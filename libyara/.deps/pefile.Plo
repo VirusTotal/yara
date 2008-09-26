@@ -1,6 +1,0 @@
-pefile.lo pefile.o: pefile.c pe.h \
-  /usr/lib/gcc/i686-apple-darwin9/4.0.1/include/stdint.h
-
-pe.h:
-
-/usr/lib/gcc/i686-apple-darwin9/4.0.1/include/stdint.h:
