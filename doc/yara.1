@@ -1,0 +1,78 @@
+.TH yara 1 "September 22, 2008" "Victor M. Alvarez"
+.SH NAME
+yara \- find files matching patterns and rules written in a special-purpose language.
+.SH SYNOPSIS
+.B yara 
+[
+.B \-t
+.I tag
+] [
+.B \-g
+] [
+.B \-s
+] [
+.B \-r
+] [
+.B \-v
+] [RULEFILE...] FILE
+.SH DESCRIPTION
+.I Yara 
+scans the given 
+.I FILE
+looking if it matches the patterns and rules provided in a special purpose-language. The rules are read from 
+.I RULEFILEs 
+or standard input.
+.PP
+The options to
+.IR yara (1)
+are:
+.TP
+.BI \-t " tag"
+Display rules tagged as
+.I tag
+and ignore the rest. This option can be used multiple times.
+.TP
+.B \-g 
+Display the tags associated to the rule.
+.TP
+.B \-s 
+Display strings found in the file.
+.TP
+.B \-r 
+Scan files in directories recursively.
+.TP
+.B \-v 
+Show version information.
+.SH EXAMPLES
+$ yara /foo/bar/rules1 /foo/bar/rules2 .
+.RS
+.PP
+Apply rules on
+.I /foo/bar/rules1
+and
+.I /foo/bar/rules2
+to all files on current directory. Subdirectories are not scanned.
+.RE
+.PP
+$ yara -t Packer -t Compiler /foo/bar/rules bazfile
+.RS
+.PP
+Apply rules on
+.I /foo/bar/rules
+to 
+.I bazfile.
+Only reports rules tagged as
+.I Packer
+or
+.I Compiler.
+.RE
+.PP
+$ cat /foo/bar/rules1 | yara -r /foo 
+.RS
+.PP
+Scan all files in the
+.I /foo
+directory and its subdirectories. Rules are read from standard input.
+.RE
+.SH AUTHOR 
+Victor M. Alvarez (vmalvarez@hispasec.com) 

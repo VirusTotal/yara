@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "yara", "yara.vcproj", "{80C7C3CA-E975-4D31-BDC8-7F664C520BB3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{935C964E-48EF-49CE-954D-9FC96FF6E961} = {935C964E-48EF-49CE-954D-9FC96FF6E961}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libyara", "..\libyara\libyara.vcproj", "{935C964E-48EF-49CE-954D-9FC96FF6E961}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{80C7C3CA-E975-4D31-BDC8-7F664C520BB3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{80C7C3CA-E975-4D31-BDC8-7F664C520BB3}.Debug|Win32.Build.0 = Debug|Win32
+		{80C7C3CA-E975-4D31-BDC8-7F664C520BB3}.Release|Win32.ActiveCfg = Release|Win32
+		{80C7C3CA-E975-4D31-BDC8-7F664C520BB3}.Release|Win32.Build.0 = Release|Win32
+		{935C964E-48EF-49CE-954D-9FC96FF6E961}.Debug|Win32.ActiveCfg = Debug|Win32
+		{935C964E-48EF-49CE-954D-9FC96FF6E961}.Debug|Win32.Build.0 = Debug|Win32
+		{935C964E-48EF-49CE-954D-9FC96FF6E961}.Release|Win32.ActiveCfg = Release|Win32
+		{935C964E-48EF-49CE-954D-9FC96FF6E961}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

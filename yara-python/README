@@ -1,0 +1,94 @@
+
+YARA for Python
+===============
+
+This is a Python extension that gives you access to YARA's powerful features from 
+your own Python scripts. 
+
+
+HOW TO BUILD
+============
+
+
+yara-python depends on libyara, a library that implements YARA's core functions. You
+must build and install YARA in your system before building yara-python. The latest
+YARA version can be downloaded from:
+
+http://yara.googlecode.com/files/yara-1.0.tar.gz
+
+
+After installing YARA you can build yara-python this way:
+
+$ tar xzvf yara-python-1.0.0.tar.gz
+$ cd yara-python-1.0.0
+$ python setup.py build
+$ sudo python setup.py install
+
+You can also test your installation by invoking Python and importing the YARA module:
+
+$ python
+Python 2.5.1 (r251:54863, Jan 17 2008, 19:35:17) 
+[GCC 4.0.1 (Apple Inc. build 5465)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import yara
+>>>
+
+
+In some operating systems (e.g: Ubuntu) you can get an error message like this one:
+
+Traceback (most recent call last):
+  File "<stdin>", line 1, in ?
+ImportError: libyara.so.0: cannot open shared object file: No such file or directory
+
+
+If you get the previous error you should add the path /usr/local/lib to the loader
+configuration file:
+
+$ sudo echo "/usr/local/lib" >> /etc/ld.so.conf
+$ ldconfig
+
+
+HOW TO USE
+==========
+
+The first thing you need to do is importing the yara module:
+
+import yara
+
+Then you will need to compile the YARA rules before applying them to your data:
+
+rules = yara.compile('/foo/bar/myrules')
+
+The method "compile" of this module returns an instance of the class "Rules", which
+in turn has two methods: "matchfile" and "match". The first one applies the rules
+to a file given its path:
+
+matches = rules.matchfile('/foo/bar/myfile')
+
+The second one applies the rules to a string:
+
+f = fopen('/foo/bar/myfile', 'rb')
+data = f.read()
+f.close()
+
+matches = rules.match(data)
+
+Both methods return a list of instances of the class "Match". The instances of this
+class can be treated as text string containing the name of the matching YARA rule. 
+For example you can print them:
+
+foreach m in matches:
+	print "%s" % m
+
+In some circumstances you may need to explicitly convert the instance of "Match" to
+string, for example when comparing it with another string:
+
+if str(matches[0]) == 'SomeRuleName':
+	...
+
+The "Match" class have another two attributes: "tags" and "strings". The "tags" 
+attribute is a list of strings containing the tags associated to the rule. The
+"strings" attribute is a dictionary whose values are those strings within the data
+that made the YARA rule match, and the keys are the offsets those strings were found.
+
+	
