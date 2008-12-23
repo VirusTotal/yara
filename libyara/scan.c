@@ -43,8 +43,11 @@ int compare(char* str1, char* str2, int len)
 	char* s2 = str2;
 	int i = 0;
 	
-	while (*s1++ == *s2++ && i < len) i++;
-	
+	while (*s1++ == *s2++ && i < len) 
+	{
+	    i++;
+    }
+
 	return ((i==len) ? i : 0);
 }
 
@@ -169,25 +172,13 @@ int regexp_match(unsigned char* buffer, unsigned int buffer_size, unsigned char*
 	char* s;
 	
 	result = 0;
-	len = 0;
-	
-	while (len < buffer_size)
-	{
-		if (buffer[len] < 32 || buffer[len] > 126)  /* only printable characters */
-		{
-			break;
-		}
-		
-		len++;
-	}
 	
 	/* 
-		negative_size > 0 indicates that it is safe to access buffer[-1], 
-		if a previous printable char exists and pattern begins with ^ the 
-		string doesn't match. 
+		negative_size > 0 indicates that we are not at the beginning of the file, 
+		therefore if pattern begins with ^ the string doesn't match
 	*/
 	
-	if (negative_size > 0 && buffer[-1] >= 32 && buffer[-1] <= 126 && pattern[0] == '^')
+	if (negative_size > 0 && pattern[0] == '^')
 	{
 		return 0;
 	}
@@ -196,7 +187,7 @@ int regexp_match(unsigned char* buffer, unsigned int buffer_size, unsigned char*
 	  				regexp,               /* the compiled pattern */
 	  				NULL,                 /* no extra data - we didn't study the pattern */
 	  				(char*) buffer,  	  /* the subject string */
-	  				len,       		  	  /* the length of the subject */
+	  				buffer_size,          /* the length of the subject */
 	  				0,                    /* start at offset 0 in the subject */
 	  				0,                    /* default options */
 	  				ovector,              /* output vector for substring information */
@@ -230,63 +221,79 @@ int init_hash_table(RULE_LIST* rule_list)
 	STRING_LIST_ENTRY* entry;
 	unsigned char x,y;
 	int next;
+    char hashable;
 		
 	rule = rule_list->head;
 	
 	while (rule != NULL)
 	{
 		string = rule->string_list_head;
-		
+
 		while (string != NULL)
-		{	
+		{	        
 			if (string->flags & STRING_FLAGS_REGEXP)
 			{	
-				/* take into account scaped characters and ^ at beginning of regular expressions */
+				/* take into account anchors (^) at beginning of regular expressions */
 							
-				if (string->string[0] == '\\' || string->string[0] == '^')
+				if (string->string[0] == '^')
 				{
-					x = string->string[1];
-					next = 2;
+				    if (string->length > 2)
+				    {
+					    x = string->string[1];
+					    y = string->string[2];
+					}
+					else
+					{
+                        x = 0;
+                        y = 0; 
+					}
 				}
 				else
 				{
 					x = string->string[0];
-					next = 1;
+					y = string->string[1];
 				}
-				
-				if (string->string[next] == '\\')
-				{
-					y = string->string[next + 1];
-				}
-				else
-				{
-					y = string->string[next];
-				}			
+			
+                hashable = isalnum(x) && isalnum(y);
 			}
 			else
 			{
-				x = string->string[0];
+			    x = string->string[0];
 				y = string->string[1];
+				
+				hashable = TRUE;
 			}
 			
-			if (string->flags & STRING_FLAGS_NO_CASE)
+			if (string->flags & STRING_FLAGS_HEXADECIMAL)
+			{
+			    hashable = (string->mask[0] == 0xFF) && (string->mask[1] == 0xFF);
+			}
+			
+			if (hashable && string->flags & STRING_FLAGS_NO_CASE)
 			{	
 				x = tolower(x);
 				y = tolower(y);
 			}
-		
+			
 			entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
-				
-			if (entry != NULL)
-			{	
-				entry->string = string;
-				entry->next = rule_list->hash_table[x][y];  /* insert new entry at begining of list */
-				rule_list->hash_table[x][y] = entry;
+			
+			if (entry == NULL)
+			{
+			    return ERROR_INSUFICIENT_MEMORY;
+			}
+			
+			entry->string = string;
+			
+			if (hashable)
+			{			
+    			entry->next = rule_list->hash_table[x][y];  /* insert new entry at begining of list */
+    			rule_list->hash_table[x][y] = entry;
 			}
 			else
 			{
-				return ERROR_INSUFICIENT_MEMORY;
-			}				
+                entry->next = rule_list->non_hashed_strings;
+                rule_list->non_hashed_strings = entry;
+			}	
 		
 			string = string->next;
 		}
@@ -319,6 +326,17 @@ void free_hash_table(RULE_LIST* rule_list)
 			rule_list->hash_table[i][j] = NULL;
 		}
 	}
+	
+    entry = rule_list->non_hashed_strings;
+    
+    while (entry != NULL)
+	{
+		next_entry = entry->next;
+		free(entry);
+		entry = next_entry;
+	}
+	
+    rule_list->non_hashed_strings = NULL;
 }
 
 void clear_marks(RULE_LIST* rule_list)
@@ -332,7 +350,8 @@ void clear_marks(RULE_LIST* rule_list)
 	
 	while (rule != NULL)
 	{	 
-		string = rule->string_list_head;
+	    rule->flags &= ~RULE_FLAGS_MATCH;
+	    string = rule->string_list_head;
 		
 		while (string != NULL)
 		{
@@ -402,7 +421,7 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 				match = regexp_match(tmp, len, string->string, string->length, string->regexp, (negative_size > 2) ? 1 : 0);
 			
 				free(tmp);			
-				return match;
+				return match * 2;
 			}
 			
 		}
@@ -457,7 +476,7 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 		{
 			match = compare((char*) string->string, (char*) buffer, string->length);		
 		}
-		
+				
 		if (match > 0 && IS_FULL_WORD(string))
 		{
 			if (negative_size >= 1 && isalnum((char) (buffer[-1])))
@@ -476,6 +495,78 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 	return 0;
 }
 
+
+int find_matches_for_strings(   STRING_LIST_ENTRY* first_string, 
+                                unsigned char* buffer, 
+                                unsigned int buffer_size,
+                                unsigned int current_file_offset,
+                                int wide, 
+                                int no_case,
+                                int negative_size)
+{
+	int len;
+    int overlap;
+	
+	STRING* string;
+	MATCH* match;
+    STRING_LIST_ENTRY* entry = first_string;
+    
+   	while (entry != NULL)
+	{	
+		string = entry->string;
+
+		if ((!wide || IS_WIDE(string)) && 
+		    (!no_case || IS_NO_CASE(string)) &&
+		    (len = string_match(buffer, buffer_size, string, negative_size)))
+		{
+		    /*  If this string already matched we must check that this match is not 
+		        overlapping a previous one. This can occur for example if we search 
+		        for the string 'aa' and the file contains 'aaaaaa'. 
+		     */
+		     
+            overlap = FALSE;
+		     
+		    if (string->flags && STRING_FLAGS_FOUND)
+		    {
+                match = string->matches;
+                
+                while(match != NULL)
+                {
+                    if (match->offset + match->length > current_file_offset)
+                    {
+                        overlap = TRUE;
+                        break;
+                    }
+                    match = match->next;
+                }
+		    }
+		    
+		    if (!overlap)
+		    {		    
+    			string->flags |= STRING_FLAGS_FOUND;
+    			match = (MATCH*) malloc(sizeof(MATCH));
+
+    			if (match != NULL)
+    			{
+    				match->offset = current_file_offset;
+    				match->length = len;
+    				match->next = string->matches;
+    				string->matches = match;
+    			}
+    			else
+    			{
+    				return ERROR_INSUFICIENT_MEMORY;
+    			}
+		    }
+		}
+		
+		entry = entry->next;
+	}
+	
+    return ERROR_SUCCESS;
+}
+
+
 int find_matches(	unsigned char first_char, 
 					unsigned char second_char, 
 					unsigned char* buffer, 
@@ -488,77 +579,57 @@ int find_matches(	unsigned char first_char,
 	unsigned char first_char_lower;
 	unsigned char second_char_lower;
 	
-	int len;
+    int result;
 	
-	STRING* string;
-	MATCH* match;
-	STRING_LIST_ENTRY* entry;
-	
-	entry = rule_list->hash_table[first_char][second_char];
+	/* case sensitive */
 
-	while (entry != NULL)
-	{	
-		string = entry->string;
-
-		if ((!wide || IS_WIDE(string)) && (len = string_match(buffer, buffer_size, string, negative_size)))
-		{
-			string->flags |= STRING_FLAGS_FOUND;
-			match = (MATCH*) malloc(sizeof(MATCH));
-
-			if (match != NULL)
-			{
-				match->offset = current_file_offset;
-				match->length = len;
-				match->next = string->matches;
-				string->matches = match;
-			}
-			else
-			{
-				return ERROR_INSUFICIENT_MEMORY;
-			}
-		}
-		
-		entry = entry->next;
-	}	
-	
+    result =  find_matches_for_strings(  rule_list->hash_table[first_char][second_char], 
+                                        buffer, 
+                                        buffer_size, 
+                                        current_file_offset, 
+                                        wide, 
+                                        FALSE,
+                                        negative_size);
+    
+    if (result == ERROR_SUCCESS)
+    {
+         result = find_matches_for_strings(    rule_list->non_hashed_strings, 
+                                               buffer, 
+                                               buffer_size, 
+                                               current_file_offset, 
+                                               wide, 
+                                               FALSE,
+                                               negative_size);
+     }
+            
 	/* case insensitive */
 	
 	first_char_lower = tolower(first_char);
 	second_char_lower = tolower(second_char);
 	
-	if (first_char_lower != first_char || second_char_lower != second_char)
+	if (result == ERROR_SUCCESS && (first_char_lower != first_char || second_char_lower != second_char))
 	{
-		entry = rule_list->hash_table[first_char_lower][second_char_lower];
-
-		while (entry != NULL)
-		{
-			string = entry->string;
-		
-			if ((!wide || IS_WIDE(string)) &&
-			    (string->flags & STRING_FLAGS_NO_CASE) &&
-			    (len = string_match(buffer, buffer_size, string, negative_size)))
-			{
-				string->flags |= STRING_FLAGS_FOUND;
-				match = (MATCH*) malloc(sizeof(MATCH));
-
-				if (match != NULL)
-				{
-					match->offset = current_file_offset;
-					match->length = len;
-					match->next = string->matches;
-					string->matches = match;
-				}
-				else
-				{
-					return ERROR_INSUFICIENT_MEMORY;
-				}
-			}
-		
-			entry = entry->next;
-		}
+            result = find_matches_for_strings(    rule_list->hash_table[first_char_lower][second_char_lower], 
+	                                           buffer, 
+	                                           buffer_size, 
+	                                           current_file_offset, 
+	                                           wide, 
+                                               TRUE,
+	                                           negative_size);
+	                                           
+            if (result == ERROR_SUCCESS)
+            {
+                result = find_matches_for_strings(    rule_list->non_hashed_strings, 
+                                                      buffer, 
+                                                      buffer_size, 
+                                                      current_file_offset, 
+                                                      wide, 
+                                                      TRUE,
+                                                      negative_size);
+            }
 	}
 	
-	return ERROR_SUCCESS;
+	return result;
 }
 
 int scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data)
@@ -612,12 +683,16 @@ int scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_li
 			continue;
 		}
 	 
+        context.rule = rule;
+	 
 		if (evaluate(rule->condition, &context))
 		{
-			if (callback(rule, buffer, buffer_size, user_data) != 0)
-			{
-                return ERROR_CALLBACK_ERROR;
-			}
+            rule->flags |= RULE_FLAGS_MATCH;
+		}
+		
+		if (callback(rule, buffer, buffer_size, user_data) != 0)
+		{
+            return ERROR_CALLBACK_ERROR;
 		}
 		
 		rule = rule->next;

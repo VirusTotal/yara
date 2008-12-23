@@ -7,33 +7,9 @@
 #include "ast.h"
 #include "error.h"
 #include "compile.h"
+#include "sizedstr.h"
 
 #define YYERROR_VERBOSE
-
-/* Global variables */
-
-STRING* current_rule_strings;
-
-/* Function declarations */
-
-void reduce_rule_declaration(char* identifier, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition);
-TAG* reduce_tags(TAG* tag_list_head, char* identifier);
-
-STRING* reduce_string_declaration(char* identifier, char* str, int flags);
-STRING* reduce_strings(STRING* string_list_head, STRING* string);
-
-TERM* reduce_string(char* identifier);
-TERM* reduce_string_at(char* identifier, TERM* offset);
-TERM* reduce_string_in_range(char* identifier, TERM* lower_offset, TERM* upper_offset);
-TERM* reduce_string_in_section_by_name(char* identifier, char* section_name);
-TERM* reduce_string_count(char* identifier);
-
-TERM* reduce_filesize();
-TERM* reduce_entrypoint();
-TERM* reduce_term(int type, TERM* op1, TERM* op2);
-TERM* reduce_constant(unsigned int constant);
-TERM* reduce_rule(char* identifier);
-TERM* reduce_boolean_expression_list(TERM* boolean_expression_list_head, TERM* boolean_expression);
 
 %} 
 
@@ -43,13 +19,14 @@ TERM* reduce_boolean_expression_list(TERM* boolean_expression_list_head, TERM* b
 %token <string> _STRINGS_
 %token _CONDITION_
 %token _END_
-%token <pchar> _IDENTIFIER_
+%token <c_string> _IDENTIFIER_
 %token <term> _STRING_IDENTIFIER_
 %token <term> _STRING_COUNT_
 %token <integer> _NUMBER_
 %token _UNKNOWN_
-%token <pchar> _TEXTSTRING_
-%token <pchar> _HEXSTRING_
+%token <sized_string> _TEXTSTRING_
+%token <sized_string> _HEXSTRING_
+%token <sized_string> _REGEXP_
 %token _WIDE_
 %token _NOCASE_
 %token _REGEXP_
@@ -62,6 +39,7 @@ TERM* reduce_boolean_expression_list(TERM* boolean_expression_list_head, TERM* b
 %token _FILE_
 %token _IN_
 %token _OF_
+%token _THEM_
 %token <term> _SECTION_
 
 %token _MZ_
@@ -94,14 +72,49 @@ TERM* reduce_boolean_expression_list(TERM* boolean_expression_list_head, TERM* b
 %type <term> boolean_expression_list
 %type <term> boolean_expressions
 
-%union { 
-    unsigned int integer;
-    char* pchar;
-    void* string;
-    void* term;
-    void* tag;
-};
+%union {
+    
+    void*           sized_string;
+    char*           c_string;
+    unsigned int    integer;
+    void*           string;
+    void*           term;
+    void*           tag;
 
+}
+
+%destructor { free ($$); } _TEXTSTRING_ _HEXSTRING_ _REGEXP_ _IDENTIFIER_
+
+
+%{ 
+    
+/* Global variables */
+
+STRING* current_rule_strings;
+
+/* Function declarations */
+
+void reduce_rule_declaration(char* identifier, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition);
+TAG* reduce_tags(TAG* tag_list_head, char* identifier);
+
+STRING* reduce_string_declaration(char* identifier, SIZED_STRING* str, int flags);
+STRING* reduce_strings(STRING* string_list_head, STRING* string);
+
+TERM* reduce_string(char* identifier);
+TERM* reduce_string_at(char* identifier, TERM* offset);
+TERM* reduce_string_in_range(char* identifier, TERM* lower_offset, TERM* upper_offset);
+TERM* reduce_string_in_section_by_name(char* identifier, SIZED_STRING* section_name);
+TERM* reduce_string_count(char* identifier);
+
+TERM* reduce_filesize();
+TERM* reduce_entrypoint();
+TERM* reduce_term(int type, TERM* op1, TERM* op2);
+TERM* reduce_constant(unsigned int constant);
+TERM* reduce_rule(char* identifier);
+TERM* reduce_boolean_expression_list(TERM* boolean_expression_list_head, TERM* boolean_expression);
+TERM* reduce_n_of_them(TERM* n);
+
+%} 
 
 %%
 
@@ -186,6 +199,17 @@ string_declaration  :   _STRING_IDENTIFIER_ '=' _TEXTSTRING_ string_modifiers
                                 YYERROR;
                             } 
                         }
+                    |   _STRING_IDENTIFIER_ '=' _REGEXP_ string_modifiers   
+                       { 
+                           $$ = reduce_string_declaration($1, $3, $4 | STRING_FLAGS_REGEXP); 
+
+                           if ($$ == NULL)
+                           {
+                               show_last_error();
+                               yynerrs++;
+                               YYERROR;
+                           } 
+                       }
                     |   _STRING_IDENTIFIER_ '=' _HEXSTRING_         
                         {
                             $$ = reduce_string_declaration($1, $3, STRING_FLAGS_HEXADECIMAL);
@@ -205,7 +229,6 @@ string_modifiers : /* empty */                              { $$ = 0;  }
 
 string_modifier : _WIDE_        { $$ = STRING_FLAGS_WIDE; }
                 | _NOCASE_      { $$ = STRING_FLAGS_NO_CASE; }
-                | _REGEXP_      { $$ = STRING_FLAGS_REGEXP; }
                 | _FULLWORD_    { $$ = STRING_FLAGS_FULL_WORD; }
                 ;
 
@@ -283,9 +306,8 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                    | expression _IS_ expression                         { $$ = reduce_term(TERM_TYPE_EQ, $1, $3); }
                    | expression _NEQ_ expression                        { $$ = reduce_term(TERM_TYPE_NOT_EQ, $1, $3); }
                    | number _OF_ boolean_expression_list                { $$ = reduce_term(TERM_TYPE_OF, $1, $3); }
+                   | number _OF_ _THEM_                                 { $$ = reduce_n_of_them($1); }
                    ;    
-
-//TODO: controla que el numero en el operador OF sea menor o igual que la cantidad de elementos en la lista
 
 boolean_expression_list : '(' boolean_expressions ')'   { $$ = $2; }
                         ;                           
@@ -360,11 +382,11 @@ void reduce_rule_declaration(char* identifier, int flags, TAG* tag_list_head, ST
     }
 }
 
-STRING* reduce_string_declaration(char* identifier, char* str, int flags)
+STRING* reduce_string_declaration(char* identifier, SIZED_STRING* str, int flags)
 {
     char tmp[200];
     STRING* string = NULL;
-
+    
     last_error = new_string(identifier, str, flags, &string);
     
     if (last_error == ERROR_INVALID_REGULAR_EXPRESSION) 
@@ -514,7 +536,7 @@ TERM* reduce_string_in_range(char* identifier, TERM* lower_offset, TERM* upper_o
     return (TERM*) term;
 }
 
-TERM* reduce_string_in_section_by_name(char* identifier, char* section_name)
+TERM* reduce_string_in_section_by_name(char* identifier, SIZED_STRING* section_name)
 {
     TERM_STRING* term = NULL;
     
@@ -526,9 +548,10 @@ TERM* reduce_string_in_section_by_name(char* identifier, char* section_name)
     }
     else
     {
-        term->section_name = section_name;
+        term->section_name = strdup(section_name->c_string);
     }
     
+    free(section_name);
     free(identifier);   
     return (TERM*) term;
 }
@@ -576,6 +599,26 @@ TERM* reduce_boolean_expression_list(TERM* boolean_expression_list_head, TERM* b
     return boolean_expression;
 }
 
+TERM* reduce_n_of_them(TERM* n)
+{
+    STRING* string;
+    TERM_BINARY_OPERATION* term;
+    
+    last_error = new_binary_operation(TERM_TYPE_OF_THEM, n, NULL, &term);
+    
+    /* the keyword THEM implicitly references all the strings 
+       on the rule, so let's flag them as referenced */
+    
+    string = current_rule_strings;
+    
+    while (string != NULL)
+    {
+        string->flags |= STRING_FLAGS_REFERENCED;
+        string = string->next;
+    }
+    
+    return (TERM*) term;  
+}
 
 
     

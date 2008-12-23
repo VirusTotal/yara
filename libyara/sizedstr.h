@@ -14,22 +14,20 @@ GNU General Public License for more details.
 
 */
 
-#ifndef _EVAL_H
-#define _EVAL_H
+#ifndef _SIZEDSTR_H
+#define _SIZEDSTR_H
 
-#include "yara.h"
+//
+// This struct is used to support strings containing null chars. The length of 
+// the string is stored along the string data. However the string data is also
+// terminated with a null char.
+//
 
-typedef struct _EVALUATION_CONTEXT
+typedef struct _SIZED_STRING
 {
-	unsigned int file_size;
-	unsigned int entry_point;
-    RULE* rule;
-
-} EVALUATION_CONTEXT;
-
-
-
-unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context);
+    int length;
+    char c_string[1];  
+    
+} SIZED_STRING;
 
 #endif
-

@@ -1,4 +1,4 @@
-AC_INIT([libyara], [1.0], [vmalvarez@hispasec.com])
+AC_INIT([libyara], [1.1], [vmalvarez@hispasec.com])
         AM_INIT_AUTOMAKE([-Wall -Werror foreign])
         AC_PROG_CC
 		AC_PROG_YACC

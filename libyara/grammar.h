@@ -42,9 +42,9 @@
      _UNKNOWN_ = 268,
      _TEXTSTRING_ = 269,
      _HEXSTRING_ = 270,
-     _WIDE_ = 271,
-     _NOCASE_ = 272,
-     _REGEXP_ = 273,
+     _REGEXP_ = 271,
+     _WIDE_ = 272,
+     _NOCASE_ = 273,
      _FULLWORD_ = 274,
      _AT_ = 275,
      _SIZE_ = 276,
@@ -54,22 +54,23 @@
      _FILE_ = 280,
      _IN_ = 281,
      _OF_ = 282,
-     _SECTION_ = 283,
-     _MZ_ = 284,
-     _PE_ = 285,
-     _DLL_ = 286,
-     _TRUE_ = 287,
-     _FALSE_ = 288,
-     _OR_ = 289,
-     _AND_ = 290,
-     _NOT_ = 291,
-     _IS_ = 292,
-     _NEQ_ = 293,
-     _EQ_ = 294,
-     _GE_ = 295,
-     _GT_ = 296,
-     _LE_ = 297,
-     _LT_ = 298
+     _THEM_ = 283,
+     _SECTION_ = 284,
+     _MZ_ = 285,
+     _PE_ = 286,
+     _DLL_ = 287,
+     _TRUE_ = 288,
+     _FALSE_ = 289,
+     _OR_ = 290,
+     _AND_ = 291,
+     _NOT_ = 292,
+     _IS_ = 293,
+     _NEQ_ = 294,
+     _EQ_ = 295,
+     _GE_ = 296,
+     _GT_ = 297,
+     _LE_ = 298,
+     _LT_ = 299
    };
 #endif
 #define _RULE_ 258
@@ -85,9 +86,9 @@
 #define _UNKNOWN_ 268
 #define _TEXTSTRING_ 269
 #define _HEXSTRING_ 270
-#define _WIDE_ 271
-#define _NOCASE_ 272
-#define _REGEXP_ 273
+#define _REGEXP_ 271
+#define _WIDE_ 272
+#define _NOCASE_ 273
 #define _FULLWORD_ 274
 #define _AT_ 275
 #define _SIZE_ 276
@@ -97,37 +98,41 @@
 #define _FILE_ 280
 #define _IN_ 281
 #define _OF_ 282
-#define _SECTION_ 283
-#define _MZ_ 284
-#define _PE_ 285
-#define _DLL_ 286
-#define _TRUE_ 287
-#define _FALSE_ 288
-#define _OR_ 289
-#define _AND_ 290
-#define _NOT_ 291
-#define _IS_ 292
-#define _NEQ_ 293
-#define _EQ_ 294
-#define _GE_ 295
-#define _GT_ 296
-#define _LE_ 297
-#define _LT_ 298
+#define _THEM_ 283
+#define _SECTION_ 284
+#define _MZ_ 285
+#define _PE_ 286
+#define _DLL_ 287
+#define _TRUE_ 288
+#define _FALSE_ 289
+#define _OR_ 290
+#define _AND_ 291
+#define _NOT_ 292
+#define _IS_ 293
+#define _NEQ_ 294
+#define _EQ_ 295
+#define _GE_ 296
+#define _GT_ 297
+#define _LE_ 298
+#define _LT_ 299
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 97 "grammar.y"
-typedef union YYSTYPE { 
-    unsigned int integer;
-    char* pchar;
-    void* string;
-    void* term;
-    void* tag;
+#line 75 "grammar.y"
+typedef union YYSTYPE {
+    
+    void*           sized_string;
+    char*           c_string;
+    unsigned int    integer;
+    void*           string;
+    void*           term;
+    void*           tag;
+
 } YYSTYPE;
 /* Line 1318 of yacc.c.  */
-#line 131 "grammar.h"
+#line 136 "grammar.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

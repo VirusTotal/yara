@@ -59,7 +59,7 @@ GNU General Public License for more details.
 #endif
 
 #define ERROR_INSUFICIENT_MEMORY                1
-#define ERROR_DUPLICATERULEIDENTIFIER         2
+#define ERROR_DUPLICATERULEIDENTIFIER           2
 #define ERROR_INVALID_CHAR_IN_HEX_STRING        3
 #define ERROR_MISMATCHED_BRACKET                4
 #define ERROR_SKIP_AT_END                       5
@@ -71,12 +71,11 @@ GNU General Public License for more details.
 #define ERROR_UNDEFINED_RULE                    11
 #define ERROR_COULD_NOT_OPEN_FILE               12
 #define ERROR_INVALID_REGULAR_EXPRESSION        13
-#define ERROR_INVALID_BEGINING_FOR_REGEXP       14
-#define ERROR_SYNTAX_ERROR                      15
-#define ERROR_DUPLICATE_TAG_IDENTIFIER			16
-#define ERROR_UNREFERENCED_STRING				17
-#define ERROR_DUPLICATE_STRING_IDENTIFIER		18
-#define ERROR_CALLBACK_ERROR            		19
+#define ERROR_SYNTAX_ERROR                      14
+#define ERROR_DUPLICATE_TAG_IDENTIFIER			15
+#define ERROR_UNREFERENCED_STRING				16
+#define ERROR_DUPLICATE_STRING_IDENTIFIER		17
+#define ERROR_CALLBACK_ERROR            		18
       
 typedef struct _MATCH
 {   
@@ -146,6 +145,7 @@ typedef struct _RULE_LIST
     RULE* head; 
     RULE* tail;
     STRING_LIST_ENTRY* hash_table[256][256];
+    STRING_LIST_ENTRY* non_hashed_strings;
         
 } RULE_LIST;
 

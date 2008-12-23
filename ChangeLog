@@ -1,3 +1,10 @@
 
 version 1.0 (24/09/2008)
 	* first release
+	
+version 1.1
+	* added support for strings containing null (\x00) chars
+	* added syntactic construct "x of them" 	
+	* regular expressions syntax changed
+	* now regular expressions can begin with any character
+	

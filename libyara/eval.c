@@ -23,6 +23,8 @@ unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 	unsigned int i;
 	unsigned int offs, hi_bound, lo_bound;
 	
+    STRING* string;
+	
 	TERM_CONST* term_const = ((TERM_CONST*) term);
 	TERM_BINARY_OPERATION* term_binary = ((TERM_BINARY_OPERATION*) term);
 	TERM_STRING* term_string = ((TERM_STRING*) term);
@@ -160,6 +162,24 @@ unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		} 
 		
 		return (i == 0);
+		
+	case TERM_TYPE_OF_THEM: 
+	
+	    i = evaluate(term_binary->op1, context);
+	    
+        string = context->rule->string_list_head;
+        
+        while (string != NULL && i > 0)
+        {
+            if (string->flags & STRING_FLAGS_FOUND)
+            {
+                i--;
+            }
+            
+            string = string->next;
+        }
+        
+        return (i == 0);
 		
 	default:
 		return 0;

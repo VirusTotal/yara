@@ -18,6 +18,7 @@ GNU General Public License for more details.
 #define _AST_H
 
 #include "yara.h"
+#include "sizedstr.h"
 
 #define MASK_EXACT_SKIP                         0xCC
 #define MASK_RANGE_SKIP                         0xDD
@@ -49,7 +50,7 @@ GNU General Public License for more details.
 #define TERM_TYPE_FILESIZE              	         22          
 #define TERM_TYPE_ENTRYPOINT						 23			
 #define TERM_TYPE_RULE                               24
-
+#define TERM_TYPE_OF_THEM                            25
 
 
 typedef struct _TERM_CONST
@@ -90,7 +91,7 @@ typedef struct _TERM_STRING
 
 int new_rule(RULE_LIST* rules, char* identifier, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition);
 
-int new_string(char* identifier, char* charstr, int flags, STRING** string);
+int new_string(char* identifier, SIZED_STRING* charstr, int flags, STRING** string);
 
 int new_simple_term(int type, TERM** term);
 

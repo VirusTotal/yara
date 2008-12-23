@@ -93,10 +93,6 @@ void show_last_error()
 		case ERROR_INVALID_REGULAR_EXPRESSION:
 			yyerror(last_error_extra_info);
 			break;
-		case ERROR_INVALID_BEGINING_FOR_REGEXP:
-		    sprintf(errmsg, "invalid regular expression in string \"%s\": first two characters of regular expressions must be strictly defined", last_error_extra_info);
-			yyerror(errmsg);
-			break;
 	}
 	
 }

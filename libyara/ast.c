@@ -158,7 +158,7 @@ int new_rule(RULE_LIST* rules, char* identifier, int flags, TAG* tag_list_head, 
     return result;
 }
 
-int new_hex_string(char* charstr, unsigned char** hexstr, unsigned char** maskstr, unsigned int* length)
+int new_hex_string(SIZED_STRING* charstr, unsigned char** hexstr, unsigned char** maskstr, unsigned int* length)
 {
     int i;
     int skip_lo;
@@ -178,7 +178,7 @@ int new_hex_string(char* charstr, unsigned char** hexstr, unsigned char** maskst
     
     //assert(charstr && hexstr && maskstr && length);
     
-    len = (int) strlen(charstr);
+    len = (int) charstr->length;
     
     //assert(charstr[0] == '{' && charstr[len - 1] == '}');
     
@@ -199,7 +199,7 @@ int new_hex_string(char* charstr, unsigned char** hexstr, unsigned char** maskst
     
     while (i < len - 1)
     {
-        c = toupper(charstr[i]);    
+        c = toupper(charstr->c_string[i]);    
         
         if (c >= 'A' && c <= 'F')
         {               
@@ -273,7 +273,7 @@ int new_hex_string(char* charstr, unsigned char** hexstr, unsigned char** maskst
             
             nibble_count = 0;
             
-            closing_bracket = strchr(charstr + i + 1, ']');
+            closing_bracket = strchr(charstr->c_string + i + 1, ']');
 
             if (closing_bracket == NULL)
             {
@@ -293,7 +293,7 @@ int new_hex_string(char* charstr, unsigned char** hexstr, unsigned char** maskst
             
             /* only decimal digits and '-' are allowed between brackets */
             
-            for (s = charstr + i + 1; s < closing_bracket; s++)
+            for (s = charstr->c_string + i + 1; s < closing_bracket; s++)
             {
                 if ((*s != '-') && (*s < '0' || *s > '9'))
                 {
@@ -302,7 +302,7 @@ int new_hex_string(char* charstr, unsigned char** hexstr, unsigned char** maskst
                 }
             }
             
-            skip_lo = atoi(charstr + i + 1);
+            skip_lo = atoi(charstr->c_string + i + 1);
             
             if (skip_lo < 0 || skip_lo > MASK_MAX_SKIP)
             { 
@@ -312,7 +312,7 @@ int new_hex_string(char* charstr, unsigned char** hexstr, unsigned char** maskst
 
             skip_exact = 1;
 
-            s = strchr(charstr + i + 1, '-');
+            s = strchr(charstr->c_string + i + 1, '-');
 
             if (s != NULL && s < closing_bracket)
             {
@@ -339,7 +339,7 @@ int new_hex_string(char* charstr, unsigned char** hexstr, unsigned char** maskst
                 *mask++ = (unsigned char) skip_hi;
             }
             
-            i = (int) (closing_bracket - charstr + 1); 
+            i = (int) (closing_bracket - charstr->c_string + 1); 
             
         }
 		else if (c == ' ')
@@ -361,7 +361,7 @@ int new_hex_string(char* charstr, unsigned char** hexstr, unsigned char** maskst
         
     *mask++ = MASK_END;
     
-    /* wildcards or skip instructions are not allowed at the first two bytes of the string */
+    /* wildcards or skip instructions are not allowed at the first position the string */
     
     if ((*maskstr)[0] != 0xFF || (*maskstr)[1] != 0xFF) 
     {
@@ -384,46 +384,8 @@ int new_hex_string(char* charstr, unsigned char** hexstr, unsigned char** maskst
     return result;
 }
 
-int validate_regexp(char* regexp)
-{
-    int i = 0;
-    char* s = regexp;
-    
-    while (*s != '\0' && i < 2)
-    {
-        if (*s == '\\')     /* scaped char */
-        {
-            s += 2;
-        }
-        else
-        {
-            switch(*s)
-            {
-                case '(':
-                case ')':
-                case '[':
-                case ']':
-                case '{':
-                case '}':
-                case '.':
-                case '*':
-                case '+':
-                case '|':
-                case '$':
-                case '?':
-                    return ERROR_INVALID_BEGINING_FOR_REGEXP;
-            }
-            
-            s++;
-        }
-        
-        i++;
-    }
-    
-    return ERROR_SUCCESS;
-}
 
-int new_text_string(char* charstr, int flags, unsigned char** hexstr, pcre** regexp, unsigned int* length)
+int new_text_string(SIZED_STRING* charstr, int flags, unsigned char** hexstr, pcre** regexp, unsigned int* length)
 {
     const char *error;
     int erroffset;
@@ -432,8 +394,16 @@ int new_text_string(char* charstr, int flags, unsigned char** hexstr, pcre** reg
     
     //assert(charstr && hexstr && regexp && length);
     
-    *length = (int) strlen(charstr);
-	*hexstr = (unsigned char*) strdup(charstr);
+    *length = charstr->length;
+    *hexstr = malloc(charstr->length);
+    
+    if (*hexstr == NULL)
+    {
+        return ERROR_INSUFICIENT_MEMORY;
+    }
+    
+    memcpy(*hexstr, charstr->c_string, charstr->length);
+    
      
      if (flags & STRING_FLAGS_REGEXP)
      {           
@@ -448,7 +418,7 @@ int new_text_string(char* charstr, int flags, unsigned char** hexstr, pcre** reg
 
          if (*regexp != NULL)  
          {
-             result = validate_regexp((char*) *hexstr);
+             result = ERROR_SUCCESS;
          }
          else /* compilation failed */
          {
@@ -465,7 +435,7 @@ int new_text_string(char* charstr, int flags, unsigned char** hexstr, pcre** reg
     return result;
 }
 
-int new_string(char* identifier, char* charstr, int flags, STRING** string)
+int new_string(char* identifier, SIZED_STRING* charstr, int flags, STRING** string)
 {
     STRING* new_string;
     int result = ERROR_SUCCESS;
@@ -661,6 +631,7 @@ RULE_LIST* alloc_rule_list()
 
 	rule_list->head = NULL;
 	rule_list->tail = NULL;
+    rule_list->non_hashed_strings = NULL;
 
 	memset(rule_list->hash_table, 0, sizeof(rule_list->hash_table));
 

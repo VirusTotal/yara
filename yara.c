@@ -36,6 +36,8 @@ int recursive_search = FALSE;
 int show_tags = FALSE;
 int show_specified_tags = FALSE;
 int show_strings = FALSE;
+int negate = FALSE;
+
 TAG* specified_tag_list = NULL;
 
 
@@ -43,13 +45,14 @@ TAG* specified_tag_list = NULL;
 
 void show_help()
 {
-    printf("usage:  yara [ -t tag ] [ -g ] [ -s ] [ -r ] [ -v ] [RULEFILE...] FILE\n");
+    printf("usage:  yara [ -t tag ] [ -g ] [ -s ] [ -r ] [ -n ] [ -v ] [RULEFILE...] FILE\n");
     printf("options:\n");
-	printf("  -t <tag>          Display rules tagged as <tag> and ignore the rest. This option can be used more than once.\n");
-	printf("  -g                Display tags.\n");
-	printf("  -s                Display strings.\n");
-	printf("  -r                Recursively search directories.\n");
-	printf("  -v                Show version information.\n");
+	printf("  -t <tag>          print rules tagged as <tag> and ignore the rest. This option can be used more than once.\n");
+	printf("  -n                print rules that doesn't apply (negate).\n");
+	printf("  -g                print tags.\n");
+	printf("  -s                print strings.\n");
+    printf("  -r                recursively search directories.\n");
+	printf("  -v                show version information.\n");
 	printf("\nReport bugs to: <%s>\n", PACKAGE_BUGREPORT);
 }
 
@@ -160,22 +163,43 @@ void scan_dir(const char* dir, int recursive, RULE_LIST* rules, YARACALLBACK cal
 
 #endif
 
-void print_string(unsigned char* buffer, unsigned int buffer_size, unsigned int offset, unsigned int length)
+void print_string(unsigned char* buffer, unsigned int buffer_size, unsigned int offset, unsigned int length, int unicode)
 {
-	int i = offset;
-	int len = 0;
-	char* tmp;
-		
-	tmp = malloc(length + 1);
+	int i;
+	char* str;
 	
-	memcpy(tmp, buffer + offset, length);
+    str = (char*) (buffer + offset);
 	
-	tmp[length] = 0;
+    for (i = 0; i < length; i++)
+    {
+        if (str[i] >= 32 && str[i] <= 126)
+        {
+            printf("%c",str[i]);
+        }
+        else
+        {
+            printf("\\x%02x", str[i]);
+        }
+        
+        if (unicode) i++;
+    }
+
+	printf("\n");
+}
+
+void print_hex_string(unsigned char* buffer, unsigned int buffer_size, unsigned int offset, unsigned int length)
+{
+	int i;
+	char* str;
 	
-	printf("%s\n", tmp);
+    str = (char*) (buffer + offset);
 	
-	free(tmp);
-	
+    for (i = 0; i < length; i++)
+    {
+        printf("%02X ", str[i]);
+    }
+
+	printf("\n");
 }
 
 int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* data)
@@ -184,6 +208,8 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
 	STRING* string;
 	MATCH* match;
 	
+    int rule_match;
+    int string_found;
 	int show = TRUE;
 		
 	if (show_specified_tags)
@@ -202,6 +228,10 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
 			tag = tag->next;
 		}
 	}
+	
+    rule_match = (rule->flags & RULE_FLAGS_MATCH);
+	
+    show = show && ((!negate && rule_match) || (negate && !rule_match));
 	
 	if (show)
 	{
@@ -240,13 +270,17 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
 			printf("%s   %s\n", rule->identifier, (char*) data);
 		}
 		
+		/* show matched strings */
+		
 		if (show_strings)
 		{
 			string = rule->string_list_head;
 
 			while (string != NULL)
 			{
-				if (string->flags & STRING_FLAGS_FOUND)
+                string_found = string->flags & STRING_FLAGS_FOUND;
+			    
+				if ( (!string_found))
 				{
 					match = string->matches;
 
@@ -256,17 +290,15 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
 						
 						if (IS_HEX(string))
 						{
-							//TODO: print_hex_string()
-							printf("\n");
+							print_hex_string(buffer, buffer_size, match->offset, match->length);
 						}
 						else if (IS_WIDE(string))
 						{
-							//TODO: print_wide_string()
-							printf("\n");
+							print_string(buffer, buffer_size, match->offset, match->length, TRUE);
 						}
 						else
 						{
-							print_string(buffer, buffer_size, match->offset, match->length);
+							print_string(buffer, buffer_size, match->offset, match->length, FALSE);
 						}
 						
 						match = match->next;
@@ -287,7 +319,7 @@ int process_cmd_line(int argc, char const* argv[])
 	TAG* tag;
 	opterr = 0;
  
-	while ((c = getopt (argc, (char**) argv, "rsvgt:")) != -1)
+	while ((c = getopt (argc, (char**) argv, "rnsvgt:")) != -1)
 	{
 		switch (c)
 	    {
@@ -306,6 +338,10 @@ int process_cmd_line(int argc, char const* argv[])
 			case 's':
 				show_strings = TRUE;
 				break;
+			
+			case 'n':
+    			negate = TRUE;
+    			break;
 		
 		   	case 't':
 		

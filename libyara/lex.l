@@ -10,8 +10,10 @@
 #include "error.h"
 #include "xtoi.h"
 
-char string_buf[255];
+
+char string_buf[256];
 char *string_buf_ptr;
+unsigned short string_buf_len;
 
 #ifdef WIN32
 #define strdup _strdup
@@ -22,6 +24,7 @@ char *string_buf_ptr;
 %option noyywrap
 
 %x str
+%x regexp
 
 digit         [0-9]
 letter        [a-zA-Z]
@@ -42,7 +45,6 @@ hexdigit      [a-fA-F0-9]
 "widechar"           { return _WIDE_;       }
 "fullword"           { return _FULLWORD_;   }
 "nocase"             { return _NOCASE_;     }
-"regexp"             { return _REGEXP_;     }
 "condition"          { return _CONDITION_;  }
 "true"               { return _TRUE_;       }
 "false"              { return _FALSE_;      }
@@ -52,6 +54,7 @@ hexdigit      [a-fA-F0-9]
 "at"                 { return _AT_;         }
 "in"                 { return _IN_;         }
 "of"                 { return _OF_;         }
+"them"				 { return _THEM_;		}
 "entrypoint"         { return _ENTRYPOINT_; }
 "filesize"			 { return _SIZE_;       }
 "rva"			     { return _RVA_;   	    }
@@ -78,13 +81,13 @@ hexdigit      [a-fA-F0-9]
 							}
 
 $({letter}|{digit})* {
-                       		yylval.pchar = (char*) strdup(yytext);
+                       		yylval.c_string = (char*) strdup(yytext);
                        		return _STRING_IDENTIFIER_;      
 					 }
 					
 #({letter}|{digit})* {	
-                       		yylval.pchar = (char*) strdup(yytext);
-							yylval.pchar[0] = '$'; 					/* replace # by $*/
+                       		yylval.c_string = (char*) strdup(yytext);
+							yylval.c_string[0] = '$'; 					/* replace # by $*/
 		                    return _STRING_COUNT_;      
 					 }					
 
@@ -95,7 +98,7 @@ $({letter}|{digit})* {
 											yynerrs++;
 										}
 										
-										yylval.pchar = (char*) strdup(yytext);
+										yylval.c_string = (char*) strdup(yytext);
                    						return _IDENTIFIER_;
 									}
 							
@@ -122,46 +125,54 @@ $({letter}|{digit})* {
 	
 \"     				{
  						string_buf_ptr = string_buf; 
+						string_buf_len = 0;
 						BEGIN(str);
 					}
 
 <str>\"        		{ 	/* saw closing quote - all done */
 
-						int len;
+						if (string_buf_len == 0)
+						{
+							yyerror("empty string");
+							yynerrs++;
+						}
+
+						*string_buf_ptr = '\0';
 
 						BEGIN(INITIAL);
-						*string_buf_ptr = '\0';
 						
-						len = strlen(string_buf);
+						SIZED_STRING* s = (SIZED_STRING*) malloc(string_buf_len + sizeof(SIZED_STRING));
 						
-						yylval.pchar = strdup(string_buf);
+						s->length = string_buf_len;
 						
+						memcpy(s->c_string, string_buf, string_buf_len);
+					
+						yylval.sized_string = s;
+												
 						return _TEXTSTRING_;
 			  		}
 
-<str>\\t  			*string_buf_ptr++ = '\t';
-<str>\\\"  			*string_buf_ptr++ = '\"';
-<str>\\\\  			*string_buf_ptr++ = '\\';
+<str>\\t  			{ *string_buf_ptr++ = '\t'; string_buf_len++; }
+<str>\\\"  			{ *string_buf_ptr++ = '\"'; string_buf_len++; }
+<str>\\\\  			{ *string_buf_ptr++ = '\\'; string_buf_len++; }
 
 <str>\\x{hexdigit}{2}   	{
         						int result;
 
         						sscanf( yytext + 2, "%x", &result );
-
-								if (result == 0)
-								{
-									yyerror("illegal escape sequence");
-									yynerrs++;
-								}
                 					
         						*string_buf_ptr++ = result;
+								string_buf_len++;
         					}
 
 <str>[^\\\n\"]+      {
 						char *yptr = yytext;
 
 						while ( *yptr )
+						{
         					*string_buf_ptr++ = *yptr++;
+							string_buf_len++;
+						}
 					 }
 
 <str>\n  		    {
@@ -175,10 +186,68 @@ $({letter}|{digit})* {
 						yynerrs++;
 					}
 					
+"/"     			{
+ 						string_buf_ptr = string_buf; 
+						string_buf_len = 0;
+						BEGIN(regexp);
+						
+					}
+					
+<regexp>"/"         { 	
+						if (string_buf_len == 0)
+						{
+							yyerror("empty regular expression");
+							yynerrs++;
+						}
+
+
+						*string_buf_ptr = '\0';
+
+						BEGIN(INITIAL);
+
+						SIZED_STRING* s = (SIZED_STRING*) malloc(string_buf_len + sizeof(SIZED_STRING));
+
+						s->length = string_buf_len;
+
+						memcpy(s->c_string, string_buf, string_buf_len);
+
+						yylval.sized_string = s;
+
+						return _REGEXP_;
+			  		}
+
+
+<regexp>"\\/"  		{ *string_buf_ptr++ = '/'; string_buf_len++; }
+
+<regexp>[^/\n]+     {
+						char *yptr = yytext;
+
+						while ( *yptr )
+						{
+        					*string_buf_ptr++ = *yptr++;
+							string_buf_len++;
+						}
+					 }
+
+<regexp>\n  		    {
+						yyerror("unterminated regular expression");
+						yyterminate();
+						yynerrs++;
+					}
+					
 					
 					
 \{({hexdigit}|[ \?\[\]-])+\}		{ 
-										yylval.pchar = (char*) strdup(yytext);
+										int len = strlen(yytext);
+										
+										SIZED_STRING* s = (SIZED_STRING*) malloc(len + sizeof(SIZED_STRING));
+
+										s->length = len;
+
+										strcpy(s->c_string, yytext);
+
+										yylval.sized_string = s;
+
 										return _HEXSTRING_;
 									}
 					
