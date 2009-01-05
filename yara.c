@@ -23,6 +23,8 @@ GNU General Public License for more details.
 #include "getopt.h"
 #endif
 
+#include <time.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <yara.h>
@@ -45,7 +47,7 @@ TAG* specified_tag_list = NULL;
 
 void show_help()
 {
-    printf("usage:  yara [ -t tag ] [ -g ] [ -s ] [ -r ] [ -n ] [ -v ] [RULEFILE...] FILE\n");
+    printf("usage:  yara [ -t tag ] [ -n ] [ -g ] [ -s ] [ -r ] [ -v ] [RULEFILE...] FILE\n");
     printf("options:\n");
 	printf("  -t <tag>          print rules tagged as <tag> and ignore the rest. This option can be used more than once.\n");
 	printf("  -n                print rules that doesn't apply (negate).\n");
@@ -190,9 +192,9 @@ void print_string(unsigned char* buffer, unsigned int buffer_size, unsigned int 
 void print_hex_string(unsigned char* buffer, unsigned int buffer_size, unsigned int offset, unsigned int length)
 {
 	int i;
-	char* str;
+	unsigned char* str;
 	
-    str = (char*) (buffer + offset);
+    str = (unsigned char*) (buffer + offset);
 	
     for (i = 0; i < length; i++)
     {
@@ -280,7 +282,7 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
 			{
                 string_found = string->flags & STRING_FLAGS_FOUND;
 			    
-				if ( (!string_found))
+				if (string_found)
 				{
 					match = string->matches;
 
@@ -459,7 +461,9 @@ int main(int argc, char const* argv[])
 	}
 	else		
 	{
+          printf("%d\n", time(NULL));
 		scan_file(argv[argc - 1], rules, callback, (void*) argv[argc - 1]);
+        printf("%d\n", time(NULL));
 	}
 	
 	free_hash_table(rules);	

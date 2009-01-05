@@ -363,7 +363,7 @@ int new_hex_string(SIZED_STRING* charstr, unsigned char** hexstr, unsigned char*
     
     /* wildcards or skip instructions are not allowed at the first position the string */
     
-    if ((*maskstr)[0] != 0xFF || (*maskstr)[1] != 0xFF) 
+    if ((*maskstr)[0] != 0xFF) 
     {
         result = ERROR_MISPLACED_WILDCARD_OR_SKIP;
     }
@@ -385,7 +385,7 @@ int new_hex_string(SIZED_STRING* charstr, unsigned char** hexstr, unsigned char*
 }
 
 
-int new_text_string(SIZED_STRING* charstr, int flags, unsigned char** hexstr, pcre** regexp, unsigned int* length)
+int new_text_string(SIZED_STRING* charstr, int flags, unsigned char** hexstr, REGEXP* re, unsigned int* length)
 {
     const char *error;
     int erroffset;
@@ -414,10 +414,11 @@ int new_text_string(SIZED_STRING* charstr, int flags, unsigned char** hexstr, pc
              options |= PCRE_CASELESS;
          }
      
-         *regexp = pcre_compile((char*) *hexstr, options, &error, &erroffset, NULL); 
+         re->regexp = pcre_compile((char*) *hexstr, options, &error, &erroffset, NULL); 
 
-         if (*regexp != NULL)  
+         if (re->regexp != NULL)  
          {
+             re->extra = pcre_study(re->regexp, 0, &error);
              result = ERROR_SUCCESS;
          }
          else /* compilation failed */
@@ -428,7 +429,7 @@ int new_text_string(SIZED_STRING* charstr, int flags, unsigned char** hexstr, pc
      }
      else
      {
-         *regexp = NULL;
+         re->regexp = NULL;
      }
 
     
@@ -455,7 +456,7 @@ int new_string(char* identifier, SIZED_STRING* charstr, int flags, STRING** stri
         }
         else
         {
-            result = new_text_string(charstr, flags, &new_string->string, &new_string->regexp, &new_string->length);
+            result = new_text_string(charstr, flags, &new_string->string, &new_string->re, &new_string->length);
         }
         
         if (result != ERROR_SUCCESS)
@@ -678,7 +679,8 @@ void free_rule_list(RULE_LIST* rule_list)
             }
             else if (IS_REGEXP(string))
             {
-                pcre_free(string->regexp);
+                pcre_free(string->re.regexp);
+                pcre_free(string->re.extra);
             }
             
             match = string->matches;

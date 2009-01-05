@@ -989,6 +989,8 @@ YY_RULE_SETUP
 #line 132 "lex.l"
 { 	/* saw closing quote - all done */
 
+						SIZED_STRING* s;
+
 						if (string_buf_len == 0)
 						{
 							yyerror("empty string");
@@ -999,7 +1001,7 @@ YY_RULE_SETUP
 
 						BEGIN(INITIAL);
 						
-						SIZED_STRING* s = (SIZED_STRING*) malloc(string_buf_len + sizeof(SIZED_STRING));
+						s = (SIZED_STRING*) malloc(string_buf_len + sizeof(SIZED_STRING));
 						
 						s->length = string_buf_len;
 						
@@ -1012,22 +1014,22 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 155 "lex.l"
+#line 157 "lex.l"
 { *string_buf_ptr++ = '\t'; string_buf_len++; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 156 "lex.l"
+#line 158 "lex.l"
 { *string_buf_ptr++ = '\"'; string_buf_len++; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 157 "lex.l"
+#line 159 "lex.l"
 { *string_buf_ptr++ = '\\'; string_buf_len++; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 159 "lex.l"
+#line 161 "lex.l"
 {
         						int result;
 
@@ -1039,7 +1041,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 168 "lex.l"
+#line 170 "lex.l"
 {
 						char *yptr = yytext;
 
@@ -1052,7 +1054,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 178 "lex.l"
+#line 180 "lex.l"
 {
 						yyerror("unterminated string");
 						yyterminate();
@@ -1061,7 +1063,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 184 "lex.l"
+#line 186 "lex.l"
 {
 						yyerror("illegal escape sequence");
 						yynerrs++;
@@ -1069,7 +1071,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 189 "lex.l"
+#line 191 "lex.l"
 {
  						string_buf_ptr = string_buf; 
 						string_buf_len = 0;
@@ -1079,8 +1081,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 196 "lex.l"
+#line 198 "lex.l"
 { 	
+						SIZED_STRING* s;
+
 						if (string_buf_len == 0)
 						{
 							yyerror("empty regular expression");
@@ -1092,7 +1096,7 @@ YY_RULE_SETUP
 
 						BEGIN(INITIAL);
 
-						SIZED_STRING* s = (SIZED_STRING*) malloc(string_buf_len + sizeof(SIZED_STRING));
+						s = (SIZED_STRING*) malloc(string_buf_len + sizeof(SIZED_STRING));
 
 						s->length = string_buf_len;
 
@@ -1105,12 +1109,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 220 "lex.l"
+#line 224 "lex.l"
 { *string_buf_ptr++ = '/'; string_buf_len++; }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 222 "lex.l"
+#line 226 "lex.l"
 {
 						char *yptr = yytext;
 
@@ -1123,7 +1127,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 232 "lex.l"
+#line 236 "lex.l"
 {
 						yyerror("unterminated regular expression");
 						yyterminate();
@@ -1132,7 +1136,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 240 "lex.l"
+#line 244 "lex.l"
 { 
 										int len = strlen(yytext);
 										
@@ -1149,12 +1153,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 255 "lex.l"
+#line 259 "lex.l"
 /* skip whitespace */
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 257 "lex.l"
+#line 261 "lex.l"
 {
 						line_number++;
 						
@@ -1162,17 +1166,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 262 "lex.l"
+#line 266 "lex.l"
 { 
                        	return yytext[0];    
 					}
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 265 "lex.l"
+#line 269 "lex.l"
 ECHO;
 	YY_BREAK
-#line 1176 "lex.c"
+#line 1180 "lex.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(str):
 case YY_STATE_EOF(regexp):
@@ -2060,7 +2064,7 @@ int main()
 	return 0;
 	}
 #endif
-#line 265 "lex.l"
+#line 269 "lex.l"
 
 
 

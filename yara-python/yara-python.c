@@ -302,6 +302,9 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
     PyObject* stringlist = NULL;
     PyObject* match;
     PyObject* list = (PyObject*) data;
+    
+    if (!(rule->flags & RULE_FLAGS_MATCH))
+        return 0;
        
     taglist = PyList_New(0);
     stringlist = PyDict_New();

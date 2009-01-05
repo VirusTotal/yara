@@ -14,17 +14,17 @@ yara-python depends on libyara, a library that implements YARA's core functions.
 must build and install YARA in your system before building yara-python. The latest
 YARA version can be downloaded from:
 
-http://yara.googlecode.com/files/yara-1.0.tar.gz
+http://yara.googlecode.com/files/yara-1.1.tar.gz
 
 
 After installing YARA you can build yara-python this way:
 
-$ tar xzvf yara-python-1.0.0.tar.gz
-$ cd yara-python-1.0.0
+$ tar xzvf yara-python-1.1.0.tar.gz
+$ cd yara-python-1.1.0
 $ python setup.py build
 $ sudo python setup.py install
 
-You can also test your installation by invoking Python and importing the YARA module:
+You can test your installation by invoking Python and importing the YARA module:
 
 $ python
 Python 2.5.1 (r251:54863, Jan 17 2008, 19:35:17) 

@@ -86,6 +86,13 @@ typedef struct _MATCH
 } MATCH;
 
 
+typedef struct _REGEXP
+{
+    pcre* regexp;
+    pcre_extra* extra;
+    
+} REGEXP;
+
 typedef struct _STRING
 {
     int             flags;
@@ -95,7 +102,7 @@ typedef struct _STRING
     
     union {
         unsigned char*  mask;
-        pcre*           regexp;
+        REGEXP re;
     };  
     
     MATCH*         	matches;        

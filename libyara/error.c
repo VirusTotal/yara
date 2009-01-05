@@ -75,7 +75,7 @@ void show_last_error()
 			yyerror(errmsg);			
 			break;
 		case ERROR_MISPLACED_WILDCARD_OR_SKIP:
-			sprintf(errmsg, "misplaced wildcard or skip at string \"%s\", wildcards and skips are only allowed after the first two bytes of the string", last_error_extra_info);
+			sprintf(errmsg, "misplaced wildcard or skip at string \"%s\", wildcards and skips are only allowed after the first byte of the string", last_error_extra_info);
 			yyerror(errmsg);
 			break;
 		case ERROR_UNDEFINED_STRING:

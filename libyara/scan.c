@@ -128,16 +128,17 @@ int hex_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pa
 			b += distance;
 			matches += distance;
 			
-			if (b < buffer_size)
-			{		
-				for (i = 0; i <= delta; i++)
-				{
-					tmp = hex_match(buffer + b + i, buffer_size - b - i,  pattern + p, pattern_length - p, mask + m);
-					
-				    if (tmp > 0) 
-						return b + i + tmp;
-				}
-			}
+            i = 0;
+            
+            while (i <= delta && b + i < buffer_size)
+            {
+       			tmp = hex_match(buffer + b + i, buffer_size - b - i,  pattern + p, pattern_length - p, mask + m);
+				
+			    if (tmp > 0) 
+					return b + i + tmp;
+				
+                i++;      
+            }
 			
 			break;	
 		}
@@ -163,7 +164,7 @@ int hex_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pa
 	return matches;
 }
 
-int regexp_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pattern, int pattern_length, pcre* regexp, int negative_size)
+int regexp_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pattern, int pattern_length, REGEXP re, int negative_size)
 {
 	int ovector[3];
 	unsigned int len;
@@ -184,8 +185,8 @@ int regexp_match(unsigned char* buffer, unsigned int buffer_size, unsigned char*
 	}
 
 	rc = pcre_exec(
-	  				regexp,               /* the compiled pattern */
-	  				NULL,                 /* no extra data - we didn't study the pattern */
+	  				re.regexp,            /* the compiled pattern */
+	  				re.extra,             /* extra data */
 	  				(char*) buffer,  	  /* the subject string */
 	  				buffer_size,          /* the length of the subject */
 	  				0,                    /* start at offset 0 in the subject */
@@ -262,7 +263,8 @@ int init_hash_table(RULE_LIST* rule_list)
 				y = string->string[1];
 				
 				hashable = TRUE;
-			}
+				
+			} /* if (string->flags & STRING_FLAGS_REGEXP) */
 			
 			if (string->flags & STRING_FLAGS_HEXADECIMAL)
 			{
@@ -418,7 +420,7 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 					i++;
 				}
 								
-				match = regexp_match(tmp, len, string->string, string->length, string->regexp, (negative_size > 2) ? 1 : 0);
+				match = regexp_match(tmp, len, string->string, string->length, string->re, (negative_size > 2) ? 1 : 0);
 			
 				free(tmp);			
 				return match * 2;
@@ -427,7 +429,7 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 		}
 		else
 		{
-			return regexp_match(buffer, buffer_size, string->string, string->length, string->regexp, negative_size);
+			return regexp_match(buffer, buffer_size, string->string, string->length, string->re, negative_size);
 		}
 	}
 	else if (IS_WIDE(string) && string->length * 2 <= buffer_size)

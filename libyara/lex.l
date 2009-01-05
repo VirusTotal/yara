@@ -131,6 +131,8 @@ $({letter}|{digit})* {
 
 <str>\"        		{ 	/* saw closing quote - all done */
 
+						SIZED_STRING* s;
+
 						if (string_buf_len == 0)
 						{
 							yyerror("empty string");
@@ -141,7 +143,7 @@ $({letter}|{digit})* {
 
 						BEGIN(INITIAL);
 						
-						SIZED_STRING* s = (SIZED_STRING*) malloc(string_buf_len + sizeof(SIZED_STRING));
+						s = (SIZED_STRING*) malloc(string_buf_len + sizeof(SIZED_STRING));
 						
 						s->length = string_buf_len;
 						
@@ -194,6 +196,8 @@ $({letter}|{digit})* {
 					}
 					
 <regexp>"/"         { 	
+						SIZED_STRING* s;
+
 						if (string_buf_len == 0)
 						{
 							yyerror("empty regular expression");
@@ -205,7 +209,7 @@ $({letter}|{digit})* {
 
 						BEGIN(INITIAL);
 
-						SIZED_STRING* s = (SIZED_STRING*) malloc(string_buf_len + sizeof(SIZED_STRING));
+						s = (SIZED_STRING*) malloc(string_buf_len + sizeof(SIZED_STRING));
 
 						s->length = string_buf_len;
 
