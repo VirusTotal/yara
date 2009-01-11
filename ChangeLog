@@ -7,4 +7,8 @@ version 1.1
 	* added syntactic construct "x of them" 	
 	* regular expressions syntax changed
 	* now regular expressions can begin with any character
+
+version 1.1.1
+	* BUGFIX: Wrong behavior of escaped characters in regular expressions
+	* BUGFIX: Fatal error in yara-python when invoking matchfile with invalid path twice
 	

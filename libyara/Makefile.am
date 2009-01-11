@@ -22,6 +22,7 @@ libyara_la_SOURCES = \
   filemap.h \
   pe.h \
   xtoi.h \
-  pefile.h
+  pefile.h \
+  sizedstr.h
 
 libyara_la_LIBDADD = /usr/local/lib/libpcre.la

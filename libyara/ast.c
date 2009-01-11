@@ -413,6 +413,9 @@ int new_text_string(SIZED_STRING* charstr, int flags, unsigned char** hexstr, RE
          {
              options |= PCRE_CASELESS;
          }
+         
+         
+         printf("regexp: %s\n", *hexstr);
      
          re->regexp = pcre_compile((char*) *hexstr, options, &error, &erroffset, NULL); 
 

@@ -23,8 +23,6 @@ GNU General Public License for more details.
 #include "getopt.h"
 #endif
 
-#include <time.h>
-
 #include <stdio.h>
 #include <string.h>
 #include <yara.h>
@@ -461,9 +459,7 @@ int main(int argc, char const* argv[])
 	}
 	else		
 	{
-          printf("%d\n", time(NULL));
 		scan_file(argv[argc - 1], rules, callback, (void*) argv[argc - 1]);
-        printf("%d\n", time(NULL));
 	}
 	
 	free_hash_table(rules);	

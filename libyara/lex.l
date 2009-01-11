@@ -122,13 +122,6 @@ $({letter}|{digit})* {
 						return _NUMBER_;
 					}
 	
-	
-\"     				{
- 						string_buf_ptr = string_buf; 
-						string_buf_len = 0;
-						BEGIN(str);
-					}
-
 <str>\"        		{ 	/* saw closing quote - all done */
 
 						SIZED_STRING* s;
@@ -187,13 +180,7 @@ $({letter}|{digit})* {
 						yyerror("illegal escape sequence");
 						yynerrs++;
 					}
-					
-"/"     			{
- 						string_buf_ptr = string_buf; 
-						string_buf_len = 0;
-						BEGIN(regexp);
-						
-					}
+
 					
 <regexp>"/"         { 	
 						SIZED_STRING* s;
@@ -203,7 +190,6 @@ $({letter}|{digit})* {
 							yyerror("empty regular expression");
 							yynerrs++;
 						}
-
 
 						*string_buf_ptr = '\0';
 
@@ -219,11 +205,19 @@ $({letter}|{digit})* {
 
 						return _REGEXP_;
 			  		}
+			
+<regexp>\\\/		{ 				
+						*string_buf_ptr++ = '/';
+						string_buf_len++ ;
+					}
 
+<regexp>\\.			{ 				
+						*string_buf_ptr++ = yytext[0];
+						*string_buf_ptr++ = yytext[1];
+						string_buf_len += 2;
+					}
 
-<regexp>"\\/"  		{ *string_buf_ptr++ = '/'; string_buf_len++; }
-
-<regexp>[^/\n]+     {
+<regexp>[^/\n\\]+    {
 						char *yptr = yytext;
 
 						while ( *yptr )
@@ -233,12 +227,23 @@ $({letter}|{digit})* {
 						}
 					 }
 
-<regexp>\n  		    {
+<regexp>\n  		{
 						yyerror("unterminated regular expression");
 						yyterminate();
 						yynerrs++;
 					}
 					
+\"     				{
+ 						string_buf_ptr = string_buf; 
+						string_buf_len = 0;
+						BEGIN(str);
+					}
+			
+"/"     			{
+ 						string_buf_ptr = string_buf; 
+						string_buf_len = 0;
+						BEGIN(regexp);
+					}
 					
 					
 \{({hexdigit}|[ \?\[\]-])+\}		{ 

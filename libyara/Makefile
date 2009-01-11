@@ -145,15 +145,15 @@ OBJEXT = o
 PACKAGE = libyara
 PACKAGE_BUGREPORT = vmalvarez@hispasec.com
 PACKAGE_NAME = libyara
-PACKAGE_STRING = libyara 1.1
+PACKAGE_STRING = libyara 1.1.1
 PACKAGE_TARNAME = libyara
-PACKAGE_VERSION = 1.1
+PACKAGE_VERSION = 1.1.1
 PATH_SEPARATOR = :
 RANLIB = ranlib
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = strip
-VERSION = 1.1
+VERSION = 1.1.1
 YACC = bison -y
 YFLAGS = -d
 abs_builddir = /Users/plusvic/Projects/yara/trunk/libyara
@@ -227,7 +227,8 @@ libyara_la_SOURCES = \
   filemap.h \
   pe.h \
   xtoi.h \
-  pefile.h
+  pefile.h \
+  sizedstr.h
 
 libyara_la_LIBDADD = /usr/local/lib/libpcre.la
 all: config.h

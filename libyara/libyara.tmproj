@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>scan.c</string>
+	<string>lex.l</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -13,9 +13,7 @@
 					<key>filename</key>
 					<string>scan.c</string>
 					<key>lastUsed</key>
-					<date>2008-12-24T17:47:25Z</date>
-					<key>selected</key>
-					<true/>
+					<date>2009-01-08T11:09:40Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -51,19 +49,21 @@
 					<key>filename</key>
 					<string>ast.c</string>
 					<key>lastUsed</key>
-					<date>2008-12-24T17:43:43Z</date>
+					<date>2009-01-08T11:55:41Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>lex.l</string>
 					<key>lastUsed</key>
-					<date>2008-12-24T17:27:40Z</date>
+					<date>2009-01-08T11:55:41Z</date>
+					<key>selected</key>
+					<true/>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>grammar.y</string>
 					<key>lastUsed</key>
-					<date>2008-12-24T17:32:47Z</date>
+					<date>2009-01-08T11:09:56Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -170,14 +170,30 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>13</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>420</integer>
+				<integer>416</integer>
 			</dict>
+			<key>columnSelection</key>
+			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>393</integer>
+			<integer>384</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>41</integer>
+				<key>line</key>
+				<integer>417</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>416</integer>
+			</dict>
 		</dict>
 		<key>ast.h</key>
 		<dict>
@@ -333,21 +349,21 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>374</integer>
+			<integer>384</integer>
 		</dict>
 		<key>lex.l</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>21</integer>
+				<integer>20</integer>
 				<key>line</key>
-				<integer>143</integer>
+				<integer>210</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>229</integer>
+			<integer>187</integer>
 		</dict>
 		<key>pefile.c</key>
 		<dict>
@@ -427,6 +443,6 @@
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{258, 144}, {1020, 800}}</string>
+	<string>{{258, 4}, {1020, 774}}</string>
 </dict>
 </plist>

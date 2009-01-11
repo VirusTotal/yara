@@ -159,7 +159,7 @@ static void Match_dealloc(PyObject *self)
      
     Py_DECREF(object->tags); 
     Py_DECREF(object->strings);
-    PyObject_FREE(self);
+    PyObject_Del(self);
 }
 
 static PyObject * Match_Repr(PyObject *self)
@@ -290,7 +290,7 @@ static void Rules_dealloc(PyObject *self)
 {      
     free_hash_table(((Rules*) self)->rules);
     free_rule_list(((Rules*) self)->rules);
-    PyObject_FREE(self);
+    PyObject_Del(self);
 }
 
 int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* data)
@@ -349,8 +349,8 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
     }
     else
     {
-        PyObject_FREE(taglist);
-        PyObject_FREE(stringlist);
+        Py_DECREF(taglist);
+        Py_DECREF(stringlist);
         return 1;
     }
     
@@ -375,7 +375,7 @@ PyObject * Rules_matchstring(PyObject *self, PyObject *args)
        
        if (result != ERROR_SUCCESS)
        {
-           PyObject_FREE(matches);
+           Py_DECREF(matches);
            return PyErr_Format(PyExc_Exception, "internal error"); 
        }
     }
@@ -398,12 +398,12 @@ PyObject * Rules_matchfile(PyObject *self, PyObject *args)
        
         if (result == ERROR_COULD_NOT_OPEN_FILE)
         {
-            PyObject_FREE(matches);
+            Py_DECREF(matches);
             return PyErr_SetFromErrno(PyExc_IOError);
         }
         else if (result != ERROR_SUCCESS)
         {
-            PyObject_FREE(matches);
+            Py_DECREF(matches);
             return PyErr_Format(PyExc_Exception, "internal error");
         }
     }
