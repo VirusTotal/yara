@@ -37,7 +37,7 @@ GNU General Public License for more details.
 /* Function implementations */
 
 
-int compare(char* str1, char* str2, int len)
+inline int compare(char* str1, char* str2, int len)
 {
 	char* s1 = str1;
 	char* s2 = str2;
@@ -51,7 +51,7 @@ int compare(char* str1, char* str2, int len)
 	return ((i==len) ? i : 0);
 }
 
-int icompare(char* str1, char* str2, int len)
+inline int icompare(char* str1, char* str2, int len)
 {
 	char* s1 = str1;
 	char* s2 = str2;
@@ -63,7 +63,7 @@ int icompare(char* str1, char* str2, int len)
 }
 
 
-int wcompare(char* str1, char* str2, int len)
+inline int wcompare(char* str1, char* str2, int len)
 {
 	char* s1 = str1;
 	char* s2 = str2;
@@ -79,7 +79,7 @@ int wcompare(char* str1, char* str2, int len)
 	return ((i==len) ? i * 2 : 0);
 }
 
-int wicompare(char* str1, char* str2, int len)
+inline int wicompare(char* str1, char* str2, int len)
 {
 	char* s1 = str1;
 	char* s2 = str2;
@@ -129,6 +129,8 @@ int hex_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pa
 			matches += distance;
 			
             i = 0;
+            
+            //TODO: improve performance of range skips
             
             while (i <= delta && b + i < buffer_size)
             {
@@ -569,7 +571,7 @@ int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
 }
 
 
-int find_matches(	unsigned char first_char, 
+inline int find_matches(	unsigned char first_char, 
 					unsigned char second_char, 
 					unsigned char* buffer, 
 					unsigned int buffer_size, 

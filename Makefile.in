@@ -69,12 +69,11 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	ps-recursive uninstall-recursive
 man1dir = $(mandir)/man1
 NROFF = nroff
-MANS = $(man_MANS)
+MANS = $(man1_MANS)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -171,12 +170,14 @@ top_srcdir = @top_srcdir@
 
 # Build the library in the hand subdirectory first.
 SUBDIRS = libyara
+DIST_SUBDIRS = libyara
 AM_CPPFLAGS = -I$(srcdir)/libyara
 yara_SOURCES = yara.c
 yara_LDADD = libyara/.libs/libyara.a
 
 # man page
-man_MANS = doc/yara.1
+man1_MANS = yara.man
+EXTRA_DIST = $(man1_MANS)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
