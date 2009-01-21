@@ -175,7 +175,7 @@
 #endif
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 77 "grammar.y"
+#line 78 "grammar.y"
 typedef union YYSTYPE {
     
     void*           sized_string;
@@ -196,7 +196,7 @@ typedef union YYSTYPE {
 
 
 /* Copy the second part of user declarations.  */
-#line 91 "grammar.y"
+#line 92 "grammar.y"
  
     
 /* Global variables */
@@ -330,7 +330,7 @@ union yyalloc
 /* YYFINAL -- State number of the termination state. */
 #define YYFINAL  2
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   164
+#define YYLAST   166
 
 /* YYNTOKENS -- Number of terminals. */
 #define YYNTOKENS  60
@@ -428,13 +428,13 @@ static const yysigned_char yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const unsigned short int yyrline[] =
 {
-       0,   123,   123,   124,   133,   136,   137,   140,   141,   144,
-     145,   148,   149,   152,   162,   174,   184,   196,   207,   218,
-     231,   232,   235,   236,   237,   238,   241,   242,   243,   254,
-     265,   275,   279,   290,   301,   302,   303,   304,   305,   306,
-     307,   308,   309,   310,   311,   312,   313,   314,   315,   318,
-     321,   325,   331,   332,   333,   344,   345,   346,   347,   348,
-     349,   352,   355,   356,   357
+       0,   124,   124,   125,   134,   137,   138,   141,   142,   145,
+     146,   149,   150,   153,   163,   175,   185,   197,   208,   219,
+     232,   233,   236,   237,   238,   239,   242,   243,   244,   255,
+     266,   276,   280,   291,   302,   303,   304,   305,   306,   307,
+     308,   309,   310,   311,   312,   313,   314,   315,   316,   319,
+     322,   326,   332,   333,   334,   345,   346,   347,   348,   349,
+     350,   353,   356,   357,   358
 };
 #endif
 
@@ -526,29 +526,29 @@ static const yysigned_char yydefgoto[] =
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -50
+#define YYPACT_NINF -47
 static const short int yypact[] =
 {
-     -50,   115,   -50,   -49,   -50,   150,   -50,     3,   -50,   -50,
-     -50,   -31,    14,    -1,   -50,    43,   137,   -50,     9,    11,
-      67,    46,    22,    72,   -50,   -50,    49,   -50,   -50,   -50,
-     -50,    44,   -50,   -50,    46,    46,    23,    85,    57,   142,
-      38,   -50,    -6,   -23,   128,    78,     8,    65,    46,    46,
-      46,   -50,    -3,    -3,    -3,    -3,    -3,    -3,    -3,    -3,
-      -3,    -3,    -3,   -27,   -50,   -50,   -50,    46,    -3,    -3,
-      53,   -50,    42,    -3,   -50,   -50,   -50,   -50,   -50,   -50,
-      78,    78,   -50,    53,    53,    53,    53,    53,    53,    53,
-     -45,   -45,   -50,   -50,   -50,    46,   -50,   132,   132,    28,
-      53,    40,   133,    93,    56,    63,   -50,   -50,   -50,   -50,
-     -50,   -50,    90,   107,   -50,    46,   -50,    -3,    56,    89,
-     -50
+     -47,   115,   -47,   -46,   -47,   150,   -47,     3,   -47,   -47,
+     -47,   -31,    14,    -1,   -47,    43,   137,   -47,     9,    11,
+      67,    46,    22,    72,   -47,   -47,    49,   -47,   -47,   -47,
+     -47,    44,   -47,   -47,    46,    46,    23,    85,    57,   142,
+      38,   -47,    -6,   -23,   128,    78,     8,    65,    46,    46,
+      46,   -47,    -3,    -3,    -3,    -3,    -3,    -3,    -3,    -3,
+      -3,    -3,    -3,   -27,   -47,   -47,   -47,    46,    -3,    -3,
+      53,   -47,    42,    -3,   -47,   -47,   -47,   -47,   -47,   -47,
+     -36,    78,   -47,    53,    53,    53,    53,    53,    53,    53,
+      73,    73,   -47,   -47,   -47,    46,   -47,   132,   132,    28,
+      53,    40,   148,    93,    56,    88,   -47,   -47,   -47,   -47,
+     -47,   -47,   107,   109,   -47,    46,   -47,    -3,    56,    89,
+     -47
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const short int yypgoto[] =
 {
-     -50,   -50,   -50,   -50,   -50,   -50,   -50,   -50,   140,    98,
-     -50,   -24,   -50,   -50,   -20,   -21,   -50
+     -47,   -47,   -47,   -47,   -47,   -47,   -47,   -47,   143,    99,
+     -47,   -24,   -47,   -47,   -20,   -21,   -47
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
@@ -558,7 +558,7 @@ static const short int yypgoto[] =
 #define YYTABLE_NINF -8
 static const yysigned_char yytable[] =
 {
-      38,     6,    94,    61,    62,    27,    28,    72,    27,    28,
+      38,    49,    94,    50,     6,    27,    28,    72,    27,    28,
       45,    46,    11,    38,    38,    47,    29,    30,    68,    29,
       30,    12,    70,    14,    80,    81,    82,    38,    38,    38,
       95,    73,    83,    84,    85,    86,    87,    88,    89,    90,
@@ -570,16 +570,16 @@ static const yysigned_char yytable[] =
       67,   118,    48,    49,    38,    50,   102,   119,    79,    59,
       60,    61,    62,    35,    52,    53,    54,    55,    56,    57,
       58,    59,    60,    61,    62,     2,     3,    50,    -7,    -7,
-      -7,   114,   115,    79,    52,    53,    54,    55,    56,    57,
+      -7,    61,    62,    79,    52,    53,    54,    55,    56,    57,
       58,    59,    60,    61,    62,    59,    60,    61,    62,    59,
-      60,    61,    62,    18,    19,   120,   116,   112,   113,   106,
+      60,    61,    62,    18,    19,   120,   114,   115,   113,   106,
      107,   108,   109,     7,     8,     9,    64,    65,    66,    74,
-      75,    76,   117,    41,    98
+      75,    76,   112,   116,   117,    98,    41
 };
 
 static const unsigned char yycheck[] =
 {
-      21,    50,    29,    48,    49,    11,    12,    30,    11,    12,
+      21,    37,    29,    39,    50,    11,    12,    30,    11,    12,
       34,    35,     9,    34,    35,    35,    22,    23,    24,    22,
       23,    52,    42,     9,    48,    49,    50,    48,    49,    50,
       57,    54,    52,    53,    54,    55,    56,    57,    58,    59,
@@ -591,11 +591,11 @@ static const unsigned char yycheck[] =
       52,   115,    36,    37,   115,    39,    54,   117,    58,    46,
       47,    48,    49,    57,    39,    40,    41,    42,    43,    44,
       45,    46,    47,    48,    49,     0,     1,    39,     3,     4,
-       5,    58,    59,    58,    39,    40,    41,    42,    43,    44,
+       5,    48,    49,    58,    39,    40,    41,    42,    43,    44,
       45,    46,    47,    48,    49,    46,    47,    48,    49,    46,
-      47,    48,    49,     6,     7,    56,    56,    14,    55,    17,
+      47,    48,    49,     6,     7,    56,    58,    59,    55,    17,
       18,    19,    20,     3,     4,     5,    14,    15,    16,    31,
-      32,    33,    55,    23,    66
+      32,    33,    14,    56,    55,    66,    23
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -952,22 +952,22 @@ yydestruct (yymsg, yytype, yyvaluep)
   switch (yytype)
     {
       case 9: /* _IDENTIFIER_ */
-#line 88 "grammar.y"
+#line 89 "grammar.y"
         { free ((yyvaluep->c_string)); };
 #line 958 "grammar.c"
         break;
       case 14: /* _TEXTSTRING_ */
-#line 88 "grammar.y"
+#line 89 "grammar.y"
         { free ((yyvaluep->sized_string)); };
 #line 963 "grammar.c"
         break;
       case 15: /* _HEXSTRING_ */
-#line 88 "grammar.y"
+#line 89 "grammar.y"
         { free ((yyvaluep->sized_string)); };
 #line 968 "grammar.c"
         break;
       case 16: /* _REGEXP_ */
-#line 88 "grammar.y"
+#line 89 "grammar.y"
         { free ((yyvaluep->sized_string)); };
 #line 973 "grammar.c"
         break;
@@ -1275,7 +1275,7 @@ yyreduce:
   switch (yyn)
     {
         case 3:
-#line 125 "grammar.y"
+#line 126 "grammar.y"
     {
             if (last_error != ERROR_SUCCESS)
             {
@@ -1287,47 +1287,47 @@ yyreduce:
     break;
 
   case 5:
-#line 136 "grammar.y"
+#line 137 "grammar.y"
     { reduce_rule_declaration((yyvsp[-6].c_string),(yyvsp[-8].integer),(yyvsp[-5].tag),0,(yyvsp[-1].term));    }
     break;
 
   case 6:
-#line 137 "grammar.y"
+#line 138 "grammar.y"
     { reduce_rule_declaration((yyvsp[-9].c_string),(yyvsp[-11].integer),(yyvsp[-8].tag),(yyvsp[-4].string),(yyvsp[-1].term));  }
     break;
 
   case 7:
-#line 140 "grammar.y"
+#line 141 "grammar.y"
     { (yyval.integer) = 0;  }
     break;
 
   case 8:
-#line 141 "grammar.y"
+#line 142 "grammar.y"
     { (yyval.integer) = (yyvsp[-1].integer) | (yyvsp[0].integer); }
     break;
 
   case 9:
-#line 144 "grammar.y"
+#line 145 "grammar.y"
     { (yyval.integer) = RULE_FLAGS_PRIVATE; }
     break;
 
   case 10:
-#line 145 "grammar.y"
+#line 146 "grammar.y"
     { (yyval.integer) = RULE_FLAGS_GLOBAL; }
     break;
 
   case 11:
-#line 148 "grammar.y"
+#line 149 "grammar.y"
     { (yyval.tag) = NULL; }
     break;
 
   case 12:
-#line 149 "grammar.y"
+#line 150 "grammar.y"
     { (yyval.tag) = (yyvsp[0].tag);   }
     break;
 
   case 13:
-#line 152 "grammar.y"
+#line 153 "grammar.y"
     { 
                                                 (yyval.tag) = reduce_tags(NULL,(yyvsp[0].c_string)); 
                                                 
@@ -1341,7 +1341,7 @@ yyreduce:
     break;
 
   case 14:
-#line 162 "grammar.y"
+#line 163 "grammar.y"
     {   
                                                 (yyval.tag) = reduce_tags((yyvsp[-1].tag),(yyvsp[0].c_string)); 
                                                 
@@ -1355,7 +1355,7 @@ yyreduce:
     break;
 
   case 15:
-#line 174 "grammar.y"
+#line 175 "grammar.y"
     { 
                                                 (yyval.string) = reduce_strings(NULL,(yyvsp[0].string)); 
                                                 
@@ -1369,7 +1369,7 @@ yyreduce:
     break;
 
   case 16:
-#line 184 "grammar.y"
+#line 185 "grammar.y"
     { 
                                                 (yyval.string) = reduce_strings((yyvsp[-1].string),(yyvsp[0].string));
                                                 
@@ -1383,7 +1383,7 @@ yyreduce:
     break;
 
   case 17:
-#line 197 "grammar.y"
+#line 198 "grammar.y"
     { 
                             (yyval.string) = reduce_string_declaration((yyvsp[-3].term), (yyvsp[-1].sized_string), (yyvsp[0].integer)); 
                 
@@ -1397,7 +1397,7 @@ yyreduce:
     break;
 
   case 18:
-#line 208 "grammar.y"
+#line 209 "grammar.y"
     { 
                            (yyval.string) = reduce_string_declaration((yyvsp[-3].term), (yyvsp[-1].sized_string), (yyvsp[0].integer) | STRING_FLAGS_REGEXP); 
 
@@ -1411,7 +1411,7 @@ yyreduce:
     break;
 
   case 19:
-#line 219 "grammar.y"
+#line 220 "grammar.y"
     {
                             (yyval.string) = reduce_string_declaration((yyvsp[-2].term), (yyvsp[0].sized_string), STRING_FLAGS_HEXADECIMAL);
             
@@ -1425,47 +1425,47 @@ yyreduce:
     break;
 
   case 20:
-#line 231 "grammar.y"
+#line 232 "grammar.y"
     { (yyval.integer) = 0;  }
     break;
 
   case 21:
-#line 232 "grammar.y"
+#line 233 "grammar.y"
     { (yyval.integer) = (yyvsp[-1].integer) | (yyvsp[0].integer); }
     break;
 
   case 22:
-#line 235 "grammar.y"
+#line 236 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_WIDE; }
     break;
 
   case 23:
-#line 236 "grammar.y"
+#line 237 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_ASCII; }
     break;
 
   case 24:
-#line 237 "grammar.y"
+#line 238 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_NO_CASE; }
     break;
 
   case 25:
-#line 238 "grammar.y"
+#line 239 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_FULL_WORD; }
     break;
 
   case 26:
-#line 241 "grammar.y"
+#line 242 "grammar.y"
     { (yyval.term) = reduce_constant(1); }
     break;
 
   case 27:
-#line 242 "grammar.y"
+#line 243 "grammar.y"
     { (yyval.term) = reduce_constant(0); }
     break;
 
   case 28:
-#line 244 "grammar.y"
+#line 245 "grammar.y"
     { 
                         (yyval.term) = reduce_rule((yyvsp[0].c_string));
                         
@@ -1479,7 +1479,7 @@ yyreduce:
     break;
 
   case 29:
-#line 255 "grammar.y"
+#line 256 "grammar.y"
     {  
                         (yyval.term) = reduce_string((yyvsp[0].term));
                         
@@ -1493,7 +1493,7 @@ yyreduce:
     break;
 
   case 30:
-#line 266 "grammar.y"
+#line 267 "grammar.y"
     {          
                         (yyval.term) = reduce_string_at((yyvsp[-2].term), (yyvsp[0].term));
                         
@@ -1506,14 +1506,14 @@ yyreduce:
     break;
 
   case 31:
-#line 276 "grammar.y"
+#line 277 "grammar.y"
     { 
                         (yyval.term) = NULL; 
                      }
     break;
 
   case 32:
-#line 280 "grammar.y"
+#line 281 "grammar.y"
     {          
                         (yyval.term) = reduce_string_in_range((yyvsp[-7].term), (yyvsp[-4].term), (yyvsp[-1].term));
                         
@@ -1527,7 +1527,7 @@ yyreduce:
     break;
 
   case 33:
-#line 291 "grammar.y"
+#line 292 "grammar.y"
     {          
                         (yyval.term) = reduce_string_in_section_by_name((yyvsp[-5].term), (yyvsp[-1].sized_string));
 
@@ -1541,111 +1541,111 @@ yyreduce:
     break;
 
   case 34:
-#line 301 "grammar.y"
+#line 302 "grammar.y"
     { (yyval.term) = NULL; }
     break;
 
   case 35:
-#line 302 "grammar.y"
+#line 303 "grammar.y"
     { (yyval.term) = (yyvsp[-1].term); }
     break;
 
   case 36:
-#line 303 "grammar.y"
+#line 304 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_NOT, (yyvsp[0].term), NULL); }
     break;
 
   case 37:
-#line 304 "grammar.y"
+#line 305 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_AND, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
   case 38:
-#line 305 "grammar.y"
+#line 306 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_OR, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
   case 39:
-#line 306 "grammar.y"
+#line 307 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_EQ, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
   case 40:
-#line 307 "grammar.y"
+#line 308 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_LT, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
   case 41:
-#line 308 "grammar.y"
+#line 309 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_GT, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
   case 42:
-#line 309 "grammar.y"
+#line 310 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_LE, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
   case 43:
-#line 310 "grammar.y"
+#line 311 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_GE, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
   case 44:
-#line 311 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_EQ, (yyvsp[-2].term), (yyvsp[0].term)); }
-    break;
-
-  case 45:
 #line 312 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_EQ, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
-  case 46:
+  case 45:
 #line 313 "grammar.y"
+    { (yyval.term) = reduce_term(TERM_TYPE_EQ, (yyvsp[-2].term), (yyvsp[0].term)); }
+    break;
+
+  case 46:
+#line 314 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_NOT_EQ, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
   case 47:
-#line 314 "grammar.y"
+#line 315 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_OF, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
   case 48:
-#line 315 "grammar.y"
+#line 316 "grammar.y"
     { (yyval.term) = reduce_n_of_them((yyvsp[-2].term)); }
     break;
 
   case 49:
-#line 318 "grammar.y"
+#line 319 "grammar.y"
     { (yyval.term) = (yyvsp[-1].term); }
     break;
 
   case 50:
-#line 322 "grammar.y"
+#line 323 "grammar.y"
     {
                          (yyval.term) = reduce_boolean_expression_list(NULL,(yyvsp[0].term));
                       }
     break;
 
   case 51:
-#line 326 "grammar.y"
+#line 327 "grammar.y"
     {
                          (yyval.term) = reduce_boolean_expression_list((yyvsp[-2].term),(yyvsp[0].term));
                       }
     break;
 
   case 52:
-#line 331 "grammar.y"
+#line 332 "grammar.y"
     { (yyval.term) = reduce_filesize(); }
     break;
 
   case 53:
-#line 332 "grammar.y"
+#line 333 "grammar.y"
     { (yyval.term) = reduce_entrypoint(); }
     break;
 
   case 54:
-#line 334 "grammar.y"
+#line 335 "grammar.y"
     { 
                     (yyval.term) = reduce_string_count((yyvsp[0].term)); 
                     
@@ -1659,32 +1659,32 @@ yyreduce:
     break;
 
   case 55:
-#line 344 "grammar.y"
+#line 345 "grammar.y"
     { (yyval.term) = (yyvsp[-1].term); }
     break;
 
   case 56:
-#line 345 "grammar.y"
+#line 346 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_ADD, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
   case 57:
-#line 346 "grammar.y"
+#line 347 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_SUB, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
   case 58:
-#line 347 "grammar.y"
+#line 348 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_MUL, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
   case 59:
-#line 348 "grammar.y"
+#line 349 "grammar.y"
     { (yyval.term) = reduce_term(TERM_TYPE_DIV, (yyvsp[-2].term), (yyvsp[0].term)); }
     break;
 
   case 61:
-#line 352 "grammar.y"
+#line 353 "grammar.y"
     { (yyval.term) = reduce_constant((yyvsp[0].integer)); }
     break;
 
@@ -1920,7 +1920,7 @@ yyreturn:
 }
 
 
-#line 360 "grammar.y"
+#line 361 "grammar.y"
 
 
 

@@ -50,7 +50,8 @@
 %token _TRUE_
 %token _FALSE_
 
-%left _AND_ _OR_
+%left _OR_
+%left _AND_
 %left _NOT_
 %left _LT_ _LE_ _GT_ _GE_ _EQ_ _NEQ_ _IS_
 %left '+' '-' 
