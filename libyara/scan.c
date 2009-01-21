@@ -639,6 +639,7 @@ inline int find_matches(	unsigned char first_char,
 int scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data)
 {
     int error;
+    int global_rules_satisfied;
 	unsigned int i;	
 	int file_is_pe;
 	
@@ -673,22 +674,69 @@ int scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_li
     		    return error;
 		}	
 	}
+	
+	rule = rule_list->head;
+	
+	/* evaluate global rules */
+	
+    global_rules_satisfied = TRUE;
+	
+	while (rule != NULL)
+	{	
+		if (rule->flags & RULE_FLAGS_GLOBAL)
+		{
+            context.rule = rule;
+            
+            if (evaluate(rule->condition, &context))
+    		{
+                rule->flags |= RULE_FLAGS_MATCH;
+    		}
+    		else
+    		{
+                global_rules_satisfied = FALSE;
+    		}
+    		
+    		if (!(rule->flags & RULE_FLAGS_PRIVATE))
+    		{
+        		if (callback(rule, buffer, buffer_size, user_data) != 0)
+        		{
+                    return ERROR_CALLBACK_ERROR;
+        		}
+		    }
+		}
+			
+		rule = rule->next;
+	}
+	
+	if (!global_rules_satisfied)
+	{
+        return ERROR_SUCCESS;
+	}
 
 	rule = rule_list->head;
 	
 	while (rule != NULL)
 	{
-		/* skip privates rules, or rules expecting PE files if the file is not a PE */
+		/* skip global rules, privates rules, or rules expecting PE files if the file is not a PE */
 		
-		if ((rule->flags & RULE_FLAGS_PRIVATE) || 
-			((rule->flags & RULE_FLAGS_REQUIRE_PE_FILE) && !file_is_pe))  
+		if (rule->flags & RULE_FLAGS_GLOBAL || rule->flags & RULE_FLAGS_PRIVATE)  
 		{
 			rule = rule->next;
 			continue;
 		}
-	 
-        context.rule = rule;
-	 
+		
+		/* evaluate only if file is PE or the rule does not requires PE files*/
+	  
+		if (file_is_pe || !(rule->flags & RULE_FLAGS_REQUIRE_PE_FILE))
+		{
+		    context.rule = rule;
+		    
+		    if (evaluate(rule->condition, &context))
+    		{
+                rule->flags |= RULE_FLAGS_MATCH;
+    		}
+		}
+		 
 		if (evaluate(rule->condition, &context))
 		{
             rule->flags |= RULE_FLAGS_MATCH;

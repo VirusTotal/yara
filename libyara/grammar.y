@@ -27,6 +27,7 @@
 %token <sized_string> _TEXTSTRING_
 %token <sized_string> _HEXSTRING_
 %token <sized_string> _REGEXP_
+%token _ASCII_
 %token _WIDE_
 %token _NOCASE_
 %token _REGEXP_
@@ -62,6 +63,7 @@
 %type <integer> string_modifiers
 
 %type <integer> rule_modifier
+%type <integer> rule_modifiers
 
 %type <tag>  tags
 %type <tag>  tag_list
@@ -131,14 +133,17 @@ rules :  /* empty */
       | rules error '}' /* on error skip until end of rule*/
       ;
 
-rule    :   rule_modifier _RULE_ _IDENTIFIER_ tags '{' _CONDITION_ ':' boolean_expression '}'                          { reduce_rule_declaration($3,$1,$4,0,$8);    }
-        |   rule_modifier _RULE_ _IDENTIFIER_ tags '{' _STRINGS_ ':' strings _CONDITION_ ':' boolean_expression '}'    { reduce_rule_declaration($3,$1,$4,$8,$11);  }
+rule    :   rule_modifiers _RULE_ _IDENTIFIER_ tags '{' _CONDITION_ ':' boolean_expression '}'                          { reduce_rule_declaration($3,$1,$4,0,$8);    }
+        |   rule_modifiers _RULE_ _IDENTIFIER_ tags '{' _STRINGS_ ':' strings _CONDITION_ ':' boolean_expression '}'    { reduce_rule_declaration($3,$1,$4,$8,$11);  }
         ;
         
-rule_modifier   :  /* empty */    { $$ = 0; }
-                | _PRIVATE_       { $$ = RULE_FLAGS_PRIVATE; }
-				| _GLOBAL_	      { $$ = RULE_FLAGS_GLOBAL; }
-                ;
+rule_modifiers : /* empty */                          { $$ = 0;  }
+               | rule_modifiers rule_modifier         { $$ = $1 | $2; }
+               ;
+        
+rule_modifier : _PRIVATE_       { $$ = RULE_FLAGS_PRIVATE; }
+		      | _GLOBAL_	    { $$ = RULE_FLAGS_GLOBAL; }
+              ;
 
 tags    : /* empty */                       { $$ = NULL; }
         | ':' tag_list                      { $$ = $2;   }
@@ -228,6 +233,7 @@ string_modifiers : /* empty */                              { $$ = 0;  }
                  ;
 
 string_modifier : _WIDE_        { $$ = STRING_FLAGS_WIDE; }
+                | _ASCII_       { $$ = STRING_FLAGS_ASCII; }
                 | _NOCASE_      { $$ = STRING_FLAGS_NO_CASE; }
                 | _FULLWORD_    { $$ = STRING_FLAGS_FULL_WORD; }
                 ;

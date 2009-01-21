@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>lex.l</string>
+	<string>scan.c</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -13,7 +13,9 @@
 					<key>filename</key>
 					<string>scan.c</string>
 					<key>lastUsed</key>
-					<date>2009-01-14T08:19:15Z</date>
+					<date>2009-01-20T16:43:08Z</date>
+					<key>selected</key>
+					<true/>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -49,27 +51,25 @@
 					<key>filename</key>
 					<string>ast.c</string>
 					<key>lastUsed</key>
-					<date>2009-01-12T16:01:10Z</date>
+					<date>2009-01-20T16:42:52Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>lex.l</string>
 					<key>lastUsed</key>
-					<date>2009-01-17T17:10:56Z</date>
-					<key>selected</key>
-					<true/>
+					<date>2009-01-20T15:03:42Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>grammar.y</string>
 					<key>lastUsed</key>
-					<date>2009-01-17T17:10:56Z</date>
+					<date>2009-01-20T15:06:22Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>../yara.c</string>
 					<key>lastUsed</key>
-					<date>2008-12-24T17:47:25Z</date>
+					<date>2009-01-20T16:42:55Z</date>
 				</dict>
 			</array>
 			<key>expanded</key>
@@ -84,7 +84,7 @@
 					<key>filename</key>
 					<string>yara.h</string>
 					<key>lastUsed</key>
-					<date>2008-12-24T17:39:53Z</date>
+					<date>2009-01-20T16:43:08Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -132,7 +132,7 @@
 					<key>filename</key>
 					<string>ast.h</string>
 					<key>lastUsed</key>
-					<date>2008-12-24T17:23:34Z</date>
+					<date>2009-01-20T15:08:20Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -156,28 +156,44 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>4</integer>
+				<integer>15</integer>
 				<key>line</key>
 				<integer>465</integer>
 			</dict>
+			<key>columnSelection</key>
+			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>432</integer>
+			<integer>430</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>1</integer>
+				<key>line</key>
+				<integer>465</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>15</integer>
+				<key>line</key>
+				<integer>465</integer>
+			</dict>
 		</dict>
 		<key>ast.c</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>9</integer>
+				<integer>39</integer>
 				<key>line</key>
-				<integer>415</integer>
+				<integer>449</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>356</integer>
+			<integer>437</integer>
 		</dict>
 		<key>ast.h</key>
 		<dict>
@@ -193,7 +209,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>12</integer>
+			<integer>75</integer>
 			<key>selectFrom</key>
 			<dict>
 				<key>column</key>
@@ -326,28 +342,28 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>37</integer>
+				<integer>29</integer>
 				<key>line</key>
-				<integer>332</integer>
+				<integer>236</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>222</integer>
+			<integer>379</integer>
 		</dict>
 		<key>lex.l</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>0</integer>
+				<integer>42</integer>
 				<key>line</key>
-				<integer>275</integer>
+				<integer>44</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>237</integer>
+			<integer>80</integer>
 		</dict>
 		<key>pefile.c</key>
 		<dict>
@@ -368,14 +384,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>7</integer>
+				<integer>20</integer>
 				<key>line</key>
-				<integer>573</integer>
+				<integer>388</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>674</integer>
+			<integer>102</integer>
 		</dict>
 		<key>sizedstr.h</key>
 		<dict>
@@ -396,14 +412,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>18</integer>
+				<integer>28</integer>
 				<key>line</key>
-				<integer>104</integer>
+				<integer>155</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>80</integer>
+			<integer>135</integer>
 		</dict>
 	</dict>
 	<key>openDocuments</key>
@@ -427,6 +443,6 @@
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{258, 4}, {1020, 774}}</string>
+	<string>{{229, 24}, {1047, 754}}</string>
 </dict>
 </plist>

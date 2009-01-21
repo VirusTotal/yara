@@ -42,7 +42,8 @@ hexdigit      [a-fA-F0-9]
 "global"             { return _GLOBAL_;     }
 "rule"               { return _RULE_;       }
 "strings"            { return _STRINGS_;    }
-"widechar"           { return _WIDE_;       }
+"ascii"              { return _ASCII_;      }
+"wide"               { return _WIDE_;       }
 "fullword"           { return _FULLWORD_;   }
 "nocase"             { return _NOCASE_;     }
 "condition"          { return _CONDITION_;  }

@@ -37,9 +37,10 @@ GNU General Public License for more details.
 #define STRING_FLAGS_REFERENCED					0x02
 #define STRING_FLAGS_HEXADECIMAL                0x04
 #define STRING_FLAGS_NO_CASE                    0x08
-#define STRING_FLAGS_WIDE                       0x10
-#define STRING_FLAGS_REGEXP                     0x20
-#define STRING_FLAGS_FULL_WORD                  0x40
+#define STRING_FLAGS_ASCII                      0x10
+#define STRING_FLAGS_WIDE                       0x20
+#define STRING_FLAGS_REGEXP                     0x40
+#define STRING_FLAGS_FULL_WORD                  0x80
 
 #define RULE_FLAGS_MATCH                        0x01
 #define RULE_FLAGS_PRIVATE                      0x02
@@ -48,6 +49,7 @@ GNU General Public License for more details.
 
 #define IS_HEX(x)       (((x)->flags) & STRING_FLAGS_HEXADECIMAL)
 #define IS_NO_CASE(x)   (((x)->flags) & STRING_FLAGS_NO_CASE)
+#define IS_ASCII(x)     (((x)->flags) & STRING_FLAGS_ASCII)
 #define IS_WIDE(x)      (((x)->flags) & STRING_FLAGS_WIDE)
 #define IS_REGEXP(x)    (((x)->flags) & STRING_FLAGS_REGEXP)
 #define IS_FULL_WORD(x) (((x)->flags) & STRING_FLAGS_FULL_WORD)

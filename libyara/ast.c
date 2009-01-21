@@ -114,6 +114,7 @@ int require_exe_file(TERM* term)
 int new_rule(RULE_LIST* rules, char* identifier, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition)
 {
     RULE* new_rule;
+    
     int result = ERROR_SUCCESS;
     
     if (lookup_rule(rules, identifier) == NULL)  /* do not allow rules with the same identifier */
@@ -128,7 +129,7 @@ int new_rule(RULE_LIST* rules, char* identifier, int flags, TAG* tag_list_head, 
             new_rule->string_list_head = string_list_head;
             new_rule->condition = condition;
             new_rule->next = NULL;
-        
+            
             if (rules->head == NULL && rules->tail == NULL)  /* list is empty */
             {
                 rules->head = new_rule;
@@ -445,6 +446,9 @@ int new_string(char* identifier, SIZED_STRING* charstr, int flags, STRING** stri
     
     if(new_string != NULL)
     {
+        if (!(flags & STRING_FLAGS_WIDE))
+            flags |= STRING_FLAGS_ASCII;
+        
         new_string->identifier = identifier;
         new_string->flags = flags;
         new_string->next = NULL;
