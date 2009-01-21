@@ -275,29 +275,87 @@ int init_hash_table(RULE_LIST* rule_list)
 			
 			if (hashable && string->flags & STRING_FLAGS_NO_CASE)
 			{	
+			    /* 
+			       if string is case-insensitive add an entry in the hash table
+			       for each posible combination 
+			    */
+			    
 				x = tolower(x);
 				y = tolower(y);
-			}
-			
-			entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
-			
-			if (entry == NULL)
-			{
-			    return ERROR_INSUFICIENT_MEMORY;
-			}
-			
-			entry->string = string;
-			
-			if (hashable)
-			{			
-    			entry->next = rule_list->hash_table[x][y];  /* insert new entry at begining of list */
+				
+				/* both lowercases */
+				
+				entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
+				
+				if (entry == NULL)
+    			    return ERROR_INSUFICIENT_MEMORY;
+    			    
+    			entry->next = rule_list->hash_table[x][y];
+    			entry->string = string;
     			rule_list->hash_table[x][y] = entry;
+    			
+    			/* X uppercase Y lowercase */
+    			
+                x = toupper(x);
+				
+				entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
+				
+				if (entry == NULL)
+                    return ERROR_INSUFICIENT_MEMORY;
+    			    
+        		entry->next = rule_list->hash_table[x][y];  
+        		entry->string = string;
+        		rule_list->hash_table[x][y] = entry; 
+        		
+        		/* both uppercases */			    
+    			
+    			y = toupper(y);  
+    			    
+    			entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
+				
+				if (entry == NULL)
+                    return ERROR_INSUFICIENT_MEMORY;
+    			    
+        		entry->next = rule_list->hash_table[x][y];
+        		entry->string = string;
+        		rule_list->hash_table[x][y] = entry;
+        		
+        		/* X lowercase Y uppercase */
+    			    
+                x = tolower(x);
+ 
+    			entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
+				
+				if (entry == NULL)
+                    return ERROR_INSUFICIENT_MEMORY;
+    			    
+        		entry->next = rule_list->hash_table[x][y]; 
+        		entry->string = string; 
+        		rule_list->hash_table[x][y] = entry;               
+    							
 			}
-			else
+			else if (hashable)
 			{
-                entry->next = rule_list->non_hashed_strings;
+				entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
+				
+				if (entry == NULL)
+                    return ERROR_INSUFICIENT_MEMORY;
+    			    
+        		entry->next = rule_list->hash_table[x][y]; 
+        		entry->string = string; 
+        		rule_list->hash_table[x][y] = entry;    
+			}
+			else /* non hashable */
+			{
+			    entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
+				
+				if (entry == NULL)
+                    return ERROR_INSUFICIENT_MEMORY;
+			    
+			    entry->next = rule_list->non_hashed_strings;
+			    entry->string = string; 
                 rule_list->non_hashed_strings = entry;
-			}	
+			}
 		
 			string = string->next;
 		}
@@ -378,7 +436,7 @@ void clear_marks(RULE_LIST* rule_list)
 	}
 }
 
-int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string, int negative_size)
+int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string, int flags, int negative_size)
 {
 	int match;
 	int i, len;
@@ -386,11 +444,11 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 	
 	unsigned char* tmp;
 	
-	if (IS_HEX(string))
+	if ((flags & STRING_FLAGS_HEXADECIMAL) && IS_HEX(string))
 	{
 		return hex_match(buffer, buffer_size, string->string, string->length, string->mask);
 	}
-	else if (IS_REGEXP(string)) 
+	else if ((flags & STRING_FLAGS_REGEXP) && IS_REGEXP(string)) 
 	{
 		if (IS_WIDE(string))
 		{
@@ -434,7 +492,8 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 			return regexp_match(buffer, buffer_size, string->string, string->length, string->re, negative_size);
 		}
 	}
-	else if (IS_WIDE(string) && string->length * 2 <= buffer_size)
+	
+	if ((flags & STRING_FLAGS_WIDE) && IS_WIDE(string) && string->length * 2 <= buffer_size)
 	{	
 		if(IS_NO_CASE(string))
 		{
@@ -466,11 +525,13 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 					match = 0;
 				}
 			}
-		}
+		}	
 		
-		return match;		
+		if (match > 0)
+            return match;
 	}
-	else if (string->length <= buffer_size)
+	
+	if ((flags & STRING_FLAGS_ASCII) && IS_ASCII(string) && string->length <= buffer_size)
 	{		
 		if(IS_NO_CASE(string))
 		{
@@ -504,8 +565,7 @@ int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
                                 unsigned char* buffer, 
                                 unsigned int buffer_size,
                                 unsigned int current_file_offset,
-                                int wide, 
-                                int no_case,
+                                int flags, 
                                 int negative_size)
 {
 	int len;
@@ -519,11 +579,10 @@ int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
 	{	
 		string = entry->string;
 
-		if ((!wide || IS_WIDE(string)) && 
-		    (!no_case || IS_NO_CASE(string)) &&
-		    (len = string_match(buffer, buffer_size, string, negative_size)))
+		if ( (string->flags & flags) && (len = string_match(buffer, buffer_size, string, flags, negative_size)))
 		{
-		    /*  If this string already matched we must check that this match is not 
+		    /*  
+		        If this string already matched we must check that this match is not 
 		        overlapping a previous one. This can occur for example if we search 
 		        for the string 'aa' and the file contains 'aaaaaa'. 
 		     */
@@ -541,6 +600,7 @@ int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
                         overlap = TRUE;
                         break;
                     }
+                    
                     match = match->next;
                 }
 		    }
@@ -576,23 +636,18 @@ inline int find_matches(	unsigned char first_char,
 					unsigned char* buffer, 
 					unsigned int buffer_size, 
 					unsigned int current_file_offset,
-					int wide,
+					int flags,
 					int negative_size, 
 					RULE_LIST* rule_list)
 {
-	unsigned char first_char_lower;
-	unsigned char second_char_lower;
 	
     int result;
-	
-	/* case sensitive */
-
+    	
     result =  find_matches_for_strings(  rule_list->hash_table[first_char][second_char], 
                                         buffer, 
                                         buffer_size, 
                                         current_file_offset, 
-                                        wide, 
-                                        FALSE,
+                                        flags, 
                                         negative_size);
     
     if (result == ERROR_SUCCESS)
@@ -601,38 +656,10 @@ inline int find_matches(	unsigned char first_char,
                                                buffer, 
                                                buffer_size, 
                                                current_file_offset, 
-                                               wide, 
-                                               FALSE,
+                                               flags, 
                                                negative_size);
-     }
-            
-	/* case insensitive */
-	
-	first_char_lower = tolower(first_char);
-	second_char_lower = tolower(second_char);
-	
-	if (result == ERROR_SUCCESS && (first_char_lower != first_char || second_char_lower != second_char))
-	{
-            result = find_matches_for_strings(    rule_list->hash_table[first_char_lower][second_char_lower], 
-	                                           buffer, 
-	                                           buffer_size, 
-	                                           current_file_offset, 
-	                                           wide, 
-                                               TRUE,
-	                                           negative_size);
-	                                           
-            if (result == ERROR_SUCCESS)
-            {
-                result = find_matches_for_strings(    rule_list->non_hashed_strings, 
-                                                      buffer, 
-                                                      buffer_size, 
-                                                      current_file_offset, 
-                                                      wide, 
-                                                      TRUE,
-                                                      negative_size);
-            }
-	}
-	
+    }
+            	
 	return result;
 }
 
@@ -660,7 +687,14 @@ int scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_li
 	for (i = 0; i < buffer_size - 1; i++)
 	{		    
 		/* search for normal strings */	
-        error = find_matches(buffer[i], buffer[i + 1], buffer + i, buffer_size - i, i, FALSE, i, rule_list);
+        error = find_matches(   buffer[i], 
+                                buffer[i + 1], 
+                                buffer + i, 
+                                buffer_size - i, 
+                                i, 
+                                STRING_FLAGS_HEXADECIMAL | STRING_FLAGS_ASCII | STRING_FLAGS_REGEXP, 
+                                i, 
+                                rule_list);
 		
 		if (error != ERROR_SUCCESS)
 		    return error;
@@ -668,7 +702,14 @@ int scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_li
 		/* search for wide strings */
 		if (i < buffer_size - 3 && buffer[i + 1] == 0 && buffer[i + 3] == 0)
 		{
-			error = find_matches(buffer[i], buffer[i + 2], buffer + i, buffer_size - i, i, TRUE, i, rule_list);
+			error = find_matches(   buffer[i], 
+			                        buffer[i + 2], 
+			                        buffer + i, 
+			                        buffer_size - i, 
+			                        i, 
+			                        STRING_FLAGS_WIDE, 
+			                        i, 
+			                        rule_list);
 			
 			if (error != ERROR_SUCCESS)
     		    return error;

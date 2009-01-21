@@ -13,7 +13,7 @@
 					<key>filename</key>
 					<string>scan.c</string>
 					<key>lastUsed</key>
-					<date>2009-01-20T16:43:08Z</date>
+					<date>2009-01-21T13:44:38Z</date>
 					<key>selected</key>
 					<true/>
 				</dict>
@@ -39,7 +39,7 @@
 					<key>filename</key>
 					<string>error.c</string>
 					<key>lastUsed</key>
-					<date>2008-12-24T13:10:36Z</date>
+					<date>2009-01-21T13:44:31Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -51,7 +51,7 @@
 					<key>filename</key>
 					<string>ast.c</string>
 					<key>lastUsed</key>
-					<date>2009-01-20T16:42:52Z</date>
+					<date>2009-01-21T12:31:40Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -69,7 +69,7 @@
 					<key>filename</key>
 					<string>../yara.c</string>
 					<key>lastUsed</key>
-					<date>2009-01-20T16:42:55Z</date>
+					<date>2009-01-21T13:44:38Z</date>
 				</dict>
 			</array>
 			<key>expanded</key>
@@ -84,7 +84,7 @@
 					<key>filename</key>
 					<string>yara.h</string>
 					<key>lastUsed</key>
-					<date>2009-01-20T16:43:08Z</date>
+					<date>2009-01-21T13:41:00Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -132,7 +132,7 @@
 					<key>filename</key>
 					<string>ast.h</string>
 					<key>lastUsed</key>
-					<date>2009-01-20T15:08:20Z</date>
+					<date>2009-01-21T13:41:05Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -165,7 +165,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>430</integer>
+			<integer>357</integer>
 			<key>selectFrom</key>
 			<dict>
 				<key>column</key>
@@ -200,30 +200,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>23</integer>
+				<integer>2</integer>
 				<key>line</key>
-				<integer>23</integer>
+				<integer>0</integer>
 			</dict>
-			<key>columnSelection</key>
-			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>75</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>8</integer>
-				<key>line</key>
-				<integer>23</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>23</integer>
-				<key>line</key>
-				<integer>23</integer>
-			</dict>
+			<integer>0</integer>
 		</dict>
 		<key>compile.c</key>
 		<dict>
@@ -384,14 +368,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>20</integer>
+				<integer>21</integer>
 				<key>line</key>
-				<integer>388</integer>
+				<integer>495</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>102</integer>
+			<integer>554</integer>
 		</dict>
 		<key>sizedstr.h</key>
 		<dict>
@@ -412,14 +396,30 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>28</integer>
+				<integer>8</integer>
 				<key>line</key>
-				<integer>155</integer>
+				<integer>41</integer>
 			</dict>
+			<key>columnSelection</key>
+			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>135</integer>
+			<integer>22</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>28</integer>
+				<key>line</key>
+				<integer>41</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>8</integer>
+				<key>line</key>
+				<integer>41</integer>
+			</dict>
 		</dict>
 	</dict>
 	<key>openDocuments</key>
@@ -443,6 +443,6 @@
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{229, 24}, {1047, 754}}</string>
+	<string>{{230, 24}, {1047, 754}}</string>
 </dict>
 </plist>
