@@ -129,12 +129,17 @@ int hex_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pa
 			matches += distance;
 			
             i = 0;
-            
-            //TODO: improve performance of range skips
-            
+                        
             while (i <= delta && b + i < buffer_size)
             {
-       			tmp = hex_match(buffer + b + i, buffer_size - b - i,  pattern + p, pattern_length - p, mask + m);
+                if ((buffer[b + i] & mask[m]) == pattern[p])
+                {
+       			    tmp = hex_match(buffer + b + i, buffer_size - b - i,  pattern + p, pattern_length - p, mask + m);
+       			}
+       			else
+       			{
+                    tmp = 0;
+       			}
 				
 			    if (tmp > 0) 
 					return b + i + tmp;
@@ -444,11 +449,11 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 	
 	unsigned char* tmp;
 	
-	if ((flags & STRING_FLAGS_HEXADECIMAL) && IS_HEX(string))
+	if (IS_HEX(string))
 	{
 		return hex_match(buffer, buffer_size, string->string, string->length, string->mask);
 	}
-	else if ((flags & STRING_FLAGS_REGEXP) && IS_REGEXP(string)) 
+	else if (IS_REGEXP(string)) 
 	{
 		if (IS_WIDE(string))
 		{
@@ -692,7 +697,7 @@ int scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_li
                                 buffer + i, 
                                 buffer_size - i, 
                                 i, 
-                                STRING_FLAGS_HEXADECIMAL | STRING_FLAGS_ASCII | STRING_FLAGS_REGEXP, 
+                                STRING_FLAGS_HEXADECIMAL | STRING_FLAGS_ASCII, 
                                 i, 
                                 rule_list);
 		
