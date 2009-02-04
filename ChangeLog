@@ -11,6 +11,7 @@ version 1.1 (05/01/2009)
 version 1.2
 	* added support for global rules
 	* added support for declaring alternative sub-strings in hex strings
+	* added support for anonymous strings
 	* "widechar" is now "wide" and can be used in conjuntion with "ascii"
 	* some performance improvements
 	* BUGFIX: Wrong behavior of escaped characters in regular expressions

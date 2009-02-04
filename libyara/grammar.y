@@ -401,6 +401,11 @@ STRING* reduce_string_declaration(char* identifier, SIZED_STRING* str, int flags
     char tmp[200];
     STRING* string = NULL;
     
+    if (strcmp(identifier,"$") == 0)
+    {
+        flags |= STRING_FLAGS_ANONYMOUS;
+    }
+    
     last_error = new_string(identifier, str, flags, &string);
     
     if (last_error == ERROR_INVALID_REGULAR_EXPRESSION) 
@@ -420,7 +425,9 @@ STRING* reduce_string_declaration(char* identifier, SIZED_STRING* str, int flags
 
 STRING* reduce_strings(STRING* string_list_head, STRING* string)
 {
-    if (lookup_string(string_list_head,string->identifier) == NULL) /* no strings with the same identifier */
+    /* no strings with the same identifier, except for anonymous strings */
+    
+    if (IS_ANONYMOUS(string) || lookup_string(string_list_head,string->identifier) == NULL) 
     {
         string->next = string_list_head;    
         current_rule_strings = string;
