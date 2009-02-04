@@ -102,14 +102,17 @@ int hex_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pa
 	unsigned char i;
 	unsigned char distance;
 	unsigned char delta;
+    int match;
+    int match_length;
+    int longest_match;
 	int matches;
-	int tmp;
+    int tmp, tmp_b;
 	
 	b = 0;
 	p = 0;
 	m = 0;
 	
-	matches = 0;
+	matches = 0;	
 	
 	while (b < (size_t) buffer_size && p < (size_t) pattern_length)
 	{
@@ -148,6 +151,54 @@ int hex_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pa
             }
 			
 			break;	
+		}
+		else if (mask[m] == MASK_OR)
+		{		    
+            longest_match = 0;
+            		    
+		    while (mask[m] != MASK_OR_END)
+		    {
+                tmp_b = b;
+                match = TRUE;
+                match_length = 0;
+                m++;
+		        
+		        while (mask[m] != MASK_OR && mask[m] != MASK_OR_END)
+                {
+                    if ((buffer[tmp_b] & mask[m]) != pattern[p])
+                    {
+                        match = FALSE;
+                    }
+                    
+                    if (match)
+                    {
+                        match_length++;
+                    }
+                
+                    tmp_b++;
+                    m++;
+                    p++;                    
+                }
+		        
+		        if (match && match_length > longest_match)
+		        {
+                    longest_match = match_length;
+		        }	     
+		    }
+		    
+            m++;
+		    
+		    if (longest_match > 0)
+		    {
+                b += longest_match;
+                matches += longest_match;
+            }
+            else
+            {
+                matches = 0;
+                break;
+            }
+    
 		}
 		else if ((buffer[b] & mask[m]) == pattern[p])
 		{
@@ -679,6 +730,7 @@ int scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_li
 	EVALUATION_CONTEXT context;
 	
 	context.file_size = buffer_size;
+    context.data = buffer;
 	
 	file_is_pe = is_pe(buffer, buffer_size);
 	
@@ -763,7 +815,7 @@ int scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_li
 	
 	while (rule != NULL)
 	{
-		/* skip global rules, privates rules, or rules expecting PE files if the file is not a PE */
+		/* skip global rules and privates rules */
 		
 		if (rule->flags & RULE_FLAGS_GLOBAL || rule->flags & RULE_FLAGS_PRIVATE)  
 		{
@@ -781,11 +833,6 @@ int scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_li
     		{
                 rule->flags |= RULE_FLAGS_MATCH;
     		}
-		}
-		 
-		if (evaluate(rule->condition, &context))
-		{
-            rule->flags |= RULE_FLAGS_MATCH;
 		}
 		
 		if (callback(rule, buffer, buffer_size, user_data) != 0)

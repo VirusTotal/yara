@@ -27,6 +27,7 @@ unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 	
 	TERM_CONST* term_const = ((TERM_CONST*) term);
 	TERM_BINARY_OPERATION* term_binary = ((TERM_BINARY_OPERATION*) term);
+	TERM_UNARY_OPERATION* term_unary = ((TERM_UNARY_OPERATION*) term);
 	TERM_STRING* term_string = ((TERM_STRING*) term);
 	
 	
@@ -116,7 +117,7 @@ unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 			return evaluate(term_binary->op2, context);
 			
 	case TERM_TYPE_NOT:
-		return !evaluate(term_binary->op1, context);
+		return !evaluate(term_unary->op, context);
 		
 	case TERM_TYPE_ADD:
 		return evaluate(term_binary->op1, context) + evaluate(term_binary->op2, context);
@@ -165,7 +166,7 @@ unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		
 	case TERM_TYPE_OF_THEM: 
 	
-	    i = evaluate(term_binary->op1, context);
+	    i = evaluate(term_unary->op, context);
 	    
         string = context->rule->string_list_head;
         
@@ -180,6 +181,45 @@ unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
         }
         
         return (i == 0);
+    
+    case TERM_TYPE_BYTE_AT_OFFSET:
+    
+        offs = evaluate(term_unary->op, context);
+        
+        if (offs < context->file_size)
+        {
+            return context->data[offs];
+        }
+        else
+        {
+            return 0xBADBAD1;
+        }
+        
+    case TERM_TYPE_WORD_AT_OFFSET:
+
+        offs = evaluate(term_unary->op, context);
+
+        if (offs < context->file_size - 1)
+        {
+            return *((unsigned short*) (context->data + offs)) ;
+        }
+        else
+        {
+            return 0xBADBAD2;
+        }
+    
+    case TERM_TYPE_DWORD_AT_OFFSET:
+
+        offs = evaluate(term_unary->op, context);
+
+        if (offs < context->file_size - 1)
+        {
+            return *((unsigned int*) (context->data + offs)) ;
+        }
+        else
+        {
+            return 0xBADBAD3;
+        }
 		
 	default:
 		return 0;

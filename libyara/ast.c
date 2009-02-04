@@ -23,6 +23,8 @@ GNU General Public License for more details.
 #include "ast.h"
 #include "error.h"
 
+#define todigit(x)  ((x) >='A'&& (x) <='F')? ((unsigned char) (x - 'A' + 10)) : ((unsigned char) (x - '0'))
+
 #ifdef WIN32
 #define strdup _strdup
 #endif
@@ -153,7 +155,7 @@ int new_rule(RULE_LIST* rules, char* identifier, int flags, TAG* tag_list_head, 
     }
     else
     {
-        result = ERROR_DUPLICATERULEIDENTIFIER;
+        result = ERROR_DUPLICATE_RULE_IDENTIFIER;
     }
     
     return result;
@@ -165,15 +167,18 @@ int new_hex_string(SIZED_STRING* charstr, unsigned char** hexstr, unsigned char*
     int skip_lo;
     int skip_hi;
     int skip_exact;
-    int nibble_count;
-    char c;
+    char c,d;
     char* s;
     char* closing_bracket;
+    int inside_or;
+    int or_count;
     int len;  
     int result = ERROR_SUCCESS;
     
     unsigned char high_nibble = 0;
+    unsigned char low_nibble = 0;
     unsigned char mask_high_nibble = 0;
+    unsigned char mask_low_nibble = 0;
     unsigned char* hex;
     unsigned char* mask;
     
@@ -195,60 +200,27 @@ int new_hex_string(SIZED_STRING* charstr, unsigned char** hexstr, unsigned char*
     }
     
     i = 1;  
-    nibble_count = 0;
     *length = 0;
+    inside_or = FALSE;
     
     while (i < len - 1)
     {
         c = toupper(charstr->c_string[i]);    
         
-        if (c >= 'A' && c <= 'F')
-        {               
-            if (nibble_count % 2 != 0)
-            {           
-                *hex = (high_nibble << 4) | (unsigned char) (c - 'A' + 10);
-                hex++;
-                (*length)++;
-
-                *mask++ = (mask_high_nibble << 4) | 0x0F;
-            }
-            else
+        if (isalnum(c) || (c == '?'))
+        {   
+            d = toupper(charstr->c_string[i + 1]);
+            
+            if (!isalnum(d) && (d != '?'))
             {
-                high_nibble = (unsigned char) (c - 'A' + 10);
-                mask_high_nibble = 0x0F;
-            }
-
-            i++;
-			nibble_count++;
-        }
-        else if (c >= '0' && c <= '9')
-        {
-            if (nibble_count % 2 != 0)
-            {   
-                *hex = (high_nibble << 4) | (unsigned char) (c - '0');
-                hex++;
-                (*length)++;
-                
-                *mask++ = (mask_high_nibble << 4) | 0x0F;
-            }
-            else
-            {
-                high_nibble = (unsigned char) (c - '0');
-                mask_high_nibble = 0x0F;
+                result = ERROR_UNPAIRED_NIBBLE;
+                break;
             }
             
-            i++;
-   			nibble_count++;
-        }       
-        else if (c == '?')
-        {
-            if (nibble_count % 2 != 0)
-            {   
-                *hex = (high_nibble << 4) ;
-                hex++;
-                (*length)++;
-                
-                *mask++ = (mask_high_nibble << 4);
+            if (c != '?')
+            {  
+                high_nibble = todigit(c);
+                mask_high_nibble = 0x0F;
             }
             else
             {
@@ -256,24 +228,61 @@ int new_hex_string(SIZED_STRING* charstr, unsigned char** hexstr, unsigned char*
                 mask_high_nibble = 0;
             }
             
-            i++; 
-   			nibble_count++;
-        }
-        else if (c == '[')
-        {   
-            /* 
-                before any skip instrucion (e.g.[0-4]) an even amount of nibbles should appear
-                defining a full sequence of bytes
-            */
-            
-            if (nibble_count % 2 != 0)  
+            if (d != '?')
+            {  
+                low_nibble = todigit(d);
+                mask_low_nibble = 0x0F;
+            }
+            else
             {
-                result = ERROR_UNPAIRED_NIBBLE;
+                low_nibble = 0;
+                mask_low_nibble = 0;
+            }
+                      
+            *hex++ = (high_nibble << 4) | (low_nibble); 
+            *mask++ = (mask_high_nibble << 4) | (mask_low_nibble);
+            
+            (*length)++; 
+            
+            i+=2;
+        }      
+        else if (c == '(')
+        {            
+            if (inside_or)
+            {
+                result = ERROR_NESTED_OR_OPERATION;
+                break;                
+            }
+            
+            inside_or = TRUE;
+            *mask++ = MASK_OR;
+            i++;
+        }
+        else if (c == ')')
+        {
+            inside_or = FALSE;
+            *mask++ = MASK_OR_END;
+            i++;
+        }
+        else if (c == '|')
+        {   
+            if (!inside_or)
+            {
+                result = ERROR_MISPLACED_OR_OPERATOR;
                 break;
             }
             
-            nibble_count = 0;
-            
+            *mask++ = MASK_OR;
+            i++;
+        }
+        else if (c == '[')
+        {   
+            if (inside_or)
+            {
+                result = ERROR_SKIP_INSIDE_OR_OPERATION;
+                break;
+            }
+                        
             closing_bracket = strchr(charstr->c_string + i + 1, ']');
 
             if (closing_bracket == NULL)
@@ -281,15 +290,22 @@ int new_hex_string(SIZED_STRING* charstr, unsigned char** hexstr, unsigned char*
                 result = ERROR_MISMATCHED_BRACKET;
                 break;
             } 
-            else if (*(closing_bracket + 1) == '}')  /* no skip instruction should exists at the end of the string */
+            else  
             {
-                result = ERROR_SKIP_AT_END;
-                break;              
-            }
-            else if (*(closing_bracket + 1) == '[')  /* consecutive skip intructions are not allowed */
-            {
-                result = ERROR_CONSECUTIVE_SKIPS;
-                break;              
+                s = closing_bracket + 1; 
+                
+                while (*s == ' ') s++;  /* skip spaces */
+                
+                if (*s == '}')          /* no skip instruction should exists at the end of the string */
+                {
+                    result = ERROR_SKIP_AT_END;
+                    break;          
+                } 
+                else if (*s == '[')     /* consecutive skip intructions are not allowed */
+                {
+                    result = ERROR_CONSECUTIVE_SKIPS;
+                    break;          
+                }   
             }
             
             /* only decimal digits and '-' are allowed between brackets */
@@ -343,15 +359,15 @@ int new_hex_string(SIZED_STRING* charstr, unsigned char** hexstr, unsigned char*
             i = (int) (closing_bracket - charstr->c_string + 1); 
             
         }
-		else if (c == ' ')
-		{
-			i++;
-		}
         else if (c == ']')
         {
             result = ERROR_MISMATCHED_BRACKET;
             break;          
         }
+        else if (c == ' ')
+		{
+			i++;
+		}
         else 
         {
             result = ERROR_INVALID_CHAR_IN_HEX_STRING;
@@ -368,10 +384,36 @@ int new_hex_string(SIZED_STRING* charstr, unsigned char** hexstr, unsigned char*
     {
         result = ERROR_MISPLACED_WILDCARD_OR_SKIP;
     }
+        
+    /* check if byte or syntax is correct */
     
-    if (result == ERROR_SUCCESS && nibble_count % 2 != 0)  
+    i = 0;
+    or_count = 0;
+    
+    while ((*maskstr)[i] != MASK_END)
     {
-        result = ERROR_UNPAIRED_NIBBLE;
+        if ((*maskstr)[i] == MASK_OR)
+        {
+            or_count++;
+            
+            if ( (*maskstr)[i+1] == MASK_OR || (*maskstr)[i+1] == MASK_OR_END )
+            {
+                result = ERROR_INVALID_OR_OPERATION_SYNTAX;
+                break;
+            }
+        }
+        else if ((*maskstr)[i] == MASK_OR_END)
+        {
+            if (or_count <  2)
+            {
+                result = ERROR_INVALID_OR_OPERATION_SYNTAX;
+                break;              
+            }
+            
+            or_count = 0;
+        }
+        
+        i++;
     }
     
     if (result != ERROR_SUCCESS)
@@ -499,6 +541,28 @@ int new_simple_term(int type, TERM** term)
     return result;	
 }
 
+int new_unary_operation(int type, TERM* op, TERM_UNARY_OPERATION** term)
+{
+    TERM_UNARY_OPERATION* new_term;
+    int result = ERROR_SUCCESS;
+    
+    new_term = (TERM_UNARY_OPERATION*) malloc(sizeof(TERM_UNARY_OPERATION));
+    
+    if (new_term != NULL)
+    {
+        new_term->type = type;
+        new_term->op = op;
+        new_term->next = NULL;
+    }
+    else
+    {
+        result = ERROR_INSUFICIENT_MEMORY;
+    }
+    
+    *term = new_term;   
+    return result;
+}
+
 int new_binary_operation(int type, TERM* op1, TERM* op2, TERM_BINARY_OPERATION** term)
 {
     TERM_BINARY_OPERATION* new_term;
@@ -622,8 +686,12 @@ void free_term(TERM* term)
         free_term(((TERM_BINARY_OPERATION*)term)->op2);
         break;        
                       
-    case TERM_TYPE_NOT:    
-        free_term(((TERM_BINARY_OPERATION*)term)->op1);
+    case TERM_TYPE_NOT: 
+    case TERM_TYPE_OF_THEM:   
+    case TERM_TYPE_BYTE_AT_OFFSET:
+    case TERM_TYPE_WORD_AT_OFFSET:
+    case TERM_TYPE_DWORD_AT_OFFSET:
+        free_term(((TERM_UNARY_OPERATION*)term)->op);
         break;
     }
     

@@ -63,6 +63,10 @@ hexdigit      [a-fA-F0-9]
 "file"				 { return _FILE_;       }
 "is"				 { return _IS_;         }
 "section"			 { return _SECTION_;    }
+"byte"				 { return _BYTE_;    	}
+"word"				 { return _WORD_;    	}
+"dword"				 { return _DWORD_;    	}
+
 
 
 "/*"([^\*]|\*[^\/])*"*/"    {	/* skip comments */
@@ -247,7 +251,7 @@ $({letter}|{digit})* {
 					}
 					
 					
-\{({hexdigit}|[ \?\[\]-])+\}		{ 
+\{({hexdigit}|[ -|\?\[\]\(\)])+\}		{ 
 										int len = strlen(yytext);
 										
 										SIZED_STRING* s = (SIZED_STRING*) malloc(len + sizeof(SIZED_STRING));

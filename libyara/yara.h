@@ -61,7 +61,7 @@ GNU General Public License for more details.
 #endif
 
 #define ERROR_INSUFICIENT_MEMORY                1
-#define ERROR_DUPLICATERULEIDENTIFIER           2
+#define ERROR_DUPLICATE_RULE_IDENTIFIER         2
 #define ERROR_INVALID_CHAR_IN_HEX_STRING        3
 #define ERROR_MISMATCHED_BRACKET                4
 #define ERROR_SKIP_AT_END                       5
@@ -78,6 +78,10 @@ GNU General Public License for more details.
 #define ERROR_UNREFERENCED_STRING				16
 #define ERROR_DUPLICATE_STRING_IDENTIFIER		17
 #define ERROR_CALLBACK_ERROR            		18
+#define ERROR_MISPLACED_OR_OPERATOR             19
+#define ERROR_INVALID_OR_OPERATION_SYNTAX       20
+#define ERROR_SKIP_INSIDE_OR_OPERATION          21  
+#define ERROR_NESTED_OR_OPERATION               22          
       
 typedef struct _MATCH
 {   

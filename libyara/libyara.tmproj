@@ -13,7 +13,7 @@
 					<key>filename</key>
 					<string>scan.c</string>
 					<key>lastUsed</key>
-					<date>2009-01-21T13:44:38Z</date>
+					<date>2009-01-28T14:02:05Z</date>
 					<key>selected</key>
 					<true/>
 				</dict>
@@ -27,19 +27,19 @@
 					<key>filename</key>
 					<string>filemap.c</string>
 					<key>lastUsed</key>
-					<date>2008-12-16T14:05:52Z</date>
+					<date>2009-01-26T12:37:06Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>eval.c</string>
 					<key>lastUsed</key>
-					<date>2009-01-12T18:47:42Z</date>
+					<date>2009-01-28T13:34:47Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>error.c</string>
 					<key>lastUsed</key>
-					<date>2009-01-21T13:44:31Z</date>
+					<date>2009-01-26T12:37:12Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -51,25 +51,25 @@
 					<key>filename</key>
 					<string>ast.c</string>
 					<key>lastUsed</key>
-					<date>2009-01-21T12:31:40Z</date>
+					<date>2009-01-26T12:54:02Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>lex.l</string>
 					<key>lastUsed</key>
-					<date>2009-01-20T15:03:42Z</date>
+					<date>2009-01-26T11:58:05Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>grammar.y</string>
 					<key>lastUsed</key>
-					<date>2009-01-20T15:06:22Z</date>
+					<date>2009-01-26T12:57:43Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>../yara.c</string>
 					<key>lastUsed</key>
-					<date>2009-01-21T13:44:38Z</date>
+					<date>2009-01-28T13:35:33Z</date>
 				</dict>
 			</array>
 			<key>expanded</key>
@@ -84,7 +84,7 @@
 					<key>filename</key>
 					<string>yara.h</string>
 					<key>lastUsed</key>
-					<date>2009-01-21T13:41:00Z</date>
+					<date>2009-01-22T21:59:19Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -114,13 +114,13 @@
 					<key>filename</key>
 					<string>eval.h</string>
 					<key>lastUsed</key>
-					<date>2008-12-18T12:45:27Z</date>
+					<date>2009-01-26T12:41:11Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>error.h</string>
 					<key>lastUsed</key>
-					<date>2008-12-24T13:10:39Z</date>
+					<date>2009-01-22T20:31:24Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -132,13 +132,13 @@
 					<key>filename</key>
 					<string>ast.h</string>
 					<key>lastUsed</key>
-					<date>2009-01-21T13:41:05Z</date>
+					<date>2009-01-26T12:40:14Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>sizedstr.h</string>
 					<key>lastUsed</key>
-					<date>2008-12-18T12:06:30Z</date>
+					<date>2009-01-22T20:31:21Z</date>
 				</dict>
 			</array>
 			<key>expanded</key>
@@ -156,29 +156,29 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>15</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>465</integer>
+				<integer>200</integer>
 			</dict>
 			<key>columnSelection</key>
 			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>357</integer>
+			<integer>182</integer>
 			<key>selectFrom</key>
 			<dict>
 				<key>column</key>
 				<integer>1</integer>
 				<key>line</key>
-				<integer>465</integer>
+				<integer>213</integer>
 			</dict>
 			<key>selectTo</key>
 			<dict>
 				<key>column</key>
-				<integer>15</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>465</integer>
+				<integer>200</integer>
 			</dict>
 		</dict>
 		<key>ast.c</key>
@@ -186,28 +186,28 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>39</integer>
+				<integer>26</integer>
 				<key>line</key>
-				<integer>449</integer>
+				<integer>689</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>437</integer>
+			<integer>642</integer>
 		</dict>
 		<key>ast.h</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>2</integer>
+				<integer>55</integer>
 				<key>line</key>
-				<integer>0</integer>
+				<integer>71</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>0</integer>
+			<integer>100</integer>
 		</dict>
 		<key>compile.c</key>
 		<dict>
@@ -228,14 +228,30 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>122</integer>
+				<integer>2</integer>
 				<key>line</key>
-				<integer>77</integer>
+				<integer>91</integer>
 			</dict>
+			<key>columnSelection</key>
+			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>91</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>3</integer>
+				<key>line</key>
+				<integer>91</integer>
+			</dict>
 		</dict>
 		<key>error.h</key>
 		<dict>
@@ -256,23 +272,23 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>3</integer>
+				<integer>20</integer>
 				<key>line</key>
-				<integer>99</integer>
+				<integer>210</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>0</integer>
+			<integer>43</integer>
 		</dict>
 		<key>eval.h</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>15</integer>
+				<integer>24</integer>
 				<key>line</key>
-				<integer>25</integer>
+				<integer>23</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
@@ -291,7 +307,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>0</integer>
+			<integer>97</integer>
 		</dict>
 		<key>filemap.h</key>
 		<dict>
@@ -326,28 +342,28 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>29</integer>
+				<integer>97</integer>
 				<key>line</key>
-				<integer>236</integer>
+				<integer>338</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>379</integer>
+			<integer>520</integer>
 		</dict>
 		<key>lex.l</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>42</integer>
+				<integer>27</integer>
 				<key>line</key>
-				<integer>44</integer>
+				<integer>67</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>80</integer>
+			<integer>45</integer>
 		</dict>
 		<key>pefile.c</key>
 		<dict>
@@ -368,14 +384,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>21</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>495</integer>
+				<integer>97</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>554</integer>
+			<integer>37</integer>
 		</dict>
 		<key>sizedstr.h</key>
 		<dict>
@@ -398,27 +414,27 @@
 				<key>column</key>
 				<integer>8</integer>
 				<key>line</key>
-				<integer>41</integer>
+				<integer>83</integer>
 			</dict>
 			<key>columnSelection</key>
 			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>22</integer>
+			<integer>62</integer>
 			<key>selectFrom</key>
 			<dict>
 				<key>column</key>
-				<integer>28</integer>
+				<integer>34</integer>
 				<key>line</key>
-				<integer>41</integer>
+				<integer>83</integer>
 			</dict>
 			<key>selectTo</key>
 			<dict>
 				<key>column</key>
 				<integer>8</integer>
 				<key>line</key>
-				<integer>41</integer>
+				<integer>83</integer>
 			</dict>
 		</dict>
 	</dict>
@@ -443,6 +459,6 @@
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{230, 24}, {1047, 754}}</string>
+	<string>{{224, 24}, {1047, 754}}</string>
 </dict>
 </plist>

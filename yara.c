@@ -35,10 +35,20 @@ GNU General Public License for more details.
 int recursive_search = FALSE;
 int show_tags = FALSE;
 int show_specified_tags = FALSE;
+int show_specified_rules = FALSE;
 int show_strings = FALSE;
 int negate = FALSE;
 
-TAG* specified_tag_list = NULL;
+TAG* specified_tags_list = NULL;
+
+typedef struct _IDENTIFIER
+{
+	char*			name;
+	struct _IDENTIFIER*	next;
+	
+} IDENTIFIER;
+
+IDENTIFIER* specified_rules_list = NULL;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -47,10 +57,11 @@ void show_help()
 {
     printf("usage:  yara [ -t tag ] [ -n ] [ -g ] [ -s ] [ -r ] [ -v ] [RULEFILE...] FILE\n");
     printf("options:\n");
-	printf("  -t <tag>          print rules tagged as <tag> and ignore the rest. This option can be used more than once.\n");
-	printf("  -n                print rules that doesn't apply (negate).\n");
+	printf("  -t <tag>          print rules tagged as <tag> and ignore the rest. Can be used more than once.\n");
+    printf("  -i <identifier>   print rules named <identifier> and ignore the rest. Can be used more than once.\n");
+	printf("  -n                print only not satisfied rules (negate).\n");
 	printf("  -g                print tags.\n");
-	printf("  -s                print strings.\n");
+	printf("  -s                print matching strings.\n");
     printf("  -r                recursively search directories.\n");
 	printf("  -v                show version information.\n");
 	printf("\nReport bugs to: <%s>\n", PACKAGE_BUGREPORT);
@@ -205,6 +216,7 @@ void print_hex_string(unsigned char* buffer, unsigned int buffer_size, unsigned 
 int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* data)
 {
 	TAG* tag;
+    IDENTIFIER* identifier;
 	STRING* string;
 	MATCH* match;
 	
@@ -215,7 +227,7 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
 	if (show_specified_tags)
 	{
 		show = FALSE;
-		tag = specified_tag_list;
+		tag = specified_tags_list;
 		
 		while (tag != NULL)
 		{
@@ -226,6 +238,23 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
 			}
 			
 			tag = tag->next;
+		}
+	}
+	
+	if (show_specified_rules)
+	{
+		show = FALSE;
+		identifier = specified_rules_list;
+		
+		while (identifier != NULL)
+		{
+            if (strcmp(identifier->name, rule->identifier) == 0)
+            {
+                show = TRUE;
+                break;
+            }
+			
+			identifier = identifier->next;
 		}
 	}
 	
@@ -317,9 +346,10 @@ int process_cmd_line(int argc, char const* argv[])
 {
 	char c;	
 	TAG* tag;
+    IDENTIFIER* identifier;
 	opterr = 0;
  
-	while ((c = getopt (argc, (char**) argv, "rnsvgt:")) != -1)
+	while ((c = getopt (argc, (char**) argv, "rnsvgt:i:")) != -1)
 	{
 		switch (c)
 	    {
@@ -352,8 +382,8 @@ int process_cmd_line(int argc, char const* argv[])
 				if (tag != NULL)
 				{
 					tag->identifier = optarg;
-					tag->next = specified_tag_list;
-					specified_tag_list = tag;
+					tag->next = specified_tags_list;
+					specified_tags_list = tag;
 				}
 				else
 				{
@@ -361,6 +391,26 @@ int process_cmd_line(int argc, char const* argv[])
 					return 0;
 				}
 	
+		        break;
+		        
+	       	case 'i':
+
+				show_specified_rules = TRUE;
+
+				identifier = malloc(sizeof(IDENTIFIER));	
+
+				if (identifier != NULL)
+				{
+					identifier->name = optarg;
+					identifier->next = specified_rules_list;
+					specified_rules_list = identifier;
+				}
+				else
+				{
+					fprintf (stderr, "Not enough memory.\n", optopt);
+					return 0;
+				}
+
 		        break;
 	
 		    case '?':
@@ -467,7 +517,7 @@ int main(int argc, char const* argv[])
 	
 	/* free tag list allocated by process_cmd_line */
 	
-	tag = specified_tag_list;
+	tag = specified_tags_list;
 	
 	while(tag != NULL)
 	{

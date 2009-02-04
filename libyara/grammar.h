@@ -57,21 +57,24 @@
      _OF_ = 283,
      _THEM_ = 284,
      _SECTION_ = 285,
-     _MZ_ = 286,
-     _PE_ = 287,
-     _DLL_ = 288,
-     _TRUE_ = 289,
-     _FALSE_ = 290,
-     _OR_ = 291,
-     _AND_ = 292,
-     _NOT_ = 293,
-     _IS_ = 294,
-     _NEQ_ = 295,
-     _EQ_ = 296,
-     _GE_ = 297,
-     _GT_ = 298,
-     _LE_ = 299,
-     _LT_ = 300
+     _BYTE_ = 286,
+     _WORD_ = 287,
+     _DWORD_ = 288,
+     _MZ_ = 289,
+     _PE_ = 290,
+     _DLL_ = 291,
+     _TRUE_ = 292,
+     _FALSE_ = 293,
+     _OR_ = 294,
+     _AND_ = 295,
+     _NOT_ = 296,
+     _IS_ = 297,
+     _NEQ_ = 298,
+     _EQ_ = 299,
+     _GE_ = 300,
+     _GT_ = 301,
+     _LE_ = 302,
+     _LT_ = 303
    };
 #endif
 #define _RULE_ 258
@@ -102,27 +105,30 @@
 #define _OF_ 283
 #define _THEM_ 284
 #define _SECTION_ 285
-#define _MZ_ 286
-#define _PE_ 287
-#define _DLL_ 288
-#define _TRUE_ 289
-#define _FALSE_ 290
-#define _OR_ 291
-#define _AND_ 292
-#define _NOT_ 293
-#define _IS_ 294
-#define _NEQ_ 295
-#define _EQ_ 296
-#define _GE_ 297
-#define _GT_ 298
-#define _LE_ 299
-#define _LT_ 300
+#define _BYTE_ 286
+#define _WORD_ 287
+#define _DWORD_ 288
+#define _MZ_ 289
+#define _PE_ 290
+#define _DLL_ 291
+#define _TRUE_ 292
+#define _FALSE_ 293
+#define _OR_ 294
+#define _AND_ 295
+#define _NOT_ 296
+#define _IS_ 297
+#define _NEQ_ 298
+#define _EQ_ 299
+#define _GE_ 300
+#define _GT_ 301
+#define _LE_ 302
+#define _LT_ 303
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 78 "grammar.y"
+#line 81 "grammar.y"
 typedef union YYSTYPE {
     
     void*           sized_string;
@@ -134,7 +140,7 @@ typedef union YYSTYPE {
 
 } YYSTYPE;
 /* Line 1318 of yacc.c.  */
-#line 138 "grammar.h"
+#line 144 "grammar.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

@@ -42,6 +42,9 @@
 %token _OF_
 %token _THEM_
 %token <term> _SECTION_
+%token _BYTE_
+%token _WORD_
+%token _DWORD_
 
 %token _MZ_
 %token _PE_
@@ -116,6 +119,7 @@ TERM* reduce_constant(unsigned int constant);
 TERM* reduce_rule(char* identifier);
 TERM* reduce_boolean_expression_list(TERM* boolean_expression_list_head, TERM* boolean_expression);
 TERM* reduce_n_of_them(TERM* n);
+
 
 %} 
 
@@ -331,6 +335,9 @@ boolean_expressions : boolean_expression
                             
 expression : _SIZE_                             { $$ = reduce_filesize(); }
            | _ENTRYPOINT_                       { $$ = reduce_entrypoint(); }
+           | _BYTE_  '[' expression ']'         { $$ = reduce_term(TERM_TYPE_BYTE_AT_OFFSET, $3, NULL); }
+           | _WORD_  '[' expression ']'         { $$ = reduce_term(TERM_TYPE_WORD_AT_OFFSET, $3, NULL); }
+           | _DWORD_ '[' expression ']'         { $$ = reduce_term(TERM_TYPE_DWORD_AT_OFFSET, $3, NULL); }
            | _STRING_COUNT_                         
              { 
                     $$ = reduce_string_count($1); 
@@ -475,9 +482,17 @@ TERM* reduce_entrypoint()
 
 TERM* reduce_term(int type, TERM* op1, TERM* op2)
 {
-    TERM_BINARY_OPERATION* term = NULL;
+    TERM* term = NULL;
     
-    last_error = new_binary_operation(type, op1, op2, &term);
+    if (op2 == NULL)
+    {
+        last_error = new_unary_operation(type, op1, (TERM_UNARY_OPERATION**) &term);
+    }
+    else
+    {
+        last_error = new_binary_operation(type, op1, op2, (TERM_BINARY_OPERATION**) &term);
+    }
+    
     return (TERM*) term;
 }
 
@@ -609,9 +624,9 @@ TERM* reduce_boolean_expression_list(TERM* boolean_expression_list_head, TERM* b
 TERM* reduce_n_of_them(TERM* n)
 {
     STRING* string;
-    TERM_BINARY_OPERATION* term;
+    TERM_UNARY_OPERATION* term;
     
-    last_error = new_binary_operation(TERM_TYPE_OF_THEM, n, NULL, &term);
+    last_error = new_unary_operation(TERM_TYPE_OF_THEM, n, &term);
     
     /* the keyword THEM implicitly references all the strings 
        on the rule, so let's flag them as referenced */
@@ -626,6 +641,9 @@ TERM* reduce_n_of_them(TERM* n)
     
     return (TERM*) term;  
 }
+
+
+
 
 
     

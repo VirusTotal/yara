@@ -38,7 +38,7 @@ void show_last_error()
 		case ERROR_INSUFICIENT_MEMORY:
 		    yyerror("not enough memory");
 			break;
-		case ERROR_DUPLICATERULEIDENTIFIER:
+		case ERROR_DUPLICATE_RULE_IDENTIFIER:
 			sprintf(errmsg, "duplicate rule identifier \"%s\"", last_error_extra_info);
 			yyerror(errmsg);
 			break;
@@ -78,6 +78,22 @@ void show_last_error()
 			sprintf(errmsg, "misplaced wildcard or skip at string \"%s\", wildcards and skips are only allowed after the first byte of the string", last_error_extra_info);
 			yyerror(errmsg);
 			break;
+		case ERROR_MISPLACED_OR_OPERATOR:
+		    sprintf(errmsg, "misplaced OR (|) operator at string \"%s\"", last_error_extra_info);
+			yyerror(errmsg);
+			break;
+		case ERROR_NESTED_OR_OPERATION:
+	        sprintf(errmsg, "nested OR (|) operator at string \"%s\"", last_error_extra_info);
+		    yyerror(errmsg);
+		    break;		
+		case ERROR_INVALID_OR_OPERATION_SYNTAX:
+		    sprintf(errmsg, "invalid syntax at hex string \"%s\"", last_error_extra_info);
+			yyerror(errmsg);
+			break;
+		case ERROR_SKIP_INSIDE_OR_OPERATION:
+    		sprintf(errmsg, "skip inside an OR (|) operation at string \"%s\"", last_error_extra_info);
+    		yyerror(errmsg);
+    		break;
 		case ERROR_UNDEFINED_STRING:
 			sprintf(errmsg, "undefined string %s", last_error_extra_info);
 			yyerror(errmsg);
