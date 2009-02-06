@@ -56,6 +56,9 @@ hexdigit      [a-fA-F0-9]
 "in"                 { return _IN_;         }
 "of"                 { return _OF_;         }
 "them"				 { return _THEM_;		}
+"for"				 { return _FOR_;        }
+"all"				 { return _ALL_;		}
+"any"				 { return _ANY_;		}
 "entrypoint"         { return _ENTRYPOINT_; }
 "filesize"			 { return _SIZE_;       }
 "rva"			     { return _RVA_;   	    }
@@ -63,9 +66,12 @@ hexdigit      [a-fA-F0-9]
 "file"				 { return _FILE_;       }
 "is"				 { return _IS_;         }
 "section"			 { return _SECTION_;    }
-"byte"				 { return _BYTE_;    	}
-"word"				 { return _WORD_;    	}
-"dword"				 { return _DWORD_;    	}
+"uint8"				 { return _UINT8_;    	}
+"uint16"			 { return _UINT16_;    	}
+"uint32"		 	 { return _UINT32_;    	}
+"int8"				 { return _INT8_;    	}
+"int16"				 { return _INT16_;    	}
+"int32"		 		 { return _INT32_;    	}
 
 
 
@@ -84,11 +90,17 @@ hexdigit      [a-fA-F0-9]
 
 								line_number++;
 							}
+							
+$({letter}|{digit})*"*" {
+                       		yylval.c_string = (char*) strdup(yytext);
+                       		return _STRING_IDENTIFIER_WITH_WILDCARD_;      
+					 	}
 
 $({letter}|{digit})* {
                        		yylval.c_string = (char*) strdup(yytext);
                        		return _STRING_IDENTIFIER_;      
 					 }
+				
 					
 #({letter}|{digit})* {	
                        		yylval.c_string = (char*) strdup(yytext);

@@ -24,13 +24,15 @@ typedef struct _EVALUATION_CONTEXT
     unsigned char* data;
 	unsigned int file_size;
 	unsigned int entry_point;
+
     RULE* rule;
+    STRING* current_string;
 
 } EVALUATION_CONTEXT;
 
 
 
-unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context);
+int evaluate(TERM* term, EVALUATION_CONTEXT* context);
 
 #endif
 

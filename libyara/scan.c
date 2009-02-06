@@ -33,6 +33,10 @@ GNU General Public License for more details.
 #define FALSE 0
 #endif
 
+#ifdef WIN32
+#define inline __inline
+#endif
+
 
 /* Function implementations */
 

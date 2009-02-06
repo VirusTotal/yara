@@ -23,7 +23,9 @@ GNU General Public License for more details.
 
 /* Module globals */
 
-static PyObject *yara_error = NULL;
+static PyObject *YaraError = NULL;
+static PyObject *YaraSyntaxError = NULL;
+
 
 static char* module_doc = "\
 This module allows you to apply YARA rules to files or strings. You will need to        \n\
@@ -248,6 +250,7 @@ static PyObject * Rules_NEW(char* filepath)
     RULE_LIST* rules;
     Rules* object;
     int errors;
+    char errmsg[500];
     
     rules = alloc_rule_list();
     
@@ -263,6 +266,8 @@ static PyObject * Rules_NEW(char* filepath)
         free_rule_list(rules);
         return PyErr_SetFromErrno(PyExc_IOError);
     }
+    
+    set_abort_on_first_error(TRUE);
         
     errors = compile_rules(file, rules);
     
@@ -270,8 +275,9 @@ static PyObject * Rules_NEW(char* filepath)
         
     if (errors > 0)   /* errors during compilation */
     {
-        free_rule_list(rules);              
-        return PyErr_Format(PyExc_Exception, "error compiling rules"); 
+        get_error_message(get_last_error(), errmsg, 500);
+        free_rule_list(rules);             
+        return PyErr_Format(YaraSyntaxError, errmsg); 
     }
     
     object = PyObject_NEW(Rules, &Rules_Type);
@@ -287,7 +293,7 @@ static PyObject * Rules_NEW(char* filepath)
 }
 
 static void Rules_dealloc(PyObject *self)
-{      
+{     
     free_hash_table(((Rules*) self)->rules);
     free_rule_list(((Rules*) self)->rules);
     PyObject_Del(self);
@@ -449,9 +455,12 @@ void inityara(void)
     /* initialize module variables/constants */
 
 #if PYTHON_API_VERSION >= 1007
-    yara_error = PyErr_NewException("yara.error", NULL, NULL);
+    YaraError = PyErr_NewException("yara.Error", PyExc_StandardError, NULL);
+    YaraSyntaxError = PyErr_NewException("yara.SyntaxError", YaraError, NULL);
 #else
-    yara_error = Py_BuildValue("s", "yara.error");
+    yara_error = Py_BuildValue("s", "yara.Error");
+    yara_error = Py_BuildValue("s", "yara.SyntaxError");
 #endif
-    PyDict_SetItemString(d, "error", yara_error);
+    PyDict_SetItemString(d, "Error", YaraError);
+    PyDict_SetItemString(d, "SyntaxError", YaraSyntaxError);
 }

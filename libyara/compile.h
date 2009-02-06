@@ -19,13 +19,10 @@ GNU General Public License for more details.
 
 #include "ast.h"
 
-extern int line_number;
-extern const char* file_name;
 extern RULE_LIST* rule_list;
 
 extern FILE *yyin;
 extern int yydebug;
-
 
 int yylex (void); 
 int yyparse (void); 

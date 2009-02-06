@@ -56,52 +56,66 @@ GNU General Public License for more details.
 #define TERM_TYPE_EQ                                 12  
 #define TERM_TYPE_NOT_EQ                             13       
 #define TERM_TYPE_RANGE                              14          
-#define TERM_TYPE_STRING                             15          
+#define TERM_TYPE_STRING                             15       
 #define TERM_TYPE_STRING_AT                          16          
 #define TERM_TYPE_STRING_IN_RANGE                    17 
 #define TERM_TYPE_STRING_IN_SECTION_BY_NAME		 	 18     
 #define TERM_TYPE_STRING_IN_SECTION_BY_INDEX		 19      
 #define TERM_TYPE_STRING_COUNT                       20          
-#define TERM_TYPE_OF                                 21          
-#define TERM_TYPE_FILESIZE              	         22          
-#define TERM_TYPE_ENTRYPOINT						 23			
-#define TERM_TYPE_RULE                               24
-#define TERM_TYPE_OF_THEM                            25
-#define TERM_TYPE_BYTE_AT_OFFSET                     26
-#define TERM_TYPE_WORD_AT_OFFSET                     27
-#define TERM_TYPE_DWORD_AT_OFFSET                    28
+#define TERM_TYPE_OF                                 21 
+#define TERM_TYPE_FOR                                22         
+#define TERM_TYPE_FILESIZE              	         23          
+#define TERM_TYPE_ENTRYPOINT						 24			
+#define TERM_TYPE_RULE                               25
+#define TERM_TYPE_INT8_AT_OFFSET                     26
+#define TERM_TYPE_INT16_AT_OFFSET                    27
+#define TERM_TYPE_INT32_AT_OFFSET                    28
+#define TERM_TYPE_UINT8_AT_OFFSET                    29
+#define TERM_TYPE_UINT16_AT_OFFSET                   30
+#define TERM_TYPE_UINT32_AT_OFFSET                   31
+                  
 
 
 typedef struct _TERM_CONST
 {
 	int				type;
-   	TERM*  			next;           /* used to link a set of terms for the OF operator e.g: 2 OF ($A,$B,$C) */
-	unsigned int	value;
+	int         	value;
 
 } TERM_CONST;
+
 
 typedef struct _TERM_UNARY_OPERATION
 {
 	int				type;
-    TERM*  			next;           /* used to link a set of terms for the OF operator e.g: 2 OF ($A,$B,$C) */
     TERM*			op;
 	
 } TERM_UNARY_OPERATION;
 
+
 typedef struct _TERM_BINARY_OPERATION
 {
 	int				type;
-    TERM*  			next;           /* used to link a set of terms for the OF operator e.g: 2 OF ($A,$B,$C) */
 	TERM*			op1;
 	TERM*			op2;
 	
 } TERM_BINARY_OPERATION;
 
-typedef struct _TERM_STRING
+
+typedef struct _TERM_TERNARY_OPERATION
 {
 	int				type;
-    TERM*			next;           /* used to link a set of terms for the OF operator e.g: 2 OF ($A,$B,$C) */
-	STRING*			string;
+	TERM*			op1;
+	TERM*			op2;
+    TERM*           op3;
+	
+} TERM_TERNARY_OPERATION;
+
+
+typedef struct _TERM_STRING
+{
+	int			        	type;
+    struct _TERM_STRING*	next;           /* used to link a set of terms for the OF operator e.g: 2 OF ($A,$B,$C) */
+	STRING*		        	string;
 	
 	union {
 		TERM*			offset;
@@ -125,6 +139,8 @@ int new_simple_term(int type, TERM** term);
 int new_unary_operation(int type, TERM* op1, TERM_UNARY_OPERATION** term);
 
 int new_binary_operation(int type, TERM* op1, TERM* op2, TERM_BINARY_OPERATION** term);
+
+int new_ternary_operation(int type, TERM* op1, TERM* op2, TERM* op3, TERM_TERNARY_OPERATION** term);
 
 int new_constant(unsigned int constant, TERM_CONST** term);
 

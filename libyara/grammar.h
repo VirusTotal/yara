@@ -38,43 +38,51 @@
      _IDENTIFIER_ = 264,
      _STRING_IDENTIFIER_ = 265,
      _STRING_COUNT_ = 266,
-     _NUMBER_ = 267,
-     _UNKNOWN_ = 268,
-     _TEXTSTRING_ = 269,
-     _HEXSTRING_ = 270,
-     _REGEXP_ = 271,
-     _ASCII_ = 272,
-     _WIDE_ = 273,
-     _NOCASE_ = 274,
-     _FULLWORD_ = 275,
-     _AT_ = 276,
-     _SIZE_ = 277,
-     _ENTRYPOINT_ = 278,
-     _RVA_ = 279,
-     _OFFSET_ = 280,
-     _FILE_ = 281,
-     _IN_ = 282,
-     _OF_ = 283,
-     _THEM_ = 284,
-     _SECTION_ = 285,
-     _BYTE_ = 286,
-     _WORD_ = 287,
-     _DWORD_ = 288,
-     _MZ_ = 289,
-     _PE_ = 290,
-     _DLL_ = 291,
-     _TRUE_ = 292,
-     _FALSE_ = 293,
-     _OR_ = 294,
-     _AND_ = 295,
-     _NOT_ = 296,
-     _IS_ = 297,
-     _NEQ_ = 298,
-     _EQ_ = 299,
-     _GE_ = 300,
-     _GT_ = 301,
-     _LE_ = 302,
-     _LT_ = 303
+     _STRING_IDENTIFIER_WITH_WILDCARD_ = 267,
+     _ANONYMOUS_STRING_ = 268,
+     _NUMBER_ = 269,
+     _UNKNOWN_ = 270,
+     _TEXTSTRING_ = 271,
+     _HEXSTRING_ = 272,
+     _REGEXP_ = 273,
+     _ASCII_ = 274,
+     _WIDE_ = 275,
+     _NOCASE_ = 276,
+     _FULLWORD_ = 277,
+     _AT_ = 278,
+     _SIZE_ = 279,
+     _ENTRYPOINT_ = 280,
+     _ALL_ = 281,
+     _ANY_ = 282,
+     _RVA_ = 283,
+     _OFFSET_ = 284,
+     _FILE_ = 285,
+     _IN_ = 286,
+     _OF_ = 287,
+     _FOR_ = 288,
+     _THEM_ = 289,
+     _SECTION_ = 290,
+     _INT8_ = 291,
+     _INT16_ = 292,
+     _INT32_ = 293,
+     _UINT8_ = 294,
+     _UINT16_ = 295,
+     _UINT32_ = 296,
+     _MZ_ = 297,
+     _PE_ = 298,
+     _DLL_ = 299,
+     _TRUE_ = 300,
+     _FALSE_ = 301,
+     _OR_ = 302,
+     _AND_ = 303,
+     _NOT_ = 304,
+     _IS_ = 305,
+     _NEQ_ = 306,
+     _EQ_ = 307,
+     _GE_ = 308,
+     _GT_ = 309,
+     _LE_ = 310,
+     _LT_ = 311
    };
 #endif
 #define _RULE_ 258
@@ -86,49 +94,57 @@
 #define _IDENTIFIER_ 264
 #define _STRING_IDENTIFIER_ 265
 #define _STRING_COUNT_ 266
-#define _NUMBER_ 267
-#define _UNKNOWN_ 268
-#define _TEXTSTRING_ 269
-#define _HEXSTRING_ 270
-#define _REGEXP_ 271
-#define _ASCII_ 272
-#define _WIDE_ 273
-#define _NOCASE_ 274
-#define _FULLWORD_ 275
-#define _AT_ 276
-#define _SIZE_ 277
-#define _ENTRYPOINT_ 278
-#define _RVA_ 279
-#define _OFFSET_ 280
-#define _FILE_ 281
-#define _IN_ 282
-#define _OF_ 283
-#define _THEM_ 284
-#define _SECTION_ 285
-#define _BYTE_ 286
-#define _WORD_ 287
-#define _DWORD_ 288
-#define _MZ_ 289
-#define _PE_ 290
-#define _DLL_ 291
-#define _TRUE_ 292
-#define _FALSE_ 293
-#define _OR_ 294
-#define _AND_ 295
-#define _NOT_ 296
-#define _IS_ 297
-#define _NEQ_ 298
-#define _EQ_ 299
-#define _GE_ 300
-#define _GT_ 301
-#define _LE_ 302
-#define _LT_ 303
+#define _STRING_IDENTIFIER_WITH_WILDCARD_ 267
+#define _ANONYMOUS_STRING_ 268
+#define _NUMBER_ 269
+#define _UNKNOWN_ 270
+#define _TEXTSTRING_ 271
+#define _HEXSTRING_ 272
+#define _REGEXP_ 273
+#define _ASCII_ 274
+#define _WIDE_ 275
+#define _NOCASE_ 276
+#define _FULLWORD_ 277
+#define _AT_ 278
+#define _SIZE_ 279
+#define _ENTRYPOINT_ 280
+#define _ALL_ 281
+#define _ANY_ 282
+#define _RVA_ 283
+#define _OFFSET_ 284
+#define _FILE_ 285
+#define _IN_ 286
+#define _OF_ 287
+#define _FOR_ 288
+#define _THEM_ 289
+#define _SECTION_ 290
+#define _INT8_ 291
+#define _INT16_ 292
+#define _INT32_ 293
+#define _UINT8_ 294
+#define _UINT16_ 295
+#define _UINT32_ 296
+#define _MZ_ 297
+#define _PE_ 298
+#define _DLL_ 299
+#define _TRUE_ 300
+#define _FALSE_ 301
+#define _OR_ 302
+#define _AND_ 303
+#define _NOT_ 304
+#define _IS_ 305
+#define _NEQ_ 306
+#define _EQ_ 307
+#define _GE_ 308
+#define _GT_ 309
+#define _LE_ 310
+#define _LT_ 311
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 81 "grammar.y"
+#line 92 "grammar.y"
 typedef union YYSTYPE {
     
     void*           sized_string;
@@ -140,7 +156,7 @@ typedef union YYSTYPE {
 
 } YYSTYPE;
 /* Line 1318 of yacc.c.  */
-#line 144 "grammar.h"
+#line 160 "grammar.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

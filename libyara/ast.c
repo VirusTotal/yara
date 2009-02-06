@@ -552,7 +552,6 @@ int new_unary_operation(int type, TERM* op, TERM_UNARY_OPERATION** term)
     {
         new_term->type = type;
         new_term->op = op;
-        new_term->next = NULL;
     }
     else
     {
@@ -575,7 +574,29 @@ int new_binary_operation(int type, TERM* op1, TERM* op2, TERM_BINARY_OPERATION**
         new_term->type = type;
         new_term->op1 = op1;
         new_term->op2 = op2;
-        new_term->next = NULL;
+    }
+    else
+    {
+        result = ERROR_INSUFICIENT_MEMORY;
+    }
+    
+    *term = new_term;   
+    return result;
+}
+
+int new_ternary_operation(int type, TERM* op1, TERM* op2, TERM* op3, TERM_TERNARY_OPERATION** term)
+{
+    TERM_TERNARY_OPERATION* new_term;
+    int result = ERROR_SUCCESS;
+    
+    new_term = (TERM_TERNARY_OPERATION*) malloc(sizeof(TERM_TERNARY_OPERATION));
+    
+    if (new_term != NULL)
+    {
+        new_term->type = type;
+        new_term->op1 = op1;
+        new_term->op2 = op2;
+        new_term->op3 = op3;
     }
     else
     {
@@ -597,7 +618,6 @@ int new_constant(unsigned int constant, TERM_CONST** term)
     {
         new_term->type = TERM_TYPE_CONST;
         new_term->value = constant;
-        new_term->next = NULL;
     }
     else
     {
@@ -614,34 +634,68 @@ int new_string_identifier(int type, STRING* defined_strings, char* identifier, T
     STRING* string;
     int result = ERROR_SUCCESS;
     
-    string = lookup_string(defined_strings, identifier);
-    
-    if (string != NULL)
+    if (strcmp(identifier, "$") != 0) /* non-anonymous strings */
     {
-		/* the string has been used in an expression, mark it as referenced */
-		string->flags |= STRING_FLAGS_REFERENCED;  
+        string = lookup_string(defined_strings, identifier);
+      
+        if (string != NULL)
+        {
+    		/* the string has been used in an expression, mark it as referenced */
+    		string->flags |= STRING_FLAGS_REFERENCED;  
 	
+            new_term = (TERM_STRING*) malloc(sizeof(TERM_STRING));
+
+            if (new_term != NULL)
+            {
+                new_term->type = type;
+                new_term->string = string;
+                new_term->next = NULL;
+            }
+        }
+        else
+        {
+            result = ERROR_UNDEFINED_STRING;
+        }
+    }
+    else  /* anonymous strings */
+    {
         new_term = (TERM_STRING*) malloc(sizeof(TERM_STRING));
 
         if (new_term != NULL)
         {
             new_term->type = type;
-            new_term->string = string;
+            new_term->string = NULL;
             new_term->next = NULL;
-        }
-        else
-        {
-            result = ERROR_INSUFICIENT_MEMORY;
-        }
-    }
-    else
-    {
-        result = ERROR_UNDEFINED_STRING;
+        }      
     }
     
     *term = new_term;   
     return result;
 }
+
+int new_anonymous_string_identifier(int type, STRING* defined_strings, TERM_STRING** term)
+{
+    TERM_STRING* new_term = NULL;
+    STRING* string;
+    int result = ERROR_SUCCESS;
+    
+    new_term = (TERM_STRING*) malloc(sizeof(TERM_STRING));
+
+    if (new_term != NULL)
+    {
+        new_term->type = type;
+        new_term->string = NULL;
+        new_term->next = NULL;
+    }
+    else
+    {
+        result = ERROR_INSUFICIENT_MEMORY;
+    }
+
+    *term = new_term;   
+    return result;
+}
+
 
 
 
@@ -658,6 +712,9 @@ void free_term(TERM* term)
 {
     switch(term->type)
     {
+    case TERM_TYPE_STRING:
+        break;//TODO: free next
+    
 	case TERM_TYPE_STRING_AT:
 		free_term(((TERM_STRING*)term)->offset);
 		break;
@@ -682,15 +739,18 @@ void free_term(TERM* term)
     case TERM_TYPE_GE:       
     case TERM_TYPE_LE:
     case TERM_TYPE_EQ:
+    case TERM_TYPE_OF:
         free_term(((TERM_BINARY_OPERATION*)term)->op1);
         free_term(((TERM_BINARY_OPERATION*)term)->op2);
         break;        
-                      
-    case TERM_TYPE_NOT: 
-    case TERM_TYPE_OF_THEM:   
-    case TERM_TYPE_BYTE_AT_OFFSET:
-    case TERM_TYPE_WORD_AT_OFFSET:
-    case TERM_TYPE_DWORD_AT_OFFSET:
+                  
+    case TERM_TYPE_NOT:
+    case TERM_TYPE_INT8_AT_OFFSET:
+    case TERM_TYPE_INT16_AT_OFFSET:
+    case TERM_TYPE_INT32_AT_OFFSET:  
+    case TERM_TYPE_UINT8_AT_OFFSET:
+    case TERM_TYPE_UINT16_AT_OFFSET:
+    case TERM_TYPE_UINT32_AT_OFFSET:
         free_term(((TERM_UNARY_OPERATION*)term)->op);
         break;
     }

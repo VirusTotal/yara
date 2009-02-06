@@ -20,10 +20,15 @@ GNU General Public License for more details.
 extern int yynerrs;
 void yyerror (char const *);
 
+extern int line_number;
 extern int last_error;
+extern int abort_on_first_error;
+
 extern char last_error_extra_info[100];
+extern const char* file_name;
 
 void show_last_error();
+
 
 #endif
 

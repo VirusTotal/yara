@@ -439,6 +439,11 @@ int process_cmd_line(int argc, char const* argv[])
 	
 }
 
+void report_error(const char* file_name, int line_number, const char* error_message)
+{
+    fprintf(stderr, "%s:%d: %s\n", file_name, line_number, error_message);
+}
+
 int main(int argc, char const* argv[])
 {
 	int i, errors;
@@ -462,7 +467,8 @@ int main(int argc, char const* argv[])
 	
 	if (rules == NULL) 
 		return 0;
-		
+	
+	set_report_function(report_error);	
 			
 	for (i = optind; i < argc - 1; i++)
 	{
@@ -471,7 +477,7 @@ int main(int argc, char const* argv[])
 		if (rule_file != NULL)
 		{
 			set_file_name(argv[i]);
-			
+            			
 			errors = compile_rules(rule_file, rules);
 			
 			fclose(rule_file);

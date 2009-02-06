@@ -3,6 +3,7 @@
     
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 
 #include "ast.h"
 #include "error.h"
@@ -10,6 +11,7 @@
 #include "sizedstr.h"
 
 #define YYERROR_VERBOSE
+//#define YYDEBUG 1
 
 %} 
 
@@ -22,6 +24,8 @@
 %token <c_string> _IDENTIFIER_
 %token <term> _STRING_IDENTIFIER_
 %token <term> _STRING_COUNT_
+%token <term> _STRING_IDENTIFIER_WITH_WILDCARD_
+%token <term> _ANONYMOUS_STRING_
 %token <integer> _NUMBER_
 %token _UNKNOWN_
 %token <sized_string> _TEXTSTRING_
@@ -35,16 +39,22 @@
 %token _AT_
 %token _SIZE_
 %token _ENTRYPOINT_
+%token _ALL_
+%token _ANY_
 %token _RVA_
 %token _OFFSET_
 %token _FILE_
 %token _IN_
 %token _OF_
+%token _FOR_
 %token _THEM_
 %token <term> _SECTION_
-%token _BYTE_
-%token _WORD_
-%token _DWORD_
+%token _INT8_
+%token _INT16_
+%token _INT32_
+%token _UINT8_
+%token _UINT16_
+%token _UINT32_
 
 %token _MZ_
 %token _PE_
@@ -58,7 +68,7 @@
 %left _NOT_
 %left _LT_ _LE_ _GT_ _GE_ _EQ_ _NEQ_ _IS_
 %left '+' '-' 
-%left '*' '/'
+%left '*' '\\'
 
 %type <string> strings
 %type <string> string_declaration
@@ -75,8 +85,9 @@
 %type <term> boolean_expression
 %type <term> expression
 %type <term> number
-%type <term> boolean_expression_list
-%type <term> boolean_expressions
+%type <term> string_set
+%type <term> string_enumeration
+%type <term> string_enumeration_item
 
 %union {
     
@@ -97,6 +108,7 @@
 /* Global variables */
 
 STRING* current_rule_strings;
+int inside_for = 0;
 
 /* Function declarations */
 
@@ -106,6 +118,9 @@ TAG* reduce_tags(TAG* tag_list_head, char* identifier);
 STRING* reduce_string_declaration(char* identifier, SIZED_STRING* str, int flags);
 STRING* reduce_strings(STRING* string_list_head, STRING* string);
 
+TERM* reduce_string_enumeration(TERM* string_list_head, TERM* string_identifier);
+TERM* reduce_string_with_wildcard(char* identifier);
+
 TERM* reduce_string(char* identifier);
 TERM* reduce_string_at(char* identifier, TERM* offset);
 TERM* reduce_string_in_range(char* identifier, TERM* lower_offset, TERM* upper_offset);
@@ -114,12 +129,12 @@ TERM* reduce_string_count(char* identifier);
 
 TERM* reduce_filesize();
 TERM* reduce_entrypoint();
-TERM* reduce_term(int type, TERM* op1, TERM* op2);
+
+TERM* reduce_term(int type, TERM* op1, TERM* op2, TERM* op3);
 TERM* reduce_constant(unsigned int constant);
 TERM* reduce_rule(char* identifier);
-TERM* reduce_boolean_expression_list(TERM* boolean_expression_list_head, TERM* boolean_expression);
-TERM* reduce_n_of_them(TERM* n);
 
+int count_strings(TERM_STRING* st);
 
 %} 
 
@@ -136,6 +151,12 @@ rules :  /* empty */
             }
       }
       | rules error '}' /* on error skip until end of rule*/
+      {
+           if (abort_on_first_error)
+           {
+               YYERROR;
+           }
+      }
       ;
 
 rule    :   rule_modifiers _RULE_ _IDENTIFIER_ tags '{' _CONDITION_ ':' boolean_expression '}'                          { reduce_rule_declaration($3,$1,$4,0,$8);    }
@@ -281,7 +302,7 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                      { 
                         $$ = NULL; 
                      }
-                   | _STRING_IDENTIFIER_ _IN_ '[' expression '.' '.' expression ']'                     
+                   | _STRING_IDENTIFIER_ _IN_ '(' expression '.' '.' expression ')'                     
                      {          
                         $$ = reduce_string_in_range($1, $4, $7);
                         
@@ -292,7 +313,7 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                             YYERROR;
                         }
                      }
-                   | _STRING_IDENTIFIER_ _IN_ _SECTION_ '[' _TEXTSTRING_ ']'                    
+                   | _STRING_IDENTIFIER_ _IN_ _SECTION_ '(' _TEXTSTRING_ ')'                    
                      {          
                         $$ = reduce_string_in_section_by_name($1, $5);
 
@@ -303,41 +324,105 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                             YYERROR;
                         }
                      }
+                   | _FOR_ expression _OF_ string_set ':'
+                      { 
+                          inside_for++; 
+                      }           
+                      '(' boolean_expression ')'                     
+                      { 
+                           inside_for--; 
+                           $$ = reduce_term(TERM_TYPE_FOR, $2, $4, $8); 
+                      }
+                   | _FOR_ _ALL_ _OF_ string_set ':'
+                     { 
+                         inside_for++; 
+                     }           
+                     '(' boolean_expression ')'                     
+                     { 
+                          inside_for--; 
+                          $$ = reduce_term(TERM_TYPE_FOR, reduce_constant(count_strings($4)), $4, $8); 
+                     }
+                   | _FOR_ _ANY_ _OF_ string_set ':'
+                     { 
+                           inside_for++; 
+                     }           
+                     '(' boolean_expression ')'                     
+                     { 
+                          inside_for--; 
+                          $$ = reduce_term(TERM_TYPE_FOR, reduce_constant(1), $4, $8); 
+                     }
+                   | expression _OF_ string_set                         
+                     { 
+                         $$ = reduce_term(TERM_TYPE_OF, $1, $3, NULL); 
+                     }
+                   | _ALL_ _OF_ string_set                              
+                     { 
+                         $$ = reduce_term(TERM_TYPE_OF, reduce_constant(count_strings($3)), $3, NULL); 
+                     }
+                   | _ANY_ _OF_ string_set                              
+                     { 
+                         $$ = reduce_term(TERM_TYPE_OF, reduce_constant(1), $3, NULL); 
+                     }
                    | _FILE_ _IS_ type                                   { $$ = NULL; }
                    | '(' boolean_expression ')'                         { $$ = $2; }
-                   | _NOT_ boolean_expression                           { $$ = reduce_term(TERM_TYPE_NOT, $2, NULL); }
-                   | boolean_expression _AND_ boolean_expression        { $$ = reduce_term(TERM_TYPE_AND, $1, $3); }
-                   | boolean_expression _OR_ boolean_expression         { $$ = reduce_term(TERM_TYPE_OR, $1, $3); }
-                   | boolean_expression _IS_ boolean_expression         { $$ = reduce_term(TERM_TYPE_EQ, $1, $3); }
-                   | expression _LT_ expression                         { $$ = reduce_term(TERM_TYPE_LT, $1, $3); }
-                   | expression _GT_ expression                         { $$ = reduce_term(TERM_TYPE_GT, $1, $3); }
-                   | expression _LE_ expression                         { $$ = reduce_term(TERM_TYPE_LE, $1, $3); }
-                   | expression _GE_ expression                         { $$ = reduce_term(TERM_TYPE_GE, $1, $3); }
-                   | expression _EQ_ expression                         { $$ = reduce_term(TERM_TYPE_EQ, $1, $3); }
-                   | expression _IS_ expression                         { $$ = reduce_term(TERM_TYPE_EQ, $1, $3); }
-                   | expression _NEQ_ expression                        { $$ = reduce_term(TERM_TYPE_NOT_EQ, $1, $3); }
-                   | number _OF_ boolean_expression_list                { $$ = reduce_term(TERM_TYPE_OF, $1, $3); }
-                   | number _OF_ _THEM_                                 { $$ = reduce_n_of_them($1); }
+                   | _NOT_ boolean_expression                           { $$ = reduce_term(TERM_TYPE_NOT, $2, NULL, NULL); }
+                   | boolean_expression _AND_ boolean_expression        { $$ = reduce_term(TERM_TYPE_AND, $1, $3, NULL); }
+                   | boolean_expression _OR_ boolean_expression         { $$ = reduce_term(TERM_TYPE_OR, $1, $3, NULL); }
+                   | boolean_expression _IS_ boolean_expression         { $$ = reduce_term(TERM_TYPE_EQ, $1, $3, NULL); }
+                   | expression _LT_ expression                         { $$ = reduce_term(TERM_TYPE_LT, $1, $3, NULL); }
+                   | expression _GT_ expression                         { $$ = reduce_term(TERM_TYPE_GT, $1, $3, NULL); }
+                   | expression _LE_ expression                         { $$ = reduce_term(TERM_TYPE_LE, $1, $3, NULL); }
+                   | expression _GE_ expression                         { $$ = reduce_term(TERM_TYPE_GE, $1, $3, NULL); }
+                   | expression _EQ_ expression                         { $$ = reduce_term(TERM_TYPE_EQ, $1, $3, NULL); }
+                   | expression _IS_ expression                         { $$ = reduce_term(TERM_TYPE_EQ, $1, $3, NULL); }
+                   | expression _NEQ_ expression                        { $$ = reduce_term(TERM_TYPE_NOT_EQ, $1, $3, NULL); }
                    ;    
+                  
 
-boolean_expression_list : '(' boolean_expressions ')'   { $$ = $2; }
-                        ;                           
+string_set  : '(' string_enumeration ')'            { $$ = $2; }
+            | _THEM_                                { $$ = reduce_string_with_wildcard(strdup("$*")); }
+            ;                           
                             
-boolean_expressions : boolean_expression
+string_enumeration  : string_enumeration_item
+                    | string_enumeration ',' string_enumeration_item
                       {
-                         $$ = reduce_boolean_expression_list(NULL,$1);
-                      }
-                    | boolean_expressions ',' boolean_expression
-                      {
-                         $$ = reduce_boolean_expression_list($1,$3);
+                         $$ = reduce_string_enumeration($1,$3);
                       }
                     ;
+                    
+string_enumeration_item : _STRING_IDENTIFIER_
+                          {  
+                              $$ = reduce_string($1);
+
+                              if ($$ == NULL)
+                              {
+                                  show_last_error();
+                                  yynerrs++;
+                                  YYERROR;
+                              }
+                          }
+                        | _STRING_IDENTIFIER_WITH_WILDCARD_     
+                          { 
+                              $$ = reduce_string_with_wildcard($1); 
+                              
+                              if ($$ == NULL)
+                              {
+                                  show_last_error();
+                                  yynerrs++;
+                                  YYERROR;
+                              }
+                          }
+                        ;
+
                             
 expression : _SIZE_                             { $$ = reduce_filesize(); }
            | _ENTRYPOINT_                       { $$ = reduce_entrypoint(); }
-           | _BYTE_  '[' expression ']'         { $$ = reduce_term(TERM_TYPE_BYTE_AT_OFFSET, $3, NULL); }
-           | _WORD_  '[' expression ']'         { $$ = reduce_term(TERM_TYPE_WORD_AT_OFFSET, $3, NULL); }
-           | _DWORD_ '[' expression ']'         { $$ = reduce_term(TERM_TYPE_DWORD_AT_OFFSET, $3, NULL); }
+           | _INT8_  '(' expression ')'         { $$ = reduce_term(TERM_TYPE_INT8_AT_OFFSET, $3, NULL, NULL); }
+           | _INT16_ '(' expression ')'         { $$ = reduce_term(TERM_TYPE_INT16_AT_OFFSET, $3, NULL, NULL); }
+           | _INT32_ '(' expression ')'         { $$ = reduce_term(TERM_TYPE_INT32_AT_OFFSET, $3, NULL, NULL); }
+           | _UINT8_  '(' expression ')'         { $$ = reduce_term(TERM_TYPE_UINT8_AT_OFFSET, $3, NULL, NULL); }
+           | _UINT16_ '(' expression ')'         { $$ = reduce_term(TERM_TYPE_UINT16_AT_OFFSET, $3, NULL, NULL); }
+           | _UINT32_ '(' expression ')'         { $$ = reduce_term(TERM_TYPE_UINT32_AT_OFFSET, $3, NULL, NULL); }
            | _STRING_COUNT_                         
              { 
                     $$ = reduce_string_count($1); 
@@ -350,10 +435,10 @@ expression : _SIZE_                             { $$ = reduce_filesize(); }
                     }
              }
            | '(' expression ')'                 { $$ = $2; }
-           | expression '+' expression          { $$ = reduce_term(TERM_TYPE_ADD, $1, $3); }
-           | expression '-' expression          { $$ = reduce_term(TERM_TYPE_SUB, $1, $3); }
-           | expression '*' expression          { $$ = reduce_term(TERM_TYPE_MUL, $1, $3); }
-           | expression '/' expression          { $$ = reduce_term(TERM_TYPE_DIV, $1, $3); }
+           | expression '+' expression          { $$ = reduce_term(TERM_TYPE_ADD, $1, $3, NULL); }
+           | expression '-' expression          { $$ = reduce_term(TERM_TYPE_SUB, $1, $3, NULL); }
+           | expression '*' expression          { $$ = reduce_term(TERM_TYPE_MUL, $1, $3, NULL); }
+           | expression '\\' expression         { $$ = reduce_term(TERM_TYPE_DIV, $1, $3, NULL); }
            | number
            ;
         
@@ -366,6 +451,20 @@ type : _MZ_
      ;
         
 %%
+
+
+int count_strings(TERM_STRING* st)
+{
+    int count = 0;
+    
+    while(st != NULL)
+    {
+        count++;
+        st = st->next;
+    }
+    
+    return count;
+}
 
 
 void reduce_rule_declaration(char* identifier, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition)
@@ -487,17 +586,21 @@ TERM* reduce_entrypoint()
     return (TERM*) term;    
 }
 
-TERM* reduce_term(int type, TERM* op1, TERM* op2)
+TERM* reduce_term(int type, TERM* op1, TERM* op2, TERM* op3)
 {
     TERM* term = NULL;
     
-    if (op2 == NULL)
+    if (op2 == NULL && op3 == NULL)
     {
         last_error = new_unary_operation(type, op1, (TERM_UNARY_OPERATION**) &term);
     }
-    else
+    else if (op3 == NULL)
     {
         last_error = new_binary_operation(type, op1, op2, (TERM_BINARY_OPERATION**) &term);
+    }
+    else
+    {
+        last_error = new_ternary_operation(type, op1, op2, op3, (TERM_TERNARY_OPERATION**) &term);
     }
     
     return (TERM*) term;
@@ -515,15 +618,58 @@ TERM* reduce_string(char* identifier)
 {
     TERM_STRING* term = NULL;
     
-    last_error = new_string_identifier(TERM_TYPE_STRING, current_rule_strings, identifier, &term);
-    
-    if (last_error != ERROR_SUCCESS)
+    if (strcmp(identifier, "$") != 0 || inside_for > 0) 
+    {  
+        last_error = new_string_identifier(TERM_TYPE_STRING, current_rule_strings, identifier, &term);       
+     
+        if (last_error != ERROR_SUCCESS)
+        {
+            strcpy(last_error_extra_info, identifier);
+        }
+    }
+    else
     {
-        strcpy(last_error_extra_info, identifier);
+        last_error = ERROR_MISPLACED_ANONYMOUS_STRING;
     }
     
     free(identifier);   
     return (TERM*) term;
+}
+
+TERM* reduce_string_with_wildcard(char* identifier)
+{
+    TERM_STRING* term = NULL;
+    TERM_STRING* next;
+    STRING* string;
+    
+    int len = 0;
+
+    string = current_rule_strings;
+    next = NULL;
+    
+    while (identifier[len] != '\0' && identifier[len] != '*')
+    {
+        len++;
+    }
+    
+    while (string != NULL)
+    {
+        if (strncmp(string->identifier, identifier, len) == 0)
+        {
+            last_error = new_string_identifier(TERM_TYPE_STRING, current_rule_strings, string->identifier, &term);
+            
+            if (last_error != ERROR_SUCCESS)
+                break;
+
+            term->next = next;
+            next = term;            
+        }
+        
+        string = string->next;
+    }
+    
+    free(identifier);
+    return (TERM*) term;  
 }
 
 TERM* reduce_string_at(char* identifier, TERM* offset)
@@ -622,32 +768,19 @@ TERM* reduce_rule(char* identifier)
     return (TERM*) term;
 }
 
-TERM* reduce_boolean_expression_list(TERM* boolean_expression_list_head, TERM* boolean_expression)
+TERM* reduce_string_enumeration(TERM* string_list_head, TERM* string_identifier)
 {
-    boolean_expression->next = boolean_expression_list_head;
-    return boolean_expression;
+    TERM_STRING* term = (TERM_STRING*) string_identifier;
+    
+    term->next = (TERM_STRING*) string_list_head;
+    term->string->flags |= STRING_FLAGS_REFERENCED;
+
+    return string_identifier;
 }
 
-TERM* reduce_n_of_them(TERM* n)
-{
-    STRING* string;
-    TERM_UNARY_OPERATION* term;
-    
-    last_error = new_unary_operation(TERM_TYPE_OF_THEM, n, &term);
-    
-    /* the keyword THEM implicitly references all the strings 
-       on the rule, so let's flag them as referenced */
-    
-    string = current_rule_strings;
-    
-    while (string != NULL)
-    {
-        string->flags |= STRING_FLAGS_REFERENCED;
-        string = string->next;
-    }
-    
-    return (TERM*) term;  
-}
+  
+
+
 
 
 

@@ -81,7 +81,8 @@ GNU General Public License for more details.
 #define ERROR_MISPLACED_OR_OPERATOR             19
 #define ERROR_INVALID_OR_OPERATION_SYNTAX       20
 #define ERROR_SKIP_INSIDE_OR_OPERATION          21  
-#define ERROR_NESTED_OR_OPERATION               22          
+#define ERROR_NESTED_OR_OPERATION               22 
+#define ERROR_MISPLACED_ANONYMOUS_STRING        23
       
 typedef struct _MATCH
 {   
@@ -182,8 +183,15 @@ void free_hash_table(RULE_LIST* rule_list);
 typedef int (*YARACALLBACK)(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* data);
 
 int scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data);
-
 int scan_file(const char* file_path, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data);
+
+typedef void (*YARAREPORT)(const char* file_name, int line_number, const char* error_message);
+
+int get_last_error();
+int get_error_line_number();
+void get_error_message(int error_code, char* error_message, int size);
+void set_abort_on_first_error(int new_value);
+void set_report_function(YARAREPORT fn);
 
 #endif
 

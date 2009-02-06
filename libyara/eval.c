@@ -18,21 +18,22 @@ GNU General Public License for more details.
 #include "ast.h"
 #include "eval.h"
 
-unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
+int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 {
 	unsigned int i;
 	unsigned int offs, hi_bound, lo_bound;
 	
     STRING* string;
+    STRING* saved_anonymous_string;
 	
 	TERM_CONST* term_const = ((TERM_CONST*) term);
-	TERM_BINARY_OPERATION* term_binary = ((TERM_BINARY_OPERATION*) term);
 	TERM_UNARY_OPERATION* term_unary = ((TERM_UNARY_OPERATION*) term);
+	TERM_BINARY_OPERATION* term_binary = ((TERM_BINARY_OPERATION*) term);
+	TERM_TERNARY_OPERATION* term_ternary = ((TERM_TERNARY_OPERATION*) term);
 	TERM_STRING* term_string = ((TERM_STRING*) term);
 	
-	
 	MATCH* match;
-	TERM* t;
+	TERM_STRING* t;
 	
 	switch(term->type)
 	{
@@ -49,14 +50,34 @@ unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		return evaluate(term_binary->op1, context);
 		
 	case TERM_TYPE_STRING:
-		return term_string->string->flags & STRING_FLAGS_FOUND;
+	
+	    if (term_string->string == NULL) /* it's an anonymous string */
+	    {
+            string = context->current_string;
+	    }
+	    else
+	    {
+            string = term_string->string;
+	    }
+	
+		return string->flags & STRING_FLAGS_FOUND;
 		
 	case TERM_TYPE_STRING_AT:
-		if (term_string->string->flags & STRING_FLAGS_FOUND)
+	
+    	if (term_string->string == NULL) /* it's an anonymous string */
+        {
+            string = context->current_string;
+        }
+        else
+        {
+            string = term_string->string;
+        }
+	
+		if (string->flags & STRING_FLAGS_FOUND)
 		{	
 			offs = evaluate(term_string->offset, context);
 					
-			match = term_string->string->matches;
+			match = string->matches;
 			
 			while (match != NULL)
 			{
@@ -71,12 +92,22 @@ unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		else return 0;
 		
 	case TERM_TYPE_STRING_IN_RANGE:
-		if (term_string->string->flags & STRING_FLAGS_FOUND)
+	
+        if (term_string->string == NULL) /* it's an anonymous string */
+        {
+            string = context->current_string;
+        }
+        else
+        {
+            string = term_string->string;
+        }
+	
+		if (string->flags & STRING_FLAGS_FOUND)
 		{	
 			lo_bound = evaluate(term_string->lower_offset, context);
 			hi_bound = evaluate(term_string->upper_offset, context);
 				
-			match = term_string->string->matches;
+			match = string->matches;
 
 			while (match != NULL)
 			{
@@ -150,12 +181,13 @@ unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 			return evaluate(term_binary->op1, context) != evaluate(term_binary->op2, context);
 		
 	case TERM_TYPE_OF:
-		t = term_binary->op2;
+			
 		i = evaluate(term_binary->op1, context);
-		
+		t = (TERM_STRING*) term_binary->op2;
+				
 		while (t != NULL && i > 0)
 		{
-			if (evaluate(t, context)) 
+			if (evaluate((TERM*) t, context)) 
 			{
 				i--;
 			}				
@@ -164,25 +196,29 @@ unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		
 		return (i == 0);
 		
-	case TERM_TYPE_OF_THEM: 
-	
-	    i = evaluate(term_unary->op, context);
-	    
-        string = context->rule->string_list_head;
-        
-        while (string != NULL && i > 0)
-        {
-            if (string->flags & STRING_FLAGS_FOUND)
-            {
-                i--;
-            }
-            
-            string = string->next;
-        }
-        
-        return (i == 0);
+	case TERM_TYPE_FOR:
+
+		i = evaluate(term_ternary->op1, context);		
+		t = (TERM_STRING*) term_ternary->op2;		
+
+		while (t != NULL && i > 0)
+		{
+            saved_anonymous_string = context->current_string;
+            context->current_string = t->string;
+		    
+			if (evaluate(term_ternary->op3, context)) 
+			{
+				i--;
+			}	
+			
+            context->current_string = saved_anonymous_string;
+						
+			t = t->next;
+		} 
+		
+		return (i == 0);
     
-    case TERM_TYPE_BYTE_AT_OFFSET:
+    case TERM_TYPE_UINT8_AT_OFFSET:
     
         offs = evaluate(term_unary->op, context);
         
@@ -192,10 +228,10 @@ unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
         }
         else
         {
-            return 0xBADBAD1;
+            return 0xE0FE0F;
         }
         
-    case TERM_TYPE_WORD_AT_OFFSET:
+    case TERM_TYPE_UINT16_AT_OFFSET:
 
         offs = evaluate(term_unary->op, context);
 
@@ -205,10 +241,10 @@ unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
         }
         else
         {
-            return 0xBADBAD2;
+            return 0xE0FE0F;
         }
     
-    case TERM_TYPE_DWORD_AT_OFFSET:
+    case TERM_TYPE_UINT32_AT_OFFSET:
 
         offs = evaluate(term_unary->op, context);
 
@@ -218,7 +254,46 @@ unsigned int evaluate(TERM* term, EVALUATION_CONTEXT* context)
         }
         else
         {
-            return 0xBADBAD3;
+            return 0xE0FE0F;
+        }
+        
+    case TERM_TYPE_INT8_AT_OFFSET:
+
+        offs = evaluate(term_unary->op, context);
+
+        if (offs < context->file_size)
+        {
+            return ((signed char) context->data[offs]);
+        }
+        else
+        {
+            return 0xE0FE0F;
+        }
+
+    case TERM_TYPE_INT16_AT_OFFSET:
+
+        offs = evaluate(term_unary->op, context);
+
+        if (offs < context->file_size - 1)
+        {
+            return *((signed short*) (context->data + offs)) ;
+        }
+        else
+        {
+            return 0xE0FE0F;
+        }
+
+    case TERM_TYPE_INT32_AT_OFFSET:
+
+        offs = evaluate(term_unary->op, context);
+
+        if (offs < context->file_size - 1)
+        {
+            return *((signed int*) (context->data + offs)) ;
+        }
+        else
+        {
+            return 0xE0FE0F;
         }
 		
 	default:
