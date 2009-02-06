@@ -24,6 +24,7 @@
 %token <c_string> _IDENTIFIER_
 %token <term> _STRING_IDENTIFIER_
 %token <term> _STRING_COUNT_
+%token <term> _STRING_OFFSET_
 %token <term> _STRING_IDENTIFIER_WITH_WILDCARD_
 %token <term> _ANONYMOUS_STRING_
 %token <integer> _NUMBER_
@@ -126,6 +127,7 @@ TERM* reduce_string_at(char* identifier, TERM* offset);
 TERM* reduce_string_in_range(char* identifier, TERM* lower_offset, TERM* upper_offset);
 TERM* reduce_string_in_section_by_name(char* identifier, SIZED_STRING* section_name);
 TERM* reduce_string_count(char* identifier);
+TERM* reduce_string_offset(char* identifier); 
 
 TERM* reduce_filesize();
 TERM* reduce_entrypoint();
@@ -427,6 +429,17 @@ expression : _SIZE_                             { $$ = reduce_filesize(); }
              { 
                     $$ = reduce_string_count($1); 
                     
+                    if ($$ == NULL)
+                    {
+                        show_last_error();
+                        yynerrs++;
+                        YYERROR;
+                    }
+             }
+           | _STRING_OFFSET_                         
+             { 
+                    $$ = reduce_string_offset($1); 
+
                     if ($$ == NULL)
                     {
                         show_last_error();
@@ -736,6 +749,21 @@ TERM* reduce_string_count(char* identifier)
     TERM_STRING* term = NULL;
 
     last_error = new_string_identifier(TERM_TYPE_STRING_COUNT, current_rule_strings, identifier, &term);
+    
+    if (last_error != ERROR_SUCCESS)
+    {
+        strcpy(last_error_extra_info, identifier);
+    }
+    
+    free(identifier);           
+    return (TERM*) term;
+}
+
+TERM* reduce_string_offset(char* identifier)
+{
+    TERM_STRING* term = NULL;
+
+    last_error = new_string_identifier(TERM_TYPE_STRING_OFFSET, current_rule_strings, identifier, &term);
     
     if (last_error != ERROR_SUCCESS)
     {

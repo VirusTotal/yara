@@ -134,7 +134,25 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 			match = match->next;
 		}
 		return i;
-			
+		
+	case TERM_TYPE_STRING_OFFSET:
+	
+	    if (term_string->string->matches != NULL)
+	    {
+            match = term_string->string->matches;
+	        
+    		while (match->next != NULL)
+    		{
+    			match = match->next;
+    		}	  
+    		
+            return match->offset;      
+	    }
+	    else
+	    {
+            return -1;
+	    }
+
 	case TERM_TYPE_AND:
 		if (evaluate(term_binary->op1, context))  
 			return evaluate(term_binary->op2, context);	

@@ -106,6 +106,12 @@ $({letter}|{digit})* {
                        		yylval.c_string = (char*) strdup(yytext);
 							yylval.c_string[0] = '$'; 					/* replace # by $*/
 		                    return _STRING_COUNT_;      
+					 }
+					
+@({letter}|{digit})* {	
+	                      	yylval.c_string = (char*) strdup(yytext);
+							yylval.c_string[0] = '$'; 					/* replace @ by $*/
+		                    return _STRING_OFFSET_;      
 					 }					
 
 ({letter}|_)({letter}|{digit}|_)*	{ 
