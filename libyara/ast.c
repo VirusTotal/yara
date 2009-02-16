@@ -157,7 +157,7 @@ int new_rule(RULE_LIST* rules, char* identifier, int flags, TAG* tag_list_head, 
     {
         result = ERROR_DUPLICATE_RULE_IDENTIFIER;
     }
-    
+
     return result;
 }
 
@@ -672,32 +672,6 @@ int new_string_identifier(int type, STRING* defined_strings, char* identifier, T
     *term = new_term;   
     return result;
 }
-
-int new_anonymous_string_identifier(int type, STRING* defined_strings, TERM_STRING** term)
-{
-    TERM_STRING* new_term = NULL;
-    STRING* string;
-    int result = ERROR_SUCCESS;
-    
-    new_term = (TERM_STRING*) malloc(sizeof(TERM_STRING));
-
-    if (new_term != NULL)
-    {
-        new_term->type = type;
-        new_term->string = NULL;
-        new_term->next = NULL;
-    }
-    else
-    {
-        result = ERROR_INSUFICIENT_MEMORY;
-    }
-
-    *term = new_term;   
-    return result;
-}
-
-
-
 
 /* 
 	free_term(TERM* term)

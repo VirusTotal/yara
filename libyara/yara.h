@@ -83,6 +83,9 @@ GNU General Public License for more details.
 #define ERROR_SKIP_INSIDE_OR_OPERATION          21  
 #define ERROR_NESTED_OR_OPERATION               22 
 #define ERROR_MISPLACED_ANONYMOUS_STRING        23
+#define ERROR_COULD_NOT_MAP_FILE                24
+#define ERROR_ZERO_LENGTH_FILE                  25
+#define ERROR_INVALID_ARGUMENT                  26
       
 typedef struct _MATCH
 {   
@@ -189,8 +192,7 @@ typedef void (*YARAREPORT)(const char* file_name, int line_number, const char* e
 
 int get_last_error();
 int get_error_line_number();
-void get_error_message(int error_code, char* error_message, int size);
-void set_abort_on_first_error(int new_value);
+char* get_last_error_message();
 void set_report_function(YARAREPORT fn);
 
 #endif

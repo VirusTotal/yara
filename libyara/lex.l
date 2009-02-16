@@ -269,7 +269,7 @@ $({letter}|{digit})* {
 					}
 					
 					
-\{({hexdigit}|[ -|\?\[\]\(\)])+\}		{ 
+\{({hexdigit}|[ \-|\?\[\]\(\)])+\}		{ 
 										int len = strlen(yytext);
 										
 										SIZED_STRING* s = (SIZED_STRING*) malloc(len + sizeof(SIZED_STRING));
@@ -279,7 +279,7 @@ $({letter}|{digit})* {
 										strcpy(s->c_string, yytext);
 
 										yylval.sized_string = s;
-
+									
 										return _HEXSTRING_;
 									}
 					

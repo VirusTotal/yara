@@ -59,7 +59,7 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 	    {
             string = term_string->string;
 	    }
-	
+	    	
 		return string->flags & STRING_FLAGS_FOUND;
 		
 	case TERM_TYPE_STRING_AT:
@@ -126,7 +126,17 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		
 	case TERM_TYPE_STRING_COUNT:
 		i = 0;
-		match = term_string->string->matches;
+		
+		if (term_string->string == NULL) /* it's an anonymous string */
+        {
+            string = context->current_string;
+        }
+        else
+        {
+            string = term_string->string;
+        }
+        
+		match = string->matches;
 		
 		while (match != NULL)
 		{
@@ -137,9 +147,18 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		
 	case TERM_TYPE_STRING_OFFSET:
 	
-	    if (term_string->string->matches != NULL)
+    	if (term_string->string == NULL) /* it's an anonymous string */
+        {
+            string = context->current_string;
+        }
+        else
+        {
+            string = term_string->string;
+        }
+	
+	    if (string->matches != NULL)
 	    {
-            match = term_string->string->matches;
+            match = string->matches;
 	        
     		while (match->next != NULL)
     		{
@@ -202,7 +221,7 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 			
 		i = evaluate(term_binary->op1, context);
 		t = (TERM_STRING*) term_binary->op2;
-				
+						
 		while (t != NULL && i > 0)
 		{
 			if (evaluate((TERM*) t, context)) 
@@ -217,7 +236,7 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 	case TERM_TYPE_FOR:
 
 		i = evaluate(term_ternary->op1, context);		
-		t = (TERM_STRING*) term_ternary->op2;		
+		t = (TERM_STRING*) term_ternary->op2;	
 
 		while (t != NULL && i > 0)
 		{

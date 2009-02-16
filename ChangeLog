@@ -12,9 +12,17 @@ version 1.2
 	* added support for global rules
 	* added support for declaring alternative sub-strings in hex strings
 	* added support for anonymous strings
+	* added support for intXX and uintXX functions
+	* operator "of" was enhanced
+	* implemented new operator "for..of"
 	* "widechar" is now "wide" and can be used in conjuntion with "ascii"
-	* some performance improvements
+	* improved syntax error reporting in yara-python
+	* "compile" method in yara-python was enhanced
+	* "matchfile" method in yara-python was substituted by "match"
+	* some performance improvements	
 	* BUGFIX: Wrong behavior of escaped characters in regular expressions
 	* BUGFIX: Fatal error in yara-python when invoking matchfile with invalid path twice
 	* BUGFIX: Wrong precedence of OR and AND operators
+	* BUGFIX: Access violation when scanning MZ files with e_lfanew == -1
+	* BUGFIX: Incorrect handling of hex strings in lexer
 	

@@ -22,6 +22,8 @@ GNU General Public License for more details.
 #endif
 
 #include "stdlib.h"
+#include "yara.h"
+
 
 typedef struct _MAPPED_FILE
 {

@@ -7,6 +7,11 @@ yara \- find files matching patterns and rules written in a special-purpose lang
 .B \-t
 .I tag
 ] [
+.B \-i
+.I identifier
+] [
+.B \-n
+] [
 .B \-g
 ] [
 .B \-s
@@ -30,6 +35,11 @@ are:
 .BI \-t " tag"
 Print rules tagged as
 .I tag
+and ignore the rest. This option can be used multiple times.
+.TP
+.BI \-i " identifier"
+Print rules named
+.I identifier
 and ignore the rest. This option can be used multiple times.
 .TP
 .B \-n

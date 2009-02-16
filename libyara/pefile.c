@@ -43,6 +43,9 @@ PIMAGE_NT_HEADERS get_nt_headers(unsigned char* buffer, unsigned int buffer_leng
 	if (mz_header->e_magic != IMAGE_DOS_SIGNATURE)
 		return NULL;
 		
+	if (mz_header->e_lfanew < 0)
+		return NULL;
+		
 	headers_size = mz_header->e_lfanew + sizeof(nt_header->Signature) + sizeof(IMAGE_FILE_HEADER);
 	
 	if (buffer_length < headers_size)

@@ -853,16 +853,14 @@ int scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_li
 int scan_file(const char* file_path, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data)
 {
 	MAPPED_FILE mfile;
-	int result = ERROR_SUCCESS;
+	int result;
 	
-	if (map_file(file_path, &mfile))
+    result = map_file(file_path, &mfile);
+	
+	if (result == ERROR_SUCCESS)
 	{
 		result = scan_mem(mfile.data, (unsigned int) mfile.size, rule_list, callback, user_data);		
 		unmap_file(&mfile);
-	}
-	else
-	{
-		result = ERROR_COULD_NOT_OPEN_FILE;
 	}
 		
 	return result;

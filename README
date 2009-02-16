@@ -1,6 +1,5 @@
 
 
-
 DEPENDENCIES
 
 YARA depends on the PCRE library for regular expressions support, you will need
