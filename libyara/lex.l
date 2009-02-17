@@ -91,24 +91,24 @@ hexdigit      [a-fA-F0-9]
 								line_number++;
 							}
 							
-$({letter}|{digit})*"*" {
+$({letter}|{digit}|_)*"*" {
                        		yylval.c_string = (char*) strdup(yytext);
                        		return _STRING_IDENTIFIER_WITH_WILDCARD_;      
 					 	}
 
-$({letter}|{digit})* {
+$({letter}|{digit}|_)* {
                        		yylval.c_string = (char*) strdup(yytext);
                        		return _STRING_IDENTIFIER_;      
 					 }
 				
 					
-#({letter}|{digit})* {	
+#({letter}|{digit}|_)* {	
                        		yylval.c_string = (char*) strdup(yytext);
 							yylval.c_string[0] = '$'; 					/* replace # by $*/
 		                    return _STRING_COUNT_;      
 					 }
 					
-@({letter}|{digit})* {	
+@({letter}|{digit}|_)* {	
 	                      	yylval.c_string = (char*) strdup(yytext);
 							yylval.c_string[0] = '$'; 					/* replace @ by $*/
 		                    return _STRING_OFFSET_;      
@@ -163,7 +163,7 @@ $({letter}|{digit})* {
 						
 						s->length = string_buf_len;
 						
-						memcpy(s->c_string, string_buf, string_buf_len);
+						strcpy(s->c_string, string_buf);
 					
 						yylval.sized_string = s;
 												
@@ -222,8 +222,8 @@ $({letter}|{digit})* {
 
 						s->length = string_buf_len;
 
-						memcpy(s->c_string, string_buf, string_buf_len);
-
+						strcpy(s->c_string, string_buf);
+					
 						yylval.sized_string = s;
 
 						return _REGEXP_;

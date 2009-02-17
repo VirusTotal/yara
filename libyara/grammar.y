@@ -11,7 +11,7 @@
 #include "sizedstr.h"
 
 #define YYERROR_VERBOSE
-#define YYDEBUG 1
+//#define YYDEBUG 1
 
 %} 
 

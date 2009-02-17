@@ -26,3 +26,8 @@ version 1.2
 	* BUGFIX: Access violation when scanning MZ files with e_lfanew == -1
 	* BUGFIX: Incorrect handling of hex strings in lexer
 	
+version 1.2.1
+	* BUGFIX: Invoking pcre_compile with non-terminated string
+	* BUGFIX: Underscore (_) not recongnized in string identifiers
+	* BUGFIX: Memory leak
+	

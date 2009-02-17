@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>../yara.c</string>
+	<string>lex.l</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -55,21 +55,21 @@
 					<key>filename</key>
 					<string>lex.l</string>
 					<key>lastUsed</key>
-					<date>2009-02-11T17:35:41Z</date>
+					<date>2009-02-16T16:49:41Z</date>
+					<key>selected</key>
+					<true/>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>grammar.y</string>
 					<key>lastUsed</key>
-					<date>2009-02-11T18:36:02Z</date>
+					<date>2009-02-16T16:49:41Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>../yara.c</string>
 					<key>lastUsed</key>
-					<date>2009-02-13T15:54:54Z</date>
-					<key>selected</key>
-					<true/>
+					<date>2009-02-16T16:49:37Z</date>
 				</dict>
 			</array>
 			<key>expanded</key>
@@ -163,7 +163,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>38</integer>
+			<integer>68</integer>
 		</dict>
 		<key>ast.c</key>
 		<dict>
@@ -338,14 +338,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>9</integer>
+				<integer>20</integer>
 				<key>line</key>
-				<integer>281</integer>
+				<integer>110</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>88</integer>
+			<integer>134</integer>
 		</dict>
 		<key>pefile.c</key>
 		<dict>
@@ -444,6 +444,8 @@
 		<string>error.h</string>
 		<string>pefile.c</string>
 		<string>../yara.c</string>
+		<string>grammar.y</string>
+		<string>lex.l</string>
 		<string>scan.c</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>

@@ -457,7 +457,7 @@ int new_text_string(SIZED_STRING* charstr, int flags, unsigned char** hexstr, RE
              options |= PCRE_CASELESS;
          }
          
-         re->regexp = pcre_compile((char*) *hexstr, options, &error, &erroffset, NULL); 
+         re->regexp = pcre_compile(charstr->c_string, options, &error, &erroffset, NULL); 
 
          if (re->regexp != NULL)  
          {
@@ -684,21 +684,37 @@ int new_string_identifier(int type, STRING* defined_strings, char* identifier, T
 
 void free_term(TERM* term)
 {
+    TERM_STRING* next;
+    TERM_STRING* tmp;
+    
     switch(term->type)
     {
     case TERM_TYPE_STRING:
-        break;//TODO: free next
+    
+        next = ((TERM_STRING*) term)->next;
+    
+        while (next != NULL)
+        {
+            tmp = next->next;
+            free(next);
+            next = tmp;     
+        }
+    
+        break;
     
 	case TERM_TYPE_STRING_AT:
+	
 		free_term(((TERM_STRING*)term)->offset);
 		break;
 	
 	case TERM_TYPE_STRING_IN_RANGE:
+	
         free_term(((TERM_STRING*)term)->lower_offset);
 		free_term(((TERM_STRING*)term)->upper_offset);
         break;
 
 	case TERM_TYPE_STRING_IN_SECTION_BY_NAME:
+	    
 	    free(((TERM_STRING*)term)->section_name);
 		break;
                     

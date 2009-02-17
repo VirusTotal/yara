@@ -33,8 +33,6 @@ char error_message[500];
 
 YARAREPORT report_function = NULL;
 
-//TODO: Arreglar los mensajes de error en yara-python. No sale nada cuando se trata de un error de sintaxis de yyparse
-
 void yyerror(const char *error_message)
 {    
     if (last_result != ERROR_SUCCESS) 
