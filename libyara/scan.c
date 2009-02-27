@@ -47,7 +47,7 @@ inline int compare(char* str1, char* str2, int len)
 	char* s2 = str2;
 	int i = 0;
 	
-	while (*s1++ == *s2++ && i < len) 
+	while (i < len && *s1++ == *s2++) 
 	{
 	    i++;
     }
@@ -61,7 +61,10 @@ inline int icompare(char* str1, char* str2, int len)
 	char* s2 = str2;
 	int i = 0;
 	
-	while (tolower(*s1++) == tolower(*s2++) && i < len) i++;
+	while (i < len && tolower(*s1++) == tolower(*s2++)) 
+	{
+	    i++;
+    }
 	
 	return ((i==len) ? i : 0);
 }
@@ -73,7 +76,7 @@ inline int wcompare(char* str1, char* str2, int len)
 	char* s2 = str2;
 	int i = 0;
 
-	while (*s1 == *s2 && i < len) 
+	while (i < len && *s1 == *s2) 
 	{
 		s1++;
 		s2+=2;
@@ -89,7 +92,7 @@ inline int wicompare(char* str1, char* str2, int len)
 	char* s2 = str2;
 	int i = 0;
 
-	while (tolower(*s1) == tolower(*s2) && i < len) 
+	while (i < len && tolower(*s1) == tolower(*s2)) 
 	{
 		s1++;
 		s2+=2;

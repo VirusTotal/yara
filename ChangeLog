@@ -8,7 +8,7 @@ version 1.1 (05/01/2009)
 	* regular expressions syntax changed
 	* now regular expressions can begin with any character
 
-version 1.2
+version 1.2 (13/01/2009)
 	* added support for global rules
 	* added support for declaring alternative sub-strings in hex strings
 	* added support for anonymous strings
@@ -30,4 +30,5 @@ version 1.2.1
 	* BUGFIX: Invoking pcre_compile with non-terminated string
 	* BUGFIX: Underscore (_) not recongnized in string identifiers
 	* BUGFIX: Memory leak
+	* BUGFIX: Access violation on xxcompare functions
 	
