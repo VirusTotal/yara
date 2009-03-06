@@ -1673,7 +1673,7 @@ yyreduce:
 #line 371 "grammar.y"
     { 
                           inside_for--; 
-                          
+                                                    
                           (yyval.term) = reduce_term(TERM_TYPE_FOR, reduce_constant(1), (yyvsp[-5].term), (yyvsp[-1].term)); 
                           
                           if ((yyval.term) == NULL)

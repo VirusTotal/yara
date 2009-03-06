@@ -370,7 +370,7 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                      '(' boolean_expression ')'                     
                      { 
                           inside_for--; 
-                          
+                                                    
                           $$ = reduce_term(TERM_TYPE_FOR, reduce_constant(1), $4, $8); 
                           
                           if ($$ == NULL)

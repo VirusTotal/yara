@@ -29,6 +29,5 @@ extern const char* file_name;
 
 char* get_error_message(int error_code);
 
-
 #endif
 

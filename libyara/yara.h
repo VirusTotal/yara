@@ -195,5 +195,7 @@ int get_error_line_number();
 char* get_last_error_message();
 void set_report_function(YARAREPORT fn);
 
+
+
 #endif
 

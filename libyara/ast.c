@@ -444,10 +444,9 @@ int new_text_string(SIZED_STRING* charstr, int flags, unsigned char** hexstr, RE
     {
         return ERROR_INSUFICIENT_MEMORY;
     }
-    
+
     memcpy(*hexstr, charstr->c_string, charstr->length);
-    
-     
+         
      if (flags & STRING_FLAGS_REGEXP)
      {           
 		options = PCRE_ANCHORED;
@@ -456,7 +455,7 @@ int new_text_string(SIZED_STRING* charstr, int flags, unsigned char** hexstr, RE
          {
              options |= PCRE_CASELESS;
          }
-         
+
          re->regexp = pcre_compile(charstr->c_string, options, &error, &erroffset, NULL); 
 
          if (re->regexp != NULL)  
@@ -515,7 +514,7 @@ int new_string(char* identifier, SIZED_STRING* charstr, int flags, STRING** stri
     {
         result = ERROR_INSUFICIENT_MEMORY;   
     }
-    
+
     *string = new_string;
     return result;
 }
@@ -686,7 +685,7 @@ void free_term(TERM* term)
 {
     TERM_STRING* next;
     TERM_STRING* tmp;
-    
+
     switch(term->type)
     {
     case TERM_TYPE_STRING:
@@ -730,6 +729,7 @@ void free_term(TERM* term)
     case TERM_TYPE_LE:
     case TERM_TYPE_EQ:
     case TERM_TYPE_OF:
+    case TERM_TYPE_NOT_EQ:
         free_term(((TERM_BINARY_OPERATION*)term)->op1);
         free_term(((TERM_BINARY_OPERATION*)term)->op2);
         break;        
@@ -742,6 +742,15 @@ void free_term(TERM* term)
     case TERM_TYPE_UINT16_AT_OFFSET:
     case TERM_TYPE_UINT32_AT_OFFSET:
         free_term(((TERM_UNARY_OPERATION*)term)->op);
+        break;
+        
+    case TERM_TYPE_FOR:
+        free_term(((TERM_TERNARY_OPERATION*)term)->op1);
+        free_term(((TERM_TERNARY_OPERATION*)term)->op2);
+        
+        if (((TERM_TERNARY_OPERATION*)term)->op3 != NULL)
+           free_term(((TERM_TERNARY_OPERATION*)term)->op3); 
+           
         break;
     }
     
@@ -783,7 +792,7 @@ void free_rule_list(RULE_LIST* rule_list)
     rule = rule_list->head;
     
     while (rule != NULL)
-    {
+    {        
         next_rule = rule->next;
         
         string = rule->string_list_head;
@@ -831,7 +840,7 @@ void free_rule_list(RULE_LIST* rule_list)
 		}
         
         free_term(rule->condition);
-        
+        free(rule->identifier);     
         free(rule);
         rule = next_rule;
     }

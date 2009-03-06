@@ -229,7 +229,7 @@ int hex_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pa
 	return matches;
 }
 
-int regexp_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pattern, int pattern_length, REGEXP re, int negative_size)
+int regexp_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pattern, int pattern_length, REGEXP re, int file_beginning)
 {
 	int ovector[3];
 	unsigned int len;
@@ -240,11 +240,11 @@ int regexp_match(unsigned char* buffer, unsigned int buffer_size, unsigned char*
 	result = 0;
 	
 	/* 
-		negative_size > 0 indicates that we are not at the beginning of the file, 
-		therefore if pattern begins with ^ the string doesn't match
+		if we are not at the beginning of the file, and the pattern 
+		begins with ^, the string doesn't match
 	*/
 	
-	if (negative_size > 0 && pattern[0] == '^')
+	if (file_beginning && pattern[0] == '^')
 	{
 		return 0;
 	}
@@ -521,19 +521,10 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 			{
 				i += 2;
 			}
-			
-			if (negative_size > 2 && buffer[-1] == 0 && isalnum(buffer[-2]))
-			{
-				len = i/2 + 1;
-				tmp = malloc(len);
-				i = -1;
-			}
-			else
-			{
-				len = i/2;
-				tmp = malloc(len);
-				i = 0;
-			}
+						
+			len = i/2;
+			tmp = malloc(len);
+            i = 0;
 			
 			if (tmp != NULL)
 			{						
@@ -543,7 +534,7 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 					i++;
 				}
 								
-				match = regexp_match(tmp, len, string->string, string->length, string->re, (negative_size > 2) ? 1 : 0);
+				match = regexp_match(tmp, len, string->string, string->length, string->re, (negative_size > 2));
 			
 				free(tmp);			
 				return match * 2;
@@ -857,7 +848,7 @@ int scan_file(const char* file_path, RULE_LIST* rule_list, YARACALLBACK callback
 {
 	MAPPED_FILE mfile;
 	int result;
-	
+
     result = map_file(file_path, &mfile);
 	
 	if (result == ERROR_SUCCESS)
