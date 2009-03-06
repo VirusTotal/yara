@@ -9,15 +9,13 @@
 #include "compile.h"
 #include "error.h"
 #include "xtoi.h"
+#include "mem.h"
 
 
 char string_buf[256];
 char *string_buf_ptr;
 unsigned short string_buf_len;
 
-#ifdef WIN32
-#define strdup _strdup
-#endif
 
 %}
 
@@ -92,24 +90,24 @@ hexdigit      [a-fA-F0-9]
 							}
 							
 $({letter}|{digit}|_)*"*" {
-                       		yylval.c_string = (char*) strdup(yytext);
+                       		yylval.c_string = (char*) yr_strdup(yytext);
                        		return _STRING_IDENTIFIER_WITH_WILDCARD_;      
 					 	}
 
 $({letter}|{digit}|_)* {
-                       		yylval.c_string = (char*) strdup(yytext);
+                       		yylval.c_string = (char*) yr_strdup(yytext);
                        		return _STRING_IDENTIFIER_;      
 					 }
 				
 					
 #({letter}|{digit}|_)* {	
-                       		yylval.c_string = (char*) strdup(yytext);
+                       		yylval.c_string = (char*) yr_strdup(yytext);
 							yylval.c_string[0] = '$'; 					/* replace # by $*/
 		                    return _STRING_COUNT_;      
 					 }
 					
 @({letter}|{digit}|_)* {	
-	                      	yylval.c_string = (char*) strdup(yytext);
+	                      	yylval.c_string = (char*) yr_strdup(yytext);
 							yylval.c_string[0] = '$'; 					/* replace @ by $*/
 		                    return _STRING_OFFSET_;      
 					 }					
@@ -121,7 +119,7 @@ $({letter}|{digit}|_)* {
 											yynerrs++;
 										}
 										
-										yylval.c_string = (char*) strdup(yytext);
+										yylval.c_string = (char*) yr_strdup(yytext);
                    						return _IDENTIFIER_;
 									}
 							
@@ -159,7 +157,7 @@ $({letter}|{digit}|_)* {
 
 						BEGIN(INITIAL);
 						
-						s = (SIZED_STRING*) malloc(string_buf_len + sizeof(SIZED_STRING));
+						s = (SIZED_STRING*) yr_malloc(string_buf_len + sizeof(SIZED_STRING));
 						
 						s->length = string_buf_len;
 						
@@ -218,7 +216,7 @@ $({letter}|{digit}|_)* {
 
 						BEGIN(INITIAL);
 
-						s = (SIZED_STRING*) malloc(string_buf_len + sizeof(SIZED_STRING));
+						s = (SIZED_STRING*) yr_malloc(string_buf_len + sizeof(SIZED_STRING));
 
 						s->length = string_buf_len;
 
@@ -272,7 +270,7 @@ $({letter}|{digit}|_)* {
 \{({hexdigit}|[ \-|\?\[\]\(\)])+\}		{ 
 										int len = strlen(yytext);
 										
-										SIZED_STRING* s = (SIZED_STRING*) malloc(len + sizeof(SIZED_STRING));
+										SIZED_STRING* s = (SIZED_STRING*) yr_malloc(len + sizeof(SIZED_STRING));
 
 										s->length = len;
 

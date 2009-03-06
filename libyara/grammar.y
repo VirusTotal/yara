@@ -9,6 +9,7 @@
 #include "error.h"
 #include "compile.h"
 #include "sizedstr.h"
+#include "mem.h"
 
 #define YYERROR_VERBOSE
 //#define YYDEBUG 1
@@ -430,7 +431,7 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                   
 
 string_set  : '(' string_enumeration ')'            { $$ = $2; }
-            | _THEM_                                { $$ = reduce_string_with_wildcard(strdup("$*")); }
+            | _THEM_                                { $$ = reduce_string_with_wildcard(yr_strdup("$*")); }
             ;                           
                             
 string_enumeration  : string_enumeration_item
@@ -579,7 +580,7 @@ STRING* reduce_string_declaration(char* identifier, SIZED_STRING* str, int flags
         strcpy(last_error_extra_info, identifier);
     }
     
-    free(str);
+    yr_free(str);
             
     return string;
 }
@@ -609,7 +610,7 @@ TAG* reduce_tags(TAG* tag_list_head, char* identifier)
 
     if (lookup_tag(tag_list_head, identifier) == NULL) /* no tags with the same identifier */
     {
-        tag = malloc(sizeof(TAG));
+        tag = yr_malloc(sizeof(TAG));
         
         if (tag != NULL)
         {
@@ -694,7 +695,7 @@ TERM* reduce_string(char* identifier)
         last_result = ERROR_MISPLACED_ANONYMOUS_STRING;
     }
     
-    free(identifier);   
+    yr_free(identifier);   
     return (TERM*) term;
 }
 
@@ -733,7 +734,7 @@ TERM* reduce_string_with_wildcard(char* identifier)
         string = string->next;
     }
     
-    free(identifier);
+    yr_free(identifier);
     return (TERM*) term;  
 }
 
@@ -759,7 +760,7 @@ TERM* reduce_string_at(char* identifier, TERM* offset)
         last_result = ERROR_MISPLACED_ANONYMOUS_STRING;
     }
     
-    free(identifier);   
+    yr_free(identifier);   
     return (TERM*) term;
 }
 
@@ -779,7 +780,7 @@ TERM* reduce_string_in_range(char* identifier, TERM* lower_offset, TERM* upper_o
         term->upper_offset = upper_offset;
     }
     
-    free(identifier);   
+    yr_free(identifier);   
     return (TERM*) term;
 }
 
@@ -795,11 +796,11 @@ TERM* reduce_string_in_section_by_name(char* identifier, SIZED_STRING* section_n
     }
     else
     {
-        term->section_name = strdup(section_name->c_string);
+        term->section_name = yr_strdup(section_name->c_string);
     }
     
-    free(section_name);
-    free(identifier);   
+    yr_free(section_name);
+    yr_free(identifier);   
     return (TERM*) term;
 }
 
@@ -814,7 +815,7 @@ TERM* reduce_string_count(char* identifier)
         strcpy(last_error_extra_info, identifier);
     }
     
-    free(identifier);           
+    yr_free(identifier);           
     return (TERM*) term;
 }
 
@@ -829,7 +830,7 @@ TERM* reduce_string_offset(char* identifier)
         strcpy(last_error_extra_info, identifier);
     }
     
-    free(identifier);           
+    yr_free(identifier);           
     return (TERM*) term;
 }
 
@@ -851,7 +852,7 @@ TERM* reduce_rule(char* identifier)
         term = NULL;
     }
     
-    free(identifier);
+    yr_free(identifier);
     return (TERM*) term;
 }
 

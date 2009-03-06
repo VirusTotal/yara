@@ -179,6 +179,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\libyara\mem.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\libyara\pefile.c"
 				>
 			</File>

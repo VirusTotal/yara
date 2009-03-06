@@ -59,7 +59,7 @@ libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libyara_la_LIBADD =
 am_libyara_la_OBJECTS = grammar.lo lex.lo ast.lo scan.lo filemap.lo \
-	error.lo compile.lo eval.lo pefile.lo xtoi.lo
+	error.lo compile.lo eval.lo pefile.lo xtoi.lo mem.lo
 libyara_la_OBJECTS = $(am_libyara_la_OBJECTS)
 DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -220,6 +220,7 @@ libyara_la_SOURCES = \
   eval.c \
   pefile.c \
   xtoi.c \
+  mem.c \
   ast.h \
   error.h \
   compile.h \
@@ -228,7 +229,8 @@ libyara_la_SOURCES = \
   pe.h \
   xtoi.h \
   pefile.h \
-  sizedstr.h
+  sizedstr.h \
+  mem.h
 
 libyara_la_LIBDADD = /usr/local/lib/libpcre.la
 all: config.h
@@ -334,6 +336,7 @@ include ./$(DEPDIR)/eval.Plo
 include ./$(DEPDIR)/filemap.Plo
 include ./$(DEPDIR)/grammar.Plo
 include ./$(DEPDIR)/lex.Plo
+include ./$(DEPDIR)/mem.Plo
 include ./$(DEPDIR)/pefile.Plo
 include ./$(DEPDIR)/scan.Plo
 include ./$(DEPDIR)/xtoi.Plo

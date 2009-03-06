@@ -24,6 +24,7 @@ GNU General Public License for more details.
 #include "ast.h"
 #include "pefile.h"
 #include "error.h"
+#include "mem.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -348,7 +349,7 @@ int init_hash_table(RULE_LIST* rule_list)
 				
 				/* both lowercases */
 				
-				entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
+				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
 				
 				if (entry == NULL)
     			    return ERROR_INSUFICIENT_MEMORY;
@@ -361,7 +362,7 @@ int init_hash_table(RULE_LIST* rule_list)
     			
                 x = toupper(x);
 				
-				entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
+				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
 				
 				if (entry == NULL)
                     return ERROR_INSUFICIENT_MEMORY;
@@ -374,7 +375,7 @@ int init_hash_table(RULE_LIST* rule_list)
     			
     			y = toupper(y);  
     			    
-    			entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
+    			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
 				
 				if (entry == NULL)
                     return ERROR_INSUFICIENT_MEMORY;
@@ -387,7 +388,7 @@ int init_hash_table(RULE_LIST* rule_list)
     			    
                 x = tolower(x);
  
-    			entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
+    			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
 				
 				if (entry == NULL)
                     return ERROR_INSUFICIENT_MEMORY;
@@ -399,7 +400,7 @@ int init_hash_table(RULE_LIST* rule_list)
 			}
 			else if (hashable)
 			{
-				entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
+				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
 				
 				if (entry == NULL)
                     return ERROR_INSUFICIENT_MEMORY;
@@ -410,7 +411,7 @@ int init_hash_table(RULE_LIST* rule_list)
 			}
 			else /* non hashable */
 			{
-			    entry = (STRING_LIST_ENTRY*) malloc(sizeof(STRING_LIST_ENTRY));
+			    entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
 				
 				if (entry == NULL)
                     return ERROR_INSUFICIENT_MEMORY;
@@ -444,7 +445,7 @@ void free_hash_table(RULE_LIST* rule_list)
 			while (entry != NULL)
 			{
 				next_entry = entry->next;
-				free(entry);
+				yr_free(entry);
 				entry = next_entry;
 			}
 			
@@ -457,7 +458,7 @@ void free_hash_table(RULE_LIST* rule_list)
     while (entry != NULL)
 	{
 		next_entry = entry->next;
-		free(entry);
+		yr_free(entry);
 		entry = next_entry;
 	}
 	
@@ -487,7 +488,7 @@ void clear_marks(RULE_LIST* rule_list)
 			while (match != NULL)
 			{
 				next_match = match->next;
-				free(match);
+				yr_free(match);
 				match = next_match;
 			}
 			
@@ -523,7 +524,7 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 			}
 						
 			len = i/2;
-			tmp = malloc(len);
+			tmp = yr_malloc(len);
             i = 0;
 			
 			if (tmp != NULL)
@@ -536,7 +537,7 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 								
 				match = regexp_match(tmp, len, string->string, string->length, string->re, (negative_size > 2));
 			
-				free(tmp);			
+				yr_free(tmp);			
 				return match * 2;
 			}
 			
@@ -662,7 +663,7 @@ int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
 		    if (!overlap)
 		    {		    
     			string->flags |= STRING_FLAGS_FOUND;
-    			match = (MATCH*) malloc(sizeof(MATCH));
+    			match = (MATCH*) yr_malloc(sizeof(MATCH));
 
     			if (match != NULL)
     			{
