@@ -455,12 +455,19 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
         {
             fh = tmpfile();
             
-            fprintf(fh, "%s", source);
-            fseek(fh, 0, SEEK_SET);
+            if (fh != NULL)
+            {
+                fprintf(fh, "%s", source);
+                fseek(fh, 0, SEEK_SET);
             
-            result = Rules_NEW(fh);
+                result = Rules_NEW(fh);
             
-            fclose(fh);
+                fclose(fh);
+            }
+            else
+            {
+                result = PyErr_SetFromErrno(YaraError);
+            }
         }
         else if (py_file != NULL)
         {
