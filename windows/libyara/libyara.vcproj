@@ -155,10 +155,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\libyara\compile.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\libyara\error.c"
 				>
 			</File>
@@ -176,6 +172,10 @@
 			</File>
 			<File
 				RelativePath="..\..\libyara\lex.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\libyara\libyara.c"
 				>
 			</File>
 			<File

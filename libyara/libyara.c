@@ -23,16 +23,15 @@ GNU General Public License for more details.
 #include "error.h"
 #include "eval.h"
 
-extern FILE *yyin;
-extern int yydebug;
+extern FILE*           yyin;
+extern int             yydebug;
 
-int yylex (void); 
-int yyparse (void);
+extern int             line_number;
+extern const char*     file_name;
+extern RULE_LIST*      rule_list;
 
-int             line_number;
-const char*     file_name;
-RULE_LIST*      rule_list;
-
+int parse_string(const char* string, RULE_LIST* rules);
+int parse_file(FILE* rules_file, RULE_LIST* rules);
 
 void yr_set_file_name(const char* rules_file_name)
 {
@@ -132,17 +131,13 @@ void yr_free_rule_list(RULE_LIST* rule_list)
 
 int yr_compile_file(FILE* rules_file, RULE_LIST* rules)
 {	
-	rule_list = rules;	
-	yyin = rules_file;
+    return parse_file(rules_file, rules);
+}
 
-	if (yyin != NULL)
-	{
-		//yydebug = 1;	
-		line_number = 1;		
-		yyparse();	
-	}
-		
-	return yynerrs;
+
+int yr_compile_string(const char* rules_string, RULE_LIST* rules)
+{	
+    return parse_string(rules_string, rules);
 }
 
 

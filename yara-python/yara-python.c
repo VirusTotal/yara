@@ -250,7 +250,7 @@ static PyTypeObject Rules_Type = {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static PyObject * Rules_NEW(FILE* file)
+static PyObject * Rules_new_from_file(FILE* file)
 { 
     RULE_LIST* rules;
     Rules* object;
@@ -270,6 +270,39 @@ static PyObject * Rules_NEW(FILE* file)
     }
         
     errors = yr_compile_file(file, rules);
+       
+    if (errors > 0)   /* errors during compilation */
+    {
+        yr_free_rule_list(rules);       
+        return PyErr_Format(YaraSyntaxError, "line %d: %s", yr_get_error_line_number(), yr_get_last_error_message());
+    }
+    
+    object = PyObject_NEW(Rules, &Rules_Type);
+    
+    if (object != NULL)
+    {
+        yr_prepare_rules(rules);   
+        object->rules = rules;
+    } 
+      
+    return (PyObject *)object;
+}
+
+
+static PyObject * Rules_new_from_string(const char* string)
+{ 
+    RULE_LIST* rules;
+    Rules* object;
+    int errors;
+    
+    rules = yr_alloc_rule_list();
+    
+    if (rules == NULL)
+    {
+        return PyErr_NoMemory();
+    }
+    
+    errors = yr_compile_string(string, rules);
        
     if (errors > 0)   /* errors during compilation */
     {
@@ -442,7 +475,7 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
             
             if (fh != NULL)
             {
-                result = Rules_NEW(fh);
+                result = Rules_new_from_file(fh);
                 fclose(fh);
             }
             else
@@ -452,26 +485,12 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
         }
         else if (source != NULL)
         {
-            fh = tmpfile();
-            
-            if (fh != NULL)
-            {
-                fprintf(fh, "%s", source);
-                fseek(fh, 0, SEEK_SET);
-            
-                result = Rules_NEW(fh);
-            
-                fclose(fh);
-            }
-            else
-            {
-                result = PyErr_SetFromErrno(YaraError);
-            }
+            result = Rules_new_from_string(source);
         }
         else if (py_file != NULL)
         {
             fh = PyFile_AsFile(py_file);   
-            result = Rules_NEW(fh);
+            result = Rules_new_from_file(fh);
         }
         else
         {

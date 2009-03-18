@@ -10,12 +10,49 @@
 #include "xtoi.h"
 #include "mem.h"
 #include "sizedstr.h"
+#include "yara.h"
 
-extern int line_number;
+int             line_number;
+const char*     file_name;
+RULE_LIST*      rule_list;
 
-char string_buf[256];
-char *string_buf_ptr;
-unsigned short string_buf_len;
+char 			string_buf[256];
+char*			string_buf_ptr;
+unsigned 		short string_buf_len;
+
+
+int parse_string(const char* string, RULE_LIST* rules)
+{
+	YY_BUFFER_STATE state;
+
+	rule_list = rules;	
+
+	state = yy_scan_string(string);
+
+	yyparse();
+
+	yy_delete_buffer(state);
+
+	return yynerrs;
+}
+
+int parse_file(FILE* rules_file, RULE_LIST* rules)
+{	
+	rule_list = rules;	
+	yyin = rules_file;
+
+	if (yyin != NULL)
+	{
+		//yydebug = 1;	
+		line_number = 1;		
+		yyparse();	
+	}
+		
+	return yynerrs;
+}
+
+
+
 
 
 %}

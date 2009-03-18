@@ -167,33 +167,32 @@ typedef struct _RULE_LIST
 } RULE_LIST;
 
 
-RULE* lookup_rule(RULE_LIST* rules, char* identifier);
-
-STRING* lookup_string(STRING* string_list_head, char* identifier);
-
-TAG* lookup_tag(TAG* tag_list_head, char* identifier);
-
-void yr_init();
-RULE_LIST* yr_alloc_rule_list();
-void yr_free_rule_list(RULE_LIST* rule_list);
-
-void yr_set_file_name(const char* rules_file_name);
-
-int yr_compile_file(FILE* rules_file, RULE_LIST* rules);
-
-int yr_prepare_rules(RULE_LIST* rule_list);
-
 typedef int (*YARACALLBACK)(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* data);
-
-int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data);
-int yr_scan_file(const char* file_path, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data);
-
 typedef void (*YARAREPORT)(const char* file_name, int line_number, const char* error_message);
 
-int yr_get_last_error();
-int yr_get_error_line_number();
-char* yr_get_last_error_message();
-void yr_set_report_function(YARAREPORT fn);
+RULE*       lookup_rule(RULE_LIST* rules, char* identifier);
+STRING*     lookup_string(STRING* string_list_head, char* identifier);
+TAG*        lookup_tag(TAG* tag_list_head, char* identifier);
+
+void        yr_init();
+
+RULE_LIST*  yr_alloc_rule_list();
+void        yr_free_rule_list(RULE_LIST* rule_list);
+
+void        yr_set_file_name(const char* rules_file_name);
+
+int         yr_compile_file(FILE* rules_file, RULE_LIST* rules);
+int         yr_compile_string(const char* rules_string, RULE_LIST* rules);
+
+int         yr_prepare_rules(RULE_LIST* rule_list);
+
+int         yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data);
+int         yr_scan_file(const char* file_path, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data);
+
+int         yr_get_last_error();
+int         yr_get_error_line_number();
+char*       yr_get_last_error_message();
+void        yr_set_report_function(YARAREPORT fn);
 
 #endif
 
