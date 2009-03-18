@@ -6,11 +6,12 @@
 #include <stdio.h>
 #include <string.h>
 #include "grammar.h"
-#include "compile.h"
 #include "error.h"
 #include "xtoi.h"
 #include "mem.h"
+#include "sizedstr.h"
 
+extern int line_number;
 
 char string_buf[256];
 char *string_buf_ptr;

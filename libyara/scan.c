@@ -25,6 +25,7 @@ GNU General Public License for more details.
 #include "pefile.h"
 #include "error.h"
 #include "mem.h"
+#include "eval.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -40,7 +41,6 @@ GNU General Public License for more details.
 
 
 /* Function implementations */
-
 
 inline int compare(char* str1, char* str2, int len)
 {
@@ -281,154 +281,6 @@ int regexp_match(unsigned char* buffer, unsigned int buffer_size, unsigned char*
 	return 0;
 }
 
-int init_hash_table(RULE_LIST* rule_list)
-{
-	RULE* rule;
-	STRING* string;
-	STRING_LIST_ENTRY* entry;
-	unsigned char x,y;
-	int next;
-    char hashable;
-		
-	rule = rule_list->head;
-	
-	while (rule != NULL)
-	{
-		string = rule->string_list_head;
-
-		while (string != NULL)
-		{	        
-			if (string->flags & STRING_FLAGS_REGEXP)
-			{	
-				/* take into account anchors (^) at beginning of regular expressions */
-							
-				if (string->string[0] == '^')
-				{
-				    if (string->length > 2)
-				    {
-					    x = string->string[1];
-					    y = string->string[2];
-					}
-					else
-					{
-                        x = 0;
-                        y = 0; 
-					}
-				}
-				else
-				{
-					x = string->string[0];
-					y = string->string[1];
-				}
-			
-                hashable = isalnum(x) && isalnum(y);
-			}
-			else
-			{
-			    x = string->string[0];
-				y = string->string[1];
-				
-				hashable = TRUE;
-				
-			} /* if (string->flags & STRING_FLAGS_REGEXP) */
-			
-			if (string->flags & STRING_FLAGS_HEXADECIMAL)
-			{
-			    hashable = (string->mask[0] == 0xFF) && (string->mask[1] == 0xFF);
-			}
-			
-			if (hashable && string->flags & STRING_FLAGS_NO_CASE)
-			{	
-			    /* 
-			       if string is case-insensitive add an entry in the hash table
-			       for each posible combination 
-			    */
-			    
-				x = tolower(x);
-				y = tolower(y);
-				
-				/* both lowercases */
-				
-				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-				if (entry == NULL)
-    			    return ERROR_INSUFICIENT_MEMORY;
-    			    
-    			entry->next = rule_list->hash_table[x][y];
-    			entry->string = string;
-    			rule_list->hash_table[x][y] = entry;
-    			
-    			/* X uppercase Y lowercase */
-    			
-                x = toupper(x);
-				
-				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
-    			    
-        		entry->next = rule_list->hash_table[x][y];  
-        		entry->string = string;
-        		rule_list->hash_table[x][y] = entry; 
-        		
-        		/* both uppercases */			    
-    			
-    			y = toupper(y);  
-    			    
-    			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
-    			    
-        		entry->next = rule_list->hash_table[x][y];
-        		entry->string = string;
-        		rule_list->hash_table[x][y] = entry;
-        		
-        		/* X lowercase Y uppercase */
-    			    
-                x = tolower(x);
- 
-    			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
-    			    
-        		entry->next = rule_list->hash_table[x][y]; 
-        		entry->string = string; 
-        		rule_list->hash_table[x][y] = entry;               
-    							
-			}
-			else if (hashable)
-			{
-				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
-    			    
-        		entry->next = rule_list->hash_table[x][y]; 
-        		entry->string = string; 
-        		rule_list->hash_table[x][y] = entry;    
-			}
-			else /* non hashable */
-			{
-			    entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
-			    
-			    entry->next = rule_list->non_hashed_strings;
-			    entry->string = string; 
-                rule_list->non_hashed_strings = entry;
-			}
-		
-			string = string->next;
-		}
-		
-		rule = rule->next;
-	}
-	
-	return ERROR_SUCCESS;
-}
 
 void free_hash_table(RULE_LIST* rule_list)
 {
@@ -686,7 +538,7 @@ int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
 }
 
 
-inline int find_matches(	unsigned char first_char, 
+int find_matches(	unsigned char first_char, 
 					unsigned char second_char, 
 					unsigned char* buffer, 
 					unsigned int buffer_size, 
@@ -718,147 +570,6 @@ inline int find_matches(	unsigned char first_char,
 	return result;
 }
 
-int scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data)
-{
-    int error;
-    int global_rules_satisfied;
-	unsigned int i;	
-	int file_is_pe;
-	
-	RULE* rule;
-	EVALUATION_CONTEXT context;
-	
-	context.file_size = buffer_size;
-    context.data = buffer;
-	
-	file_is_pe = is_pe(buffer, buffer_size);
-	
-	if (file_is_pe)
-	{
-		context.entry_point = get_entry_point_offset(buffer, buffer_size);
-	}
-	
-	clear_marks(rule_list);
-	
-	for (i = 0; i < buffer_size - 1; i++)
-	{		    
-		/* search for normal strings */	
-        error = find_matches(   buffer[i], 
-                                buffer[i + 1], 
-                                buffer + i, 
-                                buffer_size - i, 
-                                i, 
-                                STRING_FLAGS_HEXADECIMAL | STRING_FLAGS_ASCII, 
-                                i, 
-                                rule_list);
-		
-		if (error != ERROR_SUCCESS)
-		    return error;
-		
-		/* search for wide strings */
-		if (i < buffer_size - 3 && buffer[i + 1] == 0 && buffer[i + 3] == 0)
-		{
-			error = find_matches(   buffer[i], 
-			                        buffer[i + 2], 
-			                        buffer + i, 
-			                        buffer_size - i, 
-			                        i, 
-			                        STRING_FLAGS_WIDE, 
-			                        i, 
-			                        rule_list);
-			
-			if (error != ERROR_SUCCESS)
-    		    return error;
-		}	
-	}
-	
-	rule = rule_list->head;
-	
-	/* evaluate global rules */
-	
-    global_rules_satisfied = TRUE;
-	
-	while (rule != NULL)
-	{	
-		if (rule->flags & RULE_FLAGS_GLOBAL)
-		{
-            context.rule = rule;
-            
-            if (evaluate(rule->condition, &context))
-    		{
-                rule->flags |= RULE_FLAGS_MATCH;
-    		}
-    		else
-    		{
-                global_rules_satisfied = FALSE;
-    		}
-    		
-    		if (!(rule->flags & RULE_FLAGS_PRIVATE))
-    		{
-        		if (callback(rule, buffer, buffer_size, user_data) != 0)
-        		{
-                    return ERROR_CALLBACK_ERROR;
-        		}
-		    }
-		}
-			
-		rule = rule->next;
-	}
-	
-	if (!global_rules_satisfied)
-	{
-        return ERROR_SUCCESS;
-	}
 
-	rule = rule_list->head;
-	
-	while (rule != NULL)
-	{
-		/* skip global rules and privates rules */
-		
-		if (rule->flags & RULE_FLAGS_GLOBAL || rule->flags & RULE_FLAGS_PRIVATE)  
-		{
-			rule = rule->next;
-			continue;
-		}
-		
-		/* evaluate only if file is PE or the rule does not requires PE files*/
-	  
-		if (file_is_pe || !(rule->flags & RULE_FLAGS_REQUIRE_PE_FILE))
-		{
-		    context.rule = rule;
-		    
-		    if (evaluate(rule->condition, &context))
-    		{
-                rule->flags |= RULE_FLAGS_MATCH;
-    		}
-		}
-		
-		if (callback(rule, buffer, buffer_size, user_data) != 0)
-		{
-            return ERROR_CALLBACK_ERROR;
-		}
-		
-		rule = rule->next;
-	}
-	
-	return ERROR_SUCCESS;
-}
-
-int scan_file(const char* file_path, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data)
-{
-	MAPPED_FILE mfile;
-	int result;
-
-    result = map_file(file_path, &mfile);
-	
-	if (result == ERROR_SUCCESS)
-	{
-		result = scan_mem(mfile.data, (unsigned int) mfile.size, rule_list, callback, user_data);		
-		unmap_file(&mfile);
-	}
-		
-	return result;
-}
 
 

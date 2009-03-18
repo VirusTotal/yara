@@ -7,9 +7,10 @@
 
 #include "ast.h"
 #include "error.h"
-#include "compile.h"
 #include "sizedstr.h"
 #include "mem.h"
+
+extern RULE_LIST* rule_list;
 
 #define YYERROR_VERBOSE
 //#define YYDEBUG 1
@@ -332,7 +333,7 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                      }
                    | _FOR_ expression _OF_ string_set ':'
                       { 
-                          inside_for++; 
+                           inside_for++; 
                       }           
                       '(' boolean_expression ')'                     
                       { 
@@ -349,7 +350,7 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                       }
                    | _FOR_ _ALL_ _OF_ string_set ':'
                      { 
-                         inside_for++; 
+                          inside_for++; 
                      }           
                      '(' boolean_expression ')'                     
                      { 
@@ -366,7 +367,7 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                      }
                    | _FOR_ _ANY_ _OF_ string_set ':'
                      { 
-                           inside_for++; 
+                          inside_for++; 
                      }           
                      '(' boolean_expression ')'                     
                      { 

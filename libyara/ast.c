@@ -674,7 +674,7 @@ int new_string_identifier(int type, STRING* defined_strings, char* identifier, T
 
 	Frees a term. If the term depends on other terms they are also freed. Notice that
 	some terms hold references to STRING structures, but these structures are freed
-	by free_rule_list, not by this function.
+	by yr_free_rule_list, not by this function.
 	
 */
 
@@ -754,94 +754,5 @@ void free_term(TERM* term)
     yr_free(term);
 }
 
-RULE_LIST* alloc_rule_list()
-{
-	RULE_LIST* rule_list = (RULE_LIST*) yr_malloc(sizeof(RULE_LIST));
 
-	rule_list->head = NULL;
-	rule_list->tail = NULL;
-    rule_list->non_hashed_strings = NULL;
-
-	memset(rule_list->hash_table, 0, sizeof(rule_list->hash_table));
-
-	return rule_list;
-}
-
-
-/* 
-	void free_rule_list(RULE_LIST* rule_list)
-
-	Frees a list of rules, its strings and conditions.
-	
-*/
-
-void free_rule_list(RULE_LIST* rule_list)
-{
-    RULE* rule;
-    RULE* next_rule;
-    STRING* string;
-    STRING* next_string;
-    MATCH* match;
-    MATCH* next_match;
-	TAG* tag;
-	TAG* next_tag;
-    
-    rule = rule_list->head;
-    
-    while (rule != NULL)
-    {        
-        next_rule = rule->next;
-        
-        string = rule->string_list_head;
-        
-        while (string != NULL)
-        {
-            next_string = string->next;
-            
-			yr_free(string->identifier);
-            yr_free(string->string);
-            
-            if (IS_HEX(string))
-            {   
-                yr_free(string->mask);
-            }
-            else if (IS_REGEXP(string))
-            {
-                pcre_free(string->re.regexp);
-                pcre_free(string->re.extra);
-            }
-            
-            match = string->matches;
-            
-            while (match != NULL)
-            {
-                next_match = match->next;
-                yr_free(match);
-                match = next_match;
-            }
-            
-            yr_free(string);
-            string = next_string;
-        }
-
-		tag = rule->tag_list_head;
-
-		while (tag != NULL)
-		{
-			next_tag = tag->next;
-			
-			yr_free(tag->identifier);
-			yr_free(tag);
-			
-			tag = next_tag;
-		}
-        
-        free_term(rule->condition);
-        yr_free(rule->identifier);     
-        yr_free(rule);
-        rule = next_rule;
-    }
-
-	yr_free(rule_list);
-}
 

@@ -256,7 +256,7 @@ static PyObject * Rules_NEW(FILE* file)
     Rules* object;
     int errors;
 
-    rules = alloc_rule_list();
+    rules = yr_alloc_rule_list();
     
     if (rules == NULL)
     {
@@ -265,23 +265,23 @@ static PyObject * Rules_NEW(FILE* file)
     
     if (file == NULL)
     {
-        free_rule_list(rules);
+        yr_free_rule_list(rules);
         return PyErr_SetFromErrno(PyExc_IOError);
     }
         
-    errors = compile_rules(file, rules);
+    errors = yr_compile_file(file, rules);
        
     if (errors > 0)   /* errors during compilation */
     {
-        free_rule_list(rules);       
-        return PyErr_Format(YaraSyntaxError, "line %d: %s", get_error_line_number(), get_last_error_message());
+        yr_free_rule_list(rules);       
+        return PyErr_Format(YaraSyntaxError, "line %d: %s", yr_get_error_line_number(), yr_get_last_error_message());
     }
     
     object = PyObject_NEW(Rules, &Rules_Type);
     
     if (object != NULL)
     {
-        init_hash_table(rules);   
+        yr_prepare_rules(rules);   
         object->rules = rules;
     } 
       
@@ -290,8 +290,7 @@ static PyObject * Rules_NEW(FILE* file)
 
 static void Rules_dealloc(PyObject *self)
 {     
-    free_hash_table(((Rules*) self)->rules);
-    free_rule_list(((Rules*) self)->rules);
+    yr_free_rule_list(((Rules*) self)->rules);
     PyObject_Del(self);
 }
 
@@ -378,7 +377,7 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
         
         if (filepath != NULL)
         {            
-            result = scan_file(filepath, object->rules, callback, matches);
+            result = yr_scan_file(filepath, object->rules, callback, matches);
 
             if (result != ERROR_SUCCESS)
             {
@@ -399,7 +398,7 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
         }
         else if (data != NULL)
         {
-            result = scan_mem((unsigned char*) data, (unsigned int) length, object->rules, callback, matches);
+            result = yr_scan_mem((unsigned char*) data, (unsigned int) length, object->rules, callback, matches);
 
             if (result != ERROR_SUCCESS)
             {
@@ -496,6 +495,8 @@ static PyMethodDef methods[] = {
 void inityara(void)
 { 
     PyObject *m, *d;
+    
+    yr_init();
  
     m = Py_InitModule3("yara", methods, module_doc);
     d = PyModule_GetDict(m);

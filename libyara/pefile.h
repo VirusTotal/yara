@@ -13,6 +13,11 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 */
+#ifndef _PE_H 
+#define _PE_H
 
 int is_pe(unsigned char* buffer, unsigned int buffer_length);
 int get_entry_point_offset(unsigned char* buffer, unsigned int buffer_length);
+
+#endif
+

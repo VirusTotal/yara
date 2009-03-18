@@ -18,15 +18,27 @@ GNU General Public License for more details.
 
 #include <windows.h>
 
+static HANDLE hHeap;
+
+void yr_heap_alloc()
+{
+    hHeap = HeapCreate(0, 0x8000, 0);
+}
+
+void yr_heap_free()
+{
+    HeapDestroy(hHeap);
+}
+
 void* yr_malloc(size_t size)
 {
-    return (void*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    return (void*) HeapAlloc(hHeap, HEAP_ZERO_MEMORY, size);
 }
 
 
 void yr_free(void* ptr)
 {
-    HeapFree(GetProcessHeap(), 0, ptr);
+    HeapFree(hHeap, 0, ptr);
 }
 
 
@@ -48,6 +60,16 @@ char* yr_strdup(const char *s)
 
 #include <stdlib.h>
 #include <string.h>
+
+void yr_heap_alloc()
+{
+    return;
+}
+
+void yr_heap_free()
+{
+    return;
+}
 
 void* yr_malloc(size_t size)
 {

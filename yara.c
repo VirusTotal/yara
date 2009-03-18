@@ -105,7 +105,7 @@ void scan_dir(const char* dir, int recursive, RULE_LIST* rules, YARACALLBACK cal
 			if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			{
 				//printf("Processing %s...\n", FindFileData.cFileName);
-				scan_file(full_path, rules, callback, full_path);
+				yr_scan_file(full_path, rules, callback, full_path);
 			}
 			else if (recursive && FindFileData.cFileName[0] != '.' )
 			{
@@ -156,7 +156,7 @@ void scan_dir(const char* dir, int recursive, RULE_LIST* rules, YARACALLBACK cal
 				if(S_ISREG(st.st_mode))
 				{
 					//printf("Processing %s\n", de->d_name);		
-					scan_file(full_path, rules, callback, full_path);
+					yr_scan_file(full_path, rules, callback, full_path);
 				}
 				else if(recursive && S_ISDIR(st.st_mode) && de->d_name[0] != '.')
 				{
@@ -463,12 +463,14 @@ int main(int argc, char const* argv[])
 		return 0;
 	}
 			
-	rules = alloc_rule_list();
+    yr_init();
+			
+	rules = yr_alloc_rule_list();
 	
 	if (rules == NULL) 
 		return 0;
 	
-	set_report_function(report_error);	
+	yr_set_report_function(report_error);	
 			
 	for (i = optind; i < argc - 1; i++)
 	{
@@ -476,15 +478,15 @@ int main(int argc, char const* argv[])
 		
 		if (rule_file != NULL)
 		{
-			set_file_name(argv[i]);
+			yr_set_file_name(argv[i]);
 			            			
-			errors = compile_rules(rule_file, rules);
+			errors = yr_compile_file(rule_file, rules);
 			
 			fclose(rule_file);
 			
 			if (errors > 0) /* errors during compilation */
 			{
-				free_rule_list(rules);				
+				yr_free_rule_list(rules);				
 				return 0;
 			}
 		}
@@ -496,18 +498,18 @@ int main(int argc, char const* argv[])
 	
 	if (optind == argc - 1)  /* no rule files, read rules from stdin */
 	{
-		set_file_name("stdin");
+		yr_set_file_name("stdin");
 		
-		errors = compile_rules(stdin, rules);
+		errors = yr_compile_file(stdin, rules);
 			
 		if (errors > 0) /* errors during compilation */
 		{
-			free_rule_list(rules);				
+			yr_free_rule_list(rules);				
 			return 0;
 		}		
 	}
 		
-	init_hash_table(rules);
+	yr_prepare_rules(rules);
 	
 	if (is_directory(argv[argc - 1]))
 	{
@@ -515,11 +517,10 @@ int main(int argc, char const* argv[])
 	}
 	else		
 	{
-		scan_file(argv[argc - 1], rules, callback, (void*) argv[argc - 1]);
+		yr_scan_file(argv[argc - 1], rules, callback, (void*) argv[argc - 1]);
 	}
 	
-	free_hash_table(rules);	
-	free_rule_list(rules);
+	yr_free_rule_list(rules);
 	
 	/* free tag list allocated by process_cmd_line */
 	

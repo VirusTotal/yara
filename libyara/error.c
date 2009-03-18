@@ -18,11 +18,13 @@ GNU General Public License for more details.
 #include <string.h>
 
 #include "error.h"
-#include "compile.h"
+#include "yara.h"
 
 #ifdef WIN32
 #define snprintf _snprintf
 #endif
+
+extern int line_number;
 
 int last_result = ERROR_SUCCESS;
 int last_error = ERROR_SUCCESS;
@@ -54,23 +56,23 @@ void yyerror(const char *error_message)
     }	
 }
 
-int get_last_error()
+int yr_get_last_error()
 {
     return last_error;
 }
 
-int get_error_line_number()
+int yr_get_error_line_number()
 {
     return last_error_line;
 }
 
-char* get_last_error_message()
+char* yr_get_last_error_message()
 {
     return last_error_message;
 }
 
 
-void set_report_function(YARAREPORT fn)
+void yr_set_report_function(YARAREPORT fn)
 {
     report_function = fn;
 }

@@ -14,8 +14,15 @@ GNU General Public License for more details.
 
 */
 
+#ifndef _MEM_H 
+#define _MEM_H
+
+void yr_heap_alloc();
+void yr_heap_free();
 void* yr_malloc(size_t size);
 void yr_free(void *ptr);
 char* yr_strdup(const char *s);
+
+#endif
 
 
