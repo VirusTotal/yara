@@ -146,7 +146,7 @@
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 95 "grammar.y"
+#line 97 "grammar.y"
 typedef union YYSTYPE {
     
     void*           sized_string;
@@ -164,7 +164,7 @@ typedef union YYSTYPE {
 # define YYSTYPE_IS_TRIVIAL 1
 #endif
 
-extern YYSTYPE yylval;
+
 
 
 

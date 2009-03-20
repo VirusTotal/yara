@@ -155,10 +155,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\libyara\error.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\libyara\eval.c"
 				>
 			</File>

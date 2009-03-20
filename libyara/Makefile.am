@@ -10,14 +10,13 @@ libyara_la_SOURCES = \
   ast.c \
   scan.c \
   filemap.c \
-  error.c \
   eval.c \
   pefile.c \
   xtoi.c \
   mem.c \
   libyara.c \
+  lex.h \
   ast.h \
-  error.h \
   eval.h \
   filemap.h \
   pe.h \

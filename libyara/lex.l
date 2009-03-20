@@ -6,58 +6,22 @@
 #include <stdio.h>
 #include <string.h>
 #include "grammar.h"
-#include "error.h"
 #include "xtoi.h"
 #include "mem.h"
 #include "sizedstr.h"
+#include "lex.h"
 #include "yara.h"
-
-int             line_number;
-const char*     file_name;
-RULE_LIST*      rule_list;
-
-char 			string_buf[256];
-char*			string_buf_ptr;
-unsigned 		short string_buf_len;
-
-
-int parse_string(const char* string, RULE_LIST* rules)
-{
-	YY_BUFFER_STATE state;
-
-	rule_list = rules;	
-
-	state = yy_scan_string(string);
-
-	yyparse();
-
-	yy_delete_buffer(state);
-
-	return yynerrs;
-}
-
-int parse_file(FILE* rules_file, RULE_LIST* rules)
-{	
-	rule_list = rules;	
-	yyin = rules_file;
-
-	if (yyin != NULL)
-	{
-		//yydebug = 1;	
-		line_number = 1;		
-		yyparse();	
-	}
-		
-	return yynerrs;
-}
-
-
-
-
 
 %}
 
+%option reentrant bison-bridge
 %option noyywrap
+%option nounistd
+%option yylineno
+
+%option fast
+%option verbose
+%option warn
 
 %x str
 %x regexp
@@ -111,73 +75,60 @@ hexdigit      [a-fA-F0-9]
 
 
 
-"/*"([^\*]|\*[^\/])*"*/"    {	/* skip comments */
-								
-								char* line_break = strchr( yytext, '\n' );
-								
-							   	while( line_break != NULL ) 
-								{
-									line_number++;
-							    	line_break = strchr(line_break + 1, '\n');
-							   	}
-							}
+"/*"([^\*]|\*[^\/])*"*/"    {	/* skip comments */ }
 
-"//".*\n					{   /* skip single-line comments */
-
-								line_number++;
-							}
+"//".*\n					{   /* skip single-line comments */ }
 							
 $({letter}|{digit}|_)*"*" {
-                       		yylval.c_string = (char*) yr_strdup(yytext);
+                       		yylval->c_string = (char*) yr_strdup(yytext);
                        		return _STRING_IDENTIFIER_WITH_WILDCARD_;      
 					 	}
 
 $({letter}|{digit}|_)* {
-                       		yylval.c_string = (char*) yr_strdup(yytext);
+                       		yylval->c_string = (char*) yr_strdup(yytext);
                        		return _STRING_IDENTIFIER_;      
 					 }
 				
 					
 #({letter}|{digit}|_)* {	
-                       		yylval.c_string = (char*) yr_strdup(yytext);
-							yylval.c_string[0] = '$'; 					/* replace # by $*/
+                       		yylval->c_string = (char*) yr_strdup(yytext);
+							yylval->c_string[0] = '$'; 					/* replace # by $*/
 		                    return _STRING_COUNT_;      
 					 }
 					
 @({letter}|{digit}|_)* {	
-	                      	yylval.c_string = (char*) yr_strdup(yytext);
-							yylval.c_string[0] = '$'; 					/* replace @ by $*/
+	                      	yylval->c_string = (char*) yr_strdup(yytext);
+							yylval->c_string[0] = '$'; 					/* replace @ by $*/
 		                    return _STRING_OFFSET_;      
 					 }					
 
 ({letter}|_)({letter}|{digit}|_)*	{ 
 										if (strlen(yytext) > 128)
 										{
-											yyerror("indentifier too long");
-											yynerrs++;
+											yyerror(yyscanner, "indentifier too long");
 										}
 										
-										yylval.c_string = (char*) yr_strdup(yytext);
+										yylval->c_string = (char*) yr_strdup(yytext);
                    						return _IDENTIFIER_;
 									}
 							
 {digit}+(MB|KB){0,1}  { 
-						yylval.integer = (unsigned int) atoi(yytext);
+						yylval->integer = (unsigned int) atoi(yytext);
 						
 						if (strstr(yytext, "KB") != NULL)
 						{
-							yylval.integer *= 1024;
+							yylval->integer *= 1024;
 						}
 						else if (strstr(yytext, "MB") != NULL)
 						{
-							yylval.integer *= 1048576;
+							yylval->integer *= 1048576;
 						}
 						
                        	return _NUMBER_;     
 					}
 					
 0x{hexdigit}+		{
-						yylval.integer = xtoi(yytext + 2);
+						yylval->integer = xtoi(yytext + 2);
 						return _NUMBER_;
 					}
 	
@@ -185,38 +136,37 @@ $({letter}|{digit}|_)* {
 
 						SIZED_STRING* s;
 
-						if (string_buf_len == 0)
+						if (yyextra->lex_string_buf_len == 0)
 						{
-							yyerror("empty string");
-							yynerrs++;
+							yyerror(yyscanner, "empty string");
 						}
 
-						*string_buf_ptr = '\0';
+						*yyextra->lex_string_buf_ptr = '\0';
 
 						BEGIN(INITIAL);
 						
-						s = (SIZED_STRING*) yr_malloc(string_buf_len + sizeof(SIZED_STRING));
+						s = (SIZED_STRING*) yr_malloc(yyextra->lex_string_buf_len + sizeof(SIZED_STRING));
 						
-						s->length = string_buf_len;
+						s->length = yyextra->lex_string_buf_len;
 						
-						strcpy(s->c_string, string_buf);
+						strcpy(s->c_string, yyextra->lex_string_buf);
 					
-						yylval.sized_string = s;
+						yylval->sized_string = s;
 												
 						return _TEXTSTRING_;
 			  		}
 
-<str>\\t  			{ *string_buf_ptr++ = '\t'; string_buf_len++; }
-<str>\\\"  			{ *string_buf_ptr++ = '\"'; string_buf_len++; }
-<str>\\\\  			{ *string_buf_ptr++ = '\\'; string_buf_len++; }
+<str>\\t  			{ *yyextra->lex_string_buf_ptr++ = '\t'; yyextra->lex_string_buf_len++; }
+<str>\\\"  			{ *yyextra->lex_string_buf_ptr++ = '\"'; yyextra->lex_string_buf_len++; }
+<str>\\\\  			{ *yyextra->lex_string_buf_ptr++ = '\\'; yyextra->lex_string_buf_len++; }
 
 <str>\\x{hexdigit}{2}   	{
         						int result;
 
         						sscanf( yytext + 2, "%x", &result );
                 					
-        						*string_buf_ptr++ = result;
-								string_buf_len++;
+        						*yyextra->lex_string_buf_ptr++ = result;
+								yyextra->lex_string_buf_len++;
         					}
 
 <str>[^\\\n\"]+      {
@@ -224,56 +174,53 @@ $({letter}|{digit}|_)* {
 
 						while ( *yptr )
 						{
-        					*string_buf_ptr++ = *yptr++;
-							string_buf_len++;
+        					*yyextra->lex_string_buf_ptr++ = *yptr++;
+							yyextra->lex_string_buf_len++;
 						}
 					 }
 
 <str>\n  		    {
-						yyerror("unterminated string");
+						yyerror(yyscanner, "unterminated string");
 						yyterminate();
-						yynerrs++;
 					}					
 
 <str>\\(.|\n)  		{
-						yyerror("illegal escape sequence");
-						yynerrs++;
+						yyerror(yyscanner, "illegal escape sequence");
 					}
 
 					
 <regexp>"/"         { 	
 						SIZED_STRING* s;
 
-						if (string_buf_len == 0)
+						if (yyextra->lex_string_buf_len == 0)
 						{
-							yyerror("empty regular expression");
-							yynerrs++;
+							yyerror(yyscanner, "empty regular expression");
 						}
 
-						*string_buf_ptr = '\0';
+						*yyextra->lex_string_buf_ptr = '\0';
 
 						BEGIN(INITIAL);
 
-						s = (SIZED_STRING*) yr_malloc(string_buf_len + sizeof(SIZED_STRING));
+						s = (SIZED_STRING*) yr_malloc(yyextra->lex_string_buf_len + sizeof(SIZED_STRING));
 
-						s->length = string_buf_len;
+						s->length = yyextra->lex_string_buf_len;
 
-						strcpy(s->c_string, string_buf);
+						strcpy(s->c_string, yyextra->lex_string_buf);
 					
-						yylval.sized_string = s;
+						yylval->sized_string = s;
 
 						return _REGEXP_;
 			  		}
 			
 <regexp>\\\/		{ 				
-						*string_buf_ptr++ = '/';
-						string_buf_len++ ;
+						*yyextra->lex_string_buf_ptr++ = '/';
+						yyextra->lex_string_buf_len++ ;
 					}
 
 <regexp>\\.			{ 				
-						*string_buf_ptr++ = yytext[0];
-						*string_buf_ptr++ = yytext[1];
-						string_buf_len += 2;
+						*yyextra->lex_string_buf_ptr++ = yytext[0];
+						*yyextra->lex_string_buf_ptr++ = yytext[1];
+						yyextra->lex_string_buf_len += 2;
 					}
 
 <regexp>[^/\n\\]+    {
@@ -281,31 +228,30 @@ $({letter}|{digit}|_)* {
 
 						while ( *yptr )
 						{
-        					*string_buf_ptr++ = *yptr++;
-							string_buf_len++;
+        					*yyextra->lex_string_buf_ptr++ = *yptr++;
+							yyextra->lex_string_buf_len++;
 						}
 					 }
 
 <regexp>\n  		{
-						yyerror("unterminated regular expression");
+						yyerror(yyscanner, "unterminated regular expression");
 						yyterminate();
-						yynerrs++;
 					}
 					
 \"     				{
- 						string_buf_ptr = string_buf; 
-						string_buf_len = 0;
+ 						yyextra->lex_string_buf_ptr = yyextra->lex_string_buf; 
+						yyextra->lex_string_buf_len = 0;
 						BEGIN(str);
 					}
 			
 "/"     			{
- 						string_buf_ptr = string_buf; 
-						string_buf_len = 0;
+ 						yyextra->lex_string_buf_ptr = yyextra->lex_string_buf; 
+						yyextra->lex_string_buf_len = 0;
 						BEGIN(regexp);
 					}
 					
 					
-\{({hexdigit}|[ \-|\?\[\]\(\)])+\}		{ 
+\{({hexdigit}|[ \-|\?\[\]\(\)])+\}	{ 
 										int len = strlen(yytext);
 										
 										SIZED_STRING* s = (SIZED_STRING*) yr_malloc(len + sizeof(SIZED_STRING));
@@ -314,23 +260,102 @@ $({letter}|{digit}|_)* {
 
 										strcpy(s->c_string, yytext);
 
-										yylval.sized_string = s;
+										yylval->sized_string = s;
 									
 										return _HEXSTRING_;
 									}
 					
 
-[ \t\r]				/* skip whitespace */
+[ \t\r\n]				/* skip whitespace */
 
-[\n]           		{
-						line_number++;
-						
-					}
 
 .                  	{ 
                        	return yytext[0];    
 					}
 %%
+
+
+
+void yyerror(yyscan_t yyscanner, const char *error_message)
+{    
+	YARA_CONTEXT* context = yyget_extra(yyscanner);
+	
+	char message[512];
+	
+	/* 
+		if error_message != NULL the error comes from yyparse internal code
+		else the error comes from my code and the error code is set in context->last_result 
+	*/
+		
+	context->errors++;
+	context->last_error_line = yyget_lineno(yyscanner) + 1; // yyget_lineno is zero-based
+	
+	if (error_message != NULL)
+	{
+		context->last_error = ERROR_SYNTAX_ERROR;
+		strncpy(context->last_error_extra_info, error_message, sizeof(message));
+	
+    	if (context->error_report_function != NULL)
+    	{
+        	context->error_report_function(context->file_name, context->last_error_line, error_message);
+    	}
+	}
+	else
+	{
+		context->last_error = context->last_result;
+	
+		if (context->error_report_function != NULL)
+    	{	
+			yr_get_error_message(context, message, sizeof(message));
+        	context->error_report_function(context->file_name, context->last_error_line, message);
+    	}
+	}
+	
+	context->last_result = ERROR_SUCCESS;
+}
+
+
+int parse_string(const char* string, YARA_CONTEXT* context)
+{
+	yyscan_t yyscanner;
+	YY_BUFFER_STATE state;
+			
+    yylex_init(&yyscanner);
+
+	yyset_extra(context, yyscanner);
+
+	state = yy_scan_string(string, yyscanner);
+	
+    yyparse(yyscanner);
+
+	yy_delete_buffer(state, yyscanner);  
+	yylex_destroy(yyscanner);
+	
+	return context->errors;
+}
+
+
+int parse_file(FILE* rules_file, YARA_CONTEXT* context)
+{	
+	yyscan_t yyscanner;	
+	
+    yylex_init(&yyscanner);
+
+	#ifdef DEBUG
+	yyset_debug(1, yyscanner);
+	#endif
+	
+	yyset_in(rules_file, yyscanner);
+	yyset_extra(context, yyscanner);	
+
+    yyparse(yyscanner);
+
+    yylex_destroy(yyscanner);
+
+	return context->errors;
+}
+
+
 
 
 

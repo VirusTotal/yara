@@ -15,49 +15,49 @@ GNU General Public License for more details.
 */
 
 #include <string.h>
+#include <stdio.h>
 
-#include "yara.h"
-#include "scan.h"
 #include "filemap.h"
 #include "mem.h"
-#include "error.h"
 #include "eval.h"
+#include "lex.h"
+#include "scan.h"
+#include "yara.h"
 
-extern FILE*           yyin;
-extern int             yydebug;
-
-extern int             line_number;
-extern const char*     file_name;
-extern RULE_LIST*      rule_list;
-
-int parse_string(const char* string, RULE_LIST* rules);
-int parse_file(FILE* rules_file, RULE_LIST* rules);
-
-void yr_set_file_name(const char* rules_file_name)
-{
-	file_name = rules_file_name;
-}
+#ifdef WIN32
+#define snprintf _snprintf
+#endif
 
 void yr_init()
 {
     yr_heap_alloc();
 }
 
-RULE_LIST* yr_alloc_rule_list()
-{    
-	RULE_LIST* rule_list = (RULE_LIST*) yr_malloc(sizeof(RULE_LIST));
 
-	rule_list->head = NULL;
-	rule_list->tail = NULL;
-    rule_list->non_hashed_strings = NULL;
-
-	memset(rule_list->hash_table, 0, sizeof(rule_list->hash_table));
-
-	return rule_list;
+YARA_CONTEXT* yr_create_context()
+{
+    YARA_CONTEXT* context = (YARA_CONTEXT*) yr_malloc(sizeof(YARA_CONTEXT));
+    
+    context->rule_list.head = NULL;
+    context->rule_list.tail = NULL;
+    context->hash_table.non_hashed_strings = NULL;
+    context->hash_table.populated = FALSE;
+    context->errors = 0;
+    context->error_report_function = NULL;
+    context->last_error = ERROR_SUCCESS;
+    context->last_error_line = 0;
+    context->last_result = ERROR_SUCCESS;
+    context->file_name = NULL;
+    context->current_rule_strings = NULL;
+    context->inside_for = 0;
+    
+    memset(context->hash_table.hashed_strings, 0, sizeof(context->hash_table.hashed_strings));
+    
+    return context;
+    
 }
 
-
-void yr_free_rule_list(RULE_LIST* rule_list)
+void yr_destroy_context(YARA_CONTEXT* context)
 {
     RULE* rule;
     RULE* next_rule;
@@ -68,7 +68,7 @@ void yr_free_rule_list(RULE_LIST* rule_list)
 	TAG* tag;
 	TAG* next_tag;
     
-    rule = rule_list->head;
+    rule = context->rule_list.head;
     
     while (rule != NULL)
     {        
@@ -124,175 +124,23 @@ void yr_free_rule_list(RULE_LIST* rule_list)
         rule = next_rule;
     }
     
-    free_hash_table(rule_list);
-	yr_free(rule_list);
+    clear_hash_table(&context->hash_table);
+	yr_free(context);
 }
 
 
-int yr_compile_file(FILE* rules_file, RULE_LIST* rules)
+int yr_compile_file(FILE* rules_file, YARA_CONTEXT* context)
 {	
-    return parse_file(rules_file, rules);
+    return parse_file(rules_file, context);
 }
 
 
-int yr_compile_string(const char* rules_string, RULE_LIST* rules)
+int yr_compile_string(const char* rules_string, YARA_CONTEXT* context)
 {	
-    return parse_string(rules_string, rules);
+    return parse_string(rules_string, context);
 }
 
-
-int yr_prepare_rules(RULE_LIST* rule_list)
-{
-	RULE* rule;
-	STRING* string;
-	STRING_LIST_ENTRY* entry;
-	unsigned char x,y;
-	int next;
-    char hashable;
-		
-	rule = rule_list->head;
-	
-	while (rule != NULL)
-	{
-		string = rule->string_list_head;
-
-		while (string != NULL)
-		{	        
-			if (string->flags & STRING_FLAGS_REGEXP)
-			{	
-				/* take into account anchors (^) at beginning of regular expressions */
-							
-				if (string->string[0] == '^')
-				{
-				    if (string->length > 2)
-				    {
-					    x = string->string[1];
-					    y = string->string[2];
-					}
-					else
-					{
-                        x = 0;
-                        y = 0; 
-					}
-				}
-				else
-				{
-					x = string->string[0];
-					y = string->string[1];
-				}
-			
-                hashable = isalnum(x) && isalnum(y);
-			}
-			else
-			{
-			    x = string->string[0];
-				y = string->string[1];
-				
-				hashable = TRUE;
-				
-			} /* if (string->flags & STRING_FLAGS_REGEXP) */
-			
-			if (string->flags & STRING_FLAGS_HEXADECIMAL)
-			{
-			    hashable = (string->mask[0] == 0xFF) && (string->mask[1] == 0xFF);
-			}
-			
-			if (hashable && string->flags & STRING_FLAGS_NO_CASE)
-			{	
-			    /* 
-			       if string is case-insensitive add an entry in the hash table
-			       for each posible combination 
-			    */
-			    
-				x = tolower(x);
-				y = tolower(y);
-				
-				/* both lowercases */
-				
-				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-				if (entry == NULL)
-    			    return ERROR_INSUFICIENT_MEMORY;
-    			    
-    			entry->next = rule_list->hash_table[x][y];
-    			entry->string = string;
-    			rule_list->hash_table[x][y] = entry;
-    			
-    			/* X uppercase Y lowercase */
-    			
-                x = toupper(x);
-				
-				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
-    			    
-        		entry->next = rule_list->hash_table[x][y];  
-        		entry->string = string;
-        		rule_list->hash_table[x][y] = entry; 
-        		
-        		/* both uppercases */			    
-    			
-    			y = toupper(y);  
-    			    
-    			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
-    			    
-        		entry->next = rule_list->hash_table[x][y];
-        		entry->string = string;
-        		rule_list->hash_table[x][y] = entry;
-        		
-        		/* X lowercase Y uppercase */
-    			    
-                x = tolower(x);
- 
-    			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
-    			    
-        		entry->next = rule_list->hash_table[x][y]; 
-        		entry->string = string; 
-        		rule_list->hash_table[x][y] = entry;               
-    							
-			}
-			else if (hashable)
-			{
-				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
-    			    
-        		entry->next = rule_list->hash_table[x][y]; 
-        		entry->string = string; 
-        		rule_list->hash_table[x][y] = entry;    
-			}
-			else /* non hashable */
-			{
-			    entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
-			    
-			    entry->next = rule_list->non_hashed_strings;
-			    entry->string = string; 
-                rule_list->non_hashed_strings = entry;
-			}
-		
-			string = string->next;
-		}
-		
-		rule = rule->next;
-	}
-	
-	return ERROR_SUCCESS;
-}
-
-
-
-int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data)
+int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data)
 {
     int error;
     int global_rules_satisfied;
@@ -300,19 +148,24 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule
 	int file_is_pe;
 	
 	RULE* rule;
-	EVALUATION_CONTEXT context;
+	EVALUATION_CONTEXT eval_context;
 	
-	context.file_size = buffer_size;
-    context.data = buffer;
+	if (!context->hash_table.populated)
+	{
+        populate_hash_table(&context->hash_table, &context->rule_list);
+	}
+	
+	eval_context.file_size = buffer_size;
+    eval_context.data = buffer;
 	
 	file_is_pe = is_pe(buffer, buffer_size);
 	
 	if (file_is_pe)
 	{
-		context.entry_point = get_entry_point_offset(buffer, buffer_size);
+		eval_context.entry_point = get_entry_point_offset(buffer, buffer_size);
 	}
 	
-	clear_marks(rule_list);
+	clear_marks(&context->rule_list);
 	
 	for (i = 0; i < buffer_size - 1; i++)
 	{		    
@@ -324,7 +177,7 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule
                                 i, 
                                 STRING_FLAGS_HEXADECIMAL | STRING_FLAGS_ASCII, 
                                 i, 
-                                rule_list);
+                                context);
 		
 		if (error != ERROR_SUCCESS)
 		    return error;
@@ -339,14 +192,14 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule
 			                        i, 
 			                        STRING_FLAGS_WIDE, 
 			                        i, 
-			                        rule_list);
+			                        context);
 			
 			if (error != ERROR_SUCCESS)
     		    return error;
 		}	
 	}
 	
-	rule = rule_list->head;
+	rule = context->rule_list.head;
 	
 	/* evaluate global rules */
 	
@@ -356,9 +209,9 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule
 	{	
 		if (rule->flags & RULE_FLAGS_GLOBAL)
 		{
-            context.rule = rule;
+            eval_context.rule = rule;
             
-            if (evaluate(rule->condition, &context))
+            if (evaluate(rule->condition, &eval_context))
     		{
                 rule->flags |= RULE_FLAGS_MATCH;
     		}
@@ -384,7 +237,7 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule
         return ERROR_SUCCESS;
 	}
 
-	rule = rule_list->head;
+	rule = context->rule_list.head;
 	
 	while (rule != NULL)
 	{
@@ -400,9 +253,9 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule
 	  
 		if (file_is_pe || !(rule->flags & RULE_FLAGS_REQUIRE_PE_FILE))
 		{
-		    context.rule = rule;
+		    eval_context.rule = rule;
 		    
-		    if (evaluate(rule->condition, &context))
+		    if (evaluate(rule->condition, &eval_context))
     		{
                 rule->flags |= RULE_FLAGS_MATCH;
     		}
@@ -420,7 +273,7 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule
 }
 
 
-int yr_scan_file(const char* file_path, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data)
+int yr_scan_file(const char* file_path, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data)
 {
 	MAPPED_FILE mfile;
 	int result;
@@ -429,9 +282,80 @@ int yr_scan_file(const char* file_path, RULE_LIST* rule_list, YARACALLBACK callb
 	
 	if (result == ERROR_SUCCESS)
 	{
-		result = yr_scan_mem(mfile.data, (unsigned int) mfile.size, rule_list, callback, user_data);		
+		result = yr_scan_mem(mfile.data, (unsigned int) mfile.size, context, callback, user_data);		
 		unmap_file(&mfile);
 	}
 		
 	return result;
 }
+
+char* yr_get_error_message(YARA_CONTEXT* context, char* buffer, int buffer_size)
+{
+    switch(context->last_error)
+	{
+		case ERROR_INSUFICIENT_MEMORY:
+		    snprintf(buffer, buffer_size, "not enough memory");
+			break;
+		case ERROR_DUPLICATE_RULE_IDENTIFIER:
+			snprintf(buffer, buffer_size, "duplicate rule identifier \"%s\"", context->last_error_extra_info);
+			break;
+		case ERROR_DUPLICATE_STRING_IDENTIFIER:
+			snprintf(buffer, buffer_size, "duplicate string identifier \"%s\"", context->last_error_extra_info);
+			break;
+		case ERROR_DUPLICATE_TAG_IDENTIFIER:
+			snprintf(buffer, buffer_size, "duplicate tag identifier \"%s\"", context->last_error_extra_info);			
+			break;			
+		case ERROR_INVALID_CHAR_IN_HEX_STRING:
+		   	snprintf(buffer, buffer_size, "invalid char in hex string \"%s\"", context->last_error_extra_info);
+			break;
+		case ERROR_MISMATCHED_BRACKET:
+			snprintf(buffer, buffer_size, "mismatched bracket in string \"%s\"", context->last_error_extra_info);
+			break;
+		case ERROR_SKIP_AT_END:		
+			snprintf(buffer, buffer_size, "skip at the end of string \"%s\"", context->last_error_extra_info);	
+		    break;
+		case ERROR_INVALID_SKIP_VALUE:
+			snprintf(buffer, buffer_size, "invalid skip in string \"%s\"", context->last_error_extra_info);
+			break;
+		case ERROR_UNPAIRED_NIBBLE:
+			snprintf(buffer, buffer_size, "unpaired nibble in string \"%s\"", context->last_error_extra_info);
+			break;
+		case ERROR_CONSECUTIVE_SKIPS:
+			snprintf(buffer, buffer_size, "two consecutive skips in string \"%s\"", context->last_error_extra_info);			
+			break;
+		case ERROR_MISPLACED_WILDCARD_OR_SKIP:
+			snprintf(buffer, buffer_size, "misplaced wildcard or skip at string \"%s\", wildcards and skips are only allowed after the first byte of the string", context->last_error_extra_info);
+		    break;
+		case ERROR_MISPLACED_OR_OPERATOR:
+		    snprintf(buffer, buffer_size, "misplaced OR (|) operator at string \"%s\"", context->last_error_extra_info);
+			break;
+		case ERROR_NESTED_OR_OPERATION:
+	        snprintf(buffer, buffer_size, "nested OR (|) operator at string \"%s\"", context->last_error_extra_info);
+		    break;		
+		case ERROR_INVALID_OR_OPERATION_SYNTAX:
+		    snprintf(buffer, buffer_size, "invalid syntax at hex string \"%s\"", context->last_error_extra_info);
+			break;
+		case ERROR_SKIP_INSIDE_OR_OPERATION:
+    		snprintf(buffer, buffer_size, "skip inside an OR (|) operation at string \"%s\"", context->last_error_extra_info);
+    		break;
+		case ERROR_UNDEFINED_STRING:
+            snprintf(buffer, buffer_size, "undefined string \"%s\"", context->last_error_extra_info);
+			break;
+		case ERROR_UNDEFINED_RULE:
+		    snprintf(buffer, buffer_size, "undefined rule \"%s\"", context->last_error_extra_info);
+			break;
+		case ERROR_UNREFERENCED_STRING:
+		    snprintf(buffer, buffer_size, "unreferenced string \"%s\"", context->last_error_extra_info);
+			break;
+		case ERROR_MISPLACED_ANONYMOUS_STRING:
+	        snprintf(buffer, buffer_size, "wrong use of anonymous string");
+		    break;		
+		case ERROR_INVALID_REGULAR_EXPRESSION:
+		case ERROR_SYNTAX_ERROR:
+		    snprintf(buffer, buffer_size, "%s", context->last_error_extra_info);
+			break;
+	}
+	
+    return buffer;
+}
+

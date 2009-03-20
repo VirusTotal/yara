@@ -190,7 +190,7 @@ static PyObject * Match_getattro(PyObject *self, PyObject *name)
 typedef struct {
     
     PyObject_HEAD
-    RULE_LIST* rules;
+    YARA_CONTEXT* context;
 
 } Rules;
 
@@ -252,37 +252,42 @@ static PyTypeObject Rules_Type = {
 
 static PyObject * Rules_new_from_file(FILE* file)
 { 
-    RULE_LIST* rules;
+    YARA_CONTEXT* context;
     Rules* object;
-    int errors;
-
-    rules = yr_alloc_rule_list();
     
-    if (rules == NULL)
+    int  errors;
+    int  error_line;
+    char error_message[256];
+
+    context = yr_create_context();
+    
+    if (context == NULL)
     {
         return PyErr_NoMemory();
     }
     
     if (file == NULL)
     {
-        yr_free_rule_list(rules);
+        yr_destroy_context(context);
         return PyErr_SetFromErrno(PyExc_IOError);
     }
         
-    errors = yr_compile_file(file, rules);
+    errors = yr_compile_file(file, context);
        
-    if (errors > 0)   /* errors during compilation */
+    if (errors)   /* errors during compilation */
     {
-        yr_free_rule_list(rules);       
-        return PyErr_Format(YaraSyntaxError, "line %d: %s", yr_get_error_line_number(), yr_get_last_error_message());
+        error_line = context->last_error_line;
+        yr_get_error_message(context, error_message, sizeof(error_message));
+        yr_destroy_context(context); 
+        
+        return PyErr_Format(YaraSyntaxError, "line %d: %s", error_line, error_message);
     }
     
     object = PyObject_NEW(Rules, &Rules_Type);
     
     if (object != NULL)
-    {
-        yr_prepare_rules(rules);   
-        object->rules = rules;
+    {   
+        object->context = context;
     } 
       
     return (PyObject *)object;
@@ -291,31 +296,36 @@ static PyObject * Rules_new_from_file(FILE* file)
 
 static PyObject * Rules_new_from_string(const char* string)
 { 
-    RULE_LIST* rules;
+    YARA_CONTEXT* context;
     Rules* object;
-    int errors;
     
-    rules = yr_alloc_rule_list();
+    int  errors;
+    int  error_line;
+    char error_message[256];
     
-    if (rules == NULL)
+    context = yr_create_context();
+    
+    if (context == NULL)
     {
         return PyErr_NoMemory();
     }
     
-    errors = yr_compile_string(string, rules);
+    errors = yr_compile_string(string, context);
        
-    if (errors > 0)   /* errors during compilation */
+    if (errors)   /* errors during compilation */
     {
-        yr_free_rule_list(rules);       
-        return PyErr_Format(YaraSyntaxError, "line %d: %s", yr_get_error_line_number(), yr_get_last_error_message());
+        error_line = context->last_error_line;
+        yr_get_error_message(context, error_message, sizeof(error_message));
+        yr_destroy_context(context); 
+        
+        return PyErr_Format(YaraSyntaxError, "line %d: %s", error_line, error_message);
     }
     
     object = PyObject_NEW(Rules, &Rules_Type);
     
     if (object != NULL)
     {
-        yr_prepare_rules(rules);   
-        object->rules = rules;
+        object->context = context;
     } 
       
     return (PyObject *)object;
@@ -323,7 +333,7 @@ static PyObject * Rules_new_from_string(const char* string)
 
 static void Rules_dealloc(PyObject *self)
 {     
-    yr_free_rule_list(((Rules*) self)->rules);
+    yr_destroy_context(((Rules*) self)->context);
     PyObject_Del(self);
 }
 
@@ -410,7 +420,7 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
         
         if (filepath != NULL)
         {            
-            result = yr_scan_file(filepath, object->rules, callback, matches);
+            result = yr_scan_file(filepath, object->context, callback, matches);
 
             if (result != ERROR_SUCCESS)
             {
@@ -431,7 +441,7 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
         }
         else if (data != NULL)
         {
-            result = yr_scan_mem((unsigned char*) data, (unsigned int) length, object->rules, callback, matches);
+            result = yr_scan_mem((unsigned char*) data, (unsigned int) length, object->context, callback, matches);
 
             if (result != ERROR_SUCCESS)
             {

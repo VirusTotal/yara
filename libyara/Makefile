@@ -59,7 +59,7 @@ libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libyara_la_LIBADD =
 am_libyara_la_OBJECTS = grammar.lo lex.lo ast.lo scan.lo filemap.lo \
-	error.lo eval.lo pefile.lo xtoi.lo mem.lo libyara.lo
+	eval.lo pefile.lo xtoi.lo mem.lo libyara.lo
 libyara_la_OBJECTS = $(am_libyara_la_OBJECTS)
 DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -215,14 +215,13 @@ libyara_la_SOURCES = \
   ast.c \
   scan.c \
   filemap.c \
-  error.c \
   eval.c \
   pefile.c \
   xtoi.c \
   mem.c \
   libyara.c \
+  lex.h \
   ast.h \
-  error.h \
   eval.h \
   filemap.h \
   pe.h \
@@ -329,7 +328,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 include ./$(DEPDIR)/ast.Plo
-include ./$(DEPDIR)/error.Plo
 include ./$(DEPDIR)/eval.Plo
 include ./$(DEPDIR)/filemap.Plo
 include ./$(DEPDIR)/grammar.Plo

@@ -14,20 +14,12 @@ GNU General Public License for more details.
 
 */
 
-#ifndef _ERROR_H
-#define _ERROR_H
+#ifndef _SCAN_H 
+#define _SCAN_H
 
-extern int yynerrs;
-void yyerror (char const *);
+#include "yara.h"
 
-extern int last_error;
-extern int last_result;
-extern int last_error_line;
-
-extern char last_error_extra_info[100];
-extern const char* file_name;
-
-char* get_error_message(int error_code);
+int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list);
+void clear_hash_table(HASH_TABLE* hash_table);
 
 #endif
-

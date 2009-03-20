@@ -40,7 +40,7 @@
 #define YYSKELETON_NAME "yacc.c"
 
 /* Pure parsers.  */
-#define YYPURE 0
+#define YYPURE 1
 
 /* Using locations.  */
 #define YYLSP_NEEDED 0
@@ -178,11 +178,9 @@
 #include <limits.h>
 
 #include "ast.h"
-#include "error.h"
 #include "sizedstr.h"
 #include "mem.h"
-
-extern RULE_LIST* rule_list;
+#include "lex.h"
 
 #define YYERROR_VERBOSE
 //#define YYDEBUG 1
@@ -203,7 +201,7 @@ extern RULE_LIST* rule_list;
 #endif
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 95 "grammar.y"
+#line 97 "grammar.y"
 typedef union YYSTYPE {
     
     void*           sized_string;
@@ -215,7 +213,7 @@ typedef union YYSTYPE {
 
 } YYSTYPE;
 /* Line 190 of yacc.c.  */
-#line 219 "grammar.c"
+#line 217 "grammar.c"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
@@ -224,45 +222,82 @@ typedef union YYSTYPE {
 
 
 /* Copy the second part of user declarations.  */
-#line 109 "grammar.y"
+#line 111 "grammar.y"
  
-    
-/* Global variables */
-
-STRING* current_rule_strings;
-int inside_for = 0;
 
 /* Function declarations */
 
-int reduce_rule_declaration(char* identifier, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition);
-TAG* reduce_tags(TAG* tag_list_head, char* identifier);
+int reduce_rule_declaration(    yyscan_t yyscanner, 
+                                char* identifier, 
+                                int flags, 
+                                TAG* tag_list_head, 
+                                STRING* string_list_head, 
+                                TERM* condition);
+                            
+TAG* reduce_tags(   yyscan_t yyscanner,
+                    TAG* tag_list_head,
+                    char* identifier);
 
-STRING* reduce_string_declaration(char* identifier, SIZED_STRING* str, int flags);
-STRING* reduce_strings(STRING* string_list_head, STRING* string);
+STRING* reduce_string_declaration(  yyscan_t yyscanner,
+                                    char* identifier, 
+                                    SIZED_STRING* str, 
+                                    int flags);
+                                
+STRING* reduce_strings( yyscan_t yyscanner, 
+                        STRING* string_list_head, 
+                        STRING* string);
 
-TERM* reduce_string_enumeration(TERM* string_list_head, TERM* string_identifier);
-TERM* reduce_string_with_wildcard(char* identifier);
+TERM* reduce_string_enumeration(    yyscan_t yyscanner,
+                                    TERM* string_list_head, 
+                                    TERM* string_identifier);
+                                    
+TERM* reduce_string_with_wildcard(  yyscan_t yyscanner,
+                                    char* identifier);
 
-TERM* reduce_string(char* identifier);
-TERM* reduce_string_at(char* identifier, TERM* offset);
-TERM* reduce_string_in_range(char* identifier, TERM* lower_offset, TERM* upper_offset);
-TERM* reduce_string_in_section_by_name(char* identifier, SIZED_STRING* section_name);
-TERM* reduce_string_count(char* identifier);
-TERM* reduce_string_offset(char* identifier); 
+TERM* reduce_string(    yyscan_t yyscanner, 
+                        char* identifier);
+                        
+TERM* reduce_string_at( yyscan_t yyscanner,
+                        char* identifier, 
+                        TERM* offset);
+                        
+TERM* reduce_string_in_range(   yyscan_t yyscanner,
+                                char* identifier, 
+                                TERM* lower_offset, 
+                                TERM* upper_offset);
+                                
+TERM* reduce_string_in_section_by_name( yyscan_t yyscanner,
+                                        char* identifier, 
+                                        SIZED_STRING* section_name);
+                                        
+TERM* reduce_string_count(  yyscan_t yyscanner, 
+                            char* identifier);
+                            
+TERM* reduce_string_offset( yyscan_t yyscanner,  
+                            char* identifier); 
 
-TERM* reduce_filesize();
-TERM* reduce_entrypoint();
+TERM* reduce_filesize(yyscan_t yyscanner);
 
-TERM* reduce_term(int type, TERM* op1, TERM* op2, TERM* op3);
-TERM* reduce_constant(unsigned int constant);
-TERM* reduce_rule(char* identifier);
+TERM* reduce_entrypoint(yyscan_t yyscanner);
+
+TERM* reduce_term(  yyscan_t yyscanner, 
+                    int type, 
+                    TERM* op1, 
+                    TERM* op2, 
+                    TERM* op3);
+                    
+TERM* reduce_constant(  yyscan_t yyscanner,
+                        unsigned int constant);
+
+TERM* reduce_rule(  yyscan_t yyscanner,
+                    char* identifier);
 
 int count_strings(TERM_STRING* st);
 
 
 
 /* Line 213 of yacc.c.  */
-#line 266 "grammar.c"
+#line 301 "grammar.c"
 
 #if ! defined (yyoverflow) || YYERROR_VERBOSE
 
@@ -473,15 +508,15 @@ static const yysigned_char yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const unsigned short int yyrline[] =
 {
-       0,   147,   147,   148,   149,   152,   161,   172,   173,   176,
-     177,   180,   181,   184,   194,   206,   216,   228,   239,   250,
-     263,   264,   267,   268,   269,   270,   273,   274,   275,   286,
-     297,   308,   312,   323,   335,   334,   352,   351,   369,   368,
-     385,   396,   407,   418,   419,   420,   421,   422,   423,   424,
-     425,   426,   427,   428,   429,   430,   434,   435,   438,   439,
-     445,   456,   470,   471,   472,   473,   474,   475,   476,   477,
-     478,   489,   500,   501,   502,   503,   504,   505,   508,   511,
-     512,   513
+       0,   186,   186,   187,   188,   191,   199,   209,   210,   213,
+     214,   217,   218,   221,   230,   241,   250,   261,   271,   281,
+     293,   294,   297,   298,   299,   300,   303,   304,   305,   315,
+     325,   335,   339,   349,   360,   359,   376,   375,   392,   391,
+     407,   417,   427,   437,   438,   439,   440,   441,   442,   443,
+     444,   445,   446,   447,   448,   449,   453,   454,   457,   458,
+     464,   474,   487,   488,   489,   490,   491,   492,   493,   494,
+     495,   505,   515,   516,   517,   518,   519,   520,   523,   526,
+     527,   528
 };
 #endif
 
@@ -758,7 +793,7 @@ do								\
     }								\
   else								\
     { 								\
-      yyerror ("syntax error: cannot back up");\
+      yyerror (yyscanner, "syntax error: cannot back up");\
       YYERROR;							\
     }								\
 while (0)
@@ -813,9 +848,9 @@ while (0)
 /* YYLEX -- calling `yylex' with the right arguments.  */
 
 #ifdef YYLEX_PARAM
-# define YYLEX yylex (YYLEX_PARAM)
+# define YYLEX yylex (&yylval, YYLEX_PARAM)
 #else
-# define YYLEX yylex ()
+# define YYLEX yylex (&yylval, yyscanner)
 #endif
 
 /* Enable debugging if requested.  */
@@ -1063,7 +1098,7 @@ int yyparse ();
 # endif
 #else /* ! YYPARSE_PARAM */
 #if defined (__STDC__) || defined (__cplusplus)
-int yyparse (void);
+int yyparse (void *yyscanner);
 #else
 int yyparse ();
 #endif
@@ -1071,14 +1106,6 @@ int yyparse ();
 
 
 
-/* The look-ahead symbol.  */
-int yychar;
-
-/* The semantic value of the look-ahead symbol.  */
-YYSTYPE yylval;
-
-/* Number of syntax errors so far.  */
-int yynerrs;
 
 
 
@@ -1096,15 +1123,23 @@ int yyparse (YYPARSE_PARAM)
 #else /* ! YYPARSE_PARAM */
 #if defined (__STDC__) || defined (__cplusplus)
 int
-yyparse (void)
+yyparse (void *yyscanner)
 #else
 int
-yyparse ()
-
+yyparse (yyscanner)
+    void *yyscanner;
 #endif
 #endif
 {
-  
+  /* The look-ahead symbol.  */
+int yychar;
+
+/* The semantic value of the look-ahead symbol.  */
+YYSTYPE yylval;
+
+/* Number of syntax errors so far.  */
+int yynerrs;
+
   register int yystate;
   register int yyn;
   int yyresult;
@@ -1350,598 +1385,574 @@ yyreduce:
   switch (yyn)
     {
         case 5:
-#line 153 "grammar.y"
+#line 192 "grammar.y"
     { 
-                if (reduce_rule_declaration((yyvsp[-6].c_string),(yyvsp[-8].integer),(yyvsp[-5].tag),0,(yyvsp[-1].term)) != ERROR_SUCCESS)
+                if (reduce_rule_declaration(yyscanner, (yyvsp[-6].c_string),(yyvsp[-8].integer),(yyvsp[-5].tag),0,(yyvsp[-1].term)) != ERROR_SUCCESS)
                 {
-                    yyerror(get_error_message(last_result));
-                    yynerrs++;
+                    yyerror(yyscanner, NULL);
                     YYERROR;
                 }
             }
     break;
 
   case 6:
-#line 162 "grammar.y"
+#line 200 "grammar.y"
     { 
-                if (reduce_rule_declaration((yyvsp[-9].c_string),(yyvsp[-11].integer),(yyvsp[-8].tag),(yyvsp[-4].string),(yyvsp[-1].term)) != ERROR_SUCCESS)
+                if (reduce_rule_declaration(yyscanner, (yyvsp[-9].c_string),(yyvsp[-11].integer),(yyvsp[-8].tag),(yyvsp[-4].string),(yyvsp[-1].term)) != ERROR_SUCCESS)
                 {
-                    yyerror(get_error_message(last_result));
-                    yynerrs++;
+                    yyerror(yyscanner, NULL);
                     YYERROR; 
                 }  
             }
     break;
 
   case 7:
-#line 172 "grammar.y"
+#line 209 "grammar.y"
     { (yyval.integer) = 0;  }
     break;
 
   case 8:
-#line 173 "grammar.y"
+#line 210 "grammar.y"
     { (yyval.integer) = (yyvsp[-1].integer) | (yyvsp[0].integer); }
     break;
 
   case 9:
-#line 176 "grammar.y"
+#line 213 "grammar.y"
     { (yyval.integer) = RULE_FLAGS_PRIVATE; }
     break;
 
   case 10:
-#line 177 "grammar.y"
+#line 214 "grammar.y"
     { (yyval.integer) = RULE_FLAGS_GLOBAL; }
     break;
 
   case 11:
-#line 180 "grammar.y"
+#line 217 "grammar.y"
     { (yyval.tag) = NULL; }
     break;
 
   case 12:
-#line 181 "grammar.y"
+#line 218 "grammar.y"
     { (yyval.tag) = (yyvsp[0].tag);   }
     break;
 
   case 13:
-#line 184 "grammar.y"
+#line 221 "grammar.y"
     { 
-                                                (yyval.tag) = reduce_tags(NULL,(yyvsp[0].c_string)); 
+                                                (yyval.tag) = reduce_tags(yyscanner,NULL,(yyvsp[0].c_string)); 
                                                 
                                                 if ((yyval.tag) == NULL)
                                                 {
-                                                    yyerror(get_error_message(last_result));
-                                                    yynerrs++;
+                                                    yyerror(yyscanner, NULL);
                                                     YYERROR;
                                                 }
                                             }
     break;
 
   case 14:
-#line 194 "grammar.y"
+#line 230 "grammar.y"
     {   
-                                                (yyval.tag) = reduce_tags((yyvsp[-1].tag),(yyvsp[0].c_string)); 
+                                                (yyval.tag) = reduce_tags(yyscanner,(yyvsp[-1].tag),(yyvsp[0].c_string)); 
                                                 
                                                 if ((yyval.tag) == NULL)
                                                 {
-                                                    yyerror(get_error_message(last_result));
-                                                    yynerrs++;
+                                                    yyerror(yyscanner, NULL);
                                                     YYERROR;
                                                 }
                                             }
     break;
 
   case 15:
-#line 206 "grammar.y"
+#line 241 "grammar.y"
     { 
-                                                (yyval.string) = reduce_strings(NULL,(yyvsp[0].string)); 
+                                                (yyval.string) = reduce_strings(yyscanner,NULL,(yyvsp[0].string)); 
                                                 
                                                 if ((yyval.string) == NULL)
                                                 {
-                                                    yyerror(get_error_message(last_result));
-                                                    yynerrs++;
+                                                    yyerror(yyscanner, NULL);
                                                     YYERROR;
                                                 }
                                             }
     break;
 
   case 16:
-#line 216 "grammar.y"
+#line 250 "grammar.y"
     { 
-                                                (yyval.string) = reduce_strings((yyvsp[-1].string),(yyvsp[0].string));
+                                                (yyval.string) = reduce_strings(yyscanner,(yyvsp[-1].string),(yyvsp[0].string));
                                                 
                                                 if ((yyval.string) == NULL)
                                                 {
-                                                    yyerror(get_error_message(last_result));
-                                                    yynerrs++;
+                                                    yyerror(yyscanner, NULL);
                                                     YYERROR;
                                                 }  
                                             }
     break;
 
   case 17:
-#line 229 "grammar.y"
+#line 262 "grammar.y"
     { 
-                            (yyval.string) = reduce_string_declaration((yyvsp[-3].term), (yyvsp[-1].sized_string), (yyvsp[0].integer)); 
+                            (yyval.string) = reduce_string_declaration(yyscanner, (yyvsp[-3].term), (yyvsp[-1].sized_string), (yyvsp[0].integer)); 
                 
                             if ((yyval.string) == NULL)
                             {
-                                yyerror(get_error_message(last_result));
-                                yynerrs++;
+                                yyerror(yyscanner, NULL);
                                 YYERROR;
                             }
                         }
     break;
 
   case 18:
-#line 240 "grammar.y"
+#line 272 "grammar.y"
     { 
-                           (yyval.string) = reduce_string_declaration((yyvsp[-3].term), (yyvsp[-1].sized_string), (yyvsp[0].integer) | STRING_FLAGS_REGEXP); 
+                           (yyval.string) = reduce_string_declaration(yyscanner, (yyvsp[-3].term), (yyvsp[-1].sized_string), (yyvsp[0].integer) | STRING_FLAGS_REGEXP); 
 
                            if ((yyval.string) == NULL)
                            {
-                               yyerror(get_error_message(last_result));
-                               yynerrs++;
+                               yyerror(yyscanner, NULL);
                                YYERROR;
                            }
                        }
     break;
 
   case 19:
-#line 251 "grammar.y"
+#line 282 "grammar.y"
     {
-                            (yyval.string) = reduce_string_declaration((yyvsp[-2].term), (yyvsp[0].sized_string), STRING_FLAGS_HEXADECIMAL);
+                            (yyval.string) = reduce_string_declaration(yyscanner, (yyvsp[-2].term), (yyvsp[0].sized_string), STRING_FLAGS_HEXADECIMAL);
             
                             if ((yyval.string) == NULL)
                             {
-                                yyerror(get_error_message(last_result));
-                                yynerrs++;
+                                yyerror(yyscanner, NULL);
                                 YYERROR;
                             }
                         }
     break;
 
   case 20:
-#line 263 "grammar.y"
+#line 293 "grammar.y"
     { (yyval.integer) = 0;  }
     break;
 
   case 21:
-#line 264 "grammar.y"
+#line 294 "grammar.y"
     { (yyval.integer) = (yyvsp[-1].integer) | (yyvsp[0].integer); }
     break;
 
   case 22:
-#line 267 "grammar.y"
+#line 297 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_WIDE; }
     break;
 
   case 23:
-#line 268 "grammar.y"
+#line 298 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_ASCII; }
     break;
 
   case 24:
-#line 269 "grammar.y"
+#line 299 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_NO_CASE; }
     break;
 
   case 25:
-#line 270 "grammar.y"
+#line 300 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_FULL_WORD; }
     break;
 
   case 26:
-#line 273 "grammar.y"
-    { (yyval.term) = reduce_constant(1); }
+#line 303 "grammar.y"
+    { (yyval.term) = reduce_constant(yyscanner, 1); }
     break;
 
   case 27:
-#line 274 "grammar.y"
-    { (yyval.term) = reduce_constant(0); }
+#line 304 "grammar.y"
+    { (yyval.term) = reduce_constant(yyscanner, 0); }
     break;
 
   case 28:
-#line 276 "grammar.y"
+#line 306 "grammar.y"
     { 
-                        (yyval.term) = reduce_rule((yyvsp[0].c_string));
+                        (yyval.term) = reduce_rule(yyscanner, (yyvsp[0].c_string));
                         
                         if ((yyval.term) == NULL)
                         {
-                            yyerror(get_error_message(last_result));
-                            yynerrs++;
+                            yyerror(yyscanner, NULL);
                             YYERROR;
                         }
                      }
     break;
 
   case 29:
-#line 287 "grammar.y"
+#line 316 "grammar.y"
     {  
-                        (yyval.term) = reduce_string((yyvsp[0].term));
+                        (yyval.term) = reduce_string(yyscanner, (yyvsp[0].term));
                         
                         if ((yyval.term) == NULL)
                         {
-                            yyerror(get_error_message(last_result));
-                            yynerrs++;
+                            yyerror(yyscanner, NULL);
                             YYERROR;
                         }
                      }
     break;
 
   case 30:
-#line 298 "grammar.y"
+#line 326 "grammar.y"
     {          
-                        (yyval.term) = reduce_string_at((yyvsp[-2].term), (yyvsp[0].term));
+                        (yyval.term) = reduce_string_at(yyscanner, (yyvsp[-2].term), (yyvsp[0].term));
                         
                         if ((yyval.term) == NULL)
                         {
-                            yyerror(get_error_message(last_result));
-                            yynerrs++;
+                            yyerror(yyscanner, NULL);
                             YYERROR;
                         }
                      }
     break;
 
   case 31:
-#line 309 "grammar.y"
+#line 336 "grammar.y"
     { 
                         (yyval.term) = NULL; 
                      }
     break;
 
   case 32:
-#line 313 "grammar.y"
+#line 340 "grammar.y"
     {          
-                        (yyval.term) = reduce_string_in_range((yyvsp[-7].term), (yyvsp[-4].term), (yyvsp[-1].term));
+                        (yyval.term) = reduce_string_in_range(yyscanner, (yyvsp[-7].term), (yyvsp[-4].term), (yyvsp[-1].term));
                         
                         if ((yyval.term) == NULL)
                         {
-                            yyerror(get_error_message(last_result));
-                            yynerrs++;
+                            yyerror(yyscanner, NULL);
                             YYERROR;
                         }
                      }
     break;
 
   case 33:
-#line 324 "grammar.y"
+#line 350 "grammar.y"
     {          
-                        (yyval.term) = reduce_string_in_section_by_name((yyvsp[-5].term), (yyvsp[-1].sized_string));
+                        (yyval.term) = reduce_string_in_section_by_name(yyscanner, (yyvsp[-5].term), (yyvsp[-1].sized_string));
 
                         if ((yyval.term) == NULL)
                         {
-                            yyerror(get_error_message(last_result));
-                            yynerrs++;
+                            yyerror(yyscanner, NULL);
                             YYERROR;
                         }
                      }
     break;
 
   case 34:
-#line 335 "grammar.y"
+#line 360 "grammar.y"
     { 
-                           inside_for++; 
+                           yyget_extra(yyscanner)->inside_for++; 
                       }
     break;
 
   case 35:
-#line 339 "grammar.y"
+#line 364 "grammar.y"
     { 
-                           inside_for--; 
+                           yyget_extra(yyscanner)->inside_for--; 
                            
-                           (yyval.term) = reduce_term(TERM_TYPE_FOR, (yyvsp[-7].term), (yyvsp[-5].term), (yyvsp[-1].term)); 
+                           (yyval.term) = reduce_term(yyscanner, TERM_TYPE_FOR, (yyvsp[-7].term), (yyvsp[-5].term), (yyvsp[-1].term)); 
                            
                            if ((yyval.term) == NULL)
                            {
-                               yyerror(get_error_message(last_result));
-                               yynerrs++;
+                               yyerror(yyscanner, NULL);
                                YYERROR;
                            }
                       }
     break;
 
   case 36:
-#line 352 "grammar.y"
+#line 376 "grammar.y"
     { 
-                          inside_for++; 
+                          yyget_extra(yyscanner)->inside_for++; 
                      }
     break;
 
   case 37:
-#line 356 "grammar.y"
+#line 380 "grammar.y"
     { 
-                          inside_for--; 
+                          yyget_extra(yyscanner)->inside_for--; 
                           
-                          (yyval.term) = reduce_term(TERM_TYPE_FOR, reduce_constant(count_strings((yyvsp[-5].term))), (yyvsp[-5].term), (yyvsp[-1].term)); 
+                          (yyval.term) = reduce_term(yyscanner, TERM_TYPE_FOR, reduce_constant(yyscanner, count_strings((yyvsp[-5].term))), (yyvsp[-5].term), (yyvsp[-1].term)); 
                           
                           if ((yyval.term) == NULL)
                           {
-                              yyerror(get_error_message(last_result));
-                              yynerrs++;
+                              yyerror(yyscanner, NULL);
                               YYERROR;
                           }
                      }
     break;
 
   case 38:
-#line 369 "grammar.y"
+#line 392 "grammar.y"
     { 
-                          inside_for++; 
+                          yyget_extra(yyscanner)->inside_for++; 
                      }
     break;
 
   case 39:
-#line 373 "grammar.y"
+#line 396 "grammar.y"
     { 
-                          inside_for--; 
+                          yyget_extra(yyscanner)->inside_for--; 
                                                     
-                          (yyval.term) = reduce_term(TERM_TYPE_FOR, reduce_constant(1), (yyvsp[-5].term), (yyvsp[-1].term)); 
+                          (yyval.term) = reduce_term(yyscanner, TERM_TYPE_FOR, reduce_constant(yyscanner, 1), (yyvsp[-5].term), (yyvsp[-1].term)); 
                           
                           if ((yyval.term) == NULL)
                           {
-                              yyerror(get_error_message(last_result));
-                              yynerrs++;
+                              yyerror(yyscanner, NULL);
                               YYERROR;
                           }
                      }
     break;
 
   case 40:
-#line 386 "grammar.y"
+#line 408 "grammar.y"
     { 
-                         (yyval.term) = reduce_term(TERM_TYPE_OF, (yyvsp[-2].term), (yyvsp[0].term), NULL); 
+                         (yyval.term) = reduce_term(yyscanner, TERM_TYPE_OF, (yyvsp[-2].term), (yyvsp[0].term), NULL); 
                          
                          if ((yyval.term) == NULL)
                          {
-                             yyerror(get_error_message(last_result));
-                             yynerrs++;
+                             yyerror(yyscanner, NULL);
                              YYERROR;
                          }
                      }
     break;
 
   case 41:
-#line 397 "grammar.y"
+#line 418 "grammar.y"
     { 
-                         (yyval.term) = reduce_term(TERM_TYPE_OF, reduce_constant(count_strings((yyvsp[0].term))), (yyvsp[0].term), NULL); 
+                         (yyval.term) = reduce_term(yyscanner, TERM_TYPE_OF, reduce_constant(yyscanner, count_strings((yyvsp[0].term))), (yyvsp[0].term), NULL); 
                          
                          if ((yyval.term) == NULL)
                          {
-                             yyerror(get_error_message(last_result));
-                             yynerrs++;
+                             yyerror(yyscanner, NULL);
                              YYERROR;
                          }
                      }
     break;
 
   case 42:
-#line 408 "grammar.y"
+#line 428 "grammar.y"
     { 
-                         (yyval.term) = reduce_term(TERM_TYPE_OF, reduce_constant(1), (yyvsp[0].term), NULL); 
+                         (yyval.term) = reduce_term(yyscanner, TERM_TYPE_OF, reduce_constant(yyscanner, 1), (yyvsp[0].term), NULL); 
                          
                          if ((yyval.term) == NULL)
                          {
-                             yyerror(get_error_message(last_result));
-                             yynerrs++;
+                             yyerror(yyscanner, NULL);
                              YYERROR;
                          }
                      }
     break;
 
   case 43:
-#line 418 "grammar.y"
+#line 437 "grammar.y"
     { (yyval.term) = NULL; }
     break;
 
   case 44:
-#line 419 "grammar.y"
+#line 438 "grammar.y"
     { (yyval.term) = (yyvsp[-1].term); }
     break;
 
   case 45:
-#line 420 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_NOT, (yyvsp[0].term), NULL, NULL); }
+#line 439 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_NOT, (yyvsp[0].term), NULL, NULL); }
     break;
 
   case 46:
-#line 421 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_AND, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 440 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_AND, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 47:
-#line 422 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_OR, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 441 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_OR, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 48:
-#line 423 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_EQ, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 442 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_EQ, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 49:
-#line 424 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_LT, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 443 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_LT, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 50:
-#line 425 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_GT, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 444 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_GT, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 51:
-#line 426 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_LE, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 445 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_LE, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 52:
-#line 427 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_GE, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 446 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_GE, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 53:
-#line 428 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_EQ, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 447 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_EQ, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 54:
-#line 429 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_EQ, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 448 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_EQ, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 55:
-#line 430 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_NOT_EQ, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 449 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_NOT_EQ, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 56:
-#line 434 "grammar.y"
+#line 453 "grammar.y"
     { (yyval.term) = (yyvsp[-1].term); }
     break;
 
   case 57:
-#line 435 "grammar.y"
-    { (yyval.term) = reduce_string_with_wildcard(yr_strdup("$*")); }
+#line 454 "grammar.y"
+    { (yyval.term) = reduce_string_with_wildcard(yyscanner, yr_strdup("$*")); }
     break;
 
   case 59:
-#line 440 "grammar.y"
+#line 459 "grammar.y"
     {
-                         (yyval.term) = reduce_string_enumeration((yyvsp[-2].term),(yyvsp[0].term));
+                         (yyval.term) = reduce_string_enumeration(yyscanner, (yyvsp[-2].term),(yyvsp[0].term));
                       }
     break;
 
   case 60:
-#line 446 "grammar.y"
+#line 465 "grammar.y"
     {  
-                              (yyval.term) = reduce_string((yyvsp[0].term));
+                              (yyval.term) = reduce_string(yyscanner, (yyvsp[0].term));
 
                               if ((yyval.term) == NULL)
                               {
-                                  yyerror(get_error_message(last_result));
-                                  yynerrs++;
+                                  yyerror(yyscanner, NULL);
                                   YYERROR;
                               }
                           }
     break;
 
   case 61:
-#line 457 "grammar.y"
+#line 475 "grammar.y"
     { 
-                              (yyval.term) = reduce_string_with_wildcard((yyvsp[0].term)); 
+                              (yyval.term) = reduce_string_with_wildcard(yyscanner, (yyvsp[0].term)); 
                               
                               if ((yyval.term) == NULL)
                               {
-                                  yyerror(get_error_message(last_result));
-                                  yynerrs++;
+                                  yyerror(yyscanner, NULL);
                                   YYERROR;
                               }
                           }
     break;
 
   case 62:
-#line 470 "grammar.y"
-    { (yyval.term) = reduce_filesize(); }
+#line 487 "grammar.y"
+    { (yyval.term) = reduce_filesize(yyscanner); }
     break;
 
   case 63:
-#line 471 "grammar.y"
-    { (yyval.term) = reduce_entrypoint(); }
+#line 488 "grammar.y"
+    { (yyval.term) = reduce_entrypoint(yyscanner); }
     break;
 
   case 64:
-#line 472 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_INT8_AT_OFFSET, (yyvsp[-1].term), NULL, NULL); }
+#line 489 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_INT8_AT_OFFSET, (yyvsp[-1].term), NULL, NULL); }
     break;
 
   case 65:
-#line 473 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_INT16_AT_OFFSET, (yyvsp[-1].term), NULL, NULL); }
+#line 490 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_INT16_AT_OFFSET, (yyvsp[-1].term), NULL, NULL); }
     break;
 
   case 66:
-#line 474 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_INT32_AT_OFFSET, (yyvsp[-1].term), NULL, NULL); }
+#line 491 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_INT32_AT_OFFSET, (yyvsp[-1].term), NULL, NULL); }
     break;
 
   case 67:
-#line 475 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_UINT8_AT_OFFSET, (yyvsp[-1].term), NULL, NULL); }
+#line 492 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_UINT8_AT_OFFSET, (yyvsp[-1].term), NULL, NULL); }
     break;
 
   case 68:
-#line 476 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_UINT16_AT_OFFSET, (yyvsp[-1].term), NULL, NULL); }
+#line 493 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_UINT16_AT_OFFSET, (yyvsp[-1].term), NULL, NULL); }
     break;
 
   case 69:
-#line 477 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_UINT32_AT_OFFSET, (yyvsp[-1].term), NULL, NULL); }
+#line 494 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_UINT32_AT_OFFSET, (yyvsp[-1].term), NULL, NULL); }
     break;
 
   case 70:
-#line 479 "grammar.y"
+#line 496 "grammar.y"
     { 
-                    (yyval.term) = reduce_string_count((yyvsp[0].term)); 
+                    (yyval.term) = reduce_string_count(yyscanner, (yyvsp[0].term)); 
                     
                     if ((yyval.term) == NULL)
                     {
-                        yyerror(get_error_message(last_result));
-                        yynerrs++;
+                        yyerror(yyscanner, NULL);
                         YYERROR;
                     }
              }
     break;
 
   case 71:
-#line 490 "grammar.y"
+#line 506 "grammar.y"
     { 
-                    (yyval.term) = reduce_string_offset((yyvsp[0].term)); 
+                    (yyval.term) = reduce_string_offset(yyscanner, (yyvsp[0].term)); 
 
                     if ((yyval.term) == NULL)
                     {
-                        yyerror(get_error_message(last_result));
-                        yynerrs++;
+                        yyerror(yyscanner, NULL);
                         YYERROR;
                     }
              }
     break;
 
   case 72:
-#line 500 "grammar.y"
+#line 515 "grammar.y"
     { (yyval.term) = (yyvsp[-1].term); }
     break;
 
   case 73:
-#line 501 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_ADD, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 516 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_ADD, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 74:
-#line 502 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_SUB, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 517 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_SUB, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 75:
-#line 503 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_MUL, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 518 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_MUL, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 76:
-#line 504 "grammar.y"
-    { (yyval.term) = reduce_term(TERM_TYPE_DIV, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
+#line 519 "grammar.y"
+    { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_DIV, (yyvsp[-2].term), (yyvsp[0].term), NULL); }
     break;
 
   case 78:
-#line 508 "grammar.y"
-    { (yyval.term) = reduce_constant((yyvsp[0].integer)); }
+#line 523 "grammar.y"
+    { (yyval.term) = reduce_constant(yyscanner, (yyvsp[0].integer)); }
     break;
 
 
     }
 
 /* Line 1037 of yacc.c.  */
-#line 1945 "grammar.c"
+#line 1956 "grammar.c"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -2026,15 +2037,15 @@ yyerrlab:
 			yyprefix = " or ";
 		      }
 		}
-	      yyerror (yymsg);
+	      yyerror (yyscanner, yymsg);
 	      YYSTACK_FREE (yymsg);
 	    }
 	  else
-	    yyerror ("syntax error; also virtual memory exhausted");
+	    yyerror (yyscanner, "syntax error; also virtual memory exhausted");
 	}
       else
 #endif /* YYERROR_VERBOSE */
-	yyerror ("syntax error");
+	yyerror (yyscanner, "syntax error");
     }
 
 
@@ -2155,7 +2166,7 @@ yyabortlab:
 | yyoverflowlab -- parser overflow comes here.  |
 `----------------------------------------------*/
 yyoverflowlab:
-  yyerror ("parser stack overflow");
+  yyerror (yyscanner, "parser stack overflow");
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -2169,7 +2180,7 @@ yyreturn:
 }
 
 
-#line 516 "grammar.y"
+#line 531 "grammar.y"
 
 
 
@@ -2186,15 +2197,22 @@ int count_strings(TERM_STRING* st)
     return count;
 }
 
-int reduce_rule_declaration(char* identifier, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition)
+int reduce_rule_declaration(    yyscan_t yyscanner,
+                                char* identifier, 
+                                int flags, 
+                                TAG* tag_list_head, 
+                                STRING* string_list_head, 
+                                TERM* condition
+                            )
 {
-    STRING* string;
+    STRING*         string;
+    YARA_CONTEXT*   context = yyget_extra(yyscanner);
+
+    context->last_result = new_rule(&context->rule_list, identifier, flags, tag_list_head, string_list_head, condition);
     
-    last_result = new_rule(rule_list, identifier, flags, tag_list_head, string_list_head, condition);
-    
-    if (last_result != ERROR_SUCCESS)
+    if (context->last_result != ERROR_SUCCESS)
     {
-        strcpy(last_error_extra_info, identifier);
+        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
     }
     else
     {
@@ -2204,8 +2222,8 @@ int reduce_rule_declaration(char* identifier, int flags, TAG* tag_list_head, STR
         {
             if (! (string->flags & STRING_FLAGS_REFERENCED))
             {
-                strcpy(last_error_extra_info, string->identifier);
-                last_result = ERROR_UNREFERENCED_STRING;
+                context->last_result = ERROR_UNREFERENCED_STRING;
+                strncpy(context->last_error_extra_info, string->identifier, sizeof(context->last_error_extra_info));
                 break;
             }
             
@@ -2213,29 +2231,33 @@ int reduce_rule_declaration(char* identifier, int flags, TAG* tag_list_head, STR
         }
     }
     
-    return last_result;
+    return context->last_result;
 }
 
-STRING* reduce_string_declaration(char* identifier, SIZED_STRING* str, int flags)
+STRING* reduce_string_declaration(  yyscan_t yyscanner,
+                                    char* identifier, 
+                                    SIZED_STRING* str, 
+                                    int flags)
 {
-    char tmp[200];
-    STRING* string = NULL;
+    char            tmp[200];
+    STRING*         string = NULL;
+    YARA_CONTEXT*   context = yyget_extra(yyscanner);
     
     if (strcmp(identifier,"$") == 0)
     {
         flags |= STRING_FLAGS_ANONYMOUS;
     }
     
-    last_result = new_string(identifier, str, flags, &string);
+    context->last_result = new_string(context, identifier, str, flags, &string);
     
-    if (last_result == ERROR_INVALID_REGULAR_EXPRESSION) 
+    if (context->last_result == ERROR_INVALID_REGULAR_EXPRESSION) 
     {
-        sprintf(tmp, "invalid regular expression in string \"%s\": %s", identifier, last_error_extra_info);
-        strcpy(last_error_extra_info, tmp);
+        sprintf(tmp, "invalid regular expression in string \"%s\": %s", identifier, context->last_error_extra_info);
+        strncpy(context->last_error_extra_info, tmp, sizeof(context->last_error_extra_info));
     }
-    else if (last_result != ERROR_SUCCESS)
+    else if (context->last_result != ERROR_SUCCESS)
     {
-        strcpy(last_error_extra_info, identifier);
+        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
     }
     
     yr_free(str);
@@ -2243,27 +2265,34 @@ STRING* reduce_string_declaration(char* identifier, SIZED_STRING* str, int flags
     return string;
 }
 
-STRING* reduce_strings(STRING* string_list_head, STRING* string)
+STRING* reduce_strings( yyscan_t yyscanner,
+                        STRING* string_list_head, 
+                        STRING* string)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
+    
     /* no strings with the same identifier, except for anonymous strings */
     
     if (IS_ANONYMOUS(string) || lookup_string(string_list_head,string->identifier) == NULL) 
     {
         string->next = string_list_head;    
-        current_rule_strings = string;
-        last_result = ERROR_SUCCESS;
+        context->current_rule_strings = string;
+        context->last_result = ERROR_SUCCESS;
         return string;
     }
     else
     {
-        strcpy(last_error_extra_info, string->identifier);
-        last_result = ERROR_DUPLICATE_STRING_IDENTIFIER;
+        strncpy(context->last_error_extra_info, string->identifier, sizeof(context->last_error_extra_info));
+        context->last_result = ERROR_DUPLICATE_STRING_IDENTIFIER;
         return NULL;
     }   
 }
 
-TAG* reduce_tags(TAG* tag_list_head, char* identifier)
+TAG* reduce_tags(   yyscan_t yyscanner, 
+                    TAG* tag_list_head,
+                    char* identifier)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
     TAG* tag;
 
     if (lookup_tag(tag_list_head, identifier) == NULL) /* no tags with the same identifier */
@@ -2274,98 +2303,107 @@ TAG* reduce_tags(TAG* tag_list_head, char* identifier)
         {
             tag->identifier = identifier;
             tag->next = tag_list_head;  
-            last_result = ERROR_SUCCESS;
+            context->last_result = ERROR_SUCCESS;
         }
         else
         {
-            last_result = ERROR_INSUFICIENT_MEMORY;
+            context->last_result = ERROR_INSUFICIENT_MEMORY;
         }
         
         return tag;
     }
     else
     {
-        strcpy(last_error_extra_info, identifier);
-        last_result = ERROR_DUPLICATE_TAG_IDENTIFIER;
+        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        context->last_result = ERROR_DUPLICATE_TAG_IDENTIFIER;
         return NULL;
     }
 }
 
-TERM* reduce_filesize()
+TERM* reduce_filesize(yyscan_t yyscanner)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM* term = NULL;
     
-    last_result = new_simple_term(TERM_TYPE_FILESIZE, &term); 
+    context->last_result = new_simple_term(TERM_TYPE_FILESIZE, &term); 
     return (TERM*) term;    
 }
 
-TERM* reduce_entrypoint()
+TERM* reduce_entrypoint(yyscan_t yyscanner)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM* term = NULL;
     
-    last_result = new_simple_term(TERM_TYPE_ENTRYPOINT, &term); 
+    context->last_result = new_simple_term(TERM_TYPE_ENTRYPOINT, &term); 
     return (TERM*) term;    
 }
 
-TERM* reduce_term(int type, TERM* op1, TERM* op2, TERM* op3)
+TERM* reduce_term(yyscan_t yyscanner, int type, TERM* op1, TERM* op2, TERM* op3)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM* term = NULL;
     
     if (op2 == NULL && op3 == NULL)
     {
-        last_result = new_unary_operation(type, op1, (TERM_UNARY_OPERATION**) &term);
+        context->last_result = new_unary_operation(type, op1, (TERM_UNARY_OPERATION**) &term);
     }
     else if (op3 == NULL)
     {
-        last_result = new_binary_operation(type, op1, op2, (TERM_BINARY_OPERATION**) &term);
+        context->last_result = new_binary_operation(type, op1, op2, (TERM_BINARY_OPERATION**) &term);
     }
     else
     {
-        last_result = new_ternary_operation(type, op1, op2, op3, (TERM_TERNARY_OPERATION**) &term);
+        context->last_result = new_ternary_operation(type, op1, op2, op3, (TERM_TERNARY_OPERATION**) &term);
     }
     
     return (TERM*) term;
 }
 
-TERM* reduce_constant(unsigned int constant)
+TERM* reduce_constant(  yyscan_t yyscanner,
+                        unsigned int constant)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_CONST* term = NULL;
     
-    last_result = new_constant(constant, &term); 
+    context->last_result = new_constant(constant, &term); 
     return (TERM*) term;
 }
 
-TERM* reduce_string(char* identifier)
+TERM* reduce_string(    yyscan_t yyscanner,
+                        char* identifier)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
     
-    if (strcmp(identifier, "$") != 0 || inside_for > 0) 
+    if (strcmp(identifier, "$") != 0 || context->inside_for > 0) 
     {  
-        last_result = new_string_identifier(TERM_TYPE_STRING, current_rule_strings, identifier, &term);       
+        context->last_result = new_string_identifier(TERM_TYPE_STRING, context->current_rule_strings, identifier, &term);       
      
-        if (last_result != ERROR_SUCCESS)
+        if (context->last_result != ERROR_SUCCESS)
         {
-            strcpy(last_error_extra_info, identifier);
+            strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
         }
     }
     else
     {
-        last_result = ERROR_MISPLACED_ANONYMOUS_STRING;
+        context->last_result = ERROR_MISPLACED_ANONYMOUS_STRING;
     }
     
     yr_free(identifier);   
     return (TERM*) term;
 }
 
-TERM* reduce_string_with_wildcard(char* identifier)
+TERM* reduce_string_with_wildcard(  yyscan_t yyscanner,
+                                    char* identifier)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
     TERM_STRING* next;
     STRING* string;
     
     int len = 0;
 
-    string = current_rule_strings;
+    string = context->current_rule_strings;
     next = NULL;
     
     while (identifier[len] != '\0' && identifier[len] != '*')
@@ -2377,9 +2415,9 @@ TERM* reduce_string_with_wildcard(char* identifier)
     {
         if (strncmp(string->identifier, identifier, len) == 0)
         {
-            last_result = new_string_identifier(TERM_TYPE_STRING, current_rule_strings, string->identifier, &term);
+            context->last_result = new_string_identifier(TERM_TYPE_STRING, context->current_rule_strings, string->identifier, &term);
             
-            if (last_result != ERROR_SUCCESS)
+            if (context->last_result != ERROR_SUCCESS)
                 break;
                 
             string->flags |= STRING_FLAGS_REFERENCED;
@@ -2396,17 +2434,20 @@ TERM* reduce_string_with_wildcard(char* identifier)
     return (TERM*) term;  
 }
 
-TERM* reduce_string_at(char* identifier, TERM* offset)
+TERM* reduce_string_at( yyscan_t yyscanner, 
+                        char* identifier, 
+                        TERM* offset)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
     
-    if (strcmp(identifier, "$") != 0 || inside_for > 0) 
+    if (strcmp(identifier, "$") != 0 || context->inside_for > 0) 
     {  
-        last_result = new_string_identifier(TERM_TYPE_STRING_AT, current_rule_strings, identifier, &term);       
+        context->last_result = new_string_identifier(TERM_TYPE_STRING_AT, context->current_rule_strings, identifier, &term);       
      
-        if (last_result != ERROR_SUCCESS)
+        if (context->last_result != ERROR_SUCCESS)
         {
-            strcpy(last_error_extra_info, identifier);
+            strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
         }
         else
         {
@@ -2415,22 +2456,26 @@ TERM* reduce_string_at(char* identifier, TERM* offset)
     }
     else
     {
-        last_result = ERROR_MISPLACED_ANONYMOUS_STRING;
+        context->last_result = ERROR_MISPLACED_ANONYMOUS_STRING;
     }
     
     yr_free(identifier);   
     return (TERM*) term;
 }
 
-TERM* reduce_string_in_range(char* identifier, TERM* lower_offset, TERM* upper_offset)
+TERM* reduce_string_in_range(   yyscan_t yyscanner,    
+                                char* identifier, 
+                                TERM* lower_offset, 
+                                TERM* upper_offset)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
     
-    last_result = new_string_identifier(TERM_TYPE_STRING_IN_RANGE, current_rule_strings, identifier, &term);
+    context->last_result = new_string_identifier(TERM_TYPE_STRING_IN_RANGE, context->current_rule_strings, identifier, &term);
     
-    if (last_result != ERROR_SUCCESS)
+    if (context->last_result != ERROR_SUCCESS)
     {
-        strcpy(last_error_extra_info, identifier);
+        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
     }
     else
     {
@@ -2442,15 +2487,17 @@ TERM* reduce_string_in_range(char* identifier, TERM* lower_offset, TERM* upper_o
     return (TERM*) term;
 }
 
-TERM* reduce_string_in_section_by_name(char* identifier, SIZED_STRING* section_name)
+TERM* reduce_string_in_section_by_name( yyscan_t yyscanner,
+                                        char* identifier, SIZED_STRING* section_name)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
     
-    last_result = new_string_identifier(TERM_TYPE_STRING_IN_SECTION_BY_NAME, current_rule_strings, identifier, &term);
+    context->last_result = new_string_identifier(TERM_TYPE_STRING_IN_SECTION_BY_NAME, context->current_rule_strings, identifier, &term);
     
-    if (last_result != ERROR_SUCCESS)
+    if (context->last_result != ERROR_SUCCESS)
     {
-        strcpy(last_error_extra_info, identifier);
+        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
     }
     else
     {
@@ -2462,51 +2509,58 @@ TERM* reduce_string_in_section_by_name(char* identifier, SIZED_STRING* section_n
     return (TERM*) term;
 }
 
-TERM* reduce_string_count(char* identifier)
+TERM* reduce_string_count(  yyscan_t yyscanner,
+                            char* identifier)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
 
-    last_result = new_string_identifier(TERM_TYPE_STRING_COUNT, current_rule_strings, identifier, &term);
+    context->last_result = new_string_identifier(TERM_TYPE_STRING_COUNT, context->current_rule_strings, identifier, &term);
     
-    if (last_result != ERROR_SUCCESS)
+    if (context->last_result != ERROR_SUCCESS)
     {
-        strcpy(last_error_extra_info, identifier);
+        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
     }
     
     yr_free(identifier);           
     return (TERM*) term;
 }
 
-TERM* reduce_string_offset(char* identifier)
+TERM* reduce_string_offset( yyscan_t yyscanner,
+                            char* identifier)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
 
-    last_result = new_string_identifier(TERM_TYPE_STRING_OFFSET, current_rule_strings, identifier, &term);
+    context->last_result = new_string_identifier(TERM_TYPE_STRING_OFFSET, context->current_rule_strings, identifier, &term);
     
-    if (last_result != ERROR_SUCCESS)
+    if (context->last_result != ERROR_SUCCESS)
     {
-        strcpy(last_error_extra_info, identifier);
+        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
     }
     
     yr_free(identifier);           
     return (TERM*) term;
 }
 
-TERM* reduce_rule(char* identifier)
+TERM* reduce_rule(  yyscan_t yyscanner, 
+                    char* identifier)
 {
-    TERM_BINARY_OPERATION* term;
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
+    TERM_BINARY_OPERATION*  term;
     RULE* rule;
-    
-    rule = lookup_rule(rule_list, identifier);
+    YARA_CONTEXT*   current_context = yyget_extra(yyscanner);
+  
+    rule = lookup_rule(&current_context->rule_list, identifier);
     
     if (rule != NULL)
     {
-        last_result = new_binary_operation(TERM_TYPE_RULE, rule->condition, NULL, &term);        
+        context->last_result = new_binary_operation(TERM_TYPE_RULE, rule->condition, NULL, &term);        
     }
     else
     {
-        strcpy(last_error_extra_info, identifier);
-        last_result = ERROR_UNDEFINED_RULE;
+        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        context->last_result = ERROR_UNDEFINED_RULE;
         term = NULL;
     }
     
@@ -2514,8 +2568,11 @@ TERM* reduce_rule(char* identifier)
     return (TERM*) term;
 }
 
-TERM* reduce_string_enumeration(TERM* string_list_head, TERM* string_identifier)
+TERM* reduce_string_enumeration(    yyscan_t yyscanner,
+                                    TERM* string_list_head, 
+                                    TERM* string_identifier)
 {
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = (TERM_STRING*) string_identifier;
     
     term->next = (TERM_STRING*) string_list_head;

@@ -27,8 +27,11 @@ version 1.2 (13/01/2009)
 	* BUGFIX: Incorrect handling of hex strings in lexer
 	
 version 1.2.1
+	* libyara: added support for compiling rules directly from memory
+	* libyara: interface refactored
+	* libyara: is thread-safe now
 	* BUGFIX: Invoking pcre_compile with non-terminated string
-	* BUGFIX: Underscore (_) not recongnized in string identifiers
+	* BUGFIX: Underscore (_) not recognized in string identifiers
 	* BUGFIX: Memory leak
 	* BUGFIX: Access violation on xxcompare functions
 	

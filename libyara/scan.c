@@ -23,7 +23,6 @@ GNU General Public License for more details.
 #include "eval.h"
 #include "ast.h"
 #include "pefile.h"
-#include "error.h"
 #include "mem.h"
 #include "eval.h"
 
@@ -281,10 +280,160 @@ int regexp_match(unsigned char* buffer, unsigned int buffer_size, unsigned char*
 	return 0;
 }
 
+int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)
+{
+	RULE* rule;
+	STRING* string;
+	STRING_LIST_ENTRY* entry;
+	unsigned char x,y;
+	int next;
+    char hashable;
+		
+	rule = rule_list->head;
+	
+	while (rule != NULL)
+	{
+		string = rule->string_list_head;
 
-void free_hash_table(RULE_LIST* rule_list)
+		while (string != NULL)
+		{	        
+			if (string->flags & STRING_FLAGS_REGEXP)
+			{	
+				/* take into account anchors (^) at beginning of regular expressions */
+							
+				if (string->string[0] == '^')
+				{
+				    if (string->length > 2)
+				    {
+					    x = string->string[1];
+					    y = string->string[2];
+					}
+					else
+					{
+                        x = 0;
+                        y = 0; 
+					}
+				}
+				else
+				{
+					x = string->string[0];
+					y = string->string[1];
+				}
+			
+                hashable = isalnum(x) && isalnum(y);
+			}
+			else
+			{
+			    x = string->string[0];
+				y = string->string[1];
+				
+				hashable = TRUE;
+				
+			} /* if (string->flags & STRING_FLAGS_REGEXP) */
+			
+			if (string->flags & STRING_FLAGS_HEXADECIMAL)
+			{
+			    hashable = (string->mask[0] == 0xFF) && (string->mask[1] == 0xFF);
+			}
+			
+			if (hashable && string->flags & STRING_FLAGS_NO_CASE)
+			{	
+			    /* 
+			       if string is case-insensitive add an entry in the hash table
+			       for each posible combination 
+			    */
+			    
+				x = tolower(x);
+				y = tolower(y);
+				
+				/* both lowercases */
+				
+				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+				
+				if (entry == NULL)
+    			    return ERROR_INSUFICIENT_MEMORY;
+    			    
+    			entry->next = hash_table->hashed_strings[x][y];
+    			entry->string = string;
+    			hash_table->hashed_strings[x][y] = entry;
+    			
+    			/* X uppercase Y lowercase */
+    			
+                x = toupper(x);
+				
+				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+				
+				if (entry == NULL)
+                    return ERROR_INSUFICIENT_MEMORY;
+    			    
+        		entry->next = hash_table->hashed_strings[x][y];  
+        		entry->string = string;
+        		hash_table->hashed_strings[x][y] = entry; 
+        		
+        		/* both uppercases */			    
+    			
+    			y = toupper(y);  
+    			    
+    			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+				
+				if (entry == NULL)
+                    return ERROR_INSUFICIENT_MEMORY;
+    			    
+        		entry->next = hash_table->hashed_strings[x][y];
+        		entry->string = string;
+        		hash_table->hashed_strings[x][y] = entry;
+        		
+        		/* X lowercase Y uppercase */
+    			    
+                x = tolower(x);
+ 
+    			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+				
+				if (entry == NULL)
+                    return ERROR_INSUFICIENT_MEMORY;
+    			    
+        		entry->next = hash_table->hashed_strings[x][y]; 
+        		entry->string = string; 
+        		hash_table->hashed_strings[x][y] = entry;               
+    							
+			}
+			else if (hashable)
+			{
+				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+				
+				if (entry == NULL)
+                    return ERROR_INSUFICIENT_MEMORY;
+    			    
+        		entry->next = hash_table->hashed_strings[x][y]; 
+        		entry->string = string; 
+        		hash_table->hashed_strings[x][y] = entry;    
+			}
+			else /* non hashable */
+			{
+			    entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+				
+				if (entry == NULL)
+                    return ERROR_INSUFICIENT_MEMORY;
+			    
+			    entry->next = hash_table->non_hashed_strings;
+			    entry->string = string; 
+                hash_table->non_hashed_strings = entry;
+			}
+		
+			string = string->next;
+		}
+		
+		rule = rule->next;
+	}
+	
+	return ERROR_SUCCESS;
+}
+
+
+void clear_hash_table(HASH_TABLE* hash_table)
 {
 	int i,j;
+	
 	STRING_LIST_ENTRY* next_entry;
 	STRING_LIST_ENTRY* entry;
 
@@ -292,7 +441,7 @@ void free_hash_table(RULE_LIST* rule_list)
 	{
 		for (j = 0; j < 256; j++)
 		{
-			entry = rule_list->hash_table[i][j];
+			entry = hash_table->hashed_strings[i][j];
 				
 			while (entry != NULL)
 			{
@@ -301,11 +450,11 @@ void free_hash_table(RULE_LIST* rule_list)
 				entry = next_entry;
 			}
 			
-			rule_list->hash_table[i][j] = NULL;
+			hash_table->hashed_strings[i][j] = NULL;
 		}
 	}
 	
-    entry = rule_list->non_hashed_strings;
+    entry = hash_table->non_hashed_strings;
     
     while (entry != NULL)
 	{
@@ -314,7 +463,7 @@ void free_hash_table(RULE_LIST* rule_list)
 		entry = next_entry;
 	}
 	
-    rule_list->non_hashed_strings = NULL;
+    hash_table->non_hashed_strings = NULL;
 }
 
 void clear_marks(RULE_LIST* rule_list)
@@ -545,12 +694,12 @@ int find_matches(	unsigned char first_char,
 					unsigned int current_file_offset,
 					int flags,
 					int negative_size, 
-					RULE_LIST* rule_list)
+					YARA_CONTEXT* context)
 {
 	
     int result;
     	
-    result =  find_matches_for_strings(  rule_list->hash_table[first_char][second_char], 
+    result =  find_matches_for_strings(  context->hash_table.hashed_strings[first_char][second_char], 
                                         buffer, 
                                         buffer_size, 
                                         current_file_offset, 
@@ -559,7 +708,7 @@ int find_matches(	unsigned char first_char,
     
     if (result == ERROR_SUCCESS)
     {
-         result = find_matches_for_strings(    rule_list->non_hashed_strings, 
+         result = find_matches_for_strings(    context->hash_table.non_hashed_strings, 
                                                buffer, 
                                                buffer_size, 
                                                current_file_offset, 

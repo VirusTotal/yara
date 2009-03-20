@@ -21,7 +21,6 @@ GNU General Public License for more details.
 
 #include "yara.h"
 #include "ast.h"
-#include "error.h"
 #include "mem.h"
 
 #define todigit(x)  ((x) >='A'&& (x) <='F')? ((unsigned char) (x - 'A' + 10)) : ((unsigned char) (x - '0'))
@@ -158,7 +157,11 @@ int new_rule(RULE_LIST* rules, char* identifier, int flags, TAG* tag_list_head, 
     return result;
 }
 
-int new_hex_string(SIZED_STRING* charstr, unsigned char** hexstr, unsigned char** maskstr, unsigned int* length)
+int new_hex_string( YARA_CONTEXT* context, 
+                    SIZED_STRING* charstr, 
+                    unsigned char** hexstr, 
+                    unsigned char** maskstr, 
+                    unsigned int* length)
 {
     int i;
     int skip_lo;
@@ -425,7 +428,12 @@ int new_hex_string(SIZED_STRING* charstr, unsigned char** hexstr, unsigned char*
 }
 
 
-int new_text_string(SIZED_STRING* charstr, int flags, unsigned char** hexstr, REGEXP* re, unsigned int* length)
+int new_text_string(    YARA_CONTEXT* context, 
+                        SIZED_STRING* charstr, 
+                        int flags, 
+                        unsigned char** hexstr, 
+                        REGEXP* re,
+                        unsigned int* length)
 {
     const char *error;
     int erroffset;
@@ -462,7 +470,7 @@ int new_text_string(SIZED_STRING* charstr, int flags, unsigned char** hexstr, RE
          }
          else /* compilation failed */
          {
-             strcpy(last_error_extra_info, error);
+             strcpy(context->last_error_extra_info, error);
              result = ERROR_INVALID_REGULAR_EXPRESSION;
          }
      }
@@ -475,7 +483,11 @@ int new_text_string(SIZED_STRING* charstr, int flags, unsigned char** hexstr, RE
     return result;
 }
 
-int new_string(char* identifier, SIZED_STRING* charstr, int flags, STRING** string)
+int new_string( YARA_CONTEXT* context, 
+                char* identifier, 
+                SIZED_STRING* charstr, 
+                int flags, 
+                STRING** string)
 {
     STRING* new_string;
     int result = ERROR_SUCCESS;
@@ -494,11 +506,11 @@ int new_string(char* identifier, SIZED_STRING* charstr, int flags, STRING** stri
         
         if (flags & STRING_FLAGS_HEXADECIMAL)
         {
-            result = new_hex_string(charstr, &new_string->string, &new_string->mask, &new_string->length);  
+            result = new_hex_string(context, charstr, &new_string->string, &new_string->mask, &new_string->length);  
         }
         else
         {
-            result = new_text_string(charstr, flags, &new_string->string, &new_string->re, &new_string->length);
+            result = new_text_string(context, charstr, flags, &new_string->string, &new_string->re, &new_string->length);
         }
         
         if (result != ERROR_SUCCESS)

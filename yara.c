@@ -84,7 +84,7 @@ int is_directory(const char* path)
 	}
 }
 
-void scan_dir(const char* dir, int recursive, RULE_LIST* rules, YARACALLBACK callback)
+void scan_dir(const char* dir, int recursive, YARA_CONTEXT* context, YARACALLBACK callback)
 {
 	WIN32_FIND_DATA FindFileData;
 	HANDLE hFind;
@@ -105,11 +105,11 @@ void scan_dir(const char* dir, int recursive, RULE_LIST* rules, YARACALLBACK cal
 			if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			{
 				//printf("Processing %s...\n", FindFileData.cFileName);
-				yr_scan_file(full_path, rules, callback, full_path);
+				yr_scan_file(full_path, context, callback, full_path);
 			}
 			else if (recursive && FindFileData.cFileName[0] != '.' )
 			{
-				scan_dir(full_path, recursive, rules, callback);
+				scan_dir(full_path, recursive, context, callback);
 			}
 
 		} while (FindNextFile(hFind, &FindFileData));
@@ -132,7 +132,7 @@ int is_directory(const char* path)
 	return 0;
 }
 
-void scan_dir(const char* dir, int recursive, RULE_LIST* rules, YARACALLBACK callback)
+void scan_dir(const char* dir, int recursive, YARA_CONTEXT* context, YARACALLBACK callback)
 {
 	DIR *dp;
 	struct dirent *de;
@@ -156,12 +156,12 @@ void scan_dir(const char* dir, int recursive, RULE_LIST* rules, YARACALLBACK cal
 				if(S_ISREG(st.st_mode))
 				{
 					//printf("Processing %s\n", de->d_name);		
-					yr_scan_file(full_path, rules, callback, full_path);
+					yr_scan_file(full_path, context, callback, full_path);
 				}
 				else if(recursive && S_ISDIR(st.st_mode) && de->d_name[0] != '.')
 				{
 					//printf("Entering %s\n", de->d_name);
-					scan_dir(full_path, recursive, rules, callback);
+					scan_dir(full_path, recursive, context, callback);
 				}
 			}
 			
@@ -447,7 +447,7 @@ void report_error(const char* file_name, int line_number, const char* error_mess
 int main(int argc, char const* argv[])
 {
 	int i, errors;
-	RULE_LIST* rules;
+	YARA_CONTEXT* context;
 	FILE* rule_file;
 	TAG* tag;
 	TAG* next_tag;
@@ -465,12 +465,12 @@ int main(int argc, char const* argv[])
 			
     yr_init();
 			
-	rules = yr_alloc_rule_list();
+	context = yr_create_context();
 	
-	if (rules == NULL) 
+	if (context == NULL) 
 		return 0;
 	
-	yr_set_report_function(report_error);	
+	context->error_report_function = report_error;	
 			
 	for (i = optind; i < argc - 1; i++)
 	{
@@ -478,15 +478,15 @@ int main(int argc, char const* argv[])
 		
 		if (rule_file != NULL)
 		{
-			yr_set_file_name(argv[i]);
+			context->file_name = argv[i];
 			            			
-			errors = yr_compile_file(rule_file, rules);
+			errors = yr_compile_file(rule_file, context);
 			
 			fclose(rule_file);
 			
-			if (errors > 0) /* errors during compilation */
+			if (errors) /* errors during compilation */
 			{
-				yr_free_rule_list(rules);				
+				yr_destroy_context(context);				
 				return 0;
 			}
 		}
@@ -498,29 +498,27 @@ int main(int argc, char const* argv[])
 	
 	if (optind == argc - 1)  /* no rule files, read rules from stdin */
 	{
-		yr_set_file_name("stdin");
+		context->file_name = "stdin";
 		
-		errors = yr_compile_file(stdin, rules);
+		errors = yr_compile_file(stdin, context);
 			
 		if (errors > 0) /* errors during compilation */
 		{
-			yr_free_rule_list(rules);				
+			yr_destroy_context(context);				
 			return 0;
 		}		
 	}
-		
-	yr_prepare_rules(rules);
-	
+			
 	if (is_directory(argv[argc - 1]))
 	{
-		scan_dir(argv[argc - 1], recursive_search, rules, callback);
+		scan_dir(argv[argc - 1], recursive_search, context, callback);
 	}
 	else		
 	{
-		yr_scan_file(argv[argc - 1], rules, callback, (void*) argv[argc - 1]);
+		yr_scan_file(argv[argc - 1], context, callback, (void*) argv[argc - 1]);
 	}
 	
-	yr_free_rule_list(rules);
+	yr_destroy_context(context);
 	
 	/* free tag list allocated by process_cmd_line */
 	

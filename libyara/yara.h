@@ -87,6 +87,7 @@ GNU General Public License for more details.
 #define ERROR_ZERO_LENGTH_FILE                  25
 #define ERROR_INVALID_ARGUMENT                  26
       
+
 typedef struct _MATCH
 {   
     unsigned int    offset;   
@@ -102,6 +103,7 @@ typedef struct _REGEXP
     pcre_extra* extra;
     
 } REGEXP;
+
 
 typedef struct _STRING
 {
@@ -161,38 +163,61 @@ typedef struct _RULE_LIST
 {
     RULE* head; 
     RULE* tail;
-    STRING_LIST_ENTRY* hash_table[256][256];
-    STRING_LIST_ENTRY* non_hashed_strings;
         
 } RULE_LIST;
+
+
+typedef struct _HASH_TABLE
+{
+    STRING_LIST_ENTRY*  hashed_strings[256][256];
+    STRING_LIST_ENTRY*  non_hashed_strings;
+    int                 populated;
+        
+} HASH_TABLE;
 
 
 typedef int (*YARACALLBACK)(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* data);
 typedef void (*YARAREPORT)(const char* file_name, int line_number, const char* error_message);
 
+
+typedef struct _YARA_CONTEXT
+{  
+    int             last_result;
+    YARAREPORT      error_report_function;
+    int             errors;
+    int             last_error;
+    int             last_error_line;
+    const char*     file_name;
+    
+    RULE_LIST       rule_list;
+    HASH_TABLE      hash_table;
+    STRING*         current_rule_strings;  
+    int             inside_for;
+    
+    char            last_error_extra_info[256];
+    
+    char 		    lex_string_buf[256];
+    char*		    lex_string_buf_ptr;
+    unsigned short  lex_string_buf_len;
+
+} YARA_CONTEXT;
+
+
 RULE*       lookup_rule(RULE_LIST* rules, char* identifier);
 STRING*     lookup_string(STRING* string_list_head, char* identifier);
 TAG*        lookup_tag(TAG* tag_list_head, char* identifier);
 
-void        yr_init();
+void                yr_init();
+YARA_CONTEXT*       yr_create_context();
+void                yr_destroy_context(YARA_CONTEXT* context);
 
-RULE_LIST*  yr_alloc_rule_list();
-void        yr_free_rule_list(RULE_LIST* rule_list);
+int         yr_compile_file(FILE* rules_file, YARA_CONTEXT* context);
+int         yr_compile_string(const char* rules_string, YARA_CONTEXT* context);
 
-void        yr_set_file_name(const char* rules_file_name);
+int         yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data);
+int         yr_scan_file(const char* file_path, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data);
 
-int         yr_compile_file(FILE* rules_file, RULE_LIST* rules);
-int         yr_compile_string(const char* rules_string, RULE_LIST* rules);
-
-int         yr_prepare_rules(RULE_LIST* rule_list);
-
-int         yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data);
-int         yr_scan_file(const char* file_path, RULE_LIST* rule_list, YARACALLBACK callback, void* user_data);
-
-int         yr_get_last_error();
-int         yr_get_error_line_number();
-char*       yr_get_last_error_message();
-void        yr_set_report_function(YARAREPORT fn);
+char*       yr_get_error_message(YARA_CONTEXT* context, char* buffer, int buffer_size);
 
 #endif
 

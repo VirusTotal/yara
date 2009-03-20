@@ -133,7 +133,7 @@ typedef struct _TERM_STRING
 
 int new_rule(RULE_LIST* rules, char* identifier, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition);
 
-int new_string(char* identifier, SIZED_STRING* charstr, int flags, STRING** string);
+int new_string(YARA_CONTEXT* context, char* identifier, SIZED_STRING* charstr, int flags, STRING** string);
 
 int new_simple_term(int type, TERM** term);
 
