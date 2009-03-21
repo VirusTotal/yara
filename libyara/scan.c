@@ -426,6 +426,8 @@ int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)
 		rule = rule->next;
 	}
 	
+    hash_table->populated = TRUE;
+	
 	return ERROR_SUCCESS;
 }
 

@@ -19,7 +19,6 @@
 %option nounistd
 %option yylineno
 
-%option fast
 %option verbose
 %option warn
 

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>lex.l</string>
+	<string>scan.c</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -13,69 +13,63 @@
 					<key>filename</key>
 					<string>scan.c</string>
 					<key>lastUsed</key>
-					<date>2009-03-19T22:09:19Z</date>
-				</dict>
-				<dict>
-					<key>filename</key>
-					<string>pefile.c</string>
-					<key>lastUsed</key>
-					<date>2009-03-19T21:35:57Z</date>
-				</dict>
-				<dict>
-					<key>filename</key>
-					<string>filemap.c</string>
-					<key>lastUsed</key>
-					<date>2009-03-19T21:35:59Z</date>
-				</dict>
-				<dict>
-					<key>filename</key>
-					<string>eval.c</string>
-					<key>lastUsed</key>
-					<date>2009-03-19T21:36:05Z</date>
-				</dict>
-				<dict>
-					<key>filename</key>
-					<string>error.c</string>
-					<key>lastUsed</key>
-					<date>2009-03-19T21:36:14Z</date>
-				</dict>
-				<dict>
-					<key>filename</key>
-					<string>ast.c</string>
-					<key>lastUsed</key>
-					<date>2009-03-19T21:36:24Z</date>
-				</dict>
-				<dict>
-					<key>filename</key>
-					<string>lex.l</string>
-					<key>lastUsed</key>
-					<date>2009-03-19T23:17:54Z</date>
+					<date>2009-03-20T23:14:03Z</date>
 					<key>selected</key>
 					<true/>
 				</dict>
 				<dict>
 					<key>filename</key>
+					<string>pefile.c</string>
+					<key>lastUsed</key>
+					<date>2009-03-20T09:15:52Z</date>
+				</dict>
+				<dict>
+					<key>filename</key>
+					<string>filemap.c</string>
+					<key>lastUsed</key>
+					<date>2009-03-20T10:11:57Z</date>
+				</dict>
+				<dict>
+					<key>filename</key>
+					<string>eval.c</string>
+					<key>lastUsed</key>
+					<date>2009-03-20T11:16:01Z</date>
+				</dict>
+				<dict>
+					<key>filename</key>
+					<string>ast.c</string>
+					<key>lastUsed</key>
+					<date>2009-03-20T09:24:50Z</date>
+				</dict>
+				<dict>
+					<key>filename</key>
+					<string>lex.l</string>
+					<key>lastUsed</key>
+					<date>2009-03-20T11:15:39Z</date>
+				</dict>
+				<dict>
+					<key>filename</key>
 					<string>grammar.y</string>
 					<key>lastUsed</key>
-					<date>2009-03-19T21:51:43Z</date>
+					<date>2009-03-20T10:14:18Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>../yara.c</string>
 					<key>lastUsed</key>
-					<date>2009-03-19T21:51:44Z</date>
+					<date>2009-03-20T23:13:15Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>mem.c</string>
 					<key>lastUsed</key>
-					<date>2009-03-19T21:52:23Z</date>
+					<date>2009-03-20T09:16:20Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>libyara.c</string>
 					<key>lastUsed</key>
-					<date>2009-03-19T21:54:03Z</date>
+					<date>2009-03-20T23:14:03Z</date>
 				</dict>
 			</array>
 			<key>expanded</key>
@@ -90,13 +84,13 @@
 					<key>filename</key>
 					<string>yara.h</string>
 					<key>lastUsed</key>
-					<date>2009-03-19T23:17:54Z</date>
+					<date>2009-03-20T10:11:31Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>pefile.h</string>
 					<key>lastUsed</key>
-					<date>2009-03-18T09:33:23Z</date>
+					<date>2009-03-20T09:26:29Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -114,43 +108,37 @@
 					<key>filename</key>
 					<string>eval.h</string>
 					<key>lastUsed</key>
-					<date>2009-03-19T16:10:48Z</date>
-				</dict>
-				<dict>
-					<key>filename</key>
-					<string>error.h</string>
-					<key>lastUsed</key>
-					<date>2009-03-19T21:22:18Z</date>
+					<date>2009-03-20T08:35:38Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>ast.h</string>
 					<key>lastUsed</key>
-					<date>2009-03-19T20:59:45Z</date>
+					<date>2009-03-20T08:50:58Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>sizedstr.h</string>
 					<key>lastUsed</key>
-					<date>2009-03-19T19:33:41Z</date>
+					<date>2009-03-20T08:50:56Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>mem.h</string>
 					<key>lastUsed</key>
-					<date>2009-03-19T21:12:44Z</date>
+					<date>2009-03-20T08:50:44Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>scan.h</string>
 					<key>lastUsed</key>
-					<date>2009-03-19T21:21:59Z</date>
+					<date>2009-03-20T10:44:05Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>lex.h</string>
 					<key>lastUsed</key>
-					<date>2009-03-19T21:31:33Z</date>
+					<date>2009-03-20T09:32:30Z</date>
 				</dict>
 			</array>
 			<key>expanded</key>
@@ -168,28 +156,44 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>30</integer>
+				<integer>7</integer>
 				<key>line</key>
-				<integer>500</integer>
+				<integer>92</integer>
 			</dict>
+			<key>columnSelection</key>
+			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>481</integer>
+			<integer>92</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>1</integer>
+				<key>line</key>
+				<integer>92</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>7</integer>
+				<key>line</key>
+				<integer>92</integer>
+			</dict>
 		</dict>
 		<key>ast.c</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>29</integer>
+				<integer>16</integer>
 				<key>line</key>
-				<integer>473</integer>
+				<integer>22</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>67</integer>
+			<integer>5</integer>
 		</dict>
 		<key>ast.h</key>
 		<dict>
@@ -205,34 +209,6 @@
 			<key>firstVisibleLine</key>
 			<integer>115</integer>
 		</dict>
-		<key>error.c</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>17</integer>
-				<key>line</key>
-				<integer>20</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>62</integer>
-		</dict>
-		<key>error.h</key>
-		<dict>
-			<key>caret</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>19</integer>
-			</dict>
-			<key>firstVisibleColumn</key>
-			<integer>0</integer>
-			<key>firstVisibleLine</key>
-			<integer>0</integer>
-		</dict>
 		<key>eval.c</key>
 		<dict>
 			<key>caret</key>
@@ -245,7 +221,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>83</integer>
+			<integer>73</integer>
 		</dict>
 		<key>eval.h</key>
 		<dict>
@@ -310,30 +286,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>59</integer>
+				<integer>16</integer>
 				<key>line</key>
-				<integer>725</integer>
+				<integer>7</integer>
 			</dict>
-			<key>columnSelection</key>
-			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>165</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>49</integer>
-				<key>line</key>
-				<integer>725</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>59</integer>
-				<key>line</key>
-				<integer>725</integer>
-			</dict>
+			<integer>0</integer>
 		</dict>
 		<key>lex.h</key>
 		<dict>
@@ -354,28 +314,28 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>0</integer>
+				<integer>12</integer>
 				<key>line</key>
-				<integer>14</integer>
+				<integer>21</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>0</integer>
+			<integer>6</integer>
 		</dict>
 		<key>libyara.c</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>28</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>45</integer>
+				<integer>18</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>20</integer>
+			<integer>129</integer>
 		</dict>
 		<key>mem.c</key>
 		<dict>
@@ -412,14 +372,30 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>20</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>20</integer>
+				<integer>16</integer>
 			</dict>
+			<key>columnSelection</key>
+			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
 			<integer>0</integer>
+			<key>selectFrom</key>
+			<dict>
+				<key>column</key>
+				<integer>14</integer>
+				<key>line</key>
+				<integer>17</integer>
+			</dict>
+			<key>selectTo</key>
+			<dict>
+				<key>column</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>16</integer>
+			</dict>
 		</dict>
 		<key>pe.h</key>
 		<dict>
@@ -447,7 +423,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>12</integer>
+			<integer>0</integer>
 		</dict>
 		<key>pefile.h</key>
 		<dict>
@@ -468,23 +444,23 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>10</integer>
+				<integer>16</integer>
 				<key>line</key>
-				<integer>697</integer>
+				<integer>428</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>92</integer>
+			<integer>402</integer>
 		</dict>
 		<key>scan.h</key>
 		<dict>
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>46</integer>
+				<integer>16</integer>
 				<key>line</key>
-				<integer>18</integer>
+				<integer>19</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
@@ -510,14 +486,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>30</integer>
+				<integer>27</integer>
 				<key>line</key>
-				<integer>183</integer>
+				<integer>186</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>173</integer>
+			<integer>36</integer>
 		</dict>
 	</dict>
 	<key>openDocuments</key>
@@ -528,9 +504,7 @@
 		<string>yara.h</string>
 		<string>scan.h</string>
 		<string>sizedstr.h</string>
-		<string>error.c</string>
 		<string>pefile.h</string>
-		<string>error.h</string>
 		<string>pefile.c</string>
 		<string>eval.c</string>
 		<string>../yara.c</string>
@@ -548,6 +522,6 @@
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{214, 144}, {1047, 754}}</string>
+	<string>{{211, 24}, {1047, 754}}</string>
 </dict>
 </plist>
