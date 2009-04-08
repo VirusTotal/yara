@@ -2622,6 +2622,7 @@ int parse_string(const char* string, YARA_CONTEXT* context)
 
 	state = yy_scan_string(string,yyscanner);
 	
+	yyset_lineno(0,yyscanner);
     yyparse(yyscanner);
 
 	yy_delete_buffer(state,yyscanner);  
