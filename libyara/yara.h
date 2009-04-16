@@ -33,6 +33,12 @@ GNU General Public License for more details.
 #define NULL 0
 #endif
 
+#ifndef MAX_PATH
+#define MAX_PATH 1024
+#endif
+
+#define MAX_INCLUDE_DEPTH                       16
+
 #define STRING_FLAGS_FOUND                      0x01
 #define STRING_FLAGS_REFERENCED					0x02
 #define STRING_FLAGS_HEXADECIMAL                0x04
@@ -187,18 +193,22 @@ typedef struct _YARA_CONTEXT
     int             errors;
     int             last_error;
     int             last_error_line;
-    const char*     file_name;
     
     RULE_LIST       rule_list;
     HASH_TABLE      hash_table;
     STRING*         current_rule_strings;  
     int             inside_for;
     
+    char*           file_name_stack[MAX_INCLUDE_DEPTH];
+    int             file_name_stack_ptr;
+           
     char            last_error_extra_info[256];
+
+    char 		    lex_buf[256];
+    char*		    lex_buf_ptr;
+    unsigned short  lex_buf_len;
     
-    char 		    lex_string_buf[256];
-    char*		    lex_string_buf_ptr;
-    unsigned short  lex_string_buf_len;
+    char            include_base_dir[MAX_PATH];
 
 } YARA_CONTEXT;
 
@@ -210,6 +220,7 @@ TAG*        lookup_tag(TAG* tag_list_head, char* identifier);
 void                yr_init();
 YARA_CONTEXT*       yr_create_context();
 void                yr_destroy_context(YARA_CONTEXT* context);
+char*               yr_get_current_file_name(YARA_CONTEXT* context);
 
 int         yr_compile_file(FILE* rules_file, YARA_CONTEXT* context);
 int         yr_compile_string(const char* rules_string, YARA_CONTEXT* context);

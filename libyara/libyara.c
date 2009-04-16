@@ -21,7 +21,6 @@ GNU General Public License for more details.
 #include "mem.h"
 #include "eval.h"
 #include "lex.h"
-#include "scan.h"
 #include "yara.h"
 
 #ifdef WIN32
@@ -47,7 +46,7 @@ YARA_CONTEXT* yr_create_context()
     context->last_error = ERROR_SUCCESS;
     context->last_error_line = 0;
     context->last_result = ERROR_SUCCESS;
-    context->file_name = NULL;
+    context->file_name_stack_ptr = 0;
     context->current_rule_strings = NULL;
     context->inside_for = 0;
     
@@ -128,12 +127,39 @@ void yr_destroy_context(YARA_CONTEXT* context)
 	yr_free(context);
 }
 
+char* yr_get_current_file_name(YARA_CONTEXT* context)
+{   
+    if (context->file_name_stack_ptr > 0)
+    {
+        return context->file_name_stack[context->file_name_stack_ptr - 1];
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
+void yr_push_file_name(YARA_CONTEXT* context, const char* file_name)
+{  
+    context->file_name_stack[context->file_name_stack_ptr] = yr_strdup(file_name);
+    context->file_name_stack_ptr++;
+}
+
+
+void yr_pop_file_name(YARA_CONTEXT* context)
+{  
+    context->file_name_stack_ptr--;
+    if (context->file_name_stack_ptr > 0)
+    {
+        yr_free(context->file_name_stack[context->file_name_stack_ptr]);
+        context->file_name_stack[context->file_name_stack_ptr] = NULL;  
+    }
+}
 
 int yr_compile_file(FILE* rules_file, YARA_CONTEXT* context)
 {	
     return parse_file(rules_file, context);
 }
-
 
 int yr_compile_string(const char* rules_string, YARA_CONTEXT* context)
 {	

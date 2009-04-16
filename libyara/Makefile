@@ -37,8 +37,8 @@ subdir = .
 DIST_COMMON = README $(am__configure_deps) $(include_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in $(top_srcdir)/configure config.guess \
-	config.sub depcomp grammar.c grammar.h install-sh lex.c \
-	ltmain.sh missing ylwrap
+	config.sub depcomp grammar.c install-sh lex.c ltmain.sh \
+	missing ylwrap
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -155,7 +155,7 @@ SHELL = /bin/sh
 STRIP = strip
 VERSION = 1.1.1
 YACC = bison -y
-YFLAGS = -d
+YFLAGS = 
 abs_builddir = /Users/plusvic/Projects/yara/trunk/libyara
 abs_srcdir = /Users/plusvic/Projects/yara/trunk/libyara
 abs_top_builddir = /Users/plusvic/Projects/yara/trunk/libyara
@@ -313,11 +313,6 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-grammar.h: grammar.c
-	@if test ! -f $@; then \
-	  rm -f grammar.c; \
-	  $(MAKE) $(AM_MAKEFLAGS) grammar.c; \
-	else :; fi
 libyara.la: $(libyara_la_OBJECTS) $(libyara_la_DEPENDENCIES) 
 	$(LINK) -rpath $(libdir) $(libyara_la_OBJECTS) $(libyara_la_LIBADD) $(LIBS)
 
@@ -596,7 +591,6 @@ maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 	-rm -f grammar.c
-	-rm -f grammar.h
 	-rm -f lex.c
 clean: clean-am
 

@@ -185,7 +185,8 @@ int count_strings(TERM_STRING* st);
 
 rules :  /* empty */
       | rules rule
-      | rules error '}' /* on error skip until end of rule*/
+      | rules error rule      /* on error skip until next rule..*/
+      | rules error 'include' /* .. or include statement */
       ;
 
 rule    :   rule_modifiers _RULE_ _IDENTIFIER_ tags '{' _CONDITION_ ':' boolean_expression '}'                          
@@ -489,9 +490,9 @@ expression : _SIZE_                             { $$ = reduce_filesize(yyscanner
            | _INT8_  '(' expression ')'         { $$ = reduce_term(yyscanner, TERM_TYPE_INT8_AT_OFFSET, $3, NULL, NULL); }
            | _INT16_ '(' expression ')'         { $$ = reduce_term(yyscanner, TERM_TYPE_INT16_AT_OFFSET, $3, NULL, NULL); }
            | _INT32_ '(' expression ')'         { $$ = reduce_term(yyscanner, TERM_TYPE_INT32_AT_OFFSET, $3, NULL, NULL); }
-           | _UINT8_  '(' expression ')'         { $$ = reduce_term(yyscanner, TERM_TYPE_UINT8_AT_OFFSET, $3, NULL, NULL); }
-           | _UINT16_ '(' expression ')'         { $$ = reduce_term(yyscanner, TERM_TYPE_UINT16_AT_OFFSET, $3, NULL, NULL); }
-           | _UINT32_ '(' expression ')'         { $$ = reduce_term(yyscanner, TERM_TYPE_UINT32_AT_OFFSET, $3, NULL, NULL); }
+           | _UINT8_  '(' expression ')'        { $$ = reduce_term(yyscanner, TERM_TYPE_UINT8_AT_OFFSET, $3, NULL, NULL); }
+           | _UINT16_ '(' expression ')'        { $$ = reduce_term(yyscanner, TERM_TYPE_UINT16_AT_OFFSET, $3, NULL, NULL); }
+           | _UINT32_ '(' expression ')'        { $$ = reduce_term(yyscanner, TERM_TYPE_UINT32_AT_OFFSET, $3, NULL, NULL); }
            | _STRING_COUNT_                         
              { 
                     $$ = reduce_string_count(yyscanner, $1); 

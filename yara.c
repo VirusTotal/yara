@@ -176,7 +176,7 @@ void scan_dir(const char* dir, int recursive, YARA_CONTEXT* context, YARACALLBAC
 
 void print_string(unsigned char* buffer, unsigned int buffer_size, unsigned int offset, unsigned int length, int unicode)
 {
-	int i;
+	unsigned int i;
 	char* str;
 	
     str = (char*) (buffer + offset);
@@ -478,7 +478,7 @@ int main(int argc, char const* argv[])
 		
 		if (rule_file != NULL)
 		{
-			context->file_name = argv[i];
+			yr_push_file_name(context, argv[i]);
 			            			
 			errors = yr_compile_file(rule_file, context);
 			
@@ -498,7 +498,7 @@ int main(int argc, char const* argv[])
 	
 	if (optind == argc - 1)  /* no rule files, read rules from stdin */
 	{
-		context->file_name = "stdin";
+		yr_push_file_name(context, "stdin");
 		
 		errors = yr_compile_file(stdin, context);
 			

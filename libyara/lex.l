@@ -12,6 +12,19 @@
 #include "lex.h"
 #include "yara.h"
 
+#define YYTEXT_TO_BUFFER	{ \
+								char *yptr = yytext; \
+								while ( *yptr ) \
+    							{ \
+  									*yyextra->lex_buf_ptr++ = *yptr++; \
+									yyextra->lex_buf_len++; \
+								} \
+							}
+							
+#ifdef WIN32
+#define snprintf _snprintf
+#endif
+							
 %}
 
 %option reentrant bison-bridge
@@ -24,6 +37,8 @@
 
 %x str
 %x regexp
+%x include
+
 
 digit         [0-9]
 letter        [a-zA-Z]
@@ -31,75 +46,156 @@ hexdigit      [a-fA-F0-9]
 
 %%
 
-"<"                  { return _LT_;	        }
-">"                  { return _GT_;	        }
-"<="                 { return _LE_;	        }
-">="                 { return _GE_;	        }
-"=="				 { return _EQ_;		    }
-"!="				 { return _NEQ_;	    }
-"private"            { return _PRIVATE_;    }
-"global"             { return _GLOBAL_;     }
-"rule"               { return _RULE_;       }
-"strings"            { return _STRINGS_;    }
-"ascii"              { return _ASCII_;      }
-"wide"               { return _WIDE_;       }
-"fullword"           { return _FULLWORD_;   }
-"nocase"             { return _NOCASE_;     }
-"condition"          { return _CONDITION_;  }
-"true"               { return _TRUE_;       }
-"false"              { return _FALSE_;      }
-"not"                { return _NOT_;        }
-"and"                { return _AND_;        }
-"or"                 { return _OR_;         }
-"at"                 { return _AT_;         }
-"in"                 { return _IN_;         }
-"of"                 { return _OF_;         }
-"them"				 { return _THEM_;		}
-"for"				 { return _FOR_;        }
-"all"				 { return _ALL_;		}
-"any"				 { return _ANY_;		}
-"entrypoint"         { return _ENTRYPOINT_; }
-"filesize"			 { return _SIZE_;       }
-"rva"			     { return _RVA_;   	    }
-"offset"			 { return _OFFSET_;     }
-"file"				 { return _FILE_;       }
-"is"				 { return _IS_;         }
-"section"			 { return _SECTION_;    }
-"uint8"				 { return _UINT8_;    	}
-"uint16"			 { return _UINT16_;    	}
-"uint32"		 	 { return _UINT32_;    	}
-"int8"				 { return _INT8_;    	}
-"int16"				 { return _INT16_;    	}
-"int32"		 		 { return _INT32_;    	}
+"<"                  				{ return _LT_;	        }
+">"                  				{ return _GT_;	        }
+"<="                 				{ return _LE_;	        }
+">="                 				{ return _GE_;	        }
+"=="				 				{ return _EQ_;		    }
+"!="				 				{ return _NEQ_;	    	}
+"private"            				{ return _PRIVATE_;    	}
+"global"             				{ return _GLOBAL_;     	}
+"rule"               				{ return _RULE_;       	}
+"strings"            				{ return _STRINGS_;    	}
+"ascii"              				{ return _ASCII_;      	}
+"wide"               				{ return _WIDE_;       	}
+"fullword"           				{ return _FULLWORD_;   	}
+"nocase"             				{ return _NOCASE_;     	}
+"condition"          				{ return _CONDITION_;  	}
+"true"               				{ return _TRUE_;       	}
+"false"              				{ return _FALSE_;      	}
+"not"                				{ return _NOT_;        	}
+"and"                				{ return _AND_;        	}
+"or"                 				{ return _OR_;         	}
+"at"                 				{ return _AT_;         	}
+"in"                 				{ return _IN_;         	}
+"of"                 				{ return _OF_;         	}
+"them"				 				{ return _THEM_;		}
+"for"				 				{ return _FOR_;        	}
+"all"				 				{ return _ALL_;			}
+"any"				 				{ return _ANY_;			}
+"entrypoint"         				{ return _ENTRYPOINT_; 	}
+"filesize"			 				{ return _SIZE_;       	}
+"rva"			     				{ return _RVA_;   	    }
+"offset"			 				{ return _OFFSET_;     	}
+"file"				 				{ return _FILE_;       	}
+"is"				 				{ return _IS_;         	}
+"section"			 				{ return _SECTION_;    	}
+"uint8"				 				{ return _UINT8_;    	}
+"uint16"			 				{ return _UINT16_;    	}
+"uint32"		 	 				{ return _UINT32_;    	}
+"int8"				 				{ return _INT8_;    	}
+"int16"				 				{ return _INT16_;    	}
+"int32"		 		 				{ return _INT32_;    	}
 
 
 
-"/*"([^\*]|\*[^\/])*"*/"    {	/* skip comments */ }
+"/*"([^\*]|\*[^\/])*"*/"    		{ /* skip comments */ }
 
-"//".*\n					{   /* skip single-line comments */ }
+"//".*\n							{ /* skip single-line comments */ }
+
+include[ \t]+\"						{
+										yyextra->lex_buf_ptr = yyextra->lex_buf; 
+										yyextra->lex_buf_len = 0;
+										BEGIN(include);
+									}
+					
+<include>[^\"]+ 					{
+										YYTEXT_TO_BUFFER;
+									}
+			
+<include>\"		    				{ 
+										char			buffer[1024];
+										char			*s = NULL;
+										char			*b = NULL;
+										char			*f;
+										FILE* 			fh;
+										YARA_CONTEXT* 	context = yyget_extra(yyscanner);
+					
+										*yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
+										
+										// move path of current source file into buffer
+															
+										strncpy(buffer, yr_get_current_file_name(context), sizeof(buffer));
+										
+										// make included file path relative to current source file
+										
+										s = strrchr(buffer, '/');
+										
+										#ifdef WIN32
+										b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
+										#endif
+									
+										if (s != NULL || b != NULL)
+										{
+											f = (b > s)? (b + 1): (s + 1);
+											
+											strncpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
+											
+											fh = fopen(buffer, "r");
+											
+											// if include file was not found relative to current source file, try to open it
+											// with path as specified by user (maybe user wrote a full path)
+											
+											if (fh == NULL) 
+											{
+												fh = fopen(yyextra->lex_buf, "r");
+											}
+										}
+										else
+										{
+											fh = fopen(yyextra->lex_buf, "r");
+										}
+	
+										if (fh != NULL)
+										{						
+											yr_push_file_name(context, yyextra->lex_buf);			
+											yypush_buffer_state(yy_create_buffer(fh, YY_BUF_SIZE, yyscanner), yyscanner);										
+										}
+										else
+										{
+											snprintf(buffer, sizeof(buffer), "can't open include file: %s", yyextra->lex_buf);
+											yyerror(yyscanner, buffer);
+										}
+												
+										BEGIN(INITIAL);
+									}
+									
+<<EOF>> 							{
+										YARA_CONTEXT* context = yyget_extra(yyscanner);
+						
+										yr_pop_file_name(context);
+						
+										yypop_buffer_state(yyscanner);
+													
+				        				if ( !YY_CURRENT_BUFFER )
+				            			{
+				            				yyterminate();
+				            			}
+				        			}
+
 							
-$({letter}|{digit}|_)*"*" {
-                       		yylval->c_string = (char*) yr_strdup(yytext);
-                       		return _STRING_IDENTIFIER_WITH_WILDCARD_;      
-					 	}
+$({letter}|{digit}|_)*"*" 			{
+			                       		yylval->c_string = (char*) yr_strdup(yytext);
+			                       		return _STRING_IDENTIFIER_WITH_WILDCARD_;      
+								 	}
 
-$({letter}|{digit}|_)* {
-                       		yylval->c_string = (char*) yr_strdup(yytext);
-                       		return _STRING_IDENTIFIER_;      
-					 }
+$({letter}|{digit}|_)* 				{
+				                       		yylval->c_string = (char*) yr_strdup(yytext);
+				                       		return _STRING_IDENTIFIER_;      
+									}
 				
 					
-#({letter}|{digit}|_)* {	
-                       		yylval->c_string = (char*) yr_strdup(yytext);
-							yylval->c_string[0] = '$'; 					/* replace # by $*/
-		                    return _STRING_COUNT_;      
-					 }
+#({letter}|{digit}|_)* 				{	
+				                       		yylval->c_string = (char*) yr_strdup(yytext);
+											yylval->c_string[0] = '$'; 						/* replace # by $*/
+						                    return _STRING_COUNT_;      
+									}
 					
-@({letter}|{digit}|_)* {	
-	                      	yylval->c_string = (char*) yr_strdup(yytext);
-							yylval->c_string[0] = '$'; 					/* replace @ by $*/
-		                    return _STRING_OFFSET_;      
-					 }					
+@({letter}|{digit}|_)* 				{	
+					                      	yylval->c_string = (char*) yr_strdup(yytext);
+											yylval->c_string[0] = '$'; 						/* replace @ by $*/
+						                    return _STRING_OFFSET_;      
+									}					
 
 ({letter}|_)({letter}|{digit}|_)*	{ 
 										if (strlen(yytext) > 128)
@@ -111,145 +207,131 @@ $({letter}|{digit}|_)* {
                    						return _IDENTIFIER_;
 									}
 							
-{digit}+(MB|KB){0,1}  { 
-						yylval->integer = (unsigned int) atoi(yytext);
+{digit}+(MB|KB){0,1}  				{ 
+										yylval->integer = (unsigned int) atoi(yytext);
 						
-						if (strstr(yytext, "KB") != NULL)
-						{
-							yylval->integer *= 1024;
-						}
-						else if (strstr(yytext, "MB") != NULL)
-						{
-							yylval->integer *= 1048576;
-						}
+										if (strstr(yytext, "KB") != NULL)
+										{
+											yylval->integer *= 1024;
+										}
+										else if (strstr(yytext, "MB") != NULL)
+										{
+											yylval->integer *= 1048576;
+										}
 						
-                       	return _NUMBER_;     
-					}
+				                       	return _NUMBER_;     
+									}
 					
-0x{hexdigit}+		{
-						yylval->integer = xtoi(yytext + 2);
-						return _NUMBER_;
-					}
+0x{hexdigit}+						{
+										yylval->integer = xtoi(yytext + 2);
+										return _NUMBER_;
+									}
 	
-<str>\"        		{ 	/* saw closing quote - all done */
+<str>\"        						{ 	/* saw closing quote - all done */
 
-						SIZED_STRING* s;
+										SIZED_STRING* s;
 
-						if (yyextra->lex_string_buf_len == 0)
-						{
-							yyerror(yyscanner, "empty string");
-						}
+										if (yyextra->lex_buf_len == 0)
+										{
+											yyerror(yyscanner, "empty string");
+										}
 
-						*yyextra->lex_string_buf_ptr = '\0';
+										*yyextra->lex_buf_ptr = '\0';
 
-						BEGIN(INITIAL);
+										BEGIN(INITIAL);
 						
-						s = (SIZED_STRING*) yr_malloc(yyextra->lex_string_buf_len + sizeof(SIZED_STRING));
+										s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
 						
-						s->length = yyextra->lex_string_buf_len;
+										s->length = yyextra->lex_buf_len;
 						
-						strcpy(s->c_string, yyextra->lex_string_buf);
+										strcpy(s->c_string, yyextra->lex_buf);
 					
-						yylval->sized_string = s;
+										yylval->sized_string = s;
 												
-						return _TEXTSTRING_;
-			  		}
+										return _TEXTSTRING_;
+							  		}
 
-<str>\\t  			{ *yyextra->lex_string_buf_ptr++ = '\t'; yyextra->lex_string_buf_len++; }
-<str>\\\"  			{ *yyextra->lex_string_buf_ptr++ = '\"'; yyextra->lex_string_buf_len++; }
-<str>\\\\  			{ *yyextra->lex_string_buf_ptr++ = '\\'; yyextra->lex_string_buf_len++; }
+<str>\\t  							{ *yyextra->lex_buf_ptr++ = '\t'; yyextra->lex_buf_len++; }
+<str>\\\"  							{ *yyextra->lex_buf_ptr++ = '\"'; yyextra->lex_buf_len++; }
+<str>\\\\  							{ *yyextra->lex_buf_ptr++ = '\\'; yyextra->lex_buf_len++; }
 
-<str>\\x{hexdigit}{2}   	{
-        						int result;
+<str>\\x{hexdigit}{2}   			{
+		        						int result;
 
-        						sscanf( yytext + 2, "%x", &result );
+		        						sscanf( yytext + 2, "%x", &result );
                 					
-        						*yyextra->lex_string_buf_ptr++ = result;
-								yyextra->lex_string_buf_len++;
-        					}
+		        						*yyextra->lex_buf_ptr++ = result;
+										yyextra->lex_buf_len++;
+		        					}
 
-<str>[^\\\n\"]+      {
-						char *yptr = yytext;
+<str>[^\\\n\"]+      				{
+										YYTEXT_TO_BUFFER;
+									}
 
-						while ( *yptr )
-						{
-        					*yyextra->lex_string_buf_ptr++ = *yptr++;
-							yyextra->lex_string_buf_len++;
-						}
-					 }
+<str>\n  		    				{
+										yyerror(yyscanner, "unterminated string");
+										yyterminate();
+									}					
 
-<str>\n  		    {
-						yyerror(yyscanner, "unterminated string");
-						yyterminate();
-					}					
-
-<str>\\(.|\n)  		{
-						yyerror(yyscanner, "illegal escape sequence");
-					}
+<str>\\(.|\n)  						{
+										yyerror(yyscanner, "illegal escape sequence");
+									}
 
 					
-<regexp>"/"         { 	
-						SIZED_STRING* s;
+<regexp>"/"         				{ 	
+										SIZED_STRING* s;
 
-						if (yyextra->lex_string_buf_len == 0)
-						{
-							yyerror(yyscanner, "empty regular expression");
-						}
+										if (yyextra->lex_buf_len == 0)
+										{
+											yyerror(yyscanner, "empty regular expression");
+										}
 
-						*yyextra->lex_string_buf_ptr = '\0';
+										*yyextra->lex_buf_ptr = '\0';
 
-						BEGIN(INITIAL);
+										BEGIN(INITIAL);
 
-						s = (SIZED_STRING*) yr_malloc(yyextra->lex_string_buf_len + sizeof(SIZED_STRING));
+										s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
 
-						s->length = yyextra->lex_string_buf_len;
-
-						strcpy(s->c_string, yyextra->lex_string_buf);
+										s->length = yyextra->lex_buf_len;
+										strcpy(s->c_string, yyextra->lex_buf);
 					
-						yylval->sized_string = s;
+										yylval->sized_string = s;
 
-						return _REGEXP_;
-			  		}
+										return _REGEXP_;
+							  		}
 			
-<regexp>\\\/		{ 				
-						*yyextra->lex_string_buf_ptr++ = '/';
-						yyextra->lex_string_buf_len++ ;
-					}
+<regexp>\\\/						{ 				
+										*yyextra->lex_buf_ptr++ = '/';
+										yyextra->lex_buf_len++ ;
+									}
 
-<regexp>\\.			{ 				
-						*yyextra->lex_string_buf_ptr++ = yytext[0];
-						*yyextra->lex_string_buf_ptr++ = yytext[1];
-						yyextra->lex_string_buf_len += 2;
-					}
+<regexp>\\.							{ 				
+										*yyextra->lex_buf_ptr++ = yytext[0];
+										*yyextra->lex_buf_ptr++ = yytext[1];
+										yyextra->lex_buf_len += 2;
+									}
 
-<regexp>[^/\n\\]+    {
-						char *yptr = yytext;
+<regexp>[^/\n\\]+    				{
+										YYTEXT_TO_BUFFER;
+									}
 
-						while ( *yptr )
-						{
-        					*yyextra->lex_string_buf_ptr++ = *yptr++;
-							yyextra->lex_string_buf_len++;
-						}
-					 }
-
-<regexp>\n  		{
-						yyerror(yyscanner, "unterminated regular expression");
-						yyterminate();
-					}
+<regexp>\n  						{
+										yyerror(yyscanner, "unterminated regular expression");
+										yyterminate();
+									}
 					
-\"     				{
- 						yyextra->lex_string_buf_ptr = yyextra->lex_string_buf; 
-						yyextra->lex_string_buf_len = 0;
-						BEGIN(str);
-					}
+\"     								{
+				 						yyextra->lex_buf_ptr = yyextra->lex_buf; 
+										yyextra->lex_buf_len = 0;
+										BEGIN(str);
+									}
 			
-"/"     			{
- 						yyextra->lex_string_buf_ptr = yyextra->lex_string_buf; 
-						yyextra->lex_string_buf_len = 0;
-						BEGIN(regexp);
-					}
-					
-					
+"/"     							{
+				 						yyextra->lex_buf_ptr = yyextra->lex_buf; 
+										yyextra->lex_buf_len = 0;
+										BEGIN(regexp);
+									}
+						
 \{({hexdigit}|[ \-|\?\[\]\(\)])+\}	{ 
 										int len = strlen(yytext);
 										
@@ -264,14 +346,13 @@ $({letter}|{digit}|_)* {
 										return _HEXSTRING_;
 									}
 					
+[ \t\r\n]							/* skip whitespace */
 
-[ \t\r\n]				/* skip whitespace */
-
-
-.                  	{ 
-                       	return yytext[0];    
-					}
+.                  					{ 
+                       					return yytext[0];    
+									}
 %%
+
 
 
 
@@ -280,14 +361,24 @@ void yyerror(yyscan_t yyscanner, const char *error_message)
 	YARA_CONTEXT* context = yyget_extra(yyscanner);
 	
 	char message[512];
+	char* file_name;
 	
 	/* 
 		if error_message != NULL the error comes from yyparse internal code
 		else the error comes from my code and the error code is set in context->last_result 
 	*/
-		
+			
 	context->errors++;
-	context->last_error_line = yyget_lineno(yyscanner) + 1; // yyget_lineno is zero-based
+	context->last_error_line = yyget_lineno(yyscanner);
+	
+	if (context->file_name_stack_ptr > 0)
+	{
+		file_name = context->file_name_stack[context->file_name_stack_ptr - 1];
+	} 
+	else
+	{
+		file_name = NULL;
+	}
 	
 	if (error_message != NULL)
 	{
@@ -295,23 +386,29 @@ void yyerror(yyscan_t yyscanner, const char *error_message)
 		strncpy(context->last_error_extra_info, error_message, sizeof(message));
 	
     	if (context->error_report_function != NULL)
-    	{
-        	context->error_report_function(context->file_name, context->last_error_line, error_message);
+    	{	
+        	context->error_report_function(	file_name, 
+											context->last_error_line, 
+											error_message);
     	}
 	}
 	else
 	{
 		context->last_error = context->last_result;
-	
+			
 		if (context->error_report_function != NULL)
     	{	
 			yr_get_error_message(context, message, sizeof(message));
-        	context->error_report_function(context->file_name, context->last_error_line, message);
+					
+        	context->error_report_function(	file_name, 
+											context->last_error_line, 
+											message);
     	}
 	}
 	
 	context->last_result = ERROR_SUCCESS;
 }
+
 
 
 int parse_string(const char* string, YARA_CONTEXT* context)
@@ -325,7 +422,7 @@ int parse_string(const char* string, YARA_CONTEXT* context)
 
 	state = yy_scan_string(string, yyscanner);
 	
-	yyset_lineno(0, yyscanner);
+	yyset_lineno(1, yyscanner);
     yyparse(yyscanner);
 
 	yy_delete_buffer(state, yyscanner);  
@@ -333,6 +430,7 @@ int parse_string(const char* string, YARA_CONTEXT* context)
 	
 	return context->errors;
 }
+
 
 
 int parse_file(FILE* rules_file, YARA_CONTEXT* context)
@@ -347,7 +445,7 @@ int parse_file(FILE* rules_file, YARA_CONTEXT* context)
 	
 	yyset_in(rules_file, yyscanner);
 	yyset_extra(context, yyscanner);	
-
+	
     yyparse(yyscanner);
 
     yylex_destroy(yyscanner);
