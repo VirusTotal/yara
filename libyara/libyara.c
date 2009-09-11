@@ -176,6 +176,9 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* c
 	RULE* rule;
 	EVALUATION_CONTEXT eval_context;
 	
+	if (buffer_size < 2)
+        return ERROR_SUCCESS;
+	
 	if (!context->hash_table.populated)
 	{
         populate_hash_table(&context->hash_table, &context->rule_list);
@@ -209,7 +212,7 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* c
 		    return error;
 		
 		/* search for wide strings */
-		if (i < buffer_size - 3 && buffer[i + 1] == 0 && buffer[i + 3] == 0)
+		if ((buffer[i + 1] == 0) && (buffer_size > 3) && (i < buffer_size - 3) && (buffer[i + 3] == 0))
 		{
 			error = find_matches(   buffer[i], 
 			                        buffer[i + 2], 

@@ -19,7 +19,7 @@ GNU General Public License for more details.
 #include <Python.h>
 #include "structmember.h"
 
-#include "yara.h"
+#include <yara.h>
 
 /* Module globals */
 

@@ -10,7 +10,8 @@ setup(name = "yara-python",
         ext_modules = [ Extension(
                                     name='yara', 
                                     sources=['yara-python.c'],
-                                    libraries=['yara','pcre']
+                                    libraries=['yara','pcre'],
+                                    include_dirs=['/usr/local/include']
                                     )])
      
  

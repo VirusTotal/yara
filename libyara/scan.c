@@ -699,16 +699,19 @@ int find_matches(	unsigned char first_char,
 					YARA_CONTEXT* context)
 {
 	
-    int result;
+    int result = ERROR_SUCCESS;
     	
-    result =  find_matches_for_strings(  context->hash_table.hashed_strings[first_char][second_char], 
-                                        buffer, 
-                                        buffer_size, 
-                                        current_file_offset, 
-                                        flags, 
-                                        negative_size);
+    if (context->hash_table.hashed_strings[first_char][second_char] != NULL)
+    {
+        result =  find_matches_for_strings( context->hash_table.hashed_strings[first_char][second_char], 
+                                            buffer, 
+                                            buffer_size, 
+                                            current_file_offset, 
+                                            flags, 
+                                            negative_size);
+    }
     
-    if (result == ERROR_SUCCESS)
+    if (result == ERROR_SUCCESS && context->hash_table.non_hashed_strings != NULL)
     {
          result = find_matches_for_strings(    context->hash_table.non_hashed_strings, 
                                                buffer, 

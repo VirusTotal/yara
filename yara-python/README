@@ -14,13 +14,13 @@ yara-python depends on libyara, a library that implements YARA's core functions.
 must build and install YARA in your system before building yara-python. The latest
 YARA version can be downloaded from:
 
-http://yara.googlecode.com/files/yara-1.2.tar.gz
+http://yara.googlecode.com/files/yara-1.2.1.tar.gz
 
 
 After installing YARA you can build yara-python this way:
 
-$ tar xzvf yara-python-1.2.0.tar.gz
-$ cd yara-python-1.2.0
+$ tar xzvf yara-python-1.2.1.tar.gz
+$ cd yara-python-1.2.1
 $ python setup.py build
 $ sudo python setup.py install
 
@@ -51,44 +51,16 @@ $ ldconfig
 HOW TO USE
 ==========
 
-The first thing you need to do is importing the yara module:
-
-import yara
-
-Then you will need to compile the YARA rules before applying them to your data:
-
-rules = yara.compile('/foo/bar/myrules')
-
-The method "compile" of this module returns an instance of the class "Rules", which
-in turn has two methods: "matchfile" and "match". The first one applies the rules
-to a file given its path:
-
-matches = rules.matchfile('/foo/bar/myfile')
-
-The second one applies the rules to a string:
-
-f = fopen('/foo/bar/myfile', 'rb')
-data = f.read()
-f.close()
-
-matches = rules.match(data)
-
-Both methods return a list of instances of the class "Match". The instances of this
-class can be treated as text string containing the name of the matching YARA rule. 
-For example you can print them:
-
-foreach m in matches:
-	print "%s" % m
-
-In some circumstances you may need to explicitly convert the instance of "Match" to
-string, for example when comparing it with another string:
-
-if str(matches[0]) == 'SomeRuleName':
-	...
-
-The "Match" class have another two attributes: "tags" and "strings". The "tags" 
-attribute is a list of strings containing the tags associated to the rule. The
-"strings" attribute is a dictionary whose values are those strings within the data
-that made the YARA rule match, and the keys are the offsets those strings were found.
+YARA can be also invoked from your own Python scripts. The yara-python extension is 
+provided in order to make YARA functionality available to Python users. Once yara-python 
+is built and installed on your system you can use it as shown below:import yaraThen you will need to compile your YARA rules before applying them to your data, the
+rules can be compiled from a file path:rules = yara.compile(filepath='/foo/bar/myrules')The default argument is filepath, so you don't need to explicitly specify its name:rules = yara.compile('/foo/bar/myrules')You can also compile your rules from a file object:fh = open('/foo/bar/myrules')rules = yara.compile(file=fh)fh.close()Or you can compile them from a Python string:rules = yara.compile(source='rule dummy { condition: true }')In the three cases compile returns an instance of the class Rules, which in turn has
+a match method:matches = rules.match('/foo/bar/myfile')But you can also apply he rules to a Python string:f = fopen('/foo/bar/myfile', 'rb')matches = rules.match(data=f.read())Both in both cases a list of instances of the class Match is returned. The instances
+of this class can be treated as text strings containing the name of the matching rule.
+For example you can print them:foreach m in matches:	print "%s" % mIn some circumstances you may need to explicitly convert the instance of Match to string,
+for example when comparing it with another string:if str(matches[0]) == 'SomeRuleName':	...The Match class have another two attributes: tags and strings. The tags attribute is a 
+list of strings containing the tags associated to the rule. The strings attribute is a
+dictionary whose values are those strings within the data that made the YARA rule match,
+and the keys are the offsets where those strings were found.
 
 	
