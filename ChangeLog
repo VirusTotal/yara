@@ -35,3 +35,5 @@ version 1.2.1 (14/04/2009)
 	* BUGFIX: Memory leak
 	* BUGFIX: Access violation on xxcompare functions
 	
+version 1.2.2 
+	

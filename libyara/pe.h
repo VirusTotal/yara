@@ -1,20 +1,15 @@
 
 #include <stdint.h>
+#include <stdlib.h>
 
 typedef uint8_t 	BYTE;
 typedef uint16_t	WORD;
 typedef uint32_t	DWORD;
 typedef	int32_t		LONG;
 typedef uint32_t	ULONG;
-typedef LONG		LONG_PTR;
-typedef ULONG		ULONG_PTR;
 
-//
-// TYPE_ALIGNMENT will return the alignment requirements of a given type for
-// the current platform.
-//
 
-#define FIELD_OFFSET(type, field)    ((LONG)(LONG_PTR)&(((type *)0)->field))
+#define FIELD_OFFSET(type, field)    ((size_t)&(((type *)0)->field))
 
 #ifndef _MAC
 
@@ -181,7 +176,7 @@ typedef struct _IMAGE_NT_HEADERS {
 // IMAGE_FIRST_SECTION doesn't need 32/64 versions since the file header is the same either way.
 
 #define IMAGE_FIRST_SECTION( ntheader ) ((PIMAGE_SECTION_HEADER)        \
-    ((ULONG_PTR)ntheader +                                              \
+    ((BYTE*)ntheader +                                              \
      FIELD_OFFSET( IMAGE_NT_HEADERS, OptionalHeader ) +                 \
      ((PIMAGE_NT_HEADERS)(ntheader))->FileHeader.SizeOfOptionalHeader   \
     ))
