@@ -79,6 +79,8 @@ TAG* lookup_tag(TAG* tag_list_head, char* identifier)
 
 int require_exe_file(TERM* term)
 {
+	//TODO: faltan tipos de expresiones en require_exe_file
+	
     switch(term->type)
     {
 	case TERM_TYPE_ENTRYPOINT:

@@ -91,7 +91,7 @@ hexdigit      [a-fA-F0-9]
 
 "/*"([^\*]|\*[^\/])*"*/"    		{ /* skip comments */ }
 
-"//".*\n							{ /* skip single-line comments */ }
+"//"[^\n]*							{ /* skip single-line comments */ }
 
 include[ \t]+\"						{
 										yyextra->lex_buf_ptr = yyextra->lex_buf; 

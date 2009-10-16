@@ -94,6 +94,9 @@ static PyObject * Match_Repr(PyObject *self);
 static PyObject * Match_getattro(PyObject *self, PyObject *name);
 static void Match_dealloc(PyObject *self);
 
+//TODO: Add rulename as a Match member
+//TODO: Change strings member to be a dictionary of offsets and objects of my own String class. This class should hold information about the matching string.
+
 static PyMemberDef Match_members[] = {
     {"tags", T_OBJECT_EX, offsetof(Match, tags), READONLY, "List of tags associated to the rule"},
     {"strings", T_OBJECT_EX, offsetof(Match, strings), READONLY, "Dictionary with offsets and strings that matched the file"},

@@ -27,13 +27,13 @@
 					<key>filename</key>
 					<string>filemap.c</string>
 					<key>lastUsed</key>
-					<date>2009-04-14T17:01:47Z</date>
+					<date>2009-07-22T16:18:23Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
 					<string>eval.c</string>
 					<key>lastUsed</key>
-					<date>2009-04-07T15:40:17Z</date>
+					<date>2009-07-22T16:17:19Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -69,7 +69,7 @@
 					<key>filename</key>
 					<string>libyara.c</string>
 					<key>lastUsed</key>
-					<date>2009-04-16T14:47:01Z</date>
+					<date>2009-07-22T16:16:38Z</date>
 				</dict>
 			</array>
 			<key>expanded</key>
@@ -114,7 +114,7 @@
 					<key>filename</key>
 					<string>ast.h</string>
 					<key>lastUsed</key>
-					<date>2009-04-14T16:22:57Z</date>
+					<date>2009-07-22T16:21:12Z</date>
 				</dict>
 				<dict>
 					<key>filename</key>
@@ -170,9 +170,9 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>16</integer>
+				<integer>56</integer>
 				<key>line</key>
-				<integer>22</integer>
+				<integer>81</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
@@ -184,14 +184,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>31</integer>
+				<integer>25</integer>
 				<key>line</key>
-				<integer>28</integer>
+				<integer>58</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>115</integer>
+			<integer>37</integer>
 		</dict>
 		<key>eval.c</key>
 		<dict>
@@ -205,7 +205,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>301</integer>
+			<integer>173</integer>
 		</dict>
 		<key>eval.h</key>
 		<dict>
@@ -233,7 +233,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>46</integer>
+			<integer>83</integer>
 		</dict>
 		<key>filemap.h</key>
 		<dict>
@@ -296,30 +296,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>0</integer>
+				<integer>62</integer>
 				<key>line</key>
-				<integer>25</integer>
+				<integer>277</integer>
 			</dict>
-			<key>columnSelection</key>
-			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>3</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>6</integer>
-				<key>line</key>
-				<integer>27</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>0</integer>
-				<key>line</key>
-				<integer>25</integer>
-			</dict>
+			<integer>10</integer>
 		</dict>
 		<key>mem.c</key>
 		<dict>
@@ -333,7 +317,7 @@
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>38</integer>
+			<integer>5</integer>
 		</dict>
 		<key>mem.h</key>
 		<dict>
