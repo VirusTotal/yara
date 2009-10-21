@@ -425,7 +425,6 @@ int parse_string(const char* string, YARA_CONTEXT* context)
 	yyset_lineno(1, yyscanner);
     yyparse(yyscanner);
 
-	yy_delete_buffer(state, yyscanner);  
 	yylex_destroy(yyscanner);
 	
 	return context->errors;
