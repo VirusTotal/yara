@@ -200,7 +200,7 @@ void print_string(unsigned char* buffer, unsigned int buffer_size, unsigned int 
 
 void print_hex_string(unsigned char* buffer, unsigned int buffer_size, unsigned int offset, unsigned int length)
 {
-	int i;
+	unsigned int i;
 	unsigned char* str;
 	
     str = (unsigned char*) (buffer + offset);

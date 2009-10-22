@@ -22,6 +22,7 @@ typedef void* yyscan_t;
 #endif
 
 #define YY_EXTRA_TYPE YARA_CONTEXT*
+#define YY_USE_CONST
 
 void yyerror(yyscan_t yyscanner, const char *error_message);
 
