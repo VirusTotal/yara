@@ -49,6 +49,8 @@ YARA_CONTEXT* yr_create_context()
     context->file_name_stack_ptr = 0;
     context->current_rule_strings = NULL;
     context->inside_for = 0;
+
+	strcpy(context->current_namespace, "default");
     
     memset(context->hash_table.hashed_strings, 0, sizeof(context->hash_table.hashed_strings));
     
@@ -118,7 +120,8 @@ void yr_destroy_context(YARA_CONTEXT* context)
 		}
         
         free_term(rule->condition);
-        yr_free(rule->identifier);     
+        yr_free(rule->identifier);   
+		yr_free(rule->namespace);  
         yr_free(rule);
         rule = next_rule;
     }

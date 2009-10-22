@@ -25,13 +25,14 @@ GNU General Public License for more details.
 
 #define todigit(x)  ((x) >='A'&& (x) <='F')? ((unsigned char) (x - 'A' + 10)) : ((unsigned char) (x - '0'))
 
-RULE* lookup_rule(RULE_LIST* rules, char* identifier)
+RULE* lookup_rule(RULE_LIST* rules, char* identifier, char* namespace)
 {
     RULE* rule = rules->head;
     
     while (rule != NULL)
     {
-        if (strcmp(rule->identifier, identifier) == 0)
+        if (strcmp(rule->identifier, identifier) == 0 &&
+			strcmp(rule->namespace, namespace) == 0)
         {
             return rule;
         }
@@ -111,19 +112,20 @@ int require_exe_file(TERM* term)
     }
 }
 
-int new_rule(RULE_LIST* rules, char* identifier, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition)
+int new_rule(RULE_LIST* rules, char* identifier, char* namespace, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition)
 {
     RULE* new_rule;
     
     int result = ERROR_SUCCESS;
     
-    if (lookup_rule(rules, identifier) == NULL)  /* do not allow rules with the same identifier */
+    if (lookup_rule(rules, identifier, namespace) == NULL)  /* do not allow rules with the same identifier */
     {
         new_rule = (RULE*) yr_malloc(sizeof(RULE));
     
         if (new_rule != NULL)
         {
             new_rule->identifier = identifier;
+			new_rule->namespace = namespace;
             new_rule->flags = flags;
 			new_rule->tag_list_head = tag_list_head;
             new_rule->string_list_head = string_list_head;

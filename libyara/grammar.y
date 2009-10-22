@@ -556,7 +556,9 @@ int reduce_rule_declaration(    yyscan_t yyscanner,
     STRING*         string;
     YARA_CONTEXT*   context = yyget_extra(yyscanner);
 
-    context->last_result = new_rule(&context->rule_list, identifier, flags, tag_list_head, string_list_head, condition);
+	char* namespace = strdup(context->current_namespace);
+
+    context->last_result = new_rule(&context->rule_list, identifier, namespace, flags, tag_list_head, string_list_head, condition);
     
     if (context->last_result != ERROR_SUCCESS)
     {
@@ -899,7 +901,7 @@ TERM* reduce_rule(  yyscan_t yyscanner,
     RULE* rule;
     YARA_CONTEXT*   current_context = yyget_extra(yyscanner);
   
-    rule = lookup_rule(&current_context->rule_list, identifier);
+    rule = lookup_rule(&current_context->rule_list, identifier, context->current_namespace);
     
     if (rule != NULL)
     {

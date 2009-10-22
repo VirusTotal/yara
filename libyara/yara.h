@@ -148,6 +148,7 @@ typedef struct _TERM
 typedef struct _RULE
 {
     char*           identifier;
+	char*			namespace;
     int             flags;
     STRING*         string_list_head;
 	TAG*			tag_list_head;
@@ -198,6 +199,8 @@ typedef struct _YARA_CONTEXT
     HASH_TABLE      hash_table;
     STRING*         current_rule_strings;  
     int             inside_for;
+
+	char			current_namespace[256];
     
     char*           file_name_stack[MAX_INCLUDE_DEPTH];
     int             file_name_stack_ptr;
@@ -213,7 +216,7 @@ typedef struct _YARA_CONTEXT
 } YARA_CONTEXT;
 
 
-RULE*       lookup_rule(RULE_LIST* rules, char* identifier);
+RULE*       lookup_rule(RULE_LIST* rules, char* identifier, char* namespace);
 STRING*     lookup_string(STRING* string_list_head, char* identifier);
 TAG*        lookup_tag(TAG* tag_list_head, char* identifier);
 

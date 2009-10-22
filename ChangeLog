@@ -36,4 +36,7 @@ version 1.2.1 (14/04/2009)
 	* BUGFIX: Access violation on xxcompare functions
 	
 version 1.2.2 
+    * added support for #include 
+    * BUGFIX: Incorrect handling of single-line comments at the end of the file
+	* BUGFIX: Integer underflow when scanning files of size <= 2 bytes
 	

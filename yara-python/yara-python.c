@@ -84,7 +84,8 @@ where the associated string was found.                                        \n
 typedef struct {
     
     PyObject_HEAD
-    char* rule;
+	PyObject* rule;
+	PyObject* namespace;
     PyObject* tags;
     PyObject* strings;
 
@@ -94,10 +95,12 @@ static PyObject * Match_Repr(PyObject *self);
 static PyObject * Match_getattro(PyObject *self, PyObject *name);
 static void Match_dealloc(PyObject *self);
 
-//TODO: Add rulename as a Match member
+
 //TODO: Change strings member to be a dictionary of offsets and objects of my own String class. This class should hold information about the matching string.
 
 static PyMemberDef Match_members[] = {
+	{"rule", T_OBJECT_EX, offsetof(Match, rule), READONLY, "Name of the matching rule"},
+	{"namespace", T_OBJECT_EX, offsetof(Match, namespace), READONLY, "Namespace of the matching rule"},
     {"tags", T_OBJECT_EX, offsetof(Match, tags), READONLY, "List of tags associated to the rule"},
     {"strings", T_OBJECT_EX, offsetof(Match, strings), READONLY, "Dictionary with offsets and strings that matched the file"},
     {NULL}  /* Sentinel */
@@ -151,7 +154,7 @@ static PyTypeObject Match_Type = {
 };
 
 
-static PyObject * Match_NEW(char* rule, PyObject* tags, PyObject* strings)
+static PyObject * Match_NEW(const char* rule, const char* namespace, PyObject* tags, PyObject* strings)
 { 
     Match* object;
     
@@ -159,7 +162,8 @@ static PyObject * Match_NEW(char* rule, PyObject* tags, PyObject* strings)
     
     if (object != NULL)
     {
-        object->rule = rule;   
+		object->rule = PyString_FromString(rule);
+		object->namespace = PyString_FromString(namespace);
         object->tags = tags;
         object->strings = strings;
     } 
@@ -171,8 +175,11 @@ static void Match_dealloc(PyObject *self)
 {    
     Match *object = (Match *) self;
      
+	Py_DECREF(object->rule); 
+	Py_DECREF(object->namespace);
     Py_DECREF(object->tags); 
     Py_DECREF(object->strings);
+
     PyObject_Del(self);
 }
 
@@ -180,7 +187,7 @@ static PyObject * Match_Repr(PyObject *self)
 { 
     Match *object = (Match *) self;
     
-    return PyString_FromString(object->rule);
+    return object->rule;
 }
 
 static PyObject * Match_getattro(PyObject *self, PyObject *name)
@@ -220,7 +227,7 @@ static PyTypeObject Rules_Type = {
     0,                          /*tp_setattr*/
     0,                          /*tp_compare*/
     0,                          /*tp_repr*/
-    0,                          /*tp_as_number*/
+    0,          				/*tp_as_number*/
     0,                          /*tp_as_sequence*/
     0,                          /*tp_as_mapping*/
     0,                          /*tp_hash */
@@ -253,85 +260,129 @@ static PyTypeObject Rules_Type = {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static PyObject * Rules_new_from_file(FILE* file)
+static PyObject * Rules_new_from_file(FILE* file, const char* namespace, PyObject* rules)
 { 
     YARA_CONTEXT* context;
-    Rules* object;
+    Rules* result;
     
     int  errors;
     int  error_line;
     char error_message[256];
 
-    context = yr_create_context();
-    
-    if (context == NULL)
-    {
-        return PyErr_NoMemory();
-    }
-    
     if (file == NULL)
     {
-        yr_destroy_context(context);
         return PyErr_SetFromErrno(PyExc_IOError);
     }
-        
+
+    if (rules == NULL)
+    {
+        context = yr_create_context();
+   
+   		if (context == NULL)
+       		return PyErr_NoMemory();
+    }
+	else
+	{
+		context = ((Rules*)rules)->context;
+	}
+	
+	if (namespace != NULL)
+	{
+		strncpy(context->current_namespace, namespace, sizeof(context->current_namespace) - 1);
+		/* null-terminate the string even if strncpy didn't*/
+		context->current_namespace[sizeof(context->current_namespace)] = '\0';
+	}
+         
     errors = yr_compile_file(file, context);
        
     if (errors)   /* errors during compilation */
     {
         error_line = context->last_error_line;
         yr_get_error_message(context, error_message, sizeof(error_message));
-        yr_destroy_context(context); 
+
+		if (rules == NULL)
+        	yr_destroy_context(context); 
         
         return PyErr_Format(YaraSyntaxError, "line %d: %s", error_line, error_message);
     }
-    
-    object = PyObject_NEW(Rules, &Rules_Type);
-    
-    if (object != NULL)
-    {   
-        object->context = context;
-    } 
-      
-    return (PyObject *)object;
+
+	if (rules == NULL)
+	{
+		result = PyObject_NEW(Rules, &Rules_Type);
+
+		if (result != NULL)
+	        result->context = context;
+	}
+	else
+	{
+		result = (Rules*) rules;
+	}
+          
+    return (PyObject *) result;
 }
 
 
-static PyObject * Rules_new_from_string(const char* string)
+static PyObject * Rules_new_from_string(const char* string, const char* namespace, PyObject* rules)
 { 
-    YARA_CONTEXT* context;
-    Rules* object;
-    
+	YARA_CONTEXT* context;
+	Rules* result;
+
     int  errors;
     int  error_line;
     char error_message[256];
     
-    context = yr_create_context();
-    
-    if (context == NULL)
+    if (rules == NULL)
     {
-        return PyErr_NoMemory();
+        context = yr_create_context();
+   
+   		if (context == NULL)
+       		return PyErr_NoMemory();
     }
-    
+	else
+	{
+		context = ((Rules*)rules)->context;
+	}
+	
+	if (namespace != NULL)
+	{
+		strncpy(context->current_namespace, namespace, sizeof(context->current_namespace) - 1);
+		/* null-terminate the string even if strncpy didn't*/
+		context->current_namespace[sizeof(context->current_namespace)] = '\0';
+	}
+	
     errors = yr_compile_string(string, context);
        
     if (errors)   /* errors during compilation */
     {
         error_line = context->last_error_line;
         yr_get_error_message(context, error_message, sizeof(error_message));
-        yr_destroy_context(context); 
         
-        return PyErr_Format(YaraSyntaxError, "line %d: %s", error_line, error_message);
+		if (rules == NULL)
+			yr_destroy_context(context); 
+        
+		if (namespace != NULL)
+		{
+			return PyErr_Format(YaraSyntaxError, "%s: line %d: %s", namespace, error_line, error_message);
+		}
+		else
+		{
+        	return PyErr_Format(YaraSyntaxError, "line %d: %s", error_line, error_message);
+		}	
     }
-    
-    object = PyObject_NEW(Rules, &Rules_Type);
-    
-    if (object != NULL)
-    {
-        object->context = context;
-    } 
-      
-    return (PyObject *)object;
+
+	if (rules == NULL)
+	{
+		result = PyObject_NEW(Rules, &Rules_Type);
+
+		if (result != NULL)
+	        result->context = context;
+	}
+	else
+	{
+		result = (Rules*) rules;
+	}
+          
+    return (PyObject*) result;
 }
 
 static void Rules_dealloc(PyObject *self)
@@ -387,7 +438,7 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
         string = string->next;
     }
        
-    match = Match_NEW(rule->identifier, taglist, stringlist);
+    match = Match_NEW(rule->identifier, rule->namespace, taglist, stringlist);
     
     if (match != NULL)
     {       
@@ -470,17 +521,25 @@ static PyObject * Rules_getattro(PyObject *self, PyObject *name)
 
 static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keywords)
 { 
-    static char *kwlist[] = {"filepath", "source", "file", NULL};
+    static char *kwlist[] = {"filepath", "source", "file", "filepaths", "sources", NULL};
     
     FILE* fh;
     
     PyObject *result = NULL;
-    PyObject *py_file = NULL;
+	PyObject *file = NULL;
+	
+	PyObject *sources_dict = NULL;
+	PyObject *filepaths_dict = NULL;
+	
+	PyObject *key, *value;
+	
+	Py_ssize_t pos = 0;
 
     char* filepath = NULL;
     char* source = NULL;
+	char* namespace = NULL;
     
-    if (PyArg_ParseTupleAndKeywords(args, keywords, "|ssO", kwlist, &filepath, &source, &py_file))
+    if (PyArg_ParseTupleAndKeywords(args, keywords, "|ssOOO", kwlist, &filepath, &source, &file, &filepaths_dict, &sources_dict))
     {
         if (filepath != NULL)
         {            
@@ -488,7 +547,7 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
             
             if (fh != NULL)
             {
-                result = Rules_new_from_file(fh);
+                result = Rules_new_from_file(fh, NULL, NULL);
                 fclose(fh);
             }
             else
@@ -498,19 +557,78 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
         }
         else if (source != NULL)
         {
-            result = Rules_new_from_string(source);
+            result = Rules_new_from_string(source, NULL, NULL);
         }
-        else if (py_file != NULL)
+        else if (file != NULL)
         {
-            fh = PyFile_AsFile(py_file);   
-            result = Rules_new_from_file(fh);
+            fh = PyFile_AsFile(file);   
+            result = Rules_new_from_file(fh, NULL, NULL);
+        }
+        else if (sources_dict != NULL)
+        {
+            if (PyDict_Check(sources_dict))
+			{
+				while (PyDict_Next(sources_dict, &pos, &key, &value)) 
+				{
+					source = PyString_AsString(value);
+					namespace = PyString_AsString(key);
+					
+					if (source != NULL && namespace != NULL)
+					{
+						result = Rules_new_from_string(source, namespace, result);
+					}
+					else
+					{
+						result = PyErr_Format(PyExc_TypeError, "keys and values of the sources dictionary must be of string type");
+						break;
+					}
+				}
+			}
+			else
+			{
+				result = PyErr_Format(PyExc_TypeError, "sources must be a dictionary");
+			}
+        }
+        else if (filepaths_dict != NULL)
+        {
+            if (PyDict_Check(filepaths_dict))
+			{
+				while (PyDict_Next(filepaths_dict, &pos, &key, &value)) 
+				{
+					filepath = PyString_AsString(value);
+					namespace = PyString_AsString(key);
+					
+					if (filepath != NULL && namespace != NULL)
+					{
+						fh = fopen(filepath, "r");
+            
+            			if (fh != NULL)
+            			{
+                			result = Rules_new_from_file(fh, namespace, result);
+                			fclose(fh);
+            			}
+            			else
+            			{
+                			result = PyErr_SetFromErrno(YaraError);
+            			}
+					}
+					else
+					{
+						result = PyErr_Format(PyExc_TypeError, "keys and values of the filepaths dictionary must be of string type");
+						break;
+					}
+				}
+			}
+			else
+			{
+				result = PyErr_Format(PyExc_TypeError, "filepaths must be a dictionary");
+			}
         }
         else
         {
             result = PyErr_Format(PyExc_TypeError, "compile() takes 1 argument");
         }
     } 
-
       
     return result;
 }
