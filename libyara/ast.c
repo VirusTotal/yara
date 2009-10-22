@@ -25,14 +25,14 @@ GNU General Public License for more details.
 
 #define todigit(x)  ((x) >='A'&& (x) <='F')? ((unsigned char) (x - 'A' + 10)) : ((unsigned char) (x - '0'))
 
-RULE* lookup_rule(RULE_LIST* rules, char* identifier, char* namespace)
+RULE* lookup_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace)
 {
     RULE* rule = rules->head;
     
     while (rule != NULL)
     {
         if (strcmp(rule->identifier, identifier) == 0 &&
-			strcmp(rule->namespace, namespace) == 0)
+			strcmp(rule->namespace->name, namespace->name) == 0)
         {
             return rule;
         }
@@ -112,7 +112,7 @@ int require_exe_file(TERM* term)
     }
 }
 
-int new_rule(RULE_LIST* rules, char* identifier, char* namespace, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition)
+int new_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition)
 {
     RULE* new_rule;
     

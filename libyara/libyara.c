@@ -49,8 +49,8 @@ YARA_CONTEXT* yr_create_context()
     context->file_name_stack_ptr = 0;
     context->current_rule_strings = NULL;
     context->inside_for = 0;
-
-	strcpy(context->current_namespace, "default");
+	context->namespaces = NULL;
+	context->current_namespace = yr_create_namespace(context, "default");
     
     memset(context->hash_table.hashed_strings, 0, sizeof(context->hash_table.hashed_strings));
     
@@ -68,6 +68,8 @@ void yr_destroy_context(YARA_CONTEXT* context)
     MATCH* next_match;
 	TAG* tag;
 	TAG* next_tag;
+	NAMESPACE* ns;
+	NAMESPACE* next_ns;
     
     rule = context->rule_list.head;
     
@@ -120,14 +122,41 @@ void yr_destroy_context(YARA_CONTEXT* context)
 		}
         
         free_term(rule->condition);
-        yr_free(rule->identifier);   
-		yr_free(rule->namespace);  
+        yr_free(rule->identifier);    
         yr_free(rule);
         rule = next_rule;
     }
+	
+	ns = context->namespaces;
+
+	while(ns != NULL)
+	{
+		next_ns = ns->next;
+		
+		yr_free(ns->name);
+		yr_free(ns);
+		
+		ns = next_ns;
+	}
     
     clear_hash_table(&context->hash_table);
 	yr_free(context);
+}
+
+
+NAMESPACE* yr_create_namespace(YARA_CONTEXT* context, const char* namespace)
+{
+	NAMESPACE* ns = yr_malloc(sizeof(NAMESPACE));
+	
+	if (ns != NULL)
+	{
+		ns->name = strdup(namespace);
+		ns->global_rules_satisfied = FALSE;
+		ns->next = context->namespaces;
+		context->namespaces = ns;
+	}
+	
+	return ns;
 }
 
 char* yr_get_current_file_name(YARA_CONTEXT* context)
@@ -177,6 +206,7 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* c
 	int file_is_pe;
 	
 	RULE* rule;
+	NAMESPACE* ns;
 	EVALUATION_CONTEXT eval_context;
 	
 	if (buffer_size < 2)
@@ -233,9 +263,17 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* c
 	
 	rule = context->rule_list.head;
 	
-	/* evaluate global rules */
+	/* initialize global rules flag for all namespaces */
 	
-    global_rules_satisfied = TRUE;
+	ns = context->namespaces;
+	
+	while(ns != NULL)
+	{
+		ns->global_rules_satisfied = TRUE;
+		ns = ns->next;
+	}
+	
+	/* evaluate global rules */
 	
 	while (rule != NULL)
 	{	
@@ -249,7 +287,7 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* c
     		}
     		else
     		{
-                global_rules_satisfied = FALSE;
+                rule->namespace->global_rules_satisfied = FALSE;
     		}
     		
     		if (!(rule->flags & RULE_FLAGS_PRIVATE))
@@ -264,18 +302,18 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* c
 		rule = rule->next;
 	}
 	
-	if (!global_rules_satisfied)
-	{
-        return ERROR_SUCCESS;
-	}
+	/* evaluate the rest of the rules rules */
 
 	rule = context->rule_list.head;
 	
 	while (rule != NULL)
 	{
-		/* skip global rules and privates rules */
+		/* 
+		   skip global rules, privates rules, and rules that don't need to be
+		   evaluated due to some global rule unsatisfied in it's namespace
+		*/
 		
-		if (rule->flags & RULE_FLAGS_GLOBAL || rule->flags & RULE_FLAGS_PRIVATE)  
+		if (rule->flags & RULE_FLAGS_GLOBAL || rule->flags & RULE_FLAGS_PRIVATE || !rule->namespace->global_rules_satisfied)  
 		{
 			rule = rule->next;
 			continue;

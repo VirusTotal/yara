@@ -288,9 +288,7 @@ static PyObject * Rules_new_from_file(FILE* file, const char* namespace, PyObjec
 	
 	if (namespace != NULL)
 	{
-		strncpy(context->current_namespace, namespace, sizeof(context->current_namespace) - 1);
-		/* null-terminate the string even if strncpy didn't*/
-		context->current_namespace[sizeof(context->current_namespace)] = '\0';
+		context->current_namespace = yr_create_namespace(context, namespace);
 	}
          
     errors = yr_compile_file(file, context);
@@ -345,9 +343,7 @@ static PyObject * Rules_new_from_string(const char* string, const char* namespac
 	
 	if (namespace != NULL)
 	{
-		strncpy(context->current_namespace, namespace, sizeof(context->current_namespace) - 1);
-		/* null-terminate the string even if strncpy didn't*/
-		context->current_namespace[sizeof(context->current_namespace)] = '\0';
+		context->current_namespace = yr_create_namespace(context, namespace);
 	}
 	
     errors = yr_compile_string(string, context);
@@ -438,7 +434,7 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
         string = string->next;
     }
        
-    match = Match_NEW(rule->identifier, rule->namespace, taglist, stringlist);
+    match = Match_NEW(rule->identifier, rule->namespace->name, taglist, stringlist);
     
     if (match != NULL)
     {       

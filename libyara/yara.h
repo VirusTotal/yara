@@ -145,11 +145,20 @@ typedef struct _TERM
 } TERM;
 
 
+typedef struct _NAMESPACE
+{
+    char*				name;
+	int					global_rules_satisfied;
+    struct _NAMESPACE*  next;           
+
+} NAMESPACE;
+
+
 typedef struct _RULE
 {
     char*           identifier;
-	char*			namespace;
     int             flags;
+	NAMESPACE*		namespace;
     STRING*         string_list_head;
 	TAG*			tag_list_head;
     TERM*           condition;
@@ -197,10 +206,12 @@ typedef struct _YARA_CONTEXT
     
     RULE_LIST       rule_list;
     HASH_TABLE      hash_table;
-    STRING*         current_rule_strings;  
-    int             inside_for;
+    
+	NAMESPACE*		namespaces;
+	NAMESPACE*		current_namespace;
 
-	char			current_namespace[256];
+	STRING*         current_rule_strings;  
+    int             inside_for;
     
     char*           file_name_stack[MAX_INCLUDE_DEPTH];
     int             file_name_stack_ptr;
@@ -216,13 +227,17 @@ typedef struct _YARA_CONTEXT
 } YARA_CONTEXT;
 
 
-RULE*       lookup_rule(RULE_LIST* rules, char* identifier, char* namespace);
+RULE*       lookup_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace);
 STRING*     lookup_string(STRING* string_list_head, char* identifier);
 TAG*        lookup_tag(TAG* tag_list_head, char* identifier);
 
 void                yr_init();
+
 YARA_CONTEXT*       yr_create_context();
 void                yr_destroy_context(YARA_CONTEXT* context);
+
+NAMESPACE*			yr_create_namespace(YARA_CONTEXT* context, const char* namespace);
+
 char*               yr_get_current_file_name(YARA_CONTEXT* context);
 
 void 		yr_push_file_name(YARA_CONTEXT* context, const char* file_name);

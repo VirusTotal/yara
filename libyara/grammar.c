@@ -2507,9 +2507,7 @@ int reduce_rule_declaration(    yyscan_t yyscanner,
     STRING*         string;
     YARA_CONTEXT*   context = yyget_extra(yyscanner);
 
-	char* namespace = strdup(context->current_namespace);
-
-    context->last_result = new_rule(&context->rule_list, identifier, namespace, flags, tag_list_head, string_list_head, condition);
+    context->last_result = new_rule(&context->rule_list, identifier, context->current_namespace, flags, tag_list_head, string_list_head, condition);
     
     if (context->last_result != ERROR_SUCCESS)
     {

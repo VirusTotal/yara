@@ -131,7 +131,7 @@ typedef struct _TERM_STRING
 
 
 
-int new_rule(RULE_LIST* rules, char* identifier, char* namespace, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition);
+int new_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition);
 
 int new_string(YARA_CONTEXT* context, char* identifier, SIZED_STRING* charstr, int flags, STRING** string);
 
