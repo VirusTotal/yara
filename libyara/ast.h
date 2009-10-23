@@ -54,26 +54,25 @@ GNU General Public License for more details.
 #define TERM_TYPE_GE                                 10          
 #define TERM_TYPE_LE                                 11          
 #define TERM_TYPE_EQ                                 12  
-#define TERM_TYPE_NOT_EQ                             13       
-#define TERM_TYPE_RANGE                              14          
-#define TERM_TYPE_STRING                             15       
-#define TERM_TYPE_STRING_AT                          16          
-#define TERM_TYPE_STRING_IN_RANGE                    17 
-#define TERM_TYPE_STRING_IN_SECTION_BY_NAME		 	 18     
-#define TERM_TYPE_STRING_IN_SECTION_BY_INDEX		 19      
-#define TERM_TYPE_STRING_COUNT                       20     
-#define TERM_TYPE_STRING_OFFSET                      21      
-#define TERM_TYPE_OF                                 22 
-#define TERM_TYPE_FOR                                23         
-#define TERM_TYPE_FILESIZE              	         24          
-#define TERM_TYPE_ENTRYPOINT						 25			
-#define TERM_TYPE_RULE                               26
-#define TERM_TYPE_INT8_AT_OFFSET                     27
-#define TERM_TYPE_INT16_AT_OFFSET                    28
-#define TERM_TYPE_INT32_AT_OFFSET                    29
-#define TERM_TYPE_UINT8_AT_OFFSET                    30
-#define TERM_TYPE_UINT16_AT_OFFSET                   31
-#define TERM_TYPE_UINT32_AT_OFFSET                   32
+#define TERM_TYPE_NOT_EQ                             13              
+#define TERM_TYPE_STRING                             14       
+#define TERM_TYPE_STRING_AT                          15          
+#define TERM_TYPE_STRING_IN_RANGE                    16 
+#define TERM_TYPE_STRING_IN_SECTION_BY_NAME		 	 17     
+#define TERM_TYPE_STRING_IN_SECTION_BY_INDEX		 18      
+#define TERM_TYPE_STRING_COUNT                       19     
+#define TERM_TYPE_STRING_OFFSET                      20      
+#define TERM_TYPE_OF                                 21 
+#define TERM_TYPE_FOR                                22         
+#define TERM_TYPE_FILESIZE              	         23          
+#define TERM_TYPE_ENTRYPOINT						 24			
+#define TERM_TYPE_RULE                               25
+#define TERM_TYPE_INT8_AT_OFFSET                     26
+#define TERM_TYPE_INT16_AT_OFFSET                    27
+#define TERM_TYPE_INT32_AT_OFFSET                    28
+#define TERM_TYPE_UINT8_AT_OFFSET                    29
+#define TERM_TYPE_UINT16_AT_OFFSET                   30
+#define TERM_TYPE_UINT32_AT_OFFSET                   31
                   
 
 

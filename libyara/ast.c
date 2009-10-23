@@ -79,9 +79,7 @@ TAG* lookup_tag(TAG* tag_list_head, char* identifier)
 
 
 int require_exe_file(TERM* term)
-{
-	//TODO: faltan tipos de expresiones en require_exe_file
-	
+{	
     switch(term->type)
     {
 	case TERM_TYPE_ENTRYPOINT:
@@ -102,10 +100,15 @@ int require_exe_file(TERM* term)
     case TERM_TYPE_GE:       
     case TERM_TYPE_LE:
     case TERM_TYPE_EQ:
-        return require_exe_file(((TERM_BINARY_OPERATION*)term)->op1) || require_exe_file(((TERM_BINARY_OPERATION*)term)->op2);    
+    case TERM_TYPE_NOT_EQ:
+    case TERM_TYPE_OF:
+        return require_exe_file(((TERM_BINARY_OPERATION*)term)->op1) || require_exe_file(((TERM_BINARY_OPERATION*)term)->op2);
                       
     case TERM_TYPE_NOT:    
-        return require_exe_file(((TERM_BINARY_OPERATION*)term)->op1);
+        return require_exe_file(((TERM_UNARY_OPERATION*)term)->op);
+        
+    case TERM_TYPE_FOR:
+        return require_exe_file(((TERM_TERNARY_OPERATION*)term)->op1) || require_exe_file(((TERM_TERNARY_OPERATION*)term)->op3);
 
 	default:
 		return FALSE;
@@ -760,9 +763,7 @@ void free_term(TERM* term)
     case TERM_TYPE_FOR:
         free_term(((TERM_TERNARY_OPERATION*)term)->op1);
         free_term(((TERM_TERNARY_OPERATION*)term)->op2);
-        
-        if (((TERM_TERNARY_OPERATION*)term)->op3 != NULL)
-           free_term(((TERM_TERNARY_OPERATION*)term)->op3); 
+        free_term(((TERM_TERNARY_OPERATION*)term)->op3); 
            
         break;
     }
