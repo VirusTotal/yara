@@ -37,6 +37,7 @@ int show_tags = FALSE;
 int show_specified_tags = FALSE;
 int show_specified_rules = FALSE;
 int show_strings = FALSE;
+int show_meta = FALSE;
 int negate = FALSE;
 
 TAG* specified_tags_list = NULL;
@@ -61,6 +62,7 @@ void show_help()
     printf("  -i <identifier>   print rules named <identifier> and ignore the rest. Can be used more than once.\n");
 	printf("  -n                print only not satisfied rules (negate).\n");
 	printf("  -g                print tags.\n");
+	printf("  -m                print metadata.\n");
 	printf("  -s                print matching strings.\n");
     printf("  -r                recursively search directories.\n");
 	printf("  -v                show version information.\n");
@@ -218,6 +220,7 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
 	TAG* tag;
     IDENTIFIER* identifier;
 	STRING* string;
+    META* meta;
 	MATCH* match;
 	
     int rule_match;
@@ -264,40 +267,62 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
 	
 	if (show)
 	{
+	    printf("%s ", rule->identifier);
+	    
 		if (show_tags)
-		{
-			printf("%s", rule->identifier);
-			
+		{			
 			tag = rule->tag_list_head;
 			
-			if (tag != NULL)
-			{ 
-				printf(" [");
-			
-				while(tag != NULL)
+			printf("[");
+						
+			while(tag != NULL)
+			{
+				if (tag->next == NULL)
 				{
-					if (tag->next == NULL)
-					{
-						printf("%s", tag->identifier);
-					}
-					else
-					{
-						printf("%s,", tag->identifier);
-					}
-									
-					tag = tag->next;
+					printf("%s", tag->identifier);
 				}
-				
-				printf("]");
-			}
+				else
+				{
+					printf("%s,", tag->identifier);
+				}
+								
+				tag = tag->next;
+			}	
 			
-			printf("   %s\n", (char*) data);	
-			
+			printf("] ");
 		}
-		else
+		
+		if (show_meta)
 		{
-			printf("%s   %s\n", rule->identifier, (char*) data);
-		}
+            meta = rule->meta_list_head;
+            
+            printf("[");
+           
+    		while(meta != NULL)
+    		{
+    		    if (meta->type == META_TYPE_INTEGER)
+    		    {
+    		        printf("%s=%d", meta->identifier, meta->integer);
+    		    }
+    		    else if (meta->type == META_TYPE_BOOLEAN)
+    		    {
+    		        printf("%s=%s", meta->identifier, (meta->boolean)?("true"):("false"));
+    		    }
+    		    else
+    		    {
+    		        printf("%s=\"%s\"", meta->identifier, meta->string);
+    		    }
+		    
+    		    if (meta->next != NULL)
+                    printf(",");
+                						
+    			meta = meta->next;
+    		}
+		
+    		printf("] ");
+    	}
+		
+		printf("%s\n", (char*) data);
 		
 		/* show matched strings */
 		
@@ -349,7 +374,7 @@ int process_cmd_line(int argc, char const* argv[])
     IDENTIFIER* identifier;
 	opterr = 0;
  
-	while ((c = getopt (argc, (char**) argv, "rnsvgt:i:")) != -1)
+	while ((c = getopt (argc, (char**) argv, "rnsvgmt:i:")) != -1)
 	{
 		switch (c)
 	    {
@@ -363,6 +388,10 @@ int process_cmd_line(int argc, char const* argv[])
 				
 			case 'g':
 				show_tags = TRUE;
+				break;
+				
+			case 'm':
+				show_meta = TRUE;
 				break;
 				
 			case 's':

@@ -22,6 +22,7 @@
 %token _RULE_
 %token _PRIVATE_
 %token _GLOBAL_
+%token _META_
 %token <string> _STRINGS_
 %token _CONDITION_
 %token _END_
@@ -77,6 +78,11 @@
 
 %type <string> strings
 %type <string> string_declaration
+%type <string> string_declarations
+
+%type <meta> meta
+%type <meta> meta_declaration
+%type <meta> meta_declarations
 
 %type <integer> string_modifier
 %type <integer> string_modifiers
@@ -93,6 +99,7 @@
 %type <term> string_set
 %type <term> string_enumeration
 %type <term> string_enumeration_item
+%type <term> condition
 
 %union {
     
@@ -102,6 +109,7 @@
     void*           string;
     void*           term;
     void*           tag;
+    void*           meta;
 
 }
 
@@ -116,12 +124,23 @@ int reduce_rule_declaration(    yyscan_t yyscanner,
                                 char* identifier, 
                                 int flags, 
                                 TAG* tag_list_head, 
+                                META* meta_list_head,
                                 STRING* string_list_head, 
                                 TERM* condition);
                             
 TAG* reduce_tags(   yyscan_t yyscanner,
                     TAG* tag_list_head,
                     char* identifier);
+                    
+                    
+META* reduce_meta_declaration(  yyscan_t yyscanner,
+                                int type,
+                                char* identifier,
+                                unsigned int value);
+                    
+META* reduce_metas( yyscan_t yyscanner, 
+                    META* meta_list_head,
+                    META* meta);
 
 STRING* reduce_string_declaration(  yyscan_t yyscanner,
                                     char* identifier, 
@@ -189,23 +208,26 @@ rules :  /* empty */
       | rules error 'include' /* .. or include statement */
       ;
 
-rule    :   rule_modifiers _RULE_ _IDENTIFIER_ tags '{' _CONDITION_ ':' boolean_expression '}'                          
+rule    :   rule_modifiers _RULE_ _IDENTIFIER_ tags '{' meta strings condition '}'    
             { 
-                if (reduce_rule_declaration(yyscanner, $3,$1,$4,0,$8) != ERROR_SUCCESS)
-                {
-                    yyerror(yyscanner, NULL);
-                    YYERROR;
-                }
-            }
-        |   rule_modifiers _RULE_ _IDENTIFIER_ tags '{' _STRINGS_ ':' strings _CONDITION_ ':' boolean_expression '}'    
-            { 
-                if (reduce_rule_declaration(yyscanner, $3,$1,$4,$8,$11) != ERROR_SUCCESS)
+                if (reduce_rule_declaration(yyscanner, $3,$1,$4,$6,$7,$8) != ERROR_SUCCESS)
                 {
                     yyerror(yyscanner, NULL);
                     YYERROR; 
                 }  
             }
         ;
+        
+meta      : /* empty */                               { $$ = NULL; }
+          | _META_ ':' meta_declarations              { $$ = $3; }
+          ;
+                           
+strings   : /* empty */                               { $$ = NULL; }
+          | _STRINGS_ ':' string_declarations         { $$ = $3; }
+          ;
+        
+condition : _CONDITION_ ':' boolean_expression        { $$ = $3; }
+          ;
         
 rule_modifiers : /* empty */                          { $$ = 0;  }
                | rule_modifiers rule_modifier         { $$ = $1 | $2; }
@@ -238,26 +260,85 @@ tag_list : _IDENTIFIER_                     {
                                                 }
                                             }
 
+meta_declarations : meta_declaration                        { 
+                                                                $$ = reduce_metas(yyscanner, NULL, $1); 
+                                                                
+                                                                if ($$ == NULL)
+                                                                {
+                                                                    yyerror(yyscanner, NULL);
+                                                                    YYERROR;
+                                                                }
+                                                            }
+                  | meta_declarations meta_declaration      { 
+                                                                $$ = reduce_metas(yyscanner, $1, $2); 
+                                                                
+                                                                if ($$ == NULL)
+                                                                {
+                                                                    yyerror(yyscanner, NULL);
+                                                                    YYERROR;
+                                                                }
+                                                            }
+                  ;
+                  
+meta_declaration :  _IDENTIFIER_ '=' _TEXTSTRING_            { 
+                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_STRING, $1, (unsigned int) $3);
+                                                                
+                                                                if ($$ == NULL)
+                                                                {
+                                                                    yyerror(yyscanner, NULL);
+                                                                    YYERROR;
+                                                                }
+                                                             }
+                 |  _IDENTIFIER_ '=' _NUMBER_                { 
+                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_INTEGER, $1, $3); 
+                                                                
+                                                                if ($$ == NULL)
+                                                                {
+                                                                    yyerror(yyscanner, NULL);
+                                                                    YYERROR;
+                                                                }
+                                                             }
+                 |  _IDENTIFIER_ '=' _TRUE_                 { 
+                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, $1, TRUE); 
+
+                                                                if ($$ == NULL)
+                                                                {
+                                                                    yyerror(yyscanner, NULL);
+                                                                    YYERROR;
+                                                                }
+                                                             }
+                 |  _IDENTIFIER_ '=' _FALSE_                 { 
+                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, $1, FALSE); 
+
+                                                                if ($$ == NULL)
+                                                                {
+                                                                    yyerror(yyscanner, NULL);
+                                                                    YYERROR;
+                                                                }
+                                                             }
+                 ; 
         
-strings :   string_declaration              { 
-                                                $$ = reduce_strings(yyscanner,NULL,$1); 
-                                                
-                                                if ($$ == NULL)
-                                                {
-                                                    yyerror(yyscanner, NULL);
-                                                    YYERROR;
-                                                }
-                                            }
-        |   strings string_declaration      { 
-                                                $$ = reduce_strings(yyscanner,$1,$2);
-                                                
-                                                if ($$ == NULL)
-                                                {
-                                                    yyerror(yyscanner, NULL);
-                                                    YYERROR;
-                                                }  
-                                            }
-        ;
+string_declarations :   string_declaration  
+                        { 
+                            $$ = reduce_strings(yyscanner,NULL,$1); 
+                            
+                            if ($$ == NULL)
+                            {
+                                yyerror(yyscanner, NULL);
+                                YYERROR;
+                            }
+                        }
+                    |   string_declarations string_declaration      
+                        { 
+                            $$ = reduce_strings(yyscanner,$1,$2);
+                        
+                            if ($$ == NULL)
+                            {
+                                yyerror(yyscanner, NULL);
+                                YYERROR;
+                            }  
+                        }
+                    ;
         
 string_declaration  :   _STRING_IDENTIFIER_ '=' _TEXTSTRING_ string_modifiers   
                         { 
@@ -548,7 +629,8 @@ int count_strings(TERM_STRING* st)
 int reduce_rule_declaration(    yyscan_t yyscanner,
                                 char* identifier, 
                                 int flags, 
-                                TAG* tag_list_head, 
+                                TAG* tag_list_head,
+                                META* meta_list_head,
                                 STRING* string_list_head, 
                                 TERM* condition
                             )
@@ -556,7 +638,14 @@ int reduce_rule_declaration(    yyscan_t yyscanner,
     STRING*         string;
     YARA_CONTEXT*   context = yyget_extra(yyscanner);
 
-    context->last_result = new_rule(&context->rule_list, identifier, context->current_namespace, flags, tag_list_head, string_list_head, condition);
+    context->last_result = new_rule(&context->rule_list, 
+                                    identifier, 
+                                    context->current_namespace, 
+                                    flags, 
+                                    tag_list_head, 
+                                    meta_list_head, 
+                                    string_list_head, 
+                                    condition);
     
     if (context->last_result != ERROR_SUCCESS)
     {
@@ -632,6 +721,65 @@ STRING* reduce_strings( yyscan_t yyscanner,
     {
         strncpy(context->last_error_extra_info, string->identifier, sizeof(context->last_error_extra_info));
         context->last_result = ERROR_DUPLICATE_STRING_IDENTIFIER;
+        return NULL;
+    }   
+}
+
+META* reduce_meta_declaration(  yyscan_t yyscanner, 
+                                int type,
+                                char* identifier,
+                                unsigned int value)
+{
+    META*           meta = NULL;
+    YARA_CONTEXT*   context = yyget_extra(yyscanner);
+    
+    meta = yr_malloc(sizeof(META));
+    
+    if (meta != NULL)
+    {
+        meta->identifier = identifier;
+        meta->type = type;
+        
+        if (type == META_TYPE_INTEGER)
+        {
+            meta->integer = value;
+        }
+        else if (type == META_TYPE_BOOLEAN)
+        {
+            meta->boolean = value;
+        }
+        else
+        {
+            meta->string = yr_strdup(((SIZED_STRING*) value)->c_string);
+            yr_free((SIZED_STRING*) value);
+        }    
+    }
+    else
+    {
+        context->last_result = ERROR_INSUFICIENT_MEMORY;
+    }
+    
+    return meta;  
+}
+
+META* reduce_metas( yyscan_t yyscanner,
+                    META* meta_list_head, 
+                    META* meta)
+{
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
+    
+    /* no metas with the same identifier */
+
+    if (lookup_meta(meta_list_head, meta->identifier) == NULL) 
+    {
+        meta->next = meta_list_head;    
+        context->last_result = ERROR_SUCCESS;
+        return meta;
+    }
+    else
+    {
+        strncpy(context->last_error_extra_info, meta->identifier, sizeof(context->last_error_extra_info));
+        context->last_result = ERROR_DUPLICATE_META_IDENTIFIER;
         return NULL;
     }   
 }

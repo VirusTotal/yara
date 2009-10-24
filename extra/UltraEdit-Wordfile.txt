@@ -13,7 +13,8 @@ condition
 entrypoint
 for false filesize fullword
 global
-is in int8 int16 int32
+is in include int8 int16 int32
+meta
 nocase not
 or of
 private

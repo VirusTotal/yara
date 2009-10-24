@@ -87,6 +87,7 @@ typedef struct {
 	PyObject* rule;
 	PyObject* namespace;
     PyObject* tags;
+    PyObject* meta;
     PyObject* strings;
 
 } Match;
@@ -102,6 +103,7 @@ static PyMemberDef Match_members[] = {
 	{"rule", T_OBJECT_EX, offsetof(Match, rule), READONLY, "Name of the matching rule"},
 	{"namespace", T_OBJECT_EX, offsetof(Match, namespace), READONLY, "Namespace of the matching rule"},
     {"tags", T_OBJECT_EX, offsetof(Match, tags), READONLY, "List of tags associated to the rule"},
+    {"meta", T_OBJECT_EX, offsetof(Match, meta), READONLY, "Dictionary with metadata associated to the rule"},
     {"strings", T_OBJECT_EX, offsetof(Match, strings), READONLY, "Dictionary with offsets and strings that matched the file"},
     {NULL}  /* Sentinel */
 };
@@ -154,7 +156,7 @@ static PyTypeObject Match_Type = {
 };
 
 
-static PyObject * Match_NEW(const char* rule, const char* namespace, PyObject* tags, PyObject* strings)
+static PyObject * Match_NEW(const char* rule, const char* namespace, PyObject* tags, PyObject* meta, PyObject* strings)
 { 
     Match* object;
     
@@ -165,6 +167,7 @@ static PyObject * Match_NEW(const char* rule, const char* namespace, PyObject* t
 		object->rule = PyString_FromString(rule);
 		object->namespace = PyString_FromString(namespace);
         object->tags = tags;
+        object->meta = meta;
         object->strings = strings;
     } 
       
@@ -177,7 +180,8 @@ static void Match_dealloc(PyObject *self)
      
 	Py_DECREF(object->rule); 
 	Py_DECREF(object->namespace);
-    Py_DECREF(object->tags); 
+    Py_DECREF(object->tags);
+    Py_DECREF(object->meta);  
     Py_DECREF(object->strings);
 
     PyObject_Del(self);
@@ -401,8 +405,10 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
     TAG* tag;
     STRING* string;
     MATCH* m;
+    META* meta;
     PyObject* taglist = NULL;
     PyObject* stringlist = NULL;
+    PyObject* metalist = NULL;
     PyObject* match;
     PyObject* list = (PyObject*) data;
     
@@ -411,8 +417,9 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
        
     taglist = PyList_New(0);
     stringlist = PyDict_New();
+    metalist = PyDict_New();
     
-    if (taglist == NULL || stringlist == NULL)
+    if (taglist == NULL || stringlist == NULL || metalist == NULL)
         return 1; // error!
         
     tag = rule->tag_list_head;
@@ -421,7 +428,33 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
     {
         PyList_Append(taglist, PyString_FromString(tag->identifier));               
         tag = tag->next;
-    }       
+    }      
+    
+    meta = rule->meta_list_head;
+    
+    while(meta != NULL)
+    {
+        if (meta->type == META_TYPE_INTEGER)
+        {
+            PyDict_SetItem( metalist, 
+                            PyString_FromString(meta->identifier),
+                            Py_BuildValue("I", meta->integer));  
+        }
+        else if (meta->type == META_TYPE_BOOLEAN)
+        {
+            PyDict_SetItem( metalist, 
+                            PyString_FromString(meta->identifier),
+                            PyBool_FromLong(meta->boolean));  
+        }
+        else
+        {
+            PyDict_SetItem( metalist, 
+                            PyString_FromString(meta->identifier),
+                            PyString_FromString(meta->string));    
+        }
+        
+        meta = meta->next;
+    } 
     
     string = rule->string_list_head;
 
@@ -443,7 +476,7 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
         string = string->next;
     }
        
-    match = Match_NEW(rule->identifier, rule->namespace->name, taglist, stringlist);
+    match = Match_NEW(rule->identifier, rule->namespace->name, taglist, metalist, stringlist);
     
     if (match != NULL)
     {       
@@ -453,6 +486,7 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
     {
         Py_DECREF(taglist);
         Py_DECREF(stringlist);
+        Py_DECREF(metalist);
         return 1;
     }
     

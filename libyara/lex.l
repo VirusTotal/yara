@@ -55,6 +55,7 @@ hexdigit      [a-fA-F0-9]
 "private"            				{ return _PRIVATE_;    	}
 "global"             				{ return _GLOBAL_;     	}
 "rule"               				{ return _RULE_;       	}
+"meta"            			    	{ return _META_;    	}
 "strings"            				{ return _STRINGS_;    	}
 "ascii"              				{ return _ASCII_;      	}
 "wide"               				{ return _WIDE_;       	}

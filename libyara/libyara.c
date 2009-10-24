@@ -65,6 +65,8 @@ void yr_destroy_context(YARA_CONTEXT* context)
     RULE* next_rule;
     STRING* string;
     STRING* next_string;
+    META* meta;
+    META* next_meta;
     MATCH* match;
     MATCH* next_match;
 	TAG* tag;
@@ -120,6 +122,23 @@ void yr_destroy_context(YARA_CONTEXT* context)
 			yr_free(tag);
 			
 			tag = next_tag;
+		}
+		
+		meta = rule->meta_list_head;
+
+		while (meta != NULL)
+		{
+			next_meta = meta->next;
+			
+			if (meta->type == META_TYPE_STRING)
+			{
+                yr_free(meta->string);
+			}
+			
+			yr_free(meta->identifier);
+			yr_free(meta);
+			
+			meta = next_meta;
 		}
         
         free_term(rule->condition);
@@ -380,7 +399,10 @@ char* yr_get_error_message(YARA_CONTEXT* context, char* buffer, int buffer_size)
 			break;
 		case ERROR_DUPLICATE_TAG_IDENTIFIER:
 			snprintf(buffer, buffer_size, "duplicate tag identifier \"%s\"", context->last_error_extra_info);			
-			break;			
+			break;		
+		case ERROR_DUPLICATE_META_IDENTIFIER:
+			snprintf(buffer, buffer_size, "duplicate metadata identifier \"%s\"", context->last_error_extra_info);			
+			break;	
 		case ERROR_INVALID_CHAR_IN_HEX_STRING:
 		   	snprintf(buffer, buffer_size, "invalid char in hex string \"%s\"", context->last_error_extra_info);
 			break;

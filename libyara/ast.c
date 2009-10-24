@@ -43,6 +43,24 @@ RULE* lookup_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace)
     return NULL;
 }
 
+META* lookup_meta(META* meta_list_head, char* identifier)
+{
+    META* meta = meta_list_head;
+    
+    while (meta != NULL)
+    {
+        if (strcmp(meta->identifier, identifier) == 0)
+        {
+            return meta;
+        }
+            
+        meta = meta->next;
+    }
+    
+    return NULL;
+}
+
+
 STRING* lookup_string(STRING* string_list_head, char* identifier)
 {
     STRING* string = string_list_head;
@@ -115,7 +133,7 @@ int require_exe_file(TERM* term)
     }
 }
 
-int new_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace, int flags, TAG* tag_list_head, STRING* string_list_head, TERM* condition)
+int new_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace, int flags, TAG* tag_list_head, META* meta_list_head, STRING* string_list_head, TERM* condition)
 {
     RULE* new_rule;
     
@@ -131,6 +149,7 @@ int new_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace, int flags
 			new_rule->namespace = namespace;
             new_rule->flags = flags;
 			new_rule->tag_list_head = tag_list_head;
+            new_rule->meta_list_head = meta_list_head;
             new_rule->string_list_head = string_list_head;
             new_rule->condition = condition;
             new_rule->next = NULL;

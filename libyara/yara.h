@@ -92,6 +92,11 @@ GNU General Public License for more details.
 #define ERROR_COULD_NOT_MAP_FILE                24
 #define ERROR_ZERO_LENGTH_FILE                  25
 #define ERROR_INVALID_ARGUMENT                  26
+#define ERROR_DUPLICATE_META_IDENTIFIER         27
+
+#define META_TYPE_INTEGER                       1
+#define META_TYPE_STRING                        2
+#define META_TYPE_BOOLEAN                       3
       
 
 typedef struct _MATCH
@@ -154,6 +159,22 @@ typedef struct _NAMESPACE
 } NAMESPACE;
 
 
+typedef struct _META
+{
+    int                 type;
+    char*				identifier;
+    
+    union {
+        char*   string;
+        int     integer;
+        int     boolean;
+    };
+    
+    struct _META*       next;           
+
+} META;
+
+
 typedef struct _RULE
 {
     char*           identifier;
@@ -161,6 +182,7 @@ typedef struct _RULE
 	NAMESPACE*		namespace;
     STRING*         string_list_head;
 	TAG*			tag_list_head;
+    META*           meta_list_head;
     TERM*           condition;
     struct _RULE*   next;
     
@@ -231,6 +253,7 @@ typedef struct _YARA_CONTEXT
 RULE*       lookup_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace);
 STRING*     lookup_string(STRING* string_list_head, char* identifier);
 TAG*        lookup_tag(TAG* tag_list_head, char* identifier);
+META*       lookup_meta(META* meta_list_head, char* identifier);
 
 void                yr_init();
 

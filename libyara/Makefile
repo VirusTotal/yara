@@ -31,14 +31,14 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-build_triplet = i386-apple-darwin10.0.0
-host_triplet = i386-apple-darwin10.0.0
+build_triplet = i386-apple-darwin9.8.0
+host_triplet = i386-apple-darwin9.8.0
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(include_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in $(top_srcdir)/configure config.guess \
-	config.sub depcomp grammar.c install-sh lex.c ltmain.sh \
-	missing ylwrap
+	config.sub depcomp grammar.c grammar.h install-sh lex.c \
+	ltmain.sh missing ylwrap
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -97,12 +97,12 @@ DIST_ARCHIVES = $(distdir).tar.gz
 GZIP_ENV = --best
 distuninstallcheck_listfiles = find . -type f -print
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} /Users/plusvic/Projects/yara/libyara/missing --run aclocal-1.10
-AMTAR = ${SHELL} /Users/plusvic/Projects/yara/libyara/missing --run tar
+ACLOCAL = ${SHELL} /Users/plusvic/Projects/yara/trunk/libyara/missing --run aclocal-1.10
+AMTAR = ${SHELL} /Users/plusvic/Projects/yara/trunk/libyara/missing --run tar
 AR = ar
-AUTOCONF = ${SHELL} /Users/plusvic/Projects/yara/libyara/missing --run autoconf
-AUTOHEADER = ${SHELL} /Users/plusvic/Projects/yara/libyara/missing --run autoheader
-AUTOMAKE = ${SHELL} /Users/plusvic/Projects/yara/libyara/missing --run automake-1.10
+AUTOCONF = ${SHELL} /Users/plusvic/Projects/yara/trunk/libyara/missing --run autoconf
+AUTOHEADER = ${SHELL} /Users/plusvic/Projects/yara/trunk/libyara/missing --run autoheader
+AUTOMAKE = ${SHELL} /Users/plusvic/Projects/yara/trunk/libyara/missing --run automake-1.10
 AWK = awk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -139,27 +139,27 @@ LIBS = -lpcre -lpcre -lpcre -lpcre
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LN_S = ln -s
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /Users/plusvic/Projects/yara/libyara/missing --run makeinfo
+MAKEINFO = ${SHELL} /Users/plusvic/Projects/yara/trunk/libyara/missing --run makeinfo
 MKDIR_P = ./install-sh -c -d
 OBJEXT = o
 PACKAGE = libyara
 PACKAGE_BUGREPORT = vmalvarez@hispasec.com
 PACKAGE_NAME = libyara
-PACKAGE_STRING = libyara 1.1.1
+PACKAGE_STRING = libyara 1.3
 PACKAGE_TARNAME = libyara
-PACKAGE_VERSION = 1.1.1
+PACKAGE_VERSION = 1.3
 PATH_SEPARATOR = :
 RANLIB = ranlib
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = strip
-VERSION = 1.1.1
+VERSION = 1.3
 YACC = bison -y
 YFLAGS = 
-abs_builddir = /Users/plusvic/Projects/yara/libyara
-abs_srcdir = /Users/plusvic/Projects/yara/libyara
-abs_top_builddir = /Users/plusvic/Projects/yara/libyara
-abs_top_srcdir = /Users/plusvic/Projects/yara/libyara
+abs_builddir = /Users/plusvic/Projects/yara/trunk/libyara
+abs_srcdir = /Users/plusvic/Projects/yara/trunk/libyara
+abs_top_builddir = /Users/plusvic/Projects/yara/trunk/libyara
+abs_top_srcdir = /Users/plusvic/Projects/yara/trunk/libyara
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 ac_ct_F77 = 
@@ -169,10 +169,10 @@ am__quote =
 am__tar = ${AMTAR} chof - "$$tardir"
 am__untar = ${AMTAR} xf -
 bindir = ${exec_prefix}/bin
-build = i386-apple-darwin10.0.0
+build = i386-apple-darwin9.8.0
 build_alias = 
 build_cpu = i386
-build_os = darwin10.0.0
+build_os = darwin9.8.0
 build_vendor = apple
 builddir = .
 datadir = ${datarootdir}
@@ -180,15 +180,15 @@ datarootdir = ${prefix}/share
 docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
-host = i386-apple-darwin10.0.0
+host = i386-apple-darwin9.8.0
 host_alias = 
 host_cpu = i386
-host_os = darwin10.0.0
+host_os = darwin9.8.0
 host_vendor = apple
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = $(SHELL) /Users/plusvic/Projects/yara/libyara/install-sh
+install_sh = $(SHELL) /Users/plusvic/Projects/yara/trunk/libyara/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -207,6 +207,7 @@ sysconfdir = ${prefix}/etc
 target_alias = 
 top_builddir = .
 top_srcdir = .
+AM_YFLAGS = -d
 include_HEADERS = yara.h
 lib_LTLIBRARIES = libyara.la
 libyara_la_SOURCES = \
@@ -313,6 +314,11 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
+grammar.h: grammar.c
+	@if test ! -f $@; then \
+	  rm -f grammar.c; \
+	  $(MAKE) $(AM_MAKEFLAGS) grammar.c; \
+	else :; fi
 libyara.la: $(libyara_la_OBJECTS) $(libyara_la_DEPENDENCIES) 
 	$(LINK) -rpath $(libdir) $(libyara_la_OBJECTS) $(libyara_la_LIBADD) $(LIBS)
 
@@ -591,6 +597,7 @@ maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 	-rm -f grammar.c
+	-rm -f grammar.h
 	-rm -f lex.c
 clean: clean-am
 

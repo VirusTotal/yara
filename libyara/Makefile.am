@@ -1,4 +1,4 @@
-
+AM_YFLAGS = -d
 
 include_HEADERS = yara.h
 

@@ -1,4 +1,4 @@
-AC_INIT([yara], [1.2.1], [vmalvarez@hispasec.com])
+AC_INIT([yara], [1.3], [vmalvarez@hispasec.com])
         AM_INIT_AUTOMAKE([-Wall -Werror])
         AC_PROG_CC
 		#AC_CHECK_LIB(yara,compile_rules,,AC_MSG_ERROR(yara not found))
