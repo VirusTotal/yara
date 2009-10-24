@@ -50,6 +50,7 @@ YARA_CONTEXT* yr_create_context()
     context->current_rule_strings = NULL;
     context->inside_for = 0;
 	context->namespaces = NULL;
+    context->allow_includes = TRUE;
 	context->current_namespace = yr_create_namespace(context, "default");
     
     memset(context->hash_table.hashed_strings, 0, sizeof(context->hash_table.hashed_strings));
@@ -138,6 +139,11 @@ void yr_destroy_context(YARA_CONTEXT* context)
 		
 		ns = next_ns;
 	}
+	
+	while (context->file_name_stack_ptr > 0)
+    {
+        yr_pop_file_name(context);
+    }
     
     clear_hash_table(&context->hash_table);
 	yr_free(context);
@@ -180,9 +186,9 @@ void yr_push_file_name(YARA_CONTEXT* context, const char* file_name)
 
 void yr_pop_file_name(YARA_CONTEXT* context)
 {  
-    context->file_name_stack_ptr--;
     if (context->file_name_stack_ptr > 0)
     {
+        context->file_name_stack_ptr--;
         yr_free(context->file_name_stack[context->file_name_stack_ptr]);
         context->file_name_stack[context->file_name_stack_ptr] = NULL;  
     }

@@ -105,56 +105,75 @@ include[ \t]+\"						{
 			
 <include>\"		    				{ 
 										char			buffer[1024];
+										char			*current_file_name;
 										char			*s = NULL;
 										char			*b = NULL;
 										char			*f;
 										FILE* 			fh;
 										YARA_CONTEXT* 	context = yyget_extra(yyscanner);
-					
-										*yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
 										
-										// move path of current source file into buffer
-															
-										strncpy(buffer, yr_get_current_file_name(context), sizeof(buffer));
-										
-										// make included file path relative to current source file
-										
-										s = strrchr(buffer, '/');
-										
-										#ifdef WIN32
-										b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
-										#endif
-									
-										if (s != NULL || b != NULL)
+										if (context->allow_includes)
 										{
-											f = (b > s)? (b + 1): (s + 1);
+											*yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
+										
+											// move path of current source file into buffer
 											
-											strncpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
+											current_file_name = yr_get_current_file_name(context);
 											
-											fh = fopen(buffer, "r");
+											if (current_file_name != NULL)
+											{				
+												strncpy(buffer, yr_get_current_file_name(context), sizeof(buffer));
+											}
+											else
+											{
+												buffer[0] = '\0';
+											}
+										
+											// make included file path relative to current source file
+										
+											s = strrchr(buffer, '/');
+										
+											#ifdef WIN32
+											b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
+											#endif
+									
+											if (s != NULL || b != NULL)
+											{
+												f = (b > s)? (b + 1): (s + 1);
 											
-											// if include file was not found relative to current source file, try to open it
-											// with path as specified by user (maybe user wrote a full path)
+												strncpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
 											
-											if (fh == NULL) 
+												fh = fopen(buffer, "r");
+											
+												// if include file was not found relative to current source file, try to open it
+												// with path as specified by user (maybe user wrote a full path)
+											
+												if (fh == NULL) 
+												{
+													fh = fopen(yyextra->lex_buf, "r");
+												}
+											}
+											else
 											{
 												fh = fopen(yyextra->lex_buf, "r");
 											}
-										}
-										else
-										{
-											fh = fopen(yyextra->lex_buf, "r");
-										}
 	
-										if (fh != NULL)
-										{						
-											yr_push_file_name(context, yyextra->lex_buf);			
-											yypush_buffer_state(yy_create_buffer(fh, YY_BUF_SIZE, yyscanner), yyscanner);										
-										}
-										else
+											if (fh != NULL)
+											{						
+												yr_push_file_name(context, yyextra->lex_buf);			
+												yypush_buffer_state(yy_create_buffer(fh, YY_BUF_SIZE, yyscanner), yyscanner);										
+											}
+											else
+											{
+												snprintf(buffer, sizeof(buffer), "can't open include file: %s", yyextra->lex_buf);
+												yyerror(yyscanner, buffer);
+											}
+											
+										} 
+										else // not allowing includes
 										{
-											snprintf(buffer, sizeof(buffer), "can't open include file: %s", yyextra->lex_buf);
-											yyerror(yyscanner, buffer);
+											yyerror(yyscanner, "includes are disabled");
+											yyterminate();
 										}
 												
 										BEGIN(INITIAL);

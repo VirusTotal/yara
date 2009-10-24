@@ -222,6 +222,7 @@ typedef struct _YARA_CONTEXT
     char*		    lex_buf_ptr;
     unsigned short  lex_buf_len;
     
+    int             allow_includes;
     char            include_base_dir[MAX_PATH];
 
 } YARA_CONTEXT;

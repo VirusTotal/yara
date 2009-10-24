@@ -260,7 +260,7 @@ static PyTypeObject Rules_Type = {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static PyObject * Rules_new_from_file(FILE* file, const char* namespace, PyObject* rules)
+static PyObject * Rules_new_from_file(FILE* file, const char* filepath, const char* namespace, PyObject* rules, int allow_includes)
 { 
     YARA_CONTEXT* context;
     Rules* result;
@@ -290,6 +290,13 @@ static PyObject * Rules_new_from_file(FILE* file, const char* namespace, PyObjec
 	{
 		context->current_namespace = yr_create_namespace(context, namespace);
 	}
+	
+	if (filepath != NULL)
+	{
+        yr_push_file_name(context, filepath);
+	}
+	
+	context->allow_includes = allow_includes;
          
     errors = yr_compile_file(file, context);
        
@@ -320,7 +327,7 @@ static PyObject * Rules_new_from_file(FILE* file, const char* namespace, PyObjec
 }
 
 
-static PyObject * Rules_new_from_string(const char* string, const char* namespace, PyObject* rules)
+static PyObject * Rules_new_from_string(const char* string, const char* namespace, PyObject* rules, int allow_includes)
 { 
 	YARA_CONTEXT* context;
 	Rules* result;
@@ -345,6 +352,8 @@ static PyObject * Rules_new_from_string(const char* string, const char* namespac
 	{
 		context->current_namespace = yr_create_namespace(context, namespace);
 	}
+	
+    context->allow_includes = allow_includes;
 	
     errors = yr_compile_string(string, context);
        
@@ -517,7 +526,7 @@ static PyObject * Rules_getattro(PyObject *self, PyObject *name)
 
 static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keywords)
 { 
-    static char *kwlist[] = {"filepath", "source", "file", "filepaths", "sources", NULL};
+    static char *kwlist[] = {"filepath", "source", "file", "filepaths", "sources", "includes", NULL};
     
     FILE* fh;
     
@@ -526,6 +535,7 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
 	
 	PyObject *sources_dict = NULL;
 	PyObject *filepaths_dict = NULL;
+	PyObject *includes = NULL;
 	
 	PyObject *key, *value;
 	
@@ -534,16 +544,30 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
     char* filepath = NULL;
     char* source = NULL;
 	char* namespace = NULL;
+	
+    int allow_includes = TRUE;
     
-    if (PyArg_ParseTupleAndKeywords(args, keywords, "|ssOOO", kwlist, &filepath, &source, &file, &filepaths_dict, &sources_dict))
+    if (PyArg_ParseTupleAndKeywords(args, keywords, "|ssOOOO", kwlist, &filepath, &source, &file, &filepaths_dict, &sources_dict, &includes))
     {
+        if (includes != NULL)
+        {
+            if (PyBool_Check(includes))
+            {
+                allow_includes = (PyObject_IsTrue(includes) == 1);  // PyObject_IsTrue can return -1 in case of error
+            }
+            else
+            {
+                result = PyErr_Format(PyExc_TypeError, "'includes' param must be of boolean type");
+            }
+        }
+        
         if (filepath != NULL)
         {            
             fh = fopen(filepath, "r");
             
             if (fh != NULL)
             {
-                result = Rules_new_from_file(fh, NULL, NULL);
+                result = Rules_new_from_file(fh, filepath, NULL, NULL, allow_includes);
                 fclose(fh);
             }
             else
@@ -553,12 +577,12 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
         }
         else if (source != NULL)
         {
-            result = Rules_new_from_string(source, NULL, NULL);
+            result = Rules_new_from_string(source, NULL, NULL, allow_includes);
         }
         else if (file != NULL)
         {
             fh = PyFile_AsFile(file);   
-            result = Rules_new_from_file(fh, NULL, NULL);
+            result = Rules_new_from_file(fh, NULL, NULL, NULL, allow_includes);
         }
         else if (sources_dict != NULL)
         {
@@ -571,18 +595,18 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
 					
 					if (source != NULL && namespace != NULL)
 					{
-						result = Rules_new_from_string(source, namespace, result);
+						result = Rules_new_from_string(source, namespace, result, allow_includes);
 					}
 					else
 					{
-						result = PyErr_Format(PyExc_TypeError, "keys and values of the sources dictionary must be of string type");
+						result = PyErr_Format(PyExc_TypeError, "keys and values of the 'sources' dictionary must be of string type");
 						break;
 					}
 				}
 			}
 			else
 			{
-				result = PyErr_Format(PyExc_TypeError, "sources must be a dictionary");
+				result = PyErr_Format(PyExc_TypeError, "'sources' must be a dictionary");
 			}
         }
         else if (filepaths_dict != NULL)
@@ -600,7 +624,7 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
             
             			if (fh != NULL)
             			{
-                			result = Rules_new_from_file(fh, namespace, result);
+                			result = Rules_new_from_file(fh, filepath, namespace, result, allow_includes);
                 			fclose(fh);
             			}
             			else
