@@ -161,7 +161,12 @@ include[ \t]+\"						{
 	
 											if (fh != NULL)
 											{						
-												yr_push_file_name(context, yyextra->lex_buf);			
+												if (yr_push_file_name(context, yyextra->lex_buf) == ERROR_INCLUDES_CIRCULAR_REFERENCE)
+												{
+													yyerror(yyscanner, "includes circular reference");
+													yyterminate();
+												}
+														
 												yypush_buffer_state(yy_create_buffer(fh, YY_BUF_SIZE, yyscanner), yyscanner);										
 											}
 											else

@@ -93,6 +93,7 @@ GNU General Public License for more details.
 #define ERROR_ZERO_LENGTH_FILE                  25
 #define ERROR_INVALID_ARGUMENT                  26
 #define ERROR_DUPLICATE_META_IDENTIFIER         27
+#define ERROR_INCLUDES_CIRCULAR_REFERENCE       28
 
 #define META_TYPE_INTEGER                       1
 #define META_TYPE_STRING                        2
@@ -264,7 +265,7 @@ NAMESPACE*			yr_create_namespace(YARA_CONTEXT* context, const char* namespace);
 
 char*               yr_get_current_file_name(YARA_CONTEXT* context);
 
-void 		yr_push_file_name(YARA_CONTEXT* context, const char* file_name);
+int 		yr_push_file_name(YARA_CONTEXT* context, const char* file_name);
 void 		yr_pop_file_name(YARA_CONTEXT* context);
 
 int         yr_compile_file(FILE* rules_file, YARA_CONTEXT* context);

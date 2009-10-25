@@ -196,10 +196,23 @@ char* yr_get_current_file_name(YARA_CONTEXT* context)
     }
 }
 
-void yr_push_file_name(YARA_CONTEXT* context, const char* file_name)
+int yr_push_file_name(YARA_CONTEXT* context, const char* file_name)
 {  
+    int i;
+    
+    for (i = 0; i < context->file_name_stack_ptr; i++)
+    {
+        if (strcmp(file_name, context->file_name_stack[i]) == 0)
+        {
+            context->last_result = ERROR_INCLUDES_CIRCULAR_REFERENCE;
+            return ERROR_INCLUDES_CIRCULAR_REFERENCE;
+        }
+    }
+    
     context->file_name_stack[context->file_name_stack_ptr] = yr_strdup(file_name);
     context->file_name_stack_ptr++;
+    
+    return ERROR_SUCCESS;
 }
 
 
@@ -452,6 +465,9 @@ char* yr_get_error_message(YARA_CONTEXT* context, char* buffer, int buffer_size)
 		case ERROR_SYNTAX_ERROR:
 		    snprintf(buffer, buffer_size, "%s", context->last_error_extra_info);
 			break;
+		case ERROR_INCLUDES_CIRCULAR_REFERENCE:
+		    snprintf(buffer, buffer_size, "include circular reference");
+            break;		    
 	}
 	
     return buffer;
