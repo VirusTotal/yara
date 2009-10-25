@@ -40,7 +40,6 @@
 %token _ASCII_
 %token _WIDE_
 %token _NOCASE_
-%token _REGEXP_
 %token _FULLWORD_
 %token _AT_
 %token _SIZE_
@@ -136,7 +135,7 @@ TAG* reduce_tags(   yyscan_t yyscanner,
 META* reduce_meta_declaration(  yyscan_t yyscanner,
                                 int type,
                                 char* identifier,
-                                unsigned int value);
+                                unsigned int integer_value,					SIZED_STRING* string_value);
                     
 META* reduce_metas( yyscan_t yyscanner, 
                     META* meta_list_head,
@@ -281,7 +280,7 @@ meta_declarations : meta_declaration                        {
                   ;
                   
 meta_declaration :  _IDENTIFIER_ '=' _TEXTSTRING_            { 
-                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_STRING, $1, (unsigned int) $3);
+                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_STRING, $1, 0, $3);
                                                                 
                                                                 if ($$ == NULL)
                                                                 {
@@ -290,7 +289,7 @@ meta_declaration :  _IDENTIFIER_ '=' _TEXTSTRING_            {
                                                                 }
                                                              }
                  |  _IDENTIFIER_ '=' _NUMBER_                { 
-                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_INTEGER, $1, $3); 
+                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_INTEGER, $1, $3, NULL); 
                                                                 
                                                                 if ($$ == NULL)
                                                                 {
@@ -299,7 +298,7 @@ meta_declaration :  _IDENTIFIER_ '=' _TEXTSTRING_            {
                                                                 }
                                                              }
                  |  _IDENTIFIER_ '=' _TRUE_                 { 
-                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, $1, TRUE); 
+                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, $1, TRUE, NULL); 
 
                                                                 if ($$ == NULL)
                                                                 {
@@ -308,7 +307,7 @@ meta_declaration :  _IDENTIFIER_ '=' _TEXTSTRING_            {
                                                                 }
                                                              }
                  |  _IDENTIFIER_ '=' _FALSE_                 { 
-                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, $1, FALSE); 
+                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, $1, FALSE, NULL); 
 
                                                                 if ($$ == NULL)
                                                                 {
@@ -725,10 +724,11 @@ STRING* reduce_strings( yyscan_t yyscanner,
     }   
 }
 
-META* reduce_meta_declaration(  yyscan_t yyscanner, 
+META* reduce_meta_declaration(  yyscan_t yyscanner,
                                 int type,
                                 char* identifier,
-                                unsigned int value)
+                                unsigned int integer_value,
+								SIZED_STRING* string_value)
 {
     META*           meta = NULL;
     YARA_CONTEXT*   context = yyget_extra(yyscanner);
@@ -742,16 +742,16 @@ META* reduce_meta_declaration(  yyscan_t yyscanner,
         
         if (type == META_TYPE_INTEGER)
         {
-            meta->integer = value;
+            meta->integer = integer_value;
         }
         else if (type == META_TYPE_BOOLEAN)
         {
-            meta->boolean = value;
+            meta->boolean = integer_value;
         }
         else
         {
-            meta->string = yr_strdup(((SIZED_STRING*) value)->c_string);
-            yr_free((SIZED_STRING*) value);
+            meta->string = yr_strdup(string_value->c_string);
+            yr_free(string_value);
         }    
     }
     else

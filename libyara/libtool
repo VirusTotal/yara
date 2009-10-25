@@ -44,7 +44,7 @@ available_tags=" CXX"
 
 # ### BEGIN LIBTOOL CONFIG
 
-# Libtool was configured on host andromeda.local:
+# Libtool was configured on host hydra.local:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/sh"
@@ -66,13 +66,13 @@ fast_install=needless
 
 # The host system.
 host_alias=
-host=i386-apple-darwin9.8.0
-host_os=darwin9.8.0
+host=i386-apple-darwin10.0.0
+host_os=darwin10.0.0
 
 # The build system.
 build_alias=
-build=i386-apple-darwin9.8.0
-build_os=darwin9.8.0
+build=i386-apple-darwin10.0.0
+build_os=darwin10.0.0
 
 # An echo program that does not interpret backslashes.
 echo="/bin/echo"
@@ -97,13 +97,13 @@ with_gcc=yes
 EGREP="/usr/bin/grep -E"
 
 # The linker used to build libraries.
-LD="/usr/libexec/gcc/i686-apple-darwin9/4.0.1/ld"
+LD="/usr/libexec/gcc/i686-apple-darwin10/4.2.1/ld"
 
 # Whether we need hard or soft links.
 LN_S="ln -s"
 
 # A BSD-compatible nm program.
-NM="/usr/bin/nm -p"
+NM="/usr/bin/nm"
 
 # A symbol stripping program
 STRIP="strip"
@@ -322,7 +322,7 @@ variables_saved_for_relink="PATH DYLD_LIBRARY_PATH  GCC_EXEC_PREFIX COMPILER_PAT
 link_all_deplibs=yes
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=" /lib/i686-apple-darwin9/4.0.1/ /lib/ /usr/lib/i686-apple-darwin9/4.0.1/ /usr/lib/ /usr/lib/gcc/i686-apple-darwin9/4.0.1/ /usr/lib/gcc/i686-apple-darwin9/4.0.1/ /usr/lib/gcc/i686-apple-darwin9/4.0.1/../../../../i686-apple-darwin9/lib/i686-apple-darwin9/4.0.1/ /usr/lib/gcc/i686-apple-darwin9/4.0.1/../../../../i686-apple-darwin9/lib/ /usr/lib/gcc/i686-apple-darwin9/4.0.1/../../../i686-apple-darwin9/4.0.1/ /usr/lib/gcc/i686-apple-darwin9/4.0.1/../../../  /lib /usr/lib /usr/local/lib"
+sys_lib_search_path_spec=" /lib/i686-apple-darwin10/4.2.1/x86_64/ /lib/x86_64/ /usr/lib/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../x86_64/ /lib/i686-apple-darwin10/4.2.1/ /lib/ /usr/lib/i686-apple-darwin10/4.2.1/ /usr/lib/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../  /lib /usr/lib /usr/local/lib"
 
 # Run-time system search path for libraries
 sys_lib_dlsearch_path_spec="/usr/local/lib /lib /usr/lib"
@@ -7212,7 +7212,7 @@ disable_libs=static
 # End:
 # ### BEGIN LIBTOOL TAG CONFIG: CXX
 
-# Libtool was configured on host andromeda.local:
+# Libtool was configured on host hydra.local:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/sh"
@@ -7234,13 +7234,13 @@ fast_install=needless
 
 # The host system.
 host_alias=
-host=i386-apple-darwin9.8.0
-host_os=darwin9.8.0
+host=i386-apple-darwin10.0.0
+host_os=darwin10.0.0
 
 # The build system.
 build_alias=
-build=i386-apple-darwin9.8.0
-build_os=darwin9.8.0
+build=i386-apple-darwin10.0.0
+build_os=darwin10.0.0
 
 # An echo program that does not interpret backslashes.
 echo="/bin/echo"
@@ -7265,13 +7265,13 @@ with_gcc=yes
 EGREP="/usr/bin/grep -E"
 
 # The linker used to build libraries.
-LD="/usr/libexec/gcc/i686-apple-darwin9/4.0.1/ld"
+LD="/usr/libexec/gcc/i686-apple-darwin10/4.2.1/ld"
 
 # Whether we need hard or soft links.
 LN_S="ln -s"
 
 # A BSD-compatible nm program.
-NM="/usr/bin/nm -p"
+NM="/usr/bin/nm"
 
 # A symbol stripping program
 STRIP="strip"
@@ -7490,7 +7490,7 @@ variables_saved_for_relink="PATH DYLD_LIBRARY_PATH  GCC_EXEC_PREFIX COMPILER_PAT
 link_all_deplibs=yes
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=" /lib/i686-apple-darwin9/4.0.1/ /lib/ /usr/lib/i686-apple-darwin9/4.0.1/ /usr/lib/ /usr/lib/gcc/i686-apple-darwin9/4.0.1/ /usr/lib/gcc/i686-apple-darwin9/4.0.1/ /usr/lib/gcc/i686-apple-darwin9/4.0.1/../../../../i686-apple-darwin9/lib/i686-apple-darwin9/4.0.1/ /usr/lib/gcc/i686-apple-darwin9/4.0.1/../../../../i686-apple-darwin9/lib/ /usr/lib/gcc/i686-apple-darwin9/4.0.1/../../../i686-apple-darwin9/4.0.1/ /usr/lib/gcc/i686-apple-darwin9/4.0.1/../../../  /lib /usr/lib /usr/local/lib"
+sys_lib_search_path_spec=" /lib/i686-apple-darwin10/4.2.1/x86_64/ /lib/x86_64/ /usr/lib/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../x86_64/ /lib/i686-apple-darwin10/4.2.1/ /lib/ /usr/lib/i686-apple-darwin10/4.2.1/ /usr/lib/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../  /lib /usr/lib /usr/local/lib"
 
 # Run-time system search path for libraries
 sys_lib_dlsearch_path_spec="/usr/local/lib /lib /usr/lib"
