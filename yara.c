@@ -56,7 +56,7 @@ IDENTIFIER* specified_rules_list = NULL;
 
 void show_help()
 {
-    printf("usage:  yara [ -t tag ] [ -i identifier ] [ -n ] [ -g ] [ -s ] [ -r ] [ -v ] [RULEFILE...] FILE\n");
+    printf("usage:  yara [ -t tag ] [ -i identifier ] [ -n ] [ -g ] [ -m ] [ -s ] [ -r ] [ -v ] [RULEFILE...] FILE\n");
     printf("options:\n");
 	printf("  -t <tag>          print rules tagged as <tag> and ignore the rest. Can be used more than once.\n");
     printf("  -i <identifier>   print rules named <identifier> and ignore the rest. Can be used more than once.\n");

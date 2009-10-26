@@ -14,13 +14,13 @@ yara-python depends on libyara, a library that implements YARA's core functions.
 must build and install YARA in your system before building yara-python. The latest
 YARA version can be downloaded from:
 
-http://yara.googlecode.com/files/yara-1.2.1.tar.gz
+http://yara.googlecode.com/files/yara-1.3.tar.gz
 
 
 After installing YARA you can build yara-python this way:
 
-$ tar xzvf yara-python-1.2.1.tar.gz
-$ cd yara-python-1.2.1
+$ tar xzvf yara-python-1.3.tar.gz
+$ cd yara-python-1.3
 $ python setup.py build
 $ sudo python setup.py install
 
@@ -33,7 +33,6 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> import yara
 >>>
 
-
 In some operating systems (e.g: Ubuntu) you can get an error message like this one:
 
 Traceback (most recent call last):
@@ -44,7 +43,8 @@ ImportError: libyara.so.0: cannot open shared object file: No such file or direc
 If you get the previous error you should add the path /usr/local/lib to the loader
 configuration file:
 
-$ sudo echo "/usr/local/lib" >> /etc/ld.so.conf
+$ sudo su
+$ echo "/usr/local/lib" >> /etc/ld.so.conf
 $ ldconfig
 
 
@@ -52,15 +52,96 @@ HOW TO USE
 ==========
 
 YARA can be also invoked from your own Python scripts. The yara-python extension is 
-provided in order to make YARA functionality available to Python users. Once yara-python 
-is built and installed on your system you can use it as shown below:import yaraThen you will need to compile your YARA rules before applying them to your data, the
-rules can be compiled from a file path:rules = yara.compile(filepath='/foo/bar/myrules')The default argument is filepath, so you don't need to explicitly specify its name:rules = yara.compile('/foo/bar/myrules')You can also compile your rules from a file object:fh = open('/foo/bar/myrules')rules = yara.compile(file=fh)fh.close()Or you can compile them from a Python string:rules = yara.compile(source='rule dummy { condition: true }')In the three cases compile returns an instance of the class Rules, which in turn has
-a match method:matches = rules.match('/foo/bar/myfile')But you can also apply he rules to a Python string:f = fopen('/foo/bar/myfile', 'rb')matches = rules.match(data=f.read())Both in both cases a list of instances of the class Match is returned. The instances
-of this class can be treated as text strings containing the name of the matching rule.
-For example you can print them:foreach m in matches:	print "%s" % mIn some circumstances you may need to explicitly convert the instance of Match to string,
-for example when comparing it with another string:if str(matches[0]) == 'SomeRuleName':	...The Match class have another two attributes: tags and strings. The tags attribute is a 
-list of strings containing the tags associated to the rule. The strings attribute is a
-dictionary whose values are those strings within the data that made the YARA rule match,
-and the keys are the offsets where those strings were found.
+provided in order to make YARA functionality available to Python users. Once yara-python
+is built and installed on your system you can use it as shown below:
 
+import yara
+
+Then you will need to compile your YARA rules before applying them to your data, the
+rules can be compiled from a file path:
+
+rules = yara.compile(filepath='/foo/bar/myrules')
+
+The default argument is filepath, so you don't need to explicitly specify its name:
+
+rules = yara.compile('/foo/bar/myrules')
+
+You can also compile your rules from a file object:
+
+fh = open('/foo/bar/myrules')
+rules = yara.compile(file=fh)
+fh.close()
+
+Or you can compile them directly from a Python string:
+
+rules = yara.compile(source='rule dummy { condition: true }')
+
+If you want to compile a group of files or strings at the same time you can do it by
+using the filepaths or sources named arguments:
+
+rules = yara.compile(filepaths={
+
+	'namespace1':'/my/path/rules1',
+	'namespace2':'/my/path/rules2'
+})
+
+rules = yara.compile(sources={
+
+	'namespace1':'rule dummy { condition: true }',
+	'namespace2':'rule dummy { condition: false }'
+})
+
+Notice that both filepaths and sources must be dictionaries with keys of string type.
+The dictionary keys are used as a namespace identifier, allowing to differentiate between
+rules with the same name in different sources, as occurs in the second example with the
+“dummy” name.
+
+The compile method also have an optional boolean parameter named includes which allows
+you to control whether or not the include directive should be accepted in the source files,
+for example:
+
+rules = yara.compile('/foo/bar/myrules', includes=False)
+
+If the source file contains include directives the previous line would raise an exception.
+
+In all cases compile returns an instance of the class Rules, which in turn has a match method:
+
+matches = rules.match('/foo/bar/myfile')
+
+But you can also apply he rules to a Python string:
+
+f = fopen('/foo/bar/myfile', 'rb')
+
+matches = rules.match(data=f.read())
+
+The match method returns a list of instances of the class Match. The instances of this
+class can be treated as text strings containing the name of the matching rule. For example
+you can print them:
+
+foreach m in matches:
+	print "%s" % m
+
+In some circumstances you may need to explicitly convert the instance of Match to string,
+for example when comparing it with another string:
+
+if str(matches[0]) == 'SomeRuleName':
+	...
+
+The Match class have the following attributes:
+
+rule
+namespace
+meta
+tags
+strings
+
+The rule and namespace attributes are the names of the matching rule and its namespace
+respectively. 
+
+The meta attribute is a dictionary containing the metadata associated to the rule, where
+the metadata identifiers are the dictionary keys.
+
+The tags attribute is a list of strings containing the tags associated to the rule, and
+the strings attribute is a dictionary whose values are those strings within the data that
+made the YARA rule match, and the keys are the offsets where those strings were found.
 	
