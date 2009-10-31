@@ -3,23 +3,7 @@
 yara \- find files matching patterns and rules written in a special-purpose language.
 .SH SYNOPSIS
 .B yara 
-[
-.B \-t
-.I tag
-] [
-.B \-i
-.I identifier
-] [
-.B \-n
-] [
-.B \-g
-] [
-.B \-s
-] [
-.B \-r
-] [
-.B \-v
-] [RULEFILE...] FILE
+[ OPTION ]... [RULEFILE]... FILE
 .SH DESCRIPTION
 .I Yara 
 scans the given 
@@ -48,8 +32,14 @@ Print rules that doesn't apply (negate)
 .B \-g 
 Print the tags associated to the rule.
 .TP
+.B \-m 
+Print metadata associated to the rule.
+.TP
 .B \-s 
 Print strings found in the file.
+.TP
+.BI \-d " identifier"=value
+Define an external variable. This option can be used multiple times.
 .TP
 .B \-r 
 Scan files in directories recursively.
@@ -87,5 +77,16 @@ Scan all files in the
 .I /foo
 directory and its subdirectories. Rules are read from standard input.
 .RE
+.PP
+$ yara -d mybool=true myint=5 mystring="my string" /foo/bar/rules bazfile  
+.RS
+.PP
+Defines three external variables 
+.I mybool
+.I myint 
+and
+.I mystring.
+.RE
+
 .SH AUTHOR 
 Victor M. Alvarez (vmalvarez@hispasec.com) 

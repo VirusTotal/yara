@@ -50,6 +50,7 @@ YARA_CONTEXT* yr_create_context()
     context->current_rule_strings = NULL;
     context->inside_for = 0;
 	context->namespaces = NULL;
+	context->external_variables = NULL;
     context->allow_includes = TRUE;
 	context->current_namespace = yr_create_namespace(context, "default");
     
@@ -73,6 +74,8 @@ void yr_destroy_context(YARA_CONTEXT* context)
 	TAG* next_tag;
 	NAMESPACE* ns;
 	NAMESPACE* next_ns;
+    EXTERNAL_VARIABLE* ext_var;
+	EXTERNAL_VARIABLE* next_ext_var;
     
     rule = context->rule_list.head;
     
@@ -159,6 +162,23 @@ void yr_destroy_context(YARA_CONTEXT* context)
 		ns = next_ns;
 	}
 	
+	ext_var = context->external_variables;
+
+	while(ext_var != NULL)
+	{
+		next_ext_var = ext_var->next;
+/*		
+		if (ext_var->type == EXTERNAL_VARIABLE_TYPE_STRING)
+		{
+		    yr_free(ext_var->string);
+		}
+	*/	
+		yr_free(ext_var->identifier);
+		yr_free(ext_var);
+		
+		ext_var = next_ext_var;
+	}
+	
 	while (context->file_name_stack_ptr > 0)
     {
         yr_pop_file_name(context);
@@ -183,6 +203,98 @@ NAMESPACE* yr_create_namespace(YARA_CONTEXT* context, const char* namespace)
 	
 	return ns;
 }
+
+
+int yr_set_external_integer(YARA_CONTEXT* context, const char* identifier, int value)
+{
+    EXTERNAL_VARIABLE* ext_var;
+
+    ext_var = lookup_external_variable(context->external_variables, identifier);
+    
+    if (ext_var == NULL) /* variable doesn't exists, create it */
+    {
+        ext_var = (EXTERNAL_VARIABLE*) yr_malloc(sizeof(EXTERNAL_VARIABLE));
+        
+        if (ext_var != NULL)
+        {
+            ext_var->type = EXTERNAL_VARIABLE_TYPE_INTEGER;
+            ext_var->identifier = yr_strdup(identifier);
+        
+            ext_var->next = context->external_variables;
+            context->external_variables = ext_var;
+        }
+        else
+        {
+            return ERROR_INSUFICIENT_MEMORY;
+        }
+    }
+
+    ext_var->integer = value;
+    
+    return ERROR_SUCCESS;
+}
+
+
+int yr_set_external_boolean(YARA_CONTEXT* context, const char* identifier, int value)
+{
+    EXTERNAL_VARIABLE* ext_var;
+
+    ext_var = lookup_external_variable(context->external_variables, identifier);
+    
+    if (ext_var == NULL) /* variable doesn't exists, create it */
+    {
+        ext_var = (EXTERNAL_VARIABLE*) yr_malloc(sizeof(EXTERNAL_VARIABLE));
+        
+        if (ext_var != NULL)
+        {
+            ext_var->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
+            ext_var->identifier = yr_strdup(identifier);
+        
+            ext_var->next = context->external_variables;
+            context->external_variables = ext_var;
+        }
+        else
+        {
+            return ERROR_INSUFICIENT_MEMORY;
+        }
+    }
+
+    ext_var->boolean = value;
+    
+    return ERROR_SUCCESS;
+}
+
+
+int yr_set_external_string(YARA_CONTEXT* context, const char* identifier, const char* value)
+{
+    EXTERNAL_VARIABLE* ext_var;
+
+    ext_var = lookup_external_variable(context->external_variables, identifier);
+    
+    if (ext_var == NULL) /* variable doesn't exists, create it */
+    {
+        ext_var = (EXTERNAL_VARIABLE*) yr_malloc(sizeof(EXTERNAL_VARIABLE));
+        
+        if (ext_var != NULL)
+        {
+            ext_var->type = EXTERNAL_VARIABLE_TYPE_STRING;
+            ext_var->identifier = yr_strdup(identifier);
+        
+            ext_var->next = context->external_variables;
+            context->external_variables = ext_var;
+        }
+        else
+        {
+            return ERROR_INSUFICIENT_MEMORY;
+        }
+    }
+
+    ext_var->string = (char*) value;
+    
+    return ERROR_SUCCESS;
+}
+
+
 
 char* yr_get_current_file_name(YARA_CONTEXT* context)
 {   
@@ -452,8 +564,8 @@ char* yr_get_error_message(YARA_CONTEXT* context, char* buffer, int buffer_size)
 		case ERROR_UNDEFINED_STRING:
             snprintf(buffer, buffer_size, "undefined string \"%s\"", context->last_error_extra_info);
 			break;
-		case ERROR_UNDEFINED_RULE:
-		    snprintf(buffer, buffer_size, "undefined rule \"%s\"", context->last_error_extra_info);
+		case ERROR_UNDEFINED_IDENTIFIER:
+		    snprintf(buffer, buffer_size, "undefined identifier \"%s\"", context->last_error_extra_info);
 			break;
 		case ERROR_UNREFERENCED_STRING:
 		    snprintf(buffer, buffer_size, "unreferenced string \"%s\"", context->last_error_extra_info);

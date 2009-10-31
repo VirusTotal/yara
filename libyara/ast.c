@@ -25,7 +25,7 @@ GNU General Public License for more details.
 
 #define todigit(x)  ((x) >='A'&& (x) <='F')? ((unsigned char) (x - 'A' + 10)) : ((unsigned char) (x - '0'))
 
-RULE* lookup_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace)
+RULE* lookup_rule(RULE_LIST* rules, const char* identifier, NAMESPACE* namespace)
 {
     RULE* rule = rules->head;
     
@@ -43,7 +43,7 @@ RULE* lookup_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace)
     return NULL;
 }
 
-META* lookup_meta(META* meta_list_head, char* identifier)
+META* lookup_meta(META* meta_list_head, const char* identifier)
 {
     META* meta = meta_list_head;
     
@@ -61,7 +61,7 @@ META* lookup_meta(META* meta_list_head, char* identifier)
 }
 
 
-STRING* lookup_string(STRING* string_list_head, char* identifier)
+STRING* lookup_string(STRING* string_list_head, const char* identifier)
 {
     STRING* string = string_list_head;
     
@@ -78,7 +78,7 @@ STRING* lookup_string(STRING* string_list_head, char* identifier)
     return NULL;
 }
 
-TAG* lookup_tag(TAG* tag_list_head, char* identifier)
+TAG* lookup_tag(TAG* tag_list_head, const char* identifier)
 {
     TAG* tag = tag_list_head;
     
@@ -90,6 +90,23 @@ TAG* lookup_tag(TAG* tag_list_head, char* identifier)
         }
             
         tag = tag->next;
+    }
+    
+    return NULL;
+}
+
+EXTERNAL_VARIABLE* lookup_external_variable(EXTERNAL_VARIABLE* ext_var_list_head, const char* identifier)
+{
+    EXTERNAL_VARIABLE* ext_var = ext_var_list_head;
+    
+    while (ext_var != NULL)
+    {
+        if (strcmp(ext_var->identifier, identifier) == 0)
+        {
+            return ext_var;
+        }
+            
+        ext_var = ext_var->next;
     }
     
     return NULL;
@@ -496,7 +513,7 @@ int new_text_string(    YARA_CONTEXT* context,
          }
          else /* compilation failed */
          {
-             strcpy(context->last_error_extra_info, error);
+             strncpy(context->last_error_extra_info, error, sizeof(context->last_error_extra_info));
              result = ERROR_INVALID_REGULAR_EXPRESSION;
          }
      }
@@ -707,12 +724,45 @@ int new_string_identifier(int type, STRING* defined_strings, char* identifier, T
     return result;
 }
 
+
+int new_external_variable(YARA_CONTEXT* context, char* identifier, TERM_EXTERNAL_VARIABLE** term)
+{
+    TERM_EXTERNAL_VARIABLE* new_term = NULL;
+    EXTERNAL_VARIABLE* ext_var;
+    int result = ERROR_SUCCESS;
+    
+    ext_var = lookup_external_variable(context->external_variables, identifier);
+    
+    if (ext_var != NULL) /* external variable should be defined */
+    {    
+        new_term = (TERM_EXTERNAL_VARIABLE*) yr_malloc(sizeof(TERM_EXTERNAL_VARIABLE));
+
+        if (new_term != NULL)
+        {
+            new_term->type = TERM_TYPE_EXTERNAL_VARIABLE;
+            new_term->variable = ext_var;
+        }
+        else
+        {
+            result = ERROR_INSUFICIENT_MEMORY;
+        }
+    }
+    else
+    {
+        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        result = ERROR_UNDEFINED_IDENTIFIER;
+    }
+    
+    *term = new_term;
+    return result;    
+}
+
 /* 
 	free_term(TERM* term)
 
 	Frees a term. If the term depends on other terms they are also freed. Notice that
-	some terms hold references to STRING structures, but these structures are freed
-	by yr_free_rule_list, not by this function.
+	some terms hold references to STRING or EXTERNAL_VARIABLE structures, but these 
+	structures are freed by yr_destroy_context not by this function.
 	
 */
 

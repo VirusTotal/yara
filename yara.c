@@ -15,12 +15,16 @@ GNU General Public License for more details.
 */
 
 #ifndef WIN32
+
 #include <sys/stat.h> 
 #include <dirent.h>
 #include <unistd.h>
+
 #else
+
 #include <windows.h>
 #include "getopt.h"
+
 #endif
 
 #include <stdio.h>
@@ -56,21 +60,34 @@ IDENTIFIER* specified_rules_list = NULL;
 
 void show_help()
 {
-    printf("usage:  yara [ -t tag ] [ -i identifier ] [ -n ] [ -g ] [ -m ] [ -s ] [ -r ] [ -v ] [RULEFILE...] FILE\n");
+    printf("usage:  yara [ OPTION ]... [RULEFILE]... FILE\n");
     printf("options:\n");
-	printf("  -t <tag>          print rules tagged as <tag> and ignore the rest. Can be used more than once.\n");
-    printf("  -i <identifier>   print rules named <identifier> and ignore the rest. Can be used more than once.\n");
-	printf("  -n                print only not satisfied rules (negate).\n");
-	printf("  -g                print tags.\n");
-	printf("  -m                print metadata.\n");
-	printf("  -s                print matching strings.\n");
-    printf("  -r                recursively search directories.\n");
-	printf("  -v                show version information.\n");
+	printf("  -t <tag>                  print rules tagged as <tag> and ignore the rest. Can be used more than once.\n");
+    printf("  -i <identifier>           print rules named <identifier> and ignore the rest. Can be used more than once.\n");
+	printf("  -n                        print only not satisfied rules (negate).\n");
+	printf("  -g                        print tags.\n");
+	printf("  -m                        print metadata.\n");
+	printf("  -s                        print matching strings.\n");
+	printf("  -d <identifier>=<value>   define external variable.\n");
+    printf("  -r                        recursively search directories.\n");
+	printf("  -v                        show version information.\n");
 	printf("\nReport bugs to: <%s>\n", PACKAGE_BUGREPORT);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
+
+int is_numeric(char *str)
+{
+  while(*str)
+  {
+    if(!isdigit(*str++))
+      return 0;
+  }
+
+  return 1;
+}
+
 
 #ifdef WIN32
 
@@ -367,14 +384,16 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
     return 0;
 }
 
-int process_cmd_line(int argc, char const* argv[])
+int process_cmd_line(YARA_CONTEXT* context, int argc, char const* argv[])
 {
+    char* equal_sign;
+    char* value;
 	char c;	
 	TAG* tag;
     IDENTIFIER* identifier;
 	opterr = 0;
  
-	while ((c = getopt (argc, (char**) argv, "rnsvgmt:i:")) != -1)
+	while ((c = getopt (argc, (char**) argv, "rnsvgmt:i:d:")) != -1)
 	{
 		switch (c)
 	    {
@@ -441,6 +460,32 @@ int process_cmd_line(int argc, char const* argv[])
 				}
 
 		        break;
+		        
+		    case 'd':
+		    
+		        equal_sign = strchr(optarg, '=');
+		        
+		        if (equal_sign != NULL)
+		        {
+		            *equal_sign = '\0';
+		            
+		            value = equal_sign + 1;
+		            
+		            if (is_numeric(value))
+		            {		                
+		                yr_set_external_integer(context, optarg, atoi(value));
+		            }
+		            else if (strcmp(value, "true") == 0  || strcmp(value, "false") == 0)
+		            {
+		                yr_set_external_boolean(context, optarg, strcmp(value, "true") == 0);
+		            }
+		            else
+		            {
+		                yr_set_external_string(context, optarg, value);
+		            }	            
+		        }
+
+		        break;
 	
 		    case '?':
 	
@@ -480,8 +525,15 @@ int main(int argc, char const* argv[])
 	FILE* rule_file;
 	TAG* tag;
 	TAG* next_tag;
+	
+	yr_init();
+			
+	context = yr_create_context();
+	
+	if (context == NULL) 
+		return 0;
 		
-	if (!process_cmd_line(argc, argv))
+	if (!process_cmd_line(context, argc, argv))
 	{
 		return 0;
 	}	
@@ -491,13 +543,6 @@ int main(int argc, char const* argv[])
 		show_help();
 		return 0;
 	}
-			
-    yr_init();
-			
-	context = yr_create_context();
-	
-	if (context == NULL) 
-		return 0;
 	
 	context->error_report_function = report_error;	
 			

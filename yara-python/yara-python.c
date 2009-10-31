@@ -264,9 +264,41 @@ static PyTypeObject Rules_Type = {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static PyObject * Rules_new_from_file(FILE* file, const char* filepath, const char* namespace, PyObject* rules, int allow_includes)
+int process_externals(PyObject* externals, YARA_CONTEXT* context)
+{
+    PyObject *key, *value;
+	Py_ssize_t pos = 0;
+	
+	char* identifier = NULL;
+
+    while (PyDict_Next(externals, &pos, &key, &value)) 
+    {
+        identifier = PyString_AsString(key);
+        
+        if (PyInt_Check(value))
+        {
+            yr_set_external_integer(context, identifier, PyInt_AsLong(value));
+        } 
+        else if (PyBool_Check(value))
+        {
+            yr_set_external_boolean(context, identifier, PyObject_IsTrue(value));
+        }
+        else if (PyString_Check(value))
+        {
+            yr_set_external_string(context, identifier, PyString_AsString(value));
+        }
+        else
+        {
+            return FALSE;
+        }				
+    }
+
+    return TRUE;
+}
+
+
+static PyObject * Rules_new_from_file(FILE* file, const char* filepath, PyObject* rules, YARA_CONTEXT* context)
 { 
-    YARA_CONTEXT* context;
     Rules* result;
     
     int  errors;
@@ -277,40 +309,18 @@ static PyObject * Rules_new_from_file(FILE* file, const char* filepath, const ch
     {
         return PyErr_SetFromErrno(PyExc_IOError);
     }
-
-    if (rules == NULL)
-    {
-        context = yr_create_context();
-   
-   		if (context == NULL)
-       		return PyErr_NoMemory();
-    }
-	else
-	{
-		context = ((Rules*)rules)->context;
-	}
-	
-	if (namespace != NULL)
-	{
-		context->current_namespace = yr_create_namespace(context, namespace);
-	}
 	
 	if (filepath != NULL)
 	{
         yr_push_file_name(context, filepath);
 	}
-	
-	context->allow_includes = allow_includes;
-         
+		         
     errors = yr_compile_file(file, context);
        
     if (errors)   /* errors during compilation */
     {
         error_line = context->last_error_line;
         yr_get_error_message(context, error_message, sizeof(error_message));
-
-		if (rules == NULL)
-        	yr_destroy_context(context); 
         
         return PyErr_Format(YaraSyntaxError, "line %d: %s", error_line, error_message);
     }
@@ -331,52 +341,22 @@ static PyObject * Rules_new_from_file(FILE* file, const char* filepath, const ch
 }
 
 
-static PyObject * Rules_new_from_string(const char* string, const char* namespace, PyObject* rules, int allow_includes)
+static PyObject * Rules_new_from_string(const char* string, PyObject* rules, YARA_CONTEXT* context)
 { 
-	YARA_CONTEXT* context;
 	Rules* result;
 
     int  errors;
     int  error_line;
     char error_message[256];
-    
-    if (rules == NULL)
-    {
-        context = yr_create_context();
-   
-   		if (context == NULL)
-       		return PyErr_NoMemory();
-    }
-	else
-	{
-		context = ((Rules*)rules)->context;
-	}
-	
-	if (namespace != NULL)
-	{
-		context->current_namespace = yr_create_namespace(context, namespace);
-	}
-	
-    context->allow_includes = allow_includes;
-	
+    	
     errors = yr_compile_string(string, context);
        
     if (errors)   /* errors during compilation */
     {
         error_line = context->last_error_line;
         yr_get_error_message(context, error_message, sizeof(error_message));
-        
-		if (rules == NULL)
-			yr_destroy_context(context); 
-        
-		if (namespace != NULL)
-		{
-			return PyErr_Format(YaraSyntaxError, "%s: line %d: %s", namespace, error_line, error_message);
-		}
-		else
-		{
-        	return PyErr_Format(YaraSyntaxError, "line %d: %s", error_line, error_message);
-		}	
+              
+        return PyErr_Format(YaraSyntaxError, "line %d: %s", error_line, error_message);	
     }
 
 	if (rules == NULL)
@@ -496,23 +476,40 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
 
 PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
 {
-    static char *kwlist[] = {"filepath", "data", NULL};
+    static char *kwlist[] = {"filepath", "data", "externals", NULL};
     
     char* filepath = NULL;
     char* data = NULL;
-    
+
     int length;
     int result;
     
     PyObject *matches = NULL;
-    Rules *object = (Rules *)self;
+    PyObject *externals = NULL;
+       
+    Rules* object = (Rules*) self;
     
-    if (PyArg_ParseTupleAndKeywords(args, keywords, "|ss#", kwlist, &filepath, &data, &length))
+    if (PyArg_ParseTupleAndKeywords(args, keywords, "|ss#O", kwlist, &filepath, &data, &length, &externals))
     {
-        matches = PyList_New(0);
-        
+        if (externals != NULL)
+        {
+            if (PyDict_Check(externals))
+			{
+				if (!process_externals(externals, object->context))
+			    {
+			        return PyErr_Format(PyExc_TypeError, "external values must be of type integer, boolean or string");
+				}				
+			}
+			else
+			{
+				return PyErr_Format(PyExc_TypeError, "'externals' must be a dictionary");
+			}
+        }
+             
         if (filepath != NULL)
-        {            
+        {    
+            matches = PyList_New(0);
+        
             result = yr_scan_file(filepath, object->context, callback, matches);
 
             if (result != ERROR_SUCCESS)
@@ -534,6 +531,8 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
         }
         else if (data != NULL)
         {
+            matches = PyList_New(0);
+        
             result = yr_scan_mem((unsigned char*) data, (unsigned int) length, object->context, callback, matches);
 
             if (result != ERROR_SUCCESS)
@@ -560,8 +559,9 @@ static PyObject * Rules_getattro(PyObject *self, PyObject *name)
 
 static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keywords)
 { 
-    static char *kwlist[] = {"filepath", "source", "file", "filepaths", "sources", "includes", NULL};
+    static char *kwlist[] = {"filepath", "source", "file", "filepaths", "sources", "includes", "externals", NULL};
     
+    YARA_CONTEXT* context;
     FILE* fh;
     
     PyObject *result = NULL;
@@ -570,6 +570,7 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
 	PyObject *sources_dict = NULL;
 	PyObject *filepaths_dict = NULL;
 	PyObject *includes = NULL;
+	PyObject *externals = NULL;
 	
 	PyObject *key, *value;
 	
@@ -578,30 +579,51 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
     char* filepath = NULL;
     char* source = NULL;
 	char* namespace = NULL;
-	
-    int allow_includes = TRUE;
-    
-    if (PyArg_ParseTupleAndKeywords(args, keywords, "|ssOOOO", kwlist, &filepath, &source, &file, &filepaths_dict, &sources_dict, &includes))
-    {
-        if (includes != NULL)
+	    
+    if (PyArg_ParseTupleAndKeywords(args, keywords, "|ssOOOOO", kwlist, &filepath, &source, &file, &filepaths_dict, &sources_dict, &includes, &externals))
+    {      
+        context = yr_create_context();
+   
+   		if (context == NULL)
+       		return PyErr_NoMemory();
+       		      		
+       	if (includes != NULL)
         {
             if (PyBool_Check(includes))
             {
-                allow_includes = (PyObject_IsTrue(includes) == 1);  // PyObject_IsTrue can return -1 in case of error
+                context->allow_includes = (PyObject_IsTrue(includes) == 1);  // PyObject_IsTrue can return -1 in case of error
             }
             else
             {
-                result = PyErr_Format(PyExc_TypeError, "'includes' param must be of boolean type");
+                yr_destroy_context(context); 
+                return PyErr_Format(PyExc_TypeError, "'includes' param must be of boolean type");
             }
         }
-        
+          	
+        if (externals != NULL)
+        {
+            if (PyDict_Check(externals))
+            {
+                if (!process_externals(externals, context))
+                {
+                    yr_destroy_context(context); 
+                    return PyErr_Format(PyExc_TypeError, "external values must be of type integer, boolean or string");
+                }				
+            }
+            else
+            {
+                yr_destroy_context(context); 
+                return PyErr_Format(PyExc_TypeError, "'externals' must be a dictionary");
+            }
+        }
+     
         if (filepath != NULL)
         {            
             fh = fopen(filepath, "r");
             
             if (fh != NULL)
             {
-                result = Rules_new_from_file(fh, filepath, NULL, NULL, allow_includes);
+                result = Rules_new_from_file(fh, filepath, NULL, context);
                 fclose(fh);
             }
             else
@@ -611,12 +633,12 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
         }
         else if (source != NULL)
         {
-            result = Rules_new_from_string(source, NULL, NULL, allow_includes);
+            result = Rules_new_from_string(source, NULL, context);
         }
         else if (file != NULL)
         {
             fh = PyFile_AsFile(file);   
-            result = Rules_new_from_file(fh, NULL, NULL, NULL, allow_includes);
+            result = Rules_new_from_file(fh, NULL, NULL, context);
         }
         else if (sources_dict != NULL)
         {
@@ -629,7 +651,9 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
 					
 					if (source != NULL && namespace != NULL)
 					{
-						result = Rules_new_from_string(source, namespace, result, allow_includes);
+		                context->current_namespace = yr_create_namespace(context, namespace);
+
+						result = Rules_new_from_string(source, result, context);
 					}
 					else
 					{
@@ -658,7 +682,7 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
             
             			if (fh != NULL)
             			{
-                			result = Rules_new_from_file(fh, filepath, namespace, result, allow_includes);
+                			result = Rules_new_from_file(fh, filepath, result, context);
                 			fclose(fh);
             			}
             			else

@@ -73,8 +73,8 @@ GNU General Public License for more details.
 #define TERM_TYPE_UINT8_AT_OFFSET                    29
 #define TERM_TYPE_UINT16_AT_OFFSET                   30
 #define TERM_TYPE_UINT32_AT_OFFSET                   31
+#define TERM_TYPE_EXTERNAL_VARIABLE                  32
                   
-
 
 typedef struct _TERM_CONST
 {
@@ -129,6 +129,14 @@ typedef struct _TERM_STRING
 } TERM_STRING;
 
 
+typedef struct _TERM_EXTERNAL_VARIABLE
+{ 
+    int                 type;
+    EXTERNAL_VARIABLE*  variable;
+
+} TERM_EXTERNAL_VARIABLE;
+
+
 
 int new_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace, int flags, TAG* tag_list_head, META* meta_list_head, STRING* string_list_head, TERM* condition);
 
@@ -146,7 +154,7 @@ int new_constant(unsigned int constant, TERM_CONST** term);
 
 int new_string_identifier(int type, STRING* defined_strings, char* identifier, TERM_STRING** term);
 
-
+int new_external_variable(YARA_CONTEXT* context, char* identifier, TERM_EXTERNAL_VARIABLE** term);
 
 #endif
 

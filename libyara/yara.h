@@ -76,7 +76,7 @@ GNU General Public License for more details.
 #define ERROR_CONSECUTIVE_SKIPS                 8
 #define ERROR_MISPLACED_WILDCARD_OR_SKIP        9
 #define ERROR_UNDEFINED_STRING                  10
-#define ERROR_UNDEFINED_RULE                    11
+#define ERROR_UNDEFINED_IDENTIFIER              11
 #define ERROR_COULD_NOT_OPEN_FILE               12
 #define ERROR_INVALID_REGULAR_EXPRESSION        13
 #define ERROR_SYNTAX_ERROR                      14
@@ -98,6 +98,11 @@ GNU General Public License for more details.
 #define META_TYPE_INTEGER                       1
 #define META_TYPE_STRING                        2
 #define META_TYPE_BOOLEAN                       3
+
+#define EXTERNAL_VARIABLE_TYPE_INTEGER          1
+#define EXTERNAL_VARIABLE_TYPE_STRING           2
+#define EXTERNAL_VARIABLE_TYPE_BOOLEAN          3
+
       
 
 typedef struct _MATCH
@@ -133,6 +138,22 @@ typedef struct _STRING
     struct _STRING* next;
     
 } STRING;
+
+
+typedef struct _EXTERNAL_VARIABLE
+{
+    int     type;
+    char*   identifier;
+    
+    union {      
+        char*   string;
+        int     integer;
+        int     boolean;
+    };
+    
+    struct _EXTERNAL_VARIABLE* next;
+    
+} EXTERNAL_VARIABLE;
 
 
 typedef struct _TAG
@@ -221,40 +242,43 @@ typedef void (*YARAREPORT)(const char* file_name, int line_number, const char* e
 
 typedef struct _YARA_CONTEXT
 {  
-    int             last_result;
-    YARAREPORT      error_report_function;
-    int             errors;
-    int             last_error;
-    int             last_error_line;
+    int                     last_result;
+    YARAREPORT              error_report_function;
+    int                     errors;
+    int                     last_error;
+    int                     last_error_line;
     
-    RULE_LIST       rule_list;
-    HASH_TABLE      hash_table;
+    RULE_LIST               rule_list;
+    HASH_TABLE              hash_table;
     
-	NAMESPACE*		namespaces;
-	NAMESPACE*		current_namespace;
+	NAMESPACE*		        namespaces;
+	NAMESPACE*		        current_namespace;
+	
+	EXTERNAL_VARIABLE*      external_variables;
 
-	STRING*         current_rule_strings;  
-    int             inside_for;
+	STRING*                 current_rule_strings;  
+    int                     inside_for;
     
-    char*           file_name_stack[MAX_INCLUDE_DEPTH];
-    int             file_name_stack_ptr;
+    char*                   file_name_stack[MAX_INCLUDE_DEPTH];
+    int                     file_name_stack_ptr;
            
-    char            last_error_extra_info[256];
+    char                    last_error_extra_info[256];
 
-    char 		    lex_buf[256];
-    char*		    lex_buf_ptr;
-    unsigned short  lex_buf_len;
+    char 		            lex_buf[256];
+    char*		            lex_buf_ptr;
+    unsigned short          lex_buf_len;
     
-    int             allow_includes;
-    char            include_base_dir[MAX_PATH];
+    int                     allow_includes;
+    char                    include_base_dir[MAX_PATH];
 
 } YARA_CONTEXT;
 
 
-RULE*       lookup_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace);
-STRING*     lookup_string(STRING* string_list_head, char* identifier);
-TAG*        lookup_tag(TAG* tag_list_head, char* identifier);
-META*       lookup_meta(META* meta_list_head, char* identifier);
+RULE*                   lookup_rule(RULE_LIST* rules, const char* identifier, NAMESPACE* namespace);
+STRING*                 lookup_string(STRING* string_list_head, const char* identifier);
+TAG*                    lookup_tag(TAG* tag_list_head, const char* identifier);
+META*                   lookup_meta(META* meta_list_head, const char* identifier);
+EXTERNAL_VARIABLE*      lookup_external_variable(EXTERNAL_VARIABLE* ext_var_list_head, const char* identifier);
 
 void                yr_init();
 
@@ -262,6 +286,10 @@ YARA_CONTEXT*       yr_create_context();
 void                yr_destroy_context(YARA_CONTEXT* context);
 
 NAMESPACE*			yr_create_namespace(YARA_CONTEXT* context, const char* namespace);
+
+int                 yr_set_external_integer(YARA_CONTEXT* context, const char* identifier, int value);
+int                 yr_set_external_boolean(YARA_CONTEXT* context, const char* identifier, int value);
+int                 yr_set_external_string(YARA_CONTEXT* context, const char* identifier, const char* value);
 
 char*               yr_get_current_file_name(YARA_CONTEXT* context);
 

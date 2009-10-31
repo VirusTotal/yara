@@ -192,8 +192,8 @@ TERM* reduce_term(  yyscan_t yyscanner,
 TERM* reduce_constant(  yyscan_t yyscanner,
                         unsigned int constant);
 
-TERM* reduce_rule(  yyscan_t yyscanner,
-                    char* identifier);
+TERM* reduce_identifier( yyscan_t yyscanner,
+                         char* identifier);
 
 int count_strings(TERM_STRING* st);
 
@@ -385,7 +385,7 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                    | _FALSE_                                { $$ = reduce_constant(yyscanner, 0); } 
                    | _IDENTIFIER_                                   
                      { 
-                        $$ = reduce_rule(yyscanner, $1);
+                        $$ = reduce_identifier(yyscanner, $1);
                         
                         if ($$ == NULL)
                         {
@@ -1039,25 +1039,22 @@ TERM* reduce_string_offset( yyscan_t yyscanner,
     return (TERM*) term;
 }
 
-TERM* reduce_rule(  yyscan_t yyscanner, 
-                    char* identifier)
+TERM* reduce_identifier(    yyscan_t yyscanner, 
+                            char* identifier)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
-    TERM_BINARY_OPERATION*  term;
+    TERM* term = NULL;
     RULE* rule;
-    YARA_CONTEXT*   current_context = yyget_extra(yyscanner);
-  
-    rule = lookup_rule(&current_context->rule_list, identifier, context->current_namespace);
-    
+      
+    rule = lookup_rule(&context->rule_list, identifier, context->current_namespace);
+        
     if (rule != NULL)
     {
-        context->last_result = new_binary_operation(TERM_TYPE_RULE, rule->condition, NULL, &term);        
+        context->last_result = new_binary_operation(TERM_TYPE_RULE, rule->condition, NULL, (TERM_BINARY_OPERATION**) &term);        
     }
     else
     {
-        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
-        context->last_result = ERROR_UNDEFINED_RULE;
-        term = NULL;
+        context->last_result = new_external_variable(context, identifier, (TERM_EXTERNAL_VARIABLE**) &term);
     }
     
     yr_free(identifier);

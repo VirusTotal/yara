@@ -94,7 +94,7 @@ rules = yara.compile(sources={
 Notice that both filepaths and sources must be dictionaries with keys of string type.
 The dictionary keys are used as a namespace identifier, allowing to differentiate between
 rules with the same name in different sources, as occurs in the second example with the
-“dummy” name.
+"dummy" name.
 
 The compile method also have an optional boolean parameter named includes which allows
 you to control whether or not the include directive should be accepted in the source files,

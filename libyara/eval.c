@@ -31,6 +31,7 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 	TERM_BINARY_OPERATION* term_binary = ((TERM_BINARY_OPERATION*) term);
 	TERM_TERNARY_OPERATION* term_ternary = ((TERM_TERNARY_OPERATION*) term);
 	TERM_STRING* term_string = ((TERM_STRING*) term);
+	TERM_EXTERNAL_VARIABLE* term_external_variable = ((TERM_EXTERNAL_VARIABLE*) term);
 	
 	MATCH* match;
 	TERM_STRING* t;
@@ -332,7 +333,18 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
         {
             return 0xE0FE0F;
         }
-		
+        
+    case TERM_TYPE_EXTERNAL_VARIABLE:
+    
+        if (term_external_variable->variable->type == EXTERNAL_VARIABLE_TYPE_STRING)
+        {
+            return ( term_external_variable->variable->string != NULL && *term_external_variable->variable->string != '\0');
+        }
+        else
+        {
+            return term_external_variable->variable->integer;
+        }
+     	
 	default:
 		return 0;
 	}

@@ -50,24 +50,24 @@ available_tags=" CXX"
 SHELL="/bin/sh"
 
 # Whether or not to build shared libraries.
-build_libtool_libs=yes
+build_libtool_libs=no
 
 # Whether or not to build static libraries.
 build_old_libs=yes
 
 # Whether or not to add -lc for building shared libraries.
-build_libtool_need_lc=no
+build_libtool_need_lc=yes
 
 # Whether or not to disallow shared libs when runtime libs are static
 allow_libtool_libs_with_static_runtimes=no
 
 # Whether or not to optimize for fast installation.
-fast_install=needless
+fast_install=yes
 
 # The host system.
-host_alias=
-host=i386-apple-darwin10.0.0
-host_os=darwin10.0.0
+host_alias=i686
+host=i686-pc-none
+host_os=none
 
 # The build system.
 build_alias=
@@ -82,13 +82,13 @@ AR="ar"
 AR_FLAGS="cru"
 
 # A C compiler.
-LTCC="gcc"
+LTCC="gcc -m32 -march=i686"
 
 # LTCC compiler flags.
 LTCFLAGS="-g -O2"
 
 # A language-specific compiler.
-CC="gcc"
+CC="gcc -m32 -march=i686"
 
 # Is the compiler the GNU C compiler?
 with_gcc=yes
@@ -97,13 +97,13 @@ with_gcc=yes
 EGREP="/usr/bin/grep -E"
 
 # The linker used to build libraries.
-LD="/usr/libexec/gcc/i686-apple-darwin10/4.2.1/ld"
+LD="/usr/libexec/gcc/i686-apple-darwin10/4.0.1/ld"
 
 # Whether we need hard or soft links.
 LN_S="ln -s"
 
 # A BSD-compatible nm program.
-NM="/usr/bin/nm"
+NM="nm"
 
 # A symbol stripping program
 STRIP="strip"
@@ -125,7 +125,7 @@ objdir=.libs
 
 # How to create reloadable object files.
 reload_flag=" -r"
-reload_cmds="\$LTCC \$LTCFLAGS -nostdlib \${wl}-r -o \$output\$reload_objs"
+reload_cmds="\$LD\$reload_flag -o \$output\$reload_objs"
 
 # How to pass a linker flag through the compiler.
 wl="-Wl,"
@@ -137,13 +137,13 @@ objext="o"
 libext="a"
 
 # Shared library suffix (normally ".so").
-shrext_cmds='`test .$module = .yes && echo .so || echo .dylib`'
+shrext_cmds='.so'
 
 # Executable file suffix (normally "").
 exeext=""
 
 # Additional compiler flags for building library objects.
-pic_flag=" -fno-common -DPIC"
+pic_flag=" -fPIC -DPIC"
 pic_mode=default
 
 # What is the maximum length of a command?
@@ -156,10 +156,10 @@ compiler_c_o="yes"
 need_locks="no"
 
 # Do we need the lib prefix for modules?
-need_lib_prefix=no
+need_lib_prefix=unknown
 
 # Do we need a version for libraries?
-need_version=no
+need_version=unknown
 
 # Whether dlopen is supported.
 dlopen_support=unknown
@@ -186,17 +186,17 @@ whole_archive_flag_spec=""
 thread_safe_flag_spec=""
 
 # Library versioning type.
-version_type=darwin
+version_type=none
 
 # Format of library name prefix.
 libname_spec="lib\$name"
 
 # List of archive names.  First name is the real one, the rest are links.
 # The last name is the one that the linker finds with -lNAME.
-library_names_spec="\${libname}\${release}\${major}\$shared_ext \${libname}\$shared_ext \${libname}\${release}\${versuffix}\$shared_ext"
+library_names_spec=""
 
 # The coded name of the library, if different from the real name.
-soname_spec="\${libname}\${release}\${major}\$shared_ext"
+soname_spec=""
 
 # Commands used to build and install an old-style archive.
 RANLIB="ranlib"
@@ -211,18 +211,18 @@ old_archive_from_new_cmds=""
 old_archive_from_expsyms_cmds=""
 
 # Commands used to build and install a shared archive.
-archive_cmds="\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$libobjs \$deplibs \$compiler_flags -install_name \$rpath/\$soname \$verstring"
-archive_expsym_cmds="sed -e \\\"s,#.*,,\\\" -e \\\"s,^[    ]*,,\\\" -e \\\"s,^\\\\(..*\\\\),_&,\\\" < \$export_symbols > \$output_objdir/\${libname}-symbols.expsym~\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$libobjs \$deplibs \$compiler_flags -install_name \$rpath/\$soname \$verstring~nmedit -s \$output_objdir/\${libname}-symbols.expsym \${lib}"
+archive_cmds=""
+archive_expsym_cmds=""
 postinstall_cmds=""
 postuninstall_cmds=""
 
 # Commands used to build a loadable module (assumed same as above if empty)
-module_cmds="\$CC \$allow_undefined_flag -o \$lib -bundle \$libobjs \$deplibs\$compiler_flags"
-module_expsym_cmds="sed -e \\\"s,#.*,,\\\" -e \\\"s,^[    ]*,,\\\" -e \\\"s,^\\\\(..*\\\\),_&,\\\" < \$export_symbols > \$output_objdir/\${libname}-symbols.expsym~\$CC \$allow_undefined_flag  -o \$lib -bundle \$libobjs \$deplibs\$compiler_flags~nmedit -s \$output_objdir/\${libname}-symbols.expsym \${lib}"
+module_cmds=""
+module_expsym_cmds=""
 
 # Commands to strip libraries.
 old_striplib=""
-striplib="strip -x"
+striplib=""
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
@@ -245,13 +245,13 @@ postdeps=""
 compiler_lib_search_path=""
 
 # Method to check whether dependent libraries are shared objects.
-deplibs_check_method="pass_all"
+deplibs_check_method="unknown"
 
 # Command to use when deplibs_check_method == file_magic.
 file_magic_cmd="\$MAGIC_CMD"
 
 # Flag that allows shared libraries with undefined symbols to be built.
-allow_undefined_flag="\${wl}-flat_namespace \${wl}-undefined \${wl}suppress"
+allow_undefined_flag=""
 
 # Flag that forces no undefined symbols.
 no_undefined_flag=""
@@ -275,13 +275,13 @@ global_symbol_to_c_name_address="sed -n -e 's/^: \\([^ ]*\\) \$/  {\\\"\\1\\\", 
 runpath_var=
 
 # This is the shared library path variable.
-shlibpath_var=DYLD_LIBRARY_PATH
+shlibpath_var=
 
 # Is shlibpath searched before the hard-coded library search path?
-shlibpath_overrides_runpath=yes
+shlibpath_overrides_runpath=unknown
 
 # How to hardcode a shared library path into an executable.
-hardcode_action=immediate
+hardcode_action=unsupported
 
 # Whether we should hardcode library paths into libraries.
 hardcode_into_libs=no
@@ -312,20 +312,20 @@ hardcode_shlibpath_var=unsupported
 
 # Set to yes if building a shared library automatically hardcodes DIR into the library
 # and all subsequent libraries and executables linked against it.
-hardcode_automatic=yes
+hardcode_automatic=no
 
 # Variables whose values should be saved in libtool wrapper scripts and
 # restored at relink time.
-variables_saved_for_relink="PATH DYLD_LIBRARY_PATH  GCC_EXEC_PREFIX COMPILER_PATH LIBRARY_PATH"
+variables_saved_for_relink="PATH   GCC_EXEC_PREFIX COMPILER_PATH LIBRARY_PATH"
 
 # Whether libtool must link a program against all its dependency libraries.
-link_all_deplibs=yes
+link_all_deplibs=unknown
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=" /lib/i686-apple-darwin10/4.2.1/x86_64/ /lib/x86_64/ /usr/lib/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../x86_64/ /lib/i686-apple-darwin10/4.2.1/ /lib/ /usr/lib/i686-apple-darwin10/4.2.1/ /usr/lib/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../  /lib /usr/lib /usr/local/lib"
+sys_lib_search_path_spec=" /lib/i686-apple-darwin10/4.0.1/ /lib/ /usr/lib/i686-apple-darwin10/4.0.1/ /usr/lib/ /usr/lib/gcc/i686-apple-darwin10/4.0.1/ /usr/lib/gcc/i686-apple-darwin10/4.0.1/ /usr/lib/gcc/i686-apple-darwin10/4.0.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.0.1/ /usr/lib/gcc/i686-apple-darwin10/4.0.1/../../../../i686-apple-darwin10/lib/ /usr/lib/gcc/i686-apple-darwin10/4.0.1/../../../i686-apple-darwin10/4.0.1/ /usr/lib/gcc/i686-apple-darwin10/4.0.1/../../../"
 
 # Run-time system search path for libraries
-sys_lib_dlsearch_path_spec="/usr/local/lib /lib /usr/lib"
+sys_lib_dlsearch_path_spec="/lib /usr/lib"
 
 # Fix the shell variable $srcfile for the compiler.
 fix_srcfile_path=""
@@ -7218,7 +7218,7 @@ disable_libs=static
 SHELL="/bin/sh"
 
 # Whether or not to build shared libraries.
-build_libtool_libs=yes
+build_libtool_libs=no
 
 # Whether or not to build static libraries.
 build_old_libs=yes
@@ -7233,9 +7233,9 @@ allow_libtool_libs_with_static_runtimes=no
 fast_install=needless
 
 # The host system.
-host_alias=
-host=i386-apple-darwin10.0.0
-host_os=darwin10.0.0
+host_alias=i686
+host=i686-pc-none
+host_os=none
 
 # The build system.
 build_alias=
@@ -7250,7 +7250,7 @@ AR="ar"
 AR_FLAGS="cru"
 
 # A C compiler.
-LTCC="gcc"
+LTCC="gcc -m32 -march=i686"
 
 # LTCC compiler flags.
 LTCFLAGS="-g -O2"
@@ -7265,13 +7265,13 @@ with_gcc=yes
 EGREP="/usr/bin/grep -E"
 
 # The linker used to build libraries.
-LD="/usr/libexec/gcc/i686-apple-darwin10/4.2.1/ld"
+LD="/usr/libexec/gcc/i686-apple-darwin10/4.0.1/ld"
 
 # Whether we need hard or soft links.
 LN_S="ln -s"
 
 # A BSD-compatible nm program.
-NM="/usr/bin/nm"
+NM="nm"
 
 # A symbol stripping program
 STRIP="strip"
@@ -7293,7 +7293,7 @@ objdir=.libs
 
 # How to create reloadable object files.
 reload_flag=" -r"
-reload_cmds="\$LTCC \$LTCFLAGS -nostdlib \${wl}-r -o \$output\$reload_objs"
+reload_cmds="\$LD\$reload_flag -o \$output\$reload_objs"
 
 # How to pass a linker flag through the compiler.
 wl="-Wl,"
@@ -7305,13 +7305,13 @@ objext="o"
 libext="a"
 
 # Shared library suffix (normally ".so").
-shrext_cmds='`test .$module = .yes && echo .so || echo .dylib`'
+shrext_cmds='.so'
 
 # Executable file suffix (normally "").
 exeext=""
 
 # Additional compiler flags for building library objects.
-pic_flag=" -fno-common -DPIC"
+pic_flag=" -fPIC -DPIC"
 pic_mode=default
 
 # What is the maximum length of a command?
@@ -7324,10 +7324,10 @@ compiler_c_o="yes"
 need_locks="no"
 
 # Do we need the lib prefix for modules?
-need_lib_prefix=no
+need_lib_prefix=unknown
 
 # Do we need a version for libraries?
-need_version=no
+need_version=unknown
 
 # Whether dlopen is supported.
 dlopen_support=unknown
@@ -7354,17 +7354,17 @@ whole_archive_flag_spec=""
 thread_safe_flag_spec=""
 
 # Library versioning type.
-version_type=darwin
+version_type=none
 
 # Format of library name prefix.
 libname_spec="lib\$name"
 
 # List of archive names.  First name is the real one, the rest are links.
 # The last name is the one that the linker finds with -lNAME.
-library_names_spec="\${libname}\${release}\${major}\$shared_ext \${libname}\$shared_ext \${libname}\${release}\${versuffix}\$shared_ext"
+library_names_spec=""
 
 # The coded name of the library, if different from the real name.
-soname_spec="\${libname}\${release}\${major}\$shared_ext"
+soname_spec=""
 
 # Commands used to build and install an old-style archive.
 RANLIB="ranlib"
@@ -7379,18 +7379,18 @@ old_archive_from_new_cmds=""
 old_archive_from_expsyms_cmds=""
 
 # Commands used to build and install a shared archive.
-archive_cmds="\$CC -dynamiclib -single_module \$allow_undefined_flag -o \$lib \$libobjs \$deplibs \$compiler_flags -install_name \$rpath/\$soname \$verstring"
-archive_expsym_cmds="sed -e \\\"s,#.*,,\\\" -e \\\"s,^[    ]*,,\\\" -e \\\"s,^\\\\(..*\\\\),_&,\\\" < \$export_symbols > \$output_objdir/\${libname}-symbols.expsym~\$CC -dynamiclib -single_module \$allow_undefined_flag -o \$lib \$libobjs \$deplibs \$compiler_flags -install_name \$rpath/\$soname \$verstring~nmedit -s \$output_objdir/\${libname}-symbols.expsym \${lib}"
+archive_cmds="\$CC -shared -nostdlib \$predep_objects \$libobjs \$deplibs \$postdep_objects \$compiler_flags -o \$lib"
+archive_expsym_cmds=""
 postinstall_cmds=""
 postuninstall_cmds=""
 
 # Commands used to build a loadable module (assumed same as above if empty)
-module_cmds="\$CC \$allow_undefined_flag -o \$lib -bundle \$libobjs \$deplibs\$compiler_flags"
-module_expsym_cmds="sed -e \\\"s,#.*,,\\\" -e \\\"s,^[    ]*,,\\\" -e \\\"s,^\\\\(..*\\\\),_&,\\\" < \$export_symbols > \$output_objdir/\${libname}-symbols.expsym~\$CC \$allow_undefined_flag  -o \$lib -bundle \$libobjs \$deplibs\$compiler_flags~nmedit -s \$output_objdir/\${libname}-symbols.expsym \${lib}"
+module_cmds=""
+module_expsym_cmds=""
 
 # Commands to strip libraries.
 old_striplib=""
-striplib="strip -x"
+striplib=""
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
@@ -7406,20 +7406,20 @@ predeps=""
 
 # Dependencies to place after the objects being linked to create a
 # shared library.
-postdeps=""
+postdeps="-lstdc++ -lgcc_s.10.5 -lgcc -lSystem"
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path=""
+compiler_lib_search_path="-L/usr/lib/i686-apple-darwin10/4.0.1 -L/usr/lib/gcc/i686-apple-darwin10/4.0.1 -L/usr/lib/gcc/i686-apple-darwin10/4.0.1 -L/usr/lib/gcc/i686-apple-darwin10/4.0.1/../../../i686-apple-darwin10/4.0.1 -L/usr/lib/gcc/i686-apple-darwin10/4.0.1/../../.."
 
 # Method to check whether dependent libraries are shared objects.
-deplibs_check_method="pass_all"
+deplibs_check_method="unknown"
 
 # Command to use when deplibs_check_method == file_magic.
 file_magic_cmd="\$MAGIC_CMD"
 
 # Flag that allows shared libraries with undefined symbols to be built.
-allow_undefined_flag="\${wl}-flat_namespace \${wl}-undefined \${wl}suppress"
+allow_undefined_flag=""
 
 # Flag that forces no undefined symbols.
 no_undefined_flag=""
@@ -7443,13 +7443,13 @@ global_symbol_to_c_name_address="sed -n -e 's/^: \\([^ ]*\\) \$/  {\\\"\\1\\\", 
 runpath_var=
 
 # This is the shared library path variable.
-shlibpath_var=DYLD_LIBRARY_PATH
+shlibpath_var=
 
 # Is shlibpath searched before the hard-coded library search path?
-shlibpath_overrides_runpath=yes
+shlibpath_overrides_runpath=unknown
 
 # How to hardcode a shared library path into an executable.
-hardcode_action=immediate
+hardcode_action=unsupported
 
 # Whether we should hardcode library paths into libraries.
 hardcode_into_libs=no
@@ -7480,20 +7480,20 @@ hardcode_shlibpath_var=unsupported
 
 # Set to yes if building a shared library automatically hardcodes DIR into the library
 # and all subsequent libraries and executables linked against it.
-hardcode_automatic=yes
+hardcode_automatic=no
 
 # Variables whose values should be saved in libtool wrapper scripts and
 # restored at relink time.
-variables_saved_for_relink="PATH DYLD_LIBRARY_PATH  GCC_EXEC_PREFIX COMPILER_PATH LIBRARY_PATH"
+variables_saved_for_relink="PATH   GCC_EXEC_PREFIX COMPILER_PATH LIBRARY_PATH"
 
 # Whether libtool must link a program against all its dependency libraries.
-link_all_deplibs=yes
+link_all_deplibs=unknown
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=" /lib/i686-apple-darwin10/4.2.1/x86_64/ /lib/x86_64/ /usr/lib/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/x86_64/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../x86_64/ /lib/i686-apple-darwin10/4.2.1/ /lib/ /usr/lib/i686-apple-darwin10/4.2.1/ /usr/lib/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../../i686-apple-darwin10/lib/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../i686-apple-darwin10/4.2.1/ /usr/lib/gcc/i686-apple-darwin10/4.2.1/../../../  /lib /usr/lib /usr/local/lib"
+sys_lib_search_path_spec=" /lib/i686-apple-darwin10/4.0.1/ /lib/ /usr/lib/i686-apple-darwin10/4.0.1/ /usr/lib/ /usr/lib/gcc/i686-apple-darwin10/4.0.1/ /usr/lib/gcc/i686-apple-darwin10/4.0.1/ /usr/lib/gcc/i686-apple-darwin10/4.0.1/../../../../i686-apple-darwin10/lib/i686-apple-darwin10/4.0.1/ /usr/lib/gcc/i686-apple-darwin10/4.0.1/../../../../i686-apple-darwin10/lib/ /usr/lib/gcc/i686-apple-darwin10/4.0.1/../../../i686-apple-darwin10/4.0.1/ /usr/lib/gcc/i686-apple-darwin10/4.0.1/../../../"
 
 # Run-time system search path for libraries
-sys_lib_dlsearch_path_spec="/usr/local/lib /lib /usr/lib"
+sys_lib_dlsearch_path_spec="/lib /usr/lib"
 
 # Fix the shell variable $srcfile for the compiler.
 fix_srcfile_path=""
