@@ -60,6 +60,7 @@
 %token _UINT8_
 %token _UINT16_
 %token _UINT32_
+%token _MATCH_
 
 %token _MZ_
 %token _PE_
@@ -135,7 +136,8 @@ TAG* reduce_tags(   yyscan_t yyscanner,
 META* reduce_meta_declaration(  yyscan_t yyscanner,
                                 int type,
                                 char* identifier,
-                                unsigned int integer_value,					SIZED_STRING* string_value);
+                                unsigned int integer_value,					
+                                SIZED_STRING* string_value);
                     
 META* reduce_metas( yyscan_t yyscanner, 
                     META* meta_list_head,
@@ -194,6 +196,11 @@ TERM* reduce_constant(  yyscan_t yyscanner,
 
 TERM* reduce_identifier( yyscan_t yyscanner,
                          char* identifier);
+                         
+TERM* reduce_external_string_operation( yyscan_t yyscanner,
+                                        int type,
+                                        char* identifier,
+                                        SIZED_STRING* string);
 
 int count_strings(TERM_STRING* st);
 
@@ -393,6 +400,16 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                             YYERROR;
                         }
                      }
+                   | _IDENTIFIER_ _MATCH_ _REGEXP_                                   
+                     { 
+                        $$ = reduce_external_string_operation(yyscanner, TERM_TYPE_EXTERNAL_STRING_MATCH, $1, $3);
+                        
+                        if ($$ == NULL)
+                        {
+                            yyerror(yyscanner, NULL);
+                            YYERROR;
+                        }
+                     }
                    | _STRING_IDENTIFIER_                                
                      {  
                         $$ = reduce_string(yyscanner, $1);
@@ -575,23 +592,33 @@ expression : _SIZE_                             { $$ = reduce_filesize(yyscanner
            | _UINT32_ '(' expression ')'        { $$ = reduce_term(yyscanner, TERM_TYPE_UINT32_AT_OFFSET, $3, NULL, NULL); }
            | _STRING_COUNT_                         
              { 
-                    $$ = reduce_string_count(yyscanner, $1); 
-                    
-                    if ($$ == NULL)
-                    {
-                        yyerror(yyscanner, NULL);
-                        YYERROR;
-                    }
+                $$ = reduce_string_count(yyscanner, $1); 
+                
+                if ($$ == NULL)
+                {
+                    yyerror(yyscanner, NULL);
+                    YYERROR;
+                }
              }
            | _STRING_OFFSET_                         
              { 
-                    $$ = reduce_string_offset(yyscanner, $1); 
+                $$ = reduce_string_offset(yyscanner, $1); 
 
-                    if ($$ == NULL)
-                    {
-                        yyerror(yyscanner, NULL);
-                        YYERROR;
-                    }
+                if ($$ == NULL)
+                {
+                    yyerror(yyscanner, NULL);
+                    YYERROR;
+                }
+             }
+           | _IDENTIFIER_
+             {
+                 $$ = reduce_identifier(yyscanner, $1);
+                    
+                 if ($$ == NULL)
+                 {
+                    yyerror(yyscanner, NULL);
+                    YYERROR;
+                 }
              }
            | '(' expression ')'                 { $$ = $2; }
            | expression '+' expression          { $$ = reduce_term(yyscanner, TERM_TYPE_ADD, $1, $3, NULL); }
@@ -1072,6 +1099,76 @@ TERM* reduce_string_enumeration(    yyscan_t yyscanner,
     term->string->flags |= STRING_FLAGS_REFERENCED;
 
     return string_identifier;
+}
+
+TERM* reduce_external_string_operation( yyscan_t yyscanner,
+                                        int type,
+                                        char* identifier,
+                                        SIZED_STRING* string)
+{
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
+    
+    const char *error;
+    int erroffset;
+    
+    EXTERNAL_VARIABLE* ext_var;  
+    TERM_EXTERNAL_STRING_OPERATION* term = NULL;
+    
+    ext_var = lookup_external_variable(context->external_variables, identifier);
+    
+    if (ext_var != NULL)
+    {
+        if (ext_var->type == EXTERNAL_VARIABLE_TYPE_STRING)
+        {    
+            term = (TERM_EXTERNAL_STRING_OPERATION*) yr_malloc(sizeof(TERM_EXTERNAL_STRING_OPERATION));
+            
+            if (term != NULL)
+            {
+                term->type = type;
+                term->ext_var = ext_var;
+                
+                if (type == TERM_TYPE_EXTERNAL_STRING_MATCH)
+                {
+                    term->re.regexp = pcre_compile(string->c_string, 0, &error, &erroffset, NULL); 
+                    
+                    if (term->re.regexp != NULL)  
+                    {
+                        term->re.extra = pcre_study(term->re.regexp, 0, &error);
+                        context->last_result = ERROR_SUCCESS;
+                    }
+                     else /* compilation failed */
+                    {
+                        yr_free(term);
+                        term = NULL;
+                        strncpy(context->last_error_extra_info, error, sizeof(context->last_error_extra_info));
+                        context->last_result = ERROR_INVALID_REGULAR_EXPRESSION;
+                    }
+                }
+                else
+                {
+                }
+                                
+                yr_free(string);             
+            }
+            else
+            {
+                context->last_result = ERROR_INSUFICIENT_MEMORY;
+            }
+         }
+         else
+         {
+            strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+            context->last_result = ERROR_INCORRECT_EXTERNAL_VARIABLE_TYPE;
+         }
+    }
+    else
+    {
+        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        context->last_result = ERROR_UNDEFINED_IDENTIFIER;
+    }
+    
+    return (TERM*) term;
+
 }
 
   

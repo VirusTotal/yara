@@ -18,10 +18,14 @@ GNU General Public License for more details.
 #include "ast.h"
 #include "eval.h"
 
+#include <string.h>
+
 int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 {
 	unsigned int i;
 	unsigned int offs, hi_bound, lo_bound;
+	int ovector[3];
+	int rc;
 	
     STRING* string;
     STRING* saved_anonymous_string;
@@ -32,6 +36,7 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 	TERM_TERNARY_OPERATION* term_ternary = ((TERM_TERNARY_OPERATION*) term);
 	TERM_STRING* term_string = ((TERM_STRING*) term);
 	TERM_EXTERNAL_VARIABLE* term_external_variable = ((TERM_EXTERNAL_VARIABLE*) term);
+	TERM_EXTERNAL_STRING_OPERATION* term_external_string_operation = ((TERM_EXTERNAL_STRING_OPERATION*) term);
 	
 	MATCH* match;
 	TERM_STRING* t;
@@ -216,7 +221,7 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		return evaluate(term_binary->op1, context) == evaluate(term_binary->op2, context);
 	
 	case TERM_TYPE_NOT_EQ:             
-			return evaluate(term_binary->op1, context) != evaluate(term_binary->op2, context);
+		return evaluate(term_binary->op1, context) != evaluate(term_binary->op2, context);
 		
 	case TERM_TYPE_OF:
 			
@@ -344,6 +349,19 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
         {
             return term_external_variable->variable->integer;
         }
+        
+    case TERM_TYPE_EXTERNAL_STRING_MATCH:
+        
+        rc = pcre_exec( term_external_string_operation->re.regexp,
+	  				    term_external_string_operation->re.extra,           
+	  				    term_external_string_operation->ext_var->string,  	 
+	  				    strlen(term_external_string_operation->ext_var->string),          
+	  				    0,                    
+	  				    0,                    
+	  				    ovector,              
+	  				    3);                   
+    
+        return (rc >= 0);
      	
 	default:
 		return 0;

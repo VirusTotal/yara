@@ -41,39 +41,40 @@ GNU General Public License for more details.
 #define MASK_END                                0xEE
 #define MASK_MAX_SKIP                           255
 
-#define TERM_TYPE_CONST                              0           
-#define TERM_TYPE_AND                                1           
-#define TERM_TYPE_OR                                 2           
-#define TERM_TYPE_NOT                                3           
-#define TERM_TYPE_ADD                                4           
-#define TERM_TYPE_SUB                                5           
-#define TERM_TYPE_MUL                                6           
-#define TERM_TYPE_DIV                                7           
-#define TERM_TYPE_GT                                 8           
-#define TERM_TYPE_LT                                 9           
-#define TERM_TYPE_GE                                 10          
-#define TERM_TYPE_LE                                 11          
-#define TERM_TYPE_EQ                                 12  
-#define TERM_TYPE_NOT_EQ                             13              
-#define TERM_TYPE_STRING                             14       
-#define TERM_TYPE_STRING_AT                          15          
-#define TERM_TYPE_STRING_IN_RANGE                    16 
-#define TERM_TYPE_STRING_IN_SECTION_BY_NAME		 	 17     
-#define TERM_TYPE_STRING_IN_SECTION_BY_INDEX		 18      
-#define TERM_TYPE_STRING_COUNT                       19     
-#define TERM_TYPE_STRING_OFFSET                      20      
-#define TERM_TYPE_OF                                 21 
-#define TERM_TYPE_FOR                                22         
-#define TERM_TYPE_FILESIZE              	         23          
-#define TERM_TYPE_ENTRYPOINT						 24			
-#define TERM_TYPE_RULE                               25
-#define TERM_TYPE_INT8_AT_OFFSET                     26
-#define TERM_TYPE_INT16_AT_OFFSET                    27
-#define TERM_TYPE_INT32_AT_OFFSET                    28
-#define TERM_TYPE_UINT8_AT_OFFSET                    29
-#define TERM_TYPE_UINT16_AT_OFFSET                   30
-#define TERM_TYPE_UINT32_AT_OFFSET                   31
-#define TERM_TYPE_EXTERNAL_VARIABLE                  32
+#define TERM_TYPE_CONST                              0   
+#define TERM_TYPE_AND                                2           
+#define TERM_TYPE_OR                                 3           
+#define TERM_TYPE_NOT                                4           
+#define TERM_TYPE_ADD                                5           
+#define TERM_TYPE_SUB                                6           
+#define TERM_TYPE_MUL                                7           
+#define TERM_TYPE_DIV                                8           
+#define TERM_TYPE_GT                                 9           
+#define TERM_TYPE_LT                                 10           
+#define TERM_TYPE_GE                                 11          
+#define TERM_TYPE_LE                                 12          
+#define TERM_TYPE_EQ                                 13  
+#define TERM_TYPE_NOT_EQ                             14              
+#define TERM_TYPE_STRING                             15       
+#define TERM_TYPE_STRING_AT                          16          
+#define TERM_TYPE_STRING_IN_RANGE                    17 
+#define TERM_TYPE_STRING_IN_SECTION_BY_NAME		 	 18     
+#define TERM_TYPE_STRING_IN_SECTION_BY_INDEX		 19      
+#define TERM_TYPE_STRING_COUNT                       20     
+#define TERM_TYPE_STRING_OFFSET                      21      
+#define TERM_TYPE_OF                                 22 
+#define TERM_TYPE_FOR                                23         
+#define TERM_TYPE_FILESIZE              	         24          
+#define TERM_TYPE_ENTRYPOINT						 25			
+#define TERM_TYPE_RULE                               26
+#define TERM_TYPE_INT8_AT_OFFSET                     27
+#define TERM_TYPE_INT16_AT_OFFSET                    28
+#define TERM_TYPE_INT32_AT_OFFSET                    29
+#define TERM_TYPE_UINT8_AT_OFFSET                    30
+#define TERM_TYPE_UINT16_AT_OFFSET                   31
+#define TERM_TYPE_UINT32_AT_OFFSET                   32
+#define TERM_TYPE_EXTERNAL_VARIABLE                  33
+#define TERM_TYPE_EXTERNAL_STRING_MATCH              34
                   
 
 typedef struct _TERM_CONST
@@ -82,6 +83,14 @@ typedef struct _TERM_CONST
 	int         	value;
 
 } TERM_CONST;
+
+
+typedef struct _TERM_STRING_CONST
+{
+	int				type;
+	char*         	value;
+
+} TERM_STRING_CONST;
 
 
 typedef struct _TERM_UNARY_OPERATION
@@ -135,6 +144,15 @@ typedef struct _TERM_EXTERNAL_VARIABLE
     EXTERNAL_VARIABLE*  variable;
 
 } TERM_EXTERNAL_VARIABLE;
+
+
+typedef struct _TERM_EXTERNAL_STRING_OPERATION
+{
+    int                 type;
+    EXTERNAL_VARIABLE*  ext_var;
+    REGEXP              re;
+
+} TERM_EXTERNAL_STRING_OPERATION;
 
 
 

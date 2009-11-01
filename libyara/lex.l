@@ -87,6 +87,7 @@ hexdigit      [a-fA-F0-9]
 "int8"				 				{ return _INT8_;    	}
 "int16"				 				{ return _INT16_;    	}
 "int32"		 		 				{ return _INT32_;    	}
+"match"                             { return _MATCH_;       }
 
 
 

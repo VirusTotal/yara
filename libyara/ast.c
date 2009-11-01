@@ -679,6 +679,7 @@ int new_constant(unsigned int constant, TERM_CONST** term)
     return result;
 }
 
+
 int new_string_identifier(int type, STRING* defined_strings, char* identifier, TERM_STRING** term)
 {
     TERM_STRING* new_term = NULL;
@@ -757,6 +758,7 @@ int new_external_variable(YARA_CONTEXT* context, char* identifier, TERM_EXTERNAL
     return result;    
 }
 
+
 /* 
 	free_term(TERM* term)
 
@@ -801,6 +803,12 @@ void free_term(TERM* term)
 	    
 	    yr_free(((TERM_STRING*)term)->section_name);
 		break;
+		
+    case TERM_TYPE_EXTERNAL_STRING_MATCH:
+
+        pcre_free(((TERM_EXTERNAL_STRING_OPERATION*)term)->re.regexp);
+        pcre_free(((TERM_EXTERNAL_STRING_OPERATION*)term)->re.extra);
+        break;
                     
     case TERM_TYPE_AND:          
     case TERM_TYPE_OR:

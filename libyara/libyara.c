@@ -570,6 +570,9 @@ char* yr_get_error_message(YARA_CONTEXT* context, char* buffer, int buffer_size)
 		case ERROR_UNREFERENCED_STRING:
 		    snprintf(buffer, buffer_size, "unreferenced string \"%s\"", context->last_error_extra_info);
 			break;
+	    case ERROR_INCORRECT_EXTERNAL_VARIABLE_TYPE:
+		    snprintf(buffer, buffer_size, "external variable \"%s\" has an incorrect type for this operation", context->last_error_extra_info);
+			break;
 		case ERROR_MISPLACED_ANONYMOUS_STRING:
 	        snprintf(buffer, buffer_size, "wrong use of anonymous string");
 		    break;		

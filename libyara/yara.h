@@ -94,6 +94,7 @@ GNU General Public License for more details.
 #define ERROR_INVALID_ARGUMENT                  26
 #define ERROR_DUPLICATE_META_IDENTIFIER         27
 #define ERROR_INCLUDES_CIRCULAR_REFERENCE       28
+#define ERROR_INCORRECT_EXTERNAL_VARIABLE_TYPE  29
 
 #define META_TYPE_INTEGER                       1
 #define META_TYPE_STRING                        2
