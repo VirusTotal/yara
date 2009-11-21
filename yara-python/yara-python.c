@@ -92,8 +92,10 @@ typedef struct {
 
 } Match;
 
-static PyObject * Match_Repr(PyObject *self);
+static PyObject * Match_repr(PyObject *self);
 static PyObject * Match_getattro(PyObject *self, PyObject *name);
+static int Match_compare(PyObject *self, PyObject *other);
+static long Match_hash(PyObject *self);
 static void Match_dealloc(PyObject *self);
 
 
@@ -123,12 +125,12 @@ static PyTypeObject Match_Type = {
     0,                          /*tp_print*/
     0,                          /*tp_getattr*/
     0,                          /*tp_setattr*/
-    0,                          /*tp_compare*/
-    Match_Repr,                 /*tp_repr*/
+	Match_compare,              /*tp_compare*/
+    Match_repr,                 /*tp_repr*/
     0,                          /*tp_as_number*/
     0,                          /*tp_as_sequence*/
     0,                          /*tp_as_mapping*/
-    0,                          /*tp_hash */
+    Match_hash,                 /*tp_hash */
     0,                          /*tp_call*/
     0,                          /*tp_str*/
     Match_getattro,     /*tp_getattro*/
@@ -187,7 +189,7 @@ static void Match_dealloc(PyObject *self)
     PyObject_Del(self);
 }
 
-static PyObject * Match_Repr(PyObject *self)
+static PyObject * Match_repr(PyObject *self)
 { 
     Match *object = (Match *) self;
 	Py_INCREF(object->rule);
@@ -197,6 +199,39 @@ static PyObject * Match_Repr(PyObject *self)
 static PyObject * Match_getattro(PyObject *self, PyObject *name)
 {
     return PyObject_GenericGetAttr(self, name); 
+}
+
+static int Match_compare(PyObject *self, PyObject *other)
+{
+	int result;
+	
+	Match *a = (Match *) self;
+	Match *b = (Match *) other;
+	
+	if(PyObject_TypeCheck(other, &Match_Type))
+	{
+		result = PyObject_Compare(a->rule, b->rule);
+		
+		if (result == 0)
+		{
+			result = PyObject_Compare(a->namespace, b->namespace);
+		}
+	}
+	else
+	{
+		result = -1;
+		PyErr_BadArgument();
+	}
+	
+	return result;
+	
+}
+
+static long Match_hash(PyObject *self)
+{
+	Match *match = (Match *) self;
+	
+	return PyObject_Hash(match->rule) + PyObject_Hash(match->namespace);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
