@@ -190,7 +190,7 @@ static void Match_dealloc(PyObject *self)
 static PyObject * Match_Repr(PyObject *self)
 { 
     Match *object = (Match *) self;
-    
+	Py_INCREF(object->rule);
     return object->rule;
 }
 
@@ -533,7 +533,7 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
         {
             matches = PyList_New(0);
         
-            result = yr_scan_mem((unsigned char*) data, (unsigned int) length, object->context, callback, matches);
+			result = yr_scan_mem((unsigned char*) data, (unsigned int) length, object->context, callback, matches);
 
             if (result != ERROR_SUCCESS)
             {
