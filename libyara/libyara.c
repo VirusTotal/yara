@@ -195,7 +195,7 @@ NAMESPACE* yr_create_namespace(YARA_CONTEXT* context, const char* namespace)
 	
 	if (ns != NULL)
 	{
-		ns->name = strdup(namespace);
+		ns->name = yr_strdup(namespace);
 		ns->global_rules_satisfied = FALSE;
 		ns->next = context->namespaces;
 		context->namespaces = ns;
