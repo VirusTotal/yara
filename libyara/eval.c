@@ -362,6 +362,10 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 	  				    3);                   
     
         return (rc >= 0);
+
+	case TERM_TYPE_EXTERNAL_STRING_CONTAINS:
+		
+		return (strstr(term_external_string_operation->ext_var->string, term_external_string_operation->string) != NULL);
      	
 	default:
 		return 0;

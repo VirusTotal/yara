@@ -245,12 +245,15 @@ typedef struct {
 
 
 static PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords);
+static PyObject * Rules_weight(PyObject *self);
 static PyObject * Rules_getattro(PyObject *self, PyObject *name);
 static void Rules_dealloc(PyObject *self);
+
 
 static PyMethodDef Rules_methods[] = 
 {
   {"match", (PyCFunction) Rules_match, METH_VARARGS | METH_KEYWORDS},
+  {"weight", (PyCFunction) Rules_weight, METH_NOARGS},
   {NULL, NULL},
 };
 
@@ -588,6 +591,13 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
 static PyObject * Rules_getattro(PyObject *self, PyObject *name)
 {
     return PyObject_GenericGetAttr(self, name); 
+}
+
+static PyObject * Rules_weight(PyObject *self)
+{
+    Rules* object = (Rules*) self;
+    
+    return PyInt_FromLong(yr_calculate_rules_weight(object->context));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -809,6 +809,10 @@ void free_term(TERM* term)
         pcre_free(((TERM_EXTERNAL_STRING_OPERATION*)term)->re.regexp);
         pcre_free(((TERM_EXTERNAL_STRING_OPERATION*)term)->re.extra);
         break;
+
+	case TERM_TYPE_EXTERNAL_STRING_CONTAINS:
+		yr_free(((TERM_EXTERNAL_STRING_OPERATION*)term)->string);
+		break;
                     
     case TERM_TYPE_AND:          
     case TERM_TYPE_OR:

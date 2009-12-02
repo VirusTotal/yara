@@ -21,6 +21,7 @@ GNU General Public License for more details.
 #include "mem.h"
 #include "eval.h"
 #include "lex.h"
+#include "weight.h"
 #include "yara.h"
 
 #ifdef WIN32
@@ -586,5 +587,46 @@ char* yr_get_error_message(YARA_CONTEXT* context, char* buffer, int buffer_size)
 	}
 	
     return buffer;
+}
+
+
+int yr_calculate_rules_weight(YARA_CONTEXT* context)
+{
+    STRING_LIST_ENTRY* entry;
+
+    int i,j, count, weight = 0;
+
+    if (!context->hash_table.populated)
+    {        
+        populate_hash_table(&context->hash_table, &context->rule_list);
+    }
+    
+    for (i = 0; i < 256; i++)
+    {
+        for (j = 0; j < 256; j++)
+        {
+            entry = context->hash_table.hashed_strings[i][j];
+        
+            count = 0;
+        
+            while (entry != NULL)
+            {         
+                weight += string_weight(entry->string, 1);               
+                entry = entry->next;
+                count++;
+            }
+            
+            weight += count;
+        }
+    }
+    
+    entry = context->hash_table.non_hashed_strings;
+    
+    while (entry != NULL)
+    {
+        weight += string_weight(entry->string, 4);
+    }
+    
+    return weight;
 }
 

@@ -81,21 +81,22 @@
      _UINT16_ = 297,
      _UINT32_ = 298,
      _MATCH_ = 299,
-     _MZ_ = 300,
-     _PE_ = 301,
-     _DLL_ = 302,
-     _TRUE_ = 303,
-     _FALSE_ = 304,
-     _OR_ = 305,
-     _AND_ = 306,
-     _NOT_ = 307,
-     _IS_ = 308,
-     _NEQ_ = 309,
-     _EQ_ = 310,
-     _GE_ = 311,
-     _GT_ = 312,
-     _LE_ = 313,
-     _LT_ = 314
+     _CONTAINS_ = 300,
+     _MZ_ = 301,
+     _PE_ = 302,
+     _DLL_ = 303,
+     _TRUE_ = 304,
+     _FALSE_ = 305,
+     _OR_ = 306,
+     _AND_ = 307,
+     _NOT_ = 308,
+     _IS_ = 309,
+     _NEQ_ = 310,
+     _EQ_ = 311,
+     _GE_ = 312,
+     _GT_ = 313,
+     _LE_ = 314,
+     _LT_ = 315
    };
 #endif
 /* Tokens.  */
@@ -141,28 +142,29 @@
 #define _UINT16_ 297
 #define _UINT32_ 298
 #define _MATCH_ 299
-#define _MZ_ 300
-#define _PE_ 301
-#define _DLL_ 302
-#define _TRUE_ 303
-#define _FALSE_ 304
-#define _OR_ 305
-#define _AND_ 306
-#define _NOT_ 307
-#define _IS_ 308
-#define _NEQ_ 309
-#define _EQ_ 310
-#define _GE_ 311
-#define _GT_ 312
-#define _LE_ 313
-#define _LT_ 314
+#define _CONTAINS_ 300
+#define _MZ_ 301
+#define _PE_ 302
+#define _DLL_ 303
+#define _TRUE_ 304
+#define _FALSE_ 305
+#define _OR_ 306
+#define _AND_ 307
+#define _NOT_ 308
+#define _IS_ 309
+#define _NEQ_ 310
+#define _EQ_ 311
+#define _GE_ 312
+#define _GT_ 313
+#define _LE_ 314
+#define _LT_ 315
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 104 "grammar.y"
+#line 105 "grammar.y"
 {
     
     void*           sized_string;
@@ -175,7 +177,7 @@ typedef union YYSTYPE
 
 }
 /* Line 1529 of yacc.c.  */
-#line 179 "grammar.h"
+#line 181 "grammar.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

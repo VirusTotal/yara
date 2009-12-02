@@ -88,6 +88,7 @@ hexdigit      [a-fA-F0-9]
 "int16"				 				{ return _INT16_;    	}
 "int32"		 		 				{ return _INT32_;    	}
 "match"                             { return _MATCH_;       }
+"contains"                          { return _CONTAINS_;    }
 
 
 

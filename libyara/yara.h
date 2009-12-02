@@ -286,6 +286,8 @@ void                yr_init();
 YARA_CONTEXT*       yr_create_context();
 void                yr_destroy_context(YARA_CONTEXT* context);
 
+int                 yr_calculate_rules_weight(YARA_CONTEXT* context);
+
 NAMESPACE*			yr_create_namespace(YARA_CONTEXT* context, const char* namespace);
 
 int                 yr_set_external_integer(YARA_CONTEXT* context, const char* identifier, int value);

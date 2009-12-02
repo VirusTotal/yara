@@ -75,6 +75,7 @@ GNU General Public License for more details.
 #define TERM_TYPE_UINT32_AT_OFFSET                   32
 #define TERM_TYPE_EXTERNAL_VARIABLE                  33
 #define TERM_TYPE_EXTERNAL_STRING_MATCH              34
+#define TERM_TYPE_EXTERNAL_STRING_CONTAINS           35
                   
 
 typedef struct _TERM_CONST
@@ -150,7 +151,11 @@ typedef struct _TERM_EXTERNAL_STRING_OPERATION
 {
     int                 type;
     EXTERNAL_VARIABLE*  ext_var;
-    REGEXP              re;
+   
+    union {
+    	REGEXP              re;
+		char*				string;
+	};
 
 } TERM_EXTERNAL_STRING_OPERATION;
 

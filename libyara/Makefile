@@ -31,8 +31,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-build_triplet = i386-apple-darwin10.0.0
-host_triplet = i686-pc-none
+build_triplet = i386-apple-darwin10.2.0
+host_triplet = i386-apple-darwin10.2.0
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(include_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -59,7 +59,7 @@ libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libyara_la_LIBADD =
 am_libyara_la_OBJECTS = grammar.lo lex.lo ast.lo scan.lo filemap.lo \
-	eval.lo pefile.lo xtoi.lo mem.lo libyara.lo
+	eval.lo pefile.lo xtoi.lo mem.lo weight.lo libyara.lo
 libyara_la_OBJECTS = $(am_libyara_la_OBJECTS)
 DEFAULT_INCLUDES = -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -104,44 +104,46 @@ AUTOCONF = ${SHELL} /Users/plusvic/Projects/yara/libyara/missing --run autoconf
 AUTOHEADER = ${SHELL} /Users/plusvic/Projects/yara/libyara/missing --run autoheader
 AUTOMAKE = ${SHELL} /Users/plusvic/Projects/yara/libyara/missing --run automake-1.10
 AWK = awk
-CC = gcc -m32 -march=i686
+CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
-CPP = gcc -m32 -march=i686 -E
+CPP = gcc -E
 CPPFLAGS = 
-CXX = g++
-CXXCPP = g++ -E
-CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -g -O2
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
-ECHO = /bin/echo
+DSYMUTIL = dsymutil
+DUMPBIN = 
 ECHO_C = \c
 ECHO_N = 
 ECHO_T = 
 EGREP = /usr/bin/grep -E
 EXEEXT = 
-F77 = 
-FFLAGS = 
+FGREP = /usr/bin/grep -F
 GREP = /usr/bin/grep
 INSTALL = /usr/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-LDFLAGS = -m32
+LD = /usr/libexec/gcc/i686-apple-darwin10/4.0.1/ld
+LDFLAGS = 
 LEX = flex
 LEXLIB = -lfl
 LEX_OUTPUT_ROOT = lex.yy
 LIBOBJS = 
 LIBS = -lpcre -lpcre -lpcre -lpcre 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
+LIPO = lipo
 LN_S = ln -s
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /Users/plusvic/Projects/yara/libyara/missing --run makeinfo
 MKDIR_P = ./install-sh -c -d
+NM = /usr/bin/nm
+NMEDIT = nmedit
 OBJEXT = o
+OTOOL = otool
+OTOOL64 = :
 PACKAGE = libyara
 PACKAGE_BUGREPORT = vmalvarez@hispasec.com
 PACKAGE_NAME = libyara
@@ -150,6 +152,7 @@ PACKAGE_TARNAME = libyara
 PACKAGE_VERSION = 1.3
 PATH_SEPARATOR = :
 RANLIB = ranlib
+SED = /usr/bin/sed
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = strip
@@ -160,19 +163,18 @@ abs_builddir = /Users/plusvic/Projects/yara/libyara
 abs_srcdir = /Users/plusvic/Projects/yara/libyara
 abs_top_builddir = /Users/plusvic/Projects/yara/libyara
 abs_top_srcdir = /Users/plusvic/Projects/yara/libyara
-ac_ct_CC = 
-ac_ct_CXX = g++
-ac_ct_F77 = 
+ac_ct_CC = gcc
+ac_ct_DUMPBIN = 
 am__include = include
 am__leading_dot = .
 am__quote = 
 am__tar = ${AMTAR} chof - "$$tardir"
 am__untar = ${AMTAR} xf -
 bindir = ${exec_prefix}/bin
-build = i386-apple-darwin10.0.0
+build = i386-apple-darwin10.2.0
 build_alias = 
 build_cpu = i386
-build_os = darwin10.0.0
+build_os = darwin10.2.0
 build_vendor = apple
 builddir = .
 datadir = ${datarootdir}
@@ -180,11 +182,11 @@ datarootdir = ${prefix}/share
 docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
-host = i686-pc-none
-host_alias = i686
-host_cpu = i686
-host_os = none
-host_vendor = pc
+host = i386-apple-darwin10.2.0
+host_alias = 
+host_cpu = i386
+host_os = darwin10.2.0
+host_vendor = apple
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
@@ -193,6 +195,7 @@ libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
 localstatedir = ${prefix}/var
+lt_ECHO = /bin/echo
 mandir = ${datarootdir}/man
 mkdir_p = $(top_builddir)/./install-sh -c -d
 oldincludedir = /usr/include
@@ -220,6 +223,7 @@ libyara_la_SOURCES = \
   pefile.c \
   xtoi.c \
   mem.c \
+  weight.c \
   libyara.c \
   lex.h \
   ast.h \
@@ -229,7 +233,8 @@ libyara_la_SOURCES = \
   xtoi.h \
   pefile.h \
   sizedstr.h \
-  mem.h
+  mem.h \
+  weight.h
 
 libyara_la_LIBDADD = /usr/local/lib/libpcre.la
 all: config.h
@@ -337,6 +342,7 @@ include ./$(DEPDIR)/libyara.Plo
 include ./$(DEPDIR)/mem.Plo
 include ./$(DEPDIR)/pefile.Plo
 include ./$(DEPDIR)/scan.Plo
+include ./$(DEPDIR)/weight.Plo
 include ./$(DEPDIR)/xtoi.Plo
 
 .c.o:
