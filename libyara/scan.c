@@ -207,7 +207,7 @@ int hex_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pa
             }
     
 		}
-		else if ((buffer[b] & mask[m]) == pattern[p])
+		else if ((buffer[b] & mask[m]) == pattern[p])  // TODO: This is the most common case, maybe could be checked first for speed optimization
 		{
 			b++;
 			m++;
@@ -651,7 +651,7 @@ int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
 		    {
                 match = string->matches;
                 
-                while(match != NULL)
+                while(match != NULL) // TODO: Possible optimization: is enough to check the only last match instead of all the previous ones?
                 {
                     if (match->offset + match->length > current_file_offset)
                     {
