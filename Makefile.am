@@ -4,6 +4,7 @@ SUBDIRS = libyara
 DIST_SUBDIRS = libyara
 
 AM_CPPFLAGS = -I$(srcdir)/libyara
+ACLOCAL_AMFLAGS=-I m4
 
 bin_PROGRAMS = yara
 yara_SOURCES = yara.c

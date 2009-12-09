@@ -35,7 +35,8 @@ subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(top_srcdir)/configure AUTHORS COPYING ChangeLog INSTALL NEWS \
-	depcomp install-sh missing
+	config.guess config.sub depcomp install-sh ltmain.sh missing \
+	ylwrap
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -172,6 +173,7 @@ top_srcdir = @top_srcdir@
 SUBDIRS = libyara
 DIST_SUBDIRS = libyara
 AM_CPPFLAGS = -I$(srcdir)/libyara
+ACLOCAL_AMFLAGS = -I m4
 yara_SOURCES = yara.c
 yara_LDADD = libyara/.libs/libyara.a
 

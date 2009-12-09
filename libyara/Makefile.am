@@ -1,5 +1,7 @@
 AM_YFLAGS = -d
 
+ACLOCAL_AMFLAGS=-I m4
+
 include_HEADERS = yara.h
 
 lib_LTLIBRARIES = libyara.la

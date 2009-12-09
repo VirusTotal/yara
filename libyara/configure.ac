@@ -4,7 +4,7 @@ AC_INIT([libyara], [1.3], [vmalvarez@hispasec.com])
 		AC_PROG_YACC
 		AM_PROG_LEX
 		AC_PROG_LIBTOOL
-		AC_PROG_RANLIB
+		AC_CONFIG_MACRO_DIR([m4])
 		AC_CHECK_LIB(pcre,pcre_compile,,AC_MSG_ERROR(please install pcre library))
 		AC_CHECK_LIB(pcre,pcre_exec,,AC_MSG_ERROR(please install pcre library))
 		AC_CHECK_LIB(pcre,pcre_get_substring,,AC_MSG_ERROR(please install pcre library))
