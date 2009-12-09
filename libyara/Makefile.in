@@ -40,7 +40,8 @@ DIST_COMMON = README $(am__configure_deps) $(include_HEADERS) \
 	$(srcdir)/../ltmain.sh $(srcdir)/../missing \
 	$(srcdir)/../ylwrap $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
-	$(top_srcdir)/configure grammar.c grammar.h lex.c ltmain.sh
+	$(top_srcdir)/configure grammar.c grammar.h lex.c ltmain.sh \
+	missing ylwrap
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
