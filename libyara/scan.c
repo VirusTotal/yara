@@ -207,7 +207,7 @@ int hex_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pa
             }
     
 		}
-		else if ((buffer[b] & mask[m]) == pattern[p])  // TODO: This is the most common case, maybe could be checked first for speed optimization
+		else if ((buffer[b] & mask[m]) == pattern[p])  
 		{
 			b++;
 			m++;
@@ -627,7 +627,6 @@ int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
                                 int negative_size)
 {
 	int len;
-    int overlap;
 	
 	STRING* string;
 	MATCH* match;
@@ -645,25 +644,8 @@ int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
 		        for the string 'aa' and the file contains 'aaaaaa'. 
 		     */
 		     
-            overlap = FALSE;
-		     
-		    if (string->flags && STRING_FLAGS_FOUND)
-		    {
-                match = string->matches;
-                
-                while(match != NULL) // TODO: Possible optimization: is enough to check the only last match instead of all the previous ones?
-                {
-                    if (match->offset + match->length > current_file_offset)
-                    {
-                        overlap = TRUE;
-                        break;
-                    }
-                    
-                    match = match->next;
-                }
-		    }
-		    
-		    if (!overlap)
+		    if ((string->matches == NULL) ||
+		        (string->matches->offset + string->matches->length <= current_file_offset))
 		    {		    
     			string->flags |= STRING_FLAGS_FOUND;
     			match = (MATCH*) yr_malloc(sizeof(MATCH));
