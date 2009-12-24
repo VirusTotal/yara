@@ -39,7 +39,45 @@ GNU General Public License for more details.
 #endif
 
 
+static char lowercase[256];
+static char isalphanum[256];
+
 /* Function implementations */
+
+#if defined(WIN32) && defined(SSE42)
+
+int compare(char* str1, char* str2, int len)
+{ 
+	int result;
+
+    __asm 
+    {
+		mov esi, str1
+		mov edi, str2
+        mov eax, len
+
+        xor edx, edx
+        xor ebx, ebx
+
+        mov edx, 16
+
+    _loop:
+        MovDqU    xmm0, [esi + ebx]
+        PcmpEstrI xmm0, [edi + ebx], 111000b
+        add ebx, ecx
+        cmp ecx, 16
+        jb _exit_loop
+        sub eax, 16
+        jmp _loop
+
+    _exit_loop:
+        mov result, ebx
+    }
+
+	return result;
+}
+
+#else
 
 inline int compare(char* str1, char* str2, int len)
 {
@@ -55,13 +93,15 @@ inline int compare(char* str1, char* str2, int len)
 	return ((i==len) ? i : 0);
 }
 
+#endif
+
 inline int icompare(char* str1, char* str2, int len)
 {
 	char* s1 = str1;
 	char* s2 = str2;
 	int i = 0;
 	
-	while (i < len && tolower(*s1++) == tolower(*s2++)) 
+	while (i < len && lowercase[*s1++] == lowercase[*s2++]) 
 	{
 	    i++;
     }
@@ -92,7 +132,7 @@ inline int wicompare(char* str1, char* str2, int len)
 	char* s2 = str2;
 	int i = 0;
 
-	while (i < len && tolower(*s1) == tolower(*s2)) 
+	while (i < len && lowercase[*s1] == lowercase[*s2]) 
 	{
 		s1++;
 		s2+=2;
@@ -286,8 +326,14 @@ int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)
 	STRING* string;
 	STRING_LIST_ENTRY* entry;
 	unsigned char x,y;
-	int next;
     char hashable;
+    int i, next;
+    
+    for (i = 0; i < 256; i++)
+    {
+        lowercase[i] = tolower(i);
+        isalphanum[i] = isalnum(i);
+    }
 		
 	rule = rule_list->head;
 	
@@ -320,7 +366,7 @@ int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)
 					y = string->string[1];
 				}
 			
-                hashable = isalnum(x) && isalnum(y);
+                hashable = isalphanum[x] && isalphanum[y];
 			}
 			else
 			{
@@ -343,8 +389,8 @@ int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)
 			       for each posible combination 
 			    */
 			    
-				x = tolower(x);
-				y = tolower(y);
+				x = lowercase[x];
+				y = lowercase[y];
 				
 				/* both lowercases */
 				
@@ -385,7 +431,7 @@ int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)
         		
         		/* X lowercase Y uppercase */
     			    
-                x = tolower(x);
+                x = lowercase[x];
  
     			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
 				
@@ -503,7 +549,7 @@ void clear_marks(RULE_LIST* rule_list)
 	}
 }
 
-int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string, int flags, int negative_size)
+inline int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string, int flags, int negative_size)
 {
 	int match;
 	int i, len;
@@ -521,7 +567,7 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 		{
 			i = 0;
 			
-			while(i < buffer_size - 1 && isalnum(buffer[i]) && buffer[i + 1] == 0)
+			while(i < buffer_size - 1 && isalphanum[buffer[i]] && buffer[i + 1] == 0)
 			{
 				i += 2;
 			}
@@ -566,7 +612,7 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 		{
 			if (negative_size >= 2)
 			{
-				is_wide_char = (buffer[-1] == 0 && isalnum((char) (buffer[-2])));
+				is_wide_char = (buffer[-1] == 0 && isalphanum[(char) (buffer[-2])]);
 				
 				if (is_wide_char)
 				{
@@ -576,7 +622,7 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 			
 			if (string->length * 2 < buffer_size - 1)
 			{
-				is_wide_char = (isalnum((char) (buffer[string->length * 2])) && buffer[string->length * 2 + 1] == 0);
+				is_wide_char = (isalphanum[(char) (buffer[string->length * 2])] && buffer[string->length * 2 + 1] == 0);
 				
 				if (is_wide_char)
 				{
@@ -602,11 +648,11 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 				
 		if (match > 0 && IS_FULL_WORD(string))
 		{
-			if (negative_size >= 1 && isalnum((char) (buffer[-1])))
+			if (negative_size >= 1 && isalphanum[(char) (buffer[-1])])
 			{
 				match = 0;
 			}
-			else if (string->length < buffer_size && isalnum((char) (buffer[string->length])))
+			else if (string->length < buffer_size && isalphanum[(char) (buffer[string->length])])
 			{
 				match = 0;
 			}
@@ -619,7 +665,7 @@ int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string
 }
 
 
-int find_matches_for_strings(   STRING_LIST_ENTRY* first_string, 
+inline int find_matches_for_strings(   STRING_LIST_ENTRY* first_string, 
                                 unsigned char* buffer, 
                                 unsigned int buffer_size,
                                 unsigned int current_file_offset,
