@@ -44,38 +44,80 @@ static char isalphanum[256];
 
 /* Function implementations */
 
-#if defined(WIN32) && defined(SSE42)
+#ifdef SSE42
 
-int compare(char* str1, char* str2, int len)
-{ 
-	int result;
+#include <nmmintrin.h>
 
-    __asm 
-    {
-		mov esi, str1
-		mov edi, str2
-        mov eax, len
+static char sdeltas[16] = {0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20};
+static char szeroes[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static char sranges[2]  = {0x61, 0x7a};
 
-        xor edx, edx
-        xor ebx, ebx
+int inline compare(char* str1, char* str2, int len)
+{
+	__m128i s1, s2;
 
-        mov edx, 16
+	int c, result = 0;
 
-    _loop:
-        MovDqU    xmm0, [esi + ebx]
-        PcmpEstrI xmm0, [edi + ebx], 111000b
-        add ebx, ecx
-        cmp ecx, 16
-        jb _exit_loop
-        sub eax, 16
-        jmp _loop
+	do {
 
-    _exit_loop:
-        mov result, ebx
-    }
+    	s1 = _mm_lddqu_si128((const __m128i*) str1);
+		s2 = _mm_lddqu_si128((const __m128i*) str2);
 
-	return result;
+		c = _mm_cmpestri(s1, len - result, s2, 16, _SIDD_CMP_EQUAL_EACH | _SIDD_MASKED_NEGATIVE_POLARITY);
+
+		str1 += 16;
+		str2 += 16;
+
+		result += c;
+
+	} while(c == 16);
+	
+	return ((result==len) ? result : 0);
 }
+
+int inline icompare(char* str1, char* str2, int len)
+{ 
+	__m128i s1, s2, ranges, zeroes, deltas, mask;
+
+	int c, result = 0;
+
+	ranges = _mm_loadu_si128((const __m128i*) sranges);  
+	deltas = _mm_loadu_si128((const __m128i*) sdeltas);
+	zeroes = _mm_loadu_si128((const __m128i*) szeroes);
+
+	do {
+
+	    s1 = _mm_lddqu_si128((const __m128i*) str1);
+		s2 = _mm_lddqu_si128((const __m128i*) str2);
+
+ 		// producing mask, 0xFF for lowercases, 0x00 for the rest
+		mask = _mm_cmpestrm(ranges, 2, s1, len - result, _SIDD_CMP_RANGES | _SIDD_UNIT_MASK);       
+        
+		// producing mask, 0x20 for lowercases, 0x00 for the rest
+		mask = _mm_blendv_epi8(zeroes, deltas, mask); 
+
+		s1 = _mm_sub_epi8(s1, mask);  
+
+ 		// producing mask, 0xFF for lowercases, 0x00 for the rest
+		mask = _mm_cmpestrm(ranges, 2, s2, 16, _SIDD_CMP_RANGES | _SIDD_UNIT_MASK);       
+        
+		// producing mask, 0x20 for lowercases, 0x00 for the rest
+		mask = _mm_blendv_epi8(zeroes, deltas, mask);
+
+		s2 = _mm_sub_epi8(s2, mask); 
+
+		c = _mm_cmpestri(s1, len - result, s2, 16, _SIDD_CMP_EQUAL_EACH | _SIDD_MASKED_NEGATIVE_POLARITY);
+
+		str1 += 16;
+		str2 += 16;
+
+		result += c;
+
+	} while(c == 16);
+	
+	return ((result==len) ? result : 0);
+}
+
 
 #else
 
@@ -93,8 +135,6 @@ inline int compare(char* str1, char* str2, int len)
 	return ((i==len) ? i : 0);
 }
 
-#endif
-
 inline int icompare(char* str1, char* str2, int len)
 {
 	char* s1 = str1;
@@ -108,6 +148,10 @@ inline int icompare(char* str1, char* str2, int len)
 	
 	return ((i==len) ? i : 0);
 }
+
+#endif
+
+
 
 
 inline int wcompare(char* str1, char* str2, int len)
