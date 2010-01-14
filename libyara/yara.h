@@ -230,7 +230,8 @@ typedef struct _RULE_LIST
 
 typedef struct _HASH_TABLE
 {
-    STRING_LIST_ENTRY*  hashed_strings[256][256];
+    STRING_LIST_ENTRY*  hashed_strings_2b[256][256];
+    STRING_LIST_ENTRY*  hashed_strings_1b[256];
     STRING_LIST_ENTRY*  non_hashed_strings;
     int                 populated;
         

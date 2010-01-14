@@ -55,7 +55,8 @@ YARA_CONTEXT* yr_create_context()
     context->allow_includes = TRUE;
 	context->current_namespace = yr_create_namespace(context, "default");
     
-    memset(context->hash_table.hashed_strings, 0, sizeof(context->hash_table.hashed_strings));
+    memset(context->hash_table.hashed_strings_2b, 0, sizeof(context->hash_table.hashed_strings_2b));
+    memset(context->hash_table.hashed_strings_1b, 0, sizeof(context->hash_table.hashed_strings_1b));
     
     return context;
     
@@ -602,10 +603,10 @@ int yr_calculate_rules_weight(YARA_CONTEXT* context)
     }
     
     for (i = 0; i < 256; i++)
-    {
+    {   
         for (j = 0; j < 256; j++)
         {
-            entry = context->hash_table.hashed_strings[i][j];
+            entry = context->hash_table.hashed_strings_2b[i][j];
         
             count = 0;
         
@@ -617,6 +618,17 @@ int yr_calculate_rules_weight(YARA_CONTEXT* context)
             }
             
             weight += count;
+        }
+        
+        entry = context->hash_table.hashed_strings_1b[i];
+    
+        count = 0;
+    
+        while (entry != NULL)
+        {         
+            weight += string_weight(entry->string, 2);               
+            entry = entry->next;
+            count++;
         }
     }
     

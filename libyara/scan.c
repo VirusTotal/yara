@@ -370,7 +370,8 @@ int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)
 	STRING* string;
 	STRING_LIST_ENTRY* entry;
 	unsigned char x,y;
-    char hashable;
+    char hashable_2b;
+    char hashable_1b;
     int i, next;
     
     for (i = 0; i < 256; i++)
@@ -410,93 +411,136 @@ int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)
 					y = string->string[1];
 				}
 			
-                hashable = isalphanum[x] && isalphanum[y];
+                hashable_2b = isalphanum[x] && isalphanum[y];
+                hashable_1b = isalphanum[x];
 			}
 			else
 			{
 			    x = string->string[0];
 				y = string->string[1];
 				
-				hashable = TRUE;
+				hashable_2b = TRUE;
+				hashable_1b = TRUE;
 				
 			} /* if (string->flags & STRING_FLAGS_REGEXP) */
 			
 			if (string->flags & STRING_FLAGS_HEXADECIMAL)
 			{
-			    hashable = (string->mask[0] == 0xFF) && (string->mask[1] == 0xFF);
+			    hashable_2b = (string->mask[0] == 0xFF) && (string->mask[1] == 0xFF);
+			    hashable_1b = (string->mask[0] == 0xFF);
 			}
 			
-			if (hashable && string->flags & STRING_FLAGS_NO_CASE)
+			if (hashable_1b && string->flags & STRING_FLAGS_NO_CASE)
 			{	
-			    /* 
-			       if string is case-insensitive add an entry in the hash table
-			       for each posible combination 
-			    */
+			    if (hashable_2b)
+			    {	    
+    			    /* 
+    			       if string is case-insensitive add an entry in the hash table
+    			       for each posible combination 
+    			    */
 			    
-				x = lowercase[x];
-				y = lowercase[y];
+    				x = lowercase[x];
+    				y = lowercase[y];
 				
-				/* both lowercases */
+    				/* both lowercases */
 				
-				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+    				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
 				
-				if (entry == NULL)
-    			    return ERROR_INSUFICIENT_MEMORY;
+    				if (entry == NULL)
+        			    return ERROR_INSUFICIENT_MEMORY;
     			    
-    			entry->next = hash_table->hashed_strings[x][y];
-    			entry->string = string;
-    			hash_table->hashed_strings[x][y] = entry;
+        			entry->next = hash_table->hashed_strings_2b[x][y];
+        			entry->string = string;
+        			hash_table->hashed_strings_2b[x][y] = entry;
     			
-    			/* X uppercase Y lowercase */
+        			/* X uppercase Y lowercase */
     			
-                x = toupper(x);
+                    x = toupper(x);
 				
-				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+    				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
 				
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
+    				if (entry == NULL)
+                        return ERROR_INSUFICIENT_MEMORY;
     			    
-        		entry->next = hash_table->hashed_strings[x][y];  
-        		entry->string = string;
-        		hash_table->hashed_strings[x][y] = entry; 
+            		entry->next = hash_table->hashed_strings_2b[x][y];  
+            		entry->string = string;
+            		hash_table->hashed_strings_2b[x][y] = entry; 
         		
-        		/* both uppercases */			    
+            		/* both uppercases */			    
     			
-    			y = toupper(y);  
+        			y = toupper(y);  
     			    
-    			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+        			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
 				
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
+    				if (entry == NULL)
+                        return ERROR_INSUFICIENT_MEMORY;
     			    
-        		entry->next = hash_table->hashed_strings[x][y];
-        		entry->string = string;
-        		hash_table->hashed_strings[x][y] = entry;
+            		entry->next = hash_table->hashed_strings_2b[x][y];
+            		entry->string = string;
+            		hash_table->hashed_strings_2b[x][y] = entry;
         		
-        		/* X lowercase Y uppercase */
+            		/* X lowercase Y uppercase */
     			    
-                x = lowercase[x];
+                    x = lowercase[x];
  
-    			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+        			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
 				
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
+    				if (entry == NULL)
+                        return ERROR_INSUFICIENT_MEMORY;
     			    
-        		entry->next = hash_table->hashed_strings[x][y]; 
-        		entry->string = string; 
-        		hash_table->hashed_strings[x][y] = entry;               
+            		entry->next = hash_table->hashed_strings_2b[x][y]; 
+            		entry->string = string; 
+            		hash_table->hashed_strings_2b[x][y] = entry;
+        		}
+        		else
+        		{
+        		    /* lowercase */
+    
+        		    x = lowercase[x];
+		
+    				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+				
+    				if (entry == NULL)
+        			    return ERROR_INSUFICIENT_MEMORY;
+    			    
+        			entry->next = hash_table->hashed_strings_1b[x];
+        			entry->string = string;
+        			hash_table->hashed_strings_1b[x] = entry;
+        			
+        			/* uppercase */
+    
+        		    x = toupper(x);
+		
+    				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+				
+    				if (entry == NULL)
+        			    return ERROR_INSUFICIENT_MEMORY;
+    			    
+        			entry->next = hash_table->hashed_strings_1b[x];
+        			entry->string = string;
+        			hash_table->hashed_strings_1b[x] = entry;
+        		}               
     							
 			}
-			else if (hashable)
+			else if (hashable_1b)
 			{
-				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
+			    entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+			
 				if (entry == NULL)
                     return ERROR_INSUFICIENT_MEMORY;
-    			    
-        		entry->next = hash_table->hashed_strings[x][y]; 
-        		entry->string = string; 
-        		hash_table->hashed_strings[x][y] = entry;    
+                
+                entry->string = string; 
+			    
+			    if (hashable_2b)
+			    {   
+            		entry->next = hash_table->hashed_strings_2b[x][y]; 		
+            		hash_table->hashed_strings_2b[x][y] = entry;
+        		}
+        		else
+        		{    			    
+        			entry->next = hash_table->hashed_strings_1b[x];
+        			hash_table->hashed_strings_1b[x] = entry;
+        		}  
 			}
 			else /* non hashable */
 			{
@@ -531,9 +575,20 @@ void clear_hash_table(HASH_TABLE* hash_table)
 
 	for (i = 0; i < 256; i++)
 	{
+	    entry = hash_table->hashed_strings_1b[i];
+			
+		while (entry != NULL)
+		{
+			next_entry = entry->next;
+			yr_free(entry);
+			entry = next_entry;
+		}
+		
+		hash_table->hashed_strings_1b[i] = NULL;
+	    
 		for (j = 0; j < 256; j++)
 		{
-			entry = hash_table->hashed_strings[i][j];
+			entry = hash_table->hashed_strings_2b[i][j];
 				
 			while (entry != NULL)
 			{
@@ -542,7 +597,7 @@ void clear_hash_table(HASH_TABLE* hash_table)
 				entry = next_entry;
 			}
 			
-			hash_table->hashed_strings[i][j] = NULL;
+			hash_table->hashed_strings_2b[i][j] = NULL;
 		}
 	}
 	
@@ -773,9 +828,20 @@ int find_matches(	unsigned char first_char,
 	
     int result = ERROR_SUCCESS;
     	
-    if (context->hash_table.hashed_strings[first_char][second_char] != NULL)
+    if (context->hash_table.hashed_strings_2b[first_char][second_char] != NULL)
     {
-        result =  find_matches_for_strings( context->hash_table.hashed_strings[first_char][second_char], 
+        result =  find_matches_for_strings( context->hash_table.hashed_strings_2b[first_char][second_char], 
+                                            buffer, 
+                                            buffer_size, 
+                                            current_file_offset, 
+                                            flags, 
+                                            negative_size);
+    }
+    
+    
+    if (result == ERROR_SUCCESS && context->hash_table.hashed_strings_1b[first_char] != NULL)
+    {
+        result =  find_matches_for_strings( context->hash_table.hashed_strings_1b[first_char], 
                                             buffer, 
                                             buffer_size, 
                                             current_file_offset, 
