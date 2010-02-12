@@ -78,7 +78,7 @@ Scan all files in the
 directory and its subdirectories. Rules are read from standard input.
 .RE
 .PP
-$ yara -d mybool=true myint=5 mystring="my string" /foo/bar/rules bazfile  
+$ yara -d mybool=true -d myint=5 -d mystring="my string" /foo/bar/rules bazfile  
 .RS
 .PP
 Defines three external variables 
