@@ -694,6 +694,14 @@ int new_string_identifier(int type, STRING* defined_strings, char* identifier, T
         {
     		/* the string has been used in an expression, mark it as referenced */
     		string->flags |= STRING_FLAGS_REFERENCED;  
+
+			/* in this cases we can't not use the fast-matching mode */
+			if (type == TERM_TYPE_STRING_COUNT ||
+			    type == TERM_TYPE_STRING_AT ||
+			    type == TERM_TYPE_STRING_IN_RANGE)
+			{
+				string->flags &= ~STRING_FLAGS_FAST_MATCH;
+			}
 	
             new_term = (TERM_STRING*) yr_malloc(sizeof(TERM_STRING));
 

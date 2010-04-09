@@ -780,7 +780,13 @@ inline int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
    	while (entry != NULL)
 	{	
 		string = entry->string;
-
+		entry = entry->next;
+		
+		if ((string->flags & STRING_FLAGS_FOUND) && (string->flags & STRING_FLAGS_FAST_MATCH))
+		{
+			continue;
+		}
+		
 		if ( (string->flags & flags) && (len = string_match(buffer, buffer_size, string, flags, negative_size)))
 		{
 		    /*  
@@ -807,9 +813,7 @@ inline int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
     				return ERROR_INSUFICIENT_MEMORY;
     			}
 		    }
-		}
-		
-		entry = entry->next;
+		}		
 	}
 	
     return ERROR_SUCCESS;

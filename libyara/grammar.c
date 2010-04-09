@@ -239,7 +239,7 @@ typedef union YYSTYPE
     void*           meta;
 
 }
-/* Line 193 of yacc.c.  */
+/* Line 187 of yacc.c.  */
 #line 244 "grammar.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -2741,6 +2741,11 @@ STRING* reduce_string_declaration(  yyscan_t yyscanner,
     }
     
     yr_free(str);
+
+    if (context->fast_match)
+	{
+		string->flags |= STRING_FLAGS_FAST_MATCH;
+	}
             
     return string;
 }

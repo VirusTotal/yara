@@ -54,6 +54,7 @@ YARA_CONTEXT* yr_create_context()
 	context->external_variables = NULL;
     context->allow_includes = TRUE;
 	context->current_namespace = yr_create_namespace(context, "default");
+	context->fast_match = FALSE;
     
     memset(context->hash_table.hashed_strings_2b, 0, sizeof(context->hash_table.hashed_strings_2b));
     memset(context->hash_table.hashed_strings_1b, 0, sizeof(context->hash_table.hashed_strings_1b));

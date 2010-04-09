@@ -735,6 +735,11 @@ STRING* reduce_string_declaration(  yyscan_t yyscanner,
     }
     
     yr_free(str);
+
+    if (context->fast_match)
+	{
+		string->flags |= STRING_FLAGS_FAST_MATCH;
+	}
             
     return string;
 }

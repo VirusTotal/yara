@@ -3,7 +3,7 @@
 yara \- find files matching patterns and rules written in a special-purpose language.
 .SH SYNOPSIS
 .B yara 
-[ OPTION ]... [RULEFILE]... FILE
+[OPTION]... [RULEFILE]... FILE
 .SH DESCRIPTION
 .I Yara 
 scans the given 
@@ -43,6 +43,9 @@ Define an external variable. This option can be used multiple times.
 .TP
 .B \-r 
 Scan files in directories recursively.
+.TP
+.B \-f 
+Speeds up scanning by searching only for the first occurrence of each pattern.
 .TP
 .B \-v 
 Show version information.

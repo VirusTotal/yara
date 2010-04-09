@@ -48,6 +48,7 @@ GNU General Public License for more details.
 #define STRING_FLAGS_REGEXP                     0x40
 #define STRING_FLAGS_FULL_WORD                  0x80
 #define STRING_FLAGS_ANONYMOUS                  0x100
+#define STRING_FLAGS_FAST_MATCH                 0x200
 
 #define IS_HEX(x)       (((x)->flags) & STRING_FLAGS_HEXADECIMAL)
 #define IS_NO_CASE(x)   (((x)->flags) & STRING_FLAGS_NO_CASE)
@@ -272,6 +273,8 @@ typedef struct _YARA_CONTEXT
     
     int                     allow_includes;
     char                    include_base_dir[MAX_PATH];
+
+	int						fast_match;
 
 } YARA_CONTEXT;
 

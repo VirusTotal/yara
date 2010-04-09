@@ -44,6 +44,7 @@ int show_strings = FALSE;
 int show_meta = FALSE;
 int negate = FALSE;
 
+
 TAG* specified_tags_list = NULL;
 
 typedef struct _IDENTIFIER
@@ -60,7 +61,7 @@ IDENTIFIER* specified_rules_list = NULL;
 
 void show_help()
 {
-    printf("usage:  yara [ OPTION ]... [RULEFILE]... FILE\n");
+    printf("usage:  yara [OPTION]... [RULEFILE]... FILE\n");
     printf("options:\n");
 	printf("  -t <tag>                  print rules tagged as <tag> and ignore the rest. Can be used more than once.\n");
     printf("  -i <identifier>           print rules named <identifier> and ignore the rest. Can be used more than once.\n");
@@ -70,6 +71,7 @@ void show_help()
 	printf("  -s                        print matching strings.\n");
 	printf("  -d <identifier>=<value>   define external variable.\n");
     printf("  -r                        recursively search directories.\n");
+	printf("  -f                        fast matching mode.\n");
 	printf("  -v                        show version information.\n");
 	printf("\nReport bugs to: <%s>\n", PACKAGE_BUGREPORT);
 }
@@ -393,7 +395,7 @@ int process_cmd_line(YARA_CONTEXT* context, int argc, char const* argv[])
     IDENTIFIER* identifier;
 	opterr = 0;
  
-	while ((c = getopt (argc, (char**) argv, "rnsvgmt:i:d:")) != -1)
+	while ((c = getopt (argc, (char**) argv, "rnsvgmt:i:d:f")) != -1)
 	{
 		switch (c)
 	    {
@@ -419,6 +421,10 @@ int process_cmd_line(YARA_CONTEXT* context, int argc, char const* argv[])
 			
 			case 'n':
     			negate = TRUE;
+    			break;
+
+			case 'f':
+    			context->fast_match = TRUE;
     			break;
 		
 		   	case 't':
