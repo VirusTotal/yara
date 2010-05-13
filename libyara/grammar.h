@@ -80,7 +80,7 @@
      _UINT8_ = 296,
      _UINT16_ = 297,
      _UINT32_ = 298,
-     _MATCH_ = 299,
+     _MATCHES_ = 299,
      _CONTAINS_ = 300,
      _MZ_ = 301,
      _PE_ = 302,
@@ -141,7 +141,7 @@
 #define _UINT8_ 296
 #define _UINT16_ 297
 #define _UINT32_ 298
-#define _MATCH_ 299
+#define _MATCHES_ 299
 #define _CONTAINS_ 300
 #define _MZ_ 301
 #define _PE_ 302

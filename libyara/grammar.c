@@ -107,7 +107,7 @@
      _UINT8_ = 296,
      _UINT16_ = 297,
      _UINT32_ = 298,
-     _MATCH_ = 299,
+     _MATCHES_ = 299,
      _CONTAINS_ = 300,
      _MZ_ = 301,
      _PE_ = 302,
@@ -168,7 +168,7 @@
 #define _UINT8_ 296
 #define _UINT16_ 297
 #define _UINT32_ 298
-#define _MATCH_ 299
+#define _MATCHES_ 299
 #define _CONTAINS_ 300
 #define _MZ_ 301
 #define _PE_ 302
@@ -697,9 +697,9 @@ static const char *const yytname[] =
   "_WIDE_", "_NOCASE_", "_FULLWORD_", "_AT_", "_SIZE_", "_ENTRYPOINT_",
   "_ALL_", "_ANY_", "_RVA_", "_OFFSET_", "_FILE_", "_IN_", "_OF_", "_FOR_",
   "_THEM_", "_SECTION_", "_INT8_", "_INT16_", "_INT32_", "_UINT8_",
-  "_UINT16_", "_UINT32_", "_MATCH_", "_CONTAINS_", "_MZ_", "_PE_", "_DLL_",
-  "_TRUE_", "_FALSE_", "_OR_", "_AND_", "_NOT_", "_IS_", "_NEQ_", "_EQ_",
-  "_GE_", "_GT_", "_LE_", "_LT_", "'+'", "'-'", "'*'", "'\\\\'",
+  "_UINT16_", "_UINT32_", "_MATCHES_", "_CONTAINS_", "_MZ_", "_PE_",
+  "_DLL_", "_TRUE_", "_FALSE_", "_OR_", "_AND_", "_NOT_", "_IS_", "_NEQ_",
+  "_EQ_", "_GE_", "_GT_", "_LE_", "_LT_", "'+'", "'-'", "'*'", "'\\\\'",
   "'include'", "'{'", "'}'", "':'", "'='", "'('", "'.'", "')'", "','",
   "$accept", "rules", "rule", "meta", "strings", "condition",
   "rule_modifiers", "rule_modifier", "tags", "tag_list",

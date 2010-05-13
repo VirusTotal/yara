@@ -60,7 +60,7 @@
 %token _UINT8_
 %token _UINT16_
 %token _UINT32_
-%token _MATCH_
+%token _MATCHES_
 %token _CONTAINS_
 
 %token _MZ_
@@ -401,7 +401,7 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                             YYERROR;
                         }
                      }
-                   | _IDENTIFIER_ _MATCH_ _REGEXP_                                   
+                   | _IDENTIFIER_ _MATCHES_ _REGEXP_                                   
                      { 
                         $$ = reduce_external_string_operation(yyscanner, TERM_TYPE_EXTERNAL_STRING_MATCH, $1, $3);
                         
