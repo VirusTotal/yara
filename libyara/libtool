@@ -1,7 +1,7 @@
 #! /bin/sh
 
 # libtool - Provide generalized library-building support services.
-# Generated automatically by config.status (libyara) 1.3
+# Generated automatically by config.status (libyara) 1.4
 # Libtool was configured on host hydra.local:
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 #
@@ -56,13 +56,13 @@ fast_install=needless
 
 # The host system.
 host_alias=
-host=i386-apple-darwin10.2.0
-host_os=darwin10.2.0
+host=i386-apple-darwin10.3.0
+host_os=darwin10.3.0
 
 # The build system.
 build_alias=
-build=i386-apple-darwin10.2.0
-build_os=darwin10.2.0
+build=i386-apple-darwin10.3.0
+build_os=darwin10.3.0
 
 # A sed program that does not truncate output.
 SED="/usr/bin/sed"
@@ -231,7 +231,7 @@ finish_eval=""
 hardcode_into_libs=no
 
 # Compile-time system search path for libraries.
-sys_lib_search_path_spec="/Developer/usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64 /usr/lib/gcc/i686-apple-darwin10/4.2.1/x86_64 /usr/lib/i686-apple-darwin10/4.2.1 /usr/lib /Developer/usr/lib/gcc /Developer/usr/lib/i686-apple-darwin10/4.2.1 /Developer/usr/lib /usr/local/lib"
+sys_lib_search_path_spec="/usr/lib/i686-apple-darwin10/4.0.1 /usr/lib /Developer/usr/lib/gcc/i686-apple-darwin10/4.0.1 /Developer/usr/lib/gcc /usr/lib/gcc/i686-apple-darwin10/4.0.1 /Developer/usr/lib/i686-apple-darwin10/4.0.1 /Developer/usr/lib /usr/local/lib"
 
 # Run-time system search path for libraries.
 sys_lib_dlsearch_path_spec="/usr/local/lib /lib /usr/lib"
@@ -251,7 +251,7 @@ striplib="strip -x"
 
 
 # The linker used to build libraries.
-LD="/Developer/usr/libexec/gcc/i686-apple-darwin10/4.2.1/ld"
+LD="/Developer/usr/libexec/gcc/i686-apple-darwin10/4.0.1/ld"
 
 # Commands used to build an old-style archive.
 old_archive_cmds="\$AR \$AR_FLAGS \$oldlib\$oldobjs~\$RANLIB \$oldlib"

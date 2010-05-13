@@ -35,10 +35,16 @@ version 1.2.1 (14/04/2009)
 	* BUGFIX: Memory leak
 	* BUGFIX: Access violation on xxcompare functions
 	
-version 1.3
+version 1.3 (26/10/2009)
     	* added a C-like "include" directive
    	* added support for multi-sources compilation in yara-python
     	* added support for metadata declaration in rules
     	* BUGFIX: Incorrect handling of single-line comments at the end of the file
     	* BUGFIX: Integer underflow when scanning files of size <= 2 bytes
+
+version 1.4
+	* added external variables
+	* scan speed improvements
+	* added fast scan mode
+	* BUGFIX: crash in 64-bits Windows
 	

@@ -1,4 +1,4 @@
-AC_INIT([yara], [1.3], [vmalvarez@hispasec.com])
+AC_INIT([yara], [1.4], [vmalvarez@hispasec.com])
         AM_INIT_AUTOMAKE([-Wall -Werror])
         AC_PROG_CC
 		AC_CONFIG_MACRO_DIR([m4])
