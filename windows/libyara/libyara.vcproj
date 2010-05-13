@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="9,00"
 	Name="libyara"
 	ProjectGUID="{935C964E-48EF-49CE-954D-9FC96FF6E961}"
 	RootNamespace="libyara"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -184,6 +185,10 @@
 			</File>
 			<File
 				RelativePath="..\..\libyara\scan.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\libyara\weight.c"
 				>
 			</File>
 			<File
