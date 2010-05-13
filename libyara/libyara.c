@@ -220,9 +220,7 @@ int yr_set_external_integer(YARA_CONTEXT* context, const char* identifier, int v
         
         if (ext_var != NULL)
         {
-            ext_var->type = EXTERNAL_VARIABLE_TYPE_INTEGER;
-            ext_var->identifier = yr_strdup(identifier);
-        
+            ext_var->identifier = yr_strdup(identifier);      
             ext_var->next = context->external_variables;
             context->external_variables = ext_var;
         }
@@ -232,6 +230,7 @@ int yr_set_external_integer(YARA_CONTEXT* context, const char* identifier, int v
         }
     }
 
+    ext_var->type = EXTERNAL_VARIABLE_TYPE_INTEGER;
     ext_var->integer = value;
     
     return ERROR_SUCCESS;
@@ -249,10 +248,8 @@ int yr_set_external_boolean(YARA_CONTEXT* context, const char* identifier, int v
         ext_var = (EXTERNAL_VARIABLE*) yr_malloc(sizeof(EXTERNAL_VARIABLE));
         
         if (ext_var != NULL)
-        {
-            ext_var->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
-            ext_var->identifier = yr_strdup(identifier);
-        
+        {      
+            ext_var->identifier = yr_strdup(identifier);      
             ext_var->next = context->external_variables;
             context->external_variables = ext_var;
         }
@@ -262,6 +259,7 @@ int yr_set_external_boolean(YARA_CONTEXT* context, const char* identifier, int v
         }
     }
 
+	ext_var->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
     ext_var->boolean = value;
     
     return ERROR_SUCCESS;
@@ -280,9 +278,7 @@ int yr_set_external_string(YARA_CONTEXT* context, const char* identifier, const 
         
         if (ext_var != NULL)
         {
-            ext_var->type = EXTERNAL_VARIABLE_TYPE_STRING;
-            ext_var->identifier = yr_strdup(identifier);
-        
+            ext_var->identifier = yr_strdup(identifier);    
             ext_var->next = context->external_variables;
             context->external_variables = ext_var;
         }
@@ -292,6 +288,7 @@ int yr_set_external_string(YARA_CONTEXT* context, const char* identifier, const 
         }
     }
 
+	ext_var->type = EXTERNAL_VARIABLE_TYPE_STRING;
     ext_var->string = (char*) value;
     
     return ERROR_SUCCESS;
