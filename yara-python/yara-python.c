@@ -727,6 +727,8 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
             
             			if (fh != NULL)
             			{
+            			    context->current_namespace = yr_create_namespace(context, namespace);
+            			
                 			result = Rules_new_from_file(fh, filepath, result, context);
                 			fclose(fh);
             			}
