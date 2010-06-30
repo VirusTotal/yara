@@ -71,11 +71,25 @@ In some circumstances you may need to explicitly convert the instance of      \n
 if str(matches[0]) == 'SomeRuleName':                                         \n\
     ...                                                                       \n\
                                                                               \n\
-The \"Match\" class have another two attributes: \"tags\" and \"strings\". The\n\
-\"tags\" attribute is a list of strings containing the tags associated to the \n\
-rule. The \"strings\" attribute is a dictionary whose values are those strings\n\
-within the data that made the YARA rule match, and the keys are the offset    \n\
-where the associated string was found.                                        \n";
+The \"Match\" class have the following attributes:                            \n\
+	                                                                          \n\
+- rule	                                                                      \n\
+- namespace	                                                                  \n\
+- meta	                                                                      \n\
+- tags	                                                                      \n\
+- string	                                                                  \n\
+	                                                                          \n\
+The \"rule\" and \"namespace\" attributes are the names of the matching rule and\n\
+its namespace respectively.                                                   \n\
+	                                                                          \n\
+The \"meta\" attribute is a dictionary containing the metadata associated to the\n\
+rule, where the metadata identifiers are the dictionary keys.                 \n\
+	                                                                          \n\
+The \"tags\" attribute is a list of strings containing the tags associated to \n\
+the rule.                                                                     \n\
+	                                                                          \n\
+The \"strings\" attribute is a list of tuples containig the offset, identifier,\n\
+and content of the matching strings.                                          \n";
 
 
 
@@ -434,7 +448,7 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
         return 0;
        
     taglist = PyList_New(0);
-    stringlist = PyDict_New();
+    stringlist = PyList_New(0);
     metalist = PyDict_New();
     
     if (taglist == NULL || stringlist == NULL || metalist == NULL)
@@ -484,15 +498,16 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
 
             while (m != NULL)
             {
-                PyDict_SetItem( stringlist,
-                                PyInt_FromLong(m->offset),
-                                PyString_FromStringAndSize((char*) buffer + m->offset, m->length));
+                PyList_Append(  stringlist, 
+                                Py_BuildValue("(i,s,s#)", m->offset, string->identifier, (char*) buffer + m->offset, m->length));
                 m = m->next;
             }
         }
 
         string = string->next;
     }
+    
+    PyList_Sort(stringlist);
        
     match = Match_NEW(rule->identifier, rule->namespace->name, taglist, metalist, stringlist);
     
