@@ -438,7 +438,7 @@ void yyerror(yyscan_t yyscanner, const char *error_message)
 
 
 
-int parse_string(const char* string, YARA_CONTEXT* context)
+int parse_rules_string(const char* rules_string, YARA_CONTEXT* context)
 {
 	yyscan_t yyscanner;
 	YY_BUFFER_STATE state;
@@ -447,7 +447,7 @@ int parse_string(const char* string, YARA_CONTEXT* context)
 
 	yyset_extra(context, yyscanner);
 
-	state = yy_scan_string(string, yyscanner);
+	state = yy_scan_string(rules_string, yyscanner);
 	
 	yyset_lineno(1, yyscanner);
     yyparse(yyscanner);
@@ -459,7 +459,7 @@ int parse_string(const char* string, YARA_CONTEXT* context)
 
 
 
-int parse_file(FILE* rules_file, YARA_CONTEXT* context)
+int parse_rules_file(FILE* rules_file, YARA_CONTEXT* context)
 {	
 	yyscan_t yyscanner;	
 	

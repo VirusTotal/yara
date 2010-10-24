@@ -340,12 +340,12 @@ void yr_pop_file_name(YARA_CONTEXT* context)
 
 int yr_compile_file(FILE* rules_file, YARA_CONTEXT* context)
 {	
-    return parse_file(rules_file, context);
+    return parse_rules_file(rules_file, context);
 }
 
 int yr_compile_string(const char* rules_string, YARA_CONTEXT* context)
 {	
-    return parse_string(rules_string, context);
+    return parse_rules_string(rules_string, context);
 }
 
 int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data)

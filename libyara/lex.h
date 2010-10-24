@@ -28,5 +28,5 @@ void yyerror(yyscan_t yyscanner, const char *error_message);
 
 YY_EXTRA_TYPE yyget_extra (yyscan_t yyscanner);
 
-int parse_string(const char* string, YARA_CONTEXT* context);
-int parse_file(FILE* rules_file, YARA_CONTEXT* context);
+int parse_rules_string(const char* rules_string, YARA_CONTEXT* context);
+int parse_rules_file(FILE* rules_file, YARA_CONTEXT* context);
