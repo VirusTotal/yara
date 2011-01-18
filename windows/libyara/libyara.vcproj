@@ -184,6 +184,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\libyara\proc.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\libyara\scan.c"
 				>
 			</File>

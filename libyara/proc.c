@@ -14,11 +14,12 @@ GNU General Public License for more details.
 
 */
 
-#include "proc.h"
+
 
 #ifdef WIN32
 
 #include <windows.h>
+#include "proc.h"
 
 int get_process_memory(int pid, MEMORY_BLOCK** first_block)
 {
@@ -36,6 +37,7 @@ int get_process_memory(int pid, MEMORY_BLOCK** first_block)
     TOKEN_PRIVILEGES tokenPriv;
     LUID luidDebug; 
     HANDLE hProcess;
+	HANDLE hToken;
     
     if( OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken) && 
         LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luidDebug)) 
@@ -66,7 +68,7 @@ int get_process_memory(int pid, MEMORY_BLOCK** first_block)
          {         
              if (mbi.State == MEM_COMMIT && mbi.Protect != PAGE_NOACCESS)
              {    
-                 data = yr_malloc(mbi.RegionSize);
+                 data = (unsigned char*) yr_malloc(mbi.RegionSize);
              
                  if (data == NULL)
                      return ERROR_INSUFICIENT_MEMORY;
@@ -114,6 +116,8 @@ int get_process_memory(int pid, MEMORY_BLOCK** first_block)
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>  
+
+#include "proc.h"
 
 #ifdef __MACH__
 
@@ -203,6 +207,7 @@ int get_process_memory(pid_t pid, MEMORY_BLOCK** first_block)
 #else
 
 #include <errno.h>
+#include "proc.h"
 
 int get_process_memory(pid_t pid, MEMORY_BLOCK** first_block)
 {
