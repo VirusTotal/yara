@@ -61,7 +61,7 @@ IDENTIFIER* specified_rules_list = NULL;
 
 void show_help()
 {
-    printf("usage:  yara [OPTION]... [RULEFILE]... FILE\n");
+    printf("usage:  yara [OPTION]... [RULEFILE]... FILE | PID\n");
     printf("options:\n");
 	printf("  -t <tag>                  print rules tagged as <tag> and ignore the rest. Can be used more than once.\n");
     printf("  -i <identifier>           print rules named <identifier> and ignore the rest. Can be used more than once.\n");
@@ -79,7 +79,7 @@ void show_help()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-int is_numeric(char *str)
+int is_numeric(const char *str)
 {
   while(*str)
   {
@@ -195,12 +195,12 @@ void scan_dir(const char* dir, int recursive, YARA_CONTEXT* context, YARACALLBAC
 
 #endif
 
-void print_string(unsigned char* buffer, unsigned int buffer_size, unsigned int offset, unsigned int length, int unicode)
+void print_string(unsigned char* data, unsigned int length, int unicode)
 {
 	unsigned int i;
 	char* str;
 	
-    str = (char*) (buffer + offset);
+    str = (char*) (data);
 	
     for (i = 0; i < length; i++)
     {
@@ -219,22 +219,19 @@ void print_string(unsigned char* buffer, unsigned int buffer_size, unsigned int 
 	printf("\n");
 }
 
-void print_hex_string(unsigned char* buffer, unsigned int buffer_size, unsigned int offset, unsigned int length)
+void print_hex_string(unsigned char* data, unsigned int length)
 {
 	unsigned int i;
-	unsigned char* str;
-	
-    str = (unsigned char*) (buffer + offset);
 	
     for (i = 0; i < length; i++)
     {
-        printf("%02X ", str[i]);
+        printf("%02X ", data[i]);
     }
 
 	printf("\n");
 }
 
-int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* data)
+int callback(RULE* rule, void* data)
 {
 	TAG* tag;
     IDENTIFIER* identifier;
@@ -321,7 +318,7 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
     		{
     		    if (meta->type == META_TYPE_INTEGER)
     		    {
-    		        printf("%s=%d", meta->identifier, meta->integer);
+    		        printf("%s=%lu", meta->identifier, meta->integer);
     		    }
     		    else if (meta->type == META_TYPE_BOOLEAN)
     		    {
@@ -359,19 +356,19 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
 
 					while (match != NULL)
 					{
-						printf("%08X: ", match->offset);
+						printf("0x%lx:%s: ", match->offset, string->identifier);
 						
 						if (IS_HEX(string))
 						{
-							print_hex_string(buffer, buffer_size, match->offset, match->length);
+							print_hex_string(match->data, match->length);
 						}
 						else if (IS_WIDE(string))
 						{
-							print_string(buffer, buffer_size, match->offset, match->length, TRUE);
+							print_string(match->data, match->length, TRUE);
 						}
 						else
 						{
-							print_string(buffer, buffer_size, match->offset, match->length, FALSE);
+							print_string(match->data, match->length, FALSE);
 						}
 						
 						match = match->next;
@@ -479,7 +476,7 @@ int process_cmd_line(YARA_CONTEXT* context, int argc, char const* argv[])
 		            
 		            if (is_numeric(value))
 		            {		                
-		                yr_set_external_integer(context, optarg, atoi(value));
+		                yr_set_external_integer(context, optarg, atol(value));
 		            }
 		            else if (strcmp(value, "true") == 0  || strcmp(value, "false") == 0)
 		            {
@@ -526,7 +523,7 @@ void report_error(const char* file_name, int line_number, const char* error_mess
 
 int main(int argc, char const* argv[])
 {
-	int i, errors;
+	int i, pid, errors;
 	YARA_CONTEXT* context;
 	FILE* rule_file;
 	TAG* tag;
@@ -589,7 +586,26 @@ int main(int argc, char const* argv[])
 		}		
 	}
 			
-	if (is_directory(argv[argc - 1]))
+	if (is_numeric(argv[argc - 1]))
+    {
+        pid = atoi(argv[argc - 1]);
+
+        switch (i = yr_scan_proc(pid, context, callback, (void*) argv[argc - 1]))
+        {
+            case ERROR_SUCCESS:
+                break;
+            case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
+                fprintf(stderr, "can not attach to process (try running as root)\n");
+                break;
+            case ERROR_INSUFICIENT_MEMORY:
+                fprintf(stderr, "not enough memory\n");
+                break;
+            default:
+                fprintf(stderr, "internal error: %d\n", i);
+                break;     
+        }
+    }
+	else if (is_directory(argv[argc - 1]))
 	{
 		scan_dir(argv[argc - 1], recursive_search, context, callback);
 	}

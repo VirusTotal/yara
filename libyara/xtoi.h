@@ -19,5 +19,5 @@ GNU General Public License for more details.
 //  and returns its value as integer
 // 
 
-unsigned int xtoi(const char* hexstr);
+size_t xtoi(const char* hexstr);
 

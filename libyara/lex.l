@@ -89,6 +89,7 @@ hexdigit      [a-fA-F0-9]
 "int32"		 		 				{ return _INT32_;    	}
 "matches"                           { return _MATCHES_;     }
 "contains"                          { return _CONTAINS_;    }
+"occurrence"					    { return _OCCURRENCE_;  }
 
 
 
@@ -235,7 +236,7 @@ $({letter}|{digit}|_)* 				{
 									}
 							
 {digit}+(MB|KB){0,1}  				{ 
-										yylval->integer = (unsigned int) atoi(yytext);
+										yylval->integer = (size_t) atol(yytext);
 						
 										if (strstr(yytext, "KB") != NULL)
 										{

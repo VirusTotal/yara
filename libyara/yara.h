@@ -96,6 +96,7 @@ GNU General Public License for more details.
 #define ERROR_DUPLICATE_META_IDENTIFIER         27
 #define ERROR_INCLUDES_CIRCULAR_REFERENCE       28
 #define ERROR_INCORRECT_EXTERNAL_VARIABLE_TYPE  29
+#define ERROR_COULD_NOT_ATTACH_TO_PROCESS       30
 
 #define META_TYPE_INTEGER                       1
 #define META_TYPE_STRING                        2
@@ -109,9 +110,10 @@ GNU General Public License for more details.
 
 typedef struct _MATCH
 {   
-    unsigned int    offset;   
+    size_t          offset;
+    unsigned char*  data;
 	unsigned int	length;
-    struct _MATCH* next;
+    struct _MATCH*  next;
     
 } MATCH;
 
@@ -149,7 +151,7 @@ typedef struct _EXTERNAL_VARIABLE
     
     union {      
         char*   string;
-        int     integer;
+        size_t  integer;
         int     boolean;
     };
     
@@ -190,7 +192,7 @@ typedef struct _META
     
     union {
         char*   string;
-        int     integer;
+        size_t  integer;
         int     boolean;
     };
     
@@ -239,7 +241,18 @@ typedef struct _HASH_TABLE
 } HASH_TABLE;
 
 
-typedef int (*YARACALLBACK)(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* data);
+typedef struct _MEMORY_BLOCK
+{
+    unsigned char*          data;
+    size_t			        size;
+    size_t                  base;
+    struct _MEMORY_BLOCK*   next;
+        
+} MEMORY_BLOCK;
+
+
+
+typedef int (*YARACALLBACK)(RULE* rule, void* data);
 typedef void (*YARAREPORT)(const char* file_name, int line_number, const char* error_message);
 
 
@@ -271,10 +284,9 @@ typedef struct _YARA_CONTEXT
     char*		            lex_buf_ptr;
     unsigned short          lex_buf_len;
     
+    int						fast_match;
     int                     allow_includes;
     char                    include_base_dir[MAX_PATH];
-
-	int						fast_match;
 
 } YARA_CONTEXT;
 
@@ -294,7 +306,7 @@ int                 yr_calculate_rules_weight(YARA_CONTEXT* context);
 
 NAMESPACE*			yr_create_namespace(YARA_CONTEXT* context, const char* namespace);
 
-int                 yr_set_external_integer(YARA_CONTEXT* context, const char* identifier, int value);
+int                 yr_set_external_integer(YARA_CONTEXT* context, const char* identifier, size_t value);
 int                 yr_set_external_boolean(YARA_CONTEXT* context, const char* identifier, int value);
 int                 yr_set_external_string(YARA_CONTEXT* context, const char* identifier, const char* value);
 
@@ -306,8 +318,9 @@ void 		yr_pop_file_name(YARA_CONTEXT* context);
 int         yr_compile_file(FILE* rules_file, YARA_CONTEXT* context);
 int         yr_compile_string(const char* rules_string, YARA_CONTEXT* context);
 
-int         yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data);
+int         yr_scan_mem(unsigned char* buffer, size_t buffer_size, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data);
 int         yr_scan_file(const char* file_path, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data);
+int         yr_scan_proc(int pid, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data);
 
 char*       yr_get_error_message(YARA_CONTEXT* context, char* buffer, int buffer_size);
 

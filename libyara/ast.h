@@ -76,12 +76,13 @@ GNU General Public License for more details.
 #define TERM_TYPE_EXTERNAL_VARIABLE                  33
 #define TERM_TYPE_EXTERNAL_STRING_MATCH              34
 #define TERM_TYPE_EXTERNAL_STRING_CONTAINS           35
+#define TERM_TYPE_FOR_OCCURRENCES                    36
                   
 
 typedef struct _TERM_CONST
 {
 	int				type;
-	int         	value;
+	size_t         	value;
 
 } TERM_CONST;
 
@@ -173,7 +174,7 @@ int new_binary_operation(int type, TERM* op1, TERM* op2, TERM_BINARY_OPERATION**
 
 int new_ternary_operation(int type, TERM* op1, TERM* op2, TERM* op3, TERM_TERNARY_OPERATION** term);
 
-int new_constant(unsigned int constant, TERM_CONST** term);
+int new_constant(size_t constant, TERM_CONST** term);
 
 int new_string_identifier(int type, STRING* defined_strings, char* identifier, TERM_STRING** term);
 

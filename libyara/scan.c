@@ -187,7 +187,7 @@ inline int wicompare(char* str1, char* str2, int len)
 }
 
  
-int hex_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pattern, int pattern_length, unsigned char* mask)
+int hex_match(unsigned char* buffer, size_t buffer_size, unsigned char* pattern, int pattern_length, unsigned char* mask)
 {
 	size_t b,p,m;
 	unsigned char i;
@@ -313,7 +313,7 @@ int hex_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pa
 	return matches;
 }
 
-int regexp_match(unsigned char* buffer, unsigned int buffer_size, unsigned char* pattern, int pattern_length, REGEXP re, int file_beginning)
+int regexp_match(unsigned char* buffer, size_t buffer_size, unsigned char* pattern, int pattern_length, REGEXP re, int file_beginning)
 {
 	int ovector[3];
 	unsigned int len;
@@ -648,7 +648,7 @@ void clear_marks(RULE_LIST* rule_list)
 	}
 }
 
-inline int string_match(unsigned char* buffer, unsigned int buffer_size, STRING* string, int flags, int negative_size)
+inline int string_match(unsigned char* buffer, size_t buffer_size, STRING* string, int flags, int negative_size)
 {
 	int match;
 	int i, len;
@@ -766,8 +766,8 @@ inline int string_match(unsigned char* buffer, unsigned int buffer_size, STRING*
 
 inline int find_matches_for_strings(   STRING_LIST_ENTRY* first_string, 
                                 unsigned char* buffer, 
-                                unsigned int buffer_size,
-                                unsigned int current_file_offset,
+                                size_t buffer_size,
+                                size_t current_offset,
                                 int flags, 
                                 int negative_size)
 {
@@ -796,20 +796,25 @@ inline int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
 		     */
 		     
 		    if ((string->matches == NULL) ||
-		        (string->matches->offset + string->matches->length <= current_file_offset))
+		        (string->matches->offset + string->matches->length <= current_offset))
 		    {		    
     			string->flags |= STRING_FLAGS_FOUND;
     			match = (MATCH*) yr_malloc(sizeof(MATCH));
+    			match->data = (unsigned char*) yr_malloc(len);
 
-    			if (match != NULL)
+    			if (match != NULL && match->data != NULL)
     			{
-    				match->offset = current_file_offset;
+    				match->offset = current_offset;
     				match->length = len;
+                    memcpy(match->data, buffer, len);         
     				match->next = string->matches;
     				string->matches = match;
     			}
     			else
     			{
+                    if (match != NULL) 
+                        yr_free(match);
+    			    
     				return ERROR_INSUFICIENT_MEMORY;
     			}
 		    }
@@ -823,8 +828,8 @@ inline int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
 int find_matches(	unsigned char first_char, 
 					unsigned char second_char, 
 					unsigned char* buffer, 
-					unsigned int buffer_size, 
-					unsigned int current_file_offset,
+					size_t buffer_size, 
+					size_t current_offset,
 					int flags,
 					int negative_size, 
 					YARA_CONTEXT* context)
@@ -837,7 +842,7 @@ int find_matches(	unsigned char first_char,
         result =  find_matches_for_strings( context->hash_table.hashed_strings_2b[first_char][second_char], 
                                             buffer, 
                                             buffer_size, 
-                                            current_file_offset, 
+                                            current_offset, 
                                             flags, 
                                             negative_size);
     }
@@ -848,7 +853,7 @@ int find_matches(	unsigned char first_char,
         result =  find_matches_for_strings( context->hash_table.hashed_strings_1b[first_char], 
                                             buffer, 
                                             buffer_size, 
-                                            current_file_offset, 
+                                            current_offset, 
                                             flags, 
                                             negative_size);
     }
@@ -858,7 +863,7 @@ int find_matches(	unsigned char first_char,
          result = find_matches_for_strings(    context->hash_table.non_hashed_strings, 
                                                buffer, 
                                                buffer_size, 
-                                               current_file_offset, 
+                                               current_offset, 
                                                flags, 
                                                negative_size);
     }

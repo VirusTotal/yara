@@ -1,9 +1,7 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 2.0.  */
 
-/* Skeleton interface for Bison's Yacc-like parsers in C
-
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+/* Skeleton parser for Yacc-like parsing with Bison,
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,21 +15,13 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
-/* As a special exception, you may create a larger work that contains
-   part or all of the Bison parser skeleton and distribute that work
-   under terms of your choice, so long as that work isn't itself a
-   parser generator using the skeleton or a modified version thereof
-   as a parser skeleton.  Alternatively, if you modify or redistribute
-   the parser skeleton itself, you may (at your option) remove this
-   special exception, which will cause the skeleton and the resulting
-   Bison output files to be licensed under the GNU General Public
-   License without this special exception.
-
-   This special exception was added by the Free Software Foundation in
-   version 2.2 of Bison.  */
+/* As a special exception, when this file is copied by Bison into a
+   Bison output file, you may use that output file without restriction.
+   This special exception was added by the Free Software Foundation
+   in version 1.24 of Bison.  */
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -82,24 +72,24 @@
      _UINT32_ = 298,
      _MATCHES_ = 299,
      _CONTAINS_ = 300,
-     _MZ_ = 301,
-     _PE_ = 302,
-     _DLL_ = 303,
-     _TRUE_ = 304,
-     _FALSE_ = 305,
-     _OR_ = 306,
-     _AND_ = 307,
-     _NOT_ = 308,
-     _IS_ = 309,
-     _NEQ_ = 310,
-     _EQ_ = 311,
-     _GE_ = 312,
-     _GT_ = 313,
-     _LE_ = 314,
-     _LT_ = 315
+     _OCCURRENCE_ = 301,
+     _MZ_ = 302,
+     _PE_ = 303,
+     _DLL_ = 304,
+     _TRUE_ = 305,
+     _FALSE_ = 306,
+     _OR_ = 307,
+     _AND_ = 308,
+     _NOT_ = 309,
+     _IS_ = 310,
+     _NEQ_ = 311,
+     _EQ_ = 312,
+     _GE_ = 313,
+     _GT_ = 314,
+     _LE_ = 315,
+     _LT_ = 316
    };
 #endif
-/* Tokens.  */
 #define _RULE_ 258
 #define _PRIVATE_ 259
 #define _GLOBAL_ 260
@@ -143,46 +133,47 @@
 #define _UINT32_ 298
 #define _MATCHES_ 299
 #define _CONTAINS_ 300
-#define _MZ_ 301
-#define _PE_ 302
-#define _DLL_ 303
-#define _TRUE_ 304
-#define _FALSE_ 305
-#define _OR_ 306
-#define _AND_ 307
-#define _NOT_ 308
-#define _IS_ 309
-#define _NEQ_ 310
-#define _EQ_ 311
-#define _GE_ 312
-#define _GT_ 313
-#define _LE_ 314
-#define _LT_ 315
+#define _OCCURRENCE_ 301
+#define _MZ_ 302
+#define _PE_ 303
+#define _DLL_ 304
+#define _TRUE_ 305
+#define _FALSE_ 306
+#define _OR_ 307
+#define _AND_ 308
+#define _NOT_ 309
+#define _IS_ 310
+#define _NEQ_ 311
+#define _EQ_ 312
+#define _GE_ 313
+#define _GT_ 314
+#define _LE_ 315
+#define _LT_ 316
 
 
 
 
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE
-#line 105 "grammar.y"
-{
+#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
+#line 106 "grammar.y"
+typedef union YYSTYPE {
     
     void*           sized_string;
     char*           c_string;
-    unsigned int    integer;
+    size_t          integer;
     void*           string;
     void*           term;
     void*           tag;
     void*           meta;
 
-}
-/* Line 1489 of yacc.c.  */
-#line 181 "grammar.h"
-	YYSTYPE;
+} YYSTYPE;
+/* Line 1274 of yacc.c.  */
+#line 171 "grammar.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
 #endif
+
+
 
 
 

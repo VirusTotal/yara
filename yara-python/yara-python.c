@@ -438,7 +438,7 @@ static void Rules_dealloc(PyObject *self)
     PyObject_Del(self);
 }
 
-int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* data)
+int callback(RULE* rule, void* data)
 {
     TAG* tag;
     STRING* string;
@@ -505,7 +505,7 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
             while (m != NULL)
             {
                 PyList_Append(  stringlist, 
-                                Py_BuildValue("(i,s,s#)", m->offset, string->identifier, (char*) buffer + m->offset, m->length));
+                                Py_BuildValue("(i,s,s#)", m->offset, string->identifier, (char*) m->data, m->length));
                 m = m->next;
             }
         }
@@ -535,11 +535,12 @@ int callback(RULE* rule, unsigned char* buffer, unsigned int buffer_size, void* 
 
 PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
 {
-    static char *kwlist[] = {"filepath", "data", "externals", NULL};
+    static char *kwlist[] = {"filepath", "pid", "data", "externals", NULL};
     
     char* filepath = NULL;
     char* data = NULL;
 
+    int pid = 0;
     int length;
     int result;
     
@@ -548,7 +549,7 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
        
     Rules* object = (Rules*) self;
     
-    if (PyArg_ParseTupleAndKeywords(args, keywords, "|ss#O", kwlist, &filepath, &data, &length, &externals))
+    if (PyArg_ParseTupleAndKeywords(args, keywords, "|sis#O", kwlist, &filepath, &pid, &data, &length, &externals))
     {
         if (externals != NULL)
         {
@@ -584,7 +585,7 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
                     case ERROR_ZERO_LENGTH_FILE:
                         return PyErr_Format(YaraError, "zero length file \"%s\"", filepath);
                     default:
-                        return PyErr_Format(YaraError, "uknown error while scanning file \"%s\"", filepath);
+                        return PyErr_Format(YaraError, "unknown error while scanning file \"%s\"", filepath);
                 }
             }
         }
@@ -598,6 +599,27 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
             {
                Py_DECREF(matches);
                return PyErr_Format(PyExc_Exception, "internal error"); 
+            }
+        }
+        else if (pid != 0)
+        {
+            matches = PyList_New(0);
+            
+            result = yr_scan_proc(pid, object->context, callback, matches);
+            
+            if (result != ERROR_SUCCESS)
+            {
+               Py_DECREF(matches);
+               
+               switch(result)
+               {
+                   case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
+                       return PyErr_Format(YaraError, "access denied");
+                   case ERROR_INSUFICIENT_MEMORY:
+                       return PyErr_Format(YaraError, "not enough memory"); 
+                   default:
+                       return PyErr_Format(YaraError, "unknown error while scanning file \"%s\"", filepath);
+               }
             }
         }
         else

@@ -21,9 +21,9 @@ GNU General Public License for more details.
 
 #include <string.h>
 
-unsigned int xtoi(const char* hexstr)
+size_t xtoi(const char* hexstr)
 {
-	unsigned int r = 0;
+	size_t r = 0;
 	int i;
 	int l = strlen(hexstr);
 	
@@ -41,7 +41,7 @@ unsigned int xtoi(const char* hexstr)
 			case '7':
 			case '8':
 			case '9':			
-				r |= (hexstr[i] - '0') << ((l - i - 1) * 4);
+				r |= ((size_t)(hexstr[i] - '0')) << ((l - i - 1) * 4);
 				break;
 			case 'a':
 			case 'b':
@@ -49,7 +49,7 @@ unsigned int xtoi(const char* hexstr)
 			case 'd':
 			case 'e':
 			case 'f':
-				r |= (hexstr[i] - 'a' + 10) << ((l - i - 1) * 4);
+				r |= ((size_t)(hexstr[i] - 'a' + 10)) << ((l - i - 1) * 4);
 				break;
 			case 'A':
 			case 'B':
@@ -57,7 +57,7 @@ unsigned int xtoi(const char* hexstr)
 			case 'D':
 			case 'E':
 			case 'F':
-				r |= (hexstr[i] - 'A' + 10) << ((l - i - 1) * 4);
+				r |= ((size_t)(hexstr[i] - 'A' + 10)) << ((l - i - 1) * 4);
 				break;
 			default:
 				i = l;  // force loop exit

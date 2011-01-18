@@ -14,25 +14,11 @@ GNU General Public License for more details.
 
 */
 
-#ifndef _EVAL_H
-#define _EVAL_H
+#ifndef _PROC_H
+#define _PROC_H
 
 #include "yara.h"
 
-typedef struct _EVALUATION_CONTEXT
-{
-	unsigned int    file_size;
-	unsigned int    entry_point;
-
-    MEMORY_BLOCK*   mem_block;
-    RULE*           rule;
-    STRING*         current_string;
-
-} EVALUATION_CONTEXT;
-
-
-
-long long evaluate(TERM* term, EVALUATION_CONTEXT* context);
+int get_process_memory(int pid, MEMORY_BLOCK** first_block);
 
 #endif
-

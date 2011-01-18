@@ -20,10 +20,41 @@ GNU General Public License for more details.
 
 #include <string.h>
 
-int evaluate(TERM* term, EVALUATION_CONTEXT* context)
+typedef unsigned char uint8;
+typedef unsigned short uint16;
+typedef unsigned int uint32;
+typedef char int8;
+typedef short int16;
+typedef int int32;
+
+#define function_read(type, tsize) int read_##type##tsize(MEMORY_BLOCK* block, size_t offset) \
+{ \
+    while (block != NULL) \
+    { \
+        if (offset >= block->base && offset < block->base + block->size - (tsize - 1)) \
+        { \
+            return *((type##tsize *) (block->data + offset - block->base)); \
+        } \
+        block = block->next; \
+    } \
+    return 0xE0FE0F; \
+};
+
+
+function_read(uint, 8)
+function_read(uint, 16)
+function_read(uint, 32)
+function_read(int, 8)
+function_read(int, 16)
+function_read(int, 32)
+
+
+
+long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 {
+	size_t offs, hi_bound, lo_bound;
+
 	unsigned int i;
-	unsigned int offs, hi_bound, lo_bound;
 	int ovector[3];
 	int rc;
 	
@@ -82,7 +113,7 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		if (string->flags & STRING_FLAGS_FOUND)
 		{	
 			offs = evaluate(term_string->offset, context);
-					
+								
 			match = string->matches;
 			
 			while (match != NULL)
@@ -260,84 +291,54 @@ int evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		} 
 		
 		return (i == 0);
+	
+	case TERM_TYPE_FOR_OCCURRENCES:
+	    
+        i = evaluate(term_ternary->op1, context);
+        t = (TERM_STRING*) term_ternary->op2;
+        
+        saved_anonymous_string = context->current_string;
+        context->current_string = t->string;
+        
+        match = t->string->matches;
+        
+        while (match != NULL && i > 0)
+        {            
+            if (evaluate(term_ternary->op3, context)) 
+			{
+				i--;
+			}
+			
+            match = match->next;	
+        }
+        
+        context->current_string = saved_anonymous_string;
+        
+        return (i == 0);
     
     case TERM_TYPE_UINT8_AT_OFFSET:
-    
-        offs = evaluate(term_unary->op, context);
-        
-        if (offs < context->file_size)
-        {
-            return context->data[offs];
-        }
-        else
-        {
-            return 0xE0FE0F;
-        }
-        
+
+        return read_uint8(context->mem_block, evaluate(term_unary->op, context));
+
     case TERM_TYPE_UINT16_AT_OFFSET:
-
-        offs = evaluate(term_unary->op, context);
-
-        if (offs < context->file_size - 1)
-        {
-            return *((unsigned short*) (context->data + offs)) ;
-        }
-        else
-        {
-            return 0xE0FE0F;
-        }
-    
+        
+        return read_uint16(context->mem_block, evaluate(term_unary->op, context));
+        
     case TERM_TYPE_UINT32_AT_OFFSET:
 
-        offs = evaluate(term_unary->op, context);
-
-        if (offs < context->file_size - 1)
-        {
-            return *((unsigned int*) (context->data + offs)) ;
-        }
-        else
-        {
-            return 0xE0FE0F;
-        }
+        return read_uint32(context->mem_block, evaluate(term_unary->op, context));
         
     case TERM_TYPE_INT8_AT_OFFSET:
 
-        offs = evaluate(term_unary->op, context);
-
-        if (offs < context->file_size)
-        {
-            return ((signed char) context->data[offs]);
-        }
-        else
-        {
-            return 0xE0FE0F;
-        }
+        return read_int8(context->mem_block, evaluate(term_unary->op, context));
 
     case TERM_TYPE_INT16_AT_OFFSET:
 
-        offs = evaluate(term_unary->op, context);
-
-        if (offs < context->file_size - 1)
-        {
-            return *((signed short*) (context->data + offs)) ;
-        }
-        else
-        {
-            return 0xE0FE0F;
-        }
+        return read_int16(context->mem_block, evaluate(term_unary->op, context));
 
     case TERM_TYPE_INT32_AT_OFFSET:
 
-        offs = evaluate(term_unary->op, context);
-
-        if (offs < context->file_size - 1)
-        {
-            return *((signed int*) (context->data + offs)) ;
-        }
-        else
-        {
-            return 0xE0FE0F;
-        }
+        return read_int32(context->mem_block, evaluate(term_unary->op, context));  
         
     case TERM_TYPE_EXTERNAL_VARIABLE:
     

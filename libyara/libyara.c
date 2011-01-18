@@ -22,6 +22,7 @@ GNU General Public License for more details.
 #include "eval.h"
 #include "lex.h"
 #include "weight.h"
+#include "proc.h"
 #include "yara.h"
 
 #ifdef WIN32
@@ -110,6 +111,7 @@ void yr_destroy_context(YARA_CONTEXT* context)
             while (match != NULL)
             {
                 next_match = match->next;
+                yr_free(match->data);
                 yr_free(match);
                 match = next_match;
             }
@@ -208,7 +210,7 @@ NAMESPACE* yr_create_namespace(YARA_CONTEXT* context, const char* namespace)
 }
 
 
-int yr_set_external_integer(YARA_CONTEXT* context, const char* identifier, int value)
+int yr_set_external_integer(YARA_CONTEXT* context, const char* identifier, size_t value)
 {
     EXTERNAL_VARIABLE* ext_var;
 
@@ -348,7 +350,8 @@ int yr_compile_string(const char* rules_string, YARA_CONTEXT* context)
     return parse_rules_string(rules_string, context);
 }
 
-int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data)
+
+int yr_scan_mem_blocks(MEMORY_BLOCK* block, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data)
 {
     int error;
     int global_rules_satisfied;
@@ -359,7 +362,7 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* c
 	NAMESPACE* ns;
 	EVALUATION_CONTEXT eval_context;
 	
-	if (buffer_size < 2)
+	if (block->size < 2)
         return ERROR_SUCCESS;
 	
 	if (!context->hash_table.populated)
@@ -367,49 +370,54 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* c
         populate_hash_table(&context->hash_table, &context->rule_list);
 	}
 	
-	eval_context.file_size = buffer_size;
-    eval_context.data = buffer;
+	eval_context.file_size = block->size;
+    eval_context.mem_block = block;
 	
-	file_is_pe = is_pe(buffer, buffer_size);
+	file_is_pe = is_pe(block->data, block->size);
 	
 	if (file_is_pe)
 	{
-		eval_context.entry_point = get_entry_point_offset(buffer, buffer_size);
+		eval_context.entry_point = get_entry_point_offset(block->data, block->size);
 	}
 	
 	clear_marks(&context->rule_list);
 	
-	for (i = 0; i < buffer_size - 1; i++)
-	{		    
-		/* search for normal strings */	
-        error = find_matches(   buffer[i], 
-                                buffer[i + 1], 
-                                buffer + i, 
-                                buffer_size - i, 
-                                i, 
-                                STRING_FLAGS_HEXADECIMAL | STRING_FLAGS_ASCII, 
-                                i, 
-                                context);
+	while (block != NULL)
+	{	
+    	for (i = 0; i < block->size - 1; i++)
+    	{		    
+    		/* search for normal strings */	
+            error = find_matches(   block->data[i], 
+                                    block->data[i + 1], 
+                                    block->data + i, 
+                                    block->size - i, 
+                                    block->base + i, 
+                                    STRING_FLAGS_HEXADECIMAL | STRING_FLAGS_ASCII, 
+                                    i, 
+                                    context);
 		
-		if (error != ERROR_SUCCESS)
-		    return error;
-		
-		/* search for wide strings */
-		if ((buffer[i + 1] == 0) && (buffer_size > 3) && (i < buffer_size - 3) && (buffer[i + 3] == 0))
-		{
-			error = find_matches(   buffer[i], 
-			                        buffer[i + 2], 
-			                        buffer + i, 
-			                        buffer_size - i, 
-			                        i, 
-			                        STRING_FLAGS_WIDE, 
-			                        i, 
-			                        context);
-			
-			if (error != ERROR_SUCCESS)
+    		if (error != ERROR_SUCCESS)
     		    return error;
-		}	
-	}
+		
+    		/* search for wide strings */
+    		if ((block->data[i + 1] == 0) && (block->size > 3) && (i < block->size - 3) && (block->data[i + 3] == 0))
+    		{
+    			error = find_matches(   block->data[i], 
+    			                        block->data[i + 2], 
+    			                        block->data + i, 
+    			                        block->size - i, 
+    			                        block->base + i, 
+    			                        STRING_FLAGS_WIDE, 
+    			                        i, 
+    			                        context);
+			
+    			if (error != ERROR_SUCCESS)
+        		    return error;
+    		}	
+    	}
+    	
+        block = block->next;
+    }
 	
 	rule = context->rule_list.head;
 	
@@ -442,7 +450,7 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* c
     		
     		if (!(rule->flags & RULE_FLAGS_PRIVATE))
     		{
-        		if (callback(rule, buffer, buffer_size, user_data) != 0)
+        		if (callback(rule, user_data) != 0)
         		{
                     return ERROR_CALLBACK_ERROR;
         		}
@@ -481,7 +489,7 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* c
     		}
 		}
 		
-		if (callback(rule, buffer, buffer_size, user_data) != 0)
+		if (callback(rule, user_data) != 0)
 		{
             return ERROR_CALLBACK_ERROR;
 		}
@@ -490,6 +498,19 @@ int yr_scan_mem(unsigned char* buffer, unsigned int buffer_size, YARA_CONTEXT* c
 	}
 	
 	return ERROR_SUCCESS;
+}
+
+
+int yr_scan_mem(unsigned char* buffer, size_t buffer_size, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data)
+{
+    MEMORY_BLOCK block;
+    
+    block.data = buffer;
+    block.size = buffer_size;
+    block.base = 0;
+    block.next = NULL;
+    
+    return yr_scan_mem_blocks(&block, context, callback, user_data);
 }
 
 
@@ -502,12 +523,46 @@ int yr_scan_file(const char* file_path, YARA_CONTEXT* context, YARACALLBACK call
 	
 	if (result == ERROR_SUCCESS)
 	{
-		result = yr_scan_mem(mfile.data, (unsigned int) mfile.size, context, callback, user_data);		
+		result = yr_scan_mem(mfile.data, mfile.size, context, callback, user_data);		
 		unmap_file(&mfile);
 	}
 		
 	return result;
 }
+
+
+int yr_scan_proc(int pid, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data)
+{
+    
+    MEMORY_BLOCK* first_block;
+    MEMORY_BLOCK* next_block;
+    MEMORY_BLOCK* block;
+    
+    int result = get_process_memory(pid, &first_block);
+
+    if (result == ERROR_SUCCESS)
+    {
+        result = yr_scan_mem_blocks(first_block, context, callback, user_data);
+    }
+    
+    if (result == ERROR_SUCCESS)
+    {  
+        block = first_block;
+    
+        while (block != NULL)
+        {
+            next_block = block->next;
+        
+            yr_free(block->data);
+            yr_free(block);   
+        
+            block = next_block;   
+        }
+    }
+
+    return result;
+}
+
 
 char* yr_get_error_message(YARA_CONTEXT* context, char* buffer, int buffer_size)
 {

@@ -658,7 +658,7 @@ int new_ternary_operation(int type, TERM* op1, TERM* op2, TERM* op3, TERM_TERNAR
     return result;
 }
 
-int new_constant(unsigned int constant, TERM_CONST** term)
+int new_constant(size_t constant, TERM_CONST** term)
 {
     TERM_CONST* new_term;
     int result = ERROR_SUCCESS;
@@ -685,7 +685,7 @@ int new_string_identifier(int type, STRING* defined_strings, char* identifier, T
     TERM_STRING* new_term = NULL;
     STRING* string;
     int result = ERROR_SUCCESS;
-    
+        
     if (strcmp(identifier, "$") != 0) /* non-anonymous strings */
     {
         string = lookup_string(defined_strings, identifier);
@@ -850,10 +850,10 @@ void free_term(TERM* term)
         break;
         
     case TERM_TYPE_FOR:
+    case TERM_TYPE_FOR_OCCURRENCES:
         free_term(((TERM_TERNARY_OPERATION*)term)->op1);
         free_term(((TERM_TERNARY_OPERATION*)term)->op2);
-        free_term(((TERM_TERNARY_OPERATION*)term)->op3); 
-           
+        free_term(((TERM_TERNARY_OPERATION*)term)->op3);          
         break;
     }
     

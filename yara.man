@@ -3,11 +3,13 @@
 yara \- find files matching patterns and rules written in a special-purpose language.
 .SH SYNOPSIS
 .B yara 
-[OPTION]... [RULEFILE]... FILE
+[OPTION]... [RULEFILE]... FILE | PID
 .SH DESCRIPTION
 .I Yara 
 scans the given 
 .I FILE
+or the process indentified by
+.I PID
 looking if it matches the patterns and rules provided in a special purpose-language. The rules are read from 
 .I RULEFILEs 
 or standard input.

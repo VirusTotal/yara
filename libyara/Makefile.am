@@ -16,6 +16,7 @@ libyara_la_SOURCES = \
   pefile.c \
   xtoi.c \
   mem.c \
+  proc.c \
   weight.c \
   libyara.c \
   lex.h \
@@ -27,6 +28,7 @@ libyara_la_SOURCES = \
   pefile.h \
   sizedstr.h \
   mem.h \
+  proc.h \
   weight.h
 
 libyara_la_LIBDADD = /usr/local/lib/libpcre.la

@@ -2,7 +2,7 @@ from distutils.core import setup, Extension
 
                            
 setup(name = "yara-python",
-        version = "1.4",
+        version = "1.4a",
         author = "Victor M. Alvarez",
         author_email = "plusvic@gmail.com",
         url = 'http://yara.googlecode.com',

@@ -62,6 +62,7 @@
 %token _UINT32_
 %token _MATCHES_
 %token _CONTAINS_
+%token _OCCURRENCE_
 
 %token _MZ_
 %token _PE_
@@ -106,7 +107,7 @@
     
     void*           sized_string;
     char*           c_string;
-    unsigned int    integer;
+    size_t          integer;
     void*           string;
     void*           term;
     void*           tag;
@@ -137,7 +138,7 @@ TAG* reduce_tags(   yyscan_t yyscanner,
 META* reduce_meta_declaration(  yyscan_t yyscanner,
                                 int type,
                                 char* identifier,
-                                unsigned int integer_value,					
+                                unsigned int integer_value,                 
                                 SIZED_STRING* string_value);
                     
 META* reduce_metas( yyscan_t yyscanner, 
@@ -193,7 +194,7 @@ TERM* reduce_term(  yyscan_t yyscanner,
                     TERM* op3);
                     
 TERM* reduce_constant(  yyscan_t yyscanner,
-                        unsigned int constant);
+                        size_t constant);
 
 TERM* reduce_identifier( yyscan_t yyscanner,
                          char* identifier);
@@ -241,7 +242,7 @@ rule_modifiers : /* empty */                          { $$ = 0;  }
                ;
         
 rule_modifier : _PRIVATE_       { $$ = RULE_FLAGS_PRIVATE; }
-		      | _GLOBAL_	    { $$ = RULE_FLAGS_GLOBAL; }
+              | _GLOBAL_        { $$ = RULE_FLAGS_GLOBAL; }
               ;
 
 tags    : /* empty */                       { $$ = NULL; }
@@ -465,22 +466,78 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                             YYERROR;
                         }
                      }
-                   | _FOR_ expression _OF_ string_set ':'
-                      { 
+                   | _FOR_ expression _OCCURRENCE_ _OF_ _STRING_IDENTIFIER_ ':'
+                     { 
+                        yyget_extra(yyscanner)->inside_for++; 
+                     }           
+                     '(' boolean_expression ')'                     
+                     { 
+                        yyget_extra(yyscanner)->inside_for--; 
+
+                        $$ = reduce_term(yyscanner, TERM_TYPE_FOR_OCCURRENCES, $2, reduce_string(yyscanner, $5), $9); 
+
+                        if ($$ == NULL)
+                        {
+                            yyerror(yyscanner, NULL);
+                            YYERROR;
+                        }
+                     }
+                     | _FOR_ _ALL_ _OCCURRENCE_ _OF_ _STRING_IDENTIFIER_ ':'
+                       { 
+                          yyget_extra(yyscanner)->inside_for++; 
+                       }           
+                       '(' boolean_expression ')'                     
+                       { 
+                          yyget_extra(yyscanner)->inside_for--;
+
+                          $$ = reduce_term( yyscanner, 
+                                            TERM_TYPE_FOR_OCCURRENCES, 
+                                            reduce_string_count(yyscanner, yr_strdup($5)), /* dup string identifier reduce_xx functions calls free */
+                                            reduce_string(yyscanner, $5),
+                                            $9); 
+
+                          if ($$ == NULL)
+                          {
+                              yyerror(yyscanner, NULL);
+                              YYERROR;
+                          }
+                      }                   
+                      | _FOR_ _ANY_ _OCCURRENCE_ _OF_ _STRING_IDENTIFIER_ ':'
+                        { 
                            yyget_extra(yyscanner)->inside_for++; 
-                      }           
-                      '(' boolean_expression ')'                     
-                      { 
-                           yyget_extra(yyscanner)->inside_for--; 
-                           
-                           $$ = reduce_term(yyscanner, TERM_TYPE_FOR, $2, $4, $8); 
-                           
+                        }           
+                        '(' boolean_expression ')'                     
+                        { 
+                           yyget_extra(yyscanner)->inside_for--;
+
+                           $$ = reduce_term( yyscanner, 
+                                             TERM_TYPE_FOR_OCCURRENCES, 
+                                             reduce_constant(yyscanner, 1),
+                                             reduce_string(yyscanner, $5),
+                                             $9); 
+
                            if ($$ == NULL)
                            {
                                yyerror(yyscanner, NULL);
                                YYERROR;
                            }
-                      }
+                       }
+                   | _FOR_ expression _OF_ string_set ':'
+                     { 
+                         yyget_extra(yyscanner)->inside_for++; 
+                     }           
+                     '(' boolean_expression ')'                     
+                     { 
+                         yyget_extra(yyscanner)->inside_for--; 
+                           
+                         $$ = reduce_term(yyscanner, TERM_TYPE_FOR, $2, $4, $8); 
+                           
+                         if ($$ == NULL)
+                         {
+                             yyerror(yyscanner, NULL);
+                             YYERROR;
+                         }
+                     }
                    | _FOR_ _ALL_ _OF_ string_set ':'
                      { 
                           yyget_extra(yyscanner)->inside_for++; 
@@ -737,9 +794,9 @@ STRING* reduce_string_declaration(  yyscan_t yyscanner,
     yr_free(str);
 
     if (context->fast_match)
-	{
-		string->flags |= STRING_FLAGS_FAST_MATCH;
-	}
+    {
+        string->flags |= STRING_FLAGS_FAST_MATCH;
+    }
             
     return string;
 }
@@ -771,7 +828,7 @@ META* reduce_meta_declaration(  yyscan_t yyscanner,
                                 int type,
                                 char* identifier,
                                 unsigned int integer_value,
-								SIZED_STRING* string_value)
+                                SIZED_STRING* string_value)
 {
     META*           meta = NULL;
     YARA_CONTEXT*   context = yyget_extra(yyscanner);
@@ -899,7 +956,7 @@ TERM* reduce_term(yyscan_t yyscanner, int type, TERM* op1, TERM* op2, TERM* op3)
 }
 
 TERM* reduce_constant(  yyscan_t yyscanner,
-                        unsigned int constant)
+                        size_t constant)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_CONST* term = NULL;
@@ -1162,7 +1219,7 @@ TERM* reduce_external_string_operation( yyscan_t yyscanner,
                 }
                 else
                 {
-					term->string = yr_strdup(string->c_string);
+                    term->string = yr_strdup(string->c_string);
                 }
                                 
                 yr_free(string);             
