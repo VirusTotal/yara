@@ -105,7 +105,7 @@ typedef struct {
     
     PyObject_HEAD
 	PyObject* rule;
-	PyObject* namespace;
+	PyObject* ns;
     PyObject* tags;
     PyObject* meta;
     PyObject* strings;
@@ -123,7 +123,7 @@ static void Match_dealloc(PyObject *self);
 
 static PyMemberDef Match_members[] = {
 	{"rule", T_OBJECT_EX, offsetof(Match, rule), READONLY, "Name of the matching rule"},
-	{"namespace", T_OBJECT_EX, offsetof(Match, namespace), READONLY, "Namespace of the matching rule"},
+	{"namespace", T_OBJECT_EX, offsetof(Match, ns), READONLY, "Namespace of the matching rule"},
     {"tags", T_OBJECT_EX, offsetof(Match, tags), READONLY, "List of tags associated to the rule"},
     {"meta", T_OBJECT_EX, offsetof(Match, meta), READONLY, "Dictionary with metadata associated to the rule"},
     {"strings", T_OBJECT_EX, offsetof(Match, strings), READONLY, "Dictionary with offsets and strings that matched the file"},
@@ -178,7 +178,7 @@ static PyTypeObject Match_Type = {
 };
 
 
-static PyObject * Match_NEW(const char* rule, const char* namespace, PyObject* tags, PyObject* meta, PyObject* strings)
+static PyObject * Match_NEW(const char* rule, const char* ns, PyObject* tags, PyObject* meta, PyObject* strings)
 { 
     Match* object;
     
@@ -187,7 +187,7 @@ static PyObject * Match_NEW(const char* rule, const char* namespace, PyObject* t
     if (object != NULL)
     {
 		object->rule = PyString_FromString(rule);
-		object->namespace = PyString_FromString(namespace);
+		object->ns = PyString_FromString(ns);
         object->tags = tags;
         object->meta = meta;
         object->strings = strings;
@@ -201,7 +201,7 @@ static void Match_dealloc(PyObject *self)
     Match *object = (Match *) self;
      
 	Py_DECREF(object->rule); 
-	Py_DECREF(object->namespace);
+	Py_DECREF(object->ns);
     Py_DECREF(object->tags);
     Py_DECREF(object->meta);  
     Py_DECREF(object->strings);
@@ -234,7 +234,7 @@ static int Match_compare(PyObject *self, PyObject *other)
 		
 		if (result == 0)
 		{
-			result = PyObject_Compare(a->namespace, b->namespace);
+			result = PyObject_Compare(a->ns, b->ns);
 		}
 	}
 	else
@@ -251,7 +251,7 @@ static long Match_hash(PyObject *self)
 {
 	Match *match = (Match *) self;
 	
-	return PyObject_Hash(match->rule) + PyObject_Hash(match->namespace);
+	return PyObject_Hash(match->rule) + PyObject_Hash(match->ns);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -515,7 +515,7 @@ int callback(RULE* rule, void* data)
     
     PyList_Sort(stringlist);
        
-    match = Match_NEW(rule->identifier, rule->namespace->name, taglist, metalist, stringlist);
+    match = Match_NEW(rule->identifier, rule->ns->name, taglist, metalist, stringlist);
     
     if (match != NULL)
     {       
@@ -666,7 +666,7 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
 
     char* filepath = NULL;
     char* source = NULL;
-	char* namespace = NULL;
+	char* ns = NULL;
 	    
     if (PyArg_ParseTupleAndKeywords(args, keywords, "|ssOOOOO", kwlist, &filepath, &source, &file, &filepaths_dict, &sources_dict, &includes, &externals))
     {      
@@ -735,11 +735,11 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
 				while (PyDict_Next(sources_dict, &pos, &key, &value)) 
 				{
 					source = PyString_AsString(value);
-					namespace = PyString_AsString(key);
+					ns = PyString_AsString(key);
 					
-					if (source != NULL && namespace != NULL)
+					if (source != NULL && ns != NULL)
 					{
-		                context->current_namespace = yr_create_namespace(context, namespace);
+		                context->current_namespace = yr_create_namespace(context, ns);
 
 						result = Rules_new_from_string(source, result, context);
 					}
@@ -762,15 +762,15 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
 				while (PyDict_Next(filepaths_dict, &pos, &key, &value)) 
 				{
 					filepath = PyString_AsString(value);
-					namespace = PyString_AsString(key);
+					ns = PyString_AsString(key);
 					
-					if (filepath != NULL && namespace != NULL)
+					if (filepath != NULL && ns != NULL)
 					{
 						fh = fopen(filepath, "r");
             
             			if (fh != NULL)
             			{
-            			    context->current_namespace = yr_create_namespace(context, namespace);
+            			    context->current_namespace = yr_create_namespace(context, ns);
             			
                 			result = Rules_new_from_file(fh, filepath, result, context);
                 			fclose(fh);

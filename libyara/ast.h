@@ -162,7 +162,7 @@ typedef struct _TERM_EXTERNAL_STRING_OPERATION
 
 
 
-int new_rule(RULE_LIST* rules, char* identifier, NAMESPACE* namespace, int flags, TAG* tag_list_head, META* meta_list_head, STRING* string_list_head, TERM* condition);
+int new_rule(RULE_LIST* rules, char* identifier, NAMESPACE* ns, int flags, TAG* tag_list_head, META* meta_list_head, STRING* string_list_head, TERM* condition);
 
 int new_string(YARA_CONTEXT* context, char* identifier, SIZED_STRING* charstr, int flags, STRING** string);
 

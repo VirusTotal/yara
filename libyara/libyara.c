@@ -194,13 +194,13 @@ void yr_destroy_context(YARA_CONTEXT* context)
 }
 
 
-NAMESPACE* yr_create_namespace(YARA_CONTEXT* context, const char* namespace)
+NAMESPACE* yr_create_namespace(YARA_CONTEXT* context, const char* name)
 {
 	NAMESPACE* ns = yr_malloc(sizeof(NAMESPACE));
 	
 	if (ns != NULL)
 	{
-		ns->name = yr_strdup(namespace);
+		ns->name = yr_strdup(name);
 		ns->global_rules_satisfied = FALSE;
 		ns->next = context->namespaces;
 		context->namespaces = ns;
@@ -445,7 +445,7 @@ int yr_scan_mem_blocks(MEMORY_BLOCK* block, YARA_CONTEXT* context, YARACALLBACK 
     		}
     		else
     		{
-                rule->namespace->global_rules_satisfied = FALSE;
+                rule->ns->global_rules_satisfied = FALSE;
     		}
     		
     		if (!(rule->flags & RULE_FLAGS_PRIVATE))
@@ -471,7 +471,7 @@ int yr_scan_mem_blocks(MEMORY_BLOCK* block, YARA_CONTEXT* context, YARACALLBACK 
 		   evaluated due to some global rule unsatisfied in it's namespace
 		*/
 		
-		if (rule->flags & RULE_FLAGS_GLOBAL || rule->flags & RULE_FLAGS_PRIVATE || !rule->namespace->global_rules_satisfied)  
+		if (rule->flags & RULE_FLAGS_GLOBAL || rule->flags & RULE_FLAGS_PRIVATE || !rule->ns->global_rules_satisfied)  
 		{
 			rule = rule->next;
 			continue;

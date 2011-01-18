@@ -205,7 +205,7 @@ typedef struct _RULE
 {
     char*           identifier;
     int             flags;
-	NAMESPACE*		namespace;
+	NAMESPACE*		ns;
     STRING*         string_list_head;
 	TAG*			tag_list_head;
     META*           meta_list_head;
@@ -291,7 +291,7 @@ typedef struct _YARA_CONTEXT
 } YARA_CONTEXT;
 
 
-RULE*                   lookup_rule(RULE_LIST* rules, const char* identifier, NAMESPACE* namespace);
+RULE*                   lookup_rule(RULE_LIST* rules, const char* identifier, NAMESPACE* ns);
 STRING*                 lookup_string(STRING* string_list_head, const char* identifier);
 TAG*                    lookup_tag(TAG* tag_list_head, const char* identifier);
 META*                   lookup_meta(META* meta_list_head, const char* identifier);
@@ -304,7 +304,7 @@ void                yr_destroy_context(YARA_CONTEXT* context);
 
 int                 yr_calculate_rules_weight(YARA_CONTEXT* context);
 
-NAMESPACE*			yr_create_namespace(YARA_CONTEXT* context, const char* namespace);
+NAMESPACE*			yr_create_namespace(YARA_CONTEXT* context, const char* name);
 
 int                 yr_set_external_integer(YARA_CONTEXT* context, const char* identifier, size_t value);
 int                 yr_set_external_boolean(YARA_CONTEXT* context, const char* identifier, int value);
