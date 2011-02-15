@@ -21,8 +21,8 @@ GNU General Public License for more details.
 
 typedef struct _EVALUATION_CONTEXT
 {
-	unsigned int    file_size;
-	unsigned int    entry_point;
+	unsigned long long    file_size;
+	unsigned long long    entry_point;
 
     MEMORY_BLOCK*   mem_block;
     RULE*           rule;

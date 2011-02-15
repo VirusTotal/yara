@@ -13,7 +13,7 @@ libyara_la_SOURCES = \
   scan.c \
   filemap.c \
   eval.c \
-  pefile.c \
+  exe.c \
   xtoi.c \
   mem.c \
   proc.c \
@@ -24,8 +24,9 @@ libyara_la_SOURCES = \
   eval.h \
   filemap.h \
   pe.h \
+  elf.h \
+  exe.h \
   xtoi.h \
-  pefile.h \
   sizedstr.h \
   mem.h \
   proc.h \

@@ -22,7 +22,7 @@ GNU General Public License for more details.
 #include "yara.h"
 #include "eval.h"
 #include "ast.h"
-#include "pefile.h"
+#include "exe.h"
 #include "mem.h"
 #include "eval.h"
 

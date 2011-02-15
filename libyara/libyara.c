@@ -23,6 +23,7 @@ GNU General Public License for more details.
 #include "lex.h"
 #include "weight.h"
 #include "proc.h"
+#include "exe.h"
 #include "yara.h"
 
 #ifdef WIN32
@@ -56,6 +57,7 @@ YARA_CONTEXT* yr_create_context()
     context->allow_includes = TRUE;
 	context->current_namespace = yr_create_namespace(context, "default");
 	context->fast_match = FALSE;
+    context->scanning_process_memory = FALSE;
     
     memset(context->hash_table.hashed_strings_2b, 0, sizeof(context->hash_table.hashed_strings_2b));
     memset(context->hash_table.hashed_strings_1b, 0, sizeof(context->hash_table.hashed_strings_1b));
@@ -356,7 +358,8 @@ int yr_scan_mem_blocks(MEMORY_BLOCK* block, YARA_CONTEXT* context, YARACALLBACK 
     int error;
     int global_rules_satisfied;
 	unsigned int i;	
-	int file_is_pe;
+	int is_executable;
+    int is_file;
 	
 	RULE* rule;
 	NAMESPACE* ns;
@@ -372,18 +375,27 @@ int yr_scan_mem_blocks(MEMORY_BLOCK* block, YARA_CONTEXT* context, YARACALLBACK 
 	
 	eval_context.file_size = block->size;
     eval_context.mem_block = block;
+    eval_context.entry_point = 0;
 	
-	file_is_pe = is_pe(block->data, block->size);
-	
-	if (file_is_pe)
-	{
-		eval_context.entry_point = get_entry_point_offset(block->data, block->size);
-	}
-	
+    is_executable = is_pe(block->data, block->size) || is_elf(block->data, block->size) || context->scanning_process_memory;
+    is_file = !context->scanning_process_memory;
+
 	clear_marks(&context->rule_list);
 	
 	while (block != NULL)
-	{	
+	{
+	    if (eval_context.entry_point == 0)
+	    {
+	        if (context->scanning_process_memory)
+	        {
+	            eval_context.entry_point = get_entry_point_address(block->data, block->size, block->base);
+	        }
+	        else
+	        {
+	            eval_context.entry_point = get_entry_point_offset(block->data, block->size);
+            }
+        }
+	    
     	for (i = 0; i < block->size - 1; i++)
     	{		    
     		/* search for normal strings */	
@@ -476,10 +488,10 @@ int yr_scan_mem_blocks(MEMORY_BLOCK* block, YARA_CONTEXT* context, YARACALLBACK 
 			rule = rule->next;
 			continue;
 		}
-		
-		/* evaluate only if file is PE or the rule does not requires PE files*/
+
 	  
-		if (file_is_pe || !(rule->flags & RULE_FLAGS_REQUIRE_PE_FILE))
+		if ((is_executable  || !(rule->flags & RULE_FLAGS_REQUIRE_EXECUTABLE)) &&
+		    (is_file        || !(rule->flags & RULE_FLAGS_REQUIRE_FILE)))
 		{
 		    eval_context.rule = rule;
 		    
@@ -537,11 +549,12 @@ int yr_scan_proc(int pid, YARA_CONTEXT* context, YARACALLBACK callback, void* us
     MEMORY_BLOCK* first_block;
     MEMORY_BLOCK* next_block;
     MEMORY_BLOCK* block;
-    
+        
     int result = get_process_memory(pid, &first_block);
 
     if (result == ERROR_SUCCESS)
     {
+        context->scanning_process_memory = TRUE;
         result = yr_scan_mem_blocks(first_block, context, callback, user_data);
     }
     

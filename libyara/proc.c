@@ -14,12 +14,12 @@ GNU General Public License for more details.
 
 */
 
-
+#include "mem.h"
+#include "proc.h"
 
 #ifdef WIN32
 
 #include <windows.h>
-#include "proc.h"
 
 int get_process_memory(int pid, MEMORY_BLOCK** first_block)
 {
@@ -117,7 +117,7 @@ int get_process_memory(int pid, MEMORY_BLOCK** first_block)
 #include <sys/ptrace.h>
 #include <sys/wait.h>  
 
-#include "proc.h"
+
 
 #ifdef __MACH__
 
@@ -161,7 +161,7 @@ int get_process_memory(pid_t pid, MEMORY_BLOCK** first_block)
                   
          if (kr == KERN_SUCCESS) 
          {         
-             data = yr_malloc(size);
+             data = (unsigned char*) yr_malloc(size);
              
              if (data == NULL)
                  return ERROR_INSUFICIENT_MEMORY;
@@ -236,12 +236,12 @@ int get_process_memory(pid_t pid, MEMORY_BLOCK** first_block)
     if (mem == -1)
     {
         fclose(maps);
-        return ERROR_CAN_NOT_ATTACH_TO_PROCESS;
+        return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
     }
 
     if (ptrace(PTRACE_ATTACH, pid, NULL, 0) == -1)
     {
-        return ERROR_CAN_NOT_ATTACH_TO_PROCESS;
+        return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
     }
        
     wait(NULL);

@@ -65,7 +65,7 @@ libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libyara_la_LIBADD =
 am_libyara_la_OBJECTS = grammar.lo lex.lo ast.lo scan.lo filemap.lo \
-	eval.lo pefile.lo xtoi.lo mem.lo proc.lo weight.lo libyara.lo
+	eval.lo exe.lo xtoi.lo mem.lo proc.lo weight.lo libyara.lo
 libyara_la_OBJECTS = $(am_libyara_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/../depcomp
@@ -227,7 +227,7 @@ libyara_la_SOURCES = \
   scan.c \
   filemap.c \
   eval.c \
-  pefile.c \
+  exe.c \
   xtoi.c \
   mem.c \
   proc.c \
@@ -238,8 +238,9 @@ libyara_la_SOURCES = \
   eval.h \
   filemap.h \
   pe.h \
+  elf.h \
+  exe.h \
   xtoi.h \
-  pefile.h \
   sizedstr.h \
   mem.h \
   proc.h \
@@ -344,12 +345,12 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ast.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eval.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exe.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filemap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/grammar.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libyara.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pefile.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/proc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scan.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/weight.Plo@am__quote@

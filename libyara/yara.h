@@ -61,7 +61,8 @@ GNU General Public License for more details.
 #define RULE_FLAGS_MATCH                        0x01
 #define RULE_FLAGS_PRIVATE                      0x02
 #define RULE_FLAGS_GLOBAL						0x04
-#define RULE_FLAGS_REQUIRE_PE_FILE 	            0x08
+#define RULE_FLAGS_REQUIRE_EXECUTABLE 	        0x08
+#define RULE_FLAGS_REQUIRE_FILE                 0x10
 
 #ifndef ERROR_SUCCESS 
 #define ERROR_SUCCESS                           0
@@ -286,6 +287,8 @@ typedef struct _YARA_CONTEXT
     
     int						fast_match;
     int                     allow_includes;
+    int                     scanning_process_memory;
+    
     char                    include_base_dir[MAX_PATH];
 
 } YARA_CONTEXT;

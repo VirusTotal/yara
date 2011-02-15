@@ -17,7 +17,10 @@ GNU General Public License for more details.
 #define _PE_H
 
 int is_pe(unsigned char* buffer, unsigned int buffer_length);
-int get_entry_point_offset(unsigned char* buffer, unsigned int buffer_length);
+int is_elf(unsigned char* buffer, unsigned int buffer_length);
+
+unsigned long long get_entry_point_offset(unsigned char* buffer, unsigned int buffer_length);
+unsigned long long get_entry_point_address(unsigned char* buffer, unsigned int buffer_length, size_t base_address);
 
 #endif
 
