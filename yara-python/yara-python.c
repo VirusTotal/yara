@@ -56,7 +56,6 @@ the rules to your data. This method can receive a file path or a string       \n
 containing the data.                                                          \n\
                                                                               \n\
 matches = rules.match(filepath='/foo/bar/myfile')                             \n\
-                                                                              \n\
 matches = rules.match('/foo/bar/myfile')                                      \n\
                                                                               \n\
 f = fopen('/foo/bar/myfile', 'rb')                                            \n\
@@ -83,7 +82,7 @@ The \"Match\" class have the following attributes:                            \n
 - namespace	                                                                  \n\
 - meta	                                                                      \n\
 - tags	                                                                      \n\
-- string	                                                                  \n\
+- strings	                                                                  \n\
 	                                                                          \n\
 The \"rule\" and \"namespace\" attributes are the names of the matching rule and\n\
 its namespace respectively.                                                   \n\
@@ -438,33 +437,58 @@ static void Rules_dealloc(PyObject *self)
     PyObject_Del(self);
 }
 
-int callback(RULE* rule, void* data)
+
+typedef struct _CALLBACK_DATA {
+
+    PyObject *matches;
+    PyObject *callback;
+    
+} CALLBACK_DATA;
+
+
+int yara_callback(RULE* rule, void* data)
 {
     TAG* tag;
     STRING* string;
     MATCH* m;
     META* meta;
-    PyObject* taglist = NULL;
-    PyObject* stringlist = NULL;
-    PyObject* metalist = NULL;
+    
+    PyObject* tag_list = NULL;
+    PyObject* string_list = NULL;
+    PyObject* meta_list = NULL;
     PyObject* match;
-    PyObject* list = (PyObject*) data;
+    PyObject* callback_dict;
+    PyObject* object;
+    PyObject* matches = ((CALLBACK_DATA*) data)->matches;
+    PyObject* callback = ((CALLBACK_DATA*) data)->callback;
+    PyObject* callback_result;
     
-    if (!(rule->flags & RULE_FLAGS_MATCH))
-        return 0;
-       
-    taglist = PyList_New(0);
-    stringlist = PyList_New(0);
-    metalist = PyDict_New();
+    long result = CALLBACK_CONTINUE;
     
-    if (taglist == NULL || stringlist == NULL || metalist == NULL)
-        return 1; // error!
+    if (!(rule->flags & RULE_FLAGS_MATCH) && callback == NULL)
+        return CALLBACK_CONTINUE;
+    
+    tag_list = PyList_New(0);
+    string_list = PyList_New(0);
+    meta_list = PyDict_New();
+    
+    if (tag_list == NULL || string_list == NULL || meta_list == NULL)
+    {
+        Py_XDECREF(tag_list);
+        Py_XDECREF(string_list);
+        Py_XDECREF(meta_list);
         
+        return CALLBACK_ERROR;
+    }           
+    
     tag = rule->tag_list_head;
     
     while(tag != NULL)
     {
-        PyList_Append(taglist, PyString_FromString(tag->identifier));               
+        object = PyString_FromString(tag->identifier);
+        PyList_Append(tag_list, object);
+        Py_DECREF(object);    
+                   
         tag = tag->next;
     }      
     
@@ -474,22 +498,19 @@ int callback(RULE* rule, void* data)
     {
         if (meta->type == META_TYPE_INTEGER)
         {
-            PyDict_SetItem( metalist, 
-                            PyString_FromString(meta->identifier),
-                            Py_BuildValue("I", meta->integer));  
+            object = Py_BuildValue("I", meta->integer);
         }
         else if (meta->type == META_TYPE_BOOLEAN)
         {
-            PyDict_SetItem( metalist, 
-                            PyString_FromString(meta->identifier),
-                            PyBool_FromLong(meta->boolean));  
+            object = PyBool_FromLong(meta->boolean);
         }
         else
         {
-            PyDict_SetItem( metalist, 
-                            PyString_FromString(meta->identifier),
-                            PyString_FromString(meta->string));    
+            object = PyString_FromString(meta->string);
         }
+        
+        PyDict_SetItemString( meta_list, meta->identifier, object);  
+        Py_DECREF(object);
         
         meta = meta->next;
     } 
@@ -504,8 +525,10 @@ int callback(RULE* rule, void* data)
 
             while (m != NULL)
             {
-                PyList_Append(  stringlist, 
-                                Py_BuildValue("(i,s,s#)", m->offset, string->identifier, (char*) m->data, m->length));
+                object = Py_BuildValue("(i,s,s#)", m->offset, string->identifier, (char*) m->data, m->length);
+                PyList_Append(string_list, object);
+                Py_DECREF(object);
+                
                 m = m->next;
             }
         }
@@ -513,29 +536,68 @@ int callback(RULE* rule, void* data)
         string = string->next;
     }
     
-    PyList_Sort(stringlist);
-       
-    match = Match_NEW(rule->identifier, rule->ns->name, taglist, metalist, stringlist);
+    PyList_Sort(string_list);
     
-    if (match != NULL)
-    {       
-        PyList_Append(list, match);
-    }
-    else
+    if (rule->flags & RULE_FLAGS_MATCH)
     {
-        Py_DECREF(taglist);
-        Py_DECREF(stringlist);
-        Py_DECREF(metalist);
-        return 1;
+        match = Match_NEW(rule->identifier, rule->ns->name, tag_list, meta_list, string_list);
+
+        if (match != NULL)
+        {       
+            PyList_Append(matches, match);
+            Py_DECREF(match);
+        }
+        else
+        {
+            Py_DECREF(tag_list);
+            Py_DECREF(string_list);
+            Py_DECREF(meta_list);
+    
+            return CALLBACK_ERROR;
+        }
     }
     
-    return 0;
+    if (callback != NULL)
+	{
+	    Py_INCREF(callback); 
+	    
+	    callback_dict = PyDict_New();
+	    
+	    object = PyBool_FromLong(rule->flags & RULE_FLAGS_MATCH);
+        PyDict_SetItemString(callback_dict, "matches", object);
+        Py_DECREF(object);
+	    
+        object = PyString_FromString(rule->identifier);        
+        PyDict_SetItemString(callback_dict, "rule", object);
+        Py_DECREF(object);
+        
+        object = PyString_FromString(rule->ns->name);
+        PyDict_SetItemString(callback_dict, "namespace", object);
+        Py_DECREF(object);
+        
+	    PyDict_SetItemString(callback_dict, "tags", tag_list);
+	    PyDict_SetItemString(callback_dict, "meta", meta_list);
+	    PyDict_SetItemString(callback_dict, "strings", string_list);
+
+		callback_result = PyObject_CallFunction(callback, "O", callback_dict);
+		
+		if (PyInt_Check(callback_result))
+		{
+		    result = PyInt_AsLong(callback_result);
+		}
+    
+        Py_DECREF(callback_dict);
+		Py_DECREF(callback_result);
+		Py_DECREF(callback); 
+	}
+    
+    return result;
 
 }
 
 PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
 {
-    static char *kwlist[] = {"filepath", "pid", "data", "externals", NULL};
+    static char *kwlist[] = {"filepath", "pid", "data", "externals", "callback", NULL};
     
     char* filepath = NULL;
     char* data = NULL;
@@ -544,12 +606,16 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
     int length;
     int result;
     
-    PyObject *matches = NULL;
     PyObject *externals = NULL;
-       
+    
+    CALLBACK_DATA callback_data;
+    
+    callback_data.matches = NULL;
+    callback_data.callback = NULL;
+    
     Rules* object = (Rules*) self;
     
-    if (PyArg_ParseTupleAndKeywords(args, keywords, "|sis#O", kwlist, &filepath, &pid, &data, &length, &externals))
+    if (PyArg_ParseTupleAndKeywords(args, keywords, "|sis#OO", kwlist, &filepath, &pid, &data, &length, &externals, &callback_data.callback))
     {
         if (externals != NULL)
         {
@@ -566,15 +632,23 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
 			}
         }
              
+        if (callback_data.callback != NULL)
+        {
+            if (!PyCallable_Check(callback_data.callback)) 
+            {
+                return PyErr_Format(YaraError, "callback must be callable");
+            }
+        }
+             
         if (filepath != NULL)
         {    
-            matches = PyList_New(0);
+            callback_data.matches = PyList_New(0);
         
-            result = yr_scan_file(filepath, object->context, callback, matches);
+            result = yr_scan_file(filepath, object->context, yara_callback, &callback_data);
 
             if (result != ERROR_SUCCESS)
             {
-                Py_DECREF(matches);
+                Py_DECREF(callback_data.matches);
 
                 switch(result)
                 {
@@ -591,25 +665,25 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
         }
         else if (data != NULL)
         {
-            matches = PyList_New(0);
+            callback_data.matches = PyList_New(0);
         
-			result = yr_scan_mem((unsigned char*) data, (unsigned int) length, object->context, callback, matches);
+			result = yr_scan_mem((unsigned char*) data, (unsigned int) length, object->context, yara_callback, &callback_data);
 
             if (result != ERROR_SUCCESS)
             {
-               Py_DECREF(matches);
+               Py_DECREF(callback_data.matches);
                return PyErr_Format(PyExc_Exception, "internal error"); 
             }
         }
         else if (pid != 0)
         {
-            matches = PyList_New(0);
+            callback_data.matches = PyList_New(0);
             
-            result = yr_scan_proc(pid, object->context, callback, matches);
+            result = yr_scan_proc(pid, object->context, yara_callback, &callback_data);
             
             if (result != ERROR_SUCCESS)
             {
-               Py_DECREF(matches);
+               Py_DECREF(callback_data.matches);
                
                switch(result)
                {
@@ -628,7 +702,7 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
         }
     }
     
-    return matches;
+    return callback_data.matches;
 }
 
 static PyObject * Rules_getattro(PyObject *self, PyObject *name)
@@ -812,14 +886,16 @@ static PyMethodDef methods[] = {
 
 void inityara(void)
 { 
-    PyObject *m, *d;
+    PyObject *m;
     
     yr_init();
  
     m = Py_InitModule3("yara", methods, module_doc);
-    d = PyModule_GetDict(m);
     
     /* initialize module variables/constants */
+    
+    PyModule_AddIntConstant(m, "CALLBACK_CONTINUE", 0);
+    PyModule_AddIntConstant(m, "CALLBACK_ABORT", 1);
 
 #if PYTHON_API_VERSION >= 1007
     YaraError = PyErr_NewException("yara.Error", PyExc_StandardError, NULL);
@@ -828,6 +904,7 @@ void inityara(void)
     YaraError = Py_BuildValue("s", "yara.Error");
     YaraSyntaxError = Py_BuildValue("s", "yara.SyntaxError");
 #endif
-    PyDict_SetItemString(d, "Error", YaraError);
-    PyDict_SetItemString(d, "SyntaxError", YaraSyntaxError);
+
+    PyModule_AddObject(m, "Error", YaraError);
+    PyModule_AddObject(m, "SyntaxError", YaraSyntaxError);
 }
