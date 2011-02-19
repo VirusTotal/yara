@@ -107,7 +107,9 @@ GNU General Public License for more details.
 #define EXTERNAL_VARIABLE_TYPE_STRING           2
 #define EXTERNAL_VARIABLE_TYPE_BOOLEAN          3
 
-      
+#define CALLBACK_CONTINUE                       0
+#define CALLBACK_ABORT                          1
+#define CALLBACK_ERROR                          2 
 
 typedef struct _MATCH
 {   

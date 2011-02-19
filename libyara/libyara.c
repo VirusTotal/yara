@@ -501,9 +501,13 @@ int yr_scan_mem_blocks(MEMORY_BLOCK* block, YARA_CONTEXT* context, YARACALLBACK 
     		}
 		}
 		
-		if (callback(rule, user_data) != 0)
+		switch (callback(rule, user_data))
 		{
-            return ERROR_CALLBACK_ERROR;
+		    case CALLBACK_ABORT:
+                return ERROR_SUCCESS;
+                
+            case CALLBACK_ERROR:
+                return ERROR_CALLBACK_ERROR;
 		}
 		
 		rule = rule->next;
