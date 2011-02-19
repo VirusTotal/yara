@@ -37,8 +37,13 @@ Print the tags associated to the rule.
 .B \-m 
 Print metadata associated to the rule.
 .TP
-.B \-s 
+.B \-s
 Print strings found in the file.
+.TP
+.BI \-l " number" 
+Abort scanning after a
+.I number
+of rules matched.
 .TP
 .BI \-d " identifier"=value
 Define an external variable. This option can be used multiple times.

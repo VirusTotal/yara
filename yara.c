@@ -43,6 +43,8 @@ int show_specified_rules = FALSE;
 int show_strings = FALSE;
 int show_meta = FALSE;
 int negate = FALSE;
+int count = 0;
+int limit = 0;
 
 
 TAG* specified_tags_list = NULL;
@@ -69,6 +71,7 @@ void show_help()
 	printf("  -g                        print tags.\n");
 	printf("  -m                        print metadata.\n");
 	printf("  -s                        print matching strings.\n");
+	printf("  -l <number>               abort scanning after a <number> of rules matched.\n");
 	printf("  -d <identifier>=<value>   define external variable.\n");
     printf("  -r                        recursively search directories.\n");
 	printf("  -f                        fast matching mode.\n");
@@ -380,7 +383,13 @@ int callback(RULE* rule, void* data)
 		}
 	}
 	
-    return 0;
+	if (rule_match)
+        count++;
+	
+	if (limit != 0 && count >= limit)
+        return CALLBACK_ABORT;
+	
+    return CALLBACK_CONTINUE;
 }
 
 int process_cmd_line(YARA_CONTEXT* context, int argc, char const* argv[])
@@ -392,7 +401,7 @@ int process_cmd_line(YARA_CONTEXT* context, int argc, char const* argv[])
     IDENTIFIER* identifier;
 	opterr = 0;
  
-	while ((c = getopt (argc, (char**) argv, "rnsvgmt:i:d:f")) != -1)
+	while ((c = getopt (argc, (char**) argv, "rnsvgml:t:i:d:f")) != -1)
 	{
 		switch (c)
 	    {
@@ -489,6 +498,10 @@ int process_cmd_line(YARA_CONTEXT* context, int argc, char const* argv[])
 		        }
 
 		        break;
+		        
+		    case 'l':	    
+                limit = atoi(optarg);
+                break;
 	
 		    case '?':
 	
