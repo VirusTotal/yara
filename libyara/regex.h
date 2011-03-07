@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 
-#ifndef _REGEX_H 
+#ifndef _REGEX_H
 #define _REGEX_H
 
 #include "yara.h"
