@@ -17,6 +17,7 @@ libyara_la_SOURCES = \
   xtoi.c \
   mem.c \
   proc.c \
+  regex-pcre.c \
   weight.c \
   libyara.c \
   lex.h \
@@ -30,6 +31,7 @@ libyara_la_SOURCES = \
   sizedstr.h \
   mem.h \
   proc.h \
+  regex.h \
   weight.h
 
 libyara_la_LIBDADD = /usr/local/lib/libpcre.la

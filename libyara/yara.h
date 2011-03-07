@@ -18,8 +18,6 @@ GNU General Public License for more details.
 #define _YARA_H
 
 #include <stdio.h>
-#include <pcre.h>
-
 
 #ifndef TRUE
 #define TRUE 1
@@ -121,13 +119,11 @@ typedef struct _MATCH
 } MATCH;
 
 
-typedef struct _REGEXP
-{
-    pcre* regexp;
-    pcre_extra* extra;
-    
+typedef struct _REGEXP {
+    void *regexp;
+    void *extra;
+    int re2_anchored;
 } REGEXP;
-
 
 typedef struct _STRING
 {

@@ -24,6 +24,7 @@ GNU General Public License for more details.
 #include "weight.h"
 #include "proc.h"
 #include "exe.h"
+#include "regex.h"
 #include "yara.h"
 
 #ifdef WIN32
@@ -104,8 +105,7 @@ void yr_destroy_context(YARA_CONTEXT* context)
             }
             else if (IS_REGEXP(string))
             {
-                pcre_free(string->re.regexp);
-                pcre_free(string->re.extra);
+                regex_free(&(string->re));
             }
             
             match = string->matches;

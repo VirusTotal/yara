@@ -16,7 +16,6 @@ GNU General Public License for more details.
 
 #include <string.h>
 #include <ctype.h>
-#include <pcre.h>
 
 #include "filemap.h"
 #include "yara.h"
@@ -25,6 +24,7 @@ GNU General Public License for more details.
 #include "exe.h"
 #include "mem.h"
 #include "eval.h"
+#include "regex.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -315,53 +315,21 @@ int hex_match(unsigned char* buffer, size_t buffer_size, unsigned char* pattern,
 
 int regexp_match(unsigned char* buffer, size_t buffer_size, unsigned char* pattern, int pattern_length, REGEXP re, int file_beginning)
 {
-	int ovector[3];
-	unsigned int len;
-	int rc;
-	int result;
-	char* s;
+	int result = 0;
 	
-	result = 0;
-	
-	/* 
-		if we are not at the beginning of the file, and the pattern 
-		begins with ^, the string doesn't match
-	*/
-	
+	// if we are not at the beginning of the file, and 
+	// the pattern begins with ^, the string doesn't match
 	if (file_beginning && pattern[0] == '^')
 	{
 		return 0;
 	}
 
-	rc = pcre_exec(
-	  				re.regexp,            /* the compiled pattern */
-	  				re.extra,             /* extra data */
-	  				(char*) buffer,  	  /* the subject string */
-	  				buffer_size,          /* the length of the subject */
-	  				0,                    /* start at offset 0 in the subject */
-	  				0,                    /* default options */
-	  				ovector,              /* output vector for substring information */
-	  				3);                   /* number of elements in the output vector */
-		
-	if (rc >= 0)
-	{	
-		result = pcre_get_substring(	(char*) buffer, 
-										ovector,
-		            					1, 	
-										0,
-		            					(const char**) &s);
-		            							
-		if (result != PCRE_ERROR_NOMEMORY &&
-		    result != PCRE_ERROR_NOSUBSTRING)	
-		
-		{
-			pcre_free_substring(s);
-			return result;
-		}
-	
-	}
-	
-	return 0;
+        result = regex_exec(&re, (char *)buffer, buffer_size);
+
+        if (result >= 0)
+          return result;
+        else	
+	  return 0;
 }
 
 int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)

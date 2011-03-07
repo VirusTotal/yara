@@ -17,6 +17,7 @@ GNU General Public License for more details.
 #include "yara.h"
 #include "ast.h"
 #include "eval.h"
+#include "regex.h"
 
 #include <string.h>
 
@@ -352,16 +353,9 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
         }
         
     case TERM_TYPE_EXTERNAL_STRING_MATCH:
-        
-        rc = pcre_exec( term_external_string_operation->re.regexp,
-	  				    term_external_string_operation->re.extra,           
-	  				    term_external_string_operation->ext_var->string,  	 
-	  				    strlen(term_external_string_operation->ext_var->string),          
-	  				    0,                    
-	  				    0,                    
-	  				    ovector,              
-	  				    3);                   
-    
+        rc = regex_exec(&(term_external_string_operation->re),
+                        term_external_string_operation->ext_var->string,
+                        strlen(term_external_string_operation->ext_var->string));
         return (rc >= 0);
 
 	case TERM_TYPE_EXTERNAL_STRING_CONTAINS:

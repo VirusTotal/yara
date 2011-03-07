@@ -9,6 +9,7 @@
 #include "sizedstr.h"
 #include "mem.h"
 #include "lex.h"
+#include "regex.h"
 
 #define YYERROR_VERBOSE
 //#define YYDEBUG 1
@@ -1202,14 +1203,7 @@ TERM* reduce_external_string_operation( yyscan_t yyscanner,
                 
                 if (type == TERM_TYPE_EXTERNAL_STRING_MATCH)
                 {
-                    term->re.regexp = pcre_compile(string->c_string, 0, &error, &erroffset, NULL); 
-                    
-                    if (term->re.regexp != NULL)  
-                    {
-                        term->re.extra = pcre_study(term->re.regexp, 0, &error);
-                        context->last_result = ERROR_SUCCESS;
-                    }
-                    else /* compilation failed */
+                    if (regex_compile(&(term->re), string->c_string, FALSE, FALSE, &error, &erroffset) <= 0)
                     {
                         yr_free(term);
                         term = NULL;

@@ -22,6 +22,7 @@ GNU General Public License for more details.
 #include "yara.h"
 #include "ast.h"
 #include "mem.h"
+#include "regex.h"
 
 #define todigit(x)  ((x) >='A'&& (x) <='F')? ((unsigned char) (x - 'A' + 10)) : ((unsigned char) (x - '0'))
 
@@ -558,33 +559,25 @@ int new_text_string(    YARA_CONTEXT* context,
 
     memcpy(*hexstr, charstr->c_string, charstr->length);
          
-     if (flags & STRING_FLAGS_REGEXP)
-     {           
-		options = PCRE_ANCHORED;
-         
-         if (flags & STRING_FLAGS_NO_CASE)
-         {
-             options |= PCRE_CASELESS;
-         }
-
-         re->regexp = pcre_compile(charstr->c_string, options, &error, &erroffset, NULL); 
-
-         if (re->regexp != NULL)  
-         {
-             re->extra = pcre_study(re->regexp, 0, &error);
-             result = ERROR_SUCCESS;
-         }
-         else /* compilation failed */
-         {
-             strncpy(context->last_error_extra_info, error, sizeof(context->last_error_extra_info));
-             result = ERROR_INVALID_REGULAR_EXPRESSION;
-         }
-     }
-     else
-     {
-         re->regexp = NULL;
-     }
-
+    if (flags & STRING_FLAGS_REGEXP)
+    {
+        if (regex_compile(re,  // REGEXP *
+                          charstr->c_string,  // Regex pattern
+                          TRUE,  // Anchor the pattern to the first character when evaluating
+                          flags & STRING_FLAGS_NO_CASE,  // If TRUE then case insensitive search
+                          &error,  // Error message
+                          &erroffset) <= 0) // Offset into regex pattern if error detected
+        {
+            strncpy(context->last_error_extra_info, error, sizeof(context->last_error_extra_info));
+            result = ERROR_INVALID_REGULAR_EXPRESSION;
+        }
+    }
+    else
+    {
+        // re contains multiple pointers now, if we're
+        // not doing a regex, make sure all are NULL.
+        memset(re, '\0', sizeof(REGEXP));
+    }
     
     return result;
 }
@@ -877,8 +870,7 @@ void free_term(TERM* term)
 		
     case TERM_TYPE_EXTERNAL_STRING_MATCH:
 
-        pcre_free(((TERM_EXTERNAL_STRING_OPERATION*)term)->re.regexp);
-        pcre_free(((TERM_EXTERNAL_STRING_OPERATION*)term)->re.extra);
+        regex_free(&(((TERM_EXTERNAL_STRING_OPERATION*)term)->re));
         break;
 
 	case TERM_TYPE_EXTERNAL_STRING_CONTAINS:
