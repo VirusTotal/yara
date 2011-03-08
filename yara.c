@@ -28,6 +28,7 @@ GNU General Public License for more details.
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <yara.h>
 #include "config.h"

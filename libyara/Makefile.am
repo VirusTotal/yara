@@ -17,7 +17,6 @@ libyara_la_SOURCES = \
   xtoi.c \
   mem.c \
   proc.c \
-  regex-pcre.c \
   weight.c \
   libyara.c \
   lex.h \
@@ -34,4 +33,7 @@ libyara_la_SOURCES = \
   regex.h \
   weight.h
 
-libyara_la_LIBDADD = /usr/local/lib/libpcre.la
+SUBDIRS = regex
+
+libyara_la_LIBADD = regex/libregex.la
+#libyara_la_LIBADD = $(LTLIBOBJS) re/.libs/libyara.la

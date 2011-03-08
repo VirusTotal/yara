@@ -15,3 +15,7 @@ man1_MANS = yara.man
 
 EXTRA_DIST = $(man1_MANS)
 
+if RE2
+nodist_EXTRA_yara_SOURCES = force.cpp
+endif
+

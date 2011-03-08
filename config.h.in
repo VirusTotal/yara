@@ -3,6 +3,9 @@
 /* Define to 1 if you have the `pcre' library (-lpcre). */
 #undef HAVE_LIBPCRE
 
+/* Define to 1 if you have the `re2' library (-lre2). */
+#undef HAVE_LIBRE2
+
 /* Name of package */
 #undef PACKAGE
 

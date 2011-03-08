@@ -1,13 +1,13 @@
 # ltsugar.m4 -- libtool m4 base layer.                         -*-Autoconf-*-
 #
-#   Copyright (C) 2004, 2005, 2007 Free Software Foundation, Inc.
-#   Written by Gary V. Vaughan, 2004
+# Copyright (C) 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
+# Written by Gary V. Vaughan, 2004
 #
 # This file is free software; the Free Software Foundation gives
 # unlimited permission to copy and/or distribute it, with or without
 # modifications, as long as this notice is preserved.
 
-# serial 5 ltsugar.m4
+# serial 6 ltsugar.m4
 
 # This is to help aclocal find these macros, as it can't see m4_define.
 AC_DEFUN([LTSUGAR_VERSION], [m4_if([0.1])])
@@ -63,14 +63,14 @@ m4_define([lt_append],
 # Produce a SEP delimited list of all paired combinations of elements of
 # PREFIX-LIST with SUFFIX1 through SUFFIXn.  Each element of the list
 # has the form PREFIXmINFIXSUFFIXn.
+# Needed until we can rely on m4_combine added in Autoconf 2.62.
 m4_define([lt_combine],
-[m4_if([$2], [], [],
-  [m4_if([$4], [], [],
-    [lt_join(m4_quote(m4_default([$1], [[, ]])),
-      lt_unquote(m4_split(m4_normalize(m4_foreach(_Lt_prefix, [$2],
-		   [m4_foreach(_Lt_suffix, lt_car([m4_shiftn(3, $@)]),
-			       [_Lt_prefix[]$3[]_Lt_suffix ])])))))])])dnl
-])
+[m4_if(m4_eval([$# > 3]), [1],
+       [m4_pushdef([_Lt_sep], [m4_define([_Lt_sep], m4_defn([lt_car]))])]]dnl
+[[m4_foreach([_Lt_prefix], [$2],
+	     [m4_foreach([_Lt_suffix],
+		]m4_dquote(m4_dquote(m4_shift(m4_shift(m4_shift($@)))))[,
+	[_Lt_sep([$1])[]m4_defn([_Lt_prefix])[$3]m4_defn([_Lt_suffix])])])])])
 
 
 # lt_if_append_uniq(MACRO-NAME, VARNAME, [SEPARATOR], [UNIQ], [NOT-UNIQ])

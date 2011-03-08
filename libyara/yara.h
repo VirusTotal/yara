@@ -119,11 +119,14 @@ typedef struct _MATCH
 } MATCH;
 
 
-typedef struct _REGEXP {
-    void *regexp;
-    void *extra;
-    int re2_anchored;
+typedef struct _REGEXP 
+{
+    void	*regexp;
+    void	*extra;
+    int		re2_anchored;
+	
 } REGEXP;
+
 
 typedef struct _STRING
 {
