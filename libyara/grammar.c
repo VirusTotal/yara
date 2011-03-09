@@ -87,7 +87,7 @@
 
 
 /* Line 189 of yacc.c  */
-#line 91 "grammar.c"
+#line 91 "y.tab.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -259,7 +259,7 @@ typedef union YYSTYPE
 
 
 /* Line 214 of yacc.c  */
-#line 263 "grammar.c"
+#line 263 "y.tab.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -362,7 +362,7 @@ int count_strings(TERM_STRING* st);
 
 
 /* Line 264 of yacc.c  */
-#line 366 "grammar.c"
+#line 366 "y.tab.c"
 
 #ifdef short
 # undef short
@@ -2734,7 +2734,7 @@ yyreduce:
 
 
 /* Line 1455 of yacc.c  */
-#line 2738 "grammar.c"
+#line 2738 "y.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -3445,11 +3445,16 @@ TERM* reduce_external_string_operation( yyscan_t yyscanner,
                 
                 if (type == TERM_TYPE_EXTERNAL_STRING_MATCH)
                 {
-                    if (regex_compile(&(term->re), string->c_string, FALSE, FALSE, &error, &erroffset) <= 0)
+                    if (regex_compile(&(term->re),
+                                      string->c_string,
+                                      FALSE,
+                                      FALSE,
+                                      context->last_error_extra_info,
+                                      sizeof(context->last_error_extra_info),
+                                      &erroffset) <= 0)
                     {
                         yr_free(term);
                         term = NULL;
-                        strncpy(context->last_error_extra_info, error, sizeof(context->last_error_extra_info));
                         context->last_result = ERROR_INVALID_REGULAR_EXPRESSION;
                     }
                 }

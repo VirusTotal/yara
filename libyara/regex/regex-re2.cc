@@ -18,6 +18,7 @@ GNU General Public License for more details.
 #include <string.h>
 #include <re2/re2.h>
 #include <re2/stringpiece.h>
+#include "yara.h"
 
 
 int regex_exec(REGEXP* regex, const char *buffer, size_t buffer_size) {
@@ -55,7 +56,8 @@ int regex_compile(REGEXP* output,
                   const char* pattern,
                   int anchored,
                   int case_insensitive,
-                  const char** error_message,
+                  char* error_message,
+                  size_t error_message_size,
                   int* error_offset) {
   if (!output || !pattern)
     return 0;
@@ -79,10 +81,14 @@ int regex_compile(REGEXP* output,
 
   re2::RE2* re_ptr = (re2::RE2*)output->regexp;
   if (!re_ptr->ok()) {
-    *error_message = re_ptr->error().c_str();
+    if (error_message && error_message_size) {
+      strncpy(error_message, re_ptr->error().c_str(), error_message_size - 1);
+      error_message[error_message_size - 1] = '\0';
+    }
     *error_offset = re_ptr->error().find(pattern);
     delete re_ptr;
     output->regexp = NULL;
+    return 0;
   }
   return 1;
 }

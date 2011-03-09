@@ -68,7 +68,8 @@ int regex_compile(REGEXP* output,
                   const char* pattern,
                   int anchored,
                   int case_insensitive,
-                  const char** error_message,
+                  char* error_message,
+                  size_t error_message_size,
                   int* error_offset) {
   if (!output || !pattern)
     return 0;
@@ -81,11 +82,17 @@ int regex_compile(REGEXP* output,
   if (case_insensitive)
     pcre_options |= PCRE_CASELESS;
 
+  char *pcre_error = NULL;
   output->regexp = (pcre*) pcre_compile(
-      pattern, pcre_options, error_message, error_offset, NULL);
+      pattern, pcre_options, (const char **)&pcre_error, error_offset, NULL);
   if (output->regexp != NULL) {
-    output->extra = (pcre_extra *)pcre_study(output->regexp, 0, error_message);
+    output->extra = (pcre_extra *)pcre_study(
+        output->regexp, 0, (const char **)error_message);
   } else {
+    if (error_message && error_message_size) {
+      strncpy(error_message, pcre_error, error_message_size - 1);
+      error_message[error_message_size - 1] = '\0';
+    }
     // TODO: Handle fatal error here, consistently with how yara would.
     return 0;
   }

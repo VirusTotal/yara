@@ -27,7 +27,8 @@ int regex_compile(REGEXP* output,
                   const char* pattern,
                   int anchored,
                   int case_insensitive,
-                  const char** error_message,
+                  char* error_message,
+                  size_t error_message_size,
                   int* error_offset);
 
 #ifdef __cplusplus

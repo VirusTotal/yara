@@ -542,7 +542,7 @@ int new_text_string(    YARA_CONTEXT* context,
                         REGEXP* re,
                         unsigned int* length)
 {
-    const char *error;
+    char *error;
     int erroffset;
     int options;
     int result = ERROR_SUCCESS;
@@ -565,11 +565,11 @@ int new_text_string(    YARA_CONTEXT* context,
                           charstr->c_string,  // Regex pattern
                           TRUE,  // Anchor the pattern to the first character when evaluating
                           flags & STRING_FLAGS_NO_CASE,  // If TRUE then case insensitive search
-                          &error,  // Error message
+                          context->last_error_extra_info,  // Error message
+                          sizeof(context->last_error_extra_info), // Size of error buffer
                           &erroffset) <= 0) // Offset into regex pattern if error detected
         {
-            strncpy(context->last_error_extra_info, error, sizeof(context->last_error_extra_info));
-            result = ERROR_INVALID_REGULAR_EXPRESSION;
+             result = ERROR_INVALID_REGULAR_EXPRESSION;
         }
     }
     else

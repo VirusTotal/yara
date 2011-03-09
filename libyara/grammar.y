@@ -1203,11 +1203,16 @@ TERM* reduce_external_string_operation( yyscan_t yyscanner,
                 
                 if (type == TERM_TYPE_EXTERNAL_STRING_MATCH)
                 {
-                    if (regex_compile(&(term->re), string->c_string, FALSE, FALSE, &error, &erroffset) <= 0)
+                    if (regex_compile(&(term->re),
+                                      string->c_string,
+                                      FALSE,
+                                      FALSE,
+                                      context->last_error_extra_info,
+                                      sizeof(context->last_error_extra_info),
+                                      &erroffset) <= 0)
                     {
                         yr_free(term);
                         term = NULL;
-                        strncpy(context->last_error_extra_info, error, sizeof(context->last_error_extra_info));
                         context->last_result = ERROR_INVALID_REGULAR_EXPRESSION;
                     }
                 }
