@@ -17,16 +17,17 @@ GNU General Public License for more details.
 #include "regex.h"
 #include <pcre.h>
 #include <string.h>
-#include "yara.h"
+#include "../yara.h"
 
 
 int regex_exec(REGEXP* regex, const char *buffer, size_t buffer_size) {
-  if (!regex || buffer_size == 0)
-    return 0;
-
+  
   int ovector[3];
   int result = -1;
   char *s;
+	
+  if (!regex || buffer_size == 0)
+    return 0;
 
   result = pcre_exec((pcre*)regex->regexp,       /* the compiled pattern */
                      (pcre_extra*)regex->extra,  /* extra data */
@@ -71,18 +72,20 @@ int regex_compile(REGEXP* output,
                   char* error_message,
                   size_t error_message_size,
                   int* error_offset) {
+  
+  int pcre_options = 0;
+  char *pcre_error = NULL;
+					  
   if (!output || !pattern)
     return 0;
 
   memset(output, '\0', sizeof(REGEXP));
 
-  int pcre_options = 0;
   if (anchored)
     pcre_options |= PCRE_ANCHORED;
   if (case_insensitive)
     pcre_options |= PCRE_CASELESS;
 
-  char *pcre_error = NULL;
   output->regexp = (pcre*) pcre_compile(
       pattern, pcre_options, (const char **)&pcre_error, error_offset, NULL);
   if (output->regexp != NULL) {

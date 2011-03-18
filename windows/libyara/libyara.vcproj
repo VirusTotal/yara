@@ -104,8 +104,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D_CRT_SECURE_NO_DEPRECATE /DWIN32"
+				InlineFunctionExpansion="2"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="..\..\windows\include"
-				PreprocessorDefinitions="PCRE_STATIC"
+				PreprocessorDefinitions="PCRE_STATIC;SSE42"
 				ExceptionHandling="0"
 				BufferSecurityCheck="false"
 				CompileAs="1"
@@ -160,6 +163,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\libyara\exe.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\libyara\filemap.c"
 				>
 			</File>
@@ -180,11 +187,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\libyara\pefile.c"
+				RelativePath="..\..\libyara\proc.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\libyara\proc.c"
+				RelativePath="..\..\libyara\regex\regex-pcre.c"
 				>
 			</File>
 			<File

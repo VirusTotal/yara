@@ -14,12 +14,13 @@ GNU General Public License for more details.
 
 */
 
-#include "mem.h"
-#include "proc.h"
+
 
 #ifdef WIN32
 
 #include <windows.h>
+#include "mem.h"
+#include "proc.h"
 
 int get_process_memory(int pid, MEMORY_BLOCK** first_block)
 {
@@ -117,7 +118,8 @@ int get_process_memory(int pid, MEMORY_BLOCK** first_block)
 #include <sys/ptrace.h>
 #include <sys/wait.h>  
 
-
+#include "mem.h"
+#include "proc.h"
 
 #ifdef __MACH__
 
@@ -207,7 +209,6 @@ int get_process_memory(pid_t pid, MEMORY_BLOCK** first_block)
 #else
 
 #include <errno.h>
-#include "proc.h"
 
 int get_process_memory(pid_t pid, MEMORY_BLOCK** first_block)
 {
