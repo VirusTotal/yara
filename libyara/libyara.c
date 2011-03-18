@@ -54,7 +54,7 @@ YARA_CONTEXT* yr_create_context()
     context->current_rule_strings = NULL;
     context->inside_for = 0;
 	context->namespaces = NULL;
-	context->external_variables = NULL;
+	context->variables = NULL;
     context->allow_includes = TRUE;
 	context->current_namespace = yr_create_namespace(context, "default");
 	context->fast_match = FALSE;
@@ -81,8 +81,8 @@ void yr_destroy_context(YARA_CONTEXT* context)
 	TAG* next_tag;
 	NAMESPACE* ns;
 	NAMESPACE* next_ns;
-    EXTERNAL_VARIABLE* ext_var;
-	EXTERNAL_VARIABLE* next_ext_var;
+    VARIABLE* variable;
+	VARIABLE* next_variable;
     
     rule = context->rule_list.head;
     
@@ -108,7 +108,7 @@ void yr_destroy_context(YARA_CONTEXT* context)
                 regex_free(&(string->re));
             }
             
-            match = string->matches;
+            match = string->matches_head;
             
             while (match != NULL)
             {
@@ -169,21 +169,21 @@ void yr_destroy_context(YARA_CONTEXT* context)
 		ns = next_ns;
 	}
 	
-	ext_var = context->external_variables;
+	variable = context->variables;
 
-	while(ext_var != NULL)
+	while(variable != NULL)
 	{
-		next_ext_var = ext_var->next;
+		next_variable = variable->next;
 /*		
-		if (ext_var->type == EXTERNAL_VARIABLE_TYPE_STRING)
+		if (->type == VARIABLE_TYPE_STRING)
 		{
-		    yr_free(ext_var->string);
+		    yr_free(->string);
 		}
 	*/	
-		yr_free(ext_var->identifier);
-		yr_free(ext_var);
+		yr_free(variable->identifier);
+		yr_free(variable);
 		
-		ext_var = next_ext_var;
+		variable = next_variable;
 	}
 	
 	while (context->file_name_stack_ptr > 0)
@@ -212,21 +212,21 @@ NAMESPACE* yr_create_namespace(YARA_CONTEXT* context, const char* name)
 }
 
 
-int yr_set_external_integer(YARA_CONTEXT* context, const char* identifier, size_t value)
+int yr_define_integer_variable(YARA_CONTEXT* context, const char* identifier, size_t value)
 {
-    EXTERNAL_VARIABLE* ext_var;
+    VARIABLE* variable;
 
-    ext_var = lookup_external_variable(context->external_variables, identifier);
+    variable = lookup_variable(context->variables, identifier);
     
-    if (ext_var == NULL) /* variable doesn't exists, create it */
+    if (variable == NULL) /* variable doesn't exists, create it */
     {
-        ext_var = (EXTERNAL_VARIABLE*) yr_malloc(sizeof(EXTERNAL_VARIABLE));
+        variable = (VARIABLE*) yr_malloc(sizeof(VARIABLE));
         
-        if (ext_var != NULL)
+        if (variable != NULL)
         {
-            ext_var->identifier = yr_strdup(identifier);      
-            ext_var->next = context->external_variables;
-            context->external_variables = ext_var;
+            variable->identifier = yr_strdup(identifier);      
+            variable->next = context->variables;
+            context->variables = variable;
         }
         else
         {
@@ -234,28 +234,28 @@ int yr_set_external_integer(YARA_CONTEXT* context, const char* identifier, size_
         }
     }
 
-    ext_var->type = EXTERNAL_VARIABLE_TYPE_INTEGER;
-    ext_var->integer = value;
+    variable->type = VARIABLE_TYPE_INTEGER;
+    variable->integer = value;
     
     return ERROR_SUCCESS;
 }
 
 
-int yr_set_external_boolean(YARA_CONTEXT* context, const char* identifier, int value)
+int yr_define_boolean_variable(YARA_CONTEXT* context, const char* identifier, int value)
 {
-    EXTERNAL_VARIABLE* ext_var;
+    VARIABLE* variable;
 
-    ext_var = lookup_external_variable(context->external_variables, identifier);
+    variable = lookup_variable(context->variables, identifier);
     
-    if (ext_var == NULL) /* variable doesn't exists, create it */
+    if (variable == NULL) /* variable doesn't exists, create it */
     {
-        ext_var = (EXTERNAL_VARIABLE*) yr_malloc(sizeof(EXTERNAL_VARIABLE));
+        variable = (VARIABLE*) yr_malloc(sizeof(VARIABLE));
         
-        if (ext_var != NULL)
+        if (variable != NULL)
         {      
-            ext_var->identifier = yr_strdup(identifier);      
-            ext_var->next = context->external_variables;
-            context->external_variables = ext_var;
+            variable->identifier = yr_strdup(identifier);      
+            variable->next = context->variables;
+            context->variables = variable;
         }
         else
         {
@@ -263,28 +263,28 @@ int yr_set_external_boolean(YARA_CONTEXT* context, const char* identifier, int v
         }
     }
 
-	ext_var->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
-    ext_var->boolean = value;
+	variable->type = VARIABLE_TYPE_BOOLEAN;
+    variable->boolean = value;
     
     return ERROR_SUCCESS;
 }
 
 
-int yr_set_external_string(YARA_CONTEXT* context, const char* identifier, const char* value)
+int yr_define_string_variable(YARA_CONTEXT* context, const char* identifier, const char* value)
 {
-    EXTERNAL_VARIABLE* ext_var;
+    VARIABLE* variable;
 
-    ext_var = lookup_external_variable(context->external_variables, identifier);
+    variable = lookup_variable(context->variables, identifier);
     
-    if (ext_var == NULL) /* variable doesn't exists, create it */
+    if (variable == NULL) /* variable doesn't exists, create it */
     {
-        ext_var = (EXTERNAL_VARIABLE*) yr_malloc(sizeof(EXTERNAL_VARIABLE));
+        variable = (VARIABLE*) yr_malloc(sizeof(VARIABLE));
         
-        if (ext_var != NULL)
+        if (variable != NULL)
         {
-            ext_var->identifier = yr_strdup(identifier);    
-            ext_var->next = context->external_variables;
-            context->external_variables = ext_var;
+            variable->identifier = yr_strdup(identifier);    
+            variable->next = context->variables;
+            context->variables = variable;
         }
         else
         {
@@ -292,10 +292,51 @@ int yr_set_external_string(YARA_CONTEXT* context, const char* identifier, const 
         }
     }
 
-	ext_var->type = EXTERNAL_VARIABLE_TYPE_STRING;
-    ext_var->string = (char*) value;
+	variable->type = VARIABLE_TYPE_STRING;
+    variable->string = (char*) value;
     
     return ERROR_SUCCESS;
+}
+
+int yr_undefine_variable(YARA_CONTEXT* context, const char* identifier)
+{
+    VARIABLE* variable = context->variables;
+    VARIABLE* previous;
+    
+    int found = FALSE;
+    
+    if (strcmp(variable->identifier, identifier) == 0)
+    {
+        context->variables = variable->next;
+        yr_free(variable->identifier);
+        yr_free(variable);
+        
+        found = TRUE;
+    }
+    else
+    { 
+        previous = variable;
+        variable = variable->next;
+    
+        while (!found && variable != NULL)
+        {
+            if (strcmp(variable->identifier, identifier) == 0)
+            {
+                previous->next = variable->next;
+                yr_free(variable->identifier);
+                yr_free(variable);
+
+                found = TRUE;
+            }
+            else 
+            {
+                previous = variable;
+                variable = variable->next;
+            }
+        }
+    }
+    
+    return (found)? ERROR_SUCCESS : ERROR_UNDEFINED_IDENTIFIER;
 }
 
 
@@ -642,7 +683,7 @@ char* yr_get_error_message(YARA_CONTEXT* context, char* buffer, int buffer_size)
 		case ERROR_UNREFERENCED_STRING:
 		    snprintf(buffer, buffer_size, "unreferenced string \"%s\"", context->last_error_extra_info);
 			break;
-	    case ERROR_INCORRECT_EXTERNAL_VARIABLE_TYPE:
+	    case ERROR_INCORRECT_VARIABLE_TYPE:
 		    snprintf(buffer, buffer_size, "external variable \"%s\" has an incorrect type for this operation", context->last_error_extra_info);
 			break;
 		case ERROR_MISPLACED_ANONYMOUS_STRING:

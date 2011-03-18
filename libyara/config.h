@@ -8,7 +8,10 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the `pcre' library (-lpcre). */
-#define HAVE_LIBPCRE 1
+/* #undef HAVE_LIBPCRE */
+
+/* Define to 1 if you have the `re2' library (-lre2). */
+#define HAVE_LIBRE2 1
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -52,9 +55,6 @@
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libyara"
-
-/* Define to the home page for this package. */
-#define PACKAGE_URL ""
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "1.4"

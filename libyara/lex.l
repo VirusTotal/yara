@@ -79,7 +79,6 @@ hexdigit      [a-fA-F0-9]
 "rva"			     				{ return _RVA_;   	    }
 "offset"			 				{ return _OFFSET_;     	}
 "file"				 				{ return _FILE_;       	}
-"is"				 				{ return _IS_;         	}
 "section"			 				{ return _SECTION_;    	}
 "uint8"				 				{ return _UINT8_;    	}
 "uint16"			 				{ return _UINT16_;    	}
@@ -89,7 +88,7 @@ hexdigit      [a-fA-F0-9]
 "int32"		 		 				{ return _INT32_;    	}
 "matches"                           { return _MATCHES_;     }
 "contains"                          { return _CONTAINS_;    }
-"occurrence"					    { return _OCCURRENCE_;  }
+"index"							    { return _INDEX_; 		}
 
 
 

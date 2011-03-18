@@ -38,7 +38,7 @@ GNU General Public License for more details.
 #define MAX_INCLUDE_DEPTH                       16
 
 #define STRING_FLAGS_FOUND                      0x01
-#define STRING_FLAGS_REFERENCED					0x02
+#define STRING_FLAGS_REFERENCED                 0x02
 #define STRING_FLAGS_HEXADECIMAL                0x04
 #define STRING_FLAGS_NO_CASE                    0x08
 #define STRING_FLAGS_ASCII                      0x10
@@ -58,8 +58,8 @@ GNU General Public License for more details.
 
 #define RULE_FLAGS_MATCH                        0x01
 #define RULE_FLAGS_PRIVATE                      0x02
-#define RULE_FLAGS_GLOBAL						0x04
-#define RULE_FLAGS_REQUIRE_EXECUTABLE 	        0x08
+#define RULE_FLAGS_GLOBAL                       0x04
+#define RULE_FLAGS_REQUIRE_EXECUTABLE           0x08
 #define RULE_FLAGS_REQUIRE_FILE                 0x10
 
 #ifndef ERROR_SUCCESS 
@@ -80,10 +80,10 @@ GNU General Public License for more details.
 #define ERROR_COULD_NOT_OPEN_FILE               12
 #define ERROR_INVALID_REGULAR_EXPRESSION        13
 #define ERROR_SYNTAX_ERROR                      14
-#define ERROR_DUPLICATE_TAG_IDENTIFIER			15
-#define ERROR_UNREFERENCED_STRING				16
-#define ERROR_DUPLICATE_STRING_IDENTIFIER		17
-#define ERROR_CALLBACK_ERROR            		18
+#define ERROR_DUPLICATE_TAG_IDENTIFIER          15
+#define ERROR_UNREFERENCED_STRING               16
+#define ERROR_DUPLICATE_STRING_IDENTIFIER       17
+#define ERROR_CALLBACK_ERROR                    18
 #define ERROR_MISPLACED_OR_OPERATOR             19
 #define ERROR_INVALID_OR_OPERATION_SYNTAX       20
 #define ERROR_SKIP_INSIDE_OR_OPERATION          21  
@@ -94,16 +94,17 @@ GNU General Public License for more details.
 #define ERROR_INVALID_ARGUMENT                  26
 #define ERROR_DUPLICATE_META_IDENTIFIER         27
 #define ERROR_INCLUDES_CIRCULAR_REFERENCE       28
-#define ERROR_INCORRECT_EXTERNAL_VARIABLE_TYPE  29
+#define ERROR_INCORRECT_VARIABLE_TYPE           29
 #define ERROR_COULD_NOT_ATTACH_TO_PROCESS       30
+#define ERROR_VECTOR_TOO_LONG                   31
 
 #define META_TYPE_INTEGER                       1
 #define META_TYPE_STRING                        2
 #define META_TYPE_BOOLEAN                       3
 
-#define EXTERNAL_VARIABLE_TYPE_INTEGER          1
-#define EXTERNAL_VARIABLE_TYPE_STRING           2
-#define EXTERNAL_VARIABLE_TYPE_BOOLEAN          3
+#define VARIABLE_TYPE_INTEGER          1
+#define VARIABLE_TYPE_STRING           2
+#define VARIABLE_TYPE_BOOLEAN          3
 
 #define CALLBACK_CONTINUE                       0
 #define CALLBACK_ABORT                          1
@@ -113,7 +114,7 @@ typedef struct _MATCH
 {   
     size_t          offset;
     unsigned char*  data;
-	unsigned int	length;
+    unsigned int    length;
     struct _MATCH*  next;
     
 } MATCH;
@@ -121,10 +122,10 @@ typedef struct _MATCH
 
 typedef struct _REGEXP 
 {
-    void	*regexp;
-    void	*extra;
-    int		re2_anchored;
-	
+    void    *regexp;
+    void    *extra;
+    int     re2_anchored;
+    
 } REGEXP;
 
 
@@ -140,13 +141,14 @@ typedef struct _STRING
         REGEXP re;
     };  
     
-    MATCH*         	matches;        
+    MATCH*          matches_head;
+    MATCH*          matches_tail;      
     struct _STRING* next;
     
 } STRING;
 
 
-typedef struct _EXTERNAL_VARIABLE
+typedef struct _VARIABLE
 {
     int     type;
     char*   identifier;
@@ -157,31 +159,30 @@ typedef struct _EXTERNAL_VARIABLE
         int     boolean;
     };
     
-    struct _EXTERNAL_VARIABLE* next;
+    struct _VARIABLE* next;
     
-} EXTERNAL_VARIABLE;
+} VARIABLE;
 
 
 typedef struct _TAG
 {
-	char*			identifier;
-	struct _TAG*	next;
-	
+    char*           identifier;
+    struct _TAG*    next;
+    
 } TAG;
 
 
 typedef struct _TERM
 {
-    int				type;
-    struct _TERM*   next;           
+    int             type;
 
 } TERM;
 
 
 typedef struct _NAMESPACE
 {
-    char*				name;
-	int					global_rules_satisfied;
+    char*               name;
+    int                 global_rules_satisfied;
     struct _NAMESPACE*  next;           
 
 } NAMESPACE;
@@ -190,7 +191,7 @@ typedef struct _NAMESPACE
 typedef struct _META
 {
     int                 type;
-    char*				identifier;
+    char*               identifier;
     
     union {
         char*   string;
@@ -207,9 +208,9 @@ typedef struct _RULE
 {
     char*           identifier;
     int             flags;
-	NAMESPACE*		ns;
+    NAMESPACE*      ns;
     STRING*         string_list_head;
-	TAG*			tag_list_head;
+    TAG*            tag_list_head;
     META*           meta_list_head;
     TERM*           condition;
     struct _RULE*   next;
@@ -219,9 +220,9 @@ typedef struct _RULE
 
 typedef struct _STRING_LIST_ENTRY
 {
-	STRING* string;
-	struct _STRING_LIST_ENTRY* next;
-	
+    STRING* string;
+    struct _STRING_LIST_ENTRY* next;
+    
 } STRING_LIST_ENTRY;
 
 
@@ -246,7 +247,7 @@ typedef struct _HASH_TABLE
 typedef struct _MEMORY_BLOCK
 {
     unsigned char*          data;
-    size_t			        size;
+    size_t                  size;
     size_t                  base;
     struct _MEMORY_BLOCK*   next;
         
@@ -269,24 +270,24 @@ typedef struct _YARA_CONTEXT
     RULE_LIST               rule_list;
     HASH_TABLE              hash_table;
     
-	NAMESPACE*		        namespaces;
-	NAMESPACE*		        current_namespace;
-	
-	EXTERNAL_VARIABLE*      external_variables;
-
-	STRING*                 current_rule_strings;  
+    NAMESPACE*              namespaces;
+    NAMESPACE*              current_namespace;
+    
+    VARIABLE*               variables;
+    
+    STRING*                 current_rule_strings;  
     int                     inside_for;
     
     char*                   file_name_stack[MAX_INCLUDE_DEPTH];
     int                     file_name_stack_ptr;
-           
+    
     char                    last_error_extra_info[256];
-
-    char 		            lex_buf[256];
-    char*		            lex_buf_ptr;
+    
+    char                    lex_buf[256];
+    char*                   lex_buf_ptr;
     unsigned short          lex_buf_len;
     
-    int						fast_match;
+    int                     fast_match;
     int                     allow_includes;
     int                     scanning_process_memory;
     
@@ -295,38 +296,39 @@ typedef struct _YARA_CONTEXT
 } YARA_CONTEXT;
 
 
-RULE*                   lookup_rule(RULE_LIST* rules, const char* identifier, NAMESPACE* ns);
-STRING*                 lookup_string(STRING* string_list_head, const char* identifier);
-TAG*                    lookup_tag(TAG* tag_list_head, const char* identifier);
-META*                   lookup_meta(META* meta_list_head, const char* identifier);
-EXTERNAL_VARIABLE*      lookup_external_variable(EXTERNAL_VARIABLE* ext_var_list_head, const char* identifier);
+RULE*             lookup_rule(RULE_LIST* rules, const char* identifier, NAMESPACE* ns);
+STRING*           lookup_string(STRING* string_list_head, const char* identifier);
+TAG*              lookup_tag(TAG* tag_list_head, const char* identifier);
+META*             lookup_meta(META* meta_list_head, const char* identifier);
+VARIABLE*         lookup_variable(VARIABLE* _list_head, const char* identifier);
 
-void                yr_init();
+void              yr_init();
 
-YARA_CONTEXT*       yr_create_context();
-void                yr_destroy_context(YARA_CONTEXT* context);
+YARA_CONTEXT*     yr_create_context();
+void              yr_destroy_context(YARA_CONTEXT* context);
 
-int                 yr_calculate_rules_weight(YARA_CONTEXT* context);
+int               yr_calculate_rules_weight(YARA_CONTEXT* context);
 
-NAMESPACE*			yr_create_namespace(YARA_CONTEXT* context, const char* name);
+NAMESPACE*        yr_create_namespace(YARA_CONTEXT* context, const char* name);
 
-int                 yr_set_external_integer(YARA_CONTEXT* context, const char* identifier, size_t value);
-int                 yr_set_external_boolean(YARA_CONTEXT* context, const char* identifier, int value);
-int                 yr_set_external_string(YARA_CONTEXT* context, const char* identifier, const char* value);
+int               yr_define_integer_variable(YARA_CONTEXT* context, const char* identifier, size_t value);
+int               yr_define_boolean_variable(YARA_CONTEXT* context, const char* identifier, int value);
+int               yr_define_string_variable(YARA_CONTEXT* context, const char* identifier, const char* value);
+int               yr_undefine_variable(YARA_CONTEXT* context, const char* identifier);
 
-char*               yr_get_current_file_name(YARA_CONTEXT* context);
+char*             yr_get_current_file_name(YARA_CONTEXT* context);
 
-int 		yr_push_file_name(YARA_CONTEXT* context, const char* file_name);
-void 		yr_pop_file_name(YARA_CONTEXT* context);
+int               yr_push_file_name(YARA_CONTEXT* context, const char* file_name);
+void              yr_pop_file_name(YARA_CONTEXT* context);
 
-int         yr_compile_file(FILE* rules_file, YARA_CONTEXT* context);
-int         yr_compile_string(const char* rules_string, YARA_CONTEXT* context);
+int               yr_compile_file(FILE* rules_file, YARA_CONTEXT* context);
+int               yr_compile_string(const char* rules_string, YARA_CONTEXT* context);
 
-int         yr_scan_mem(unsigned char* buffer, size_t buffer_size, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data);
-int         yr_scan_file(const char* file_path, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data);
-int         yr_scan_proc(int pid, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data);
+int               yr_scan_mem(unsigned char* buffer, size_t buffer_size, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data);
+int               yr_scan_file(const char* file_path, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data);
+int               yr_scan_proc(int pid, YARA_CONTEXT* context, YARACALLBACK callback, void* user_data);
 
-char*       yr_get_error_message(YARA_CONTEXT* context, char* buffer, int buffer_size);
+char*             yr_get_error_message(YARA_CONTEXT* context, char* buffer, int buffer_size);
 
 #endif
 

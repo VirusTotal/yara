@@ -30,7 +30,7 @@ typedef struct _EVALUATION_CONTEXT
 
 } EVALUATION_CONTEXT;
 
-
+typedef long long (*EVALUATION_FUNCTION)(TERM* term, EVALUATION_CONTEXT* context);
 
 long long evaluate(TERM* term, EVALUATION_CONTEXT* context);
 

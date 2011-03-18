@@ -99,4 +99,4 @@ and
 .RE
 
 .SH AUTHOR 
-Victor M. Alvarez (vmalvarez@hispasec.com) 
+Victor M. Alvarez (victor.alvarez@virustotal.com) 

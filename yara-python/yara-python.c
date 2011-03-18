@@ -334,15 +334,15 @@ int process_externals(PyObject* externals, YARA_CONTEXT* context)
         
         if (PyInt_Check(value))
         {
-            yr_set_external_integer(context, identifier, PyInt_AsLong(value));
+            yr_define_integer_variable(context, identifier, PyInt_AsLong(value));
         } 
         else if (PyBool_Check(value))
         {
-            yr_set_external_boolean(context, identifier, PyObject_IsTrue(value));
+            yr_define_boolean_variable(context, identifier, PyObject_IsTrue(value));
         }
         else if (PyString_Check(value))
         {
-            yr_set_external_string(context, identifier, PyString_AsString(value));
+            yr_define_string_variable(context, identifier, PyString_AsString(value));
         }
         else
         {
@@ -521,7 +521,7 @@ int yara_callback(RULE* rule, void* data)
     {
         if (string->flags & STRING_FLAGS_FOUND)
         {
-            m = string->matches;
+            m = string->matches_head;
 
             while (m != NULL)
             {

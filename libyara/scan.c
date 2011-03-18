@@ -599,7 +599,7 @@ void clear_marks(RULE_LIST* rule_list)
 		{
 			string->flags &= ~STRING_FLAGS_FOUND;  /* clear found mark */
 			
-			match = string->matches;
+			match = string->matches_head;
 			
 			while (match != NULL)
 			{
@@ -608,7 +608,8 @@ void clear_marks(RULE_LIST* rule_list)
 				match = next_match;
 			}
 			
-			string->matches = NULL;
+			string->matches_head = NULL;
+            string->matches_tail = NULL;
 			string = string->next;
 		}
 		
@@ -763,8 +764,8 @@ inline int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
 		        for the string 'aa' and the file contains 'aaaaaa'. 
 		     */
 		     
-		    if ((string->matches == NULL) ||
-		        (string->matches->offset + string->matches->length <= current_offset))
+		    if ((string->matches_tail == NULL) ||
+		        (string->matches_tail->offset + string->matches_tail->length <= current_offset))
 		    {		    
     			string->flags |= STRING_FLAGS_FOUND;
     			match = (MATCH*) yr_malloc(sizeof(MATCH));
@@ -774,9 +775,22 @@ inline int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
     			{
     				match->offset = current_offset;
     				match->length = len;
+    				match->next = NULL;
+                    
                     memcpy(match->data, buffer, len);         
-    				match->next = string->matches;
-    				string->matches = match;
+    				
+    				if (string->matches_head == NULL)
+    				{
+                        string->matches_head = match;
+    				}
+    				
+    				if (string->matches_tail != NULL)
+    				{
+                        string->matches_tail->next = match;
+    				}
+    				
+    				string->matches_tail = match;
+    				 				
     			}
     			else
     			{

@@ -1,10 +1,10 @@
 from distutils.core import setup, Extension
 
                            
-setup(name = "yara-python",
-        version = "1.4",
+setup(  name = "yara-python",
+        version = "1.5",
         author = "Victor M. Alvarez",
-        author_email = "plusvic@gmail.com",
+        author_email = "victor.alvarez@virustotal.com",
         ext_modules = [ Extension(
                                     name='yara', 
                                     sources=['yara-python.c'],

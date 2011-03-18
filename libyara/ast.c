@@ -96,18 +96,18 @@ TAG* lookup_tag(TAG* tag_list_head, const char* identifier)
     return NULL;
 }
 
-EXTERNAL_VARIABLE* lookup_external_variable(EXTERNAL_VARIABLE* ext_var_list_head, const char* identifier)
+VARIABLE* lookup_variable(VARIABLE* variable_list_head, const char* identifier)
 {
-    EXTERNAL_VARIABLE* ext_var = ext_var_list_head;
+    VARIABLE*  variable = variable_list_head;
     
-    while (ext_var != NULL)
+    while ( variable != NULL)
     {
-        if (strcmp(ext_var->identifier, identifier) == 0)
+        if (strcmp(variable->identifier, identifier) == 0)
         {
-            return ext_var;
+            return variable;
         }
             
-        ext_var = ext_var->next;
+        variable = variable->next;
     }
     
     return NULL;
@@ -125,7 +125,10 @@ int require_file(TERM* term)
         return require_file(((TERM_STRING*)term)->offset);
 	
 	case TERM_TYPE_STRING_IN_RANGE:
-        return require_file(((TERM_STRING*)term)->lower_offset) || require_file(((TERM_STRING*)term)->upper_offset);
+        return require_file(((TERM_STRING*)term)->range);
+    
+    case TERM_TYPE_RANGE:
+        return require_file(((TERM_RANGE*)term)->min) || require_file(((TERM_RANGE*)term)->max);    
                     
     case TERM_TYPE_AND:          
     case TERM_TYPE_OR:
@@ -151,8 +154,8 @@ int require_file(TERM* term)
     case TERM_TYPE_UINT32_AT_OFFSET:   
         return require_file(((TERM_UNARY_OPERATION*)term)->op);
         
-    case TERM_TYPE_FOR:
-    case TERM_TYPE_FOR_OCCURRENCES:
+    case TERM_TYPE_STRING_FOR:
+//    case TERM_TYPE_STRING_FOR_OCCURRENCES:
         return require_file(((TERM_TERNARY_OPERATION*)term)->op1) || require_file(((TERM_TERNARY_OPERATION*)term)->op3);
 
 	default:
@@ -173,7 +176,10 @@ int require_exe_file(TERM* term)
         return require_exe_file(((TERM_STRING*)term)->offset);
 	
 	case TERM_TYPE_STRING_IN_RANGE:
-        return require_exe_file(((TERM_STRING*)term)->lower_offset) || require_exe_file(((TERM_STRING*)term)->upper_offset);
+        return require_exe_file((TERM*) ((TERM_STRING*)term)->range);
+
+    case TERM_TYPE_RANGE:
+        return require_exe_file(((TERM_RANGE*)term)->min) || require_exe_file(((TERM_RANGE*)term)->max);
                     
     case TERM_TYPE_AND:          
     case TERM_TYPE_OR:
@@ -199,8 +205,8 @@ int require_exe_file(TERM* term)
     case TERM_TYPE_UINT32_AT_OFFSET:      
         return require_exe_file(((TERM_UNARY_OPERATION*)term)->op);
         
-    case TERM_TYPE_FOR:
-    case TERM_TYPE_FOR_OCCURRENCES:
+    case TERM_TYPE_STRING_FOR:
+//    case TERM_TYPE_STRING_FOR_OCCURRENCES:
         return require_exe_file(((TERM_TERNARY_OPERATION*)term)->op1) || require_exe_file(((TERM_TERNARY_OPERATION*)term)->op3);
 
 	default:
@@ -601,7 +607,8 @@ int new_string( YARA_CONTEXT* context,
         new_string->identifier = identifier;
         new_string->flags = flags;
         new_string->next = NULL;
-        new_string->matches = NULL;
+        new_string->matches_head = NULL;
+        new_string->matches_tail = NULL;
         
         if (flags & STRING_FLAGS_HEXADECIMAL)
         {
@@ -637,7 +644,6 @@ int new_simple_term(int type, TERM** term)
     if (new_term != NULL)
     {
         new_term->type = type;
-        new_term->next = NULL;
     }
     else
     {
@@ -751,10 +757,11 @@ int new_string_identifier(int type, STRING* defined_strings, char* identifier, T
     		/* the string has been used in an expression, mark it as referenced */
     		string->flags |= STRING_FLAGS_REFERENCED;  
 
-			/* in this cases we can't not use the fast-matching mode */
+			/* in these cases we can't not use the fast-matching mode */
 			if (type == TERM_TYPE_STRING_COUNT ||
 			    type == TERM_TYPE_STRING_AT ||
-			    type == TERM_TYPE_STRING_IN_RANGE)
+			    type == TERM_TYPE_STRING_IN_RANGE ||
+			    type == TERM_TYPE_STRING_OFFSET)
 			{
 				string->flags &= ~STRING_FLAGS_FAST_MATCH;
 			}
@@ -790,22 +797,22 @@ int new_string_identifier(int type, STRING* defined_strings, char* identifier, T
 }
 
 
-int new_external_variable(YARA_CONTEXT* context, char* identifier, TERM_EXTERNAL_VARIABLE** term)
+int new_variable(YARA_CONTEXT* context, char* identifier, TERM_VARIABLE** term)
 {
-    TERM_EXTERNAL_VARIABLE* new_term = NULL;
-    EXTERNAL_VARIABLE* ext_var;
+    TERM_VARIABLE* new_term = NULL;
+    VARIABLE* variable;
     int result = ERROR_SUCCESS;
     
-    ext_var = lookup_external_variable(context->external_variables, identifier);
+    variable = lookup_variable(context->variables, identifier);
     
-    if (ext_var != NULL) /* external variable should be defined */
+    if (variable != NULL) /* external variable should be defined */
     {    
-        new_term = (TERM_EXTERNAL_VARIABLE*) yr_malloc(sizeof(TERM_EXTERNAL_VARIABLE));
+        new_term = (TERM_VARIABLE*) yr_malloc(sizeof(TERM_VARIABLE));
 
         if (new_term != NULL)
         {
-            new_term->type = TERM_TYPE_EXTERNAL_VARIABLE;
-            new_term->variable = ext_var;
+            new_term->type = TERM_TYPE_VARIABLE;
+            new_term->variable = variable;
         }
         else
         {
@@ -822,12 +829,129 @@ int new_external_variable(YARA_CONTEXT* context, char* identifier, TERM_EXTERNAL
     return result;    
 }
 
+TERM* vector_first(TERM_ITERABLE* self, EVALUATION_FUNCTION evaluate, EVALUATION_CONTEXT* context)
+{
+    TERM_VECTOR* vector = (TERM_VECTOR*) self;
+    vector->current = 0;
+    return vector->items[0];
+}
+
+TERM* vector_next(TERM_ITERABLE* self, EVALUATION_FUNCTION evaluate, EVALUATION_CONTEXT* context)
+{
+    TERM_VECTOR* vector = (TERM_VECTOR*) self;
+    TERM* result = NULL;
+    
+    if (vector->current < vector->count - 1)
+    {
+        vector->current++;
+        result = vector->items[vector->current];
+    }
+    
+    return result;
+}
+
+
+int new_vector(TERM_VECTOR** term)
+{
+    TERM_VECTOR* new_term;
+    int result = ERROR_SUCCESS;
+    
+    new_term = (TERM_VECTOR*) yr_malloc(sizeof(TERM_VECTOR));
+    
+    if (new_term != NULL)
+    {
+        new_term->type = TERM_TYPE_VECTOR;
+        new_term->first = vector_first;
+        new_term->next = vector_next;
+        new_term->count = 0;
+        new_term->current = 0;
+        new_term->items[0] = NULL;
+    }
+    else
+    {
+        result = ERROR_INSUFICIENT_MEMORY;
+    }
+    
+    *term = new_term;   
+    return result;	
+}
+
+
+int add_term_to_vector(TERM_VECTOR* vector, TERM* term)
+{
+    int result = ERROR_SUCCESS;
+    
+    if (vector->count < MAX_VECTOR_SIZE)
+    {
+        vector->items[vector->count] = term;
+        vector->count++;
+    }
+    else
+    {
+        result = ERROR_VECTOR_TOO_LONG;
+    }
+    
+    return result;
+    
+}
+
+
+TERM* range_first(TERM_ITERABLE* self, EVALUATION_FUNCTION evaluate, EVALUATION_CONTEXT* context)
+{
+    TERM_RANGE* range = (TERM_RANGE*) self;
+    range->current->value = evaluate(range->min, context);
+    return (TERM*) range->current;
+}
+
+
+TERM* range_next(TERM_ITERABLE* self, EVALUATION_FUNCTION evaluate, EVALUATION_CONTEXT* context)
+{
+    TERM_RANGE* range = (TERM_RANGE*) self;
+
+    if (range->current->value < evaluate(range->max, context))
+    {
+        range->current->value++;
+        return (TERM*) range->current;
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
+
+int new_range(TERM* min, TERM* max, TERM_RANGE** term)
+{
+    TERM_RANGE* new_term = NULL;
+    int result = ERROR_SUCCESS;
+    
+    new_term = (TERM_RANGE*) yr_malloc(sizeof(TERM_RANGE));
+    
+    if (new_term != NULL)
+    {
+        new_term->type = TERM_TYPE_RANGE;
+        new_term->first = range_first;
+        new_term->next = range_next;
+        new_term->min = min;
+        new_term->max = max;
+        
+        result = new_constant(0, &new_term->current);
+    }
+    else
+    {
+        result = ERROR_INSUFICIENT_MEMORY;
+    }    
+    
+    *term = new_term;
+    return result;
+}
+
 
 /* 
 	free_term(TERM* term)
 
 	Frees a term. If the term depends on other terms they are also freed. Notice that
-	some terms hold references to STRING or EXTERNAL_VARIABLE structures, but these 
+	some terms hold references to STRING or VARIABLE structures, but these 
 	structures are freed by yr_destroy_context not by this function.
 	
 */
@@ -836,6 +960,7 @@ void free_term(TERM* term)
 {
     TERM_STRING* next;
     TERM_STRING* tmp;
+    int i, count;
 
     switch(term->type)
     {
@@ -859,22 +984,21 @@ void free_term(TERM* term)
 	
 	case TERM_TYPE_STRING_IN_RANGE:
 	
-        free_term(((TERM_STRING*)term)->lower_offset);
-		free_term(((TERM_STRING*)term)->upper_offset);
+        free_term(((TERM_STRING*)term)->range);
         break;
-
+        
 	case TERM_TYPE_STRING_IN_SECTION_BY_NAME:
 	    
 	    yr_free(((TERM_STRING*)term)->section_name);
 		break;
 		
-    case TERM_TYPE_EXTERNAL_STRING_MATCH:
+    case TERM_TYPE_STRING_MATCH:
 
-        regex_free(&(((TERM_EXTERNAL_STRING_OPERATION*)term)->re));
+        regex_free(&(((TERM_STRING_OPERATION*)term)->re));
         break;
 
-	case TERM_TYPE_EXTERNAL_STRING_CONTAINS:
-		yr_free(((TERM_EXTERNAL_STRING_OPERATION*)term)->string);
+	case TERM_TYPE_STRING_CONTAINS:
+		yr_free(((TERM_STRING_OPERATION*)term)->string);
 		break;
                     
     case TERM_TYPE_AND:          
@@ -890,6 +1014,7 @@ void free_term(TERM* term)
     case TERM_TYPE_EQ:
     case TERM_TYPE_OF:
     case TERM_TYPE_NOT_EQ:
+    
         free_term(((TERM_BINARY_OPERATION*)term)->op1);
         free_term(((TERM_BINARY_OPERATION*)term)->op2);
         break;        
@@ -901,11 +1026,37 @@ void free_term(TERM* term)
     case TERM_TYPE_UINT8_AT_OFFSET:
     case TERM_TYPE_UINT16_AT_OFFSET:
     case TERM_TYPE_UINT32_AT_OFFSET:
+    
         free_term(((TERM_UNARY_OPERATION*)term)->op);
         break;
         
-    case TERM_TYPE_FOR:
-    case TERM_TYPE_FOR_OCCURRENCES:
+    case TERM_TYPE_RANGE:
+    
+        free_term(((TERM_RANGE*)term)->min);
+        free_term(((TERM_RANGE*)term)->max);
+        free_term((TERM*) ((TERM_RANGE*)term)->current);
+        break;
+        
+    case TERM_TYPE_VECTOR:
+    
+        count = ((TERM_VECTOR*)term)->count;
+        
+        for (i = 0; i < count; i++)
+        {
+            free_term(((TERM_VECTOR*)term)->items[i]);
+        }
+        
+        break;
+        
+    case TERM_TYPE_INTEGER_FOR:
+    
+        free_term(((TERM_INTEGER_FOR*)term)->count);
+        free_term(((TERM_INTEGER_FOR*)term)->expression);
+        free_term((TERM*) ((TERM_INTEGER_FOR*)term)->items);
+        break;
+        
+    case TERM_TYPE_STRING_FOR:
+
         free_term(((TERM_TERNARY_OPERATION*)term)->op1);
         free_term(((TERM_TERNARY_OPERATION*)term)->op2);
         free_term(((TERM_TERNARY_OPERATION*)term)->op3);          

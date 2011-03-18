@@ -356,7 +356,7 @@ int callback(RULE* rule, void* data)
 			    
 				if (string_found)
 				{
-					match = string->matches;
+					match = string->matches_head;
 
 					while (match != NULL)
 					{
@@ -486,15 +486,15 @@ int process_cmd_line(YARA_CONTEXT* context, int argc, char const* argv[])
 		            
 		            if (is_numeric(value))
 		            {		                
-		                yr_set_external_integer(context, optarg, atol(value));
+		                yr_define_integer_variable(context, optarg, atol(value));
 		            }
 		            else if (strcmp(value, "true") == 0  || strcmp(value, "false") == 0)
 		            {
-		                yr_set_external_boolean(context, optarg, strcmp(value, "true") == 0);
+		                yr_define_boolean_variable(context, optarg, strcmp(value, "true") == 0);
 		            }
 		            else
 		            {
-		                yr_set_external_string(context, optarg, value);
+		                yr_define_string_variable(context, optarg, value);
 		            }	            
 		        }
 

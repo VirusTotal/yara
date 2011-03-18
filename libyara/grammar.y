@@ -63,7 +63,7 @@
 %token _UINT32_
 %token _MATCHES_
 %token _CONTAINS_
-%token _OCCURRENCE_
+%token _INDEX_
 
 %token _MZ_
 %token _PE_
@@ -97,12 +97,16 @@
 %type <tag>  tag_list
 
 %type <term> boolean_expression
+%type <term> for_expression
 %type <term> expression
 %type <term> number
 %type <term> string_set
+%type <term> integer_set
 %type <term> string_enumeration
+%type <term> integer_enumeration
 %type <term> string_enumeration_item
 %type <term> condition
+%type <term> range
 
 %union {
     
@@ -158,7 +162,7 @@ STRING* reduce_strings( yyscan_t yyscanner,
 TERM* reduce_string_enumeration(    yyscan_t yyscanner,
                                     TERM* string_list_head, 
                                     TERM* string_identifier);
-                                    
+                                                                        
 TERM* reduce_string_with_wildcard(  yyscan_t yyscanner,
                                     char* identifier);
 
@@ -171,8 +175,7 @@ TERM* reduce_string_at( yyscan_t yyscanner,
                         
 TERM* reduce_string_in_range(   yyscan_t yyscanner,
                                 char* identifier, 
-                                TERM* lower_offset, 
-                                TERM* upper_offset);
+                                TERM* range);
                                 
 TERM* reduce_string_in_section_by_name( yyscan_t yyscanner,
                                         char* identifier, 
@@ -182,7 +185,8 @@ TERM* reduce_string_count(  yyscan_t yyscanner,
                             char* identifier);
                             
 TERM* reduce_string_offset( yyscan_t yyscanner,  
-                            char* identifier); 
+                            char* identifier,
+                            TERM* index); 
 
 TERM* reduce_filesize(yyscan_t yyscanner);
 
@@ -200,12 +204,25 @@ TERM* reduce_constant(  yyscan_t yyscanner,
 TERM* reduce_identifier( yyscan_t yyscanner,
                          char* identifier);
                          
-TERM* reduce_external_string_operation( yyscan_t yyscanner,
-                                        int type,
-                                        char* identifier,
-                                        SIZED_STRING* string);
+TERM* reduce_string_operation(  yyscan_t yyscanner,
+                                int type,
+                                char* identifier,
+                                SIZED_STRING* string);
+                                        
+TERM* reduce_integer_enumeration(   yyscan_t yyscanner,
+                                    TERM* vector,     
+                                    TERM* expression);
+                                    
+TERM* reduce_integer_for(   yyscan_t yyscanner,
+                            TERM* count,
+                            char* identifier,
+                            TERM* items,
+                            TERM* expression);
+                            
+TERM* reduce_range( yyscan_t yyscanner,
+                    TERM* min,
+                    TERM* max);
 
-int count_strings(TERM_STRING* st);
 
 %} 
 
@@ -405,7 +422,7 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                      }
                    | _IDENTIFIER_ _MATCHES_ _REGEXP_                                   
                      { 
-                        $$ = reduce_external_string_operation(yyscanner, TERM_TYPE_EXTERNAL_STRING_MATCH, $1, $3);
+                        $$ = reduce_string_operation(yyscanner, TERM_TYPE_STRING_MATCH, $1, $3);
                         
                         if ($$ == NULL)
                         {
@@ -415,7 +432,7 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                      }
                    | _IDENTIFIER_ _CONTAINS_ _TEXTSTRING_                                   
                      { 
-                        $$ = reduce_external_string_operation(yyscanner, TERM_TYPE_EXTERNAL_STRING_CONTAINS, $1, $3);
+                        $$ = reduce_string_operation(yyscanner, TERM_TYPE_STRING_CONTAINS, $1, $3);
                         
                         if ($$ == NULL)
                         {
@@ -447,9 +464,9 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                      { 
                         $$ = NULL; 
                      }
-                   | _STRING_IDENTIFIER_ _IN_ '(' expression '.' '.' expression ')'                     
+                   | _STRING_IDENTIFIER_ _IN_ range                     
                      {          
-                        $$ = reduce_string_in_range(yyscanner, $1, $4, $7);
+                        $$ = reduce_string_in_range(yyscanner, $1, $3);
                         
                         if ($$ == NULL)
                         {
@@ -467,63 +484,21 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                             YYERROR;
                         }
                      }
-                   | _FOR_ expression _OCCURRENCE_ _OF_ _STRING_IDENTIFIER_ ':'
-                     { 
-                        yyget_extra(yyscanner)->inside_for++; 
-                     }           
-                     '(' boolean_expression ')'                     
-                     { 
-                        yyget_extra(yyscanner)->inside_for--; 
-
-                        $$ = reduce_term(yyscanner, TERM_TYPE_FOR_OCCURRENCES, $2, reduce_string(yyscanner, $5), $9); 
-
-                        if ($$ == NULL)
-                        {
-                            yyerror(yyscanner, NULL);
-                            YYERROR;
-                        }
+                   | _FOR_ for_expression _IDENTIFIER_ _IN_ integer_set ':' 
+                     {
+                          yr_define_integer_variable(yyget_extra(yyscanner), $3, 0);
                      }
-                     | _FOR_ _ALL_ _OCCURRENCE_ _OF_ _STRING_IDENTIFIER_ ':'
-                       { 
-                          yyget_extra(yyscanner)->inside_for++; 
-                       }           
-                       '(' boolean_expression ')'                     
-                       { 
-                          yyget_extra(yyscanner)->inside_for--;
-
-                          $$ = reduce_term( yyscanner, 
-                                            TERM_TYPE_FOR_OCCURRENCES, 
-                                            reduce_string_count(yyscanner, yr_strdup($5)), /* dup string identifier reduce_xx functions calls free */
-                                            reduce_string(yyscanner, $5),
-                                            $9); 
-
-                          if ($$ == NULL)
-                          {
-                              yyerror(yyscanner, NULL);
-                              YYERROR;
-                          }
-                      }                   
-                      | _FOR_ _ANY_ _OCCURRENCE_ _OF_ _STRING_IDENTIFIER_ ':'
-                        { 
-                           yyget_extra(yyscanner)->inside_for++; 
-                        }           
-                        '(' boolean_expression ')'                     
-                        { 
-                           yyget_extra(yyscanner)->inside_for--;
-
-                           $$ = reduce_term( yyscanner, 
-                                             TERM_TYPE_FOR_OCCURRENCES, 
-                                             reduce_constant(yyscanner, 1),
-                                             reduce_string(yyscanner, $5),
-                                             $9); 
-
-                           if ($$ == NULL)
-                           {
-                               yyerror(yyscanner, NULL);
-                               YYERROR;
-                           }
-                       }
-                   | _FOR_ expression _OF_ string_set ':'
+                     '(' boolean_expression ')'                     
+                     {                        
+                         $$ = reduce_integer_for(yyscanner, $2, $3, $5, $9); 
+                           
+                         if ($$ == NULL)
+                         {
+                             yyerror(yyscanner, NULL);
+                             YYERROR;
+                         }
+                     }                  
+                   | _FOR_ for_expression _OF_ string_set ':'
                      { 
                          yyget_extra(yyscanner)->inside_for++; 
                      }           
@@ -531,7 +506,7 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                      { 
                          yyget_extra(yyscanner)->inside_for--; 
                            
-                         $$ = reduce_term(yyscanner, TERM_TYPE_FOR, $2, $4, $8); 
+                         $$ = reduce_term(yyscanner, TERM_TYPE_STRING_FOR, $2, $4, $8); 
                            
                          if ($$ == NULL)
                          {
@@ -539,61 +514,9 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                              YYERROR;
                          }
                      }
-                   | _FOR_ _ALL_ _OF_ string_set ':'
-                     { 
-                          yyget_extra(yyscanner)->inside_for++; 
-                     }           
-                     '(' boolean_expression ')'                     
-                     { 
-                          yyget_extra(yyscanner)->inside_for--; 
-                          
-                          $$ = reduce_term(yyscanner, TERM_TYPE_FOR, reduce_constant(yyscanner, count_strings($4)), $4, $8); 
-                          
-                          if ($$ == NULL)
-                          {
-                              yyerror(yyscanner, NULL);
-                              YYERROR;
-                          }
-                     }
-                   | _FOR_ _ANY_ _OF_ string_set ':'
-                     { 
-                          yyget_extra(yyscanner)->inside_for++; 
-                     }           
-                     '(' boolean_expression ')'                     
-                     { 
-                          yyget_extra(yyscanner)->inside_for--; 
-                                                    
-                          $$ = reduce_term(yyscanner, TERM_TYPE_FOR, reduce_constant(yyscanner, 1), $4, $8); 
-                          
-                          if ($$ == NULL)
-                          {
-                              yyerror(yyscanner, NULL);
-                              YYERROR;
-                          }
-                     }
-                   | expression _OF_ string_set                         
+                   | for_expression _OF_ string_set                         
                      { 
                          $$ = reduce_term(yyscanner, TERM_TYPE_OF, $1, $3, NULL); 
-                         
-                         if ($$ == NULL)
-                         {
-                             yyerror(yyscanner, NULL);
-                             YYERROR;
-                         }
-                     }
-                   | _ALL_ _OF_ string_set                              
-                     { 
-                         $$ = reduce_term(yyscanner, TERM_TYPE_OF, reduce_constant(yyscanner, count_strings($3)), $3, NULL); 
-                         
-                         if ($$ == NULL)
-                         {
-                             yyerror(yyscanner, NULL);
-                             YYERROR;
-                         }
-                     }
-                   | _ANY_ _OF_ string_set                              
-                     { 
-                         $$ = reduce_term(yyscanner, TERM_TYPE_OF, reduce_constant(yyscanner, 1), $3, NULL); 
                          
                          if ($$ == NULL)
                          {
@@ -606,7 +529,7 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                    | _NOT_ boolean_expression                           { $$ = reduce_term(yyscanner, TERM_TYPE_NOT, $2, NULL, NULL); }
                    | boolean_expression _AND_ boolean_expression        { $$ = reduce_term(yyscanner, TERM_TYPE_AND, $1, $3, NULL); }
                    | boolean_expression _OR_ boolean_expression         { $$ = reduce_term(yyscanner, TERM_TYPE_OR, $1, $3, NULL); }
-                   | boolean_expression _IS_ boolean_expression         { $$ = reduce_term(yyscanner, TERM_TYPE_EQ, $1, $3, NULL); }
+ /*                  | boolean_expression _IS_ boolean_expression         { $$ = reduce_term(yyscanner, TERM_TYPE_EQ, $1, $3, NULL); }*/
                    | expression _LT_ expression                         { $$ = reduce_term(yyscanner, TERM_TYPE_LT, $1, $3, NULL); }
                    | expression _GT_ expression                         { $$ = reduce_term(yyscanner, TERM_TYPE_GT, $1, $3, NULL); }
                    | expression _LE_ expression                         { $$ = reduce_term(yyscanner, TERM_TYPE_LE, $1, $3, NULL); }
@@ -615,17 +538,25 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                    | expression _IS_ expression                         { $$ = reduce_term(yyscanner, TERM_TYPE_EQ, $1, $3, NULL); }
                    | expression _NEQ_ expression                        { $$ = reduce_term(yyscanner, TERM_TYPE_NOT_EQ, $1, $3, NULL); }
                    ;    
-                  
+ 
+ 
+ 
+integer_set : '(' integer_enumeration ')'                               { $$ = $2; }
+            | range                                                     { $$ = $1; }
+            ;
+            
+integer_enumeration : expression
+                    | integer_enumeration ',' expression                { $$ = reduce_integer_enumeration(yyscanner, $1, $3); }
+                    ;
 
-string_set  : '(' string_enumeration ')'            { $$ = $2; }
-            | _THEM_                                { $$ = reduce_string_with_wildcard(yyscanner, yr_strdup("$*")); }
+
+                 
+string_set  : '(' string_enumeration ')'                                { $$ = $2; }
+            | _THEM_                                                    { $$ = reduce_string_with_wildcard(yyscanner, yr_strdup("$*")); }
             ;                           
                             
 string_enumeration  : string_enumeration_item
-                    | string_enumeration ',' string_enumeration_item
-                      {
-                         $$ = reduce_string_enumeration(yyscanner, $1,$3);
-                      }
+                    | string_enumeration ',' string_enumeration_item    { $$ = reduce_string_enumeration(yyscanner, $1, $3); }
                     ;
                     
 string_enumeration_item : _STRING_IDENTIFIER_
@@ -650,7 +581,18 @@ string_enumeration_item : _STRING_IDENTIFIER_
                           }
                         ;
 
-                            
+
+
+range : '(' expression '.' '.'  expression ')'  { $$ = reduce_range(yyscanner, $2, $5); } 
+      ;
+
+
+for_expression : expression
+               | _ALL_                          { $$ = reduce_constant(yyscanner, 0); }
+               | _ANY_                          { $$ = reduce_constant(yyscanner, 1); }
+               ;
+
+
 expression : _SIZE_                             { $$ = reduce_filesize(yyscanner); }
            | _ENTRYPOINT_                       { $$ = reduce_entrypoint(yyscanner); }
            | _INT8_  '(' expression ')'         { $$ = reduce_term(yyscanner, TERM_TYPE_INT8_AT_OFFSET, $3, NULL, NULL); }
@@ -669,9 +611,9 @@ expression : _SIZE_                             { $$ = reduce_filesize(yyscanner
                     YYERROR;
                 }
              }
-           | _STRING_OFFSET_                         
+           | _STRING_OFFSET_ '[' expression ']'                         
              { 
-                $$ = reduce_string_offset(yyscanner, $1); 
+                $$ = reduce_string_offset(yyscanner, $1, $3); 
 
                 if ($$ == NULL)
                 {
@@ -708,17 +650,17 @@ type : _MZ_
 %%
 
 
-int count_strings(TERM_STRING* st)
+int valid_string_identifier(char* identifier, YARA_CONTEXT* context)
 {
-    int count = 0;
-    
-    while(st != NULL)
+    if (strcmp(identifier, "$") != 0 || context->inside_for > 0) 
     {
-        count++;
-        st = st->next;
+        return TRUE;
     }
-    
-    return count;
+    else
+    {
+        context->last_result = ERROR_MISPLACED_ANONYMOUS_STRING;
+        return FALSE;
+    }
 }
 
 int reduce_rule_declaration(    yyscan_t yyscanner,
@@ -972,7 +914,7 @@ TERM* reduce_string(    yyscan_t yyscanner,
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
     
-    if (strcmp(identifier, "$") != 0 || context->inside_for > 0) 
+    if (valid_string_identifier(identifier, context)) 
     {  
         context->last_result = new_string_identifier(TERM_TYPE_STRING, context->current_rule_strings, identifier, &term);       
      
@@ -980,10 +922,6 @@ TERM* reduce_string(    yyscan_t yyscanner,
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
         }
-    }
-    else
-    {
-        context->last_result = ERROR_MISPLACED_ANONYMOUS_STRING;
     }
     
     yr_free(identifier);   
@@ -1038,7 +976,7 @@ TERM* reduce_string_at( yyscan_t yyscanner,
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
     
-    if (strcmp(identifier, "$") != 0 || context->inside_for > 0) 
+    if (valid_string_identifier(identifier, context))  
     {  
         context->last_result = new_string_identifier(TERM_TYPE_STRING_AT, context->current_rule_strings, identifier, &term);       
      
@@ -1051,10 +989,6 @@ TERM* reduce_string_at( yyscan_t yyscanner,
             term->offset = offset;
         }  
     }
-    else
-    {
-        context->last_result = ERROR_MISPLACED_ANONYMOUS_STRING;
-    }
     
     yr_free(identifier);   
     return (TERM*) term;
@@ -1062,22 +996,23 @@ TERM* reduce_string_at( yyscan_t yyscanner,
 
 TERM* reduce_string_in_range(   yyscan_t yyscanner,    
                                 char* identifier, 
-                                TERM* lower_offset, 
-                                TERM* upper_offset)
+                                TERM* range)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
     
-    context->last_result = new_string_identifier(TERM_TYPE_STRING_IN_RANGE, context->current_rule_strings, identifier, &term);
+    if (valid_string_identifier(identifier, context)) 
+    {
+        context->last_result = new_string_identifier(TERM_TYPE_STRING_IN_RANGE, context->current_rule_strings, identifier, &term);
     
-    if (context->last_result != ERROR_SUCCESS)
-    {
-        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
-    }
-    else
-    {
-        term->lower_offset = lower_offset;
-        term->upper_offset = upper_offset;
+        if (context->last_result != ERROR_SUCCESS)
+        {
+            strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        }
+        else
+        {
+            term->range = range;
+        }
     }
     
     yr_free(identifier);   
@@ -1090,16 +1025,19 @@ TERM* reduce_string_in_section_by_name( yyscan_t yyscanner,
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
     
-    context->last_result = new_string_identifier(TERM_TYPE_STRING_IN_SECTION_BY_NAME, context->current_rule_strings, identifier, &term);
+    if (valid_string_identifier(identifier, context))
+    {
+        context->last_result = new_string_identifier(TERM_TYPE_STRING_IN_SECTION_BY_NAME, context->current_rule_strings, identifier, &term);
     
-    if (context->last_result != ERROR_SUCCESS)
-    {
-        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
-    }
-    else
-    {
-        term->section_name = yr_strdup(section_name->c_string);
-    }
+        if (context->last_result != ERROR_SUCCESS)
+        {
+            strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        }
+        else
+        {
+            term->section_name = yr_strdup(section_name->c_string);
+        }
+    }   
     
     yr_free(section_name);
     yr_free(identifier);   
@@ -1111,12 +1049,15 @@ TERM* reduce_string_count(  yyscan_t yyscanner,
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
-
-    context->last_result = new_string_identifier(TERM_TYPE_STRING_COUNT, context->current_rule_strings, identifier, &term);
     
-    if (context->last_result != ERROR_SUCCESS)
+    if (valid_string_identifier(identifier, context))
     {
-        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        context->last_result = new_string_identifier(TERM_TYPE_STRING_COUNT, context->current_rule_strings, identifier, &term);
+            
+        if (context->last_result != ERROR_SUCCESS)
+        {
+            strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        }
     }
     
     yr_free(identifier);           
@@ -1124,18 +1065,26 @@ TERM* reduce_string_count(  yyscan_t yyscanner,
 }
 
 TERM* reduce_string_offset( yyscan_t yyscanner,
-                            char* identifier)
+                            char* identifier,
+                            TERM* index)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
 
-    context->last_result = new_string_identifier(TERM_TYPE_STRING_OFFSET, context->current_rule_strings, identifier, &term);
-    
-    if (context->last_result != ERROR_SUCCESS)
+    if (valid_string_identifier(identifier, context))
     {
-        strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
-    }
+        context->last_result = new_string_identifier(TERM_TYPE_STRING_OFFSET, context->current_rule_strings, identifier, &term);
     
+        if (context->last_result != ERROR_SUCCESS)
+        {
+            strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        }
+        else
+        {
+            term->index = index;
+        }
+    }
+        
     yr_free(identifier);           
     return (TERM*) term;
 }
@@ -1155,7 +1104,7 @@ TERM* reduce_identifier(    yyscan_t yyscanner,
     }
     else
     {
-        context->last_result = new_external_variable(context, identifier, (TERM_EXTERNAL_VARIABLE**) &term);
+        context->last_result = new_variable(context, identifier, (TERM_VARIABLE**) &term);
     }
     
     yr_free(identifier);
@@ -1175,33 +1124,32 @@ TERM* reduce_string_enumeration(    yyscan_t yyscanner,
     return string_identifier;
 }
 
-TERM* reduce_external_string_operation( yyscan_t yyscanner,
+TERM* reduce_string_operation( yyscan_t yyscanner,
                                         int type,
                                         char* identifier,
                                         SIZED_STRING* string)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
-    
-    const char *error;
+   
     int erroffset;
     
-    EXTERNAL_VARIABLE* ext_var;  
-    TERM_EXTERNAL_STRING_OPERATION* term = NULL;
+    VARIABLE* variable;  
+    TERM_STRING_OPERATION* term = NULL;
     
-    ext_var = lookup_external_variable(context->external_variables, identifier);
+    variable = lookup_variable(context->variables, identifier);
     
-    if (ext_var != NULL)
+    if ( variable != NULL)
     {
-        if (ext_var->type == EXTERNAL_VARIABLE_TYPE_STRING)
+        if (variable->type == VARIABLE_TYPE_STRING)
         {    
-            term = (TERM_EXTERNAL_STRING_OPERATION*) yr_malloc(sizeof(TERM_EXTERNAL_STRING_OPERATION));
+            term = (TERM_STRING_OPERATION*) yr_malloc(sizeof(TERM_STRING_OPERATION));
             
             if (term != NULL)
             {
                 term->type = type;
-                term->ext_var = ext_var;
+                term->variable = variable;
                 
-                if (type == TERM_TYPE_EXTERNAL_STRING_MATCH)
+                if (type == TERM_TYPE_STRING_MATCH)
                 {
                     if (regex_compile(&(term->re),
                                       string->c_string,
@@ -1231,7 +1179,7 @@ TERM* reduce_external_string_operation( yyscan_t yyscanner,
          else
          {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
-            context->last_result = ERROR_INCORRECT_EXTERNAL_VARIABLE_TYPE;
+            context->last_result = ERROR_INCORRECT_VARIABLE_TYPE;
          }
     }
     else
@@ -1242,6 +1190,77 @@ TERM* reduce_external_string_operation( yyscan_t yyscanner,
     
     return (TERM*) term;
 
+}
+
+TERM* reduce_integer_enumeration(   yyscan_t yyscanner,
+                                    TERM* term1,     
+                                    TERM* term2)
+{
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
+    TERM_VECTOR* vector;
+    
+    if (term1->type == TERM_TYPE_VECTOR)
+    {
+        context->last_result = add_term_to_vector((TERM_VECTOR*) term1, term2);
+        
+        return term1;
+    }
+    else
+    {
+        context->last_result = new_vector(&vector);
+        
+        if (context->last_result == ERROR_SUCCESS)
+            context->last_result = add_term_to_vector(vector, term1);
+            
+        if (context->last_result == ERROR_SUCCESS)
+            context->last_result = add_term_to_vector(vector, term2);
+            
+        return (TERM*) vector;
+    }
+}
+
+TERM* reduce_integer_for(   yyscan_t yyscanner,
+                            TERM* count,
+                            char* identifier,
+                            TERM* items,
+                            TERM* expression)
+{
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
+    TERM_INTEGER_FOR* term = NULL;
+    VARIABLE* variable;  
+    
+    variable = lookup_variable(context->variables, identifier);
+    
+    term = (TERM_INTEGER_FOR*) yr_malloc(sizeof(TERM_INTEGER_FOR));
+    
+    if (term != NULL)
+    {
+        term->type = TERM_TYPE_INTEGER_FOR;
+        term->count = count;
+        term->items = (TERM_ITERABLE*) items;
+        term->expression = expression;
+        term->variable = variable;
+    }
+    else
+    {
+        context->last_result = ERROR_INSUFICIENT_MEMORY;
+    }
+    
+    yr_free(identifier);           
+    return (TERM*) term;    
+}
+
+
+TERM* reduce_range( yyscan_t yyscanner,
+                    TERM* min,
+                    TERM* max)
+{
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
+    TERM_RANGE* term = NULL;
+    
+    context->last_result = new_range(min, max, &term);
+             
+    return (TERM*) term;    
 }
 
   

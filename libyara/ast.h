@@ -19,6 +19,7 @@ GNU General Public License for more details.
 
 #include "yara.h"
 #include "sizedstr.h"
+#include "eval.h"
 
 /* 
     Mask examples:
@@ -63,7 +64,7 @@ GNU General Public License for more details.
 #define TERM_TYPE_STRING_COUNT                       20     
 #define TERM_TYPE_STRING_OFFSET                      21      
 #define TERM_TYPE_OF                                 22 
-#define TERM_TYPE_FOR                                23         
+#define TERM_TYPE_STRING_FOR                                23         
 #define TERM_TYPE_FILESIZE              	         24          
 #define TERM_TYPE_ENTRYPOINT						 25			
 #define TERM_TYPE_RULE                               26
@@ -73,11 +74,17 @@ GNU General Public License for more details.
 #define TERM_TYPE_UINT8_AT_OFFSET                    30
 #define TERM_TYPE_UINT16_AT_OFFSET                   31
 #define TERM_TYPE_UINT32_AT_OFFSET                   32
-#define TERM_TYPE_EXTERNAL_VARIABLE                  33
-#define TERM_TYPE_EXTERNAL_STRING_MATCH              34
-#define TERM_TYPE_EXTERNAL_STRING_CONTAINS           35
-#define TERM_TYPE_FOR_OCCURRENCES                    36
+#define TERM_TYPE_VARIABLE                           33
+#define TERM_TYPE_STRING_MATCH                       34
+#define TERM_TYPE_STRING_CONTAINS                    35
+#define TERM_TYPE_INTEGER_FOR                        36
+#define TERM_TYPE_VECTOR                             37
+#define TERM_TYPE_RANGE                              38
                   
+                  
+#define MAX_VECTOR_SIZE                              64    
+
+
 
 typedef struct _TERM_CONST
 {
@@ -122,6 +129,55 @@ typedef struct _TERM_TERNARY_OPERATION
 } TERM_TERNARY_OPERATION;
 
 
+struct _TERM_ITERABLE;
+
+typedef TERM* (*ITERATOR)(struct _TERM_ITERABLE* self, EVALUATION_FUNCTION evaluate, EVALUATION_CONTEXT* context);
+
+
+typedef struct _TERM_ITERABLE
+{
+	int				type;
+	ITERATOR        first;
+    ITERATOR        next;
+	
+} TERM_ITERABLE;
+
+
+typedef struct _TERM_RANGE
+{
+	int				type;
+    ITERATOR        first;
+    ITERATOR        next;
+    TERM*			min;
+	TERM*			max;
+    TERM_CONST*     current;
+	
+} TERM_RANGE;
+
+
+typedef struct _TERM_VECTOR
+{
+    int             type;
+    ITERATOR        first;
+    ITERATOR        next;
+    int             count;
+    int             current;
+    TERM*           items[MAX_VECTOR_SIZE];
+
+} TERM_VECTOR;
+
+
+typedef struct _TERM_INTEGER_FOR
+{
+	int			    type;
+    TERM*           count;    
+    TERM_ITERABLE*  items;
+    TERM*           expression;
+    VARIABLE*       variable;
+    
+} TERM_INTEGER_FOR;
+
+
 typedef struct _TERM_STRING
 {
 	int			        	type;
@@ -130,35 +186,34 @@ typedef struct _TERM_STRING
 	
 	union {
 		TERM*			offset;
-		TERM*			lower_offset;
+        TERM*           index;
+		TERM*   		range;
 		char* 			section_name;
 		unsigned int	section_index;
 	};
 	
-	TERM*			upper_offset;
-	
 } TERM_STRING;
 
 
-typedef struct _TERM_EXTERNAL_VARIABLE
+typedef struct _TERM_VARIABLE
 { 
-    int                 type;
-    EXTERNAL_VARIABLE*  variable;
+    int        type;
+    VARIABLE*  variable;
 
-} TERM_EXTERNAL_VARIABLE;
+} TERM_VARIABLE;
 
 
-typedef struct _TERM_EXTERNAL_STRING_OPERATION
+typedef struct _TERM_STRING_OPERATION
 {
-    int                 type;
-    EXTERNAL_VARIABLE*  ext_var;
+    int        type;
+    VARIABLE*  variable;
    
     union {
     	REGEXP              re;
 		char*				string;
 	};
 
-} TERM_EXTERNAL_STRING_OPERATION;
+} TERM_STRING_OPERATION;
 
 
 
@@ -178,7 +233,13 @@ int new_constant(size_t constant, TERM_CONST** term);
 
 int new_string_identifier(int type, STRING* defined_strings, char* identifier, TERM_STRING** term);
 
-int new_external_variable(YARA_CONTEXT* context, char* identifier, TERM_EXTERNAL_VARIABLE** term);
+int new_variable(YARA_CONTEXT* context, char* identifier, TERM_VARIABLE** term);
+
+int new_range(TERM* min, TERM* max, TERM_RANGE** term);
+
+int new_vector(TERM_VECTOR** term);
+
+int add_term_to_vector(TERM_VECTOR* vector, TERM* term);
 
 #endif
 

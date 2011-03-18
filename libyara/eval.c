@@ -21,6 +21,9 @@ GNU General Public License for more details.
 
 #include <string.h>
 
+#define UNDEFINED           0xBADBADBADBADLL
+#define IS_UNDEFINED(x)     ((x) == UNDEFINED)
+
 typedef unsigned char uint8;
 typedef unsigned short uint16;
 typedef unsigned int uint32;
@@ -28,7 +31,7 @@ typedef char int8;
 typedef short int16;
 typedef int int32;
 
-#define function_read(type, tsize) int read_##type##tsize(MEMORY_BLOCK* block, size_t offset) \
+#define function_read(type, tsize) long long read_##type##tsize(MEMORY_BLOCK* block, size_t offset) \
 { \
     while (block != NULL) \
     { \
@@ -38,8 +41,24 @@ typedef int int32;
         } \
         block = block->next; \
     } \
-    return 0xE0FE0F; \
+    return UNDEFINED; \
 };
+
+#define COMPARISON_OPERATOR(operator, term, context) \
+    op1 = evaluate(term->op1, context); \
+    op2 = evaluate(term->op2, context); \
+    if (IS_UNDEFINED(op1) || IS_UNDEFINED(op2)) \
+        return FALSE; \
+    else \
+        return op1 operator op2;\
+        
+#define ARITHMETIC_OPERATOR(operator, term, context) \
+    op1 = evaluate(term->op1, context); \
+    op2 = evaluate(term->op2, context); \
+    if (IS_UNDEFINED(op1) || IS_UNDEFINED(op2)) \
+        return UNDEFINED; \
+    else \
+        return op1 operator op2;\
 
 
 function_read(uint, 8)
@@ -54,8 +73,12 @@ function_read(int, 32)
 long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 {
 	size_t offs, hi_bound, lo_bound;
-
+    long long op1;
+    long long op2;
+    long long index;
 	unsigned int i;
+	unsigned int needed;
+	unsigned int satisfied;
 	int ovector[3];
 	int rc;
 	
@@ -67,10 +90,15 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 	TERM_BINARY_OPERATION* term_binary = ((TERM_BINARY_OPERATION*) term);
 	TERM_TERNARY_OPERATION* term_ternary = ((TERM_TERNARY_OPERATION*) term);
 	TERM_STRING* term_string = ((TERM_STRING*) term);
-	TERM_EXTERNAL_VARIABLE* term_external_variable = ((TERM_EXTERNAL_VARIABLE*) term);
-	TERM_EXTERNAL_STRING_OPERATION* term_external_string_operation = ((TERM_EXTERNAL_STRING_OPERATION*) term);
+	TERM_VARIABLE* term_variable = ((TERM_VARIABLE*) term);
+	TERM_STRING_OPERATION* term_string_operation = ((TERM_STRING_OPERATION*) term);
+	
+    TERM_INTEGER_FOR* term_integer_for;
 	
 	MATCH* match;
+    TERM* item;
+    TERM_RANGE* range;
+    TERM_ITERABLE* items;
 	TERM_STRING* t;
 	
 	switch(term->type)
@@ -115,7 +143,7 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		{	
 			offs = evaluate(term_string->offset, context);
 								
-			match = string->matches;
+			match = string->matches_head;
 			
 			while (match != NULL)
 			{
@@ -142,10 +170,12 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 	
 		if (string->flags & STRING_FLAGS_FOUND)
 		{	
-			lo_bound = evaluate(term_string->lower_offset, context);
-			hi_bound = evaluate(term_string->upper_offset, context);
+            range = (TERM_RANGE*) term_string->range;
+		    
+			lo_bound = evaluate(range->min, context);
+			hi_bound = evaluate(range->max, context);
 				
-			match = string->matches;
+			match = string->matches_head;
 
 			while (match != NULL)
 			{
@@ -163,6 +193,7 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		return 0; /*TODO: Implementar section by name*/
 		
 	case TERM_TYPE_STRING_COUNT:
+	
 		i = 0;
 		
 		if (term_string->string == NULL) /* it's an anonymous string */
@@ -174,16 +205,20 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
             string = term_string->string;
         }
         
-		match = string->matches;
+		match = string->matches_head;
 		
 		while (match != NULL)
 		{
 			i++;
 			match = match->next;
 		}
+		
 		return i;
 		
 	case TERM_TYPE_STRING_OFFSET:
+	
+        i = 1;
+	    index = evaluate(term_string->index, context);
 	
     	if (term_string->string == NULL) /* it's an anonymous string */
         {
@@ -194,29 +229,31 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
             string = term_string->string;
         }
 	
-	    if (string->matches != NULL)
-	    {
-            match = string->matches;
-	        
-    		while (match->next != NULL)
-    		{
-    			match = match->next;
-    		}	  
-    		
-            return match->offset;      
-	    }
-	    else
-	    {
-            return -1;
-	    }
+        match = string->matches_head;
+        
+		while (match->next != NULL && i < index)
+		{
+			match = match->next;
+            i++;
+		}
+		
+		if (match != NULL && i == index)
+		{
+		    return match->offset; 
+		}   
+
+        return UNDEFINED;
+
 
 	case TERM_TYPE_AND:
-		if (evaluate(term_binary->op1, context))  
-			return evaluate(term_binary->op2, context);	
-		else
-			return	0;
+        
+	    if (evaluate(term_binary->op1, context))
+		    return evaluate(term_binary->op2, context);
+	    else
+		    return 0;
 			
 	case TERM_TYPE_OR:
+	
 		if (evaluate(term_binary->op1, context))
 			return 1;
 		else
@@ -226,96 +263,115 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		return !evaluate(term_unary->op, context);
 		
 	case TERM_TYPE_ADD:
-		return evaluate(term_binary->op1, context) + evaluate(term_binary->op2, context);
+	    ARITHMETIC_OPERATOR(+, term_binary, context);
 		                      
 	case TERM_TYPE_SUB:            
-		return evaluate(term_binary->op1, context) - evaluate(term_binary->op2, context);
+		ARITHMETIC_OPERATOR(-, term_binary, context);
 		                      
 	case TERM_TYPE_MUL:            
-		return evaluate(term_binary->op1, context) * evaluate(term_binary->op2, context);
+		ARITHMETIC_OPERATOR(*, term_binary, context);
 		                      
 	case TERM_TYPE_DIV:            
-		return evaluate(term_binary->op1, context) / evaluate(term_binary->op2, context);
+		ARITHMETIC_OPERATOR(/, term_binary, context);
 		                      
-	case TERM_TYPE_GT:             
-		return evaluate(term_binary->op1, context) > evaluate(term_binary->op2, context);
+	case TERM_TYPE_GT:
+        COMPARISON_OPERATOR(>, term_binary, context);
 		                      
-	case TERM_TYPE_LT:             
-		return evaluate(term_binary->op1, context) < evaluate(term_binary->op2, context);
+	case TERM_TYPE_LT:
+	    COMPARISON_OPERATOR(<, term_binary, context);
 		                      
 	case TERM_TYPE_GE:             
-		return evaluate(term_binary->op1, context) >= evaluate(term_binary->op2, context);
+		COMPARISON_OPERATOR(>=, term_binary, context);
 		                      
 	case TERM_TYPE_LE:             
-		return evaluate(term_binary->op1, context) <= evaluate(term_binary->op2, context);	
+		COMPARISON_OPERATOR(<=, term_binary, context);	
 		                      
 	case TERM_TYPE_EQ:    
-		return evaluate(term_binary->op1, context) == evaluate(term_binary->op2, context);
+		COMPARISON_OPERATOR(==, term_binary, context);
 	
 	case TERM_TYPE_NOT_EQ:             
-		return evaluate(term_binary->op1, context) != evaluate(term_binary->op2, context);
+		COMPARISON_OPERATOR(!=, term_binary, context);
 		
 	case TERM_TYPE_OF:
 			
-		i = evaluate(term_binary->op1, context);
 		t = (TERM_STRING*) term_binary->op2;
+		needed = evaluate(term_binary->op1, context);
+        satisfied = 0;
+        i = 0;	
 						
-		while (t != NULL && i > 0)
+		while (t != NULL)
 		{
 			if (evaluate((TERM*) t, context)) 
 			{
-				i--;
-			}				
+				satisfied++;
+			}	
+						
 			t = t->next;
+            i++;
 		} 
 		
-		return (i == 0);
+		if (needed == 0)  /* needed == 0 means ALL*/
+            needed = i;
+        
+        return (satisfied == needed);
 		
-	case TERM_TYPE_FOR:
+	case TERM_TYPE_STRING_FOR:
 
-		i = evaluate(term_ternary->op1, context);		
-		t = (TERM_STRING*) term_ternary->op2;	
+        t = (TERM_STRING*) term_ternary->op2;
+		
+		needed = evaluate(term_ternary->op1, context);		
+        satisfied = 0;
+        i = 0;
 
-		while (t != NULL && i > 0)
+		while (t != NULL)
 		{
             saved_anonymous_string = context->current_string;
             context->current_string = t->string;
-		    
+            	    
 			if (evaluate(term_ternary->op3, context)) 
 			{
-				i--;
+				satisfied++;
 			}	
 			
             context->current_string = saved_anonymous_string;
 						
-			t = t->next;
+			t = t->next;	
+            i++;
 		} 
 		
-		return (i == 0);
+		if (needed == 0)  /* needed == 0 means ALL*/
+            needed = i;
+        
+        return (satisfied == needed);
 	
-	case TERM_TYPE_FOR_OCCURRENCES:
-	    
-        i = evaluate(term_ternary->op1, context);
-        t = (TERM_STRING*) term_ternary->op2;
+	case TERM_TYPE_INTEGER_FOR:
+		
+        term_integer_for = (TERM_INTEGER_FOR*) term;
+        items = term_integer_for->items;
         
-        saved_anonymous_string = context->current_string;
-        context->current_string = t->string;
+        needed = evaluate(term_integer_for->count, context);
+        satisfied = 0;
+        i = 0;    
         
-        match = t->string->matches;
+        item = items->first(items, evaluate, context);
         
-        while (match != NULL && i > 0)
-        {            
-            if (evaluate(term_ternary->op3, context)) 
+        while (item != NULL)
+        {                
+            term_integer_for->variable->integer = evaluate(item, context);
+                                           
+            if (evaluate(term_integer_for->expression, context)) 
 			{
-				i--;
+				satisfied++;
 			}
-			
-            match = match->next;	
+						
+            item = items->next(items, evaluate, context);
+            i++;	
         }
         
-        context->current_string = saved_anonymous_string;
+        if (needed == 0)  /* needed == 0 means ALL*/
+            needed = i;
         
-        return (i == 0);
+        return (satisfied == needed);
     
     case TERM_TYPE_UINT8_AT_OFFSET:
 
@@ -341,26 +397,26 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 
         return read_int32(context->mem_block, evaluate(term_unary->op, context));  
         
-    case TERM_TYPE_EXTERNAL_VARIABLE:
+    case TERM_TYPE_VARIABLE:
     
-        if (term_external_variable->variable->type == EXTERNAL_VARIABLE_TYPE_STRING)
+        if (term_variable->variable->type == VARIABLE_TYPE_STRING)
         {
-            return ( term_external_variable->variable->string != NULL && *term_external_variable->variable->string != '\0');
+            return ( term_variable->variable->string != NULL && *term_variable->variable->string != '\0');
         }
         else
         {
-            return term_external_variable->variable->integer;
+            return term_variable->variable->integer;
         }
         
-    case TERM_TYPE_EXTERNAL_STRING_MATCH:
-        rc = regex_exec(&(term_external_string_operation->re),
-                        term_external_string_operation->ext_var->string,
-                        strlen(term_external_string_operation->ext_var->string));
+    case TERM_TYPE_STRING_MATCH:
+        rc = regex_exec(&(term_string_operation->re),
+                        term_string_operation->variable->string,
+                        strlen(term_string_operation->variable->string));
         return (rc >= 0);
 
-	case TERM_TYPE_EXTERNAL_STRING_CONTAINS:
+	case TERM_TYPE_STRING_CONTAINS:
 		
-		return (strstr(term_external_string_operation->ext_var->string, term_external_string_operation->string) != NULL);
+		return (strstr(term_string_operation->variable->string, term_string_operation->string) != NULL);
      	
 	default:
 		return 0;
