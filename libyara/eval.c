@@ -231,7 +231,7 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 	
         match = string->matches_head;
         
-		while (match->next != NULL && i < index)
+		while (match != NULL && i < index)
 		{
 			match = match->next;
             i++;
