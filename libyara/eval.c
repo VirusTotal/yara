@@ -21,7 +21,7 @@ GNU General Public License for more details.
 
 #include <string.h>
 
-#define UNDEFINED           0xBADBADBADBADLL
+#define UNDEFINED           0xFABADAFABADALL
 #define IS_UNDEFINED(x)     ((x) == UNDEFINED)
 
 typedef unsigned char uint8;
@@ -35,7 +35,7 @@ typedef int int32;
 { \
     while (block != NULL) \
     { \
-        if (offset >= block->base && offset < block->base + block->size - (tsize - 1)) \
+        if (offset >= block->base && offset < block->base + block->size - (tsize/8 - 1)) \
         { \
             return *((type##tsize *) (block->data + offset - block->base)); \
         } \
