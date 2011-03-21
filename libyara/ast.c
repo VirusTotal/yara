@@ -981,6 +981,11 @@ void free_term(TERM* term)
 	
 		free_term(((TERM_STRING*)term)->offset);
 		break;
+		
+	case TERM_TYPE_STRING_OFFSET:
+
+    	free_term(((TERM_STRING*)term)->index);
+    	break;
 	
 	case TERM_TYPE_STRING_IN_RANGE:
 	
