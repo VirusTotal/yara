@@ -276,6 +276,7 @@ typedef struct _YARA_CONTEXT
     VARIABLE*               variables;
     
     STRING*                 current_rule_strings;  
+    int                     current_rule_flags;
     int                     inside_for;
     
     char*                   file_name_stack[MAX_INCLUDE_DEPTH];
@@ -290,7 +291,7 @@ typedef struct _YARA_CONTEXT
     int                     fast_match;
     int                     allow_includes;
     int                     scanning_process_memory;
-    
+        
     char                    include_base_dir[MAX_PATH];
 
 } YARA_CONTEXT;

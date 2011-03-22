@@ -52,6 +52,7 @@ YARA_CONTEXT* yr_create_context()
     context->last_result = ERROR_SUCCESS;
     context->file_name_stack_ptr = 0;
     context->current_rule_strings = NULL;
+    context->current_rule_flags = 0;
     context->inside_for = 0;
 	context->namespaces = NULL;
 	context->variables = NULL;
@@ -59,7 +60,7 @@ YARA_CONTEXT* yr_create_context()
 	context->current_namespace = yr_create_namespace(context, "default");
 	context->fast_match = FALSE;
     context->scanning_process_memory = FALSE;
-    
+
     memset(context->hash_table.hashed_strings_2b, 0, sizeof(context->hash_table.hashed_strings_2b));
     memset(context->hash_table.hashed_strings_1b, 0, sizeof(context->hash_table.hashed_strings_1b));
     

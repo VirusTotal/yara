@@ -114,106 +114,6 @@ VARIABLE* lookup_variable(VARIABLE* variable_list_head, const char* identifier)
 }
 
 
-int require_file(TERM* term)
-{
-    switch(term->type)
-    {
-	case TERM_TYPE_FILESIZE:
-		return TRUE;
-	
-	case TERM_TYPE_STRING_AT:
-        return require_file(((TERM_STRING*)term)->offset);
-	
-	case TERM_TYPE_STRING_IN_RANGE:
-        return require_file(((TERM_STRING*)term)->range);
-    
-    case TERM_TYPE_RANGE:
-        return require_file(((TERM_RANGE*)term)->min) || require_file(((TERM_RANGE*)term)->max);    
-                    
-    case TERM_TYPE_AND:          
-    case TERM_TYPE_OR:
-    case TERM_TYPE_ADD:
-    case TERM_TYPE_SUB:      
-    case TERM_TYPE_MUL:
-    case TERM_TYPE_DIV:  
-    case TERM_TYPE_GT:       
-    case TERM_TYPE_LT:
-    case TERM_TYPE_GE:       
-    case TERM_TYPE_LE:
-    case TERM_TYPE_EQ:
-    case TERM_TYPE_NOT_EQ:
-    case TERM_TYPE_OF:
-        return require_file(((TERM_BINARY_OPERATION*)term)->op1) || require_file(((TERM_BINARY_OPERATION*)term)->op2);
-                      
-    case TERM_TYPE_NOT:
-    case TERM_TYPE_INT8_AT_OFFSET:
-    case TERM_TYPE_INT16_AT_OFFSET:    
-    case TERM_TYPE_INT32_AT_OFFSET:    
-    case TERM_TYPE_UINT8_AT_OFFSET:    
-    case TERM_TYPE_UINT16_AT_OFFSET:   
-    case TERM_TYPE_UINT32_AT_OFFSET:   
-        return require_file(((TERM_UNARY_OPERATION*)term)->op);
-        
-    case TERM_TYPE_STRING_FOR:
-//    case TERM_TYPE_STRING_FOR_OCCURRENCES:
-        return require_file(((TERM_TERNARY_OPERATION*)term)->op1) || require_file(((TERM_TERNARY_OPERATION*)term)->op3);
-
-	default:
-		return FALSE;
-    }
-}
-
-
-int require_exe_file(TERM* term)
-{	    
-    switch(term->type)
-    {
-	case TERM_TYPE_ENTRYPOINT:
-	case TERM_TYPE_STRING_IN_SECTION_BY_NAME:
-		return TRUE;
-	
-	case TERM_TYPE_STRING_AT:
-        return require_exe_file(((TERM_STRING*)term)->offset);
-	
-	case TERM_TYPE_STRING_IN_RANGE:
-        return require_exe_file((TERM*) ((TERM_STRING*)term)->range);
-
-    case TERM_TYPE_RANGE:
-        return require_exe_file(((TERM_RANGE*)term)->min) || require_exe_file(((TERM_RANGE*)term)->max);
-                    
-    case TERM_TYPE_AND:          
-    case TERM_TYPE_OR:
-    case TERM_TYPE_ADD:
-    case TERM_TYPE_SUB:      
-    case TERM_TYPE_MUL:
-    case TERM_TYPE_DIV:  
-    case TERM_TYPE_GT:       
-    case TERM_TYPE_LT:
-    case TERM_TYPE_GE:       
-    case TERM_TYPE_LE:
-    case TERM_TYPE_EQ:
-    case TERM_TYPE_NOT_EQ:
-    case TERM_TYPE_OF:
-        return require_exe_file(((TERM_BINARY_OPERATION*)term)->op1) || require_exe_file(((TERM_BINARY_OPERATION*)term)->op2);
-                      
-    case TERM_TYPE_NOT:
-    case TERM_TYPE_INT8_AT_OFFSET:
-    case TERM_TYPE_INT16_AT_OFFSET:    
-    case TERM_TYPE_INT32_AT_OFFSET:    
-    case TERM_TYPE_UINT8_AT_OFFSET:    
-    case TERM_TYPE_UINT16_AT_OFFSET:   
-    case TERM_TYPE_UINT32_AT_OFFSET:      
-        return require_exe_file(((TERM_UNARY_OPERATION*)term)->op);
-        
-    case TERM_TYPE_STRING_FOR:
-//    case TERM_TYPE_STRING_FOR_OCCURRENCES:
-        return require_exe_file(((TERM_TERNARY_OPERATION*)term)->op1) || require_exe_file(((TERM_TERNARY_OPERATION*)term)->op3);
-
-	default:
-		return FALSE;
-    }
-}
-
 int new_rule(RULE_LIST* rules, char* identifier, NAMESPACE* ns, int flags, TAG* tag_list_head, META* meta_list_head, STRING* string_list_head, TERM* condition)
 {
     RULE* new_rule;
@@ -244,18 +144,7 @@ int new_rule(RULE_LIST* rules, char* identifier, NAMESPACE* ns, int flags, TAG* 
             {
                 rules->tail->next = new_rule;
                 rules->tail = new_rule;
-            }
-            
-            if (require_file(condition))
-			{
-				new_rule->flags |= RULE_FLAGS_REQUIRE_FILE;
-			}
-			
-			if (require_exe_file(condition))
-			{
-				new_rule->flags |= RULE_FLAGS_REQUIRE_EXECUTABLE;
-			}
-			
+            }			
         }
         else
         {

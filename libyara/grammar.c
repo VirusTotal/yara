@@ -2671,12 +2671,12 @@ int reduce_rule_declaration(    yyscan_t yyscanner,
     context->last_result = new_rule(&context->rule_list, 
                                     identifier, 
                                     context->current_namespace, 
-                                    flags, 
+                                    flags | context->current_rule_flags, 
                                     tag_list_head, 
                                     meta_list_head, 
                                     string_list_head, 
                                     condition);
-    
+                                        
     if (context->last_result != ERROR_SUCCESS)
     {
         strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
@@ -2697,6 +2697,8 @@ int reduce_rule_declaration(    yyscan_t yyscanner,
             string = string->next;
         }
     }
+    
+    context->current_rule_flags = 0;
     
     return context->last_result;
 }
@@ -2858,6 +2860,7 @@ TERM* reduce_filesize(yyscan_t yyscanner)
     TERM* term = NULL;
     
     context->last_result = new_simple_term(TERM_TYPE_FILESIZE, &term); 
+    context->current_rule_flags |= RULE_FLAGS_REQUIRE_FILE;
     return (TERM*) term;    
 }
 
@@ -2866,7 +2869,8 @@ TERM* reduce_entrypoint(yyscan_t yyscanner)
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM* term = NULL;
     
-    context->last_result = new_simple_term(TERM_TYPE_ENTRYPOINT, &term); 
+    context->last_result = new_simple_term(TERM_TYPE_ENTRYPOINT, &term);
+    context->current_rule_flags |= RULE_FLAGS_REQUIRE_EXECUTABLE;
     return (TERM*) term;    
 }
 
