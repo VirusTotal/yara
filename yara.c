@@ -552,11 +552,13 @@ int main(int argc, char const* argv[])
 		
 	if (!process_cmd_line(context, argc, argv))
 	{
+	    yr_destroy_context(context);
 		return 0;
 	}	
 		
 	if (argc == 1 || optind == argc)
 	{
+	    yr_destroy_context(context);
 		show_help();
 		return 0;
 	}

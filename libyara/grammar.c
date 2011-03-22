@@ -3099,7 +3099,7 @@ TERM* reduce_identifier(    yyscan_t yyscanner,
     {
         context->last_result = new_variable(context, identifier, (TERM_VARIABLE**) &term);
     }
-    
+
     yr_free(identifier);
     return (TERM*) term;
 }

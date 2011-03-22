@@ -34,67 +34,10 @@ static PyObject *YaraSyntaxError = NULL;
 
 
 static char* module_doc = "\
-This module allows you to apply YARA rules to files or strings.               \n\
-                                                                              \n\
-First of all your need to compile your YARA rules. The method \"compile\" can \n\
-receive a file path, a file object, or a string containing the rules.         \n\
-                                                                              \n\
-rules = yara.compile(filepath='/foo/bar/myrules')                             \n\
-rules = yara.compile('/foo/bar/myrules')                                      \n\
-                                                                              \n\
-f = open('/foo/bar/myrules')                                                  \n\
-rules = yara.compile(file=f)                                                  \n\
-f.close()                                                                     \n\
-                                                                              \n\
-rules = yara.compile(source='rule dummy { condition: true }')                 \n\
-                                                                              \n\
-This method returns an instance of the \"Rules\" class if the rules were      \n\
-compiled sucessfully, or raises an exception in other case.                   \n\
-                                                                              \n\
-The returned \"Rules\" object has a method \"match\" that allows you to apply \n\
-the rules to your data. This method can receive a file path or a string       \n\
-containing the data.                                                          \n\
-                                                                              \n\
-matches = rules.match(filepath='/foo/bar/myfile')                             \n\
-matches = rules.match('/foo/bar/myfile')                                      \n\
-                                                                              \n\
-f = fopen('/foo/bar/myfile', 'rb')                                            \n\
-matches = rules.match(data=f.read())                                          \n\
-                                                                              \n\
-The \"match\" method returns a list of instances of the class \"Match\". The  \n\
-instances of this class can be treated as text string containing the name of  \n\
-the matching YARA rule.                                                       \n\
-                                                                              \n\
-For example you can print them:                                               \n\
-                                                                              \n\
-foreach m in matches:                                                         \n\
-    print \"%s\" % m                                                          \n\
-                                                                              \n\
-In some circumstances you may need to explicitly convert the instance of      \n\
-\"Match\" to string, for example when comparing it with another string:       \n\
-                                                                              \n\
-if str(matches[0]) == 'SomeRuleName':                                         \n\
-    ...                                                                       \n\
-                                                                              \n\
-The \"Match\" class have the following attributes:                            \n\
-	                                                                          \n\
-- rule	                                                                      \n\
-- namespace	                                                                  \n\
-- meta	                                                                      \n\
-- tags	                                                                      \n\
-- strings	                                                                  \n\
-	                                                                          \n\
-The \"rule\" and \"namespace\" attributes are the names of the matching rule and\n\
-its namespace respectively.                                                   \n\
-	                                                                          \n\
-The \"meta\" attribute is a dictionary containing the metadata associated to the\n\
-rule, where the metadata identifiers are the dictionary keys.                 \n\
-	                                                                          \n\
-The \"tags\" attribute is a list of strings containing the tags associated to \n\
-the rule.                                                                     \n\
-	                                                                          \n\
-The \"strings\" attribute is a list of tuples containig the offset, identifier,\n\
-and content of the matching strings.                                          \n";
+This module allows you to apply YARA rules to files or strings.\n\
+\n\
+For complete documentation please visit:\n\
+http://code.google.com/p/yara-project/\n";
 
 
 

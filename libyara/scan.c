@@ -324,12 +324,12 @@ int regexp_match(unsigned char* buffer, size_t buffer_size, unsigned char* patte
 		return 0;
 	}
 
-        result = regex_exec(&re, (char *)buffer, buffer_size);
+    result = regex_exec(&re, (char *)buffer, buffer_size);
 
-        if (result >= 0)
-          return result;
-        else	
-	  return 0;
+    if (result >= 0)
+        return result;
+    else	
+	    return 0;
 }
 
 int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)

@@ -14,13 +14,13 @@ yara-python depends on libyara, a library that implements YARA's core functions.
 must build and install YARA in your system before building yara-python. The latest
 YARA version can be downloaded from:
 
-http://yara.googlecode.com/files/yara-1.3.tar.gz
+http://yara.googlecode.com/files/yara-1.5.tar.gz
 
 
 After installing YARA you can build yara-python this way:
 
-$ tar xzvf yara-python-1.3.tar.gz
-$ cd yara-python-1.3
+$ tar xzvf yara-python-1.5.tar.gz
+$ cd yara-python-1.5
 $ python setup.py build
 $ sudo python setup.py install
 
@@ -51,9 +51,7 @@ $ ldconfig
 HOW TO USE
 ==========
 
-YARA can be also invoked from your own Python scripts. The yara-python extension is 
-provided in order to make YARA functionality available to Python users. Once yara-python
-is built and installed on your system you can use it as shown below:
+Once yara-python is built and installed on your system you can use it as shown below:
 
 import yara
 
@@ -62,7 +60,7 @@ rules can be compiled from a file path:
 
 rules = yara.compile(filepath='/foo/bar/myrules')
 
-The default argument is filepath, so you don't need to explicitly specify its name:
+The default argument is 'filepath', so you don't need to explicitly specify its name:
 
 rules = yara.compile('/foo/bar/myrules')
 
@@ -76,8 +74,8 @@ Or you can compile them directly from a Python string:
 
 rules = yara.compile(source='rule dummy { condition: true }')
 
-If you want to compile a group of files or strings at the same time you can do it by
-using the filepaths or sources named arguments:
+If you want to compile a group of files or strings at the same time you can do it by using
+the 'filepaths' or 'sources' named arguments:
 
 rules = yara.compile(filepaths={
 
@@ -91,57 +89,103 @@ rules = yara.compile(sources={
 	'namespace2':'rule dummy { condition: false }'
 })
 
-Notice that both filepaths and sources must be dictionaries with keys of string type.
-The dictionary keys are used as a namespace identifier, allowing to differentiate between
-rules with the same name in different sources, as occurs in the second example with the
-"dummy" name.
+Notice that both 'filepaths' and 'sources' must be dictionaries with keys of string type. The dictionary
+keys are used as a namespace identifier, allowing to differentiate between rules with the same name in
+different sources, as occurs in the second example with the “dummy” name.
 
-The compile method also have an optional boolean parameter named includes which allows
-you to control whether or not the include directive should be accepted in the source files,
-for example:
+The compile method also have an optional boolean parameter 'includes' which allows you to control
+whether or not the include directive should be accepted in the source files, for example:
 
 rules = yara.compile('/foo/bar/myrules', includes=False)
 
 If the source file contains include directives the previous line would raise an exception.
 
+If you are using external variables in your rules you must define those externals variables either while
+compiling the rules, or while applying the rules to some file. To define your variables at the moment of
+compilation you should pass the 'externals' parameter to the compile method. For example:
+
+rules = yara.compile( '/foo/rules', 
+				   externals= {
+						'var1': 'some string',
+						'var2': 4,
+						'var3': True
+				   })
+
+The 'externals' parameter must be a dictionary with the names of the variables as keys and an associated
+value of either string, integer or boolean type.
+
 In all cases compile returns an instance of the class Rules, which in turn has a match method:
 
 matches = rules.match('/foo/bar/myfile')
 
-But you can also apply he rules to a Python string:
+But you can also apply the rules to a Python string:
 
 f = fopen('/foo/bar/myfile', 'rb')
 
 matches = rules.match(data=f.read())
 
-The match method returns a list of instances of the class Match. The instances of this
-class can be treated as text strings containing the name of the matching rule. For example
-you can print them:
+As in the case of compile, the 'match' method can receive definitions for externals variables in the externals
+parameter.
 
-foreach m in matches:
+matches = rules.match( '/foo/bar/myfile', 
+				   externals= {
+						'var1': 'some other string',
+						'var4': 100,
+				   })
+
+Externals variables defined during compile-time don’t need to be defined again in subsequent invocations of
+'match' method. However you can redefine any variable as needed, or provide additional definitions that weren’t
+provided during compilation.
+
+You can also specify a callback function when invoking match method. The provided function will be called for
+every rule, no matter if matching or not. Your callback function should expect a single parameter of dictionary
+type, and should return CALLBACK_CONTINUE to proceed to the next rule or CALLBACK_ABORT to stop applying rules to
+your data.
+
+
+Here is an example:
+
+import yara
+
+def mycallback(data):
+	print data
+	yara.CALLBACK_CONTINUE
+
+matches = rules.match('/foo/bar/myfile', callback=mycallback)
+
+The passed dictionary will be something like this:
+
+{
+	'tags': ['foo', 'bar'], 
+	'matches': True, 
+	'namespace': 'default', 
+	'rule': 'my_rule', 
+	'meta': {}, 
+	'strings': [(81, '$a', 'abc'), (141, '$b', 'def')]
+}
+
+The 'matches' field indicates if the rules matches the data or not.
+
+The 'strings' fields is a list of matching strings, with vectors of the form:
+
+(<offset>, <string identifier>, <string data>)
+
+The 'match' method returns a list of instances of the class Match. The instances of this class can be treated as text
+strings containing the name of the matching rule. For example you can print them:
+
+for m in matches:
 	print "%s" % m
 
-In some circumstances you may need to explicitly convert the instance of Match to string,
-for example when comparing it with another string:
+In some circumstances you may need to explicitly convert the instance of Match to string, for example when comparing
+it with another string:
 
 if str(matches[0]) == 'SomeRuleName':
 	...
 
-The Match class have the following attributes:
+The Match class has the same attributes as the dictionary passed to the callback function:
 
-rule
-namespace
-meta
-tags
-strings
-
-The rule and namespace attributes are the names of the matching rule and its namespace
-respectively. 
-
-The meta attribute is a dictionary containing the metadata associated to the rule, where
-the metadata identifiers are the dictionary keys.
-
-The tags attribute is a list of strings containing the tags associated to the rule, and
-the strings attribute is a dictionary whose values are those strings within the data that
-made the YARA rule match, and the keys are the offsets where those strings were found.
-	
+-rule
+-namespace
+-meta
+-tags
+-strings

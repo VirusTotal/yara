@@ -11,19 +11,19 @@
 #define PACKAGE "yara"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "vmalvarez@hispasec.com"
+#define PACKAGE_BUGREPORT "victor.alvarez@virustotal.com"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "yara"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "yara 1.4"
+#define PACKAGE_STRING "yara 1.5"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "yara"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.4"
+#define PACKAGE_VERSION "1.5"
 
 /* Version number of package */
-#define VERSION "1.4"
+#define VERSION "1.5"
