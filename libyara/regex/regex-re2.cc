@@ -71,6 +71,7 @@ int regex_compile(REGEXP* output,
 
     RE2::Options options;
     options.set_log_errors(false);
+    options.set_encoding(RE2::Options::EncodingLatin1);
 
     if (case_insensitive)
         options.set_case_sensitive(false);
