@@ -4,5 +4,6 @@
 # regarding libtool, autoconf, automake, etc.
 
 make distclean
+aclocal
 libtoolize
 autoreconf --force && cd libyara/ && autoreconf --force
