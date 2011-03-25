@@ -35,7 +35,9 @@ typedef int int32;
 { \
     while (block != NULL) \
     { \
-        if (offset >= block->base && offset < block->base + block->size - (tsize/8 - 1)) \
+        if (offset >= block->base && \
+            block->size >= tsize/8 && \
+	    offset < block->base + block->size - (tsize/8 - 1)) \
         { \
             return *((type##tsize *) (block->data + offset - block->base)); \
         } \

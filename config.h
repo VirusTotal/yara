@@ -2,10 +2,10 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if you have the `pcre' library (-lpcre). */
-/* #undef HAVE_LIBPCRE */
+#define HAVE_LIBPCRE 1
 
 /* Define to 1 if you have the `re2' library (-lre2). */
-#define HAVE_LIBRE2 1
+/* #undef HAVE_LIBRE2 */
 
 /* Name of package */
 #define PACKAGE "yara"
