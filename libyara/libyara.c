@@ -366,11 +366,18 @@ int yr_push_file_name(YARA_CONTEXT* context, const char* file_name)
             return ERROR_INCLUDES_CIRCULAR_REFERENCE;
         }
     }
-    
-    context->file_name_stack[context->file_name_stack_ptr] = yr_strdup(file_name);
-    context->file_name_stack_ptr++;
-    
-    return ERROR_SUCCESS;
+
+    if (context->file_name_stack_ptr < MAX_INCLUDE_DEPTH)
+    { 
+        context->file_name_stack[context->file_name_stack_ptr] = yr_strdup(file_name);
+        context->file_name_stack_ptr++;
+        return ERROR_SUCCESS;
+    }
+    else
+    {
+        context->last_result = ERROR_INCLUDE_DEPTH_EXCEEDED;
+        return ERROR_INCLUDE_DEPTH_EXCEEDED;
+    }
 }
 
 
@@ -696,6 +703,8 @@ char* yr_get_error_message(YARA_CONTEXT* context, char* buffer, int buffer_size)
 			break;
 		case ERROR_INCLUDES_CIRCULAR_REFERENCE:
 		    snprintf(buffer, buffer_size, "include circular reference");
+                case ERROR_INCLUDE_DEPTH_EXCEEDED:
+                    snprintf(buffer, buffer_size, "too many levels of included rules");
             break;		    
 	}
 	

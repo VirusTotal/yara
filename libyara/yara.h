@@ -36,6 +36,8 @@ GNU General Public License for more details.
 #endif
 
 #define MAX_INCLUDE_DEPTH                       16
+#define LEX_BUF_SIZE                            1024
+
 
 #define STRING_FLAGS_FOUND                      0x01
 #define STRING_FLAGS_REFERENCED                 0x02
@@ -97,6 +99,7 @@ GNU General Public License for more details.
 #define ERROR_INCORRECT_VARIABLE_TYPE           29
 #define ERROR_COULD_NOT_ATTACH_TO_PROCESS       30
 #define ERROR_VECTOR_TOO_LONG                   31
+#define ERROR_INCLUDE_DEPTH_EXCEEDED            32
 
 #define META_TYPE_INTEGER                       1
 #define META_TYPE_STRING                        2
@@ -283,8 +286,8 @@ typedef struct _YARA_CONTEXT
     int                     file_name_stack_ptr;
     
     char                    last_error_extra_info[256];
-    
-    char                    lex_buf[256];
+   
+    char                    lex_buf[LEX_BUF_SIZE];
     char*                   lex_buf_ptr;
     unsigned short          lex_buf_len;
     

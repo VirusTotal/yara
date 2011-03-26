@@ -53,7 +53,6 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
-#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -83,6 +82,8 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
+
+#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -157,7 +158,15 @@ typedef void* yyscan_t;
 
 /* Size of default input buffer. */
 #ifndef YY_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k.
+ * Moreover, YY_BUF_SIZE is 2*YY_READ_BUF_SIZE in the general case.
+ * Ditto for the __ia64__ case accordingly.
+ */
+#define YY_BUF_SIZE 32768
+#else
 #define YY_BUF_SIZE 16384
+#endif /* __ia64__ */
 #endif
 
 /* The state buf must be large enough to hold one state per character in the main buffer.
@@ -167,11 +176,6 @@ typedef void* yyscan_t;
 #ifndef YY_TYPEDEF_YY_BUFFER_STATE
 #define YY_TYPEDEF_YY_BUFFER_STATE
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
-#endif
-
-#ifndef YY_TYPEDEF_YY_SIZE_T
-#define YY_TYPEDEF_YY_SIZE_T
-typedef size_t yy_size_t;
 #endif
 
 #define EOB_ACT_CONTINUE_SCAN 0
@@ -209,6 +213,11 @@ typedef size_t yy_size_t;
 
 #define unput(c) yyunput( c, yyg->yytext_ptr , yyscanner )
 
+#ifndef YY_TYPEDEF_YY_SIZE_T
+#define YY_TYPEDEF_YY_SIZE_T
+typedef size_t yy_size_t;
+#endif
+
 #ifndef YY_STRUCT_YY_BUFFER_STATE
 #define YY_STRUCT_YY_BUFFER_STATE
 struct yy_buffer_state
@@ -226,7 +235,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	yy_size_t yy_n_chars;
+	int yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -305,7 +314,7 @@ static void yy_init_buffer (YY_BUFFER_STATE b,FILE *file ,yyscan_t yyscanner );
 
 YY_BUFFER_STATE yy_scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
 YY_BUFFER_STATE yy_scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
-YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,yy_size_t len ,yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
 
 void *yyalloc (yy_size_t ,yyscan_t yyscanner );
 void *yyrealloc (void *,yy_size_t ,yyscan_t yyscanner );
@@ -630,24 +639,33 @@ static yyconst flex_int32_t yy_rule_can_match_eol[75] =
 #include "lex.h"
 #include "yara.h"
 
-#define YYTEXT_TO_BUFFER	{ \
-								char *yptr = yytext; \
-								while ( *yptr ) \
-    							{ \
-  									*yyextra->lex_buf_ptr++ = *yptr++; \
-									yyextra->lex_buf_len++; \
-								} \
-							}
-							
+#define LEX_CHECK_SPACE_OK(data, current_size, max_length) \
+    if (strlen(data) + current_size >= max_length - 1) \
+    { \
+        yyerror(yyscanner, "out of space in lex_buf"); \
+        yyterminate(); \
+    }
+
+#define YYTEXT_TO_BUFFER \
+    { \
+        char *yptr = yytext; \
+        LEX_CHECK_SPACE_OK(yptr, yyextra->lex_buf_len, LEX_BUF_SIZE); \
+        while ( *yptr ) \
+        { \
+            *yyextra->lex_buf_ptr++ = *yptr++; \
+            yyextra->lex_buf_len++; \
+        } \
+    }
+
 #ifdef WIN32
 #define snprintf _snprintf
 #endif
-							
+
 #define YY_NO_UNISTD_H 1
 
 
 
-#line 651 "lex.c"
+#line 669 "lex.c"
 
 #define INITIAL 0
 #define str 1
@@ -679,8 +697,8 @@ struct yyguts_t
     size_t yy_buffer_stack_max; /**< capacity of stack. */
     YY_BUFFER_STATE * yy_buffer_stack; /**< Stack as an array. */
     char yy_hold_char;
-    yy_size_t yy_n_chars;
-    yy_size_t yyleng_r;
+    int yy_n_chars;
+    int yyleng_r;
     char *yy_c_buf_p;
     int yy_init;
     int yy_start;
@@ -733,7 +751,7 @@ FILE *yyget_out (yyscan_t yyscanner );
 
 void yyset_out  (FILE * out_str ,yyscan_t yyscanner );
 
-yy_size_t yyget_leng (yyscan_t yyscanner );
+int yyget_leng (yyscan_t yyscanner );
 
 char *yyget_text (yyscan_t yyscanner );
 
@@ -779,7 +797,12 @@ static int input (yyscan_t yyscanner );
 
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k */
+#define YY_READ_BUF_SIZE 16384
+#else
 #define YY_READ_BUF_SIZE 8192
+#endif /* __ia64__ */
 #endif
 
 /* Copy whatever the last rule matched to the standard output. */
@@ -787,7 +810,7 @@ static int input (yyscan_t yyscanner );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( yytext, yyleng, 1, yyout )
+#define ECHO do { if (fwrite( yytext, yyleng, 1, yyout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -798,7 +821,7 @@ static int input (yyscan_t yyscanner );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		yy_size_t n; \
+		size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -883,10 +906,10 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 47 "lex.l"
+#line 55 "lex.l"
 
 
-#line 890 "lex.c"
+#line 913 "lex.c"
 
     yylval = yylval_param;
 
@@ -985,612 +1008,621 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 49 "lex.l"
-{ return _LT_;	        }
+#line 57 "lex.l"
+{ return _LT_;          }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 50 "lex.l"
-{ return _GT_;	        }
+#line 58 "lex.l"
+{ return _GT_;          }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 51 "lex.l"
-{ return _LE_;	        }
+#line 59 "lex.l"
+{ return _LE_;          }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 52 "lex.l"
-{ return _GE_;	        }
+#line 60 "lex.l"
+{ return _GE_;          }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 53 "lex.l"
-{ return _EQ_;		    }
+#line 61 "lex.l"
+{ return _EQ_;          }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 54 "lex.l"
-{ return _NEQ_;	    	}
+#line 62 "lex.l"
+{ return _NEQ_;         }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 55 "lex.l"
-{ return _PRIVATE_;    	}
+#line 63 "lex.l"
+{ return _PRIVATE_;     }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 56 "lex.l"
-{ return _GLOBAL_;     	}
+#line 64 "lex.l"
+{ return _GLOBAL_;      }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 57 "lex.l"
-{ return _RULE_;       	}
+#line 65 "lex.l"
+{ return _RULE_;        }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 58 "lex.l"
-{ return _META_;    	}
+#line 66 "lex.l"
+{ return _META_;        }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 59 "lex.l"
-{ return _STRINGS_;    	}
+#line 67 "lex.l"
+{ return _STRINGS_;     }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 60 "lex.l"
-{ return _ASCII_;      	}
+#line 68 "lex.l"
+{ return _ASCII_;       }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 61 "lex.l"
-{ return _WIDE_;       	}
+#line 69 "lex.l"
+{ return _WIDE_;        }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 62 "lex.l"
-{ return _FULLWORD_;   	}
+#line 70 "lex.l"
+{ return _FULLWORD_;    }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 63 "lex.l"
-{ return _NOCASE_;     	}
+#line 71 "lex.l"
+{ return _NOCASE_;      }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 64 "lex.l"
-{ return _CONDITION_;  	}
+#line 72 "lex.l"
+{ return _CONDITION_;   }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 65 "lex.l"
-{ return _TRUE_;       	}
+#line 73 "lex.l"
+{ return _TRUE_;        }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 66 "lex.l"
-{ return _FALSE_;      	}
+#line 74 "lex.l"
+{ return _FALSE_;       }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 67 "lex.l"
-{ return _NOT_;        	}
+#line 75 "lex.l"
+{ return _NOT_;         }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 68 "lex.l"
-{ return _AND_;        	}
+#line 76 "lex.l"
+{ return _AND_;         }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 69 "lex.l"
-{ return _OR_;         	}
+#line 77 "lex.l"
+{ return _OR_;          }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 70 "lex.l"
-{ return _AT_;         	}
+#line 78 "lex.l"
+{ return _AT_;          }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 71 "lex.l"
-{ return _IN_;         	}
+#line 79 "lex.l"
+{ return _IN_;          }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 72 "lex.l"
-{ return _OF_;         	}
+#line 80 "lex.l"
+{ return _OF_;          }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 73 "lex.l"
-{ return _THEM_;		}
+#line 81 "lex.l"
+{ return _THEM_;        }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 74 "lex.l"
-{ return _FOR_;        	}
+#line 82 "lex.l"
+{ return _FOR_;         }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 75 "lex.l"
-{ return _ALL_;			}
+#line 83 "lex.l"
+{ return _ALL_;         }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 76 "lex.l"
-{ return _ANY_;			}
+#line 84 "lex.l"
+{ return _ANY_;         }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 77 "lex.l"
-{ return _ENTRYPOINT_; 	}
+#line 85 "lex.l"
+{ return _ENTRYPOINT_;  }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 78 "lex.l"
-{ return _SIZE_;       	}
+#line 86 "lex.l"
+{ return _SIZE_;        }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 79 "lex.l"
-{ return _RVA_;   	    }
+#line 87 "lex.l"
+{ return _RVA_;         }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 80 "lex.l"
-{ return _OFFSET_;     	}
+#line 88 "lex.l"
+{ return _OFFSET_;      }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 81 "lex.l"
-{ return _FILE_;       	}
+#line 89 "lex.l"
+{ return _FILE_;        }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 82 "lex.l"
-{ return _SECTION_;    	}
+#line 90 "lex.l"
+{ return _SECTION_;     }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 83 "lex.l"
-{ return _UINT8_;    	}
+#line 91 "lex.l"
+{ return _UINT8_;       }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 84 "lex.l"
-{ return _UINT16_;    	}
+#line 92 "lex.l"
+{ return _UINT16_;      }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 85 "lex.l"
-{ return _UINT32_;    	}
+#line 93 "lex.l"
+{ return _UINT32_;      }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 86 "lex.l"
-{ return _INT8_;    	}
+#line 94 "lex.l"
+{ return _INT8_;        }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 87 "lex.l"
-{ return _INT16_;    	}
+#line 95 "lex.l"
+{ return _INT16_;       }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 88 "lex.l"
-{ return _INT32_;    	}
+#line 96 "lex.l"
+{ return _INT32_;       }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 89 "lex.l"
+#line 97 "lex.l"
 { return _MATCHES_;     }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 90 "lex.l"
+#line 98 "lex.l"
 { return _CONTAINS_;    }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 91 "lex.l"
-{ return _INDEX_; 		}
+#line 99 "lex.l"
+{ return _INDEX_;       }
 	YY_BREAK
 case 44:
 /* rule 44 can match eol */
 YY_RULE_SETUP
-#line 95 "lex.l"
+#line 102 "lex.l"
 { /* skip comments */ }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 97 "lex.l"
+#line 104 "lex.l"
 { /* skip single-line comments */ }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 99 "lex.l"
+#line 106 "lex.l"
 {
-										yyextra->lex_buf_ptr = yyextra->lex_buf; 
-										yyextra->lex_buf_len = 0;
-										BEGIN(include);
-									}
+                                          yyextra->lex_buf_ptr = yyextra->lex_buf;
+                                          yyextra->lex_buf_len = 0;
+                                          BEGIN(include);
+                                     }
 	YY_BREAK
 case 47:
 /* rule 47 can match eol */
 YY_RULE_SETUP
-#line 105 "lex.l"
+#line 112 "lex.l"
 {
-										YYTEXT_TO_BUFFER;
-									}
+                                          YYTEXT_TO_BUFFER;
+                                     }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 109 "lex.l"
-{ 
-										char			buffer[1024];
-										char			*current_file_name;
-										char			*s = NULL;
-										char			*b = NULL;
-										char			*f;
-										FILE* 			fh;
-										YARA_CONTEXT* 	context = yyget_extra(yyscanner);
-										
-										if (context->allow_includes)
-										{
-											*yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
-										
-											// move path of current source file into buffer
-											
-											current_file_name = yr_get_current_file_name(context);
-											
-											if (current_file_name != NULL)
-											{				
-												strncpy(buffer, yr_get_current_file_name(context), sizeof(buffer));
-											}
-											else
-											{
-												buffer[0] = '\0';
-											}
-										
-											// make included file path relative to current source file
-										
-											s = strrchr(buffer, '/');
-										
-											#ifdef WIN32
-											b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
-											#endif
-									
-											if (s != NULL || b != NULL)
-											{
-												f = (b > s)? (b + 1): (s + 1);
-											
-												strncpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
-											
-												fh = fopen(buffer, "r");
-											
-												// if include file was not found relative to current source file, try to open it
-												// with path as specified by user (maybe user wrote a full path)
-											
-												if (fh == NULL) 
-												{
-													fh = fopen(yyextra->lex_buf, "r");
-												}
-											}
-											else
-											{
-												fh = fopen(yyextra->lex_buf, "r");
-											}
-	
-											if (fh != NULL)
-											{						
-												if (yr_push_file_name(context, yyextra->lex_buf) == ERROR_INCLUDES_CIRCULAR_REFERENCE)
-												{
-													yyerror(yyscanner, "includes circular reference");
-													yyterminate();
-												}
-														
-												yypush_buffer_state(yy_create_buffer(fh,YY_BUF_SIZE,yyscanner),yyscanner);										
-											}
-											else
-											{
-												snprintf(buffer, sizeof(buffer), "can't open include file: %s", yyextra->lex_buf);
-												yyerror(yyscanner, buffer);
-											}
-											
-										} 
-										else // not allowing includes
-										{
-											yyerror(yyscanner, "includes are disabled");
-											yyterminate();
-										}
-												
-										BEGIN(INITIAL);
-									}
+#line 116 "lex.l"
+{
+                                          char            buffer[1024];
+                                          char            *current_file_name;
+                                          char            *s = NULL;
+                                          char            *b = NULL;
+                                          char            *f;
+                                          FILE*           fh;
+                                          YARA_CONTEXT*   context = yyget_extra(yyscanner);
+  
+                                          if (context->allow_includes)
+                                          {
+                                              *yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
+  
+                                              // move path of current source file into buffer
+                                              current_file_name = yr_get_current_file_name(context);
+  
+                                              if (current_file_name != NULL)
+                                              {
+                                                  strncpy(buffer, yr_get_current_file_name(context), sizeof(buffer)-1);
+                                                  buffer[sizeof(buffer)-1] = '\0';
+                                              }
+                                              else
+                                              {
+                                                  buffer[0] = '\0';
+                                              }
+  
+                                              // make included file path relative to current source file
+                                              s = strrchr(buffer, '/');
+  
+                                              #ifdef WIN32
+                                              b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
+                                              #endif
+  
+                                              if (s != NULL || b != NULL)
+                                              {
+                                                  f = (b > s)? (b + 1): (s + 1);
+  
+                                                  strncpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
+                                                  buffer[sizeof(buffer)-1] = '\0';
+  
+                                                  // SECURITY: Potential for directory traversal here.
+                                                  fh = fopen(buffer, "r");
+  
+                                                  // if include file was not found relative to current source file, try to open it
+                                                  // with path as specified by user (maybe user wrote a full path)
+                                                  if (fh == NULL)
+                                                  {
+                                                      // SECURITY: Potential for directory traversal here.
+                                                      fh = fopen(yyextra->lex_buf, "r");
+                                                  }
+                                             }
+                                             else
+                                             {
+                                                 // SECURITY: Potential for directory traversal here.
+                                                 fh = fopen(yyextra->lex_buf, "r");
+                                             }
+  
+                                             if (fh != NULL)
+                                             {
+                                                 int error_code = ERROR_SUCCESS;
+                                                 if ((error_code = yr_push_file_name(context, yyextra->lex_buf)) != ERROR_SUCCESS)
+                                                 {
+                                                     if (error_code == ERROR_INCLUDES_CIRCULAR_REFERENCE)
+                                                     {
+                                                         yyerror(yyscanner, "includes circular reference");
+                                                     } 
+                                                     else if (error_code == ERROR_INCLUDE_DEPTH_EXCEEDED)
+                                                     {
+                                                         yyerror(yyscanner, "includes circular reference");
+                                                     }
+                                                     yyterminate();
+                                                 }
+                                                 yypush_buffer_state(yy_create_buffer(fh,YY_BUF_SIZE,yyscanner),yyscanner);
+                                             }
+                                             else
+                                             {
+                                                 snprintf(buffer, sizeof(buffer), "can't open include file: %s", yyextra->lex_buf);
+                                                 yyerror(yyscanner, buffer);
+                                             }
+                                         }
+                                         else // not allowing includes
+                                         {
+                                             yyerror(yyscanner, "includes are disabled");
+                                             yyterminate();
+                                         }
+
+                                         BEGIN(INITIAL);
+                                     }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(str):
 case YY_STATE_EOF(regexp):
 case YY_STATE_EOF(include):
-#line 190 "lex.l"
+#line 205 "lex.l"
 {
-										YARA_CONTEXT* context = yyget_extra(yyscanner);
-						
-										yr_pop_file_name(context);
-						
-										yypop_buffer_state(yyscanner);
-													
-				        				if ( !YY_CURRENT_BUFFER )
-				            			{
-				            				yyterminate();
-				            			}
-				        			}
+                                         YARA_CONTEXT* context = yyget_extra(yyscanner);
+
+                                         yr_pop_file_name(context);
+
+                                         yypop_buffer_state(yyscanner);
+
+                                         if (!YY_CURRENT_BUFFER)
+                                         {
+                                             yyterminate();
+                                         }
+                                     }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 204 "lex.l"
+#line 219 "lex.l"
 {
-			                       		yylval->c_string = (char*) yr_strdup(yytext);
-			                       		return _STRING_IDENTIFIER_WITH_WILDCARD_;      
-								 	}
+                                         yylval->c_string = (char*) yr_strdup(yytext);
+                                         return _STRING_IDENTIFIER_WITH_WILDCARD_;
+                                     }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 209 "lex.l"
+#line 224 "lex.l"
 {
-				                       		yylval->c_string = (char*) yr_strdup(yytext);
-				                       		return _STRING_IDENTIFIER_;      
-									}
+                                         yylval->c_string = (char*) yr_strdup(yytext);
+                                         return _STRING_IDENTIFIER_;
+                                     }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 215 "lex.l"
-{	
-				                       		yylval->c_string = (char*) yr_strdup(yytext);
-											yylval->c_string[0] = '$'; 						/* replace # by $*/
-						                    return _STRING_COUNT_;      
-									}
+#line 230 "lex.l"
+{
+                                         yylval->c_string = (char*) yr_strdup(yytext);
+                                         yylval->c_string[0] = '$'; /* replace # by $*/
+                                         return _STRING_COUNT_;
+                                     }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 221 "lex.l"
-{	
-					                      	yylval->c_string = (char*) yr_strdup(yytext);
-											yylval->c_string[0] = '$'; 						/* replace @ by $*/
-						                    return _STRING_OFFSET_;      
-									}					
+#line 236 "lex.l"
+{
+                                         yylval->c_string = (char*) yr_strdup(yytext);
+                                         yylval->c_string[0] = '$'; /* replace @ by $*/
+                                         return _STRING_OFFSET_;
+                                     }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 227 "lex.l"
-{ 
-										if (strlen(yytext) > 128)
-										{
-											yyerror(yyscanner, "indentifier too long");
-										}
-										
-										yylval->c_string = (char*) yr_strdup(yytext);
-                   						return _IDENTIFIER_;
-									}
+#line 242 "lex.l"
+{
+                                         if (strlen(yytext) > 128)
+                                         {
+                                             yyerror(yyscanner, "indentifier too long");
+                                         }
+
+                                         yylval->c_string = (char*) yr_strdup(yytext);
+                                         return _IDENTIFIER_;
+                                     }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 237 "lex.l"
-{ 
-										yylval->integer = (size_t) atol(yytext);
-						
-										if (strstr(yytext, "KB") != NULL)
-										{
-											yylval->integer *= 1024;
-										}
-										else if (strstr(yytext, "MB") != NULL)
-										{
-											yylval->integer *= 1048576;
-										}
-						
-				                       	return _NUMBER_;     
-									}
+#line 252 "lex.l"
+{
+                                         yylval->integer = (size_t) atol(yytext);
+
+                                         if (strstr(yytext, "KB") != NULL)
+                                         {
+                                             yylval->integer *= 1024;
+                                         }
+                                         else if (strstr(yytext, "MB") != NULL)
+                                         {
+                                             yylval->integer *= 1048576;
+                                         }
+                                         return _NUMBER_;
+                                     }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 252 "lex.l"
+#line 266 "lex.l"
 {
-										yylval->integer = xtoi(yytext + 2);
-										return _NUMBER_;
-									}
+                                         yylval->integer = xtoi(yytext + 2);
+                                         return _NUMBER_;
+                                     }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 257 "lex.l"
-{ 	/* saw closing quote - all done */
+#line 271 "lex.l"
+{     /* saw closing quote - all done */
 
-										SIZED_STRING* s;
+                                         SIZED_STRING* s;
 
-										if (yyextra->lex_buf_len == 0)
-										{
-											yyerror(yyscanner, "empty string");
-										}
+                                         if (yyextra->lex_buf_len == 0)
+                                         {
+                                             yyerror(yyscanner, "empty string");
+                                         }
 
-										*yyextra->lex_buf_ptr = '\0';
+                                         *yyextra->lex_buf_ptr = '\0';
 
-										BEGIN(INITIAL);
-						
-										s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
-						
-										s->length = yyextra->lex_buf_len;
-						
-										strcpy(s->c_string, yyextra->lex_buf);
-					
-										yylval->sized_string = s;
-												
-										return _TEXTSTRING_;
-							  		}
+                                         BEGIN(INITIAL);
+
+                                         s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
+
+                                         s->length = yyextra->lex_buf_len;
+
+                                         strcpy(s->c_string, yyextra->lex_buf);
+
+                                         yylval->sized_string = s;
+
+                                         return _TEXTSTRING_;
+                                     }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 281 "lex.l"
-{ *yyextra->lex_buf_ptr++ = '\t'; yyextra->lex_buf_len++; }
+#line 295 "lex.l"
+{ LEX_CHECK_SPACE_OK("\t", yyextra->lex_buf_len, LEX_BUF_SIZE); *yyextra->lex_buf_ptr++ = '\t'; yyextra->lex_buf_len++;}
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 282 "lex.l"
-{ *yyextra->lex_buf_ptr++ = '\"'; yyextra->lex_buf_len++; }
+#line 296 "lex.l"
+{ LEX_CHECK_SPACE_OK("\"", yyextra->lex_buf_len, LEX_BUF_SIZE); *yyextra->lex_buf_ptr++ = '\"'; yyextra->lex_buf_len++;}
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 283 "lex.l"
-{ *yyextra->lex_buf_ptr++ = '\\'; yyextra->lex_buf_len++; }
+#line 297 "lex.l"
+{ LEX_CHECK_SPACE_OK("\\", yyextra->lex_buf_len, LEX_BUF_SIZE); *yyextra->lex_buf_ptr++ = '\\'; yyextra->lex_buf_len++;}
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 285 "lex.l"
+#line 299 "lex.l"
 {
-		        						int result;
+                                         int result;
 
-		        						sscanf( yytext + 2, "%x", &result );
-                					
-		        						*yyextra->lex_buf_ptr++ = result;
-										yyextra->lex_buf_len++;
-		        					}
+                                         sscanf( yytext + 2, "%x", &result );
+                                         LEX_CHECK_SPACE_OK("X", yyextra->lex_buf_len, LEX_BUF_SIZE);
+                                         *yyextra->lex_buf_ptr++ = result;
+                                         yyextra->lex_buf_len++;
+                                     }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 294 "lex.l"
+#line 308 "lex.l"
 {
-										YYTEXT_TO_BUFFER;
-									}
+                                         YYTEXT_TO_BUFFER;
+                                     }
 	YY_BREAK
 case 62:
 /* rule 62 can match eol */
 YY_RULE_SETUP
-#line 298 "lex.l"
+#line 312 "lex.l"
 {
-										yyerror(yyscanner, "unterminated string");
-										yyterminate();
-									}					
+                                         yyerror(yyscanner, "unterminated string");
+                                         yyterminate();
+                                     }
 	YY_BREAK
 case 63:
 /* rule 63 can match eol */
 YY_RULE_SETUP
-#line 303 "lex.l"
+#line 317 "lex.l"
 {
-										yyerror(yyscanner, "illegal escape sequence");
-									}
+                                         yyerror(yyscanner, "illegal escape sequence");
+                                     }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 308 "lex.l"
-{ 	
-										SIZED_STRING* s;
+#line 322 "lex.l"
+{
+                                         SIZED_STRING* s;
 
-										if (yyextra->lex_buf_len == 0)
-										{
-											yyerror(yyscanner, "empty regular expression");
-										}
+                                         if (yyextra->lex_buf_len == 0)
+                                         {
+                                             yyerror(yyscanner, "empty regular expression");
+                                         }
 
-										*yyextra->lex_buf_ptr = '\0';
+                                         *yyextra->lex_buf_ptr = '\0';
 
-										BEGIN(INITIAL);
+                                         BEGIN(INITIAL);
 
-										s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
+                                         s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
 
-										s->length = yyextra->lex_buf_len;
-										strcpy(s->c_string, yyextra->lex_buf);
-					
-										yylval->sized_string = s;
+                                         s->length = yyextra->lex_buf_len;
+                                         strcpy(s->c_string, yyextra->lex_buf);
 
-										return _REGEXP_;
-							  		}
+                                         yylval->sized_string = s;
+
+                                         return _REGEXP_;
+                                     }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 330 "lex.l"
-{ 				
-										*yyextra->lex_buf_ptr++ = '/';
-										yyextra->lex_buf_len++ ;
-									}
+#line 344 "lex.l"
+{
+                                         LEX_CHECK_SPACE_OK("/", yyextra->lex_buf_len, LEX_BUF_SIZE);
+                                         *yyextra->lex_buf_ptr++ = '/';
+                                         yyextra->lex_buf_len++ ;
+                                     }
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 335 "lex.l"
-{ 				
-										*yyextra->lex_buf_ptr++ = yytext[0];
-										*yyextra->lex_buf_ptr++ = yytext[1];
-										yyextra->lex_buf_len += 2;
-									}
+#line 350 "lex.l"
+{
+                                         LEX_CHECK_SPACE_OK("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
+                                         *yyextra->lex_buf_ptr++ = yytext[0];
+                                         *yyextra->lex_buf_ptr++ = yytext[1];
+                                         yyextra->lex_buf_len += 2;
+                                     }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 341 "lex.l"
+#line 357 "lex.l"
 {
-										YYTEXT_TO_BUFFER;
-									}
+                                         YYTEXT_TO_BUFFER;
+                                     }
 	YY_BREAK
 case 68:
 /* rule 68 can match eol */
 YY_RULE_SETUP
-#line 345 "lex.l"
+#line 361 "lex.l"
 {
-										yyerror(yyscanner, "unterminated regular expression");
-										yyterminate();
-									}
+                                         yyerror(yyscanner, "unterminated regular expression");
+                                         yyterminate();
+                                     }
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 350 "lex.l"
+#line 366 "lex.l"
 {
-				 						yyextra->lex_buf_ptr = yyextra->lex_buf; 
-										yyextra->lex_buf_len = 0;
-										BEGIN(str);
-									}
+                                         yyextra->lex_buf_ptr = yyextra->lex_buf;
+                                         yyextra->lex_buf_len = 0;
+                                         BEGIN(str);
+                                     }
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 356 "lex.l"
+#line 372 "lex.l"
 {
-				 						yyextra->lex_buf_ptr = yyextra->lex_buf; 
-										yyextra->lex_buf_len = 0;
-										BEGIN(regexp);
-									}
+                                         yyextra->lex_buf_ptr = yyextra->lex_buf;
+                                         yyextra->lex_buf_len = 0;
+                                         BEGIN(regexp);
+                                     }
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 362 "lex.l"
-{ 
-										int len = strlen(yytext);
-										
-										SIZED_STRING* s = (SIZED_STRING*) yr_malloc(len + sizeof(SIZED_STRING));
+#line 378 "lex.l"
+{
+                                         int len = strlen(yytext);
 
-										s->length = len;
+                                         SIZED_STRING* s = (SIZED_STRING*) yr_malloc(len + sizeof(SIZED_STRING));
 
-										strcpy(s->c_string, yytext);
+                                         s->length = len;
 
-										yylval->sized_string = s;
-									
-										return _HEXSTRING_;
-									}
+                                         strcpy(s->c_string, yytext);
+
+                                         yylval->sized_string = s;
+
+                                         return _HEXSTRING_;
+                                     }
 	YY_BREAK
 case 72:
 /* rule 72 can match eol */
 YY_RULE_SETUP
-#line 376 "lex.l"
+#line 392 "lex.l"
 /* skip whitespace */
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 378 "lex.l"
-{ 
-                       					return yytext[0];    
-									}
+#line 394 "lex.l"
+{
+                                         return yytext[0];
+                                     }
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 381 "lex.l"
+#line 397 "lex.l"
 ECHO;
 	YY_BREAK
-#line 1594 "lex.c"
+#line 1626 "lex.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1775,7 +1807,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 	else
 		{
-			yy_size_t num_to_read =
+			int num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -1789,7 +1821,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 			if ( b->yy_is_our_buffer )
 				{
-				yy_size_t new_size = b->yy_buf_size * 2;
+				int new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -1820,7 +1852,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 		/* Read in more data. */
 		YY_INPUT( (&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move]),
-			yyg->yy_n_chars, num_to_read );
+			yyg->yy_n_chars, (size_t) num_to_read );
 
 		YY_CURRENT_BUFFER_LVALUE->yy_n_chars = yyg->yy_n_chars;
 		}
@@ -1933,7 +1965,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
 		{ /* need to shift things up to make room */
 		/* +2 for EOB chars. */
-		register yy_size_t number_to_move = yyg->yy_n_chars + 2;
+		register int number_to_move = yyg->yy_n_chars + 2;
 		register char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
 					YY_CURRENT_BUFFER_LVALUE->yy_buf_size + 2];
 		register char *source =
@@ -1987,7 +2019,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 		else
 			{ /* need more input */
-			yy_size_t offset = yyg->yy_c_buf_p - yyg->yytext_ptr;
+			int offset = yyg->yy_c_buf_p - yyg->yytext_ptr;
 			++yyg->yy_c_buf_p;
 
 			switch ( yy_get_next_buffer( yyscanner ) )
@@ -2011,7 +2043,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( yywrap(yyscanner ) )
-						return 0;
+						return EOF;
 
 					if ( ! yyg->yy_did_buffer_switch_on_eof )
 						YY_NEW_FILE;
@@ -2278,7 +2310,7 @@ void yypop_buffer_state (yyscan_t yyscanner)
  */
 static void yyensure_buffer_stack (yyscan_t yyscanner)
 {
-	yy_size_t num_to_alloc;
+	int num_to_alloc;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 	if (!yyg->yy_buffer_stack) {
@@ -2371,16 +2403,17 @@ YY_BUFFER_STATE yy_scan_string (yyconst char * yystr , yyscan_t yyscanner)
 
 /** Setup the input buffer state to scan the given bytes. The next call to yylex() will
  * scan from a @e copy of @a bytes.
- * @param bytes the byte buffer to scan
- * @param len the number of bytes in the buffer pointed to by @a bytes.
+ * @param yybytes the byte buffer to scan
+ * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len , yyscan_t yyscanner)
+YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, int  _yybytes_len , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t n, i;
+	yy_size_t n;
+	int i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
@@ -2490,7 +2523,7 @@ FILE *yyget_out  (yyscan_t yyscanner)
 /** Get the length of the current token.
  * @param yyscanner The scanner object.
  */
-yy_size_t yyget_leng  (yyscan_t yyscanner)
+int yyget_leng  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yyleng;
@@ -2765,107 +2798,106 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 381 "lex.l"
-
-
+#line 397 "lex.l"
 
 
 
 
 void yyerror(yyscan_t yyscanner, const char *error_message)
-{    
-	YARA_CONTEXT* context = yyget_extra(yyscanner);
-	
-	char message[512];
-	char* file_name;
-	
-	/* 
-		if error_message != NULL the error comes from yyparse internal code
-		else the error comes from my code and the error code is set in context->last_result 
-	*/
-			
-	context->errors++;
-	context->last_error_line = yyget_lineno(yyscanner);
-	
-	if (context->file_name_stack_ptr > 0)
-	{
-		file_name = context->file_name_stack[context->file_name_stack_ptr - 1];
-	} 
-	else
-	{
-		file_name = NULL;
-	}
-	
-	if (error_message != NULL)
-	{
-		context->last_error = ERROR_SYNTAX_ERROR;
-		strncpy(context->last_error_extra_info, error_message, sizeof(message));
-	
-    	if (context->error_report_function != NULL)
-    	{	
-        	context->error_report_function(	file_name, 
-											context->last_error_line, 
-											error_message);
-    	}
-	}
-	else
-	{
-		context->last_error = context->last_result;
-			
-		if (context->error_report_function != NULL)
-    	{	
-			yr_get_error_message(context, message, sizeof(message));
-					
-        	context->error_report_function(	file_name, 
-											context->last_error_line, 
-											message);
-    	}
-	}
-	
-	context->last_result = ERROR_SUCCESS;
+{
+    YARA_CONTEXT* context = yyget_extra(yyscanner);
+
+    char  message[512] = {'\0'};
+    char* file_name = NULL;
+
+    /*
+        if error_message != NULL the error comes from yyparse internal code
+        else the error comes from my code and the error code is set in context->last_result
+    */
+
+    context->errors++;
+    context->last_error_line = yyget_lineno(yyscanner);
+
+    if (context->file_name_stack_ptr > 0)
+    {
+        file_name = context->file_name_stack[context->file_name_stack_ptr - 1];
+    }
+    else
+    {
+        file_name = NULL;
+    }
+
+    if (error_message != NULL)
+    {
+        context->last_error = ERROR_SYNTAX_ERROR;
+        strncpy(context->last_error_extra_info, error_message, sizeof(message) - 1);
+        context->last_error_extra_info[sizeof(message)-1] = '\0';
+
+        if (context->error_report_function != NULL)
+        {
+            context->error_report_function(file_name,
+                                           context->last_error_line,
+                                           error_message);
+        }
+    }
+    else
+    {
+        context->last_error = context->last_result;
+
+        if (context->error_report_function != NULL)
+        {
+            yr_get_error_message(context, message, sizeof(message));
+
+            context->error_report_function(file_name,
+                                           context->last_error_line,
+                                           message);
+        }
+    }
+
+    context->last_result = ERROR_SUCCESS;
 }
 
 
 
 int parse_rules_string(const char* rules_string, YARA_CONTEXT* context)
 {
-	yyscan_t yyscanner;
-	YY_BUFFER_STATE state;
-			
+    yyscan_t yyscanner;
+    YY_BUFFER_STATE state;
+
     yylex_init(&yyscanner);
 
-	yyset_extra(context,yyscanner);
+    yyset_extra(context,yyscanner);
 
-	state = yy_scan_string(rules_string,yyscanner);
-	
-	yyset_lineno(1,yyscanner);
+    state = yy_scan_string(rules_string,yyscanner);
+
+    yyset_lineno(1,yyscanner);
     yyparse(yyscanner);
 
-	yylex_destroy(yyscanner);
-	
-	return context->errors;
+    yylex_destroy(yyscanner);
+
+    return context->errors;
 }
 
 
 
 int parse_rules_file(FILE* rules_file, YARA_CONTEXT* context)
-{	
-	yyscan_t yyscanner;	
-	
+{
+    yyscan_t yyscanner;
+
     yylex_init(&yyscanner);
 
-	#ifdef DEBUG
-	yyset_debug(1,yyscanner);
-	#endif
-	
-	yyset_in(rules_file,yyscanner);
-	yyset_extra(context,yyscanner);	
-	
+#ifdef DEBUG
+    yyset_debug(1,yyscanner);
+#endif
+
+    yyset_in(rules_file,yyscanner);
+    yyset_extra(context,yyscanner);
+
     yyparse(yyscanner);
 
     yylex_destroy(yyscanner);
 
-	return context->errors;
+    return context->errors;
 }
 
 
