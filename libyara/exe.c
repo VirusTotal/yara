@@ -14,8 +14,11 @@ GNU General Public License for more details.
 
 */
 
+#include <limits.h>
+
 #ifdef WIN32
 #include <windows.h>
+#define ULLONG_MAX _UI64_MAX
 #else
 #include "pe.h"
 #endif
@@ -131,6 +134,10 @@ unsigned long long elf_rva_to_offset_32(Elf32_Ehdr* elf_header, unsigned long lo
     
     if (elf_header->e_shoff == 0 || elf_header->e_shnum == 0) 
         return 0;
+
+    // check to prevent integer wraps
+    if(ULLONG_MAX - elf_header->e_shoff < sizeof(Elf64_Shdr) * elf_header->e_shnum)
+        return 0;
         
     if (elf_header->e_shoff + sizeof(Elf32_Shdr) * elf_header->e_shnum > buffer_length)
         return 0;
@@ -144,7 +151,11 @@ unsigned long long elf_rva_to_offset_32(Elf32_Ehdr* elf_header, unsigned long lo
        	    rva >= section->sh_addr &&
     	    rva <  section->sh_addr + section->sh_size)
     	{
-    		return section->sh_offset + (rva - section->sh_addr);
+                // prevent integer wrapping with the return value
+                if (ULLONG_MAX - section->sh_offset < (rva - section->sh_addr))
+                    return 0;
+                else
+    		    return section->sh_offset + (rva - section->sh_addr);
     	}
     	
         section++; 
