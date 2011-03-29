@@ -315,7 +315,7 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		if (needed == 0)  /* needed == 0 means ALL*/
             needed = i;
         
-        return (satisfied == needed);
+        return (satisfied >= needed);
 		
 	case TERM_TYPE_STRING_FOR:
 
@@ -344,7 +344,7 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		if (needed == 0)  /* needed == 0 means ALL*/
             needed = i;
         
-        return (satisfied == needed);
+        return (satisfied >= needed);
 	
 	case TERM_TYPE_INTEGER_FOR:
 		
@@ -373,7 +373,7 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
         if (needed == 0)  /* needed == 0 means ALL*/
             needed = i;
         
-        return (satisfied == needed);
+        return (satisfied >= needed);
     
     case TERM_TYPE_UINT8_AT_OFFSET:
 
