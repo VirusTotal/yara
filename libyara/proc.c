@@ -122,16 +122,17 @@ int get_process_memory(int pid, MEMORY_BLOCK** first_block)
 #include "mem.h"
 #include "proc.h"
 
-#ifdef __MACH__
+#if defined(__FreeBSD__) || defined(__MACH__)
+#define PTRACE_ATTACH PT_ATTACH
+#define PTRACE_DETACH PT_DETACH
+#endif
+
+#if defined(__MACH__)
 
 #include <mach/mach.h>
 #include <mach/mach_vm.h>
 #include <mach/vm_region.h>
 #include <mach/vm_statistics.h>
-
-#define PTRACE_ATTACH PT_ATTACH
-#define PTRACE_DETACH PT_DETACH
-
 
 int get_process_memory(pid_t pid, MEMORY_BLOCK** first_block)
 {
