@@ -2827,8 +2827,8 @@ void yyerror(yyscan_t yyscanner, const char *error_message)
     if (error_message != NULL)
     {
         context->last_error = ERROR_SYNTAX_ERROR;
-        strncpy(context->last_error_extra_info, error_message, sizeof(message) - 1);
-        context->last_error_extra_info[sizeof(message)-1] = '\0';
+        strncpy(context->last_error_extra_info, error_message, sizeof(context->last_error_extra_info) - 1);
+        context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = '\0';
 
         if (context->error_report_function != NULL)
         {
