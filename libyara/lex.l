@@ -60,6 +60,8 @@ hexdigit      [a-fA-F0-9]
 ">="                                 { return _GE_;          }
 "=="                                 { return _EQ_;          }
 "!="                                 { return _NEQ_;         }
+"<<"                                 { return _SHIFT_LEFT_;  }
+">>"                                 { return _SHIFT_RIGHT_; }
 "private"                            { return _PRIVATE_;     }
 "global"                             { return _GLOBAL_;      }
 "rule"                               { return _RULE_;        }

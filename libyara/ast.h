@@ -42,31 +42,31 @@ GNU General Public License for more details.
 #define MASK_END                                0xEE
 #define MASK_MAX_SKIP                           255
 
-#define TERM_TYPE_CONST                              0   
-#define TERM_TYPE_AND                                2           
-#define TERM_TYPE_OR                                 3           
-#define TERM_TYPE_NOT                                4           
-#define TERM_TYPE_ADD                                5           
-#define TERM_TYPE_SUB                                6           
-#define TERM_TYPE_MUL                                7           
-#define TERM_TYPE_DIV                                8           
-#define TERM_TYPE_GT                                 9           
-#define TERM_TYPE_LT                                 10           
-#define TERM_TYPE_GE                                 11          
-#define TERM_TYPE_LE                                 12          
-#define TERM_TYPE_EQ                                 13  
-#define TERM_TYPE_NOT_EQ                             14              
-#define TERM_TYPE_STRING                             15       
-#define TERM_TYPE_STRING_AT                          16          
-#define TERM_TYPE_STRING_IN_RANGE                    17 
-#define TERM_TYPE_STRING_IN_SECTION_BY_NAME		 	 18     
-#define TERM_TYPE_STRING_IN_SECTION_BY_INDEX		 19      
-#define TERM_TYPE_STRING_COUNT                       20     
-#define TERM_TYPE_STRING_OFFSET                      21      
-#define TERM_TYPE_OF                                 22 
-#define TERM_TYPE_STRING_FOR                                23         
-#define TERM_TYPE_FILESIZE              	         24          
-#define TERM_TYPE_ENTRYPOINT						 25			
+#define TERM_TYPE_CONST                              0 
+#define TERM_TYPE_AND                                2 
+#define TERM_TYPE_OR                                 3 
+#define TERM_TYPE_NOT                                4 
+#define TERM_TYPE_ADD                                5 
+#define TERM_TYPE_SUB                                6 
+#define TERM_TYPE_MUL                                7 
+#define TERM_TYPE_DIV                                8 
+#define TERM_TYPE_GT                                 9 
+#define TERM_TYPE_LT                                 10
+#define TERM_TYPE_GE                                 11
+#define TERM_TYPE_LE                                 12
+#define TERM_TYPE_EQ                                 13
+#define TERM_TYPE_NOT_EQ                             14
+#define TERM_TYPE_STRING                             15
+#define TERM_TYPE_STRING_AT                          16
+#define TERM_TYPE_STRING_IN_RANGE                    17
+#define TERM_TYPE_STRING_IN_SECTION_BY_NAME          18
+#define TERM_TYPE_STRING_IN_SECTION_BY_INDEX         19
+#define TERM_TYPE_STRING_COUNT                       20
+#define TERM_TYPE_STRING_OFFSET                      21
+#define TERM_TYPE_OF                                 22
+#define TERM_TYPE_STRING_FOR                         23
+#define TERM_TYPE_FILESIZE                           24
+#define TERM_TYPE_ENTRYPOINT                         25
 #define TERM_TYPE_RULE                               26
 #define TERM_TYPE_INT8_AT_OFFSET                     27
 #define TERM_TYPE_INT16_AT_OFFSET                    28
@@ -80,52 +80,57 @@ GNU General Public License for more details.
 #define TERM_TYPE_INTEGER_FOR                        36
 #define TERM_TYPE_VECTOR                             37
 #define TERM_TYPE_RANGE                              38
-                  
-                  
-#define MAX_VECTOR_SIZE                              64    
+#define TERM_TYPE_BITWISE_AND                        39
+#define TERM_TYPE_BITWISE_OR                         40
+#define TERM_TYPE_BITWISE_NOT                        41
+#define TERM_TYPE_SHIFT_LEFT                         42
+#define TERM_TYPE_SHIFT_RIGHT                        43
+
+
+#define MAX_VECTOR_SIZE                              64
 
 
 
 typedef struct _TERM_CONST
 {
-	int				type;
-	size_t         	value;
+    int             type;
+    size_t          value;
 
 } TERM_CONST;
 
 
 typedef struct _TERM_STRING_CONST
 {
-	int				type;
-	char*         	value;
+    int             type;
+    char*           value;
 
 } TERM_STRING_CONST;
 
 
 typedef struct _TERM_UNARY_OPERATION
 {
-	int				type;
-    TERM*			op;
-	
+    int             type;
+    TERM*           op;
+    
 } TERM_UNARY_OPERATION;
 
 
 typedef struct _TERM_BINARY_OPERATION
 {
-	int				type;
-	TERM*			op1;
-	TERM*			op2;
-	
+    int             type;
+    TERM*           op1;
+    TERM*           op2;
+    
 } TERM_BINARY_OPERATION;
 
 
 typedef struct _TERM_TERNARY_OPERATION
 {
-	int				type;
-	TERM*			op1;
-	TERM*			op2;
+    int             type;
+    TERM*           op1;
+    TERM*           op2;
     TERM*           op3;
-	
+    
 } TERM_TERNARY_OPERATION;
 
 
@@ -136,22 +141,22 @@ typedef TERM* (*ITERATOR)(struct _TERM_ITERABLE* self, EVALUATION_FUNCTION evalu
 
 typedef struct _TERM_ITERABLE
 {
-	int				type;
-	ITERATOR        first;
+    int             type;
+    ITERATOR        first;
     ITERATOR        next;
-	
+    
 } TERM_ITERABLE;
 
 
 typedef struct _TERM_RANGE
 {
-	int				type;
+    int             type;
     ITERATOR        first;
     ITERATOR        next;
-    TERM*			min;
-	TERM*			max;
+    TERM*           min;
+    TERM*           max;
     TERM_CONST*     current;
-	
+    
 } TERM_RANGE;
 
 
@@ -169,7 +174,7 @@ typedef struct _TERM_VECTOR
 
 typedef struct _TERM_INTEGER_FOR
 {
-	int			    type;
+    int             type;
     TERM*           count;    
     TERM_ITERABLE*  items;
     TERM*           expression;
@@ -180,18 +185,18 @@ typedef struct _TERM_INTEGER_FOR
 
 typedef struct _TERM_STRING
 {
-	int			        	type;
-    struct _TERM_STRING*	next;           /* used to link a set of terms for the OF operator e.g: 2 OF ($A,$B,$C) */
-	STRING*		        	string;
-	
-	union {
-		TERM*			offset;
+    int                     type;
+    struct _TERM_STRING*    next;           /* used to link a set of terms for the OF operator e.g: 2 OF ($A,$B,$C) */
+    STRING*                 string;
+    
+    union {
+        TERM*           offset;
         TERM*           index;
-		TERM*   		range;
-		char* 			section_name;
-		unsigned int	section_index;
-	};
-	
+        TERM*           range;
+        char*           section_name;
+        unsigned int    section_index;
+    };
+    
 } TERM_STRING;
 
 
@@ -209,9 +214,9 @@ typedef struct _TERM_STRING_OPERATION
     VARIABLE*  variable;
    
     union {
-    	REGEXP              re;
-		char*				string;
-	};
+        REGEXP              re;
+        char*               string;
+    };
 
 } TERM_STRING_OPERATION;
 

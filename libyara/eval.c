@@ -61,7 +61,7 @@ typedef int int32;
         return UNDEFINED; \
     else \
         return op1 operator op2;\
-
+        
 
 function_read(uint, 8)
 function_read(uint, 16)
@@ -275,7 +275,27 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		                      
 	case TERM_TYPE_DIV:            
 		ARITHMETIC_OPERATOR(/, term_binary, context);
-		                      
+		
+	case TERM_TYPE_BITWISE_AND:
+	    ARITHMETIC_OPERATOR(&, term_binary, context);
+	    
+	case TERM_TYPE_BITWISE_OR:
+    	ARITHMETIC_OPERATOR(|, term_binary, context);
+    	
+	case TERM_TYPE_SHIFT_LEFT:
+    	ARITHMETIC_OPERATOR(<<, term_binary, context);    	
+	
+	case TERM_TYPE_SHIFT_RIGHT:
+    	ARITHMETIC_OPERATOR(>>, term_binary, context);
+    
+    case TERM_TYPE_BITWISE_NOT:
+    
+        op1 = evaluate(term_unary->op, context);
+        if (IS_UNDEFINED(op1))
+            return UNDEFINED;
+        else
+            return ~op1;
+               
 	case TERM_TYPE_GT:
         COMPARISON_OPERATOR(>, term_binary, context);
 		                      

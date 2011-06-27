@@ -72,12 +72,17 @@
 %token _TRUE_
 %token _FALSE_
 
+
+
 %left _OR_
 %left _AND_
-%left _NOT_
+%left '&' '|'
 %left _LT_ _LE_ _GT_ _GE_ _EQ_ _NEQ_ _IS_
+%left _SHIFT_LEFT_ _SHIFT_RIGHT_
 %left '+' '-' 
 %left '*' '\\'
+%right _NOT_
+%right '~'
 
 %type <string> strings
 %type <string> string_declaration
@@ -631,11 +636,16 @@ expression : _SIZE_                             { $$ = reduce_filesize(yyscanner
                     YYERROR;
                  }
              }
-           | '(' expression ')'                 { $$ = $2; }
-           | expression '+' expression          { $$ = reduce_term(yyscanner, TERM_TYPE_ADD, $1, $3, NULL); }
-           | expression '-' expression          { $$ = reduce_term(yyscanner, TERM_TYPE_SUB, $1, $3, NULL); }
-           | expression '*' expression          { $$ = reduce_term(yyscanner, TERM_TYPE_MUL, $1, $3, NULL); }
-           | expression '\\' expression         { $$ = reduce_term(yyscanner, TERM_TYPE_DIV, $1, $3, NULL); }
+           | '(' expression ')'                     { $$ = $2; }
+           | expression '+' expression              { $$ = reduce_term(yyscanner, TERM_TYPE_ADD, $1, $3, NULL); }
+           | expression '-' expression              { $$ = reduce_term(yyscanner, TERM_TYPE_SUB, $1, $3, NULL); }
+           | expression '*' expression              { $$ = reduce_term(yyscanner, TERM_TYPE_MUL, $1, $3, NULL); }
+           | expression '\\' expression             { $$ = reduce_term(yyscanner, TERM_TYPE_DIV, $1, $3, NULL); }
+           | expression '&' expression              { $$ = reduce_term(yyscanner, TERM_TYPE_BITWISE_AND, $1, $3, NULL); }
+           | expression '|' expression              { $$ = reduce_term(yyscanner, TERM_TYPE_BITWISE_OR, $1, $3, NULL); }
+           | '~' expression                         { $$ = reduce_term(yyscanner, TERM_TYPE_BITWISE_NOT, $2, NULL, NULL); }
+           | expression _SHIFT_LEFT_ expression     { $$ = reduce_term(yyscanner, TERM_TYPE_SHIFT_LEFT, $1, $3, NULL); }
+           | expression _SHIFT_RIGHT_ expression    { $$ = reduce_term(yyscanner, TERM_TYPE_SHIFT_RIGHT, $1, $3, NULL); }
            | number
            ;
         
