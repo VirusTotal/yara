@@ -550,13 +550,12 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
     int result;
     
     PyObject *externals = NULL;
-    
+	Rules* object = (Rules*) self;
+
     CALLBACK_DATA callback_data;
     
     callback_data.matches = NULL;
     callback_data.callback = NULL;
-    
-    Rules* object = (Rules*) self;
     
     if (PyArg_ParseTupleAndKeywords(args, keywords, "|sis#OO", kwlist, &filepath, &pid, &data, &length, &externals, &callback_data.callback))
     {

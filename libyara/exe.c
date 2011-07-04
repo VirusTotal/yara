@@ -18,7 +18,6 @@ GNU General Public License for more details.
 
 #ifdef WIN32
 #include <windows.h>
-#define ULLONG_MAX _UI64_MAX
 #else
 #include "pe.h"
 #endif

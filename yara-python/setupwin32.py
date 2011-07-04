@@ -1,18 +1,15 @@
 from distutils.core import setup, Extension
 
-print vars()
                            
 setup(  name = "yara-python",
         version = "1.5",
         author = "Victor M. Alvarez",
-        author_email = "victor.alvarez@virustoal.com",
-        url = 'http://yara-project.googlecode.com',
-        platforms = ['any'],
+        author_email = "victor.alvarez@virustotal.com",
         ext_modules = [ Extension(
                                     name='yara', 
                                     sources=['yara-python.c'],
-                                    libraries=['yara','pcre'],
-                                    include_dirs=['/usr/local/include']
+                                    include_dirs=['../windows/include', '../libyara'],
+                                    extra_objects=['../windows/yara/Release/libyara32.lib','../windows/lib/pcre32.lib']
                                     )])
      
  
