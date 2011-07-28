@@ -366,7 +366,7 @@ int new_hex_string( YARA_CONTEXT* context,
             result = ERROR_MISMATCHED_BRACKET;
             break;          
         }
-        else if (c == ' ')
+        else if (c == ' ' || c == '\n' || c == '\t')
 		{
 			i++;
 		}
