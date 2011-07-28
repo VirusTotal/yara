@@ -377,7 +377,7 @@ $({letter}|{digit}|_)*               {
                                          BEGIN(regexp);
                                      }
 
-\{({hexdigit}|[ \-|\?\[\]\(\)])+\}   {
+\{({hexdigit}|[ \-|\?\[\]\(\)\n\t])+\} {
                                          int len = strlen(yytext);
 
                                          SIZED_STRING* s = (SIZED_STRING*) yr_malloc(len + sizeof(SIZED_STRING));
