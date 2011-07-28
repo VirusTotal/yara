@@ -27,7 +27,8 @@ typedef struct _SIZED_STRING
 {
     int length;
     char c_string[1];  
-    
+
 } SIZED_STRING;
 
 #endif
+

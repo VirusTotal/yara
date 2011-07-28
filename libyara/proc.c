@@ -39,7 +39,7 @@ int get_process_memory(int pid, MEMORY_BLOCK** first_block)
     TOKEN_PRIVILEGES tokenPriv;
     LUID luidDebug; 
     HANDLE hProcess;
-	HANDLE hToken;
+    HANDLE hToken;
     
     if( OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken) && 
         LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luidDebug)) 
@@ -48,7 +48,7 @@ int get_process_memory(int pid, MEMORY_BLOCK** first_block)
             tokenPriv.Privileges[0].Luid = luidDebug; 
             tokenPriv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED; 
 
-    	    AdjustTokenPrivileges(hToken, FALSE, &tokenPriv, sizeof(tokenPriv), NULL, NULL); 
+            AdjustTokenPrivileges(hToken, FALSE, &tokenPriv, sizeof(tokenPriv), NULL, NULL); 
     }  
  
     hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
@@ -246,7 +246,7 @@ int get_process_memory(pid_t pid, MEMORY_BLOCK** first_block)
     {
         return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
     }
-       
+    
     wait(NULL);
 
     while (fgets(buffer, sizeof(buffer), maps) != NULL)
@@ -269,15 +269,15 @@ int get_process_memory(pid_t pid, MEMORY_BLOCK** first_block)
                 yr_free(data);
                 return ERROR_INSUFICIENT_MEMORY;
             }
-
+            
             if (*first_block == NULL)
                 *first_block = new_block;
-        
+            
             new_block->base = begin;
             new_block->size = length;
             new_block->data = data;
             new_block->next = NULL;
-
+            
             if (current_block != NULL)
                 current_block->next = new_block;
             
@@ -295,3 +295,4 @@ int get_process_memory(pid_t pid, MEMORY_BLOCK** first_block)
 
 #endif
 #endif
+
