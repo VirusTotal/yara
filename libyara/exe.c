@@ -24,6 +24,7 @@ GNU General Public License for more details.
 
 #include "elf.h"
 
+
 #ifndef NULL
 #define NULL 0
 #endif
@@ -135,7 +136,7 @@ unsigned long long elf_rva_to_offset_32(Elf32_Ehdr* elf_header, unsigned long lo
         return 0;
 
     // check to prevent integer wraps
-    if(ULLONG_MAX - elf_header->e_shoff < sizeof(Elf64_Shdr) * elf_header->e_shnum)
+    if(ULONG_MAX - elf_header->e_shoff < sizeof(Elf32_Shdr) * elf_header->e_shnum)
         return 0;
         
     if (elf_header->e_shoff + sizeof(Elf32_Shdr) * elf_header->e_shnum > buffer_length)
@@ -151,10 +152,10 @@ unsigned long long elf_rva_to_offset_32(Elf32_Ehdr* elf_header, unsigned long lo
     	    rva <  section->sh_addr + section->sh_size)
     	{
                 // prevent integer wrapping with the return value
-                if (ULLONG_MAX - section->sh_offset < (rva - section->sh_addr))
+                if (ULONG_MAX - section->sh_offset < (rva - section->sh_addr))
                     return 0;
                 else
-    		    return section->sh_offset + (rva - section->sh_addr);
+    		        return section->sh_offset + (rva - section->sh_addr);
     	}
     	
         section++; 
