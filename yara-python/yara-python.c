@@ -19,6 +19,14 @@ GNU General Public License for more details.
 #include <Python.h>
 #include "structmember.h"
 
+#if PY_VERSION_HEX >= 0x02060000
+#include "bytesobject.h"
+#elif PY_VERSION_HEX < 0x02060000
+#define PyBytes_AsString PyString_AsString
+#define PyBytes_FromString PyString_FromString
+#define PyBytes_Check PyString_Check
+#endif
+
 #include <yara.h>
 
 #if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
@@ -27,17 +35,21 @@ typedef int Py_ssize_t;
 #define PY_SSIZE_T_MIN INT_MIN
 #endif
 
+#ifndef PyVarObject_HEAD_INIT
+#define PyVarObject_HEAD_INIT(type, size) PyObject_HEAD_INIT(type) size,
+#endif
+
 /* Module globals */
 
 static PyObject *YaraError = NULL;
 static PyObject *YaraSyntaxError = NULL;
 
 
-static char* module_doc = "\
+#define YARA_DOC "\
 This module allows you to apply YARA rules to files or strings.\n\
 \n\
 For complete documentation please visit:\n\
-http://code.google.com/p/yara-project/\n";
+http://code.google.com/p/yara-project/\n"
 
 
 
@@ -77,9 +89,11 @@ static PyMethodDef Match_methods[] =
     {NULL},
 };
 
+
+
+
 static PyTypeObject Match_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                          /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL, 0)
     "yara.Match",               /*tp_name*/
     sizeof(Match),              /*tp_basicsize*/
     0,                          /*tp_itemsize*/
@@ -128,8 +142,8 @@ static PyObject * Match_NEW(const char* rule, const char* ns, PyObject* tags, Py
     
     if (object != NULL)
     {
-		object->rule = PyString_FromString(rule);
-		object->ns = PyString_FromString(ns);
+		object->rule = PyBytes_FromString(rule);
+		object->ns = PyBytes_FromString(ns);
         object->tags = tags;
         object->meta = meta;
         object->strings = strings;
@@ -172,11 +186,11 @@ static int Match_compare(PyObject *self, PyObject *other)
 	
 	if(PyObject_TypeCheck(other, &Match_Type))
 	{
-		result = PyObject_Compare(a->rule, b->rule);
+		result = PyObject_RichCompareBool(a->rule, b->rule, Py_EQ);
 		
 		if (result == 0)
 		{
-			result = PyObject_Compare(a->ns, b->ns);
+			result = PyObject_RichCompareBool(a->ns, b->ns, Py_EQ);
 		}
 	}
 	else
@@ -220,8 +234,7 @@ static PyMethodDef Rules_methods[] =
 };
 
 static PyTypeObject Rules_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                          /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL, 0)
     "yara.Rules",               /*tp_name*/
     sizeof(Rules),              /*tp_basicsize*/
     0,                          /*tp_itemsize*/
@@ -273,19 +286,19 @@ int process_externals(PyObject* externals, YARA_CONTEXT* context)
 
     while (PyDict_Next(externals, &pos, &key, &value)) 
     {
-        identifier = PyString_AsString(key);
+        identifier = PyBytes_AsString(key);
         
-        if (PyInt_Check(value))
+        if (PyLong_Check(value))
         {
-            yr_define_integer_variable(context, identifier, PyInt_AsLong(value));
+            yr_define_integer_variable(context, identifier, PyLong_AsLong(value));
         } 
         else if (PyBool_Check(value))
         {
             yr_define_boolean_variable(context, identifier, PyObject_IsTrue(value));
         }
-        else if (PyString_Check(value))
+        else if (PyBytes_Check(value))
         {
-            yr_define_string_variable(context, identifier, PyString_AsString(value));
+            yr_define_string_variable(context, identifier, PyBytes_AsString(value));
         }
         else
         {
@@ -428,7 +441,7 @@ int yara_callback(RULE* rule, void* data)
     
     while(tag != NULL)
     {
-        object = PyString_FromString(tag->identifier);
+        object = PyBytes_FromString(tag->identifier);
         PyList_Append(tag_list, object);
         Py_DECREF(object);    
                    
@@ -449,7 +462,7 @@ int yara_callback(RULE* rule, void* data)
         }
         else
         {
-            object = PyString_FromString(meta->string);
+            object = PyBytes_FromString(meta->string);
         }
         
         PyDict_SetItemString( meta_list, meta->identifier, object);  
@@ -510,11 +523,11 @@ int yara_callback(RULE* rule, void* data)
         PyDict_SetItemString(callback_dict, "matches", object);
         Py_DECREF(object);
 	    
-        object = PyString_FromString(rule->identifier);        
+        object = PyBytes_FromString(rule->identifier);        
         PyDict_SetItemString(callback_dict, "rule", object);
         Py_DECREF(object);
         
-        object = PyString_FromString(rule->ns->name);
+        object = PyBytes_FromString(rule->ns->name);
         PyDict_SetItemString(callback_dict, "namespace", object);
         Py_DECREF(object);
         
@@ -524,9 +537,9 @@ int yara_callback(RULE* rule, void* data)
 
 		callback_result = PyObject_CallFunction(callback, "O", callback_dict);
 		
-		if (PyInt_Check(callback_result))
+		if (PyLong_Check(callback_result))
 		{
-		    result = PyInt_AsLong(callback_result);
+		    result = PyLong_AsLong(callback_result);
 		}
     
         Py_DECREF(callback_dict);
@@ -656,7 +669,7 @@ static PyObject * Rules_weight(PyObject *self)
 {
     Rules* object = (Rules*) self;
     
-    return PyInt_FromLong(yr_calculate_rules_weight(object->context));
+    return PyLong_FromLong(yr_calculate_rules_weight(object->context));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -667,6 +680,7 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
     
     YARA_CONTEXT* context;
     FILE* fh;
+    int fd;
     
     PyObject *result = NULL;
 	PyObject *file = NULL;
@@ -741,8 +755,10 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
         }
         else if (file != NULL)
         {
-            fh = PyFile_AsFile(file);   
+            fd = dup(PyObject_AsFileDescriptor(file));
+            fh = fdopen(fd, "r");
             result = Rules_new_from_file(fh, NULL, NULL, context);
+            fclose(fh);
         }
         else if (sources_dict != NULL)
         {
@@ -750,8 +766,8 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
 			{
 				while (PyDict_Next(sources_dict, &pos, &key, &value)) 
 				{
-					source = PyString_AsString(value);
-					ns = PyString_AsString(key);
+					source = PyBytes_AsString(value);
+					ns = PyBytes_AsString(key);
 					
 					if (source != NULL && ns != NULL)
 					{
@@ -777,8 +793,8 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
 			{
 				while (PyDict_Next(filepaths_dict, &pos, &key, &value)) 
 				{
-					filepath = PyString_AsString(value);
-					ns = PyString_AsString(key);
+					filepath = PyBytes_AsString(value);
+					ns = PyBytes_AsString(key);
 					
 					if (filepath != NULL && ns != NULL)
 					{
@@ -817,22 +833,40 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
     return result;
 }
 
+
+
 /* Module functions */
 
-static PyMethodDef methods[] = {
+static PyMethodDef yara_methods[] = {
   {"compile", (PyCFunction) yara_compile, METH_VARARGS | METH_KEYWORDS, "Compiles a YARA rules file and returns an instance of class Rules"},
   {NULL, NULL},
 };
 
-/* Module init function */
+#if PY_MAJOR_VERSION >= 3
+  #define MOD_ERROR_VAL NULL
+  #define MOD_SUCCESS_VAL(val) val
+  #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+  #define MOD_DEF(ob, name, doc, methods) \
+          static struct PyModuleDef moduledef = { \
+            PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+          ob = PyModule_Create(&moduledef);
+#else
+  #define MOD_ERROR_VAL
+  #define MOD_SUCCESS_VAL(val)
+  #define MOD_INIT(name) void init##name(void)
+  #define MOD_DEF(ob, name, doc, methods) \
+          ob = Py_InitModule3(name, methods, doc);
+#endif
 
-void inityara(void)
+
+MOD_INIT(yara)
 { 
     PyObject *m;
     
-    yr_init();
- 
-    m = Py_InitModule3("yara", methods, module_doc);
+    MOD_DEF(m, "yara", YARA_DOC, yara_methods)
+    
+    if (m == NULL)
+        return MOD_ERROR_VAL;
     
     /* initialize module variables/constants */
     
@@ -840,7 +874,7 @@ void inityara(void)
     PyModule_AddIntConstant(m, "CALLBACK_ABORT", 1);
 
 #if PYTHON_API_VERSION >= 1007
-    YaraError = PyErr_NewException("yara.Error", PyExc_StandardError, NULL);
+    YaraError = PyErr_NewException("yara.Error", PyExc_Exception, NULL);
     YaraSyntaxError = PyErr_NewException("yara.SyntaxError", YaraError, NULL);
 #else
     YaraError = Py_BuildValue("s", "yara.Error");
@@ -849,4 +883,8 @@ void inityara(void)
 
     PyModule_AddObject(m, "Error", YaraError);
     PyModule_AddObject(m, "SyntaxError", YaraSyntaxError);
+    
+    yr_init();
+    
+    return MOD_SUCCESS_VAL(m);
 }
