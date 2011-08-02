@@ -20,21 +20,25 @@ GNU General Public License for more details.
 #include "../yara.h"
 
 
-int regex_exec(REGEXP* regex, const char *buffer, size_t buffer_size) 
+int regex_exec(REGEXP* regex, int anchored, const char *buffer, size_t buffer_size) 
 {    
     int ovector[3];
     int result = -1;
+    int options = 0;
     char *s;
     
     if (!regex || buffer_size == 0)
         return 0;
+        
+    if (anchored)
+        options = PCRE_ANCHORED;
 
     result = pcre_exec( (pcre*)regex->regexp,           /* the compiled pattern */
                         (pcre_extra*)regex->extra,      /* extra data */
                         (char*) buffer,                 /* the subject string */
                         buffer_size,                    /* the length of the subject */
                         0,                              /* start at offset 0 in the subject */
-                        0,                              /* default options */
+                        options,                        /* options */
                         ovector,                        /* output vector for substring information */
                         sizeof(ovector)/sizeof(int));   /* number of elements in the output vector */
     
@@ -74,7 +78,6 @@ void regex_free(REGEXP* regex)
 
 int regex_compile(REGEXP* output,
                   const char* pattern,
-                  int anchored,
                   int case_insensitive,
                   char* error_message,
                   size_t error_message_size,
@@ -83,15 +86,12 @@ int regex_compile(REGEXP* output,
   
     int pcre_options = 0;
     char *pcre_error = NULL;
-                      
+                          
     if (!output || !pattern)
         return 0;
 
     memset(output, '\0', sizeof(REGEXP));
 
-    if (anchored)
-        pcre_options |= PCRE_ANCHORED;
-        
     if (case_insensitive)
         pcre_options |= PCRE_CASELESS;
 
@@ -99,8 +99,7 @@ int regex_compile(REGEXP* output,
   
     if (output->regexp != NULL) 
     {
-        output->extra = (pcre_extra *)pcre_study(
-        output->regexp, 0, (const char **)error_message);
+        output->extra = (pcre_extra *) pcre_study(output->regexp, 0, (const char **)error_message);
     } 
     else 
     {
@@ -115,4 +114,41 @@ int regex_compile(REGEXP* output,
     }
 
     return 1;
+}
+
+
+
+int regex_get_first_bytes(  REGEXP* regex, 
+                            unsigned char* table)
+{
+    unsigned char* t;
+    
+    int i;
+    int b;
+    int result;
+    int count = 0;
+    
+    result = pcre_fullinfo(regex->regexp, regex->extra, PCRE_INFO_FIRSTTABLE, &t);
+    
+    if (result == 0 && t != NULL)
+    {        
+        for (i = 0; i < 256; i++)
+        {
+            if (t[i / 8] & (1 << i % 8))
+            {
+                table[count] = i; 
+                count++;
+            }
+        }
+    }
+    
+    result = pcre_fullinfo(regex->regexp, regex->extra, PCRE_INFO_FIRSTBYTE, &b);
+    
+    if (result == 0 && b > 0)
+    {   
+        table[count] = b;
+        count++;
+    }
+    
+    return count;
 }

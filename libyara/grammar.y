@@ -1167,7 +1167,6 @@ TERM* reduce_string_operation( yyscan_t yyscanner,
                     if (regex_compile(&(term->re),
                                       string->c_string,
                                       FALSE,
-                                      FALSE,
                                       context->last_error_extra_info,
                                       sizeof(context->last_error_extra_info),
                                       &erroffset) <= 0)

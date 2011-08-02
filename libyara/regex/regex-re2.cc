@@ -20,7 +20,7 @@ GNU General Public License for more details.
 #include <re2/stringpiece.h>
 #include "yara.h"
 
-int regex_exec(REGEXP* regex, const char *buffer, size_t buffer_size) 
+int regex_exec(REGEXP* regex, int anchored, const char *buffer, size_t buffer_size) 
 {
     if (!regex || buffer_size == 0)
         return 0;
@@ -28,8 +28,8 @@ int regex_exec(REGEXP* regex, const char *buffer, size_t buffer_size)
     re2::StringPiece data(buffer, buffer_size);
     re2::StringPiece substring;
     re2::RE2::Anchor anchor = re2::RE2::UNANCHORED;
-
-    if (regex->re2_anchored)
+    
+    if (anchored)
         anchor = re2::RE2::ANCHOR_START;
 
     re2::RE2* re_ptr = (re2::RE2*) regex->regexp;
@@ -58,7 +58,6 @@ void regex_free(REGEXP* regex)
 
 int regex_compile(REGEXP* output,
                   const char* pattern,
-                  int anchored,
                   int case_insensitive,
                   char* error_message,
                   size_t error_message_size,
@@ -75,9 +74,6 @@ int regex_compile(REGEXP* output,
 
     if (case_insensitive)
         options.set_case_sensitive(false);
-    
-    if (anchored)
-        output->re2_anchored = anchored;
 
     re2::StringPiece string_piece_pattern(pattern);
     output->regexp = (void *)new RE2(string_piece_pattern, options);
@@ -105,4 +101,10 @@ int regex_compile(REGEXP* output,
     }
     
     return 1;
+}
+
+int regex_get_first_bytes(  REGEXP* regex, 
+                            unsigned char* table)
+{
+    return 0;
 }

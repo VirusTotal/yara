@@ -246,7 +246,7 @@ typedef union YYSTYPE
     void*           meta;
 
 }
-/* Line 187 of yacc.c.  */
+/* Line 193 of yacc.c.  */
 #line 251 "grammar.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -3209,7 +3209,6 @@ TERM* reduce_string_operation( yyscan_t yyscanner,
                 {
                     if (regex_compile(&(term->re),
                                       string->c_string,
-                                      FALSE,
                                       FALSE,
                                       context->last_error_extra_info,
                                       sizeof(context->last_error_extra_info),

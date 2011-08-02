@@ -127,7 +127,6 @@ typedef struct _REGEXP
 {
     void    *regexp;
     void    *extra;
-    int     re2_anchored;
     
 } REGEXP;
 

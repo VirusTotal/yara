@@ -40,6 +40,7 @@ GNU General Public License for more details.
 
 
 static char lowercase[256];
+static char altercase[256];
 static char isalphanum[256];
 
 /* Function implementations */
@@ -324,7 +325,7 @@ int regexp_match(unsigned char* buffer, size_t buffer_size, unsigned char* patte
 		return 0;
 	}
 
-    result = regex_exec(&re, (char *)buffer, buffer_size);
+    result = regex_exec(&re, TRUE, (char *)buffer, buffer_size);
 
     if (result >= 0)
         return result;
@@ -337,15 +338,27 @@ int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)
 	RULE* rule;
 	STRING* string;
 	STRING_LIST_ENTRY* entry;
-	unsigned char x,y;
-    char hashable_2b;
-    char hashable_1b;
-    int i, next;
+	
+    unsigned char first[256];
+    unsigned char second[2];
+    
+    unsigned char f;
+    unsigned char s;
+    
+    int fcount;
+	int scount;
+    
+    int i, j;
     
     for (i = 0; i < 256; i++)
     {
         lowercase[i] = tolower(i);
         isalphanum[i] = isalnum(i);
+        
+        if (lowercase[i] == i)
+            altercase[i] = toupper(i);
+        else
+            altercase[i] = lowercase[i];
     }
 		
 	rule = rule_list->head;
@@ -355,173 +368,113 @@ int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)
 		string = rule->string_list_head;
 
 		while (string != NULL)
-		{	        
-			if (string->flags & STRING_FLAGS_REGEXP)
-			{	
-				/* take into account anchors (^) at beginning of regular expressions */
-							
-				if (string->string[0] == '^')
-				{
-				    if (string->length > 2)
-				    {
-					    x = string->string[1];
-					    y = string->string[2];
-					}
-					else
-					{
-                        x = 0;
-                        y = 0; 
-					}
-				}
-				else
-				{
-					x = string->string[0];
-					y = string->string[1];
-				}
-			
-                hashable_2b = isalphanum[x] && isalphanum[y];
-                hashable_1b = isalphanum[x];
-			}
-			else
-			{
-			    x = string->string[0];
-				y = string->string[1];
-				
-				hashable_2b = TRUE;
-				hashable_1b = TRUE;
-				
-			} /* if (string->flags & STRING_FLAGS_REGEXP) */
-			
-			if (string->flags & STRING_FLAGS_HEXADECIMAL)
-			{
-			    hashable_2b = (string->mask[0] == 0xFF) && (string->mask[1] == 0xFF);
-			    hashable_1b = (string->mask[0] == 0xFF);
-			}
-			
-			if (hashable_1b && string->flags & STRING_FLAGS_NO_CASE)
-			{	
-			    if (hashable_2b)
-			    {	    
-    			    /* 
-    			       if string is case-insensitive add an entry in the hash table
-    			       for each posible combination 
-    			    */
-			    
-    				x = lowercase[x];
-    				y = lowercase[y];
-				
-    				/* both lowercases */
-				
-    				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-    				if (entry == NULL)
-        			    return ERROR_INSUFICIENT_MEMORY;
-    			    
-        			entry->next = hash_table->hashed_strings_2b[x][y];
-        			entry->string = string;
-        			hash_table->hashed_strings_2b[x][y] = entry;
-    			
-        			/* X uppercase Y lowercase */
-    			
-                    x = toupper(x);
-				
-    				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-    				if (entry == NULL)
-                        return ERROR_INSUFICIENT_MEMORY;
-    			    
-            		entry->next = hash_table->hashed_strings_2b[x][y];  
-            		entry->string = string;
-            		hash_table->hashed_strings_2b[x][y] = entry; 
-        		
-            		/* both uppercases */			    
-    			
-        			y = toupper(y);  
-    			    
-        			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-    				if (entry == NULL)
-                        return ERROR_INSUFICIENT_MEMORY;
-    			    
-            		entry->next = hash_table->hashed_strings_2b[x][y];
-            		entry->string = string;
-            		hash_table->hashed_strings_2b[x][y] = entry;
-        		
-            		/* X lowercase Y uppercase */
-    			    
-                    x = lowercase[x];
- 
-        			entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-    				if (entry == NULL)
-                        return ERROR_INSUFICIENT_MEMORY;
-    			    
-            		entry->next = hash_table->hashed_strings_2b[x][y]; 
-            		entry->string = string; 
-            		hash_table->hashed_strings_2b[x][y] = entry;
-        		}
-        		else
-        		{
-        		    /* lowercase */
-    
-        		    x = lowercase[x];
-		
-    				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-    				if (entry == NULL)
-        			    return ERROR_INSUFICIENT_MEMORY;
-    			    
-        			entry->next = hash_table->hashed_strings_1b[x];
-        			entry->string = string;
-        			hash_table->hashed_strings_1b[x] = entry;
-        			
-        			/* uppercase */
-    
-        		    x = toupper(x);
-		
-    				entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-    				if (entry == NULL)
-        			    return ERROR_INSUFICIENT_MEMORY;
-    			    
-        			entry->next = hash_table->hashed_strings_1b[x];
-        			entry->string = string;
-        			hash_table->hashed_strings_1b[x] = entry;
-        		}               
-    							
-			}
-			else if (hashable_1b)
-			{
-			    entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-			
-				if (entry == NULL)
-                    return ERROR_INSUFICIENT_MEMORY;
+		{	      
+            fcount = 0;
+            scount = 0;
+		    
+		    if (string->flags & STRING_FLAGS_REGEXP)
+            {				    			    
+            	if (string->string[0] == '^')
+            	{
+            	    if (string->length > 2)
+            	    {
+            		    f = string->string[1];
+            		    s = string->string[2];
+            		}
+            		else
+            		{
+                        f = string->string[1];
+                        s = 0; 
+            		}
+            	}
+            	else
+            	{
+            		f = string->string[0];
+            		s = string->string[1];
+            	}
+            	
+            	if (isalphanum[f])
+            	{
+            	    first[fcount++] = f;
+            	    
+        	        if (string->flags & STRING_FLAGS_NO_CASE)
+                        first[fcount++] = altercase[f];
+        	                	
+                	if (isalphanum[s])
+                	{
+                	    second[scount++] = s;    
+        	    
+            	        if (string->flags & STRING_FLAGS_NO_CASE)
+                            second[scount++] = altercase[s];
+            	    }
+        	    }
+        	    
+        	    if (fcount == 0)
+        	    {
+                    fcount += regex_get_first_bytes(&(string->re), first);
+        	    }
+            	
+            }
+            else if (string->flags & STRING_FLAGS_HEXADECIMAL)
+            {
+                if (string->mask[0] == 0xFF) 
+                    first[fcount++] = string->string[0];
                 
-                entry->string = string; 
-			    
-			    if (hashable_2b)
-			    {   
-            		entry->next = hash_table->hashed_strings_2b[x][y]; 		
-            		hash_table->hashed_strings_2b[x][y] = entry;
-        		}
-        		else
-        		{    			    
-        			entry->next = hash_table->hashed_strings_1b[x];
-        			hash_table->hashed_strings_1b[x] = entry;
-        		}  
-			}
-			else /* non hashable */
-			{
-			    entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
-				
-				if (entry == NULL)
+                if (string->mask[1] == 0xFF);
+                    second[scount++] = string->string[1];
+            }
+            else 
+            {
+                first[fcount++] = string->string[0];
+                second[scount++] = string->string[1];
+                
+                if (string->flags & STRING_FLAGS_NO_CASE)
+                {
+                    first[fcount++] = altercase[string->string[0]];
+                    second[scount++] = altercase[string->string[1]];
+                }
+            }
+            
+            for (i = 0; i < fcount; i++)
+            {
+                for (j = 0; j < scount; j++)
+                {
+                    entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+
+            		if (entry == NULL)
+                        return ERROR_INSUFICIENT_MEMORY;
+                        
+                    entry->next = hash_table->hashed_strings_2b[first[i]][second[j]];
+                	entry->string = string;
+                	hash_table->hashed_strings_2b[first[i]][second[j]] = entry;
+                
+                }
+                
+                if (scount == 0)
+                {
+                    entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+
+            		if (entry == NULL)
+            		    return ERROR_INSUFICIENT_MEMORY;
+
+            		entry->next = hash_table->hashed_strings_1b[first[i]];
+            		entry->string = string;
+            		hash_table->hashed_strings_1b[first[i]] = entry;
+                }
+            }
+            
+            if (fcount == 0)
+            {
+                entry = (STRING_LIST_ENTRY*) yr_malloc(sizeof(STRING_LIST_ENTRY));
+
+            	if (entry == NULL)
                     return ERROR_INSUFICIENT_MEMORY;
-			    
-			    entry->next = hash_table->non_hashed_strings;
-			    entry->string = string; 
+
+                entry->next = hash_table->non_hashed_strings;
+                entry->string = string; 
                 hash_table->non_hashed_strings = entry;
-			}
-		
+            }
+            
 			string = string->next;
 		}
 		
@@ -678,7 +631,7 @@ inline int string_match(unsigned char* buffer, size_t buffer_size, STRING* strin
 		}
 		else
 		{
-			return regexp_match(buffer, buffer_size, string->string, string->length, string->re, negative_size);
+			return regexp_match(buffer, buffer_size, string->string, string->length, string->re, negative_size);   
 		}
 	}
 	

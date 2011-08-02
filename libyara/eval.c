@@ -432,6 +432,7 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
         
     case TERM_TYPE_STRING_MATCH:
         rc = regex_exec(&(term_string_operation->re),
+                        FALSE,
                         term_string_operation->variable->string,
                         strlen(term_string_operation->variable->string));
         return (rc >= 0);

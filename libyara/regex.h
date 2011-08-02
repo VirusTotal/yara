@@ -21,15 +21,23 @@ GNU General Public License for more details.
 extern "C" {
 #endif
 
+
 void regex_free(REGEXP* regex);
-int regex_exec(REGEXP* regex, const char *buffer, size_t buffer_size);
-int regex_compile(REGEXP* output,
-                  const char* pattern,
-                  int anchored,
-                  int case_insensitive,
-                  char* error_message,
-                  size_t error_message_size,
-                  int* error_offset);
+
+int regex_exec( REGEXP* regex, 
+                int anchored, 
+                const char *buffer, 
+                size_t buffer_size);
+
+int regex_compile(  REGEXP* output, 
+                    const char* pattern,
+                    int case_insensitive,
+                    char* error_message,
+                    size_t error_message_size,
+                    int* error_offset);
+                    
+int regex_get_first_bytes(  REGEXP* regex, 
+                            unsigned char* table);
 
 #ifdef __cplusplus
 }

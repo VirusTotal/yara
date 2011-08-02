@@ -458,7 +458,6 @@ int new_text_string(    YARA_CONTEXT* context,
     {
         if (regex_compile(re,  // REGEXP *
                           charstr->c_string,  // Regex pattern
-                          TRUE,  // Anchor the pattern to the first character when evaluating
                           flags & STRING_FLAGS_NO_CASE,  // If TRUE then case insensitive search
                           context->last_error_extra_info,  // Error message
                           sizeof(context->last_error_extra_info), // Size of error buffer
