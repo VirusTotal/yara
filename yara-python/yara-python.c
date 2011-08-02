@@ -23,7 +23,6 @@ GNU General Public License for more details.
 #include "bytesobject.h"
 #elif PY_VERSION_HEX < 0x02060000
 #define PyBytes_AsString PyString_AsString
-#define PyBytes_FromString PyString_FromString
 #define PyBytes_Check PyString_Check
 #endif
 
@@ -37,6 +36,12 @@ typedef int Py_ssize_t;
 
 #ifndef PyVarObject_HEAD_INIT
 #define PyVarObject_HEAD_INIT(type, size) PyObject_HEAD_INIT(type) size,
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+#define PY_STRING(x) PyUnicode_FromString(x);
+#else
+#define PY_STRING(x) PyString_FromString(x);
 #endif
 
 /* Module globals */
@@ -142,8 +147,8 @@ static PyObject * Match_NEW(const char* rule, const char* ns, PyObject* tags, Py
     
     if (object != NULL)
     {
-		object->rule = PyBytes_FromString(rule);
-		object->ns = PyBytes_FromString(ns);
+		object->rule = PY_STRING(rule);
+		object->ns = PY_STRING(ns);
         object->tags = tags;
         object->meta = meta;
         object->strings = strings;
@@ -419,7 +424,7 @@ int yara_callback(RULE* rule, void* data)
     PyObject* callback = ((CALLBACK_DATA*) data)->callback;
     PyObject* callback_result;
     
-    long result = CALLBACK_CONTINUE;
+    int result = CALLBACK_CONTINUE;
     
     if (!(rule->flags & RULE_FLAGS_MATCH) && callback == NULL)
         return CALLBACK_CONTINUE;
@@ -441,7 +446,7 @@ int yara_callback(RULE* rule, void* data)
     
     while(tag != NULL)
     {
-        object = PyBytes_FromString(tag->identifier);
+        object = PY_STRING(tag->identifier);
         PyList_Append(tag_list, object);
         Py_DECREF(object);    
                    
@@ -462,10 +467,10 @@ int yara_callback(RULE* rule, void* data)
         }
         else
         {
-            object = PyBytes_FromString(meta->string);
+            object = PY_STRING(meta->string);
         }
         
-        PyDict_SetItemString( meta_list, meta->identifier, object);  
+        PyDict_SetItemString(meta_list, meta->identifier, object);  
         Py_DECREF(object);
         
         meta = meta->next;
@@ -481,10 +486,10 @@ int yara_callback(RULE* rule, void* data)
 
             while (m != NULL)
             {
-                object = Py_BuildValue("(i,s,s#)", m->offset, string->identifier, (char*) m->data, m->length);
+                object = Py_BuildValue("(i,s,O)", m->offset, string->identifier, PyBytes_FromStringAndSize((char*) m->data, m->length));
                 PyList_Append(string_list, object);
                 Py_DECREF(object);
-                
+                   
                 m = m->next;
             }
         }
@@ -523,11 +528,11 @@ int yara_callback(RULE* rule, void* data)
         PyDict_SetItemString(callback_dict, "matches", object);
         Py_DECREF(object);
 	    
-        object = PyBytes_FromString(rule->identifier);        
+        object = PY_STRING(rule->identifier);        
         PyDict_SetItemString(callback_dict, "rule", object);
         Py_DECREF(object);
         
-        object = PyBytes_FromString(rule->ns->name);
+        object = PY_STRING(rule->ns->name);
         PyDict_SetItemString(callback_dict, "namespace", object);
         Py_DECREF(object);
         
@@ -539,7 +544,7 @@ int yara_callback(RULE* rule, void* data)
 		
 		if (PyLong_Check(callback_result))
 		{
-		    result = PyLong_AsLong(callback_result);
+		    result = (int) PyLong_AsLong(callback_result);
 		}
     
         Py_DECREF(callback_dict);
