@@ -420,7 +420,7 @@ int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)
                 if (string->mask[0] == 0xFF) 
                     first[fcount++] = string->string[0];
                 
-                if (string->mask[1] == 0xFF);
+                if (string->mask[1] == 0xFF)
                     second[scount++] = string->string[1];
             }
             else 
