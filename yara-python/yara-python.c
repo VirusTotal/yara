@@ -39,9 +39,13 @@ typedef int Py_ssize_t;
 #endif
 
 #if PY_MAJOR_VERSION >= 3
-#define PY_STRING(x) PyUnicode_FromString(x);
+#define PY_STRING(x) PyUnicode_FromString(x)
+#define PY_STRING_TO_C(x) PyBytes_AsString(PyUnicode_AsEncodedString(x, "utf-8", "Error"))
+#define PY_STRING_CHECK(x) PyUnicode_Check(x)
 #else
-#define PY_STRING(x) PyString_FromString(x);
+#define PY_STRING(x) PyString_FromString(x)
+#define PY_STRING_TO_C(x) PyString_AsString(x)
+#define PY_STRING_CHECK(x) PyString_Check(x)
 #endif
 
 /* Module globals */
@@ -291,19 +295,23 @@ int process_externals(PyObject* externals, YARA_CONTEXT* context)
 
     while (PyDict_Next(externals, &pos, &key, &value)) 
     {
-        identifier = PyBytes_AsString(key);
-        
+        identifier = PY_STRING_TO_C(key);
+         
+#if PY_MAJOR_VERSION >= 3
         if (PyLong_Check(value))
-        {
+#else
+        if (PyLong_Check(value) || PyInt_Check(value))
+#endif
+        {  
             yr_define_integer_variable(context, identifier, PyLong_AsLong(value));
         } 
         else if (PyBool_Check(value))
         {
             yr_define_boolean_variable(context, identifier, PyObject_IsTrue(value));
         }
-        else if (PyBytes_Check(value))
+        else if (PY_STRING_CHECK(value))
         {
-            yr_define_string_variable(context, identifier, PyBytes_AsString(value));
+            yr_define_string_variable(context, identifier, PY_STRING_TO_C(value));
         }
         else
         {
@@ -540,15 +548,27 @@ int yara_callback(RULE* rule, void* data)
 	    PyDict_SetItemString(callback_dict, "meta", meta_list);
 	    PyDict_SetItemString(callback_dict, "strings", string_list);
 
-		callback_result = PyObject_CallFunction(callback, "O", callback_dict);
-		
-		if (PyLong_Check(callback_result))
-		{
-		    result = (int) PyLong_AsLong(callback_result);
-		}
-    
-        Py_DECREF(callback_dict);
-		Py_DECREF(callback_result);
+		callback_result = PyObject_CallFunctionObjArgs(callback, callback_dict, NULL);
+
+        if (callback_result != NULL)
+        {
+            #if PY_MAJOR_VERSION >= 3
+            if (PyLong_Check(callback_result))
+            #else
+            if (PyLong_Check(callback_result) || PyInt_Check(callback_result))
+            #endif
+    		{
+    		    result = (int) PyLong_AsLong(callback_result);
+    		}
+        
+    		Py_DECREF(callback_result);
+	    }
+	    else
+	    {
+            result = CALLBACK_ERROR;
+	    }
+	    
+	    Py_DECREF(callback_dict);
 		Py_DECREF(callback); 
 	}
     
@@ -567,6 +587,7 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
     int length;
     int result;
     
+    PyObject *error;
     PyObject *externals = NULL;
 	Rules* object = (Rules*) self;
 
@@ -631,8 +652,14 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
 
             if (result != ERROR_SUCCESS)
             {
-               Py_DECREF(callback_data.matches);
-               return PyErr_Format(PyExc_Exception, "internal error"); 
+                Py_DECREF(callback_data.matches);
+               
+                error = PyErr_Occurred();
+               
+                if (error != NULL)
+                    return NULL;
+                else
+                    return PyErr_Format(PyExc_Exception, "internal error"); 
             }
         }
         else if (pid != 0)
@@ -771,8 +798,8 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
 			{
 				while (PyDict_Next(sources_dict, &pos, &key, &value)) 
 				{
-					source = PyBytes_AsString(value);
-					ns = PyBytes_AsString(key);
+					source = PY_STRING_TO_C(value);
+					ns = PY_STRING_TO_C(key);
 					
 					if (source != NULL && ns != NULL)
 					{
@@ -798,8 +825,8 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
 			{
 				while (PyDict_Next(filepaths_dict, &pos, &key, &value)) 
 				{
-					filepath = PyBytes_AsString(value);
-					ns = PyBytes_AsString(key);
+					filepath = PY_STRING_TO_C(value);
+					ns = PY_STRING_TO_C(key);
 					
 					if (filepath != NULL && ns != NULL)
 					{
