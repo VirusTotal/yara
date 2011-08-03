@@ -78,6 +78,7 @@ typedef struct {
 static PyObject * Match_repr(PyObject *self);
 static PyObject * Match_getattro(PyObject *self, PyObject *name);
 static int Match_compare(PyObject *self, PyObject *other);
+static PyObject * Match_richcompare(PyObject *self, PyObject *other, int op);
 static long Match_hash(PyObject *self);
 static void Match_dealloc(PyObject *self);
 
@@ -110,7 +111,7 @@ static PyTypeObject Match_Type = {
     0,                          /*tp_print*/
     0,                          /*tp_getattr*/
     0,                          /*tp_setattr*/
-	Match_compare,              /*tp_compare*/
+	0,							/*tp_compare*/
     Match_repr,                 /*tp_repr*/
     0,                          /*tp_as_number*/
     0,                          /*tp_as_sequence*/
@@ -118,14 +119,14 @@ static PyTypeObject Match_Type = {
     Match_hash,                 /*tp_hash */
     0,                          /*tp_call*/
     0,                          /*tp_str*/
-    Match_getattro,     /*tp_getattro*/
+    Match_getattro,				/*tp_getattro*/
     0,                          /*tp_setattro*/
     0,                          /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
     "Match class",              /* tp_doc */
     0,                          /* tp_traverse */
     0,                          /* tp_clear */
-    0,                          /* tp_richcompare */
+    Match_richcompare,          /* tp_richcompare */
     0,                          /* tp_weaklistoffset */
     0,                          /* tp_iter */
     0,                          /* tp_iternext */
@@ -184,6 +185,47 @@ static PyObject * Match_repr(PyObject *self)
 static PyObject * Match_getattro(PyObject *self, PyObject *name)
 {
     return PyObject_GenericGetAttr(self, name); 
+}
+
+
+static PyObject * Match_richcompare(PyObject *self, PyObject *other, int op)
+{
+	Match *a = (Match *) self;
+	Match *b = (Match *) other;
+	
+	if(PyObject_TypeCheck(other, &Match_Type))
+	{
+		switch(op)
+		{
+		case Py_EQ:
+
+			if (PyObject_RichCompareBool(a->rule, b->rule, Py_EQ) && PyObject_RichCompareBool(a->ns, b->ns, Py_EQ))
+				return Py_True;
+			else
+				return Py_False;
+
+		case Py_NE:
+
+			if (PyObject_RichCompareBool(a->rule, b->rule, Py_NE) || PyObject_RichCompareBool(a->ns, b->ns, Py_NE))
+				return Py_True;
+			else
+				return Py_False;
+
+		case Py_LT:
+		case Py_LE:
+		case Py_GT:
+		case Py_GE:
+
+			if (PyObject_RichCompareBool(a->rule, b->rule, Py_EQ)) 
+				return PyObject_RichCompare(a->ns, b->ns, op);
+			else
+				return PyObject_RichCompare(a->rule, b->rule, op);
+
+		}
+	}
+
+	return PyErr_Format(PyExc_TypeError, "'Match' objects must be compared with objects of the same class");
+
 }
 
 static int Match_compare(PyObject *self, PyObject *other)

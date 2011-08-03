@@ -261,15 +261,13 @@ class TestYara(unittest.TestCase):
         f1.close()
 
         p2 = os.path.join(tmpdir,'test2')
-        t2 = open(p2, 'wt')
-        t2.write('include "%s" rule test2 { condition: test1 }' % p1)
-        t2.close()
+        f2 = open(p2, 'wt')
+        f2.write('include "%s" rule test2 { condition: test1 }' % p1)
+        f2.close()
 
         r = yara.compile(p2)
         self.assertTrue(len(r.match(data='dummy')) == 2)
 
-        os.remove(p1)
-        os.remove(p2)
         
     def testExternals(self):
         
@@ -303,6 +301,23 @@ class TestYara(unittest.TestCase):
     
         self.assertTrue(rule_data['matches'])
         self.assertTrue(rule_data['rule'] == 'test')
+
+    def testCompare(self):
+
+        r = yara.compile(sources={
+        	'test1': 'rule test { condition: true}',
+        	'test2': 'rule test { condition: true}'
+        })
+
+        m = r.match(data="dummy")
+
+        self.assertTrue(len(m) == 2)
+        self.assertTrue(m[0] < m[1])
+        self.assertTrue(m[0] != m[1])
+        self.assertFalse(m[0] > m[1])
+        self.assertFalse(m[0] == m[1])
+         
+        
 
 if __name__ == "__main__":  
     unittest.main()
