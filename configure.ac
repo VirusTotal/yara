@@ -19,12 +19,11 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_SUBDIRS([libyara])
 
-REVISION=`svnversion $srcdir`
+REVISION=`svnversion $srcdir | sed 's/[[A-Z]]//g'`
 which svnversion > /dev/null; \
 if test $? -ne 0  || test "x$REVISION" = "xexported"
   then REVISION=`cat $srcdir/REVISION`
   else echo "#define REVISION \"$REVISION\"">$srcdir/REVISION
 fi
 AC_SUBST(REVISION)
-
 AC_OUTPUT

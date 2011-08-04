@@ -3919,13 +3919,12 @@ ac_config_files="$ac_config_files Makefile"
 subdirs="$subdirs libyara"
 
 
-REVISION=`svnversion $srcdir`
+REVISION=`svnversion $srcdir | sed 's/[A-Z]//g'`
 which svnversion > /dev/null; \
 if test $? -ne 0  || test "x$REVISION" = "xexported"
   then REVISION=`cat $srcdir/REVISION`
   else echo "#define REVISION \"$REVISION\"">$srcdir/REVISION
 fi
-
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
