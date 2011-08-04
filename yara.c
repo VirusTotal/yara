@@ -31,7 +31,9 @@ GNU General Public License for more details.
 #include <stdlib.h>
 #include <string.h>
 #include <yara.h>
+
 #include "config.h"
+#include "REVISION"
 
 #ifndef MAX_PATH
 #define MAX_PATH 255
@@ -407,7 +409,7 @@ int process_cmd_line(YARA_CONTEXT* context, int argc, char const* argv[])
 		switch (c)
 	    {
 			case 'v':
-				printf("%s\n", PACKAGE_STRING);
+				printf("%s (rev:%s)\n", PACKAGE_STRING, REVISION);
 				return 0;
 		
 			case 'r':

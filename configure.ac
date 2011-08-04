@@ -1,4 +1,4 @@
-AC_INIT([yara], [1.5], [victor.alvarez@virustotal.com])
+AC_INIT([yara], [1.6], [victor.alvarez@virustotal.com])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_PROG_CC
 AC_PROG_CXX
@@ -18,4 +18,13 @@ AM_CONDITIONAL([RE2], [test x$re2 = xtrue])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_SUBDIRS([libyara])
+
+REVISION=`svnversion $srcdir`
+which svnversion > /dev/null; \
+if test $? -ne 0  || test "x$REVISION" = "xexported"
+  then REVISION=`cat $srcdir/REVISION`
+  else echo "#define REVISION \"$REVISION\"">$srcdir/REVISION
+fi
+AC_SUBST(REVISION)
+
 AC_OUTPUT

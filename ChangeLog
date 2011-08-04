@@ -48,7 +48,7 @@ version 1.4 (13/05/2010)
 	* added fast scan mode
 	* BUGFIX: crash in 64-bits Windows
 	
-version 1.5
+version 1.5 (22/03/2011)
 	* added -l parameter to abort scanning after a number of matches
 	* added support for scanning processes memory
 	* entrypoint now works with ELF as well as PE files
@@ -57,3 +57,11 @@ version 1.5
 	* implemented new operator "for <quantifier> <variable> in <set or range> : (<expression>)"
 	* BUGFIX: Memory leaks in yara-python
 	* BUGFIX: yara.compile namespaces not working with filesources
+	
+version 1.6 (04/08/2011)
+    * added support for bitwise operators
+    * added support for multi-line hex strings
+    * scan speed improvement for regular expressions (with PCRE)
+    * yara-python ported to Python 3.x
+    * yara-python support for 64-bits Python under Windows
+    * BUGFIX: Buffer overflow in error printing
