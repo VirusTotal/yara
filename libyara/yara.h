@@ -284,6 +284,9 @@ typedef struct _YARA_CONTEXT
     char*                   file_name_stack[MAX_INCLUDE_DEPTH];
     int                     file_name_stack_ptr;
     
+    FILE*                   file_stack[MAX_INCLUDE_DEPTH];
+    int                     file_stack_ptr;
+    
     char                    last_error_extra_info[256];
    
     char                    lex_buf[LEX_BUF_SIZE];
@@ -323,6 +326,9 @@ char*             yr_get_current_file_name(YARA_CONTEXT* context);
 
 int               yr_push_file_name(YARA_CONTEXT* context, const char* file_name);
 void              yr_pop_file_name(YARA_CONTEXT* context);
+
+int               yr_push_file(YARA_CONTEXT* context, FILE* fh);
+FILE*             yr_pop_file(YARA_CONTEXT* context);
 
 int               yr_compile_file(FILE* rules_file, YARA_CONTEXT* context);
 int               yr_compile_string(const char* rules_string, YARA_CONTEXT* context);

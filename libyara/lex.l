@@ -175,6 +175,7 @@ include[ \t]+\"                      {
                                              if (fh != NULL)
                                              {
                                                  int error_code = ERROR_SUCCESS;
+
                                                  if ((error_code = yr_push_file_name(context, yyextra->lex_buf)) != ERROR_SUCCESS)
                                                  {
                                                      if (error_code == ERROR_INCLUDES_CIRCULAR_REFERENCE)
@@ -185,9 +186,13 @@ include[ \t]+\"                      {
                                                      {
                                                          yyerror(yyscanner, "includes circular reference");
                                                      }
+
                                                      yyterminate();
                                                  }
+												 
+												 yr_push_file(context, fh);
                                                  yypush_buffer_state(yy_create_buffer(fh, YY_BUF_SIZE, yyscanner), yyscanner);
+												 
                                              }
                                              else
                                              {
@@ -206,8 +211,10 @@ include[ \t]+\"                      {
 
 <<EOF>>                              {
                                          YARA_CONTEXT* context = yyget_extra(yyscanner);
-
+				
                                          yr_pop_file_name(context);
+										 
+										 fclose(yr_pop_file(context));						
 
                                          yypop_buffer_state(yyscanner);
 

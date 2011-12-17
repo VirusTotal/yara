@@ -391,6 +391,38 @@ void yr_pop_file_name(YARA_CONTEXT* context)
     }
 }
 
+
+int yr_push_file(YARA_CONTEXT* context, FILE* fh)
+{  
+    int i;
+
+    if (context->file_stack_ptr < MAX_INCLUDE_DEPTH)
+    { 
+        context->file_stack[context->file_stack_ptr] = fh;
+        context->file_stack_ptr++;
+        return ERROR_SUCCESS;
+    }
+    else
+    {
+        context->last_result = ERROR_INCLUDE_DEPTH_EXCEEDED;
+        return ERROR_INCLUDE_DEPTH_EXCEEDED;
+    }
+}
+
+
+FILE* yr_pop_file(YARA_CONTEXT* context)
+{  
+    FILE* result = NULL;
+    
+    if (context->file_stack_ptr > 0)
+    {
+        context->file_stack_ptr--;
+        result = context->file_stack[context->file_stack_ptr];
+    }
+    
+    return result;
+}
+
 int yr_compile_file(FILE* rules_file, YARA_CONTEXT* context)
 {	
     return parse_rules_file(rules_file, context);
