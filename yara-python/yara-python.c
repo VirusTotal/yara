@@ -67,8 +67,8 @@ http://code.google.com/p/yara-project/\n"
 typedef struct {
     
     PyObject_HEAD
-	PyObject* rule;
-	PyObject* ns;
+    PyObject* rule;
+    PyObject* ns;
     PyObject* tags;
     PyObject* meta;
     PyObject* strings;
@@ -86,8 +86,8 @@ static void Match_dealloc(PyObject *self);
 //TODO: Change strings member to be a dictionary of offsets and objects of my own String class. This class should hold information about the matching string.
 
 static PyMemberDef Match_members[] = {
-	{"rule", T_OBJECT_EX, offsetof(Match, rule), READONLY, "Name of the matching rule"},
-	{"namespace", T_OBJECT_EX, offsetof(Match, ns), READONLY, "Namespace of the matching rule"},
+    {"rule", T_OBJECT_EX, offsetof(Match, rule), READONLY, "Name of the matching rule"},
+    {"namespace", T_OBJECT_EX, offsetof(Match, ns), READONLY, "Namespace of the matching rule"},
     {"tags", T_OBJECT_EX, offsetof(Match, tags), READONLY, "List of tags associated to the rule"},
     {"meta", T_OBJECT_EX, offsetof(Match, meta), READONLY, "Dictionary with metadata associated to the rule"},
     {"strings", T_OBJECT_EX, offsetof(Match, strings), READONLY, "Dictionary with offsets and strings that matched the file"},
@@ -111,7 +111,7 @@ static PyTypeObject Match_Type = {
     0,                          /*tp_print*/
     0,                          /*tp_getattr*/
     0,                          /*tp_setattr*/
-	0,							/*tp_compare*/
+    0,                          /*tp_compare*/
     Match_repr,                 /*tp_repr*/
     0,                          /*tp_as_number*/
     0,                          /*tp_as_sequence*/
@@ -119,7 +119,7 @@ static PyTypeObject Match_Type = {
     Match_hash,                 /*tp_hash */
     0,                          /*tp_call*/
     0,                          /*tp_str*/
-    Match_getattro,				/*tp_getattro*/
+    Match_getattro,             /*tp_getattro*/
     0,                          /*tp_setattro*/
     0,                          /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
@@ -152,8 +152,8 @@ static PyObject * Match_NEW(const char* rule, const char* ns, PyObject* tags, Py
     
     if (object != NULL)
     {
-		object->rule = PY_STRING(rule);
-		object->ns = PY_STRING(ns);
+        object->rule = PY_STRING(rule);
+        object->ns = PY_STRING(ns);
         object->tags = tags;
         object->meta = meta;
         object->strings = strings;
@@ -166,8 +166,8 @@ static void Match_dealloc(PyObject *self)
 {    
     Match *object = (Match *) self;
      
-	Py_DECREF(object->rule); 
-	Py_DECREF(object->ns);
+    Py_DECREF(object->rule); 
+    Py_DECREF(object->ns);
     Py_DECREF(object->tags);
     Py_DECREF(object->meta);  
     Py_DECREF(object->strings);
@@ -178,7 +178,7 @@ static void Match_dealloc(PyObject *self)
 static PyObject * Match_repr(PyObject *self)
 { 
     Match *object = (Match *) self;
-	Py_INCREF(object->rule);
+    Py_INCREF(object->rule);
     return object->rule;
 }
 
@@ -190,75 +190,73 @@ static PyObject * Match_getattro(PyObject *self, PyObject *name)
 
 static PyObject * Match_richcompare(PyObject *self, PyObject *other, int op)
 {
-	Match *a = (Match *) self;
-	Match *b = (Match *) other;
-	
-	if(PyObject_TypeCheck(other, &Match_Type))
-	{
-		switch(op)
-		{
-		case Py_EQ:
+    Match *a = (Match *) self;
+    Match *b = (Match *) other;
 
-			if (PyObject_RichCompareBool(a->rule, b->rule, Py_EQ) && PyObject_RichCompareBool(a->ns, b->ns, Py_EQ))
-				return Py_True;
-			else
-				return Py_False;
+    if(PyObject_TypeCheck(other, &Match_Type))
+    {
+        switch(op)
+        {
+        case Py_EQ:
 
-		case Py_NE:
+            if (PyObject_RichCompareBool(a->rule, b->rule, Py_EQ) && PyObject_RichCompareBool(a->ns, b->ns, Py_EQ))
+                return Py_True;
+            else
+                return Py_False;
 
-			if (PyObject_RichCompareBool(a->rule, b->rule, Py_NE) || PyObject_RichCompareBool(a->ns, b->ns, Py_NE))
-				return Py_True;
-			else
-				return Py_False;
+        case Py_NE:
 
-		case Py_LT:
-		case Py_LE:
-		case Py_GT:
-		case Py_GE:
+            if (PyObject_RichCompareBool(a->rule, b->rule, Py_NE) || PyObject_RichCompareBool(a->ns, b->ns, Py_NE))
+                return Py_True;
+            else
+                return Py_False;
 
-			if (PyObject_RichCompareBool(a->rule, b->rule, Py_EQ)) 
-				return PyObject_RichCompare(a->ns, b->ns, op);
-			else
-				return PyObject_RichCompare(a->rule, b->rule, op);
+        case Py_LT:
+        case Py_LE:
+        case Py_GT:
+        case Py_GE:
 
-		}
-	}
+            if (PyObject_RichCompareBool(a->rule, b->rule, Py_EQ)) 
+                return PyObject_RichCompare(a->ns, b->ns, op);
+            else
+                return PyObject_RichCompare(a->rule, b->rule, op);
+        }
+    }
 
-	return PyErr_Format(PyExc_TypeError, "'Match' objects must be compared with objects of the same class");
+    return PyErr_Format(PyExc_TypeError, "'Match' objects must be compared with objects of the same class");
 
 }
 
 static int Match_compare(PyObject *self, PyObject *other)
 {
-	int result;
-	
-	Match *a = (Match *) self;
-	Match *b = (Match *) other;
-	
-	if(PyObject_TypeCheck(other, &Match_Type))
-	{
-		result = PyObject_RichCompareBool(a->rule, b->rule, Py_EQ);
-		
-		if (result == 0)
-		{
-			result = PyObject_RichCompareBool(a->ns, b->ns, Py_EQ);
-		}
-	}
-	else
-	{
-		result = -1;
-		PyErr_BadArgument();
-	}
-	
-	return result;
-	
+    int result;
+
+    Match *a = (Match *) self;
+    Match *b = (Match *) other;
+
+    if(PyObject_TypeCheck(other, &Match_Type))
+    {
+        result = PyObject_RichCompareBool(a->rule, b->rule, Py_EQ);
+
+        if (result == 0)
+        {
+            result = PyObject_RichCompareBool(a->ns, b->ns, Py_EQ);
+        }
+    }
+    else
+    {
+        result = -1;
+        PyErr_BadArgument();
+    }
+
+    return result;
+  
 }
 
 static long Match_hash(PyObject *self)
 {
-	Match *match = (Match *) self;
-	
-	return PyObject_Hash(match->rule) + PyObject_Hash(match->ns);
+    Match *match = (Match *) self;
+    return PyObject_Hash(match->rule) + PyObject_Hash(match->ns);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -279,9 +277,9 @@ static void Rules_dealloc(PyObject *self);
 
 static PyMethodDef Rules_methods[] = 
 {
-  {"match", (PyCFunction) Rules_match, METH_VARARGS | METH_KEYWORDS},
-  {"weight", (PyCFunction) Rules_weight, METH_NOARGS},
-  {NULL, NULL},
+    {"match", (PyCFunction) Rules_match, METH_VARARGS | METH_KEYWORDS},
+    {"weight", (PyCFunction) Rules_weight, METH_NOARGS},
+    {NULL, NULL}
 };
 
 static PyTypeObject Rules_Type = {
@@ -295,7 +293,7 @@ static PyTypeObject Rules_Type = {
     0,                          /*tp_setattr*/
     0,                          /*tp_compare*/
     0,                          /*tp_repr*/
-    0,          				/*tp_as_number*/
+    0,                          /*tp_as_number*/
     0,                          /*tp_as_sequence*/
     0,                          /*tp_as_mapping*/
     0,                          /*tp_hash */
@@ -331,9 +329,9 @@ static PyTypeObject Rules_Type = {
 int process_externals(PyObject* externals, YARA_CONTEXT* context)
 {
     PyObject *key, *value;
-	Py_ssize_t pos = 0;
-	
-	char* identifier = NULL;
+    Py_ssize_t pos = 0;
+  
+    char* identifier = NULL;
 
     while (PyDict_Next(externals, &pos, &key, &value)) 
     {
@@ -358,7 +356,7 @@ int process_externals(PyObject* externals, YARA_CONTEXT* context)
         else
         {
             return FALSE;
-        }				
+        }       
     }
 
     return TRUE;
@@ -377,12 +375,12 @@ static PyObject * Rules_new_from_file(FILE* file, const char* filepath, PyObject
     {
         return PyErr_SetFromErrno(PyExc_IOError);
     }
-	
-	if (filepath != NULL)
-	{
-        yr_push_file_name(context, filepath);
-	}
-		         
+  
+    if (filepath != NULL)
+    {
+          yr_push_file_name(context, filepath);
+    }
+             
     errors = yr_compile_file(file, context);
        
     if (errors)   /* errors during compilation */
@@ -393,17 +391,17 @@ static PyObject * Rules_new_from_file(FILE* file, const char* filepath, PyObject
         return PyErr_Format(YaraSyntaxError, "line %d: %s", error_line, error_message);
     }
 
-	if (rules == NULL)
-	{
-		result = PyObject_NEW(Rules, &Rules_Type);
+    if (rules == NULL)
+    {
+        result = PyObject_NEW(Rules, &Rules_Type);
 
-		if (result != NULL)
-	        result->context = context;
-	}
-	else
-	{
-		result = (Rules*) rules;
-	}
+        if (result != NULL)
+            result->context = context;
+    }
+    else
+    {
+        result = (Rules*) rules;
+    }
           
     return (PyObject *) result;
 }
@@ -411,12 +409,12 @@ static PyObject * Rules_new_from_file(FILE* file, const char* filepath, PyObject
 
 static PyObject * Rules_new_from_string(const char* string, PyObject* rules, YARA_CONTEXT* context)
 { 
-	Rules* result;
+  Rules* result;
 
     int  errors;
     int  error_line;
     char error_message[256];
-    	
+      
     errors = yr_compile_string(string, context);
        
     if (errors)   /* errors during compilation */
@@ -424,20 +422,20 @@ static PyObject * Rules_new_from_string(const char* string, PyObject* rules, YAR
         error_line = context->last_error_line;
         yr_get_error_message(context, error_message, sizeof(error_message));
               
-        return PyErr_Format(YaraSyntaxError, "line %d: %s", error_line, error_message);	
+        return PyErr_Format(YaraSyntaxError, "line %d: %s", error_line, error_message); 
     }
 
-	if (rules == NULL)
-	{
-		result = PyObject_NEW(Rules, &Rules_Type);
+    if (rules == NULL)
+    {
+        result = PyObject_NEW(Rules, &Rules_Type);
 
-		if (result != NULL)
-	        result->context = context;
-	}
-	else
-	{
-		result = (Rules*) rules;
-	}
+        if (result != NULL)
+              result->context = context;
+    }
+    else
+    {
+        result = (Rules*) rules;
+    }
           
     return (PyObject*) result;
 }
@@ -569,15 +567,15 @@ int yara_callback(RULE* rule, void* data)
     }
     
     if (callback != NULL)
-	{
-	    Py_INCREF(callback); 
-	    
-	    callback_dict = PyDict_New();
-	    
-	    object = PyBool_FromLong(rule->flags & RULE_FLAGS_MATCH);
+    {
+        Py_INCREF(callback); 
+      
+        callback_dict = PyDict_New();
+      
+        object = PyBool_FromLong(rule->flags & RULE_FLAGS_MATCH);
         PyDict_SetItemString(callback_dict, "matches", object);
         Py_DECREF(object);
-	    
+      
         object = PY_STRING(rule->identifier);        
         PyDict_SetItemString(callback_dict, "rule", object);
         Py_DECREF(object);
@@ -586,11 +584,11 @@ int yara_callback(RULE* rule, void* data)
         PyDict_SetItemString(callback_dict, "namespace", object);
         Py_DECREF(object);
         
-	    PyDict_SetItemString(callback_dict, "tags", tag_list);
-	    PyDict_SetItemString(callback_dict, "meta", meta_list);
-	    PyDict_SetItemString(callback_dict, "strings", string_list);
+        PyDict_SetItemString(callback_dict, "tags", tag_list);
+        PyDict_SetItemString(callback_dict, "meta", meta_list);
+        PyDict_SetItemString(callback_dict, "strings", string_list);
 
-		callback_result = PyObject_CallFunctionObjArgs(callback, callback_dict, NULL);
+        callback_result = PyObject_CallFunctionObjArgs(callback, callback_dict, NULL);
 
         if (callback_result != NULL)
         {
@@ -599,22 +597,22 @@ int yara_callback(RULE* rule, void* data)
             #else
             if (PyLong_Check(callback_result) || PyInt_Check(callback_result))
             #endif
-    		{
-    		    result = (int) PyLong_AsLong(callback_result);
-    		}
+            {
+                result = (int) PyLong_AsLong(callback_result);
+            }
         
-    		Py_DECREF(callback_result);
-	    }
-	    else
-	    {
+            Py_DECREF(callback_result);
+        }
+        else
+        {
             result = CALLBACK_ERROR;
-	    }
-	    
-	    Py_DECREF(callback_dict);
-		Py_DECREF(callback); 
-	}
+        }
+      
+        Py_DECREF(callback_dict);
+        Py_DECREF(callback); 
+    }
     
-    return result;
+  return result;
 
 }
 
@@ -631,7 +629,7 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
     
     PyObject *error;
     PyObject *externals = NULL;
-	Rules* object = (Rules*) self;
+    Rules* object = (Rules*) self;
 
     CALLBACK_DATA callback_data;
     
@@ -643,16 +641,16 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
         if (externals != NULL)
         {
             if (PyDict_Check(externals))
-			{
-				if (!process_externals(externals, object->context))
-			    {
-			        return PyErr_Format(PyExc_TypeError, "external values must be of type integer, boolean or string");
-				}				
-			}
-			else
-			{
-				return PyErr_Format(PyExc_TypeError, "'externals' must be a dictionary");
-			}
+            {
+                if (!process_externals(externals, object->context))
+                {
+                    return PyErr_Format(PyExc_TypeError, "external values must be of type integer, boolean or string");
+                }       
+            }
+            else
+            {
+                return PyErr_Format(PyExc_TypeError, "'externals' must be a dictionary");
+            }
         }
              
         if (callback_data.callback != NULL)
@@ -690,7 +688,7 @@ PyObject * Rules_match(PyObject *self, PyObject *args, PyObject *keywords)
         {
             callback_data.matches = PyList_New(0);
         
-			result = yr_scan_mem((unsigned char*) data, (unsigned int) length, object->context, yara_callback, &callback_data);
+            result = yr_scan_mem((unsigned char*) data, (unsigned int) length, object->context, yara_callback, &callback_data);
 
             if (result != ERROR_SUCCESS)
             {
@@ -757,29 +755,29 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
     int fd;
     
     PyObject *result = NULL;
-	PyObject *file = NULL;
-	
-	PyObject *sources_dict = NULL;
-	PyObject *filepaths_dict = NULL;
-	PyObject *includes = NULL;
-	PyObject *externals = NULL;
-	
-	PyObject *key, *value;
-	
-	Py_ssize_t pos = 0;
+    PyObject *file = NULL;
+  
+    PyObject *sources_dict = NULL;
+    PyObject *filepaths_dict = NULL;
+    PyObject *includes = NULL;
+    PyObject *externals = NULL;
+  
+    PyObject *key, *value;
+  
+    Py_ssize_t pos = 0;
 
     char* filepath = NULL;
     char* source = NULL;
-	char* ns = NULL;
-	    
+    char* ns = NULL;
+      
     if (PyArg_ParseTupleAndKeywords(args, keywords, "|ssOOOOO", kwlist, &filepath, &source, &file, &filepaths_dict, &sources_dict, &includes, &externals))
     {      
         context = yr_create_context();
    
-   		if (context == NULL)
-       		return PyErr_NoMemory();
-       		      		
-       	if (includes != NULL)
+      if (context == NULL)
+          return PyErr_NoMemory();
+                    
+        if (includes != NULL)
         {
             if (PyBool_Check(includes))
             {
@@ -791,7 +789,7 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
                 return PyErr_Format(PyExc_TypeError, "'includes' param must be of boolean type");
             }
         }
-          	
+            
         if (externals != NULL)
         {
             if (PyDict_Check(externals))
@@ -800,7 +798,7 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
                 {
                     yr_destroy_context(context); 
                     return PyErr_Format(PyExc_TypeError, "external values must be of type integer, boolean or string");
-                }				
+                }       
             }
             else
             {
@@ -837,66 +835,65 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
         else if (sources_dict != NULL)
         {
             if (PyDict_Check(sources_dict))
-			{
-				while (PyDict_Next(sources_dict, &pos, &key, &value)) 
-				{
-					source = PY_STRING_TO_C(value);
-					ns = PY_STRING_TO_C(key);
-					
-					if (source != NULL && ns != NULL)
-					{
-		                context->current_namespace = yr_create_namespace(context, ns);
-
-						result = Rules_new_from_string(source, result, context);
-					}
-					else
-					{
-						result = PyErr_Format(PyExc_TypeError, "keys and values of the 'sources' dictionary must be of string type");
-						break;
-					}
-				}
-			}
-			else
-			{
-				result = PyErr_Format(PyExc_TypeError, "'sources' must be a dictionary");
-			}
+            {
+                while (PyDict_Next(sources_dict, &pos, &key, &value)) 
+                {
+                    source = PY_STRING_TO_C(value);
+                    ns = PY_STRING_TO_C(key);
+          
+                    if (source != NULL && ns != NULL)
+                    {
+                        context->current_namespace = yr_create_namespace(context, ns);
+                        result = Rules_new_from_string(source, result, context);
+                    }
+                    else
+                    {
+                        result = PyErr_Format(PyExc_TypeError, "keys and values of the 'sources' dictionary must be of string type");
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                result = PyErr_Format(PyExc_TypeError, "'sources' must be a dictionary");
+            }
         }
         else if (filepaths_dict != NULL)
         {
             if (PyDict_Check(filepaths_dict))
-			{
-				while (PyDict_Next(filepaths_dict, &pos, &key, &value)) 
-				{
-					filepath = PY_STRING_TO_C(value);
-					ns = PY_STRING_TO_C(key);
-					
-					if (filepath != NULL && ns != NULL)
-					{
-						fh = fopen(filepath, "r");
-            
-            			if (fh != NULL)
-            			{
-            			    context->current_namespace = yr_create_namespace(context, ns);
-            			
-                			result = Rules_new_from_file(fh, filepath, result, context);
-                			fclose(fh);
-            			}
-            			else
-            			{
-                			result = PyErr_SetFromErrno(YaraError);
-            			}
-					}
-					else
-					{
-						result = PyErr_Format(PyExc_TypeError, "keys and values of the filepaths dictionary must be of string type");
-						break;
-					}
-				}
-			}
-			else
-			{
-				result = PyErr_Format(PyExc_TypeError, "filepaths must be a dictionary");
-			}
+            {
+                while (PyDict_Next(filepaths_dict, &pos, &key, &value)) 
+                {
+                    filepath = PY_STRING_TO_C(value);
+                    ns = PY_STRING_TO_C(key);
+      
+                    if (filepath != NULL && ns != NULL)
+                    {
+                        fh = fopen(filepath, "r");
+        
+                        if (fh != NULL)
+                        {
+                            context->current_namespace = yr_create_namespace(context, ns);
+              
+                            result = Rules_new_from_file(fh, filepath, result, context);
+                            fclose(fh);
+                        }
+                        else
+                        { 
+                            result = PyErr_SetFromErrno(YaraError);
+                        }
+                    }
+                    else
+                    {
+                        result = PyErr_Format(PyExc_TypeError, "keys and values of the filepaths dictionary must be of string type");
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                result = PyErr_Format(PyExc_TypeError, "filepaths must be a dictionary");
+            }
         }
         else
         {
@@ -912,24 +909,24 @@ static PyObject * yara_compile(PyObject *self, PyObject *args, PyObject *keyword
 /* Module functions */
 
 static PyMethodDef yara_methods[] = {
-  {"compile", (PyCFunction) yara_compile, METH_VARARGS | METH_KEYWORDS, "Compiles a YARA rules file and returns an instance of class Rules"},
-  {NULL, NULL},
+    {"compile", (PyCFunction) yara_compile, METH_VARARGS | METH_KEYWORDS, "Compiles a YARA rules file and returns an instance of class Rules"},
+    {NULL, NULL}
 };
 
 #if PY_MAJOR_VERSION >= 3
-  #define MOD_ERROR_VAL NULL
-  #define MOD_SUCCESS_VAL(val) val
-  #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
-  #define MOD_DEF(ob, name, doc, methods) \
-          static struct PyModuleDef moduledef = { \
-            PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
-          ob = PyModule_Create(&moduledef);
+#define MOD_ERROR_VAL NULL
+#define MOD_SUCCESS_VAL(val) val
+#define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+#define MOD_DEF(ob, name, doc, methods) \
+      static struct PyModuleDef moduledef = { \
+        PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+      ob = PyModule_Create(&moduledef);
 #else
-  #define MOD_ERROR_VAL
-  #define MOD_SUCCESS_VAL(val)
-  #define MOD_INIT(name) void init##name(void)
-  #define MOD_DEF(ob, name, doc, methods) \
-          ob = Py_InitModule3(name, methods, doc);
+#define MOD_ERROR_VAL
+#define MOD_SUCCESS_VAL(val)
+#define MOD_INIT(name) void init##name(void)
+#define MOD_DEF(ob, name, doc, methods) \
+      ob = Py_InitModule3(name, methods, doc);
 #endif
 
 
