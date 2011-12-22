@@ -1355,7 +1355,7 @@ case YY_STATE_EOF(include):
 										
                                          yr_pop_file_name(context);
 										
-										 //fclose(yr_pop_file(context));
+										 fclose(yr_pop_file(context));
 										
 										
 
