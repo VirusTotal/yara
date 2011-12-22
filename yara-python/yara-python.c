@@ -77,7 +77,6 @@ typedef struct {
 
 static PyObject * Match_repr(PyObject *self);
 static PyObject * Match_getattro(PyObject *self, PyObject *name);
-static int Match_compare(PyObject *self, PyObject *other);
 static PyObject * Match_richcompare(PyObject *self, PyObject *other, int op);
 static long Match_hash(PyObject *self);
 static void Match_dealloc(PyObject *self);
@@ -227,31 +226,6 @@ static PyObject * Match_richcompare(PyObject *self, PyObject *other, int op)
 
 }
 
-static int Match_compare(PyObject *self, PyObject *other)
-{
-    int result;
-
-    Match *a = (Match *) self;
-    Match *b = (Match *) other;
-
-    if(PyObject_TypeCheck(other, &Match_Type))
-    {
-        result = PyObject_RichCompareBool(a->rule, b->rule, Py_EQ);
-
-        if (result == 0)
-        {
-            result = PyObject_RichCompareBool(a->ns, b->ns, Py_EQ);
-        }
-    }
-    else
-    {
-        result = -1;
-        PyErr_BadArgument();
-    }
-
-    return result;
-  
-}
 
 static long Match_hash(PyObject *self)
 {
@@ -951,6 +925,12 @@ MOD_INIT(yara)
     YaraError = Py_BuildValue("s", "yara.Error");
     YaraSyntaxError = Py_BuildValue("s", "yara.SyntaxError");
 #endif
+
+    if (PyType_Ready(&Rules_Type) < 0)
+        return MOD_ERROR_VAL;
+        
+    if (PyType_Ready(&Match_Type) < 0)
+        return MOD_ERROR_VAL;
 
     PyModule_AddObject(m, "Error", YaraError);
     PyModule_AddObject(m, "SyntaxError", YaraSyntaxError);
