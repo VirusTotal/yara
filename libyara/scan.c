@@ -191,14 +191,13 @@ inline int wicompare(char* str1, char* str2, int len)
 int hex_match(unsigned char* buffer, size_t buffer_size, unsigned char* pattern, int pattern_length, unsigned char* mask)
 {
 	size_t b,p,m;
-	unsigned char i;
 	unsigned char distance;
 	unsigned char delta;
     int match;
     int match_length;
     int longest_match;
 	int matches;
-    int tmp, tmp_b;
+    int i, tmp, tmp_b;
 	
 	b = 0;
 	p = 0;
