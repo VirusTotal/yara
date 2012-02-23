@@ -61,6 +61,7 @@ YARA_CONTEXT* yr_create_context()
 	context->fast_match = FALSE;
     context->scanning_process_memory = FALSE;
 
+    memset(context->rule_list.hash_table, 0, sizeof(context->rule_list.hash_table));
     memset(context->hash_table.hashed_strings_2b, 0, sizeof(context->hash_table.hashed_strings_2b));
     memset(context->hash_table.hashed_strings_1b, 0, sizeof(context->hash_table.hashed_strings_1b));
     

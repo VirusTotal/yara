@@ -65,7 +65,8 @@ libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libyara_la_DEPENDENCIES = regex/libregex.la
 am_libyara_la_OBJECTS = grammar.lo lex.lo ast.lo scan.lo filemap.lo \
-	eval.lo exe.lo xtoi.lo mem.lo proc.lo weight.lo libyara.lo
+	eval.lo exe.lo xtoi.lo mem.lo proc.lo weight.lo hash.lo \
+	libyara.lo
 libyara_la_OBJECTS = $(am_libyara_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/../depcomp
@@ -248,6 +249,7 @@ libyara_la_SOURCES = \
   mem.c \
   proc.c \
   weight.c \
+  hash.c \
   libyara.c \
   lex.h \
   ast.h \
@@ -366,6 +368,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exe.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filemap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/grammar.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libyara.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@

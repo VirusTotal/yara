@@ -18,6 +18,7 @@ libyara_la_SOURCES = \
   mem.c \
   proc.c \
   weight.c \
+  hash.c \
   libyara.c \
   lex.h \
   ast.h \

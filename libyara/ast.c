@@ -28,17 +28,29 @@ GNU General Public License for more details.
 
 RULE* lookup_rule(RULE_LIST* rules, const char* identifier, NAMESPACE* ns)
 {
-    RULE* rule = rules->head;
+    RULE_LIST_ENTRY* entry;
+    RULE* rule;
     
-    while (rule != NULL)
+    unsigned int key;
+    
+    key = hash(0, identifier, strlen(identifier));
+    key = hash(key, ns->name, strlen(ns->name));
+    key = key % RULE_LIST_HASH_TABLE_SIZE;
+        
+    entry = &rules->hash_table[key];
+    
+    while (entry != NULL)
     {
-        if (strcmp(rule->identifier, identifier) == 0 &&
+        rule = (RULE*) entry->rule;
+        
+        if (rule != NULL &&
+            strcmp(rule->identifier, identifier) == 0 &&
 			strcmp(rule->ns->name, ns->name) == 0)
         {
             return rule;
         }
         
-        rule = rule->next;
+        entry = entry->next;
     }
     
     return NULL;
@@ -117,9 +129,11 @@ VARIABLE* lookup_variable(VARIABLE* variable_list_head, const char* identifier)
 int new_rule(RULE_LIST* rules, char* identifier, NAMESPACE* ns, int flags, TAG* tag_list_head, META* meta_list_head, STRING* string_list_head, TERM* condition)
 {
     RULE* new_rule;
-    
+    RULE_LIST_ENTRY* entry;
+
+    unsigned int key;
     int result = ERROR_SUCCESS;
-    
+
     if (lookup_rule(rules, identifier, ns) == NULL)  /* do not allow rules with the same identifier */
     {
         new_rule = (RULE*) yr_malloc(sizeof(RULE));
@@ -145,6 +159,26 @@ int new_rule(RULE_LIST* rules, char* identifier, NAMESPACE* ns, int flags, TAG* 
                 rules->tail->next = new_rule;
                 rules->tail = new_rule;
             }			
+            
+            key = hash(0, identifier, strlen(identifier));
+            key = hash(key, ns->name, strlen(ns->name));
+            key = key % RULE_LIST_HASH_TABLE_SIZE;
+            
+            if (rules->hash_table[key].rule == NULL)
+            {
+                rules->hash_table[key].rule = new_rule;
+            }
+            else
+            {
+                entry = (RULE_LIST_ENTRY*) yr_malloc(sizeof(RULE_LIST_ENTRY));
+                
+                if (entry == NULL)
+                    return ERROR_INSUFICIENT_MEMORY;
+
+                entry->rule = new_rule;
+                entry->next = rules->hash_table[key].next;
+                rules->hash_table[key].next = entry;
+            }
         }
         else
         {

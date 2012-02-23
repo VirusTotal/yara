@@ -228,10 +228,21 @@ typedef struct _STRING_LIST_ENTRY
 } STRING_LIST_ENTRY;
 
 
+typedef struct _RULE_LIST_ENTRY
+{
+    RULE* rule;
+    struct _RULE_LIST_ENTRY* next;
+    
+} RULE_LIST_ENTRY;
+
+
+#define RULE_LIST_HASH_TABLE_SIZE   10007
+
 typedef struct _RULE_LIST
 {
-    RULE* head; 
-    RULE* tail;
+    RULE*               head; 
+    RULE*               tail;
+    RULE_LIST_ENTRY     hash_table[RULE_LIST_HASH_TABLE_SIZE];
         
 } RULE_LIST;
 
