@@ -1,4 +1,5 @@
 AC_INIT([yara], [1.6], [victor.alvarez@virustotal.com])
+LT_INIT
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_PROG_CC
 AC_PROG_CXX
