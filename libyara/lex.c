@@ -1351,14 +1351,14 @@ case YY_STATE_EOF(include):
 #line 212 "lex.l"
 {
                                          YARA_CONTEXT* context = yyget_extra(yyscanner);
-					
-										
+				                         FILE* file = yr_pop_file(context);
+				                         
+				                         if (file != NULL)
+				                         {
+				                            fclose(file);
+				                         }
+				                         
                                          yr_pop_file_name(context);
-										
-										 fclose(yr_pop_file(context));
-										
-										
-
                                          yypop_buffer_state(yyscanner);
 
                                          if (!YY_CURRENT_BUFFER)
