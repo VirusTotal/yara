@@ -189,6 +189,8 @@ static PyObject * Match_getattro(PyObject *self, PyObject *name)
 
 static PyObject * Match_richcompare(PyObject *self, PyObject *other, int op)
 {
+    PyObject* result;
+    
     Match *a = (Match *) self;
     Match *b = (Match *) other;
 
@@ -199,16 +201,22 @@ static PyObject * Match_richcompare(PyObject *self, PyObject *other, int op)
         case Py_EQ:
 
             if (PyObject_RichCompareBool(a->rule, b->rule, Py_EQ) && PyObject_RichCompareBool(a->ns, b->ns, Py_EQ))
-                return Py_True;
+                result = Py_True;
             else
-                return Py_False;
+                result = Py_False;
+                
+            Py_INCREF(result);
+            break;
 
         case Py_NE:
 
             if (PyObject_RichCompareBool(a->rule, b->rule, Py_NE) || PyObject_RichCompareBool(a->ns, b->ns, Py_NE))
-                return Py_True;
+                result = Py_True;
             else
-                return Py_False;
+                result = Py_False;
+                
+            Py_INCREF(result);
+            break;
 
         case Py_LT:
         case Py_LE:
@@ -216,13 +224,19 @@ static PyObject * Match_richcompare(PyObject *self, PyObject *other, int op)
         case Py_GE:
 
             if (PyObject_RichCompareBool(a->rule, b->rule, Py_EQ)) 
-                return PyObject_RichCompare(a->ns, b->ns, op);
+                result = PyObject_RichCompare(a->ns, b->ns, op);
             else
-                return PyObject_RichCompare(a->rule, b->rule, op);
+                result = PyObject_RichCompare(a->rule, b->rule, op);
+                
+            break;
         }
     }
-
-    return PyErr_Format(PyExc_TypeError, "'Match' objects must be compared with objects of the same class");
+    else 
+    {
+        result = PyErr_Format(PyExc_TypeError, "'Match' objects must be compared with objects of the same class");
+    }
+    
+    return result;
 
 }
 
