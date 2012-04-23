@@ -189,7 +189,7 @@ static PyObject * Match_getattro(PyObject *self, PyObject *name)
 
 static PyObject * Match_richcompare(PyObject *self, PyObject *other, int op)
 {
-    PyObject* result;
+    PyObject* result = NULL;
     
     Match *a = (Match *) self;
     Match *b = (Match *) other;
