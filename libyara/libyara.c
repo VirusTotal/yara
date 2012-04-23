@@ -50,6 +50,7 @@ YARA_CONTEXT* yr_create_context()
     context->last_error = ERROR_SUCCESS;
     context->last_error_line = 0;
     context->last_result = ERROR_SUCCESS;
+    context->file_stack_ptr = 0;
     context->file_name_stack_ptr = 0;
     context->current_rule_strings = NULL;
     context->current_rule_flags = 0;
