@@ -118,7 +118,7 @@ int map_file(const char* file_path, MAPPED_FILE* pmapped_file)
 	
 	pmapped_file->data = (unsigned char*) mmap(0, pmapped_file->size, PROT_READ, MAP_PRIVATE, pmapped_file->file, 0);
 
-	if (pmapped_file->data == NULL)
+	if (pmapped_file->data == MAP_FAILED)
 	{
 		close(pmapped_file->file);
 		return ERROR_COULD_NOT_MAP_FILE;
