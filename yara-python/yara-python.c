@@ -156,6 +156,10 @@ static PyObject * Match_NEW(const char* rule, const char* ns, PyObject* tags, Py
         object->tags = tags;
         object->meta = meta;
         object->strings = strings;
+        
+        Py_INCREF(tags);
+        Py_INCREF(meta);
+        Py_INCREF(tags);
     } 
       
     return (PyObject *)object;
@@ -397,7 +401,7 @@ static PyObject * Rules_new_from_file(FILE* file, const char* filepath, PyObject
 
 static PyObject * Rules_new_from_string(const char* string, PyObject* rules, YARA_CONTEXT* context)
 { 
-  Rules* result;
+    Rules* result;
 
     int  errors;
     int  error_line;
@@ -456,6 +460,7 @@ int yara_callback(RULE* rule, void* data)
     PyObject* match;
     PyObject* callback_dict;
     PyObject* object;
+    PyObject* tuple;
     PyObject* matches = ((CALLBACK_DATA*) data)->matches;
     PyObject* callback = ((CALLBACK_DATA*) data)->callback;
     PyObject* callback_result;
@@ -522,9 +527,13 @@ int yara_callback(RULE* rule, void* data)
 
             while (m != NULL)
             {
-                object = Py_BuildValue("(i,s,O)", m->offset, string->identifier, PyBytes_FromStringAndSize((char*) m->data, m->length));
-                PyList_Append(string_list, object);
+                object = PyBytes_FromStringAndSize((char*) m->data, m->length);
+                tuple = Py_BuildValue("(i,s,O)", m->offset, string->identifier, object);
+                
+                PyList_Append(string_list, tuple);
+                
                 Py_DECREF(object);
+                Py_DECREF(tuple);
                    
                 m = m->next;
             }
@@ -599,6 +608,10 @@ int yara_callback(RULE* rule, void* data)
         Py_DECREF(callback_dict);
         Py_DECREF(callback); 
     }
+    
+  Py_DECREF(tag_list);
+  Py_DECREF(string_list);
+  Py_DECREF(meta_list);  
     
   return result;
 

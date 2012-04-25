@@ -86,6 +86,10 @@ void yr_destroy_context(YARA_CONTEXT* context)
 	NAMESPACE* next_ns;
     VARIABLE* variable;
 	VARIABLE* next_variable;
+    RULE_LIST_ENTRY* rule_list_entry;
+    RULE_LIST_ENTRY* next_rule_list_entry;
+	
+    int i;
     
     rule = context->rule_list.head;
     
@@ -192,6 +196,19 @@ void yr_destroy_context(YARA_CONTEXT* context)
 	while (context->file_name_stack_ptr > 0)
     {
         yr_pop_file_name(context);
+    }
+    
+    for(i = 0; i < RULE_LIST_HASH_TABLE_SIZE; i++)
+    {
+        rule_list_entry = context->rule_list.hash_table[i].next;
+        
+        while(rule_list_entry != NULL)
+        {
+            next_rule_list_entry = rule_list_entry->next;
+            yr_free(rule_list_entry);
+            
+            rule_list_entry = next_rule_list_entry;
+        }
     }
     
     clear_hash_table(&context->hash_table);
