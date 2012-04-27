@@ -159,7 +159,7 @@ static PyObject * Match_NEW(const char* rule, const char* ns, PyObject* tags, Py
         
         Py_INCREF(tags);
         Py_INCREF(meta);
-        Py_INCREF(tags);
+        Py_INCREF(strings);
     } 
       
     return (PyObject *)object;
