@@ -425,6 +425,10 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
         {
             return ( term_variable->variable->string != NULL && *term_variable->variable->string != '\0');
         }
+        else if (term_variable->variable->type == VARIABLE_TYPE_BOOLEAN)
+        {
+            return term_variable->variable->boolean;
+        }
         else
         {
             return term_variable->variable->integer;

@@ -1200,6 +1200,7 @@ TERM* reduce_string_operation( yyscan_t yyscanner,
         context->last_result = ERROR_UNDEFINED_IDENTIFIER;
     }
     
+    yr_free(identifier);
     return (TERM*) term;
 
 }
