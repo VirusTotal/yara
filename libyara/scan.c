@@ -42,6 +42,9 @@ GNU General Public License for more details.
 static char lowercase[256];
 static char altercase[256];
 static char isalphanum[256];
+static char isregexescapable[256];
+static char isregexhashable[256];
+
 
 /* Function implementations */
 
@@ -353,12 +356,36 @@ int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)
     {
         lowercase[i] = tolower(i);
         isalphanum[i] = isalnum(i);
-        
+        isregexhashable[i] = isalnum(i);
+
         if (lowercase[i] == i)
             altercase[i] = toupper(i);
         else
             altercase[i] = lowercase[i];
     }
+
+    // Add other characters that we can hash with for regexes.
+    isregexhashable['%'] = 1;
+    isregexhashable['"'] = 1;
+    isregexhashable[','] = 1;
+    isregexhashable['\''] = 1;
+    isregexhashable[':'] = 1;
+    isregexhashable['/'] = 1;
+
+    // Characters that are escaped in regexes.
+    isregexescapable['['] = 1;
+    isregexescapable['{'] = 1;
+    isregexescapable['.'] = 1;
+    isregexescapable['('] = 1;
+    isregexescapable[')'] = 1;
+    isregexescapable['.'] = 1;
+    isregexescapable['?'] = 1;
+    isregexescapable['^'] = 1;
+    isregexescapable['*'] = 1;
+    isregexescapable['+'] = 1;
+    isregexescapable['$'] = 1;
+    isregexescapable['|'] = 1;
+    isregexescapable['\\'] = 1;
 		
 	rule = rule_list->head;
 	
@@ -367,42 +394,76 @@ int populate_hash_table(HASH_TABLE* hash_table, RULE_LIST* rule_list)
 		string = rule->string_list_head;
 
 		while (string != NULL)
-		{	      
+		{
             fcount = 0;
             scount = 0;
-		    
-		    if (string->flags & STRING_FLAGS_REGEXP)
-            {				    			    
+            f = 0;
+            s = 0;
+
+		
+            if (string->flags & STRING_FLAGS_REGEXP)
+            {				    			
+                int pos = 0;
+
             	if (string->string[0] == '^')
-            	{
-            	    if (string->length > 2)
-            	    {
-            		    f = string->string[1];
-            		    s = string->string[2];
-            		}
-            		else
-            		{
-                        f = string->string[1];
-                        s = 0; 
-            		}
-            	}
-            	else
-            	{
-            		f = string->string[0];
-            		s = string->string[1];
-            	}
-            	
-            	if (isalphanum[f])
+                {
+                    pos++;
+                }
+
+                if (string->length > pos)
+                {
+                    // Get first character for hash map.
+                    if (string->string[pos] == '\\' && string->length > pos + 1)
+                    {
+                        if (isregexescapable[string->string[pos+1]])
+                        {
+                            f = string->string[pos+1];
+                            pos += 2;
+                        }
+                    }
+                    else
+                    {
+                        if (isregexhashable[string->string[pos]])
+                        {
+                            f = string->string[pos];
+                            pos++;
+                        }
+                    }
+                }
+                
+                if (f && string->length > pos)
+                {
+                    // Get second character for hash map.
+                    if (string->string[pos] == '\\' && string->length > pos + 1)
+                    {
+                        if (isregexescapable[string->string[pos+1]])
+                        {
+                            s = string->string[pos+1];
+                            pos += 2;
+                        }
+                    }
+                    else
+                    {
+                        if (isregexhashable[string->string[pos]])
+                        {
+                            s = string->string[pos];
+                            pos++;
+                        }
+                    }
+                }
+                // If f is set then it can be used in hashtable
+
+            	if (f)
             	{
             	    first[fcount++] = f;
             	    
         	        if (string->flags & STRING_FLAGS_NO_CASE)
                         first[fcount++] = altercase[f];
         	                	
-                	if (isalphanum[s])
+                	if (s)
                 	{
-                	    second[scount++] = s;    
-        	    
+                	    second[scount++] = s;
+        	
             	        if (string->flags & STRING_FLAGS_NO_CASE)
                             second[scount++] = altercase[s];
             	    }
@@ -821,7 +882,3 @@ int find_matches(	unsigned char first_char,
             	
 	return result;
 }
-
-
-
-
