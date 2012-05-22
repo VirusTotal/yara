@@ -190,6 +190,8 @@ inline int wicompare(char* str1, char* str2, int len)
 	return ((i==len) ? i * 2 : 0);
 }
 
+
+#define MIN(x,y)  ((x<y)?(x):(y))
  
 int hex_match(unsigned char* buffer, size_t buffer_size, unsigned char* pattern, int pattern_length, unsigned char* mask)
 {
@@ -207,7 +209,7 @@ int hex_match(unsigned char* buffer, size_t buffer_size, unsigned char* pattern,
 	m = 0;
 	
 	matches = 0;	
-	
+		
 	while (b < (size_t) buffer_size && p < (size_t) pattern_length)
 	{
 		if (mask[m] == MASK_EXACT_SKIP)
@@ -229,7 +231,7 @@ int hex_match(unsigned char* buffer, size_t buffer_size, unsigned char* pattern,
                         
             while (i <= delta && b + i < buffer_size)
             {
-                if ((buffer[b + i] & mask[m]) == pattern[p])
+                if ((buffer[b + i] & mask[m]) == pattern[p] || mask[m] == MASK_OR)
                 {
        			    tmp = hex_match(buffer + b + i, buffer_size - b - i,  pattern + p, pattern_length - p, mask + m);
        			}

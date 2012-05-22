@@ -137,6 +137,7 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = { 64 01 00 00 60 01 } condition: $a }',
             'rule test { strings: $a = { 64 0? 00 00 ?0 01 } condition: $a }',
             'rule test { strings: $a = { 64 01 [1-3] 60 01 } condition: $a }',
+            'rule test { strings: $a = { 64 01 [1-3] (60|61) 01 } condition: $a }',
         ], PE32_FILE)
         
     def testCount(self):
