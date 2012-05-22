@@ -1,23 +1,24 @@
-
-/* A Bison parser, made by GNU Bison 2.4.1.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
 /* Skeleton implementation for Bison's Yacc-like parsers in C
-   
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
-   
-   This program is free software: you can redistribute it and/or modify
+
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-   
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -28,7 +29,7 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-   
+
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
@@ -46,7 +47,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "2.4.1"
+#define YYBISON_VERSION "2.3"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -54,58 +55,9 @@
 /* Pure parsers.  */
 #define YYPURE 1
 
-/* Push parsers.  */
-#define YYPUSH 0
-
-/* Pull parsers.  */
-#define YYPULL 1
-
 /* Using locations.  */
 #define YYLSP_NEEDED 0
 
-
-
-/* Copy the first part of user declarations.  */
-
-/* Line 189 of yacc.c  */
-#line 2 "grammar.y"
- 
-    
-#include <stdio.h>
-#include <string.h>
-#include <limits.h>
-
-#include "ast.h"
-#include "sizedstr.h"
-#include "mem.h"
-#include "lex.h"
-#include "regex.h"
-
-#define YYERROR_VERBOSE
-//#define YYDEBUG 1
-
-
-
-/* Line 189 of yacc.c  */
-#line 91 "grammar.c"
-
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
-/* Enabling the token table.  */
-#ifndef YYTOKEN_TABLE
-# define YYTOKEN_TABLE 0
-#endif
 
 
 /* Tokens.  */
@@ -243,13 +195,47 @@
 
 
 
+/* Copy the first part of user declarations.  */
+#line 34 "grammar.y"
+ 
+    
+#include <stdio.h>
+#include <string.h>
+#include <limits.h>
+
+#include "ast.h"
+#include "sizedstr.h"
+#include "mem.h"
+#include "lex.h"
+#include "regex.h"
+
+#define YYERROR_VERBOSE
+//#define YYDEBUG 1
+
+
+
+/* Enabling traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+
+/* Enabling verbose error messages.  */
+#ifdef YYERROR_VERBOSE
+# undef YYERROR_VERBOSE
+# define YYERROR_VERBOSE 1
+#else
+# define YYERROR_VERBOSE 0
+#endif
+
+/* Enabling the token table.  */
+#ifndef YYTOKEN_TABLE
+# define YYTOKEN_TABLE 0
+#endif
+
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
+#line 148 "grammar.y"
 {
-
-/* Line 214 of yacc.c  */
-#line 116 "grammar.y"
-
     
     void*           sized_string;
     char*           c_string;
@@ -259,22 +245,19 @@ typedef union YYSTYPE
     void*           tag;
     void*           meta;
 
-
-
-
-/* Line 214 of yacc.c  */
-#line 267 "grammar.c"
-} YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
+}
+/* Line 193 of yacc.c.  */
+#line 251 "grammar.c"
+	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 
-/* Copy the second part of user declarations.  */
 
-/* Line 264 of yacc.c  */
-#line 131 "grammar.y"
+/* Copy the second part of user declarations.  */
+#line 163 "grammar.y"
  
 
 /* Function declarations */
@@ -378,8 +361,8 @@ TERM* reduce_range( yyscan_t yyscanner,
 
 
 
-/* Line 264 of yacc.c  */
-#line 383 "grammar.c"
+/* Line 216 of yacc.c.  */
+#line 366 "grammar.c"
 
 #ifdef short
 # undef short
@@ -429,7 +412,7 @@ typedef short int yytype_int16;
 #define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
 
 #ifndef YY_
-# if YYENABLE_NLS
+# if defined YYENABLE_NLS && YYENABLE_NLS
 #  if ENABLE_NLS
 #   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
 #   define YY_(msgid) dgettext ("bison-runtime", msgid)
@@ -454,14 +437,14 @@ typedef short int yytype_int16;
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static int
-YYID (int yyi)
+YYID (int i)
 #else
 static int
-YYID (yyi)
-    int yyi;
+YYID (i)
+    int i;
 #endif
 {
-  return yyi;
+  return i;
 }
 #endif
 
@@ -542,9 +525,9 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss_alloc;
-  YYSTYPE yyvs_alloc;
-};
+  yytype_int16 yyss;
+  YYSTYPE yyvs;
+  };
 
 /* The size of the maximum gap between one aligned stack and the next.  */
 # define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
@@ -578,12 +561,12 @@ union yyalloc
    elements in the stack, and YYPTR gives the new location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
-# define YYSTACK_RELOCATE(Stack_alloc, Stack)				\
+# define YYSTACK_RELOCATE(Stack)					\
     do									\
       {									\
 	YYSIZE_T yynewbytes;						\
-	YYCOPY (&yyptr->Stack_alloc, Stack, yysize);			\
-	Stack = &yyptr->Stack_alloc;					\
+	YYCOPY (&yyptr->Stack, Stack, yysize);				\
+	Stack = &yyptr->Stack;						\
 	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
 	yyptr += yynewbytes / sizeof (*yyptr);				\
       }									\
@@ -711,17 +694,17 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   236,   236,   237,   238,   239,   242,   252,   253,   256,
-     257,   260,   263,   264,   267,   268,   271,   272,   275,   284,
-     294,   303,   314,   323,   332,   341,   352,   362,   374,   384,
-     394,   406,   407,   410,   411,   412,   413,   416,   417,   418,
-     428,   438,   448,   458,   468,   472,   482,   493,   492,   507,
-     506,   522,   532,   533,   534,   535,   536,   538,   539,   540,
-     541,   542,   543,   544,   549,   550,   553,   554,   559,   560,
-     563,   564,   567,   577,   591,   595,   596,   597,   601,   602,
-     603,   604,   605,   606,   607,   608,   609,   619,   629,   639,
-     640,   641,   642,   643,   644,   645,   646,   647,   648,   649,
-     652,   655,   656,   657
+       0,   268,   268,   269,   270,   271,   274,   284,   285,   288,
+     289,   292,   295,   296,   299,   300,   303,   304,   307,   316,
+     326,   335,   346,   355,   364,   373,   384,   394,   406,   416,
+     426,   438,   439,   442,   443,   444,   445,   448,   449,   450,
+     460,   470,   480,   490,   500,   504,   514,   525,   524,   539,
+     538,   554,   564,   565,   566,   567,   568,   570,   571,   572,
+     573,   574,   575,   576,   581,   582,   585,   586,   591,   592,
+     595,   596,   599,   609,   623,   627,   628,   629,   633,   634,
+     635,   636,   637,   638,   639,   640,   641,   651,   661,   671,
+     672,   673,   674,   675,   676,   677,   678,   679,   680,   681,
+     684,   687,   688,   689
 };
 #endif
 
@@ -741,13 +724,13 @@ static const char *const yytname[] =
   "_UINT16_", "_UINT32_", "_MATCHES_", "_CONTAINS_", "_INDEX_", "_MZ_",
   "_PE_", "_DLL_", "_TRUE_", "_FALSE_", "_OR_", "_AND_", "'&'", "'|'",
   "_IS_", "_NEQ_", "_EQ_", "_GE_", "_GT_", "_LE_", "_LT_", "_SHIFT_RIGHT_",
-  "_SHIFT_LEFT_", "'+'", "'-'", "'*'", "'\\\\'", "_NOT_", "'~'", "'i'",
-  "'{'", "'}'", "':'", "'='", "'('", "')'", "','", "'.'", "'['", "']'",
-  "$accept", "rules", "rule", "meta", "strings", "condition",
+  "_SHIFT_LEFT_", "'+'", "'-'", "'*'", "'\\\\'", "_NOT_", "'~'",
+  "'include'", "'{'", "'}'", "':'", "'='", "'('", "')'", "','", "'.'",
+  "'['", "']'", "$accept", "rules", "rule", "meta", "strings", "condition",
   "rule_modifiers", "rule_modifier", "tags", "tag_list",
   "meta_declarations", "meta_declaration", "string_declarations",
   "string_declaration", "string_modifiers", "string_modifier",
-  "boolean_expression", "$@1", "$@2", "integer_set", "integer_enumeration",
+  "boolean_expression", "@1", "@2", "integer_set", "integer_enumeration",
   "string_set", "string_enumeration", "string_enumeration_item", "range",
   "for_expression", "expression", "number", "type", 0
 };
@@ -1061,7 +1044,7 @@ while (YYID (0))
    we won't break user code: when these are the locations we know.  */
 
 #ifndef YY_LOCATION_PRINT
-# if YYLTYPE_IS_TRIVIAL
+# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
 #  define YY_LOCATION_PRINT(File, Loc)			\
      fprintf (File, "%d.%d-%d.%d",			\
 	      (Loc).first_line, (Loc).first_column,	\
@@ -1175,20 +1158,17 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, yyscanner)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
+yy_stack_print (yytype_int16 *bottom, yytype_int16 *top)
 #else
 static void
-yy_stack_print (yybottom, yytop)
-    yytype_int16 *yybottom;
-    yytype_int16 *yytop;
+yy_stack_print (bottom, top)
+    yytype_int16 *bottom;
+    yytype_int16 *top;
 #endif
 {
   YYFPRINTF (stderr, "Stack now");
-  for (; yybottom <= yytop; yybottom++)
-    {
-      int yybot = *yybottom;
-      YYFPRINTF (stderr, " %d", yybot);
-    }
+  for (; bottom <= top; ++bottom)
+    YYFPRINTF (stderr, " %d", *bottom);
   YYFPRINTF (stderr, "\n");
 }
 
@@ -1223,11 +1203,11 @@ yy_reduce_print (yyvsp, yyrule, yyscanner)
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
     {
-      YYFPRINTF (stderr, "   $%d = ", yyi + 1);
+      fprintf (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
 		       		       , yyscanner);
-      YYFPRINTF (stderr, "\n");
+      fprintf (stderr, "\n");
     }
 }
 
@@ -1509,8 +1489,10 @@ yydestruct (yymsg, yytype, yyvaluep, yyscanner)
 	break;
     }
 }
+
 
 /* Prevent warnings from -Wmissing-prototypes.  */
+
 #ifdef YYPARSE_PARAM
 #if defined __STDC__ || defined __cplusplus
 int yyparse (void *YYPARSE_PARAM);
@@ -1529,9 +1511,10 @@ int yyparse ();
 
 
 
-/*-------------------------.
-| yyparse or yypush_parse.  |
-`-------------------------*/
+
+/*----------.
+| yyparse.  |
+`----------*/
 
 #ifdef YYPARSE_PARAM
 #if (defined __STDC__ || defined __C99__FUNC__ \
@@ -1555,46 +1538,22 @@ yyparse (yyscanner)
 #endif
 #endif
 {
-/* The lookahead symbol.  */
+  /* The look-ahead symbol.  */
 int yychar;
 
-/* The semantic value of the lookahead symbol.  */
+/* The semantic value of the look-ahead symbol.  */
 YYSTYPE yylval;
 
-    /* Number of syntax errors so far.  */
-    int yynerrs;
+/* Number of syntax errors so far.  */
+int yynerrs;
 
-    int yystate;
-    /* Number of tokens to shift before error messages enabled.  */
-    int yyerrstatus;
-
-    /* The stacks and their tools:
-       `yyss': related to states.
-       `yyvs': related to semantic values.
-
-       Refer to the stacks thru separate pointers, to allow yyoverflow
-       to reallocate them elsewhere.  */
-
-    /* The state stack.  */
-    yytype_int16 yyssa[YYINITDEPTH];
-    yytype_int16 *yyss;
-    yytype_int16 *yyssp;
-
-    /* The semantic value stack.  */
-    YYSTYPE yyvsa[YYINITDEPTH];
-    YYSTYPE *yyvs;
-    YYSTYPE *yyvsp;
-
-    YYSIZE_T yystacksize;
-
+  int yystate;
   int yyn;
   int yyresult;
-  /* Lookahead token as an internal (translated) token number.  */
-  int yytoken;
-  /* The variables used to return semantic value and location from the
-     action routines.  */
-  YYSTYPE yyval;
-
+  /* Number of tokens to shift before error messages enabled.  */
+  int yyerrstatus;
+  /* Look-ahead token as an internal (translated) token number.  */
+  int yytoken = 0;
 #if YYERROR_VERBOSE
   /* Buffer for error messages, and its allocated size.  */
   char yymsgbuf[128];
@@ -1602,28 +1561,51 @@ YYSTYPE yylval;
   YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
 #endif
 
+  /* Three stacks and their tools:
+     `yyss': related to states,
+     `yyvs': related to semantic values,
+     `yyls': related to locations.
+
+     Refer to the stacks thru separate pointers, to allow yyoverflow
+     to reallocate them elsewhere.  */
+
+  /* The state stack.  */
+  yytype_int16 yyssa[YYINITDEPTH];
+  yytype_int16 *yyss = yyssa;
+  yytype_int16 *yyssp;
+
+  /* The semantic value stack.  */
+  YYSTYPE yyvsa[YYINITDEPTH];
+  YYSTYPE *yyvs = yyvsa;
+  YYSTYPE *yyvsp;
+
+
+
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
+
+  YYSIZE_T yystacksize = YYINITDEPTH;
+
+  /* The variables used to return semantic value and location from the
+     action routines.  */
+  YYSTYPE yyval;
+
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
-
-  yytoken = 0;
-  yyss = yyssa;
-  yyvs = yyvsa;
-  yystacksize = YYINITDEPTH;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
 
   yystate = 0;
   yyerrstatus = 0;
   yynerrs = 0;
-  yychar = YYEMPTY; /* Cause a token to be read.  */
+  yychar = YYEMPTY;		/* Cause a token to be read.  */
 
   /* Initialize stack pointers.
      Waste one element of value and location stack
      so that they stay on the same level as the state stack.
      The wasted elements are never initialized.  */
+
   yyssp = yyss;
   yyvsp = yyvs;
 
@@ -1653,6 +1635,7 @@ YYSTYPE yylval;
 	YYSTYPE *yyvs1 = yyvs;
 	yytype_int16 *yyss1 = yyss;
 
+
 	/* Each stack pointer address is followed by the size of the
 	   data in use in that stack, in bytes.  This used to be a
 	   conditional around just the two extra args, but that might
@@ -1660,6 +1643,7 @@ YYSTYPE yylval;
 	yyoverflow (YY_("memory exhausted"),
 		    &yyss1, yysize * sizeof (*yyssp),
 		    &yyvs1, yysize * sizeof (*yyvsp),
+
 		    &yystacksize);
 
 	yyss = yyss1;
@@ -1682,8 +1666,9 @@ YYSTYPE yylval;
 	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
 	if (! yyptr)
 	  goto yyexhaustedlab;
-	YYSTACK_RELOCATE (yyss_alloc, yyss);
-	YYSTACK_RELOCATE (yyvs_alloc, yyvs);
+	YYSTACK_RELOCATE (yyss);
+	YYSTACK_RELOCATE (yyvs);
+
 #  undef YYSTACK_RELOCATE
 	if (yyss1 != yyssa)
 	  YYSTACK_FREE (yyss1);
@@ -1694,6 +1679,7 @@ YYSTYPE yylval;
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
 
+
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
 		  (unsigned long int) yystacksize));
 
@@ -1703,9 +1689,6 @@ YYSTYPE yylval;
 
   YYDPRINTF ((stderr, "Entering state %d\n", yystate));
 
-  if (yystate == YYFINAL)
-    YYACCEPT;
-
   goto yybackup;
 
 /*-----------.
@@ -1714,16 +1697,16 @@ YYSTYPE yylval;
 yybackup:
 
   /* Do appropriate processing given the current state.  Read a
-     lookahead token if we need one and don't already have one.  */
+     look-ahead token if we need one and don't already have one.  */
 
-  /* First try to decide what to do without reference to lookahead token.  */
+  /* First try to decide what to do without reference to look-ahead token.  */
   yyn = yypact[yystate];
   if (yyn == YYPACT_NINF)
     goto yydefault;
 
-  /* Not known => get a lookahead token if don't already have one.  */
+  /* Not known => get a look-ahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
+  /* YYCHAR is either YYEMPTY or YYEOF or a valid look-ahead symbol.  */
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
@@ -1755,16 +1738,20 @@ yybackup:
       goto yyreduce;
     }
 
+  if (yyn == YYFINAL)
+    YYACCEPT;
+
   /* Count tokens shifted since error; after three, turn off error
      status.  */
   if (yyerrstatus)
     yyerrstatus--;
 
-  /* Shift the lookahead token.  */
+  /* Shift the look-ahead token.  */
   YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
 
-  /* Discard the shifted token.  */
-  yychar = YYEMPTY;
+  /* Discard the shifted token unless it is eof.  */
+  if (yychar != YYEOF)
+    yychar = YYEMPTY;
 
   yystate = yyn;
   *++yyvsp = yylval;
@@ -1804,9 +1791,7 @@ yyreduce:
   switch (yyn)
     {
         case 6:
-
-/* Line 1455 of yacc.c  */
-#line 243 "grammar.y"
+#line 275 "grammar.y"
     { 
                 if (reduce_rule_declaration(yyscanner, (yyvsp[(3) - (9)].c_string),(yyvsp[(1) - (9)].integer),(yyvsp[(4) - (9)].tag),(yyvsp[(6) - (9)].meta),(yyvsp[(7) - (9)].string),(yyvsp[(8) - (9)].term)) != ERROR_SUCCESS)
                 {
@@ -1817,86 +1802,62 @@ yyreduce:
     break;
 
   case 7:
-
-/* Line 1455 of yacc.c  */
-#line 252 "grammar.y"
+#line 284 "grammar.y"
     { (yyval.meta) = NULL; }
     break;
 
   case 8:
-
-/* Line 1455 of yacc.c  */
-#line 253 "grammar.y"
+#line 285 "grammar.y"
     { (yyval.meta) = (yyvsp[(3) - (3)].meta); }
     break;
 
   case 9:
-
-/* Line 1455 of yacc.c  */
-#line 256 "grammar.y"
+#line 288 "grammar.y"
     { (yyval.string) = NULL; }
     break;
 
   case 10:
-
-/* Line 1455 of yacc.c  */
-#line 257 "grammar.y"
+#line 289 "grammar.y"
     { (yyval.string) = (yyvsp[(3) - (3)].string); }
     break;
 
   case 11:
-
-/* Line 1455 of yacc.c  */
-#line 260 "grammar.y"
+#line 292 "grammar.y"
     { (yyval.term) = (yyvsp[(3) - (3)].term); }
     break;
 
   case 12:
-
-/* Line 1455 of yacc.c  */
-#line 263 "grammar.y"
+#line 295 "grammar.y"
     { (yyval.integer) = 0;  }
     break;
 
   case 13:
-
-/* Line 1455 of yacc.c  */
-#line 264 "grammar.y"
+#line 296 "grammar.y"
     { (yyval.integer) = (yyvsp[(1) - (2)].integer) | (yyvsp[(2) - (2)].integer); }
     break;
 
   case 14:
-
-/* Line 1455 of yacc.c  */
-#line 267 "grammar.y"
+#line 299 "grammar.y"
     { (yyval.integer) = RULE_FLAGS_PRIVATE; }
     break;
 
   case 15:
-
-/* Line 1455 of yacc.c  */
-#line 268 "grammar.y"
+#line 300 "grammar.y"
     { (yyval.integer) = RULE_FLAGS_GLOBAL; }
     break;
 
   case 16:
-
-/* Line 1455 of yacc.c  */
-#line 271 "grammar.y"
+#line 303 "grammar.y"
     { (yyval.tag) = NULL; }
     break;
 
   case 17:
-
-/* Line 1455 of yacc.c  */
-#line 272 "grammar.y"
+#line 304 "grammar.y"
     { (yyval.tag) = (yyvsp[(2) - (2)].tag);   }
     break;
 
   case 18:
-
-/* Line 1455 of yacc.c  */
-#line 275 "grammar.y"
+#line 307 "grammar.y"
     { 
                                                 (yyval.tag) = reduce_tags(yyscanner,NULL,(yyvsp[(1) - (1)].c_string)); 
                                                 
@@ -1909,9 +1870,7 @@ yyreduce:
     break;
 
   case 19:
-
-/* Line 1455 of yacc.c  */
-#line 284 "grammar.y"
+#line 316 "grammar.y"
     {   
                                                 (yyval.tag) = reduce_tags(yyscanner,(yyvsp[(1) - (2)].tag),(yyvsp[(2) - (2)].c_string)); 
                                                 
@@ -1924,9 +1883,7 @@ yyreduce:
     break;
 
   case 20:
-
-/* Line 1455 of yacc.c  */
-#line 294 "grammar.y"
+#line 326 "grammar.y"
     { 
                                                                 (yyval.meta) = reduce_metas(yyscanner, NULL, (yyvsp[(1) - (1)].meta)); 
                                                                 
@@ -1939,9 +1896,7 @@ yyreduce:
     break;
 
   case 21:
-
-/* Line 1455 of yacc.c  */
-#line 303 "grammar.y"
+#line 335 "grammar.y"
     { 
                                                                 (yyval.meta) = reduce_metas(yyscanner, (yyvsp[(1) - (2)].meta), (yyvsp[(2) - (2)].meta)); 
                                                                 
@@ -1954,9 +1909,7 @@ yyreduce:
     break;
 
   case 22:
-
-/* Line 1455 of yacc.c  */
-#line 314 "grammar.y"
+#line 346 "grammar.y"
     { 
                                                                 (yyval.meta) = reduce_meta_declaration(yyscanner, META_TYPE_STRING, (yyvsp[(1) - (3)].c_string), 0, (yyvsp[(3) - (3)].sized_string));
                                                                 
@@ -1969,9 +1922,7 @@ yyreduce:
     break;
 
   case 23:
-
-/* Line 1455 of yacc.c  */
-#line 323 "grammar.y"
+#line 355 "grammar.y"
     { 
                                                                 (yyval.meta) = reduce_meta_declaration(yyscanner, META_TYPE_INTEGER, (yyvsp[(1) - (3)].c_string), (yyvsp[(3) - (3)].integer), NULL); 
                                                                 
@@ -1984,9 +1935,7 @@ yyreduce:
     break;
 
   case 24:
-
-/* Line 1455 of yacc.c  */
-#line 332 "grammar.y"
+#line 364 "grammar.y"
     { 
                                                                 (yyval.meta) = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, (yyvsp[(1) - (3)].c_string), TRUE, NULL); 
 
@@ -1999,9 +1948,7 @@ yyreduce:
     break;
 
   case 25:
-
-/* Line 1455 of yacc.c  */
-#line 341 "grammar.y"
+#line 373 "grammar.y"
     { 
                                                                 (yyval.meta) = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, (yyvsp[(1) - (3)].c_string), FALSE, NULL); 
 
@@ -2014,9 +1961,7 @@ yyreduce:
     break;
 
   case 26:
-
-/* Line 1455 of yacc.c  */
-#line 353 "grammar.y"
+#line 385 "grammar.y"
     { 
                             (yyval.string) = reduce_strings(yyscanner,NULL,(yyvsp[(1) - (1)].string)); 
                             
@@ -2029,9 +1974,7 @@ yyreduce:
     break;
 
   case 27:
-
-/* Line 1455 of yacc.c  */
-#line 363 "grammar.y"
+#line 395 "grammar.y"
     { 
                             (yyval.string) = reduce_strings(yyscanner,(yyvsp[(1) - (2)].string),(yyvsp[(2) - (2)].string));
                         
@@ -2044,9 +1987,7 @@ yyreduce:
     break;
 
   case 28:
-
-/* Line 1455 of yacc.c  */
-#line 375 "grammar.y"
+#line 407 "grammar.y"
     { 
                             (yyval.string) = reduce_string_declaration(yyscanner, (yyvsp[(1) - (4)].term), (yyvsp[(3) - (4)].sized_string), (yyvsp[(4) - (4)].integer)); 
                 
@@ -2059,9 +2000,7 @@ yyreduce:
     break;
 
   case 29:
-
-/* Line 1455 of yacc.c  */
-#line 385 "grammar.y"
+#line 417 "grammar.y"
     { 
                            (yyval.string) = reduce_string_declaration(yyscanner, (yyvsp[(1) - (4)].term), (yyvsp[(3) - (4)].sized_string), (yyvsp[(4) - (4)].integer) | STRING_FLAGS_REGEXP); 
 
@@ -2074,9 +2013,7 @@ yyreduce:
     break;
 
   case 30:
-
-/* Line 1455 of yacc.c  */
-#line 395 "grammar.y"
+#line 427 "grammar.y"
     {
                             (yyval.string) = reduce_string_declaration(yyscanner, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].sized_string), STRING_FLAGS_HEXADECIMAL);
             
@@ -2089,65 +2026,47 @@ yyreduce:
     break;
 
   case 31:
-
-/* Line 1455 of yacc.c  */
-#line 406 "grammar.y"
+#line 438 "grammar.y"
     { (yyval.integer) = 0;  }
     break;
 
   case 32:
-
-/* Line 1455 of yacc.c  */
-#line 407 "grammar.y"
+#line 439 "grammar.y"
     { (yyval.integer) = (yyvsp[(1) - (2)].integer) | (yyvsp[(2) - (2)].integer); }
     break;
 
   case 33:
-
-/* Line 1455 of yacc.c  */
-#line 410 "grammar.y"
+#line 442 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_WIDE; }
     break;
 
   case 34:
-
-/* Line 1455 of yacc.c  */
-#line 411 "grammar.y"
+#line 443 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_ASCII; }
     break;
 
   case 35:
-
-/* Line 1455 of yacc.c  */
-#line 412 "grammar.y"
+#line 444 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_NO_CASE; }
     break;
 
   case 36:
-
-/* Line 1455 of yacc.c  */
-#line 413 "grammar.y"
+#line 445 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_FULL_WORD; }
     break;
 
   case 37:
-
-/* Line 1455 of yacc.c  */
-#line 416 "grammar.y"
+#line 448 "grammar.y"
     { (yyval.term) = reduce_constant(yyscanner, 1); }
     break;
 
   case 38:
-
-/* Line 1455 of yacc.c  */
-#line 417 "grammar.y"
+#line 449 "grammar.y"
     { (yyval.term) = reduce_constant(yyscanner, 0); }
     break;
 
   case 39:
-
-/* Line 1455 of yacc.c  */
-#line 419 "grammar.y"
+#line 451 "grammar.y"
     { 
                         (yyval.term) = reduce_identifier(yyscanner, (yyvsp[(1) - (1)].c_string));
                         
@@ -2160,9 +2079,7 @@ yyreduce:
     break;
 
   case 40:
-
-/* Line 1455 of yacc.c  */
-#line 429 "grammar.y"
+#line 461 "grammar.y"
     { 
                         (yyval.term) = reduce_string_operation(yyscanner, TERM_TYPE_STRING_MATCH, (yyvsp[(1) - (3)].c_string), (yyvsp[(3) - (3)].sized_string));
                         
@@ -2175,9 +2092,7 @@ yyreduce:
     break;
 
   case 41:
-
-/* Line 1455 of yacc.c  */
-#line 439 "grammar.y"
+#line 471 "grammar.y"
     { 
                         (yyval.term) = reduce_string_operation(yyscanner, TERM_TYPE_STRING_CONTAINS, (yyvsp[(1) - (3)].c_string), (yyvsp[(3) - (3)].sized_string));
                         
@@ -2190,9 +2105,7 @@ yyreduce:
     break;
 
   case 42:
-
-/* Line 1455 of yacc.c  */
-#line 449 "grammar.y"
+#line 481 "grammar.y"
     {  
                         (yyval.term) = reduce_string(yyscanner, (yyvsp[(1) - (1)].term));
                         
@@ -2205,9 +2118,7 @@ yyreduce:
     break;
 
   case 43:
-
-/* Line 1455 of yacc.c  */
-#line 459 "grammar.y"
+#line 491 "grammar.y"
     {          
                         (yyval.term) = reduce_string_at(yyscanner, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term));
                         
@@ -2220,18 +2131,14 @@ yyreduce:
     break;
 
   case 44:
-
-/* Line 1455 of yacc.c  */
-#line 469 "grammar.y"
+#line 501 "grammar.y"
     { 
                         (yyval.term) = NULL; 
                      }
     break;
 
   case 45:
-
-/* Line 1455 of yacc.c  */
-#line 473 "grammar.y"
+#line 505 "grammar.y"
     {          
                         (yyval.term) = reduce_string_in_range(yyscanner, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term));
                         
@@ -2244,9 +2151,7 @@ yyreduce:
     break;
 
   case 46:
-
-/* Line 1455 of yacc.c  */
-#line 483 "grammar.y"
+#line 515 "grammar.y"
     {          
                         (yyval.term) = reduce_string_in_section_by_name(yyscanner, (yyvsp[(1) - (6)].term), (yyvsp[(5) - (6)].sized_string));
 
@@ -2259,18 +2164,14 @@ yyreduce:
     break;
 
   case 47:
-
-/* Line 1455 of yacc.c  */
-#line 493 "grammar.y"
+#line 525 "grammar.y"
     {
                           yr_define_integer_variable(yyget_extra(yyscanner), (yyvsp[(3) - (6)].c_string), 0);
                      }
     break;
 
   case 48:
-
-/* Line 1455 of yacc.c  */
-#line 497 "grammar.y"
+#line 529 "grammar.y"
     {                        
                          (yyval.term) = reduce_integer_for(yyscanner, (yyvsp[(2) - (10)].term), (yyvsp[(3) - (10)].c_string), (yyvsp[(5) - (10)].term), (yyvsp[(9) - (10)].term)); 
                            
@@ -2283,18 +2184,14 @@ yyreduce:
     break;
 
   case 49:
-
-/* Line 1455 of yacc.c  */
-#line 507 "grammar.y"
+#line 539 "grammar.y"
     { 
                          yyget_extra(yyscanner)->inside_for++; 
                      }
     break;
 
   case 50:
-
-/* Line 1455 of yacc.c  */
-#line 511 "grammar.y"
+#line 543 "grammar.y"
     { 
                          yyget_extra(yyscanner)->inside_for--; 
                            
@@ -2309,9 +2206,7 @@ yyreduce:
     break;
 
   case 51:
-
-/* Line 1455 of yacc.c  */
-#line 523 "grammar.y"
+#line 555 "grammar.y"
     { 
                          (yyval.term) = reduce_term(yyscanner, TERM_TYPE_OF, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); 
                          
@@ -2324,135 +2219,97 @@ yyreduce:
     break;
 
   case 52:
-
-/* Line 1455 of yacc.c  */
-#line 532 "grammar.y"
+#line 564 "grammar.y"
     { (yyval.term) = NULL; }
     break;
 
   case 53:
-
-/* Line 1455 of yacc.c  */
-#line 533 "grammar.y"
+#line 565 "grammar.y"
     { (yyval.term) = (yyvsp[(2) - (3)].term); }
     break;
 
   case 54:
-
-/* Line 1455 of yacc.c  */
-#line 534 "grammar.y"
+#line 566 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_NOT, (yyvsp[(2) - (2)].term), NULL, NULL); }
     break;
 
   case 55:
-
-/* Line 1455 of yacc.c  */
-#line 535 "grammar.y"
+#line 567 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_AND, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 56:
-
-/* Line 1455 of yacc.c  */
-#line 536 "grammar.y"
+#line 568 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_OR, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 57:
-
-/* Line 1455 of yacc.c  */
-#line 538 "grammar.y"
+#line 570 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_LT, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 58:
-
-/* Line 1455 of yacc.c  */
-#line 539 "grammar.y"
+#line 571 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_GT, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 59:
-
-/* Line 1455 of yacc.c  */
-#line 540 "grammar.y"
+#line 572 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_LE, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 60:
-
-/* Line 1455 of yacc.c  */
-#line 541 "grammar.y"
+#line 573 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_GE, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 61:
-
-/* Line 1455 of yacc.c  */
-#line 542 "grammar.y"
+#line 574 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_EQ, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 62:
-
-/* Line 1455 of yacc.c  */
-#line 543 "grammar.y"
+#line 575 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_EQ, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 63:
-
-/* Line 1455 of yacc.c  */
-#line 544 "grammar.y"
+#line 576 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_NOT_EQ, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 64:
-
-/* Line 1455 of yacc.c  */
-#line 549 "grammar.y"
+#line 581 "grammar.y"
     { (yyval.term) = (yyvsp[(2) - (3)].term); }
     break;
 
   case 65:
-
-/* Line 1455 of yacc.c  */
-#line 550 "grammar.y"
+#line 582 "grammar.y"
     { (yyval.term) = (yyvsp[(1) - (1)].term); }
     break;
 
   case 67:
-
-/* Line 1455 of yacc.c  */
-#line 554 "grammar.y"
+#line 586 "grammar.y"
     { (yyval.term) = reduce_integer_enumeration(yyscanner, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term)); }
     break;
 
   case 68:
-
-/* Line 1455 of yacc.c  */
-#line 559 "grammar.y"
+#line 591 "grammar.y"
     { (yyval.term) = (yyvsp[(2) - (3)].term); }
     break;
 
   case 69:
-
-/* Line 1455 of yacc.c  */
-#line 560 "grammar.y"
+#line 592 "grammar.y"
     { (yyval.term) = reduce_string_with_wildcard(yyscanner, yr_strdup("$*")); }
     break;
 
   case 71:
-
-/* Line 1455 of yacc.c  */
-#line 564 "grammar.y"
+#line 596 "grammar.y"
     { (yyval.term) = reduce_string_enumeration(yyscanner, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term)); }
     break;
 
   case 72:
-
-/* Line 1455 of yacc.c  */
-#line 568 "grammar.y"
+#line 600 "grammar.y"
     {  
                               (yyval.term) = reduce_string(yyscanner, (yyvsp[(1) - (1)].term));
 
@@ -2465,9 +2322,7 @@ yyreduce:
     break;
 
   case 73:
-
-/* Line 1455 of yacc.c  */
-#line 578 "grammar.y"
+#line 610 "grammar.y"
     { 
                               (yyval.term) = reduce_string_with_wildcard(yyscanner, (yyvsp[(1) - (1)].term)); 
                               
@@ -2480,86 +2335,62 @@ yyreduce:
     break;
 
   case 74:
-
-/* Line 1455 of yacc.c  */
-#line 591 "grammar.y"
+#line 623 "grammar.y"
     { (yyval.term) = reduce_range(yyscanner, (yyvsp[(2) - (6)].term), (yyvsp[(5) - (6)].term)); }
     break;
 
   case 76:
-
-/* Line 1455 of yacc.c  */
-#line 596 "grammar.y"
+#line 628 "grammar.y"
     { (yyval.term) = reduce_constant(yyscanner, 0); }
     break;
 
   case 77:
-
-/* Line 1455 of yacc.c  */
-#line 597 "grammar.y"
+#line 629 "grammar.y"
     { (yyval.term) = reduce_constant(yyscanner, 1); }
     break;
 
   case 78:
-
-/* Line 1455 of yacc.c  */
-#line 601 "grammar.y"
+#line 633 "grammar.y"
     { (yyval.term) = reduce_filesize(yyscanner); }
     break;
 
   case 79:
-
-/* Line 1455 of yacc.c  */
-#line 602 "grammar.y"
+#line 634 "grammar.y"
     { (yyval.term) = reduce_entrypoint(yyscanner); }
     break;
 
   case 80:
-
-/* Line 1455 of yacc.c  */
-#line 603 "grammar.y"
+#line 635 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_INT8_AT_OFFSET, (yyvsp[(3) - (4)].term), NULL, NULL); }
     break;
 
   case 81:
-
-/* Line 1455 of yacc.c  */
-#line 604 "grammar.y"
+#line 636 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_INT16_AT_OFFSET, (yyvsp[(3) - (4)].term), NULL, NULL); }
     break;
 
   case 82:
-
-/* Line 1455 of yacc.c  */
-#line 605 "grammar.y"
+#line 637 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_INT32_AT_OFFSET, (yyvsp[(3) - (4)].term), NULL, NULL); }
     break;
 
   case 83:
-
-/* Line 1455 of yacc.c  */
-#line 606 "grammar.y"
+#line 638 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_UINT8_AT_OFFSET, (yyvsp[(3) - (4)].term), NULL, NULL); }
     break;
 
   case 84:
-
-/* Line 1455 of yacc.c  */
-#line 607 "grammar.y"
+#line 639 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_UINT16_AT_OFFSET, (yyvsp[(3) - (4)].term), NULL, NULL); }
     break;
 
   case 85:
-
-/* Line 1455 of yacc.c  */
-#line 608 "grammar.y"
+#line 640 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_UINT32_AT_OFFSET, (yyvsp[(3) - (4)].term), NULL, NULL); }
     break;
 
   case 86:
-
-/* Line 1455 of yacc.c  */
-#line 610 "grammar.y"
+#line 642 "grammar.y"
     { 
                 (yyval.term) = reduce_string_count(yyscanner, (yyvsp[(1) - (1)].term)); 
                 
@@ -2572,9 +2403,7 @@ yyreduce:
     break;
 
   case 87:
-
-/* Line 1455 of yacc.c  */
-#line 620 "grammar.y"
+#line 652 "grammar.y"
     { 
                 (yyval.term) = reduce_string_offset(yyscanner, (yyvsp[(1) - (4)].term), (yyvsp[(3) - (4)].term)); 
 
@@ -2587,9 +2416,7 @@ yyreduce:
     break;
 
   case 88:
-
-/* Line 1455 of yacc.c  */
-#line 630 "grammar.y"
+#line 662 "grammar.y"
     {
                  (yyval.term) = reduce_identifier(yyscanner, (yyvsp[(1) - (1)].c_string));
                     
@@ -2602,86 +2429,63 @@ yyreduce:
     break;
 
   case 89:
-
-/* Line 1455 of yacc.c  */
-#line 639 "grammar.y"
+#line 671 "grammar.y"
     { (yyval.term) = (yyvsp[(2) - (3)].term); }
     break;
 
   case 90:
-
-/* Line 1455 of yacc.c  */
-#line 640 "grammar.y"
+#line 672 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_ADD, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 91:
-
-/* Line 1455 of yacc.c  */
-#line 641 "grammar.y"
+#line 673 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_SUB, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 92:
-
-/* Line 1455 of yacc.c  */
-#line 642 "grammar.y"
+#line 674 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_MUL, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 93:
-
-/* Line 1455 of yacc.c  */
-#line 643 "grammar.y"
+#line 675 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_DIV, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 94:
-
-/* Line 1455 of yacc.c  */
-#line 644 "grammar.y"
+#line 676 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_BITWISE_AND, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 95:
-
-/* Line 1455 of yacc.c  */
-#line 645 "grammar.y"
+#line 677 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_BITWISE_OR, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 96:
-
-/* Line 1455 of yacc.c  */
-#line 646 "grammar.y"
+#line 678 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_BITWISE_NOT, (yyvsp[(2) - (2)].term), NULL, NULL); }
     break;
 
   case 97:
-
-/* Line 1455 of yacc.c  */
-#line 647 "grammar.y"
+#line 679 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_SHIFT_LEFT, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 98:
-
-/* Line 1455 of yacc.c  */
-#line 648 "grammar.y"
+#line 680 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_SHIFT_RIGHT, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 100:
-
-/* Line 1455 of yacc.c  */
-#line 652 "grammar.y"
+#line 684 "grammar.y"
     { (yyval.term) = reduce_constant(yyscanner, (yyvsp[(1) - (1)].integer)); }
     break;
 
 
-
-/* Line 1455 of yacc.c  */
-#line 2685 "grammar.c"
+/* Line 1267 of yacc.c.  */
+#line 2489 "grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2691,6 +2495,7 @@ yyreduce:
   YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
+
 
   /* Now `shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
@@ -2756,7 +2561,7 @@ yyerrlab:
 
   if (yyerrstatus == 3)
     {
-      /* If just tried and failed to reuse lookahead token after an
+      /* If just tried and failed to reuse look-ahead token after an
 	 error, discard it.  */
 
       if (yychar <= YYEOF)
@@ -2773,7 +2578,7 @@ yyerrlab:
 	}
     }
 
-  /* Else will try to reuse lookahead token after shifting the error
+  /* Else will try to reuse look-ahead token after shifting the error
      token.  */
   goto yyerrlab1;
 
@@ -2830,6 +2635,9 @@ yyerrlab1:
       YY_STACK_PRINT (yyss, yyssp);
     }
 
+  if (yyn == YYFINAL)
+    YYACCEPT;
+
   *++yyvsp = yylval;
 
 
@@ -2854,7 +2662,7 @@ yyabortlab:
   yyresult = 1;
   goto yyreturn;
 
-#if !defined(yyoverflow) || YYERROR_VERBOSE
+#ifndef yyoverflow
 /*-------------------------------------------------.
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
@@ -2865,7 +2673,7 @@ yyexhaustedlab:
 #endif
 
 yyreturn:
-  if (yychar != YYEMPTY)
+  if (yychar != YYEOF && yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
 		 yytoken, &yylval, yyscanner);
   /* Do not reclaim the symbols of the rule which action triggered
@@ -2891,9 +2699,7 @@ yyreturn:
 }
 
 
-
-/* Line 1675 of yacc.c  */
-#line 660 "grammar.y"
+#line 692 "grammar.y"
 
 
 
