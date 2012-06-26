@@ -258,7 +258,9 @@ int hex_match(unsigned char* buffer, size_t buffer_size, unsigned char* pattern,
                 match_length = 0;
                 m++;
                 
-                while (mask[m] != MASK_OR && mask[m] != MASK_OR_END)
+                while (tmp_b < (size_t) buffer_size && 
+                       mask[m] != MASK_OR && 
+                       mask[m] != MASK_OR_END)
                 {
                     if ((buffer[tmp_b] & mask[m]) != pattern[p])
                     {
