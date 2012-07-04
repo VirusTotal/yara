@@ -97,21 +97,25 @@ class TestYara(unittest.TestCase):
     def testArithmeticOperators(self): 
         
         self.assertTrueRules([ 
-            'rule test { condition: (1 + 1) * 2 == (9 - 1) \ 2 }'
+            'rule test { condition: (1 + 1) * 2 == (9 - 1) \ 2 }',
+            'rule test { condition: 5 % 2 == 1 }'
         ])
             
     def testBitwiseOperators(self):
         
         self.assertTrueRules([ 
             'rule test { condition: 0x55 | 0xAA == 0xFF }',
+            'rule test { condition: 0x55 ^ 0x5A == 0x0F }',
             'rule test { condition: ~0x55 & 0xFF == 0xAA }',
             'rule test { condition: 8 >> 2 == 2 }',
-            'rule test { condition: 1 << 3 == 8 }'
+            'rule test { condition: 1 << 3 == 8 }',
+            
         ])
             
     def testStrings(self):
         
         self.assertTrueRules([ 
+            'rule test { strings: $a = "a" condition: $a }',
             'rule test { strings: $a = "abc" condition: $a }',
             'rule test { strings: $a = "xyz" condition: $a }',
             'rule test { strings: $a = "abc" wide nocase fullword condition: $a }',

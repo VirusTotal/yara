@@ -934,6 +934,7 @@ void free_term(TERM* term)
     case TERM_TYPE_SUB:      
     case TERM_TYPE_MUL:
     case TERM_TYPE_DIV:  
+    case TERM_TYPE_MOD:
     case TERM_TYPE_GT:       
     case TERM_TYPE_LT:
     case TERM_TYPE_GE:       
@@ -944,6 +945,7 @@ void free_term(TERM* term)
     case TERM_TYPE_SHIFT_LEFT:
     case TERM_TYPE_SHIFT_RIGHT:
     case TERM_TYPE_BITWISE_OR:
+    case TERM_TYPE_BITWISE_XOR:
     case TERM_TYPE_BITWISE_AND:
     
         free_term(((TERM_BINARY_OPERATION*)term)->op1);

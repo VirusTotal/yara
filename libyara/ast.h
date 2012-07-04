@@ -85,6 +85,8 @@ limitations under the License.
 #define TERM_TYPE_BITWISE_NOT                        41
 #define TERM_TYPE_SHIFT_LEFT                         42
 #define TERM_TYPE_SHIFT_RIGHT                        43
+#define TERM_TYPE_BITWISE_XOR                        44
+#define TERM_TYPE_MOD                                45
 
 
 #define MAX_VECTOR_SIZE                              64

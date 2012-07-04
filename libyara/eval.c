@@ -275,7 +275,13 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 		                      
 	case TERM_TYPE_DIV:            
 		ARITHMETIC_OPERATOR(/, term_binary, context);
+
+	case TERM_TYPE_MOD:
+	    ARITHMETIC_OPERATOR(%, term_binary, context);
 		
+	case TERM_TYPE_BITWISE_XOR:
+	    ARITHMETIC_OPERATOR(^, term_binary, context);
+
 	case TERM_TYPE_BITWISE_AND:
 	    ARITHMETIC_OPERATOR(&, term_binary, context);
 	    
