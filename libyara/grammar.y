@@ -108,11 +108,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 %left _OR_
 %left _AND_
-%left '&' '|'
+%left '&' '|' '^'
 %left _LT_ _LE_ _GT_ _GE_ _EQ_ _NEQ_ _IS_
 %left _SHIFT_LEFT_ _SHIFT_RIGHT_
 %left '+' '-' 
-%left '*' '\\'
+%left '*' '\\' '%'
 %right _NOT_
 %right '~'
 
