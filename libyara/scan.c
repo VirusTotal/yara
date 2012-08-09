@@ -623,6 +623,7 @@ void clear_marks(RULE_LIST* rule_list)
             while (match != NULL)
             {
                 next_match = match->next;
+                yr_free(match->data);
                 yr_free(match);
                 match = next_match;
             }
