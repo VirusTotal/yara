@@ -2780,6 +2780,8 @@ int reduce_rule_declaration(    yyscan_t yyscanner,
     }
     
     context->current_rule_flags = 0;  
+    context->current_rule_strings = NULL;
+
     return context->last_result;
 }
 
