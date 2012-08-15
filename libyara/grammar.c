@@ -584,7 +584,7 @@ union yyalloc
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  29
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  105
+#define YYNRULES  106
 /* YYNRULES -- Number of states.  */
 #define YYNSTATES  207
 
@@ -646,8 +646,8 @@ static const yytype_uint16 yyprhs[] =
      202,   206,   210,   214,   218,   222,   224,   226,   230,   234,
      236,   238,   242,   244,   246,   253,   255,   257,   259,   261,
      263,   268,   273,   278,   283,   288,   293,   295,   300,   302,
-     306,   310,   314,   318,   322,   326,   330,   334,   338,   341,
-     345,   349,   351,   353,   355,   357
+     304,   308,   312,   316,   320,   324,   328,   332,   336,   340,
+     343,   347,   351,   353,   355,   357,   359
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
@@ -683,12 +683,13 @@ static const yytype_int8 yyrhs[] =
      110,    79,    -1,    40,    78,   110,    79,    -1,    41,    78,
      110,    79,    -1,    42,    78,   110,    79,    -1,    43,    78,
      110,    79,    -1,    12,    -1,    13,    82,   110,    83,    -1,
-      10,    -1,    78,   110,    79,    -1,   110,    66,   110,    -1,
-     110,    67,   110,    -1,   110,    68,   110,    -1,   110,    69,
-     110,    -1,   110,    70,   110,    -1,   110,    56,   110,    -1,
-     110,    54,   110,    -1,   110,    55,   110,    -1,    72,   110,
-      -1,   110,    65,   110,    -1,   110,    64,   110,    -1,   111,
-      -1,    16,    -1,    47,    -1,    48,    -1,    49,    -1
+      13,    -1,    10,    -1,    78,   110,    79,    -1,   110,    66,
+     110,    -1,   110,    67,   110,    -1,   110,    68,   110,    -1,
+     110,    69,   110,    -1,   110,    70,   110,    -1,   110,    56,
+     110,    -1,   110,    54,   110,    -1,   110,    55,   110,    -1,
+      72,   110,    -1,   110,    65,   110,    -1,   110,    64,   110,
+      -1,   111,    -1,    16,    -1,    47,    -1,    48,    -1,    49,
+      -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
@@ -703,8 +704,8 @@ static const yytype_uint16 yyrline[] =
      573,   574,   575,   576,   581,   582,   585,   586,   591,   592,
      595,   596,   599,   609,   623,   627,   628,   629,   633,   634,
      635,   636,   637,   638,   639,   640,   641,   651,   661,   671,
-     672,   673,   674,   675,   676,   677,   678,   679,   680,   681,
-     682,   683,   686,   689,   690,   691
+     681,   682,   683,   684,   685,   686,   687,   688,   689,   690,
+     691,   692,   693,   696,   699,   700,   701
 };
 #endif
 
@@ -767,7 +768,7 @@ static const yytype_uint8 yyr1[] =
      106,   106,   107,   107,   108,   109,   109,   109,   110,   110,
      110,   110,   110,   110,   110,   110,   110,   110,   110,   110,
      110,   110,   110,   110,   110,   110,   110,   110,   110,   110,
-     110,   110,   111,   112,   112,   112
+     110,   110,   110,   111,   112,   112,   112
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
@@ -781,9 +782,9 @@ static const yytype_uint8 yyr2[] =
        9,     3,     3,     3,     2,     3,     3,     3,     3,     3,
        3,     3,     3,     3,     3,     1,     1,     3,     3,     1,
        1,     3,     1,     1,     6,     1,     1,     1,     1,     1,
-       4,     4,     4,     4,     4,     4,     1,     4,     1,     3,
-       3,     3,     3,     3,     3,     3,     3,     3,     2,     3,
-       3,     1,     1,     1,     1,     1
+       4,     4,     4,     4,     4,     4,     1,     4,     1,     1,
+       3,     3,     3,     3,     3,     3,     3,     3,     3,     2,
+       3,     3,     1,     1,     1,     1,     1
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -795,18 +796,18 @@ static const yytype_uint8 yydefact[] =
       15,    13,    16,     0,     0,    18,    17,     7,    19,     0,
        9,     0,     0,     0,     0,     8,    20,     0,     0,     0,
        0,    21,     0,    10,    26,     0,     6,    23,    22,    24,
-      25,     0,    27,    88,    42,    86,     0,   102,    78,    79,
+      25,     0,    27,    89,    42,    86,    88,   103,    78,    79,
       76,    77,     0,     0,     0,     0,     0,     0,     0,     0,
-      37,    38,     0,     0,     0,    11,     0,    75,   101,    31,
-      30,    31,     0,     0,     0,     0,     0,     0,    88,     0,
-       0,    75,     0,     0,     0,     0,     0,     0,    54,    98,
+      37,    38,     0,     0,     0,    11,     0,    75,   102,    31,
+      30,    31,     0,     0,     0,     0,     0,     0,    89,     0,
+       0,    75,     0,     0,     0,     0,     0,     0,    54,    99,
        0,    75,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,    28,    29,    40,    41,     0,    43,     0,     0,
-      45,     0,   103,   104,   105,    52,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,    53,    89,    56,    55,    69,
-       0,    51,    96,    97,    95,    62,    63,    61,    60,    58,
-      59,    57,   100,    99,    90,    91,    92,    93,    94,    34,
+      45,     0,   104,   105,   106,    52,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,    53,    90,    56,    55,    69,
+       0,    51,    97,    98,    96,    62,    63,    61,    60,    58,
+      59,    57,   101,   100,    91,    92,    93,    94,    95,    34,
       33,    35,    36,    32,    44,     0,     0,    87,     0,     0,
       80,    81,    82,    83,    84,    85,    72,    73,     0,    70,
        0,     0,     0,     0,    65,    49,    68,     0,    46,     0,
@@ -2428,6 +2429,19 @@ yyreduce:
 
   case 88:
 #line 662 "grammar.y"
+    { 
+                 (yyval.term) = reduce_string_offset(yyscanner, (yyvsp[(1) - (1)].term), reduce_constant(yyscanner, 1)); 
+ 
+                 if ((yyval.term) == NULL)
+                 {
+                     yyerror(yyscanner, NULL);
+                     YYERROR;
+                 }
+              }
+    break;
+
+  case 89:
+#line 672 "grammar.y"
     {
                  (yyval.term) = reduce_identifier(yyscanner, (yyvsp[(1) - (1)].c_string));
                     
@@ -2439,74 +2453,74 @@ yyreduce:
              }
     break;
 
-  case 89:
-#line 671 "grammar.y"
+  case 90:
+#line 681 "grammar.y"
     { (yyval.term) = (yyvsp[(2) - (3)].term); }
     break;
 
-  case 90:
-#line 672 "grammar.y"
+  case 91:
+#line 682 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_ADD, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
-  case 91:
-#line 673 "grammar.y"
+  case 92:
+#line 683 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_SUB, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
-  case 92:
-#line 674 "grammar.y"
+  case 93:
+#line 684 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_MUL, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
-  case 93:
-#line 675 "grammar.y"
+  case 94:
+#line 685 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_DIV, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
-  case 94:
-#line 676 "grammar.y"
+  case 95:
+#line 686 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_MOD, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
-  case 95:
-#line 677 "grammar.y"
+  case 96:
+#line 687 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_BITWISE_XOR, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
-  case 96:
-#line 678 "grammar.y"
+  case 97:
+#line 688 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_BITWISE_AND, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
-  case 97:
-#line 679 "grammar.y"
+  case 98:
+#line 689 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_BITWISE_OR, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
-  case 98:
-#line 680 "grammar.y"
+  case 99:
+#line 690 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_BITWISE_NOT, (yyvsp[(2) - (2)].term), NULL, NULL); }
     break;
 
-  case 99:
-#line 681 "grammar.y"
+  case 100:
+#line 691 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_SHIFT_LEFT, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
-  case 100:
-#line 682 "grammar.y"
+  case 101:
+#line 692 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_SHIFT_RIGHT, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
-  case 102:
-#line 686 "grammar.y"
+  case 103:
+#line 696 "grammar.y"
     { (yyval.term) = reduce_constant(yyscanner, (yyvsp[(1) - (1)].integer)); }
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 2510 "grammar.c"
+#line 2524 "grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2720,7 +2734,7 @@ yyreturn:
 }
 
 
-#line 694 "grammar.y"
+#line 704 "grammar.y"
 
 
 

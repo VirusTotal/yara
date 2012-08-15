@@ -658,6 +658,16 @@ expression : _SIZE_                             { $$ = reduce_filesize(yyscanner
                     YYERROR;
                 }
              }
+           | _STRING_OFFSET_
+              { 
+                 $$ = reduce_string_offset(yyscanner, $1, reduce_constant(yyscanner, 1)); 
+ 
+                 if ($$ == NULL)
+                 {
+                     yyerror(yyscanner, NULL);
+                     YYERROR;
+                 }
+              }
            | _IDENTIFIER_
              {
                  $$ = reduce_identifier(yyscanner, $1);
