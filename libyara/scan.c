@@ -793,49 +793,38 @@ inline int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
             continue;
         }
         
-        if ( (string->flags & flags) && (len = string_match(buffer, buffer_size, string, flags, negative_size)))
-        {
-            /*  
-                If this string already matched we must check that this match is not 
-                overlapping a previous one. This can occur for example if we search 
-                for the string 'aa' and the file contains 'aaaaaa'. 
-             */
-             
-            if ((string->matches_tail == NULL) ||
-                (string->matches_tail->offset + string->matches_tail->length <= current_offset))
-            {           
-                string->flags |= STRING_FLAGS_FOUND;
-                match = (MATCH*) yr_malloc(sizeof(MATCH));
-                match->data = (unsigned char*) yr_malloc(len);
+        if ((string->flags & flags) && (len = string_match(buffer, buffer_size, string, flags, negative_size)))
+        {         
+            string->flags |= STRING_FLAGS_FOUND;
+            match = (MATCH*) yr_malloc(sizeof(MATCH));
+            match->data = (unsigned char*) yr_malloc(len);
 
-                if (match != NULL && match->data != NULL)
+            if (match != NULL && match->data != NULL)
+            {
+                match->offset = current_offset;
+                match->length = len;
+                match->next = NULL;
+                
+                memcpy(match->data, buffer, len);         
+                
+                if (string->matches_head == NULL)
                 {
-                    match->offset = current_offset;
-                    match->length = len;
-                    match->next = NULL;
-                    
-                    memcpy(match->data, buffer, len);         
-                    
-                    if (string->matches_head == NULL)
-                    {
-                        string->matches_head = match;
-                    }
-                    
-                    if (string->matches_tail != NULL)
-                    {
-                        string->matches_tail->next = match;
-                    }
-                    
-                    string->matches_tail = match;
-                                    
+                    string->matches_head = match;
                 }
-                else
+                
+                if (string->matches_tail != NULL)
                 {
-                    if (match != NULL) 
-                        yr_free(match);
-                    
-                    return ERROR_INSUFICIENT_MEMORY;
+                    string->matches_tail->next = match;
                 }
+                
+                string->matches_tail = match;
+            }
+            else
+            {
+                if (match != NULL) 
+                    yr_free(match);
+                
+                return ERROR_INSUFICIENT_MEMORY;
             }
         }       
     }
