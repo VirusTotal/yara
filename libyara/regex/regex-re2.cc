@@ -34,7 +34,7 @@ int regex_exec(REGEXP* regex, int anchored, const char *buffer, size_t buffer_si
 
     re2::RE2* re_ptr = (re2::RE2*) regex->regexp;
 
-    if (re_ptr->Match(data, 0, data.size()-1, anchor, &substring, 1)) 
+    if (re_ptr->Match(data, 0, data.size(), anchor, &substring, 1)) 
     {
         return substring.size();
     }
