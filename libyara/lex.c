@@ -1,5 +1,6 @@
+#line 2 "lex.c"
 
-#line 3 "lex.c"
+#line 4 "lex.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -699,7 +700,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#line 703 "lex.c"
+#line 704 "lex.c"
 
 #define INITIAL 0
 #define str 1
@@ -943,7 +944,7 @@ YY_DECL
 #line 88 "lex.l"
 
 
-#line 947 "lex.c"
+#line 948 "lex.c"
 
     yylval = yylval_param;
 
@@ -1505,7 +1506,7 @@ YY_RULE_SETUP
 
                                          s->length = yyextra->lex_buf_len;
 
-                                         memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len);
+                                         memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
 
                                          yylval->sized_string = s;
 
@@ -1677,7 +1678,7 @@ YY_RULE_SETUP
 #line 442 "lex.l"
 ECHO;
 	YY_BREAK
-#line 1681 "lex.c"
+#line 1682 "lex.c"
 
 	case YY_END_OF_BUFFER:
 		{
