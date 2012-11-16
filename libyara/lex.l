@@ -330,7 +330,7 @@ $({letter}|{digit}|_)*               {
 
                                          s->length = yyextra->lex_buf_len;
 
-                                         strcpy(s->c_string, yyextra->lex_buf);
+                                         memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len);
 
                                          yylval->sized_string = s;
 
