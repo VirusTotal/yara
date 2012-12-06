@@ -1,9 +1,9 @@
 from distutils.core import setup, Extension
                            
 setup(  name = "yara-python",
-        version = "1.6",
+        version = "1.7",
         author = "Victor M. Alvarez",
-        author_email = "victor.alvarez@virustotal.com",
+        author_email = "vmalvarez@virustotal.com",
         url = 'http://yara-project.googlecode.com',
         platforms = ['any'],
         ext_modules = [ Extension(

@@ -1,6 +1,6 @@
-AC_INIT([libyara], [1.6], [victor.alvarez@virustotal.com])
+AC_INIT([libyara], [1.7], [vmalvarez@virustotal.com])
 LT_INIT
-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign -Wno-extra-portability])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_YACC

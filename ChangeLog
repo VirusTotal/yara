@@ -65,3 +65,14 @@ version 1.6 (04/08/2011)
     * yara-python ported to Python 3.x
     * yara-python support for 64-bits Python under Windows
     * BUGFIX: Buffer overflow in error printing
+
+version 1.7 (06/12/2012)
+	* faster compilation
+	* added suport for modulus (%) and bitwise xor (|) operators
+	* better hashing of regular expressions
+	* BUGFIX: yara-python segfault when using dir() on Rules and Match classes
+	* BUGFIX: Integer overflow causing infinite loop
+	* BUGFIX: Handling strings containing \x00 characters correctly
+	* BUGFIX: Regular expressions not matching at the end of the file when compiled with RE2
+	* BUGFIX: Memory leaks
+	* BUGFIX: File handle leaks

@@ -1,10 +1,9 @@
 #! /bin/sh
 # ylwrap - wrapper for lex/yacc invocations.
 
-scriptversion=2005-05-14.22
+scriptversion=2011-08-25.18; # UTC
 
-# Copyright (C) 1996, 1997, 1998, 1999, 2001, 2002, 2003, 2004, 2005
-#   Free Software Foundation, Inc.
+# Copyright (C) 1996-2012 Free Software Foundation, Inc.
 #
 # Written by Tom Tromey <tromey@cygnus.com>.
 #
@@ -19,9 +18,7 @@ scriptversion=2005-05-14.22
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # As a special exception to the GNU General Public License, if you
 # distribute this file as part of a program that contains a
@@ -34,7 +31,7 @@ scriptversion=2005-05-14.22
 
 case "$1" in
   '')
-    echo "$0: No files given.  Try \`$0 --help' for more information." 1>&2
+    echo "$0: No files given.  Try '$0 --help' for more information." 1>&2
     exit 1
     ;;
   --basedir)
@@ -65,10 +62,25 @@ EOF
     ;;
 esac
 
+get_dirname ()
+{
+  case $1 in
+    */*|*\\*) printf '%s\n' "$1" | sed -e 's,\([\\/]\)[^\\/]*$,\1,';;
+    # Otherwise,  we want the empty string (not ".").
+  esac
+}
+
+quote_for_sed ()
+{
+  # FIXME: really we should care about more than '.' and '\'.
+  sed -e 's,[\\.],\\&,g'
+}
 
 # The input.
 input="$1"
 shift
+# We'll later need for a correct munging of "#line" directives.
+input_sub_rx=`get_dirname "$input" | quote_for_sed`
 case "$input" in
   [\\/]* | ?:[\\/]*)
     # Absolute path; do nothing.
@@ -101,14 +113,18 @@ esac
 # FIXME: add hostname here for parallel makes that run commands on
 # other machines.  But that might take us over the 14-char limit.
 dirname=ylwrap$$
-trap "cd `pwd`; rm -rf $dirname > /dev/null 2>&1" 1 2 3 15
+do_exit="cd '`pwd`' && rm -rf $dirname > /dev/null 2>&1;"' (exit $ret); exit $ret'
+trap "ret=129; $do_exit" 1
+trap "ret=130; $do_exit" 2
+trap "ret=141; $do_exit" 13
+trap "ret=143; $do_exit" 15
 mkdir $dirname || exit 1
 
 cd $dirname
 
 case $# in
-  0) $prog "$input" ;;
-  *) $prog "$@" "$input" ;;
+  0) "$prog" "$input" ;;
+  *) "$prog" "$@" "$input" ;;
 esac
 ret=$?
 
@@ -124,30 +140,26 @@ if test $ret -eq 0; then
     y_tab_nodot="yes"
   fi
 
-  # The directory holding the input.
-  input_dir=`echo "$input" | sed -e 's,\([\\/]\)[^\\/]*$,\1,'`
-  # Quote $INPUT_DIR so we can use it in a regexp.
-  # FIXME: really we should care about more than `.' and `\'.
-  input_rx=`echo "$input_dir" | sed 's,\\\\,\\\\\\\\,g;s,\\.,\\\\.,g'`
+  input_rx=`get_dirname "$input" | quote_for_sed`
 
   while test "$#" -ne 0; do
     from="$1"
     # Handle y_tab.c and y_tab.h output by DOS
     if test $y_tab_nodot = "yes"; then
       if test $from = "y.tab.c"; then
-    	from="y_tab.c"
+        from="y_tab.c"
       else
-    	if test $from = "y.tab.h"; then
-    	  from="y_tab.h"
-    	fi
+        if test $from = "y.tab.h"; then
+          from="y_tab.h"
+        fi
       fi
     fi
     if test -f "$from"; then
       # If $2 is an absolute path name, then just use that,
-      # otherwise prepend `../'.
+      # otherwise prepend '../'.
       case "$2" in
-    	[\\/]* | ?:[\\/]*) target="$2";;
-    	*) target="../$2";;
+        [\\/]* | ?:[\\/]*) target="$2";;
+        *) target="../$2";;
       esac
 
       # We do not want to overwrite a header file if it hasn't
@@ -157,18 +169,14 @@ if test $ret -eq 0; then
       # Makefile.  Divert the output of all other files to a temporary
       # file so we can compare them to existing versions.
       if test $first = no; then
-	realtarget="$target"
-	target="tmp-`echo $target | sed s/.*[\\/]//g`"
+        realtarget="$target"
+        target="tmp-`echo $target | sed s/.*[\\/]//g`"
       fi
-      # Edit out `#line' or `#' directives.
-      #
+      # Munge "#line" or "#" directives.
       # We don't want the resulting debug information to point at
-      # an absolute srcdir; it is better for it to just mention the
-      # .y file with no path.
-      #
+      # an absolute srcdir.
       # We want to use the real output file name, not yy.lex.c for
       # instance.
-      #
       # We want the include guards to be adjusted too.
       FROM=`echo "$from" | sed \
             -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'\
@@ -177,15 +185,15 @@ if test $ret -eq 0; then
             -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'\
             -e 's/[^ABCDEFGHIJKLMNOPQRSTUVWXYZ]/_/g'`
 
-      sed -e "/^#/!b" -e "s,$input_rx,," -e "s,$from,$2," \
+      sed -e "/^#/!b" -e "s,$input_rx,$input_sub_rx," -e "s,$from,$2," \
           -e "s,$FROM,$TARGET," "$from" >"$target" || ret=$?
 
       # Check whether header files must be updated.
       if test $first = no; then
-	if test -f "$realtarget" && cmp -s "$realtarget" "$target"; then
-	  echo "$2" is unchanged
-	  rm -f "$target"
-	else
+        if test -f "$realtarget" && cmp -s "$realtarget" "$target"; then
+          echo "$2" is unchanged
+          rm -f "$target"
+        else
           echo updating "$2"
           mv -f "$target" "$realtarget"
         fi
@@ -219,5 +227,6 @@ exit $ret
 # eval: (add-hook 'write-file-hooks 'time-stamp)
 # time-stamp-start: "scriptversion="
 # time-stamp-format: "%:y-%02m-%02d.%02H"
-# time-stamp-end: "$"
+# time-stamp-time-zone: "UTC"
+# time-stamp-end: "; # UTC"
 # End:
