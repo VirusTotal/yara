@@ -16,13 +16,13 @@ limitations under the License.
 
 #include "hash.h"
 
-#define ROTATE_INT32(x, shift) ((x << shift) | (x >> (32 - shift)))
+#define ROTATE_INT32(x, shift) ((x << (shift % 32)) | (x >> (32 - (shift % 32))))
 
 #ifdef WIN32
 #define inline __inline
 #endif
 
-unsigned int byte_to_int32[]  = 
+unsigned int byte_to_int32[]  =
 {
     0xC3113E7F,0x4C353C5F,0x7423810B,0x258D264E,0xDAD39DED,0x75D0B694,0x98CE1216,0x93334482,
     0xC5C48EA5,0xF57E0E8B,0x5D7F3723,0x396B1B24,0xA8883D9F,0xB2A74A00,0xF8E171AE,0x3F01FBAB,
@@ -63,13 +63,13 @@ inline unsigned int hash(unsigned int seed, const unsigned char* buffer, int len
 {
     int i;
     unsigned int result = seed;
-    
+
     for (i = len - 1; i > 0; i--)
     {
         result ^= ROTATE_INT32(byte_to_int32[*buffer], i);
         buffer++;
     }
-    
+
     result ^= byte_to_int32[*buffer];
     return result;
 }
