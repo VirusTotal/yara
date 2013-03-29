@@ -1,10 +1,10 @@
 
 version 1.0 (24/09/2008)
 	* first release
-	
+
 version 1.1 (05/01/2009)
 	* added support for strings containing null (\x00) chars
-	* added syntactic construct "x of them" 	
+	* added syntactic construct "x of them"
 	* regular expressions syntax changed
 	* now regular expressions can begin with any character
 
@@ -19,13 +19,13 @@ version 1.2 (13/01/2009)
 	* improved syntax error reporting in yara-python
 	* "compile" method in yara-python was enhanced
 	* "matchfile" method in yara-python was substituted by "match"
-	* some performance improvements	
+	* some performance improvements
 	* BUGFIX: Wrong behavior of escaped characters in regular expressions
 	* BUGFIX: Fatal error in yara-python when invoking matchfile with invalid path twice
 	* BUGFIX: Wrong precedence of OR and AND operators
 	* BUGFIX: Access violation when scanning MZ files with e_lfanew == -1
 	* BUGFIX: Incorrect handling of hex strings in lexer
-	
+
 version 1.2.1 (14/04/2009)
 	* libyara: added support for compiling rules directly from memory
 	* libyara: interface refactored
@@ -34,7 +34,7 @@ version 1.2.1 (14/04/2009)
 	* BUGFIX: Underscore (_) not recognized in string identifiers
 	* BUGFIX: Memory leak
 	* BUGFIX: Access violation on xxcompare functions
-	
+
 version 1.3 (26/10/2009)
 	* added a C-like "include" directive
 	* added support for multi-sources compilation in yara-python
@@ -47,7 +47,7 @@ version 1.4 (13/05/2010)
 	* scan speed improvements
 	* added fast scan mode
 	* BUGFIX: crash in 64-bits Windows
-	
+
 version 1.5 (22/03/2011)
 	* added -l parameter to abort scanning after a number of matches
 	* added support for scanning processes memory
@@ -57,16 +57,16 @@ version 1.5 (22/03/2011)
 	* implemented new operator "for <quantifier> <variable> in <set or range> : (<expression>)"
 	* BUGFIX: Memory leaks in yara-python
 	* BUGFIX: yara.compile namespaces not working with filesources
-	
-version 1.6 (04/08/2011)
-    * added support for bitwise operators
-    * added support for multi-line hex strings
-    * scan speed improvement for regular expressions (with PCRE)
-    * yara-python ported to Python 3.x
-    * yara-python support for 64-bits Python under Windows
-    * BUGFIX: Buffer overflow in error printing
 
-version 1.7 (06/12/2012)
+version 1.6 (04/08/2011)
+  * added support for bitwise operators
+  * added support for multi-line hex strings
+  * scan speed improvement for regular expressions (with PCRE)
+  * yara-python ported to Python 3.x
+  * yara-python support for 64-bits Python under Windows
+  * BUGFIX: Buffer overflow in error printing
+
+version 1.7 (29/03/2013)
 	* faster compilation
 	* added suport for modulus (%) and bitwise xor (|) operators
 	* better hashing of regular expressions
