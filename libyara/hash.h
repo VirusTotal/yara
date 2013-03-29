@@ -17,7 +17,7 @@ limitations under the License.
 #ifndef _HASH_H
 #define _HASH_H
 
-inline unsigned int hash(unsigned int seed, const unsigned char* buffer, int len);
-inline unsigned int hash_update(unsigned int hash, unsigned char new, unsigned char old, int len);
+unsigned int hash(unsigned int seed, const unsigned char* buffer, int len);
+unsigned int hash_update(unsigned int hash, unsigned char new, unsigned char old, int len);
 
 #endif

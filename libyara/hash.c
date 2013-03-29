@@ -18,10 +18,6 @@ limitations under the License.
 
 #define ROTATE_INT32(x, shift) ((x << (shift % 32)) | (x >> (32 - (shift % 32))))
 
-#ifdef WIN32
-#define inline __inline
-#endif
-
 unsigned int byte_to_int32[]  =
 {
     0xC3113E7F,0x4C353C5F,0x7423810B,0x258D264E,0xDAD39DED,0x75D0B694,0x98CE1216,0x93334482,
@@ -59,7 +55,7 @@ unsigned int byte_to_int32[]  =
 };
 
 
-inline unsigned int hash(unsigned int seed, const unsigned char* buffer, int len)
+unsigned int hash(unsigned int seed, const unsigned char* buffer, int len)
 {
     int i;
     unsigned int result = seed;
@@ -75,7 +71,7 @@ inline unsigned int hash(unsigned int seed, const unsigned char* buffer, int len
 }
 
 
-inline unsigned int hash_update(unsigned int hash, unsigned char new, unsigned char old, int len)
+unsigned int hash_update(unsigned int hash, unsigned char new, unsigned char old, int len)
 {
     return ROTATE_INT32(hash, 1) ^ ROTATE_INT32(byte_to_int32[old], len) ^ byte_to_int32[new];
 }
