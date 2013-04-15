@@ -80,6 +80,7 @@ POSSIBILITY OF SUCH DAMAGE.
 %x str
 %x regexp
 %x include
+%x comment
 
 digit         [0-9]
 letter        [a-zA-Z]
@@ -134,7 +135,11 @@ hexdigit      [a-fA-F0-9]
 "index"                              { return _INDEX_;       }
 
 
-"/*"(.|\n)*"*/"                      { /* skip comments */ }
+"/*"                                 { BEGIN(comment); }
+<comment>"*/"                        { BEGIN(INITIAL); }
+<comment>(.|\n)                      { /* skip comments */ }
+
+
 
 "//"[^\n]*                           { /* skip single-line comments */ }
 
