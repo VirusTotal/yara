@@ -744,6 +744,7 @@ int new_variable(YARA_CONTEXT* context, char* identifier, TERM_VARIABLE** term)
     else
     {
         strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         result = ERROR_UNDEFINED_IDENTIFIER;
     }
     

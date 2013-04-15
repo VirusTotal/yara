@@ -2775,6 +2775,7 @@ int reduce_rule_declaration(    yyscan_t yyscanner,
     if (context->last_result != ERROR_SUCCESS)
     {
         strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
     }
     else
     {
@@ -2786,6 +2787,7 @@ int reduce_rule_declaration(    yyscan_t yyscanner,
             {
                 context->last_result = ERROR_UNREFERENCED_STRING;
                 strncpy(context->last_error_extra_info, string->identifier, sizeof(context->last_error_extra_info));
+                context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
                 break;
             }
             
@@ -2817,12 +2819,14 @@ STRING* reduce_string_declaration(  yyscan_t yyscanner,
     
     if (context->last_result == ERROR_INVALID_REGULAR_EXPRESSION) 
     {
-        sprintf(tmp, "invalid regular expression in string \"%s\": %s", identifier, context->last_error_extra_info);
+        snprintf(tmp, sizeof(tmp), "invalid regular expression in string \"%s\": %s", identifier, context->last_error_extra_info);
         strncpy(context->last_error_extra_info, tmp, sizeof(context->last_error_extra_info));
+        context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
     }
     else if (context->last_result != ERROR_SUCCESS)
     {
         strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
     }
     
     yr_free(str);
@@ -2853,6 +2857,7 @@ STRING* reduce_strings( yyscan_t yyscanner,
     else
     {
         strncpy(context->last_error_extra_info, string->identifier, sizeof(context->last_error_extra_info));
+        context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         context->last_result = ERROR_DUPLICATE_STRING_IDENTIFIER;
         return NULL;
     }   
@@ -2913,6 +2918,7 @@ META* reduce_metas( yyscan_t yyscanner,
     else
     {
         strncpy(context->last_error_extra_info, meta->identifier, sizeof(context->last_error_extra_info));
+        context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         context->last_result = ERROR_DUPLICATE_META_IDENTIFIER;
         return NULL;
     }   
@@ -2945,6 +2951,7 @@ TAG* reduce_tags(   yyscan_t yyscanner,
     else
     {
         strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         context->last_result = ERROR_DUPLICATE_TAG_IDENTIFIER;
         return NULL;
     }
@@ -3014,6 +3021,7 @@ TERM* reduce_string(    yyscan_t yyscanner,
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+            context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         }
     }
     
@@ -3076,6 +3084,7 @@ TERM* reduce_string_at( yyscan_t yyscanner,
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+            context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         }
         else
         {
@@ -3101,6 +3110,7 @@ TERM* reduce_string_in_range(   yyscan_t yyscanner,
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+            context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         }
         else
         {
@@ -3125,6 +3135,7 @@ TERM* reduce_string_in_section_by_name( yyscan_t yyscanner,
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+            context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         }
         else
         {
@@ -3150,6 +3161,7 @@ TERM* reduce_string_count(  yyscan_t yyscanner,
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+            context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         }
     }
     
@@ -3171,6 +3183,7 @@ TERM* reduce_string_offset( yyscan_t yyscanner,
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+            context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         }
         else
         {
@@ -3271,12 +3284,14 @@ TERM* reduce_string_operation( yyscan_t yyscanner,
          else
          {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+            context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
             context->last_result = ERROR_INCORRECT_VARIABLE_TYPE;
          }
     }
     else
     {
         strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
+        context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         context->last_result = ERROR_UNDEFINED_IDENTIFIER;
     }
     

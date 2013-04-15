@@ -1519,7 +1519,10 @@ YY_RULE_SETUP
 {
                                          int result;
 
-                                         sscanf( yytext + 2, "%x", &result );
+                                         if (sscanf( yytext + 2, "%x", &result ) != 1) {
+                                           yyerror(yyscanner, "Invalid escaped hex digit");
+                                           yyterminate();
+                                         }
                                          LEX_CHECK_SPACE_OK("X", yyextra->lex_buf_len, LEX_BUF_SIZE);
                                          *yyextra->lex_buf_ptr++ = result;
                                          yyextra->lex_buf_len++;
