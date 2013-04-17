@@ -445,7 +445,15 @@ $({letter}|{digit}|_)*               {
 [ \t\r\n]                            /* skip whitespace */
 
 .                                    {
-                                         return yytext[0];
+                                        if (yytext[0] >= 32 && yytext[0] < 127)
+                                        {
+                                          return yytext[0];
+                                        }
+                                        else
+                                        {
+                                          yyerror(yyscanner, "non-ascii character");
+                                          yyterminate();
+                                        }
                                      }
 %%
 

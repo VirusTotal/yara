@@ -1671,15 +1671,23 @@ case 77:
 YY_RULE_SETUP
 #line 447 "lex.l"
 {
-                                         return yytext[0];
+                                        if (yytext[0] >= 32 && yytext[0] < 127)
+                                        {
+                                          return yytext[0];
+                                        }
+                                        else
+                                        {
+                                          yyerror(yyscanner, "non-ascii character");
+                                          yyterminate();
+                                        }
                                      }
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 450 "lex.l"
+#line 458 "lex.l"
 ECHO;
 	YY_BREAK
-#line 1683 "lex.c"
+#line 1691 "lex.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2854,7 +2862,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 450 "lex.l"
+#line 458 "lex.l"
 
 
 
