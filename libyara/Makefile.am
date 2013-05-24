@@ -1,5 +1,7 @@
 AM_YFLAGS = -d
 
+CFLAGS=-g -O0
+
 ACLOCAL_AMFLAGS=-I m4
 
 include_HEADERS = yara.h
@@ -7,32 +9,38 @@ include_HEADERS = yara.h
 lib_LTLIBRARIES = libyara.la
 
 libyara_la_SOURCES = \
-  grammar.y \
-  lex.l \
-  ast.c \
-  scan.c \
-  filemap.c \
-  eval.c \
-  exe.c \
-  xtoi.c \
-  mem.c \
-  proc.c \
-  weight.c \
-  hash.c \
-  libyara.c \
-  lex.h \
-  ast.h \
-  eval.h \
-  filemap.h \
-  pe.h \
+  ahocorasick.c \
+  ahocorasick.h \
+  arena.c \
+  arena.h \
+  compiler.c \
+  compiler.h \
   elf.h \
-  exe.h \
-  xtoi.h \
-  sizedstr.h \
+  exec.c \
+  exec.h \
+  exefiles.c \
+  exefiles.h \
+  filemap.c \
+  filemap.h \
+  grammar.y \
+  hash.c \
+  hash.h \
+  lex.h \
+  lex.l \
+  libyara.c \
+  mem.c \
   mem.h \
+  parser.c \
+  parser.h \
+  pe.h \
+  proc.c \
   proc.h \
+  rules.c \
+  rules.h \
   regex.h \
-  weight.h
+  sizedstr.h \
+  utils.c \
+  utils.h
 
 SUBDIRS = regex
 

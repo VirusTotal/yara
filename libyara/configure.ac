@@ -1,6 +1,6 @@
-AC_INIT([libyara], [1.7], [vmalvarez@virustotal.com])
+AC_INIT([libyara], [2.0], [vmalvarez@virustotal.com])
 LT_INIT
-AM_INIT_AUTOMAKE([-Wall -Werror foreign -Wno-extra-portability])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_YACC
@@ -20,7 +20,7 @@ AC_ARG_WITH([re2],
 AM_CONDITIONAL([RE2], [test x$re2 = xtrue])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
-			Makefile 
+			Makefile
 			regex/Makefile
 		])
 AC_OUTPUT
