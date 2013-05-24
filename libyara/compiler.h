@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007. Victor M. Alvarez [plusvic@gmail.com].
+Copyright (c) 2013. Victor M. Alvarez [plusvic@gmail.com].
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,12 +14,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _SIZEDSTR_H
-#define _SIZEDSTR_H
+#ifndef _COMPILER_H
+#define _COMPILER_H
+
+#include <stdio.h>
 
 #include "yara.h"
 
-int calculate_string_weight(STRING* string);
+
+#define yr_compiler_set_error_extra_info(compiler, info) \
+    strncpy( \
+        compiler->last_error_extra_info, \
+        info, \
+        sizeof(compiler->last_error_extra_info)); \
+    compiler->last_error_extra_info[ \
+        sizeof(compiler->last_error_extra_info) - 1] = 0;
+
+
+int _yr_compiler_push_file(
+    YARA_COMPILER* compiler,
+    FILE* fh);
+
+
+FILE* _yr_compiler_pop_file(
+    YARA_COMPILER* compiler);
 
 #endif
-

@@ -17,7 +17,27 @@ limitations under the License.
 #ifndef _HASH_H
 #define _HASH_H
 
-unsigned int hash(unsigned int seed, const unsigned char* buffer, int len);
-unsigned int hash_update(unsigned int hash, unsigned char new, unsigned char old, int len);
+#include "yara.h"
+
+int yr_hash_table_create(
+    int size,
+    HASH_TABLE** table);
+
+
+void yr_hash_table_destroy(
+    HASH_TABLE* table);
+
+
+void* yr_hash_table_lookup(
+    HASH_TABLE* table,
+    const char* key,
+    const char* namespace);
+
+
+int yr_hash_table_add(
+    HASH_TABLE* table,
+    const char* key,
+    const char* namespace,
+    void* value);
 
 #endif

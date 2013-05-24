@@ -21,22 +21,25 @@ limitations under the License.
 #define FILE_DESCRIPTOR         int
 #endif
 
-#include "stdlib.h"
-#include "yara.h"
+#include <stdlib.h>
+#include <stdint.h>
 
 
 typedef struct _MAPPED_FILE
 {
-    FILE_DESCRIPTOR     file;
-    size_t			    size;
-    unsigned char*      data;
-    #ifdef WIN32
-    HANDLE              mapping;
-    #endif
+  FILE_DESCRIPTOR     file;
+  size_t              size;
+  uint8_t*            data;
+  #ifdef WIN32
+  HANDLE              mapping;
+  #endif
 
 } MAPPED_FILE;
 
 
-int map_file(const char* file_path, MAPPED_FILE* pmapped_file);
+int yr_filemap_map(
+    const char* file_path,
+    MAPPED_FILE* pmapped_file);
 
-void unmap_file(MAPPED_FILE* pmapped_file);
+void yr_filemap_unmap(
+    MAPPED_FILE* pmapped_file);

@@ -178,6 +178,7 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = /ssi/ condition: $a }',
             'rule test { strings: $a = /ssi(s|p)/ condition: $a }',
             'rule test { strings: $a = /ssim*/ condition: $a }',
+            'rule test { strings: $a = /ssa?/ condition: $a }',
             'rule test { strings: $a = /Miss/ nocase condition: $a }',
             'rule test { strings: $a = /(Mi|ssi)ssippi/ nocase condition: $a }',
             'rule test { strings: $a = /ppi\tmi/ condition: $a }',
@@ -206,7 +207,7 @@ class TestYara(unittest.TestCase):
         ], ELF64_FILE)
 
         self.assertFalseRules([
-            'rule test { condition: true or entrypoint >= 0 }',
+            'rule test { condition: entrypoint >= 0 }',
         ])
 
     def testFilesize(self):

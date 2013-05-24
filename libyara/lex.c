@@ -621,65 +621,48 @@ static yyconst flex_int32_t yy_rule_can_match_eol[79] =
 #line 1 "lex.l"
 /*
 Copyright (c) 2007. Victor M. Alvarez [plusvic@gmail.com].
-All rights reserved.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-3. All advertising materials mentioning features or use of this software
-   must display the following acknowledgement:
-   This product includes software developed by Victor M. Alvarez and its
-   contributors.
-4. Neither the name of Victor M. Alvarez nor the names of its contributors
-   may be used to endorse or promote products derived from this software
-   without specific prior written permission.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 /* Lexical analyzer for YARA */
-#line 37 "lex.l"
+#line 20 "lex.l"
 
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "grammar.h"
-#include "xtoi.h"
 #include "mem.h"
 #include "sizedstr.h"
 #include "lex.h"
-#include "yara.h"
+
 
 #define LEX_CHECK_SPACE_OK(data, current_size, max_length) \
     if (strlen(data) + current_size >= max_length - 1) \
     { \
-        yyerror(yyscanner, "out of space in lex_buf"); \
-        yyterminate(); \
+      yyerror(yyscanner, "out of space in lex_buf"); \
+      yyterminate(); \
     }
 
 #define YYTEXT_TO_BUFFER \
     { \
-        char *yptr = yytext; \
-        LEX_CHECK_SPACE_OK(yptr, yyextra->lex_buf_len, LEX_BUF_SIZE); \
-        while ( *yptr ) \
-        { \
-            *yyextra->lex_buf_ptr++ = *yptr++; \
-            yyextra->lex_buf_len++; \
-        } \
+      char *yptr = yytext; \
+      LEX_CHECK_SPACE_OK(yptr, yyextra->lex_buf_len, LEX_BUF_SIZE); \
+      while(*yptr) \
+      { \
+        *yyextra->lex_buf_ptr++ = *yptr++; \
+        yyextra->lex_buf_len++; \
+      } \
     }
 
 #ifdef WIN32
@@ -691,7 +674,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#line 695 "lex.c"
+#line 678 "lex.c"
 
 #define INITIAL 0
 #define str 1
@@ -928,10 +911,10 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 89 "lex.l"
+#line 72 "lex.l"
 
 
-#line 935 "lex.c"
+#line 918 "lex.c"
 
     yylval = yylval_param;
 
@@ -1030,664 +1013,685 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 91 "lex.l"
+#line 74 "lex.l"
 { return _LT_;          }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 92 "lex.l"
+#line 75 "lex.l"
 { return _GT_;          }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 93 "lex.l"
+#line 76 "lex.l"
 { return _LE_;          }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 94 "lex.l"
+#line 77 "lex.l"
 { return _GE_;          }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 95 "lex.l"
+#line 78 "lex.l"
 { return _EQ_;          }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 96 "lex.l"
+#line 79 "lex.l"
 { return _NEQ_;         }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 97 "lex.l"
+#line 80 "lex.l"
 { return _SHIFT_LEFT_;  }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 98 "lex.l"
+#line 81 "lex.l"
 { return _SHIFT_RIGHT_; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 99 "lex.l"
+#line 82 "lex.l"
 { return _PRIVATE_;     }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 100 "lex.l"
+#line 83 "lex.l"
 { return _GLOBAL_;      }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 101 "lex.l"
+#line 84 "lex.l"
 { return _RULE_;        }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 102 "lex.l"
+#line 85 "lex.l"
 { return _META_;        }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 103 "lex.l"
+#line 86 "lex.l"
 { return _STRINGS_;     }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 104 "lex.l"
+#line 87 "lex.l"
 { return _ASCII_;       }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 105 "lex.l"
+#line 88 "lex.l"
 { return _WIDE_;        }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 106 "lex.l"
+#line 89 "lex.l"
 { return _FULLWORD_;    }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 107 "lex.l"
+#line 90 "lex.l"
 { return _NOCASE_;      }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 108 "lex.l"
+#line 91 "lex.l"
 { return _CONDITION_;   }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 109 "lex.l"
+#line 92 "lex.l"
 { return _TRUE_;        }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 110 "lex.l"
+#line 93 "lex.l"
 { return _FALSE_;       }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 111 "lex.l"
+#line 94 "lex.l"
 { return _NOT_;         }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 112 "lex.l"
+#line 95 "lex.l"
 { return _AND_;         }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 113 "lex.l"
+#line 96 "lex.l"
 { return _OR_;          }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 114 "lex.l"
+#line 97 "lex.l"
 { return _AT_;          }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 115 "lex.l"
+#line 98 "lex.l"
 { return _IN_;          }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 116 "lex.l"
+#line 99 "lex.l"
 { return _OF_;          }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 117 "lex.l"
+#line 100 "lex.l"
 { return _THEM_;        }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 118 "lex.l"
+#line 101 "lex.l"
 { return _FOR_;         }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 119 "lex.l"
+#line 102 "lex.l"
 { return _ALL_;         }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 120 "lex.l"
+#line 103 "lex.l"
 { return _ANY_;         }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 121 "lex.l"
+#line 104 "lex.l"
 { return _ENTRYPOINT_;  }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 122 "lex.l"
+#line 105 "lex.l"
 { return _SIZE_;        }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 123 "lex.l"
+#line 106 "lex.l"
 { return _RVA_;         }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 124 "lex.l"
+#line 107 "lex.l"
 { return _OFFSET_;      }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 125 "lex.l"
+#line 108 "lex.l"
 { return _FILE_;        }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 126 "lex.l"
+#line 109 "lex.l"
 { return _SECTION_;     }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 127 "lex.l"
+#line 110 "lex.l"
 { return _UINT8_;       }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 128 "lex.l"
+#line 111 "lex.l"
 { return _UINT16_;      }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 129 "lex.l"
+#line 112 "lex.l"
 { return _UINT32_;      }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 130 "lex.l"
+#line 113 "lex.l"
 { return _INT8_;        }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 131 "lex.l"
+#line 114 "lex.l"
 { return _INT16_;       }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 132 "lex.l"
+#line 115 "lex.l"
 { return _INT32_;       }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 133 "lex.l"
+#line 116 "lex.l"
 { return _MATCHES_;     }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 134 "lex.l"
+#line 117 "lex.l"
 { return _CONTAINS_;    }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 135 "lex.l"
+#line 118 "lex.l"
 { return _INDEX_;       }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 138 "lex.l"
-{ BEGIN(comment); }
+#line 121 "lex.l"
+{ BEGIN(comment);       }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 139 "lex.l"
-{ BEGIN(INITIAL); }
+#line 122 "lex.l"
+{ BEGIN(INITIAL);       }
 	YY_BREAK
 case 48:
 /* rule 48 can match eol */
 YY_RULE_SETUP
-#line 140 "lex.l"
-{ /* skip comments */ }
+#line 123 "lex.l"
+{ /* skip comments */   }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 144 "lex.l"
+#line 126 "lex.l"
 { /* skip single-line comments */ }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 146 "lex.l"
+#line 129 "lex.l"
 {
-                                          yyextra->lex_buf_ptr = yyextra->lex_buf;
-                                          yyextra->lex_buf_len = 0;
-                                          BEGIN(include);
-                                     }
+                          yyextra->lex_buf_ptr = yyextra->lex_buf;
+                          yyextra->lex_buf_len = 0;
+                          BEGIN(include);
+                        }
 	YY_BREAK
 case 51:
 /* rule 51 can match eol */
 YY_RULE_SETUP
-#line 152 "lex.l"
-{
-                                          YYTEXT_TO_BUFFER;
-                                     }
+#line 136 "lex.l"
+{ YYTEXT_TO_BUFFER; }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 156 "lex.l"
+#line 139 "lex.l"
 {
-                                          char            buffer[1024];
-                                          char            *current_file_name;
-                                          char            *s = NULL;
-                                          char            *b = NULL;
-                                          char            *f;
-                                          FILE*           fh;
-                                          YARA_CONTEXT*   context = yyget_extra(yyscanner);
 
-                                          if (context->allow_includes)
-                                          {
-                                              *yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
+  char            buffer[1024];
+  char            *current_file_name;
+  char            *s = NULL;
+  char            *b = NULL;
+  char            *f;
+  FILE*           fh;
+  YARA_COMPILER*   compiler = yyget_extra(yyscanner);
 
-                                              // move path of current source file into buffer
-                                              current_file_name = yr_get_current_file_name(context);
+  if (compiler->allow_includes)
+  {
+    *yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
 
-                                              if (current_file_name != NULL)
-                                              {
-                                                  strncpy(buffer, yr_get_current_file_name(context), sizeof(buffer)-1);
-                                                  buffer[sizeof(buffer)-1] = '\0';
-                                              }
-                                              else
-                                              {
-                                                  buffer[0] = '\0';
-                                              }
+    // move path of current source file into buffer
+    current_file_name = yr_compiler_get_current_file_name(compiler);
 
-                                              // make included file path relative to current source file
-                                              s = strrchr(buffer, '/');
+    if (current_file_name != NULL)
+    {
+      strncpy(buffer, current_file_name, sizeof(buffer)-1);
+      buffer[sizeof(buffer)-1] = '\0';
+    }
+    else
+    {
+      buffer[0] = '\0';
+    }
 
-                                              #ifdef WIN32
-                                              b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
-                                              #endif
+    // make included file path relative to current source file
+    s = strrchr(buffer, '/');
 
-                                              if (s != NULL || b != NULL)
-                                              {
-                                                  f = (b > s)? (b + 1): (s + 1);
+    #ifdef WIN32
+    b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
+    #endif
 
-                                                  strncpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
-                                                  buffer[sizeof(buffer)-1] = '\0';
+    if (s != NULL || b != NULL)
+    {
+      f = (b > s)? (b + 1): (s + 1);
 
-                                                  // SECURITY: Potential for directory traversal here.
-                                                  fh = fopen(buffer, "r");
+      strncpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
+      buffer[sizeof(buffer)-1] = '\0';
 
-                                                  // if include file was not found relative to current source file, try to open it
-                                                  // with path as specified by user (maybe user wrote a full path)
-                                                  if (fh == NULL)
-                                                  {
-                                                      // SECURITY: Potential for directory traversal here.
-                                                      fh = fopen(yyextra->lex_buf, "r");
-                                                  }
-                                             }
-                                             else
-                                             {
-                                                 // SECURITY: Potential for directory traversal here.
-                                                 fh = fopen(yyextra->lex_buf, "r");
-                                             }
+      // SECURITY: Potential for directory traversal here.
+      fh = fopen(buffer, "r");
 
-                                             if (fh != NULL)
-                                             {
-                                                 int error_code = ERROR_SUCCESS;
+      // if include file was not found relative to current source file,
+      // try to open it with path as specified by user (maybe user wrote
+      // a full path)
+      if (fh == NULL)
+      {
+        // SECURITY: Potential for directory traversal here.
+        fh = fopen(yyextra->lex_buf, "r");
+      }
+    }
+    else
+    {
+      // SECURITY: Potential for directory traversal here.
+      fh = fopen(yyextra->lex_buf, "r");
+    }
 
-                                                 if ((error_code = yr_push_file_name(context, yyextra->lex_buf)) != ERROR_SUCCESS)
-                                                 {
-                                                     if (error_code == ERROR_INCLUDES_CIRCULAR_REFERENCE)
-                                                     {
-                                                         yyerror(yyscanner, "includes circular reference");
-                                                     }
-                                                     else if (error_code == ERROR_INCLUDE_DEPTH_EXCEEDED)
-                                                     {
-                                                         yyerror(yyscanner, "includes circular reference");
-                                                     }
+    if (fh != NULL)
+    {
+      int error_code = yr_compiler_push_file_name(compiler, yyextra->lex_buf);
 
-                                                     yyterminate();
-                                                 }
+      if (error_code != ERROR_SUCCESS)
+      {
+        if (error_code == ERROR_INCLUDES_CIRCULAR_REFERENCE)
+        {
+          yyerror(yyscanner, "includes circular reference");
+        }
+        else if (error_code == ERROR_INCLUDE_DEPTH_EXCEEDED)
+        {
+          yyerror(yyscanner, "includes circular reference");
+        }
 
-                                                 yr_push_file(context, fh);
-                                                 yypush_buffer_state(yy_create_buffer(fh,YY_BUF_SIZE,yyscanner),yyscanner);
+        yyterminate();
+      }
 
-                                             }
-                                             else
-                                             {
-                                                 snprintf(buffer, sizeof(buffer), "can't open include file: %s", yyextra->lex_buf);
-                                                 yyerror(yyscanner, buffer);
-                                             }
-                                         }
-                                         else // not allowing includes
-                                         {
-                                             yyerror(yyscanner, "includes are disabled");
-                                             yyterminate();
-                                         }
+      _yr_compiler_push_file(compiler, fh);
+      yypush_buffer_state(yy_create_buffer(fh,YY_BUF_SIZE,yyscanner),yyscanner);
+    }
+    else
+    {
+      snprintf(buffer, sizeof(buffer),
+               "can't open include file: %s", yyextra->lex_buf);
+      yyerror(yyscanner, buffer);
+    }
+  }
+  else // not allowing includes
+  {
+    yyerror(yyscanner, "includes are disabled");
+    yyterminate();
+  }
 
-                                         BEGIN(INITIAL);
-                                     }
+  BEGIN(INITIAL);
+}
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(str):
 case YY_STATE_EOF(regexp):
 case YY_STATE_EOF(include):
 case YY_STATE_EOF(comment):
-#line 250 "lex.l"
+#line 236 "lex.l"
 {
-                                         YARA_CONTEXT* context = yyget_extra(yyscanner);
-                                         FILE* file = yr_pop_file(context);
 
-                                         if (file != NULL)
-                                         {
-                                            fclose(file);
-                                         }
+  YARA_COMPILER* compiler = yyget_extra(yyscanner);
+  FILE* file = _yr_compiler_pop_file(compiler);
 
-                                         yr_pop_file_name(context);
-                                         yypop_buffer_state(yyscanner);
+  if (file != NULL)
+  {
+    fclose(file);
+  }
 
-                                         if (!YY_CURRENT_BUFFER)
-                                         {
-                                             yyterminate();
-                                         }
-                                     }
+  yr_compiler_pop_file_name(compiler);
+  yypop_buffer_state(yyscanner);
+
+  if (!YY_CURRENT_BUFFER)
+  {
+    yyterminate();
+  }
+}
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 269 "lex.l"
+#line 256 "lex.l"
 {
-                                         yylval->c_string = (char*) yr_strdup(yytext);
-                                         return _STRING_IDENTIFIER_WITH_WILDCARD_;
-                                     }
+
+  yylval->c_string = yr_strdup(yytext);
+  return _STRING_IDENTIFIER_WITH_WILDCARD_;
+}
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 274 "lex.l"
+#line 263 "lex.l"
 {
-                                         yylval->c_string = (char*) yr_strdup(yytext);
-                                         return _STRING_IDENTIFIER_;
-                                     }
+
+  yylval->c_string = yr_strdup(yytext);
+  return _STRING_IDENTIFIER_;
+}
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 280 "lex.l"
+#line 270 "lex.l"
 {
-                                         yylval->c_string = (char*) yr_strdup(yytext);
-                                         yylval->c_string[0] = '$'; /* replace # by $*/
-                                         return _STRING_COUNT_;
-                                     }
+
+  yylval->c_string = yr_strdup(yytext);
+  yylval->c_string[0] = '$'; /* replace # by $*/
+  return _STRING_COUNT_;
+}
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 286 "lex.l"
+#line 278 "lex.l"
 {
-                                         yylval->c_string = (char*) yr_strdup(yytext);
-                                         yylval->c_string[0] = '$'; /* replace @ by $*/
-                                         return _STRING_OFFSET_;
-                                     }
+
+  yylval->c_string = yr_strdup(yytext);
+  yylval->c_string[0] = '$'; /* replace @ by $*/
+  return _STRING_OFFSET_;
+}
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 292 "lex.l"
+#line 286 "lex.l"
 {
-                                         if (strlen(yytext) > 128)
-                                         {
-                                             yyerror(yyscanner, "indentifier too long");
-                                         }
 
-                                         yylval->c_string = (char*) yr_strdup(yytext);
-                                         return _IDENTIFIER_;
-                                     }
+  if (strlen(yytext) > 128)
+  {
+    yyerror(yyscanner, "indentifier too long");
+  }
+
+  yylval->c_string = yr_strdup(yytext);
+  return _IDENTIFIER_;
+}
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 302 "lex.l"
+#line 298 "lex.l"
 {
-                                         yylval->integer = (size_t) atol(yytext);
 
-                                         if (strstr(yytext, "KB") != NULL)
-                                         {
-                                             yylval->integer *= 1024;
-                                         }
-                                         else if (strstr(yytext, "MB") != NULL)
-                                         {
-                                             yylval->integer *= 1048576;
-                                         }
-                                         return _NUMBER_;
-                                     }
+  yylval->integer = (size_t) atol(yytext);
+
+  if (strstr(yytext, "KB") != NULL)
+  {
+     yylval->integer *= 1024;
+  }
+  else if (strstr(yytext, "MB") != NULL)
+  {
+     yylval->integer *= 1048576;
+  }
+  return _NUMBER_;
+}
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 316 "lex.l"
+#line 314 "lex.l"
 {
-                                         yylval->integer = xtoi(yytext + 2);
-                                         return _NUMBER_;
-                                     }
+
+  yylval->integer = xtoi(yytext + 2);
+  return _NUMBER_;
+}
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
 #line 321 "lex.l"
 {     /* saw closing quote - all done */
 
-                                         SIZED_STRING* s;
+  SIZED_STRING* s;
 
-                                         if (yyextra->lex_buf_len == 0)
-                                         {
-                                             yyerror(yyscanner, "empty string");
-                                         }
+  if (yyextra->lex_buf_len == 0)
+  {
+    yyerror(yyscanner, "empty string");
+  }
 
-                                         *yyextra->lex_buf_ptr = '\0';
+  *yyextra->lex_buf_ptr = '\0';
 
-                                         BEGIN(INITIAL);
+  BEGIN(INITIAL);
 
-                                         s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
+  s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
+  s->length = yyextra->lex_buf_len;
+  memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
+  yylval->sized_string = s;
 
-                                         s->length = yyextra->lex_buf_len;
-
-                                         memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
-
-                                         yylval->sized_string = s;
-
-                                         return _TEXTSTRING_;
-                                     }
+  return _TEXTSTRING_;
+}
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 345 "lex.l"
-{ LEX_CHECK_SPACE_OK("\t", yyextra->lex_buf_len, LEX_BUF_SIZE); *yyextra->lex_buf_ptr++ = '\t'; yyextra->lex_buf_len++;}
+#line 343 "lex.l"
+{
+
+  LEX_CHECK_SPACE_OK("\t", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  *yyextra->lex_buf_ptr++ = '\t';
+  yyextra->lex_buf_len++;
+}
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 346 "lex.l"
-{ LEX_CHECK_SPACE_OK("\"", yyextra->lex_buf_len, LEX_BUF_SIZE); *yyextra->lex_buf_ptr++ = '\"'; yyextra->lex_buf_len++;}
+#line 351 "lex.l"
+{
+
+  LEX_CHECK_SPACE_OK("\"", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  *yyextra->lex_buf_ptr++ = '\"';
+  yyextra->lex_buf_len++;
+}
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 347 "lex.l"
-{ LEX_CHECK_SPACE_OK("\\", yyextra->lex_buf_len, LEX_BUF_SIZE); *yyextra->lex_buf_ptr++ = '\\'; yyextra->lex_buf_len++;}
+#line 359 "lex.l"
+{
+
+  LEX_CHECK_SPACE_OK("\\", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  *yyextra->lex_buf_ptr++ = '\\';
+  yyextra->lex_buf_len++;
+}
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 349 "lex.l"
+#line 367 "lex.l"
 {
-                                         int result;
 
-                                         if (sscanf( yytext + 2, "%x", &result ) != 1) {
-                                           yyerror(yyscanner, "Invalid escaped hex digit");
-                                           yyterminate();
-                                         }
-                                         LEX_CHECK_SPACE_OK("X", yyextra->lex_buf_len, LEX_BUF_SIZE);
-                                         *yyextra->lex_buf_ptr++ = result;
-                                         yyextra->lex_buf_len++;
-                                     }
+   int result;
+
+   sscanf( yytext + 2, "%x", &result );
+   LEX_CHECK_SPACE_OK("X", yyextra->lex_buf_len, LEX_BUF_SIZE);
+   *yyextra->lex_buf_ptr++ = result;
+   yyextra->lex_buf_len++;
+}
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 361 "lex.l"
-{
-                                         YYTEXT_TO_BUFFER;
-                                     }
+#line 378 "lex.l"
+{ YYTEXT_TO_BUFFER; }
 	YY_BREAK
 case 66:
 /* rule 66 can match eol */
 YY_RULE_SETUP
-#line 365 "lex.l"
+#line 381 "lex.l"
 {
-                                         yyerror(yyscanner, "unterminated string");
-                                         yyterminate();
-                                     }
+
+  yyerror(yyscanner, "unterminated string");
+  yyterminate();
+}
 	YY_BREAK
 case 67:
 /* rule 67 can match eol */
 YY_RULE_SETUP
-#line 370 "lex.l"
+#line 387 "lex.l"
 {
-                                         yyerror(yyscanner, "illegal escape sequence");
-                                     }
+
+  yyerror(yyscanner, "illegal escape sequence");
+}
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 375 "lex.l"
+#line 393 "lex.l"
 {
-                                         SIZED_STRING* s;
 
-                                         if (yyextra->lex_buf_len == 0)
-                                         {
-                                             yyerror(yyscanner, "empty regular expression");
-                                         }
+  SIZED_STRING* s;
 
-                                         *yyextra->lex_buf_ptr = '\0';
+  if (yyextra->lex_buf_len == 0)
+  {
+    yyerror(yyscanner, "empty regular expression");
+  }
 
-                                         BEGIN(INITIAL);
+  *yyextra->lex_buf_ptr = '\0';
 
-                                         s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
+  BEGIN(INITIAL);
 
-                                         s->length = yyextra->lex_buf_len;
-                                         strcpy(s->c_string, yyextra->lex_buf);
+  s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
 
-                                         yylval->sized_string = s;
+  s->length = yyextra->lex_buf_len;
+  strcpy(s->c_string, yyextra->lex_buf);
 
-                                         return _REGEXP_;
-                                     }
+  yylval->sized_string = s;
+
+  return _REGEXP_;
+}
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 397 "lex.l"
+#line 417 "lex.l"
 {
-                                         LEX_CHECK_SPACE_OK("/", yyextra->lex_buf_len, LEX_BUF_SIZE);
-                                         *yyextra->lex_buf_ptr++ = '/';
-                                         yyextra->lex_buf_len++ ;
-                                     }
+
+  LEX_CHECK_SPACE_OK("/", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  *yyextra->lex_buf_ptr++ = '/';
+  yyextra->lex_buf_len++ ;
+}
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 403 "lex.l"
+#line 425 "lex.l"
 {
-                                         LEX_CHECK_SPACE_OK("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
-                                         *yyextra->lex_buf_ptr++ = yytext[0];
-                                         *yyextra->lex_buf_ptr++ = yytext[1];
-                                         yyextra->lex_buf_len += 2;
-                                     }
+
+  LEX_CHECK_SPACE_OK("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  *yyextra->lex_buf_ptr++ = yytext[0];
+  *yyextra->lex_buf_ptr++ = yytext[1];
+  yyextra->lex_buf_len += 2;
+}
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 410 "lex.l"
-{
-                                         YYTEXT_TO_BUFFER;
-                                     }
+#line 434 "lex.l"
+{ YYTEXT_TO_BUFFER; }
 	YY_BREAK
 case 72:
 /* rule 72 can match eol */
 YY_RULE_SETUP
-#line 414 "lex.l"
+#line 437 "lex.l"
 {
-                                         yyerror(yyscanner, "unterminated regular expression");
-                                         yyterminate();
-                                     }
+
+  yyerror(yyscanner, "unterminated regular expression");
+  yyterminate();
+}
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 419 "lex.l"
+#line 444 "lex.l"
 {
-                                         yyextra->lex_buf_ptr = yyextra->lex_buf;
-                                         yyextra->lex_buf_len = 0;
-                                         BEGIN(str);
-                                     }
+
+  yyextra->lex_buf_ptr = yyextra->lex_buf;
+  yyextra->lex_buf_len = 0;
+  BEGIN(str);
+}
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 425 "lex.l"
+#line 452 "lex.l"
 {
-                                         yyextra->lex_buf_ptr = yyextra->lex_buf;
-                                         yyextra->lex_buf_len = 0;
-                                         BEGIN(regexp);
-                                     }
+
+  yyextra->lex_buf_ptr = yyextra->lex_buf;
+  yyextra->lex_buf_len = 0;
+  BEGIN(regexp);
+}
 	YY_BREAK
 case 75:
 /* rule 75 can match eol */
 YY_RULE_SETUP
-#line 431 "lex.l"
+#line 460 "lex.l"
 {
-                                         int len = strlen(yytext);
 
-                                         SIZED_STRING* s = (SIZED_STRING*) yr_malloc(len + sizeof(SIZED_STRING));
+  int len = strlen(yytext);
+  SIZED_STRING* s = (SIZED_STRING*) yr_malloc(len + sizeof(SIZED_STRING));
 
-                                         s->length = len;
+  s->length = len;
+  strcpy(s->c_string, yytext);
+  yylval->sized_string = s;
 
-                                         strcpy(s->c_string, yytext);
-
-                                         yylval->sized_string = s;
-
-                                         return _HEXSTRING_;
-                                     }
+  return _HEXSTRING_;
+}
 	YY_BREAK
 case 76:
 /* rule 76 can match eol */
 YY_RULE_SETUP
-#line 445 "lex.l"
+#line 473 "lex.l"
 /* skip whitespace */
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 447 "lex.l"
+#line 475 "lex.l"
 {
-                                        if (yytext[0] >= 32 && yytext[0] < 127)
-                                        {
-                                          return yytext[0];
-                                        }
-                                        else
-                                        {
-                                          yyerror(yyscanner, "non-ascii character");
-                                          yyterminate();
-                                        }
-                                     }
+
+  if (yytext[0] >= 32 && yytext[0] < 127)
+  {
+    return yytext[0];
+  }
+  else
+  {
+    yyerror(yyscanner, "non-ascii character");
+    yyterminate();
+  }
+}
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 458 "lex.l"
+#line 488 "lex.l"
 ECHO;
 	YY_BREAK
-#line 1691 "lex.c"
+#line 1695 "lex.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2862,108 +2866,106 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 458 "lex.l"
+#line 488 "lex.l"
 
 
 
 
 void yyerror(yyscan_t yyscanner, const char *error_message)
 {
-    YARA_CONTEXT* context = yyget_extra(yyscanner);
+  YARA_COMPILER* compiler = yyget_extra(yyscanner);
 
-    char  message[512] = {'\0'};
-    char* file_name = NULL;
+  char message[512] = {'\0'};
+  char* file_name = NULL;
 
-    /*
-        if error_message != NULL the error comes from yyparse internal code
-        else the error comes from my code and the error code is set in context->last_result
-    */
+  /*
+    if error_message != NULL the error comes from yyparse internal code
+    else the error comes from my code and the error code is set in
+    compiler->last_result
+  */
 
-    context->errors++;
-    context->last_error_line = yyget_lineno(yyscanner);
+  compiler->errors++;
+  compiler->last_error_line = yyget_lineno(yyscanner);
 
-    if (context->file_name_stack_ptr > 0)
+  if (compiler->file_name_stack_ptr > 0)
+  {
+    file_name = compiler->file_name_stack[compiler->file_name_stack_ptr - 1];
+  }
+  else
+  {
+    file_name = NULL;
+  }
+
+  if (error_message != NULL)
+  {
+    yr_compiler_set_error_extra_info(compiler, error_message);
+    compiler->last_error = ERROR_SYNTAX_ERROR;
+
+    if (compiler->error_report_function != NULL)
     {
-        file_name = context->file_name_stack[context->file_name_stack_ptr - 1];
+      compiler->error_report_function(
+          file_name,
+          compiler->last_error_line,
+          error_message);
     }
-    else
+  }
+  else
+  {
+    compiler->last_error = compiler->last_result;
+
+    if (compiler->error_report_function != NULL)
     {
-        file_name = NULL;
+      yr_compiler_get_error_message(compiler, message, sizeof(message));
+
+      compiler->error_report_function(
+        file_name,
+        compiler->last_error_line,
+        message);
     }
+  }
 
-    if (error_message != NULL)
-    {
-        context->last_error = ERROR_SYNTAX_ERROR;
-        strncpy(context->last_error_extra_info, error_message, sizeof(context->last_error_extra_info) - 1);
-        context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = '\0';
-
-        if (context->error_report_function != NULL)
-        {
-            context->error_report_function(file_name,
-                                           context->last_error_line,
-                                           error_message);
-        }
-    }
-    else
-    {
-        context->last_error = context->last_result;
-
-        if (context->error_report_function != NULL)
-        {
-            yr_get_error_message(context, message, sizeof(message));
-
-            context->error_report_function(file_name,
-                                           context->last_error_line,
-                                           message);
-        }
-    }
-
-    context->last_result = ERROR_SUCCESS;
+  compiler->last_result = ERROR_SUCCESS;
 }
 
 
-
-int parse_rules_string(const char* rules_string, YARA_CONTEXT* context)
+int parse_rules_string(
+  const char* rules_string,
+  YARA_COMPILER* compiler)
 {
-    yyscan_t yyscanner;
-    YY_BUFFER_STATE state;
+  yyscan_t yyscanner;
+  YY_BUFFER_STATE state;
 
-    yylex_init(&yyscanner);
+  yylex_init(&yyscanner);
+  yyset_extra(compiler,yyscanner);
 
-    yyset_extra(context,yyscanner);
+  state = yy_scan_string(rules_string,yyscanner);
 
-    state = yy_scan_string(rules_string,yyscanner);
+  yyset_lineno(1,yyscanner);
+  yyparse(yyscanner);
+  yylex_destroy(yyscanner);
 
-    yyset_lineno(1,yyscanner);
-    yyparse(yyscanner);
-
-    yylex_destroy(yyscanner);
-
-    return context->errors;
+  return compiler->errors;
 }
 
 
-
-int parse_rules_file(FILE* rules_file, YARA_CONTEXT* context)
+int parse_rules_file(
+  FILE* rules_file,
+  YARA_COMPILER* compiler)
 {
-    yyscan_t yyscanner;
-
-    yylex_init(&yyscanner);
+  yyscan_t yyscanner;
+  yylex_init(&yyscanner);
 
 #ifdef DEBUG
-    yyset_debug(1,yyscanner);
+  yyset_debug(1,yyscanner);
 #endif
 
-    yyset_in(rules_file,yyscanner);
-    yyset_extra(context,yyscanner);
+  yyset_in(rules_file,yyscanner);
+  yyset_extra(compiler,yyscanner);
+  yyparse(yyscanner);
+  yylex_destroy(yyscanner);
 
-    yyparse(yyscanner);
-
-    yylex_destroy(yyscanner);
-
-    return context->errors;
+  return compiler->errors;
 }
-
 
 
 

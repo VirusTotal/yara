@@ -14,10 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//
-//  receives an string representing an hex number (without the leading 0x)
-//  and returns its value as integer
-// 
+#ifndef _EXEFILES_H
+#define _EXEFILES_H
 
-size_t xtoi(const char* hexstr);
+int yr_file_is_pe(
+		unsigned char* buffer,
+		unsigned int buffer_length);
+
+
+int yr_file_is_elf(
+		unsigned char* buffer,
+		unsigned int buffer_length);
+
+
+unsigned long long yr_get_entry_point_offset(
+		unsigned char* buffer,
+		unsigned int buffer_length);
+
+
+unsigned long long yr_get_entry_point_address(
+		unsigned char* buffer,
+		unsigned int buffer_length,
+		size_t base_address);
+
+#endif
 

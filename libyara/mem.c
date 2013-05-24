@@ -22,70 +22,92 @@ static HANDLE hHeap;
 
 void yr_heap_alloc()
 {
-    hHeap = HeapCreate(0, 0x8000, 0);
+  hHeap = HeapCreate(0, 0x8000, 0);
 }
 
 void yr_heap_free()
 {
-    HeapDestroy(hHeap);
+  HeapDestroy(hHeap);
 }
 
 void* yr_malloc(size_t size)
 {
-    return (void*) HeapAlloc(hHeap, HEAP_ZERO_MEMORY, size);
+  return (void*) HeapAlloc(hHeap, HEAP_ZERO_MEMORY, size);
 }
 
+void* yr_realloc(void* ptr, size_t size)
+{
+  return (void*) HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, ptr, size);
+}
 
 void yr_free(void* ptr)
 {
-    HeapFree(hHeap, 0, ptr);
+  HeapFree(hHeap, 0, ptr);
 }
-
 
 char* yr_strdup(const char *s)
 {
-    size_t len;
-    char *r;
-    
-    len = strlen(s);
-    
-    r = yr_malloc(len + 1);
-    
-    strcpy(r, s);
-    
-    return r;
+  size_t len;
+  char *r;
+
+  len = strlen(s);
+  r = yr_malloc(len + 1);
+  strcpy(r, s);
+
+  return r;
 }
 
 #else
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+
+static int count;
 
 void yr_heap_alloc()
 {
-    return;
+  count = 0;
+  return;
 }
 
 void yr_heap_free()
 {
-    return;
+  printf("malloc count: %d\n", count);
+  return;
 }
 
 void* yr_malloc(size_t size)
 {
-    return malloc(size);
+  void* result;
+  count++;
+  result = malloc(size);
+  //printf("malloc: %p %d\n", result, size);
+  return result;
 }
 
+void* yr_realloc(void* ptr, size_t size)
+{
+  void* result;
+  result = realloc(ptr, size);
+  //printf("realloc: %p -> %p\n", ptr, result);
+  return result;
+}
 
 void yr_free(void *ptr)
 {
-    free(ptr);
+  count--;
+  //printf("free: %p\n", ptr);
+  free(ptr);
 }
 
-
-char* yr_strdup(const char *s)
+char* yr_strdup(const char *str)
 {
-    return strdup(s);
+  void* result;
+  count++;
+  result = strdup(str);
+  //printf("strdup: %p %d %s\n", result, strlen(str) + 1, str);
+  return result;
 }
 
 #endif

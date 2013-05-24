@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007. Victor M. Alvarez [plusvic@gmail.com].
+Copyright (c) 2013. Victor M. Alvarez [plusvic@gmail.com].
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,25 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _EVAL_H
-#define _EVAL_H
 
-#include "yara.h"
+#ifndef _UTILS_H
+#define _UTILS_H
 
-typedef struct _EVALUATION_CONTEXT
-{
-	unsigned long long    file_size;
-	unsigned long long    entry_point;
 
-    MEMORY_BLOCK*   mem_block;
-    RULE*           rule;
-    STRING*         current_string;
-
-} EVALUATION_CONTEXT;
-
-typedef long long (*EVALUATION_FUNCTION)(TERM* term, EVALUATION_CONTEXT* context);
-
-long long evaluate(TERM* term, EVALUATION_CONTEXT* context);
+size_t xtoi(const char* hexstr);
 
 #endif
-

@@ -21,6 +21,8 @@ limitations under the License.
 
 #include "yara.h"
 
-int get_process_memory(int pid, MEMORY_BLOCK** first_block);
+int get_process_memory(
+		int pid,
+		MEMORY_BLOCK** first_block);
 
 #endif

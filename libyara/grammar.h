@@ -172,18 +172,14 @@
 typedef union YYSTYPE
 #line 148 "grammar.y"
 {
-    
-    void*           sized_string;
-    char*           c_string;
-    size_t          integer;
-    void*           string;
-    void*           term;
-    void*           tag;
-    void*           meta;
-
+  void*           sized_string;
+  char*           c_string;
+  int64_t         integer;
+  void*           string;
+  void*           meta;
 }
 /* Line 1529 of yacc.c.  */
-#line 187 "grammar.h"
+#line 183 "grammar.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
