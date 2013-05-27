@@ -30,14 +30,14 @@ int _yr_scan_compare(
     uint8_t* str2,
     int len)
 {
-    uint8_t* s1 = str1;
-    uint8_t* s2 = str2;
-    int i = 0;
+  uint8_t* s1 = str1;
+  uint8_t* s2 = str2;
+  int i = 0;
 
-    while (i < len && *s1++ == *s2++)
-      i++;
+  while (i < len && *s1++ == *s2++)
+    i++;
 
-    return ((i == len) ? i : 0);
+  return ((i == len) ? i : 0);
 }
 
 
@@ -46,14 +46,14 @@ int _yr_scan_icompare(
     uint8_t* str2,
     int len)
 {
-    uint8_t* s1 = str1;
-    uint8_t* s2 = str2;
-    int i = 0;
+  uint8_t* s1 = str1;
+  uint8_t* s2 = str2;
+  int i = 0;
 
-    while (i < len && lowercase[*s1++] == lowercase[*s2++])
-      i++;
+  while (i < len && lowercase[*s1++] == lowercase[*s2++])
+    i++;
 
-    return ((i == len) ? i : 0);
+  return ((i == len) ? i : 0);
 }
 
 
@@ -523,6 +523,7 @@ void yr_rules_free_matches(
 
   while (!RULE_IS_NULL(rule))
   {
+    rule->flags &= ~RULE_FLAGS_MATCH;
     string = rule->strings;
 
     while (!STRING_IS_NULL(string))

@@ -1004,7 +1004,6 @@ static PyObject * yara_compile(
                 PyExc_TypeError,
                 "keys and values of the 'sources' dictionary must be "
                 "of string type");
-            break;
           }
         }
       }
@@ -1040,6 +1039,7 @@ static PyObject * yara_compile(
             else
             {
               result = PyErr_SetFromErrno(YaraError);
+              break;
             }
           }
           else
@@ -1048,7 +1048,6 @@ static PyObject * yara_compile(
                 PyExc_TypeError,
                 "keys and values of the filepaths dictionary must be of "
                 "string type");
-            break;
           }
         }
       }
@@ -1066,7 +1065,7 @@ static PyObject * yara_compile(
           "compile() takes 1 argument");
     }
 
-    if (result == NULL)
+    if (PyErr_Occurred() == NULL)
     {
       if (compile_result > 0)
       {

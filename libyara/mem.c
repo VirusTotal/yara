@@ -25,25 +25,30 @@ void yr_heap_alloc()
   hHeap = HeapCreate(0, 0x8000, 0);
 }
 
+
 void yr_heap_free()
 {
   HeapDestroy(hHeap);
 }
+
 
 void* yr_malloc(size_t size)
 {
   return (void*) HeapAlloc(hHeap, HEAP_ZERO_MEMORY, size);
 }
 
+
 void* yr_realloc(void* ptr, size_t size)
 {
   return (void*) HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, ptr, size);
 }
 
+
 void yr_free(void* ptr)
 {
   HeapFree(hHeap, 0, ptr);
 }
+
 
 char* yr_strdup(const char *s)
 {
@@ -71,11 +76,13 @@ void yr_heap_alloc()
   return;
 }
 
+
 void yr_heap_free()
 {
   printf("malloc count: %d\n", count);
   return;
 }
+
 
 void* yr_malloc(size_t size)
 {
@@ -86,6 +93,7 @@ void* yr_malloc(size_t size)
   return result;
 }
 
+
 void* yr_realloc(void* ptr, size_t size)
 {
   void* result;
@@ -94,12 +102,14 @@ void* yr_realloc(void* ptr, size_t size)
   return result;
 }
 
+
 void yr_free(void *ptr)
 {
   count--;
   //printf("free: %p\n", ptr);
   free(ptr);
 }
+
 
 char* yr_strdup(const char *str)
 {

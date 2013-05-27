@@ -26,6 +26,7 @@ limitations under the License.
     if (sp < STACK_SIZE) stack[sp++] = (x); \
     else return ERROR_STACK_OVERFLOW
 
+
 #define pop(x)  x = stack[--sp]
 
 

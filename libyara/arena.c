@@ -14,6 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+/*
+
+This module implements a data structure "arena". An arena is a data
+container composed of a set of pages. The arena grows automatically
+when needed, by adding new pages to hold new data if required. Arenas
+can be saved and loaded from files.
+
+*/
+
 #include <string.h>
 #include <assert.h>
 #include <stdlib.h>

@@ -36,13 +36,13 @@ limitations under the License.
 
 
 PIMAGE_NT_HEADERS yr_get_pe_header(
-    unsigned char* buffer,
-    unsigned int buffer_length)
+    uint8_t* buffer,
+    size_t buffer_length)
 {
   PIMAGE_DOS_HEADER mz_header;
   PIMAGE_NT_HEADERS pe_header;
 
-  unsigned int headers_size = 0;
+  size_t headers_size = 0;
 
   if (buffer_length < sizeof(IMAGE_DOS_HEADER))
     return NULL;
@@ -79,10 +79,10 @@ PIMAGE_NT_HEADERS yr_get_pe_header(
 }
 
 
-unsigned long long yr_pe_rva_to_offset(
+uint64_t yr_pe_rva_to_offset(
     PIMAGE_NT_HEADERS pe_header,
-    unsigned long long rva,
-    unsigned int buffer_length)
+    uint64_t rva,
+    size_t buffer_length)
 {
   int i = 0;
   PIMAGE_SECTION_HEADER section;
@@ -91,7 +91,8 @@ unsigned long long yr_pe_rva_to_offset(
 
   while(i < MIN(pe_header->FileHeader.NumberOfSections, 60))
   {
-    if ((unsigned char*) section - (unsigned char*) pe_header + sizeof(IMAGE_SECTION_HEADER) < buffer_length)
+    if ((uint8_t*) section - \
+        (uint8_t*) pe_header + sizeof(IMAGE_SECTION_HEADER) < buffer_length)
     {
       if (rva >= section->VirtualAddress &&
           rva <  section->VirtualAddress + section->SizeOfRawData)
@@ -113,8 +114,8 @@ unsigned long long yr_pe_rva_to_offset(
 
 
 int yr_get_elf_type(
-    unsigned char* buffer,
-    unsigned int buffer_length)
+    uint8_t* buffer,
+    size_t buffer_length)
 {
   Elf32_Ehdr* elf_header;
 
@@ -137,10 +138,10 @@ int yr_get_elf_type(
 }
 
 
-unsigned long long yr_elf_rva_to_offset_32(
+uint64_t yr_elf_rva_to_offset_32(
     Elf32_Ehdr* elf_header,
-    unsigned long long rva,
-    unsigned int buffer_length)
+    uint64_t rva,
+    size_t buffer_length)
 {
   int i;
   Elf32_Shdr* section;
@@ -152,7 +153,8 @@ unsigned long long yr_elf_rva_to_offset_32(
   if(ULONG_MAX - elf_header->e_shoff < sizeof(Elf32_Shdr) * elf_header->e_shnum)
     return 0;
 
-  if (elf_header->e_shoff + sizeof(Elf32_Shdr) * elf_header->e_shnum > buffer_length)
+  if (elf_header->e_shoff + \
+      sizeof(Elf32_Shdr) * elf_header->e_shnum > buffer_length)
     return 0;
 
   section = (Elf32_Shdr*) ((unsigned char*) elf_header + elf_header->e_shoff);
@@ -179,10 +181,10 @@ unsigned long long yr_elf_rva_to_offset_32(
 }
 
 
-unsigned long long yr_elf_rva_to_offset_64(
+uint64_t yr_elf_rva_to_offset_64(
     Elf64_Ehdr* elf_header,
-    unsigned long long rva,
-    unsigned int buffer_length)
+    uint64_t rva,
+    size_t buffer_length)
 {
   int i;
   Elf64_Shdr* section;
@@ -194,7 +196,7 @@ unsigned long long yr_elf_rva_to_offset_64(
       buffer_length)
     return 0;
 
-  section = (Elf64_Shdr*) ((unsigned char*) elf_header + elf_header->e_shoff);
+  section = (Elf64_Shdr*) ((uint8_t*) elf_header + elf_header->e_shoff);
 
   for (i = 0; i < elf_header->e_shnum; i++)
   {
@@ -213,9 +215,9 @@ unsigned long long yr_elf_rva_to_offset_64(
 }
 
 
-unsigned long long yr_get_entry_point_offset(
-    unsigned char* buffer,
-    unsigned int buffer_length)
+uint64_t yr_get_entry_point_offset(
+    uint8_t* buffer,
+    size_t buffer_length)
 {
   PIMAGE_NT_HEADERS pe_header;
   Elf32_Ehdr* elf_header32;
@@ -228,7 +230,7 @@ unsigned long long yr_get_entry_point_offset(
     return yr_pe_rva_to_offset(
         pe_header,
         pe_header->OptionalHeader.AddressOfEntryPoint,
-        buffer_length - ((unsigned char*) pe_header - buffer));
+        buffer_length - ((uint8_t*) pe_header - buffer));
   }
 
   switch(yr_get_elf_type(buffer, buffer_length))
@@ -252,9 +254,9 @@ unsigned long long yr_get_entry_point_offset(
 }
 
 
-unsigned long long yr_get_entry_point_address(
-    unsigned char* buffer,
-    unsigned int buffer_length,
+uint64_t yr_get_entry_point_address(
+    uint8_t* buffer,
+    size_t buffer_length,
     size_t base_address)
 {
   PIMAGE_NT_HEADERS pe_header;
@@ -296,16 +298,16 @@ unsigned long long yr_get_entry_point_address(
 
 
 int yr_file_is_pe(
-    unsigned char* buffer,
-    unsigned int buffer_length)
+    uint8_t* buffer,
+    size_t buffer_length)
 {
   return (yr_get_pe_header(buffer, buffer_length) != NULL);
 }
 
 
 int yr_file_is_elf(
-    unsigned char* buffer,
-    unsigned int buffer_length)
+    uint8_t* buffer,
+    size_t buffer_length)
 {
   int type = yr_get_elf_type(buffer, buffer_length);
 

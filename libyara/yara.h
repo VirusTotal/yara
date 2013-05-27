@@ -106,7 +106,7 @@ limitations under the License.
 #define META_TYPE_BOOLEAN               3
 
 #define META_IS_NULL(x) \
-    ((x) == NULL || ((x)->type) == META_TYPE_NULL)
+    ((x) != NULL ? (x)->type == META_TYPE_NULL : TRUE)
 
 #define EXTERNAL_VARIABLE_TYPE_NULL     0
 #define EXTERNAL_VARIABLE_TYPE_ANY      1
@@ -115,7 +115,7 @@ limitations under the License.
 #define EXTERNAL_VARIABLE_TYPE_BOOLEAN  4
 
 #define EXTERNAL_VARIABLE_IS_NULL(x) \
-    ((x) == NULL || ((x)->type) == EXTERNAL_VARIABLE_TYPE_NULL)
+    ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : TRUE)
 
 #define CALLBACK_CONTINUE  0
 #define CALLBACK_ABORT     1
