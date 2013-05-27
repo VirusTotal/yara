@@ -105,12 +105,17 @@ limitations under the License.
 #define META_TYPE_STRING                2
 #define META_TYPE_BOOLEAN               3
 
-#define META_IS_NULL(x)  ((x) == NULL || ((x)->type) == META_TYPE_NULL)
+#define META_IS_NULL(x) \
+    ((x) == NULL || ((x)->type) == META_TYPE_NULL)
 
-#define EXTERNAL_VARIABLE_TYPE_ANY      0
-#define EXTERNAL_VARIABLE_TYPE_INTEGER  1
-#define EXTERNAL_VARIABLE_TYPE_STRING   2
-#define EXTERNAL_VARIABLE_TYPE_BOOLEAN  3
+#define EXTERNAL_VARIABLE_TYPE_NULL     0
+#define EXTERNAL_VARIABLE_TYPE_ANY      1
+#define EXTERNAL_VARIABLE_TYPE_INTEGER  2
+#define EXTERNAL_VARIABLE_TYPE_STRING   3
+#define EXTERNAL_VARIABLE_TYPE_BOOLEAN  4
+
+#define EXTERNAL_VARIABLE_IS_NULL(x) \
+    ((x) == NULL || ((x)->type) == EXTERNAL_VARIABLE_TYPE_NULL)
 
 #define CALLBACK_CONTINUE  0
 #define CALLBACK_ABORT     1
@@ -128,15 +133,24 @@ limitations under the License.
 #define STRING_FLAGS_FAST_MATCH   0x200
 #define STRING_FLAGS_NULL         0x1000
 
-#define STRING_IS_HEX(x)       (((x)->flags) & STRING_FLAGS_HEXADECIMAL)
-#define STRING_IS_NO_CASE(x)   (((x)->flags) & STRING_FLAGS_NO_CASE)
-#define STRING_IS_ASCII(x)     (((x)->flags) & STRING_FLAGS_ASCII)
-#define STRING_IS_WIDE(x)      (((x)->flags) & STRING_FLAGS_WIDE)
-#define STRING_IS_REGEXP(x)    (((x)->flags) & STRING_FLAGS_REGEXP)
-#define STRING_IS_FULL_WORD(x) (((x)->flags) & STRING_FLAGS_FULL_WORD)
-#define STRING_IS_ANONYMOUS(x) (((x)->flags) & STRING_FLAGS_ANONYMOUS)
-#define STRING_IS_REFERENCED(x) (((x)->flags) & STRING_FLAGS_REFERENCED)
-#define STRING_IS_NULL(x)      ((x) == NULL || ((x)->flags) & STRING_FLAGS_NULL)
+#define STRING_IS_HEX(x) \
+    (((x)->flags) & STRING_FLAGS_HEXADECIMAL)
+#define STRING_IS_NO_CASE(x) \
+    (((x)->flags) & STRING_FLAGS_NO_CASE)
+#define STRING_IS_ASCII(x) \
+    (((x)->flags) & STRING_FLAGS_ASCII)
+#define STRING_IS_WIDE(x) \
+    (((x)->flags) & STRING_FLAGS_WIDE)
+#define STRING_IS_REGEXP(x) \
+    (((x)->flags) & STRING_FLAGS_REGEXP)
+#define STRING_IS_FULL_WORD(x) \
+    (((x)->flags) & STRING_FLAGS_FULL_WORD)
+#define STRING_IS_ANONYMOUS(x) \
+    (((x)->flags) & STRING_FLAGS_ANONYMOUS)
+#define STRING_IS_REFERENCED(x) \
+    (((x)->flags) & STRING_FLAGS_REFERENCED)
+#define STRING_IS_NULL(x) \
+    ((x) == NULL || ((x)->flags) & STRING_FLAGS_NULL)
 
 #define RULE_FLAGS_MATCH                0x01
 #define RULE_FLAGS_PRIVATE              0x02
@@ -145,7 +159,8 @@ limitations under the License.
 #define RULE_FLAGS_REQUIRE_FILE         0x10
 #define RULE_FLAGS_NULL                 0x1000
 
-#define RULE_IS_NULL(x) (((x)->flags) & RULE_FLAGS_NULL)
+#define RULE_IS_NULL(x) \
+    (((x)->flags) & RULE_FLAGS_NULL)
 
 
 #define NAMESPACE_FLAGS_UNSATISFIED_GLOBAL      0x01
@@ -154,9 +169,13 @@ limitations under the License.
 
 #define EOL ((size_t) -1)
 
-
 #define DECLARE_REFERENCE(type, name) \
     union { type name; int64_t name##_; }
+
+
+#define UINT64_TO_PTR(type, x)  ((type)(size_t) x)
+
+#define PTR_TO_UINT64(x)  ((uint64_t) (size_t) x)
 
 
 typedef struct _RELOC
@@ -194,7 +213,7 @@ typedef struct _ARENA
 
 
 #pragma pack(push)
-#pragma pack(8)
+#pragma pack(1)
 
 
 typedef struct _REGEXP

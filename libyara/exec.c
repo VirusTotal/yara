@@ -165,7 +165,7 @@ int yr_execute_code(
         //printf("JLE_A_B A:%d  B:%d\n", rA, rB);
         if (rA <= rB)
         {
-          ip = (uint8_t*)(*(uint64_t*)(ip + 1));
+          ip = *(uint8_t**)(ip + 1);
           // ip will be incremented at the end of the loop,
           // decrement it here to compensate.
           ip--;
@@ -179,7 +179,7 @@ int yr_execute_code(
       case JNUNDEF_A:
         if (rA != UNDEFINED)
         {
-          ip = (uint8_t*)(*(uint64_t*)(ip + 1));
+          ip = *(uint8_t**)(ip + 1);
           // ip will be incremented at the end of the loop,
           // decrement it here to compensate.
           ip--;
@@ -337,7 +337,7 @@ int yr_execute_code(
       case EXT_STR:
         external = *(EXTERNAL_VARIABLE**)(ip + 1);
         ip += sizeof(uint64_t);
-        push((uint64_t) external->string);
+        push(PTR_TO_UINT64(external->string));
         break;
 
       case EXT_BOOL:
@@ -351,7 +351,7 @@ int yr_execute_code(
 
       case SFOUND:
         pop(r1);
-        string = (STRING*) r1;
+        string = UINT64_TO_PTR(STRING*, r1);
         push(string->flags & STRING_FLAGS_FOUND ? 1 : 0);
         //printf("SFOUND %s %d\n", string->identifier, string->flags & STRING_FLAGS_FOUND? 1 : 0);
         break;
@@ -366,7 +366,7 @@ int yr_execute_code(
           break;
         }
 
-        string = (STRING*) r2;
+        string = UINT64_TO_PTR(STRING*, r2);
         match = string->matches_list_head;
         found = 0;
 
@@ -401,7 +401,7 @@ int yr_execute_code(
           break;
         }
 
-        string = (STRING*) r3;
+        string = UINT64_TO_PTR(STRING*, r3);
         match = string->matches_list_head;
         found = 0;
 
@@ -429,7 +429,7 @@ int yr_execute_code(
 
       case SCOUNT:
         pop(r1);
-        string = (STRING*) r1;
+        string = UINT64_TO_PTR(STRING*, r1);
         match = string->matches_list_head;
         found = 0;
         while (match != NULL)
@@ -450,7 +450,7 @@ int yr_execute_code(
           break;
         }
 
-        string = (STRING*) r2;
+        string = UINT64_TO_PTR(STRING*, r2);
         match = string->matches_list_head;
         i = 1;
         found = 0;
@@ -484,7 +484,7 @@ int yr_execute_code(
         pop(r1);
         while (r1 != UNDEFINED)
         {
-          string = (STRING*) r1;
+          string = UINT64_TO_PTR(STRING*, r1);
           if (string->flags & STRING_FLAGS_FOUND)
             found++;
           count++;
@@ -538,7 +538,7 @@ int yr_execute_code(
       case CONTAINS:
         pop(r2);
         pop(r1);
-        push(strstr((char*) r1, (char*) r2) != NULL);
+        push(strstr(UINT64_TO_PTR(char*, r1), UINT64_TO_PTR(char*, r2)) != NULL);
         break;
 
       case MATCHES:
@@ -546,7 +546,7 @@ int yr_execute_code(
         pop(r1);
 
         result = regex_compile(&re,
-            (char*) r2,
+            UINT64_TO_PTR(char*, r2),
             FALSE,
             NULL,
             0,
@@ -558,8 +558,8 @@ int yr_execute_code(
 
         result = regex_exec(&re,
             FALSE,
-            (char*) r1,
-            strlen((char*) r1));
+            UINT64_TO_PTR(char*, r1),
+            strlen(UINT64_TO_PTR(char*, r1)));
 
         push(result >= 0);
         break;

@@ -122,7 +122,8 @@ void emit_pushes_for_strings(
     if ((*target_identifier == '\0' && *string_identifier == '\0') ||
          *target_identifier == '*')
     {
-      emit_with_arg_reloc(yyscanner, PUSH, (int64_t) string, NULL);
+      emit_with_arg_reloc(yyscanner, PUSH, PTR_TO_UINT64(string), NULL);
+      string->flags |= STRING_FLAGS_REFERENCED;
     }
 
     string = yr_arena_next_address(
@@ -644,7 +645,7 @@ int reduce_rule_declaration(
   compiler->last_result = emit_with_arg_reloc(
       yyscanner,
       RULE_POP,
-      (uint64_t) rule,
+      PTR_TO_UINT64(rule),
       NULL);
 
   if (compiler->last_result != ERROR_SUCCESS)
@@ -698,10 +699,12 @@ int reduce_string_identifier(
       emit_with_arg_reloc(
           yyscanner,
           PUSH,
-          (int64_t) string,
+          PTR_TO_UINT64(string),
           NULL);
 
       emit(yyscanner, instruction, NULL);
+
+      string->flags |= STRING_FLAGS_REFERENCED;
     }
   }
 
@@ -726,7 +729,7 @@ int reduce_external(
       compiler->last_result = emit_with_arg_reloc(
           yyscanner,
           EXT_BOOL,
-          (int64_t) external,
+          PTR_TO_UINT64(external),
           NULL);
     }
     else if (instruction == EXT_INT &&
@@ -735,7 +738,7 @@ int reduce_external(
       compiler->last_result = emit_with_arg_reloc(
           yyscanner,
           EXT_INT,
-          (int64_t) external,
+          PTR_TO_UINT64(external),
           NULL);
     }
     else if (instruction == EXT_STR &&
@@ -744,7 +747,7 @@ int reduce_external(
       compiler->last_result = emit_with_arg_reloc(
           yyscanner,
           EXT_STR,
-          (int64_t) external,
+          PTR_TO_UINT64(external),
           NULL);
     }
     else
@@ -803,8 +806,5 @@ META* reduce_meta_declaration(
 
   return meta;
 }
-
-
-
 
 

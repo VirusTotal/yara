@@ -880,7 +880,7 @@ static PyObject * yara_compile(
   FILE* fh;
 
   int fd;
-  int compile_result;
+  int compile_result = 0;
   int error_line;
   char error_message[256];
 

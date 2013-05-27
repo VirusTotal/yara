@@ -2130,7 +2130,7 @@ yyreduce:
                           compiler->last_result = emit_with_arg_reloc(
                               yyscanner,
                               RULE_PUSH,
-                              (int64_t) rule,
+                              PTR_TO_UINT64(rule),
                               NULL);
                         }
                         else
@@ -2175,7 +2175,7 @@ yyreduce:
                           emit_with_arg_reloc(
                               yyscanner,
                               PUSH,
-                              (int64_t) string,
+                              PTR_TO_UINT64(string),
                               NULL);
 
                           emit(yyscanner, MATCHES, NULL);
@@ -2305,7 +2305,7 @@ yyreduce:
                           emit_with_arg_reloc(
                               yyscanner,
                               JNUNDEF_A,
-                              (int64_t) compiler->loop_address,
+                              PTR_TO_UINT64(compiler->loop_address),
                               NULL);
                         }
                         else // INTEGER_SET_RANGE
@@ -2317,7 +2317,7 @@ yyreduce:
                           emit_with_arg_reloc(
                               yyscanner,
                               JLE_A_B,
-                              (int64_t) compiler->loop_address,
+                              PTR_TO_UINT64(compiler->loop_address),
                               NULL);
 
                           emit(yyscanner, POP_B, NULL);
@@ -2361,7 +2361,7 @@ yyreduce:
                         emit_with_arg_reloc(
                             yyscanner,
                             JNUNDEF_A,
-                            (int64_t) compiler->loop_address,
+                            PTR_TO_UINT64(compiler->loop_address),
                             NULL);
 
                         emit(yyscanner, POP_A, NULL);
@@ -2471,7 +2471,7 @@ yyreduce:
           emit_with_arg_reloc(
               yyscanner,
               PUSH,
-              (int64_t) string,
+              PTR_TO_UINT64(string),
               NULL);
 
           yr_free((yyvsp[(1) - (1)].sized_string));

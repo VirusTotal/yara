@@ -416,7 +416,7 @@ int callback(RULE* rule, void* data)
 
           while (match != NULL)
           {
-            printf("0x%lx:%s: ", match->first_offset, string->identifier);
+            printf("0x%zx:%s: ", match->first_offset, string->identifier);
 
             if (STRING_IS_HEX(string))
             {

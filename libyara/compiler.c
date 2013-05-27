@@ -321,6 +321,7 @@ int _yr_compiler_compile_rules(
   YARA_RULES_FILE_HEADER* rules_file_header;
   ARENA* arena;
   RULE null_rule;
+  EXTERNAL_VARIABLE null_external;
 
   int8_t halt = HALT;
   int result;
@@ -342,6 +343,16 @@ int _yr_compiler_compile_rules(
       sizeof(RULE),
       NULL);
 
+  // Write a null external the end.
+  memset(&null_external, 0xFA, sizeof(EXTERNAL_VARIABLE));
+  null_external.type = EXTERNAL_VARIABLE_TYPE_NULL;
+
+  yr_arena_write_data(
+      compiler->externals_arena,
+      &null_external,
+      sizeof(EXTERNAL_VARIABLE),
+      NULL);
+
   // Create Aho-Corasick automaton's failure links.
   yr_ac_create_failure_links(
       compiler->automaton_arena,
@@ -355,6 +366,7 @@ int _yr_compiler_compile_rules(
         sizeof(YARA_RULES_FILE_HEADER),
         (void**) &rules_file_header,
         offsetof(YARA_RULES_FILE_HEADER, rules_list_head),
+        offsetof(YARA_RULES_FILE_HEADER, externals_list_head),
         offsetof(YARA_RULES_FILE_HEADER, code_start),
         offsetof(YARA_RULES_FILE_HEADER, automaton),
         EOL);

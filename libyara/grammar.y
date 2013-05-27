@@ -462,7 +462,7 @@ boolean_expression  : '(' boolean_expression ')'
                           compiler->last_result = emit_with_arg_reloc(
                               yyscanner,
                               RULE_PUSH,
-                              (int64_t) rule,
+                              PTR_TO_UINT64(rule),
                               NULL);
                         }
                         else
@@ -504,7 +504,7 @@ boolean_expression  : '(' boolean_expression ')'
                           emit_with_arg_reloc(
                               yyscanner,
                               PUSH,
-                              (int64_t) string,
+                              PTR_TO_UINT64(string),
                               NULL);
 
                           emit(yyscanner, MATCHES, NULL);
@@ -607,7 +607,7 @@ boolean_expression  : '(' boolean_expression ')'
                           emit_with_arg_reloc(
                               yyscanner,
                               JNUNDEF_A,
-                              (int64_t) compiler->loop_address,
+                              PTR_TO_UINT64(compiler->loop_address),
                               NULL);
                         }
                         else // INTEGER_SET_RANGE
@@ -619,7 +619,7 @@ boolean_expression  : '(' boolean_expression ')'
                           emit_with_arg_reloc(
                               yyscanner,
                               JLE_A_B,
-                              (int64_t) compiler->loop_address,
+                              PTR_TO_UINT64(compiler->loop_address),
                               NULL);
 
                           emit(yyscanner, POP_B, NULL);
@@ -657,7 +657,7 @@ boolean_expression  : '(' boolean_expression ')'
                         emit_with_arg_reloc(
                             yyscanner,
                             JNUNDEF_A,
-                            (int64_t) compiler->loop_address,
+                            PTR_TO_UINT64(compiler->loop_address),
                             NULL);
 
                         emit(yyscanner, POP_A, NULL);
@@ -731,7 +731,7 @@ text  : _TEXTSTRING_
           emit_with_arg_reloc(
               yyscanner,
               PUSH,
-              (int64_t) string,
+              PTR_TO_UINT64(string),
               NULL);
 
           yr_free($1);

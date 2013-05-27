@@ -271,7 +271,7 @@ int get_process_memory(
 
   while (fgets(buffer, sizeof(buffer), maps) != NULL)
   {
-    sscanf(buffer, "%lx-%lx", &begin, &end);
+    sscanf(buffer, "%zx-%zx", &begin, &end);
 
     length = end - begin;
 
