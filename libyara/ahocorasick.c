@@ -246,10 +246,14 @@ void* _yr_ac_gen_hex_tokens(
 {
   int inside_or = 0;
   int token_length = 0;
+  int backtrack = 0;
   int unique_bytes = 0;
   int max_unique_bytes = 0;
   int candidate_token_position = 0;
   int candidate_token_length = 0;
+  int candidate_token_backtrack = 0;
+  int or_string_length = 0;
+  int previous_or_string_length = 0;
   int string_position = 0;
   int i, j, unique;
 
@@ -264,12 +268,16 @@ void* _yr_ac_gen_hex_tokens(
       for (i = 0; i < max_token_length; i++)
         last[i] = string->string[string_position];
 
+    // We entered an OR operation like (01 | 02).
     if (*mask == MASK_OR)
       inside_or = TRUE;
 
+    // We exit from an OR operation.
     if (*mask == MASK_OR_END)
       inside_or = FALSE;
 
+    // If non-wildcard byte and not inside an OR it could
+    // be used for the token.
     if (*mask == 0xFF && !inside_or)
     {
       token_length++;
@@ -300,6 +308,7 @@ void* _yr_ac_gen_hex_tokens(
       {
         max_unique_bytes = unique_bytes;
         candidate_token_position = string_position - token_length + 1;
+        candidate_token_backtrack = backtrack - token_length + 1;
         candidate_token_length = token_length;
 
         if (candidate_token_length == max_token_length &&
@@ -318,12 +327,43 @@ void* _yr_ac_gen_hex_tokens(
         *mask != MASK_RANGE_SKIP)
     {
       string_position++;
+
+      if (inside_or)
+        or_string_length++;
+      else
+        backtrack++;
     }
 
     if (*mask == MASK_EXACT_SKIP)
+    {
       mask++;
+      backtrack += *mask;
+    }
     else if (*mask == MASK_RANGE_SKIP)
-      mask += 2;
+    {
+      break;
+    }
+    else if (*mask == MASK_OR || *mask == MASK_OR_END)
+    {
+      if (previous_or_string_length == 0)
+        previous_or_string_length = or_string_length;
+
+      // This happens when the string contains an OR with
+      // alternatives of different size like: (01 | 02 03)
+      // instead of (01 | 02). In those cases the backtrack
+      // value would be different for each alternative, so
+      // we don't want any token past the OR.
+      if (or_string_length != previous_or_string_length)
+        break;
+
+      or_string_length = 0;
+
+      if (*mask == MASK_OR_END)
+      {
+        backtrack += previous_or_string_length;
+        previous_or_string_length = 0;
+      }
+    }
 
     mask++;
   }
@@ -331,7 +371,7 @@ void* _yr_ac_gen_hex_tokens(
   *((int*) output_buffer) = candidate_token_length;
   output_buffer += sizeof(int);
 
-  *((int*) output_buffer) = candidate_token_position;
+  *((int*) output_buffer) = candidate_token_backtrack;
   output_buffer += sizeof(int);
 
   memcpy(
