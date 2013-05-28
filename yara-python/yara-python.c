@@ -774,7 +774,7 @@ static PyObject * Rules_match(
         if (error == ERROR_CALLBACK_ERROR)
           return NULL;
         else
-          return handle_error(error, NULL);
+          return handle_error(error, filepath);
       }
     }
     else if (data != NULL)
