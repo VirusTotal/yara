@@ -570,14 +570,17 @@ int yr_rules_scan_mem_block(
 
     while (ac_match != NULL)
     {
-      result = _yr_scan_verify_match(
-          ac_match,
-          data,
-          data_size,
-          i - ac_match->backtrack);
+      if (i >= ac_match->backtrack)
+      {
+        result = _yr_scan_verify_match(
+            ac_match,
+            data,
+            data_size,
+            i - ac_match->backtrack);
 
-      if (result != ERROR_SUCCESS)
-        return result;
+        if (result != ERROR_SUCCESS)
+          return result;
+      }
 
       ac_match = ac_match->next;
     }
@@ -616,8 +619,6 @@ int yr_rules_scan_mem_block(
 }
 
 
-#include <time.h>
-
 int yr_rules_scan_mem_blocks(
     YARA_RULES* rules,
     MEMORY_BLOCK* block,
@@ -633,10 +634,6 @@ int yr_rules_scan_mem_blocks(
   context.file_size = block->size;
   context.mem_block = block;
   context.entry_point = UNDEFINED;
-
-  clock_t start, end;
-
-  start = clock();
 
   yr_rules_free_matches(rules);
 
@@ -703,9 +700,6 @@ int yr_rules_scan_mem_blocks(
     }
     rule++;
   }
-
-  end = clock();
-  printf( "Scanning time: %f s\n", (float)(end - start) / CLOCKS_PER_SEC);
 
   return ERROR_SUCCESS;
 }
