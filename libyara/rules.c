@@ -622,6 +622,7 @@ int yr_rules_scan_mem_block(
 int yr_rules_scan_mem_blocks(
     YARA_RULES* rules,
     MEMORY_BLOCK* block,
+    int scanning_process_memory,
     YARACALLBACK callback,
     void* user_data)
 {
@@ -641,7 +642,7 @@ int yr_rules_scan_mem_blocks(
   {
     if (context.entry_point == UNDEFINED)
     {
-      if (rules->scanning_process_memory)
+      if (scanning_process_memory)
         context.entry_point = yr_get_entry_point_address(
             block->data,
             block->size,
@@ -719,9 +720,12 @@ int yr_rules_scan_mem(
   block.base = 0;
   block.next = NULL;
 
-  rules->scanning_process_memory = FALSE;
-
-  return yr_rules_scan_mem_blocks(rules, &block, callback, user_data);
+  return yr_rules_scan_mem_blocks(
+      rules,
+      &block,
+      FALSE,
+      callback,
+      user_data);
 }
 
 
@@ -746,6 +750,44 @@ int yr_rules_scan_file(
         user_data);
 
     yr_filemap_unmap(&mfile);
+  }
+
+  return result;
+}
+
+
+int yr_rules_scan_proc(
+    YARA_RULES* rules,
+    int pid,
+    YARACALLBACK callback,
+    void* user_data)
+{
+  MEMORY_BLOCK* first_block;
+  MEMORY_BLOCK* next_block;
+  MEMORY_BLOCK* block;
+
+  int result;
+
+  result = get_process_memory(pid, &first_block);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_rules_scan_mem_blocks(
+        rules,
+        first_block,
+        TRUE,
+        callback,
+        user_data);
+
+  block = first_block;
+
+  while (block != NULL)
+  {
+    next_block = block->next;
+
+    yr_free(block->data);
+    yr_free(block);
+
+    block = next_block;
   }
 
   return result;

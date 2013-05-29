@@ -655,8 +655,6 @@ int main(
   int errors;
   int result;
 
-  clock_t start, end;
-
   if (!process_cmd_line(compiler, argc, argv))
     return 0;
 
@@ -739,18 +737,27 @@ int main(
   if (is_numeric(argv[argc - 1]))
   {
     pid = atoi(argv[argc - 1]);
-    // result = yr_rules_scan_proc(pid, compiler, callback, (void*) argv[argc - 1]))
+    result = yr_rules_scan_proc(
+        rules,
+        pid,
+        callback,
+        (void*) argv[argc - 1]);
   }
   else if (is_directory(argv[argc - 1]))
   {
-    result = scan_dir(argv[argc - 1], recursive_search, rules, callback);
+    result = scan_dir(
+        argv[argc - 1],
+        recursive_search,
+        rules,
+        callback);
   }
   else
   {
-    start = clock();
-    result = yr_rules_scan_file(rules, argv[argc - 1], callback, (void*) argv[argc - 1]);
-    end = clock();
-    printf( "Scanning time: %f s\n", (float)(end - start) / CLOCKS_PER_SEC);
+    result = yr_rules_scan_file(
+        rules,
+        argv[argc - 1],
+        callback,
+        (void*) argv[argc - 1]);
   }
 
   switch (result)

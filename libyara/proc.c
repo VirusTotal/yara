@@ -217,6 +217,10 @@ int get_process_memory(
 
         current_block = new_block;
       }
+      else
+      {
+        yr_free(data);
+      }
 
       address += size;
     }
@@ -302,6 +306,10 @@ int get_process_memory(
         current_block->next = new_block;
 
       current_block = new_block;
+    }
+    else
+    {
+      yr_free(data);
     }
   }
 

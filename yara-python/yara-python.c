@@ -802,9 +802,9 @@ static PyObject * Rules_match(
     {
       callback_data.matches = PyList_New(0);
 
-      /*error = yr_scan_proc(
+      error = yr_rules_scan_proc(
+          object->rules,
           pid,
-          object->compiler,
           yara_callback,
           &callback_data);
 
@@ -816,7 +816,7 @@ static PyObject * Rules_match(
           return NULL;
         else
           return handle_error(error, NULL);
-      }*/
+      }
     }
     else
     {

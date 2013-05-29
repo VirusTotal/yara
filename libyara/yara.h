@@ -434,7 +434,6 @@ typedef struct _YARA_RULES {
   EXTERNAL_VARIABLE*   externals_list_head;
   AC_AUTOMATON*        automaton;
   int8_t*              code_start;
-  int                  scanning_process_memory;
   int                  last_error;
   char                 last_error_extra_info[256];
 
@@ -526,6 +525,13 @@ int yr_rules_scan_mem(
 int yr_rules_scan_file(
     YARA_RULES* rules,
     const char* filename,
+    YARACALLBACK callback,
+    void* user_data);
+
+
+int yr_rules_scan_proc(
+    YARA_RULES* rules,
+    int pid,
     YARACALLBACK callback,
     void* user_data);
 
