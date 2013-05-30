@@ -301,11 +301,14 @@ int yara_callback(
   PyObject* matches = ((CALLBACK_DATA*) data)->matches;
   PyObject* callback = ((CALLBACK_DATA*) data)->callback;
   PyObject* callback_result;
+  PyGILState_STATE gil_state;
 
   int result = CALLBACK_CONTINUE;
 
   if (!(rule->flags & RULE_FLAGS_MATCH) && callback == NULL)
     return CALLBACK_CONTINUE;
+
+  gil_state = PyGILState_Ensure();
 
   tag_list = PyList_New(0);
   string_list = PyList_New(0);
@@ -316,6 +319,7 @@ int yara_callback(
     Py_XDECREF(tag_list);
     Py_XDECREF(string_list);
     Py_XDECREF(meta_list);
+    PyGILState_Release(gil_state);
 
     return CALLBACK_ERROR;
   }
@@ -399,6 +403,7 @@ int yara_callback(
       Py_DECREF(tag_list);
       Py_DECREF(string_list);
       Py_DECREF(meta_list);
+      PyGILState_Release(gil_state);
 
       return CALLBACK_ERROR;
     }
@@ -456,6 +461,7 @@ int yara_callback(
   Py_DECREF(tag_list);
   Py_DECREF(string_list);
   Py_DECREF(meta_list);
+  PyGILState_Release(gil_state);
 
   return result;
 }
@@ -801,11 +807,15 @@ static PyObject * Rules_match(
     {
       callback_data.matches = PyList_New(0);
 
+      Py_BEGIN_ALLOW_THREADS
+
       error = yr_rules_scan_file(
           object->rules,
           filepath,
           yara_callback,
           &callback_data);
+
+      Py_END_ALLOW_THREADS
 
       if (error != ERROR_SUCCESS)
       {
@@ -821,12 +831,16 @@ static PyObject * Rules_match(
     {
       callback_data.matches = PyList_New(0);
 
+      Py_BEGIN_ALLOW_THREADS
+
       error = yr_rules_scan_mem(
           object->rules,
           (unsigned char*) data,
           (unsigned int) length,
           yara_callback,
           &callback_data);
+
+      Py_END_ALLOW_THREADS
 
       if (error != ERROR_SUCCESS)
       {
@@ -842,11 +856,15 @@ static PyObject * Rules_match(
     {
       callback_data.matches = PyList_New(0);
 
+      Py_BEGIN_ALLOW_THREADS
+
       error = yr_rules_scan_proc(
           object->rules,
           pid,
           yara_callback,
           &callback_data);
+
+      Py_END_ALLOW_THREADS
 
       if (error != ERROR_SUCCESS)
       {
@@ -880,7 +898,9 @@ static PyObject * Rules_save(
 
   if (PyArg_ParseTuple(args, "s", &filepath))
   {
+    Py_BEGIN_ALLOW_THREADS
     error = yr_rules_save(rules->rules, filepath);
+    Py_END_ALLOW_THREADS
 
     if (error != ERROR_SUCCESS)
       return handle_error(error, filepath);
@@ -917,6 +937,7 @@ static PyObject * yara_compile(
     "sources", "includes", "externals", NULL};
 
   YARA_COMPILER* compiler;
+  YARA_RULES* yara_rules;
   FILE* fh;
 
   int fd;
@@ -1000,9 +1021,11 @@ static PyObject * yara_compile(
 
       if (fh != NULL)
       {
+        Py_BEGIN_ALLOW_THREADS
         yr_compiler_push_file_name(compiler, filepath);
         compile_result = yr_compiler_add_file(compiler, fh, NULL);
         fclose(fh);
+        Py_END_ALLOW_THREADS
       }
       else
       {
@@ -1011,16 +1034,19 @@ static PyObject * yara_compile(
     }
     else if (source != NULL)
     {
+      Py_BEGIN_ALLOW_THREADS
       compile_result = yr_compiler_add_string(compiler, source, NULL);
+      Py_END_ALLOW_THREADS
     }
     else if (file != NULL)
     {
       fd = dup(PyObject_AsFileDescriptor(file));
+
+      Py_BEGIN_ALLOW_THREADS
       fh = fdopen(fd, "r");
-
       compile_result = yr_compiler_add_file(compiler, fh, NULL);
-
       fclose(fh);
+      Py_END_ALLOW_THREADS
     }
     else if (sources_dict != NULL)
     {
@@ -1033,7 +1059,9 @@ static PyObject * yara_compile(
 
           if (source != NULL && ns != NULL)
           {
+            Py_BEGIN_ALLOW_THREADS
             compile_result = yr_compiler_add_string(compiler, source, ns);
+            Py_END_ALLOW_THREADS
 
             if (compile_result > 0)
               break;
@@ -1069,9 +1097,11 @@ static PyObject * yara_compile(
 
             if (fh != NULL)
             {
+              Py_BEGIN_ALLOW_THREADS
               yr_compiler_push_file_name(compiler, filepath);
               compile_result = yr_compiler_add_file(compiler, fh, ns);
               fclose(fh);
+              Py_END_ALLOW_THREADS
 
               if (compile_result > 0)
                 break;
@@ -1127,7 +1157,13 @@ static PyObject * yara_compile(
         rules = PyObject_NEW(Rules, &Rules_Type);
 
         if (rules != NULL)
-          yr_compiler_get_rules(compiler, &rules->rules);
+        {
+          Py_BEGIN_ALLOW_THREADS
+          yr_compiler_get_rules(compiler, &yara_rules);
+          Py_END_ALLOW_THREADS
+
+          rules->rules = yara_rules;
+        }
 
         result = (PyObject*) rules;
       }
@@ -1152,10 +1188,14 @@ static PyObject * yara_load(
   {
     rules = PyObject_NEW(Rules, &Rules_Type);
 
+    Py_BEGIN_ALLOW_THREADS
+
     if (rules != NULL)
       error = yr_rules_load(filepath, &rules->rules);
     else
       error = ERROR_INSUFICIENT_MEMORY;
+
+    Py_END_ALLOW_THREADS
 
     if (error != ERROR_SUCCESS)
       return handle_error(error, filepath);
