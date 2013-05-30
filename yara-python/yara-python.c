@@ -513,6 +513,46 @@ int process_match_externals(
     PyObject* externals,
     YARA_RULES* rules)
 {
+  PyObject *key, *value;
+  Py_ssize_t pos = 0;
+
+  char* identifier = NULL;
+
+  while (PyDict_Next(externals, &pos, &key, &value))
+  {
+    identifier = PY_STRING_TO_C(key);
+
+    if (PyBool_Check(value))
+    {
+      yr_rules_define_boolean_variable(
+          rules,
+          identifier,
+          PyObject_IsTrue(value));
+    }
+#if PY_MAJOR_VERSION >= 3
+    else if (PyLong_Check(value))
+#else
+    else if (PyLong_Check(value) || PyInt_Check(value))
+#endif
+    {
+      yr_rules_define_integer_variable(
+          rules,
+          identifier,
+          PyLong_AsLong(value));
+    }
+    else if (PY_STRING_CHECK(value))
+    {
+      yr_rules_define_string_variable(
+          rules,
+          identifier,
+          PY_STRING_TO_C(value));
+    }
+    else
+    {
+      return FALSE;
+    }
+  }
+
   return TRUE;
 }
 

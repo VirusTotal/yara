@@ -485,6 +485,19 @@ int yr_rules_define_integer_variable(
 {
   EXTERNAL_VARIABLE* external;
 
+  external = rules->externals_list_head;
+
+  while (!EXTERNAL_VARIABLE_IS_NULL(external))
+  {
+    if (strcmp(external->identifier, identifier) == 0)
+    {
+      external->integer = value;
+      break;
+    }
+
+    external++;
+  }
+
   return ERROR_SUCCESS;
 }
 
@@ -496,6 +509,19 @@ int yr_rules_define_boolean_variable(
 {
   EXTERNAL_VARIABLE* external;
 
+  external = rules->externals_list_head;
+
+  while (!EXTERNAL_VARIABLE_IS_NULL(external))
+  {
+    if (strcmp(external->identifier, identifier) == 0)
+    {
+      external->integer = value;
+      break;
+    }
+
+    external++;
+  }
+
   return ERROR_SUCCESS;
 }
 
@@ -506,6 +532,20 @@ int yr_rules_define_string_variable(
     const char* value)
 {
   EXTERNAL_VARIABLE* external;
+
+  external = rules->externals_list_head;
+
+  while (!EXTERNAL_VARIABLE_IS_NULL(external))
+  {
+    if (strcmp(external->identifier, identifier) == 0)
+    {
+      external->type = EXTERNAL_VARIABLE_TYPE_MALLOC_STRING;
+      external->string = yr_strdup(value);
+      break;
+    }
+
+    external++;
+  }
 
   return ERROR_SUCCESS;
 }
@@ -866,6 +906,18 @@ int yr_rules_load(
 int yr_rules_destroy(
     YARA_RULES* rules)
 {
+  EXTERNAL_VARIABLE* external;
+
+  external = rules->externals_list_head;
+
+  while (!EXTERNAL_VARIABLE_IS_NULL(external))
+  {
+    if (external->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
+      yr_free(external->string);
+
+    external++;
+  }
+
   yr_rules_free_matches(rules);
   yr_arena_destroy(rules->arena);
   yr_free(rules);

@@ -742,7 +742,7 @@ int reduce_external(
           NULL);
     }
     else if (instruction == EXT_STR &&
-             external->type == EXTERNAL_VARIABLE_TYPE_STRING)
+             external->type == EXTERNAL_VARIABLE_TYPE_FIXED_STRING)
     {
       compiler->last_result = emit_with_arg_reloc(
           yyscanner,

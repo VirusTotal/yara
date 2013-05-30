@@ -668,7 +668,35 @@ int main(
 
   if (yr_rules_load(argv[optind], &rules) == ERROR_SUCCESS)
   {
-    // TODO: redefine external variables
+    external = externals_list;
+
+    while (external != NULL)
+    {
+      switch (external->type)
+      {
+        case EXTERNAL_TYPE_INTEGER:
+          yr_rules_define_integer_variable(
+              rules,
+              external->name,
+              external->integer);
+          break;
+
+        case EXTERNAL_TYPE_BOOLEAN:
+          yr_rules_define_boolean_variable(
+              rules,
+              external->name,
+              external->boolean);
+          break;
+
+        case EXTERNAL_TYPE_STRING:
+          yr_rules_define_string_variable(
+              rules,
+              external->name,
+              external->string);
+          break;
+      }
+      external = external->next;
+    }
   }
   else
   {

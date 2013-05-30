@@ -344,7 +344,8 @@ int yr_execute_code(
       case EXT_BOOL:
         external = *(EXTERNAL_VARIABLE**)(ip + 1);
         ip += sizeof(uint64_t);
-        if (external->type == EXTERNAL_VARIABLE_TYPE_STRING)
+        if (external->type == EXTERNAL_VARIABLE_TYPE_FIXED_STRING ||
+            external->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
           push(strlen(external->string) > 0);
         else
           push(external->integer);

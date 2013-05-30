@@ -593,7 +593,7 @@ int yr_compiler_define_string_variable(
 
   if (result == ERROR_SUCCESS)
   {
-    external->type = EXTERNAL_VARIABLE_TYPE_STRING;
+    external->type = EXTERNAL_VARIABLE_TYPE_FIXED_STRING;
     external->identifier = id;
     external->integer = 0;
     external->string = val;
