@@ -451,11 +451,12 @@ int yr_compiler_get_rules(
     return ERROR_INSUFICIENT_MEMORY;
 
   if (compiler->compiled_rules_arena == NULL)
-     _yr_compiler_compile_rules(compiler);
+     result = _yr_compiler_compile_rules(compiler);
 
-  result = yr_arena_duplicate(
-      compiler->compiled_rules_arena,
-      &yara_rules->arena);
+  if (result == ERROR_SUCCESS)
+    result = yr_arena_duplicate(
+        compiler->compiled_rules_arena,
+        &yara_rules->arena);
 
   if (result == ERROR_SUCCESS)
   {

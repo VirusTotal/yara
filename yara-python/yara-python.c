@@ -941,7 +941,7 @@ static PyObject * yara_compile(
   FILE* fh;
 
   int fd;
-  int compile_result = 0;
+  int error = 0;
   int error_line;
   char error_message[256];
 
@@ -1023,7 +1023,7 @@ static PyObject * yara_compile(
       {
         Py_BEGIN_ALLOW_THREADS
         yr_compiler_push_file_name(compiler, filepath);
-        compile_result = yr_compiler_add_file(compiler, fh, NULL);
+        error = yr_compiler_add_file(compiler, fh, NULL);
         fclose(fh);
         Py_END_ALLOW_THREADS
       }
@@ -1035,7 +1035,7 @@ static PyObject * yara_compile(
     else if (source != NULL)
     {
       Py_BEGIN_ALLOW_THREADS
-      compile_result = yr_compiler_add_string(compiler, source, NULL);
+      error = yr_compiler_add_string(compiler, source, NULL);
       Py_END_ALLOW_THREADS
     }
     else if (file != NULL)
@@ -1044,7 +1044,7 @@ static PyObject * yara_compile(
 
       Py_BEGIN_ALLOW_THREADS
       fh = fdopen(fd, "r");
-      compile_result = yr_compiler_add_file(compiler, fh, NULL);
+      error = yr_compiler_add_file(compiler, fh, NULL);
       fclose(fh);
       Py_END_ALLOW_THREADS
     }
@@ -1060,10 +1060,10 @@ static PyObject * yara_compile(
           if (source != NULL && ns != NULL)
           {
             Py_BEGIN_ALLOW_THREADS
-            compile_result = yr_compiler_add_string(compiler, source, ns);
+            error = yr_compiler_add_string(compiler, source, ns);
             Py_END_ALLOW_THREADS
 
-            if (compile_result > 0)
+            if (error > 0)
               break;
           }
           else
@@ -1099,11 +1099,11 @@ static PyObject * yara_compile(
             {
               Py_BEGIN_ALLOW_THREADS
               yr_compiler_push_file_name(compiler, filepath);
-              compile_result = yr_compiler_add_file(compiler, fh, ns);
+              error = yr_compiler_add_file(compiler, fh, ns);
               fclose(fh);
               Py_END_ALLOW_THREADS
 
-              if (compile_result > 0)
+              if (error > 0)
                 break;
             }
             else
@@ -1137,7 +1137,7 @@ static PyObject * yara_compile(
 
     if (PyErr_Occurred() == NULL)
     {
-      if (compile_result > 0)
+      if (error > 0)
       {
         error_line = compiler->last_error_line;
 
@@ -1159,13 +1159,23 @@ static PyObject * yara_compile(
         if (rules != NULL)
         {
           Py_BEGIN_ALLOW_THREADS
-          yr_compiler_get_rules(compiler, &yara_rules);
+          error = yr_compiler_get_rules(compiler, &yara_rules);
           Py_END_ALLOW_THREADS
 
-          rules->rules = yara_rules;
+          if (error == ERROR_SUCCESS)
+          {
+            rules->rules = yara_rules;
+            result = (PyObject*) rules;
+          }
+          else
+          {
+            result = handle_error(error, NULL);
+          }
         }
-
-        result = (PyObject*) rules;
+        else
+        {
+          result = handle_error(ERROR_INSUFICIENT_MEMORY, NULL);
+        }
       }
     }
 
