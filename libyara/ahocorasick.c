@@ -711,6 +711,9 @@ int yr_ac_create_automaton(
       offsetof(AC_AUTOMATON, root),
       EOL);
 
+  if (result != ERROR_SUCCESS)
+    return result;
+
   result = yr_arena_allocate_struct(
       arena,
       sizeof(AC_STATE),
@@ -718,6 +721,9 @@ int yr_ac_create_automaton(
       offsetof(AC_STATE, failure),
       offsetof(AC_STATE, matches),
       EOL);
+
+  if (result != ERROR_SUCCESS)
+    return result;
 
   (*automaton)->root = root_state;
 

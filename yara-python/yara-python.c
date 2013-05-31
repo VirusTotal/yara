@@ -574,9 +574,7 @@ PyObject* handle_error(
         YaraError,
         "access denied");
     case ERROR_INSUFICIENT_MEMORY:
-      return PyErr_Format(
-        YaraError,
-        "not enough memory");
+      return PyErr_NoMemory();
     case ERROR_COULD_NOT_OPEN_FILE:
       return PyErr_Format(
           YaraError,
@@ -975,8 +973,10 @@ static PyObject * yara_compile(
         &includes,
         &externals))
   {
-    if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
-      return PyErr_NoMemory();
+    error = yr_compiler_create(&compiler);
+
+    if (error != ERROR_SUCCESS)
+      return handle_error(error, NULL);
 
     if (includes != NULL)
     {
