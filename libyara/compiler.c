@@ -443,20 +443,22 @@ int yr_compiler_get_rules(
   YARA_RULES* yara_rules;
   YARA_RULES_FILE_HEADER* rules_file_header;
 
-  int result;
+  int result = ERROR_SUCCESS;
+
+  if (compiler->compiled_rules_arena == NULL)
+     result = _yr_compiler_compile_rules(compiler);
+
+  if (result != ERROR_SUCCESS)
+    return result;
 
   yara_rules = yr_malloc(sizeof(YARA_RULES));
 
   if (yara_rules == NULL)
     return ERROR_INSUFICIENT_MEMORY;
 
-  if (compiler->compiled_rules_arena == NULL)
-     result = _yr_compiler_compile_rules(compiler);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_duplicate(
-        compiler->compiled_rules_arena,
-        &yara_rules->arena);
+  result = yr_arena_duplicate(
+      compiler->compiled_rules_arena,
+      &yara_rules->arena);
 
   if (result == ERROR_SUCCESS)
   {
@@ -473,9 +475,6 @@ int yr_compiler_get_rules(
   }
   else
   {
-    if (yara_rules->arena)
-      yr_arena_destroy(yara_rules->arena);
-
     yr_free(yara_rules);
     *rules = NULL;
   }
