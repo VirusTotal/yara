@@ -275,19 +275,22 @@ class TestYara(unittest.TestCase):
     def testExternals(self):
 
         r = yara.compile(source='rule test { condition: ext_int == 15 }', externals={'ext_int': 15})
-        self.assertTrue(r.match(data=PE32_FILE))
+        self.assertTrue(r.match(data='dummy'))
 
         r = yara.compile(source='rule test { condition: ext_bool }', externals={'ext_bool': True})
-        self.assertTrue(r.match(data=PE32_FILE))
+        self.assertTrue(r.match(data='dummy'))
 
         r = yara.compile(source='rule test { condition: ext_bool }', externals={'ext_bool': False})
-        self.assertFalse(r.match(data=PE32_FILE))
+        self.assertFalse(r.match(data='dummy'))
 
         r = yara.compile(source='rule test { condition: ext_str contains "ssi" }', externals={'ext_str': 'mississippi'})
-        self.assertTrue(r.match(data=PE32_FILE))
+        self.assertTrue(r.match(data='dummy'))
+
+        r = yara.compile(source='rule test { condition: ext_str matches /foo/ }', externals={'ext_str': ''})
+        self.assertFalse(r.match(data='dummy'))
 
         r = yara.compile(source='rule test { condition: ext_str matches /ssi(s|p)/ }', externals={'ext_str': 'mississippi'})
-        self.assertTrue(r.match(data=PE32_FILE))
+        self.assertTrue(r.match(data='dummy'))
 
     def testCallback(self):
 

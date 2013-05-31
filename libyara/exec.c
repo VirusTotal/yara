@@ -547,6 +547,14 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
+        count = strlen(UINT64_TO_PTR(char*, r1));
+
+        if (count == 0)
+        {
+          push(FALSE);
+          break;
+        }
+
         result = regex_compile(&re,
             UINT64_TO_PTR(char*, r2),
             FALSE,
@@ -561,7 +569,7 @@ int yr_execute_code(
         result = regex_exec(&re,
             FALSE,
             UINT64_TO_PTR(char*, r1),
-            strlen(UINT64_TO_PTR(char*, r1)));
+            count);
 
         push(result >= 0);
         break;
