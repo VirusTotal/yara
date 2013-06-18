@@ -21,6 +21,7 @@ limitations under the License.
 #include "arena.h"
 #include "exec.h"
 #include "filemap.h"
+#include "lex.h"
 #include "mem.h"
 #include "utils.h"
 #include "yara.h"
@@ -123,24 +124,40 @@ int yr_compiler_create(
 void yr_compiler_destroy(
     YARA_COMPILER* compiler)
 {
+  int i;
 
   if (compiler->compiled_rules_arena != NULL)
-  {
     yr_arena_destroy(compiler->compiled_rules_arena);
-  }
-  else
-  {
+
+  if (compiler->sz_arena != NULL)
     yr_arena_destroy(compiler->sz_arena);
+
+  if (compiler->rules_arena != NULL)
     yr_arena_destroy(compiler->rules_arena);
+
+  if (compiler->strings_arena != NULL)
     yr_arena_destroy(compiler->strings_arena);
+
+  if (compiler->code_arena != NULL)
     yr_arena_destroy(compiler->code_arena);
+
+  if (compiler->automaton_arena != NULL)
     yr_arena_destroy(compiler->automaton_arena);
+
+  if (compiler->externals_arena != NULL)
     yr_arena_destroy(compiler->externals_arena);
+
+  if (compiler->namespaces_arena != NULL)
     yr_arena_destroy(compiler->namespaces_arena);
+
+  if (compiler->metas_arena != NULL)
     yr_arena_destroy(compiler->metas_arena);
-  }
 
   yr_hash_table_destroy(compiler->rules_table);
+
+  for (i = 0; i < compiler->file_name_stack_ptr; i++)
+    yr_free(compiler->file_name_stack[i]);
+
   yr_free(compiler);
 }
 
@@ -298,7 +315,7 @@ int yr_compiler_add_file(
   else
     _yr_compiler_set_namespace(compiler, "default");
 
-  return parse_rules_file(rules_file, compiler);
+  return yr_lex_parse_rules_file(rules_file, compiler);
 }
 
 
@@ -312,7 +329,7 @@ int yr_compiler_add_string(
   else
     _yr_compiler_set_namespace(compiler, "default");
 
-  return parse_rules_string(rules_string, compiler);
+  return yr_lex_parse_rules_string(rules_string, compiler);
 }
 
 int _yr_compiler_compile_rules(
@@ -392,45 +409,67 @@ int _yr_compiler_compile_rules(
         compiler->automaton_arena);
 
   if (result == ERROR_SUCCESS)
+  {
+    compiler->automaton_arena = NULL;
     result = yr_arena_append(
         arena,
         compiler->code_arena);
+  }
 
   if (result == ERROR_SUCCESS)
+  {
+    compiler->code_arena = NULL;
     result = yr_arena_append(
         arena,
         compiler->rules_arena);
+  }
 
   if (result == ERROR_SUCCESS)
+  {
+    compiler->rules_arena = NULL;
     result = yr_arena_append(
         arena,
         compiler->strings_arena);
+  }
 
   if (result == ERROR_SUCCESS)
+  {
+    compiler->strings_arena = NULL;
     result = yr_arena_append(
         arena,
         compiler->externals_arena);
+  }
 
   if (result == ERROR_SUCCESS)
+  {
+    compiler->externals_arena = NULL;
     result = yr_arena_append(
         arena,
         compiler->namespaces_arena);
+  }
 
   if (result == ERROR_SUCCESS)
+  {
+    compiler->namespaces_arena = NULL;
     result = yr_arena_append(
         arena,
         compiler->metas_arena);
+  }
 
   if (result == ERROR_SUCCESS)
+  {
+    compiler->metas_arena = NULL;
     result = yr_arena_append(
         arena,
         compiler->sz_arena);
+  }
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_coalesce(arena);
-
-  if (result == ERROR_SUCCESS)
+  {
+    compiler->sz_arena = NULL;
     compiler->compiled_rules_arena = arena;
+    result = yr_arena_coalesce(arena);
+  }
 
   return result;
 }

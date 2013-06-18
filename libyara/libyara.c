@@ -31,7 +31,7 @@ char isalphanum[256];
 char lowercase[256];
 
 
-void yr_init()
+void yr_initialize()
 {
   int i;
 

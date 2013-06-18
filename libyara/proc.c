@@ -25,7 +25,7 @@ limitations under the License.
 #include "proc.h"
 
 
-int get_process_memory(
+int yr_process_get_memory(
     int pid,
     MEMORY_BLOCK** first_block)
 {
@@ -145,7 +145,7 @@ int get_process_memory(
 #include <mach/vm_region.h>
 #include <mach/vm_statistics.h>
 
-int get_process_memory(
+int yr_process_get_memory(
     pid_t pid,
     MEMORY_BLOCK** first_block)
 {
@@ -238,7 +238,7 @@ int get_process_memory(
 
 #include <errno.h>
 
-int get_process_memory(
+int yr_process_get_memory(
     pid_t pid,
     MEMORY_BLOCK** first_block)
 {

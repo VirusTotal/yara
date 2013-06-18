@@ -664,7 +664,7 @@ int main(
     return 0;
   }
 
-  yr_init();
+  yr_initialize();
 
   if (yr_rules_load(argv[optind], &rules) == ERROR_SUCCESS)
   {

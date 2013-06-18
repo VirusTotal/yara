@@ -447,7 +447,7 @@ extern char isalphanum[256];
 extern char lowercase[256];
 
 
-void yr_init(void);
+void yr_initialize(void);
 
 
 void yr_finalize(void);

@@ -165,7 +165,7 @@ rules : /* empty */
 
 rule  : rule_modifiers _RULE_ _IDENTIFIER_ tags '{' meta strings condition '}'
         {
-          int result = reduce_rule_declaration(
+          int result = yr_parser_reduce_rule_declaration(
               yyscanner,
               $1,
               $3,
@@ -324,7 +324,7 @@ meta_declaration  : _IDENTIFIER_ '=' _TEXTSTRING_
                     {
                       SIZED_STRING* sized_string = $3;
 
-                      $$ = reduce_meta_declaration(
+                      $$ = yr_parser_reduce_meta_declaration(
                           yyscanner,
                           META_TYPE_STRING,
                           $1,
@@ -338,7 +338,7 @@ meta_declaration  : _IDENTIFIER_ '=' _TEXTSTRING_
                     }
                   | _IDENTIFIER_ '=' _NUMBER_
                     {
-                      $$ = reduce_meta_declaration(
+                      $$ = yr_parser_reduce_meta_declaration(
                           yyscanner,
                           META_TYPE_INTEGER,
                           $1,
@@ -351,7 +351,7 @@ meta_declaration  : _IDENTIFIER_ '=' _TEXTSTRING_
                     }
                   | _IDENTIFIER_ '=' _TRUE_
                     {
-                      $$ = reduce_meta_declaration(
+                      $$ = yr_parser_reduce_meta_declaration(
                           yyscanner,
                           META_TYPE_BOOLEAN,
                           $1,
@@ -364,7 +364,7 @@ meta_declaration  : _IDENTIFIER_ '=' _TEXTSTRING_
                     }
                   | _IDENTIFIER_ '=' _FALSE_
                     {
-                      $$ = reduce_meta_declaration(
+                      $$ = yr_parser_reduce_meta_declaration(
                           yyscanner,
                           META_TYPE_BOOLEAN,
                           $1,
@@ -385,7 +385,7 @@ string_declarations : string_declaration                      { $$ = $1; }
 
 string_declaration  : _STRING_IDENTIFIER_ '=' _TEXTSTRING_ string_modifiers
                       {
-                        $$ = reduce_string_declaration(
+                        $$ = yr_parser_reduce_string_declaration(
                             yyscanner,
                             $4,
                             $1,
@@ -398,7 +398,7 @@ string_declaration  : _STRING_IDENTIFIER_ '=' _TEXTSTRING_ string_modifiers
                       }
                     | _STRING_IDENTIFIER_ '=' _REGEXP_ string_modifiers
                       {
-                        $$ = reduce_string_declaration(
+                        $$ = yr_parser_reduce_string_declaration(
                             yyscanner,
                             $4 | STRING_FLAGS_REGEXP,
                             $1,
@@ -411,7 +411,7 @@ string_declaration  : _STRING_IDENTIFIER_ '=' _TEXTSTRING_ string_modifiers
                       }
                     | _STRING_IDENTIFIER_ '=' _HEXSTRING_
                       {
-                        $$ = reduce_string_declaration(
+                        $$ = yr_parser_reduce_string_declaration(
                             yyscanner,
                             STRING_FLAGS_HEXADECIMAL,
                             $1,
@@ -440,11 +440,11 @@ string_modifier : _WIDE_        { $$ = STRING_FLAGS_WIDE; }
 boolean_expression  : '(' boolean_expression ')'
                     | _TRUE_
                       {
-                        emit_with_arg(yyscanner, PUSH, 1, NULL);
+                        yr_parser_emit_with_arg(yyscanner, PUSH, 1, NULL);
                       }
                     | _FALSE_
                       {
-                        emit_with_arg(yyscanner, PUSH, 0, NULL);
+                        yr_parser_emit_with_arg(yyscanner, PUSH, 0, NULL);
                       }
                     | _IDENTIFIER_
                       {
@@ -459,7 +459,7 @@ boolean_expression  : '(' boolean_expression ')'
 
                         if (rule != NULL)
                         {
-                          compiler->last_result = emit_with_arg_reloc(
+                          compiler->last_result = yr_parser_emit_with_arg_reloc(
                               yyscanner,
                               RULE_PUSH,
                               PTR_TO_UINT64(rule),
@@ -467,7 +467,7 @@ boolean_expression  : '(' boolean_expression ')'
                         }
                         else
                         {
-                          compiler->last_result = reduce_external(
+                          compiler->last_result = yr_parser_reduce_external(
                               yyscanner,
                               $1,
                               EXT_BOOL);
@@ -501,13 +501,13 @@ boolean_expression  : '(' boolean_expression ')'
                             sized_string->c_string,
                             &string);
 
-                          emit_with_arg_reloc(
+                          yr_parser_emit_with_arg_reloc(
                               yyscanner,
                               PUSH,
                               PTR_TO_UINT64(string),
                               NULL);
 
-                          emit(yyscanner, MATCHES, NULL);
+                          yr_parser_emit(yyscanner, MATCHES, NULL);
                         }
                         else
                         {
@@ -521,11 +521,11 @@ boolean_expression  : '(' boolean_expression ')'
                       }
                     | text _CONTAINS_ text
                       {
-                        emit(yyscanner, CONTAINS, NULL);
+                        yr_parser_emit(yyscanner, CONTAINS, NULL);
                       }
                     | _STRING_IDENTIFIER_
                       {
-                        int result = reduce_string_identifier(
+                        int result = yr_parser_reduce_string_identifier(
                             yyscanner,
                             $1,
                             SFOUND);
@@ -536,7 +536,7 @@ boolean_expression  : '(' boolean_expression ')'
                       }
                     | _STRING_IDENTIFIER_ _AT_ expression
                       {
-                        int result = reduce_string_identifier(
+                        int result = yr_parser_reduce_string_identifier(
                             yyscanner,
                             $1,
                             SFOUND_AT);
@@ -551,7 +551,7 @@ boolean_expression  : '(' boolean_expression ')'
                       }
                     | _STRING_IDENTIFIER_ _IN_ range
                       {
-                        int result = reduce_string_identifier(
+                        int result = yr_parser_reduce_string_identifier(
                             yyscanner,
                             $1,
                             SFOUND_IN);
@@ -567,7 +567,11 @@ boolean_expression  : '(' boolean_expression ')'
                       }
                     | _FOR_ for_expression _IDENTIFIER_ _IN_
                       {
-                        emit_with_arg(yyscanner, PUSH, UNDEFINED, NULL);
+                        yr_parser_emit_with_arg(
+                            yyscanner,
+                            PUSH,
+                            UNDEFINED,
+                            NULL);
                       }
                       integer_set ':'
                       {
@@ -575,19 +579,25 @@ boolean_expression  : '(' boolean_expression ')'
 
                         if ($6 == INTEGER_SET_ENUMERATION)
                         {
-                          emit(yyscanner, CLEAR_B, NULL);
-                          emit(yyscanner, CLEAR_C, NULL);
-                          emit(yyscanner, POP_A, &compiler->loop_address);
+                          yr_parser_emit(yyscanner, CLEAR_B, NULL);
+                          yr_parser_emit(yyscanner, CLEAR_C, NULL);
+                          yr_parser_emit(
+                              yyscanner,
+                              POP_A,
+                              &compiler->loop_address);
                         }
                         else // INTEGER_SET_RANGE
                         {
-                          emit(yyscanner, POP_B, NULL);
-                          emit(yyscanner, POP_A, NULL);
-                          emit(yyscanner, POP_C, NULL);
-                          emit(yyscanner, CLEAR_C, NULL);
-                          emit(yyscanner, PUSH_B, NULL);
-                          emit(yyscanner, PUSH_A, NULL);
-                          emit(yyscanner, SUB, &compiler->loop_address);
+                          yr_parser_emit(yyscanner, POP_B, NULL);
+                          yr_parser_emit(yyscanner, POP_A, NULL);
+                          yr_parser_emit(yyscanner, POP_C, NULL);
+                          yr_parser_emit(yyscanner, CLEAR_C, NULL);
+                          yr_parser_emit(yyscanner, PUSH_B, NULL);
+                          yr_parser_emit(yyscanner, PUSH_A, NULL);
+                          yr_parser_emit(
+                              yyscanner,
+                              SUB,
+                              &compiler->loop_address);
                         }
 
                         compiler->loop_address++;
@@ -599,12 +609,12 @@ boolean_expression  : '(' boolean_expression ')'
 
                         if ($6 == INTEGER_SET_ENUMERATION)
                         {
-                          emit(yyscanner, INCR_C, NULL);
-                          emit_with_arg(yyscanner, PUSH, 1, NULL);
-                          emit(yyscanner, INCR_B, NULL);
-                          emit(yyscanner, POP_A, NULL);
+                          yr_parser_emit(yyscanner, INCR_C, NULL);
+                          yr_parser_emit_with_arg(yyscanner, PUSH, 1, NULL);
+                          yr_parser_emit(yyscanner, INCR_B, NULL);
+                          yr_parser_emit(yyscanner, POP_A, NULL);
 
-                          emit_with_arg_reloc(
+                          yr_parser_emit_with_arg_reloc(
                               yyscanner,
                               JNUNDEF_A,
                               PTR_TO_UINT64(compiler->loop_address),
@@ -612,23 +622,23 @@ boolean_expression  : '(' boolean_expression ')'
                         }
                         else // INTEGER_SET_RANGE
                         {
-                          emit(yyscanner, INCR_C, NULL);
-                          emit_with_arg(yyscanner, PUSH, 1, NULL);
-                          emit(yyscanner, INCR_A, NULL);
+                          yr_parser_emit(yyscanner, INCR_C, NULL);
+                          yr_parser_emit_with_arg(yyscanner, PUSH, 1, NULL);
+                          yr_parser_emit(yyscanner, INCR_A, NULL);
 
-                          emit_with_arg_reloc(
+                          yr_parser_emit_with_arg_reloc(
                               yyscanner,
                               JLE_A_B,
                               PTR_TO_UINT64(compiler->loop_address),
                               NULL);
 
-                          emit(yyscanner, POP_B, NULL);
+                          yr_parser_emit(yyscanner, POP_B, NULL);
                         }
 
-                        emit(yyscanner, POP_A, NULL);
-                        emit(yyscanner, PNUNDEF_A_B, NULL);
-                        emit(yyscanner, PUSH_C, NULL);
-                        emit(yyscanner, LE, NULL);
+                        yr_parser_emit(yyscanner, POP_A, NULL);
+                        yr_parser_emit(yyscanner, PNUNDEF_A_B, NULL);
+                        yr_parser_emit(yyscanner, PUSH_C, NULL);
+                        yr_parser_emit(yyscanner, LE, NULL);
 
                         compiler->loop_identifier = NULL;
 
@@ -638,9 +648,12 @@ boolean_expression  : '(' boolean_expression ')'
                       {
                         YARA_COMPILER* compiler = yyget_extra(yyscanner);
 
-                        emit(yyscanner, CLEAR_B, NULL);
-                        emit(yyscanner, CLEAR_C, NULL);
-                        emit(yyscanner, POP_A, &compiler->loop_address);
+                        yr_parser_emit(yyscanner, CLEAR_B, NULL);
+                        yr_parser_emit(yyscanner, CLEAR_C, NULL);
+                        yr_parser_emit(
+                            yyscanner,
+                            POP_A,
+                            &compiler->loop_address);
 
                         compiler->loop_address++;
                         compiler->inside_for++;
@@ -649,70 +662,70 @@ boolean_expression  : '(' boolean_expression ')'
                       {
                         YARA_COMPILER* compiler = yyget_extra(yyscanner);
 
-                        emit(yyscanner, INCR_C, NULL);
-                        emit_with_arg(yyscanner, PUSH, 1, NULL);
-                        emit(yyscanner, INCR_B, NULL);
-                        emit(yyscanner, POP_A, NULL);
+                        yr_parser_emit(yyscanner, INCR_C, NULL);
+                        yr_parser_emit_with_arg(yyscanner, PUSH, 1, NULL);
+                        yr_parser_emit(yyscanner, INCR_B, NULL);
+                        yr_parser_emit(yyscanner, POP_A, NULL);
 
-                        emit_with_arg_reloc(
+                        yr_parser_emit_with_arg_reloc(
                             yyscanner,
                             JNUNDEF_A,
                             PTR_TO_UINT64(compiler->loop_address),
                             NULL);
 
-                        emit(yyscanner, POP_A, NULL);
-                        emit(yyscanner, PNUNDEF_A_B, NULL);
-                        emit(yyscanner, PUSH_C, NULL);
-                        emit(yyscanner, LE, NULL);
+                        yr_parser_emit(yyscanner, POP_A, NULL);
+                        yr_parser_emit(yyscanner, PNUNDEF_A_B, NULL);
+                        yr_parser_emit(yyscanner, PUSH_C, NULL);
+                        yr_parser_emit(yyscanner, LE, NULL);
 
                         compiler->inside_for--;
                       }
                     | for_expression _OF_ string_set
                       {
-                        emit(yyscanner, OF, NULL);
+                        yr_parser_emit(yyscanner, OF, NULL);
                       }
                     | _FILE_ _IS_ type
                       {
                       }
                     | _NOT_ boolean_expression
                       {
-                        emit(yyscanner, NOT, NULL);
+                        yr_parser_emit(yyscanner, NOT, NULL);
                       }
                     | boolean_expression _AND_ boolean_expression
                       {
-                        emit(yyscanner, AND, NULL);
+                        yr_parser_emit(yyscanner, AND, NULL);
                       }
                     | boolean_expression _OR_ boolean_expression
                       {
-                        emit(yyscanner, OR, NULL);
+                        yr_parser_emit(yyscanner, OR, NULL);
                       }
                     | expression _LT_ expression
                       {
-                        emit(yyscanner, LT, NULL);
+                        yr_parser_emit(yyscanner, LT, NULL);
                       }
                     | expression _GT_ expression
                       {
-                        emit(yyscanner, GT, NULL);
+                        yr_parser_emit(yyscanner, GT, NULL);
                       }
                     | expression _LE_ expression
                       {
-                        emit(yyscanner, LE, NULL);
+                        yr_parser_emit(yyscanner, LE, NULL);
                       }
                     | expression _GE_ expression
                       {
-                        emit(yyscanner, GE, NULL);
+                        yr_parser_emit(yyscanner, GE, NULL);
                       }
                     | expression _EQ_ expression
                       {
-                        emit(yyscanner, EQ, NULL);
+                        yr_parser_emit(yyscanner, EQ, NULL);
                       }
                     | expression _IS_ expression
                       {
-                        emit(yyscanner, EQ, NULL);
+                        yr_parser_emit(yyscanner, EQ, NULL);
                       }
                     | expression _NEQ_ expression
                       {
-                        emit(yyscanner, NEQ, NULL);
+                        yr_parser_emit(yyscanner, NEQ, NULL);
                       }
                     ;
 
@@ -728,7 +741,7 @@ text  : _TEXTSTRING_
             sized_string->c_string,
             &string);
 
-          emit_with_arg_reloc(
+          yr_parser_emit_with_arg_reloc(
               yyscanner,
               PUSH,
               PTR_TO_UINT64(string),
@@ -738,7 +751,7 @@ text  : _TEXTSTRING_
         }
       | _IDENTIFIER_
         {
-          int result = reduce_external(
+          int result = yr_parser_reduce_external(
               yyscanner,
               $1,
               EXT_STR);
@@ -765,13 +778,13 @@ integer_enumeration : expression
 
 string_set  : '('
               {
-                emit_with_arg(yyscanner, PUSH, UNDEFINED, NULL);
+                yr_parser_emit_with_arg(yyscanner, PUSH, UNDEFINED, NULL);
               }
               string_enumeration ')'
             | _THEM_
               {
-                emit_with_arg(yyscanner, PUSH, UNDEFINED, NULL);
-                emit_pushes_for_strings(yyscanner, "$*");
+                yr_parser_emit_with_arg(yyscanner, PUSH, UNDEFINED, NULL);
+                yr_parser_emit_pushes_for_strings(yyscanner, "$*");
               }
             ;
 
@@ -781,12 +794,12 @@ string_enumeration  : string_enumeration_item
 
 string_enumeration_item : _STRING_IDENTIFIER_
                           {
-                            emit_pushes_for_strings(yyscanner, $1);
+                            yr_parser_emit_pushes_for_strings(yyscanner, $1);
                             yr_free($1);
                           }
                         | _STRING_IDENTIFIER_WITH_WILDCARD_
                           {
-                            emit_pushes_for_strings(yyscanner, $1);
+                            yr_parser_emit_pushes_for_strings(yyscanner, $1);
                             yr_free($1);
                           }
                         ;
@@ -794,11 +807,11 @@ string_enumeration_item : _STRING_IDENTIFIER_
 for_expression  : expression
                 | _ALL_
                   {
-                    emit_with_arg(yyscanner, PUSH, UNDEFINED, NULL);
+                    yr_parser_emit_with_arg(yyscanner, PUSH, UNDEFINED, NULL);
                   }
                 | _ANY_
                   {
-                    emit_with_arg(yyscanner, PUSH, 1, NULL);
+                    yr_parser_emit_with_arg(yyscanner, PUSH, 1, NULL);
                   }
                 ;
 
@@ -806,43 +819,43 @@ for_expression  : expression
 expression  : '(' expression ')'
             | _SIZE_
               {
-                emit(yyscanner, SIZE, NULL);
+                yr_parser_emit(yyscanner, SIZE, NULL);
               }
             | _ENTRYPOINT_
               {
-                emit(yyscanner, ENTRYPOINT, NULL);
+                yr_parser_emit(yyscanner, ENTRYPOINT, NULL);
               }
             | _INT8_  '(' expression ')'
               {
-                emit(yyscanner, INT8, NULL);
+                yr_parser_emit(yyscanner, INT8, NULL);
               }
             | _INT16_ '(' expression ')'
               {
-                emit(yyscanner, INT16, NULL);
+                yr_parser_emit(yyscanner, INT16, NULL);
               }
             | _INT32_ '(' expression ')'
               {
-                emit(yyscanner, INT32, NULL);
+                yr_parser_emit(yyscanner, INT32, NULL);
               }
             | _UINT8_  '(' expression ')'
               {
-                emit(yyscanner, UINT8, NULL);
+                yr_parser_emit(yyscanner, UINT8, NULL);
               }
             | _UINT16_ '(' expression ')'
               {
-                emit(yyscanner, UINT16, NULL);
+                yr_parser_emit(yyscanner, UINT16, NULL);
               }
             | _UINT32_ '(' expression ')'
               {
-                emit(yyscanner, UINT32, NULL);
+                yr_parser_emit(yyscanner, UINT32, NULL);
               }
             | _NUMBER_
               {
-                emit_with_arg(yyscanner, PUSH, $1, NULL);
+                yr_parser_emit_with_arg(yyscanner, PUSH, $1, NULL);
               }
             | _STRING_COUNT_
               {
-                int result = reduce_string_identifier(
+                int result = yr_parser_reduce_string_identifier(
                     yyscanner,
                     $1,
                     SCOUNT);
@@ -853,7 +866,7 @@ expression  : '(' expression ')'
               }
             | _STRING_OFFSET_ '[' expression ']'
               {
-                int result = reduce_string_identifier(
+                int result = yr_parser_reduce_string_identifier(
                     yyscanner,
                     $1,
                     SOFFSET);
@@ -864,10 +877,10 @@ expression  : '(' expression ')'
               }
             | _STRING_OFFSET_
               {
-                int result = emit_with_arg(yyscanner, PUSH, 0, NULL);
+                int result = yr_parser_emit_with_arg(yyscanner, PUSH, 0, NULL);
 
                 if (result == ERROR_SUCCESS)
-                  result = reduce_string_identifier(
+                  result = yr_parser_reduce_string_identifier(
                       yyscanner,
                       $1,
                       SOFFSET);
@@ -884,11 +897,11 @@ expression  : '(' expression ')'
                 if (compiler->loop_identifier != NULL &&
                     strcmp($1, compiler->loop_identifier) == 0)
                 {
-                  emit(yyscanner, PUSH_A, NULL);
+                  yr_parser_emit(yyscanner, PUSH_A, NULL);
                 }
                 else
                 {
-                  compiler->last_result = reduce_external(
+                  compiler->last_result = yr_parser_reduce_external(
                       yyscanner,
                       $1,
                       EXT_INT);
@@ -900,47 +913,47 @@ expression  : '(' expression ')'
               }
             | expression '+' expression
               {
-                emit(yyscanner, ADD, NULL);
+                yr_parser_emit(yyscanner, ADD, NULL);
               }
             | expression '-' expression
               {
-                emit(yyscanner, SUB, NULL);
+                yr_parser_emit(yyscanner, SUB, NULL);
               }
             | expression '*' expression
               {
-                emit(yyscanner, MUL, NULL);
+                yr_parser_emit(yyscanner, MUL, NULL);
               }
             | expression '\\' expression
               {
-                emit(yyscanner, DIV, NULL);
+                yr_parser_emit(yyscanner, DIV, NULL);
               }
             | expression '%' expression
               {
-                emit(yyscanner, MOD, NULL);
+                yr_parser_emit(yyscanner, MOD, NULL);
               }
             | expression '^' expression
               {
-                emit(yyscanner, XOR, NULL);
+                yr_parser_emit(yyscanner, XOR, NULL);
               }
             | expression '&' expression
               {
-                emit(yyscanner, AND, NULL);
+                yr_parser_emit(yyscanner, AND, NULL);
               }
             | expression '|' expression
               {
-                emit(yyscanner, OR, NULL);
+                yr_parser_emit(yyscanner, OR, NULL);
               }
             | '~' expression
               {
-                emit(yyscanner, NEG, NULL);
+                yr_parser_emit(yyscanner, NEG, NULL);
               }
             | expression _SHIFT_LEFT_ expression
               {
-                emit(yyscanner, SHL, NULL);
+                yr_parser_emit(yyscanner, SHL, NULL);
               }
             | expression _SHIFT_RIGHT_ expression
               {
-                emit(yyscanner, SHR, NULL);
+                yr_parser_emit(yyscanner, SHR, NULL);
               }
             ;
 

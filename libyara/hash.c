@@ -92,7 +92,8 @@ int yr_hash_table_create(
   HASH_TABLE* new_table;
   int i;
 
-  new_table = yr_malloc(sizeof(HASH_TABLE) + size * sizeof(HASH_TABLE_ENTRY*));
+  new_table = yr_malloc(sizeof(HASH_TABLE) +
+                        size * sizeof(HASH_TABLE_ENTRY*));
 
   if (new_table == NULL)
     return ERROR_INSUFICIENT_MEMORY;

@@ -1072,6 +1072,7 @@ static PyObject * yara_compile(
                 PyExc_TypeError,
                 "keys and values of the 'sources' dictionary must be "
                 "of string type");
+            break;
           }
         }
       }
@@ -1118,6 +1119,7 @@ static PyObject * yara_compile(
                 PyExc_TypeError,
                 "keys and values of the filepaths dictionary must be of "
                 "string type");
+            break;
           }
         }
       }
@@ -1169,14 +1171,20 @@ static PyObject * yara_compile(
           }
           else
           {
+            printf("yr_compiler_get_rules: %d\n", error);
             result = handle_error(error, NULL);
           }
         }
         else
         {
+          printf("PyObject_NEW: ERROR_INSUFICIENT_MEMORY\n");
           result = handle_error(ERROR_INSUFICIENT_MEMORY, NULL);
         }
       }
+    }
+    else
+    {
+      printf("PyErr_Occurred() != NULL\n");
     }
 
     yr_compiler_destroy(compiler);
@@ -1285,7 +1293,7 @@ MOD_INIT(yara)
   PyModule_AddObject(m, "Error", YaraError);
   PyModule_AddObject(m, "SyntaxError", YaraSyntaxError);
 
-  yr_init();
+  yr_initialize();
 
   return MOD_SUCCESS_VAL(m);
 }

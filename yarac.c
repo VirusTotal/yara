@@ -156,7 +156,7 @@ int main(
 
   clock_t start, end;
 
-  yr_init();
+  yr_initialize();
 
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
     return 0;

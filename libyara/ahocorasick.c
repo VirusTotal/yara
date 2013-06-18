@@ -49,7 +49,16 @@ typedef struct _QUEUE
 
 
 //
+// _yr_ac_queue_push
+//
 // Pushes a state in a queue.
+//
+// Args:
+//    QUEUE* queue     - The queue
+//    AC_STATE* state  - The state
+//
+// Returns:
+//    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
 //
 
 int _yr_ac_queue_push(
@@ -77,8 +86,17 @@ int _yr_ac_queue_push(
   return ERROR_SUCCESS;
 }
 
+
 //
-// Pop a state from a queue.
+// _yr_ac_queue_pop
+//
+// Pops a state from a queue.
+//
+// Args:
+//    QUEUE* queue     - The queue
+//
+// Returns:
+//    Pointer to the poped state.
 //
 
 AC_STATE* _yr_ac_queue_pop(
@@ -106,7 +124,15 @@ AC_STATE* _yr_ac_queue_pop(
 
 
 //
+// _yr_ac_queue_is_empty
+//
 // Checks if a queue is empty.
+//
+// Args:
+//    QUEUE* queue     - The queue
+//
+// Returns:
+//    TRUE if queue is empty, FALSE otherwise.
 //
 
 int _yr_ac_queue_is_empty(
@@ -117,8 +143,17 @@ int _yr_ac_queue_is_empty(
 
 
 //
-// Given an automaton state and an input, returns the state
-// where the automaton should transition to.
+// _yr_ac_next_state
+//
+// Given an automaton state and an input symbol, returns the new state
+// after reading the input symbol.
+//
+// Args:
+//    AC_STATE* state     - Automaton state
+//    uint8_t input       - Input symbol
+//
+// Returns:
+//   Pointer to the next automaton state.
 //
 
 AC_STATE* _yr_ac_next_state(
@@ -130,8 +165,19 @@ AC_STATE* _yr_ac_next_state(
 
 
 //
-// Creates a new automaton state.
+// _yr_ac_create_state
 //
+// Creates a new automaton state, the automaton will transition from
+// the given state to the new state after reading the input symbol.
+//
+// Args:
+//   ARENA* arena     - Automaton's arena
+//   AC_STATE* state  - Origin state
+//   uint8_t input    - Input symbol
+//
+// Returns:
+//   AC_STATE* pointer to the newly allocated state or NULL in case
+//   of error.
 
 AC_STATE* _yr_ac_create_state(
     ARENA* arena,
@@ -172,6 +218,8 @@ AC_STATE* _yr_ac_create_state(
 }
 
 
+//
+// _yr_ac_gen_case_combinations
 //
 // Returns all combinations of lower and upper cases for a given token. For
 // token "abc" the output would be "abc" "abC" "aBC" and so on. Resulting
@@ -238,6 +286,21 @@ void* _yr_ac_gen_case_combinations(
   return output_buffer;
 }
 
+//
+// _yr_ac_gen_hex_tokens
+//
+// Generates token for a hex string. The token will be a substring of length
+// up to MAX_TOKEN, generally a prefix, but not necessarily. The token can
+// also be extracted from the middle of the string when the prefix is not long
+// enough. The function will try to choose a token with as many distinct bytes
+// as posible, avoiding tokens like 00 00 00 00 which are too common.
+// For example, in the string
+//
+//    98 56 ?? ?? 00 00 00 00 34 EB 45 97 21
+//
+// the token would be 34 EB 45 97 (assuming MAX_TOKEN is 4) instead of 98 56,
+// which is shorter, or 00 00 00 00 which is more homogeneous.
+//
 
 void* _yr_ac_gen_hex_tokens(
     STRING* string,
@@ -384,6 +447,11 @@ void* _yr_ac_gen_hex_tokens(
   return output_buffer;
 }
 
+//
+// _yr_ac_gen_regexp_tokens
+//
+// Generates tokens for a regular expression.
+//
 
 void* _yr_ac_gen_regexp_tokens(
     STRING* string,
@@ -456,7 +524,7 @@ void* _yr_ac_gen_regexp_tokens(
   }
   else
   {
-    first_bytes_count = regex_get_first_bytes(&(string->re), first_bytes);
+    first_bytes_count = yr_regex_get_first_bytes(&(string->re), first_bytes);
 
     for (i = 0; i < first_bytes_count; i++)
     {
@@ -477,6 +545,8 @@ void* _yr_ac_gen_regexp_tokens(
 }
 
 
+//
+// _yr_ac_gen_tokens
 //
 // Returns the tokens to be added to the Aho-Corasick automaton for
 // a given YARA string. Length of tokens is limited by max_token_lengh.
@@ -580,7 +650,9 @@ void _yr_ac_gen_tokens(
 
 
 //
-// Update failure links for each automaton state. This function must
+// yr_ac_create_failure_links
+//
+// Create failure links for each automaton state. This function must
 // be called after all the strings have been added to the automaton.
 //
 
@@ -694,6 +766,8 @@ void yr_ac_create_failure_links(
 
 
 //
+// yr_ac_create_automaton
+//
 // Creates a new automaton
 //
 
@@ -736,6 +810,12 @@ int yr_ac_create_automaton(
 }
 
 
+//
+// yr_ac_add_string
+//
+// Adds a string to the automaton.
+//
+
 int yr_ac_add_string(
     ARENA* arena,
     AC_AUTOMATON* automaton,
@@ -754,7 +834,7 @@ int yr_ac_add_string(
   uint8_t* tokens_cursor;
 
   // Reserve memory to hold tokens for the string. We reserve enough memory
-  // for the worst case which is an "ascii wide nocase" text string.
+  // for the worst case which is a "ascii wide nocase" text string.
 
   tokens = yr_malloc(
       2 * MAX_TOKEN * MAX_TOKEN * (2 * sizeof(int) + MAX_TOKEN) + sizeof(int));
@@ -764,8 +844,10 @@ int yr_ac_add_string(
 
   tokens_cursor = tokens;
 
-  // Generate all posible tokens for the string. These tokens will be
-  // added to the Aho-Corasick automaton.
+  // Generate all posible tokens for the string. These tokens are substrings up
+  // to MAX_TOKEN bytes length, which are generally a prefix of the strings,
+  // but not necessarily. For hex strings token can be extracted from the middle
+  // of the string. This tokens are added to the Aho-Corasick automaton.
 
   _yr_ac_gen_tokens(string, MAX_TOKEN, tokens);
 
@@ -774,9 +856,11 @@ int yr_ac_add_string(
 
   if (token_length == 0)
   {
-    // No tokens, put the string in the automaton's root state.
+    // No token could be extracted from the string, put the string in the
+    // automaton's root state. This is far from ideal, because the string will
+    // be tried at every data offset during scanning.
 
-    yr_arena_allocate_struct(
+    result = yr_arena_allocate_struct(
         arena,
         sizeof(AC_MATCH),
         (void**) &new_match,
@@ -784,10 +868,13 @@ int yr_ac_add_string(
         offsetof(AC_MATCH, next),
         EOL);
 
-    new_match->backtrack = 0;
-    new_match->string = string;
-    new_match->next = automaton->root->matches;
-    automaton->root->matches = new_match;
+    if (result == ERROR_SUCCESS)
+    {
+      new_match->backtrack = 0;
+      new_match->string = string;
+      new_match->next = automaton->root->matches;
+      automaton->root->matches = new_match;
+    }
   }
   else
   {
@@ -821,21 +908,28 @@ int yr_ac_add_string(
             state,
             *tokens_cursor);
 
-        if (next_state != NULL)
-          state = next_state;
-        else
-          state = _yr_ac_create_state(
+        if (next_state == NULL)
+        {
+          next_state = _yr_ac_create_state(
               arena,
               state,
               *tokens_cursor);
 
+          if (next_state == NULL)
+          {
+            yr_free(tokens);
+            return ERROR_INSUFICIENT_MEMORY;
+          }
+        }
+
+        state = next_state;
         tokens_cursor++;
       }
 
       token_length = *((int*) tokens_cursor);
       tokens_cursor += sizeof(int);
 
-      yr_arena_allocate_struct(
+      result = yr_arena_allocate_struct(
           arena,
           sizeof(AC_MATCH),
           (void**) &new_match,
@@ -843,18 +937,32 @@ int yr_ac_add_string(
           offsetof(AC_MATCH, next),
           EOL);
 
-      new_match->backtrack = state->depth + token_backtrack;
-      new_match->string = string;
-      new_match->next = state->matches;
-      state->matches = new_match;
+      if (result == ERROR_SUCCESS)
+      {
+        new_match->backtrack = state->depth + token_backtrack;
+        new_match->string = string;
+        new_match->next = state->matches;
+        state->matches = new_match;
+      }
+      else
+      {
+        break;
+      }
     }
   }
 
   yr_free(tokens);
 
-  return ERROR_SUCCESS;
+  return result;
 }
 
+
+//
+// _yr_ac_print_automaton_state
+//
+// Prints automaton state for debug purposes. This function is invoked by
+// yr_ac_print_automaton, is not intended to be used stand-alone.
+//
 
 void _yr_ac_print_automaton_state(
   AC_STATE* state)
@@ -886,6 +994,11 @@ void _yr_ac_print_automaton_state(
   }
 }
 
+//
+// yr_ac_print_automaton
+//
+// Prints automaton for debug purposes.
+//
 
 void yr_ac_print_automaton(AC_AUTOMATON* automaton)
 {

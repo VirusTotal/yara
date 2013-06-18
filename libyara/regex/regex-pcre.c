@@ -19,7 +19,7 @@ limitations under the License.
 
 #include "regex.h"
 
-int regex_exec(
+int yr_regex_exec(
     REGEXP* regex,
     int anchored,
     const char *buffer,
@@ -66,7 +66,7 @@ int regex_exec(
 }
 
 
-void regex_free(
+void yr_regex_free(
     REGEXP* regex)
 {
   if (!regex)
@@ -86,7 +86,7 @@ void regex_free(
 }
 
 
-int regex_compile(
+int yr_regex_compile(
     REGEXP* output,
     const char* pattern,
     int case_insensitive,
@@ -135,7 +135,7 @@ int regex_compile(
 }
 
 
-int regex_get_first_bytes(
+int yr_regex_get_first_bytes(
     REGEXP* regex,
     uint8_t* table)
 {

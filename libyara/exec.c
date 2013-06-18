@@ -555,7 +555,7 @@ int yr_execute_code(
           break;
         }
 
-        result = regex_compile(&re,
+        result = yr_regex_compile(&re,
             UINT64_TO_PTR(char*, r2),
             FALSE,
             NULL,
@@ -566,7 +566,7 @@ int yr_execute_code(
         // it was verified during compile time.
         assert(result > 0);
 
-        result = regex_exec(&re,
+        result = yr_regex_exec(&re,
             FALSE,
             UINT64_TO_PTR(char*, r1),
             count);

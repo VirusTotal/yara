@@ -24,10 +24,18 @@ typedef void* yyscan_t;
 #define YY_EXTRA_TYPE YARA_COMPILER*
 #define YY_USE_CONST
 
-void yyerror(yyscan_t yyscanner, const char *error_message);
+void yyerror(
+		yyscan_t yyscanner,
+		const char *error_message);
 
-YY_EXTRA_TYPE yyget_extra (yyscan_t yyscanner);
+YY_EXTRA_TYPE yyget_extra(
+		yyscan_t yyscanner);
 
-int parse_rules_string(const char* rules_string, YARA_COMPILER* compiler);
-int parse_rules_file(FILE* rules_file, YARA_COMPILER* compiler);
+int yr_lex_parse_rules_string(
+		const char* rules_string,
+		YARA_COMPILER* compiler);
+
+int yr_lex_parse_rules_file(
+		FILE* rules_file,
+		YARA_COMPILER* compiler);
 

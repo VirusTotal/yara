@@ -29,7 +29,7 @@ limitations under the License.
                     ((uint8_t) (x - '0'))
 
 
-int emit(
+int yr_parser_emit(
     yyscan_t yyscanner,
     int8_t instruction,
     int8_t** instruction_address)
@@ -42,7 +42,7 @@ int emit(
 }
 
 
-int emit_with_arg(
+int yr_parser_emit_with_arg(
     yyscan_t yyscanner,
     int8_t instruction,
     int64_t argument,
@@ -65,7 +65,7 @@ int emit_with_arg(
 }
 
 
-int emit_with_arg_reloc(
+int yr_parser_emit_with_arg_reloc(
     yyscan_t yyscanner,
     int8_t instruction,
     int64_t argument,
@@ -97,7 +97,7 @@ int emit_with_arg_reloc(
 }
 
 
-void emit_pushes_for_strings(
+void yr_parser_emit_pushes_for_strings(
     yyscan_t yyscanner,
     const char* identifier)
 {
@@ -122,7 +122,12 @@ void emit_pushes_for_strings(
     if ((*target_identifier == '\0' && *string_identifier == '\0') ||
          *target_identifier == '*')
     {
-      emit_with_arg_reloc(yyscanner, PUSH, PTR_TO_UINT64(string), NULL);
+      yr_parser_emit_with_arg_reloc(
+          yyscanner,
+          PUSH,
+          PTR_TO_UINT64(string),
+          NULL);
+
       string->flags |= STRING_FLAGS_REFERENCED;
     }
 
@@ -134,7 +139,7 @@ void emit_pushes_for_strings(
 }
 
 
-STRING* lookup_string(
+STRING* yr_parser_lookup_string(
     yyscan_t yyscanner,
     const char* identifier)
 {
@@ -161,7 +166,7 @@ STRING* lookup_string(
 }
 
 
-EXTERNAL_VARIABLE* lookup_external_variable(
+EXTERNAL_VARIABLE* yr_parser_lookup_external_variable(
     yyscan_t yyscanner,
     const char* identifier)
 {
@@ -189,7 +194,7 @@ EXTERNAL_VARIABLE* lookup_external_variable(
   return NULL;
 }
 
-int new_hex_string(
+int yr_parser_new_hex_string(
     YARA_COMPILER* compiler,
     SIZED_STRING* charstr,
     uint8_t** new_string,
@@ -476,7 +481,7 @@ int new_hex_string(
 }
 
 
-STRING* reduce_string_declaration(
+STRING* yr_parser_reduce_string_declaration(
     yyscan_t yyscanner,
     int32_t flags,
     const char* identifier,
@@ -521,7 +526,7 @@ STRING* reduce_string_declaration(
 
   if (flags & STRING_FLAGS_HEXADECIMAL)
   {
-    compiler->last_result = new_hex_string(
+    compiler->last_result = yr_parser_new_hex_string(
         compiler,
         str,
         &string->string,
@@ -532,7 +537,7 @@ STRING* reduce_string_declaration(
   {
     if (flags & STRING_FLAGS_REGEXP)
     {
-      if (regex_compile(
+      if (yr_regex_compile(
           &string->re,
           str->c_string,
           flags & STRING_FLAGS_NO_CASE,
@@ -573,7 +578,7 @@ STRING* reduce_string_declaration(
 }
 
 
-int reduce_rule_declaration(
+int yr_parser_reduce_rule_declaration(
     yyscan_t yyscanner,
     int32_t flags,
     const char* identifier,
@@ -642,7 +647,7 @@ int reduce_rule_declaration(
   if (compiler->last_result != ERROR_SUCCESS)
     return compiler->last_result;
 
-  compiler->last_result = emit_with_arg_reloc(
+  compiler->last_result = yr_parser_emit_with_arg_reloc(
       yyscanner,
       RULE_POP,
       PTR_TO_UINT64(rule),
@@ -670,7 +675,7 @@ int reduce_rule_declaration(
 }
 
 
-int reduce_string_identifier(
+int yr_parser_reduce_string_identifier(
     yyscan_t yyscanner,
     const char* identifier,
     int8_t instruction)
@@ -682,8 +687,8 @@ int reduce_string_identifier(
   {
     if (compiler->inside_for > 0)
     {
-      emit(yyscanner, PUSH_A, NULL);
-      emit(yyscanner, instruction, NULL);
+      yr_parser_emit(yyscanner, PUSH_A, NULL);
+      yr_parser_emit(yyscanner, instruction, NULL);
     }
     else
     {
@@ -692,17 +697,17 @@ int reduce_string_identifier(
   }
   else
   {
-    string = lookup_string(yyscanner, identifier);
+    string = yr_parser_lookup_string(yyscanner, identifier);
 
     if (string != NULL)
     {
-      emit_with_arg_reloc(
+      yr_parser_emit_with_arg_reloc(
           yyscanner,
           PUSH,
           PTR_TO_UINT64(string),
           NULL);
 
-      emit(yyscanner, instruction, NULL);
+      yr_parser_emit(yyscanner, instruction, NULL);
 
       string->flags |= STRING_FLAGS_REFERENCED;
     }
@@ -712,7 +717,7 @@ int reduce_string_identifier(
 }
 
 
-int reduce_external(
+int yr_parser_reduce_external(
   yyscan_t yyscanner,
   const char* identifier,
   int8_t instruction)
@@ -720,13 +725,13 @@ int reduce_external(
   YARA_COMPILER* compiler = yyget_extra(yyscanner);
   EXTERNAL_VARIABLE* external;
 
-  external = lookup_external_variable(yyscanner, identifier);
+  external = yr_parser_lookup_external_variable(yyscanner, identifier);
 
   if (external != NULL)
   {
     if (instruction == EXT_BOOL)
     {
-      compiler->last_result = emit_with_arg_reloc(
+      compiler->last_result = yr_parser_emit_with_arg_reloc(
           yyscanner,
           EXT_BOOL,
           PTR_TO_UINT64(external),
@@ -735,7 +740,7 @@ int reduce_external(
     else if (instruction == EXT_INT &&
              external->type == EXTERNAL_VARIABLE_TYPE_INTEGER)
     {
-      compiler->last_result = emit_with_arg_reloc(
+      compiler->last_result = yr_parser_emit_with_arg_reloc(
           yyscanner,
           EXT_INT,
           PTR_TO_UINT64(external),
@@ -744,7 +749,7 @@ int reduce_external(
     else if (instruction == EXT_STR &&
              external->type == EXTERNAL_VARIABLE_TYPE_FIXED_STRING)
     {
-      compiler->last_result = emit_with_arg_reloc(
+      compiler->last_result = yr_parser_emit_with_arg_reloc(
           yyscanner,
           EXT_STR,
           PTR_TO_UINT64(external),
@@ -761,7 +766,7 @@ int reduce_external(
 }
 
 
-META* reduce_meta_declaration(
+META* yr_parser_reduce_meta_declaration(
     yyscan_t yyscanner,
     int32_t type,
     const char* identifier,

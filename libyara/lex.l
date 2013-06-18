@@ -214,7 +214,8 @@ include[ \t]+\"         {
       }
 
       _yr_compiler_push_file(compiler, fh);
-      yypush_buffer_state(yy_create_buffer(fh, YY_BUF_SIZE, yyscanner), yyscanner);
+      yypush_buffer_state(
+          yy_create_buffer(fh, YY_BUF_SIZE, yyscanner), yyscanner);
     }
     else
     {
@@ -545,7 +546,7 @@ void yyerror(yyscan_t yyscanner, const char *error_message)
 }
 
 
-int parse_rules_string(
+int yr_lex_parse_rules_string(
   const char* rules_string,
   YARA_COMPILER* compiler)
 {
@@ -565,7 +566,7 @@ int parse_rules_string(
 }
 
 
-int parse_rules_file(
+int yr_lex_parse_rules_file(
   FILE* rules_file,
   YARA_COMPILER* compiler)
 {

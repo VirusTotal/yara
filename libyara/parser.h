@@ -23,42 +23,42 @@ limitations under the License.
 #include "sizedstr.h"
 
 
-int emit(
+int yr_parser_emit(
     yyscan_t yyscanner,
     int8_t instruction,
     int8_t** instruction_address);
 
 
-int emit_with_arg(
-    yyscan_t yyscanner,
-    int8_t instruction,
-    int64_t argument,
-    int8_t** instruction_address);
-
-
-int emit_with_arg_reloc(
+int yr_parser_emit_with_arg(
     yyscan_t yyscanner,
     int8_t instruction,
     int64_t argument,
     int8_t** instruction_address);
 
 
-STRING* lookup_string(
+int yr_parser_emit_with_arg_reloc(
+    yyscan_t yyscanner,
+    int8_t instruction,
+    int64_t argument,
+    int8_t** instruction_address);
+
+
+STRING* yr_parser_lookup_string(
   yyscan_t yyscanner,
   const char* identifier);
 
 
-EXTERNAL_VARIABLE* lookup_external_variable(
+EXTERNAL_VARIABLE* yr_parser_lookup_external_variable(
   yyscan_t yyscanner,
   const char* identifier);
 
 
-void push_string_pointers(
+void yr_parser_push_string_pointers(
     yyscan_t yyscanner,
     const char* identifier);
 
 
-int reduce_rule_declaration(
+int yr_parser_reduce_rule_declaration(
     yyscan_t yyscanner,
     int flags,
     const char* identifier,
@@ -67,14 +67,14 @@ int reduce_rule_declaration(
     META* metas);
 
 
-STRING* reduce_string_declaration(
+STRING* yr_parser_reduce_string_declaration(
     yyscan_t yyscanner,
     int flags,
     const char* identifier,
     SIZED_STRING* str);
 
 
-META* reduce_meta_declaration(
+META* yr_parser_reduce_meta_declaration(
     yyscan_t yyscanner,
     int32_t type,
     const char* identifier,
@@ -82,13 +82,13 @@ META* reduce_meta_declaration(
     int32_t integer);
 
 
-int reduce_string_identifier(
+int yr_parser_reduce_string_identifier(
     yyscan_t yyscanner,
     const char* identifier,
     int8_t instruction);
 
 
-int reduce_external(
+int yr_parser_reduce_external(
     yyscan_t yyscanner,
     const char* identifier,
     int8_t intruction);

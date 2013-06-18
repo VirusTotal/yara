@@ -35,7 +35,7 @@ limitations under the License.
 
 int yr_filemap_map(
     const char* file_path,
-     MAPPED_FILE* pmapped_file)
+    MAPPED_FILE* pmapped_file)
 {
   if (file_path == NULL)
     return ERROR_INVALID_ARGUMENT;

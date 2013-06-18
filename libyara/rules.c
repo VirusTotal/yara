@@ -242,7 +242,7 @@ int _yr_scan_verify_regexp_match(
   if (file_beginning && pattern[0] == '^')
     return 0;
 
-  result = regex_exec(&re, TRUE, (char*) buffer, buffer_size);
+  result = yr_regex_exec(&re, TRUE, (char*) buffer, buffer_size);
 
   if (result >= 0)
     return result;
@@ -808,7 +808,7 @@ int yr_rules_scan_proc(
 
   int result;
 
-  result = get_process_memory(pid, &first_block);
+  result = yr_process_get_memory(pid, &first_block);
 
   if (result == ERROR_SUCCESS)
     result = yr_rules_scan_mem_blocks(
@@ -885,7 +885,7 @@ int yr_rules_load(
       string->re.extra = NULL;
 
       if (STRING_IS_REGEXP(string))
-        regex_compile(&string->re,
+        yr_regex_compile(&string->re,
             string->string,
             0,
             NULL,
