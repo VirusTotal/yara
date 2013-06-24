@@ -17,6 +17,7 @@ limitations under the License.
 %{
 
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <limits.h>
 #include <stddef.h>
@@ -487,7 +488,7 @@ boolean_expression  : '(' boolean_expression ')'
                         int error_offset;
                         int result;
 
-                        result = regex_compile(&re,
+                        result = yr_regex_compile(&re,
                             sized_string->c_string,
                             FALSE,
                             compiler->last_error_extra_info,

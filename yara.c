@@ -308,7 +308,7 @@ int callback(RULE* rule, void* data)
   META* meta;
 
   char* tag_name;
-  int tag_length;
+  size_t tag_length;
   int rule_match;
   int string_found;
   int show = TRUE;
