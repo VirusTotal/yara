@@ -156,7 +156,7 @@ int _yr_arena_make_relocatable(
 
   assert(page != NULL);
 
-  base_offset = base - page->address;
+  base_offset = (uint8_t*) base - page->address;
   offset = va_arg(offsets, size_t);
 
   while (offset != -1)
@@ -338,10 +338,10 @@ void* yr_arena_next_address(
 
   assert(page != NULL);
 
-  if (address + increment >= page->address + page->used)
+  if ((uint8_t*) address + increment >= page->address + page->used)
     return page->next ? page->next->address : NULL;
   else
-    return address + increment;
+    return (uint8_t*) address + increment;
 }
 
 
@@ -366,8 +366,8 @@ int yr_arena_coalesce(
   ARENA_PAGE* next_page;
   RELOC* reloc;
 
-  void** reloc_address;
-  void* reloc_target;
+  uint8_t** reloc_address;
+  uint8_t* reloc_target;
   int total_size = 0;
 
   page = arena->page_list_head;
@@ -418,7 +418,7 @@ int yr_arena_coalesce(
 
   while (reloc != NULL)
   {
-    reloc_address = big_page->address + reloc->offset;
+	reloc_address = (uint8_t**) (big_page->address + reloc->offset);
     reloc_target = *reloc_address;
 
     if (reloc_target != NULL)
@@ -734,8 +734,8 @@ int yr_arena_duplicate(
   ARENA_PAGE* page;
   ARENA_PAGE* new_page;
   ARENA* new_arena;
-  void** reloc_address;
-  void* reloc_target;
+  uint8_t** reloc_address;
+  uint8_t* reloc_target;
 
   // Only coalesced arenas can be duplicated.
   assert(arena->is_coalesced);
@@ -778,7 +778,7 @@ int yr_arena_duplicate(
 
     new_page->reloc_list_tail = new_reloc;
 
-    reloc_address = new_page->address + new_reloc->offset;
+    reloc_address = (uint8_t**) (new_page->address + new_reloc->offset);
     reloc_target = *reloc_address;
 
     if (reloc_target != NULL)
@@ -828,8 +828,8 @@ int yr_arena_save(
   ARENA_FILE_HEADER header;
 
   int32_t end_marker = -1;
-  void** reloc_address;
-  void* reloc_target;
+  uint8_t** reloc_address;
+  uint8_t* reloc_target;
 
   // Only coalesced arenas can be saved.
   assert(arena->is_coalesced);
@@ -845,7 +845,7 @@ int yr_arena_save(
   // Convert pointers to offsets before saving.
   while (reloc != NULL)
   {
-    reloc_address = page->address + reloc->offset;
+    reloc_address = (uint8_t**) (page->address + reloc->offset);
     reloc_target = *reloc_address;
 
     if (reloc_target != NULL)
@@ -878,7 +878,7 @@ int yr_arena_save(
   {
     fwrite(&reloc->offset, sizeof(reloc->offset), 1, fh);
 
-    reloc_address = page->address + reloc->offset;
+    reloc_address = (uint8_t**) (page->address + reloc->offset);
     reloc_target = *reloc_address;
 
     if (reloc_target != (void*) (size_t) 0xFFFABADA)
@@ -922,8 +922,8 @@ int yr_arena_load(
   void* new_address;
   int result;
   int32_t reloc_offset;
-  void** reloc_address;
-  void* reloc_target;
+  uint8_t** reloc_address;
+  uint8_t* reloc_target;
   long file_size;
 
   fh = fopen(filename, "r");
@@ -991,10 +991,10 @@ int yr_arena_load(
   {
     yr_arena_make_relocatable(new_arena, page->address, reloc_offset, EOL);
 
-    reloc_address = page->address + reloc_offset;
-    reloc_target = (void*) *reloc_address;
+    reloc_address = (uint8_t**) (page->address + reloc_offset);
+    reloc_target = *reloc_address;
 
-    if (reloc_target != (void*) (size_t) 0xFFFABADA)
+    if (reloc_target != (uint8_t*) (size_t) 0xFFFABADA)
       *reloc_address += (size_t) page->address;
     else
       *reloc_address = 0;

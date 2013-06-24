@@ -24,6 +24,9 @@ limitations under the License.
 #include "utils.h"
 #include "yara.h"
 
+#ifdef WIN32
+#define inline __inline
+#endif
 
 int _yr_scan_compare(
     uint8_t* str1,

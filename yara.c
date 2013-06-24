@@ -40,6 +40,11 @@ limitations under the License.
 #define MAX_PATH 255
 #endif
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
+
+
 int recursive_search = FALSE;
 int show_tags = FALSE;
 int show_specified_tags = FALSE;
@@ -140,7 +145,7 @@ int is_directory(
   }
 }
 
-void scan_dir(
+int scan_dir(
     const char* dir,
     int recursive,
     YARA_RULES* rules,
@@ -151,6 +156,8 @@ void scan_dir(
 
   char full_path[MAX_PATH];
   static char path_and_mask[MAX_PATH];
+
+  int result = ERROR_SUCCESS;
 
   snprintf(path_and_mask, sizeof(path_and_mask), "%s\\*", dir);
 
@@ -166,17 +173,22 @@ void scan_dir(
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
         //printf("Processing %s...\n", FindFileData.cFileName);
-        yr_rules_scan_file(rules, full_path, callback, full_path);
+        result = yr_rules_scan_file(rules, full_path, callback, full_path);
       }
       else if (recursive && FindFileData.cFileName[0] != '.' )
       {
-        scan_dir(full_path, recursive, rules, callback);
+        result = scan_dir(full_path, recursive, rules, callback);
       }
+
+      if (result != ERROR_SUCCESS)
+        break;
 
     } while (FindNextFile(hFind, &FindFileData));
 
     FindClose(hFind);
   }
+
+  return result;
 }
 
 #else
@@ -451,7 +463,6 @@ int callback(RULE* rule, void* data)
 
 
 int process_cmd_line(
-    YARA_COMPILER* compiler,
     int argc,
     char const* argv[])
 {
@@ -655,7 +666,7 @@ int main(
   int errors;
   int result;
 
-  if (!process_cmd_line(compiler, argc, argv))
+  if (!process_cmd_line(argc, argv))
     return 0;
 
   if (argc == 1 || optind == argc)

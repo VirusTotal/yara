@@ -69,8 +69,8 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;PCRE_STATIC</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\windows\include;..\libyara;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;PCRE_STATIC;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\libyara\regex;..\libyara;..\..\windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Lib>
@@ -98,8 +98,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;PCRE_STATIC</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\windows\include;..\libyara;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;PCRE_STATIC;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\libyara\regex;..\libyara;..\..\windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Lib>
@@ -119,20 +119,22 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\libyara\ast.c" />
-    <ClCompile Include="..\..\libyara\eval.c" />
-    <ClCompile Include="..\..\libyara\exe.c" />
+    <ClCompile Include="..\..\libyara\ahocorasick.c" />
+    <ClCompile Include="..\..\libyara\arena.c" />
+    <ClCompile Include="..\..\libyara\compiler.c" />
+    <ClCompile Include="..\..\libyara\exec.c" />
+    <ClCompile Include="..\..\libyara\exefiles.c" />
     <ClCompile Include="..\..\libyara\filemap.c" />
     <ClCompile Include="..\..\libyara\grammar.c" />
     <ClCompile Include="..\..\libyara\hash.c" />
     <ClCompile Include="..\..\libyara\lex.c" />
     <ClCompile Include="..\..\libyara\libyara.c" />
     <ClCompile Include="..\..\libyara\mem.c" />
+    <ClCompile Include="..\..\libyara\parser.c" />
     <ClCompile Include="..\..\libyara\proc.c" />
     <ClCompile Include="..\..\libyara\regex\regex-pcre.c" />
-    <ClCompile Include="..\..\libyara\scan.c" />
-    <ClCompile Include="..\..\libyara\weight.c" />
-    <ClCompile Include="..\..\libyara\xtoi.c" />
+    <ClCompile Include="..\..\libyara\rules.c" />
+    <ClCompile Include="..\..\libyara\utils.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

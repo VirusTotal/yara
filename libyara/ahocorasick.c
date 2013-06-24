@@ -27,8 +27,9 @@ limitations under the License.
 #define MAX_TOKEN 4
 
 
-#define min(x, y) (x < y)?(x):(y)
-
+#ifndef min
+#define min(x, y) ((x < y) ? (x) : (y))
+#endif
 
 typedef struct _QUEUE_NODE
 {
@@ -233,12 +234,12 @@ AC_STATE* _yr_ac_create_state(
 // returned tokens.
 //
 
-void* _yr_ac_gen_case_combinations(
+uint8_t* _yr_ac_gen_case_combinations(
     uint8_t* token,
     int token_length,
     int token_offset,
     int token_backtrack,
-    void* output_buffer)
+    uint8_t* output_buffer)
 {
   char c;
   char* new_token;
@@ -302,10 +303,10 @@ void* _yr_ac_gen_case_combinations(
 // which is shorter, or 00 00 00 00 which is more homogeneous.
 //
 
-void* _yr_ac_gen_hex_tokens(
+uint8_t* _yr_ac_gen_hex_tokens(
     STRING* string,
     int max_token_length,
-    void* output_buffer)
+    uint8_t* output_buffer)
 {
   int inside_or = 0;
   int token_length = 0;
@@ -453,10 +454,10 @@ void* _yr_ac_gen_hex_tokens(
 // Generates tokens for a regular expression.
 //
 
-void* _yr_ac_gen_regexp_tokens(
+uint8_t* _yr_ac_gen_regexp_tokens(
     STRING* string,
     int max_token_length,
-    void* output_buffer)
+    uint8_t* output_buffer)
 {
   uint8_t token[MAX_TOKEN];
   uint8_t first_bytes[256];
@@ -557,7 +558,7 @@ void* _yr_ac_gen_regexp_tokens(
 void _yr_ac_gen_tokens(
     STRING* string,
     int max_token_length,
-    void* output_buffer)
+    uint8_t* output_buffer)
 {
   int i, j;
   int token_length;
@@ -595,7 +596,7 @@ void _yr_ac_gen_tokens(
       str = output_buffer;
 
       memcpy(output_buffer, string->string, token_length);
-      output_buffer += token_length;
+      ((uint8_t*) output_buffer) += token_length;
 
       if (STRING_IS_NO_CASE(string))
       {
@@ -626,9 +627,9 @@ void _yr_ac_gen_tokens(
       while(i < token_length)
       {
         if (i % 2 == 0)
-          *((uint8_t*) output_buffer++) = string->string[j++];
+          *(((uint8_t*) output_buffer)++) = string->string[j++];
         else
-          *((uint8_t*) output_buffer++) = 0;
+          *(((uint8_t*) output_buffer)++) = 0;
         i++;
       }
 

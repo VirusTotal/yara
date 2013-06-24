@@ -174,7 +174,7 @@ typedef union YYSTYPE
 {
   void*           sized_string;
   char*           c_string;
-  int64_t         integer;
+  __int64         integer;
   void*           string;
   void*           meta;
 }

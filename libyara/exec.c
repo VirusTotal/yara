@@ -24,7 +24,7 @@ limitations under the License.
 
 #define push(x)  \
     if (sp < STACK_SIZE) stack[sp++] = (x); \
-    else return ERROR_STACK_OVERFLOW
+    else return ERROR_EXEC_STACK_OVERFLOW
 
 
 #define pop(x)  x = stack[--sp]

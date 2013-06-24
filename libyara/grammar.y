@@ -26,7 +26,7 @@ limitations under the License.
 #include "sizedstr.h"
 #include "mem.h"
 #include "lex.h"
-#include "regex.h"
+#include "regex/regex.h"
 #include "parser.h"
 #include "utils.h"
 #include "yara.h"
