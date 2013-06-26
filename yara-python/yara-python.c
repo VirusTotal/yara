@@ -598,7 +598,8 @@ PyObject* handle_error(
     default:
       return PyErr_Format(
           YaraError,
-          "unknown error");
+          "internal error: %d",
+          error);
   }
 }
 
