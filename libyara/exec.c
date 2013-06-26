@@ -19,7 +19,7 @@ limitations under the License.
 
 #include "exec.h"
 
-#define STACK_SIZE 2048
+#define STACK_SIZE 4096
 
 
 #define push(x)  \
