@@ -52,13 +52,9 @@ void yr_free(void* ptr)
 
 char* yr_strdup(const char *s)
 {
-  size_t len;
-  char *r;
-
-  len = strlen(s);
-  r = yr_malloc(len + 1);
+  size_t len = strlen(s);
+  char *r = yr_malloc(len + 1);
   strcpy(r, s);
-
   return r;
 }
 
@@ -68,55 +64,74 @@ char* yr_strdup(const char *s)
 #include <string.h>
 #include <stdio.h>
 
+
+#ifdef DEBUG_HEAP
 static int count;
+#endif
 
 void yr_heap_alloc()
 {
+  #ifdef DEBUG_HEAP
   count = 0;
+  #endif
   return;
 }
 
 
 void yr_heap_free()
 {
+  #ifdef DEBUG_HEAP
   printf("malloc count: %d\n", count);
+  #endif
   return;
 }
 
 
 void* yr_malloc(size_t size)
 {
-  void* result;
+  void* result = malloc(size);
+
+  #ifdef DEBUG_HEAP
   count++;
-  result = malloc(size);
-  //printf("malloc: %p %d\n", result, size);
+  printf("malloc: %p %zd\n", result, size);
+  #endif
+
   return result;
 }
 
 
 void* yr_realloc(void* ptr, size_t size)
 {
-  void* result;
-  result = realloc(ptr, size);
-  //printf("realloc: %p -> %p\n", ptr, result);
+  void* result = realloc(ptr, size);
+
+  #ifdef DEBUG_HEAP
+  printf("realloc: %p -> %p\n", ptr, result);
+  #endif
+
   return result;
 }
 
 
 void yr_free(void *ptr)
 {
+  #ifdef DEBUG_HEAP
   count--;
-  //printf("free: %p\n", ptr);
+  printf("free: %p\n", ptr);
+  #endif
+
   free(ptr);
 }
 
 
 char* yr_strdup(const char *str)
 {
-  void* result;
+  void* result = strdup(str);
+
+  #ifdef DEBUG_HEAP
   count++;
-  result = strdup(str);
-  //printf("strdup: %p %d %s\n", result, strlen(str) + 1, str);
+  printf("strdup: %p %zd %s\n", result, strlen(str) + 1, str);
+  #endif
+
   return result;
 }
 

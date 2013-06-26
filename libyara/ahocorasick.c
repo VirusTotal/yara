@@ -24,9 +24,12 @@ limitations under the License.
 #include "yara.h"
 
 
-#define MAX_TOKEN 4
+#define MAX_ATOM 4
 #define MAX_TABLE_BASED_STATES_DEPTH 1
 
+#ifdef _MSC_VER
+#define inline __inline
+#endif
 
 #ifndef min
 #define min(x, y) ((x < y) ? (x) : (y))
@@ -342,65 +345,65 @@ AC_STATE* _yr_ac_create_state(
 //
 // _yr_ac_gen_case_combinations
 //
-// Returns all combinations of lower and upper cases for a given token. For
-// token "abc" the output would be "abc" "abC" "aBC" and so on. Resulting
-// tokens are written into the output buffer in this format:
+// Returns all combinations of lower and upper cases for a given atom. For
+// atom "abc" the output would be "abc" "abC" "aBC" and so on. Resulting
+// atoms are written into the output buffer in this format:
 //
-//  [size 1] [backtrack 1] [token 1]  ... [size N] [backtrack N] [token N] [0]
+//  [size 1] [backtrack 1] [atom 1]  ... [size N] [backtrack N] [atom N] [0]
 //
 // Notice the zero at the end to indicate where the output ends.
 //
 // The caller is responsible of providing a buffer large enough to hold the
-// returned tokens.
+// returned atoms.
 //
 
 uint8_t* _yr_ac_gen_case_combinations(
-    uint8_t* token,
-    int token_length,
-    int token_offset,
-    int token_backtrack,
+    uint8_t* atom,
+    int atom_length,
+    int atom_offset,
+    int atom_backtrack,
     uint8_t* output_buffer)
 {
   char c;
-  char* new_token;
+  char* new_atom;
 
-  if (token_offset + 1 < token_length)
+  if (atom_offset + 1 < atom_length)
     output_buffer = _yr_ac_gen_case_combinations(
-        token,
-        token_length,
-        token_offset + 1,
-        token_backtrack,
+        atom,
+        atom_length,
+        atom_offset + 1,
+        atom_backtrack,
         output_buffer);
 
-  c = token[token_offset];
+  c = atom[atom_offset];
 
   if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
   {
-    // Write token length.
-    *((int*) output_buffer) = token_length;
+    // Write atom length.
+    *((int*) output_buffer) = atom_length;
     output_buffer += sizeof(int);
 
-    // Write token backtrack.
-    *((int*) output_buffer) = token_backtrack;
+    // Write atom backtrack.
+    *((int*) output_buffer) = atom_backtrack;
     output_buffer += sizeof(int);
 
-    memcpy(output_buffer, token, token_length);
+    memcpy(output_buffer, atom, atom_length);
 
-    new_token = output_buffer;
-    output_buffer += token_length;
+    new_atom = output_buffer;
+    output_buffer += atom_length;
 
     // Swap character case.
     if (c >= 'a' && c <= 'z')
-      new_token[token_offset] -= 32;
+      new_atom[atom_offset] -= 32;
     else
-      new_token[token_offset] += 32;
+      new_atom[atom_offset] += 32;
 
-    if (token_offset + 1 < token_length)
+    if (atom_offset + 1 < atom_length)
       output_buffer = _yr_ac_gen_case_combinations(
-          new_token,
-          token_length,
-          token_offset + 1,
-          token_backtrack,
+          new_atom,
+          atom_length,
+          atom_offset + 1,
+          atom_backtrack,
           output_buffer);
   }
 
@@ -408,48 +411,48 @@ uint8_t* _yr_ac_gen_case_combinations(
 }
 
 //
-// _yr_ac_gen_hex_tokens
+// _yr_ac_gen_hex_atoms
 //
-// Generates token for a hex string. The token will be a substring of length
-// up to MAX_TOKEN, generally a prefix, but not necessarily. The token can
+// Generates atom for a hex string. The atom will be a substring of length
+// up to MAX_ATOM, generally a prefix, but not necessarily. The atom can
 // also be extracted from the middle of the string when the prefix is not long
-// enough. The function will try to choose a token with as many distinct bytes
-// as posible, avoiding tokens like 00 00 00 00 which are too common.
+// enough. The function will try to choose an atom with as many distinct bytes
+// as posible, avoiding atoms like 00 00 00 00 which are too common.
 // For example, in the string
 //
 //    98 56 ?? ?? 00 00 00 00 34 EB 45 97 21
 //
-// the token would be 34 EB 45 97 (assuming MAX_TOKEN is 4) instead of 98 56,
+// the atom would be 34 EB 45 97 (assuming MAX_ATOM is 4) instead of 98 56,
 // which is shorter, or 00 00 00 00 which is more homogeneous.
 //
 
-uint8_t* _yr_ac_gen_hex_tokens(
+uint8_t* _yr_ac_gen_hex_atoms(
     STRING* string,
-    int max_token_length,
+    int max_atom_length,
     uint8_t* output_buffer)
 {
   int inside_or = 0;
-  int token_length = 0;
+  int atom_length = 0;
   int backtrack = 0;
   int unique_bytes = 0;
   int max_unique_bytes = 0;
-  int candidate_token_position = 0;
-  int candidate_token_length = 0;
-  int candidate_token_backtrack = 0;
+  int candidate_atom_position = 0;
+  int candidate_atom_length = 0;
+  int candidate_atom_backtrack = 0;
   int or_string_length = 0;
   int previous_or_string_length = 0;
   int string_position = 0;
   int i, j, unique;
 
   uint8_t* mask;
-  uint8_t last[MAX_TOKEN];
+  uint8_t last[MAX_ATOM];
 
   mask = string->mask;
 
   while (*mask != MASK_END)
   {
-    if (token_length == 0)
-      for (i = 0; i < max_token_length; i++)
+    if (atom_length == 0)
+      for (i = 0; i < max_atom_length; i++)
         last[i] = string->string[string_position];
 
     // We entered an OR operation like (01 | 02).
@@ -461,21 +464,21 @@ uint8_t* _yr_ac_gen_hex_tokens(
       inside_or = FALSE;
 
     // If non-wildcard byte and not inside an OR it could
-    // be used for the token.
+    // be used for the atom.
     if (*mask == 0xFF && !inside_or)
     {
-      token_length++;
-      token_length = min(token_length, max_token_length);
+      atom_length++;
+      atom_length = min(atom_length, max_atom_length);
 
-      last[string_position % max_token_length] = \
+      last[string_position % max_atom_length] = \
           string->string[string_position];
 
       unique_bytes = 1;
 
-      for (i = 0; i < max_token_length - 1; i++)
+      for (i = 0; i < max_atom_length - 1; i++)
       {
         unique = TRUE;
-        for (j = i + 1; j < max_token_length; j++)
+        for (j = i + 1; j < max_atom_length; j++)
         {
           if (last[i] == last[j])
           {
@@ -488,21 +491,21 @@ uint8_t* _yr_ac_gen_hex_tokens(
       }
 
       if (unique_bytes > max_unique_bytes ||
-          token_length > candidate_token_length)
+          atom_length > candidate_atom_length)
       {
         max_unique_bytes = unique_bytes;
-        candidate_token_position = string_position - token_length + 1;
-        candidate_token_backtrack = backtrack - token_length + 1;
-        candidate_token_length = token_length;
+        candidate_atom_position = string_position - atom_length + 1;
+        candidate_atom_backtrack = backtrack - atom_length + 1;
+        candidate_atom_length = atom_length;
 
-        if (candidate_token_length == max_token_length &&
-            max_unique_bytes == max_token_length)
+        if (candidate_atom_length == max_atom_length &&
+            max_unique_bytes == max_atom_length)
           break;
       }
     }
     else
     {
-      token_length = 0;
+      atom_length = 0;
     }
 
     if (*mask != MASK_OR &&
@@ -536,7 +539,7 @@ uint8_t* _yr_ac_gen_hex_tokens(
       // alternatives of different size like: (01 | 02 03)
       // instead of (01 | 02). In those cases the backtrack
       // value would be different for each alternative, so
-      // we don't want any token past the OR.
+      // we don't want any atom past the OR.
       if (or_string_length != previous_or_string_length)
         break;
 
@@ -552,46 +555,46 @@ uint8_t* _yr_ac_gen_hex_tokens(
     mask++;
   }
 
-  *((int*) output_buffer) = candidate_token_length;
+  *((int*) output_buffer) = candidate_atom_length;
   output_buffer += sizeof(int);
 
-  *((int*) output_buffer) = candidate_token_backtrack;
+  *((int*) output_buffer) = candidate_atom_backtrack;
   output_buffer += sizeof(int);
 
   memcpy(
       output_buffer,
-      string->string + candidate_token_position,
-      candidate_token_length);
+      string->string + candidate_atom_position,
+      candidate_atom_length);
 
-  output_buffer += candidate_token_length;
+  output_buffer += candidate_atom_length;
 
   return output_buffer;
 }
 
 //
-// _yr_ac_gen_regexp_tokens
+// _yr_ac_gen_regexp_atoms
 //
-// Generates tokens for a regular expression.
+// Generates atoms for a regular expression.
 //
 
-uint8_t* _yr_ac_gen_regexp_tokens(
+uint8_t* _yr_ac_gen_regexp_atoms(
     STRING* string,
-    int max_token_length,
+    int max_atom_length,
     uint8_t* output_buffer)
 {
-  uint8_t token[MAX_TOKEN];
+  uint8_t atom[MAX_ATOM];
   uint8_t first_bytes[256];
   uint8_t current;
   uint8_t next;
 
   int first_bytes_count;
-  int token_length = 0;
+  int atom_length = 0;
   int i = 0;
 
   if (string->string[0] == '^')
     i++;
 
-  while (i < string->length && token_length < max_token_length)
+  while (i < string->length && atom_length < max_atom_length)
   {
     current = string->string[i];
 
@@ -602,20 +605,20 @@ uint8_t* _yr_ac_gen_regexp_tokens(
 
     if (current == '\\' && isregexescapable[next])
     {
-      token[token_length] = next;
-      token_length++;
+      atom[atom_length] = next;
+      atom_length++;
       i += 2;
     }
     else if (isregexhashable[current] &&
              next != '*' && next != '{' && next != '?')
     {
-      // Add current character to the token if it's hashable and the next one
+      // Add current character to the atom if it's hashable and the next one
       // is not a quantifier. Quantifiers can make the character optional like
       // in abc*, abc{0,N}, abc?. In all this regexps the 'c' is not required
       // to appear in a matching string.
 
-      token[token_length] = current;
-      token_length++;
+      atom[atom_length] = current;
+      atom_length++;
       i++;
     }
     else
@@ -624,21 +627,21 @@ uint8_t* _yr_ac_gen_regexp_tokens(
     }
   }
 
-  if (token_length > 0)
+  if (atom_length > 0)
   {
-    *((int*) output_buffer) = token_length;
+    *((int*) output_buffer) = atom_length;
     output_buffer += sizeof(int);
 
     *((int*) output_buffer) = 0;
     output_buffer += sizeof(int);
 
-    memcpy(output_buffer, token, token_length);
-    output_buffer += token_length;
+    memcpy(output_buffer, atom, atom_length);
+    output_buffer += atom_length;
 
     if (STRING_IS_NO_CASE(string))
       output_buffer = _yr_ac_gen_case_combinations(
-          token,
-          token_length,
+          atom,
+          atom_length,
           0,
           0,
           output_buffer);
@@ -649,7 +652,7 @@ uint8_t* _yr_ac_gen_regexp_tokens(
 
     for (i = 0; i < first_bytes_count; i++)
     {
-      // Write token length.
+      // Write atom length.
       *((int*) output_buffer) = 1;
       output_buffer += sizeof(int);
 
@@ -667,46 +670,46 @@ uint8_t* _yr_ac_gen_regexp_tokens(
 
 
 //
-// _yr_ac_gen_tokens
+// _yr_ac_gen_atoms
 //
-// Returns the tokens to be added to the Aho-Corasick automaton for
-// a given YARA string. Length of tokens is limited by max_token_lengh.
+// Returns the atoms to be added to the Aho-Corasick automaton for
+// a given YARA string. Length of atoms is limited by max_atom_lengh.
 // Tokens are written to the output buffer in the same format used by
 // _yr_ac_gen_case_combinations.
 //
 
-void _yr_ac_gen_tokens(
+void _yr_ac_gen_atoms(
     STRING* string,
-    int max_token_length,
+    int max_atom_length,
     uint8_t* output_buffer)
 {
   int i, j;
-  int token_length;
+  int atom_length;
   void* str;
 
 
   if (STRING_IS_HEX(string))
   {
-    output_buffer = _yr_ac_gen_hex_tokens(
+    output_buffer = _yr_ac_gen_hex_atoms(
         string,
-        max_token_length,
+        max_atom_length,
         output_buffer);
   }
   else if (STRING_IS_REGEXP(string))
   {
-    output_buffer = _yr_ac_gen_regexp_tokens(
+    output_buffer = _yr_ac_gen_regexp_atoms(
         string,
-        max_token_length,
+        max_atom_length,
         output_buffer);
   }
   else // text string
   {
     if (STRING_IS_ASCII(string))
     {
-      token_length = min(string->length, max_token_length);
+      atom_length = min(string->length, max_atom_length);
 
-      // Write token length.
-      *((int*) output_buffer) = token_length;
+      // Write atom length.
+      *((int*) output_buffer) = atom_length;
       output_buffer += sizeof(int);
 
       // Write backtrack value.
@@ -715,14 +718,14 @@ void _yr_ac_gen_tokens(
 
       str = output_buffer;
 
-      memcpy(output_buffer, string->string, token_length);
-      output_buffer += token_length;
+      memcpy(output_buffer, string->string, atom_length);
+      output_buffer += atom_length;
 
       if (STRING_IS_NO_CASE(string))
       {
         output_buffer = _yr_ac_gen_case_combinations(
             str,
-            token_length,
+            atom_length,
             0,
             0,
             output_buffer);
@@ -731,10 +734,10 @@ void _yr_ac_gen_tokens(
 
     if (STRING_IS_WIDE(string))
     {
-      token_length = min(string->length * 2, max_token_length);
+      atom_length = min(string->length * 2, max_atom_length);
 
-      // Write token length.
-      *((int*) output_buffer) = token_length;
+      // Write atom length.
+      *((int*) output_buffer) = atom_length;
       output_buffer += sizeof(int);
 
       // Write backtrack value.
@@ -744,7 +747,7 @@ void _yr_ac_gen_tokens(
       str = output_buffer;
       i = j = 0;
 
-      while(i < token_length)
+      while(i < atom_length)
       {
         if (i % 2 == 0)
           *(((uint8_t*) output_buffer)++) = string->string[j++];
@@ -757,7 +760,7 @@ void _yr_ac_gen_tokens(
       {
         output_buffer = _yr_ac_gen_case_combinations(
             str,
-            token_length,
+            atom_length,
             0,
             0,
             output_buffer);
@@ -941,46 +944,46 @@ int yr_ac_add_string(
     ARENA* arena,
     AC_AUTOMATON* automaton,
     STRING* string,
-    int* min_token_length)
+    int* min_atom_length)
 {
   int result;
-  int token_length;
-  int token_backtrack;
+  int atom_length;
+  int atom_backtrack;
   int i;
 
   AC_STATE* state;
   AC_STATE* next_state;
   AC_MATCH* new_match;
 
-  uint8_t* tokens;
-  uint8_t* tokens_cursor;
+  uint8_t* atoms;
+  uint8_t* atoms_cursor;
 
-  // Reserve memory to hold tokens for the string. We reserve enough memory
+  // Reserve memory to hold atoms for the string. We reserve enough memory
   // for the worst case which is a "ascii wide nocase" text string.
 
-  tokens = yr_malloc(
-      2 * (1 << MAX_TOKEN) * (2 * sizeof(int) + MAX_TOKEN) + sizeof(int));
+  atoms = yr_malloc(
+      2 * (1 << MAX_ATOM) * (2 * sizeof(int) + MAX_ATOM) + sizeof(int));
 
-  if (tokens == NULL)
+  if (atoms == NULL)
     return ERROR_INSUFICIENT_MEMORY;
 
-  tokens_cursor = tokens;
+  atoms_cursor = atoms;
 
-  // Generate all posible tokens for the string. These tokens are substrings up
-  // to MAX_TOKEN bytes length, which are generally a prefix of the strings,
-  // but not necessarily. For hex strings token can be extracted from the middle
-  // of the string. This tokens are added to the Aho-Corasick automaton.
+  // Generate all posible atoms for the string. These atoms are substrings up
+  // to MAX_ATOM bytes length, which are generally a prefix of the strings,
+  // but not necessarily. For hex strings atom can be extracted from the middle
+  // of the string. This atoms are added to the Aho-Corasick automaton.
 
-  _yr_ac_gen_tokens(string, MAX_TOKEN, tokens);
+  _yr_ac_gen_atoms(string, MAX_ATOM, atoms);
 
-  token_length = *((int*) tokens_cursor);
-  tokens_cursor += sizeof(int);
+  atom_length = *((int*) atoms_cursor);
+  atoms_cursor += sizeof(int);
 
-  if (token_length == 0)
+  if (atom_length == 0)
   {
-    *min_token_length = 0;
+    *min_atom_length = 0;
 
-    // No token could be extracted from the string, put the string in the
+    // No atom could be extracted from the string, put the string in the
     // automaton's root state. This is far from ideal, because the string will
     // be tried at every data offset during scanning.
 
@@ -1002,46 +1005,46 @@ int yr_ac_add_string(
   }
   else
   {
-    // For each token create the states in the automaton.
+    // For each atom create the states in the automaton.
 
-    *min_token_length = MAX_TOKEN;
+    *min_atom_length = MAX_ATOM;
 
-    while (token_length != 0)
+    while (atom_length != 0)
     {
-      if (token_length < *min_token_length)
-        *min_token_length = token_length;
+      if (atom_length < *min_atom_length)
+        *min_atom_length = atom_length;
 
       state = automaton->root;
 
-      token_backtrack = *((int*) tokens_cursor);
-      tokens_cursor += sizeof(int);
+      atom_backtrack = *((int*) atoms_cursor);
+      atoms_cursor += sizeof(int);
 
-      for(i = 0; i < token_length; i++)
+      for(i = 0; i < atom_length; i++)
       {
         next_state = yr_ac_next_state(
             state,
-            *tokens_cursor);
+            *atoms_cursor);
 
         if (next_state == NULL)
         {
           next_state = _yr_ac_create_state(
               arena,
               state,
-              *tokens_cursor);
+              *atoms_cursor);
 
           if (next_state == NULL)
           {
-            yr_free(tokens);
+            yr_free(atoms);
             return ERROR_INSUFICIENT_MEMORY;
           }
         }
 
         state = next_state;
-        tokens_cursor++;
+        atoms_cursor++;
       }
 
-      token_length = *((int*) tokens_cursor);
-      tokens_cursor += sizeof(int);
+      atom_length = *((int*) atoms_cursor);
+      atoms_cursor += sizeof(int);
 
       result = yr_arena_allocate_struct(
           arena,
@@ -1053,7 +1056,7 @@ int yr_ac_add_string(
 
       if (result == ERROR_SUCCESS)
       {
-        new_match->backtrack = state->depth + token_backtrack;
+        new_match->backtrack = state->depth + atom_backtrack;
         new_match->string = string;
         new_match->next = state->matches;
         state->matches = new_match;
@@ -1065,7 +1068,7 @@ int yr_ac_add_string(
     }
   }
 
-  yr_free(tokens);
+  yr_free(atoms);
 
   return result;
 }

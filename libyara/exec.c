@@ -101,69 +101,56 @@ int yr_execute_code(
         r1 = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         push(r1);
-        //printf("PUSH: %p\n", r1);
         break;
 
       case PUSH_A:
         push(rA);
-        //printf("PUSH_A: %p\n", rA);
         break;
 
       case POP_A:
         pop(rA);
-        //printf("POP_A: %p\n", rA);
         break;
 
       case PUSH_B:
         push(rB);
-        //printf("PUSH_B: %p\n", rB);
         break;
 
       case POP_B:
         pop(rB);
-        //printf("POP_B: %p\n", rB);
         break;
 
       case PUSH_C:
         push(rC);
-        //printf("PUSH_C: %p\n", rC);
         break;
 
       case POP_C:
         pop(rC);
-        //printf("POP_C: %p\n", rC);
         break;
 
       case CLEAR_B:
-        //printf("CLEAR_B\n");
         rB = 0;
         break;
 
       case CLEAR_C:
-        //printf("CLEAR_C\n");
         rC = 0;
         break;
 
       case INCR_A:
         pop(r1);
         rA += r1;
-        //printf("INCR_A A:%d\n", rA);
         break;
 
       case INCR_B:
         pop(r1);
         rB += r1;
-        //printf("INCR_B B:%d\n", rB);
         break;
 
       case INCR_C:
         pop(r1);
         rC += r1;
-        //printf("INCR_C C:%d\n", rC);
         break;
 
       case JLE_A_B:
-        //printf("JLE_A_B A:%d  B:%d\n", rA, rB);
         if (rA <= rB)
         {
           ip = *(uint8_t**)(ip + 1);
@@ -192,7 +179,6 @@ int yr_execute_code(
         break;
 
       case PNUNDEF_A_B:
-        //printf("PNUNDEF_A_B  %p\n", rA != UNDEFINED ? rA : rB);
         if (rA != UNDEFINED)
           push(rA);
         else
@@ -203,14 +189,12 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
         push(r1 & r2);
-        //printf("AND %p %p\n", r1, r2);
         break;
 
       case OR:
         pop(r2);
         pop(r1);
         push(r1 | r2);
-        //printf("OR %p %p\n", r1, r2);
         break;
 
       case NOT:
@@ -222,21 +206,18 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
         push(comparison(<, r1, r2));
-        //printf("LT %p %p\n", r1, r2);
         break;
 
       case GT:
         pop(r2);
         pop(r1);
         push(comparison(>, r1, r2));
-        //printf("GT %p %p\n", r1, r2);
         break;
 
       case LE:
         pop(r2);
         pop(r1);
         push(comparison(<=, r1, r2));
-        //printf("LE %p %p\n", r1, r2);
         break;
 
       case GE:
@@ -255,21 +236,18 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
         push(comparison(!=, r1, r2));
-        //printf("NEQ %p %p %p\n", r1, r2, comparison(!=, r1, r2));
         break;
 
       case ADD:
         pop(r2);
         pop(r1);
         push(operation(+, r1, r2));
-        //printf("ADD %p %p %p\n", r1, r2, operation(+, r1, r2));
         break;
 
       case SUB:
         pop(r2);
         pop(r1);
         push(operation(-, r1, r2));
-        //printf("SUB %p %p %p\n", r1, r2, operation(-, r1, r2));
         break;
 
       case MUL:
@@ -317,7 +295,6 @@ int yr_execute_code(
         rule = *(RULE**)(ip + 1);
         ip += sizeof(uint64_t);
         push(rule->flags & RULE_FLAGS_MATCH ? 1 : 0);
-        //printf("RULE_PUSH %s %d\n", rule->identifier, rule->flags | RULE_FLAGS_MATCH ? 1 : 0);
         break;
 
       case RULE_POP:
@@ -326,7 +303,6 @@ int yr_execute_code(
         ip += sizeof(uint64_t);
         if (r1)
           rule->flags |= RULE_FLAGS_MATCH;
-        //printf("RULE_POP %s %d\n", rule->identifier, r1);
         break;
 
       case EXT_INT:
@@ -355,7 +331,6 @@ int yr_execute_code(
         pop(r1);
         string = UINT64_TO_PTR(STRING*, r1);
         push(string->flags & STRING_FLAGS_FOUND ? 1 : 0);
-        //printf("SFOUND %s %d\n", string->identifier, string->flags & STRING_FLAGS_FOUND? 1 : 0);
         break;
 
       case SFOUND_AT:
@@ -457,15 +432,12 @@ int yr_execute_code(
         i = 1;
         found = 0;
 
-        //printf("SOFFSET %s[%d] ", string->identifier, r1);
-
         while (match != NULL)
         {
           if (r1 >= i &&
               r1 <= i + match->last_offset - match->first_offset)
           {
             push(match->first_offset + r1 - i);
-            //printf("%d", match->first_offset + r1 - i);
             found = 1;
           }
 
@@ -476,14 +448,13 @@ int yr_execute_code(
         if (!found)
           push(UNDEFINED);
 
-        //printf("\n");
-
         break;
 
       case OF:
         found = 0;
         count = 0;
         pop(r1);
+
         while (r1 != UNDEFINED)
         {
           string = UINT64_TO_PTR(STRING*, r1);
@@ -492,11 +463,14 @@ int yr_execute_code(
           count++;
           pop(r1);
         }
+
         pop(r2);
+
         if (r2 != UNDEFINED)
           push(found >= r2 ? 1 : 0);
         else
           push(found >= count ? 1 : 0);
+
         break;
 
       case SIZE:
@@ -540,7 +514,8 @@ int yr_execute_code(
       case CONTAINS:
         pop(r2);
         pop(r1);
-        push(strstr(UINT64_TO_PTR(char*, r1), UINT64_TO_PTR(char*, r2)) != NULL);
+        push(strstr(UINT64_TO_PTR(char*, r1),
+                    UINT64_TO_PTR(char*, r2)) != NULL);
         break;
 
       case MATCHES:
