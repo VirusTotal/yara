@@ -151,36 +151,38 @@ int _yr_ac_queue_is_empty(
 }
 
 
-AC_STATE* _yr_ac_next_child(
+AC_STATE* _yr_ac_next_transition(
   AC_STATE* state,
-  int64_t* iterator)
+  AC_STATE_TRANSITION* transition)
 {
   int i;
   AC_TABLE_BASED_STATE* table_based_state;
   AC_LIST_BASED_STATE* list_based_state;
-  AC_STATE_TRANSITION* transition;
+  AC_STATE_TRANSITION* next_transition;
 
   if (state->depth <= MAX_TABLE_BASED_STATES_DEPTH)
   {
-    for (i = (int) *iterator; i < 256; i++)
-    {
-      table_based_state = (AC_TABLE_BASED_STATE*) state;
+    table_based_state = (AC_TABLE_BASED_STATE*) state;
 
+    for (i = transition->input + 1; i < 256; i++)
+    {
       if (table_based_state->transitions[i].state != NULL)
       {
-        *iterator = i + 1;
-        return table_based_state->transitions[i].state;
+        transition->state = table_based_state->transitions[i].state;
+        transition->input = i;
+        transition->next = NULL;
+        return transition->state;
       }
     }
   }
   else
   {
-    transition = (AC_STATE_TRANSITION*) *iterator;
-
     if (transition->next != NULL)
     {
-      *iterator = (int64_t) transition->next;
-      return transition->next->state;
+      transition->state = transition->next->state;
+      transition->input = transition->next->input;
+      transition->next = transition->next->next;
+      return transition->state;
     }
   }
 
@@ -188,16 +190,29 @@ AC_STATE* _yr_ac_next_child(
 }
 
 
-AC_STATE* _yr_ac_first_child(
+AC_STATE* _yr_ac_first_transition(
   AC_STATE* state,
-  int64_t* iterator)
+  AC_STATE_TRANSITION* transition)
 {
+  int i;
+
   AC_LIST_BASED_STATE* list_based_state;
+  AC_TABLE_BASED_STATE* table_based_state;
 
   if (state->depth <= MAX_TABLE_BASED_STATES_DEPTH)
   {
-    *iterator = 0;
-    return _yr_ac_next_child(state, iterator);
+    table_based_state = (AC_TABLE_BASED_STATE*) state;
+
+    for (i = 0; i < 256; i++)
+    {
+      if (table_based_state->transitions[i].state != NULL)
+      {
+        transition->state = table_based_state->transitions[i].state;
+        transition->input = i;
+        transition->next = NULL;
+        return transition->state;
+      }
+    }
   }
   else
   {
@@ -205,8 +220,10 @@ AC_STATE* _yr_ac_first_child(
 
     if (list_based_state->transitions != NULL)
     {
-      *iterator = (int64_t) list_based_state->transitions;
-      return list_based_state->transitions->state;
+      transition->state = list_based_state->transitions->state;
+      transition->input = list_based_state->transitions->input;
+      transition->next = list_based_state->transitions->next;
+      return transition->state;
     }
   }
 
@@ -788,9 +805,7 @@ void yr_ac_create_failure_links(
     ARENA* arena,
     AC_AUTOMATON* automaton)
 {
-  int i;
-
-  int64_t iterator;
+  AC_STATE_TRANSITION transition;
 
   AC_STATE* current_state;
   AC_STATE* failure_state;
@@ -812,19 +827,19 @@ void yr_ac_create_failure_links(
 
   // Push root's children and set their failure link to root.
 
-  state = _yr_ac_first_child(root_state, &iterator);
+  state = _yr_ac_first_transition(root_state, &transition);
 
   while (state != NULL)
   {
     _yr_ac_queue_push(&queue, state);
     state->failure = root_state;
-    state = _yr_ac_next_child(root_state, &iterator);
+    state = _yr_ac_next_transition(root_state, &transition);
   }
 
   // Traverse the trie in BFS order calculating the failure link
   // for each state.
 
-  while(!_yr_ac_queue_is_empty(&queue))
+  while (!_yr_ac_queue_is_empty(&queue))
   {
     current_state = _yr_ac_queue_pop(&queue);
 
@@ -843,7 +858,9 @@ void yr_ac_create_failure_links(
       current_state->matches = root_state->matches;
     }
 
-    transition_state = _yr_ac_first_child(current_state, &iterator);
+    transition_state = _yr_ac_first_transition(
+        current_state,
+        &transition);
 
     while (transition_state != NULL)
     {
@@ -852,7 +869,9 @@ void yr_ac_create_failure_links(
 
       while (1)
       {
-        temp_state = yr_ac_next_state(failure_state, i);
+        temp_state = yr_ac_next_state(
+            failure_state,
+            transition.input);
 
         if (temp_state != NULL)
         {
@@ -888,7 +907,9 @@ void yr_ac_create_failure_links(
         }
       } // while(1)
 
-      transition_state = _yr_ac_next_child(current_state, &iterator);
+      transition_state = _yr_ac_next_transition(
+          current_state,
+          &transition);
     }
 
   } // while(!__yr_ac_queue_is_empty(&queue))
@@ -1093,10 +1114,10 @@ void _yr_ac_print_automaton_state(
 {
   int i;
   char* identifier;
-  int64_t iterator;
   STRING* string;
   AC_MATCH* match;
   AC_STATE* child_state;
+  AC_STATE_TRANSITION transition;
 
   for (i = 0; i < state->depth; i++)
     printf(" ");
@@ -1113,12 +1134,12 @@ void _yr_ac_print_automaton_state(
 
   printf("\n");
 
-  child_state = _yr_ac_first_child(state, &iterator);
+  child_state = _yr_ac_first_transition(state, &transition);
 
   while(child_state != NULL)
   {
     _yr_ac_print_automaton_state(child_state);
-    child_state = _yr_ac_next_child(state, &iterator);
+    child_state = _yr_ac_next_transition(state, &transition);
   }
 }
 
