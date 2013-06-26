@@ -121,6 +121,17 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = "abc" fullword condition: $a }',
         ], "---- abc ---- A\x00B\x00C\x00 ---- xyz")
 
+        self.assertTrueRules([
+            'rule test {\
+                strings:\
+                    $a = "abcdef"\
+                    $b = "cdef"\
+                    $c = "ef"\
+                condition:\
+                    all of them\
+             }'
+        ], 'abcdef')
+
     def testWildcardStrings(self):
 
         self.assertTrueRules([
