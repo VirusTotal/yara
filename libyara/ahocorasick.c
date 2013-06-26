@@ -35,6 +35,10 @@ limitations under the License.
 #define min(x, y) ((x < y) ? (x) : (y))
 #endif
 
+#ifndef max
+#define max(x, y) ((x > y) ? (x) : (y))
+#endif
+
 typedef struct _QUEUE_NODE
 {
   AC_STATE* value;
@@ -958,11 +962,14 @@ int yr_ac_add_string(
   uint8_t* atoms;
   uint8_t* atoms_cursor;
 
-  // Reserve memory to hold atoms for the string. We reserve enough memory
-  // for the worst case which is a "ascii wide nocase" text string.
+  // Reserve memory to hold atoms for the string. We reserve a minimun of
+  // 4KB which is enough for storing single-character atoms from regular
+  // expressions obtained by calling yr_regex_get_first_bytes, and for
+  // storing worst case strings (ascii wide nocase) for MAX_ATOM up to 7.
+  // If MAX_ATOM is greater than 7 we reserve more memory as required.
 
   atoms = yr_malloc(
-      2 * (1 << MAX_ATOM) * (2 * sizeof(int) + MAX_ATOM) + sizeof(int));
+      max(2 * (1 << MAX_ATOM) * (2 * sizeof(int) + MAX_ATOM), 4096));
 
   if (atoms == NULL)
     return ERROR_INSUFICIENT_MEMORY;
