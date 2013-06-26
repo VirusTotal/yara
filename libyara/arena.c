@@ -115,8 +115,8 @@ ARENA_PAGE* _yr_arena_page_for_address(
 
   while (page != NULL)
   {
-    if (address >= page->address &&
-        address < page->address + page->used)
+    if ((uint8_t*) address >= page->address &&
+        (uint8_t*) address < page->address + page->used)
       return page;
     page = page->next;
   }

@@ -25,6 +25,7 @@ limitations under the License.
 
 
 #define MAX_TOKEN 4
+#define MAX_TABLE_BASED_STATES_DEPTH 1
 
 
 #ifndef min
@@ -143,8 +144,70 @@ int _yr_ac_queue_is_empty(
 }
 
 
+AC_STATE* _yr_ac_next_child(
+  AC_STATE* state,
+  int64_t* iterator)
+{
+  int i;
+  AC_TABLE_BASED_STATE* table_based_state;
+  AC_LIST_BASED_STATE* list_based_state;
+  AC_STATE_TRANSITION* transition;
+
+  if (state->depth <= MAX_TABLE_BASED_STATES_DEPTH)
+  {
+    for (i = (int) *iterator; i < 256; i++)
+    {
+      table_based_state = (AC_TABLE_BASED_STATE*) state;
+
+      if (table_based_state->transitions[i].state != NULL)
+      {
+        *iterator = i + 1;
+        return table_based_state->transitions[i].state;
+      }
+    }
+  }
+  else
+  {
+    transition = (AC_STATE_TRANSITION*) *iterator;
+
+    if (transition->next != NULL)
+    {
+      *iterator = (int64_t) transition->next;
+      return transition->next->state;
+    }
+  }
+
+  return NULL;
+}
+
+
+AC_STATE* _yr_ac_first_child(
+  AC_STATE* state,
+  int64_t* iterator)
+{
+  AC_LIST_BASED_STATE* list_based_state;
+
+  if (state->depth <= MAX_TABLE_BASED_STATES_DEPTH)
+  {
+    *iterator = 0;
+    return _yr_ac_next_child(state, iterator);
+  }
+  else
+  {
+    list_based_state = (AC_LIST_BASED_STATE*) state;
+
+    if (list_based_state->transitions != NULL)
+    {
+      *iterator = (int64_t) list_based_state->transitions;
+      return list_based_state->transitions->state;
+    }
+  }
+
+  return NULL;
+}
+
 //
-// _yr_ac_next_state
+// yr_ac_next_state
 //
 // Given an automaton state and an input symbol, returns the new state
 // after reading the input symbol.
@@ -157,11 +220,30 @@ int _yr_ac_queue_is_empty(
 //   Pointer to the next automaton state.
 //
 
-AC_STATE* _yr_ac_next_state(
+inline AC_STATE* yr_ac_next_state(
     AC_STATE* state,
     uint8_t input)
 {
-  return state->transitions[input].state;
+  AC_STATE_TRANSITION* transition;
+
+  if (state->depth <= MAX_TABLE_BASED_STATES_DEPTH)
+  {
+    return ((AC_TABLE_BASED_STATE*) state)->transitions[input].state;
+  }
+  else
+  {
+    transition = ((AC_LIST_BASED_STATE*) state)->transitions;
+
+    while (transition != NULL)
+    {
+      if (transition->input == input)
+        return transition->state;
+
+      transition = transition->next;
+    }
+
+    return NULL;
+  }
 }
 
 
@@ -187,33 +269,71 @@ AC_STATE* _yr_ac_create_state(
 {
   int result;
   AC_STATE* new_state;
+  AC_LIST_BASED_STATE* list_based_state;
+  AC_TABLE_BASED_STATE* table_based_state;
+  AC_STATE_TRANSITION* new_transition;
 
-  result = yr_arena_allocate_struct(
-      arena,
-      sizeof(AC_STATE),
-      (void**) &new_state,
-      offsetof(AC_STATE, failure),
-      offsetof(AC_STATE, matches),
-      EOL);
+  if (state->depth < MAX_TABLE_BASED_STATES_DEPTH)
+  {
+    result = yr_arena_allocate_struct(
+        arena,
+        sizeof(AC_TABLE_BASED_STATE),
+        (void**) &new_state,
+        offsetof(AC_TABLE_BASED_STATE, failure),
+        offsetof(AC_TABLE_BASED_STATE, matches),
+        EOL);
+  }
+  else
+  {
+    result = yr_arena_allocate_struct(
+        arena,
+        sizeof(AC_LIST_BASED_STATE),
+        (void**) &new_state,
+        offsetof(AC_LIST_BASED_STATE, failure),
+        offsetof(AC_LIST_BASED_STATE, matches),
+        offsetof(AC_LIST_BASED_STATE, transitions),
+        EOL);
+  }
 
   if (result != ERROR_SUCCESS)
     return NULL;
 
-  result = yr_arena_make_relocatable(
-      arena,
-      state,
-      offsetof(AC_STATE, transitions[input]),
-      EOL);
+  if (state->depth <= MAX_TABLE_BASED_STATES_DEPTH)
+  {
+    result = yr_arena_make_relocatable(
+        arena,
+        state,
+        offsetof(AC_TABLE_BASED_STATE, transitions[input]),
+        EOL);
 
-  if (result != ERROR_SUCCESS)
-    return NULL;
+    if (result != ERROR_SUCCESS)
+      return NULL;
 
-  state->transitions[input].state = new_state;
+    table_based_state = (AC_TABLE_BASED_STATE*) state;
+    table_based_state->transitions[input].state = new_state;
+  }
+  else
+  {
+    result = yr_arena_allocate_struct(
+        arena,
+        sizeof(AC_STATE_TRANSITION),
+        (void**) &new_transition,
+        offsetof(AC_STATE_TRANSITION, state),
+        offsetof(AC_STATE_TRANSITION, next),
+        EOL);
+
+    if (result != ERROR_SUCCESS)
+      return NULL;
+
+    list_based_state = (AC_LIST_BASED_STATE*) state;
+
+    new_transition->input = input;
+    new_transition->state = new_state;
+    new_transition->next = list_based_state->transitions;
+    list_based_state->transitions = new_transition;
+  }
 
   new_state->depth = state->depth + 1;
-  new_state->matches = NULL;
-
-  memset(new_state->transitions, 0, sizeof(new_state->transitions));
 
   return new_state;
 }
@@ -596,7 +716,7 @@ void _yr_ac_gen_tokens(
       str = output_buffer;
 
       memcpy(output_buffer, string->string, token_length);
-      ((uint8_t*) output_buffer) += token_length;
+      output_buffer += token_length;
 
       if (STRING_IS_NO_CASE(string))
       {
@@ -663,6 +783,8 @@ void yr_ac_create_failure_links(
 {
   int i;
 
+  int64_t iterator;
+
   AC_STATE* current_state;
   AC_STATE* failure_state;
   AC_STATE* temp_state;
@@ -683,13 +805,13 @@ void yr_ac_create_failure_links(
 
   // Push root's children and set their failure link to root.
 
-  for (i = 0; i < 256; i++)
+  state = _yr_ac_first_child(root_state, &iterator);
+
+  while (state != NULL)
   {
-    if (root_state->transitions[i].state != NULL)
-    {
-      _yr_ac_queue_push(&queue, root_state->transitions[i].state);
-      root_state->transitions[i].state->failure = root_state;
-    }
+    _yr_ac_queue_push(&queue, state);
+    state->failure = root_state;
+    state = _yr_ac_next_child(root_state, &iterator);
   }
 
   // Traverse the trie in BFS order calculating the failure link
@@ -714,19 +836,16 @@ void yr_ac_create_failure_links(
       current_state->matches = root_state->matches;
     }
 
-    for (i = 0; i < 256; i++)
+    transition_state = _yr_ac_first_child(current_state, &iterator);
+
+    while (transition_state != NULL)
     {
-      transition_state = current_state->transitions[i].state;
-
-      if (transition_state == NULL)
-        continue;
-
       _yr_ac_queue_push(&queue, transition_state);
       failure_state = current_state->failure;
 
       while (1)
       {
-        temp_state = _yr_ac_next_state(failure_state, i);
+        temp_state = yr_ac_next_state(failure_state, i);
 
         if (temp_state != NULL)
         {
@@ -761,7 +880,10 @@ void yr_ac_create_failure_links(
           }
         }
       } // while(1)
+
+      transition_state = _yr_ac_next_child(current_state, &iterator);
     }
+
   } // while(!__yr_ac_queue_is_empty(&queue))
 }
 
@@ -791,10 +913,10 @@ int yr_ac_create_automaton(
 
   result = yr_arena_allocate_struct(
       arena,
-      sizeof(AC_STATE),
+      sizeof(AC_TABLE_BASED_STATE),
       (void**) &root_state,
-      offsetof(AC_STATE, failure),
-      offsetof(AC_STATE, matches),
+      offsetof(AC_TABLE_BASED_STATE, failure),
+      offsetof(AC_TABLE_BASED_STATE, matches),
       EOL);
 
   if (result != ERROR_SUCCESS)
@@ -804,8 +926,6 @@ int yr_ac_create_automaton(
 
   root_state->depth = 0;
   root_state->matches = NULL;
-
-  memset(root_state->transitions, 0, sizeof(root_state->transitions));
 
   return result;
 }
@@ -820,7 +940,8 @@ int yr_ac_create_automaton(
 int yr_ac_add_string(
     ARENA* arena,
     AC_AUTOMATON* automaton,
-    STRING* string)
+    STRING* string,
+    int* min_token_length)
 {
   int result;
   int token_length;
@@ -838,7 +959,7 @@ int yr_ac_add_string(
   // for the worst case which is a "ascii wide nocase" text string.
 
   tokens = yr_malloc(
-      2 * MAX_TOKEN * MAX_TOKEN * (2 * sizeof(int) + MAX_TOKEN) + sizeof(int));
+      2 * (1 << MAX_TOKEN) * (2 * sizeof(int) + MAX_TOKEN) + sizeof(int));
 
   if (tokens == NULL)
     return ERROR_INSUFICIENT_MEMORY;
@@ -857,6 +978,8 @@ int yr_ac_add_string(
 
   if (token_length == 0)
   {
+    *min_token_length = 0;
+
     // No token could be extracted from the string, put the string in the
     // automaton's root state. This is far from ideal, because the string will
     // be tried at every data offset during scanning.
@@ -881,31 +1004,21 @@ int yr_ac_add_string(
   {
     // For each token create the states in the automaton.
 
+    *min_token_length = MAX_TOKEN;
+
     while (token_length != 0)
     {
+      if (token_length < *min_token_length)
+        *min_token_length = token_length;
+
       state = automaton->root;
 
       token_backtrack = *((int*) tokens_cursor);
       tokens_cursor += sizeof(int);
 
-      /*if (token_length < 2)
-      {
-        printf("%s\n", string->string);
-        printf("%s\n", string->identifier);
-        for (i = 0; i < token_length; i++)
-          printf("%02X", *(tokens_cursor + i));
-
-        printf("\n");
-
-        tokens_cursor += token_length;
-          token_length = *((int*) tokens_cursor);
-        tokens_cursor += sizeof(int);
-        continue;
-      }*/
-
       for(i = 0; i < token_length; i++)
       {
-        next_state = _yr_ac_next_state(
+        next_state = yr_ac_next_state(
             state,
             *tokens_cursor);
 
@@ -970,8 +1083,10 @@ void _yr_ac_print_automaton_state(
 {
   int i;
   char* identifier;
+  int64_t iterator;
   STRING* string;
   AC_MATCH* match;
+  AC_STATE* child_state;
 
   for (i = 0; i < state->depth; i++)
     printf(" ");
@@ -988,10 +1103,12 @@ void _yr_ac_print_automaton_state(
 
   printf("\n");
 
-  for (i = 0; i < 256; i++)
+  child_state = _yr_ac_first_child(state, &iterator);
+
+  while(child_state != NULL)
   {
-    if (state->transitions[i].state != NULL)
-      _yr_ac_print_automaton_state(state->transitions[i].state);
+    _yr_ac_print_automaton_state(child_state);
+    child_state = _yr_ac_next_child(state, &iterator);
   }
 }
 

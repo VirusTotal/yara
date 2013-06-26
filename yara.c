@@ -51,6 +51,7 @@ int show_specified_tags = FALSE;
 int show_specified_rules = FALSE;
 int show_strings = FALSE;
 int show_meta = FALSE;
+int fast_scan = FALSE;
 int negate = FALSE;
 int count = 0;
 int limit = 0;
@@ -94,28 +95,26 @@ TAG* specified_tags_list = NULL;
 IDENTIFIER* specified_rules_list = NULL;
 EXTERNAL* externals_list = NULL;
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////
+#define USAGE \
+"usage:  yara [OPTION]... RULES_FILE FILE | PID\n"\
+"options:\n"\
+"  -t <tag>                 only print rules tagged as <tag>.\n"\
+"  -i <identifier>          only print rules named <identifier>.\n"\
+"  -n                       only print not satisfied rules (negate).\n"\
+"  -g                       print tags.\n"\
+"  -m                       print metadata.\n"\
+"  -s                       print matching strings.\n"\
+"  -l <number>              abort scanning after matching <number> rules.\n"\
+"  -d <identifier>=<value>  define external variable.\n"\
+"  -r                       recursively search directories.\n"\
+"  -v                       show version information.\n"
 
 void show_help()
 {
-  printf("usage:  yara [OPTION]... RULES_FILE FILE | PID\n");
-  printf("options:\n");
-  printf("  -t <tag>                  print rules tagged as <tag> and ignore the rest. Can be used more than once.\n");
-  printf("  -i <identifier>           print rules named <identifier> and ignore the rest. Can be used more than once.\n");
-  printf("  -n                        print only not satisfied rules (negate).\n");
-  printf("  -g                        print tags.\n");
-  printf("  -m                        print metadata.\n");
-  printf("  -s                        print matching strings.\n");
-  printf("  -l <number>               abort scanning after a <number> of rules matched.\n");
-  printf("  -d <identifier>=<value>   define external variable.\n");
-  printf("  -r                        recursively search directories.\n");
-  printf("  -v                        show version information.\n");
+  printf(USAGE);
   printf("\nReport bugs to: <%s>\n", PACKAGE_BUGREPORT);
 }
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////
 
 int is_numeric(
     const char *str)
@@ -172,8 +171,12 @@ int scan_dir(
 
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
-        //printf("Processing %s...\n", FindFileData.cFileName);
-        result = yr_rules_scan_file(rules, full_path, callback, full_path);
+        result = yr_rules_scan_file(
+            rules,
+            full_path,
+            callback,
+            full_path,
+            TRUE);
       }
       else if (recursive && FindFileData.cFileName[0] != '.' )
       {
@@ -235,7 +238,12 @@ int scan_dir(
       {
         if(S_ISREG(st.st_mode))
         {
-          result = yr_rules_scan_file(rules, full_path, callback, full_path);
+          result = yr_rules_scan_file(
+              rules,
+              full_path,
+              callback,
+              full_path,
+              fast_scan);
         }
         else if(recursive && S_ISDIR(st.st_mode) && de->d_name[0] != '.')
         {
@@ -500,6 +508,10 @@ int process_cmd_line(
         show_strings = TRUE;
         break;
 
+      case 'f':
+        fast_scan = TRUE;
+        break;
+
       case 'n':
         negate = TRUE;
         break;
@@ -607,11 +619,15 @@ int process_cmd_line(
 }
 
 void report_error(
+    int error_level,
     const char* file_name,
     int line_number,
-    const char* error_message)
+    const char* message)
 {
-  fprintf(stderr, "%s:%d: %s\n", file_name, line_number, error_message);
+  if (error_level == YARA_ERROR_LEVEL_ERROR)
+    fprintf(stderr, "%s(%d): error: %s\n", file_name, line_number, message);
+  else
+    fprintf(stderr, "%s(%d): warning: %s\n", file_name, line_number, message);
 }
 
 
@@ -780,7 +796,8 @@ int main(
         rules,
         pid,
         callback,
-        (void*) argv[argc - 1]);
+        (void*) argv[argc - 1],
+        fast_scan);
   }
   else if (is_directory(argv[argc - 1]))
   {
@@ -796,7 +813,8 @@ int main(
         rules,
         argv[argc - 1],
         callback,
-        (void*) argv[argc - 1]);
+        (void*) argv[argc - 1],
+        fast_scan);
   }
 
   switch (result)

@@ -136,11 +136,15 @@ int process_cmd_line(
 
 
 void report_error(
+    int error_level,
     const char* file_name,
     int line_number,
-    const char* error_message)
+    const char* message)
 {
-  fprintf(stderr, "%s:%d: %s\n", file_name, line_number, error_message);
+  if (error_level == YARA_ERROR_LEVEL_ERROR)
+    fprintf(stderr, "%s(%d): error: %s\n", file_name, line_number, message);
+  else
+    fprintf(stderr, "%s(%d): warning: %s\n", file_name, line_number, message);
 }
 
 

@@ -130,17 +130,17 @@ limitations under the License.
 #define CALLBACK_ABORT     1
 #define CALLBACK_ERROR     2
 
-#define STRING_FLAGS_FOUND        0x01
-#define STRING_FLAGS_REFERENCED   0x02
-#define STRING_FLAGS_HEXADECIMAL  0x04
-#define STRING_FLAGS_NO_CASE      0x08
-#define STRING_FLAGS_ASCII        0x10
-#define STRING_FLAGS_WIDE         0x20
-#define STRING_FLAGS_REGEXP       0x40
-#define STRING_FLAGS_FULL_WORD    0x80
-#define STRING_FLAGS_ANONYMOUS    0x100
-#define STRING_FLAGS_FAST_MATCH   0x200
-#define STRING_FLAGS_NULL         0x1000
+#define STRING_FLAGS_FOUND          0x01
+#define STRING_FLAGS_REFERENCED     0x02
+#define STRING_FLAGS_HEXADECIMAL    0x04
+#define STRING_FLAGS_NO_CASE        0x08
+#define STRING_FLAGS_ASCII          0x10
+#define STRING_FLAGS_WIDE           0x20
+#define STRING_FLAGS_REGEXP         0x40
+#define STRING_FLAGS_FULL_WORD      0x80
+#define STRING_FLAGS_ANONYMOUS      0x100
+#define STRING_FLAGS_SINGLE_MATCH   0x200
+#define STRING_FLAGS_NULL           0x1000
 
 #define STRING_IS_HEX(x) \
     (((x)->flags) & STRING_FLAGS_HEXADECIMAL)
@@ -319,9 +319,39 @@ typedef struct _AC_STATE
 
   DECLARE_REFERENCE(struct _AC_STATE*, failure);
   DECLARE_REFERENCE(AC_MATCH*, matches);
-  DECLARE_REFERENCE(struct _AC_STATE*, state) transitions[256];
 
 } AC_STATE;
+
+
+typedef struct _AC_STATE_TRANSITION
+{
+  uint8_t input;
+  DECLARE_REFERENCE(AC_STATE*, state);
+  DECLARE_REFERENCE(struct _AC_STATE_TRANSITION*, next);
+
+} AC_STATE_TRANSITION;
+
+
+typedef struct _AC_TABLE_BASED_STATE
+{
+  int8_t depth;
+
+  DECLARE_REFERENCE(AC_STATE*, failure);
+  DECLARE_REFERENCE(AC_MATCH*, matches);
+  DECLARE_REFERENCE(AC_STATE*, state) transitions[256];
+
+} AC_TABLE_BASED_STATE;
+
+
+typedef struct _AC_LIST_BASED_STATE
+{
+  int8_t depth;
+
+  DECLARE_REFERENCE(AC_STATE*, failure);
+  DECLARE_REFERENCE(AC_MATCH*, matches);
+  DECLARE_REFERENCE(AC_STATE_TRANSITION*, transitions);
+
+} AC_LIST_BASED_STATE;
 
 
 typedef struct _AC_AUTOMATON
@@ -362,10 +392,14 @@ typedef struct _HASH_TABLE
 } HASH_TABLE;
 
 
+#define YARA_ERROR_LEVEL_ERROR   0
+#define YARA_ERROR_LEVEL_WARNING 1
+
 typedef void (*YARAREPORT)(
+    int error_level,
     const char* file_name,
     int line_number,
-    const char* error_message);
+    const char* message);
 
 
 typedef int (*YARACALLBACK)(
@@ -528,21 +562,24 @@ int yr_rules_scan_mem(
     uint8_t* buffer,
     size_t buffer_size,
     YARACALLBACK callback,
-    void* user_data);
+    void* user_data,
+    int fast_scan_mode);
 
 
 int yr_rules_scan_file(
     YARA_RULES* rules,
     const char* filename,
     YARACALLBACK callback,
-    void* user_data);
+    void* user_data,
+    int fast_scan_mode);
 
 
 int yr_rules_scan_proc(
     YARA_RULES* rules,
     int pid,
     YARACALLBACK callback,
-    void* user_data);
+    void* user_data,
+    int fast_scan_mode);
 
 
 int yr_rules_save(
@@ -585,7 +622,13 @@ int yr_ac_create_automaton(
 int yr_ac_add_string(
     ARENA* arena,
     AC_AUTOMATON* automaton,
-    STRING* string);
+    STRING* string,
+    int* min_token_length);
+
+
+AC_STATE* yr_ac_next_state(
+    AC_STATE* state,
+    uint8_t input);
 
 
 void yr_ac_create_failure_links(

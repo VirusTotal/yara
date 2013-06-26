@@ -488,6 +488,10 @@ STRING* yr_parser_reduce_string_declaration(
     SIZED_STRING* str)
 {
   int error_offset;
+  int min_token_length;
+  char* file_name;
+  char warning_message[512];
+
   STRING* string;
   YARA_COMPILER* compiler = yyget_extra(yyscanner);
 
@@ -516,6 +520,14 @@ STRING* yr_parser_reduce_string_declaration(
 
   if (!(flags & STRING_FLAGS_WIDE))
     flags |= STRING_FLAGS_ASCII;
+
+  // The STRING_FLAGS_SINGLE_MATCH flag indicates that finding
+  // a single match for the string is enough. This is true in
+  // most cases, except when the string count (#) and string offset (@)
+  // operators are used. All strings are marked STRING_FLAGS_SINGLE_MATCH
+  // initially, and unmarked later if required.
+
+  flags |= STRING_FLAGS_SINGLE_MATCH;
 
   string->flags = flags;
   string->mask = NULL;
@@ -569,7 +581,30 @@ STRING* yr_parser_reduce_string_declaration(
   compiler->last_result = yr_ac_add_string(
       compiler->automaton_arena,
       compiler->automaton,
-      string);
+      string,
+      &min_token_length);
+
+  if (compiler->file_name_stack_ptr > 0)
+    file_name = compiler->file_name_stack[
+        compiler->file_name_stack_ptr - 1];
+  else
+    file_name = NULL;
+
+  if (min_token_length < 2 && compiler->error_report_function != NULL)
+  {
+    snprintf(
+        warning_message,
+        sizeof(warning_message),
+        "%s is slowing down scanning%s",
+        string->identifier,
+        min_token_length == 0 ? " (critical!)" : "");
+
+    compiler->error_report_function(
+        YARA_ERROR_LEVEL_WARNING,
+        file_name,
+        yyget_lineno(yyscanner),
+        warning_message);
+  }
 
   if (compiler->last_result != ERROR_SUCCESS)
     return NULL;
@@ -689,6 +724,20 @@ int yr_parser_reduce_string_identifier(
     {
       yr_parser_emit(yyscanner, PUSH_A, NULL);
       yr_parser_emit(yyscanner, instruction, NULL);
+
+      if (instruction != SFOUND)
+      {
+        string = compiler->current_rule_strings;
+
+        while(!STRING_IS_NULL(string))
+        {
+          string->flags &= ~STRING_FLAGS_SINGLE_MATCH;
+          string = yr_arena_next_address(
+              compiler->strings_arena,
+              string,
+              sizeof(STRING));
+        }
+      }
     }
     else
     {
@@ -706,6 +755,9 @@ int yr_parser_reduce_string_identifier(
           PUSH,
           PTR_TO_UINT64(string),
           NULL);
+
+      if (instruction != SFOUND)
+        string->flags &= ~STRING_FLAGS_SINGLE_MATCH;
 
       yr_parser_emit(yyscanner, instruction, NULL);
 

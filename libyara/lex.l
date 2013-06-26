@@ -523,6 +523,7 @@ void yyerror(yyscan_t yyscanner, const char *error_message)
     if (compiler->error_report_function != NULL)
     {
       compiler->error_report_function(
+          YARA_ERROR_LEVEL_ERROR,
           file_name,
           compiler->last_error_line,
           error_message);
@@ -537,6 +538,7 @@ void yyerror(yyscan_t yyscanner, const char *error_message)
       yr_compiler_get_error_message(compiler, message, sizeof(message));
 
       compiler->error_report_function(
+        YARA_ERROR_LEVEL_ERROR,
         file_name,
         compiler->last_error_line,
         message);

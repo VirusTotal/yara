@@ -1,4 +1,4 @@
-AM_CFLAGS=-g -O0
+AM_CFLAGS=-g -O3
 
 # Build the library in the hand subdirectory first.
 SUBDIRS = libyara

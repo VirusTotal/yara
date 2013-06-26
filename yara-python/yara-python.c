@@ -743,7 +743,7 @@ static PyObject * Rules_match(
     PyObject *keywords)
 {
   static char *kwlist[] = {
-      "filepath", "pid", "data", "externals", "callback", NULL};
+      "filepath", "pid", "data", "externals", "callback", "fast", NULL};
 
   char* filepath = NULL;
   char* data = NULL;
@@ -751,8 +751,10 @@ static PyObject * Rules_match(
   int pid = 0;
   int length;
   int error;
+  int fast_mode = FALSE;
 
   PyObject *externals = NULL;
+  PyObject *fast = NULL;
   Rules* object = (Rules*) self;
 
   CALLBACK_DATA callback_data;
@@ -763,14 +765,15 @@ static PyObject * Rules_match(
   if (PyArg_ParseTupleAndKeywords(
         args,
         keywords,
-        "|sis#OO",
+        "|sis#OOO",
         kwlist,
         &filepath,
         &pid,
         &data,
         &length,
         &externals,
-        &callback_data.callback))
+        &callback_data.callback,
+        &fast))
   {
     if (externals != NULL)
     {
@@ -801,6 +804,11 @@ static PyObject * Rules_match(
       }
     }
 
+    if (fast != NULL)
+    {
+      fast_mode = (PyObject_IsTrue(fast) == 1);
+    }
+
     if (filepath != NULL)
     {
       callback_data.matches = PyList_New(0);
@@ -811,7 +819,8 @@ static PyObject * Rules_match(
           object->rules,
           filepath,
           yara_callback,
-          &callback_data);
+          &callback_data,
+          fast_mode);
 
       Py_END_ALLOW_THREADS
 
@@ -836,7 +845,8 @@ static PyObject * Rules_match(
           (unsigned char*) data,
           (unsigned int) length,
           yara_callback,
-          &callback_data);
+          &callback_data,
+          fast_mode);
 
       Py_END_ALLOW_THREADS
 
@@ -860,7 +870,8 @@ static PyObject * Rules_match(
           object->rules,
           pid,
           yara_callback,
-          &callback_data);
+          &callback_data,
+          fast_mode);
 
       Py_END_ALLOW_THREADS
 

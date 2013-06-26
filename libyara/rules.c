@@ -595,7 +595,8 @@ void yr_rules_free_matches(
 int yr_rules_scan_mem_block(
     YARA_RULES* rules,
     uint8_t* data,
-    size_t data_size)
+    size_t data_size,
+    int fast_scan_mode)
 {
 
   AC_STATE* next_state;
@@ -615,25 +616,30 @@ int yr_rules_scan_mem_block(
     {
       if (i >= ac_match->backtrack)
       {
-        result = _yr_scan_verify_match(
-            ac_match,
-            data,
-            data_size,
-            i - ac_match->backtrack);
+        if (!(fast_scan_mode &&
+              ac_match->string->flags & STRING_FLAGS_FOUND &&
+              ac_match->string->flags & STRING_FLAGS_SINGLE_MATCH))
+        {
+          result = _yr_scan_verify_match(
+              ac_match,
+              data,
+              data_size,
+              i - ac_match->backtrack);
 
-        if (result != ERROR_SUCCESS)
-          return result;
+          if (result != ERROR_SUCCESS)
+            return result;
+        }
       }
 
       ac_match = ac_match->next;
     }
 
-    next_state = current_state->transitions[data[i]].state;
+    next_state = yr_ac_next_state(current_state, data[i]);
 
     while (next_state == NULL && current_state->depth > 0)
     {
       current_state = current_state->failure;
-      next_state = current_state->transitions[data[i]].state;
+      next_state = yr_ac_next_state(current_state, data[i]);
     }
 
     if (next_state != NULL)
@@ -667,7 +673,8 @@ int yr_rules_scan_mem_blocks(
     MEMORY_BLOCK* block,
     int scanning_process_memory,
     YARACALLBACK callback,
-    void* user_data)
+    void* user_data,
+    int fast_scan_mode)
 {
   RULE* rule;
   EVALUATION_CONTEXT context;
@@ -699,7 +706,8 @@ int yr_rules_scan_mem_blocks(
     result = yr_rules_scan_mem_block(
         rules,
         block->data,
-        block->size);
+        block->size,
+        fast_scan_mode);
 
     if (result != ERROR_SUCCESS)
       return result;
@@ -754,7 +762,8 @@ int yr_rules_scan_mem(
     uint8_t* buffer,
     size_t buffer_size,
     YARACALLBACK callback,
-    void* user_data)
+    void* user_data,
+    int fast_scan_mode)
 {
   MEMORY_BLOCK block;
 
@@ -768,7 +777,8 @@ int yr_rules_scan_mem(
       &block,
       FALSE,
       callback,
-      user_data);
+      user_data,
+      fast_scan_mode);
 }
 
 
@@ -776,7 +786,8 @@ int yr_rules_scan_file(
     YARA_RULES* rules,
     const char* filename,
     YARACALLBACK callback,
-    void* user_data)
+    void* user_data,
+    int fast_scan_mode)
 {
   MAPPED_FILE mfile;
   int result;
@@ -790,7 +801,8 @@ int yr_rules_scan_file(
         mfile.data,
         mfile.size,
         callback,
-        user_data);
+        user_data,
+        fast_scan_mode);
 
     yr_filemap_unmap(&mfile);
   }
@@ -803,7 +815,8 @@ int yr_rules_scan_proc(
     YARA_RULES* rules,
     int pid,
     YARACALLBACK callback,
-    void* user_data)
+    void* user_data,
+    int fast_scan_mode)
 {
   MEMORY_BLOCK* first_block;
   MEMORY_BLOCK* next_block;
@@ -819,7 +832,8 @@ int yr_rules_scan_proc(
         first_block,
         TRUE,
         callback,
-        user_data);
+        user_data,
+        fast_scan_mode);
 
   block = first_block;
 
