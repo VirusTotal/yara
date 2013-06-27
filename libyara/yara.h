@@ -305,7 +305,7 @@ typedef struct _EXTERNAL_VARIABLE
 
 typedef struct _AC_MATCH
 {
-  int8_t backtrack;
+  uint16_t backtrack;
 
   DECLARE_REFERENCE(STRING*, string);
   DECLARE_REFERENCE(struct _AC_MATCH*, next);
