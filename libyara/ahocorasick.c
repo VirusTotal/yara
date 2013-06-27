@@ -1112,23 +1112,59 @@ int yr_ac_add_string(
 void _yr_ac_print_automaton_state(
   AC_STATE* state)
 {
-  int i;
   char* identifier;
+  int i;
+  int child_count;
+
   STRING* string;
+  AC_STATE_TRANSITION transition;
   AC_MATCH* match;
   AC_STATE* child_state;
-  AC_STATE_TRANSITION transition;
 
   for (i = 0; i < state->depth; i++)
     printf(" ");
 
-  printf("%p (%d) -> %p", state, state->depth, state->failure);
+  child_state = _yr_ac_first_transition(state, &transition);
+  child_count = 0;
+
+  while(child_state != NULL)
+  {
+    child_count++;
+    child_state = _yr_ac_next_transition(state, &transition);
+  }
+
+  printf("%p childs:%d depth:%d failure:%p",
+         state, child_count, state->depth, state->failure);
 
   match = state->matches;
 
   while (match != NULL)
   {
-    printf(" %s:%d", match->string->identifier, match->backtrack);
+    printf("\n");
+
+    for (i = 0; i < state->depth + 1; i++)
+      printf(" ");
+
+    printf("%s = ", match->string->identifier, match->backtrack);
+
+    if (STRING_IS_HEX(match->string))
+    {
+      printf("{ ");
+
+      for (i = 0; i < min(match->string->length, 10); i++)
+        printf("%02x ", match->string->string[i]);
+
+      printf("}");
+    }
+    else if (STRING_IS_REGEXP(match->string))
+    {
+      printf("/%s/", match->string->string);
+    }
+    else
+    {
+      printf("\"%s\"", match->string->string);
+    }
+
     match = match->next;
   }
 
