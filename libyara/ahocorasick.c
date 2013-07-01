@@ -771,9 +771,9 @@ void _yr_ac_gen_atoms(
       while(i < atom_length)
       {
         if (i % 2 == 0)
-          *(((uint8_t*) output_buffer)++) = string->string[j++];
+          *output_buffer++ = string->string[j++];
         else
-          *(((uint8_t*) output_buffer)++) = 0;
+          *output_buffer++ = 0;
         i++;
       }
 
@@ -1006,6 +1006,11 @@ int yr_ac_add_string(
 
   atom_length = *((int*) atoms_cursor);
   atoms_cursor += sizeof(int);
+
+  /*if (atom_length < 3)
+  { yr_free(atoms);
+    return ERROR_SUCCESS;
+  }*/
 
   if (atom_length == 0)
   {
