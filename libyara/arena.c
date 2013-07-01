@@ -111,6 +111,17 @@ ARENA_PAGE* _yr_arena_page_for_address(
 {
   ARENA_PAGE* page;
 
+  // Most of the times this function is called with an address within
+  // the current page, let's check the current page first to avoid
+  // looping through the page list.
+
+  page = arena->current_page;
+
+  if (page != NULL &&
+      (uint8_t*) address >= page->address &&
+      (uint8_t*) address < page->address + page->used)
+    return page;
+
   page = arena->page_list_head;
 
   while (page != NULL)
