@@ -1007,11 +1007,6 @@ int yr_ac_add_string(
   atom_length = *((int*) atoms_cursor);
   atoms_cursor += sizeof(int);
 
-  /*if (atom_length < 3)
-  { yr_free(atoms);
-    return ERROR_SUCCESS;
-  }*/
-
   if (atom_length == 0)
   {
     *min_atom_length = 0;
