@@ -55,6 +55,7 @@ int fast_scan = FALSE;
 int negate = FALSE;
 int count = 0;
 int limit = 0;
+int timeout = 0;
 
 
 typedef struct _TAG
@@ -104,7 +105,8 @@ EXTERNAL* externals_list = NULL;
 "  -g                       print tags.\n"\
 "  -m                       print metadata.\n"\
 "  -s                       print matching strings.\n"\
-"  -l <number>              abort scanning after matching <number> rules.\n"\
+"  -l <number>              abort scanning after matching a <number> rules.\n"\
+"  -a <seconds>             abort scanning after a number of seconds has elapsed.\n"\
 "  -d <identifier>=<value>  define external variable.\n"\
 "  -r                       recursively search directories.\n"\
 "  -v                       show version information.\n"
@@ -176,7 +178,8 @@ int scan_dir(
             full_path,
             callback,
             full_path,
-            TRUE);
+            fast_scan,
+            timeout);
       }
       else if (recursive && FindFileData.cFileName[0] != '.' )
       {
@@ -243,7 +246,8 @@ int scan_dir(
               full_path,
               callback,
               full_path,
-              fast_scan);
+              fast_scan,
+              timeout);
         }
         else if(recursive && S_ISDIR(st.st_mode) && de->d_name[0] != '.')
         {
@@ -484,7 +488,7 @@ int process_cmd_line(
 
   opterr = 0;
 
-  while ((c = getopt (argc, (char**) argv, "rnsvgml:t:i:d:f")) != -1)
+  while ((c = getopt (argc, (char**) argv, "rnsvgma:l:t:i:d:f")) != -1)
   {
     switch (c)
     {
@@ -593,6 +597,10 @@ int process_cmd_line(
         limit = atoi(optarg);
         break;
 
+      case 'a':
+        timeout = atoi(optarg);
+        break;
+
       case '?':
 
         if (optopt == 't')
@@ -681,6 +689,8 @@ int main(
   int pid;
   int errors;
   int result;
+
+  clock_t start, end;
 
   if (!process_cmd_line(argc, argv))
     return 0;
@@ -797,7 +807,8 @@ int main(
         pid,
         callback,
         (void*) argv[argc - 1],
-        fast_scan);
+        fast_scan,
+        timeout);
   }
   else if (is_directory(argv[argc - 1]))
   {
@@ -809,12 +820,19 @@ int main(
   }
   else
   {
+    start = clock();
+
     result = yr_rules_scan_file(
         rules,
         argv[argc - 1],
         callback,
         (void*) argv[argc - 1],
-        fast_scan);
+        fast_scan,
+        timeout);
+
+    end = clock();
+
+    printf( "Scanning time: %f s\n", (float)(end - start) / CLOCKS_PER_SEC);
   }
 
   switch (result)
@@ -826,6 +844,12 @@ int main(
       break;
     case ERROR_INSUFICIENT_MEMORY:
       fprintf(stderr, "not enough memory\n");
+      break;
+    case ERROR_TIMEOUT:
+      fprintf(stderr, "scanning timed out\n");
+      break;
+    case ERROR_COULD_NOT_OPEN_FILE:
+      fprintf(stderr, "could not open file\n");
       break;
     default:
       fprintf(stderr, "internal error: %d\n", result);

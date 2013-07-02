@@ -53,6 +53,7 @@ typedef int Py_ssize_t;
 
 static PyObject *YaraError = NULL;
 static PyObject *YaraSyntaxError = NULL;
+static PyObject *YaraTimeoutError = NULL;
 
 
 #define YARA_DOC "\
@@ -595,6 +596,10 @@ PyObject* handle_error(
           YaraError,
           "invalid or corrupt compiled rules file \"%s\"",
           extra);
+    case ERROR_TIMEOUT:
+      return PyErr_Format(
+          YaraTimeoutError,
+          "scanning timed out");
     default:
       return PyErr_Format(
           YaraError,
@@ -744,12 +749,15 @@ static PyObject * Rules_match(
     PyObject *keywords)
 {
   static char *kwlist[] = {
-      "filepath", "pid", "data", "externals", "callback", "fast", NULL};
+      "filepath", "pid", "data", "externals",
+      "callback", "fast", "timeout", NULL
+      };
 
   char* filepath = NULL;
   char* data = NULL;
 
   int pid = 0;
+  int timeout = 0;
   int length;
   int error;
   int fast_mode = FALSE;
@@ -766,7 +774,7 @@ static PyObject * Rules_match(
   if (PyArg_ParseTupleAndKeywords(
         args,
         keywords,
-        "|sis#OOO",
+        "|sis#OOOi",
         kwlist,
         &filepath,
         &pid,
@@ -774,7 +782,8 @@ static PyObject * Rules_match(
         &length,
         &externals,
         &callback_data.callback,
-        &fast))
+        &fast,
+        &timeout))
   {
     if (externals != NULL)
     {
@@ -821,7 +830,8 @@ static PyObject * Rules_match(
           filepath,
           yara_callback,
           &callback_data,
-          fast_mode);
+          fast_mode,
+          timeout);
 
       Py_END_ALLOW_THREADS
 
@@ -847,7 +857,8 @@ static PyObject * Rules_match(
           (unsigned int) length,
           yara_callback,
           &callback_data,
-          fast_mode);
+          fast_mode,
+          timeout);
 
       Py_END_ALLOW_THREADS
 
@@ -872,7 +883,8 @@ static PyObject * Rules_match(
           pid,
           yara_callback,
           &callback_data,
-          fast_mode);
+          fast_mode,
+          timeout);
 
       Py_END_ALLOW_THREADS
 
@@ -1291,9 +1303,11 @@ MOD_INIT(yara)
 #if PYTHON_API_VERSION >= 1007
   YaraError = PyErr_NewException("yara.Error", PyExc_Exception, NULL);
   YaraSyntaxError = PyErr_NewException("yara.SyntaxError", YaraError, NULL);
+  YaraTimeoutError = PyErr_NewException("yara.TimeoutError", YaraError, NULL);
 #else
   YaraError = Py_BuildValue("s", "yara.Error");
   YaraSyntaxError = Py_BuildValue("s", "yara.SyntaxError");
+  YaraTimeoutError = Py_BuildValue("s", "yara.TimeoutError");
 #endif
 
   if (PyType_Ready(&Rules_Type) < 0)
@@ -1304,6 +1318,7 @@ MOD_INIT(yara)
 
   PyModule_AddObject(m, "Error", YaraError);
   PyModule_AddObject(m, "SyntaxError", YaraSyntaxError);
+  PyModule_AddObject(m, "TimeoutError", YaraTimeoutError);
 
   yr_initialize();
 

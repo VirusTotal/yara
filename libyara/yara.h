@@ -78,6 +78,7 @@ limitations under the License.
 #define ERROR_INCLUDE_DEPTH_EXCEEDED            32
 #define ERROR_INVALID_OR_CORRUPT_FILE           33
 #define ERROR_EXEC_STACK_OVERFLOW               34
+#define ERROR_TIMEOUT                           35
 
 #define MAX_INCLUDE_DEPTH 16
 #define LEX_BUF_SIZE  1024
@@ -563,7 +564,8 @@ int yr_rules_scan_mem(
     size_t buffer_size,
     YARACALLBACK callback,
     void* user_data,
-    int fast_scan_mode);
+    int fast_scan_mode,
+    int timeout);
 
 
 int yr_rules_scan_file(
@@ -571,7 +573,8 @@ int yr_rules_scan_file(
     const char* filename,
     YARACALLBACK callback,
     void* user_data,
-    int fast_scan_mode);
+    int fast_scan_mode,
+    int timeout);
 
 
 int yr_rules_scan_proc(
@@ -579,7 +582,8 @@ int yr_rules_scan_proc(
     int pid,
     YARACALLBACK callback,
     void* user_data,
-    int fast_scan_mode);
+    int fast_scan_mode,
+    int timeout);
 
 
 int yr_rules_save(

@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 #include <string.h>
+#include <time.h>
 
 #include "arena.h"
 #include "exec.h"
@@ -596,13 +597,18 @@ int yr_rules_scan_mem_block(
     YARA_RULES* rules,
     uint8_t* data,
     size_t data_size,
-    int fast_scan_mode)
+    int fast_scan_mode,
+    int timeout,
+    time_t start_time)
 {
 
   AC_STATE* next_state;
   AC_MATCH* ac_match;
   AC_STATE* current_state;
+
+  time_t current_time;
   size_t i;
+
   int result;
 
   current_state = rules->automaton->root;
@@ -646,6 +652,14 @@ int yr_rules_scan_mem_block(
       current_state = next_state;
 
     i++;
+
+    if (timeout > 0 && i % 256 == 0)
+    {
+      current_time = time(NULL);
+
+      if (difftime(current_time, start_time) > timeout)
+        return ERROR_TIMEOUT;
+    }
   }
 
   ac_match = current_state->matches;
@@ -674,10 +688,13 @@ int yr_rules_scan_mem_blocks(
     int scanning_process_memory,
     YARACALLBACK callback,
     void* user_data,
-    int fast_scan_mode)
+    int fast_scan_mode,
+    int timeout)
 {
   RULE* rule;
   EVALUATION_CONTEXT context;
+
+  time_t start_time;
 
   char message[512];
   int result;
@@ -687,6 +704,8 @@ int yr_rules_scan_mem_blocks(
   context.entry_point = UNDEFINED;
 
   yr_rules_free_matches(rules);
+
+  start_time = time(NULL);
 
   while (block != NULL)
   {
@@ -707,7 +726,9 @@ int yr_rules_scan_mem_blocks(
         rules,
         block->data,
         block->size,
-        fast_scan_mode);
+        fast_scan_mode,
+        timeout,
+        start_time);
 
     if (result != ERROR_SUCCESS)
       return result;
@@ -763,7 +784,8 @@ int yr_rules_scan_mem(
     size_t buffer_size,
     YARACALLBACK callback,
     void* user_data,
-    int fast_scan_mode)
+    int fast_scan_mode,
+    int timeout)
 {
   MEMORY_BLOCK block;
 
@@ -778,7 +800,8 @@ int yr_rules_scan_mem(
       FALSE,
       callback,
       user_data,
-      fast_scan_mode);
+      fast_scan_mode,
+      timeout);
 }
 
 
@@ -787,7 +810,8 @@ int yr_rules_scan_file(
     const char* filename,
     YARACALLBACK callback,
     void* user_data,
-    int fast_scan_mode)
+    int fast_scan_mode,
+    int timeout)
 {
   MAPPED_FILE mfile;
   int result;
@@ -802,7 +826,8 @@ int yr_rules_scan_file(
         mfile.size,
         callback,
         user_data,
-        fast_scan_mode);
+        fast_scan_mode,
+        timeout);
 
     yr_filemap_unmap(&mfile);
   }
@@ -816,7 +841,8 @@ int yr_rules_scan_proc(
     int pid,
     YARACALLBACK callback,
     void* user_data,
-    int fast_scan_mode)
+    int fast_scan_mode,
+    int timeout)
 {
   MEMORY_BLOCK* first_block;
   MEMORY_BLOCK* next_block;
@@ -833,7 +859,8 @@ int yr_rules_scan_proc(
         TRUE,
         callback,
         user_data,
-        fast_scan_mode);
+        fast_scan_mode,
+        timeout);
 
   block = first_block;
 
