@@ -111,7 +111,7 @@ int yr_compiler_create(
     if (new_compiler->namespaces_arena != NULL)
       yr_arena_destroy(new_compiler->namespaces_arena);
 
-    if (new_compiler->namespaces_arena != NULL)
+    if (new_compiler->metas_arena != NULL)
       yr_arena_destroy(new_compiler->metas_arena);
 
     yr_free(new_compiler);
