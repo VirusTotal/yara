@@ -474,6 +474,7 @@ typedef struct _MEMORY_BLOCK
 typedef struct _YARA_RULES {
 
   ARENA*               arena;
+  ARENA*               matches_arena;
   RULE*                rules_list_head;
   EXTERNAL_VARIABLE*   externals_list_head;
   AC_AUTOMATON*        automaton;

@@ -414,6 +414,7 @@ inline int _yr_scan_verify_string_match(
 
 
 int _yr_scan_verify_match(
+    YARA_RULES* rules,
     AC_MATCH* ac_match,
     uint8_t* data,
     size_t data_size,
@@ -422,6 +423,7 @@ int _yr_scan_verify_match(
   MATCH* match;
   STRING* string;
 
+  int result;
   int32_t match_length;
 
   match_length = _yr_scan_verify_string_match(
@@ -442,39 +444,35 @@ int _yr_scan_verify_match(
     }
     else
     {
-      match = (MATCH*) yr_malloc(sizeof(MATCH));
+      result = yr_arena_allocate_memory(
+          rules->matches_arena,
+          sizeof(MATCH),
+          (void**) &match);
 
-      if (match == NULL)
-        return ERROR_INSUFICIENT_MEMORY;
-
-      match->data = (uint8_t*) yr_malloc(match_length);
-
-      if (match->data != NULL)
-      {
-        match->first_offset = string_offset;
-        match->last_offset = string_offset;
-        match->length = match_length;
-        match->next = NULL;
-
-        memcpy(match->data, data + string_offset, match_length);
-
-        if (string->matches_list_head == NULL)
-          string->matches_list_head = match;
-
-        if (string->matches_list_tail != NULL)
-          string->matches_list_tail->next = match;
-
-        string->matches_list_tail = match;
-      }
-      else
-      {
-        yr_free(match);
-        return ERROR_INSUFICIENT_MEMORY;
-      }
+      if (result != ERROR_SUCCESS)
+        return result;
 
       match->first_offset = string_offset;
       match->last_offset = string_offset;
       match->length = match_length;
+      match->next = NULL;
+
+      result = yr_arena_write_data(
+          rules->matches_arena,
+          data + string_offset,
+          match_length,
+          (void**) &match->data);
+
+      if (result != ERROR_SUCCESS)
+        return result;
+
+      if (string->matches_list_head == NULL)
+        string->matches_list_head = match;
+
+      if (string->matches_list_tail != NULL)
+        string->matches_list_tail->next = match;
+
+      string->matches_list_tail = match;
     }
   }
 
@@ -573,16 +571,6 @@ void yr_rules_free_matches(
     while (!STRING_IS_NULL(string))
     {
       string->flags &= ~STRING_FLAGS_FOUND;
-      match = string->matches_list_head;
-
-      while (match != NULL)
-      {
-        next_match = match->next;
-        yr_free(match->data);
-        yr_free(match);
-        match = next_match;
-      }
-
       string->matches_list_head = NULL;
       string->matches_list_tail = NULL;
       string++;
@@ -590,6 +578,9 @@ void yr_rules_free_matches(
 
     rule++;
   }
+
+  if (rules->matches_arena != NULL)
+    yr_arena_destroy(rules->matches_arena);
 }
 
 
@@ -627,6 +618,7 @@ int yr_rules_scan_mem_block(
               ac_match->string->flags & STRING_FLAGS_SINGLE_MATCH))
         {
           result = _yr_scan_verify_match(
+              rules,
               ac_match,
               data,
               data_size,
@@ -667,6 +659,7 @@ int yr_rules_scan_mem_block(
   while (ac_match != NULL)
   {
     result = _yr_scan_verify_match(
+        rules,
         ac_match,
         data,
         data_size,
@@ -704,6 +697,11 @@ int yr_rules_scan_mem_blocks(
   context.entry_point = UNDEFINED;
 
   yr_rules_free_matches(rules);
+
+  result = yr_arena_create(&rules->matches_arena);
+
+  if (result != ERROR_SUCCESS)
+    return result;
 
   start_time = time(NULL);
 
@@ -916,6 +914,7 @@ int yr_rules_load(
   new_rules->code_start = header->code_start;
   new_rules->externals_list_head = header->externals_list_head;
   new_rules->rules_list_head = header->rules_list_head;
+  new_rules->matches_arena = NULL;
 
   rule = new_rules->rules_list_head;
 
