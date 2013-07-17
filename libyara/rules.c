@@ -268,6 +268,9 @@ inline int _yr_scan_verify_string_match(
   uint8_t tmp_buffer[512];
   uint8_t* tmp;
 
+  if (buffer_size <= 0)
+    return 0;
+
   if (STRING_IS_HEX(string))
   {
     return _yr_scan_verify_hex_match(
