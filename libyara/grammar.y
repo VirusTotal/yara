@@ -593,6 +593,8 @@ boolean_expression  : '(' boolean_expression ')'
                           yr_parser_emit(yyscanner, POP_A, NULL);
                           yr_parser_emit(yyscanner, POP_C, NULL);
                           yr_parser_emit(yyscanner, CLEAR_C, NULL);
+                          yr_parser_emit_with_arg(yyscanner, PUSH, 1, NULL);
+                          yr_parser_emit(yyscanner, INCR_B, NULL);
                           yr_parser_emit(yyscanner, PUSH_B, NULL);
                           yr_parser_emit(yyscanner, PUSH_A, NULL);
                           yr_parser_emit(
