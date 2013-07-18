@@ -880,7 +880,7 @@ expression  : '(' expression ')'
               }
             | _STRING_OFFSET_
               {
-                int result = yr_parser_emit_with_arg(yyscanner, PUSH, 0, NULL);
+                int result = yr_parser_emit_with_arg(yyscanner, PUSH, 1, NULL);
 
                 if (result == ERROR_SUCCESS)
                   result = yr_parser_reduce_string_identifier(

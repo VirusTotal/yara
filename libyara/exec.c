@@ -380,17 +380,16 @@ int yr_execute_code(
 
         string = UINT64_TO_PTR(STRING*, r3);
         match = string->matches_list_head;
-        found = 0;
+        found = FALSE;
 
-        while (match != NULL)
+        while (match != NULL && !found)
         {
           if ((match->first_offset >= r1 && match->first_offset <= r2) ||
               (match->last_offset >= r1 && match->last_offset <= r2) ||
               (match->first_offset <= r1 && match->last_offset >= r2))
           {
             push(1);
-            found = 1;
-            break;
+            found = TRUE;
           }
 
           if (match->first_offset > r2)
@@ -430,15 +429,15 @@ int yr_execute_code(
         string = UINT64_TO_PTR(STRING*, r2);
         match = string->matches_list_head;
         i = 1;
-        found = 0;
+        found = FALSE;
 
-        while (match != NULL)
+        while (match != NULL && !found)
         {
           if (r1 >= i &&
               r1 <= i + match->last_offset - match->first_offset)
           {
             push(match->first_offset + r1 - i);
-            found = 1;
+            found = TRUE;
           }
 
           i += match->last_offset - match->first_offset + 1;
