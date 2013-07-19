@@ -20,6 +20,7 @@ limitations under the License.
 #include "exec.h"
 
 #define STACK_SIZE 4096
+#define MEM_SIZE   MAX_LOOP_NESTING * LOOP_LOCAL_VARS
 
 
 #define push(x)  \
@@ -72,6 +73,7 @@ int yr_execute_code(
   int64_t r1;
   int64_t r2;
   int64_t r3;
+  int64_t mem[MEM_SIZE];
   int64_t stack[STACK_SIZE];
   int32_t sp = 0;
   uint8_t* ip = rules->code_start;
@@ -103,55 +105,56 @@ int yr_execute_code(
         push(r1);
         break;
 
-      case PUSH_A:
-        push(rA);
-        break;
-
-      case POP_A:
-        pop(rA);
-        break;
-
-      case PUSH_B:
-        push(rB);
-        break;
-
-      case POP_B:
-        pop(rB);
-        break;
-
-      case PUSH_C:
-        push(rC);
-        break;
-
-      case POP_C:
-        pop(rC);
-        break;
-
-      case CLEAR_B:
-        rB = 0;
-        break;
-
-      case CLEAR_C:
-        rC = 0;
-        break;
-
-      case INCR_A:
+      case POP:
         pop(r1);
-        rA += r1;
         break;
 
-      case INCR_B:
+      case CLEAR_M:
+        r1 = *(uint64_t*)(ip + 1);
+        ip += sizeof(uint64_t);
+        mem[r1] = 0;
+        break;
+
+      case ADD_M:
+        r1 = *(uint64_t*)(ip + 1);
+        ip += sizeof(uint64_t);
+        pop(r2);
+        mem[r1] += r2;
+        break;
+
+      case INCR_M:
+        r1 = *(uint64_t*)(ip + 1);
+        ip += sizeof(uint64_t);
+        mem[r1]++;
+        break;
+
+      case PUSH_M:
+        r1 = *(uint64_t*)(ip + 1);
+        ip += sizeof(uint64_t);
+        push(mem[r1]);
+        break;
+
+      case POP_M:
+        r1 = *(uint64_t*)(ip + 1);
+        ip += sizeof(uint64_t);
+        pop(mem[r1]);
+        break;     
+
+      case SWAPUNDEF:
+        r1 = *(uint64_t*)(ip + 1);
+        ip += sizeof(uint64_t);
+        pop(r2);
+        if (r2 != UNDEFINED)
+          push(r2);
+        else
+          push(mem[r1]);
+        break;
+
+      case JNUNDEF:
         pop(r1);
-        rB += r1;
-        break;
+        push(r1);
 
-      case INCR_C:
-        pop(r1);
-        rC += r1;
-        break;
-
-      case JLE_A_B:
-        if (rA <= rB)
+        if (r1 != UNDEFINED)
         {
           ip = *(uint8_t**)(ip + 1);
           // ip will be incremented at the end of the loop,
@@ -164,8 +167,13 @@ int yr_execute_code(
         }
         break;
 
-      case JNUNDEF_A:
-        if (rA != UNDEFINED)
+      case JLE:
+        pop(r2);
+        pop(r1);
+        push(r1);
+        push(r2);
+
+        if (r1 <= r2)
         {
           ip = *(uint8_t**)(ip + 1);
           // ip will be incremented at the end of the loop,
@@ -176,13 +184,6 @@ int yr_execute_code(
         {
           ip += sizeof(uint64_t);
         }
-        break;
-
-      case PNUNDEF_A_B:
-        if (rA != UNDEFINED)
-          push(rA);
-        else
-          push(rB);
         break;
 
       case AND:

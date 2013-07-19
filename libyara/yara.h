@@ -79,7 +79,11 @@ limitations under the License.
 #define ERROR_INVALID_OR_CORRUPT_FILE           33
 #define ERROR_EXEC_STACK_OVERFLOW               34
 #define ERROR_TIMEOUT                           35
+#define ERROR_LOOP_NESTING_LIMIT_EXCEEDED       36
+#define ERROR_DUPLICATE_LOOP_IDENTIFIER         37
 
+#define LOOP_LOCAL_VARS 4
+#define MAX_LOOP_NESTING 4
 #define MAX_INCLUDE_DEPTH 16
 #define LEX_BUF_SIZE  1024
 
@@ -438,10 +442,10 @@ typedef struct _YARA_COMPILER
   int              externals_count;
   int              namespaces_count;
 
-  int8_t*          loop_address;
-  char*            loop_identifier;
-
-  int              inside_for;
+  int8_t*          loop_address[MAX_LOOP_NESTING];
+  char*            loop_identifier[MAX_LOOP_NESTING];
+  int              loop_depth;
+  
   int              allow_includes;
 
   char*            file_name_stack[MAX_INCLUDE_DEPTH];

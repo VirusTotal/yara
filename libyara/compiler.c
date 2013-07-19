@@ -46,9 +46,8 @@ int yr_compiler_create(
   new_compiler->file_stack_ptr = 0;
   new_compiler->file_name_stack_ptr = 0;
   new_compiler->current_rule_flags = 0;
-  new_compiler->inside_for = 0;
   new_compiler->allow_includes = 1;
-  new_compiler->loop_identifier = NULL;
+  new_compiler->loop_depth = 0;
   new_compiler->compiled_rules_arena = NULL;
   new_compiler->externals_count = 0;
   new_compiler->namespaces_count = 0;
@@ -684,6 +683,13 @@ char* yr_compiler_get_error_message(
           "duplicate metadata identifier \"%s\"",
           compiler->last_error_extra_info);
       break;
+    case ERROR_DUPLICATE_LOOP_IDENTIFIER:
+      snprintf(
+          buffer,
+          buffer_size,
+          "duplicate loop identifier \"%s\"",
+          compiler->last_error_extra_info);
+      break;
     case ERROR_INVALID_CHAR_IN_HEX_STRING:
       snprintf(
           buffer,
@@ -808,10 +814,16 @@ char* yr_compiler_get_error_message(
           buffer,
           buffer_size,
           "include circular reference");
+      break;
     case ERROR_INCLUDE_DEPTH_EXCEEDED:
       snprintf(buffer,
           buffer_size,
           "too many levels of included rules");
+      break;
+    case ERROR_LOOP_NESTING_LIMIT_EXCEEDED:
+      snprintf(buffer,
+          buffer_size,
+          "loop nesting limit exceeded");
       break;
   }
 

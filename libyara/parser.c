@@ -720,9 +720,14 @@ int yr_parser_reduce_string_identifier(
 
   if (strcmp(identifier, "$") == 0)
   {
-    if (compiler->inside_for > 0)
+    if (compiler->loop_depth > 0)
     {
-      yr_parser_emit(yyscanner, PUSH_A, NULL);
+      yr_parser_emit_with_arg(
+          yyscanner, 
+          PUSH_M, 
+          LOOP_LOCAL_VARS * (compiler->loop_depth - 1),
+          NULL);
+
       yr_parser_emit(yyscanner, instruction, NULL);
 
       if (instruction != SFOUND)
@@ -862,6 +867,23 @@ META* yr_parser_reduce_meta_declaration(
   meta->type = type;
 
   return meta;
+}
+
+
+int yr_parser_lookup_loop_variable(
+    yyscan_t yyscanner,
+    const char* identifier)
+{
+  YARA_COMPILER* compiler = yyget_extra(yyscanner);
+  int i;
+
+  for (i = 0; i < compiler->loop_depth; i++)
+  {
+    if (strcmp(identifier, compiler->loop_identifier[i]) == 0)
+      return i;
+  }
+
+  return -1;
 }
 
 

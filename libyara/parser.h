@@ -93,4 +93,8 @@ int yr_parser_reduce_external(
     const char* identifier,
     int8_t intruction);
 
+int yr_parser_lookup_loop_variable(
+    yyscan_t yyscanner,
+    const char* identifier);
+
 #endif

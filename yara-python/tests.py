@@ -165,6 +165,14 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = "ssi" condition: $a at 2 and $a at 5 }',
         ], 'mississippi')
 
+    def testOffset(self):
+
+        self.assertTrueRules([
+            'rule test { strings: $a = "ssi" condition: @a == 2 }',
+            'rule test { strings: $a = "ssi" condition: @a == @a[1] }',
+            'rule test { strings: $a = "ssi" condition: @a[2] == 5 }'
+        ], 'mississippi')
+
     def testOf(self):
 
         self.assertTrueRules([
@@ -177,10 +185,15 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = "ssi" $b = "mis" $c = "oops" condition: all of them }'
         ], 'mississipi')
 
-    def testForAll(self):
+    def testFor(self):
 
         self.assertTrueRules([
-            'rule test { strings: $a = "ssi" condition: for all i in (1..#a) : (@a[i] >= 2 and @a[i] <= 5) }'
+            'rule test { strings: $a = "ssi" condition: for all i in (1..#a) : (@a[i] >= 2 and @a[i] <= 5) }',
+            'rule test { strings: $a = "ssi" $b = "mi" condition: for all i in (1..#a) : ( for all j in (1..#b) : (@a[i] >= @b[j])) }'
+        ], 'mississipi')
+
+        self.assertFalseRules([
+            'rule test { strings: $a = "ssi" condition: for all i in (1..#a) : (@a[i] == 5) }',
         ], 'mississipi')
 
     def testRE(self):

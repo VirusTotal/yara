@@ -38,6 +38,8 @@ limitations under the License.
 #define INTEGER_SET_ENUMERATION 1
 #define INTEGER_SET_RANGE 2
 
+
+
 #define ERROR_IF(x) \
     if (x) \
     { \
@@ -568,120 +570,209 @@ boolean_expression  : '(' boolean_expression ')'
                       }
                     | _FOR_ for_expression _IDENTIFIER_ _IN_
                       {
-                        yr_parser_emit_with_arg(
+                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        int result = ERROR_SUCCESS;
+                        int var_index;
+
+                        if (compiler->loop_depth == MAX_LOOP_NESTING)
+                          compiler->last_result = \
+                              ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
+
+                        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+                        var_index = yr_parser_lookup_loop_variable(
+                            yyscanner, 
+                            $3);
+
+                        if (var_index >= 0)
+                        {
+                          yr_compiler_set_error_extra_info(
+                              compiler, 
+                              $3);
+
+                          compiler->last_result = \
+                              ERROR_DUPLICATE_LOOP_IDENTIFIER;
+                        }
+
+                        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+                        // Push end-of-list marker
+                        result = yr_parser_emit_with_arg(
                             yyscanner,
                             PUSH,
                             UNDEFINED,
                             NULL);
+
+                        ERROR_IF(result != ERROR_SUCCESS);
                       }
                       integer_set ':'
                       {
                         YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
+                        int8_t* addr;
+
+                        // Clear counter for number of expressions evaluating
+                        // to TRUE.
+                        yr_parser_emit_with_arg(
+                            yyscanner, CLEAR_M, mem_offset + 1, NULL);
+
+                        // Clear iterations counter
+                        yr_parser_emit_with_arg(
+                            yyscanner, CLEAR_M, mem_offset + 2, NULL);
 
                         if ($6 == INTEGER_SET_ENUMERATION)
                         {
-                          yr_parser_emit(yyscanner, CLEAR_B, NULL);
-                          yr_parser_emit(yyscanner, CLEAR_C, NULL);
-                          yr_parser_emit(
-                              yyscanner,
-                              POP_A,
-                              &compiler->loop_address);
+                          // Pop the first integer
+                          yr_parser_emit_with_arg(
+                              yyscanner, POP_M, mem_offset, &addr);
                         }
                         else // INTEGER_SET_RANGE
                         {
-                          yr_parser_emit(yyscanner, POP_B, NULL);
-                          yr_parser_emit(yyscanner, POP_A, NULL);
-                          yr_parser_emit(yyscanner, POP_C, NULL);
-                          yr_parser_emit(yyscanner, CLEAR_C, NULL);
-                          yr_parser_emit_with_arg(yyscanner, PUSH, 1, NULL);
-                          yr_parser_emit(yyscanner, INCR_B, NULL);
-                          yr_parser_emit(yyscanner, PUSH_B, NULL);
-                          yr_parser_emit(yyscanner, PUSH_A, NULL);
-                          yr_parser_emit(
-                              yyscanner,
-                              SUB,
-                              &compiler->loop_address);
+                          yr_parser_emit_with_arg(
+                              yyscanner, POP_M, mem_offset + 3, &addr);
+
+                          yr_parser_emit_with_arg(
+                              yyscanner, POP_M, mem_offset, NULL);
                         }
 
-                        compiler->loop_address++;
-                        compiler->loop_identifier = $3;
+                        compiler->loop_address[compiler->loop_depth] = addr;
+                        compiler->loop_identifier[compiler->loop_depth] = $3;
+                        compiler->loop_depth++;
                       }
                       '(' boolean_expression ')'
                       {
                         YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        int mem_offset;
+
+                        compiler->loop_depth--;
+                        mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
+
+                        yr_parser_emit_with_arg(
+                            yyscanner, ADD_M, mem_offset + 1, NULL);
+
+                        yr_parser_emit_with_arg(
+                            yyscanner, INCR_M, mem_offset + 2, NULL);
 
                         if ($6 == INTEGER_SET_ENUMERATION)
                         {
-                          yr_parser_emit(yyscanner, INCR_C, NULL);
-                          yr_parser_emit_with_arg(yyscanner, PUSH, 1, NULL);
-                          yr_parser_emit(yyscanner, INCR_B, NULL);
-                          yr_parser_emit(yyscanner, POP_A, NULL);
-
                           yr_parser_emit_with_arg_reloc(
                               yyscanner,
-                              JNUNDEF_A,
-                              PTR_TO_UINT64(compiler->loop_address),
+                              JNUNDEF,
+                              PTR_TO_UINT64(
+                                  compiler->loop_address[compiler->loop_depth]),
                               NULL);
                         }
                         else // INTEGER_SET_RANGE
                         {
-                          yr_parser_emit(yyscanner, INCR_C, NULL);
-                          yr_parser_emit_with_arg(yyscanner, PUSH, 1, NULL);
-                          yr_parser_emit(yyscanner, INCR_A, NULL);
+                          yr_parser_emit_with_arg(
+                              yyscanner, INCR_M, mem_offset, NULL);
+
+                          yr_parser_emit_with_arg(
+                              yyscanner, PUSH_M, mem_offset, NULL);
+
+                          yr_parser_emit_with_arg(
+                              yyscanner, PUSH_M, mem_offset + 3, NULL);
 
                           yr_parser_emit_with_arg_reloc(
                               yyscanner,
-                              JLE_A_B,
-                              PTR_TO_UINT64(compiler->loop_address),
+                              JLE,
+                              PTR_TO_UINT64(
+                                compiler->loop_address[compiler->loop_depth]),
                               NULL);
 
-                          yr_parser_emit(yyscanner, POP_B, NULL);
+                          yr_parser_emit(yyscanner, POP, NULL);
+                          yr_parser_emit(yyscanner, POP, NULL);                       
                         }
 
-                        yr_parser_emit(yyscanner, POP_A, NULL);
-                        yr_parser_emit(yyscanner, PNUNDEF_A_B, NULL);
-                        yr_parser_emit(yyscanner, PUSH_C, NULL);
+                        // Pop end-of-list marker.
+                        yr_parser_emit(yyscanner, POP, NULL);
+
+                        // At this point the loop quantifier (any, all, 1, 2,..)
+                        // is at the top of the stack. Check if the quantifier
+                        // is undefined (meaning "all") and replace it with the
+                        // iterations counter in that case. 
+                        yr_parser_emit_with_arg(
+                            yyscanner, SWAPUNDEF, mem_offset + 2, NULL);
+
+                        // Compare the loop quantifier with the number of 
+                        // expressions evaluating to TRUE.
+                        yr_parser_emit_with_arg(
+                            yyscanner, PUSH_M, mem_offset + 1, NULL);
+
                         yr_parser_emit(yyscanner, LE, NULL);
 
-                        compiler->loop_identifier = NULL;
-
+                        compiler->loop_identifier[compiler->loop_depth] = NULL;
                         yr_free($3);
                       }
                     | _FOR_ for_expression _OF_ string_set ':'
                       {
                         YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
+                        int result = ERROR_SUCCESS;
+                        int8_t* addr;
 
-                        yr_parser_emit(yyscanner, CLEAR_B, NULL);
-                        yr_parser_emit(yyscanner, CLEAR_C, NULL);
-                        yr_parser_emit(
-                            yyscanner,
-                            POP_A,
-                            &compiler->loop_address);
+                        if (compiler->loop_depth == MAX_LOOP_NESTING)
+                          compiler->last_result = \
+                            ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 
-                        compiler->loop_address++;
-                        compiler->inside_for++;
+                        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+                        yr_parser_emit_with_arg(
+                            yyscanner, CLEAR_M, mem_offset + 1, NULL);
+
+                        yr_parser_emit_with_arg(
+                            yyscanner, CLEAR_M, mem_offset + 2, NULL);
+
+                        // Pop the first string.
+                        yr_parser_emit_with_arg(
+                            yyscanner, POP_M, mem_offset, &addr);
+
+                        compiler->loop_address[compiler->loop_depth] = addr;
+                        compiler->loop_depth++;
                       }
                       '(' boolean_expression ')'
                       {
                         YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        int mem_offset;
 
-                        yr_parser_emit(yyscanner, INCR_C, NULL);
-                        yr_parser_emit_with_arg(yyscanner, PUSH, 1, NULL);
-                        yr_parser_emit(yyscanner, INCR_B, NULL);
-                        yr_parser_emit(yyscanner, POP_A, NULL);
+                        compiler->loop_depth--;
+                        mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
 
+                        // Increment counter by the value returned by the 
+                        // boolean expression (0 or 1).
+                        yr_parser_emit_with_arg(
+                            yyscanner, ADD_M, mem_offset + 1, NULL);
+
+                        // Increment iterations counter.
+                        yr_parser_emit_with_arg(
+                            yyscanner, INCR_M, mem_offset + 2, NULL);
+
+                        // If next string is not undefined, go back to the
+                        // begining of the loop.
                         yr_parser_emit_with_arg_reloc(
                             yyscanner,
-                            JNUNDEF_A,
-                            PTR_TO_UINT64(compiler->loop_address),
+                            JNUNDEF,
+                            PTR_TO_UINT64(
+                                compiler->loop_address[compiler->loop_depth]),
                             NULL);
 
-                        yr_parser_emit(yyscanner, POP_A, NULL);
-                        yr_parser_emit(yyscanner, PNUNDEF_A_B, NULL);
-                        yr_parser_emit(yyscanner, PUSH_C, NULL);
+                        // Pop end-of-list marker.
+                        yr_parser_emit(yyscanner, POP, NULL);
+
+                        // At this point the loop quantifier (any, all, 1, 2,..)
+                        // is at top of the stack. Check if the quantifier is
+                        // undefined (meaning "all") and replace it with the
+                        // iterations counter in that case. 
+                        yr_parser_emit_with_arg(
+                            yyscanner, SWAPUNDEF, mem_offset + 2, NULL);
+
+                        // Compare the loop quantifier with the number of 
+                        // expressions evaluating to TRUE.
+                        yr_parser_emit_with_arg(
+                            yyscanner, PUSH_M, mem_offset + 1, NULL);
+
                         yr_parser_emit(yyscanner, LE, NULL);
 
-                        compiler->inside_for--;
                       }
                     | for_expression _OF_ string_set
                       {
@@ -896,11 +987,17 @@ expression  : '(' expression ')'
               {
                 YARA_COMPILER* compiler = yyget_extra(yyscanner);
                 EXTERNAL_VARIABLE* external;
+                int var_index;
 
-                if (compiler->loop_identifier != NULL &&
-                    strcmp($1, compiler->loop_identifier) == 0)
+                var_index = yr_parser_lookup_loop_variable(yyscanner, $1);
+
+                if (var_index >= 0)
                 {
-                  yr_parser_emit(yyscanner, PUSH_A, NULL);
+                  yr_parser_emit_with_arg(
+                    yyscanner, 
+                    PUSH_M, 
+                    LOOP_LOCAL_VARS * var_index, 
+                    NULL);
                 }
                 else
                 {
