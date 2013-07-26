@@ -383,6 +383,7 @@ typedef struct _YARA_RULES_FILE_HEADER
 typedef struct _HASH_TABLE_ENTRY
 {
   char* key;
+  char* namespace;
   void* value;
   struct _HASH_TABLE_ENTRY* next;
 

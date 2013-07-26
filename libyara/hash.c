@@ -123,6 +123,8 @@ void yr_hash_table_destroy(
     while (entry != NULL)
     {
       next_entry = entry->next;
+      if (entry->namespace != NULL)
+        yr_free(entry->namespace);
       yr_free(entry->key);
       yr_free(entry);
       entry = next_entry;
@@ -152,8 +154,13 @@ void* yr_hash_table_lookup(
 
   while (entry != NULL)
   {
-    if (strcmp(entry->key, key) == 0)
+    if (strcmp(entry->key, key) == 0 &&
+        (entry->namespace == namespace || 
+         strcmp(entry->namespace, namespace) == 0))
+    {
       return entry->value;
+    }
+
     entry = entry->next;
   }
 
@@ -175,7 +182,6 @@ int yr_hash_table_add(
     return ERROR_INSUFICIENT_MEMORY;
 
   entry->key = yr_strdup(key);
-  entry->value = value;
 
   if (entry->key == NULL)
   {
@@ -183,6 +189,12 @@ int yr_hash_table_add(
     return ERROR_INSUFICIENT_MEMORY;
   }
 
+  if (namespace != NULL)
+    entry->namespace = yr_strdup(namespace);
+  else
+    entry->namespace = NULL;
+
+  entry->value = value;
   bucket_index = hash(0, key, strlen(key));
 
   if (namespace != NULL)
