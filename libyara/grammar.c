@@ -1836,7 +1836,7 @@ yyreduce:
           compiler = yyget_extra(yyscanner);
 
           memset(&null_string, 0xFF, sizeof(STRING));
-          null_string.flags = STRING_FLAGS_NULL;
+          null_string.g_flags = STRING_GFLAGS_NULL;
 
           yr_arena_write_data(
               compiler->strings_arena,
@@ -1861,12 +1861,12 @@ yyreduce:
 
   case 14:
 #line 256 "grammar.y"
-    { (yyval.integer) = RULE_FLAGS_PRIVATE; }
+    { (yyval.integer) = RULE_GFLAGS_PRIVATE; }
     break;
 
   case 15:
 #line 257 "grammar.y"
-    { (yyval.integer) = RULE_FLAGS_GLOBAL; }
+    { (yyval.integer) = RULE_GFLAGS_GLOBAL; }
     break;
 
   case 16:
@@ -2045,7 +2045,7 @@ yyreduce:
     {
                         (yyval.string) = yr_parser_reduce_string_declaration(
                             yyscanner,
-                            (yyvsp[(4) - (4)].integer) | STRING_FLAGS_REGEXP,
+                            (yyvsp[(4) - (4)].integer) | STRING_GFLAGS_REGEXP,
                             (yyvsp[(1) - (4)].c_string),
                             (yyvsp[(3) - (4)].sized_string));
 
@@ -2061,7 +2061,7 @@ yyreduce:
     {
                         (yyval.string) = yr_parser_reduce_string_declaration(
                             yyscanner,
-                            STRING_FLAGS_HEXADECIMAL,
+                            STRING_GFLAGS_HEXADECIMAL,
                             (yyvsp[(1) - (3)].c_string),
                             (yyvsp[(3) - (3)].sized_string));
 
@@ -2084,22 +2084,22 @@ yyreduce:
 
   case 33:
 #line 436 "grammar.y"
-    { (yyval.integer) = STRING_FLAGS_WIDE; }
+    { (yyval.integer) = STRING_GFLAGS_WIDE; }
     break;
 
   case 34:
 #line 437 "grammar.y"
-    { (yyval.integer) = STRING_FLAGS_ASCII; }
+    { (yyval.integer) = STRING_GFLAGS_ASCII; }
     break;
 
   case 35:
 #line 438 "grammar.y"
-    { (yyval.integer) = STRING_FLAGS_NO_CASE; }
+    { (yyval.integer) = STRING_GFLAGS_NO_CASE; }
     break;
 
   case 36:
 #line 439 "grammar.y"
-    { (yyval.integer) = STRING_FLAGS_FULL_WORD; }
+    { (yyval.integer) = STRING_GFLAGS_FULL_WORD; }
     break;
 
   case 38:

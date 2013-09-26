@@ -361,7 +361,7 @@ int yara_callback(
   {
     if (string->flags & STRING_FLAGS_FOUND)
     {
-      m = string->matches_list_head;
+      m = STRING_MATCHES(string).head;
 
       while (m != NULL)
       {

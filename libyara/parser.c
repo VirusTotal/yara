@@ -128,7 +128,7 @@ void yr_parser_emit_pushes_for_strings(
           PTR_TO_UINT64(string),
           NULL);
 
-      string->flags |= STRING_FLAGS_REFERENCED;
+      string->g_flags |= STRING_GFLAGS_REFERENCED;
     }
 
     string = yr_arena_next_address(
@@ -491,9 +491,9 @@ STRING* yr_parser_reduce_string_declaration(
   int min_token_length;
   char* file_name;
   char warning_message[512];
-
   STRING* string;
   YARA_COMPILER* compiler = yyget_extra(yyscanner);
+  int tidx = yr_get_tidx();
 
   compiler->last_result = yr_arena_allocate_struct(
       compiler->strings_arena,
@@ -516,10 +516,10 @@ STRING* yr_parser_reduce_string_declaration(
     return NULL;
 
   if (strcmp(identifier,"$") == 0)
-    flags |= STRING_FLAGS_ANONYMOUS;
+    flags |= STRING_GFLAGS_ANONYMOUS;
 
-  if (!(flags & STRING_FLAGS_WIDE))
-    flags |= STRING_FLAGS_ASCII;
+  if (!(flags & STRING_GFLAGS_WIDE))
+    flags |= STRING_GFLAGS_ASCII;
 
   // The STRING_FLAGS_SINGLE_MATCH flag indicates that finding
   // a single match for the string is enough. This is true in
@@ -527,16 +527,17 @@ STRING* yr_parser_reduce_string_declaration(
   // operators are used. All strings are marked STRING_FLAGS_SINGLE_MATCH
   // initially, and unmarked later if required.
 
-  flags |= STRING_FLAGS_SINGLE_MATCH;
+  flags |= STRING_GFLAGS_SINGLE_MATCH;
 
-  string->flags = flags;
+  string->g_flags = flags;
   string->mask = NULL;
   string->re.regexp = NULL;
   string->re.extra = NULL;
-  string->matches_list_head = NULL;
-  string->matches_list_tail = NULL;
+  string->matches[tidx].head = NULL;
+  string->matches[tidx].tail = NULL;
 
-  if (flags & STRING_FLAGS_HEXADECIMAL)
+
+  if (flags & STRING_GFLAGS_HEXADECIMAL)
   {
     compiler->last_result = yr_parser_new_hex_string(
         compiler,
@@ -547,12 +548,12 @@ STRING* yr_parser_reduce_string_declaration(
   }
   else
   {
-    if (flags & STRING_FLAGS_REGEXP)
+    if (flags & STRING_GFLAGS_REGEXP)
     {
       if (yr_regex_compile(
           &string->re,
           str->c_string,
-          flags & STRING_FLAGS_NO_CASE,
+          flags & STRING_GFLAGS_NO_CASE,
           compiler->last_error_extra_info,
           sizeof(compiler->last_error_extra_info),
           &error_offset) <= 0)
@@ -691,7 +692,7 @@ int yr_parser_reduce_rule_declaration(
   if (compiler->last_result != ERROR_SUCCESS)
     return compiler->last_result;
 
-  rule->flags = flags | compiler->current_rule_flags;
+  rule->g_flags = flags | compiler->current_rule_flags;
   rule->tags = tags;
   rule->strings = strings;
   rule->metas = metas;
@@ -736,7 +737,7 @@ int yr_parser_reduce_string_identifier(
 
         while(!STRING_IS_NULL(string))
         {
-          string->flags &= ~STRING_FLAGS_SINGLE_MATCH;
+          string->g_flags &= ~STRING_GFLAGS_SINGLE_MATCH;
           string = yr_arena_next_address(
               compiler->strings_arena,
               string,
@@ -762,11 +763,11 @@ int yr_parser_reduce_string_identifier(
           NULL);
 
       if (instruction != SFOUND)
-        string->flags &= ~STRING_FLAGS_SINGLE_MATCH;
+        string->g_flags &= ~STRING_GFLAGS_SINGLE_MATCH;
 
       yr_parser_emit(yyscanner, instruction, NULL);
 
-      string->flags |= STRING_FLAGS_REFERENCED;
+      string->g_flags |= STRING_GFLAGS_REFERENCED;
     }
   }
 

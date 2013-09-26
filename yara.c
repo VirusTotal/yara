@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007. Victor M. Alvarez [plusvic@gmail.com].
+Copyright (c) 2013. Victor M. Alvarez [plusvic@gmail.com].
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,8 +33,30 @@ limitations under the License.
 #include <string.h>
 #include <yara.h>
 
+#include "threading.h"
 #include "config.h"
 #include "REVISION"
+
+#define USAGE \
+"usage:  yara [OPTION]... RULES_FILE FILE | PID\n"\
+"options:\n"\
+"  -t <tag>                 only print rules tagged as <tag>.\n"\
+"  -i <identifier>          only print rules named <identifier>.\n"\
+"  -n                       only print not satisfied rules (negate).\n"\
+"  -g                       print tags.\n"\
+"  -m                       print metadata.\n"\
+"  -s                       print matching strings.\n"\
+"  -l <number>              abort scanning after matching a <number> rules.\n"\
+"  -a <seconds>             abort scanning after a number of seconds has elapsed.\n"\
+"  -d <identifier>=<value>  define external variable.\n"\
+"  -r                       recursively search directories.\n"\
+"  -v                       show version information.\n"
+
+#define EXTERNAL_TYPE_INTEGER   1
+#define EXTERNAL_TYPE_BOOLEAN   2
+#define EXTERNAL_TYPE_STRING    3
+
+#define ERROR_COULD_NOT_CREATE_THREAD  100
 
 #ifndef MAX_PATH
 #define MAX_PATH 255
@@ -44,18 +66,7 @@ limitations under the License.
 #define snprintf _snprintf
 #endif
 
-
-int recursive_search = FALSE;
-int show_tags = FALSE;
-int show_specified_tags = FALSE;
-int show_specified_rules = FALSE;
-int show_strings = FALSE;
-int show_meta = FALSE;
-int fast_scan = FALSE;
-int negate = FALSE;
-int count = 0;
-int limit = 0;
-int timeout = 0;
+#define MAX_QUEUED_FILES 64
 
 
 typedef struct _TAG
@@ -74,10 +85,6 @@ typedef struct _IDENTIFIER
 } IDENTIFIER;
 
 
-#define EXTERNAL_TYPE_INTEGER   1
-#define EXTERNAL_TYPE_BOOLEAN   2
-#define EXTERNAL_TYPE_STRING    3
-
 typedef struct _EXTERNAL
 {
   char type;
@@ -92,42 +99,118 @@ typedef struct _EXTERNAL
 } EXTERNAL;
 
 
+typedef struct _QUEUED_FILE {
+
+  char* path;
+  ARENA* output;
+
+} QUEUED_FILE;
+
+
+int recursive_search = FALSE;
+int show_tags = FALSE;
+int show_specified_tags = FALSE;
+int show_specified_rules = FALSE;
+int show_strings = FALSE;
+int show_meta = FALSE;
+int fast_scan = FALSE;
+int negate = FALSE;
+int count = 0;
+int limit = 0;
+int timeout = 0;
+int threads = 8;
+
+
 TAG* specified_tags_list = NULL;
 IDENTIFIER* specified_rules_list = NULL;
 EXTERNAL* externals_list = NULL;
 
-#define USAGE \
-"usage:  yara [OPTION]... RULES_FILE FILE | PID\n"\
-"options:\n"\
-"  -t <tag>                 only print rules tagged as <tag>.\n"\
-"  -i <identifier>          only print rules named <identifier>.\n"\
-"  -n                       only print not satisfied rules (negate).\n"\
-"  -g                       print tags.\n"\
-"  -m                       print metadata.\n"\
-"  -s                       print matching strings.\n"\
-"  -l <number>              abort scanning after matching a <number> rules.\n"\
-"  -a <seconds>             abort scanning after a number of seconds has elapsed.\n"\
-"  -d <identifier>=<value>  define external variable.\n"\
-"  -r                       recursively search directories.\n"\
-"  -v                       show version information.\n"
 
-void show_help()
+// file_queue is size-limited queue stored as a circular array, files are
+// removed from queue_head position and new files are added at queue_tail
+// position. The array has room for one extra element to avoid queue_head
+// being equal to queue_tail in a full queue. The only situation where 
+// queue_head == queue_tail is when queue is empty.
+
+QUEUED_FILE file_queue[MAX_QUEUED_FILES + 1];
+
+int queue_head;
+int queue_tail;
+
+SEMAPHORE used_slots;
+SEMAPHORE unused_slots;
+
+MUTEX queue_mutex;
+MUTEX output_mutex;
+
+
+void file_queue_init()
 {
-  printf(USAGE);
-  printf("\nReport bugs to: <%s>\n", PACKAGE_BUGREPORT);
+  queue_tail = 0;
+  queue_head = 0;
+
+  mutex_init(&queue_mutex);
+  semaphore_init(&used_slots, 0);
+  semaphore_init(&unused_slots, MAX_QUEUED_FILES);
 }
 
 
-int is_numeric(
-    const char *str)
+void file_queue_destroy()
 {
-  while(*str)
+  mutex_destroy(&queue_mutex);
+  semaphore_destroy(&unused_slots);
+  semaphore_destroy(&used_slots);
+}
+
+
+void file_queue_finish()
+{
+  int i;
+
+  for (i = 0; i < MAX_THREADS; i++)
+    semaphore_release(&used_slots);
+}
+
+
+void file_queue_put(
+    const char* file_path)
+{
+  semaphore_wait(&unused_slots);
+  mutex_lock(&queue_mutex);
+
+  file_queue[queue_tail].path = strdup(file_path);
+
+  //TODO: handle errors
+  yr_arena_create(&file_queue[queue_tail].output);
+
+  queue_tail = (queue_tail + 1) % (MAX_QUEUED_FILES + 1);
+
+  mutex_unlock(&queue_mutex);
+  semaphore_release(&used_slots);
+}
+
+
+char* file_queue_get()
+{
+  char* result;
+
+  semaphore_wait(&used_slots);
+  mutex_lock(&queue_mutex);
+
+  if (queue_head == queue_tail) // queue is empty
   {
-    if(!isdigit(*str++))
-      return 0;
+    result = NULL;
+  }
+  else
+  {
+    result = file_queue[queue_head].path;
+    queue_head = (queue_head + 1) % (MAX_QUEUED_FILES + 1);
   }
 
-  return 1;
+  mutex_unlock(&queue_mutex);
+  semaphore_release(&unused_slots);
+
+  return result;
 }
 
 
@@ -137,16 +220,12 @@ int is_directory(
     const char* path)
 {
   if (GetFileAttributes(path) & FILE_ATTRIBUTE_DIRECTORY)
-  {
     return TRUE;
-  }
   else
-  {
     return FALSE;
-  }
 }
 
-int scan_dir(
+void scan_dir(
     const char* dir,
     int recursive,
     YARA_RULES* rules,
@@ -157,8 +236,6 @@ int scan_dir(
 
   char full_path[MAX_PATH];
   static char path_and_mask[MAX_PATH];
-
-  int result = ERROR_SUCCESS;
 
   snprintf(path_and_mask, sizeof(path_and_mask), "%s\\*", dir);
 
@@ -173,28 +250,17 @@ int scan_dir(
 
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
-        result = yr_rules_scan_file(
-            rules,
-            full_path,
-            callback,
-            full_path,
-            fast_scan,
-            timeout);
+        file_queue_put(full_path);
       }
       else if (recursive && FindFileData.cFileName[0] != '.' )
       {
-        result = scan_dir(full_path, recursive, rules, callback);
+        scan_dir(full_path, recursive, rules, callback);
       }
-
-      if (result != ERROR_SUCCESS)
-        break;
 
     } while (FindNextFile(hFind, &FindFileData));
 
     FindClose(hFind);
   }
-
-  return result;
 }
 
 #else
@@ -205,14 +271,12 @@ int is_directory(
   struct stat st;
 
   if (stat(path,&st) == 0)
-  {
     return S_ISDIR(st.st_mode);
-  }
 
   return 0;
 }
 
-int scan_dir(
+void scan_dir(
     const char* dir,
     int recursive,
     YARA_RULES* rules,
@@ -222,8 +286,6 @@ int scan_dir(
   struct dirent *de;
   struct stat st;
   char full_path[MAX_PATH];
-
-  int result = ERROR_SUCCESS;
 
   dp = opendir(dir);
 
@@ -235,27 +297,21 @@ int scan_dir(
     {
       snprintf(full_path, sizeof(full_path), "%s/%s", dir, de->d_name);
 
-      int err = stat(full_path,&st);
+      int err = lstat(full_path, &st);
 
       if (err == 0)
       {
         if(S_ISREG(st.st_mode))
         {
-          result = yr_rules_scan_file(
-              rules,
-              full_path,
-              callback,
-              full_path,
-              fast_scan,
-              timeout);
+          file_queue_put(full_path);
         }
-        else if(recursive && S_ISDIR(st.st_mode) && de->d_name[0] != '.')
+        else if(recursive &&  
+                S_ISDIR(st.st_mode) &&
+                !S_ISLNK(st.st_mode) &&
+                de->d_name[0] != '.')
         {
-          result = scan_dir(full_path, recursive, rules, callback);
+          scan_dir(full_path, recursive, rules, callback);
         }
-
-        if (result != ERROR_SUCCESS)
-          break;
       }
 
       de = readdir(dp);
@@ -263,8 +319,6 @@ int scan_dir(
 
     closedir(dp);
   }
-
-  return result;
 }
 
 #endif
@@ -282,13 +336,9 @@ void print_string(
   for (i = 0; i < length; i++)
   {
     if (str[i] >= 32 && str[i] <= 126)
-    {
       printf("%c",str[i]);
-    }
     else
-    {
       printf("\\x%02x", str[i]);
-    }
 
     if (unicode) i++;
   }
@@ -303,15 +353,54 @@ void print_hex_string(
   unsigned int i;
 
   for (i = 0; i < length; i++)
-  {
     printf("%02X ", data[i]);
-  }
 
   printf("\n");
 }
 
 
-int callback(RULE* rule, void* data)
+void print_scanning_error(int error)
+{
+  switch (error)
+  {
+    case ERROR_SUCCESS:
+      break;
+    case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
+      fprintf(stderr, "can not attach to process (try running as root)\n");
+      break;
+    case ERROR_INSUFICIENT_MEMORY:
+      fprintf(stderr, "not enough memory\n");
+      break;
+    case ERROR_TIMEOUT:
+      fprintf(stderr, "scanning timed out\n");
+      break;
+    case ERROR_COULD_NOT_OPEN_FILE:
+      fprintf(stderr, "could not open file\n");
+      break;
+    case ERROR_ZERO_LENGTH_FILE:
+      fprintf(stderr, "zero length file\n");
+      break;
+    default:
+      fprintf(stderr, "internal error: %d\n", error);
+      break;
+  }
+}
+
+
+void print_compiler_error(
+    int error_level,
+    const char* file_name,
+    int line_number,
+    const char* message)
+{
+  if (error_level == YARA_ERROR_LEVEL_ERROR)
+    fprintf(stderr, "%s(%d): error: %s\n", file_name, line_number, message);
+  else
+    fprintf(stderr, "%s(%d): warning: %s\n", file_name, line_number, message);
+}
+
+
+int handle_message(int message, RULE* rule, void* data)
 {
   TAG* tag;
   IDENTIFIER* identifier;
@@ -321,7 +410,7 @@ int callback(RULE* rule, void* data)
 
   char* tag_name;
   size_t tag_length;
-  int rule_match;
+  int is_matching;
   int string_found;
   int show = TRUE;
 
@@ -368,12 +457,13 @@ int callback(RULE* rule, void* data)
     }
   }
 
-  rule_match = (rule->flags & RULE_FLAGS_MATCH);
+  is_matching = (message == CALLBACK_MSG_RULE_MATCHING);
 
-  show = show && ((!negate && rule_match) || (negate && !rule_match));
+  show = show && ((!negate && is_matching) || (negate && !is_matching));
 
   if (show)
   {
+    mutex_lock(&output_mutex);
     printf("%s ", rule->identifier);
 
     if (show_tags)
@@ -432,11 +522,11 @@ int callback(RULE* rule, void* data)
 
       while (!STRING_IS_NULL(string))
       {
-        string_found = string->flags & STRING_FLAGS_FOUND;
+        string_found = STRING_FOUND(string);
 
         if (string_found)
         {
-          match = string->matches_list_head;
+          match = STRING_MATCHES(string).head;
 
           while (match != NULL)
           {
@@ -462,15 +552,114 @@ int callback(RULE* rule, void* data)
         string++;
       }
     }
+
+    mutex_unlock(&output_mutex);
   }
 
-  if (rule_match)
+  if (is_matching)
     count++;
 
   if (limit != 0 && count >= limit)
     return CALLBACK_ABORT;
 
   return CALLBACK_CONTINUE;
+}
+
+
+int callback(int message, RULE* rule, void* data)
+{
+  switch(message)
+  {
+    case CALLBACK_MSG_RULE_MATCHING:
+    case CALLBACK_MSG_RULE_NOT_MATCHING:
+      return handle_message(message, rule, data);
+  }
+}
+
+#ifdef WIN32
+DWORD WINAPI ThreadProc(LPVOID param)
+#else
+void* scanning_thread(void* param)
+#endif
+{
+  YARA_RULES* rules = (YARA_RULES*) param;
+  char* file_path;
+  int result;
+
+  file_path = file_queue_get();
+
+  while (file_path != NULL) 
+  {
+    result = yr_rules_scan_file(
+        rules,
+        file_path,
+        callback,
+        file_path,
+        fast_scan,
+        timeout);
+
+    if (result != ERROR_SUCCESS)
+    {
+      mutex_lock(&output_mutex);
+      fprintf(stderr, "Error scanning %s: ", file_path);
+      print_scanning_error(result);
+      mutex_unlock(&output_mutex);
+    }
+
+    free(file_path);
+    file_path = file_queue_get();
+  }
+}
+
+
+void cleanup()
+{
+  IDENTIFIER* identifier;
+  IDENTIFIER* next_identifier;
+  TAG* tag;
+  TAG* next_tag;
+  EXTERNAL* external;
+  EXTERNAL* next_external;
+
+  tag = specified_tags_list;
+
+  while(tag != NULL)
+  {
+    next_tag = tag->next;
+    free(tag);
+    tag = next_tag;
+  }
+
+  external = externals_list;
+
+  while(external != NULL)
+  {
+    next_external = external->next;
+    free(external);
+    external = next_external;
+  }
+
+  identifier = specified_rules_list;
+
+  while(identifier != NULL)
+  {
+    next_identifier = identifier->next;
+    free(identifier);
+    identifier = next_identifier;
+  }
+}
+
+
+int is_numeric(
+    const char *str)
+{
+  while(*str)
+  {
+    if(!isdigit(*str++))
+      return 0;
+  }
+
+  return 1;
 }
 
 
@@ -602,12 +791,11 @@ int process_cmd_line(
         break;
 
       case '?':
-
         if (optopt == 't')
         {
           fprintf(stderr, "Option -%c requires an argument.\n", optopt);
         }
-        else if (isprint (optopt))
+        else if (isprint(optopt))
         {
           fprintf(stderr, "Unknown option `-%c'.\n", optopt);
         }
@@ -626,54 +814,11 @@ int process_cmd_line(
 
 }
 
-void report_error(
-    int error_level,
-    const char* file_name,
-    int line_number,
-    const char* message)
+
+void show_help()
 {
-  if (error_level == YARA_ERROR_LEVEL_ERROR)
-    fprintf(stderr, "%s(%d): error: %s\n", file_name, line_number, message);
-  else
-    fprintf(stderr, "%s(%d): warning: %s\n", file_name, line_number, message);
-}
-
-
-void cleanup()
-{
-  IDENTIFIER* identifier;
-  IDENTIFIER* next_identifier;
-  TAG* tag;
-  TAG* next_tag;
-  EXTERNAL* external;
-  EXTERNAL* next_external;
-
-  tag = specified_tags_list;
-
-  while(tag != NULL)
-  {
-    next_tag = tag->next;
-    free(tag);
-    tag = next_tag;
-  }
-
-  external = externals_list;
-
-  while(external != NULL)
-  {
-    next_external = external->next;
-    free(external);
-    external = next_external;
-  }
-
-  identifier = specified_rules_list;
-
-  while(identifier != NULL)
-  {
-    next_identifier = identifier->next;
-    free(identifier);
-    identifier = next_identifier;
-  }
+  printf(USAGE);
+  printf("\nReport bugs to: <%s>\n", PACKAGE_BUGREPORT);
 }
 
 
@@ -687,9 +832,11 @@ int main(
   EXTERNAL* external;
 
   int pid;
+  int i;
   int errors;
   int result;
 
+  THREAD thread[MAX_THREADS];
   clock_t start, end;
 
   if (!process_cmd_line(argc, argv))
@@ -770,7 +917,7 @@ int main(
       external = external->next;
     }
 
-    compiler->error_report_function = report_error;
+    compiler->error_report_function = print_compiler_error;
     rule_file = fopen(argv[optind], "r");
 
     if (rule_file != NULL)
@@ -799,6 +946,8 @@ int main(
     }
   }
 
+  mutex_init(&output_mutex);
+
   if (is_numeric(argv[argc - 1]))
   {
     pid = atoi(argv[argc - 1]);
@@ -809,14 +958,33 @@ int main(
         (void*) argv[argc - 1],
         fast_scan,
         timeout);
+
+    if (result != ERROR_SUCCESS)
+      print_scanning_error(result);
   }
   else if (is_directory(argv[argc - 1]))
-  {
-    result = scan_dir(
+  {   
+    file_queue_init();
+    
+    for (i = 0; i < threads; i++)
+    {
+      if (create_thread(&thread[i], scanning_thread, (void*) rules) != 0)
+        return ERROR_COULD_NOT_CREATE_THREAD;
+    }
+
+    scan_dir(
         argv[argc - 1],
         recursive_search,
         rules,
         callback);
+
+    file_queue_finish();
+
+    // Wait for scan threads to finish
+    for (i = 0; i < threads; i++)
+      thread_join(&thread[i]);
+
+    file_queue_destroy();
   }
   else
   {
@@ -832,32 +1000,21 @@ int main(
 
     end = clock();
 
-    printf( "Scanning time: %f s\n", (float)(end - start) / CLOCKS_PER_SEC);
-  }
-
-  switch (result)
-  {
-    case ERROR_SUCCESS:
-      break;
-    case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
-      fprintf(stderr, "can not attach to process (try running as root)\n");
-      break;
-    case ERROR_INSUFICIENT_MEMORY:
-      fprintf(stderr, "not enough memory\n");
-      break;
-    case ERROR_TIMEOUT:
-      fprintf(stderr, "scanning timed out\n");
-      break;
-    case ERROR_COULD_NOT_OPEN_FILE:
-      fprintf(stderr, "could not open file\n");
-      break;
-    default:
-      fprintf(stderr, "internal error: %d\n", result);
-      break;
+    if (result != ERROR_SUCCESS)
+    {
+      fprintf(stderr, "Error scanning %s: ", argv[argc - 1]);
+      print_scanning_error(result);
+    }
+    else
+    {
+      printf( "Scanning time: %f s\n", (float)(end - start) / CLOCKS_PER_SEC);
+    }
   }
 
   yr_rules_destroy(rules);
   yr_finalize();
+
+  mutex_destroy(&output_mutex);
   cleanup();
 
   return 1;

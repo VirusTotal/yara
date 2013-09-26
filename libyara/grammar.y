@@ -230,7 +230,7 @@ strings : /* empty */
           compiler = yyget_extra(yyscanner);
 
           memset(&null_string, 0xFF, sizeof(STRING));
-          null_string.flags = STRING_FLAGS_NULL;
+          null_string.g_flags = STRING_GFLAGS_NULL;
 
           yr_arena_write_data(
               compiler->strings_arena,
@@ -253,8 +253,8 @@ rule_modifiers : /* empty */                      { $$ = 0;  }
                ;
 
 
-rule_modifier : _PRIVATE_       { $$ = RULE_FLAGS_PRIVATE; }
-              | _GLOBAL_        { $$ = RULE_FLAGS_GLOBAL; }
+rule_modifier : _PRIVATE_       { $$ = RULE_GFLAGS_PRIVATE; }
+              | _GLOBAL_        { $$ = RULE_GFLAGS_GLOBAL; }
               ;
 
 
@@ -403,7 +403,7 @@ string_declaration  : _STRING_IDENTIFIER_ '=' _TEXTSTRING_ string_modifiers
                       {
                         $$ = yr_parser_reduce_string_declaration(
                             yyscanner,
-                            $4 | STRING_FLAGS_REGEXP,
+                            $4 | STRING_GFLAGS_REGEXP,
                             $1,
                             $3);
 
@@ -416,7 +416,7 @@ string_declaration  : _STRING_IDENTIFIER_ '=' _TEXTSTRING_ string_modifiers
                       {
                         $$ = yr_parser_reduce_string_declaration(
                             yyscanner,
-                            STRING_FLAGS_HEXADECIMAL,
+                            STRING_GFLAGS_HEXADECIMAL,
                             $1,
                             $3);
 
@@ -433,10 +433,10 @@ string_modifiers : /* empty */                              { $$ = 0;  }
                  ;
 
 
-string_modifier : _WIDE_        { $$ = STRING_FLAGS_WIDE; }
-                | _ASCII_       { $$ = STRING_FLAGS_ASCII; }
-                | _NOCASE_      { $$ = STRING_FLAGS_NO_CASE; }
-                | _FULLWORD_    { $$ = STRING_FLAGS_FULL_WORD; }
+string_modifier : _WIDE_        { $$ = STRING_GFLAGS_WIDE; }
+                | _ASCII_       { $$ = STRING_GFLAGS_ASCII; }
+                | _NOCASE_      { $$ = STRING_GFLAGS_NO_CASE; }
+                | _FULLWORD_    { $$ = STRING_GFLAGS_FULL_WORD; }
                 ;
 
 

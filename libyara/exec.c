@@ -89,6 +89,7 @@ int yr_execute_code(
   int found;
   int count;
   int result;
+  int tidx = yr_get_tidx();
 
   while(1)
   {
@@ -295,7 +296,7 @@ int yr_execute_code(
       case RULE_PUSH:
         rule = *(RULE**)(ip + 1);
         ip += sizeof(uint64_t);
-        push(rule->flags & RULE_FLAGS_MATCH ? 1 : 0);
+        push(rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0);
         break;
 
       case RULE_POP:
@@ -303,7 +304,7 @@ int yr_execute_code(
         rule = *(RULE**)(ip + 1);
         ip += sizeof(uint64_t);
         if (r1)
-          rule->flags |= RULE_FLAGS_MATCH;
+          rule->t_flags[tidx] |= RULE_TFLAGS_MATCH;
         break;
 
       case EXT_INT:
@@ -331,7 +332,7 @@ int yr_execute_code(
       case SFOUND:
         pop(r1);
         string = UINT64_TO_PTR(STRING*, r1);
-        push(string->flags & STRING_FLAGS_FOUND ? 1 : 0);
+        push(string->matches[tidx].tail != NULL ? 1 : 0);
         break;
 
       case SFOUND_AT:
@@ -345,7 +346,7 @@ int yr_execute_code(
         }
 
         string = UINT64_TO_PTR(STRING*, r2);
-        match = string->matches_list_head;
+        match = string->matches[tidx].head;
         found = 0;
 
         while (match != NULL)
@@ -380,7 +381,7 @@ int yr_execute_code(
         }
 
         string = UINT64_TO_PTR(STRING*, r3);
-        match = string->matches_list_head;
+        match = string->matches[tidx].head;
         found = FALSE;
 
         while (match != NULL && !found)
@@ -407,7 +408,7 @@ int yr_execute_code(
       case SCOUNT:
         pop(r1);
         string = UINT64_TO_PTR(STRING*, r1);
-        match = string->matches_list_head;
+        match = string->matches[tidx].head;
         found = 0;
         while (match != NULL)
         {
@@ -428,7 +429,7 @@ int yr_execute_code(
         }
 
         string = UINT64_TO_PTR(STRING*, r2);
-        match = string->matches_list_head;
+        match = string->matches[tidx].head;
         i = 1;
         found = FALSE;
 
@@ -458,7 +459,7 @@ int yr_execute_code(
         while (r1 != UNDEFINED)
         {
           string = UINT64_TO_PTR(STRING*, r1);
-          if (string->flags & STRING_FLAGS_FOUND)
+          if (string->matches[tidx].tail != NULL)
             found++;
           count++;
           pop(r1);

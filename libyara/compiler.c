@@ -296,7 +296,10 @@ int _yr_compiler_set_namespace(
       return result;
 
     ns->name = ns_name;
-    ns->flags = 0;
+
+    for (i = 0; i < MAX_THREADS; i++)
+      ns->t_flags[i] = 0;
+
     compiler->namespaces_count++;
   }
 
@@ -351,7 +354,7 @@ int _yr_compiler_compile_rules(
 
   // Write a null rule indicating the end.
   memset(&null_rule, 0xFA, sizeof(RULE));
-  null_rule.flags = RULE_FLAGS_NULL;
+  null_rule.g_flags = RULE_GFLAGS_NULL;
 
   yr_arena_write_data(
       compiler->rules_arena,
@@ -508,7 +511,13 @@ int yr_compiler_get_rules(
     yara_rules->externals_list_head = rules_file_header->externals_list_head;
     yara_rules->automaton = rules_file_header->automaton;
     yara_rules->code_start = rules_file_header->code_start;
-    yara_rules->matches_arena = NULL;
+    yara_rules->threads_count = 0;
+
+    #if WIN32
+    yara_rules->mutex = CreateMutex(NULL, FALSE, NULL);
+    #else
+    pthread_mutex_init(&yara_rules->mutex, NULL);
+    #endif
 
     *rules = yara_rules;
   }

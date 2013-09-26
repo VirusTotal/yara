@@ -22,6 +22,10 @@ limitations under the License.
 
 #ifdef WIN32
 #include <windows.h>
+typedef HANDLE mutex_t;
+#else
+#include <pthread.h>
+typedef pthread_mutex_t mutex_t;
 #endif
 
 #ifdef _MSC_VER
@@ -81,10 +85,22 @@ limitations under the License.
 #define ERROR_TIMEOUT                           35
 #define ERROR_LOOP_NESTING_LIMIT_EXCEEDED       36
 #define ERROR_DUPLICATE_LOOP_IDENTIFIER         37
+#define ERROR_TOO_MANY_THREADS                  38
+
+
+#define CALLBACK_MSG_RULE_MATCHING            1
+#define CALLBACK_MSG_RULE_NOT_MATCHING        2
+#define CALLBACK_MSG_SCAN_FINISHED            3
+
+#define CALLBACK_CONTINUE  0
+#define CALLBACK_ABORT     1
+#define CALLBACK_ERROR     2
+
 
 #define LOOP_LOCAL_VARS 4
 #define MAX_LOOP_NESTING 4
 #define MAX_INCLUDE_DEPTH 16
+#define MAX_THREADS 32
 #define LEX_BUF_SIZE  1024
 
 #ifndef MAX_PATH
@@ -131,53 +147,82 @@ limitations under the License.
 #define EXTERNAL_VARIABLE_IS_NULL(x) \
     ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : TRUE)
 
-#define CALLBACK_CONTINUE  0
-#define CALLBACK_ABORT     1
-#define CALLBACK_ERROR     2
 
-#define STRING_FLAGS_FOUND          0x01
-#define STRING_FLAGS_REFERENCED     0x02
-#define STRING_FLAGS_HEXADECIMAL    0x04
-#define STRING_FLAGS_NO_CASE        0x08
-#define STRING_FLAGS_ASCII          0x10
-#define STRING_FLAGS_WIDE           0x20
-#define STRING_FLAGS_REGEXP         0x40
-#define STRING_FLAGS_FULL_WORD      0x80
-#define STRING_FLAGS_ANONYMOUS      0x100
-#define STRING_FLAGS_SINGLE_MATCH   0x200
-#define STRING_FLAGS_NULL           0x1000
+#define STRING_TFLAGS_FOUND          0x01
+
+#define STRING_GFLAGS_REFERENCED     0x01
+#define STRING_GFLAGS_HEXADECIMAL    0x02
+#define STRING_GFLAGS_NO_CASE        0x04
+#define STRING_GFLAGS_ASCII          0x08
+#define STRING_GFLAGS_WIDE           0x10
+#define STRING_GFLAGS_REGEXP         0x20
+#define STRING_GFLAGS_FULL_WORD      0x40
+#define STRING_GFLAGS_ANONYMOUS      0x80
+#define STRING_GFLAGS_SINGLE_MATCH   0x100
+#define STRING_GFLAGS_NULL           0x1000
 
 #define STRING_IS_HEX(x) \
-    (((x)->flags) & STRING_FLAGS_HEXADECIMAL)
-#define STRING_IS_NO_CASE(x) \
-    (((x)->flags) & STRING_FLAGS_NO_CASE)
-#define STRING_IS_ASCII(x) \
-    (((x)->flags) & STRING_FLAGS_ASCII)
-#define STRING_IS_WIDE(x) \
-    (((x)->flags) & STRING_FLAGS_WIDE)
-#define STRING_IS_REGEXP(x) \
-    (((x)->flags) & STRING_FLAGS_REGEXP)
-#define STRING_IS_FULL_WORD(x) \
-    (((x)->flags) & STRING_FLAGS_FULL_WORD)
-#define STRING_IS_ANONYMOUS(x) \
-    (((x)->flags) & STRING_FLAGS_ANONYMOUS)
-#define STRING_IS_REFERENCED(x) \
-    (((x)->flags) & STRING_FLAGS_REFERENCED)
-#define STRING_IS_NULL(x) \
-    ((x) == NULL || ((x)->flags) & STRING_FLAGS_NULL)
+    (((x)->g_flags) & STRING_GFLAGS_HEXADECIMAL)
 
-#define RULE_FLAGS_MATCH                0x01
-#define RULE_FLAGS_PRIVATE              0x02
-#define RULE_FLAGS_GLOBAL               0x04
-#define RULE_FLAGS_REQUIRE_EXECUTABLE   0x08
-#define RULE_FLAGS_REQUIRE_FILE         0x10
-#define RULE_FLAGS_NULL                 0x1000
+#define STRING_IS_NO_CASE(x) \
+    (((x)->g_flags) & STRING_GFLAGS_NO_CASE)
+
+#define STRING_IS_ASCII(x) \
+    (((x)->g_flags) & STRING_GFLAGS_ASCII)
+
+#define STRING_IS_WIDE(x) \
+    (((x)->g_flags) & STRING_GFLAGS_WIDE)
+
+#define STRING_IS_REGEXP(x) \
+    (((x)->g_flags) & STRING_GFLAGS_REGEXP)
+
+#define STRING_IS_FULL_WORD(x) \
+    (((x)->g_flags) & STRING_GFLAGS_FULL_WORD)
+
+#define STRING_IS_ANONYMOUS(x) \
+    (((x)->g_flags) & STRING_GFLAGS_ANONYMOUS)
+
+#define STRING_IS_REFERENCED(x) \
+    (((x)->g_flags) & STRING_GFLAGS_REFERENCED)
+
+#define STRING_IS_SINGLE_MATCH(x) \
+    (((x)->g_flags) & STRING_GFLAGS_SINGLE_MATCH)
+
+#define STRING_IS_NULL(x) \
+    ((x) == NULL || ((x)->g_flags) & STRING_GFLAGS_NULL)
+
+#define STRING_FOUND(x) \
+    ((x)->matches[yr_get_tidx()].tail != NULL)
+
+
+#define RULE_TFLAGS_MATCH                0x01
+
+#define RULE_GFLAGS_PRIVATE              0x01
+#define RULE_GFLAGS_GLOBAL               0x02
+#define RULE_GFLAGS_REQUIRE_EXECUTABLE   0x04
+#define RULE_GFLAGS_REQUIRE_FILE         0x08
+#define RULE_GFLAGS_NULL                 0x1000
+
+#define RULE_IS_PRIVATE(x) \
+    (((x)->g_flags) & RULE_GFLAGS_PRIVATE)
+
+#define RULE_IS_GLOBAL(x) \
+    (((x)->g_flags) & RULE_GFLAGS_GLOBAL)
 
 #define RULE_IS_NULL(x) \
-    (((x)->flags) & RULE_FLAGS_NULL)
+    (((x)->g_flags) & RULE_GFLAGS_NULL)
+
+#define RULE_MATCHES(x) \
+    ((x)->t_flags[yr_get_tidx()] & RULE_TFLAGS_MATCH)
 
 
-#define NAMESPACE_FLAGS_UNSATISFIED_GLOBAL      0x01
+
+#define NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL      0x01
+
+#define NAMESPACE_HAS_UNSATISFIED_GLOBAL(x) \
+    ((x)->t_flags[yr_get_tidx()] & NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL)
+
+
 
 #define MAX_ARENA_PAGES 32
 
@@ -190,6 +235,8 @@ limitations under the License.
 #define UINT64_TO_PTR(type, x)  ((type)(size_t) x)
 
 #define PTR_TO_UINT64(x)  ((uint64_t) (size_t) x)
+
+#define STRING_MATCHES(x) (x->matches[yr_get_tidx()])
 
 
 typedef struct _RELOC
@@ -251,7 +298,7 @@ typedef struct _MATCH
 
 typedef struct _NAMESPACE
 {
-  int32_t flags;
+  int32_t t_flags[MAX_THREADS];     // Thread-specific flags
   DECLARE_REFERENCE(char*, name);
 
 } NAMESPACE;
@@ -270,23 +317,27 @@ typedef struct _META
 
 typedef struct _STRING
 {
-  int32_t flags;
+  int32_t g_flags;
   int32_t length;
+
+  REGEXP re;
 
   DECLARE_REFERENCE(char*, identifier);
   DECLARE_REFERENCE(uint8_t*, string);
   DECLARE_REFERENCE(uint8_t*, mask);
-  DECLARE_REFERENCE(MATCH*, matches_list_head);
-  DECLARE_REFERENCE(MATCH*, matches_list_tail);
 
-  REGEXP re;
+  struct {
+    DECLARE_REFERENCE(MATCH*, head);
+    DECLARE_REFERENCE(MATCH*, tail);
+  } matches[MAX_THREADS];
 
 } STRING;
 
 
 typedef struct _RULE
 {
-  int32_t flags;
+  int32_t g_flags;               // Global flags
+  int32_t t_flags[MAX_THREADS];  // Thread-specific flags
 
   DECLARE_REFERENCE(char*, identifier);
   DECLARE_REFERENCE(char*, tags);
@@ -409,6 +460,7 @@ typedef void (*YARAREPORT)(
 
 
 typedef int (*YARACALLBACK)(
+    int message,
     RULE* rule,
     void* data);
 
@@ -478,14 +530,13 @@ typedef struct _MEMORY_BLOCK
 
 typedef struct _YARA_RULES {
 
+  int                  threads_count;
   ARENA*               arena;
-  ARENA*               matches_arena;
   RULE*                rules_list_head;
   EXTERNAL_VARIABLE*   externals_list_head;
   AC_AUTOMATON*        automaton;
   int8_t*              code_start;
-  int                  last_error;
-  char                 last_error_extra_info[256];
+  mutex_t              mutex;
 
 } YARA_RULES;
 
@@ -500,6 +551,9 @@ void yr_initialize(void);
 
 
 void yr_finalize(void);
+
+
+int yr_get_tidx(void);
 
 
 int yr_compiler_create(

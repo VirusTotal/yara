@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <assert.h>
 #include <string.h>
 #include <time.h>
 
@@ -417,18 +418,19 @@ inline int _yr_scan_verify_string_match(
 
 
 int _yr_scan_verify_match(
-    YARA_RULES* rules,
     AC_MATCH* ac_match,
     uint8_t* data,
     size_t data_size,
-    size_t string_offset)
+    size_t string_offset,
+    ARENA* matches_arena)
 {
   MATCH* match;
   STRING* string;
 
-  int result;
   int32_t match_length;
-
+  int result;
+  int tidx;
+  
   match_length = _yr_scan_verify_string_match(
       ac_match->string,
       data + string_offset,
@@ -438,17 +440,17 @@ int _yr_scan_verify_match(
   if (match_length > 0)
   {
     string = ac_match->string;
-    string->flags |= STRING_FLAGS_FOUND;
+    tidx = yr_get_tidx();
 
-    if (string->matches_list_tail != NULL &&
-        string->matches_list_tail->last_offset == string_offset - 1)
+    if (string->matches[tidx].tail != NULL &&
+        string->matches[tidx].tail->last_offset == string_offset - 1)
     {
-      string->matches_list_tail->last_offset = string_offset;
+      string->matches[tidx].tail->last_offset = string_offset;
     }
     else
     {
       result = yr_arena_allocate_memory(
-          rules->matches_arena,
+          matches_arena,
           sizeof(MATCH),
           (void**) &match);
 
@@ -461,7 +463,7 @@ int _yr_scan_verify_match(
       match->next = NULL;
 
       result = yr_arena_write_data(
-          rules->matches_arena,
+          matches_arena,
           data + string_offset,
           match_length,
           (void**) &match->data);
@@ -469,17 +471,31 @@ int _yr_scan_verify_match(
       if (result != ERROR_SUCCESS)
         return result;
 
-      if (string->matches_list_head == NULL)
-        string->matches_list_head = match;
+      if (string->matches[tidx].head == NULL)
+        string->matches[tidx].head = match;
 
-      if (string->matches_list_tail != NULL)
-        string->matches_list_tail->next = match;
+      if (string->matches[tidx].tail != NULL)
+        string->matches[tidx].tail->next = match;
 
-      string->matches_list_tail = match;
+      string->matches[tidx].tail = match;
     }
   }
 
   return ERROR_SUCCESS;
+}
+
+
+void _yr_rules_lock(
+    YARA_RULES* rules)
+{
+  pthread_mutex_lock(&rules->mutex);
+}
+
+
+void _yr_rules_unlock(
+    YARA_RULES* rules)
+{
+  pthread_mutex_unlock(&rules->mutex);
 }
 
 
@@ -556,34 +572,32 @@ int yr_rules_define_string_variable(
 }
 
 
-void yr_rules_free_matches(
+void _yr_rules_clean_matches(
     YARA_RULES* rules)
 {
   RULE* rule;
   STRING* string;
   MATCH* match;
   MATCH* next_match;
+  
+  int tidx = yr_get_tidx();
 
   rule = rules->rules_list_head;
 
   while (!RULE_IS_NULL(rule))
   {
-    rule->flags &= ~RULE_FLAGS_MATCH;
+    rule->t_flags[tidx] &= ~RULE_TFLAGS_MATCH;
     string = rule->strings;
 
     while (!STRING_IS_NULL(string))
     {
-      string->flags &= ~STRING_FLAGS_FOUND;
-      string->matches_list_head = NULL;
-      string->matches_list_tail = NULL;
+      string->matches[tidx].head = NULL;
+      string->matches[tidx].tail = NULL;
       string++;
     }
 
     rule++;
   }
-
-  if (rules->matches_arena != NULL)
-    yr_arena_destroy(rules->matches_arena);
 }
 
 
@@ -593,7 +607,8 @@ int yr_rules_scan_mem_block(
     size_t data_size,
     int fast_scan_mode,
     int timeout,
-    time_t start_time)
+    time_t start_time,
+    ARENA* matches_arena)
 {
 
   AC_STATE* next_state;
@@ -604,6 +619,7 @@ int yr_rules_scan_mem_block(
   size_t i;
 
   int result;
+  int tidx = yr_get_tidx();
 
   current_state = rules->automaton->root;
   i = 0;
@@ -617,15 +633,15 @@ int yr_rules_scan_mem_block(
       if (i >= ac_match->backtrack)
       {
         if (!(fast_scan_mode &&
-              ac_match->string->flags & STRING_FLAGS_FOUND &&
-              ac_match->string->flags & STRING_FLAGS_SINGLE_MATCH))
+              ac_match->string->matches[tidx].tail != NULL &&
+              STRING_IS_SINGLE_MATCH(ac_match->string)))
         {
           result = _yr_scan_verify_match(
-              rules,
               ac_match,
               data,
               data_size,
-              i - ac_match->backtrack);
+              i - ac_match->backtrack,
+              matches_arena);
 
           if (result != ERROR_SUCCESS)
             return result;
@@ -662,11 +678,11 @@ int yr_rules_scan_mem_block(
   while (ac_match != NULL)
   {
     result = _yr_scan_verify_match(
-        rules,
         ac_match,
         data,
         data_size,
-        data_size - ac_match->backtrack);
+        data_size - ac_match->backtrack,
+        matches_arena);
 
     if (result != ERROR_SUCCESS)
       return result;
@@ -689,22 +705,43 @@ int yr_rules_scan_mem_blocks(
 {
   RULE* rule;
   EVALUATION_CONTEXT context;
+  ARENA* matches_arena = NULL;
 
   time_t start_time;
 
-  char message[512];
-  int result;
+  int message;
+  int tidx;
+  int result = ERROR_SUCCESS;
 
   context.file_size = block->size;
   context.mem_block = block;
   context.entry_point = UNDEFINED;
 
-  yr_rules_free_matches(rules);
+  tidx = yr_get_tidx();
 
-  result = yr_arena_create(&rules->matches_arena);
+  if (tidx == -1) 
+  {
+    _yr_rules_lock(rules);
+
+    tidx = rules->threads_count;
+
+    if (tidx < MAX_THREADS)
+      rules->threads_count++;
+    else
+      result = ERROR_TOO_MANY_THREADS;
+    
+    _yr_rules_unlock(rules);
+
+    if (result != ERROR_SUCCESS)
+      return result;
+
+    yr_set_tidx(tidx);
+  }
+
+  result = yr_arena_create(&matches_arena);
 
   if (result != ERROR_SUCCESS)
-    return result;
+    goto _exit;
 
   start_time = time(NULL);
 
@@ -729,10 +766,11 @@ int yr_rules_scan_mem_blocks(
         block->size,
         fast_scan_mode,
         timeout,
-        start_time);
+        start_time,
+        matches_arena);
 
     if (result != ERROR_SUCCESS)
-      return result;
+      goto _exit;
 
     block = block->next;
   }
@@ -740,16 +778,15 @@ int yr_rules_scan_mem_blocks(
   result = yr_execute_code(rules, &context);
 
   if (result != ERROR_SUCCESS)
-      return result;
+    goto _exit;
 
   rule = rules->rules_list_head;
 
   while (!RULE_IS_NULL(rule))
   {
-    if (rule->flags & RULE_FLAGS_GLOBAL &&
-        !(rule->flags & RULE_FLAGS_MATCH))
+    if (RULE_IS_GLOBAL(rule) && !(rule->t_flags[tidx] & RULE_TFLAGS_MATCH))
     {
-      rule->namespace->flags |= NAMESPACE_FLAGS_UNSATISFIED_GLOBAL;
+      rule->namespace->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
     }
 
     rule++;
@@ -759,23 +796,42 @@ int yr_rules_scan_mem_blocks(
 
   while (!RULE_IS_NULL(rule))
   {
-    if (rule->flags & RULE_FLAGS_MATCH &&
-        !(rule->flags & RULE_FLAGS_PRIVATE) &&
-        !(rule->namespace->flags & NAMESPACE_FLAGS_UNSATISFIED_GLOBAL))
+    if (rule->t_flags[tidx] & RULE_TFLAGS_MATCH &&
+        !(rule->namespace->t_flags[tidx] & NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL))
     {
-      switch (callback(rule, user_data))
+      message = CALLBACK_MSG_RULE_MATCHING;
+    }
+    else
+    {
+      message = CALLBACK_MSG_RULE_NOT_MATCHING;
+    }
+
+    if (!RULE_IS_PRIVATE(rule))
+    {
+      switch (callback(message, rule, user_data))
       {
         case CALLBACK_ABORT:
-          return ERROR_SUCCESS;
+          result = ERROR_SUCCESS;
+          goto _exit;
 
         case CALLBACK_ERROR:
-          return ERROR_CALLBACK_ERROR;
+          result = ERROR_CALLBACK_ERROR;
+          goto _exit;
       }
     }
+
     rule++;
   }
 
-  return ERROR_SUCCESS;
+  callback(CALLBACK_MSG_SCAN_FINISHED, NULL, user_data);
+
+_exit:
+  _yr_rules_clean_matches(rules);
+
+  if (matches_arena != NULL)
+    yr_arena_destroy(matches_arena);
+
+  return result;
 }
 
 
@@ -883,6 +939,7 @@ int yr_rules_save(
     YARA_RULES* rules,
     const char* filename)
 {
+  assert(rules->threads_count == 0);
   return yr_arena_save(rules->arena, filename);
 }
 
@@ -917,7 +974,13 @@ int yr_rules_load(
   new_rules->code_start = header->code_start;
   new_rules->externals_list_head = header->externals_list_head;
   new_rules->rules_list_head = header->rules_list_head;
-  new_rules->matches_arena = NULL;
+  new_rules->threads_count = 0;
+
+  #if WIN32
+  new_rules->mutex = CreateMutex(NULL, FALSE, NULL);
+  #else
+  pthread_mutex_init(&new_rules->mutex, NULL);
+  #endif
 
   rule = new_rules->rules_list_head;
 
@@ -964,7 +1027,6 @@ int yr_rules_destroy(
     external++;
   }
 
-  yr_rules_free_matches(rules);
   yr_arena_destroy(rules->arena);
   yr_free(rules);
 

@@ -4,12 +4,12 @@ AM_CFLAGS=-g -O3
 SUBDIRS = libyara
 DIST_SUBDIRS = libyara
 
-AM_CPPFLAGS = -I$(srcdir)/libyara -g -O0
+AM_CPPFLAGS = -I$(srcdir)/libyara -g -O3
 ACLOCAL_AMFLAGS=-I m4
 
 bin_PROGRAMS = yara yarac
 
-yara_SOURCES = yara.c
+yara_SOURCES = threading.c yara.c
 yara_LDADD = libyara/.libs/libyara.a
 
 yarac_SOURCES = yarac.c
