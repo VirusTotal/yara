@@ -19,11 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\threading.c" />
     <ClCompile Include="..\..\yara.c" />
     <ClCompile Include="getopt.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\libyara\yara.h" />
+    <ClInclude Include="..\..\threading.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E203D7BB-29B9-4152-9208-BB410983CE8C}</ProjectGuid>

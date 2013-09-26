@@ -17,7 +17,7 @@ limitations under the License.
 #include "threading.h"
 
 
-int mutex_init(
+void mutex_init(
     MUTEX* mutex)
 {
   #ifdef WIN32

@@ -31,7 +31,7 @@ typedef HANDLE SEMAPHORE;
 typedef HANDLE MUTEX;
 typedef HANDLE THREAD;
 
-typedef THREAD_START_ROUTINE LPTHREAD_START_ROUTINE;
+typedef LPTHREAD_START_ROUTINE THREAD_START_ROUTINE;
 
 #else
 
@@ -42,7 +42,10 @@ typedef void *(*THREAD_START_ROUTINE) (void *);
 
 #endif
 
-int mutex_init(
+void mutex_init(
+    MUTEX* mutex);
+
+void mutex_destroy(
     MUTEX* mutex);
 
 void mutex_lock(
@@ -54,6 +57,9 @@ void mutex_unlock(
 void semaphore_init(
     SEMAPHORE* semaphore, 
     int value);
+
+void semaphore_destroy(
+    SEMAPHORE* semaphore);
 
 void semaphore_wait(
     SEMAPHORE* semaphore);

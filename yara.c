@@ -64,6 +64,7 @@ limitations under the License.
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
+#define strdup _strdup
 #endif
 
 #define MAX_QUEUED_FILES 64
@@ -102,7 +103,6 @@ typedef struct _EXTERNAL
 typedef struct _QUEUED_FILE {
 
   char* path;
-  ARENA* output;
 
 } QUEUED_FILE;
 
@@ -179,10 +179,6 @@ void file_queue_put(
   mutex_lock(&queue_mutex);
 
   file_queue[queue_tail].path = strdup(file_path);
-
-  //TODO: handle errors
-  yr_arena_create(&file_queue[queue_tail].output);
-
   queue_tail = (queue_tail + 1) % (MAX_QUEUED_FILES + 1);
 
   mutex_unlock(&queue_mutex);
@@ -371,7 +367,7 @@ void print_scanning_error(int error)
     case ERROR_INSUFICIENT_MEMORY:
       fprintf(stderr, "not enough memory\n");
       break;
-    case ERROR_TIMEOUT:
+    case ERROR_SCAN_TIMEOUT:
       fprintf(stderr, "scanning timed out\n");
       break;
     case ERROR_COULD_NOT_OPEN_FILE:
@@ -574,10 +570,12 @@ int callback(int message, RULE* rule, void* data)
     case CALLBACK_MSG_RULE_NOT_MATCHING:
       return handle_message(message, rule, data);
   }
+
+  return CALLBACK_ERROR;
 }
 
 #ifdef WIN32
-DWORD WINAPI ThreadProc(LPVOID param)
+DWORD WINAPI scanning_thread(LPVOID param)
 #else
 void* scanning_thread(void* param)
 #endif
@@ -609,6 +607,8 @@ void* scanning_thread(void* param)
     free(file_path);
     file_path = file_queue_get();
   }
+
+  return 0;
 }
 
 
@@ -837,7 +837,6 @@ int main(
   int result;
 
   THREAD thread[MAX_THREADS];
-  clock_t start, end;
 
   if (!process_cmd_line(argc, argv))
     return 0;
@@ -988,8 +987,6 @@ int main(
   }
   else
   {
-    start = clock();
-
     result = yr_rules_scan_file(
         rules,
         argv[argc - 1],
@@ -998,16 +995,10 @@ int main(
         fast_scan,
         timeout);
 
-    end = clock();
-
     if (result != ERROR_SUCCESS)
     {
       fprintf(stderr, "Error scanning %s: ", argv[argc - 1]);
       print_scanning_error(result);
-    }
-    else
-    {
-      printf( "Scanning time: %f s\n", (float)(end - start) / CLOCKS_PER_SEC);
     }
   }
 

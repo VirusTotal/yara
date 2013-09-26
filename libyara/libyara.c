@@ -27,7 +27,6 @@ limitations under the License.
 #ifdef WIN32
 #else
 #include <pthread.h>
-#define PTHREADS
 #endif
 
 char isregexescapable[256];
@@ -35,7 +34,12 @@ char isregexhashable[256];
 char isalphanum[256];
 char lowercase[256];
 
+#ifdef WIN32
+DWORD key;
+#else
 pthread_key_t key;
+#endif
+
 
 void yr_initialize(void)
 {
@@ -80,7 +84,9 @@ void yr_initialize(void)
 
   yr_heap_alloc();
   
-  #ifdef PTHREADS
+  #ifdef WIN32
+  key = TlsAlloc();
+  #else
   pthread_key_create(&key, NULL);
   #endif
 
@@ -106,9 +112,9 @@ void yr_finalize(void)
 void yr_set_tidx(int tidx)
 {
   #ifdef WIN32
-    //TODO: implement this
+  TlsSetValue(key, (LPVOID) (tidx + 1));
   #else
-    pthread_setspecific(key, (void*) (size_t) (tidx + 1));
+  pthread_setspecific(key, (void*) (size_t) (tidx + 1));
   #endif
 }
 
@@ -125,5 +131,9 @@ void yr_set_tidx(int tidx)
 
 int yr_get_tidx(void)
 {
+  #ifdef WIN32
+  return (int) TlsGetValue(key) - 1;
+  #else
   return (int) (size_t) pthread_getspecific(key) - 1;
+  #endif
 }

@@ -488,14 +488,22 @@ int _yr_scan_verify_match(
 void _yr_rules_lock(
     YARA_RULES* rules)
 {
+  #ifdef WIN32
+  WaitForSingleObject(rules->mutex, INFINITE);
+  #else
   pthread_mutex_lock(&rules->mutex);
+  #endif
 }
 
 
 void _yr_rules_unlock(
     YARA_RULES* rules)
 {
+  #ifdef WIN32
+  ReleaseMutex(rules->mutex);
+  #else
   pthread_mutex_unlock(&rules->mutex);
+  #endif
 }
 
 
@@ -669,7 +677,7 @@ int yr_rules_scan_mem_block(
       current_time = time(NULL);
 
       if (difftime(current_time, start_time) > timeout)
-        return ERROR_TIMEOUT;
+        return ERROR_SCAN_TIMEOUT;
     }
   }
 
@@ -728,7 +736,7 @@ int yr_rules_scan_mem_blocks(
     if (tidx < MAX_THREADS)
       rules->threads_count++;
     else
-      result = ERROR_TOO_MANY_THREADS;
+      result = ERROR_TOO_MANY_SCAN_THREADS;
     
     _yr_rules_unlock(rules);
 

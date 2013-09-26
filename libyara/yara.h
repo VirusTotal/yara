@@ -82,10 +82,10 @@ typedef pthread_mutex_t mutex_t;
 #define ERROR_INCLUDE_DEPTH_EXCEEDED            32
 #define ERROR_INVALID_OR_CORRUPT_FILE           33
 #define ERROR_EXEC_STACK_OVERFLOW               34
-#define ERROR_TIMEOUT                           35
+#define ERROR_SCAN_TIMEOUT                      35
 #define ERROR_LOOP_NESTING_LIMIT_EXCEEDED       36
 #define ERROR_DUPLICATE_LOOP_IDENTIFIER         37
-#define ERROR_TOO_MANY_THREADS                  38
+#define ERROR_TOO_MANY_SCAN_THREADS             38
 
 
 #define CALLBACK_MSG_RULE_MATCHING            1
