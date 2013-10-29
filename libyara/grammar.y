@@ -452,7 +452,6 @@ boolean_expression  : '(' boolean_expression ')'
                       {
                         YARA_COMPILER* compiler = yyget_extra(yyscanner);
                         RULE* rule;
-                        EXTERNAL_VARIABLE* external;
 
                         rule = (RULE*) yr_hash_table_lookup(
                             compiler->rules_table,
@@ -484,10 +483,6 @@ boolean_expression  : '(' boolean_expression ')'
                         YARA_COMPILER* compiler = yyget_extra(yyscanner);
                         SIZED_STRING* sized_string = $3;
                         RE* re;
-    
-                        char* string;
-                        int error_offset;
-                        int result;
 
                         compiler->last_result = yr_parse_re_string(
                             sized_string->c_string, &re);
@@ -698,7 +693,6 @@ boolean_expression  : '(' boolean_expression ')'
                       {
                         YARA_COMPILER* compiler = yyget_extra(yyscanner);
                         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
-                        int result = ERROR_SUCCESS;
                         int8_t* addr;
 
                         if (compiler->loop_depth == MAX_LOOP_NESTING)
@@ -976,7 +970,6 @@ expression  : '(' expression ')'
             | _IDENTIFIER_
               {
                 YARA_COMPILER* compiler = yyget_extra(yyscanner);
-                EXTERNAL_VARIABLE* external;
                 int var_index;
 
                 var_index = yr_parser_lookup_loop_variable(yyscanner, $1);

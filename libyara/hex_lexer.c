@@ -481,6 +481,7 @@ limitations under the License.
 #include "re.h"
 #include "hex_grammar.h"
 #include "hex_lexer.h"
+#include "utils.h"
 
 
 #ifdef WIN32
@@ -489,7 +490,7 @@ limitations under the License.
 
 #define YY_NO_UNISTD_H 1
 
-#line 493 "hex_lexer.c"
+#line 494 "hex_lexer.c"
 
 #define INITIAL 0
 #define range 1
@@ -723,11 +724,11 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 51 "hex_lexer.l"
+#line 52 "hex_lexer.l"
 
 
 
-#line 731 "hex_lexer.c"
+#line 732 "hex_lexer.c"
 
     yylval = yylval_param;
 
@@ -826,7 +827,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 54 "hex_lexer.l"
+#line 55 "hex_lexer.l"
 {
 
   yylval->integer = xtoi(yytext);
@@ -835,7 +836,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 60 "hex_lexer.l"
+#line 61 "hex_lexer.l"
 {
 
   yytext[1] = '0'; // replace ? by 0
@@ -845,7 +846,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 67 "hex_lexer.l"
+#line 68 "hex_lexer.l"
 {
 
   yytext[0] = '0'; // replace ? by 0
@@ -855,7 +856,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 74 "hex_lexer.l"
+#line 75 "hex_lexer.l"
 {
 
   yylval->integer = 0x0000;
@@ -864,7 +865,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 80 "hex_lexer.l"
+#line 81 "hex_lexer.l"
 {
 
   BEGIN(range);
@@ -873,14 +874,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 86 "hex_lexer.l"
+#line 87 "hex_lexer.l"
 {
   return yytext[0];
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 90 "hex_lexer.l"
+#line 91 "hex_lexer.l"
 {
 
   yylval->integer = atoi(yytext);
@@ -889,7 +890,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 96 "hex_lexer.l"
+#line 97 "hex_lexer.l"
 {
 
   BEGIN(INITIAL);
@@ -899,12 +900,12 @@ YY_RULE_SETUP
 case 9:
 /* rule 9 can match eol */
 YY_RULE_SETUP
-#line 103 "hex_lexer.l"
+#line 104 "hex_lexer.l"
 // skip whitespace
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 106 "hex_lexer.l"
+#line 107 "hex_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -920,10 +921,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 119 "hex_lexer.l"
+#line 120 "hex_lexer.l"
 ECHO;
 	YY_BREAK
-#line 927 "hex_lexer.c"
+#line 928 "hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(range):
 	yyterminate();
@@ -2101,7 +2102,7 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 119 "hex_lexer.l"
+#line 120 "hex_lexer.l"
 
 
 

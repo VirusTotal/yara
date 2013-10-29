@@ -121,6 +121,10 @@ typedef void RE_MATCH_CALLBACK_FUNC(
     void* args);
 
 
+int yr_re_create(
+    RE** re);
+
+
 RE_NODE* yr_re_node_create(
     int type, 
     RE_NODE* left, 

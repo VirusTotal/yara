@@ -42,7 +42,7 @@ The strings "abc", "ed" and "fgh" are atoms.
 #endif
 
 #ifndef max
-define max(x, y)  ((x > y) ? (x) : (y))
+#define max(x, y)  ((x > y) ? (x) : (y))
 #endif
 
 

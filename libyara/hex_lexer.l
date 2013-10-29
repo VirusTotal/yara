@@ -23,6 +23,7 @@ limitations under the License.
 #include "re.h"
 #include "hex_grammar.h"
 #include "hex_lexer.h"
+#include "utils.h"
 
 
 #ifdef WIN32

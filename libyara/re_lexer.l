@@ -24,6 +24,7 @@ limitations under the License.
 #include "re.h"
 #include "re_grammar.h"
 #include "re_lexer.h"
+#include "utils.h"
 
 
 #ifdef WIN32
