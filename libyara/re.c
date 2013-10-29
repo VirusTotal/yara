@@ -32,9 +32,9 @@ limitations under the License.
 #define MAX_RE_COUNTERS 1024
 #define RE_SCAN_LIMIT   65535
 
-
+#ifndef min
 #define min(x, y)  ((x < y) ? (x) : (y))
-
+#endif
 
 typedef struct _RE_THREAD_LIST
 {

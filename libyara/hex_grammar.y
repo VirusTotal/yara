@@ -21,12 +21,13 @@ limitations under the License.
 #include "hex_lexer.h"
 #include "mem.h"
 #include "re.h"
+#include "yara.h"
 
 #define YYERROR_VERBOSE
 
 #define YYDEBUG 0
 
-#define mark_as_not_literal() \ 
+#define mark_as_not_literal() \
     ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_LITERAL_STRING
 
 #if YYDEBUG

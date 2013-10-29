@@ -2480,10 +2480,6 @@ uint8_t read_escaped_char(yyscan_t yyscanner)
     result = '\a';
     break;
 
-  case 'e':
-    result = '\e';
-    break;
-
   default:
     result = c;
   }

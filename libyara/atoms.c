@@ -37,8 +37,14 @@ The strings "abc", "ed" and "fgh" are atoms.
 #include "atoms.h"
 #include "mem.h"
 
+#ifndef min
 #define min(x, y)  ((x < y) ? (x) : (y))
-#define max(x, y)  ((x > y) ? (x) : (y))
+#endif
+
+#ifndef max
+define max(x, y)  ((x > y) ? (x) : (y))
+#endif
+
 
 #define append_current_leaf_to_node(node) \
     if (atom_tree->current_leaf != NULL) \
