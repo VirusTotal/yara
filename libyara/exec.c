@@ -68,9 +68,6 @@ int yr_execute_code(
     YARA_RULES* rules,
     EVALUATION_CONTEXT* context)
 {
-  int64_t rA;
-  int64_t rB;
-  int64_t rC;
   int64_t r1;
   int64_t r2;
   int64_t r3;
@@ -84,7 +81,6 @@ int yr_execute_code(
   MATCH* match;
   EXTERNAL_VARIABLE* external;
 
-  char* identifier;
   int i;
   int found;
   int count;

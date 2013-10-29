@@ -295,6 +295,8 @@ int _yr_atoms_choose(
     
     return min_quality;
   }
+
+  return 0;
 }
 
 
@@ -531,11 +533,11 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
           for (i = 0; i < MAX_ATOM_LENGTH; i++)
             current_leaf->atom[i] = current_leaf->recent_bytes[i];
 
-          current_leaf->forward_code = re_node->forward_code -
-                                       2 * (MAX_ATOM_LENGTH - 1);
+		  current_leaf->forward_code = 
+			  (uint8_t*) re_node->forward_code - 2 * (MAX_ATOM_LENGTH - 1);
 
-          current_leaf->backward_code = re_node->backward_code +
-                                        2 * (MAX_ATOM_LENGTH - 1);
+          current_leaf->backward_code = 
+			  (uint8_t*) re_node->backward_code + 2 * (MAX_ATOM_LENGTH - 1);
         }
       }
 
@@ -638,6 +640,8 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
     default:
       assert(FALSE);
   }
+
+  return NULL;
 }
 
 
@@ -730,7 +734,6 @@ int yr_atoms_extract_from_re(
     ATOM_LIST_ITEM** atoms)
 {
   ATOM_TREE* atom_tree = yr_malloc(sizeof(ATOM_TREE));
-  ATOM_TREE_NODE* root_node;
   ATOM_TREE_NODE* temp;
   ATOM_LIST_ITEM* wide_atoms;
   ATOM_LIST_ITEM* case_insentive_atoms;

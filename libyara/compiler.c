@@ -21,6 +21,7 @@ limitations under the License.
 #include "arena.h"
 #include "exec.h"
 #include "filemap.h"
+#include "hash.h"
 #include "lexer.h"
 #include "mem.h"
 #include "utils.h"
@@ -319,7 +320,7 @@ int yr_compiler_add_string(
 int _yr_compiler_compile_rules(
   YARA_COMPILER* compiler)
 {
-  YARA_RULES_FILE_HEADER* rules_file_header;
+  YARA_RULES_FILE_HEADER* rules_file_header = NULL;
   ARENA* arena;
   RULE null_rule;
   EXTERNAL_VARIABLE null_external;
@@ -603,10 +604,11 @@ int yr_compiler_define_string_variable(
     const char* identifier,
     const char* value)
 {
-  EXTERNAL_VARIABLE* external;
+  EXTERNAL_VARIABLE* external = NULL;
 
-  char* id;
-  char* val;
+  char* id = NULL;
+  char* val = NULL;
+
   int result;
 
   result = yr_arena_write_string(

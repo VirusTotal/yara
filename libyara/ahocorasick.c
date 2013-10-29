@@ -19,6 +19,7 @@ limitations under the License.
 #include <stddef.h>
 #include <string.h>
 
+#include "arena.h"
 #include "atoms.h"
 #include "mem.h"
 #include "utils.h"
@@ -157,8 +158,6 @@ AC_STATE* _yr_ac_next_transition(
 {
   int i;
   AC_TABLE_BASED_STATE* table_based_state;
-  AC_LIST_BASED_STATE* list_based_state;
-  AC_STATE_TRANSITION* next_transition;
 
   if (state->depth <= MAX_TABLE_BASED_STATES_DEPTH)
   {
@@ -537,7 +536,7 @@ int yr_ac_add_string(
     STRING* string,
     ATOM_LIST_ITEM* atom)
 {
-  int result;
+  int result = ERROR_SUCCESS;
   int i;
 
   AC_STATE* state;
@@ -610,11 +609,9 @@ int yr_ac_add_string(
 void _yr_ac_print_automaton_state(
   AC_STATE* state)
 {
-  char* identifier;
   int i;
   int child_count;
 
-  STRING* string;
   AC_STATE_TRANSITION transition;
   AC_MATCH* match;
   AC_STATE* child_state;

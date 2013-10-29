@@ -430,7 +430,6 @@ inline int _yr_scan_verify_match(
     size_t offset,
     ARENA* matches_arena)
 {
-  int matching;
   STRING* string = ac_match->string;
 
   if (data_size - offset <= 0)
@@ -551,8 +550,6 @@ void _yr_rules_clean_matches(
 {
   RULE* rule;
   STRING* string;
-  MATCH* match;
-  MATCH* next_match;
   
   int tidx = yr_get_tidx();
 
@@ -915,10 +912,8 @@ int yr_rules_load(
   YARA_RULES* new_rules;
   YARA_RULES_FILE_HEADER* header;
   RULE* rule;
-  STRING* string;
 
   int result;
-  int error_offset;
 
   new_rules = yr_malloc(sizeof(YARA_RULES));
 

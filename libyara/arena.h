@@ -94,6 +94,11 @@ int yr_arena_load(
     const char* filename,
     ARENA** arena);
 
+
+int yr_arena_duplicate(
+    ARENA* arena,
+    ARENA** duplicated);
+
 #endif
 
 
