@@ -283,6 +283,7 @@ typedef struct _CALLBACK_DATA
 
 
 int yara_callback(
+    int message,
     RULE* rule,
     void* data)
 {
@@ -306,7 +307,10 @@ int yara_callback(
 
   int result = CALLBACK_CONTINUE;
 
-  if (!(rule->flags & RULE_FLAGS_MATCH) && callback == NULL)
+  if (message == CALLBACK_MSG_SCAN_FINISHED)
+    return CALLBACK_CONTINUE;
+
+  if (message == CALLBACK_MSG_RULE_NOT_MATCHING && callback == NULL)
     return CALLBACK_CONTINUE;
 
   gil_state = PyGILState_Ensure();
@@ -359,7 +363,7 @@ int yara_callback(
 
   while (!STRING_IS_NULL(string))
   {
-    if (string->flags & STRING_FLAGS_FOUND)
+    if (STRING_FOUND(string))
     {
       m = STRING_MATCHES(string).head;
 
@@ -385,7 +389,7 @@ int yara_callback(
     string++;
   }
 
-  if (rule->flags & RULE_FLAGS_MATCH)
+  if (message == CALLBACK_MSG_RULE_MATCHING)
   {
     match = Match_NEW(
         rule->identifier,
@@ -416,7 +420,7 @@ int yara_callback(
 
     callback_dict = PyDict_New();
 
-    object = PyBool_FromLong(rule->flags & RULE_FLAGS_MATCH);
+    object = PyBool_FromLong(message == CALLBACK_MSG_RULE_MATCHING);
     PyDict_SetItemString(callback_dict, "matches", object);
     Py_DECREF(object);
 
@@ -596,7 +600,7 @@ PyObject* handle_error(
           YaraError,
           "invalid or corrupt compiled rules file \"%s\"",
           extra);
-    case ERROR_TIMEOUT:
+    case ERROR_SCAN_TIMEOUT:
       return PyErr_Format(
           YaraTimeoutError,
           "scanning timed out");

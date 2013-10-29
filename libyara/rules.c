@@ -1,4 +1,4 @@
-/*
+ /*
 Copyright (c) 2013. Victor M. Alvarez [plusvic@gmail.com].
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ limitations under the License.
 #include "exefiles.h"
 #include "filemap.h"
 #include "mem.h"
+#include "re.h"
 #include "utils.h"
 #include "yara.h"
 
@@ -30,455 +31,420 @@ limitations under the License.
 #define inline __inline
 #endif
 
-int _yr_scan_compare(
-    uint8_t* str1,
-    uint8_t* str2,
-    int len)
+
+typedef struct _CALLBACK_ARGS
 {
-  uint8_t* s1 = str1;
-  uint8_t* s2 = str2;
+  STRING* string;
+  ARENA* matches_arena;
+  int forward_matches;
+  uint8_t* data;
+  int data_size;
+
+} CALLBACK_ARGS;
+
+
+inline int _yr_scan_compare(
+    uint8_t* data,
+    int data_size,
+    uint8_t* string,
+    int string_length)
+{
+  uint8_t* s1 = data;
+  uint8_t* s2 = string;
   int i = 0;
 
-  while (i < len && *s1++ == *s2++)
-    i++;
-
-  return ((i == len) ? i : 0);
-}
-
-
-int _yr_scan_icompare(
-    uint8_t* str1,
-    uint8_t* str2,
-    int len)
-{
-  uint8_t* s1 = str1;
-  uint8_t* s2 = str2;
-  int i = 0;
-
-  while (i < len && lowercase[*s1++] == lowercase[*s2++])
-    i++;
-
-  return ((i == len) ? i : 0);
-}
-
-
-int _yr_scan_wcompare(
-    uint8_t* str1,
-    uint8_t* str2,
-    int len)
-{
-  uint8_t* s1 = str1;
-  uint8_t* s2 = str2;
-  int i = 0;
-
-  while (i < len && *s1 == *s2)
-  {
-    s1++;
-    s2+=2;
-    i++;
-  }
-
-  return ((i == len) ? i * 2 : 0);
-}
-
-
-int _yr_scan_wicompare(
-    uint8_t* str1,
-    uint8_t* str2,
-    int len)
-{
-  uint8_t* s1 = str1;
-  uint8_t* s2 = str2;
-  int i = 0;
-
-  while (i < len && lowercase[*s1] == lowercase[*s2])
-  {
-    s1++;
-    s2+=2;
-    i++;
-  }
-
-  return ((i == len) ? i * 2 : 0);
-}
-
-
-int _yr_scan_verify_hex_match(
-    uint8_t* buffer,
-    size_t buffer_size,
-    uint8_t* pattern,
-    int32_t pattern_length,
-    uint8_t* mask)
-{
-  size_t b, p, m;
-  uint8_t distance;
-  uint8_t delta;
-  int match;
-  int match_length;
-  int longest_match;
-  int matches;
-  int i, tmp, tmp_b;
-
-  b = 0;
-  p = 0;
-  m = 0;
-
-  matches = 0;
-
-  while (b < buffer_size && p < pattern_length)
-  {
-    if (mask[m] == MASK_EXACT_SKIP)
-    {
-      m++;
-      distance = mask[m++];
-      b += distance;
-      matches += distance;
-    }
-    else if (mask[m] == MASK_RANGE_SKIP)
-    {
-      m++;
-      distance = mask[m++];
-      delta = mask[m++] - distance;
-      b += distance;
-      matches += distance;
-
-      i = 0;
-
-      while (i <= delta && b + i < buffer_size)
-      {
-        if ((buffer[b + i] & mask[m]) == pattern[p] || mask[m] == MASK_OR)
-        {
-          tmp = _yr_scan_verify_hex_match(
-              buffer + b + i,
-              buffer_size - b - i,
-              pattern + p,
-              pattern_length - p,
-              mask + m);
-        }
-        else
-        {
-          tmp = 0;
-        }
-
-        if (tmp > 0)
-          return b + i + tmp;
-
-        i++;
-      }
-
-      break;
-    }
-    else if (mask[m] == MASK_OR)
-    {
-      longest_match = 0;
-
-      while (mask[m] != MASK_OR_END)
-      {
-        tmp_b = b;
-        match = TRUE;
-        match_length = 0;
-        m++;
-
-        while (tmp_b < buffer_size &&
-               mask[m] != MASK_OR &&
-               mask[m] != MASK_OR_END)
-        {
-          if ((buffer[tmp_b] & mask[m]) != pattern[p])
-            match = FALSE;
-
-          if (match)
-            match_length++;
-
-          tmp_b++;
-          m++;
-          p++;
-        }
-
-        if (match && match_length > longest_match)
-          longest_match = match_length;
-      }
-
-      m++;
-
-      if (longest_match > 0)
-      {
-        b += longest_match;
-        matches += longest_match;
-      }
-      else
-      {
-        matches = 0;
-        break;
-      }
-
-    }
-    else if ((buffer[b] & mask[m]) == pattern[p])
-    {
-      b++;
-      m++;
-      p++;
-      matches++;
-    }
-    else  // do not match
-    {
-      matches = 0;
-      break;
-    }
-  }
-
-  // did not reach the end of pattern because buffer was too small
-  if (p < pattern_length)
-    matches = 0;
-
-  return matches;
-}
-
-int _yr_scan_verify_regexp_match(
-    uint8_t* buffer,
-    size_t buffer_size,
-    uint8_t* pattern,
-    int32_t pattern_length,
-    REGEXP re,
-    int file_beginning)
-{
-  int result = 0;
-
-  // if we are not at the beginning of the file, and
-  // the pattern begins with ^, the string doesn't match
-  if (file_beginning && pattern[0] == '^')
+  if (data_size < string_length)
     return 0;
 
-  result = yr_regex_exec(&re, TRUE, (char*) buffer, buffer_size);
+  while (i < string_length && *s1++ == *s2++) 
+    i++;
 
-  if (result >= 0)
-    return result;
+  return ((i == string_length) ? i : 0);
+}
+
+
+inline int _yr_scan_icompare(
+    uint8_t* data,
+    int data_size,
+    uint8_t* string,
+    int string_length)
+{
+  uint8_t* s1 = data;
+  uint8_t* s2 = string;
+  int i = 0;
+
+  if (data_size < string_length)
+    return 0;
+
+  while (i < string_length && lowercase[*s1++] == lowercase[*s2++])
+    i++;
+
+  return ((i == string_length) ? i : 0);
+}
+
+
+inline int _yr_scan_wcompare(
+    uint8_t* data,
+    int data_size,
+    uint8_t* string,
+    int string_length)
+{
+  uint8_t* s1 = data;
+  uint8_t* s2 = string;
+  int i = 0;
+
+  if (data_size < string_length * 2)
+    return 0;
+
+  while (i < string_length && *s1 == *s2)
+  {
+    s1+=2;
+    s2++;
+    i++;
+  }
+
+  return ((i == string_length) ? i * 2 : 0);
+}
+
+
+inline int _yr_scan_wicompare(
+    uint8_t* data,
+    int data_size,
+    uint8_t* string,
+    int string_length)
+{
+  uint8_t* s1 = data;
+  uint8_t* s2 = string;
+  int i = 0;
+
+  if (data_size < string_length * 2)
+    return 0;
+
+  while (i < string_length && lowercase[*s1] == lowercase[*s2])
+  {
+    s1+=2;
+    s2++;
+    i++;
+  }
+
+  return ((i == string_length) ? i * 2 : 0);
+}
+
+
+void match_callback(
+    uint8_t* match_data,
+    int match_length,
+    int flags,
+    void* args)
+{
+  MATCH* new_match;
+  MATCH* match;
+  
+  CALLBACK_ARGS* callback_args = args;
+  STRING* string = callback_args->string;
+
+  int character_size;
+  int tidx = yr_get_tidx();
+
+  size_t match_offset = match_data - callback_args->data;
+
+  if (flags & RE_FLAGS_WIDE)
+    character_size = 2;
   else
-    return 0;
+    character_size = 1;
+
+  // match_length > 0 means that we have found some backward matching
+  // but backward matching overlaps one character with forward matching, 
+  // we decrement match_length here to compensate that overlapping.
+
+  if (match_length > 0)
+    match_length -= character_size;
+
+  // total match length is the sum of backward and forward matches.
+  match_length = match_length + callback_args->forward_matches;
+
+  if (flags & RE_FLAGS_START_ANCHORED && match_offset > 0)
+    return;
+
+  if (flags & RE_FLAGS_END_ANCHORED && 
+      match_offset + match_length != callback_args->data_size)
+    return;
+  
+  match = string->matches[tidx].tail;
+
+  while (match != NULL)
+  {
+    if (match_length == match->length)
+    {
+      if (match_offset >= match->first_offset &&
+          match_offset <= match->last_offset)
+      {
+        return;
+      }
+
+      if (match_offset == match->last_offset + 1)
+      {
+        match->last_offset++;
+        return;
+      }
+
+      if (match_offset == match->first_offset - 1)
+      {
+        match->first_offset--;
+        return;
+      }
+    }
+
+    if (match_offset > match->last_offset)
+      break;
+
+    match = match->prev;
+  }
+
+  yr_arena_allocate_memory(
+      callback_args->matches_arena,
+      sizeof(MATCH),
+      (void**) &new_match);
+
+  new_match->first_offset = match_offset;
+  new_match->last_offset = match_offset;
+  new_match->length = match_length;
+
+  if (match != NULL)
+  {
+    new_match->next = match->next;
+    match->next = new_match;
+  }
+  else
+  {
+    new_match->next = string->matches[tidx].head;
+    string->matches[tidx].head = new_match;
+  }
+
+  if (new_match->next != NULL)
+    new_match->next->prev = new_match;
+  else
+    string->matches[tidx].tail = new_match;
+
+  new_match->prev = match;
+  //TODO: handle errors
+  yr_arena_write_data(
+      callback_args->matches_arena,
+      match_data,
+      match_length,
+      (void**) &new_match->data);
 }
 
 
-inline int _yr_scan_verify_string_match(
-    STRING* string,
-    uint8_t* buffer,
-    size_t buffer_size,
-    size_t negative_size)
-{
-  int match;
-  int i, len;
-  int is_wide_char;
-
-  uint8_t tmp_buffer[512];
-  uint8_t* tmp;
-
-  if (buffer_size <= 0)
-    return 0;
-
-  if (STRING_IS_HEX(string))
-  {
-    return _yr_scan_verify_hex_match(
-        buffer,
-        buffer_size,
-        string->string,
-        string->length,
-        string->mask);
-  }
-  else if (STRING_IS_REGEXP(string))
-  {
-    if (STRING_IS_WIDE(string))
-    {
-      i = 0;
-
-      while (i < buffer_size - 1 &&
-             buffer[i] >= 32 &&        // buffer[i] is a ...
-             buffer[i] <= 126 &&       // ... printable character
-             buffer[i + 1] == 0)
-      {
-        i += 2;
-      }
-
-      len = i/2;
-
-      if (len > sizeof(tmp_buffer))
-        tmp = yr_malloc(len);
-      else
-        tmp = tmp_buffer;
-
-      i = 0;
-
-      if (tmp != NULL)
-      {
-        while (i < len)
-        {
-          tmp[i] = buffer[i * 2];
-          i++;
-        }
-
-        match = _yr_scan_verify_regexp_match(
-            tmp,
-            len,
-            string->string,
-            string->length,
-            string->re,
-            (negative_size > 2));
-
-        if (len > sizeof(tmp_buffer))
-          yr_free(tmp);
-
-        return match * 2;
-      }
-
-    }
-    else
-    {
-      return _yr_scan_verify_regexp_match(
-          buffer,
-          buffer_size,
-          string->string,
-          string->length,
-          string->re,
-          negative_size);
-    }
-  }
-
-  if (STRING_IS_WIDE(string) && string->length * 2 <= buffer_size)
-  {
-    if (STRING_IS_NO_CASE(string))
-    {
-      match = _yr_scan_wicompare(
-          string->string,
-          buffer,
-          string->length);
-    }
-    else
-    {
-      match = _yr_scan_wcompare(
-          string->string,
-          buffer,
-          string->length);
-    }
-
-    if (match > 0 && STRING_IS_FULL_WORD(string))
-    {
-      if (negative_size >= 2)
-      {
-        is_wide_char = (buffer[-1] == 0 && isalphanum[(char) (buffer[-2])]);
-
-        if (is_wide_char)
-          match = 0;
-      }
-
-      if (string->length * 2 < buffer_size - 1)
-      {
-        is_wide_char = (isalphanum[(char) (buffer[string->length * 2])] && \
-                        buffer[string->length * 2 + 1] == 0);
-
-        if (is_wide_char)
-          match = 0;
-      }
-    }
-
-    if (match > 0)
-      return match;
-  }
-
-  if (STRING_IS_ASCII(string) && string->length <= buffer_size)
-  {
-    if (STRING_IS_NO_CASE(string))
-    {
-      match = _yr_scan_icompare(
-          string->string,
-          buffer,
-          string->length);
-    }
-    else
-    {
-      match = _yr_scan_compare(
-          string->string,
-          buffer,
-          string->length);
-    }
-
-    if (match > 0 && STRING_IS_FULL_WORD(string))
-    {
-      if (negative_size >= 1 && isalphanum[(char) (buffer[-1])])
-      {
-        match = 0;
-      }
-      else if (string->length < buffer_size &&
-               isalphanum[(char) (buffer[string->length])])
-      {
-        match = 0;
-      }
-    }
-
-    return match;
-  }
-
-  return 0;
-}
-
-
-int _yr_scan_verify_match(
+int _yr_scan_verify_re_match(
     AC_MATCH* ac_match,
     uint8_t* data,
     size_t data_size,
-    size_t string_offset,
+    size_t offset,
     ARENA* matches_arena)
 {
-  MATCH* match;
-  STRING* string;
+  CALLBACK_ARGS callback_args;
 
-  int32_t match_length;
-  int result;
-  int tidx;
-  
-  match_length = _yr_scan_verify_string_match(
-      ac_match->string,
-      data + string_offset,
-      data_size - string_offset,
-      string_offset);
+  int forward_matches = 0;
+  int flags = 0;
 
-  if (match_length > 0)
+  if (STRING_IS_START_ANCHORED(ac_match->string))
+    flags |= RE_FLAGS_START_ANCHORED;
+
+  if (STRING_IS_END_ANCHORED(ac_match->string))
+    flags |= RE_FLAGS_END_ANCHORED;
+
+  if (STRING_IS_ASCII(ac_match->string))
   {
-    string = ac_match->string;
-    tidx = yr_get_tidx();
+    forward_matches = yr_re_exec(
+        ac_match->forward_code, 
+        data + offset, 
+        data_size - offset,
+        flags,
+        NULL,
+        NULL);
+  }
 
-    if (string->matches[tidx].tail != NULL &&
-        string->matches[tidx].tail->last_offset == string_offset - 1)
-    {
-      string->matches[tidx].tail->last_offset = string_offset;
-    }
+  if (STRING_IS_WIDE(ac_match->string) && 
+      forward_matches < 0)
+  {
+    flags |= RE_FLAGS_WIDE;
+    forward_matches = yr_re_exec(
+        ac_match->forward_code, 
+        data + offset, 
+        data_size - offset,
+        flags,
+        NULL,
+        NULL);
+  }
+
+  if (forward_matches < 0)
+    return ERROR_SUCCESS;
+
+  if (forward_matches == 0 && ac_match->backward_code == NULL)
+    return ERROR_SUCCESS;
+
+  callback_args.string = ac_match->string;
+  callback_args.data = data;
+  callback_args.data_size = data_size;
+  callback_args.matches_arena = matches_arena;
+  callback_args.forward_matches = forward_matches;
+
+  if (ac_match->backward_code != NULL)
+  {
+    yr_re_exec(
+        ac_match->backward_code, 
+        data + offset, 
+        offset + 1,
+        flags | RE_FLAGS_BACKWARDS | RE_FLAGS_EXHAUSTIVE,
+        match_callback,
+        (void*) &callback_args);
+  }
+  else
+  {
+    match_callback(
+        data + offset, 0, flags, &callback_args);
+  }
+
+  return ERROR_SUCCESS;
+}
+
+
+int _yr_scan_verify_literal_match(
+    AC_MATCH* ac_match,
+    uint8_t* data,
+    size_t data_size,
+    size_t offset,
+    ARENA* matches_arena)
+{
+  int flags = 0;
+  int forward_matches = 0;
+
+  CALLBACK_ARGS callback_args;
+  STRING* string = ac_match->string;
+  
+  if (STRING_FITS_IN_ATOM(string))
+  {
+    if (STRING_IS_WIDE(string))
+      forward_matches = string->length * 2;
     else
+      forward_matches = string->length;
+  }
+  else if (STRING_IS_NO_CASE(string))
+  {
+    flags |= RE_FLAGS_NO_CASE;
+
+    if (STRING_IS_ASCII(string))
     {
-      result = yr_arena_allocate_memory(
-          matches_arena,
-          sizeof(MATCH),
-          (void**) &match);
-
-      if (result != ERROR_SUCCESS)
-        return result;
-
-      match->first_offset = string_offset;
-      match->last_offset = string_offset;
-      match->length = match_length;
-      match->next = NULL;
-
-      result = yr_arena_write_data(
-          matches_arena,
-          data + string_offset,
-          match_length,
-          (void**) &match->data);
-
-      if (result != ERROR_SUCCESS)
-        return result;
-
-      if (string->matches[tidx].head == NULL)
-        string->matches[tidx].head = match;
-
-      if (string->matches[tidx].tail != NULL)
-        string->matches[tidx].tail->next = match;
-
-      string->matches[tidx].tail = match;
+      forward_matches = _yr_scan_icompare(
+          data + offset,
+          data_size - offset,
+          string->string,
+          string->length);
     }
+
+    if (STRING_IS_WIDE(string) && forward_matches == 0)
+    {
+      flags |= RE_FLAGS_WIDE;
+      forward_matches = _yr_scan_wicompare(
+          data + offset,
+          data_size - offset,
+          string->string,
+          string->length);
+    }
+  }
+  else
+  {
+    if (STRING_IS_ASCII(string))
+    {
+      forward_matches = _yr_scan_compare(
+          data + offset,
+          data_size - offset,
+          string->string,
+          string->length);
+    }
+
+    if (STRING_IS_WIDE(string) && forward_matches == 0)
+    {
+      flags |= RE_FLAGS_WIDE;
+      forward_matches = _yr_scan_wcompare(
+          data + offset,
+          data_size - offset,
+          string->string,
+          string->length);
+    }
+  }
+
+  if (forward_matches > 0)
+  {
+    if (STRING_IS_FULL_WORD(string))
+    {
+      if (flags & RE_FLAGS_WIDE)
+      {
+        if (offset >= 2 && 
+            *(data + offset - 1) == 0 && 
+            isalnum(*(data + offset - 2)))
+          return ERROR_SUCCESS;
+
+        if (offset + forward_matches + 1 < data_size && 
+            *(data + offset + forward_matches + 1) != 0 && 
+            isalnum(*(data + offset + forward_matches)))
+          return ERROR_SUCCESS;
+      }
+      else
+      {
+        if (offset >= 1 && 
+            isalnum(*(data + offset - 1)))
+          return ERROR_SUCCESS;
+
+        if (offset + forward_matches < data_size && 
+            isalnum(*(data + offset + forward_matches)))
+          return ERROR_SUCCESS;
+      }
+    }
+
+    if (STRING_IS_START_ANCHORED(string))
+      flags |= RE_FLAGS_START_ANCHORED;
+
+    if (STRING_IS_END_ANCHORED(string))
+      flags |= RE_FLAGS_END_ANCHORED;
+
+    callback_args.string = string;
+    callback_args.data = data;
+    callback_args.data_size = data_size;
+    callback_args.matches_arena = matches_arena;
+    callback_args.forward_matches = forward_matches;
+
+    match_callback(
+        data + offset, 0, flags, &callback_args);
+  }
+
+  return ERROR_SUCCESS;
+}
+
+
+inline int _yr_scan_verify_match(
+    AC_MATCH* ac_match,
+    uint8_t* data,
+    size_t data_size,
+    size_t offset,
+    ARENA* matches_arena)
+{
+  int matching;
+  STRING* string = ac_match->string;
+
+  if (data_size - offset <= 0)
+    return ERROR_SUCCESS;
+
+  if (STRING_IS_LITERAL(string))
+  {
+    FAIL_ON_ERROR(_yr_scan_verify_literal_match(
+        ac_match, data, data_size, offset, matches_arena));
+  }
+  else
+  {
+    FAIL_ON_ERROR(_yr_scan_verify_re_match(
+        ac_match, data, data_size, offset, matches_arena));
   }
 
   return ERROR_SUCCESS;
@@ -618,15 +584,14 @@ int yr_rules_scan_mem_block(
     time_t start_time,
     ARENA* matches_arena)
 {
-
   AC_STATE* next_state;
   AC_MATCH* ac_match;
   AC_STATE* current_state;
 
   time_t current_time;
+  size_t offset;
   size_t i;
 
-  int result;
   int tidx = yr_get_tidx();
 
   current_state = rules->automaton->root;
@@ -638,24 +603,18 @@ int yr_rules_scan_mem_block(
 
     while (ac_match != NULL)
     {
-      if (i >= ac_match->backtrack)
+      if (ac_match->backtrack <= i)
       {
-        if (!(fast_scan_mode &&
-              ac_match->string->matches[tidx].tail != NULL &&
-              STRING_IS_SINGLE_MATCH(ac_match->string)))
-        {
-          result = _yr_scan_verify_match(
+        offset = i - ac_match->backtrack;
+
+        _yr_scan_verify_match(
               ac_match,
               data,
               data_size,
-              i - ac_match->backtrack,
+              offset,
               matches_arena);
-
-          if (result != ERROR_SUCCESS)
-            return result;
-        }
       }
-
+    
       ac_match = ac_match->next;
     }
 
@@ -685,15 +644,12 @@ int yr_rules_scan_mem_block(
 
   while (ac_match != NULL)
   {
-    result = _yr_scan_verify_match(
+    _yr_scan_verify_match(
         ac_match,
         data,
         data_size,
         data_size - ac_match->backtrack,
         matches_arena);
-
-    if (result != ERROR_SUCCESS)
-      return result;
 
     ac_match = ac_match->next;
   }
@@ -991,29 +947,6 @@ int yr_rules_load(
   #endif
 
   rule = new_rules->rules_list_head;
-
-  while (!RULE_IS_NULL(rule))
-  {
-    string = rule->strings;
-
-    while (!STRING_IS_NULL(string))
-    {
-      string->re.regexp = NULL;
-      string->re.extra = NULL;
-
-      if (STRING_IS_REGEXP(string))
-        yr_regex_compile(&string->re,
-            string->string,
-            0,
-            NULL,
-            0,
-            &error_offset);
-
-      string++;
-    }
-    rule++;
-  }
-
   *rules = new_rules;
 
   return ERROR_SUCCESS;

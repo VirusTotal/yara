@@ -320,9 +320,8 @@ void scan_dir(
 #endif
 
 void print_string(
-    unsigned char* data,
-    unsigned int length,
-    int unicode)
+    uint8_t* data,
+    int length)
 {
   unsigned int i;
   char* str;
@@ -332,24 +331,22 @@ void print_string(
   for (i = 0; i < length; i++)
   {
     if (str[i] >= 32 && str[i] <= 126)
-      printf("%c",str[i]);
+      printf("%c", str[i]);
     else
-      printf("\\x%02x", str[i]);
-
-    if (unicode) i++;
+      printf("\\x%02X", (uint8_t) str[i]);
   }
 
   printf("\n");
 }
 
 void print_hex_string(
-    unsigned char* data,
-    unsigned int length)
+    uint8_t* data,
+    int length)
 {
   unsigned int i;
 
   for (i = 0; i < length; i++)
-    printf("%02X ", data[i]);
+    printf("%02X ", (uint8_t) data[i]);
 
   printf("\n");
 }
@@ -375,6 +372,12 @@ void print_scanning_error(int error)
       break;
     case ERROR_ZERO_LENGTH_FILE:
       fprintf(stderr, "zero length file\n");
+      break;
+    case ERROR_UNSUPPORTED_FILE_VERSION:
+      fprintf(stderr, "rules were compiled with a newer version of YARA.\n");
+      break;
+    case ERROR_CORRUPT_FILE:
+      fprintf(stderr, "corrupt compiled rules file.\n");
       break;
     default:
       fprintf(stderr, "internal error: %d\n", error);
@@ -532,15 +535,11 @@ int handle_message(int message, RULE* rule, void* data)
             {
               print_hex_string(match->data, match->length);
             }
-            else if (STRING_IS_WIDE(string))
-            {
-              print_string(match->data, match->length, TRUE);
-            }
             else
             {
-              print_string(match->data, match->length, FALSE);
+              print_string(match->data, match->length);
             }
-
+ 
             match = match->next;
           }
         }
@@ -836,6 +835,9 @@ int main(
   int errors;
   int result;
 
+  clock_t start, end;
+  double cpu_time_used;
+
   THREAD thread[MAX_THREADS];
 
   if (!process_cmd_line(argc, argv))
@@ -849,7 +851,16 @@ int main(
 
   yr_initialize();
 
-  if (yr_rules_load(argv[optind], &rules) == ERROR_SUCCESS)
+  result = yr_rules_load(argv[optind], &rules);
+
+  if (result == ERROR_UNSUPPORTED_FILE_VERSION ||
+      result == ERROR_CORRUPT_FILE)
+  {
+    print_scanning_error(result);
+    return;
+  }
+
+  if (result == ERROR_SUCCESS)
   {
     external = externals_list;
 
@@ -921,6 +932,8 @@ int main(
 
     if (rule_file != NULL)
     {
+      start = clock();
+
       yr_compiler_push_file_name(compiler, argv[optind]);
 
       errors = yr_compiler_add_file(compiler, rule_file, NULL);
@@ -931,6 +944,10 @@ int main(
         yr_compiler_get_rules(compiler, &rules);
 
       yr_compiler_destroy(compiler);
+
+      end = clock();
+
+      printf( "Compiling time: %f s\n", ((float)(end - start)) / CLOCKS_PER_SEC);
 
       if (errors > 0)
       {
@@ -987,6 +1004,10 @@ int main(
   }
   else
   {
+
+     
+    start = clock();
+     
     result = yr_rules_scan_file(
         rules,
         argv[argc - 1],
@@ -994,6 +1015,13 @@ int main(
         (void*) argv[argc - 1],
         fast_scan,
         timeout);
+
+    end = clock();
+
+    cpu_time_used = (float)(end - start) / CLOCKS_PER_SEC;
+
+    printf("Scanning time: %f\n", cpu_time_used);
+
 
     if (result != ERROR_SUCCESS)
     {

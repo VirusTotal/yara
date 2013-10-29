@@ -26,14 +26,13 @@ limitations under the License.
 #include "hash.h"
 #include "sizedstr.h"
 #include "mem.h"
-#include "lex.h"
-#include "regex/regex.h"
+#include "lexer.h"
 #include "parser.h"
+#include "re.h"
 #include "utils.h"
 #include "yara.h"
 
 #define YYERROR_VERBOSE
-#define YYDEBUG 1
 
 #define INTEGER_SET_ENUMERATION 1
 #define INTEGER_SET_RANGE 2
@@ -50,7 +49,7 @@ limitations under the License.
 %}
 
 %debug
-
+%name-prefix="yara_yy"
 %pure-parser
 %parse-param {void *yyscanner}
 %lex-param {yyscan_t yyscanner}
@@ -149,11 +148,11 @@ limitations under the License.
 %destructor { yr_free($$); } _REGEXP_
 
 %union {
-  void*           sized_string;
+  SIZED_STRING*   sized_string;
   char*           c_string;
   int64_t         integer;
-  void*           string;
-  void*           meta;
+  STRING*         string;
+  META*           meta;
 }
 
 
@@ -484,40 +483,31 @@ boolean_expression  : '(' boolean_expression ')'
                       {
                         YARA_COMPILER* compiler = yyget_extra(yyscanner);
                         SIZED_STRING* sized_string = $3;
-                        REGEXP re;
-
+                        RE* re;
+    
                         char* string;
                         int error_offset;
                         int result;
 
-                        result = yr_regex_compile(&re,
-                            sized_string->c_string,
-                            FALSE,
-                            compiler->last_error_extra_info,
-                            sizeof(compiler->last_error_extra_info),
-                            &error_offset);
+                        compiler->last_result = yr_parse_re_string(
+                            sized_string->c_string, &re);
 
-                        if (result > 0)
-                        {
-                          yr_arena_write_string(
-                            compiler->sz_arena,
-                            sized_string->c_string,
-                            &string);
+                        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-                          yr_parser_emit_with_arg_reloc(
-                              yyscanner,
-                              PUSH,
-                              PTR_TO_UINT64(string),
-                              NULL);
+                        compiler->last_result = yr_re_emit_code(
+                            re, compiler->re_code_arena);
 
-                          yr_parser_emit(yyscanner, MATCHES, NULL);
-                        }
-                        else
-                        {
-                          compiler->last_result = \
-                            ERROR_INVALID_REGULAR_EXPRESSION;
-                        }
+                        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
+                        yr_parser_emit_with_arg_reloc(
+                            yyscanner,
+                            PUSH,
+                            PTR_TO_UINT64(re->root_node->forward_code),
+                            NULL);
+
+                        yr_parser_emit(yyscanner, MATCHES, NULL);
+ 
+                        yr_re_destroy(re);
                         yr_free($3);
 
                         ERROR_IF(compiler->last_result != ERROR_SUCCESS);

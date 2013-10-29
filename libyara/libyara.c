@@ -18,6 +18,7 @@ limitations under the License.
 #include <stdio.h>
 
 #include "mem.h"
+#include "re.h"
 #include "yara.h"
 
 #ifdef WIN32
@@ -29,9 +30,6 @@ limitations under the License.
 #include <pthread.h>
 #endif
 
-char isregexescapable[256];
-char isregexhashable[256];
-char isalphanum[256];
 char lowercase[256];
 
 #ifdef WIN32
@@ -46,41 +44,7 @@ void yr_initialize(void)
   int i;
 
   for (i = 0; i < 256; i++)
-  {
-  	lowercase[i] = tolower(i);
-    isregexhashable[i] = isalnum(i);
-   	isalphanum[i] = isalnum(i);
-    isregexescapable[i] = FALSE;
-  }
-
-  // Add other characters that we can hash with for regexes.
-
-  isregexhashable['"'] = TRUE;
-  isregexhashable['\''] = TRUE;
-  isregexhashable[','] = TRUE;
-  isregexhashable[';'] = TRUE;
-  isregexhashable[':'] = TRUE;
-  isregexhashable['/'] = TRUE;
-  isregexhashable['%'] = TRUE;
-  isregexhashable['@'] = TRUE;
-  isregexhashable['#'] = TRUE;
-  isregexhashable['='] = TRUE;
-
-
-  // Characters that are escaped in regexes.
-  isregexescapable['['] = TRUE;
-  isregexescapable['{'] = TRUE;
-  isregexescapable['.'] = TRUE;
-  isregexescapable['('] = TRUE;
-  isregexescapable[')'] = TRUE;
-  isregexescapable['.'] = TRUE;
-  isregexescapable['?'] = TRUE;
-  isregexescapable['^'] = TRUE;
-  isregexescapable['*'] = TRUE;
-  isregexescapable['+'] = TRUE;
-  isregexescapable['$'] = TRUE;
-  isregexescapable['|'] = TRUE;
-  isregexescapable['\\'] = TRUE;
+    lowercase[i] = tolower(i);
 
   yr_heap_alloc();
   
@@ -89,6 +53,8 @@ void yr_initialize(void)
   #else
   pthread_key_create(&key, NULL);
   #endif
+
+  yr_re_initialize();
 
 }
 

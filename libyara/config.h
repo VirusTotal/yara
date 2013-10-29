@@ -7,12 +7,6 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
-/* Define to 1 if you have the `pcre' library (-lpcre). */
-#define HAVE_LIBPCRE 1
-
-/* Define to 1 if you have the `re2' library (-lre2). */
-/* #undef HAVE_LIBRE2 */
-
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 

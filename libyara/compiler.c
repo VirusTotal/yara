@@ -21,7 +21,7 @@ limitations under the License.
 #include "arena.h"
 #include "exec.h"
 #include "filemap.h"
-#include "lex.h"
+#include "lexer.h"
 #include "mem.h"
 #include "utils.h"
 #include "yara.h"
@@ -67,6 +67,9 @@ int yr_compiler_create(
     result = yr_arena_create(&new_compiler->code_arena);
 
   if (result == ERROR_SUCCESS)
+    result = yr_arena_create(&new_compiler->re_code_arena);
+
+  if (result == ERROR_SUCCESS)
     result = yr_arena_create(&new_compiler->automaton_arena);
 
   if (result == ERROR_SUCCESS)
@@ -89,31 +92,7 @@ int yr_compiler_create(
   }
   else  // if error, do cleanup
   {
-    if (new_compiler->sz_arena != NULL)
-      yr_arena_destroy(new_compiler->sz_arena);
-
-    if (new_compiler->rules_arena != NULL)
-      yr_arena_destroy(new_compiler->rules_arena);
-
-    if (new_compiler->strings_arena != NULL)
-      yr_arena_destroy(new_compiler->strings_arena);
-
-    if (new_compiler->code_arena != NULL)
-      yr_arena_destroy(new_compiler->code_arena);
-
-    if (new_compiler->automaton_arena != NULL)
-      yr_arena_destroy(new_compiler->automaton_arena);
-
-    if (new_compiler->externals_arena != NULL)
-      yr_arena_destroy(new_compiler->externals_arena);
-
-    if (new_compiler->namespaces_arena != NULL)
-      yr_arena_destroy(new_compiler->namespaces_arena);
-
-    if (new_compiler->metas_arena != NULL)
-      yr_arena_destroy(new_compiler->metas_arena);
-
-    yr_free(new_compiler);
+    yr_compiler_destroy(new_compiler);
   }
 
   return result;
@@ -139,6 +118,9 @@ void yr_compiler_destroy(
 
   if (compiler->code_arena != NULL)
     yr_arena_destroy(compiler->code_arena);
+
+  if (compiler->re_code_arena != NULL)
+    yr_arena_destroy(compiler->re_code_arena);
 
   if (compiler->automaton_arena != NULL)
     yr_arena_destroy(compiler->automaton_arena);
@@ -421,6 +403,14 @@ int _yr_compiler_compile_rules(
   if (result == ERROR_SUCCESS)
   {
     compiler->code_arena = NULL;
+    result = yr_arena_append(
+        arena,
+        compiler->re_code_arena);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    compiler->re_code_arena = NULL;
     result = yr_arena_append(
         arena,
         compiler->rules_arena);

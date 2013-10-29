@@ -18,8 +18,9 @@ limitations under the License.
 #include <assert.h>
 
 #include "exec.h"
+#include "re.h"
 
-#define STACK_SIZE 4096
+#define STACK_SIZE 16384
 #define MEM_SIZE   MAX_LOOP_NESTING * LOOP_LOCAL_VARS
 
 
@@ -82,7 +83,6 @@ int yr_execute_code(
   STRING* string;
   MATCH* match;
   EXTERNAL_VARIABLE* external;
-  REGEXP re;
 
   char* identifier;
   int i;
@@ -531,21 +531,13 @@ int yr_execute_code(
           break;
         }
 
-        result = yr_regex_compile(&re,
-            UINT64_TO_PTR(char*, r2),
-            FALSE,
-            NULL,
-            0,
-            &i);
-
-        // Regexp should compile without errors,
-        // it was verified during compile time.
-        assert(result > 0);
-
-        result = yr_regex_exec(&re,
-            FALSE,
-            UINT64_TO_PTR(char*, r1),
-            count);
+        result = yr_re_exec(
+          UINT64_TO_PTR(uint8_t*, r2),
+          UINT64_TO_PTR(uint8_t*, r1),
+          count,
+          RE_FLAGS_SCAN,
+          NULL,
+          NULL);
 
         push(result >= 0);
         break;

@@ -85,6 +85,15 @@ int yr_arena_append(
     ARENA* source_arena);
 
 
+int yr_arena_save(
+  ARENA* arena,
+  const char* filename);
+
+
+int yr_arena_load(
+    const char* filename,
+    ARENA** arena);
+
 #endif
 
 

@@ -170,13 +170,13 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 151 "grammar.y"
+#line 150 "grammar.y"
 {
-  void*           sized_string;
+  SIZED_STRING*   sized_string;
   char*           c_string;
   int64_t         integer;
-  void*           string;
-  void*           meta;
+  STRING*         string;
+  META*           meta;
 }
 /* Line 1529 of yacc.c.  */
 #line 183 "grammar.h"

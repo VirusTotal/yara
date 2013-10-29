@@ -17,10 +17,13 @@ limitations under the License.
 #include <stddef.h>
 #include <string.h>
 
+
+#include "atoms.h"
 #include "exec.h"
 #include "hash.h"
 #include "mem.h"
 #include "parser.h"
+#include "re.h"
 #include "utils.h"
 
 
@@ -194,292 +197,6 @@ EXTERNAL_VARIABLE* yr_parser_lookup_external_variable(
   return NULL;
 }
 
-int yr_parser_new_hex_string(
-    YARA_COMPILER* compiler,
-    SIZED_STRING* charstr,
-    uint8_t** new_string,
-    uint8_t** new_mask,
-    int32_t* length)
-{
-  int i;
-  int skip_lo;
-  int skip_hi;
-  int skip_exact;
-  int inside_or;
-  int or_count;
-  int result = ERROR_SUCCESS;
-  char c, d;
-  char* s;
-  char* closing_bracket;
-  uint8_t high_nibble = 0;
-  uint8_t low_nibble = 0;
-  uint8_t mask_high_nibble = 0;
-  uint8_t mask_low_nibble = 0;
-  uint8_t* hex;
-  uint8_t* mask;
-  uint8_t* hex_ptr;
-  uint8_t* mask_ptr;
-
-  hex_ptr = hex =  yr_malloc(charstr->length / 2);
-  mask_ptr = mask = yr_malloc(charstr->length);
-
-  if (hex == NULL || mask == NULL)
-  {
-    if (hex)
-      yr_free(hex);
-
-    if (mask)
-      yr_free(mask);
-
-    return ERROR_INSUFICIENT_MEMORY;
-  }
-
-  *length = 0;
-  inside_or = FALSE;
-
-  // Start iterating at 1 because at 0 is the opening curly brace.
-
-  i = 1;
-
-  // Iterate up to the character prior the closing curly brace.
-
-  while (i < charstr->length - 1)
-  {
-    c = toupper(charstr->c_string[i]);
-
-    if (isalnum(c) || (c == '?'))
-    {
-      d = toupper(charstr->c_string[i + 1]);
-
-      if (!isalnum(d) && (d != '?'))
-      {
-        result = ERROR_UNPAIRED_NIBBLE;
-        break;
-      }
-
-      if (c != '?')
-      {
-        high_nibble = todigit(c);
-        mask_high_nibble = 0x0F;
-      }
-      else
-      {
-        high_nibble = 0;
-        mask_high_nibble = 0;
-      }
-
-      if (d != '?')
-      {
-        low_nibble = todigit(d);
-        mask_low_nibble = 0x0F;
-      }
-      else
-      {
-        low_nibble = 0;
-        mask_low_nibble = 0;
-      }
-
-      *hex++ = (high_nibble << 4) | (low_nibble);
-      *mask++ = (mask_high_nibble << 4) | (mask_low_nibble);
-
-      (*length)++;
-
-      i+=2;
-    }
-    else if (c == '(')
-    {
-      if (inside_or)
-      {
-        result = ERROR_NESTED_OR_OPERATION;
-        break;
-      }
-
-      inside_or = TRUE;
-      *mask++ = MASK_OR;
-      i++;
-    }
-    else if (c == ')')
-    {
-      inside_or = FALSE;
-      *mask++ = MASK_OR_END;
-      i++;
-    }
-    else if (c == '|')
-    {
-      if (!inside_or)
-      {
-        result = ERROR_MISPLACED_OR_OPERATOR;
-        break;
-      }
-
-      *mask++ = MASK_OR;
-      i++;
-    }
-    else if (c == '[')
-    {
-      if (inside_or)
-      {
-        result = ERROR_SKIP_INSIDE_OR_OPERATION;
-        break;
-      }
-
-      closing_bracket = strchr(charstr->c_string + i + 1, ']');
-
-      if (closing_bracket == NULL)
-      {
-        result = ERROR_MISMATCHED_BRACKET;
-        break;
-      }
-      else
-      {
-        s = closing_bracket + 1;
-
-        while (*s == ' ')
-          s++;  // Skip spaces.
-
-        if (*s == '}')
-        {
-          // No skip instruction should exists at the end of the string.
-          result = ERROR_SKIP_AT_END;
-          break;
-        }
-        else if (*s == '[')
-        {
-          // Consecutive skip intructions are not allowed.
-          result = ERROR_CONSECUTIVE_SKIPS;
-          break;
-        }
-      }
-
-      // Only decimal digits and '-' are allowed between brackets.
-
-      for (s = charstr->c_string + i + 1; s < closing_bracket; s++)
-      {
-        if ((*s != '-') && (*s < '0' || *s > '9'))
-        {
-          result = ERROR_INVALID_SKIP_VALUE;
-          break;
-        }
-      }
-
-      skip_lo = atoi(charstr->c_string + i + 1);
-
-      if (skip_lo < 0 || skip_lo > MASK_MAX_SKIP)
-      {
-        result = ERROR_INVALID_SKIP_VALUE;
-        break;
-      }
-
-      skip_exact = 1;
-
-      s = strchr(charstr->c_string + i + 1, '-');
-
-      if (s != NULL && s < closing_bracket)
-      {
-        skip_hi = atoi(s + 1);
-
-        if (skip_hi <= skip_lo || skip_hi > MASK_MAX_SKIP)
-        {
-          result = ERROR_INVALID_SKIP_VALUE;
-          break;
-        }
-
-        skip_exact = 0;
-      }
-
-      if (skip_exact)
-      {
-        *mask++ = MASK_EXACT_SKIP;
-        *mask++ = (unsigned char) skip_lo;
-      }
-      else
-      {
-        *mask++ = MASK_RANGE_SKIP;
-        *mask++ = (unsigned char) skip_lo;
-        *mask++ = (unsigned char) skip_hi;
-      }
-
-      i = (int) (closing_bracket - charstr->c_string + 1);
-
-    }
-    else if (c == ']')
-    {
-      result = ERROR_MISMATCHED_BRACKET;
-      break;
-    }
-    else if (c == ' ' || c == '\n' || c == '\t')
-    {
-      i++;
-    }
-    else
-    {
-      result = ERROR_INVALID_CHAR_IN_HEX_STRING;
-      break;
-    }
-
-  }
-
-  *mask++ = MASK_END;
-
-  // Wildcards or skip instructions are not allowed at the first
-  // position the string.
-
-  if (mask_ptr[0] != 0xFF)
-  {
-    result = ERROR_MISPLACED_WILDCARD_OR_SKIP;
-  }
-
-  // Check if OR syntax is correct.
-
-  i = 0;
-  or_count = 0;
-
-  while (mask_ptr[i] != MASK_END)
-  {
-    if (mask_ptr[i] == MASK_OR)
-    {
-      or_count++;
-
-      if (mask_ptr[i+1] == MASK_OR || mask_ptr[i+1] == MASK_OR_END)
-      {
-        result = ERROR_INVALID_OR_OPERATION_SYNTAX;
-        break;
-      }
-    }
-    else if (mask_ptr[i] == MASK_OR_END)
-    {
-      if (or_count <  2)
-      {
-        result = ERROR_INVALID_OR_OPERATION_SYNTAX;
-        break;
-      }
-
-      or_count = 0;
-    }
-
-    i++;
-  }
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_write_data(
-        compiler->sz_arena,
-        hex_ptr,
-        *length,
-        (void*) new_string);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_write_data(
-        compiler->sz_arena,
-        mask_ptr,
-        i + 1,
-        (void*) new_mask);
-
-  yr_free(hex_ptr);
-  yr_free(mask_ptr);
-
-  return result;
-}
-
 
 STRING* yr_parser_reduce_string_declaration(
     yyscan_t yyscanner,
@@ -487,21 +204,31 @@ STRING* yr_parser_reduce_string_declaration(
     const char* identifier,
     SIZED_STRING* str)
 {
+  int i;
   int error_offset;
-  int min_token_length;
+  int min_atom_length;
   char* file_name;
-  char warning_message[512];
+  char message[512];
+  
   STRING* string;
-  YARA_COMPILER* compiler = yyget_extra(yyscanner);
-  int tidx = yr_get_tidx();
+  AC_MATCH* new_match;
+  ATOM_TREE* atom_tree;
+  ATOM_LIST_ITEM* atom;
+  ATOM_LIST_ITEM* atom_list = NULL;
+  RE* re = NULL;
+  
+  uint8_t* literal_string;
+  int literal_string_len;
+  int max_string_len;
 
+  YARA_COMPILER* compiler = yyget_extra(yyscanner);
+  
   compiler->last_result = yr_arena_allocate_struct(
       compiler->strings_arena,
       sizeof(STRING),
       (void**) &string,
       offsetof(STRING, identifier),
       offsetof(STRING, string),
-      offsetof(STRING, mask),
       EOL);
 
   if (compiler->last_result != ERROR_SUCCESS)
@@ -521,7 +248,7 @@ STRING* yr_parser_reduce_string_declaration(
   if (!(flags & STRING_GFLAGS_WIDE))
     flags |= STRING_GFLAGS_ASCII;
 
-  // The STRING_FLAGS_SINGLE_MATCH flag indicates that finding
+  // The STRING_GFLAGS_SINGLE_MATCH flag indicates that finding
   // a single match for the string is enough. This is true in
   // most cases, except when the string count (#) and string offset (@)
   // operators are used. All strings are marked STRING_FLAGS_SINGLE_MATCH
@@ -530,85 +257,197 @@ STRING* yr_parser_reduce_string_declaration(
   flags |= STRING_GFLAGS_SINGLE_MATCH;
 
   string->g_flags = flags;
-  string->mask = NULL;
-  string->re.regexp = NULL;
-  string->re.extra = NULL;
-  string->matches[tidx].head = NULL;
-  string->matches[tidx].tail = NULL;
 
-
-  if (flags & STRING_GFLAGS_HEXADECIMAL)
+  for (i = 0; i < MAX_THREADS; i++)
   {
-    compiler->last_result = yr_parser_new_hex_string(
-        compiler,
-        str,
-        &string->string,
-        &string->mask,
-        &string->length);
+    string->matches[i].head = NULL;
+    string->matches[i].tail = NULL;
+  }
+
+  if (flags & STRING_GFLAGS_HEXADECIMAL ||
+      flags & STRING_GFLAGS_REGEXP)
+  {
+    if (flags & STRING_GFLAGS_HEXADECIMAL)
+      compiler->last_result = yr_parse_hex_string(
+          str->c_string, &re);
+    else
+      compiler->last_result = yr_parse_re_string(
+          str->c_string, &re);
+
+    if (compiler->last_result != ERROR_SUCCESS)
+    {
+      snprintf(
+          message, 
+          sizeof(message), 
+          "invalid regular expression in string \"%s\": %s", 
+          identifier, 
+          re->error_message);
+
+      yr_compiler_set_error_extra_info(compiler, message);
+      string = NULL;
+      goto _exit;
+    }
+
+    //
+    //yr_re_print(re);
+    //printf("\n");
+    //
+
+    if (re->flags & RE_FLAGS_START_ANCHORED)
+      string->g_flags |= STRING_GFLAGS_START_ANCHORED;
+
+    if (re->flags & RE_FLAGS_END_ANCHORED)
+      string->g_flags |= STRING_GFLAGS_END_ANCHORED;
+
+    if (re->flags & RE_FLAGS_LITERAL_STRING)
+    {
+      string->g_flags |= STRING_GFLAGS_LITERAL;
+      literal_string = re->literal_string;
+      literal_string_len = re->literal_string_len;
+
+      compiler->last_result = yr_atoms_extract_from_string(
+          re->literal_string, 
+          re->literal_string_len, 
+          string->g_flags, 
+          &atom_list);
+    }
+    else
+    {
+      compiler->last_result = yr_re_emit_code(
+          re, compiler->re_code_arena);
+
+      if (compiler->last_result != ERROR_SUCCESS)
+      {
+        string = NULL;
+        goto _exit;
+      }
+
+      compiler->last_result = yr_atoms_extract_from_re(
+          re, string->g_flags, &atom_list);
+    }
   }
   else
   {
-    if (flags & STRING_GFLAGS_REGEXP)
-    {
-      if (yr_regex_compile(
-          &string->re,
-          str->c_string,
-          flags & STRING_GFLAGS_NO_CASE,
-          compiler->last_error_extra_info,
-          sizeof(compiler->last_error_extra_info),
-          &error_offset) <= 0)
-      {
-        compiler->last_result = ERROR_INVALID_REGULAR_EXPRESSION;
-      }
-    }
+    string->g_flags |= STRING_GFLAGS_LITERAL;
+    literal_string = str->c_string;
+    literal_string_len = str->length;
 
-    if (compiler->last_result == ERROR_SUCCESS)
-    {
-      compiler->last_result = yr_arena_write_data(
-          compiler->sz_arena,
-          str->c_string,
-          str->length + 1, // +1 to include the null at the end
-          (void*) &string->string);
-
-      string->length = str->length;
-    }
+    compiler->last_result  = yr_atoms_extract_from_string(
+        str->c_string, str->length, string->g_flags, &atom_list);
   }
 
   if (compiler->last_result != ERROR_SUCCESS)
-    return NULL;
+  {
+    string = NULL;
+    goto _exit;
+  }
+
+  if (STRING_IS_LITERAL(string))
+  {
+    compiler->last_result = yr_arena_write_data(
+        compiler->sz_arena,
+        literal_string,
+        literal_string_len,
+        (void*) &string->string);
+
+    if (compiler->last_result != ERROR_SUCCESS)
+    {
+      string = NULL;
+      goto _exit;
+    }
+
+    string->length = literal_string_len;
+  }
 
   // Add the string to Aho-Corasick automaton.
 
-  compiler->last_result = yr_ac_add_string(
+  if (atom_list != NULL)
+  {
+    compiler->last_result = yr_ac_add_string(
       compiler->automaton_arena,
       compiler->automaton,
       string,
-      &min_token_length);
+      atom_list);
+  }
+  else
+  {
+    compiler->last_result = yr_arena_allocate_struct(
+        compiler->automaton_arena,
+        sizeof(AC_MATCH),
+        (void**) &new_match,
+        offsetof(AC_MATCH, string),
+        offsetof(AC_MATCH, forward_code),
+        offsetof(AC_MATCH, backward_code),
+        offsetof(AC_MATCH, next),
+        EOL);
+
+    if (compiler->last_result == ERROR_SUCCESS)
+    {
+      new_match->backtrack = 0;
+      new_match->string = string;
+      new_match->forward_code = re->root_node->forward_code;
+      new_match->backward_code = NULL;
+      new_match->next = compiler->automaton->root->matches;
+      compiler->automaton->root->matches = new_match;
+    }
+  }
+
+  atom = atom_list;
+
+  if (atom != NULL)
+    min_atom_length = MAX_ATOM_LENGTH;
+  else
+    min_atom_length = 0;
+
+  while (atom != NULL)
+  {
+    if (atom->atom_length < min_atom_length)
+      min_atom_length = atom->atom_length;
+    atom = atom->next;
+  }
+
+  if (STRING_IS_LITERAL(string))
+  {
+    if (STRING_IS_WIDE(string))
+      max_string_len = string->length * 2;
+    else
+      max_string_len = string->length;
+
+    if (max_string_len == min_atom_length)
+      string->g_flags |= STRING_GFLAGS_FITS_IN_ATOM;
+  }
 
   if (compiler->file_name_stack_ptr > 0)
-    file_name = compiler->file_name_stack[
-        compiler->file_name_stack_ptr - 1];
+    file_name = compiler->file_name_stack[compiler->file_name_stack_ptr - 1];
   else
     file_name = NULL;
 
-  if (min_token_length < 2 && compiler->error_report_function != NULL)
+  if (min_atom_length < 2 && compiler->error_report_function != NULL)
   {
     snprintf(
-        warning_message,
-        sizeof(warning_message),
+        message,
+        sizeof(message),
         "%s is slowing down scanning%s",
         string->identifier,
-        min_token_length == 0 ? " (critical!)" : "");
+        min_atom_length == 0 ? " (critical!)" : "");
 
     compiler->error_report_function(
         YARA_ERROR_LEVEL_WARNING,
         file_name,
         yyget_lineno(yyscanner),
-        warning_message);
+        message);
   }
 
   if (compiler->last_result != ERROR_SUCCESS)
-    return NULL;
+    string = NULL;
+
+_exit:
+
+  if (atom_list != NULL)
+    yr_atoms_list_destroy(atom_list);
+
+  if (re != NULL)
+    yr_re_destroy(re);
 
   return string;
 }

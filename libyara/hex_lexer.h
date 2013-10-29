@@ -14,28 +14,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "compiler.h"
+
+#include "re.h"
+
+#define yyparse         hex_yyparse
+#define yylex           hex_yylex
+#define yyerror         hex_yyerror
+#define yychar          hex_yychar
+#define yydebug         hex_yydebug
+#define yynerrs         hex_yynerrs
+#define yyget_extra     hex_yyget_extra
+#define yyget_lineno    hex_yyget_lineno
+
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
 #endif
 
-#define YY_EXTRA_TYPE YARA_COMPILER*
+#define YY_EXTRA_TYPE RE*
 #define YY_USE_CONST
 
-void yyerror(
-		yyscan_t yyscanner,
-		const char *error_message);
 
 YY_EXTRA_TYPE yyget_extra(
-		yyscan_t yyscanner);
+    yyscan_t yyscanner);
 
-int yr_lex_parse_rules_string(
-		const char* rules_string,
-		YARA_COMPILER* compiler);
+void yyerror(
+    yyscan_t yyscanner,
+    const char *error_message);
 
-int yr_lex_parse_rules_file(
-		FILE* rules_file,
-		YARA_COMPILER* compiler);
+int yr_parse_hex_string(
+  const char* hex_string,
+  RE** re);
 

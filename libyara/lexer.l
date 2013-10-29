@@ -23,10 +23,11 @@ limitations under the License.
 #include <stdint.h>
 #include <string.h>
 
+#include "yara.h"
+#include "sizedstr.h"
 #include "grammar.h"
 #include "mem.h"
-#include "sizedstr.h"
-#include "lex.h"
+#include "lexer.h"
 
 
 #define LEX_CHECK_SPACE_OK(data, current_size, max_length) \
@@ -57,6 +58,8 @@ limitations under the License.
 %option noyywrap
 %option nounistd
 %option yylineno
+%option prefix="yara_yy"
+%option outfile="lex.yy.c"
 
 %option verbose
 %option warn
@@ -489,7 +492,6 @@ $({letter}|{digit}|_)*  {
 
 %%
 
-
 void yyerror(yyscan_t yyscanner, const char *error_message)
 {
   YARA_COMPILER* compiler = yyget_extra(yyscanner);
@@ -557,6 +559,9 @@ int yr_lex_parse_rules_string(
   YY_BUFFER_STATE state;
 
   yylex_init(&yyscanner);
+
+  yyset_debug(1, yyscanner);
+
   yyset_extra(compiler, yyscanner);
 
   state = yy_scan_string(rules_string, yyscanner);
@@ -576,9 +581,11 @@ int yr_lex_parse_rules_file(
   yyscan_t yyscanner;
   yylex_init(&yyscanner);
 
-#ifdef DEBUG
+  #if YYDEBUG
+  printf("debug enabled");
+  #endif
+
   yyset_debug(1, yyscanner);
-#endif
 
   yyset_in(rules_file, yyscanner);
   yyset_extra(compiler, yyscanner);

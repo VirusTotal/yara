@@ -44,6 +44,12 @@ typedef pthread_mutex_t mutex_t;
 #define NULL 0
 #endif
 
+#define FAIL_ON_ERROR(x) { \
+  int result = (x); \
+  if (result != ERROR_SUCCESS) \
+    return result; \
+}
+
 #ifndef ERROR_SUCCESS
 #define ERROR_SUCCESS                           0
 #endif
@@ -80,12 +86,14 @@ typedef pthread_mutex_t mutex_t;
 #define ERROR_COULD_NOT_ATTACH_TO_PROCESS       30
 #define ERROR_VECTOR_TOO_LONG                   31
 #define ERROR_INCLUDE_DEPTH_EXCEEDED            32
-#define ERROR_INVALID_OR_CORRUPT_FILE           33
-#define ERROR_EXEC_STACK_OVERFLOW               34
-#define ERROR_SCAN_TIMEOUT                      35
-#define ERROR_LOOP_NESTING_LIMIT_EXCEEDED       36
-#define ERROR_DUPLICATE_LOOP_IDENTIFIER         37
-#define ERROR_TOO_MANY_SCAN_THREADS             38
+#define ERROR_INVALID_FILE                      33
+#define ERROR_CORRUPT_FILE                      34
+#define ERROR_UNSUPPORTED_FILE_VERSION          35
+#define ERROR_EXEC_STACK_OVERFLOW               36
+#define ERROR_SCAN_TIMEOUT                      37
+#define ERROR_LOOP_NESTING_LIMIT_EXCEEDED       38
+#define ERROR_DUPLICATE_LOOP_IDENTIFIER         39
+#define ERROR_TOO_MANY_SCAN_THREADS             40
 
 
 #define CALLBACK_MSG_RULE_MATCHING            1
@@ -97,11 +105,13 @@ typedef pthread_mutex_t mutex_t;
 #define CALLBACK_ERROR     2
 
 
+#define MAX_ATOM_LENGTH 4
 #define LOOP_LOCAL_VARS 4
 #define MAX_LOOP_NESTING 4
 #define MAX_INCLUDE_DEPTH 16
 #define MAX_THREADS 32
 #define LEX_BUF_SIZE  1024
+
 
 #ifndef MAX_PATH
 #define MAX_PATH 1024
@@ -159,7 +169,11 @@ typedef pthread_mutex_t mutex_t;
 #define STRING_GFLAGS_FULL_WORD      0x40
 #define STRING_GFLAGS_ANONYMOUS      0x80
 #define STRING_GFLAGS_SINGLE_MATCH   0x100
-#define STRING_GFLAGS_NULL           0x1000
+#define STRING_GFLAGS_LITERAL        0x200
+#define STRING_GFLAGS_START_ANCHORED 0x400
+#define STRING_GFLAGS_END_ANCHORED   0x800
+#define STRING_GFLAGS_FITS_IN_ATOM   0x1000
+#define STRING_GFLAGS_NULL           0x2000
 
 #define STRING_IS_HEX(x) \
     (((x)->g_flags) & STRING_GFLAGS_HEXADECIMAL)
@@ -188,8 +202,20 @@ typedef pthread_mutex_t mutex_t;
 #define STRING_IS_SINGLE_MATCH(x) \
     (((x)->g_flags) & STRING_GFLAGS_SINGLE_MATCH)
 
+#define STRING_IS_LITERAL(x) \
+    (((x)->g_flags) & STRING_GFLAGS_LITERAL)
+
+#define STRING_IS_START_ANCHORED(x) \
+    (((x)->g_flags) & STRING_GFLAGS_START_ANCHORED)
+
+#define STRING_IS_END_ANCHORED(x) \
+    (((x)->g_flags) & STRING_GFLAGS_END_ANCHORED)
+
 #define STRING_IS_NULL(x) \
     ((x) == NULL || ((x)->g_flags) & STRING_GFLAGS_NULL)
+
+#define STRING_FITS_IN_ATOM(x) \
+    (((x)->g_flags) & STRING_GFLAGS_FITS_IN_ATOM)
 
 #define STRING_FOUND(x) \
     ((x)->matches[yr_get_tidx()].tail != NULL)
@@ -277,20 +303,14 @@ typedef struct _ARENA
 #pragma pack(1)
 
 
-typedef struct _REGEXP
-{
-  DECLARE_REFERENCE(void*, regexp);
-  DECLARE_REFERENCE(void*, extra);
-
-} REGEXP;
-
-
 typedef struct _MATCH
 {
   size_t          first_offset;
   size_t          last_offset;
   uint8_t*        data;
   uint32_t        length;
+
+  struct _MATCH*  prev;
   struct _MATCH*  next;
 
 } MATCH;
@@ -320,11 +340,8 @@ typedef struct _STRING
   int32_t g_flags;
   int32_t length;
 
-  REGEXP re;
-
   DECLARE_REFERENCE(char*, identifier);
   DECLARE_REFERENCE(uint8_t*, string);
-  DECLARE_REFERENCE(uint8_t*, mask);
 
   struct {
     DECLARE_REFERENCE(MATCH*, head);
@@ -364,6 +381,8 @@ typedef struct _AC_MATCH
   uint16_t backtrack;
 
   DECLARE_REFERENCE(STRING*, string);
+  DECLARE_REFERENCE(uint8_t*, forward_code);
+  DECLARE_REFERENCE(uint8_t*, backward_code);
   DECLARE_REFERENCE(struct _AC_MATCH*, next);
 
 } AC_MATCH;
@@ -477,6 +496,7 @@ typedef struct _YARA_COMPILER
   ARENA*           rules_arena;
   ARENA*           strings_arena;
   ARENA*           code_arena;
+  ARENA*           re_code_arena;
   ARENA*           automaton_arena;
   ARENA*           compiled_rules_arena;
   ARENA*           externals_arena;
@@ -541,9 +561,6 @@ typedef struct _YARA_RULES {
 } YARA_RULES;
 
 
-extern char isregexescapable[256];
-extern char isregexhashable[256];
-extern char isalphanum[256];
 extern char lowercase[256];
 
 
@@ -682,12 +699,28 @@ int yr_ac_create_automaton(
     ARENA* arena,
     AC_AUTOMATON** automaton);
 
+//TODO: put this structure in a better place
+
+typedef struct _ATOM_LIST_ITEM
+{
+  uint8_t atom_length;
+  uint8_t atom[MAX_ATOM_LENGTH];
+
+  uint16_t backtrack;
+  
+  void* forward_code;
+  void* backward_code;
+
+  struct _ATOM_LIST_ITEM* next;
+
+} ATOM_LIST_ITEM;
+
 
 int yr_ac_add_string(
     ARENA* arena,
     AC_AUTOMATON* automaton,
     STRING* string,
-    int* min_token_length);
+    ATOM_LIST_ITEM* atom);
 
 
 AC_STATE* yr_ac_next_state(

@@ -116,10 +116,33 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = "a" condition: $a }',
             'rule test { strings: $a = "abc" condition: $a }',
             'rule test { strings: $a = "xyz" condition: $a }',
-            'rule test { strings: $a = "abc" wide nocase fullword condition: $a }',
+            'rule test { strings: $a = "abc" nocase fullword condition: $a }',
             'rule test { strings: $a = "aBc" nocase  condition: $a }',
             'rule test { strings: $a = "abc" fullword condition: $a }',
-        ], "---- abc ---- A\x00B\x00C\x00 ---- xyz")
+        ], "---- abc ---- xyz")
+
+        self.assertTrueRules([
+            'rule test { strings: $a = "a" wide condition: $a }',
+            'rule test { strings: $a = "abc" wide condition: $a }',
+            'rule test { strings: $a = "abc" wide nocase fullword condition: $a }',
+            'rule test { strings: $a = "aBc" wide nocase condition: $a }'
+        ], "---- a\x00b\x00c\x00 ---- xyz")
+
+        self.assertTrueRules([
+            'rule test { strings: $a = "abc" fullword condition: $a }',
+        ], "abc")
+
+        self.assertFalseRules([
+            'rule test { strings: $a = "abc" fullword condition: $a }',
+        ], "xabcx")
+
+        self.assertTrueRules([
+            'rule test { strings: $a = "abc" wide fullword condition: $a }',
+        ], "a\x00b\x00c\x00")
+
+        self.assertFalseRules([
+            'rule test { strings: $a = "abc" wide fullword condition: $a }',
+        ], "x\x00a\x00b\x00c\x00x\x00")
 
         self.assertTrueRules([
             'rule test {\
@@ -213,7 +236,7 @@ class TestYara(unittest.TestCase):
         self.assertFalseRules([
             'rule test { strings: $a = /^ssi/ condition: $a }',
             'rule test { strings: $a = /ssi$/ condition: $a }',
-            'rule test { strings: $a = /ssissi$/ fullword condition: $a }'
+            'rule test { strings: $a = /ssissi/ fullword condition: $a }'
         ], 'mississippi')
 
     def testEntrypoint(self):

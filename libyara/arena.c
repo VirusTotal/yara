@@ -31,18 +31,21 @@ from files.
 #include <stddef.h>
 #include <time.h>
 
+#include "config.h"
 #include "mem.h"
 #include "utils.h"
 #include "yara.h"
 
 
-#define FIRST_PAGE_SIZE 1024
+#define FIRST_PAGE_SIZE         1024
+#define ARENA_FILE_VERSION      1
 
 
 typedef struct _ARENA_FILE_HEADER
 {
   char      magic[4];
   uint32_t  size;
+  uint8_t   version;
 
 } ARENA_FILE_HEADER;
 
@@ -878,6 +881,7 @@ int yr_arena_save(
   header.magic[2] = 'R';
   header.magic[3] = 'A';
   header.size = page->size;
+  header.version = ARENA_FILE_VERSION;
 
   fwrite(&header, sizeof(header), 1, fh);
   fwrite(page->address, sizeof(uint8_t), header.size, fh);
@@ -946,15 +950,31 @@ int yr_arena_load(
   file_size = ftell(fh);
   fseek(fh, 0, SEEK_SET);
 
-  if (fread(&header, sizeof(header), 1, fh) != 1 ||
-      header.size >= file_size ||
-      header.magic[0] != 'Y' ||
+  if (fread(&header, sizeof(header), 1, fh) != 1)
+  {
+    fclose(fh);
+    return ERROR_INVALID_FILE; 
+  }
+
+  if (header.magic[0] != 'Y' ||
       header.magic[1] != 'A' ||
       header.magic[2] != 'R' ||
       header.magic[3] != 'A')
   {
     fclose(fh);
-    return ERROR_INVALID_OR_CORRUPT_FILE;
+    return ERROR_INVALID_FILE;
+  }
+
+  if (header.size >= file_size)
+  {
+    fclose(fh);
+    return ERROR_CORRUPT_FILE;
+  }
+
+  if (header.version > ARENA_FILE_VERSION)
+  {
+    fclose(fh);
+    return ERROR_UNSUPPORTED_FILE_VERSION;
   }
 
   result = yr_arena_create(&new_arena);
@@ -986,7 +1006,7 @@ int yr_arena_load(
   {
     fclose(fh);
     yr_arena_destroy(new_arena);
-    return ERROR_INVALID_OR_CORRUPT_FILE;
+    return ERROR_CORRUPT_FILE;
   }
 
   page->used = header.size;
@@ -995,7 +1015,7 @@ int yr_arena_load(
   {
     fclose(fh);
     yr_arena_destroy(new_arena);
-    return ERROR_INVALID_OR_CORRUPT_FILE;
+    return ERROR_CORRUPT_FILE;
   }
 
   while (reloc_offset != -1)
@@ -1014,7 +1034,7 @@ int yr_arena_load(
     {
       fclose(fh);
       yr_arena_destroy(new_arena);
-      return ERROR_INVALID_OR_CORRUPT_FILE;
+      return ERROR_CORRUPT_FILE;
     }
   }
 

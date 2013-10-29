@@ -19,7 +19,7 @@ limitations under the License.
 
 #include "arena.h"
 #include "compiler.h"
-#include "lex.h"
+#include "lexer.h"
 #include "sizedstr.h"
 
 

@@ -180,6 +180,8 @@ int main(
 
   compiler->error_report_function = report_error;
 
+  start = clock();
+
   for (i = optind; i < argc - 1; i++)
   {
     rule_file = fopen(argv[i], "r");
@@ -203,8 +205,6 @@ int main(
       fprintf(stderr, "could not open file: %s\n", argv[i]);
     }
   }
-
-  start = clock();
 
   yr_compiler_get_rules(compiler, &rules);
 
