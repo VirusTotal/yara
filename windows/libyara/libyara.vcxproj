@@ -121,18 +121,23 @@
   <ItemGroup>
     <ClCompile Include="..\..\libyara\ahocorasick.c" />
     <ClCompile Include="..\..\libyara\arena.c" />
+    <ClCompile Include="..\..\libyara\atoms.c" />
     <ClCompile Include="..\..\libyara\compiler.c" />
     <ClCompile Include="..\..\libyara\exec.c" />
     <ClCompile Include="..\..\libyara\exefiles.c" />
     <ClCompile Include="..\..\libyara\filemap.c" />
     <ClCompile Include="..\..\libyara\grammar.c" />
     <ClCompile Include="..\..\libyara\hash.c" />
-    <ClCompile Include="..\..\libyara\lex.c" />
+    <ClCompile Include="..\..\libyara\hex_grammar.c" />
+    <ClCompile Include="..\..\libyara\hex_lexer.c" />
+    <ClCompile Include="..\..\libyara\lexer.c" />
     <ClCompile Include="..\..\libyara\libyara.c" />
     <ClCompile Include="..\..\libyara\mem.c" />
     <ClCompile Include="..\..\libyara\parser.c" />
     <ClCompile Include="..\..\libyara\proc.c" />
-    <ClCompile Include="..\..\libyara\regex\regex-pcre.c" />
+    <ClCompile Include="..\..\libyara\re.c" />
+    <ClCompile Include="..\..\libyara\re_grammar.c" />
+    <ClCompile Include="..\..\libyara\re_lexer.c" />
     <ClCompile Include="..\..\libyara\rules.c" />
     <ClCompile Include="..\..\libyara\utils.c" />
   </ItemGroup>
