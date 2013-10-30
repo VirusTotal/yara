@@ -595,10 +595,15 @@ PyObject* handle_error(
           YaraError,
           "zero length file \"%s\"",
           extra);
-    case ERROR_INVALID_OR_CORRUPT_FILE:
+    case ERROR_INVALID_FILE:
       return PyErr_Format(
           YaraError,
-          "invalid or corrupt compiled rules file \"%s\"",
+          "invalid rules file \"%s\"",
+          extra);
+    case ERROR_CORRUPT_FILE:
+      return PyErr_Format(
+          YaraError,
+          "corrupt rules file \"%s\"",
           extra);
     case ERROR_SCAN_TIMEOUT:
       return PyErr_Format(
