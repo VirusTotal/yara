@@ -39,6 +39,7 @@ typedef struct _CALLBACK_ARGS
   int forward_matches;
   uint8_t* data;
   int data_size;
+  int full_word;
 
 } CALLBACK_ARGS;
 
@@ -169,6 +170,32 @@ void match_callback(
   if (flags & RE_FLAGS_END_ANCHORED && 
       match_offset + match_length != callback_args->data_size)
     return;
+
+  if (callback_args->full_word)
+  {
+    if (flags & RE_FLAGS_WIDE)
+    {
+      if (match_offset >= 2 && 
+          *(match_data - 1) == 0 && 
+          isalnum(*(match_data - 2)))
+        return;
+
+      if (match_offset + match_length + 1 < callback_args->data_size && 
+          *(match_data + match_length + 1) == 0 && 
+          isalnum(*(match_data + match_length)))
+        return;
+    }
+    else
+    {
+      if (match_offset >= 1 && 
+          isalnum(*(match_data - 1)))
+        return;
+
+      if (match_offset + match_length < callback_args->data_size && 
+          isalnum(*(match_data + match_length)))
+        return;
+    }
+  }
   
   match = string->matches[tidx].tail;
 
@@ -245,7 +272,7 @@ int _yr_scan_verify_re_match(
 {
   CALLBACK_ARGS callback_args;
 
-  int forward_matches = 0;
+  int forward_matches = -1;
   int flags = 0;
 
   if (STRING_IS_START_ANCHORED(ac_match->string))
@@ -289,6 +316,7 @@ int _yr_scan_verify_re_match(
   callback_args.data_size = data_size;
   callback_args.matches_arena = matches_arena;
   callback_args.forward_matches = forward_matches;
+  callback_args.full_word = STRING_IS_FULL_WORD(ac_match->string);
 
   if (ac_match->backward_code != NULL)
   {
@@ -387,7 +415,7 @@ int _yr_scan_verify_literal_match(
           return ERROR_SUCCESS;
 
         if (offset + forward_matches + 1 < data_size && 
-            *(data + offset + forward_matches + 1) != 0 && 
+            *(data + offset + forward_matches + 1) == 0 && 
             isalnum(*(data + offset + forward_matches)))
           return ERROR_SUCCESS;
       }
@@ -414,6 +442,7 @@ int _yr_scan_verify_literal_match(
     callback_args.data_size = data_size;
     callback_args.matches_arena = matches_arena;
     callback_args.forward_matches = forward_matches;
+    callback_args.full_word = STRING_IS_FULL_WORD(string);
 
     match_callback(
         data + offset, 0, flags, &callback_args);
