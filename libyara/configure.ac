@@ -1,4 +1,7 @@
 AC_INIT([libyara], [2.0], [vmalvarez@virustotal.com])
+
+${CFLAGS=""}
+
 LT_INIT
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC

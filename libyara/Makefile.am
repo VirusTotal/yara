@@ -1,6 +1,6 @@
-AM_YFLAGS = -d
+AM_YFLAGS=-d
 
-CFLAGS=-g -O0
+AM_CFLAGS=-g -O4
 
 ACLOCAL_AMFLAGS=-I m4
 
