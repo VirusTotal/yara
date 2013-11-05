@@ -2137,7 +2137,7 @@ int yr_parse_hex_string(
   yyparse(yyscanner);
   hex_yylex_destroy(yyscanner);
 
-  return ERROR_SUCCESS;
+  return (*re)->error_code;
 }
 
 

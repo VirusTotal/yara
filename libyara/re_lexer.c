@@ -2533,7 +2533,7 @@ int yr_parse_re_string(
     return ERROR_INVALID_REGULAR_EXPRESSION;
   }
 
-  return ERROR_SUCCESS;
+  return (*re)->error_code;
 }
 
 

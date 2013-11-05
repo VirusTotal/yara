@@ -61,6 +61,7 @@ void yr_initialize(void)
 void yr_finalize(void)
 {
   yr_heap_free();
+  yr_re_finalize();
 }
 
 //

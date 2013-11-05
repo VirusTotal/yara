@@ -73,6 +73,23 @@ int yr_re_initialize()
 }
 
 
+int yr_re_finalize()
+{
+  RE_THREAD_STORAGE* thread_storage;
+
+  #ifdef WIN32
+  thread_storage = TlsGetValue(thread_storage_key);
+  #else
+  thread_storage = pthread_getspecific(thread_storage_key);
+  #endif
+
+  if (thread_storage != NULL)
+    yr_free(thread_storage);
+
+  return ERROR_SUCCESS;
+}
+
+
 RE_NODE* yr_re_node_create(
     int type, 
     RE_NODE* left, 
@@ -129,6 +146,7 @@ int yr_re_create(
   (*re)->flags = 0;
   (*re)->root_node = NULL;
   (*re)->error_message = NULL;
+  (*re)->error_code = ERROR_SUCCESS;
 
   return ERROR_SUCCESS;
 }

@@ -150,7 +150,7 @@ int yr_parse_hex_string(
   yyparse(yyscanner);
   yylex_destroy(yyscanner);
 
-  return ERROR_SUCCESS;
+  return (*re)->error_code;
 }
 
 

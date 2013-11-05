@@ -34,6 +34,14 @@ limitations under the License.
 yydebug = 1;
 #endif
 
+#define ERROR_IF(x, error) \
+    if (x) \
+    { \
+      RE* re = yyget_extra(yyscanner); \
+      re->error_code = error; \
+      YYABORT; \
+    } \
+
 %}
 
 %debug
@@ -71,6 +79,7 @@ tokens : token
        | tokens token
          {
             $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
+            ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        ;
 
@@ -98,6 +107,9 @@ range : _NUMBER_
           re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
           $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
+
+          ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+
           $$->start = $1;
           $$->end = $1;
         }
@@ -108,6 +120,9 @@ range : _NUMBER_
           re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
           $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
+
+          ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+
           $$->start = $1;
           $$->end = $3;
         }
@@ -122,6 +137,8 @@ alternatives : tokens
                {
                   mark_as_not_literal();
                   $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
+
+                  ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
                }
              ;
 
@@ -130,6 +147,9 @@ byte  : _BYTE_
           RE* re = yyget_extra(yyscanner);
 
           $$ = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
+
+          ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+
           $$->value = $1;
 
           if (re->literal_string_len == re->literal_string_max)
@@ -139,10 +159,7 @@ byte  : _BYTE_
                 re->literal_string, 
                 re->literal_string_max);
 
-            if (re->literal_string == NULL)
-            {
-                //TODO
-            }
+            ERROR_IF(re->literal_string == NULL, ERROR_INSUFICIENT_MEMORY);
           }
 
           re->literal_string[re->literal_string_len] = $1;
@@ -157,10 +174,15 @@ byte  : _BYTE_
           if (mask == 0x00)
           {
             $$ = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
+            
+            ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
           }
           else 
           {
             $$ = yr_re_node_create(RE_NODE_MASKED_LITERAL, NULL, NULL);
+
+            ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+
             $$->value = $1 & 0xFF;
             $$->mask = mask;
           }
