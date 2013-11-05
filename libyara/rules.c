@@ -40,6 +40,7 @@ typedef struct _CALLBACK_ARGS
   uint8_t* data;
   int data_size;
   int full_word;
+  int tidx;
 
 } CALLBACK_ARGS;
 
@@ -145,8 +146,8 @@ void match_callback(
   STRING* string = callback_args->string;
 
   int character_size;
-  int tidx = yr_get_tidx();
-
+  int tidx = callback_args->tidx;
+  
   size_t match_offset = match_data - callback_args->data;
 
   if (flags & RE_FLAGS_WIDE)
@@ -317,6 +318,7 @@ int _yr_scan_verify_re_match(
   callback_args.matches_arena = matches_arena;
   callback_args.forward_matches = forward_matches;
   callback_args.full_word = STRING_IS_FULL_WORD(ac_match->string);
+  callback_args.tidx = yr_get_tidx();
 
   if (ac_match->backward_code != NULL)
   {
@@ -443,6 +445,7 @@ int _yr_scan_verify_literal_match(
     callback_args.matches_arena = matches_arena;
     callback_args.forward_matches = forward_matches;
     callback_args.full_word = STRING_IS_FULL_WORD(string);
+    callback_args.tidx = yr_get_tidx();
 
     match_callback(
         data + offset, 0, flags, &callback_args);
@@ -679,7 +682,7 @@ int yr_rules_scan_mem_block(
 
     ac_match = ac_match->next;
   }
-
+  
   return ERROR_SUCCESS;
 }
 
