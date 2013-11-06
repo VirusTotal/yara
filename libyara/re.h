@@ -106,6 +106,8 @@ struct RE {
   RE_NODE* root_node;
   
   const char* error_message;
+  int error_code;
+  
   int8_t* literal_string;
 
   int literal_string_len;
@@ -152,5 +154,7 @@ int yr_re_exec(
     void* callback_args);
 
 int yr_re_initialize();
+
+int yr_re_finalize();
 
 #endif
