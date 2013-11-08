@@ -21,6 +21,7 @@ limitations under the License.
 #ifdef WIN32
 #include <windows.h>
 #else
+#include <sys/stat.h>
 #include <pthread.h>
 #include <semaphore.h>
 #endif
