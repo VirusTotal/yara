@@ -779,7 +779,7 @@ int yr_rules_scan_mem_blocks(
   {
     if (RULE_IS_GLOBAL(rule) && !(rule->t_flags[tidx] & RULE_TFLAGS_MATCH))
     {
-      rule->namespace->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
+      rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
     }
 
     rule++;
@@ -790,7 +790,7 @@ int yr_rules_scan_mem_blocks(
   while (!RULE_IS_NULL(rule))
   {
     if (rule->t_flags[tidx] & RULE_TFLAGS_MATCH &&
-        !(rule->namespace->t_flags[tidx] & NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL))
+        !(rule->ns->t_flags[tidx] & NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL))
     {
       message = CALLBACK_MSG_RULE_MATCHING;
     }

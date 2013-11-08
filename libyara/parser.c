@@ -508,7 +508,7 @@ int yr_parser_reduce_rule_declaration(
       offsetof(RULE, tags),
       offsetof(RULE, strings),
       offsetof(RULE, metas),
-      offsetof(RULE, namespace),
+      offsetof(RULE, ns),
       EOL);
 
   if (compiler->last_result != ERROR_SUCCESS)
@@ -535,7 +535,7 @@ int yr_parser_reduce_rule_declaration(
   rule->tags = tags;
   rule->strings = strings;
   rule->metas = metas;
-  rule->namespace = compiler->current_namespace;
+  rule->ns = compiler->current_namespace;
 
   compiler->current_rule_flags = 0;
   compiler->current_rule_strings = NULL;

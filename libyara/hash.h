@@ -31,13 +31,13 @@ void yr_hash_table_destroy(
 void* yr_hash_table_lookup(
     HASH_TABLE* table,
     const char* key,
-    const char* namespace);
+    const char* ns);
 
 
 int yr_hash_table_add(
     HASH_TABLE* table,
     const char* key,
-    const char* namespace,
+    const char* ns,
     void* value);
 
 #endif

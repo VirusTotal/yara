@@ -360,7 +360,7 @@ typedef struct _RULE
   DECLARE_REFERENCE(char*, tags);
   DECLARE_REFERENCE(META*, metas);
   DECLARE_REFERENCE(STRING*, strings);
-  DECLARE_REFERENCE(NAMESPACE*, namespace);
+  DECLARE_REFERENCE(NAMESPACE*, ns);
 
 } RULE;
 
@@ -453,7 +453,7 @@ typedef struct _YARA_RULES_FILE_HEADER
 typedef struct _HASH_TABLE_ENTRY
 {
   char* key;
-  char* namespace;
+  char* ns;
   void* value;
   struct _HASH_TABLE_ENTRY* next;
 

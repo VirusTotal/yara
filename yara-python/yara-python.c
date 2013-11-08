@@ -393,7 +393,7 @@ int yara_callback(
   {
     match = Match_NEW(
         rule->identifier,
-        rule->namespace->name,
+        rule->ns->name,
         tag_list,
         meta_list,
         string_list);
@@ -428,7 +428,7 @@ int yara_callback(
     PyDict_SetItemString(callback_dict, "rule", object);
     Py_DECREF(object);
 
-    object = PY_STRING(rule->namespace->name);
+    object = PY_STRING(rule->ns->name);
     PyDict_SetItemString(callback_dict, "namespace", object);
     Py_DECREF(object);
 
