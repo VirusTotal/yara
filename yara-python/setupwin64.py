@@ -9,6 +9,5 @@ setup(name='yara-python',
         sources=['yara-python.c'],
         include_dirs=['../windows/include', '../libyara'],
         extra_objects=[
-          '../windows/yara/Release/libyara64.lib',
-          '../windows/lib/pcre64.lib']
+          '../windows/yara/Release/libyara64.lib']
         )])

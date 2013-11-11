@@ -7,6 +7,6 @@ setup(name='yara-python',
       ext_modules=[Extension(
         name='yara',
         sources=['yara-python.c'],
-        libraries=['yara', 'pcre'],
+        libraries=['yara'],
         include_dirs=['../windows/include', '../libyara'],
     )])
