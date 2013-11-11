@@ -691,83 +691,6 @@ char* yr_compiler_get_error_message(
           "duplicate loop identifier \"%s\"",
           compiler->last_error_extra_info);
       break;
-    case ERROR_INVALID_CHAR_IN_HEX_STRING:
-      snprintf(
-          buffer,
-          buffer_size,
-          "invalid char in hex string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_MISMATCHED_BRACKET:
-      snprintf(
-          buffer,
-          buffer_size,
-          "mismatched bracket in string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_SKIP_AT_END:
-      snprintf(
-          buffer,
-          buffer_size,
-          "skip at the end of string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_INVALID_SKIP_VALUE:
-      snprintf(
-          buffer,
-          buffer_size,
-          "invalid skip in string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_UNPAIRED_NIBBLE:
-      snprintf(
-          buffer,
-          buffer_size,
-          "unpaired nibble in string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_CONSECUTIVE_SKIPS:
-      snprintf(
-          buffer,
-          buffer_size,
-          "two consecutive skips in string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_MISPLACED_WILDCARD_OR_SKIP:
-      snprintf(
-          buffer,
-          buffer_size,
-          "misplaced wildcard or skip at string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_MISPLACED_OR_OPERATOR:
-      snprintf(
-          buffer,
-          buffer_size,
-          "misplaced OR (|) operator at string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_NESTED_OR_OPERATION:
-      snprintf(
-          buffer,
-          buffer_size,
-          "nested OR (|) operator at string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_INVALID_OR_OPERATION_SYNTAX:
-      snprintf(
-          buffer,
-          buffer_size,
-          "invalid syntax at hex string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_SKIP_INSIDE_OR_OPERATION:
-      snprintf(
-          buffer,
-          buffer_size,
-          "skip inside an OR (|) operation at string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
     case ERROR_UNDEFINED_STRING:
       snprintf(
           buffer,
@@ -802,6 +725,7 @@ char* yr_compiler_get_error_message(
           buffer_size,
           "wrong use of anonymous string");
       break;
+    case ERROR_INVALID_HEX_STRING:
     case ERROR_INVALID_REGULAR_EXPRESSION:
     case ERROR_SYNTAX_ERROR:
       snprintf(

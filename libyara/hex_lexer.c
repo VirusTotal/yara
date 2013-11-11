@@ -478,6 +478,7 @@ limitations under the License.
 
 #include "yara.h"
 #include "atoms.h"
+#include "mem.h"
 #include "re.h"
 #include "hex_grammar.h"
 #include "hex_lexer.h"
@@ -488,9 +489,23 @@ limitations under the License.
 #define snprintf _snprintf
 #endif
 
+
+#define YY_DECL int hex_yylex \
+    (YYSTYPE * yylval_param , yyscan_t yyscanner, LEX_ENVIRONMENT* lex_env)
+
+#define LEX_ENV  ((LEX_ENVIRONMENT*) lex_env)
+
+#define ERROR_IF(x, error) \
+    if (x) \
+    { \
+      RE* re = hex_yyget_extra(yyscanner); \
+      re->error_code = error; \
+      YYABORT; \
+    } \
+
 #define YY_NO_UNISTD_H 1
 
-#line 494 "hex_lexer.c"
+#line 509 "hex_lexer.c"
 
 #define INITIAL 0
 #define range 1
@@ -724,11 +739,11 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 52 "hex_lexer.l"
+#line 67 "hex_lexer.l"
 
 
 
-#line 732 "hex_lexer.c"
+#line 747 "hex_lexer.c"
 
     yylval = yylval_param;
 
@@ -827,7 +842,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 55 "hex_lexer.l"
+#line 70 "hex_lexer.l"
 {
 
   yylval->integer = xtoi(yytext);
@@ -836,7 +851,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 61 "hex_lexer.l"
+#line 76 "hex_lexer.l"
 {
 
   yytext[1] = '0'; // replace ? by 0
@@ -846,7 +861,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 68 "hex_lexer.l"
+#line 83 "hex_lexer.l"
 {
 
   yytext[0] = '0'; // replace ? by 0
@@ -856,7 +871,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 75 "hex_lexer.l"
+#line 90 "hex_lexer.l"
 {
 
   yylval->integer = 0x0000;
@@ -865,7 +880,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 81 "hex_lexer.l"
+#line 96 "hex_lexer.l"
 {
 
   BEGIN(range);
@@ -874,23 +889,30 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 87 "hex_lexer.l"
+#line 102 "hex_lexer.l"
 {
   return yytext[0];
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 91 "hex_lexer.l"
+#line 106 "hex_lexer.l"
 {
 
   yylval->integer = atoi(yytext);
+
+  if (yylval->integer > INT16_MAX)
+  {
+    yyerror(yyscanner, lex_env, "range value too large");
+    yyterminate();
+  }
+
   return _NUMBER_;
 }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 97 "hex_lexer.l"
+#line 119 "hex_lexer.l"
 {
 
   BEGIN(INITIAL);
@@ -900,12 +922,12 @@ YY_RULE_SETUP
 case 9:
 /* rule 9 can match eol */
 YY_RULE_SETUP
-#line 104 "hex_lexer.l"
+#line 126 "hex_lexer.l"
 // skip whitespace
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 107 "hex_lexer.l"
+#line 129 "hex_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -914,17 +936,17 @@ YY_RULE_SETUP
   }
   else
   {
-    yyerror(yyscanner, "non-ascii character");
+    yyerror(yyscanner, lex_env, "non-ascii character");
     yyterminate();
   }
 }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 120 "hex_lexer.l"
+#line 142 "hex_lexer.l"
 ECHO;
 	YY_BREAK
-#line 928 "hex_lexer.c"
+#line 950 "hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(range):
 	yyterminate();
@@ -2102,24 +2124,29 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 120 "hex_lexer.l"
+#line 142 "hex_lexer.l"
 
 
 
 void yyerror(
     yyscan_t yyscanner,
+    LEX_ENVIRONMENT* lex_env,
     const char *error_message)
 {
-  printf("%s", error_message);
-
+  if (lex_env->last_error_message == NULL)
+  {
+    lex_env->last_error_message = yr_strdup(error_message);
+  }
 }
-
 
 int yr_parse_hex_string(
   const char* hex_string,
   RE** re)
 {
   yyscan_t yyscanner;
+  LEX_ENVIRONMENT lex_env;
+
+  lex_env.last_error_message = NULL;
 
   FAIL_ON_ERROR(yr_re_create(re));
 
@@ -2134,8 +2161,14 @@ int yr_parse_hex_string(
   hex_yylex_init(&yyscanner);
   hex_yyset_extra(*re,yyscanner);
   hex_yy_scan_string(hex_string,yyscanner);
-  yyparse(yyscanner);
+  yyparse(yyscanner, &lex_env);
   hex_yylex_destroy(yyscanner);
+
+  if (lex_env.last_error_message != NULL)
+  {
+    (*re)->error_message = lex_env.last_error_message;
+    return ERROR_INVALID_HEX_STRING;
+  }
 
   return (*re)->error_code;
 }

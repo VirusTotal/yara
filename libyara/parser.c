@@ -279,7 +279,9 @@ STRING* yr_parser_reduce_string_declaration(
       snprintf(
           message, 
           sizeof(message), 
-          "invalid regular expression in string \"%s\": %s", 
+          "invalid %s in string \"%s\": %s", 
+          (flags & STRING_GFLAGS_HEXADECIMAL) ? 
+              "hex string" : "regular expression",
           identifier, 
           re->error_message);
 

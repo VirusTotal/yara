@@ -48,8 +48,12 @@ yydebug = 1;
 
 %name-prefix="hex_yy"
 %pure-parser
+
 %parse-param {void *yyscanner}
+%parse-param {LEX_ENVIRONMENT *lex_env}
+
 %lex-param {yyscan_t yyscanner}
+%lex-param {LEX_ENVIRONMENT *lex_env}
 
 %union {
   int integer;
@@ -116,6 +120,14 @@ range : _NUMBER_
       | _NUMBER_ '-' _NUMBER_
         {
           RE_NODE* re_any;
+
+          if ($1 > $3)
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup("invalid range");
+            YYABORT;
+          }
 
           re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 

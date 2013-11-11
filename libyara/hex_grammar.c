@@ -139,7 +139,7 @@ yydebug = 1;
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 54 "hex_grammar.y"
+#line 58 "hex_grammar.y"
 {
   int integer;
   RE_NODE *re_node;
@@ -444,8 +444,8 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    67,    67,    75,    79,    87,    91,    95,   103,   116,
-     132,   136,   145,   168
+       0,    71,    71,    79,    83,    91,    95,    99,   107,   120,
+     144,   148,   157,   180
 };
 #endif
 
@@ -574,7 +574,7 @@ do								\
     }								\
   else								\
     {								\
-      yyerror (yyscanner, YY_("syntax error: cannot back up")); \
+      yyerror (yyscanner, lex_env, YY_("syntax error: cannot back up")); \
       YYERROR;							\
     }								\
 while (YYID (0))
@@ -631,7 +631,7 @@ while (YYID (0))
 #ifdef YYLEX_PARAM
 # define YYLEX yylex (&yylval, YYLEX_PARAM)
 #else
-# define YYLEX yylex (&yylval, yyscanner)
+# define YYLEX yylex (&yylval, yyscanner, lex_env)
 #endif
 
 /* Enable debugging if requested.  */
@@ -654,7 +654,7 @@ do {									  \
     {									  \
       YYFPRINTF (stderr, "%s ", Title);					  \
       yy_symbol_print (stderr,						  \
-		  Type, Value, yyscanner); \
+		  Type, Value, yyscanner, lex_env); \
       YYFPRINTF (stderr, "\n");						  \
     }									  \
 } while (YYID (0))
@@ -668,19 +668,21 @@ do {									  \
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *yyscanner)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *yyscanner, LEX_ENVIRONMENT *lex_env)
 #else
 static void
-yy_symbol_value_print (yyoutput, yytype, yyvaluep, yyscanner)
+yy_symbol_value_print (yyoutput, yytype, yyvaluep, yyscanner, lex_env)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
     void *yyscanner;
+    LEX_ENVIRONMENT *lex_env;
 #endif
 {
   if (!yyvaluep)
     return;
   YYUSE (yyscanner);
+  YYUSE (lex_env);
 # ifdef YYPRINT
   if (yytype < YYNTOKENS)
     YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
@@ -702,14 +704,15 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, yyscanner)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *yyscanner)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *yyscanner, LEX_ENVIRONMENT *lex_env)
 #else
 static void
-yy_symbol_print (yyoutput, yytype, yyvaluep, yyscanner)
+yy_symbol_print (yyoutput, yytype, yyvaluep, yyscanner, lex_env)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
     void *yyscanner;
+    LEX_ENVIRONMENT *lex_env;
 #endif
 {
   if (yytype < YYNTOKENS)
@@ -717,7 +720,7 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, yyscanner)
   else
     YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, yyscanner);
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep, yyscanner, lex_env);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -757,13 +760,14 @@ do {								\
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, int yyrule, void *yyscanner)
+yy_reduce_print (YYSTYPE *yyvsp, int yyrule, void *yyscanner, LEX_ENVIRONMENT *lex_env)
 #else
 static void
-yy_reduce_print (yyvsp, yyrule, yyscanner)
+yy_reduce_print (yyvsp, yyrule, yyscanner, lex_env)
     YYSTYPE *yyvsp;
     int yyrule;
     void *yyscanner;
+    LEX_ENVIRONMENT *lex_env;
 #endif
 {
   int yynrhs = yyr2[yyrule];
@@ -777,7 +781,7 @@ yy_reduce_print (yyvsp, yyrule, yyscanner)
       fprintf (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
-		       		       , yyscanner);
+		       		       , yyscanner, lex_env);
       fprintf (stderr, "\n");
     }
 }
@@ -785,7 +789,7 @@ yy_reduce_print (yyvsp, yyrule, yyscanner)
 # define YY_REDUCE_PRINT(Rule)		\
 do {					\
   if (yydebug)				\
-    yy_reduce_print (yyvsp, Rule, yyscanner); \
+    yy_reduce_print (yyvsp, Rule, yyscanner, lex_env); \
 } while (YYID (0))
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1036,18 +1040,20 @@ yysyntax_error (char *yyresult, int yystate, int yychar)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *yyscanner)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *yyscanner, LEX_ENVIRONMENT *lex_env)
 #else
 static void
-yydestruct (yymsg, yytype, yyvaluep, yyscanner)
+yydestruct (yymsg, yytype, yyvaluep, yyscanner, lex_env)
     const char *yymsg;
     int yytype;
     YYSTYPE *yyvaluep;
     void *yyscanner;
+    LEX_ENVIRONMENT *lex_env;
 #endif
 {
   YYUSE (yyvaluep);
   YYUSE (yyscanner);
+  YYUSE (lex_env);
 
   if (!yymsg)
     yymsg = "Deleting";
@@ -1072,7 +1078,7 @@ int yyparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int yyparse (void *yyscanner);
+int yyparse (void *yyscanner, LEX_ENVIRONMENT *lex_env);
 #else
 int yyparse ();
 #endif
@@ -1101,11 +1107,12 @@ yyparse (YYPARSE_PARAM)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (void *yyscanner)
+yyparse (void *yyscanner, LEX_ENVIRONMENT *lex_env)
 #else
 int
-yyparse (yyscanner)
+yyparse (yyscanner, lex_env)
     void *yyscanner;
+    LEX_ENVIRONMENT *lex_env;
 #endif
 #endif
 {
@@ -1362,7 +1369,7 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 68 "hex_grammar.y"
+#line 72 "hex_grammar.y"
     {
                 RE* re = yyget_extra(yyscanner);
                 re->root_node = (yyvsp[(2) - (3)].re_node);
@@ -1370,14 +1377,14 @@ yyreduce:
     break;
 
   case 3:
-#line 76 "hex_grammar.y"
+#line 80 "hex_grammar.y"
     {
             (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
          }
     break;
 
   case 4:
-#line 80 "hex_grammar.y"
+#line 84 "hex_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[(1) - (2)].re_node), (yyvsp[(2) - (2)].re_node));
             ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
@@ -1385,21 +1392,21 @@ yyreduce:
     break;
 
   case 5:
-#line 88 "hex_grammar.y"
+#line 92 "hex_grammar.y"
     {
           (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
         }
     break;
 
   case 6:
-#line 92 "hex_grammar.y"
+#line 96 "hex_grammar.y"
     {
           (yyval.re_node) = (yyvsp[(2) - (3)].re_node);
         }
     break;
 
   case 7:
-#line 96 "hex_grammar.y"
+#line 100 "hex_grammar.y"
     {
           mark_as_not_literal();
           (yyval.re_node) = (yyvsp[(2) - (3)].re_node);
@@ -1407,7 +1414,7 @@ yyreduce:
     break;
 
   case 8:
-#line 104 "hex_grammar.y"
+#line 108 "hex_grammar.y"
     {
           RE_NODE* re_any;
 
@@ -1423,9 +1430,17 @@ yyreduce:
     break;
 
   case 9:
-#line 117 "hex_grammar.y"
+#line 121 "hex_grammar.y"
     {
           RE_NODE* re_any;
+
+          if ((yyvsp[(1) - (3)].integer) > (yyvsp[(3) - (3)].integer))
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup("invalid range");
+            YYABORT;
+          }
 
           re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
@@ -1439,14 +1454,14 @@ yyreduce:
     break;
 
   case 10:
-#line 133 "hex_grammar.y"
+#line 145 "hex_grammar.y"
     {
                   (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
                }
     break;
 
   case 11:
-#line 137 "hex_grammar.y"
+#line 149 "hex_grammar.y"
     {
                   mark_as_not_literal();
                   (yyval.re_node) = yr_re_node_create(RE_NODE_ALT, (yyvsp[(1) - (3)].re_node), (yyvsp[(3) - (3)].re_node));
@@ -1456,7 +1471,7 @@ yyreduce:
     break;
 
   case 12:
-#line 146 "hex_grammar.y"
+#line 158 "hex_grammar.y"
     {
           RE* re = yyget_extra(yyscanner);
 
@@ -1482,7 +1497,7 @@ yyreduce:
     break;
 
   case 13:
-#line 169 "hex_grammar.y"
+#line 181 "hex_grammar.y"
     {
           uint8_t mask = (yyvsp[(1) - (1)].integer) >> 8;
 
@@ -1508,7 +1523,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1512 "hex_grammar.c"
+#line 1527 "hex_grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1544,7 +1559,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (yyscanner, YY_("syntax error"));
+      yyerror (yyscanner, lex_env, YY_("syntax error"));
 #else
       {
 	YYSIZE_T yysize = yysyntax_error (0, yystate, yychar);
@@ -1568,11 +1583,11 @@ yyerrlab:
 	if (0 < yysize && yysize <= yymsg_alloc)
 	  {
 	    (void) yysyntax_error (yymsg, yystate, yychar);
-	    yyerror (yyscanner, yymsg);
+	    yyerror (yyscanner, lex_env, yymsg);
 	  }
 	else
 	  {
-	    yyerror (yyscanner, YY_("syntax error"));
+	    yyerror (yyscanner, lex_env, YY_("syntax error"));
 	    if (yysize != 0)
 	      goto yyexhaustedlab;
 	  }
@@ -1596,7 +1611,7 @@ yyerrlab:
       else
 	{
 	  yydestruct ("Error: discarding",
-		      yytoken, &yylval, yyscanner);
+		      yytoken, &yylval, yyscanner, lex_env);
 	  yychar = YYEMPTY;
 	}
     }
@@ -1652,7 +1667,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-		  yystos[yystate], yyvsp, yyscanner);
+		  yystos[yystate], yyvsp, yyscanner, lex_env);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1690,7 +1705,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (yyscanner, YY_("memory exhausted"));
+  yyerror (yyscanner, lex_env, YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -1698,7 +1713,7 @@ yyexhaustedlab:
 yyreturn:
   if (yychar != YYEOF && yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
-		 yytoken, &yylval, yyscanner);
+		 yytoken, &yylval, yyscanner, lex_env);
   /* Do not reclaim the symbols of the rule which action triggered
      this YYABORT or YYACCEPT.  */
   YYPOPSTACK (yylen);
@@ -1706,7 +1721,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-		  yystos[*yyssp], yyvsp, yyscanner);
+		  yystos[*yyssp], yyvsp, yyscanner, lex_env);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -1722,7 +1737,7 @@ yyreturn:
 }
 
 
-#line 192 "hex_grammar.y"
+#line 204 "hex_grammar.y"
 
 
 

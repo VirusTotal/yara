@@ -36,11 +36,19 @@ typedef void* yyscan_t;
 #define YY_USE_CONST
 
 
+typedef struct _LEX_ENVIRONMENT 
+{
+  const char* last_error_message;
+
+} LEX_ENVIRONMENT;
+
+
 YY_EXTRA_TYPE yyget_extra(
     yyscan_t yyscanner);
 
 void yyerror(
     yyscan_t yyscanner,
+    LEX_ENVIRONMENT* lex_env,
     const char *error_message);
 
 int yr_parse_hex_string(

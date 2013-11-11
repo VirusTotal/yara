@@ -20,6 +20,7 @@ limitations under the License.
 
 #include "yara.h"
 #include "atoms.h"
+#include "mem.h"
 #include "re.h"
 #include "hex_grammar.h"
 #include "hex_lexer.h"
@@ -29,6 +30,20 @@ limitations under the License.
 #ifdef WIN32
 #define snprintf _snprintf
 #endif
+
+
+#define YY_DECL int hex_yylex \
+    (YYSTYPE * yylval_param , yyscan_t yyscanner, LEX_ENVIRONMENT* lex_env)
+
+#define LEX_ENV  ((LEX_ENVIRONMENT*) lex_env)
+
+#define ERROR_IF(x, error) \
+    if (x) \
+    { \
+      RE* re = yyget_extra(yyscanner); \
+      re->error_code = error; \
+      YYABORT; \
+    } \
 
 %}
 
@@ -91,6 +106,13 @@ hexdigit      [a-fA-F0-9]
 <range>{digit}+ {
 
   yylval->integer = atoi(yytext);
+
+  if (yylval->integer > INT16_MAX)
+  {
+    yyerror(yyscanner, lex_env, "range value too large");
+    yyterminate();
+  }
+
   return _NUMBER_;
 }
 
@@ -112,7 +134,7 @@ hexdigit      [a-fA-F0-9]
   }
   else
   {
-    yyerror(yyscanner, "non-ascii character");
+    yyerror(yyscanner, lex_env, "non-ascii character");
     yyterminate();
   }
 }
@@ -121,18 +143,23 @@ hexdigit      [a-fA-F0-9]
 
 void yyerror(
     yyscan_t yyscanner,
+    LEX_ENVIRONMENT* lex_env,
     const char *error_message)
 {
-  printf("%s", error_message);
-
+  if (lex_env->last_error_message == NULL)
+  {
+    lex_env->last_error_message = yr_strdup(error_message);
+  }
 }
-
 
 int yr_parse_hex_string(
   const char* hex_string,
   RE** re)
 {
   yyscan_t yyscanner;
+  LEX_ENVIRONMENT lex_env;
+
+  lex_env.last_error_message = NULL;
 
   FAIL_ON_ERROR(yr_re_create(re));
 
@@ -147,8 +174,14 @@ int yr_parse_hex_string(
   yylex_init(&yyscanner);
   yyset_extra(*re, yyscanner);
   yy_scan_string(hex_string, yyscanner);
-  yyparse(yyscanner);
+  yyparse(yyscanner, &lex_env);
   yylex_destroy(yyscanner);
+
+  if (lex_env.last_error_message != NULL)
+  {
+    (*re)->error_message = lex_env.last_error_message;
+    return ERROR_INVALID_HEX_STRING;
+  }
 
   return (*re)->error_code;
 }
