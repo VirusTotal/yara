@@ -117,19 +117,16 @@ int yr_get_elf_type(
     uint8_t* buffer,
     size_t buffer_length)
 {
-  Elf32_Ehdr* elf_header;
+  elf_ident_t* elf_ident;
 
-  if (buffer_length < sizeof(Elf32_Ehdr))
-  return 0;
+  if (buffer_length < sizeof(elf_ident_t))
+    return 0;
 
-  elf_header = (Elf32_Ehdr*) buffer;
+  elf_ident = (elf_ident_t*) buffer;
 
-  if (elf_header->e_ident[0] == ELFMAG0 &&
-      elf_header->e_ident[1] == ELFMAG1 &&
-      elf_header->e_ident[2] == ELFMAG2 &&
-      elf_header->e_ident[3] == ELFMAG3)
+  if (elf_ident->magic == ELF_MAGIC)
   {
-    return elf_header->e_ident[4];
+    return elf_ident->_class;
   }
   else
   {
@@ -139,38 +136,41 @@ int yr_get_elf_type(
 
 
 uint64_t yr_elf_rva_to_offset_32(
-    Elf32_Ehdr* elf_header,
+    elf32_header_t* elf_header,
     uint64_t rva,
     size_t buffer_length)
 {
   int i;
-  Elf32_Shdr* section;
+  elf32_section_header_t* section;
 
-  if (elf_header->e_shoff == 0 || elf_header->e_shnum == 0)
+  if (elf_header->sh_offset == 0 || elf_header->sh_entry_count == 0)
     return 0;
 
   // check to prevent integer wraps
-  if(ULONG_MAX - elf_header->e_shoff < sizeof(Elf32_Shdr) * elf_header->e_shnum)
+  if(ULONG_MAX - elf_header->sh_entry_count < 
+     sizeof(elf32_section_header_t) * elf_header->sh_entry_count)
     return 0;
 
-  if (elf_header->e_shoff + \
-      sizeof(Elf32_Shdr) * elf_header->e_shnum > buffer_length)
+  if (elf_header->sh_offset + \
+      sizeof(elf32_section_header_t) * \
+      elf_header->sh_entry_count > buffer_length)
     return 0;
 
-  section = (Elf32_Shdr*) ((unsigned char*) elf_header + elf_header->e_shoff);
+  section = (elf32_section_header_t*) \
+      ((unsigned char*) elf_header + elf_header->sh_offset);
 
-  for (i = 0; i < elf_header->e_shnum; i++)
+  for (i = 0; i < elf_header->sh_entry_count; i++)
   {
-    if (section->sh_type != SHT_NULL &&
-        section->sh_type != SHT_NOBITS &&
-        rva >= section->sh_addr &&
-        rva <  section->sh_addr + section->sh_size)
+    if (section->type != ELF_SHT_NULL &&
+        section->type != ELF_SHT_NOBITS &&
+        rva >= section->addr &&
+        rva <  section->addr + section->size)
     {
       // prevent integer wrapping with the return value
-      if (ULONG_MAX - section->sh_offset < (rva - section->sh_addr))
+      if (ULONG_MAX - section->offset < (rva - section->addr))
         return 0;
       else
-        return section->sh_offset + (rva - section->sh_addr);
+        return section->offset + (rva - section->addr);
     }
 
     section++;
@@ -182,30 +182,32 @@ uint64_t yr_elf_rva_to_offset_32(
 
 
 uint64_t yr_elf_rva_to_offset_64(
-    Elf64_Ehdr* elf_header,
+    elf64_header_t* elf_header,
     uint64_t rva,
     size_t buffer_length)
 {
   int i;
-  Elf64_Shdr* section;
+  elf64_section_header_t* section;
 
-  if (elf_header->e_shoff == 0 || elf_header->e_shnum == 0)
+  if (elf_header->sh_offset == 0 || elf_header->sh_entry_count == 0)
     return 0;
 
-  if (elf_header->e_shoff + sizeof(Elf64_Shdr) * elf_header->e_shnum > \
-      buffer_length)
+  if (elf_header->sh_offset + \
+      sizeof(elf64_section_header_t) * \
+      elf_header->sh_entry_count > buffer_length)
     return 0;
 
-  section = (Elf64_Shdr*) ((uint8_t*) elf_header + elf_header->e_shoff);
+  section = (elf64_section_header_t*) \
+      ((uint8_t*) elf_header + elf_header->sh_offset);
 
-  for (i = 0; i < elf_header->e_shnum; i++)
+  for (i = 0; i < elf_header->sh_entry_count; i++)
   {
-    if (section->sh_type != SHT_NULL &&
-        section->sh_type != SHT_NOBITS &&
-        rva >= section->sh_addr &&
-        rva <  section->sh_addr + section->sh_size)
+    if (section->type != ELF_SHT_NULL &&
+        section->type != ELF_SHT_NOBITS &&
+        rva >= section->addr &&
+        rva <  section->addr + section->size)
     {
-      return section->sh_offset + (rva - section->sh_addr);
+      return section->offset + (rva - section->addr);
     }
 
     section++;
@@ -220,8 +222,8 @@ uint64_t yr_get_entry_point_offset(
     size_t buffer_length)
 {
   PIMAGE_NT_HEADERS pe_header;
-  Elf32_Ehdr* elf_header32;
-  Elf64_Ehdr* elf_header64;
+  elf32_header_t* elf_header32;
+  elf64_header_t* elf_header64;
 
   pe_header = yr_get_pe_header(buffer, buffer_length);
 
@@ -235,18 +237,18 @@ uint64_t yr_get_entry_point_offset(
 
   switch(yr_get_elf_type(buffer, buffer_length))
   {
-    case ELFCLASS32:
-      elf_header32 = (Elf32_Ehdr*) buffer;
+    case ELF_CLASS_32:
+      elf_header32 = (elf32_header_t*) buffer;
       return yr_elf_rva_to_offset_32(
           elf_header32,
-          elf_header32->e_entry,
+          elf_header32->entry,
           buffer_length);
 
-    case ELFCLASS64:
-      elf_header64 = (Elf64_Ehdr*) buffer;
+    case ELF_CLASS_64:
+      elf_header64 = (elf64_header_t*) buffer;
       return yr_elf_rva_to_offset_64(
           elf_header64,
-          elf_header64->e_entry,
+          elf_header64->entry,
           buffer_length);
   }
 
@@ -261,8 +263,8 @@ uint64_t yr_get_entry_point_address(
 {
   PIMAGE_NT_HEADERS pe_header;
 
-  Elf32_Ehdr* elf_header32;
-  Elf64_Ehdr* elf_header64;
+  elf32_header_t* elf_header32;
+  elf64_header_t* elf_header64;
 
   pe_header = yr_get_pe_header(buffer, buffer_length);
 
@@ -276,19 +278,19 @@ uint64_t yr_get_entry_point_address(
 
   switch(yr_get_elf_type(buffer, buffer_length))
   {
-    case ELFCLASS32:
-      elf_header32 = (Elf32_Ehdr*) buffer;
+    case ELF_CLASS_32:
+      elf_header32 = (elf32_header_t*) buffer;
 
-      if (elf_header32->e_type == ET_EXEC)
-        return elf_header32->e_entry;
+      if (elf_header32->type == ELF_ET_EXEC)
+        return elf_header32->entry;
 
       break;
 
-    case ELFCLASS64:
-      elf_header64 = (Elf64_Ehdr*) buffer;
+    case ELF_CLASS_64:
+      elf_header64 = (elf64_header_t*) buffer;
 
-      if (elf_header64->e_type == ET_EXEC)
-        return elf_header64->e_entry;
+      if (elf_header64->type == ELF_ET_EXEC)
+        return elf_header64->entry;
 
       break;
   }
@@ -311,7 +313,7 @@ int yr_file_is_elf(
 {
   int type = yr_get_elf_type(buffer, buffer_length);
 
-  return (type == ELFCLASS32 || type == ELFCLASS64);
+  return (type == ELF_CLASS_32 || type == ELF_CLASS_64);
 }
 
 
