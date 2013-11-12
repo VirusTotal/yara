@@ -305,26 +305,6 @@ void* yr_arena_base_address(
 
 
 //
-// yr_arena_current_address
-//
-// Returns the current address for the arena, which is the address
-// where the next write operation or memory allocation will be done.
-//
-// Args:
-//    ARENA* arena  - Pointer to the arena.
-//
-// Returns:
-//    A pointer
-//
-
-void* yr_arena_current_address(
-  ARENA* arena)
-{
-  return arena->current_page->address + arena->current_page->used;
-}
-
-
-//
 // yr_arena_next_address
 //
 // Given an address and an increment value, returns the address where
