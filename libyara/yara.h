@@ -567,6 +567,9 @@ void yr_finalize(void);
 int yr_get_tidx(void);
 
 
+void yr_set_tidx(int);
+
+
 int yr_compiler_create(
     YARA_COMPILER** compiler);
 

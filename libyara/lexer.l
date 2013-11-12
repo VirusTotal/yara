@@ -28,6 +28,7 @@ limitations under the License.
 #include "grammar.h"
 #include "mem.h"
 #include "lexer.h"
+#include "utils.h"
 
 
 #define LEX_CHECK_SPACE_OK(data, current_size, max_length) \

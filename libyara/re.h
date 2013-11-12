@@ -127,6 +127,16 @@ int yr_re_create(
     RE** re);
 
 
+int yr_re_compile(
+    const char* re_string,
+    RE** re);
+
+
+int yr_re_compile_hex(
+    const char* hex_string,
+    RE** re);
+
+
 RE_NODE* yr_re_node_create(
     int type, 
     RE_NODE* left, 

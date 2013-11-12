@@ -37,8 +37,6 @@ limitations under the License.
 #define INTEGER_SET_ENUMERATION 1
 #define INTEGER_SET_RANGE 2
 
-
-
 #define ERROR_IF(x) \
     if (x) \
     { \
@@ -484,7 +482,7 @@ boolean_expression  : '(' boolean_expression ')'
                         SIZED_STRING* sized_string = $3;
                         RE* re;
 
-                        compiler->last_result = yr_parse_re_string(
+                        compiler->last_result = yr_re_compile(
                             sized_string->c_string, &re);
 
                         ERROR_IF(compiler->last_result != ERROR_SUCCESS);

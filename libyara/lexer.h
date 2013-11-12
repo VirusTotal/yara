@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include "sizedstr.h"
+#include "grammar.h"
 #include "compiler.h"
-
 
 #define yyparse       yara_yyparse
 #define yylex         yara_yylex
@@ -34,6 +35,15 @@ typedef void* yyscan_t;
 
 #define YY_EXTRA_TYPE YARA_COMPILER*
 #define YY_USE_CONST
+
+int yyget_lineno(yyscan_t yyscanner);
+
+int yylex(
+    YYSTYPE* yylval_param,
+    yyscan_t yyscanner);
+
+int yyparse(
+    void *yyscanner);
 
 void yyerror(
     yyscan_t yyscanner,

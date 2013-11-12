@@ -17,19 +17,17 @@ limitations under the License.
 #include <assert.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
 
 #include "arena.h"
 #include "exec.h"
 #include "exefiles.h"
 #include "filemap.h"
 #include "mem.h"
+#include "proc.h"
 #include "re.h"
 #include "utils.h"
 #include "yara.h"
-
-#ifdef WIN32
-#define inline __inline
-#endif
 
 
 typedef struct _CALLBACK_ARGS

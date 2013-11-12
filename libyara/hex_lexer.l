@@ -32,8 +32,7 @@ limitations under the License.
 #endif
 
 
-#define YY_DECL int hex_yylex \
-    (YYSTYPE * yylval_param , yyscan_t yyscanner, LEX_ENVIRONMENT* lex_env)
+
 
 #define LEX_ENV  ((LEX_ENVIRONMENT*) lex_env)
 

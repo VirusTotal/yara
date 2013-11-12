@@ -268,10 +268,10 @@ STRING* yr_parser_reduce_string_declaration(
       flags & STRING_GFLAGS_REGEXP)
   {
     if (flags & STRING_GFLAGS_HEXADECIMAL)
-      compiler->last_result = yr_parse_hex_string(
+      compiler->last_result = yr_re_compile_hex(
           str->c_string, &re);
     else
-      compiler->last_result = yr_parse_re_string(
+      compiler->last_result = yr_re_compile(
           str->c_string, &re);
 
     if (compiler->last_result != ERROR_SUCCESS)

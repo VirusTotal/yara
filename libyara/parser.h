@@ -88,10 +88,16 @@ int yr_parser_reduce_string_identifier(
     int8_t instruction);
 
 
+void yr_parser_emit_pushes_for_strings(
+    yyscan_t yyscanner,
+    const char* identifier);
+
+
 int yr_parser_reduce_external(
     yyscan_t yyscanner,
     const char* identifier,
     int8_t intruction);
+
 
 int yr_parser_lookup_loop_variable(
     yyscan_t yyscanner,
