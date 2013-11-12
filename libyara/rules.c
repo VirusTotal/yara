@@ -43,6 +43,8 @@ typedef struct _CALLBACK_ARGS
 } CALLBACK_ARGS;
 
 
+#define inline 
+
 inline int _yr_scan_compare(
     uint8_t* data,
     int data_size,

@@ -432,7 +432,7 @@ int yr_arena_coalesce(
 
   while (reloc != NULL)
   {
-	reloc_address = (uint8_t**) (big_page->address + reloc->offset);
+    reloc_address = (uint8_t**) (big_page->address + reloc->offset);
     reloc_target = *reloc_address;
 
     if (reloc_target != NULL)
@@ -662,7 +662,7 @@ int yr_arena_write_data(
 
   memcpy(output, data, size);
 
-  if (written_data)
+  if (written_data != NULL)
     *written_data = output;
 
   return ERROR_SUCCESS;

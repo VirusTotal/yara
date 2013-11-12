@@ -34,10 +34,6 @@ void* yr_arena_base_address(
   ARENA* arena);
 
 
-void* yr_arena_current_address(
-  ARENA* arena);
-
-
 void* yr_arena_next_address(
   ARENA* arena,
   void* address,
