@@ -16,6 +16,7 @@ limitations under the License.
 
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "mem.h"
 #include "re.h"

@@ -14,7 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+
+/*
+
+This modules implements a regular expressions engine based on Thompson's
+algorithm as described by Russ Cox in http://swtch.com/~rsc/regexp/
+
+*/
+
 #include <assert.h>
+#include <ctype.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -59,6 +68,16 @@ DWORD thread_storage_key;
 #else
 pthread_key_t thread_storage_key;
 #endif
+
+
+extern int yr_parse_re_string(
+  const char* re_string,
+  RE** re);
+
+
+extern int yr_parse_hex_string(
+  const char* hex_string,
+  RE** re);
 
 
 int yr_re_initialize()
@@ -165,6 +184,22 @@ void yr_re_destroy(
     yr_free(re->literal_string);
 
   yr_free(re);
+}
+
+
+int yr_re_compile(
+    const char* re_string,
+    RE** re)
+{
+  return yr_parse_re_string(re_string, re);
+}
+
+
+int yr_re_compile_hex(
+    const char* hex_string,
+    RE** re)
+{
+  return yr_parse_hex_string(hex_string, re);
 }
 
 
@@ -712,6 +747,19 @@ void _yr_re_add_thread(
     y = tmp; \
   }
 
+//
+// yr_re_exec
+//
+// Executes a regular expression
+//
+// Args:
+//   uint8_t* code      - Pointer to regexp code be executed
+//   uint8_t* input     - Pointer to input data
+//   size_t input_size  - Input data size
+//   int flags
+//   RE_MATCH_CALLBACK_FUNC callback - Callback function
+//   void* callback_args  - Callback argument
+//
 
 int yr_re_exec(
     uint8_t* code, 
