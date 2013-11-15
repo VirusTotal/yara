@@ -575,7 +575,7 @@ int _yr_atoms_wide(
     new_atom->atom_length = min(atom->atom_length * 2, MAX_ATOM_LENGTH);
     new_atom->forward_code = atom->forward_code;
     new_atom->backward_code = atom->backward_code;
-    new_atom->backtrack = atom->backtrack;
+    new_atom->backtrack = atom->backtrack * 2;
     new_atom->next = *wide_atoms;
 
     *wide_atoms = new_atom;
