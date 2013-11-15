@@ -566,6 +566,9 @@ void yr_initialize(void);
 void yr_finalize(void);
 
 
+void yr_finalize_thread(void);
+
+
 int yr_get_tidx(void);
 
 

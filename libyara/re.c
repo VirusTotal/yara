@@ -123,6 +123,13 @@ extern int yr_parse_hex_string(
   RE** re);
 
 
+//
+// yr_re_initialize
+//
+// Should be called by main thread before any other
+// function from this module.
+//
+
 int yr_re_initialize()
 {
   #ifdef WIN32
@@ -134,8 +141,32 @@ int yr_re_initialize()
   return ERROR_SUCCESS;
 }
 
+//
+// yr_re_finalize
+//
+// Should be called by main thread after every other thread
+// stopped using functions from this module.
+//
 
 int yr_re_finalize()
+{
+  #ifdef WIN32
+  TlsFree(thread_storage_key);
+  #else
+  pthread_key_delete(thread_storage_key);
+  #endif
+
+  return ERROR_SUCCESS;
+}
+
+//
+// yr_re_finalize_thread
+//
+// Should be called by every thread using this module
+// before exiting.
+//
+
+int yr_re_finalize_thread()
 {
   RE_THREAD_STORAGE* thread_storage;
 

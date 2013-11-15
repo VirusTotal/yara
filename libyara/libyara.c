@@ -40,6 +40,13 @@ pthread_key_t key;
 #endif
 
 
+//
+// yr_initialize
+//
+// Should be called by main thread before using any other
+// function from libyara.
+//
+
 void yr_initialize(void)
 {
   int i;
@@ -56,13 +63,41 @@ void yr_initialize(void)
   #endif
 
   yr_re_initialize();
-
 }
+
+
+//
+// yr_finalize_thread
+//
+// Should be called by ALL threads using libyara before exiting.
+//
+
+void yr_finalize_thread(void)
+{
+  yr_re_finalize_thread();
+}
+
+
+//
+// yr_finalize
+//
+// Should be called by main thread before exiting. Main thread doesn't
+// need to explicitely call yr_finalize_thread because yr_finalize already
+// calls it.
+//
 
 void yr_finalize(void)
 {
-  yr_heap_free();
+  yr_re_finalize_thread();
+
+  #ifdef WIN32
+  TlsFree(key);
+  #else
+  pthread_key_delete(key);
+  #endif
+
   yr_re_finalize();
+  yr_heap_free();
 }
 
 //

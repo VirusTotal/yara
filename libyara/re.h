@@ -168,4 +168,6 @@ int yr_re_initialize();
 
 int yr_re_finalize();
 
+int yr_re_finalize_thread();
+
 #endif
