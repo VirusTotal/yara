@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
 #ifndef _RE_H
 #define _RE_H
 
@@ -37,24 +36,26 @@ limitations under the License.
 #define RE_NODE_NON_DIGIT           15
 
 
-#define RE_OPCODE_ANY               0xE0
-#define RE_OPCODE_LITERAL           0xE1
-#define RE_OPCODE_MASKED_LITERAL    0xE2
-#define RE_OPCODE_LITERAL_STRING    0xE3
-#define RE_OPCODE_SPLIT_A           0xE4
-#define RE_OPCODE_SPLIT_B           0xE5
-#define RE_OPCODE_SET_COUNTER       0xE6
-#define RE_OPCODE_JCNZ              0xE7
-#define RE_OPCODE_JUMP              0xE8
-#define RE_OPCODE_CLASS             0xE9
-#define RE_OPCODE_WORD_CHAR         0xEA
-#define RE_OPCODE_NON_WORD_CHAR     0xEB
-#define RE_OPCODE_SPACE             0xEC
-#define RE_OPCODE_NON_SPACE         0xED
-#define RE_OPCODE_DIGIT             0xEE
-#define RE_OPCODE_NON_DIGIT         0xEF
+#define RE_OPCODE_ANY               0xA0
+#define RE_OPCODE_LITERAL           0xA1
+#define RE_OPCODE_MASKED_LITERAL    0xA2
+#define RE_OPCODE_LITERAL_STRING    0xA3
+#define RE_OPCODE_CLASS             0xA4
+#define RE_OPCODE_WORD_CHAR         0xA5
+#define RE_OPCODE_NON_WORD_CHAR     0xA6
+#define RE_OPCODE_SPACE             0xA7
+#define RE_OPCODE_NON_SPACE         0xA8
+#define RE_OPCODE_DIGIT             0xA9
+#define RE_OPCODE_NON_DIGIT         0xAA
+#define RE_OPCODE_MATCH             0xAB
 
-#define RE_OPCODE_MATCH             0xFF
+#define RE_OPCODE_SPLIT_A           0xB0
+#define RE_OPCODE_SPLIT_B           0xB1
+#define RE_OPCODE_PUSH              0xB2
+#define RE_OPCODE_POP               0xB3
+#define RE_OPCODE_JNZ               0xB4
+#define RE_OPCODE_JUMP              0xB5
+
 
 #define RE_FLAGS_START_ANCHORED     0x01
 #define RE_FLAGS_END_ANCHORED       0x02
@@ -91,7 +92,7 @@ struct RE_NODE
   int greedy;
 
   uint8_t* class_vector;
- 
+
   RE_NODE* left;
   RE_NODE* right;
 
@@ -104,10 +105,10 @@ struct RE {
 
   uint32_t flags;
   RE_NODE* root_node;
-  
+
   const char* error_message;
   int error_code;
-  
+
   int8_t* literal_string;
 
   int literal_string_len;
@@ -138,8 +139,8 @@ int yr_re_compile_hex(
 
 
 RE_NODE* yr_re_node_create(
-    int type, 
-    RE_NODE* left, 
+    int type,
+    RE_NODE* left,
     RE_NODE* right);
 
 
@@ -156,7 +157,7 @@ int yr_re_emit_code(
     ARENA* arena);
 
 int yr_re_exec(
-    uint8_t* code, 
+    uint8_t* code,
     uint8_t* input,
     size_t input_size,
     int flags,

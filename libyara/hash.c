@@ -155,7 +155,7 @@ void* yr_hash_table_lookup(
   while (entry != NULL)
   {
     if (strcmp(entry->key, key) == 0 &&
-        (entry->ns == ns || 
+        (entry->ns == ns ||
          strcmp(entry->ns, ns) == 0))
     {
       return entry->value;

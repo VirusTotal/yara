@@ -1485,7 +1485,7 @@ yyreduce:
           {
             re->literal_string_max *= 2;
             re->literal_string = yr_realloc(
-                re->literal_string, 
+                re->literal_string,
                 re->literal_string_max);
 
             ERROR_IF(re->literal_string == NULL, ERROR_INSUFICIENT_MEMORY);
@@ -1506,10 +1506,10 @@ yyreduce:
           if (mask == 0x00)
           {
             (yyval.re_node) = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
-            
+
             ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
           }
-          else 
+          else
           {
             (yyval.re_node) = yr_re_node_create(RE_NODE_MASKED_LITERAL, NULL, NULL);
 

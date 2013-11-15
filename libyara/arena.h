@@ -22,7 +22,13 @@ limitations under the License.
 
 #include "yara.h"
 
+#define ARENA_FLAGS_FIXED_SIZE   1
+#define ARENA_FLAGS_COALESCED    2
+
+
 int yr_arena_create(
+    int initial_size,
+    int flags,
     ARENA** arena);
 
 
@@ -37,7 +43,7 @@ void* yr_arena_base_address(
 void* yr_arena_next_address(
   ARENA* arena,
   void* address,
-  size_t increment);
+  int offset);
 
 
 int yr_arena_coalesce(

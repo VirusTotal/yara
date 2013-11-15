@@ -280,13 +280,15 @@ typedef struct _ARENA_PAGE
   RELOC* reloc_list_tail;
 
   struct _ARENA_PAGE* next;
+  struct _ARENA_PAGE* prev;
 
 } ARENA_PAGE;
 
 
 typedef struct _ARENA
 {
-  int8_t      is_coalesced;
+  int flags;
+
   ARENA_PAGE* page_list_head;
   ARENA_PAGE* current_page;
 
@@ -512,7 +514,7 @@ typedef struct _YARA_COMPILER
   int8_t*          loop_address[MAX_LOOP_NESTING];
   char*            loop_identifier[MAX_LOOP_NESTING];
   int              loop_depth;
-  
+
   int              allow_includes;
 
   char*            file_name_stack[MAX_INCLUDE_DEPTH];
@@ -704,7 +706,7 @@ typedef struct _ATOM_LIST_ITEM
   uint8_t atom[MAX_ATOM_LENGTH];
 
   uint16_t backtrack;
-  
+
   void* forward_code;
   void* backward_code;
 

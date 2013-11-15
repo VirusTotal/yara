@@ -147,7 +147,7 @@ uint64_t yr_elf_rva_to_offset_32(
     return 0;
 
   // check to prevent integer wraps
-  if(ULONG_MAX - elf_header->sh_entry_count < 
+  if(ULONG_MAX - elf_header->sh_entry_count <
      sizeof(elf32_section_header_t) * elf_header->sh_entry_count)
     return 0;
 

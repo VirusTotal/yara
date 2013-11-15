@@ -132,7 +132,7 @@ yydebug = 1;
       re->error_code = error; \
       YYABORT; \
     } \
-                
+
 
 
 /* Enabling traces.  */
@@ -1479,7 +1479,7 @@ yyreduce:
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_PLUS, (yyvsp[(1) - (3)].re_node), NULL);
-            
+
             ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
 
             (yyval.re_node)->greedy = FALSE;
@@ -1491,7 +1491,7 @@ yyreduce:
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, (yyvsp[(1) - (2)].re_node), NULL);
-            
+
             ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
 
             (yyval.re_node)->start = 0;
@@ -1608,7 +1608,7 @@ yyreduce:
 
   case 22:
 #line 244 "re_grammar.y"
-    {  
+    {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_NON_SPACE, NULL, NULL);
 

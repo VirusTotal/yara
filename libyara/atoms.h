@@ -32,12 +32,12 @@ typedef struct _ATOM_TREE_NODE
   uint8_t type;
   uint8_t atom_length;
   uint8_t atom[MAX_ATOM_LENGTH];
-  
+
   void* forward_code;
   void* backward_code;
 
   RE_NODE* recent_nodes[MAX_ATOM_LENGTH];
-  
+
   struct _ATOM_TREE_NODE* children_head;
   struct _ATOM_TREE_NODE* children_tail;
   struct _ATOM_TREE_NODE* next_sibling;
@@ -59,7 +59,7 @@ int yr_atoms_extract_from_re(
     ATOM_LIST_ITEM** atoms);
 
 int yr_atoms_extract_from_string(
-    char* string, 
+    char* string,
     int string_length,
     int flags,
     ATOM_LIST_ITEM** atoms);

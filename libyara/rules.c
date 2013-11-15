@@ -43,7 +43,7 @@ typedef struct _CALLBACK_ARGS
 } CALLBACK_ARGS;
 
 
-#define inline 
+#define inline
 
 inline int _yr_scan_compare(
     uint8_t* data,
@@ -58,7 +58,7 @@ inline int _yr_scan_compare(
   if (data_size < string_length)
     return 0;
 
-  while (i < string_length && *s1++ == *s2++) 
+  while (i < string_length && *s1++ == *s2++)
     i++;
 
   return ((i == string_length) ? i : 0);
@@ -141,13 +141,13 @@ void match_callback(
 {
   MATCH* new_match;
   MATCH* match;
-  
+
   CALLBACK_ARGS* callback_args = args;
   STRING* string = callback_args->string;
 
   int character_size;
   int tidx = callback_args->tidx;
-  
+
   size_t match_offset = match_data - callback_args->data;
 
   if (flags & RE_FLAGS_WIDE)
@@ -156,7 +156,7 @@ void match_callback(
     character_size = 1;
 
   // match_length > 0 means that we have found some backward matching
-  // but backward matching overlaps one character with forward matching, 
+  // but backward matching overlaps one character with forward matching,
   // we decrement match_length here to compensate that overlapping.
 
   if (match_length > 0)
@@ -168,7 +168,7 @@ void match_callback(
   if (flags & RE_FLAGS_START_ANCHORED && match_offset > 0)
     return;
 
-  if (flags & RE_FLAGS_END_ANCHORED && 
+  if (flags & RE_FLAGS_END_ANCHORED &&
       match_offset + match_length != callback_args->data_size)
     return;
 
@@ -176,28 +176,28 @@ void match_callback(
   {
     if (flags & RE_FLAGS_WIDE)
     {
-      if (match_offset >= 2 && 
-          *(match_data - 1) == 0 && 
+      if (match_offset >= 2 &&
+          *(match_data - 1) == 0 &&
           isalnum(*(match_data - 2)))
         return;
 
-      if (match_offset + match_length + 1 < callback_args->data_size && 
-          *(match_data + match_length + 1) == 0 && 
+      if (match_offset + match_length + 1 < callback_args->data_size &&
+          *(match_data + match_length + 1) == 0 &&
           isalnum(*(match_data + match_length)))
         return;
     }
     else
     {
-      if (match_offset >= 1 && 
+      if (match_offset >= 1 &&
           isalnum(*(match_data - 1)))
         return;
 
-      if (match_offset + match_length < callback_args->data_size && 
+      if (match_offset + match_length < callback_args->data_size &&
           isalnum(*(match_data + match_length)))
         return;
     }
   }
-  
+
   match = string->matches[tidx].tail;
 
   while (match != NULL)
@@ -285,21 +285,21 @@ int _yr_scan_verify_re_match(
   if (STRING_IS_ASCII(ac_match->string))
   {
     forward_matches = yr_re_exec(
-        ac_match->forward_code, 
-        data + offset, 
+        ac_match->forward_code,
+        data + offset,
         data_size - offset,
         flags,
         NULL,
         NULL);
   }
 
-  if (STRING_IS_WIDE(ac_match->string) && 
+  if (STRING_IS_WIDE(ac_match->string) &&
       forward_matches < 0)
   {
     flags |= RE_FLAGS_WIDE;
     forward_matches = yr_re_exec(
-        ac_match->forward_code, 
-        data + offset, 
+        ac_match->forward_code,
+        data + offset,
         data_size - offset,
         flags,
         NULL,
@@ -323,8 +323,8 @@ int _yr_scan_verify_re_match(
   if (ac_match->backward_code != NULL)
   {
     yr_re_exec(
-        ac_match->backward_code, 
-        data + offset, 
+        ac_match->backward_code,
+        data + offset,
         offset + 1,
         flags | RE_FLAGS_BACKWARDS | RE_FLAGS_EXHAUSTIVE,
         match_callback,
@@ -352,7 +352,7 @@ int _yr_scan_verify_literal_match(
 
   CALLBACK_ARGS callback_args;
   STRING* string = ac_match->string;
-  
+
   if (STRING_FITS_IN_ATOM(string))
   {
     if (STRING_IS_WIDE(string))
@@ -411,23 +411,23 @@ int _yr_scan_verify_literal_match(
     {
       if (flags & RE_FLAGS_WIDE)
       {
-        if (offset >= 2 && 
-            *(data + offset - 1) == 0 && 
+        if (offset >= 2 &&
+            *(data + offset - 1) == 0 &&
             isalnum(*(data + offset - 2)))
           return ERROR_SUCCESS;
 
-        if (offset + forward_matches + 1 < data_size && 
-            *(data + offset + forward_matches + 1) == 0 && 
+        if (offset + forward_matches + 1 < data_size &&
+            *(data + offset + forward_matches + 1) == 0 &&
             isalnum(*(data + offset + forward_matches)))
           return ERROR_SUCCESS;
       }
       else
       {
-        if (offset >= 1 && 
+        if (offset >= 1 &&
             isalnum(*(data + offset - 1)))
           return ERROR_SUCCESS;
 
-        if (offset + forward_matches < data_size && 
+        if (offset + forward_matches < data_size &&
             isalnum(*(data + offset + forward_matches)))
           return ERROR_SUCCESS;
       }
@@ -582,7 +582,7 @@ void _yr_rules_clean_matches(
 {
   RULE* rule;
   STRING* string;
-  
+
   int tidx = yr_get_tidx();
 
   rule = rules->rules_list_head;
@@ -643,7 +643,7 @@ int yr_rules_scan_mem_block(
               offset,
               matches_arena);
       }
-    
+
       ac_match = ac_match->next;
     }
 
@@ -682,7 +682,7 @@ int yr_rules_scan_mem_block(
 
     ac_match = ac_match->next;
   }
-  
+
   return ERROR_SUCCESS;
 }
 
@@ -712,7 +712,7 @@ int yr_rules_scan_mem_blocks(
 
   tidx = yr_get_tidx();
 
-  if (tidx == -1) 
+  if (tidx == -1)
   {
     _yr_rules_lock(rules);
 
@@ -722,7 +722,7 @@ int yr_rules_scan_mem_blocks(
       rules->threads_count++;
     else
       result = ERROR_TOO_MANY_SCAN_THREADS;
-    
+
     _yr_rules_unlock(rules);
 
     if (result != ERROR_SUCCESS)
@@ -731,7 +731,7 @@ int yr_rules_scan_mem_blocks(
     yr_set_tidx(tidx);
   }
 
-  result = yr_arena_create(&matches_arena);
+  result = yr_arena_create(1024, 0, &matches_arena);
 
   if (result != ERROR_SUCCESS)
     goto _exit;

@@ -36,7 +36,7 @@ typedef void* yyscan_t;
 #define YY_USE_CONST
 
 
-typedef struct _LEX_ENVIRONMENT 
+typedef struct _LEX_ENVIRONMENT
 {
   int negated_class;
   uint8_t class_vector[32];
@@ -57,11 +57,11 @@ YY_EXTRA_TYPE yyget_extra(
 
 int yylex(
     YYSTYPE* yylval_param,
-    yyscan_t yyscanner, 
+    yyscan_t yyscanner,
     LEX_ENVIRONMENT* lex_env);
 
 int yyparse(
-    void *yyscanner, 
+    void *yyscanner,
     LEX_ENVIRONMENT *lex_env);
 
 void yyerror(

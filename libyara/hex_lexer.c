@@ -492,7 +492,7 @@ limitations under the License.
 
 
 
-#define LEX_ENV  ((LEX_ENVIRONMENT*) lex_env)
+
 
 #define ERROR_IF(x, error) \
     if (x) \

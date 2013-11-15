@@ -52,7 +52,7 @@ typedef uint64_t elf64_xword_t;
 #define ELF_ET_CORE     0x0004  // Corefile
 #define ELF_ET_LOPROC   0xFF00  // Processor-specific
 #define ELF_ET_HIPROC   0x00FF  // Processor-specific
- 
+
 #define ELF_EM_NONE     0x0000  // no type
 #define ELF_EM_M32      0x0001  // AT&T WE 32100
 #define ELF_EM_SPARC    0x0002  // SPARC
@@ -67,11 +67,11 @@ typedef uint64_t elf64_xword_t;
 #define ELF_CLASS_NONE  0x0000
 #define ELF_CLASS_32    0x0001  // 32bit file
 #define ELF_CLASS_64    0x0002  // 64bit file
- 
+
 #define ELF_DATA_NONE   0x0000
 #define ELF_DATA_2LSB   0x0001
 #define ELF_DATA_2MSB   0x002
- 
+
 
 #define ELF_SHT_NULL         0     // Section header table entry unused
 #define ELF_SHT_PROGBITS     1     // Program data
@@ -88,7 +88,7 @@ typedef uint64_t elf64_xword_t;
 #define ELF_SHT_NUM          12    // Number of defined types.
 
 
-typedef struct 
+typedef struct
 {
   uint32_t magic;
   uint8_t _class;
@@ -100,7 +100,7 @@ typedef struct
 } elf_ident_t;
 
 
-typedef struct 
+typedef struct
 {
   elf_ident_t     ident;
   elf32_half_t    type;
@@ -120,7 +120,7 @@ typedef struct
 } elf32_header_t;
 
 
-typedef struct 
+typedef struct
 {
   elf_ident_t     ident;
   elf64_half_t    type;
@@ -140,7 +140,7 @@ typedef struct
 } elf64_header_t;
 
 
-typedef struct 
+typedef struct
 {
   elf32_word_t    type;
   elf32_off_t     offset;
@@ -168,7 +168,7 @@ typedef struct
 } elf64_program_header_t;
 
 
-typedef struct 
+typedef struct
 {
   elf32_word_t    name;
   elf32_word_t    type;
@@ -184,7 +184,7 @@ typedef struct
 } elf32_section_header_t;
 
 
-typedef struct 
+typedef struct
 {
   elf64_word_t    name;
   elf64_word_t    type;

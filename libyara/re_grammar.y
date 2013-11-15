@@ -43,7 +43,7 @@ yydebug = 1;
       re->error_code = error; \
       YYABORT; \
     } \
-                
+
 %}
 
 %debug
@@ -65,7 +65,7 @@ yydebug = 1;
 }
 
 
-%token <integer> _CHAR_ _ANY_ 
+%token <integer> _CHAR_ _ANY_
 %token <range> _RANGE_
 %token <class_vector> _CLASS_
 
@@ -143,7 +143,7 @@ repeat : single '*'
          {
             mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_PLUS, $1, NULL);
-            
+
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
             $$->greedy = FALSE;
@@ -152,12 +152,12 @@ repeat : single '*'
          {
             mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
-            
+
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
             $$->start = 0;
             $$->end = 1;
-         }  
+         }
        | single '?' '?'
          {
             mark_as_not_literal();
@@ -168,7 +168,7 @@ repeat : single '*'
             $$->start = 0;
             $$->end = 1;
             $$->greedy = FALSE;
-         } 
+         }
        | single _RANGE_
          {
             mark_as_not_literal();
@@ -179,7 +179,7 @@ repeat : single '*'
             $$->start = $2 & 0xFFFF;;
             $$->end = $2 >> 16;;
          }
-       | single 
+       | single
          {
             $$ = $1;
          }
@@ -241,7 +241,7 @@ single : '(' alternative ')'
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        | _NON_SPACE_
-         {  
+         {
             mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_NON_SPACE, NULL, NULL);
 

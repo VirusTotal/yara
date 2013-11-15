@@ -48,7 +48,7 @@ void yr_initialize(void)
     lowercase[i] = tolower(i);
 
   yr_heap_alloc();
-  
+
   #ifdef WIN32
   key = TlsAlloc();
   #else

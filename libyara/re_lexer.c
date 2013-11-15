@@ -869,11 +869,11 @@ case 2:
 YY_RULE_SETUP
 #line 67 "re_lexer.l"
 {
-  
+
   // In a perfect world we would be able to detect a trailing $
   // by using \$$, just as we did with ^\^ for detecting the
   // leading ^. However in the real world this doesn't work. We
-  // are forced to match every $ and take note of the position 
+  // are forced to match every $ and take note of the position
   // where it was seen for the last time. At the end of the regexp
   // we verify if a $ was found just before the end.
 
@@ -893,7 +893,7 @@ YY_RULE_SETUP
   char* comma = strchr(yytext, ',');
 
   if (comma - yytext == strlen(yytext) - 2)
-    // if comma is followed by the closing curly bracket 
+    // if comma is followed by the closing curly bracket
     // (example: {2,}) set high bound value to maximum.
     hi_bound = INT16_MAX;
   else
@@ -941,7 +941,7 @@ YY_RULE_SETUP
 #line 132 "re_lexer.l"
 {
 
-  // Start of a negated character class. Example: [^abcd] 
+  // Start of a negated character class. Example: [^abcd]
 
   BEGIN(char_class);
   memset(LEX_ENV->class_vector, 0, 32);
@@ -953,7 +953,7 @@ YY_RULE_SETUP
 #line 141 "re_lexer.l"
 {
 
-  // Start of character negated class containing a ]. 
+  // Start of character negated class containing a ].
   // Example: [^]abc] this must be interpreted as a class
   // not matching ], a, b, nor c
 
@@ -961,14 +961,14 @@ YY_RULE_SETUP
   memset(LEX_ENV->class_vector, 0, 32);
   LEX_ENV->negated_class = TRUE;
   LEX_ENV->class_vector[']' / 8] |= 1 << ']' % 8;
-} 
+}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
 #line 154 "re_lexer.l"
 {
 
-  // Start of character class containing a ]. 
+  // Start of character class containing a ].
   // Example: []abc] this must be interpreted as a class
   // matching ], a, b, or c.
 
@@ -976,7 +976,7 @@ YY_RULE_SETUP
   memset(LEX_ENV->class_vector, 0, 32);
   LEX_ENV->negated_class = FALSE;
   LEX_ENV->class_vector[']' / 8] |= 1 << ']' % 8;
-} 
+}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
@@ -1081,8 +1081,8 @@ YY_RULE_SETUP
 {
 
   // A range inside a character class.
-  //  [abc0-9] 
-  //      ^- matching here 
+  //  [abc0-9]
+  //      ^- matching here
 
   int c;
 
@@ -1118,9 +1118,9 @@ YY_RULE_SETUP
 {
 
   int i;
-  char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03, 
-                        0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07, 
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
+                        0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
   for (i = 0; i < 32; i++)
@@ -1133,9 +1133,9 @@ YY_RULE_SETUP
 {
 
   int i;
-  char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03, 
-                        0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07, 
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
+                        0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
   for (i = 0; i < 32; i++)
@@ -1169,7 +1169,7 @@ case 24:
 YY_RULE_SETUP
 #line 320 "re_lexer.l"
 {
- 
+
   char c;
 
   for (c = '0'; c <= '9'; c++)
@@ -1183,7 +1183,7 @@ YY_RULE_SETUP
 
   int i;
   char c;
- 
+
   for (i = 0; i < 32; i++)
     LEX_ENV->class_vector[i] = 0xFF;
 
@@ -1195,7 +1195,7 @@ case 26:
 YY_RULE_SETUP
 #line 342 "re_lexer.l"
 {
-  
+
   uint8_t c = read_escaped_char(yyscanner);
   unput(c);
 }
@@ -2445,7 +2445,7 @@ uint8_t read_escaped_char(yyscan_t yyscanner)
   int result;
   char hex[3];
   int c = input(yyscanner);
-  
+
   switch(c)
   {
   case 'x':
@@ -2454,7 +2454,7 @@ uint8_t read_escaped_char(yyscan_t yyscanner)
     hex[2] = '\0';
     sscanf(hex, "%x", &result);
     break;
-  
+
   case 'n':
     result = '\n';
     break;

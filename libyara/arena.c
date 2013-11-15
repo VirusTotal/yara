@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
 /*
 
 This module implements a structure I've called "arena". An arena is a data
@@ -31,13 +30,13 @@ from files.
 #include <stddef.h>
 #include <time.h>
 
+#include "arena.h"
 #include "config.h"
 #include "mem.h"
 #include "utils.h"
 #include "yara.h"
 
 
-#define FIRST_PAGE_SIZE         1024
 #define ARENA_FILE_VERSION      1
 
 
@@ -87,6 +86,7 @@ ARENA_PAGE* _yr_arena_new_page(
   new_page->size = size;
   new_page->used = 0;
   new_page->next = NULL;
+  new_page->prev = NULL;
   new_page->reloc_list_head = NULL;
   new_page->reloc_list_tail = NULL;
 
@@ -205,14 +205,18 @@ int _yr_arena_make_relocatable(
 // Creates a new arena.
 //
 // Args:
-//    ARENA** arena  - Address where a pointer to the new arena will be
-//                     written to.
+//    int initial_size  - Initial size
+//    int flags         - Flags
+//    ARENA** arena     - Address where a pointer to the new arena will be
+//                        written to.
 //
 // Returns:
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
 //
 
 int yr_arena_create(
+    int initial_size,
+    int flags,
     ARENA** arena)
 {
   ARENA* new_arena;
@@ -224,7 +228,7 @@ int yr_arena_create(
   if (new_arena == NULL)
     return ERROR_INSUFICIENT_MEMORY;
 
-  new_page = _yr_arena_new_page(FIRST_PAGE_SIZE);
+  new_page = _yr_arena_new_page(initial_size);
 
   if (new_page == NULL)
   {
@@ -234,7 +238,7 @@ int yr_arena_create(
 
   new_arena->page_list_head = new_page;
   new_arena->current_page = new_page;
-  new_arena->is_coalesced = TRUE;
+  new_arena->flags = flags | ARENA_FLAGS_COALESCED;
 
   *arena = new_arena;
   return ERROR_SUCCESS;
@@ -307,14 +311,17 @@ void* yr_arena_base_address(
 //
 // yr_arena_next_address
 //
-// Given an address and an increment value, returns the address where
-// address + increment resides. The arena is a collection of non-contigous
+// Given an address and an offset, returns the address where
+// address + offset resides. The arena is a collection of non-contigous
 // regions of memory (pages), if address is pointing at the end of a page,
-// address + increment could cross the page boundary and point at somewhere
-// within the next page, this function handles these situations.
+// address + offset could cross the page boundary and point at somewhere
+// within the next page, this function handles these situations. It works
+// also with negative offsets.
 //
 // Args:
 //    ARENA* arena  - Pointer to the arena.
+//    void* address - Base address.
+//    int offset    - Offset.
 //
 // Returns:
 //    A pointer
@@ -324,7 +331,7 @@ void* yr_arena_base_address(
 void* yr_arena_next_address(
   ARENA* arena,
   void* address,
-  size_t increment)
+  int offset)
 {
   ARENA_PAGE* page;
 
@@ -332,10 +339,42 @@ void* yr_arena_next_address(
 
   assert(page != NULL);
 
-  if ((uint8_t*) address + increment >= page->address + page->used)
-    return page->next ? page->next->address : NULL;
+  if ((uint8_t*) address + offset >= page->address &&
+      (uint8_t*) address + offset < page->address + page->used)
+  {
+    return (uint8_t*) address + offset;
+  }
+
+  if (offset > 0)
+  {
+    offset -= page->address + page->used - (uint8_t*) address;
+    page = page->next;
+
+    while (page != NULL)
+    {
+      if (offset < page->used)
+        return page->address + offset;
+
+      offset -= page->used;
+      page = page->next;
+    }
+  }
   else
-    return (uint8_t*) address + increment;
+  {
+    offset += page->used;
+    page = page->prev;
+
+    while (page != NULL)
+    {
+      if (offset < page->used)
+        return page->address + page->used + offset;
+
+      offset += page->used;
+      page = page->prev;
+    }
+  }
+
+  return NULL;
 }
 
 
@@ -438,7 +477,7 @@ int yr_arena_coalesce(
 
   arena->page_list_head = big_page;
   arena->current_page = big_page;
-  arena->is_coalesced = TRUE;
+  arena->flags |= ARENA_FLAGS_COALESCED;
 
   return ERROR_SUCCESS;
 }
@@ -493,14 +532,18 @@ int yr_arena_allocate_memory(
     }
     else
     {
+      if (arena->flags & ARENA_FLAGS_FIXED_SIZE)
+        return ERROR_INSUFICIENT_MEMORY;
+
       new_page = _yr_arena_new_page(new_page_size);
 
       if (new_page == NULL)
         return ERROR_INSUFICIENT_MEMORY;
 
+      new_page->prev = arena->current_page;
       arena->current_page->next = new_page;
       arena->current_page = new_page;
-      arena->is_coalesced = FALSE;
+      arena->flags &= ~ARENA_FLAGS_COALESCED;
     }
   }
 
@@ -732,7 +775,7 @@ int yr_arena_duplicate(
   uint8_t* reloc_target;
 
   // Only coalesced arenas can be duplicated.
-  assert(arena->is_coalesced);
+  assert(arena->flags & ARENA_FLAGS_COALESCED);
 
   new_arena = (ARENA*) yr_malloc(sizeof(ARENA));
 
@@ -790,7 +833,7 @@ int yr_arena_duplicate(
 
   new_arena->page_list_head = new_page;
   new_arena->current_page = new_page;
-  new_arena->is_coalesced = TRUE;
+  new_arena->flags |= ARENA_FLAGS_COALESCED;
 
   *duplicated = new_arena;
 
@@ -826,7 +869,7 @@ int yr_arena_save(
   uint8_t* reloc_target;
 
   // Only coalesced arenas can be saved.
-  assert(arena->is_coalesced);
+  assert(arena->flags & ARENA_FLAGS_COALESCED);
 
   fh = fopen(filename, "w");
 
@@ -933,7 +976,7 @@ int yr_arena_load(
   if (fread(&header, sizeof(header), 1, fh) != 1)
   {
     fclose(fh);
-    return ERROR_INVALID_FILE; 
+    return ERROR_INVALID_FILE;
   }
 
   if (header.magic[0] != 'Y' ||
@@ -957,7 +1000,7 @@ int yr_arena_load(
     return ERROR_UNSUPPORTED_FILE_VERSION;
   }
 
-  result = yr_arena_create(&new_arena);
+  result = yr_arena_create(1024, 0, &new_arena);
 
   if (result != ERROR_SUCCESS)
   {

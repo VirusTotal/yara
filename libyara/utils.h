@@ -14,10 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
 #ifndef _UTILS_H
 #define _UTILS_H
-
 
 size_t xtoi(const char* hexstr);
 

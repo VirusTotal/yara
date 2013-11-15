@@ -499,7 +499,7 @@ boolean_expression  : '(' boolean_expression ')'
                             NULL);
 
                         yr_parser_emit(yyscanner, MATCHES, NULL);
- 
+
                         yr_re_destroy(re);
                         yr_free($3);
 
@@ -564,13 +564,13 @@ boolean_expression  : '(' boolean_expression ')'
                         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
                         var_index = yr_parser_lookup_loop_variable(
-                            yyscanner, 
+                            yyscanner,
                             $3);
 
                         if (var_index >= 0)
                         {
                           yr_compiler_set_error_extra_info(
-                              compiler, 
+                              compiler,
                               $3);
 
                           compiler->last_result = \
@@ -664,7 +664,7 @@ boolean_expression  : '(' boolean_expression ')'
                               NULL);
 
                           yr_parser_emit(yyscanner, POP, NULL);
-                          yr_parser_emit(yyscanner, POP, NULL);                       
+                          yr_parser_emit(yyscanner, POP, NULL);
                         }
 
                         // Pop end-of-list marker.
@@ -673,11 +673,11 @@ boolean_expression  : '(' boolean_expression ')'
                         // At this point the loop quantifier (any, all, 1, 2,..)
                         // is at the top of the stack. Check if the quantifier
                         // is undefined (meaning "all") and replace it with the
-                        // iterations counter in that case. 
+                        // iterations counter in that case.
                         yr_parser_emit_with_arg(
                             yyscanner, SWAPUNDEF, mem_offset + 2, NULL);
 
-                        // Compare the loop quantifier with the number of 
+                        // Compare the loop quantifier with the number of
                         // expressions evaluating to TRUE.
                         yr_parser_emit_with_arg(
                             yyscanner, PUSH_M, mem_offset + 1, NULL);
@@ -720,7 +720,7 @@ boolean_expression  : '(' boolean_expression ')'
                         compiler->loop_depth--;
                         mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
 
-                        // Increment counter by the value returned by the 
+                        // Increment counter by the value returned by the
                         // boolean expression (0 or 1).
                         yr_parser_emit_with_arg(
                             yyscanner, ADD_M, mem_offset + 1, NULL);
@@ -744,11 +744,11 @@ boolean_expression  : '(' boolean_expression ')'
                         // At this point the loop quantifier (any, all, 1, 2,..)
                         // is at top of the stack. Check if the quantifier is
                         // undefined (meaning "all") and replace it with the
-                        // iterations counter in that case. 
+                        // iterations counter in that case.
                         yr_parser_emit_with_arg(
                             yyscanner, SWAPUNDEF, mem_offset + 2, NULL);
 
-                        // Compare the loop quantifier with the number of 
+                        // Compare the loop quantifier with the number of
                         // expressions evaluating to TRUE.
                         yr_parser_emit_with_arg(
                             yyscanner, PUSH_M, mem_offset + 1, NULL);
@@ -975,9 +975,9 @@ expression  : '(' expression ')'
                 if (var_index >= 0)
                 {
                   yr_parser_emit_with_arg(
-                    yyscanner, 
-                    PUSH_M, 
-                    LOOP_LOCAL_VARS * var_index, 
+                    yyscanner,
+                    PUSH_M,
+                    LOOP_LOCAL_VARS * var_index,
                     NULL);
                 }
                 else

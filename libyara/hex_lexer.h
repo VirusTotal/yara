@@ -17,7 +17,6 @@ limitations under the License.
 #include "re.h"
 #include "hex_grammar.h"
 
-
 #define yyparse         hex_yyparse
 #define yylex           hex_yylex
 #define yyerror         hex_yyerror
@@ -37,7 +36,7 @@ typedef void* yyscan_t;
 #define YY_USE_CONST
 
 
-typedef struct _LEX_ENVIRONMENT 
+typedef struct _LEX_ENVIRONMENT
 {
   const char* last_error_message;
 
@@ -55,11 +54,11 @@ YY_EXTRA_TYPE yyget_extra(
 
 int yylex(
     YYSTYPE* yylval_param,
-    yyscan_t yyscanner, 
+    yyscan_t yyscanner,
     LEX_ENVIRONMENT* lex_env);
 
 int yyparse(
-    void *yyscanner, 
+    void *yyscanner,
     LEX_ENVIRONMENT *lex_env);
 
 void yyerror(

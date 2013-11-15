@@ -135,7 +135,7 @@ int yr_execute_code(
         r1 = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         pop(mem[r1]);
-        break;     
+        break;
 
       case SWAPUNDEF:
         r1 = *(uint64_t*)(ip + 1);

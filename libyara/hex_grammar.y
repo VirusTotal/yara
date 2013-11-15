@@ -60,7 +60,7 @@ yydebug = 1;
   RE_NODE *re_node;
 }
 
-%token <integer> _BYTE_ 
+%token <integer> _BYTE_
 %token <integer> _MASKED_BYTE_
 %token <integer> _NUMBER_
 
@@ -168,7 +168,7 @@ byte  : _BYTE_
           {
             re->literal_string_max *= 2;
             re->literal_string = yr_realloc(
-                re->literal_string, 
+                re->literal_string,
                 re->literal_string_max);
 
             ERROR_IF(re->literal_string == NULL, ERROR_INSUFICIENT_MEMORY);
@@ -186,10 +186,10 @@ byte  : _BYTE_
           if (mask == 0x00)
           {
             $$ = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
-            
+
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
           }
-          else 
+          else
           {
             $$ = yr_re_node_create(RE_NODE_MASKED_LITERAL, NULL, NULL);
 

@@ -37,14 +37,14 @@ there's no chance for the regexp to match. When the atom is found in the file
 YARA proceeds to fully evaluate the regexp/hex string to determine if it's
 actually a match.
 
-For each regexp/hex string YARA extracts one or more atoms. Sometimes a 
+For each regexp/hex string YARA extracts one or more atoms. Sometimes a
 single atom is enough (like in the previous example "abc" is enough for finding
 /abc.*ed[0-9]+fgh/), but sometimes a single atom isn't enough like in the
 regexp /(abc|efg)/. In this case YARA must search for both "abc" AND "efg" and
 fully evaluate the regexp whenever one of those atoms is found.
 
-In the regexp /Look(at|into)this/ YARA can search for "Look", or search for 
-"this", or search for both "at" and "into". This what we call an atoms tree, 
+In the regexp /Look(at|into)this/ YARA can search for "Look", or search for
+"this", or search for both "at" and "into". This what we call an atoms tree,
 because it can be represented by the following tree structure:
 
 -OR
@@ -53,11 +53,11 @@ because it can be represented by the following tree structure:
   |- AND
   |   |
   |   |- "at"
-  |    - "into"  
+  |    - "into"
   |
    - "this"
 
-From an atom tree YARA chooses the best combination, trying to minimize the 
+From an atom tree YARA chooses the best combination, trying to minimize the
 number of required atoms, but also using high quality atoms (long atoms with
 not too many zeroes and a bit of byte diversity). In the previous example YARA
 will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
@@ -107,7 +107,7 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 //
 
 int _yr_atoms_quality(
-    uint8_t* atom, 
+    uint8_t* atom,
     int atom_length)
 {
   int null_bytes = 0;
@@ -118,10 +118,10 @@ int _yr_atoms_quality(
   for (i = 0; i < atom_length; i++)
   {
     if (atom[i] == 0)
-      null_bytes++; 
+      null_bytes++;
 
     is_unique = TRUE;
-    
+
     for (j = i + 1; j < atom_length; j++)
       if (atom[i] == atom[j])
       {
@@ -230,7 +230,7 @@ void _yr_atoms_tree_node_destroy(
 //
 
 void _yr_atoms_tree_node_append(
-    ATOM_TREE_NODE* dest, 
+    ATOM_TREE_NODE* dest,
     ATOM_TREE_NODE* node)
 {
   if (dest->children_head == NULL)
@@ -351,7 +351,7 @@ int _yr_atoms_choose(
   case ATOM_TREE_OR:
 
     child = node->children_head;
-    
+
     while (child != NULL)
     {
       quality = _yr_atoms_choose(child, &item);
@@ -369,13 +369,13 @@ int _yr_atoms_choose(
 
       child = child->next_sibling;
     }
-    
+
     return max_quality;
 
   case ATOM_TREE_AND:
 
     child = node->children_head;
-    
+
     while (child != NULL)
     {
       quality = _yr_atoms_choose(child, &item);
@@ -392,7 +392,7 @@ int _yr_atoms_choose(
 
       child = child->next_sibling;
     }
-    
+
     return min_quality;
   }
 
@@ -478,7 +478,7 @@ uint8_t* _yr_atoms_case_combinations(
 //
 
 int _yr_atoms_case_insentive(
-    ATOM_LIST_ITEM* atoms, 
+    ATOM_LIST_ITEM* atoms,
     ATOM_LIST_ITEM** case_insensitive_atoms)
 {
   ATOM_LIST_ITEM* atom;
@@ -488,7 +488,7 @@ int _yr_atoms_case_insentive(
   uint8_t* atoms_cursor;
 
   int i, atom_length;
-  
+
   *case_insensitive_atoms = NULL;
   atom = atoms;
 
@@ -543,7 +543,7 @@ int _yr_atoms_case_insentive(
 //
 
 int _yr_atoms_wide(
-    ATOM_LIST_ITEM* atoms, 
+    ATOM_LIST_ITEM* atoms,
     ATOM_LIST_ITEM** wide_atoms)
 {
   ATOM_LIST_ITEM* atom;
@@ -621,7 +621,7 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
         atom_tree->current_leaf->forward_code = re_node->forward_code;
         atom_tree->current_leaf->backward_code = re_node->backward_code;
       }
-  
+
       current_leaf = atom_tree->current_leaf;
 
       if (current_leaf->atom_length < MAX_ATOM_LENGTH)
@@ -641,11 +641,11 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
           new_atom[i] = current_leaf->recent_nodes[i]->value;
 
         quality = _yr_atoms_quality(
-            current_leaf->atom, 
+            current_leaf->atom,
             MAX_ATOM_LENGTH);
-        
+
         new_quality = _yr_atoms_quality(
-            new_atom, 
+            new_atom,
             MAX_ATOM_LENGTH);
 
         if (new_quality > quality)
@@ -728,10 +728,13 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
 
       append_current_leaf_to_node(current_node);
 
-      current_node = _yr_atoms_extract_from_re_node(
-          re_node->left, atom_tree, current_node);
+      if (re_node->start > 0)
+      {
+        current_node = _yr_atoms_extract_from_re_node(
+            re_node->left, atom_tree, current_node);
 
-      append_current_leaf_to_node(current_node);
+        append_current_leaf_to_node(current_node);
+      }
 
       return current_node;
 
@@ -771,7 +774,7 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
 // can infer them. For example, in the hex string { 01 ?? 02 } the only explict
 // atoms are 01 and 02, and both of them are too short to be efficiently used.
 // However YARA can use simultaneously atoms 01 00 02, 01 01 02, 01 02 02,
-// 01 03 02, and so on up to 01 FF 02. Searching for 256 three-bytes atoms is 
+// 01 03 02, and so on up to 01 FF 02. Searching for 256 three-bytes atoms is
 // faster than searching for a single one-byte atom.
 //
 // This function extracts these three-bytes atoms from a regexp node if
@@ -800,7 +803,7 @@ int yr_atoms_extract_triplets(
     if (re_node->right->type != RE_NODE_LITERAL)
       return yr_atoms_extract_triplets(left_child, atoms);
 
-    if (left_child->left->type == RE_NODE_LITERAL && 
+    if (left_child->left->type == RE_NODE_LITERAL &&
         (left_child->right->type == RE_NODE_ANY))
     {
       int i;
@@ -829,7 +832,7 @@ int yr_atoms_extract_triplets(
       return ERROR_SUCCESS;
     }
 
-    if (left_child->left->type == RE_NODE_LITERAL && 
+    if (left_child->left->type == RE_NODE_LITERAL &&
         (left_child->right->type == RE_NODE_MASKED_LITERAL))
     {
       int i;
@@ -937,7 +940,7 @@ int yr_atoms_extract_triplets(
 //
 // _yr_atoms_extract_from_re
 //
-// Extract atoms from a regular expression. 
+// Extract atoms from a regular expression.
 //
 
 int yr_atoms_extract_from_re(
@@ -962,7 +965,7 @@ int yr_atoms_extract_from_re(
   if (atom_tree->current_leaf != NULL)
     _yr_atoms_tree_node_append(atom_tree->root_node, atom_tree->current_leaf);
 
-  if (atom_tree->root_node->children_head == 
+  if (atom_tree->root_node->children_head ==
       atom_tree->root_node->children_tail)
   {
     // The root OR node has a single child, there's no need for the OR node so
@@ -1005,7 +1008,7 @@ int yr_atoms_extract_from_re(
     {
       *atoms = _yr_atoms_list_concat(*atoms, wide_atoms);
     }
-    else 
+    else
     {
       yr_atoms_list_destroy(*atoms);
       *atoms = wide_atoms;
@@ -1027,11 +1030,11 @@ int yr_atoms_extract_from_re(
 //
 // yr_atoms_extract_from_string
 //
-// Extract atoms from a string. 
+// Extract atoms from a string.
 //
 
 int yr_atoms_extract_from_string(
-    char* string, 
+    char* string,
     int string_length,
     int flags,
     ATOM_LIST_ITEM** atoms)
@@ -1087,7 +1090,7 @@ int yr_atoms_extract_from_string(
     {
       item = _yr_atoms_list_concat(item, wide_atoms);
     }
-    else 
+    else
     {
       yr_atoms_list_destroy(item);
       item = wide_atoms;
@@ -1126,7 +1129,7 @@ void yr_atoms_tree_node_print(
   }
 
   switch(node->type)
-  { 
+  {
   case ATOM_TREE_LEAF:
     for (i = 0; i < node->atom_length; i++)
       printf("%02X", node->atom[i]);

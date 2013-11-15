@@ -17,7 +17,6 @@ limitations under the License.
 #include <stddef.h>
 #include <string.h>
 
-
 #include "atoms.h"
 #include "exec.h"
 #include "hash.h"
@@ -209,20 +208,20 @@ STRING* yr_parser_reduce_string_declaration(
   int min_atom_length;
   char* file_name;
   char message[512];
-  
+
   STRING* string;
   AC_MATCH* new_match;
   ATOM_TREE* atom_tree;
   ATOM_LIST_ITEM* atom;
   ATOM_LIST_ITEM* atom_list = NULL;
   RE* re = NULL;
-  
+
   uint8_t* literal_string;
   int literal_string_len;
   int max_string_len;
 
   YARA_COMPILER* compiler = yyget_extra(yyscanner);
-  
+
   compiler->last_result = yr_arena_allocate_struct(
       compiler->strings_arena,
       sizeof(STRING),
@@ -277,12 +276,12 @@ STRING* yr_parser_reduce_string_declaration(
     if (compiler->last_result != ERROR_SUCCESS)
     {
       snprintf(
-          message, 
-          sizeof(message), 
-          "invalid %s in string \"%s\": %s", 
-          (flags & STRING_GFLAGS_HEXADECIMAL) ? 
+          message,
+          sizeof(message),
+          "invalid %s in string \"%s\": %s",
+          (flags & STRING_GFLAGS_HEXADECIMAL) ?
               "hex string" : "regular expression",
-          identifier, 
+          identifier,
           re->error_message);
 
       yr_compiler_set_error_extra_info(compiler, message);
@@ -308,9 +307,9 @@ STRING* yr_parser_reduce_string_declaration(
       literal_string_len = re->literal_string_len;
 
       compiler->last_result = yr_atoms_extract_from_string(
-          re->literal_string, 
-          re->literal_string_len, 
-          string->g_flags, 
+          re->literal_string,
+          re->literal_string_len,
+          string->g_flags,
           &atom_list);
     }
     else
@@ -565,8 +564,8 @@ int yr_parser_reduce_string_identifier(
     if (compiler->loop_depth > 0)
     {
       yr_parser_emit_with_arg(
-          yyscanner, 
-          PUSH_M, 
+          yyscanner,
+          PUSH_M,
           LOOP_LOCAL_VARS * (compiler->loop_depth - 1),
           NULL);
 
