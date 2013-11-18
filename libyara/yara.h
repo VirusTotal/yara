@@ -558,7 +558,7 @@ typedef struct _YARA_RULES {
 
 
 extern char lowercase[256];
-
+extern char altercase[256];
 
 void yr_initialize(void);
 

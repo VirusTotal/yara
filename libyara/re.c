@@ -1049,6 +1049,8 @@ int yr_re_exec(
   RE_STACK* stack;
 
   int idx;
+  int match;
+  char character;
   int character_size;
   int result = -1;
 
@@ -1111,7 +1113,11 @@ int yr_re_exec(
       switch(*ip)
       {
         case RE_OPCODE_LITERAL:
-          if (*current_input == *(ip + 1))
+          if (flags & RE_FLAGS_NO_CASE)
+            match = lowercase[*current_input] == lowercase[*(ip + 1)];
+          else
+            match = *current_input == *(ip + 1);
+          if (match)
             _yr_re_add_fiber(next_fibers, storage, ip + 2, stack);
           else
             _yr_re_free_stack(stack, &storage->stack_pool);
@@ -1120,6 +1126,11 @@ int yr_re_exec(
         case RE_OPCODE_MASKED_LITERAL:
           value = *(int16_t*)(ip + 1) & 0xFF;
           mask = *(int16_t*)(ip + 1) >> 8;
+
+          // We don't need to take into account the case-insensitive
+          // case because this opcode is only used with hex strings,
+          // which can't be case-insensitive.
+
           if ((*current_input & mask) == value)
             _yr_re_add_fiber(next_fibers, storage, ip + 3, stack);
           else
@@ -1127,7 +1138,13 @@ int yr_re_exec(
           break;
 
         case RE_OPCODE_CLASS:
-          if (CHAR_IN_CLASS(*current_input, ip + 1))
+          if (flags & RE_FLAGS_NO_CASE)
+            match = CHAR_IN_CLASS(*current_input, ip + 1) ||
+                    CHAR_IN_CLASS(altercase[*current_input], ip + 1);
+          else
+            match = CHAR_IN_CLASS(*current_input, ip + 1);
+
+          if (match)
             _yr_re_add_fiber(next_fibers, storage, ip + 33, stack);
           else
             _yr_re_free_stack(stack, &storage->stack_pool);

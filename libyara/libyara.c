@@ -32,6 +32,7 @@ limitations under the License.
 #endif
 
 char lowercase[256];
+char altercase[256];
 
 #ifdef WIN32
 DWORD key;
@@ -52,7 +53,16 @@ void yr_initialize(void)
   int i;
 
   for (i = 0; i < 256; i++)
+  {
+    if (i >= 'a' && i <= 'z')
+      altercase[i] = i - 32;
+    else if (i >= 'A' && i <= 'Z')
+      altercase[i] = i + 32;
+    else
+      altercase[i] = i;
+
     lowercase[i] = tolower(i);
+  }
 
   yr_heap_alloc();
 
