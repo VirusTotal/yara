@@ -301,8 +301,8 @@ typedef struct _ARENA
 
 typedef struct _MATCH
 {
-  size_t          first_offset;
-  size_t          last_offset;
+  int64_t         first_offset;
+  int64_t         last_offset;
   uint8_t*        data;
   uint32_t        length;
 
