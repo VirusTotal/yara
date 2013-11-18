@@ -498,6 +498,12 @@ boolean_expression  : '(' boolean_expression ')'
                             PTR_TO_UINT64(re->root_node->forward_code),
                             NULL);
 
+                        yr_parser_emit_with_arg(
+                            yyscanner,
+                            PUSH,
+                            re->flags,
+                            NULL);
+
                         yr_parser_emit(yyscanner, MATCHES, NULL);
 
                         yr_re_destroy(re);

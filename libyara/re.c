@@ -1096,7 +1096,8 @@ int yr_re_exec(
 
   for (i = 0; i < min(input_size, RE_SCAN_LIMIT); i += character_size)
   {
-    if (flags & RE_FLAGS_SCAN)
+    if ((flags & RE_FLAGS_SCAN) &&
+        !(flags & RE_FLAGS_START_ANCHORED))
       _yr_re_add_fiber(current_fibers, storage, code, NULL);
 
     if (current_fibers->count == 0)
@@ -1181,6 +1182,9 @@ int yr_re_exec(
         case RE_OPCODE_MATCH:
           _yr_re_free_stack(stack, &storage->stack_pool);
 
+          if (flags & RE_FLAGS_END_ANCHORED && i < input_size)
+            break;
+
           if (flags & RE_FLAGS_EXHAUSTIVE)
           {
             if (flags & RE_FLAGS_BACKWARDS)
@@ -1232,29 +1236,32 @@ int yr_re_exec(
       current_input += character_size;
   }
 
-  for(t = 0; t < current_fibers->count; t++)
+  if (!(flags & RE_FLAGS_END_ANCHORED) || i == input_size)
   {
-    if (*current_fibers->items[t].ip == RE_OPCODE_MATCH)
+    for(t = 0; t < current_fibers->count; t++)
     {
-      if (flags & RE_FLAGS_EXHAUSTIVE)
+      if (*current_fibers->items[t].ip == RE_OPCODE_MATCH)
       {
-        if (flags & RE_FLAGS_BACKWARDS)
-          callback(
-              current_input + character_size,
-              i,
-              flags,
-              callback_args);
+        if (flags & RE_FLAGS_EXHAUSTIVE)
+        {
+          if (flags & RE_FLAGS_BACKWARDS)
+            callback(
+                current_input + character_size,
+                i,
+                flags,
+                callback_args);
+          else
+            callback(
+                input,
+                i,
+                flags,
+                callback_args);
+        }
         else
-          callback(
-              input,
-              i,
-              flags,
-              callback_args);
-      }
-      else
-      {
-        result = i;
-        break;
+        {
+          result = i;
+          break;
+        }
       }
     }
   }

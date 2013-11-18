@@ -85,6 +85,7 @@ int yr_execute_code(
   int found;
   int count;
   int result;
+  int flags;
   int tidx = yr_get_tidx();
 
   while(1)
@@ -516,9 +517,11 @@ int yr_execute_code(
         break;
 
       case MATCHES:
+        pop(r3);
         pop(r2);
         pop(r1);
 
+        flags = (int) r3;
         count = strlen(UINT64_TO_PTR(char*, r1));
 
         if (count == 0)
@@ -531,7 +534,7 @@ int yr_execute_code(
           UINT64_TO_PTR(uint8_t*, r2),
           UINT64_TO_PTR(uint8_t*, r1),
           count,
-          RE_FLAGS_SCAN,
+          flags | RE_FLAGS_SCAN,
           NULL,
           NULL);
 
