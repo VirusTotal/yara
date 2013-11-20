@@ -133,6 +133,9 @@ inline int _yr_scan_wicompare(
 }
 
 
+#define MAX_FAST_HEX_RE_STACK 100
+
+
 int _yr_scan_fast_hex_re_exec(
     uint8_t* code,
     uint8_t* input,
@@ -141,20 +144,20 @@ int _yr_scan_fast_hex_re_exec(
     RE_MATCH_CALLBACK_FUNC callback,
     void* callback_args)
 {
-  uint8_t* code_stack[100];
-  uint8_t* input_stack[100];
-  int matches_stack[100];
+  uint8_t* code_stack[MAX_FAST_HEX_RE_STACK];
+  uint8_t* input_stack[MAX_FAST_HEX_RE_STACK];
+  int matches_stack[MAX_FAST_HEX_RE_STACK];
 
   int sp = 0;
 
   uint8_t* ip = code;
   uint8_t* current_input = input;
+  uint8_t* next_input;
   uint8_t mask;
   uint8_t value;
 
   int i;
   int matches;
-  int offset;
   int stop;
   int increment;
 
@@ -214,13 +217,22 @@ int _yr_scan_fast_hex_re_exec(
         case RE_OPCODE_PUSH:
           for (i = *(uint16_t*)(ip + 1); i > 0; i--)
           {
-            offset = flags & RE_FLAGS_BACKWARDS ? -i : i;
-            code_stack[sp] = ip + 11;
-            input_stack[sp] = current_input + offset;
-            matches_stack[sp] = matches + i;
-            sp++;
-          }
+            if (flags & RE_FLAGS_BACKWARDS)
+              next_input = current_input - i;
+            else
+              next_input = current_input + i;
 
+            if ( *(ip + 11) != RE_OPCODE_LITERAL ||
+                (*(ip + 11) == RE_OPCODE_LITERAL &&
+                 *(ip + 12) == *next_input))
+            {
+              assert(sp < MAX_FAST_HEX_RE_STACK);
+              code_stack[sp] = ip + 11;
+              input_stack[sp] = next_input;
+              matches_stack[sp] = matches + i;
+              sp++;
+            }
+          }
           ip += 11;
           break;
 
