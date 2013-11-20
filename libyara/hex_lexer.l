@@ -31,11 +31,6 @@ limitations under the License.
 #define snprintf _snprintf
 #endif
 
-
-
-
-
-
 #define ERROR_IF(x, error) \
     if (x) \
     { \
@@ -162,13 +157,19 @@ int yr_parse_hex_string(
 
   FAIL_ON_ERROR(yr_re_create(re));
 
-  // The RE_FLAGS_LITERAL_STRING flag indicates that the
-  // regular expression is just a literal string and it can
-  // be matched by doing a simple string comparison, without
-  // executing any regular expression code. We initially set
-  // this flag which is unset later during parsing if necessary.
+  // The RE_FLAGS_LITERAL_STRING flag indicates that the regular expression
+  // is just a literal string and it can be matched by doing a simple string
+  // comparison, without executing any regular expression code.
+  //
+  // The RE_FLAGS_FAST_HEX_REGEXP flag indicates a regular expression derived
+  // from a hex string that can be matched by faster algorithm. These regular
+  // expressions come from hex strings not contaning alternatives
+  // (like in 01 02 | 03 04).
+  //
+  // These flags are unset later during parsing if necessary.
 
   (*re)->flags |= RE_FLAGS_LITERAL_STRING;
+  (*re)->flags |= RE_FLAGS_FAST_HEX_REGEXP;
 
   yylex_init(&yyscanner);
   yyset_extra(*re, yyscanner);

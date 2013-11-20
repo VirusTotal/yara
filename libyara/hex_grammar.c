@@ -105,6 +105,9 @@
 #define mark_as_not_literal() \
     ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_LITERAL_STRING
 
+#define mark_as_not_fast_hex_regexp() \
+    ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_HEX_REGEXP
+
 #if YYDEBUG
 yydebug = 1;
 #endif
@@ -139,13 +142,13 @@ yydebug = 1;
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 58 "hex_grammar.y"
+#line 61 "hex_grammar.y"
 {
   int integer;
   RE_NODE *re_node;
 }
 /* Line 193 of yacc.c.  */
-#line 149 "hex_grammar.c"
+#line 152 "hex_grammar.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -158,7 +161,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 162 "hex_grammar.c"
+#line 165 "hex_grammar.c"
 
 #ifdef short
 # undef short
@@ -444,8 +447,8 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    71,    71,    79,    83,    91,    95,    99,   107,   120,
-     144,   148,   157,   180
+       0,    74,    74,    82,    86,    94,    98,   102,   110,   123,
+     147,   151,   162,   186
 };
 #endif
 
@@ -1369,7 +1372,7 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 72 "hex_grammar.y"
+#line 75 "hex_grammar.y"
     {
                 RE* re = yyget_extra(yyscanner);
                 re->root_node = (yyvsp[(2) - (3)].re_node);
@@ -1377,14 +1380,14 @@ yyreduce:
     break;
 
   case 3:
-#line 80 "hex_grammar.y"
+#line 83 "hex_grammar.y"
     {
             (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
          }
     break;
 
   case 4:
-#line 84 "hex_grammar.y"
+#line 87 "hex_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[(1) - (2)].re_node), (yyvsp[(2) - (2)].re_node));
             ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
@@ -1392,21 +1395,21 @@ yyreduce:
     break;
 
   case 5:
-#line 92 "hex_grammar.y"
+#line 95 "hex_grammar.y"
     {
           (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
         }
     break;
 
   case 6:
-#line 96 "hex_grammar.y"
+#line 99 "hex_grammar.y"
     {
           (yyval.re_node) = (yyvsp[(2) - (3)].re_node);
         }
     break;
 
   case 7:
-#line 100 "hex_grammar.y"
+#line 103 "hex_grammar.y"
     {
           mark_as_not_literal();
           (yyval.re_node) = (yyvsp[(2) - (3)].re_node);
@@ -1414,7 +1417,7 @@ yyreduce:
     break;
 
   case 8:
-#line 108 "hex_grammar.y"
+#line 111 "hex_grammar.y"
     {
           RE_NODE* re_any;
 
@@ -1430,7 +1433,7 @@ yyreduce:
     break;
 
   case 9:
-#line 121 "hex_grammar.y"
+#line 124 "hex_grammar.y"
     {
           RE_NODE* re_any;
 
@@ -1454,16 +1457,18 @@ yyreduce:
     break;
 
   case 10:
-#line 145 "hex_grammar.y"
+#line 148 "hex_grammar.y"
     {
                   (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
                }
     break;
 
   case 11:
-#line 149 "hex_grammar.y"
+#line 152 "hex_grammar.y"
     {
                   mark_as_not_literal();
+                  mark_as_not_fast_hex_regexp();
+
                   (yyval.re_node) = yr_re_node_create(RE_NODE_ALT, (yyvsp[(1) - (3)].re_node), (yyvsp[(3) - (3)].re_node));
 
                   ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
@@ -1471,7 +1476,7 @@ yyreduce:
     break;
 
   case 12:
-#line 158 "hex_grammar.y"
+#line 163 "hex_grammar.y"
     {
           RE* re = yyget_extra(yyscanner);
 
@@ -1484,6 +1489,7 @@ yyreduce:
           if (re->literal_string_len == re->literal_string_max)
           {
             re->literal_string_max *= 2;
+
             re->literal_string = yr_realloc(
                 re->literal_string,
                 re->literal_string_max);
@@ -1497,7 +1503,7 @@ yyreduce:
     break;
 
   case 13:
-#line 181 "hex_grammar.y"
+#line 187 "hex_grammar.y"
     {
           uint8_t mask = (yyvsp[(1) - (1)].integer) >> 8;
 
@@ -1523,7 +1529,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1527 "hex_grammar.c"
+#line 1533 "hex_grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1737,7 +1743,7 @@ yyreturn:
 }
 
 
-#line 204 "hex_grammar.y"
+#line 210 "hex_grammar.y"
 
 
 

@@ -30,6 +30,9 @@ limitations under the License.
 #define mark_as_not_literal() \
     ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_LITERAL_STRING
 
+#define mark_as_not_fast_hex_regexp() \
+    ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_HEX_REGEXP
+
 #if YYDEBUG
 yydebug = 1;
 #endif
@@ -148,6 +151,8 @@ alternatives : tokens
              | alternatives '|' tokens
                {
                   mark_as_not_literal();
+                  mark_as_not_fast_hex_regexp();
+
                   $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
 
                   ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
@@ -167,6 +172,7 @@ byte  : _BYTE_
           if (re->literal_string_len == re->literal_string_max)
           {
             re->literal_string_max *= 2;
+
             re->literal_string = yr_realloc(
                 re->literal_string,
                 re->literal_string_max);

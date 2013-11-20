@@ -133,6 +133,123 @@ inline int _yr_scan_wicompare(
 }
 
 
+int _yr_scan_fast_hex_re_exec(
+    uint8_t* code,
+    uint8_t* input,
+    size_t input_size,
+    int flags,
+    RE_MATCH_CALLBACK_FUNC callback,
+    void* callback_args)
+{
+  uint8_t* code_stack[100];
+  uint8_t* input_stack[100];
+  int matches_stack[100];
+
+  int sp = 0;
+
+  uint8_t* ip = code;
+  uint8_t* current_input = input;
+  uint8_t mask;
+  uint8_t value;
+
+  int i;
+  int matches;
+  int offset;
+  int stop;
+  int increment;
+
+  increment = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
+
+  code_stack[sp] = code;
+  input_stack[sp] = input;
+  matches_stack[sp] = 0;
+  sp++;
+
+  while (sp > 0)
+  {
+    sp--;
+    ip = code_stack[sp];
+    current_input = input_stack[sp];
+    matches = matches_stack[sp];
+    stop = FALSE;
+
+    while(!stop)
+    {
+      switch(*ip)
+      {
+        case RE_OPCODE_LITERAL:
+          if (*current_input == *(ip + 1))
+          {
+            matches++;
+            current_input += increment;
+            ip += 2;
+          }
+          else
+          {
+            stop = TRUE;
+          }
+          break;
+
+        case RE_OPCODE_MASKED_LITERAL:
+          value = *(int16_t*)(ip + 1) & 0xFF;
+          mask = *(int16_t*)(ip + 1) >> 8;
+          if ((*current_input & mask) == value)
+          {
+            matches++;
+            current_input += increment;
+            ip += 3;
+          }
+          else
+          {
+            stop = TRUE;
+          }
+          break;
+
+        case RE_OPCODE_ANY:
+          matches++;
+          current_input += increment;
+          ip += 1;
+          break;
+
+        case RE_OPCODE_PUSH:
+          for (i = *(uint16_t*)(ip + 1); i > 0; i--)
+          {
+            offset = flags & RE_FLAGS_BACKWARDS ? -i : i;
+            code_stack[sp] = ip + 11;
+            input_stack[sp] = current_input + offset;
+            matches_stack[sp] = matches + i;
+            sp++;
+          }
+
+          ip += 11;
+          break;
+
+        default:
+          assert(FALSE);
+      }
+
+      if (*ip == RE_OPCODE_MATCH)
+      {
+        if (flags & RE_FLAGS_EXHAUSTIVE)
+        {
+          callback(
+            flags & RE_FLAGS_BACKWARDS ? current_input + 1 : input,
+            matches,
+            flags,
+            callback_args);
+          stop = TRUE;
+        }
+        else
+        {
+          return matches;
+        }
+      }
+    }
+  }
+
+  return -1;
+}
+
 void match_callback(
     uint8_t* match_data,
     int match_length,
@@ -264,6 +381,16 @@ void match_callback(
 }
 
 
+
+typedef int (*RE_EXEC_FUNC)(
+    uint8_t* code,
+    uint8_t* input,
+    size_t input_size,
+    int flags,
+    RE_MATCH_CALLBACK_FUNC callback,
+    void* callback_args);
+
+
 int _yr_scan_verify_re_match(
     AC_MATCH* ac_match,
     uint8_t* data,
@@ -272,9 +399,15 @@ int _yr_scan_verify_re_match(
     ARENA* matches_arena)
 {
   CALLBACK_ARGS callback_args;
+  RE_EXEC_FUNC exec;
 
   int forward_matches = -1;
   int flags = 0;
+
+  if (STRING_IS_FAST_HEX_REGEXP(ac_match->string))
+    exec = _yr_scan_fast_hex_re_exec;
+  else
+    exec = yr_re_exec;
 
   if (STRING_IS_START_ANCHORED(ac_match->string))
     flags |= RE_FLAGS_START_ANCHORED;
@@ -287,7 +420,7 @@ int _yr_scan_verify_re_match(
 
   if (STRING_IS_ASCII(ac_match->string))
   {
-    forward_matches = yr_re_exec(
+    forward_matches = exec(
         ac_match->forward_code,
         data + offset,
         data_size - offset,
@@ -300,7 +433,7 @@ int _yr_scan_verify_re_match(
       forward_matches < 0)
   {
     flags |= RE_FLAGS_WIDE;
-    forward_matches = yr_re_exec(
+    forward_matches = exec(
         ac_match->forward_code,
         data + offset,
         data_size - offset,
@@ -325,7 +458,7 @@ int _yr_scan_verify_re_match(
 
   if (ac_match->backward_code != NULL)
   {
-    yr_re_exec(
+    exec(
         ac_match->backward_code,
         data + offset,
         offset + 1,

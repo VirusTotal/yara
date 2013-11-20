@@ -196,6 +196,8 @@ RE_NODE* yr_re_node_create(
     result->left = left;
     result->right = right;
     result->greedy = TRUE;
+    result->forward_code = NULL;
+    result->backward_code = NULL;
   }
 
   return result;

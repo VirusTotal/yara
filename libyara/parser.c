@@ -217,6 +217,7 @@ STRING* yr_parser_reduce_string_declaration(
   RE* re = NULL;
 
   uint8_t* literal_string;
+
   int literal_string_len;
   int max_string_len;
 
@@ -289,16 +290,14 @@ STRING* yr_parser_reduce_string_declaration(
       goto _exit;
     }
 
-    //
-    //yr_re_print(re);
-    //printf("\n");
-    //
-
     if (re->flags & RE_FLAGS_START_ANCHORED)
       string->g_flags |= STRING_GFLAGS_START_ANCHORED;
 
     if (re->flags & RE_FLAGS_END_ANCHORED)
       string->g_flags |= STRING_GFLAGS_END_ANCHORED;
+
+    if (re->flags & RE_FLAGS_FAST_HEX_REGEXP)
+      string->g_flags |= STRING_GFLAGS_FAST_HEX_REGEXP;
 
     if (re->flags & RE_FLAGS_LITERAL_STRING)
     {
@@ -307,10 +306,7 @@ STRING* yr_parser_reduce_string_declaration(
       literal_string_len = re->literal_string_len;
 
       compiler->last_result = yr_atoms_extract_from_string(
-          re->literal_string,
-          re->literal_string_len,
-          string->g_flags,
-          &atom_list);
+          literal_string, literal_string_len, string->g_flags, &atom_list);
     }
     else
     {
@@ -334,7 +330,7 @@ STRING* yr_parser_reduce_string_declaration(
     literal_string_len = str->length;
 
     compiler->last_result  = yr_atoms_extract_from_string(
-        str->c_string, str->length, string->g_flags, &atom_list);
+        literal_string, literal_string_len, string->g_flags, &atom_list);
   }
 
   if (compiler->last_result != ERROR_SUCCESS)

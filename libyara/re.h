@@ -57,14 +57,16 @@ limitations under the License.
 #define RE_OPCODE_JUMP              0xB5
 
 
-#define RE_FLAGS_START_ANCHORED     0x01
-#define RE_FLAGS_END_ANCHORED       0x02
-#define RE_FLAGS_LITERAL_STRING     0x04
-#define RE_FLAGS_BACKWARDS          0x08
-#define RE_FLAGS_EXHAUSTIVE         0x10
-#define RE_FLAGS_WIDE               0x20
-#define RE_FLAGS_NO_CASE            0x40
-#define RE_FLAGS_SCAN               0x80
+#define RE_FLAGS_START_ANCHORED           0x01
+#define RE_FLAGS_END_ANCHORED             0x02
+#define RE_FLAGS_LITERAL_STRING           0x04
+#define RE_FLAGS_FAST_HEX_REGEXP          0x08
+#define RE_FLAGS_BACKWARDS                0x10
+#define RE_FLAGS_EXHAUSTIVE               0x20
+#define RE_FLAGS_WIDE                     0x40
+#define RE_FLAGS_NO_CASE                  0x80
+#define RE_FLAGS_SCAN                     0x100
+
 
 typedef struct RE RE;
 typedef struct RE_NODE RE_NODE;
@@ -110,10 +112,8 @@ struct RE {
   int error_code;
 
   int8_t* literal_string;
-
   int literal_string_len;
   int literal_string_max;
-
 };
 
 

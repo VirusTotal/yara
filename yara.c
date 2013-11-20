@@ -129,7 +129,7 @@ EXTERNAL* externals_list = NULL;
 // file_queue is size-limited queue stored as a circular array, files are
 // removed from queue_head position and new files are added at queue_tail
 // position. The array has room for one extra element to avoid queue_head
-// being equal to queue_tail in a full queue. The only situation where 
+// being equal to queue_tail in a full queue. The only situation where
 // queue_head == queue_tail is when queue is empty.
 
 QUEUED_FILE file_queue[MAX_QUEUED_FILES + 1];
@@ -301,7 +301,7 @@ void scan_dir(
         {
           file_queue_put(full_path);
         }
-        else if(recursive &&  
+        else if(recursive &&
                 S_ISDIR(st.st_mode) &&
                 !S_ISLNK(st.st_mode) &&
                 de->d_name[0] != '.')
@@ -529,7 +529,7 @@ int handle_message(int message, RULE* rule, void* data)
 
           while (match != NULL)
           {
-            printf("0x%zx:%s: ", match->first_offset, string->identifier);
+            printf("0x%llx:%s: ", match->first_offset, string->identifier);
 
             if (STRING_IS_HEX(string))
             {
@@ -539,7 +539,7 @@ int handle_message(int message, RULE* rule, void* data)
             {
               print_string(match->data, match->length);
             }
- 
+
             match = match->next;
           }
         }
@@ -585,7 +585,7 @@ void* scanning_thread(void* param)
 
   file_path = file_queue_get();
 
-  while (file_path != NULL) 
+  while (file_path != NULL)
   {
     result = yr_rules_scan_file(
         rules,
@@ -606,6 +606,8 @@ void* scanning_thread(void* param)
     free(file_path);
     file_path = file_queue_get();
   }
+
+  yr_re_finalize_thread();
 
   return 0;
 }
@@ -979,9 +981,9 @@ int main(
       print_scanning_error(result);
   }
   else if (is_directory(argv[argc - 1]))
-  {   
+  {
     file_queue_init();
-    
+
     for (i = 0; i < threads; i++)
     {
       if (create_thread(&thread[i], scanning_thread, (void*) rules) != 0)
@@ -1005,9 +1007,9 @@ int main(
   else
   {
 
-     
+
     start = clock();
-     
+
     result = yr_rules_scan_file(
         rules,
         argv[argc - 1],

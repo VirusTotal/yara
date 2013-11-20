@@ -59,7 +59,7 @@ int yr_atoms_extract_from_re(
     ATOM_LIST_ITEM** atoms);
 
 int yr_atoms_extract_from_string(
-    char* string,
+    uint8_t* string,
     int string_length,
     int flags,
     ATOM_LIST_ITEM** atoms);
