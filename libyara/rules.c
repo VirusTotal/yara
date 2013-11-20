@@ -178,6 +178,17 @@ int _yr_scan_fast_hex_re_exec(
 
     while(!stop)
     {
+      if (flags & RE_FLAGS_BACKWARDS)
+      {
+        if (current_input <= input - input_size)
+          break;
+      }
+      else
+      {
+        if (current_input >= input + input_size)
+          break;
+      }
+
       switch(*ip)
       {
         case RE_OPCODE_LITERAL:
