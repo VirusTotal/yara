@@ -28,6 +28,7 @@ limitations under the License.
 
 #endif
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -529,7 +530,7 @@ int handle_message(int message, RULE* rule, void* data)
 
           while (match != NULL)
           {
-            printf("0x%llx:%s: ", match->first_offset, string->identifier);
+            printf("0x%" PRIx64 ":%s: ", match->first_offset, string->identifier);
 
             if (STRING_IS_HEX(string))
             {
