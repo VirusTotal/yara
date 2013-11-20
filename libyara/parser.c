@@ -258,11 +258,7 @@ STRING* yr_parser_reduce_string_declaration(
 
   string->g_flags = flags;
 
-  for (i = 0; i < MAX_THREADS; i++)
-  {
-    string->matches[i].head = NULL;
-    string->matches[i].tail = NULL;
-  }
+  memset(string->matches, 0, sizeof(string->matches));
 
   if (flags & STRING_GFLAGS_HEXADECIMAL ||
       flags & STRING_GFLAGS_REGEXP)
