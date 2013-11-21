@@ -133,7 +133,7 @@ inline int _yr_scan_wicompare(
 }
 
 
-#define MAX_FAST_HEX_RE_STACK 100
+#define MAX_FAST_HEX_RE_STACK 200
 
 
 int _yr_scan_fast_hex_re_exec(
@@ -229,9 +229,17 @@ int _yr_scan_fast_hex_re_exec(
           for (i = *(uint16_t*)(ip + 1); i > 0; i--)
           {
             if (flags & RE_FLAGS_BACKWARDS)
+            {
               next_input = current_input - i;
+              if (next_input <= input - input_size)
+                continue;
+            }
             else
+            {
               next_input = current_input + i;
+              if (next_input >= input + input_size)
+                continue;
+            }
 
             if ( *(ip + 11) != RE_OPCODE_LITERAL ||
                 (*(ip + 11) == RE_OPCODE_LITERAL &&
