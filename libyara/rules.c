@@ -757,6 +757,7 @@ void _yr_rules_clean_matches(
   while (!RULE_IS_NULL(rule))
   {
     rule->t_flags[tidx] &= ~RULE_TFLAGS_MATCH;
+    rule->ns->t_flags[tidx] &= ~NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
     string = rule->strings;
 
     while (!STRING_IS_NULL(string))
