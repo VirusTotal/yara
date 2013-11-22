@@ -168,16 +168,29 @@ int yr_re_finalize()
 
 int yr_re_finalize_thread()
 {
-  RE_THREAD_STORAGE* thread_storage;
+  RE_STACK* stack;
+  RE_STACK* next_stack;
+  RE_THREAD_STORAGE* storage;
 
   #ifdef WIN32
-  thread_storage = TlsGetValue(thread_storage_key);
+  storage = TlsGetValue(thread_storage_key);
   #else
-  thread_storage = pthread_getspecific(thread_storage_key);
+  storage = pthread_getspecific(thread_storage_key);
   #endif
 
-  if (thread_storage != NULL)
-    yr_free(thread_storage);
+  if (storage != NULL)
+  {
+    stack = storage->stack_pool.free;
+
+    while (stack != NULL)
+    {
+      next_stack = stack->next;
+      yr_free(stack);
+      stack = next_stack;
+    }
+
+    yr_free(storage);
+  }
 
   return ERROR_SUCCESS;
 }
