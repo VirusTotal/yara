@@ -991,8 +991,6 @@ int yr_rules_scan_mem_blocks(
 
     if (!RULE_IS_PRIVATE(rule))
     {
-	  printf("$ id:%s $\n", rule->identifier);
-
       switch (callback(message, rule, user_data))
       {
         case CALLBACK_ABORT:
