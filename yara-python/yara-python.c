@@ -372,7 +372,7 @@ int yara_callback(
         object = PyBytes_FromStringAndSize((char*) m->data, m->length);
 
         tuple = Py_BuildValue(
-            "(i,s,O)",
+            "(L,s,O)",
             m->first_offset,
             string->identifier,
             object);

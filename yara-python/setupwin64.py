@@ -8,6 +8,7 @@ setup(name='yara-python',
         name='yara',
         sources=['yara-python.c'],
         include_dirs=['../windows/include', '../libyara'],
+	   define_macros=[('WIN32', None)],
         extra_objects=[
           '../windows/yara/Release/libyara64.lib']
         )])
