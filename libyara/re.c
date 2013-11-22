@@ -280,7 +280,7 @@ int yr_re_compile_hex(
 
 
 int _yr_emit_inst(
-    ARENA* arena,
+    YR_ARENA* arena,
     uint8_t opcode,
     uint8_t** instruction_addr,
     int* code_size)
@@ -298,7 +298,7 @@ int _yr_emit_inst(
 
 
 int _yr_emit_inst_arg_uint8(
-    ARENA* arena,
+    YR_ARENA* arena,
     uint8_t opcode,
     uint8_t argument,
     uint8_t** instruction_addr,
@@ -324,7 +324,7 @@ int _yr_emit_inst_arg_uint8(
 
 
 int _yr_emit_inst_arg_uint16(
-    ARENA* arena,
+    YR_ARENA* arena,
     uint8_t opcode,
     uint16_t argument,
     uint8_t** instruction_addr,
@@ -350,7 +350,7 @@ int _yr_emit_inst_arg_uint16(
 
 
 int _yr_emit_inst_arg_uint32(
-    ARENA* arena,
+    YR_ARENA* arena,
     uint8_t opcode,
     uint32_t argument,
     uint8_t** instruction_addr,
@@ -376,7 +376,7 @@ int _yr_emit_inst_arg_uint32(
 
 
 int _yr_emit_inst_arg_int16(
-    ARENA* arena,
+    YR_ARENA* arena,
     uint8_t opcode,
     int16_t argument,
     uint8_t** instruction_addr,
@@ -403,7 +403,7 @@ int _yr_emit_inst_arg_int16(
 
 int _yr_re_emit(
     RE_NODE* re_node,
-    ARENA* arena,
+    YR_ARENA* arena,
     int flags,
     uint8_t** code_addr,
     int* code_size)
@@ -802,7 +802,7 @@ int _yr_re_emit(
 
 int yr_re_emit_code(
     RE* re,
-    ARENA* arena)
+    YR_ARENA* arena)
 {
   int code_size;
 

@@ -262,8 +262,8 @@ typedef union YYSTYPE
   SIZED_STRING*   sized_string;
   char*           c_string;
   int64_t         integer;
-  STRING*         string;
-  META*           meta;
+  YR_STRING*         string;
+  YR_META*           meta;
 }
 /* Line 193 of yacc.c.  */
 #line 270 "grammar.c"
@@ -1795,23 +1795,23 @@ yyreduce:
 #line 185 "grammar.y"
     {
           // Each rule have a list of meta-data info, consisting in a
-          // sequence of META structures. The last META structure does
+          // sequence of YR_META structures. The last YR_META structure does
           // not represent a real meta-data, it's just a end-of-list marker
           // identified by a specific type (META_TYPE_NULL). Here we
           // write the end-of-list marker.
 
-          META null_meta;
-          YARA_COMPILER* compiler;
+          YR_META null_meta;
+          YR_COMPILER* compiler;
 
           compiler = yyget_extra(yyscanner);
 
-          memset(&null_meta, 0xFF, sizeof(META));
+          memset(&null_meta, 0xFF, sizeof(YR_META));
           null_meta.type = META_TYPE_NULL;
 
           yr_arena_write_data(
               compiler->metas_arena,
               &null_meta,
-              sizeof(META),
+              sizeof(YR_META),
               NULL);
 
           (yyval.meta) = (yyvsp[(3) - (3)].meta);
@@ -1830,23 +1830,23 @@ yyreduce:
 #line 217 "grammar.y"
     {
           // Each rule have a list of strings, consisting in a sequence
-          // of STRING structures. The last STRING structure does not
+          // of YR_STRING structures. The last YR_STRING structure does not
           // represent a real string, it's just a end-of-list marker
           // identified by a specific flag (STRING_FLAGS_NULL). Here we
           // write the end-of-list marker.
 
-          STRING null_string;
-          YARA_COMPILER* compiler;
+          YR_STRING null_string;
+          YR_COMPILER* compiler;
 
           compiler = yyget_extra(yyscanner);
 
-          memset(&null_string, 0xFF, sizeof(STRING));
+          memset(&null_string, 0xFF, sizeof(YR_STRING));
           null_string.g_flags = STRING_GFLAGS_NULL;
 
           yr_arena_write_data(
               compiler->strings_arena,
               &null_string,
-              sizeof(STRING),
+              sizeof(YR_STRING),
               NULL);
 
           (yyval.string) = (yyvsp[(3) - (3)].string);
@@ -1910,7 +1910,7 @@ yyreduce:
   case 19:
 #line 285 "grammar.y"
     {
-              YARA_COMPILER* compiler = yyget_extra(yyscanner);
+              YR_COMPILER* compiler = yyget_extra(yyscanner);
               char* tag_name = (yyvsp[(1) - (2)].c_string);
               size_t tag_length = tag_name != NULL ? strlen(tag_name) : 0;
 
@@ -2124,10 +2124,10 @@ yyreduce:
   case 40:
 #line 450 "grammar.y"
     {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
-                        RULE* rule;
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_RULE* rule;
 
-                        rule = (RULE*) yr_hash_table_lookup(
+                        rule = (YR_RULE*) yr_hash_table_lookup(
                             compiler->rules_table,
                             (yyvsp[(1) - (1)].c_string),
                             compiler->current_namespace->name);
@@ -2157,7 +2157,7 @@ yyreduce:
   case 41:
 #line 480 "grammar.y"
     {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
                         SIZED_STRING* sized_string = (yyvsp[(3) - (3)].sized_string);
                         RE* re;
 
@@ -2259,7 +2259,7 @@ yyreduce:
   case 48:
 #line 561 "grammar.y"
     {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
                         int result = ERROR_SUCCESS;
                         int var_index;
 
@@ -2299,7 +2299,7 @@ yyreduce:
   case 49:
 #line 598 "grammar.y"
     {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
                         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
                         int8_t* addr;
 
@@ -2336,7 +2336,7 @@ yyreduce:
   case 50:
 #line 632 "grammar.y"
     {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
                         int mem_offset;
 
                         compiler->loop_depth--;
@@ -2404,7 +2404,7 @@ yyreduce:
   case 51:
 #line 697 "grammar.y"
     {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
                         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
                         int8_t* addr;
 
@@ -2432,7 +2432,7 @@ yyreduce:
   case 52:
 #line 722 "grammar.y"
     {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
                         int mem_offset;
 
                         compiler->loop_depth--;
@@ -2562,7 +2562,7 @@ yyreduce:
   case 65:
 #line 816 "grammar.y"
     {
-          YARA_COMPILER* compiler = yyget_extra(yyscanner);
+          YR_COMPILER* compiler = yyget_extra(yyscanner);
           SIZED_STRING* sized_string = (yyvsp[(1) - (1)].sized_string);
           char* string;
 
@@ -2761,7 +2761,7 @@ yyreduce:
   case 95:
 #line 975 "grammar.y"
     {
-                YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                YR_COMPILER* compiler = yyget_extra(yyscanner);
                 int var_index;
 
                 var_index = yr_parser_lookup_loop_variable(yyscanner, (yyvsp[(1) - (1)].c_string));

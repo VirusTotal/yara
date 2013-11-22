@@ -22,6 +22,6 @@ limitations under the License.
 
 int yr_process_get_memory(
 		int pid,
-		MEMORY_BLOCK** first_block);
+		YR_MEMORY_BLOCK** first_block);
 
 #endif

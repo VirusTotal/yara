@@ -21,21 +21,21 @@ limitations under the License.
 
 int yr_hash_table_create(
     int size,
-    HASH_TABLE** table);
+    YR_HASH_TABLE** table);
 
 
 void yr_hash_table_destroy(
-    HASH_TABLE* table);
+    YR_HASH_TABLE* table);
 
 
 void* yr_hash_table_lookup(
-    HASH_TABLE* table,
+    YR_HASH_TABLE* table,
     const char* key,
     const char* ns);
 
 
 int yr_hash_table_add(
-    HASH_TABLE* table,
+    YR_HASH_TABLE* table,
     const char* key,
     const char* ns,
     void* value);

@@ -14,29 +14,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _COMPILER_H
-#define _COMPILER_H
-
-#include <stdio.h>
+#ifndef _AHOCORASICK_H
+#define _AHOCORASICK_H
 
 #include "yara.h"
 
-
-#define yr_compiler_set_error_extra_info(compiler, info) \
-    strncpy( \
-        compiler->last_error_extra_info, \
-        info, \
-        sizeof(compiler->last_error_extra_info)); \
-    compiler->last_error_extra_info[ \
-        sizeof(compiler->last_error_extra_info) - 1] = 0;
+int yr_ac_create_automaton(
+    YR_ARENA* arena,
+    YR_AC_AUTOMATON** automaton);
 
 
-int _yr_compiler_push_file(
-    YR_COMPILER* compiler,
-    FILE* fh);
+int yr_ac_add_string(
+    YR_ARENA* arena,
+    YR_AC_AUTOMATON* automaton,
+    YR_STRING* string,
+    YR_ATOM_LIST_ITEM* atom);
 
 
-FILE* _yr_compiler_pop_file(
-    YR_COMPILER* compiler);
+YR_AC_STATE* yr_ac_next_state(
+    YR_AC_STATE* state,
+    uint8_t input);
+
+
+void yr_ac_create_failure_links(
+    YR_ARENA* arena,
+    YR_AC_AUTOMATON* automaton);
+
+
+void yr_ac_print_automaton(
+    YR_AC_AUTOMATON* automaton);
 
 #endif
+
+

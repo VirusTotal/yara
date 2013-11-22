@@ -41,7 +41,7 @@ limitations under the License.
 
 typedef struct _QUEUE_NODE
 {
-  AC_STATE* value;
+  YR_AC_STATE* value;
 
   struct _QUEUE_NODE*  previous;
   struct _QUEUE_NODE*  next;
@@ -64,7 +64,7 @@ typedef struct _QUEUE
 //
 // Args:
 //    QUEUE* queue     - The queue
-//    AC_STATE* state  - The state
+//    YR_AC_STATE* state  - The state
 //
 // Returns:
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
@@ -72,7 +72,7 @@ typedef struct _QUEUE
 
 int _yr_ac_queue_push(
     QUEUE* queue,
-    AC_STATE* value)
+    YR_AC_STATE* value)
 {
   QUEUE_NODE* pushed_node;
 
@@ -108,10 +108,10 @@ int _yr_ac_queue_push(
 //    Pointer to the poped state.
 //
 
-AC_STATE* _yr_ac_queue_pop(
+YR_AC_STATE* _yr_ac_queue_pop(
     QUEUE* queue)
 {
-  AC_STATE* result;
+  YR_AC_STATE* result;
   QUEUE_NODE* popped_node;
 
   if (queue->head == NULL)
@@ -151,16 +151,16 @@ int _yr_ac_queue_is_empty(
 }
 
 
-AC_STATE* _yr_ac_next_transition(
-  AC_STATE* state,
-  AC_STATE_TRANSITION* transition)
+YR_AC_STATE* _yr_ac_next_transition(
+  YR_AC_STATE* state,
+  YR_AC_STATE_TRANSITION* transition)
 {
   int i;
-  AC_TABLE_BASED_STATE* table_based_state;
+  YR_AC_TABLE_BASED_STATE* table_based_state;
 
   if (state->depth <= MAX_TABLE_BASED_STATES_DEPTH)
   {
-    table_based_state = (AC_TABLE_BASED_STATE*) state;
+    table_based_state = (YR_AC_TABLE_BASED_STATE*) state;
 
     for (i = transition->input + 1; i < 256; i++)
     {
@@ -188,18 +188,18 @@ AC_STATE* _yr_ac_next_transition(
 }
 
 
-AC_STATE* _yr_ac_first_transition(
-  AC_STATE* state,
-  AC_STATE_TRANSITION* transition)
+YR_AC_STATE* _yr_ac_first_transition(
+  YR_AC_STATE* state,
+  YR_AC_STATE_TRANSITION* transition)
 {
   int i;
 
-  AC_LIST_BASED_STATE* list_based_state;
-  AC_TABLE_BASED_STATE* table_based_state;
+  YR_AC_LIST_BASED_STATE* list_based_state;
+  YR_AC_TABLE_BASED_STATE* table_based_state;
 
   if (state->depth <= MAX_TABLE_BASED_STATES_DEPTH)
   {
-    table_based_state = (AC_TABLE_BASED_STATE*) state;
+    table_based_state = (YR_AC_TABLE_BASED_STATE*) state;
 
     for (i = 0; i < 256; i++)
     {
@@ -214,7 +214,7 @@ AC_STATE* _yr_ac_first_transition(
   }
   else
   {
-    list_based_state = (AC_LIST_BASED_STATE*) state;
+    list_based_state = (YR_AC_LIST_BASED_STATE*) state;
 
     if (list_based_state->transitions != NULL)
     {
@@ -235,29 +235,26 @@ AC_STATE* _yr_ac_first_transition(
 // after reading the input symbol.
 //
 // Args:
-//    AC_STATE* state     - Automaton state
+//    YR_AC_STATE* state     - Automaton state
 //    uint8_t input       - Input symbol
 //
 // Returns:
 //   Pointer to the next automaton state.
 //
 
-int c = 0;
-int d = 0;
-
-inline AC_STATE* yr_ac_next_state(
-    AC_STATE* state,
+YR_AC_STATE* yr_ac_next_state(
+    YR_AC_STATE* state,
     uint8_t input)
 {
-  AC_STATE_TRANSITION* transition;
+  YR_AC_STATE_TRANSITION* transition;
 
   if (state->depth <= MAX_TABLE_BASED_STATES_DEPTH)
   {
-    return ((AC_TABLE_BASED_STATE*) state)->transitions[input].state;
+    return ((YR_AC_TABLE_BASED_STATE*) state)->transitions[input].state;
   }
   else
   {
-    transition = ((AC_LIST_BASED_STATE*) state)->transitions;
+    transition = ((YR_AC_LIST_BASED_STATE*) state)->transitions;
 
     while (transition != NULL)
     {
@@ -279,44 +276,44 @@ inline AC_STATE* yr_ac_next_state(
 // the given state to the new state after reading the input symbol.
 //
 // Args:
-//   ARENA* arena     - Automaton's arena
-//   AC_STATE* state  - Origin state
+//   YR_ARENA* arena     - Automaton's arena
+//   YR_AC_STATE* state  - Origin state
 //   uint8_t input    - Input symbol
 //
 // Returns:
-//   AC_STATE* pointer to the newly allocated state or NULL in case
+//   YR_AC_STATE* pointer to the newly allocated state or NULL in case
 //   of error.
 
-AC_STATE* _yr_ac_create_state(
-    ARENA* arena,
-    AC_STATE* state,
+YR_AC_STATE* _yr_ac_create_state(
+    YR_ARENA* arena,
+    YR_AC_STATE* state,
     uint8_t input)
 {
   int result;
-  AC_STATE* new_state;
-  AC_LIST_BASED_STATE* list_based_state;
-  AC_TABLE_BASED_STATE* table_based_state;
-  AC_STATE_TRANSITION* new_transition;
+  YR_AC_STATE* new_state;
+  YR_AC_LIST_BASED_STATE* list_based_state;
+  YR_AC_TABLE_BASED_STATE* table_based_state;
+  YR_AC_STATE_TRANSITION* new_transition;
 
   if (state->depth < MAX_TABLE_BASED_STATES_DEPTH)
   {
     result = yr_arena_allocate_struct(
         arena,
-        sizeof(AC_TABLE_BASED_STATE),
+        sizeof(YR_AC_TABLE_BASED_STATE),
         (void**) &new_state,
-        offsetof(AC_TABLE_BASED_STATE, failure),
-        offsetof(AC_TABLE_BASED_STATE, matches),
+        offsetof(YR_AC_TABLE_BASED_STATE, failure),
+        offsetof(YR_AC_TABLE_BASED_STATE, matches),
         EOL);
   }
   else
   {
     result = yr_arena_allocate_struct(
         arena,
-        sizeof(AC_LIST_BASED_STATE),
+        sizeof(YR_AC_LIST_BASED_STATE),
         (void**) &new_state,
-        offsetof(AC_LIST_BASED_STATE, failure),
-        offsetof(AC_LIST_BASED_STATE, matches),
-        offsetof(AC_LIST_BASED_STATE, transitions),
+        offsetof(YR_AC_LIST_BASED_STATE, failure),
+        offsetof(YR_AC_LIST_BASED_STATE, matches),
+        offsetof(YR_AC_LIST_BASED_STATE, transitions),
         EOL);
   }
 
@@ -328,29 +325,29 @@ AC_STATE* _yr_ac_create_state(
     result = yr_arena_make_relocatable(
         arena,
         state,
-        offsetof(AC_TABLE_BASED_STATE, transitions[input]),
+        offsetof(YR_AC_TABLE_BASED_STATE, transitions[input]),
         EOL);
 
     if (result != ERROR_SUCCESS)
       return NULL;
 
-    table_based_state = (AC_TABLE_BASED_STATE*) state;
+    table_based_state = (YR_AC_TABLE_BASED_STATE*) state;
     table_based_state->transitions[input].state = new_state;
   }
   else
   {
     result = yr_arena_allocate_struct(
         arena,
-        sizeof(AC_STATE_TRANSITION),
+        sizeof(YR_AC_STATE_TRANSITION),
         (void**) &new_transition,
-        offsetof(AC_STATE_TRANSITION, state),
-        offsetof(AC_STATE_TRANSITION, next),
+        offsetof(YR_AC_STATE_TRANSITION, state),
+        offsetof(YR_AC_STATE_TRANSITION, next),
         EOL);
 
     if (result != ERROR_SUCCESS)
       return NULL;
 
-    list_based_state = (AC_LIST_BASED_STATE*) state;
+    list_based_state = (YR_AC_LIST_BASED_STATE*) state;
 
     new_transition->input = input;
     new_transition->state = new_state;
@@ -372,18 +369,18 @@ AC_STATE* _yr_ac_create_state(
 //
 
 void yr_ac_create_failure_links(
-    ARENA* arena,
-    AC_AUTOMATON* automaton)
+    YR_ARENA* arena,
+    YR_AC_AUTOMATON* automaton)
 {
-  AC_STATE_TRANSITION transition;
+  YR_AC_STATE_TRANSITION transition;
 
-  AC_STATE* current_state;
-  AC_STATE* failure_state;
-  AC_STATE* temp_state;
-  AC_STATE* state;
-  AC_STATE* transition_state;
-  AC_STATE* root_state;
-  AC_MATCH* match;
+  YR_AC_STATE* current_state;
+  YR_AC_STATE* failure_state;
+  YR_AC_STATE* temp_state;
+  YR_AC_STATE* state;
+  YR_AC_STATE* transition_state;
+  YR_AC_STATE* root_state;
+  YR_AC_MATCH* match;
 
   QUEUE queue;
 
@@ -493,17 +490,17 @@ void yr_ac_create_failure_links(
 //
 
 int yr_ac_create_automaton(
-    ARENA* arena,
-    AC_AUTOMATON** automaton)
+    YR_ARENA* arena,
+    YR_AC_AUTOMATON** automaton)
 {
   int result;
-  AC_STATE* root_state;
+  YR_AC_STATE* root_state;
 
   result = yr_arena_allocate_struct(
       arena,
-      sizeof(AC_AUTOMATON),
+      sizeof(YR_AC_AUTOMATON),
       (void**) automaton,
-      offsetof(AC_AUTOMATON, root),
+      offsetof(YR_AC_AUTOMATON, root),
       EOL);
 
   if (result != ERROR_SUCCESS)
@@ -511,10 +508,10 @@ int yr_ac_create_automaton(
 
   result = yr_arena_allocate_struct(
       arena,
-      sizeof(AC_TABLE_BASED_STATE),
+      sizeof(YR_AC_TABLE_BASED_STATE),
       (void**) &root_state,
-      offsetof(AC_TABLE_BASED_STATE, failure),
-      offsetof(AC_TABLE_BASED_STATE, matches),
+      offsetof(YR_AC_TABLE_BASED_STATE, failure),
+      offsetof(YR_AC_TABLE_BASED_STATE, matches),
       EOL);
 
   if (result != ERROR_SUCCESS)
@@ -530,17 +527,17 @@ int yr_ac_create_automaton(
 
 
 int yr_ac_add_string(
-    ARENA* arena,
-    AC_AUTOMATON* automaton,
-    STRING* string,
-    ATOM_LIST_ITEM* atom)
+    YR_ARENA* arena,
+    YR_AC_AUTOMATON* automaton,
+    YR_STRING* string,
+    YR_ATOM_LIST_ITEM* atom)
 {
   int result = ERROR_SUCCESS;
   int i;
 
-  AC_STATE* state;
-  AC_STATE* next_state;
-  AC_MATCH* new_match;
+  YR_AC_STATE* state;
+  YR_AC_STATE* next_state;
+  YR_AC_MATCH* new_match;
 
   // For each atom create the states in the automaton.
 
@@ -569,12 +566,12 @@ int yr_ac_add_string(
 
     result = yr_arena_allocate_struct(
         arena,
-        sizeof(AC_MATCH),
+        sizeof(YR_AC_MATCH),
         (void**) &new_match,
-        offsetof(AC_MATCH, string),
-        offsetof(AC_MATCH, forward_code),
-        offsetof(AC_MATCH, backward_code),
-        offsetof(AC_MATCH, next),
+        offsetof(YR_AC_MATCH, string),
+        offsetof(YR_AC_MATCH, forward_code),
+        offsetof(YR_AC_MATCH, backward_code),
+        offsetof(YR_AC_MATCH, next),
         EOL);
 
     if (result == ERROR_SUCCESS)
@@ -606,14 +603,14 @@ int yr_ac_add_string(
 //
 
 void _yr_ac_print_automaton_state(
-  AC_STATE* state)
+  YR_AC_STATE* state)
 {
   int i;
   int child_count;
 
-  AC_STATE_TRANSITION transition;
-  AC_MATCH* match;
-  AC_STATE* child_state;
+  YR_AC_STATE_TRANSITION transition;
+  YR_AC_MATCH* match;
+  YR_AC_STATE* child_state;
 
   for (i = 0; i < state->depth; i++)
     printf(" ");
@@ -679,7 +676,7 @@ void _yr_ac_print_automaton_state(
 // Prints automaton for debug purposes.
 //
 
-void yr_ac_print_automaton(AC_AUTOMATON* automaton)
+void yr_ac_print_automaton(YR_AC_AUTOMATON* automaton)
 {
   printf("-------------------------------------------------------\n");
   _yr_ac_print_automaton_state(automaton->root);

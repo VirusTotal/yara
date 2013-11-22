@@ -149,7 +149,7 @@ include[ \t]+\"         {
   char            *b = NULL;
   char            *f;
   FILE*           fh;
-  YARA_COMPILER*   compiler = yyget_extra(yyscanner);
+  YR_COMPILER*   compiler = yyget_extra(yyscanner);
 
   if (compiler->allow_includes)
   {
@@ -241,7 +241,7 @@ include[ \t]+\"         {
 
 <<EOF>> {
 
-  YARA_COMPILER* compiler = yyget_extra(yyscanner);
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
   FILE* file = _yr_compiler_pop_file(compiler);
 
   if (file != NULL)
@@ -495,7 +495,7 @@ $({letter}|{digit}|_)*  {
 
 void yyerror(yyscan_t yyscanner, const char *error_message)
 {
-  YARA_COMPILER* compiler = yyget_extra(yyscanner);
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   char message[512] = {'\0'};
   char* file_name = NULL;
@@ -554,7 +554,7 @@ void yyerror(yyscan_t yyscanner, const char *error_message)
 
 int yr_lex_parse_rules_string(
   const char* rules_string,
-  YARA_COMPILER* compiler)
+  YR_COMPILER* compiler)
 {
   yyscan_t yyscanner;
   YY_BUFFER_STATE state;
@@ -577,7 +577,7 @@ int yr_lex_parse_rules_string(
 
 int yr_lex_parse_rules_file(
   FILE* rules_file,
-  YARA_COMPILER* compiler)
+  YR_COMPILER* compiler)
 {
   yyscan_t yyscanner;
   yylex_init(&yyscanner);

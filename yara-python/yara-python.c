@@ -194,7 +194,7 @@ static PyTypeObject Match_Type = {
 typedef struct
 {
   PyObject_HEAD
-  YARA_RULES* rules;
+  YR_RULES* rules;
 
 } Rules;
 
@@ -284,12 +284,12 @@ typedef struct _CALLBACK_DATA
 
 int yara_callback(
     int message,
-    RULE* rule,
+    YR_RULE* rule,
     void* data)
 {
-  STRING* string;
-  MATCH* m;
-  META* meta;
+  YR_STRING* string;
+  YR_MATCH* m;
+  YR_META* meta;
   char* tag_name;
   size_t tag_length;
 
@@ -474,7 +474,7 @@ int yara_callback(
 
 int process_compile_externals(
     PyObject* externals,
-    YARA_COMPILER* compiler)
+    YR_COMPILER* compiler)
 {
   PyObject *key, *value;
   Py_ssize_t pos = 0;
@@ -522,7 +522,7 @@ int process_compile_externals(
 
 int process_match_externals(
     PyObject* externals,
-    YARA_RULES* rules)
+    YR_RULES* rules)
 {
   PyObject *key, *value;
   Py_ssize_t pos = 0;
@@ -967,8 +967,8 @@ static PyObject * yara_compile(
     "filepath", "source", "file", "filepaths",
     "sources", "includes", "externals", NULL};
 
-  YARA_COMPILER* compiler;
-  YARA_RULES* yara_rules;
+  YR_COMPILER* compiler;
+  YR_RULES* yara_rules;
   FILE* fh;
 
   int fd;

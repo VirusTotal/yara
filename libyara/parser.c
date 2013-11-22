@@ -17,6 +17,7 @@ limitations under the License.
 #include <stddef.h>
 #include <string.h>
 
+#include "ahocorasick.h"
 #include "atoms.h"
 #include "exec.h"
 #include "hash.h"
@@ -103,8 +104,8 @@ void yr_parser_emit_pushes_for_strings(
     yyscan_t yyscanner,
     const char* identifier)
 {
-  YARA_COMPILER* compiler = yyget_extra(yyscanner);
-  STRING* string = compiler->current_rule_strings;
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
+  YR_STRING* string = compiler->current_rule_strings;
   const char* string_identifier;
   const char* target_identifier;
 
@@ -136,17 +137,17 @@ void yr_parser_emit_pushes_for_strings(
     string = yr_arena_next_address(
         compiler->strings_arena,
         string,
-        sizeof(STRING));
+        sizeof(YR_STRING));
   }
 }
 
 
-STRING* yr_parser_lookup_string(
+YR_STRING* yr_parser_lookup_string(
     yyscan_t yyscanner,
     const char* identifier)
 {
-  STRING* string;
-  YARA_COMPILER* compiler = yyget_extra(yyscanner);
+  YR_STRING* string;
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   string = compiler->current_rule_strings;
 
@@ -158,7 +159,7 @@ STRING* yr_parser_lookup_string(
     string = yr_arena_next_address(
         compiler->strings_arena,
         string,
-        sizeof(STRING));
+        sizeof(YR_STRING));
   }
 
   yr_compiler_set_error_extra_info(compiler, identifier);
@@ -168,15 +169,15 @@ STRING* yr_parser_lookup_string(
 }
 
 
-EXTERNAL_VARIABLE* yr_parser_lookup_external_variable(
+YR_EXTERNAL_VARIABLE* yr_parser_lookup_external_variable(
     yyscan_t yyscanner,
     const char* identifier)
 {
-  EXTERNAL_VARIABLE* external;
-  YARA_COMPILER* compiler = yyget_extra(yyscanner);
+  YR_EXTERNAL_VARIABLE* external;
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
   int i;
 
-  external = (EXTERNAL_VARIABLE*) yr_arena_base_address(
+  external = (YR_EXTERNAL_VARIABLE*) yr_arena_base_address(
       compiler->externals_arena);
 
   for (i = 0; i < compiler->externals_count; i++)
@@ -187,7 +188,7 @@ EXTERNAL_VARIABLE* yr_parser_lookup_external_variable(
     external = yr_arena_next_address(
         compiler->externals_arena,
         external,
-        sizeof(EXTERNAL_VARIABLE));
+        sizeof(YR_EXTERNAL_VARIABLE));
   }
 
   yr_compiler_set_error_extra_info(compiler, identifier);
@@ -197,7 +198,7 @@ EXTERNAL_VARIABLE* yr_parser_lookup_external_variable(
 }
 
 
-STRING* yr_parser_reduce_string_declaration(
+YR_STRING* yr_parser_reduce_string_declaration(
     yyscan_t yyscanner,
     int32_t flags,
     const char* identifier,
@@ -209,11 +210,11 @@ STRING* yr_parser_reduce_string_declaration(
   char* file_name;
   char message[512];
 
-  STRING* string;
-  AC_MATCH* new_match;
+  YR_STRING* string;
+  YR_AC_MATCH* new_match;
   ATOM_TREE* atom_tree;
-  ATOM_LIST_ITEM* atom;
-  ATOM_LIST_ITEM* atom_list = NULL;
+  YR_ATOM_LIST_ITEM* atom;
+  YR_ATOM_LIST_ITEM* atom_list = NULL;
   RE* re = NULL;
 
   uint8_t* literal_string;
@@ -221,14 +222,14 @@ STRING* yr_parser_reduce_string_declaration(
   int literal_string_len;
   int max_string_len;
 
-  YARA_COMPILER* compiler = yyget_extra(yyscanner);
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   compiler->last_result = yr_arena_allocate_struct(
       compiler->strings_arena,
-      sizeof(STRING),
+      sizeof(YR_STRING),
       (void**) &string,
-      offsetof(STRING, identifier),
-      offsetof(STRING, string),
+      offsetof(YR_STRING, identifier),
+      offsetof(YR_STRING, string),
       EOL);
 
   if (compiler->last_result != ERROR_SUCCESS)
@@ -366,12 +367,12 @@ STRING* yr_parser_reduce_string_declaration(
   {
     compiler->last_result = yr_arena_allocate_struct(
         compiler->automaton_arena,
-        sizeof(AC_MATCH),
+        sizeof(YR_AC_MATCH),
         (void**) &new_match,
-        offsetof(AC_MATCH, string),
-        offsetof(AC_MATCH, forward_code),
-        offsetof(AC_MATCH, backward_code),
-        offsetof(AC_MATCH, next),
+        offsetof(YR_AC_MATCH, string),
+        offsetof(YR_AC_MATCH, forward_code),
+        offsetof(YR_AC_MATCH, backward_code),
+        offsetof(YR_AC_MATCH, next),
         EOL);
 
     if (compiler->last_result == ERROR_SUCCESS)
@@ -451,12 +452,12 @@ int yr_parser_reduce_rule_declaration(
     int32_t flags,
     const char* identifier,
     char* tags,
-    STRING* strings,
-    META* metas)
+    YR_STRING* strings,
+    YR_META* metas)
 {
-  YARA_COMPILER* compiler = yyget_extra(yyscanner);
-  RULE* rule;
-  STRING* string;
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
+  YR_RULE* rule;
+  YR_STRING* string;
 
   if (yr_hash_table_lookup(
         compiler->rules_table,
@@ -487,7 +488,7 @@ int yr_parser_reduce_rule_declaration(
     string = yr_arena_next_address(
         compiler->strings_arena,
         string,
-        sizeof(STRING));
+        sizeof(YR_STRING));
   }
 
   if (compiler->last_result != ERROR_SUCCESS)
@@ -495,13 +496,13 @@ int yr_parser_reduce_rule_declaration(
 
   compiler->last_result = yr_arena_allocate_struct(
       compiler->rules_arena,
-      sizeof(RULE),
+      sizeof(YR_RULE),
       (void**) &rule,
-      offsetof(RULE, identifier),
-      offsetof(RULE, tags),
-      offsetof(RULE, strings),
-      offsetof(RULE, metas),
-      offsetof(RULE, ns),
+      offsetof(YR_RULE, identifier),
+      offsetof(YR_RULE, tags),
+      offsetof(YR_RULE, strings),
+      offsetof(YR_RULE, metas),
+      offsetof(YR_RULE, ns),
       EOL);
 
   if (compiler->last_result != ERROR_SUCCESS)
@@ -548,8 +549,8 @@ int yr_parser_reduce_string_identifier(
     const char* identifier,
     int8_t instruction)
 {
-  STRING* string;
-  YARA_COMPILER* compiler = yyget_extra(yyscanner);
+  YR_STRING* string;
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   if (strcmp(identifier, "$") == 0)
   {
@@ -573,7 +574,7 @@ int yr_parser_reduce_string_identifier(
           string = yr_arena_next_address(
               compiler->strings_arena,
               string,
-              sizeof(STRING));
+              sizeof(YR_STRING));
         }
       }
     }
@@ -612,8 +613,8 @@ int yr_parser_reduce_external(
   const char* identifier,
   int8_t instruction)
 {
-  YARA_COMPILER* compiler = yyget_extra(yyscanner);
-  EXTERNAL_VARIABLE* external;
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
+  YR_EXTERNAL_VARIABLE* external;
 
   external = yr_parser_lookup_external_variable(yyscanner, identifier);
 
@@ -656,22 +657,22 @@ int yr_parser_reduce_external(
 }
 
 
-META* yr_parser_reduce_meta_declaration(
+YR_META* yr_parser_reduce_meta_declaration(
     yyscan_t yyscanner,
     int32_t type,
     const char* identifier,
     const char* string,
     int32_t integer)
 {
-  YARA_COMPILER* compiler = yyget_extra(yyscanner);
-  META* meta;
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
+  YR_META* meta;
 
   compiler->last_result = yr_arena_allocate_struct(
       compiler->metas_arena,
-      sizeof(META),
+      sizeof(YR_META),
       (void**) &meta,
-      offsetof(META, identifier),
-      offsetof(META, string),
+      offsetof(YR_META, identifier),
+      offsetof(YR_META, string),
       EOL);
 
   if (compiler->last_result != ERROR_SUCCESS)
@@ -707,7 +708,7 @@ int yr_parser_lookup_loop_variable(
     yyscan_t yyscanner,
     const char* identifier)
 {
-  YARA_COMPILER* compiler = yyget_extra(yyscanner);
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
   int i;
 
   for (i = 0; i < compiler->loop_depth; i++)

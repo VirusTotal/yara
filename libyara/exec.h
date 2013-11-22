@@ -81,13 +81,13 @@ typedef struct _EVALUATION_CONTEXT
   uint64_t  file_size;
   uint64_t  entry_point;
 
-  MEMORY_BLOCK*   mem_block;
+  YR_MEMORY_BLOCK*   mem_block;
 
 } EVALUATION_CONTEXT;
 
 
 int yr_execute_code(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     EVALUATION_CONTEXT* context);
 
 #endif

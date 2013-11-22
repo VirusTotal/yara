@@ -18,6 +18,7 @@ limitations under the License.
 #include <stdio.h>
 #include <string.h>
 
+#include "ahocorasick.h"
 #include "arena.h"
 #include "exec.h"
 #include "filemap.h"
@@ -29,12 +30,12 @@ limitations under the License.
 
 
 int yr_compiler_create(
-    YARA_COMPILER** compiler)
+    YR_COMPILER** compiler)
 {
   int result;
-  YARA_COMPILER* new_compiler;
+  YR_COMPILER* new_compiler;
 
-  new_compiler = (YARA_COMPILER*) yr_malloc(sizeof(YARA_COMPILER));
+  new_compiler = (YR_COMPILER*) yr_malloc(sizeof(YR_COMPILER));
 
   if (new_compiler == NULL)
     return ERROR_INSUFICIENT_MEMORY;
@@ -101,7 +102,7 @@ int yr_compiler_create(
 
 
 void yr_compiler_destroy(
-    YARA_COMPILER* compiler)
+    YR_COMPILER* compiler)
 {
   int i;
 
@@ -145,7 +146,7 @@ void yr_compiler_destroy(
 
 
 int _yr_compiler_push_file(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     FILE* fh)
 {
   if (compiler->file_stack_ptr < MAX_INCLUDE_DEPTH)
@@ -163,7 +164,7 @@ int _yr_compiler_push_file(
 
 
 FILE* _yr_compiler_pop_file(
-    YARA_COMPILER* compiler)
+    YR_COMPILER* compiler)
 {
   FILE* result = NULL;
 
@@ -177,7 +178,7 @@ FILE* _yr_compiler_pop_file(
 }
 
 int yr_compiler_push_file_name(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     const char* file_name)
 {
   int i;
@@ -207,7 +208,7 @@ int yr_compiler_push_file_name(
 
 
 void yr_compiler_pop_file_name(
-    YARA_COMPILER* compiler)
+    YR_COMPILER* compiler)
 {
   if (compiler->file_name_stack_ptr > 0)
   {
@@ -219,7 +220,7 @@ void yr_compiler_pop_file_name(
 
 
 char* yr_compiler_get_current_file_name(
-    YARA_COMPILER* context)
+    YR_COMPILER* context)
 {
   if (context->file_name_stack_ptr > 0)
   {
@@ -233,10 +234,10 @@ char* yr_compiler_get_current_file_name(
 
 
 int _yr_compiler_set_namespace(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     const char* namespace)
 {
-  NAMESPACE* ns;
+  YR_NAMESPACE* ns;
   char* ns_name;
   int result;
   int i;
@@ -257,7 +258,7 @@ int _yr_compiler_set_namespace(
     ns = yr_arena_next_address(
         compiler->namespaces_arena,
         ns,
-        sizeof(NAMESPACE));
+        sizeof(YR_NAMESPACE));
   }
 
   if (!found)
@@ -270,9 +271,9 @@ int _yr_compiler_set_namespace(
     if (result == ERROR_SUCCESS)
       result = yr_arena_allocate_struct(
           compiler->namespaces_arena,
-          sizeof(NAMESPACE),
+          sizeof(YR_NAMESPACE),
           (void*) &ns,
-          offsetof(NAMESPACE, name),
+          offsetof(YR_NAMESPACE, name),
           EOL);
 
     if (result != ERROR_SUCCESS)
@@ -291,7 +292,7 @@ int _yr_compiler_set_namespace(
 }
 
 int yr_compiler_add_file(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     FILE* rules_file,
     const char* namespace)
 {
@@ -305,7 +306,7 @@ int yr_compiler_add_file(
 
 
 int yr_compiler_add_string(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     const char* rules_string,
     const char* namespace)
 {
@@ -318,12 +319,12 @@ int yr_compiler_add_string(
 }
 
 int _yr_compiler_compile_rules(
-  YARA_COMPILER* compiler)
+  YR_COMPILER* compiler)
 {
   YARA_RULES_FILE_HEADER* rules_file_header = NULL;
-  ARENA* arena;
-  RULE null_rule;
-  EXTERNAL_VARIABLE null_external;
+  YR_ARENA* arena;
+  YR_RULE null_rule;
+  YR_EXTERNAL_VARIABLE null_external;
 
   int8_t halt = HALT;
   int result;
@@ -336,23 +337,23 @@ int _yr_compiler_compile_rules(
       NULL);
 
   // Write a null rule indicating the end.
-  memset(&null_rule, 0xFA, sizeof(RULE));
+  memset(&null_rule, 0xFA, sizeof(YR_RULE));
   null_rule.g_flags = RULE_GFLAGS_NULL;
 
   yr_arena_write_data(
       compiler->rules_arena,
       &null_rule,
-      sizeof(RULE),
+      sizeof(YR_RULE),
       NULL);
 
   // Write a null external the end.
-  memset(&null_external, 0xFA, sizeof(EXTERNAL_VARIABLE));
+  memset(&null_external, 0xFA, sizeof(YR_EXTERNAL_VARIABLE));
   null_external.type = EXTERNAL_VARIABLE_TYPE_NULL;
 
   yr_arena_write_data(
       compiler->externals_arena,
       &null_external,
-      sizeof(EXTERNAL_VARIABLE),
+      sizeof(YR_EXTERNAL_VARIABLE),
       NULL);
 
   // Create Aho-Corasick automaton's failure links.
@@ -469,10 +470,10 @@ int _yr_compiler_compile_rules(
 
 
 int yr_compiler_get_rules(
-    YARA_COMPILER* compiler,
-    YARA_RULES** rules)
+    YR_COMPILER* compiler,
+    YR_RULES** rules)
 {
-  YARA_RULES* yara_rules;
+  YR_RULES* yara_rules;
   YARA_RULES_FILE_HEADER* rules_file_header;
 
   int result = ERROR_SUCCESS;
@@ -483,7 +484,7 @@ int yr_compiler_get_rules(
   if (result != ERROR_SUCCESS)
     return result;
 
-  yara_rules = yr_malloc(sizeof(YARA_RULES));
+  yara_rules = yr_malloc(sizeof(YR_RULES));
 
   if (yara_rules == NULL)
     return ERROR_INSUFICIENT_MEMORY;
@@ -523,11 +524,11 @@ int yr_compiler_get_rules(
 
 
 int yr_compiler_define_integer_variable(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     const char* identifier,
     int64_t value)
 {
-  EXTERNAL_VARIABLE* external;
+  YR_EXTERNAL_VARIABLE* external;
 
   char* id;
   int result;
@@ -540,10 +541,10 @@ int yr_compiler_define_integer_variable(
   if (result == ERROR_SUCCESS)
     result = yr_arena_allocate_struct(
         compiler->externals_arena,
-        sizeof(EXTERNAL_VARIABLE),
+        sizeof(YR_EXTERNAL_VARIABLE),
         (void**) &external,
-        offsetof(EXTERNAL_VARIABLE, identifier),
-        offsetof(EXTERNAL_VARIABLE, string),
+        offsetof(YR_EXTERNAL_VARIABLE, identifier),
+        offsetof(YR_EXTERNAL_VARIABLE, string),
         EOL);
 
   if (result == ERROR_SUCCESS)
@@ -561,11 +562,11 @@ int yr_compiler_define_integer_variable(
 
 
 int yr_compiler_define_boolean_variable(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     const char* identifier,
     int value)
 {
-  EXTERNAL_VARIABLE* external;
+  YR_EXTERNAL_VARIABLE* external;
 
   char* id;
   int result;
@@ -578,10 +579,10 @@ int yr_compiler_define_boolean_variable(
   if (result == ERROR_SUCCESS)
     result = yr_arena_allocate_struct(
         compiler->externals_arena,
-        sizeof(EXTERNAL_VARIABLE),
+        sizeof(YR_EXTERNAL_VARIABLE),
         (void**) &external,
-        offsetof(EXTERNAL_VARIABLE, identifier),
-        offsetof(EXTERNAL_VARIABLE, string),
+        offsetof(YR_EXTERNAL_VARIABLE, identifier),
+        offsetof(YR_EXTERNAL_VARIABLE, string),
         EOL);
 
   if (result == ERROR_SUCCESS)
@@ -600,11 +601,11 @@ int yr_compiler_define_boolean_variable(
 
 
 int yr_compiler_define_string_variable(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     const char* identifier,
     const char* value)
 {
-  EXTERNAL_VARIABLE* external = NULL;
+  YR_EXTERNAL_VARIABLE* external = NULL;
 
   char* id = NULL;
   char* val = NULL;
@@ -625,10 +626,10 @@ int yr_compiler_define_string_variable(
   if (result == ERROR_SUCCESS)
     result = yr_arena_allocate_struct(
         compiler->externals_arena,
-        sizeof(EXTERNAL_VARIABLE),
+        sizeof(YR_EXTERNAL_VARIABLE),
         (void**) &external,
-        offsetof(EXTERNAL_VARIABLE, identifier),
-        offsetof(EXTERNAL_VARIABLE, string),
+        offsetof(YR_EXTERNAL_VARIABLE, identifier),
+        offsetof(YR_EXTERNAL_VARIABLE, string),
         EOL);
 
   if (result == ERROR_SUCCESS)
@@ -647,7 +648,7 @@ int yr_compiler_define_string_variable(
 
 
 char* yr_compiler_get_error_message(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     char* buffer,
     int buffer_size)
 {

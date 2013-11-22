@@ -29,77 +29,77 @@ limitations under the License.
 int yr_arena_create(
     int initial_size,
     int flags,
-    ARENA** arena);
+    YR_ARENA** arena);
 
 
 void yr_arena_destroy(
-    ARENA* arena);
+    YR_ARENA* arena);
 
 
 void* yr_arena_base_address(
-  ARENA* arena);
+  YR_ARENA* arena);
 
 
 void* yr_arena_next_address(
-  ARENA* arena,
+  YR_ARENA* arena,
   void* address,
   int offset);
 
 
 int yr_arena_coalesce(
-    ARENA* arena);
+    YR_ARENA* arena);
 
 
 int yr_arena_allocate_memory(
-    ARENA* arena,
+    YR_ARENA* arena,
     int32_t size,
     void** allocated_memory);
 
 
 int yr_arena_allocate_struct(
-    ARENA* arena,
+    YR_ARENA* arena,
     int32_t size,
     void** allocated_memory,
     ...);
 
 
 int yr_arena_make_relocatable(
-    ARENA* arena,
+    YR_ARENA* arena,
     void* base,
     ...);
 
 
 int yr_arena_write_data(
-    ARENA* arena,
+    YR_ARENA* arena,
     void* data,
     int32_t size,
     void** written_data);
 
 
 int yr_arena_write_string(
-    ARENA* arena,
+    YR_ARENA* arena,
     const char* string,
     char** written_string);
 
 
 int yr_arena_append(
-    ARENA* target_arena,
-    ARENA* source_arena);
+    YR_ARENA* target_arena,
+    YR_ARENA* source_arena);
 
 
 int yr_arena_save(
-  ARENA* arena,
+  YR_ARENA* arena,
   const char* filename);
 
 
 int yr_arena_load(
     const char* filename,
-    ARENA** arena);
+    YR_ARENA** arena);
 
 
 int yr_arena_duplicate(
-    ARENA* arena,
-    ARENA** duplicated);
+    YR_ARENA* arena,
+    YR_ARENA** duplicated);
 
 #endif
 

@@ -225,8 +225,8 @@ int is_directory(
 void scan_dir(
     const char* dir,
     int recursive,
-    YARA_RULES* rules,
-    YARACALLBACK callback)
+    YR_RULES* rules,
+    YR_CALLBACK_FUNC callback)
 {
   WIN32_FIND_DATA FindFileData;
   HANDLE hFind;
@@ -276,8 +276,8 @@ int is_directory(
 void scan_dir(
     const char* dir,
     int recursive,
-    YARA_RULES* rules,
-    YARACALLBACK callback)
+    YR_RULES* rules,
+    YR_CALLBACK_FUNC callback)
 {
   DIR *dp;
   struct dirent *de;
@@ -400,13 +400,13 @@ void print_compiler_error(
 }
 
 
-int handle_message(int message, RULE* rule, void* data)
+int handle_message(int message, YR_RULE* rule, void* data)
 {
   TAG* tag;
   IDENTIFIER* identifier;
-  STRING* string;
-  MATCH* match;
-  META* meta;
+  YR_STRING* string;
+  YR_MATCH* match;
+  YR_META* meta;
 
   char* tag_name;
   size_t tag_length;
@@ -562,7 +562,7 @@ int handle_message(int message, RULE* rule, void* data)
 }
 
 
-int callback(int message, RULE* rule, void* data)
+int callback(int message, YR_RULE* rule, void* data)
 {
   switch(message)
   {
@@ -580,7 +580,7 @@ DWORD WINAPI scanning_thread(LPVOID param)
 void* scanning_thread(void* param)
 #endif
 {
-  YARA_RULES* rules = (YARA_RULES*) param;
+  YR_RULES* rules = (YR_RULES*) param;
   char* file_path;
   int result;
 
@@ -828,8 +828,8 @@ int main(
     int argc,
     char const* argv[])
 {
-  YARA_COMPILER* compiler;
-  YARA_RULES* rules;
+  YR_COMPILER* compiler;
+  YR_RULES* rules;
   FILE* rule_file;
   EXTERNAL* external;
 

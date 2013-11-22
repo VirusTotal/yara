@@ -33,7 +33,7 @@ limitations under the License.
 typedef void* yyscan_t;
 #endif
 
-#define YY_EXTRA_TYPE YARA_COMPILER*
+#define YY_EXTRA_TYPE YR_COMPILER*
 #define YY_USE_CONST
 
 int yyget_lineno(yyscan_t yyscanner);
@@ -54,9 +54,9 @@ YY_EXTRA_TYPE yyget_extra(
 
 int yr_lex_parse_rules_string(
     const char* rules_string,
-    YARA_COMPILER* compiler);
+    YR_COMPILER* compiler);
 
 int yr_lex_parse_rules_file(
     FILE* rules_file,
-    YARA_COMPILER* compiler);
+    YR_COMPILER* compiler);
 

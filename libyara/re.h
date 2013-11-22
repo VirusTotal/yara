@@ -154,7 +154,7 @@ void yr_re_print(
 
 int yr_re_emit_code(
     RE* re,
-    ARENA* arena);
+    YR_ARENA* arena);
 
 int yr_re_exec(
     uint8_t* code,

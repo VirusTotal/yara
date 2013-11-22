@@ -149,8 +149,8 @@ limitations under the License.
   SIZED_STRING*   sized_string;
   char*           c_string;
   int64_t         integer;
-  STRING*         string;
-  META*           meta;
+  YR_STRING*         string;
+  YR_META*           meta;
 }
 
 
@@ -184,23 +184,23 @@ meta  : /* empty */                      {  $$ = NULL; }
       | _META_ ':' meta_declarations
         {
           // Each rule have a list of meta-data info, consisting in a
-          // sequence of META structures. The last META structure does
+          // sequence of YR_META structures. The last YR_META structure does
           // not represent a real meta-data, it's just a end-of-list marker
           // identified by a specific type (META_TYPE_NULL). Here we
           // write the end-of-list marker.
 
-          META null_meta;
-          YARA_COMPILER* compiler;
+          YR_META null_meta;
+          YR_COMPILER* compiler;
 
           compiler = yyget_extra(yyscanner);
 
-          memset(&null_meta, 0xFF, sizeof(META));
+          memset(&null_meta, 0xFF, sizeof(YR_META));
           null_meta.type = META_TYPE_NULL;
 
           yr_arena_write_data(
               compiler->metas_arena,
               &null_meta,
-              sizeof(META),
+              sizeof(YR_META),
               NULL);
 
           $$ = $3;
@@ -216,23 +216,23 @@ strings : /* empty */
         | _STRINGS_ ':' string_declarations
         {
           // Each rule have a list of strings, consisting in a sequence
-          // of STRING structures. The last STRING structure does not
+          // of YR_STRING structures. The last YR_STRING structure does not
           // represent a real string, it's just a end-of-list marker
           // identified by a specific flag (STRING_FLAGS_NULL). Here we
           // write the end-of-list marker.
 
-          STRING null_string;
-          YARA_COMPILER* compiler;
+          YR_STRING null_string;
+          YR_COMPILER* compiler;
 
           compiler = yyget_extra(yyscanner);
 
-          memset(&null_string, 0xFF, sizeof(STRING));
+          memset(&null_string, 0xFF, sizeof(YR_STRING));
           null_string.g_flags = STRING_GFLAGS_NULL;
 
           yr_arena_write_data(
               compiler->strings_arena,
               &null_string,
-              sizeof(STRING),
+              sizeof(YR_STRING),
               NULL);
 
           $$ = $3;
@@ -283,7 +283,7 @@ tag_list  : _IDENTIFIER_
             }
           | tag_list _IDENTIFIER_
             {
-              YARA_COMPILER* compiler = yyget_extra(yyscanner);
+              YR_COMPILER* compiler = yyget_extra(yyscanner);
               char* tag_name = $1;
               size_t tag_length = tag_name != NULL ? strlen(tag_name) : 0;
 
@@ -448,10 +448,10 @@ boolean_expression  : '(' boolean_expression ')'
                       }
                     | _IDENTIFIER_
                       {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
-                        RULE* rule;
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_RULE* rule;
 
-                        rule = (RULE*) yr_hash_table_lookup(
+                        rule = (YR_RULE*) yr_hash_table_lookup(
                             compiler->rules_table,
                             $1,
                             compiler->current_namespace->name);
@@ -478,7 +478,7 @@ boolean_expression  : '(' boolean_expression ')'
                       }
                     | text _MATCHES_ _REGEXP_
                       {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
                         SIZED_STRING* sized_string = $3;
                         RE* re;
 
@@ -559,7 +559,7 @@ boolean_expression  : '(' boolean_expression ')'
                       }
                     | _FOR_ for_expression _IDENTIFIER_ _IN_
                       {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
                         int result = ERROR_SUCCESS;
                         int var_index;
 
@@ -596,7 +596,7 @@ boolean_expression  : '(' boolean_expression ')'
                       }
                       integer_set ':'
                       {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
                         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
                         int8_t* addr;
 
@@ -630,7 +630,7 @@ boolean_expression  : '(' boolean_expression ')'
                       }
                       '(' boolean_expression ')'
                       {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
                         int mem_offset;
 
                         compiler->loop_depth--;
@@ -695,7 +695,7 @@ boolean_expression  : '(' boolean_expression ')'
                       }
                     | _FOR_ for_expression _OF_ string_set ':'
                       {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
                         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
                         int8_t* addr;
 
@@ -720,7 +720,7 @@ boolean_expression  : '(' boolean_expression ')'
                       }
                       '(' boolean_expression ')'
                       {
-                        YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
                         int mem_offset;
 
                         compiler->loop_depth--;
@@ -814,7 +814,7 @@ boolean_expression  : '(' boolean_expression ')'
 
 text  : _TEXTSTRING_
         {
-          YARA_COMPILER* compiler = yyget_extra(yyscanner);
+          YR_COMPILER* compiler = yyget_extra(yyscanner);
           SIZED_STRING* sized_string = $1;
           char* string;
 
@@ -973,7 +973,7 @@ expression  : '(' expression ')'
               }
             | _IDENTIFIER_
               {
-                YARA_COMPILER* compiler = yyget_extra(yyscanner);
+                YR_COMPILER* compiler = yyget_extra(yyscanner);
                 int var_index;
 
                 var_index = yr_parser_lookup_loop_variable(yyscanner, $1);

@@ -263,15 +263,15 @@ typedef pthread_mutex_t mutex_t;
 #define STRING_MATCHES(x) (x->matches[yr_get_tidx()])
 
 
-typedef struct _RELOC
+typedef struct _YR_RELOC
 {
   int32_t offset;
-  struct _RELOC* next;
+  struct _YR_RELOC* next;
 
-} RELOC;
+} YR_RELOC;
 
 
-typedef struct _ARENA_PAGE
+typedef struct _YR_ARENA_PAGE
 {
 
   uint8_t* new_address;
@@ -280,62 +280,63 @@ typedef struct _ARENA_PAGE
   int32_t size;
   int32_t used;
 
-  RELOC* reloc_list_head;
-  RELOC* reloc_list_tail;
+  YR_RELOC* reloc_list_head;
+  YR_RELOC* reloc_list_tail;
 
-  struct _ARENA_PAGE* next;
-  struct _ARENA_PAGE* prev;
+  struct _YR_ARENA_PAGE* next;
+  struct _YR_ARENA_PAGE* prev;
 
-} ARENA_PAGE;
+} YR_ARENA_PAGE;
 
 
-typedef struct _ARENA
+typedef struct _YR_ARENA
 {
   int flags;
 
-  ARENA_PAGE* page_list_head;
-  ARENA_PAGE* current_page;
+  YR_ARENA_PAGE* page_list_head;
+  YR_ARENA_PAGE* current_page;
 
-} ARENA;
+} YR_ARENA;
 
 
 #pragma pack(push)
 #pragma pack(1)
 
 
-typedef struct _MATCH
+typedef struct _YR_MATCH
 {
-  int64_t         first_offset;
-  int64_t         last_offset;
-  uint8_t*        data;
-  uint32_t        length;
+  uint8_t* data;
+  uint32_t length;
 
-  struct _MATCH*  prev;
-  struct _MATCH*  next;
+  int64_t first_offset;
+  int64_t last_offset;
 
-} MATCH;
+  struct _YR_MATCH*  prev;
+  struct _YR_MATCH*  next;
+
+} YR_MATCH;
 
 
-typedef struct _NAMESPACE
+typedef struct _YR_NAMESPACE
 {
   int32_t t_flags[MAX_THREADS];     // Thread-specific flags
   DECLARE_REFERENCE(char*, name);
 
-} NAMESPACE;
+} YR_NAMESPACE;
 
 
-typedef struct _META
+typedef struct _YR_META
 {
-  int32_t   type;
-  int32_t   integer;
+  int32_t type;
+  int32_t integer;
 
   DECLARE_REFERENCE(char*, identifier);
   DECLARE_REFERENCE(char*, string);
 
-} META;
+} YR_META;
 
 
-typedef struct _STRING
+typedef struct _YR_STRING
 {
   int32_t g_flags;
   int32_t length;
@@ -344,28 +345,28 @@ typedef struct _STRING
   DECLARE_REFERENCE(uint8_t*, string);
 
   struct {
-    DECLARE_REFERENCE(MATCH*, head);
-    DECLARE_REFERENCE(MATCH*, tail);
+    DECLARE_REFERENCE(YR_MATCH*, head);
+    DECLARE_REFERENCE(YR_MATCH*, tail);
   } matches[MAX_THREADS];
 
-} STRING;
+} YR_STRING;
 
 
-typedef struct _RULE
+typedef struct _YR_RULE
 {
   int32_t g_flags;               // Global flags
   int32_t t_flags[MAX_THREADS];  // Thread-specific flags
 
   DECLARE_REFERENCE(char*, identifier);
   DECLARE_REFERENCE(char*, tags);
-  DECLARE_REFERENCE(META*, metas);
-  DECLARE_REFERENCE(STRING*, strings);
-  DECLARE_REFERENCE(NAMESPACE*, ns);
+  DECLARE_REFERENCE(YR_META*, metas);
+  DECLARE_REFERENCE(YR_STRING*, strings);
+  DECLARE_REFERENCE(YR_NAMESPACE*, ns);
 
-} RULE;
+} YR_RULE;
 
 
-typedef struct _EXTERNAL_VARIABLE
+typedef struct _YR_EXTERNAL_VARIABLE
 {
   int32_t type;
   int64_t integer;
@@ -373,192 +374,210 @@ typedef struct _EXTERNAL_VARIABLE
   DECLARE_REFERENCE(char*, identifier);
   DECLARE_REFERENCE(char*, string);
 
-} EXTERNAL_VARIABLE;
+} YR_EXTERNAL_VARIABLE;
 
 
-typedef struct _AC_MATCH
+typedef struct _YR_AC_MATCH
 {
   uint16_t backtrack;
 
-  DECLARE_REFERENCE(STRING*, string);
+  DECLARE_REFERENCE(YR_STRING*, string);
   DECLARE_REFERENCE(uint8_t*, forward_code);
   DECLARE_REFERENCE(uint8_t*, backward_code);
-  DECLARE_REFERENCE(struct _AC_MATCH*, next);
+  DECLARE_REFERENCE(struct _YR_AC_MATCH*, next);
 
-} AC_MATCH;
+} YR_AC_MATCH;
 
 
-typedef struct _AC_STATE
+typedef struct _YR_AC_STATE
 {
   int8_t depth;
 
-  DECLARE_REFERENCE(struct _AC_STATE*, failure);
-  DECLARE_REFERENCE(AC_MATCH*, matches);
+  DECLARE_REFERENCE(struct _YR_AC_STATE*, failure);
+  DECLARE_REFERENCE(YR_AC_MATCH*, matches);
 
-} AC_STATE;
+} YR_AC_STATE;
 
 
-typedef struct _AC_STATE_TRANSITION
+typedef struct _YR_AC_STATE_TRANSITION
 {
   uint8_t input;
-  DECLARE_REFERENCE(AC_STATE*, state);
-  DECLARE_REFERENCE(struct _AC_STATE_TRANSITION*, next);
 
-} AC_STATE_TRANSITION;
+  DECLARE_REFERENCE(YR_AC_STATE*, state);
+  DECLARE_REFERENCE(struct _YR_AC_STATE_TRANSITION*, next);
+
+} YR_AC_STATE_TRANSITION;
 
 
-typedef struct _AC_TABLE_BASED_STATE
+typedef struct _YR_AC_TABLE_BASED_STATE
 {
   int8_t depth;
 
-  DECLARE_REFERENCE(AC_STATE*, failure);
-  DECLARE_REFERENCE(AC_MATCH*, matches);
-  DECLARE_REFERENCE(AC_STATE*, state) transitions[256];
+  DECLARE_REFERENCE(YR_AC_STATE*, failure);
+  DECLARE_REFERENCE(YR_AC_MATCH*, matches);
+  DECLARE_REFERENCE(YR_AC_STATE*, state) transitions[256];
 
-} AC_TABLE_BASED_STATE;
+} YR_AC_TABLE_BASED_STATE;
 
 
-typedef struct _AC_LIST_BASED_STATE
+typedef struct _YR_AC_LIST_BASED_STATE
 {
   int8_t depth;
 
-  DECLARE_REFERENCE(AC_STATE*, failure);
-  DECLARE_REFERENCE(AC_MATCH*, matches);
-  DECLARE_REFERENCE(AC_STATE_TRANSITION*, transitions);
+  DECLARE_REFERENCE(YR_AC_STATE*, failure);
+  DECLARE_REFERENCE(YR_AC_MATCH*, matches);
+  DECLARE_REFERENCE(YR_AC_STATE_TRANSITION*, transitions);
 
-} AC_LIST_BASED_STATE;
+} YR_AC_LIST_BASED_STATE;
 
 
-typedef struct _AC_AUTOMATON
+typedef struct _YR_AC_AUTOMATON
 {
-  DECLARE_REFERENCE(AC_STATE*, root);
+  DECLARE_REFERENCE(YR_AC_STATE*, root);
 
-} AC_AUTOMATON;
+} YR_AC_AUTOMATON;
 
 
 typedef struct _YARA_RULES_FILE_HEADER
 {
   uint32_t version;
 
-  DECLARE_REFERENCE(RULE*, rules_list_head);
-  DECLARE_REFERENCE(EXTERNAL_VARIABLE*, externals_list_head);
+  DECLARE_REFERENCE(YR_RULE*, rules_list_head);
+  DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
   DECLARE_REFERENCE(int8_t*, code_start);
-  DECLARE_REFERENCE(AC_AUTOMATON*, automaton);
+  DECLARE_REFERENCE(YR_AC_AUTOMATON*, automaton);
 
 } YARA_RULES_FILE_HEADER;
 
 #pragma pack(pop)
 
 
-typedef struct _HASH_TABLE_ENTRY
+typedef struct _YR_HASH_TABLE_ENTRY
 {
   char* key;
   char* ns;
   void* value;
-  struct _HASH_TABLE_ENTRY* next;
 
-} HASH_TABLE_ENTRY;
+  struct _YR_HASH_TABLE_ENTRY* next;
+
+} YR_HASH_TABLE_ENTRY;
 
 
-typedef struct _HASH_TABLE
+typedef struct _YR_HASH_TABLE
 {
   int size;
-  HASH_TABLE_ENTRY* buckets[0];
 
-} HASH_TABLE;
+  YR_HASH_TABLE_ENTRY* buckets[0];
+
+} YR_HASH_TABLE;
+
+
+typedef struct _YR_ATOM_LIST_ITEM
+{
+  uint8_t atom_length;
+  uint8_t atom[MAX_ATOM_LENGTH];
+
+  uint16_t backtrack;
+
+  void* forward_code;
+  void* backward_code;
+
+  struct _YR_ATOM_LIST_ITEM* next;
+
+} YR_ATOM_LIST_ITEM;
 
 
 #define YARA_ERROR_LEVEL_ERROR   0
 #define YARA_ERROR_LEVEL_WARNING 1
 
-typedef void (*YARAREPORT)(
+
+typedef void (*YR_REPORT_FUNC)(
     int error_level,
     const char* file_name,
     int line_number,
     const char* message);
 
 
-typedef int (*YARACALLBACK)(
+typedef int (*YR_CALLBACK_FUNC)(
     int message,
-    RULE* rule,
+    YR_RULE* rule,
     void* data);
 
 
-typedef struct _YARA_COMPILER
+typedef struct _YR_COMPILER
 {
-  int              last_result;
-  YARAREPORT       error_report_function;
-  int              errors;
-  int              last_error;
-  int              last_error_line;
+  int                 last_result;
+  YR_REPORT_FUNC      error_report_function;
+  int                 errors;
+  int                 last_error;
+  int                 last_error_line;
 
-  ARENA*           sz_arena;
-  ARENA*           rules_arena;
-  ARENA*           strings_arena;
-  ARENA*           code_arena;
-  ARENA*           re_code_arena;
-  ARENA*           automaton_arena;
-  ARENA*           compiled_rules_arena;
-  ARENA*           externals_arena;
-  ARENA*           namespaces_arena;
-  ARENA*           metas_arena;
+  YR_ARENA*           sz_arena;
+  YR_ARENA*           rules_arena;
+  YR_ARENA*           strings_arena;
+  YR_ARENA*           code_arena;
+  YR_ARENA*           re_code_arena;
+  YR_ARENA*           automaton_arena;
+  YR_ARENA*           compiled_rules_arena;
+  YR_ARENA*           externals_arena;
+  YR_ARENA*           namespaces_arena;
+  YR_ARENA*           metas_arena;
 
-  AC_AUTOMATON*    automaton;
+  YR_AC_AUTOMATON*    automaton;
+  YR_HASH_TABLE*      rules_table;
+  YR_NAMESPACE*       current_namespace;
+  YR_STRING*          current_rule_strings;
 
-  HASH_TABLE*      rules_table;
+  int                 current_rule_flags;
+  int                 externals_count;
+  int                 namespaces_count;
 
-  NAMESPACE*       current_namespace;
+  int8_t*             loop_address[MAX_LOOP_NESTING];
+  char*               loop_identifier[MAX_LOOP_NESTING];
+  int                 loop_depth;
 
-  STRING*          current_rule_strings;
-  int              current_rule_flags;
+  int                 allow_includes;
 
-  int              externals_count;
-  int              namespaces_count;
+  char*               file_name_stack[MAX_INCLUDE_DEPTH];
+  int                 file_name_stack_ptr;
 
-  int8_t*          loop_address[MAX_LOOP_NESTING];
-  char*            loop_identifier[MAX_LOOP_NESTING];
-  int              loop_depth;
+  FILE*               file_stack[MAX_INCLUDE_DEPTH];
+  int                 file_stack_ptr;
 
-  int              allow_includes;
+  char                last_error_extra_info[256];
 
-  char*            file_name_stack[MAX_INCLUDE_DEPTH];
-  int              file_name_stack_ptr;
+  char                lex_buf[LEX_BUF_SIZE];
+  char*               lex_buf_ptr;
+  unsigned short      lex_buf_len;
 
-  FILE*            file_stack[MAX_INCLUDE_DEPTH];
-  int              file_stack_ptr;
+  char                include_base_dir[MAX_PATH];
 
-  char             last_error_extra_info[256];
-
-  char             lex_buf[LEX_BUF_SIZE];
-  char*            lex_buf_ptr;
-  unsigned short   lex_buf_len;
-
-  char             include_base_dir[MAX_PATH];
-
-} YARA_COMPILER;
+} YR_COMPILER;
 
 
-typedef struct _MEMORY_BLOCK
+typedef struct _YR_MEMORY_BLOCK
 {
-  unsigned char*          data;
-  size_t                  size;
-  size_t                  base;
-  struct _MEMORY_BLOCK*   next;
+  uint8_t* data;
+  size_t size;
+  size_t base;
 
-} MEMORY_BLOCK;
+  struct _YR_MEMORY_BLOCK* next;
+
+} YR_MEMORY_BLOCK;
 
 
-typedef struct _YARA_RULES {
+typedef struct _YR_RULES {
 
-  int                  threads_count;
-  ARENA*               arena;
-  RULE*                rules_list_head;
-  EXTERNAL_VARIABLE*   externals_list_head;
-  AC_AUTOMATON*        automaton;
-  int8_t*              code_start;
-  mutex_t              mutex;
+  int threads_count;
+  int8_t* code_start;
+  mutex_t mutex;
 
-} YARA_RULES;
+  YR_ARENA* arena;
+  YR_RULE* rules_list_head;
+  YR_EXTERNAL_VARIABLE* externals_list_head;
+  YR_AC_AUTOMATON* automaton;
+
+} YR_RULES;
 
 
 extern char lowercase[256];
@@ -580,167 +599,125 @@ void yr_set_tidx(int);
 
 
 int yr_compiler_create(
-    YARA_COMPILER** compiler);
+    YR_COMPILER** compiler);
 
 
 void yr_compiler_destroy(
-    YARA_COMPILER* compiler);
+    YR_COMPILER* compiler);
 
 
 int yr_compiler_add_file(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     FILE* rules_file,
     const char* namespace);
 
 
 int yr_compiler_add_string(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     const char* rules_string,
     const char* namespace);
 
 
 int yr_compiler_push_file_name(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     const char* file_name);
 
 
 void yr_compiler_pop_file_name(
-    YARA_COMPILER* compiler);
+    YR_COMPILER* compiler);
 
 
 char* yr_compiler_get_error_message(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     char* buffer,
     int buffer_size);
 
 
 char* yr_compiler_get_current_file_name(
-    YARA_COMPILER* context);
+    YR_COMPILER* context);
 
 
 int yr_compiler_define_integer_variable(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     const char* identifier,
     int64_t value);
 
 
 int yr_compiler_define_boolean_variable(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     const char* identifier,
     int value);
 
 
 int yr_compiler_define_string_variable(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     const char* identifier,
     const char* value);
 
 
 int yr_compiler_get_rules(
-    YARA_COMPILER* compiler,
-    YARA_RULES** rules);
+    YR_COMPILER* compiler,
+    YR_RULES** rules);
 
 
 int yr_rules_scan_mem(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     uint8_t* buffer,
     size_t buffer_size,
-    YARACALLBACK callback,
+    YR_CALLBACK_FUNC callback,
     void* user_data,
     int fast_scan_mode,
     int timeout);
 
 
 int yr_rules_scan_file(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     const char* filename,
-    YARACALLBACK callback,
+    YR_CALLBACK_FUNC callback,
     void* user_data,
     int fast_scan_mode,
     int timeout);
 
 
 int yr_rules_scan_proc(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     int pid,
-    YARACALLBACK callback,
+    YR_CALLBACK_FUNC callback,
     void* user_data,
     int fast_scan_mode,
     int timeout);
 
 
 int yr_rules_save(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     const char* filename);
 
 
 int yr_rules_load(
-  const char* filename,
-  YARA_RULES** rules);
+    const char* filename,
+    YR_RULES** rules);
 
 
 int yr_rules_destroy(
-    YARA_RULES* rules);
+    YR_RULES* rules);
 
 
 int yr_rules_define_integer_variable(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     const char* identifier,
     int64_t value);
 
 
 int yr_rules_define_boolean_variable(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     const char* identifier,
     int value);
 
 
 int yr_rules_define_string_variable(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     const char* identifier,
     const char* value);
-
-
-int yr_ac_create_automaton(
-    ARENA* arena,
-    AC_AUTOMATON** automaton);
-
-//TODO: put this structure in a better place
-
-typedef struct _ATOM_LIST_ITEM
-{
-  uint8_t atom_length;
-  uint8_t atom[MAX_ATOM_LENGTH];
-
-  uint16_t backtrack;
-
-  void* forward_code;
-  void* backward_code;
-
-  struct _ATOM_LIST_ITEM* next;
-
-} ATOM_LIST_ITEM;
-
-
-int yr_ac_add_string(
-    ARENA* arena,
-    AC_AUTOMATON* automaton,
-    STRING* string,
-    ATOM_LIST_ITEM* atom);
-
-
-AC_STATE* yr_ac_next_state(
-    AC_STATE* state,
-    uint8_t input);
-
-
-void yr_ac_create_failure_links(
-    ARENA* arena,
-    AC_AUTOMATON* automaton);
-
-
-void yr_ac_print_automaton(
-    AC_AUTOMATON* automaton);
 
 #endif
 

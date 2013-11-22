@@ -43,12 +43,12 @@ int yr_parser_emit_with_arg_reloc(
     int8_t** instruction_address);
 
 
-STRING* yr_parser_lookup_string(
+YR_STRING* yr_parser_lookup_string(
   yyscan_t yyscanner,
   const char* identifier);
 
 
-EXTERNAL_VARIABLE* yr_parser_lookup_external_variable(
+YR_EXTERNAL_VARIABLE* yr_parser_lookup_external_variable(
   yyscan_t yyscanner,
   const char* identifier);
 
@@ -63,18 +63,18 @@ int yr_parser_reduce_rule_declaration(
     int flags,
     const char* identifier,
     char* tags,
-    STRING* strings,
-    META* metas);
+    YR_STRING* strings,
+    YR_META* metas);
 
 
-STRING* yr_parser_reduce_string_declaration(
+YR_STRING* yr_parser_reduce_string_declaration(
     yyscan_t yyscanner,
     int flags,
     const char* identifier,
     SIZED_STRING* str);
 
 
-META* yr_parser_reduce_meta_declaration(
+YR_META* yr_parser_reduce_meta_declaration(
     yyscan_t yyscanner,
     int32_t type,
     const char* identifier,

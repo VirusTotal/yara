@@ -115,7 +115,7 @@ void yr_finalize(void)
 //
 // Set the thread index (tidx) for the current thread. The tidx is the index
 // that will be used by the thread to access thread-specific data stored in
-// YARA_RULES structure.
+// YR_RULES structure.
 //
 // Args:
 //    int tidx   - The zero-based tidx that will be associated to the current

@@ -19,6 +19,7 @@ limitations under the License.
 #include <time.h>
 #include <ctype.h>
 
+#include "ahocorasick.h"
 #include "arena.h"
 #include "exec.h"
 #include "exefiles.h"
@@ -32,8 +33,8 @@ limitations under the License.
 
 typedef struct _CALLBACK_ARGS
 {
-  STRING* string;
-  ARENA* matches_arena;
+  YR_STRING* string;
+  YR_ARENA* matches_arena;
   int forward_matches;
   uint8_t* data;
   int data_size;
@@ -133,8 +134,26 @@ inline int _yr_scan_wicompare(
 }
 
 
-#define MAX_FAST_HEX_RE_STACK 200
+//
+// _yr_scan_fast_hex_re_exec
+//
+// This function is a replacement for yr_re_exec in some particular cases of
+// regular expressions where a faster algorithm can be used. These regular
+// expressions are those derived from hex strings not containing OR (|)
+// operations. The following hex strings would apply:
+//
+//   { 01 ?? 03 04 05 }
+//   { 01 02 0? 04 04 }
+//   { 01 02 [1] 04 05 }
+//   { 01 02 [2-6] 04 06 }
+//
+// In order to match these strings we don't need to use the general case
+// matching algorithm (yr_re_exec), instead we can take advance of the
+// characteristics of the code generated for this kind of strings and do the
+// matching in a faster way.
+//
 
+#define MAX_FAST_HEX_RE_STACK 200
 
 int _yr_scan_fast_hex_re_exec(
     uint8_t* code,
@@ -287,11 +306,11 @@ void match_callback(
     int flags,
     void* args)
 {
-  MATCH* new_match;
-  MATCH* match;
+  YR_MATCH* new_match;
+  YR_MATCH* match;
 
   CALLBACK_ARGS* callback_args = args;
-  STRING* string = callback_args->string;
+  YR_STRING* string = callback_args->string;
 
   int character_size;
   int tidx = callback_args->tidx;
@@ -379,7 +398,7 @@ void match_callback(
 
   yr_arena_allocate_memory(
       callback_args->matches_arena,
-      sizeof(MATCH),
+      sizeof(YR_MATCH),
       (void**) &new_match);
 
   new_match->first_offset = match_offset;
@@ -423,11 +442,11 @@ typedef int (*RE_EXEC_FUNC)(
 
 
 int _yr_scan_verify_re_match(
-    AC_MATCH* ac_match,
+    YR_AC_MATCH* ac_match,
     uint8_t* data,
     size_t data_size,
     size_t offset,
-    ARENA* matches_arena)
+    YR_ARENA* matches_arena)
 {
   CALLBACK_ARGS callback_args;
   RE_EXEC_FUNC exec;
@@ -508,17 +527,17 @@ int _yr_scan_verify_re_match(
 
 
 int _yr_scan_verify_literal_match(
-    AC_MATCH* ac_match,
+    YR_AC_MATCH* ac_match,
     uint8_t* data,
     size_t data_size,
     size_t offset,
-    ARENA* matches_arena)
+    YR_ARENA* matches_arena)
 {
   int flags = 0;
   int forward_matches = 0;
 
   CALLBACK_ARGS callback_args;
-  STRING* string = ac_match->string;
+  YR_STRING* string = ac_match->string;
 
   if (STRING_FITS_IN_ATOM(string))
   {
@@ -623,13 +642,13 @@ int _yr_scan_verify_literal_match(
 
 
 inline int _yr_scan_verify_match(
-    AC_MATCH* ac_match,
+    YR_AC_MATCH* ac_match,
     uint8_t* data,
     size_t data_size,
     size_t offset,
-    ARENA* matches_arena)
+    YR_ARENA* matches_arena)
 {
-  STRING* string = ac_match->string;
+  YR_STRING* string = ac_match->string;
 
   if (data_size - offset <= 0)
     return ERROR_SUCCESS;
@@ -650,7 +669,7 @@ inline int _yr_scan_verify_match(
 
 
 void _yr_rules_lock(
-    YARA_RULES* rules)
+    YR_RULES* rules)
 {
   #ifdef WIN32
   WaitForSingleObject(rules->mutex, INFINITE);
@@ -661,7 +680,7 @@ void _yr_rules_lock(
 
 
 void _yr_rules_unlock(
-    YARA_RULES* rules)
+    YR_RULES* rules)
 {
   #ifdef WIN32
   ReleaseMutex(rules->mutex);
@@ -672,11 +691,11 @@ void _yr_rules_unlock(
 
 
 int yr_rules_define_integer_variable(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     const char* identifier,
     int64_t value)
 {
-  EXTERNAL_VARIABLE* external;
+  YR_EXTERNAL_VARIABLE* external;
 
   external = rules->externals_list_head;
 
@@ -696,11 +715,11 @@ int yr_rules_define_integer_variable(
 
 
 int yr_rules_define_boolean_variable(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     const char* identifier,
     int value)
 {
-  EXTERNAL_VARIABLE* external;
+  YR_EXTERNAL_VARIABLE* external;
 
   external = rules->externals_list_head;
 
@@ -720,11 +739,11 @@ int yr_rules_define_boolean_variable(
 
 
 int yr_rules_define_string_variable(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     const char* identifier,
     const char* value)
 {
-  EXTERNAL_VARIABLE* external;
+  YR_EXTERNAL_VARIABLE* external;
 
   external = rules->externals_list_head;
 
@@ -745,10 +764,10 @@ int yr_rules_define_string_variable(
 
 
 void _yr_rules_clean_matches(
-    YARA_RULES* rules)
+    YR_RULES* rules)
 {
-  RULE* rule;
-  STRING* string;
+  YR_RULE* rule;
+  YR_STRING* string;
 
   int tidx = yr_get_tidx();
 
@@ -773,17 +792,17 @@ void _yr_rules_clean_matches(
 
 
 int yr_rules_scan_mem_block(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     uint8_t* data,
     size_t data_size,
     int fast_scan_mode,
     int timeout,
     time_t start_time,
-    ARENA* matches_arena)
+    YR_ARENA* matches_arena)
 {
-  AC_STATE* next_state;
-  AC_MATCH* ac_match;
-  AC_STATE* current_state;
+  YR_AC_STATE* next_state;
+  YR_AC_MATCH* ac_match;
+  YR_AC_STATE* current_state;
 
   time_t current_time;
   size_t offset;
@@ -856,17 +875,17 @@ int yr_rules_scan_mem_block(
 
 
 int yr_rules_scan_mem_blocks(
-    YARA_RULES* rules,
-    MEMORY_BLOCK* block,
+    YR_RULES* rules,
+    YR_MEMORY_BLOCK* block,
     int scanning_process_memory,
-    YARACALLBACK callback,
+    YR_CALLBACK_FUNC callback,
     void* user_data,
     int fast_scan_mode,
     int timeout)
 {
-  RULE* rule;
+  YR_RULE* rule;
   EVALUATION_CONTEXT context;
-  ARENA* matches_arena = NULL;
+  YR_ARENA* matches_arena = NULL;
 
   time_t start_time;
 
@@ -997,15 +1016,15 @@ _exit:
 
 
 int yr_rules_scan_mem(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     uint8_t* buffer,
     size_t buffer_size,
-    YARACALLBACK callback,
+    YR_CALLBACK_FUNC callback,
     void* user_data,
     int fast_scan_mode,
     int timeout)
 {
-  MEMORY_BLOCK block;
+  YR_MEMORY_BLOCK block;
 
   block.data = buffer;
   block.size = buffer_size;
@@ -1024,9 +1043,9 @@ int yr_rules_scan_mem(
 
 
 int yr_rules_scan_file(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     const char* filename,
-    YARACALLBACK callback,
+    YR_CALLBACK_FUNC callback,
     void* user_data,
     int fast_scan_mode,
     int timeout)
@@ -1055,16 +1074,16 @@ int yr_rules_scan_file(
 
 
 int yr_rules_scan_proc(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     int pid,
-    YARACALLBACK callback,
+    YR_CALLBACK_FUNC callback,
     void* user_data,
     int fast_scan_mode,
     int timeout)
 {
-  MEMORY_BLOCK* first_block;
-  MEMORY_BLOCK* next_block;
-  MEMORY_BLOCK* block;
+  YR_MEMORY_BLOCK* first_block;
+  YR_MEMORY_BLOCK* next_block;
+  YR_MEMORY_BLOCK* block;
 
   int result;
 
@@ -1097,7 +1116,7 @@ int yr_rules_scan_proc(
 
 
 int yr_rules_save(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     const char* filename)
 {
   assert(rules->threads_count == 0);
@@ -1107,15 +1126,15 @@ int yr_rules_save(
 
 int yr_rules_load(
   const char* filename,
-  YARA_RULES** rules)
+  YR_RULES** rules)
 {
-  YARA_RULES* new_rules;
+  YR_RULES* new_rules;
   YARA_RULES_FILE_HEADER* header;
-  RULE* rule;
+  YR_RULE* rule;
 
   int result;
 
-  new_rules = yr_malloc(sizeof(YARA_RULES));
+  new_rules = yr_malloc(sizeof(YR_RULES));
 
   if (new_rules == NULL)
     return ERROR_INSUFICIENT_MEMORY;
@@ -1149,9 +1168,9 @@ int yr_rules_load(
 
 
 int yr_rules_destroy(
-    YARA_RULES* rules)
+    YR_RULES* rules)
 {
-  EXTERNAL_VARIABLE* external;
+  YR_EXTERNAL_VARIABLE* external;
 
   external = rules->externals_list_head;
 

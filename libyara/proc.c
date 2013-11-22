@@ -26,7 +26,7 @@ limitations under the License.
 
 int yr_process_get_memory(
     int pid,
-    MEMORY_BLOCK** first_block)
+    YR_MEMORY_BLOCK** first_block)
 {
   PVOID address;
   SIZE_T read;
@@ -36,8 +36,8 @@ int yr_process_get_memory(
   SYSTEM_INFO si;
   MEMORY_BASIC_INFORMATION mbi;
 
-  MEMORY_BLOCK* new_block;
-  MEMORY_BLOCK* current_block = NULL;
+  YR_MEMORY_BLOCK* new_block;
+  YR_MEMORY_BLOCK* current_block = NULL;
 
   TOKEN_PRIVILEGES tokenPriv;
   LUID luidDebug;
@@ -87,7 +87,7 @@ int yr_process_get_memory(
 
         if (ReadProcessMemory(hProcess, address, data, mbi.RegionSize, &read))
         {
-          new_block = (MEMORY_BLOCK*) yr_malloc(sizeof(MEMORY_BLOCK));
+          new_block = (YR_MEMORY_BLOCK*) yr_malloc(sizeof(YR_MEMORY_BLOCK));
 
           if (new_block == NULL)
           {
@@ -146,7 +146,7 @@ int yr_process_get_memory(
 
 int yr_process_get_memory(
     pid_t pid,
-    MEMORY_BLOCK** first_block)
+    YR_MEMORY_BLOCK** first_block)
 {
   task_t task;
   kern_return_t kr;
@@ -159,8 +159,8 @@ int yr_process_get_memory(
 
   unsigned char* data;
 
-  MEMORY_BLOCK* new_block;
-  MEMORY_BLOCK* current_block = NULL;
+  YR_MEMORY_BLOCK* new_block;
+  YR_MEMORY_BLOCK* current_block = NULL;
 
   *first_block = NULL;
 
@@ -195,7 +195,7 @@ int yr_process_get_memory(
               data,
               &size) == KERN_SUCCESS)
       {
-        new_block = (MEMORY_BLOCK*) yr_malloc(sizeof(MEMORY_BLOCK));
+        new_block = (YR_MEMORY_BLOCK*) yr_malloc(sizeof(YR_MEMORY_BLOCK));
 
         if (new_block == NULL)
         {
@@ -239,14 +239,14 @@ int yr_process_get_memory(
 
 int yr_process_get_memory(
     pid_t pid,
-    MEMORY_BLOCK** first_block)
+    YR_MEMORY_BLOCK** first_block)
 {
   char buffer[256];
   unsigned char* data;
   size_t begin, end, length;
 
-  MEMORY_BLOCK* new_block;
-  MEMORY_BLOCK* current_block = NULL;
+  YR_MEMORY_BLOCK* new_block;
+  YR_MEMORY_BLOCK* current_block = NULL;
 
   *first_block = NULL;
 
@@ -285,7 +285,7 @@ int yr_process_get_memory(
 
     if (pread(mem, data, length, begin) != -1)
     {
-      new_block = (MEMORY_BLOCK*) yr_malloc(sizeof(MEMORY_BLOCK));
+      new_block = (YR_MEMORY_BLOCK*) yr_malloc(sizeof(YR_MEMORY_BLOCK));
 
       if (new_block == NULL)
       {

@@ -41,7 +41,7 @@ limitations under the License.
 
 
 #define function_read(type) \
-    int64_t read_##type(MEMORY_BLOCK* block, size_t offset) \
+    int64_t read_##type(YR_MEMORY_BLOCK* block, size_t offset) \
     { \
       while (block != NULL) \
       { \
@@ -65,7 +65,7 @@ function_read(int32_t)
 
 
 int yr_execute_code(
-    YARA_RULES* rules,
+    YR_RULES* rules,
     EVALUATION_CONTEXT* context)
 {
   int64_t r1;
@@ -76,10 +76,10 @@ int yr_execute_code(
   int32_t sp = 0;
   uint8_t* ip = rules->code_start;
 
-  RULE* rule;
-  STRING* string;
-  MATCH* match;
-  EXTERNAL_VARIABLE* external;
+  YR_RULE* rule;
+  YR_STRING* string;
+  YR_MATCH* match;
+  YR_EXTERNAL_VARIABLE* external;
 
   int i;
   int found;
@@ -291,33 +291,33 @@ int yr_execute_code(
         break;
 
       case RULE_PUSH:
-        rule = *(RULE**)(ip + 1);
+        rule = *(YR_RULE**)(ip + 1);
         ip += sizeof(uint64_t);
         push(rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0);
         break;
 
       case RULE_POP:
         pop(r1);
-        rule = *(RULE**)(ip + 1);
+        rule = *(YR_RULE**)(ip + 1);
         ip += sizeof(uint64_t);
         if (r1)
           rule->t_flags[tidx] |= RULE_TFLAGS_MATCH;
         break;
 
       case EXT_INT:
-        external = *(EXTERNAL_VARIABLE**)(ip + 1);
+        external = *(YR_EXTERNAL_VARIABLE**)(ip + 1);
         ip += sizeof(uint64_t);
         push(external->integer);
         break;
 
       case EXT_STR:
-        external = *(EXTERNAL_VARIABLE**)(ip + 1);
+        external = *(YR_EXTERNAL_VARIABLE**)(ip + 1);
         ip += sizeof(uint64_t);
         push(PTR_TO_UINT64(external->string));
         break;
 
       case EXT_BOOL:
-        external = *(EXTERNAL_VARIABLE**)(ip + 1);
+        external = *(YR_EXTERNAL_VARIABLE**)(ip + 1);
         ip += sizeof(uint64_t);
         if (external->type == EXTERNAL_VARIABLE_TYPE_FIXED_STRING ||
             external->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
@@ -328,7 +328,7 @@ int yr_execute_code(
 
       case SFOUND:
         pop(r1);
-        string = UINT64_TO_PTR(STRING*, r1);
+        string = UINT64_TO_PTR(YR_STRING*, r1);
         push(string->matches[tidx].tail != NULL ? 1 : 0);
         break;
 
@@ -342,7 +342,7 @@ int yr_execute_code(
           break;
         }
 
-        string = UINT64_TO_PTR(STRING*, r2);
+        string = UINT64_TO_PTR(YR_STRING*, r2);
         match = string->matches[tidx].head;
         found = 0;
 
@@ -377,7 +377,7 @@ int yr_execute_code(
           break;
         }
 
-        string = UINT64_TO_PTR(STRING*, r3);
+        string = UINT64_TO_PTR(YR_STRING*, r3);
         match = string->matches[tidx].head;
         found = FALSE;
 
@@ -404,7 +404,7 @@ int yr_execute_code(
 
       case SCOUNT:
         pop(r1);
-        string = UINT64_TO_PTR(STRING*, r1);
+        string = UINT64_TO_PTR(YR_STRING*, r1);
         match = string->matches[tidx].head;
         found = 0;
         while (match != NULL)
@@ -425,7 +425,7 @@ int yr_execute_code(
           break;
         }
 
-        string = UINT64_TO_PTR(STRING*, r2);
+        string = UINT64_TO_PTR(YR_STRING*, r2);
         match = string->matches[tidx].head;
         i = 1;
         found = FALSE;
@@ -455,7 +455,7 @@ int yr_execute_code(
 
         while (r1 != UNDEFINED)
         {
-          string = UINT64_TO_PTR(STRING*, r1);
+          string = UINT64_TO_PTR(YR_STRING*, r1);
           if (string->matches[tidx].tail != NULL)
             found++;
           count++;

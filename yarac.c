@@ -65,7 +65,7 @@ int is_numeric(
 
 
 int process_cmd_line(
-    YARA_COMPILER* compiler,
+    YR_COMPILER* compiler,
     int argc,
     char const* argv[])
 {
@@ -154,8 +154,8 @@ int main(
 {
   int i, errors;
 
-  YARA_COMPILER* compiler;
-  YARA_RULES* rules;
+  YR_COMPILER* compiler;
+  YR_RULES* rules;
   FILE* rule_file;
 
   clock_t start, end;

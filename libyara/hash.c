@@ -87,13 +87,13 @@ uint32_t hash(
 
 int yr_hash_table_create(
     int size,
-    HASH_TABLE** table)
+    YR_HASH_TABLE** table)
 {
-  HASH_TABLE* new_table;
+  YR_HASH_TABLE* new_table;
   int i;
 
-  new_table = yr_malloc(sizeof(HASH_TABLE) +
-                        size * sizeof(HASH_TABLE_ENTRY*));
+  new_table = yr_malloc(sizeof(YR_HASH_TABLE) +
+                        size * sizeof(YR_HASH_TABLE_ENTRY*));
 
   if (new_table == NULL)
     return ERROR_INSUFICIENT_MEMORY;
@@ -109,10 +109,10 @@ int yr_hash_table_create(
 }
 
 void yr_hash_table_destroy(
-    HASH_TABLE* table)
+    YR_HASH_TABLE* table)
 {
-  HASH_TABLE_ENTRY* entry;
-  HASH_TABLE_ENTRY* next_entry;
+  YR_HASH_TABLE_ENTRY* entry;
+  YR_HASH_TABLE_ENTRY* next_entry;
 
   int i;
 
@@ -136,11 +136,11 @@ void yr_hash_table_destroy(
 
 
 void* yr_hash_table_lookup(
-    HASH_TABLE* table,
+    YR_HASH_TABLE* table,
     const char* key,
     const char* ns)
 {
-  HASH_TABLE_ENTRY* entry;
+  YR_HASH_TABLE_ENTRY* entry;
   uint32_t bucket_index;
 
   bucket_index = hash(0, key, strlen(key));
@@ -168,15 +168,15 @@ void* yr_hash_table_lookup(
 }
 
 int yr_hash_table_add(
-    HASH_TABLE* table,
+    YR_HASH_TABLE* table,
     const char* key,
     const char* ns,
     void* value)
 {
-  HASH_TABLE_ENTRY* entry;
+  YR_HASH_TABLE_ENTRY* entry;
   uint32_t bucket_index;
 
-  entry = (HASH_TABLE_ENTRY*) yr_malloc(sizeof(HASH_TABLE_ENTRY));
+  entry = (YR_HASH_TABLE_ENTRY*) yr_malloc(sizeof(YR_HASH_TABLE_ENTRY));
 
   if (entry == NULL)
     return ERROR_INSUFICIENT_MEMORY;

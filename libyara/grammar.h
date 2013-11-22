@@ -175,8 +175,8 @@ typedef union YYSTYPE
   SIZED_STRING*   sized_string;
   char*           c_string;
   int64_t         integer;
-  STRING*         string;
-  META*           meta;
+  YR_STRING*         string;
+  YR_META*           meta;
 }
 /* Line 1529 of yacc.c.  */
 #line 183 "grammar.h"

@@ -56,15 +56,15 @@ typedef struct _ATOM_TREE
 int yr_atoms_extract_from_re(
     RE* re,
     int flags,
-    ATOM_LIST_ITEM** atoms);
+    YR_ATOM_LIST_ITEM** atoms);
 
 int yr_atoms_extract_from_string(
     uint8_t* string,
     int string_length,
     int flags,
-    ATOM_LIST_ITEM** atoms);
+    YR_ATOM_LIST_ITEM** atoms);
 
 void yr_atoms_list_destroy(
-    ATOM_LIST_ITEM* list_head);
+    YR_ATOM_LIST_ITEM* list_head);
 
 #endif
