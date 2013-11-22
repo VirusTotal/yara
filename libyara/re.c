@@ -1194,7 +1194,10 @@ int yr_re_exec(
           break;
 
         case RE_OPCODE_ANY:
-          _yr_re_add_fiber(next_fibers, storage, ip + 1, stack);
+          if (*current_input != 0x0A || flags & RE_FLAGS_DOT_ALL)
+            _yr_re_add_fiber(next_fibers, storage, ip + 1, stack);
+          else
+            _yr_re_free_stack(stack, &storage->stack_pool);
           break;
 
         case RE_OPCODE_MATCH:
