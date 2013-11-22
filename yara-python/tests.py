@@ -50,6 +50,98 @@ ab000000000000001a0000000000000000000000000000000100000000000000\
 0000000000000000')
 
 
+# The 3 possible outcomes for each pattern
+[SUCCEED, FAIL, SYNTAX_ERROR] = range(3)
+
+
+RE_TESTS = [
+
+  # RE, string, expected result, expected matching
+
+  ('abc', 'abc', SUCCEED, 'abc'),
+  ('abc', 'xabcx', SUCCEED, 'abc'),
+  ('a.c', 'abc', SUCCEED, 'abc'),
+  ('ab*c', 'abc', SUCCEED, 'abc'),
+  ('ab*c', 'ac', SUCCEED, 'ac'),
+  ('ab*bc', 'abc', SUCCEED, 'abc'),
+  ('ab*bc', 'abbc', SUCCEED, 'abbc'),
+  ('a.*c', 'ac', SUCCEED, 'ac'),
+  ('a.*c', 'axyzc', SUCCEED, 'axyzc'),
+  ('ab+c', 'abbc', SUCCEED, 'abbc'),
+  ('ab+c', 'ac', FAIL),
+  ('ab+', 'abbbb', SUCCEED, 'abbbb'),
+  ('ab+?', 'abbbb', SUCCEED, 'ab'),
+  ('ab?bc', 'abbbbc', FAIL),
+  ('ab?c', 'abc', SUCCEED, 'abc'),
+  ('ab*?', 'abbb', SUCCEED, 'a'),
+  ('ab?c', 'abc', SUCCEED, 'abc'),
+  ('ab??', 'ab', SUCCEED, 'a'),
+  ('a(b|x)c', 'abc', SUCCEED, 'abc'),
+  ('a(b|x)c', 'axc', SUCCEED, 'axc'),
+  ('a(b|.)c', 'axc', SUCCEED, 'axc'),
+  ('a(b|x|y)c', 'ayc', SUCCEED, 'ayc'),
+  ('ab{1}c', 'abc', SUCCEED, 'abc'),
+  ('ab{1,2}c', 'abbc', SUCCEED, 'abbc'),
+  ('ab{1,}c', 'abbbc', SUCCEED, 'abbbc'),
+  ('ab{1,}b', 'ab', FAIL),
+  ('ab{1}c', 'abbc', FAIL),
+  ('ab{0,}c', 'ac', SUCCEED, 'ac'),
+  ('ab{0,}c', 'abbbc', SUCCEED, 'abbbc'),
+  ('ab{,3}c', 'abbbc', SUCCEED, 'abbbc'),
+  ('ab{,2}c', 'abbbc', FAIL),
+  ('ab{.*}', 'ab{c}', SUCCEED, 'ab{c}'),
+  ('(ab{1,2}c){1,3}', 'abbcabc', SUCCEED, 'abbcabc'),
+  ('ab(c|cc){1,3}d', 'abccccccd', SUCCEED, 'abccccccd'),
+  ('a[bx]c', 'abc', SUCCEED, 'abc'),
+  ('a[bx]c', 'axc', SUCCEED, 'axc'),
+  ('a[0-9]*b', 'ab', SUCCEED, 'ab'),
+  ('a[0-9]*b', 'a0123456789b', SUCCEED, 'a0123456789b'),
+  ('[0-9a-f]+', '0123456789abcdef', SUCCEED, '0123456789abcdef'),
+  ('[0-9a-f]+', 'xyz0123456789xyz', SUCCEED, '0123456789'),
+  ('[x-z]+', 'abc', FAIL),
+  ('a[-]?c', 'ac', SUCCEED, 'ac'),
+  ('a[-b]', 'a-', SUCCEED, 'a-'),
+  ('a[-b]', 'ab', SUCCEED, 'ab'),
+  ('a[b-]', 'a-', SUCCEED, 'a-'),
+  ('a[b-]', 'ab', SUCCEED, 'ab'),
+  ('[a-c-e]', 'b', SUCCEED, 'b'),
+  ('[a-c-e]', '-', SUCCEED, '-'),
+  ('[a-c-e]', 'd', FAIL),
+  ('[b-a]', '', SYNTAX_ERROR),
+  ('(abc', '', SYNTAX_ERROR),
+  ('abc)', '', SYNTAX_ERROR),
+  ('a[]b', '', SYNTAX_ERROR),
+  ('a[\\-b]', 'a-', SUCCEED, 'a-'),
+  ('a[\\-b]', 'ab', SUCCEED, 'ab'),
+  ('a[\\', '', SYNTAX_ERROR),
+  ('a]', 'a]', SUCCEED, 'a]'),
+  ('a[]]b', 'a]b', SUCCEED, 'a]b'),
+  ('a[\]]b', 'a]b', SUCCEED, 'a]b'),
+  ('a[^bc]d', 'aed', SUCCEED, 'aed'),
+  ('a[^bc]d', 'abd', FAIL),
+  ('a[^-b]c', 'adc', SUCCEED, 'adc'),
+  ('a[^-b]c', 'a-c', FAIL),
+  ('a[^]b]c', 'a]c', FAIL),
+  ('a[^]b]c', 'adc', SUCCEED, 'adc'),
+  (')(', '', SYNTAX_ERROR),
+  (r'\n\r\t\f\a', '\n\r\t\f\a', SUCCEED, '\n\r\t\f\a'),
+  (r'[\n][\r][\t][\f][\a]', '\n\r\t\f\a', SUCCEED, '\n\r\t\f\a'),
+  (r'\x00\x01\x02', '\x00\x01\x02', SUCCEED, '\x00\x01\x02'),
+  (r'[\x00-\x02]+', '\x00\x01\x02', SUCCEED, '\x00\x01\x02'),
+  (r'[\x00-\x02]+', '\x03\x04\x05', FAIL),
+  ('a\wc', 'abc', SUCCEED, 'abc'),
+  ('a\wc', 'a_c', SUCCEED, 'a_c'),
+  ('a\wc', 'a0c', SUCCEED, 'a0c'),
+  ('a\wc', 'a*c', FAIL),
+  ('\w+', '--ab_cd0123--', SUCCEED, 'ab_cd0123'),
+  ('[\w]+', '--ab_cd0123--', SUCCEED, 'ab_cd0123'),
+  ('\D+', '1234abc5678', SUCCEED, 'abc'),
+  ('[\D]+', '1234abc5678', SUCCEED, 'abc'),
+  ('[\da-fA-F]+', '123abc', SUCCEED, '123abc'),
+
+]
+
+
 class TestYara(unittest.TestCase):
 
     def assertTrueRules(self, rules, data='dummy'):
@@ -63,6 +155,26 @@ class TestYara(unittest.TestCase):
         for r in rules:
             r = yara.compile(source=r)
             self.assertFalse(r.match(data=data))
+
+    def runReTest(self, test):
+
+        regexp = test[0]
+        string = test[1]
+        expected_result = test[2]
+
+        source = 'rule test { strings: $a = /%s/ condition: $a }' % regexp
+
+        if expected_result == SYNTAX_ERROR:
+          self.assertRaises(yara.SyntaxError, yara.compile, source=source)
+        else:
+          rule = yara.compile(source=source)
+          matches = rule.match(data=string)
+          if expected_result == SUCCEED:
+            self.assertTrue(matches)
+            _, _, matching_string = matches[0].strings[0]
+            self.assertTrue(matching_string == test[3])
+          else:
+            self.assertFalse(matches)
 
     def testBooleanOperators(self):
 
@@ -125,8 +237,9 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = "a" wide condition: $a }',
             'rule test { strings: $a = "abc" wide condition: $a }',
             'rule test { strings: $a = "abc" wide nocase fullword condition: $a }',
-            'rule test { strings: $a = "aBc" wide nocase condition: $a }'
-        ], "---- a\x00b\x00c\x00 ---- xyz")
+            'rule test { strings: $a = "aBc" wide nocase condition: $a }',
+            'rule test { strings: $a = "---xyz" wide nocase condition: $a }'
+        ], "---- a\x00b\x00c\x00 -\x00-\x00-\x00-\x00x\x00y\x00z\x00")
 
         self.assertTrueRules([
             'rule test { strings: $a = "abc" fullword condition: $a }',
@@ -136,6 +249,14 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = "abc" fullword condition: $a }',
         ], "xabcx")
 
+        self.assertFalseRules([
+            'rule test { strings: $a = "abc" fullword condition: $a }',
+        ], "xabc")
+
+        self.assertFalseRules([
+            'rule test { strings: $a = "abc" fullword condition: $a }',
+        ], "abcx")
+
         self.assertTrueRules([
             'rule test { strings: $a = "abc" wide fullword condition: $a }',
         ], "a\x00b\x00c\x00")
@@ -143,6 +264,14 @@ class TestYara(unittest.TestCase):
         self.assertFalseRules([
             'rule test { strings: $a = "abc" wide fullword condition: $a }',
         ], "x\x00a\x00b\x00c\x00x\x00")
+
+        self.assertFalseRules([
+            'rule test { strings: $a = "abc" wide fullword condition: $a }',
+        ], "x\x00a\x00b\x00c\x00")
+
+        self.assertTrueRules([
+            'rule test { strings: $a = "abc" wide fullword condition: $a }',
+        ], "x\x01a\x00b\x00c\x00")
 
         self.assertTrueRules([
             'rule test {\
@@ -227,6 +356,8 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = /ssim*/ condition: $a }',
             'rule test { strings: $a = /ssa?/ condition: $a }',
             'rule test { strings: $a = /Miss/ nocase condition: $a }',
+            'rule test { strings: $a = /(M|N)iss/ nocase condition: $a }',
+            'rule test { strings: $a = /[M-N]iss/ nocase condition: $a }',
             'rule test { strings: $a = /(Mi|ssi)ssippi/ nocase condition: $a }',
             'rule test { strings: $a = /ppi\tmi/ condition: $a }',
             'rule test { strings: $a = /ppi\.mi/ condition: $a }',
@@ -238,6 +369,13 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = /ssi$/ condition: $a }',
             'rule test { strings: $a = /ssissi/ fullword condition: $a }'
         ], 'mississippi')
+
+        for test in RE_TESTS:
+            try:
+                self.runReTest(test)
+            except Exception, e:
+                print '\nFailed test: %s\n' % str(test)
+                raise e
 
     def testEntrypoint(self):
 
@@ -338,6 +476,18 @@ class TestYara(unittest.TestCase):
 
         r = yara.compile(source='rule test { condition: ext_str matches /ssi(s|p)/ }', externals={'ext_str': 'mississippi'})
         self.assertTrue(r.match(data='dummy'))
+
+        r = yara.compile(source='rule test { condition: ext_str matches /ppi$/ }', externals={'ext_str': 'mississippi'})
+        self.assertTrue(r.match(data='dummy'))
+
+        r = yara.compile(source='rule test { condition: ext_str matches /ssi$/ }', externals={'ext_str': 'mississippi'})
+        self.assertFalse(r.match(data='dummy'))
+
+        r = yara.compile(source='rule test { condition: ext_str matches /^miss/ }', externals={'ext_str': 'mississippi'})
+        self.assertTrue(r.match(data='dummy'))
+
+        r = yara.compile(source='rule test { condition: ext_str matches /ssi$/ }', externals={'ext_str': 'mississippi'})
+        self.assertFalse(r.match(data='dummy'))
 
     def testCallback(self):
 
