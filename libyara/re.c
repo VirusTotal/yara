@@ -874,6 +874,7 @@ RE_STACK* _yr_re_clone_stack(
     RE_STACK_POOL* pool)
 {
   RE_STACK* clon;
+  int i;
 
   if (stack == NULL)
     return NULL;
@@ -881,7 +882,7 @@ RE_STACK* _yr_re_clone_stack(
   clon = _yr_re_alloc_stack(pool);
   clon->top = stack->top;
 
-  for (int i = 0; i < clon->top; i++)
+  for (i = 0; i < clon->top; i++)
     clon->items[i] = stack->items[i];
 
   return clon;

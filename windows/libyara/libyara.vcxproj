@@ -101,6 +101,7 @@
       <PreprocessorDefinitions>WIN32;PCRE_STATIC;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\libyara\regex;..\libyara;..\..\windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <DisableSpecificWarnings>4005;4273;4090;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <AdditionalDependencies>pcre32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -111,6 +112,7 @@
     <ClCompile>
       <PreprocessorDefinitions>WIN32;PCRE_STATIC</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\windows\include;..\libyara;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4005;4273;4090;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <AdditionalDependencies>pcre64.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>

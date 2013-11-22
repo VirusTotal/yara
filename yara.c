@@ -20,15 +20,17 @@ limitations under the License.
 #include <dirent.h>
 #include <unistd.h>
 #include <time.h>
+#include <inttypes.h>
 
 #else
 
 #include <windows.h>
 #include "getopt.h"
 
+#define PRIx64 "llx"
+
 #endif
 
-#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -324,7 +326,7 @@ void print_string(
     uint8_t* data,
     int length)
 {
-  unsigned int i;
+  int i;
   char* str;
 
   str = (char*) (data);
@@ -344,7 +346,7 @@ void print_hex_string(
     uint8_t* data,
     int length)
 {
-  unsigned int i;
+  int i;
 
   for (i = 0; i < length; i++)
     printf("%02X ", (uint8_t) data[i]);
@@ -608,7 +610,7 @@ void* scanning_thread(void* param)
     file_path = file_queue_get();
   }
 
-  yr_re_finalize_thread();
+  yr_finalize_thread();
 
   return 0;
 }
@@ -838,9 +840,6 @@ int main(
   int errors;
   int result;
 
-  clock_t start, end;
-  double cpu_time_used;
-
   THREAD thread[MAX_THREADS];
 
   if (!process_cmd_line(argc, argv))
@@ -935,8 +934,6 @@ int main(
 
     if (rule_file != NULL)
     {
-      start = clock();
-
       yr_compiler_push_file_name(compiler, argv[optind]);
 
       errors = yr_compiler_add_file(compiler, rule_file, NULL);
@@ -947,10 +944,6 @@ int main(
         yr_compiler_get_rules(compiler, &rules);
 
       yr_compiler_destroy(compiler);
-
-      end = clock();
-
-      printf( "Compiling time: %f s\n", ((float)(end - start)) / CLOCKS_PER_SEC);
 
       if (errors > 0)
       {
@@ -1007,10 +1000,6 @@ int main(
   }
   else
   {
-
-
-    start = clock();
-
     result = yr_rules_scan_file(
         rules,
         argv[argc - 1],
@@ -1018,14 +1007,7 @@ int main(
         (void*) argv[argc - 1],
         fast_scan,
         timeout);
-
-    end = clock();
-
-    cpu_time_used = (float)(end - start) / CLOCKS_PER_SEC;
-
-    printf("Scanning time: %f\n", cpu_time_used);
-
-
+ 
     if (result != ERROR_SUCCESS)
     {
       fprintf(stderr, "Error scanning %s: ", argv[argc - 1]);
