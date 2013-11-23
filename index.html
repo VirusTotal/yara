@@ -1,0 +1,181 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>YARA by plusvic</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>YARA</h1>
+        <p>A malware identification and classification tool</p>
+        <p class="view"><a href="https://github.com/plusvic/yara">View the Project on GitHub <small>plusvic/yara</small></a></p>
+        <ul>
+          <li><a href="https://github.com/plusvic/yara/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/plusvic/yara/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/plusvic/yara">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h2>
+<a name="yara-in-a-nutshell" class="anchor" href="#yara-in-a-nutshell"><span class="octicon octicon-link"></span></a>YARA in a nutshell</h2>
+
+<p>YARA is a tool aimed at helping malware researchers to identify and classify malware 
+samples. With YARA you can create descriptions of malware families based on textual or 
+binary patterns contained on samples of those families. Each description consists of a set of strings and a Boolean expression which determines its logic. Let's see an example:</p>
+
+<pre><code>rule silent_banker : banker
+{
+    meta:                                        
+        description = "This is just an example"
+        thread_level = 3
+        in_the_wild = true
+
+    strings: 
+        $a = {6A 40 68 00 30 00 00 6A 14 8D 91}  
+        $b = {8D 4D B0 2B C1 83 C0 27 99 6A 4E 59 F7 F9}
+        $c = "UVODFRYSIHLNWPEJXQZAKCBGMT"
+
+    condition:
+        $a or $b or $c
+}
+</code></pre>
+
+<p>The rule above is telling YARA that any file containing one of the three strings must be reported as <em>silent_banker</em>.</p>
+
+<p>This is just a simple example, more complex and powerful rules can be created by using binary strings with wild-cards, case-insensitive text strings, special operators, regular expressions and many other features that you can find explained in <a href="http://yara-project.googlecode.com/files/YARA%20User%27s%20Manual%201.6.pdf">YARA's documentation</a>.</p>
+
+<p>YARA is multi-platform, running on Windows, Linux and Mac OS X, and can be used through its command-line interface or from your own Python scripts with the yara-python extension. </p>
+
+<p>Python users can also use <a href="https://github.com/mjdorma/yara-ctypes">yara-ctyles</a> by Michael Dorman. He has also written a multi-threaded command-line YARA scanner based on yara-ctypes that can exploit the benefits of current multi-core CPUs when scanning big file collections.</p>
+
+<p>If you are a Ruby user you can use <a href="https://github.com/SpiderLabs/yara-ruby">yara-ruby</a>, written by Eric Monti. </p>
+
+<h2>
+<a name="whos-using-yara" class="anchor" href="#whos-using-yara"><span class="octicon octicon-link"></span></a>Who's using YARA</h2>
+
+<ul>
+<li><a href="https://www.virustotal.com/intelligence/">VirusTotal Intelligence</a></li>
+<li><a href="http://jsunpack.jeek.org/">jsunpack-n</a></li>
+<li><a href="http://www.wewatchyourwebsite.com/">We Watch Your Website</a></li>
+<li><a href="http://www.fireeye.com">FireEye, Inc.</a></li>
+<li><a href="http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS">Fidelis XPS</a></li>
+<li><a href="http://www.emc.com/security/rsa-ecat.htm">RSA ECAT</a></li>
+</ul><h2>
+<a name="releases" class="anchor" href="#releases"><span class="octicon octicon-link"></span></a>Releases</h2>
+
+<h3>
+<a name="17-29032013" class="anchor" href="#17-29032013"><span class="octicon octicon-link"></span></a>1.7 (29/03/2013)</h3>
+
+<ul>
+<li>faster compilation</li>
+<li>added suport for modulus (%) and bitwise xor (|) operators</li>
+<li>better hashing of regular expressions</li>
+<li>BUGFIX: yara-python segfault when using dir() on Rules and Match classes</li>
+<li>BUGFIX: Integer overflow causing infinite loop</li>
+<li>BUGFIX: Handling strings containing \x00 characters correctly</li>
+<li>BUGFIX: Regular expressions not matching at the end of the file when compiled with RE2</li>
+<li>BUGFIX: Memory leaks</li>
+<li>BUGFIX: File handle leaks</li>
+</ul><h3>
+<a name="16-04082011" class="anchor" href="#16-04082011"><span class="octicon octicon-link"></span></a>1.6 (04/08/2011)</h3>
+
+<ul>
+<li>added support for bitwise operators</li>
+<li>added support for multi-line hex strings</li>
+<li>scan speed improvement for regular expressions (with PCRE)</li>
+<li>yara-python ported to Python 3.x</li>
+<li>yara-python support for 64-bits Python under Windows</li>
+<li>BUGFIX: Buffer overflow in error printing</li>
+</ul><h3>
+<a name="15-22032011" class="anchor" href="#15-22032011"><span class="octicon octicon-link"></span></a>1.5 (22/03/2011)</h3>
+
+<ul>
+<li>added -l parameter to abort scanning after a number of matches</li>
+<li>added support for scanning processes memory</li>
+<li>entrypoint now works with ELF as well as PE files</li>
+<li>added support for linking with the faster RE2 library (<a href="http://code.google.com/p/re2/">http://code.google.com/p/re2/</a>) instead of PCRE</li>
+<li>implemented index operator to access offsets where string was found</li>
+<li>implemented new operator "for &lt; quantifier &gt; &lt; variable &gt; in &lt; set or range &gt; : (&lt; expression &gt;) "</li>
+<li>BUGFIX: Memory leaks in yara-python</li>
+<li>BUGFIX: yara.compile namespaces not working with filesources</li>
+</ul><h3>
+<a name="14-13052010" class="anchor" href="#14-13052010"><span class="octicon octicon-link"></span></a>1.4 (13/05/2010)</h3>
+
+<ul>
+<li>added external variables</li>
+<li>scan speed improvements</li>
+<li>added fast scan mode</li>
+<li>BUGFIX: crash in 64-bits Windows</li>
+</ul><h3>
+<a name="13-26102009" class="anchor" href="#13-26102009"><span class="octicon octicon-link"></span></a>1.3 (26/10/2009)</h3>
+
+<ul>
+<li>added a C-like "include" directive</li>
+<li>added support for multi-sources compilation in yara-python</li>
+<li>added support for metadata declaration in rules</li>
+<li>BUGFIX: Incorrect handling of single-line comments at the end of the file</li>
+<li>BUGFIX: Integer underflow when scanning files of size &lt;= 2 bytesversion 1.0 (24/09/2008)</li>
+<li>first release</li>
+</ul><h3>
+<a name="121-14042009" class="anchor" href="#121-14042009"><span class="octicon octicon-link"></span></a>1.2.1 (14/04/2009)</h3>
+
+<ul>
+<li>libyara: added support for compiling rules directly from memory</li>
+<li>libyara: interface refactored</li>
+<li>libyara: is thread-safe now</li>
+<li>BUGFIX: Invoking pcre_compile with non-terminated string</li>
+<li>BUGFIX: Underscore not recognized in string identifiers</li>
+<li>BUGFIX: Memory leak</li>
+<li>BUGFIX: Access violation on xxcompare functionsversion 1.1 (05/01/2009)</li>
+<li>added support for strings containing null (\x00) chars</li>
+<li>added syntactic construct "x of them"<br>
+</li>
+<li>regular expressions syntax changed</li>
+<li>now regular expressions can begin with any character</li>
+</ul><h3>
+<a name="12-13012009" class="anchor" href="#12-13012009"><span class="octicon octicon-link"></span></a>1.2 (13/01/2009)</h3>
+
+<ul>
+<li>added support for global rules</li>
+<li>added support for declaring alternative sub-strings in hex strings</li>
+<li>added support for anonymous strings</li>
+<li>added support for intXX and uintXX functions</li>
+<li>operator "of" was enhanced</li>
+<li>implemented new operator "for..of"</li>
+<li>"widechar" is now "wide" and can be used in conjuntion with "ascii"</li>
+<li>improved syntax error reporting in yara-python</li>
+<li>"compile" method in yara-python was enhanced</li>
+<li>"matchfile" method in yara-python was substituted by "match"</li>
+<li>some performance improvements </li>
+<li>BUGFIX: Wrong behavior of escaped characters in regular expressions</li>
+<li>BUGFIX: Fatal error in yara-python when invoking matchfile with invalid path twice</li>
+<li>BUGFIX: Wrong precedence of OR and AND operators</li>
+<li>BUGFIX: Access violation when scanning MZ files with e_lfanew == -1</li>
+<li>BUGFIX: Incorrect handling of hex strings in lexer</li>
+</ul><h3>
+<a name="10-24092008" class="anchor" href="#10-24092008"><span class="octicon octicon-link"></span></a>1.0 (24/09/2008)</h3>
+
+<ul>
+<li>first release</li>
+</ul>
+      </section>
+    </div>
+    <footer>
+      <p>Project maintained by <a href="https://github.com/plusvic">plusvic</a></p>
+      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
+    </footer>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
