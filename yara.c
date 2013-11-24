@@ -38,7 +38,6 @@ limitations under the License.
 
 #include "threading.h"
 #include "config.h"
-#include "REVISION"
 
 #define USAGE \
 "usage:  yara [OPTION]... RULES_FILE FILE | PID\n"\
