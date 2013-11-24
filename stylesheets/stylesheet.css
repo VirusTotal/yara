@@ -67,7 +67,7 @@ header {
   padding-top: 20px;
   padding-bottom: 10px;
   font-family: 'Helvetica Neue', Helvetica, Arial, serif; 
-  background: #D0D2D4 url(../images/header-bg.jpg) 9px -49px repeat;
+  background: #D0D2D4;
   border-bottom: solid 1px #A5A09F;
 }
 
