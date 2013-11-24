@@ -31,10 +31,10 @@ limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <yara.h>
 
 #include "config.h"
-#include "REVISION"
 
 #ifndef MAX_PATH
 #define MAX_PATH 255
@@ -79,7 +79,7 @@ int process_cmd_line(
     switch (c)
     {
       case 'v':
-        printf("%s (rev:%s)\n", PACKAGE_STRING, REVISION);
+        printf("%s\n", PACKAGE_STRING);
         return 0;
 
       case 'd':

@@ -34,6 +34,7 @@ limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <yara.h>
 
 #include "threading.h"
@@ -685,7 +686,7 @@ int process_cmd_line(
     switch (c)
     {
       case 'v':
-        printf("%s (rev:%s)\n", PACKAGE_STRING, REVISION);
+        printf("%s\n", PACKAGE_STRING);
         return 0;
 
       case 'r':
@@ -724,7 +725,7 @@ int process_cmd_line(
         }
         else
         {
-          fprintf (stderr, "Not enough memory.\n", optopt);
+          fprintf(stderr, "Not enough memory.\n");
           return 0;
         }
         break;
@@ -741,7 +742,7 @@ int process_cmd_line(
         }
         else
         {
-          fprintf (stderr, "Not enough memory.\n", optopt);
+          fprintf(stderr, "Not enough memory.\n");
           return 0;
         }
         break;
@@ -758,7 +759,7 @@ int process_cmd_line(
         }
         else
         {
-          fprintf (stderr, "Not enough memory.\n", optopt);
+          fprintf(stderr, "Not enough memory.\n");
           return 0;
         }
 
@@ -858,7 +859,7 @@ int main(
       result == ERROR_CORRUPT_FILE)
   {
     print_scanning_error(result);
-    return;
+    return 0;
   }
 
   if (result == ERROR_SUCCESS)

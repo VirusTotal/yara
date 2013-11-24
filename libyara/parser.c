@@ -323,7 +323,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
   else
   {
     string->g_flags |= STRING_GFLAGS_LITERAL;
-    literal_string = str->c_string;
+    literal_string = (uint8_t*) str->c_string;
     literal_string_len = str->length;
 
     compiler->last_result  = yr_atoms_extract_from_string(

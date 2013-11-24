@@ -112,7 +112,8 @@ struct RE {
   const char* error_message;
   int error_code;
 
-  int8_t* literal_string;
+  uint8_t* literal_string;
+
   int literal_string_len;
   int literal_string_max;
 };

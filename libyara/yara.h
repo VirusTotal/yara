@@ -444,7 +444,7 @@ typedef struct _YARA_RULES_FILE_HEADER
 
   DECLARE_REFERENCE(YR_RULE*, rules_list_head);
   DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
-  DECLARE_REFERENCE(int8_t*, code_start);
+  DECLARE_REFERENCE(uint8_t*, code_start);
   DECLARE_REFERENCE(YR_AC_AUTOMATON*, automaton);
 
 } YARA_RULES_FILE_HEADER;
@@ -569,7 +569,7 @@ typedef struct _YR_MEMORY_BLOCK
 typedef struct _YR_RULES {
 
   int threads_count;
-  int8_t* code_start;
+  uint8_t* code_start;
   mutex_t mutex;
 
   YR_ARENA* arena;

@@ -421,8 +421,8 @@ uint8_t* _yr_atoms_case_combinations(
     int atom_offset,
     uint8_t* output_buffer)
 {
-  char c;
-  char* new_atom;
+  uint8_t c;
+  uint8_t* new_atom;
 
   if (atom_offset + 1 < atom_length)
     output_buffer = _yr_atoms_case_combinations(

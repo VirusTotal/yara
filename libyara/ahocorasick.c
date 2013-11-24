@@ -636,7 +636,7 @@ void _yr_ac_print_automaton_state(
     for (i = 0; i < state->depth + 1; i++)
       printf(" ");
 
-    printf("%s = ", match->string->identifier, match->backtrack);
+    printf("%s = ", match->string->identifier);
 
     if (STRING_IS_HEX(match->string))
     {
