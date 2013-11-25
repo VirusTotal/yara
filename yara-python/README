@@ -2,8 +2,8 @@
 YARA for Python
 ===============
 
-This is a Python extension that gives you access to YARA's powerful features from 
-your own Python scripts. 
+This is a Python extension that gives you access to YARA's powerful features from
+your own Python scripts.
 
 
 HOW TO BUILD
@@ -14,20 +14,21 @@ yara-python depends on libyara, a library that implements YARA's core functions.
 must build and install YARA in your system before building yara-python. The latest
 YARA version can be downloaded from:
 
-http://yara.googlecode.com/files/yara-1.6.tar.gz
+
+https://github.com/plusvic/yara/archive/yara-1.7.1.tar.gz
 
 
 After installing YARA you can build yara-python this way:
 
-$ tar xzvf yara-python-1.6.tar.gz
-$ cd yara-python-1.6
+$ tar xzvf yara-python-1.7.1.tar.gz
+$ cd yara-python-1.7.1
 $ python setup.py build
 $ sudo python setup.py install
 
 You can test your installation by invoking Python and importing the YARA module:
 
 $ python
-Python 2.7.1 (r271:86832, Jun 16 2011, 16:59:05) 
+Python 2.7.1 (r271:86832, Jun 16 2011, 16:59:05)
 [GCC 4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2335.15.00)] on darwin
 Type "help", "copyright", "credits" or "license" for more information.
 >>> import yara
@@ -104,7 +105,7 @@ If you are using external variables in your rules you must define those external
 compiling the rules, or while applying the rules to some file. To define your variables at the moment of
 compilation you should pass the 'externals' parameter to the compile method. For example:
 
-rules = yara.compile( '/foo/rules', 
+rules = yara.compile( '/foo/rules',
 				   externals= {
 						'var1': 'some string',
 						'var2': 4,
@@ -127,7 +128,7 @@ matches = rules.match(data=f.read())
 As in the case of compile, the 'match' method can receive definitions for externals variables in the externals
 parameter.
 
-matches = rules.match( '/foo/bar/myfile', 
+matches = rules.match( '/foo/bar/myfile',
 				   externals= {
 						'var1': 'some other string',
 						'var4': 100,
@@ -156,11 +157,11 @@ matches = rules.match('/foo/bar/myfile', callback=mycallback)
 The passed dictionary will be something like this:
 
 {
-	'tags': ['foo', 'bar'], 
-	'matches': True, 
-	'namespace': 'default', 
-	'rule': 'my_rule', 
-	'meta': {}, 
+	'tags': ['foo', 'bar'],
+	'matches': True,
+	'namespace': 'default',
+	'rule': 'my_rule',
+	'meta': {},
 	'strings': [(81, '$a', 'abc'), (141, '$b', 'def')]
 }
 
