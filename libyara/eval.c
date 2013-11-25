@@ -83,6 +83,7 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
 	unsigned int satisfied;
 	int ovector[3];
 	int rc;
+  int len;
 
     STRING* string;
     STRING* saved_anonymous_string;
@@ -446,10 +447,17 @@ long long evaluate(TERM* term, EVALUATION_CONTEXT* context)
         }
 
     case TERM_TYPE_STRING_MATCH:
+
+        len = strlen(term_string_operation->variable->string);
+
+        if (len == 0)
+            return FALSE;
+
         rc = regex_exec(&(term_string_operation->re),
                         FALSE,
                         term_string_operation->variable->string,
-                        strlen(term_string_operation->variable->string));
+                        len);
+
         return (rc >= 0);
 
 	case TERM_TYPE_STRING_CONTAINS:
