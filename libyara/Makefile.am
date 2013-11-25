@@ -32,7 +32,8 @@ libyara_la_SOURCES = \
   mem.h \
   proc.h \
   regex.h \
-  weight.h
+  weight.h \
+  hash.h
 
 SUBDIRS = regex
 
