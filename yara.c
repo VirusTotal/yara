@@ -399,7 +399,7 @@ int process_cmd_line(YARA_CONTEXT* context, int argc, char const* argv[])
 {
     char* equal_sign;
     char* value;
-    char c;
+    int c;
     TAG* tag;
     IDENTIFIER* identifier;
     opterr = 0;
