@@ -3,17 +3,18 @@ LT_INIT
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_LIBTOOL
 AC_CONFIG_MACRO_DIR([m4])
 AC_ARG_WITH([re2],
-	[AS_HELP_STRING([--with-re2],[use RE2 instead of PCRE])],
+  [AS_HELP_STRING([--with-re2],[use RE2 instead of PCRE])],
         [
-			AC_LANG_CPLUSPLUS
-			AC_CHECK_LIB(re2, main,,AC_MSG_ERROR(please install RE2 library))
-			[re2=true]
+      AC_LANG_CPLUSPLUS
+      AC_CHECK_LIB(re2, main,,AC_MSG_ERROR(please install RE2 library))
+      [re2=true]
         ],
         [
-        	AC_CHECK_LIB(pcre, main,,AC_MSG_ERROR(please install PCRE library))
-        	[re2=false]
+          AC_CHECK_LIB(pcre, main,,AC_MSG_ERROR(please install PCRE library))
+          [re2=false]
         ])
 AM_CONDITIONAL([RE2], [test x$re2 = xtrue])
 AC_CONFIG_HEADERS([config.h])
