@@ -201,7 +201,7 @@ void scan_dir(const char* dir, int recursive, YARA_CONTEXT* context, YARACALLBAC
 
 #endif
 
-void print_string(unsigned char* data, unsigned int length, int unicode)
+void print_string(unsigned char* data, unsigned int length)
 {
     unsigned int i;
     char* str;
@@ -218,8 +218,6 @@ void print_string(unsigned char* data, unsigned int length, int unicode)
         {
             printf("\\x%02x", str[i]);
         }
-
-        if (unicode) i++;
     }
 
     printf("\n");
@@ -368,13 +366,9 @@ int callback(RULE* rule, void* data)
                         {
                             print_hex_string(match->data, match->length);
                         }
-                        else if (IS_WIDE(string))
-                        {
-                            print_string(match->data, match->length, TRUE);
-                        }
                         else
                         {
-                            print_string(match->data, match->length, FALSE);
+                            print_string(match->data, match->length);
                         }
 
                         match = match->next;
