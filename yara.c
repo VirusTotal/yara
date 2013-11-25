@@ -185,7 +185,7 @@ void scan_dir(const char* dir, int recursive, YARA_CONTEXT* context, YARACALLBAC
                     //printf("Processing %s\n", de->d_name);
                     yr_scan_file(full_path, context, callback, full_path);
                 }
-                else if(recursive && S_ISDIR(st.st_mode) && de->d_name[0] != '.')
+                else if(recursive && S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) && de->d_name[0] != '.')
                 {
                     //printf("Entering %s\n", de->d_name);
                     scan_dir(full_path, recursive, context, callback);
