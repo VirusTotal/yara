@@ -38,6 +38,11 @@ limitations under the License.
 #define MAX_PATH 255
 #endif
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#define strdup _strdup
+#endif
+
 int recursive_search = FALSE;
 int show_tags = FALSE;
 int show_specified_tags = FALSE;

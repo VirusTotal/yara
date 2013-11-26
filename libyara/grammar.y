@@ -12,7 +12,7 @@ are met:
    documentation and/or other materials provided with the distribution.
 3. All advertising materials mentioning features or use of this software
    must display the following acknowledgement:
-   This product includes software developed by Victor M. Alvarez and its 
+   This product includes software developed by Victor M. Alvarez and its
    contributors.
 4. Neither the name of Victor M. Alvarez nor the names of its contributors
    may be used to endorse or promote products derived from this software
@@ -31,8 +31,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-%{ 
-    
+%{
+
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
@@ -43,10 +43,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "lex.h"
 #include "regex.h"
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
+
 #define YYERROR_VERBOSE
 //#define YYDEBUG 1
 
-%} 
+%}
 
 %pure-parser
 %parse-param {void *yyscanner}
@@ -111,7 +115,7 @@ POSSIBILITY OF SUCH DAMAGE.
 %left '&' '|' '^'
 %left _LT_ _LE_ _GT_ _GE_ _EQ_ _NEQ_ _IS_
 %left _SHIFT_LEFT_ _SHIFT_RIGHT_
-%left '+' '-' 
+%left '+' '-'
 %left '*' '\\' '%'
 %right _NOT_
 %right '~'
@@ -146,7 +150,7 @@ POSSIBILITY OF SUCH DAMAGE.
 %type <term> range
 
 %union {
-    
+
     void*           sized_string;
     char*           c_string;
     size_t          integer;
@@ -160,108 +164,108 @@ POSSIBILITY OF SUCH DAMAGE.
 //%destructor { free ($$); } _TEXTSTRING_ _HEXSTRING_ _REGEXP_ _IDENTIFIER_
 
 
-%{ 
+%{
 
 /* Function declarations */
 
-int reduce_rule_declaration(    yyscan_t yyscanner, 
-                                char* identifier, 
-                                int flags, 
-                                TAG* tag_list_head, 
+int reduce_rule_declaration(    yyscan_t yyscanner,
+                                char* identifier,
+                                int flags,
+                                TAG* tag_list_head,
                                 META* meta_list_head,
-                                STRING* string_list_head, 
+                                STRING* string_list_head,
                                 TERM* condition);
-                            
+
 TAG* reduce_tags(   yyscan_t yyscanner,
                     TAG* tag_list_head,
                     char* identifier);
-                    
-                    
+
+
 META* reduce_meta_declaration(  yyscan_t yyscanner,
                                 int type,
                                 char* identifier,
-                                unsigned int integer_value,                 
+                                unsigned int integer_value,
                                 SIZED_STRING* string_value);
-                    
-META* reduce_metas( yyscan_t yyscanner, 
+
+META* reduce_metas( yyscan_t yyscanner,
                     META* meta_list_head,
                     META* meta);
 
 STRING* reduce_string_declaration(  yyscan_t yyscanner,
-                                    char* identifier, 
-                                    SIZED_STRING* str, 
+                                    char* identifier,
+                                    SIZED_STRING* str,
                                     int flags);
-                                
-STRING* reduce_strings( yyscan_t yyscanner, 
-                        STRING* string_list_head, 
+
+STRING* reduce_strings( yyscan_t yyscanner,
+                        STRING* string_list_head,
                         STRING* string);
 
 TERM* reduce_string_enumeration(    yyscan_t yyscanner,
-                                    TERM* string_list_head, 
+                                    TERM* string_list_head,
                                     TERM* string_identifier);
-                                                                        
+
 TERM* reduce_string_with_wildcard(  yyscan_t yyscanner,
                                     char* identifier);
 
-TERM* reduce_string(    yyscan_t yyscanner, 
+TERM* reduce_string(    yyscan_t yyscanner,
                         char* identifier);
-                        
+
 TERM* reduce_string_at( yyscan_t yyscanner,
-                        char* identifier, 
+                        char* identifier,
                         TERM* offset);
-                        
+
 TERM* reduce_string_in_range(   yyscan_t yyscanner,
-                                char* identifier, 
+                                char* identifier,
                                 TERM* range);
-                                
+
 TERM* reduce_string_in_section_by_name( yyscan_t yyscanner,
-                                        char* identifier, 
+                                        char* identifier,
                                         SIZED_STRING* section_name);
-                                        
-TERM* reduce_string_count(  yyscan_t yyscanner, 
+
+TERM* reduce_string_count(  yyscan_t yyscanner,
                             char* identifier);
-                            
-TERM* reduce_string_offset( yyscan_t yyscanner,  
+
+TERM* reduce_string_offset( yyscan_t yyscanner,
                             char* identifier,
-                            TERM* index); 
+                            TERM* index);
 
 TERM* reduce_filesize(yyscan_t yyscanner);
 
 TERM* reduce_entrypoint(yyscan_t yyscanner);
 
-TERM* reduce_term(  yyscan_t yyscanner, 
-                    int type, 
-                    TERM* op1, 
-                    TERM* op2, 
+TERM* reduce_term(  yyscan_t yyscanner,
+                    int type,
+                    TERM* op1,
+                    TERM* op2,
                     TERM* op3);
-                    
+
 TERM* reduce_constant(  yyscan_t yyscanner,
                         size_t constant);
 
 TERM* reduce_identifier( yyscan_t yyscanner,
                          char* identifier);
-                         
+
 TERM* reduce_string_operation(  yyscan_t yyscanner,
                                 int type,
                                 char* identifier,
                                 SIZED_STRING* string);
-                                        
+
 TERM* reduce_integer_enumeration(   yyscan_t yyscanner,
-                                    TERM* vector,     
+                                    TERM* vector,
                                     TERM* expression);
-                                    
+
 TERM* reduce_integer_for(   yyscan_t yyscanner,
                             TERM* count,
                             char* identifier,
                             TERM* items,
                             TERM* expression);
-                            
+
 TERM* reduce_range( yyscan_t yyscanner,
                     TERM* min,
                     TERM* max);
 
 
-%} 
+%}
 
 %%
 
@@ -271,31 +275,31 @@ rules :  /* empty */
       | rules error 'include' /* .. or include statement */
       ;
 
-rule    :   rule_modifiers _RULE_ _IDENTIFIER_ tags '{' meta strings condition '}'    
-            { 
+rule    :   rule_modifiers _RULE_ _IDENTIFIER_ tags '{' meta strings condition '}'
+            {
                 if (reduce_rule_declaration(yyscanner, $3,$1,$4,$6,$7,$8) != ERROR_SUCCESS)
                 {
                     yyerror(yyscanner, NULL);
-                    YYERROR; 
-                }  
+                    YYERROR;
+                }
             }
         ;
-        
+
 meta      : /* empty */                               { $$ = NULL; }
           | _META_ ':' meta_declarations              { $$ = $3; }
           ;
-                           
+
 strings   : /* empty */                               { $$ = NULL; }
           | _STRINGS_ ':' string_declarations         { $$ = $3; }
           ;
-        
+
 condition : _CONDITION_ ':' boolean_expression        { $$ = $3; }
           ;
-        
+
 rule_modifiers : /* empty */                          { $$ = 0;  }
                | rule_modifiers rule_modifier         { $$ = $1 | $2; }
                ;
-        
+
 rule_modifier : _PRIVATE_       { $$ = RULE_FLAGS_PRIVATE; }
               | _GLOBAL_        { $$ = RULE_FLAGS_GLOBAL; }
               ;
@@ -303,19 +307,19 @@ rule_modifier : _PRIVATE_       { $$ = RULE_FLAGS_PRIVATE; }
 tags    : /* empty */                       { $$ = NULL; }
         | ':' tag_list                      { $$ = $2;   }
         ;
-        
-tag_list : _IDENTIFIER_                     { 
-                                                $$ = reduce_tags(yyscanner,NULL,$1); 
-                                                
+
+tag_list : _IDENTIFIER_                     {
+                                                $$ = reduce_tags(yyscanner,NULL,$1);
+
                                                 if ($$ == NULL)
                                                 {
                                                     yyerror(yyscanner, NULL);
                                                     YYERROR;
                                                 }
                                             }
-         | tag_list _IDENTIFIER_            {   
-                                                $$ = reduce_tags(yyscanner,$1,$2); 
-                                                
+         | tag_list _IDENTIFIER_            {
+                                                $$ = reduce_tags(yyscanner,$1,$2);
+
                                                 if ($$ == NULL)
                                                 {
                                                     yyerror(yyscanner, NULL);
@@ -323,18 +327,18 @@ tag_list : _IDENTIFIER_                     {
                                                 }
                                             }
 
-meta_declarations : meta_declaration                        { 
-                                                                $$ = reduce_metas(yyscanner, NULL, $1); 
-                                                                
+meta_declarations : meta_declaration                        {
+                                                                $$ = reduce_metas(yyscanner, NULL, $1);
+
                                                                 if ($$ == NULL)
                                                                 {
                                                                     yyerror(yyscanner, NULL);
                                                                     YYERROR;
                                                                 }
                                                             }
-                  | meta_declarations meta_declaration      { 
-                                                                $$ = reduce_metas(yyscanner, $1, $2); 
-                                                                
+                  | meta_declarations meta_declaration      {
+                                                                $$ = reduce_metas(yyscanner, $1, $2);
+
                                                                 if ($$ == NULL)
                                                                 {
                                                                     yyerror(yyscanner, NULL);
@@ -342,27 +346,9 @@ meta_declarations : meta_declaration                        {
                                                                 }
                                                             }
                   ;
-                  
-meta_declaration :  _IDENTIFIER_ '=' _TEXTSTRING_            { 
+
+meta_declaration :  _IDENTIFIER_ '=' _TEXTSTRING_            {
                                                                 $$ = reduce_meta_declaration(yyscanner, META_TYPE_STRING, $1, 0, $3);
-                                                                
-                                                                if ($$ == NULL)
-                                                                {
-                                                                    yyerror(yyscanner, NULL);
-                                                                    YYERROR;
-                                                                }
-                                                             }
-                 |  _IDENTIFIER_ '=' _NUMBER_                { 
-                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_INTEGER, $1, $3, NULL); 
-                                                                
-                                                                if ($$ == NULL)
-                                                                {
-                                                                    yyerror(yyscanner, NULL);
-                                                                    YYERROR;
-                                                                }
-                                                             }
-                 |  _IDENTIFIER_ '=' _TRUE_                 { 
-                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, $1, TRUE, NULL); 
 
                                                                 if ($$ == NULL)
                                                                 {
@@ -370,8 +356,8 @@ meta_declaration :  _IDENTIFIER_ '=' _TEXTSTRING_            {
                                                                     YYERROR;
                                                                 }
                                                              }
-                 |  _IDENTIFIER_ '=' _FALSE_                 { 
-                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, $1, FALSE, NULL); 
+                 |  _IDENTIFIER_ '=' _NUMBER_                {
+                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_INTEGER, $1, $3, NULL);
 
                                                                 if ($$ == NULL)
                                                                 {
@@ -379,43 +365,61 @@ meta_declaration :  _IDENTIFIER_ '=' _TEXTSTRING_            {
                                                                     YYERROR;
                                                                 }
                                                              }
-                 ; 
-        
-string_declarations :   string_declaration  
-                        { 
-                            $$ = reduce_strings(yyscanner,NULL,$1); 
-                            
+                 |  _IDENTIFIER_ '=' _TRUE_                 {
+                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, $1, TRUE, NULL);
+
+                                                                if ($$ == NULL)
+                                                                {
+                                                                    yyerror(yyscanner, NULL);
+                                                                    YYERROR;
+                                                                }
+                                                             }
+                 |  _IDENTIFIER_ '=' _FALSE_                 {
+                                                                $$ = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, $1, FALSE, NULL);
+
+                                                                if ($$ == NULL)
+                                                                {
+                                                                    yyerror(yyscanner, NULL);
+                                                                    YYERROR;
+                                                                }
+                                                             }
+                 ;
+
+string_declarations :   string_declaration
+                        {
+                            $$ = reduce_strings(yyscanner,NULL,$1);
+
                             if ($$ == NULL)
                             {
                                 yyerror(yyscanner, NULL);
                                 YYERROR;
                             }
                         }
-                    |   string_declarations string_declaration      
-                        { 
+                    |   string_declarations string_declaration
+                        {
                             $$ = reduce_strings(yyscanner,$1,$2);
-                        
+
                             if ($$ == NULL)
                             {
                                 yyerror(yyscanner, NULL);
                                 YYERROR;
-                            }  
+                            }
                         }
                     ;
-        
-string_declaration  :   _STRING_IDENTIFIER_ '=' _TEXTSTRING_ string_modifiers   
-                        { 
-                            $$ = reduce_string_declaration(yyscanner, $1, $3, $4); 
-                
+
+string_declaration  :   _STRING_IDENTIFIER_ '=' _TEXTSTRING_ string_modifiers
+                        {
+                            $$ = reduce_string_declaration(yyscanner, $1, $3, $4);
+
                             if ($$ == NULL)
                             {
                                 yyerror(yyscanner, NULL);
                                 YYERROR;
                             }
                         }
-                    |   _STRING_IDENTIFIER_ '=' _REGEXP_ string_modifiers   
-                       { 
-                           $$ = reduce_string_declaration(yyscanner, $1, $3, $4 | STRING_FLAGS_REGEXP); 
+                    |   _STRING_IDENTIFIER_ '=' _REGEXP_ string_modifiers
+                       {
+                           $$ = reduce_string_declaration(yyscanner, $1, $3, $4 | STRING_FLAGS_REGEXP);
 
                            if ($$ == NULL)
                            {
@@ -423,10 +427,10 @@ string_declaration  :   _STRING_IDENTIFIER_ '=' _TEXTSTRING_ string_modifiers
                                YYERROR;
                            }
                        }
-                    |   _STRING_IDENTIFIER_ '=' _HEXSTRING_         
+                    |   _STRING_IDENTIFIER_ '=' _HEXSTRING_
                         {
                             $$ = reduce_string_declaration(yyscanner, $1, $3, STRING_FLAGS_HEXADECIMAL);
-            
+
                             if ($$ == NULL)
                             {
                                 yyerror(yyscanner, NULL);
@@ -434,7 +438,7 @@ string_declaration  :   _STRING_IDENTIFIER_ '=' _TEXTSTRING_ string_modifiers
                             }
                         }
                     ;
-    
+
 string_modifiers : /* empty */                              { $$ = 0;  }
                  | string_modifiers string_modifier         { $$ = $1 | $2; }
                  ;
@@ -446,73 +450,73 @@ string_modifier : _WIDE_        { $$ = STRING_FLAGS_WIDE; }
                 ;
 
 boolean_expression : _TRUE_                                 { $$ = reduce_constant(yyscanner, 1); }
-                   | _FALSE_                                { $$ = reduce_constant(yyscanner, 0); } 
-                   | _IDENTIFIER_                                   
-                     { 
+                   | _FALSE_                                { $$ = reduce_constant(yyscanner, 0); }
+                   | _IDENTIFIER_
+                     {
                         $$ = reduce_identifier(yyscanner, $1);
-                        
+
                         if ($$ == NULL)
                         {
                             yyerror(yyscanner, NULL);
                             YYERROR;
                         }
                      }
-                   | _IDENTIFIER_ _MATCHES_ _REGEXP_                                   
-                     { 
+                   | _IDENTIFIER_ _MATCHES_ _REGEXP_
+                     {
                         $$ = reduce_string_operation(yyscanner, TERM_TYPE_STRING_MATCH, $1, $3);
-                        
+
                         if ($$ == NULL)
                         {
                             yyerror(yyscanner, NULL);
                             YYERROR;
                         }
                      }
-                   | _IDENTIFIER_ _CONTAINS_ _TEXTSTRING_                                   
-                     { 
+                   | _IDENTIFIER_ _CONTAINS_ _TEXTSTRING_
+                     {
                         $$ = reduce_string_operation(yyscanner, TERM_TYPE_STRING_CONTAINS, $1, $3);
-                        
+
                         if ($$ == NULL)
                         {
                             yyerror(yyscanner, NULL);
                             YYERROR;
                         }
                      }
-                   | _STRING_IDENTIFIER_                                
-                     {  
+                   | _STRING_IDENTIFIER_
+                     {
                         $$ = reduce_string(yyscanner, $1);
-                        
+
                         if ($$ == NULL)
                         {
                             yyerror(yyscanner, NULL);
                             YYERROR;
                         }
                      }
-                   | _STRING_IDENTIFIER_ _AT_ expression    
-                     {          
+                   | _STRING_IDENTIFIER_ _AT_ expression
+                     {
                         $$ = reduce_string_at(yyscanner, $1, $3);
-                        
+
                         if ($$ == NULL)
                         {
                             yyerror(yyscanner, NULL);
                             YYERROR;
                         }
                      }
-                   | _STRING_IDENTIFIER_ _AT_ _RVA_ expression          
-                     { 
-                        $$ = NULL; 
+                   | _STRING_IDENTIFIER_ _AT_ _RVA_ expression
+                     {
+                        $$ = NULL;
                      }
-                   | _STRING_IDENTIFIER_ _IN_ range                     
-                     {          
+                   | _STRING_IDENTIFIER_ _IN_ range
+                     {
                         $$ = reduce_string_in_range(yyscanner, $1, $3);
-                        
+
                         if ($$ == NULL)
                         {
                             yyerror(yyscanner, NULL);
                             YYERROR;
                         }
                      }
-                   | _STRING_IDENTIFIER_ _IN_ _SECTION_ '(' _TEXTSTRING_ ')'                    
-                     {          
+                   | _STRING_IDENTIFIER_ _IN_ _SECTION_ '(' _TEXTSTRING_ ')'
+                     {
                         $$ = reduce_string_in_section_by_name(yyscanner, $1, $5);
 
                         if ($$ == NULL)
@@ -521,40 +525,40 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                             YYERROR;
                         }
                      }
-                   | _FOR_ for_expression _IDENTIFIER_ _IN_ integer_set ':' 
+                   | _FOR_ for_expression _IDENTIFIER_ _IN_ integer_set ':'
                      {
                           yr_define_integer_variable(yyget_extra(yyscanner), $3, 0);
                      }
-                     '(' boolean_expression ')'                     
-                     {                        
-                         $$ = reduce_integer_for(yyscanner, $2, $3, $5, $9); 
-                           
-                         if ($$ == NULL)
-                         {
-                             yyerror(yyscanner, NULL);
-                             YYERROR;
-                         }
-                     }                  
-                   | _FOR_ for_expression _OF_ string_set ':'
-                     { 
-                         yyget_extra(yyscanner)->inside_for++; 
-                     }           
-                     '(' boolean_expression ')'                     
-                     { 
-                         yyget_extra(yyscanner)->inside_for--; 
-                           
-                         $$ = reduce_term(yyscanner, TERM_TYPE_STRING_FOR, $2, $4, $8); 
-                           
+                     '(' boolean_expression ')'
+                     {
+                         $$ = reduce_integer_for(yyscanner, $2, $3, $5, $9);
+
                          if ($$ == NULL)
                          {
                              yyerror(yyscanner, NULL);
                              YYERROR;
                          }
                      }
-                   | for_expression _OF_ string_set                         
-                     { 
-                         $$ = reduce_term(yyscanner, TERM_TYPE_OF, $1, $3, NULL); 
-                         
+                   | _FOR_ for_expression _OF_ string_set ':'
+                     {
+                         yyget_extra(yyscanner)->inside_for++;
+                     }
+                     '(' boolean_expression ')'
+                     {
+                         yyget_extra(yyscanner)->inside_for--;
+
+                         $$ = reduce_term(yyscanner, TERM_TYPE_STRING_FOR, $2, $4, $8);
+
+                         if ($$ == NULL)
+                         {
+                             yyerror(yyscanner, NULL);
+                             YYERROR;
+                         }
+                     }
+                   | for_expression _OF_ string_set
+                     {
+                         $$ = reduce_term(yyscanner, TERM_TYPE_OF, $1, $3, NULL);
+
                          if ($$ == NULL)
                          {
                              yyerror(yyscanner, NULL);
@@ -574,30 +578,30 @@ boolean_expression : _TRUE_                                 { $$ = reduce_consta
                    | expression _EQ_ expression                         { $$ = reduce_term(yyscanner, TERM_TYPE_EQ, $1, $3, NULL); }
                    | expression _IS_ expression                         { $$ = reduce_term(yyscanner, TERM_TYPE_EQ, $1, $3, NULL); }
                    | expression _NEQ_ expression                        { $$ = reduce_term(yyscanner, TERM_TYPE_NOT_EQ, $1, $3, NULL); }
-                   ;    
- 
- 
- 
+                   ;
+
+
+
 integer_set : '(' integer_enumeration ')'                               { $$ = $2; }
             | range                                                     { $$ = $1; }
             ;
-            
+
 integer_enumeration : expression
                     | integer_enumeration ',' expression                { $$ = reduce_integer_enumeration(yyscanner, $1, $3); }
                     ;
 
 
-                 
+
 string_set  : '(' string_enumeration ')'                                { $$ = $2; }
             | _THEM_                                                    { $$ = reduce_string_with_wildcard(yyscanner, yr_strdup("$*")); }
-            ;                           
-                            
+            ;
+
 string_enumeration  : string_enumeration_item
                     | string_enumeration ',' string_enumeration_item    { $$ = reduce_string_enumeration(yyscanner, $1, $3); }
                     ;
-                    
+
 string_enumeration_item : _STRING_IDENTIFIER_
-                          {  
+                          {
                               $$ = reduce_string(yyscanner, $1);
 
                               if ($$ == NULL)
@@ -606,10 +610,10 @@ string_enumeration_item : _STRING_IDENTIFIER_
                                   YYERROR;
                               }
                           }
-                        | _STRING_IDENTIFIER_WITH_WILDCARD_     
-                          { 
-                              $$ = reduce_string_with_wildcard(yyscanner, $1); 
-                              
+                        | _STRING_IDENTIFIER_WITH_WILDCARD_
+                          {
+                              $$ = reduce_string_with_wildcard(yyscanner, $1);
+
                               if ($$ == NULL)
                               {
                                   yyerror(yyscanner, NULL);
@@ -620,7 +624,7 @@ string_enumeration_item : _STRING_IDENTIFIER_
 
 
 
-range : '(' expression '.' '.'  expression ')'  { $$ = reduce_range(yyscanner, $2, $5); } 
+range : '(' expression '.' '.'  expression ')'  { $$ = reduce_range(yyscanner, $2, $5); }
       ;
 
 
@@ -638,19 +642,19 @@ expression : _SIZE_                             { $$ = reduce_filesize(yyscanner
            | _UINT8_  '(' expression ')'        { $$ = reduce_term(yyscanner, TERM_TYPE_UINT8_AT_OFFSET, $3, NULL, NULL); }
            | _UINT16_ '(' expression ')'        { $$ = reduce_term(yyscanner, TERM_TYPE_UINT16_AT_OFFSET, $3, NULL, NULL); }
            | _UINT32_ '(' expression ')'        { $$ = reduce_term(yyscanner, TERM_TYPE_UINT32_AT_OFFSET, $3, NULL, NULL); }
-           | _STRING_COUNT_                         
-             { 
-                $$ = reduce_string_count(yyscanner, $1); 
-                
+           | _STRING_COUNT_
+             {
+                $$ = reduce_string_count(yyscanner, $1);
+
                 if ($$ == NULL)
                 {
                     yyerror(yyscanner, NULL);
                     YYERROR;
                 }
              }
-           | _STRING_OFFSET_ '[' expression ']'                         
-             { 
-                $$ = reduce_string_offset(yyscanner, $1, $3); 
+           | _STRING_OFFSET_ '[' expression ']'
+             {
+                $$ = reduce_string_offset(yyscanner, $1, $3);
 
                 if ($$ == NULL)
                 {
@@ -659,9 +663,9 @@ expression : _SIZE_                             { $$ = reduce_filesize(yyscanner
                 }
              }
            | _STRING_OFFSET_
-              { 
-                 $$ = reduce_string_offset(yyscanner, $1, reduce_constant(yyscanner, 1)); 
- 
+              {
+                 $$ = reduce_string_offset(yyscanner, $1, reduce_constant(yyscanner, 1));
+
                  if ($$ == NULL)
                  {
                      yyerror(yyscanner, NULL);
@@ -671,7 +675,7 @@ expression : _SIZE_                             { $$ = reduce_filesize(yyscanner
            | _IDENTIFIER_
              {
                  $$ = reduce_identifier(yyscanner, $1);
-                    
+
                  if ($$ == NULL)
                  {
                     yyerror(yyscanner, NULL);
@@ -692,21 +696,21 @@ expression : _SIZE_                             { $$ = reduce_filesize(yyscanner
            | expression _SHIFT_RIGHT_ expression    { $$ = reduce_term(yyscanner, TERM_TYPE_SHIFT_RIGHT, $1, $3, NULL); }
            | number
            ;
-        
+
 number   :  _NUMBER_                            { $$ = reduce_constant(yyscanner, $1); }
-         ;  
-        
+         ;
+
 type : _MZ_
      | _PE_
      | _DLL_
      ;
-        
+
 %%
 
 
 int valid_string_identifier(char* identifier, YARA_CONTEXT* context)
 {
-    if (strcmp(identifier, "$") != 0 || context->inside_for > 0) 
+    if (strcmp(identifier, "$") != 0 || context->inside_for > 0)
     {
         return TRUE;
     }
@@ -718,26 +722,26 @@ int valid_string_identifier(char* identifier, YARA_CONTEXT* context)
 }
 
 int reduce_rule_declaration(    yyscan_t yyscanner,
-                                char* identifier, 
-                                int flags, 
+                                char* identifier,
+                                int flags,
                                 TAG* tag_list_head,
                                 META* meta_list_head,
-                                STRING* string_list_head, 
+                                STRING* string_list_head,
                                 TERM* condition
                             )
 {
     STRING*         string;
     YARA_CONTEXT*   context = yyget_extra(yyscanner);
 
-    context->last_result = new_rule(&context->rule_list, 
-                                    identifier, 
-                                    context->current_namespace, 
-                                    flags | context->current_rule_flags, 
-                                    tag_list_head, 
-                                    meta_list_head, 
-                                    string_list_head, 
+    context->last_result = new_rule(&context->rule_list,
+                                    identifier,
+                                    context->current_namespace,
+                                    flags | context->current_rule_flags,
+                                    tag_list_head,
+                                    meta_list_head,
+                                    string_list_head,
                                     condition);
-                                        
+
     if (context->last_result != ERROR_SUCCESS)
     {
         strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
@@ -746,7 +750,7 @@ int reduce_rule_declaration(    yyscan_t yyscanner,
     else
     {
         string = string_list_head;
-        
+
         while (string != NULL)
         {
             if (! (string->flags & STRING_FLAGS_REFERENCED))
@@ -756,34 +760,34 @@ int reduce_rule_declaration(    yyscan_t yyscanner,
                 context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
                 break;
             }
-            
+
             string = string->next;
         }
     }
-    
-    context->current_rule_flags = 0;  
+
+    context->current_rule_flags = 0;
     context->current_rule_strings = NULL;
 
     return context->last_result;
 }
 
 STRING* reduce_string_declaration(  yyscan_t yyscanner,
-                                    char* identifier, 
-                                    SIZED_STRING* str, 
+                                    char* identifier,
+                                    SIZED_STRING* str,
                                     int flags)
 {
     char            tmp[200];
     STRING*         string = NULL;
     YARA_CONTEXT*   context = yyget_extra(yyscanner);
-    
+
     if (strcmp(identifier,"$") == 0)
     {
         flags |= STRING_FLAGS_ANONYMOUS;
     }
-    
+
     context->last_result = new_string(context, identifier, str, flags, &string);
-    
-    if (context->last_result == ERROR_INVALID_REGULAR_EXPRESSION) 
+
+    if (context->last_result == ERROR_INVALID_REGULAR_EXPRESSION)
     {
         snprintf(tmp, sizeof(tmp), "invalid regular expression in string \"%s\": %s", identifier, context->last_error_extra_info);
         strncpy(context->last_error_extra_info, tmp, sizeof(context->last_error_extra_info));
@@ -794,28 +798,28 @@ STRING* reduce_string_declaration(  yyscan_t yyscanner,
         strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
         context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
     }
-    
+
     yr_free(str);
 
     if (context->fast_match)
     {
         string->flags |= STRING_FLAGS_FAST_MATCH;
     }
-            
+
     return string;
 }
 
 STRING* reduce_strings( yyscan_t yyscanner,
-                        STRING* string_list_head, 
+                        STRING* string_list_head,
                         STRING* string)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
-    
+
     /* no strings with the same identifier, except for anonymous strings */
-    
-    if (IS_ANONYMOUS(string) || lookup_string(string_list_head,string->identifier) == NULL) 
+
+    if (IS_ANONYMOUS(string) || lookup_string(string_list_head,string->identifier) == NULL)
     {
-        string->next = string_list_head;    
+        string->next = string_list_head;
         context->current_rule_strings = string;
         context->last_result = ERROR_SUCCESS;
         return string;
@@ -826,7 +830,7 @@ STRING* reduce_strings( yyscan_t yyscanner,
         context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         context->last_result = ERROR_DUPLICATE_STRING_IDENTIFIER;
         return NULL;
-    }   
+    }
 }
 
 META* reduce_meta_declaration(  yyscan_t yyscanner,
@@ -837,14 +841,14 @@ META* reduce_meta_declaration(  yyscan_t yyscanner,
 {
     META*           meta = NULL;
     YARA_CONTEXT*   context = yyget_extra(yyscanner);
-    
+
     meta = yr_malloc(sizeof(META));
-    
+
     if (meta != NULL)
     {
         meta->identifier = identifier;
         meta->type = type;
-        
+
         if (type == META_TYPE_INTEGER)
         {
             meta->integer = integer_value;
@@ -857,27 +861,27 @@ META* reduce_meta_declaration(  yyscan_t yyscanner,
         {
             meta->string = yr_strdup(string_value->c_string);
             yr_free(string_value);
-        }    
+        }
     }
     else
     {
         context->last_result = ERROR_INSUFICIENT_MEMORY;
     }
-    
-    return meta;  
+
+    return meta;
 }
 
 META* reduce_metas( yyscan_t yyscanner,
-                    META* meta_list_head, 
+                    META* meta_list_head,
                     META* meta)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
-    
+
     /* no metas with the same identifier */
 
-    if (lookup_meta(meta_list_head, meta->identifier) == NULL) 
+    if (lookup_meta(meta_list_head, meta->identifier) == NULL)
     {
-        meta->next = meta_list_head;    
+        meta->next = meta_list_head;
         context->last_result = ERROR_SUCCESS;
         return meta;
     }
@@ -887,10 +891,10 @@ META* reduce_metas( yyscan_t yyscanner,
         context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         context->last_result = ERROR_DUPLICATE_META_IDENTIFIER;
         return NULL;
-    }   
+    }
 }
 
-TAG* reduce_tags(   yyscan_t yyscanner, 
+TAG* reduce_tags(   yyscan_t yyscanner,
                     TAG* tag_list_head,
                     char* identifier)
 {
@@ -900,18 +904,18 @@ TAG* reduce_tags(   yyscan_t yyscanner,
     if (lookup_tag(tag_list_head, identifier) == NULL) /* no tags with the same identifier */
     {
         tag = yr_malloc(sizeof(TAG));
-        
+
         if (tag != NULL)
         {
             tag->identifier = identifier;
-            tag->next = tag_list_head;  
+            tag->next = tag_list_head;
             context->last_result = ERROR_SUCCESS;
         }
         else
         {
             context->last_result = ERROR_INSUFICIENT_MEMORY;
         }
-        
+
         return tag;
     }
     else
@@ -927,27 +931,27 @@ TERM* reduce_filesize(yyscan_t yyscanner)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM* term = NULL;
-    
-    context->last_result = new_simple_term(TERM_TYPE_FILESIZE, &term); 
+
+    context->last_result = new_simple_term(TERM_TYPE_FILESIZE, &term);
     context->current_rule_flags |= RULE_FLAGS_REQUIRE_FILE;
-    return (TERM*) term;    
+    return (TERM*) term;
 }
 
 TERM* reduce_entrypoint(yyscan_t yyscanner)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM* term = NULL;
-    
+
     context->last_result = new_simple_term(TERM_TYPE_ENTRYPOINT, &term);
     context->current_rule_flags |= RULE_FLAGS_REQUIRE_EXECUTABLE;
-    return (TERM*) term;    
+    return (TERM*) term;
 }
 
 TERM* reduce_term(yyscan_t yyscanner, int type, TERM* op1, TERM* op2, TERM* op3)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM* term = NULL;
-    
+
     if (op2 == NULL && op3 == NULL)
     {
         context->last_result = new_unary_operation(type, op1, (TERM_UNARY_OPERATION**) &term);
@@ -960,7 +964,7 @@ TERM* reduce_term(yyscan_t yyscanner, int type, TERM* op1, TERM* op2, TERM* op3)
     {
         context->last_result = new_ternary_operation(type, op1, op2, op3, (TERM_TERNARY_OPERATION**) &term);
     }
-    
+
     return (TERM*) term;
 }
 
@@ -969,8 +973,8 @@ TERM* reduce_constant(  yyscan_t yyscanner,
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_CONST* term = NULL;
-    
-    context->last_result = new_constant(constant, &term); 
+
+    context->last_result = new_constant(constant, &term);
     return (TERM*) term;
 }
 
@@ -979,19 +983,19 @@ TERM* reduce_string(    yyscan_t yyscanner,
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
-    
-    if (valid_string_identifier(identifier, context)) 
-    {  
-        context->last_result = new_string_identifier(TERM_TYPE_STRING, context->current_rule_strings, identifier, &term);       
-     
+
+    if (valid_string_identifier(identifier, context))
+    {
+        context->last_result = new_string_identifier(TERM_TYPE_STRING, context->current_rule_strings, identifier, &term);
+
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
             context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         }
     }
-    
-    yr_free(identifier);   
+
+    yr_free(identifier);
     return (TERM*) term;
 }
 
@@ -1002,51 +1006,51 @@ TERM* reduce_string_with_wildcard(  yyscan_t yyscanner,
     TERM_STRING* term = NULL;
     TERM_STRING* next;
     STRING* string;
-    
+
     int len = 0;
 
     string = context->current_rule_strings;
     next = NULL;
-    
+
     while (identifier[len] != '\0' && identifier[len] != '*')
     {
         len++;
     }
-    
+
     while (string != NULL)
     {
         if (strncmp(string->identifier, identifier, len) == 0)
         {
             context->last_result = new_string_identifier(TERM_TYPE_STRING, context->current_rule_strings, string->identifier, &term);
-            
+
             if (context->last_result != ERROR_SUCCESS)
                 break;
-                
+
             string->flags |= STRING_FLAGS_REFERENCED;
-            
+
             term->string = string;
             term->next = next;
-            next = term;            
+            next = term;
         }
-        
+
         string = string->next;
     }
-    
+
     yr_free(identifier);
-    return (TERM*) term;  
+    return (TERM*) term;
 }
 
-TERM* reduce_string_at( yyscan_t yyscanner, 
-                        char* identifier, 
+TERM* reduce_string_at( yyscan_t yyscanner,
+                        char* identifier,
                         TERM* offset)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
-    
-    if (valid_string_identifier(identifier, context))  
-    {  
-        context->last_result = new_string_identifier(TERM_TYPE_STRING_AT, context->current_rule_strings, identifier, &term);       
-     
+
+    if (valid_string_identifier(identifier, context))
+    {
+        context->last_result = new_string_identifier(TERM_TYPE_STRING_AT, context->current_rule_strings, identifier, &term);
+
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
@@ -1055,24 +1059,24 @@ TERM* reduce_string_at( yyscan_t yyscanner,
         else
         {
             term->offset = offset;
-        }  
+        }
     }
-    
-    yr_free(identifier);   
+
+    yr_free(identifier);
     return (TERM*) term;
 }
 
-TERM* reduce_string_in_range(   yyscan_t yyscanner,    
-                                char* identifier, 
+TERM* reduce_string_in_range(   yyscan_t yyscanner,
+                                char* identifier,
                                 TERM* range)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
-    
-    if (valid_string_identifier(identifier, context)) 
+
+    if (valid_string_identifier(identifier, context))
     {
         context->last_result = new_string_identifier(TERM_TYPE_STRING_IN_RANGE, context->current_rule_strings, identifier, &term);
-    
+
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
@@ -1083,8 +1087,8 @@ TERM* reduce_string_in_range(   yyscan_t yyscanner,
             term->range = range;
         }
     }
-    
-    yr_free(identifier);   
+
+    yr_free(identifier);
     return (TERM*) term;
 }
 
@@ -1093,11 +1097,11 @@ TERM* reduce_string_in_section_by_name( yyscan_t yyscanner,
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
-    
+
     if (valid_string_identifier(identifier, context))
     {
         context->last_result = new_string_identifier(TERM_TYPE_STRING_IN_SECTION_BY_NAME, context->current_rule_strings, identifier, &term);
-    
+
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
@@ -1107,10 +1111,10 @@ TERM* reduce_string_in_section_by_name( yyscan_t yyscanner,
         {
             term->section_name = yr_strdup(section_name->c_string);
         }
-    }   
-    
+    }
+
     yr_free(section_name);
-    yr_free(identifier);   
+    yr_free(identifier);
     return (TERM*) term;
 }
 
@@ -1119,19 +1123,19 @@ TERM* reduce_string_count(  yyscan_t yyscanner,
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
-    
+
     if (valid_string_identifier(identifier, context))
     {
         context->last_result = new_string_identifier(TERM_TYPE_STRING_COUNT, context->current_rule_strings, identifier, &term);
-            
+
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
             context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         }
     }
-    
-    yr_free(identifier);           
+
+    yr_free(identifier);
     return (TERM*) term;
 }
 
@@ -1145,7 +1149,7 @@ TERM* reduce_string_offset( yyscan_t yyscanner,
     if (valid_string_identifier(identifier, context))
     {
         context->last_result = new_string_identifier(TERM_TYPE_STRING_OFFSET, context->current_rule_strings, identifier, &term);
-    
+
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
@@ -1156,23 +1160,23 @@ TERM* reduce_string_offset( yyscan_t yyscanner,
             term->index = index;
         }
     }
-        
-    yr_free(identifier);           
+
+    yr_free(identifier);
     return (TERM*) term;
 }
 
-TERM* reduce_identifier(    yyscan_t yyscanner, 
+TERM* reduce_identifier(    yyscan_t yyscanner,
                             char* identifier)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM* term = NULL;
     RULE* rule;
-      
+
     rule = lookup_rule(&context->rule_list, identifier, context->current_namespace);
-        
+
     if (rule != NULL)
     {
-        context->last_result = new_binary_operation(TERM_TYPE_RULE, rule->condition, NULL, (TERM_BINARY_OPERATION**) &term);        
+        context->last_result = new_binary_operation(TERM_TYPE_RULE, rule->condition, NULL, (TERM_BINARY_OPERATION**) &term);
     }
     else
     {
@@ -1184,12 +1188,12 @@ TERM* reduce_identifier(    yyscan_t yyscanner,
 }
 
 TERM* reduce_string_enumeration(    yyscan_t yyscanner,
-                                    TERM* string_list_head, 
+                                    TERM* string_list_head,
                                     TERM* string_identifier)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = (TERM_STRING*) string_identifier;
-    
+
     term->next = (TERM_STRING*) string_list_head;
     term->string->flags |= STRING_FLAGS_REFERENCED;
 
@@ -1202,25 +1206,25 @@ TERM* reduce_string_operation( yyscan_t yyscanner,
                                         SIZED_STRING* string)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
-   
+
     int erroffset;
-    
-    VARIABLE* variable;  
+
+    VARIABLE* variable;
     TERM_STRING_OPERATION* term = NULL;
-    
+
     variable = lookup_variable(context->variables, identifier);
-    
+
     if ( variable != NULL)
     {
         if (variable->type == VARIABLE_TYPE_STRING)
-        {    
+        {
             term = (TERM_STRING_OPERATION*) yr_malloc(sizeof(TERM_STRING_OPERATION));
-            
+
             if (term != NULL)
             {
                 term->type = type;
                 term->variable = variable;
-                
+
                 if (type == TERM_TYPE_STRING_MATCH)
                 {
                     if (regex_compile(&(term->re),
@@ -1239,8 +1243,8 @@ TERM* reduce_string_operation( yyscan_t yyscanner,
                 {
                     term->string = yr_strdup(string->c_string);
                 }
-                                
-                yr_free(string);             
+
+                yr_free(string);
             }
             else
             {
@@ -1260,35 +1264,35 @@ TERM* reduce_string_operation( yyscan_t yyscanner,
         context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         context->last_result = ERROR_UNDEFINED_IDENTIFIER;
     }
-    
+
     yr_free(identifier);
     return (TERM*) term;
 
 }
 
 TERM* reduce_integer_enumeration(   yyscan_t yyscanner,
-                                    TERM* term1,     
+                                    TERM* term1,
                                     TERM* term2)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_VECTOR* vector;
-    
+
     if (term1->type == TERM_TYPE_VECTOR)
     {
         context->last_result = add_term_to_vector((TERM_VECTOR*) term1, term2);
-        
+
         return term1;
     }
     else
     {
         context->last_result = new_vector(&vector);
-        
+
         if (context->last_result == ERROR_SUCCESS)
             context->last_result = add_term_to_vector(vector, term1);
-            
+
         if (context->last_result == ERROR_SUCCESS)
             context->last_result = add_term_to_vector(vector, term2);
-            
+
         return (TERM*) vector;
     }
 }
@@ -1301,12 +1305,12 @@ TERM* reduce_integer_for(   yyscan_t yyscanner,
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_INTEGER_FOR* term = NULL;
-    VARIABLE* variable;  
-    
+    VARIABLE* variable;
+
     variable = lookup_variable(context->variables, identifier);
-    
+
     term = (TERM_INTEGER_FOR*) yr_malloc(sizeof(TERM_INTEGER_FOR));
-    
+
     if (term != NULL)
     {
         term->type = TERM_TYPE_INTEGER_FOR;
@@ -1319,9 +1323,9 @@ TERM* reduce_integer_for(   yyscan_t yyscanner,
     {
         context->last_result = ERROR_INSUFICIENT_MEMORY;
     }
-    
-    yr_free(identifier);           
-    return (TERM*) term;    
+
+    yr_free(identifier);
+    return (TERM*) term;
 }
 
 
@@ -1331,13 +1335,12 @@ TERM* reduce_range( yyscan_t yyscanner,
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_RANGE* term = NULL;
-    
+
     context->last_result = new_range(min, max, &term);
-             
-    return (TERM*) term;    
+
+    return (TERM*) term;
 }
 
-  
 
 
 
@@ -1345,6 +1348,7 @@ TERM* reduce_range( yyscan_t yyscanner,
 
 
 
-    
-    
-    
+
+
+
+

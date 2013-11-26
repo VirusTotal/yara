@@ -197,8 +197,8 @@
 
 /* Copy the first part of user declarations.  */
 #line 34 "grammar.y"
- 
-    
+
+
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
@@ -208,6 +208,10 @@
 #include "mem.h"
 #include "lex.h"
 #include "regex.h"
+
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
 
 #define YYERROR_VERBOSE
 //#define YYDEBUG 1
@@ -234,9 +238,9 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 148 "grammar.y"
+#line 152 "grammar.y"
 {
-    
+
     void*           sized_string;
     char*           c_string;
     size_t          integer;
@@ -247,7 +251,7 @@ typedef union YYSTYPE
 
 }
 /* Line 193 of yacc.c.  */
-#line 251 "grammar.c"
+#line 255 "grammar.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -257,103 +261,103 @@ typedef union YYSTYPE
 
 
 /* Copy the second part of user declarations.  */
-#line 163 "grammar.y"
- 
+#line 167 "grammar.y"
+
 
 /* Function declarations */
 
-int reduce_rule_declaration(    yyscan_t yyscanner, 
-                                char* identifier, 
-                                int flags, 
-                                TAG* tag_list_head, 
+int reduce_rule_declaration(    yyscan_t yyscanner,
+                                char* identifier,
+                                int flags,
+                                TAG* tag_list_head,
                                 META* meta_list_head,
-                                STRING* string_list_head, 
+                                STRING* string_list_head,
                                 TERM* condition);
-                            
+
 TAG* reduce_tags(   yyscan_t yyscanner,
                     TAG* tag_list_head,
                     char* identifier);
-                    
-                    
+
+
 META* reduce_meta_declaration(  yyscan_t yyscanner,
                                 int type,
                                 char* identifier,
-                                unsigned int integer_value,                 
+                                unsigned int integer_value,
                                 SIZED_STRING* string_value);
-                    
-META* reduce_metas( yyscan_t yyscanner, 
+
+META* reduce_metas( yyscan_t yyscanner,
                     META* meta_list_head,
                     META* meta);
 
 STRING* reduce_string_declaration(  yyscan_t yyscanner,
-                                    char* identifier, 
-                                    SIZED_STRING* str, 
+                                    char* identifier,
+                                    SIZED_STRING* str,
                                     int flags);
-                                
-STRING* reduce_strings( yyscan_t yyscanner, 
-                        STRING* string_list_head, 
+
+STRING* reduce_strings( yyscan_t yyscanner,
+                        STRING* string_list_head,
                         STRING* string);
 
 TERM* reduce_string_enumeration(    yyscan_t yyscanner,
-                                    TERM* string_list_head, 
+                                    TERM* string_list_head,
                                     TERM* string_identifier);
-                                                                        
+
 TERM* reduce_string_with_wildcard(  yyscan_t yyscanner,
                                     char* identifier);
 
-TERM* reduce_string(    yyscan_t yyscanner, 
+TERM* reduce_string(    yyscan_t yyscanner,
                         char* identifier);
-                        
+
 TERM* reduce_string_at( yyscan_t yyscanner,
-                        char* identifier, 
+                        char* identifier,
                         TERM* offset);
-                        
+
 TERM* reduce_string_in_range(   yyscan_t yyscanner,
-                                char* identifier, 
+                                char* identifier,
                                 TERM* range);
-                                
+
 TERM* reduce_string_in_section_by_name( yyscan_t yyscanner,
-                                        char* identifier, 
+                                        char* identifier,
                                         SIZED_STRING* section_name);
-                                        
-TERM* reduce_string_count(  yyscan_t yyscanner, 
+
+TERM* reduce_string_count(  yyscan_t yyscanner,
                             char* identifier);
-                            
-TERM* reduce_string_offset( yyscan_t yyscanner,  
+
+TERM* reduce_string_offset( yyscan_t yyscanner,
                             char* identifier,
-                            TERM* index); 
+                            TERM* index);
 
 TERM* reduce_filesize(yyscan_t yyscanner);
 
 TERM* reduce_entrypoint(yyscan_t yyscanner);
 
-TERM* reduce_term(  yyscan_t yyscanner, 
-                    int type, 
-                    TERM* op1, 
-                    TERM* op2, 
+TERM* reduce_term(  yyscan_t yyscanner,
+                    int type,
+                    TERM* op1,
+                    TERM* op2,
                     TERM* op3);
-                    
+
 TERM* reduce_constant(  yyscan_t yyscanner,
                         size_t constant);
 
 TERM* reduce_identifier( yyscan_t yyscanner,
                          char* identifier);
-                         
+
 TERM* reduce_string_operation(  yyscan_t yyscanner,
                                 int type,
                                 char* identifier,
                                 SIZED_STRING* string);
-                                        
+
 TERM* reduce_integer_enumeration(   yyscan_t yyscanner,
-                                    TERM* vector,     
+                                    TERM* vector,
                                     TERM* expression);
-                                    
+
 TERM* reduce_integer_for(   yyscan_t yyscanner,
                             TERM* count,
                             char* identifier,
                             TERM* items,
                             TERM* expression);
-                            
+
 TERM* reduce_range( yyscan_t yyscanner,
                     TERM* min,
                     TERM* max);
@@ -362,7 +366,7 @@ TERM* reduce_range( yyscan_t yyscanner,
 
 
 /* Line 216 of yacc.c.  */
-#line 366 "grammar.c"
+#line 370 "grammar.c"
 
 #ifdef short
 # undef short
@@ -695,17 +699,17 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   268,   268,   269,   270,   271,   274,   284,   285,   288,
-     289,   292,   295,   296,   299,   300,   303,   304,   307,   316,
-     326,   335,   346,   355,   364,   373,   384,   394,   406,   416,
-     426,   438,   439,   442,   443,   444,   445,   448,   449,   450,
-     460,   470,   480,   490,   500,   504,   514,   525,   524,   539,
-     538,   554,   564,   565,   566,   567,   568,   570,   571,   572,
-     573,   574,   575,   576,   581,   582,   585,   586,   591,   592,
-     595,   596,   599,   609,   623,   627,   628,   629,   633,   634,
-     635,   636,   637,   638,   639,   640,   641,   651,   661,   671,
-     681,   682,   683,   684,   685,   686,   687,   688,   689,   690,
-     691,   692,   693,   696,   699,   700,   701
+       0,   272,   272,   273,   274,   275,   278,   288,   289,   292,
+     293,   296,   299,   300,   303,   304,   307,   308,   311,   320,
+     330,   339,   350,   359,   368,   377,   388,   398,   410,   420,
+     430,   442,   443,   446,   447,   448,   449,   452,   453,   454,
+     464,   474,   484,   494,   504,   508,   518,   529,   528,   543,
+     542,   558,   568,   569,   570,   571,   572,   574,   575,   576,
+     577,   578,   579,   580,   585,   586,   589,   590,   595,   596,
+     599,   600,   603,   613,   627,   631,   632,   633,   637,   638,
+     639,   640,   641,   642,   643,   644,   645,   655,   665,   675,
+     685,   686,   687,   688,   689,   690,   691,   692,   693,   694,
+     695,   696,   697,   700,   703,   704,   705
 };
 #endif
 
@@ -1803,76 +1807,76 @@ yyreduce:
   switch (yyn)
     {
         case 6:
-#line 275 "grammar.y"
-    { 
+#line 279 "grammar.y"
+    {
                 if (reduce_rule_declaration(yyscanner, (yyvsp[(3) - (9)].c_string),(yyvsp[(1) - (9)].integer),(yyvsp[(4) - (9)].tag),(yyvsp[(6) - (9)].meta),(yyvsp[(7) - (9)].string),(yyvsp[(8) - (9)].term)) != ERROR_SUCCESS)
                 {
                     yyerror(yyscanner, NULL);
-                    YYERROR; 
-                }  
+                    YYERROR;
+                }
             }
     break;
 
   case 7:
-#line 284 "grammar.y"
+#line 288 "grammar.y"
     { (yyval.meta) = NULL; }
     break;
 
   case 8:
-#line 285 "grammar.y"
+#line 289 "grammar.y"
     { (yyval.meta) = (yyvsp[(3) - (3)].meta); }
     break;
 
   case 9:
-#line 288 "grammar.y"
+#line 292 "grammar.y"
     { (yyval.string) = NULL; }
     break;
 
   case 10:
-#line 289 "grammar.y"
+#line 293 "grammar.y"
     { (yyval.string) = (yyvsp[(3) - (3)].string); }
     break;
 
   case 11:
-#line 292 "grammar.y"
+#line 296 "grammar.y"
     { (yyval.term) = (yyvsp[(3) - (3)].term); }
     break;
 
   case 12:
-#line 295 "grammar.y"
+#line 299 "grammar.y"
     { (yyval.integer) = 0;  }
     break;
 
   case 13:
-#line 296 "grammar.y"
+#line 300 "grammar.y"
     { (yyval.integer) = (yyvsp[(1) - (2)].integer) | (yyvsp[(2) - (2)].integer); }
     break;
 
   case 14:
-#line 299 "grammar.y"
+#line 303 "grammar.y"
     { (yyval.integer) = RULE_FLAGS_PRIVATE; }
     break;
 
   case 15:
-#line 300 "grammar.y"
+#line 304 "grammar.y"
     { (yyval.integer) = RULE_FLAGS_GLOBAL; }
     break;
 
   case 16:
-#line 303 "grammar.y"
+#line 307 "grammar.y"
     { (yyval.tag) = NULL; }
     break;
 
   case 17:
-#line 304 "grammar.y"
+#line 308 "grammar.y"
     { (yyval.tag) = (yyvsp[(2) - (2)].tag);   }
     break;
 
   case 18:
-#line 307 "grammar.y"
-    { 
-                                                (yyval.tag) = reduce_tags(yyscanner,NULL,(yyvsp[(1) - (1)].c_string)); 
-                                                
+#line 311 "grammar.y"
+    {
+                                                (yyval.tag) = reduce_tags(yyscanner,NULL,(yyvsp[(1) - (1)].c_string));
+
                                                 if ((yyval.tag) == NULL)
                                                 {
                                                     yyerror(yyscanner, NULL);
@@ -1882,10 +1886,10 @@ yyreduce:
     break;
 
   case 19:
-#line 316 "grammar.y"
-    {   
-                                                (yyval.tag) = reduce_tags(yyscanner,(yyvsp[(1) - (2)].tag),(yyvsp[(2) - (2)].c_string)); 
-                                                
+#line 320 "grammar.y"
+    {
+                                                (yyval.tag) = reduce_tags(yyscanner,(yyvsp[(1) - (2)].tag),(yyvsp[(2) - (2)].c_string));
+
                                                 if ((yyval.tag) == NULL)
                                                 {
                                                     yyerror(yyscanner, NULL);
@@ -1895,10 +1899,10 @@ yyreduce:
     break;
 
   case 20:
-#line 326 "grammar.y"
-    { 
-                                                                (yyval.meta) = reduce_metas(yyscanner, NULL, (yyvsp[(1) - (1)].meta)); 
-                                                                
+#line 330 "grammar.y"
+    {
+                                                                (yyval.meta) = reduce_metas(yyscanner, NULL, (yyvsp[(1) - (1)].meta));
+
                                                                 if ((yyval.meta) == NULL)
                                                                 {
                                                                     yyerror(yyscanner, NULL);
@@ -1908,10 +1912,10 @@ yyreduce:
     break;
 
   case 21:
-#line 335 "grammar.y"
-    { 
-                                                                (yyval.meta) = reduce_metas(yyscanner, (yyvsp[(1) - (2)].meta), (yyvsp[(2) - (2)].meta)); 
-                                                                
+#line 339 "grammar.y"
+    {
+                                                                (yyval.meta) = reduce_metas(yyscanner, (yyvsp[(1) - (2)].meta), (yyvsp[(2) - (2)].meta));
+
                                                                 if ((yyval.meta) == NULL)
                                                                 {
                                                                     yyerror(yyscanner, NULL);
@@ -1921,10 +1925,10 @@ yyreduce:
     break;
 
   case 22:
-#line 346 "grammar.y"
-    { 
+#line 350 "grammar.y"
+    {
                                                                 (yyval.meta) = reduce_meta_declaration(yyscanner, META_TYPE_STRING, (yyvsp[(1) - (3)].c_string), 0, (yyvsp[(3) - (3)].sized_string));
-                                                                
+
                                                                 if ((yyval.meta) == NULL)
                                                                 {
                                                                     yyerror(yyscanner, NULL);
@@ -1934,10 +1938,10 @@ yyreduce:
     break;
 
   case 23:
-#line 355 "grammar.y"
-    { 
-                                                                (yyval.meta) = reduce_meta_declaration(yyscanner, META_TYPE_INTEGER, (yyvsp[(1) - (3)].c_string), (yyvsp[(3) - (3)].integer), NULL); 
-                                                                
+#line 359 "grammar.y"
+    {
+                                                                (yyval.meta) = reduce_meta_declaration(yyscanner, META_TYPE_INTEGER, (yyvsp[(1) - (3)].c_string), (yyvsp[(3) - (3)].integer), NULL);
+
                                                                 if ((yyval.meta) == NULL)
                                                                 {
                                                                     yyerror(yyscanner, NULL);
@@ -1947,9 +1951,9 @@ yyreduce:
     break;
 
   case 24:
-#line 364 "grammar.y"
-    { 
-                                                                (yyval.meta) = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, (yyvsp[(1) - (3)].c_string), TRUE, NULL); 
+#line 368 "grammar.y"
+    {
+                                                                (yyval.meta) = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, (yyvsp[(1) - (3)].c_string), TRUE, NULL);
 
                                                                 if ((yyval.meta) == NULL)
                                                                 {
@@ -1960,9 +1964,9 @@ yyreduce:
     break;
 
   case 25:
-#line 373 "grammar.y"
-    { 
-                                                                (yyval.meta) = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, (yyvsp[(1) - (3)].c_string), FALSE, NULL); 
+#line 377 "grammar.y"
+    {
+                                                                (yyval.meta) = reduce_meta_declaration(yyscanner, META_TYPE_BOOLEAN, (yyvsp[(1) - (3)].c_string), FALSE, NULL);
 
                                                                 if ((yyval.meta) == NULL)
                                                                 {
@@ -1973,10 +1977,10 @@ yyreduce:
     break;
 
   case 26:
-#line 385 "grammar.y"
-    { 
-                            (yyval.string) = reduce_strings(yyscanner,NULL,(yyvsp[(1) - (1)].string)); 
-                            
+#line 389 "grammar.y"
+    {
+                            (yyval.string) = reduce_strings(yyscanner,NULL,(yyvsp[(1) - (1)].string));
+
                             if ((yyval.string) == NULL)
                             {
                                 yyerror(yyscanner, NULL);
@@ -1986,23 +1990,23 @@ yyreduce:
     break;
 
   case 27:
-#line 395 "grammar.y"
-    { 
+#line 399 "grammar.y"
+    {
                             (yyval.string) = reduce_strings(yyscanner,(yyvsp[(1) - (2)].string),(yyvsp[(2) - (2)].string));
-                        
+
                             if ((yyval.string) == NULL)
                             {
                                 yyerror(yyscanner, NULL);
                                 YYERROR;
-                            }  
+                            }
                         }
     break;
 
   case 28:
-#line 407 "grammar.y"
-    { 
-                            (yyval.string) = reduce_string_declaration(yyscanner, (yyvsp[(1) - (4)].term), (yyvsp[(3) - (4)].sized_string), (yyvsp[(4) - (4)].integer)); 
-                
+#line 411 "grammar.y"
+    {
+                            (yyval.string) = reduce_string_declaration(yyscanner, (yyvsp[(1) - (4)].term), (yyvsp[(3) - (4)].sized_string), (yyvsp[(4) - (4)].integer));
+
                             if ((yyval.string) == NULL)
                             {
                                 yyerror(yyscanner, NULL);
@@ -2012,9 +2016,9 @@ yyreduce:
     break;
 
   case 29:
-#line 417 "grammar.y"
-    { 
-                           (yyval.string) = reduce_string_declaration(yyscanner, (yyvsp[(1) - (4)].term), (yyvsp[(3) - (4)].sized_string), (yyvsp[(4) - (4)].integer) | STRING_FLAGS_REGEXP); 
+#line 421 "grammar.y"
+    {
+                           (yyval.string) = reduce_string_declaration(yyscanner, (yyvsp[(1) - (4)].term), (yyvsp[(3) - (4)].sized_string), (yyvsp[(4) - (4)].integer) | STRING_FLAGS_REGEXP);
 
                            if ((yyval.string) == NULL)
                            {
@@ -2025,10 +2029,10 @@ yyreduce:
     break;
 
   case 30:
-#line 427 "grammar.y"
+#line 431 "grammar.y"
     {
                             (yyval.string) = reduce_string_declaration(yyscanner, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].sized_string), STRING_FLAGS_HEXADECIMAL);
-            
+
                             if ((yyval.string) == NULL)
                             {
                                 yyerror(yyscanner, NULL);
@@ -2038,50 +2042,50 @@ yyreduce:
     break;
 
   case 31:
-#line 438 "grammar.y"
+#line 442 "grammar.y"
     { (yyval.integer) = 0;  }
     break;
 
   case 32:
-#line 439 "grammar.y"
+#line 443 "grammar.y"
     { (yyval.integer) = (yyvsp[(1) - (2)].integer) | (yyvsp[(2) - (2)].integer); }
     break;
 
   case 33:
-#line 442 "grammar.y"
+#line 446 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_WIDE; }
     break;
 
   case 34:
-#line 443 "grammar.y"
+#line 447 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_ASCII; }
     break;
 
   case 35:
-#line 444 "grammar.y"
+#line 448 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_NO_CASE; }
     break;
 
   case 36:
-#line 445 "grammar.y"
+#line 449 "grammar.y"
     { (yyval.integer) = STRING_FLAGS_FULL_WORD; }
     break;
 
   case 37:
-#line 448 "grammar.y"
+#line 452 "grammar.y"
     { (yyval.term) = reduce_constant(yyscanner, 1); }
     break;
 
   case 38:
-#line 449 "grammar.y"
+#line 453 "grammar.y"
     { (yyval.term) = reduce_constant(yyscanner, 0); }
     break;
 
   case 39:
-#line 451 "grammar.y"
-    { 
+#line 455 "grammar.y"
+    {
                         (yyval.term) = reduce_identifier(yyscanner, (yyvsp[(1) - (1)].c_string));
-                        
+
                         if ((yyval.term) == NULL)
                         {
                             yyerror(yyscanner, NULL);
@@ -2091,10 +2095,10 @@ yyreduce:
     break;
 
   case 40:
-#line 461 "grammar.y"
-    { 
+#line 465 "grammar.y"
+    {
                         (yyval.term) = reduce_string_operation(yyscanner, TERM_TYPE_STRING_MATCH, (yyvsp[(1) - (3)].c_string), (yyvsp[(3) - (3)].sized_string));
-                        
+
                         if ((yyval.term) == NULL)
                         {
                             yyerror(yyscanner, NULL);
@@ -2104,10 +2108,10 @@ yyreduce:
     break;
 
   case 41:
-#line 471 "grammar.y"
-    { 
+#line 475 "grammar.y"
+    {
                         (yyval.term) = reduce_string_operation(yyscanner, TERM_TYPE_STRING_CONTAINS, (yyvsp[(1) - (3)].c_string), (yyvsp[(3) - (3)].sized_string));
-                        
+
                         if ((yyval.term) == NULL)
                         {
                             yyerror(yyscanner, NULL);
@@ -2117,10 +2121,10 @@ yyreduce:
     break;
 
   case 42:
-#line 481 "grammar.y"
-    {  
+#line 485 "grammar.y"
+    {
                         (yyval.term) = reduce_string(yyscanner, (yyvsp[(1) - (1)].term));
-                        
+
                         if ((yyval.term) == NULL)
                         {
                             yyerror(yyscanner, NULL);
@@ -2130,10 +2134,10 @@ yyreduce:
     break;
 
   case 43:
-#line 491 "grammar.y"
-    {          
+#line 495 "grammar.y"
+    {
                         (yyval.term) = reduce_string_at(yyscanner, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term));
-                        
+
                         if ((yyval.term) == NULL)
                         {
                             yyerror(yyscanner, NULL);
@@ -2143,17 +2147,17 @@ yyreduce:
     break;
 
   case 44:
-#line 501 "grammar.y"
-    { 
-                        (yyval.term) = NULL; 
+#line 505 "grammar.y"
+    {
+                        (yyval.term) = NULL;
                      }
     break;
 
   case 45:
-#line 505 "grammar.y"
-    {          
+#line 509 "grammar.y"
+    {
                         (yyval.term) = reduce_string_in_range(yyscanner, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term));
-                        
+
                         if ((yyval.term) == NULL)
                         {
                             yyerror(yyscanner, NULL);
@@ -2163,8 +2167,8 @@ yyreduce:
     break;
 
   case 46:
-#line 515 "grammar.y"
-    {          
+#line 519 "grammar.y"
+    {
                         (yyval.term) = reduce_string_in_section_by_name(yyscanner, (yyvsp[(1) - (6)].term), (yyvsp[(5) - (6)].sized_string));
 
                         if ((yyval.term) == NULL)
@@ -2176,17 +2180,17 @@ yyreduce:
     break;
 
   case 47:
-#line 525 "grammar.y"
+#line 529 "grammar.y"
     {
                           yr_define_integer_variable(yyget_extra(yyscanner), (yyvsp[(3) - (6)].c_string), 0);
                      }
     break;
 
   case 48:
-#line 529 "grammar.y"
-    {                        
-                         (yyval.term) = reduce_integer_for(yyscanner, (yyvsp[(2) - (10)].term), (yyvsp[(3) - (10)].c_string), (yyvsp[(5) - (10)].term), (yyvsp[(9) - (10)].term)); 
-                           
+#line 533 "grammar.y"
+    {
+                         (yyval.term) = reduce_integer_for(yyscanner, (yyvsp[(2) - (10)].term), (yyvsp[(3) - (10)].c_string), (yyvsp[(5) - (10)].term), (yyvsp[(9) - (10)].term));
+
                          if ((yyval.term) == NULL)
                          {
                              yyerror(yyscanner, NULL);
@@ -2196,19 +2200,19 @@ yyreduce:
     break;
 
   case 49:
-#line 539 "grammar.y"
-    { 
-                         yyget_extra(yyscanner)->inside_for++; 
+#line 543 "grammar.y"
+    {
+                         yyget_extra(yyscanner)->inside_for++;
                      }
     break;
 
   case 50:
-#line 543 "grammar.y"
-    { 
-                         yyget_extra(yyscanner)->inside_for--; 
-                           
-                         (yyval.term) = reduce_term(yyscanner, TERM_TYPE_STRING_FOR, (yyvsp[(2) - (9)].term), (yyvsp[(4) - (9)].term), (yyvsp[(8) - (9)].term)); 
-                           
+#line 547 "grammar.y"
+    {
+                         yyget_extra(yyscanner)->inside_for--;
+
+                         (yyval.term) = reduce_term(yyscanner, TERM_TYPE_STRING_FOR, (yyvsp[(2) - (9)].term), (yyvsp[(4) - (9)].term), (yyvsp[(8) - (9)].term));
+
                          if ((yyval.term) == NULL)
                          {
                              yyerror(yyscanner, NULL);
@@ -2218,10 +2222,10 @@ yyreduce:
     break;
 
   case 51:
-#line 555 "grammar.y"
-    { 
-                         (yyval.term) = reduce_term(yyscanner, TERM_TYPE_OF, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); 
-                         
+#line 559 "grammar.y"
+    {
+                         (yyval.term) = reduce_term(yyscanner, TERM_TYPE_OF, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL);
+
                          if ((yyval.term) == NULL)
                          {
                              yyerror(yyscanner, NULL);
@@ -2231,98 +2235,98 @@ yyreduce:
     break;
 
   case 52:
-#line 564 "grammar.y"
+#line 568 "grammar.y"
     { (yyval.term) = NULL; }
     break;
 
   case 53:
-#line 565 "grammar.y"
+#line 569 "grammar.y"
     { (yyval.term) = (yyvsp[(2) - (3)].term); }
     break;
 
   case 54:
-#line 566 "grammar.y"
+#line 570 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_NOT, (yyvsp[(2) - (2)].term), NULL, NULL); }
     break;
 
   case 55:
-#line 567 "grammar.y"
+#line 571 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_AND, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 56:
-#line 568 "grammar.y"
+#line 572 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_OR, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 57:
-#line 570 "grammar.y"
+#line 574 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_LT, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 58:
-#line 571 "grammar.y"
+#line 575 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_GT, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 59:
-#line 572 "grammar.y"
+#line 576 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_LE, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 60:
-#line 573 "grammar.y"
+#line 577 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_GE, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 61:
-#line 574 "grammar.y"
+#line 578 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_EQ, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 62:
-#line 575 "grammar.y"
+#line 579 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_EQ, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 63:
-#line 576 "grammar.y"
+#line 580 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_NOT_EQ, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 64:
-#line 581 "grammar.y"
+#line 585 "grammar.y"
     { (yyval.term) = (yyvsp[(2) - (3)].term); }
     break;
 
   case 65:
-#line 582 "grammar.y"
+#line 586 "grammar.y"
     { (yyval.term) = (yyvsp[(1) - (1)].term); }
     break;
 
   case 67:
-#line 586 "grammar.y"
+#line 590 "grammar.y"
     { (yyval.term) = reduce_integer_enumeration(yyscanner, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term)); }
     break;
 
   case 68:
-#line 591 "grammar.y"
+#line 595 "grammar.y"
     { (yyval.term) = (yyvsp[(2) - (3)].term); }
     break;
 
   case 69:
-#line 592 "grammar.y"
+#line 596 "grammar.y"
     { (yyval.term) = reduce_string_with_wildcard(yyscanner, yr_strdup("$*")); }
     break;
 
   case 71:
-#line 596 "grammar.y"
+#line 600 "grammar.y"
     { (yyval.term) = reduce_string_enumeration(yyscanner, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term)); }
     break;
 
   case 72:
-#line 600 "grammar.y"
-    {  
+#line 604 "grammar.y"
+    {
                               (yyval.term) = reduce_string(yyscanner, (yyvsp[(1) - (1)].term));
 
                               if ((yyval.term) == NULL)
@@ -2334,10 +2338,10 @@ yyreduce:
     break;
 
   case 73:
-#line 610 "grammar.y"
-    { 
-                              (yyval.term) = reduce_string_with_wildcard(yyscanner, (yyvsp[(1) - (1)].term)); 
-                              
+#line 614 "grammar.y"
+    {
+                              (yyval.term) = reduce_string_with_wildcard(yyscanner, (yyvsp[(1) - (1)].term));
+
                               if ((yyval.term) == NULL)
                               {
                                   yyerror(yyscanner, NULL);
@@ -2347,65 +2351,65 @@ yyreduce:
     break;
 
   case 74:
-#line 623 "grammar.y"
+#line 627 "grammar.y"
     { (yyval.term) = reduce_range(yyscanner, (yyvsp[(2) - (6)].term), (yyvsp[(5) - (6)].term)); }
     break;
 
   case 76:
-#line 628 "grammar.y"
+#line 632 "grammar.y"
     { (yyval.term) = reduce_constant(yyscanner, 0); }
     break;
 
   case 77:
-#line 629 "grammar.y"
+#line 633 "grammar.y"
     { (yyval.term) = reduce_constant(yyscanner, 1); }
     break;
 
   case 78:
-#line 633 "grammar.y"
+#line 637 "grammar.y"
     { (yyval.term) = reduce_filesize(yyscanner); }
     break;
 
   case 79:
-#line 634 "grammar.y"
+#line 638 "grammar.y"
     { (yyval.term) = reduce_entrypoint(yyscanner); }
     break;
 
   case 80:
-#line 635 "grammar.y"
+#line 639 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_INT8_AT_OFFSET, (yyvsp[(3) - (4)].term), NULL, NULL); }
     break;
 
   case 81:
-#line 636 "grammar.y"
+#line 640 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_INT16_AT_OFFSET, (yyvsp[(3) - (4)].term), NULL, NULL); }
     break;
 
   case 82:
-#line 637 "grammar.y"
+#line 641 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_INT32_AT_OFFSET, (yyvsp[(3) - (4)].term), NULL, NULL); }
     break;
 
   case 83:
-#line 638 "grammar.y"
+#line 642 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_UINT8_AT_OFFSET, (yyvsp[(3) - (4)].term), NULL, NULL); }
     break;
 
   case 84:
-#line 639 "grammar.y"
+#line 643 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_UINT16_AT_OFFSET, (yyvsp[(3) - (4)].term), NULL, NULL); }
     break;
 
   case 85:
-#line 640 "grammar.y"
+#line 644 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_UINT32_AT_OFFSET, (yyvsp[(3) - (4)].term), NULL, NULL); }
     break;
 
   case 86:
-#line 642 "grammar.y"
-    { 
-                (yyval.term) = reduce_string_count(yyscanner, (yyvsp[(1) - (1)].term)); 
-                
+#line 646 "grammar.y"
+    {
+                (yyval.term) = reduce_string_count(yyscanner, (yyvsp[(1) - (1)].term));
+
                 if ((yyval.term) == NULL)
                 {
                     yyerror(yyscanner, NULL);
@@ -2415,9 +2419,9 @@ yyreduce:
     break;
 
   case 87:
-#line 652 "grammar.y"
-    { 
-                (yyval.term) = reduce_string_offset(yyscanner, (yyvsp[(1) - (4)].term), (yyvsp[(3) - (4)].term)); 
+#line 656 "grammar.y"
+    {
+                (yyval.term) = reduce_string_offset(yyscanner, (yyvsp[(1) - (4)].term), (yyvsp[(3) - (4)].term));
 
                 if ((yyval.term) == NULL)
                 {
@@ -2428,10 +2432,10 @@ yyreduce:
     break;
 
   case 88:
-#line 662 "grammar.y"
-    { 
-                 (yyval.term) = reduce_string_offset(yyscanner, (yyvsp[(1) - (1)].term), reduce_constant(yyscanner, 1)); 
- 
+#line 666 "grammar.y"
+    {
+                 (yyval.term) = reduce_string_offset(yyscanner, (yyvsp[(1) - (1)].term), reduce_constant(yyscanner, 1));
+
                  if ((yyval.term) == NULL)
                  {
                      yyerror(yyscanner, NULL);
@@ -2441,10 +2445,10 @@ yyreduce:
     break;
 
   case 89:
-#line 672 "grammar.y"
+#line 676 "grammar.y"
     {
                  (yyval.term) = reduce_identifier(yyscanner, (yyvsp[(1) - (1)].c_string));
-                    
+
                  if ((yyval.term) == NULL)
                  {
                     yyerror(yyscanner, NULL);
@@ -2454,73 +2458,73 @@ yyreduce:
     break;
 
   case 90:
-#line 681 "grammar.y"
+#line 685 "grammar.y"
     { (yyval.term) = (yyvsp[(2) - (3)].term); }
     break;
 
   case 91:
-#line 682 "grammar.y"
+#line 686 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_ADD, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 92:
-#line 683 "grammar.y"
+#line 687 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_SUB, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 93:
-#line 684 "grammar.y"
+#line 688 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_MUL, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 94:
-#line 685 "grammar.y"
+#line 689 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_DIV, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 95:
-#line 686 "grammar.y"
+#line 690 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_MOD, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 96:
-#line 687 "grammar.y"
+#line 691 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_BITWISE_XOR, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 97:
-#line 688 "grammar.y"
+#line 692 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_BITWISE_AND, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 98:
-#line 689 "grammar.y"
+#line 693 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_BITWISE_OR, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 99:
-#line 690 "grammar.y"
+#line 694 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_BITWISE_NOT, (yyvsp[(2) - (2)].term), NULL, NULL); }
     break;
 
   case 100:
-#line 691 "grammar.y"
+#line 695 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_SHIFT_LEFT, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 101:
-#line 692 "grammar.y"
+#line 696 "grammar.y"
     { (yyval.term) = reduce_term(yyscanner, TERM_TYPE_SHIFT_RIGHT, (yyvsp[(1) - (3)].term), (yyvsp[(3) - (3)].term), NULL); }
     break;
 
   case 103:
-#line 696 "grammar.y"
+#line 700 "grammar.y"
     { (yyval.term) = reduce_constant(yyscanner, (yyvsp[(1) - (1)].integer)); }
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 2524 "grammar.c"
+#line 2528 "grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2734,13 +2738,13 @@ yyreturn:
 }
 
 
-#line 704 "grammar.y"
+#line 708 "grammar.y"
 
 
 
 int valid_string_identifier(char* identifier, YARA_CONTEXT* context)
 {
-    if (strcmp(identifier, "$") != 0 || context->inside_for > 0) 
+    if (strcmp(identifier, "$") != 0 || context->inside_for > 0)
     {
         return TRUE;
     }
@@ -2752,26 +2756,26 @@ int valid_string_identifier(char* identifier, YARA_CONTEXT* context)
 }
 
 int reduce_rule_declaration(    yyscan_t yyscanner,
-                                char* identifier, 
-                                int flags, 
+                                char* identifier,
+                                int flags,
                                 TAG* tag_list_head,
                                 META* meta_list_head,
-                                STRING* string_list_head, 
+                                STRING* string_list_head,
                                 TERM* condition
                             )
 {
     STRING*         string;
     YARA_CONTEXT*   context = yyget_extra(yyscanner);
 
-    context->last_result = new_rule(&context->rule_list, 
-                                    identifier, 
-                                    context->current_namespace, 
-                                    flags | context->current_rule_flags, 
-                                    tag_list_head, 
-                                    meta_list_head, 
-                                    string_list_head, 
+    context->last_result = new_rule(&context->rule_list,
+                                    identifier,
+                                    context->current_namespace,
+                                    flags | context->current_rule_flags,
+                                    tag_list_head,
+                                    meta_list_head,
+                                    string_list_head,
                                     condition);
-                                        
+
     if (context->last_result != ERROR_SUCCESS)
     {
         strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
@@ -2780,7 +2784,7 @@ int reduce_rule_declaration(    yyscan_t yyscanner,
     else
     {
         string = string_list_head;
-        
+
         while (string != NULL)
         {
             if (! (string->flags & STRING_FLAGS_REFERENCED))
@@ -2790,34 +2794,34 @@ int reduce_rule_declaration(    yyscan_t yyscanner,
                 context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
                 break;
             }
-            
+
             string = string->next;
         }
     }
-    
-    context->current_rule_flags = 0;  
+
+    context->current_rule_flags = 0;
     context->current_rule_strings = NULL;
 
     return context->last_result;
 }
 
 STRING* reduce_string_declaration(  yyscan_t yyscanner,
-                                    char* identifier, 
-                                    SIZED_STRING* str, 
+                                    char* identifier,
+                                    SIZED_STRING* str,
                                     int flags)
 {
     char            tmp[200];
     STRING*         string = NULL;
     YARA_CONTEXT*   context = yyget_extra(yyscanner);
-    
+
     if (strcmp(identifier,"$") == 0)
     {
         flags |= STRING_FLAGS_ANONYMOUS;
     }
-    
+
     context->last_result = new_string(context, identifier, str, flags, &string);
-    
-    if (context->last_result == ERROR_INVALID_REGULAR_EXPRESSION) 
+
+    if (context->last_result == ERROR_INVALID_REGULAR_EXPRESSION)
     {
         snprintf(tmp, sizeof(tmp), "invalid regular expression in string \"%s\": %s", identifier, context->last_error_extra_info);
         strncpy(context->last_error_extra_info, tmp, sizeof(context->last_error_extra_info));
@@ -2828,28 +2832,28 @@ STRING* reduce_string_declaration(  yyscan_t yyscanner,
         strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
         context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
     }
-    
+
     yr_free(str);
 
     if (context->fast_match)
     {
         string->flags |= STRING_FLAGS_FAST_MATCH;
     }
-            
+
     return string;
 }
 
 STRING* reduce_strings( yyscan_t yyscanner,
-                        STRING* string_list_head, 
+                        STRING* string_list_head,
                         STRING* string)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
-    
+
     /* no strings with the same identifier, except for anonymous strings */
-    
-    if (IS_ANONYMOUS(string) || lookup_string(string_list_head,string->identifier) == NULL) 
+
+    if (IS_ANONYMOUS(string) || lookup_string(string_list_head,string->identifier) == NULL)
     {
-        string->next = string_list_head;    
+        string->next = string_list_head;
         context->current_rule_strings = string;
         context->last_result = ERROR_SUCCESS;
         return string;
@@ -2860,7 +2864,7 @@ STRING* reduce_strings( yyscan_t yyscanner,
         context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         context->last_result = ERROR_DUPLICATE_STRING_IDENTIFIER;
         return NULL;
-    }   
+    }
 }
 
 META* reduce_meta_declaration(  yyscan_t yyscanner,
@@ -2871,14 +2875,14 @@ META* reduce_meta_declaration(  yyscan_t yyscanner,
 {
     META*           meta = NULL;
     YARA_CONTEXT*   context = yyget_extra(yyscanner);
-    
+
     meta = yr_malloc(sizeof(META));
-    
+
     if (meta != NULL)
     {
         meta->identifier = identifier;
         meta->type = type;
-        
+
         if (type == META_TYPE_INTEGER)
         {
             meta->integer = integer_value;
@@ -2891,27 +2895,27 @@ META* reduce_meta_declaration(  yyscan_t yyscanner,
         {
             meta->string = yr_strdup(string_value->c_string);
             yr_free(string_value);
-        }    
+        }
     }
     else
     {
         context->last_result = ERROR_INSUFICIENT_MEMORY;
     }
-    
-    return meta;  
+
+    return meta;
 }
 
 META* reduce_metas( yyscan_t yyscanner,
-                    META* meta_list_head, 
+                    META* meta_list_head,
                     META* meta)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
-    
+
     /* no metas with the same identifier */
 
-    if (lookup_meta(meta_list_head, meta->identifier) == NULL) 
+    if (lookup_meta(meta_list_head, meta->identifier) == NULL)
     {
-        meta->next = meta_list_head;    
+        meta->next = meta_list_head;
         context->last_result = ERROR_SUCCESS;
         return meta;
     }
@@ -2921,10 +2925,10 @@ META* reduce_metas( yyscan_t yyscanner,
         context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         context->last_result = ERROR_DUPLICATE_META_IDENTIFIER;
         return NULL;
-    }   
+    }
 }
 
-TAG* reduce_tags(   yyscan_t yyscanner, 
+TAG* reduce_tags(   yyscan_t yyscanner,
                     TAG* tag_list_head,
                     char* identifier)
 {
@@ -2934,18 +2938,18 @@ TAG* reduce_tags(   yyscan_t yyscanner,
     if (lookup_tag(tag_list_head, identifier) == NULL) /* no tags with the same identifier */
     {
         tag = yr_malloc(sizeof(TAG));
-        
+
         if (tag != NULL)
         {
             tag->identifier = identifier;
-            tag->next = tag_list_head;  
+            tag->next = tag_list_head;
             context->last_result = ERROR_SUCCESS;
         }
         else
         {
             context->last_result = ERROR_INSUFICIENT_MEMORY;
         }
-        
+
         return tag;
     }
     else
@@ -2961,27 +2965,27 @@ TERM* reduce_filesize(yyscan_t yyscanner)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM* term = NULL;
-    
-    context->last_result = new_simple_term(TERM_TYPE_FILESIZE, &term); 
+
+    context->last_result = new_simple_term(TERM_TYPE_FILESIZE, &term);
     context->current_rule_flags |= RULE_FLAGS_REQUIRE_FILE;
-    return (TERM*) term;    
+    return (TERM*) term;
 }
 
 TERM* reduce_entrypoint(yyscan_t yyscanner)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM* term = NULL;
-    
+
     context->last_result = new_simple_term(TERM_TYPE_ENTRYPOINT, &term);
     context->current_rule_flags |= RULE_FLAGS_REQUIRE_EXECUTABLE;
-    return (TERM*) term;    
+    return (TERM*) term;
 }
 
 TERM* reduce_term(yyscan_t yyscanner, int type, TERM* op1, TERM* op2, TERM* op3)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM* term = NULL;
-    
+
     if (op2 == NULL && op3 == NULL)
     {
         context->last_result = new_unary_operation(type, op1, (TERM_UNARY_OPERATION**) &term);
@@ -2994,7 +2998,7 @@ TERM* reduce_term(yyscan_t yyscanner, int type, TERM* op1, TERM* op2, TERM* op3)
     {
         context->last_result = new_ternary_operation(type, op1, op2, op3, (TERM_TERNARY_OPERATION**) &term);
     }
-    
+
     return (TERM*) term;
 }
 
@@ -3003,8 +3007,8 @@ TERM* reduce_constant(  yyscan_t yyscanner,
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_CONST* term = NULL;
-    
-    context->last_result = new_constant(constant, &term); 
+
+    context->last_result = new_constant(constant, &term);
     return (TERM*) term;
 }
 
@@ -3013,19 +3017,19 @@ TERM* reduce_string(    yyscan_t yyscanner,
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
-    
-    if (valid_string_identifier(identifier, context)) 
-    {  
-        context->last_result = new_string_identifier(TERM_TYPE_STRING, context->current_rule_strings, identifier, &term);       
-     
+
+    if (valid_string_identifier(identifier, context))
+    {
+        context->last_result = new_string_identifier(TERM_TYPE_STRING, context->current_rule_strings, identifier, &term);
+
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
             context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         }
     }
-    
-    yr_free(identifier);   
+
+    yr_free(identifier);
     return (TERM*) term;
 }
 
@@ -3036,51 +3040,51 @@ TERM* reduce_string_with_wildcard(  yyscan_t yyscanner,
     TERM_STRING* term = NULL;
     TERM_STRING* next;
     STRING* string;
-    
+
     int len = 0;
 
     string = context->current_rule_strings;
     next = NULL;
-    
+
     while (identifier[len] != '\0' && identifier[len] != '*')
     {
         len++;
     }
-    
+
     while (string != NULL)
     {
         if (strncmp(string->identifier, identifier, len) == 0)
         {
             context->last_result = new_string_identifier(TERM_TYPE_STRING, context->current_rule_strings, string->identifier, &term);
-            
+
             if (context->last_result != ERROR_SUCCESS)
                 break;
-                
+
             string->flags |= STRING_FLAGS_REFERENCED;
-            
+
             term->string = string;
             term->next = next;
-            next = term;            
+            next = term;
         }
-        
+
         string = string->next;
     }
-    
+
     yr_free(identifier);
-    return (TERM*) term;  
+    return (TERM*) term;
 }
 
-TERM* reduce_string_at( yyscan_t yyscanner, 
-                        char* identifier, 
+TERM* reduce_string_at( yyscan_t yyscanner,
+                        char* identifier,
                         TERM* offset)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
-    
-    if (valid_string_identifier(identifier, context))  
-    {  
-        context->last_result = new_string_identifier(TERM_TYPE_STRING_AT, context->current_rule_strings, identifier, &term);       
-     
+
+    if (valid_string_identifier(identifier, context))
+    {
+        context->last_result = new_string_identifier(TERM_TYPE_STRING_AT, context->current_rule_strings, identifier, &term);
+
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
@@ -3089,24 +3093,24 @@ TERM* reduce_string_at( yyscan_t yyscanner,
         else
         {
             term->offset = offset;
-        }  
+        }
     }
-    
-    yr_free(identifier);   
+
+    yr_free(identifier);
     return (TERM*) term;
 }
 
-TERM* reduce_string_in_range(   yyscan_t yyscanner,    
-                                char* identifier, 
+TERM* reduce_string_in_range(   yyscan_t yyscanner,
+                                char* identifier,
                                 TERM* range)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
-    
-    if (valid_string_identifier(identifier, context)) 
+
+    if (valid_string_identifier(identifier, context))
     {
         context->last_result = new_string_identifier(TERM_TYPE_STRING_IN_RANGE, context->current_rule_strings, identifier, &term);
-    
+
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
@@ -3117,8 +3121,8 @@ TERM* reduce_string_in_range(   yyscan_t yyscanner,
             term->range = range;
         }
     }
-    
-    yr_free(identifier);   
+
+    yr_free(identifier);
     return (TERM*) term;
 }
 
@@ -3127,11 +3131,11 @@ TERM* reduce_string_in_section_by_name( yyscan_t yyscanner,
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
-    
+
     if (valid_string_identifier(identifier, context))
     {
         context->last_result = new_string_identifier(TERM_TYPE_STRING_IN_SECTION_BY_NAME, context->current_rule_strings, identifier, &term);
-    
+
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
@@ -3141,10 +3145,10 @@ TERM* reduce_string_in_section_by_name( yyscan_t yyscanner,
         {
             term->section_name = yr_strdup(section_name->c_string);
         }
-    }   
-    
+    }
+
     yr_free(section_name);
-    yr_free(identifier);   
+    yr_free(identifier);
     return (TERM*) term;
 }
 
@@ -3153,19 +3157,19 @@ TERM* reduce_string_count(  yyscan_t yyscanner,
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = NULL;
-    
+
     if (valid_string_identifier(identifier, context))
     {
         context->last_result = new_string_identifier(TERM_TYPE_STRING_COUNT, context->current_rule_strings, identifier, &term);
-            
+
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
             context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         }
     }
-    
-    yr_free(identifier);           
+
+    yr_free(identifier);
     return (TERM*) term;
 }
 
@@ -3179,7 +3183,7 @@ TERM* reduce_string_offset( yyscan_t yyscanner,
     if (valid_string_identifier(identifier, context))
     {
         context->last_result = new_string_identifier(TERM_TYPE_STRING_OFFSET, context->current_rule_strings, identifier, &term);
-    
+
         if (context->last_result != ERROR_SUCCESS)
         {
             strncpy(context->last_error_extra_info, identifier, sizeof(context->last_error_extra_info));
@@ -3190,23 +3194,23 @@ TERM* reduce_string_offset( yyscan_t yyscanner,
             term->index = index;
         }
     }
-        
-    yr_free(identifier);           
+
+    yr_free(identifier);
     return (TERM*) term;
 }
 
-TERM* reduce_identifier(    yyscan_t yyscanner, 
+TERM* reduce_identifier(    yyscan_t yyscanner,
                             char* identifier)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM* term = NULL;
     RULE* rule;
-      
+
     rule = lookup_rule(&context->rule_list, identifier, context->current_namespace);
-        
+
     if (rule != NULL)
     {
-        context->last_result = new_binary_operation(TERM_TYPE_RULE, rule->condition, NULL, (TERM_BINARY_OPERATION**) &term);        
+        context->last_result = new_binary_operation(TERM_TYPE_RULE, rule->condition, NULL, (TERM_BINARY_OPERATION**) &term);
     }
     else
     {
@@ -3218,12 +3222,12 @@ TERM* reduce_identifier(    yyscan_t yyscanner,
 }
 
 TERM* reduce_string_enumeration(    yyscan_t yyscanner,
-                                    TERM* string_list_head, 
+                                    TERM* string_list_head,
                                     TERM* string_identifier)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = (TERM_STRING*) string_identifier;
-    
+
     term->next = (TERM_STRING*) string_list_head;
     term->string->flags |= STRING_FLAGS_REFERENCED;
 
@@ -3236,25 +3240,25 @@ TERM* reduce_string_operation( yyscan_t yyscanner,
                                         SIZED_STRING* string)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
-   
+
     int erroffset;
-    
-    VARIABLE* variable;  
+
+    VARIABLE* variable;
     TERM_STRING_OPERATION* term = NULL;
-    
+
     variable = lookup_variable(context->variables, identifier);
-    
+
     if ( variable != NULL)
     {
         if (variable->type == VARIABLE_TYPE_STRING)
-        {    
+        {
             term = (TERM_STRING_OPERATION*) yr_malloc(sizeof(TERM_STRING_OPERATION));
-            
+
             if (term != NULL)
             {
                 term->type = type;
                 term->variable = variable;
-                
+
                 if (type == TERM_TYPE_STRING_MATCH)
                 {
                     if (regex_compile(&(term->re),
@@ -3273,8 +3277,8 @@ TERM* reduce_string_operation( yyscan_t yyscanner,
                 {
                     term->string = yr_strdup(string->c_string);
                 }
-                                
-                yr_free(string);             
+
+                yr_free(string);
             }
             else
             {
@@ -3294,35 +3298,35 @@ TERM* reduce_string_operation( yyscan_t yyscanner,
         context->last_error_extra_info[sizeof(context->last_error_extra_info)-1] = 0;
         context->last_result = ERROR_UNDEFINED_IDENTIFIER;
     }
-    
+
     yr_free(identifier);
     return (TERM*) term;
 
 }
 
 TERM* reduce_integer_enumeration(   yyscan_t yyscanner,
-                                    TERM* term1,     
+                                    TERM* term1,
                                     TERM* term2)
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_VECTOR* vector;
-    
+
     if (term1->type == TERM_TYPE_VECTOR)
     {
         context->last_result = add_term_to_vector((TERM_VECTOR*) term1, term2);
-        
+
         return term1;
     }
     else
     {
         context->last_result = new_vector(&vector);
-        
+
         if (context->last_result == ERROR_SUCCESS)
             context->last_result = add_term_to_vector(vector, term1);
-            
+
         if (context->last_result == ERROR_SUCCESS)
             context->last_result = add_term_to_vector(vector, term2);
-            
+
         return (TERM*) vector;
     }
 }
@@ -3335,12 +3339,12 @@ TERM* reduce_integer_for(   yyscan_t yyscanner,
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_INTEGER_FOR* term = NULL;
-    VARIABLE* variable;  
-    
+    VARIABLE* variable;
+
     variable = lookup_variable(context->variables, identifier);
-    
+
     term = (TERM_INTEGER_FOR*) yr_malloc(sizeof(TERM_INTEGER_FOR));
-    
+
     if (term != NULL)
     {
         term->type = TERM_TYPE_INTEGER_FOR;
@@ -3353,9 +3357,9 @@ TERM* reduce_integer_for(   yyscan_t yyscanner,
     {
         context->last_result = ERROR_INSUFICIENT_MEMORY;
     }
-    
-    yr_free(identifier);           
-    return (TERM*) term;    
+
+    yr_free(identifier);
+    return (TERM*) term;
 }
 
 
@@ -3365,13 +3369,12 @@ TERM* reduce_range( yyscan_t yyscanner,
 {
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_RANGE* term = NULL;
-    
+
     context->last_result = new_range(min, max, &term);
-             
-    return (TERM*) term;    
+
+    return (TERM*) term;
 }
 
-  
 
 
 
@@ -3379,7 +3382,8 @@ TERM* reduce_range( yyscan_t yyscanner,
 
 
 
-    
-    
-    
+
+
+
+
 
