@@ -4,67 +4,78 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <meta name="keywords" content="pattern matching,virus,signature,malware,classification">
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css" media="screen" />
 
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
-    <title>YARA by plusvic</title>
+    <title>YARA - The pattern matching swiss knife for malware researchers</title>
+
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-4224338-5', 'plusvic.github.io');
+      ga('send', 'pageview');
+    </script>
   </head>
 
   <body>
     <header>
       <div class="inner">
-        <img src="images/logo.png" style="position:relative;left:-35px">
-        <h2>A malware identification and classification tool</h2>
-        <a href="https://github.com/plusvic/yara" class="button"><small>View project on</small>GitHub</a>
+        <img src="images/logo.png" style="position:relative;left:-5px">
+        <h2>The pattern matching swiss knife for malware researchers <small>(and everyone else)</small></h2>
+        <a href="https://github.com/plusvic/yara" class="btn btn-lg">
+          <i class="fa fa-github-alt fa-2x"></i>
+          <small>View project in</small>GitHub
+        </a>
       </div>
     </header>
 
     <div id="content-wrapper">
       <div class="inner clearfix">
         <section id="main-content">
-          <h2>
-<a name="yara-in-a-nutshell" class="anchor" href="#yara-in-a-nutshell"><span class="octicon octicon-link"></span></a>YARA in a nutshell</h2>
+          
 
-<p>YARA is a tool aimed at helping malware researchers to identify and classify malware 
-samples. With YARA you can create descriptions of malware families based on textual or 
-binary patterns contained on samples of those families. Each description consists of a set of strings and a Boolean expression which determines its logic. Let's see an example:</p>
-
+<h2>YARA in a nutshell</h2>
+<p>YARA is a tool aimed at (but not limited to) helping malware researchers to identify and classify malware samples. With YARA you can create descriptions of malware families (or whatever you want to describe) based on textual or binary patterns. Each description, a.k.a rule, consists of a set of strings and a boolean expression which determine its logic. Let&#39;s see an example:</p>
 <pre><code>rule silent_banker : banker
 {
     meta:                                        
-        description = "This is just an example"
+        description = &quot;This is just an example&quot;
         thread_level = 3
         in_the_wild = true
 
     strings: 
         $a = {6A 40 68 00 30 00 00 6A 14 8D 91}  
         $b = {8D 4D B0 2B C1 83 C0 27 99 6A 4E 59 F7 F9}
-        $c = "UVODFRYSIHLNWPEJXQZAKCBGMT"
+        $c = &quot;UVODFRYSIHLNWPEJXQZAKCBGMT&quot;
 
     condition:
         $a or $b or $c
-}
-</code></pre>
-
-<p>The rule above is telling YARA that any file containing one of the three strings must be reported as <em>silent_banker</em>.</p>
-
-<p>This is just a simple example, more complex and powerful rules can be created by using binary strings with wild-cards, case-insensitive text strings, special operators, regular expressions and many other features that you can find explained in <a href="http://yara-project.googlecode.com/files/YARA%20User%27s%20Manual%201.6.pdf">YARA's documentation</a>.</p>
-
-<p>YARA is multi-platform, running on Windows, Linux and Mac OS X, and can be used through its command-line interface or from your own Python scripts with the yara-python extension. </p>
-
-<p>Python users can also use <a href="https://github.com/mjdorma/yara-ctypes">yara-ctyles</a> by Michael Dorman. He has also written a multi-threaded command-line YARA scanner based on yara-ctypes that can exploit the benefits of current multi-core CPUs when scanning big file collections.</p>
-
-<p>If you are a Ruby user you can use <a href="https://github.com/SpiderLabs/yara-ruby">yara-ruby</a>, written by Eric Monti. </p>
-
-<h2>
-<a name="whos-using-yara" class="anchor" href="#whos-using-yara"><span class="octicon octicon-link"></span></a>Who's using YARA</h2>
-
+}</code></pre>
+<p>The above rule is telling YARA that any file containing one of the three strings
+must be reported as <em>silent_banker</em>. This is just a simple example, more complex
+and powerful rules can be created by using wild-cards, case-insensitive strings,
+regular expressions, special operators and many other features that you&#39;ll find
+explained in <a href="https://github.com/plusvic/yara/releases/download/v1.7.1/YARA.User.s.Manual.pdf">YARA&#39;s documentation</a>.</p>
+<p>YARA is multi-platform, running on Windows, Linux and Mac OS X, and can be used
+through its command-line interface or from your own Python scripts with the
+yara-python extension. </p>
+<p>Python users can also use <a href="https://github.com/mjdorma/yara-ctypes">yara-ctyles</a>
+by Michael Dorman. He has also written a multi-threaded command-line YARA
+scanner based on yara-ctypes that can exploit the benefits of current multi-core
+CPUs when scanning big file collections.</p>
+<p>If you are a Ruby user you can use <a href="https://github.com/SpiderLabs/yara-ruby">yara-ruby</a>,
+written by Eric Monti.</p>
+<h2>Who&#39;s using YARA</h2>
 <ul>
 <li><a href="https://www.virustotal.com/intelligence/">VirusTotal Intelligence</a></li>
 <li><a href="http://jsunpack.jeek.org/">jsunpack-n</a></li>
@@ -72,12 +83,20 @@ binary patterns contained on samples of those families. Each description consist
 <li><a href="http://www.fireeye.com">FireEye, Inc.</a></li>
 <li><a href="http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS">Fidelis XPS</a></li>
 <li><a href="http://www.emc.com/security/rsa-ecat.htm">RSA ECAT</a></li>
-</ul><h2>
-<a name="releases" class="anchor" href="#releases"><span class="octicon octicon-link"></span></a>Releases</h2>
-
-<h3>
-<a name="17-29032013" class="anchor" href="#17-29032013"><span class="octicon octicon-link"></span></a>1.7 (29/03/2013)</h3>
-
+</ul>
+<p>Are you using it too? Tell me!</p>
+<h2>Releases</h2>
+<h3>1.7.1 (25/11/2013)</h3>
+<ul>
+<li>BUGFIX: Fix SIGABORT in ARM</li>
+<li>BUGFIX: Failing to detect one-byte strings at the end of a file.</li>
+<li>BUGFIX: Strings being incorrectly printed when markes both as wide and ascii</li>
+<li>BUGFIX: Stack overflow while following circular symlinks</li>
+<li>BUGFIX: Expression &quot;/re/ matches var&quot; always matching if &quot;var&quot; was an empty
+string</li>
+<li>BUGFIX: Strings marked as &quot;fullword&quot; were incorrectly matching in some cases.</li>
+</ul>
+<h3>1.7 (29/03/2013)</h3>
 <ul>
 <li>faster compilation</li>
 <li>added suport for modulus (%) and bitwise xor (|) operators</li>
@@ -85,12 +104,12 @@ binary patterns contained on samples of those families. Each description consist
 <li>BUGFIX: yara-python segfault when using dir() on Rules and Match classes</li>
 <li>BUGFIX: Integer overflow causing infinite loop</li>
 <li>BUGFIX: Handling strings containing \x00 characters correctly</li>
-<li>BUGFIX: Regular expressions not matching at the end of the file when compiled with RE2</li>
+<li>BUGFIX: Regular expressions not matching at the end of the file when compiled
+with RE2</li>
 <li>BUGFIX: Memory leaks</li>
 <li>BUGFIX: File handle leaks</li>
-</ul><h3>
-<a name="16-04082011" class="anchor" href="#16-04082011"><span class="octicon octicon-link"></span></a>1.6 (04/08/2011)</h3>
-
+</ul>
+<h3>1.6 (04/08/2011)</h3>
 <ul>
 <li>added support for bitwise operators</li>
 <li>added support for multi-line hex strings</li>
@@ -98,39 +117,36 @@ binary patterns contained on samples of those families. Each description consist
 <li>yara-python ported to Python 3.x</li>
 <li>yara-python support for 64-bits Python under Windows</li>
 <li>BUGFIX: Buffer overflow in error printing</li>
-</ul><h3>
-<a name="15-22032011" class="anchor" href="#15-22032011"><span class="octicon octicon-link"></span></a>1.5 (22/03/2011)</h3>
-
+</ul>
+<h3>1.5 (22/03/2011)</h3>
 <ul>
 <li>added -l parameter to abort scanning after a number of matches</li>
 <li>added support for scanning processes memory</li>
 <li>entrypoint now works with ELF as well as PE files</li>
-<li>added support for linking with the faster RE2 library (<a href="http://code.google.com/p/re2/">http://code.google.com/p/re2/</a>) instead of PCRE</li>
+<li>added support for linking with the faster RE2 library
+(<a href="http://code.google.com/p/re2/">http://code.google.com/p/re2/</a>) instead of PCRE</li>
 <li>implemented index operator to access offsets where string was found</li>
-<li>implemented new operator "for &lt; quantifier &gt; &lt; variable &gt; in &lt; set or range &gt; : (&lt; expression &gt;) "</li>
+<li>implemented new operator 
+&quot;for &lt; quantifier &gt; &lt; variable &gt; in &lt; set or range &gt; : (&lt; expression &gt;) &quot;</li>
 <li>BUGFIX: Memory leaks in yara-python</li>
 <li>BUGFIX: yara.compile namespaces not working with filesources</li>
-</ul><h3>
-<a name="14-13052010" class="anchor" href="#14-13052010"><span class="octicon octicon-link"></span></a>1.4 (13/05/2010)</h3>
-
+</ul>
+<h3>1.4 (13/05/2010)</h3>
 <ul>
 <li>added external variables</li>
 <li>scan speed improvements</li>
 <li>added fast scan mode</li>
 <li>BUGFIX: crash in 64-bits Windows</li>
-</ul><h3>
-<a name="13-26102009" class="anchor" href="#13-26102009"><span class="octicon octicon-link"></span></a>1.3 (26/10/2009)</h3>
-
+</ul>
+<h3>1.3 (26/10/2009)</h3>
 <ul>
-<li>added a C-like "include" directive</li>
+<li>added a C-like &quot;include&quot; directive</li>
 <li>added support for multi-sources compilation in yara-python</li>
 <li>added support for metadata declaration in rules</li>
 <li>BUGFIX: Incorrect handling of single-line comments at the end of the file</li>
-<li>BUGFIX: Integer underflow when scanning files of size &lt;= 2 bytesversion 1.0 (24/09/2008)</li>
-<li>first release</li>
-</ul><h3>
-<a name="121-14042009" class="anchor" href="#121-14042009"><span class="octicon octicon-link"></span></a>1.2.1 (14/04/2009)</h3>
-
+<li>BUGFIX: Integer underflow when scanning files of size &lt;= 2 bytes</li>
+</ul>
+<h3>1.2.1 (14/04/2009)</h3>
 <ul>
 <li>libyara: added support for compiling rules directly from memory</li>
 <li>libyara: interface refactored</li>
@@ -138,53 +154,80 @@ binary patterns contained on samples of those families. Each description consist
 <li>BUGFIX: Invoking pcre_compile with non-terminated string</li>
 <li>BUGFIX: Underscore not recognized in string identifiers</li>
 <li>BUGFIX: Memory leak</li>
-<li>BUGFIX: Access violation on xxcompare functionsversion 1.1 (05/01/2009)</li>
+<li>BUGFIX: Access violation on xxcompare functions</li>
+</ul>
+<h3>1.1 (05/01/2009)</h3>
+<ul>
 <li>added support for strings containing null (\x00) chars</li>
-<li>added syntactic construct "x of them"<br>
-</li>
+<li>added syntactic construct &quot;x of them&quot;     </li>
 <li>regular expressions syntax changed</li>
 <li>now regular expressions can begin with any character</li>
-</ul><h3>
-<a name="12-13012009" class="anchor" href="#12-13012009"><span class="octicon octicon-link"></span></a>1.2 (13/01/2009)</h3>
-
+</ul>
+<h3>1.2 (13/01/2009)</h3>
 <ul>
 <li>added support for global rules</li>
 <li>added support for declaring alternative sub-strings in hex strings</li>
 <li>added support for anonymous strings</li>
 <li>added support for intXX and uintXX functions</li>
-<li>operator "of" was enhanced</li>
-<li>implemented new operator "for..of"</li>
-<li>"widechar" is now "wide" and can be used in conjuntion with "ascii"</li>
+<li>operator &quot;of&quot; was enhanced</li>
+<li>implemented new operator &quot;for..of&quot;</li>
+<li>&quot;widechar&quot; is now &quot;wide&quot; and can be used in conjuntion with &quot;ascii&quot;</li>
 <li>improved syntax error reporting in yara-python</li>
-<li>"compile" method in yara-python was enhanced</li>
-<li>"matchfile" method in yara-python was substituted by "match"</li>
-<li>some performance improvements </li>
+<li>&quot;compile&quot; method in yara-python was enhanced</li>
+<li>&quot;matchfile&quot; method in yara-python was substituted by &quot;match&quot;</li>
+<li>some performance improvements    </li>
 <li>BUGFIX: Wrong behavior of escaped characters in regular expressions</li>
-<li>BUGFIX: Fatal error in yara-python when invoking matchfile with invalid path twice</li>
+<li>BUGFIX: Fatal error in yara-python when invoking matchfile with invalid path
+twice</li>
 <li>BUGFIX: Wrong precedence of OR and AND operators</li>
 <li>BUGFIX: Access violation when scanning MZ files with e_lfanew == -1</li>
 <li>BUGFIX: Incorrect handling of hex strings in lexer</li>
-</ul><h3>
-<a name="10-24092008" class="anchor" href="#10-24092008"><span class="octicon octicon-link"></span></a>1.0 (24/09/2008)</h3>
-
+</ul>
+<h3>1.0 (24/09/2008)</h3>
 <ul>
 <li>first release</li>
 </ul>
+
+
         </section>
 
         <aside id="sidebar">
-          <a href="https://github.com/plusvic/yara/zipball/master" class="button">
-            <small>Download</small>
-            .zip file
+
+          <a href="https://github.com/plusvic/yara/releases" class="btn btn-lg">
+            <i class="fa fa-download fa-2x"></i>
+            <small>Download</small>Latest release
           </a>
-          <a href="https://github.com/plusvic/yara/tarball/master" class="button">
-            <small>Download</small>
-            .tar.gz file
+
+          <a href="https://github.com/plusvic/yara/releases/download/v1.7.1/YARA.User.s.Manual.pdf" class="btn btn-lg">
+            <i class="fa fa-book fa-2x"></i>
+            <small>Download</small>User's Manual
           </a>
+
+          <a href="https://groups.google.com/forum/#!forum/yara-project" class="btn btn-lg">
+            <i class="fa fa-comments fa-2x"></i>
+            <small>Ask for help at</small>YARA's group
+          </a>
+
+          <a href="https://github.com/plusvic/yara/issues/new" class="btn btn-lg">
+            <i class="fa fa-bug fa-2x"></i>
+            <small>Send</small>Bug Report
+          </a>
+
+
+          <div style="margin-top:25px">  
+            <span style="font-size:11px">Contact the author:&nbsp;<span>
+            <a href="http://www.linkedin.com/in/vmalvarez">
+              <i class="fa fa-linkedin-square fa-2x"></i>
+            </a>
+
+            <a href="http://twitter.com/plusvic">
+              <i class="fa fa-twitter fa-2x"></i>
+            </a>
+          </div>
+
+
         </aside>
       </div>
     </div>
-
-  
   </body>
 </html>
