@@ -1202,10 +1202,11 @@ int yr_re_exec(
         case RE_OPCODE_MATCH:
 
           match = FALSE;
-          result = i;
 
           if (flags & RE_FLAGS_END_ANCHORED && i < input_size)
             break;
+
+          result = i;
 
           if (flags & RE_FLAGS_EXHAUSTIVE)
           {
@@ -1219,7 +1220,7 @@ int yr_re_exec(
             // As we are forcing a jump out of the loop fiber_idx
             // won't be incremented. Let's do it before exiting.
 
-            //fiber_idx++;
+            fiber_idx++;
             goto _exit_loop;
           }
 
