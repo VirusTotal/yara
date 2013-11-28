@@ -869,7 +869,6 @@ RE_FIBER_DATA* _yr_re_alloc_fiber_data(
     fiber_data = yr_malloc(sizeof(RE_FIBER_DATA));
   }
 
-  fiber_data->pre_matched = 0;
   fiber_data->stack_top = -1;
   fiber_data->prev = NULL;
 
