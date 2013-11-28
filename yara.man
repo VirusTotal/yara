@@ -2,16 +2,16 @@
 .SH NAME
 yara \- find files matching patterns and rules written in a special-purpose language.
 .SH SYNOPSIS
-.B yara 
+.B yara
 [OPTION]... [RULEFILE]... FILE | PID
 .SH DESCRIPTION
-.I Yara 
-scans the given 
+.I Yara
+scans the given
 .I FILE
 or the process indentified by
 .I PID
-looking if it matches the patterns and rules provided in a special purpose-language. The rules are read from 
-.I RULEFILEs 
+looking if it matches the patterns and rules provided in a special purpose-language. The rules are read from
+.I RULEFILEs
 or standard input.
 .PP
 The options to
@@ -31,16 +31,16 @@ and ignore the rest. This option can be used multiple times.
 .B \-n
 Print rules that doesn't apply (negate)
 .TP
-.B \-g 
+.B \-g
 Print the tags associated to the rule.
 .TP
-.B \-m 
+.B \-m
 Print metadata associated to the rule.
 .TP
 .B \-s
 Print strings found in the file.
 .TP
-.BI \-l " number" 
+.BI \-l " number"
 Abort scanning after a
 .I number
 of rules matched.
@@ -48,13 +48,16 @@ of rules matched.
 .BI \-d " identifier"=value
 Define an external variable. This option can be used multiple times.
 .TP
-.B \-r 
+.B \-r
 Scan files in directories recursively.
 .TP
-.B \-f 
+.B \-f
 Speeds up scanning by searching only for the first occurrence of each pattern.
 .TP
-.B \-v 
+.B \-w
+Disable warnings.
+.TP
+.B \-v
 Show version information.
 .SH EXAMPLES
 $ yara /foo/bar/rules1 /foo/bar/rules2 .
@@ -72,7 +75,7 @@ $ yara -t Packer -t Compiler /foo/bar/rules bazfile
 .PP
 Apply rules on
 .I /foo/bar/rules
-to 
+to
 .I bazfile.
 Only reports rules tagged as
 .I Packer
@@ -80,7 +83,7 @@ or
 .I Compiler.
 .RE
 .PP
-$ cat /foo/bar/rules1 | yara -r /foo 
+$ cat /foo/bar/rules1 | yara -r /foo
 .RS
 .PP
 Scan all files in the
@@ -88,15 +91,15 @@ Scan all files in the
 directory and its subdirectories. Rules are read from standard input.
 .RE
 .PP
-$ yara -d mybool=true -d myint=5 -d mystring="my string" /foo/bar/rules bazfile  
+$ yara -d mybool=true -d myint=5 -d mystring="my string" /foo/bar/rules bazfile
 .RS
 .PP
-Defines three external variables 
+Defines three external variables
 .I mybool
-.I myint 
+.I myint
 and
 .I mystring.
 .RE
 
-.SH AUTHOR 
-Victor M. Alvarez (victor.alvarez@virustotal.com) 
+.SH AUTHOR
+Victor M. Alvarez (victor.alvarez@virustotal.com)

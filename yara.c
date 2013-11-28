@@ -53,6 +53,7 @@ limitations under the License.
 "  -a <seconds>             abort scanning after a number of seconds has elapsed.\n"\
 "  -d <identifier>=<value>  define external variable.\n"\
 "  -r                       recursively search directories.\n"\
+"  -w                       disable warnings."\
 "  -v                       show version information.\n"
 
 #define EXTERNAL_TYPE_INTEGER   1
@@ -115,6 +116,7 @@ int show_tags = FALSE;
 int show_specified_tags = FALSE;
 int show_specified_rules = FALSE;
 int show_strings = FALSE;
+int show_warnings = TRUE;
 int show_meta = FALSE;
 int fast_scan = FALSE;
 int negate = FALSE;
@@ -396,9 +398,14 @@ void print_compiler_error(
     const char* message)
 {
   if (error_level == YARA_ERROR_LEVEL_ERROR)
+  {
     fprintf(stderr, "%s(%d): error: %s\n", file_name, line_number, message);
+  }
   else
-    fprintf(stderr, "%s(%d): warning: %s\n", file_name, line_number, message);
+  {
+    if (show_warnings)
+      fprintf(stderr, "%s(%d): warning: %s\n", file_name, line_number, message);
+  }
 }
 
 
@@ -681,7 +688,7 @@ int process_cmd_line(
 
   opterr = 0;
 
-  while ((c = getopt (argc, (char**) argv, "rnsvgma:l:t:i:d:f")) != -1)
+  while ((c = getopt (argc, (char**) argv, "wrnsvgma:l:t:i:d:f")) != -1)
   {
     switch (c)
     {
@@ -703,6 +710,10 @@ int process_cmd_line(
 
       case 's':
         show_strings = TRUE;
+        break;
+
+      case 'w':
+        show_warnings = FALSE;
         break;
 
       case 'f':
@@ -1007,7 +1018,7 @@ int main(
         (void*) argv[argc - 1],
         fast_scan,
         timeout);
- 
+
     if (result != ERROR_SUCCESS)
     {
       fprintf(stderr, "Error scanning %s: ", argv[argc - 1]);
