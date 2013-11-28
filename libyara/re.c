@@ -56,35 +56,35 @@ order to avoid confusion with operating system threads.
 // Each fiber has an associated stack, which is used by
 // PUSH, POP and JNZ
 
-typedef struct _RE_STACK
+typedef struct _RE_FIBER_DATA
 {
-  int top;
-  uint16_t items[MAX_RE_STACK];
+  int stack_top;
+  uint16_t stack[MAX_RE_STACK];
 
-  struct _RE_STACK* next;
-  struct _RE_STACK* prev;
+  struct _RE_FIBER_DATA* next;
+  struct _RE_FIBER_DATA* prev;
 
-} RE_STACK;
+} RE_FIBER_DATA;
 
 
 // Stacks are allocated as needed, and freed stacks are kept in
 // a pool for later re-use.
 
-typedef struct _RE_STACK_POOL
+typedef struct _RE_FIBER_DATA_POOL
 {
-  RE_STACK* free;
-  RE_STACK* used;
+  RE_FIBER_DATA* free;
+  RE_FIBER_DATA* used;
 
-} RE_STACK_POOL;
+} RE_FIBER_DATA_POOL;
 
 
 // A fiber is described by its current instruction pointer and
-// its stack.
+// its fiber_data.
 
 typedef struct _RE_FIBER
 {
   uint8_t*  ip;
-  RE_STACK* stack;
+  RE_FIBER_DATA* fiber_data;
 
 } RE_FIBER;
 
@@ -101,7 +101,7 @@ typedef struct _RE_THREAD_STORAGE
 {
   RE_FIBER_LIST list1;
   RE_FIBER_LIST list2;
-  RE_STACK_POOL stack_pool;
+  RE_FIBER_DATA_POOL fiber_data_pool;
 
 } RE_THREAD_STORAGE;
 
@@ -168,8 +168,8 @@ int yr_re_finalize()
 
 int yr_re_finalize_thread()
 {
-  RE_STACK* stack;
-  RE_STACK* next_stack;
+  RE_FIBER_DATA* fiber_data;
+  RE_FIBER_DATA* next_fiber_data;
   RE_THREAD_STORAGE* storage;
 
   #ifdef WIN32
@@ -180,13 +180,13 @@ int yr_re_finalize_thread()
 
   if (storage != NULL)
   {
-    stack = storage->stack_pool.free;
+    fiber_data = storage->fiber_data_pool.free;
 
-    while (stack != NULL)
+    while (fiber_data != NULL)
     {
-      next_stack = stack->next;
-      yr_free(stack);
-      stack = next_stack;
+      next_fiber_data = fiber_data->next;
+      yr_free(fiber_data);
+      fiber_data = next_fiber_data;
     }
 
     yr_free(storage);
@@ -851,80 +851,81 @@ int yr_re_emit_code(
 }
 
 
-RE_STACK* _yr_re_alloc_stack(
-    RE_STACK_POOL* pool)
+RE_FIBER_DATA* _yr_re_alloc_fiber_data(
+    RE_FIBER_DATA_POOL* pool)
 {
-  RE_STACK* stack;
+  RE_FIBER_DATA* fiber_data;
 
   if (pool->free != NULL)
   {
-    stack = pool->free;
-    pool->free = stack->next;
+    fiber_data = pool->free;
+    pool->free = fiber_data->next;
 
     if (pool->free != NULL)
       pool->free->prev = NULL;
   }
   else
   {
-    stack = yr_malloc(sizeof(RE_STACK));
+    fiber_data = yr_malloc(sizeof(RE_FIBER_DATA));
   }
 
-  stack->top = -1;
-  stack->prev = NULL;
+  fiber_data->pre_matched = 0;
+  fiber_data->stack_top = -1;
+  fiber_data->prev = NULL;
 
   if (pool->used != NULL)
-    pool->used->prev = stack;
+    pool->used->prev = fiber_data;
 
-  stack->next = pool->used;
-  pool->used = stack;
+  fiber_data->next = pool->used;
+  pool->used = fiber_data;
 
-  return stack;
+  return fiber_data;
 }
 
 
-RE_STACK* _yr_re_clone_stack(
-    RE_STACK* stack,
-    RE_STACK_POOL* pool)
+RE_FIBER_DATA* _yr_re_clone_fiber_data(
+    RE_FIBER_DATA* fiber_data,
+    RE_FIBER_DATA_POOL* pool)
 {
-  RE_STACK* clon;
+  RE_FIBER_DATA* clon;
   int i;
 
-  if (stack == NULL)
+  if (fiber_data == NULL)
     return NULL;
 
-  clon = _yr_re_alloc_stack(pool);
-  clon->top = stack->top;
+  clon = _yr_re_alloc_fiber_data(pool);
+  clon->stack_top = fiber_data->stack_top;
 
-  for (i = 0; i < clon->top; i++)
-    clon->items[i] = stack->items[i];
+  for (i = 0; i < clon->stack_top; i++)
+    clon->stack[i] = fiber_data->stack[i];
 
   return clon;
 }
 
 
-void _yr_re_free_stack(
-    RE_STACK* stack,
-    RE_STACK_POOL* pool)
+void _yr_re_free_fiber_data(
+    RE_FIBER_DATA* fiber_data,
+    RE_FIBER_DATA_POOL* pool)
 {
-  if (stack == NULL)
+  if (fiber_data == NULL)
     return;
 
-  if (stack->prev != NULL)
-    stack->prev->next = stack->next;
+  if (pool->used == fiber_data)
+    pool->used = fiber_data->next;
 
-  if (stack->next != NULL)
-    stack->next->prev = stack->prev;
+  if (fiber_data->prev != NULL)
+    fiber_data->prev->next = fiber_data->next;
 
-  stack->next = pool->free;
+  if (fiber_data->next != NULL)
+    fiber_data->next->prev = fiber_data->prev;
+
+  fiber_data->next = pool->free;
 
   if (pool->free != NULL)
-    pool->free->prev = stack;
+    pool->free->prev = fiber_data;
 
-  pool->free = stack;
-  stack->prev = NULL;
-
-  if (pool->used == stack)
-    pool->used = NULL;
+  pool->free = fiber_data;
+  fiber_data->prev = NULL;
 }
 
 
@@ -946,16 +947,17 @@ void _yr_re_add_fiber(
     RE_FIBER_LIST* fibers,
     RE_THREAD_STORAGE* storage,
     uint8_t* ip,
-    RE_STACK* stack)
+    uint8_t* input,
+    RE_FIBER_DATA* fiber_data)
 {
-  RE_STACK* new_stack;
+  RE_FIBER_DATA* new_fiber_data;
 
   uint16_t counter_index;
   int16_t jmp_offset;
 
   if (_yr_re_fiber_exists(fibers, ip))
   {
-    _yr_re_free_stack(stack, &storage->stack_pool);
+    _yr_re_free_fiber_data(fiber_data, &storage->fiber_data_pool);
     return;
   }
 
@@ -963,56 +965,63 @@ void _yr_re_add_fiber(
   {
     case RE_OPCODE_JUMP:
       jmp_offset = *(int16_t*)(ip + 1);
-      _yr_re_add_fiber(fibers, storage, ip + jmp_offset, stack);
+      _yr_re_add_fiber(fibers, storage, ip + jmp_offset, input, fiber_data);
       break;
 
     case RE_OPCODE_JNZ:
       jmp_offset = *(int16_t*)(ip + 1);
-      stack->items[stack->top]--;
+      fiber_data->stack[fiber_data->stack_top]--;
 
-      if (stack->items[stack->top] > 0)
-        _yr_re_add_fiber(fibers, storage, ip + jmp_offset, stack);
+      if (fiber_data->stack[fiber_data->stack_top] > 0)
+        _yr_re_add_fiber(fibers, storage, ip + jmp_offset, input, fiber_data);
       else
-        _yr_re_add_fiber(fibers, storage, ip + 3, stack);
+        _yr_re_add_fiber(fibers, storage, ip + 3, input, fiber_data);
       break;
 
     case RE_OPCODE_PUSH:
-      if (stack == NULL)
-        stack = _yr_re_alloc_stack(&storage->stack_pool);
-      stack->items[++stack->top] = *(uint16_t*)(ip + 1);
-      _yr_re_add_fiber(fibers, storage, ip + 3, stack);
+      if (fiber_data == NULL)
+        fiber_data = _yr_re_alloc_fiber_data(&storage->fiber_data_pool);
+
+      fiber_data->stack[++fiber_data->stack_top] = *(uint16_t*)(ip + 1);
+      _yr_re_add_fiber(fibers, storage, ip + 3, input, fiber_data);
       break;
 
     case RE_OPCODE_POP:
-      stack->top--;
-      if (stack->top == -1)
+      fiber_data->stack_top--;
+      if (fiber_data->stack_top == -1)
       {
-        _yr_re_free_stack(stack, &storage->stack_pool);
-        stack = NULL;
+        _yr_re_free_fiber_data(fiber_data, &storage->fiber_data_pool);
+        fiber_data = NULL;
       }
-      _yr_re_add_fiber(fibers, storage, ip + 1, stack);
+      _yr_re_add_fiber(fibers, storage, ip + 1, input, fiber_data);
       break;
 
     case RE_OPCODE_SPLIT_A:
       jmp_offset = *(int16_t*)(ip + 1);
-      new_stack = _yr_re_clone_stack(stack, &storage->stack_pool);
 
-      _yr_re_add_fiber(fibers, storage, ip + 3, stack);
-      _yr_re_add_fiber(fibers, storage, ip + jmp_offset, new_stack);
+      new_fiber_data = _yr_re_clone_fiber_data(
+          fiber_data, &storage->fiber_data_pool);
+
+      _yr_re_add_fiber(
+          fibers, storage, ip + 3, input, fiber_data);
+      _yr_re_add_fiber(
+          fibers, storage, ip + jmp_offset, input, new_fiber_data);
       break;
 
     case RE_OPCODE_SPLIT_B:
       jmp_offset = *(int16_t*)(ip + 1);
-      new_stack = _yr_re_clone_stack(stack, &storage->stack_pool);
 
-      _yr_re_add_fiber(fibers, storage, ip + jmp_offset, stack);
-      _yr_re_add_fiber(fibers, storage, ip + 3, new_stack);
+      new_fiber_data = _yr_re_clone_fiber_data(
+          fiber_data, &storage->fiber_data_pool);
+
+      _yr_re_add_fiber(fibers, storage, ip + jmp_offset, input, fiber_data);
+      _yr_re_add_fiber(fibers, storage, ip + 3, input, new_fiber_data);
       break;
 
     default:
       assert(fibers->count < MAX_RE_FIBERS);
       fibers->items[fibers->count].ip = ip;
-      fibers->items[fibers->count].stack = stack;
+      fibers->items[fibers->count].fiber_data = fiber_data;
       fibers->count++;
   }
 }
@@ -1046,24 +1055,25 @@ void _yr_re_add_fiber(
 
 int yr_re_exec(
     uint8_t* code,
-    uint8_t* input,
+    uint8_t* input_data,
     size_t input_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
     void* callback_args)
 {
-  size_t i, t;
+  size_t i;
   uint8_t* ip;
-  uint8_t* current_input;
+  uint8_t* input;
   uint8_t mask;
   uint8_t value;
 
   RE_THREAD_STORAGE* storage;
-  RE_FIBER_LIST* current_fibers;
+  RE_FIBER_LIST* fibers;
   RE_FIBER_LIST* next_fibers;
-  RE_STACK* stack;
+  RE_FIBER_DATA* fiber_data;
 
-  int idx;
+  int fiber_idx;
+  int j;
   int match;
   char character;
   int character_size;
@@ -1082,8 +1092,8 @@ int yr_re_exec(
     if (storage == NULL)
       return ERROR_INSUFICIENT_MEMORY;
 
-    storage->stack_pool.free = NULL;
-    storage->stack_pool.used = NULL;
+    storage->fiber_data_pool.free = NULL;
+    storage->fiber_data_pool.used = NULL;
 
     #ifdef WIN32
     TlsSetValue(thread_storage_key, storage);
@@ -1092,7 +1102,8 @@ int yr_re_exec(
     #endif
   }
 
-  current_fibers = &storage->list1;
+  input = input_data;
+  fibers = &storage->list1;
   next_fibers = &storage->list2;
 
   if (flags & RE_FLAGS_WIDE)
@@ -1100,42 +1111,37 @@ int yr_re_exec(
   else
     character_size = 1;
 
-  current_fibers->count = 0;
+  fibers->count = 0;
   next_fibers->count = 0;
 
   // Create the initial execution fiber starting at the provided the beginning
-  // of the provided code. The stack is initially NULL and will be created
+  // of the provided code. The fiber data is initially NULL and will be created
   // dynamically when the first PUSH instruction is found.
 
-  _yr_re_add_fiber(current_fibers, storage, code, NULL);
-
-  current_input = input;
+  _yr_re_add_fiber(fibers, storage, code, input, NULL);
 
   for (i = 0; i < min(input_size, RE_SCAN_LIMIT); i += character_size)
   {
     if ((flags & RE_FLAGS_SCAN) &&
         !(flags & RE_FLAGS_START_ANCHORED))
-      _yr_re_add_fiber(current_fibers, storage, code, NULL);
+      _yr_re_add_fiber(fibers, storage, code, input, NULL);
 
-    if (current_fibers->count == 0)
+    if (fibers->count == 0)
       break;
 
-    for(t = 0; t < current_fibers->count; t++)
+    for(fiber_idx = 0; fiber_idx < fibers->count; fiber_idx++)
     {
-      ip = current_fibers->items[t].ip;
-      stack = current_fibers->items[t].stack;
+      ip = fibers->items[fiber_idx].ip;
+      fiber_data = fibers->items[fiber_idx].fiber_data;
 
       switch(*ip)
       {
         case RE_OPCODE_LITERAL:
           if (flags & RE_FLAGS_NO_CASE)
-            match = lowercase[*current_input] == lowercase[*(ip + 1)];
+            match = lowercase[*input] == lowercase[*(ip + 1)];
           else
-            match = *current_input == *(ip + 1);
-          if (match)
-            _yr_re_add_fiber(next_fibers, storage, ip + 2, stack);
-          else
-            _yr_re_free_stack(stack, &storage->stack_pool);
+            match = (*input == *(ip + 1));
+          ip += 2;
           break;
 
         case RE_OPCODE_MASKED_LITERAL:
@@ -1146,76 +1152,58 @@ int yr_re_exec(
           // case because this opcode is only used with hex strings,
           // which can't be case-insensitive.
 
-          if ((*current_input & mask) == value)
-            _yr_re_add_fiber(next_fibers, storage, ip + 3, stack);
-          else
-            _yr_re_free_stack(stack, &storage->stack_pool);
+          match = ((*input & mask) == value);
+          ip += 3;
           break;
 
         case RE_OPCODE_CLASS:
           if (flags & RE_FLAGS_NO_CASE)
-            match = CHAR_IN_CLASS(*current_input, ip + 1) ||
-                    CHAR_IN_CLASS(altercase[*current_input], ip + 1);
+            match = CHAR_IN_CLASS(*input, ip + 1) ||
+                    CHAR_IN_CLASS(altercase[*input], ip + 1);
           else
-            match = CHAR_IN_CLASS(*current_input, ip + 1);
-
-          if (match)
-            _yr_re_add_fiber(next_fibers, storage, ip + 33, stack);
-          else
-            _yr_re_free_stack(stack, &storage->stack_pool);
+            match = CHAR_IN_CLASS(*input, ip + 1);
+          ip += 33;
           break;
 
         case RE_OPCODE_WORD_CHAR:
-          if (isalnum(*current_input) || *current_input == '_')
-            _yr_re_add_fiber(next_fibers, storage, ip + 1, stack);
-          else
-            _yr_re_free_stack(stack, &storage->stack_pool);
+          match = (isalnum(*input) || *input == '_');
+          ip += 1;
           break;
 
         case RE_OPCODE_NON_WORD_CHAR:
-          if (!isalnum(*current_input) && *current_input != '_')
-            _yr_re_add_fiber(next_fibers, storage, ip + 1, stack);
-          else
-            _yr_re_free_stack(stack, &storage->stack_pool);
+          match = (!isalnum(*input) && *input != '_');
+          ip += 1;
           break;
 
         case RE_OPCODE_SPACE:
-          if (*current_input == ' ' || *current_input == '\t')
-            _yr_re_add_fiber(next_fibers, storage, ip + 1, stack);
-          else
-            _yr_re_free_stack(stack, &storage->stack_pool);
+          match = (*input == ' ' || *input == '\t');
+          ip += 1;
           break;
 
         case RE_OPCODE_NON_SPACE:
-          if (*current_input != ' ' && *current_input != '\t')
-            _yr_re_add_fiber(next_fibers, storage, ip + 1, stack);
-          else
-            _yr_re_free_stack(stack, &storage->stack_pool);
+          match = (*input != ' ' && *input != '\t');
+          ip += 1;
           break;
 
         case RE_OPCODE_DIGIT:
-          if (isdigit(*current_input))
-            _yr_re_add_fiber(next_fibers, storage, ip + 1, stack);
-          else
-            _yr_re_free_stack(stack, &storage->stack_pool);
+          match = isdigit(*input);
+          ip += 1;
           break;
 
         case RE_OPCODE_NON_DIGIT:
-          if (!isdigit(*current_input))
-            _yr_re_add_fiber(next_fibers, storage, ip + 1, stack);
-          else
-            _yr_re_free_stack(stack, &storage->stack_pool);
+          match = !isdigit(*input);
+          ip += 1;
           break;
 
         case RE_OPCODE_ANY:
-          if (*current_input != 0x0A || flags & RE_FLAGS_DOT_ALL)
-            _yr_re_add_fiber(next_fibers, storage, ip + 1, stack);
-          else
-            _yr_re_free_stack(stack, &storage->stack_pool);
+          match = (*input != 0x0A || flags & RE_FLAGS_DOT_ALL);
+          ip += 1;
           break;
 
         case RE_OPCODE_MATCH:
-          _yr_re_free_stack(stack, &storage->stack_pool);
+
+          match = FALSE;
+          result = i;
 
           if (flags & RE_FLAGS_END_ANCHORED && i < input_size)
             break;
@@ -1223,86 +1211,92 @@ int yr_re_exec(
           if (flags & RE_FLAGS_EXHAUSTIVE)
           {
             if (flags & RE_FLAGS_BACKWARDS)
-              callback(
-                  current_input + character_size,
-                  i,
-                  flags,
-                  callback_args);
+              callback(input + character_size, i, flags, callback_args);
             else
-              callback(
-                  input,
-                  i,
-                  flags,
-                  callback_args);
-
-            result = i;
+              callback(input_data, i, flags, callback_args);
           }
           else
           {
-            result = i;
-            goto _break;
+            // As we are forcing a jump out of the loop fiber_idx
+            // won't be incremented. Let's do it before exiting.
+
+            //fiber_idx++;
+            goto _exit_loop;
           }
+
           break;
 
         default:
           assert(FALSE);
       }
+
+      if (match)
+        _yr_re_add_fiber(
+            next_fibers,
+            storage,
+            ip,
+            input + character_size,
+            fiber_data);
+      else
+        _yr_re_free_fiber_data(
+            fiber_data,
+            &storage->fiber_data_pool);
     }
 
-  _break:
+  _exit_loop:
 
-    // Free the stacks for any remaining fiber that didn't
+    // Free the fiber data for any remaining fiber that didn't
     // survived for the next step.
 
-    for(; t < current_fibers->count; t++)
-      _yr_re_free_stack(
-          current_fibers->items[t].stack,
-          &storage->stack_pool);
+    for(; fiber_idx < fibers->count; fiber_idx++)
+      _yr_re_free_fiber_data(
+          fibers->items[fiber_idx].fiber_data,
+          &storage->fiber_data_pool);
 
-    swap_fibers(current_fibers, next_fibers);
+    swap_fibers(fibers, next_fibers);
     next_fibers->count = 0;
 
-    if (flags & RE_FLAGS_WIDE && *(current_input + 1) != 0)
+    if (flags & RE_FLAGS_WIDE && *(input + 1) != 0)
       break;
 
     if (flags & RE_FLAGS_BACKWARDS)
-      current_input -= character_size;
+      input -= character_size;
     else
-      current_input += character_size;
-  }
+      input += character_size;
+
+  } //for (i = 0; i < min(input_size, RE_SCAN_LIMIT) ...
 
   if (!(flags & RE_FLAGS_END_ANCHORED) || i == input_size)
   {
-    for(t = 0; t < current_fibers->count; t++)
+    for(fiber_idx = 0; fiber_idx < fibers->count; fiber_idx++)
     {
-      if (*current_fibers->items[t].ip == RE_OPCODE_MATCH)
+      if (*fibers->items[fiber_idx].ip != RE_OPCODE_MATCH)
+        continue;
+
+      if (flags & RE_FLAGS_EXHAUSTIVE)
       {
-        if (flags & RE_FLAGS_EXHAUSTIVE)
-        {
-          if (flags & RE_FLAGS_BACKWARDS)
-            callback(
-                current_input + character_size,
-                i,
-                flags,
-                callback_args);
-          else
-            callback(
-                input,
-                i,
-                flags,
-                callback_args);
-        }
+        if (flags & RE_FLAGS_BACKWARDS)
+          callback(
+              input + character_size, i, flags, callback_args);
         else
-        {
-          result = i;
-          break;
-        }
+          callback(
+              input_data, i, flags, callback_args);
+      }
+      else
+      {
+        result = i;
+        break;
       }
     }
   }
 
-  // Ensure that every stack was released
-  assert(storage->stack_pool.used == NULL);
+  for(fiber_idx = 0; fiber_idx < fibers->count; fiber_idx++)
+    _yr_re_free_fiber_data(
+        fibers->items[fiber_idx].fiber_data,
+        &storage->fiber_data_pool);
+
+  // Ensure that every fiber data was released
+  assert(storage->fiber_data_pool.used == NULL);
 
   return result;
 }
