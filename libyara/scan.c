@@ -692,11 +692,13 @@ inline int string_match(unsigned char* buffer, size_t buffer_size, STRING* strin
                     yr_free(tmp);
                 }
 
-                return match * 2;
+                if (match > 0)
+                    return match * 2;
             }
 
         }
-        else
+
+        if (IS_ASCII(string))
         {
             return regexp_match(buffer, buffer_size, string->string, string->length, string->re, negative_size);
         }
