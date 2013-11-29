@@ -159,7 +159,8 @@ class TestYara(unittest.TestCase):
         self.assertTrueRules([
             'rule test { strings: $a = "ssi" $b = "mis" $c = "oops" condition: any of them }',
             'rule test { strings: $a = "ssi" $b = "mis" $c = "oops" condition: 1 of them }',
-            'rule test { strings: $a = "ssi" $b = "mis" $c = "oops" condition: 2 of them }'
+            'rule test { strings: $a = "ssi" $b = "mis" $c = "oops" condition: 2 of them }',
+            'rule test { strings: $a1 = "dummy1" $b1 = "dummy1" $b2 = "ssi" condition: any of ($a*, $b*) }',
         ], 'mississipi')
 
         self.assertFalseRules([

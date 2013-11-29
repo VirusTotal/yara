@@ -1194,6 +1194,9 @@ TERM* reduce_string_enumeration(    yyscan_t yyscanner,
     YARA_CONTEXT* context = yyget_extra(yyscanner);
     TERM_STRING* term = (TERM_STRING*) string_identifier;
 
+    while (term->next != NULL)
+      term = term->next;
+
     term->next = (TERM_STRING*) string_list_head;
     term->string->flags |= STRING_FLAGS_REFERENCED;
 
