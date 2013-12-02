@@ -1,6 +1,6 @@
 AM_YFLAGS=-d
 
-AM_CFLAGS=-g -O4 -std=gnu99
+AM_CFLAGS=-g -O4 -Wall -std=gnu99
 
 ACLOCAL_AMFLAGS=-I m4
 

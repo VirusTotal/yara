@@ -204,15 +204,12 @@ YR_STRING* yr_parser_reduce_string_declaration(
     const char* identifier,
     SIZED_STRING* str)
 {
-  int i;
-  int error_offset;
   int min_atom_length;
   char* file_name;
   char message[512];
 
   YR_STRING* string;
   YR_AC_MATCH* new_match;
-  ATOM_TREE* atom_tree;
   YR_ATOM_LIST_ITEM* atom;
   YR_ATOM_LIST_ITEM* atom_list = NULL;
   RE* re = NULL;

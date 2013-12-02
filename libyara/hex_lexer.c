@@ -47,6 +47,7 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
+typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -357,7 +358,7 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (size_t) (yy_cp - yy_bp); \
+	yyleng = (yy_size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
@@ -498,8 +499,9 @@ limitations under the License.
     } \
 
 #define YY_NO_UNISTD_H 1
+#define YY_NO_INPUT 1
 
-#line 503 "hex_lexer.c"
+#line 505 "hex_lexer.c"
 
 #define INITIAL 0
 #define range 1
@@ -607,8 +609,6 @@ extern int hex_yywrap (yyscan_t yyscanner );
 #endif
 #endif
 
-    static void yyunput (int c,char *buf_ptr  ,yyscan_t yyscanner);
-    
 #ifndef yytext_ptr
 static void yy_flex_strncpy (char *,yyconst char *,int ,yyscan_t yyscanner);
 #endif
@@ -733,7 +733,7 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 61 "hex_lexer.l"
+#line 63 "hex_lexer.l"
 
 
 
@@ -836,7 +836,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 64 "hex_lexer.l"
+#line 66 "hex_lexer.l"
 {
 
   yylval->integer = xtoi(yytext);
@@ -845,7 +845,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 70 "hex_lexer.l"
+#line 72 "hex_lexer.l"
 {
 
   yytext[1] = '0'; // replace ? by 0
@@ -855,7 +855,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 77 "hex_lexer.l"
+#line 79 "hex_lexer.l"
 {
 
   yytext[0] = '0'; // replace ? by 0
@@ -865,7 +865,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 84 "hex_lexer.l"
+#line 86 "hex_lexer.l"
 {
 
   yylval->integer = 0x0000;
@@ -874,7 +874,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 90 "hex_lexer.l"
+#line 92 "hex_lexer.l"
 {
 
   BEGIN(range);
@@ -883,14 +883,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 96 "hex_lexer.l"
+#line 98 "hex_lexer.l"
 {
   return yytext[0];
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 100 "hex_lexer.l"
+#line 102 "hex_lexer.l"
 {
 
   yylval->integer = atoi(yytext);
@@ -906,7 +906,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 113 "hex_lexer.l"
+#line 115 "hex_lexer.l"
 {
 
   BEGIN(INITIAL);
@@ -916,12 +916,12 @@ YY_RULE_SETUP
 case 9:
 /* rule 9 can match eol */
 YY_RULE_SETUP
-#line 120 "hex_lexer.l"
+#line 122 "hex_lexer.l"
 // skip whitespace
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 123 "hex_lexer.l"
+#line 125 "hex_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -937,7 +937,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 136 "hex_lexer.l"
+#line 138 "hex_lexer.l"
 ECHO;
 	YY_BREAK
 #line 944 "hex_lexer.c"
@@ -1271,48 +1271,6 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	yy_is_jam = (yy_current_state == 21);
 
 	return yy_is_jam ? 0 : yy_current_state;
-}
-
-    static void yyunput (int c, register char * yy_bp , yyscan_t yyscanner)
-{
-	register char *yy_cp;
-    struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-
-    yy_cp = yyg->yy_c_buf_p;
-
-	/* undo effects of setting up yytext */
-	*yy_cp = yyg->yy_hold_char;
-
-	if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
-		{ /* need to shift things up to make room */
-		/* +2 for EOB chars. */
-		register yy_size_t number_to_move = yyg->yy_n_chars + 2;
-		register char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
-					YY_CURRENT_BUFFER_LVALUE->yy_buf_size + 2];
-		register char *source =
-				&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move];
-
-		while ( source > YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
-			*--dest = *--source;
-
-		yy_cp += (int) (dest - source);
-		yy_bp += (int) (dest - source);
-		YY_CURRENT_BUFFER_LVALUE->yy_n_chars =
-			yyg->yy_n_chars = YY_CURRENT_BUFFER_LVALUE->yy_buf_size;
-
-		if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
-			YY_FATAL_ERROR( "flex scanner push-back overflow" );
-		}
-
-	*--yy_cp = (char) c;
-
-    if ( c == '\n' ){
-        --yylineno;
-    }
-
-	yyg->yytext_ptr = yy_bp;
-	yyg->yy_hold_char = *yy_cp;
-	yyg->yy_c_buf_p = yy_cp;
 }
 
 #ifndef YY_NO_INPUT
@@ -2118,7 +2076,7 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 136 "hex_lexer.l"
+#line 138 "hex_lexer.l"
 
 
 

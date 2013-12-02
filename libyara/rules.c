@@ -811,8 +811,6 @@ int yr_rules_scan_mem_block(
   size_t offset;
   size_t i;
 
-  int tidx = yr_get_tidx();
-
   current_state = rules->automaton->root;
   i = 0;
 

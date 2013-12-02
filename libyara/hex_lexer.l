@@ -44,6 +44,8 @@ limitations under the License.
 %option reentrant bison-bridge
 %option noyywrap
 %option nounistd
+%option noinput
+%option nounput
 %option yylineno
 %option prefix="hex_yy"
 

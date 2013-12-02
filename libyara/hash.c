@@ -68,7 +68,7 @@ uint32_t byte_to_int32[]  =
 
 uint32_t hash(
     uint32_t seed,
-    const char* buffer,
+    uint8_t* buffer,
     int len)
 {
   int i;
@@ -92,8 +92,8 @@ int yr_hash_table_create(
   YR_HASH_TABLE* new_table;
   int i;
 
-  new_table = yr_malloc(sizeof(YR_HASH_TABLE) +
-                        size * sizeof(YR_HASH_TABLE_ENTRY*));
+  new_table = yr_malloc(
+      sizeof(YR_HASH_TABLE) + size * sizeof(YR_HASH_TABLE_ENTRY*));
 
   if (new_table == NULL)
     return ERROR_INSUFICIENT_MEMORY;
@@ -143,10 +143,10 @@ void* yr_hash_table_lookup(
   YR_HASH_TABLE_ENTRY* entry;
   uint32_t bucket_index;
 
-  bucket_index = hash(0, key, strlen(key));
+  bucket_index = hash(0, (uint8_t*) key, strlen(key));
 
   if (ns != NULL)
-    bucket_index = hash(bucket_index, ns, strlen(ns));
+    bucket_index = hash(bucket_index, (uint8_t*) ns, strlen(ns));
 
   bucket_index = bucket_index % table->size;
 
@@ -195,10 +195,10 @@ int yr_hash_table_add(
     entry->ns = NULL;
 
   entry->value = value;
-  bucket_index = hash(0, key, strlen(key));
+  bucket_index = hash(0, (uint8_t*) key, strlen(key));
 
   if (ns != NULL)
-    bucket_index = hash(bucket_index, ns, strlen(ns));
+    bucket_index = hash(bucket_index, (uint8_t*) ns, strlen(ns));
 
   bucket_index = bucket_index % table->size;
 
