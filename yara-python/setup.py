@@ -1,7 +1,7 @@
 from distutils.core import setup, Extension
 
 setup(  name = "yara-python",
-        version = "1.7.1",
+        version = "1.7.2",
         author = "Victor M. Alvarez",
         author_email = "vmalvarez@virustotal.com",
         url = 'http://plusvic.github.io/yara/',

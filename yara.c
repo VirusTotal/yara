@@ -30,6 +30,7 @@ limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <yara.h>
 
 #include "config.h"
@@ -448,7 +449,7 @@ int process_cmd_line(YARA_CONTEXT* context, int argc, char const* argv[])
                 }
                 else
                 {
-                    fprintf (stderr, "Not enough memory.\n", optopt);
+                    fprintf (stderr, "Not enough memory.\n");
                     return 0;
                 }
 
@@ -468,7 +469,7 @@ int process_cmd_line(YARA_CONTEXT* context, int argc, char const* argv[])
                 }
                 else
                 {
-                    fprintf (stderr, "Not enough memory.\n", optopt);
+                    fprintf (stderr, "Not enough memory.\n");
                     return 0;
                 }
 

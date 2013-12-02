@@ -161,7 +161,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 }
 
-//%destructor { free ($$); } _TEXTSTRING_ _HEXSTRING_ _REGEXP_ _IDENTIFIER_
+
+
+%destructor { yr_free($$); } _IDENTIFIER_
+%destructor { yr_free($$); } _STRING_IDENTIFIER_
+%destructor { yr_free($$); } _STRING_COUNT_
+%destructor { yr_free($$); } _STRING_OFFSET_
+%destructor { yr_free($$); } _STRING_IDENTIFIER_WITH_WILDCARD_
+%destructor { yr_free($$); } _ANONYMOUS_STRING_
+%destructor { yr_free($$); } _TEXTSTRING_
+%destructor { yr_free($$); } _HEXSTRING_
+%destructor { yr_free($$); } _REGEXP_
 
 
 %{

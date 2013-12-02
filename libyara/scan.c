@@ -637,7 +637,7 @@ void clear_marks(RULE_LIST* rule_list)
     }
 }
 
-inline int string_match(unsigned char* buffer, size_t buffer_size, STRING* string, int flags, int negative_size)
+int string_match(unsigned char* buffer, size_t buffer_size, STRING* string, int flags, int negative_size)
 {
     int match;
     int i, len;
@@ -772,7 +772,7 @@ inline int string_match(unsigned char* buffer, size_t buffer_size, STRING* strin
 }
 
 
-inline int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
+int find_matches_for_strings(   STRING_LIST_ENTRY* first_string,
                                 unsigned char* buffer,
                                 size_t buffer_size,
                                 size_t current_offset,

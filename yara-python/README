@@ -15,13 +15,13 @@ must build and install YARA in your system before building yara-python. The late
 YARA version can be downloaded from:
 
 
-https://github.com/plusvic/yara/archive/yara-1.7.1.tar.gz
+https://github.com/plusvic/yara/archive/yara-1.7.2.tar.gz
 
 
 After installing YARA you can build yara-python this way:
 
-$ tar xzvf yara-python-1.7.1.tar.gz
-$ cd yara-python-1.7.1
+$ tar xzvf yara-python-1.7.2.tar.gz
+$ cd yara-python-1.7.2
 $ python setup.py build
 $ sudo python setup.py install
 
