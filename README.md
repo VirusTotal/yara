@@ -54,6 +54,12 @@ written by Eric Monti.
 
 ## Releases
 
+### 1.7.2 (02/12/2013)
+
+* BUGFIX: Regular expressions marked as both "wide" and "ascii" were treated as 
+just "wide"
+* BUGFIX: Bug in "n of (<string_set>)" operator 
+
 ### 1.7.1 (25/11/2013)
 
 * BUGFIX: Fix SIGABORT in ARM
@@ -62,7 +68,7 @@ written by Eric Monti.
 * BUGFIX: Stack overflow while following circular symlinks
 * BUGFIX: Expression "/re/ matches var" always matching if "var" was an empty
 string
-* BUGFIX: Strings marked as "fullword" were incorrectly matching in some cases.
+* BUGFIX: Strings marked as "fullword" were incorrectly matching in some cases
 
 ### 1.7 (29/03/2013)
 * faster compilation
@@ -118,12 +124,6 @@ with RE2
 * BUGFIX: Memory leak
 * BUGFIX: Access violation on xxcompare functions
 
-### 1.1 (05/01/2009)
-* added support for strings containing null (\x00) chars
-* added syntactic construct "x of them"
-* regular expressions syntax changed
-* now regular expressions can begin with any character
-
 ### 1.2 (13/01/2009)
 * added support for global rules
 * added support for declaring alternative sub-strings in hex strings
@@ -142,6 +142,12 @@ twice
 * BUGFIX: Wrong precedence of OR and AND operators
 * BUGFIX: Access violation when scanning MZ files with e_lfanew == -1
 * BUGFIX: Incorrect handling of hex strings in lexer
+
+### 1.1 (05/01/2009)
+* added support for strings containing null (\x00) chars
+* added syntactic construct "x of them"
+* regular expressions syntax changed
+* now regular expressions can begin with any character
 
 ### 1.0 (24/09/2008)
 * first release
