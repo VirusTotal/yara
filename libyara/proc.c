@@ -40,14 +40,14 @@ int get_process_memory(int pid, MEMORY_BLOCK** first_block)
     HANDLE hProcess;
     HANDLE hToken;
 
-    if( OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken) &&
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken) &&
         LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luidDebug))
     {
-            tokenPriv.PrivilegeCount = 1;
-            tokenPriv.Privileges[0].Luid = luidDebug;
-            tokenPriv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+        tokenPriv.PrivilegeCount = 1;
+        tokenPriv.Privileges[0].Luid = luidDebug;
+        tokenPriv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
-            AdjustTokenPrivileges(hToken, FALSE, &tokenPriv, sizeof(tokenPriv), NULL, NULL);
+        AdjustTokenPrivileges(hToken, FALSE, &tokenPriv, sizeof(tokenPriv), NULL, NULL);
     }
 
     hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
@@ -59,55 +59,53 @@ int get_process_memory(int pid, MEMORY_BLOCK** first_block)
         return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
     }
 
+
     GetSystemInfo(&si);
 
     address = si.lpMinimumApplicationAddress;
 
-    while (address < si.lpMaximumApplicationAddress)
+    while (VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
     {
-         if (VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
-         {
-             if (mbi.State == MEM_COMMIT && mbi.Protect != PAGE_NOACCESS)
-             {
-                 data = (unsigned char*) yr_malloc(mbi.RegionSize);
+        if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
+        {
+            data = (unsigned char*) yr_malloc(mbi.RegionSize);
 
-                 if (data == NULL)
-                     return ERROR_INSUFICIENT_MEMORY;
+            if (data == NULL)
+                return ERROR_INSUFICIENT_MEMORY;
 
-                 if (ReadProcessMemory(hProcess, address, data, mbi.RegionSize, &read))
-                 {
-                     new_block = (MEMORY_BLOCK*) yr_malloc(sizeof(MEMORY_BLOCK));
+            if (ReadProcessMemory(hProcess, mbi.BaseAddress, data, mbi.RegionSize, &read))
+            {
+                new_block = (MEMORY_BLOCK*) yr_malloc(sizeof(MEMORY_BLOCK));
 
-                     if (new_block == NULL)
-                     {
-                         yr_free(data);
-                         return ERROR_INSUFICIENT_MEMORY;
-                     }
+                if (new_block == NULL)
+                {
+                    yr_free(data);
+                    return ERROR_INSUFICIENT_MEMORY;
+                }
 
-                     if (*first_block == NULL)
-                         *first_block = new_block;
+                if (*first_block == NULL)
+                  *first_block = new_block;
 
-                     new_block->base = (size_t) mbi.BaseAddress;
-                     new_block->size = mbi.RegionSize;
-                     new_block->data = data;
-                     new_block->next = NULL;
+                new_block->base = (size_t) mbi.BaseAddress;
+                new_block->size = mbi.RegionSize;
+                new_block->data = data;
+                new_block->next = NULL;
 
-                     if (current_block != NULL)
-                         current_block->next = new_block;
+                if (current_block != NULL)
+                  current_block->next = new_block;
 
-                     current_block = new_block;
-                 }
-                 else
-                 {
-                     yr_free(data);
-                 }
-             }
+                current_block = new_block;
+            }
+            else
+            {
+                yr_free(data);
+            }
+        }
 
-             address = (PVOID)((DWORD) mbi.BaseAddress + mbi.RegionSize);
-         }
-     }
+        address = (PVOID)((ULONG_PTR) mbi.BaseAddress + mbi.RegionSize);
+    }
 
-     return ERROR_SUCCESS;
+    return ERROR_SUCCESS;
 }
 
 #else
