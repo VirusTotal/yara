@@ -1,4 +1,4 @@
-AM_CFLAGS=-g -O4 -I$(srcdir)/libyara
+AM_CFLAGS=-g -O4 -Wall -I$(srcdir)/libyara
 
 # Build the library in the hand subdirectory first.
 SUBDIRS = libyara
@@ -17,5 +17,5 @@ yarac_LDADD = libyara/.libs/libyara.a
 # man page
 man1_MANS = yara.man
 
-EXTRA_DIST = $(man1_MANS) REVISION
+EXTRA_DIST = $(man1_MANS) README.md
 
