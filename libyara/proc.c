@@ -74,48 +74,50 @@ int yr_process_get_memory(
 
   address = si.lpMinimumApplicationAddress;
 
-  while (address < si.lpMaximumApplicationAddress)
+  while (VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
   {
-    if (VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
+    if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
     {
-      if (mbi.State == MEM_COMMIT && mbi.Protect != PAGE_NOACCESS)
+      data = (unsigned char*) yr_malloc(mbi.RegionSize);
+
+      if (data == NULL)
+        return ERROR_INSUFICIENT_MEMORY;
+
+      if (ReadProcessMemory(
+              hProcess,
+              mbi.BaseAddress,
+              data,
+              mbi.RegionSize,
+              &read))
       {
-        data = (unsigned char*) yr_malloc(mbi.RegionSize);
+        new_block = (YR_MEMORY_BLOCK*) yr_malloc(sizeof(YR_MEMORY_BLOCK));
 
-        if (data == NULL)
-          return ERROR_INSUFICIENT_MEMORY;
-
-        if (ReadProcessMemory(hProcess, address, data, mbi.RegionSize, &read))
-        {
-          new_block = (YR_MEMORY_BLOCK*) yr_malloc(sizeof(YR_MEMORY_BLOCK));
-
-          if (new_block == NULL)
-          {
-            yr_free(data);
-            return ERROR_INSUFICIENT_MEMORY;
-          }
-
-          if (*first_block == NULL)
-            *first_block = new_block;
-
-          new_block->base = (size_t) mbi.BaseAddress;
-          new_block->size = mbi.RegionSize;
-          new_block->data = data;
-          new_block->next = NULL;
-
-          if (current_block != NULL)
-            current_block->next = new_block;
-
-          current_block = new_block;
-        }
-        else
+        if (new_block == NULL)
         {
           yr_free(data);
+          return ERROR_INSUFICIENT_MEMORY;
         }
-      }
 
-      address = (PVOID)((DWORD) mbi.BaseAddress + mbi.RegionSize);
+        if (*first_block == NULL)
+          *first_block = new_block;
+
+        new_block->base = (size_t) mbi.BaseAddress;
+        new_block->size = mbi.RegionSize;
+        new_block->data = data;
+        new_block->next = NULL;
+
+        if (current_block != NULL)
+          current_block->next = new_block;
+
+        current_block = new_block;
+      }
+      else
+      {
+        yr_free(data);
+      }
     }
+
+    address = (PVOID)((ULONG_PTR) mbi.BaseAddress + mbi.RegionSize);
   }
 
   return ERROR_SUCCESS;
