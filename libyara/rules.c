@@ -153,7 +153,7 @@ inline int _yr_scan_wicompare(
 // matching in a faster way.
 //
 
-#define MAX_FAST_HEX_RE_STACK 200
+#define MAX_FAST_HEX_RE_STACK 300
 
 int _yr_scan_fast_hex_re_exec(
     uint8_t* code,
