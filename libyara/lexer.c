@@ -47,7 +47,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -358,7 +357,7 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	yyleng = (size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
@@ -680,7 +679,7 @@ limitations under the License.
 
 
 
-#line 684 "lexer.c"
+#line 683 "lexer.c"
 
 #define INITIAL 0
 #define str 1
@@ -918,7 +917,7 @@ YY_DECL
 #line 79 "lexer.l"
 
 
-#line 922 "lexer.c"
+#line 921 "lexer.c"
 
     yylval = yylval_param;
 
@@ -1695,7 +1694,7 @@ YY_RULE_SETUP
 #line 496 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1699 "lexer.c"
+#line 1698 "lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2846,7 +2845,13 @@ void yyerror(yyscan_t yyscanner, const char *error_message)
   */
 
   compiler->errors++;
-  compiler->last_error_line = yara_yyget_lineno(yyscanner);
+
+  if (compiler->error_line != 0)
+    compiler->last_error_line = compiler->error_line;
+  else
+    compiler->last_error_line = yara_yyget_lineno(yyscanner);
+
+  compiler->error_line = 0;
 
   if (compiler->file_name_stack_ptr > 0)
   {

@@ -396,16 +396,21 @@ string_declaration  : _STRING_IDENTIFIER_ '=' _TEXTSTRING_ string_modifiers
 
                         ERROR_IF($$ == NULL);
                       }
-                    | _STRING_IDENTIFIER_ '=' _REGEXP_ string_modifiers
+                    | _STRING_IDENTIFIER_ '='
+                      {
+                        YR_COMPILER* compiler = yyget_extra(yyscanner);
+                        compiler->error_line = yyget_lineno(yyscanner);
+                      }
+                      _REGEXP_ string_modifiers
                       {
                         $$ = yr_parser_reduce_string_declaration(
                             yyscanner,
-                            $4 | STRING_GFLAGS_REGEXP,
+                            $5 | STRING_GFLAGS_REGEXP,
                             $1,
-                            $3);
+                            $4);
 
                         yr_free($1);
-                        yr_free($3);
+                        yr_free($4);
 
                         ERROR_IF($$ == NULL);
                       }

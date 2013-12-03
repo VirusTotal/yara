@@ -509,7 +509,13 @@ void yyerror(yyscan_t yyscanner, const char *error_message)
   */
 
   compiler->errors++;
-  compiler->last_error_line = yyget_lineno(yyscanner);
+
+  if (compiler->error_line != 0)
+    compiler->last_error_line = compiler->error_line;
+  else
+    compiler->last_error_line = yyget_lineno(yyscanner);
+
+  compiler->error_line = 0;
 
   if (compiler->file_name_stack_ptr > 0)
   {

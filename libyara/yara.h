@@ -509,6 +509,7 @@ typedef struct _YR_COMPILER
   int                 last_result;
   YR_REPORT_FUNC      error_report_function;
   int                 errors;
+  int                 error_line;
   int                 last_error;
   int                 last_error_line;
 
