@@ -379,7 +379,7 @@ class TestYara(unittest.TestCase):
             try:
                 self.runReTest(test)
             except Exception as e:
-                print '\nFailed test: %s\n' % str(test)
+                print('\nFailed test: %s\n' % str(test))
                 raise e
 
     def testEntrypoint(self):
