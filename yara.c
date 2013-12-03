@@ -49,11 +49,12 @@ limitations under the License.
 "  -g                       print tags.\n"\
 "  -m                       print metadata.\n"\
 "  -s                       print matching strings.\n"\
-"  -l <number>              abort scanning after matching a <number> rules.\n"\
+"  -l <number>              abort scanning after matching a number rules.\n"\
 "  -a <seconds>             abort scanning after a number of seconds has elapsed.\n"\
 "  -d <identifier>=<value>  define external variable.\n"\
 "  -r                       recursively search directories.\n"\
-"  -w                       disable warnings."\
+"  -f                       fast matching mode.\n"\
+"  -w                       disable warnings.\n"\
 "  -v                       show version information.\n"
 
 #define EXTERNAL_TYPE_INTEGER   1
