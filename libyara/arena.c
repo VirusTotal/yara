@@ -957,12 +957,12 @@ int yr_arena_load(
   YR_ARENA* new_arena;
   ARENA_FILE_HEADER header;
 
-  void* new_address;
-  int result;
   int32_t reloc_offset;
   uint8_t** reloc_address;
   uint8_t* reloc_target;
+
   long file_size;
+  int result;
 
   fh = fopen(filename, "rb");
 
@@ -1009,7 +1009,7 @@ int yr_arena_load(
   }
 
   page = new_arena->current_page;
-  
+
   if (fread(page->address, header.size, 1, fh) != 1)
   {
     fclose(fh);
