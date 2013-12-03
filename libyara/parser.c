@@ -214,9 +214,9 @@ YR_STRING* yr_parser_reduce_string_declaration(
   YR_ATOM_LIST_ITEM* atom_list = NULL;
   RE* re = NULL;
 
-  uint8_t* literal_string;
+  uint8_t* literal_string = NULL;
 
-  int literal_string_len;
+  int literal_string_len = 0;
   int max_string_len;
 
   YR_COMPILER* compiler = yyget_extra(yyscanner);
