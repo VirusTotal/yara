@@ -332,13 +332,6 @@ void match_callback(
   // total match length is the sum of backward and forward matches.
   match_length = match_length + callback_args->forward_matches;
 
-  if (flags & RE_FLAGS_START_ANCHORED && match_offset > 0)
-    return;
-
-  if (flags & RE_FLAGS_END_ANCHORED &&
-      match_offset + match_length != callback_args->data_size)
-    return;
-
   if (callback_args->full_word)
   {
     if (flags & RE_FLAGS_WIDE)
@@ -458,12 +451,6 @@ int _yr_scan_verify_re_match(
     exec = _yr_scan_fast_hex_re_exec;
   else
     exec = yr_re_exec;
-
-  if (STRING_IS_START_ANCHORED(ac_match->string))
-    flags |= RE_FLAGS_START_ANCHORED;
-
-  if (STRING_IS_END_ANCHORED(ac_match->string))
-    flags |= RE_FLAGS_END_ANCHORED;
 
   if (STRING_IS_NO_CASE(ac_match->string))
     flags |= RE_FLAGS_NO_CASE;
@@ -621,12 +608,6 @@ int _yr_scan_verify_literal_match(
           return ERROR_SUCCESS;
       }
     }
-
-    if (STRING_IS_START_ANCHORED(string))
-      flags |= RE_FLAGS_START_ANCHORED;
-
-    if (STRING_IS_END_ANCHORED(string))
-      flags |= RE_FLAGS_END_ANCHORED;
 
     callback_args.string = string;
     callback_args.data = data;

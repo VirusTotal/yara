@@ -35,6 +35,8 @@ limitations under the License.
 #define RE_NODE_DIGIT               14
 #define RE_NODE_NON_DIGIT           15
 #define RE_NODE_EMPTY               16
+#define RE_NODE_ANCHOR_START        17
+#define RE_NODE_ANCHOR_END          18
 
 
 #define RE_OPCODE_ANY               0xA0
@@ -49,6 +51,8 @@ limitations under the License.
 #define RE_OPCODE_DIGIT             0xA9
 #define RE_OPCODE_NON_DIGIT         0xAA
 #define RE_OPCODE_MATCH             0xAB
+#define RE_OPCODE_MATCH_AT_END      0xAC
+#define RE_OPCODE_MATCH_AT_START    0xAD
 
 #define RE_OPCODE_SPLIT_A           0xB0
 #define RE_OPCODE_SPLIT_B           0xB1
@@ -57,17 +61,14 @@ limitations under the License.
 #define RE_OPCODE_JNZ               0xB4
 #define RE_OPCODE_JUMP              0xB5
 
-
-#define RE_FLAGS_START_ANCHORED           0x01
-#define RE_FLAGS_END_ANCHORED             0x02
-#define RE_FLAGS_LITERAL_STRING           0x04
-#define RE_FLAGS_FAST_HEX_REGEXP          0x08
-#define RE_FLAGS_BACKWARDS                0x10
-#define RE_FLAGS_EXHAUSTIVE               0x20
-#define RE_FLAGS_WIDE                     0x40
-#define RE_FLAGS_NO_CASE                  0x80
-#define RE_FLAGS_SCAN                     0x100
-#define RE_FLAGS_DOT_ALL                  0x200
+#define RE_FLAGS_LITERAL_STRING           0x01
+#define RE_FLAGS_FAST_HEX_REGEXP          0x02
+#define RE_FLAGS_BACKWARDS                0x04
+#define RE_FLAGS_EXHAUSTIVE               0x08
+#define RE_FLAGS_WIDE                     0x10
+#define RE_FLAGS_NO_CASE                  0x20
+#define RE_FLAGS_SCAN                     0x40
+#define RE_FLAGS_DOT_ALL                  0x80
 
 
 typedef struct RE RE;

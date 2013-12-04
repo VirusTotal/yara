@@ -284,12 +284,6 @@ YR_STRING* yr_parser_reduce_string_declaration(
       goto _exit;
     }
 
-    if (re->flags & RE_FLAGS_START_ANCHORED)
-      string->g_flags |= STRING_GFLAGS_START_ANCHORED;
-
-    if (re->flags & RE_FLAGS_END_ANCHORED)
-      string->g_flags |= STRING_GFLAGS_END_ANCHORED;
-
     if (re->flags & RE_FLAGS_FAST_HEX_REGEXP)
       string->g_flags |= STRING_GFLAGS_FAST_HEX_REGEXP;
 

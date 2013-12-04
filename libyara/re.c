@@ -514,6 +514,24 @@ int _yr_re_emit(
     *code_size += 32;
     break;
 
+  case RE_NODE_ANCHOR_START:
+
+    FAIL_ON_ERROR(_yr_emit_inst(
+        arena,
+        RE_OPCODE_MATCH_AT_START,
+        &instruction_addr,
+        code_size));
+    break;
+
+  case RE_NODE_ANCHOR_END:
+
+    FAIL_ON_ERROR(_yr_emit_inst(
+        arena,
+        RE_OPCODE_MATCH_AT_END,
+        &instruction_addr,
+        code_size));
+    break;
+
   case RE_NODE_CONCAT:
 
     if (flags & EMIT_FLAGS_BACKWARDS)
@@ -1201,8 +1219,13 @@ int yr_re_exec(
           break;
 
         case RE_OPCODE_MATCH:
+        case RE_OPCODE_MATCH_AT_START:
+        case RE_OPCODE_MATCH_AT_END:
 
-          if (flags & RE_FLAGS_END_ANCHORED && count < input_size)
+          if ((*ip == RE_OPCODE_MATCH_AT_START &&
+               input_size - 1 > count - character_size) ||
+              (*ip == RE_OPCODE_MATCH_AT_END &&
+               input_size > count))
           {
             fiber = _yr_re_fiber_kill(fiber, &fibers, &storage->fiber_pool);
             break;
@@ -1240,10 +1263,9 @@ int yr_re_exec(
     else
       input += character_size;
 
-    count++;
+    count += character_size;
 
-    if ((flags & RE_FLAGS_SCAN) && !(flags & RE_FLAGS_START_ANCHORED) &&
-        count < max_count)
+    if ((flags & RE_FLAGS_SCAN) && count < max_count)
     {
       fiber = _yr_re_fiber_create(&storage->fiber_pool);
       fiber->ip = code;

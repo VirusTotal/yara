@@ -196,6 +196,20 @@ repeat : single '*'
          {
             $$ = $1;
          }
+       | '^'
+         {
+            mark_as_not_literal();
+            $$ = yr_re_node_create(RE_NODE_ANCHOR_START, NULL, NULL);
+
+            ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+         }
+       | '$'
+         {
+            mark_as_not_literal();
+            $$ = yr_re_node_create(RE_NODE_ANCHOR_END, NULL, NULL);
+
+            ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+         }
        ;
 
 single : '(' alternative ')'

@@ -40,7 +40,6 @@ typedef struct _LEX_ENVIRONMENT
 {
   int negated_class;
   uint8_t class_vector[32];
-  const char* last_dollar;
   const char* last_error_message;
 
 } LEX_ENVIRONMENT;

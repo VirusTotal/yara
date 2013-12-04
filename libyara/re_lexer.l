@@ -54,29 +54,6 @@ hex_digit     [0-9a-fA-F]
 
 %%
 
-^\^ {
-
-  // If ^ was found just at the beginning of the regexp
-  // then we have an achored regexp.
-
-  RE* re = yyget_extra(yyscanner);
-  re->flags |= RE_FLAGS_START_ANCHORED;
-}
-
-
-\$ {
-
-  // In a perfect world we would be able to detect a trailing $
-  // by using \$$, just as we did with ^\^ for detecting the
-  // leading ^. However in the real world this doesn't work. We
-  // are forced to match every $ and take note of the position
-  // where it was seen for the last time. At the end of the regexp
-  // we verify if a $ was found just before the end.
-
-  LEX_ENV->last_dollar = yytext;
-}
-
-
 \{{digit}*,{digit}*\} {
 
   // Examples: {3,8} {0,5} {,5} {7,}
@@ -380,15 +357,6 @@ hex_digit     [0-9a-fA-F]
 
 <<EOF>> {
 
-  // If $ was found just before the end of the regexp
-  // then we have an achored regexp.
-
-  if (yytext == LEX_ENV->last_dollar + 1)
-  {
-    RE* re = yyget_extra(yyscanner);
-    re->flags |= RE_FLAGS_END_ANCHORED;
-  }
-
   yyterminate();
 }
 
@@ -456,7 +424,6 @@ int yr_parse_re_string(
   yyscan_t yyscanner;
   LEX_ENVIRONMENT lex_env;
 
-  lex_env.last_dollar = NULL;
   lex_env.last_error_message = NULL;
 
   FAIL_ON_ERROR(yr_re_create(re));

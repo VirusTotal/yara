@@ -165,10 +165,8 @@ typedef pthread_mutex_t mutex_t;
 #define STRING_GFLAGS_ANONYMOUS         0x100
 #define STRING_GFLAGS_SINGLE_MATCH      0x200
 #define STRING_GFLAGS_LITERAL           0x400
-#define STRING_GFLAGS_START_ANCHORED    0x800
-#define STRING_GFLAGS_END_ANCHORED      0x1000
-#define STRING_GFLAGS_FITS_IN_ATOM      0x2000
-#define STRING_GFLAGS_NULL              0x4000
+#define STRING_GFLAGS_FITS_IN_ATOM      0x800
+#define STRING_GFLAGS_NULL              0x1000
 
 #define STRING_IS_HEX(x) \
     (((x)->g_flags) & STRING_GFLAGS_HEXADECIMAL)
@@ -202,12 +200,6 @@ typedef pthread_mutex_t mutex_t;
 
 #define STRING_IS_FAST_HEX_REGEXP(x) \
     (((x)->g_flags) & STRING_GFLAGS_FAST_HEX_REGEXP)
-
-#define STRING_IS_START_ANCHORED(x) \
-    (((x)->g_flags) & STRING_GFLAGS_START_ANCHORED)
-
-#define STRING_IS_END_ANCHORED(x) \
-    (((x)->g_flags) & STRING_GFLAGS_END_ANCHORED)
 
 #define STRING_IS_NULL(x) \
     ((x) == NULL || ((x)->g_flags) & STRING_GFLAGS_NULL)

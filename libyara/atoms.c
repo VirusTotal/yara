@@ -757,6 +757,8 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
     case RE_NODE_DIGIT:
     case RE_NODE_NON_DIGIT:
     case RE_NODE_EMPTY:
+    case RE_NODE_ANCHOR_START:
+    case RE_NODE_ANCHOR_END:
 
       append_current_leaf_to_node(current_node);
       return current_node;
