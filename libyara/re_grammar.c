@@ -398,7 +398,7 @@ union yyalloc
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  6
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  25
+#define YYNRULES  26
 /* YYNRULES -- Number of states.  */
 #define YYNSTATES  30
 
@@ -446,29 +446,29 @@ static const yytype_uint8 yytranslate[] =
    YYRHS.  */
 static const yytype_uint8 yyprhs[] =
 {
-       0,     0,     3,     5,     7,     9,    13,    15,    18,    21,
-      25,    28,    32,    35,    39,    42,    44,    48,    50,    52,
-      54,    56,    58,    60,    62,    64
+       0,     0,     3,     5,     7,     9,    13,    16,    18,    21,
+      24,    28,    31,    35,    38,    42,    45,    47,    51,    53,
+      55,    57,    59,    61,    63,    65,    67
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
 static const yytype_int8 yyrhs[] =
 {
       21,     0,    -1,    22,    -1,     1,    -1,    23,    -1,    22,
-      13,    23,    -1,    24,    -1,    23,    24,    -1,    25,    14,
-      -1,    25,    14,    15,    -1,    25,    16,    -1,    25,    16,
-      15,    -1,    25,    15,    -1,    25,    15,    15,    -1,    25,
-       5,    -1,    25,    -1,    17,    22,    18,    -1,    19,    -1,
-       3,    -1,     7,    -1,     8,    -1,     9,    -1,    10,    -1,
-      11,    -1,    12,    -1,     6,    -1
+      13,    23,    -1,    22,    13,    -1,    24,    -1,    23,    24,
+      -1,    25,    14,    -1,    25,    14,    15,    -1,    25,    16,
+      -1,    25,    16,    15,    -1,    25,    15,    -1,    25,    15,
+      15,    -1,    25,     5,    -1,    25,    -1,    17,    22,    18,
+      -1,    19,    -1,     3,    -1,     7,    -1,     8,    -1,     9,
+      -1,    10,    -1,    11,    -1,    12,    -1,     6,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    86,    86,    91,    94,    98,   107,   111,   119,   126,
-     135,   142,   151,   161,   172,   182,   188,   192,   199,   222,
-     229,   236,   243,   250,   257,   264
+       0,    86,    86,    91,    94,    98,   105,   120,   124,   132,
+     139,   148,   155,   164,   174,   185,   195,   201,   205,   212,
+     235,   242,   249,   256,   263,   270,   277
 };
 #endif
 
@@ -497,17 +497,17 @@ static const yytype_uint16 yytoknum[] =
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    20,    21,    21,    22,    22,    23,    23,    24,    24,
-      24,    24,    24,    24,    24,    24,    25,    25,    25,    25,
-      25,    25,    25,    25,    25,    25
+       0,    20,    21,    21,    22,    22,    22,    23,    23,    24,
+      24,    24,    24,    24,    24,    24,    24,    25,    25,    25,
+      25,    25,    25,    25,    25,    25,    25
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     1,     1,     1,     3,     1,     2,     2,     3,
-       2,     3,     2,     3,     2,     1,     3,     1,     1,     1,
-       1,     1,     1,     1,     1,     1
+       0,     2,     1,     1,     1,     3,     2,     1,     2,     2,
+       3,     2,     3,     2,     3,     2,     1,     3,     1,     1,
+       1,     1,     1,     1,     1,     1,     1
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -515,9 +515,9 @@ static const yytype_uint8 yyr2[] =
    means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     3,    18,    25,    19,    20,    21,    22,    23,    24,
-       0,    17,     0,     2,     4,     6,    15,     0,     1,     0,
-       7,    14,     8,    12,    10,    16,     5,     9,    13,    11
+       0,     3,    19,    26,    20,    21,    22,    23,    24,    25,
+       0,    18,     0,     2,     4,     7,    16,     0,     1,     6,
+       8,    15,     9,    13,    11,    17,     5,    10,    14,    12
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
@@ -1427,14 +1427,30 @@ yyreduce:
     break;
 
   case 6:
-#line 108 "re_grammar.y"
+#line 106 "re_grammar.y"
+    {
+                RE_NODE* node;
+
+                mark_as_not_literal();
+                node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
+
+                ERROR_IF(node == NULL, ERROR_INSUFICIENT_MEMORY);
+
+                (yyval.re_node) = yr_re_node_create(RE_NODE_ALT, (yyvsp[(1) - (2)].re_node), node);
+
+                ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+              }
+    break;
+
+  case 7:
+#line 121 "re_grammar.y"
     {
                   (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
                 }
     break;
 
-  case 7:
-#line 112 "re_grammar.y"
+  case 8:
+#line 125 "re_grammar.y"
     {
                   (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[(1) - (2)].re_node), (yyvsp[(2) - (2)].re_node));
 
@@ -1442,8 +1458,8 @@ yyreduce:
                 }
     break;
 
-  case 8:
-#line 120 "re_grammar.y"
+  case 9:
+#line 133 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_STAR, (yyvsp[(1) - (2)].re_node), NULL);
@@ -1452,8 +1468,8 @@ yyreduce:
          }
     break;
 
-  case 9:
-#line 127 "re_grammar.y"
+  case 10:
+#line 140 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_STAR, (yyvsp[(1) - (3)].re_node), NULL);
@@ -1464,8 +1480,8 @@ yyreduce:
          }
     break;
 
-  case 10:
-#line 136 "re_grammar.y"
+  case 11:
+#line 149 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_PLUS, (yyvsp[(1) - (2)].re_node), NULL);
@@ -1474,8 +1490,8 @@ yyreduce:
          }
     break;
 
-  case 11:
-#line 143 "re_grammar.y"
+  case 12:
+#line 156 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_PLUS, (yyvsp[(1) - (3)].re_node), NULL);
@@ -1486,8 +1502,8 @@ yyreduce:
          }
     break;
 
-  case 12:
-#line 152 "re_grammar.y"
+  case 13:
+#line 165 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, (yyvsp[(1) - (2)].re_node), NULL);
@@ -1499,8 +1515,8 @@ yyreduce:
          }
     break;
 
-  case 13:
-#line 162 "re_grammar.y"
+  case 14:
+#line 175 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, (yyvsp[(1) - (3)].re_node), NULL);
@@ -1513,8 +1529,8 @@ yyreduce:
          }
     break;
 
-  case 14:
-#line 173 "re_grammar.y"
+  case 15:
+#line 186 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, (yyvsp[(1) - (2)].re_node), NULL);
@@ -1526,22 +1542,22 @@ yyreduce:
          }
     break;
 
-  case 15:
-#line 183 "re_grammar.y"
+  case 16:
+#line 196 "re_grammar.y"
     {
             (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
          }
     break;
 
-  case 16:
-#line 189 "re_grammar.y"
+  case 17:
+#line 202 "re_grammar.y"
     {
             (yyval.re_node) = (yyvsp[(2) - (3)].re_node);
          }
     break;
 
-  case 17:
-#line 193 "re_grammar.y"
+  case 18:
+#line 206 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
@@ -1550,8 +1566,8 @@ yyreduce:
          }
     break;
 
-  case 18:
-#line 200 "re_grammar.y"
+  case 19:
+#line 213 "re_grammar.y"
     {
             RE* re = yyget_extra(yyscanner);
 
@@ -1576,8 +1592,8 @@ yyreduce:
          }
     break;
 
-  case 19:
-#line 223 "re_grammar.y"
+  case 20:
+#line 236 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_WORD_CHAR, NULL, NULL);
@@ -1586,8 +1602,8 @@ yyreduce:
          }
     break;
 
-  case 20:
-#line 230 "re_grammar.y"
+  case 21:
+#line 243 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_NON_WORD_CHAR, NULL, NULL);
@@ -1596,8 +1612,8 @@ yyreduce:
          }
     break;
 
-  case 21:
-#line 237 "re_grammar.y"
+  case 22:
+#line 250 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_SPACE, NULL, NULL);
@@ -1606,8 +1622,8 @@ yyreduce:
          }
     break;
 
-  case 22:
-#line 244 "re_grammar.y"
+  case 23:
+#line 257 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_NON_SPACE, NULL, NULL);
@@ -1616,8 +1632,8 @@ yyreduce:
          }
     break;
 
-  case 23:
-#line 251 "re_grammar.y"
+  case 24:
+#line 264 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_DIGIT, NULL, NULL);
@@ -1626,8 +1642,8 @@ yyreduce:
          }
     break;
 
-  case 24:
-#line 258 "re_grammar.y"
+  case 25:
+#line 271 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_NON_DIGIT, NULL, NULL);
@@ -1636,8 +1652,8 @@ yyreduce:
          }
     break;
 
-  case 25:
-#line 265 "re_grammar.y"
+  case 26:
+#line 278 "re_grammar.y"
     {
             mark_as_not_literal();
             (yyval.re_node) = yr_re_node_create(RE_NODE_CLASS, NULL, NULL);
@@ -1650,7 +1666,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1654 "re_grammar.c"
+#line 1670 "re_grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1864,7 +1880,7 @@ yyreturn:
 }
 
 
-#line 276 "re_grammar.y"
+#line 289 "re_grammar.y"
 
 
 

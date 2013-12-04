@@ -404,9 +404,9 @@ int _yr_re_emit(
   RE_NODE* left;
   RE_NODE* right;
 
-  int16_t* split_offset_addr;
-  int16_t* jmp_offset_addr;
-  uint8_t* instruction_addr;
+  int16_t* split_offset_addr = NULL;
+  int16_t* jmp_offset_addr = NULL;
+  uint8_t* instruction_addr = NULL;
 
   *code_size = 0;
 

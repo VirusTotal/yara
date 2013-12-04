@@ -102,6 +102,19 @@ alternative : concatenation
 
                 ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
               }
+            | alternative '|'
+              {
+                RE_NODE* node;
+
+                mark_as_not_literal();
+                node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
+
+                ERROR_IF(node == NULL, ERROR_INSUFICIENT_MEMORY);
+
+                $$ = yr_re_node_create(RE_NODE_ALT, $1, node);
+
+                ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+              }
             ;
 
 concatenation : repeat

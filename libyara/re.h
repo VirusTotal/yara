@@ -34,6 +34,7 @@ limitations under the License.
 #define RE_NODE_NON_SPACE           13
 #define RE_NODE_DIGIT               14
 #define RE_NODE_NON_DIGIT           15
+#define RE_NODE_EMPTY               16
 
 
 #define RE_OPCODE_ANY               0xA0
