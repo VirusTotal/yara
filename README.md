@@ -56,9 +56,10 @@ written by Eric Monti.
 
 ### 1.7.2 (02/12/2013)
 
-* BUGFIX: Regular expressions marked as both "wide" and "ascii" were treated as 
+* BUGFIX: Regular expressions marked as both "wide" and "ascii" were treated as
 just "wide"
-* BUGFIX: Bug in "n of (<string_set>)" operator 
+* BUGFIX: Bug in "n of (<string_set>)" operator
+* BUGFIX: Bug in get_process_memory could cause infinite loop
 
 ### 1.7.1 (25/11/2013)
 
