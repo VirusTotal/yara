@@ -273,7 +273,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
       snprintf(
           message,
           sizeof(message),
-          "invalid %s in string \"%s\": %s",
+          "invalid %s \"%s\": %s",
           (flags & STRING_GFLAGS_HEXADECIMAL) ?
               "hex string" : "regular expression",
           identifier,

@@ -19,6 +19,7 @@ limitations under the License.
 
 #include <stdio.h>
 #include <stdint.h>
+#include <setjmp.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -88,6 +89,7 @@ typedef pthread_mutex_t mutex_t;
 #define ERROR_LOOP_NESTING_LIMIT_EXCEEDED       32
 #define ERROR_DUPLICATE_LOOP_IDENTIFIER         33
 #define ERROR_TOO_MANY_SCAN_THREADS             34
+#define ERROR_INTERNAL_FATAL_ERROR              35
 
 
 #define CALLBACK_MSG_RULE_MATCHING            1
@@ -504,6 +506,8 @@ typedef struct _YR_COMPILER
   int                 error_line;
   int                 last_error;
   int                 last_error_line;
+
+  jmp_buf             fatal_error;
 
   YR_ARENA*           sz_arena;
   YR_ARENA*           rules_arena;

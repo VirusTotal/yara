@@ -35,9 +35,11 @@ char lowercase[256];
 char altercase[256];
 
 #ifdef WIN32
-DWORD key;
+DWORD tidx_key;
+DWORD recovery_state_key;
 #else
-pthread_key_t key;
+pthread_key_t tidx_key;
+pthread_key_t recovery_state_key;
 #endif
 
 
@@ -67,9 +69,11 @@ void yr_initialize(void)
   yr_heap_alloc();
 
   #ifdef WIN32
-  key = TlsAlloc();
+  tidx_key = TlsAlloc();
+  recovery_state_key = TlsAlloc();
   #else
-  pthread_key_create(&key, NULL);
+  pthread_key_create(&tidx_key, NULL);
+  pthread_key_create(&recovery_state_key, NULL);
   #endif
 
   yr_re_initialize();
@@ -101,9 +105,11 @@ void yr_finalize(void)
   yr_re_finalize_thread();
 
   #ifdef WIN32
-  TlsFree(key);
+  TlsFree(tidx_key);
+  TlsFree(recovery_state_key);
   #else
-  pthread_key_delete(key);
+  pthread_key_delete(tidx_key);
+  pthread_key_delete(recovery_state_key);
   #endif
 
   yr_re_finalize();
@@ -125,9 +131,9 @@ void yr_finalize(void)
 void yr_set_tidx(int tidx)
 {
   #ifdef WIN32
-  TlsSetValue(key, (LPVOID) (tidx + 1));
+  TlsSetValue(tidx_key, (LPVOID) (tidx + 1));
   #else
-  pthread_setspecific(key, (void*) (size_t) (tidx + 1));
+  pthread_setspecific(tidx_key, (void*) (size_t) (tidx + 1));
   #endif
 }
 
@@ -145,8 +151,8 @@ void yr_set_tidx(int tidx)
 int yr_get_tidx(void)
 {
   #ifdef WIN32
-  return (int) TlsGetValue(key) - 1;
+  return (int) TlsGetValue(tidx_key) - 1;
   #else
-  return (int) (size_t) pthread_getspecific(key) - 1;
+  return (int) (size_t) pthread_getspecific(tidx_key) - 1;
   #endif
 }

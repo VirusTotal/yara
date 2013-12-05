@@ -752,6 +752,12 @@ char* yr_compiler_get_error_message(
           buffer_size,
           "loop nesting limit exceeded");
       break;
+    case ERROR_INTERNAL_FATAL_ERROR:
+      snprintf(
+          buffer,
+          buffer_size,
+          "internal fatal error");
+      break;
   }
 
   return buffer;

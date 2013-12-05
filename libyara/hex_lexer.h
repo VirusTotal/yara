@@ -20,6 +20,7 @@ limitations under the License.
 #define yyparse         hex_yyparse
 #define yylex           hex_yylex
 #define yyerror         hex_yyerror
+#define yyfatal         hex_yyfatal
 #define yychar          hex_yychar
 #define yydebug         hex_yydebug
 #define yynerrs         hex_yynerrs
@@ -42,6 +43,8 @@ typedef struct _LEX_ENVIRONMENT
 
 } LEX_ENVIRONMENT;
 
+
+#define YY_FATAL_ERROR(msg) hex_yyfatal(yyscanner, msg)
 
 #define LEX_ENV  ((LEX_ENVIRONMENT*) lex_env)
 
@@ -66,3 +69,6 @@ void yyerror(
     LEX_ENVIRONMENT* lex_env,
     const char *error_message);
 
+void yyfatal(
+    yyscan_t yyscanner,
+    const char *error_message);

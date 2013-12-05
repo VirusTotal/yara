@@ -21,6 +21,7 @@ limitations under the License.
 #define yyparse       yara_yyparse
 #define yylex         yara_yylex
 #define yyerror       yara_yyerror
+#define yyfatal       yara_yyfatal
 #define yychar        yara_yychar
 #define yydebug       yara_yydebug
 #define yynerrs       yara_yynerrs
@@ -32,6 +33,9 @@ limitations under the License.
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
 #endif
+
+#define YY_FATAL_ERROR(msg) yara_yyfatal(yyscanner, msg)
+
 
 #define YY_EXTRA_TYPE YR_COMPILER*
 #define YY_USE_CONST
@@ -46,6 +50,10 @@ int yyparse(
     void *yyscanner);
 
 void yyerror(
+    yyscan_t yyscanner,
+    const char *error_message);
+
+void yyfatal(
     yyscan_t yyscanner,
     const char *error_message);
 

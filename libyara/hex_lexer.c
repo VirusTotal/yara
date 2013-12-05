@@ -2080,6 +2080,29 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 
 
 
+
+#ifdef WIN32
+extern DWORD recovery_state_key;
+#else
+extern pthread_key_t recovery_state_key;
+#endif
+
+
+void yyfatal(
+    yyscan_t yyscanner,
+    const char *error_message)
+{
+  jmp_buf* recovery_state;
+
+  #ifdef WIN32
+  recovery_state = TlsGetValue(recovery_state_key) ;
+  #else
+  recovery_state = pthread_getspecific(recovery_state_key);
+  #endif
+
+  longjmp(*recovery_state, 1);
+}
+
 void yyerror(
     yyscan_t yyscanner,
     LEX_ENVIRONMENT* lex_env,
@@ -2096,6 +2119,7 @@ int yr_parse_hex_string(
   RE** re)
 {
   yyscan_t yyscanner;
+  jmp_buf recovery_state;
   LEX_ENVIRONMENT lex_env;
 
   lex_env.last_error_message = NULL;
@@ -2115,6 +2139,15 @@ int yr_parse_hex_string(
 
   (*re)->flags |= RE_FLAGS_LITERAL_STRING;
   (*re)->flags |= RE_FLAGS_FAST_HEX_REGEXP;
+
+  #ifdef WIN32
+  TlsSetValue(recovery_state_key, (LPVOID) &recovery_state);
+  #else
+  pthread_setspecific(recovery_state_key, (void*) &recovery_state);
+  #endif
+
+  if (setjmp(recovery_state) != 0)
+    return ERROR_INTERNAL_FATAL_ERROR;
 
   hex_yylex_init(&yyscanner);
   hex_yyset_extra(*re,yyscanner);

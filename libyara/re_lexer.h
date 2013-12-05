@@ -20,6 +20,7 @@ limitations under the License.
 #define yyparse         re_yyparse
 #define yylex           re_yylex
 #define yyerror         re_yyerror
+#define yyfatal         re_yyfatal
 #define yychar          re_yychar
 #define yydebug         re_yydebug
 #define yynerrs         re_yynerrs
@@ -47,6 +48,8 @@ typedef struct _LEX_ENVIRONMENT
 
 #define LEX_ENV  ((LEX_ENVIRONMENT*) lex_env)
 
+#define YY_FATAL_ERROR(msg) re_yyfatal(yyscanner, msg)
+
 #define YY_DECL int re_yylex \
     (YYSTYPE * yylval_param , yyscan_t yyscanner, LEX_ENVIRONMENT* lex_env)
 
@@ -66,6 +69,10 @@ int yyparse(
 void yyerror(
     yyscan_t yyscanner,
     LEX_ENVIRONMENT* lex_env,
+    const char *error_message);
+
+void yyfatal(
+    yyscan_t yyscanner,
     const char *error_message);
 
 int yr_parse_re_string(
