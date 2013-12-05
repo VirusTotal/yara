@@ -507,7 +507,7 @@ typedef struct _YR_COMPILER
   int                 last_error;
   int                 last_error_line;
 
-  jmp_buf             fatal_error;
+  jmp_buf             error_recovery;
 
   YR_ARENA*           sz_arena;
   YR_ARENA*           rules_arena;

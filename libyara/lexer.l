@@ -504,7 +504,7 @@ void yyfatal(
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   yyerror(yyscanner, error_message);
-  longjmp(compiler->fatal_error, 1);
+  longjmp(compiler->error_recovery, 1);
 }
 
 
@@ -582,7 +582,7 @@ int yr_lex_parse_rules_string(
   yyscan_t yyscanner;
   YY_BUFFER_STATE state;
 
-  if (setjmp(compiler->fatal_error) != 0)
+  if (setjmp(compiler->error_recovery) != 0)
     return compiler->errors;
 
   yylex_init(&yyscanner);
@@ -607,7 +607,7 @@ int yr_lex_parse_rules_file(
 {
   yyscan_t yyscanner;
 
-  if (setjmp(compiler->fatal_error) != 0)
+  if (setjmp(compiler->error_recovery) != 0)
     return compiler->errors;
 
   yylex_init(&yyscanner);
