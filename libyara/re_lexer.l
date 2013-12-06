@@ -190,6 +190,13 @@ hex_digit     [0-9a-fA-F]
 }
 
 
+\\{digit}+ {
+
+  yyerror(yyscanner, lex_env, "backreferences are not allowed");
+  yyterminate();
+}
+
+
 \\ {
   yylval->integer = read_escaped_char(yyscanner);
   return _CHAR_;
