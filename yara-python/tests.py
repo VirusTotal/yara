@@ -528,6 +528,12 @@ class TestYara(unittest.TestCase):
         r = yara.compile(source='rule test { condition: ext_str matches /foo/ }', externals={'ext_str': ''})
         self.assertFalse(r.match(data='dummy'))
 
+        r = yara.compile(source='rule test { condition: ext_str matches /foo/ }', externals={'ext_str': 'FOO'})
+        self.assertFalse(r.match(data='dummy'))
+
+        r = yara.compile(source='rule test { condition: ext_str matches /foo/i }', externals={'ext_str': 'FOO'})
+        self.assertTrue(r.match(data='dummy'))
+
         r = yara.compile(source='rule test { condition: ext_str matches /ssi(s|p)/ }', externals={'ext_str': 'mississippi'})
         self.assertTrue(r.match(data='dummy'))
 
