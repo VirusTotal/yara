@@ -64,75 +64,44 @@ char* yr_strdup(const char *s)
 #include <string.h>
 #include <stdio.h>
 
-
-#ifdef DEBUG_HEAP
-static int count;
+#ifdef DMALLOC
+#include <dmalloc.h>
 #endif
+
 
 void yr_heap_alloc()
 {
-  #ifdef DEBUG_HEAP
-  count = 0;
-  #endif
   return;
 }
 
 
 void yr_heap_free()
 {
-  #ifdef DEBUG_HEAP
-  printf("malloc count: %d\n", count);
-  #endif
   return;
 }
 
 
 void* yr_malloc(size_t size)
 {
-  void* result = malloc(size);
-
-  #ifdef DEBUG_HEAP
-  count++;
-  printf("malloc: %p %zd\n", result, size);
-  #endif
-
-  return result;
+  return malloc(size);
 }
 
 
 void* yr_realloc(void* ptr, size_t size)
 {
-  void* result = realloc(ptr, size);
-
-  #ifdef DEBUG_HEAP
-  printf("realloc: %p -> %p\n", ptr, result);
-  #endif
-
-  return result;
+  return realloc(ptr, size);
 }
 
 
 void yr_free(void *ptr)
 {
-  #ifdef DEBUG_HEAP
-  count--;
-  printf("free: %p\n", ptr);
-  #endif
-
   free(ptr);
 }
 
 
 char* yr_strdup(const char *str)
 {
-  void* result = strdup(str);
-
-  #ifdef DEBUG_HEAP
-  count++;
-  printf("strdup: %p %zd %s\n", result, strlen(str) + 1, str);
-  #endif
-
-  return result;
+  return strdup(str);
 }
 
 #endif
