@@ -246,6 +246,9 @@ YR_STRING* yr_parser_reduce_string_declaration(
   if (!(flags & STRING_GFLAGS_WIDE))
     flags |= STRING_GFLAGS_ASCII;
 
+  if (str->flags & SIZED_STRING_FLAGS_NO_CASE)
+    flags |= STRING_GFLAGS_NO_CASE;
+
   // The STRING_GFLAGS_SINGLE_MATCH flag indicates that finding
   // a single match for the string is enough. This is true in
   // most cases, except when the string count (#) and string offset (@)

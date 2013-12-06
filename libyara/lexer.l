@@ -30,6 +30,7 @@ limitations under the License.
 #include "mem.h"
 #include "lexer.h"
 #include "utils.h"
+#include "re.h"
 
 
 #define LEX_CHECK_SPACE_OK(data, current_size, max_length) \
@@ -399,7 +400,7 @@ $({letter}|{digit}|_)*  {
 }
 
 
-<regexp>"/"  {
+<regexp>\/i?  {
 
   SIZED_STRING* s;
 
@@ -413,6 +414,11 @@ $({letter}|{digit}|_)*  {
   BEGIN(INITIAL);
 
   s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
+
+  if (yytext[1] == 'i')
+    s->flags = SIZED_STRING_FLAGS_NO_CASE;
+  else
+    s->flags = 0;
 
   s->length = yyextra->lex_buf_len;
   strcpy(s->c_string, yyextra->lex_buf);

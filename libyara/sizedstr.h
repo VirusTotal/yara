@@ -18,15 +18,18 @@ limitations under the License.
 #define _SIZEDSTR_H
 
 //
-// This struct is used to support strings containing null chars. The length of 
+// This struct is used to support strings containing null chars. The length of
 // the string is stored along the string data. However the string data is also
 // terminated with a null char.
 //
 
+#define SIZED_STRING_FLAGS_NO_CASE 	1
+
 typedef struct _SIZED_STRING
 {
     int length;
-    char c_string[1];  
+    int flags;
+    char c_string[1];
 
 } SIZED_STRING;
 

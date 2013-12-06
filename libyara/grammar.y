@@ -149,8 +149,8 @@ limitations under the License.
   SIZED_STRING*   sized_string;
   char*           c_string;
   int64_t         integer;
-  YR_STRING*         string;
-  YR_META*           meta;
+  YR_STRING*      string;
+  YR_META*        meta;
 }
 
 
@@ -489,6 +489,9 @@ boolean_expression  : '(' boolean_expression ')'
 
                         compiler->last_result = yr_re_compile(
                             sized_string->c_string, &re);
+
+                        if (sized_string->flags & SIZED_STRING_FLAGS_NO_CASE)
+                          re->flags |= RE_FLAGS_NO_CASE;
 
                         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
