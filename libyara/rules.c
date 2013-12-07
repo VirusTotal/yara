@@ -742,6 +742,10 @@ int yr_rules_define_string_variable(
     if (strcmp(external->identifier, identifier) == 0)
     {
       external->type = EXTERNAL_VARIABLE_TYPE_MALLOC_STRING;
+
+      if (external->string != NULL)
+        yr_free(external->string);
+
       external->string = yr_strdup(value);
       break;
     }
