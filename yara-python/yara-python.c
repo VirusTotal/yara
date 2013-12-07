@@ -1331,5 +1331,7 @@ MOD_INIT(yara)
 
   yr_initialize();
 
+  Py_AtExit(yr_finalize);
+
   return MOD_SUCCESS_VAL(m);
 }
