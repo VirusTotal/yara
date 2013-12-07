@@ -1255,8 +1255,9 @@ int yr_re_exec(
       }
     }
 
-    if (flags & RE_FLAGS_WIDE && *(input + 1) != 0)
-      break;
+    if (fibers.head != NULL &&
+        flags & RE_FLAGS_WIDE && *(input + 1) != 0)
+      _yr_re_fiber_kill_tail(fibers.head, &fibers, &storage->fiber_pool);
 
     if (flags & RE_FLAGS_BACKWARDS)
       input -= character_size;
