@@ -156,6 +156,16 @@ void yr_re_print(
     RE* re);
 
 
+RE_NODE* yr_re_node_create(
+    int type,
+    RE_NODE* left,
+    RE_NODE* right);
+
+
+void yr_re_node_destroy(
+  RE_NODE* node);
+
+
 int yr_re_emit_code(
     RE* re,
     YR_ARENA* arena);

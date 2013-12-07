@@ -176,18 +176,23 @@ int main(
   yr_initialize();
 
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    yr_finalize();
     return 0;
+  }
 
   if (!process_cmd_line(compiler, argc, argv))
   {
     yr_compiler_destroy(compiler);
+    yr_finalize();
     return 0;
   }
 
   if (argc == 1 || optind == argc)
   {
-    yr_compiler_destroy(compiler);
     show_help();
+    yr_compiler_destroy(compiler);
+    yr_finalize();
     return 0;
   }
 
@@ -210,6 +215,7 @@ int main(
       if (errors) // errors during compilation
       {
         yr_compiler_destroy(compiler);
+        yr_finalize();
         return 0;
       }
     }
@@ -229,6 +235,8 @@ int main(
 
   yr_rules_destroy(rules);
   yr_compiler_destroy(compiler);
+
+  yr_finalize();
 
   return 1;
 }

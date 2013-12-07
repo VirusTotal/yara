@@ -22,6 +22,12 @@ limitations under the License.
 #include "re_lexer.h"
 #include "re.h"
 
+#include "config.h"
+
+#ifdef DMALLOC
+#include <dmalloc.h>
+#endif
+
 #define YYERROR_VERBOSE
 
 
@@ -42,6 +48,12 @@ yydebug = 1;
       RE* re = yyget_extra(yyscanner); \
       re->error_code = error; \
       YYABORT; \
+    } \
+
+#define DESTROY_NODE_IF(x, node) \
+    if (x) \
+    { \
+      yr_re_node_destroy(node); \
     } \
 
 %}
@@ -76,10 +88,13 @@ yydebug = 1;
 %token _DIGIT_
 %token _NON_DIGIT_
 
-%destructor { yr_free($$); } _CLASS_
-
-
 %type <re_node>  alternative concatenation repeat single
+
+%destructor { yr_free($$); } _CLASS_
+%destructor { yr_re_node_destroy($$); } alternative
+%destructor { yr_re_node_destroy($$); } concatenation
+%destructor { yr_re_node_destroy($$); } repeat
+%destructor { yr_re_node_destroy($$); } single
 
 %%
 
@@ -100,6 +115,9 @@ alternative : concatenation
                 mark_as_not_literal();
                 $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
 
+                DESTROY_NODE_IF($$ == NULL, $1);
+                DESTROY_NODE_IF($$ == NULL, $3);
+
                 ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
               }
             | alternative '|'
@@ -109,6 +127,7 @@ alternative : concatenation
                 mark_as_not_literal();
                 node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
 
+                DESTROY_NODE_IF($$ == NULL, $1);
                 ERROR_IF(node == NULL, ERROR_INSUFICIENT_MEMORY);
 
                 $$ = yr_re_node_create(RE_NODE_ALT, $1, node);
@@ -125,6 +144,8 @@ concatenation : repeat
                 {
                   $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
 
+                  DESTROY_NODE_IF($$ == NULL, $1);
+                  DESTROY_NODE_IF($$ == NULL, $2);
                   ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
                 }
               ;
@@ -134,6 +155,7 @@ repeat : single '*'
             mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_STAR, $1, NULL);
 
+            DESTROY_NODE_IF($$ == NULL, $1);
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        | single '*' '?'
@@ -141,6 +163,7 @@ repeat : single '*'
             mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_STAR, $1, NULL);
 
+            DESTROY_NODE_IF($$ == NULL, $1);
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
             $$->greedy = FALSE;
@@ -150,6 +173,7 @@ repeat : single '*'
             mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_PLUS, $1, NULL);
 
+            DESTROY_NODE_IF($$ == NULL, $1);
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        | single '+' '?'
@@ -157,6 +181,7 @@ repeat : single '*'
             mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_PLUS, $1, NULL);
 
+            DESTROY_NODE_IF($$ == NULL, $1);
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
             $$->greedy = FALSE;
@@ -166,6 +191,7 @@ repeat : single '*'
             mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
 
+            DESTROY_NODE_IF($$ == NULL, $1);
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
             $$->start = 0;
@@ -176,6 +202,7 @@ repeat : single '*'
             mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
 
+            DESTROY_NODE_IF($$ == NULL, $1);
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
             $$->start = 0;
@@ -187,6 +214,7 @@ repeat : single '*'
             mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
 
+            DESTROY_NODE_IF($$ == NULL, $1);
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
             $$->start = $2 & 0xFFFF;;

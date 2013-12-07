@@ -32,6 +32,11 @@ limitations under the License.
 #include "utils.h"
 #include "re.h"
 
+#include "config.h"
+
+#ifdef DMALLOC
+#include <dmalloc.h>
+#endif
 
 #define LEX_CHECK_SPACE_OK(data, current_size, max_length) \
     if (strlen(data) + current_size >= max_length - 1) \

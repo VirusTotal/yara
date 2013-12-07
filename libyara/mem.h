@@ -19,9 +19,18 @@ limitations under the License.
 
 #include <stdio.h>
 
-void yr_heap_alloc();
+#include "config.h"
 
-void yr_heap_free();
+#ifdef DMALLOC
+
+#define yr_malloc malloc
+#define yr_realloc realloc
+#define yr_free free
+#define yr_strdup strdup
+
+#include <dmalloc.h>
+
+#else
 
 void* yr_malloc(
 		size_t size);
@@ -35,6 +44,12 @@ void yr_free(
 
 char* yr_strdup(
 		const char *str);
+
+#endif
+
+void yr_heap_alloc();
+
+void yr_heap_free();
 
 #endif
 

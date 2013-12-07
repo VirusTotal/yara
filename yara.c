@@ -40,6 +40,10 @@ limitations under the License.
 #include "threading.h"
 #include "config.h"
 
+#ifdef DMALLOC
+#include <dmalloc.h>
+#endif
+
 #define USAGE \
 "usage:  yara [OPTION]... RULES_FILE FILE | PID\n"\
 "options:\n"\
@@ -860,6 +864,7 @@ int main(
   if (argc == 1 || optind == argc)
   {
     show_help();
+    cleanup();
     return 0;
   }
 
@@ -871,6 +876,8 @@ int main(
       result == ERROR_CORRUPT_FILE)
   {
     print_scanning_error(result);
+    yr_finalize();
+    cleanup();
     return 0;
   }
 
@@ -909,7 +916,11 @@ int main(
   else
   {
     if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+    {
+      yr_finalize();
+      cleanup();
       return 0;
+    }
 
     external = externals_list;
 
@@ -960,12 +971,15 @@ int main(
       if (errors > 0)
       {
         yr_finalize();
+        cleanup();
         return 0;
       }
     }
     else
     {
       fprintf(stderr, "could not open file: %s\n", argv[optind]);
+      yr_finalize();
+      cleanup();
       return 0;
     }
   }

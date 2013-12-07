@@ -23,6 +23,12 @@ limitations under the License.
 #include "re.h"
 #include "yara.h"
 
+#include "config.h"
+
+#ifdef DMALLOC
+#include <dmalloc.h>
+#endif
+
 #define YYERROR_VERBOSE
 
 #define YYDEBUG 0
@@ -43,6 +49,12 @@ yydebug = 1;
       RE* re = yyget_extra(yyscanner); \
       re->error_code = error; \
       YYABORT; \
+    } \
+
+#define DESTROY_NODE_IF(x, node) \
+    if (x) \
+    { \
+      yr_re_node_destroy(node); \
     } \
 
 %}
@@ -69,6 +81,12 @@ yydebug = 1;
 
 %type <re_node>  tokens token byte alternatives range
 
+%destructor { yr_re_node_destroy($$); } tokens
+%destructor { yr_re_node_destroy($$); } token
+%destructor { yr_re_node_destroy($$); } byte
+%destructor { yr_re_node_destroy($$); } alternatives
+%destructor { yr_re_node_destroy($$); } range
+
 %%
 
 hex_string : '{' tokens '}'
@@ -86,6 +104,9 @@ tokens : token
        | tokens token
          {
             $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
+
+            DESTROY_NODE_IF($$ == NULL, $1);
+            DESTROY_NODE_IF($$ == NULL, $2);
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        ;
@@ -113,6 +134,8 @@ range : _NUMBER_
 
           re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
+          ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+
           $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
 
           ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
@@ -133,6 +156,8 @@ range : _NUMBER_
           }
 
           re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
+
+          ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
 
           $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
 
@@ -155,6 +180,8 @@ alternatives : tokens
 
                   $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
 
+                  DESTROY_NODE_IF($$ == NULL, $1);
+                  DESTROY_NODE_IF($$ == NULL, $3);
                   ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
                }
              ;

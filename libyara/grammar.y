@@ -32,6 +32,12 @@ limitations under the License.
 #include "utils.h"
 #include "yara.h"
 
+#include "config.h"
+
+#ifdef DMALLOC
+#include <dmalloc.h>
+#endif
+
 #define YYERROR_VERBOSE
 
 #define INTEGER_SET_ENUMERATION 1

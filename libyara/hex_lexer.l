@@ -26,6 +26,11 @@ limitations under the License.
 #include "hex_lexer.h"
 #include "utils.h"
 
+#include "config.h"
+
+#ifdef DMALLOC
+#include <dmalloc.h>
+#endif
 
 #ifdef WIN32
 #define snprintf _snprintf
