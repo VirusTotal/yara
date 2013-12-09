@@ -53,6 +53,7 @@ limitations under the License.
 "  -g                       print tags.\n"\
 "  -m                       print metadata.\n"\
 "  -s                       print matching strings.\n"\
+"  -p <number>              use the specified <number> of threads to scan a directory.\n"\
 "  -l <number>              abort scanning after matching a number rules.\n"\
 "  -a <seconds>             abort scanning after a number of seconds has elapsed.\n"\
 "  -d <identifier>=<value>  define external variable.\n"\
@@ -693,7 +694,7 @@ int process_cmd_line(
 
   opterr = 0;
 
-  while ((c = getopt (argc, (char**) argv, "wrnsvgma:l:t:i:d:f")) != -1)
+  while ((c = getopt (argc, (char**) argv, "wrnsvgma:l:t:i:d:p:f")) != -1)
   {
     switch (c)
     {
@@ -808,6 +809,10 @@ int process_cmd_line(
 
       case 'a':
         timeout = atoi(optarg);
+        break;
+
+      case 'p':
+        threads = atoi(optarg);
         break;
 
       case '?':
