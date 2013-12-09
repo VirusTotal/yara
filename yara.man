@@ -40,10 +40,20 @@ Print metadata associated to the rule.
 .B \-s
 Print strings found in the file.
 .TP
+.BI \-p " number"
+Use the specified
+.I number
+of threads to scan a directory.
+.TP
 .BI \-l " number"
 Abort scanning after a
 .I number
 of rules matched.
+.TP
+.BI \-a " seconds"
+Abort scanning after a number of
+.I seconds
+has elapsed.
 .TP
 .BI \-d " identifier"=value
 Define an external variable. This option can be used multiple times.
