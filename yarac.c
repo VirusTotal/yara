@@ -171,8 +171,6 @@ int main(
   YR_RULES* rules;
   FILE* rule_file;
 
-  clock_t start, end;
-
   yr_initialize();
 
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
@@ -197,8 +195,6 @@ int main(
   }
 
   compiler->error_report_function = report_error;
-
-  start = clock();
 
   for (i = optind; i < argc - 1; i++)
   {
@@ -226,10 +222,6 @@ int main(
   }
 
   yr_compiler_get_rules(compiler, &rules);
-
-  end = clock();
-
-  printf( "Compiling time: %f s\n", (float)(end - start) / CLOCKS_PER_SEC);
 
   yr_rules_save(rules, argv[argc - 1]);
 

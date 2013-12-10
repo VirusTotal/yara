@@ -8,6 +8,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "yara", "yara.vcxproj", "{E2
 		{632EE910-8B6F-A478-8D69-83878CE26140} = {632EE910-8B6F-A478-8D69-83878CE26140}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "yarac", "..\yarac\yarac.vcxproj", "{C2EE445F-2BA5-4E2D-A9E5-44ADE8CAF8E4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{632EE910-8B6F-A478-8D69-83878CE26140} = {632EE910-8B6F-A478-8D69-83878CE26140}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -32,6 +37,13 @@ Global
 		{E203D7BB-29B9-4152-9208-BB410983CE8C}.Release|Win32.Build.0 = Release|Win32
 		{E203D7BB-29B9-4152-9208-BB410983CE8C}.Release|x64.ActiveCfg = Release|x64
 		{E203D7BB-29B9-4152-9208-BB410983CE8C}.Release|x64.Build.0 = Release|x64
+		{C2EE445F-2BA5-4E2D-A9E5-44ADE8CAF8E4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C2EE445F-2BA5-4E2D-A9E5-44ADE8CAF8E4}.Debug|Win32.Build.0 = Debug|Win32
+		{C2EE445F-2BA5-4E2D-A9E5-44ADE8CAF8E4}.Debug|x64.ActiveCfg = Debug|Win32
+		{C2EE445F-2BA5-4E2D-A9E5-44ADE8CAF8E4}.Release|Win32.ActiveCfg = Release|Win32
+		{C2EE445F-2BA5-4E2D-A9E5-44ADE8CAF8E4}.Release|Win32.Build.0 = Release|Win32
+		{C2EE445F-2BA5-4E2D-A9E5-44ADE8CAF8E4}.Release|x64.ActiveCfg = Release|x64
+		{C2EE445F-2BA5-4E2D-A9E5-44ADE8CAF8E4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
