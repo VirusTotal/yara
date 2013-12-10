@@ -805,7 +805,6 @@ int yr_rules_scan_mem_block(
   YR_AC_STATE* current_state;
 
   time_t current_time;
-  size_t offset;
   size_t i;
 
   current_state = rules->automaton->root;
@@ -819,13 +818,11 @@ int yr_rules_scan_mem_block(
     {
       if (ac_match->backtrack <= i)
       {
-        offset = i - ac_match->backtrack;
-
         _yr_scan_verify_match(
               ac_match,
               data,
               data_size,
-              offset,
+              i - ac_match->backtrack,
               matches_arena,
               fast_scan_mode);
       }
@@ -859,13 +856,16 @@ int yr_rules_scan_mem_block(
 
   while (ac_match != NULL)
   {
-    _yr_scan_verify_match(
-        ac_match,
-        data,
-        data_size,
-        data_size - ac_match->backtrack,
-        matches_arena,
-        fast_scan_mode);
+    if (ac_match->backtrack <= data_size)
+    {
+      _yr_scan_verify_match(
+          ac_match,
+          data,
+          data_size,
+          data_size - ac_match->backtrack,
+          matches_arena,
+          fast_scan_mode);
+    }
 
     ac_match = ac_match->next;
   }
