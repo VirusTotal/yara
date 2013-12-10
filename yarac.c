@@ -178,14 +178,14 @@ int main(
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
   {
     yr_finalize();
-    return 0;
+    return EXIT_FAILURE;
   }
 
   if (!process_cmd_line(compiler, argc, argv))
   {
     yr_compiler_destroy(compiler);
     yr_finalize();
-    return 0;
+    return EXIT_FAILURE;
   }
 
   if (argc == 1 || optind == argc)
@@ -193,7 +193,7 @@ int main(
     show_help();
     yr_compiler_destroy(compiler);
     yr_finalize();
-    return 0;
+    return EXIT_FAILURE;
   }
 
   compiler->error_report_function = report_error;
@@ -216,7 +216,7 @@ int main(
       {
         yr_compiler_destroy(compiler);
         yr_finalize();
-        return 0;
+        return EXIT_FAILURE;
       }
     }
     else
@@ -238,6 +238,6 @@ int main(
 
   yr_finalize();
 
-  return 1;
+  return EXIT_SUCCESS;
 }
 

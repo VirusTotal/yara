@@ -864,13 +864,13 @@ int main(
   THREAD thread[MAX_THREADS];
 
   if (!process_cmd_line(argc, argv))
-    return 0;
+    return EXIT_FAILURE;
 
   if (argc == 1 || optind == argc)
   {
     show_help();
     cleanup();
-    return 0;
+    return EXIT_FAILURE;
   }
 
   yr_initialize();
@@ -883,7 +883,7 @@ int main(
     print_scanning_error(result);
     yr_finalize();
     cleanup();
-    return 0;
+    return EXIT_FAILURE;
   }
 
   if (result == ERROR_SUCCESS)
@@ -924,7 +924,7 @@ int main(
     {
       yr_finalize();
       cleanup();
-      return 0;
+      return EXIT_FAILURE;
     }
 
     external = externals_list;
@@ -977,7 +977,7 @@ int main(
       {
         yr_finalize();
         cleanup();
-        return 0;
+        return EXIT_FAILURE;
       }
     }
     else
@@ -985,7 +985,7 @@ int main(
       fprintf(stderr, "could not open file: %s\n", argv[optind]);
       yr_finalize();
       cleanup();
-      return 0;
+      return EXIT_FAILURE;
     }
   }
 
@@ -1052,6 +1052,6 @@ int main(
   mutex_destroy(&output_mutex);
   cleanup();
 
-  return 1;
+  return EXIT_SUCCESS;
 }
 
