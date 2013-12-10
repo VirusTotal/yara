@@ -47,7 +47,7 @@ autogen() {
 
   echo "automake..."
   if test x$AUTOMAKE = x; then
-    AUTOMAKE=`locate_binary automake-1.12 automake-1.11 automake-1.10 automake-1.9 automake-1.7`
+    AUTOMAKE=`locate_binary automake-1.14 automake-1.3 automake-1.12 automake-1.11 automake-1.10 automake-1.9 automake-1.7 automake`
     if test x$AUTOMAKE = x; then
       die "Did not find a supported automake"
     fi
