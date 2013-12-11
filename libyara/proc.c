@@ -152,7 +152,7 @@ int yr_process_get_memory(
 #include "mem.h"
 #include "proc.h"
 
-#if defined(__FreeBSD__) || defined(__MACH__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__MACH__)
 #define PTRACE_ATTACH PT_ATTACH
 #define PTRACE_DETACH PT_DETACH
 #endif
