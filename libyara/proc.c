@@ -32,6 +32,7 @@ int yr_process_get_memory(
   SIZE_T read;
 
   unsigned char* data;
+  int result = ERROR_SUCCESS;
 
   SYSTEM_INFO si;
   MEMORY_BASIC_INFORMATION mbi;
@@ -41,8 +42,8 @@ int yr_process_get_memory(
 
   TOKEN_PRIVILEGES tokenPriv;
   LUID luidDebug;
-  HANDLE hProcess;
-  HANDLE hToken;
+  HANDLE hProcess = NULL;
+  HANDLE hToken = NULL;
 
   if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken) &&
       LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luidDebug))
@@ -68,7 +69,12 @@ int yr_process_get_memory(
   *first_block = NULL;
 
   if (hProcess == NULL)
+  {
+    if (hToken != NULL)
+      CloseHandle(hToken);
+
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+  }
 
   GetSystemInfo(&si);
 
@@ -81,7 +87,10 @@ int yr_process_get_memory(
       data = (unsigned char*) yr_malloc(mbi.RegionSize);
 
       if (data == NULL)
-        return ERROR_INSUFICIENT_MEMORY;
+      {
+        result = ERROR_INSUFICIENT_MEMORY;
+        break;
+      }
 
       if (ReadProcessMemory(
               hProcess,
@@ -95,7 +104,8 @@ int yr_process_get_memory(
         if (new_block == NULL)
         {
           yr_free(data);
-          return ERROR_INSUFICIENT_MEMORY;
+          result = ERROR_INSUFICIENT_MEMORY;
+          break;
         }
 
         if (*first_block == NULL)
@@ -120,7 +130,13 @@ int yr_process_get_memory(
     address = (PVOID)((ULONG_PTR) mbi.BaseAddress + mbi.RegionSize);
   }
 
-  return ERROR_SUCCESS;
+  if (hToken != NULL)
+    CloseHandle(hToken);
+
+  if (hProcess != NULL)
+    CloseHandle(hProcess);
+
+  return result;
 }
 
 #else
