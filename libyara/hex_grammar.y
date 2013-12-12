@@ -124,6 +124,7 @@ token : byte
         {
           mark_as_not_literal();
           $$ = $2;
+          $$->greedy = FALSE;
         }
       ;
 
