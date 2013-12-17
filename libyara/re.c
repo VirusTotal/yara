@@ -28,6 +28,7 @@ order to avoid confusion with operating system threads.
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
+#include <limits.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -215,16 +216,6 @@ int yr_re_create(
   if (*re == NULL)
     return ERROR_INSUFICIENT_MEMORY;
 
-  (*re)->literal_string_len = 0;
-  (*re)->literal_string_max = 128;
-  (*re)->literal_string = yr_malloc(128);
-
-  if ((*re)->literal_string == NULL)
-  {
-    yr_free(*re);
-    return ERROR_INSUFICIENT_MEMORY;
-  }
-
   (*re)->flags = 0;
   (*re)->root_node = NULL;
   (*re)->error_message = NULL;
@@ -243,9 +234,6 @@ void yr_re_destroy(
   if (re->error_message != NULL)
     yr_free((char*) re->error_message);
 
-  if (re->literal_string != NULL)
-    yr_free(re->literal_string);
-
   yr_free(re);
 }
 
@@ -263,6 +251,123 @@ int yr_re_compile_hex(
     RE** re)
 {
   return yr_parse_hex_string(hex_string, re);
+}
+
+//
+// yr_re_extract_literal
+//
+// Verifies if the provided regular expression is just a literal string
+// like "abc", "12345", without any wildcard, operator, etc. In that case
+// returns the string as a SIZED_STRING, or returns NULL if otherwise.
+//
+// The caller is responsible for deallocating the returned SIZED_STRING by
+// calling yr_free.
+//
+
+SIZED_STRING* yr_re_extract_literal(
+    RE* re)
+{
+  SIZED_STRING* string;
+  RE_NODE* node = re->root_node;
+
+  int i, length = 0;
+  char tmp;
+
+  while (node != NULL)
+  {
+    length++;
+
+    if (node->type == RE_NODE_LITERAL)
+      break;
+
+    if (node->type != RE_NODE_CONCAT)
+      return NULL;
+
+    if (node->right == NULL ||
+        node->right->type != RE_NODE_LITERAL)
+      return NULL;
+
+    node = node->left;
+  }
+
+  string = yr_malloc(sizeof(SIZED_STRING) + length);
+  string->length = 0;
+
+  if (string == NULL)
+    return NULL;
+
+  node = re->root_node;
+
+  while (node->type == RE_NODE_CONCAT)
+  {
+    string->c_string[string->length++] = node->right->value;
+    node = node->left;
+  }
+
+  string->c_string[string->length++] = node->value;
+
+  // The string ends up reversed. Reverse it back to its original value.
+
+  for (i = 0; i < length / 2; i++)
+  {
+    tmp = string->c_string[i];
+    string->c_string[i] = string->c_string[length - i - 1];
+    string->c_string[length - i - 1] = tmp;
+  }
+
+  return string;
+}
+
+
+int yr_re_split_at_chaining_point(
+    RE* re,
+    RE** result_re,
+    RE** remainder_re)
+{
+  RE_NODE* node = re->root_node;
+  RE_NODE* child = re->root_node->left;
+  RE_NODE* parent = NULL;
+
+  int result;
+
+  *result_re = re;
+  *remainder_re = NULL;
+
+  while (child != NULL && child->type == RE_NODE_CONCAT)
+  {
+    if (child->right != NULL &&
+        child->right->type == RE_NODE_RANGE &&
+        child->right->greedy == FALSE &&
+        child->right->start == 0 &&
+        child->right->end == INT_MAX &&
+        child->right->left->type == RE_NODE_ANY)
+    {
+      result = yr_re_create(remainder_re);
+
+      if (result != ERROR_SUCCESS)
+        return result;
+
+      (*remainder_re)->root_node = child->left;
+
+      child->left = NULL;
+
+      if (parent != NULL)
+        parent->left = node->right;
+      else
+        (*result_re)->root_node = node->right;
+
+      node->right = NULL;
+      yr_re_node_destroy(node);
+
+      return ERROR_SUCCESS;
+    }
+
+    parent = node;
+    node = child;
+    child = child->left;
+  }
+
+  return ERROR_SUCCESS;
 }
 
 

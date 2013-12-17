@@ -56,40 +56,35 @@ typedef pthread_mutex_t mutex_t;
 #endif
 
 #define ERROR_INSUFICIENT_MEMORY                1
-#define ERROR_DUPLICATE_RULE_IDENTIFIER         2
-#define ERROR_INVALID_HEX_STRING                3
-#define ERROR_UNDEFINED_STRING                  4
-#define ERROR_UNDEFINED_IDENTIFIER              5
-#define ERROR_COULD_NOT_OPEN_FILE               6
-#define ERROR_INVALID_REGULAR_EXPRESSION        7
-#define ERROR_SYNTAX_ERROR                      8
-#define ERROR_DUPLICATE_TAG_IDENTIFIER          9
-#define ERROR_UNREFERENCED_STRING               10
-#define ERROR_DUPLICATE_STRING_IDENTIFIER       11
-#define ERROR_CALLBACK_ERROR                    12
-#define ERROR_MISPLACED_OR_OPERATOR             13
-#define ERROR_INVALID_OR_OPERATION_SYNTAX       14
-#define ERROR_SKIP_INSIDE_OR_OPERATION          15
-#define ERROR_NESTED_OR_OPERATION               16
-#define ERROR_MISPLACED_ANONYMOUS_STRING        17
-#define ERROR_COULD_NOT_MAP_FILE                18
-#define ERROR_ZERO_LENGTH_FILE                  19
-#define ERROR_INVALID_ARGUMENT                  20
-#define ERROR_DUPLICATE_META_IDENTIFIER         21
+#define ERROR_COULD_NOT_ATTACH_TO_PROCESS       2
+#define ERROR_COULD_NOT_OPEN_FILE               3
+#define ERROR_COULD_NOT_MAP_FILE                4
+#define ERROR_ZERO_LENGTH_FILE                  5
+#define ERROR_INVALID_FILE                      6
+#define ERROR_CORRUPT_FILE                      7
+#define ERROR_UNSUPPORTED_FILE_VERSION          8
+#define ERROR_INVALID_REGULAR_EXPRESSION        9
+#define ERROR_INVALID_HEX_STRING                10
+#define ERROR_SYNTAX_ERROR                      11
+#define ERROR_LOOP_NESTING_LIMIT_EXCEEDED       12
+#define ERROR_DUPLICATE_LOOP_IDENTIFIER         13
+#define ERROR_DUPLICATE_RULE_IDENTIFIER         14
+#define ERROR_DUPLICATE_TAG_IDENTIFIER          15
+#define ERROR_DUPLICATE_META_IDENTIFIER         16
+#define ERROR_DUPLICATE_STRING_IDENTIFIER       17
+#define ERROR_UNREFERENCED_STRING               18
+#define ERROR_UNDEFINED_STRING                  19
+#define ERROR_UNDEFINED_IDENTIFIER              20
+#define ERROR_MISPLACED_ANONYMOUS_STRING        21
 #define ERROR_INCLUDES_CIRCULAR_REFERENCE       22
-#define ERROR_INCORRECT_VARIABLE_TYPE           23
-#define ERROR_COULD_NOT_ATTACH_TO_PROCESS       24
-#define ERROR_VECTOR_TOO_LONG                   25
-#define ERROR_INCLUDE_DEPTH_EXCEEDED            26
-#define ERROR_INVALID_FILE                      27
-#define ERROR_CORRUPT_FILE                      28
-#define ERROR_UNSUPPORTED_FILE_VERSION          29
-#define ERROR_EXEC_STACK_OVERFLOW               30
-#define ERROR_SCAN_TIMEOUT                      31
-#define ERROR_LOOP_NESTING_LIMIT_EXCEEDED       32
-#define ERROR_DUPLICATE_LOOP_IDENTIFIER         33
-#define ERROR_TOO_MANY_SCAN_THREADS             34
-#define ERROR_INTERNAL_FATAL_ERROR              35
+#define ERROR_INCLUDE_DEPTH_EXCEEDED            23
+#define ERROR_INCORRECT_VARIABLE_TYPE           24
+#define ERROR_EXEC_STACK_OVERFLOW               25
+#define ERROR_SCAN_TIMEOUT                      26
+#define ERROR_TOO_MANY_SCAN_THREADS             27
+#define ERROR_CALLBACK_ERROR                    28
+#define ERROR_INVALID_ARGUMENT                  29
+#define ERROR_INTERNAL_FATAL_ERROR              30
 
 
 #define CALLBACK_MSG_RULE_MATCHING            1
@@ -169,6 +164,8 @@ typedef pthread_mutex_t mutex_t;
 #define STRING_GFLAGS_LITERAL           0x400
 #define STRING_GFLAGS_FITS_IN_ATOM      0x800
 #define STRING_GFLAGS_NULL              0x1000
+#define STRING_GFLAGS_CHAIN_PART        0x2000
+#define STRING_GFLAGS_CHAIN_TAIL        0x4000
 
 #define STRING_IS_HEX(x) \
     (((x)->g_flags) & STRING_GFLAGS_HEXADECIMAL)
@@ -202,6 +199,12 @@ typedef pthread_mutex_t mutex_t;
 
 #define STRING_IS_FAST_HEX_REGEXP(x) \
     (((x)->g_flags) & STRING_GFLAGS_FAST_HEX_REGEXP)
+
+#define STRING_IS_CHAIN_PART(x) \
+    (((x)->g_flags) & STRING_GFLAGS_CHAIN_PART)
+
+#define STRING_IS_CHAIN_TAIL(x) \
+    (((x)->g_flags) & STRING_GFLAGS_CHAIN_TAIL)
 
 #define STRING_IS_NULL(x) \
     ((x) == NULL || ((x)->g_flags) & STRING_GFLAGS_NULL)
@@ -330,6 +333,14 @@ typedef struct _YR_META
 } YR_META;
 
 
+typedef struct _YR_MATCHES
+{
+  DECLARE_REFERENCE(YR_MATCH*, head);
+  DECLARE_REFERENCE(YR_MATCH*, tail);
+
+} YR_MATCHES;
+
+
 typedef struct _YR_STRING
 {
   int32_t g_flags;
@@ -337,11 +348,10 @@ typedef struct _YR_STRING
 
   DECLARE_REFERENCE(char*, identifier);
   DECLARE_REFERENCE(uint8_t*, string);
+  DECLARE_REFERENCE(struct _YR_STRING*, chained_to);
 
-  struct {
-    DECLARE_REFERENCE(YR_MATCH*, head);
-    DECLARE_REFERENCE(YR_MATCH*, tail);
-  } matches[MAX_THREADS];
+  YR_MATCHES matches[MAX_THREADS];
+  YR_MATCHES unconfirmed_matches[MAX_THREADS];
 
 } YR_STRING;
 

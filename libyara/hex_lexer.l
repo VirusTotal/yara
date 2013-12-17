@@ -104,6 +104,10 @@ hexdigit      [a-fA-F0-9]
   return yytext[0];
 }
 
+<range>\. {
+  return yytext[0];
+}
+
 <range>{digit}+ {
 
   yylval->integer = atoi(yytext);
@@ -185,21 +189,17 @@ int yr_parse_hex_string(
   LEX_ENVIRONMENT lex_env;
 
   lex_env.last_error_message = NULL;
+  lex_env.inside_or = 0;
 
   FAIL_ON_ERROR(yr_re_create(re));
 
-  // The RE_FLAGS_LITERAL_STRING flag indicates that the regular expression
-  // is just a literal string and it can be matched by doing a simple string
-  // comparison, without executing any regular expression code.
-  //
   // The RE_FLAGS_FAST_HEX_REGEXP flag indicates a regular expression derived
   // from a hex string that can be matched by faster algorithm. These regular
   // expressions come from hex strings not contaning alternatives
   // (like in 01 02 | 03 04).
   //
-  // These flags are unset later during parsing if necessary.
+  // This flag is unset later during parsing if necessary.
 
-  (*re)->flags |= RE_FLAGS_LITERAL_STRING;
   (*re)->flags |= RE_FLAGS_FAST_HEX_REGEXP;
 
   #ifdef WIN32

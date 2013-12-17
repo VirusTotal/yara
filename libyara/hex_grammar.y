@@ -17,6 +17,7 @@ limitations under the License.
 %{
 
 #include <stdint.h>
+#include <limits.h>
 
 #include "hex_lexer.h"
 #include "mem.h"
@@ -32,9 +33,6 @@ limitations under the License.
 #define YYERROR_VERBOSE
 
 #define YYDEBUG 0
-
-#define mark_as_not_literal() \
-    ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_LITERAL_STRING
 
 #define mark_as_not_fast_hex_regexp() \
     ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_HEX_REGEXP
@@ -116,13 +114,17 @@ token : byte
         {
           $$ = $1;
         }
-      | '(' alternatives ')'
+      | '('
         {
-          $$ = $2;
+          lex_env->inside_or++;
+        }
+        alternatives ')'
+        {
+          $$ = $3;
+          lex_env->inside_or--;
         }
       | '[' range ']'
         {
-          mark_as_not_literal();
           $$ = $2;
           $$->greedy = FALSE;
         }
@@ -167,6 +169,29 @@ range : _NUMBER_
           $$->start = $1;
           $$->end = $3;
         }
+      | '.' '.'
+        {
+          RE_NODE* re_any;
+
+          if (lex_env->inside_or)
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup("[..] not allowed inside OR (|)");
+            YYABORT;
+          }
+
+          re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
+
+          ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+
+          $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
+
+          ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+
+          $$->start = 0;
+          $$->end = INT_MAX;
+        }
       ;
 
 
@@ -176,7 +201,6 @@ alternatives : tokens
                }
              | alternatives '|' tokens
                {
-                  mark_as_not_literal();
                   mark_as_not_fast_hex_regexp();
 
                   $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
@@ -189,33 +213,15 @@ alternatives : tokens
 
 byte  : _BYTE_
         {
-          RE* re = yyget_extra(yyscanner);
-
           $$ = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
           ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
           $$->value = $1;
-
-          if (re->literal_string_len == re->literal_string_max)
-          {
-            re->literal_string_max *= 2;
-
-            re->literal_string = yr_realloc(
-                re->literal_string,
-                re->literal_string_max);
-
-            ERROR_IF(re->literal_string == NULL, ERROR_INSUFICIENT_MEMORY);
-          }
-
-          re->literal_string[re->literal_string_len] = $1;
-          re->literal_string_len++;
         }
       | _MASKED_BYTE_
         {
           uint8_t mask = $1 >> 8;
-
-          mark_as_not_literal();
 
           if (mask == 0x00)
           {

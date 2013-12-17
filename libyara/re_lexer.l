@@ -466,14 +466,6 @@ int yr_parse_re_string(
 
   FAIL_ON_ERROR(yr_re_create(re));
 
-  // The RE_FLAGS_LITERAL_STRING flag indicates that the
-  // regular expression is just a literal string and it can
-  // be matched by doing a simple string comparison, without
-  // executing any regular expression code. We initially set
-  // this flag which is unset later during parsing if necessary.
-
-  (*re)->flags |= RE_FLAGS_LITERAL_STRING;
-
   #ifdef WIN32
   TlsSetValue(recovery_state_key, (LPVOID) &recovery_state);
   #else

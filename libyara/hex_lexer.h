@@ -39,6 +39,7 @@ typedef void* yyscan_t;
 
 typedef struct _LEX_ENVIRONMENT
 {
+  int inside_or;
   const char* last_error_message;
 
 } LEX_ENVIRONMENT;

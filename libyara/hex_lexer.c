@@ -362,8 +362,8 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
 
-#define YY_NUM_RULES 11
-#define YY_END_OF_BUFFER 12
+#define YY_NUM_RULES 12
+#define YY_END_OF_BUFFER 13
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -371,11 +371,11 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[22] =
+static yyconst flex_int16_t yy_accept[23] =
     {   0,
-        0,    0,    0,    0,   12,   10,    9,    9,   10,   10,
-        5,   11,    6,    7,    8,    1,    2,    3,    4,    7,
-        0
+        0,    0,    0,    0,   13,   11,   10,   10,   11,   11,
+        5,   12,    6,    7,    8,    9,    1,    2,    3,    4,
+        8,    0
     } ;
 
 static yyconst flex_int32_t yy_ec[256] =
@@ -384,14 +384,14 @@ static yyconst flex_int32_t yy_ec[256] =
         1,    1,    2,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    2,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    4,    1,    1,    5,    5,    5,
-        5,    5,    5,    5,    5,    5,    5,    1,    1,    1,
-        1,    1,    6,    1,    7,    7,    7,    7,    7,    7,
+        1,    1,    1,    1,    4,    5,    1,    6,    6,    6,
+        6,    6,    6,    6,    6,    6,    6,    1,    1,    1,
+        1,    1,    7,    1,    8,    8,    8,    8,    8,    8,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        8,    1,    9,    1,    1,    1,    7,    7,    7,    7,
+        9,    1,   10,    1,    1,    1,    8,    8,    8,    8,
 
-        7,    7,    1,    1,    1,    1,    1,    1,    1,    1,
+        8,    8,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -410,45 +410,45 @@ static yyconst flex_int32_t yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static yyconst flex_int32_t yy_meta[10] =
+static yyconst flex_int32_t yy_meta[11] =
     {   0,
-        1,    1,    1,    1,    2,    2,    2,    1,    1
+        1,    1,    1,    1,    1,    2,    2,    2,    1,    1
     } ;
 
-static yyconst flex_int16_t yy_base[25] =
+static yyconst flex_int16_t yy_base[26] =
     {   0,
-        0,    0,    6,   12,   24,   25,   25,   25,   14,   13,
-       25,   25,   25,   13,   25,   25,   25,   25,   25,    9,
-       25,   21,   11,   10
+        0,    0,    7,   14,   27,   28,   28,   28,   16,   15,
+       28,   28,   28,   28,   15,   28,   28,   28,   28,   28,
+       10,   28,   24,   13,   12
     } ;
 
-static yyconst flex_int16_t yy_def[25] =
+static yyconst flex_int16_t yy_def[26] =
     {   0,
-       21,    1,   22,   22,   21,   21,   21,   21,   23,   24,
-       21,   21,   21,   21,   21,   21,   21,   21,   21,   21,
-        0,   21,   21,   21
+       22,    1,   23,   23,   22,   22,   22,   22,   24,   25,
+       22,   22,   22,   22,   22,   22,   22,   22,   22,   22,
+       22,    0,   22,   22,   22
     } ;
 
-static yyconst flex_int16_t yy_nxt[35] =
+static yyconst flex_int16_t yy_nxt[39] =
     {   0,
-        6,    7,    8,    6,    9,   10,    9,   11,    6,   13,
-       14,   18,   16,   20,   15,   13,   14,   20,   19,   17,
-       15,   12,   12,   21,    5,   21,   21,   21,   21,   21,
-       21,   21,   21,   21
+        6,    7,    8,    6,    6,    9,   10,    9,   11,    6,
+       13,   14,   15,   19,   17,   21,   16,   13,   14,   15,
+       21,   20,   18,   16,   12,   12,   22,    5,   22,   22,
+       22,   22,   22,   22,   22,   22,   22,   22
     } ;
 
-static yyconst flex_int16_t yy_chk[35] =
+static yyconst flex_int16_t yy_chk[39] =
     {   0,
-        1,    1,    1,    1,    1,    1,    1,    1,    1,    3,
-        3,   24,   23,   20,    3,    4,    4,   14,   10,    9,
-        4,   22,   22,    5,   21,   21,   21,   21,   21,   21,
-       21,   21,   21,   21
+        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+        3,    3,    3,   25,   24,   21,    3,    4,    4,    4,
+       15,   10,    9,    4,   23,   23,    5,   22,   22,   22,
+       22,   22,   22,   22,   22,   22,   22,   22
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static yyconst flex_int32_t yy_rule_can_match_eol[12] =
+static yyconst flex_int32_t yy_rule_can_match_eol[13] =
     {   0,
-0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,     };
+0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,     };
 
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
@@ -796,13 +796,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 22 )
+				if ( yy_current_state >= 23 )
 					yy_c = yy_meta[(unsigned int) yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 25 );
+		while ( yy_base[yy_current_state] != 28 );
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
@@ -896,6 +896,13 @@ case 7:
 YY_RULE_SETUP
 #line 107 "hex_lexer.l"
 {
+  return yytext[0];
+}
+	YY_BREAK
+case 8:
+YY_RULE_SETUP
+#line 111 "hex_lexer.l"
+{
 
   yylval->integer = atoi(yytext);
 
@@ -908,24 +915,24 @@ YY_RULE_SETUP
   return _NUMBER_;
 }
 	YY_BREAK
-case 8:
+case 9:
 YY_RULE_SETUP
-#line 120 "hex_lexer.l"
+#line 124 "hex_lexer.l"
 {
 
   BEGIN(INITIAL);
   return yytext[0];
 }
 	YY_BREAK
-case 9:
-/* rule 9 can match eol */
+case 10:
+/* rule 10 can match eol */
 YY_RULE_SETUP
-#line 127 "hex_lexer.l"
+#line 131 "hex_lexer.l"
 // skip whitespace
 	YY_BREAK
-case 10:
+case 11:
 YY_RULE_SETUP
-#line 130 "hex_lexer.l"
+#line 134 "hex_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -939,12 +946,12 @@ YY_RULE_SETUP
   }
 }
 	YY_BREAK
-case 11:
+case 12:
 YY_RULE_SETUP
-#line 143 "hex_lexer.l"
+#line 147 "hex_lexer.l"
 ECHO;
 	YY_BREAK
-#line 948 "hex_lexer.c"
+#line 955 "hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(range):
 	yyterminate();
@@ -1239,7 +1246,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 22 )
+			if ( yy_current_state >= 23 )
 				yy_c = yy_meta[(unsigned int) yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
@@ -1268,11 +1275,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 22 )
+		if ( yy_current_state >= 23 )
 			yy_c = yy_meta[(unsigned int) yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-	yy_is_jam = (yy_current_state == 21);
+	yy_is_jam = (yy_current_state == 22);
 
 	return yy_is_jam ? 0 : yy_current_state;
 }
@@ -2080,7 +2087,7 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 143 "hex_lexer.l"
+#line 147 "hex_lexer.l"
 
 
 
@@ -2127,21 +2134,17 @@ int yr_parse_hex_string(
   LEX_ENVIRONMENT lex_env;
 
   lex_env.last_error_message = NULL;
+  lex_env.inside_or = 0;
 
   FAIL_ON_ERROR(yr_re_create(re));
 
-  // The RE_FLAGS_LITERAL_STRING flag indicates that the regular expression
-  // is just a literal string and it can be matched by doing a simple string
-  // comparison, without executing any regular expression code.
-  //
   // The RE_FLAGS_FAST_HEX_REGEXP flag indicates a regular expression derived
   // from a hex string that can be matched by faster algorithm. These regular
   // expressions come from hex strings not contaning alternatives
   // (like in 01 02 | 03 04).
   //
-  // These flags are unset later during parsing if necessary.
+  // This flag is unset later during parsing if necessary.
 
-  (*re)->flags |= RE_FLAGS_LITERAL_STRING;
   (*re)->flags |= RE_FLAGS_FAST_HEX_REGEXP;
 
   #ifdef WIN32

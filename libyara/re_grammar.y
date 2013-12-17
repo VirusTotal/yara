@@ -37,11 +37,6 @@ limitations under the License.
 yydebug = 1;
 #endif
 
-
-#define mark_as_not_literal() \
-    ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_LITERAL_STRING
-
-
 #define ERROR_IF(x, error) \
     if (x) \
     { \
@@ -112,7 +107,6 @@ alternative : concatenation
               }
             | alternative '|' concatenation
               {
-                mark_as_not_literal();
                 $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
 
                 DESTROY_NODE_IF($$ == NULL, $1);
@@ -124,7 +118,6 @@ alternative : concatenation
               {
                 RE_NODE* node;
 
-                mark_as_not_literal();
                 node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
 
                 DESTROY_NODE_IF($$ == NULL, $1);
@@ -152,7 +145,6 @@ concatenation : repeat
 
 repeat : single '*'
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_STAR, $1, NULL);
 
             DESTROY_NODE_IF($$ == NULL, $1);
@@ -160,7 +152,6 @@ repeat : single '*'
          }
        | single '*' '?'
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_STAR, $1, NULL);
 
             DESTROY_NODE_IF($$ == NULL, $1);
@@ -170,7 +161,6 @@ repeat : single '*'
          }
        | single '+'
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_PLUS, $1, NULL);
 
             DESTROY_NODE_IF($$ == NULL, $1);
@@ -178,7 +168,6 @@ repeat : single '*'
          }
        | single '+' '?'
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_PLUS, $1, NULL);
 
             DESTROY_NODE_IF($$ == NULL, $1);
@@ -188,7 +177,6 @@ repeat : single '*'
          }
        | single '?'
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
 
             DESTROY_NODE_IF($$ == NULL, $1);
@@ -199,7 +187,6 @@ repeat : single '*'
          }
        | single '?' '?'
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
 
             DESTROY_NODE_IF($$ == NULL, $1);
@@ -211,7 +198,6 @@ repeat : single '*'
          }
        | single _RANGE_
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
 
             DESTROY_NODE_IF($$ == NULL, $1);
@@ -226,14 +212,12 @@ repeat : single '*'
          }
        | '^'
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_ANCHOR_START, NULL, NULL);
 
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        | '$'
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_ANCHOR_END, NULL, NULL);
 
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
@@ -246,79 +230,56 @@ single : '(' alternative ')'
          }
        | '.'
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        | _CHAR_
          {
-            RE* re = yyget_extra(yyscanner);
-
             $$ = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
             $$->value = $1;
-
-            if (re->literal_string_len == re->literal_string_max)
-            {
-              re->literal_string_max *= 2;
-              re->literal_string = yr_realloc(
-                  re->literal_string,
-                  re->literal_string_max);
-
-              ERROR_IF(re->literal_string == NULL, ERROR_INSUFICIENT_MEMORY);
-            }
-
-            re->literal_string[re->literal_string_len] = $1;
-            re->literal_string_len++;
          }
        | _WORD_CHAR_
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_WORD_CHAR, NULL, NULL);
 
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        | _NON_WORD_CHAR_
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_NON_WORD_CHAR, NULL, NULL);
 
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        | _SPACE_
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_SPACE, NULL, NULL);
 
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        | _NON_SPACE_
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_NON_SPACE, NULL, NULL);
 
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        | _DIGIT_
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_DIGIT, NULL, NULL);
 
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        | _NON_DIGIT_
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_NON_DIGIT, NULL, NULL);
 
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        | _CLASS_
          {
-            mark_as_not_literal();
             $$ = yr_re_node_create(RE_NODE_CLASS, NULL, NULL);
 
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);

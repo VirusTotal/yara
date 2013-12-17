@@ -300,7 +300,60 @@ int _yr_scan_fast_hex_re_exec(
   return -1;
 }
 
-void match_callback(
+void _yr_scan_confirm_matches(
+    int tidx,
+    YR_STRING* string,
+    size_t match_offset,
+    int match_length)
+{
+  YR_MATCH* match;
+  YR_MATCH* next_match;
+
+  if (string->chained_to == NULL)
+    return;
+
+  match = string->chained_to->unconfirmed_matches[tidx].head;
+
+  while (match != NULL)
+  {
+    next_match = match->next;
+
+    if (match_offset >= match->first_offset + match->length)
+    {
+      if (match->prev != NULL)
+        match->prev->next = match->next;
+
+      if (match->next != NULL)
+        match->next->prev = match->prev;
+
+      if (match == string->chained_to->unconfirmed_matches[tidx].head)
+        string->chained_to->unconfirmed_matches[tidx].head = match->next;
+
+      if (match == string->chained_to->unconfirmed_matches[tidx].tail)
+        string->chained_to->unconfirmed_matches[tidx].tail = match->prev;
+
+      match->prev = string->chained_to->matches[tidx].tail;
+      match->next = NULL;
+      match->length = match_offset - match->first_offset + match_length;
+
+      if (string->chained_to->matches[tidx].head == NULL)
+        string->chained_to->matches[tidx].head = match;
+
+      if (string->chained_to->matches[tidx].tail != NULL)
+        string->chained_to->matches[tidx].tail->next = match;
+
+      string->chained_to->matches[tidx].tail = match;
+
+      _yr_scan_confirm_matches(
+          tidx, string->chained_to, match->first_offset, match->length);
+    }
+
+    match = next_match;
+  }
+}
+
+
+void _yr_rules_match_callback(
     uint8_t* match_data,
     int match_length,
     int flags,
@@ -308,6 +361,7 @@ void match_callback(
 {
   YR_MATCH* new_match;
   YR_MATCH* match;
+  YR_MATCHES* matches;
 
   CALLBACK_ARGS* callback_args = args;
   YR_STRING* string = callback_args->string;
@@ -358,7 +412,18 @@ void match_callback(
     }
   }
 
-  match = string->matches[tidx].tail;
+  if (STRING_IS_CHAIN_TAIL(string))
+  {
+    _yr_scan_confirm_matches(tidx, string, match_offset, match_length);
+    return;
+  }
+
+  if (STRING_IS_CHAIN_PART(string))
+    matches = &string->unconfirmed_matches[tidx];
+  else
+    matches = &string->matches[tidx];
+
+  match = matches->tail;
 
   while (match != NULL)
   {
@@ -397,32 +462,27 @@ void match_callback(
   new_match->first_offset = match_offset;
   new_match->last_offset = match_offset;
   new_match->length = match_length;
+  new_match->data = match_data;
 
   if (match != NULL)
   {
     new_match->next = match->next;
+    new_match->prev = match;
     match->next = new_match;
   }
   else
   {
-    new_match->next = string->matches[tidx].head;
-    string->matches[tidx].head = new_match;
+    new_match->next = matches->head;
+    matches->head = new_match;
   }
 
   if (new_match->next != NULL)
     new_match->next->prev = new_match;
   else
-    string->matches[tidx].tail = new_match;
+    matches->tail = new_match;
 
   new_match->prev = match;
-  //TODO: handle errors
-  yr_arena_write_data(
-      callback_args->matches_arena,
-      match_data,
-      match_length,
-      (void**) &new_match->data);
 }
-
 
 
 typedef int (*RE_EXEC_FUNC)(
@@ -503,12 +563,12 @@ int _yr_scan_verify_re_match(
         data + offset,
         offset + 1,
         flags | RE_FLAGS_BACKWARDS | RE_FLAGS_EXHAUSTIVE,
-        match_callback,
+        _yr_rules_match_callback,
         (void*) &callback_args);
   }
   else
   {
-    match_callback(
+    _yr_rules_match_callback(
         data + offset, 0, flags, &callback_args);
   }
 
@@ -617,7 +677,7 @@ int _yr_scan_verify_literal_match(
     callback_args.full_word = STRING_IS_FULL_WORD(string);
     callback_args.tidx = yr_get_tidx();
 
-    match_callback(
+    _yr_rules_match_callback(
         data + offset, 0, flags, &callback_args);
   }
 
@@ -783,6 +843,8 @@ void _yr_rules_clean_matches(
     {
       string->matches[tidx].head = NULL;
       string->matches[tidx].tail = NULL;
+      string->unconfirmed_matches[tidx].head = NULL;
+      string->unconfirmed_matches[tidx].tail = NULL;
       string++;
     }
 

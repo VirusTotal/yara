@@ -198,6 +198,174 @@ YR_EXTERNAL_VARIABLE* yr_parser_lookup_external_variable(
 }
 
 
+int _yr_parser_write_string(
+    const char* identifier,
+    int flags,
+    YR_COMPILER* compiler,
+    SIZED_STRING* str,
+    RE* re,
+    YR_STRING** string,
+    int* min_atom_length)
+{
+  SIZED_STRING* literal_string;
+  YR_AC_MATCH* new_match;
+
+  YR_ATOM_LIST_ITEM* atom;
+  YR_ATOM_LIST_ITEM* atom_list = NULL;
+
+  int result;
+  int max_string_len;
+  int free_literal = FALSE;
+
+  *string = NULL;
+
+  result = yr_arena_allocate_struct(
+      compiler->strings_arena,
+      sizeof(YR_STRING),
+      (void**) string,
+      offsetof(YR_STRING, identifier),
+      offsetof(YR_STRING, string),
+      offsetof(YR_STRING, chained_to),
+      EOL);
+
+  if (result != ERROR_SUCCESS)
+    return result;
+
+  result = yr_arena_write_string(
+      compiler->sz_arena,
+      identifier,
+      &(*string)->identifier);
+
+  if (result != ERROR_SUCCESS)
+    return result;
+
+  if (flags & STRING_GFLAGS_HEXADECIMAL ||
+      flags & STRING_GFLAGS_REGEXP)
+  {
+    literal_string = yr_re_extract_literal(re);
+
+    if (literal_string != NULL)
+    {
+      flags |= STRING_GFLAGS_LITERAL;
+      free_literal = TRUE;
+    }
+  }
+  else
+  {
+    literal_string = str;
+    flags |= STRING_GFLAGS_LITERAL;
+  }
+
+  (*string)->g_flags = flags;
+  (*string)->chained_to = NULL;
+
+  memset((*string)->matches, 0,
+         sizeof((*string)->matches));
+
+  memset((*string)->unconfirmed_matches, 0,
+         sizeof((*string)->unconfirmed_matches));
+
+  if (flags & STRING_GFLAGS_LITERAL)
+  {
+    (*string)->length = literal_string->length;
+
+    result = yr_arena_write_data(
+        compiler->sz_arena,
+        literal_string->c_string,
+        literal_string->length,
+        (void*) &(*string)->string);
+
+    if (result == ERROR_SUCCESS)
+    {
+      result = yr_atoms_extract_from_string(
+          (uint8_t*) literal_string->c_string,
+          literal_string->length,
+          flags,
+          &atom_list);
+    }
+  }
+  else
+  {
+    result = yr_re_emit_code(re, compiler->re_code_arena);
+
+    if (result == ERROR_SUCCESS)
+      result = yr_atoms_extract_from_re(re, flags, &atom_list);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    // Add the string to Aho-Corasick automaton.
+
+    if (atom_list != NULL)
+    {
+      result = yr_ac_add_string(
+          compiler->automaton_arena,
+          compiler->automaton,
+          *string,
+          atom_list);
+    }
+    else
+    {
+      result = yr_arena_allocate_struct(
+          compiler->automaton_arena,
+          sizeof(YR_AC_MATCH),
+          (void**) &new_match,
+          offsetof(YR_AC_MATCH, string),
+          offsetof(YR_AC_MATCH, forward_code),
+          offsetof(YR_AC_MATCH, backward_code),
+          offsetof(YR_AC_MATCH, next),
+          EOL);
+
+      if (result == ERROR_SUCCESS)
+      {
+        new_match->backtrack = 0;
+        new_match->string = *string;
+        new_match->forward_code = re->root_node->forward_code;
+        new_match->backward_code = NULL;
+        new_match->next = compiler->automaton->root->matches;
+        compiler->automaton->root->matches = new_match;
+      }
+    }
+  }
+
+  atom = atom_list;
+
+  if (atom != NULL)
+    *min_atom_length = MAX_ATOM_LENGTH;
+  else
+    *min_atom_length = 0;
+
+  while (atom != NULL)
+  {
+    if (atom->atom_length < *min_atom_length)
+      *min_atom_length = atom->atom_length;
+    atom = atom->next;
+  }
+
+  if (flags & STRING_GFLAGS_LITERAL)
+  {
+    if (flags & STRING_GFLAGS_WIDE)
+      max_string_len = (*string)->length * 2;
+    else
+      max_string_len = (*string)->length;
+
+    if (max_string_len == *min_atom_length)
+      (*string)->g_flags |= STRING_GFLAGS_FITS_IN_ATOM;
+  }
+
+  if (free_literal)
+    yr_free(literal_string);
+
+  if (atom_list != NULL)
+    yr_atoms_list_destroy(atom_list);
+
+  return result;
+}
+
+#include <stdint.h>
+#include <limits.h>
+
+
 YR_STRING* yr_parser_reduce_string_declaration(
     yyscan_t yyscanner,
     int32_t flags,
@@ -205,40 +373,17 @@ YR_STRING* yr_parser_reduce_string_declaration(
     SIZED_STRING* str)
 {
   int min_atom_length;
+  int min_atom_length_aux;
+
   char* file_name;
   char message[512];
 
-  YR_STRING* string;
-  YR_AC_MATCH* new_match;
-  YR_ATOM_LIST_ITEM* atom;
-  YR_ATOM_LIST_ITEM* atom_list = NULL;
-  RE* re = NULL;
-
-  uint8_t* literal_string = NULL;
-
-  int literal_string_len = 0;
-  int max_string_len;
-
   YR_COMPILER* compiler = yyget_extra(yyscanner);
+  YR_STRING* string = NULL;
+  YR_STRING* prev_string;
 
-  compiler->last_result = yr_arena_allocate_struct(
-      compiler->strings_arena,
-      sizeof(YR_STRING),
-      (void**) &string,
-      offsetof(YR_STRING, identifier),
-      offsetof(YR_STRING, string),
-      EOL);
-
-  if (compiler->last_result != ERROR_SUCCESS)
-    return NULL;
-
-  compiler->last_result = yr_arena_write_string(
-      compiler->sz_arena,
-      identifier,
-      &string->identifier);
-
-  if (compiler->last_result != ERROR_SUCCESS)
-    return NULL;
+  RE* re = NULL;
+  RE* remainder_re;
 
   if (strcmp(identifier,"$") == 0)
     flags |= STRING_GFLAGS_ANONYMOUS;
@@ -256,10 +401,6 @@ YR_STRING* yr_parser_reduce_string_declaration(
   // initially, and unmarked later if required.
 
   flags |= STRING_GFLAGS_SINGLE_MATCH;
-
-  string->g_flags = flags;
-
-  memset(string->matches, 0, sizeof(string->matches));
 
   if (flags & STRING_GFLAGS_HEXADECIMAL ||
       flags & STRING_GFLAGS_REGEXP)
@@ -282,127 +423,84 @@ YR_STRING* yr_parser_reduce_string_declaration(
           identifier,
           re->error_message);
 
-      yr_compiler_set_error_extra_info(compiler, message);
-      string = NULL;
+      yr_compiler_set_error_extra_info(
+          compiler, message);
+
       goto _exit;
     }
 
     if (re->flags & RE_FLAGS_FAST_HEX_REGEXP)
-      string->g_flags |= STRING_GFLAGS_FAST_HEX_REGEXP;
+      flags |= STRING_GFLAGS_FAST_HEX_REGEXP;
 
-    if (re->flags & RE_FLAGS_LITERAL_STRING)
-    {
-      string->g_flags |= STRING_GFLAGS_LITERAL;
-      literal_string = re->literal_string;
-      literal_string_len = re->literal_string_len;
-
-      compiler->last_result = yr_atoms_extract_from_string(
-          literal_string, literal_string_len, string->g_flags, &atom_list);
-    }
-    else
-    {
-      compiler->last_result = yr_re_emit_code(
-          re, compiler->re_code_arena);
-
-      if (compiler->last_result != ERROR_SUCCESS)
-      {
-        string = NULL;
-        goto _exit;
-      }
-
-      compiler->last_result = yr_atoms_extract_from_re(
-          re, string->g_flags, &atom_list);
-    }
-  }
-  else
-  {
-    string->g_flags |= STRING_GFLAGS_LITERAL;
-    literal_string = (uint8_t*) str->c_string;
-    literal_string_len = str->length;
-
-    compiler->last_result  = yr_atoms_extract_from_string(
-        literal_string, literal_string_len, string->g_flags, &atom_list);
-  }
-
-  if (compiler->last_result != ERROR_SUCCESS)
-  {
-    string = NULL;
-    goto _exit;
-  }
-
-  if (STRING_IS_LITERAL(string))
-  {
-    compiler->last_result = yr_arena_write_data(
-        compiler->sz_arena,
-        literal_string,
-        literal_string_len,
-        (void*) &string->string);
+    compiler->last_result = yr_re_split_at_chaining_point(
+        re, &re, &remainder_re);
 
     if (compiler->last_result != ERROR_SUCCESS)
-    {
-      string = NULL;
       goto _exit;
-    }
 
-    string->length = literal_string_len;
-  }
+    compiler->last_result = _yr_parser_write_string(
+        identifier,
+        flags,
+        compiler,
+        NULL,
+        re,
+        &string,
+        &min_atom_length);
 
-  // Add the string to Aho-Corasick automaton.
+    if (compiler->last_result != ERROR_SUCCESS)
+      goto _exit;
 
-  if (atom_list != NULL)
-  {
-    compiler->last_result = yr_ac_add_string(
-      compiler->automaton_arena,
-      compiler->automaton,
-      string,
-      atom_list);
-  }
-  else
-  {
-    compiler->last_result = yr_arena_allocate_struct(
-        compiler->automaton_arena,
-        sizeof(YR_AC_MATCH),
-        (void**) &new_match,
-        offsetof(YR_AC_MATCH, string),
-        offsetof(YR_AC_MATCH, forward_code),
-        offsetof(YR_AC_MATCH, backward_code),
-        offsetof(YR_AC_MATCH, next),
-        EOL);
+    if (remainder_re != NULL)
+      string->g_flags |= STRING_GFLAGS_CHAIN_TAIL |
+                         STRING_GFLAGS_CHAIN_PART;
 
-    if (compiler->last_result == ERROR_SUCCESS)
+    while (remainder_re != NULL)
     {
-      new_match->backtrack = 0;
-      new_match->string = string;
-      new_match->forward_code = re->root_node->forward_code;
-      new_match->backward_code = NULL;
-      new_match->next = compiler->automaton->root->matches;
-      compiler->automaton->root->matches = new_match;
+      // Destroy regexp pointed by 're' before yr_re_split_at_jmp
+      // overwrites 're' with another value.
+
+      yr_re_destroy(re);
+
+      compiler->last_result = yr_re_split_at_chaining_point(
+          remainder_re, &re, &remainder_re);
+
+      if (compiler->last_result != ERROR_SUCCESS)
+        goto _exit;
+
+      prev_string = string;
+
+      compiler->last_result = _yr_parser_write_string(
+          identifier,
+          flags,
+          compiler,
+          NULL,
+          re,
+          &string,
+          &min_atom_length_aux);
+
+      if (compiler->last_result != ERROR_SUCCESS)
+        goto _exit;
+
+      if (min_atom_length_aux < min_atom_length)
+        min_atom_length = min_atom_length_aux;
+
+      string->g_flags |= STRING_GFLAGS_CHAIN_PART;
+      prev_string->chained_to = string;
     }
   }
-
-  atom = atom_list;
-
-  if (atom != NULL)
-    min_atom_length = MAX_ATOM_LENGTH;
   else
-    min_atom_length = 0;
-
-  while (atom != NULL)
   {
-    if (atom->atom_length < min_atom_length)
-      min_atom_length = atom->atom_length;
-    atom = atom->next;
-  }
+    compiler->last_result = _yr_parser_write_string(
+        identifier,
+        flags,
+        compiler,
+        str,
+        NULL,
+        &string,
+        &min_atom_length);
 
-  if (STRING_IS_LITERAL(string))
-  {
-    if (STRING_IS_WIDE(string))
-      max_string_len = string->length * 2;
-    else
-      max_string_len = string->length;
-
-    if (max_string_len == min_atom_length)
-      string->g_flags |= STRING_GFLAGS_FITS_IN_ATOM;
+    if (compiler->last_result != ERROR_SUCCESS)
+      goto _exit;
   }
 
   if (compiler->file_name_stack_ptr > 0)
@@ -426,16 +524,13 @@ YR_STRING* yr_parser_reduce_string_declaration(
         message);
   }
 
-  if (compiler->last_result != ERROR_SUCCESS)
-    string = NULL;
-
 _exit:
-
-  if (atom_list != NULL)
-    yr_atoms_list_destroy(atom_list);
 
   if (re != NULL)
     yr_re_destroy(re);
+
+  if (compiler->last_result != ERROR_SUCCESS)
+    return NULL;
 
   return string;
 }

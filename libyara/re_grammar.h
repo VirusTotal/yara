@@ -68,7 +68,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 72 "re_grammar.y"
+#line 67 "re_grammar.y"
 {
   int integer;
   uint32_t range;
