@@ -348,6 +348,8 @@ $({letter}|{digit}|_)*  {
 
   s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
   s->length = yyextra->lex_buf_len;
+  s->flags = 0;
+
   memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
   yylval->sized_string = s;
 
@@ -483,6 +485,8 @@ $({letter}|{digit}|_)*  {
   SIZED_STRING* s = (SIZED_STRING*) yr_malloc(len + sizeof(SIZED_STRING));
 
   s->length = len;
+  s->flags = 0;
+
   strcpy(s->c_string, yytext);
   yylval->sized_string = s;
 
