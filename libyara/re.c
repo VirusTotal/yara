@@ -1,4 +1,4 @@
-/*
+    /*
 Copyright (c) 2013. Victor M. Alvarez [plusvic@gmail.com].
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -1009,7 +1009,7 @@ RE_FIBER* _yr_re_fiber_split(
   new_fiber->sp = fiber->sp;
   new_fiber->ip = fiber->ip;
 
-  for (i = 0; i < fiber->sp; i++)
+  for (i = 0; i <= fiber->sp; i++)
     new_fiber->stack[i] = fiber->stack[i];
 
   new_fiber->next = fiber->next;
