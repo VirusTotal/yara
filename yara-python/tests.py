@@ -222,7 +222,7 @@ class TestYara(unittest.TestCase):
           if expected_result == SUCCEED:
             self.assertTrue(matches)
             _, _, matching_string = matches[0].strings[0]
-            if sys.version_info.major >= 3:
+            if sys.version_info[0] >= 3:
               self.assertTrue(matching_string == bytes(test[3], 'utf-8'))
             else:
               self.assertTrue(matching_string == test[3])
