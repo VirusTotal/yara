@@ -358,6 +358,16 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = { 64 01 [1-3] (60|61) 01 } condition: $a }',
         ], PE32_FILE)
 
+        self.assertTrueRules([
+          'rule test { strings: $a = { 31 32 [..] 38 39 } condition: $a }',
+          'rule test { strings: $a = { 31 32 [..] 33 34 [..] 38 39 } condition: $a }',
+        ], '123456789')
+
+        self.assertFalseRules([
+          'rule test { strings: $a = { 31 32 [..] 32 33 } condition: $a }',
+          'rule test { strings: $a = { 35 36 [..] 31 32 } condition: $a }',
+        ], '123456789')
+
         rules = yara.compile(source='rule test { strings: $a = { 61 [0-3] (62|63) } condition: $a }')
         matches = rules.match(data='abbb')
         self.assertTrue(matches[0].strings == [(0L, '$a', 'ab')])
