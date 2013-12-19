@@ -350,14 +350,14 @@ int yr_execute_code(
 
         while (match != NULL)
         {
-          if (r1 >= match->first_offset && r1 <= match->last_offset)
+          if (r1 == match->offset)
           {
             push(1);
             found = 1;
             break;
           }
 
-          if (r1 < match->first_offset)
+          if (r1 < match->offset)
             break;
 
           match = match->next;
@@ -385,15 +385,13 @@ int yr_execute_code(
 
         while (match != NULL && !found)
         {
-          if ((match->first_offset >= r1 && match->first_offset <= r2) ||
-              (match->last_offset >= r1 && match->last_offset <= r2) ||
-              (match->first_offset <= r1 && match->last_offset >= r2))
+          if (match->offset >= r1 && match->offset <= r2)
           {
             push(1);
             found = TRUE;
           }
 
-          if (match->first_offset > r2)
+          if (match->offset > r2)
             break;
 
           match = match->next;
@@ -411,7 +409,7 @@ int yr_execute_code(
         found = 0;
         while (match != NULL)
         {
-          found += match->last_offset - match->first_offset + 1;
+          found++;
           match = match->next;
         }
         push(found);
@@ -434,14 +432,13 @@ int yr_execute_code(
 
         while (match != NULL && !found)
         {
-          if (r1 >= i &&
-              r1 <= i + match->last_offset - match->first_offset)
+          if (r1 == i)
           {
-            push(match->first_offset + r1 - i);
+            push(match->offset);
             found = TRUE;
           }
 
-          i += match->last_offset - match->first_offset + 1;
+          i++;
           match = match->next;
         }
 

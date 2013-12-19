@@ -373,7 +373,7 @@ int yara_callback(
 
         tuple = Py_BuildValue(
             "(L,s,O)",
-            m->first_offset,
+            m->offset,
             string->identifier,
             object);
 

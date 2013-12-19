@@ -304,9 +304,7 @@ typedef struct _YR_MATCH
 {
   uint8_t* data;
   uint32_t length;
-
-  int64_t first_offset;
-  int64_t last_offset;
+  int64_t offset;
 
   struct _YR_MATCH*  prev;
   struct _YR_MATCH*  next;

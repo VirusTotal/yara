@@ -545,7 +545,7 @@ int handle_message(int message, YR_RULE* rule, void* data)
 
           while (match != NULL)
           {
-            printf("0x%" PRIx64 ":%s: ", match->first_offset, string->identifier);
+            printf("0x%" PRIx64 ":%s: ", match->offset, string->identifier);
 
             if (STRING_IS_HEX(string))
             {

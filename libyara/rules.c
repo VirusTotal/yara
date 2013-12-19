@@ -318,7 +318,7 @@ void _yr_scan_confirm_matches(
   {
     next_match = match->next;
 
-    if (match_offset >= match->first_offset + match->length)
+    if (match_offset >= match->offset + match->length)
     {
       if (match->prev != NULL)
         match->prev->next = match->next;
@@ -334,7 +334,7 @@ void _yr_scan_confirm_matches(
 
       match->prev = string->chained_to->matches[tidx].tail;
       match->next = NULL;
-      match->length = match_offset - match->first_offset + match_length;
+      match->length = match_offset - match->offset + match_length;
 
       if (string->chained_to->matches[tidx].head == NULL)
         string->chained_to->matches[tidx].head = match;
@@ -345,7 +345,7 @@ void _yr_scan_confirm_matches(
       string->chained_to->matches[tidx].tail = match;
 
       _yr_scan_confirm_matches(
-          tidx, string->chained_to, match->first_offset, match->length);
+          tidx, string->chained_to, match->offset, match->length);
     }
 
     match = next_match;
@@ -429,26 +429,11 @@ void _yr_rules_match_callback(
   {
     if (match_length == match->length)
     {
-      if (match_offset >= match->first_offset &&
-          match_offset <= match->last_offset)
-      {
+      if (match_offset == match->offset)
         return;
-      }
-
-      if (match_offset == match->last_offset + 1)
-      {
-        match->last_offset++;
-        return;
-      }
-
-      if (match_offset == match->first_offset - 1)
-      {
-        match->first_offset--;
-        return;
-      }
     }
 
-    if (match_offset > match->last_offset)
+    if (match_offset > match->offset)
       break;
 
     match = match->prev;
@@ -459,8 +444,7 @@ void _yr_rules_match_callback(
       sizeof(YR_MATCH),
       (void**) &new_match);
 
-  new_match->first_offset = match_offset;
-  new_match->last_offset = match_offset;
+  new_match->offset = match_offset;
   new_match->length = match_length;
   new_match->data = match_data;
 
