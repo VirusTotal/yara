@@ -47,6 +47,7 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
+typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -357,7 +358,7 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (size_t) (yy_cp - yy_bp); \
+	yyleng = (yy_size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
@@ -406,7 +407,7 @@ static yyconst flex_int32_t yy_ec[256] =
         1,    1,    4,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    2,    5,    6,    7,    8,    1,    1,    1,    9,
-        9,   10,    1,    1,    9,    9,   11,   12,   13,   14,
+        9,   10,    1,    1,    9,    1,   11,   12,   13,   14,
        15,   16,   16,   17,   16,   18,   16,    1,    1,   19,
        20,   21,    9,   22,   23,   24,   23,   23,   23,   23,
        25,   25,   25,   25,   26,   25,   27,   25,   25,   25,
@@ -686,7 +687,7 @@ limitations under the License.
 
 
 
-#line 690 "lexer.c"
+#line 691 "lexer.c"
 
 #define INITIAL 0
 #define str 1
@@ -924,7 +925,7 @@ YY_DECL
 #line 86 "lexer.l"
 
 
-#line 928 "lexer.c"
+#line 929 "lexer.c"
 
     yylval = yylval_param;
 
@@ -1710,7 +1711,7 @@ YY_RULE_SETUP
 #line 512 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1714 "lexer.c"
+#line 1715 "lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{

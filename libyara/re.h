@@ -166,10 +166,13 @@ SIZED_STRING* yr_re_extract_literal(
     RE* re);
 
 
+
 int yr_re_split_at_chaining_point(
     RE* re,
     RE** result_re,
-    RE** remainder_re);
+    RE** remainder_re,
+    int32_t* min_gap,
+    int32_t* max_gap);
 
 
 int yr_re_emit_code(

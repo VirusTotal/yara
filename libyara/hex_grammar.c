@@ -105,6 +105,9 @@
 #include <dmalloc.h>
 #endif
 
+#define STR_EXPAND(tok) #tok
+#define STR(tok) STR_EXPAND(tok)
+
 #define YYERROR_VERBOSE
 
 #define YYDEBUG 0
@@ -152,13 +155,13 @@ yydebug = 1;
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 71 "hex_grammar.y"
+#line 74 "hex_grammar.y"
 {
   int integer;
   RE_NODE *re_node;
 }
 /* Line 193 of yacc.c.  */
-#line 162 "hex_grammar.c"
+#line 165 "hex_grammar.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -171,7 +174,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 175 "hex_grammar.c"
+#line 178 "hex_grammar.c"
 
 #ifdef short
 # undef short
@@ -386,16 +389,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  10
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   23
+#define YYLAST   25
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  15
+#define YYNTOKENS  14
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  8
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  15
+#define YYNRULES  16
 /* YYNRULES -- Number of states.  */
-#define YYNSTATES  26
+#define YYNSTATES  25
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
@@ -411,7 +414,7 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       8,     9,     2,     2,     2,    12,    13,     2,     2,     2,
+       8,     9,     2,     2,     2,    12,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -419,7 +422,7 @@ static const yytype_uint8 yytranslate[] =
        2,    10,     2,    11,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     6,    14,     7,     2,     2,     2,     2,
+       2,     2,     2,     6,    13,     7,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -442,24 +445,24 @@ static const yytype_uint8 yytranslate[] =
 static const yytype_uint8 yyprhs[] =
 {
        0,     0,     3,     7,     9,    12,    14,    15,    20,    24,
-      26,    30,    33,    35,    39,    41
+      26,    30,    33,    35,    37,    41,    43
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
 static const yytype_int8 yyrhs[] =
 {
-      16,     0,    -1,     6,    17,     7,    -1,    18,    -1,    17,
-      18,    -1,    22,    -1,    -1,     8,    19,    21,     9,    -1,
-      10,    20,    11,    -1,     5,    -1,     5,    12,     5,    -1,
-      13,    13,    -1,    17,    -1,    21,    14,    17,    -1,     3,
-      -1,     4,    -1
+      15,     0,    -1,     6,    16,     7,    -1,    17,    -1,    16,
+      17,    -1,    21,    -1,    -1,     8,    18,    20,     9,    -1,
+      10,    19,    11,    -1,     5,    -1,     5,    12,     5,    -1,
+       5,    12,    -1,    12,    -1,    16,    -1,    20,    13,    16,
+      -1,     3,    -1,     4,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
-static const yytype_uint8 yyrline[] =
+static const yytype_uint16 yyrline[] =
 {
-       0,    90,    90,    98,   102,   113,   118,   117,   126,   134,
-     149,   172,   198,   202,   214,   222
+       0,    93,    93,   101,   105,   116,   121,   120,   129,   137,
+     164,   201,   226,   253,   257,   269,   277
 };
 #endif
 
@@ -469,7 +472,7 @@ static const yytype_uint8 yyrline[] =
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "_BYTE_", "_MASKED_BYTE_", "_NUMBER_",
-  "'{'", "'}'", "'('", "')'", "'['", "']'", "'-'", "'.'", "'|'", "$accept",
+  "'{'", "'}'", "'('", "')'", "'['", "']'", "'-'", "'|'", "$accept",
   "hex_string", "tokens", "token", "@1", "range", "alternatives", "byte", 0
 };
 #endif
@@ -480,22 +483,22 @@ static const char *const yytname[] =
 static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   123,   125,    40,    41,
-      91,    93,    45,    46,   124
+      91,    93,    45,   124
 };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    15,    16,    17,    17,    18,    19,    18,    18,    20,
-      20,    20,    21,    21,    22,    22
+       0,    14,    15,    16,    16,    17,    18,    17,    17,    19,
+      19,    19,    19,    20,    20,    21,    21
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
        0,     2,     3,     1,     2,     1,     0,     4,     3,     1,
-       3,     2,     1,     3,     1,     1
+       3,     2,     1,     1,     3,     1,     1
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -503,9 +506,9 @@ static const yytype_uint8 yyr2[] =
    means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,     0,    14,    15,     6,     0,     0,     3,     5,
-       1,     0,     9,     0,     0,     2,     4,    12,     0,     0,
-      11,     8,     7,     0,    10,    13
+       0,     0,     0,    15,    16,     6,     0,     0,     3,     5,
+       1,     0,     9,    12,     0,     2,     4,    13,     0,    11,
+       8,     7,     0,    10,    14
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
@@ -519,9 +522,9 @@ static const yytype_int8 yydefgoto[] =
 #define YYPACT_NINF -11
 static const yytype_int8 yypact[] =
 {
-      -4,     4,     5,   -11,   -11,   -11,    -2,    12,   -11,   -11,
-     -11,     4,    -6,     8,     6,   -11,   -11,     4,    -5,    18,
-     -11,   -11,   -11,     4,   -11,     4
+      -2,    10,     5,   -11,   -11,   -11,     3,    -1,   -11,   -11,
+     -11,    10,     4,   -11,     0,   -11,   -11,    10,    12,    14,
+     -11,   -11,    10,   -11,    10
 };
 
 /* YYPGOTO[NTERM-NUM].  */
@@ -537,25 +540,25 @@ static const yytype_int8 yypgoto[] =
 #define YYTABLE_NINF -1
 static const yytype_uint8 yytable[] =
 {
-      16,    17,     1,    12,    22,    10,    19,     3,     4,    23,
-      16,    13,     5,    25,     6,     3,     4,    21,    16,    15,
-       5,    20,     6,    24
+      16,    17,     3,     4,     1,    10,    15,     5,    12,     6,
+      16,    20,    24,     3,     4,    13,    19,    16,     5,    23,
+       6,    21,     0,     0,     0,    22
 };
 
-static const yytype_uint8 yycheck[] =
+static const yytype_int8 yycheck[] =
 {
-       7,    11,     6,     5,     9,     0,    12,     3,     4,    14,
-      17,    13,     8,    23,    10,     3,     4,    11,    25,     7,
-       8,    13,    10,     5
+       7,    11,     3,     4,     6,     0,     7,     8,     5,    10,
+      17,    11,    22,     3,     4,    12,    12,    24,     8,     5,
+      10,     9,    -1,    -1,    -1,    13
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     6,    16,     3,     4,     8,    10,    17,    18,    22,
-       0,    19,     5,    13,    20,     7,    18,    17,    21,    12,
-      13,    11,     9,    14,     5,    17
+       0,     6,    15,     3,     4,     8,    10,    16,    17,    21,
+       0,    18,     5,    12,    19,     7,    17,    16,    20,    12,
+      11,     9,    13,     5,    16
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -1075,30 +1078,30 @@ yydestruct (yymsg, yytype, yyvaluep, yyscanner, lex_env)
 
   switch (yytype)
     {
-      case 17: /* "tokens" */
-#line 82 "hex_grammar.y"
-	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1082 "hex_grammar.c"
-	break;
-      case 18: /* "token" */
-#line 83 "hex_grammar.y"
-	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1087 "hex_grammar.c"
-	break;
-      case 20: /* "range" */
-#line 86 "hex_grammar.y"
-	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1092 "hex_grammar.c"
-	break;
-      case 21: /* "alternatives" */
+      case 16: /* "tokens" */
 #line 85 "hex_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1097 "hex_grammar.c"
+#line 1085 "hex_grammar.c"
 	break;
-      case 22: /* "byte" */
-#line 84 "hex_grammar.y"
+      case 17: /* "token" */
+#line 86 "hex_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1102 "hex_grammar.c"
+#line 1090 "hex_grammar.c"
+	break;
+      case 19: /* "range" */
+#line 89 "hex_grammar.y"
+	{ yr_re_node_destroy((yyvaluep->re_node)); };
+#line 1095 "hex_grammar.c"
+	break;
+      case 20: /* "alternatives" */
+#line 88 "hex_grammar.y"
+	{ yr_re_node_destroy((yyvaluep->re_node)); };
+#line 1100 "hex_grammar.c"
+	break;
+      case 21: /* "byte" */
+#line 87 "hex_grammar.y"
+	{ yr_re_node_destroy((yyvaluep->re_node)); };
+#line 1105 "hex_grammar.c"
 	break;
 
       default:
@@ -1408,7 +1411,7 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 91 "hex_grammar.y"
+#line 94 "hex_grammar.y"
     {
                 RE* re = yyget_extra(yyscanner);
                 re->root_node = (yyvsp[(2) - (3)].re_node);
@@ -1416,14 +1419,14 @@ yyreduce:
     break;
 
   case 3:
-#line 99 "hex_grammar.y"
+#line 102 "hex_grammar.y"
     {
             (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
          }
     break;
 
   case 4:
-#line 103 "hex_grammar.y"
+#line 106 "hex_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[(1) - (2)].re_node), (yyvsp[(2) - (2)].re_node));
 
@@ -1434,21 +1437,21 @@ yyreduce:
     break;
 
   case 5:
-#line 114 "hex_grammar.y"
+#line 117 "hex_grammar.y"
     {
           (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
         }
     break;
 
   case 6:
-#line 118 "hex_grammar.y"
+#line 121 "hex_grammar.y"
     {
           lex_env->inside_or++;
         }
     break;
 
   case 7:
-#line 122 "hex_grammar.y"
+#line 125 "hex_grammar.y"
     {
           (yyval.re_node) = (yyvsp[(3) - (4)].re_node);
           lex_env->inside_or--;
@@ -1456,7 +1459,7 @@ yyreduce:
     break;
 
   case 8:
-#line 127 "hex_grammar.y"
+#line 130 "hex_grammar.y"
     {
           (yyval.re_node) = (yyvsp[(2) - (3)].re_node);
           (yyval.re_node)->greedy = FALSE;
@@ -1464,9 +1467,21 @@ yyreduce:
     break;
 
   case 9:
-#line 135 "hex_grammar.y"
+#line 138 "hex_grammar.y"
     {
           RE_NODE* re_any;
+
+          if (lex_env->inside_or && (yyvsp[(1) - (1)].integer) > STRING_CHAINING_THRESHOLD)
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup(
+                "jumps over "
+                STR(STRING_CHAINING_THRESHOLD)
+                " now allowed inside alternation (|)");
+
+            YYABORT;
+          }
 
           re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
@@ -1482,15 +1497,29 @@ yyreduce:
     break;
 
   case 10:
-#line 150 "hex_grammar.y"
+#line 165 "hex_grammar.y"
     {
           RE_NODE* re_any;
+
+          if (lex_env->inside_or &&
+              ((yyvsp[(1) - (3)].integer) > STRING_CHAINING_THRESHOLD ||
+               (yyvsp[(3) - (3)].integer) > STRING_CHAINING_THRESHOLD) )
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup(
+                "jumps over "
+                STR(STRING_CHAINING_THRESHOLD)
+                " now allowed inside alternation (|)");
+
+            YYABORT;
+          }
 
           if ((yyvsp[(1) - (3)].integer) > (yyvsp[(3) - (3)].integer))
           {
             RE* re = yyget_extra(yyscanner);
             re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup("invalid range");
+            re->error_message = yr_strdup("invalid jump range");
             YYABORT;
           }
 
@@ -1508,7 +1537,7 @@ yyreduce:
     break;
 
   case 11:
-#line 173 "hex_grammar.y"
+#line 202 "hex_grammar.y"
     {
           RE_NODE* re_any;
 
@@ -1516,7 +1545,36 @@ yyreduce:
           {
             RE* re = yyget_extra(yyscanner);
             re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup("[..] not allowed inside OR (|)");
+            re->error_message = yr_strdup(
+                "unbounded jumps not allowed inside alternation (|)");
+
+            YYABORT;
+          }
+
+          re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
+
+          ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+
+          (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
+
+          ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+
+          (yyval.re_node)->start = (yyvsp[(1) - (2)].integer);
+          (yyval.re_node)->end = INT_MAX;
+        }
+    break;
+
+  case 12:
+#line 227 "hex_grammar.y"
+    {
+          RE_NODE* re_any;
+
+          if (lex_env->inside_or)
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup(
+                "unbounded jumps not allowed inside alternation (|)");
             YYABORT;
           }
 
@@ -1533,15 +1591,15 @@ yyreduce:
         }
     break;
 
-  case 12:
-#line 199 "hex_grammar.y"
+  case 13:
+#line 254 "hex_grammar.y"
     {
                   (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
                }
     break;
 
-  case 13:
-#line 203 "hex_grammar.y"
+  case 14:
+#line 258 "hex_grammar.y"
     {
                   mark_as_not_fast_hex_regexp();
 
@@ -1553,8 +1611,8 @@ yyreduce:
                }
     break;
 
-  case 14:
-#line 215 "hex_grammar.y"
+  case 15:
+#line 270 "hex_grammar.y"
     {
           (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
@@ -1564,8 +1622,8 @@ yyreduce:
         }
     break;
 
-  case 15:
-#line 223 "hex_grammar.y"
+  case 16:
+#line 278 "hex_grammar.y"
     {
           uint8_t mask = (yyvsp[(1) - (1)].integer) >> 8;
 
@@ -1589,7 +1647,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1593 "hex_grammar.c"
+#line 1651 "hex_grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1803,7 +1861,7 @@ yyreturn:
 }
 
 
-#line 244 "hex_grammar.y"
+#line 299 "hex_grammar.y"
 
 
 

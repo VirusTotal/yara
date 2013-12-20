@@ -111,13 +111,6 @@ hexdigit      [a-fA-F0-9]
 <range>{digit}+ {
 
   yylval->integer = atoi(yytext);
-
-  if (yylval->integer > INT16_MAX)
-  {
-    yyerror(yyscanner, lex_env, "range value too large");
-    yyterminate();
-  }
-
   return _NUMBER_;
 }
 

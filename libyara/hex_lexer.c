@@ -47,6 +47,7 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
+typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -357,7 +358,7 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (size_t) (yy_cp - yy_bp); \
+	yyleng = (yy_size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
@@ -505,7 +506,7 @@ limitations under the License.
 #define YY_NO_UNISTD_H 1
 #define YY_NO_INPUT 1
 
-#line 509 "hex_lexer.c"
+#line 510 "hex_lexer.c"
 
 #define INITIAL 0
 #define range 1
@@ -741,7 +742,7 @@ YY_DECL
 
 
 
-#line 745 "hex_lexer.c"
+#line 746 "hex_lexer.c"
 
     yylval = yylval_param;
 
@@ -905,19 +906,12 @@ YY_RULE_SETUP
 {
 
   yylval->integer = atoi(yytext);
-
-  if (yylval->integer > INT16_MAX)
-  {
-    yyerror(yyscanner, lex_env, "range value too large");
-    yyterminate();
-  }
-
   return _NUMBER_;
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 124 "hex_lexer.l"
+#line 117 "hex_lexer.l"
 {
 
   BEGIN(INITIAL);
@@ -927,12 +921,12 @@ YY_RULE_SETUP
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 131 "hex_lexer.l"
+#line 124 "hex_lexer.l"
 // skip whitespace
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 134 "hex_lexer.l"
+#line 127 "hex_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -948,10 +942,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 147 "hex_lexer.l"
+#line 140 "hex_lexer.l"
 ECHO;
 	YY_BREAK
-#line 955 "hex_lexer.c"
+#line 949 "hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(range):
 	yyterminate();
@@ -2087,7 +2081,7 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 147 "hex_lexer.l"
+#line 140 "hex_lexer.l"
 
 
 

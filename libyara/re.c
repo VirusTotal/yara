@@ -322,7 +322,9 @@ SIZED_STRING* yr_re_extract_literal(
 int yr_re_split_at_chaining_point(
     RE* re,
     RE** result_re,
-    RE** remainder_re)
+    RE** remainder_re,
+    int32_t* min_gap,
+    int32_t* max_gap)
 {
   RE_NODE* node = re->root_node;
   RE_NODE* child = re->root_node->left;
@@ -332,15 +334,17 @@ int yr_re_split_at_chaining_point(
 
   *result_re = re;
   *remainder_re = NULL;
+  *min_gap = 0;
+  *max_gap = 0;
 
   while (child != NULL && child->type == RE_NODE_CONCAT)
   {
     if (child->right != NULL &&
         child->right->type == RE_NODE_RANGE &&
         child->right->greedy == FALSE &&
-        child->right->start == 0 &&
-        child->right->end == INT_MAX &&
-        child->right->left->type == RE_NODE_ANY)
+        child->right->left->type == RE_NODE_ANY &&
+        (child->right->start > STRING_CHAINING_THRESHOLD ||
+         child->right->end > STRING_CHAINING_THRESHOLD))
     {
       result = yr_re_create(remainder_re);
 
@@ -357,6 +361,10 @@ int yr_re_split_at_chaining_point(
         (*result_re)->root_node = node->right;
 
       node->right = NULL;
+
+      *min_gap = child->right->start;
+      *max_gap = child->right->end;
+
       yr_re_node_destroy(node);
 
       return ERROR_SUCCESS;

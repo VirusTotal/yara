@@ -1,4 +1,4 @@
- /*
+    /*
 Copyright (c) 2013. Victor M. Alvarez [plusvic@gmail.com].
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -304,7 +304,7 @@ void _yr_scan_confirm_matches(
     int tidx,
     YR_STRING* string,
     size_t match_offset,
-    int match_length)
+    int32_t match_length)
 {
   YR_MATCH* match;
   YR_MATCH* next_match;
@@ -353,18 +353,220 @@ void _yr_scan_confirm_matches(
 }
 
 
-void _yr_rules_match_callback(
+void _yr_scan_update_match_chain_length(
+    int tidx,
+    YR_STRING* string,
+    YR_MATCH* match_to_update,
+    int chain_length)
+{
+  YR_MATCH* match;
+  size_t ending_offset;
+
+  match_to_update->chain_length = chain_length;
+
+  if (string->chained_to != NULL)
+    match = string->chained_to->unconfirmed_matches[tidx].head;
+  else
+    match = NULL;
+
+  while (match != NULL)
+  {
+    ending_offset = match->offset + match->length;
+
+    if (ending_offset + string->chain_gap_max >= match_to_update->offset &&
+        ending_offset + string->chain_gap_min <= match_to_update->offset)
+    {
+      _yr_scan_update_match_chain_length(
+          tidx, string->chained_to, match, chain_length + 1);
+    }
+
+    match = match->next;
+  }
+}
+
+
+void _yr_scan_add_match_to_list(
+    YR_MATCH* match,
+    YR_MATCHES* matches_list)
+{
+  YR_MATCH* insertion_point;
+
+  insertion_point = matches_list->tail;
+
+  while (insertion_point != NULL)
+  {
+    if (match->offset == insertion_point->offset)
+    {
+      insertion_point->length = match->length;
+      return;
+    }
+
+    if (match->offset > insertion_point->offset)
+      break;
+
+    insertion_point = insertion_point->prev;
+  }
+
+  match->prev = insertion_point;
+
+  if (insertion_point != NULL)
+  {
+    match->next = insertion_point->next;
+    insertion_point->next = match;
+  }
+  else
+  {
+    match->next = matches_list->head;
+    matches_list->head = match;
+  }
+
+  if (match->next != NULL)
+    match->next->prev = match;
+  else
+    matches_list->tail = match;
+}
+
+
+void _yr_scan_remove_match_from_list(
+    YR_MATCH* match,
+    YR_MATCHES* matches_list)
+{
+  if (match->prev != NULL)
+    match->prev->next = match->next;
+
+  if (match->next != NULL)
+    match->next->prev = match->prev;
+
+  if (matches_list->head == match)
+    matches_list->head = match->next;
+
+  if (matches_list->tail == match)
+    matches_list->tail = match->prev;
+}
+
+void _yr_scan_handle_chained_matches(
+    YR_ARENA* matches_arena,
+    YR_STRING* matching_string,
     uint8_t* match_data,
-    int match_length,
+    size_t match_offset,
+    int32_t match_length,
+    int tidx)
+{
+  YR_STRING* string;
+  YR_MATCH* match;
+  YR_MATCH* next_match;
+  YR_MATCH* new_match;
+
+  size_t lower_offset;
+  size_t ending_offset;
+  int32_t full_chain_length;
+
+  int add_match = FALSE;
+
+  if (matching_string->chained_to == NULL)
+  {
+    add_match = TRUE;
+  }
+  else
+  {
+    if (matching_string->unconfirmed_matches[tidx].head != NULL)
+      lower_offset = matching_string->unconfirmed_matches[tidx].head->offset;
+    else
+      lower_offset = match_offset;
+
+    match = matching_string->chained_to->unconfirmed_matches[tidx].head;
+
+    while (match != NULL)
+    {
+      next_match = match->next;
+      ending_offset = match->offset + match->length;
+
+      if (ending_offset + matching_string->chain_gap_max < lower_offset)
+      {
+        _yr_scan_remove_match_from_list(
+            match, &matching_string->chained_to->unconfirmed_matches[tidx]);
+      }
+      else
+      {
+        if (ending_offset + matching_string->chain_gap_max >= match_offset &&
+            ending_offset + matching_string->chain_gap_min <= match_offset)
+        {
+          _yr_scan_update_match_chain_length(
+              tidx, matching_string->chained_to, match, 1);
+
+          add_match = TRUE;
+        }
+      }
+
+      match = next_match;
+    }
+  }
+
+  if (add_match)
+  {
+    if (STRING_IS_CHAIN_TAIL(matching_string))
+    {
+      full_chain_length = 0;
+      string = matching_string;
+
+      while(string->chained_to != NULL)
+      {
+        full_chain_length++;
+        string = string->chained_to;
+      }
+
+      // "string" points now to the head of the strings chain
+
+      match = string->unconfirmed_matches[tidx].head;
+
+      while (match != NULL)
+      {
+        next_match = match->next;
+
+        if (match->chain_length == full_chain_length)
+        {
+          _yr_scan_remove_match_from_list(
+              match, &string->unconfirmed_matches[tidx]);
+
+          match->length = match_offset - match->offset + match_length;
+          match->data = match_data - match_offset + match->offset;
+
+          _yr_scan_add_match_to_list(
+              match, &string->matches[tidx]);
+        }
+
+        match = next_match;
+      }
+    }
+    else
+    {
+      yr_arena_allocate_memory(
+          matches_arena,
+          sizeof(YR_MATCH),
+          (void**) &new_match);
+
+      new_match->offset = match_offset;
+      new_match->length = match_length;
+      new_match->data = match_data;
+
+      _yr_scan_add_match_to_list(
+          new_match,
+          &matching_string->unconfirmed_matches[tidx]);
+    }
+  }
+}
+
+
+void _yr_scan_match_callback(
+    uint8_t* match_data,
+    int32_t match_length,
     int flags,
     void* args)
 {
-  YR_MATCH* new_match;
-  YR_MATCH* match;
-  YR_MATCHES* matches;
-
   CALLBACK_ARGS* callback_args = args;
+
   YR_STRING* string = callback_args->string;
+  YR_MATCH* new_match;
 
   int character_size;
   int tidx = callback_args->tidx;
@@ -384,6 +586,7 @@ void _yr_rules_match_callback(
     match_length -= character_size;
 
   // total match length is the sum of backward and forward matches.
+
   match_length = match_length + callback_args->forward_matches;
 
   if (callback_args->full_word)
@@ -412,60 +615,31 @@ void _yr_rules_match_callback(
     }
   }
 
-  if (STRING_IS_CHAIN_TAIL(string))
-  {
-    _yr_scan_confirm_matches(tidx, string, match_offset, match_length);
-    return;
-  }
-
   if (STRING_IS_CHAIN_PART(string))
-    matches = &string->unconfirmed_matches[tidx];
-  else
-    matches = &string->matches[tidx];
-
-  match = matches->tail;
-
-  while (match != NULL)
   {
-    if (match_length == match->length)
-    {
-      if (match_offset == match->offset)
-        return;
-    }
-
-    if (match_offset > match->offset)
-      break;
-
-    match = match->prev;
-  }
-
-  yr_arena_allocate_memory(
-      callback_args->matches_arena,
-      sizeof(YR_MATCH),
-      (void**) &new_match);
-
-  new_match->offset = match_offset;
-  new_match->length = match_length;
-  new_match->data = match_data;
-
-  if (match != NULL)
-  {
-    new_match->next = match->next;
-    new_match->prev = match;
-    match->next = new_match;
+    _yr_scan_handle_chained_matches(
+        callback_args->matches_arena,
+        string,
+        match_data,
+        match_offset,
+        match_length,
+        tidx);
   }
   else
   {
-    new_match->next = matches->head;
-    matches->head = new_match;
+    yr_arena_allocate_memory(
+        callback_args->matches_arena,
+        sizeof(YR_MATCH),
+        (void**) &new_match);
+
+    new_match->offset = match_offset;
+    new_match->length = match_length;
+    new_match->data = match_data;
+
+    _yr_scan_add_match_to_list(
+        new_match,
+        &string->matches[tidx]);
   }
-
-  if (new_match->next != NULL)
-    new_match->next->prev = new_match;
-  else
-    matches->tail = new_match;
-
-  new_match->prev = match;
 }
 
 
@@ -547,12 +721,12 @@ int _yr_scan_verify_re_match(
         data + offset,
         offset + 1,
         flags | RE_FLAGS_BACKWARDS | RE_FLAGS_EXHAUSTIVE,
-        _yr_rules_match_callback,
+        _yr_scan_match_callback,
         (void*) &callback_args);
   }
   else
   {
-    _yr_rules_match_callback(
+    _yr_scan_match_callback(
         data + offset, 0, flags, &callback_args);
   }
 
@@ -661,7 +835,7 @@ int _yr_scan_verify_literal_match(
     callback_args.full_word = STRING_IS_FULL_WORD(string);
     callback_args.tidx = yr_get_tidx();
 
-    _yr_rules_match_callback(
+    _yr_scan_match_callback(
         data + offset, 0, flags, &callback_args);
   }
 

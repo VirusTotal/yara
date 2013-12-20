@@ -95,12 +95,12 @@ typedef pthread_mutex_t mutex_t;
 #define CALLBACK_ABORT     1
 #define CALLBACK_ERROR     2
 
-
 #define MAX_ATOM_LENGTH 4
 #define LOOP_LOCAL_VARS 4
 #define MAX_LOOP_NESTING 4
 #define MAX_INCLUDE_DEPTH 16
 #define MAX_THREADS 32
+#define STRING_CHAINING_THRESHOLD 256
 #define LEX_BUF_SIZE  1024
 
 
@@ -302,9 +302,13 @@ typedef struct _YR_ARENA
 
 typedef struct _YR_MATCH
 {
-  uint8_t* data;
-  uint32_t length;
   int64_t offset;
+  int32_t length;
+
+  union {
+    uint8_t* data;            // Confirmed matches use "data",
+    int32_t chain_length;    // unconfirmed ones use "chain_length"
+  };
 
   struct _YR_MATCH*  prev;
   struct _YR_MATCH*  next;
@@ -347,6 +351,9 @@ typedef struct _YR_STRING
   DECLARE_REFERENCE(char*, identifier);
   DECLARE_REFERENCE(uint8_t*, string);
   DECLARE_REFERENCE(struct _YR_STRING*, chained_to);
+
+  int32_t chain_gap_min;
+  int32_t chain_gap_max;
 
   YR_MATCHES matches[MAX_THREADS];
   YR_MATCHES unconfirmed_matches[MAX_THREADS];

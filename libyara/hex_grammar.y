@@ -30,6 +30,9 @@ limitations under the License.
 #include <dmalloc.h>
 #endif
 
+#define STR_EXPAND(tok) #tok
+#define STR(tok) STR_EXPAND(tok)
+
 #define YYERROR_VERBOSE
 
 #define YYDEBUG 0
@@ -135,6 +138,18 @@ range : _NUMBER_
         {
           RE_NODE* re_any;
 
+          if (lex_env->inside_or && $1 > STRING_CHAINING_THRESHOLD)
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup(
+                "jumps over "
+                STR(STRING_CHAINING_THRESHOLD)
+                " now allowed inside alternation (|)");
+
+            YYABORT;
+          }
+
           re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
           ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
@@ -150,11 +165,25 @@ range : _NUMBER_
         {
           RE_NODE* re_any;
 
+          if (lex_env->inside_or &&
+              ($1 > STRING_CHAINING_THRESHOLD ||
+               $3 > STRING_CHAINING_THRESHOLD) )
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup(
+                "jumps over "
+                STR(STRING_CHAINING_THRESHOLD)
+                " now allowed inside alternation (|)");
+
+            YYABORT;
+          }
+
           if ($1 > $3)
           {
             RE* re = yyget_extra(yyscanner);
             re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup("invalid range");
+            re->error_message = yr_strdup("invalid jump range");
             YYABORT;
           }
 
@@ -169,7 +198,7 @@ range : _NUMBER_
           $$->start = $1;
           $$->end = $3;
         }
-      | '.' '.'
+      | _NUMBER_ '-'
         {
           RE_NODE* re_any;
 
@@ -177,7 +206,33 @@ range : _NUMBER_
           {
             RE* re = yyget_extra(yyscanner);
             re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup("[..] not allowed inside OR (|)");
+            re->error_message = yr_strdup(
+                "unbounded jumps not allowed inside alternation (|)");
+
+            YYABORT;
+          }
+
+          re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
+
+          ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+
+          $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
+
+          ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+
+          $$->start = $1;
+          $$->end = INT_MAX;
+        }
+      | '-'
+        {
+          RE_NODE* re_any;
+
+          if (lex_env->inside_or)
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup(
+                "unbounded jumps not allowed inside alternation (|)");
             YYABORT;
           }
 
