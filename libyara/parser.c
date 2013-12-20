@@ -375,6 +375,9 @@ YR_STRING* yr_parser_reduce_string_declaration(
   int min_atom_length;
   int min_atom_length_aux;
 
+  int32_t min_gap;
+  int32_t max_gap;
+
   char* file_name;
   char message[512];
 
@@ -433,7 +436,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
       flags |= STRING_GFLAGS_FAST_HEX_REGEXP;
 
     compiler->last_result = yr_re_split_at_chaining_point(
-        re, &re, &remainder_re);
+        re, &re, &remainder_re, &min_gap, &max_gap);
 
     if (compiler->last_result != ERROR_SUCCESS)
       goto _exit;
@@ -451,8 +454,11 @@ YR_STRING* yr_parser_reduce_string_declaration(
       goto _exit;
 
     if (remainder_re != NULL)
-      string->g_flags |= STRING_GFLAGS_CHAIN_TAIL |
-                         STRING_GFLAGS_CHAIN_PART;
+    {
+      string->g_flags |= STRING_GFLAGS_CHAIN_TAIL | STRING_GFLAGS_CHAIN_PART;
+      string->chain_gap_min = min_gap;
+      string->chain_gap_max = max_gap;
+    }
 
     while (remainder_re != NULL)
     {
@@ -462,7 +468,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
       yr_re_destroy(re);
 
       compiler->last_result = yr_re_split_at_chaining_point(
-          remainder_re, &re, &remainder_re);
+          remainder_re, &re, &remainder_re, &min_gap, &max_gap);
 
       if (compiler->last_result != ERROR_SUCCESS)
         goto _exit;
@@ -485,6 +491,9 @@ YR_STRING* yr_parser_reduce_string_declaration(
         min_atom_length = min_atom_length_aux;
 
       string->g_flags |= STRING_GFLAGS_CHAIN_PART;
+      string->chain_gap_min = min_gap;
+      string->chain_gap_max = max_gap;
+
       prev_string->chained_to = string;
     }
   }
