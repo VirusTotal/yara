@@ -100,7 +100,7 @@ typedef pthread_mutex_t mutex_t;
 #define MAX_LOOP_NESTING 4
 #define MAX_INCLUDE_DEPTH 16
 #define MAX_THREADS 32
-#define STRING_CHAINING_THRESHOLD 256
+#define STRING_CHAINING_THRESHOLD 200
 #define LEX_BUF_SIZE  1024
 
 

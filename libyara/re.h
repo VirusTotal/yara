@@ -117,7 +117,7 @@ struct RE {
 };
 
 
-typedef void RE_MATCH_CALLBACK_FUNC(
+typedef int RE_MATCH_CALLBACK_FUNC(
     uint8_t* match,
     int match_length,
     int flags,
@@ -166,7 +166,6 @@ SIZED_STRING* yr_re_extract_literal(
     RE* re);
 
 
-
 int yr_re_split_at_chaining_point(
     RE* re,
     RE** result_re,
@@ -188,9 +187,12 @@ int yr_re_exec(
     RE_MATCH_CALLBACK_FUNC callback,
     void* callback_args);
 
+
 int yr_re_initialize();
 
+
 int yr_re_finalize();
+
 
 int yr_re_finalize_thread();
 

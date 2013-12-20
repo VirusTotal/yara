@@ -153,8 +153,16 @@ YR_STRING* yr_parser_lookup_string(
 
   while(!STRING_IS_NULL(string))
   {
-    if (strcmp(string->identifier, identifier) == 0)
+    // If some string $a gets fragmented into multiple chained
+    // strings, all those fragments have the same $a identifier
+    // but we are interested in the heading fragment, which is
+    // that with chained_to == NULL
+
+    if (strcmp(string->identifier, identifier) == 0 &&
+        string->chained_to == NULL)
+    {
       return string;
+    }
 
     string = yr_arena_next_address(
         compiler->strings_arena,
@@ -383,6 +391,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   YR_STRING* string = NULL;
+  YR_STRING* aux_string;
   YR_STRING* prev_string;
 
   RE* re = NULL;
@@ -460,6 +469,11 @@ YR_STRING* yr_parser_reduce_string_declaration(
       string->chain_gap_max = max_gap;
     }
 
+    // Use "aux_string" from now on, we want to keep the value of "string"
+    // because it will returned.
+
+    aux_string = string;
+
     while (remainder_re != NULL)
     {
       // Destroy regexp pointed by 're' before yr_re_split_at_jmp
@@ -473,7 +487,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
       if (compiler->last_result != ERROR_SUCCESS)
         goto _exit;
 
-      prev_string = string;
+      prev_string = aux_string;
 
       compiler->last_result = _yr_parser_write_string(
           identifier,
@@ -481,7 +495,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
           compiler,
           NULL,
           re,
-          &string,
+          &aux_string,
           &min_atom_length_aux);
 
       if (compiler->last_result != ERROR_SUCCESS)
@@ -490,11 +504,11 @@ YR_STRING* yr_parser_reduce_string_declaration(
       if (min_atom_length_aux < min_atom_length)
         min_atom_length = min_atom_length_aux;
 
-      string->g_flags |= STRING_GFLAGS_CHAIN_PART;
-      string->chain_gap_min = min_gap;
-      string->chain_gap_max = max_gap;
+      aux_string->g_flags |= STRING_GFLAGS_CHAIN_PART;
+      aux_string->chain_gap_min = min_gap;
+      aux_string->chain_gap_max = max_gap;
 
-      prev_string->chained_to = string;
+      prev_string->chained_to = aux_string;
     }
   }
   else
@@ -576,7 +590,12 @@ int yr_parser_reduce_rule_declaration(
 
   while(!STRING_IS_NULL(string))
   {
-    if (!STRING_IS_REFERENCED(string))
+    // Only the heading fragment in a chain of strings (the one with
+    // chained_to == NULL) must be referenced. All other fragments
+    // are never marked as referenced.
+
+    if (!STRING_IS_REFERENCED(string) &&
+        string->chained_to == NULL)
     {
       yr_compiler_set_error_extra_info(compiler, string->identifier);
       compiler->last_result = ERROR_UNREFERENCED_STRING;

@@ -1,4 +1,4 @@
-    /*
+ /*
 Copyright (c) 2013. Victor M. Alvarez [plusvic@gmail.com].
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -300,58 +300,6 @@ int _yr_scan_fast_hex_re_exec(
   return -1;
 }
 
-void _yr_scan_confirm_matches(
-    int tidx,
-    YR_STRING* string,
-    size_t match_offset,
-    int32_t match_length)
-{
-  YR_MATCH* match;
-  YR_MATCH* next_match;
-
-  if (string->chained_to == NULL)
-    return;
-
-  match = string->chained_to->unconfirmed_matches[tidx].head;
-
-  while (match != NULL)
-  {
-    next_match = match->next;
-
-    if (match_offset >= match->offset + match->length)
-    {
-      if (match->prev != NULL)
-        match->prev->next = match->next;
-
-      if (match->next != NULL)
-        match->next->prev = match->prev;
-
-      if (match == string->chained_to->unconfirmed_matches[tidx].head)
-        string->chained_to->unconfirmed_matches[tidx].head = match->next;
-
-      if (match == string->chained_to->unconfirmed_matches[tidx].tail)
-        string->chained_to->unconfirmed_matches[tidx].tail = match->prev;
-
-      match->prev = string->chained_to->matches[tidx].tail;
-      match->next = NULL;
-      match->length = match_offset - match->offset + match_length;
-
-      if (string->chained_to->matches[tidx].head == NULL)
-        string->chained_to->matches[tidx].head = match;
-
-      if (string->chained_to->matches[tidx].tail != NULL)
-        string->chained_to->matches[tidx].tail->next = match;
-
-      string->chained_to->matches[tidx].tail = match;
-
-      _yr_scan_confirm_matches(
-          tidx, string->chained_to, match->offset, match->length);
-    }
-
-    match = next_match;
-  }
-}
-
 
 void _yr_scan_update_match_chain_length(
     int tidx,
@@ -389,9 +337,7 @@ void _yr_scan_add_match_to_list(
     YR_MATCH* match,
     YR_MATCHES* matches_list)
 {
-  YR_MATCH* insertion_point;
-
-  insertion_point = matches_list->tail;
+  YR_MATCH* insertion_point = matches_list->tail;
 
   while (insertion_point != NULL)
   {
@@ -442,9 +388,13 @@ void _yr_scan_remove_match_from_list(
 
   if (matches_list->tail == match)
     matches_list->tail = match->prev;
+
+  match->next = NULL;
+  match->prev = NULL;
 }
 
-void _yr_scan_handle_chained_matches(
+
+int _yr_scan_handle_chained_matches(
     YR_ARENA* matches_arena,
     YR_STRING* matching_string,
     uint8_t* match_data,
@@ -462,6 +412,7 @@ void _yr_scan_handle_chained_matches(
   int32_t full_chain_length;
 
   int add_match = FALSE;
+  int result;
 
   if (matching_string->chained_to == NULL)
   {
@@ -530,6 +481,8 @@ void _yr_scan_handle_chained_matches(
 
           match->length = match_offset - match->offset + match_length;
           match->data = match_data - match_offset + match->offset;
+          match->prev = NULL;
+          match->next = NULL;
 
           _yr_scan_add_match_to_list(
               match, &string->matches[tidx]);
@@ -540,24 +493,31 @@ void _yr_scan_handle_chained_matches(
     }
     else
     {
-      yr_arena_allocate_memory(
+      result = yr_arena_allocate_memory(
           matches_arena,
           sizeof(YR_MATCH),
           (void**) &new_match);
 
+      if (result != ERROR_SUCCESS)
+        return result;
+
       new_match->offset = match_offset;
       new_match->length = match_length;
       new_match->data = match_data;
+      new_match->prev = NULL;
+      new_match->next = NULL;
 
       _yr_scan_add_match_to_list(
           new_match,
           &matching_string->unconfirmed_matches[tidx]);
     }
   }
+
+  return ERROR_SUCCESS;
 }
 
 
-void _yr_scan_match_callback(
+int _yr_scan_match_callback(
     uint8_t* match_data,
     int32_t match_length,
     int flags,
@@ -569,6 +529,7 @@ void _yr_scan_match_callback(
   YR_MATCH* new_match;
 
   int character_size;
+  int result = ERROR_SUCCESS;
   int tidx = callback_args->tidx;
 
   size_t match_offset = match_data - callback_args->data;
@@ -596,28 +557,28 @@ void _yr_scan_match_callback(
       if (match_offset >= 2 &&
           *(match_data - 1) == 0 &&
           isalnum(*(match_data - 2)))
-        return;
+        return ERROR_SUCCESS;
 
       if (match_offset + match_length + 1 < callback_args->data_size &&
           *(match_data + match_length + 1) == 0 &&
           isalnum(*(match_data + match_length)))
-        return;
+        return ERROR_SUCCESS;
     }
     else
     {
       if (match_offset >= 1 &&
           isalnum(*(match_data - 1)))
-        return;
+        return ERROR_SUCCESS;
 
       if (match_offset + match_length < callback_args->data_size &&
           isalnum(*(match_data + match_length)))
-        return;
+        return ERROR_SUCCESS;
     }
   }
 
   if (STRING_IS_CHAIN_PART(string))
   {
-    _yr_scan_handle_chained_matches(
+    result = _yr_scan_handle_chained_matches(
         callback_args->matches_arena,
         string,
         match_data,
@@ -627,19 +588,26 @@ void _yr_scan_match_callback(
   }
   else
   {
-    yr_arena_allocate_memory(
+    result = yr_arena_allocate_memory(
         callback_args->matches_arena,
         sizeof(YR_MATCH),
         (void**) &new_match);
 
-    new_match->offset = match_offset;
-    new_match->length = match_length;
-    new_match->data = match_data;
+    if (result == ERROR_SUCCESS)
+    {
+      new_match->offset = match_offset;
+      new_match->length = match_length;
+      new_match->data = match_data;
+      new_match->prev = NULL;
+      new_match->next = NULL;
 
-    _yr_scan_add_match_to_list(
-        new_match,
-        &string->matches[tidx]);
+      _yr_scan_add_match_to_list(
+          new_match,
+          &string->matches[tidx]);
+    }
   }
+
+  return result;
 }
 
 
