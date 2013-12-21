@@ -442,10 +442,8 @@ int _yr_scan_handle_chained_matches(
         if (ending_offset + matching_string->chain_gap_max >= match_offset &&
             ending_offset + matching_string->chain_gap_min <= match_offset)
         {
-          _yr_scan_update_match_chain_length(
-              tidx, matching_string->chained_to, match, 1);
-
           add_match = TRUE;
+          break;
         }
       }
 
@@ -457,6 +455,16 @@ int _yr_scan_handle_chained_matches(
   {
     if (STRING_IS_CHAIN_TAIL(matching_string))
     {
+      match = matching_string->chained_to->unconfirmed_matches[tidx].head;
+
+      while (match != NULL)
+      {
+        _yr_scan_update_match_chain_length(
+            tidx, matching_string->chained_to, match, 1);
+
+        match = match->next;
+      }
+
       full_chain_length = 0;
       string = matching_string;
 
