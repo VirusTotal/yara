@@ -356,16 +356,27 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = { 64 0? 00 00 ?0 01 } condition: $a }',
             'rule test { strings: $a = { 64 01 [1-3] 60 01 } condition: $a }',
             'rule test { strings: $a = { 64 01 [1-3] (60|61) 01 } condition: $a }',
+            'rule test { strings: $a = { 4D 5A [-] 6A 2A [-] 58 C3} condition: $a }',
+            'rule test { strings: $a = { 4D 5A [300-] 6A 2A [-] 58 C3} condition: $a }'
+        ], PE32_FILE)
+
+        self.assertFalseRules([
+            'rule test { strings: $a = { 4D 5A [0-300] 6A 2A } condition: $a }'
         ], PE32_FILE)
 
         self.assertTrueRules([
-          'rule test { strings: $a = { 31 32 [..] 38 39 } condition: $a }',
-          'rule test { strings: $a = { 31 32 [..] 33 34 [..] 38 39 } condition: $a }',
+          'rule test { strings: $a = { 31 32 [-] 38 39 } condition: $a }',
+          'rule test { strings: $a = { 31 32 [-] 33 34 [-] 38 39 } condition: $a }',
+          'rule test { strings: $a = { 31 32 [1] 34 35 [2] 38 39 } condition: $a }',
+          'rule test { strings: $a = { 31 32 [1-] 34 35 [1-] 38 39 } condition: $a }',
+          'rule test { strings: $a = { 31 32 [0-3] 34 35 [1-] 38 39 } condition: $a }',
         ], '123456789')
 
         self.assertFalseRules([
-          'rule test { strings: $a = { 31 32 [..] 32 33 } condition: $a }',
-          'rule test { strings: $a = { 35 36 [..] 31 32 } condition: $a }',
+          'rule test { strings: $a = { 31 32 [-] 32 33 } condition: $a }',
+          'rule test { strings: $a = { 35 36 [-] 31 32 } condition: $a }',
+          'rule test { strings: $a = { 31 32 [2-] 34 35 } condition: $a }',
+          'rule test { strings: $a = { 31 32 [0-3] 37 38 } condition: $a }',
         ], '123456789')
 
         rules = yara.compile(source='rule test { strings: $a = { 61 [0-3] (62|63) } condition: $a }')
