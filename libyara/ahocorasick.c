@@ -649,11 +649,21 @@ void _yr_ac_print_automaton_state(
     }
     else if (STRING_IS_REGEXP(match->string))
     {
-      printf("/%s/", match->string->string);
+      printf("/");
+
+      for (i = 0; i < min(match->string->length, 10); i++)
+        printf("%c", match->string->string[i]);
+
+      printf("/");
     }
     else
     {
-      printf("\"%s\"", match->string->string);
+      printf("\"");
+
+      for (i = 0; i < min(match->string->length, 10); i++)
+        printf("%c", match->string->string[i]);
+
+      printf("\"");
     }
 
     match = match->next;
