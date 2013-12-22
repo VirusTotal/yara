@@ -394,7 +394,7 @@ void _yr_scan_remove_match_from_list(
 }
 
 
-int _yr_scan_handle_chained_matches(
+int _yr_scan_verify_chained_string_match(
     YR_ARENA* matches_arena,
     YR_STRING* matching_string,
     uint8_t* match_data,
@@ -592,7 +592,7 @@ int _yr_scan_match_callback(
 
   if (STRING_IS_CHAIN_PART(string))
   {
-    result = _yr_scan_handle_chained_matches(
+    result = _yr_scan_verify_chained_string_match(
         callback_args->matches_arena,
         string,
         match_data,
