@@ -459,8 +459,14 @@ int _yr_scan_handle_chained_matches(
 
       while (match != NULL)
       {
-        _yr_scan_update_match_chain_length(
-            tidx, matching_string->chained_to, match, 1);
+        ending_offset = match->offset + match->length;
+
+        if (ending_offset + matching_string->chain_gap_max >= match_offset &&
+            ending_offset + matching_string->chain_gap_min <= match_offset)
+        {
+          _yr_scan_update_match_chain_length(
+              tidx, matching_string->chained_to, match, 1);
+        }
 
         match = match->next;
       }
