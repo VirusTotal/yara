@@ -59,14 +59,14 @@ typedef struct _ARENA_FILE_HEADER
 // Creates a new arena page of a given size
 //
 // Args:
-//    int size  - Size of the page
+//    size_t size  - Size of the page
 //
 // Returns:
 //    A pointer to the newly created YR_ARENA_PAGE structure
 //
 
 YR_ARENA_PAGE* _yr_arena_new_page(
-    int size)
+    size_t size)
 {
   YR_ARENA_PAGE* new_page;
 
@@ -205,7 +205,7 @@ int _yr_arena_make_relocatable(
 // Creates a new arena.
 //
 // Args:
-//    int initial_size  - Initial size
+//    size_t initial_size  - Initial size
 //    int flags         - Flags
 //    YR_ARENA** arena     - Address where a pointer to the new arena will be
 //                        written to.
@@ -215,7 +215,7 @@ int _yr_arena_make_relocatable(
 //
 
 int yr_arena_create(
-    int initial_size,
+    size_t initial_size,
     int flags,
     YR_ARENA** arena)
 {
@@ -490,7 +490,7 @@ int yr_arena_coalesce(
 //
 // Args:
 //    YR_ARENA* arena - Pointer to the arena.
-//    int32_t size - Size of the region to be allocated.
+//    size_t size - Size of the region to be allocated.
 //    void** allocated_memory - Address of a pointer to newly allocated
 //                              region.
 // Returns:
@@ -499,10 +499,10 @@ int yr_arena_coalesce(
 
 int yr_arena_allocate_memory(
     YR_ARENA* arena,
-    int32_t size,
+    size_t size,
     void** allocated_memory)
 {
-  int32_t new_page_size;
+  size_t new_page_size;
   void* new_page_address;
   YR_ARENA_PAGE* new_page;
 
@@ -578,7 +578,7 @@ int yr_arena_allocate_memory(
 //
 // Args:
 //    YR_ARENA* arena - Pointer to the arena.
-//    int32_t size - Size of the region to be allocated.
+//    size_t size - Size of the region to be allocated.
 //    void** allocated_memory - Address of a pointer to newly allocated
 //                              region.
 //    ...          - Variable number of offsets relative to beginning of
@@ -590,7 +590,7 @@ int yr_arena_allocate_memory(
 
 int yr_arena_allocate_struct(
     YR_ARENA* arena,
-    int32_t size,
+    size_t size,
     void** allocated_memory,
     ...)
 {
@@ -653,7 +653,7 @@ int yr_arena_make_relocatable(
 // Args:
 //    YR_ARENA* arena        - Pointer to the arena.
 //    void* data          - Pointer to data to be written.
-//    int32_t size        - Size of data.
+//    size_t size        - Size of data.
 //    void** written_data - Address where a pointer to the written data will
 //                          be returned.
 //
@@ -664,7 +664,7 @@ int yr_arena_make_relocatable(
 int yr_arena_write_data(
     YR_ARENA* arena,
     void* data,
-    int32_t size,
+    size_t size,
     void** written_data)
 {
   void* output;

@@ -274,8 +274,8 @@ typedef struct _YR_ARENA_PAGE
   uint8_t* new_address;
   uint8_t* address;
 
-  int32_t size;
-  int32_t used;
+  size_t size;
+  size_t used;
 
   YR_RELOC* reloc_list_head;
   YR_RELOC* reloc_list_tail;

@@ -27,7 +27,7 @@ limitations under the License.
 
 
 int yr_arena_create(
-    int initial_size,
+    size_t initial_size,
     int flags,
     YR_ARENA** arena);
 
@@ -52,13 +52,13 @@ int yr_arena_coalesce(
 
 int yr_arena_allocate_memory(
     YR_ARENA* arena,
-    int32_t size,
+    size_t size,
     void** allocated_memory);
 
 
 int yr_arena_allocate_struct(
     YR_ARENA* arena,
-    int32_t size,
+    size_t size,
     void** allocated_memory,
     ...);
 
@@ -72,7 +72,7 @@ int yr_arena_make_relocatable(
 int yr_arena_write_data(
     YR_ARENA* arena,
     void* data,
-    int32_t size,
+    size_t size,
     void** written_data);
 
 
