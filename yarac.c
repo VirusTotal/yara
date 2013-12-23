@@ -165,7 +165,7 @@ int main(
     int argc,
     char const* argv[])
 {
-  int i, errors;
+  int i, result, errors;
 
   YR_COMPILER* compiler;
   YR_RULES* rules;
@@ -221,9 +221,21 @@ int main(
     }
   }
 
-  yr_compiler_get_rules(compiler, &rules);
+  result = yr_compiler_get_rules(compiler, &rules);
 
-  yr_rules_save(rules, argv[argc - 1]);
+  if (result != ERROR_SUCCESS)
+  {
+    fprintf(stderr, "error: %d\n", result);
+    return EXIT_FAILURE;
+  }
+
+  result = yr_rules_save(rules, argv[argc - 1]);
+
+  if (result != ERROR_SUCCESS)
+  {
+    fprintf(stderr, "error: %d\n", result);
+    return EXIT_FAILURE;
+  }
 
   yr_rules_destroy(rules);
   yr_compiler_destroy(compiler);
