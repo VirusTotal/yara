@@ -1,4 +1,4 @@
-AM_CFLAGS=-g -O4 -Wall -I$(srcdir)/libyara
+AM_CFLAGS=-O4 -Wall -I$(srcdir)/libyara
 
 # Build the library in the hand subdirectory first.
 SUBDIRS = libyara
