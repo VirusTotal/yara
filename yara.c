@@ -72,6 +72,10 @@ limitations under the License.
 #define MAX_PATH 255
 #endif
 
+#ifndef min
+#define min(x, y)  ((x < y) ? (x) : (y))
+#endif
+
 #ifdef _MSC_VER
 #define snprintf _snprintf
 #define strdup _strdup
@@ -356,8 +360,11 @@ void print_hex_string(
 {
   int i;
 
-  for (i = 0; i < length; i++)
+  for (i = 0; i < min(32, length); i++)
     printf("%02X ", (uint8_t) data[i]);
+
+  if (length > 32)
+    printf("...");
 
   printf("\n");
 }
