@@ -69,11 +69,20 @@ can use pre-compiled rules without having to parse them again, or you can share
 rules with someone else without revealing the actual source code (but beware
 that each time you do that God kills a kitten).
 
-YARA 2.0 is backward compatible with versions 1.X in terms of rules' syntax and
-behavior, and the yara-python module hasn't changed its interface. But if you're
-a developer using the C API provided by libyara, you will need to make some
-changes to your application in order to adapt it to YARA 2.0. But don't worry,
-it won't be too much work and the benefits worth the effort.
+The drawsbacks for this rewrite are:
+
+* You can find some incompatibilities in regular expressions. YARA 2.0 replaced
+external libraries like PCRE or RE2 with its own regular expression engine. Most
+regular expression features are present in the new implementation, but a few
+ones like POSIX character classes and backreferences are missing. If you were
+using RE2 instead of PCRE with previous versions of YARA you won't miss
+backreferences, because RE2 don't support them neither.
+
+* The C API provided by libyara has changed. If you're a developer using this
+API you'll need to make some changes to your application in order to adapt it
+to YARA 2.0. But don't worry, it won't be too much work and the benefits worth
+the effort. Users of yara-python are not affected, the Python interface remains
+the same.
 
 
 ## Who's using YARA
