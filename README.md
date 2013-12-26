@@ -85,12 +85,13 @@ it won't be too much work and the benefits worth the effort.
 * [FireEye, Inc.](http://www.fireeye.com)
 * [Fidelis XPS](http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
 * [RSA ECAT](http://www.emc.com/security/rsa-ecat.htm)
+* [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
 
 Are you using it too? Tell me!
 
 ## Releases
 
-### 2.0.0 (24/12/2013)
+### 2.0.0 (26/12/2013)
 * Faster matching algorithm
 * Command-line scanner is now multi-threaded
 * Compiled rules can be saved to and loaded from a file
