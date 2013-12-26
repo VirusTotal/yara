@@ -27,7 +27,7 @@ autogen() {
   if test x$LIBTOOLIZE = x; then
     LIBTOOLIZE=`locate_binary libtoolize glibtoolize`
     if test x$LIBTOOLIZE = x; then
-      die "Did not find a supported aclocal"
+      die "Did not find a supported libtoolize"
     fi
   fi
   $LIBTOOLIZE --force --quiet || exit 1
