@@ -159,14 +159,24 @@ MUTEX queue_mutex;
 MUTEX output_mutex;
 
 
-void file_queue_init()
+int file_queue_init()
 {
+  int result;
+
   queue_tail = 0;
   queue_head = 0;
 
-  mutex_init(&queue_mutex);
-  semaphore_init(&used_slots, 0);
-  semaphore_init(&unused_slots, MAX_QUEUED_FILES);
+  result = mutex_init(&queue_mutex);
+
+  if (result != 0)
+    return result;
+
+  result = semaphore_init(&used_slots, 0);
+
+  if (result != 0)
+    return result;
+
+ return semaphore_init(&unused_slots, MAX_QUEUED_FILES);
 }
 
 
@@ -880,8 +890,8 @@ int main(
 
   result = yr_rules_load(argv[optind], &rules);
 
-  if (result == ERROR_UNSUPPORTED_FILE_VERSION ||
-      result == ERROR_CORRUPT_FILE)
+  if (result != ERROR_SUCCESS &&
+      result != ERROR_INVALID_FILE)
   {
     print_scanner_error(result);
     yr_finalize();
@@ -1016,7 +1026,8 @@ int main(
   }
   else if (is_directory(argv[argc - 1]))
   {
-    file_queue_init();
+    if (file_queue_init() != 0)
+      print_scanner_error(ERROR_INTERNAL_FATAL_ERROR);
 
     for (i = 0; i < threads; i++)
     {

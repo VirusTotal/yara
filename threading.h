@@ -43,7 +43,7 @@ typedef void *(*THREAD_START_ROUTINE) (void *);
 
 #endif
 
-void mutex_init(
+int mutex_init(
     MUTEX* mutex);
 
 void mutex_destroy(
@@ -55,8 +55,8 @@ void mutex_lock(
 void mutex_unlock(
     MUTEX* mutex);
 
-void semaphore_init(
-    SEMAPHORE* semaphore, 
+int semaphore_init(
+    SEMAPHORE* semaphore,
     int value);
 
 void semaphore_destroy(
@@ -69,7 +69,7 @@ void semaphore_release(
     SEMAPHORE* semaphore);
 
 int create_thread(
-    THREAD* thread, 
+    THREAD* thread,
     THREAD_START_ROUTINE start_routine,
     void* param);
 

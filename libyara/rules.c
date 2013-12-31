@@ -1358,8 +1358,14 @@ int yr_rules_load(
 
   #if WIN32
   new_rules->mutex = CreateMutex(NULL, FALSE, NULL);
+
+  if (new_rules->mutex == NULL)
+    return ERROR_INTERNAL_FATAL_ERROR;
   #else
-  pthread_mutex_init(&new_rules->mutex, NULL);
+  result = pthread_mutex_init(&new_rules->mutex, NULL);
+
+  if (result != 0)
+    return ERROR_INTERNAL_FATAL_ERROR;
   #endif
 
   rule = new_rules->rules_list_head;
