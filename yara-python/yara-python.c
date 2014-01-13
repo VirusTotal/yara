@@ -54,6 +54,7 @@ typedef int Py_ssize_t;
 static PyObject *YaraError = NULL;
 static PyObject *YaraSyntaxError = NULL;
 static PyObject *YaraTimeoutError = NULL;
+static PyObject *YaraWarningError = NULL;
 
 
 #define YARA_DOC "\
@@ -956,6 +957,68 @@ static PyObject * Rules_getattro(
 }
 
 
+void raise_exception_on_error(
+    int error_level,
+    const char* file_name,
+    int line_number,
+    const char* message)
+{
+  if (error_level == YARA_ERROR_LEVEL_ERROR)
+  {
+    if (file_name != NULL)
+      PyErr_Format(
+          YaraSyntaxError,
+          "%s(%d): %s",
+          file_name,
+          line_number,
+          message);
+    else
+      PyErr_Format(
+          YaraSyntaxError,
+          "%s",
+          message);
+  }
+}
+
+
+void raise_exception_on_error_or_warning(
+    int error_level,
+    const char* file_name,
+    int line_number,
+    const char* message)
+{
+  if (error_level == YARA_ERROR_LEVEL_ERROR)
+  {
+    if (file_name != NULL)
+      PyErr_Format(
+          YaraSyntaxError,
+          "%s(%d): %s",
+          file_name,
+          line_number,
+          message);
+    else
+      PyErr_Format(
+          YaraSyntaxError,
+          "%s",
+          message);
+  }
+  else
+  {
+    if (file_name != NULL)
+      PyErr_Format(
+          YaraWarningError,
+          "%s(%d): %s",
+          file_name,
+          line_number,
+          message);
+    else
+      PyErr_Format(
+          YaraWarningError,
+          "%s",
+          message);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 static PyObject * yara_compile(
@@ -964,8 +1027,8 @@ static PyObject * yara_compile(
     PyObject *keywords)
 {
   static char *kwlist[] = {
-    "filepath", "source", "file", "filepaths",
-    "sources", "includes", "externals", NULL};
+    "filepath", "source", "file", "filepaths", "sources",
+    "includes", "externals", "error_on_warning", NULL};
 
   YR_COMPILER* compiler;
   YR_RULES* yara_rules;
@@ -973,8 +1036,6 @@ static PyObject * yara_compile(
 
   int fd;
   int error = 0;
-  int error_line;
-  char error_message[256];
 
   Rules* rules;
   PyObject *result = NULL;
@@ -984,6 +1045,7 @@ static PyObject * yara_compile(
   PyObject *filepaths_dict = NULL;
   PyObject *includes = NULL;
   PyObject *externals = NULL;
+  PyObject *error_on_warning = NULL;
 
   PyObject *key, *value;
 
@@ -996,7 +1058,7 @@ static PyObject * yara_compile(
   if (PyArg_ParseTupleAndKeywords(
         args,
         keywords,
-        "|ssOOOOO",
+        "|ssOOOOOO",
         kwlist,
         &filepath,
         &source,
@@ -1004,12 +1066,31 @@ static PyObject * yara_compile(
         &filepaths_dict,
         &sources_dict,
         &includes,
-        &externals))
+        &externals,
+        &error_on_warning))
   {
     error = yr_compiler_create(&compiler);
 
     if (error != ERROR_SUCCESS)
       return handle_error(error, NULL);
+
+    compiler->error_report_function = raise_exception_on_error;
+
+    if (error_on_warning != NULL)
+    {
+      if (PyBool_Check(error_on_warning))
+      {
+        if (PyObject_IsTrue(error_on_warning) == 1)
+          compiler->error_report_function = raise_exception_on_error_or_warning;
+      }
+      else
+      {
+        yr_compiler_destroy(compiler);
+        return PyErr_Format(
+            PyExc_TypeError,
+            "'error_on_warning' param must be of boolean type");
+      }
+    }
 
     if (includes != NULL)
     {
@@ -1054,11 +1135,9 @@ static PyObject * yara_compile(
 
       if (fh != NULL)
       {
-        Py_BEGIN_ALLOW_THREADS
         yr_compiler_push_file_name(compiler, filepath);
         error = yr_compiler_add_file(compiler, fh, NULL);
         fclose(fh);
-        Py_END_ALLOW_THREADS
       }
       else
       {
@@ -1067,19 +1146,14 @@ static PyObject * yara_compile(
     }
     else if (source != NULL)
     {
-      Py_BEGIN_ALLOW_THREADS
       error = yr_compiler_add_string(compiler, source, NULL);
-      Py_END_ALLOW_THREADS
     }
     else if (file != NULL)
     {
       fd = dup(PyObject_AsFileDescriptor(file));
-
-      Py_BEGIN_ALLOW_THREADS
       fh = fdopen(fd, "r");
       error = yr_compiler_add_file(compiler, fh, NULL);
       fclose(fh);
-      Py_END_ALLOW_THREADS
     }
     else if (sources_dict != NULL)
     {
@@ -1092,9 +1166,7 @@ static PyObject * yara_compile(
 
           if (source != NULL && ns != NULL)
           {
-            Py_BEGIN_ALLOW_THREADS
             error = yr_compiler_add_string(compiler, source, ns);
-            Py_END_ALLOW_THREADS
 
             if (error > 0)
               break;
@@ -1131,11 +1203,9 @@ static PyObject * yara_compile(
 
             if (fh != NULL)
             {
-              Py_BEGIN_ALLOW_THREADS
               yr_compiler_push_file_name(compiler, filepath);
               error = yr_compiler_add_file(compiler, fh, ns);
               fclose(fh);
-              Py_END_ALLOW_THREADS
 
               if (error > 0)
                 break;
@@ -1172,52 +1242,30 @@ static PyObject * yara_compile(
 
     if (PyErr_Occurred() == NULL)
     {
-      if (error > 0)
+      rules = PyObject_NEW(Rules, &Rules_Type);
+
+      if (rules != NULL)
       {
-        error_line = compiler->last_error_line;
+        Py_BEGIN_ALLOW_THREADS
+        error = yr_compiler_get_rules(compiler, &yara_rules);
+        Py_END_ALLOW_THREADS
 
-        yr_compiler_get_error_message(
-            compiler,
-            error_message,
-            sizeof(error_message));
-
-        result = PyErr_Format(
-            YaraSyntaxError,
-            "line %d: %s",
-            error_line,
-            error_message);
-      }
-      else
-      {
-        rules = PyObject_NEW(Rules, &Rules_Type);
-
-        if (rules != NULL)
+        if (error == ERROR_SUCCESS)
         {
-          Py_BEGIN_ALLOW_THREADS
-          error = yr_compiler_get_rules(compiler, &yara_rules);
-          Py_END_ALLOW_THREADS
-
-          if (error == ERROR_SUCCESS)
-          {
-            rules->rules = yara_rules;
-            result = (PyObject*) rules;
-          }
-          else
-          {
-            printf("yr_compiler_get_rules: %d\n", error);
-            result = handle_error(error, NULL);
-          }
+          rules->rules = yara_rules;
+          result = (PyObject*) rules;
         }
         else
         {
-          printf("PyObject_NEW: ERROR_INSUFICIENT_MEMORY\n");
-          result = handle_error(ERROR_INSUFICIENT_MEMORY, NULL);
+          printf("yr_compiler_get_rules: %d\n", error);
+          result = handle_error(error, NULL);
         }
       }
-    }
-    else
-    {
-      printf("PyErr_Occurred() != NULL\n");
+      else
+      {
+        printf("PyObject_NEW: ERROR_INSUFICIENT_MEMORY\n");
+        result = handle_error(ERROR_INSUFICIENT_MEMORY, NULL);
+      }
     }
 
     yr_compiler_destroy(compiler);
@@ -1313,10 +1361,12 @@ MOD_INIT(yara)
   YaraError = PyErr_NewException("yara.Error", PyExc_Exception, NULL);
   YaraSyntaxError = PyErr_NewException("yara.SyntaxError", YaraError, NULL);
   YaraTimeoutError = PyErr_NewException("yara.TimeoutError", YaraError, NULL);
+  YaraWarningError = PyErr_NewException("yara.WarningError", YaraError, NULL);
 #else
   YaraError = Py_BuildValue("s", "yara.Error");
   YaraSyntaxError = Py_BuildValue("s", "yara.SyntaxError");
   YaraTimeoutError = Py_BuildValue("s", "yara.TimeoutError");
+  YaraWarningError = Py_BuildValue("s", "yara.WarningError");
 #endif
 
   if (PyType_Ready(&Rules_Type) < 0)
@@ -1328,6 +1378,7 @@ MOD_INIT(yara)
   PyModule_AddObject(m, "Error", YaraError);
   PyModule_AddObject(m, "SyntaxError", YaraSyntaxError);
   PyModule_AddObject(m, "TimeoutError", YaraTimeoutError);
+  PyModule_AddObject(m, "WarningError", YaraWarningError);
 
   yr_initialize();
 
