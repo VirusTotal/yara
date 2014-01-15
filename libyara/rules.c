@@ -265,6 +265,10 @@ int _yr_scan_fast_hex_re_exec(
                  *(ip + 12) == *next_input))
             {
               assert(sp < MAX_FAST_HEX_RE_STACK);
+
+              if (sp < MAX_FAST_HEX_RE_STACK)
+                return -2;
+
               code_stack[sp] = ip + 11;
               input_stack[sp] = next_input;
               matches_stack[sp] = matches + i;
@@ -669,8 +673,7 @@ int _yr_scan_verify_re_match(
         NULL);
   }
 
-  if (STRING_IS_WIDE(ac_match->string) &&
-      forward_matches < 0)
+  if (STRING_IS_WIDE(ac_match->string) && forward_matches == -1)
   {
     flags |= RE_FLAGS_WIDE;
     forward_matches = exec(
@@ -682,7 +685,10 @@ int _yr_scan_verify_re_match(
         NULL);
   }
 
-  if (forward_matches < 0)
+  if (forward_matches == -2)
+    return ERROR_INTERNAL_FATAL_ERROR;
+
+  if (forward_matches == -1)
     return ERROR_SUCCESS;
 
   if (forward_matches == 0 && ac_match->backward_code == NULL)
