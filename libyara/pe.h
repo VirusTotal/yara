@@ -114,6 +114,7 @@ typedef struct _IMAGE_FILE_HEADER {
 
 
 #define IMAGE_FILE_MACHINE_I386              0x014c  // Intel 386.
+#define IMAGE_FILE_MACHINE_X64               0x8664  // Intel x64.
 
 //
 // Directory format.

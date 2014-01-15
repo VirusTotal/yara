@@ -67,7 +67,8 @@ PIMAGE_NT_HEADERS yr_get_pe_header(
   headers_size += pe_header->FileHeader.SizeOfOptionalHeader;
 
   if (pe_header->Signature == IMAGE_NT_SIGNATURE &&
-      pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 &&
+      (pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_X64) &&
       buffer_length > headers_size)
   {
     return pe_header;
@@ -147,8 +148,16 @@ uint64_t yr_elf_rva_to_offset_32(
     return 0;
 
   // check to prevent integer wraps
-  if(ULONG_MAX - elf_header->sh_entry_count <
-     sizeof(elf32_section_header_t) * elf_header->sh_entry_count)
+
+  if (ULONG_MAX - elf_header->sh_entry_count <
+      sizeof(elf32_section_header_t) * elf_header->sh_entry_count)
+    return 0;
+
+  // check that 'sh_offset' doesn't wrap when added to the
+  // size of entries.
+
+  if (ULONG_MAX - elf_header->sh_offset <
+      sizeof(elf32_section_header_t) * elf_header->sh_entry_count)
     return 0;
 
   if (elf_header->sh_offset + \
@@ -167,6 +176,7 @@ uint64_t yr_elf_rva_to_offset_32(
         rva <  section->addr + section->size)
     {
       // prevent integer wrapping with the return value
+
       if (ULONG_MAX - section->offset < (rva - section->addr))
         return 0;
       else
@@ -190,6 +200,12 @@ uint64_t yr_elf_rva_to_offset_64(
   elf64_section_header_t* section;
 
   if (elf_header->sh_offset == 0 || elf_header->sh_entry_count == 0)
+    return 0;
+
+  // check that 'sh_offset' doesn't wrap when added to the
+  // size of entries.
+  if(ULONG_MAX - elf_header->sh_offset <
+     sizeof(elf64_section_header_t) * elf_header->sh_entry_count)
     return 0;
 
   if (elf_header->sh_offset + \
