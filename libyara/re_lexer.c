@@ -47,6 +47,7 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
+typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -357,7 +358,7 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (size_t) (yy_cp - yy_bp); \
+	yyleng = (yy_size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
@@ -521,7 +522,7 @@ uint8_t read_escaped_char(yyscan_t yyscanner);
 
 #define YY_NO_UNISTD_H 1
 
-#line 525 "re_lexer.c"
+#line 526 "re_lexer.c"
 
 #define INITIAL 0
 #define char_class 1
@@ -758,7 +759,7 @@ YY_DECL
 #line 61 "re_lexer.l"
 
 
-#line 762 "re_lexer.c"
+#line 763 "re_lexer.c"
 
     yylval = yylval_param;
 
@@ -880,7 +881,7 @@ YY_RULE_SETUP
     yyterminate();
   }
 
-  if (hi_bound < lo_bound)
+  if (hi_bound < lo_bound || hi_bound < 0 || lo_bound < 0)
   {
     yyerror(yyscanner, lex_env, "bad repeat interval");
     yyterminate();
@@ -1234,7 +1235,7 @@ YY_RULE_SETUP
 #line 376 "re_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1238 "re_lexer.c"
+#line 1239 "re_lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{

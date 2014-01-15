@@ -82,7 +82,7 @@ hex_digit     [0-9a-fA-F]
     yyterminate();
   }
 
-  if (hi_bound < lo_bound)
+  if (hi_bound < lo_bound || hi_bound < 0 || lo_bound < 0)
   {
     yyerror(yyscanner, lex_env, "bad repeat interval");
     yyterminate();

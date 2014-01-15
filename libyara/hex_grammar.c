@@ -462,7 +462,7 @@ static const yytype_int8 yyrhs[] =
 static const yytype_uint16 yyrline[] =
 {
        0,    93,    93,   101,   105,   116,   121,   120,   129,   137,
-     164,   201,   226,   253,   257,   269,   277
+     172,   217,   250,   277,   281,   293,   301
 };
 #endif
 
@@ -1471,6 +1471,14 @@ yyreduce:
     {
           RE_NODE* re_any;
 
+          if ((yyvsp[(1) - (1)].integer) < 0)
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup("invalid negative jump length");
+            YYABORT;
+          }
+
           if (lex_env->inside_or && (yyvsp[(1) - (1)].integer) > STRING_CHAINING_THRESHOLD)
           {
             RE* re = yyget_extra(yyscanner);
@@ -1497,7 +1505,7 @@ yyreduce:
     break;
 
   case 10:
-#line 165 "hex_grammar.y"
+#line 173 "hex_grammar.y"
     {
           RE_NODE* re_any;
 
@@ -1512,6 +1520,14 @@ yyreduce:
                 STR(STRING_CHAINING_THRESHOLD)
                 " now allowed inside alternation (|)");
 
+            YYABORT;
+          }
+
+          if ((yyvsp[(1) - (3)].integer) < 0 || (yyvsp[(3) - (3)].integer) < 0)
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup("invalid negative jump length");
             YYABORT;
           }
 
@@ -1537,7 +1553,7 @@ yyreduce:
     break;
 
   case 11:
-#line 202 "hex_grammar.y"
+#line 218 "hex_grammar.y"
     {
           RE_NODE* re_any;
 
@@ -1548,6 +1564,14 @@ yyreduce:
             re->error_message = yr_strdup(
                 "unbounded jumps not allowed inside alternation (|)");
 
+            YYABORT;
+          }
+
+          if ((yyvsp[(1) - (2)].integer) < 0)
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup("invalid negative jump length");
             YYABORT;
           }
 
@@ -1565,7 +1589,7 @@ yyreduce:
     break;
 
   case 12:
-#line 227 "hex_grammar.y"
+#line 251 "hex_grammar.y"
     {
           RE_NODE* re_any;
 
@@ -1592,14 +1616,14 @@ yyreduce:
     break;
 
   case 13:
-#line 254 "hex_grammar.y"
+#line 278 "hex_grammar.y"
     {
                   (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
                }
     break;
 
   case 14:
-#line 258 "hex_grammar.y"
+#line 282 "hex_grammar.y"
     {
                   mark_as_not_fast_hex_regexp();
 
@@ -1612,7 +1636,7 @@ yyreduce:
     break;
 
   case 15:
-#line 270 "hex_grammar.y"
+#line 294 "hex_grammar.y"
     {
           (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
@@ -1623,7 +1647,7 @@ yyreduce:
     break;
 
   case 16:
-#line 278 "hex_grammar.y"
+#line 302 "hex_grammar.y"
     {
           uint8_t mask = (yyvsp[(1) - (1)].integer) >> 8;
 
@@ -1647,7 +1671,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1651 "hex_grammar.c"
+#line 1675 "hex_grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1861,7 +1885,7 @@ yyreturn:
 }
 
 
-#line 299 "hex_grammar.y"
+#line 323 "hex_grammar.y"
 
 
 

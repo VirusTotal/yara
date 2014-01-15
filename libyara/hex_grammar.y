@@ -138,6 +138,14 @@ range : _NUMBER_
         {
           RE_NODE* re_any;
 
+          if ($1 < 0)
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup("invalid negative jump length");
+            YYABORT;
+          }
+
           if (lex_env->inside_or && $1 > STRING_CHAINING_THRESHOLD)
           {
             RE* re = yyget_extra(yyscanner);
@@ -179,6 +187,14 @@ range : _NUMBER_
             YYABORT;
           }
 
+          if ($1 < 0 || $3 < 0)
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup("invalid negative jump length");
+            YYABORT;
+          }
+
           if ($1 > $3)
           {
             RE* re = yyget_extra(yyscanner);
@@ -209,6 +225,14 @@ range : _NUMBER_
             re->error_message = yr_strdup(
                 "unbounded jumps not allowed inside alternation (|)");
 
+            YYABORT;
+          }
+
+          if ($1 < 0)
+          {
+            RE* re = yyget_extra(yyscanner);
+            re->error_code = ERROR_INVALID_HEX_STRING;
+            re->error_message = yr_strdup("invalid negative jump length");
             YYABORT;
           }
 
