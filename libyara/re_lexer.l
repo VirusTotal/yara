@@ -18,6 +18,8 @@ limitations under the License.
 
 %{
 
+#include <assert.h>
+
 #include "yara.h"
 #include "atoms.h"
 #include "mem.h"
@@ -38,6 +40,7 @@ limitations under the License.
 #endif
 
 
+uint8_t escaped_char_value(char* text);
 uint8_t read_escaped_char(yyscan_t yyscanner);
 
 %}
@@ -45,6 +48,7 @@ uint8_t read_escaped_char(yyscan_t yyscanner);
 %option reentrant bison-bridge
 %option noyywrap
 %option nounistd
+%option nounput
 %option yylineno
 %option prefix="re_yy"
 
@@ -229,7 +233,8 @@ hex_digit     [0-9a-fA-F]
 }
 
 
-<char_class>[^\\]\-[^]] {
+
+<char_class>(\\x{hex_digit}{2}|\\.|[^\\])\-[^]] {
 
   // A range inside a character class.
   //  [abc0-9]
@@ -239,6 +244,16 @@ hex_digit     [0-9a-fA-F]
 
   uint8_t start = yytext[0];
   uint8_t end = yytext[2];
+
+  if (start == '\\')
+  {
+    start = escaped_char_value(yytext);
+
+    if (yytext[1] == 'x')
+      end = yytext[5];
+    else
+      end = yytext[3];
+  }
 
   if (end == '\\')
     end = read_escaped_char(yyscanner);
@@ -253,12 +268,6 @@ hex_digit     [0-9a-fA-F]
   {
     LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
   }
-}
-
-
-<char_class>\\] {
-
-  LEX_ENV->class_vector[']' / 8] |= 1 << ']' % 8;
 }
 
 
@@ -332,7 +341,7 @@ hex_digit     [0-9a-fA-F]
 <char_class>\\ {
 
   uint8_t c = read_escaped_char(yyscanner);
-  unput(c);
+  LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
 }
 
 
@@ -375,17 +384,18 @@ hex_digit     [0-9a-fA-F]
 
 %%
 
-uint8_t read_escaped_char(yyscan_t yyscanner)
+uint8_t escaped_char_value(char* text)
 {
-  int result;
   char hex[3];
-  int c = input(yyscanner);
+  int result;
 
-  switch(c)
+  assert(text[0] == '\\');
+
+  switch(text[1])
   {
   case 'x':
-    hex[0] = input(yyscanner);
-    hex[1] = input(yyscanner);
+    hex[0] = text[2];
+    hex[1] = text[3];
     hex[2] = '\0';
     sscanf(hex, "%x", &result);
     break;
@@ -411,10 +421,27 @@ uint8_t read_escaped_char(yyscan_t yyscanner)
     break;
 
   default:
-    result = c;
+    result = text[1];
   }
 
   return result;
+}
+
+
+uint8_t read_escaped_char(yyscan_t yyscanner)
+{
+  char text[4];
+
+  text[0] = '\\';
+  text[1] = input(yyscanner);
+
+  if (text[1] == 'x')
+  {
+    text[2] = input(yyscanner);
+    text[3] = input(yyscanner);
+  }
+
+  return escaped_char_value(text);
 }
 
 
