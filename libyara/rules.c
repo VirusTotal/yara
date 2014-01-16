@@ -266,7 +266,7 @@ int _yr_scan_fast_hex_re_exec(
             {
               assert(sp < MAX_FAST_HEX_RE_STACK);
 
-              if (sp < MAX_FAST_HEX_RE_STACK)
+              if (sp >= MAX_FAST_HEX_RE_STACK)
                 return -2;
 
               code_stack[sp] = ip + 11;
