@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 
-#ifndef _THREADING_H
-#define _THREADING_H
+#ifndef YR_THREADING_H
+#define YR_THREADING_H
 
 #ifdef WIN32
 #include <windows.h>

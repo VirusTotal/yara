@@ -46,3 +46,6 @@ int yr_filemap_map(
 
 void yr_filemap_unmap(
     MAPPED_FILE* pmapped_file);
+
+#endif
+
