@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 
-#ifndef _ATOMS_H
-#define _ATOMS_H
+#ifndef YR_ATOMS_H
+#define YR_ATOMS_H
 
 #include "re.h"
 #include "yara.h"

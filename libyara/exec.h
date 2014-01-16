@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _EXEC_H
-#define _EXEC_H
+#ifndef YR_EXEC_H
+#define YR_EXEC_H
 
 #include "yara.h"
 

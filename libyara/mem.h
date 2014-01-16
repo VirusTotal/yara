@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _MEM_H
-#define _MEM_H
+#ifndef YR_MEM_H
+#define YR_MEM_H
 
 #include <stdio.h>
 

@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _COMPILER_H
-#define _COMPILER_H
+#ifndef YR_COMPILER_H
+#define YR_COMPILER_H
 
 #include <stdio.h>
 

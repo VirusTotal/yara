@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _RE_H
-#define _RE_H
+#ifndef YR_RE_H
+#define YR_RE_H
 
 #include "yara.h"
 #include "sizedstr.h"

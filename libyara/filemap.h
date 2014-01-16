@@ -14,6 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#ifndef YR_FILEMAP_H
+#define YR_FILEMAP_H
+
 #ifdef WIN32
 #include <windows.h>
 #define FILE_DESCRIPTOR         HANDLE

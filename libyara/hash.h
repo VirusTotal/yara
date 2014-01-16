@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _HASH_H
-#define _HASH_H
+#ifndef YR_HASH_H
+#define YR_HASH_H
 
 #include "yara.h"
 

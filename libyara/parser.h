@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _PARSER_H
-#define _PARSER_H
+#ifndef YR_PARSER_H
+#define YR_PARSER_H
 
 #include "arena.h"
 #include "compiler.h"

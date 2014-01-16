@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _YARA_H
-#define _YARA_H
+#ifndef YR_YARA_H
+#define YR_YARA_H
 
 #include <stdio.h>
 #include <stdint.h>

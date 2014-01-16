@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _ARENA_H
-#define _ARENA_H
+#ifndef YR_ARENA_H
+#define YR_ARENA_H
 
 #include <stdint.h>
 #include <stddef.h>

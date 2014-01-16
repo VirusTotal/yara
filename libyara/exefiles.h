@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _EXEFILES_H
-#define _EXEFILES_H
+#ifndef YR_EXEFILES_H
+#define YR_EXEFILES_H
 
 int yr_file_is_pe(
 		uint8_t* buffer,
