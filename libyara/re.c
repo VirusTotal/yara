@@ -44,7 +44,7 @@ order to avoid confusion with operating system threads.
 
 #define MAX_RE_STACK    1024
 
-#define RE_SCAN_LIMIT   65535
+#define RE_SCAN_LIMIT   4096
 
 #define EMIT_FLAGS_BACKWARDS           1
 #define EMIT_FLAGS_DONT_ANNOTATE_RE    2
