@@ -1,11 +1,17 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* enable dmalloc */
+/* #undef DMALLOC */
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
+
+/* Define to 1 if you have the `dmalloc' library (-ldmalloc). */
+/* #undef HAVE_LIBDMALLOC */
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #define HAVE_LIBPTHREAD 1
@@ -53,6 +59,9 @@
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "yara"
 
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "2.0"
 
@@ -61,3 +70,7 @@
 
 /* Version number of package */
 #define VERSION "2.0"
+
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
+/* #undef YYTEXT_POINTER */

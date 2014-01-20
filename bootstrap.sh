@@ -34,7 +34,7 @@ autogen() {
 
   echo "aclocal..."
   if test x$ACLOCAL = x; then
-    ACLOCAL=`locate_binary aclocal-1.11 aclocal-1.10 aclocal-1.9 aclocal19 aclocal-1.7 aclocal17 aclocal-1.5 aclocal15 aclocal`
+    ACLOCAL=`locate_binary aclocal aclocal-1.11 aclocal-1.10 aclocal-1.9 aclocal19 aclocal-1.7 aclocal17 aclocal-1.5 aclocal15`
     if test x$ACLOCAL = x; then
       die "Did not find a supported aclocal"
     fi
@@ -47,7 +47,7 @@ autogen() {
 
   echo "automake..."
   if test x$AUTOMAKE = x; then
-    AUTOMAKE=`locate_binary automake-1.14 automake-1.3 automake-1.12 automake-1.11 automake-1.10 automake-1.9 automake-1.7 automake`
+    AUTOMAKE=`locate_binary automake automake-1.14 automake-1.3 automake-1.12 automake-1.11 automake-1.10 automake-1.9 automake-1.7`
     if test x$AUTOMAKE = x; then
       die "Did not find a supported automake"
     fi
@@ -62,7 +62,3 @@ autogen() {
 
 echo "== bootstraping yara"
 autogen
-echo "== bootstraping libyara"
-cd libyara
-autogen
-cd ..
