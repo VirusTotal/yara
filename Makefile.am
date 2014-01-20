@@ -8,7 +8,7 @@ ACLOCAL_AMFLAGS=-I m4
 
 bin_PROGRAMS = yara yarac
 
-yara_SOURCES = threading.c yara.c
+yara_SOURCES = threading.c threading.h yara.c
 yara_LDADD = libyara/.libs/libyara.la
 
 yarac_SOURCES = yarac.c

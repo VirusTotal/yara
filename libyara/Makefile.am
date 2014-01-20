@@ -48,7 +48,6 @@ libyara_la_SOURCES = \
   re_lexer.h \
   re_lexer.l \
   rules.c \
-  rules.h \
   sizedstr.h \
   utils.c \
   utils.h

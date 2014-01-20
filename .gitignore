@@ -1,0 +1,46 @@
+# Generic auto-generated build files
+*~
+*.a
+*.la
+*.lai
+*.lo
+*.Plo
+*.Po
+*.o
+*.so
+*.so.[0-9][0-9]*
+*.so.[0-9][0-9]*.[0-9][0-9]*.[0-9][0-9]*
+*.Tpo
+*.m4
+*.dSYM
+.deps
+.libs
+INSTALL
+Makefile
+Makefile.in
+stamp-h1
+
+# Specific auto-generated build files
+/ABOUT-NLS
+/aclocal.m4
+/ar-lib
+/autom4te.cache/
+/config.guess
+/config.h
+/config.h.in
+/config.log
+/config.rpath
+/config.status
+/config.sub
+/configure
+/depcomp
+/install-sh
+/libtool
+/ltmain.sh
+/missing
+/ylwrap
+/m4
+
+# Project specific files
+/yara
+/yarac
