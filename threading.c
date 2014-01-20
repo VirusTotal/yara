@@ -78,8 +78,6 @@ int semaphore_init(
   *semaphore = CreateSemaphore(NULL, value, 65535, NULL);
   if (*semaphore == NULL)
     return GetLastError();
-  else
-    return 0;
   #else
   // Mac OS X doesn't support unnamed semaphores via sem_init, that's why
   // we use sem_open instead sem_init and immediately unlink the semaphore
@@ -87,13 +85,15 @@ int semaphore_init(
   //
   // http://stackoverflow.com/questions/1413785/sem-init-on-os-x
   *semaphore = sem_open("/semaphore", O_CREAT, S_IRUSR, value);
+
   if (*semaphore == SEM_FAILED)
     return errno;
-  else
-    return 0;
+
   if (sem_unlink("/semaphore") != 0)
     return errno;
   #endif
+
+  return 0;
 }
 
 
