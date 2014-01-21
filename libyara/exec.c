@@ -550,4 +550,6 @@ int yr_execute_code(
 
   // After executing the code the stack should be empty.
   assert(sp == 0);
+
+  return ERROR_SUCCESS;
 }
