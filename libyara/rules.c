@@ -1396,6 +1396,12 @@ int yr_rules_destroy(
     external++;
   }
 
+  #if WIN32
+  CloseHandle(rules->mutex);
+  #else
+  pthread_mutex_destroy(rules->mutex);
+  #endif
+
   yr_arena_destroy(rules->arena);
   yr_free(rules);
 
