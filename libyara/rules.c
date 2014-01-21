@@ -1399,7 +1399,7 @@ int yr_rules_destroy(
   #if WIN32
   CloseHandle(rules->mutex);
   #else
-  pthread_mutex_destroy(rules->mutex);
+  pthread_mutex_destroy(&rules->mutex);
   #endif
 
   yr_arena_destroy(rules->arena);
