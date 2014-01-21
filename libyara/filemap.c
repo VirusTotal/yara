@@ -68,7 +68,7 @@ int yr_filemap_map(
       0,
       NULL);
 
-  if (pmapped_file->mapping == INVALID_HANDLE_VALUE)
+  if (pmapped_file->mapping == NULL)
   {
     CloseHandle(pmapped_file->file);
     return ERROR_COULD_NOT_MAP_FILE;
