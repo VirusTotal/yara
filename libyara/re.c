@@ -291,10 +291,11 @@ SIZED_STRING* yr_re_extract_literal(
   }
 
   string = yr_malloc(sizeof(SIZED_STRING) + length);
-  string->length = 0;
-
+ 
   if (string == NULL)
     return NULL;
+
+  string->length = 0;
 
   node = re->root_node;
 
