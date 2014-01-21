@@ -323,7 +323,7 @@ int yr_execute_code(
         ip += sizeof(uint64_t);
         if (external->type == EXTERNAL_VARIABLE_TYPE_FIXED_STRING ||
             external->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
-          push(strlen(external->string) > 0);
+          push(external->string[0] != '\0');
         else
           push(external->integer);
         break;
