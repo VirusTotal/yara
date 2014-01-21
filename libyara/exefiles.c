@@ -68,7 +68,7 @@ PIMAGE_NT_HEADERS yr_get_pe_header(
 
   if (pe_header->Signature == IMAGE_NT_SIGNATURE &&
       (pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_X64) &&
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64) &&
       buffer_length > headers_size)
   {
     return pe_header;
