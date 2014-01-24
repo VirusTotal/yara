@@ -1012,7 +1012,6 @@ int yr_rules_scan_mem_block(
   YR_AC_MATCH* ac_match;
   YR_AC_STATE* current_state;
 
-  time_t current_time;
   size_t i;
 
   current_state = rules->automaton->root;
@@ -1053,9 +1052,7 @@ int yr_rules_scan_mem_block(
 
     if (timeout > 0 && i % 256 == 0)
     {
-      current_time = time(NULL);
-
-      if (difftime(current_time, start_time) > timeout)
+      if (difftime(time(NULL), start_time) > timeout)
         return ERROR_SCAN_TIMEOUT;
     }
   }
@@ -1163,7 +1160,11 @@ int yr_rules_scan_mem_blocks(
     block = block->next;
   }
 
-  result = yr_execute_code(rules, &context);
+  result = yr_execute_code(
+      rules,
+      &context,
+      timeout,
+      start_time);
 
   if (result != ERROR_SUCCESS)
     goto _exit;

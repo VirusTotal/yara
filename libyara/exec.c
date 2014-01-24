@@ -16,6 +16,7 @@ limitations under the License.
 
 #include <string.h>
 #include <assert.h>
+#include <time.h>
 
 #include "exec.h"
 #include "re.h"
@@ -68,7 +69,9 @@ function_read(int32_t)
 
 int yr_execute_code(
     YR_RULES* rules,
-    EVALUATION_CONTEXT* context)
+    EVALUATION_CONTEXT* context,
+    int timeout,
+    time_t start_time)
 {
   int64_t r1;
   int64_t r2;
@@ -88,6 +91,7 @@ int yr_execute_code(
   int count;
   int result;
   int flags;
+  int cycle = 0;
   int tidx = yr_get_tidx();
 
   while(1)
@@ -95,7 +99,8 @@ int yr_execute_code(
     switch(*ip)
     {
       case HALT:
-        // When the halt instruction is reached the stack should be empty.
+        // When the halt instruction is reached the stack
+        // should be empty.
         assert(sp == 0);
         return ERROR_SUCCESS;
 
@@ -543,6 +548,19 @@ int yr_execute_code(
       default:
         // Unknown instruction, this shouldn't happen.
         assert(FALSE);
+    }
+
+    if (timeout > 0)  // timeout == 0 means no timeout
+    {
+      // Check for timeout every 10 instruction cycles.
+
+      if (++cycle == 10)
+      {
+        if (difftime(time(NULL), start_time) > timeout)
+          return ERROR_SCAN_TIMEOUT;
+
+        cycle = 0;
+      }
     }
 
     ip++;

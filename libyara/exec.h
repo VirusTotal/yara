@@ -88,7 +88,9 @@ typedef struct _EVALUATION_CONTEXT
 
 int yr_execute_code(
     YR_RULES* rules,
-    EVALUATION_CONTEXT* context);
+    EVALUATION_CONTEXT* context,
+    int timeout,
+    time_t start_time);
 
 #endif
 
