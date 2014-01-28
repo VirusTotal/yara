@@ -80,7 +80,8 @@ int yr_process_get_memory(
 
   address = si.lpMinimumApplicationAddress;
 
-  while (VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
+  while (address < si.MaximumApplicationAddress &&
+         VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
   {
     if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
     {
