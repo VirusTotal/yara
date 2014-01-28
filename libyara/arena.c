@@ -51,7 +51,7 @@ typedef struct _ARENA_FILE_HEADER
 
 } ARENA_FILE_HEADER;
 
-#pragma pop()
+#pragma pack(pop)
 
 
 #define free_space(page) \
