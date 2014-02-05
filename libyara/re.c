@@ -1,5 +1,5 @@
-    /*
-Copyright (c) 2013. Victor M. Alvarez [plusvic@gmail.com].
+/*
+Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -291,7 +291,7 @@ SIZED_STRING* yr_re_extract_literal(
   }
 
   string = yr_malloc(sizeof(SIZED_STRING) + length);
- 
+
   if (string == NULL)
     return NULL;
 
