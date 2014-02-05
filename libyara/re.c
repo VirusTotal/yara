@@ -42,8 +42,7 @@ order to avoid confusion with operating system threads.
 #include "re.h"
 
 
-#define MAX_RE_STACK    1024
-
+#define RE_MAX_STACK    1024
 #define RE_SCAN_LIMIT   4096
 
 #define EMIT_FLAGS_BACKWARDS           1
@@ -58,7 +57,7 @@ typedef struct _RE_FIBER
 {
   uint8_t* ip;
   int32_t  sp;
-  uint16_t stack[MAX_RE_STACK];
+  uint16_t stack[RE_MAX_STACK];
 
   struct _RE_FIBER* prev;
   struct _RE_FIBER* next;
@@ -955,6 +954,36 @@ int yr_re_emit_code(
 }
 
 
+int _yr_re_alloc_storage(
+    RE_THREAD_STORAGE** storage)
+{
+  #ifdef WIN32
+  *storage = TlsGetValue(thread_storage_key);
+  #else
+  *storage = pthread_getspecific(thread_storage_key);
+  #endif
+
+  if (*storage == NULL)
+  {
+    *storage = yr_malloc(sizeof(RE_THREAD_STORAGE));
+
+    if (*storage == NULL)
+      return ERROR_INSUFICIENT_MEMORY;
+
+    (*storage)->fiber_pool.head = NULL;
+    (*storage)->fiber_pool.tail = NULL;
+
+    #ifdef WIN32
+    TlsSetValue(thread_storage_key, *storage);
+    #else
+    pthread_setspecific(thread_storage_key, *storage);
+    #endif
+  }
+
+  return ERROR_SUCCESS;
+}
+
+
 RE_FIBER* _yr_re_fiber_create(
     RE_FIBER_LIST* fiber_pool)
 {
@@ -983,10 +1012,20 @@ RE_FIBER* _yr_re_fiber_create(
   return fiber;
 }
 
+
+//
+// _yr_re_fiber_append
+//
+// Appends 'fiber' to 'fiber_list'
+//
+
 void _yr_re_fiber_append(
-    RE_FIBER* fiber,
-    RE_FIBER_LIST* fiber_list)
+    RE_FIBER_LIST* fiber_list,
+    RE_FIBER* fiber)
 {
+  assert(fiber->prev == NULL);
+  assert(fiber->next == NULL);
+
   fiber->prev = fiber_list->tail;
 
   if (fiber_list->tail != NULL)
@@ -1001,6 +1040,69 @@ void _yr_re_fiber_append(
   assert(fiber_list->head->prev == NULL);
 }
 
+
+//
+// _yr_re_fiber_exists
+//
+// Verifies if a fiber with the same properties (ip, sp, and stack values)
+// than 'target_fiber' exists in 'fiber_list'. The list is iterated from
+// the start until 'last_fiber' (inclusive). Fibers past 'last_fiber' are not
+// taken into account.
+//
+
+int _yr_re_fiber_exists(
+    RE_FIBER_LIST* fiber_list,
+    RE_FIBER* target_fiber,
+    RE_FIBER* last_fiber)
+{
+  RE_FIBER* fiber = fiber_list->head;
+
+  int equal_stacks;
+  int i;
+
+
+  if (last_fiber == NULL)
+    return FALSE;
+
+  while (fiber != last_fiber->next)
+  {
+    if (fiber->ip == target_fiber->ip &&
+        fiber->sp == target_fiber->sp)
+    {
+      equal_stacks = TRUE;
+
+      for (i = 0; i <= fiber->sp; i++)
+      {
+        if (fiber->stack[i] != target_fiber->stack[i])
+        {
+          equal_stacks = FALSE;
+          break;
+        }
+      }
+
+      if (equal_stacks)
+        return TRUE;
+    }
+
+    fiber = fiber->next;
+  }
+
+  return FALSE;
+}
+
+
+//
+// _yr_re_fiber_split
+//
+// Duplicates 'fiber' in 'fiber_list', if 'fiber_list' was:
+//
+//   f1 -> f2 -> f3 -> f4
+//
+// Splitting f2 will result in:
+//
+//   f1 -> f2 -> f2 -> f3 -> f4
+//
+//
 
 RE_FIBER* _yr_re_fiber_split(
     RE_FIBER* fiber,
@@ -1047,9 +1149,9 @@ RE_FIBER* _yr_re_fiber_split(
 //
 
 RE_FIBER* _yr_re_fiber_kill(
-    RE_FIBER* fiber,
     RE_FIBER_LIST* fiber_list,
-    RE_FIBER_LIST* fiber_pool)
+    RE_FIBER_LIST* fiber_pool,
+    RE_FIBER* fiber)
 {
   RE_FIBER* next_fiber = fiber->next;
 
@@ -1086,9 +1188,9 @@ RE_FIBER* _yr_re_fiber_kill(
 //
 
 void _yr_re_fiber_kill_tail(
-  RE_FIBER* fiber,
   RE_FIBER_LIST* fiber_list,
-  RE_FIBER_LIST* fiber_pool)
+  RE_FIBER_LIST* fiber_pool,
+  RE_FIBER* fiber)
 {
   RE_FIBER* prev_fiber = fiber->prev;
 
@@ -1111,18 +1213,91 @@ void _yr_re_fiber_kill_tail(
 }
 
 
-#define prolog \
-    if (count >= max_count) \
-    { \
-      fiber = _yr_re_fiber_kill(fiber, &fibers, &storage->fiber_pool); \
-      break; \
-    } \
+//
+// _yr_re_fiber_kill_tail
+//
+// Kills all fibers from in the fiber list.
+//
 
-#define epilog \
-    if (match) \
-      fiber = fiber->next; \
-    else\
-      fiber = _yr_re_fiber_kill(fiber, &fibers, &storage->fiber_pool) \
+void _yr_re_fiber_kill_all(
+    RE_FIBER_LIST* fiber_list,
+    RE_FIBER_LIST* fiber_pool)
+{
+  if (fiber_list->head != NULL)
+    _yr_re_fiber_kill_tail(fiber_list, fiber_pool, fiber_list->head);
+}
+
+
+//
+// _yr_re_fiber_sync
+//
+// Executes a fiber until reaching an "matching" instruction. A "matching"
+// instruction is one that actually reads a byte from the input and performs
+// some matching. If the fiber reaches a split instruction, the new fiber is
+// also synced.
+//
+
+void _yr_re_fiber_sync(
+    RE_FIBER_LIST* fiber_list,
+    RE_FIBER_LIST* fiber_pool,
+    RE_FIBER* fiber_to_sync)
+{
+  RE_FIBER* fiber;
+  RE_FIBER* last;
+  RE_FIBER* prev;
+  RE_FIBER* new_fiber;
+
+  fiber = fiber_to_sync;
+  prev = fiber_to_sync->prev;
+  last = fiber_to_sync->next;
+
+  while(fiber != last)
+  {
+    switch(*fiber->ip)
+    {
+      case RE_OPCODE_SPLIT_A:
+        new_fiber = _yr_re_fiber_split(fiber, fiber_list, fiber_pool);
+        new_fiber->ip += *(int16_t*)(fiber->ip + 1);
+        fiber->ip += 3;
+        break;
+
+      case RE_OPCODE_SPLIT_B:
+        new_fiber = _yr_re_fiber_split(fiber, fiber_list, fiber_pool);
+        new_fiber->ip += 3;
+        fiber->ip += *(int16_t*)(fiber->ip + 1);
+        break;
+
+      case RE_OPCODE_JUMP:
+        fiber->ip += *(int16_t*)(fiber->ip + 1);
+        break;
+
+      case RE_OPCODE_JNZ:
+        fiber->stack[fiber->sp]--;
+        if (fiber->stack[fiber->sp] > 0)
+          fiber->ip += *(int16_t*)(fiber->ip + 1);
+        else
+          fiber->ip += 3;
+        break;
+
+      case RE_OPCODE_PUSH:
+        fiber->stack[++fiber->sp] = *(uint16_t*)(fiber->ip + 1);
+        fiber->ip += 3;
+        break;
+
+      case RE_OPCODE_POP:
+        fiber->sp--;
+        fiber->ip++;
+        break;
+
+      default:
+        if (_yr_re_fiber_exists(fiber_list, fiber, prev))
+          fiber = _yr_re_fiber_kill(fiber_list, fiber_pool, fiber);
+        else
+          fiber = fiber->next;
+    }
+  }
+}
+
 
 //
 // yr_re_exec
@@ -1141,6 +1316,12 @@ void _yr_re_fiber_kill_tail(
 //   RE_MATCH_CALLBACK_FUNC callback  - Callback function
 //   void* callback_args              - Callback argument
 //
+// Returns:
+//    Integer indicating the number of matching bytes, including 0 when
+//    matching an empty regexp. Negative values indicate:
+//      -1  No match
+//      -2  Insuficient memory
+//      -3  Fatal error
 
 int yr_re_exec(
     uint8_t* code,
@@ -1158,7 +1339,7 @@ int yr_re_exec(
   RE_FIBER_LIST fibers;
   RE_THREAD_STORAGE* storage;
   RE_FIBER* fiber;
-  RE_FIBER* new_fiber;
+  RE_FIBER* next_fiber;
 
   int count;
   int max_count;
@@ -1166,33 +1347,17 @@ int yr_re_exec(
   int character_size;
   int result = -1;
 
-  #ifdef WIN32
-  storage = TlsGetValue(thread_storage_key);
-  #else
-  storage = pthread_getspecific(thread_storage_key);
-  #endif
-
-  if (storage == NULL)
-  {
-    storage = yr_malloc(sizeof(RE_THREAD_STORAGE));
-
-    if (storage == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
-
-    storage->fiber_pool.head = NULL;
-    storage->fiber_pool.tail = NULL;
-
-    #ifdef WIN32
-    TlsSetValue(thread_storage_key, storage);
-    #else
-    pthread_setspecific(thread_storage_key, storage);
-    #endif
-  }
+  if (_yr_re_alloc_storage(&storage) != ERROR_SUCCESS)
+    return -2;
 
   if (flags & RE_FLAGS_WIDE)
     character_size = 2;
   else
     character_size = 1;
+
+  max_count = min(input_size, RE_SCAN_LIMIT);
+  input = input_data;
+  count = 0;
 
   fiber = _yr_re_fiber_create(&storage->fiber_pool);
   fiber->ip = code;
@@ -1200,9 +1365,7 @@ int yr_re_exec(
   fibers.head = fiber;
   fibers.tail = fiber;
 
-  input = input_data;
-  count = 0;
-  max_count = min(input_size, RE_SCAN_LIMIT);
+  _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
 
   while (fibers.head != NULL)
   {
@@ -1212,27 +1375,61 @@ int yr_re_exec(
     {
       ip = fiber->ip;
 
+      if (*ip == RE_OPCODE_MATCH ||
+          *ip == RE_OPCODE_MATCH_AT_START ||
+          *ip == RE_OPCODE_MATCH_AT_END)
+      {
+        if ((*ip == RE_OPCODE_MATCH_AT_START &&
+             input_size - 1 > count - character_size) ||
+            (*ip == RE_OPCODE_MATCH_AT_END &&
+             input_size > count))
+        {
+          fiber = _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
+          continue;
+        }
+
+        result = count;
+
+        if (flags & RE_FLAGS_EXHAUSTIVE)
+        {
+          if (flags & RE_FLAGS_BACKWARDS)
+            callback(input + character_size, count, flags, callback_args);
+          else
+            callback(input_data, count, flags, callback_args);
+
+          fiber = _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
+        }
+        else
+        {
+          _yr_re_fiber_kill_tail(&fibers, &storage->fiber_pool, fiber);
+          fiber = NULL;
+        }
+
+        continue;
+      }
+
+      if (count >= max_count)
+      {
+        fiber = _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
+        continue;
+      }
+
       switch(*ip)
       {
+        case RE_OPCODE_ANY:
+          match = (*input != 0x0A || flags & RE_FLAGS_DOT_ALL);
+          fiber->ip += 1;
+          break;
+
         case RE_OPCODE_LITERAL:
-          prolog;
           if (flags & RE_FLAGS_NO_CASE)
             match = lowercase[*input] == lowercase[*(ip + 1)];
           else
             match = (*input == *(ip + 1));
           fiber->ip += 2;
-          epilog;
-          break;
-
-        case RE_OPCODE_ANY:
-          prolog;
-          match = (*input != 0x0A || flags & RE_FLAGS_DOT_ALL);
-          fiber->ip += 1;
-          epilog;
           break;
 
         case RE_OPCODE_MASKED_LITERAL:
-          prolog;
           value = *(int16_t*)(ip + 1) & 0xFF;
           mask = *(int16_t*)(ip + 1) >> 8;
 
@@ -1242,136 +1439,64 @@ int yr_re_exec(
 
           match = ((*input & mask) == value);
           fiber->ip += 3;
-          epilog;
           break;
 
         case RE_OPCODE_CLASS:
-          prolog;
           if (flags & RE_FLAGS_NO_CASE)
             match = CHAR_IN_CLASS(*input, ip + 1) ||
                     CHAR_IN_CLASS(altercase[*input], ip + 1);
           else
             match = CHAR_IN_CLASS(*input, ip + 1);
           fiber->ip += 33;
-          epilog;
           break;
 
         case RE_OPCODE_WORD_CHAR:
-          prolog;
           match = (isalnum(*input) || *input == '_');
           fiber->ip += 1;
-          epilog;
           break;
 
         case RE_OPCODE_NON_WORD_CHAR:
-          prolog;
           match = (!isalnum(*input) && *input != '_');
           fiber->ip += 1;
-          epilog;
           break;
 
         case RE_OPCODE_SPACE:
-          prolog;
           match = (*input == ' ' || *input == '\t');
           fiber->ip += 1;
-          epilog;
           break;
 
         case RE_OPCODE_NON_SPACE:
-          prolog;
           match = (*input != ' ' && *input != '\t');
           fiber->ip += 1;
-          epilog;
           break;
 
         case RE_OPCODE_DIGIT:
-          prolog;
           match = isdigit(*input);
           fiber->ip += 1;
-          epilog;
           break;
 
         case RE_OPCODE_NON_DIGIT:
-          prolog;
           match = !isdigit(*input);
           fiber->ip += 1;
-          epilog;
-          break;
-
-        case RE_OPCODE_SPLIT_A:
-          new_fiber = _yr_re_fiber_split(fiber, &fibers, &storage->fiber_pool);
-          new_fiber->ip += *(int16_t*)(ip + 1);
-          fiber->ip += 3;
-          break;
-
-        case RE_OPCODE_SPLIT_B:
-          new_fiber = _yr_re_fiber_split(fiber, &fibers, &storage->fiber_pool);
-          new_fiber->ip += 3;
-          fiber->ip += *(int16_t*)(ip + 1);
-          break;
-
-        case RE_OPCODE_JUMP:
-          fiber->ip = ip + *(int16_t*)(ip + 1);
-          break;
-
-        case RE_OPCODE_JNZ:
-          fiber->stack[fiber->sp]--;
-          if (fiber->stack[fiber->sp] > 0)
-            fiber->ip = ip + *(int16_t*)(ip + 1);
-          else
-            fiber->ip += 3;
-          break;
-
-        case RE_OPCODE_PUSH:
-          fiber->stack[++fiber->sp] = *(uint16_t*)(ip + 1);
-          fiber->ip += 3;
-          break;
-
-        case RE_OPCODE_POP:
-          fiber->sp--;
-          fiber->ip++;
-          break;
-
-        case RE_OPCODE_MATCH:
-        case RE_OPCODE_MATCH_AT_START:
-        case RE_OPCODE_MATCH_AT_END:
-
-          if ((*ip == RE_OPCODE_MATCH_AT_START &&
-               input_size - 1 > count - character_size) ||
-              (*ip == RE_OPCODE_MATCH_AT_END &&
-               input_size > count))
-          {
-            fiber = _yr_re_fiber_kill(fiber, &fibers, &storage->fiber_pool);
-            break;
-          }
-
-          result = count;
-
-          if (flags & RE_FLAGS_EXHAUSTIVE)
-          {
-            if (flags & RE_FLAGS_BACKWARDS)
-              callback(input + character_size, count, flags, callback_args);
-            else
-              callback(input_data, count, flags, callback_args);
-
-            fiber = _yr_re_fiber_kill(fiber, &fibers, &storage->fiber_pool);
-          }
-          else
-          {
-            _yr_re_fiber_kill_tail(fiber, &fibers, &storage->fiber_pool);
-            fiber = NULL;
-          }
-
           break;
 
         default:
           assert(FALSE);
       }
+
+      if (!match)
+      {
+        fiber = _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
+        continue;
+      }
+
+      next_fiber = fiber->next;
+      _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+      fiber = next_fiber;
     }
 
-    if (fibers.head != NULL &&
-        flags & RE_FLAGS_WIDE && *(input + 1) != 0)
-      _yr_re_fiber_kill_tail(fibers.head, &fibers, &storage->fiber_pool);
+    if (flags & RE_FLAGS_WIDE && *(input + 1) != 0)
+      _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool);
 
     if (flags & RE_FLAGS_BACKWARDS)
       input -= character_size;
@@ -1380,11 +1505,13 @@ int yr_re_exec(
 
     count += character_size;
 
-    if ((flags & RE_FLAGS_SCAN) && count < max_count)
+    if (flags & RE_FLAGS_SCAN && count < max_count)
     {
       fiber = _yr_re_fiber_create(&storage->fiber_pool);
       fiber->ip = code;
-      _yr_re_fiber_append(fiber, &fibers);
+
+      _yr_re_fiber_append(&fibers, fiber);
+      _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
     }
   }
 

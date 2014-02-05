@@ -152,6 +152,8 @@ inline int _yr_scan_wicompare(
 // characteristics of the code generated for this kind of strings and do the
 // matching in a faster way.
 //
+// See return values in yr_re_exec (re.c)
+//
 
 #define MAX_FAST_HEX_RE_STACK 300
 
@@ -267,7 +269,7 @@ int _yr_scan_fast_hex_re_exec(
               assert(sp < MAX_FAST_HEX_RE_STACK);
 
               if (sp >= MAX_FAST_HEX_RE_STACK)
-                return -2;
+                return -3;
 
               code_stack[sp] = ip + 11;
               input_stack[sp] = next_input;
@@ -685,11 +687,15 @@ int _yr_scan_verify_re_match(
         NULL);
   }
 
-  if (forward_matches == -2)
-    return ERROR_INTERNAL_FATAL_ERROR;
-
-  if (forward_matches == -1)
-    return ERROR_SUCCESS;
+  switch(forward_matches)
+  {
+    case -1:
+      return ERROR_SUCCESS;
+    case -2:
+      return ERROR_INSUFICIENT_MEMORY;
+    case -3:
+      return ERROR_INTERNAL_FATAL_ERROR;
+  }
 
   if (forward_matches == 0 && ac_match->backward_code == NULL)
     return ERROR_SUCCESS;
@@ -1025,13 +1031,13 @@ int yr_rules_scan_mem_block(
     {
       if (ac_match->backtrack <= i)
       {
-        _yr_scan_verify_match(
-              ac_match,
-              data,
-              data_size,
-              i - ac_match->backtrack,
-              matches_arena,
-              fast_scan_mode);
+        FAIL_ON_ERROR(_yr_scan_verify_match(
+            ac_match,
+            data,
+            data_size,
+            i - ac_match->backtrack,
+            matches_arena,
+            fast_scan_mode));
       }
 
       ac_match = ac_match->next;
@@ -1063,13 +1069,13 @@ int yr_rules_scan_mem_block(
   {
     if (ac_match->backtrack <= data_size)
     {
-      _yr_scan_verify_match(
+      FAIL_ON_ERROR(_yr_scan_verify_match(
           ac_match,
           data,
           data_size,
           data_size - ac_match->backtrack,
           matches_arena,
-          fast_scan_mode);
+          fast_scan_mode));
     }
 
     ac_match = ac_match->next;
