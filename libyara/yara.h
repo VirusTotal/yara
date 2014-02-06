@@ -29,6 +29,8 @@ typedef HANDLE mutex_t;
 typedef pthread_mutex_t mutex_t;
 #endif
 
+typedef int32_t tidx_mask_t;
+
 #ifdef _MSC_VER
 #define snprintf _snprintf
 #endif
@@ -99,9 +101,15 @@ typedef pthread_mutex_t mutex_t;
 #define LOOP_LOCAL_VARS 4
 #define MAX_LOOP_NESTING 4
 #define MAX_INCLUDE_DEPTH 16
-#define MAX_THREADS 32
+
 #define STRING_CHAINING_THRESHOLD 200
 #define LEX_BUF_SIZE  1024
+
+// MAX_THREADS is the number of threads that can use a YR_RULES
+// object simultaneosly. This value is limited by the number of
+// bits in tidx_mask.
+
+#define MAX_THREADS sizeof(tidx_mask_t) * 8
 
 
 #ifndef MAX_PATH
@@ -580,8 +588,9 @@ typedef struct _YR_MEMORY_BLOCK
 
 typedef struct _YR_RULES {
 
-  int threads_count;
+  tidx_mask_t tidx_mask;
   uint8_t* code_start;
+
   mutex_t mutex;
 
   YR_ARENA* arena;

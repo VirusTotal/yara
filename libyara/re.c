@@ -166,6 +166,12 @@ int yr_re_finalize_thread()
     yr_free(storage);
   }
 
+  #ifdef WIN32
+  TlsSetValue(thread_storage_key, NULL);
+  #else
+  pthread_setspecific(thread_storage_key, NULL);
+  #endif
+
   return ERROR_SUCCESS;
 }
 

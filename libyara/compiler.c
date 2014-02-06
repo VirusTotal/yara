@@ -504,7 +504,7 @@ int yr_compiler_get_rules(
     yara_rules->externals_list_head = rules_file_header->externals_list_head;
     yara_rules->automaton = rules_file_header->automaton;
     yara_rules->code_start = rules_file_header->code_start;
-    yara_rules->threads_count = 0;
+    yara_rules->tidx_mask = 0;
 
     #if WIN32
     yara_rules->mutex = CreateMutex(NULL, FALSE, NULL);

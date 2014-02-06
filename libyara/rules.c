@@ -1099,35 +1099,37 @@ int yr_rules_scan_mem_blocks(
   YR_ARENA* matches_arena = NULL;
 
   time_t start_time;
+  tidx_mask_t bit;
 
   int message;
-  int tidx;
+  int tidx = 0;
   int result = ERROR_SUCCESS;
 
   context.file_size = block->size;
   context.mem_block = block;
   context.entry_point = UNDEFINED;
 
-  tidx = yr_get_tidx();
+  _yr_rules_lock(rules);
 
-  if (tidx == -1)
+  bit = 1;
+
+  while (rules->tidx_mask & bit)
   {
-    _yr_rules_lock(rules);
-
-    tidx = rules->threads_count;
-
-    if (tidx < MAX_THREADS)
-      rules->threads_count++;
-    else
-      result = ERROR_TOO_MANY_SCAN_THREADS;
-
-    _yr_rules_unlock(rules);
-
-    if (result != ERROR_SUCCESS)
-      return result;
-
-    yr_set_tidx(tidx);
+    tidx++;
+    bit <<= 1;
   }
+
+  if (tidx < MAX_THREADS)
+    rules->tidx_mask |= bit;
+  else
+    result = ERROR_TOO_MANY_SCAN_THREADS;
+
+  _yr_rules_unlock(rules);
+
+  if (result != ERROR_SUCCESS)
+    return result;
+
+  yr_set_tidx(tidx);
 
   result = yr_arena_create(1024, 0, &matches_arena);
 
@@ -1225,6 +1227,12 @@ _exit:
 
   if (matches_arena != NULL)
     yr_arena_destroy(matches_arena);
+
+  _yr_rules_lock(rules);
+  rules->tidx_mask &= ~(1 << tidx);
+  _yr_rules_unlock(rules);
+
+  yr_set_tidx(-1);
 
   return result;
 }
@@ -1334,7 +1342,7 @@ int yr_rules_save(
     YR_RULES* rules,
     const char* filename)
 {
-  assert(rules->threads_count == 0);
+  assert(rules->tidx_mask == 0);
   return yr_arena_save(rules->arena, filename);
 }
 
@@ -1367,7 +1375,7 @@ int yr_rules_load(
   new_rules->code_start = header->code_start;
   new_rules->externals_list_head = header->externals_list_head;
   new_rules->rules_list_head = header->rules_list_head;
-  new_rules->threads_count = 0;
+  new_rules->tidx_mask = 0;
 
   #if WIN32
   new_rules->mutex = CreateMutex(NULL, FALSE, NULL);
