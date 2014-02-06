@@ -1501,7 +1501,7 @@ int yr_re_exec(
       fiber = next_fiber;
     }
 
-    if (flags & RE_FLAGS_WIDE && *(input + 1) != 0)
+    if (flags & RE_FLAGS_WIDE && count + 1 < max_count && *(input + 1) != 0)
       _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool);
 
     if (flags & RE_FLAGS_BACKWARDS)
