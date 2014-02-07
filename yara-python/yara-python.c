@@ -773,7 +773,7 @@ static PyObject * Rules_match(
   int pid = 0;
   int timeout = 0;
   int length;
-  int error;
+  int error = ERROR_SUCCESS;
   int fast_mode = FALSE;
 
   PyObject *externals = NULL;
