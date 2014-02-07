@@ -393,6 +393,10 @@ class TestYara(unittest.TestCase):
           'rule test { strings: $a = { 31 32 [0-3] 34 35 [1-] 38 39 } condition: $a }',
         ], '123456789')
 
+        self.assertTrueRules([
+          'rule test { strings: $a = { 31 32 [-] 38 39 } condition: all of them }',
+        ], '123456789')
+
         self.assertFalseRules([
           'rule test { strings: $a = { 31 32 [-] 32 33 } condition: $a }',
           'rule test { strings: $a = { 35 36 [-] 31 32 } condition: $a }',

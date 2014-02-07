@@ -111,27 +111,33 @@ void yr_parser_emit_pushes_for_strings(
 
   while(!STRING_IS_NULL(string))
   {
-    string_identifier = string->identifier;
-    target_identifier = identifier;
+    // Don't generate pushes for strings chained to another one, we are
+    // only interested in non-chained strings or the head of the chain.
 
-    while (*target_identifier != '\0' &&
-           *string_identifier != '\0' &&
-           *target_identifier == *string_identifier)
+    if (string->chained_to == NULL)
     {
-      target_identifier++;
-      string_identifier++;
-    }
+      string_identifier = string->identifier;
+      target_identifier = identifier;
 
-    if ((*target_identifier == '\0' && *string_identifier == '\0') ||
-         *target_identifier == '*')
-    {
-      yr_parser_emit_with_arg_reloc(
-          yyscanner,
-          PUSH,
-          PTR_TO_UINT64(string),
-          NULL);
+      while (*target_identifier != '\0' &&
+             *string_identifier != '\0' &&
+             *target_identifier == *string_identifier)
+      {
+        target_identifier++;
+        string_identifier++;
+      }
 
-      string->g_flags |= STRING_GFLAGS_REFERENCED;
+      if ((*target_identifier == '\0' && *string_identifier == '\0') ||
+           *target_identifier == '*')
+      {
+        yr_parser_emit_with_arg_reloc(
+            yyscanner,
+            PUSH,
+            PTR_TO_UINT64(string),
+            NULL);
+
+        string->g_flags |= STRING_GFLAGS_REFERENCED;
+      }
     }
 
     string = yr_arena_next_address(
