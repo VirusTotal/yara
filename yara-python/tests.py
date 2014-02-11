@@ -121,6 +121,7 @@ RE_TESTS = [
   ('ab{0,}c', 'abbbc', SUCCEED, 'abbbc'),
   ('ab{,3}c', 'abbbc', SUCCEED, 'abbbc'),
   ('ab{,2}c', 'abbbc', FAIL),
+  ('ab{4,5}bc', 'abbbbc', FAIL),
   ('ab{.*}', 'ab{c}', SUCCEED, 'ab{c}'),
   ('(ab{1,2}c){1,3}', 'abbcabc', SUCCEED, 'abbcabc'),
   ('ab(c|cc){1,3}d', 'abccccccd', SUCCEED, 'abccccccd'),
@@ -203,6 +204,11 @@ RE_TESTS = [
   ('abc|123$', '123x', FAIL),
   ('abc|^123', '123', SUCCEED, '123'),
   ('abc|^123', 'x123', FAIL),
+  ('^abc$', 'abc', SUCCEED, 'abc'),
+  ('^abc$', 'abcc', FAIL),
+  ('^abc', 'abcc', SUCCEED, 'abc'),
+  ('^abc$', 'aabc', FAIL),
+  ('abc$', 'aabc', SUCCEED, 'abc'),
   ('^a(bc+|b[eh])g|.h$', 'abhg', SUCCEED, 'abhg'),
   ('(bc+d$|ef*g.|h?i(j|k))', 'effgz', SUCCEED, 'effgz'),
   ('(bc+d$|ef*g.|h?i(j|k))', 'ij', SUCCEED, 'ij'),
@@ -466,7 +472,8 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = /ppi\tmi/ condition: $a }',
             'rule test { strings: $a = /ppi\.mi/ condition: $a }',
             'rule test { strings: $a = /^mississippi/ fullword condition: $a }',
-        ], 'mississippi\tmississippi.mississippi')
+            'rule test { strings: $a = /mississippi.*mississippi$/s condition: $a }',
+        ], 'mississippi\tmississippi.mississippi\nmississippi')
 
         self.assertFalseRules([
             'rule test { strings: $a = /^ssi/ condition: $a }',
