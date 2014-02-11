@@ -407,7 +407,7 @@ $({letter}|{digit}|_)*  {
 }
 
 
-<regexp>\/i?  {
+<regexp>\/i?s?  {
 
   SIZED_STRING* s;
 
@@ -421,11 +421,13 @@ $({letter}|{digit}|_)*  {
   BEGIN(INITIAL);
 
   s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
+  s->flags = 0;
 
   if (yytext[1] == 'i')
-    s->flags = SIZED_STRING_FLAGS_NO_CASE;
-  else
-    s->flags = 0;
+    s->flags |= SIZED_STRING_FLAGS_NO_CASE;
+
+  if (yytext[1] == 's' || yytext[2] == 's')
+    s->flags |= SIZED_STRING_FLAGS_DOT_ALL;
 
   s->length = yyextra->lex_buf_len;
   strcpy(s->c_string, yyextra->lex_buf);

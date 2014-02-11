@@ -174,6 +174,7 @@ typedef int32_t tidx_mask_t;
 #define STRING_GFLAGS_NULL              0x1000
 #define STRING_GFLAGS_CHAIN_PART        0x2000
 #define STRING_GFLAGS_CHAIN_TAIL        0x4000
+#define STRING_GFLAGS_REGEXP_DOT_ALL    0x8000
 
 #define STRING_IS_HEX(x) \
     (((x)->g_flags) & STRING_GFLAGS_HEXADECIMAL)
@@ -189,6 +190,9 @@ typedef int32_t tidx_mask_t;
 
 #define STRING_IS_REGEXP(x) \
     (((x)->g_flags) & STRING_GFLAGS_REGEXP)
+
+#define STRING_IS_REGEXP_DOT_ALL(x) \
+    (((x)->g_flags) & STRING_GFLAGS_REGEXP_DOT_ALL)
 
 #define STRING_IS_FULL_WORD(x) \
     (((x)->g_flags) & STRING_GFLAGS_FULL_WORD)

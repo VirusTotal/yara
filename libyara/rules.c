@@ -662,7 +662,8 @@ int _yr_scan_verify_re_match(
   if (STRING_IS_NO_CASE(ac_match->string))
     flags |= RE_FLAGS_NO_CASE;
 
-  if (STRING_IS_HEX(ac_match->string))
+  if (STRING_IS_HEX(ac_match->string) ||
+      STRING_IS_REGEXP_DOT_ALL(ac_match->string))
     flags |= RE_FLAGS_DOT_ALL;
 
   if (STRING_IS_ASCII(ac_match->string))

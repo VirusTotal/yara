@@ -23,7 +23,8 @@ limitations under the License.
 // terminated with a null char.
 //
 
-#define SIZED_STRING_FLAGS_NO_CASE 	1
+#define SIZED_STRING_FLAGS_NO_CASE  1
+#define SIZED_STRING_FLAGS_DOT_ALL  2
 
 typedef struct _SIZED_STRING
 {

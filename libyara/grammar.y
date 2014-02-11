@@ -499,6 +499,9 @@ boolean_expression  : '(' boolean_expression ')'
                         if (sized_string->flags & SIZED_STRING_FLAGS_NO_CASE)
                           re->flags |= RE_FLAGS_NO_CASE;
 
+                        if (sized_string->flags & SIZED_STRING_FLAGS_DOT_ALL)
+                          re->flags |= RE_FLAGS_DOT_ALL;
+
                         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
                         compiler->last_result = yr_re_emit_code(
