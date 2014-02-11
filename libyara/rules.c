@@ -651,6 +651,7 @@ int _yr_scan_verify_re_match(
   RE_EXEC_FUNC exec;
 
   int forward_matches = -1;
+  int backward_matches = -1;
   int flags = 0;
 
   if (STRING_IS_FAST_HEX_REGEXP(ac_match->string))
@@ -710,18 +711,24 @@ int _yr_scan_verify_re_match(
 
   if (ac_match->backward_code != NULL)
   {
-    exec(
+    backward_matches = exec(
         ac_match->backward_code,
         data + offset,
         offset + 1,
         flags | RE_FLAGS_BACKWARDS | RE_FLAGS_EXHAUSTIVE,
         _yr_scan_match_callback,
         (void*) &callback_args);
+
+    if (backward_matches == -2)
+      return ERROR_INSUFICIENT_MEMORY;
+
+    if (backward_matches == -3)
+      return ERROR_INTERNAL_FATAL_ERROR;
   }
   else
   {
-    _yr_scan_match_callback(
-        data + offset, 0, flags, &callback_args);
+    FAIL_ON_ERROR(_yr_scan_match_callback(
+        data + offset, 0, flags, &callback_args));
   }
 
   return ERROR_SUCCESS;
@@ -829,8 +836,8 @@ int _yr_scan_verify_literal_match(
     callback_args.full_word = STRING_IS_FULL_WORD(string);
     callback_args.tidx = yr_get_tidx();
 
-    _yr_scan_match_callback(
-        data + offset, 0, flags, &callback_args);
+    FAIL_ON_ERROR(_yr_scan_match_callback(
+        data + offset, 0, flags, &callback_args));
   }
 
   return ERROR_SUCCESS;
