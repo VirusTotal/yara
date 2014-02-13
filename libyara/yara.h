@@ -86,21 +86,23 @@ typedef int32_t tidx_mask_t;
 #define ERROR_TOO_MANY_SCAN_THREADS             27
 #define ERROR_CALLBACK_ERROR                    28
 #define ERROR_INVALID_ARGUMENT                  29
-#define ERROR_INTERNAL_FATAL_ERROR              30
+#define ERROR_TOO_MANY_MATCHES                  30
+#define ERROR_INTERNAL_FATAL_ERROR              31
 
 
-#define CALLBACK_MSG_RULE_MATCHING            1
-#define CALLBACK_MSG_RULE_NOT_MATCHING        2
-#define CALLBACK_MSG_SCAN_FINISHED            3
+#define CALLBACK_MSG_RULE_MATCHING              1
+#define CALLBACK_MSG_RULE_NOT_MATCHING          2
+#define CALLBACK_MSG_SCAN_FINISHED              3
 
-#define CALLBACK_CONTINUE  0
-#define CALLBACK_ABORT     1
-#define CALLBACK_ERROR     2
+#define CALLBACK_CONTINUE   0
+#define CALLBACK_ABORT      1
+#define CALLBACK_ERROR      2
 
-#define MAX_ATOM_LENGTH 4
-#define LOOP_LOCAL_VARS 4
-#define MAX_LOOP_NESTING 4
-#define MAX_INCLUDE_DEPTH 16
+#define MAX_ATOM_LENGTH     4
+#define LOOP_LOCAL_VARS     4
+#define MAX_LOOP_NESTING    4
+#define MAX_INCLUDE_DEPTH   16
+#define MAX_STRING_MATCHES  5000
 
 #define STRING_CHAINING_THRESHOLD 200
 #define LEX_BUF_SIZE  1024
@@ -349,6 +351,8 @@ typedef struct _YR_META
 
 typedef struct _YR_MATCHES
 {
+  int32_t count;
+
   DECLARE_REFERENCE(YR_MATCH*, head);
   DECLARE_REFERENCE(YR_MATCH*, tail);
 

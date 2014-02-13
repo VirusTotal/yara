@@ -37,7 +37,7 @@ from files.
 #include "yara.h"
 
 
-#define ARENA_FILE_VERSION      2
+#define ARENA_FILE_VERSION      3
 
 
 #pragma pack(push)

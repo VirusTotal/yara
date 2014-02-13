@@ -410,14 +410,7 @@ int yr_execute_code(
       case SCOUNT:
         pop(r1);
         string = UINT64_TO_PTR(YR_STRING*, r1);
-        match = string->matches[tidx].head;
-        found = 0;
-        while (match != NULL)
-        {
-          found++;
-          match = match->next;
-        }
-        push(found);
+        push(string->matches[tidx].count);
         break;
 
       case SOFFSET:

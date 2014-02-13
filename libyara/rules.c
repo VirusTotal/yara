@@ -339,18 +339,21 @@ void _yr_scan_update_match_chain_length(
 }
 
 
-void _yr_scan_add_match_to_list(
+int _yr_scan_add_match_to_list(
     YR_MATCH* match,
     YR_MATCHES* matches_list)
 {
   YR_MATCH* insertion_point = matches_list->tail;
+
+  if (matches_list->count == MAX_STRING_MATCHES)
+    return ERROR_TOO_MANY_MATCHES;
 
   while (insertion_point != NULL)
   {
     if (match->offset == insertion_point->offset)
     {
       insertion_point->length = match->length;
-      return;
+      return ERROR_SUCCESS;
     }
 
     if (match->offset > insertion_point->offset)
@@ -372,10 +375,14 @@ void _yr_scan_add_match_to_list(
     matches_list->head = match;
   }
 
+  matches_list->count++;
+
   if (match->next != NULL)
     match->next->prev = match;
   else
     matches_list->tail = match;
+
+  return ERROR_SUCCESS;
 }
 
 
@@ -395,6 +402,7 @@ void _yr_scan_remove_match_from_list(
   if (matches_list->tail == match)
     matches_list->tail = match->prev;
 
+  matches_list->count--;
   match->next = NULL;
   match->prev = NULL;
 }
@@ -418,7 +426,6 @@ int _yr_scan_verify_chained_string_match(
   int32_t full_chain_length;
 
   int add_match = FALSE;
-  int result;
 
   if (matching_string->chained_to == NULL)
   {
@@ -504,8 +511,8 @@ int _yr_scan_verify_chained_string_match(
           match->prev = NULL;
           match->next = NULL;
 
-          _yr_scan_add_match_to_list(
-              match, &string->matches[tidx]);
+          FAIL_ON_ERROR(_yr_scan_add_match_to_list(
+              match, &string->matches[tidx]));
         }
 
         match = next_match;
@@ -513,13 +520,10 @@ int _yr_scan_verify_chained_string_match(
     }
     else
     {
-      result = yr_arena_allocate_memory(
+      FAIL_ON_ERROR(yr_arena_allocate_memory(
           matches_arena,
           sizeof(YR_MATCH),
-          (void**) &new_match);
-
-      if (result != ERROR_SUCCESS)
-        return result;
+          (void**) &new_match));
 
       new_match->offset = match_offset;
       new_match->length = match_length;
@@ -527,9 +531,9 @@ int _yr_scan_verify_chained_string_match(
       new_match->prev = NULL;
       new_match->next = NULL;
 
-      _yr_scan_add_match_to_list(
+      FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,
-          &matching_string->unconfirmed_matches[tidx]);
+          &matching_string->unconfirmed_matches[tidx]));
     }
   }
 
@@ -621,9 +625,9 @@ int _yr_scan_match_callback(
       new_match->prev = NULL;
       new_match->next = NULL;
 
-      _yr_scan_add_match_to_list(
+      FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,
-          &string->matches[tidx]);
+          &string->matches[tidx]));
     }
   }
 
@@ -1001,8 +1005,10 @@ void _yr_rules_clean_matches(
 
     while (!STRING_IS_NULL(string))
     {
+      string->matches[tidx].count = 0;
       string->matches[tidx].head = NULL;
       string->matches[tidx].tail = NULL;
+      string->unconfirmed_matches[tidx].count = 0;
       string->unconfirmed_matches[tidx].head = NULL;
       string->unconfirmed_matches[tidx].tail = NULL;
       string++;
