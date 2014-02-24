@@ -88,7 +88,7 @@ int yr_parser_reduce_string_identifier(
     int8_t instruction);
 
 
-void yr_parser_emit_pushes_for_strings(
+int yr_parser_emit_pushes_for_strings(
     yyscan_t yyscanner,
     const char* identifier);
 

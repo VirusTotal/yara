@@ -100,14 +100,17 @@ int yr_parser_emit_with_arg_reloc(
 }
 
 
-void yr_parser_emit_pushes_for_strings(
+int yr_parser_emit_pushes_for_strings(
     yyscan_t yyscanner,
     const char* identifier)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   YR_STRING* string = compiler->current_rule_strings;
+
   const char* string_identifier;
   const char* target_identifier;
+
+  int matching = 0;
 
   while(!STRING_IS_NULL(string))
   {
@@ -137,6 +140,7 @@ void yr_parser_emit_pushes_for_strings(
             NULL);
 
         string->g_flags |= STRING_GFLAGS_REFERENCED;
+        matching++;
       }
     }
 
@@ -145,6 +149,14 @@ void yr_parser_emit_pushes_for_strings(
         string,
         sizeof(YR_STRING));
   }
+
+  if (matching == 0)
+  {
+    yr_compiler_set_error_extra_info(compiler, identifier);
+    compiler->last_result = ERROR_UNDEFINED_STRING;
+  }
+
+  return compiler->last_result;
 }
 
 
