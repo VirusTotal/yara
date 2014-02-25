@@ -17,6 +17,7 @@ limitations under the License.
 #ifdef WIN32
 
 #include <windows.h>
+#include <string.h>
 
 static HANDLE hHeap;
 
@@ -52,13 +53,13 @@ void yr_free(void* ptr)
 
 char* yr_strdup(const char *str)
 {
-  size_t len = strlen(str);
-  char *dup = yr_malloc(len + 1);
+  size_t len = strlen(str) + 1;
+  void *dup = yr_malloc(len);
 
   if (dup != NULL)
-    strcpy(dup, str);
+    memcpy(dup, str, len);
 
-  return dup;
+  return (char*) dup;
 }
 
 #else
