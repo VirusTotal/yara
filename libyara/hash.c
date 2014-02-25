@@ -190,9 +190,21 @@ int yr_hash_table_add(
   }
 
   if (ns != NULL)
+  {
     entry->ns = yr_strdup(ns);
+
+    if (entry->ns == NULL)
+    {
+      yr_free(entry->key);
+      yr_free(entry);
+
+      return ERROR_INSUFICIENT_MEMORY;
+    }
+  }
   else
+  {
     entry->ns = NULL;
+  }
 
   entry->value = value;
   bucket_index = hash(0, (uint8_t*) key, strlen(key));

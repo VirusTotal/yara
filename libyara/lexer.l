@@ -271,6 +271,13 @@ include[ \t]+\"         {
 $({letter}|{digit}|_)*"*"  {
 
   yylval->c_string = yr_strdup(yytext);
+
+  if (yylval->c_string == NULL)
+  {
+    yyerror(yyscanner, "not enough memory");
+    yyterminate();
+  }
+
   return _STRING_IDENTIFIER_WITH_WILDCARD_;
 }
 
@@ -278,6 +285,13 @@ $({letter}|{digit}|_)*"*"  {
 $({letter}|{digit}|_)*  {
 
   yylval->c_string = yr_strdup(yytext);
+
+  if (yylval->c_string == NULL)
+  {
+    yyerror(yyscanner, "not enough memory");
+    yyterminate();
+  }
+
   return _STRING_IDENTIFIER_;
 }
 
@@ -285,6 +299,13 @@ $({letter}|{digit}|_)*  {
 #({letter}|{digit}|_)*  {
 
   yylval->c_string = yr_strdup(yytext);
+
+  if (yylval->c_string == NULL)
+  {
+    yyerror(yyscanner, "not enough memory");
+    yyterminate();
+  }
+
   yylval->c_string[0] = '$'; /* replace # by $*/
   return _STRING_COUNT_;
 }
@@ -293,6 +314,13 @@ $({letter}|{digit}|_)*  {
 @({letter}|{digit}|_)*  {
 
   yylval->c_string = yr_strdup(yytext);
+
+  if (yylval->c_string == NULL)
+  {
+    yyerror(yyscanner, "not enough memory");
+    yyterminate();
+  }
+
   yylval->c_string[0] = '$'; /* replace @ by $*/
   return _STRING_OFFSET_;
 }
@@ -306,6 +334,13 @@ $({letter}|{digit}|_)*  {
   }
 
   yylval->c_string = yr_strdup(yytext);
+
+  if (yylval->c_string == NULL)
+  {
+    yyerror(yyscanner, "not enough memory");
+    yyterminate();
+  }
+
   return _IDENTIFIER_;
 }
 

@@ -50,12 +50,15 @@ void yr_free(void* ptr)
 }
 
 
-char* yr_strdup(const char *s)
+char* yr_strdup(const char *str)
 {
-  size_t len = strlen(s);
-  char *r = yr_malloc(len + 1);
-  strcpy(r, s);
-  return r;
+  size_t len = strlen(str);
+  char *dup = yr_malloc(len + 1);
+
+  if (dup != NULL)
+    strcpy(dup, str);
+
+  return dup;
 }
 
 #else
