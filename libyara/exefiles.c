@@ -87,8 +87,11 @@ uint64_t yr_pe_rva_to_offset(
 {
   int i = 0;
   PIMAGE_SECTION_HEADER section;
+  DWORD section_rva;
+  DWORD section_offset;
 
   section = IMAGE_FIRST_SECTION(pe_header);
+  section_rva = 0;
 
   while(i < MIN(pe_header->FileHeader.NumberOfSections, 60))
   {
@@ -96,9 +99,10 @@ uint64_t yr_pe_rva_to_offset(
         (uint8_t*) pe_header + sizeof(IMAGE_SECTION_HEADER) < buffer_length)
     {
       if (rva >= section->VirtualAddress &&
-          rva <  section->VirtualAddress + section->SizeOfRawData)
+          section_rva <= section->VirtualAddress)
       {
-        return section->PointerToRawData + (rva - section->VirtualAddress);
+        section_rva = section->VirtualAddress;
+        section_offset = section->PointerToRawData;
       }
 
       section++;
@@ -106,11 +110,11 @@ uint64_t yr_pe_rva_to_offset(
     }
     else
     {
-      break;
+      return 0;
     }
   }
 
-  return 0;
+  return section_offset + (rva - section_rva);
 }
 
 
