@@ -44,7 +44,6 @@
         <section id="main-content">
 
 
-
 <h2>YARA in a nutshell</h2>
 <p>YARA is a tool aimed at (but not limited to) helping malware researchers to
 identify and classify malware samples. With YARA you can create descriptions of
@@ -108,18 +107,20 @@ that each time you do that God kills a kitten).</p>
 </ul>
 <p>The drawsbacks for this rewrite are:</p>
 <ul>
-<li><p>You can find some incompatibilities in regular expressions. YARA 2.0 replaced external libraries like PCRE or RE2 with its own regular expression engine. Most regular expression features are present in the new implementation, but a few ones like POSIX character classes and backreferences are missing. If you were using RE2 instead of PCRE with previous versions of YARA you won&#39;t miss backreferences, because RE2 don&#39;t support them neither.</p>
+<li><p>You can find some incompatibilities in regular expressions. YARA 2.0 replaced
+external libraries like PCRE or RE2 with its own regular expression engine. Most
+regular expression features are present in the new implementation, but a few
+ones like POSIX character classes and backreferences are missing. If you were
+using RE2 instead of PCRE with previous versions of YARA you won&#39;t miss
+backreferences, because RE2 don&#39;t support them neither.</p>
 </li>
-<li><p>The C API provided by libyara has changed. If you&#39;re a developer using this API you&#39;ll need to make some
-changes to your application in order to adapt it to YARA 2.0. But don&#39;t worry, it won&#39;t be too much work and the benefits worth the effort. Users of yara-python are not affected, the Python interface remains the same.</p>
-
+<li><p>The C API provided by libyara has changed. If you&#39;re a developer using this
+API you&#39;ll need to make some changes to your application in order to adapt it
+to YARA 2.0. But don&#39;t worry, it won&#39;t be too much work and the benefits worth
+the effort. Users of yara-python are not affected, the Python interface remains
+the same.</p>
 </li>
 </ul>
-
-<div style="margin:50px">
-<iframe width="640" height="360" src="http://www.youtube.com/embed/ApAFU5ROo10" frameborder="0" allowfullscreen></iframe>
-</div>
-
 <h2>Who&#39;s using YARA</h2>
 <ul>
 <li><a href="https://www.virustotal.com/intelligence/">VirusTotal Intelligence</a></li>
@@ -129,11 +130,26 @@ changes to your application in order to adapt it to YARA 2.0. But don&#39;t worr
 <li><a href="http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS">Fidelis XPS</a></li>
 <li><a href="http://www.emc.com/security/rsa-ecat.htm">RSA ECAT</a></li>
 <li><a href="https://github.com/CrowdStrike/CrowdFMS">CrowdStrike FMS</a></li>
-<li><a href="http://www.threatconnect.com">ThreatConnect</a></li>
+<li><a href="http://www.threatconnect.com">ThreadConnect</a></li>
 <li><a href="https://github.com/Masood-M/YALIH">YALIH</a></li>
 </ul>
 <p>Are you using it too? Tell me!</p>
 <h2>Releases</h2>
+<h3>2.1.0 (05/03/2014)</h3>
+<ul>
+<li>Improve regexp engine</li>
+<li>Improve multithreading support</li>
+<li>Case-insensitive and single-line matching modes for &quot;matches&quot; operator&#39;s regexps</li>
+<li>Added &quot;error_on_warning&quot; argument to &quot;match&quot; in yara-python</li>
+<li>Recognize x64 PE files</li>
+<li>BUGFIX: Mutex handle leak</li>
+<li>BUGFIX: NULL pointer dereferences</li>
+<li>BUGFIX: Buffer overflow</li>
+<li>BUGFIX: Crash while using compiled rules with yara64 in Windows</li>
+<li>BUGFIX: Infinite loop while scanning 64bits process in Windows</li>
+<li>BUGFIX: Side-effect on &quot;externals&quot; argument in yara-python&#39;s &quot;match&quot; function</li>
+<li>BUGFIX: &quot;x of them&quot; not working with strings containing unbounded jumps</li>
+</ul>
 <h3>2.0.0 (26/12/2013)</h3>
 <ul>
 <li>Faster matching algorithm</li>
@@ -253,10 +269,6 @@ twice</li>
 
 
 
-
-
-
-
         </section>
 
         <aside id="sidebar">
@@ -266,7 +278,7 @@ twice</li>
             <small>Download</small>Latest release
           </a>
 
-          <a href="https://github.com/plusvic/yara/releases/download/v2.0.0/YARA.User.s.Manual.pdf" class="btn btn-lg">
+          <a href="https://googledrive.com/host/0BznOMqZ9f3VUek8yN3VvSGdhRFU/YARA-Manual.pdf" class="btn btn-lg">
             <i class="fa fa-book fa-2x"></i>
             <small>Download</small>User's Manual
           </a>
