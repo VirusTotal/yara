@@ -412,7 +412,11 @@ class TestYara(unittest.TestCase):
 
         rules = yara.compile(source='rule test { strings: $a = { 61 [0-3] (62|63) } condition: $a }')
         matches = rules.match(data='abbb')
-        self.assertTrue(matches[0].strings == [(0L, '$a', 'ab')])
+
+        if sys.version_info[0] >= 3:
+          self.assertTrue(matches[0].strings == [(0, '$a', bytes('ab', 'utf-8'))])
+        else:
+          self.assertTrue(matches[0].strings == [(0, '$a', 'ab')])
 
     def testCount(self):
 
