@@ -14,8 +14,8 @@ yara_LDADD = libyara/.libs/libyara.la
 yarac_SOURCES = yarac.c
 yarac_LDADD = libyara/.libs/libyara.la
 
-# man page
-man1_MANS = yara.man
+# man pages
+man1_MANS = yara.man yarac.man
 
 EXTRA_DIST = $(man1_MANS) README.md
 

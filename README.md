@@ -102,6 +102,21 @@ Are you using it too? Tell me!
 
 ## Releases
 
+### 2.1.0 (03/03/2014)
+
+* Improve regexp engine
+* Improve multithreading support
+* Case-insensitive and single-line matching modes for "matches" operator's regexps
+* Added "error_on_warning" argument to "match" in yara-python
+* Recognize x64 PE files
+* BUGFIX: Mutex handle leak
+* BUGFIX: NULL pointer dereferences
+* BUGFIX: Buffer overflow
+* BUGFIX: Crash while using compiled rules with yara64 in Windows
+* BUGFIX: Infinite loop while scanning 64bits process in Windows
+* BUGFIX: Side-effect on "externals" argument in yara-python's "match" function
+* BUGFIX: "x of them" not working with strings containing unbounded jumps
+
 ### 2.0.0 (26/12/2013)
 * Faster matching algorithm
 * Command-line scanner is now multi-threaded
