@@ -102,7 +102,7 @@ typedef int32_t tidx_mask_t;
 #define LOOP_LOCAL_VARS     4
 #define MAX_LOOP_NESTING    4
 #define MAX_INCLUDE_DEPTH   16
-#define MAX_STRING_MATCHES  5000
+#define MAX_STRING_MATCHES  1000000
 
 #define STRING_CHAINING_THRESHOLD 200
 #define LEX_BUF_SIZE  1024
