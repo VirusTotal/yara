@@ -1501,7 +1501,7 @@ int yr_re_exec(
           assert(FALSE);
       }
 
-      if (count >= max_count && action != ACTION_CONTINUE)
+      if (count >= max_count && action == ACTION_NONE)
         action = ACTION_KILL;
 
       switch(action)
