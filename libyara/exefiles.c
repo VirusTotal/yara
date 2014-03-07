@@ -92,6 +92,7 @@ uint64_t yr_pe_rva_to_offset(
 
   section = IMAGE_FIRST_SECTION(pe_header);
   section_rva = 0;
+  section_offset = 0;
 
   while(i < MIN(pe_header->FileHeader.NumberOfSections, 60))
   {
