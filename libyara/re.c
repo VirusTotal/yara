@@ -1351,7 +1351,14 @@ int yr_re_exec(
   int max_count;
   int match;
   int character_size;
+  int kill;
+  int action;
   int result = -1;
+
+  #define ACTION_NONE       0
+  #define ACTION_CONTINUE   1
+  #define ACTION_KILL       2
+  #define ACTION_KILL_TAIL  3
 
   if (_yr_re_alloc_storage(&storage) != ERROR_SUCCESS)
     return -2;
@@ -1380,50 +1387,13 @@ int yr_re_exec(
     while(fiber != NULL)
     {
       ip = fiber->ip;
-
-      if (*ip == RE_OPCODE_MATCH ||
-          *ip == RE_OPCODE_MATCH_AT_START ||
-          *ip == RE_OPCODE_MATCH_AT_END)
-      {
-        if ((*ip == RE_OPCODE_MATCH_AT_START &&
-             input_size - 1 > count - character_size) ||
-            (*ip == RE_OPCODE_MATCH_AT_END &&
-             input_size > count))
-        {
-          fiber = _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
-          continue;
-        }
-
-        result = count;
-
-        if (flags & RE_FLAGS_EXHAUSTIVE)
-        {
-          if (flags & RE_FLAGS_BACKWARDS)
-            callback(input + character_size, count, flags, callback_args);
-          else
-            callback(input_data, count, flags, callback_args);
-
-          fiber = _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
-        }
-        else
-        {
-          _yr_re_fiber_kill_tail(&fibers, &storage->fiber_pool, fiber);
-          fiber = NULL;
-        }
-
-        continue;
-      }
-
-      if (count >= max_count)
-      {
-        fiber = _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
-        continue;
-      }
+      action = ACTION_NONE;
 
       switch(*ip)
       {
         case RE_OPCODE_ANY:
           match = (*input != 0x0A || flags & RE_FLAGS_DOT_ALL);
+          action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
@@ -1432,6 +1402,7 @@ int yr_re_exec(
             match = lowercase[*input] == lowercase[*(ip + 1)];
           else
             match = (*input == *(ip + 1));
+          action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 2;
           break;
 
@@ -1444,6 +1415,7 @@ int yr_re_exec(
           // which can't be case-insensitive.
 
           match = ((*input & mask) == value);
+          action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 3;
           break;
 
@@ -1453,52 +1425,106 @@ int yr_re_exec(
                     CHAR_IN_CLASS(altercase[*input], ip + 1);
           else
             match = CHAR_IN_CLASS(*input, ip + 1);
+          action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 33;
           break;
 
         case RE_OPCODE_WORD_CHAR:
           match = (isalnum(*input) || *input == '_');
+          action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_NON_WORD_CHAR:
           match = (!isalnum(*input) && *input != '_');
+          action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_SPACE:
           match = (*input == ' ' || *input == '\t');
+          action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_NON_SPACE:
           match = (*input != ' ' && *input != '\t');
+          action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_DIGIT:
           match = isdigit(*input);
+          action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_NON_DIGIT:
           match = !isdigit(*input);
+          action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
+          break;
+
+        case RE_OPCODE_MATCH_AT_START:
+          if (flags & RE_FLAGS_BACKWARDS)
+            kill = (input_size - 1 > count - character_size);
+          else
+            kill = (count != 0);
+          action = kill ? ACTION_KILL : ACTION_CONTINUE;
+          break;
+
+        case RE_OPCODE_MATCH_AT_END:
+          assert(!(flags & RE_FLAGS_BACKWARDS));
+          action = input_size > count ? ACTION_KILL : ACTION_CONTINUE;
+          break;
+
+        case RE_OPCODE_MATCH:
+          result = count;
+
+          if (flags & RE_FLAGS_EXHAUSTIVE)
+          {
+            if (flags & RE_FLAGS_BACKWARDS)
+              callback(input + character_size, count, flags, callback_args);
+            else
+              callback(input_data, count, flags, callback_args);
+
+            action = ACTION_KILL;
+          }
+          else
+          {
+            action = ACTION_KILL_TAIL;
+          }
+
           break;
 
         default:
           assert(FALSE);
       }
 
-      if (!match)
-      {
-        fiber = _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
-        continue;
-      }
+      if (count >= max_count && action != ACTION_CONTINUE)
+        action = ACTION_KILL;
 
-      next_fiber = fiber->next;
-      _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
-      fiber = next_fiber;
+      switch(action)
+      {
+        case ACTION_KILL:
+          fiber = _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
+          break;
+
+        case ACTION_KILL_TAIL:
+          _yr_re_fiber_kill_tail(&fibers, &storage->fiber_pool, fiber);
+          fiber = NULL;
+          break;
+
+        case ACTION_CONTINUE:
+          fiber->ip += 1;
+          _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+          break;
+
+        default:
+          next_fiber = fiber->next;
+          _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+          fiber = next_fiber;
+      }
     }
 
     if (flags & RE_FLAGS_WIDE && count + 1 < max_count && *(input + 1) != 0)

@@ -607,6 +607,9 @@ class TestYara(unittest.TestCase):
         r = yara.compile(source='rule test { condition: ext_str matches /^miss/ }', externals={'ext_str': 'mississippi'})
         self.assertTrue(r.match(data='dummy'))
 
+        r = yara.compile(source='rule test { condition: ext_str matches /^iss/ }', externals={'ext_str': 'mississippi'})
+        self.assertFalse(r.match(data='dummy'))
+
         r = yara.compile(source='rule test { condition: ext_str matches /ssi$/ }', externals={'ext_str': 'mississippi'})
         self.assertFalse(r.match(data='dummy'))
 
