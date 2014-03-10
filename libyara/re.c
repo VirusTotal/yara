@@ -1360,6 +1360,12 @@ int yr_re_exec(
   #define ACTION_KILL       2
   #define ACTION_KILL_TAIL  3
 
+  #define prolog if (count >= max_count) \
+      { \
+        action = ACTION_KILL; \
+        break; \
+      }
+
   if (_yr_re_alloc_storage(&storage) != ERROR_SUCCESS)
     return -2;
 
@@ -1392,12 +1398,14 @@ int yr_re_exec(
       switch(*ip)
       {
         case RE_OPCODE_ANY:
+          prolog;
           match = (*input != 0x0A || flags & RE_FLAGS_DOT_ALL);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_LITERAL:
+          prolog;
           if (flags & RE_FLAGS_NO_CASE)
             match = lowercase[*input] == lowercase[*(ip + 1)];
           else
@@ -1407,6 +1415,7 @@ int yr_re_exec(
           break;
 
         case RE_OPCODE_MASKED_LITERAL:
+          prolog;
           value = *(int16_t*)(ip + 1) & 0xFF;
           mask = *(int16_t*)(ip + 1) >> 8;
 
@@ -1420,6 +1429,7 @@ int yr_re_exec(
           break;
 
         case RE_OPCODE_CLASS:
+          prolog;
           if (flags & RE_FLAGS_NO_CASE)
             match = CHAR_IN_CLASS(*input, ip + 1) ||
                     CHAR_IN_CLASS(altercase[*input], ip + 1);
@@ -1430,36 +1440,42 @@ int yr_re_exec(
           break;
 
         case RE_OPCODE_WORD_CHAR:
+          prolog;
           match = (isalnum(*input) || *input == '_');
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_NON_WORD_CHAR:
+          prolog;
           match = (!isalnum(*input) && *input != '_');
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_SPACE:
+          prolog;
           match = (*input == ' ' || *input == '\t');
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_NON_SPACE:
+          prolog;
           match = (*input != ' ' && *input != '\t');
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_DIGIT:
+          prolog;
           match = isdigit(*input);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_NON_DIGIT:
+          prolog;
           match = !isdigit(*input);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
@@ -1500,9 +1516,6 @@ int yr_re_exec(
         default:
           assert(FALSE);
       }
-
-      if (count >= max_count && action == ACTION_NONE)
-        action = ACTION_KILL;
 
       switch(action)
       {
