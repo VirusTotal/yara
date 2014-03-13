@@ -447,6 +447,18 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a1 = "dummy1" $b1 = "dummy1" $b2 = "ssi" condition: any of ($a*, $b*) }',
         ], 'mississipi')
 
+        self.assertTrueRules(["""
+            rule test
+            {
+              strings:
+                $ = /abc/
+                $ = /def/
+                $ = /ghi/
+              condition:
+                for any of ($*) : ( for any i in (1..#): (uint8(@[i] - 1) == 0x00) )
+            }"""
+        ], 'abc\x00def\x00ghi')
+
         self.assertFalseRules([
             'rule test { strings: $a = "ssi" $b = "mis" $c = "oops" condition: all of them }'
         ], 'mississipi')
