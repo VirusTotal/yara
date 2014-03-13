@@ -634,9 +634,11 @@ boolean_expression  : '(' boolean_expression ')'
                         }
                         else // INTEGER_SET_RANGE
                         {
+                          // Pop higher bound of set range
                           yr_parser_emit_with_arg(
                               yyscanner, POP_M, mem_offset + 3, &addr);
 
+                          // Pop lower bound of set range
                           yr_parser_emit_with_arg(
                               yyscanner, POP_M, mem_offset, NULL);
                         }
@@ -653,9 +655,14 @@ boolean_expression  : '(' boolean_expression ')'
                         compiler->loop_depth--;
                         mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
 
+                        // The value at the top of the stack is 1 if latest
+                        // expression was true or 0 otherwise. Add this value
+                        // to the counter for number of expressions evaluating
+                        // to true.
                         yr_parser_emit_with_arg(
                             yyscanner, ADD_M, mem_offset + 1, NULL);
 
+                        // Increment iterations counter
                         yr_parser_emit_with_arg(
                             yyscanner, INCR_M, mem_offset + 2, NULL);
 
@@ -670,15 +677,20 @@ boolean_expression  : '(' boolean_expression ')'
                         }
                         else // INTEGER_SET_RANGE
                         {
+                          // Increment lower bound of integer set
                           yr_parser_emit_with_arg(
                               yyscanner, INCR_M, mem_offset, NULL);
 
+                          // Push lower bound of integer set
                           yr_parser_emit_with_arg(
                               yyscanner, PUSH_M, mem_offset, NULL);
 
+                          // Push higher bound of integer set
                           yr_parser_emit_with_arg(
                               yyscanner, PUSH_M, mem_offset + 3, NULL);
 
+                          // Compare higher bound with lower bound, do loop again
+                          // if lower bound is still lower or equal than higher bound
                           yr_parser_emit_with_arg_reloc(
                               yyscanner,
                               JLE,
@@ -720,6 +732,10 @@ boolean_expression  : '(' boolean_expression ')'
                           compiler->last_result = \
                             ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 
+                        if (compiler->loop_for_of_mem_offset != -1)
+                          compiler->last_result = \
+                            ERROR_NESTED_FOR_OF_LOOP;
+
                         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
                         yr_parser_emit_with_arg(
@@ -732,7 +748,9 @@ boolean_expression  : '(' boolean_expression ')'
                         yr_parser_emit_with_arg(
                             yyscanner, POP_M, mem_offset, &addr);
 
+                        compiler->loop_for_of_mem_offset = mem_offset;
                         compiler->loop_address[compiler->loop_depth] = addr;
+                        compiler->loop_identifier[compiler->loop_depth] = NULL;
                         compiler->loop_depth++;
                       }
                       '(' boolean_expression ')'
@@ -741,6 +759,8 @@ boolean_expression  : '(' boolean_expression ')'
                         int mem_offset;
 
                         compiler->loop_depth--;
+                        compiler->loop_for_of_mem_offset = -1;
+
                         mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
 
                         // Increment counter by the value returned by the
@@ -877,6 +897,7 @@ integer_enumeration : expression
 
 string_set  : '('
               {
+                // Push end-of-list marker
                 yr_parser_emit_with_arg(yyscanner, PUSH, UNDEFINED, NULL);
               }
               string_enumeration ')'

@@ -624,13 +624,13 @@ static const yytype_uint16 yyrline[] =
      324,   325,   329,   345,   358,   371,   387,   388,   392,   406,
      405,   423,   439,   440,   444,   445,   446,   447,   451,   452,
      456,   460,   490,   531,   535,   546,   557,   561,   572,   578,
-     615,   577,   714,   713,   782,   786,   789,   793,   797,   801,
-     805,   809,   813,   817,   821,   825,   832,   851,   865,   866,
-     870,   874,   875,   879,   878,   883,   890,   891,   894,   899,
-     906,   907,   911,   918,   919,   923,   927,   931,   935,   939,
-     943,   947,   951,   955,   966,   977,   991,  1018,  1022,  1026,
-    1030,  1034,  1038,  1042,  1046,  1050,  1054,  1058,  1064,  1065,
-    1066
+     615,   577,   726,   725,   802,   806,   809,   813,   817,   821,
+     825,   829,   833,   837,   841,   845,   852,   871,   885,   886,
+     890,   894,   895,   899,   898,   904,   911,   912,   915,   920,
+     927,   928,   932,   939,   940,   944,   948,   952,   956,   960,
+     964,   968,   972,   976,   987,   998,  1012,  1039,  1043,  1047,
+    1051,  1055,  1059,  1063,  1067,  1071,  1075,  1079,  1085,  1086,
+    1087
 };
 #endif
 
@@ -2342,9 +2342,11 @@ yyreduce:
                         }
                         else // INTEGER_SET_RANGE
                         {
+                          // Pop higher bound of set range
                           yr_parser_emit_with_arg(
                               yyscanner, POP_M, mem_offset + 3, &addr);
 
+                          // Pop lower bound of set range
                           yr_parser_emit_with_arg(
                               yyscanner, POP_M, mem_offset, NULL);
                         }
@@ -2356,7 +2358,7 @@ yyreduce:
     break;
 
   case 51:
-#line 649 "grammar.y"
+#line 651 "grammar.y"
     {
                         YR_COMPILER* compiler = yyget_extra(yyscanner);
                         int mem_offset;
@@ -2364,9 +2366,14 @@ yyreduce:
                         compiler->loop_depth--;
                         mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
 
+                        // The value at the top of the stack is 1 if latest
+                        // expression was true or 0 otherwise. Add this value
+                        // to the counter for number of expressions evaluating
+                        // to true.
                         yr_parser_emit_with_arg(
                             yyscanner, ADD_M, mem_offset + 1, NULL);
 
+                        // Increment iterations counter
                         yr_parser_emit_with_arg(
                             yyscanner, INCR_M, mem_offset + 2, NULL);
 
@@ -2381,15 +2388,20 @@ yyreduce:
                         }
                         else // INTEGER_SET_RANGE
                         {
+                          // Increment lower bound of integer set
                           yr_parser_emit_with_arg(
                               yyscanner, INCR_M, mem_offset, NULL);
 
+                          // Push lower bound of integer set
                           yr_parser_emit_with_arg(
                               yyscanner, PUSH_M, mem_offset, NULL);
 
+                          // Push higher bound of integer set
                           yr_parser_emit_with_arg(
                               yyscanner, PUSH_M, mem_offset + 3, NULL);
 
+                          // Compare higher bound with lower bound, do loop again
+                          // if lower bound is still lower or equal than higher bound
                           yr_parser_emit_with_arg_reloc(
                               yyscanner,
                               JLE,
@@ -2424,7 +2436,7 @@ yyreduce:
     break;
 
   case 52:
-#line 714 "grammar.y"
+#line 726 "grammar.y"
     {
                         YR_COMPILER* compiler = yyget_extra(yyscanner);
                         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
@@ -2433,6 +2445,10 @@ yyreduce:
                         if (compiler->loop_depth == MAX_LOOP_NESTING)
                           compiler->last_result = \
                             ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
+
+                        if (compiler->loop_for_of_mem_offset != -1)
+                          compiler->last_result = \
+                            ERROR_NESTED_FOR_OF_LOOP;
 
                         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
@@ -2446,18 +2462,22 @@ yyreduce:
                         yr_parser_emit_with_arg(
                             yyscanner, POP_M, mem_offset, &addr);
 
+                        compiler->loop_for_of_mem_offset = mem_offset;
                         compiler->loop_address[compiler->loop_depth] = addr;
+                        compiler->loop_identifier[compiler->loop_depth] = NULL;
                         compiler->loop_depth++;
                       }
     break;
 
   case 53:
-#line 739 "grammar.y"
+#line 757 "grammar.y"
     {
                         YR_COMPILER* compiler = yyget_extra(yyscanner);
                         int mem_offset;
 
                         compiler->loop_depth--;
+                        compiler->loop_for_of_mem_offset = -1;
+
                         mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
 
                         // Increment counter by the value returned by the
@@ -2499,90 +2519,90 @@ yyreduce:
     break;
 
   case 54:
-#line 783 "grammar.y"
+#line 803 "grammar.y"
     {
                         yr_parser_emit(yyscanner, OF, NULL);
                       }
     break;
 
   case 55:
-#line 787 "grammar.y"
+#line 807 "grammar.y"
     {
                       }
     break;
 
   case 56:
-#line 790 "grammar.y"
+#line 810 "grammar.y"
     {
                         yr_parser_emit(yyscanner, NOT, NULL);
                       }
     break;
 
   case 57:
-#line 794 "grammar.y"
+#line 814 "grammar.y"
     {
                         yr_parser_emit(yyscanner, AND, NULL);
                       }
     break;
 
   case 58:
-#line 798 "grammar.y"
+#line 818 "grammar.y"
     {
                         yr_parser_emit(yyscanner, OR, NULL);
                       }
     break;
 
   case 59:
-#line 802 "grammar.y"
+#line 822 "grammar.y"
     {
                         yr_parser_emit(yyscanner, LT, NULL);
                       }
     break;
 
   case 60:
-#line 806 "grammar.y"
+#line 826 "grammar.y"
     {
                         yr_parser_emit(yyscanner, GT, NULL);
                       }
     break;
 
   case 61:
-#line 810 "grammar.y"
+#line 830 "grammar.y"
     {
                         yr_parser_emit(yyscanner, LE, NULL);
                       }
     break;
 
   case 62:
-#line 814 "grammar.y"
+#line 834 "grammar.y"
     {
                         yr_parser_emit(yyscanner, GE, NULL);
                       }
     break;
 
   case 63:
-#line 818 "grammar.y"
+#line 838 "grammar.y"
     {
                         yr_parser_emit(yyscanner, EQ, NULL);
                       }
     break;
 
   case 64:
-#line 822 "grammar.y"
+#line 842 "grammar.y"
     {
                         yr_parser_emit(yyscanner, EQ, NULL);
                       }
     break;
 
   case 65:
-#line 826 "grammar.y"
+#line 846 "grammar.y"
     {
                         yr_parser_emit(yyscanner, NEQ, NULL);
                       }
     break;
 
   case 66:
-#line 833 "grammar.y"
+#line 853 "grammar.y"
     {
           YR_COMPILER* compiler = yyget_extra(yyscanner);
           SIZED_STRING* sized_string = (yyvsp[(1) - (1)].sized_string);
@@ -2604,7 +2624,7 @@ yyreduce:
     break;
 
   case 67:
-#line 852 "grammar.y"
+#line 872 "grammar.y"
     {
           int result = yr_parser_reduce_external(
               yyscanner,
@@ -2618,24 +2638,25 @@ yyreduce:
     break;
 
   case 68:
-#line 865 "grammar.y"
+#line 885 "grammar.y"
     { (yyval.integer) = INTEGER_SET_ENUMERATION; }
     break;
 
   case 69:
-#line 866 "grammar.y"
+#line 886 "grammar.y"
     { (yyval.integer) = INTEGER_SET_RANGE; }
     break;
 
   case 73:
-#line 879 "grammar.y"
+#line 899 "grammar.y"
     {
+                // Push end-of-list marker
                 yr_parser_emit_with_arg(yyscanner, PUSH, UNDEFINED, NULL);
               }
     break;
 
   case 75:
-#line 884 "grammar.y"
+#line 905 "grammar.y"
     {
                 yr_parser_emit_with_arg(yyscanner, PUSH, UNDEFINED, NULL);
                 yr_parser_emit_pushes_for_strings(yyscanner, "$*");
@@ -2643,7 +2664,7 @@ yyreduce:
     break;
 
   case 78:
-#line 895 "grammar.y"
+#line 916 "grammar.y"
     {
                             yr_parser_emit_pushes_for_strings(yyscanner, (yyvsp[(1) - (1)].c_string));
                             yr_free((yyvsp[(1) - (1)].c_string));
@@ -2651,7 +2672,7 @@ yyreduce:
     break;
 
   case 79:
-#line 900 "grammar.y"
+#line 921 "grammar.y"
     {
                             yr_parser_emit_pushes_for_strings(yyscanner, (yyvsp[(1) - (1)].c_string));
                             yr_free((yyvsp[(1) - (1)].c_string));
@@ -2659,84 +2680,84 @@ yyreduce:
     break;
 
   case 81:
-#line 908 "grammar.y"
+#line 929 "grammar.y"
     {
                     yr_parser_emit_with_arg(yyscanner, PUSH, UNDEFINED, NULL);
                   }
     break;
 
   case 82:
-#line 912 "grammar.y"
+#line 933 "grammar.y"
     {
                     yr_parser_emit_with_arg(yyscanner, PUSH, 1, NULL);
                   }
     break;
 
   case 84:
-#line 920 "grammar.y"
+#line 941 "grammar.y"
     {
                 yr_parser_emit(yyscanner, SIZE, NULL);
               }
     break;
 
   case 85:
-#line 924 "grammar.y"
+#line 945 "grammar.y"
     {
                 yr_parser_emit(yyscanner, ENTRYPOINT, NULL);
               }
     break;
 
   case 86:
-#line 928 "grammar.y"
+#line 949 "grammar.y"
     {
                 yr_parser_emit(yyscanner, INT8, NULL);
               }
     break;
 
   case 87:
-#line 932 "grammar.y"
+#line 953 "grammar.y"
     {
                 yr_parser_emit(yyscanner, INT16, NULL);
               }
     break;
 
   case 88:
-#line 936 "grammar.y"
+#line 957 "grammar.y"
     {
                 yr_parser_emit(yyscanner, INT32, NULL);
               }
     break;
 
   case 89:
-#line 940 "grammar.y"
+#line 961 "grammar.y"
     {
                 yr_parser_emit(yyscanner, UINT8, NULL);
               }
     break;
 
   case 90:
-#line 944 "grammar.y"
+#line 965 "grammar.y"
     {
                 yr_parser_emit(yyscanner, UINT16, NULL);
               }
     break;
 
   case 91:
-#line 948 "grammar.y"
+#line 969 "grammar.y"
     {
                 yr_parser_emit(yyscanner, UINT32, NULL);
               }
     break;
 
   case 92:
-#line 952 "grammar.y"
+#line 973 "grammar.y"
     {
                 yr_parser_emit_with_arg(yyscanner, PUSH, (yyvsp[(1) - (1)].integer), NULL);
               }
     break;
 
   case 93:
-#line 956 "grammar.y"
+#line 977 "grammar.y"
     {
                 int result = yr_parser_reduce_string_identifier(
                     yyscanner,
@@ -2750,7 +2771,7 @@ yyreduce:
     break;
 
   case 94:
-#line 967 "grammar.y"
+#line 988 "grammar.y"
     {
                 int result = yr_parser_reduce_string_identifier(
                     yyscanner,
@@ -2764,7 +2785,7 @@ yyreduce:
     break;
 
   case 95:
-#line 978 "grammar.y"
+#line 999 "grammar.y"
     {
                 int result = yr_parser_emit_with_arg(yyscanner, PUSH, 1, NULL);
 
@@ -2781,7 +2802,7 @@ yyreduce:
     break;
 
   case 96:
-#line 992 "grammar.y"
+#line 1013 "grammar.y"
     {
                 YR_COMPILER* compiler = yyget_extra(yyscanner);
                 int var_index;
@@ -2811,77 +2832,77 @@ yyreduce:
     break;
 
   case 97:
-#line 1019 "grammar.y"
+#line 1040 "grammar.y"
     {
                 yr_parser_emit(yyscanner, ADD, NULL);
               }
     break;
 
   case 98:
-#line 1023 "grammar.y"
+#line 1044 "grammar.y"
     {
                 yr_parser_emit(yyscanner, SUB, NULL);
               }
     break;
 
   case 99:
-#line 1027 "grammar.y"
+#line 1048 "grammar.y"
     {
                 yr_parser_emit(yyscanner, MUL, NULL);
               }
     break;
 
   case 100:
-#line 1031 "grammar.y"
+#line 1052 "grammar.y"
     {
                 yr_parser_emit(yyscanner, DIV, NULL);
               }
     break;
 
   case 101:
-#line 1035 "grammar.y"
+#line 1056 "grammar.y"
     {
                 yr_parser_emit(yyscanner, MOD, NULL);
               }
     break;
 
   case 102:
-#line 1039 "grammar.y"
+#line 1060 "grammar.y"
     {
                 yr_parser_emit(yyscanner, XOR, NULL);
               }
     break;
 
   case 103:
-#line 1043 "grammar.y"
+#line 1064 "grammar.y"
     {
                 yr_parser_emit(yyscanner, AND, NULL);
               }
     break;
 
   case 104:
-#line 1047 "grammar.y"
+#line 1068 "grammar.y"
     {
                 yr_parser_emit(yyscanner, OR, NULL);
               }
     break;
 
   case 105:
-#line 1051 "grammar.y"
+#line 1072 "grammar.y"
     {
                 yr_parser_emit(yyscanner, NEG, NULL);
               }
     break;
 
   case 106:
-#line 1055 "grammar.y"
+#line 1076 "grammar.y"
     {
                 yr_parser_emit(yyscanner, SHL, NULL);
               }
     break;
 
   case 107:
-#line 1059 "grammar.y"
+#line 1080 "grammar.y"
     {
                 yr_parser_emit(yyscanner, SHR, NULL);
               }
@@ -2889,7 +2910,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 2893 "grammar.c"
+#line 2914 "grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -3103,7 +3124,7 @@ yyreturn:
 }
 
 
-#line 1069 "grammar.y"
+#line 1090 "grammar.y"
 
 
 

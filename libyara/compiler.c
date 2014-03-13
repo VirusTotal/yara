@@ -51,6 +51,7 @@ int yr_compiler_create(
   new_compiler->current_rule_flags = 0;
   new_compiler->allow_includes = 1;
   new_compiler->loop_depth = 0;
+  new_compiler->loop_for_of_mem_offset = -1;
   new_compiler->compiled_rules_arena = NULL;
   new_compiler->externals_count = 0;
   new_compiler->namespaces_count = 0;
@@ -757,6 +758,11 @@ char* yr_compiler_get_error_message(
       snprintf(buffer,
           buffer_size,
           "loop nesting limit exceeded");
+      break;
+    case ERROR_NESTED_FOR_OF_LOOP:
+      snprintf(buffer,
+          buffer_size,
+          "'for <quantifier> of <string set>' loops can't be nested");
       break;
     case ERROR_INTERNAL_FATAL_ERROR:
       snprintf(

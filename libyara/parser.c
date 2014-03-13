@@ -692,12 +692,12 @@ int yr_parser_reduce_string_identifier(
 
   if (strcmp(identifier, "$") == 0)
   {
-    if (compiler->loop_depth > 0)
+    if (compiler->loop_for_of_mem_offset >= 0)
     {
       yr_parser_emit_with_arg(
           yyscanner,
           PUSH_M,
-          LOOP_LOCAL_VARS * (compiler->loop_depth - 1),
+          compiler->loop_for_of_mem_offset,
           NULL);
 
       yr_parser_emit(yyscanner, instruction, NULL);
@@ -851,7 +851,8 @@ int yr_parser_lookup_loop_variable(
 
   for (i = 0; i < compiler->loop_depth; i++)
   {
-    if (strcmp(identifier, compiler->loop_identifier[i]) == 0)
+    if (compiler->loop_identifier[i] != NULL &&
+        strcmp(identifier, compiler->loop_identifier[i]) == 0)
       return i;
   }
 

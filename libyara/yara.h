@@ -88,7 +88,7 @@ typedef int32_t tidx_mask_t;
 #define ERROR_INVALID_ARGUMENT                  29
 #define ERROR_TOO_MANY_MATCHES                  30
 #define ERROR_INTERNAL_FATAL_ERROR              31
-
+#define ERROR_NESTED_FOR_OF_LOOP                32
 
 #define CALLBACK_MSG_RULE_MATCHING              1
 #define CALLBACK_MSG_RULE_NOT_MATCHING          2
@@ -563,6 +563,7 @@ typedef struct _YR_COMPILER
   int8_t*             loop_address[MAX_LOOP_NESTING];
   char*               loop_identifier[MAX_LOOP_NESTING];
   int                 loop_depth;
+  int                 loop_for_of_mem_offset;
 
   int                 allow_includes;
 
