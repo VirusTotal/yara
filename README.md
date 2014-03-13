@@ -95,7 +95,7 @@ the same.
 * [Fidelis XPS](http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
 * [RSA ECAT](http://www.emc.com/security/rsa-ecat.htm)
 * [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
-* [ThreadConnect](http://www.threatconnect.com)
+* [ThreatConnect](http://www.threatconnect.com)
 * [YALIH](https://github.com/Masood-M/YALIH)
 
 Are you using it too? Tell me!
