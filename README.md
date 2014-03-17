@@ -97,6 +97,7 @@ the same.
 * [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
 * [ThreatConnect](http://www.threatconnect.com)
 * [YALIH](https://github.com/Masood-M/YALIH)
+* [Bayshore Networks, Inc.](http://www.bayshorenetworks.com)
 
 Are you using it too? Tell me!
 
