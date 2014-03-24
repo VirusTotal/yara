@@ -30,7 +30,7 @@ autogen() {
       die "Did not find a supported libtoolize"
     fi
   fi
-  $LIBTOOLIZE --force --quiet || exit 1
+  $LIBTOOLIZE --force || exit 1
 
   echo "aclocal..."
   if test x$ACLOCAL = x; then
@@ -61,4 +61,10 @@ autogen() {
 }
 
 echo "== bootstraping yara"
+
+if [ ! -d m4 ]; then
+  echo "mkdir m4..."
+  mkdir m4
+fi
+
 autogen
