@@ -345,12 +345,20 @@ hex_digit     [0-9a-fA-F]
 }
 
 
-<char_class>(.|\n) {
+<char_class>. {
 
-  // A character class (i.e: [0-9a-f]) is represented by a 256-bits vector,
-  // here we set to 1 the vector's bit corresponding to the input character.
+  if (yytext[0] >= 32 && yytext[0] < 127)
+  {
+    // A character class (i.e: [0-9a-f]) is represented by a 256-bits vector,
+    // here we set to 1 the vector's bit corresponding to the input character.
 
-  LEX_ENV->class_vector[yytext[0] / 8] |= 1 << yytext[0] % 8;
+    LEX_ENV->class_vector[yytext[0] / 8] |= 1 << yytext[0] % 8;
+  }
+  else
+  {
+    yyerror(yyscanner, lex_env, "non-ascii character");
+    yyterminate();
+  }
 }
 
 
