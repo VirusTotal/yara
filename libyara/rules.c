@@ -199,6 +199,23 @@ int _yr_scan_fast_hex_re_exec(
 
     while(!stop)
     {
+      if (*ip == RE_OPCODE_MATCH)
+      {
+        if (flags & RE_FLAGS_EXHAUSTIVE)
+        {
+            callback(
+               flags & RE_FLAGS_BACKWARDS ? current_input + 1 : input,
+               matches,
+               flags,
+               callback_args);
+            break;
+        }
+        else
+        {
+            return matches;
+        }
+      }
+
       if (flags & RE_FLAGS_BACKWARDS)
       {
         if (current_input <= input - input_size)
@@ -282,23 +299,6 @@ int _yr_scan_fast_hex_re_exec(
 
         default:
           assert(FALSE);
-      }
-
-      if (*ip == RE_OPCODE_MATCH)
-      {
-        if (flags & RE_FLAGS_EXHAUSTIVE)
-        {
-          callback(
-            flags & RE_FLAGS_BACKWARDS ? current_input + 1 : input,
-            matches,
-            flags,
-            callback_args);
-          stop = TRUE;
-        }
-        else
-        {
-          return matches;
-        }
       }
     }
   }
@@ -552,27 +552,13 @@ int _yr_scan_match_callback(
   YR_STRING* string = callback_args->string;
   YR_MATCH* new_match;
 
-  int character_size;
   int result = ERROR_SUCCESS;
   int tidx = callback_args->tidx;
 
   size_t match_offset = match_data - callback_args->data;
 
-  if (flags & RE_FLAGS_WIDE)
-    character_size = 2;
-  else
-    character_size = 1;
-
-  // match_length > 0 means that we have found some backward matching
-  // but backward matching overlaps one character with forward matching,
-  // we decrement match_length here to compensate that overlapping.
-
-  if (match_length > 0)
-    match_length -= character_size;
-
   // total match length is the sum of backward and forward matches.
-
-  match_length = match_length + callback_args->forward_matches;
+  match_length += callback_args->forward_matches;
 
   if (callback_args->full_word)
   {
@@ -718,8 +704,8 @@ int _yr_scan_verify_re_match(
   {
     backward_matches = exec(
         ac_match->backward_code,
-        data + offset,
-        offset + 1,
+        data + offset - 1,
+        offset,
         flags | RE_FLAGS_BACKWARDS | RE_FLAGS_EXHAUSTIVE,
         _yr_scan_match_callback,
         (void*) &callback_args);

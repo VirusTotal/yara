@@ -728,13 +728,14 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
 
       append_current_leaf_to_node(current_node);
 
-      if (re_node->start > 0)
+      for (i = 0; i < re_node->start; i++)
       {
         current_node = _yr_atoms_extract_from_re_node(
             re_node->left, atom_tree, current_node);
-
-        append_current_leaf_to_node(current_node);
       }
+
+      if (re_node->start > 0)
+        append_current_leaf_to_node(current_node);
 
       return current_node;
 

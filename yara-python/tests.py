@@ -112,6 +112,7 @@ RE_TESTS = [
   ('(a+|b)*', 'ab', SUCCEED, 'ab'),
   ('a|b|c|d|e', 'e', SUCCEED, 'e'),
   ('(a|b|c|d|e)f', 'ef', SUCCEED, 'ef'),
+  ('.b{2}', 'abb', SUCCEED, 'abb'),
   ('ab{1}c', 'abc', SUCCEED, 'abc'),
   ('ab{1,2}c', 'abbc', SUCCEED, 'abbc'),
   ('ab{1,}c', 'abbbc', SUCCEED, 'abbbc'),
