@@ -191,27 +191,34 @@ include[ \t]+\"         {
       strncpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
       buffer[sizeof(buffer)-1] = '\0';
 
+      f = buffer;
+
       // SECURITY: Potential for directory traversal here.
       fh = fopen(buffer, "r");
 
       // if include file was not found relative to current source file,
       // try to open it with path as specified by user (maybe user wrote
       // a full path)
+
       if (fh == NULL)
       {
+        f = yyextra->lex_buf;
+
         // SECURITY: Potential for directory traversal here.
         fh = fopen(yyextra->lex_buf, "r");
       }
     }
     else
     {
+      f = yyextra->lex_buf;
+
       // SECURITY: Potential for directory traversal here.
       fh = fopen(yyextra->lex_buf, "r");
     }
 
     if (fh != NULL)
     {
-      int error_code = yr_compiler_push_file_name(compiler, yyextra->lex_buf);
+      int error_code = yr_compiler_push_file_name(compiler, f);
 
       if (error_code != ERROR_SUCCESS)
       {
