@@ -1465,14 +1465,40 @@ int yr_re_exec(
 
         case RE_OPCODE_SPACE:
           prolog;
-          match = (*input == ' ' || *input == '\t');
+          switch(*input)
+          {
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+            case '\v':
+            case '\f':
+              match = TRUE;
+              break;
+
+            default:
+              match = FALSE;
+          }
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_NON_SPACE:
           prolog;
-          match = (*input != ' ' && *input != '\t');
+          switch(*input)
+          {
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+            case '\v':
+            case '\f':
+              match = FALSE;
+              break;
+
+            default:
+              match = TRUE;
+          }
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
