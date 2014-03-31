@@ -98,6 +98,7 @@ the same.
 * [ThreatConnect](http://www.threatconnect.com)
 * [YALIH](https://github.com/Masood-M/YALIH)
 * [Bayshore Networks, Inc.](http://www.bayshorenetworks.com)
+* [ThreatStream, Inc.](http://threatstream.com)
 
 Are you using it too? Tell me!
 
