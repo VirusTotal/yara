@@ -184,6 +184,9 @@ int _yr_scan_fast_hex_re_exec(
 
   increment = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
 
+  if (flags & RE_FLAGS_BACKWARDS)
+    input--;
+
   code_stack[sp] = code;
   input_stack[sp] = input;
   matches_stack[sp] = 0;
@@ -704,7 +707,7 @@ int _yr_scan_verify_re_match(
   {
     backward_matches = exec(
         ac_match->backward_code,
-        data + offset - 1,
+        data + offset,
         offset,
         flags | RE_FLAGS_BACKWARDS | RE_FLAGS_EXHAUSTIVE,
         _yr_scan_match_callback,

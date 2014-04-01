@@ -1384,8 +1384,12 @@ int yr_re_exec(
   else
     character_size = 1;
 
-  max_count = min(input_size, RE_SCAN_LIMIT);
   input = input_data;
+
+  if (flags & RE_FLAGS_BACKWARDS)
+    input -= character_size;
+
+  max_count = min(input_size, RE_SCAN_LIMIT);
   count = 0;
 
   fiber = _yr_re_fiber_create(&storage->fiber_pool);
