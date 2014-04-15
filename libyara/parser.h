@@ -53,11 +53,6 @@ YR_EXTERNAL_VARIABLE* yr_parser_lookup_external_variable(
   const char* identifier);
 
 
-void yr_parser_push_string_pointers(
-    yyscan_t yyscanner,
-    const char* identifier);
-
-
 int yr_parser_reduce_rule_declaration(
     yyscan_t yyscanner,
     int flags,
