@@ -151,8 +151,8 @@ YR_ARENA_PAGE* _yr_arena_page_for_address(
 //
 // Args:
 //    YR_ARENA* arena    - Pointer the arena
-//    void* address   - Base address
-//    va_list offsets - List of offsets relative to base address
+//    void* address      - Base address
+//    va_list offsets    - List of offsets relative to base address
 //
 // Returns:
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
@@ -211,9 +211,9 @@ int _yr_arena_make_relocatable(
 //
 // Args:
 //    size_t initial_size  - Initial size
-//    int flags         - Flags
+//    int flags            - Flags
 //    YR_ARENA** arena     - Address where a pointer to the new arena will be
-//                        written to.
+//                           written to.
 //
 // Returns:
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
@@ -325,8 +325,8 @@ void* yr_arena_base_address(
 //
 // Args:
 //    YR_ARENA* arena  - Pointer to the arena.
-//    void* address - Base address.
-//    int offset    - Offset.
+//    void* address    - Base address.
+//    int offset       - Offset.
 //
 // Returns:
 //    A pointer
@@ -607,12 +607,13 @@ int yr_arena_allocate_memory(
 //        EOL);
 //
 // Args:
-//    YR_ARENA* arena - Pointer to the arena.
-//    size_t size - Size of the region to be allocated.
+//    YR_ARENA* arena         - Pointer to the arena.
+//    size_t size             - Size of the region to be allocated.
 //    void** allocated_memory - Address of a pointer to newly allocated
 //                              region.
-//    ...          - Variable number of offsets relative to beginning of
-//                   the struct. Offsets are if type size_t.
+//    ...                     - Variable number of offsets relative to the
+//                              beginning of the struct. Offsets are of type
+//                              size_t.
 //
 // Returns:
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
@@ -649,9 +650,9 @@ int yr_arena_allocate_struct(
 //
 // Args:
 //    YR_ARENA* arena    - Pointer to the arena.
-//    void* base      - Address within the arena.
-//    ...             - Variable number of size_t arguments with offsets
-//                      relative to base.
+//    void* base         - Address within the arena.
+//    ...                - Variable number of size_t arguments with offsets
+//                         relative to base.
 //
 // Returns:
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
@@ -682,10 +683,10 @@ int yr_arena_make_relocatable(
 //
 // Args:
 //    YR_ARENA* arena        - Pointer to the arena.
-//    void* data          - Pointer to data to be written.
-//    size_t size        - Size of data.
-//    void** written_data - Address where a pointer to the written data will
-//                          be returned.
+//    void* data             - Pointer to data to be written.
+//    size_t size            - Size of data.
+//    void** written_data    - Address where a pointer to the written data will
+//                             be returned.
 //
 // Returns:
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
@@ -728,7 +729,7 @@ int yr_arena_write_data(
 // Writes string to the arena.
 //
 // Args:
-//    YR_ARENA* arena           - Pointer to the arena.
+//    YR_ARENA* arena        - Pointer to the arena.
 //    const char* string     - Pointer to string to be written.
 //    void** written_string  - Address where a pointer to the written data will
 //                             be returned.
@@ -786,8 +787,8 @@ int yr_arena_append(
 //
 // Args:
 //    YR_ARENA* arena        - Pointer to the arena.
-//    YR_ARENA** duplicated  - Address where a pointer to the new arena arena will
-//                          be returned.
+//    YR_ARENA** duplicated  - Address where a pointer to the new arena arena
+//                             will be returned.
 //
 // Returns:
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
@@ -880,7 +881,7 @@ int yr_arena_duplicate(
 //
 // Args:
 //    YR_ARENA* arena          - Pointer to the arena.
-//    const char* filename  - File path.
+//    const char* filename     - File path.
 //
 // Returns:
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
@@ -972,7 +973,7 @@ int yr_arena_save(
 //
 // Args:
 //    const char* filename  - File path.
-//    YR_ARENA**               - Address where a pointer to the loaded arena
+//    YR_ARENA**            - Address where a pointer to the loaded arena
 //                            will be returned.
 //
 // Returns:
