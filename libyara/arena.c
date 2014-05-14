@@ -412,7 +412,7 @@ int yr_arena_coalesce(
 
   while(page != NULL)
   {
-    total_size += page->size;
+    total_size += page->used;
     page = page->next;
   }
 
@@ -541,9 +541,6 @@ int yr_arena_reserve_memory(
     }
     else
     {
-      if (arena->flags & ARENA_FLAGS_FIXED_SIZE)
-        return ERROR_INSUFICIENT_MEMORY;
-
       new_page = _yr_arena_new_page(new_page_size);
 
       if (new_page == NULL)
