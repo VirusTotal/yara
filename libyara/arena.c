@@ -489,30 +489,34 @@ int yr_arena_coalesce(
 
 
 //
-// yr_arena_allocate_memory
+// yr_arena_reserve_memory
 //
-// Allocates memory within the arena.
+// Ensures that the arena have enough contiguous memory for future allocations.
+// if the available space in the current page is lower than "size", a new page
+// is allocated.
 //
 // Args:
-//    YR_ARENA* arena - Pointer to the arena.
-//    size_t size - Size of the region to be allocated.
-//    void** allocated_memory - Address of a pointer to newly allocated
-//                              region.
+//    YR_ARENA* arena         - Pointer to the arena.
+//    size_t size             - Size of the region to be reserved.
+//
 // Returns:
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
 //
 
-int yr_arena_allocate_memory(
+
+int yr_arena_reserve_memory(
     YR_ARENA* arena,
-    size_t size,
-    void** allocated_memory)
+    size_t size)
 {
+  YR_ARENA_PAGE* new_page;
   size_t new_page_size;
   void* new_page_address;
-  YR_ARENA_PAGE* new_page;
 
   if (size > free_space(arena->current_page))
   {
+    if (arena->flags & ARENA_FLAGS_FIXED_SIZE)
+      return ERROR_INSUFICIENT_MEMORY;
+
     // Requested space is bigger than current page's empty space,
     // lets calculate the size for a new page.
 
@@ -552,13 +556,37 @@ int yr_arena_allocate_memory(
     }
   }
 
+  return ERROR_SUCCESS;
+}
+
+
+//
+// yr_arena_allocate_memory
+//
+// Allocates memory within the arena.
+//
+// Args:
+//    YR_ARENA* arena         - Pointer to the arena.
+//    size_t size             - Size of the region to be allocated.
+//    void** allocated_memory - Address of a pointer to newly allocated
+//                              region.
+// Returns:
+//    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
+//
+
+int yr_arena_allocate_memory(
+    YR_ARENA* arena,
+    size_t size,
+    void** allocated_memory)
+{
+  FAIL_ON_ERROR(yr_arena_reserve_memory(arena, size));
+
   *allocated_memory = arena->current_page->address + \
                       arena->current_page->used;
 
   arena->current_page->used += size;
 
   return ERROR_SUCCESS;
-
 }
 
 
@@ -744,6 +772,7 @@ int yr_arena_append(
     YR_ARENA* source_arena)
 {
   target_arena->current_page->next = source_arena->page_list_head;
+  source_arena->page_list_head->prev = target_arena->current_page;
   target_arena->current_page = source_arena->current_page;
 
   yr_free(source_arena);

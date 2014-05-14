@@ -42,8 +42,10 @@ order to avoid confusion with operating system threads.
 #include "re.h"
 
 
-#define RE_MAX_STACK    1024
-#define RE_SCAN_LIMIT   4096
+#define RE_MAX_STACK      1024
+#define RE_MAX_CODE_SIZE  4096
+#define RE_SCAN_LIMIT     4096
+
 
 #define EMIT_BACKWARDS                1
 #define DONT_UPDATE_FORWARDS_CODE     2
@@ -938,7 +940,14 @@ int yr_re_emit_code(
 {
   int code_size;
 
+  // Ensure that we have enough contiguos memory space in the arena to
+  // contain the regular expression code. The code can't span over multiple
+  // non-contiguos pages.
+
+  yr_arena_reserve_memory(arena, RE_MAX_CODE_SIZE);
+
   // Emit code for matching the regular expressions forwards.
+
   FAIL_ON_ERROR(_yr_re_emit(
       re->root_node,
       arena,
@@ -946,19 +955,26 @@ int yr_re_emit_code(
       NULL,
       &code_size));
 
+  assert(code_size < RE_MAX_CODE_SIZE);
+
   FAIL_ON_ERROR(_yr_emit_inst(
       arena,
       RE_OPCODE_MATCH,
       NULL,
       &code_size));
 
+  yr_arena_reserve_memory(arena, RE_MAX_CODE_SIZE);
+
   // Emit code for matching the regular expressions backwards.
+
   FAIL_ON_ERROR(_yr_re_emit(
       re->root_node,
       arena,
       EMIT_BACKWARDS,
       NULL,
       &code_size));
+
+  assert(code_size < RE_MAX_CODE_SIZE);
 
   FAIL_ON_ERROR(_yr_emit_inst(
       arena,
