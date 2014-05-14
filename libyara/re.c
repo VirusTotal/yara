@@ -42,9 +42,9 @@ order to avoid confusion with operating system threads.
 #include "re.h"
 
 
-#define RE_MAX_STACK      1024
-#define RE_MAX_CODE_SIZE  4096
-#define RE_SCAN_LIMIT     4096
+#define RE_MAX_STACK      1024  // Maxium stack size for regexp evaluation
+#define RE_MAX_CODE_SIZE  16384 // Maximum code size for a compiled regexp
+#define RE_SCAN_LIMIT     4096  // Maximum input size scanned by yr_re_exec
 
 
 #define EMIT_BACKWARDS                1
