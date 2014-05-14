@@ -956,7 +956,7 @@ static PyObject * Rules_profiling_info(
     PyObject *args)
 {
 
-#if PROFILING_ENABLED
+#ifdef PROFILING_ENABLED
   PyObject* object;
   PyObject* result;
 
