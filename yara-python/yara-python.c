@@ -25,6 +25,7 @@ limitations under the License.
 #define PyBytes_Check PyString_Check
 #endif
 
+#include <time.h>
 #include <yara.h>
 
 #if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
@@ -211,6 +212,10 @@ static PyObject * Rules_save(
     PyObject *self,
     PyObject *args);
 
+static PyObject * Rules_profiling_info(
+    PyObject *self,
+    PyObject *args);
+
 static PyObject * Rules_getattro(
     PyObject *self,
     PyObject *name);
@@ -226,6 +231,11 @@ static PyMethodDef Rules_methods[] =
     "save",
     (PyCFunction) Rules_save,
     METH_VARARGS
+  },
+  {
+    "profiling_info",
+    (PyCFunction) Rules_profiling_info,
+    METH_NOARGS
   },
   {
     NULL,
@@ -930,8 +940,7 @@ static PyObject * Rules_save(
     if (error != ERROR_SUCCESS)
       return handle_error(error, filepath);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
   }
   else
   {
@@ -939,6 +948,53 @@ static PyObject * Rules_save(
         PyExc_TypeError,
           "save() takes 1 argument");
   }
+}
+
+
+static PyObject * Rules_profiling_info(
+    PyObject *self,
+    PyObject *args)
+{
+
+#if PROFILING_ENABLED
+  PyObject* object;
+  PyObject* result;
+
+  YR_RULES* rules = ((Rules*) self)->rules;
+  YR_RULE* rule;
+  YR_STRING* string;
+
+  char key[512];
+  uint64_t clock_ticks;
+
+  result = PyDict_New();
+
+  rule = rules->rules_list_head;
+
+  while (!RULE_IS_NULL(rule))
+  {
+    clock_ticks = rule->clock_ticks;
+    string = rule->strings;
+
+    while (!STRING_IS_NULL(string))
+    {
+      clock_ticks += string->clock_ticks;
+      string++;
+    }
+
+    snprintf(key, sizeof(key), "%s:%s", rule->ns->name, rule->identifier);
+
+    object = PyLong_FromLongLong(clock_ticks);
+    PyDict_SetItemString(result, key, object);
+    Py_DECREF(object);
+
+    rule++;
+  }
+
+  return result;
+#else
+  return PyErr_Format(YaraError, "libyara compiled without profiling support");
+#endif
 }
 
 

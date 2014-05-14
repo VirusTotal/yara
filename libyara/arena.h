@@ -105,6 +105,9 @@ int yr_arena_load(
 int yr_arena_duplicate(
     YR_ARENA* arena,
     YR_ARENA** duplicated);
+    
+void yr_arena_print(
+    YR_ARENA* arena);
 
 #endif
 

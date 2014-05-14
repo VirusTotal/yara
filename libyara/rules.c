@@ -848,6 +848,10 @@ inline int _yr_scan_verify_match(
 {
   YR_STRING* string = ac_match->string;
 
+  #ifdef PROFILING_ENABLED
+  clock_t start = clock();
+  #endif
+
   if (data_size - offset <= 0)
     return ERROR_SUCCESS;
 
@@ -866,6 +870,10 @@ inline int _yr_scan_verify_match(
     FAIL_ON_ERROR(_yr_scan_verify_re_match(
         ac_match, data, data_size, offset, matches_arena));
   }
+
+  #ifdef PROFILING_ENABLED
+  string->clock_ticks += clock() - start;
+  #endif
 
   return ERROR_SUCCESS;
 }
@@ -1006,6 +1014,44 @@ void _yr_rules_clean_matches(
     rule++;
   }
 }
+
+
+#ifdef PROFILING_ENABLED
+void yr_rules_print_profiling_info(
+    YR_RULES* rules)
+{
+  YR_RULE* rule;
+  YR_STRING* string;
+
+  clock_t clock_ticks;
+
+  printf("===== PROFILING_ENABLED INFORMATION =====\n");
+
+  rule = rules->rules_list_head;
+
+  while (!RULE_IS_NULL(rule))
+  {
+    clock_ticks = rule->clock_ticks;
+    string = rule->strings;
+
+    while (!STRING_IS_NULL(string))
+    {
+      clock_ticks += string->clock_ticks;
+      string++;
+    }
+
+    printf(
+        "%s:%s: %li\n",
+        rule->ns->name,
+        rule->identifier,
+        clock_ticks);
+
+    rule++;
+  }
+
+  printf("================================\n");
+}
+#endif
 
 
 int yr_rules_scan_mem_block(

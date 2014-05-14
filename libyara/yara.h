@@ -1,4 +1,4 @@
-/*
+  /*
 Copyright (c) 2007-2013. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,8 @@ limitations under the License.
 #include <stdio.h>
 #include <stdint.h>
 #include <setjmp.h>
+
+//#define PROFILING_ENABLED
 
 #ifdef WIN32
 #include <windows.h>
@@ -374,6 +376,10 @@ typedef struct _YR_STRING
   YR_MATCHES matches[MAX_THREADS];
   YR_MATCHES unconfirmed_matches[MAX_THREADS];
 
+  #ifdef PROFILING_ENABLED
+  uint64_t clock_ticks;
+  #endif
+
 } YR_STRING;
 
 
@@ -387,6 +393,10 @@ typedef struct _YR_RULE
   DECLARE_REFERENCE(YR_META*, metas);
   DECLARE_REFERENCE(YR_STRING*, strings);
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);
+
+  #ifdef PROFILING_ENABLED
+  uint64_t clock_ticks;
+  #endif
 
 } YR_RULE;
 
@@ -748,6 +758,10 @@ int yr_rules_define_string_variable(
     YR_RULES* rules,
     const char* identifier,
     const char* value);
+
+
+void yr_rules_print_profiling_info(
+    YR_RULES* rules);
 
 #endif
 

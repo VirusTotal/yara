@@ -24,3 +24,4 @@ yr_rules_destroy
 yr_rules_define_integer_variable
 yr_rules_define_boolean_variable
 yr_rules_define_string_variable
+yr_rules_print_profiling_info

@@ -285,6 +285,10 @@ int _yr_parser_write_string(
   (*string)->g_flags = flags;
   (*string)->chained_to = NULL;
 
+  #ifdef PROFILING_ENABLED
+  (*string)->clock_ticks = 0;
+  #endif
+
   memset((*string)->matches, 0,
          sizeof((*string)->matches));
 
@@ -668,6 +672,10 @@ int yr_parser_reduce_rule_declaration(
   rule->strings = strings;
   rule->metas = metas;
   rule->ns = compiler->current_namespace;
+
+  #ifdef PROFILING_ENABLED
+  rule->clock_ticks = 0;
+  #endif
 
   compiler->current_rule_flags = 0;
   compiler->current_rule_strings = NULL;

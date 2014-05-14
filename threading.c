@@ -124,7 +124,7 @@ void semaphore_release(
 {
   #ifdef WIN32
   ReleaseSemaphore(*semaphore, 1, NULL);
-  #else
+  #else   
   sem_post(*semaphore);
   #endif
 }
@@ -156,7 +156,3 @@ void thread_join(
   pthread_join(*thread, NULL);
   #endif
 }
-
-
-
-

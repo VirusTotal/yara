@@ -94,6 +94,10 @@ int yr_execute_code(
   int cycle = 0;
   int tidx = yr_get_tidx();
 
+  #ifdef PROFILING_ENABLED
+  clock_t start = clock();
+  #endif
+
   while(1)
   {
     switch(*ip)
@@ -309,6 +313,11 @@ int yr_execute_code(
         ip += sizeof(uint64_t);
         if (r1)
           rule->t_flags[tidx] |= RULE_TFLAGS_MATCH;
+
+        #ifdef PROFILING_ENABLED
+        rule->clock_ticks += clock() - start;
+        start = clock();
+        #endif
         break;
 
       case EXT_INT:

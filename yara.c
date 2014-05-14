@@ -1069,6 +1069,10 @@ int main(
     }
   }
 
+  #ifdef PROFILING_ENABLED
+  yr_rules_print_profiling_info(rules);
+  #endif
+
   yr_rules_destroy(rules);
   yr_finalize();
 
@@ -1077,4 +1081,3 @@ int main(
 
   return EXIT_SUCCESS;
 }
-
