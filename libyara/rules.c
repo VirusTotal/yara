@@ -1154,6 +1154,9 @@ int yr_rules_scan_mem_blocks(
   int tidx = 0;
   int result = ERROR_SUCCESS;
 
+  if (block == NULL)
+    return ERROR_SUCCESS;
+
   context.file_size = block->size;
   context.mem_block = block;
   context.entry_point = UNDEFINED;
