@@ -99,6 +99,7 @@ the same.
 * [YALIH](https://github.com/Masood-M/YALIH)
 * [Bayshore Networks, Inc.](http://www.bayshorenetworks.com)
 * [ThreatStream, Inc.](http://threatstream.com)
+* [Fox-IT] (https://www.fox-it.com)
 
 Are you using it too? Tell me!
 
