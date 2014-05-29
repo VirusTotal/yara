@@ -25,6 +25,7 @@ limitations under the License.
 
 #ifdef WIN32
 #include <windows.h>
+#include <Psapi.h>
 typedef HANDLE mutex_t;
 #else
 #include <pthread.h>

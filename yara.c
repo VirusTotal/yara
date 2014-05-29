@@ -58,6 +58,7 @@ limitations under the License.
 "  -a <seconds>             abort scanning after a number of seconds has elapsed.\n"\
 "  -d <identifier>=<value>  define external variable.\n"\
 "  -r                       recursively search directories.\n"\
+"  -e                       enumerate all running processes (Windows only).\n"\
 "  -f                       fast matching mode.\n"\
 "  -w                       disable warnings.\n"\
 "  -v                       show version information.\n"
@@ -82,6 +83,7 @@ limitations under the License.
 #endif
 
 #define MAX_QUEUED_FILES 64
+#define MAX_QUEUED_PIDS 2048
 
 
 typedef struct _TAG
@@ -121,12 +123,18 @@ typedef struct _QUEUED_FILE {
 } QUEUED_FILE;
 
 
+typedef struct _QUEUED_PID {
+  unsigned long pid;
+} QUEUED_PID;
+
+
 int recursive_search = FALSE;
 int show_tags = FALSE;
 int show_specified_tags = FALSE;
 int show_specified_rules = FALSE;
 int show_strings = FALSE;
 int show_warnings = TRUE;
+int all_processes = FALSE;
 int show_meta = FALSE;
 int fast_scan = FALSE;
 int negate = FALSE;
@@ -157,6 +165,12 @@ SEMAPHORE unused_slots;
 
 MUTEX queue_mutex;
 MUTEX output_mutex;
+
+// pid_queue is a fixed length array and not a circular buffer like the
+// file queue.  If there are more than MAX_QUEUED_PIDS running then they
+// wont be added to the queue therefore wont be scanned.
+
+QUEUED_PID pid_queue[MAX_QUEUED_PIDS];
 
 
 int file_queue_init()
@@ -284,6 +298,29 @@ void scan_dir(
   }
 }
 
+unsigned int enumerate_processes()
+{
+  DWORD dwPIDArray[MAX_QUEUED_PIDS], dwRet, total_pids, i, my_pid;
+  DWORD queue_pos = 0;
+
+  if (EnumProcesses(dwPIDArray, MAX_QUEUED_PIDS * sizeof(DWORD), &dwRet) == 0)
+  {
+    return 0;
+  }
+
+  my_pid = GetCurrentProcessId();
+  total_pids = dwRet / sizeof(DWORD);
+  
+  for (i = 0; i < total_pids; i++)
+  {
+    if (dwPIDArray[i] != my_pid) {
+      pid_queue[queue_pos++].pid = dwPIDArray[i];
+    }
+  }
+
+  return queue_pos;
+}
+
 #else
 
 int is_directory(
@@ -387,7 +424,7 @@ void print_scanner_error(int error)
     case ERROR_SUCCESS:
       break;
     case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
-      fprintf(stderr, "can not attach to process (try running as root)\n");
+      fprintf(stderr, "cannot attach to process (try running as root)\n");
       break;
     case ERROR_INSUFICIENT_MEMORY:
       fprintf(stderr, "not enough memory\n");
@@ -707,7 +744,7 @@ int process_cmd_line(
 
   opterr = 0;
 
-  while ((c = getopt (argc, (char**) argv, "wrnsvgma:l:t:i:d:p:f")) != -1)
+  while ((c = getopt (argc, (char**) argv, "wrnsvgma:l:t:i:d:p:ef")) != -1)
   {
     switch (c)
     {
@@ -733,6 +770,15 @@ int process_cmd_line(
 
       case 'w':
         show_warnings = FALSE;
+        break;
+
+      case 'e':
+#ifdef WIN32
+        all_processes = TRUE;
+#else
+        fprintf(stderr, "Enumerating processes currently only available on Windows.\n");
+        return 0;
+#endif
         break;
 
       case 'f':
@@ -873,6 +919,8 @@ int main(
   int i;
   int errors;
   int result;
+  int total_pids;
+  char pid_string[11];
 
   THREAD thread[MAX_THREADS];
 
@@ -1010,7 +1058,26 @@ int main(
 
   mutex_init(&output_mutex);
 
-  if (is_numeric(argv[argc - 1]))
+  if (all_processes) {
+    total_pids = enumerate_processes();
+    for (i = 0; i < total_pids; i++) {
+
+      fprintf(stderr, "Scanning pid: %u\n", pid_queue[i].pid);
+      snprintf(pid_string, sizeof(pid_string), "%u", pid_queue[i].pid);
+      result = yr_rules_scan_proc(
+        rules,
+        pid_queue[i].pid,
+        callback,
+        pid_string,
+        fast_scan,
+        timeout);
+
+      if (result != ERROR_SUCCESS)
+        print_scanner_error(result);
+    }
+    
+  }
+  else if (is_numeric(argv[argc - 1]))
   {
     pid = atoi(argv[argc - 1]);
     result = yr_rules_scan_proc(
