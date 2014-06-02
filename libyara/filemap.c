@@ -37,6 +37,8 @@ int yr_filemap_map(
     const char* file_path,
     MAPPED_FILE* pmapped_file)
 {
+  LARGE_INTEGER size;
+
   if (file_path == NULL)
     return ERROR_INVALID_ARGUMENT;
 
@@ -52,7 +54,19 @@ int yr_filemap_map(
   if (pmapped_file->file == INVALID_HANDLE_VALUE)
     return ERROR_COULD_NOT_OPEN_FILE;
 
-  pmapped_file->size = GetFileSize(pmapped_file->file, NULL);
+  if (GetFileSizeEx(pmapped_file->file, &size))
+  {
+    #ifdef _WIN64
+    pmapped_file->size = size.QuadPart;
+    #else
+    pmapped_file->size = size.LowPart;
+    #endif
+  }
+  else
+  {
+    CloseHandle(pmapped_file->file);
+    return ERROR_COULD_NOT_OPEN_FILE;
+  }
 
   if (pmapped_file->size == 0)
   {
