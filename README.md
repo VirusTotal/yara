@@ -100,6 +100,7 @@ the same.
 * [Bayshore Networks, Inc.](http://www.bayshorenetworks.com)
 * [ThreatStream, Inc.](http://threatstream.com)
 * [Fox-IT] (https://www.fox-it.com)
+* [Lastline, Inc.](http://www.lastline.com)
 
 Are you using it too? Tell me!
 
