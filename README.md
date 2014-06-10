@@ -99,8 +99,9 @@ the same.
 * [YALIH](https://github.com/Masood-M/YALIH)
 * [Bayshore Networks, Inc.](http://www.bayshorenetworks.com)
 * [ThreatStream, Inc.](http://threatstream.com)
-* [Fox-IT] (https://www.fox-it.com)
+* [Fox-IT](https://www.fox-it.com)
 * [Lastline, Inc.](http://www.lastline.com)
+* [Blue Coat](http://www.bluecoat.com/products/malware-analysis-appliance)
 
 Are you using it too? Tell me!
 
