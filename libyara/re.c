@@ -449,6 +449,7 @@ int yr_re_split_at_chaining_point(
         return result;
 
       (*remainder_re)->root_node = child->left;
+      (*remainder_re)->flags = re->flags;
 
       child->left = NULL;
 
