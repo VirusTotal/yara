@@ -2,7 +2,7 @@ AC_INIT([yara], [2.1], [vmalvarez@virustotal.com])
 
 AC_CONFIG_SRCDIR([yara.c])
 
-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 
 AC_CONFIG_MACRO_DIR([m4])
 
