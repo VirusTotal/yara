@@ -18,26 +18,15 @@ limitations under the License.
 #include <stddef.h>
 #include <string.h>
 
-#include "arena.h"
-#include "atoms.h"
-#include "mem.h"
-#include "utils.h"
-#include "yara.h"
+#include <yara/arena.h>
+#include <yara/ahocorasick.h>
+#include <yara/mem.h>
+#include <yara/error.h>
+#include <yara/utils.h>
 
 
 #define MAX_TABLE_BASED_STATES_DEPTH 1
 
-#ifdef _MSC_VER
-#define inline __inline
-#endif
-
-#ifndef min
-#define min(x, y) ((x < y) ? (x) : (y))
-#endif
-
-#ifndef max
-#define max(x, y) ((x > y) ? (x) : (y))
-#endif
 
 typedef struct _QUEUE_NODE
 {

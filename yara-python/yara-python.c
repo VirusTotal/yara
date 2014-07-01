@@ -41,7 +41,7 @@ typedef int Py_ssize_t;
 #if PY_MAJOR_VERSION >= 3
 #define PY_STRING(x) PyUnicode_FromString(x)
 #define PY_STRING_TO_C(x) PyBytes_AsString(\
-                            PyUnicode_AsEncodedString(x, "utf-8", "Error"))
+                            PyUnicode_AsEncodedString(x, "utf-8", "strict"))
 #define PY_STRING_CHECK(x) PyUnicode_Check(x)
 #else
 #define PY_STRING(x) PyString_FromString(x)
@@ -289,18 +289,22 @@ typedef struct _CALLBACK_DATA
 {
   PyObject *matches;
   PyObject *callback;
+  PyObject *modules_data;
 
 } CALLBACK_DATA;
 
 
 int yara_callback(
     int message,
-    YR_RULE* rule,
-    void* data)
+    void* message_data,
+    void* user_data)
 {
   YR_STRING* string;
   YR_MATCH* m;
   YR_META* meta;
+  YR_RULE* rule;
+  YR_MODULE_IMPORT* module_import;
+
   char* tag_name;
   size_t tag_length;
 
@@ -311,9 +315,13 @@ int yara_callback(
   PyObject* callback_dict;
   PyObject* object;
   PyObject* tuple;
-  PyObject* matches = ((CALLBACK_DATA*) data)->matches;
-  PyObject* callback = ((CALLBACK_DATA*) data)->callback;
+  PyObject* matches = ((CALLBACK_DATA*) user_data)->matches;
+  PyObject* callback = ((CALLBACK_DATA*) user_data)->callback;
+  PyObject* modules_data = ((CALLBACK_DATA*) user_data)->modules_data;
+  PyObject* module_data;
   PyObject* callback_result;
+
+  Py_ssize_t data_size;
   PyGILState_STATE gil_state;
 
   int result = CALLBACK_CONTINUE;
@@ -323,6 +331,40 @@ int yara_callback(
 
   if (message == CALLBACK_MSG_RULE_NOT_MATCHING && callback == NULL)
     return CALLBACK_CONTINUE;
+
+  if (message == CALLBACK_MSG_IMPORT_MODULE && modules_data != NULL)
+  {
+    module_import = (YR_MODULE_IMPORT*) message_data;
+
+    module_data = PyDict_GetItemString(
+        modules_data,
+        module_import->module_name);
+
+    #if PY_MAJOR_VERSION >= 3
+    if (PyBytes_Check(module_data))
+    #else
+    if (PyString_Check(module_data))
+    #endif
+    {
+      #if PY_MAJOR_VERSION >= 3
+      PyBytes_AsStringAndSize(
+          module_data,
+          (char**) &module_import->module_data,
+          &data_size);
+      #else
+      PyString_AsStringAndSize(
+          module_data,
+          (char**) &module_import->module_data,
+          &data_size);
+      #endif
+
+      module_import->module_data_size = data_size;
+    }
+
+    return CALLBACK_CONTINUE;
+  }
+
+  rule = (YR_RULE*) message_data;
 
   gil_state = PyGILState_Ensure();
 
@@ -774,7 +816,7 @@ static PyObject * Rules_match(
 {
   static char *kwlist[] = {
       "filepath", "pid", "data", "externals",
-      "callback", "fast", "timeout", NULL
+      "callback", "fast", "timeout", "modules_data", NULL
       };
 
   char* filepath = NULL;
@@ -795,11 +837,12 @@ static PyObject * Rules_match(
 
   callback_data.matches = NULL;
   callback_data.callback = NULL;
+  callback_data.modules_data = NULL;
 
   if (PyArg_ParseTupleAndKeywords(
         args,
         keywords,
-        "|sis#OOOi",
+        "|sis#OOOiO",
         kwlist,
         &filepath,
         &pid,
@@ -808,7 +851,8 @@ static PyObject * Rules_match(
         &externals,
         &callback_data.callback,
         &fast,
-        &timeout))
+        &timeout,
+        &callback_data.modules_data))
   {
     if (filepath == NULL && data == NULL && pid == 0)
     {
@@ -822,8 +866,18 @@ static PyObject * Rules_match(
       if (!PyCallable_Check(callback_data.callback))
       {
         return PyErr_Format(
-            YaraError,
-            "callback must be callable");
+            PyExc_TypeError,
+            "'callback' must be callable");
+      }
+    }
+
+    if (callback_data.modules_data != NULL)
+    {
+      if (!PyDict_Check(callback_data.modules_data))
+      {
+        return PyErr_Format(
+            PyExc_TypeError,
+            "'modules_data' must be a dictionary");
       }
     }
 
@@ -1380,7 +1434,7 @@ static PyObject * yara_load(
               external->identifier,
               PyLong_FromLong((long) external->integer));
           break;
-        case EXTERNAL_VARIABLE_TYPE_FIXED_STRING:
+        case EXTERNAL_VARIABLE_TYPE_STRING:
           PyDict_SetItemString(
               rules->externals,
               external->identifier,

@@ -68,10 +68,6 @@ char* yr_strdup(const char *str)
 #include <string.h>
 #include <stdio.h>
 
-#ifdef DMALLOC
-#include <dmalloc.h>
-#endif
-
 
 void yr_heap_alloc()
 {

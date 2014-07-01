@@ -20,10 +20,47 @@ limitations under the License.
 #include <stdint.h>
 #include <stddef.h>
 
-#include "yara.h"
 
 #define ARENA_FLAGS_FIXED_SIZE   1
 #define ARENA_FLAGS_COALESCED    2
+
+#define EOL ((size_t) -1)
+
+
+typedef struct _YR_RELOC
+{
+  int32_t offset;
+  struct _YR_RELOC* next;
+
+} YR_RELOC;
+
+
+typedef struct _YR_ARENA_PAGE
+{
+
+  uint8_t* new_address;
+  uint8_t* address;
+
+  size_t size;
+  size_t used;
+
+  YR_RELOC* reloc_list_head;
+  YR_RELOC* reloc_list_tail;
+
+  struct _YR_ARENA_PAGE* next;
+  struct _YR_ARENA_PAGE* prev;
+
+} YR_ARENA_PAGE;
+
+
+typedef struct _YR_ARENA
+{
+  int flags;
+
+  YR_ARENA_PAGE* page_list_head;
+  YR_ARENA_PAGE* current_page;
+
+} YR_ARENA;
 
 
 int yr_arena_create(
@@ -37,13 +74,13 @@ void yr_arena_destroy(
 
 
 void* yr_arena_base_address(
-  YR_ARENA* arena);
+    YR_ARENA* arena);
 
 
 void* yr_arena_next_address(
-  YR_ARENA* arena,
-  void* address,
-  int offset);
+    YR_ARENA* arena,
+    void* address,
+    int offset);
 
 
 int yr_arena_coalesce(
@@ -93,8 +130,8 @@ int yr_arena_append(
 
 
 int yr_arena_save(
-  YR_ARENA* arena,
-  const char* filename);
+    YR_ARENA* arena,
+    const char* filename);
 
 
 int yr_arena_load(
@@ -105,7 +142,8 @@ int yr_arena_load(
 int yr_arena_duplicate(
     YR_ARENA* arena,
     YR_ARENA** duplicated);
-    
+
+
 void yr_arena_print(
     YR_ARENA* arena);
 

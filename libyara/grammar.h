@@ -39,147 +39,129 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     _RULE_ = 258,
-     _PRIVATE_ = 259,
-     _GLOBAL_ = 260,
-     _META_ = 261,
-     _STRINGS_ = 262,
-     _CONDITION_ = 263,
-     _END_ = 264,
-     _IDENTIFIER_ = 265,
-     _STRING_IDENTIFIER_ = 266,
-     _STRING_COUNT_ = 267,
-     _STRING_OFFSET_ = 268,
-     _STRING_IDENTIFIER_WITH_WILDCARD_ = 269,
-     _ANONYMOUS_STRING_ = 270,
-     _NUMBER_ = 271,
-     _UNKNOWN_ = 272,
-     _TEXTSTRING_ = 273,
-     _HEXSTRING_ = 274,
-     _REGEXP_ = 275,
-     _ASCII_ = 276,
-     _WIDE_ = 277,
-     _NOCASE_ = 278,
-     _FULLWORD_ = 279,
-     _AT_ = 280,
-     _SIZE_ = 281,
-     _ENTRYPOINT_ = 282,
-     _ALL_ = 283,
-     _ANY_ = 284,
-     _RVA_ = 285,
-     _OFFSET_ = 286,
-     _FILE_ = 287,
-     _IN_ = 288,
-     _OF_ = 289,
-     _FOR_ = 290,
-     _THEM_ = 291,
-     _SECTION_ = 292,
-     _INT8_ = 293,
-     _INT16_ = 294,
-     _INT32_ = 295,
-     _UINT8_ = 296,
-     _UINT16_ = 297,
-     _UINT32_ = 298,
-     _MATCHES_ = 299,
-     _CONTAINS_ = 300,
-     _INDEX_ = 301,
-     _MZ_ = 302,
-     _PE_ = 303,
-     _DLL_ = 304,
-     _TRUE_ = 305,
-     _FALSE_ = 306,
-     _OR_ = 307,
-     _AND_ = 308,
-     _IS_ = 309,
-     _NEQ_ = 310,
-     _EQ_ = 311,
-     _GE_ = 312,
-     _GT_ = 313,
-     _LE_ = 314,
-     _LT_ = 315,
-     _SHIFT_RIGHT_ = 316,
-     _SHIFT_LEFT_ = 317,
-     _NOT_ = 318
+     RULE = 258,
+     PRIVATE = 259,
+     GLOBAL = 260,
+     META = 261,
+     STRINGS = 262,
+     CONDITION = 263,
+     IDENTIFIER = 264,
+     STRING_IDENTIFIER = 265,
+     STRING_COUNT = 266,
+     STRING_OFFSET = 267,
+     STRING_IDENTIFIER_WITH_WILDCARD = 268,
+     NUMBER = 269,
+     TEXT_STRING = 270,
+     HEX_STRING = 271,
+     REGEXP = 272,
+     ASCII = 273,
+     WIDE = 274,
+     NOCASE = 275,
+     FULLWORD = 276,
+     AT = 277,
+     SIZE = 278,
+     ENTRYPOINT = 279,
+     ALL = 280,
+     ANY = 281,
+     IN = 282,
+     OF = 283,
+     FOR = 284,
+     THEM = 285,
+     INT8 = 286,
+     INT16 = 287,
+     INT32 = 288,
+     UINT8 = 289,
+     UINT16 = 290,
+     UINT32 = 291,
+     MATCHES = 292,
+     CONTAINS = 293,
+     IMPORT = 294,
+     _TRUE_ = 295,
+     _FALSE_ = 296,
+     OR = 297,
+     AND = 298,
+     IS = 299,
+     NEQ = 300,
+     EQ = 301,
+     GE = 302,
+     GT = 303,
+     LE = 304,
+     LT = 305,
+     SHIFT_RIGHT = 306,
+     SHIFT_LEFT = 307,
+     NOT = 308
    };
 #endif
 /* Tokens.  */
-#define _RULE_ 258
-#define _PRIVATE_ 259
-#define _GLOBAL_ 260
-#define _META_ 261
-#define _STRINGS_ 262
-#define _CONDITION_ 263
-#define _END_ 264
-#define _IDENTIFIER_ 265
-#define _STRING_IDENTIFIER_ 266
-#define _STRING_COUNT_ 267
-#define _STRING_OFFSET_ 268
-#define _STRING_IDENTIFIER_WITH_WILDCARD_ 269
-#define _ANONYMOUS_STRING_ 270
-#define _NUMBER_ 271
-#define _UNKNOWN_ 272
-#define _TEXTSTRING_ 273
-#define _HEXSTRING_ 274
-#define _REGEXP_ 275
-#define _ASCII_ 276
-#define _WIDE_ 277
-#define _NOCASE_ 278
-#define _FULLWORD_ 279
-#define _AT_ 280
-#define _SIZE_ 281
-#define _ENTRYPOINT_ 282
-#define _ALL_ 283
-#define _ANY_ 284
-#define _RVA_ 285
-#define _OFFSET_ 286
-#define _FILE_ 287
-#define _IN_ 288
-#define _OF_ 289
-#define _FOR_ 290
-#define _THEM_ 291
-#define _SECTION_ 292
-#define _INT8_ 293
-#define _INT16_ 294
-#define _INT32_ 295
-#define _UINT8_ 296
-#define _UINT16_ 297
-#define _UINT32_ 298
-#define _MATCHES_ 299
-#define _CONTAINS_ 300
-#define _INDEX_ 301
-#define _MZ_ 302
-#define _PE_ 303
-#define _DLL_ 304
-#define _TRUE_ 305
-#define _FALSE_ 306
-#define _OR_ 307
-#define _AND_ 308
-#define _IS_ 309
-#define _NEQ_ 310
-#define _EQ_ 311
-#define _GE_ 312
-#define _GT_ 313
-#define _LE_ 314
-#define _LT_ 315
-#define _SHIFT_RIGHT_ 316
-#define _SHIFT_LEFT_ 317
-#define _NOT_ 318
+#define RULE 258
+#define PRIVATE 259
+#define GLOBAL 260
+#define META 261
+#define STRINGS 262
+#define CONDITION 263
+#define IDENTIFIER 264
+#define STRING_IDENTIFIER 265
+#define STRING_COUNT 266
+#define STRING_OFFSET 267
+#define STRING_IDENTIFIER_WITH_WILDCARD 268
+#define NUMBER 269
+#define TEXT_STRING 270
+#define HEX_STRING 271
+#define REGEXP 272
+#define ASCII 273
+#define WIDE 274
+#define NOCASE 275
+#define FULLWORD 276
+#define AT 277
+#define SIZE 278
+#define ENTRYPOINT 279
+#define ALL 280
+#define ANY 281
+#define IN 282
+#define OF 283
+#define FOR 284
+#define THEM 285
+#define INT8 286
+#define INT16 287
+#define INT32 288
+#define UINT8 289
+#define UINT16 290
+#define UINT32 291
+#define MATCHES 292
+#define CONTAINS 293
+#define IMPORT 294
+#define _TRUE_ 295
+#define _FALSE_ 296
+#define OR 297
+#define AND 298
+#define IS 299
+#define NEQ 300
+#define EQ 301
+#define GE 302
+#define GT 303
+#define LE 304
+#define LT 305
+#define SHIFT_RIGHT 306
+#define SHIFT_LEFT 307
+#define NOT 308
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 154 "grammar.y"
+#line 185 "grammar.y"
 {
   SIZED_STRING*   sized_string;
   char*           c_string;
+  int8_t          expression_type;
   int64_t         integer;
   YR_STRING*      string;
   YR_META*        meta;
+  YR_OBJECT*      object;
 }
 /* Line 1529 of yacc.c.  */
-#line 183 "grammar.h"
+#line 165 "grammar.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

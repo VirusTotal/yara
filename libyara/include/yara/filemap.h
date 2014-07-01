@@ -14,9 +14,39 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef YR_UTILS_H
-#define YR_UTILS_H
+#ifndef YR_FILEMAP_H
+#define YR_FILEMAP_H
 
-size_t xtoi(const char* hexstr);
+#ifdef WIN32
+#include <windows.h>
+#define FILE_DESCRIPTOR         HANDLE
+#else
+#define FILE_DESCRIPTOR         int
+#endif
+
+#include <stdlib.h>
+#include <stdint.h>
+
+
+typedef struct _YR_MAPPED_FILE
+{
+  FILE_DESCRIPTOR     file;
+  size_t              size;
+  uint8_t*            data;
+  #ifdef WIN32
+  HANDLE              mapping;
+  #endif
+
+} YR_MAPPED_FILE;
+
+
+int yr_filemap_map(
+    const char* file_path,
+    YR_MAPPED_FILE* pmapped_file);
+
+
+void yr_filemap_unmap(
+    YR_MAPPED_FILE* pmapped_file);
 
 #endif
+

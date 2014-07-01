@@ -24,8 +24,9 @@ limitations under the License.
 #include <unistd.h>
 #endif
 
-#include "filemap.h"
-#include "yara.h"
+#include <yara/filemap.h>
+#include <yara/error.h>
+
 
 #ifdef WIN32
 
@@ -35,7 +36,7 @@ limitations under the License.
 
 int yr_filemap_map(
     const char* file_path,
-    MAPPED_FILE* pmapped_file)
+    YR_MAPPED_FILE* pmapped_file)
 {
   LARGE_INTEGER size;
 
@@ -105,7 +106,8 @@ int yr_filemap_map(
   return ERROR_SUCCESS;
 }
 
-void yr_filemap_unmap(MAPPED_FILE* pmapped_file)
+void yr_filemap_unmap(
+    YR_MAPPED_FILE* pmapped_file)
 {
   UnmapViewOfFile(pmapped_file->data);
   CloseHandle(pmapped_file->mapping);
@@ -120,7 +122,7 @@ void yr_filemap_unmap(MAPPED_FILE* pmapped_file)
 
 int yr_filemap_map(
     const char* file_path,
-    MAPPED_FILE* pmapped_file)
+    YR_MAPPED_FILE* pmapped_file)
 {
   struct stat fstat;
 
@@ -160,7 +162,8 @@ int yr_filemap_map(
   return ERROR_SUCCESS;
 }
 
-void yr_filemap_unmap(MAPPED_FILE* pmapped_file)
+void yr_filemap_unmap(
+    YR_MAPPED_FILE* pmapped_file)
 {
   munmap(pmapped_file->data, pmapped_file->size);
   close(pmapped_file->file);

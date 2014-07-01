@@ -19,20 +19,15 @@ limitations under the License.
 %{
 
 #include <assert.h>
+#include <setjmp.h>
 
-#include "yara.h"
-#include "atoms.h"
-#include "mem.h"
-#include "re.h"
-#include "re_grammar.h"
-#include "re_lexer.h"
-#include "utils.h"
 
-#include "config.h"
-
-#ifdef DMALLOC
-#include <dmalloc.h>
-#endif
+#include <yara/utils.h>
+#include <yara/error.h>
+#include <yara/limits.h>
+#include <yara/mem.h>
+#include <yara/re.h>
+#include <yara/re_lexer.h>
 
 
 #ifdef WIN32
@@ -457,9 +452,9 @@ uint8_t read_escaped_char(yyscan_t yyscanner)
 #ifdef WIN32
 extern DWORD recovery_state_key;
 #else
+#include <pthread.h>
 extern pthread_key_t recovery_state_key;
 #endif
-
 
 void yyfatal(
     yyscan_t yyscanner,
@@ -479,27 +474,37 @@ void yyfatal(
 
 void yyerror(
     yyscan_t yyscanner,
-    LEX_ENVIRONMENT* lex_env,
+    RE_LEX_ENVIRONMENT* lex_env,
     const char *error_message)
 {
-  if (lex_env->last_error_message == NULL)
+  // if lex_env->last_error_code was set to some error code before
+  // don't overwrite it, we are interested in the first error, not in
+  // subsequent errors like "syntax error, unexpected $end" caused by
+  // early parser termination.
+
+  if (lex_env->last_error_code == ERROR_SUCCESS)
   {
-    lex_env->last_error_message = yr_strdup(error_message);
+    lex_env->last_error_code = ERROR_INVALID_REGULAR_EXPRESSION;
+
+    strncpy(
+        lex_env->last_error_message,
+        error_message,
+        sizeof(lex_env->last_error_message));
   }
 }
 
 
 int yr_parse_re_string(
   const char* re_string,
-  RE** re)
+  int flags,
+  RE** re,
+  RE_ERROR* error)
 {
   yyscan_t yyscanner;
   jmp_buf recovery_state;
-  LEX_ENVIRONMENT lex_env;
+  RE_LEX_ENVIRONMENT lex_env;
 
-  lex_env.last_error_message = NULL;
-
-  FAIL_ON_ERROR(yr_re_create(re));
+  lex_env.last_error_code = ERROR_SUCCESS;
 
   #ifdef WIN32
   TlsSetValue(recovery_state_key, (LPVOID) &recovery_state);
@@ -510,19 +515,30 @@ int yr_parse_re_string(
   if (setjmp(recovery_state) != 0)
     return ERROR_INTERNAL_FATAL_ERROR;
 
+  FAIL_ON_ERROR(yr_re_create(re));
+
+  (*re)->flags = flags;
+
   yylex_init(&yyscanner);
   yyset_extra(*re, yyscanner);
   yy_scan_string(re_string, yyscanner);
   yyparse(yyscanner, &lex_env);
   yylex_destroy(yyscanner);
 
-  if (lex_env.last_error_message != NULL)
+  if (lex_env.last_error_code != ERROR_SUCCESS)
   {
-    (*re)->error_message = lex_env.last_error_message;
-    return ERROR_INVALID_REGULAR_EXPRESSION;
+    yr_re_destroy(*re);
+    *re = NULL;
+
+    strncpy(
+        error->message,
+        lex_env.last_error_message,
+        sizeof(error->message));
+
+    return lex_env.last_error_code;
   }
 
-  return (*re)->error_code;
+  return ERROR_SUCCESS;
 }
 
 

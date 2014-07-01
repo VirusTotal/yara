@@ -14,13 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
 #ifndef YR_ATOMS_H
 #define YR_ATOMS_H
 
-#include "re.h"
-#include "yara.h"
-
+#include <yara/limits.h>
+#include <yara/re.h>
 
 #define ATOM_TREE_LEAF  1
 #define ATOM_TREE_AND   2
@@ -53,16 +51,33 @@ typedef struct _ATOM_TREE
 } ATOM_TREE;
 
 
+typedef struct _YR_ATOM_LIST_ITEM
+{
+  uint8_t atom_length;
+  uint8_t atom[MAX_ATOM_LENGTH];
+
+  uint16_t backtrack;
+
+  void* forward_code;
+  void* backward_code;
+
+  struct _YR_ATOM_LIST_ITEM* next;
+
+} YR_ATOM_LIST_ITEM;
+
+
 int yr_atoms_extract_from_re(
     RE* re,
     int flags,
     YR_ATOM_LIST_ITEM** atoms);
+
 
 int yr_atoms_extract_from_string(
     uint8_t* string,
     int string_length,
     int flags,
     YR_ATOM_LIST_ITEM** atoms);
+
 
 void yr_atoms_list_destroy(
     YR_ATOM_LIST_ITEM* list_head);

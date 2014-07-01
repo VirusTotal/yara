@@ -30,12 +30,11 @@ from files.
 #include <stddef.h>
 #include <time.h>
 
-#include "arena.h"
-#include "config.h"
-#include "mem.h"
-#include "utils.h"
-#include "yara.h"
 
+#include <yara/arena.h>
+#include <yara/mem.h>
+#include <yara/error.h>
+#include <yara/limits.h>
 
 #define ARENA_FILE_VERSION      3
 

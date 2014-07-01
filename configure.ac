@@ -23,8 +23,18 @@ AC_ARG_ENABLE([dmalloc],
   [AS_HELP_STRING([--enable-dmalloc], [enable dmalloc to debug heap-related issues])],
   [if test x$enableval = xyes; then
     AC_CHECK_LIB(dmalloc, dmalloc_malloc,, AC_MSG_ERROR(please install dmalloc library))
-    AC_DEFINE([DMALLOC], [], [enable dmalloc])
+    AC_DEFINE([DMALLOC], [1], [enable dmalloc])
   fi])
+
+AC_ARG_ENABLE([cuckoo],
+  [AS_HELP_STRING([--enable-cuckoo], [enable cuckoo module])],
+  [if test x$enableval = xyes; then
+    cuckoo=true
+    AC_CHECK_LIB(jansson, json_loadb,, AC_MSG_ERROR(please install Jansson library))
+    AC_DEFINE([CUCKOO], [1], [enable cuckoo])
+  fi])
+
+AM_CONDITIONAL([CUCKOO], [test x$cuckoo = xtrue])
 
 AC_CHECK_LIB(pthread, pthread_create)
 

@@ -17,8 +17,9 @@ limitations under the License.
 #include <stdint.h>
 #include <string.h>
 
-#include "hash.h"
-#include "mem.h"
+#include <yara/hash.h>
+#include <yara/mem.h>
+#include <yara/error.h>
 
 #define ROTATE_INT32(x, shift) \
     ((x << (shift % 32)) | (x >> (32 - (shift % 32))))
@@ -109,7 +110,8 @@ int yr_hash_table_create(
 }
 
 void yr_hash_table_destroy(
-    YR_HASH_TABLE* table)
+    YR_HASH_TABLE* table,
+    YR_HASH_TABLE_FREE_VALUE_FUNC free_value)
 {
   YR_HASH_TABLE_ENTRY* entry;
   YR_HASH_TABLE_ENTRY* next_entry;
@@ -123,10 +125,16 @@ void yr_hash_table_destroy(
     while (entry != NULL)
     {
       next_entry = entry->next;
+
+      if (free_value != NULL)
+        free_value(entry->value);
+
       if (entry->ns != NULL)
         yr_free(entry->ns);
+
       yr_free(entry->key);
       yr_free(entry);
+
       entry = next_entry;
     }
   }

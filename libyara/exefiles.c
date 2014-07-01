@@ -19,12 +19,11 @@ limitations under the License.
 #ifdef WIN32
 #include <windows.h>
 #else
-#include "pe.h"
+#include <yara/pe.h>
 #endif
 
-#include "elf.h"
-#include "exec.h"
-
+#include <yara/elf.h>
+#include <yara/exec.h>
 
 #ifndef NULL
 #define NULL 0

@@ -14,9 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "sizedstr.h"
-#include "grammar.h"
-#include "compiler.h"
+#include <yara/compiler.h>
+#include <grammar.h>
+
+#undef yyparse
+#undef yylex
+#undef yyerror
+#undef yyfatal
+#undef yychar
+#undef yydebug
+#undef yynerrs
+#undef yyget_extra
+#undef yyget_lineno
+
+#undef YY_DECL
+#undef YY_FATAL_ERROR
+#undef YY_EXTRA_TYPE
 
 #define yyparse       yara_yyparse
 #define yylex         yara_yylex
@@ -34,23 +47,32 @@ limitations under the License.
 typedef void* yyscan_t;
 #endif
 
+
+#define YY_DECL int yylex( \
+    YYSTYPE* yylval_param, yyscan_t yyscanner, YR_COMPILER* compiler)
+
+
 #define YY_FATAL_ERROR(msg) yara_yyfatal(yyscanner, msg)
 
 
 #define YY_EXTRA_TYPE YR_COMPILER*
 #define YY_USE_CONST
 
+
 int yyget_lineno(yyscan_t yyscanner);
 
 int yylex(
     YYSTYPE* yylval_param,
-    yyscan_t yyscanner);
+    yyscan_t yyscanner,
+    YR_COMPILER* compiler);
 
 int yyparse(
-    void *yyscanner);
+    void *yyscanner,
+    YR_COMPILER* compiler);
 
 void yyerror(
     yyscan_t yyscanner,
+    YR_COMPILER* compiler,
     const char *error_message);
 
 void yyfatal(
@@ -67,4 +89,6 @@ int yr_lex_parse_rules_string(
 int yr_lex_parse_rules_file(
     FILE* rules_file,
     YR_COMPILER* compiler);
+
+
 

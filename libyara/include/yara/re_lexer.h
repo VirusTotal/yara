@@ -1,4 +1,4 @@
-/*
+  /*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "re.h"
-#include "re_grammar.h"
+#include <re_grammar.h>
+
+#undef yyparse
+#undef yylex
+#undef yyerror
+#undef yyfatal
+#undef yychar
+#undef yydebug
+#undef yynerrs
+#undef yyget_extra
+#undef yyget_lineno
+
+#undef YY_FATAL_ERROR
+#undef YY_DECL
+#undef LEX_ENV
+
 
 #define yyparse         re_yyparse
 #define yylex           re_yylex
@@ -37,21 +51,22 @@ typedef void* yyscan_t;
 #define YY_USE_CONST
 
 
-typedef struct _LEX_ENVIRONMENT
+typedef struct _RE_LEX_ENVIRONMENT
 {
   int negated_class;
   uint8_t class_vector[32];
-  const char* last_error_message;
+  int last_error_code;
+  char last_error_message[256];
 
-} LEX_ENVIRONMENT;
+} RE_LEX_ENVIRONMENT;
 
 
-#define LEX_ENV  ((LEX_ENVIRONMENT*) lex_env)
+#define LEX_ENV  ((RE_LEX_ENVIRONMENT*) lex_env)
 
 #define YY_FATAL_ERROR(msg) re_yyfatal(yyscanner, msg)
 
 #define YY_DECL int re_yylex \
-    (YYSTYPE * yylval_param , yyscan_t yyscanner, LEX_ENVIRONMENT* lex_env)
+    (YYSTYPE * yylval_param , yyscan_t yyscanner, RE_LEX_ENVIRONMENT* lex_env)
 
 
 YY_EXTRA_TYPE yyget_extra(
@@ -60,15 +75,15 @@ YY_EXTRA_TYPE yyget_extra(
 int yylex(
     YYSTYPE* yylval_param,
     yyscan_t yyscanner,
-    LEX_ENVIRONMENT* lex_env);
+    RE_LEX_ENVIRONMENT* lex_env);
 
 int yyparse(
     void *yyscanner,
-    LEX_ENVIRONMENT *lex_env);
+    RE_LEX_ENVIRONMENT *lex_env);
 
 void yyerror(
     yyscan_t yyscanner,
-    LEX_ENVIRONMENT* lex_env,
+    RE_LEX_ENVIRONMENT* lex_env,
     const char *error_message);
 
 void yyfatal(
@@ -77,5 +92,7 @@ void yyfatal(
 
 int yr_parse_re_string(
   const char* re_string,
-  RE** re);
+  int flags,
+  RE** re,
+  RE_ERROR* error);
 

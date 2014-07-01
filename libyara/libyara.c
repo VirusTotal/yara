@@ -18,9 +18,9 @@ limitations under the License.
 #include <stdio.h>
 #include <ctype.h>
 
-#include "mem.h"
-#include "re.h"
-#include "yara.h"
+#include <yara/mem.h>
+#include <yara/re.h>
+
 
 #ifdef WIN32
 #define snprintf _snprintf

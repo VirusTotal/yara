@@ -17,8 +17,8 @@ limitations under the License.
 #ifndef YR_RE_H
 #define YR_RE_H
 
-#include "yara.h"
-#include "sizedstr.h"
+#include <yara/arena.h>
+#include <yara/sizedstr.h>
 
 #define RE_NODE_LITERAL             1
 #define RE_NODE_MASKED_LITERAL      2
@@ -40,27 +40,29 @@ limitations under the License.
 #define RE_NODE_ANCHOR_END          18
 
 
-#define RE_OPCODE_ANY               0xA0
-#define RE_OPCODE_LITERAL           0xA1
-#define RE_OPCODE_MASKED_LITERAL    0xA2
-#define RE_OPCODE_LITERAL_STRING    0xA3
-#define RE_OPCODE_CLASS             0xA4
-#define RE_OPCODE_WORD_CHAR         0xA5
-#define RE_OPCODE_NON_WORD_CHAR     0xA6
-#define RE_OPCODE_SPACE             0xA7
-#define RE_OPCODE_NON_SPACE         0xA8
-#define RE_OPCODE_DIGIT             0xA9
-#define RE_OPCODE_NON_DIGIT         0xAA
-#define RE_OPCODE_MATCH             0xAB
-#define RE_OPCODE_MATCH_AT_END      0xAC
-#define RE_OPCODE_MATCH_AT_START    0xAD
+#define RE_OPCODE_ANY                   0xA0
+#define RE_OPCODE_ANY_EXCEPT_NEW_LINE   0xA1
+#define RE_OPCODE_LITERAL               0xA2
+#define RE_OPCODE_LITERAL_NO_CASE       0xA3
+#define RE_OPCODE_MASKED_LITERAL        0xA4
+#define RE_OPCODE_CLASS                 0xA5
+#define RE_OPCODE_CLASS_NO_CASE         0xA6
+#define RE_OPCODE_WORD_CHAR             0xA7
+#define RE_OPCODE_NON_WORD_CHAR         0xA8
+#define RE_OPCODE_SPACE                 0xA9
+#define RE_OPCODE_NON_SPACE             0xAA
+#define RE_OPCODE_DIGIT                 0xAB
+#define RE_OPCODE_NON_DIGIT             0xAC
+#define RE_OPCODE_MATCH                 0xAD
+#define RE_OPCODE_MATCH_AT_END          0xAE
+#define RE_OPCODE_MATCH_AT_START        0xAF
 
-#define RE_OPCODE_SPLIT_A           0xB0
-#define RE_OPCODE_SPLIT_B           0xB1
-#define RE_OPCODE_PUSH              0xB2
-#define RE_OPCODE_POP               0xB3
-#define RE_OPCODE_JNZ               0xB4
-#define RE_OPCODE_JUMP              0xB5
+#define RE_OPCODE_SPLIT_A               0xB0
+#define RE_OPCODE_SPLIT_B               0xB1
+#define RE_OPCODE_PUSH                  0xB2
+#define RE_OPCODE_POP                   0xB3
+#define RE_OPCODE_JNZ                   0xB4
+#define RE_OPCODE_JUMP                  0xB5
 
 
 #define RE_FLAGS_FAST_HEX_REGEXP          0x02
@@ -70,10 +72,12 @@ limitations under the License.
 #define RE_FLAGS_NO_CASE                  0x20
 #define RE_FLAGS_SCAN                     0x40
 #define RE_FLAGS_DOT_ALL                  0x80
+#define RE_FLAGS_NOT_AT_START            0x100
 
 
 typedef struct RE RE;
 typedef struct RE_NODE RE_NODE;
+typedef struct RE_ERROR RE_ERROR;
 
 
 #define CHAR_IN_CLASS(chr, cls)  \
@@ -102,8 +106,8 @@ struct RE_NODE
   RE_NODE* left;
   RE_NODE* right;
 
-  void* forward_code;
-  void* backward_code;
+  uint8_t* forward_code;
+  uint8_t* backward_code;
 };
 
 
@@ -111,9 +115,15 @@ struct RE {
 
   uint32_t flags;
   RE_NODE* root_node;
+  YR_ARENA* code_arena;
+  uint8_t* code;
+};
 
-  const char* error_message;
-  int error_code;
+
+struct RE_ERROR {
+
+  char message[512];
+
 };
 
 
@@ -128,14 +138,26 @@ int yr_re_create(
     RE** re);
 
 
+int yr_re_parse(
+    const char* re_string,
+    int flags,
+    RE** re,
+    RE_ERROR* error);
+
+
+int yr_re_parse_hex(
+    const char* hex_string,
+    int flags,
+    RE** re,
+    RE_ERROR* error);
+
+
 int yr_re_compile(
     const char* re_string,
-    RE** re);
-
-
-int yr_re_compile_hex(
-    const char* hex_string,
-    RE** re);
+    int flags,
+    YR_ARENA* code_arena,
+    RE** re,
+    RE_ERROR* error);
 
 
 RE_NODE* yr_re_node_create(
@@ -145,7 +167,7 @@ RE_NODE* yr_re_node_create(
 
 
 void yr_re_destroy(
-  RE* re);
+    RE* re);
 
 
 void yr_re_print(
@@ -180,7 +202,7 @@ int yr_re_emit_code(
 
 
 int yr_re_exec(
-    uint8_t* code,
+    uint8_t* re_code,
     uint8_t* input,
     size_t input_size,
     int flags,
@@ -188,12 +210,17 @@ int yr_re_exec(
     void* callback_args);
 
 
-int yr_re_initialize();
+int yr_re_match(
+    uint8_t* re_code,
+    const char* target);
 
 
-int yr_re_finalize();
+int yr_re_initialize(void);
 
 
-int yr_re_finalize_thread();
+int yr_re_finalize(void);
+
+
+int yr_re_finalize_thread(void);
 
 #endif

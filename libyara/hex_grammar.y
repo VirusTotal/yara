@@ -16,19 +16,16 @@ limitations under the License.
 
 %{
 
+#include <string.h>
 #include <stdint.h>
 #include <limits.h>
 
-#include "hex_lexer.h"
-#include "mem.h"
-#include "re.h"
-#include "yara.h"
+#include <yara/utils.h>
+#include <yara/hex_lexer.h>
+#include <yara/limits.h>
+#include <yara/mem.h>
+#include <yara/error.h>
 
-#include "config.h"
-
-#ifdef DMALLOC
-#include <dmalloc.h>
-#endif
 
 #define STR_EXPAND(tok) #tok
 #define STR(tok) STR_EXPAND(tok)
@@ -47,8 +44,7 @@ yydebug = 1;
 #define ERROR_IF(x, error) \
     if (x) \
     { \
-      RE* re = yyget_extra(yyscanner); \
-      re->error_code = error; \
+      lex_env->last_error_code = error; \
       YYABORT; \
     } \
 
@@ -66,10 +62,10 @@ yydebug = 1;
 %pure-parser
 
 %parse-param {void *yyscanner}
-%parse-param {LEX_ENVIRONMENT *lex_env}
+%parse-param {HEX_LEX_ENVIRONMENT *lex_env}
 
 %lex-param {yyscan_t yyscanner}
-%lex-param {LEX_ENVIRONMENT *lex_env}
+%lex-param {HEX_LEX_ENVIRONMENT *lex_env}
 
 %union {
   int integer;
@@ -140,21 +136,15 @@ range : _NUMBER_
 
           if ($1 < 0)
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup("invalid negative jump length");
+            yyerror(yyscanner, lex_env, "invalid negative jump length");
             YYABORT;
           }
 
           if (lex_env->inside_or && $1 > STRING_CHAINING_THRESHOLD)
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup(
-                "jumps over "
+            yyerror(yyscanner, lex_env, "jumps over "
                 STR(STRING_CHAINING_THRESHOLD)
                 " now allowed inside alternation (|)");
-
             YYABORT;
           }
 
@@ -177,10 +167,7 @@ range : _NUMBER_
               ($1 > STRING_CHAINING_THRESHOLD ||
                $3 > STRING_CHAINING_THRESHOLD) )
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup(
-                "jumps over "
+            yyerror(yyscanner, lex_env, "jumps over "
                 STR(STRING_CHAINING_THRESHOLD)
                 " now allowed inside alternation (|)");
 
@@ -189,17 +176,13 @@ range : _NUMBER_
 
           if ($1 < 0 || $3 < 0)
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup("invalid negative jump length");
+            yyerror(yyscanner, lex_env, "invalid negative jump length");
             YYABORT;
           }
 
           if ($1 > $3)
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup("invalid jump range");
+            yyerror(yyscanner, lex_env, "invalid jump range");
             YYABORT;
           }
 
@@ -220,19 +203,14 @@ range : _NUMBER_
 
           if (lex_env->inside_or)
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup(
+            yyerror(yyscanner, lex_env,
                 "unbounded jumps not allowed inside alternation (|)");
-
             YYABORT;
           }
 
           if ($1 < 0)
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup("invalid negative jump length");
+            yyerror(yyscanner, lex_env, "invalid negative jump length");
             YYABORT;
           }
 
@@ -253,9 +231,7 @@ range : _NUMBER_
 
           if (lex_env->inside_or)
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup(
+            yyerror(yyscanner, lex_env,
                 "unbounded jumps not allowed inside alternation (|)");
             YYABORT;
           }
@@ -286,6 +262,7 @@ alternatives : tokens
 
                   DESTROY_NODE_IF($$ == NULL, $1);
                   DESTROY_NODE_IF($$ == NULL, $3);
+
                   ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
                }
              ;

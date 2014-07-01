@@ -1,4 +1,4 @@
-AM_CFLAGS=-O4 -Wall -I$(srcdir)/libyara
+AM_CFLAGS=-g -O0 -Wall -I$(srcdir)/libyara/include
 
 # Build the library in the hand subdirectory first.
 SUBDIRS = libyara
@@ -9,10 +9,10 @@ ACLOCAL_AMFLAGS=-I m4
 bin_PROGRAMS = yara yarac
 
 yara_SOURCES = threading.c threading.h yara.c
-yara_LDADD = libyara/.libs/libyara.la
+yara_LDADD = libyara/.libs/libyara.a
 
 yarac_SOURCES = yarac.c
-yarac_LDADD = libyara/.libs/libyara.la
+yarac_LDADD = libyara/.libs/libyara.a
 
 # man pages
 man1_MANS = yara.man yarac.man

@@ -91,19 +91,16 @@
 #line 17 "hex_grammar.y"
 
 
+#include <string.h>
 #include <stdint.h>
 #include <limits.h>
 
-#include "hex_lexer.h"
-#include "mem.h"
-#include "re.h"
-#include "yara.h"
+#include <yara/utils.h>
+#include <yara/hex_lexer.h>
+#include <yara/limits.h>
+#include <yara/mem.h>
+#include <yara/error.h>
 
-#include "config.h"
-
-#ifdef DMALLOC
-#include <dmalloc.h>
-#endif
 
 #define STR_EXPAND(tok) #tok
 #define STR(tok) STR_EXPAND(tok)
@@ -122,8 +119,7 @@ yydebug = 1;
 #define ERROR_IF(x, error) \
     if (x) \
     { \
-      RE* re = yyget_extra(yyscanner); \
-      re->error_code = error; \
+      lex_env->last_error_code = error; \
       YYABORT; \
     } \
 
@@ -155,13 +151,13 @@ yydebug = 1;
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 74 "hex_grammar.y"
+#line 70 "hex_grammar.y"
 {
   int integer;
   RE_NODE *re_node;
 }
 /* Line 193 of yacc.c.  */
-#line 165 "hex_grammar.c"
+#line 161 "hex_grammar.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -174,7 +170,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 178 "hex_grammar.c"
+#line 174 "hex_grammar.c"
 
 #ifdef short
 # undef short
@@ -461,8 +457,8 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    93,    93,   101,   105,   116,   121,   120,   129,   137,
-     172,   217,   250,   277,   281,   293,   301
+       0,    89,    89,    97,   101,   112,   117,   116,   125,   133,
+     162,   200,   228,   253,   257,   270,   278
 };
 #endif
 
@@ -685,7 +681,7 @@ do {									  \
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *yyscanner, LEX_ENVIRONMENT *lex_env)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *yyscanner, HEX_LEX_ENVIRONMENT *lex_env)
 #else
 static void
 yy_symbol_value_print (yyoutput, yytype, yyvaluep, yyscanner, lex_env)
@@ -693,7 +689,7 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, yyscanner, lex_env)
     int yytype;
     YYSTYPE const * const yyvaluep;
     void *yyscanner;
-    LEX_ENVIRONMENT *lex_env;
+    HEX_LEX_ENVIRONMENT *lex_env;
 #endif
 {
   if (!yyvaluep)
@@ -721,7 +717,7 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, yyscanner, lex_env)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *yyscanner, LEX_ENVIRONMENT *lex_env)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *yyscanner, HEX_LEX_ENVIRONMENT *lex_env)
 #else
 static void
 yy_symbol_print (yyoutput, yytype, yyvaluep, yyscanner, lex_env)
@@ -729,7 +725,7 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, yyscanner, lex_env)
     int yytype;
     YYSTYPE const * const yyvaluep;
     void *yyscanner;
-    LEX_ENVIRONMENT *lex_env;
+    HEX_LEX_ENVIRONMENT *lex_env;
 #endif
 {
   if (yytype < YYNTOKENS)
@@ -777,14 +773,14 @@ do {								\
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, int yyrule, void *yyscanner, LEX_ENVIRONMENT *lex_env)
+yy_reduce_print (YYSTYPE *yyvsp, int yyrule, void *yyscanner, HEX_LEX_ENVIRONMENT *lex_env)
 #else
 static void
 yy_reduce_print (yyvsp, yyrule, yyscanner, lex_env)
     YYSTYPE *yyvsp;
     int yyrule;
     void *yyscanner;
-    LEX_ENVIRONMENT *lex_env;
+    HEX_LEX_ENVIRONMENT *lex_env;
 #endif
 {
   int yynrhs = yyr2[yyrule];
@@ -1057,7 +1053,7 @@ yysyntax_error (char *yyresult, int yystate, int yychar)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *yyscanner, LEX_ENVIRONMENT *lex_env)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *yyscanner, HEX_LEX_ENVIRONMENT *lex_env)
 #else
 static void
 yydestruct (yymsg, yytype, yyvaluep, yyscanner, lex_env)
@@ -1065,7 +1061,7 @@ yydestruct (yymsg, yytype, yyvaluep, yyscanner, lex_env)
     int yytype;
     YYSTYPE *yyvaluep;
     void *yyscanner;
-    LEX_ENVIRONMENT *lex_env;
+    HEX_LEX_ENVIRONMENT *lex_env;
 #endif
 {
   YYUSE (yyvaluep);
@@ -1079,29 +1075,29 @@ yydestruct (yymsg, yytype, yyvaluep, yyscanner, lex_env)
   switch (yytype)
     {
       case 16: /* "tokens" */
-#line 85 "hex_grammar.y"
+#line 81 "hex_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1085 "hex_grammar.c"
+#line 1081 "hex_grammar.c"
 	break;
       case 17: /* "token" */
-#line 86 "hex_grammar.y"
+#line 82 "hex_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1090 "hex_grammar.c"
+#line 1086 "hex_grammar.c"
 	break;
       case 19: /* "range" */
-#line 89 "hex_grammar.y"
+#line 85 "hex_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1095 "hex_grammar.c"
+#line 1091 "hex_grammar.c"
 	break;
       case 20: /* "alternatives" */
-#line 88 "hex_grammar.y"
+#line 84 "hex_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1100 "hex_grammar.c"
+#line 1096 "hex_grammar.c"
 	break;
       case 21: /* "byte" */
-#line 87 "hex_grammar.y"
+#line 83 "hex_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1105 "hex_grammar.c"
+#line 1101 "hex_grammar.c"
 	break;
 
       default:
@@ -1120,7 +1116,7 @@ int yyparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int yyparse (void *yyscanner, LEX_ENVIRONMENT *lex_env);
+int yyparse (void *yyscanner, HEX_LEX_ENVIRONMENT *lex_env);
 #else
 int yyparse ();
 #endif
@@ -1149,12 +1145,12 @@ yyparse (YYPARSE_PARAM)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (void *yyscanner, LEX_ENVIRONMENT *lex_env)
+yyparse (void *yyscanner, HEX_LEX_ENVIRONMENT *lex_env)
 #else
 int
 yyparse (yyscanner, lex_env)
     void *yyscanner;
-    LEX_ENVIRONMENT *lex_env;
+    HEX_LEX_ENVIRONMENT *lex_env;
 #endif
 #endif
 {
@@ -1411,7 +1407,7 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 94 "hex_grammar.y"
+#line 90 "hex_grammar.y"
     {
                 RE* re = yyget_extra(yyscanner);
                 re->root_node = (yyvsp[(2) - (3)].re_node);
@@ -1419,14 +1415,14 @@ yyreduce:
     break;
 
   case 3:
-#line 102 "hex_grammar.y"
+#line 98 "hex_grammar.y"
     {
             (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
          }
     break;
 
   case 4:
-#line 106 "hex_grammar.y"
+#line 102 "hex_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[(1) - (2)].re_node), (yyvsp[(2) - (2)].re_node));
 
@@ -1437,21 +1433,21 @@ yyreduce:
     break;
 
   case 5:
-#line 117 "hex_grammar.y"
+#line 113 "hex_grammar.y"
     {
           (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
         }
     break;
 
   case 6:
-#line 121 "hex_grammar.y"
+#line 117 "hex_grammar.y"
     {
           lex_env->inside_or++;
         }
     break;
 
   case 7:
-#line 125 "hex_grammar.y"
+#line 121 "hex_grammar.y"
     {
           (yyval.re_node) = (yyvsp[(3) - (4)].re_node);
           lex_env->inside_or--;
@@ -1459,7 +1455,7 @@ yyreduce:
     break;
 
   case 8:
-#line 130 "hex_grammar.y"
+#line 126 "hex_grammar.y"
     {
           (yyval.re_node) = (yyvsp[(2) - (3)].re_node);
           (yyval.re_node)->greedy = FALSE;
@@ -1467,27 +1463,21 @@ yyreduce:
     break;
 
   case 9:
-#line 138 "hex_grammar.y"
+#line 134 "hex_grammar.y"
     {
           RE_NODE* re_any;
 
           if ((yyvsp[(1) - (1)].integer) < 0)
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup("invalid negative jump length");
+            yyerror(yyscanner, lex_env, "invalid negative jump length");
             YYABORT;
           }
 
           if (lex_env->inside_or && (yyvsp[(1) - (1)].integer) > STRING_CHAINING_THRESHOLD)
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup(
-                "jumps over "
+            yyerror(yyscanner, lex_env, "jumps over "
                 STR(STRING_CHAINING_THRESHOLD)
                 " now allowed inside alternation (|)");
-
             YYABORT;
           }
 
@@ -1505,7 +1495,7 @@ yyreduce:
     break;
 
   case 10:
-#line 173 "hex_grammar.y"
+#line 163 "hex_grammar.y"
     {
           RE_NODE* re_any;
 
@@ -1513,10 +1503,7 @@ yyreduce:
               ((yyvsp[(1) - (3)].integer) > STRING_CHAINING_THRESHOLD ||
                (yyvsp[(3) - (3)].integer) > STRING_CHAINING_THRESHOLD) )
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup(
-                "jumps over "
+            yyerror(yyscanner, lex_env, "jumps over "
                 STR(STRING_CHAINING_THRESHOLD)
                 " now allowed inside alternation (|)");
 
@@ -1525,17 +1512,13 @@ yyreduce:
 
           if ((yyvsp[(1) - (3)].integer) < 0 || (yyvsp[(3) - (3)].integer) < 0)
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup("invalid negative jump length");
+            yyerror(yyscanner, lex_env, "invalid negative jump length");
             YYABORT;
           }
 
           if ((yyvsp[(1) - (3)].integer) > (yyvsp[(3) - (3)].integer))
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup("invalid jump range");
+            yyerror(yyscanner, lex_env, "invalid jump range");
             YYABORT;
           }
 
@@ -1553,25 +1536,20 @@ yyreduce:
     break;
 
   case 11:
-#line 218 "hex_grammar.y"
+#line 201 "hex_grammar.y"
     {
           RE_NODE* re_any;
 
           if (lex_env->inside_or)
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup(
+            yyerror(yyscanner, lex_env,
                 "unbounded jumps not allowed inside alternation (|)");
-
             YYABORT;
           }
 
           if ((yyvsp[(1) - (2)].integer) < 0)
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup("invalid negative jump length");
+            yyerror(yyscanner, lex_env, "invalid negative jump length");
             YYABORT;
           }
 
@@ -1589,15 +1567,13 @@ yyreduce:
     break;
 
   case 12:
-#line 251 "hex_grammar.y"
+#line 229 "hex_grammar.y"
     {
           RE_NODE* re_any;
 
           if (lex_env->inside_or)
           {
-            RE* re = yyget_extra(yyscanner);
-            re->error_code = ERROR_INVALID_HEX_STRING;
-            re->error_message = yr_strdup(
+            yyerror(yyscanner, lex_env,
                 "unbounded jumps not allowed inside alternation (|)");
             YYABORT;
           }
@@ -1616,14 +1592,14 @@ yyreduce:
     break;
 
   case 13:
-#line 278 "hex_grammar.y"
+#line 254 "hex_grammar.y"
     {
                   (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
                }
     break;
 
   case 14:
-#line 282 "hex_grammar.y"
+#line 258 "hex_grammar.y"
     {
                   mark_as_not_fast_hex_regexp();
 
@@ -1631,12 +1607,13 @@ yyreduce:
 
                   DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[(1) - (3)].re_node));
                   DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[(3) - (3)].re_node));
+
                   ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
                }
     break;
 
   case 15:
-#line 294 "hex_grammar.y"
+#line 271 "hex_grammar.y"
     {
           (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
@@ -1647,7 +1624,7 @@ yyreduce:
     break;
 
   case 16:
-#line 302 "hex_grammar.y"
+#line 279 "hex_grammar.y"
     {
           uint8_t mask = (yyvsp[(1) - (1)].integer) >> 8;
 
@@ -1671,7 +1648,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1675 "hex_grammar.c"
+#line 1652 "hex_grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1885,7 +1862,7 @@ yyreturn:
 }
 
 
-#line 323 "hex_grammar.y"
+#line 300 "hex_grammar.y"
 
 
 

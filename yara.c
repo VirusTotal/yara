@@ -40,9 +40,6 @@ limitations under the License.
 #include "threading.h"
 #include "config.h"
 
-#ifdef DMALLOC
-#include <dmalloc.h>
-#endif
 
 #define USAGE \
 "usage:  yara [OPTION]... RULES_FILE FILE | PID\n"\
@@ -57,6 +54,7 @@ limitations under the License.
 "  -l <number>              abort scanning after matching a number rules.\n"\
 "  -a <seconds>             abort scanning after a number of seconds has elapsed.\n"\
 "  -d <identifier>=<value>  define external variable.\n"\
+"  -x <module>=<file>       pass file's content as extra data to module.\n"\
 "  -r                       recursively search directories.\n"\
 "  -f                       fast matching mode.\n"\
 "  -w                       disable warnings.\n"\
@@ -114,6 +112,16 @@ typedef struct _EXTERNAL
 } EXTERNAL;
 
 
+typedef struct _MODULE_DATA
+{
+  const char* module_name;
+  void* module_data;
+  size_t module_data_size;
+  struct _MODULE_DATA* next;
+
+} MODULE_DATA;
+
+
 typedef struct _QUEUED_FILE {
 
   char* path;
@@ -139,6 +147,7 @@ int threads = 8;
 TAG* specified_tags_list = NULL;
 IDENTIFIER* specified_rules_list = NULL;
 EXTERNAL* externals_list = NULL;
+MODULE_DATA* modules_data_list = NULL;
 
 
 // file_queue is size-limited queue stored as a circular array, files are
@@ -590,13 +599,35 @@ int handle_message(int message, YR_RULE* rule, void* data)
 }
 
 
-int callback(int message, YR_RULE* rule, void* data)
+int callback(int message, void* message_data, void* user_data)
 {
+  YR_MODULE_IMPORT* mi;
+  MODULE_DATA* module_data;
+
   switch(message)
   {
     case CALLBACK_MSG_RULE_MATCHING:
     case CALLBACK_MSG_RULE_NOT_MATCHING:
-      return handle_message(message, rule, data);
+      return handle_message(message, (YR_RULE*) message_data, user_data);
+
+    case CALLBACK_MSG_IMPORT_MODULE:
+      mi = (YR_MODULE_IMPORT*) message_data;
+
+      module_data = modules_data_list;
+
+      while (module_data != NULL)
+      {
+        if (strcmp(module_data->module_name, mi->module_name) == 0)
+        {
+          mi->module_data = module_data->module_data;
+          mi->module_data_size = module_data->module_data_size;
+          break;
+        }
+
+        module_data = module_data->next;
+      }
+
+      return CALLBACK_CONTINUE;
   }
 
   return CALLBACK_ERROR;
@@ -650,6 +681,8 @@ void cleanup()
   TAG* next_tag;
   EXTERNAL* external;
   EXTERNAL* next_external;
+  MODULE_DATA* module_data;
+  MODULE_DATA* next_module_data;
 
   tag = specified_tags_list;
 
@@ -677,6 +710,16 @@ void cleanup()
     free(identifier);
     identifier = next_identifier;
   }
+
+  module_data = modules_data_list;
+
+  while(module_data != NULL)
+  {
+    next_module_data = module_data->next;
+    free(module_data);
+    module_data = next_module_data;
+  }
+
 }
 
 
@@ -704,10 +747,13 @@ int process_cmd_line(
   TAG* tag;
   IDENTIFIER* identifier;
   EXTERNAL* external;
+  MODULE_DATA* module_data;
+
+  YR_MAPPED_FILE mapped_file;
 
   opterr = 0;
 
-  while ((c = getopt (argc, (char**) argv, "wrnsvgma:l:t:i:d:p:f")) != -1)
+  while ((c = getopt (argc, (char**) argv, "wrnsvgma:l:t:i:d:x:p:f")) != -1)
   {
     switch (c)
     {
@@ -814,6 +860,42 @@ int process_cmd_line(
             external->string = value;
           }
         }
+        break;
+
+      case 'x':
+
+        equal_sign = strchr(optarg, '=');
+
+        if (equal_sign == NULL)
+        {
+          fprintf(stderr, "Wrong syntax for -x modifier.\n");
+          return 0;
+        }
+
+        module_data = (MODULE_DATA*) malloc(sizeof(MODULE_DATA));
+
+        if (module_data == NULL)
+        {
+          fprintf(stderr, "Not enough memory.\n");
+          return 0;
+        }
+
+        *equal_sign = '\0';
+        value = equal_sign + 1;
+
+        if (yr_filemap_map(value, &mapped_file) != ERROR_SUCCESS)
+        {
+          free(module_data);
+          fprintf(stderr, "Could not open file \"%s\".\n", value);
+          return 0;
+        }
+
+        module_data->module_name = strdup(optarg);
+        module_data->module_data = mapped_file.data;
+        module_data->module_data_size = mapped_file.size;
+        module_data->next = modules_data_list;
+        modules_data_list = module_data;
+
         break;
 
       case 'l':

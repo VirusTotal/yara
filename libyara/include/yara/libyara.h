@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007. The YARA Authors. All Rights Reserved.
+Copyright (c) 2014. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,43 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef YR_MEM_H
-#define YR_MEM_H
+#ifndef YR_LIBYARA_H
+#define YR_LIBYARA_H
 
-#include <stdio.h>
+void yr_initialize(void);
 
-#include "config.h"
 
-#ifdef DMALLOC
+void yr_finalize(void);
 
-#define yr_malloc malloc
-#define yr_realloc realloc
-#define yr_free free
-#define yr_strdup strdup
 
-#include <dmalloc.h>
+void yr_finalize_thread(void);
 
-#else
 
-void* yr_malloc(
-		size_t size);
+int yr_get_tidx(void);
 
-void* yr_realloc(
-		void* ptr,
-		size_t size);
 
-void yr_free(
-		void *ptr);
-
-char* yr_strdup(
-		const char *str);
+void yr_set_tidx(int);
 
 #endif
-
-void yr_heap_alloc();
-
-void yr_heap_free();
-
-#endif
-
-

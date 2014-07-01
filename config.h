@@ -1,8 +1,11 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* enable cuckoo */
+#define CUCKOO 1
+
 /* enable dmalloc */
-/* #undef DMALLOC */
+#define DMALLOC 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
@@ -11,7 +14,10 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the `dmalloc' library (-ldmalloc). */
-/* #undef HAVE_LIBDMALLOC */
+#define HAVE_LIBDMALLOC 1
+
+/* Define to 1 if you have the `jansson' library (-ljansson). */
+#define HAVE_LIBJANSSON 1
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #define HAVE_LIBPTHREAD 1

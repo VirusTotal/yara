@@ -14,8 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "re.h"
-#include "hex_grammar.h"
+#include <yara/re.h>
+#include <hex_grammar.h>
+
+#undef yyparse
+#undef yylex
+#undef yyerror
+#undef yyfatal
+#undef yychar
+#undef yydebug
+#undef yynerrs
+#undef yyget_extra
+#undef yyget_lineno
+
+#undef YY_FATAL_ERROR
+#undef YY_DECL
+#undef LEX_ENV
 
 #define yyparse         hex_yyparse
 #define yylex           hex_yylex
@@ -37,20 +51,21 @@ typedef void* yyscan_t;
 #define YY_USE_CONST
 
 
-typedef struct _LEX_ENVIRONMENT
+typedef struct _HEX_LEX_ENVIRONMENT
 {
   int inside_or;
-  const char* last_error_message;
+  int last_error_code;
+  char last_error_message[256];
 
-} LEX_ENVIRONMENT;
+} HEX_LEX_ENVIRONMENT;
 
 
 #define YY_FATAL_ERROR(msg) hex_yyfatal(yyscanner, msg)
 
-#define LEX_ENV  ((LEX_ENVIRONMENT*) lex_env)
+#define LEX_ENV  ((HEX_LEX_ENVIRONMENT*) lex_env)
 
 #define YY_DECL int hex_yylex \
-    (YYSTYPE * yylval_param , yyscan_t yyscanner, LEX_ENVIRONMENT* lex_env)
+    (YYSTYPE * yylval_param , yyscan_t yyscanner, HEX_LEX_ENVIRONMENT* lex_env)
 
 
 YY_EXTRA_TYPE yyget_extra(
@@ -59,17 +74,23 @@ YY_EXTRA_TYPE yyget_extra(
 int yylex(
     YYSTYPE* yylval_param,
     yyscan_t yyscanner,
-    LEX_ENVIRONMENT* lex_env);
+    HEX_LEX_ENVIRONMENT* lex_env);
 
 int yyparse(
     void *yyscanner,
-    LEX_ENVIRONMENT *lex_env);
+    HEX_LEX_ENVIRONMENT *lex_env);
 
 void yyerror(
     yyscan_t yyscanner,
-    LEX_ENVIRONMENT* lex_env,
+    HEX_LEX_ENVIRONMENT* lex_env,
     const char *error_message);
 
 void yyfatal(
     yyscan_t yyscanner,
     const char *error_message);
+
+int yr_parse_hex_string(
+  const char* hex_string,
+  int flags,
+  RE** re,
+  RE_ERROR* error);

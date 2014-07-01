@@ -18,15 +18,13 @@ limitations under the License.
 
 #include <stdint.h>
 
-#include "mem.h"
-#include "re_lexer.h"
-#include "re.h"
+#include <yara/utils.h>
+#include <yara/error.h>
+#include <yara/limits.h>
+#include <yara/mem.h>
+#include <yara/re.h>
+#include <yara/re_lexer.h>
 
-#include "config.h"
-
-#ifdef DMALLOC
-#include <dmalloc.h>
-#endif
 
 #define YYERROR_VERBOSE
 
@@ -40,8 +38,7 @@ yydebug = 1;
 #define ERROR_IF(x, error) \
     if (x) \
     { \
-      RE* re = yyget_extra(yyscanner); \
-      re->error_code = error; \
+      lex_env->last_error_code = error; \
       YYABORT; \
     } \
 
@@ -59,10 +56,10 @@ yydebug = 1;
 %pure-parser
 
 %parse-param {void *yyscanner}
-%parse-param {LEX_ENVIRONMENT *lex_env}
+%parse-param {RE_LEX_ENVIRONMENT *lex_env}
 
 %lex-param {yyscan_t yyscanner}
-%lex-param {LEX_ENVIRONMENT *lex_env}
+%lex-param {RE_LEX_ENVIRONMENT *lex_env}
 
 %union {
   int integer;

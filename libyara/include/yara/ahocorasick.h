@@ -17,7 +17,10 @@ limitations under the License.
 #ifndef _AHOCORASICK_H
 #define _AHOCORASICK_H
 
-#include "yara.h"
+#include <yara/limits.h>
+#include <yara/atoms.h>
+#include <yara/types.h>
+
 
 int yr_ac_create_automaton(
     YR_ARENA* arena,

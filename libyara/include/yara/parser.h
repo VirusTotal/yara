@@ -17,10 +17,8 @@ limitations under the License.
 #ifndef YR_PARSER_H
 #define YR_PARSER_H
 
-#include "arena.h"
-#include "compiler.h"
+
 #include "lexer.h"
-#include "sizedstr.h"
 
 
 int yr_parser_emit(
@@ -43,14 +41,20 @@ int yr_parser_emit_with_arg_reloc(
     int8_t** instruction_address);
 
 
+int yr_parser_check_types(
+    YR_COMPILER* compiler,
+    YR_OBJECT_FUNCTION* function,
+    const char* actual_args_fmt);
+
+
 YR_STRING* yr_parser_lookup_string(
   yyscan_t yyscanner,
   const char* identifier);
 
 
-YR_EXTERNAL_VARIABLE* yr_parser_lookup_external_variable(
-  yyscan_t yyscanner,
-  const char* identifier);
+int yr_parser_lookup_loop_variable(
+    yyscan_t yyscanner,
+    const char* identifier);
 
 
 int yr_parser_reduce_rule_declaration(
@@ -94,8 +98,11 @@ int yr_parser_reduce_external(
     int8_t intruction);
 
 
-int yr_parser_lookup_loop_variable(
+int yr_parser_reduce_import(
     yyscan_t yyscanner,
-    const char* identifier);
+    SIZED_STRING* module_name);
+
+
+
 
 #endif

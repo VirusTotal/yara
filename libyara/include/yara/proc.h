@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013. The YARA Authors. All Rights Reserved.
+Copyright (c) 2007. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,30 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef YR_HASH_H
-#define YR_HASH_H
+#ifndef YR_PROC_H
+#define YR_PROC_H
 
-#include "yara.h"
+#include <yara/types.h>
 
-int yr_hash_table_create(
-    int size,
-    YR_HASH_TABLE** table);
-
-
-void yr_hash_table_destroy(
-    YR_HASH_TABLE* table);
-
-
-void* yr_hash_table_lookup(
-    YR_HASH_TABLE* table,
-    const char* key,
-    const char* ns);
-
-
-int yr_hash_table_add(
-    YR_HASH_TABLE* table,
-    const char* key,
-    const char* ns,
-    void* value);
+int yr_process_get_memory(
+    int pid,
+    YR_MEMORY_BLOCK** first_block);
 
 #endif

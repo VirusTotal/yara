@@ -1,32 +1,44 @@
 AM_YFLAGS=-d
 
-AM_CFLAGS=-O4 -Wall -std=gnu99
+AM_CFLAGS=-g -O0 -Wall -std=gnu99 -I./include
 
 ACLOCAL_AMFLAGS=-I m4
 
-include_HEADERS = yara.h
+include_HEADERS = include/yara.h
+
+yaraincludedir = $(includedir)/yara
+yarainclude_HEADERS = \
+  include/yara/error.h \
+  include/yara/utils.h \
+  include/yara/filemap.h \
+  include/yara/compiler.h \
+  include/yara/modules.h \
+  include/yara/object.h \
+  include/yara/libyara.h
 
 lib_LTLIBRARIES = libyara.la
 
 libyara_la_LDFLAGS = -export-symbols libyara.sym -version-number 2:1
 
+
+MODULES = modules/pe.c
+
+if CUCKOO
+MODULES += modules/cuckoo.c
+endif
+
 libyara_la_SOURCES = \
+  $(MODULES) \
+  grammar.y \
   ahocorasick.c \
-  ahocorasick.h \
   arena.c \
-  arena.h \
   atoms.c \
-  atoms.h \
   compiler.c \
-  compiler.h \
-  elf.h \
   exec.c \
-  exec.h \
   exefiles.c \
   exefiles.h \
   filemap.c \
   filemap.h \
-  grammar.y \
   hash.c \
   hash.h \
   hex_grammar.y \
@@ -37,6 +49,10 @@ libyara_la_SOURCES = \
   libyara.c \
   mem.c \
   mem.h \
+  modules.c \
+  modules.h \
+  object.c \
+  object.h \
   parser.c \
   parser.h \
   pe.h \
@@ -48,7 +64,9 @@ libyara_la_SOURCES = \
   re_lexer.h \
   re_lexer.l \
   rules.c \
+  scan.c \
   sizedstr.h \
   utils.c \
   utils.h
+
 

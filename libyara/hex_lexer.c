@@ -47,7 +47,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -358,7 +357,7 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	yyleng = (size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
@@ -460,7 +459,7 @@ static yyconst flex_int32_t yy_rule_can_match_eol[13] =
 #define YY_RESTORE_YY_MORE_OFFSET
 #line 1 "hex_lexer.l"
 /*
-Copyright (c) 2013. Victor M. Alvarez [plusvic@gmail.com].
+Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -477,19 +476,17 @@ limitations under the License.
 /* Lexical analyzer for hex strings */
 #line 20 "hex_lexer.l"
 
-#include "yara.h"
-#include "atoms.h"
-#include "mem.h"
-#include "re.h"
+
+#include <setjmp.h>
+
+#include <yara/limits.h>
+#include <yara/error.h>
+#include <yara/mem.h>
+#include <yara/re.h>
+#include <yara/utils.h>
+#include <yara/hex_lexer.h>
+
 #include "hex_grammar.h"
-#include "hex_lexer.h"
-#include "utils.h"
-
-#include "config.h"
-
-#ifdef DMALLOC
-#include <dmalloc.h>
-#endif
 
 #ifdef WIN32
 #define snprintf _snprintf
@@ -506,7 +503,7 @@ limitations under the License.
 #define YY_NO_UNISTD_H 1
 #define YY_NO_INPUT 1
 
-#line 510 "hex_lexer.c"
+#line 507 "hex_lexer.c"
 
 #define INITIAL 0
 #define range 1
@@ -738,11 +735,11 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 68 "hex_lexer.l"
+#line 66 "hex_lexer.l"
 
 
 
-#line 746 "hex_lexer.c"
+#line 743 "hex_lexer.c"
 
     yylval = yylval_param;
 
@@ -841,7 +838,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 71 "hex_lexer.l"
+#line 69 "hex_lexer.l"
 {
 
   yylval->integer = xtoi(yytext);
@@ -850,7 +847,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 77 "hex_lexer.l"
+#line 75 "hex_lexer.l"
 {
 
   yytext[1] = '0'; // replace ? by 0
@@ -860,7 +857,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 84 "hex_lexer.l"
+#line 82 "hex_lexer.l"
 {
 
   yytext[0] = '0'; // replace ? by 0
@@ -870,7 +867,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 91 "hex_lexer.l"
+#line 89 "hex_lexer.l"
 {
 
   yylval->integer = 0x0000;
@@ -879,7 +876,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 97 "hex_lexer.l"
+#line 95 "hex_lexer.l"
 {
 
   BEGIN(range);
@@ -888,21 +885,21 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 103 "hex_lexer.l"
+#line 101 "hex_lexer.l"
 {
   return yytext[0];
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 107 "hex_lexer.l"
+#line 105 "hex_lexer.l"
 {
   return yytext[0];
 }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 111 "hex_lexer.l"
+#line 109 "hex_lexer.l"
 {
 
   yylval->integer = atoi(yytext);
@@ -911,7 +908,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 117 "hex_lexer.l"
+#line 115 "hex_lexer.l"
 {
 
   BEGIN(INITIAL);
@@ -921,12 +918,12 @@ YY_RULE_SETUP
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 124 "hex_lexer.l"
+#line 122 "hex_lexer.l"
 // skip whitespace
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 127 "hex_lexer.l"
+#line 125 "hex_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -942,10 +939,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 140 "hex_lexer.l"
+#line 138 "hex_lexer.l"
 ECHO;
 	YY_BREAK
-#line 949 "hex_lexer.c"
+#line 946 "hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(range):
 	yyterminate();
@@ -2081,7 +2078,7 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 140 "hex_lexer.l"
+#line 138 "hex_lexer.l"
 
 
 
@@ -2089,6 +2086,7 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 #ifdef WIN32
 extern DWORD recovery_state_key;
 #else
+#include <pthread.h>
 extern pthread_key_t recovery_state_key;
 #endif
 
@@ -2110,36 +2108,38 @@ void yyfatal(
 
 void yyerror(
     yyscan_t yyscanner,
-    LEX_ENVIRONMENT* lex_env,
+    HEX_LEX_ENVIRONMENT* lex_env,
     const char *error_message)
 {
-  if (lex_env->last_error_message == NULL)
+  // if lex_env->last_error_code was set to some error code before
+  // don't overwrite it, we are interested in the first error, not in
+  // subsequent errors like "syntax error, unexpected $end" caused by
+  // early parser termination.
+
+  if (lex_env->last_error_code == ERROR_SUCCESS)
   {
-    lex_env->last_error_message = yr_strdup(error_message);
+    lex_env->last_error_code = ERROR_INVALID_HEX_STRING;
+
+    strncpy(
+        lex_env->last_error_message,
+        error_message,
+        sizeof(lex_env->last_error_message));
   }
 }
 
+
 int yr_parse_hex_string(
   const char* hex_string,
-  RE** re)
+  int flags,
+  RE** re,
+  RE_ERROR* error)
 {
   yyscan_t yyscanner;
   jmp_buf recovery_state;
-  LEX_ENVIRONMENT lex_env;
+  HEX_LEX_ENVIRONMENT lex_env;
 
-  lex_env.last_error_message = NULL;
+  lex_env.last_error_code = ERROR_SUCCESS;
   lex_env.inside_or = 0;
-
-  FAIL_ON_ERROR(yr_re_create(re));
-
-  // The RE_FLAGS_FAST_HEX_REGEXP flag indicates a regular expression derived
-  // from a hex string that can be matched by faster algorithm. These regular
-  // expressions come from hex strings not contaning alternatives
-  // (like in 01 02 | 03 04).
-  //
-  // This flag is unset later during parsing if necessary.
-
-  (*re)->flags |= RE_FLAGS_FAST_HEX_REGEXP;
 
   #ifdef WIN32
   TlsSetValue(recovery_state_key, (LPVOID) &recovery_state);
@@ -2150,19 +2150,35 @@ int yr_parse_hex_string(
   if (setjmp(recovery_state) != 0)
     return ERROR_INTERNAL_FATAL_ERROR;
 
+  FAIL_ON_ERROR(yr_re_create(re));
+
+  // The RE_FLAGS_FAST_HEX_REGEXP flag indicates a regular expression derived
+  // from a hex string that can be matched by faster algorithm. These regular
+  // expressions come from hex strings not contaning alternatives, like in:
+  // { ( 01 02 | 03 04) 05 06 }.
+  //
+  // This flag is unset later during parsing if alternatives are used.
+
+  (*re)->flags |= RE_FLAGS_FAST_HEX_REGEXP;
+
+  // Set RE_FLAGS_DOT_ALL because in hex strings the "dot" (?? in this case)
+  // must match all characters including new-line.
+
+  (*re)->flags |= RE_FLAGS_DOT_ALL;
+
   hex_yylex_init(&yyscanner);
   hex_yyset_extra(*re,yyscanner);
   hex_yy_scan_string(hex_string,yyscanner);
   yyparse(yyscanner, &lex_env);
   hex_yylex_destroy(yyscanner);
 
-  if (lex_env.last_error_message != NULL)
+  if (lex_env.last_error_code != ERROR_SUCCESS)
   {
-    (*re)->error_message = lex_env.last_error_message;
-    return ERROR_INVALID_HEX_STRING;
+    strncpy(error->message, lex_env.last_error_message, sizeof(error->message));
+    return lex_env.last_error_code;
   }
 
-  return (*re)->error_code;
+  return ERROR_SUCCESS;
 }
 
 

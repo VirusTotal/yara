@@ -18,8 +18,15 @@ limitations under the License.
 #include <assert.h>
 #include <time.h>
 
-#include "exec.h"
-#include "re.h"
+#include <yara/exec.h>
+#include <yara/limits.h>
+#include <yara/error.h>
+#include <yara/object.h>
+#include <yara/modules.h>
+#include <yara/re.h>
+
+
+#include <yara.h>
 
 #define STACK_SIZE 16384
 #define MEM_SIZE   MAX_LOOP_NESTING * LOOP_LOCAL_VARS
@@ -69,7 +76,7 @@ function_read(int32_t)
 
 int yr_execute_code(
     YR_RULES* rules,
-    EVALUATION_CONTEXT* context,
+    YR_EVALUATION_CONTEXT* context,
     int timeout,
     time_t start_time)
 {
@@ -78,19 +85,22 @@ int yr_execute_code(
   int64_t r3;
   int64_t mem[MEM_SIZE];
   int64_t stack[STACK_SIZE];
+  int64_t args[MAX_FUNCTION_ARGS];
   int32_t sp = 0;
   uint8_t* ip = rules->code_start;
 
   YR_RULE* rule;
   YR_STRING* string;
   YR_MATCH* match;
-  YR_EXTERNAL_VARIABLE* external;
+  YR_OBJECT* object;
+  YR_OBJECT_FUNCTION* function;
+
+  char* identifier;
 
   int i;
   int found;
   int count;
   int result;
-  int flags;
   int cycle = 0;
   int tidx = yr_get_tidx();
 
@@ -102,54 +112,54 @@ int yr_execute_code(
   {
     switch(*ip)
     {
-      case HALT:
+      case OP_HALT:
         // When the halt instruction is reached the stack
         // should be empty.
         assert(sp == 0);
         return ERROR_SUCCESS;
 
-      case PUSH:
+      case OP_PUSH:
         r1 = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         push(r1);
         break;
 
-      case POP:
+      case OP_POP:
         pop(r1);
         break;
 
-      case CLEAR_M:
+      case OP_CLEAR_M:
         r1 = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         mem[r1] = 0;
         break;
 
-      case ADD_M:
+      case OP_ADD_M:
         r1 = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         pop(r2);
         mem[r1] += r2;
         break;
 
-      case INCR_M:
+      case OP_INCR_M:
         r1 = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         mem[r1]++;
         break;
 
-      case PUSH_M:
+      case OP_PUSH_M:
         r1 = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         push(mem[r1]);
         break;
 
-      case POP_M:
+      case OP_POP_M:
         r1 = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         pop(mem[r1]);
         break;
 
-      case SWAPUNDEF:
+      case OP_SWAPUNDEF:
         r1 = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         pop(r2);
@@ -159,7 +169,7 @@ int yr_execute_code(
           push(mem[r1]);
         break;
 
-      case JNUNDEF:
+      case OP_JNUNDEF:
         pop(r1);
         push(r1);
 
@@ -176,7 +186,7 @@ int yr_execute_code(
         }
         break;
 
-      case JLE:
+      case OP_JLE:
         pop(r2);
         pop(r1);
         push(r1);
@@ -195,123 +205,154 @@ int yr_execute_code(
         }
         break;
 
-      case AND:
+      case OP_AND:
         pop(r2);
         pop(r1);
-        push(r1 & r2);
+        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
+          push(0);
+        else
+          push(r1 & r2);
         break;
 
-      case OR:
+      case OP_OR:
         pop(r2);
         pop(r1);
-        push(r1 | r2);
+        if (IS_UNDEFINED(r1))
+          push(r2);
+        else if (IS_UNDEFINED(r2))
+          push(r1);
+        else
+          push(r1 | r2);
         break;
 
-      case NOT:
+      case OP_NOT:
         pop(r1);
-        push(!r1);
+        if (IS_UNDEFINED(r1))
+          push(UNDEFINED);
+        else
+          push(!r1);
         break;
 
-      case LT:
+      case OP_LT:
         pop(r2);
         pop(r1);
         push(comparison(<, r1, r2));
         break;
 
-      case GT:
+      case OP_GT:
         pop(r2);
         pop(r1);
         push(comparison(>, r1, r2));
         break;
 
-      case LE:
+      case OP_LE:
         pop(r2);
         pop(r1);
         push(comparison(<=, r1, r2));
         break;
 
-      case GE:
+      case OP_GE:
         pop(r2);
         pop(r1);
         push(comparison(>=, r1, r2));
         break;
 
-      case EQ:
+      case OP_EQ:
         pop(r2);
         pop(r1);
         push(comparison(==, r1, r2));
         break;
 
-      case NEQ:
+      case OP_NEQ:
         pop(r2);
         pop(r1);
         push(comparison(!=, r1, r2));
         break;
 
-      case ADD:
+      case OP_SZ_EQ:
+        pop(r2);
+        pop(r1);
+        push(strcmp(UINT64_TO_PTR(char*, r1),
+                    UINT64_TO_PTR(char*, r2)) == 0);
+        break;
+
+      case OP_SZ_NEQ:
+        pop(r2);
+        pop(r1);
+        push(strcmp(UINT64_TO_PTR(char*, r1),
+                    UINT64_TO_PTR(char*, r2)) != 0);
+        break;
+
+      case OP_SZ_TO_BOOL:
+        pop(r1);
+        push(strlen(UINT64_TO_PTR(char*, r1)) > 0);
+        break;
+
+      case OP_ADD:
         pop(r2);
         pop(r1);
         push(operation(+, r1, r2));
         break;
 
-      case SUB:
+      case OP_SUB:
         pop(r2);
         pop(r1);
         push(operation(-, r1, r2));
         break;
 
-      case MUL:
+      case OP_MUL:
         pop(r2);
         pop(r1);
         push(operation(*, r1, r2));
         break;
 
-      case DIV:
+      case OP_DIV:
         pop(r2);
         pop(r1);
         push(operation(/, r1, r2));
         break;
 
-      case MOD:
+      case OP_MOD:
         pop(r2);
         pop(r1);
         push(operation(%, r1, r2));
         break;
 
-      case NEG:
+      case OP_NEG:
         pop(r1);
         push(IS_UNDEFINED(r1) ? UNDEFINED : ~r1);
         break;
 
-      case SHR:
+      case OP_SHR:
         pop(r2);
         pop(r1);
         push(operation(>>, r1, r2));
         break;
 
-      case SHL:
+      case OP_SHL:
         pop(r2);
         pop(r1);
         push(operation(<<, r1, r2));
         break;
 
-      case XOR:
+      case OP_XOR:
         pop(r2);
         pop(r1);
         push(operation(^, r1, r2));
         break;
 
-      case RULE_PUSH:
+      case OP_PUSH_RULE:
         rule = *(YR_RULE**)(ip + 1);
         ip += sizeof(uint64_t);
         push(rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0);
         break;
 
-      case RULE_POP:
+      case OP_MATCH_RULE:
         pop(r1);
         rule = *(YR_RULE**)(ip + 1);
         ip += sizeof(uint64_t);
-        if (r1)
+
+        if (!IS_UNDEFINED(r1) && r1)
           rule->t_flags[tidx] |= RULE_TFLAGS_MATCH;
 
         #ifdef PROFILING_ENABLED
@@ -320,35 +361,119 @@ int yr_execute_code(
         #endif
         break;
 
-      case EXT_INT:
-        external = *(YR_EXTERNAL_VARIABLE**)(ip + 1);
+      case OP_OBJ_LOAD:
+        identifier = *(char**)(ip + 1);
         ip += sizeof(uint64_t);
-        push(external->integer);
+
+        object = (YR_OBJECT*) yr_hash_table_lookup(
+            context->objects_table,
+            identifier,
+            NULL);
+
+        assert(object != NULL);
+        push(PTR_TO_UINT64(object));
         break;
 
-      case EXT_STR:
-        external = *(YR_EXTERNAL_VARIABLE**)(ip + 1);
+      case OP_OBJ_FIELD:
+        pop(r1);
+
+        identifier = *(char**)(ip + 1);
         ip += sizeof(uint64_t);
-        push(PTR_TO_UINT64(external->string));
+
+        if (IS_UNDEFINED(r1))
+        {
+          push(UNDEFINED);
+          break;
+        }
+
+        object = UINT64_TO_PTR(YR_OBJECT*, r1);
+        object = yr_object_lookup_field(object, identifier);
+        assert(object != NULL);
+        push(PTR_TO_UINT64(object));
         break;
 
-      case EXT_BOOL:
-        external = *(YR_EXTERNAL_VARIABLE**)(ip + 1);
-        ip += sizeof(uint64_t);
-        if (external->type == EXTERNAL_VARIABLE_TYPE_FIXED_STRING ||
-            external->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
-          push(external->string[0] != '\0');
+      case OP_OBJ_VALUE:
+        pop(r1);
+
+        if (IS_UNDEFINED(r1))
+        {
+          push(UNDEFINED);
+          break;
+        }
+
+        object = UINT64_TO_PTR(YR_OBJECT*, r1);
+
+        switch(object->type)
+        {
+          case OBJECT_TYPE_INTEGER:
+            push(((YR_OBJECT_INTEGER*) object)->value);
+            break;
+
+          case OBJECT_TYPE_STRING:
+            push(PTR_TO_UINT64(((YR_OBJECT_STRING*) object)->value));
+            break;
+
+          default:
+            assert(FALSE);
+        }
+
+        break;
+
+      case OP_INDEX_ARRAY:
+        pop(r1);
+        pop(r2);
+
+        if (r1 == UNDEFINED)
+        {
+          push(UNDEFINED);
+          break;
+        }
+
+        object = UINT64_TO_PTR(YR_OBJECT*, r2);
+        assert(object->type == OBJECT_TYPE_ARRAY);
+        object = yr_object_array_get_item(object, 0, r1);
+
+        if (object != NULL)
+          push(PTR_TO_UINT64(object));
         else
-          push(external->integer);
+          push(UNDEFINED);
+
         break;
 
-      case SFOUND:
+      case OP_CALL:
+
+        // r1 = number of arguments
+
+        r1 = *(uint64_t*)(ip + 1);
+        ip += sizeof(uint64_t);
+
+        // pop arguments from stack and copy them to args array
+
+        while (r1 > 0)
+        {
+          pop(args[r1 - 1]);
+          r1--;
+        }
+
+        pop(r2);
+
+        function = UINT64_TO_PTR(YR_OBJECT_FUNCTION*, r2);
+        result = function->code((void*) args, function);
+
+        if (result == ERROR_SUCCESS)
+          push(PTR_TO_UINT64(function->return_obj));
+        else
+          return result;
+
+        break;
+
+      case OP_STR_FOUND:
         pop(r1);
         string = UINT64_TO_PTR(YR_STRING*, r1);
         push(string->matches[tidx].tail != NULL ? 1 : 0);
         break;
 
-      case SFOUND_AT:
+      case OP_STR_FOUND_AT:
         pop(r2);
         pop(r1);
 
@@ -382,7 +507,7 @@ int yr_execute_code(
 
         break;
 
-      case SFOUND_IN:
+      case OP_STR_FOUND_IN:
         pop(r3);
         pop(r2);
         pop(r1);
@@ -416,13 +541,13 @@ int yr_execute_code(
 
         break;
 
-      case SCOUNT:
+      case OP_STR_COUNT:
         pop(r1);
         string = UINT64_TO_PTR(YR_STRING*, r1);
         push(string->matches[tidx].count);
         break;
 
-      case SOFFSET:
+      case OP_STR_OFFSET:
         pop(r2);
         pop(r1);
 
@@ -454,7 +579,7 @@ int yr_execute_code(
 
         break;
 
-      case OF:
+      case OP_OF:
         found = 0;
         count = 0;
         pop(r1);
@@ -477,57 +602,65 @@ int yr_execute_code(
 
         break;
 
-      case SIZE:
+      case OP_SIZE:
         push(context->file_size);
         break;
 
-      case ENTRYPOINT:
+      case OP_ENTRYPOINT:
         push(context->entry_point);
         break;
 
-      case INT8:
+      case OP_INT8:
         pop(r1);
         push(read_int8_t(context->mem_block, r1));
         break;
 
-      case INT16:
+      case OP_INT16:
         pop(r1);
         push(read_int16_t(context->mem_block, r1));
         break;
 
-      case INT32:
+      case OP_INT32:
         pop(r1);
         push(read_int32_t(context->mem_block, r1));
         break;
 
-      case UINT8:
+      case OP_UINT8:
         pop(r1);
         push(read_uint8_t(context->mem_block, r1));
         break;
 
-      case UINT16:
+      case OP_UINT16:
         pop(r1);
         push(read_uint16_t(context->mem_block, r1));
         break;
 
-      case UINT32:
+      case OP_UINT32:
         pop(r1);
         push(read_uint32_t(context->mem_block, r1));
         break;
 
-      case CONTAINS:
+      case OP_CONTAINS:
         pop(r2);
         pop(r1);
         push(strstr(UINT64_TO_PTR(char*, r1),
                     UINT64_TO_PTR(char*, r2)) != NULL);
         break;
 
-      case MATCHES:
-        pop(r3);
+      case OP_IMPORT:
+        r1 = *(uint64_t*)(ip + 1);
+        ip += sizeof(uint64_t);
+
+        FAIL_ON_ERROR(yr_modules_load(
+            UINT64_TO_PTR(char*, r1),
+            context));
+
+        break;
+
+      case OP_MATCHES:
         pop(r2);
         pop(r1);
 
-        flags = (int) r3;
         count = strlen(UINT64_TO_PTR(char*, r1));
 
         if (count == 0)
@@ -540,7 +673,7 @@ int yr_execute_code(
           UINT64_TO_PTR(uint8_t*, r2),
           UINT64_TO_PTR(uint8_t*, r1),
           count,
-          flags | RE_FLAGS_SCAN,
+          RE_FLAGS_SCAN,
           NULL,
           NULL);
 

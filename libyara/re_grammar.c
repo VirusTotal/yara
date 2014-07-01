@@ -107,15 +107,13 @@
 
 #include <stdint.h>
 
-#include "mem.h"
-#include "re_lexer.h"
-#include "re.h"
+#include <yara/utils.h>
+#include <yara/error.h>
+#include <yara/limits.h>
+#include <yara/mem.h>
+#include <yara/re.h>
+#include <yara/re_lexer.h>
 
-#include "config.h"
-
-#ifdef DMALLOC
-#include <dmalloc.h>
-#endif
 
 #define YYERROR_VERBOSE
 
@@ -129,8 +127,7 @@ yydebug = 1;
 #define ERROR_IF(x, error) \
     if (x) \
     { \
-      RE* re = yyget_extra(yyscanner); \
-      re->error_code = error; \
+      lex_env->last_error_code = error; \
       YYABORT; \
     } \
 
@@ -162,7 +159,7 @@ yydebug = 1;
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 67 "re_grammar.y"
+#line 64 "re_grammar.y"
 {
   int integer;
   uint32_t range;
@@ -170,7 +167,7 @@ typedef union YYSTYPE
   uint8_t* class_vector;
 }
 /* Line 193 of yacc.c.  */
-#line 174 "re_grammar.c"
+#line 171 "re_grammar.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -183,7 +180,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 187 "re_grammar.c"
+#line 184 "re_grammar.c"
 
 #ifdef short
 # undef short
@@ -474,9 +471,9 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    96,    96,   101,   104,   108,   117,   132,   136,   146,
-     153,   162,   169,   178,   188,   199,   209,   213,   219,   227,
-     231,   237,   245,   251,   257,   263,   269,   275,   281
+       0,    93,    93,    98,   101,   105,   114,   129,   133,   143,
+     150,   159,   166,   175,   185,   196,   206,   210,   216,   224,
+     228,   234,   242,   248,   254,   260,   266,   272,   278
 };
 #endif
 
@@ -711,7 +708,7 @@ do {									  \
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *yyscanner, LEX_ENVIRONMENT *lex_env)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *yyscanner, RE_LEX_ENVIRONMENT *lex_env)
 #else
 static void
 yy_symbol_value_print (yyoutput, yytype, yyvaluep, yyscanner, lex_env)
@@ -719,7 +716,7 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, yyscanner, lex_env)
     int yytype;
     YYSTYPE const * const yyvaluep;
     void *yyscanner;
-    LEX_ENVIRONMENT *lex_env;
+    RE_LEX_ENVIRONMENT *lex_env;
 #endif
 {
   if (!yyvaluep)
@@ -747,7 +744,7 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, yyscanner, lex_env)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *yyscanner, LEX_ENVIRONMENT *lex_env)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, void *yyscanner, RE_LEX_ENVIRONMENT *lex_env)
 #else
 static void
 yy_symbol_print (yyoutput, yytype, yyvaluep, yyscanner, lex_env)
@@ -755,7 +752,7 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, yyscanner, lex_env)
     int yytype;
     YYSTYPE const * const yyvaluep;
     void *yyscanner;
-    LEX_ENVIRONMENT *lex_env;
+    RE_LEX_ENVIRONMENT *lex_env;
 #endif
 {
   if (yytype < YYNTOKENS)
@@ -803,14 +800,14 @@ do {								\
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, int yyrule, void *yyscanner, LEX_ENVIRONMENT *lex_env)
+yy_reduce_print (YYSTYPE *yyvsp, int yyrule, void *yyscanner, RE_LEX_ENVIRONMENT *lex_env)
 #else
 static void
 yy_reduce_print (yyvsp, yyrule, yyscanner, lex_env)
     YYSTYPE *yyvsp;
     int yyrule;
     void *yyscanner;
-    LEX_ENVIRONMENT *lex_env;
+    RE_LEX_ENVIRONMENT *lex_env;
 #endif
 {
   int yynrhs = yyr2[yyrule];
@@ -1083,7 +1080,7 @@ yysyntax_error (char *yyresult, int yystate, int yychar)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *yyscanner, LEX_ENVIRONMENT *lex_env)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *yyscanner, RE_LEX_ENVIRONMENT *lex_env)
 #else
 static void
 yydestruct (yymsg, yytype, yyvaluep, yyscanner, lex_env)
@@ -1091,7 +1088,7 @@ yydestruct (yymsg, yytype, yyvaluep, yyscanner, lex_env)
     int yytype;
     YYSTYPE *yyvaluep;
     void *yyscanner;
-    LEX_ENVIRONMENT *lex_env;
+    RE_LEX_ENVIRONMENT *lex_env;
 #endif
 {
   YYUSE (yyvaluep);
@@ -1105,29 +1102,29 @@ yydestruct (yymsg, yytype, yyvaluep, yyscanner, lex_env)
   switch (yytype)
     {
       case 6: /* "_CLASS_" */
-#line 88 "re_grammar.y"
+#line 85 "re_grammar.y"
 	{ yr_free((yyvaluep->class_vector)); };
-#line 1111 "re_grammar.c"
+#line 1108 "re_grammar.c"
 	break;
       case 24: /* "alternative" */
-#line 89 "re_grammar.y"
+#line 86 "re_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1116 "re_grammar.c"
+#line 1113 "re_grammar.c"
 	break;
       case 25: /* "concatenation" */
-#line 90 "re_grammar.y"
+#line 87 "re_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1121 "re_grammar.c"
+#line 1118 "re_grammar.c"
 	break;
       case 26: /* "repeat" */
-#line 91 "re_grammar.y"
+#line 88 "re_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1126 "re_grammar.c"
+#line 1123 "re_grammar.c"
 	break;
       case 27: /* "single" */
-#line 92 "re_grammar.y"
+#line 89 "re_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1131 "re_grammar.c"
+#line 1128 "re_grammar.c"
 	break;
 
       default:
@@ -1146,7 +1143,7 @@ int yyparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int yyparse (void *yyscanner, LEX_ENVIRONMENT *lex_env);
+int yyparse (void *yyscanner, RE_LEX_ENVIRONMENT *lex_env);
 #else
 int yyparse ();
 #endif
@@ -1175,12 +1172,12 @@ yyparse (YYPARSE_PARAM)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (void *yyscanner, LEX_ENVIRONMENT *lex_env)
+yyparse (void *yyscanner, RE_LEX_ENVIRONMENT *lex_env)
 #else
 int
 yyparse (yyscanner, lex_env)
     void *yyscanner;
-    LEX_ENVIRONMENT *lex_env;
+    RE_LEX_ENVIRONMENT *lex_env;
 #endif
 #endif
 {
@@ -1437,7 +1434,7 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 97 "re_grammar.y"
+#line 94 "re_grammar.y"
     {
         RE* re = yyget_extra(yyscanner);
         re->root_node = (yyvsp[(1) - (1)].re_node);
@@ -1445,14 +1442,14 @@ yyreduce:
     break;
 
   case 4:
-#line 105 "re_grammar.y"
+#line 102 "re_grammar.y"
     {
                 (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
               }
     break;
 
   case 5:
-#line 109 "re_grammar.y"
+#line 106 "re_grammar.y"
     {
                 (yyval.re_node) = yr_re_node_create(RE_NODE_ALT, (yyvsp[(1) - (3)].re_node), (yyvsp[(3) - (3)].re_node));
 
@@ -1464,7 +1461,7 @@ yyreduce:
     break;
 
   case 6:
-#line 118 "re_grammar.y"
+#line 115 "re_grammar.y"
     {
                 RE_NODE* node;
 
@@ -1480,14 +1477,14 @@ yyreduce:
     break;
 
   case 7:
-#line 133 "re_grammar.y"
+#line 130 "re_grammar.y"
     {
                   (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
                 }
     break;
 
   case 8:
-#line 137 "re_grammar.y"
+#line 134 "re_grammar.y"
     {
                   (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[(1) - (2)].re_node), (yyvsp[(2) - (2)].re_node));
 
@@ -1498,7 +1495,7 @@ yyreduce:
     break;
 
   case 9:
-#line 147 "re_grammar.y"
+#line 144 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_STAR, (yyvsp[(1) - (2)].re_node), NULL);
 
@@ -1508,7 +1505,7 @@ yyreduce:
     break;
 
   case 10:
-#line 154 "re_grammar.y"
+#line 151 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_STAR, (yyvsp[(1) - (3)].re_node), NULL);
 
@@ -1520,7 +1517,7 @@ yyreduce:
     break;
 
   case 11:
-#line 163 "re_grammar.y"
+#line 160 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_PLUS, (yyvsp[(1) - (2)].re_node), NULL);
 
@@ -1530,7 +1527,7 @@ yyreduce:
     break;
 
   case 12:
-#line 170 "re_grammar.y"
+#line 167 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_PLUS, (yyvsp[(1) - (3)].re_node), NULL);
 
@@ -1542,7 +1539,7 @@ yyreduce:
     break;
 
   case 13:
-#line 179 "re_grammar.y"
+#line 176 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, (yyvsp[(1) - (2)].re_node), NULL);
 
@@ -1555,7 +1552,7 @@ yyreduce:
     break;
 
   case 14:
-#line 189 "re_grammar.y"
+#line 186 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, (yyvsp[(1) - (3)].re_node), NULL);
 
@@ -1569,7 +1566,7 @@ yyreduce:
     break;
 
   case 15:
-#line 200 "re_grammar.y"
+#line 197 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, (yyvsp[(1) - (2)].re_node), NULL);
 
@@ -1582,14 +1579,14 @@ yyreduce:
     break;
 
   case 16:
-#line 210 "re_grammar.y"
+#line 207 "re_grammar.y"
     {
             (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
          }
     break;
 
   case 17:
-#line 214 "re_grammar.y"
+#line 211 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_ANCHOR_START, NULL, NULL);
 
@@ -1598,7 +1595,7 @@ yyreduce:
     break;
 
   case 18:
-#line 220 "re_grammar.y"
+#line 217 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_ANCHOR_END, NULL, NULL);
 
@@ -1607,14 +1604,14 @@ yyreduce:
     break;
 
   case 19:
-#line 228 "re_grammar.y"
+#line 225 "re_grammar.y"
     {
             (yyval.re_node) = (yyvsp[(2) - (3)].re_node);
          }
     break;
 
   case 20:
-#line 232 "re_grammar.y"
+#line 229 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
@@ -1623,7 +1620,7 @@ yyreduce:
     break;
 
   case 21:
-#line 238 "re_grammar.y"
+#line 235 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
@@ -1634,7 +1631,7 @@ yyreduce:
     break;
 
   case 22:
-#line 246 "re_grammar.y"
+#line 243 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_WORD_CHAR, NULL, NULL);
 
@@ -1643,7 +1640,7 @@ yyreduce:
     break;
 
   case 23:
-#line 252 "re_grammar.y"
+#line 249 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_NON_WORD_CHAR, NULL, NULL);
 
@@ -1652,7 +1649,7 @@ yyreduce:
     break;
 
   case 24:
-#line 258 "re_grammar.y"
+#line 255 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_SPACE, NULL, NULL);
 
@@ -1661,7 +1658,7 @@ yyreduce:
     break;
 
   case 25:
-#line 264 "re_grammar.y"
+#line 261 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_NON_SPACE, NULL, NULL);
 
@@ -1670,7 +1667,7 @@ yyreduce:
     break;
 
   case 26:
-#line 270 "re_grammar.y"
+#line 267 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_DIGIT, NULL, NULL);
 
@@ -1679,7 +1676,7 @@ yyreduce:
     break;
 
   case 27:
-#line 276 "re_grammar.y"
+#line 273 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_NON_DIGIT, NULL, NULL);
 
@@ -1688,7 +1685,7 @@ yyreduce:
     break;
 
   case 28:
-#line 282 "re_grammar.y"
+#line 279 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_CLASS, NULL, NULL);
 
@@ -1700,7 +1697,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1704 "re_grammar.c"
+#line 1701 "re_grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1914,7 +1911,7 @@ yyreturn:
 }
 
 
-#line 292 "re_grammar.y"
+#line 289 "re_grammar.y"
 
 
 

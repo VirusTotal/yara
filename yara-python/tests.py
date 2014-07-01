@@ -507,7 +507,8 @@ class TestYara(unittest.TestCase):
         self.assertFalseRules([
             'rule test { strings: $a = /^ssi/ condition: $a }',
             'rule test { strings: $a = /ssi$/ condition: $a }',
-            'rule test { strings: $a = /ssissi/ fullword condition: $a }'
+            'rule test { strings: $a = /ssissi/ fullword condition: $a }',
+            'rule test { strings: $a = /^[isp]+/ condition: $a }'
         ], 'mississippi')
 
         for test in RE_TESTS:

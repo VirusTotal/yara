@@ -18,10 +18,9 @@ limitations under the License.
 
 #include <windows.h>
 
-#include "errors.h"
-#include "mem.h"
-#include "proc.h"
-
+#include <yara/mem.h>
+#include <yara/error.h>
+#include <yara/proc.h>
 
 int yr_process_get_memory(
     int pid,
@@ -149,8 +148,9 @@ int yr_process_get_memory(
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 
-#include "mem.h"
-#include "proc.h"
+#include <yara/error.h>
+#include <yara/proc.h>
+#include <yara/mem.h>
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__MACH__)
 #define PTRACE_ATTACH PT_ATTACH

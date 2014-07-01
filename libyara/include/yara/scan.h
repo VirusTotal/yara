@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007. The YARA Authors. All Rights Reserved.
+Copyright (c) 2014. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,28 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef YR_EXEFILES_H
-#define YR_EXEFILES_H
+#ifndef YR_SCAN_H
+#define YR_SCAN_H
 
-int yr_file_is_pe(
-		uint8_t* buffer,
-		size_t buffer_length);
-
-
-int yr_file_is_elf(
-		uint8_t* buffer,
-		size_t buffer_length);
-
-
-uint64_t yr_get_entry_point_offset(
-		uint8_t* buffer,
-		size_t buffer_length);
-
-
-uint64_t yr_get_entry_point_address(
-		uint8_t* buffer,
-		size_t buffer_length,
-		size_t base_address);
+int yr_scan_verify_match(
+    YR_AC_MATCH* ac_match,
+    uint8_t* data,
+    size_t data_size,
+    size_t offset,
+    YR_ARENA* matches_arena,
+    int fast_scan_mode);
 
 #endif
-

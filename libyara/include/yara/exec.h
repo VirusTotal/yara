@@ -18,7 +18,9 @@ limitations under the License.
 #define YR_EXEC_H
 
 #include <yara/hash.h>
+#include <yara/types.h>
 #include <yara/rules.h>
+
 
 #define UNDEFINED           0xFFFABADAFABADAFFLL
 #define IS_UNDEFINED(x)     ((x) == UNDEFINED)
@@ -37,51 +39,52 @@ limitations under the License.
 #define OP_NEQ            10
 #define OP_SZ_EQ          11
 #define OP_SZ_NEQ         12
-#define OP_ADD            13
-#define OP_SUB            14
-#define OP_MUL            15
-#define OP_DIV            16
-#define OP_MOD            17
-#define OP_NEG            18
-#define OP_SHL            19
-#define OP_SHR            20
-#define OP_PUSH           21
-#define OP_POP            22
-#define OP_CALL           23
-#define OP_OBJ_LOAD       24
-#define OP_OBJ_VALUE      25
-#define OP_OBJ_FIELD      26
-#define OP_INDEX_ARRAY    27
-#define OP_STR_COUNT      28
-#define OP_STR_FOUND      29
-#define OP_STR_FOUND_AT   30
-#define OP_STR_FOUND_IN   31
-#define OP_STR_OFFSET     32
-#define OP_OF             33
-#define OP_PUSH_RULE      34
-#define OP_MATCH_RULE     35
-#define OP_INCR_M         36
-#define OP_CLEAR_M        37
-#define OP_ADD_M          38
-#define OP_POP_M          39
-#define OP_PUSH_M         40
-#define OP_SWAPUNDEF      41
-#define OP_JNUNDEF        42
-#define OP_JLE            43
-#define OP_SIZE           44
-#define OP_ENTRYPOINT     45
-#define OP_INT8           46
-#define OP_INT16          47
-#define OP_INT32          48
-#define OP_UINT8          49
-#define OP_UINT16         50
-#define OP_UINT32         51
-#define OP_CONTAINS       52
-#define OP_MATCHES        53
-#define OP_IMPORT         54
+#define OP_SZ_TO_BOOL     13
+#define OP_ADD            14
+#define OP_SUB            15
+#define OP_MUL            16
+#define OP_DIV            17
+#define OP_MOD            18
+#define OP_NEG            19
+#define OP_SHL            20
+#define OP_SHR            21
+#define OP_PUSH           22
+#define OP_POP            23
+#define OP_CALL           24
+#define OP_OBJ_LOAD       25
+#define OP_OBJ_VALUE      26
+#define OP_OBJ_FIELD      27
+#define OP_INDEX_ARRAY    28
+#define OP_STR_COUNT      29
+#define OP_STR_FOUND      30
+#define OP_STR_FOUND_AT   31
+#define OP_STR_FOUND_IN   32
+#define OP_STR_OFFSET     33
+#define OP_OF             34
+#define OP_PUSH_RULE      35
+#define OP_MATCH_RULE     36
+#define OP_INCR_M         37
+#define OP_CLEAR_M        38
+#define OP_ADD_M          39
+#define OP_POP_M          40
+#define OP_PUSH_M         41
+#define OP_SWAPUNDEF      42
+#define OP_JNUNDEF        43
+#define OP_JLE            44
+#define OP_SIZE           45
+#define OP_ENTRYPOINT     46
+#define OP_INT8           47
+#define OP_INT16          48
+#define OP_INT32          49
+#define OP_UINT8          50
+#define OP_UINT16         51
+#define OP_UINT32         52
+#define OP_CONTAINS       53
+#define OP_MATCHES        54
+#define OP_IMPORT         55
 
 
-typedef struct _YR_YR_EVALUATION_CONTEXT
+typedef struct _YR_EVALUATION_CONTEXT
 {
   uint64_t  file_size;
   uint64_t  entry_point;
