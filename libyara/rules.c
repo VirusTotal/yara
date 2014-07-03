@@ -608,7 +608,6 @@ int yr_rules_load(
 {
   YR_RULES* new_rules;
   YARA_RULES_FILE_HEADER* header;
-  YR_RULE* rule;
 
   int result;
 
@@ -644,7 +643,6 @@ int yr_rules_load(
     return ERROR_INTERNAL_FATAL_ERROR;
   #endif
 
-  rule = new_rules->rules_list_head;
   *rules = new_rules;
 
   return ERROR_SUCCESS;

@@ -256,36 +256,6 @@ int yr_parser_lookup_loop_variable(
 }
 
 
-/*
-YR_EXTERNAL_VARIABLE* yr_parser_lookup_external_variable(
-    yyscan_t yyscanner,
-    const char* identifier)
-{
-  YR_EXTERNAL_VARIABLE* external;
-  YR_COMPILER* compiler = yyget_extra(yyscanner);
-  int i;
-
-  external = (YR_EXTERNAL_VARIABLE*) yr_arena_base_address(
-      compiler->externals_arena);
-
-  for (i = 0; i < compiler->externals_count; i++)
-  {
-    if (strcmp(external->identifier, identifier) == 0)
-      return external;
-
-    external = yr_arena_next_address(
-        compiler->externals_arena,
-        external,
-        sizeof(YR_EXTERNAL_VARIABLE));
-  }
-
-  yr_compiler_set_error_extra_info(compiler, identifier);
-  compiler->last_result = ERROR_UNDEFINED_IDENTIFIER;
-
-  return NULL;
-}
-*/
-
 int _yr_parser_write_string(
     const char* identifier,
     int flags,

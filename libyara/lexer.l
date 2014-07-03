@@ -638,7 +638,6 @@ int yr_lex_parse_rules_string(
   YR_COMPILER* compiler)
 {
   yyscan_t yyscanner;
-  YY_BUFFER_STATE state;
 
   if (setjmp(compiler->error_recovery) != 0)
     return compiler->errors;
@@ -649,7 +648,7 @@ int yr_lex_parse_rules_string(
 
   yyset_extra(compiler, yyscanner);
 
-  state = yy_scan_string(rules_string, yyscanner);
+  yy_scan_string(rules_string, yyscanner);
 
   yyset_lineno(1, yyscanner);
   yyparse(yyscanner, compiler);

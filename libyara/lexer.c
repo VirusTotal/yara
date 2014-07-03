@@ -2957,7 +2957,6 @@ int yr_lex_parse_rules_string(
   YR_COMPILER* compiler)
 {
   yyscan_t yyscanner;
-  YY_BUFFER_STATE state;
 
   if (setjmp(compiler->error_recovery) != 0)
     return compiler->errors;
@@ -2968,7 +2967,7 @@ int yr_lex_parse_rules_string(
 
   yara_yyset_extra(compiler,yyscanner);
 
-  state = yara_yy_scan_string(rules_string,yyscanner);
+  yara_yy_scan_string(rules_string,yyscanner);
 
   yara_yyset_lineno(1,yyscanner);
   yyparse(yyscanner, compiler);
