@@ -17,7 +17,8 @@ limitations under the License.
 #ifndef YR_UTILS_H
 #define YR_UTILS_H
 
-#include <stddef.h>
+#include <assert.h>
+#include <stdlib.h>
 
 #ifndef TRUE
 #define TRUE 1

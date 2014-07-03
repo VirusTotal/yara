@@ -22,13 +22,11 @@ limitations under the License.
 #include <yara/re.h>
 #include <yara/error.h>
 #include <yara/exec.h>
-#include <yara/mem.h>
 #include <yara/object.h>
 #include <yara/utils.h>
 #include <yara/modules.h>
-
-
 #include <yara/parser.h>
+#include <yara/mem.h>
 
 #define todigit(x)  ((x) >='A'&& (x) <='F')? \
                     ((uint8_t) (x - 'A' + 10)) : \

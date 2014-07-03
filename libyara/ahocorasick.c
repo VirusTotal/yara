@@ -20,9 +20,9 @@ limitations under the License.
 
 #include <yara/arena.h>
 #include <yara/ahocorasick.h>
-#include <yara/mem.h>
 #include <yara/error.h>
 #include <yara/utils.h>
+#include <yara/mem.h>
 
 
 #define MAX_TABLE_BASED_STATES_DEPTH 1
