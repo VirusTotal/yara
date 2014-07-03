@@ -272,20 +272,33 @@ int yr_execute_code(
       case OP_SZ_EQ:
         pop(r2);
         pop(r1);
-        push(strcmp(UINT64_TO_PTR(char*, r1),
-                    UINT64_TO_PTR(char*, r2)) == 0);
+
+        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
+          push(UNDEFINED);
+        else
+          push(strcmp(UINT64_TO_PTR(char*, r1),
+                      UINT64_TO_PTR(char*, r2)) == 0);
         break;
 
       case OP_SZ_NEQ:
         pop(r2);
         pop(r1);
-        push(strcmp(UINT64_TO_PTR(char*, r1),
-                    UINT64_TO_PTR(char*, r2)) != 0);
+
+        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
+          push(UNDEFINED);
+        else
+          push(strcmp(UINT64_TO_PTR(char*, r1),
+                      UINT64_TO_PTR(char*, r2)) != 0);
         break;
 
       case OP_SZ_TO_BOOL:
         pop(r1);
-        push(strlen(UINT64_TO_PTR(char*, r1)) > 0);
+
+        if (IS_UNDEFINED(r1))
+          push(UNDEFINED);
+        else
+          push(strlen(UINT64_TO_PTR(char*, r1)) > 0);
+
         break;
 
       case OP_ADD:
@@ -410,7 +423,10 @@ int yr_execute_code(
             break;
 
           case OBJECT_TYPE_STRING:
-            push(PTR_TO_UINT64(((YR_OBJECT_STRING*) object)->value));
+            if (((YR_OBJECT_STRING*) object)->value != NULL)
+              push(PTR_TO_UINT64(((YR_OBJECT_STRING*) object)->value));
+            else
+              push(UNDEFINED);
             break;
 
           default:
