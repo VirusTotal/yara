@@ -344,9 +344,9 @@ int yara_callback(
         module_import->module_name);
 
     #if PY_MAJOR_VERSION >= 3
-    if (PyBytes_Check(module_data))
+    if (module_data != NULL && PyBytes_Check(module_data))
     #else
-    if (PyString_Check(module_data))
+    if (module_data != NULL && PyString_Check(module_data))
     #endif
     {
       #if PY_MAJOR_VERSION >= 3
