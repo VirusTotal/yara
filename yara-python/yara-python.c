@@ -332,8 +332,11 @@ int yara_callback(
   if (message == CALLBACK_MSG_RULE_NOT_MATCHING && callback == NULL)
     return CALLBACK_CONTINUE;
 
-  if (message == CALLBACK_MSG_IMPORT_MODULE && modules_data != NULL)
+  if (message == CALLBACK_MSG_IMPORT_MODULE)
   {
+    if (modules_data == NULL)
+      return CALLBACK_CONTINUE;
+
     module_import = (YR_MODULE_IMPORT*) message_data;
 
     module_data = PyDict_GetItemString(
