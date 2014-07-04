@@ -1173,7 +1173,7 @@ YY_RULE_SETUP
 case 32:
 YY_RULE_SETUP
 #line 116 "lexer.l"
-{ return SIZE;        }
+{ return FILESIZE;    }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP

@@ -113,7 +113,7 @@ limitations under the License.
 %token NOCASE
 %token FULLWORD
 %token AT
-%token SIZE
+%token FILESIZE
 %token ENTRYPOINT
 %token ALL
 %token ANY
@@ -1407,10 +1407,10 @@ primary_expression
       {
         $$ = $2;
       }
-    | SIZE
+    | FILESIZE
       {
         compiler->last_result = yr_parser_emit(
-            yyscanner, OP_SIZE, NULL);
+            yyscanner, OP_FILESIZE, NULL);
 
         $$ = EXPRESSION_TYPE_INTEGER;
 

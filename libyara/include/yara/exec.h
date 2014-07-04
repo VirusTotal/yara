@@ -72,7 +72,7 @@ limitations under the License.
 #define OP_SWAPUNDEF      42
 #define OP_JNUNDEF        43
 #define OP_JLE            44
-#define OP_SIZE           45
+#define OP_FILESIZE       45
 #define OP_ENTRYPOINT     46
 #define OP_INT8           47
 #define OP_INT16          48

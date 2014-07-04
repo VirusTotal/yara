@@ -94,7 +94,7 @@
      NOCASE = 275,
      FULLWORD = 276,
      AT = 277,
-     SIZE = 278,
+     FILESIZE = 278,
      ENTRYPOINT = 279,
      ALL = 280,
      ANY = 281,
@@ -148,7 +148,7 @@
 #define NOCASE 275
 #define FULLWORD 276
 #define AT 277
-#define SIZE 278
+#define FILESIZE 278
 #define ENTRYPOINT 279
 #define ALL 280
 #define ANY 281
@@ -655,7 +655,7 @@ static const char *const yytname[] =
   "STRINGS", "CONDITION", "IDENTIFIER", "STRING_IDENTIFIER",
   "STRING_COUNT", "STRING_OFFSET", "STRING_IDENTIFIER_WITH_WILDCARD",
   "NUMBER", "TEXT_STRING", "HEX_STRING", "REGEXP", "ASCII", "WIDE",
-  "NOCASE", "FULLWORD", "AT", "SIZE", "ENTRYPOINT", "ALL", "ANY", "IN",
+  "NOCASE", "FULLWORD", "AT", "FILESIZE", "ENTRYPOINT", "ALL", "ANY", "IN",
   "OF", "FOR", "THEM", "INT8", "INT16", "INT32", "UINT8", "UINT16",
   "UINT32", "MATCHES", "CONTAINS", "IMPORT", "_TRUE_", "_FALSE_", "OR",
   "AND", "'&'", "'|'", "'^'", "IS", "NEQ", "EQ", "GE", "GT", "LE", "LT",
@@ -3130,7 +3130,7 @@ yyreduce:
 #line 1411 "grammar.y"
     {
         compiler->last_result = yr_parser_emit(
-            yyscanner, OP_SIZE, NULL);
+            yyscanner, OP_FILESIZE, NULL);
 
         (yyval.expression_type) = EXPRESSION_TYPE_INTEGER;
 

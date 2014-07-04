@@ -59,7 +59,7 @@
      NOCASE = 275,
      FULLWORD = 276,
      AT = 277,
-     SIZE = 278,
+     FILESIZE = 278,
      ENTRYPOINT = 279,
      ALL = 280,
      ANY = 281,
@@ -113,7 +113,7 @@
 #define NOCASE 275
 #define FULLWORD 276
 #define AT 277
-#define SIZE 278
+#define FILESIZE 278
 #define ENTRYPOINT 279
 #define ALL 280
 #define ANY 281

@@ -113,7 +113,7 @@ hexdigit      [a-fA-F0-9]
 "all"                   { return ALL;         }
 "any"                   { return ANY;         }
 "entrypoint"            { return ENTRYPOINT;  }
-"filesize"              { return SIZE;        }
+"filesize"              { return FILESIZE;    }
 "uint8"                 { return UINT8;       }
 "uint16"                { return UINT16;      }
 "uint32"                { return UINT32;      }

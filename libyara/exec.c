@@ -618,7 +618,7 @@ int yr_execute_code(
 
         break;
 
-      case OP_SIZE:
+      case OP_FILESIZE:
         push(context->file_size);
         break;
 
