@@ -198,7 +198,7 @@ typedef int (*YR_EXT_DECLARATIONS_FUNC)( \
 
 
 typedef int (*YR_EXT_LOAD_FUNC)( \
-    YR_EVALUATION_CONTEXT* context,
+    YR_SCAN_CONTEXT* context,
     YR_OBJECT* main_structure,
     void* module_data,
     size_t module_data_size);
@@ -239,11 +239,11 @@ int yr_modules_do_declarations(
 
 int yr_modules_load(
     const char* module_name,
-    YR_EVALUATION_CONTEXT* context);
+    YR_SCAN_CONTEXT* context);
 
 
 int yr_modules_unload_all(
-    YR_EVALUATION_CONTEXT* context);
+    YR_SCAN_CONTEXT* context);
 
 
 #endif
