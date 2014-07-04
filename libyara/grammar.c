@@ -74,111 +74,111 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     RULE = 258,
-     PRIVATE = 259,
-     GLOBAL = 260,
-     META = 261,
-     STRINGS = 262,
-     CONDITION = 263,
-     IDENTIFIER = 264,
-     STRING_IDENTIFIER = 265,
-     STRING_COUNT = 266,
-     STRING_OFFSET = 267,
-     STRING_IDENTIFIER_WITH_WILDCARD = 268,
-     NUMBER = 269,
-     TEXT_STRING = 270,
-     HEX_STRING = 271,
-     REGEXP = 272,
-     ASCII = 273,
-     WIDE = 274,
-     NOCASE = 275,
-     FULLWORD = 276,
-     AT = 277,
-     FILESIZE = 278,
-     ENTRYPOINT = 279,
-     ALL = 280,
-     ANY = 281,
-     IN = 282,
-     OF = 283,
-     FOR = 284,
-     THEM = 285,
-     INT8 = 286,
-     INT16 = 287,
-     INT32 = 288,
-     UINT8 = 289,
-     UINT16 = 290,
-     UINT32 = 291,
-     MATCHES = 292,
-     CONTAINS = 293,
-     IMPORT = 294,
+     _RULE_ = 258,
+     _PRIVATE_ = 259,
+     _GLOBAL_ = 260,
+     _META_ = 261,
+     _STRINGS_ = 262,
+     _CONDITION_ = 263,
+     _IDENTIFIER_ = 264,
+     _STRING_IDENTIFIER_ = 265,
+     _STRING_COUNT_ = 266,
+     _STRING_OFFSET_ = 267,
+     _STRING_IDENTIFIER_WITH_WILDCARD_ = 268,
+     _NUMBER_ = 269,
+     _TEXT_STRING_ = 270,
+     _HEX_STRING_ = 271,
+     _REGEXP_ = 272,
+     _ASCII_ = 273,
+     _WIDE_ = 274,
+     _NOCASE_ = 275,
+     _FULLWORD_ = 276,
+     _AT_ = 277,
+     _FILESIZE_ = 278,
+     _ENTRYPOINT_ = 279,
+     _ALL_ = 280,
+     _ANY_ = 281,
+     _IN_ = 282,
+     _OF_ = 283,
+     _FOR_ = 284,
+     _THEM_ = 285,
+     _INT8_ = 286,
+     _INT16_ = 287,
+     _INT32_ = 288,
+     _UINT8_ = 289,
+     _UINT16_ = 290,
+     _UINT32_ = 291,
+     _MATCHES_ = 292,
+     _CONTAINS_ = 293,
+     _IMPORT_ = 294,
      _TRUE_ = 295,
      _FALSE_ = 296,
-     OR = 297,
-     AND = 298,
-     IS = 299,
-     NEQ = 300,
-     EQ = 301,
-     GE = 302,
-     GT = 303,
-     LE = 304,
-     LT = 305,
-     SHIFT_RIGHT = 306,
-     SHIFT_LEFT = 307,
-     NOT = 308
+     _OR_ = 297,
+     _AND_ = 298,
+     _IS_ = 299,
+     _NEQ_ = 300,
+     _EQ_ = 301,
+     _GE_ = 302,
+     _GT_ = 303,
+     _LE_ = 304,
+     _LT_ = 305,
+     _SHIFT_RIGHT_ = 306,
+     _SHIFT_LEFT_ = 307,
+     _NOT_ = 308
    };
 #endif
 /* Tokens.  */
-#define RULE 258
-#define PRIVATE 259
-#define GLOBAL 260
-#define META 261
-#define STRINGS 262
-#define CONDITION 263
-#define IDENTIFIER 264
-#define STRING_IDENTIFIER 265
-#define STRING_COUNT 266
-#define STRING_OFFSET 267
-#define STRING_IDENTIFIER_WITH_WILDCARD 268
-#define NUMBER 269
-#define TEXT_STRING 270
-#define HEX_STRING 271
-#define REGEXP 272
-#define ASCII 273
-#define WIDE 274
-#define NOCASE 275
-#define FULLWORD 276
-#define AT 277
-#define FILESIZE 278
-#define ENTRYPOINT 279
-#define ALL 280
-#define ANY 281
-#define IN 282
-#define OF 283
-#define FOR 284
-#define THEM 285
-#define INT8 286
-#define INT16 287
-#define INT32 288
-#define UINT8 289
-#define UINT16 290
-#define UINT32 291
-#define MATCHES 292
-#define CONTAINS 293
-#define IMPORT 294
+#define _RULE_ 258
+#define _PRIVATE_ 259
+#define _GLOBAL_ 260
+#define _META_ 261
+#define _STRINGS_ 262
+#define _CONDITION_ 263
+#define _IDENTIFIER_ 264
+#define _STRING_IDENTIFIER_ 265
+#define _STRING_COUNT_ 266
+#define _STRING_OFFSET_ 267
+#define _STRING_IDENTIFIER_WITH_WILDCARD_ 268
+#define _NUMBER_ 269
+#define _TEXT_STRING_ 270
+#define _HEX_STRING_ 271
+#define _REGEXP_ 272
+#define _ASCII_ 273
+#define _WIDE_ 274
+#define _NOCASE_ 275
+#define _FULLWORD_ 276
+#define _AT_ 277
+#define _FILESIZE_ 278
+#define _ENTRYPOINT_ 279
+#define _ALL_ 280
+#define _ANY_ 281
+#define _IN_ 282
+#define _OF_ 283
+#define _FOR_ 284
+#define _THEM_ 285
+#define _INT8_ 286
+#define _INT16_ 287
+#define _INT32_ 288
+#define _UINT8_ 289
+#define _UINT16_ 290
+#define _UINT32_ 291
+#define _MATCHES_ 292
+#define _CONTAINS_ 293
+#define _IMPORT_ 294
 #define _TRUE_ 295
 #define _FALSE_ 296
-#define OR 297
-#define AND 298
-#define IS 299
-#define NEQ 300
-#define EQ 301
-#define GE 302
-#define GT 303
-#define LE 304
-#define LT 305
-#define SHIFT_RIGHT 306
-#define SHIFT_LEFT 307
-#define NOT 308
+#define _OR_ 297
+#define _AND_ 298
+#define _IS_ 299
+#define _NEQ_ 300
+#define _EQ_ 301
+#define _GE_ 302
+#define _GT_ 303
+#define _LE_ 304
+#define _LT_ 305
+#define _SHIFT_RIGHT_ 306
+#define _SHIFT_LEFT_ 307
+#define _NOT_ 308
 
 
 
@@ -651,23 +651,25 @@ static const yytype_uint16 yyrline[] =
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "RULE", "PRIVATE", "GLOBAL", "META",
-  "STRINGS", "CONDITION", "IDENTIFIER", "STRING_IDENTIFIER",
-  "STRING_COUNT", "STRING_OFFSET", "STRING_IDENTIFIER_WITH_WILDCARD",
-  "NUMBER", "TEXT_STRING", "HEX_STRING", "REGEXP", "ASCII", "WIDE",
-  "NOCASE", "FULLWORD", "AT", "FILESIZE", "ENTRYPOINT", "ALL", "ANY", "IN",
-  "OF", "FOR", "THEM", "INT8", "INT16", "INT32", "UINT8", "UINT16",
-  "UINT32", "MATCHES", "CONTAINS", "IMPORT", "_TRUE_", "_FALSE_", "OR",
-  "AND", "'&'", "'|'", "'^'", "IS", "NEQ", "EQ", "GE", "GT", "LE", "LT",
-  "SHIFT_RIGHT", "SHIFT_LEFT", "'+'", "'-'", "'*'", "'\\\\'", "'%'", "NOT",
-  "'~'", "'include'", "'{'", "'}'", "':'", "'='", "'.'", "'['", "']'",
-  "'('", "')'", "','", "$accept", "rules", "import", "rule", "meta",
-  "strings", "condition", "rule_modifiers", "rule_modifier", "tags",
-  "tag_list", "meta_declarations", "meta_declaration",
-  "string_declarations", "string_declaration", "@1", "string_modifiers",
-  "string_modifier", "identifier", "arguments_list", "regexp",
-  "boolean_expression", "expression", "@2", "@3", "@4", "integer_set",
-  "range", "integer_enumeration", "string_set", "@5", "string_enumeration",
+  "$end", "error", "$undefined", "_RULE_", "_PRIVATE_", "_GLOBAL_",
+  "_META_", "_STRINGS_", "_CONDITION_", "_IDENTIFIER_",
+  "_STRING_IDENTIFIER_", "_STRING_COUNT_", "_STRING_OFFSET_",
+  "_STRING_IDENTIFIER_WITH_WILDCARD_", "_NUMBER_", "_TEXT_STRING_",
+  "_HEX_STRING_", "_REGEXP_", "_ASCII_", "_WIDE_", "_NOCASE_",
+  "_FULLWORD_", "_AT_", "_FILESIZE_", "_ENTRYPOINT_", "_ALL_", "_ANY_",
+  "_IN_", "_OF_", "_FOR_", "_THEM_", "_INT8_", "_INT16_", "_INT32_",
+  "_UINT8_", "_UINT16_", "_UINT32_", "_MATCHES_", "_CONTAINS_", "_IMPORT_",
+  "_TRUE_", "_FALSE_", "_OR_", "_AND_", "'&'", "'|'", "'^'", "_IS_",
+  "_NEQ_", "_EQ_", "_GE_", "_GT_", "_LE_", "_LT_", "_SHIFT_RIGHT_",
+  "_SHIFT_LEFT_", "'+'", "'-'", "'*'", "'\\\\'", "'%'", "_NOT_", "'~'",
+  "'include'", "'{'", "'}'", "':'", "'='", "'.'", "'['", "']'", "'('",
+  "')'", "','", "$accept", "rules", "import", "rule", "meta", "strings",
+  "condition", "rule_modifiers", "rule_modifier", "tags", "tag_list",
+  "meta_declarations", "meta_declaration", "string_declarations",
+  "string_declaration", "@1", "string_modifiers", "string_modifier",
+  "identifier", "arguments_list", "regexp", "boolean_expression",
+  "expression", "@2", "@3", "@4", "integer_set", "range",
+  "integer_enumeration", "string_set", "@5", "string_enumeration",
   "string_enumeration_item", "for_expression", "primary_expression", 0
 };
 #endif
@@ -1444,45 +1446,45 @@ yydestruct (yymsg, yytype, yyvaluep, yyscanner, compiler)
 
   switch (yytype)
     {
-      case 9: /* "IDENTIFIER" */
+      case 9: /* "_IDENTIFIER_" */
 #line 176 "grammar.y"
 	{ yr_free((yyvaluep->c_string)); };
-#line 1451 "grammar.c"
+#line 1453 "grammar.c"
 	break;
-      case 10: /* "STRING_IDENTIFIER" */
+      case 10: /* "_STRING_IDENTIFIER_" */
 #line 177 "grammar.y"
 	{ yr_free((yyvaluep->c_string)); };
-#line 1456 "grammar.c"
+#line 1458 "grammar.c"
 	break;
-      case 11: /* "STRING_COUNT" */
+      case 11: /* "_STRING_COUNT_" */
 #line 178 "grammar.y"
 	{ yr_free((yyvaluep->c_string)); };
-#line 1461 "grammar.c"
+#line 1463 "grammar.c"
 	break;
-      case 12: /* "STRING_OFFSET" */
+      case 12: /* "_STRING_OFFSET_" */
 #line 179 "grammar.y"
 	{ yr_free((yyvaluep->c_string)); };
-#line 1466 "grammar.c"
+#line 1468 "grammar.c"
 	break;
-      case 13: /* "STRING_IDENTIFIER_WITH_WILDCARD" */
+      case 13: /* "_STRING_IDENTIFIER_WITH_WILDCARD_" */
 #line 180 "grammar.y"
 	{ yr_free((yyvaluep->c_string)); };
-#line 1471 "grammar.c"
+#line 1473 "grammar.c"
 	break;
-      case 15: /* "TEXT_STRING" */
+      case 15: /* "_TEXT_STRING_" */
 #line 181 "grammar.y"
 	{ yr_free((yyvaluep->sized_string)); };
-#line 1476 "grammar.c"
+#line 1478 "grammar.c"
 	break;
-      case 16: /* "HEX_STRING" */
+      case 16: /* "_HEX_STRING_" */
 #line 182 "grammar.y"
 	{ yr_free((yyvaluep->sized_string)); };
-#line 1481 "grammar.c"
+#line 1483 "grammar.c"
 	break;
-      case 17: /* "REGEXP" */
+      case 17: /* "_REGEXP_" */
 #line 183 "grammar.y"
 	{ yr_free((yyvaluep->sized_string)); };
-#line 1486 "grammar.c"
+#line 1488 "grammar.c"
 	break;
 
       default:
@@ -3505,7 +3507,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 3509 "grammar.c"
+#line 3511 "grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);

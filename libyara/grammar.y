@@ -93,55 +93,55 @@ limitations under the License.
 %lex-param {yyscan_t yyscanner}
 %lex-param {YR_COMPILER* compiler}
 
-%token RULE
-%token PRIVATE
-%token GLOBAL
-%token META
-%token <string> STRINGS
-%token CONDITION
-%token <c_string> IDENTIFIER
-%token <c_string> STRING_IDENTIFIER
-%token <c_string> STRING_COUNT
-%token <c_string> STRING_OFFSET
-%token <c_string> STRING_IDENTIFIER_WITH_WILDCARD
-%token <integer> NUMBER
-%token <sized_string> TEXT_STRING
-%token <sized_string> HEX_STRING
-%token <sized_string> REGEXP
-%token ASCII
-%token WIDE
-%token NOCASE
-%token FULLWORD
-%token AT
-%token FILESIZE
-%token ENTRYPOINT
-%token ALL
-%token ANY
-%token IN
-%token OF
-%token FOR
-%token THEM
-%token INT8
-%token INT16
-%token INT32
-%token UINT8
-%token UINT16
-%token UINT32
-%token MATCHES
-%token CONTAINS
-%token IMPORT
+%token _RULE_
+%token _PRIVATE_
+%token _GLOBAL_
+%token _META_
+%token <string> _STRINGS_
+%token _CONDITION_
+%token <c_string> _IDENTIFIER_
+%token <c_string> _STRING_IDENTIFIER_
+%token <c_string> _STRING_COUNT_
+%token <c_string> _STRING_OFFSET_
+%token <c_string> _STRING_IDENTIFIER_WITH_WILDCARD_
+%token <integer> _NUMBER_
+%token <sized_string> _TEXT_STRING_
+%token <sized_string> _HEX_STRING_
+%token <sized_string> _REGEXP_
+%token _ASCII_
+%token _WIDE_
+%token _NOCASE_
+%token _FULLWORD_
+%token _AT_
+%token _FILESIZE_
+%token _ENTRYPOINT_
+%token _ALL_
+%token _ANY_
+%token _IN_
+%token _OF_
+%token _FOR_
+%token _THEM_
+%token _INT8_
+%token _INT16_
+%token _INT32_
+%token _UINT8_
+%token _UINT16_
+%token _UINT32_
+%token _MATCHES_
+%token _CONTAINS_
+%token _IMPORT_
 
 %token _TRUE_
 %token _FALSE_
 
-%left OR
-%left AND
+%left _OR_
+%left _AND_
 %left '&' '|' '^'
-%left LT LE GT GE EQ NEQ IS
-%left SHIFT_LEFT SHIFT_RIGHT
+%left _LT_ _LE_ _GT_ _GE_ _EQ_ _NEQ_ _IS_
+%left _SHIFT_LEFT_ _SHIFT_RIGHT_
 %left '+' '-'
 %left '*' '\\' '%'
-%right NOT
+%right _NOT_
 %right '~'
 
 %type <string> strings
@@ -173,14 +173,14 @@ limitations under the License.
 %type <c_string> arguments_list
 
 
-%destructor { yr_free($$); } IDENTIFIER
-%destructor { yr_free($$); } STRING_IDENTIFIER
-%destructor { yr_free($$); } STRING_COUNT
-%destructor { yr_free($$); } STRING_OFFSET
-%destructor { yr_free($$); } STRING_IDENTIFIER_WITH_WILDCARD
-%destructor { yr_free($$); } TEXT_STRING
-%destructor { yr_free($$); } HEX_STRING
-%destructor { yr_free($$); } REGEXP
+%destructor { yr_free($$); } _IDENTIFIER_
+%destructor { yr_free($$); } _STRING_IDENTIFIER_
+%destructor { yr_free($$); } _STRING_COUNT_
+%destructor { yr_free($$); } _STRING_OFFSET_
+%destructor { yr_free($$); } _STRING_IDENTIFIER_WITH_WILDCARD_
+%destructor { yr_free($$); } _TEXT_STRING_
+%destructor { yr_free($$); } _HEX_STRING_
+%destructor { yr_free($$); } _REGEXP_
 
 %union {
   SIZED_STRING*   sized_string;
@@ -205,7 +205,7 @@ rules
 
 
 import
-    : IMPORT TEXT_STRING
+    : _IMPORT_ _TEXT_STRING_
       {
         int result = yr_parser_reduce_import(yyscanner, $2);
 
@@ -217,7 +217,7 @@ import
 
 
 rule
-    : rule_modifiers RULE IDENTIFIER tags '{' meta strings condition '}'
+    : rule_modifiers _RULE_ _IDENTIFIER_ tags '{' meta strings condition '}'
       {
         int result = yr_parser_reduce_rule_declaration(
             yyscanner,
@@ -239,7 +239,7 @@ meta
       {
         $$ = NULL;
       }
-    | META ':' meta_declarations
+    | _META_ ':' meta_declarations
       {
         // Each rule have a list of meta-data info, consisting in a
         // sequence of YR_META structures. The last YR_META structure does
@@ -271,7 +271,7 @@ strings
         $$ = NULL;
         compiler->current_rule_strings = $$;
       }
-    | STRINGS ':' string_declarations
+    | _STRINGS_ ':' string_declarations
       {
         // Each rule have a list of strings, consisting in a sequence
         // of YR_STRING structures. The last YR_STRING structure does not
@@ -299,7 +299,7 @@ strings
 
 
 condition
-    : CONDITION ':' boolean_expression
+    : _CONDITION_ ':' boolean_expression
     ;
 
 
@@ -310,8 +310,8 @@ rule_modifiers
 
 
 rule_modifier
-    : PRIVATE       { $$ = RULE_GFLAGS_PRIVATE; }
-    | GLOBAL        { $$ = RULE_GFLAGS_GLOBAL; }
+    : _PRIVATE_      { $$ = RULE_GFLAGS_PRIVATE; }
+    | _GLOBAL_       { $$ = RULE_GFLAGS_GLOBAL; }
     ;
 
 
@@ -338,7 +338,7 @@ tags
 
 
 tag_list
-    : IDENTIFIER
+    : _IDENTIFIER_
       {
         char* identifier;
 
@@ -351,7 +351,7 @@ tag_list
 
         $$ = identifier;
       }
-    | tag_list IDENTIFIER
+    | tag_list _IDENTIFIER_
       {
         char* tag_name = $1;
         size_t tag_length = tag_name != NULL ? strlen(tag_name) : 0;
@@ -394,7 +394,7 @@ meta_declarations
 
 
 meta_declaration
-    : IDENTIFIER '=' TEXT_STRING
+    : _IDENTIFIER_ '=' _TEXT_STRING_
       {
         SIZED_STRING* sized_string = $3;
 
@@ -410,7 +410,7 @@ meta_declaration
 
         ERROR_IF($$ == NULL);
       }
-    | IDENTIFIER '=' NUMBER
+    | _IDENTIFIER_ '=' _NUMBER_
       {
         $$ = yr_parser_reduce_meta_declaration(
             yyscanner,
@@ -423,7 +423,7 @@ meta_declaration
 
         ERROR_IF($$ == NULL);
       }
-    | IDENTIFIER '=' _TRUE_
+    | _IDENTIFIER_ '=' _TRUE_
       {
         $$ = yr_parser_reduce_meta_declaration(
             yyscanner,
@@ -436,7 +436,7 @@ meta_declaration
 
         ERROR_IF($$ == NULL);
       }
-    | IDENTIFIER '=' _FALSE_
+    | _IDENTIFIER_ '=' _FALSE_
       {
         $$ = yr_parser_reduce_meta_declaration(
             yyscanner,
@@ -459,7 +459,7 @@ string_declarations
 
 
 string_declaration
-    : STRING_IDENTIFIER '=' TEXT_STRING string_modifiers
+    : _STRING_IDENTIFIER_ '=' _TEXT_STRING_ string_modifiers
       {
         $$ = yr_parser_reduce_string_declaration(
             yyscanner,
@@ -472,11 +472,11 @@ string_declaration
 
         ERROR_IF($$ == NULL);
       }
-    | STRING_IDENTIFIER '='
+    | _STRING_IDENTIFIER_ '='
       {
         compiler->error_line = yyget_lineno(yyscanner);
       }
-      REGEXP string_modifiers
+      _REGEXP_ string_modifiers
       {
         $$ = yr_parser_reduce_string_declaration(
             yyscanner,
@@ -489,7 +489,7 @@ string_declaration
 
         ERROR_IF($$ == NULL);
       }
-    | STRING_IDENTIFIER '=' HEX_STRING
+    | _STRING_IDENTIFIER_ '=' _HEX_STRING_
       {
         $$ = yr_parser_reduce_string_declaration(
             yyscanner,
@@ -512,15 +512,15 @@ string_modifiers
 
 
 string_modifier
-    : WIDE        { $$ = STRING_GFLAGS_WIDE; }
-    | ASCII       { $$ = STRING_GFLAGS_ASCII; }
-    | NOCASE      { $$ = STRING_GFLAGS_NO_CASE; }
-    | FULLWORD    { $$ = STRING_GFLAGS_FULL_WORD; }
+    : _WIDE_        { $$ = STRING_GFLAGS_WIDE; }
+    | _ASCII_       { $$ = STRING_GFLAGS_ASCII; }
+    | _NOCASE_      { $$ = STRING_GFLAGS_NO_CASE; }
+    | _FULLWORD_    { $$ = STRING_GFLAGS_FULL_WORD; }
     ;
 
 
 identifier
-    : IDENTIFIER
+    : _IDENTIFIER_
       {
         YR_OBJECT* object = NULL;
         YR_RULE* rule;
@@ -608,7 +608,7 @@ identifier
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
       }
-    | identifier '.' IDENTIFIER
+    | identifier '.' _IDENTIFIER_
       {
         YR_OBJECT* object = $1;
         YR_OBJECT* field = NULL;
@@ -771,7 +771,7 @@ arguments_list
 
 
 regexp
-    : REGEXP
+    : _REGEXP_
       {
         SIZED_STRING* sized_string = $1;
         RE* re;
@@ -852,7 +852,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | primary_expression MATCHES regexp
+    | primary_expression _MATCHES_ regexp
       {
         CHECK_TYPE($1, EXPRESSION_TYPE_STRING, "matches");
         CHECK_TYPE($3, EXPRESSION_TYPE_REGEXP, "matches");
@@ -867,7 +867,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | primary_expression CONTAINS primary_expression
+    | primary_expression _CONTAINS_ primary_expression
       {
         CHECK_TYPE($1, EXPRESSION_TYPE_STRING, "contains");
         CHECK_TYPE($3, EXPRESSION_TYPE_STRING, "contains");
@@ -881,7 +881,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | STRING_IDENTIFIER
+    | _STRING_IDENTIFIER_
       {
         int result = yr_parser_reduce_string_identifier(
             yyscanner,
@@ -894,7 +894,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | STRING_IDENTIFIER AT primary_expression
+    | _STRING_IDENTIFIER_ _AT_ primary_expression
       {
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "at");
 
@@ -909,7 +909,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | STRING_IDENTIFIER IN range
+    | _STRING_IDENTIFIER_ _IN_ range
       {
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
@@ -922,7 +922,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | FOR for_expression IDENTIFIER IN
+    | _FOR_ for_expression _IDENTIFIER_ _IN_
       {
         int var_index;
 
@@ -1068,7 +1068,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | FOR for_expression OF string_set ':'
+    | _FOR_ for_expression _OF_ string_set ':'
       {
         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         int8_t* addr;
@@ -1145,25 +1145,25 @@ expression
         $$ = EXPRESSION_TYPE_BOOLEAN;
 
       }
-    | for_expression OF string_set
+    | for_expression _OF_ string_set
       {
         yr_parser_emit(yyscanner, OP_OF, NULL);
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | NOT boolean_expression
+    | _NOT_ boolean_expression
       {
         yr_parser_emit(yyscanner, OP_NOT, NULL);
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | boolean_expression AND boolean_expression
+    | boolean_expression _AND_ boolean_expression
       {
         yr_parser_emit(yyscanner, OP_AND, NULL);
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | boolean_expression OR boolean_expression
+    | boolean_expression _OR_ boolean_expression
       {
         CHECK_TYPE($1, EXPRESSION_TYPE_BOOLEAN, "or");
 
@@ -1171,7 +1171,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | primary_expression LT primary_expression
+    | primary_expression _LT_ primary_expression
       {
         CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "<");
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "<");
@@ -1180,7 +1180,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | primary_expression GT primary_expression
+    | primary_expression _GT_ primary_expression
       {
         CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, ">");
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, ">");
@@ -1189,7 +1189,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | primary_expression LE primary_expression
+    | primary_expression _LE_ primary_expression
       {
         CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "<=");
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "<=");
@@ -1198,7 +1198,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | primary_expression GE primary_expression
+    | primary_expression _GE_ primary_expression
       {
         CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, ">=");
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, ">=");
@@ -1207,7 +1207,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | primary_expression EQ primary_expression
+    | primary_expression _EQ_ primary_expression
       {
         if ($1 != $3)
         {
@@ -1234,7 +1234,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | primary_expression IS primary_expression
+    | primary_expression _IS_ primary_expression
       {
         if ($1 != $3)
         {
@@ -1261,7 +1261,7 @@ expression
 
         $$ = EXPRESSION_TYPE_BOOLEAN;
       }
-    | primary_expression NEQ primary_expression
+    | primary_expression _NEQ_ primary_expression
       {
         if ($1 != $3)
         {
@@ -1361,7 +1361,7 @@ string_set
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL);
       }
       string_enumeration ')'
-    | THEM
+    | _THEM_
       {
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL);
         yr_parser_emit_pushes_for_strings(yyscanner, "$*");
@@ -1376,12 +1376,12 @@ string_enumeration
 
 
 string_enumeration_item
-    : STRING_IDENTIFIER
+    : _STRING_IDENTIFIER_
       {
         yr_parser_emit_pushes_for_strings(yyscanner, $1);
         yr_free($1);
       }
-    | STRING_IDENTIFIER_WITH_WILDCARD
+    | _STRING_IDENTIFIER_WITH_WILDCARD_
       {
         yr_parser_emit_pushes_for_strings(yyscanner, $1);
         yr_free($1);
@@ -1391,11 +1391,11 @@ string_enumeration_item
 
 for_expression
     : primary_expression
-    | ALL
+    | _ALL_
       {
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL);
       }
-    | ANY
+    | _ANY_
       {
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, 1, NULL);
       }
@@ -1407,7 +1407,7 @@ primary_expression
       {
         $$ = $2;
       }
-    | FILESIZE
+    | _FILESIZE_
       {
         compiler->last_result = yr_parser_emit(
             yyscanner, OP_FILESIZE, NULL);
@@ -1416,7 +1416,7 @@ primary_expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
       }
-    | ENTRYPOINT
+    | _ENTRYPOINT_
       {
         compiler->last_result = yr_parser_emit(
             yyscanner, OP_ENTRYPOINT, NULL);
@@ -1425,7 +1425,7 @@ primary_expression
 
         $$ = EXPRESSION_TYPE_INTEGER;
       }
-    | INT8  '(' primary_expression ')'
+    | _INT8_  '(' primary_expression ')'
       {
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "int8");
 
@@ -1436,7 +1436,7 @@ primary_expression
 
         $$ = EXPRESSION_TYPE_INTEGER;
       }
-    | INT16 '(' primary_expression ')'
+    | _INT16_ '(' primary_expression ')'
       {
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "int16");
 
@@ -1447,7 +1447,7 @@ primary_expression
 
         $$ = EXPRESSION_TYPE_INTEGER;
       }
-    | INT32 '(' primary_expression ')'
+    | _INT32_ '(' primary_expression ')'
       {
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "int32");
 
@@ -1458,7 +1458,7 @@ primary_expression
 
         $$ = EXPRESSION_TYPE_INTEGER;
       }
-    | UINT8 '(' primary_expression ')'
+    | _UINT8_ '(' primary_expression ')'
       {
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "uint8");
 
@@ -1469,7 +1469,7 @@ primary_expression
 
         $$ = EXPRESSION_TYPE_INTEGER;
       }
-    | UINT16 '(' primary_expression ')'
+    | _UINT16_ '(' primary_expression ')'
       {
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "uint16");
 
@@ -1480,7 +1480,7 @@ primary_expression
 
         $$ = EXPRESSION_TYPE_INTEGER;
       }
-    | UINT32 '(' primary_expression ')'
+    | _UINT32_ '(' primary_expression ')'
       {
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "uint32");
 
@@ -1491,7 +1491,7 @@ primary_expression
 
         $$ = EXPRESSION_TYPE_INTEGER;
       }
-    | NUMBER
+    | _NUMBER_
       {
         compiler->last_result = yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, $1, NULL);
@@ -1500,7 +1500,7 @@ primary_expression
 
         $$ = EXPRESSION_TYPE_INTEGER;
       }
-    | TEXT_STRING
+    | _TEXT_STRING_
       {
         SIZED_STRING* sized_string = $1;
         char* string;
@@ -1523,7 +1523,7 @@ primary_expression
 
         $$ = EXPRESSION_TYPE_STRING;
       }
-    | STRING_COUNT
+    | _STRING_COUNT_
       {
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
@@ -1536,7 +1536,7 @@ primary_expression
 
         $$ = EXPRESSION_TYPE_INTEGER;
       }
-    | STRING_OFFSET '[' primary_expression ']'
+    | _STRING_OFFSET_ '[' primary_expression ']'
       {
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
@@ -1549,7 +1549,7 @@ primary_expression
 
         $$ = EXPRESSION_TYPE_INTEGER;
       }
-    | STRING_OFFSET
+    | _STRING_OFFSET_
       {
         compiler->last_result = yr_parser_emit_with_arg(
             yyscanner,
@@ -1684,7 +1684,7 @@ primary_expression
 
         $$ = EXPRESSION_TYPE_INTEGER;
       }
-    | primary_expression SHIFT_LEFT primary_expression
+    | primary_expression _SHIFT_LEFT_ primary_expression
       {
         CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "<<");
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "<<");
@@ -1693,7 +1693,7 @@ primary_expression
 
         $$ = EXPRESSION_TYPE_INTEGER;
       }
-    | primary_expression SHIFT_RIGHT primary_expression
+    | primary_expression _SHIFT_RIGHT_ primary_expression
       {
         CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, ">>");
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, ">>");

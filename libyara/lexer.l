@@ -82,47 +82,47 @@ hexdigit      [a-fA-F0-9]
 
 %%
 
-"<"                     { return LT;          }
-">"                     { return GT;          }
-"<="                    { return LE;          }
-">="                    { return GE;          }
-"=="                    { return EQ;          }
-"!="                    { return NEQ;         }
-"<<"                    { return SHIFT_LEFT;  }
-">>"                    { return SHIFT_RIGHT; }
-"private"               { return PRIVATE;     }
-"global"                { return GLOBAL;      }
-"rule"                  { return RULE;        }
-"meta"                  { return META;        }
-"strings"               { return STRINGS;     }
-"ascii"                 { return ASCII;       }
-"wide"                  { return WIDE;        }
-"fullword"              { return FULLWORD;    }
-"nocase"                { return NOCASE;      }
-"condition"             { return CONDITION;   }
+"<"                     { return _LT_;          }
+">"                     { return _GT_;          }
+"<="                    { return _LE_;          }
+">="                    { return _GE_;          }
+"=="                    { return _EQ_;          }
+"!="                    { return _NEQ_;         }
+"<<"                    { return _SHIFT_LEFT_;  }
+">>"                    { return _SHIFT_RIGHT_; }
+"private"               { return _PRIVATE_;     }
+"global"                { return _GLOBAL_;      }
+"rule"                  { return _RULE_;        }
+"meta"                  { return _META_;        }
+"strings"               { return _STRINGS_;     }
+"ascii"                 { return _ASCII_;       }
+"wide"                  { return _WIDE_;        }
+"fullword"              { return _FULLWORD_;    }
+"nocase"                { return _NOCASE_;      }
+"condition"             { return _CONDITION_;   }
 "true"                  { return _TRUE_;        }
 "false"                 { return _FALSE_;       }
-"not"                   { return NOT;         }
-"and"                   { return AND;         }
-"or"                    { return OR;          }
-"at"                    { return AT;          }
-"in"                    { return IN;          }
-"of"                    { return OF;          }
-"them"                  { return THEM;        }
-"for"                   { return FOR;         }
-"all"                   { return ALL;         }
-"any"                   { return ANY;         }
-"entrypoint"            { return ENTRYPOINT;  }
-"filesize"              { return FILESIZE;    }
-"uint8"                 { return UINT8;       }
-"uint16"                { return UINT16;      }
-"uint32"                { return UINT32;      }
-"int8"                  { return INT8;        }
-"int16"                 { return INT16;       }
-"int32"                 { return INT32;       }
-"matches"               { return MATCHES;     }
-"contains"              { return CONTAINS;    }
-"import"                { return IMPORT;      }
+"not"                   { return _NOT_;         }
+"and"                   { return _AND_;         }
+"or"                    { return _OR_;          }
+"at"                    { return _AT_;          }
+"in"                    { return _IN_;          }
+"of"                    { return _OF_;          }
+"them"                  { return _THEM_;        }
+"for"                   { return _FOR_;         }
+"all"                   { return _ALL_;         }
+"any"                   { return _ANY_;         }
+"entrypoint"            { return _ENTRYPOINT_;  }
+"filesize"              { return _FILESIZE_;    }
+"uint8"                 { return _UINT8_;       }
+"uint16"                { return _UINT16_;      }
+"uint32"                { return _UINT32_;      }
+"int8"                  { return _INT8_;        }
+"int16"                 { return _INT16_;       }
+"int32"                 { return _INT32_;       }
+"matches"               { return _MATCHES_;     }
+"contains"              { return _CONTAINS_;    }
+"import"                { return _IMPORT_;      }
 
 
 "/*"                    { BEGIN(comment);       }
@@ -277,7 +277,7 @@ $({letter}|{digit}|_)*"*"  {
     yyterminate();
   }
 
-  return STRING_IDENTIFIER_WITH_WILDCARD;
+  return _STRING_IDENTIFIER_WITH_WILDCARD_;
 }
 
 
@@ -291,7 +291,7 @@ $({letter}|{digit}|_)*  {
     yyterminate();
   }
 
-  return STRING_IDENTIFIER;
+  return _STRING_IDENTIFIER_;
 }
 
 
@@ -306,7 +306,7 @@ $({letter}|{digit}|_)*  {
   }
 
   yylval->c_string[0] = '$'; /* replace # by $*/
-  return STRING_COUNT;
+  return _STRING_COUNT_;
 }
 
 
@@ -321,7 +321,7 @@ $({letter}|{digit}|_)*  {
   }
 
   yylval->c_string[0] = '$'; /* replace @ by $*/
-  return STRING_OFFSET;
+  return _STRING_OFFSET_;
 }
 
 
@@ -340,7 +340,7 @@ $({letter}|{digit}|_)*  {
     yyterminate();
   }
 
-  return IDENTIFIER;
+  return _IDENTIFIER_;
 }
 
 
@@ -356,14 +356,14 @@ $({letter}|{digit}|_)*  {
   {
      yylval->integer *= 1048576;
   }
-  return NUMBER;
+  return _NUMBER_;
 }
 
 
 0x{hexdigit}+  {
 
   yylval->integer = xtoi(yytext + 2);
-  return NUMBER;
+  return _NUMBER_;
 }
 
 
@@ -387,7 +387,7 @@ $({letter}|{digit}|_)*  {
   memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
   yylval->sized_string = s;
 
-  return TEXT_STRING;
+  return _TEXT_STRING_;
 }
 
 
@@ -476,7 +476,7 @@ $({letter}|{digit}|_)*  {
 
   yylval->sized_string = s;
 
-  return REGEXP;
+  return _REGEXP_;
 }
 
 
@@ -534,7 +534,7 @@ $({letter}|{digit}|_)*  {
   strcpy(s->c_string, yytext);
   yylval->sized_string = s;
 
-  return HEX_STRING;
+  return _HEX_STRING_;
 }
 
 
