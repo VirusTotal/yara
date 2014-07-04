@@ -18,6 +18,7 @@ limitations under the License.
 #define YR_EXEC_H
 
 #include <yara/hash.h>
+#include <yara/scan.h>
 #include <yara/types.h>
 #include <yara/rules.h>
 
@@ -84,23 +85,9 @@ limitations under the License.
 #define OP_IMPORT         55
 
 
-typedef struct _YR_EVALUATION_CONTEXT
-{
-  uint64_t  file_size;
-  uint64_t  entry_point;
-
-  void* user_data;
-
-  YR_MEMORY_BLOCK*  mem_block;
-  YR_HASH_TABLE*  objects_table;
-  YR_CALLBACK_FUNC  callback;
-
-} YR_EVALUATION_CONTEXT;
-
-
 int yr_execute_code(
     YR_RULES* rules,
-    YR_EVALUATION_CONTEXT* context,
+    YR_SCAN_CONTEXT* context,
     int timeout,
     time_t start_time);
 

@@ -17,12 +17,36 @@ limitations under the License.
 #ifndef YR_SCAN_H
 #define YR_SCAN_H
 
+#include <yara/types.h>
+#include <yara/hash.h>
+#include <yara/rules.h>
+
+
+#define SCAN_FLAGS_FAST_MODE		 1
+#define SCAN_FLAGS_PROCESS_MEMORY    2
+
+
+typedef struct _YR_SCAN_CONTEXT
+{
+  uint64_t  file_size;
+  uint64_t  entry_point;
+
+  int flags;
+  void* user_data;
+
+  YR_MEMORY_BLOCK*  mem_block;
+  YR_HASH_TABLE*  objects_table;
+  YR_CALLBACK_FUNC  callback;
+
+} YR_SCAN_CONTEXT;
+
+
 int yr_scan_verify_match(
     YR_AC_MATCH* ac_match,
     uint8_t* data,
     size_t data_size,
     size_t offset,
     YR_ARENA* matches_arena,
-    int fast_scan_mode);
+    int flags);
 
 #endif

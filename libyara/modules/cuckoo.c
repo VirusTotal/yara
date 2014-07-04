@@ -190,9 +190,33 @@ define_function(sync_mutex)
 }
 
 
+begin_declarations;
+
+  begin_struct("network");
+    function("dns_lookup", "s", "i", network_dns_lookup);
+    function("http_get", "r", "i", network_http_get);
+    function("http_post", "r", "i", network_http_post);
+    function("http_request", "r", "i", network_http_request);
+  end_struct("network");
+
+  begin_struct("registry");
+    function("key_access", "r", "i", registry_key_access);
+  end_struct("registry");
+
+  begin_struct("filesystem");
+    function("file_access", "r", "i", filesystem_file_access);
+  end_struct("filesystem");
+
+  begin_struct("sync");
+    function("mutex", "r", "i", sync_mutex);
+  end_struct("sync");
+
+end_declarations;
+
+
 int module_load(
-    YR_EVALUATION_CONTEXT* context,
-    YR_OBJECT* main_struct,
+    YR_SCAN_CONTEXT* context,
+    YR_OBJECT* module,
     void* module_data,
     size_t module_data_size)
 {
@@ -218,12 +242,12 @@ int module_load(
   if (json == NULL)
     return ERROR_INVALID_FILE;
 
-  main_struct->data = (void*) json;
+  module->data = (void*) json;
 
-  network_obj = get_object(main_struct, "network");
-  registry_obj = get_object(main_struct, "registry");
-  filesystem_obj = get_object(main_struct, "filesystem");
-  sync_obj = get_object(main_struct, "sync");
+  network_obj = get_object(module, "network");
+  registry_obj = get_object(module, "registry");
+  filesystem_obj = get_object(module, "filesystem");
+  sync_obj = get_object(module, "sync");
 
   network_obj->data = (void*) json_object_get(json, "network");
 
@@ -238,37 +262,14 @@ int module_load(
 }
 
 
-int module_unload(YR_OBJECT* main_struct)
+int module_unload(YR_OBJECT* module)
 {
-  if (main_struct->data != NULL)
-    json_decref((json_t*) main_struct->data);
+  if (module->data != NULL)
+    json_decref((json_t*) module->data);
 
   return ERROR_SUCCESS;
 }
 
-
-begin_declarations;
-
-  begin_struct("network");
-    function("dns_lookup", "s", "i", network_dns_lookup);
-    function("http_get", "r", "i", network_http_get);
-    function("http_post", "r", "i", network_http_post);
-    function("http_request", "r", "i", network_http_request);
-  end_struct("network");
-
-  begin_struct("registry");
-    function("key_access", "r", "i", registry_key_access);
-  end_struct("registry");
-
-  begin_struct("filesystem");
-    function("file_access", "r", "i", filesystem_file_access);
-  end_struct("filesystem");
-
-  begin_struct("sync");
-    function("mutex", "r", "i", sync_mutex);
-  end_struct("sync");
-
-end_declarations;
 
 
 

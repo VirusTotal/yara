@@ -76,7 +76,7 @@ function_read(int32_t)
 
 int yr_execute_code(
     YR_RULES* rules,
-    YR_EVALUATION_CONTEXT* context,
+    YR_SCAN_CONTEXT* context,
     int timeout,
     time_t start_time)
 {

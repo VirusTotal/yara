@@ -24,7 +24,7 @@ limitations under the License.
 
 #define MODULE(name) \
     int name ## _declarations(); \
-    int name ## _load(YR_EVALUATION_CONTEXT* context, \
+    int name ## _load(YR_SCAN_CONTEXT* context, \
                       YR_OBJECT* main_structure, \
                       void* module_data, \
                       size_t module_data_size); \
@@ -64,7 +64,7 @@ int yr_modules_do_declarations(
 
 int yr_modules_load(
     const char* module_name,
-    YR_EVALUATION_CONTEXT* context)
+    YR_SCAN_CONTEXT* context)
 {
   YR_MODULE_IMPORT mi;
   YR_OBJECT* module_structure;
@@ -133,7 +133,7 @@ int yr_modules_load(
 
 
 int yr_modules_unload_all(
-    YR_EVALUATION_CONTEXT* context)
+    YR_SCAN_CONTEXT* context)
 {
   YR_OBJECT* module_structure;
   tidx_mask_t tidx_mask = 1 << yr_get_tidx();

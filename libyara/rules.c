@@ -38,11 +38,6 @@ limitations under the License.
 
 
 
-
-
-
-
-
 void _yr_rules_lock(
     YR_RULES* rules)
 {
@@ -222,7 +217,7 @@ int yr_rules_scan_mem_block(
     YR_RULES* rules,
     uint8_t* data,
     size_t data_size,
-    int fast_scan_mode,
+    int flags,
     int timeout,
     time_t start_time,
     YR_ARENA* matches_arena)
@@ -250,7 +245,7 @@ int yr_rules_scan_mem_block(
             data_size,
             i - ac_match->backtrack,
             matches_arena,
-            fast_scan_mode));
+            flags));
       }
 
       ac_match = ac_match->next;
@@ -288,7 +283,7 @@ int yr_rules_scan_mem_block(
           data_size,
           data_size - ac_match->backtrack,
           matches_arena,
-          fast_scan_mode));
+          flags));
     }
 
     ac_match = ac_match->next;
@@ -301,13 +296,12 @@ int yr_rules_scan_mem_block(
 int yr_rules_scan_mem_blocks(
     YR_RULES* rules,
     YR_MEMORY_BLOCK* block,
-    int scanning_process_memory,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int fast_scan_mode,
+    int flags,
     int timeout)
 {
-  YR_EVALUATION_CONTEXT context;
+  YR_SCAN_CONTEXT context;
   YR_RULE* rule;
   YR_OBJECT* object;
   YR_EXTERNAL_VARIABLE* external;
@@ -323,6 +317,7 @@ int yr_rules_scan_mem_blocks(
   if (block == NULL)
     return ERROR_SUCCESS;
 
+  context.flags = flags;
   context.callback = callback;
   context.user_data = user_data;
   context.file_size = block->size;
@@ -389,7 +384,7 @@ int yr_rules_scan_mem_blocks(
   {
     if (context.entry_point == UNDEFINED)
     {
-      if (scanning_process_memory)
+      if (flags & SCAN_FLAGS_PROCESS_MEMORY)
         context.entry_point = yr_get_entry_point_address(
             block->data,
             block->size,
@@ -404,7 +399,7 @@ int yr_rules_scan_mem_blocks(
         rules,
         block->data,
         block->size,
-        fast_scan_mode,
+        flags,
         timeout,
         start_time,
         matches_arena);
@@ -512,10 +507,9 @@ int yr_rules_scan_mem(
   return yr_rules_scan_mem_blocks(
       rules,
       &block,
-      FALSE,
       callback,
       user_data,
-      fast_scan_mode,
+      fast_scan_mode ? SCAN_FLAGS_FAST_MODE : 0,
       timeout);
 }
 
@@ -571,10 +565,11 @@ int yr_rules_scan_proc(
     result = yr_rules_scan_mem_blocks(
         rules,
         first_block,
-        TRUE,
         callback,
         user_data,
-        fast_scan_mode,
+        fast_scan_mode ?
+          SCAN_FLAGS_FAST_MODE | SCAN_FLAGS_PROCESS_MEMORY :
+          SCAN_FLAGS_PROCESS_MEMORY,
         timeout);
 
   block = first_block;

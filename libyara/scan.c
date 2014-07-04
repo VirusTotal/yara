@@ -25,6 +25,7 @@ limitations under the License.
 #include <yara/types.h>
 #include <yara/error.h>
 #include <yara/libyara.h>
+#include <yara/scan.h>
 
 
 typedef struct _CALLBACK_ARGS
@@ -829,7 +830,7 @@ int yr_scan_verify_match(
     size_t data_size,
     size_t offset,
     YR_ARENA* matches_arena,
-    int fast_scan_mode)
+    int flags)
 {
   YR_STRING* string = ac_match->string;
 
@@ -840,7 +841,7 @@ int yr_scan_verify_match(
   if (data_size - offset <= 0)
     return ERROR_SUCCESS;
 
-  if (fast_scan_mode &&
+  if (flags & SCAN_FLAGS_FAST_MODE &&
       STRING_IS_SINGLE_MATCH(string) &&
       STRING_FOUND(string))
     return ERROR_SUCCESS;

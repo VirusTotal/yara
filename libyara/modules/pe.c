@@ -21,6 +21,11 @@ limitations under the License.
 #define MODULE_NAME pe
 
 
+#ifndef MIN
+#define MIN(x,y) ((x < y)?(x):(y))
+#endif
+
+
 PIMAGE_NT_HEADERS get_pe_header(
     uint8_t* buffer,
     size_t buffer_length)
@@ -66,9 +71,50 @@ PIMAGE_NT_HEADERS get_pe_header(
 }
 
 
+uint64_t rva_to_offset(
+    PIMAGE_NT_HEADERS pe_header,
+    uint64_t rva,
+    size_t buffer_length)
+{
+  PIMAGE_SECTION_HEADER section;
+  DWORD section_rva;
+  DWORD section_offset;
+
+  section = IMAGE_FIRST_SECTION(pe_header);
+  section_rva = 0;
+  section_offset = 0;
+
+  int i = 0;
+
+  while(i < MIN(pe_header->FileHeader.NumberOfSections, 60))
+  {
+    if ((uint8_t*) section - \
+        (uint8_t*) pe_header + sizeof(IMAGE_SECTION_HEADER) < buffer_length)
+    {
+      if (rva >= section->VirtualAddress &&
+          section_rva <= section->VirtualAddress)
+      {
+        section_rva = section->VirtualAddress;
+        section_offset = section->PointerToRawData;
+      }
+
+      section++;
+      i++;
+    }
+    else
+    {
+      return 0;
+    }
+  }
+
+  return section_offset + (rva - section_rva);
+}
+
+
 void parse_pe_header(
     PIMAGE_NT_HEADERS pe,
     size_t buffer_length,
+    int flags,
     YR_OBJECT* pe_obj)
 {
   PIMAGE_SECTION_HEADER section;
@@ -93,7 +139,10 @@ void parse_pe_header(
       pe_obj, "characteristics");
 
   set_integer(
-      pe->OptionalHeader.AddressOfEntryPoint,
+      flags & SCAN_FLAGS_PROCESS_MEMORY ?
+        pe->OptionalHeader.AddressOfEntryPoint :
+        rva_to_offset(
+            pe, pe->OptionalHeader.AddressOfEntryPoint, buffer_length),
       pe_obj, "entry_point");
 
   set_integer(
@@ -239,33 +288,38 @@ end_declarations;
 
 
 int module_load(
-    YR_EVALUATION_CONTEXT* context,
-    YR_OBJECT* main_struct,
+    YR_SCAN_CONTEXT* context,
+    YR_OBJECT* module,
     void* module_data,
     size_t module_data_size)
 {
-
-  YR_MEMORY_BLOCK* block = context->mem_block;
+  YR_MEMORY_BLOCK* block;
   PIMAGE_NT_HEADERS header;
 
-  while (block != NULL)
+  foreach_memory_block(context, block)
   {
     header = get_pe_header(block->data, block->size);
 
     if (header != NULL)
     {
-      parse_pe_header(header, block->size, main_struct);
+      // ignore DLLs while scanning a process
+
+      if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
+          !(header->FileHeader.Characteristics & IMAGE_FILE_DLL))
+      {
+        parse_pe_header(header, block->size, context->flags, module);
+        break;
+      }
+
       break;
     }
-
-    block = block->next;
   }
 
   return ERROR_SUCCESS;
 }
 
 
-int module_unload(YR_OBJECT* main_struct)
+int module_unload(YR_OBJECT* module)
 {
   return ERROR_SUCCESS;
 }
