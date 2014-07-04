@@ -14,7 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <yara/pe.h>
+#endif
+
 #include <yara/modules.h>
 
 
@@ -80,11 +85,11 @@ uint64_t rva_to_offset(
   DWORD section_rva;
   DWORD section_offset;
 
+  int i = 0;
+
   section = IMAGE_FIRST_SECTION(pe_header);
   section_rva = 0;
   section_offset = 0;
-
-  int i = 0;
 
   while(i < MIN(pe_header->FileHeader.NumberOfSections, 60))
   {

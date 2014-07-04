@@ -40,10 +40,10 @@ limitations under the License.
 
 
 #define begin_declarations \
-    int module_declarations(YR_OBJECT* main_structure) { \
+    int module_declarations(YR_OBJECT* module) { \
       YR_OBJECT* stack[64]; \
       int stack_top = 0; \
-      stack[stack_top] = main_structure;
+      stack[stack_top] = module;
 
 
 #define end_declarations \
@@ -200,19 +200,19 @@ limitations under the License.
 
 
 typedef int (*YR_EXT_DECLARATIONS_FUNC)( \
-    YR_OBJECT* main_structure);
+    YR_OBJECT* module);
 
 
 typedef int (*YR_EXT_LOAD_FUNC)( \
     YR_SCAN_CONTEXT* context,
-    YR_OBJECT* main_structure,
+    YR_OBJECT* module,
     void* module_data,
     size_t module_data_size);
 
 
 
 typedef int (*YR_EXT_UNLOAD_FUNC)( \
-    YR_OBJECT* main_structure);
+    YR_OBJECT* module);
 
 
 typedef struct _YR_MODULE

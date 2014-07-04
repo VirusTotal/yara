@@ -30,7 +30,7 @@ define_function(network_dns_lookup)
   YR_OBJECT* network_obj = self();
 
   json_t* network_json = (json_t*) network_obj->data;
-  json_t* dns_json = json_object_get(network_json, "dns");;
+  json_t* dns_json = json_object_get(network_json, "dns");
   json_t* value;
 
   uint64_t result = 0;

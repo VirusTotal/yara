@@ -23,12 +23,13 @@ limitations under the License.
 
 
 #define MODULE(name) \
-    int name ## _declarations(); \
+    int name ## _declarations(YR_OBJECT* module); \
     int name ## _load(YR_SCAN_CONTEXT* context, \
-                      YR_OBJECT* main_structure, \
+                      YR_OBJECT* module, \
                       void* module_data, \
                       size_t module_data_size); \
     int name ## _unload(YR_OBJECT* main_structure);
+
 
 #include <modules/list>
 
