@@ -153,6 +153,12 @@ limitations under the License.
 #define self()  (function_obj->parent_obj)
 
 
+#define foreach_memory_block(context, block) \
+  for (block = context->mem_block; \
+       block != NULL; \
+       block = block->next) \
+
+
 #define get_object(object, ...) \
     yr_object_lookup(object, 0, __VA_ARGS__)
 

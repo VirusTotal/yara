@@ -113,6 +113,7 @@ uint64_t rva_to_offset(
 
 void parse_pe_header(
     PIMAGE_NT_HEADERS pe,
+    size_t base_address,
     size_t buffer_length,
     int flags,
     YR_OBJECT* pe_obj)
@@ -140,7 +141,7 @@ void parse_pe_header(
 
   set_integer(
       flags & SCAN_FLAGS_PROCESS_MEMORY ?
-        pe->OptionalHeader.AddressOfEntryPoint :
+        base_address + pe->OptionalHeader.AddressOfEntryPoint :
         rva_to_offset(
             pe, pe->OptionalHeader.AddressOfEntryPoint, buffer_length),
       pe_obj, "entry_point");
@@ -307,7 +308,13 @@ int module_load(
       if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
           !(header->FileHeader.Characteristics & IMAGE_FILE_DLL))
       {
-        parse_pe_header(header, block->size, context->flags, module);
+        parse_pe_header(
+            header,
+            block->base,
+            block->size,
+            context->flags,
+            module);
+
         break;
       }
 
