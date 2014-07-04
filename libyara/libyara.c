@@ -26,22 +26,20 @@ limitations under the License.
 #define snprintf _snprintf
 #endif
 
-#ifdef WIN32
-#else
-#include <pthread.h>
-#endif
-
-char lowercase[256];
-char altercase[256];
 
 #ifdef WIN32
+#include <windows.h>
 DWORD tidx_key;
 DWORD recovery_state_key;
 #else
+#include <pthread.h>
 pthread_key_t tidx_key;
 pthread_key_t recovery_state_key;
 #endif
 
+
+char lowercase[256];
+char altercase[256];
 
 //
 // yr_initialize

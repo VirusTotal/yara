@@ -2444,6 +2444,7 @@ uint8_t read_escaped_char(yyscan_t yyscanner)
 
 
 #ifdef WIN32
+#include <windows.h>
 extern DWORD recovery_state_key;
 #else
 #include <pthread.h>

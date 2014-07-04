@@ -2084,6 +2084,7 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 
 
 #ifdef WIN32
+#include <windows.h>
 extern DWORD recovery_state_key;
 #else
 #include <pthread.h>

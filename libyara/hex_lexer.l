@@ -139,6 +139,7 @@ hexdigit      [a-fA-F0-9]
 
 
 #ifdef WIN32
+#include <windows.h>
 extern DWORD recovery_state_key;
 #else
 #include <pthread.h>
