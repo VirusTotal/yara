@@ -1,4 +1,4 @@
-
+MODULE(tests)
 MODULE(pe)
 
 #ifdef CUCKOO

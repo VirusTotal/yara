@@ -606,6 +606,12 @@ class TestYara(unittest.TestCase):
         r = yara.compile(source='rule test { condition: ext_bool }', externals={'ext_bool': True})
         self.assertTrue(r.match(data='dummy'))
 
+        r = yara.compile(source='rule test { condition: ext_str }', externals={'ext_str': ''})
+        self.assertFalse(r.match(data='dummy'))
+
+        r = yara.compile(source='rule test { condition: ext_str }', externals={'ext_str': 'foo'})
+        self.assertTrue(r.match(data='dummy'))
+
         r = yara.compile(source='rule test { condition: ext_bool }', externals={'ext_bool': False})
         self.assertFalse(r.match(data='dummy'))
 
@@ -685,6 +691,19 @@ class TestYara(unittest.TestCase):
             }
             """,
         ])
+
+    def testModules(self):
+
+        self.assertTrueRules([
+            'import "tests" rule test { condition: tests.constants.one + 1 == tests.constants.two }',
+            'import "tests" rule test { condition: tests.constants.foo == "foo" }',
+            'import "tests" rule test { condition: tests.struct_array[1].i == 1 }',
+            'import "tests" rule test { condition: tests.struct_array[0].i == 1 or true}'
+          ])
+
+        self.assertFalseRules([
+            'import "tests" rule test { condition: tests.struct_array[0].i == 1 }'
+          ])
 
 
 if __name__ == "__main__":
