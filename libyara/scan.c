@@ -32,9 +32,12 @@ typedef struct _CALLBACK_ARGS
 {
   YR_STRING* string;
   YR_ARENA* matches_arena;
-  int forward_matches;
+
   uint8_t* data;
-  int data_size;
+  size_t data_size;
+  size_t data_base;
+
+  int forward_matches;
   int full_word;
   int tidx;
 
@@ -408,6 +411,7 @@ int _yr_scan_verify_chained_string_match(
     YR_ARENA* matches_arena,
     YR_STRING* matching_string,
     uint8_t* match_data,
+    size_t match_base,
     size_t match_offset,
     int32_t match_length,
     int tidx)
@@ -521,6 +525,7 @@ int _yr_scan_verify_chained_string_match(
           sizeof(YR_MATCH),
           (void**) &new_match));
 
+      new_match->base = match_base;
       new_match->offset = match_offset;
       new_match->length = match_length;
       new_match->data = match_data;
@@ -588,6 +593,7 @@ int _yr_scan_match_callback(
         callback_args->matches_arena,
         string,
         match_data,
+        callback_args->data_base,
         match_offset,
         match_length,
         tidx);
@@ -601,6 +607,7 @@ int _yr_scan_match_callback(
 
     if (result == ERROR_SUCCESS)
     {
+      new_match->base = callback_args->data_base;
       new_match->offset = match_offset;
       new_match->length = match_length;
       new_match->data = match_data;
@@ -630,6 +637,7 @@ int _yr_scan_verify_re_match(
     YR_AC_MATCH* ac_match,
     uint8_t* data,
     size_t data_size,
+    size_t data_base,
     size_t offset,
     YR_ARENA* matches_arena)
 {
@@ -684,6 +692,7 @@ int _yr_scan_verify_re_match(
   callback_args.string = ac_match->string;
   callback_args.data = data;
   callback_args.data_size = data_size;
+  callback_args.data_base = data_base;
   callback_args.matches_arena = matches_arena;
   callback_args.forward_matches = forward_matches;
   callback_args.full_word = STRING_IS_FULL_WORD(ac_match->string);
@@ -719,6 +728,7 @@ int _yr_scan_verify_literal_match(
     YR_AC_MATCH* ac_match,
     uint8_t* data,
     size_t data_size,
+    size_t data_base,
     size_t offset,
     YR_ARENA* matches_arena)
 {
@@ -811,6 +821,7 @@ int _yr_scan_verify_literal_match(
     callback_args.string = string;
     callback_args.data = data;
     callback_args.data_size = data_size;
+    callback_args.data_base = data_base;
     callback_args.matches_arena = matches_arena;
     callback_args.forward_matches = forward_matches;
     callback_args.full_word = STRING_IS_FULL_WORD(string);
@@ -828,6 +839,7 @@ int yr_scan_verify_match(
     YR_AC_MATCH* ac_match,
     uint8_t* data,
     size_t data_size,
+    size_t data_base,
     size_t offset,
     YR_ARENA* matches_arena,
     int flags)
@@ -849,12 +861,12 @@ int yr_scan_verify_match(
   if (STRING_IS_LITERAL(string))
   {
     FAIL_ON_ERROR(_yr_scan_verify_literal_match(
-        ac_match, data, data_size, offset, matches_arena));
+        ac_match, data, data_size, data_base, offset, matches_arena));
   }
   else
   {
     FAIL_ON_ERROR(_yr_scan_verify_re_match(
-        ac_match, data, data_size, offset, matches_arena));
+        ac_match, data, data_size, data_base, offset, matches_arena));
   }
 
   #ifdef PROFILING_ENABLED

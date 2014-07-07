@@ -167,6 +167,7 @@ typedef struct _YR_META
 
 typedef struct _YR_MATCH
 {
+  int64_t base;
   int64_t offset;
   int32_t length;
 

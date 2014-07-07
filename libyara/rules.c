@@ -215,8 +215,7 @@ void yr_rules_print_profiling_info(
 
 int yr_rules_scan_mem_block(
     YR_RULES* rules,
-    uint8_t* data,
-    size_t data_size,
+    YR_MEMORY_BLOCK* block,
     int flags,
     int timeout,
     time_t start_time,
@@ -231,7 +230,7 @@ int yr_rules_scan_mem_block(
   current_state = rules->automaton->root;
   i = 0;
 
-  while (i < data_size)
+  while (i < block->size)
   {
     ac_match = current_state->matches;
 
@@ -241,8 +240,9 @@ int yr_rules_scan_mem_block(
       {
         FAIL_ON_ERROR(yr_scan_verify_match(
             ac_match,
-            data,
-            data_size,
+            block->data,
+            block->size,
+            block->base,
             i - ac_match->backtrack,
             matches_arena,
             flags));
@@ -251,12 +251,12 @@ int yr_rules_scan_mem_block(
       ac_match = ac_match->next;
     }
 
-    next_state = yr_ac_next_state(current_state, data[i]);
+    next_state = yr_ac_next_state(current_state, block->data[i]);
 
     while (next_state == NULL && current_state->depth > 0)
     {
       current_state = current_state->failure;
-      next_state = yr_ac_next_state(current_state, data[i]);
+      next_state = yr_ac_next_state(current_state, block->data[i]);
     }
 
     if (next_state != NULL)
@@ -275,13 +275,14 @@ int yr_rules_scan_mem_block(
 
   while (ac_match != NULL)
   {
-    if (ac_match->backtrack <= data_size)
+    if (ac_match->backtrack <= block->size)
     {
       FAIL_ON_ERROR(yr_scan_verify_match(
           ac_match,
-          data,
-          data_size,
-          data_size - ac_match->backtrack,
+          block->data,
+          block->size,
+          block->base,
+          block->size - ac_match->backtrack,
           matches_arena,
           flags));
     }
@@ -397,8 +398,7 @@ int yr_rules_scan_mem_blocks(
 
     result = yr_rules_scan_mem_block(
         rules,
-        block->data,
-        block->size,
+        block,
         flags,
         timeout,
         start_time,

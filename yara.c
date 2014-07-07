@@ -251,7 +251,7 @@ int is_directory(
 {
   DWORD attributes = GetFileAttributes(path);
 
-  if (attributes != INVALID_FILE_ATTRIBUTES && 
+  if (attributes != INVALID_FILE_ATTRIBUTES &&
 	  attributes & FILE_ATTRIBUTE_DIRECTORY)
     return TRUE;
   else
@@ -574,7 +574,9 @@ int handle_message(int message, YR_RULE* rule, void* data)
 
           while (match != NULL)
           {
-            printf("0x%" PRIx64 ":%s: ", match->offset, string->identifier);
+            printf("0x%" PRIx64 ":%s: ",
+                match->base + match->offset,
+                string->identifier);
 
             if (STRING_IS_HEX(string))
               print_hex_string(match->data, match->length);
