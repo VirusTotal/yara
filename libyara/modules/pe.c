@@ -322,8 +322,6 @@ int module_load(
 
         break;
       }
-
-      break;
     }
   }
 
