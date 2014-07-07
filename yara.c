@@ -249,7 +249,10 @@ char* file_queue_get()
 int is_directory(
     const char* path)
 {
-  if (GetFileAttributes(path) & FILE_ATTRIBUTE_DIRECTORY)
+  DWORD attributes = GetFileAttributes(path);
+
+  if (attributes != INVALID_FILE_ATTRIBUTES && 
+	  attributes & FILE_ATTRIBUTE_DIRECTORY)
     return TRUE;
   else
     return FALSE;
