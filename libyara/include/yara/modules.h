@@ -147,7 +147,7 @@ limitations under the License.
 
 #define integer_argument(n)  (((int64_t*) args)[n-1])
 #define string_argument(n)   ((char*)((int64_t*) args)[n-1])
-#define regexp_argument(n)   ((uint8_t*)((int64_t*) args)[n-1])
+#define regexp_argument(n)   ((RE_CODE)((int64_t*) args)[n-1])
 
 
 #define self()  (function_obj->parent_obj)
@@ -184,7 +184,9 @@ limitations under the License.
           function_obj->return_obj->type == OBJECT_TYPE_INTEGER, \
           "return type differs from function declaration"); \
       yr_object_set_integer( \
-          (integer), function_obj->return_obj, NULL); \
+          (integer), \
+          function_obj->return_obj, \
+          NULL); \
       return ERROR_SUCCESS; \
     }
 
@@ -194,7 +196,9 @@ limitations under the License.
           function_obj->return_obj->type == OBJECT_TYPE_STRING, \
           "return type differs from function declaration"); \
       yr_object_set_string( \
-          (string), function_obj->return_obj, NULL); \
+          ((string) != UNDEFINED) ? (string) : NULL, \
+          function_obj->return_obj, \
+          NULL); \
       return ERROR_SUCCESS; \
     }
 

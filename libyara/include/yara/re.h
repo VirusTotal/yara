@@ -79,6 +79,7 @@ typedef struct RE RE;
 typedef struct RE_NODE RE_NODE;
 typedef struct RE_ERROR RE_ERROR;
 
+typedef uint8_t* RE_CODE;
 
 #define CHAR_IN_CLASS(chr, cls)  \
     ((cls)[(chr) / 8] & 1 << ((chr) % 8))
@@ -106,8 +107,8 @@ struct RE_NODE
   RE_NODE* left;
   RE_NODE* right;
 
-  uint8_t* forward_code;
-  uint8_t* backward_code;
+  RE_CODE forward_code;
+  RE_CODE backward_code;
 };
 
 
@@ -116,7 +117,7 @@ struct RE {
   uint32_t flags;
   RE_NODE* root_node;
   YR_ARENA* code_arena;
-  uint8_t* code;
+  RE_CODE code;
 };
 
 
@@ -202,7 +203,7 @@ int yr_re_emit_code(
 
 
 int yr_re_exec(
-    uint8_t* re_code,
+    RE_CODE re_code,
     uint8_t* input,
     size_t input_size,
     int flags,
@@ -211,7 +212,7 @@ int yr_re_exec(
 
 
 int yr_re_match(
-    uint8_t* re_code,
+    RE_CODE re_code,
     const char* target);
 
 

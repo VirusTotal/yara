@@ -60,7 +60,7 @@ order to avoid confusion with operating system threads.
 
 typedef struct _RE_FIBER
 {
-  uint8_t* ip;
+  RE_CODE  ip;
   int32_t  sp;
 
   uint16_t stack[RE_MAX_STACK];
@@ -336,7 +336,7 @@ int yr_re_compile(
 
 
 int yr_re_match(
-    uint8_t* re_code,
+    RE_CODE re_code,
     const char* target)
 {
   return yr_re_exec(
@@ -1452,7 +1452,7 @@ void _yr_re_fiber_sync(
 // Executes a regular expression
 //
 // Args:
-//   uint8_t* re_code                 - Pointer to regexp code be executed
+//   RE_CODE re_code                  - Regexp code be executed
 //   uint8_t* input                   - Pointer to input data
 //   size_t input_size                - Input data size
 //   int flags                        - Flags:
@@ -1471,18 +1471,18 @@ void _yr_re_fiber_sync(
 //      -2  An error ocurred
 
 int yr_re_exec(
-    uint8_t* re_code,
+    RE_CODE re_code,
     uint8_t* input_data,
     size_t input_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
     void* callback_args)
 {
-  uint8_t* ip;
   uint8_t* input;
   uint8_t mask;
   uint8_t value;
 
+  RE_CODE ip;
   RE_FIBER_LIST fibers;
   RE_THREAD_STORAGE* storage;
   RE_FIBER* fiber;

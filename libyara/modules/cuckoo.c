@@ -60,7 +60,7 @@ define_function(network_dns_lookup)
 
 uint64_t http_request(
     YR_OBJECT* network_obj,
-    uint8_t* uri_regexp,
+    RE_CODE uri_regexp,
     int methods)
 {
   json_t* network_json = (json_t*) network_obj->data;
@@ -269,8 +269,3 @@ int module_unload(YR_OBJECT* module)
 
   return ERROR_SUCCESS;
 }
-
-
-
-
-#undef MODULE_NAME
