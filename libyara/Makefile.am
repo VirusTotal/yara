@@ -1,3 +1,19 @@
+
+MODULES =  modules/tests.c
+MODULES += modules/pe.c
+
+if CUCKOO
+MODULES += modules/cuckoo.c
+endif
+
+#
+# Add your modules here:
+#
+# MODULES += modules/yourmodule.c
+#
+
+MODULES += modules/demo.c
+
 AM_YFLAGS=-d
 
 AM_CFLAGS=-g -O0 -Wall -std=gnu99 -I./include
@@ -19,13 +35,6 @@ yarainclude_HEADERS = \
 lib_LTLIBRARIES = libyara.la
 
 libyara_la_LDFLAGS = -export-symbols libyara.sym -version-number 2:1
-
-
-MODULES = modules/tests.c modules/pe.c
-
-if CUCKOO
-MODULES += modules/cuckoo.c
-endif
 
 libyara_la_SOURCES = \
   $(MODULES) \

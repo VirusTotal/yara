@@ -31,7 +31,7 @@ limitations under the License.
     int name ## _unload(YR_OBJECT* main_structure);
 
 
-#include <modules/list>
+#include <modules/module_list>
 
 #undef MODULE
 
@@ -41,7 +41,7 @@ limitations under the License.
 
 YR_MODULE yr_modules_table[] =
 {
-  #include <modules/list>
+  #include <modules/module_list>
 };
 
 #undef MODULE
