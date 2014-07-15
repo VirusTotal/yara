@@ -129,6 +129,21 @@ limitations under the License.
   }
 
 
+#define string_array(name) { \
+    YR_OBJECT* array; \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_ARRAY, \
+        name, \
+        stack[stack_top], \
+        &array)); \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_STRING, \
+        name, \
+        array, \
+        NULL)); \
+  }
+
+
 #define function(name, args_fmt, ret_fmt, func) { \
     YR_OBJECT* function; \
     FAIL_ON_ERROR(yr_object_function_create( \
