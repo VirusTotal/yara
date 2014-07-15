@@ -12,8 +12,6 @@ endif
 # MODULES += modules/yourmodule.c
 #
 
-MODULES += modules/demo.c
-
 AM_YFLAGS=-d
 
 AM_CFLAGS=-g -O0 -Wall -std=gnu99 -I./include
