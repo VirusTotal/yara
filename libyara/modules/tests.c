@@ -26,6 +26,9 @@ begin_declarations;
     string("foo");
   end_struct("constants");
 
+  integer_array("integer_array");
+  string_array("string_array");
+
   begin_struct_array("struct_array");
     integer("i");
     string("s");
@@ -44,6 +47,14 @@ int module_load(
 
   set_integer(1, module, "struct_array[1].i");
 
+  set_integer(0, module, "integer_array[%i]", 0);
+  set_integer(1, module, "integer_array[%i]", 1);
+  set_integer(2, module, "integer_array[%i]", 2);
+
+  set_string("foo", module, "string_array[%i]", 0);
+  set_string("bar", module, "string_array[%i]", 1);
+  set_string("baz", module, "string_array[%i]", 2);
+
   return ERROR_SUCCESS;
 }
 
@@ -52,7 +63,3 @@ int module_unload(YR_OBJECT* module)
 {
   return ERROR_SUCCESS;
 }
-
-
-
-#undef MODULE_NAME

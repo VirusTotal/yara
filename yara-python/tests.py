@@ -698,7 +698,11 @@ class TestYara(unittest.TestCase):
             'import "tests" rule test { condition: tests.constants.one + 1 == tests.constants.two }',
             'import "tests" rule test { condition: tests.constants.foo == "foo" }',
             'import "tests" rule test { condition: tests.struct_array[1].i == 1 }',
-            'import "tests" rule test { condition: tests.struct_array[0].i == 1 or true}'
+            'import "tests" rule test { condition: tests.struct_array[0].i == 1 or true}',
+            'import "tests" rule test { condition: tests.integer_array[0] == 0}',
+            'import "tests" rule test { condition: tests.integer_array[1] == 1}',
+            'import "tests" rule test { condition: tests.string_array[0] == "foo"}',
+            'import "tests" rule test { condition: tests.string_array[2] == "baz"}',
           ])
 
         self.assertFalseRules([

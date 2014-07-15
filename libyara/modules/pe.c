@@ -333,5 +333,3 @@ int module_unload(YR_OBJECT* module)
 {
   return ERROR_SUCCESS;
 }
-
-#undef MODULE_NAME
