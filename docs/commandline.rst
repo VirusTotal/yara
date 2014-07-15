@@ -1,3 +1,5 @@
+.. _command-line:
+
 ********************************
 Using YARA from the command-line
 ********************************
@@ -63,6 +65,10 @@ Available options are:
 .. option:: -d <identifier>=<value>
 
    Define external variable.
+
+.. option:: -x <module>=<file>
+
+   Pass file's content as extra data to module.
 
 .. option:: -r
 

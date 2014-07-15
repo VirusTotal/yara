@@ -184,13 +184,13 @@ PE module reference
 .. c:function:: exports(function_name)
 
     Function returning true if the PE exports *function_name* or
-    false if otherwise.
+    false otherwise.
 
     *Example:  pe.exports("CPlApplet")*
 
 .. c:function:: imports(dll_name, function_name)
 
     Function returning true if the PE imports *function_name* from *dll_name*,
-    or false if otherwise. *dll_name* is case insensitive.
+    or false otherwise. *dll_name* is case insensitive.
 
     *Example:  pe.imports("kernel32.dll", "WriteProcessMemory")*

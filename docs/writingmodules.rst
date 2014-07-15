@@ -90,7 +90,7 @@ Then follows the declaration section:
 Here is where the module declares the functions and data structures that will
 be available later for YARA your rules. In this case we are declaring just a
 string variable named *greeting*. We are going to discuss more in depth about
-the declaration section
+this in :ref:`declaration-section`.
 
 Then comes the ``module_load`` function:
 
@@ -206,6 +206,7 @@ Now you should be able to create a rule like this::
 Any file scanned with this rule will match the ``HelloWord`` because
 ``demo.greeting == "Hello World!"`` is always true.
 
+.. _declaration-section:
 
 The declaration section
 =======================
@@ -310,6 +311,76 @@ declare arrays of them::
         end_struct_array("struct_array");
 
     end_declarations;
+
+
+Implementing your module's logic
+================================
+
+Every module must implement two functions which are called by YARA during the
+scanning of a file or process memory space: ``module_load`` and ``module_unload``.
+Both functions are called once for each scanned file or process, but only if
+the module was imported by means of the ``import`` directive. If the module is
+not imported by some rule neither ``module_load`` nor ``module_unload``
+will be called.
+
+The ``module_load`` function has the following prototype:
+
+.. code-block:: c
+
+    int module_load(
+        YR_SCAN_CONTEXT* context,
+        YR_OBJECT* module,
+        void* module_data,
+        size_t module_data_size)
+
+The ``context`` argument contains information relative to the current scan,
+including the data being scanned. The ``module`` argument is a pointer to
+a ``YR_OBJECT`` structure associated to the module. Each structure, variable or function declared in a YARA module is represented by a ``YR_OBJECT`` structure. These structures conform a tree whose root is the module's ``YR_OBJECT`` structure. If you have the following declarations in a
+module named
+*mymodule*::
+
+    begin_declarations;
+
+        integer("foo");
+
+        begin_struct("bar");
+
+            string("baz");
+
+        end_struct("bar");
+
+    end_declarations;
+
+Then the tree will look like this::
+
+     YR_OBJECT(type=OBJECT_TYPE_STRUCT, name="mymodule")
+      |
+      |_ YR_OBJECT(type=OBJECT_TYPE_INTEGER, name="foo")
+      |
+      |_ YR_OBJECT(type=OBJECT_TYPE_STRUCT, name="bar")
+          |
+          |_ YR_OBJECT(type=OBJECT_TYPE_STRING, name="baz")
+
+Notice that both *bar* and *mymodule* are of the same type
+``OBJECT_TYPE_STRUCT``, which means that the ``YR_OBJECT`` associated to the
+module is just another structure like *bar*. In fact, when you write in your
+rules something like ``mymodule.foo`` you're performing a field lookup in a
+structure in the same way that ``bar.baz`` does.
+
+In resume, the ``module`` argument allows you to access every variable,
+structure or function declared by the module by providing a pointer to the
+root of the objects tree.
+
+The ``module_data`` argument is a pointer to any additional data passed to the
+module, and ``module_data_size`` is the size of that data. Not all modules
+require additional data, most of them rely on the data being scanned alone, but
+a few of them require more information to work. The :ref:`cuckoo-module` is a
+good example of this, it receives a behavior report associated to PE
+files being scanned, and that behavior report is passed in the ``module_data``
+and ``module_data_size`` arguments.
+
+For more information on how to pass additional data to your module take a look
+at the ``-x`` command-line argument in :ref:`command-line`.
 
 
 Functions
