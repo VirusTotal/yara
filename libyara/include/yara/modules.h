@@ -169,9 +169,13 @@ limitations under the License.
 
 
 #define foreach_memory_block(context, block) \
-  for (block = context->mem_block; \
+  for (block = (context)->mem_block; \
        block != NULL; \
        block = block->next) \
+
+
+#define first_memory_block(context) \
+      (context)->mem_block
 
 
 #define get_object(object, ...) \
