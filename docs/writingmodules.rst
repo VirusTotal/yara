@@ -312,6 +312,65 @@ declare arrays of them::
 
     end_declarations;
 
+.. _declaring-functions:
+
+Functions
+---------
+
+One of the more powerful features of YARA modules is the possibility of
+declaring functions that can be later invoked from your rules. Functions
+must appear in the declaration section in this way::
+
+    function(<function name>, <argument types>, <return tuype>, <C function>);
+
+*<function name>* is the name that will be used in your YARA rules to invoke
+the function.
+
+*<argument types>* is a string containing one character per
+function argument, where the character indicates the type of the argument.
+Functions can receive three different types of arguments: string, integer and
+regular expression, denoted by characters: *s*, *i* and *r*
+respectively. If your function receives two integers *<argument types>* must be
+*"ii"*, if it receives an integer as the first argument and a string as the
+second one *<argument types>* must be *"is"*, if it receives three strings
+*<argument types>* must be "*sss*".
+
+*<return type>* is a string with a single character indicating the return type.
+Possible return types are string (*"s"*) and integer (*"i"*).
+
+*<C function>* is the identifier for the actual implementation of your function.
+
+Here you have a full example:
+
+.. code-block:: c
+
+    define_function(sum)
+    {
+      int64_t a = integer_argument(1);
+      int64_t b = integer_argument(2);
+
+      if (a == UNDEFINED || b == UNDEFINED)
+        return_integer(UNDEFINED);
+
+      return_integer(a + b);
+    }
+
+    begin_declarations;
+
+        function("sum", "ii", "i", sum);
+
+    end_declarations;
+
+As you can see in the example above, your function code must be defined before
+the declaration section, like this::
+
+    define_function(<function identifier>)
+    {
+      ...your code here
+    }
+
+We are going to discuss function implementation more in depth in the
+:ref:`implementing-functions` section.
 
 Implementing your module's logic
 ================================
@@ -382,60 +441,249 @@ and ``module_data_size`` arguments.
 For more information on how to pass additional data to your module take a look
 at the ``-x`` command-line argument in :ref:`command-line`.
 
+Accessing the scanned data
+--------------------------
 
-Functions
-=========
-
-One of the more powerful features of YARA modules is the possibility of
-declaring functions that can be later invoked from your rules. Functions
-must appear in the declaration section in this way::
-
-    function(<function name>, <argument types>, <return tuype>, <C function>);
-
-*<function name>* is the name that will be used in your YARA rules to invoke
-the function.
-
-*<argument types>* is a string containing one character per
-function argument, where the character indicates the type of the argument.
-Functions can receive three different types of arguments: string, integer and
-regular expression, denoted by characters: *s*, *i* and *r*
-respectively. If your function receives two integers *<argument types>* must be
-*"ii"*, if it receives an integer as the first argument and a string as the
-second one *<argument types>* must be *"is"*, if it receives three strings
-*<argument types>* must be "*sss*".
-
-*<return type>* is a string with a single character indicating the return type.
-Possible return types are string (*"s"*) and integer (*"i"*).
-
-*<C function>* is the identifier for the actual implementation of your function.
-
-Here you have a full example:
+Most YARA modules needs to access the file or process memory being scanned to
+extract information from it. The scanned data is sent to the module in the
+``YR_SCAN_CONTEXT`` structure passed to the ``module_load`` function. The data
+is sometimes sliced in blocks, so your module needs to iterate over the
+blocks by using the ``foreach_memory_block`` macro:
 
 .. code-block:: c
 
-    define_function(sum)
+    int module_load(
+        YR_SCAN_CONTEXT* context,
+        YR_OBJECT* module,
+        void* module_data,
+        size_t module_data_size)
+        {
+            YR_MEMORY_BLOCK* block;
+
+            foreach_memory_block(context, block)
+            {
+                ..do something with the current memory block
+            }
+        }
+
+Each memory block is represented by a ``YR_MEMORY_BLOCK`` structure with the
+following attributes:
+
+.. c:type:: uint8_t*   data
+
+    Pointer to the actual data for this memory block.
+
+.. c:type:: size_t   size
+
+    Size of the data block.
+
+.. c:type:: size_t   base
+
+    Base offset/address for this block. If a file is being scanned this field
+    contains the offset within the file where the block begins, if a process
+    memory space is being scanned this contains the virtual address where
+    the block begins.
+
+The blocks are always iterated in the same order as they appear in the file
+or process memory. In the case of files the first block will contain the
+beginning of the file. Actually, a single block will contain the whole file's content in most cases, but you can't rely on that while writing your code. For very big files YARA could eventually split the file into two or more blocks, and your module should be prepared to handle that.
+
+The story is very different for processes. While scanning a process memory space your module will definitely receive a large number of blocks, one for each
+committed memory region in the proccess address space.
+
+However, there are some cases where you don't actually need to iterate over the
+blocks. If your module just parses the header of some file format you can safely
+assume that the whole header is contained in the first block (put some checks
+in your code nevertheless). In those cases you can use the ``first_memory_block``
+macro:
+
+.. code-block:: c
+
+    int module_load(
+        YR_SCAN_CONTEXT* context,
+        YR_OBJECT* module,
+        void* module_data,
+        size_t module_data_size)
     {
-      int64_t a = integer_argument(1);
-      int64_t b = integer_argument(2);
+        YR_MEMORY_BLOCK* block;
 
-      if (a == UNDEFINED || b == UNDEFINED)
-        return_integer(UNDEFINED);
+        block = first_memory_block(context);
 
-      return_integer(a + b);
+        ..do something with the memory block
     }
+
+Setting variable's values
+-------------------------
+
+The ``module_load`` function is where you assign values to the variables
+declared in the declarations section, once you've parsed or analized the scanned
+data and/or any additional module's data. This is done by using the
+``set_integer`` and ``set_string`` functions:
+
+.. c:function:: void set_integer(int64_t value, YR_OBJECT* object, char* field, ...)
+
+.. c:function:: void set_string(char* value, YR_OBJECT* object, char* field, ...)
+
+Both functions receive a value to be assigned to the variable, a pointer to a
+``YR_OBJECT`` representing the variable itself or some ancestor of
+that variable, a field descriptor, and additional arguments as defined by the
+field descriptor.
+
+If we are assigning the value to the variable represented by ``object`` itself,
+then the field descriptor must be ``NULL``. For example, assuming that ``object``
+points to a ``YR_OBJECT`` structure corresponding to some integer variable, we
+can set the value for that integer variable with:
+
+.. code-block:: c
+
+    set_integer(<value>, object, NULL);
+
+The field descriptor is used to assign the value to some descendant of
+``object``. For example, consider the following declarations::
 
     begin_declarations;
 
-        function("sum", "ii", "i", sum);
+        begin_struct("foo");
+
+            string("bar");
+
+            begin_struct("baz");
+
+                integer("qux");
+
+            end_struct("baz");
+
+        end_struct("foo");
 
     end_declarations;
 
-As you can see in the example above, your function code must be defined as::
+If ``object`` points to the ``YR_OBJECT`` associated to the ``foo`` structure
+you can set the value for the ``bar`` string like this:
 
-    define_function(<function identifier>)
+.. code-block:: c
+
+    set_string(<value>, object, "bar");
+
+And the value for ``qux`` like this:
+
+.. code-block:: c
+
+    set_integer(<value>, object, "baz.qux");
+
+
+Do you remember that the ``module`` argument for ``module_load`` was a pointer
+to a ``YR_OBJECT``? Do you remember that this ``YR_OBJECT`` is an structure just
+like ``bar`` is? Well, you could also set the values for ``bar`` and
+``qux`` like this:
+
+.. code-block:: c
+
+    set_string(<value>, module, "foo.bar");
+    set_integer(<value>, module, "foo.baz.qux");
+
+
+But what happens with arrays? How can I set the value for array items? If
+you have the following declarations::
+
+    begin_declarations;
+
+        integer_array("foo");
+
+        begin_struct_array("bar")
+
+            string("baz");
+            integer_array("qux");
+
+        end_struct_array("bar");
+
+    end_declarations;
+
+Then the following statements are all valid:
+
+.. code-block:: c
+
+    set_integer(<value>, module, "foo[0]");
+    set_integer(<value>, module, "foo[%i]", 0);
+    set_string(<value>, module, "bar[%i].baz", 0);
+    set_string(<value>, module, "bar[0].qux[0]");
+    set_string(<value>, module, "bar[0].qux[%i]", 0);
+    set_string(<value>, module, "bar[%i].qux[%i]", 0, 0);
+
+Those ``%i`` in the field descriptor are replaced by the additional
+integer arguments passed to the function. This work in the same way than
+``printf`` in C programs, but the only format specifier accepted is ``%i``.
+
+In addition to ``set_integer`` and ``set_string`` functions you have their
+``get_integer`` and ``get_string`` counterparts. As the names suggest they
+are used for getting the value of a variable, which can be useful in the
+implementation of your functions to retrieve values previously stored by
+``module_load``.
+
+
+.. c:function:: int64_t get_integer(YR_OBJECT* object, char* field, ...)
+
+.. c:function:: char* get_string(YR_OBJECT* object, char* field, ...)
+
+Storing data for later use
+--------------------------
+
+Sometimes the information stored directly in your variables by means of
+``set_integer`` and ``set_string`` is not enough. You may need to store more
+complex data structures or information that don't need to be exposed to YARA
+rules.
+
+Storing information is essential when your module exports functions
+to be used by YARA rules. The implementation of these functions usually require
+to access information generated by ``module_load``. You may be tempted to define
+global variables in your module where to put the required information, but
+this would make your code non-thread-safe. The correct approach is using the
+``data`` field of the ``YR_OBJECT`` structures.
+
+Each ``YR_OBJECT`` has a ``void* data`` field. This field can be safely used
+by your code to store a pointer to any data you may want. A typical pattern
+is using the ``data`` field of the root ``YR_OBJECT`` to the module,
+like in the following example:
+
+.. code-block:: cpp
+
+    typedef struct _MY_DATA
     {
-      ...your code here
+       int some_integer;
+
+    } MY_DATA;
+
+    int module_load(
+        YR_SCAN_CONTEXT* context,
+        YR_OBJECT* module,
+        void* module_data,
+        size_t module_data_size)
+    {
+        module->data = yr_malloc(sizeof(MY_DATA));
+        ((MY_DATA*) module->data)->some_integer = 0;
+
+        return ERROR_SUCCESS;
     }
+
+Don't forget to release the allocated memory in the ``module_unload`` function:
+
+.. code-block:: cpp
+
+    int module_unload(
+        YR_OBJECT* module)
+    {
+        yr_free(module->data);
+
+        return ERROR_SUCCESS;
+    }
+
+.. _implementing-functions:
+
+More about functions
+====================
+
+We already showed how to declare a function in
+:ref:`The declaration section  <declaring-functions>`. Here we are going to
+discuss how to provide an implementation for them.
 
 Function arguments
 ------------------
