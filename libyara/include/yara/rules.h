@@ -31,12 +31,6 @@ limitations under the License.
 #define CALLBACK_ERROR      2
 
 
-typedef int (*YR_CALLBACK_FUNC)(
-    int message,
-    void* message_data,
-    void* user_data);
-
-
 int yr_rules_scan_mem(
     YR_RULES* rules,
     uint8_t* buffer,

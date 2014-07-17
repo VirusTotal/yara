@@ -157,15 +157,19 @@ limitations under the License.
 
 
 #define define_function(func) \
-    int func (void* args, YR_OBJECT_FUNCTION* function_obj)
+    int func ( \
+        void* __args, \
+        YR_SCAN_CONTEXT* __context, \
+        YR_OBJECT_FUNCTION* __function_obj)
 
 
-#define integer_argument(n)  (((int64_t*) args)[n-1])
-#define string_argument(n)   ((char*)((int64_t*) args)[n-1])
-#define regexp_argument(n)   ((RE_CODE)((int64_t*) args)[n-1])
+#define integer_argument(n)  (((int64_t*) __args)[n-1])
+#define string_argument(n)   ((char*)((int64_t*) __args)[n-1])
+#define regexp_argument(n)   ((RE_CODE)((int64_t*) __args)[n-1])
 
 
-#define self()  (function_obj->parent_obj)
+#define self()          (__function_obj->parent_obj)
+#define scan_context()  (__context)
 
 
 #define foreach_memory_block(context, block) \
@@ -200,11 +204,11 @@ limitations under the License.
 
 #define return_integer(integer) { \
       assertf( \
-          function_obj->return_obj->type == OBJECT_TYPE_INTEGER, \
+          __function_obj->return_obj->type == OBJECT_TYPE_INTEGER, \
           "return type differs from function declaration"); \
       yr_object_set_integer( \
           (integer), \
-          function_obj->return_obj, \
+          __function_obj->return_obj, \
           NULL); \
       return ERROR_SUCCESS; \
     }
@@ -212,11 +216,11 @@ limitations under the License.
 
 #define return_string(string) { \
       assertf( \
-          function_obj->return_obj->type == OBJECT_TYPE_STRING, \
+          __function_obj->return_obj->type == OBJECT_TYPE_STRING, \
           "return type differs from function declaration"); \
       yr_object_set_string( \
           ((string) != UNDEFINED) ? (string) : NULL, \
-          function_obj->return_obj, \
+          __function_obj->return_obj, \
           NULL); \
       return ERROR_SUCCESS; \
     }

@@ -21,6 +21,7 @@ limitations under the License.
 #include <yara/arena.h>
 #include <yara/re.h>
 #include <yara/limits.h>
+#include <yara/hash.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -35,97 +36,6 @@ typedef int32_t tidx_mask_t;
 
 #define DECLARE_REFERENCE(type, name) \
     union { type name; int64_t name##_; }
-
-
-#define OBJECT_COMMON_FIELDS \
-    int8_t type; \
-    const char* identifier; \
-    void* data;
-
-
-typedef struct _YR_OBJECT
-{
-  OBJECT_COMMON_FIELDS
-
-} YR_OBJECT;
-
-
-typedef struct _YR_OBJECT_INTEGER
-{
-  OBJECT_COMMON_FIELDS
-  int64_t value;
-
-} YR_OBJECT_INTEGER;
-
-
-typedef struct _YR_OBJECT_STRING
-{
-  OBJECT_COMMON_FIELDS
-  char* value;
-
-} YR_OBJECT_STRING;
-
-
-typedef struct _YR_OBJECT_REGEXP
-{
-  OBJECT_COMMON_FIELDS
-  RE* value;
-
-} YR_OBJECT_REGEXP;
-
-
-typedef struct _YR_OBJECT_STRUCTURE
-{
-  OBJECT_COMMON_FIELDS
-  struct _YR_STRUCTURE_MEMBER* members;
-
-} YR_OBJECT_STRUCTURE;
-
-
-typedef struct _YR_OBJECT_ARRAY
-{
-  OBJECT_COMMON_FIELDS
-  struct _YR_ARRAY_ITEMS* items;
-
-} YR_OBJECT_ARRAY;
-
-
-struct _YR_OBJECT_FUNCTION;
-
-
-typedef int (*YR_MODULE_FUNC)(
-    void* args, struct _YR_OBJECT_FUNCTION* function_obj);
-
-
-typedef struct _YR_OBJECT_FUNCTION
-{
-  OBJECT_COMMON_FIELDS
-
-  const char* arguments_fmt;
-
-  YR_OBJECT* parent_obj;
-  YR_OBJECT* return_obj;
-
-  YR_MODULE_FUNC code;
-
-} YR_OBJECT_FUNCTION;
-
-
-typedef struct _YR_STRUCTURE_MEMBER
-{
-  YR_OBJECT* object;
-  struct _YR_STRUCTURE_MEMBER* next;
-
-} YR_STRUCTURE_MEMBER;
-
-
-typedef struct _YR_ARRAY_ITEMS
-{
-  int count;
-  YR_OBJECT* objects[1];
-
-} YR_ARRAY_ITEMS;
-
 
 #pragma pack(push)
 #pragma pack(1)
@@ -284,8 +194,6 @@ typedef struct _YR_STRING
 } YR_STRING;
 
 
-
-
 #define RULE_TFLAGS_MATCH                0x01
 
 #define RULE_GFLAGS_PRIVATE              0x01
@@ -408,7 +316,21 @@ typedef struct _YR_AC_AUTOMATON
 } YR_AC_AUTOMATON;
 
 
-#include <yara/arena.h>
+typedef struct _YARA_RULES_FILE_HEADER
+{
+  uint32_t version;
+
+  DECLARE_REFERENCE(YR_RULE*, rules_list_head);
+  DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
+  DECLARE_REFERENCE(uint8_t*, code_start);
+  DECLARE_REFERENCE(YR_AC_AUTOMATON*, automaton);
+
+} YARA_RULES_FILE_HEADER;
+
+
+
+#pragma pack(pop)
+
 
 typedef struct _YR_RULES {
 
@@ -425,18 +347,6 @@ typedef struct _YR_RULES {
 } YR_RULES;
 
 
-typedef struct _YARA_RULES_FILE_HEADER
-{
-  uint32_t version;
-
-  DECLARE_REFERENCE(YR_RULE*, rules_list_head);
-  DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
-  DECLARE_REFERENCE(uint8_t*, code_start);
-  DECLARE_REFERENCE(YR_AC_AUTOMATON*, automaton);
-
-} YARA_RULES_FILE_HEADER;
-
-
 typedef struct _YR_MEMORY_BLOCK
 {
   uint8_t* data;
@@ -447,7 +357,119 @@ typedef struct _YR_MEMORY_BLOCK
 
 } YR_MEMORY_BLOCK;
 
-#pragma pack(pop)
+
+typedef int (*YR_CALLBACK_FUNC)(
+    int message,
+    void* message_data,
+    void* user_data);
+
+
+typedef struct _YR_SCAN_CONTEXT
+{
+  uint64_t  file_size;
+  uint64_t  entry_point;
+
+  int flags;
+  void* user_data;
+
+  YR_MEMORY_BLOCK*  mem_block;
+  YR_HASH_TABLE*  objects_table;
+  YR_CALLBACK_FUNC  callback;
+
+} YR_SCAN_CONTEXT;
+
+
+
+#define OBJECT_COMMON_FIELDS \
+    int8_t type; \
+    const char* identifier; \
+    void* data;
+
+
+typedef struct _YR_OBJECT
+{
+  OBJECT_COMMON_FIELDS
+
+} YR_OBJECT;
+
+
+typedef struct _YR_OBJECT_INTEGER
+{
+  OBJECT_COMMON_FIELDS
+  int64_t value;
+
+} YR_OBJECT_INTEGER;
+
+
+typedef struct _YR_OBJECT_STRING
+{
+  OBJECT_COMMON_FIELDS
+  char* value;
+
+} YR_OBJECT_STRING;
+
+
+typedef struct _YR_OBJECT_REGEXP
+{
+  OBJECT_COMMON_FIELDS
+  RE* value;
+
+} YR_OBJECT_REGEXP;
+
+
+typedef struct _YR_OBJECT_STRUCTURE
+{
+  OBJECT_COMMON_FIELDS
+  struct _YR_STRUCTURE_MEMBER* members;
+
+} YR_OBJECT_STRUCTURE;
+
+
+typedef struct _YR_OBJECT_ARRAY
+{
+  OBJECT_COMMON_FIELDS
+  struct _YR_ARRAY_ITEMS* items;
+
+} YR_OBJECT_ARRAY;
+
+
+struct _YR_OBJECT_FUNCTION;
+
+
+typedef int (*YR_MODULE_FUNC)(
+    void* args,
+    YR_SCAN_CONTEXT* context,
+    struct _YR_OBJECT_FUNCTION* function_obj);
+
+
+typedef struct _YR_OBJECT_FUNCTION
+{
+  OBJECT_COMMON_FIELDS
+
+  const char* arguments_fmt;
+
+  YR_OBJECT* parent_obj;
+  YR_OBJECT* return_obj;
+
+  YR_MODULE_FUNC code;
+
+} YR_OBJECT_FUNCTION;
+
+
+typedef struct _YR_STRUCTURE_MEMBER
+{
+  YR_OBJECT* object;
+  struct _YR_STRUCTURE_MEMBER* next;
+
+} YR_STRUCTURE_MEMBER;
+
+
+typedef struct _YR_ARRAY_ITEMS
+{
+  int count;
+  YR_OBJECT* objects[1];
+
+} YR_ARRAY_ITEMS;
 
 
 #endif

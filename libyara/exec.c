@@ -474,7 +474,7 @@ int yr_execute_code(
         pop(r2);
 
         function = UINT64_TO_PTR(YR_OBJECT_FUNCTION*, r2);
-        result = function->code((void*) args, function);
+        result = function->code((void*) args, context, function);
 
         if (result == ERROR_SUCCESS)
           push(PTR_TO_UINT64(function->return_obj));
