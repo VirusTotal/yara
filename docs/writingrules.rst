@@ -966,8 +966,62 @@ identifier/value pairs defined in the metadata section can not be used in
 the condition section, their only purpose is to store additional information
 about the rule.
 
+.. _using-modules:
+
+Using modules
+=============
+
+Modules are extensions to YARA's core functionality. Some modules like the
+the :ref:`PE module <pe-module>` and the :ref:`Cuckoo module <cuckoo-module>`
+are officially distributed with YARA and some of them can be created by
+third-parties or even by yourself as described in :ref:`writing-modules`.
+
+The first step to use a module is importing it with the ``import`` statement.
+These statements must be placed outside any rule definition and followed by
+the module name enclosed in double-quotes. Like this::
+
+
+  import "pe"
+  import "cuckoo"
+
+After importing the module you can make use of its features, always using
+``<module name>.`` as a prefix to any variable, or function exported by the
+module. For example::
+
+  pe.entry_point == 0x1000
+  cuckoo.http_request(/someregexp/)
+
+Modules often leave variables in undefined state, for example when the variable
+doesn't make sense in the current context (think of ``pe.entry_point`` while
+scanning a non-PE file). YARA handles undefined values in way that allows the
+rule to keep its meaningfulness. Take a look at this rule::
+
+  import "pe"
+
+  rule test
+  {
+    strings:
+      $a = "some string"
+    condition:
+      $a and pe.entry_point == 0x1000
+  }
+
+If the scanned file is not a PE you wouldn't expect this rule matching the file,
+even if it contains the string, because **both** conditions (the presence of the
+string and the right value for the entry point) must be satisfied. However, if the
+condition is changed to::
+
+  $a or pe.entry_point == 0x1000
+
+You would expect the rule matching in this case if the file contains the string,
+even if it isn't a PE file. That's exactly how YARA behaves. The logic is simple:
+any arithmetic, comparison, or boolean operation will result in an undefined value
+if one of its operands is undefined, except for *OR* operations where an undefined
+operand is interpreted as a False.
+
+
 External variables
-------------------
+==================
 
 External variables allow you to define rules which depends on values provided
 from the outside. For example you can write the following rule::
@@ -1030,8 +1084,8 @@ at run-time, either by using the ``-d`` option of the command-line tool, or by
 providing the ``externals`` parameter to the appropriate method in
 ``yara-python``.
 
-Includes
---------
+Including files
+===============
 
 In order to allow you a more flexible organization of your rules files,
 YARA provides the ``include`` directive. This directive works in a similar way

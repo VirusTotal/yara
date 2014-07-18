@@ -35,7 +35,7 @@ Contents:
 
    gettingstarted
    writingrules
-   usingmodules
+   modules
    writingmodules
    commandline
 

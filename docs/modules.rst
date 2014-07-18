@@ -1,6 +1,3 @@
-
-.. _using-modules:
-
 *******
 Modules
 *******
@@ -13,6 +10,7 @@ the :ref:`writing-modules` section.
 
 .. include:: modules/pe
 .. include:: modules/cuckoo
+
 
 
 
