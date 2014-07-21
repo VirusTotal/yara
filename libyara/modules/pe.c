@@ -21,9 +21,20 @@ limitations under the License.
 #endif
 
 #include <yara/modules.h>
+#include <yara/mem.h>
 
 
 #define MODULE_NAME pe
+
+
+typedef struct _DATA
+{
+  uint8_t* data;
+  size_t size;
+  PIMAGE_NT_HEADERS32 pe_header;
+  size_t pe_size;
+
+} DATA;
 
 
 #ifndef MIN
@@ -31,12 +42,12 @@ limitations under the License.
 #endif
 
 
-PIMAGE_NT_HEADERS get_pe_header(
+PIMAGE_NT_HEADERS32 get_pe_header(
     uint8_t* buffer,
     size_t buffer_length)
 {
   PIMAGE_DOS_HEADER mz_header;
-  PIMAGE_NT_HEADERS pe_header;
+  PIMAGE_NT_HEADERS32 pe_header;
 
   size_t headers_size = 0;
 
@@ -58,7 +69,7 @@ PIMAGE_NT_HEADERS get_pe_header(
   if (buffer_length < headers_size)
     return NULL;
 
-  pe_header = (PIMAGE_NT_HEADERS) (buffer + mz_header->e_lfanew);
+  pe_header = (PIMAGE_NT_HEADERS32) (buffer + mz_header->e_lfanew);
 
   headers_size += pe_header->FileHeader.SizeOfOptionalHeader;
 
@@ -77,9 +88,9 @@ PIMAGE_NT_HEADERS get_pe_header(
 
 
 uint64_t rva_to_offset(
-    PIMAGE_NT_HEADERS pe_header,
-    uint64_t rva,
-    size_t buffer_length)
+    PIMAGE_NT_HEADERS32 pe_header,
+    size_t pe_size,
+    uint64_t rva)
 {
   PIMAGE_SECTION_HEADER section;
   DWORD section_rva;
@@ -94,7 +105,7 @@ uint64_t rva_to_offset(
   while(i < MIN(pe_header->FileHeader.NumberOfSections, 60))
   {
     if ((uint8_t*) section - \
-        (uint8_t*) pe_header + sizeof(IMAGE_SECTION_HEADER) < buffer_length)
+        (uint8_t*) pe_header + sizeof(IMAGE_SECTION_HEADER) < pe_size)
     {
       if (rva >= section->VirtualAddress &&
           section_rva <= section->VirtualAddress)
@@ -115,11 +126,10 @@ uint64_t rva_to_offset(
   return section_offset + (rva - section_rva);
 }
 
-
 void parse_pe_header(
-    PIMAGE_NT_HEADERS pe,
+    PIMAGE_NT_HEADERS32 pe,
     size_t base_address,
-    size_t buffer_length,
+    size_t pe_size,
     int flags,
     YR_OBJECT* pe_obj)
 {
@@ -127,6 +137,10 @@ void parse_pe_header(
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
   int i;
+
+#define OptionalHeader(field) \
+  (pe->FileHeader.Machine == 0x8664 ? \
+   ((PIMAGE_NT_HEADERS64) pe)->OptionalHeader.field: pe->OptionalHeader.field)
 
   set_integer(
       pe->FileHeader.Machine,
@@ -146,44 +160,49 @@ void parse_pe_header(
 
   set_integer(
       flags & SCAN_FLAGS_PROCESS_MEMORY ?
-        base_address + pe->OptionalHeader.AddressOfEntryPoint :
+        base_address + OptionalHeader(AddressOfEntryPoint) :
         rva_to_offset(
-            pe, pe->OptionalHeader.AddressOfEntryPoint, buffer_length),
+            pe, pe_size, OptionalHeader(AddressOfEntryPoint)),
       pe_obj, "entry_point");
 
   set_integer(
-      pe->OptionalHeader.ImageBase,
+      OptionalHeader(ImageBase),
       pe_obj, "image_base");
 
   set_integer(
-      pe->OptionalHeader.MajorLinkerVersion,
+      OptionalHeader(MajorLinkerVersion),
       pe_obj, "linker_version.major");
 
   set_integer(
-      pe->OptionalHeader.MinorLinkerVersion,
+      OptionalHeader(MinorLinkerVersion),
       pe_obj, "linker_version.minor");
 
   set_integer(
-      pe->OptionalHeader.MajorOperatingSystemVersion,
+      OptionalHeader(MajorOperatingSystemVersion),
       pe_obj, "os_version.major");
 
-  set_integer(pe->OptionalHeader.MinorOperatingSystemVersion,
+  set_integer(
+      OptionalHeader(MinorOperatingSystemVersion),
       pe_obj, "os_version.minor");
 
-  set_integer(pe->OptionalHeader.MajorImageVersion,
+  set_integer(
+      OptionalHeader(MajorImageVersion),
       pe_obj, "image_version.major");
 
-  set_integer(pe->OptionalHeader.MinorImageVersion,
+  set_integer(
+      OptionalHeader(MinorImageVersion),
       pe_obj, "image_version.minor");
 
   set_integer(
-      pe->OptionalHeader.MajorSubsystemVersion,
+      OptionalHeader(MajorSubsystemVersion),
       pe_obj, "subsystem_version.major");
 
-  set_integer(pe->OptionalHeader.MinorSubsystemVersion,
+  set_integer(
+      OptionalHeader(MinorSubsystemVersion),
       pe_obj, "subsystem_version.minor");
 
-  set_integer(pe->OptionalHeader.Subsystem,
+  set_integer(
+      OptionalHeader(Subsystem),
       pe_obj, "subsystem");
 
   section = IMAGE_FIRST_SECTION(pe);
@@ -191,7 +210,7 @@ void parse_pe_header(
   for (i = 0; i < min(pe->FileHeader.NumberOfSections, 60); i++)
   {
     if ((uint8_t*) section -
-        (uint8_t*) pe + sizeof(IMAGE_SECTION_HEADER) >= buffer_length)
+        (uint8_t*) pe + sizeof(IMAGE_SECTION_HEADER) >= pe_size)
     {
       break;
     }
@@ -246,8 +265,116 @@ define_function(section_index)
   return_integer(UNDEFINED);
 }
 
+define_function(exports)
+{
+  YR_OBJECT* self = self();
+
+  PIMAGE_DATA_DIRECTORY directory;
+  PIMAGE_EXPORT_DIRECTORY exports;
+
+  DWORD* names;
+  DATA* data;
+
+  char* function_name = string_argument(1);
+  char* name;
+
+  uint64_t offset;
+  int i;
+
+  data = (DATA*) self->data;
+
+  // if not a PE file, return UNDEFINED
+
+  if (data == NULL)
+    return_integer(UNDEFINED);
+
+  if (data->pe_header->FileHeader.Machine == 0x8664)  // is a 64-bit PE ?
+  {
+    directory = &((PIMAGE_NT_HEADERS64)
+                    (data->pe_header))->OptionalHeader.DataDirectory[
+                        IMAGE_DIRECTORY_ENTRY_EXPORT];
+  }
+  else
+  {
+    directory = &data->pe_header->OptionalHeader.DataDirectory[
+        IMAGE_DIRECTORY_ENTRY_EXPORT];
+  }
+
+  // if the PE doesn't export any functions, return FALSE
+
+  if (directory->VirtualAddress == 0)
+    return_integer(0);
+
+  offset = rva_to_offset(
+      data->pe_header,
+      data->pe_size,
+      directory->VirtualAddress);
+
+  if (offset == 0 ||
+      offset >= data->size)
+    return_integer(0);
+
+  exports = (PIMAGE_EXPORT_DIRECTORY)(data->data + offset);
+
+  offset = rva_to_offset(
+      data->pe_header,
+      data->pe_size,
+      exports->AddressOfNames);
+
+  if (offset == 0 ||
+      offset >= data->size - exports->NumberOfNames * sizeof(DWORD))
+    return_integer(0);
+
+  names = (DWORD*)(data->data + offset);
+
+  for (i = 0; i < exports->NumberOfNames; i++)
+  {
+    offset = rva_to_offset(
+        data->pe_header,
+        data->pe_size,
+        names[i]);
+
+    if (offset == 0 || offset >= data->size)
+      return_integer(0);
+
+    name = (char*)(data->data + offset);
+
+    if (strncmp(name, function_name, data->size - offset) == 0)
+      return_integer(1);
+  }
+
+  return_integer(0);
+}
+
 
 begin_declarations;
+
+  integer("MACHINE_I386");
+  integer("MACHINE_AMD64");
+
+  integer("SUBSYSTEM_UNKNOWN");
+  integer("SUBSYSTEM_NATIVE");
+  integer("SUBSYSTEM_WINDOWS_GUI");
+  integer("SUBSYSTEM_WINDOWS_CUI");
+  integer("SUBSYSTEM_OS2_CUI");
+  integer("SUBSYSTEM_POSIX_CUI");
+  integer("SUBSYSTEM_NATIVE_WINDOWS");
+
+  integer("RELOCS_STRIPPED");
+  integer("EXECUTABLE_IMAGE");
+  integer("LINE_NUMS_STRIPPED");
+  integer("LOCAL_SYMS_STRIPPED");
+  integer("AGGRESIVE_WS_TRIM");
+  integer("LARGE_ADDRESS_AWARE");
+  integer("BYTES_REVERSED_LO");
+  integer("32BIT_MACHINE");
+  integer("DEBUG_STRIPPED");
+  integer("REMOVABLE_RUN_FROM_SWAP");
+  integer("NET_RUN_FROM_SWAP");
+  integer("SYSTEM");
+  integer("DLL");
+  integer("UP_SYSTEM_ONLY");
+  integer("BYTES_REVERSED_HI");
 
   integer("machine");
   integer("number_of_sections");
@@ -290,6 +417,8 @@ begin_declarations;
 
   function("section_index", "s", "i", section_index);
 
+  function("exports", "s", "i", exports);
+
 end_declarations;
 
 
@@ -300,26 +429,70 @@ int module_load(
     size_t module_data_size)
 {
   YR_MEMORY_BLOCK* block;
-  PIMAGE_NT_HEADERS header;
+
+  PIMAGE_NT_HEADERS32 pe_header;
+  DATA* data;
+
+  size_t pe_size;
+
+  set_integer(IMAGE_FILE_MACHINE_I386, module, "MACHINE_I386");
+  set_integer(IMAGE_FILE_MACHINE_AMD64, module, "MACHINE_AMD64");
+
+  set_integer(IMAGE_SUBSYSTEM_UNKNOWN, module, "SUBSYSTEM_UNKNOWN");
+  set_integer(IMAGE_SUBSYSTEM_NATIVE, module, "SUBSYSTEM_NATIVE");
+  set_integer(IMAGE_SUBSYSTEM_WINDOWS_GUI, module, "SUBSYSTEM_WINDOWS_GUI");
+  set_integer(IMAGE_SUBSYSTEM_WINDOWS_CUI, module, "SUBSYSTEM_WINDOWS_CUI");
+  set_integer(IMAGE_SUBSYSTEM_OS2_CUI, module, "SUBSYSTEM_OS2_CUI");
+  set_integer(IMAGE_SUBSYSTEM_POSIX_CUI, module, "SUBSYSTEM_POSIX_CUI");
+  set_integer(IMAGE_SUBSYSTEM_NATIVE_WINDOWS, module, "SUBSYSTEM_NATIVE_WINDOWS");
+
+  set_integer(IMAGE_FILE_RELOCS_STRIPPED, module, "RELOCS_STRIPPED");
+  set_integer(IMAGE_FILE_EXECUTABLE_IMAGE, module, "EXECUTABLE_IMAGE");
+  set_integer(IMAGE_FILE_LINE_NUMS_STRIPPED, module, "LINE_NUMS_STRIPPED");
+  set_integer(IMAGE_FILE_LOCAL_SYMS_STRIPPED, module, "LOCAL_SYMS_STRIPPED");
+  set_integer(IMAGE_FILE_AGGRESIVE_WS_TRIM, module, "AGGRESIVE_WS_TRIM");
+  set_integer(IMAGE_FILE_LARGE_ADDRESS_AWARE, module, "LARGE_ADDRESS_AWARE");
+  set_integer(IMAGE_FILE_BYTES_REVERSED_LO, module, "BYTES_REVERSED_LO");
+  set_integer(IMAGE_FILE_32BIT_MACHINE, module, "32BIT_MACHINE");
+  set_integer(IMAGE_FILE_DEBUG_STRIPPED, module, "DEBUG_STRIPPED");
+  set_integer(IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP, module, "REMOVABLE_RUN_FROM_SWAP");
+  set_integer(IMAGE_FILE_NET_RUN_FROM_SWAP, module, "NET_RUN_FROM_SWAP");
+  set_integer(IMAGE_FILE_SYSTEM, module, "SYSTEM");
+  set_integer(IMAGE_FILE_DLL, module, "DLL");
+  set_integer(IMAGE_FILE_UP_SYSTEM_ONLY, module, "UP_SYSTEM_ONLY");
+  set_integer(IMAGE_FILE_BYTES_REVERSED_HI, module, "BYTES_REVERSED_HI");
 
   foreach_memory_block(context, block)
   {
-    header = get_pe_header(block->data, block->size);
+    pe_header = get_pe_header(block->data, block->size);
 
-    if (header != NULL)
+    if (pe_header != NULL)
     {
       // ignore DLLs while scanning a process
 
       if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
-          !(header->FileHeader.Characteristics & IMAGE_FILE_DLL))
+          !(pe_header->FileHeader.Characteristics & IMAGE_FILE_DLL))
       {
+        pe_size = block->size - ((uint8_t*) pe_header - block->data);
+
         parse_pe_header(
-            header,
+            pe_header,
             block->base,
-            block->size,
+            pe_size,
             context->flags,
             module);
 
+        data = (DATA*) yr_malloc(sizeof(DATA));
+
+        if (data == NULL)
+          return ERROR_INSUFICIENT_MEMORY;
+
+        data->data = block->data;
+        data->size = block->size;
+        data->pe_header = pe_header;
+        data->pe_size = pe_size;
+
+        module->data = data;
         break;
       }
     }
@@ -331,5 +504,8 @@ int module_load(
 
 int module_unload(YR_OBJECT* module)
 {
+  if (module->data != NULL)
+    yr_free(module->data);
+
   return ERROR_SUCCESS;
 }
