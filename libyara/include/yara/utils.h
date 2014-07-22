@@ -48,6 +48,7 @@ limitations under the License.
 #ifdef WIN32
 #define snprintf _snprintf
 #define strcasecmp _stricmp
+#define strncasecmp _strnicmp
 #endif
 
 

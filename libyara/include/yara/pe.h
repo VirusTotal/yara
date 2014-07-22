@@ -281,6 +281,7 @@ typedef struct _IMAGE_SECTION_HEADER {
     WORD    NumberOfRelocations;
     WORD    NumberOfLinenumbers;
     DWORD   Characteristics;
+
 } IMAGE_SECTION_HEADER, *PIMAGE_SECTION_HEADER;
 
 #define IMAGE_SIZEOF_SECTION_HEADER          40
@@ -299,6 +300,50 @@ typedef struct _IMAGE_EXPORT_DIRECTORY {
     DWORD AddressOfNames;
     DWORD AddressOfNameOrdinals;
 } IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
+
+
+typedef struct _IMAGE_IMPORT_DESCRIPTOR {
+    union {
+        DWORD Characteristics;
+        DWORD OriginalFirstThunk;
+    } ;
+    DWORD TimeDateStamp;
+    DWORD ForwarderChain;
+    DWORD Name;
+    DWORD FirstThunk;
+
+} IMAGE_IMPORT_DESCRIPTOR, *PIMAGE_IMPORT_DESCRIPTOR;
+
+
+typedef struct _IMAGE_IMPORT_BY_NAME {
+  WORD Hint;
+  BYTE Name[1];
+
+} IMAGE_IMPORT_BY_NAME, *PIMAGE_IMPORT_BY_NAME;
+
+typedef struct _IMAGE_THUNK_DATA32 {
+  union {
+    DWORD ForwarderString;
+    DWORD Function;
+    DWORD Ordinal;
+    DWORD AddressOfData;
+  } u1;
+
+} IMAGE_THUNK_DATA32, *PIMAGE_THUNK_DATA32;
+
+
+#define IMAGE_ORDINAL_FLAG32  0x80000000
+#define IMAGE_ORDINAL_FLAG64  0x8000000000000000L
+
+typedef struct _IMAGE_THUNK_DATA64 {
+  union {
+    ULONGLONG ForwarderString;
+    ULONGLONG Function;
+    ULONGLONG Ordinal;
+    ULONGLONG AddressOfData;
+  } u1;
+
+} IMAGE_THUNK_DATA64, *PIMAGE_THUNK_DATA64;
 
 
 #pragma pack(pop)

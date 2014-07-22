@@ -87,6 +87,23 @@ PIMAGE_NT_HEADERS32 get_pe_header(
 }
 
 
+PIMAGE_DATA_DIRECTORY get_data_directory(
+    PIMAGE_NT_HEADERS32 pe_header,
+    int entry)
+{
+  PIMAGE_DATA_DIRECTORY result;
+
+  if (pe_header->FileHeader.Machine == 0x8664)  // is a 64-bit PE ?
+    result = &((PIMAGE_NT_HEADERS64) pe_header)->
+        OptionalHeader.DataDirectory[entry];
+  else
+    result = &pe_header->OptionalHeader.DataDirectory[entry];
+
+  return result;
+}
+
+
+
 uint64_t rva_to_offset(
     PIMAGE_NT_HEADERS32 pe_header,
     size_t pe_size,
@@ -265,40 +282,30 @@ define_function(section_index)
   return_integer(UNDEFINED);
 }
 
+
 define_function(exports)
 {
+  char* function_name = string_argument(1);
+
   YR_OBJECT* self = self();
+  DATA* data = (DATA*) self->data;
 
   PIMAGE_DATA_DIRECTORY directory;
   PIMAGE_EXPORT_DIRECTORY exports;
-
   DWORD* names;
-  DATA* data;
 
-  char* function_name = string_argument(1);
   char* name;
-
-  uint64_t offset;
   int i;
-
-  data = (DATA*) self->data;
+  uint64_t offset;
 
   // if not a PE file, return UNDEFINED
 
   if (data == NULL)
     return_integer(UNDEFINED);
 
-  if (data->pe_header->FileHeader.Machine == 0x8664)  // is a 64-bit PE ?
-  {
-    directory = &((PIMAGE_NT_HEADERS64)
-                    (data->pe_header))->OptionalHeader.DataDirectory[
-                        IMAGE_DIRECTORY_ENTRY_EXPORT];
-  }
-  else
-  {
-    directory = &data->pe_header->OptionalHeader.DataDirectory[
-        IMAGE_DIRECTORY_ENTRY_EXPORT];
-  }
+  directory = get_data_directory(
+      data->pe_header,
+      IMAGE_DIRECTORY_ENTRY_EXPORT);
 
   // if the PE doesn't export any functions, return FALSE
 
@@ -322,7 +329,7 @@ define_function(exports)
       exports->AddressOfNames);
 
   if (offset == 0 ||
-      offset >= data->size - exports->NumberOfNames * sizeof(DWORD))
+      offset + exports->NumberOfNames * sizeof(DWORD) > data->size)
     return_integer(0);
 
   names = (DWORD*)(data->data + offset);
@@ -341,6 +348,125 @@ define_function(exports)
 
     if (strncmp(name, function_name, data->size - offset) == 0)
       return_integer(1);
+  }
+
+  return_integer(0);
+}
+
+
+define_function(imports)
+{
+  char* dll_name = string_argument(1);
+  char* function_name = string_argument(2);
+
+  YR_OBJECT* self = self();
+  DATA* data = (DATA*) self->data;
+
+  PIMAGE_DATA_DIRECTORY directory;
+  PIMAGE_IMPORT_DESCRIPTOR imports;
+  PIMAGE_IMPORT_BY_NAME import;
+  PIMAGE_THUNK_DATA32 thunks32;
+  PIMAGE_THUNK_DATA64 thunks64;
+
+  uint8_t* data_end;
+  uint64_t offset;
+
+  // if not a PE file, return UNDEFINED
+
+  if (data == NULL)
+    return_integer(UNDEFINED);
+
+  data_end = data->data + data->size;
+
+  directory = get_data_directory(
+      data->pe_header,
+      IMAGE_DIRECTORY_ENTRY_IMPORT);
+
+  if (directory->VirtualAddress == 0)
+    return_integer(0);
+
+  offset = rva_to_offset(
+      data->pe_header,
+      data->pe_size,
+      directory->VirtualAddress);
+
+  if (offset == 0 ||
+      offset + sizeof(IMAGE_IMPORT_DESCRIPTOR) > data->size)
+    return_integer(0);
+
+  imports = (PIMAGE_IMPORT_DESCRIPTOR)(data->data + offset);
+
+  while (imports->Name != 0)
+  {
+    offset = rva_to_offset(
+        data->pe_header,
+        data->pe_size,
+        imports->Name);
+
+    if (offset != 0 &&
+        offset <= data->size &&
+        strncasecmp(
+            dll_name,
+            (char*)(data->data + offset),
+            data->size - offset) == 0)
+    {
+      offset = rva_to_offset(
+          data->pe_header,
+          data->pe_size,
+          imports->OriginalFirstThunk);
+
+      if (data->pe_header->FileHeader.Machine == 0x8664)
+      {
+        thunks64 = (PIMAGE_THUNK_DATA64)(data->data + offset);
+
+        while (thunks64->u1.Ordinal != 0)
+        {
+          if (!(thunks64->u1.Ordinal & IMAGE_ORDINAL_FLAG64))
+          {
+            // if not exported by ordinal
+            offset = rva_to_offset(
+                data->pe_header,
+                data->pe_size,
+                thunks64->u1.Function);
+
+            import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
+
+            if (strcmp((char*) import->Name, function_name) == 0)
+              return_integer(1);
+          }
+
+          thunks64++;
+        }
+      }
+      else
+      {
+        thunks32 = (PIMAGE_THUNK_DATA32)(data->data + offset);
+
+        while (thunks32->u1.Ordinal != 0)
+        {
+          if (!(thunks32->u1.Ordinal & IMAGE_ORDINAL_FLAG32))
+          {
+            // if not exported by ordinal
+            offset = rva_to_offset(
+                data->pe_header,
+                data->pe_size,
+                thunks32->u1.Function);
+
+            import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
+
+            if (strcmp((char*) import->Name, function_name) == 0)
+              return_integer(1);
+          }
+
+          thunks32++;
+        }
+      }
+    }
+
+    imports++;
+
+    if ((uint8_t*) imports > data_end - sizeof(IMAGE_IMPORT_DESCRIPTOR))
+      break;
   }
 
   return_integer(0);
@@ -416,8 +542,9 @@ begin_declarations;
   end_struct_array("sections");
 
   function("section_index", "s", "i", section_index);
-
   function("exports", "s", "i", exports);
+  function("imports", "ss", "i", imports);
+
 
 end_declarations;
 
@@ -435,32 +562,56 @@ int module_load(
 
   size_t pe_size;
 
-  set_integer(IMAGE_FILE_MACHINE_I386, module, "MACHINE_I386");
-  set_integer(IMAGE_FILE_MACHINE_AMD64, module, "MACHINE_AMD64");
+  set_integer(
+      IMAGE_FILE_MACHINE_I386, module, "MACHINE_I386");
+  set_integer(
+      IMAGE_FILE_MACHINE_AMD64, module, "MACHINE_AMD64");
 
-  set_integer(IMAGE_SUBSYSTEM_UNKNOWN, module, "SUBSYSTEM_UNKNOWN");
-  set_integer(IMAGE_SUBSYSTEM_NATIVE, module, "SUBSYSTEM_NATIVE");
-  set_integer(IMAGE_SUBSYSTEM_WINDOWS_GUI, module, "SUBSYSTEM_WINDOWS_GUI");
-  set_integer(IMAGE_SUBSYSTEM_WINDOWS_CUI, module, "SUBSYSTEM_WINDOWS_CUI");
-  set_integer(IMAGE_SUBSYSTEM_OS2_CUI, module, "SUBSYSTEM_OS2_CUI");
-  set_integer(IMAGE_SUBSYSTEM_POSIX_CUI, module, "SUBSYSTEM_POSIX_CUI");
-  set_integer(IMAGE_SUBSYSTEM_NATIVE_WINDOWS, module, "SUBSYSTEM_NATIVE_WINDOWS");
+  set_integer(
+      IMAGE_SUBSYSTEM_UNKNOWN, module, "SUBSYSTEM_UNKNOWN");
+  set_integer(
+      IMAGE_SUBSYSTEM_NATIVE, module, "SUBSYSTEM_NATIVE");
+  set_integer(
+      IMAGE_SUBSYSTEM_WINDOWS_GUI, module, "SUBSYSTEM_WINDOWS_GUI");
+  set_integer(
+      IMAGE_SUBSYSTEM_WINDOWS_CUI, module, "SUBSYSTEM_WINDOWS_CUI");
+  set_integer(
+      IMAGE_SUBSYSTEM_OS2_CUI, module, "SUBSYSTEM_OS2_CUI");
+  set_integer(
+      IMAGE_SUBSYSTEM_POSIX_CUI, module, "SUBSYSTEM_POSIX_CUI");
+  set_integer(
+      IMAGE_SUBSYSTEM_NATIVE_WINDOWS, module, "SUBSYSTEM_NATIVE_WINDOWS");
 
-  set_integer(IMAGE_FILE_RELOCS_STRIPPED, module, "RELOCS_STRIPPED");
-  set_integer(IMAGE_FILE_EXECUTABLE_IMAGE, module, "EXECUTABLE_IMAGE");
-  set_integer(IMAGE_FILE_LINE_NUMS_STRIPPED, module, "LINE_NUMS_STRIPPED");
-  set_integer(IMAGE_FILE_LOCAL_SYMS_STRIPPED, module, "LOCAL_SYMS_STRIPPED");
-  set_integer(IMAGE_FILE_AGGRESIVE_WS_TRIM, module, "AGGRESIVE_WS_TRIM");
-  set_integer(IMAGE_FILE_LARGE_ADDRESS_AWARE, module, "LARGE_ADDRESS_AWARE");
-  set_integer(IMAGE_FILE_BYTES_REVERSED_LO, module, "BYTES_REVERSED_LO");
-  set_integer(IMAGE_FILE_32BIT_MACHINE, module, "32BIT_MACHINE");
-  set_integer(IMAGE_FILE_DEBUG_STRIPPED, module, "DEBUG_STRIPPED");
-  set_integer(IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP, module, "REMOVABLE_RUN_FROM_SWAP");
-  set_integer(IMAGE_FILE_NET_RUN_FROM_SWAP, module, "NET_RUN_FROM_SWAP");
-  set_integer(IMAGE_FILE_SYSTEM, module, "SYSTEM");
-  set_integer(IMAGE_FILE_DLL, module, "DLL");
-  set_integer(IMAGE_FILE_UP_SYSTEM_ONLY, module, "UP_SYSTEM_ONLY");
-  set_integer(IMAGE_FILE_BYTES_REVERSED_HI, module, "BYTES_REVERSED_HI");
+  set_integer(
+      IMAGE_FILE_RELOCS_STRIPPED, module, "RELOCS_STRIPPED");
+  set_integer(
+      IMAGE_FILE_EXECUTABLE_IMAGE, module, "EXECUTABLE_IMAGE");
+  set_integer(
+      IMAGE_FILE_LINE_NUMS_STRIPPED, module, "LINE_NUMS_STRIPPED");
+  set_integer(
+      IMAGE_FILE_LOCAL_SYMS_STRIPPED, module, "LOCAL_SYMS_STRIPPED");
+  set_integer(
+      IMAGE_FILE_AGGRESIVE_WS_TRIM, module, "AGGRESIVE_WS_TRIM");
+  set_integer(
+      IMAGE_FILE_LARGE_ADDRESS_AWARE, module, "LARGE_ADDRESS_AWARE");
+  set_integer(
+      IMAGE_FILE_BYTES_REVERSED_LO, module, "BYTES_REVERSED_LO");
+  set_integer(
+      IMAGE_FILE_32BIT_MACHINE, module, "32BIT_MACHINE");
+  set_integer(
+      IMAGE_FILE_DEBUG_STRIPPED, module, "DEBUG_STRIPPED");
+  set_integer(
+      IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP, module, "REMOVABLE_RUN_FROM_SWAP");
+  set_integer(
+      IMAGE_FILE_NET_RUN_FROM_SWAP, module, "NET_RUN_FROM_SWAP");
+  set_integer(
+      IMAGE_FILE_SYSTEM, module, "SYSTEM");
+  set_integer(
+      IMAGE_FILE_DLL, module, "DLL");
+  set_integer(
+      IMAGE_FILE_UP_SYSTEM_ONLY, module, "UP_SYSTEM_ONLY");
+  set_integer(
+      IMAGE_FILE_BYTES_REVERSED_HI, module, "BYTES_REVERSED_HI");
 
   foreach_memory_block(context, block)
   {
