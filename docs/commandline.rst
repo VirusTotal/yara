@@ -1,8 +1,8 @@
 .. _command-line:
 
-********************************
-Using YARA from the command-line
-********************************
+**********************************
+Running YARA from the command-line
+**********************************
 
 In order to invoke YARA you’ll need two things: a file with the rules you want
 to use (either in source code or compiled form) and the target to be scanned.

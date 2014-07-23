@@ -457,6 +457,8 @@ files being scanned which is passed in the ``module_data`` and
 For more information on how to pass additional data to your module take a look
 at the ``-x`` argument in :ref:`command-line`.
 
+.. _accessing-scanned-data:
+
 Accessing the scanned data
 --------------------------
 
@@ -665,7 +667,7 @@ Are the following two lines equivalent? Why?
     set_integer(1, get_object(module, "foo.bar"), NULL);
     set_integer(1, module, "foo.bar");
 
-
+.. _storing-data-for-later-use:
 
 Storing data for later use
 --------------------------
@@ -737,7 +739,7 @@ Function arguments
 
 Within the function's code you get its arguments by using
 ``integer_argument(n)``, ``string_argument(n)`` or ``regexp_argument(n)``
-depending on the type of the argument, and where *n* is the 1-based argument's
+depending on the type of the argument, where *n* is the 1-based argument's
 number.
 
 If your function receives a string, a regular expression and an integer in that
@@ -746,18 +748,19 @@ order, you can get their values with:
 .. code-block:: c
 
     char* arg_1 = string_argument(1);
-    re_code_t arg_2 = regexp_argument(2);
+    RE_CODE arg_2 = regexp_argument(2);
     int64_t arg_3 = integer_argument(3);
 
 
 Notice that the C type for integer arguments is ``int64_t`` and for regular
-expressions is ``re_code_t``.
+expressions is ``RE_CODE``.
 
 Return values
 -------------
 
 Functions can return two types of values: strings and integers. Instead of
-using the C *return* statement you must use ``return_string(x)`` or ``return_integer(x)`` to return from a function, depending on the function's
+using the C *return* statement you must use ``return_string(x)`` or
+``return_integer(x)`` to return from a function, depending on the function's
 return type. In both cases *x* is a constant, variable, or expression
 evaluating to ``char*`` or ``int64_t`` respectively.
 
@@ -771,5 +774,71 @@ value.
 
 .. warning:: Don't use the C *return* statement for returning from a function.
     The returned value will be interpreted as an error code.
+
+Accessing objects
+-----------------
+
+While writing a function we sometimes need to access values previously assigned
+to module's variables, or additional data stored in the ``data`` field of
+``YR_OBJECT`` structures as discussed earlier in
+:ref:`storing-data-for-later-use`. But for that we need a way to get access to
+the corresponding ``YR_OBJECT`` first. There are two functions to do that:
+``module()`` and ``parent()``. The ``module()`` function returns a pointer to
+the top-level ``YR_OBJECT`` corresponding to the module, the same one passed
+to the ``module_load`` function. The ``parent()`` function returns a pointer to
+the ``YR_OBJECT`` corresponding to the structure where the function is
+contained. For example, consider the following code snipet:
+
+.. code-block:: c
+
+    define_function(f1)
+    {
+        YR_OBJECT* module = module();
+        YR_OBJECT* parent = parent();
+
+        // parent == module;
+    }
+
+    define_function(f2)
+    {
+        YR_OBJECT* module = module();
+        YR_OBJECT* parent = parent();
+
+        // parent != module;
+    }
+
+    begin_declarations;
+
+        function("f1", "i", "i", f1);
+
+        begin_struct("foo");
+
+            function("f2", "i", "i", f2);
+
+        end_struct("foo");
+
+    end_declarations;
+
+In ``f1`` the ``module`` variable points to the top-level ``YR_OBJECT`` as well
+as the ``parent`` variable, because the parent for ``f1`` is the module itself.
+In ``f2`` however the ``parent`` variable points to the ``YR_OBJECT``
+corresponding to the ``foo`` structure while ``module`` points to the top-level ``YR_OBJECT`` as before.
+
+Scan context
+------------
+
+From within a function you can also access the ``YR_SCAN_CONTEXT`` structure
+discussed earlier in :ref:`accessing-scanned-data`. This is useful for functions
+which needs to inspect the file or process memory being scanned. This is how
+you get a pointer to the ``YR_SCAN_CONTEXT`` structure:
+
+.. code-block:: c
+
+    YR_SCAN_CONTEXT* context = scan_context();
+
+
+
+
+
 
 

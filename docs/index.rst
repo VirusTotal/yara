@@ -38,6 +38,7 @@ Contents:
    modules
    writingmodules
    commandline
+   yarapython
 
 
 
