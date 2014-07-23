@@ -383,7 +383,8 @@ typedef struct _YR_SCAN_CONTEXT
 #define OBJECT_COMMON_FIELDS \
     int8_t type; \
     const char* identifier; \
-    void* data;
+    void* data; \
+    struct _YR_OBJECT* parent;
 
 
 typedef struct _YR_OBJECT
@@ -448,9 +449,7 @@ typedef struct _YR_OBJECT_FUNCTION
 
   const char* arguments_fmt;
 
-  YR_OBJECT* parent_obj;
   YR_OBJECT* return_obj;
-
   YR_MODULE_FUNC code;
 
 } YR_OBJECT_FUNCTION;

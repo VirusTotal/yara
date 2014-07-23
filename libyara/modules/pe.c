@@ -263,11 +263,10 @@ void parse_pe_header(
 
 define_function(section_index)
 {
-  YR_OBJECT* self = self();
-
+  YR_OBJECT* module = module();
   char* name = string_argument(1);
 
-  int64_t n = get_integer(self, "number_of_sections");
+  int64_t n = get_integer(module, "number_of_sections");
   int64_t i;
 
   if (n == UNDEFINED)
@@ -275,7 +274,7 @@ define_function(section_index)
 
   for (i = 0; i < n; i++)
   {
-    if (strcmp(name, get_string(self, "sections[%i].name", i)) == 0)
+    if (strcmp(name, get_string(module, "sections[%i].name", i)) == 0)
       return_integer(i);
   }
 
@@ -287,8 +286,8 @@ define_function(exports)
 {
   char* function_name = string_argument(1);
 
-  YR_OBJECT* self = self();
-  DATA* data = (DATA*) self->data;
+  YR_OBJECT* module = module();
+  DATA* data = (DATA*) module->data;
 
   PIMAGE_DATA_DIRECTORY directory;
   PIMAGE_EXPORT_DIRECTORY exports;
@@ -359,8 +358,8 @@ define_function(imports)
   char* dll_name = string_argument(1);
   char* function_name = string_argument(2);
 
-  YR_OBJECT* self = self();
-  DATA* data = (DATA*) self->data;
+  YR_OBJECT* module = module();
+  DATA* data = (DATA*) module->data;
 
   PIMAGE_DATA_DIRECTORY directory;
   PIMAGE_IMPORT_DESCRIPTOR imports;

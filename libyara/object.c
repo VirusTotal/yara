@@ -69,6 +69,7 @@ int yr_object_create(
 
   obj->type = type;
   obj->identifier = yr_strdup(identifier);
+  obj->parent = parent;
   obj->data = NULL;
 
   if (obj->identifier == NULL)
@@ -102,6 +103,10 @@ int yr_object_create(
 
   if (parent != NULL)
   {
+    assert( parent->type == OBJECT_TYPE_STRUCTURE ||
+            parent->type == OBJECT_TYPE_ARRAY ||
+            parent->type == OBJECT_TYPE_FUNCTION);
+
     switch(parent->type)
     {
       case OBJECT_TYPE_STRUCTURE:
@@ -115,9 +120,6 @@ int yr_object_create(
             yr_object_array_set_item(parent, obj, 0),
             yr_free(obj));
         break;
-
-      default:
-        assert(FALSE);
     }
   }
 
@@ -160,12 +162,11 @@ int yr_object_function_create(
       &f));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_object_create(return_type, "result", NULL, &return_obj),
+      yr_object_create(return_type, "result", f, &return_obj),
       yr_object_destroy(f));
 
   ((YR_OBJECT_FUNCTION* )f)->arguments_fmt = arguments_fmt;
   ((YR_OBJECT_FUNCTION* )f)->return_obj = return_obj;
-  ((YR_OBJECT_FUNCTION* )f)->parent_obj = parent;
   ((YR_OBJECT_FUNCTION* )f)->code = code;
 
   if (function != NULL)
@@ -493,6 +494,7 @@ int yr_object_structure_set_member(
   if (sm == NULL)
     return ERROR_INSUFICIENT_MEMORY;
 
+  member->parent = object;
   sm->object = member;
   sm->next = ((YR_OBJECT_STRUCTURE*) object)->members;
 
@@ -575,6 +577,7 @@ int yr_object_array_set_item(
     array->items->count = count;
   }
 
+  item->parent = object;
   array->items->objects[index] = item;
 
   return ERROR_SUCCESS;
@@ -687,6 +690,18 @@ void yr_object_set_string(
     yr_free(string_obj->value);
 
   string_obj->value = yr_strdup(value);
+}
+
+
+YR_OBJECT* yr_object_get_root(
+    YR_OBJECT* object)
+{
+  YR_OBJECT* o = object;
+
+  while (o->parent != NULL)
+    o = o->parent;
+
+  return o;
 }
 
 

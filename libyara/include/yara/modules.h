@@ -168,7 +168,8 @@ limitations under the License.
 #define regexp_argument(n)   ((RE_CODE)((int64_t*) __args)[n-1])
 
 
-#define self()          (__function_obj->parent_obj)
+#define module()        yr_object_get_root((YR_OBJECT*) __function_obj)
+#define parent()        (__function_obj->parent_obj)
 #define scan_context()  (__context)
 
 

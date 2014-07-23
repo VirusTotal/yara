@@ -27,7 +27,7 @@ limitations under the License.
 
 define_function(network_dns_lookup)
 {
-  YR_OBJECT* network_obj = self();
+  YR_OBJECT* network_obj = parent();
 
   json_t* network_json = (json_t*) network_obj->data;
   json_t* dns_json = json_object_get(network_json, "dns");
@@ -122,7 +122,7 @@ define_function(network_http_post)
 
 define_function(registry_key_access)
 {
-  YR_OBJECT* registry_obj = self();
+  YR_OBJECT* registry_obj = parent();
 
   json_t* keys_json = (json_t*) registry_obj->data;
   json_t* value;
@@ -145,7 +145,7 @@ define_function(registry_key_access)
 
 define_function(filesystem_file_access)
 {
-  YR_OBJECT* filesystem_obj = self();
+  YR_OBJECT* filesystem_obj = parent();
 
   json_t* files_json = (json_t*) filesystem_obj->data;
   json_t* value;
@@ -169,7 +169,7 @@ define_function(filesystem_file_access)
 
 define_function(sync_mutex)
 {
-  YR_OBJECT* sync_obj = self();
+  YR_OBJECT* sync_obj = parent();
 
   json_t* mutexes_json = (json_t*) sync_obj->data;
   json_t* value;

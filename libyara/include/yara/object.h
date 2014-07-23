@@ -110,4 +110,8 @@ int yr_object_structure_set_member(
     YR_OBJECT* member);
 
 
+YR_OBJECT* yr_object_get_root(
+    YR_OBJECT* object);
+
+
 #endif
