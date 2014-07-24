@@ -94,7 +94,7 @@ define_function(network_http_request)
 {
   return_integer(
       http_request(
-          self(),
+          parent(),
           regexp_argument(1),
           METHOD_GET | METHOD_POST));
 }
@@ -104,7 +104,7 @@ define_function(network_http_get)
 {
   return_integer(
       http_request(
-          self(),
+          parent(),
           regexp_argument(1),
           METHOD_GET));
 }
@@ -114,7 +114,7 @@ define_function(network_http_post)
 {
   return_integer(
       http_request(
-          self(),
+          parent(),
           regexp_argument(1),
           METHOD_POST));
 }

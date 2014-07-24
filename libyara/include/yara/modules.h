@@ -169,7 +169,7 @@ limitations under the License.
 
 
 #define module()        yr_object_get_root((YR_OBJECT*) __function_obj)
-#define parent()        (__function_obj->parent_obj)
+#define parent()        (__function_obj->parent)
 #define scan_context()  (__context)
 
 
