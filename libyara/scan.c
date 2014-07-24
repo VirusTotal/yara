@@ -671,7 +671,7 @@ int _yr_scan_verify_re_match(
         ac_match->forward_code,
         data + offset,
         data_size - offset,
-        flags,
+        offset > 0 ? flags | RE_FLAGS_NOT_AT_START : flags,
         NULL,
         NULL);
   }

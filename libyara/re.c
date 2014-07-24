@@ -1668,7 +1668,7 @@ int yr_re_exec(
 
         case RE_OPCODE_MATCH_AT_START:
           if (flags & RE_FLAGS_BACKWARDS)
-            kill = (flags & RE_FLAGS_NOT_AT_START) || (input_size > count);
+            kill = input_size > count;
           else
             kill = (flags & RE_FLAGS_NOT_AT_START) || (count != 0);
           action = kill ? ACTION_KILL : ACTION_CONTINUE;
