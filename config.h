@@ -5,7 +5,7 @@
 #define CUCKOO 1
 
 /* enable dmalloc */
-#define DMALLOC 1
+/* #undef DMALLOC */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
@@ -14,7 +14,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the `dmalloc' library (-ldmalloc). */
-#define HAVE_LIBDMALLOC 1
+/* #undef HAVE_LIBDMALLOC */
 
 /* Define to 1 if you have the `jansson' library (-ljansson). */
 #define HAVE_LIBJANSSON 1
