@@ -18,6 +18,18 @@ limitations under the License.
 
 #define MODULE_NAME tests
 
+
+define_function(sum)
+{
+  int64_t a = integer_argument(1);
+  int64_t b = integer_argument(1);
+
+  if (a == UNDEFINED || b == UNDEFINED)
+    return_integer(UNDEFINED);
+
+  return_integer(a + b);
+}
+
 begin_declarations;
 
   begin_struct("constants");
@@ -33,6 +45,8 @@ begin_declarations;
     integer("i");
     string("s");
   end_struct_array("struct_array");
+
+  function("sum", "ii", "i", sum);
 
 end_declarations;
 

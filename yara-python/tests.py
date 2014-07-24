@@ -703,10 +703,12 @@ class TestYara(unittest.TestCase):
             'import "tests" rule test { condition: tests.integer_array[1] == 1}',
             'import "tests" rule test { condition: tests.string_array[0] == "foo"}',
             'import "tests" rule test { condition: tests.string_array[2] == "baz"}',
+            'import "tests" rule test { condition: tests.sum(1,1) == 2}',
           ])
 
         self.assertFalseRules([
-            'import "tests" rule test { condition: tests.struct_array[0].i == 1 }'
+            'import "tests" rule test { condition: tests.struct_array[0].i == 1 }',
+            'import "tests" rule test { condition: tests.sum(1,1) == 3}',
           ])
 
 
