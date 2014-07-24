@@ -17,13 +17,21 @@ limitations under the License.
 #ifndef YR_YARA_H
 #define YR_YARA_H
 
-#include <yara/error.h>
-#include <yara/utils.h>
-#include <yara/filemap.h>
-#include <yara/compiler.h>
-#include <yara/modules.h>
-#include <yara/object.h>
-#include <yara/libyara.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "yara/error.h"
+#include "yara/utils.h"
+#include "yara/filemap.h"
+#include "yara/compiler.h"
+#include "yara/modules.h"
+#include "yara/object.h"
+#include "yara/libyara.h"
+
+#ifdef __cplusplus
+}  /* end extern "C" */
+#endif
 
 #endif
 
