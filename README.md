@@ -102,6 +102,8 @@ the same.
 * [Fox-IT](https://www.fox-it.com)
 * [Lastline, Inc.](http://www.lastline.com)
 * [Blue Coat](http://www.bluecoat.com/products/malware-analysis-appliance)
+* [Blueliv](http://www.blueliv.com)
+* [Adlice](http://www.adlice.com/)
 
 Are you using it too? Tell me!
 
