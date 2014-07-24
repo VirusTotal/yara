@@ -181,8 +181,8 @@ int yr_object_from_external_variable(
     YR_OBJECT** object)
 {
   YR_OBJECT* obj;
-  uint8_t obj_type;
   int result;
+  uint8_t obj_type = 0;
 
   switch(external->type)
   {
@@ -195,6 +195,9 @@ int yr_object_from_external_variable(
     case EXTERNAL_VARIABLE_TYPE_MALLOC_STRING:
       obj_type = OBJECT_TYPE_STRING;
       break;
+
+    default:
+      assert(FALSE);
   }
 
   result = yr_object_create(
