@@ -33,20 +33,20 @@ define_function(sum)
 begin_declarations;
 
   begin_struct("constants");
-    integer("one");
-    integer("two");
-    string("foo");
+    declare_integer("one");
+    declare_integer("two");
+    declare_string("foo");
   end_struct("constants");
 
-  integer_array("integer_array");
-  string_array("string_array");
+  declare_integer_array("integer_array");
+  declare_string_array("string_array");
 
   begin_struct_array("struct_array");
-    integer("i");
-    string("s");
+    declare_integer("i");
+    declare_string("s");
   end_struct_array("struct_array");
 
-  function("sum", "ii", "i", sum);
+  declare_function("sum", "ii", "i", sum);
 
 end_declarations;
 

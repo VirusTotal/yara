@@ -20,7 +20,7 @@ limitations under the License.
 
 begin_declarations;
 
-  string("greeting");
+  declare_string("greeting");
 
 end_declarations;
 

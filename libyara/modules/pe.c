@@ -474,76 +474,75 @@ define_function(imports)
 
 begin_declarations;
 
-  integer("MACHINE_I386");
-  integer("MACHINE_AMD64");
+  declare_integer("MACHINE_I386");
+  declare_integer("MACHINE_AMD64");
 
-  integer("SUBSYSTEM_UNKNOWN");
-  integer("SUBSYSTEM_NATIVE");
-  integer("SUBSYSTEM_WINDOWS_GUI");
-  integer("SUBSYSTEM_WINDOWS_CUI");
-  integer("SUBSYSTEM_OS2_CUI");
-  integer("SUBSYSTEM_POSIX_CUI");
-  integer("SUBSYSTEM_NATIVE_WINDOWS");
+  declare_integer("SUBSYSTEM_UNKNOWN");
+  declare_integer("SUBSYSTEM_NATIVE");
+  declare_integer("SUBSYSTEM_WINDOWS_GUI");
+  declare_integer("SUBSYSTEM_WINDOWS_CUI");
+  declare_integer("SUBSYSTEM_OS2_CUI");
+  declare_integer("SUBSYSTEM_POSIX_CUI");
+  declare_integer("SUBSYSTEM_NATIVE_WINDOWS");
 
-  integer("RELOCS_STRIPPED");
-  integer("EXECUTABLE_IMAGE");
-  integer("LINE_NUMS_STRIPPED");
-  integer("LOCAL_SYMS_STRIPPED");
-  integer("AGGRESIVE_WS_TRIM");
-  integer("LARGE_ADDRESS_AWARE");
-  integer("BYTES_REVERSED_LO");
-  integer("32BIT_MACHINE");
-  integer("DEBUG_STRIPPED");
-  integer("REMOVABLE_RUN_FROM_SWAP");
-  integer("NET_RUN_FROM_SWAP");
-  integer("SYSTEM");
-  integer("DLL");
-  integer("UP_SYSTEM_ONLY");
-  integer("BYTES_REVERSED_HI");
+  declare_integer("RELOCS_STRIPPED");
+  declare_integer("EXECUTABLE_IMAGE");
+  declare_integer("LINE_NUMS_STRIPPED");
+  declare_integer("LOCAL_SYMS_STRIPPED");
+  declare_integer("AGGRESIVE_WS_TRIM");
+  declare_integer("LARGE_ADDRESS_AWARE");
+  declare_integer("BYTES_REVERSED_LO");
+  declare_integer("32BIT_MACHINE");
+  declare_integer("DEBUG_STRIPPED");
+  declare_integer("REMOVABLE_RUN_FROM_SWAP");
+  declare_integer("NET_RUN_FROM_SWAP");
+  declare_integer("SYSTEM");
+  declare_integer("DLL");
+  declare_integer("UP_SYSTEM_ONLY");
+  declare_integer("BYTES_REVERSED_HI");
 
-  integer("machine");
-  integer("number_of_sections");
-  integer("timestamp");
-  integer("characteristics");
+  declare_integer("machine");
+  declare_integer("number_of_sections");
+  declare_integer("timestamp");
+  declare_integer("characteristics");
 
-  integer("entry_point");
-  integer("image_base");
+  declare_integer("entry_point");
+  declare_integer("image_base");
 
   begin_struct("linker_version");
-    integer("major");
-    integer("minor");
+    declare_integer("major");
+    declare_integer("minor");
   end_struct("linker_version");
 
   begin_struct("os_version");
-    integer("major");
-    integer("minor");
+    declare_integer("major");
+    declare_integer("minor");
   end_struct("os_version");
 
   begin_struct("image_version");
-    integer("major");
-    integer("minor");
+    declare_integer("major");
+    declare_integer("minor");
   end_struct("image_version");
 
   begin_struct("subsystem_version");
-    integer("major");
-    integer("minor");
+    declare_integer("major");
+    declare_integer("minor");
   end_struct("subsystem_version");
 
-  integer("subsystem");
+  declare_integer("subsystem");
 
   begin_struct_array("sections");
-    string("name");
-    integer("characteristics");
-    integer("virtual_address");
-    integer("virtual_size");
-    integer("raw_data_offset");
-    integer("raw_data_size");
+    declare_string("name");
+    declare_integer("characteristics");
+    declare_integer("virtual_address");
+    declare_integer("virtual_size");
+    declare_integer("raw_data_offset");
+    declare_integer("raw_data_size");
   end_struct_array("sections");
 
-  function("section_index", "s", "i", section_index);
-  function("exports", "s", "i", exports);
-  function("imports", "ss", "i", imports);
-
+  declare_function("section_index", "s", "i", section_index);
+  declare_function("exports", "s", "i", exports);
+  declare_function("imports", "ss", "i", imports);
 
 end_declarations;
 

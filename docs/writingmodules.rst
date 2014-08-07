@@ -38,7 +38,7 @@ as our starting point. The file looks like this:
 
     begin_declarations;
 
-      string("greeting");
+      declare_string("greeting");
 
     end_declarations;
 
@@ -84,7 +84,7 @@ Then follows the declaration section:
 
     begin_declarations;
 
-      string("greeting");
+      declare_string("greeting");
 
     end_declarations;
 
@@ -226,14 +226,14 @@ a declaration section like this::
 Basic types
 -----------
 
-Within the declaration section you can use ``string(<variable name>)`` and
-``integer(<variable name>)`` to declare string or integer variables
+Within the declaration section you can use ``declare_string(<variable name>)``
+and ``declare_integer(<variable name>)`` to declare string or integer variables
 respectively. For example::
 
     begin_declarations;
 
-        integer("foo");
-        string("bar");
+        declare_integer("foo");
+        declare_string("bar");
 
     end_declarations;
 
@@ -254,16 +254,16 @@ Your declarations can be organized in a more structured way::
 
     begin_declarations;
 
-        integer("foo");
-        string("bar");
+        declare_integer("foo");
+        declare_string("bar");
 
         begin_struct("some_structure");
 
-            integer("foo");
+            declare_integer("foo");
 
             begin_struct("nested_structure");
 
-                integer("bar");
+                declare_integer("bar");
 
             end_struct("nested_structure");
 
@@ -271,9 +271,9 @@ Your declarations can be organized in a more structured way::
 
         begin_struct("another_structure");
 
-            integer("foo");
-            string("bar");
-            string("baz")
+            declare_integer("foo");
+            declare_string("bar");
+            declare_string("baz")
 
         end_struct("another_structure");
 
@@ -302,13 +302,13 @@ declare arrays of them::
 
     begin_declarations;
 
-        integer_array("foo");
-        string_array("bar");
+        declare_integer_array("foo");
+        declare_string_array("bar");
 
         begin_struct_array("struct_array");
 
-            integer("baz");
-            string("qux");
+            declare_integer("baz");
+            declare_string("qux");
 
         end_struct_array("struct_array");
 
@@ -336,7 +336,7 @@ One of the more powerful features of YARA modules is the possibility of
 declaring functions that can be later invoked from your rules. Functions
 must appear in the declaration section in this way::
 
-    function(<function name>, <argument types>, <return tuype>, <C function>);
+    declare_function(<function name>, <argument types>, <return tuype>, <C function>);
 
 *<function name>* is the name that will be used in your YARA rules to invoke
 the function.
@@ -372,7 +372,7 @@ Here you have a full example:
 
     begin_declarations;
 
-        function("sum", "ii", "i", sum);
+        declare_function("sum", "ii", "i", sum);
 
     end_declarations;
 
@@ -416,11 +416,11 @@ structure. If you have the following declarations in a module named *mymodule*::
 
     begin_declarations;
 
-        integer("foo");
+        declare_integer("foo");
 
         begin_struct("bar");
 
-            string("baz");
+            declare_string("baz");
 
         end_struct("bar");
 
@@ -567,11 +567,11 @@ descendant of ``object``. For example, consider the following declarations::
 
         begin_struct("foo");
 
-            string("bar");
+            declare_string("bar");
 
             begin_struct("baz");
 
-                integer("qux");
+                declare_integer("qux");
 
             end_struct("baz");
 
@@ -609,12 +609,12 @@ you have the following declarations::
 
     begin_declarations;
 
-        integer_array("foo");
+        declare_integer_array("foo");
 
         begin_struct_array("bar")
 
-            string("baz");
-            integer_array("qux");
+            declare_string("baz");
+            declare_integer_array("qux");
 
         end_struct_array("bar");
 
@@ -809,11 +809,11 @@ contained. For example, consider the following code snipet:
 
     begin_declarations;
 
-        function("f1", "i", "i", f1);
+        declare_function("f1", "i", "i", f1);
 
         begin_struct("foo");
 
-            function("f2", "i", "i", f2);
+            declare_function("f2", "i", "i", f2);
 
         end_struct("foo");
 
@@ -822,7 +822,8 @@ contained. For example, consider the following code snipet:
 In ``f1`` the ``module`` variable points to the top-level ``YR_OBJECT`` as well
 as the ``parent`` variable, because the parent for ``f1`` is the module itself.
 In ``f2`` however the ``parent`` variable points to the ``YR_OBJECT``
-corresponding to the ``foo`` structure while ``module`` points to the top-level ``YR_OBJECT`` as before.
+corresponding to the ``foo`` structure while ``module`` points to the top-level
+``YR_OBJECT`` as before.
 
 Scan context
 ------------

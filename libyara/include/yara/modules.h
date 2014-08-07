@@ -96,7 +96,7 @@ limitations under the License.
 #define end_struct_array(name) end_struct(name)
 
 
-#define integer(name) { \
+#define declare_integer(name) { \
     FAIL_ON_ERROR(yr_object_create( \
         OBJECT_TYPE_INTEGER, \
         name, \
@@ -105,7 +105,7 @@ limitations under the License.
   }
 
 
-#define integer_array(name) { \
+#define declare_integer_array(name) { \
     YR_OBJECT* array; \
     FAIL_ON_ERROR(yr_object_create( \
         OBJECT_TYPE_ARRAY, \
@@ -120,7 +120,7 @@ limitations under the License.
   }
 
 
-#define string(name) { \
+#define declare_string(name) { \
     FAIL_ON_ERROR(yr_object_create( \
         OBJECT_TYPE_STRING, \
         name, \
@@ -129,7 +129,7 @@ limitations under the License.
   }
 
 
-#define string_array(name) { \
+#define declare_string_array(name) { \
     YR_OBJECT* array; \
     FAIL_ON_ERROR(yr_object_create( \
         OBJECT_TYPE_ARRAY, \
@@ -144,7 +144,7 @@ limitations under the License.
   }
 
 
-#define function(name, args_fmt, ret_fmt, func) { \
+#define declare_function(name, args_fmt, ret_fmt, func) { \
     YR_OBJECT* function; \
     FAIL_ON_ERROR(yr_object_function_create( \
         name, \

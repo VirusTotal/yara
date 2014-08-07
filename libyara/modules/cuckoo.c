@@ -193,22 +193,22 @@ define_function(sync_mutex)
 begin_declarations;
 
   begin_struct("network");
-    function("dns_lookup", "s", "i", network_dns_lookup);
-    function("http_get", "r", "i", network_http_get);
-    function("http_post", "r", "i", network_http_post);
-    function("http_request", "r", "i", network_http_request);
+    declare_function("dns_lookup", "s", "i", network_dns_lookup);
+    declare_function("http_get", "r", "i", network_http_get);
+    declare_function("http_post", "r", "i", network_http_post);
+    declare_function("http_request", "r", "i", network_http_request);
   end_struct("network");
 
   begin_struct("registry");
-    function("key_access", "r", "i", registry_key_access);
+    declare_function("key_access", "r", "i", registry_key_access);
   end_struct("registry");
 
   begin_struct("filesystem");
-    function("file_access", "r", "i", filesystem_file_access);
+    declare_function("file_access", "r", "i", filesystem_file_access);
   end_struct("filesystem");
 
   begin_struct("sync");
-    function("mutex", "r", "i", sync_mutex);
+    declare_function("mutex", "r", "i", sync_mutex);
   end_struct("sync");
 
 end_declarations;
