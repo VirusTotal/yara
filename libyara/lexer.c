@@ -2875,6 +2875,26 @@ void yara_yyfree (void * ptr , yyscan_t yyscanner)
 
 
 
+void yywarning(
+    yyscan_t yyscanner,
+    const char *warning_message)
+{
+  YR_COMPILER* compiler = yara_yyget_extra(yyscanner);
+  char* file_name;
+
+  if (compiler->file_name_stack_ptr > 0)
+    file_name = compiler->file_name_stack[compiler->file_name_stack_ptr - 1];
+  else
+    file_name = NULL;
+
+  compiler->error_report_function(
+      YARA_ERROR_LEVEL_WARNING,
+      file_name,
+      yara_yyget_lineno(yyscanner),
+      warning_message);
+}
+
+
 void yyfatal(
     yyscan_t yyscanner,
     const char *error_message)

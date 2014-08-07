@@ -1418,6 +1418,9 @@ primary_expression
       }
     | _ENTRYPOINT_
       {
+        yywarning(yyscanner,
+            "Using deprecated \"entrypoint\" keyword. Use the \"entry_point\" " "function from PE module instead.");
+
         compiler->last_result = yr_parser_emit(
             yyscanner, OP_ENTRYPOINT, NULL);
 

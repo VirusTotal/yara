@@ -439,7 +439,6 @@ YR_STRING* yr_parser_reduce_string_declaration(
   int32_t min_gap;
   int32_t max_gap;
 
-  char* file_name;
   char message[512];
 
   YR_COMPILER* compiler = yyget_extra(yyscanner);
@@ -587,11 +586,6 @@ YR_STRING* yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
-  if (compiler->file_name_stack_ptr > 0)
-    file_name = compiler->file_name_stack[compiler->file_name_stack_ptr - 1];
-  else
-    file_name = NULL;
-
   if (min_atom_length < 2 && compiler->error_report_function != NULL)
   {
     snprintf(
@@ -601,11 +595,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
         string->identifier,
         min_atom_length == 0 ? " (critical!)" : "");
 
-    compiler->error_report_function(
-        YARA_ERROR_LEVEL_WARNING,
-        file_name,
-        yyget_lineno(yyscanner),
-        message);
+    yywarning(yyscanner, message);
   }
 
 _exit:

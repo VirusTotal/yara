@@ -35,6 +35,7 @@ limitations under the License.
 #define yylex         yara_yylex
 #define yyerror       yara_yyerror
 #define yyfatal       yara_yyfatal
+#define yywarning     yara_yywarning
 #define yychar        yara_yychar
 #define yydebug       yara_yydebug
 #define yynerrs       yara_yynerrs
@@ -74,6 +75,10 @@ void yyerror(
     yyscan_t yyscanner,
     YR_COMPILER* compiler,
     const char *error_message);
+
+void yywarning(
+    yyscan_t yyscanner,
+    const char *warning_message);
 
 void yyfatal(
     yyscan_t yyscanner,
