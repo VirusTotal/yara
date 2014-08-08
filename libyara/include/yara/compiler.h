@@ -29,7 +29,7 @@ limitations under the License.
 #define YARA_ERROR_LEVEL_WARNING 1
 
 
-typedef void (*YR_COMPILER_CALLBACK)(
+typedef void (*YR_COMPILER_CALLBACK_FUNC)(
     int error_level,
     const char* file_name,
     int line_number,
@@ -38,56 +38,56 @@ typedef void (*YR_COMPILER_CALLBACK)(
 
 typedef struct _YR_COMPILER
 {
-  int                   errors;
-  int                   error_line;
-  int                   last_error;
-  int                   last_error_line;
-  int                   last_result;
+  int               errors;
+  int               error_line;
+  int               last_error;
+  int               last_error_line;
+  int               last_result;
 
-  jmp_buf               error_recovery;
+  jmp_buf           error_recovery;
 
-  YR_COMPILER_CALLBACK  callback;
+  YR_ARENA*         sz_arena;
+  YR_ARENA*         rules_arena;
+  YR_ARENA*         strings_arena;
+  YR_ARENA*         code_arena;
+  YR_ARENA*         re_code_arena;
+  YR_ARENA*         automaton_arena;
+  YR_ARENA*         compiled_rules_arena;
+  YR_ARENA*         externals_arena;
+  YR_ARENA*         namespaces_arena;
+  YR_ARENA*         metas_arena;
 
-  YR_ARENA*             sz_arena;
-  YR_ARENA*             rules_arena;
-  YR_ARENA*             strings_arena;
-  YR_ARENA*             code_arena;
-  YR_ARENA*             re_code_arena;
-  YR_ARENA*             automaton_arena;
-  YR_ARENA*             compiled_rules_arena;
-  YR_ARENA*             externals_arena;
-  YR_ARENA*             namespaces_arena;
-  YR_ARENA*             metas_arena;
+  YR_AC_AUTOMATON*  automaton;
+  YR_HASH_TABLE*    rules_table;
+  YR_HASH_TABLE*    objects_table;
+  YR_NAMESPACE*     current_namespace;
+  YR_STRING*        current_rule_strings;
 
-  YR_AC_AUTOMATON*      automaton;
-  YR_HASH_TABLE*        rules_table;
-  YR_HASH_TABLE*        objects_table;
-  YR_NAMESPACE*         current_namespace;
-  YR_STRING*            current_rule_strings;
+  int               current_rule_flags;
+  int               namespaces_count;
 
-  int                   current_rule_flags;
-  int                   namespaces_count;
+  int8_t*           loop_address[MAX_LOOP_NESTING];
+  char*             loop_identifier[MAX_LOOP_NESTING];
+  int               loop_depth;
+  int               loop_for_of_mem_offset;
 
-  int8_t*               loop_address[MAX_LOOP_NESTING];
-  char*                 loop_identifier[MAX_LOOP_NESTING];
-  int                   loop_depth;
-  int                   loop_for_of_mem_offset;
+  int               allow_includes;
 
-  int                   allow_includes;
+  char*             file_name_stack[MAX_INCLUDE_DEPTH];
+  int               file_name_stack_ptr;
 
-  char*                 file_name_stack[MAX_INCLUDE_DEPTH];
-  int                   file_name_stack_ptr;
+  FILE*             file_stack[MAX_INCLUDE_DEPTH];
+  int               file_stack_ptr;
 
-  FILE*                 file_stack[MAX_INCLUDE_DEPTH];
-  int                   file_stack_ptr;
+  char              last_error_extra_info[MAX_COMPILER_ERROR_EXTRA_INFO];
 
-  char                  last_error_extra_info[MAX_COMPILER_ERROR_EXTRA_INFO];
+  char              lex_buf[LEX_BUF_SIZE];
+  char*             lex_buf_ptr;
+  unsigned short    lex_buf_len;
 
-  char                  lex_buf[LEX_BUF_SIZE];
-  char*                 lex_buf_ptr;
-  unsigned short        lex_buf_len;
+  char              include_base_dir[MAX_PATH];
 
-  char                  include_base_dir[MAX_PATH];
+  YR_COMPILER_CALLBACK_FUNC  callback;
 
 } YR_COMPILER;
 
@@ -120,7 +120,7 @@ void yr_compiler_destroy(
 
 void yr_compiler_set_callback(
     YR_COMPILER* compiler,
-    YR_COMPILER_CALLBACK callback);
+    YR_COMPILER_CALLBACK_FUNC callback);
 
 
 int yr_compiler_add_file(
@@ -133,15 +133,6 @@ int yr_compiler_add_string(
     YR_COMPILER* compiler,
     const char* rules_string,
     const char* namespace_);
-
-
-int yr_compiler_push_file_name(
-    YR_COMPILER* compiler,
-    const char* file_name);
-
-
-void yr_compiler_pop_file_name(
-    YR_COMPILER* compiler);
 
 
 char* yr_compiler_get_error_message(

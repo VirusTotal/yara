@@ -156,7 +156,7 @@ void yr_compiler_destroy(
 
 void yr_compiler_set_callback(
     YR_COMPILER* compiler,
-    YR_COMPILER_CALLBACK callback)
+    YR_COMPILER_CALLBACK_FUNC callback)
 {
   compiler->callback = callback;
 }
