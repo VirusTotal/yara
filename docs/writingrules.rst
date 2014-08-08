@@ -509,7 +509,7 @@ In the majority of cases, when a string identifier is used in a condition, we
 are willing to know if the associated string is anywhere within the file or
 process memory, but sometimes we need to know if the string is at some specific
 offset on the file or at some virtual address within the process address space.
-In such situations the operator at is what we need. This operator is used as
+In such situations the operator ``at`` is what we need. This operator is used as
 shown in the following example::
 
     rule AtExample

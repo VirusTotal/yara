@@ -39,6 +39,7 @@ Contents:
    writingmodules
    commandline
    yarapython
+   capi
 
 
 
