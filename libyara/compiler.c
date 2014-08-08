@@ -39,7 +39,7 @@ int yr_compiler_create(
     return ERROR_INSUFICIENT_MEMORY;
 
   new_compiler->errors = 0;
-  new_compiler->error_report_function = NULL;
+  new_compiler->callback = NULL;
   new_compiler->last_error = ERROR_SUCCESS;
   new_compiler->last_error_line = 0;
   new_compiler->error_line = 0;
@@ -151,6 +151,14 @@ void yr_compiler_destroy(
     yr_free(compiler->file_name_stack[i]);
 
   yr_free(compiler);
+}
+
+
+void yr_compiler_set_callback(
+    YR_COMPILER* compiler,
+    YR_COMPILER_CALLBACK callback)
+{
+  compiler->callback = callback;
 }
 
 

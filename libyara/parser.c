@@ -586,7 +586,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
-  if (min_atom_length < 2 && compiler->error_report_function != NULL)
+  if (min_atom_length < 2 && compiler->callback != NULL)
   {
     snprintf(
         message,

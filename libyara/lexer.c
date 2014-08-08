@@ -2887,7 +2887,7 @@ void yywarning(
   else
     file_name = NULL;
 
-  compiler->error_report_function(
+  compiler->callback(
       YARA_ERROR_LEVEL_WARNING,
       file_name,
       yara_yyget_lineno(yyscanner),
@@ -2943,9 +2943,9 @@ void yyerror(
     yr_compiler_set_error_extra_info(compiler, error_message);
     compiler->last_error = ERROR_SYNTAX_ERROR;
 
-    if (compiler->error_report_function != NULL)
+    if (compiler->callback != NULL)
     {
-      compiler->error_report_function(
+      compiler->callback(
           YARA_ERROR_LEVEL_ERROR,
           file_name,
           compiler->last_error_line,
@@ -2956,11 +2956,11 @@ void yyerror(
   {
     compiler->last_error = compiler->last_result;
 
-    if (compiler->error_report_function != NULL)
+    if (compiler->callback != NULL)
     {
       yr_compiler_get_error_message(compiler, message, sizeof(message));
 
-      compiler->error_report_function(
+      compiler->callback(
         YARA_ERROR_LEVEL_ERROR,
         file_name,
         compiler->last_error_line,

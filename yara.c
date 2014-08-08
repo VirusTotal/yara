@@ -1057,7 +1057,8 @@ int main(
       external = external->next;
     }
 
-    compiler->error_report_function = print_compiler_error;
+    yr_compiler_set_callback(compiler, print_compiler_error);
+
     rule_file = fopen(argv[optind], "r");
 
     if (rule_file == NULL)

@@ -194,7 +194,7 @@ int main(
     return EXIT_FAILURE;
   }
 
-  compiler->error_report_function = report_error;
+  yr_compiler_set_callback(compiler, report_error);
 
   for (i = optind; i < argc - 1; i++)
   {
