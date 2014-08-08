@@ -194,7 +194,7 @@ FILE* _yr_compiler_pop_file(
   return result;
 }
 
-int yr_compiler_push_file_name(
+int _yr_compiler_push_file_name(
     YR_COMPILER* compiler,
     const char* file_name)
 {
@@ -230,7 +230,7 @@ int yr_compiler_push_file_name(
 }
 
 
-void yr_compiler_pop_file_name(
+void _yr_compiler_pop_file_name(
     YR_COMPILER* compiler)
 {
   if (compiler->file_name_stack_ptr > 0)
@@ -317,8 +317,12 @@ int _yr_compiler_set_namespace(
 int yr_compiler_add_file(
     YR_COMPILER* compiler,
     FILE* rules_file,
-    const char* namespace_)
+    const char* namespace_,
+    const char* file_name)
 {
+  if (file_name != NULL)
+    _yr_compiler_push_file_name(compiler, file_name);
+
   if (namespace_ != NULL)
     _yr_compiler_set_namespace(compiler, namespace_);
   else

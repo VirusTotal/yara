@@ -110,6 +110,15 @@ FILE* _yr_compiler_pop_file(
     YR_COMPILER* compiler);
 
 
+int _yr_compiler_push_file_name(
+    YR_COMPILER* compiler,
+    const char* file_name);
+
+
+void _yr_compiler_pop_file_name(
+    YR_COMPILER* compiler);
+
+
 int yr_compiler_create(
     YR_COMPILER** compiler);
 
@@ -126,7 +135,8 @@ void yr_compiler_set_callback(
 int yr_compiler_add_file(
     YR_COMPILER* compiler,
     FILE* rules_file,
-    const char* namespace_);
+    const char* namespace_,
+    const char* file_name);
 
 
 int yr_compiler_add_string(

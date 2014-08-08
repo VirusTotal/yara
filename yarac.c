@@ -202,9 +202,7 @@ int main(
 
     if (rule_file != NULL)
     {
-      yr_compiler_push_file_name(compiler, argv[i]);
-
-      errors = yr_compiler_add_file(compiler, rule_file, NULL);
+      errors = yr_compiler_add_file(compiler, rule_file, NULL, argv[i]);
 
       fclose(rule_file);
 

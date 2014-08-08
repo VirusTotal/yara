@@ -210,7 +210,7 @@ include[ \t]+\"         {
 
     if (fh != NULL)
     {
-      int error_code = yr_compiler_push_file_name(compiler, f);
+      int error_code = _yr_compiler_push_file_name(compiler, f);
 
       if (error_code != ERROR_SUCCESS)
       {
@@ -257,7 +257,7 @@ include[ \t]+\"         {
     fclose(file);
   }
 
-  yr_compiler_pop_file_name(compiler);
+  _yr_compiler_pop_file_name(compiler);
   yypop_buffer_state(yyscanner);
 
   if (!YY_CURRENT_BUFFER)

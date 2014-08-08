@@ -1070,9 +1070,7 @@ int main(
       return EXIT_FAILURE;
     }
 
-    yr_compiler_push_file_name(compiler, argv[optind]);
-
-    errors = yr_compiler_add_file(compiler, rule_file, NULL);
+    errors = yr_compiler_add_file(compiler, rule_file, NULL, argv[optind]);
 
     fclose(rule_file);
 

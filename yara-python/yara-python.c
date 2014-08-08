@@ -1245,8 +1245,7 @@ static PyObject * yara_compile(
 
       if (fh != NULL)
       {
-        yr_compiler_push_file_name(compiler, filepath);
-        error = yr_compiler_add_file(compiler, fh, NULL);
+        error = yr_compiler_add_file(compiler, fh, NULL, filepath);
         fclose(fh);
       }
       else
@@ -1262,7 +1261,7 @@ static PyObject * yara_compile(
     {
       fd = dup(PyObject_AsFileDescriptor(file));
       fh = fdopen(fd, "r");
-      error = yr_compiler_add_file(compiler, fh, NULL);
+      error = yr_compiler_add_file(compiler, fh, NULL, NULL);
       fclose(fh);
     }
     else if (sources_dict != NULL)
@@ -1313,8 +1312,7 @@ static PyObject * yara_compile(
 
             if (fh != NULL)
             {
-              yr_compiler_push_file_name(compiler, filepath);
-              error = yr_compiler_add_file(compiler, fh, ns);
+              error = yr_compiler_add_file(compiler, fh, ns, filepath);
               fclose(fh);
 
               if (error > 0)
