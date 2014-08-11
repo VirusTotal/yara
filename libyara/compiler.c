@@ -320,6 +320,11 @@ int yr_compiler_add_file(
     const char* namespace_,
     const char* file_name)
 {
+  // Don't allow yr_compiler_add_file() after
+  // yr_compiler_get_rules() has been called.
+
+  assert(compiler->compiled_rules_arena == NULL);
+
   if (file_name != NULL)
     _yr_compiler_push_file_name(compiler, file_name);
 
@@ -337,6 +342,11 @@ int yr_compiler_add_string(
     const char* rules_string,
     const char* namespace_)
 {
+  // Don't allow yr_compiler_add_string() after
+  // yr_compiler_get_rules() has been called.
+
+  assert(compiler->compiled_rules_arena == NULL);
+
   if (namespace_ != NULL)
     _yr_compiler_set_namespace(compiler, namespace_);
   else
