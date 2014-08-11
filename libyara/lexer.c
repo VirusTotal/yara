@@ -2978,6 +2978,8 @@ int yr_lex_parse_rules_string(
 {
   yyscan_t yyscanner;
 
+  compiler->errors = 0;
+
   if (setjmp(compiler->error_recovery) != 0)
     return compiler->errors;
 
@@ -3002,6 +3004,8 @@ int yr_lex_parse_rules_file(
   YR_COMPILER* compiler)
 {
   yyscan_t yyscanner;
+
+  compiler->errors = 0;
 
   if (setjmp(compiler->error_recovery) != 0)
     return compiler->errors;
