@@ -305,8 +305,7 @@ int yara_callback(
   YR_RULE* rule;
   YR_MODULE_IMPORT* module_import;
 
-  char* tag_name;
-  size_t tag_length;
+  const char* tag;
 
   PyObject* tag_list = NULL;
   PyObject* string_list = NULL;
@@ -385,22 +384,14 @@ int yara_callback(
     return CALLBACK_ERROR;
   }
 
-  tag_name = rule->tags;
-  tag_length = tag_name != NULL ? strlen(tag_name) : 0;
-
-  while (tag_length > 0)
+  yr_rule_tags_foreach(rule, tag)
   {
-    object = PY_STRING(tag_name);
+    object = PY_STRING(tag);
     PyList_Append(tag_list, object);
     Py_DECREF(object);
-
-    tag_name += tag_length + 1;
-    tag_length = strlen(tag_name);
   }
 
-  meta = rule->metas;
-
-  while(!META_IS_NULL(meta))
+  yr_rule_metas_foreach(rule, meta)
   {
     if (meta->type == META_TYPE_INTEGER)
       object = Py_BuildValue("I", meta->integer);
@@ -411,38 +402,25 @@ int yara_callback(
 
     PyDict_SetItemString(meta_list, meta->identifier, object);
     Py_DECREF(object);
-
-    meta++;
   }
 
-  string = rule->strings;
-
-  while (!STRING_IS_NULL(string))
+  yr_rule_strings_foreach(rule, string)
   {
-    if (STRING_FOUND(string))
+    yr_string_matches_foreach(string, m)
     {
-      m = STRING_MATCHES(string).head;
+      object = PyBytes_FromStringAndSize((char*) m->data, m->length);
 
-      while (m != NULL)
-      {
-        object = PyBytes_FromStringAndSize((char*) m->data, m->length);
+      tuple = Py_BuildValue(
+          "(L,s,O)",
+          m->offset,
+          string->identifier,
+          object);
 
-        tuple = Py_BuildValue(
-            "(L,s,O)",
-            m->offset,
-            string->identifier,
-            object);
+      PyList_Append(string_list, tuple);
 
-        PyList_Append(string_list, tuple);
-
-        Py_DECREF(object);
-        Py_DECREF(tuple);
-
-        m = m->next;
-      }
+      Py_DECREF(object);
+      Py_DECREF(tuple);
     }
-
-    string++;
   }
 
   if (message == CALLBACK_MSG_RULE_MATCHING)

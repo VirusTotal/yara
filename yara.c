@@ -453,9 +453,8 @@ int handle_message(int message, YR_RULE* rule, void* data)
   YR_META* meta;
 
   const char* tag_name;
-  size_t tag_length;
+
   int is_matching;
-  int string_found;
   int show = TRUE;
 
   if (show_specified_tags)
@@ -465,19 +464,13 @@ int handle_message(int message, YR_RULE* rule, void* data)
 
     while (tag != NULL)
     {
-      tag_name = rule->tags;
-      tag_length = tag_name != NULL ? strlen(tag_name) : 0;
-
-      while (tag_length > 0)
+      yr_rule_tags_foreach(rule, tag_name)
       {
         if (strcmp(tag_name, tag->identifier) == 0)
         {
           show = TRUE;
           break;
         }
-
-        tag_name += tag_length + 1;
-        tag_length = strlen(tag_name);
       }
 
       tag = tag->next;
@@ -514,17 +507,13 @@ int handle_message(int message, YR_RULE* rule, void* data)
     {
       printf("[");
 
-      tag_name = rule->tags;
-      tag_length = tag_name != NULL ? strlen(tag_name) : 0;
-
-      while (tag_length > 0)
+      yr_rule_tags_foreach(rule, tag_name)
       {
-        printf("%s", tag_name);
-        tag_name += tag_length + 1;
-        tag_length = strlen(tag_name);
-
-        if (tag_length > 0)
+        // print a comma except for the first tag
+        if (tag_name != rule->tags)
           printf(",");
+
+        printf("%s", tag_name);
       }
 
       printf("] ");
@@ -534,23 +523,19 @@ int handle_message(int message, YR_RULE* rule, void* data)
 
     if (show_meta)
     {
-      meta = rule->metas;
-
       printf("[");
 
-      while(!META_IS_NULL(meta))
+      yr_rule_metas_foreach(rule, meta)
       {
+        if (meta != rule->metas)
+          printf(",");
+
         if (meta->type == META_TYPE_INTEGER)
           printf("%s=%d", meta->identifier, meta->integer);
         else if (meta->type == META_TYPE_BOOLEAN)
           printf("%s=%s", meta->identifier, meta->integer ? "true" : "false");
         else
           printf("%s=\"%s\"", meta->identifier, meta->string);
-
-        meta++;
-
-        if (!META_IS_NULL(meta))
-          printf(",");
       }
 
       printf("] ");
@@ -562,32 +547,19 @@ int handle_message(int message, YR_RULE* rule, void* data)
 
     if (show_strings)
     {
-      string = rule->strings;
-
-      while (!STRING_IS_NULL(string))
+      yr_rule_strings_foreach(rule, string)
       {
-        string_found = STRING_FOUND(string);
-
-        if (string_found)
+        yr_string_matches_foreach(string, match)
         {
-          match = STRING_MATCHES(string).head;
+          printf("0x%" PRIx64 ":%s: ",
+              match->base + match->offset,
+              string->identifier);
 
-          while (match != NULL)
-          {
-            printf("0x%" PRIx64 ":%s: ",
-                match->base + match->offset,
-                string->identifier);
-
-            if (STRING_IS_HEX(string))
-              print_hex_string(match->data, match->length);
-            else
-              print_string(match->data, match->length);
-
-            match = match->next;
-          }
+          if (STRING_IS_HEX(string))
+            print_hex_string(match->data, match->length);
+          else
+            print_string(match->data, match->length);
         }
-
-        string++;
       }
     }
 
