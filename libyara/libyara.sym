@@ -9,8 +9,7 @@ yr_compiler_create
 yr_compiler_destroy
 yr_compiler_add_file
 yr_compiler_add_string
-yr_compiler_push_file_name
-yr_compiler_pop_file_name
+yr_compiler_set_callback
 yr_compiler_get_error_message
 yr_compiler_get_current_file_name
 yr_compiler_define_integer_variable
