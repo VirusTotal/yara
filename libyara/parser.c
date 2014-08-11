@@ -691,7 +691,7 @@ int yr_parser_reduce_rule_declaration(
   FAIL_ON_COMPILER_ERROR(yr_arena_write_string(
       compiler->sz_arena,
       identifier,
-      &rule->identifier));
+      (char**) &rule->identifier));
 
   FAIL_ON_COMPILER_ERROR(yr_parser_emit_with_arg_reloc(
       yyscanner,
@@ -800,7 +800,7 @@ YR_META* yr_parser_reduce_meta_declaration(
   compiler->last_result = yr_arena_write_string(
       compiler->sz_arena,
       identifier,
-      &meta->identifier);
+      (char**) &meta->identifier);
 
   if (compiler->last_result != ERROR_SUCCESS)
     return NULL;

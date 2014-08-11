@@ -730,7 +730,7 @@ int yr_arena_write_data(
 // Args:
 //    YR_ARENA* arena        - Pointer to the arena.
 //    const char* string     - Pointer to string to be written.
-//    void** written_string  - Address where a pointer to the written data will
+//    char** written_string  - Address where a pointer to the written data will
 //                             be returned.
 //
 // Returns:

@@ -69,7 +69,7 @@ typedef struct _YR_META
   int32_t type;
   int32_t integer;
 
-  DECLARE_REFERENCE(char*, identifier);
+  DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(char*, string);
 
 } YR_META;
@@ -167,7 +167,6 @@ typedef struct _YR_MATCHES
 #define STRING_FOUND(x) \
     ((x)->matches[yr_get_tidx()].tail != NULL)
 
-
 #define STRING_MATCHES(x) \
     ((x)->matches[yr_get_tidx()])
 
@@ -220,8 +219,8 @@ typedef struct _YR_RULE
   int32_t g_flags;               // Global flags
   int32_t t_flags[MAX_THREADS];  // Thread-specific flags
 
-  DECLARE_REFERENCE(char*, identifier);
-  DECLARE_REFERENCE(char*, tags);
+  DECLARE_REFERENCE(const char*, identifier);
+  DECLARE_REFERENCE(const char*, tags);
   DECLARE_REFERENCE(YR_META*, metas);
   DECLARE_REFERENCE(YR_STRING*, strings);
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);

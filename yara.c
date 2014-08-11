@@ -452,7 +452,7 @@ int handle_message(int message, YR_RULE* rule, void* data)
   YR_MATCH* match;
   YR_META* meta;
 
-  char* tag_name;
+  const char* tag_name;
   size_t tag_length;
   int is_matching;
   int string_found;
