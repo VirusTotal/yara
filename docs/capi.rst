@@ -115,8 +115,15 @@ depending if the rule is matching or not. In both cases a pointer to the
 ``void*`` to ``YR_RULE*`` to access the structure.
 
 The callback is also called once for each imported module, with the
-``CALLBACK_MSG_IMPORT_MODULE`` message.
-
+``CALLBACK_MSG_IMPORT_MODULE`` message. In this case ``message_data`` points
+to a :c:type:`YR_MODULE_IMPORT` structure. This structure contains a
+``module_name`` field pointing to a null terminated string with the name of the
+module being imported and two other fields ``module_data`` and
+``module_data_size``. These fields are initially set to ``NULL`` and ``0`` ,
+but your program can assign a pointer to some arbitrary data to ``module_data``
+while setting ``module_data_size`` to the size of the data. This way you can
+pass additional data to those modules requiring it, like the
+:ref:`Cuckoo-module` for example.
 
 Lastly, the callback function is also called with the
 ``CALLBACK_MSG_SCAN_FINISHED`` message when the scan is finished. In this case
@@ -127,123 +134,372 @@ In all cases the ``user_data`` argument is the same passed to
 not touched by YARA, it's just a way for your program to pass arbitrary data
 to the callback function.
 
-Example
-=======
+Both :c:func:`yr_rules_scan_file` and :c:func:`yr_rules_scan_mem` receive a
+``flags`` argument and a ``timeout`` argument. The only flag defined at this
+time is ``SCAN_FLAGS_FAST_MODE``, so you must pass either this flag or a zero
+value. The ``timeout`` argument forces the function to return after
+the specified number of seconds aproximately, with a zero meaning no
+timeout at all.
 
-Here you have a code snippet showing the most important features
-
-.. code-block:: c
-
-
-    YR_COMPILER* compiler;
-    YR_RULES* rules;
-    FILE* file;
-
-    int result;
-
-
-    result = yr_create_compiler(&compiler);
-
-    if (result == ERROR_SUCCESS)
-    {
-        file = fopen(file_path, "r");
-
-        yr_compiler_add_file(compiler, file, NULL, file_path);
-
-        result = yr_compiler_get_rules(compiler, &rules);
-
-        if (result == ERROR_SUCCESS)
-        {
-           ... use rules to scan some data.
-        }
-
-        yr_compiler_destroy(compiler);
-    }
-    else
-    {
-        ... handle error.
-    }
-
-
-
-
-
+The ``SCAN_FLAGS_FAST_MODE`` flag makes the scanning a little faster by avoiding
+multiple matches of the same string when not necessary. Once the string was
+found in the file it's subsequently ignored, implying that you'll have a
+single match for the string, even if it appears multiple times in the scanned
+data. This flag has the same effect of the ``-f`` command-line option described
+in :ref:`command-line`.
 
 
 API reference
 =============
 
+Data structures
+---------------
+
 .. c:type:: YR_COMPILER
 
-    Data structure representing a YARA compiler.
+  Data structure representing a YARA compiler.
 
 .. c:type:: YR_RULES
 
-    Data structure representing a set of compiled rules.
+  Data structure representing a set of compiled rules.
 
 .. c:type:: YR_RULE
 
-    Data structure representing a single rule.
+  Data structure representing a single rule.
+
+  .. c:member:: const char* identifier
+
+    Rule identifier.
+
+  .. c:member:: const char* tags
+
+    Pointer to a sequence of null terminated strings with tag names. An
+    additional null character marks the end of the sequence. Example:
+    ``tag1\0tag2\0tag3\0\0``. To iterate over the tags you can use
+    :c:func:`yr_rule_tags_foreach`.
+
+  .. c:member:: YR_META* metas
+
+    Pointer to a sequence of :c:type:`YR_META` structures. To iterate over the
+    structures use :c:func:`yr_rule_metas_foreach`.
+
+  .. c:member:: YR_STRING* strings
+
+    Pointer to a sequence of :c:type:`YR_STRING` structures. To iterate over the
+    structures use :c:func:`yr_rule_strings_foreach`.
+
+.. c:type:: YR_META
+
+  Data structure representing a metadata value.
+
+  .. c:member:: const char* identifier
+
+    Meta identifier.
+
+  .. c:member:: int32_t type
+
+    One of the following metadata types:
+
+      ``META_TYPE_NULL``
+      ``META_TYPE_INTEGER``
+      ``META_TYPE_STRING``
+      ``META_TYPE_BOOLEAN``
+
+.. c:type:: YR_STRING
+
+  Data structure representing a string declared in a rule.
+
+  .. c:member:: const char* identifier
+
+      String identifier.
+
+
+.. c:type:: YR_MATCH
+
+  Data structure representing a string match.
+
+  .. c:member:: int64_t base
+
+    Base offset/address for the match. While scanning a file this field is
+    usually zero, while scanning a process memory space this field is the
+    virtual address of the memory block where the match was found.
+
+  .. c:member:: int64_t offset
+
+    Offset of the match relative to *base*.
+
+  .. c:member:: int32_t length
+
+    Length of the matching string
+
+  .. c:member:: uint8_t* data
+
+    Pointer to the matching string.
+
+
+.. c:type:: YR_MODULE_IMPORT
+
+  .. c:member:: const char* module_name
+
+    Name of the module being imported.
+
+  .. c:member:: void* module_data
+
+    Pointer to additional data passed to the module. Initially set to
+    ``NULL``, your program is responsible of setting this pointer while
+    handling the CALLBACK_MSG_IMPORT_MODULE message.
+
+  .. c:member:: size_t module_data_size
+
+    Size of additional data passed to module. Your program must set the
+    appropriate value if ``module_data`` is modified.
+
+
+Functions
+---------
 
 .. c:function:: void yr_initialize(void)
 
-    Initalize the library. Must be called by the main thread before using any
-    other function.
+  Initalize the library. Must be called by the main thread before using any
+  other function.
 
 .. c:function:: void yr_finalize(void)
 
-    Finalize the library. Must be called by the main free to release any
-    resource allocated by the library.
+  Finalize the library. Must be called by the main free to release any
+  resource allocated by the library.
 
 .. c:function:: void yr_finalize_thread(void)
 
-    Any thread using the library, except the main thread, must call this
-    function when it finishes using the library.
+  Any thread using the library, except the main thread, must call this
+  function when it finishes using the library.
 
 .. c:function:: int yr_compiler_create(YR_COMPILER** compiler)
 
-    Create a YARA compiler.
+  Create a YARA compiler. You must pass the address of a pointer to a
+  :c:type:`YR_COMPILER`, the function will set the pointer to the newly
+  allocated compiler. Returns one of the following error codes:
+
+    :c:macro:`ERROR_SUCCESS`
+
+    :c:macro:`ERROR_INSUFICENT_MEMORY`
 
 .. c:function:: void yr_compiler_destroy(YR_COMPILER* compiler)
 
-    Destroy a YARA compiler.
+  Destroy a YARA compiler.
 
 .. c:function:: void yr_compiler_set_callback(YR_COMPILER* compiler, YR_COMPILER_CALLBACK_FUNC callback)
 
-    Set a callback for receiving error and warning information.
+  Set a callback for receiving error and warning information.
 
 .. c:function:: int yr_compiler_add_file(YR_COMPILER* compiler, FILE* file, const char* namespace, const char* file_name)
 
-    Compile rules from a *file*. Rules are put into the specified *namespace*,
-    if *namespace* is ``NULL`` they will be put into the default namespace.
-    *file_name* is the name of the file for error reporting purposes and can be
-    set to ``NULL``.
+  Compile rules from a *file*. Rules are put into the specified *namespace*,
+  if *namespace* is ``NULL`` they will be put into the default namespace.
+  *file_name* is the name of the file for error reporting purposes and can be
+  set to ``NULL``. Returns the number of errors found during compilation.
 
 
 .. c:function:: int yr_compiler_add_string(YR_COMPILER* compiler, const char* string, const char* namespace_)
 
-    Compile rules from a *string*. Rules are put into the specified *namespace*,
-    if *namespace* is ``NULL`` they will be put into the default namespace.
+  Compile rules from a *string*. Rules are put into the specified *namespace*,
+  if *namespace* is ``NULL`` they will be put into the default namespace.
+  Returns the number of errors found during compilation.
 
 .. c:function:: int yr_compiler_get_rules(YR_COMPILER* compiler, YR_RULES** rules)
 
-    Get the compiled rules from the compiler.
+  Get the compiled rules from the compiler. Returns one of the following error
+  codes:
+
+    :c:macro:`ERROR_SUCCESS`
+
+    :c:macro:`ERROR_INSUFICENT_MEMORY`
 
 .. c:function:: void yr_rules_destroy(YR_RULES* rules)
 
-    Destroy compiled rules.
-
+  Destroy compiled rules.
 
 .. c:function:: int yr_rules_save(YR_RULES* rules, const char* filename)
 
-    Save *rules* into the file specified by *filename*.
+  Save *rules* into the file specified by *filename*. Returns one of the
+  following error codes:
 
-.. c:function:: void yr_rules_load(const char* filename, YR_RULES** rules)
+    :c:macro:`ERROR_SUCCESS`
 
-    Load rules from the file specified by *filename*.
+    :c:macro:`ERROR_COULD_NOT_OPEN_FILE`
 
-.. c:function:: int yr_rules_scan_mem(YR_RULES* rules, uint8_t* buffer, size_t buffer_size, YR_CALLBACK_FUNC callback, void* user_data, int fast_scan_mode, int timeout)
+.. c:function:: int yr_rules_load(const char* filename, YR_RULES** rules)
 
-    Scan a memory buffer.
+  Load rules from the file specified by *filename*. Returns one of the
+  following error codes:
 
-.. c:function:: int yr_rules_scan_file(YR_RULES* rules, const char* filename, YR_CALLBACK_FUNC callback, void* user_data, int fast_scan_mode, int timeout)
+    :c:macro:`ERROR_SUCCESS`
+
+    :c:macro:`ERROR_INSUFICENT_MEMORY`
+
+    :c:macro:`ERROR_COULD_NOT_OPEN_FILE`
+
+    :c:macro:`ERROR_INVALID_FILE`
+
+    :c:macro:`ERROR_CORRUPT_FILE`
+
+    :c:macro:`ERROR_UNSUPPORTED_FILE_VERSION`
+
+    :c:macro:`ERROR_INSUFICENT_MEMORY`
+
+.. c:function:: int yr_rules_scan_mem(YR_RULES* rules, uint8_t* buffer, size_t buffer_size, int flags, YR_CALLBACK_FUNC callback, void* user_data, int timeout)
+
+    Scan a memory buffer. Returns one of the following error codes:
+
+      :c:macro:`ERROR_SUCCESS`
+
+      :c:macro:`ERROR_INSUFICENT_MEMORY`
+
+      :c:macro:`ERROR_TOO_MANY_SCAN_THREADS`
+
+      :c:macro:`ERROR_SCAN_TIMEOUT`
+
+      :c:macro:`ERROR_CALLBACK_ERROR`
+
+      :c:macro:`ERROR_TOO_MANY_MATCHES`
+
+
+.. c:function:: int yr_rules_scan_file(YR_RULES* rules, const char* filename, int flags, YR_CALLBACK_FUNC callback, void* user_data, int timeout)
+
+  Scan a file. Returns one of the following error codes:
+
+    :c:macro:`ERROR_SUCCESS`
+
+    :c:macro:`ERROR_INSUFICENT_MEMORY`
+
+    :c:macro:`ERROR_COULD_NOT_MAP_FILE`
+
+    :c:macro:`ERROR_ZERO_LENGTH_FILE`
+
+    :c:macro:`ERROR_TOO_MANY_SCAN_THREADS`
+
+    :c:macro:`ERROR_SCAN_TIMEOUT`
+
+    :c:macro:`ERROR_CALLBACK_ERROR`
+
+    :c:macro:`ERROR_TOO_MANY_MATCHES`
+
+.. c:function:: yr_rule_tags_foreach(rule, tag)
+
+  Iterate over the tags of a given rule running the block of code that follows
+  each time with a different value for *tag* of type ``const char*``. Example:
+
+  .. code-block:: c
+
+    const char* tag;
+
+    /* rule is a YR_RULE object */
+
+    yr_rule_tags_foreach(rule, tag)
+    {
+      ..do something with tag
+    }
+
+.. c:function:: yr_rule_metas_foreach(rule, meta)
+
+  Iterate over the :c:type:`YR_META` structures associated to a given rule
+  running the block of code that follows each time with a different value for
+  *meta*. Example:
+
+  .. code-block:: c
+
+    YR_META* meta;
+
+    /* rule is a YR_RULE object */
+
+    yr_rule_metas_foreach(rule, meta)
+    {
+      ..do something with meta
+    }
+
+.. c:function:: yr_rule_strings_foreach(rule, string)
+
+  Iterate over the :c:type:`YR_STRING` structures associated to a given rule
+  running the block of code that follows each time with a different value for
+  *string*. Example:
+
+  .. code-block:: c
+
+    YR_STRING* string;
+
+    /* rule is a YR_RULE object */
+
+    yr_rule_strings_foreach(rule, string)
+    {
+      ..do something with string
+    }
+
+.. c:function:: yr_string_matches_foreach(string, match)
+
+  Example:
+
+  .. code-block:: c
+
+    YR_MATCH* match;
+
+    /* string is a YR_STRING object */
+
+    yr_string_matches_foreach(string, match)
+    {
+      ..do something with match
+    }
+
+Error codes
+-----------
+
+.. c:macro:: ERROR_SUCCESS
+
+  Everything went fine.
+
+.. c:macro:: ERROR_INSUFICENT_MEMORY
+
+  Insuficient memory to complete the operation.
+
+.. c:macro:: ERROR_COULD_NOT_OPEN_FILE
+
+  File could not be opened.
+
+.. c:macro:: ERROR_COULD_NOT_MAP_FILE
+
+  File could not be mapped into memory.
+
+.. c:macro:: ERROR_ZERO_LENGTH_FILE
+
+  File length is zero.
+
+.. c:macro:: ERROR_INVALID_FILE
+
+  File is not a valid rules file.
+
+.. c:macro:: ERROR_CORRUPT_FILE
+
+  Rules file is corrupt.
+
+.. c:macro:: ERROR_UNSUPPORTED_FILE_VERSION
+
+  File was generated by a different YARA and can't be loaded by this version.
+
+.. c:macro:: ERROR_TOO_MANY_SCAN_THREADS
+
+  Too many threads trying to use the same :c:type:`YR_RULES` object
+  simultaneosly. The limit is defined by ``MAX_THREADS`` in
+  *./include/yara/limits.h*
+
+.. c:macro:: ERROR_SCAN_TIMEOUT
+
+  Scan timed out.
+
+.. c:macro:: ERROR_CALLBACK_ERROR
+
+  Callback returned an error.
+
+.. c:macro:: ERROR_TOO_MANY_MATCHES
+
+  Too many matches for some string in your rules. This usually happens when
+  your rules contains very short or very common strings like ``01 02`` or
+  ``FF FF FF FF``. The limit is defined by ``MAX_STRING_MATCHES`` in
+  *./include/yara/limits.h*
