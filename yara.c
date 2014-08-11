@@ -627,9 +627,9 @@ void* scanning_thread(void* param)
     result = yr_rules_scan_file(
         rules,
         file_path,
+        fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
         callback,
         file_path,
-        fast_scan,
         timeout);
 
     if (result != ERROR_SUCCESS)
@@ -1074,9 +1074,9 @@ int main(
     result = yr_rules_scan_proc(
         rules,
         pid,
+        fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
         callback,
         (void*) argv[argc - 1],
-        fast_scan,
         timeout);
 
     if (result != ERROR_SUCCESS)
@@ -1115,9 +1115,9 @@ int main(
     result = yr_rules_scan_file(
         rules,
         argv[argc - 1],
+        fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
         callback,
         (void*) argv[argc - 1],
-        fast_scan,
         timeout);
 
     if (result != ERROR_SUCCESS)

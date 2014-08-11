@@ -898,9 +898,9 @@ static PyObject * Rules_match(
       error = yr_rules_scan_file(
           object->rules,
           filepath,
+          fast_mode ? SCAN_FLAGS_FAST_MODE : 0,
           yara_callback,
           &callback_data,
-          fast_mode,
           timeout);
 
       Py_END_ALLOW_THREADS
@@ -915,9 +915,9 @@ static PyObject * Rules_match(
           object->rules,
           (unsigned char*) data,
           (unsigned int) length,
+          fast_mode ? SCAN_FLAGS_FAST_MODE : 0,
           yara_callback,
           &callback_data,
-          fast_mode,
           timeout);
 
       Py_END_ALLOW_THREADS
@@ -931,9 +931,9 @@ static PyObject * Rules_match(
       error = yr_rules_scan_proc(
           object->rules,
           pid,
+          fast_mode ? SCAN_FLAGS_FAST_MODE : 0,
           yara_callback,
           &callback_data,
-          fast_mode,
           timeout);
 
       Py_END_ALLOW_THREADS

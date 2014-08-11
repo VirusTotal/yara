@@ -297,9 +297,9 @@ int yr_rules_scan_mem_block(
 int yr_rules_scan_mem_blocks(
     YR_RULES* rules,
     YR_MEMORY_BLOCK* block,
+    int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int flags,
     int timeout)
 {
   YR_SCAN_CONTEXT context;
@@ -492,9 +492,9 @@ int yr_rules_scan_mem(
     YR_RULES* rules,
     uint8_t* buffer,
     size_t buffer_size,
+    int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int fast_scan_mode,
     int timeout)
 {
   YR_MEMORY_BLOCK block;
@@ -507,9 +507,9 @@ int yr_rules_scan_mem(
   return yr_rules_scan_mem_blocks(
       rules,
       &block,
+      flags,
       callback,
       user_data,
-      fast_scan_mode ? SCAN_FLAGS_FAST_MODE : 0,
       timeout);
 }
 
@@ -517,9 +517,9 @@ int yr_rules_scan_mem(
 int yr_rules_scan_file(
     YR_RULES* rules,
     const char* filename,
+    int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int fast_scan_mode,
     int timeout)
 {
   YR_MAPPED_FILE mfile;
@@ -533,9 +533,9 @@ int yr_rules_scan_file(
         rules,
         mfile.data,
         mfile.size,
+        flags,
         callback,
         user_data,
-        fast_scan_mode,
         timeout);
 
     yr_filemap_unmap(&mfile);
@@ -548,9 +548,9 @@ int yr_rules_scan_file(
 int yr_rules_scan_proc(
     YR_RULES* rules,
     int pid,
+    int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int fast_scan_mode,
     int timeout)
 {
   YR_MEMORY_BLOCK* first_block;
@@ -565,11 +565,9 @@ int yr_rules_scan_proc(
     result = yr_rules_scan_mem_blocks(
         rules,
         first_block,
+        flags | SCAN_FLAGS_PROCESS_MEMORY,
         callback,
         user_data,
-        fast_scan_mode ?
-          SCAN_FLAGS_FAST_MODE | SCAN_FLAGS_PROCESS_MEMORY :
-          SCAN_FLAGS_PROCESS_MEMORY,
         timeout);
 
   block = first_block;

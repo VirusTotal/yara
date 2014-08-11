@@ -54,27 +54,27 @@ int yr_rules_scan_mem(
     YR_RULES* rules,
     uint8_t* buffer,
     size_t buffer_size,
+    int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int fast_scan_mode,
     int timeout);
 
 
 int yr_rules_scan_file(
     YR_RULES* rules,
     const char* filename,
+    int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int fast_scan_mode,
     int timeout);
 
 
 int yr_rules_scan_proc(
     YR_RULES* rules,
     int pid,
+    int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int fast_scan_mode,
     int timeout);
 
 
