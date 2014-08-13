@@ -44,84 +44,50 @@
         <section id="main-content">
 
 
-<h2>YARA in a nutshell</h2>
+<h2 id="yara-in-a-nutshell">YARA in a nutshell</h2>
 <p>YARA is a tool aimed at (but not limited to) helping malware researchers to
 identify and classify malware samples. With YARA you can create descriptions of
 malware families (or whatever you want to describe) based on textual or binary
 patterns. Each description, a.k.a rule, consists of a set of strings and a
-boolean expression which determine its logic. Let&#39;s see an example:</p>
+boolean expression which determine its logic. Let's see an example:</p>
 <pre><code>rule silent_banker : banker
 {
     meta:
-        description = &quot;This is just an example&quot;
+        description = "This is just an example"
         thread_level = 3
         in_the_wild = true
 
     strings:
         $a = {6A 40 68 00 30 00 00 6A 14 8D 91}
         $b = {8D 4D B0 2B C1 83 C0 27 99 6A 4E 59 F7 F9}
-        $c = &quot;UVODFRYSIHLNWPEJXQZAKCBGMT&quot;
+        $c = "UVODFRYSIHLNWPEJXQZAKCBGMT"
 
     condition:
         $a or $b or $c
-}</code></pre>
-<p>The above rule is telling YARA that any file containing one of the three strings
+}
+</code></pre><p>The above rule is telling YARA that any file containing one of the three strings
 must be reported as <em>silent_banker</em>. This is just a simple example, more
 complex and powerful rules can be created by using wild-cards, case-insensitive
 strings, regular expressions, special operators and many other features that
-you&#39;ll find explained in <a href="https://googledrive.com/host/0BznOMqZ9f3VUek8yN3VvSGdhRFU/YARA-Manual.pdf">YARA&#39;s documentation</a>.</p>
+you'll find explained in <a href="http://yara.readthedocs.org/">YARA's documentation</a>.</p>
 <p>YARA is multi-platform, running on Windows, Linux and Mac OS X, and can be used
 through its command-line interface or from your own Python scripts with the
 yara-python extension.</p>
-<p>Python users can also use <a href="https://github.com/mjdorma/yara-ctypes">yara-ctyles</a>
-by Michael Dorman. He has also written a multi-threaded command-line YARA
-scanner based on yara-ctypes that can exploit the benefits of current multi-core
-CPUs when scanning big file collections.</p>
-<p>If you are a Ruby user you can use <a href="https://github.com/SpiderLabs/yara-ruby">yara-ruby</a>,
-written by Eric Monti.</p>
-<h2>What&#39;s new in YARA 2.0</h2>
-<p>YARA has experiencied an almost complete rewrite for version 2.0, as a result
-this new version has the following advantages over previous ones:</p>
-<ul>
-<li><p>It&#39;s faster, <a href="http://www.youtube.com/watch?v=ApAFU5ROo10">believe me</a>, a
-LOT faster. With YARA 2.0 scanning speed is from 2X to 100X faster depending
-on your rules. The 100X speedup is only experienced with certain corner cases,
-but if you have a large and diverse set of rules you&#39;ll definitely notice the
-improvement.</p>
-</li>
-<li><p>Better multi-threading support. Previous versions of YARA were thread-safe up
-to a certain level. You could compile rules and scan multiple files
-simultaneously, provided that each thread was using its own set of compiled
-rules. In YARA 2.0 multiple threads can share the same compiled rules to scan
-multiple files at the same time. The new YARA&#39;s command-line scanner takes
-advance of that and is now multi-threaded, allowing to scan whole directories
-blazingly fast.</p>
-</li>
-<li><p>Rules can be saved to binary form. In the same way you would compile your
-program&#39;s source code to create an executable file, with YARA 2.0 you can
-compile your rules and save them into a binary file for later use. This way you
-can use pre-compiled rules without having to parse them again, or you can share
-rules with someone else without revealing the actual source code (but beware
-that each time you do that God kills a kitten).</p>
-</li>
-</ul>
-<p>The drawsbacks for this rewrite are:</p>
-<ul>
-<li><p>You can find some incompatibilities in regular expressions. YARA 2.0 replaced
-external libraries like PCRE or RE2 with its own regular expression engine. Most
-regular expression features are present in the new implementation, but a few
-ones like POSIX character classes and backreferences are missing. If you were
-using RE2 instead of PCRE with previous versions of YARA you won&#39;t miss
-backreferences, because RE2 don&#39;t support them neither.</p>
-</li>
-<li><p>The C API provided by libyara has changed. If you&#39;re a developer using this
-API you&#39;ll need to make some changes to your application in order to adapt it
-to YARA 2.0. But don&#39;t worry, it won&#39;t be too much work and the benefits worth
-the effort. Users of yara-python are not affected, the Python interface remains
-the same.</p>
-</li>
-</ul>
-<h2>Who&#39;s using YARA</h2>
+<h2 id="what-s-new-in-yara-3-0">What's new in YARA 3.0</h2>
+<p>YARA 3.0 introduces a new concept that will skyrocket its potential: extension
+modules. With extension modules you can implement new features for YARA in a
+simple and easy way. Modules can be used for dissecting file formats and then
+creating YARA rules based on features of the format, for implenting new
+functions that you can invoke later from your rules, and for much more!</p>
+<p>You can get a grasp of what modules can do by looking at the documentation of
+the two modules included in this release, the
+<a href="http://yara.readthedocs.org/en/latest/modules.html#cuckoo-module">Cuckoo module</a>
+and the <a href="http://yara.readthedocs.org/en/latest/modules.html#pe-module">PE module</a>.</p>
+<p>More details about how to implement your own modules can be found in the
+<a href="http://yara.readthedocs.org/">new documentation</a>.</p>
+<p>If you want to contribute with ideas or code for new YARA modules, don't
+hesitate! Share your thoughts!</p>
+<h2 id="who-s-using-yara">Who's using YARA</h2>
 <ul>
 <li><a href="https://www.virustotal.com/intelligence/">VirusTotal Intelligence</a></li>
 <li><a href="http://jsunpack.jeek.org/">jsunpack-n</a></li>
@@ -133,31 +99,49 @@ the same.</p>
 <li><a href="http://www.threatconnect.com">ThreatConnect</a></li>
 <li><a href="https://github.com/Masood-M/YALIH">YALIH</a></li>
 <li><a href="http://www.bayshorenetworks.com">Bayshore Networks, Inc.</a></li>
-<li><a href="http://www.threatstream.com">ThreatStream, Inc.</a></li>
-<li><a href="https://www.fox-it.com/">Fox-IT</a></li>
+<li><a href="http://threatstream.com">ThreatStream, Inc.</a></li>
+<li><a href="https://www.fox-it.com">Fox-IT</a></li>
 <li><a href="http://www.lastline.com">Lastline, Inc.</a></li>
 <li><a href="http://www.bluecoat.com/products/malware-analysis-appliance">Blue Coat</a></li>
-<li><a href="http://www.blueliv.com/">Blueliv</a></li>
+<li><a href="http://www.blueliv.com">Blueliv</a></li>
 <li><a href="http://www.adlice.com/">Adlice</a></li>
 </ul>
-<p>Are you using it too? Tell me!</p>
-<h2>Releases</h2>
-<h3>2.1.0 (05/03/2014)</h3>
+<p>Are you using it? Want to see your site listed here?</p>
+<h2 id="releases">Releases</h2>
+<h3 id="3-0-0-13-08-2014-">3.0.0 (13/08/2014)</h3>
+<ul>
+<li>Support for modules</li>
+<li>PE module</li>
+<li>Cuckoo module</li>
+<li>Some improvements in the C API</li>
+<li>More comprehensive documentation</li>
+<li>BUGFIX: Start anchor (^) not working properly with the "matches" operator</li>
+<li>BUGFIX: False negative with certain regular expressions</li>
+<li>BUGFIX: Improper handling of nested includes with relative pathes</li>
+<li>BUGFIX: \s character class not recognizing \n, \r, \v and \f as spaces</li>
+<li>BUGFIX: YARA for Win64 scanning only the first 4GB of files.</li>
+<li>BUGFIX: Segmentation fault when using nested loops</li>
+<li>BUGFIX: Segmentation fault caused by invalid characters in regular expressions</li>
+<li>BUGFIX: Segmentation fault while scanning some processes in Windows</li>
+<li>BUGFIX: Segmentation fault caused by regexp code spanning over non-contiguous
+memory pages</li>
+</ul>
+<h3 id="2-1-0-03-03-2014-">2.1.0 (03/03/2014)</h3>
 <ul>
 <li>Improve regexp engine</li>
 <li>Improve multithreading support</li>
-<li>Case-insensitive and single-line matching modes for &quot;matches&quot; operator&#39;s regexps</li>
-<li>Added &quot;error_on_warning&quot; argument to &quot;match&quot; in yara-python</li>
+<li>Case-insensitive and single-line matching modes for "matches" operator's regexps</li>
+<li>Added "error_on_warning" argument to "match" in yara-python</li>
 <li>Recognize x64 PE files</li>
 <li>BUGFIX: Mutex handle leak</li>
 <li>BUGFIX: NULL pointer dereferences</li>
 <li>BUGFIX: Buffer overflow</li>
 <li>BUGFIX: Crash while using compiled rules with yara64 in Windows</li>
 <li>BUGFIX: Infinite loop while scanning 64bits process in Windows</li>
-<li>BUGFIX: Side-effect on &quot;externals&quot; argument in yara-python&#39;s &quot;match&quot; function</li>
-<li>BUGFIX: &quot;x of them&quot; not working with strings containing unbounded jumps</li>
+<li>BUGFIX: Side-effect on "externals" argument in yara-python's "match" function</li>
+<li>BUGFIX: "x of them" not working with strings containing unbounded jumps</li>
 </ul>
-<h3>2.0.0 (26/12/2013)</h3>
+<h3 id="2-0-0-26-12-2013-">2.0.0 (26/12/2013)</h3>
 <ul>
 <li>Faster matching algorithm</li>
 <li>Command-line scanner is now multi-threaded</li>
@@ -165,24 +149,24 @@ the same.</p>
 <li>Added support for unbounded jumps</li>
 <li>New libyara API</li>
 </ul>
-<h3>1.7.2 (02/12/2013)</h3>
+<h3 id="1-7-2-02-12-2013-">1.7.2 (02/12/2013)</h3>
 <ul>
-<li>BUGFIX: Regular expressions marked as both &quot;wide&quot; and &quot;ascii&quot; were treated as
-just &quot;wide&quot;</li>
-<li>BUGFIX: Bug in &quot;n of (<string_set>)&quot; operator</li>
+<li>BUGFIX: Regular expressions marked as both "wide" and "ascii" were treated as
+just "wide"</li>
+<li>BUGFIX: Bug in "n of (<string_set>)" operator</li>
 <li>BUGFIX: Bug in get_process_memory could cause infinite loop</li>
 </ul>
-<h3>1.7.1 (25/11/2013)</h3>
+<h3 id="1-7-1-25-11-2013-">1.7.1 (25/11/2013)</h3>
 <ul>
 <li>BUGFIX: Fix SIGABORT in ARM</li>
 <li>BUGFIX: Failing to detect one-byte strings at the end of a file.</li>
 <li>BUGFIX: Strings being incorrectly printed when marked both as wide and ascii</li>
 <li>BUGFIX: Stack overflow while following circular symlinks</li>
-<li>BUGFIX: Expression &quot;/re/ matches var&quot; always matching if &quot;var&quot; was an empty
+<li>BUGFIX: Expression "/re/ matches var" always matching if "var" was an empty
 string</li>
-<li>BUGFIX: Strings marked as &quot;fullword&quot; were incorrectly matching in some cases.</li>
+<li>BUGFIX: Strings marked as "fullword" were incorrectly matching in some cases.</li>
 </ul>
-<h3>1.7 (29/03/2013)</h3>
+<h3 id="1-7-29-03-2013-">1.7 (29/03/2013)</h3>
 <ul>
 <li>Faster compilation</li>
 <li>Added suport for modulus (%) and bitwise xor (|) operators</li>
@@ -195,7 +179,7 @@ with RE2</li>
 <li>BUGFIX: Memory leaks</li>
 <li>BUGFIX: File handle leaks</li>
 </ul>
-<h3>1.6 (04/08/2011)</h3>
+<h3 id="1-6-04-08-2011-">1.6 (04/08/2011)</h3>
 <ul>
 <li>Added support for bitwise operators</li>
 <li>Added support for multi-line hex strings</li>
@@ -204,7 +188,7 @@ with RE2</li>
 <li>yara-python support for 64-bits Python under Windows</li>
 <li>BUGFIX: Buffer overflow in error printing</li>
 </ul>
-<h3>1.5 (22/03/2011)</h3>
+<h3 id="1-5-22-03-2011-">1.5 (22/03/2011)</h3>
 <ul>
 <li>Added -l parameter to abort scanning after a number of matches</li>
 <li>Added support for scanning processes memory</li>
@@ -213,26 +197,26 @@ with RE2</li>
 (<a href="http://code.google.com/p/re2/">http://code.google.com/p/re2/</a>) instead of PCRE</li>
 <li>Implemented index operator to access offsets where string was found</li>
 <li>Implemented new operator
-&quot;for &lt; quantifier &gt; &lt; variable &gt; in &lt; set or range &gt; : (&lt; expression &gt;) &quot;</li>
+"for < quantifier > < variable > in < set or range > : (< expression >) "</li>
 <li>BUGFIX: Memory leaks in yara-python</li>
 <li>BUGFIX: yara.compile namespaces not working with filesources</li>
 </ul>
-<h3>1.4 (13/05/2010)</h3>
+<h3 id="1-4-13-05-2010-">1.4 (13/05/2010)</h3>
 <ul>
 <li>Added external variables</li>
 <li>Scan speed improvements</li>
 <li>Added fast scan mode</li>
 <li>BUGFIX: crash in 64-bits Windows</li>
 </ul>
-<h3>1.3 (26/10/2009)</h3>
+<h3 id="1-3-26-10-2009-">1.3 (26/10/2009)</h3>
 <ul>
-<li>Added a C-like &quot;include&quot; directive</li>
+<li>Added a C-like "include" directive</li>
 <li>Added support for multi-sources compilation in yara-python</li>
 <li>Added support for metadata declaration in rules</li>
 <li>BUGFIX: Incorrect handling of single-line comments at the end of the file</li>
-<li>BUGFIX: Integer underflow when scanning files of size &lt;= 2 bytes</li>
+<li>BUGFIX: Integer underflow when scanning files of size <= 2 bytes</li>
 </ul>
-<h3>1.2.1 (14/04/2009)</h3>
+<h3 id="1-2-1-14-04-2009-">1.2.1 (14/04/2009)</h3>
 <ul>
 <li>libyara: added support for compiling rules directly from memory</li>
 <li>libyara: interface refactored</li>
@@ -242,18 +226,18 @@ with RE2</li>
 <li>BUGFIX: Memory leak</li>
 <li>BUGFIX: Access violation on xxcompare functions</li>
 </ul>
-<h3>1.2 (13/01/2009)</h3>
+<h3 id="1-2-13-01-2009-">1.2 (13/01/2009)</h3>
 <ul>
 <li>Added support for global rules</li>
 <li>Added support for declaring alternative sub-strings in hex strings</li>
 <li>Added support for anonymous strings</li>
 <li>Added support for intXX and uintXX functions</li>
-<li>Operator &quot;of&quot; was enhanced</li>
-<li>Implemented new operator &quot;for..of&quot;</li>
-<li>&quot;widechar&quot; is now &quot;wide&quot; and can be used in conjuntion with &quot;ascii&quot;</li>
+<li>Operator "of" was enhanced</li>
+<li>Implemented new operator "for..of"</li>
+<li>"widechar" is now "wide" and can be used in conjuntion with "ascii"</li>
 <li>Improved syntax error reporting in yara-python</li>
-<li>&quot;compile&quot; method in yara-python was enhanced</li>
-<li>&quot;matchfile&quot; method in yara-python was substituted by &quot;match&quot;</li>
+<li>"compile" method in yara-python was enhanced</li>
+<li>"matchfile" method in yara-python was substituted by "match"</li>
 <li>Some performance improvements</li>
 <li>BUGFIX: Wrong behavior of escaped characters in regular expressions</li>
 <li>BUGFIX: Fatal error in yara-python when invoking matchfile with invalid path
@@ -262,17 +246,18 @@ twice</li>
 <li>BUGFIX: Access violation when scanning MZ files with e_lfanew == -1</li>
 <li>BUGFIX: Incorrect handling of hex strings in lexer</li>
 </ul>
-<h3>1.1 (05/01/2009)</h3>
+<h3 id="1-1-05-01-2009-">1.1 (05/01/2009)</h3>
 <ul>
 <li>Added support for strings containing null (\x00) chars</li>
-<li>Added syntactic construct &quot;x of them&quot;</li>
+<li>Added syntactic construct "x of them"</li>
 <li>Regular expressions syntax changed</li>
 <li>Now regular expressions can begin with any character</li>
 </ul>
-<h3>1.0 (24/09/2008)</h3>
+<h3 id="1-0-24-09-2008-">1.0 (24/09/2008)</h3>
 <ul>
 <li>First release</li>
 </ul>
+
 
 
 
@@ -285,9 +270,9 @@ twice</li>
             <small>Download</small>Latest release
           </a>
 
-          <a href="https://googledrive.com/host/0BznOMqZ9f3VUek8yN3VvSGdhRFU/YARA-Manual.pdf" class="btn btn-lg">
+          <a href="http://yara.readthedocs.org" class="btn btn-lg">
             <i class="fa fa-book fa-2x"></i>
-            <small>Download</small>User's Manual
+            <small>Read the</small>Documentation
           </a>
 
           <a href="https://groups.google.com/forum/#!forum/yara-project" class="btn btn-lg">
