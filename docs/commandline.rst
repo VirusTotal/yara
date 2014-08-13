@@ -106,6 +106,8 @@ Here you have some examples:
 
     yara -d mybool=true -d myint=5 -d mystring="my string" /foo/bar/rules bazfile
 
+* Apply rules on */foo/bar/rules* to *bazfile* while passing the content of
+  *cuckoo_json_report* to the cuckoo module::
 
-
+    yara -x cuckoo=cuckoo_json_report /foo/bar/rules bazfile
 
