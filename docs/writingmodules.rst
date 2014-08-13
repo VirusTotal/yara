@@ -4,7 +4,7 @@
 Writing your own modules
 ************************
 
-Starting with YARA 2.2 you can extend its features by using modules. With
+Starting with YARA 3.0 you can extend its features by using modules. With
 modules you can define data structures and functions which can be later used
 from your rules to express more complex and refined conditions. You can see
 some examples of what a module can do in the :ref:`using-modules` section.

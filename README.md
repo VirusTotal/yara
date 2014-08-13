@@ -28,65 +28,32 @@ The above rule is telling YARA that any file containing one of the three strings
 must be reported as *silent_banker*. This is just a simple example, more
 complex and powerful rules can be created by using wild-cards, case-insensitive
 strings, regular expressions, special operators and many other features that
-you'll find explained in [YARA's documentation](https://googledrive.com/host/0BznOMqZ9f3VUek8yN3VvSGdhRFU/YARA-Manual.pdf).
+you'll find explained in [YARA's documentation](http://yara.readthedocs.org/).
 
 YARA is multi-platform, running on Windows, Linux and Mac OS X, and can be used
 through its command-line interface or from your own Python scripts with the
 yara-python extension.
 
-Python users can also use [yara-ctyles](https://github.com/mjdorma/yara-ctypes)
-by Michael Dorman. He has also written a multi-threaded command-line YARA
-scanner based on yara-ctypes that can exploit the benefits of current multi-core
-CPUs when scanning big file collections.
+## What's new in YARA 3.0
 
-If you are a Ruby user you can use [yara-ruby](https://github.com/SpiderLabs/yara-ruby),
-written by Eric Monti.
+YARA 3.0 introduces a new concept that will skyrocket its potential: extension
+modules. With extension modules you can implement new features for YARA in a
+simple and easy way. Modules can be used for dissecting file formats and then
+creating YARA rules based on features of the format, for implenting new
+functions that you can invoke later from your rules, and for much more!
 
+You can get a grasp of what modules can do by looking at the documentation of
+the two modules included in this release, the
+[Cuckoo module](http://yara.readthedocs.org/en/latest/modules.html#cuckoo-module)
+and the [PE module](http://yara.readthedocs.org/en/latest/modules.html#pe-module).
 
-## What's new in YARA 2.0
+More details about how to implement your own modules can be found in the
+[new documentation](http://yara.readthedocs.org/).
 
-YARA has experiencied an almost complete rewrite for version 2.0, as a result
-this new version has the following advantages over previous ones:
-
-* It's faster, [believe me](http://www.youtube.com/watch?v=ApAFU5ROo10), a
-LOT faster. With YARA 2.0 scanning speed is from 2X to 100X faster depending
-on your rules. The 100X speedup is only experienced with certain corner cases,
-but if you have a large and diverse set of rules you'll definitely notice the
-improvement.
-
-* Better multi-threading support. Previous versions of YARA were thread-safe up
-to a certain level. You could compile rules and scan multiple files
-simultaneously, provided that each thread was using its own set of compiled
-rules. In YARA 2.0 multiple threads can share the same compiled rules to scan
-multiple files at the same time. The new YARA's command-line scanner takes
-advance of that and is now multi-threaded, allowing to scan whole directories
-blazingly fast.
-
-* Rules can be saved to binary form. In the same way you would compile your
-program's source code to create an executable file, with YARA 2.0 you can
-compile your rules and save them into a binary file for later use. This way you
-can use pre-compiled rules without having to parse them again, or you can share
-rules with someone else without revealing the actual source code (but beware
-that each time you do that God kills a kitten).
-
-The drawsbacks for this rewrite are:
-
-* You can find some incompatibilities in regular expressions. YARA 2.0 replaced
-external libraries like PCRE or RE2 with its own regular expression engine. Most
-regular expression features are present in the new implementation, but a few
-ones like POSIX character classes and backreferences are missing. If you were
-using RE2 instead of PCRE with previous versions of YARA you won't miss
-backreferences, because RE2 don't support them neither.
-
-* The C API provided by libyara has changed. If you're a developer using this
-API you'll need to make some changes to your application in order to adapt it
-to YARA 2.0. But don't worry, it won't be too much work and the benefits worth
-the effort. Users of yara-python are not affected, the Python interface remains
-the same.
-
+If you want to contribute with ideas or code for new YARA modules, don't
+hesitate! Share your thoughts!
 
 ## Who's using YARA
-
 
 * [VirusTotal Intelligence](https://www.virustotal.com/intelligence/)
 * [jsunpack-n](http://jsunpack.jeek.org/)
@@ -105,9 +72,28 @@ the same.
 * [Blueliv](http://www.blueliv.com)
 * [Adlice](http://www.adlice.com/)
 
-Are you using it too? Tell me!
+Are you using it? Want to see your site listed here?
 
 ## Releases
+
+### 3.0 (13/08/2014)
+
+* Support for modules
+* PE module
+* Cuckoo module
+* Some improvements in the C API
+* More comprehensive documentation
+* BUGFIX: Start anchor (^) not working properly with the "matches" operator
+* BUGFIX: False negative with certain regular expressions
+* BUGFIX: Improper handling of nested includes with relative pathes
+* BUGFIX: \s character class not recognizing \n, \r, \v and \f as spaces
+* BUGFIX: YARA for Win64 scanning only the first 4GB of files.
+* BUGFIX: Segmentation fault when using nested loops
+* BUGFIX: Segmentation fault caused by invalid characters in regular expressions
+* BUGFIX: Segmentation fault while scanning some processes in Windows
+* BUGFIX: Segmentation fault caused by regexp code spanning over non-contiguous
+memory pages
+
 
 ### 2.1.0 (03/03/2014)
 

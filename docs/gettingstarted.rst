@@ -12,8 +12,8 @@ Compiling and installing YARA
 
 Download the source tarball and get prepared for compiling it::
 
-    tar -zxf yara-2.2.0.tar.gz
-    cd yara-2.2.0
+    tar -zxf yara-3.0.0.tar.gz
+    cd yara-3.0.0
     ./bootstrap.sh
 
 YARA uses GNU autotools, so it's compiled and installed in the standard
