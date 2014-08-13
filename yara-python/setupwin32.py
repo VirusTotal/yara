@@ -23,7 +23,7 @@ setup(name='yara-python',
       ext_modules=[Extension(
         name='yara',
         sources=['yara-python.c'],
-        include_dirs=['../windows/include', '../libyara'],
+        include_dirs=['../windows/include', '../libyara/include'],
         define_macros=[('WIN32', None)],
         extra_objects=[
           '../windows/libyara/Release/libyara32.lib']

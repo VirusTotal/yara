@@ -21,13 +21,14 @@ limitations under the License.
 extern "C" {
 #endif
 
-#include "yara/error.h"
+
 #include "yara/utils.h"
 #include "yara/filemap.h"
 #include "yara/compiler.h"
 #include "yara/modules.h"
 #include "yara/object.h"
 #include "yara/libyara.h"
+#include "yara/error.h"
 
 #ifdef __cplusplus
 }  /* end extern "C" */
