@@ -184,7 +184,7 @@ void yr_rules_print_profiling_info(
 
   clock_t clock_ticks;
 
-  printf("===== PROFILING_ENABLED INFORMATION =====\n");
+  printf("===== PROFILING INFORMATION =====\n");
 
   rule = rules->rules_list_head;
 
