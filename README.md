@@ -76,7 +76,7 @@ Are you using it? Want to see your site listed here?
 
 ## Releases
 
-### 3.0 (13/08/2014)
+### 3.0.0 (13/08/2014)
 
 * Support for modules
 * PE module
