@@ -2,8 +2,6 @@
 The C API
 *********
 
-.. highlight: c
-
 You can integrate YARA into your C/C++ project by using the API privided by the
 *libyara* library. This API gives you access to every YARA feature and it's the
 same API used by the command-line tools ``yara`` and ``yarac``.

@@ -95,7 +95,7 @@ your rules contains some construct that could be slowing down the scanning.
 The default value for the ``error_on_warning`` argument is False.
 
 
-In all cases ``compile`` returns an instance of the class ````
+In all cases ``compile`` returns an instance of the class :py:class:`yara.Rules`
 Rules. This class have a ``save`` method that can be used to save the compiled
 rules to a file:
 
@@ -110,7 +110,7 @@ The compiled rules can be loaded later by using the ``load`` method:
   rules = yara.load('/foo/bar/my_compiled_rules')
 
 
-The result of ``load`` is also an instance of the class ``Rules``.
+The result of ``load`` is also an instance of the class :py:class:`yara.Rules`.
 
 Instances of ``Rules`` also have a ``match`` method, which allows to apply the
 rules to a file:
@@ -139,7 +139,7 @@ externals variables in the ``externals`` argument.
 .. code-block:: python
 
   matches = rules.match('/foo/bar/my_file',
-    externals= {'var1': 'some other string’, 'var2': 100})
+    externals= {'var1': 'some other string', 'var2': 100})
 
 Externals variables defined during compile-time don’t need to be defined again
 in subsequent calls to the ``match`` method. However you can redefine
@@ -203,29 +203,76 @@ Reference
 
 .. py:module:: yara
 
-.. py:function:: yara.compile(<source>, )
+.. py:function:: yara.compile(...)
 
-    Compile YARA sources. One (and only one) of *filepath*,
-    *source*, *file*, *filepaths* or *sources* must be provided.
+  Compile YARA sources.
 
-   :param str filepath: Path to the source file.
-   :param str source: String containing the rules code.
-   :param file file: Source file as a file object.
-   :param dict filepaths: Dictionary where keys are namespaces and
-        values are paths to source files.
-   :param dict sources: Dictionary where keys are namespaces and
-        values are string containing rules code.
-   :param dict externals: Dictionary with external variables. Keys are variable
-        names and values are variable values.
-   :return: The compiled rules
-   :rtype: yara.Rules
-   :raises ValueError: if the message_body exceeds 160 characters
-   :raises TypeError: if the message_body is not a basestring
+  One of *filepath*, *source*, *file*, *filepaths* or *sources* must be
+  provided. The remaining arguments are optional.
 
+  :param str filepath: Path to the source file.
+  :param str source: String containing the rules code.
+  :param file file: Source file as a file object.
+  :param dict filepaths: Dictionary where keys are namespaces and values are
+    paths to source files.
+  :param dict sources: Dictionary where keys are namespaces and values are
+    strings containing rules code.
+  :param dict externals: Dictionary with external variables. Keys are variable
+    names and values are variable values.
+  :param boolean includes: True if include directives are allowed or False
+    otherwise. Default value: *True*.
+  :param boolean error_on_warning: If true warnings are treated as errors,
+    raising an exception.
+  :return: Compiled rules object.
+  :rtype: :py:class:`yara.Rules`
+  :raises YaraSyntaxError: If a syntax error was found.
+  :raises YaraError: If an error occurred.
+
+.. py:function:: yara.load(filepath)
+
+  Load compiled rules from a file.
+
+  :param str filepath: Path to the file.
+
+  :return: Compiled rules object.
+  :rtype: :py:class:`yara.Rules`
+  :raises: **YaraError**: If an error occurred while loading the file.
 
 .. py:class:: Rules
 
-    .. py:method:: match(filepath, pid, data, externals, callback, fast, timeout, modules_data)
+  Instances of this class are returned by :py:func:`yara.compile`  and
+  represents a set of compiled rules.
+
+  .. py:method:: match(filepath, pid, data, externals=None, callback=None, fast=False, timeout=None, modules_data=None)
+
+    Scan a file, process memory or data string.
+
+    One of *filepath*, *pid* or *data* must be provided. The remaining
+    arguments are optional.
+
+    :param str filepath: Path to the file to be scanned.
+    :param int pid: Process id to be scanned.
+    :param str data: Data to be scanned.
+    :param dict externals: Dictionary with external variables. Keys are variable
+      names and values are variable values.
+    :param function callback: Callback function invoked for each rule.
+    :param bool fast: If true performs a fast mode scan.
+    :param int timeout: Aborts the scanning when the number of specified seconds
+      have elapsed.
+    :param dict modules_data: Dictionary with additional data to modules. Keys
+      are module names and values are *bytes* objects containing the additional
+      data.
+    :raises YaraTimeoutError: If the timeout was reached.
+    :raises YaraError: If an error occurred during the scan.
+
+  .. py:method:: save(filepath)
+
+    Save compiled rules to a file.
+
+    :param str filepath: Path to the file.
+    :raises: **YaraError**: If an error occurred while saving the file.
+
+
 
 
 
