@@ -4,30 +4,31 @@
 Writing your own modules
 ************************
 
-Starting with YARA 3.0 you can extend its features by using modules. With
-modules you can define data structures and functions which can be later used
-from your rules to express more complex and refined conditions. You can see
-some examples of what a module can do in the :ref:`using-modules` section.
+For the first time ever, in YARA 3.0 you can extend its features to express 
+more complex and refined conditions.  YARA 3.0 does this by employing 
+modules, which you can use to define data structures and functions, which 
+can be later used from within your rules. You can see some examples of 
+what a module can do in the :ref:`using-modules` section.
 
-The purpose of this sections is teaching you how to create your own modules
-for giving YARA that cool feature you always dreamed of.
+The purpose of the following sections is to teach you how to create your 
+own modules for giving YARA that cool feature you always dreamed of.
 
 
 The "Hello World!" module
 =========================
 
 Modules are written in C and built into YARA as part of the compiling process.
-In order to create your own modules you must be familiarized with the C
+In order to create your own modules you must be familiar with the C
 programming language and how to configure and build YARA from source code. You
-don't need to understand how YARA does its magic, YARA exposes a simple API for
-modules which is all you'll need to know.
+don't need to understand how YARA does its magic; YARA exposes a simple API for
+modules, which is all you need to know.
 
 The source code for your module must reside in the *libyara/modules* directory
-in the source tree. It's recommended to use the module name as the file name for
+of the source tree. It's recommended to use the module name as the file name for
 the source file, if your module's name is *foo* its source file should be
 *foo.c*.
 
-In the *libyara/modules* directory you'll find a *demo.c* file which we'll use
+In the *libyara/modules* directory you'll find a *demo.c* file.  We'll use
 as our starting point. The file looks like this:
 
 .. code-block:: c
@@ -90,8 +91,8 @@ Then follows the declaration section:
 
 Here is where the module declares the functions and data structures that will
 be available for your YARA rules. In this case we are declaring just a
-string variable named *greeting*. We are going to discuss more in depth about
-this in :ref:`declaration-section`.
+string variable named *greeting*. We are going to discuss these concepts more 
+in greater detail in the :ref:`declaration-section`.
 
 Then comes the ``module_load`` function:
 
@@ -111,14 +112,14 @@ Then comes the ``module_load`` function:
 This function is invoked once for each scanned file, but only if the module is
 imported by some rule with the ``import`` directive. The ``module_load``
 function is where your module has the opportunity to inspect the file being
-scanned, parse it or analize it the way it may prefer, and then populate the
+scanned, parse or analyze it in the way prefered, and then populate the
 data structures defined in the declarations section.
 
 In this example the ``module_load`` function doesn't inspect the file content
-at all, it just assign the string "Hello World!" to the variable *greeting*
+at all, it just assigns the string, "Hello World!" to the variable *greeting*
 declared before.
 
-And finally we have the ``module_unload`` function:
+And finally, we have the ``module_unload`` function:
 
 .. code-block:: c
 
@@ -133,7 +134,7 @@ For each call to ``module_load`` there is a corresponding call to
 allocated during ``module_load``. There's nothing to free in this case, so
 the function just returns ``ERROR_SUCCESS``. Both ``module_load`` and
 ``module_unload`` should return ``ERROR_SUCCESS`` to indicate that everything
-went fine. If a different value is returned the scanning will be aborted and the
+went fine. If a different value is returned the scanning will be aborted and an
 error reported to the user.
 
 Building our "Hello World!"
