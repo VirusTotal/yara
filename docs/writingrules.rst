@@ -613,7 +613,7 @@ this variable evaluates to false.
 
 .. warning:: The ``entrypoint`` variable is deprecated, you should use the
     equivalent ``pe.entry_point`` from the :ref:`pe-module` instead. Starting
-    with YARA 2.2 you'll get a warning if you use ``entrypoint`` and it will be
+    with YARA 3.0 you'll get a warning if you use ``entrypoint`` and it will be
     completely removed in future versions.
 
 

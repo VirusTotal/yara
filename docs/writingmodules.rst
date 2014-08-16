@@ -4,13 +4,13 @@
 Writing your own modules
 ************************
 
-For the first time ever, in YARA 3.0 you can extend its features to express 
-more complex and refined conditions.  YARA 3.0 does this by employing 
-modules, which you can use to define data structures and functions, which 
-can be later used from within your rules. You can see some examples of 
+For the first time ever, in YARA 3.0 you can extend its features to express
+more complex and refined conditions.  YARA 3.0 does this by employing
+modules, which you can use to define data structures and functions, which
+can be later used from within your rules. You can see some examples of
 what a module can do in the :ref:`using-modules` section.
 
-The purpose of the following sections is to teach you how to create your 
+The purpose of the following sections is to teach you how to create your
 own modules for giving YARA that cool feature you always dreamed of.
 
 
@@ -28,7 +28,7 @@ of the source tree. It's recommended to use the module name as the file name for
 the source file, if your module's name is *foo* its source file should be
 *foo.c*.
 
-In the *libyara/modules* directory you'll find a *demo.c* file.  We'll use
+In the *libyara/modules* directory you'll find a *demo.c* file we'll use
 as our starting point. The file looks like this:
 
 .. code-block:: c
@@ -91,7 +91,7 @@ Then follows the declaration section:
 
 Here is where the module declares the functions and data structures that will
 be available for your YARA rules. In this case we are declaring just a
-string variable named *greeting*. We are going to discuss these concepts more 
+string variable named *greeting*. We are going to discuss these concepts more
 in greater detail in the :ref:`declaration-section`.
 
 Then comes the ``module_load`` function:
