@@ -352,12 +352,10 @@ define_function(exports)
   return_integer(0);
 }
 
-
 define_function(imports)
 {
   char* dll_name = string_argument(1);
   char* function_name = string_argument(2);
-  int function_name_len = strlen(function_name);
 
   YR_OBJECT* module = module();
   DATA* data = (DATA*) module->data;
@@ -419,8 +417,11 @@ define_function(imports)
       {
         thunks64 = (PIMAGE_THUNK_DATA64)(data->data + offset);
 
-        while (thunks64->u1.Ordinal != 0)
+        while ((uint8_t*)thunks64 < data_end-sizeof(IMAGE_THUNK_DATA64) && thunks64 > data->data)
         {
+          if (thunks64->u1.Ordinal == 0)
+            break;
+
           if (!(thunks64->u1.Ordinal & IMAGE_ORDINAL_FLAG64))
           {
             // if not exported by ordinal
@@ -429,21 +430,13 @@ define_function(imports)
                 data->pe_size,
                 thunks64->u1.Function);
 
-            if (offset != 0 &&
-                offset <= data->size - sizeof(IMAGE_IMPORT_BY_NAME))
-            {
-              import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
+            import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
 
-              if (data_end - import->Name >= function_name_len)
-              {
-                if (strncmp((char*) import->Name,
-                            function_name,
-                            function_name_len) == 0)
-                {
-                  return_integer(1);
-                }
-              }
-            }
+	    if ((uint8_t*)import > data_end - strlen(function_name) || import < data->data)
+		break;
+
+            if (strncmp((char*) import->Name, function_name, strlen(function_name)) == 0)
+              return_integer(1);
           }
 
           thunks64++;
@@ -453,8 +446,11 @@ define_function(imports)
       {
         thunks32 = (PIMAGE_THUNK_DATA32)(data->data + offset);
 
-        while (thunks32->u1.Ordinal != 0)
+        while ((uint8_t*)thunks32 < data_end-sizeof(IMAGE_THUNK_DATA32) && thunks32 > data->data)
         {
+          if (thunks32->u1.Ordinal == 0)
+            break;
+
           if (!(thunks32->u1.Ordinal & IMAGE_ORDINAL_FLAG32))
           {
             // if not exported by ordinal
@@ -463,21 +459,13 @@ define_function(imports)
                 data->pe_size,
                 thunks32->u1.Function);
 
-            if (offset != 0 &&
-                offset <= data->size - sizeof(IMAGE_IMPORT_BY_NAME))
-            {
-              import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
+            import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
 
-              if (data_end - import->Name >= function_name_len)
-              {
-                if (strncmp((char*) import->Name,
-                            function_name,
-                            function_name_len) == 0)
-                {
-                  return_integer(1);
-                }
-              }
-            }
+	    if ((uint8_t*)import > data_end - strlen(function_name) || import < data->data)
+		break;
+
+            if (strncmp((char*) import->Name, function_name, strlen(function_name)) == 0)
+              return_integer(1);
           }
 
           thunks32++;
