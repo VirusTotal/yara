@@ -357,6 +357,7 @@ define_function(imports)
 {
   char* dll_name = string_argument(1);
   char* function_name = string_argument(2);
+  int function_name_len = strlen(function_name);
 
   YR_OBJECT* module = module();
   DATA* data = (DATA*) module->data;
@@ -428,10 +429,21 @@ define_function(imports)
                 data->pe_size,
                 thunks64->u1.Function);
 
-            import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
+            if (offset != 0 &&
+                offset <= data->size - sizeof(IMAGE_IMPORT_BY_NAME))
+            {
+              import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
 
-            if (strcmp((char*) import->Name, function_name) == 0)
-              return_integer(1);
+              if (data_end - import->Name >= function_name_len)
+              {
+                if (strncmp((char*) import->Name,
+                            function_name,
+                            function_name_len) == 0)
+                {
+                  return_integer(1);
+                }
+              }
+            }
           }
 
           thunks64++;
@@ -451,10 +463,21 @@ define_function(imports)
                 data->pe_size,
                 thunks32->u1.Function);
 
-            import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
+            if (offset != 0 &&
+                offset <= data->size - sizeof(IMAGE_IMPORT_BY_NAME))
+            {
+              import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
 
-            if (strcmp((char*) import->Name, function_name) == 0)
-              return_integer(1);
+              if (data_end - import->Name >= function_name_len)
+              {
+                if (strncmp((char*) import->Name,
+                            function_name,
+                            function_name_len) == 0)
+                {
+                  return_integer(1);
+                }
+              }
+            }
           }
 
           thunks32++;
