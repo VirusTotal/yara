@@ -353,6 +353,9 @@ define_function(exports)
 }
 
 
+#define check_bounds(pointer, struct_type, limit) \
+    ((uint8_t*)(pointer) + sizeof(struct_type) <= limit)
+
 define_function(imports)
 {
   char* dll_name = string_argument(1);
@@ -396,14 +399,15 @@ define_function(imports)
 
   imports = (PIMAGE_IMPORT_DESCRIPTOR)(data->data + offset);
 
-  while (imports->Name != 0)
+  while (check_bounds(imports, IMAGE_IMPORT_DESCRIPTOR, data_end) &&
+         imports->Name != 0)
   {
     offset = rva_to_offset(
         data->pe_header,
         data->pe_size,
         imports->Name);
 
-    if (offset != 0 &&
+    if (offset > 0 &&
         offset <= data->size &&
         strncasecmp(
             dll_name,
@@ -415,80 +419,82 @@ define_function(imports)
           data->pe_size,
           imports->OriginalFirstThunk);
 
-      if (data->pe_header->FileHeader.Machine == 0x8664)
+      if (offset > 0)
       {
-        thunks64 = (PIMAGE_THUNK_DATA64)(data->data + offset);
-
-        while (thunks64->u1.Ordinal != 0)
+        if (data->pe_header->FileHeader.Machine == 0x8664)
         {
-          if (!(thunks64->u1.Ordinal & IMAGE_ORDINAL_FLAG64))
+          thunks64 = (PIMAGE_THUNK_DATA64)(data->data + offset);
+
+          while (check_bounds(thunks64, IMAGE_THUNK_DATA64, data_end) &&
+                 thunks64->u1.Ordinal != 0)
           {
-            // if not exported by ordinal
-            offset = rva_to_offset(
-                data->pe_header,
-                data->pe_size,
-                thunks64->u1.Function);
-
-            if (offset != 0 &&
-                offset <= data->size - sizeof(IMAGE_IMPORT_BY_NAME))
+            if (!(thunks64->u1.Ordinal & IMAGE_ORDINAL_FLAG64))
             {
-              import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
+              // if not exported by ordinal
+              offset = rva_to_offset(
+                  data->pe_header,
+                  data->pe_size,
+                  thunks64->u1.Function);
 
-              if (data_end - import->Name >= function_name_len)
+              if (offset != 0 &&
+                  offset <= data->size - sizeof(IMAGE_IMPORT_BY_NAME))
               {
-                if (strncmp((char*) import->Name,
-                            function_name,
-                            function_name_len) == 0)
+                import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
+
+                if (data_end - import->Name >= function_name_len)
                 {
-                  return_integer(1);
+                  if (strncmp((char*) import->Name,
+                              function_name,
+                              function_name_len) == 0)
+                  {
+                    return_integer(1);
+                  }
                 }
               }
             }
-          }
 
-          thunks64++;
+            thunks64++;
+          }
         }
-      }
-      else
-      {
-        thunks32 = (PIMAGE_THUNK_DATA32)(data->data + offset);
-
-        while (thunks32->u1.Ordinal != 0)
+        else
         {
-          if (!(thunks32->u1.Ordinal & IMAGE_ORDINAL_FLAG32))
+          thunks32 = (PIMAGE_THUNK_DATA32)(data->data + offset);
+
+          while (check_bounds(thunks32, IMAGE_THUNK_DATA32, data_end) &&
+                 thunks32->u1.Ordinal != 0)
           {
-            // if not exported by ordinal
-            offset = rva_to_offset(
-                data->pe_header,
-                data->pe_size,
-                thunks32->u1.Function);
-
-            if (offset != 0 &&
-                offset <= data->size - sizeof(IMAGE_IMPORT_BY_NAME))
+            if (!(thunks32->u1.Ordinal & IMAGE_ORDINAL_FLAG32))
             {
-              import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
+              // if not exported by ordinal
+              offset = rva_to_offset(
+                  data->pe_header,
+                  data->pe_size,
+                  thunks32->u1.Function);
 
-              if (data_end - import->Name >= function_name_len)
+              if (offset != 0 &&
+                  offset <= data->size - sizeof(IMAGE_IMPORT_BY_NAME))
               {
-                if (strncmp((char*) import->Name,
-                            function_name,
-                            function_name_len) == 0)
+                import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
+
+                if (data_end - import->Name >= function_name_len)
                 {
-                  return_integer(1);
+                  if (strncmp((char*) import->Name,
+                              function_name,
+                              function_name_len) == 0)
+                  {
+                    return_integer(1);
+                  }
                 }
               }
             }
-          }
 
-          thunks32++;
+            thunks32++;
+          }
         }
       }
     }
 
     imports++;
-
-    if ((uint8_t*) imports > data_end - sizeof(IMAGE_IMPORT_DESCRIPTOR))
-      break;
   }
 
   return_integer(0);
