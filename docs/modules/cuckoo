@@ -39,7 +39,7 @@ executable file to YARA, and write a rule like this::
     rule evil_doer
     {
         condition:
-            cuckoo.network.http_request(/http://someone\.doingevil\.com/)
+            cuckoo.network.http_request(/http:\/\/someone\.doingevil\.com/)
     }
 
 Of course you can mix your behavior-related conditions with good old
@@ -54,7 +54,7 @@ string-based conditions::
 
         condition:
             $some_string and
-            cuckoo.network.http_request(/http://someone\.doingevil\.com/)
+            cuckoo.network.http_request(/http:\/\/someone\.doingevil\.com/)
     }
 
 
