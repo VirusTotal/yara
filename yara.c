@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef WIN32
+#ifndef _WIN32
 
 #include <sys/stat.h>
 #include <dirent.h>
@@ -244,7 +244,7 @@ char* file_queue_get()
 }
 
 
-#ifdef WIN32
+#ifdef _WIN32
 
 int is_directory(
     const char* path)
@@ -610,7 +610,7 @@ int callback(int message, void* message_data, void* user_data)
   return CALLBACK_ERROR;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 DWORD WINAPI scanning_thread(LPVOID param)
 #else
 void* scanning_thread(void* param)

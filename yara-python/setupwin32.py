@@ -24,7 +24,6 @@ setup(name='yara-python',
         name='yara',
         sources=['yara-python.c'],
         include_dirs=['../windows/include', '../libyara/include'],
-        define_macros=[('WIN32', None)],
         extra_objects=[
           '../windows/libyara/Release/libyara32.lib']
         )])

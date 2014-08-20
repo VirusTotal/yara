@@ -16,7 +16,7 @@ limitations under the License.
 
 #include <limits.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #else
 #include <yara/pe.h>

@@ -16,7 +16,7 @@ limitations under the License.
 
 #include <fcntl.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #else
 #include <sys/stat.h>
@@ -28,7 +28,7 @@ limitations under the License.
 #include <yara/error.h>
 
 
-#ifdef WIN32
+#ifdef _WIN32
 
 //
 // Win32 implementation

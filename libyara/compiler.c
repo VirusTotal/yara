@@ -536,7 +536,7 @@ int yr_compiler_get_rules(
   yara_rules->code_start = rules_file_header->code_start;
   yara_rules->tidx_mask = 0;
 
-  #if WIN32
+  #if _WIN32
   yara_rules->mutex = CreateMutex(NULL, FALSE, NULL);
   #else
   pthread_mutex_init(&yara_rules->mutex, NULL);

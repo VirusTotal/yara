@@ -670,7 +670,7 @@ limitations under the License.
       } \
     }
 
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #endif
 
@@ -1288,7 +1288,7 @@ YY_RULE_SETUP
     // make included file path relative to current source file
     s = strrchr(buffer, '/');
 
-    #ifdef WIN32
+    #ifdef _WIN32
     b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
     #endif
 

@@ -45,7 +45,7 @@ limitations under the License.
 
 #define PTR_TO_UINT64(x)  ((uint64_t) (size_t) x)
 
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp

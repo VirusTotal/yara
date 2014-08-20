@@ -22,12 +22,12 @@ limitations under the License.
 #include <yara/re.h>
 
 
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #endif
 
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 DWORD tidx_key;
 DWORD recovery_state_key;
@@ -66,7 +66,7 @@ void yr_initialize(void)
 
   yr_heap_alloc();
 
-  #ifdef WIN32
+  #ifdef _WIN32
   tidx_key = TlsAlloc();
   recovery_state_key = TlsAlloc();
   #else
@@ -102,7 +102,7 @@ void yr_finalize(void)
 {
   yr_re_finalize_thread();
 
-  #ifdef WIN32
+  #ifdef _WIN32
   TlsFree(tidx_key);
   TlsFree(recovery_state_key);
   #else
@@ -128,7 +128,7 @@ void yr_finalize(void)
 
 void yr_set_tidx(int tidx)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   TlsSetValue(tidx_key, (LPVOID) (tidx + 1));
   #else
   pthread_setspecific(tidx_key, (void*) (size_t) (tidx + 1));
@@ -148,7 +148,7 @@ void yr_set_tidx(int tidx)
 
 int yr_get_tidx(void)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   return (int) TlsGetValue(tidx_key) - 1;
   #else
   return (int) (size_t) pthread_getspecific(tidx_key) - 1;

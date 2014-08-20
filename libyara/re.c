@@ -30,7 +30,7 @@ order to avoid confusion with operating system threads.
 #include <string.h>
 #include <limits.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #else
 #include <pthread.h>
@@ -86,7 +86,7 @@ typedef struct _RE_THREAD_STORAGE
 } RE_THREAD_STORAGE;
 
 
-#ifdef WIN32
+#ifdef _WIN32
 DWORD thread_storage_key;
 #else
 pthread_key_t thread_storage_key;
@@ -101,7 +101,7 @@ pthread_key_t thread_storage_key;
 
 int yr_re_initialize(void)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   thread_storage_key = TlsAlloc();
   #else
   pthread_key_create(&thread_storage_key, NULL);
@@ -119,7 +119,7 @@ int yr_re_initialize(void)
 
 int yr_re_finalize(void)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   TlsFree(thread_storage_key);
   #else
   pthread_key_delete(thread_storage_key);
@@ -141,7 +141,7 @@ int yr_re_finalize_thread(void)
   RE_FIBER* next_fiber;
   RE_THREAD_STORAGE* storage;
 
-  #ifdef WIN32
+  #ifdef _WIN32
   storage = TlsGetValue(thread_storage_key);
   #else
   storage = pthread_getspecific(thread_storage_key);
@@ -161,7 +161,7 @@ int yr_re_finalize_thread(void)
     yr_free(storage);
   }
 
-  #ifdef WIN32
+  #ifdef _WIN32
   TlsSetValue(thread_storage_key, NULL);
   #else
   pthread_setspecific(thread_storage_key, NULL);
@@ -1104,7 +1104,7 @@ int yr_re_emit_code(
 int _yr_re_alloc_storage(
     RE_THREAD_STORAGE** storage)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   *storage = TlsGetValue(thread_storage_key);
   #else
   *storage = pthread_getspecific(thread_storage_key);
@@ -1120,7 +1120,7 @@ int _yr_re_alloc_storage(
     (*storage)->fiber_pool.head = NULL;
     (*storage)->fiber_pool.tail = NULL;
 
-    #ifdef WIN32
+    #ifdef _WIN32
     TlsSetValue(thread_storage_key, *storage);
     #else
     pthread_setspecific(thread_storage_key, *storage);

@@ -18,7 +18,7 @@ limitations under the License.
 #ifndef YR_THREADING_H
 #define YR_THREADING_H
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #else
 #include <sys/stat.h>
@@ -26,7 +26,7 @@ limitations under the License.
 #include <semaphore.h>
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 
 typedef HANDLE SEMAPHORE;
 typedef HANDLE MUTEX;
