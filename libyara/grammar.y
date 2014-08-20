@@ -760,6 +760,9 @@ arguments_list
             case EXPRESSION_TYPE_STRING:
               strcat($1, "s");
               break;
+            case EXPRESSION_TYPE_REGEXP:
+              strcat($1, "r");
+              break;
           }
         }
 
