@@ -784,6 +784,13 @@ char* yr_compiler_get_error_message(
           buffer_size,
           "'for <quantifier> of <string set>' loops can't be nested");
       break;
+    case ERROR_UNKNOWN_MODULE:
+      snprintf(
+          buffer,
+          buffer_size,
+          "unknown module \"%s\"",
+          compiler->last_error_extra_info);
+      break;
     case ERROR_INTERNAL_FATAL_ERROR:
       snprintf(
           buffer,

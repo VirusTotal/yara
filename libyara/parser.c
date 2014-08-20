@@ -856,9 +856,14 @@ int yr_parser_reduce_import(
         module_structure);
 
   if (compiler->last_result == ERROR_SUCCESS)
+  {
     compiler->last_result = yr_modules_do_declarations(
         module_name->c_string,
         module_structure);
+
+    if (compiler->last_result == ERROR_UNKNOWN_MODULE)
+      yr_compiler_set_error_extra_info(compiler, module_name->c_string);
+  }
 
   if (compiler->last_result == ERROR_SUCCESS)
     compiler->last_result = yr_arena_write_string(
