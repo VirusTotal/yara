@@ -18,6 +18,7 @@ limitations under the License.
 #include <stdio.h>
 #include <ctype.h>
 
+#include <yara/error.h>
 #include <yara/mem.h>
 #include <yara/re.h>
 #include <yara/modules.h>
@@ -49,7 +50,7 @@ char altercase[256];
 // function from libyara.
 //
 
-void yr_initialize(void)
+int yr_initialize(void)
 {
   int i;
 
@@ -65,7 +66,7 @@ void yr_initialize(void)
     lowercase[i] = tolower(i);
   }
 
-  yr_heap_alloc();
+  FAIL_ON_ERROR(yr_heap_alloc());
 
   #ifdef _WIN32
   tidx_key = TlsAlloc();
@@ -75,8 +76,10 @@ void yr_initialize(void)
   pthread_key_create(&recovery_state_key, NULL);
   #endif
 
-  yr_re_initialize();
-  yr_modules_initialize();
+  FAIL_ON_ERROR(yr_re_initialize());
+  FAIL_ON_ERROR(yr_modules_initialize());
+
+  return ERROR_SUCCESS;
 }
 
 
@@ -100,7 +103,7 @@ void yr_finalize_thread(void)
 // calls it.
 //
 
-void yr_finalize(void)
+int yr_finalize(void)
 {
   yr_re_finalize_thread();
 
@@ -112,9 +115,11 @@ void yr_finalize(void)
   pthread_key_delete(recovery_state_key);
   #endif
 
-  yr_re_finalize();
-  yr_modules_finalize();
-  yr_heap_free();
+  FAIL_ON_ERROR(yr_re_finalize());
+  FAIL_ON_ERROR(yr_modules_finalize());
+  FAIL_ON_ERROR(yr_heap_free());
+
+  return ERROR_SUCCESS;
 }
 
 //

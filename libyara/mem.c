@@ -14,22 +14,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+
+
 #ifdef _WIN32
 
 #include <windows.h>
 #include <string.h>
 
+#include <yara/error.h>
+
 static HANDLE hHeap;
 
-void yr_heap_alloc()
+int yr_heap_alloc()
 {
   hHeap = HeapCreate(0, 0x8000, 0);
+
+  if (hHeap == NULL)
+    return ERROR_INTERNAL_FATAL_ERROR;
+
+  return ERROR_SUCCESS;
 }
 
 
-void yr_heap_free()
+int yr_heap_free()
 {
-  HeapDestroy(hHeap);
+  if (HeapDestroy(hHeap))
+    return ERROR_SUCCESS;
+  else
+    return ERROR_INTERNAL_FATAL_ERROR;
 }
 
 
@@ -68,16 +80,17 @@ char* yr_strdup(const char *str)
 #include <string.h>
 #include <stdio.h>
 
+#include <yara/error.h>
 
-void yr_heap_alloc()
+int yr_heap_alloc()
 {
-  return;
+  return ERROR_SUCCESS;
 }
 
 
-void yr_heap_free()
+int yr_heap_free()
 {
-  return;
+  return ERROR_SUCCESS;
 }
 
 

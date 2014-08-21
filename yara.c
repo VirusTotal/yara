@@ -945,7 +945,14 @@ int main(
     return EXIT_FAILURE;
   }
 
-  yr_initialize();
+  result = yr_initialize();
+
+  if (result != ERROR_SUCCESS)
+  {
+    fprintf(stderr, "initialization error: %d\n", result);
+    cleanup();
+    return EXIT_FAILURE;
+  }
 
   result = yr_rules_load(argv[optind], &rules);
 

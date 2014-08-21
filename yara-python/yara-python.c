@@ -1509,7 +1509,11 @@ MOD_INIT(yara)
   PyModule_AddObject(m, "TimeoutError", YaraTimeoutError);
   PyModule_AddObject(m, "WarningError", YaraWarningError);
 
-  yr_initialize();
+  if (yr_initialize() == ERROR_SUCCESS)
+  {
+    PyErr_SetString(YareError, "initialization error");
+    return MOD_ERROR_VAL;
+  }
 
   Py_AtExit(yr_finalize);
 

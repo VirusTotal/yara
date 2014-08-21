@@ -47,9 +47,9 @@ char* yr_strdup(
 
 #endif
 
-void yr_heap_alloc();
+int yr_heap_alloc();
 
-void yr_heap_free();
+int yr_heap_free();
 
 #endif
 

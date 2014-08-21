@@ -17,10 +17,10 @@ limitations under the License.
 #ifndef YR_LIBYARA_H
 #define YR_LIBYARA_H
 
-void yr_initialize(void);
+int yr_initialize(void);
 
 
-void yr_finalize(void);
+int yr_finalize(void);
 
 
 void yr_finalize_thread(void);

@@ -171,7 +171,10 @@ int main(
   YR_RULES* rules;
   FILE* rule_file;
 
-  yr_initialize();
+  result = yr_initialize();
+
+  if (result != ERROR_SUCCESS)
+    return EXIT_FAILURE;
 
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
   {
