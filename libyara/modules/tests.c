@@ -51,29 +51,45 @@ begin_declarations;
 end_declarations;
 
 
+int module_initialize(
+    YR_MODULE* module)
+{
+  return ERROR_SUCCESS;
+}
+
+
+int module_finalize(
+    YR_MODULE* module)
+{
+  return ERROR_SUCCESS;
+}
+
 int module_load(
     YR_SCAN_CONTEXT* context,
-    YR_OBJECT* module, void* module_data, size_t module_data_size)
+    YR_OBJECT* module_object,
+    void* module_data,
+    size_t module_data_size)
 {
-  set_integer(1, module, "constants.one");
-  set_integer(2, module, "constants.two");
-  set_string("foo", module, "constants.foo");
+  set_integer(1, module_object, "constants.one");
+  set_integer(2, module_object, "constants.two");
+  set_string("foo", module_object, "constants.foo");
 
-  set_integer(1, module, "struct_array[1].i");
+  set_integer(1, module_object, "struct_array[1].i");
 
-  set_integer(0, module, "integer_array[%i]", 0);
-  set_integer(1, module, "integer_array[%i]", 1);
-  set_integer(2, module, "integer_array[%i]", 2);
+  set_integer(0, module_object, "integer_array[%i]", 0);
+  set_integer(1, module_object, "integer_array[%i]", 1);
+  set_integer(2, module_object, "integer_array[%i]", 2);
 
-  set_string("foo", module, "string_array[%i]", 0);
-  set_string("bar", module, "string_array[%i]", 1);
-  set_string("baz", module, "string_array[%i]", 2);
+  set_string("foo", module_object, "string_array[%i]", 0);
+  set_string("bar", module_object, "string_array[%i]", 1);
+  set_string("baz", module_object, "string_array[%i]", 2);
 
   return ERROR_SUCCESS;
 }
 
 
-int module_unload(YR_OBJECT* module)
+int module_unload(
+    YR_OBJECT* module_object)
 {
   return ERROR_SUCCESS;
 }

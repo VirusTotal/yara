@@ -20,6 +20,7 @@ limitations under the License.
 
 #include <yara/mem.h>
 #include <yara/re.h>
+#include <yara/modules.h>
 
 
 #ifdef _WIN32
@@ -75,6 +76,7 @@ void yr_initialize(void)
   #endif
 
   yr_re_initialize();
+  yr_modules_initialize();
 }
 
 
@@ -111,6 +113,7 @@ void yr_finalize(void)
   #endif
 
   yr_re_finalize();
+  yr_modules_finalize();
   yr_heap_free();
 }
 

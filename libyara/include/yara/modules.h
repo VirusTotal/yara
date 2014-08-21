@@ -27,6 +27,7 @@ limitations under the License.
 #include <yara/exec.h>
 #include <yara/types.h>
 #include <yara/object.h>
+#include <yara/libyara.h>
 
 // Concatenation that macro-expands its arguments.
 
@@ -34,10 +35,11 @@ limitations under the License.
 #define _CONCAT(arg1, arg2) arg1 ## arg2       // do the actual concatenation.
 
 
-#define module_declarations CONCAT(MODULE_NAME, _declarations)
-#define module_load CONCAT(MODULE_NAME, _load)
-#define module_unload CONCAT(MODULE_NAME, _unload)
-
+#define module_declarations CONCAT(MODULE_NAME, __declarations)
+#define module_load CONCAT(MODULE_NAME, __load)
+#define module_unload CONCAT(MODULE_NAME, __unload)
+#define module_initialize CONCAT(MODULE_NAME, __initialize)
+#define module_finalize CONCAT(MODULE_NAME, __finalize)
 
 #define begin_declarations \
     int module_declarations(YR_OBJECT* module) { \
@@ -227,20 +229,30 @@ limitations under the License.
     }
 
 
-typedef int (*YR_EXT_DECLARATIONS_FUNC)( \
-    YR_OBJECT* module);
+struct _YR_MODULE;
 
 
-typedef int (*YR_EXT_LOAD_FUNC)( \
+typedef int (*YR_EXT_INITIALIZE_FUNC)(
+    struct _YR_MODULE* module);
+
+
+typedef int (*YR_EXT_FINALIZE_FUNC)(
+    struct _YR_MODULE* module);
+
+
+typedef int (*YR_EXT_DECLARATIONS_FUNC)(
+    YR_OBJECT* module_object);
+
+
+typedef int (*YR_EXT_LOAD_FUNC)(
     YR_SCAN_CONTEXT* context,
-    YR_OBJECT* module,
+    YR_OBJECT* module_object,
     void* module_data,
     size_t module_data_size);
 
 
-
-typedef int (*YR_EXT_UNLOAD_FUNC)( \
-    YR_OBJECT* module);
+typedef int (*YR_EXT_UNLOAD_FUNC)(
+    YR_OBJECT* module_object);
 
 
 typedef struct _YR_MODULE
@@ -252,6 +264,8 @@ typedef struct _YR_MODULE
   YR_EXT_DECLARATIONS_FUNC declarations;
   YR_EXT_LOAD_FUNC load;
   YR_EXT_UNLOAD_FUNC unload;
+  YR_EXT_INITIALIZE_FUNC initialize;
+  YR_EXT_FINALIZE_FUNC finalize;
 
 } YR_MODULE;
 
@@ -264,6 +278,11 @@ typedef struct _YR_MODULE_IMPORT
 
 } YR_MODULE_IMPORT;
 
+
+int yr_modules_initialize();
+
+
+int yr_modules_finalize();
 
 
 int yr_modules_do_declarations(

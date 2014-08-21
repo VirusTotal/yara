@@ -214,9 +214,23 @@ begin_declarations;
 end_declarations;
 
 
+int module_initialize(
+    YR_MODULE* module)
+{
+  return ERROR_SUCCESS;
+}
+
+
+int module_finalize(
+    YR_MODULE* module)
+{
+  return ERROR_SUCCESS;
+}
+
+
 int module_load(
     YR_SCAN_CONTEXT* context,
-    YR_OBJECT* module,
+    YR_OBJECT* module_object,
     void* module_data,
     size_t module_data_size)
 {
@@ -242,12 +256,12 @@ int module_load(
   if (json == NULL)
     return ERROR_INVALID_FILE;
 
-  module->data = (void*) json;
+  module_object->data = (void*) json;
 
-  network_obj = get_object(module, "network");
-  registry_obj = get_object(module, "registry");
-  filesystem_obj = get_object(module, "filesystem");
-  sync_obj = get_object(module, "sync");
+  network_obj = get_object(module_object, "network");
+  registry_obj = get_object(module_object, "registry");
+  filesystem_obj = get_object(module_object, "filesystem");
+  sync_obj = get_object(module_object, "sync");
 
   network_obj->data = (void*) json_object_get(json, "network");
 

@@ -576,9 +576,23 @@ begin_declarations;
 end_declarations;
 
 
+int module_initialize(
+    YR_MODULE* module)
+{
+  return ERROR_SUCCESS;
+}
+
+
+int module_finalize(
+    YR_MODULE* module)
+{
+  return ERROR_SUCCESS;
+}
+
+
 int module_load(
     YR_SCAN_CONTEXT* context,
-    YR_OBJECT* module,
+    YR_OBJECT* module_object,
     void* module_data,
     size_t module_data_size)
 {
@@ -590,55 +604,79 @@ int module_load(
   size_t pe_size;
 
   set_integer(
-      IMAGE_FILE_MACHINE_I386, module, "MACHINE_I386");
+      IMAGE_FILE_MACHINE_I386, module_object,
+      "MACHINE_I386");
   set_integer(
-      IMAGE_FILE_MACHINE_AMD64, module, "MACHINE_AMD64");
+      IMAGE_FILE_MACHINE_AMD64, module_object,
+      "MACHINE_AMD64");
 
   set_integer(
-      IMAGE_SUBSYSTEM_UNKNOWN, module, "SUBSYSTEM_UNKNOWN");
+      IMAGE_SUBSYSTEM_UNKNOWN, module_object,
+      "SUBSYSTEM_UNKNOWN");
   set_integer(
-      IMAGE_SUBSYSTEM_NATIVE, module, "SUBSYSTEM_NATIVE");
+      IMAGE_SUBSYSTEM_NATIVE, module_object,
+      "SUBSYSTEM_NATIVE");
   set_integer(
-      IMAGE_SUBSYSTEM_WINDOWS_GUI, module, "SUBSYSTEM_WINDOWS_GUI");
+      IMAGE_SUBSYSTEM_WINDOWS_GUI, module_object,
+      "SUBSYSTEM_WINDOWS_GUI");
   set_integer(
-      IMAGE_SUBSYSTEM_WINDOWS_CUI, module, "SUBSYSTEM_WINDOWS_CUI");
+      IMAGE_SUBSYSTEM_WINDOWS_CUI, module_object,
+      "SUBSYSTEM_WINDOWS_CUI");
   set_integer(
-      IMAGE_SUBSYSTEM_OS2_CUI, module, "SUBSYSTEM_OS2_CUI");
+      IMAGE_SUBSYSTEM_OS2_CUI, module_object,
+      "SUBSYSTEM_OS2_CUI");
   set_integer(
-      IMAGE_SUBSYSTEM_POSIX_CUI, module, "SUBSYSTEM_POSIX_CUI");
+      IMAGE_SUBSYSTEM_POSIX_CUI, module_object,
+      "SUBSYSTEM_POSIX_CUI");
   set_integer(
-      IMAGE_SUBSYSTEM_NATIVE_WINDOWS, module, "SUBSYSTEM_NATIVE_WINDOWS");
+      IMAGE_SUBSYSTEM_NATIVE_WINDOWS, module_object,
+      "SUBSYSTEM_NATIVE_WINDOWS");
 
   set_integer(
-      IMAGE_FILE_RELOCS_STRIPPED, module, "RELOCS_STRIPPED");
+      IMAGE_FILE_RELOCS_STRIPPED, module_object,
+      "RELOCS_STRIPPED");
   set_integer(
-      IMAGE_FILE_EXECUTABLE_IMAGE, module, "EXECUTABLE_IMAGE");
+      IMAGE_FILE_EXECUTABLE_IMAGE, module_object,
+      "EXECUTABLE_IMAGE");
   set_integer(
-      IMAGE_FILE_LINE_NUMS_STRIPPED, module, "LINE_NUMS_STRIPPED");
+      IMAGE_FILE_LINE_NUMS_STRIPPED, module_object,
+      "LINE_NUMS_STRIPPED");
   set_integer(
-      IMAGE_FILE_LOCAL_SYMS_STRIPPED, module, "LOCAL_SYMS_STRIPPED");
+      IMAGE_FILE_LOCAL_SYMS_STRIPPED, module_object,
+      "LOCAL_SYMS_STRIPPED");
   set_integer(
-      IMAGE_FILE_AGGRESIVE_WS_TRIM, module, "AGGRESIVE_WS_TRIM");
+      IMAGE_FILE_AGGRESIVE_WS_TRIM, module_object,
+      "AGGRESIVE_WS_TRIM");
   set_integer(
-      IMAGE_FILE_LARGE_ADDRESS_AWARE, module, "LARGE_ADDRESS_AWARE");
+      IMAGE_FILE_LARGE_ADDRESS_AWARE, module_object,
+      "LARGE_ADDRESS_AWARE");
   set_integer(
-      IMAGE_FILE_BYTES_REVERSED_LO, module, "BYTES_REVERSED_LO");
+      IMAGE_FILE_BYTES_REVERSED_LO, module_object,
+      "BYTES_REVERSED_LO");
   set_integer(
-      IMAGE_FILE_32BIT_MACHINE, module, "32BIT_MACHINE");
+      IMAGE_FILE_32BIT_MACHINE, module_object,
+      "32BIT_MACHINE");
   set_integer(
-      IMAGE_FILE_DEBUG_STRIPPED, module, "DEBUG_STRIPPED");
+      IMAGE_FILE_DEBUG_STRIPPED, module_object,
+      "DEBUG_STRIPPED");
   set_integer(
-      IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP, module, "REMOVABLE_RUN_FROM_SWAP");
+      IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP, module_object,
+      "REMOVABLE_RUN_FROM_SWAP");
   set_integer(
-      IMAGE_FILE_NET_RUN_FROM_SWAP, module, "NET_RUN_FROM_SWAP");
+      IMAGE_FILE_NET_RUN_FROM_SWAP, module_object,
+      "NET_RUN_FROM_SWAP");
   set_integer(
-      IMAGE_FILE_SYSTEM, module, "SYSTEM");
+      IMAGE_FILE_SYSTEM, module_object,
+      "SYSTEM");
   set_integer(
-      IMAGE_FILE_DLL, module, "DLL");
+      IMAGE_FILE_DLL, module_object,
+      "DLL");
   set_integer(
-      IMAGE_FILE_UP_SYSTEM_ONLY, module, "UP_SYSTEM_ONLY");
+      IMAGE_FILE_UP_SYSTEM_ONLY, module_object,
+      "UP_SYSTEM_ONLY");
   set_integer(
-      IMAGE_FILE_BYTES_REVERSED_HI, module, "BYTES_REVERSED_HI");
+      IMAGE_FILE_BYTES_REVERSED_HI, module_object,
+      "BYTES_REVERSED_HI");
 
   foreach_memory_block(context, block)
   {
@@ -658,7 +696,7 @@ int module_load(
             block->base,
             pe_size,
             context->flags,
-            module);
+            module_object);
 
         data = (DATA*) yr_malloc(sizeof(DATA));
 
@@ -670,7 +708,7 @@ int module_load(
         data->pe_header = pe_header;
         data->pe_size = pe_size;
 
-        module->data = data;
+        module_object->data = data;
         break;
       }
     }
@@ -680,10 +718,10 @@ int module_load(
 }
 
 
-int module_unload(YR_OBJECT* module)
+int module_unload(YR_OBJECT* module_object)
 {
-  if (module->data != NULL)
-    yr_free(module->data);
+  if (module_object->data != NULL)
+    yr_free(module_object->data);
 
   return ERROR_SUCCESS;
 }

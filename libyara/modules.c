@@ -23,12 +23,14 @@ limitations under the License.
 
 
 #define MODULE(name) \
-    int name ## _declarations(YR_OBJECT* module); \
-    int name ## _load(YR_SCAN_CONTEXT* context, \
-                      YR_OBJECT* module, \
-                      void* module_data, \
-                      size_t module_data_size); \
-    int name ## _unload(YR_OBJECT* main_structure);
+    int name ## __declarations(YR_OBJECT* module); \
+    int name ## __load(YR_SCAN_CONTEXT* context, \
+                       YR_OBJECT* module, \
+                       void* module_data, \
+                       size_t module_data_size); \
+    int name ## __unload(YR_OBJECT* main_structure); \
+    int name ## __initialize(YR_MODULE* module); \
+    int name ## __finalize(YR_MODULE* module);
 
 
 #include <modules/module_list>
@@ -37,7 +39,14 @@ limitations under the License.
 
 
 #define MODULE(name) \
-    {0, #name, name##_declarations, name##_load, name##_unload},
+    { 0, \
+      #name, \
+      name##__declarations, \
+      name##__load, \
+      name##__unload, \
+      name##__initialize, \
+      name##__finalize \
+    },
 
 YR_MODULE yr_modules_table[] =
 {
@@ -45,6 +54,38 @@ YR_MODULE yr_modules_table[] =
 };
 
 #undef MODULE
+
+
+int yr_modules_initialize()
+{
+  int i, result;
+
+  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  {
+    result = yr_modules_table[i].initialize(&yr_modules_table[i]);
+
+    if (result != ERROR_SUCCESS)
+      return result;
+  }
+
+  return ERROR_SUCCESS;
+}
+
+
+int yr_modules_finalize()
+{
+  int i, result;
+
+  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  {
+    result = yr_modules_table[i].finalize(&yr_modules_table[i]);
+
+    if (result != ERROR_SUCCESS)
+      return result;
+  }
+
+  return ERROR_SUCCESS;
+}
 
 
 int yr_modules_do_declarations(
