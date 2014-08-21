@@ -1439,6 +1439,12 @@ static PyObject * yara_load(
 }
 
 
+void finalize(void)
+{
+  yr_finalize();
+}
+
+
 static PyMethodDef yara_methods[] = {
   {
     "compile",
@@ -1509,13 +1515,13 @@ MOD_INIT(yara)
   PyModule_AddObject(m, "TimeoutError", YaraTimeoutError);
   PyModule_AddObject(m, "WarningError", YaraWarningError);
 
-  if (yr_initialize() == ERROR_SUCCESS)
+  if (yr_initialize() != ERROR_SUCCESS)
   {
-    PyErr_SetString(YareError, "initialization error");
+    PyErr_SetString(YaraError, "initialization error");
     return MOD_ERROR_VAL;
   }
 
-  Py_AtExit(yr_finalize);
+  Py_AtExit(finalize);
 
   return MOD_SUCCESS_VAL(m);
 }
