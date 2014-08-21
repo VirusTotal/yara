@@ -44,6 +44,12 @@ To build and install the ``yara-python`` extension::
     ``yara-python`` depends on the ``libyara`` library which gets installed
     with YARA, so don't proceed to build ``yara-python`` without previously installing YARA as described above.
 
+Installing on OSX with Homebrew
+===============================
+
+To install Yara using `Homebrew <http://brew.sh>`_ simply type ``brew install yara``. 
+You may also need to install yara-python using ``sudo pip install yara``. 
+
 Running YARA for the first time
 ===============================
 
