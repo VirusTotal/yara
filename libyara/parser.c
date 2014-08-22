@@ -175,21 +175,35 @@ int yr_parser_check_types(
 
   i = 0;
 
-  while (*expected != '\0' && actual != '\0')
+  while (*expected != '\0' || *actual != '\0')
   {
     i++;
 
     if (*expected != *actual)
     {
-      snprintf(
-          message,
-          sizeof(message),
-          "wrong type for argument %i of \"%s\"",
-          i,
-          function->identifier);
+      if (*expected == '\0' || *actual == '\0')
+      {
+        snprintf(
+            message,
+            sizeof(message),
+            "wrong number of arguments for \"%s\"",
+            function->identifier);
+
+        compiler->last_result = ERROR_WRONG_NUMBER_OF_ARGUMENTS;
+      }
+      else
+      {
+        snprintf(
+            message,
+            sizeof(message),
+            "wrong type for argument %i of \"%s\"",
+            i,
+            function->identifier);
+
+        compiler->last_result = ERROR_WRONG_TYPE;
+      }
 
       yr_compiler_set_error_extra_info(compiler, message);
-      compiler->last_result = ERROR_WRONG_TYPE;
       break;
     }
 

@@ -59,6 +59,7 @@ limitations under the License.
 #define ERROR_NOT_A_FUNCTION                    37
 #define ERROR_INVALID_FORMAT                    38
 #define ERROR_TOO_MANY_ARGUMENTS                39
+#define ERROR_WRONG_NUMBER_OF_ARGUMENTS         40
 
 
 #define FAIL_ON_ERROR(x) { \

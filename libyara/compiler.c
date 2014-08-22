@@ -720,13 +720,6 @@ char* yr_compiler_get_error_message(
           "unreferenced string \"%s\"",
           compiler->last_error_extra_info);
       break;
-    case ERROR_WRONG_TYPE:
-      snprintf(
-          buffer,
-          buffer_size,
-          "%s",
-          compiler->last_error_extra_info);
-      break;
     case ERROR_NOT_A_STRUCTURE:
       snprintf(
           buffer,
@@ -754,15 +747,6 @@ char* yr_compiler_get_error_message(
           buffer_size,
           "wrong use of anonymous string");
       break;
-    case ERROR_INVALID_HEX_STRING:
-    case ERROR_INVALID_REGULAR_EXPRESSION:
-    case ERROR_SYNTAX_ERROR:
-      snprintf(
-          buffer,
-          buffer_size,
-          "%s",
-          compiler->last_error_extra_info);
-      break;
     case ERROR_INCLUDES_CIRCULAR_REFERENCE:
       snprintf(
           buffer,
@@ -789,6 +773,17 @@ char* yr_compiler_get_error_message(
           buffer,
           buffer_size,
           "unknown module \"%s\"",
+          compiler->last_error_extra_info);
+      break;
+    case ERROR_INVALID_HEX_STRING:
+    case ERROR_INVALID_REGULAR_EXPRESSION:
+    case ERROR_SYNTAX_ERROR:
+    case ERROR_WRONG_TYPE:
+    case ERROR_WRONG_NUMBER_OF_ARGUMENTS:
+      snprintf(
+          buffer,
+          buffer_size,
+          "%s",
           compiler->last_error_extra_info);
       break;
     case ERROR_INTERNAL_FATAL_ERROR:
