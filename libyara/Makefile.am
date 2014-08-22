@@ -6,6 +6,10 @@ if CUCKOO
 MODULES += modules/cuckoo.c
 endif
 
+if MAGIC
+MODULES += modules/magic.c
+endif
+
 #
 # Add your modules here:
 #

@@ -31,10 +31,20 @@ AC_ARG_ENABLE([cuckoo],
   [if test x$enableval = xyes; then
     cuckoo=true
     AC_CHECK_LIB(jansson, json_loadb,, AC_MSG_ERROR(please install Jansson library))
-    AC_DEFINE([CUCKOO], [1], [enable cuckoo])
+    AC_DEFINE([CUCKOO], [1], [enable cuckoo module])
+  fi])
+
+AC_ARG_ENABLE([magic],
+  [AS_HELP_STRING([--enable-magic], [enable magic module])],
+  [if test x$enableval = xyes; then
+    magic=true
+    AC_CHECK_LIB(magic, magic_open,, AC_MSG_ERROR(please install libmagic library))
+    AC_DEFINE([MAGIC], [1], [enable magic module])
   fi])
 
 AM_CONDITIONAL([CUCKOO], [test x$cuckoo = xtrue])
+
+AM_CONDITIONAL([MAGIC], [test x$magic = xtrue])
 
 AC_CHECK_LIB(pthread, pthread_create)
 

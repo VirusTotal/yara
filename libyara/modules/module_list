@@ -4,3 +4,7 @@ MODULE(pe)
 #ifdef CUCKOO
 MODULE(cuckoo)
 #endif
+
+#ifdef MAGIC
+MODULE(magic)
+#endif
