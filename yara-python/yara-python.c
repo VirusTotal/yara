@@ -624,11 +624,6 @@ PyObject* handle_error(
           YaraError,
           "could not map file \"%s\" into memory",
           extra);
-    case ERROR_ZERO_LENGTH_FILE:
-      return PyErr_Format(
-          YaraError,
-          "zero length file \"%s\"",
-          extra);
     case ERROR_INVALID_FILE:
       return PyErr_Format(
           YaraError,

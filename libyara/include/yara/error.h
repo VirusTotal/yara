@@ -25,7 +25,6 @@ limitations under the License.
 #define ERROR_COULD_NOT_ATTACH_TO_PROCESS       2
 #define ERROR_COULD_NOT_OPEN_FILE               3
 #define ERROR_COULD_NOT_MAP_FILE                4
-#define ERROR_ZERO_LENGTH_FILE                  5
 #define ERROR_INVALID_FILE                      6
 #define ERROR_CORRUPT_FILE                      7
 #define ERROR_UNSUPPORTED_FILE_VERSION          8

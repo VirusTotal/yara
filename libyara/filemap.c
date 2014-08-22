@@ -69,38 +69,40 @@ int yr_filemap_map(
     return ERROR_COULD_NOT_OPEN_FILE;
   }
 
-  if (pmapped_file->size == 0)
+  if (pmapped_file->size != 0)
   {
-    CloseHandle(pmapped_file->file);
-    return ERROR_ZERO_LENGTH_FILE;
+    pmapped_file->mapping = CreateFileMapping(
+        pmapped_file->file,
+        NULL,
+        PAGE_READONLY,
+        0,
+        0,
+        NULL);
+
+    if (pmapped_file->mapping == NULL)
+    {
+      CloseHandle(pmapped_file->file);
+      return ERROR_COULD_NOT_MAP_FILE;
+    }
+
+    pmapped_file->data = (uint8_t*) MapViewOfFile(
+        pmapped_file->mapping,
+        FILE_MAP_READ,
+        0,
+        0,
+        0);
+
+    if (pmapped_file->data == NULL)
+    {
+      CloseHandle(pmapped_file->mapping);
+      CloseHandle(pmapped_file->file);
+      return ERROR_COULD_NOT_MAP_FILE;
+    }
   }
-
-  pmapped_file->mapping = CreateFileMapping(
-      pmapped_file->file,
-      NULL,
-      PAGE_READONLY,
-      0,
-      0,
-      NULL);
-
-  if (pmapped_file->mapping == NULL)
+  else
   {
-    CloseHandle(pmapped_file->file);
-    return ERROR_COULD_NOT_MAP_FILE;
-  }
-
-  pmapped_file->data = (uint8_t*) MapViewOfFile(
-      pmapped_file->mapping,
-      FILE_MAP_READ,
-      0,
-      0,
-      0);
-
-  if (pmapped_file->data == NULL)
-  {
-    CloseHandle(pmapped_file->mapping);
-    CloseHandle(pmapped_file->file);
-    return ERROR_COULD_NOT_MAP_FILE;
+    pmapped_file->mapping = NULL;
+    pmapped_file->data = NULL;
   }
 
   return ERROR_SUCCESS;
@@ -109,8 +111,12 @@ int yr_filemap_map(
 void yr_filemap_unmap(
     YR_MAPPED_FILE* pmapped_file)
 {
-  UnmapViewOfFile(pmapped_file->data);
-  CloseHandle(pmapped_file->mapping);
+  if (pmapped_file->data != NULL)
+    UnmapViewOfFile(pmapped_file->data);
+
+  if (pmapped_file->mapping != NULL)
+    CloseHandle(pmapped_file->mapping);
+
   CloseHandle(pmapped_file->file);
 }
 
@@ -139,24 +145,25 @@ int yr_filemap_map(
 
   pmapped_file->size = fstat.st_size;
 
-  if (pmapped_file->size == 0)
+  if (pmapped_file->size != 0)
   {
-    close(pmapped_file->file);
-    return ERROR_ZERO_LENGTH_FILE;
+    pmapped_file->data = (uint8_t*) mmap(
+        0,
+        pmapped_file->size,
+        PROT_READ,
+        MAP_PRIVATE,
+        pmapped_file->file,
+        0);
+
+    if (pmapped_file->data == MAP_FAILED)
+    {
+      close(pmapped_file->file);
+      return ERROR_COULD_NOT_MAP_FILE;
+    }
   }
-
-  pmapped_file->data = (uint8_t*) mmap(
-      0,
-      pmapped_file->size,
-      PROT_READ,
-      MAP_PRIVATE,
-      pmapped_file->file,
-      0);
-
-  if (pmapped_file->data == MAP_FAILED)
+  else
   {
-    close(pmapped_file->file);
-    return ERROR_COULD_NOT_MAP_FILE;
+    pmapped_file->data = NULL;
   }
 
   return ERROR_SUCCESS;
@@ -165,7 +172,9 @@ int yr_filemap_map(
 void yr_filemap_unmap(
     YR_MAPPED_FILE* pmapped_file)
 {
-  munmap(pmapped_file->data, pmapped_file->size);
+  if (pmapped_file->data != NULL)
+    munmap(pmapped_file->data, pmapped_file->size);
+
   close(pmapped_file->file);
 }
 

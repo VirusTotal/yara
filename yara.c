@@ -410,9 +410,6 @@ void print_scanner_error(int error)
     case ERROR_COULD_NOT_OPEN_FILE:
       fprintf(stderr, "could not open file\n");
       break;
-    case ERROR_ZERO_LENGTH_FILE:
-      fprintf(stderr, "zero length file\n");
-      break;
     case ERROR_UNSUPPORTED_FILE_VERSION:
       fprintf(stderr, "rules were compiled with a newer version of YARA.\n");
       break;
