@@ -221,8 +221,9 @@ limitations under the License.
       assertf( \
           __function_obj->return_obj->type == OBJECT_TYPE_STRING, \
           "return type differs from function declaration"); \
+      char* s = (char*) (string); \
       yr_object_set_string( \
-          ((string) != (void*) UNDEFINED) ? (string) : NULL, \
+          (s != (char*) UNDEFINED) ? s : NULL, \
           __function_obj->return_obj, \
           NULL); \
       return ERROR_SUCCESS; \
