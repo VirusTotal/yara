@@ -719,7 +719,11 @@ identifier
 
 
 arguments_list
-    : expression
+    : /* empty */
+      {
+        $$ = yr_strdup("");
+      }
+    | expression
       {
         $$ = yr_malloc(MAX_FUNCTION_ARGS + 1);
 
