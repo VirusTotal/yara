@@ -222,7 +222,7 @@ limitations under the License.
           __function_obj->return_obj->type == OBJECT_TYPE_STRING, \
           "return type differs from function declaration"); \
       yr_object_set_string( \
-          ((string) != UNDEFINED) ? (string) : NULL, \
+          ((string) != (void*) UNDEFINED) ? (string) : NULL, \
           __function_obj->return_obj, \
           NULL); \
       return ERROR_SUCCESS; \
@@ -279,10 +279,10 @@ typedef struct _YR_MODULE_IMPORT
 } YR_MODULE_IMPORT;
 
 
-int yr_modules_initialize();
+int yr_modules_initialize(void);
 
 
-int yr_modules_finalize();
+int yr_modules_finalize(void);
 
 
 int yr_modules_do_declarations(
