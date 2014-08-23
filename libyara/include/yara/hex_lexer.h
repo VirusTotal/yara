@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 #include <yara/re.h>
-#include <hex_grammar.h>
 
 #undef yyparse
 #undef yylex
@@ -63,6 +62,8 @@ typedef struct _HEX_LEX_ENVIRONMENT
 #define YY_FATAL_ERROR(msg) hex_yyfatal(yyscanner, msg)
 
 #define LEX_ENV  ((HEX_LEX_ENVIRONMENT*) lex_env)
+
+#include <hex_grammar.h>
 
 #define YY_DECL int hex_yylex \
     (YYSTYPE * yylval_param , yyscan_t yyscanner, HEX_LEX_ENVIRONMENT* lex_env)

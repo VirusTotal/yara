@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <re_grammar.h>
-
 #undef yyparse
 #undef yylex
 #undef yyerror
@@ -64,6 +62,8 @@ typedef struct _RE_LEX_ENVIRONMENT
 #define LEX_ENV  ((RE_LEX_ENVIRONMENT*) lex_env)
 
 #define YY_FATAL_ERROR(msg) re_yyfatal(yyscanner, msg)
+
+#include <re_grammar.h>
 
 #define YY_DECL int re_yylex \
     (YYSTYPE * yylval_param , yyscan_t yyscanner, RE_LEX_ENVIRONMENT* lex_env)
