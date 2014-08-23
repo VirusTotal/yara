@@ -193,7 +193,7 @@ define_function(sync_mutex)
 begin_declarations;
 
   begin_struct("network");
-    declare_function("dns_lookup", "s", "i", network_dns_lookup);
+    declare_function("dns_lookup", "r", "i", network_dns_lookup);
     declare_function("http_get", "r", "i", network_http_get);
     declare_function("http_post", "r", "i", network_http_post);
     declare_function("http_request", "r", "i", network_http_request);
