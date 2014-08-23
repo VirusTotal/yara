@@ -32,14 +32,8 @@ limitations under the License.
 
 #define YYERROR_VERBOSE
 
-#define YYDEBUG 0
-
 #define mark_as_not_fast_hex_regexp() \
     ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_HEX_REGEXP
-
-#if YYDEBUG
-yydebug = 1;
-#endif
 
 #define ERROR_IF(x, error) \
     if (x) \

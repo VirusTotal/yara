@@ -28,13 +28,6 @@ limitations under the License.
 
 #define YYERROR_VERBOSE
 
-
-#define YYDEBUG 0
-
-#if YYDEBUG
-yydebug = 1;
-#endif
-
 #define ERROR_IF(x, error) \
     if (x) \
     { \
