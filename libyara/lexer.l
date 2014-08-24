@@ -706,8 +706,3 @@ int yr_lex_parse_rules_file(
 
   return compiler->errors;
 }
-
-
-
-
-

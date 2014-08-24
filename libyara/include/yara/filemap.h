@@ -49,4 +49,3 @@ void yr_filemap_unmap(
     YR_MAPPED_FILE* pmapped_file);
 
 #endif
-

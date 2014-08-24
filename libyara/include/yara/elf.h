@@ -202,4 +202,3 @@ typedef struct
 } elf64_section_header_t;
 
 #endif
-

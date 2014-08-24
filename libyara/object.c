@@ -706,10 +706,3 @@ YR_OBJECT* yr_object_get_root(
 
   return o;
 }
-
-
-
-
-
-
-

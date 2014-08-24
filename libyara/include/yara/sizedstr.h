@@ -35,4 +35,3 @@ typedef struct _SIZED_STRING
 } SIZED_STRING;
 
 #endif
-

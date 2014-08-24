@@ -47,6 +47,7 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
+typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -357,7 +358,7 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (size_t) (yy_cp - yy_bp); \
+	yyleng = (yy_size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
@@ -670,7 +671,7 @@ limitations under the License.
       } \
     }
 
-#ifdef _WIN32
+#ifdef WIN32
 #define snprintf _snprintf
 #endif
 
@@ -680,7 +681,7 @@ limitations under the License.
 
 
 
-#line 684 "lexer.c"
+#line 685 "lexer.c"
 
 #define INITIAL 0
 #define str 1
@@ -918,7 +919,7 @@ YY_DECL
 #line 83 "lexer.l"
 
 
-#line 922 "lexer.c"
+#line 923 "lexer.c"
 
     yylval = yylval_param;
 
@@ -1288,7 +1289,7 @@ YY_RULE_SETUP
     // make included file path relative to current source file
     s = strrchr(buffer, '/');
 
-    #ifdef _WIN32
+    #ifdef WIN32
     b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
     #endif
 
@@ -1737,7 +1738,7 @@ YY_RULE_SETUP
 #line 556 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1741 "lexer.c"
+#line 1742 "lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3025,9 +3026,4 @@ int yr_lex_parse_rules_file(
 
   return compiler->errors;
 }
-
-
-
-
-
 

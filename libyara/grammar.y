@@ -1719,17 +1719,3 @@ primary_expression
     ;
 
 %%
-
-
-
-
-
-
-
-
-
-
-
-
-
-

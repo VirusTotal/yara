@@ -38,4 +38,3 @@ uint64_t yr_get_entry_point_address(
     size_t base_address);
 
 #endif
-

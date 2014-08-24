@@ -894,7 +894,3 @@ int yr_parser_reduce_import(
 
   return compiler->last_result;
 }
-
-
-
-

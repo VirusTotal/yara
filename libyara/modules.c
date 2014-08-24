@@ -199,10 +199,3 @@ int yr_modules_unload_all(
 
   return ERROR_SUCCESS;
 }
-
-
-
-
-
-
-

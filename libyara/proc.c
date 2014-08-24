@@ -342,4 +342,3 @@ int yr_process_get_memory(
 
 #endif
 #endif
-

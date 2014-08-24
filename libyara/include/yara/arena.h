@@ -148,5 +148,3 @@ void yr_arena_print(
     YR_ARENA* arena);
 
 #endif
-
-

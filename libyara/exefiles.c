@@ -335,6 +335,3 @@ int yr_file_is_elf(
 
   return (type == ELF_CLASS_32 || type == ELF_CLASS_64);
 }
-
-
-

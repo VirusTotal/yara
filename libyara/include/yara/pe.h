@@ -347,4 +347,3 @@ typedef struct _IMAGE_THUNK_DATA64 {
 
 
 #pragma pack(pop)
-

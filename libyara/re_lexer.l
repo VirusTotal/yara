@@ -541,9 +541,3 @@ int yr_parse_re_string(
 
   return ERROR_SUCCESS;
 }
-
-
-
-
-
-

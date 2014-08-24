@@ -227,5 +227,3 @@ int yr_hash_table_add(
 
   return ERROR_SUCCESS;
 }
-
-

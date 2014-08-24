@@ -102,7 +102,4 @@ int yr_parser_reduce_import(
     yyscan_t yyscanner,
     SIZED_STRING* module_name);
 
-
-
-
 #endif

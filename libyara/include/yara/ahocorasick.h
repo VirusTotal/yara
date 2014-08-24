@@ -48,5 +48,3 @@ void yr_ac_print_automaton(
     YR_AC_AUTOMATON* automaton);
 
 #endif
-
-

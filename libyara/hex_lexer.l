@@ -236,7 +236,3 @@ int yr_parse_hex_string(
 
   return ERROR_SUCCESS;
 }
-
-
-
-
