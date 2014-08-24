@@ -26,6 +26,17 @@ include_HEADERS = include/yara.h
 
 yaraincludedir = $(includedir)/yara
 yarainclude_HEADERS = \
+  include/yara/ahocorasick.h \
+  include/yara/atoms.h \
+  include/yara/limits.h \
+  include/yara/re.h \
+  include/yara/arena.h \
+  include/yara/sizedstr.h \
+  include/yara/types.h \
+  include/yara/hash.h \
+  include/yara/exec.h \
+  include/yara/scan.h \
+  include/yara/rules.h \
   include/yara/error.h \
   include/yara/utils.h \
   include/yara/filemap.h \
