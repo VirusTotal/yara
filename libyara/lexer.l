@@ -531,7 +531,7 @@ $({letter}|{digit}|_)*  {
   s->length = len;
   s->flags = 0;
 
-  strcpy(s->c_string, yytext);
+  strlcpy(s->c_string, yytext, s->length);
   yylval->sized_string = s;
 
   return _HEX_STRING_;
