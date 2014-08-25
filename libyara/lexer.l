@@ -470,7 +470,7 @@ $({letter}|{digit}|_)*  {
     s->flags |= SIZED_STRING_FLAGS_DOT_ALL;
 
   s->length = yyextra->lex_buf_len;
-  strlcpy(s->c_string, yyextra->lex_buf, s->length);
+  strlcpy(s->c_string, yyextra->lex_buf, s->length + 1);
 
   yylval->sized_string = s;
 
@@ -529,7 +529,7 @@ $({letter}|{digit}|_)*  {
   s->length = len;
   s->flags = 0;
 
-  strlcpy(s->c_string, yytext, s->length);
+  strlcpy(s->c_string, yytext, s->length + 1);
   yylval->sized_string = s;
 
   return _HEX_STRING_;
