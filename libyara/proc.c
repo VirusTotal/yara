@@ -270,14 +270,14 @@ int yr_process_get_memory(
 
   *first_block = NULL;
 
-  sprintf(buffer, "/proc/%u/maps", pid);
+  snprintf(buffer, sizeof(buffer), "/proc/%u/maps", pid);
 
   FILE* maps = fopen(buffer, "r");
 
   if (maps == NULL)
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
 
-  sprintf(buffer, "/proc/%u/mem", pid);
+  snprintf(buffer, sizeof(buffer), "/proc/%u/mem", pid);
 
   int mem = open(buffer, O_RDONLY);
 

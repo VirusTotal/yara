@@ -730,16 +730,16 @@ arguments_list
         switch($1)
         {
           case EXPRESSION_TYPE_INTEGER:
-            strcpy($$, "i");
+            strlcpy($$, "i", MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_BOOLEAN:
-            strcpy($$, "b");
+            strlcpy($$, "b", MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_STRING:
-            strcpy($$, "s");
+            strlcpy($$, "s", MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_REGEXP:
-            strcpy($$, "r");
+            strlcpy($$, "r", MAX_FUNCTION_ARGS);
             break;
         }
 
@@ -756,16 +756,16 @@ arguments_list
           switch($3)
           {
             case EXPRESSION_TYPE_INTEGER:
-              strcat($1, "i");
+              strlcat($1, "i", MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_BOOLEAN:
-              strcat($1, "b");
+              strlcat($1, "b", MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_STRING:
-              strcat($1, "s");
+              strlcat($1, "s", MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_REGEXP:
-              strcat($1, "r");
+              strlcat($1, "r", MAX_FUNCTION_ARGS);
               break;
           }
         }

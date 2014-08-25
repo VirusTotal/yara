@@ -472,7 +472,7 @@ $({letter}|{digit}|_)*  {
     s->flags |= SIZED_STRING_FLAGS_DOT_ALL;
 
   s->length = yyextra->lex_buf_len;
-  strcpy(s->c_string, yyextra->lex_buf);
+  strlcpy(s->c_string, yyextra->lex_buf, s->length);
 
   yylval->sized_string = s;
 

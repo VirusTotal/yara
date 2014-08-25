@@ -2377,16 +2377,16 @@ yyreduce:
         switch((yyvsp[(1) - (1)].expression_type))
         {
           case EXPRESSION_TYPE_INTEGER:
-            strcpy((yyval.c_string), "i");
+            strlcpy((yyval.c_string), "i", MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_BOOLEAN:
-            strcpy((yyval.c_string), "b");
+            strlcpy((yyval.c_string), "b", MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_STRING:
-            strcpy((yyval.c_string), "s");
+            strlcpy((yyval.c_string), "s", MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_REGEXP:
-            strcpy((yyval.c_string), "r");
+            strlcpy((yyval.c_string), "r", MAX_FUNCTION_ARGS);
             break;
         }
 
@@ -2406,16 +2406,16 @@ yyreduce:
           switch((yyvsp[(3) - (3)].expression_type))
           {
             case EXPRESSION_TYPE_INTEGER:
-              strcat((yyvsp[(1) - (3)].c_string), "i");
+              strlcat((yyvsp[(1) - (3)].c_string), "i", MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_BOOLEAN:
-              strcat((yyvsp[(1) - (3)].c_string), "b");
+              strlcat((yyvsp[(1) - (3)].c_string), "b", MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_STRING:
-              strcat((yyvsp[(1) - (3)].c_string), "s");
+              strlcat((yyvsp[(1) - (3)].c_string), "s", MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_REGEXP:
-              strcat((yyvsp[(1) - (3)].c_string), "r");
+              strlcat((yyvsp[(1) - (3)].c_string), "r", MAX_FUNCTION_ARGS);
               break;
           }
         }
