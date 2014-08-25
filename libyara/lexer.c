@@ -47,7 +47,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -358,7 +357,7 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	yyleng = (size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
@@ -681,7 +680,7 @@ limitations under the License.
 
 
 
-#line 685 "lexer.c"
+#line 684 "lexer.c"
 
 #define INITIAL 0
 #define str 1
@@ -919,7 +918,7 @@ YY_DECL
 #line 83 "lexer.l"
 
 
-#line 923 "lexer.c"
+#line 922 "lexer.c"
 
     yylval = yylval_param;
 
@@ -1278,8 +1277,7 @@ YY_RULE_SETUP
 
     if (current_file_name != NULL)
     {
-      strncpy(buffer, current_file_name, sizeof(buffer)-1);
-      buffer[sizeof(buffer)-1] = '\0';
+      strlcpy(buffer, current_file_name, sizeof(buffer));
     }
     else
     {
@@ -1297,8 +1295,7 @@ YY_RULE_SETUP
     {
       f = (b > s)? (b + 1): (s + 1);
 
-      strncpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
-      buffer[sizeof(buffer)-1] = '\0';
+      strlcpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
 
       f = buffer;
 
@@ -1367,7 +1364,7 @@ case YY_STATE_EOF(str):
 case YY_STATE_EOF(regexp):
 case YY_STATE_EOF(include):
 case YY_STATE_EOF(comment):
-#line 250 "lexer.l"
+#line 248 "lexer.l"
 {
 
   YR_COMPILER* compiler = yara_yyget_extra(yyscanner);
@@ -1389,7 +1386,7 @@ case YY_STATE_EOF(comment):
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 270 "lexer.l"
+#line 268 "lexer.l"
 {
 
   yylval->c_string = yr_strdup(yytext);
@@ -1405,7 +1402,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 284 "lexer.l"
+#line 282 "lexer.l"
 {
 
   yylval->c_string = yr_strdup(yytext);
@@ -1421,7 +1418,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 298 "lexer.l"
+#line 296 "lexer.l"
 {
 
   yylval->c_string = yr_strdup(yytext);
@@ -1438,7 +1435,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 313 "lexer.l"
+#line 311 "lexer.l"
 {
 
   yylval->c_string = yr_strdup(yytext);
@@ -1455,7 +1452,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 328 "lexer.l"
+#line 326 "lexer.l"
 {
 
   if (strlen(yytext) > 128)
@@ -1476,7 +1473,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 347 "lexer.l"
+#line 345 "lexer.l"
 {
 
   yylval->integer = (size_t) atol(yytext);
@@ -1494,7 +1491,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 363 "lexer.l"
+#line 361 "lexer.l"
 {
 
   yylval->integer = xtoi(yytext + 2);
@@ -1503,7 +1500,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 370 "lexer.l"
+#line 368 "lexer.l"
 {     /* saw closing quote - all done */
 
   SIZED_STRING* s;
@@ -1529,7 +1526,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 394 "lexer.l"
+#line 392 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\t", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1539,7 +1536,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 402 "lexer.l"
+#line 400 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\n", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1549,7 +1546,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 410 "lexer.l"
+#line 408 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\"", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1559,7 +1556,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 418 "lexer.l"
+#line 416 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\\", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1569,7 +1566,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 426 "lexer.l"
+#line 424 "lexer.l"
 {
 
    int result;
@@ -1582,13 +1579,13 @@ YY_RULE_SETUP
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 437 "lexer.l"
+#line 435 "lexer.l"
 { YYTEXT_TO_BUFFER; }
 	YY_BREAK
 case 63:
 /* rule 63 can match eol */
 YY_RULE_SETUP
-#line 440 "lexer.l"
+#line 438 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "unterminated string");
@@ -1598,7 +1595,7 @@ YY_RULE_SETUP
 case 64:
 /* rule 64 can match eol */
 YY_RULE_SETUP
-#line 446 "lexer.l"
+#line 444 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "illegal escape sequence");
@@ -1606,7 +1603,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 452 "lexer.l"
+#line 450 "lexer.l"
 {
 
   SIZED_STRING* s;
@@ -1639,7 +1636,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 483 "lexer.l"
+#line 481 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("/", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1649,7 +1646,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 491 "lexer.l"
+#line 489 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1660,13 +1657,13 @@ YY_RULE_SETUP
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 500 "lexer.l"
+#line 498 "lexer.l"
 { YYTEXT_TO_BUFFER; }
 	YY_BREAK
 case 69:
 /* rule 69 can match eol */
 YY_RULE_SETUP
-#line 503 "lexer.l"
+#line 501 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "unterminated regular expression");
@@ -1675,7 +1672,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 510 "lexer.l"
+#line 508 "lexer.l"
 {
 
   yyextra->lex_buf_ptr = yyextra->lex_buf;
@@ -1685,7 +1682,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 518 "lexer.l"
+#line 516 "lexer.l"
 {
 
   yyextra->lex_buf_ptr = yyextra->lex_buf;
@@ -1696,7 +1693,7 @@ YY_RULE_SETUP
 case 72:
 /* rule 72 can match eol */
 YY_RULE_SETUP
-#line 526 "lexer.l"
+#line 524 "lexer.l"
 {
 
   int len = strlen(yytext);
@@ -1714,12 +1711,12 @@ YY_RULE_SETUP
 case 73:
 /* rule 73 can match eol */
 YY_RULE_SETUP
-#line 541 "lexer.l"
+#line 539 "lexer.l"
 /* skip whitespace */
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 543 "lexer.l"
+#line 541 "lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1735,10 +1732,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 556 "lexer.l"
+#line 554 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1742 "lexer.c"
+#line 1739 "lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2871,7 +2868,7 @@ void yara_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 556 "lexer.l"
+#line 554 "lexer.l"
 
 
 

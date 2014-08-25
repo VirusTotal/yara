@@ -47,7 +47,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -358,7 +357,7 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	yyleng = (size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
@@ -525,7 +524,7 @@ uint8_t read_escaped_char(yyscan_t yyscanner);
 
 #define YY_NO_UNISTD_H 1
 
-#line 529 "re_lexer.c"
+#line 528 "re_lexer.c"
 
 #define INITIAL 0
 #define char_class 1
@@ -760,7 +759,7 @@ YY_DECL
 #line 60 "re_lexer.l"
 
 
-#line 764 "re_lexer.c"
+#line 763 "re_lexer.c"
 
     yylval = yylval_param;
 
@@ -1245,7 +1244,7 @@ YY_RULE_SETUP
 #line 388 "re_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1249 "re_lexer.c"
+#line 1248 "re_lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2482,7 +2481,7 @@ void yyerror(
   {
     lex_env->last_error_code = ERROR_INVALID_REGULAR_EXPRESSION;
 
-    strncpy(
+    strlcpy(
         lex_env->last_error_message,
         error_message,
         sizeof(lex_env->last_error_message));
@@ -2526,7 +2525,7 @@ int yr_parse_re_string(
     yr_re_destroy(*re);
     *re = NULL;
 
-    strncpy(
+    strlcpy(
         error->message,
         lex_env.last_error_message,
         sizeof(error->message));

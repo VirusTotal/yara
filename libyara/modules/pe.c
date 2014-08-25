@@ -232,8 +232,7 @@ void parse_pe_header(
       break;
     }
 
-    strncpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME);
-    section_name[IMAGE_SIZEOF_SHORT_NAME] = '\0';
+    strlcpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME + 1);
 
     set_string(
         section_name,

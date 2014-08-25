@@ -93,12 +93,10 @@ typedef struct _YR_COMPILER
 
 
 #define yr_compiler_set_error_extra_info(compiler, info) \
-    strncpy( \
+    strlcpy( \
         compiler->last_error_extra_info, \
         info, \
         sizeof(compiler->last_error_extra_info)); \
-    compiler->last_error_extra_info[ \
-        sizeof(compiler->last_error_extra_info) - 1] = 0;
 
 
 int _yr_compiler_push_file(

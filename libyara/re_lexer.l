@@ -487,7 +487,7 @@ void yyerror(
   {
     lex_env->last_error_code = ERROR_INVALID_REGULAR_EXPRESSION;
 
-    strncpy(
+    strlcpy(
         lex_env->last_error_message,
         error_message,
         sizeof(lex_env->last_error_message));
@@ -531,7 +531,7 @@ int yr_parse_re_string(
     yr_re_destroy(*re);
     *re = NULL;
 
-    strncpy(
+    strlcpy(
         error->message,
         lex_env.last_error_message,
         sizeof(error->message));

@@ -47,7 +47,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -358,7 +357,7 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	yyleng = (size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
@@ -504,7 +503,7 @@ limitations under the License.
 #define YY_NO_UNISTD_H 1
 #define YY_NO_INPUT 1
 
-#line 508 "hex_lexer.c"
+#line 507 "hex_lexer.c"
 
 #define INITIAL 0
 #define range 1
@@ -740,7 +739,7 @@ YY_DECL
 
 
 
-#line 744 "hex_lexer.c"
+#line 743 "hex_lexer.c"
 
     yylval = yylval_param;
 
@@ -943,7 +942,7 @@ YY_RULE_SETUP
 #line 138 "hex_lexer.l"
 ECHO;
 	YY_BREAK
-#line 947 "hex_lexer.c"
+#line 946 "hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(range):
 	yyterminate();
@@ -2122,7 +2121,7 @@ void yyerror(
   {
     lex_env->last_error_code = ERROR_INVALID_HEX_STRING;
 
-    strncpy(
+    strlcpy(
         lex_env->last_error_message,
         error_message,
         sizeof(lex_env->last_error_message));
@@ -2176,7 +2175,7 @@ int yr_parse_hex_string(
 
   if (lex_env.last_error_code != ERROR_SUCCESS)
   {
-    strncpy(error->message, lex_env.last_error_message, sizeof(error->message));
+    strlcpy(error->message, lex_env.last_error_message, sizeof(error->message));
     return lex_env.last_error_code;
   }
 

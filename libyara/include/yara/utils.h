@@ -66,4 +66,12 @@ limitations under the License.
 
 size_t xtoi(const char* hexstr);
 
+#if !defined(__FreeBSD__) && !defined(__OpenBSD__)
+
+size_t strlcpy(char *dst, const char *src, size_t size);
+
+size_t strlcat(char *dst, const char *src, size_t size);
+
+#endif
+
 #endif

@@ -176,7 +176,7 @@ void yyerror(
   {
     lex_env->last_error_code = ERROR_INVALID_HEX_STRING;
 
-    strncpy(
+    strlcpy(
         lex_env->last_error_message,
         error_message,
         sizeof(lex_env->last_error_message));
@@ -230,7 +230,7 @@ int yr_parse_hex_string(
 
   if (lex_env.last_error_code != ERROR_SUCCESS)
   {
-    strncpy(error->message, lex_env.last_error_message, sizeof(error->message));
+    strlcpy(error->message, lex_env.last_error_message, sizeof(error->message));
     return lex_env.last_error_code;
   }
 

@@ -161,8 +161,7 @@ include[ \t]+\"         {
 
     if (current_file_name != NULL)
     {
-      strncpy(buffer, current_file_name, sizeof(buffer)-1);
-      buffer[sizeof(buffer)-1] = '\0';
+      strlcpy(buffer, current_file_name, sizeof(buffer));
     }
     else
     {
@@ -180,8 +179,7 @@ include[ \t]+\"         {
     {
       f = (b > s)? (b + 1): (s + 1);
 
-      strncpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
-      buffer[sizeof(buffer)-1] = '\0';
+      strlcpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
 
       f = buffer;
 
