@@ -488,7 +488,7 @@ limitations under the License.
 
 #include "hex_grammar.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #endif
 
@@ -2083,7 +2083,7 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 
 
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 extern DWORD recovery_state_key;
 #else
@@ -2098,7 +2098,7 @@ void yyfatal(
 {
   jmp_buf* recovery_state;
 
-  #ifdef WIN32
+  #ifdef _WIN32
   recovery_state = TlsGetValue(recovery_state_key) ;
   #else
   recovery_state = pthread_getspecific(recovery_state_key);
@@ -2142,7 +2142,7 @@ int yr_parse_hex_string(
   lex_env.last_error_code = ERROR_SUCCESS;
   lex_env.inside_or = 0;
 
-  #ifdef WIN32
+  #ifdef _WIN32
   TlsSetValue(recovery_state_key, (LPVOID) &recovery_state);
   #else
   pthread_setspecific(recovery_state_key, (void*) &recovery_state);

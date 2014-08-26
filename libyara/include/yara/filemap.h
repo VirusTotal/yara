@@ -17,7 +17,7 @@ limitations under the License.
 #ifndef YR_FILEMAP_H
 #define YR_FILEMAP_H
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #define FILE_DESCRIPTOR         HANDLE
 #else
@@ -33,7 +33,7 @@ typedef struct _YR_MAPPED_FILE
   FILE_DESCRIPTOR     file;
   size_t              size;
   uint8_t*            data;
-  #ifdef WIN32
+  #ifdef _WIN32
   HANDLE              mapping;
   #endif
 
