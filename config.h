@@ -1,7 +1,7 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* enable cuckoo */
+/* enable cuckoo module */
 #define CUCKOO 1
 
 /* enable dmalloc */
@@ -18,6 +18,9 @@
 
 /* Define to 1 if you have the `jansson' library (-ljansson). */
 #define HAVE_LIBJANSSON 1
+
+/* Define to 1 if you have the `magic' library (-lmagic). */
+/* #undef HAVE_LIBMAGIC */
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #define HAVE_LIBPTHREAD 1
@@ -50,6 +53,9 @@
    */
 #define LT_OBJDIR ".libs/"
 
+/* enable magic module */
+/* #undef MAGIC */
+
 /* Name of package */
 #define PACKAGE "yara"
 
@@ -60,19 +66,19 @@
 #define PACKAGE_NAME "yara"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "yara 3.0"
+#define PACKAGE_STRING "yara 3.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "yara"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.0"
+#define PACKAGE_VERSION "3.1"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "3.0"
+#define VERSION "3.1"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
