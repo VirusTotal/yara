@@ -17,6 +17,8 @@ limitations under the License.
 #include <stdio.h>
 #include <string.h>
 
+#include "config.h"
+
 size_t xtoi(const char* hexstr)
 {
   size_t r = 0;
@@ -64,7 +66,6 @@ size_t xtoi(const char* hexstr)
 }
 
 
-#if !defined(__FreeBSD__) && !defined(__OpenBSD__)
 
 /*
 
@@ -73,6 +74,7 @@ the following implementations were taken from OpenBSD.
 
 */
 
+#if !HAVE_STRLCPY
 
 size_t strlcpy(char *dst, const char *src, size_t size)
 {
@@ -105,6 +107,10 @@ size_t strlcpy(char *dst, const char *src, size_t size)
   return(s - src - 1);  /* count does not include NUL */
 }
 
+#endif
+
+
+#if !HAVE_STRLCAT
 
 size_t strlcat(char *dst, const char *src, size_t size)
 {

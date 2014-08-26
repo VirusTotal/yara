@@ -20,6 +20,8 @@ limitations under the License.
 #include <assert.h>
 #include <stdlib.h>
 
+#include "config.h"
+
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -62,16 +64,16 @@ limitations under the License.
     }
 #endif
 
-
-
 size_t xtoi(const char* hexstr);
 
-#if !defined(__FreeBSD__) && !defined(__OpenBSD__)
-
+#if !HAVE_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t size);
+#endif
 
+#if !HAVE_STRLCAT
 size_t strlcat(char *dst, const char *src, size_t size);
-
 #endif
 
 #endif
+
+
