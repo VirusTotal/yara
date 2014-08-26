@@ -43,9 +43,21 @@ as our starting point. The file looks like this:
 
     end_declarations;
 
+    int module_initialize(
+        YR_MODULE* module)
+    {
+      return ERROR_SUCCESS;
+    }
+
+    int module_finalize(
+        YR_MODULE* module)
+    {
+      return ERROR_SUCCESS;
+    }
+
     int module_load(
         YR_SCAN_CONTEXT* context,
-        YR_OBJECT* module,
+        YR_OBJECT* module_object,
         void* module_data,
         size_t module_data_size)
     {
@@ -54,7 +66,7 @@ as our starting point. The file looks like this:
     }
 
     int module_unload(
-        YR_OBJECT* module)
+        YR_OBJECT* module_object)
     {
       return ERROR_SUCCESS;
     }
@@ -69,7 +81,8 @@ first line in the code is:
     #include <yara/modules.h>
 
 The *modules.h* header file is where the definitions for YARA's module API
-reside, therefore this include directive is required in all your modules. The second line is:
+reside, therefore this include directive is required in all your modules. The
+second line is:
 
 .. code-block:: c
 
@@ -94,17 +107,38 @@ be available for your YARA rules. In this case we are declaring just a
 string variable named *greeting*. We are going to discuss these concepts more
 in greater detail in the :ref:`declaration-section`.
 
+After the declaration section you'll find a pair of functions:
+
+.. code-block:: c
+
+    int module_initialize(
+        YR_MODULE* module)
+    {
+      return ERROR_SUCCESS;
+    }
+
+    int module_finalize(
+        YR_MODULE* module)
+    {
+      return ERROR_SUCCESS;
+    }
+
+The ``module_initialize`` function is called during YARA's initializtion while
+its counterpart ``module_finalize`` is called while finalizing YARA. These
+functions allows you initialize and finalize any global data structure you may
+need to use in your module.
+
 Then comes the ``module_load`` function:
 
 .. code-block:: c
 
     int module_load(
         YR_SCAN_CONTEXT* context,
-        YR_OBJECT* module,
+        YR_OBJECT* module_object,
         void* module_data,
         size_t module_data_size)
     {
-      set_string("Hello World!", module, "greeting");
+      set_string("Hello World!", module_object, "greeting");
       return ERROR_SUCCESS;
     }
 
@@ -124,7 +158,7 @@ And finally, we have the ``module_unload`` function:
 .. code-block:: c
 
     int module_unload(
-        YR_OBJECT* module)
+        YR_OBJECT* module_object)
     {
       return ERROR_SUCCESS;
     }
@@ -388,10 +422,41 @@ the declaration section, like this::
 We are going to discuss function implementation more in depth in the
 :ref:`implementing-functions` section.
 
+Initialization and finalization
+===============================
+
+Every module must implement two functions for initialization and finalization:
+``module_initialize`` and ``module_finalize``. The former is called during
+YARA's initialization by :c:func:`yr_initialize` while the latter is called
+during finalization by :c:func:`yr_finalize`. Both functions are invoked
+whether or not the module is being imported by some rule.
+
+These functions give your module an opportunity to initialize any global data
+structure it may need, but most of the times they are just empty functions:
+
+.. code-block:: c
+
+    int module_initialize(
+        YR_MODULE* module)
+    {
+      return ERROR_SUCCESS;
+    }
+
+    int module_finalize(
+        YR_MODULE* module)
+    {
+      return ERROR_SUCCESS;
+    }
+
+Any returned value different from ``ERROR_SUCCESS`` will abort YARA's execution.
+
+
+
 Implementing the module's logic
 ===============================
 
-Every module must implement two functions which are called by YARA during the
+Besides ``module_initialize`` and ``module_finalize`` Every module must
+implement two other functions which are called by YARA during the
 scanning of a file or process memory space: ``module_load`` and
 ``module_unload``. Both functions are called once for each scanned file or
 process, but only if the module was imported by means of the ``import``
@@ -404,12 +469,12 @@ The ``module_load`` function has the following prototype:
 
     int module_load(
         YR_SCAN_CONTEXT* context,
-        YR_OBJECT* module,
+        YR_OBJECT* module_object,
         void* module_data,
         size_t module_data_size)
 
 The ``context`` argument contains information relative to the current scan,
-including the data being scanned. The ``module`` argument is a pointer to
+including the data being scanned. The ``module_object`` argument is a pointer to
 a ``YR_OBJECT`` structure associated to the module. Each structure, variable or
 function declared in a YARA module is represented by a ``YR_OBJECT`` structure.
 These structures conform a tree whose root is the module's ``YR_OBJECT``
@@ -443,7 +508,7 @@ module is just another structure like *bar*. In fact, when you write in your
 rules something like ``mymodule.foo`` you're performing a field lookup in a
 structure in the same way that ``bar.baz`` does.
 
-In resume, the ``module`` argument allows you to access every variable,
+In resume, the ``module_object`` argument allows you to access every variable,
 structure or function declared by the module by providing a pointer to the
 root of the objects tree.
 
@@ -473,7 +538,7 @@ blocks by using the ``foreach_memory_block`` macro:
 
     int module_load(
         YR_SCAN_CONTEXT* context,
-        YR_OBJECT* module,
+        YR_OBJECT* module_object,
         void* module_data,
         size_t module_data_size)
     {
@@ -524,7 +589,7 @@ checks in your code nevertheless). In those cases you can use the
 
     int module_load(
         YR_SCAN_CONTEXT* context,
-        YR_OBJECT* module,
+        YR_OBJECT* module_object,
         void* module_data,
         size_t module_data_size)
     {
@@ -594,16 +659,15 @@ And the value for ``qux`` like this:
     set_integer(<value>, object, "baz.qux");
 
 
-Do you remember that the ``module`` argument for ``module_load`` was a pointer
-to a ``YR_OBJECT``? Do you remember that this ``YR_OBJECT`` is an structure just
-like ``bar`` is? Well, you could also set the values for ``bar`` and
-``qux`` like this:
+Do you remember that the ``module_object`` argument for ``module_load`` was a
+pointer to a ``YR_OBJECT``? Do you remember that this ``YR_OBJECT`` is an
+structure just like ``bar`` is? Well, you could also set the values for ``bar``
+and ``qux`` like this:
 
 .. code-block:: c
 
-    set_string(<value>, module, "foo.bar");
-    set_integer(<value>, module, "foo.baz.qux");
-
+    set_string(<value>, module_object, "foo.bar");
+    set_integer(<value>, module_object, "foo.baz.qux");
 
 But what happens with arrays? How can I set the value for array items? If
 you have the following declarations::
@@ -665,8 +729,8 @@ Are the following two lines equivalent? Why?
 
 .. code-block:: c
 
-    set_integer(1, get_object(module, "foo.bar"), NULL);
-    set_integer(1, module, "foo.bar");
+    set_integer(1, get_object(module_object, "foo.bar"), NULL);
+    set_integer(1, module_object, "foo.bar");
 
 .. _storing-data-for-later-use:
 
@@ -700,12 +764,12 @@ following example:
 
     int module_load(
         YR_SCAN_CONTEXT* context,
-        YR_OBJECT* module,
+        YR_OBJECT* module_object,
         void* module_data,
         size_t module_data_size)
     {
         module->data = yr_malloc(sizeof(MY_DATA));
-        ((MY_DATA*) module->data)->some_integer = 0;
+        ((MY_DATA*) module_object->data)->some_integer = 0;
 
         return ERROR_SUCCESS;
     }
@@ -715,9 +779,9 @@ Don't forget to release the allocated memory in the ``module_unload`` function:
 .. code-block:: cpp
 
     int module_unload(
-        YR_OBJECT* module)
+        YR_OBJECT* module_object)
     {
-        yr_free(module->data);
+        yr_free(module_object->data);
 
         return ERROR_SUCCESS;
     }

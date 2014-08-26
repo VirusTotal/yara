@@ -10,7 +10,7 @@ the :ref:`writing-modules` section.
 
 .. include:: modules/pe
 .. include:: modules/cuckoo
-
+.. include:: modules/magic
 
 
 

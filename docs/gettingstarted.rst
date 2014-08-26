@@ -12,8 +12,8 @@ Compiling and installing YARA
 
 Download the source tarball and get prepared for compiling it::
 
-    tar -zxf yara-3.0.0.tar.gz
-    cd yara-3.0.0
+    tar -zxf yara-3.1.0.tar.gz
+    cd yara-3.1.0
     ./bootstrap.sh
 
 YARA uses GNU autotools, so it's compiled and installed in the standard
@@ -23,15 +23,39 @@ way::
     make
     sudo make install
 
+The following modules are not copiled into YARA by default:
 
-The Cuckoo module is not compiled into YARA by default, if you plan to
-use the Cuckoo module you must pass the ``--enable-cuckoo`` argument to the
-``configure`` script. The Cuckoo module depends on the
-`Jansson library <http://www.digip.org/jansson///>`_, you'll need to install it
-beforehand. Some Debian and Ubuntu versions already include a package named
-``libjansson-dev``, if ``sudo apt-get install libjansson-dev`` doesn't work for
-you then get the source code from
-`its repository <https://github.com/akheron/jansson>`_.
+* cuckoo
+* magic
+
+If you plan to use them must pass the corresponding ``--enable-<module name>``
+arguments to the ``configure`` script.
+
+For example::
+
+    ./configure --enable-cuckoo
+    ./configure --enable-magic
+    ./configure --enable-cuckoo --enable-magic
+
+
+Modules usually depends on external libraries, depending on the modules you
+choose to install you'll need the following libraries:
+
+* cuckoo:
+        Depends on `Jansson <http://www.digip.org/jansson/>`_ for parsing JSON.
+        Some Ubuntu and Debian versions already include a package named
+        ``libjansson-dev``, if ``sudo apt-get install libjansson-dev`` doesn't
+        work for you then get the source code from
+        `its repository <https://github.com/akheron/jansson>`_.
+
+
+* magic:
+        Depends on *libmagic*, a library used by the Unix standard program
+        `file <http://en.wikipedia.org/wiki/File_(command)>`_.
+        Ubuntu, Debian and CentOS include a package
+        ``libmagic-dev``. The source code can be found
+        `here <ftp://ftp.astron.com/pub/file/>`_.
+
 
 To build and install the ``yara-python`` extension::
 
@@ -39,17 +63,32 @@ To build and install the ``yara-python`` extension::
     python setup.py build
     sudo setup.py install
 
-.. note:: You may need to install the Python development package (usually
-    ``python-dev``) before compiling ``yara-python``. Additionally,
-    ``yara-python`` depends on the ``libyara`` library which gets installed
-    with YARA, so don't proceed to build ``yara-python`` without previously
-    installing YARA as described above.
+You may need to install the Python development package (usually ``python-dev``)
+before compiling ``yara-python``. Additionally, ``yara-python`` depends on the
+``libyara`` library which gets installed with YARA, so don't proceed to build
+``yara-python`` without previously installing YARA as described above.
 
-Installing on OSX with Homebrew
-===============================
+Installing on Windows
+---------------------
+
+Compiled binaries for Windows in both 32 and 64 bits flavors can be found
+in the link below. Just download the version of you want, unzip the archive,
+and put the ``yara.exe`` and ``yarac.exe`` binaries anywhere in your disk.
+
+To install the ``yara-python`` extension download an execute the installer
+corresponding to the version of Python you're using.
+
+`Download Windows binaries <https://b161268c3bf5a87bc67309e7c870820f5f39f672.googledrive.com/host/0BznOMqZ9f3VUek8yN3VvSGdhRFU/>`_
+
+If you want to build YARA yourself you can use the *Visual Studio 2010* project
+found in the source tree under *./windows/yara*.
+
+Installing on Mac OS X with Homebrew
+------------------------------------
 
 To install YARA using `Homebrew <http://brew.sh>`_ simply type
 ``brew install yara``.
+
 
 
 Running YARA for the first time

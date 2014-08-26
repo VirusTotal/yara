@@ -10,6 +10,11 @@ While scanning a PE file with YARA, you can pass additional information about
 its behavior to the ``cuckoo`` module and create rules based not only in what
 it *contains*, but also in what it *does*.
 
+.. important::
+    This module is not built into YARA by default, to learn how to include it
+    refer to :ref:`compiling-yara`. Good news for Windows users: this module
+    is already included in the official Windows binaries.
+
 Suppose that you're interested in executable files sending a HTTP request to
 http://someone.doingevil.com. In previous versions of YARA you had to settle
 with::
@@ -78,10 +83,6 @@ If you are using ``yara-python`` then you must pass the behavior report in the
     report_data = report_file.read()
     rules.match(pe_file, modules_data={'cuckoo': bytes(report_data)})
 
-
-.. important::
-   The ``cuckoo`` module is not built into YARA by default, to learn how to
-   build YARA with Cuckoo support refer to :ref:`compiling-yara`.
 
 Cuckoo module reference
 -----------------------

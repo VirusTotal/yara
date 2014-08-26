@@ -256,15 +256,19 @@ Data structures
 Functions
 ---------
 
-.. c:function:: void yr_initialize(void)
+.. c:function:: int yr_initialize(void)
 
   Initalize the library. Must be called by the main thread before using any
-  other function.
+  other function. Return :c:macro:`ERROR_SUCCESS` on success another error
+  code in case of error. The list of possible return codes vary according
+  to the modules compiled into YARA.
 
-.. c:function:: void yr_finalize(void)
+.. c:function:: int yr_finalize(void)
 
   Finalize the library. Must be called by the main free to release any
-  resource allocated by the library.
+  resource allocated by the library. Return :c:macro:`ERROR_SUCCESS` on
+  success another error code in case of error. The list of possible return
+  codes vary according to the modules compiled into YARA.
 
 .. c:function:: void yr_finalize_thread(void)
 
