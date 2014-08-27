@@ -23,6 +23,7 @@ limitations under the License.
 #include <yara/error.h>
 #include <yara/exec.h>
 #include <yara/object.h>
+#include <yara/strutils.h>
 #include <yara/utils.h>
 #include <yara/modules.h>
 #include <yara/parser.h>

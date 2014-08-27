@@ -22,6 +22,7 @@ limitations under the License.
 
 #include <yara/modules.h>
 #include <yara/mem.h>
+#include <yara/strutils.h>
 
 
 #define MODULE_NAME pe
