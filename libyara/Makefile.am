@@ -43,7 +43,7 @@ yarainclude_HEADERS = \
   include/yara/compiler.h \
   include/yara/modules.h \
   include/yara/object.h \
-  include/yara/strings.h \
+  include/yara/strutils.h \
   include/yara/libyara.h
 
 lib_LTLIBRARIES = libyara.la
