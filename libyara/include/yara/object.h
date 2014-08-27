@@ -17,7 +17,7 @@ limitations under the License.
 #ifndef YR_OBJECT_H
 #define YR_OBJECT_H
 
-#include <yara/rules.h>
+#include <yara/types.h>
 
 
 #define OBJECT_CREATE           1

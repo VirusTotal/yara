@@ -17,6 +17,8 @@ limitations under the License.
 #ifndef YR_ERROR_H
 #define YR_ERROR_H
 
+#include <string.h>
+
 #ifndef ERROR_SUCCESS
 #define ERROR_SUCCESS                           0
 #endif
@@ -81,5 +83,16 @@ limitations under the License.
   if (compiler->last_result != ERROR_SUCCESS) \
     return compiler->last_result; \
 }
+
+
+#ifdef NDEBUG
+#define assertf(expr, msg)  ((void)0)
+#else
+#define assertf(expr, msg, ...) \
+    if(!(expr)) { \
+      fprintf(stderr, "%s:%d: " msg "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
+      abort(); \
+    }
+#endif
 
 #endif

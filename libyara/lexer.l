@@ -26,11 +26,10 @@ limitations under the License.
 
 
 #include <yara/lexer.h>
-#include <yara/rules.h>
 #include <yara/sizedstr.h>
 #include <yara/error.h>
 #include <yara/mem.h>
-#include <yara/utils.h>
+#include <yara/strings.h>
 
 #include "grammar.h"
 

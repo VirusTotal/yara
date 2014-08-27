@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007. The YARA Authors. All Rights Reserved.
+Copyright (c) 2014. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,13 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+
 #ifndef YR_UTILS_H
 #define YR_UTILS_H
-
-#include <assert.h>
-#include <stdlib.h>
-
-#include "config.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -43,37 +39,26 @@ limitations under the License.
 #define max(x, y) ((x > y) ? (x) : (y))
 #endif
 
+
 #define UINT64_TO_PTR(type, x)  ((type)(size_t) x)
 
 #define PTR_TO_UINT64(x)  ((uint64_t) (size_t) x)
 
-#ifdef _WIN32
-#define snprintf _snprintf
-#define strcasecmp _stricmp
-#define strncasecmp _strnicmp
-#endif
-
 
 #ifdef NDEBUG
+
 #define assertf(expr, msg)  ((void)0)
+
 #else
+
+#include <stdlib.h>
+
 #define assertf(expr, msg, ...) \
     if(!(expr)) { \
       fprintf(stderr, "%s:%d: " msg "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
       abort(); \
     }
-#endif
-
-size_t xtoi(const char* hexstr);
-
-#if !HAVE_STRLCPY
-size_t strlcpy(char *dst, const char *src, size_t size);
-#endif
-
-#if !HAVE_STRLCAT
-size_t strlcat(char *dst, const char *src, size_t size);
-#endif
 
 #endif
 
-
+#endif

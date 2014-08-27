@@ -17,15 +17,16 @@ limitations under the License.
 #include <stdio.h>
 #include <string.h>
 
+#include <yara/strutils.h>
+
 #include "config.h"
 
-size_t xtoi(const char* hexstr)
+uint64_t xtoi(const char* hexstr)
 {
-  size_t r = 0;
-  int i;
   int l = strlen(hexstr);
+  uint64_t r = 0;
 
-  for (i = 0; i < l; i++)
+  for (int i = 0; i < l; i++)
   {
     switch(hexstr[i])
     {
@@ -39,7 +40,7 @@ size_t xtoi(const char* hexstr)
       case '7':
       case '8':
       case '9':
-        r |= ((size_t)(hexstr[i] - '0')) << ((l - i - 1) * 4);
+        r |= ((uint64_t)(hexstr[i] - '0')) << ((l - i - 1) * 4);
         break;
       case 'a':
       case 'b':
@@ -47,7 +48,7 @@ size_t xtoi(const char* hexstr)
       case 'd':
       case 'e':
       case 'f':
-        r |= ((size_t)(hexstr[i] - 'a' + 10)) << ((l - i - 1) * 4);
+        r |= ((uint64_t)(hexstr[i] - 'a' + 10)) << ((l - i - 1) * 4);
         break;
       case 'A':
       case 'B':
@@ -55,7 +56,7 @@ size_t xtoi(const char* hexstr)
       case 'D':
       case 'E':
       case 'F':
-        r |= ((size_t)(hexstr[i] - 'A' + 10)) << ((l - i - 1) * 4);
+        r |= ((uint64_t)(hexstr[i] - 'A' + 10)) << ((l - i - 1) * 4);
         break;
       default:
         i = l;  // force loop exit
@@ -64,8 +65,6 @@ size_t xtoi(const char* hexstr)
 
   return r;
 }
-
-
 
 /*
 
