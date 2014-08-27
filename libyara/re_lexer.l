@@ -28,6 +28,7 @@ limitations under the License.
 #include <yara/mem.h>
 #include <yara/re.h>
 #include <yara/re_lexer.h>
+#include <yara/strutils.h>
 
 
 #ifdef _WIN32
