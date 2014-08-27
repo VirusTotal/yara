@@ -29,7 +29,7 @@ limitations under the License.
 #include <yara/sizedstr.h>
 #include <yara/error.h>
 #include <yara/mem.h>
-#include <yara/strings.h>
+#include <yara/strutils.h>
 
 #include "grammar.h"
 
