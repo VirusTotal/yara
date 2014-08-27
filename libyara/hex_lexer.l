@@ -25,7 +25,7 @@ limitations under the License.
 #include <yara/error.h>
 #include <yara/mem.h>
 #include <yara/re.h>
-#include <yara/strings.h>
+#include <yara/strutils.h>
 #include <yara/hex_lexer.h>
 
 #include "hex_grammar.h"
