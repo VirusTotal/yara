@@ -25,6 +25,7 @@ limitations under the License.
 
 
 #include <yara/utils.h>
+#include <yara/strutils.h>
 #include <yara/compiler.h>
 #include <yara/object.h>
 #include <yara/sizedstr.h>
