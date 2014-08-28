@@ -84,8 +84,8 @@ If you are using ``yara-python`` then you must pass the behavior report in the
     rules.match(pe_file, modules_data={'cuckoo': bytes(report_data)})
 
 
-Cuckoo module reference
------------------------
+Reference
+---------
 
 .. default-domain:: c
 

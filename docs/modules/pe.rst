@@ -30,8 +30,8 @@ write more expressive and targeted rules. Let's see some examples::
             pe.characteristics & pe.DLL
     }
 
-PE module reference
--------------------
+Reference
+---------
 
 .. c:type:: machine
 

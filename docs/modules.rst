@@ -8,9 +8,14 @@ more complex conditions. Here you'll find described some modules officially
 distributed with YARA, but you can also learn how to write your own modules in
 the :ref:`writing-modules` section.
 
-.. include:: modules/pe
-.. include:: modules/cuckoo
-.. include:: modules/magic
+
+.. toctree::
+   :maxdepth: 3
+
+   modules/pe
+   modules/elf
+   modules/cuckoo
+   modules/magic
 
 
 
