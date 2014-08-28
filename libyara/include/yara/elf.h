@@ -87,8 +87,13 @@ typedef uint64_t elf64_xword_t;
 #define ELF_SHT_REL          9     // Relocation entries, no addends
 #define ELF_SHT_SHLIB        10    // Reserved
 #define ELF_SHT_DYNSYM       11    // Dynamic linker symbol table
-#define ELF_SHT_NUM          12    // Number of defined types.
+#define ELF_SHT_NUM          12    // Number of defined types
 
+#define ELF_SHF_WRITE        0x1   // Section is writable
+#define ELF_SHF_ALLOC        0x2   // Section is present during execution
+#define ELF_SHF_EXECINSTR    0x4   // Section contains executable instructions
+
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -200,5 +205,8 @@ typedef struct
   elf64_xword_t   entry_size;
 
 } elf64_section_header_t;
+
+
+#pragma pack(pop)
 
 #endif

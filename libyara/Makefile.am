@@ -1,6 +1,7 @@
 
 MODULES =  modules/tests.c
 MODULES += modules/pe.c
+MODULES += modules/elf.c
 
 if CUCKOO
 MODULES += modules/cuckoo.c
