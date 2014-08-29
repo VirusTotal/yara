@@ -346,4 +346,20 @@ typedef struct _IMAGE_THUNK_DATA64 {
 } IMAGE_THUNK_DATA64, *PIMAGE_THUNK_DATA64;
 
 
+typedef struct _IMAGE_RESOURCE_DIRECTORY_ENTRY {
+    DWORD Name;
+    DWORD OffsetToData;
+} IMAGE_RESOURCE_DIRECTORY_ENTRY, *PIMAGE_RESOURCE_DIRECTORY_ENTRY;
+
+
+typedef struct _IMAGE_RESOURCE_DIRECTORY {
+    DWORD Characteristics;
+    DWORD TimeDateStamp;
+    WORD  MajorVersion;
+    WORD  MinorVersion;
+    WORD  NumberOfNamedEntries;
+    WORD  NumberOfIdEntries;
+    IMAGE_RESOURCE_DIRECTORY_ENTRY DirectoryEntries[1];
+} IMAGE_RESOURCE_DIRECTORY, *PIMAGE_RESOURCE_DIRECTORY;
+
 #pragma pack(pop)
