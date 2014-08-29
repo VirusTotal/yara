@@ -651,7 +651,7 @@ int yr_parser_reduce_rule_declaration(
     // appropriate error.
 
     yr_compiler_set_error_extra_info(compiler, identifier);
-    compiler->last_result = ERROR_DUPLICATE_IDENTIFIER;
+    compiler->last_result = ERROR_DUPLICATED_IDENTIFIER;
     return compiler->last_result;
   }
 

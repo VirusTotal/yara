@@ -495,7 +495,7 @@ int yr_object_structure_set_member(
   // Check if the object already have a member with the same identifier
 
   if (yr_object_lookup_field(object,  member->identifier) != NULL)
-    return ERROR_DUPLICATE_STRUCTURE_MEMBER;
+    return ERROR_DUPLICATED_STRUCTURE_MEMBER;
 
   sm = yr_malloc(sizeof(YR_STRUCTURE_MEMBER));
 

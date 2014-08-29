@@ -1961,7 +1961,7 @@ yyreduce:
           if (strcmp(tag_name, (yyvsp[(2) - (2)].c_string)) == 0)
           {
             yr_compiler_set_error_extra_info(compiler, tag_name);
-            compiler->last_result = ERROR_DUPLICATE_TAG_IDENTIFIER;
+            compiler->last_result = ERROR_DUPLICATED_TAG_IDENTIFIER;
             break;
           }
 
@@ -2620,7 +2620,7 @@ yyreduce:
               (yyvsp[(3) - (4)].c_string));
 
           compiler->last_result = \
-              ERROR_DUPLICATE_LOOP_IDENTIFIER;
+              ERROR_DUPLICATED_LOOP_IDENTIFIER;
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);

@@ -665,39 +665,39 @@ char* yr_compiler_get_error_message(
     case ERROR_INSUFICIENT_MEMORY:
       snprintf(buffer, buffer_size, "not enough memory");
       break;
-    case ERROR_DUPLICATE_IDENTIFIER:
+    case ERROR_DUPLICATED_IDENTIFIER:
       snprintf(
           buffer,
           buffer_size,
-          "duplicate identifier \"%s\"",
+          "duplicated identifier \"%s\"",
           compiler->last_error_extra_info);
       break;
-    case ERROR_DUPLICATE_STRING_IDENTIFIER:
+    case ERROR_DUPLICATED_STRING_IDENTIFIER:
       snprintf(
           buffer,
           buffer_size,
-          "duplicate string identifier \"%s\"",
+          "duplicated string identifier \"%s\"",
           compiler->last_error_extra_info);
       break;
-    case ERROR_DUPLICATE_TAG_IDENTIFIER:
+    case ERROR_DUPLICATED_TAG_IDENTIFIER:
       snprintf(
           buffer,
           buffer_size,
-          "duplicate tag identifier \"%s\"",
+          "duplicated tag identifier \"%s\"",
           compiler->last_error_extra_info);
       break;
-    case ERROR_DUPLICATE_META_IDENTIFIER:
+    case ERROR_DUPLICATED_META_IDENTIFIER:
       snprintf(
           buffer,
           buffer_size,
-          "duplicate metadata identifier \"%s\"",
+          "duplicated metadata identifier \"%s\"",
           compiler->last_error_extra_info);
       break;
-    case ERROR_DUPLICATE_LOOP_IDENTIFIER:
+    case ERROR_DUPLICATED_LOOP_IDENTIFIER:
       snprintf(
           buffer,
           buffer_size,
-          "duplicate loop identifier \"%s\"",
+          "duplicated loop identifier \"%s\"",
           compiler->last_error_extra_info);
       break;
     case ERROR_UNDEFINED_STRING:
@@ -776,10 +776,10 @@ char* yr_compiler_get_error_message(
           "unknown module \"%s\"",
           compiler->last_error_extra_info);
       break;
-    case ERROR_DUPLICATE_STRUCTURE_MEMBER:
+    case ERROR_DUPLICATED_STRUCTURE_MEMBER:
       snprintf(buffer,
           buffer_size,
-          "duplicate structure member");
+          "duplicated structure member");
       break;
     case ERROR_INVALID_HEX_STRING:
     case ERROR_INVALID_REGULAR_EXPRESSION:

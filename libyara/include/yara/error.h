@@ -34,11 +34,11 @@ limitations under the License.
 #define ERROR_INVALID_HEX_STRING                10
 #define ERROR_SYNTAX_ERROR                      11
 #define ERROR_LOOP_NESTING_LIMIT_EXCEEDED       12
-#define ERROR_DUPLICATE_LOOP_IDENTIFIER         13
-#define ERROR_DUPLICATE_IDENTIFIER              14
-#define ERROR_DUPLICATE_TAG_IDENTIFIER          15
-#define ERROR_DUPLICATE_META_IDENTIFIER         16
-#define ERROR_DUPLICATE_STRING_IDENTIFIER       17
+#define ERROR_DUPLICATED_LOOP_IDENTIFIER        13
+#define ERROR_DUPLICATED_IDENTIFIER             14
+#define ERROR_DUPLICATED_TAG_IDENTIFIER         15
+#define ERROR_DUPLICATED_META_IDENTIFIER        16
+#define ERROR_DUPLICATED_STRING_IDENTIFIER      17
 #define ERROR_UNREFERENCED_STRING               18
 #define ERROR_UNDEFINED_STRING                  19
 #define ERROR_UNDEFINED_IDENTIFIER              20
@@ -62,7 +62,7 @@ limitations under the License.
 #define ERROR_INVALID_FORMAT                    38
 #define ERROR_TOO_MANY_ARGUMENTS                39
 #define ERROR_WRONG_NUMBER_OF_ARGUMENTS         40
-#define ERROR_DUPLICATE_STRUCTURE_MEMBER        41
+#define ERROR_DUPLICATED_STRUCTURE_MEMBER       41
 
 
 #define FAIL_ON_ERROR(x) { \
