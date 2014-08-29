@@ -776,6 +776,11 @@ char* yr_compiler_get_error_message(
           "unknown module \"%s\"",
           compiler->last_error_extra_info);
       break;
+    case ERROR_DUPLICATE_STRUCTURE_MEMBER:
+      snprintf(buffer,
+          buffer_size,
+          "duplicate structure member");
+      break;
     case ERROR_INVALID_HEX_STRING:
     case ERROR_INVALID_REGULAR_EXPRESSION:
     case ERROR_SYNTAX_ERROR:

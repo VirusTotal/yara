@@ -144,6 +144,15 @@ uint64_t rva_to_offset(
   return section_offset + (rva - section_rva);
 }
 
+
+void parse_pe_resources(
+    PIMAGE_RESOURCE_DIRECTORY resource_dir,
+    size_t resource_size)
+{
+
+}
+
+
 void parse_pe_header(
     PIMAGE_NT_HEADERS32 pe,
     size_t base_address,
@@ -152,6 +161,9 @@ void parse_pe_header(
     YR_OBJECT* pe_obj)
 {
   PIMAGE_SECTION_HEADER section;
+  PIMAGE_DATA_DIRECTORY directory;
+
+  uint64_t offset;
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
   int i;
@@ -257,6 +269,22 @@ void parse_pe_header(
         pe_obj, "sections[%i].virtual_size", i);
 
     section++;
+  }
+
+  directory = get_data_directory(pe, IMAGE_DIRECTORY_ENTRY_RESOURCE);
+
+  if (directory->VirtualAddress != 0)
+  {
+    offset = rva_to_offset(pe, pe_size, directory->VirtualAddress);
+
+    if (offset != 0 &&
+        offset < pe_size &&
+        directory->Size < pe_size - offset)
+    {
+      parse_pe_resources(
+          (PIMAGE_RESOURCE_DIRECTORY)((uint8_t*) pe + offset),
+          directory->Size);
+    }
   }
 }
 
