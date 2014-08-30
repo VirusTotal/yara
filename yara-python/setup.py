@@ -25,4 +25,5 @@ setup(name='yara-python',
         sources=['yara-python.c'],
         libraries=['yara'],
         include_dirs=['../windows/include', '../libyara/include'],
+        library_dirs=['../libyara/.libs'],
     )])
