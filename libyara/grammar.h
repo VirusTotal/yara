@@ -150,11 +150,11 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 186 "grammar.y"
+#line 187 "grammar.y"
 {
+  EXPRESSION      expression;
   SIZED_STRING*   sized_string;
   char*           c_string;
-  int8_t          expression_type;
   int64_t         integer;
   YR_STRING*      string;
   YR_META*        meta;

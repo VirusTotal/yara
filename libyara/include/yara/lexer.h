@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 #include <yara/compiler.h>
-#include <grammar.h>
+
 
 #undef yyparse
 #undef yylex
@@ -48,9 +48,26 @@ limitations under the License.
 typedef void* yyscan_t;
 #endif
 
+#ifndef YY_TYPEDEF_EXPRESSION_T
+#define YY_TYPEDEF_EXPRESSION_T
+
+typedef struct _EXPRESSION
+{
+  int type;
+
+  union {
+    int64_t integer;
+  } value;
+
+} EXPRESSION;
+
+union YYSTYPE;
+
+#endif
+
 
 #define YY_DECL int yylex( \
-    YYSTYPE* yylval_param, yyscan_t yyscanner, YR_COMPILER* compiler)
+    union YYSTYPE* yylval_param, yyscan_t yyscanner, YR_COMPILER* compiler)
 
 
 #define YY_FATAL_ERROR(msg) yara_yyfatal(yyscanner, msg)
@@ -63,7 +80,7 @@ typedef void* yyscan_t;
 int yyget_lineno(yyscan_t yyscanner);
 
 int yylex(
-    YYSTYPE* yylval_param,
+    union YYSTYPE* yylval_param,
     yyscan_t yyscanner,
     YR_COMPILER* compiler);
 

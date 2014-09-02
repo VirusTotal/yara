@@ -85,6 +85,14 @@ limitations under the License.
 #define OP_IMPORT         55
 
 
+#define OPERATION(operator, op1, op2) \
+    (IS_UNDEFINED(op1) || IS_UNDEFINED(op2)) ? (UNDEFINED) : (op1 operator op2)
+
+
+#define COMPARISON(operator, op1, op2) \
+    (IS_UNDEFINED(op1) || IS_UNDEFINED(op2)) ? (0) : (op1 operator op2)
+
+
 int yr_execute_code(
     YR_RULES* rules,
     YR_SCAN_CONTEXT* context,

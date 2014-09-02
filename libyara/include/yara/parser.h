@@ -84,7 +84,8 @@ YR_META* yr_parser_reduce_meta_declaration(
 int yr_parser_reduce_string_identifier(
     yyscan_t yyscanner,
     const char* identifier,
-    int8_t instruction);
+    int8_t instruction,
+    uint64_t at_offset);
 
 
 int yr_parser_emit_pushes_for_strings(

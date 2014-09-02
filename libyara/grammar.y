@@ -55,10 +55,10 @@ limitations under the License.
     } \
 
 
-#define CHECK_TYPE_WITH_CLEANUP(actual_type, expected_type, op, cleanup) \
-    if (actual_type != expected_type) \
+#define CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op, cleanup) \
+    if (expression.type != expected_type) \
     { \
-      switch(actual_type) \
+      switch(expression.type) \
       { \
         case EXPRESSION_TYPE_INTEGER: \
           yr_compiler_set_error_extra_info( \
@@ -75,8 +75,9 @@ limitations under the License.
       YYERROR; \
     }
 
-#define CHECK_TYPE(actual_type, expected_type, op) \
-    CHECK_TYPE_WITH_CLEANUP(actual_type, expected_type, op, ) \
+
+#define CHECK_TYPE(expression, expected_type, op) \
+    CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op, ) \
 
 
 #define MSG(op)  "wrong type \"string\" for \"" op "\" operator"
@@ -166,10 +167,10 @@ limitations under the License.
 
 %type <object> identifier
 
-%type <expression_type> primary_expression
-%type <expression_type> boolean_expression
-%type <expression_type> expression
-%type <expression_type> regexp
+%type <expression> primary_expression
+%type <expression> boolean_expression
+%type <expression> expression
+%type <expression> regexp
 
 %type <c_string> arguments_list
 
@@ -184,9 +185,9 @@ limitations under the License.
 %destructor { yr_free($$); } _REGEXP_
 
 %union {
+  EXPRESSION      expression;
   SIZED_STRING*   sized_string;
   char*           c_string;
-  int8_t          expression_type;
   int64_t         integer;
   YR_STRING*      string;
   YR_META*        meta;
@@ -728,7 +729,7 @@ arguments_list
       {
         $$ = yr_malloc(MAX_FUNCTION_ARGS + 1);
 
-        switch($1)
+        switch($1.type)
         {
           case EXPRESSION_TYPE_INTEGER:
             strlcpy($$, "i", MAX_FUNCTION_ARGS);
@@ -754,7 +755,7 @@ arguments_list
         }
         else
         {
-          switch($3)
+          switch($3.type)
           {
             case EXPRESSION_TYPE_INTEGER:
               strlcat($1, "i", MAX_FUNCTION_ARGS);
@@ -818,7 +819,7 @@ regexp
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_REGEXP;
+        $$.type = EXPRESSION_TYPE_REGEXP;
       }
     ;
 
@@ -826,7 +827,7 @@ regexp
 boolean_expression
     : expression
       {
-        if ($1 == EXPRESSION_TYPE_STRING)
+        if ($1.type == EXPRESSION_TYPE_STRING)
         {
           compiler->last_result = yr_parser_emit(
               yyscanner,
@@ -836,8 +837,7 @@ boolean_expression
           ERROR_IF(compiler->last_result != ERROR_SUCCESS);
         }
 
-
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     ;
 
@@ -849,7 +849,7 @@ expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | _FALSE_
       {
@@ -858,7 +858,7 @@ expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _MATCHES_ regexp
       {
@@ -873,7 +873,7 @@ expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _CONTAINS_ primary_expression
       {
@@ -887,20 +887,21 @@ expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | _STRING_IDENTIFIER_
       {
         int result = yr_parser_reduce_string_identifier(
             yyscanner,
             $1,
-            OP_STR_FOUND);
+            OP_STR_FOUND,
+            UNDEFINED);
 
         yr_free($1);
 
         ERROR_IF(result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | _STRING_IDENTIFIER_ _AT_ primary_expression
       {
@@ -909,26 +910,28 @@ expression
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
             $1,
-            OP_STR_FOUND_AT);
+            OP_STR_FOUND_AT,
+            $3.value.integer);
 
         yr_free($1);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | _STRING_IDENTIFIER_ _IN_ range
       {
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
             $1,
-            OP_STR_FOUND_IN);
+            OP_STR_FOUND_IN,
+            UNDEFINED);
 
         yr_free($1);
 
         ERROR_IF(compiler->last_result!= ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | _FOR_ for_expression _IDENTIFIER_ _IN_
       {
@@ -1074,7 +1077,7 @@ expression
         compiler->loop_identifier[compiler->loop_depth] = NULL;
         yr_free($3);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | _FOR_ for_expression _OF_ string_set ':'
       {
@@ -1150,26 +1153,26 @@ expression
 
         yr_parser_emit(yyscanner, OP_LE, NULL);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
 
       }
     | for_expression _OF_ string_set
       {
         yr_parser_emit(yyscanner, OP_OF, NULL);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | _NOT_ boolean_expression
       {
         yr_parser_emit(yyscanner, OP_NOT, NULL);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | boolean_expression _AND_ boolean_expression
       {
         yr_parser_emit(yyscanner, OP_AND, NULL);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | boolean_expression _OR_ boolean_expression
       {
@@ -1177,7 +1180,7 @@ expression
 
         yr_parser_emit(yyscanner, OP_OR, NULL);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _LT_ primary_expression
       {
@@ -1186,7 +1189,7 @@ expression
 
         yr_parser_emit(yyscanner, OP_LT, NULL);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _GT_ primary_expression
       {
@@ -1195,7 +1198,7 @@ expression
 
         yr_parser_emit(yyscanner, OP_GT, NULL);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _LE_ primary_expression
       {
@@ -1204,7 +1207,7 @@ expression
 
         yr_parser_emit(yyscanner, OP_LE, NULL);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _GE_ primary_expression
       {
@@ -1213,17 +1216,17 @@ expression
 
         yr_parser_emit(yyscanner, OP_GE, NULL);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _EQ_ primary_expression
       {
-        if ($1 != $3)
+        if ($1.type != $3.type)
         {
           yr_compiler_set_error_extra_info(
               compiler, "mismatching types for == operator");
           compiler->last_result = ERROR_WRONG_TYPE;
         }
-        else if ($1 == EXPRESSION_TYPE_STRING)
+        else if ($1.type == EXPRESSION_TYPE_STRING)
         {
           compiler->last_result = yr_parser_emit(
               yyscanner,
@@ -1240,17 +1243,17 @@ expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _IS_ primary_expression
       {
-        if ($1 != $3)
+        if ($1.type != $3.type)
         {
           yr_compiler_set_error_extra_info(
               compiler, "mismatching types for == operator");
           compiler->last_result = ERROR_WRONG_TYPE;
         }
-        else if ($1 == EXPRESSION_TYPE_STRING)
+        else if ($1.type == EXPRESSION_TYPE_STRING)
         {
           compiler->last_result = yr_parser_emit(
               yyscanner,
@@ -1267,17 +1270,17 @@ expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _NEQ_ primary_expression
       {
-        if ($1 != $3)
+        if ($1.type != $3.type)
         {
           yr_compiler_set_error_extra_info(
               compiler, "mismatching types for != operator");
           compiler->last_result = ERROR_WRONG_TYPE;
         }
-        else if ($1 == EXPRESSION_TYPE_STRING)
+        else if ($1.type == EXPRESSION_TYPE_STRING)
         {
           compiler->last_result = yr_parser_emit(
               yyscanner,
@@ -1294,7 +1297,7 @@ expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_BOOLEAN;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression
       {
@@ -1316,14 +1319,14 @@ integer_set
 range
     : '(' primary_expression '.' '.'  primary_expression ')'
       {
-        if ($2 != EXPRESSION_TYPE_INTEGER)
+        if ($2.type != EXPRESSION_TYPE_INTEGER)
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for range's lower bound");
           compiler->last_result = ERROR_WRONG_TYPE;
         }
 
-        if ($5 != EXPRESSION_TYPE_INTEGER)
+        if ($5.type != EXPRESSION_TYPE_INTEGER)
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for range's upper bound");
@@ -1338,7 +1341,7 @@ range
 integer_enumeration
     : primary_expression
       {
-        if ($1 != EXPRESSION_TYPE_INTEGER)
+        if ($1.type != EXPRESSION_TYPE_INTEGER)
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for enumeration item");
@@ -1350,7 +1353,7 @@ integer_enumeration
       }
     | integer_enumeration ',' primary_expression
       {
-        if ($3 != EXPRESSION_TYPE_INTEGER)
+        if ($3.type != EXPRESSION_TYPE_INTEGER)
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for enumeration item");
@@ -1420,9 +1423,10 @@ primary_expression
         compiler->last_result = yr_parser_emit(
             yyscanner, OP_FILESIZE, NULL);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
-
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = UNDEFINED;
       }
     | _ENTRYPOINT_
       {
@@ -1434,9 +1438,10 @@ primary_expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = UNDEFINED;
       }
-    | _INT8_  '(' primary_expression ')'
+    | _INT8_ '(' primary_expression ')'
       {
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "int8");
 
@@ -1445,7 +1450,8 @@ primary_expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = UNDEFINED;
       }
     | _INT16_ '(' primary_expression ')'
       {
@@ -1456,7 +1462,8 @@ primary_expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = UNDEFINED;
       }
     | _INT32_ '(' primary_expression ')'
       {
@@ -1467,7 +1474,8 @@ primary_expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = UNDEFINED;
       }
     | _UINT8_ '(' primary_expression ')'
       {
@@ -1478,7 +1486,8 @@ primary_expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = UNDEFINED;
       }
     | _UINT16_ '(' primary_expression ')'
       {
@@ -1489,7 +1498,8 @@ primary_expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = UNDEFINED;
       }
     | _UINT32_ '(' primary_expression ')'
       {
@@ -1500,7 +1510,8 @@ primary_expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = UNDEFINED;
       }
     | _NUMBER_
       {
@@ -1509,7 +1520,8 @@ primary_expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = $1;
       }
     | _TEXT_STRING_
       {
@@ -1532,33 +1544,37 @@ primary_expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_STRING;
+        $$.type = EXPRESSION_TYPE_STRING;
       }
     | _STRING_COUNT_
       {
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
             $1,
-            OP_STR_COUNT);
+            OP_STR_COUNT,
+            UNDEFINED);
 
         yr_free($1);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = UNDEFINED;
       }
     | _STRING_OFFSET_ '[' primary_expression ']'
       {
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
             $1,
-            OP_STR_OFFSET);
+            OP_STR_OFFSET,
+            UNDEFINED);
 
         yr_free($1);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = UNDEFINED;
       }
     | _STRING_OFFSET_
       {
@@ -1572,23 +1588,26 @@ primary_expression
           compiler->last_result = yr_parser_reduce_string_identifier(
               yyscanner,
               $1,
-              OP_STR_OFFSET);
+              OP_STR_OFFSET,
+              UNDEFINED);
 
         yr_free($1);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = UNDEFINED;
       }
     | identifier
       {
         if ($1 == (YR_OBJECT*) -1)  // loop identifier
         {
-          $$ = EXPRESSION_TYPE_INTEGER;
+          $$.type = EXPRESSION_TYPE_INTEGER;
+          $$.value.integer = UNDEFINED;
         }
         else if ($1 == (YR_OBJECT*) -2)  // rule identifier
         {
-          $$ = EXPRESSION_TYPE_BOOLEAN;
+          $$.type = EXPRESSION_TYPE_BOOLEAN;
         }
         else if ($1 != NULL)
         {
@@ -1598,10 +1617,11 @@ primary_expression
           switch($1->type)
           {
             case OBJECT_TYPE_INTEGER:
-              $$ = EXPRESSION_TYPE_INTEGER;
+              $$.type = EXPRESSION_TYPE_INTEGER;
+              $$.value.integer = UNDEFINED;
               break;
             case OBJECT_TYPE_STRING:
-              $$ = EXPRESSION_TYPE_STRING;
+              $$.type = EXPRESSION_TYPE_STRING;
               break;
             default:
               assert(FALSE);
@@ -1622,7 +1642,8 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_ADD, NULL);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = OPERATION(+, $1.value.integer, $3.value.integer);
       }
     | primary_expression '-' primary_expression
       {
@@ -1631,7 +1652,8 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_SUB, NULL);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = OPERATION(-, $1.value.integer, $3.value.integer);
       }
     | primary_expression '*' primary_expression
       {
@@ -1640,7 +1662,8 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_MUL, NULL);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = OPERATION(*, $1.value.integer, $3.value.integer);
       }
     | primary_expression '\\' primary_expression
       {
@@ -1649,7 +1672,8 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_DIV, NULL);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = OPERATION(/, $1.value.integer, $3.value.integer);
       }
     | primary_expression '%' primary_expression
       {
@@ -1658,7 +1682,8 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_MOD, NULL);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = OPERATION(%, $1.value.integer, $3.value.integer);
       }
     | primary_expression '^' primary_expression
       {
@@ -1667,7 +1692,8 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_XOR, NULL);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = OPERATION(^, $1.value.integer, $3.value.integer);
       }
     | primary_expression '&' primary_expression
       {
@@ -1676,7 +1702,8 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_AND, NULL);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = OPERATION(&, $1.value.integer, $3.value.integer);
       }
     | primary_expression '|' primary_expression
       {
@@ -1685,7 +1712,8 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_OR, NULL);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = OPERATION(|, $1.value.integer, $3.value.integer);
       }
     | '~' primary_expression
       {
@@ -1693,7 +1721,9 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_NEG, NULL);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = ($2.value.integer == UNDEFINED) ?
+                              UNDEFINED : $2.value.integer;
       }
     | primary_expression _SHIFT_LEFT_ primary_expression
       {
@@ -1702,7 +1732,8 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_SHL, NULL);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = OPERATION(<<, $1.value.integer, $3.value.integer);
       }
     | primary_expression _SHIFT_RIGHT_ primary_expression
       {
@@ -1711,7 +1742,8 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_SHR, NULL);
 
-        $$ = EXPRESSION_TYPE_INTEGER;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = OPERATION(>>, $1.value.integer, $3.value.integer);
       }
     | regexp
       {

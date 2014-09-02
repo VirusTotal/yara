@@ -329,6 +329,7 @@ int _yr_parser_write_string(
 
   (*string)->g_flags = flags;
   (*string)->chained_to = NULL;
+  (*string)->fixed_offset = UNDEFINED;
 
   #ifdef PROFILING_ENABLED
   (*string)->clock_ticks = 0;
@@ -488,6 +489,14 @@ YR_STRING* yr_parser_reduce_string_declaration(
   // initially, and unmarked later if required.
 
   string_flags |= STRING_GFLAGS_SINGLE_MATCH;
+
+  // The STRING_GFLAGS_FIXED_OFFSET indicates that the string doesn't
+  // need to be searched all over the file because the user is using the
+  // "at" operator. The string must be searched at a fixed offset in the
+  // file. All strings are marked STRING_GFLAGS_FIXED_OFFSET initially,
+  // and unmarked later if required.
+
+  string_flags |= STRING_GFLAGS_FIXED_OFFSET;
 
   if (string_flags & STRING_GFLAGS_HEXADECIMAL ||
       string_flags & STRING_GFLAGS_REGEXP)
@@ -730,14 +739,15 @@ int yr_parser_reduce_rule_declaration(
 int yr_parser_reduce_string_identifier(
     yyscan_t yyscanner,
     const char* identifier,
-    int8_t instruction)
+    int8_t instruction,
+    uint64_t at_offset)
 {
   YR_STRING* string;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
-  if (strcmp(identifier, "$") == 0)
+  if (strcmp(identifier, "$") == 0) // is an anonymous string ?
   {
-    if (compiler->loop_for_of_mem_offset >= 0)
+    if (compiler->loop_for_of_mem_offset >= 0) // inside a loop ?
     {
       yr_parser_emit_with_arg(
           yyscanner,
@@ -747,22 +757,41 @@ int yr_parser_reduce_string_identifier(
 
       yr_parser_emit(yyscanner, instruction, NULL);
 
-      if (instruction != OP_STR_FOUND)
-      {
-        string = compiler->current_rule_strings;
+      string = compiler->current_rule_strings;
 
-        while(!STRING_IS_NULL(string))
-        {
+      while(!STRING_IS_NULL(string))
+      {
+        if (instruction != OP_STR_FOUND)
           string->g_flags &= ~STRING_GFLAGS_SINGLE_MATCH;
-          string = yr_arena_next_address(
-              compiler->strings_arena,
-              string,
-              sizeof(YR_STRING));
+
+        if (instruction == OP_STR_FOUND_AT)
+        {
+          // Avoid overwriting any previous fixed offset
+
+          if (string->fixed_offset == UNDEFINED)
+            string->fixed_offset = at_offset;
+
+          // If a previous fixed offset was different, disable
+          // the STRING_GFLAGS_FIXED_OFFSET flag because we only
+          // have room to store a single fixed offset value
+
+          if (string->fixed_offset != at_offset)
+            string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
         }
+        else
+        {
+          string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+        }
+
+        string = yr_arena_next_address(
+            compiler->strings_arena,
+            string,
+            sizeof(YR_STRING));
       }
     }
     else
     {
+      // Anonymous strings not allowed outside of a loop
       compiler->last_result = ERROR_MISPLACED_ANONYMOUS_STRING;
     }
   }
@@ -780,6 +809,25 @@ int yr_parser_reduce_string_identifier(
 
       if (instruction != OP_STR_FOUND)
         string->g_flags &= ~STRING_GFLAGS_SINGLE_MATCH;
+
+      if (instruction == OP_STR_FOUND_AT)
+      {
+        // Avoid overwriting any previous fixed offset
+
+        if (string->fixed_offset == UNDEFINED)
+          string->fixed_offset = at_offset;
+
+        // If a previous fixed offset was different, disable
+        // the STRING_GFLAGS_FIXED_OFFSET flag because we only
+        // have room to store a single fixed offset value
+
+        if (string->fixed_offset != at_offset)
+          string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+      }
+      else
+      {
+        string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+      }
 
       yr_parser_emit(yyscanner, instruction, NULL);
 

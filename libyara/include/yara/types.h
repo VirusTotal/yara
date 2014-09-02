@@ -117,6 +117,7 @@ typedef struct _YR_MATCHES
 #define STRING_GFLAGS_NULL              0x1000
 #define STRING_GFLAGS_CHAIN_PART        0x2000
 #define STRING_GFLAGS_CHAIN_TAIL        0x4000
+#define STRING_GFLAGS_FIXED_OFFSET      0x8000
 
 
 #define STRING_IS_HEX(x) \
@@ -145,6 +146,9 @@ typedef struct _YR_MATCHES
 
 #define STRING_IS_SINGLE_MATCH(x) \
     (((x)->g_flags) & STRING_GFLAGS_SINGLE_MATCH)
+
+#define STRING_IS_FIXED_OFFSET(x) \
+    (((x)->g_flags) & STRING_GFLAGS_FIXED_OFFSET)
 
 #define STRING_IS_LITERAL(x) \
     (((x)->g_flags) & STRING_GFLAGS_LITERAL)
@@ -182,6 +186,8 @@ typedef struct _YR_STRING
 
   int32_t chain_gap_min;
   int32_t chain_gap_max;
+
+  int64_t fixed_offset;
 
   YR_MATCHES matches[MAX_THREADS];
   YR_MATCHES unconfirmed_matches[MAX_THREADS];

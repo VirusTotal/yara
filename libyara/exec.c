@@ -43,14 +43,6 @@ limitations under the License.
 #define pop(x)  x = stack[--sp]
 
 
-#define operation(operator, op1, op2) \
-    (IS_UNDEFINED(op1) || IS_UNDEFINED(op2)) ? (UNDEFINED) : (op1 operator op2)
-
-
-#define comparison(operator, op1, op2) \
-    (IS_UNDEFINED(op1) || IS_UNDEFINED(op2)) ? (0) : (op1 operator op2)
-
-
 #define function_read(type) \
     int64_t read_##type(YR_MEMORY_BLOCK* block, size_t offset) \
     { \
@@ -237,37 +229,37 @@ int yr_execute_code(
       case OP_LT:
         pop(r2);
         pop(r1);
-        push(comparison(<, r1, r2));
+        push(COMPARISON(<, r1, r2));
         break;
 
       case OP_GT:
         pop(r2);
         pop(r1);
-        push(comparison(>, r1, r2));
+        push(COMPARISON(>, r1, r2));
         break;
 
       case OP_LE:
         pop(r2);
         pop(r1);
-        push(comparison(<=, r1, r2));
+        push(COMPARISON(<=, r1, r2));
         break;
 
       case OP_GE:
         pop(r2);
         pop(r1);
-        push(comparison(>=, r1, r2));
+        push(COMPARISON(>=, r1, r2));
         break;
 
       case OP_EQ:
         pop(r2);
         pop(r1);
-        push(comparison(==, r1, r2));
+        push(COMPARISON(==, r1, r2));
         break;
 
       case OP_NEQ:
         pop(r2);
         pop(r1);
-        push(comparison(!=, r1, r2));
+        push(COMPARISON(!=, r1, r2));
         break;
 
       case OP_SZ_EQ:
@@ -305,31 +297,31 @@ int yr_execute_code(
       case OP_ADD:
         pop(r2);
         pop(r1);
-        push(operation(+, r1, r2));
+        push(OPERATION(+, r1, r2));
         break;
 
       case OP_SUB:
         pop(r2);
         pop(r1);
-        push(operation(-, r1, r2));
+        push(OPERATION(-, r1, r2));
         break;
 
       case OP_MUL:
         pop(r2);
         pop(r1);
-        push(operation(*, r1, r2));
+        push(OPERATION(*, r1, r2));
         break;
 
       case OP_DIV:
         pop(r2);
         pop(r1);
-        push(operation(/, r1, r2));
+        push(OPERATION(/, r1, r2));
         break;
 
       case OP_MOD:
         pop(r2);
         pop(r1);
-        push(operation(%, r1, r2));
+        push(OPERATION(%, r1, r2));
         break;
 
       case OP_NEG:
@@ -340,19 +332,19 @@ int yr_execute_code(
       case OP_SHR:
         pop(r2);
         pop(r1);
-        push(operation(>>, r1, r2));
+        push(OPERATION(>>, r1, r2));
         break;
 
       case OP_SHL:
         pop(r2);
         pop(r1);
-        push(operation(<<, r1, r2));
+        push(OPERATION(<<, r1, r2));
         break;
 
       case OP_XOR:
         pop(r2);
         pop(r1);
-        push(operation(^, r1, r2));
+        push(OPERATION(^, r1, r2));
         break;
 
       case OP_PUSH_RULE:

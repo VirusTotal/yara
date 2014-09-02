@@ -858,6 +858,10 @@ int yr_scan_verify_match(
       STRING_FOUND(string))
     return ERROR_SUCCESS;
 
+  if (STRING_IS_FIXED_OFFSET(string) &&
+      string->fixed_offset != data_base + offset)
+    return ERROR_SUCCESS;
+
   if (STRING_IS_LITERAL(string))
   {
     FAIL_ON_ERROR(_yr_scan_verify_literal_match(
