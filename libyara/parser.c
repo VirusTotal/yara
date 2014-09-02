@@ -142,6 +142,7 @@ int yr_parser_emit_pushes_for_strings(
             NULL);
 
         string->g_flags |= STRING_GFLAGS_REFERENCED;
+        string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
         matching++;
       }
     }
@@ -593,6 +594,12 @@ YR_STRING* yr_parser_reduce_string_declaration(
       aux_string->chain_gap_max = max_gap;
 
       prev_string->chained_to = aux_string;
+
+      // prev_string is now chained to aux_string, an string chained
+      // to another one can't have a fixed offset, only the head of the
+      // string chain can have a fixed offset.
+
+      prev_string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
     }
   }
   else
@@ -821,8 +828,11 @@ int yr_parser_reduce_string_identifier(
         // the STRING_GFLAGS_FIXED_OFFSET flag because we only
         // have room to store a single fixed offset value
 
-        if (string->fixed_offset != at_offset)
+        if (string->fixed_offset == UNDEFINED ||
+            string->fixed_offset != at_offset)
+        {
           string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+        }
       }
       else
       {
