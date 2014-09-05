@@ -359,6 +359,10 @@ class TestYara(unittest.TestCase):
         ], "x\x00a\x00b\x00c\x00x\x00")
 
         self.assertFalseRules([
+            'rule test { strings: $a = "ab" wide fullword condition: $a }',
+        ], "x\x00a\x00b\x00")
+
+        self.assertFalseRules([
             'rule test { strings: $a = "abc" wide fullword condition: $a }',
         ], "x\x00a\x00b\x00c\x00")
 

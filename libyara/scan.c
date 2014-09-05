@@ -747,8 +747,6 @@ int _yr_scan_verify_literal_match(
   }
   else if (STRING_IS_NO_CASE(string))
   {
-    flags |= RE_FLAGS_NO_CASE;
-
     if (STRING_IS_ASCII(string))
     {
       forward_matches = _yr_scan_icompare(
@@ -760,7 +758,6 @@ int _yr_scan_verify_literal_match(
 
     if (STRING_IS_WIDE(string) && forward_matches == 0)
     {
-      flags |= RE_FLAGS_WIDE;
       forward_matches = _yr_scan_wicompare(
           data + offset,
           data_size - offset,
@@ -781,7 +778,6 @@ int _yr_scan_verify_literal_match(
 
     if (STRING_IS_WIDE(string) && forward_matches == 0)
     {
-      flags |= RE_FLAGS_WIDE;
       forward_matches = _yr_scan_wcompare(
           data + offset,
           data_size - offset,
@@ -794,7 +790,7 @@ int _yr_scan_verify_literal_match(
   {
     if (STRING_IS_FULL_WORD(string))
     {
-      if (flags & RE_FLAGS_WIDE)
+      if (STRING_IS_WIDE(string))
       {
         if (offset >= 2 &&
             *(data + offset - 1) == 0 &&
@@ -817,6 +813,12 @@ int _yr_scan_verify_literal_match(
           return ERROR_SUCCESS;
       }
     }
+
+    if (STRING_IS_WIDE(string))
+      flags |= RE_FLAGS_WIDE;
+
+    if (STRING_IS_NO_CASE(string))
+      flags |= RE_FLAGS_NO_CASE;
 
     callback_args.string = string;
     callback_args.data = data;
