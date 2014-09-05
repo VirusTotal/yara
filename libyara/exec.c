@@ -523,7 +523,7 @@ int yr_execute_code(
 
         if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
         {
-          push(0);
+          push(UNDEFINED);
           break;
         }
 
@@ -653,8 +653,12 @@ int yr_execute_code(
       case OP_CONTAINS:
         pop(r2);
         pop(r1);
-        push(strstr(UINT64_TO_PTR(char*, r1),
-                    UINT64_TO_PTR(char*, r2)) != NULL);
+
+        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
+          push(UNDEFINED);
+        else
+          push(strstr(UINT64_TO_PTR(char*, r1),
+                      UINT64_TO_PTR(char*, r2)) != NULL);
         break;
 
       case OP_IMPORT:
