@@ -122,6 +122,21 @@ limitations under the License.
   }
 
 
+#define declare_integer_dictionary(name) { \
+    YR_OBJECT* dict; \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_DICTIONARY, \
+        name, \
+        stack[stack_top], \
+        &dict)); \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_INTEGER, \
+        name, \
+        dict, \
+        NULL)); \
+  }
+
+
 #define declare_string(name) { \
     FAIL_ON_ERROR(yr_object_create( \
         OBJECT_TYPE_STRING, \
@@ -142,6 +157,21 @@ limitations under the License.
         OBJECT_TYPE_STRING, \
         name, \
         array, \
+        NULL)); \
+  }
+
+
+#define declare_string_dictionary(name) { \
+    YR_OBJECT* dict; \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_DICTIONARY, \
+        name, \
+        stack[stack_top], \
+        &dict)); \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_STRING, \
+        name, \
+        dict, \
         NULL)); \
   }
 

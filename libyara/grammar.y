@@ -663,12 +663,39 @@ identifier
       {
         if ($1 != NULL && $1->type == OBJECT_TYPE_ARRAY)
         {
+          if ($3.type != EXPRESSION_TYPE_INTEGER)
+          {
+            yr_compiler_set_error_extra_info(
+                compiler, "array indexes must be of integer type");
+            compiler->last_result = ERROR_WRONG_TYPE;
+          }
+
+          ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
           compiler->last_result = yr_parser_emit(
               yyscanner,
               OP_INDEX_ARRAY,
               NULL);
 
-          $$ = ((YR_OBJECT_ARRAY*) $1)->items->objects[0];
+          $$ = ((YR_OBJECT_ARRAY*) $1)->prototype_item;
+        }
+        else if ($1 != NULL && $1->type == OBJECT_TYPE_DICTIONARY)
+        {
+          if ($3.type != EXPRESSION_TYPE_STRING)
+          {
+            yr_compiler_set_error_extra_info(
+                compiler, "dictionary keys must be of string type");
+            compiler->last_result = ERROR_WRONG_TYPE;
+          }
+
+          ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+          compiler->last_result = yr_parser_emit(
+              yyscanner,
+              OP_LOOKUP_DICT,
+              NULL);
+
+          $$ = ((YR_OBJECT_DICTIONARY*) $1)->prototype_item;
         }
         else
         {
@@ -676,7 +703,7 @@ identifier
               compiler,
               $1->identifier);
 
-          compiler->last_result = ERROR_NOT_AN_ARRAY;
+          compiler->last_result = ERROR_NOT_INDEXABLE;
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);

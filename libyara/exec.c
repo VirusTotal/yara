@@ -429,10 +429,10 @@ int yr_execute_code(
         break;
 
       case OP_INDEX_ARRAY:
-        pop(r1);
-        pop(r2);
+        pop(r1);  // index
+        pop(r2);  // array
 
-        if (r1 == UNDEFINED)
+        if (IS_UNDEFINED(r1))
         {
           push(UNDEFINED);
           break;
@@ -441,6 +441,29 @@ int yr_execute_code(
         object = UINT64_TO_PTR(YR_OBJECT*, r2);
         assert(object->type == OBJECT_TYPE_ARRAY);
         object = yr_object_array_get_item(object, 0, r1);
+
+        if (object != NULL)
+          push(PTR_TO_UINT64(object));
+        else
+          push(UNDEFINED);
+
+        break;
+
+      case OP_LOOKUP_DICT:
+        pop(r1);  // key
+        pop(r2);  // dictionary
+
+        if (IS_UNDEFINED(r1))
+        {
+          push(UNDEFINED);
+          break;
+        }
+
+        object = UINT64_TO_PTR(YR_OBJECT*, r2);
+        assert(object->type == OBJECT_TYPE_DICTIONARY);
+
+        object = yr_object_dict_get_item(
+            object, 0, UINT64_TO_PTR(const char*, r1));
 
         if (object != NULL)
           push(PTR_TO_UINT64(object));

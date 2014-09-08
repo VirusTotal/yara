@@ -28,6 +28,7 @@ limitations under the License.
 #define OBJECT_TYPE_ARRAY       4
 #define OBJECT_TYPE_FUNCTION    5
 #define OBJECT_TYPE_REGEXP      6
+#define OBJECT_TYPE_DICTIONARY  7
 
 
 int yr_object_create(
@@ -103,6 +104,18 @@ int yr_object_array_set_item(
     YR_OBJECT* object,
     YR_OBJECT* item,
     int index);
+
+
+YR_OBJECT* yr_object_dict_get_item(
+    YR_OBJECT* object,
+    int flags,
+    const char* key);
+
+
+int yr_object_dict_set_item(
+    YR_OBJECT* object,
+    YR_OBJECT* item,
+    const char* key);
 
 
 int yr_object_structure_set_member(

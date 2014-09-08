@@ -41,6 +41,9 @@ begin_declarations;
   declare_integer_array("integer_array");
   declare_string_array("string_array");
 
+  declare_integer_dictionary("integer_dict");
+  declare_string_dictionary("string_dict");
+
   begin_struct_array("struct_array");
     declare_integer("i");
     declare_string("s");
@@ -83,6 +86,9 @@ int module_load(
   set_string("foo", module_object, "string_array[%i]", 0);
   set_string("bar", module_object, "string_array[%i]", 1);
   set_string("baz", module_object, "string_array[%i]", 2);
+
+  set_string("foo", module_object, "string_dict[%s]", "foo");
+  set_string("bar", module_object, "string_dict[\"bar\"]");
 
   return ERROR_SUCCESS;
 }

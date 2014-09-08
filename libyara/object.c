@@ -46,6 +46,9 @@ int yr_object_create(
     case OBJECT_TYPE_ARRAY:
       object_size = sizeof(YR_OBJECT_ARRAY);
       break;
+    case OBJECT_TYPE_DICTIONARY:
+      object_size = sizeof(YR_OBJECT_DICTIONARY);
+      break;
     case OBJECT_TYPE_INTEGER:
       object_size = sizeof(YR_OBJECT_INTEGER);
       break;
@@ -85,6 +88,11 @@ int yr_object_create(
       break;
     case OBJECT_TYPE_ARRAY:
       ((YR_OBJECT_ARRAY*) obj)->items = NULL;
+      ((YR_OBJECT_ARRAY*) obj)->prototype_item = NULL;
+      break;
+    case OBJECT_TYPE_DICTIONARY:
+      ((YR_OBJECT_DICTIONARY*) obj)->items = NULL;
+      ((YR_OBJECT_ARRAY*) obj)->prototype_item = NULL;
       break;
     case OBJECT_TYPE_INTEGER:
       ((YR_OBJECT_INTEGER*) obj)->value = UNDEFINED;
@@ -103,9 +111,10 @@ int yr_object_create(
 
   if (parent != NULL)
   {
-    assert( parent->type == OBJECT_TYPE_STRUCTURE ||
-            parent->type == OBJECT_TYPE_ARRAY ||
-            parent->type == OBJECT_TYPE_FUNCTION);
+    assert(parent->type == OBJECT_TYPE_STRUCTURE ||
+           parent->type == OBJECT_TYPE_ARRAY ||
+           parent->type == OBJECT_TYPE_DICTIONARY ||
+           parent->type == OBJECT_TYPE_FUNCTION);
 
     switch(parent->type)
     {
@@ -116,9 +125,11 @@ int yr_object_create(
         break;
 
       case OBJECT_TYPE_ARRAY:
-        FAIL_ON_ERROR_WITH_CLEANUP(
-            yr_object_array_set_item(parent, obj, 0),
-            yr_free(obj));
+        ((YR_OBJECT_ARRAY*) parent)->prototype_item = obj;
+        break;
+
+      case OBJECT_TYPE_DICTIONARY:
+        ((YR_OBJECT_DICTIONARY*) parent)->prototype_item = obj;
         break;
     }
   }
@@ -234,6 +245,7 @@ void yr_object_destroy(
   YR_STRUCTURE_MEMBER* member;
   YR_STRUCTURE_MEMBER* next_member;
   YR_ARRAY_ITEMS* array_items;
+  YR_DICTIONARY_ITEMS* dict_items;
 
   RE* re;
   int i;
@@ -266,13 +278,40 @@ void yr_object_destroy(
       break;
 
     case OBJECT_TYPE_ARRAY:
+      if (((YR_OBJECT_ARRAY*) object)->prototype_item != NULL)
+        yr_free(((YR_OBJECT_ARRAY*) object)->prototype_item);
+
       array_items = ((YR_OBJECT_ARRAY*) object)->items;
 
-      for (i = 0; i < array_items->count; i++)
-        if (array_items->objects[i] != NULL)
-          yr_object_destroy(array_items->objects[i]);
+      if (array_items != NULL)
+      {
+        for (i = 0; i < array_items->count; i++)
+          if (array_items->objects[i] != NULL)
+            yr_object_destroy(array_items->objects[i]);
+      }
 
       yr_free(array_items);
+      break;
+
+    case OBJECT_TYPE_DICTIONARY:
+      if (((YR_OBJECT_DICTIONARY*) object)->prototype_item != NULL)
+        yr_free(((YR_OBJECT_DICTIONARY*) object)->prototype_item);
+
+      dict_items = ((YR_OBJECT_DICTIONARY*) object)->items;
+
+      if (dict_items != NULL)
+      {
+        for (i = 0; i < dict_items->used; i++)
+        {
+          if (dict_items->objects[i].key != NULL)
+            yr_free(dict_items->objects[i].key);
+
+          if (dict_items->objects[i].obj != NULL)
+            yr_object_destroy(dict_items->objects[i].obj);
+        }
+      }
+
+      yr_free(dict_items);
       break;
 
     case OBJECT_TYPE_FUNCTION:
@@ -317,7 +356,9 @@ YR_OBJECT* _yr_object_lookup(
   YR_OBJECT* obj = object;
 
   const char* p = pattern;
-  char field_name[256];
+  const char* key;
+
+  char str[256];
 
   int i;
   int index;
@@ -326,17 +367,17 @@ YR_OBJECT* _yr_object_lookup(
   {
     i = 0;
 
-    while(*p != '\0' && *p != '.' && *p != '[')
+    while(*p != '\0' && *p != '.' && *p != '[' && i < sizeof(str))
     {
-      field_name[i++] = *p++;
+      str[i++] = *p++;
     }
 
-    field_name[i] = '\0';
+    str[i] = '\0';
 
     if (obj->type != OBJECT_TYPE_STRUCTURE)
       return NULL;
 
-    obj = yr_object_lookup_field(obj, field_name);
+    obj = yr_object_lookup_field(obj, str);
 
     if (obj == NULL)
       return NULL;
@@ -347,19 +388,36 @@ YR_OBJECT* _yr_object_lookup(
 
       if (*p == '%')
       {
-        if (*++p == 'i')
+        p++;
+
+        switch(*p++)
         {
-          index = va_arg(args, int);
-          p++;
-        }
-        else
-        {
-          return NULL;
+          case 'i':
+            index = va_arg(args, int);
+            break;
+          case 's':
+            key = va_arg(args, const char*);
+            break;
+
+          default:
+            return NULL;
         }
       }
       else if (*p >= '0' && *p <= '9')
       {
         index = strtol(p, (char**) &p, 10);
+      }
+      else if (*p == '"')
+      {
+        i = 0;
+        p++;              // skip the opening quotation mark
+
+        while (*p != '"' && *p != '\0' && i < sizeof(str))
+          str[i++] = *p++;
+
+        str[i] = '\0';
+        p++;              // skip the closing quotation mark
+        key = str;
       }
       else
       {
@@ -369,7 +427,16 @@ YR_OBJECT* _yr_object_lookup(
       assert(*p++ == ']');
       assert(*p == '.' || *p == '\0');
 
-      obj = yr_object_array_get_item(obj, flags, index);
+      switch(obj->type)
+      {
+        case OBJECT_TYPE_ARRAY:
+          obj = yr_object_array_get_item(obj, flags, index);
+          break;
+
+        case OBJECT_TYPE_DICTIONARY:
+          obj = yr_object_dict_get_item(obj, flags, key);
+          break;
+      }
     }
 
     if (*p == '\0')
@@ -518,20 +585,18 @@ YR_OBJECT* yr_object_array_get_item(
     int index)
 {
   YR_OBJECT* result = NULL;
-  YR_ARRAY_ITEMS* array_items;
+  YR_OBJECT_ARRAY* array;
 
   assert(object->type == OBJECT_TYPE_ARRAY);
 
-  array_items = ((YR_OBJECT_ARRAY*) object)->items;
+  array = (YR_OBJECT_ARRAY*) object;
 
-  assert(array_items != NULL);
-
-  if (array_items->count > index)
-    result = array_items->objects[index];
+  if (array->items != NULL && array->items->count > index)
+      result = array->items->objects[index];
 
   if (result == NULL && flags & OBJECT_CREATE)
   {
-    yr_object_copy(array_items->objects[0], &result);
+    yr_object_copy(array->prototype_item, &result);
 
     if (result != NULL)
       yr_object_array_set_item(object, result, index);
@@ -587,6 +652,98 @@ int yr_object_array_set_item(
 
   item->parent = object;
   array->items->objects[index] = item;
+
+  return ERROR_SUCCESS;
+}
+
+
+YR_OBJECT* yr_object_dict_get_item(
+    YR_OBJECT* object,
+    int flags,
+    const char* key)
+{
+  YR_OBJECT* result = NULL;
+  YR_OBJECT_DICTIONARY* dict;
+
+  assert(object->type == OBJECT_TYPE_DICTIONARY);
+
+  dict = (YR_OBJECT_DICTIONARY*) object;
+
+  if (dict->items != NULL)
+  {
+    for (int i = 0; i < dict->items->used; i++)
+    {
+      if (strcmp(dict->items->objects[i].key, key) == 0)
+        result = dict->items->objects[i].obj;
+    }
+  }
+
+  if (result == NULL && flags & OBJECT_CREATE)
+  {
+    yr_object_copy(dict->prototype_item, &result);
+
+    if (result != NULL)
+      yr_object_dict_set_item(object, result, key);
+  }
+
+  return result;
+}
+
+
+int yr_object_dict_set_item(
+    YR_OBJECT* object,
+    YR_OBJECT* item,
+    const char* key)
+{
+  YR_OBJECT_DICTIONARY* dict;
+
+  int i;
+  int count;
+
+  assert(object->type == OBJECT_TYPE_DICTIONARY);
+
+  dict = ((YR_OBJECT_DICTIONARY*) object);
+
+  if (dict->items == NULL)
+  {
+    count = 64;
+
+    dict->items = yr_malloc(
+        sizeof(YR_DICTIONARY_ITEMS) + count * sizeof(dict->items->objects[0]));
+
+    if (dict->items == NULL)
+      return ERROR_INSUFICIENT_MEMORY;
+
+    memset(dict->items->objects, 0, count * sizeof(dict->items->objects[0]));
+
+    dict->items->free = count;
+    dict->items->used = 0;
+  }
+  else if (dict->items->free == 0)
+  {
+    count = dict->items->used * 2;
+    dict->items = yr_realloc(
+        dict->items,
+        sizeof(YR_DICTIONARY_ITEMS) + count * sizeof(dict->items->objects[0]));
+
+    if (dict->items == NULL)
+      return ERROR_INSUFICIENT_MEMORY;
+
+    for (i = dict->items->used; i < count; i++)
+    {
+      dict->items->objects[i].key = NULL;
+      dict->items->objects[i].obj = NULL;
+    }
+
+    dict->items->free = dict->items->used;
+  }
+
+  item->parent = object;
+
+  dict->items->objects[dict->items->used].key = yr_strdup(key);
+  dict->items->objects[dict->items->used].obj = item;
+
+  dict->items->used++;
 
   return ERROR_SUCCESS;
 }

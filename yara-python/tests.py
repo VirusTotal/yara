@@ -707,6 +707,8 @@ class TestYara(unittest.TestCase):
             'import "tests" rule test { condition: tests.integer_array[1] == 1}',
             'import "tests" rule test { condition: tests.string_array[0] == "foo"}',
             'import "tests" rule test { condition: tests.string_array[2] == "baz"}',
+            'import "tests" rule test { condition: tests.string_dict["foo"] == "foo"}',
+            'import "tests" rule test { condition: tests.string_dict["bar"] == "bar"}',
             'import "tests" rule test { condition: tests.sum(1,1) == 2}',
           ])
 

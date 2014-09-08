@@ -728,11 +728,11 @@ char* yr_compiler_get_error_message(
           "\"%s\" is not a structure",
           compiler->last_error_extra_info);
       break;
-    case ERROR_NOT_AN_ARRAY:
+    case ERROR_NOT_INDEXABLE:
       snprintf(
           buffer,
           buffer_size,
-          "\"%s\" is not a array",
+          "\"%s\" is not an array or dictionary",
           compiler->last_error_extra_info);
       break;
     case ERROR_INVALID_FIELD_NAME:

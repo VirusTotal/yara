@@ -434,9 +434,19 @@ typedef struct _YR_OBJECT_STRUCTURE
 typedef struct _YR_OBJECT_ARRAY
 {
   OBJECT_COMMON_FIELDS
+  YR_OBJECT* prototype_item;
   struct _YR_ARRAY_ITEMS* items;
 
 } YR_OBJECT_ARRAY;
+
+
+typedef struct _YR_OBJECT_DICTIONARY
+{
+  OBJECT_COMMON_FIELDS
+  YR_OBJECT* prototype_item;
+  struct _YR_DICTIONARY_ITEMS* items;
+
+} YR_OBJECT_DICTIONARY;
 
 
 struct _YR_OBJECT_FUNCTION;
@@ -474,6 +484,21 @@ typedef struct _YR_ARRAY_ITEMS
   YR_OBJECT* objects[1];
 
 } YR_ARRAY_ITEMS;
+
+
+typedef struct _YR_DICTIONARY_ITEMS
+{
+  int used;
+  int free;
+
+  struct {
+
+    char* key;
+    YR_OBJECT* obj;
+
+  } objects[1];
+
+} YR_DICTIONARY_ITEMS;
 
 
 #endif

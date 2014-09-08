@@ -57,7 +57,7 @@ limitations under the License.
 #define ERROR_INVALID_FIELD_NAME                33
 #define ERROR_UNKNOWN_MODULE                    34
 #define ERROR_NOT_A_STRUCTURE                   35
-#define ERROR_NOT_AN_ARRAY                      36
+#define ERROR_NOT_INDEXABLE                     36
 #define ERROR_NOT_A_FUNCTION                    37
 #define ERROR_INVALID_FORMAT                    38
 #define ERROR_TOO_MANY_ARGUMENTS                39
