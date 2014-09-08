@@ -60,36 +60,38 @@ limitations under the License.
     ((entry)->OffsetToData & 0x7FFFFFFF)
 
 
-typedef int (*RESOURCE_CALLBACK_FUNC) \
-    (int type, int id, int language, void* cb_data);
+typedef int (*RESOURCE_CALLBACK_FUNC) ( \
+     PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, \
+     int rsrc_type, \
+     int rsrc_id, \
+     int rsrc_language, \
+     void* cb_data);
 
 
-typedef struct _DATA
+typedef struct _PE
 {
-  PIMAGE_NT_HEADERS32 pe_header;
-
-  size_t pe_size;
-  size_t pe_offset;
-
   uint8_t* data;
   size_t data_size;
 
-} DATA;
+  PIMAGE_NT_HEADERS32 header;
+  YR_OBJECT* object;
+
+} PE;
 
 
 PIMAGE_NT_HEADERS32 pe_get_header(
-    uint8_t* buffer,
-    size_t buffer_length)
+    uint8_t* data,
+    size_t data_size)
 {
   PIMAGE_DOS_HEADER mz_header;
   PIMAGE_NT_HEADERS32 pe_header;
 
   size_t headers_size = 0;
 
-  if (buffer_length < sizeof(IMAGE_DOS_HEADER))
+  if (data_size < sizeof(IMAGE_DOS_HEADER))
     return NULL;
 
-  mz_header = (PIMAGE_DOS_HEADER) buffer;
+  mz_header = (PIMAGE_DOS_HEADER) data;
 
   if (mz_header->e_magic != IMAGE_DOS_SIGNATURE)
     return NULL;
@@ -101,17 +103,17 @@ PIMAGE_NT_HEADERS32 pe_get_header(
                  sizeof(pe_header->Signature) + \
                  sizeof(IMAGE_FILE_HEADER);
 
-  if (buffer_length < headers_size)
+  if (data_size < headers_size)
     return NULL;
 
-  pe_header = (PIMAGE_NT_HEADERS32) (buffer + mz_header->e_lfanew);
+  pe_header = (PIMAGE_NT_HEADERS32) (data + mz_header->e_lfanew);
 
   headers_size += pe_header->FileHeader.SizeOfOptionalHeader;
 
   if (pe_header->Signature == IMAGE_NT_SIGNATURE &&
       (pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 ||
        pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64) &&
-      buffer_length > headers_size)
+      data_size > headers_size)
   {
     return pe_header;
   }
@@ -123,24 +125,23 @@ PIMAGE_NT_HEADERS32 pe_get_header(
 
 
 PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
-    PIMAGE_NT_HEADERS32 pe_header,
+    PE* pe,
     int entry)
 {
   PIMAGE_DATA_DIRECTORY result;
 
-  if (pe_header->FileHeader.Machine == 0x8664)  // is a 64-bit PE ?
-    result = &((PIMAGE_NT_HEADERS64) pe_header)->
+  if (pe->header->FileHeader.Machine == 0x8664)  // is a 64-bit PE ?
+    result = &((PIMAGE_NT_HEADERS64) pe->header)->
         OptionalHeader.DataDirectory[entry];
   else
-    result = &pe_header->OptionalHeader.DataDirectory[entry];
+    result = &pe->header->OptionalHeader.DataDirectory[entry];
 
   return result;
 }
 
 
 uint64_t pe_rva_to_offset(
-    PIMAGE_NT_HEADERS32 pe_header,
-    size_t pe_size,
+    PE* pe,
     uint64_t rva)
 {
   PIMAGE_SECTION_HEADER section;
@@ -149,14 +150,14 @@ uint64_t pe_rva_to_offset(
 
   int i = 0;
 
-  section = IMAGE_FIRST_SECTION(pe_header);
+  section = IMAGE_FIRST_SECTION(pe->header);
   section_rva = 0;
   section_offset = 0;
 
-  while(i < min(pe_header->FileHeader.NumberOfSections, MAX_PE_SECTIONS))
+  while(i < min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS))
   {
     if ((uint8_t*) section - \
-        (uint8_t*) pe_header + sizeof(IMAGE_SECTION_HEADER) < pe_size)
+        (uint8_t*) pe->data + sizeof(IMAGE_SECTION_HEADER) < pe->data_size)
     {
       if (rva >= section->VirtualAddress &&
           section_rva <= section->VirtualAddress)
@@ -179,9 +180,9 @@ uint64_t pe_rva_to_offset(
 
 
 int _pe_iterate_resources(
+    PE* pe,
     PIMAGE_RESOURCE_DIRECTORY resource_dir,
     uint8_t* rsrc_data,
-    size_t rsrc_size,
     int rsrc_tree_level,
     int* type,
     int* id,
@@ -213,9 +214,9 @@ int _pe_iterate_resources(
     if (IS_RESOURCE_SUBDIRECTORY(entry))
     {
       result = _pe_iterate_resources(
-          (PIMAGE_RESOURCE_DIRECTORY) (rsrc_data + RESOURCE_OFFSET(entry)),
+          pe,
+          (PIMAGE_RESOURCE_DIRECTORY)(rsrc_data + RESOURCE_OFFSET(entry)),
           rsrc_data,
-          rsrc_size,
           rsrc_tree_level + 1,
           type,
           id,
@@ -228,7 +229,15 @@ int _pe_iterate_resources(
     }
     else
     {
-      result = callback(*type, *id, *language, callback_data);
+      PIMAGE_RESOURCE_DATA_ENTRY data_entry = (PIMAGE_RESOURCE_DATA_ENTRY) \
+          (rsrc_data + RESOURCE_OFFSET(entry));
+
+      result = callback(
+          data_entry,
+          *type,
+          *id,
+          *language,
+          callback_data);
 
       if (result == RESOURCE_CALLBACK_ABORT)
         return RESOURCE_ITERATOR_ABORTED;
@@ -245,9 +254,7 @@ int _pe_iterate_resources(
 
 
 int pe_iterate_resources(
-    PIMAGE_NT_HEADERS32 pe_header,
-    size_t pe_size,
-    size_t pe_offset,
+    PE* pe,
     RESOURCE_CALLBACK_FUNC callback,
     void* callback_data)
 {
@@ -258,22 +265,20 @@ int pe_iterate_resources(
   int language = -1;
 
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
-      pe_header, IMAGE_DIRECTORY_ENTRY_RESOURCE);
+      pe, IMAGE_DIRECTORY_ENTRY_RESOURCE);
 
   if (directory->VirtualAddress != 0)
   {
-    offset = pe_rva_to_offset(
-        pe_header, pe_size, directory->VirtualAddress);
+    offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
     if (offset != 0 &&
-        offset < pe_size &&
-        directory->Size < pe_size - offset)
+        offset < pe->data_size &&
+        directory->Size < pe->data_size - offset)
     {
       _pe_iterate_resources(
-          (PIMAGE_RESOURCE_DIRECTORY) \
-              ((uint8_t*) pe_header - pe_offset + offset),
-          (uint8_t*) pe_header - pe_offset + offset,
-          directory->Size,
+          pe,
+          (PIMAGE_RESOURCE_DIRECTORY) (pe->data + offset),
+          pe->data + offset,
           0,
           &type,
           &id,
@@ -289,91 +294,174 @@ int pe_iterate_resources(
 }
 
 
-void pe_parse_header(
-    PIMAGE_NT_HEADERS32 pe,
+int pe_find_version_info_cb(
+    PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
+    int rsrc_type,
+    int rsrc_id,
+    int rsrc_language,
+    PE* pe)
+{
+  PVERSION_INFO version_info;
+  PVERSION_INFO string_file_info;
+
+  char key[64];
+  char value[256];
+
+  size_t version_info_offset;
+
+  if (rsrc_type == RESOURCE_TYPE_VERSION)
+  {
+    version_info_offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
+
+    if (version_info_offset == 0)
+      return RESOURCE_CALLBACK_CONTINUE;
+
+    version_info = (PVERSION_INFO) (pe->data + version_info_offset);
+
+    if (strcmp_w(version_info->Key, "VS_VERSION_INFO") != 0)
+      return RESOURCE_CALLBACK_CONTINUE;
+
+    string_file_info = ADD_OFFSET(version_info, sizeof(VERSION_INFO) + 86);
+
+    while(strcmp_w(string_file_info->Key, "StringFileInfo") == 0)
+    {
+      PVERSION_INFO string_table = ADD_OFFSET(
+          string_file_info,
+          sizeof(VERSION_INFO) + 30);
+
+      string_file_info = ADD_OFFSET(
+          string_file_info,
+          string_file_info->Length);
+
+      string_file_info = ALIGN_NEXT_DWORD(string_file_info);
+
+      while (string_table < string_file_info)
+      {
+        PVERSION_INFO string = ADD_OFFSET(
+            string_table,
+            sizeof(VERSION_INFO) + 2 * (strlen_w(string_table->Key) + 1));
+
+        string_table = ADD_OFFSET(
+            string_table,
+            string_table->Length);
+
+        string_table = ALIGN_NEXT_DWORD(string_table);
+
+        while (string < string_table)
+        {
+          char* string_value = (char*) ADD_OFFSET(
+              string,
+              sizeof(VERSION_INFO) + 2 * (strlen_w(string->Key) + 1));
+
+          string_value = ALIGN_NEXT_DWORD(string_value);
+
+          strlcpy_w(key, string->Key, sizeof(key));
+          strlcpy_w(value, string_value, sizeof(value));
+
+          set_string(value, pe->object, "version_info[%s]", key);
+
+          string = ADD_OFFSET(string, string->Length);
+          string = ALIGN_NEXT_DWORD(string);
+        }
+      }
+    }
+
+    return RESOURCE_CALLBACK_ABORT;
+  }
+
+  return RESOURCE_CALLBACK_CONTINUE;
+}
+
+
+void pe_parse(
+    PE* pe,
     size_t base_address,
-    size_t pe_size,
-    int flags,
-    YR_OBJECT* pe_obj)
+    int flags)
 {
   PIMAGE_SECTION_HEADER section;
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
-  int i;
 
 #define OptionalHeader(field) \
-  (pe->FileHeader.Machine == 0x8664 ? \
-   ((PIMAGE_NT_HEADERS64) pe)->OptionalHeader.field: pe->OptionalHeader.field)
+  (pe->header->FileHeader.Machine == 0x8664 ? \
+   ((PIMAGE_NT_HEADERS64) pe->header)->OptionalHeader.field : \
+     pe->header->OptionalHeader.field)
 
   set_integer(
-      pe->FileHeader.Machine,
-      pe_obj, "machine");
+      pe->header->FileHeader.Machine,
+      pe->object, "machine");
 
   set_integer(
-      pe->FileHeader.NumberOfSections,
-      pe_obj, "number_of_sections");
+      pe->header->FileHeader.NumberOfSections,
+      pe->object, "number_of_sections");
 
   set_integer(
-      pe->FileHeader.TimeDateStamp,
-      pe_obj, "timestamp");
+      pe->header->FileHeader.TimeDateStamp,
+      pe->object, "timestamp");
 
   set_integer(
-      pe->FileHeader.Characteristics,
-      pe_obj, "characteristics");
+      pe->header->FileHeader.Characteristics,
+      pe->object, "characteristics");
 
   set_integer(
       flags & SCAN_FLAGS_PROCESS_MEMORY ?
         base_address + OptionalHeader(AddressOfEntryPoint) :
-        pe_rva_to_offset(
-            pe, pe_size, OptionalHeader(AddressOfEntryPoint)),
-      pe_obj, "entry_point");
+        pe_rva_to_offset(pe, OptionalHeader(AddressOfEntryPoint)),
+      pe->object, "entry_point");
 
   set_integer(
       OptionalHeader(ImageBase),
-      pe_obj, "image_base");
+      pe->object, "image_base");
 
   set_integer(
       OptionalHeader(MajorLinkerVersion),
-      pe_obj, "linker_version.major");
+      pe->object, "linker_version.major");
 
   set_integer(
       OptionalHeader(MinorLinkerVersion),
-      pe_obj, "linker_version.minor");
+      pe->object, "linker_version.minor");
 
   set_integer(
       OptionalHeader(MajorOperatingSystemVersion),
-      pe_obj, "os_version.major");
+      pe->object, "os_version.major");
 
   set_integer(
       OptionalHeader(MinorOperatingSystemVersion),
-      pe_obj, "os_version.minor");
+      pe->object, "os_version.minor");
 
   set_integer(
       OptionalHeader(MajorImageVersion),
-      pe_obj, "image_version.major");
+      pe->object, "image_version.major");
 
   set_integer(
       OptionalHeader(MinorImageVersion),
-      pe_obj, "image_version.minor");
+      pe->object, "image_version.minor");
 
   set_integer(
       OptionalHeader(MajorSubsystemVersion),
-      pe_obj, "subsystem_version.major");
+      pe->object, "subsystem_version.major");
 
   set_integer(
       OptionalHeader(MinorSubsystemVersion),
-      pe_obj, "subsystem_version.minor");
+      pe->object, "subsystem_version.minor");
 
   set_integer(
       OptionalHeader(Subsystem),
-      pe_obj, "subsystem");
+      pe->object, "subsystem");
+
+  pe_iterate_resources(
+      pe,
+      (RESOURCE_CALLBACK_FUNC) pe_find_version_info_cb,
+      (void*) pe);
 
   section = IMAGE_FIRST_SECTION(pe);
 
-  for (i = 0; i < min(pe->FileHeader.NumberOfSections, MAX_PE_SECTIONS); i++)
+  int scount = min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS);
+
+  for (int i = 0; i < scount; i++)
   {
     if ((uint8_t*) section -
-        (uint8_t*) pe + sizeof(IMAGE_SECTION_HEADER) >= pe_size)
+        (uint8_t*) pe + sizeof(IMAGE_SECTION_HEADER) >= pe->data_size)
     {
       break;
     }
@@ -382,24 +470,24 @@ void pe_parse_header(
 
     set_string(
         section_name,
-        pe_obj, "sections[%i].name", i);
+        pe->object, "sections[%i].name", i);
 
     set_integer(
         section->Characteristics,
-        pe_obj, "sections[%i].characteristics", i);
+        pe->object, "sections[%i].characteristics", i);
 
     set_integer(section->SizeOfRawData,
-        pe_obj, "sections[%i].raw_data_size", i);
+        pe->object, "sections[%i].raw_data_size", i);
 
     set_integer(section->PointerToRawData,
-        pe_obj, "sections[%i].raw_data_offset", i);
+        pe->object, "sections[%i].raw_data_offset", i);
 
     set_integer(section->VirtualAddress,
-        pe_obj, "sections[%i].virtual_address", i);
+        pe->object, "sections[%i].virtual_address", i);
 
     set_integer(
         section->Misc.VirtualSize,
-        pe_obj, "sections[%i].virtual_size", i);
+        pe->object, "sections[%i].virtual_size", i);
 
     section++;
   }
@@ -432,7 +520,7 @@ define_function(exports)
   char* function_name = string_argument(1);
 
   YR_OBJECT* module = module();
-  DATA* data = (DATA*) module->data;
+  PE* pe = (PE*) module->data;
 
   PIMAGE_DATA_DIRECTORY directory;
   PIMAGE_EXPORT_DIRECTORY exports;
@@ -444,53 +532,42 @@ define_function(exports)
 
   // if not a PE file, return UNDEFINED
 
-  if (data == NULL)
+  if (pe == NULL)
     return_integer(UNDEFINED);
 
-  directory = pe_get_directory_entry(
-      data->pe_header,
-      IMAGE_DIRECTORY_ENTRY_EXPORT);
+  directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_EXPORT);
 
   // if the PE doesn't export any functions, return FALSE
 
   if (directory->VirtualAddress == 0)
     return_integer(0);
 
-  offset = pe_rva_to_offset(
-      data->pe_header,
-      data->pe_size,
-      directory->VirtualAddress);
+  offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
   if (offset == 0 ||
-      offset >= data->data_size)
+      offset >= pe->data_size)
     return_integer(0);
 
-  exports = (PIMAGE_EXPORT_DIRECTORY)(data->data + offset);
+  exports = (PIMAGE_EXPORT_DIRECTORY)(pe->data + offset);
 
-  offset = pe_rva_to_offset(
-      data->pe_header,
-      data->pe_size,
-      exports->AddressOfNames);
+  offset = pe_rva_to_offset(pe, exports->AddressOfNames);
 
   if (offset == 0 ||
-      offset + exports->NumberOfNames * sizeof(DWORD) > data->data_size)
+      offset + exports->NumberOfNames * sizeof(DWORD) > pe->data_size)
     return_integer(0);
 
-  names = (DWORD*)(data->data + offset);
+  names = (DWORD*)(pe->data + offset);
 
   for (i = 0; i < exports->NumberOfNames; i++)
   {
-    offset = pe_rva_to_offset(
-        data->pe_header,
-        data->pe_size,
-        names[i]);
+    offset = pe_rva_to_offset(pe, names[i]);
 
-    if (offset == 0 || offset >= data->data_size)
+    if (offset == 0 || offset >= pe->data_size)
       return_integer(0);
 
-    name = (char*)(data->data + offset);
+    name = (char*)(pe->data + offset);
 
-    if (strncmp(name, function_name, data->data_size - offset) == 0)
+    if (strncmp(name, function_name, pe->data_size - offset) == 0)
       return_integer(1);
   }
 
@@ -508,7 +585,7 @@ define_function(imports)
   int function_name_len = strlen(function_name);
 
   YR_OBJECT* module = module();
-  DATA* data = (DATA*) module->data;
+  PE* pe = (PE*) module->data;
 
   PIMAGE_DATA_DIRECTORY directory;
   PIMAGE_IMPORT_DESCRIPTOR imports;
@@ -516,77 +593,63 @@ define_function(imports)
   PIMAGE_THUNK_DATA32 thunks32;
   PIMAGE_THUNK_DATA64 thunks64;
 
-  uint8_t* data_end;
+  uint8_t* pe_end;
   uint64_t offset;
 
   // if not a PE file, return UNDEFINED
 
-  if (data == NULL)
+  if (pe == NULL)
     return_integer(UNDEFINED);
 
-  data_end = data->data + data->data_size;
+  pe_end = pe->data + pe->data_size;
 
-  directory = pe_get_directory_entry(
-      data->pe_header,
-      IMAGE_DIRECTORY_ENTRY_IMPORT);
+  directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
 
   if (directory->VirtualAddress == 0)
     return_integer(0);
 
-  offset = pe_rva_to_offset(
-      data->pe_header,
-      data->pe_size,
-      directory->VirtualAddress);
+  offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
   if (offset == 0 ||
-      offset + sizeof(IMAGE_IMPORT_DESCRIPTOR) > data->data_size)
+      offset + sizeof(IMAGE_IMPORT_DESCRIPTOR) > pe->data_size)
     return_integer(0);
 
-  imports = (PIMAGE_IMPORT_DESCRIPTOR)(data->data + offset);
+  imports = (PIMAGE_IMPORT_DESCRIPTOR)(pe->data + offset);
 
-  while (check_bounds(imports, IMAGE_IMPORT_DESCRIPTOR, data_end) &&
+  while (check_bounds(imports, IMAGE_IMPORT_DESCRIPTOR, pe_end) &&
          imports->Name != 0)
   {
-    offset = pe_rva_to_offset(
-        data->pe_header,
-        data->pe_size,
-        imports->Name);
+    offset = pe_rva_to_offset(pe, imports->Name);
 
     if (offset > 0 &&
-        offset <= data->data_size &&
+        offset <= pe->data_size &&
         strncasecmp(
             dll_name,
-            (char*)(data->data + offset),
-            data->data_size - offset) == 0)
+            (char*)(pe->data + offset),
+            pe->data_size - offset) == 0)
     {
-      offset = pe_rva_to_offset(
-          data->pe_header,
-          data->pe_size,
-          imports->OriginalFirstThunk);
+      offset = pe_rva_to_offset(pe, imports->OriginalFirstThunk);
 
       if (offset > 0)
       {
-        if (data->pe_header->FileHeader.Machine == 0x8664)
+        if (pe->header->FileHeader.Machine == 0x8664)
         {
-          thunks64 = (PIMAGE_THUNK_DATA64)(data->data + offset);
+          thunks64 = (PIMAGE_THUNK_DATA64)(pe->data + offset);
 
-          while (check_bounds(thunks64, IMAGE_THUNK_DATA64, data_end) &&
+          while (check_bounds(thunks64, IMAGE_THUNK_DATA64, pe_end) &&
                  thunks64->u1.Ordinal != 0)
           {
             if (!(thunks64->u1.Ordinal & IMAGE_ORDINAL_FLAG64))
             {
               // if not exported by ordinal
-              offset = pe_rva_to_offset(
-                  data->pe_header,
-                  data->pe_size,
-                  thunks64->u1.Function);
+              offset = pe_rva_to_offset(pe, thunks64->u1.Function);
 
               if (offset != 0 &&
-                  offset <= data->data_size - sizeof(IMAGE_IMPORT_BY_NAME))
+                  offset <= pe->data_size - sizeof(IMAGE_IMPORT_BY_NAME))
               {
-                import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
+                import = (PIMAGE_IMPORT_BY_NAME)(pe->data + offset);
 
-                if (data_end - import->Name >= function_name_len)
+                if (pe_end - import->Name >= function_name_len)
                 {
                   if (strncmp((char*) import->Name,
                               function_name,
@@ -603,25 +666,22 @@ define_function(imports)
         }
         else
         {
-          thunks32 = (PIMAGE_THUNK_DATA32)(data->data + offset);
+          thunks32 = (PIMAGE_THUNK_DATA32)(pe->data + offset);
 
-          while (check_bounds(thunks32, IMAGE_THUNK_DATA32, data_end) &&
+          while (check_bounds(thunks32, IMAGE_THUNK_DATA32, pe_end) &&
                  thunks32->u1.Ordinal != 0)
           {
             if (!(thunks32->u1.Ordinal & IMAGE_ORDINAL_FLAG32))
             {
               // if not exported by ordinal
-              offset = pe_rva_to_offset(
-                  data->pe_header,
-                  data->pe_size,
-                  thunks32->u1.Function);
+              offset = pe_rva_to_offset(pe, thunks32->u1.Function);
 
               if (offset != 0 &&
-                  offset <= data->data_size - sizeof(IMAGE_IMPORT_BY_NAME))
+                  offset <= pe->data_size - sizeof(IMAGE_IMPORT_BY_NAME))
               {
-                import = (PIMAGE_IMPORT_BY_NAME)(data->data + offset);
+                import = (PIMAGE_IMPORT_BY_NAME)(pe->data + offset);
 
-                if (data_end - import->Name >= function_name_len)
+                if (pe_end - import->Name >= function_name_len)
                 {
                   if (strncmp((char*) import->Name,
                               function_name,
@@ -655,9 +715,13 @@ typedef struct _FIND_LANGUAGE_CB_DATA
 
 
 int pe_find_language_cb(
+    PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
     int rsrc_type,
     int rsrc_id,
     int rsrc_language,
+    PIMAGE_NT_HEADERS32 pe_header,
+    size_t pe_size,
+    size_t pe_offset,
     FIND_LANGUAGE_CB_DATA* cb_data)
 {
   if (rsrc_language == cb_data->language)
@@ -678,19 +742,16 @@ define_function(language)
   cb_data.found = FALSE;
 
   YR_OBJECT* module = module();
-  DATA* data = (DATA*) module->data;
+  PE* pe = (PE*) module->data;
 
   // if not a PE file, return UNDEFINED
 
-  if (data == NULL)
+  if (pe == NULL)
     return_integer(UNDEFINED);
 
-  if (pe_iterate_resources(
-      data->pe_header,
-      data->pe_size,
-      data->pe_offset,
-      (RESOURCE_CALLBACK_FUNC) pe_find_language_cb,
-      (void*) &cb_data))
+  if (pe_iterate_resources(pe,
+          (RESOURCE_CALLBACK_FUNC) pe_find_language_cb,
+          (void*) &cb_data))
   {
     return_integer(cb_data.found);
   }
@@ -736,6 +797,8 @@ begin_declarations;
 
   declare_integer("entry_point");
   declare_integer("image_base");
+
+  declare_string_dictionary("version_info");
 
   begin_struct("linker_version");
     declare_integer("major");
@@ -796,12 +859,6 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-  PIMAGE_NT_HEADERS32 pe_header;
-  YR_MEMORY_BLOCK* block;
-  DATA* data;
-
-  size_t pe_size;
-
   set_integer(
       IMAGE_FILE_MACHINE_I386, module_object,
       "MACHINE_I386");
@@ -877,9 +934,11 @@ int module_load(
       IMAGE_FILE_BYTES_REVERSED_HI, module_object,
       "BYTES_REVERSED_HI");
 
+  YR_MEMORY_BLOCK* block;
+
   foreach_memory_block(context, block)
   {
-    pe_header = pe_get_header(block->data, block->size);
+    PIMAGE_NT_HEADERS32 pe_header = pe_get_header(block->data, block->size);
 
     if (pe_header != NULL)
     {
@@ -888,27 +947,23 @@ int module_load(
       if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
           !(pe_header->FileHeader.Characteristics & IMAGE_FILE_DLL))
       {
-        pe_size = block->size - ((uint8_t*) pe_header - block->data);
+        PE* pe = (PE*) yr_malloc(sizeof(PE));
 
-        pe_parse_header(
-            pe_header,
-            block->base,
-            pe_size,
-            context->flags,
-            module_object);
-
-        data = (DATA*) yr_malloc(sizeof(DATA));
-
-        if (data == NULL)
+        if (pe == NULL)
           return ERROR_INSUFICIENT_MEMORY;
 
-        data->data = block->data;
-        data->data_size = block->size;
-        data->pe_header = pe_header;
-        data->pe_size = pe_size;
-        data->pe_offset = (uint8_t*) pe_header - block->data;
+        pe->data = block->data;
+        pe->data_size = block->size;
+        pe->header = pe_header;
+        pe->object = module_object;
 
-        module_object->data = data;
+        module_object->data = pe;
+
+        pe_parse(
+            pe,
+            block->base,
+            context->flags);
+
         break;
       }
     }

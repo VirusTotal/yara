@@ -75,10 +75,10 @@ the following implementations were taken from OpenBSD.
 
 #if !HAVE_STRLCPY
 
-size_t strlcpy(char *dst, const char *src, size_t size)
+size_t strlcpy(char* dst, const char* src, size_t size)
 {
-  register char *d = dst;
-  register const char *s = src;
+  register char* d = dst;
+  register const char* s = src;
   register size_t n = size;
 
   /* Copy as many bytes as will fit */
@@ -111,10 +111,10 @@ size_t strlcpy(char *dst, const char *src, size_t size)
 
 #if !HAVE_STRLCAT
 
-size_t strlcat(char *dst, const char *src, size_t size)
+size_t strlcat(char* dst, const char* src, size_t size)
 {
-  register char *d = dst;
-  register const char *s = src;
+  register char* d = dst;
+  register const char* s = src;
   register size_t n = size;
   size_t dlen;
 
@@ -145,3 +145,55 @@ size_t strlcat(char *dst, const char *src, size_t size)
 }
 
 #endif
+
+
+int strlen_w(const char* w_str)
+{
+  int len = 0;
+
+  while (*w_str != 0)
+  {
+    w_str += 2;
+    len += 1;
+  }
+
+  return len;
+}
+
+
+int strcmp_w(const char* w_str, const char* str)
+{
+  while (*w_str != 0 && *str != 0 && *w_str == *str)
+  {
+    w_str += 2;
+    str += 1;
+  }
+
+  if (*w_str == *str)
+    return 0;
+
+  if (*w_str > *str)
+    return 1;
+
+  return -1;
+}
+
+size_t strlcpy_w(char* dst, const char* w_src, size_t n)
+{
+  register char* d = dst;
+  register const char* s = w_src;
+
+  while (n > 1 && *s != 0)
+  {
+    *d = *s;
+    d += 1;
+    n -= 1;
+    s += 2;
+  }
+
+  while (*s) s += 2;
+
+  *d = '\0';
+
+  return (s - w_src) / 2;
+}

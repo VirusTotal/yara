@@ -39,6 +39,11 @@ size_t strlcpy(char *dst, const char *src, size_t size);
 size_t strlcat(char *dst, const char *src, size_t size);
 #endif
 
-#endif
+int strlen_w(const char* w_str);
 
+int strcmp_w(const char* w_str, const char* str);
+
+size_t strlcpy_w(char* dst, const char* w_src, size_t n);
+
+#endif
 
