@@ -52,5 +52,6 @@ yara-python extension.
 * [Blue Coat](http://www.bluecoat.com/products/malware-analysis-appliance)
 * [Blueliv](http://www.blueliv.com)
 * [Adlice](http://www.adlice.com/)
+* [Tanium](http://www.tanium.com/)
 
 Are you using it? Want to see your site listed here?
