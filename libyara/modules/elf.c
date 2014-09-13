@@ -169,7 +169,6 @@ begin_declarations;
   declare_integer("EM_68K");
   declare_integer("EM_88K");
   declare_integer("EM_860");
-  declare_integer("EM_MIPS");
   declare_integer("EM_ARM");
   declare_integer("EM_MIPS");
   declare_integer("EM_X86_64");
@@ -245,7 +244,6 @@ int module_load(
   set_integer(ELF_EM_68K, module_object, "EM_68K");
   set_integer(ELF_EM_88K, module_object, "EM_88K");
   set_integer(ELF_EM_860, module_object, "EM_860");
-  set_integer(ELF_EM_MIPS, module_object, "EM_MIPS");
   set_integer(ELF_EM_ARM, module_object, "EM_ARM");
   set_integer(ELF_EM_MIPS, module_object, "EM_MIPS");
   set_integer(ELF_EM_X86_64, module_object, "EM_X86_64");
