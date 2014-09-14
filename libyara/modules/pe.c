@@ -75,6 +75,7 @@ typedef struct _PE
 
   PIMAGE_NT_HEADERS32 header;
   YR_OBJECT* object;
+  PRICH_DATA rich_data;
 
 } PE;
 
@@ -121,6 +122,101 @@ PIMAGE_NT_HEADERS32 pe_get_header(
   {
     return NULL;
   }
+}
+
+
+/* This is basically a straight copy/paste of pe_get_header(). :( */
+PRICH_DATA pe_get_rich_signature(
+    uint8_t* buffer,
+    size_t buffer_length,
+    YR_OBJECT* pe_obj)
+{
+  PIMAGE_DOS_HEADER mz_header;
+  PIMAGE_NT_HEADERS32 pe_header;
+  PRICH_SIGNATURE rich_signature;
+  DWORD* rich_ptr;
+  PRICH_DATA rich_data;
+
+  BYTE* raw_data = NULL;
+  BYTE* clear_data = NULL;
+  size_t headers_size = 0;
+  size_t rich_len = 0;
+
+  if (buffer_length < sizeof(IMAGE_DOS_HEADER))
+    return NULL;
+
+  mz_header = (PIMAGE_DOS_HEADER) buffer;
+
+  if (mz_header->e_magic != IMAGE_DOS_SIGNATURE)
+    return NULL;
+
+  if (mz_header->e_lfanew < 0)
+    return NULL;
+
+  headers_size = mz_header->e_lfanew + \
+                 sizeof(pe_header->Signature) + \
+                 sizeof(IMAGE_FILE_HEADER);
+
+  if (buffer_length < headers_size)
+    return NULL;
+
+  /*
+   * From offset 0x80 until the start of the PE header should be the Rich
+   * signature. The three key values must all be equal and the first dword
+   * XORs to "DanS". Then walk the buffer looking for "Rich" which marks the
+   * end. Technically the XOR key should be right after "Rich" but it's not
+   * important.
+   */
+  rich_signature = (PRICH_SIGNATURE) (buffer + 0x80);
+  if (rich_signature->key1 != rich_signature->key2 ||
+      rich_signature->key2 != rich_signature->key3 ||
+      (rich_signature->dans ^ rich_signature->key1) != RICH_DANS)
+    return NULL;
+
+  for (rich_ptr = (DWORD *) rich_signature; rich_ptr <= (DWORD *) (buffer + headers_size); rich_ptr++) {
+    if (*rich_ptr == RICH_RICH) {
+      // Multiple by 4 because we are counting in DWORDs.
+      rich_len = (rich_ptr - (DWORD *) rich_signature) * 4;
+      raw_data = (BYTE *) yr_malloc(rich_len);
+      if (!raw_data)
+        return NULL;
+
+      memcpy(raw_data, rich_signature, rich_len);
+      set_integer(htonl(rich_signature->dans), pe_obj, "rich_signature.start");
+      set_integer(htonl(rich_signature->key1), pe_obj, "rich_signature.key");
+      break;
+    }
+  }
+
+  /* Walk the entire block and apply the XOR key. */
+  if (raw_data) {
+    clear_data = (BYTE *) yr_malloc(rich_len);
+    if (!clear_data) {
+      yr_free(raw_data);
+      return NULL;
+    }
+
+    /* Copy the entire block here to be XORed */
+    memcpy(clear_data, raw_data, rich_len);
+    for (rich_ptr = (DWORD *) clear_data; rich_ptr < (DWORD *) (clear_data + rich_len); rich_ptr++) {
+      *rich_ptr ^= rich_signature->key1;
+    }
+
+    rich_data = (PRICH_DATA) yr_malloc(sizeof(RICH_DATA));
+    if (!rich_data) {
+      yr_free(raw_data);
+      yr_free(clear_data);
+    }
+
+    set_string((char *) raw_data, rich_len, pe_obj, "rich_signature.raw_data");
+    set_string((char *) clear_data, rich_len, pe_obj, "rich_signature.clear_data");
+    rich_data->len = rich_len;
+    rich_data->raw_data = raw_data;
+    rich_data->clear_data = clear_data;
+    return rich_data;
+  }
+
+  return NULL;
 }
 
 
@@ -358,7 +454,7 @@ int pe_find_version_info_cb(
           strlcpy_w(key, string->Key, sizeof(key));
           strlcpy_w(value, string_value, sizeof(value));
 
-          set_string(value, pe->object, "version_info[%s]", key);
+          set_string(value, sizeof(value), pe->object, "version_info[%s]", key);
 
           string = ADD_OFFSET(string, string->Length);
           string = ALIGN_NEXT_DWORD(string);
@@ -381,6 +477,7 @@ void pe_parse(
   PIMAGE_SECTION_HEADER section;
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
+  size_t str_size;
 
 #define OptionalHeader(field) \
   (pe->header->FileHeader.Machine == 0x8664 ? \
@@ -466,10 +563,10 @@ void pe_parse(
       break;
     }
 
-    strlcpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME + 1);
+    str_size = strlcpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME + 1);
 
     set_string(
-        section_name,
+        section_name, str_size,
         pe->object, "sections[%i].name", i);
 
     set_integer(
@@ -497,7 +594,8 @@ void pe_parse(
 define_function(section_index)
 {
   YR_OBJECT* module = module();
-  char* name = string_argument(1);
+  SIZED_STRING* sect;
+  SIZED_STRING* name = string_argument(1);
 
   int64_t n = get_integer(module, "number_of_sections");
   int64_t i;
@@ -507,7 +605,10 @@ define_function(section_index)
 
   for (i = 0; i < n; i++)
   {
-    if (strcmp(name, get_string(module, "sections[%i].name", i)) == 0)
+    sect = get_string(module, "sections[%i].name", i);
+    if (sect->length != name->length)
+      continue;
+    if (memcmp(name->c_string, sect->c_string, name->length) == 0)
       return_integer(i);
   }
 
@@ -517,7 +618,7 @@ define_function(section_index)
 
 define_function(exports)
 {
-  char* function_name = string_argument(1);
+  SIZED_STRING* function_name = string_argument(1);
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
@@ -567,7 +668,10 @@ define_function(exports)
 
     name = (char*)(pe->data + offset);
 
-    if (strncmp(name, function_name, pe->data_size - offset) == 0)
+    if (function_name->length != pe->data_size - offset)
+        continue;
+
+    if (memcmp(name, function_name->c_string, pe->data_size - offset) == 0)
       return_integer(1);
   }
 
@@ -580,9 +684,9 @@ define_function(exports)
 
 define_function(imports)
 {
-  char* dll_name = string_argument(1);
-  char* function_name = string_argument(2);
-  int function_name_len = strlen(function_name);
+  SIZED_STRING* dll_name = string_argument(1);
+  SIZED_STRING* function_name = string_argument(2);
+  int function_name_len = function_name->length;
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
@@ -624,7 +728,7 @@ define_function(imports)
     if (offset > 0 &&
         offset <= pe->data_size &&
         strncasecmp(
-            dll_name,
+            dll_name->c_string, // XXX
             (char*)(pe->data + offset),
             pe->data_size - offset) == 0)
     {
@@ -652,7 +756,7 @@ define_function(imports)
                 if (pe_end - import->Name >= function_name_len)
                 {
                   if (strncmp((char*) import->Name,
-                              function_name,
+                              function_name->c_string,
                               function_name_len) == 0)
                   {
                     return_integer(1);
@@ -684,7 +788,7 @@ define_function(imports)
                 if (pe_end - import->Name >= function_name_len)
                 {
                   if (strncmp((char*) import->Name,
-                              function_name,
+                              function_name->c_string,
                               function_name_len) == 0)
                   {
                     return_integer(1);
@@ -761,6 +865,67 @@ define_function(language)
   }
 }
 
+/*
+define_function(matches)
+{
+  void *cmp_data;
+  uint64_t cmp_len;
+
+  YR_OBJECT* parent = parent();
+  YR_OBJECT* module = module();
+  DATA* data = (DATA*) module->data;
+  char *str = string_argument(1);
+  uint64_t len = integer_argument(2);
+
+  if (data == NULL || data->rich_data == NULL)
+    return_integer(UNDEFINED);
+
+  if (strcmp(parent->identifier, "raw_data") == 0)
+    cmp_data = data->rich_data->raw_data;
+  else if (strcmp(parent->identifier, "clear_data") == 0)
+    cmp_data = data->rich_data->clear_data;
+  else
+    return_integer(UNDEFINED);
+
+  // Compare the smaller of the two.
+  if (data->rich_data->len < len)
+    cmp_len = data->rich_data->len;
+  else
+    cmp_len = len;
+
+  if (memcmp(cmp_data, str, cmp_len) == 0)
+    return_integer(1);
+
+  return_integer(0);
+}
+
+define_function(contains)
+{
+  void *cmp_data;
+
+  YR_OBJECT* parent = parent();
+  YR_OBJECT* module = module();
+  DATA* data = (DATA*) module->data;
+  char *str = string_argument(1);
+  uint64_t len = integer_argument(2);
+
+  if (data == NULL || data->rich_data == NULL)
+    return_integer(UNDEFINED);
+
+  if (strcmp(parent->identifier, "raw_data") == 0)
+    cmp_data = data->rich_data->raw_data;
+  else if (strcmp(parent->identifier, "clear_data") == 0)
+    cmp_data = data->rich_data->clear_data;
+  else
+    return_integer(UNDEFINED);
+
+  if (memmem(cmp_data, data->rich_data->len, str, len) != NULL)
+    return_integer(1);
+
+  return_integer(0);
+}
+*/
+
 begin_declarations;
 
   declare_integer("MACHINE_I386");
@@ -831,6 +996,23 @@ begin_declarations;
     declare_integer("raw_data_size");
   end_struct_array("sections");
 
+  begin_struct("rich_signature");
+    declare_integer("start");
+    declare_integer("key");
+    declare_string("raw_data");
+    declare_string("clear_data");
+/*
+    begin_struct("raw_data");
+      declare_function("is", "si", "i", matches);
+      declare_function("has", "si", "i", contains);
+    end_struct("raw_data")
+    begin_struct("clear_data");
+      declare_function("is", "si", "i", matches);
+      declare_function("has", "si", "i", contains);
+    end_struct("clear_data")
+*/
+  end_struct("rich_signature");
+
   declare_function("section_index", "s", "i", section_index);
   declare_function("exports", "s", "i", exports);
   declare_function("imports", "ss", "i", imports);
@@ -859,6 +1041,7 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
+
   set_integer(
       IMAGE_FILE_MACHINE_I386, module_object,
       "MACHINE_I386");
@@ -952,10 +1135,14 @@ int module_load(
         if (pe == NULL)
           return ERROR_INSUFICIENT_MEMORY;
 
+        // Get the rich signature.
+        PRICH_DATA rich_data = pe_get_rich_signature(block->data, block->size, module_object);
+
         pe->data = block->data;
         pe->data_size = block->size;
         pe->header = pe_header;
         pe->object = module_object;
+        pe->rich_data = rich_data;
 
         module_object->data = pe;
 
@@ -975,8 +1162,17 @@ int module_load(
 
 int module_unload(YR_OBJECT* module_object)
 {
-  if (module_object->data != NULL)
+  PE* pe = (PE *) module_object->data;
+  if (pe != NULL) {
+    if (pe->rich_data) {
+      if (pe->rich_data->raw_data)
+        yr_free(pe->rich_data->raw_data);
+      if (pe->rich_data->clear_data)
+        yr_free(pe->rich_data->clear_data);
+      yr_free(pe->rich_data);
+    }
     yr_free(module_object->data);
+  }
 
   return ERROR_SUCCESS;
 }

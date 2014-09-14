@@ -410,7 +410,7 @@ typedef struct _YR_OBJECT_INTEGER
 typedef struct _YR_OBJECT_STRING
 {
   OBJECT_COMMON_FIELDS
-  char* value;
+  SIZED_STRING* value;
 
 } YR_OBJECT_STRING;
 

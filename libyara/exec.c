@@ -717,6 +717,21 @@ int yr_execute_code(
         push(result >= 0);
         break;
 
+      case OP_CONTAINS_STR:
+        pop(r2);
+        pop(r1);
+        SIZED_STRING *big = UINT64_TO_PTR(SIZED_STRING*, r1);
+        YR_STRING *little = UINT64_TO_PTR(YR_STRING*, r2);
+
+        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
+        {
+          push(UNDEFINED);
+          break;
+        }
+
+        push(memmem(big->c_string, big->length, little->string, little->length) != NULL);
+        break;
+
       default:
         // Unknown instruction, this shouldn't happen.
         assert(FALSE);
