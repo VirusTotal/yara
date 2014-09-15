@@ -22,7 +22,7 @@ limitations under the License.
 // object simultaneosly. This value is limited by the number of
 // bits in tidx_mask.
 
-#define MAX_THREADS	32
+#define MAX_THREADS 32
 
 
 #ifndef MAX_PATH
@@ -36,11 +36,12 @@ limitations under the License.
 #define MAX_INCLUDE_DEPTH               16
 #define MAX_STRING_MATCHES              1000000
 #define MAX_FUNCTION_ARGS               128
-#define MAX_FAST_HEX_RE_STACK 			300
+#define MAX_FAST_HEX_RE_STACK           300
+#define MAX_OVERLOADED_FUNCTIONS        10
 
-#define LOOP_LOCAL_VARS     			4
-#define STRING_CHAINING_THRESHOLD 		200
-#define LEX_BUF_SIZE  					1024
+#define LOOP_LOCAL_VARS                 4
+#define STRING_CHAINING_THRESHOLD       200
+#define LEX_BUF_SIZE                    1024
 
 
 #endif

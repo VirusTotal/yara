@@ -104,8 +104,12 @@ int yr_object_create(
       ((YR_OBJECT_REGEXP*) obj)->value = NULL;
       break;
     case OBJECT_TYPE_FUNCTION:
-      ((YR_OBJECT_FUNCTION*) obj)->arguments_fmt = NULL;
       ((YR_OBJECT_FUNCTION*) obj)->return_obj = NULL;
+      for (int i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+      {
+        ((YR_OBJECT_FUNCTION*) obj)->prototypes[i].arguments_fmt = NULL;
+        ((YR_OBJECT_FUNCTION*) obj)->prototypes[i].code = NULL;
+      }
       break;
   }
 
@@ -150,9 +154,10 @@ int yr_object_function_create(
     YR_OBJECT** function)
 {
   YR_OBJECT* return_obj;
-  YR_OBJECT* f;
+  YR_OBJECT* f = NULL;
 
   int8_t return_type;
+  int i;
 
   switch (*return_fmt)
   {
@@ -166,19 +171,41 @@ int yr_object_function_create(
       return ERROR_INVALID_FORMAT;
   }
 
-  FAIL_ON_ERROR(yr_object_create(
-      OBJECT_TYPE_FUNCTION,
-      identifier,
-      parent,
-      &f));
+  if (parent != NULL)
+  {
+    assert(parent->type == OBJECT_TYPE_STRUCTURE);
 
-  FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_object_create(return_type, "result", f, &return_obj),
-      yr_object_destroy(f));
+    // Try to find if the structure already has a function
+    // with that name. In that case this is a function oveload.
 
-  ((YR_OBJECT_FUNCTION* )f)->arguments_fmt = arguments_fmt;
-  ((YR_OBJECT_FUNCTION* )f)->return_obj = return_obj;
-  ((YR_OBJECT_FUNCTION* )f)->code = code;
+    f = yr_object_lookup_field(parent, identifier);
+
+    if (f != NULL && return_type != ((YR_OBJECT_FUNCTION*) f)->return_obj->type)
+      return ERROR_WRONG_RETURN_TYPE;
+  }
+
+  if (f == NULL)
+  {
+    // Function doesn't exist yet, create it.
+
+    FAIL_ON_ERROR(yr_object_create(
+        OBJECT_TYPE_FUNCTION,
+        identifier,
+        parent,
+        &f));
+
+    FAIL_ON_ERROR_WITH_CLEANUP(
+        yr_object_create(return_type, "result", f, &return_obj),
+        yr_object_destroy(f));
+  }
+
+  for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+    if (((YR_OBJECT_FUNCTION*) f)->prototypes[i].arguments_fmt == NULL)
+      break;
+
+  ((YR_OBJECT_FUNCTION*) f)->prototypes[i].arguments_fmt = arguments_fmt;
+  ((YR_OBJECT_FUNCTION*) f)->prototypes[i].code = code;
+  ((YR_OBJECT_FUNCTION*) f)->return_obj = return_obj;
 
   if (function != NULL)
     *function = f;

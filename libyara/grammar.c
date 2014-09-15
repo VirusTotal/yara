@@ -637,14 +637,14 @@ static const yytype_uint16 yyrline[] =
      244,   272,   276,   304,   309,   310,   315,   316,   322,   325,
      343,   356,   393,   394,   399,   415,   428,   441,   458,   459,
      464,   478,   477,   494,   511,   512,   517,   518,   519,   520,
-     525,   613,   662,   712,   752,   755,   777,   810,   855,   872,
-     881,   890,   905,   919,   933,   949,   964,   999,   963,  1110,
-    1109,  1186,  1192,  1198,  1204,  1212,  1221,  1230,  1239,  1248,
-    1275,  1302,  1329,  1333,  1341,  1342,  1347,  1369,  1381,  1397,
-    1396,  1402,  1411,  1412,  1417,  1422,  1431,  1432,  1436,  1444,
-    1448,  1458,  1471,  1483,  1495,  1507,  1519,  1531,  1543,  1553,
-    1576,  1591,  1606,  1628,  1665,  1675,  1685,  1695,  1705,  1715,
-    1725,  1735,  1745,  1755,  1765,  1775
+     525,   613,   662,   712,   754,   757,   779,   812,   857,   874,
+     883,   892,   907,   921,   935,   951,   966,  1001,   965,  1112,
+    1111,  1188,  1194,  1200,  1206,  1214,  1223,  1232,  1241,  1250,
+    1277,  1304,  1331,  1335,  1343,  1344,  1349,  1371,  1383,  1399,
+    1398,  1404,  1413,  1414,  1419,  1424,  1433,  1434,  1438,  1446,
+    1450,  1460,  1473,  1485,  1497,  1509,  1521,  1533,  1545,  1555,
+    1578,  1593,  1608,  1630,  1667,  1677,  1687,  1697,  1707,  1717,
+    1727,  1737,  1747,  1757,  1767,  1777
 };
 #endif
 
@@ -2356,7 +2356,7 @@ yyreduce:
   case 43:
 #line 713 "grammar.y"
     {
-        int args_count;
+        char* args_fmt;
 
         if ((yyvsp[(1) - (4)].object) != NULL && (yyvsp[(1) - (4)].object)->type == OBJECT_TYPE_FUNCTION)
         {
@@ -2364,15 +2364,17 @@ yyreduce:
               compiler, (YR_OBJECT_FUNCTION*) (yyvsp[(1) - (4)].object), (yyvsp[(3) - (4)].c_string));
 
           if (compiler->last_result == ERROR_SUCCESS)
-          {
-            args_count = strlen((yyvsp[(3) - (4)].c_string));
+            compiler->last_result = yr_arena_write_string(
+              compiler->sz_arena,
+              (yyvsp[(3) - (4)].c_string),
+              &args_fmt);
 
-            compiler->last_result = yr_parser_emit_with_arg(
+          if (compiler->last_result == ERROR_SUCCESS)
+            compiler->last_result = yr_parser_emit_with_arg_reloc(
                 yyscanner,
                 OP_CALL,
-                args_count,
+                PTR_TO_UINT64(args_fmt),
                 NULL);
-          }
 
           (yyval.object) = ((YR_OBJECT_FUNCTION*) (yyvsp[(1) - (4)].object))->return_obj;
         }
@@ -2392,14 +2394,14 @@ yyreduce:
     break;
 
   case 44:
-#line 752 "grammar.y"
+#line 754 "grammar.y"
     {
         (yyval.c_string) = yr_strdup("");
       }
     break;
 
   case 45:
-#line 756 "grammar.y"
+#line 758 "grammar.y"
     {
         (yyval.c_string) = yr_malloc(MAX_FUNCTION_ARGS + 1);
 
@@ -2424,7 +2426,7 @@ yyreduce:
     break;
 
   case 46:
-#line 778 "grammar.y"
+#line 780 "grammar.y"
     {
         if (strlen((yyvsp[(1) - (3)].c_string)) == MAX_FUNCTION_ARGS)
         {
@@ -2456,7 +2458,7 @@ yyreduce:
     break;
 
   case 47:
-#line 811 "grammar.y"
+#line 813 "grammar.y"
     {
         SIZED_STRING* sized_string = (yyvsp[(1) - (1)].sized_string);
         RE* re;
@@ -2500,7 +2502,7 @@ yyreduce:
     break;
 
   case 48:
-#line 856 "grammar.y"
+#line 858 "grammar.y"
     {
         if ((yyvsp[(1) - (1)].expression).type == EXPRESSION_TYPE_STRING)
         {
@@ -2517,7 +2519,7 @@ yyreduce:
     break;
 
   case 49:
-#line 873 "grammar.y"
+#line 875 "grammar.y"
     {
         compiler->last_result = yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, 1, NULL);
@@ -2529,7 +2531,7 @@ yyreduce:
     break;
 
   case 50:
-#line 882 "grammar.y"
+#line 884 "grammar.y"
     {
         compiler->last_result = yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, 0, NULL);
@@ -2541,7 +2543,7 @@ yyreduce:
     break;
 
   case 51:
-#line 891 "grammar.y"
+#line 893 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_STRING, "matches");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_REGEXP, "matches");
@@ -2559,7 +2561,7 @@ yyreduce:
     break;
 
   case 52:
-#line 906 "grammar.y"
+#line 908 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_STRING, "contains");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_STRING, "contains");
@@ -2576,7 +2578,7 @@ yyreduce:
     break;
 
   case 53:
-#line 920 "grammar.y"
+#line 922 "grammar.y"
     {
         int result = yr_parser_reduce_string_identifier(
             yyscanner,
@@ -2593,7 +2595,7 @@ yyreduce:
     break;
 
   case 54:
-#line 934 "grammar.y"
+#line 936 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "at");
 
@@ -2612,7 +2614,7 @@ yyreduce:
     break;
 
   case 55:
-#line 950 "grammar.y"
+#line 952 "grammar.y"
     {
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
@@ -2629,7 +2631,7 @@ yyreduce:
     break;
 
   case 56:
-#line 964 "grammar.y"
+#line 966 "grammar.y"
     {
         int var_index;
 
@@ -2667,7 +2669,7 @@ yyreduce:
     break;
 
   case 57:
-#line 999 "grammar.y"
+#line 1001 "grammar.y"
     {
         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         int8_t* addr;
@@ -2705,7 +2707,7 @@ yyreduce:
     break;
 
   case 58:
-#line 1034 "grammar.y"
+#line 1036 "grammar.y"
     {
         int mem_offset;
 
@@ -2784,7 +2786,7 @@ yyreduce:
     break;
 
   case 59:
-#line 1110 "grammar.y"
+#line 1112 "grammar.y"
     {
         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         int8_t* addr;
@@ -2817,7 +2819,7 @@ yyreduce:
     break;
 
   case 60:
-#line 1140 "grammar.y"
+#line 1142 "grammar.y"
     {
         int mem_offset;
 
@@ -2867,7 +2869,7 @@ yyreduce:
     break;
 
   case 61:
-#line 1187 "grammar.y"
+#line 1189 "grammar.y"
     {
         yr_parser_emit(yyscanner, OP_OF, NULL);
 
@@ -2876,7 +2878,7 @@ yyreduce:
     break;
 
   case 62:
-#line 1193 "grammar.y"
+#line 1195 "grammar.y"
     {
         yr_parser_emit(yyscanner, OP_NOT, NULL);
 
@@ -2885,7 +2887,7 @@ yyreduce:
     break;
 
   case 63:
-#line 1199 "grammar.y"
+#line 1201 "grammar.y"
     {
         yr_parser_emit(yyscanner, OP_AND, NULL);
 
@@ -2894,7 +2896,7 @@ yyreduce:
     break;
 
   case 64:
-#line 1205 "grammar.y"
+#line 1207 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_BOOLEAN, "or");
 
@@ -2905,7 +2907,7 @@ yyreduce:
     break;
 
   case 65:
-#line 1213 "grammar.y"
+#line 1215 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "<");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "<");
@@ -2917,7 +2919,7 @@ yyreduce:
     break;
 
   case 66:
-#line 1222 "grammar.y"
+#line 1224 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, ">");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, ">");
@@ -2929,7 +2931,7 @@ yyreduce:
     break;
 
   case 67:
-#line 1231 "grammar.y"
+#line 1233 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "<=");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "<=");
@@ -2941,7 +2943,7 @@ yyreduce:
     break;
 
   case 68:
-#line 1240 "grammar.y"
+#line 1242 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, ">=");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, ">=");
@@ -2953,7 +2955,7 @@ yyreduce:
     break;
 
   case 69:
-#line 1249 "grammar.y"
+#line 1251 "grammar.y"
     {
         if ((yyvsp[(1) - (3)].expression).type != (yyvsp[(3) - (3)].expression).type)
         {
@@ -2983,7 +2985,7 @@ yyreduce:
     break;
 
   case 70:
-#line 1276 "grammar.y"
+#line 1278 "grammar.y"
     {
         if ((yyvsp[(1) - (3)].expression).type != (yyvsp[(3) - (3)].expression).type)
         {
@@ -3013,7 +3015,7 @@ yyreduce:
     break;
 
   case 71:
-#line 1303 "grammar.y"
+#line 1305 "grammar.y"
     {
         if ((yyvsp[(1) - (3)].expression).type != (yyvsp[(3) - (3)].expression).type)
         {
@@ -3043,31 +3045,31 @@ yyreduce:
     break;
 
   case 72:
-#line 1330 "grammar.y"
+#line 1332 "grammar.y"
     {
         (yyval.expression) = (yyvsp[(1) - (1)].expression);
       }
     break;
 
   case 73:
-#line 1334 "grammar.y"
+#line 1336 "grammar.y"
     {
         (yyval.expression) = (yyvsp[(2) - (3)].expression);
       }
     break;
 
   case 74:
-#line 1341 "grammar.y"
+#line 1343 "grammar.y"
     { (yyval.integer) = INTEGER_SET_ENUMERATION; }
     break;
 
   case 75:
-#line 1342 "grammar.y"
+#line 1344 "grammar.y"
     { (yyval.integer) = INTEGER_SET_RANGE; }
     break;
 
   case 76:
-#line 1348 "grammar.y"
+#line 1350 "grammar.y"
     {
         if ((yyvsp[(2) - (6)].expression).type != EXPRESSION_TYPE_INTEGER)
         {
@@ -3088,7 +3090,7 @@ yyreduce:
     break;
 
   case 77:
-#line 1370 "grammar.y"
+#line 1372 "grammar.y"
     {
         if ((yyvsp[(1) - (1)].expression).type != EXPRESSION_TYPE_INTEGER)
         {
@@ -3103,7 +3105,7 @@ yyreduce:
     break;
 
   case 78:
-#line 1382 "grammar.y"
+#line 1384 "grammar.y"
     {
         if ((yyvsp[(3) - (3)].expression).type != EXPRESSION_TYPE_INTEGER)
         {
@@ -3117,7 +3119,7 @@ yyreduce:
     break;
 
   case 79:
-#line 1397 "grammar.y"
+#line 1399 "grammar.y"
     {
         // Push end-of-list marker
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL);
@@ -3125,7 +3127,7 @@ yyreduce:
     break;
 
   case 81:
-#line 1403 "grammar.y"
+#line 1405 "grammar.y"
     {
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL);
         yr_parser_emit_pushes_for_strings(yyscanner, "$*");
@@ -3133,7 +3135,7 @@ yyreduce:
     break;
 
   case 84:
-#line 1418 "grammar.y"
+#line 1420 "grammar.y"
     {
         yr_parser_emit_pushes_for_strings(yyscanner, (yyvsp[(1) - (1)].c_string));
         yr_free((yyvsp[(1) - (1)].c_string));
@@ -3141,7 +3143,7 @@ yyreduce:
     break;
 
   case 85:
-#line 1423 "grammar.y"
+#line 1425 "grammar.y"
     {
         yr_parser_emit_pushes_for_strings(yyscanner, (yyvsp[(1) - (1)].c_string));
         yr_free((yyvsp[(1) - (1)].c_string));
@@ -3149,28 +3151,28 @@ yyreduce:
     break;
 
   case 87:
-#line 1433 "grammar.y"
+#line 1435 "grammar.y"
     {
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL);
       }
     break;
 
   case 88:
-#line 1437 "grammar.y"
+#line 1439 "grammar.y"
     {
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, 1, NULL);
       }
     break;
 
   case 89:
-#line 1445 "grammar.y"
+#line 1447 "grammar.y"
     {
         (yyval.expression) = (yyvsp[(2) - (3)].expression);
       }
     break;
 
   case 90:
-#line 1449 "grammar.y"
+#line 1451 "grammar.y"
     {
         compiler->last_result = yr_parser_emit(
             yyscanner, OP_FILESIZE, NULL);
@@ -3183,7 +3185,7 @@ yyreduce:
     break;
 
   case 91:
-#line 1459 "grammar.y"
+#line 1461 "grammar.y"
     {
         yywarning(yyscanner,
             "Using deprecated \"entrypoint\" keyword. Use the \"entry_point\" " "function from PE module instead.");
@@ -3199,7 +3201,7 @@ yyreduce:
     break;
 
   case 92:
-#line 1472 "grammar.y"
+#line 1474 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(3) - (4)].expression), EXPRESSION_TYPE_INTEGER, "int8");
 
@@ -3214,7 +3216,7 @@ yyreduce:
     break;
 
   case 93:
-#line 1484 "grammar.y"
+#line 1486 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(3) - (4)].expression), EXPRESSION_TYPE_INTEGER, "int16");
 
@@ -3229,7 +3231,7 @@ yyreduce:
     break;
 
   case 94:
-#line 1496 "grammar.y"
+#line 1498 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(3) - (4)].expression), EXPRESSION_TYPE_INTEGER, "int32");
 
@@ -3244,7 +3246,7 @@ yyreduce:
     break;
 
   case 95:
-#line 1508 "grammar.y"
+#line 1510 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(3) - (4)].expression), EXPRESSION_TYPE_INTEGER, "uint8");
 
@@ -3259,7 +3261,7 @@ yyreduce:
     break;
 
   case 96:
-#line 1520 "grammar.y"
+#line 1522 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(3) - (4)].expression), EXPRESSION_TYPE_INTEGER, "uint16");
 
@@ -3274,7 +3276,7 @@ yyreduce:
     break;
 
   case 97:
-#line 1532 "grammar.y"
+#line 1534 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(3) - (4)].expression), EXPRESSION_TYPE_INTEGER, "uint32");
 
@@ -3289,7 +3291,7 @@ yyreduce:
     break;
 
   case 98:
-#line 1544 "grammar.y"
+#line 1546 "grammar.y"
     {
         compiler->last_result = yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, (yyvsp[(1) - (1)].integer), NULL);
@@ -3302,7 +3304,7 @@ yyreduce:
     break;
 
   case 99:
-#line 1554 "grammar.y"
+#line 1556 "grammar.y"
     {
         SIZED_STRING* sized_string = (yyvsp[(1) - (1)].sized_string);
         char* string;
@@ -3328,7 +3330,7 @@ yyreduce:
     break;
 
   case 100:
-#line 1577 "grammar.y"
+#line 1579 "grammar.y"
     {
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
@@ -3346,7 +3348,7 @@ yyreduce:
     break;
 
   case 101:
-#line 1592 "grammar.y"
+#line 1594 "grammar.y"
     {
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
@@ -3364,7 +3366,7 @@ yyreduce:
     break;
 
   case 102:
-#line 1607 "grammar.y"
+#line 1609 "grammar.y"
     {
         compiler->last_result = yr_parser_emit_with_arg(
             yyscanner,
@@ -3389,7 +3391,7 @@ yyreduce:
     break;
 
   case 103:
-#line 1629 "grammar.y"
+#line 1631 "grammar.y"
     {
         if ((yyvsp[(1) - (1)].object) == (YR_OBJECT*) -1)  // loop identifier
         {
@@ -3429,7 +3431,7 @@ yyreduce:
     break;
 
   case 104:
-#line 1666 "grammar.y"
+#line 1668 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "+");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "+");
@@ -3442,7 +3444,7 @@ yyreduce:
     break;
 
   case 105:
-#line 1676 "grammar.y"
+#line 1678 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "-");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "-");
@@ -3455,7 +3457,7 @@ yyreduce:
     break;
 
   case 106:
-#line 1686 "grammar.y"
+#line 1688 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "*");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "*");
@@ -3468,7 +3470,7 @@ yyreduce:
     break;
 
   case 107:
-#line 1696 "grammar.y"
+#line 1698 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "\\");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "\\");
@@ -3481,7 +3483,7 @@ yyreduce:
     break;
 
   case 108:
-#line 1706 "grammar.y"
+#line 1708 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "%");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "%");
@@ -3494,7 +3496,7 @@ yyreduce:
     break;
 
   case 109:
-#line 1716 "grammar.y"
+#line 1718 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "^");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "^");
@@ -3507,7 +3509,7 @@ yyreduce:
     break;
 
   case 110:
-#line 1726 "grammar.y"
+#line 1728 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "^");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "^");
@@ -3520,7 +3522,7 @@ yyreduce:
     break;
 
   case 111:
-#line 1736 "grammar.y"
+#line 1738 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "|");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "|");
@@ -3533,7 +3535,7 @@ yyreduce:
     break;
 
   case 112:
-#line 1746 "grammar.y"
+#line 1748 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(2) - (2)].expression), EXPRESSION_TYPE_INTEGER, "~");
 
@@ -3546,7 +3548,7 @@ yyreduce:
     break;
 
   case 113:
-#line 1756 "grammar.y"
+#line 1758 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "<<");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "<<");
@@ -3559,7 +3561,7 @@ yyreduce:
     break;
 
   case 114:
-#line 1766 "grammar.y"
+#line 1768 "grammar.y"
     {
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, ">>");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, ">>");
@@ -3572,7 +3574,7 @@ yyreduce:
     break;
 
   case 115:
-#line 1776 "grammar.y"
+#line 1778 "grammar.y"
     {
         (yyval.expression) = (yyvsp[(1) - (1)].expression);
       }
@@ -3580,7 +3582,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 3584 "grammar.c"
+#line 3586 "grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -3794,6 +3796,6 @@ yyreturn:
 }
 
 
-#line 1781 "grammar.y"
+#line 1783 "grammar.y"
 
 

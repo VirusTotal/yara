@@ -89,6 +89,7 @@ int yr_execute_code(
   YR_OBJECT_FUNCTION* function;
 
   char* identifier;
+  char* args_fmt;
 
   int i;
   int found;
@@ -473,24 +474,40 @@ int yr_execute_code(
         break;
 
       case OP_CALL:
-
-        // r1 = number of arguments
-
-        r1 = *(uint64_t*)(ip + 1);
+        args_fmt = *(char**)(ip + 1);
         ip += sizeof(uint64_t);
+
+        i = strlen(args_fmt);
 
         // pop arguments from stack and copy them to args array
 
-        while (r1 > 0)
+        while (i > 0)
         {
-          pop(args[r1 - 1]);
-          r1--;
+          pop(args[i - 1]);
+          i--;
         }
 
         pop(r2);
 
         function = UINT64_TO_PTR(YR_OBJECT_FUNCTION*, r2);
-        result = function->code((void*) args, context, function);
+
+        for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+        {
+          if (function->prototypes[i].arguments_fmt == NULL)
+            break;
+
+          if (strcmp(function->prototypes[i].arguments_fmt, args_fmt) == 0)
+          {
+            result = function->prototypes[i].code(
+                (void*) args,
+                context,
+                function);
+
+            break;
+          }
+        }
+
+        assert(i < MAX_OVERLOADED_FUNCTIONS);
 
         if (result == ERROR_SUCCESS)
           push(PTR_TO_UINT64(function->return_obj));

@@ -711,7 +711,7 @@ identifier
 
     | identifier '(' arguments_list ')'
       {
-        int args_count;
+        char* args_fmt;
 
         if ($1 != NULL && $1->type == OBJECT_TYPE_FUNCTION)
         {
@@ -719,15 +719,17 @@ identifier
               compiler, (YR_OBJECT_FUNCTION*) $1, $3);
 
           if (compiler->last_result == ERROR_SUCCESS)
-          {
-            args_count = strlen($3);
+            compiler->last_result = yr_arena_write_string(
+              compiler->sz_arena,
+              $3,
+              &args_fmt);
 
-            compiler->last_result = yr_parser_emit_with_arg(
+          if (compiler->last_result == ERROR_SUCCESS)
+            compiler->last_result = yr_parser_emit_with_arg_reloc(
                 yyscanner,
                 OP_CALL,
-                args_count,
+                PTR_TO_UINT64(args_fmt),
                 NULL);
-          }
 
           $$ = ((YR_OBJECT_FUNCTION*) $1)->return_obj;
         }
