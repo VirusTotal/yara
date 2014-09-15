@@ -60,6 +60,14 @@ limitations under the License.
     ((entry)->OffsetToData & 0x7FFFFFFF)
 
 
+#define fits_in_pe(pe, pointer, size) \
+    ((uint8_t*)(pointer) + size <= pe->data + pe->data_size)
+
+
+#define struct_fits_in_pe(pe, pointer, struct_type) \
+    fits_in_pe(pe, pointer, sizeof(struct_type))
+
+
 typedef int (*RESOURCE_CALLBACK_FUNC) ( \
      PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, \
      int rsrc_type, \
@@ -198,6 +206,9 @@ int _pe_iterate_resources(
 
   for (int i = 0; i < total_entries; i++)
   {
+    if (!struct_fits_in_pe(pe, entry, IMAGE_RESOURCE_DIRECTORY_ENTRY))
+      break;
+
     switch(rsrc_tree_level)
     {
       case 0:
@@ -213,31 +224,40 @@ int _pe_iterate_resources(
 
     if (IS_RESOURCE_SUBDIRECTORY(entry))
     {
-      result = _pe_iterate_resources(
-          pe,
-          (PIMAGE_RESOURCE_DIRECTORY)(rsrc_data + RESOURCE_OFFSET(entry)),
-          rsrc_data,
-          rsrc_tree_level + 1,
-          type,
-          id,
-          language,
-          callback,
-          callback_data);
+      PIMAGE_RESOURCE_DIRECTORY directory = (PIMAGE_RESOURCE_DIRECTORY) \
+          (rsrc_data + RESOURCE_OFFSET(entry));
 
-      if (result == RESOURCE_ITERATOR_ABORTED)
-        return RESOURCE_ITERATOR_ABORTED;
+      if (struct_fits_in_pe(pe, directory, IMAGE_RESOURCE_DIRECTORY))
+      {
+        result = _pe_iterate_resources(
+            pe,
+            directory,
+            rsrc_data,
+            rsrc_tree_level + 1,
+            type,
+            id,
+            language,
+            callback,
+            callback_data);
+
+        if (result == RESOURCE_ITERATOR_ABORTED)
+          return RESOURCE_ITERATOR_ABORTED;
+      }
     }
     else
     {
       PIMAGE_RESOURCE_DATA_ENTRY data_entry = (PIMAGE_RESOURCE_DATA_ENTRY) \
           (rsrc_data + RESOURCE_OFFSET(entry));
 
-      result = callback(
-          data_entry,
-          *type,
-          *id,
-          *language,
-          callback_data);
+      if (struct_fits_in_pe(pe, data_entry, IMAGE_RESOURCE_DATA_ENTRY))
+      {
+        result = callback(
+            data_entry,
+            *type,
+            *id,
+            *language,
+            callback_data);
+      }
 
       if (result == RESOURCE_CALLBACK_ABORT)
         return RESOURCE_ITERATOR_ABORTED;
@@ -272,8 +292,7 @@ int pe_iterate_resources(
     offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
     if (offset != 0 &&
-        offset < pe->data_size &&
-        directory->Size < pe->data_size - offset)
+        offset < pe->data_size)
     {
       _pe_iterate_resources(
           pe,
@@ -318,10 +337,22 @@ int pe_find_version_info_cb(
 
     version_info = (PVERSION_INFO) (pe->data + version_info_offset);
 
+    if (!struct_fits_in_pe(pe, version_info, VERSION_INFO))
+      return RESOURCE_CALLBACK_CONTINUE;
+
+    if (!fits_in_pe(pe, version_info, sizeof("VS_VERSION_INFO")))
+      return RESOURCE_CALLBACK_CONTINUE;
+
     if (strcmp_w(version_info->Key, "VS_VERSION_INFO") != 0)
       return RESOURCE_CALLBACK_CONTINUE;
 
     string_file_info = ADD_OFFSET(version_info, sizeof(VERSION_INFO) + 86);
+
+    if (!struct_fits_in_pe(pe, string_file_info, VERSION_INFO))
+      return RESOURCE_CALLBACK_CONTINUE;
+
+    if (!fits_in_pe(pe, string_file_info, sizeof("StringFileInfo")))
+      return RESOURCE_CALLBACK_CONTINUE;
 
     while(strcmp_w(string_file_info->Key, "StringFileInfo") == 0)
     {
@@ -575,9 +606,6 @@ define_function(exports)
 }
 
 
-#define check_bounds(pointer, struct_type, limit) \
-    ((uint8_t*)(pointer) + sizeof(struct_type) <= limit)
-
 define_function(imports)
 {
   char* dll_name = string_argument(1);
@@ -593,15 +621,12 @@ define_function(imports)
   PIMAGE_THUNK_DATA32 thunks32;
   PIMAGE_THUNK_DATA64 thunks64;
 
-  uint8_t* pe_end;
   uint64_t offset;
 
   // if not a PE file, return UNDEFINED
 
   if (pe == NULL)
     return_integer(UNDEFINED);
-
-  pe_end = pe->data + pe->data_size;
 
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
 
@@ -616,7 +641,7 @@ define_function(imports)
 
   imports = (PIMAGE_IMPORT_DESCRIPTOR)(pe->data + offset);
 
-  while (check_bounds(imports, IMAGE_IMPORT_DESCRIPTOR, pe_end) &&
+  while (struct_fits_in_pe(pe, imports, IMAGE_IMPORT_DESCRIPTOR) &&
          imports->Name != 0)
   {
     offset = pe_rva_to_offset(pe, imports->Name);
@@ -636,7 +661,7 @@ define_function(imports)
         {
           thunks64 = (PIMAGE_THUNK_DATA64)(pe->data + offset);
 
-          while (check_bounds(thunks64, IMAGE_THUNK_DATA64, pe_end) &&
+          while (struct_fits_in_pe(pe, thunks64, IMAGE_THUNK_DATA64) &&
                  thunks64->u1.Ordinal != 0)
           {
             if (!(thunks64->u1.Ordinal & IMAGE_ORDINAL_FLAG64))
@@ -649,7 +674,7 @@ define_function(imports)
               {
                 import = (PIMAGE_IMPORT_BY_NAME)(pe->data + offset);
 
-                if (pe_end - import->Name >= function_name_len)
+                if (fits_in_pe(pe, import->Name, function_name_len))
                 {
                   if (strncmp((char*) import->Name,
                               function_name,
@@ -668,7 +693,7 @@ define_function(imports)
         {
           thunks32 = (PIMAGE_THUNK_DATA32)(pe->data + offset);
 
-          while (check_bounds(thunks32, IMAGE_THUNK_DATA32, pe_end) &&
+          while (struct_fits_in_pe(pe, thunks32, sizeof(IMAGE_THUNK_DATA32)) &&
                  thunks32->u1.Ordinal != 0)
           {
             if (!(thunks32->u1.Ordinal & IMAGE_ORDINAL_FLAG32))
@@ -681,7 +706,7 @@ define_function(imports)
               {
                 import = (PIMAGE_IMPORT_BY_NAME)(pe->data + offset);
 
-                if (pe_end - import->Name >= function_name_len)
+                if (fits_in_pe(pe, import->Name, function_name_len))
                 {
                   if (strncmp((char*) import->Name,
                               function_name,
@@ -708,7 +733,9 @@ define_function(imports)
 
 typedef struct _FIND_LANGUAGE_CB_DATA
 {
-  uint64_t language;
+  uint64_t locale;
+  uint64_t mask;
+
   int found;
 
 } FIND_LANGUAGE_CB_DATA;
@@ -719,12 +746,9 @@ int pe_find_language_cb(
     int rsrc_type,
     int rsrc_id,
     int rsrc_language,
-    PIMAGE_NT_HEADERS32 pe_header,
-    size_t pe_size,
-    size_t pe_offset,
     FIND_LANGUAGE_CB_DATA* cb_data)
 {
-  if (rsrc_language == cb_data->language)
+  if ((rsrc_language & cb_data->mask) == cb_data->locale)
   {
     cb_data->found = TRUE;
     return RESOURCE_CALLBACK_ABORT;
@@ -734,11 +758,41 @@ int pe_find_language_cb(
 }
 
 
+define_function(locale)
+{
+  FIND_LANGUAGE_CB_DATA cb_data;
+
+  cb_data.locale = integer_argument(1);
+  cb_data.mask = 0xFFFF;
+  cb_data.found = FALSE;
+
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  // if not a PE file, return UNDEFINED
+
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  if (pe_iterate_resources(pe,
+          (RESOURCE_CALLBACK_FUNC) pe_find_language_cb,
+          (void*) &cb_data))
+  {
+    return_integer(cb_data.found);
+  }
+  else
+  {
+    return_integer(UNDEFINED);
+  }
+}
+
+
 define_function(language)
 {
   FIND_LANGUAGE_CB_DATA cb_data;
 
-  cb_data.language = integer_argument(1);
+  cb_data.locale = integer_argument(1);
+  cb_data.mask = 0xFF;
   cb_data.found = FALSE;
 
   YR_OBJECT* module = module();
@@ -834,6 +888,7 @@ begin_declarations;
   declare_function("section_index", "s", "i", section_index);
   declare_function("exports", "s", "i", exports);
   declare_function("imports", "ss", "i", imports);
+  declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
 
 end_declarations;
