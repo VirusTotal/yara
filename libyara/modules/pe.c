@@ -485,17 +485,14 @@ void pe_parse(
       (RESOURCE_CALLBACK_FUNC) pe_find_version_info_cb,
       (void*) pe);
 
-  section = IMAGE_FIRST_SECTION(pe);
+  section = IMAGE_FIRST_SECTION(pe->header);
 
   int scount = min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS);
 
   for (int i = 0; i < scount; i++)
   {
-    if ((uint8_t*) section -
-        (uint8_t*) pe + sizeof(IMAGE_SECTION_HEADER) >= pe->data_size)
-    {
+    if (!struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
       break;
-    }
 
     strlcpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME + 1);
 
