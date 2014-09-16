@@ -86,6 +86,26 @@ limitations under the License.
   }
 
 
+#define begin_struct_dictionary(name) { \
+    YR_OBJECT* structure; \
+    YR_OBJECT* array; \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_DICTIONARY, \
+        name, \
+        stack[stack_top], \
+        &array)); \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_STRUCTURE, \
+        name, \
+        array, \
+        &structure)); \
+    assertf( \
+        stack_top < sizeof(stack)/sizeof(stack[0]) - 1, \
+        "too many nested structures"); \
+    stack[++stack_top] = structure; \
+  }
+
+
 #define end_struct(name) { \
     assert(stack[stack_top]->type == OBJECT_TYPE_STRUCTURE); \
     assertf( \
@@ -96,6 +116,9 @@ limitations under the License.
 
 
 #define end_struct_array(name) end_struct(name)
+
+
+#define end_struct_dictionary(name) end_struct(name)
 
 
 #define declare_integer(name) { \

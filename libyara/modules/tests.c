@@ -62,6 +62,11 @@ begin_declarations;
     declare_string("s");
   end_struct_array("struct_array");
 
+  begin_struct_dictionary("struct_dict");
+    declare_integer("i");
+    declare_string("s");
+  end_struct_dictionary("struct_dict");
+
   declare_function("sum", "ii", "i", sum_2);
   declare_function("sum", "iii", "i", sum_3);
 
@@ -103,6 +108,9 @@ int module_load(
 
   set_string("foo", module_object, "string_dict[%s]", "foo");
   set_string("bar", module_object, "string_dict[\"bar\"]");
+
+  set_string("foo", module_object, "struct_dict[%s].s", "foo");
+  set_integer(1, module_object, "struct_dict[%s].i", "foo");
 
   return ERROR_SUCCESS;
 }
