@@ -362,6 +362,32 @@ Arrays are zero-based and don't have a fixed size, they will grow as needed
 when you start initializing its values.
 
 
+Dictionaries
+------------
+
+You can also declare dictionaries of integers, strings, or structures::
+
+    begin_declarations;
+
+        declare_integer_dictionary("foo");
+        declare_string_dictionary("bar");
+
+        begin_struct_dictionary("struct_dict");
+
+            declare_integer("baz");
+            declare_string("qux");
+
+        end_struct_dictionary("struct_dict");
+
+    end_declarations;
+
+Individual values in the dictionary are accessed by using a string key::
+
+    foo["somekey"]
+    bar["anotherkey"]
+    struct_dict["k1"].baz
+    struct_dict["k1"].qux
+
 .. _declaring-functions:
 
 Functions
@@ -698,14 +724,24 @@ Then the following statements are all valid:
 
 Those ``%i`` in the field descriptor are replaced by the additional
 integer arguments passed to the function. This work in the same way than
-``printf`` in C programs, but the only format specifier accepted is ``%i``.
+``printf`` in C programs, but the only format specifiers accepted are ``%i``
+and ``%s``, for integer and string arguments respectively.
 
-If you don't explicitely assign a value to a declared variable or array item it
-will remain in undefined state. That's not a problem at all, and is even useful
-in many cases. For example, if your module parses files from certain format and
-it receives one from a different format, you can safely leave all your
-variables undefined instead of assigning them bogus values that doesn't make
-sense. YARA will handle undefined values in rule conditions as described in
+The ``%s`` format specifiers is used for assigning values to a certain key
+in a dictionary:
+
+.. code-block:: c
+
+    set_integer(<value>, module, "foo[\"key\"]");
+    set_integer(<value>, module, "foo[%s]", "key");
+    set_string(<value>, module, "bar[%s].baz", "another_key");
+
+If you don't explicitely assign a value to a declared variable, array or
+dictionary item it will remain in undefined state. That's not a problem at all,
+and is even useful in many cases. For example, if your module parses files from
+certain format and it receives one from a different format, you can safely leave
+all your variables undefined instead of assigning them bogus values that doesn't
+make sense. YARA will handle undefined values in rule conditions as described in
 :ref:`using-modules`.
 
 In addition to ``set_integer`` and ``set_string`` functions you have their

@@ -181,6 +181,27 @@ Reference
 
     *Example:  pe.sections[0].name == ".text"*
 
+.. c:type:: version_info
+
+    Dictionary containing PE's version information. Typical keys are:
+
+        ``Comments``
+        ``CompanyName``
+        ``FileDescription``
+        ``FileVersion``
+        ``InternalName``
+        ``LegalCopyright``
+        ``LegalTrademarks``
+        ``OriginalFilename``
+        ``ProductName``
+        ``ProductVersion``
+
+    For more information refer to:
+
+    http://msdn.microsoft.com/en-us/library/windows/desktop/ms646987(v=vs.85).aspx
+
+    *Example:  pe.version_info["CompanyName"] contains "Microsoft"*
+
 .. c:function:: exports(function_name)
 
     Function returning true if the PE exports *function_name* or
@@ -194,3 +215,22 @@ Reference
     or false otherwise. *dll_name* is case insensitive.
 
     *Example:  pe.imports("kernel32.dll", "WriteProcessMemory")*
+
+.. c:function:: locale(locale_identifier)
+
+    Function returning true if the PE has a resource with the specified locale
+    identifier. Locale identifiers are 16-bit integers and can be found here:
+
+    http://msdn.microsoft.com/en-us/library/windows/desktop/dd318693(v=vs.85).aspx
+
+    *Example: pe.locale(0x0419) // Russian (RU)*
+
+.. c:function:: language(language_identifier)
+
+    Function returning true if the PE has a resource with the specified language
+    identifier. Language identifiers are 8-bit integers and can be found here:
+
+    http://msdn.microsoft.com/en-us/library/windows/desktop/dd318693(v=vs.85).aspx
+
+    *Example: pe.language(0x0A) // Spanish*
+
