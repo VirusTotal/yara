@@ -199,3 +199,26 @@ int yr_modules_unload_all(
 
   return ERROR_SUCCESS;
 }
+
+
+void yr_modules_print_data(
+    YR_SCAN_CONTEXT* context)
+{
+  YR_OBJECT* module_structure;
+  tidx_mask_t tidx_mask = 1 << yr_get_tidx();
+
+  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  {
+    if (yr_modules_table[i].is_loaded & tidx_mask)
+    {
+      module_structure = (YR_OBJECT*) yr_hash_table_lookup(
+          context->objects_table,
+          yr_modules_table[i].name,
+          NULL);
+
+      assert(module_structure != NULL);
+
+      yr_object_print_data(module_structure, 0);
+    }
+  }
+}

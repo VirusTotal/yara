@@ -895,3 +895,87 @@ YR_OBJECT* yr_object_get_root(
 
   return o;
 }
+
+void yr_object_print_data(
+    YR_OBJECT* object,
+    int indent)
+{
+  YR_DICTIONARY_ITEMS* dict_items;
+  YR_ARRAY_ITEMS* array_items;
+
+  char indent_spaces[32];
+
+  indent = min(indent, sizeof(indent_spaces));
+
+  memset(indent_spaces, '\t', indent);
+  indent_spaces[indent] = '\0';
+
+  switch(object->type)
+  {
+    case OBJECT_TYPE_INTEGER:
+      if (((YR_OBJECT_INTEGER*) object)->value != UNDEFINED)
+        printf(
+            "%s%s = %lld\n",
+            indent_spaces,
+            object->identifier,
+            ((YR_OBJECT_INTEGER*) object)->value);
+      break;
+
+    case OBJECT_TYPE_STRING:
+      if (((YR_OBJECT_STRING*) object)->value != NULL)
+        printf(
+            "%s%s = \"%s\"\n",
+            indent_spaces,
+            object->identifier,
+            ((YR_OBJECT_STRING*) object)->value);
+      break;
+
+    case OBJECT_TYPE_STRUCTURE:
+      printf(
+          "%s%s\n",
+          indent_spaces,
+          object->identifier);
+
+      YR_STRUCTURE_MEMBER* member = ((YR_OBJECT_STRUCTURE*) object)->members;
+
+      while (member != NULL)
+      {
+        yr_object_print_data(member->object, indent + 1);
+        member = member->next;
+      }
+
+      break;
+
+    case OBJECT_TYPE_ARRAY:
+      array_items = ((YR_OBJECT_ARRAY*) object)->items;
+
+      if (array_items != NULL)
+      {
+        for (int i = 0; i < array_items->count; i++)
+        {
+          if (array_items->objects[i] != NULL)
+          {
+            printf("%s[%d]\n", indent_spaces, i);
+            yr_object_print_data(array_items->objects[i], indent + 1);
+          }
+        }
+      }
+
+      break;
+
+    case OBJECT_TYPE_DICTIONARY:
+      dict_items = ((YR_OBJECT_DICTIONARY*) object)->items;
+
+      if (dict_items != NULL)
+      {
+        printf("%s%s\n", indent_spaces, object->identifier);
+
+        for (int i = 0; i < dict_items->used; i++)
+        {
+          printf("%s\t%s\n", indent_spaces, dict_items->objects[i].key);
+          yr_object_print_data(dict_items->objects[i].obj, indent + 1);
+        }
+      }
+      break;
+  }
+}
