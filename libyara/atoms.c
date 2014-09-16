@@ -31,7 +31,7 @@ The strings "abc", "ed" and "fgh" are atoms.
 
 When searching for regexps/hex strings matching a file, YARA uses these
 atoms to find locations inside the file where the regexp/hex string could
-match. If the atom "abc" is found somewhere inside the file, there is a change
+match. If the atom "abc" is found somewhere inside the file, there is a chance
 for /abc.*ed[0-9]+fgh/ to match the file, if "abc" doesn't appear in the file
 there's no chance for the regexp to match. When the atom is found in the file
 YARA proceeds to fully evaluate the regexp/hex string to determine if it's
@@ -41,7 +41,7 @@ For each regexp/hex string YARA extracts one or more atoms. Sometimes a
 single atom is enough (like in the previous example "abc" is enough for finding
 /abc.*ed[0-9]+fgh/), but sometimes a single atom isn't enough like in the
 regexp /(abc|efg)/. In this case YARA must search for both "abc" AND "efg" and
-fully evaluate the regexp whenever one of those atoms is found.
+fully evaluate the regexp whenever one of these atoms is found.
 
 In the regexp /Look(at|into)this/ YARA can search for "Look", or search for
 "this", or search for both "at" and "into". This is what we call an atoms tree,
