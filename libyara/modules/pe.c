@@ -865,67 +865,6 @@ define_function(language)
   }
 }
 
-/*
-define_function(matches)
-{
-  void *cmp_data;
-  uint64_t cmp_len;
-
-  YR_OBJECT* parent = parent();
-  YR_OBJECT* module = module();
-  DATA* data = (DATA*) module->data;
-  char *str = string_argument(1);
-  uint64_t len = integer_argument(2);
-
-  if (data == NULL || data->rich_data == NULL)
-    return_integer(UNDEFINED);
-
-  if (strcmp(parent->identifier, "raw_data") == 0)
-    cmp_data = data->rich_data->raw_data;
-  else if (strcmp(parent->identifier, "clear_data") == 0)
-    cmp_data = data->rich_data->clear_data;
-  else
-    return_integer(UNDEFINED);
-
-  // Compare the smaller of the two.
-  if (data->rich_data->len < len)
-    cmp_len = data->rich_data->len;
-  else
-    cmp_len = len;
-
-  if (memcmp(cmp_data, str, cmp_len) == 0)
-    return_integer(1);
-
-  return_integer(0);
-}
-
-define_function(contains)
-{
-  void *cmp_data;
-
-  YR_OBJECT* parent = parent();
-  YR_OBJECT* module = module();
-  DATA* data = (DATA*) module->data;
-  char *str = string_argument(1);
-  uint64_t len = integer_argument(2);
-
-  if (data == NULL || data->rich_data == NULL)
-    return_integer(UNDEFINED);
-
-  if (strcmp(parent->identifier, "raw_data") == 0)
-    cmp_data = data->rich_data->raw_data;
-  else if (strcmp(parent->identifier, "clear_data") == 0)
-    cmp_data = data->rich_data->clear_data;
-  else
-    return_integer(UNDEFINED);
-
-  if (memmem(cmp_data, data->rich_data->len, str, len) != NULL)
-    return_integer(1);
-
-  return_integer(0);
-}
-*/
-
 begin_declarations;
 
   declare_integer("MACHINE_I386");
@@ -1001,16 +940,6 @@ begin_declarations;
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
-/*
-    begin_struct("raw_data");
-      declare_function("is", "si", "i", matches);
-      declare_function("has", "si", "i", contains);
-    end_struct("raw_data")
-    begin_struct("clear_data");
-      declare_function("is", "si", "i", matches);
-      declare_function("has", "si", "i", contains);
-    end_struct("clear_data")
-*/
   end_struct("rich_signature");
 
   declare_function("section_index", "s", "i", section_index);
