@@ -383,12 +383,12 @@ YR_OBJECT* _yr_object_lookup(
   YR_OBJECT* obj = object;
 
   const char* p = pattern;
-  const char* key;
+  const char* key = NULL;
 
   char str[256];
 
   int i;
-  int index;
+  int index = -1;
 
   while (obj != NULL)
   {
@@ -457,10 +457,12 @@ YR_OBJECT* _yr_object_lookup(
       switch(obj->type)
       {
         case OBJECT_TYPE_ARRAY:
+          assert(index != -1);
           obj = yr_object_array_get_item(obj, flags, index);
           break;
 
         case OBJECT_TYPE_DICTIONARY:
+          assert(key != NULL);
           obj = yr_object_dict_get_item(obj, flags, key);
           break;
       }
