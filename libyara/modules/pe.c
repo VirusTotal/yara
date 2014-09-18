@@ -234,7 +234,7 @@ PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
 {
   PIMAGE_DATA_DIRECTORY result;
 
-  if (pe->header->FileHeader.Machine == 0x8664)  // is a 64-bit PE ?
+  if (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
     result = &((PIMAGE_NT_HEADERS64) pe->header)->
         OptionalHeader.DataDirectory[entry];
   else
@@ -511,7 +511,7 @@ void pe_parse(
   size_t str_size;
 
 #define OptionalHeader(field) \
-  (pe->header->FileHeader.Machine == 0x8664 ? \
+  (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64 ? \
    ((PIMAGE_NT_HEADERS64) pe->header)->OptionalHeader.field : \
      pe->header->OptionalHeader.field)
 
