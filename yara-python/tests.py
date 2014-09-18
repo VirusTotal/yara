@@ -709,7 +709,8 @@ class TestYara(unittest.TestCase):
             'import "tests" rule test { condition: tests.string_array[2] == "baz"}',
             'import "tests" rule test { condition: tests.string_dict["foo"] == "foo"}',
             'import "tests" rule test { condition: tests.string_dict["bar"] == "bar"}',
-            'import "tests" rule test { condition: tests.sum(1,1) == 2}',
+            'import "tests" rule test { condition: tests.sum(1,2) == 3}',
+            'import "tests" rule test { condition: tests.sum(1,2,3) == 6}'
           ])
 
         self.assertFalseRules([

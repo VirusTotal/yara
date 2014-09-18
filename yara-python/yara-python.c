@@ -61,7 +61,7 @@ static PyObject *YaraWarningError = NULL;
 This module allows you to apply YARA rules to files or strings.\n\
 \n\
 For complete documentation please visit:\n\
-http://code.google.com/p/yara-project/\n"
+https://plusvic.github.io/yara\n"
 
 
 
@@ -189,6 +189,94 @@ static PyTypeObject Match_Type = {
   0,                          /* tp_new */
 };
 
+// Rule object
+
+typedef struct
+{
+  PyObject_HEAD
+  PyObject* identifier;
+  PyObject* tags;
+  PyObject* meta;
+} Rule;
+
+static void Rule_dealloc(
+    PyObject *self);
+
+static PyObject * Rule_getattro(
+    PyObject *self,
+    PyObject *name);
+
+static PyMemberDef Rule_members[] = {
+  {
+    "identifier",
+    T_OBJECT_EX,
+    offsetof(Rule, identifier),
+    READONLY,
+    "Name of the rule"
+  },
+  {
+    "tags",
+    T_OBJECT_EX,
+    offsetof(Rule, tags),
+    READONLY,
+    "Tags for the rule"
+  },
+  {
+    "meta",
+    T_OBJECT_EX,
+    offsetof(Rule, meta),
+    READONLY,
+    "Meta for the rule"
+  },
+  { NULL } // End marker
+};
+
+static PyMethodDef Rule_methods[] =
+{
+  { NULL, NULL }
+};
+
+static PyTypeObject Rule_Type = {
+  PyVarObject_HEAD_INIT(NULL, 0)
+  "yara.Rule",                /*tp_name*/
+  sizeof(Rule),               /*tp_basicsize*/
+  0,                          /*tp_itemsize*/
+  (destructor)Rule_dealloc,   /*tp_dealloc*/
+  0,                          /*tp_print*/
+  0,                          /*tp_getattr*/
+  0,                          /*tp_setattr*/
+  0,                          /*tp_compare*/
+  0,                          /*tp_repr*/
+  0,                          /*tp_as_number*/
+  0,                          /*tp_as_sequence*/
+  0,                          /*tp_as_mapping*/
+  0,                          /*tp_hash */
+  0,                          /*tp_call*/
+  0,                          /*tp_str*/
+  Rule_getattro,              /*tp_getattro*/
+  0,                          /*tp_setattro*/
+  0,                          /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+  "Rule class",               /* tp_doc */
+  0,                          /* tp_traverse */
+  0,                          /* tp_clear */
+  0,                          /* tp_richcompare */
+  0,                          /* tp_weaklistoffset */
+  0,                          /* tp_iter */
+  0,                          /* tp_iternext */
+  Rule_methods,               /* tp_methods */
+  Rule_members,               /* tp_members */
+  0,                          /* tp_getset */
+  0,                          /* tp_base */
+  0,                          /* tp_dict */
+  0,                          /* tp_descr_get */
+  0,                          /* tp_descr_set */
+  0,                          /* tp_dictoffset */
+  0,                          /* tp_init */
+  0,                          /* tp_alloc */
+  0,                          /* tp_new */
+};
+
 
 // Rules object
 
@@ -197,7 +285,7 @@ typedef struct
   PyObject_HEAD
   PyObject* externals;
   YR_RULES* rules;
-
+  YR_RULE* cur_rule;
 } Rules;
 
 static void Rules_dealloc(
@@ -219,6 +307,9 @@ static PyObject * Rules_profiling_info(
 static PyObject * Rules_getattro(
     PyObject *self,
     PyObject *name);
+
+static PyObject * Rules_next(
+    PyObject *self);
 
 static PyMethodDef Rules_methods[] =
 {
@@ -269,8 +360,8 @@ static PyTypeObject Rules_Type = {
   0,                          /* tp_clear */
   0,                          /* tp_richcompare */
   0,                          /* tp_weaklistoffset */
-  0,                          /* tp_iter */
-  0,                          /* tp_iternext */
+  PyObject_SelfIter,          /* tp_iter */
+  (iternextfunc) Rules_next,  /* tp_iternext */
   Rules_methods,              /* tp_methods */
   0,                          /* tp_members */
   0,                          /* tp_getset */
@@ -283,7 +374,6 @@ static PyTypeObject Rules_Type = {
   0,                          /* tp_alloc */
   0,                          /* tp_new */
 };
-
 
 typedef struct _CALLBACK_DATA
 {
@@ -774,6 +864,22 @@ static long Match_hash(
 ////////////////////////////////////////////////////////////////////////////////
 
 
+static void Rule_dealloc(PyObject *self)
+{
+  Rule *object = (Rule *) self;
+  Py_XDECREF(object->identifier);
+  Py_XDECREF(object->tags);
+  Py_XDECREF(object->meta);
+  PyObject_Del(self);
+}
+
+static PyObject * Rule_getattro(
+    PyObject *self,
+    PyObject *name)
+{
+  return PyObject_GenericGetAttr(self, name);
+}
+
 static void Rules_dealloc(PyObject *self)
 {
   Rules *object = (Rules *) self;
@@ -784,6 +890,63 @@ static void Rules_dealloc(PyObject *self)
   PyObject_Del(self);
 }
 
+static PyObject * Rules_next(PyObject *self)
+{
+  Rule *rule;
+  PyObject *tag_list;
+  PyObject *object;
+  PyObject *meta_list;
+  YR_META *meta;
+  Rules *rules;
+  const char *tag;
+
+  rules = (Rules *) self;
+  // Generate new Rule object based upon cur_rule
+  // Increment cur_rule.
+  if (RULE_IS_NULL(rules->cur_rule))
+  {
+    PyErr_SetNone(PyExc_StopIteration);
+    return NULL;
+  }
+
+  rule = PyObject_NEW(Rule, &Rule_Type);
+  tag_list = PyList_New(0);
+  meta_list = PyDict_New();
+  if (rule != NULL && tag_list != NULL && meta_list != NULL)
+  {
+    yr_rule_tags_foreach(rules->cur_rule, tag)
+    {
+      object = PY_STRING(tag);
+      PyList_Append(tag_list, object);
+      Py_DECREF(object);
+    }
+
+    yr_rule_metas_foreach(rules->cur_rule, meta)
+    {
+      if (meta->type == META_TYPE_INTEGER)
+        object = Py_BuildValue("I", meta->integer);
+      else if (meta->type == META_TYPE_BOOLEAN)
+        object = PyBool_FromLong(meta->integer);
+      else
+        object = PY_STRING(meta->string);
+
+      PyDict_SetItemString(meta_list, meta->identifier, object);
+      Py_DECREF(object);
+    }
+
+    rule->identifier = PY_STRING(rules->cur_rule->identifier);
+    rule->tags = tag_list;
+    rule->meta = meta_list;
+    rules->cur_rule++;
+    return (PyObject *) rule;
+  }
+  else
+  {
+    Py_XDECREF(tag_list);
+    Py_XDECREF(meta_list);
+    return PyErr_Format(PyExc_TypeError, "Out of memory");
+  }
+}
 
 static PyObject * Rules_match(
     PyObject *self,
@@ -1334,6 +1497,7 @@ static PyObject * yara_compile(
         if (error == ERROR_SUCCESS)
         {
           rules->rules = yara_rules;
+          rules->cur_rule = rules->rules->rules_list_head;
 
           if (externals != NULL)
             rules->externals = PyDict_Copy(externals);
@@ -1380,7 +1544,10 @@ static PyObject * yara_load(
     Py_BEGIN_ALLOW_THREADS
 
     if (rules != NULL)
+    {
+      rules->cur_rule = rules->rules->rules_list_head;
       error = yr_rules_load(filepath, &rules->rules);
+    }
     else
       error = ERROR_INSUFICIENT_MEMORY;
 
@@ -1498,6 +1665,9 @@ MOD_INIT(yara)
   YaraTimeoutError = Py_BuildValue("s", "yara.TimeoutError");
   YaraWarningError = Py_BuildValue("s", "yara.WarningError");
 #endif
+
+  if (PyType_Ready(&Rule_Type) < 0)
+    return MOD_ERROR_VAL;
 
   if (PyType_Ready(&Rules_Type) < 0)
     return MOD_ERROR_VAL;

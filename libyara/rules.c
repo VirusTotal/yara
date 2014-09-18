@@ -466,6 +466,10 @@ int yr_rules_scan_mem_blocks(
 
 _exit:
 
+  #if PRINT_MODULE_DATA
+  yr_modules_print_data(&context);
+  #endif
+
   yr_modules_unload_all(&context);
 
   _yr_rules_clean_matches(rules);

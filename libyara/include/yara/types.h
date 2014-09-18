@@ -462,10 +462,12 @@ typedef struct _YR_OBJECT_FUNCTION
 {
   OBJECT_COMMON_FIELDS
 
-  const char* arguments_fmt;
-
   YR_OBJECT* return_obj;
-  YR_MODULE_FUNC code;
+
+  struct {
+    const char* arguments_fmt;
+    YR_MODULE_FUNC code;
+  } prototypes[MAX_OVERLOADED_FUNCTIONS];
 
 } YR_OBJECT_FUNCTION;
 

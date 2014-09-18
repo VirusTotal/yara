@@ -128,4 +128,9 @@ YR_OBJECT* yr_object_get_root(
     YR_OBJECT* object);
 
 
+void yr_object_print_data(
+    YR_OBJECT* object,
+    int indent);
+
+
 #endif

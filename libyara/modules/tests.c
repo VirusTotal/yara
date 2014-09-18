@@ -19,15 +19,28 @@ limitations under the License.
 #define MODULE_NAME tests
 
 
-define_function(sum)
+define_function(sum_2)
 {
   int64_t a = integer_argument(1);
-  int64_t b = integer_argument(1);
+  int64_t b = integer_argument(2);
 
   if (a == UNDEFINED || b == UNDEFINED)
     return_integer(UNDEFINED);
 
   return_integer(a + b);
+}
+
+
+define_function(sum_3)
+{
+  int64_t a = integer_argument(1);
+  int64_t b = integer_argument(2);
+  int64_t c = integer_argument(3);
+
+  if (a == UNDEFINED || b == UNDEFINED || c == UNDEFINED)
+    return_integer(UNDEFINED);
+
+  return_integer(a + b + c);
 }
 
 begin_declarations;
@@ -49,7 +62,13 @@ begin_declarations;
     declare_string("s");
   end_struct_array("struct_array");
 
-  declare_function("sum", "ii", "i", sum);
+  begin_struct_dictionary("struct_dict");
+    declare_integer("i");
+    declare_string("s");
+  end_struct_dictionary("struct_dict");
+
+  declare_function("sum", "ii", "i", sum_2);
+  declare_function("sum", "iii", "i", sum_3);
 
 end_declarations;
 
@@ -89,6 +108,9 @@ int module_load(
 
   set_string("foo", 3, module_object, "string_dict[%s]", "foo");
   set_string("bar", 3, module_object, "string_dict[\"bar\"]");
+
+  set_string("foo", 3, module_object, "struct_dict[%s].s", "foo");
+  set_integer(1, module_object, "struct_dict[%s].i", "foo");
 
   return ERROR_SUCCESS;
 }

@@ -1,4 +1,4 @@
-    /*
+/*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -168,50 +168,20 @@ int yr_parser_check_types(
     YR_OBJECT_FUNCTION* function,
     const char* actual_args_fmt)
 {
-  int i;
-
-  char message[MAX_COMPILER_ERROR_EXTRA_INFO];
-
-  const char* expected = function->arguments_fmt;
-  const char* actual = actual_args_fmt;
-
-  i = 0;
-
-  while (*expected != '\0' || *actual != '\0')
+  for (int i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
   {
-    i++;
-
-    if (*expected != *actual)
-    {
-      if (*expected == '\0' || *actual == '\0')
-      {
-        snprintf(
-            message,
-            sizeof(message),
-            "wrong number of arguments for \"%s\"",
-            function->identifier);
-
-        compiler->last_result = ERROR_WRONG_NUMBER_OF_ARGUMENTS;
-      }
-      else
-      {
-        snprintf(
-            message,
-            sizeof(message),
-            "wrong type for argument %i of \"%s\"",
-            i,
-            function->identifier);
-
-        compiler->last_result = ERROR_WRONG_TYPE;
-      }
-
-      yr_compiler_set_error_extra_info(compiler, message);
+    if (function->prototypes[i].arguments_fmt == NULL)
       break;
-    }
 
-    expected++;
-    actual++;
+    if (strcmp(function->prototypes[i].arguments_fmt, actual_args_fmt) == 0)
+    {
+      compiler->last_result = ERROR_SUCCESS;
+      return compiler->last_result;
+    }
   }
+
+  yr_compiler_set_error_extra_info(compiler, function->identifier);
+  compiler->last_result = ERROR_WRONG_ARGUMENTS;
 
   return compiler->last_result;
 }

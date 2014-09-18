@@ -104,8 +104,12 @@ int yr_object_create(
       ((YR_OBJECT_REGEXP*) obj)->value = NULL;
       break;
     case OBJECT_TYPE_FUNCTION:
-      ((YR_OBJECT_FUNCTION*) obj)->arguments_fmt = NULL;
       ((YR_OBJECT_FUNCTION*) obj)->return_obj = NULL;
+      for (int i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+      {
+        ((YR_OBJECT_FUNCTION*) obj)->prototypes[i].arguments_fmt = NULL;
+        ((YR_OBJECT_FUNCTION*) obj)->prototypes[i].code = NULL;
+      }
       break;
   }
 
@@ -150,9 +154,10 @@ int yr_object_function_create(
     YR_OBJECT** function)
 {
   YR_OBJECT* return_obj;
-  YR_OBJECT* f;
+  YR_OBJECT* f = NULL;
 
   int8_t return_type;
+  int i;
 
   switch (*return_fmt)
   {
@@ -166,19 +171,41 @@ int yr_object_function_create(
       return ERROR_INVALID_FORMAT;
   }
 
-  FAIL_ON_ERROR(yr_object_create(
-      OBJECT_TYPE_FUNCTION,
-      identifier,
-      parent,
-      &f));
+  if (parent != NULL)
+  {
+    assert(parent->type == OBJECT_TYPE_STRUCTURE);
 
-  FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_object_create(return_type, "result", f, &return_obj),
-      yr_object_destroy(f));
+    // Try to find if the structure already has a function
+    // with that name. In that case this is a function oveload.
 
-  ((YR_OBJECT_FUNCTION* )f)->arguments_fmt = arguments_fmt;
-  ((YR_OBJECT_FUNCTION* )f)->return_obj = return_obj;
-  ((YR_OBJECT_FUNCTION* )f)->code = code;
+    f = yr_object_lookup_field(parent, identifier);
+
+    if (f != NULL && return_type != ((YR_OBJECT_FUNCTION*) f)->return_obj->type)
+      return ERROR_WRONG_RETURN_TYPE;
+  }
+
+  if (f == NULL)
+  {
+    // Function doesn't exist yet, create it.
+
+    FAIL_ON_ERROR(yr_object_create(
+        OBJECT_TYPE_FUNCTION,
+        identifier,
+        parent,
+        &f));
+
+    FAIL_ON_ERROR_WITH_CLEANUP(
+        yr_object_create(return_type, "result", f, &return_obj),
+        yr_object_destroy(f));
+  }
+
+  for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+    if (((YR_OBJECT_FUNCTION*) f)->prototypes[i].arguments_fmt == NULL)
+      break;
+
+  ((YR_OBJECT_FUNCTION*) f)->prototypes[i].arguments_fmt = arguments_fmt;
+  ((YR_OBJECT_FUNCTION*) f)->prototypes[i].code = code;
+  ((YR_OBJECT_FUNCTION*) f)->return_obj = return_obj;
 
   if (function != NULL)
     *function = f;
@@ -356,12 +383,12 @@ YR_OBJECT* _yr_object_lookup(
   YR_OBJECT* obj = object;
 
   const char* p = pattern;
-  const char* key;
+  const char* key = NULL;
 
   char str[256];
 
   int i;
-  int index;
+  int index = -1;
 
   while (obj != NULL)
   {
@@ -430,10 +457,12 @@ YR_OBJECT* _yr_object_lookup(
       switch(obj->type)
       {
         case OBJECT_TYPE_ARRAY:
+          assert(index != -1);
           obj = yr_object_array_get_item(obj, flags, index);
           break;
 
         case OBJECT_TYPE_DICTIONARY:
+          assert(key != NULL);
           obj = yr_object_dict_get_item(obj, flags, key);
           break;
       }
@@ -871,4 +900,88 @@ YR_OBJECT* yr_object_get_root(
     o = o->parent;
 
   return o;
+}
+
+void yr_object_print_data(
+    YR_OBJECT* object,
+    int indent)
+{
+  YR_DICTIONARY_ITEMS* dict_items;
+  YR_ARRAY_ITEMS* array_items;
+
+  char indent_spaces[32];
+
+  indent = min(indent, sizeof(indent_spaces));
+
+  memset(indent_spaces, '\t', indent);
+  indent_spaces[indent] = '\0';
+
+  switch(object->type)
+  {
+    case OBJECT_TYPE_INTEGER:
+      if (((YR_OBJECT_INTEGER*) object)->value != UNDEFINED)
+        printf(
+            "%s%s = %lld\n",
+            indent_spaces,
+            object->identifier,
+            ((YR_OBJECT_INTEGER*) object)->value);
+      break;
+
+    case OBJECT_TYPE_STRING:
+      if (((YR_OBJECT_STRING*) object)->value != NULL)
+        printf(
+            "%s%s = \"%s\"\n",
+            indent_spaces,
+            object->identifier,
+            ((YR_OBJECT_STRING*) object)->value->c_string);
+      break;
+
+    case OBJECT_TYPE_STRUCTURE:
+      printf(
+          "%s%s\n",
+          indent_spaces,
+          object->identifier);
+
+      YR_STRUCTURE_MEMBER* member = ((YR_OBJECT_STRUCTURE*) object)->members;
+
+      while (member != NULL)
+      {
+        yr_object_print_data(member->object, indent + 1);
+        member = member->next;
+      }
+
+      break;
+
+    case OBJECT_TYPE_ARRAY:
+      array_items = ((YR_OBJECT_ARRAY*) object)->items;
+
+      if (array_items != NULL)
+      {
+        for (int i = 0; i < array_items->count; i++)
+        {
+          if (array_items->objects[i] != NULL)
+          {
+            printf("%s[%d]\n", indent_spaces, i);
+            yr_object_print_data(array_items->objects[i], indent + 1);
+          }
+        }
+      }
+
+      break;
+
+    case OBJECT_TYPE_DICTIONARY:
+      dict_items = ((YR_OBJECT_DICTIONARY*) object)->items;
+
+      if (dict_items != NULL)
+      {
+        printf("%s%s\n", indent_spaces, object->identifier);
+
+        for (int i = 0; i < dict_items->used; i++)
+        {
+          printf("%s\t%s\n", indent_spaces, dict_items->objects[i].key);
+          yr_object_print_data(dict_items->objects[i].obj, indent + 1);
+        }
+      }
+      break;
+  }
 }

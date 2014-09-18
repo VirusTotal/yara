@@ -781,11 +781,22 @@ char* yr_compiler_get_error_message(
           buffer_size,
           "duplicated structure member");
       break;
+    case ERROR_WRONG_ARGUMENTS:
+      snprintf(
+          buffer,
+          buffer_size,
+          "wrong arguments for function \"%s\"",
+          compiler->last_error_extra_info);
+      break;
+    case ERROR_WRONG_RETURN_TYPE:
+      snprintf(buffer,
+          buffer_size,
+          "wrong return type for overloaded function");
+      break;
     case ERROR_INVALID_HEX_STRING:
     case ERROR_INVALID_REGULAR_EXPRESSION:
     case ERROR_SYNTAX_ERROR:
     case ERROR_WRONG_TYPE:
-    case ERROR_WRONG_NUMBER_OF_ARGUMENTS:
       snprintf(
           buffer,
           buffer_size,
