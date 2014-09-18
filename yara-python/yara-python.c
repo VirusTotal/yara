@@ -1162,17 +1162,13 @@ static PyObject * Rules_profiling_info(
 
   result = PyDict_New();
 
-  rule = rules->rules_list_head;
-
-  while (!RULE_IS_NULL(rule))
+  yr_rules_foreach(rules, rule)
   {
     clock_ticks = rule->clock_ticks;
-    string = rule->strings;
 
-    while (!STRING_IS_NULL(string))
+    yr_rule_strings_foreach(rule, string)
     {
       clock_ticks += string->clock_ticks;
-      string++;
     }
 
     snprintf(key, sizeof(key), "%s:%s", rule->ns->name, rule->identifier);
@@ -1180,8 +1176,6 @@ static PyObject * Rules_profiling_info(
     object = PyLong_FromLongLong(clock_ticks);
     PyDict_SetItemString(result, key, object);
     Py_DECREF(object);
-
-    rule++;
   }
 
   return result;
