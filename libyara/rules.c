@@ -151,15 +151,12 @@ void _yr_rules_clean_matches(
 
   int tidx = yr_get_tidx();
 
-  rule = rules->rules_list_head;
-
-  while (!RULE_IS_NULL(rule))
+  yr_rules_foreach(rules, rule)
   {
     rule->t_flags[tidx] &= ~RULE_TFLAGS_MATCH;
     rule->ns->t_flags[tidx] &= ~NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
-    string = rule->strings;
 
-    while (!STRING_IS_NULL(string))
+    yr_rule_strings_foreach(rule, string)
     {
       string->matches[tidx].count = 0;
       string->matches[tidx].head = NULL;
@@ -167,10 +164,7 @@ void _yr_rules_clean_matches(
       string->unconfirmed_matches[tidx].count = 0;
       string->unconfirmed_matches[tidx].head = NULL;
       string->unconfirmed_matches[tidx].tail = NULL;
-      string++;
     }
-
-    rule++;
   }
 }
 
@@ -186,17 +180,13 @@ void yr_rules_print_profiling_info(
 
   printf("===== PROFILING INFORMATION =====\n");
 
-  rule = rules->rules_list_head;
-
-  while (!RULE_IS_NULL(rule))
+  yr_rules_foreach(rules, rule)
   {
     clock_ticks = rule->clock_ticks;
-    string = rule->strings;
 
-    while (!STRING_IS_NULL(string))
+    yr_rule_strings_foreach(rule, string)
     {
       clock_ticks += string->clock_ticks;
-      string++;
     }
 
     printf(
@@ -204,8 +194,6 @@ void yr_rules_print_profiling_info(
         rule->ns->name,
         rule->identifier,
         clock_ticks);
-
-    rule++;
   }
 
   printf("================================\n");
@@ -419,21 +407,15 @@ int yr_rules_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  rule = rules->rules_list_head;
-
-  while (!RULE_IS_NULL(rule))
+  yr_rules_foreach(rules, rule)
   {
     if (RULE_IS_GLOBAL(rule) && !(rule->t_flags[tidx] & RULE_TFLAGS_MATCH))
     {
       rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
     }
-
-    rule++;
   }
 
-  rule = rules->rules_list_head;
-
-  while (!RULE_IS_NULL(rule))
+  yr_rules_foreach(rules, rule)
   {
     if (rule->t_flags[tidx] & RULE_TFLAGS_MATCH &&
         !(rule->ns->t_flags[tidx] & NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL))
@@ -458,8 +440,6 @@ int yr_rules_scan_mem_blocks(
           goto _exit;
       }
     }
-
-    rule++;
   }
 
   callback(CALLBACK_MSG_SCAN_FINISHED, NULL, user_data);

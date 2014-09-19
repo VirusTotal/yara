@@ -437,7 +437,9 @@ Functions
 
 .. c:function:: yr_string_matches_foreach(string, match)
 
-  Example:
+  Iterate over the :c:type:`YR_MATCH` structures associated to a given string
+  running the block of code that follows each time with a different value for
+  *match*. Example:
 
   .. code-block:: c
 
@@ -448,6 +450,23 @@ Functions
     yr_string_matches_foreach(string, match)
     {
       ..do something with match
+    }
+
+.. c:function:: yr_rules_foreach(rules, rule)
+
+  Iterate over each :c:type:`YR_RULE` in a :c:type:`YR_RULES` object running
+  the block of code that follows each time with a different value for
+  *rule*. Example:
+
+  .. code-block:: c
+
+    YR_RULE* rule;
+
+    /* rules is a YR_RULES object */
+
+    yr_rules_foreach(rules, rule)
+    {
+      ..do something with rule
     }
 
 Error codes

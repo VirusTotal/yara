@@ -49,6 +49,10 @@ limitations under the License.
     for (match = STRING_MATCHES(string).head; match != NULL; match = match->next)
 
 
+#define yr_rules_foreach(rules, rule) \
+    for (rule = rules->rules_list_head; !RULE_IS_NULL(rule); rule++)
+
+
 
 int yr_rules_scan_mem(
     YR_RULES* rules,
