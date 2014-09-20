@@ -623,7 +623,7 @@ define_function(section_index)
 {
   YR_OBJECT* module = module();
   SIZED_STRING* sect;
-  SIZED_STRING* name = string_argument(1);
+  char* name = string_argument(1);
 
   int64_t n = get_integer(module, "number_of_sections");
   int64_t i;
@@ -634,9 +634,7 @@ define_function(section_index)
   for (i = 0; i < n; i++)
   {
     sect = get_string(module, "sections[%i].name", i);
-    if (sect->length != name->length)
-      continue;
-    if (memcmp(name->c_string, sect->c_string, name->length) == 0)
+    if (strcmp(name, sect->c_string) == 0)
       return_integer(i);
   }
 
@@ -646,7 +644,7 @@ define_function(section_index)
 
 define_function(exports)
 {
-  SIZED_STRING* function_name = string_argument(1);
+  char* function_name = string_argument(1);
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
@@ -696,10 +694,7 @@ define_function(exports)
 
     name = (char*)(pe->data + offset);
 
-    if (function_name->length != pe->data_size - offset)
-        continue;
-
-    if (memcmp(name, function_name->c_string, pe->data_size - offset) == 0)
+    if (strncmp(name, function_name, pe->data_size - offset) == 0)
       return_integer(1);
   }
 
@@ -709,9 +704,9 @@ define_function(exports)
 
 define_function(imports)
 {
-  SIZED_STRING* dll_name = string_argument(1);
-  SIZED_STRING* function_name = string_argument(2);
-  int function_name_len = function_name->length;
+  char* dll_name = string_argument(1);
+  char* function_name = string_argument(2);
+  int function_name_len = strlen(function_name);
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
@@ -750,7 +745,7 @@ define_function(imports)
     if (offset > 0 &&
         offset <= pe->data_size &&
         strncasecmp(
-            dll_name->c_string, // XXX
+            dll_name,
             (char*)(pe->data + offset),
             pe->data_size - offset) == 0)
     {
@@ -778,7 +773,7 @@ define_function(imports)
                 if (fits_in_pe(pe, import->Name, function_name_len))
                 {
                   if (strncmp((char*) import->Name,
-                              function_name->c_string,
+                              function_name,
                               function_name_len) == 0)
                   {
                     return_integer(1);
@@ -810,7 +805,7 @@ define_function(imports)
                 if (fits_in_pe(pe, import->Name, function_name_len))
                 {
                   if (strncmp((char*) import->Name,
-                              function_name->c_string,
+                              function_name,
                               function_name_len) == 0)
                   {
                     return_integer(1);
