@@ -219,7 +219,7 @@ limitations under the License.
 
 
 #define integer_argument(n)  (((int64_t*) __args)[n-1])
-#define string_argument(n)   ((SIZED_STRING*)((int64_t*) __args)[n-1])
+#define string_argument(n)   ((char*)((int64_t*) __args)[n-1])
 #define regexp_argument(n)   ((RE_CODE)((int64_t*) __args)[n-1])
 
 
