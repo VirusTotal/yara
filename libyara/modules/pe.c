@@ -2458,7 +2458,7 @@ PIMPORT_LIST parse_imports(PE* pe)
 
       if (offset > 0)
       {
-        if (pe->header->FileHeader.Machine == 0x8664)
+        if (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
         {
           thunks64 = (PIMAGE_THUNK_DATA64)(pe->data + offset);
 
