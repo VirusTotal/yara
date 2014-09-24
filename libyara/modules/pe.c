@@ -1892,7 +1892,7 @@ int _pe_iterate_resources(
     RESOURCE_CALLBACK_FUNC callback,
     void* callback_data)
 {
-  int result;
+  int result = RESOURCE_ITERATOR_FINISHED;
   int total_entries = resource_dir->NumberOfNamedEntries +
                       resource_dir->NumberOfIdEntries;
 

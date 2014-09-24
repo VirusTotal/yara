@@ -20,6 +20,7 @@ limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 
 #include <yara/mem.h>
@@ -921,7 +922,7 @@ void yr_object_print_data(
     case OBJECT_TYPE_INTEGER:
       if (((YR_OBJECT_INTEGER*) object)->value != UNDEFINED)
         printf(
-            "%s%s = %lld\n",
+            "%s%s = %" PRIu64 "\n",
             indent_spaces,
             object->identifier,
             ((YR_OBJECT_INTEGER*) object)->value);

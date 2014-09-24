@@ -42,12 +42,12 @@ AC_ARG_ENABLE([magic],
     AC_DEFINE([MAGIC], [1], [enable magic module])
   fi])
 
+ACX_PTHREAD
+
 AC_CHECK_FUNCS_ONCE(strlcpy strlcat)
 
 AM_CONDITIONAL([CUCKOO], [test x$cuckoo = xtrue])
 AM_CONDITIONAL([MAGIC], [test x$magic = xtrue])
-
-AC_CHECK_LIB(pthread, pthread_create)
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libyara/Makefile])
