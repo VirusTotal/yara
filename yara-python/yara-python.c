@@ -285,7 +285,7 @@ typedef struct
   PyObject_HEAD
   PyObject* externals;
   YR_RULES* rules;
-  YR_RULE* cur_rule;
+  YR_RULE* iter_current_rule;
 } Rules;
 
 static void Rules_dealloc(
@@ -901,9 +901,11 @@ static PyObject * Rules_next(PyObject *self)
   const char *tag;
 
   rules = (Rules *) self;
-  // Generate new Rule object based upon cur_rule
-  // Increment cur_rule.
-  if (RULE_IS_NULL(rules->cur_rule))
+
+  // Generate new Rule object based upon iter_current_rule and increment
+  // iter_current_rule.
+
+  if (RULE_IS_NULL(rules->iter_current_rule))
   {
     PyErr_SetNone(PyExc_StopIteration);
     return NULL;
@@ -914,14 +916,14 @@ static PyObject * Rules_next(PyObject *self)
   meta_list = PyDict_New();
   if (rule != NULL && tag_list != NULL && meta_list != NULL)
   {
-    yr_rule_tags_foreach(rules->cur_rule, tag)
+    yr_rule_tags_foreach(rules->iter_current_rule, tag)
     {
       object = PY_STRING(tag);
       PyList_Append(tag_list, object);
       Py_DECREF(object);
     }
 
-    yr_rule_metas_foreach(rules->cur_rule, meta)
+    yr_rule_metas_foreach(rules->iter_current_rule, meta)
     {
       if (meta->type == META_TYPE_INTEGER)
         object = Py_BuildValue("I", meta->integer);
@@ -934,10 +936,10 @@ static PyObject * Rules_next(PyObject *self)
       Py_DECREF(object);
     }
 
-    rule->identifier = PY_STRING(rules->cur_rule->identifier);
+    rule->identifier = PY_STRING(rules->iter_current_rule->identifier);
     rule->tags = tag_list;
     rule->meta = meta_list;
-    rules->cur_rule++;
+    rules->iter_current_rule++;
     return (PyObject *) rule;
   }
   else
@@ -1491,7 +1493,7 @@ static PyObject * yara_compile(
         if (error == ERROR_SUCCESS)
         {
           rules->rules = yara_rules;
-          rules->cur_rule = rules->rules->rules_list_head;
+          rules->iter_current_rule = rules->rules->rules_list_head;
 
           if (externals != NULL)
             rules->externals = PyDict_Copy(externals);
@@ -1548,7 +1550,7 @@ static PyObject * yara_load(
       return handle_error(error, filepath);
 
     external = rules->rules->externals_list_head;
-    rules->cur_rule = rules->rules->rules_list_head;
+    rules->iter_current_rule = rules->rules->rules_list_head;
 
     if (!EXTERNAL_VARIABLE_IS_NULL(external))
       rules->externals = PyDict_New();
