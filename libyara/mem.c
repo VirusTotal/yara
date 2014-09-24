@@ -96,7 +96,7 @@ int yr_heap_free()
 
 void* yr_malloc(size_t size)
 {
-  return malloc(size);
+  return calloc(1, size);
 }
 
 
