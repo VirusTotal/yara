@@ -1731,7 +1731,8 @@ PIMAGE_NT_HEADERS32 pe_get_header(
 }
 
 
-/* This is basically a straight copy/paste of pe_get_header(). :( */
+// Parse the rich signature.
+// http://www.ntcore.com/files/richsign.htm
 PRICH_DATA pe_get_rich_signature(
     uint8_t* buffer,
     size_t buffer_length,
