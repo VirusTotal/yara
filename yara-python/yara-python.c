@@ -1538,10 +1538,7 @@ static PyObject * yara_load(
     Py_BEGIN_ALLOW_THREADS
 
     if (rules != NULL)
-    {
-      rules->cur_rule = rules->rules->rules_list_head;
       error = yr_rules_load(filepath, &rules->rules);
-    }
     else
       error = ERROR_INSUFICIENT_MEMORY;
 
@@ -1551,6 +1548,7 @@ static PyObject * yara_load(
       return handle_error(error, filepath);
 
     external = rules->rules->externals_list_head;
+    rules->cur_rule = rules->rules->rules_list_head;
 
     if (!EXTERNAL_VARIABLE_IS_NULL(external))
       rules->externals = PyDict_New();
