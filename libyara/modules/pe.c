@@ -2306,7 +2306,6 @@ define_function(exports)
  * It is important to make duplicates of the strings as we don't want
  * to alter the contents of the parsed import structures.
  */
-// XXX: Add -lcrypto to Makefile.am
 define_function(imphash)
 {
   char *p;
