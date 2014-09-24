@@ -1719,7 +1719,7 @@ primary_expression
         CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "^");
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "^");
 
-        yr_parser_emit(yyscanner, OP_XOR, NULL);
+        yr_parser_emit(yyscanner, OP_BITWISE_XOR, NULL);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = OPERATION(^, $1.value.integer, $3.value.integer);
@@ -1729,7 +1729,7 @@ primary_expression
         CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "^");
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "^");
 
-        yr_parser_emit(yyscanner, OP_AND, NULL);
+        yr_parser_emit(yyscanner, OP_BITWISE_AND, NULL);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = OPERATION(&, $1.value.integer, $3.value.integer);
@@ -1739,7 +1739,7 @@ primary_expression
         CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "|");
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "|");
 
-        yr_parser_emit(yyscanner, OP_OR, NULL);
+        yr_parser_emit(yyscanner, OP_BITWISE_OR, NULL);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = OPERATION(|, $1.value.integer, $3.value.integer);
@@ -1748,7 +1748,7 @@ primary_expression
       {
         CHECK_TYPE($2, EXPRESSION_TYPE_INTEGER, "~");
 
-        yr_parser_emit(yyscanner, OP_NEG, NULL);
+        yr_parser_emit(yyscanner, OP_BITWISE_NOT, NULL);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = ($2.value.integer == UNDEFINED) ?
