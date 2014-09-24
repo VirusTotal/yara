@@ -926,7 +926,7 @@ expression
             yyscanner,
             $3,
             OP_CONTAINS_STR,
-            UNDEFINED); // XXX: UNDEFINED?
+            UNDEFINED);
 
         yr_free($3);
 
@@ -942,7 +942,7 @@ expression
             yyscanner,
             $3,
             OP_MATCHES_STR,
-            UNDEFINED); // XXX: UNDEFINED?
+            UNDEFINED);
 
         yr_free($3);
 

@@ -2595,7 +2595,7 @@ yyreduce:
             yyscanner,
             (yyvsp[(3) - (3)].c_string),
             OP_CONTAINS_STR,
-            UNDEFINED); // XXX: UNDEFINED?
+            UNDEFINED);
 
         yr_free((yyvsp[(3) - (3)].c_string));
 
@@ -2614,7 +2614,7 @@ yyreduce:
             yyscanner,
             (yyvsp[(3) - (3)].c_string),
             OP_MATCHES_STR,
-            UNDEFINED); // XXX: UNDEFINED?
+            UNDEFINED);
 
         yr_free((yyvsp[(3) - (3)].c_string));
 
