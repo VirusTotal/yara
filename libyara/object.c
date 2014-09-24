@@ -256,7 +256,7 @@ int yr_object_from_external_variable(
 
       case EXTERNAL_VARIABLE_TYPE_STRING:
       case EXTERNAL_VARIABLE_TYPE_MALLOC_STRING:
-        yr_object_set_string(external->string, 0, obj, NULL); // XXX
+        yr_object_set_string(external->string, strlen(external->string), obj, NULL);
         break;
     }
 
