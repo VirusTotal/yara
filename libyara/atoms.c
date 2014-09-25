@@ -133,13 +133,13 @@ int _yr_atoms_quality(
 }
 
 //
-// _yr_atoms_min_quality
+// yr_atoms_min_quality
 //
 // Returns the quality for the worst quality atom in a list.
 //
 
-int _yr_atoms_min_quality(
-  YR_ATOM_LIST_ITEM* atom_list)
+int yr_atoms_min_quality(
+    YR_ATOM_LIST_ITEM* atom_list)
 {
   YR_ATOM_LIST_ITEM* atom;
 
@@ -164,6 +164,36 @@ int _yr_atoms_min_quality(
   return min_quality;
 }
 
+
+//
+// yr_atoms_min_length
+//
+// Returns the length for the shortest atom in a list.
+//
+
+int yr_atoms_min_length(
+    YR_ATOM_LIST_ITEM* atom_list)
+{
+  YR_ATOM_LIST_ITEM* atom;
+
+  int min_length = 100000;
+
+  if (atom_list == NULL)
+    return 0;
+
+  atom = atom_list;
+
+  while (atom != NULL)
+  {
+    if (atom->atom_length < min_length)
+      min_length = atom->atom_length;
+
+    atom = atom->next;
+  }
+
+  return min_length;
+}
+
 //
 // _yr_atoms_tree_node_create
 //
@@ -171,7 +201,7 @@ int _yr_atoms_min_quality(
 //
 
 ATOM_TREE_NODE* _yr_atoms_tree_node_create(
-  uint8_t type)
+    uint8_t type)
 {
   ATOM_TREE_NODE* new_node;
 
@@ -988,7 +1018,7 @@ int yr_atoms_extract_from_re(
 
     yr_atoms_extract_triplets(re->root_node, &triplet_atoms);
 
-    if (min_atom_quality < _yr_atoms_min_quality(triplet_atoms))
+    if (min_atom_quality < yr_atoms_min_quality(triplet_atoms))
     {
       yr_atoms_list_destroy(*atoms);
       *atoms = triplet_atoms;

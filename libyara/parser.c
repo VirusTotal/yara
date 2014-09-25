@@ -247,12 +247,10 @@ int _yr_parser_write_string(
     SIZED_STRING* str,
     RE* re,
     YR_STRING** string,
-    int* min_atom_length)
+    int* min_atom_quality)
 {
   SIZED_STRING* literal_string;
   YR_AC_MATCH* new_match;
-
-  YR_ATOM_LIST_ITEM* atom;
   YR_ATOM_LIST_ITEM* atom_list = NULL;
 
   int result;
@@ -375,19 +373,7 @@ int _yr_parser_write_string(
     }
   }
 
-  atom = atom_list;
-
-  if (atom != NULL)
-    *min_atom_length = MAX_ATOM_LENGTH;
-  else
-    *min_atom_length = 0;
-
-  while (atom != NULL)
-  {
-    if (atom->atom_length < *min_atom_length)
-      *min_atom_length = atom->atom_length;
-    atom = atom->next;
-  }
+  *min_atom_quality = yr_atoms_min_quality(atom_list);
 
   if (flags & STRING_GFLAGS_LITERAL)
   {
@@ -396,7 +382,7 @@ int _yr_parser_write_string(
     else
       max_string_len = (*string)->length;
 
-    if (max_string_len == *min_atom_length)
+    if (max_string_len == yr_atoms_min_length(atom_list))
       (*string)->g_flags |= STRING_GFLAGS_FITS_IN_ATOM;
   }
 
@@ -419,8 +405,8 @@ YR_STRING* yr_parser_reduce_string_declaration(
     const char* identifier,
     SIZED_STRING* str)
 {
-  int min_atom_length;
-  int min_atom_length_aux;
+  int min_atom_quality;
+  int min_atom_quality_aux;
   int re_flags = 0;
 
   int32_t min_gap;
@@ -512,7 +498,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
         NULL,
         re,
         &string,
-        &min_atom_length);
+        &min_atom_quality);
 
     if (compiler->last_result != ERROR_SUCCESS)
       goto _exit;
@@ -551,13 +537,13 @@ YR_STRING* yr_parser_reduce_string_declaration(
           NULL,
           re,
           &aux_string,
-          &min_atom_length_aux);
+          &min_atom_quality_aux);
 
       if (compiler->last_result != ERROR_SUCCESS)
         goto _exit;
 
-      if (min_atom_length_aux < min_atom_length)
-        min_atom_length = min_atom_length_aux;
+      if (min_atom_quality_aux < min_atom_quality)
+        min_atom_quality = min_atom_quality_aux;
 
       aux_string->g_flags |= STRING_GFLAGS_CHAIN_PART;
       aux_string->chain_gap_min = min_gap;
@@ -581,20 +567,20 @@ YR_STRING* yr_parser_reduce_string_declaration(
         str,
         NULL,
         &string,
-        &min_atom_length);
+        &min_atom_quality);
 
     if (compiler->last_result != ERROR_SUCCESS)
       goto _exit;
   }
 
-  if (min_atom_length < 2 && compiler->callback != NULL)
+  if (min_atom_quality < 3 && compiler->callback != NULL)
   {
     snprintf(
         message,
         sizeof(message),
         "%s is slowing down scanning%s",
         string->identifier,
-        min_atom_length == 0 ? " (critical!)" : "");
+        min_atom_quality < 2 ? " (critical!)" : "");
 
     yywarning(yyscanner, message);
   }
