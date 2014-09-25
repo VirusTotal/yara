@@ -3548,7 +3548,7 @@ yyreduce:
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "^");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "^");
 
-        yr_parser_emit(yyscanner, OP_XOR, NULL);
+        yr_parser_emit(yyscanner, OP_BITWISE_XOR, NULL);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(^, (yyvsp[(1) - (3)].expression).value.integer, (yyvsp[(3) - (3)].expression).value.integer);
@@ -3561,7 +3561,7 @@ yyreduce:
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "^");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "^");
 
-        yr_parser_emit(yyscanner, OP_AND, NULL);
+        yr_parser_emit(yyscanner, OP_BITWISE_AND, NULL);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(&, (yyvsp[(1) - (3)].expression).value.integer, (yyvsp[(3) - (3)].expression).value.integer);
@@ -3574,7 +3574,7 @@ yyreduce:
         CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_INTEGER, "|");
         CHECK_TYPE((yyvsp[(3) - (3)].expression), EXPRESSION_TYPE_INTEGER, "|");
 
-        yr_parser_emit(yyscanner, OP_OR, NULL);
+        yr_parser_emit(yyscanner, OP_BITWISE_OR, NULL);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(|, (yyvsp[(1) - (3)].expression).value.integer, (yyvsp[(3) - (3)].expression).value.integer);
@@ -3586,7 +3586,7 @@ yyreduce:
     {
         CHECK_TYPE((yyvsp[(2) - (2)].expression), EXPRESSION_TYPE_INTEGER, "~");
 
-        yr_parser_emit(yyscanner, OP_NEG, NULL);
+        yr_parser_emit(yyscanner, OP_BITWISE_NOT, NULL);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = ((yyvsp[(2) - (2)].expression).value.integer == UNDEFINED) ?

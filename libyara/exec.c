@@ -207,7 +207,7 @@ int yr_execute_code(
         if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
           push(0);
         else
-          push(r1 & r2);
+          push(r1 && r2);
         break;
 
       case OP_OR:
@@ -218,7 +218,7 @@ int yr_execute_code(
         else if (IS_UNDEFINED(r2))
           push(r1);
         else
-          push(r1 | r2);
+          push(r1 || r2);
         break;
 
       case OP_NOT:
@@ -327,11 +327,6 @@ int yr_execute_code(
         push(OPERATION(%, r1, r2));
         break;
 
-      case OP_NEG:
-        pop(r1);
-        push(IS_UNDEFINED(r1) ? UNDEFINED : ~r1);
-        break;
-
       case OP_SHR:
         pop(r2);
         pop(r1);
@@ -344,7 +339,24 @@ int yr_execute_code(
         push(OPERATION(<<, r1, r2));
         break;
 
-      case OP_XOR:
+      case OP_BITWISE_NOT:
+        pop(r1);
+        push(IS_UNDEFINED(r1) ? UNDEFINED : ~r1);
+        break;
+
+      case OP_BITWISE_AND:
+        pop(r2);
+        pop(r1);
+        push(OPERATION(&, r1, r2));
+        break;
+
+      case OP_BITWISE_OR:
+        pop(r2);
+        pop(r1);
+        push(OPERATION(|, r1, r2));
+        break;
+
+      case OP_BITWISE_XOR:
         pop(r2);
         pop(r1);
         push(OPERATION(^, r1, r2));

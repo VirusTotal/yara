@@ -274,7 +274,8 @@ class TestYara(unittest.TestCase):
         self.assertTrueRules([
             'rule test { condition: true }',
             'rule test { condition: true or false }',
-            'rule test { condition: true and true }'
+            'rule test { condition: true and true }',
+            'rule test { condition: 0x1 and 0x2}',
         ])
 
         self.assertFalseRules([

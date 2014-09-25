@@ -42,7 +42,11 @@ AC_ARG_ENABLE([magic],
     AC_DEFINE([MAGIC], [1], [enable magic module])
   fi])
 
-ACX_PTHREAD
+ACX_PTHREAD(
+    [LIBS="$PTHREAD_LIBS $LIBS"
+     CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+     CC="$PTHREAD_CC"],
+    [AC_MSG_ERROR([pthread API support is required.])])
 
 AC_CHECK_FUNCS_ONCE(strlcpy strlcat)
 
