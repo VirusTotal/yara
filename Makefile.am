@@ -1,4 +1,4 @@
-AM_CFLAGS=-O3 -Wall -I$(srcdir)/libyara/include -lcrypto $(PTHREAD_CFLAGS)
+AM_CFLAGS=-O3 -Wall -I$(srcdir)/libyara/include $(PTHREAD_CFLAGS)
 
 # Build the library in the hand subdirectory first.
 SUBDIRS = libyara

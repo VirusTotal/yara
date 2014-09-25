@@ -45,7 +45,8 @@ yarainclude_HEADERS = \
   include/yara/modules.h \
   include/yara/object.h \
   include/yara/strutils.h \
-  include/yara/libyara.h
+  include/yara/libyara.h \
+  include/yara/md5.h
 
 lib_LTLIBRARIES = libyara.la
 
@@ -71,6 +72,8 @@ libyara_la_SOURCES = \
   lexer.h \
   lexer.l \
   libyara.c \
+  md5.c \
+  md5.h \
   mem.c \
   mem.h \
   modules.c \

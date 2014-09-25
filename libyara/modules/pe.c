@@ -21,8 +21,8 @@ limitations under the License.
 #endif
 
 #include <ctype.h>
-#include <openssl/evp.h>
 #include <yara/modules.h>
+#include <yara/md5.h>
 #include <yara/mem.h>
 #include <yara/strutils.h>
 
@@ -2314,9 +2314,8 @@ define_function(imphash)
   char *final_name;
   size_t len;
   int i;
-  unsigned int md_len;
-  EVP_MD_CTX mdctx;
-  unsigned char md_value[EVP_MAX_MD_SIZE];
+  MD5_CTX ctx;
+  unsigned char md_value[MD5_BLOCK_SIZE];
   char *final_hash;
   char *hash = string_argument(1);
   int first = 1;
@@ -2325,14 +2324,12 @@ define_function(imphash)
   PIMPORT_FUNC_LIST cur_func_node = NULL;
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
-  const EVP_MD *md = EVP_md5();
 
   // If not a PE, return 0.
   if (!pe)
     return_integer(result);
 
-  EVP_MD_CTX_init(&mdctx);
-  EVP_DigestInit_ex(&mdctx, md, NULL);
+  md5_init(&ctx);
 
   cur_dll_node = pe->imports;
   while (cur_dll_node) {
@@ -2366,7 +2363,7 @@ define_function(imphash)
         final_name[i] = tolower(final_name[i]);
       }
 
-      EVP_DigestUpdate(&mdctx, final_name, strlen(final_name));
+      md5_update(&ctx, (MD_BYTE *) final_name, strlen(final_name));
 
       yr_free(final_name);
       cur_func_node = cur_func_node->next;
@@ -2376,19 +2373,18 @@ define_function(imphash)
     cur_dll_node = cur_dll_node->next;
   }
 
-  EVP_DigestFinal_ex(&mdctx, md_value, &md_len);
-  EVP_MD_CTX_cleanup(&mdctx);
+  md5_final(&ctx, md_value);
 
   // Convert md_value into it's hexlified form.
-  final_hash = yr_malloc((md_len * 2));
+  final_hash = yr_malloc((MD5_BLOCK_SIZE * 2));
   if (!final_hash)
     return_integer(0);
 
   p = final_hash;
-  for (i = 0; i < md_len; i++)
+  for (i = 0; i < MD5_BLOCK_SIZE; i++)
     snprintf(p + 2 * i, 3, "%02x", md_value[i]);
 
-  if (strncasecmp(hash, final_hash, (md_len * 2)) == 0)
+  if (strncasecmp(hash, final_hash, (MD5_BLOCK_SIZE* 2)) == 0)
     result = 1;
 
   yr_free(final_hash);
