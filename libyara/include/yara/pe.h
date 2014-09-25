@@ -27,11 +27,6 @@ typedef uint64_t  ULONGLONG;
 
 #define FIELD_OFFSET(type, field)    ((size_t)&(((type *)0)->field))
 
-#define ALIGN_NEXT_DWORD(ptr)  (typeof(ptr)) (((size_t) ptr + 3) & ~3)
-
-#define ADD_OFFSET(ptr, offset)  (typeof(ptr)) ((uint8_t*) (ptr) + (offset))
-
-
 #ifndef _MAC
 
 #pragma pack(push,4)                   // 4 byte packing is the default

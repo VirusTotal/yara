@@ -313,6 +313,12 @@ int pe_iterate_resources(
 }
 
 
+// Align offset to a 32-bit boundary and add it to a pointer
+
+#define ADD_OFFSET(ptr, offset) \
+    (typeof(ptr)) ((uint8_t*) (ptr) + ((offset + 3) & ~3))
+
+
 int pe_find_version_info_cb(
     PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
     int rsrc_type,
@@ -364,8 +370,6 @@ int pe_find_version_info_cb(
           string_file_info,
           string_file_info->Length);
 
-      string_file_info = ALIGN_NEXT_DWORD(string_file_info);
-
       while (string_table < string_file_info)
       {
         PVERSION_INFO string = ADD_OFFSET(
@@ -376,24 +380,25 @@ int pe_find_version_info_cb(
             string_table,
             string_table->Length);
 
-        string_table = ALIGN_NEXT_DWORD(string_table);
-
         while (string < string_table)
         {
           char* string_value = (char*) ADD_OFFSET(
               string,
               sizeof(VERSION_INFO) + 2 * (strlen_w(string->Key) + 1));
 
-          string_value = ALIGN_NEXT_DWORD(string_value);
-
           strlcpy_w(key, string->Key, sizeof(key));
           strlcpy_w(value, string_value, sizeof(value));
 
           set_string(value, pe->object, "version_info[%s]", key);
 
+          if (string->Length == 0)
+            break;
+
           string = ADD_OFFSET(string, string->Length);
-          string = ALIGN_NEXT_DWORD(string);
         }
+
+        if (string_table->Length == 0)
+          break;
       }
     }
 
