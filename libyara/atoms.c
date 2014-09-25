@@ -89,10 +89,10 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 //
 // Returns a numeric value indicating the quality of an atom. The quality
 // depends on some characteristics of the atom, including its length, number
-// of zeroes and number of unique distinct bytes. Atom 00 00 has a very low
-// quality, because it's only two bytes long and both bytes are zeroes. Atom
-// 01 01 01 01 is better but still not optimal, because the same byte is
-// repeated. Atom 01 02 03 04 is an optimal one.
+// of very common bytes like 00 and FF and number of unique distinct bytes.
+// Atom 00 00 has a very low quality, because it's only two bytes long and
+// both bytes are zeroes. Atom 01 01 01 01 is better but still not optimal,
+// because the same byte is repeated. Atom 01 02 03 04 is an optimal one.
 //
 // Args:
 //    uint8_t* atom   - Pointer to the atom's bytes.
@@ -106,15 +106,15 @@ int _yr_atoms_quality(
     uint8_t* atom,
     int atom_length)
 {
-  int null_bytes = 0;
+  int common_bytes = 0;
   int unique_bytes = 0;
   int is_unique;
   int i, j;
 
   for (i = 0; i < atom_length; i++)
   {
-    if (atom[i] == 0)
-      null_bytes++;
+    if (atom[i] == 0x00 || atom[i] == 0xFF)
+      common_bytes++;
 
     is_unique = TRUE;
 
@@ -129,7 +129,7 @@ int _yr_atoms_quality(
       unique_bytes += 1;
   }
 
-  return atom_length + unique_bytes - null_bytes;
+  return atom_length + unique_bytes - common_bytes;
 }
 
 //
