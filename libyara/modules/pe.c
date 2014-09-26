@@ -199,6 +199,16 @@ int _pe_iterate_resources(
     void* callback_data)
 {
   int result = RESOURCE_ITERATOR_FINISHED;
+
+  // A few sanity checks to avoid corrupt files
+
+  if (resource_dir->Characteristics != 0 ||
+      resource_dir->NumberOfNamedEntries > 32768 ||
+      resource_dir->NumberOfIdEntries > 32768)
+  {
+    return result;
+  }
+
   int total_entries = resource_dir->NumberOfNamedEntries +
                       resource_dir->NumberOfIdEntries;
 
