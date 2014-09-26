@@ -2332,7 +2332,7 @@ define_function(imphash)
 
   // If not a PE, return 0.
   if (!pe)
-    return_integer(result);
+    return_integer(UNDEFINED);
 
   md5_init(&ctx);
 
@@ -2614,6 +2614,9 @@ define_function(imports)
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
+
+  if (!pe)
+    return_integer(UNDEFINED);
 
   cur_dll_node = pe->imports;
   while (cur_dll_node)
