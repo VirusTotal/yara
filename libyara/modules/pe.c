@@ -232,7 +232,7 @@ int _pe_iterate_resources(
         break;
     }
 
-    if (IS_RESOURCE_SUBDIRECTORY(entry))
+    if (IS_RESOURCE_SUBDIRECTORY(entry) && rsrc_tree_level < 2)
     {
       PIMAGE_RESOURCE_DIRECTORY directory = (PIMAGE_RESOURCE_DIRECTORY) \
           (rsrc_data + RESOURCE_OFFSET(entry));
