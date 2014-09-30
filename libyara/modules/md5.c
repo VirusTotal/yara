@@ -16,11 +16,15 @@ limitations under the License.
 
 
 
-MD5 Modules usage
+MD5 Modules usage acepts two agurments offset and length
 
 mdh.hash(offset, length)
 
+# to hash the entire file
+mdh.hash(0, filesize)
 
+
+#example below checking empty hash
 import "md5"
 
 rule hash_test
@@ -30,9 +34,6 @@ rule hash_test
 }
 
 */
-
-
-
 
 
 #include <yara/modules.h>
@@ -359,16 +360,15 @@ define_function(md5_hash)
   struct md5_ctx md5_context;
   int i;
   int64_t offset = integer_argument(1);
-  uint64_t length = (uint64_t ) integer_argument(2);
+  int64_t length = integer_argument(2);
   int64_t file_pos = 0; // position in file
   uint64_t read_length = 0;
   uint64_t block_pos = 0; // position within block
 
   MD5_Init(&md5_context);
 
-  if (offset < 0) {
-    printf(MODULE_NAME_STR ": Error in rule initial offset < 0 %lld\n", (long long) offset);
-    goto finalize;
+  if (offset < 0 || length < 0) {
+    return ERROR_WRONG_ARGUMENTS;
   }
 
   foreach_memory_block(context, block)
