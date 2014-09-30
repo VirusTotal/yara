@@ -1,6 +1,7 @@
 MODULE(tests)
 MODULE(pe)
 MODULE(elf)
+MODULE(md5)
 
 #ifdef CUCKOO
 MODULE(cuckoo)
