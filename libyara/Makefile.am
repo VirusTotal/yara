@@ -11,8 +11,9 @@ if MAGIC
 MODULES += modules/magic.c
 endif
 
-MODULES += modules/md5.c
-
+if HASH
+MODULES += modules/hash.c
+endif
 #
 # Add your modules here:
 #

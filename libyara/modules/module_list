@@ -1,7 +1,6 @@
 MODULE(tests)
 MODULE(pe)
 MODULE(elf)
-MODULE(md5)
 
 #ifdef CUCKOO
 MODULE(cuckoo)
@@ -9,4 +8,8 @@ MODULE(cuckoo)
 
 #ifdef MAGIC
 MODULE(magic)
+#endif
+
+#ifdef HASH
+MODULE(hash)
 #endif

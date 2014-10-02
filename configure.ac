@@ -42,6 +42,15 @@ AC_ARG_ENABLE([magic],
     AC_DEFINE([MAGIC], [1], [enable magic module])
   fi])
 
+AC_ARG_ENABLE([hash],
+  [AS_HELP_STRING([--enable-hash], [enable hash module for files and memory blocks])],
+  [if test x$enableval = xyes; then
+    hash=true
+    AC_CHECK_HEADERS([openssl/md5.h])
+    AC_CHECK_LIB(crypto, MD5_Update,, AC_MSG_ERROR(please install openssl libcrypto library))
+    AC_DEFINE([HASH], [1], [enable hash module])
+  fi])
+
 ACX_PTHREAD(
     [LIBS="$PTHREAD_LIBS $LIBS"
      CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
@@ -52,6 +61,7 @@ AC_CHECK_FUNCS_ONCE(strlcpy strlcat)
 
 AM_CONDITIONAL([CUCKOO], [test x$cuckoo = xtrue])
 AM_CONDITIONAL([MAGIC], [test x$magic = xtrue])
+AM_CONDITIONAL([HASH], [test x$hash = xtrue])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libyara/Makefile])
