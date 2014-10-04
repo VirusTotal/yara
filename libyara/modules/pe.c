@@ -24,6 +24,7 @@ limitations under the License.
 #include <yara/modules.h>
 #include <yara/md5.h>
 #include <yara/mem.h>
+#include <yara/sha256.h>
 #include <yara/strutils.h>
 
 #define MODULE_NAME pe
@@ -106,7 +107,6 @@ typedef struct _PE
 
   PIMAGE_NT_HEADERS32 header;
   YR_OBJECT* object;
-  PRICH_DATA rich_data;
   PIMPORT_LIST imports;
 
 } PE;
@@ -1733,7 +1733,7 @@ PIMAGE_NT_HEADERS32 pe_get_header(
 
 // Parse the rich signature.
 // http://www.ntcore.com/files/richsign.htm
-PRICH_DATA pe_get_rich_signature(
+void *pe_get_rich_signature(
     uint8_t* buffer,
     size_t buffer_length,
     YR_OBJECT* pe_obj)
@@ -1742,7 +1742,6 @@ PRICH_DATA pe_get_rich_signature(
   PIMAGE_NT_HEADERS32 pe_header;
   PRICH_SIGNATURE rich_signature;
   DWORD* rich_ptr;
-  PRICH_DATA rich_data;
 
   BYTE* raw_data = NULL;
   BYTE* clear_data = NULL;
@@ -1809,18 +1808,9 @@ PRICH_DATA pe_get_rich_signature(
       *rich_ptr ^= rich_signature->key1;
     }
 
-    rich_data = (PRICH_DATA) yr_malloc(sizeof(RICH_DATA));
-    if (!rich_data) {
-      yr_free(raw_data);
-      yr_free(clear_data);
-    }
-
     set_string((char *) raw_data, rich_len, pe_obj, "rich_signature.raw_data");
     set_string((char *) clear_data, rich_len, pe_obj, "rich_signature.clear_data");
-    rich_data->len = rich_len;
-    rich_data->raw_data = raw_data;
-    rich_data->clear_data = clear_data;
-    return rich_data;
+    return NULL;
   }
 
   return NULL;
@@ -2381,7 +2371,7 @@ define_function(imphash)
   md5_final(&ctx, md_value);
 
   // Convert md_value into it's hexlified form.
-  final_hash = yr_malloc((MD5_BLOCK_SIZE * 2));
+  final_hash = yr_malloc(MD5_BLOCK_SIZE * 2);
   if (!final_hash)
     return_integer(0);
 
@@ -2389,7 +2379,48 @@ define_function(imphash)
   for (i = 0; i < MD5_BLOCK_SIZE; i++)
     snprintf(p + 2 * i, 3, "%02x", md_value[i]);
 
-  if (strncasecmp(hash, final_hash, (MD5_BLOCK_SIZE* 2)) == 0)
+  if (strncasecmp(hash, final_hash, (MD5_BLOCK_SIZE * 2)) == 0)
+    result = 1;
+
+  yr_free(final_hash);
+  return_integer(result);
+}
+
+
+/*
+ * XXX: Nothing fancy here. Just a sha256 of the clear data.
+ */
+define_function(richhash)
+{
+  char *p;
+  int i;
+  SHA256_CTX ctx;
+  unsigned char md_value[SHA256_BLOCK_SIZE];
+  char *final_hash;
+  char *hash = string_argument(1);
+  int result = 0;
+  YR_OBJECT* parent = parent();
+
+  SIZED_STRING *clear_data = get_string(parent, "clear_data");
+
+  // Length should be at least 0x80
+  sha256_init(&ctx);
+  for (i = 0; i < clear_data->length; i += 4) {
+    sha256_update(&ctx, (SHA_BYTE *) ((uint32_t *) (clear_data->c_string + i)), 0x04);
+  }
+  sha256_final(&ctx, md_value);
+
+  // Convert md_value into it's hexlified form.
+  final_hash = yr_malloc(SHA256_BLOCK_SIZE * 2);
+  if (!final_hash)
+    return_integer(0);
+
+  p = final_hash;
+  for (i = 0; i < SHA256_BLOCK_SIZE; i++) {
+    snprintf(p + 2 * i, 3, "%02x", md_value[i]);
+  }
+
+  if (strncasecmp(hash, final_hash, (SHA256_BLOCK_SIZE * 2)) == 0)
     result = 1;
 
   yr_free(final_hash);
@@ -2797,6 +2828,7 @@ begin_declarations;
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
+    declare_function("richhash", "s", "i", richhash);
   end_struct("rich_signature");
 
   declare_function("section_index", "s", "i", section_index);
@@ -2924,13 +2956,12 @@ int module_load(
           return ERROR_INSUFICIENT_MEMORY;
 
         // Get the rich signature.
-        PRICH_DATA rich_data = pe_get_rich_signature(block->data, block->size, module_object);
+        pe_get_rich_signature(block->data, block->size, module_object);
 
         pe->data = block->data;
         pe->data_size = block->size;
         pe->header = pe_header;
         pe->object = module_object;
-        pe->rich_data = rich_data;
 
         module_object->data = pe;
 
@@ -2958,13 +2989,6 @@ int module_unload(YR_OBJECT* module_object)
   PIMPORT_FUNC_LIST next_func_node = NULL;
   PE* pe = (PE *) module_object->data;
   if (pe != NULL) {
-    if (pe->rich_data) {
-      if (pe->rich_data->raw_data)
-        yr_free(pe->rich_data->raw_data);
-      if (pe->rich_data->clear_data)
-        yr_free(pe->rich_data->clear_data);
-      yr_free(pe->rich_data);
-    }
     if (pe->imports) {
       cur_dll_node = pe->imports;
       while (cur_dll_node) {
