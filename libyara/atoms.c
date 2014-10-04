@@ -106,7 +106,7 @@ int _yr_atoms_quality(
     uint8_t* atom,
     int atom_length)
 {
-  int common_bytes = 0;
+  int penalty = 0;
   int unique_bytes = 0;
   int is_unique;
   int i, j;
@@ -114,7 +114,23 @@ int _yr_atoms_quality(
   for (i = 0; i < atom_length; i++)
   {
     if (atom[i] == 0x00 || atom[i] == 0xFF)
-      common_bytes++;
+    {
+      // Penalize common bytes like 0x00 and 0xFF, specially if they are
+      // in the first two positions.
+
+      switch(i)
+      {
+        case 0:
+          penalty += 3;
+          break;
+        case 1:
+          penalty += 2;
+          break;
+        default:
+          penalty += 1;
+          break;
+      }
+    }
 
     is_unique = TRUE;
 
@@ -129,7 +145,7 @@ int _yr_atoms_quality(
       unique_bytes += 1;
   }
 
-  return atom_length + unique_bytes - common_bytes;
+  return atom_length + unique_bytes - penalty;
 }
 
 //
