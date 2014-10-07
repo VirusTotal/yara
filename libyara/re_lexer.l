@@ -45,6 +45,7 @@ uint8_t read_escaped_char(yyscan_t yyscanner);
 %option noyywrap
 %option nounistd
 %option nounput
+%option never-interactive
 %option yylineno
 %option prefix="re_yy"
 

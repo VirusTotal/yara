@@ -49,6 +49,7 @@ limitations under the License.
 %option nounistd
 %option noinput
 %option nounput
+%option never-interactive
 %option yylineno
 %option prefix="hex_yy"
 
