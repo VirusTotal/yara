@@ -59,12 +59,13 @@ define_function(md5_hash)
 
   YR_SCAN_CONTEXT*  context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
+  YR_MEMORY_BLOCK* prev_block = NULL;
   unsigned char digest[MD5_DIGEST_LENGTH];  /* message digest */
   char digest_ascii[MD5_DIGEST_LENGTH*2 + 1] = { 0,}; // (16*2) +1
   MD5_CTX md5_context;
   int i;
   int64_t offset = integer_argument(1);
-  int64_t length = integer_argument(2);
+  int64_t length = integer_argument(2); // length of bytes we want hash on
   uint64_t read_length = 0;
   uint64_t block_pos = 0; // position within block
 
@@ -77,9 +78,18 @@ define_function(md5_hash)
 
   foreach_memory_block(context, block)
   {
-    block_pos = 0;
+    block_pos = 0;  // position within current block.
 
-    // if we need to offset within the block
+    // if we've read a previous block and not continous
+    if (prev_block && (prev_block->base + prev_block->size) != block->base) {
+      DBG("non contigous block == undefined "
+        " prev_block->base=0x%llx, prev_block->size=%lld, block->base=0x%llx\n",
+        (long long) prev_block->base, (long long) prev_block->size,
+        (long long) block->base);
+      return_string(UNDEFINED);
+    }
+
+    // if we need to offset within the current block
     if (offset > block->base) {
       read_length = MIN(offset - block->base, block->size);  // do not skip past end of block
       block_pos += read_length;  // update position within block
@@ -88,13 +98,14 @@ define_function(md5_hash)
              block->data,  block->base, block->size,
              (long long) read_length);
 
-      if (offset > block_pos)
+      // if offset beyond our current position
+      if (offset > (block->base + block_pos))
         continue; // need to continue to next block
     }
 
-    // do not read past the end of the block
+    // do not read past the end of the block, get length to read
     read_length = MIN(block->size - block_pos, length);
-    length -= read_length;  // remove length from remaining length
+    length -= read_length;  // remove read_length from remaining length
 
     DBG("md5_hash update  data=%p  base=0x%zx size=%zd read_length=%lld block_pos=%lld \n",
            block->data,  block->base, block->size,
@@ -102,9 +113,11 @@ define_function(md5_hash)
 
     MD5_Update(&md5_context, block->data + block_pos, read_length);
 
-
     if (length == 0)
       break; // done reading
+
+    // save previous block to check for contigous blocks
+    prev_block = block;
   }
 
   MD5_Final(digest, &md5_context);
