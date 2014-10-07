@@ -9,3 +9,7 @@ MODULE(cuckoo)
 #ifdef MAGIC
 MODULE(magic)
 #endif
+
+#ifdef HASH
+MODULE(hash)
+#endif
