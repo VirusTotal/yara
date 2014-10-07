@@ -2360,7 +2360,6 @@ define_function(imphash)
         first = 0;
       } else {
         asprintf(&final_name, ",%s.%s", dll_name, cur_func_node->name);
-        first = 0;
       }
 
       // Lowercase the whole thing.
