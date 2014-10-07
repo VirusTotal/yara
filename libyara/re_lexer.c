@@ -2424,12 +2424,22 @@ uint8_t read_escaped_char(yyscan_t yyscanner)
   char text[4];
 
   text[0] = '\\';
+
+  #ifdef __cplusplus
+  text[1] = yyinput(yyscanner);
+  #else
   text[1] = input(yyscanner);
+  #endif
 
   if (text[1] == 'x')
   {
+    #ifdef __cplusplus
+    text[2] = yyinput(yyscanner);
+    text[3] = yyinput(yyscanner);
+    #else
     text[2] = input(yyscanner);
     text[3] = input(yyscanner);
+    #endif
   }
 
   return escaped_char_value(text);
