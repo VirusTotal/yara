@@ -79,7 +79,7 @@ YR_ARENA_PAGE* _yr_arena_new_page(
   if (new_page == NULL)
     return NULL;
 
-  new_page->address = yr_malloc(size);
+  new_page->address = (uint8_t*) yr_malloc(size);
 
   if (new_page->address == NULL)
   {
@@ -181,7 +181,7 @@ int _yr_arena_make_relocatable(
   {
     assert(base_offset + offset <= page->used - sizeof(int64_t));
 
-    reloc = yr_malloc(sizeof(YR_RELOC));
+    reloc = (YR_RELOC*) yr_malloc(sizeof(YR_RELOC));
 
     if (reloc == NULL)
       return ERROR_INSUFICIENT_MEMORY;
@@ -509,7 +509,7 @@ int yr_arena_reserve_memory(
 {
   YR_ARENA_PAGE* new_page;
   size_t new_page_size;
-  void* new_page_address;
+  uint8_t* new_page_address;
 
   if (size > free_space(arena->current_page))
   {
@@ -528,7 +528,7 @@ int yr_arena_reserve_memory(
     {
       // Current page is not used at all, it can be reallocated.
 
-      new_page_address = yr_realloc(
+      new_page_address = (uint8_t*) yr_realloc(
           arena->current_page->address,
           new_page_size);
 
@@ -830,7 +830,7 @@ int yr_arena_duplicate(
 
   while (reloc != NULL)
   {
-    new_reloc = yr_malloc(sizeof(YR_RELOC));
+    new_reloc = (YR_RELOC*) yr_malloc(sizeof(YR_RELOC));
 
     if (new_reloc == NULL)
       return ERROR_INSUFICIENT_MEMORY;
@@ -920,11 +920,11 @@ int yr_arena_save(
     {
       assert(reloc_target >= page->address);
       assert(reloc_target < page->address + page->used);
-      *reloc_address = (void*) (*reloc_address - page->address);
+      *reloc_address = (uint8_t*) (*reloc_address - page->address);
     }
     else
     {
-      *reloc_address = (void*) (size_t) 0xFFFABADA;
+      *reloc_address = (uint8_t*) (size_t) 0xFFFABADA;
     }
 
     reloc = reloc->next;

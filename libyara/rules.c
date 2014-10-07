@@ -588,7 +588,7 @@ int yr_rules_load(
 
   int result;
 
-  new_rules = yr_malloc(sizeof(YR_RULES));
+  new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
 
   if (new_rules == NULL)
     return ERROR_INSUFICIENT_MEMORY;

@@ -26,6 +26,7 @@ limitations under the License.
 #include <yara/mem.h>
 #include <yara/object.h>
 #include <yara/lexer.h>
+#include <yara/strutils.h>
 
 
 int yr_compiler_create(
@@ -268,7 +269,7 @@ int _yr_compiler_set_namespace(
   int i;
   int found;
 
-  ns = yr_arena_base_address(compiler->namespaces_arena);
+  ns = (YR_NAMESPACE*) yr_arena_base_address(compiler->namespaces_arena);
   found = FALSE;
 
   for (i = 0; i < compiler->namespaces_count; i++)
@@ -279,7 +280,7 @@ int _yr_compiler_set_namespace(
       break;
     }
 
-    ns = yr_arena_next_address(
+    ns = (YR_NAMESPACE*) yr_arena_next_address(
         compiler->namespaces_arena,
         ns,
         sizeof(YR_NAMESPACE));
@@ -296,7 +297,7 @@ int _yr_compiler_set_namespace(
       result = yr_arena_allocate_struct(
           compiler->namespaces_arena,
           sizeof(YR_NAMESPACE),
-          (void*) &ns,
+          (void**) &ns,
           offsetof(YR_NAMESPACE, name),
           EOL);
 
@@ -414,16 +415,16 @@ int _yr_compiler_compile_rules(
 
   if (result == ERROR_SUCCESS)
   {
-    rules_file_header->rules_list_head = yr_arena_base_address(
+    rules_file_header->rules_list_head = (YR_RULE*) yr_arena_base_address(
         compiler->rules_arena);
 
-    rules_file_header->externals_list_head = yr_arena_base_address(
-        compiler->externals_arena);
+    rules_file_header->externals_list_head = (YR_EXTERNAL_VARIABLE*) 
+		yr_arena_base_address(compiler->externals_arena);
 
-    rules_file_header->code_start = yr_arena_base_address(
+    rules_file_header->code_start = (uint8_t*) yr_arena_base_address(
         compiler->code_arena);
 
-    rules_file_header->automaton = yr_arena_base_address(
+    rules_file_header->automaton = (YR_AC_AUTOMATON*) yr_arena_base_address(
         compiler->automaton_arena);
   }
 
@@ -519,7 +520,7 @@ int yr_compiler_get_rules(
   if (compiler->compiled_rules_arena == NULL)
      FAIL_ON_ERROR(_yr_compiler_compile_rules(compiler));
 
-  yara_rules = yr_malloc(sizeof(YR_RULES));
+  yara_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
 
   if (yara_rules == NULL)
     return ERROR_INSUFICIENT_MEMORY;

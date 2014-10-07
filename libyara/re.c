@@ -142,9 +142,9 @@ int yr_re_finalize_thread(void)
   RE_THREAD_STORAGE* storage;
 
   #ifdef _WIN32
-  storage = TlsGetValue(thread_storage_key);
+  storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
   #else
-  storage = pthread_getspecific(thread_storage_key);
+  storage = (RE_THREAD_STORAGE*) pthread_getspecific(thread_storage_key);
   #endif
 
   if (storage != NULL)
@@ -176,7 +176,7 @@ RE_NODE* yr_re_node_create(
     RE_NODE* left,
     RE_NODE* right)
 {
-  RE_NODE* result = yr_malloc(sizeof(RE_NODE));
+  RE_NODE* result = (RE_NODE*) yr_malloc(sizeof(RE_NODE));
 
   if (result != NULL)
   {
@@ -386,7 +386,7 @@ SIZED_STRING* yr_re_extract_literal(
     node = node->left;
   }
 
-  string = yr_malloc(sizeof(SIZED_STRING) + length);
+  string = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + length);
 
   if (string == NULL)
     return NULL;
@@ -1105,14 +1105,14 @@ int _yr_re_alloc_storage(
     RE_THREAD_STORAGE** storage)
 {
   #ifdef _WIN32
-  *storage = TlsGetValue(thread_storage_key);
+  *storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
   #else
-  *storage = pthread_getspecific(thread_storage_key);
+  *storage = (RE_THREAD_STORAGE*) pthread_getspecific(thread_storage_key);
   #endif
 
   if (*storage == NULL)
   {
-    *storage = yr_malloc(sizeof(RE_THREAD_STORAGE));
+    *storage = (RE_THREAD_STORAGE*) yr_malloc(sizeof(RE_THREAD_STORAGE));
 
     if (*storage == NULL)
       return ERROR_INSUFICIENT_MEMORY;
@@ -1145,7 +1145,7 @@ RE_FIBER* _yr_re_fiber_create(
   }
   else
   {
-    fiber = yr_malloc(sizeof(RE_FIBER));
+    fiber = (RE_FIBER*) yr_malloc(sizeof(RE_FIBER));
   }
 
   if (fiber != NULL)

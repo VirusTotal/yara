@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#ifndef _WIN32
+
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -371,15 +373,15 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY {
 } IMAGE_RESOURCE_DIRECTORY, *PIMAGE_RESOURCE_DIRECTORY;
 
 
+#endif  // _WIN32
+
+#include <windows.h>
+
 typedef struct _VERSION_INFO {
     WORD   Length;
     WORD   ValueLength;
     WORD   Type;
     char   Key[0];
 } VERSION_INFO, *PVERSION_INFO;
-
-
-
-
 
 #pragma pack(pop)

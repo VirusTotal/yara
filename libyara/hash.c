@@ -93,7 +93,7 @@ int yr_hash_table_create(
   YR_HASH_TABLE* new_table;
   int i;
 
-  new_table = yr_malloc(
+  new_table = (YR_HASH_TABLE*) yr_malloc(
       sizeof(YR_HASH_TABLE) + size * sizeof(YR_HASH_TABLE_ENTRY*));
 
   if (new_table == NULL)

@@ -14,11 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifdef _WIN32
-#include <windows.h>
-#else
 #include <yara/pe.h>
-#endif
 
 #include <yara/modules.h>
 #include <yara/mem.h>
@@ -322,6 +318,9 @@ int pe_iterate_resources(
   return 0;
 }
 
+#ifdef __cplusplus
+#define typeof decltype
+#endif
 
 // Align offset to a 32-bit boundary and add it to a pointer
 
