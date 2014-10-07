@@ -88,17 +88,17 @@ define_function(md5_hash)
              block->data,  block->base, block->size,
              (long long) read_length);
 
-      if (offset > block->base)
+      if (offset > block_pos)
         continue; // need to continue to next block
     }
 
-
-    read_length = MIN(block->size, length);  // do not read past the end of the block
+    // do not read past the end of the block
+    read_length = MIN(block->size - block_pos, length);
     length -= read_length;  // remove length from remaining length
 
-    DBG("md5_hash update  data=%p  base=0x%zx size=%zd read_length=%lld \n",
+    DBG("md5_hash update  data=%p  base=0x%zx size=%zd read_length=%lld block_pos=%lld \n",
            block->data,  block->base, block->size,
-           (long long) read_length);
+           (long long) read_length,  (long long) block_pos);
 
     MD5_Update(&md5_context, block->data + block_pos, read_length);
 
