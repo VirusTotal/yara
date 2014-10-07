@@ -1966,7 +1966,7 @@ yyreduce:
             break;
           }
 
-          tag_name = yr_arena_next_address(
+          tag_name = (char*) yr_arena_next_address(
               yyget_extra(yyscanner)->sz_arena,
               tag_name,
               tag_length + 1);
@@ -2403,7 +2403,7 @@ yyreduce:
   case 45:
 #line 758 "grammar.y"
     {
-        (yyval.c_string) = yr_malloc(MAX_FUNCTION_ARGS + 1);
+        (yyval.c_string) = (char*) yr_malloc(MAX_FUNCTION_ARGS + 1);
 
         switch((yyvsp[(1) - (1)].expression).type)
         {

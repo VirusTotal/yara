@@ -1043,7 +1043,7 @@ YY_RULE_SETUP
 
   int i;
 
-  yylval->class_vector = yr_malloc(32);
+  yylval->class_vector = (uint8_t*) yr_malloc(32);
   memcpy(yylval->class_vector, LEX_ENV->class_vector, 32);
 
   if (LEX_ENV->negated_class)
@@ -2452,9 +2452,9 @@ void yyfatal(
   jmp_buf* recovery_state;
 
   #ifdef _WIN32
-  recovery_state = TlsGetValue(recovery_state_key) ;
+  recovery_state = (jmp_buf*) TlsGetValue(recovery_state_key) ;
   #else
-  recovery_state = pthread_getspecific(recovery_state_key);
+  recovery_state = (jmp_buf*) pthread_getspecific(recovery_state_key);
   #endif
 
   longjmp(*recovery_state, 1);
