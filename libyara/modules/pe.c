@@ -2380,7 +2380,7 @@ define_function(imphash)
   md5_final(&ctx, md_value);
 
   // Convert md_value into it's hexlified form.
-  final_hash = yr_malloc(MD5_BLOCK_SIZE * 2);
+  final_hash = yr_malloc((MD5_BLOCK_SIZE * 2) + 1);
   if (!final_hash)
     return_integer(0);
 
@@ -2397,11 +2397,10 @@ define_function(imphash)
 
 
 /*
- * XXX: Nothing fancy here. Just a sha256 of the clear data.
+ * Nothing fancy here. Just a sha256 of the clear data.
  */
 define_function(richhash)
 {
-  char *p;
   int i;
   SHA256_CTX ctx;
   unsigned char md_value[SHA256_BLOCK_SIZE];
@@ -2410,9 +2409,13 @@ define_function(richhash)
   int result = 0;
   YR_OBJECT* parent = parent();
 
+  // No point in calculating the hash if the input length is wrong.
+  if (strlen(hash) != SHA256_BLOCK_SIZE * 2) {
+    return_integer(0);
+  }
+
   SIZED_STRING *clear_data = get_string(parent, "clear_data");
 
-  // Length should be at least 0x80
   sha256_init(&ctx);
   for (i = 0; i < clear_data->length; i += 4) {
     sha256_update(&ctx, (SHA_BYTE *) ((uint32_t *) (clear_data->c_string + i)), 0x04);
@@ -2420,13 +2423,12 @@ define_function(richhash)
   sha256_final(&ctx, md_value);
 
   // Convert md_value into it's hexlified form.
-  final_hash = yr_malloc(SHA256_BLOCK_SIZE * 2);
+  final_hash = yr_malloc((SHA256_BLOCK_SIZE * 2) + 1);
   if (!final_hash)
     return_integer(0);
 
-  p = final_hash;
   for (i = 0; i < SHA256_BLOCK_SIZE; i++) {
-    snprintf(p + 2 * i, 3, "%02x", md_value[i]);
+    snprintf(final_hash + (2 * i), 3, "%02x", md_value[i]);
   }
 
   if (strncasecmp(hash, final_hash, (SHA256_BLOCK_SIZE * 2)) == 0)
