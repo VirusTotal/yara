@@ -29,7 +29,7 @@ limitations under the License.
 #include <yara/strutils.h>
 
 
-int yr_compiler_create(
+YR_API int yr_compiler_create(
     YR_COMPILER** compiler)
 {
   int result;
@@ -106,7 +106,7 @@ int yr_compiler_create(
 }
 
 
-void yr_compiler_destroy(
+YR_API void yr_compiler_destroy(
     YR_COMPILER* compiler)
 {
   int i;
@@ -156,7 +156,7 @@ void yr_compiler_destroy(
 }
 
 
-void yr_compiler_set_callback(
+YR_API void yr_compiler_set_callback(
     YR_COMPILER* compiler,
     YR_COMPILER_CALLBACK_FUNC callback)
 {
@@ -244,7 +244,7 @@ void _yr_compiler_pop_file_name(
 }
 
 
-char* yr_compiler_get_current_file_name(
+YR_API char* yr_compiler_get_current_file_name(
     YR_COMPILER* context)
 {
   if (context->file_name_stack_ptr > 0)
@@ -316,7 +316,7 @@ int _yr_compiler_set_namespace(
   return ERROR_SUCCESS;
 }
 
-int yr_compiler_add_file(
+YR_API int yr_compiler_add_file(
     YR_COMPILER* compiler,
     FILE* rules_file,
     const char* namespace_,
@@ -339,7 +339,7 @@ int yr_compiler_add_file(
 }
 
 
-int yr_compiler_add_string(
+YR_API int yr_compiler_add_string(
     YR_COMPILER* compiler,
     const char* rules_string,
     const char* namespace_)
@@ -508,7 +508,7 @@ int _yr_compiler_compile_rules(
 }
 
 
-int yr_compiler_get_rules(
+YR_API int yr_compiler_get_rules(
     YR_COMPILER* compiler,
     YR_RULES** rules)
 {
@@ -550,7 +550,7 @@ int yr_compiler_get_rules(
 }
 
 
-int yr_compiler_define_integer_variable(
+YR_API int yr_compiler_define_integer_variable(
     YR_COMPILER* compiler,
     const char* identifier,
     int64_t value)
@@ -594,7 +594,7 @@ int yr_compiler_define_integer_variable(
 }
 
 
-int yr_compiler_define_boolean_variable(
+YR_API int yr_compiler_define_boolean_variable(
     YR_COMPILER* compiler,
     const char* identifier,
     int value)
@@ -606,7 +606,7 @@ int yr_compiler_define_boolean_variable(
 }
 
 
-int yr_compiler_define_string_variable(
+YR_API int yr_compiler_define_string_variable(
     YR_COMPILER* compiler,
     const char* identifier,
     const char* value)
@@ -656,7 +656,7 @@ int yr_compiler_define_string_variable(
 }
 
 
-char* yr_compiler_get_error_message(
+YR_API char* yr_compiler_get_error_message(
     YR_COMPILER* compiler,
     char* buffer,
     int buffer_size)

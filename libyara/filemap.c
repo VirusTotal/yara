@@ -34,7 +34,7 @@ limitations under the License.
 // Win32 implementation
 //
 
-int yr_filemap_map(
+YR_API int yr_filemap_map(
     const char* file_path,
     YR_MAPPED_FILE* pmapped_file)
 {
@@ -108,7 +108,7 @@ int yr_filemap_map(
   return ERROR_SUCCESS;
 }
 
-void yr_filemap_unmap(
+YR_API void yr_filemap_unmap(
     YR_MAPPED_FILE* pmapped_file)
 {
   if (pmapped_file->data != NULL)
@@ -126,7 +126,7 @@ void yr_filemap_unmap(
 // POSIX implementation
 //
 
-int yr_filemap_map(
+YR_API int yr_filemap_map(
     const char* file_path,
     YR_MAPPED_FILE* pmapped_file)
 {
@@ -169,7 +169,7 @@ int yr_filemap_map(
   return ERROR_SUCCESS;
 }
 
-void yr_filemap_unmap(
+YR_API void yr_filemap_unmap(
     YR_MAPPED_FILE* pmapped_file)
 {
   if (pmapped_file->data != NULL)

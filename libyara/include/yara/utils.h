@@ -30,6 +30,11 @@ limitations under the License.
 #define NULL 0
 #endif
 
+#ifdef __cplusplus
+#define YR_API extern "C" 
+#else
+#define YR_API
+#endif
 
 #ifndef min
 #define min(x, y) ((x < y) ? (x) : (y))

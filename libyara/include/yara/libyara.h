@@ -17,18 +17,20 @@ limitations under the License.
 #ifndef YR_LIBYARA_H
 #define YR_LIBYARA_H
 
-int yr_initialize(void);
+#include <yara/utils.h>
+
+YR_API int yr_initialize(void);
 
 
-int yr_finalize(void);
+YR_API int yr_finalize(void);
 
 
-void yr_finalize_thread(void);
+YR_API void yr_finalize_thread(void);
 
 
-int yr_get_tidx(void);
+YR_API int yr_get_tidx(void);
 
 
-void yr_set_tidx(int);
+YR_API void yr_set_tidx(int);
 
 #endif

@@ -50,7 +50,7 @@ char altercase[256];
 // function from libyara.
 //
 
-int yr_initialize(void)
+YR_API int yr_initialize(void)
 {
   int i;
 
@@ -89,7 +89,7 @@ int yr_initialize(void)
 // Should be called by ALL threads using libyara before exiting.
 //
 
-void yr_finalize_thread(void)
+YR_API void yr_finalize_thread(void)
 {
   yr_re_finalize_thread();
 }
@@ -103,7 +103,7 @@ void yr_finalize_thread(void)
 // calls it.
 //
 
-int yr_finalize(void)
+YR_API int yr_finalize(void)
 {
   yr_re_finalize_thread();
 
@@ -134,7 +134,7 @@ int yr_finalize(void)
 //                 thread.
 //
 
-void yr_set_tidx(int tidx)
+YR_API void yr_set_tidx(int tidx)
 {
   #ifdef _WIN32
   TlsSetValue(tidx_key, (LPVOID) (tidx + 1));
@@ -154,7 +154,7 @@ void yr_set_tidx(int tidx)
 //    have any tidx associated.
 //
 
-int yr_get_tidx(void)
+YR_API int yr_get_tidx(void)
 {
   #ifdef _WIN32
   return (int) TlsGetValue(tidx_key) - 1;

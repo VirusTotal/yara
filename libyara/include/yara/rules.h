@@ -19,6 +19,7 @@ limitations under the License.
 #define YR_RULES_H
 
 #include <yara/types.h>
+#include <yara/utils.h>
 
 
 #define CALLBACK_MSG_RULE_MATCHING              1
@@ -54,7 +55,7 @@ limitations under the License.
 
 
 
-int yr_rules_scan_mem(
+YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
     uint8_t* buffer,
     size_t buffer_size,
@@ -64,7 +65,7 @@ int yr_rules_scan_mem(
     int timeout);
 
 
-int yr_rules_scan_file(
+YR_API int yr_rules_scan_file(
     YR_RULES* rules,
     const char* filename,
     int flags,
@@ -73,7 +74,7 @@ int yr_rules_scan_file(
     int timeout);
 
 
-int yr_rules_scan_proc(
+YR_API int yr_rules_scan_proc(
     YR_RULES* rules,
     int pid,
     int flags,
@@ -82,39 +83,39 @@ int yr_rules_scan_proc(
     int timeout);
 
 
-int yr_rules_save(
+YR_API int yr_rules_save(
     YR_RULES* rules,
     const char* filename);
 
 
-int yr_rules_load(
+YR_API int yr_rules_load(
     const char* filename,
     YR_RULES** rules);
 
 
-int yr_rules_destroy(
+YR_API int yr_rules_destroy(
     YR_RULES* rules);
 
 
-int yr_rules_define_integer_variable(
+YR_API int yr_rules_define_integer_variable(
     YR_RULES* rules,
     const char* identifier,
     int64_t value);
 
 
-int yr_rules_define_boolean_variable(
+YR_API int yr_rules_define_boolean_variable(
     YR_RULES* rules,
     const char* identifier,
     int value);
 
 
-int yr_rules_define_string_variable(
+YR_API int yr_rules_define_string_variable(
     YR_RULES* rules,
     const char* identifier,
     const char* value);
 
 
-void yr_rules_print_profiling_info(
+YR_API void yr_rules_print_profiling_info(
     YR_RULES* rules);
 
 #endif
