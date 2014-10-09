@@ -36,12 +36,17 @@ rule hash_test
 
 #include <stdbool.h>
 #include <openssl/md5.h>
+
+#if _WIN32
+#define PRIu64 "%I64d"
+#define PRIx64 "%I64x"
+#else
+#include <inttypes.h>
+#endif
+
 #include <yara/modules.h>
 
 #define MODULE_NAME hash
-#define MODULE_NAME_STR "hash"
-#define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
-
 
 #ifdef HASH_DEBUG
 #define DBG(FMT, ...) \
@@ -53,42 +58,46 @@ rule hash_test
 
 #define MD5_DIGEST_LENGTH 16
 
+
 define_function(md5_hash)
 {
+  int64_t offset = integer_argument(1);   // offset where to start
+  int64_t length = integer_argument(2);   // length of bytes we want hash on
 
   YR_SCAN_CONTEXT*  context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
-  unsigned char digest[MD5_DIGEST_LENGTH];  /* message digest */
-  char digest_ascii[MD5_DIGEST_LENGTH*2 + 1] = { 0,}; // (16*2) +1
+
   MD5_CTX md5_context;
-  int i;
-  int64_t offset = integer_argument(1);
-  int64_t length = integer_argument(2); // length of bytes we want hash on
-  uint64_t data_offset = 0;
-  uint64_t data_len = 0;
+
+  unsigned char digest[MD5_DIGEST_LENGTH];
+  char digest_ascii[MD5_DIGEST_LENGTH * 2 + 1];
   bool md5_updated = false;
 
-  DBG("offset=%llx, length=%lld \n", (long long) offset, (long long) length);
+  DBG("offset=%" PRIx64 ", length=%" PRIu64 "\n", offset, length);
+
   MD5_Init(&md5_context);
 
-  if (offset < 0 || length < 0 || offset < context->mem_block->base) {
+  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  {
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  foreach_memory_block(context, block) {
-
+  foreach_memory_block(context, block)
+  {
     // if desired block within current block
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      data_offset = offset - block->base;
-      data_len = MIN(length, block->size - data_offset);
+      uint64_t data_offset = offset - block->base;
+      uint64_t data_len = min(length, block->size - data_offset);
 
       offset += data_len;
       length -= data_len;
 
-      DBG("update =0x%llx =%lld\n", (long long) block->data + data_offset,
-          (long long) data_len);
+      DBG("update data=%p length=%" PRIu64 "\n",
+          block->data + data_offset,
+          data_len);
+
       MD5_Update(&md5_context, block->data + data_offset, data_len);
 
       md5_updated = true;
@@ -96,7 +105,8 @@ define_function(md5_hash)
     else if (md5_updated)
     {
       // non contigous block
-      DBG("undefined =%llx\n", (long long) block->base);
+      DBG("undefined =%zu\n", block->base);
+
       return_string(UNDEFINED);
     }
 
@@ -110,9 +120,13 @@ define_function(md5_hash)
   MD5_Final(digest, &md5_context);
 
   // transform the binary digest to ascii
-  for (i = 0; i < MD5_DIGEST_LENGTH; i++) {
-    sprintf(digest_ascii+(i*2), "%02x", digest[i]);
+  for (int i = 0; i < MD5_DIGEST_LENGTH; i++)
+  {
+    sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
   }
+
+  digest_ascii[32] = '\0';
+
   DBG("md5 hash result=%s\n", digest_ascii);
   return_string(digest_ascii);
 }
@@ -120,7 +134,7 @@ define_function(md5_hash)
 
 begin_declarations;
 
-declare_function("md5", "ii", "s", md5_hash)
+  declare_function("md5", "ii", "s", md5_hash)
 
 end_declarations;
 
@@ -148,7 +162,6 @@ int module_load(
 
   return ERROR_SUCCESS;
 }
-
 
 
 int module_unload(
