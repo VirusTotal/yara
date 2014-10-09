@@ -367,7 +367,6 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY {
     WORD  MinorVersion;
     WORD  NumberOfNamedEntries;
     WORD  NumberOfIdEntries;
-    IMAGE_RESOURCE_DIRECTORY_ENTRY DirectoryEntries[1];
 } IMAGE_RESOURCE_DIRECTORY, *PIMAGE_RESOURCE_DIRECTORY;
 
 #pragma pack(pop)
