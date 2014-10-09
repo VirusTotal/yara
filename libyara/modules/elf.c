@@ -16,12 +16,7 @@ limitations under the License.
 
 #include <limits.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#else
 #include <yara/elf.h>
-#endif
-
 #include <yara/modules.h>
 #include <yara/mem.h>
 
