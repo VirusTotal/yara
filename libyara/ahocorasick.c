@@ -65,7 +65,7 @@ int _yr_ac_queue_push(
 {
   QUEUE_NODE* pushed_node;
 
-  pushed_node = yr_malloc(sizeof(QUEUE_NODE));
+  pushed_node = (QUEUE_NODE*) yr_malloc(sizeof(QUEUE_NODE));
 
   if (pushed_node == NULL)
     return ERROR_INSUFICIENT_MEMORY;

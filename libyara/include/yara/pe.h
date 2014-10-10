@@ -14,6 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#pragma pack(push, 1)
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -29,19 +35,13 @@ typedef uint64_t  ULONGLONG;
 
 #ifndef _MAC
 
-#pragma pack(push,4)                   // 4 byte packing is the default
-
 #define IMAGE_DOS_SIGNATURE                 0x5A4D      // MZ
 #define IMAGE_OS2_SIGNATURE                 0x454E      // NE
 #define IMAGE_OS2_SIGNATURE_LE              0x454C      // LE
 #define IMAGE_VXD_SIGNATURE                 0x454C      // LE
 #define IMAGE_NT_SIGNATURE                  0x00004550  // PE00
 
-#pragma pack(push,2)                   // 16 bit headers are 2 byte packed
-
 #else
-
-#pragma pack(push,1)
 
 #define IMAGE_DOS_SIGNATURE                 0x4D5A      // MZ
 #define IMAGE_OS2_SIGNATURE                 0x4E45      // NE
@@ -50,6 +50,7 @@ typedef uint64_t  ULONGLONG;
 
 #endif
 
+#pragma pack(push, 2)
 
 typedef struct _IMAGE_DOS_HEADER {      // DOS .EXE header
     WORD   e_magic;                     // Magic number
@@ -73,10 +74,7 @@ typedef struct _IMAGE_DOS_HEADER {      // DOS .EXE header
     LONG   e_lfanew;                    // File address of new exe header
   } IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
 
-
-#ifndef _MAC
-#pragma pack(pop)                       // Back to 4 byte packing
-#endif
+#pragma pack(pop)
 
 //
 // Rich signature.
@@ -101,6 +99,8 @@ typedef struct _RICH_DATA {
 //
 // File header format.
 //
+
+#pragma pack(push,4)
 
 typedef struct _IMAGE_FILE_HEADER {
     WORD    Machine;
@@ -387,9 +387,11 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY {
     WORD  MinorVersion;
     WORD  NumberOfNamedEntries;
     WORD  NumberOfIdEntries;
-    IMAGE_RESOURCE_DIRECTORY_ENTRY DirectoryEntries[1];
 } IMAGE_RESOURCE_DIRECTORY, *PIMAGE_RESOURCE_DIRECTORY;
 
+#pragma pack(pop)
+
+#endif  // _WIN32
 
 typedef struct _VERSION_INFO {
     WORD   Length;
@@ -397,9 +399,5 @@ typedef struct _VERSION_INFO {
     WORD   Type;
     char   Key[0];
 } VERSION_INFO, *PVERSION_INFO;
-
-
-
-
 
 #pragma pack(pop)

@@ -14,11 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifdef _WIN32
-#include <windows.h>
-#else
 #include <yara/pe.h>
-#endif
 
 #include <ctype.h>
 #include <yara/modules.h>
@@ -1897,7 +1893,13 @@ int _pe_iterate_resources(
   int total_entries = resource_dir->NumberOfNamedEntries +
                       resource_dir->NumberOfIdEntries;
 
-  PIMAGE_RESOURCE_DIRECTORY_ENTRY entry = &resource_dir->DirectoryEntries[0];
+  PIMAGE_RESOURCE_DIRECTORY_ENTRY entry;
+
+  // The first directory entry is just after the resource directory,
+  // by incrementing resource_dir we skip sizeof(resource_dir) bytes
+  // and get a pointer to the end of the resource directory.
+
+  entry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY) (resource_dir + 1);
 
   for (int i = 0; i < total_entries; i++)
   {
@@ -2007,6 +2009,9 @@ int pe_iterate_resources(
   return 0;
 }
 
+#ifdef __cplusplus
+#define typeof decltype
+#endif
 
 // Align offset to a 32-bit boundary and add it to a pointer
 

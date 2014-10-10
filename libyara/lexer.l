@@ -63,6 +63,7 @@ limitations under the License.
 %option nounistd
 %option noinput
 %option nounput
+%option never-interactive
 %option yylineno
 %option prefix="yara_yy"
 %option outfile="lex.yy.c"

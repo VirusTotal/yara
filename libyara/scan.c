@@ -548,7 +548,7 @@ int _yr_scan_match_callback(
     int flags,
     void* args)
 {
-  CALLBACK_ARGS* callback_args = args;
+  CALLBACK_ARGS* callback_args = (CALLBACK_ARGS*) args;
 
   YR_STRING* string = callback_args->string;
   YR_MATCH* new_match;

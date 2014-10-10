@@ -27,6 +27,8 @@ limitations under the License.
 #include <stdlib.h>
 #include <stdint.h>
 
+#include <yara/utils.h>
+
 
 typedef struct _YR_MAPPED_FILE
 {
@@ -40,12 +42,12 @@ typedef struct _YR_MAPPED_FILE
 } YR_MAPPED_FILE;
 
 
-int yr_filemap_map(
+YR_API int yr_filemap_map(
     const char* file_path,
     YR_MAPPED_FILE* pmapped_file);
 
 
-void yr_filemap_unmap(
+YR_API void yr_filemap_unmap(
     YR_MAPPED_FILE* pmapped_file);
 
 #endif

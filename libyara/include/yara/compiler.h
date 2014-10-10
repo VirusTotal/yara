@@ -23,6 +23,7 @@ limitations under the License.
 #include <yara/ahocorasick.h>
 #include <yara/arena.h>
 #include <yara/hash.h>
+#include <yara/utils.h>
 
 
 #define YARA_ERROR_LEVEL_ERROR   0
@@ -117,61 +118,61 @@ void _yr_compiler_pop_file_name(
     YR_COMPILER* compiler);
 
 
-int yr_compiler_create(
+YR_API int yr_compiler_create(
     YR_COMPILER** compiler);
 
 
-void yr_compiler_destroy(
+YR_API void yr_compiler_destroy(
     YR_COMPILER* compiler);
 
 
-void yr_compiler_set_callback(
+YR_API void yr_compiler_set_callback(
     YR_COMPILER* compiler,
     YR_COMPILER_CALLBACK_FUNC callback);
 
 
-int yr_compiler_add_file(
+YR_API int yr_compiler_add_file(
     YR_COMPILER* compiler,
     FILE* rules_file,
     const char* namespace_,
     const char* file_name);
 
 
-int yr_compiler_add_string(
+YR_API int yr_compiler_add_string(
     YR_COMPILER* compiler,
     const char* rules_string,
     const char* namespace_);
 
 
-char* yr_compiler_get_error_message(
+YR_API char* yr_compiler_get_error_message(
     YR_COMPILER* compiler,
     char* buffer,
     int buffer_size);
 
 
-char* yr_compiler_get_current_file_name(
+YR_API char* yr_compiler_get_current_file_name(
     YR_COMPILER* context);
 
 
-int yr_compiler_define_integer_variable(
+YR_API int yr_compiler_define_integer_variable(
     YR_COMPILER* compiler,
     const char* identifier,
     int64_t value);
 
 
-int yr_compiler_define_boolean_variable(
+YR_API int yr_compiler_define_boolean_variable(
     YR_COMPILER* compiler,
     const char* identifier,
     int value);
 
 
-int yr_compiler_define_string_variable(
+YR_API int yr_compiler_define_string_variable(
     YR_COMPILER* compiler,
     const char* identifier,
     const char* value);
 
 
-int yr_compiler_get_rules(
+YR_API int yr_compiler_get_rules(
     YR_COMPILER* compiler,
     YR_RULES** rules);
 

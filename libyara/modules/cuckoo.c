@@ -21,6 +21,9 @@ limitations under the License.
 #include <yara/re.h>
 #include <yara/modules.h>
 
+#ifdef _WIN32
+#define strcasecmp _stricmp
+#endif
 
 #define MODULE_NAME cuckoo
 

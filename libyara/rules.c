@@ -60,7 +60,7 @@ void _yr_rules_unlock(
 }
 
 
-int yr_rules_define_integer_variable(
+YR_API int yr_rules_define_integer_variable(
     YR_RULES* rules,
     const char* identifier,
     int64_t value)
@@ -84,7 +84,7 @@ int yr_rules_define_integer_variable(
 }
 
 
-int yr_rules_define_boolean_variable(
+YR_API int yr_rules_define_boolean_variable(
     YR_RULES* rules,
     const char* identifier,
     int value)
@@ -108,7 +108,7 @@ int yr_rules_define_boolean_variable(
 }
 
 
-int yr_rules_define_string_variable(
+YR_API int yr_rules_define_string_variable(
     YR_RULES* rules,
     const char* identifier,
     const char* value)
@@ -282,7 +282,7 @@ int yr_rules_scan_mem_block(
 }
 
 
-int yr_rules_scan_mem_blocks(
+YR_API int yr_rules_scan_mem_blocks(
     YR_RULES* rules,
     YR_MEMORY_BLOCK* block,
     int flags,
@@ -472,7 +472,7 @@ _exit:
 }
 
 
-int yr_rules_scan_mem(
+YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
     uint8_t* buffer,
     size_t buffer_size,
@@ -498,7 +498,7 @@ int yr_rules_scan_mem(
 }
 
 
-int yr_rules_scan_file(
+YR_API int yr_rules_scan_file(
     YR_RULES* rules,
     const char* filename,
     int flags,
@@ -529,7 +529,7 @@ int yr_rules_scan_file(
 }
 
 
-int yr_rules_scan_proc(
+YR_API int yr_rules_scan_proc(
     YR_RULES* rules,
     int pid,
     int flags,
@@ -570,7 +570,7 @@ int yr_rules_scan_proc(
 }
 
 
-int yr_rules_save(
+YR_API int yr_rules_save(
     YR_RULES* rules,
     const char* filename)
 {
@@ -579,7 +579,7 @@ int yr_rules_save(
 }
 
 
-int yr_rules_load(
+YR_API int yr_rules_load(
   const char* filename,
   YR_RULES** rules)
 {
@@ -588,7 +588,7 @@ int yr_rules_load(
 
   int result;
 
-  new_rules = yr_malloc(sizeof(YR_RULES));
+  new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
 
   if (new_rules == NULL)
     return ERROR_INSUFICIENT_MEMORY;
@@ -626,7 +626,7 @@ int yr_rules_load(
 }
 
 
-int yr_rules_destroy(
+YR_API int yr_rules_destroy(
     YR_RULES* rules)
 {
   YR_EXTERNAL_VARIABLE* external;

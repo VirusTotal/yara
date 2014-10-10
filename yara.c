@@ -765,7 +765,7 @@ int process_cmd_line(
 
       case 't':
         show_specified_tags = TRUE;
-        tag = malloc(sizeof(TAG));
+        tag = (TAG*) malloc(sizeof(TAG));
 
         if (tag != NULL)
         {
@@ -782,7 +782,7 @@ int process_cmd_line(
 
       case 'i':
         show_specified_rules = TRUE;
-        identifier = malloc(sizeof(IDENTIFIER));
+        identifier = (IDENTIFIER*) malloc(sizeof(IDENTIFIER));
 
         if (identifier != NULL)
         {
@@ -799,7 +799,7 @@ int process_cmd_line(
 
       case 'd':
         equal_sign = strchr(optarg, '=');
-        external = malloc(sizeof(EXTERNAL));
+        external = (EXTERNAL*) malloc(sizeof(EXTERNAL));
 
         if (external != NULL)
         {

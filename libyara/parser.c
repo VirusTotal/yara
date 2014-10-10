@@ -147,7 +147,7 @@ int yr_parser_emit_pushes_for_strings(
       }
     }
 
-    string = yr_arena_next_address(
+    string = (YR_STRING*) yr_arena_next_address(
         compiler->strings_arena,
         string,
         sizeof(YR_STRING));
@@ -209,7 +209,7 @@ YR_STRING* yr_parser_lookup_string(
       return string;
     }
 
-    string = yr_arena_next_address(
+    string = (YR_STRING*) yr_arena_next_address(
         compiler->strings_arena,
         string,
         sizeof(YR_STRING));
@@ -318,7 +318,7 @@ int _yr_parser_write_string(
         compiler->sz_arena,
         literal_string->c_string,
         literal_string->length,
-        (void*) &(*string)->string);
+        (void**) &(*string)->string);
 
     if (result == ERROR_SUCCESS)
     {
@@ -645,7 +645,7 @@ int yr_parser_reduce_rule_declaration(
       break;
     }
 
-    string = yr_arena_next_address(
+    string = (YR_STRING*) yr_arena_next_address(
         compiler->strings_arena,
         string,
         sizeof(YR_STRING));
@@ -746,7 +746,7 @@ int yr_parser_reduce_string_identifier(
           string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
         }
 
-        string = yr_arena_next_address(
+        string = (YR_STRING*) yr_arena_next_address(
             compiler->strings_arena,
             string,
             sizeof(YR_STRING));
@@ -861,7 +861,7 @@ int yr_parser_reduce_import(
 
   char* name;
 
-  module_structure = yr_hash_table_lookup(
+  module_structure = (YR_OBJECT*) yr_hash_table_lookup(
       compiler->objects_table,
       module_name->c_string,
       compiler->current_namespace->name);

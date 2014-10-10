@@ -20,8 +20,12 @@ limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
+#if _WIN32
+#define PRIu64 "%I64d"
+#else
+#include <inttypes.h>
+#endif
 
 #include <yara/mem.h>
 #include <yara/error.h>
@@ -594,7 +598,7 @@ int yr_object_structure_set_member(
   if (yr_object_lookup_field(object,  member->identifier) != NULL)
     return ERROR_DUPLICATED_STRUCTURE_MEMBER;
 
-  sm = yr_malloc(sizeof(YR_STRUCTURE_MEMBER));
+  sm = (YR_STRUCTURE_MEMBER*) yr_malloc(sizeof(YR_STRUCTURE_MEMBER));
 
   if (sm == NULL)
     return ERROR_INSUFICIENT_MEMORY;
@@ -654,7 +658,7 @@ int yr_object_array_set_item(
   {
     count = max(64, (index + 1) * 2);
 
-    array->items = yr_malloc(
+    array->items = (YR_ARRAY_ITEMS*) yr_malloc(
         sizeof(YR_ARRAY_ITEMS) + count * sizeof(YR_OBJECT*));
 
     if (array->items == NULL)
@@ -667,7 +671,7 @@ int yr_object_array_set_item(
   else if (index >= array->items->count)
   {
     count = array->items->count * 2;
-    array->items = yr_realloc(
+    array->items = (YR_ARRAY_ITEMS*) yr_realloc(
         array->items,
         sizeof(YR_ARRAY_ITEMS) + count * sizeof(YR_OBJECT*));
 
@@ -738,7 +742,7 @@ int yr_object_dict_set_item(
   {
     count = 64;
 
-    dict->items = yr_malloc(
+    dict->items = (YR_DICTIONARY_ITEMS*) yr_malloc(
         sizeof(YR_DICTIONARY_ITEMS) + count * sizeof(dict->items->objects[0]));
 
     if (dict->items == NULL)
@@ -752,7 +756,7 @@ int yr_object_dict_set_item(
   else if (dict->items->free == 0)
   {
     count = dict->items->used * 2;
-    dict->items = yr_realloc(
+    dict->items = (YR_DICTIONARY_ITEMS*) yr_realloc(
         dict->items,
         sizeof(YR_DICTIONARY_ITEMS) + count * sizeof(dict->items->objects[0]));
 
@@ -909,6 +913,7 @@ void yr_object_print_data(
 {
   YR_DICTIONARY_ITEMS* dict_items;
   YR_ARRAY_ITEMS* array_items;
+  YR_STRUCTURE_MEMBER* member;
 
   char indent_spaces[32];
 
@@ -943,7 +948,7 @@ void yr_object_print_data(
           indent_spaces,
           object->identifier);
 
-      YR_STRUCTURE_MEMBER* member = ((YR_OBJECT_STRUCTURE*) object)->members;
+      member = ((YR_OBJECT_STRUCTURE*) object)->members;
 
       while (member != NULL)
       {

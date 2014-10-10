@@ -47,7 +47,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -358,7 +357,7 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	yyleng = (size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
@@ -526,7 +525,7 @@ uint8_t read_escaped_char(yyscan_t yyscanner);
 
 #define YY_NO_UNISTD_H 1
 
-#line 530 "re_lexer.c"
+#line 529 "re_lexer.c"
 
 #define INITIAL 0
 #define char_class 1
@@ -758,10 +757,10 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 61 "re_lexer.l"
+#line 62 "re_lexer.l"
 
 
-#line 765 "re_lexer.c"
+#line 764 "re_lexer.c"
 
     yylval = yylval_param;
 
@@ -822,16 +821,12 @@ yy_match:
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 91 );
+		while ( yy_current_state != 42 );
+		yy_cp = yyg->yy_last_accepting_cpos;
+		yy_current_state = yyg->yy_last_accepting_state;
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
-		if ( yy_act == 0 )
-			{ /* have to back up */
-			yy_cp = yyg->yy_last_accepting_cpos;
-			yy_current_state = yyg->yy_last_accepting_state;
-			yy_act = yy_accept[yy_current_state];
-			}
 
 		YY_DO_BEFORE_ACTION;
 
@@ -860,7 +855,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 63 "re_lexer.l"
+#line 64 "re_lexer.l"
 {
 
   // Examples: {3,8} {0,5} {,5} {7,}
@@ -896,7 +891,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 97 "re_lexer.l"
+#line 98 "re_lexer.l"
 {
 
   // Example: {10}
@@ -916,7 +911,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 115 "re_lexer.l"
+#line 116 "re_lexer.l"
 {
 
   // Start of a negated character class. Example: [^abcd]
@@ -928,7 +923,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 124 "re_lexer.l"
+#line 125 "re_lexer.l"
 {
 
   // Start of character negated class containing a ].
@@ -943,7 +938,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 137 "re_lexer.l"
+#line 138 "re_lexer.l"
 {
 
   // Start of character class containing a ].
@@ -958,7 +953,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 150 "re_lexer.l"
+#line 151 "re_lexer.l"
 {
 
   // Start of character class. Example: [abcd]
@@ -971,7 +966,7 @@ YY_RULE_SETUP
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 160 "re_lexer.l"
+#line 161 "re_lexer.l"
 {
 
   // Any non-special character is passed as a CHAR token to the scanner.
@@ -982,49 +977,49 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 169 "re_lexer.l"
+#line 170 "re_lexer.l"
 {
   return _WORD_CHAR_;
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 174 "re_lexer.l"
+#line 175 "re_lexer.l"
 {
   return _NON_WORD_CHAR_;
 }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 179 "re_lexer.l"
+#line 180 "re_lexer.l"
 {
   return _SPACE_;
 }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 184 "re_lexer.l"
+#line 185 "re_lexer.l"
 {
   return _NON_SPACE_;
 }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 189 "re_lexer.l"
+#line 190 "re_lexer.l"
 {
   return _DIGIT_;
 }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 194 "re_lexer.l"
+#line 195 "re_lexer.l"
 {
   return _NON_DIGIT_;
 }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 199 "re_lexer.l"
+#line 200 "re_lexer.l"
 {
 
   yyerror(yyscanner, lex_env, "backreferences are not allowed");
@@ -1033,7 +1028,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 206 "re_lexer.l"
+#line 207 "re_lexer.l"
 {
   yylval->integer = read_escaped_char(yyscanner);
   return _CHAR_;
@@ -1041,14 +1036,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 212 "re_lexer.l"
+#line 213 "re_lexer.l"
 {
 
   // End of character class.
 
   int i;
 
-  yylval->class_vector = yr_malloc(32);
+  yylval->class_vector = (uint8_t*) yr_malloc(32);
   memcpy(yylval->class_vector, LEX_ENV->class_vector, 32);
 
   if (LEX_ENV->negated_class)
@@ -1064,7 +1059,7 @@ YY_RULE_SETUP
 case 17:
 /* rule 17 can match eol */
 YY_RULE_SETUP
-#line 233 "re_lexer.l"
+#line 234 "re_lexer.l"
 {
 
   // A range inside a character class.
@@ -1103,7 +1098,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 270 "re_lexer.l"
+#line 271 "re_lexer.l"
 {
 
   int i;
@@ -1118,7 +1113,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 283 "re_lexer.l"
+#line 284 "re_lexer.l"
 {
 
   int i;
@@ -1133,7 +1128,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 296 "re_lexer.l"
+#line 297 "re_lexer.l"
 {
 
   LEX_ENV->class_vector[' ' / 8] |= 1 << ' ' % 8;
@@ -1142,7 +1137,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 303 "re_lexer.l"
+#line 304 "re_lexer.l"
 {
 
   int i;
@@ -1156,7 +1151,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 315 "re_lexer.l"
+#line 316 "re_lexer.l"
 {
 
   char c;
@@ -1167,7 +1162,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 324 "re_lexer.l"
+#line 325 "re_lexer.l"
 {
 
   int i;
@@ -1182,7 +1177,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 337 "re_lexer.l"
+#line 338 "re_lexer.l"
 {
 
   uint8_t c = read_escaped_char(yyscanner);
@@ -1191,7 +1186,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 344 "re_lexer.l"
+#line 345 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1209,7 +1204,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(char_class):
-#line 361 "re_lexer.l"
+#line 362 "re_lexer.l"
 {
 
   // End of regexp reached while scanning a character class.
@@ -1220,7 +1215,7 @@ case YY_STATE_EOF(char_class):
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 370 "re_lexer.l"
+#line 371 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1235,7 +1230,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 384 "re_lexer.l"
+#line 385 "re_lexer.l"
 {
 
   yyterminate();
@@ -1243,10 +1238,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 389 "re_lexer.l"
+#line 390 "re_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1250 "re_lexer.c"
+#line 1245 "re_lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1311,7 +1306,8 @@ ECHO;
 
 			else
 				{
-				yy_cp = yyg->yy_c_buf_p;
+				yy_cp = yyg->yy_last_accepting_cpos;
+				yy_current_state = yyg->yy_last_accepting_state;
 				goto yy_find_action;
 				}
 			}
@@ -1772,10 +1768,6 @@ static void re_yy_load_buffer_state  (yyscan_t yyscanner)
 	re_yyfree((void *) b ,yyscanner );
 }
 
-#ifndef __cplusplus
-extern int isatty (int );
-#endif /* __cplusplus */
-    
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
  * such as during a re_yyrestart() or at EOF.
@@ -1800,7 +1792,7 @@ extern int isatty (int );
         b->yy_bs_column = 0;
     }
 
-        b->yy_is_interactive = file ? (isatty( fileno(file) ) > 0) : 0;
+        b->yy_is_interactive = 0;
     
 	errno = oerrno;
 }
@@ -2379,7 +2371,7 @@ void re_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 389 "re_lexer.l"
+#line 390 "re_lexer.l"
 
 
 
@@ -2432,12 +2424,22 @@ uint8_t read_escaped_char(yyscan_t yyscanner)
   char text[4];
 
   text[0] = '\\';
+
+  #ifdef __cplusplus
+  text[1] = yyinput(yyscanner);
+  #else
   text[1] = input(yyscanner);
+  #endif
 
   if (text[1] == 'x')
   {
+    #ifdef __cplusplus
+    text[2] = yyinput(yyscanner);
+    text[3] = yyinput(yyscanner);
+    #else
     text[2] = input(yyscanner);
     text[3] = input(yyscanner);
+    #endif
   }
 
   return escaped_char_value(text);
@@ -2460,9 +2462,9 @@ void yyfatal(
   jmp_buf* recovery_state;
 
   #ifdef _WIN32
-  recovery_state = TlsGetValue(recovery_state_key) ;
+  recovery_state = (jmp_buf*) TlsGetValue(recovery_state_key) ;
   #else
-  recovery_state = pthread_getspecific(recovery_state_key);
+  recovery_state = (jmp_buf*) pthread_getspecific(recovery_state_key);
   #endif
 
   longjmp(*recovery_state, 1);

@@ -49,6 +49,7 @@ limitations under the License.
 %option nounistd
 %option noinput
 %option nounput
+%option never-interactive
 %option yylineno
 %option prefix="hex_yy"
 
@@ -154,9 +155,9 @@ void yyfatal(
   jmp_buf* recovery_state;
 
   #ifdef _WIN32
-  recovery_state = TlsGetValue(recovery_state_key) ;
+  recovery_state = (jmp_buf*) TlsGetValue(recovery_state_key) ;
   #else
-  recovery_state = pthread_getspecific(recovery_state_key);
+  recovery_state = (jmp_buf*) pthread_getspecific(recovery_state_key);
   #endif
 
   longjmp(*recovery_state, 1);

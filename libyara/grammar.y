@@ -367,7 +367,7 @@ tag_list
             break;
           }
 
-          tag_name = yr_arena_next_address(
+          tag_name = (char*) yr_arena_next_address(
               yyget_extra(yyscanner)->sz_arena,
               tag_name,
               tag_length + 1);
@@ -756,7 +756,7 @@ arguments_list
       }
     | expression
       {
-        $$ = yr_malloc(MAX_FUNCTION_ARGS + 1);
+        $$ = (char*) yr_malloc(MAX_FUNCTION_ARGS + 1);
 
         switch($1.type)
         {
