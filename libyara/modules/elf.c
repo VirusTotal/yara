@@ -103,7 +103,6 @@ void parse_elf_header_##bits(                                                 \
   YR_OBJECT* elf_obj)                                                         \
 {                                                                             \
   char* str_table;                                                            \
-  size_t name_len;                                                            \
   elf##bits##_section_header_t* section;                                      \
                                                                               \
   set_integer(elf->type, elf_obj, "type");                                    \
@@ -134,8 +133,7 @@ void parse_elf_header_##bits(                                                 \
       set_integer(section->flags, elf_obj, "sections[%i].flags", i);          \
       set_integer(section->size, elf_obj, "sections[%i].size", i);            \
       set_integer(section->offset, elf_obj, "sections[%i].offset", i);        \
-      name_len = strlen(str_table + section->name);                           \
-      set_string(str_table + section->name, name_len, elf_obj, "sections[%i].name", i); \
+      set_string(str_table + section->name, elf_obj, "sections[%i].name", i); \
                                                                               \
       section++;                                                              \
     }                                                                         \

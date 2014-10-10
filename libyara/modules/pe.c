@@ -1804,8 +1804,8 @@ void *pe_get_rich_signature(
       *rich_ptr ^= rich_signature->key1;
     }
 
-    set_string((char *) raw_data, rich_len, pe_obj, "rich_signature.raw_data");
-    set_string((char *) clear_data, rich_len, pe_obj, "rich_signature.clear_data");
+    set_sized_string((char *) raw_data, rich_len, pe_obj, "rich_signature.raw_data");
+    set_sized_string((char *) clear_data, rich_len, pe_obj, "rich_signature.clear_data");
     return NULL;
   }
 
@@ -2089,7 +2089,7 @@ int pe_find_version_info_cb(
           strlcpy_w(key, string->Key, sizeof(key));
           strlcpy_w(value, string_value, sizeof(value));
 
-          set_string(value, sizeof(value), pe->object, "version_info[%s]", key);
+          set_string(value, pe->object, "version_info[%s]", key);
 
           if (string->Length == 0)
             break;
@@ -2203,7 +2203,7 @@ void pe_parse(
     str_size = strlcpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME + 1);
 
     set_string(
-        section_name, str_size,
+        section_name,
         pe->object, "sections[%i].name", i);
 
     set_integer(

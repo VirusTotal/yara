@@ -94,7 +94,7 @@ int module_load(
 {
   set_integer(1, module_object, "constants.one");
   set_integer(2, module_object, "constants.two");
-  set_string("foo", 3, module_object, "constants.foo");
+  set_string("foo", module_object, "constants.foo");
 
   set_integer(1, module_object, "struct_array[1].i");
 
@@ -102,14 +102,15 @@ int module_load(
   set_integer(1, module_object, "integer_array[%i]", 1);
   set_integer(2, module_object, "integer_array[%i]", 2);
 
-  set_string("foo", 3, module_object, "string_array[%i]", 0);
-  set_string("bar", 3, module_object, "string_array[%i]", 1);
-  set_string("baz", 3, module_object, "string_array[%i]", 2);
+  set_string("foo", module_object, "string_array[%i]", 0);
+  set_string("bar", module_object, "string_array[%i]", 1);
+  set_string("baz", module_object, "string_array[%i]", 2);
+  set_sized_string("foo\x00bar", 7, module_object, "string_array[%i]", 3);
 
-  set_string("foo", 3, module_object, "string_dict[%s]", "foo");
-  set_string("bar", 3, module_object, "string_dict[\"bar\"]");
+  set_string("foo", module_object, "string_dict[%s]", "foo");
+  set_string("bar", module_object, "string_dict[\"bar\"]");
 
-  set_string("foo", 3, module_object, "struct_dict[%s].s", "foo");
+  set_string("foo", module_object, "struct_dict[%s].s", "foo");
   set_integer(1, module_object, "struct_dict[%s].i", "foo");
 
   return ERROR_SUCCESS;

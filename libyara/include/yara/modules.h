@@ -254,8 +254,12 @@ limitations under the License.
     yr_object_set_integer(value, object, __VA_ARGS__)
 
 
-#define set_string(value, len, object, ...) \
+#define set_sized_string(value, len, object, ...) \
     yr_object_set_string(value, len, object, __VA_ARGS__)
+
+
+#define set_string(value, object, ...) \
+    set_sized_string(value, strlen(value), object, __VA_ARGS__)
 
 
 #define return_integer(integer) { \
