@@ -936,7 +936,7 @@ expression
       }
     | primary_expression _MATCHES_ _STRING_IDENTIFIER_
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_STRING, "contains");
+        CHECK_TYPE($1, EXPRESSION_TYPE_STRING, "matches");
 
         int result = yr_parser_reduce_string_identifier(
             yyscanner,

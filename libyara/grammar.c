@@ -2608,7 +2608,7 @@ yyreduce:
   case 54:
 #line 938 "grammar.y"
     {
-        CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_STRING, "contains");
+        CHECK_TYPE((yyvsp[(1) - (3)].expression), EXPRESSION_TYPE_STRING, "matches");
 
         int result = yr_parser_reduce_string_identifier(
             yyscanner,
