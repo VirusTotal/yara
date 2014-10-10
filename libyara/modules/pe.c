@@ -2487,7 +2487,7 @@ PIMPORT_LIST parse_imports(PE* pe)
 
     if (offset > 0 && offset <= pe->data_size)
     {
-      new_dll_node = (PIMPORT_LIST) yr_malloc(sizeof(IMPORT_LIST));
+      new_dll_node = (PIMPORT_LIST) yr_calloc(1, sizeof(IMPORT_LIST));
       if (!new_dll_node)
         return NULL;
 
@@ -2533,7 +2533,7 @@ PIMPORT_LIST parse_imports(PE* pe)
                 if (size == (pe->data + pe->data_size) - import->Name)
                   return NULL;
 
-                new_func_node = (PIMPORT_FUNC_LIST) yr_malloc(sizeof(IMPORT_FUNC_LIST));
+                new_func_node = (PIMPORT_FUNC_LIST) yr_calloc(1, sizeof(IMPORT_FUNC_LIST));
                 if (!new_func_node)
                   return NULL;
 
@@ -2552,7 +2552,7 @@ PIMPORT_LIST parse_imports(PE* pe)
             {
               // Exported by ordinal.
               ordinal = thunks64->u1.Ordinal & 0xFFFF;
-              new_func_node = (PIMPORT_FUNC_LIST) yr_malloc(sizeof(IMPORT_FUNC_LIST));
+              new_func_node = (PIMPORT_FUNC_LIST) yr_calloc(1, sizeof(IMPORT_FUNC_LIST));
               if (!new_func_node)
                 return NULL;
 
@@ -2600,7 +2600,7 @@ PIMPORT_LIST parse_imports(PE* pe)
                 if (size == (pe->data + pe->data_size) - import->Name)
                   return NULL;
 
-                new_func_node = (PIMPORT_FUNC_LIST) yr_malloc(sizeof(IMPORT_FUNC_LIST));
+                new_func_node = (PIMPORT_FUNC_LIST) yr_calloc(1, sizeof(IMPORT_FUNC_LIST));
                 if (!new_func_node)
                   return NULL;
 
@@ -2619,7 +2619,7 @@ PIMPORT_LIST parse_imports(PE* pe)
             {
               // Exported by ordinal.
               ordinal = thunks32->u1.Ordinal & 0xFFFF;
-              new_func_node = (PIMPORT_FUNC_LIST) yr_malloc(sizeof(IMPORT_FUNC_LIST));
+              new_func_node = (PIMPORT_FUNC_LIST) yr_calloc(1, sizeof(IMPORT_FUNC_LIST));
               if (!new_func_node)
                 return NULL;
 

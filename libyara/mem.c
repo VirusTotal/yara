@@ -45,6 +45,13 @@ int yr_heap_free()
 }
 
 
+// Call yr_malloc(), which does HEAP_ZERO_MEMORY.
+void* yr_calloc(size_t count, size_t size)
+{
+  return yr_malloc(count * size);
+}
+
+
 void* yr_malloc(size_t size)
 {
   return (void*) HeapAlloc(hHeap, HEAP_ZERO_MEMORY, size);
@@ -94,9 +101,15 @@ int yr_heap_free()
 }
 
 
+void* yr_calloc(size_t count, size_t size)
+{
+  return calloc(count, size);
+}
+
+
 void* yr_malloc(size_t size)
 {
-  return calloc(1, size);
+  return malloc(size);
 }
 
 
