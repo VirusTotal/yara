@@ -14,14 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <yara/pe.h>
-
 #include <ctype.h>
+#include <openssl/md5.h>
+#include <openssl/sha.h>
+
+#include <yara/pe.h>
 #include <yara/modules.h>
-#include <yara/md5.h>
 #include <yara/mem.h>
-#include <yara/sha256.h>
 #include <yara/strutils.h>
+
 
 #define MODULE_NAME pe
 
@@ -86,6 +87,7 @@ typedef struct _IMPORT_LIST
   struct _IMPORT_LIST *next;
   char *dll;
   struct _IMPORT_FUNC_LIST *names;
+
 } IMPORT_LIST, *PIMPORT_LIST;
 
 
@@ -93,6 +95,7 @@ typedef struct _IMPORT_FUNC_LIST
 {
   struct _IMPORT_FUNC_LIST *next;
   char *name;
+
 } IMPORT_FUNC_LIST, *PIMPORT_FUNC_LIST;
 
 
@@ -2340,8 +2343,6 @@ define_function(exports)
 
 define_function(imphash)
 {
-  char *hash = string_argument(1);
-
   YR_OBJECT* module = module();
   PIMPORT_LIST cur_dll_node = NULL;
   PIMPORT_FUNC_LIST cur_func_node = NULL;
@@ -2352,11 +2353,10 @@ define_function(imphash)
 
   MD5_CTX ctx;
 
-  unsigned char md_value[MD5_BLOCK_SIZE];
-  char *final_hash;
+  unsigned char digest[MD5_DIGEST_LENGTH];
+  char digest_ascii[MD5_DIGEST_LENGTH * 2 + 1];
 
   int first = 1;
-  int result = 0;
 
   PE* pe = (PE*) module->data;
 
@@ -2364,7 +2364,7 @@ define_function(imphash)
   if (!pe)
     return_integer(UNDEFINED);
 
-  md5_init(&ctx);
+  MD5_Init(&ctx);
 
   cur_dll_node = pe->imports;
 
@@ -2411,7 +2411,7 @@ define_function(imphash)
         final_name[i] = tolower(final_name[i]);
       }
 
-      md5_update(&ctx, (MD_BYTE *) final_name, strlen(final_name));
+      MD5_Update(&ctx, final_name, strlen(final_name));
 
       yr_free(final_name);
       cur_func_node = cur_func_node->next;
@@ -2421,24 +2421,18 @@ define_function(imphash)
     cur_dll_node = cur_dll_node->next;
   }
 
-  md5_final(&ctx, md_value);
+  MD5_Final(digest, &ctx);
 
-  // Convert md_value into it's hexlified form.
-  final_hash = yr_malloc((MD5_BLOCK_SIZE * 2) + 1);
+  // transform the binary digest to ascii
 
-  if (!final_hash)
-    return_integer(UNDEFINED);
+  for (int i = 0; i < MD5_DIGEST_LENGTH; i++)
+  {
+    sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
+  }
 
-  char* p = final_hash;
+  digest_ascii[32] = '\0';
 
-  for (int i = 0; i < MD5_BLOCK_SIZE; i++)
-    snprintf(p + 2 * i, 3, "%02x", md_value[i]);
-
-  if (strncasecmp(hash, final_hash, (MD5_BLOCK_SIZE * 2)) == 0)
-    result = 1;
-
-  yr_free(final_hash);
-  return_integer(result);
+  return_string(digest_ascii);
 }
 
 
@@ -2448,48 +2442,26 @@ define_function(imphash)
 
 define_function(richhash)
 {
-  SHA256_CTX ctx;
-  unsigned char md_value[SHA256_BLOCK_SIZE];
-  char *final_hash;
-  char *hash = string_argument(1);
-  int result = 0;
   YR_OBJECT* parent = parent();
+  SHA256_CTX ctx;
 
-  // No point in calculating the hash if the input length is wrong.
-  if (strlen(hash) != SHA256_BLOCK_SIZE * 2)
-  {
-    return_integer(0);
-  }
+  unsigned char digest[SHA256_DIGEST_LENGTH];
+  char digest_ascii[SHA256_DIGEST_LENGTH * 2 + 1];
 
   SIZED_STRING *clear_data = get_string(parent, "clear_data");
 
-  sha256_init(&ctx);
+  SHA256_Init(&ctx);
+  SHA256_Update(&ctx, clear_data->c_string, clear_data->length);
+  SHA256_Final(digest, &ctx);
 
-  for (int i = 0; i < clear_data->length; i += 4)
+  for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
   {
-    sha256_update(&ctx, (SHA_BYTE *) ((uint32_t *) (clear_data->c_string + i)), 0x04);
+    sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
   }
 
-  sha256_final(&ctx, md_value);
+  digest_ascii[32] = '\0';
 
-  // Convert md_value into it's hexlified form.
-  final_hash = yr_malloc((SHA256_BLOCK_SIZE * 2) + 1);
-
-  if (!final_hash)
-    return_integer(0);
-
-  for (int i = 0; i < SHA256_BLOCK_SIZE; i++)
-  {
-    snprintf(final_hash + (2 * i), 3, "%02x", md_value[i]);
-  }
-
-  if (strncasecmp(hash, final_hash, (SHA256_BLOCK_SIZE * 2)) == 0)
-  {
-    result = 1;
-  }
-
-  yr_free(final_hash);
-  return_integer(result);
+  return_string(digest_ascii);
 }
 
 
@@ -2893,7 +2865,7 @@ begin_declarations;
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
-    declare_function("richhash", "s", "i", richhash);
+    declare_function("richhash", "", "s", richhash);
   end_struct("rich_signature");
 
   declare_function("section_index", "s", "i", section_index);
@@ -2901,7 +2873,7 @@ begin_declarations;
   declare_function("imports", "ss", "i", imports);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
-  declare_function("imphash", "s", "i", imphash);
+  declare_function("imphash", "", "s", imphash);
 
 end_declarations;
 
