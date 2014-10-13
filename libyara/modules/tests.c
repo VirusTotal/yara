@@ -105,6 +105,7 @@ int module_load(
   set_string("foo", module_object, "string_array[%i]", 0);
   set_string("bar", module_object, "string_array[%i]", 1);
   set_string("baz", module_object, "string_array[%i]", 2);
+  set_sized_string("foo\x00bar", 7, module_object, "string_array[%i]", 3);
 
   set_string("foo", module_object, "string_dict[%s]", "foo");
   set_string("bar", module_object, "string_dict[\"bar\"]");

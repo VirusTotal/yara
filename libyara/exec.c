@@ -87,6 +87,8 @@ int yr_execute_code(
   YR_MATCH* match;
   YR_OBJECT* object;
   YR_OBJECT_FUNCTION* function;
+  SIZED_STRING *big;
+  YR_STRING *little;
 
   char* identifier;
   char* args_fmt;
@@ -745,6 +747,42 @@ int yr_execute_code(
           NULL);
 
         push(result >= 0);
+        break;
+
+      case OP_CONTAINS_STR:
+        pop(r2);
+        pop(r1);
+        big = UINT64_TO_PTR(SIZED_STRING*, r1);
+        little = UINT64_TO_PTR(YR_STRING*, r2);
+
+        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
+        {
+          push(UNDEFINED);
+          break;
+        }
+
+        push(memmem(big->c_string, big->length, little->string, little->length) != NULL);
+        break;
+
+      case OP_MATCHES_STR:
+        pop(r2);
+        pop(r1);
+        big = UINT64_TO_PTR(SIZED_STRING*, r1);
+        little = UINT64_TO_PTR(YR_STRING*, r2);
+
+        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
+        {
+          push(UNDEFINED);
+          break;
+        }
+
+        if (big->length != little->length)
+        {
+          push(FALSE);
+          break;
+        }
+
+        push(memcmp(big->c_string, little->string, big->length) == 0);
         break;
 
       default:

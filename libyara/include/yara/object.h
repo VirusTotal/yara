@@ -74,7 +74,7 @@ int64_t yr_object_get_integer(
     ...);
 
 
-char* yr_object_get_string(
+SIZED_STRING* yr_object_get_string(
     YR_OBJECT* object,
     char* field,
     ...);
@@ -89,6 +89,7 @@ void yr_object_set_integer(
 
 void yr_object_set_string(
     char* value,
+    size_t len,
     YR_OBJECT* object,
     char* field,
     ...);

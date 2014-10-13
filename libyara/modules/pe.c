@@ -16,8 +16,11 @@ limitations under the License.
 
 #include <yara/pe.h>
 
+#include <ctype.h>
 #include <yara/modules.h>
+#include <yara/md5.h>
 #include <yara/mem.h>
+#include <yara/sha256.h>
 #include <yara/strutils.h>
 
 #define MODULE_NAME pe
@@ -72,6 +75,27 @@ typedef int (*RESOURCE_CALLBACK_FUNC) ( \
      void* cb_data);
 
 
+/*
+ * Imports are stored in a linked list (IMPORT_LIST). Each node contains the
+ * name of the DLL and a pointer to another linked list (IMPORT_FUNC_LIST).
+ * The IMPORT_FUNC_LIST contains the names of each function imported from
+ * the corresponding DLL.
+ */
+typedef struct _IMPORT_LIST
+{
+  struct _IMPORT_LIST *next;
+  char *dll;
+  struct _IMPORT_FUNC_LIST *names;
+} IMPORT_LIST, *PIMPORT_LIST;
+
+
+typedef struct _IMPORT_FUNC_LIST
+{
+  struct _IMPORT_FUNC_LIST *next;
+  char *name;
+} IMPORT_FUNC_LIST, *PIMPORT_FUNC_LIST;
+
+
 typedef struct _PE
 {
   uint8_t* data;
@@ -79,9 +103,1584 @@ typedef struct _PE
 
   PIMAGE_NT_HEADERS32 header;
   YR_OBJECT* object;
+  PIMPORT_LIST imports;
 
 } PE;
 
+/*
+ * These ordinals are taken from pefile. If a lookup fails attempt to return
+ * "ordN" and if that fails, return NULL. The caller is responsible for freeing
+ * the returned string.
+ */
+char *ord_lookup(
+    char *dll,
+    uint16_t ord)
+{
+  char *name = NULL;
+  if (strncasecmp(dll, "WS2_32.dll", 10) == 0 ||
+      strncasecmp(dll, "wsock32.dll", 11) == 0)
+  {
+    switch(ord) {
+      case 1:
+        asprintf(&name, "accept");
+        break;
+      case 2:
+        asprintf(&name, "bind");
+        break;
+      case 3:
+        asprintf(&name, "closesocket");
+        break;
+      case 4:
+        asprintf(&name, "connect");
+        break;
+      case 5:
+        asprintf(&name, "getpeername");
+        break;
+      case 6:
+        asprintf(&name, "getsockname");
+        break;
+      case 7:
+        asprintf(&name, "getsockopt");
+        break;
+      case 8:
+        asprintf(&name, "htonl");
+        break;
+      case 9:
+        asprintf(&name, "htons");
+        break;
+      case 10:
+        asprintf(&name, "ioctlsocket");
+        break;
+      case 11:
+        asprintf(&name, "inet_addr");
+        break;
+      case 12:
+        asprintf(&name, "inet_ntoa");
+        break;
+      case 13:
+        asprintf(&name, "listen");
+        break;
+      case 14:
+        asprintf(&name, "ntohl");
+        break;
+      case 15:
+        asprintf(&name, "ntohs");
+        break;
+      case 16:
+        asprintf(&name, "recv");
+        break;
+      case 17:
+        asprintf(&name, "recvfrom");
+        break;
+      case 18:
+        asprintf(&name, "select");
+        break;
+      case 19:
+        asprintf(&name, "send");
+        break;
+      case 20:
+        asprintf(&name, "sendto");
+        break;
+      case 21:
+        asprintf(&name, "setsockopt");
+        break;
+      case 22:
+        asprintf(&name, "shutdown");
+        break;
+      case 23:
+        asprintf(&name, "socket");
+        break;
+      case 24:
+        asprintf(&name, "GetAddrInfoW");
+        break;
+      case 25:
+        asprintf(&name, "GetNameInfoW");
+        break;
+      case 26:
+        asprintf(&name, "WSApSetPostRoutine");
+        break;
+      case 27:
+        asprintf(&name, "FreeAddrInfoW");
+        break;
+      case 28:
+        asprintf(&name, "WPUCompleteOverlappedRequest");
+        break;
+      case 29:
+        asprintf(&name, "WSAAccept");
+        break;
+      case 30:
+        asprintf(&name, "WSAAddressToStringA");
+        break;
+      case 31:
+        asprintf(&name, "WSAAddressToStringW");
+        break;
+      case 32:
+        asprintf(&name, "WSACloseEvent");
+        break;
+      case 33:
+        asprintf(&name, "WSAConnect");
+        break;
+      case 34:
+        asprintf(&name, "WSACreateEvent");
+        break;
+      case 35:
+        asprintf(&name, "WSADuplicateSocketA");
+        break;
+      case 36:
+        asprintf(&name, "WSADuplicateSocketW");
+        break;
+      case 37:
+        asprintf(&name, "WSAEnumNameSpaceProvidersA");
+        break;
+      case 38:
+        asprintf(&name, "WSAEnumNameSpaceProvidersW");
+        break;
+      case 39:
+        asprintf(&name, "WSAEnumNetworkEvents");
+        break;
+      case 40:
+        asprintf(&name, "WSAEnumProtocolsA");
+        break;
+      case 41:
+        asprintf(&name, "WSAEnumProtocolsW");
+        break;
+      case 42:
+        asprintf(&name, "WSAEventSelect");
+        break;
+      case 43:
+        asprintf(&name, "WSAGetOverlappedResult");
+        break;
+      case 44:
+        asprintf(&name, "WSAGetQOSByName");
+        break;
+      case 45:
+        asprintf(&name, "WSAGetServiceClassInfoA");
+        break;
+      case 46:
+        asprintf(&name, "WSAGetServiceClassInfoW");
+        break;
+      case 47:
+        asprintf(&name, "WSAGetServiceClassNameByClassIdA");
+        break;
+      case 48:
+        asprintf(&name, "WSAGetServiceClassNameByClassIdW");
+        break;
+      case 49:
+        asprintf(&name, "WSAHtonl");
+        break;
+      case 50:
+        asprintf(&name, "WSAHtons");
+        break;
+      case 51:
+        asprintf(&name, "gethostbyaddr");
+        break;
+      case 52:
+        asprintf(&name, "gethostbyname");
+        break;
+      case 53:
+        asprintf(&name, "getprotobyname");
+        break;
+      case 54:
+        asprintf(&name, "getprotobynumber");
+        break;
+      case 55:
+        asprintf(&name, "getservbyname");
+        break;
+      case 56:
+        asprintf(&name, "getservbyport");
+        break;
+      case 57:
+        asprintf(&name, "gethostname");
+        break;
+      case 58:
+        asprintf(&name, "WSAInstallServiceClassA");
+        break;
+      case 59:
+        asprintf(&name, "WSAInstallServiceClassW");
+        break;
+      case 60:
+        asprintf(&name, "WSAIoctl");
+        break;
+      case 61:
+        asprintf(&name, "WSAJoinLeaf");
+        break;
+      case 62:
+        asprintf(&name, "WSALookupServiceBeginA");
+        break;
+      case 63:
+        asprintf(&name, "WSALookupServiceBeginW");
+        break;
+      case 64:
+        asprintf(&name, "WSALookupServiceEnd");
+        break;
+      case 65:
+        asprintf(&name, "WSALookupServiceNextA");
+        break;
+      case 66:
+        asprintf(&name, "WSALookupServiceNextW");
+        break;
+      case 67:
+        asprintf(&name, "WSANSPIoctl");
+        break;
+      case 68:
+        asprintf(&name, "WSANtohl");
+        break;
+      case 69:
+        asprintf(&name, "WSANtohs");
+        break;
+      case 70:
+        asprintf(&name, "WSAProviderConfigChange");
+        break;
+      case 71:
+        asprintf(&name, "WSARecv");
+        break;
+      case 72:
+        asprintf(&name, "WSARecvDisconnect");
+        break;
+      case 73:
+        asprintf(&name, "WSARecvFrom");
+        break;
+      case 74:
+        asprintf(&name, "WSARemoveServiceClass");
+        break;
+      case 75:
+        asprintf(&name, "WSAResetEvent");
+        break;
+      case 76:
+        asprintf(&name, "WSASend");
+        break;
+      case 77:
+        asprintf(&name, "WSASendDisconnect");
+        break;
+      case 78:
+        asprintf(&name, "WSASendTo");
+        break;
+      case 79:
+        asprintf(&name, "WSASetEvent");
+        break;
+      case 80:
+        asprintf(&name, "WSASetServiceA");
+        break;
+      case 81:
+        asprintf(&name, "WSASetServiceW");
+        break;
+      case 82:
+        asprintf(&name, "WSASocketA");
+        break;
+      case 83:
+        asprintf(&name, "WSASocketW");
+        break;
+      case 84:
+        asprintf(&name, "WSAStringToAddressA");
+        break;
+      case 85:
+        asprintf(&name, "WSAStringToAddressW");
+        break;
+      case 86:
+        asprintf(&name, "WSAWaitForMultipleEvents");
+        break;
+      case 87:
+        asprintf(&name, "WSCDeinstallProvider");
+        break;
+      case 88:
+        asprintf(&name, "WSCEnableNSProvider");
+        break;
+      case 89:
+        asprintf(&name, "WSCEnumProtocols");
+        break;
+      case 90:
+        asprintf(&name, "WSCGetProviderPath");
+        break;
+      case 91:
+        asprintf(&name, "WSCInstallNameSpace");
+        break;
+      case 92:
+        asprintf(&name, "WSCInstallProvider");
+        break;
+      case 93:
+        asprintf(&name, "WSCUnInstallNameSpace");
+        break;
+      case 94:
+        asprintf(&name, "WSCUpdateProvider");
+        break;
+      case 95:
+        asprintf(&name, "WSCWriteNameSpaceOrder");
+        break;
+      case 96:
+        asprintf(&name, "WSCWriteProviderOrder");
+        break;
+      case 97:
+        asprintf(&name, "freeaddrinfo");
+        break;
+      case 98:
+        asprintf(&name, "getaddrinfo");
+        break;
+      case 99:
+        asprintf(&name, "getnameinfo");
+        break;
+      case 101:
+        asprintf(&name, "WSAAsyncSelect");
+        break;
+      case 102:
+        asprintf(&name, "WSAAsyncGetHostByAddr");
+        break;
+      case 103:
+        asprintf(&name, "WSAAsyncGetHostByName");
+        break;
+      case 104:
+        asprintf(&name, "WSAAsyncGetProtoByNumber");
+        break;
+      case 105:
+        asprintf(&name, "WSAAsyncGetProtoByName");
+        break;
+      case 106:
+        asprintf(&name, "WSAAsyncGetServByPort");
+        break;
+      case 107:
+        asprintf(&name, "WSAAsyncGetServByName");
+        break;
+      case 108:
+        asprintf(&name, "WSACancelAsyncRequest");
+        break;
+      case 109:
+        asprintf(&name, "WSASetBlockingHook");
+        break;
+      case 110:
+        asprintf(&name, "WSAUnhookBlockingHook");
+        break;
+      case 111:
+        asprintf(&name, "WSAGetLastError");
+        break;
+      case 112:
+        asprintf(&name, "WSASetLastError");
+        break;
+      case 113:
+        asprintf(&name, "WSACancelBlockingCall");
+        break;
+      case 114:
+        asprintf(&name, "WSAIsBlocking");
+        break;
+      case 115:
+        asprintf(&name, "WSAStartup");
+        break;
+      case 116:
+        asprintf(&name, "WSACleanup");
+        break;
+      case 151:
+        asprintf(&name, "__WSAFDIsSet");
+        break;
+      case 500:
+        asprintf(&name, "WEP");
+        break;
+      default:
+        break;
+    }
+  }
+  else if (strncasecmp(dll, "oleaut32.dll", 12) == 0)
+  {
+    switch (ord) {
+      case 2:
+        asprintf(&name, "SysAllocString");
+        break;
+      case 3:
+        asprintf(&name, "SysReAllocString");
+        break;
+      case 4:
+        asprintf(&name, "SysAllocStringLen");
+        break;
+      case 5:
+        asprintf(&name, "SysReAllocStringLen");
+        break;
+      case 6:
+        asprintf(&name, "SysFreeString");
+        break;
+      case 7:
+        asprintf(&name, "SysStringLen");
+        break;
+      case 8:
+        asprintf(&name, "VariantInit");
+        break;
+      case 9:
+        asprintf(&name, "VariantClear");
+        break;
+      case 10:
+        asprintf(&name, "VariantCopy");
+        break;
+      case 11:
+        asprintf(&name, "VariantCopyInd");
+        break;
+      case 12:
+        asprintf(&name, "VariantChangeType");
+        break;
+      case 13:
+        asprintf(&name, "VariantTimeToDosDateTime");
+        break;
+      case 14:
+        asprintf(&name, "DosDateTimeToVariantTime");
+        break;
+      case 15:
+        asprintf(&name, "SafeArrayCreate");
+        break;
+      case 16:
+        asprintf(&name, "SafeArrayDestroy");
+        break;
+      case 17:
+        asprintf(&name, "SafeArrayGetDim");
+        break;
+      case 18:
+        asprintf(&name, "SafeArrayGetElemsize");
+        break;
+      case 19:
+        asprintf(&name, "SafeArrayGetUBound");
+        break;
+      case 20:
+        asprintf(&name, "SafeArrayGetLBound");
+        break;
+      case 21:
+        asprintf(&name, "SafeArrayLock");
+        break;
+      case 22:
+        asprintf(&name, "SafeArrayUnlock");
+        break;
+      case 23:
+        asprintf(&name, "SafeArrayAccessData");
+        break;
+      case 24:
+        asprintf(&name, "SafeArrayUnaccessData");
+        break;
+      case 25:
+        asprintf(&name, "SafeArrayGetElement");
+        break;
+      case 26:
+        asprintf(&name, "SafeArrayPutElement");
+        break;
+      case 27:
+        asprintf(&name, "SafeArrayCopy");
+        break;
+      case 28:
+        asprintf(&name, "DispGetParam");
+        break;
+      case 29:
+        asprintf(&name, "DispGetIDsOfNames");
+        break;
+      case 30:
+        asprintf(&name, "DispInvoke");
+        break;
+      case 31:
+        asprintf(&name, "CreateDispTypeInfo");
+        break;
+      case 32:
+        asprintf(&name, "CreateStdDispatch");
+        break;
+      case 33:
+        asprintf(&name, "RegisterActiveObject");
+        break;
+      case 34:
+        asprintf(&name, "RevokeActiveObject");
+        break;
+      case 35:
+        asprintf(&name, "GetActiveObject");
+        break;
+      case 36:
+        asprintf(&name, "SafeArrayAllocDescriptor");
+        break;
+      case 37:
+        asprintf(&name, "SafeArrayAllocData");
+        break;
+      case 38:
+        asprintf(&name, "SafeArrayDestroyDescriptor");
+        break;
+      case 39:
+        asprintf(&name, "SafeArrayDestroyData");
+        break;
+      case 40:
+        asprintf(&name, "SafeArrayRedim");
+        break;
+      case 41:
+        asprintf(&name, "SafeArrayAllocDescriptorEx");
+        break;
+      case 42:
+        asprintf(&name, "SafeArrayCreateEx");
+        break;
+      case 43:
+        asprintf(&name, "SafeArrayCreateVectorEx");
+        break;
+      case 44:
+        asprintf(&name, "SafeArraySetRecordInfo");
+        break;
+      case 45:
+        asprintf(&name, "SafeArrayGetRecordInfo");
+        break;
+      case 46:
+        asprintf(&name, "VarParseNumFromStr");
+        break;
+      case 47:
+        asprintf(&name, "VarNumFromParseNum");
+        break;
+      case 48:
+        asprintf(&name, "VarI2FromUI1");
+        break;
+      case 49:
+        asprintf(&name, "VarI2FromI4");
+        break;
+      case 50:
+        asprintf(&name, "VarI2FromR4");
+        break;
+      case 51:
+        asprintf(&name, "VarI2FromR8");
+        break;
+      case 52:
+        asprintf(&name, "VarI2FromCy");
+        break;
+      case 53:
+        asprintf(&name, "VarI2FromDate");
+        break;
+      case 54:
+        asprintf(&name, "VarI2FromStr");
+        break;
+      case 55:
+        asprintf(&name, "VarI2FromDisp");
+        break;
+      case 56:
+        asprintf(&name, "VarI2FromBool");
+        break;
+      case 57:
+        asprintf(&name, "SafeArraySetIID");
+        break;
+      case 58:
+        asprintf(&name, "VarI4FromUI1");
+        break;
+      case 59:
+        asprintf(&name, "VarI4FromI2");
+        break;
+      case 60:
+        asprintf(&name, "VarI4FromR4");
+        break;
+      case 61:
+        asprintf(&name, "VarI4FromR8");
+        break;
+      case 62:
+        asprintf(&name, "VarI4FromCy");
+        break;
+      case 63:
+        asprintf(&name, "VarI4FromDate");
+        break;
+      case 64:
+        asprintf(&name, "VarI4FromStr");
+        break;
+      case 65:
+        asprintf(&name, "VarI4FromDisp");
+        break;
+      case 66:
+        asprintf(&name, "VarI4FromBool");
+        break;
+      case 67:
+        asprintf(&name, "SafeArrayGetIID");
+        break;
+      case 68:
+        asprintf(&name, "VarR4FromUI1");
+        break;
+      case 69:
+        asprintf(&name, "VarR4FromI2");
+        break;
+      case 70:
+        asprintf(&name, "VarR4FromI4");
+        break;
+      case 71:
+        asprintf(&name, "VarR4FromR8");
+        break;
+      case 72:
+        asprintf(&name, "VarR4FromCy");
+        break;
+      case 73:
+        asprintf(&name, "VarR4FromDate");
+        break;
+      case 74:
+        asprintf(&name, "VarR4FromStr");
+        break;
+      case 75:
+        asprintf(&name, "VarR4FromDisp");
+        break;
+      case 76:
+        asprintf(&name, "VarR4FromBool");
+        break;
+      case 77:
+        asprintf(&name, "SafeArrayGetVartype");
+        break;
+      case 78:
+        asprintf(&name, "VarR8FromUI1");
+        break;
+      case 79:
+        asprintf(&name, "VarR8FromI2");
+        break;
+      case 80:
+        asprintf(&name, "VarR8FromI4");
+        break;
+      case 81:
+        asprintf(&name, "VarR8FromR4");
+        break;
+      case 82:
+        asprintf(&name, "VarR8FromCy");
+        break;
+      case 83:
+        asprintf(&name, "VarR8FromDate");
+        break;
+      case 84:
+        asprintf(&name, "VarR8FromStr");
+        break;
+      case 85:
+        asprintf(&name, "VarR8FromDisp");
+        break;
+      case 86:
+        asprintf(&name, "VarR8FromBool");
+        break;
+      case 87:
+        asprintf(&name, "VarFormat");
+        break;
+      case 88:
+        asprintf(&name, "VarDateFromUI1");
+        break;
+      case 89:
+        asprintf(&name, "VarDateFromI2");
+        break;
+      case 90:
+        asprintf(&name, "VarDateFromI4");
+        break;
+      case 91:
+        asprintf(&name, "VarDateFromR4");
+        break;
+      case 92:
+        asprintf(&name, "VarDateFromR8");
+        break;
+      case 93:
+        asprintf(&name, "VarDateFromCy");
+        break;
+      case 94:
+        asprintf(&name, "VarDateFromStr");
+        break;
+      case 95:
+        asprintf(&name, "VarDateFromDisp");
+        break;
+      case 96:
+        asprintf(&name, "VarDateFromBool");
+        break;
+      case 97:
+        asprintf(&name, "VarFormatDateTime");
+        break;
+      case 98:
+        asprintf(&name, "VarCyFromUI1");
+        break;
+      case 99:
+        asprintf(&name, "VarCyFromI2");
+        break;
+      case 100:
+        asprintf(&name, "VarCyFromI4");
+        break;
+      case 101:
+        asprintf(&name, "VarCyFromR4");
+        break;
+      case 102:
+        asprintf(&name, "VarCyFromR8");
+        break;
+      case 103:
+        asprintf(&name, "VarCyFromDate");
+        break;
+      case 104:
+        asprintf(&name, "VarCyFromStr");
+        break;
+      case 105:
+        asprintf(&name, "VarCyFromDisp");
+        break;
+      case 106:
+        asprintf(&name, "VarCyFromBool");
+        break;
+      case 107:
+        asprintf(&name, "VarFormatNumber");
+        break;
+      case 108:
+        asprintf(&name, "VarBstrFromUI1");
+        break;
+      case 109:
+        asprintf(&name, "VarBstrFromI2");
+        break;
+      case 110:
+        asprintf(&name, "VarBstrFromI4");
+        break;
+      case 111:
+        asprintf(&name, "VarBstrFromR4");
+        break;
+      case 112:
+        asprintf(&name, "VarBstrFromR8");
+        break;
+      case 113:
+        asprintf(&name, "VarBstrFromCy");
+        break;
+      case 114:
+        asprintf(&name, "VarBstrFromDate");
+        break;
+      case 115:
+        asprintf(&name, "VarBstrFromDisp");
+        break;
+      case 116:
+        asprintf(&name, "VarBstrFromBool");
+        break;
+      case 117:
+        asprintf(&name, "VarFormatPercent");
+        break;
+      case 118:
+        asprintf(&name, "VarBoolFromUI1");
+        break;
+      case 119:
+        asprintf(&name, "VarBoolFromI2");
+        break;
+      case 120:
+        asprintf(&name, "VarBoolFromI4");
+        break;
+      case 121:
+        asprintf(&name, "VarBoolFromR4");
+        break;
+      case 122:
+        asprintf(&name, "VarBoolFromR8");
+        break;
+      case 123:
+        asprintf(&name, "VarBoolFromDate");
+        break;
+      case 124:
+        asprintf(&name, "VarBoolFromCy");
+        break;
+      case 125:
+        asprintf(&name, "VarBoolFromStr");
+        break;
+      case 126:
+        asprintf(&name, "VarBoolFromDisp");
+        break;
+      case 127:
+        asprintf(&name, "VarFormatCurrency");
+        break;
+      case 128:
+        asprintf(&name, "VarWeekdayName");
+        break;
+      case 129:
+        asprintf(&name, "VarMonthName");
+        break;
+      case 130:
+        asprintf(&name, "VarUI1FromI2");
+        break;
+      case 131:
+        asprintf(&name, "VarUI1FromI4");
+        break;
+      case 132:
+        asprintf(&name, "VarUI1FromR4");
+        break;
+      case 133:
+        asprintf(&name, "VarUI1FromR8");
+        break;
+      case 134:
+        asprintf(&name, "VarUI1FromCy");
+        break;
+      case 135:
+        asprintf(&name, "VarUI1FromDate");
+        break;
+      case 136:
+        asprintf(&name, "VarUI1FromStr");
+        break;
+      case 137:
+        asprintf(&name, "VarUI1FromDisp");
+        break;
+      case 138:
+        asprintf(&name, "VarUI1FromBool");
+        break;
+      case 139:
+        asprintf(&name, "VarFormatFromTokens");
+        break;
+      case 140:
+        asprintf(&name, "VarTokenizeFormatString");
+        break;
+      case 141:
+        asprintf(&name, "VarAdd");
+        break;
+      case 142:
+        asprintf(&name, "VarAnd");
+        break;
+      case 143:
+        asprintf(&name, "VarDiv");
+        break;
+      case 144:
+        asprintf(&name, "DllCanUnloadNow");
+        break;
+      case 145:
+        asprintf(&name, "DllGetClassObject");
+        break;
+      case 146:
+        asprintf(&name, "DispCallFunc");
+        break;
+      case 147:
+        asprintf(&name, "VariantChangeTypeEx");
+        break;
+      case 148:
+        asprintf(&name, "SafeArrayPtrOfIndex");
+        break;
+      case 149:
+        asprintf(&name, "SysStringByteLen");
+        break;
+      case 150:
+        asprintf(&name, "SysAllocStringByteLen");
+        break;
+      case 151:
+        asprintf(&name, "DllRegisterServer");
+        break;
+      case 152:
+        asprintf(&name, "VarEqv");
+        break;
+      case 153:
+        asprintf(&name, "VarIdiv");
+        break;
+      case 154:
+        asprintf(&name, "VarImp");
+        break;
+      case 155:
+        asprintf(&name, "VarMod");
+        break;
+      case 156:
+        asprintf(&name, "VarMul");
+        break;
+      case 157:
+        asprintf(&name, "VarOr");
+        break;
+      case 158:
+        asprintf(&name, "VarPow");
+        break;
+      case 159:
+        asprintf(&name, "VarSub");
+        break;
+      case 160:
+        asprintf(&name, "CreateTypeLib");
+        break;
+      case 161:
+        asprintf(&name, "LoadTypeLib");
+        break;
+      case 162:
+        asprintf(&name, "LoadRegTypeLib");
+        break;
+      case 163:
+        asprintf(&name, "RegisterTypeLib");
+        break;
+      case 164:
+        asprintf(&name, "QueryPathOfRegTypeLib");
+        break;
+      case 165:
+        asprintf(&name, "LHashValOfNameSys");
+        break;
+      case 166:
+        asprintf(&name, "LHashValOfNameSysA");
+        break;
+      case 167:
+        asprintf(&name, "VarXor");
+        break;
+      case 168:
+        asprintf(&name, "VarAbs");
+        break;
+      case 169:
+        asprintf(&name, "VarFix");
+        break;
+      case 170:
+        asprintf(&name, "OaBuildVersion");
+        break;
+      case 171:
+        asprintf(&name, "ClearCustData");
+        break;
+      case 172:
+        asprintf(&name, "VarInt");
+        break;
+      case 173:
+        asprintf(&name, "VarNeg");
+        break;
+      case 174:
+        asprintf(&name, "VarNot");
+        break;
+      case 175:
+        asprintf(&name, "VarRound");
+        break;
+      case 176:
+        asprintf(&name, "VarCmp");
+        break;
+      case 177:
+        asprintf(&name, "VarDecAdd");
+        break;
+      case 178:
+        asprintf(&name, "VarDecDiv");
+        break;
+      case 179:
+        asprintf(&name, "VarDecMul");
+        break;
+      case 180:
+        asprintf(&name, "CreateTypeLib2");
+        break;
+      case 181:
+        asprintf(&name, "VarDecSub");
+        break;
+      case 182:
+        asprintf(&name, "VarDecAbs");
+        break;
+      case 183:
+        asprintf(&name, "LoadTypeLibEx");
+        break;
+      case 184:
+        asprintf(&name, "SystemTimeToVariantTime");
+        break;
+      case 185:
+        asprintf(&name, "VariantTimeToSystemTime");
+        break;
+      case 186:
+        asprintf(&name, "UnRegisterTypeLib");
+        break;
+      case 187:
+        asprintf(&name, "VarDecFix");
+        break;
+      case 188:
+        asprintf(&name, "VarDecInt");
+        break;
+      case 189:
+        asprintf(&name, "VarDecNeg");
+        break;
+      case 190:
+        asprintf(&name, "VarDecFromUI1");
+        break;
+      case 191:
+        asprintf(&name, "VarDecFromI2");
+        break;
+      case 192:
+        asprintf(&name, "VarDecFromI4");
+        break;
+      case 193:
+        asprintf(&name, "VarDecFromR4");
+        break;
+      case 194:
+        asprintf(&name, "VarDecFromR8");
+        break;
+      case 195:
+        asprintf(&name, "VarDecFromDate");
+        break;
+      case 196:
+        asprintf(&name, "VarDecFromCy");
+        break;
+      case 197:
+        asprintf(&name, "VarDecFromStr");
+        break;
+      case 198:
+        asprintf(&name, "VarDecFromDisp");
+        break;
+      case 199:
+        asprintf(&name, "VarDecFromBool");
+        break;
+      case 200:
+        asprintf(&name, "GetErrorInfo");
+        break;
+      case 201:
+        asprintf(&name, "SetErrorInfo");
+        break;
+      case 202:
+        asprintf(&name, "CreateErrorInfo");
+        break;
+      case 203:
+        asprintf(&name, "VarDecRound");
+        break;
+      case 204:
+        asprintf(&name, "VarDecCmp");
+        break;
+      case 205:
+        asprintf(&name, "VarI2FromI1");
+        break;
+      case 206:
+        asprintf(&name, "VarI2FromUI2");
+        break;
+      case 207:
+        asprintf(&name, "VarI2FromUI4");
+        break;
+      case 208:
+        asprintf(&name, "VarI2FromDec");
+        break;
+      case 209:
+        asprintf(&name, "VarI4FromI1");
+        break;
+      case 210:
+        asprintf(&name, "VarI4FromUI2");
+        break;
+      case 211:
+        asprintf(&name, "VarI4FromUI4");
+        break;
+      case 212:
+        asprintf(&name, "VarI4FromDec");
+        break;
+      case 213:
+        asprintf(&name, "VarR4FromI1");
+        break;
+      case 214:
+        asprintf(&name, "VarR4FromUI2");
+        break;
+      case 215:
+        asprintf(&name, "VarR4FromUI4");
+        break;
+      case 216:
+        asprintf(&name, "VarR4FromDec");
+        break;
+      case 217:
+        asprintf(&name, "VarR8FromI1");
+        break;
+      case 218:
+        asprintf(&name, "VarR8FromUI2");
+        break;
+      case 219:
+        asprintf(&name, "VarR8FromUI4");
+        break;
+      case 220:
+        asprintf(&name, "VarR8FromDec");
+        break;
+      case 221:
+        asprintf(&name, "VarDateFromI1");
+        break;
+      case 222:
+        asprintf(&name, "VarDateFromUI2");
+        break;
+      case 223:
+        asprintf(&name, "VarDateFromUI4");
+        break;
+      case 224:
+        asprintf(&name, "VarDateFromDec");
+        break;
+      case 225:
+        asprintf(&name, "VarCyFromI1");
+        break;
+      case 226:
+        asprintf(&name, "VarCyFromUI2");
+        break;
+      case 227:
+        asprintf(&name, "VarCyFromUI4");
+        break;
+      case 228:
+        asprintf(&name, "VarCyFromDec");
+        break;
+      case 229:
+        asprintf(&name, "VarBstrFromI1");
+        break;
+      case 230:
+        asprintf(&name, "VarBstrFromUI2");
+        break;
+      case 231:
+        asprintf(&name, "VarBstrFromUI4");
+        break;
+      case 232:
+        asprintf(&name, "VarBstrFromDec");
+        break;
+      case 233:
+        asprintf(&name, "VarBoolFromI1");
+        break;
+      case 234:
+        asprintf(&name, "VarBoolFromUI2");
+        break;
+      case 235:
+        asprintf(&name, "VarBoolFromUI4");
+        break;
+      case 236:
+        asprintf(&name, "VarBoolFromDec");
+        break;
+      case 237:
+        asprintf(&name, "VarUI1FromI1");
+        break;
+      case 238:
+        asprintf(&name, "VarUI1FromUI2");
+        break;
+      case 239:
+        asprintf(&name, "VarUI1FromUI4");
+        break;
+      case 240:
+        asprintf(&name, "VarUI1FromDec");
+        break;
+      case 241:
+        asprintf(&name, "VarDecFromI1");
+        break;
+      case 242:
+        asprintf(&name, "VarDecFromUI2");
+        break;
+      case 243:
+        asprintf(&name, "VarDecFromUI4");
+        break;
+      case 244:
+        asprintf(&name, "VarI1FromUI1");
+        break;
+      case 245:
+        asprintf(&name, "VarI1FromI2");
+        break;
+      case 246:
+        asprintf(&name, "VarI1FromI4");
+        break;
+      case 247:
+        asprintf(&name, "VarI1FromR4");
+        break;
+      case 248:
+        asprintf(&name, "VarI1FromR8");
+        break;
+      case 249:
+        asprintf(&name, "VarI1FromDate");
+        break;
+      case 250:
+        asprintf(&name, "VarI1FromCy");
+        break;
+      case 251:
+        asprintf(&name, "VarI1FromStr");
+        break;
+      case 252:
+        asprintf(&name, "VarI1FromDisp");
+        break;
+      case 253:
+        asprintf(&name, "VarI1FromBool");
+        break;
+      case 254:
+        asprintf(&name, "VarI1FromUI2");
+        break;
+      case 255:
+        asprintf(&name, "VarI1FromUI4");
+        break;
+      case 256:
+        asprintf(&name, "VarI1FromDec");
+        break;
+      case 257:
+        asprintf(&name, "VarUI2FromUI1");
+        break;
+      case 258:
+        asprintf(&name, "VarUI2FromI2");
+        break;
+      case 259:
+        asprintf(&name, "VarUI2FromI4");
+        break;
+      case 260:
+        asprintf(&name, "VarUI2FromR4");
+        break;
+      case 261:
+        asprintf(&name, "VarUI2FromR8");
+        break;
+      case 262:
+        asprintf(&name, "VarUI2FromDate");
+        break;
+      case 263:
+        asprintf(&name, "VarUI2FromCy");
+        break;
+      case 264:
+        asprintf(&name, "VarUI2FromStr");
+        break;
+      case 265:
+        asprintf(&name, "VarUI2FromDisp");
+        break;
+      case 266:
+        asprintf(&name, "VarUI2FromBool");
+        break;
+      case 267:
+        asprintf(&name, "VarUI2FromI1");
+        break;
+      case 268:
+        asprintf(&name, "VarUI2FromUI4");
+        break;
+      case 269:
+        asprintf(&name, "VarUI2FromDec");
+        break;
+      case 270:
+        asprintf(&name, "VarUI4FromUI1");
+        break;
+      case 271:
+        asprintf(&name, "VarUI4FromI2");
+        break;
+      case 272:
+        asprintf(&name, "VarUI4FromI4");
+        break;
+      case 273:
+        asprintf(&name, "VarUI4FromR4");
+        break;
+      case 274:
+        asprintf(&name, "VarUI4FromR8");
+        break;
+      case 275:
+        asprintf(&name, "VarUI4FromDate");
+        break;
+      case 276:
+        asprintf(&name, "VarUI4FromCy");
+        break;
+      case 277:
+        asprintf(&name, "VarUI4FromStr");
+        break;
+      case 278:
+        asprintf(&name, "VarUI4FromDisp");
+        break;
+      case 279:
+        asprintf(&name, "VarUI4FromBool");
+        break;
+      case 280:
+        asprintf(&name, "VarUI4FromI1");
+        break;
+      case 281:
+        asprintf(&name, "VarUI4FromUI2");
+        break;
+      case 282:
+        asprintf(&name, "VarUI4FromDec");
+        break;
+      case 283:
+        asprintf(&name, "BSTR_UserSize");
+        break;
+      case 284:
+        asprintf(&name, "BSTR_UserMarshal");
+        break;
+      case 285:
+        asprintf(&name, "BSTR_UserUnmarshal");
+        break;
+      case 286:
+        asprintf(&name, "BSTR_UserFree");
+        break;
+      case 287:
+        asprintf(&name, "VARIANT_UserSize");
+        break;
+      case 288:
+        asprintf(&name, "VARIANT_UserMarshal");
+        break;
+      case 289:
+        asprintf(&name, "VARIANT_UserUnmarshal");
+        break;
+      case 290:
+        asprintf(&name, "VARIANT_UserFree");
+        break;
+      case 291:
+        asprintf(&name, "LPSAFEARRAY_UserSize");
+        break;
+      case 292:
+        asprintf(&name, "LPSAFEARRAY_UserMarshal");
+        break;
+      case 293:
+        asprintf(&name, "LPSAFEARRAY_UserUnmarshal");
+        break;
+      case 294:
+        asprintf(&name, "LPSAFEARRAY_UserFree");
+        break;
+      case 295:
+        asprintf(&name, "LPSAFEARRAY_Size");
+        break;
+      case 296:
+        asprintf(&name, "LPSAFEARRAY_Marshal");
+        break;
+      case 297:
+        asprintf(&name, "LPSAFEARRAY_Unmarshal");
+        break;
+      case 298:
+        asprintf(&name, "VarDecCmpR8");
+        break;
+      case 299:
+        asprintf(&name, "VarCyAdd");
+        break;
+      case 300:
+        asprintf(&name, "DllUnregisterServer");
+        break;
+      case 301:
+        asprintf(&name, "OACreateTypeLib2");
+        break;
+      case 303:
+        asprintf(&name, "VarCyMul");
+        break;
+      case 304:
+        asprintf(&name, "VarCyMulI4");
+        break;
+      case 305:
+        asprintf(&name, "VarCySub");
+        break;
+      case 306:
+        asprintf(&name, "VarCyAbs");
+        break;
+      case 307:
+        asprintf(&name, "VarCyFix");
+        break;
+      case 308:
+        asprintf(&name, "VarCyInt");
+        break;
+      case 309:
+        asprintf(&name, "VarCyNeg");
+        break;
+      case 310:
+        asprintf(&name, "VarCyRound");
+        break;
+      case 311:
+        asprintf(&name, "VarCyCmp");
+        break;
+      case 312:
+        asprintf(&name, "VarCyCmpR8");
+        break;
+      case 313:
+        asprintf(&name, "VarBstrCat");
+        break;
+      case 314:
+        asprintf(&name, "VarBstrCmp");
+        break;
+      case 315:
+        asprintf(&name, "VarR8Pow");
+        break;
+      case 316:
+        asprintf(&name, "VarR4CmpR8");
+        break;
+      case 317:
+        asprintf(&name, "VarR8Round");
+        break;
+      case 318:
+        asprintf(&name, "VarCat");
+        break;
+      case 319:
+        asprintf(&name, "VarDateFromUdateEx");
+        break;
+      case 322:
+        asprintf(&name, "GetRecordInfoFromGuids");
+        break;
+      case 323:
+        asprintf(&name, "GetRecordInfoFromTypeInfo");
+        break;
+      case 325:
+        asprintf(&name, "SetVarConversionLocaleSetting");
+        break;
+      case 326:
+        asprintf(&name, "GetVarConversionLocaleSetting");
+        break;
+      case 327:
+        asprintf(&name, "SetOaNoCache");
+        break;
+      case 329:
+        asprintf(&name, "VarCyMulI8");
+        break;
+      case 330:
+        asprintf(&name, "VarDateFromUdate");
+        break;
+      case 331:
+        asprintf(&name, "VarUdateFromDate");
+        break;
+      case 332:
+        asprintf(&name, "GetAltMonthNames");
+        break;
+      case 333:
+        asprintf(&name, "VarI8FromUI1");
+        break;
+      case 334:
+        asprintf(&name, "VarI8FromI2");
+        break;
+      case 335:
+        asprintf(&name, "VarI8FromR4");
+        break;
+      case 336:
+        asprintf(&name, "VarI8FromR8");
+        break;
+      case 337:
+        asprintf(&name, "VarI8FromCy");
+        break;
+      case 338:
+        asprintf(&name, "VarI8FromDate");
+        break;
+      case 339:
+        asprintf(&name, "VarI8FromStr");
+        break;
+      case 340:
+        asprintf(&name, "VarI8FromDisp");
+        break;
+      case 341:
+        asprintf(&name, "VarI8FromBool");
+        break;
+      case 342:
+        asprintf(&name, "VarI8FromI1");
+        break;
+      case 343:
+        asprintf(&name, "VarI8FromUI2");
+        break;
+      case 344:
+        asprintf(&name, "VarI8FromUI4");
+        break;
+      case 345:
+        asprintf(&name, "VarI8FromDec");
+        break;
+      case 346:
+        asprintf(&name, "VarI2FromI8");
+        break;
+      case 347:
+        asprintf(&name, "VarI2FromUI8");
+        break;
+      case 348:
+        asprintf(&name, "VarI4FromI8");
+        break;
+      case 349:
+        asprintf(&name, "VarI4FromUI8");
+        break;
+      case 360:
+        asprintf(&name, "VarR4FromI8");
+        break;
+      case 361:
+        asprintf(&name, "VarR4FromUI8");
+        break;
+      case 362:
+        asprintf(&name, "VarR8FromI8");
+        break;
+      case 363:
+        asprintf(&name, "VarR8FromUI8");
+        break;
+      case 364:
+        asprintf(&name, "VarDateFromI8");
+        break;
+      case 365:
+        asprintf(&name, "VarDateFromUI8");
+        break;
+      case 366:
+        asprintf(&name, "VarCyFromI8");
+        break;
+      case 367:
+        asprintf(&name, "VarCyFromUI8");
+        break;
+      case 368:
+        asprintf(&name, "VarBstrFromI8");
+        break;
+      case 369:
+        asprintf(&name, "VarBstrFromUI8");
+        break;
+      case 370:
+        asprintf(&name, "VarBoolFromI8");
+        break;
+      case 371:
+        asprintf(&name, "VarBoolFromUI8");
+        break;
+      case 372:
+        asprintf(&name, "VarUI1FromI8");
+        break;
+      case 373:
+        asprintf(&name, "VarUI1FromUI8");
+        break;
+      case 374:
+        asprintf(&name, "VarDecFromI8");
+        break;
+      case 375:
+        asprintf(&name, "VarDecFromUI8");
+        break;
+      case 376:
+        asprintf(&name, "VarI1FromI8");
+        break;
+      case 377:
+        asprintf(&name, "VarI1FromUI8");
+        break;
+      case 378:
+        asprintf(&name, "VarUI2FromI8");
+        break;
+      case 379:
+        asprintf(&name, "VarUI2FromUI8");
+        break;
+      case 401:
+        asprintf(&name, "OleLoadPictureEx");
+        break;
+      case 402:
+        asprintf(&name, "OleLoadPictureFileEx");
+        break;
+      case 411:
+        asprintf(&name, "SafeArrayCreateVector");
+        break;
+      case 412:
+        asprintf(&name, "SafeArrayCopyData");
+        break;
+      case 413:
+        asprintf(&name, "VectorFromBstr");
+        break;
+      case 414:
+        asprintf(&name, "BstrFromVector");
+        break;
+      case 415:
+        asprintf(&name, "OleIconToCursor");
+        break;
+      case 416:
+        asprintf(&name, "OleCreatePropertyFrameIndirect");
+        break;
+      case 417:
+        asprintf(&name, "OleCreatePropertyFrame");
+        break;
+      case 418:
+        asprintf(&name, "OleLoadPicture");
+        break;
+      case 419:
+        asprintf(&name, "OleCreatePictureIndirect");
+        break;
+      case 420:
+        asprintf(&name, "OleCreateFontIndirect");
+        break;
+      case 421:
+        asprintf(&name, "OleTranslateColor");
+        break;
+      case 422:
+        asprintf(&name, "OleLoadPictureFile");
+        break;
+      case 423:
+        asprintf(&name, "OleSavePictureFile");
+        break;
+      case 424:
+        asprintf(&name, "OleLoadPicturePath");
+        break;
+      case 425:
+        asprintf(&name, "VarUI4FromI8");
+        break;
+      case 426:
+        asprintf(&name, "VarUI4FromUI8");
+        break;
+      case 427:
+        asprintf(&name, "VarI8FromUI8");
+        break;
+      case 428:
+        asprintf(&name, "VarUI8FromI8");
+        break;
+      case 429:
+        asprintf(&name, "VarUI8FromUI1");
+        break;
+      case 430:
+        asprintf(&name, "VarUI8FromI2");
+        break;
+      case 431:
+        asprintf(&name, "VarUI8FromR4");
+        break;
+      case 432:
+        asprintf(&name, "VarUI8FromR8");
+        break;
+      case 433:
+        asprintf(&name, "VarUI8FromCy");
+        break;
+      case 434:
+        asprintf(&name, "VarUI8FromDate");
+        break;
+      case 435:
+        asprintf(&name, "VarUI8FromStr");
+        break;
+      case 436:
+        asprintf(&name, "VarUI8FromDisp");
+        break;
+      case 437:
+        asprintf(&name, "VarUI8FromBool");
+        break;
+      case 438:
+        asprintf(&name, "VarUI8FromI1");
+        break;
+      case 439:
+        asprintf(&name, "VarUI8FromUI2");
+        break;
+      case 440:
+        asprintf(&name, "VarUI8FromUI4");
+        break;
+      case 441:
+        asprintf(&name, "VarUI8FromDec");
+        break;
+      case 442:
+        asprintf(&name, "RegisterTypeLibForUser");
+        break;
+      case 443:
+        asprintf(&name, "UnRegisterTypeLibForUser");
+        break;
+      default:
+        break;
+    }
+  }
+  if (!name)
+    asprintf(&name, "ord%u", ord);
+  return name;
+}
 
 PIMAGE_NT_HEADERS32 pe_get_header(
     uint8_t* data,
@@ -125,6 +1724,92 @@ PIMAGE_NT_HEADERS32 pe_get_header(
   {
     return NULL;
   }
+}
+
+
+// Parse the rich signature.
+// http://www.ntcore.com/files/richsign.htm
+void *pe_get_rich_signature(
+    uint8_t* buffer,
+    size_t buffer_length,
+    YR_OBJECT* pe_obj)
+{
+  PIMAGE_DOS_HEADER mz_header;
+  PIMAGE_NT_HEADERS32 pe_header;
+  PRICH_SIGNATURE rich_signature;
+  DWORD* rich_ptr;
+
+  BYTE* raw_data = NULL;
+  BYTE* clear_data = NULL;
+  size_t headers_size = 0;
+  size_t rich_len = 0;
+
+  if (buffer_length < sizeof(IMAGE_DOS_HEADER))
+    return NULL;
+
+  mz_header = (PIMAGE_DOS_HEADER) buffer;
+
+  if (mz_header->e_magic != IMAGE_DOS_SIGNATURE)
+    return NULL;
+
+  if (mz_header->e_lfanew < 0)
+    return NULL;
+
+  headers_size = mz_header->e_lfanew + \
+                 sizeof(pe_header->Signature) + \
+                 sizeof(IMAGE_FILE_HEADER);
+
+  if (buffer_length < headers_size)
+    return NULL;
+
+  /*
+   * From offset 0x80 until the start of the PE header should be the Rich
+   * signature. The three key values must all be equal and the first dword
+   * XORs to "DanS". Then walk the buffer looking for "Rich" which marks the
+   * end. Technically the XOR key should be right after "Rich" but it's not
+   * important.
+   */
+  rich_signature = (PRICH_SIGNATURE) (buffer + 0x80);
+  if (rich_signature->key1 != rich_signature->key2 ||
+      rich_signature->key2 != rich_signature->key3 ||
+      (rich_signature->dans ^ rich_signature->key1) != RICH_DANS)
+    return NULL;
+
+  for (rich_ptr = (DWORD *) rich_signature; rich_ptr <= (DWORD *) (buffer + headers_size); rich_ptr++) {
+    if (*rich_ptr == RICH_RICH) {
+      // Multiple by 4 because we are counting in DWORDs.
+      rich_len = (rich_ptr - (DWORD *) rich_signature) * 4;
+      raw_data = (BYTE *) yr_malloc(rich_len);
+      if (!raw_data)
+        return NULL;
+
+      memcpy(raw_data, rich_signature, rich_len);
+      set_integer(htonl(rich_signature->dans), pe_obj, "rich_signature.start");
+      set_integer(htonl(rich_signature->key1), pe_obj, "rich_signature.key");
+      break;
+    }
+  }
+
+  /* Walk the entire block and apply the XOR key. */
+  if (raw_data) {
+    clear_data = (BYTE *) yr_malloc(rich_len);
+    if (!clear_data) {
+      yr_free(raw_data);
+      return NULL;
+    }
+
+    /* Copy the entire block here to be XORed */
+    memcpy(clear_data, raw_data, rich_len);
+    for (rich_ptr = (DWORD *) clear_data; rich_ptr < (DWORD *) (clear_data + rich_len); rich_ptr++) {
+      *rich_ptr ^= rich_signature->key1;
+    }
+
+    set_sized_string((char *) raw_data, rich_len, pe_obj, "rich_signature.raw_data");
+    set_sized_string((char *) clear_data, rich_len, pe_obj, "rich_signature.clear_data");
+    return NULL;
+  }
+
+  return NULL;
 }
 
 
@@ -432,6 +2117,7 @@ void pe_parse(
   PIMAGE_SECTION_HEADER section;
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
+  size_t str_size;
 
 #define OptionalHeader(field) \
   (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64 ? \
@@ -514,7 +2200,7 @@ void pe_parse(
     if (!struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
       break;
 
-    strlcpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME + 1);
+    str_size = strlcpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME + 1);
 
     set_string(
         section_name,
@@ -545,6 +2231,7 @@ void pe_parse(
 define_function(section_index)
 {
   YR_OBJECT* module = module();
+  SIZED_STRING* sect;
   char* name = string_argument(1);
 
   int64_t n = get_integer(module, "number_of_sections");
@@ -555,7 +2242,8 @@ define_function(section_index)
 
   for (i = 0; i < n; i++)
   {
-    if (strcmp(name, get_string(module, "sections[%i].name", i)) == 0)
+    sect = get_string(module, "sections[%i].name", i);
+    if (strcmp(name, sect->c_string) == 0)
       return_integer(i);
   }
 
@@ -623,38 +2311,172 @@ define_function(exports)
 }
 
 
-define_function(imports)
+/*
+ * Generate an import hash:
+ * https://www.mandiant.com/blog/tracking-malware-import-hashing/
+ * It is important to make duplicates of the strings as we don't want
+ * to alter the contents of the parsed import structures.
+ */
+define_function(imphash)
 {
-  char* dll_name = string_argument(1);
-  char* function_name = string_argument(2);
-  int function_name_len = strlen(function_name);
-
+  char *p;
+  char *dll_name;
+  char *final_name;
+  size_t len;
+  int i;
+  MD5_CTX ctx;
+  unsigned char md_value[MD5_BLOCK_SIZE];
+  char *final_hash;
+  char *hash = string_argument(1);
+  int first = 1;
+  int result = 0;
+  PIMPORT_LIST cur_dll_node = NULL;
+  PIMPORT_FUNC_LIST cur_func_node = NULL;
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
+  // If not a PE, return 0.
+  if (!pe)
+    return_integer(UNDEFINED);
+
+  md5_init(&ctx);
+
+  cur_dll_node = pe->imports;
+  while (cur_dll_node) {
+    // If extension is 'ocx', 'sys' or 'dll', chop it.
+    p = strstr(cur_dll_node->dll, ".");
+    if (p && (strncasecmp(p, ".ocx", 4) == 0 ||
+              strncasecmp(p, ".sys", 4) == 0 ||
+              strncasecmp(p, ".dll", 4) == 0)) {
+      len = (p - cur_dll_node->dll) + 1;
+    }
+    else {
+      len = strlen(cur_dll_node->dll) + 1;
+    }
+
+    // Allocate a new string to hold the dll name.
+    dll_name = (char *) yr_malloc(len);
+    strlcpy(dll_name, cur_dll_node->dll, len);
+
+    cur_func_node = cur_dll_node->names;
+    while (cur_func_node) {
+      if (first == 1) {
+        asprintf(&final_name, "%s.%s", dll_name, cur_func_node->name);
+        first = 0;
+      } else {
+        asprintf(&final_name, ",%s.%s", dll_name, cur_func_node->name);
+      }
+
+      // Lowercase the whole thing.
+      for (i = 0; i < strlen(final_name); i++) {
+        final_name[i] = tolower(final_name[i]);
+      }
+
+      md5_update(&ctx, (MD_BYTE *) final_name, strlen(final_name));
+
+      yr_free(final_name);
+      cur_func_node = cur_func_node->next;
+    }
+
+    yr_free(dll_name);
+    cur_dll_node = cur_dll_node->next;
+  }
+
+  md5_final(&ctx, md_value);
+
+  // Convert md_value into it's hexlified form.
+  final_hash = yr_malloc((MD5_BLOCK_SIZE * 2) + 1);
+  if (!final_hash)
+    return_integer(0);
+
+  p = final_hash;
+  for (i = 0; i < MD5_BLOCK_SIZE; i++)
+    snprintf(p + 2 * i, 3, "%02x", md_value[i]);
+
+  if (strncasecmp(hash, final_hash, (MD5_BLOCK_SIZE * 2)) == 0)
+    result = 1;
+
+  yr_free(final_hash);
+  return_integer(result);
+}
+
+
+/*
+ * Nothing fancy here. Just a sha256 of the clear data.
+ */
+define_function(richhash)
+{
+  int i;
+  SHA256_CTX ctx;
+  unsigned char md_value[SHA256_BLOCK_SIZE];
+  char *final_hash;
+  char *hash = string_argument(1);
+  int result = 0;
+  YR_OBJECT* parent = parent();
+
+  // No point in calculating the hash if the input length is wrong.
+  if (strlen(hash) != SHA256_BLOCK_SIZE * 2) {
+    return_integer(0);
+  }
+
+  SIZED_STRING *clear_data = get_string(parent, "clear_data");
+
+  sha256_init(&ctx);
+  for (i = 0; i < clear_data->length; i += 4) {
+    sha256_update(&ctx, (SHA_BYTE *) ((uint32_t *) (clear_data->c_string + i)), 0x04);
+  }
+  sha256_final(&ctx, md_value);
+
+  // Convert md_value into it's hexlified form.
+  final_hash = yr_malloc((SHA256_BLOCK_SIZE * 2) + 1);
+  if (!final_hash)
+    return_integer(0);
+
+  for (i = 0; i < SHA256_BLOCK_SIZE; i++) {
+    snprintf(final_hash + (2 * i), 3, "%02x", md_value[i]);
+  }
+
+  if (strncasecmp(hash, final_hash, (SHA256_BLOCK_SIZE * 2)) == 0)
+    result = 1;
+
+  yr_free(final_hash);
+  return_integer(result);
+}
+
+
+/*
+ * Walk the imports and collect relevant information. It is used in the
+ * "imports" function for comparison and in the "imphash" function for
+ * calculation.
+ */
+PIMPORT_LIST parse_imports(PE* pe)
+{
   PIMAGE_DATA_DIRECTORY directory;
   PIMAGE_IMPORT_DESCRIPTOR imports;
   PIMAGE_IMPORT_BY_NAME import;
   PIMAGE_THUNK_DATA32 thunks32;
   PIMAGE_THUNK_DATA64 thunks64;
+  PIMPORT_LIST dll_head = NULL;
+  PIMPORT_LIST cur_dll_node = NULL;
+  PIMPORT_LIST new_dll_node = NULL;
+  PIMPORT_FUNC_LIST cur_func_node = NULL;
+  PIMPORT_FUNC_LIST new_func_node = NULL;
 
+  size_t size;
   uint64_t offset;
-
-  // if not a PE file, return UNDEFINED
-
-  if (pe == NULL)
-    return_integer(UNDEFINED);
+  uint16_t ordinal;
+  char *ord_name;
 
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
 
   if (directory->VirtualAddress == 0)
-    return_integer(0);
+    return NULL;
 
   offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
   if (offset == 0 ||
       offset + sizeof(IMAGE_IMPORT_DESCRIPTOR) > pe->data_size)
-    return_integer(0);
+    return NULL;
 
   imports = (PIMAGE_IMPORT_DESCRIPTOR)(pe->data + offset);
 
@@ -663,18 +2485,28 @@ define_function(imports)
   {
     offset = pe_rva_to_offset(pe, imports->Name);
 
-    if (offset > 0 &&
-        offset <= pe->data_size &&
-        strncasecmp(
-            dll_name,
-            (char*)(pe->data + offset),
-            pe->data_size - offset) == 0)
+    if (offset > 0 && offset <= pe->data_size)
     {
+      new_dll_node = (PIMPORT_LIST) yr_calloc(1, sizeof(IMPORT_LIST));
+      if (!new_dll_node)
+        return NULL;
+
+      if (dll_head == NULL)
+        dll_head = new_dll_node;
+
+      if (cur_dll_node != NULL)
+        cur_dll_node->next = new_dll_node;
+
+      cur_dll_node = new_dll_node;
+
+      // Store the DLL name.
+      cur_dll_node->dll = yr_strdup((char *) (pe->data + offset));
+
       offset = pe_rva_to_offset(pe, imports->OriginalFirstThunk);
 
       if (offset > 0)
       {
-        if (pe->header->FileHeader.Machine == 0x8664)
+        if (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
         {
           thunks64 = (PIMAGE_THUNK_DATA64)(pe->data + offset);
 
@@ -691,20 +2523,55 @@ define_function(imports)
               {
                 import = (PIMAGE_IMPORT_BY_NAME)(pe->data + offset);
 
-                if (fits_in_pe(pe, import->Name, function_name_len))
-                {
-                  if (strncmp((char*) import->Name,
-                              function_name,
-                              function_name_len) == 0)
-                  {
-                    return_integer(1);
-                  }
-                }
+                /*
+                 * Make sure there is a NULL byte somewhere between
+                 * import->Name and the end of PE. If strnlen() can't find the
+                 * end of the string, it will return the number of bytes until
+                 * the end of PE. If this happens, return.
+                 */
+                size = strnlen((char *) import->Name, (pe->data + pe->data_size) - import->Name);
+                if (size == (pe->data + pe->data_size) - import->Name)
+                  return NULL;
+
+                new_func_node = (PIMPORT_FUNC_LIST) yr_calloc(1, sizeof(IMPORT_FUNC_LIST));
+                if (!new_func_node)
+                  return NULL;
+
+                if (cur_func_node != NULL)
+                  cur_func_node->next = new_func_node;
+
+                cur_func_node = new_func_node;
+                if (cur_dll_node->names == NULL)
+                  cur_dll_node->names = cur_func_node;
+
+                // Store the function name.
+                cur_func_node->name = yr_strdup((char *) import->Name);
               }
             }
+            else
+            {
+              // Exported by ordinal.
+              ordinal = thunks64->u1.Ordinal & 0xFFFF;
+              new_func_node = (PIMPORT_FUNC_LIST) yr_calloc(1, sizeof(IMPORT_FUNC_LIST));
+              if (!new_func_node)
+                return NULL;
 
+              if (cur_func_node != NULL)
+                cur_func_node->next = new_func_node;
+
+              cur_func_node = new_func_node;
+              if (cur_dll_node->names == NULL)
+                cur_dll_node->names = cur_func_node;
+
+              // Lookup the ordinal.
+              ord_name = ord_lookup(cur_dll_node->dll, ordinal);
+              if (ord_name == NULL)
+                return NULL;
+              cur_func_node->name = yr_strdup(ord_name);
+            }
             thunks64++;
           }
+          cur_func_node = NULL;
         }
         else
         {
@@ -723,25 +2590,95 @@ define_function(imports)
               {
                 import = (PIMAGE_IMPORT_BY_NAME)(pe->data + offset);
 
-                if (fits_in_pe(pe, import->Name, function_name_len))
-                {
-                  if (strncmp((char*) import->Name,
-                              function_name,
-                              function_name_len) == 0)
-                  {
-                    return_integer(1);
-                  }
-                }
+                /*
+                 * Make sure there is a NULL byte somewhere between
+                 * import->Name and the end of PE. If strnlen() can't find the
+                 * end of the string, it will return the number of bytes until
+                 * the end of PE. If this happens, return.
+                 */
+                size = strnlen((char *) import->Name, (pe->data + pe->data_size) - import->Name);
+                if (size == (pe->data + pe->data_size) - import->Name)
+                  return NULL;
+
+                new_func_node = (PIMPORT_FUNC_LIST) yr_calloc(1, sizeof(IMPORT_FUNC_LIST));
+                if (!new_func_node)
+                  return NULL;
+
+                if (cur_func_node != NULL)
+                  cur_func_node->next = new_func_node;
+
+                cur_func_node = new_func_node;
+                if (cur_dll_node->names == NULL)
+                  cur_dll_node->names = cur_func_node;
+
+                // Store the function name.
+                cur_func_node->name = yr_strdup((char *) import->Name);
               }
             }
+            else
+            {
+              // Exported by ordinal.
+              ordinal = thunks32->u1.Ordinal & 0xFFFF;
+              new_func_node = (PIMPORT_FUNC_LIST) yr_calloc(1, sizeof(IMPORT_FUNC_LIST));
+              if (!new_func_node)
+                return NULL;
 
+              if (cur_func_node != NULL)
+                cur_func_node->next = new_func_node;
+
+              cur_func_node = new_func_node;
+              if (cur_dll_node->names == NULL)
+                cur_dll_node->names = cur_func_node;
+
+              // Lookup the ordinal.
+              ord_name = ord_lookup(cur_dll_node->dll, ordinal);
+              if (ord_name == NULL)
+                return NULL;
+              cur_func_node->name = yr_strdup(ord_name);
+            }
             thunks32++;
           }
+          cur_func_node = NULL;
         }
       }
     }
 
     imports++;
+  }
+
+  return dll_head;
+}
+
+
+define_function(imports)
+{
+  PIMPORT_LIST cur_dll_node = NULL;
+  PIMPORT_FUNC_LIST cur_func_node = NULL;
+  char* dll_name = string_argument(1);
+  char* function_name = string_argument(2);
+  int function_name_len = strlen(function_name);
+  int dll_name_len = strlen(dll_name);
+
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  if (!pe)
+    return_integer(UNDEFINED);
+
+  cur_dll_node = pe->imports;
+  while (cur_dll_node)
+  {
+    if (strncasecmp(cur_dll_node->dll, dll_name, dll_name_len) == 0)
+    {
+      cur_func_node = cur_dll_node->names;
+      while (cur_func_node)
+      {
+        if (strncasecmp(cur_func_node->name, function_name, function_name_len) == 0)
+          return_integer(1);
+        cur_func_node = cur_func_node->next;
+      }
+    }
+    cur_dll_node = cur_dll_node->next;
   }
 
   return_integer(0);
@@ -902,11 +2839,20 @@ begin_declarations;
     declare_integer("raw_data_size");
   end_struct_array("sections");
 
+  begin_struct("rich_signature");
+    declare_integer("start");
+    declare_integer("key");
+    declare_string("raw_data");
+    declare_string("clear_data");
+    declare_function("richhash", "s", "i", richhash);
+  end_struct("rich_signature");
+
   declare_function("section_index", "s", "i", section_index);
   declare_function("exports", "s", "i", exports);
   declare_function("imports", "ss", "i", imports);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
+  declare_function("imphash", "s", "i", imphash);
 
 end_declarations;
 
@@ -931,6 +2877,7 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
+
   set_integer(
       IMAGE_FILE_MACHINE_I386, module_object,
       "MACHINE_I386");
@@ -1024,6 +2971,9 @@ int module_load(
         if (pe == NULL)
           return ERROR_INSUFICIENT_MEMORY;
 
+        // Get the rich signature.
+        pe_get_rich_signature(block->data, block->size, module_object);
+
         pe->data = block->data;
         pe->data_size = block->size;
         pe->header = pe_header;
@@ -1036,6 +2986,8 @@ int module_load(
             block->base,
             context->flags);
 
+        PIMPORT_LIST import_list = parse_imports(pe);
+        pe->imports = import_list;
         break;
       }
     }
@@ -1047,8 +2999,28 @@ int module_load(
 
 int module_unload(YR_OBJECT* module_object)
 {
-  if (module_object->data != NULL)
+  PIMPORT_LIST cur_dll_node = NULL;
+  PIMPORT_LIST next_dll_node = NULL;
+  PIMPORT_FUNC_LIST cur_func_node = NULL;
+  PIMPORT_FUNC_LIST next_func_node = NULL;
+  PE* pe = (PE *) module_object->data;
+  if (pe != NULL) {
+    if (pe->imports) {
+      cur_dll_node = pe->imports;
+      while (cur_dll_node) {
+        cur_func_node = cur_dll_node->names;
+        while (cur_func_node) {
+          next_func_node = cur_func_node->next;
+          yr_free(cur_func_node);
+          cur_func_node = next_func_node;
+        }
+        next_dll_node = cur_dll_node->next;
+        yr_free(cur_dll_node);
+        cur_dll_node = next_dll_node;
+      }
+    }
     yr_free(module_object->data);
+  }
 
   return ERROR_SUCCESS;
 }

@@ -918,6 +918,38 @@ expression
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
+    | primary_expression _CONTAINS_ _STRING_IDENTIFIER_
+      {
+        CHECK_TYPE($1, EXPRESSION_TYPE_STRING, "contains");
+
+        int result = yr_parser_reduce_string_identifier(
+            yyscanner,
+            $3,
+            OP_CONTAINS_STR,
+            UNDEFINED);
+
+        yr_free($3);
+
+        ERROR_IF(result != ERROR_SUCCESS);
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _MATCHES_ _STRING_IDENTIFIER_
+      {
+        CHECK_TYPE($1, EXPRESSION_TYPE_STRING, "matches");
+
+        int result = yr_parser_reduce_string_identifier(
+            yyscanner,
+            $3,
+            OP_MATCHES_STR,
+            UNDEFINED);
+
+        yr_free($3);
+
+        ERROR_IF(result != ERROR_SUCCESS);
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
     | _STRING_IDENTIFIER_
       {
         int result = yr_parser_reduce_string_identifier(

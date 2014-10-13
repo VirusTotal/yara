@@ -77,6 +77,26 @@ typedef struct _IMAGE_DOS_HEADER {      // DOS .EXE header
 #pragma pack(pop)
 
 //
+// Rich signature.
+// http://www.ntcore.com/files/richsign.htm
+//
+typedef struct _RICH_SIGNATURE {
+    DWORD dans;
+    DWORD key1;
+    DWORD key2;
+    DWORD key3;
+  } RICH_SIGNATURE, *PRICH_SIGNATURE;
+
+#define RICH_DANS 0x536e6144 // "DanS"
+#define RICH_RICH 0x68636952 // "Rich"
+
+typedef struct _RICH_DATA {
+    size_t len;
+    BYTE* raw_data;
+    BYTE* clear_data;
+  } RICH_DATA, *PRICH_DATA;
+
+//
 // File header format.
 //
 

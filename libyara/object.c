@@ -260,7 +260,7 @@ int yr_object_from_external_variable(
 
       case EXTERNAL_VARIABLE_TYPE_STRING:
       case EXTERNAL_VARIABLE_TYPE_MALLOC_STRING:
-        yr_object_set_string(external->string, obj, NULL);
+        yr_object_set_string(external->string, strlen(external->string), obj, NULL);
         break;
     }
 
@@ -281,7 +281,7 @@ void yr_object_destroy(
 
   RE* re;
   int i;
-  char* str;
+  SIZED_STRING* str;
 
   switch(object->type)
   {
@@ -810,7 +810,7 @@ int64_t yr_object_get_integer(
 }
 
 
-char* yr_object_get_string(
+SIZED_STRING* yr_object_get_string(
     YR_OBJECT* object,
     char* field,
     ...)
@@ -865,6 +865,7 @@ void yr_object_set_integer(
 
 void yr_object_set_string(
     char* value,
+    size_t len,
     YR_OBJECT* object,
     char* field,
     ...)
@@ -888,7 +889,10 @@ void yr_object_set_string(
   if (string_obj->value != NULL)
     yr_free(string_obj->value);
 
-  string_obj->value = yr_strdup(value);
+  string_obj->value = (SIZED_STRING*) yr_malloc(len + sizeof(SIZED_STRING));
+  string_obj->value->length = len;
+  string_obj->value->flags = 0;
+  memcpy(string_obj->value->c_string, value, len);
 }
 
 
@@ -935,7 +939,7 @@ void yr_object_print_data(
             "%s%s = \"%s\"\n",
             indent_spaces,
             object->identifier,
-            ((YR_OBJECT_STRING*) object)->value);
+            ((YR_OBJECT_STRING*) object)->value->c_string);
       break;
 
     case OBJECT_TYPE_STRUCTURE:

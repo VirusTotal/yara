@@ -86,6 +86,8 @@ limitations under the License.
 #define OP_MATCHES        56
 #define OP_IMPORT         57
 #define OP_LOOKUP_DICT    58
+#define OP_CONTAINS_STR   59
+#define OP_MATCHES_STR    60
 
 
 #define OPERATION(operator, op1, op2) \
