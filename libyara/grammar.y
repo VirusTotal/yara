@@ -860,7 +860,7 @@ boolean_expression
         {
           compiler->last_result = yr_parser_emit(
               yyscanner,
-              OP_SZ_TO_BOOL,
+              OP_STR_TO_BOOL,
               NULL);
 
           ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -918,44 +918,12 @@ expression
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
-    | primary_expression _CONTAINS_ _STRING_IDENTIFIER_
-      {
-        CHECK_TYPE($1, EXPRESSION_TYPE_STRING, "contains");
-
-        int result = yr_parser_reduce_string_identifier(
-            yyscanner,
-            $3,
-            OP_CONTAINS_STR,
-            UNDEFINED);
-
-        yr_free($3);
-
-        ERROR_IF(result != ERROR_SUCCESS);
-
-        $$.type = EXPRESSION_TYPE_BOOLEAN;
-      }
-    | primary_expression _MATCHES_ _STRING_IDENTIFIER_
-      {
-        CHECK_TYPE($1, EXPRESSION_TYPE_STRING, "matches");
-
-        int result = yr_parser_reduce_string_identifier(
-            yyscanner,
-            $3,
-            OP_MATCHES_STR,
-            UNDEFINED);
-
-        yr_free($3);
-
-        ERROR_IF(result != ERROR_SUCCESS);
-
-        $$.type = EXPRESSION_TYPE_BOOLEAN;
-      }
     | _STRING_IDENTIFIER_
       {
         int result = yr_parser_reduce_string_identifier(
             yyscanner,
             $1,
-            OP_STR_FOUND,
+            OP_FOUND,
             UNDEFINED);
 
         yr_free($1);
@@ -971,7 +939,7 @@ expression
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
             $1,
-            OP_STR_FOUND_AT,
+            OP_FOUND_AT,
             $3.value.integer);
 
         yr_free($1);
@@ -985,7 +953,7 @@ expression
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
             $1,
-            OP_STR_FOUND_IN,
+            OP_FOUND_IN,
             UNDEFINED);
 
         yr_free($1);
@@ -1291,7 +1259,7 @@ expression
         {
           compiler->last_result = yr_parser_emit(
               yyscanner,
-              OP_SZ_EQ,
+              OP_STR_EQ,
               NULL);
         }
         else
@@ -1318,7 +1286,7 @@ expression
         {
           compiler->last_result = yr_parser_emit(
               yyscanner,
-              OP_SZ_EQ,
+              OP_STR_EQ,
               NULL);
         }
         else
@@ -1345,7 +1313,7 @@ expression
         {
           compiler->last_result = yr_parser_emit(
               yyscanner,
-              OP_SZ_NEQ,
+              OP_STR_NEQ,
               NULL);
         }
         else
@@ -1586,13 +1554,13 @@ primary_expression
       }
     | _TEXT_STRING_
       {
-        SIZED_STRING* sized_string = $1;
-        char* string;
+        SIZED_STRING* sized_string;
 
-        compiler->last_result = yr_arena_write_string(
+        compiler->last_result = yr_arena_write_data(
             compiler->sz_arena,
-            sized_string->c_string,
-            &string);
+            $1,
+            $1->length + sizeof(SIZED_STRING),
+            (void*) &sized_string);
 
         yr_free($1);
 
@@ -1600,7 +1568,7 @@ primary_expression
           compiler->last_result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              PTR_TO_UINT64(string),
+              PTR_TO_UINT64(sized_string),
               NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -1612,7 +1580,7 @@ primary_expression
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
             $1,
-            OP_STR_COUNT,
+            OP_COUNT,
             UNDEFINED);
 
         yr_free($1);
@@ -1627,7 +1595,7 @@ primary_expression
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner,
             $1,
-            OP_STR_OFFSET,
+            OP_OFFSET,
             UNDEFINED);
 
         yr_free($1);
@@ -1649,7 +1617,7 @@ primary_expression
           compiler->last_result = yr_parser_reduce_string_identifier(
               yyscanner,
               $1,
-              OP_STR_OFFSET,
+              OP_OFFSET,
               UNDEFINED);
 
         yr_free($1);

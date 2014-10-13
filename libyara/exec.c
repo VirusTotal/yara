@@ -87,8 +87,9 @@ int yr_execute_code(
   YR_MATCH* match;
   YR_OBJECT* object;
   YR_OBJECT_FUNCTION* function;
-  SIZED_STRING *big;
-  YR_STRING *little;
+
+  SIZED_STRING* sized_str_1;
+  SIZED_STRING* sized_str_2;
 
   char* identifier;
   char* args_fmt;
@@ -265,35 +266,65 @@ int yr_execute_code(
         push(COMPARISON(!=, r1, r2));
         break;
 
-      case OP_SZ_EQ:
+      case OP_STR_EQ:
         pop(r2);
         pop(r1);
 
         if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
+        {
           push(UNDEFINED);
+        }
         else
-          push(strcmp(UINT64_TO_PTR(char*, r1),
-                      UINT64_TO_PTR(char*, r2)) == 0);
+        {
+          sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
+          sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2);
+
+          if (sized_str_1->length == sized_str_2->length)
+          {
+            push(memcmp(sized_str_1->c_string,
+                        sized_str_2->c_string,
+                        sized_str_2->length) == 0);
+          }
+          else
+          {
+            push(FALSE);
+          }
+        }
         break;
 
-      case OP_SZ_NEQ:
+      case OP_STR_NEQ:
         pop(r2);
         pop(r1);
 
         if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
+        {
           push(UNDEFINED);
+        }
         else
-          push(strcmp(UINT64_TO_PTR(char*, r1),
-                      UINT64_TO_PTR(char*, r2)) != 0);
+        {
+          sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
+          sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2);
+
+          if (sized_str_1->length == sized_str_2->length)
+          {
+            push(memcmp(sized_str_1->c_string,
+                        sized_str_2->c_string,
+                        sized_str_2->length) != 0);
+          }
+          else
+          {
+            push(TRUE);
+          }
+        }
         break;
 
-      case OP_SZ_TO_BOOL:
+      case OP_STR_TO_BOOL:
         pop(r1);
 
         if (IS_UNDEFINED(r1))
           push(UNDEFINED);
         else
-          push(strlen(UINT64_TO_PTR(char*, r1)) > 0);
+          push(UINT64_TO_PTR(SIZED_STRING*, r1)->length > 0);
 
         break;
 
@@ -478,7 +509,7 @@ int yr_execute_code(
         assert(object->type == OBJECT_TYPE_DICTIONARY);
 
         object = yr_object_dict_get_item(
-            object, 0, UINT64_TO_PTR(const char*, r1));
+            object, 0, UINT64_TO_PTR(SIZED_STRING*, r1)->c_string);
 
         if (object != NULL)
           push(PTR_TO_UINT64(object));
@@ -531,13 +562,13 @@ int yr_execute_code(
 
         break;
 
-      case OP_STR_FOUND:
+      case OP_FOUND:
         pop(r1);
         string = UINT64_TO_PTR(YR_STRING*, r1);
         push(string->matches[tidx].tail != NULL ? 1 : 0);
         break;
 
-      case OP_STR_FOUND_AT:
+      case OP_FOUND_AT:
         pop(r2);
         pop(r1);
 
@@ -571,7 +602,7 @@ int yr_execute_code(
 
         break;
 
-      case OP_STR_FOUND_IN:
+      case OP_FOUND_IN:
         pop(r3);
         pop(r2);
         pop(r1);
@@ -606,13 +637,13 @@ int yr_execute_code(
 
         break;
 
-      case OP_STR_COUNT:
+      case OP_COUNT:
         pop(r1);
         string = UINT64_TO_PTR(YR_STRING*, r1);
         push(string->matches[tidx].count);
         break;
 
-      case OP_STR_OFFSET:
+      case OP_OFFSET:
         pop(r2);
         pop(r1);
 
@@ -710,10 +741,17 @@ int yr_execute_code(
         pop(r1);
 
         if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
+        {
           push(UNDEFINED);
+        }
         else
-          push(strstr(UINT64_TO_PTR(char*, r1),
-                      UINT64_TO_PTR(char*, r2)) != NULL);
+        {
+          sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
+          sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2);
+
+          push(memmem(sized_str_1->c_string, sized_str_1->length,
+                      sized_str_2->c_string, sized_str_2->length) != NULL);
+        }
         break;
 
       case OP_IMPORT:
@@ -730,9 +768,9 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
-        count = strlen(UINT64_TO_PTR(char*, r1));
+        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
 
-        if (count == 0)
+        if (sized_str_1->length == 0)
         {
           push(FALSE);
           break;
@@ -740,49 +778,13 @@ int yr_execute_code(
 
         result = yr_re_exec(
           UINT64_TO_PTR(uint8_t*, r2),
-          UINT64_TO_PTR(uint8_t*, r1),
-          count,
+          (uint8_t*) sized_str_1->c_string,
+          sized_str_1->length,
           RE_FLAGS_SCAN,
           NULL,
           NULL);
 
         push(result >= 0);
-        break;
-
-      case OP_CONTAINS_STR:
-        pop(r2);
-        pop(r1);
-        big = UINT64_TO_PTR(SIZED_STRING*, r1);
-        little = UINT64_TO_PTR(YR_STRING*, r2);
-
-        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
-        {
-          push(UNDEFINED);
-          break;
-        }
-
-        push(memmem(big->c_string, big->length, little->string, little->length) != NULL);
-        break;
-
-      case OP_MATCHES_STR:
-        pop(r2);
-        pop(r1);
-        big = UINT64_TO_PTR(SIZED_STRING*, r1);
-        little = UINT64_TO_PTR(YR_STRING*, r2);
-
-        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
-        {
-          push(UNDEFINED);
-          break;
-        }
-
-        if (big->length != little->length)
-        {
-          push(FALSE);
-          break;
-        }
-
-        push(memcmp(big->c_string, little->string, big->length) == 0);
         break;
 
       default:

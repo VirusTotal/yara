@@ -281,6 +281,7 @@ limitations under the License.
       char* s = (char*) (string); \
       yr_object_set_string( \
           (s != (char*) UNDEFINED) ? s : NULL, \
+          (s != (char*) UNDEFINED) ? strlen(s) : 0, \
           __function_obj->return_obj, \
           NULL); \
       return ERROR_SUCCESS; \

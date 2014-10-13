@@ -37,9 +37,9 @@ limitations under the License.
 #define OP_GE             7
 #define OP_EQ             8
 #define OP_NEQ            9
-#define OP_SZ_EQ          10
-#define OP_SZ_NEQ         11
-#define OP_SZ_TO_BOOL     12
+#define OP_STR_EQ         10
+#define OP_STR_NEQ        11
+#define OP_STR_TO_BOOL    12
 #define OP_ADD            13
 #define OP_SUB            14
 #define OP_MUL            15
@@ -58,11 +58,11 @@ limitations under the License.
 #define OP_OBJ_VALUE      28
 #define OP_OBJ_FIELD      29
 #define OP_INDEX_ARRAY    30
-#define OP_STR_COUNT      31
-#define OP_STR_FOUND      32
-#define OP_STR_FOUND_AT   33
-#define OP_STR_FOUND_IN   34
-#define OP_STR_OFFSET     35
+#define OP_COUNT          31
+#define OP_FOUND          32
+#define OP_FOUND_AT       33
+#define OP_FOUND_IN       34
+#define OP_OFFSET         35
 #define OP_OF             36
 #define OP_PUSH_RULE      37
 #define OP_MATCH_RULE     38
@@ -86,8 +86,6 @@ limitations under the License.
 #define OP_MATCHES        56
 #define OP_IMPORT         57
 #define OP_LOOKUP_DICT    58
-#define OP_CONTAINS_STR   59
-#define OP_MATCHES_STR    60
 
 
 #define OPERATION(operator, op1, op2) \

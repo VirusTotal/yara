@@ -724,10 +724,10 @@ int yr_parser_reduce_string_identifier(
 
       while(!STRING_IS_NULL(string))
       {
-        if (instruction != OP_STR_FOUND)
+        if (instruction != OP_FOUND)
           string->g_flags &= ~STRING_GFLAGS_SINGLE_MATCH;
 
-        if (instruction == OP_STR_FOUND_AT)
+        if (instruction == OP_FOUND_AT)
         {
           // Avoid overwriting any previous fixed offset
 
@@ -770,10 +770,10 @@ int yr_parser_reduce_string_identifier(
           PTR_TO_UINT64(string),
           NULL);
 
-      if (instruction != OP_STR_FOUND)
+      if (instruction != OP_FOUND)
         string->g_flags &= ~STRING_GFLAGS_SINGLE_MATCH;
 
-      if (instruction == OP_STR_FOUND_AT)
+      if (instruction == OP_FOUND_AT)
       {
         // Avoid overwriting any previous fixed offset
 
