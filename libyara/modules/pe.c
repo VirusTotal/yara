@@ -60,6 +60,10 @@ limitations under the License.
     ((entry)->OffsetToData & 0x7FFFFFFF)
 
 
+#define available_space(pe, pointer) \
+    (pe->data + pe->data_size - (uint8_t*)(pointer))
+
+
 #define fits_in_pe(pe, pointer, size) \
     ((uint8_t*)(pointer) + size <= pe->data + pe->data_size)
 
@@ -82,21 +86,22 @@ typedef int (*RESOURCE_CALLBACK_FUNC) ( \
  * The IMPORT_FUNC_LIST contains the names of each function imported from
  * the corresponding DLL.
  */
-typedef struct _IMPORT_LIST
+typedef struct _IMPORTED_DLL
 {
-  struct _IMPORT_LIST *next;
-  char *dll;
-  struct _IMPORT_FUNC_LIST *names;
-
-} IMPORT_LIST, *PIMPORT_LIST;
-
-
-typedef struct _IMPORT_FUNC_LIST
-{
-  struct _IMPORT_FUNC_LIST *next;
   char *name;
 
-} IMPORT_FUNC_LIST, *PIMPORT_FUNC_LIST;
+  struct _IMPORTED_FUNCTION *functions;
+  struct _IMPORTED_DLL *next;
+
+} IMPORTED_DLL, *PIMPORTED_DLL;
+
+
+typedef struct _IMPORTED_FUNCTION
+{
+  char *name;
+  struct _IMPORTED_FUNCTION *next;
+
+} IMPORTED_FUNCTION, *PIMPORTED_FUNCTION;
 
 
 typedef struct _PE
@@ -106,7 +111,7 @@ typedef struct _PE
 
   PIMAGE_NT_HEADERS32 header;
   YR_OBJECT* object;
-  PIMPORT_LIST imports;
+  IMPORTED_DLL* imported_dlls;
 
 } PE;
 
@@ -2132,6 +2137,206 @@ int pe_find_version_info_cb(
 }
 
 
+IMPORTED_FUNCTION* pe_parse_import_descriptor(
+    PE* pe,
+    PIMAGE_IMPORT_DESCRIPTOR import_descriptor,
+    char* dll_name)
+{
+  IMPORTED_FUNCTION* head = NULL;
+  IMPORTED_FUNCTION* tail = NULL;
+
+  uint64_t offset = pe_rva_to_offset(
+      pe, import_descriptor->OriginalFirstThunk);
+
+  if (offset == 0)
+    return NULL;
+
+  if (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
+  {
+    PIMAGE_THUNK_DATA64 thunks64 = (PIMAGE_THUNK_DATA64)(pe->data + offset);
+
+    while (struct_fits_in_pe(pe, thunks64, IMAGE_THUNK_DATA64) &&
+           thunks64->u1.Ordinal != 0)
+    {
+      char* name = NULL;
+
+      if (!(thunks64->u1.Ordinal & IMAGE_ORDINAL_FLAG64))
+      {
+        // If exported by name
+        offset = pe_rva_to_offset(pe, thunks64->u1.Function);
+
+        if (offset != 0 && struct_fits_in_pe(pe, offset, IMAGE_IMPORT_BY_NAME))
+        {
+          PIMAGE_IMPORT_BY_NAME import = (PIMAGE_IMPORT_BY_NAME) \
+              (pe->data + offset);
+
+          // Make sure there is a NULL byte somewhere between
+          // import->Name and the end of PE. If strnlen() can't find the
+          // end of the string, it will return the number of bytes until
+          // the end of PE.
+
+          int name_length = strnlen(
+              (char *) import->Name,
+              available_space(pe, import->Name));
+
+          if (name_length < available_space(pe, import->Name))
+            name = (char *) import->Name;
+        }
+      }
+      else
+      {
+        // Lookup the ordinal.
+        name = ord_lookup(dll_name, thunks64->u1.Ordinal & 0xFFFF);
+      }
+
+      if (name != NULL)
+      {
+        IMPORTED_FUNCTION* imported_func = (IMPORTED_FUNCTION*)
+            yr_calloc(1, sizeof(IMPORTED_FUNCTION));
+
+        imported_func->name = yr_strdup(name);
+        imported_func->next = NULL;
+
+        if (head == NULL)
+          head = imported_func;
+
+        if (tail != NULL)
+          tail->next = imported_func;
+
+        tail = imported_func;
+      }
+
+      thunks64++;
+    }
+  }
+  else
+  {
+    PIMAGE_THUNK_DATA32 thunks32 = (PIMAGE_THUNK_DATA32)(pe->data + offset);
+
+    while (struct_fits_in_pe(pe, thunks32, IMAGE_THUNK_DATA32) &&
+           thunks32->u1.Ordinal != 0)
+    {
+      char* name = NULL;
+
+      if (!(thunks32->u1.Ordinal & IMAGE_ORDINAL_FLAG32))
+      {
+        // If exported by name
+        offset = pe_rva_to_offset(pe, thunks32->u1.Function);
+
+        if (offset != 0 && struct_fits_in_pe(pe, offset, IMAGE_IMPORT_BY_NAME))
+        {
+          PIMAGE_IMPORT_BY_NAME import = (PIMAGE_IMPORT_BY_NAME) \
+              (pe->data + offset);
+
+          // Make sure there is a NULL byte somewhere between
+          // import->Name and the end of PE. If strnlen() can't find the
+          // end of the string, it will return the number of bytes until
+          // the end of PE.
+
+          int name_length = strnlen(
+              (char *) import->Name,
+              available_space(pe, import->Name));
+
+          if (name_length < available_space(pe, import->Name))
+            name = (char *) import->Name;
+        }
+      }
+      else
+      {
+        // Lookup the ordinal.
+        name = ord_lookup(dll_name, thunks32->u1.Ordinal & 0xFFFF);
+      }
+
+      if (name != NULL)
+      {
+        IMPORTED_FUNCTION* imported_func = (IMPORTED_FUNCTION*)
+            yr_calloc(1, sizeof(IMPORTED_FUNCTION));
+
+        imported_func->name = yr_strdup(name);
+        imported_func->next = NULL;
+
+        if (head == NULL)
+          head = imported_func;
+
+        if (tail != NULL)
+          tail->next = imported_func;
+
+        tail = imported_func;
+      }
+
+      thunks32++;
+    }
+  }
+
+  return head;
+}
+
+//
+// Walk the imports and collect relevant information. It is used in the
+// "imports" function for comparison and in the "imphash" function for
+// calculation.
+//
+
+void pe_parse_imports(PE* pe)
+{
+  IMPORTED_DLL* head = NULL;
+  IMPORTED_DLL* tail = NULL;
+
+  PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
+      pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
+
+  if (directory->VirtualAddress == 0)
+    return NULL;
+
+  uint64_t offset = pe_rva_to_offset(pe, directory->VirtualAddress);
+
+  if (offset == 0 || !struct_fits_in_pe(pe, offset, IMAGE_IMPORT_DESCRIPTOR))
+    return NULL;
+
+  PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR) \
+      (pe->data + offset);
+
+  while (struct_fits_in_pe(pe, imports, IMAGE_IMPORT_DESCRIPTOR) &&
+         imports->Name != 0)
+  {
+    uint64_t offset = pe_rva_to_offset(pe, imports->Name);
+
+    if (offset != 0)
+    {
+      char* dll_name = yr_strdup((char *) (pe->data + offset));
+
+      IMPORTED_FUNCTION* functions = pe_parse_import_descriptor(
+          pe, imports, dll_name);
+
+      if (functions != NULL)
+      {
+        IMPORTED_DLL* imported_dll = (IMPORTED_DLL*) yr_calloc(
+            1, sizeof(IMPORTED_DLL));
+
+        if (imported_dll != NULL)
+        {
+          imported_dll->name = dll_name;
+          imported_dll->functions = functions;
+          imported_dll->next = NULL;
+
+          if (head == NULL)
+            head = imported_dll;
+
+          if (tail != NULL)
+            tail->next = imported_dll;
+
+          tail = imported_dll;
+        }
+      }
+    }
+
+    imports++;
+  }
+
+  pe->imported_dlls = head;
+}
+
+
 void pe_parse(
     PE* pe,
     size_t base_address,
@@ -2209,6 +2414,11 @@ void pe_parse(
       OptionalHeader(Subsystem),
       pe->object, "subsystem");
 
+  // Get the rich signature.
+  pe_get_rich_signature(pe->data, pe->data_size, pe->object);
+
+  pe_parse_imports(pe);
+
   pe_iterate_resources(
       pe,
       (RESOURCE_CALLBACK_FUNC) pe_find_version_info_cb,
@@ -2223,7 +2433,10 @@ void pe_parse(
     if (!struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
       break;
 
-    str_size = strlcpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME + 1);
+    str_size = strlcpy(
+        section_name,
+        (char*) section->Name,
+        IMAGE_SIZEOF_SHORT_NAME + 1);
 
     set_string(
         section_name,
@@ -2334,18 +2547,18 @@ define_function(exports)
 }
 
 
-/*
- * Generate an import hash:
- * https://www.mandiant.com/blog/tracking-malware-import-hashing/
- * It is important to make duplicates of the strings as we don't want
- * to alter the contents of the parsed import structures.
- */
+//
+// Generate an import hash:
+// https://www.mandiant.com/blog/tracking-malware-import-hashing/
+// It is important to make duplicates of the strings as we don't want
+// to alter the contents of the parsed import structures.
+//
 
 define_function(imphash)
 {
   YR_OBJECT* module = module();
-  PIMPORT_LIST cur_dll_node = NULL;
-  PIMPORT_FUNC_LIST cur_func_node = NULL;
+  IMPORTED_DLL* dll = NULL;
+  IMPORTED_FUNCTION* func = NULL;
 
   char *dll_name;
   char *final_name;
@@ -2366,42 +2579,42 @@ define_function(imphash)
 
   MD5_Init(&ctx);
 
-  cur_dll_node = pe->imports;
+  dll = pe->imported_dlls;
 
-  while (cur_dll_node)
+  while (dll)
   {
     // If extension is 'ocx', 'sys' or 'dll', chop it.
 
-    char* ext = strstr(cur_dll_node->dll, ".");
+    char* ext = strstr(dll->name, ".");
 
     if (ext && (strncasecmp(ext, ".ocx", 4) == 0 ||
                 strncasecmp(ext, ".sys", 4) == 0 ||
                 strncasecmp(ext, ".dll", 4) == 0))
     {
-      len = (ext - cur_dll_node->dll) + 1;
+      len = (ext - dll->name) + 1;
     }
     else
     {
-      len = strlen(cur_dll_node->dll) + 1;
+      len = strlen(dll->name) + 1;
     }
 
     // Allocate a new string to hold the dll name.
 
     dll_name = (char *) yr_malloc(len);
-    strlcpy(dll_name, cur_dll_node->dll, len);
+    strlcpy(dll_name, dll->name, len);
 
-    cur_func_node = cur_dll_node->names;
+    func = dll->functions;
 
-    while (cur_func_node)
+    while (func)
     {
       if (first == 1)
       {
-        asprintf(&final_name, "%s.%s", dll_name, cur_func_node->name);
+        asprintf(&final_name, "%s.%s", dll_name, func->name);
         first = 0;
       }
       else
       {
-        asprintf(&final_name, ",%s.%s", dll_name, cur_func_node->name);
+        asprintf(&final_name, ",%s.%s", dll_name, func->name);
       }
 
       // Lowercase the whole thing.
@@ -2414,11 +2627,11 @@ define_function(imphash)
       MD5_Update(&ctx, final_name, strlen(final_name));
 
       yr_free(final_name);
-      cur_func_node = cur_func_node->next;
+      func = func->next;
     }
 
     yr_free(dll_name);
-    cur_dll_node = cur_dll_node->next;
+    dll = dll->next;
   }
 
   MD5_Final(digest, &ctx);
@@ -2436,9 +2649,9 @@ define_function(imphash)
 }
 
 
-/*
- * Nothing fancy here. Just a sha256 of the clear data.
- */
+//
+// Nothing fancy here. Just a sha256 of the clear data.
+//
 
 define_function(richhash)
 {
@@ -2465,241 +2678,37 @@ define_function(richhash)
 }
 
 
-/*
- * Walk the imports and collect relevant information. It is used in the
- * "imports" function for comparison and in the "imphash" function for
- * calculation.
- */
-PIMPORT_LIST parse_imports(PE* pe)
-{
-  PIMAGE_DATA_DIRECTORY directory;
-  PIMAGE_IMPORT_DESCRIPTOR imports;
-  PIMAGE_IMPORT_BY_NAME import;
-  PIMAGE_THUNK_DATA32 thunks32;
-  PIMAGE_THUNK_DATA64 thunks64;
-  PIMPORT_LIST dll_head = NULL;
-  PIMPORT_LIST cur_dll_node = NULL;
-  PIMPORT_LIST new_dll_node = NULL;
-  PIMPORT_FUNC_LIST cur_func_node = NULL;
-  PIMPORT_FUNC_LIST new_func_node = NULL;
-
-  size_t size;
-  uint64_t offset;
-  uint16_t ordinal;
-  char *ord_name;
-
-  directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
-
-  if (directory->VirtualAddress == 0)
-    return NULL;
-
-  offset = pe_rva_to_offset(pe, directory->VirtualAddress);
-
-  if (offset == 0 ||
-      offset + sizeof(IMAGE_IMPORT_DESCRIPTOR) > pe->data_size)
-    return NULL;
-
-  imports = (PIMAGE_IMPORT_DESCRIPTOR)(pe->data + offset);
-
-  while (struct_fits_in_pe(pe, imports, IMAGE_IMPORT_DESCRIPTOR) &&
-         imports->Name != 0)
-  {
-    offset = pe_rva_to_offset(pe, imports->Name);
-
-    if (offset > 0 && offset <= pe->data_size)
-    {
-      new_dll_node = (PIMPORT_LIST) yr_calloc(1, sizeof(IMPORT_LIST));
-      if (!new_dll_node)
-        return NULL;
-
-      if (dll_head == NULL)
-        dll_head = new_dll_node;
-
-      if (cur_dll_node != NULL)
-        cur_dll_node->next = new_dll_node;
-
-      cur_dll_node = new_dll_node;
-
-      // Store the DLL name.
-      cur_dll_node->dll = yr_strdup((char *) (pe->data + offset));
-
-      offset = pe_rva_to_offset(pe, imports->OriginalFirstThunk);
-
-      if (offset > 0)
-      {
-        if (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
-        {
-          thunks64 = (PIMAGE_THUNK_DATA64)(pe->data + offset);
-
-          while (struct_fits_in_pe(pe, thunks64, IMAGE_THUNK_DATA64) &&
-                 thunks64->u1.Ordinal != 0)
-          {
-            if (!(thunks64->u1.Ordinal & IMAGE_ORDINAL_FLAG64))
-            {
-              // if not exported by ordinal
-              offset = pe_rva_to_offset(pe, thunks64->u1.Function);
-
-              if (offset != 0 &&
-                  offset <= pe->data_size - sizeof(IMAGE_IMPORT_BY_NAME))
-              {
-                import = (PIMAGE_IMPORT_BY_NAME)(pe->data + offset);
-
-                /*
-                 * Make sure there is a NULL byte somewhere between
-                 * import->Name and the end of PE. If strnlen() can't find the
-                 * end of the string, it will return the number of bytes until
-                 * the end of PE. If this happens, return.
-                 */
-                size = strnlen((char *) import->Name, (pe->data + pe->data_size) - import->Name);
-                if (size == (pe->data + pe->data_size) - import->Name)
-                  return NULL;
-
-                new_func_node = (PIMPORT_FUNC_LIST) yr_calloc(1, sizeof(IMPORT_FUNC_LIST));
-                if (!new_func_node)
-                  return NULL;
-
-                if (cur_func_node != NULL)
-                  cur_func_node->next = new_func_node;
-
-                cur_func_node = new_func_node;
-                if (cur_dll_node->names == NULL)
-                  cur_dll_node->names = cur_func_node;
-
-                // Store the function name.
-                cur_func_node->name = yr_strdup((char *) import->Name);
-              }
-            }
-            else
-            {
-              // Exported by ordinal.
-              ordinal = thunks64->u1.Ordinal & 0xFFFF;
-              new_func_node = (PIMPORT_FUNC_LIST) yr_calloc(1, sizeof(IMPORT_FUNC_LIST));
-              if (!new_func_node)
-                return NULL;
-
-              if (cur_func_node != NULL)
-                cur_func_node->next = new_func_node;
-
-              cur_func_node = new_func_node;
-              if (cur_dll_node->names == NULL)
-                cur_dll_node->names = cur_func_node;
-
-              // Lookup the ordinal.
-              ord_name = ord_lookup(cur_dll_node->dll, ordinal);
-              if (ord_name == NULL)
-                return NULL;
-              cur_func_node->name = yr_strdup(ord_name);
-            }
-            thunks64++;
-          }
-          cur_func_node = NULL;
-        }
-        else
-        {
-          thunks32 = (PIMAGE_THUNK_DATA32)(pe->data + offset);
-
-          while (struct_fits_in_pe(pe, thunks32, sizeof(IMAGE_THUNK_DATA32)) &&
-                 thunks32->u1.Ordinal != 0)
-          {
-            if (!(thunks32->u1.Ordinal & IMAGE_ORDINAL_FLAG32))
-            {
-              // if not exported by ordinal
-              offset = pe_rva_to_offset(pe, thunks32->u1.Function);
-
-              if (offset != 0 &&
-                  offset <= pe->data_size - sizeof(IMAGE_IMPORT_BY_NAME))
-              {
-                import = (PIMAGE_IMPORT_BY_NAME)(pe->data + offset);
-
-                /*
-                 * Make sure there is a NULL byte somewhere between
-                 * import->Name and the end of PE. If strnlen() can't find the
-                 * end of the string, it will return the number of bytes until
-                 * the end of PE. If this happens, return.
-                 */
-                size = strnlen((char *) import->Name, (pe->data + pe->data_size) - import->Name);
-                if (size == (pe->data + pe->data_size) - import->Name)
-                  return NULL;
-
-                new_func_node = (PIMPORT_FUNC_LIST) yr_calloc(1, sizeof(IMPORT_FUNC_LIST));
-                if (!new_func_node)
-                  return NULL;
-
-                if (cur_func_node != NULL)
-                  cur_func_node->next = new_func_node;
-
-                cur_func_node = new_func_node;
-                if (cur_dll_node->names == NULL)
-                  cur_dll_node->names = cur_func_node;
-
-                // Store the function name.
-                cur_func_node->name = yr_strdup((char *) import->Name);
-              }
-            }
-            else
-            {
-              // Exported by ordinal.
-              ordinal = thunks32->u1.Ordinal & 0xFFFF;
-              new_func_node = (PIMPORT_FUNC_LIST) yr_calloc(1, sizeof(IMPORT_FUNC_LIST));
-              if (!new_func_node)
-                return NULL;
-
-              if (cur_func_node != NULL)
-                cur_func_node->next = new_func_node;
-
-              cur_func_node = new_func_node;
-              if (cur_dll_node->names == NULL)
-                cur_dll_node->names = cur_func_node;
-
-              // Lookup the ordinal.
-              ord_name = ord_lookup(cur_dll_node->dll, ordinal);
-              if (ord_name == NULL)
-                return NULL;
-              cur_func_node->name = yr_strdup(ord_name);
-            }
-            thunks32++;
-          }
-          cur_func_node = NULL;
-        }
-      }
-    }
-
-    imports++;
-  }
-
-  return dll_head;
-}
-
-
 define_function(imports)
 {
-  PIMPORT_LIST cur_dll_node = NULL;
-  PIMPORT_FUNC_LIST cur_func_node = NULL;
   char* dll_name = string_argument(1);
   char* function_name = string_argument(2);
-  int function_name_len = strlen(function_name);
-  int dll_name_len = strlen(dll_name);
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
+  IMPORTED_DLL* imported_dll = NULL;
+  IMPORTED_FUNCTION* imported_func = NULL;
+
   if (!pe)
     return_integer(UNDEFINED);
 
-  cur_dll_node = pe->imports;
-  while (cur_dll_node)
+  imported_dll = pe->imported_dlls;
+
+  while (imported_dll != NULL)
   {
-    if (strncasecmp(cur_dll_node->dll, dll_name, dll_name_len) == 0)
+    if (strcasecmp(imported_dll->name, dll_name) == 0)
     {
-      cur_func_node = cur_dll_node->names;
-      while (cur_func_node)
+      imported_func = imported_dll->functions;
+
+      while (imported_func)
       {
-        if (strncasecmp(cur_func_node->name, function_name, function_name_len) == 0)
+        if (strcasecmp(imported_func->name, function_name) == 0)
           return_integer(1);
-        cur_func_node = cur_func_node->next;
+
+        imported_dll = imported_dll->next;
       }
     }
-    cur_dll_node = cur_dll_node->next;
+    imported_dll = imported_dll->next;
   }
 
   return_integer(0);
@@ -2865,7 +2874,7 @@ begin_declarations;
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
-    declare_function("richhash", "", "s", richhash);
+    declare_function("hash", "", "s", richhash);
   end_struct("rich_signature");
 
   declare_function("section_index", "s", "i", section_index);
@@ -2898,7 +2907,6 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-
   set_integer(
       IMAGE_FILE_MACHINE_I386, module_object,
       "MACHINE_I386");
@@ -2992,9 +3000,6 @@ int module_load(
         if (pe == NULL)
           return ERROR_INSUFICIENT_MEMORY;
 
-        // Get the rich signature.
-        pe_get_rich_signature(block->data, block->size, module_object);
-
         pe->data = block->data;
         pe->data_size = block->size;
         pe->header = pe_header;
@@ -3007,8 +3012,6 @@ int module_load(
             block->base,
             context->flags);
 
-        PIMPORT_LIST import_list = parse_imports(pe);
-        pe->imports = import_list;
         break;
       }
     }
@@ -3020,28 +3023,35 @@ int module_load(
 
 int module_unload(YR_OBJECT* module_object)
 {
-  PIMPORT_LIST cur_dll_node = NULL;
-  PIMPORT_LIST next_dll_node = NULL;
-  PIMPORT_FUNC_LIST cur_func_node = NULL;
-  PIMPORT_FUNC_LIST next_func_node = NULL;
+  IMPORTED_DLL* dll = NULL;
+  IMPORTED_DLL* next_dll = NULL;
+  IMPORTED_FUNCTION* func = NULL;
+  IMPORTED_FUNCTION* next_func = NULL;
+
   PE* pe = (PE *) module_object->data;
-  if (pe != NULL) {
-    if (pe->imports) {
-      cur_dll_node = pe->imports;
-      while (cur_dll_node) {
-        cur_func_node = cur_dll_node->names;
-        while (cur_func_node) {
-          next_func_node = cur_func_node->next;
-          yr_free(cur_func_node);
-          cur_func_node = next_func_node;
-        }
-        next_dll_node = cur_dll_node->next;
-        yr_free(cur_dll_node);
-        cur_dll_node = next_dll_node;
-      }
+
+  if (pe == NULL)
+    return ERROR_SUCCESS;
+
+  dll = pe->imported_dlls;
+
+  while (dll)
+  {
+    func = dll->functions;
+
+    while (func)
+    {
+      next_func = func->next;
+      yr_free(func);
+      func = next_func;
     }
-    yr_free(module_object->data);
+
+    next_dll = dll->next;
+    yr_free(dll);
+    dll = next_dll;
   }
+
+  yr_free(pe);
 
   return ERROR_SUCCESS;
 }
