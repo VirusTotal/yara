@@ -2285,12 +2285,12 @@ void pe_parse_imports(PE* pe)
       pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
 
   if (directory->VirtualAddress == 0)
-    return NULL;
+    return;
 
   uint64_t offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
   if (offset == 0 || !struct_fits_in_pe(pe, offset, IMAGE_IMPORT_DESCRIPTOR))
-    return NULL;
+    return;
 
   PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR) \
       (pe->data + offset);
