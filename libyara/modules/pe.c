@@ -1729,6 +1729,7 @@ PIMAGE_NT_HEADERS32 pe_get_header(
 
 // Parse the rich signature.
 // http://www.ntcore.com/files/richsign.htm
+
 void *pe_get_rich_signature(
     uint8_t* buffer,
     size_t buffer_length,
@@ -1770,16 +1771,24 @@ void *pe_get_rich_signature(
    * important.
    */
   rich_signature = (PRICH_SIGNATURE) (buffer + 0x80);
+
   if (rich_signature->key1 != rich_signature->key2 ||
       rich_signature->key2 != rich_signature->key3 ||
       (rich_signature->dans ^ rich_signature->key1) != RICH_DANS)
+  {
     return NULL;
+  }
 
-  for (rich_ptr = (DWORD *) rich_signature; rich_ptr <= (DWORD *) (buffer + headers_size); rich_ptr++) {
-    if (*rich_ptr == RICH_RICH) {
+  for (rich_ptr = (DWORD*) rich_signature;
+       rich_ptr <= (DWORD*) (buffer + headers_size);
+       rich_ptr++)
+  {
+    if (*rich_ptr == RICH_RICH)
+    {
       // Multiple by 4 because we are counting in DWORDs.
-      rich_len = (rich_ptr - (DWORD *) rich_signature) * 4;
-      raw_data = (BYTE *) yr_malloc(rich_len);
+      rich_len = (rich_ptr - (DWORD*) rich_signature) * 4;
+      raw_data = (BYTE*) yr_malloc(rich_len);
+
       if (!raw_data)
         return NULL;
 
@@ -1791,21 +1800,32 @@ void *pe_get_rich_signature(
   }
 
   /* Walk the entire block and apply the XOR key. */
-  if (raw_data) {
-    clear_data = (BYTE *) yr_malloc(rich_len);
-    if (!clear_data) {
+  if (raw_data)
+  {
+    clear_data = (BYTE*) yr_malloc(rich_len);
+
+    if (!clear_data)
+    {
       yr_free(raw_data);
       return NULL;
     }
 
     /* Copy the entire block here to be XORed */
     memcpy(clear_data, raw_data, rich_len);
-    for (rich_ptr = (DWORD *) clear_data; rich_ptr < (DWORD *) (clear_data + rich_len); rich_ptr++) {
+
+    for (rich_ptr = (DWORD*) clear_data;
+         rich_ptr < (DWORD*) (clear_data + rich_len);
+         rich_ptr++)
+    {
       *rich_ptr ^= rich_signature->key1;
     }
 
-    set_sized_string((char *) raw_data, rich_len, pe_obj, "rich_signature.raw_data");
-    set_sized_string((char *) clear_data, rich_len, pe_obj, "rich_signature.clear_data");
+    set_sized_string(
+        (char*) raw_data, rich_len, pe_obj, "rich_signature.raw_data");
+
+    set_sized_string(
+        (char*) clear_data, rich_len, pe_obj, "rich_signature.clear_data");
+
     return NULL;
   }
 
@@ -2317,22 +2337,27 @@ define_function(exports)
  * It is important to make duplicates of the strings as we don't want
  * to alter the contents of the parsed import structures.
  */
+
 define_function(imphash)
 {
-  char *p;
+  char *hash = string_argument(1);
+
+  YR_OBJECT* module = module();
+  PIMPORT_LIST cur_dll_node = NULL;
+  PIMPORT_FUNC_LIST cur_func_node = NULL;
+
   char *dll_name;
   char *final_name;
   size_t len;
-  int i;
+
   MD5_CTX ctx;
+
   unsigned char md_value[MD5_BLOCK_SIZE];
   char *final_hash;
-  char *hash = string_argument(1);
+
   int first = 1;
   int result = 0;
-  PIMPORT_LIST cur_dll_node = NULL;
-  PIMPORT_FUNC_LIST cur_func_node = NULL;
-  YR_OBJECT* module = module();
+
   PE* pe = (PE*) module->data;
 
   // If not a PE, return 0.
@@ -2342,33 +2367,47 @@ define_function(imphash)
   md5_init(&ctx);
 
   cur_dll_node = pe->imports;
-  while (cur_dll_node) {
+
+  while (cur_dll_node)
+  {
     // If extension is 'ocx', 'sys' or 'dll', chop it.
-    p = strstr(cur_dll_node->dll, ".");
-    if (p && (strncasecmp(p, ".ocx", 4) == 0 ||
-              strncasecmp(p, ".sys", 4) == 0 ||
-              strncasecmp(p, ".dll", 4) == 0)) {
-      len = (p - cur_dll_node->dll) + 1;
+
+    char* ext = strstr(cur_dll_node->dll, ".");
+
+    if (ext && (strncasecmp(ext, ".ocx", 4) == 0 ||
+                strncasecmp(ext, ".sys", 4) == 0 ||
+                strncasecmp(ext, ".dll", 4) == 0))
+    {
+      len = (ext - cur_dll_node->dll) + 1;
     }
-    else {
+    else
+    {
       len = strlen(cur_dll_node->dll) + 1;
     }
 
     // Allocate a new string to hold the dll name.
+
     dll_name = (char *) yr_malloc(len);
     strlcpy(dll_name, cur_dll_node->dll, len);
 
     cur_func_node = cur_dll_node->names;
-    while (cur_func_node) {
-      if (first == 1) {
+
+    while (cur_func_node)
+    {
+      if (first == 1)
+      {
         asprintf(&final_name, "%s.%s", dll_name, cur_func_node->name);
         first = 0;
-      } else {
+      }
+      else
+      {
         asprintf(&final_name, ",%s.%s", dll_name, cur_func_node->name);
       }
 
       // Lowercase the whole thing.
-      for (i = 0; i < strlen(final_name); i++) {
+
+      for (int i = 0; i < strlen(final_name); i++)
+      {
         final_name[i] = tolower(final_name[i]);
       }
 
@@ -2386,11 +2425,13 @@ define_function(imphash)
 
   // Convert md_value into it's hexlified form.
   final_hash = yr_malloc((MD5_BLOCK_SIZE * 2) + 1);
-  if (!final_hash)
-    return_integer(0);
 
-  p = final_hash;
-  for (i = 0; i < MD5_BLOCK_SIZE; i++)
+  if (!final_hash)
+    return_integer(UNDEFINED);
+
+  char* p = final_hash;
+
+  for (int i = 0; i < MD5_BLOCK_SIZE; i++)
     snprintf(p + 2 * i, 3, "%02x", md_value[i]);
 
   if (strncasecmp(hash, final_hash, (MD5_BLOCK_SIZE * 2)) == 0)
@@ -2404,9 +2445,9 @@ define_function(imphash)
 /*
  * Nothing fancy here. Just a sha256 of the clear data.
  */
+
 define_function(richhash)
 {
-  int i;
   SHA256_CTX ctx;
   unsigned char md_value[SHA256_BLOCK_SIZE];
   char *final_hash;
@@ -2415,29 +2456,37 @@ define_function(richhash)
   YR_OBJECT* parent = parent();
 
   // No point in calculating the hash if the input length is wrong.
-  if (strlen(hash) != SHA256_BLOCK_SIZE * 2) {
+  if (strlen(hash) != SHA256_BLOCK_SIZE * 2)
+  {
     return_integer(0);
   }
 
   SIZED_STRING *clear_data = get_string(parent, "clear_data");
 
   sha256_init(&ctx);
-  for (i = 0; i < clear_data->length; i += 4) {
+
+  for (int i = 0; i < clear_data->length; i += 4)
+  {
     sha256_update(&ctx, (SHA_BYTE *) ((uint32_t *) (clear_data->c_string + i)), 0x04);
   }
+
   sha256_final(&ctx, md_value);
 
   // Convert md_value into it's hexlified form.
   final_hash = yr_malloc((SHA256_BLOCK_SIZE * 2) + 1);
+
   if (!final_hash)
     return_integer(0);
 
-  for (i = 0; i < SHA256_BLOCK_SIZE; i++) {
+  for (int i = 0; i < SHA256_BLOCK_SIZE; i++)
+  {
     snprintf(final_hash + (2 * i), 3, "%02x", md_value[i]);
   }
 
   if (strncasecmp(hash, final_hash, (SHA256_BLOCK_SIZE * 2)) == 0)
+  {
     result = 1;
+  }
 
   yr_free(final_hash);
   return_integer(result);
