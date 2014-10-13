@@ -80,12 +80,12 @@ typedef int (*RESOURCE_CALLBACK_FUNC) ( \
      void* cb_data);
 
 
-/*
- * Imports are stored in a linked list (IMPORT_LIST). Each node contains the
- * name of the DLL and a pointer to another linked list (IMPORT_FUNC_LIST).
- * The IMPORT_FUNC_LIST contains the names of each function imported from
- * the corresponding DLL.
- */
+//
+// Imports are stored in a linked list. Each node (IMPORTED_DLL) contains the
+// name of the DLL and a pointer to another linked list of IMPORTED_FUNCTION
+// structures containing the names of imported functions.
+//
+
 typedef struct _IMPORTED_DLL
 {
   char *name;
@@ -115,11 +115,10 @@ typedef struct _PE
 
 } PE;
 
-/*
- * These ordinals are taken from pefile. If a lookup fails attempt to return
- * "ordN" and if that fails, return NULL. The caller is responsible for freeing
- * the returned string.
- */
+// These ordinals are taken from pefile. If a lookup fails attempt to return
+// "ordN" and if that fails, return NULL. The caller is responsible for freeing
+// the returned string.
+
 char *ord_lookup(
     char *dll,
     uint16_t ord)
@@ -1690,6 +1689,7 @@ char *ord_lookup(
   return name;
 }
 
+
 PIMAGE_NT_HEADERS32 pe_get_header(
     uint8_t* data,
     size_t data_size)
@@ -1771,13 +1771,12 @@ void *pe_get_rich_signature(
   if (buffer_length < headers_size)
     return NULL;
 
-  /*
-   * From offset 0x80 until the start of the PE header should be the Rich
-   * signature. The three key values must all be equal and the first dword
-   * XORs to "DanS". Then walk the buffer looking for "Rich" which marks the
-   * end. Technically the XOR key should be right after "Rich" but it's not
-   * important.
-   */
+  // From offset 0x80 until the start of the PE header should be the Rich
+  // signature. The three key values must all be equal and the first dword
+  // XORs to "DanS". Then walk the buffer looking for "Rich" which marks the
+  // end. Technically the XOR key should be right after "Rich" but it's not
+  // important.
+
   rich_signature = (PRICH_SIGNATURE) (buffer + 0x80);
 
   if (rich_signature->key1 != rich_signature->key2 ||
@@ -1807,7 +1806,7 @@ void *pe_get_rich_signature(
     }
   }
 
-  /* Walk the entire block and apply the XOR key. */
+  // Walk the entire block and apply the XOR key.
   if (raw_data)
   {
     clear_data = (BYTE*) yr_malloc(rich_len);
@@ -1818,7 +1817,7 @@ void *pe_get_rich_signature(
       return NULL;
     }
 
-    /* Copy the entire block here to be XORed */
+    // Copy the entire block here to be XORed.
     memcpy(clear_data, raw_data, rich_len);
 
     for (rich_ptr = (DWORD*) clear_data;
@@ -2502,14 +2501,14 @@ define_function(exports)
   int i;
   uint64_t offset;
 
-  // if not a PE file, return UNDEFINED
+  // If not a PE file, return UNDEFINED
 
   if (pe == NULL)
     return_integer(UNDEFINED);
 
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_EXPORT);
 
-  // if the PE doesn't export any functions, return FALSE
+  // If the PE doesn't export any functions, return FALSE
 
   if (directory->VirtualAddress == 0)
     return_integer(0);
@@ -2574,6 +2573,7 @@ define_function(imphash)
   PE* pe = (PE*) module->data;
 
   // If not a PE, return 0.
+
   if (!pe)
     return_integer(UNDEFINED);
 
@@ -2636,7 +2636,7 @@ define_function(imphash)
 
   MD5_Final(digest, &ctx);
 
-  // transform the binary digest to ascii
+  // Transform the binary digest to ascii
 
   for (int i = 0; i < MD5_DIGEST_LENGTH; i++)
   {
@@ -2753,7 +2753,7 @@ define_function(locale)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
-  // if not a PE file, return UNDEFINED
+  // If not a PE file, return UNDEFINED
 
   if (pe == NULL)
     return_integer(UNDEFINED);
@@ -2782,7 +2782,7 @@ define_function(language)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
-  // if not a PE file, return UNDEFINED
+  // If not a PE file, return UNDEFINED
 
   if (pe == NULL)
     return_integer(UNDEFINED);
@@ -2990,7 +2990,7 @@ int module_load(
 
     if (pe_header != NULL)
     {
-      // ignore DLLs while scanning a process
+      // Ignore DLLs while scanning a process
 
       if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
           !(pe_header->FileHeader.Characteristics & IMAGE_FILE_DLL))
