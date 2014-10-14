@@ -2351,7 +2351,6 @@ void pe_parse(
   PIMAGE_SECTION_HEADER section;
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
-  size_t str_size;
 
 #define OptionalHeader(field) \
   (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64 ? \
@@ -2439,10 +2438,7 @@ void pe_parse(
     if (!struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
       break;
 
-    str_size = strlcpy(
-        section_name,
-        (char*) section->Name,
-        IMAGE_SIZEOF_SHORT_NAME + 1);
+    strlcpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME + 1);
 
     set_string(
         section_name,
