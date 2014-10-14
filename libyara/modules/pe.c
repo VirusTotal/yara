@@ -2646,7 +2646,7 @@ define_function(imphash)
     sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
   }
 
-  digest_ascii[SHA256_DIGEST_LENGTH * 2] = '\0';
+  digest_ascii[MD5_DIGEST_LENGTH * 2] = '\0';
 
   return_string(digest_ascii);
 }
@@ -2675,7 +2675,7 @@ define_function(richhash)
     sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
   }
 
-  digest_ascii[MD5_DIGEST_LENGTH * 2] = '\0';
+  digest_ascii[SHA256_DIGEST_LENGTH * 2] = '\0';
 
   return_string(digest_ascii);
 }
