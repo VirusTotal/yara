@@ -24,6 +24,13 @@ limitations under the License.
 #include <yara/strutils.h>
 
 
+#define bigendian(n) \
+    (((((uint32_t)(n) & 0xFF)) << 24) | \
+     ((((uint32_t)(n) & 0xFF00)) << 8) | \
+     ((((uint32_t)(n) & 0xFF0000)) >> 8) | \
+     ((((uint32_t)(n) & 0xFF000000)) >> 24))
+
+
 #define MODULE_NAME pe
 
 #define RESOURCE_TYPE_CURSOR         1
@@ -1800,8 +1807,8 @@ void *pe_get_rich_signature(
         return NULL;
 
       memcpy(raw_data, rich_signature, rich_len);
-      set_integer(htonl(rich_signature->dans), pe_obj, "rich_signature.start");
-      set_integer(htonl(rich_signature->key1), pe_obj, "rich_signature.key");
+      set_integer(bigendian(rich_signature->dans), pe_obj, "rich_signature.start");
+      set_integer(bigendian(rich_signature->key1), pe_obj, "rich_signature.key");
       break;
     }
   }
