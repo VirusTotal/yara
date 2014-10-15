@@ -2397,7 +2397,7 @@ void pe_parse_certificates(
 
       p = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
       if (!p)
-        break; // XXX
+        break;
       set_string(p, pe_obj, "signature.subject");
       yr_free(p);
 
@@ -2419,12 +2419,13 @@ void pe_parse_certificates(
       p = (char *) yr_malloc((serial->length * 2) + (serial->length - 1) + 1);
       if (!p)
         break;
-      for (j = 0; j < serial->length; j++)
+      for (j = 0; j < serial->length; j++) {
         // Don't put the colon on the last one.
         if (j < serial->length - 1)
           snprintf(p + 3 * j, 4, "%02x:", serial->data[j]);
         else
           snprintf(p + 3 * j, 3, "%02x", serial->data[j]);
+      }
       set_string(p, pe_obj, "signature.serial");
       yr_free(p);
 
@@ -2435,13 +2436,16 @@ void pe_parse_certificates(
       //
       date_bio = BIO_new(BIO_s_mem());
       if (!date_bio)
-        break; // XXX
+        break;
       date_time = X509_get_notBefore(cert);
-      ASN1_TIME_print(date_bio, date_time); // XXX: free date_time?
+      ASN1_TIME_print(date_bio, date_time);
       // Use num_write to get the number of bytes available for reading.
       p = (char *) yr_malloc(date_bio->num_write + 1);
-      if (!p)
+      if (!p) {
+        BIO_set_close(date_bio, BIO_CLOSE);
+        BIO_free(date_bio);
         break;
+      }
       BIO_read(date_bio, p, date_bio->num_write);
       p[date_bio->num_write] = '\x0';
       set_string(p, pe_obj, "signature.notBefore");
@@ -2450,15 +2454,18 @@ void pe_parse_certificates(
       ASN1_TIME_print(date_bio, date_time);
       // How much is written the second time?
       date_length = date_bio->num_write - date_bio->num_read;
-      if (date_length == 0)
-        break; // Nothing written
-      p = (char *) yr_malloc(date_length + 1);
-      if (!p)
-        break;
-      BIO_read(date_bio, p, date_length);
-      p[date_length] = '\x0';
-      set_string(p, pe_obj, "signature.notAfter");
-      yr_free(p);
+      if (date_length != 0) {
+        p = (char *) yr_malloc(date_length + 1);
+        if (!p) {
+          BIO_set_close(date_bio, BIO_CLOSE);
+          BIO_free(date_bio);
+          break;
+        }
+        BIO_read(date_bio, p, date_length);
+        p[date_length] = '\x0';
+        set_string(p, pe_obj, "signature.notAfter");
+        yr_free(p);
+      }
       BIO_set_close(date_bio, BIO_CLOSE);
       BIO_free(date_bio);
     }
