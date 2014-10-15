@@ -2358,7 +2358,7 @@ void pe_parse_certificates(
   PKCS7 *p7;
   X509 *cert;
   int i, j;
-  char *p; // XXX: Use a better name.
+  char *p;
   const char *sig_alg;
   unsigned long date_length;
   ASN1_INTEGER *serial;
