@@ -322,6 +322,22 @@ typedef struct _IMAGE_EXPORT_DIRECTORY {
 } IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
 
 
+#define WIN_CERT_REVISION_1_0 0x0100
+#define WIN_CERT_REVISION_2_0 0x0200
+
+#define WIN_CERT_TYPE_X509             0x0001
+#define WIN_CERT_TYPE_PKCS_SIGNED_DATA 0x0002
+#define WIN_CERT_TYPE_RESERVED_1       0x0003
+#define WIN_CERT_TYPE_TS_STACK_SIGNED  0x0004
+
+typedef struct _IMAGE_SECURITY_DESCRIPTOR {
+    DWORD Length;
+    WORD  Revision;
+    WORD  CertificateType;
+    BYTE  Certificate[1];
+} IMAGE_SECURITY_DESCRIPTOR, *PIMAGE_SECURITY_DESCRIPTOR;
+
+
 typedef struct _IMAGE_IMPORT_DESCRIPTOR {
     union {
         DWORD Characteristics;

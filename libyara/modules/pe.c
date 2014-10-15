@@ -17,6 +17,11 @@ limitations under the License.
 #include <ctype.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
+#include <openssl/safestack.h>
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
+#include <openssl/pkcs7.h>
+#include <openssl/x509.h>
 
 #include <yara/pe.h>
 #include <yara/modules.h>
@@ -2343,6 +2348,132 @@ void pe_parse_imports(PE* pe)
 }
 
 
+void pe_parse_certificates(
+  PE* pe,
+  YR_OBJECT *pe_obj)
+{
+  PIMAGE_DATA_DIRECTORY directory;
+  PIMAGE_SECURITY_DESCRIPTOR sec_desc;
+  BIO *cert_bio, *date_bio;
+  PKCS7 *p7;
+  X509 *cert;
+  int i, j;
+  char *p; // XXX: Use a better name.
+  const char *sig_alg;
+  unsigned long date_length;
+  ASN1_INTEGER *serial;
+  ASN1_TIME *date_time;
+  STACK_OF(X509) *certs;
+
+  directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
+  // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
+  if (directory->VirtualAddress == 0 ||
+      directory->VirtualAddress + sizeof(IMAGE_SECURITY_DESCRIPTOR) > pe->data_size) {
+    return;
+  }
+
+  //
+  // Walk the directory, pulling out certificates. Make sure the current
+  // certificate fits in pe, and that we don't walk past the end of the
+  // directory.
+  //
+  sec_desc = (PIMAGE_SECURITY_DESCRIPTOR) (pe->data + directory->VirtualAddress);
+  while (struct_fits_in_pe(pe, sec_desc, IMAGE_SECURITY_DESCRIPTOR) &&
+         (uint8_t *) sec_desc <= pe->data + directory->VirtualAddress + directory->Size)
+  {
+    cert_bio = BIO_new_mem_buf(sec_desc->Certificate, sec_desc->Length);
+    if (!cert_bio)
+      break;
+    p7 = d2i_PKCS7_bio(cert_bio, NULL);
+    certs = PKCS7_get0_signers(p7, NULL, 0);
+    for (i = 0; i < sk_X509_num(certs); i++) {
+      cert = sk_X509_value(certs, i);
+
+      p = X509_NAME_oneline(X509_get_issuer_name(cert), NULL, 0);
+      if (!p)
+        break;
+      set_string(p, pe_obj, "signature.issuer");
+      yr_free(p);
+
+      p = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
+      if (!p)
+        break; // XXX
+      set_string(p, pe_obj, "signature.subject");
+      yr_free(p);
+
+      // Versions are zero based, so add one.
+      set_integer(X509_get_version(cert) + 1, pe_obj, "signature.version");
+
+      sig_alg = OBJ_nid2ln(OBJ_obj2nid(cert->sig_alg->algorithm));
+      set_string(sig_alg, pe_obj, "signature.algorithm");
+
+      serial = X509_get_serialNumber(cert);
+      if (serial->length <= 0)
+        continue;
+      //
+      // Convert serial number to "common" string format: 00:01:02:03:04...
+      // The (length * 2) is for each of the bytes in the integer to convert
+      // to hexlified format. The (length - 1) is for the colons. The extra
+      // byte is for the NULL terminator.
+      //
+      p = (char *) yr_malloc((serial->length * 2) + (serial->length - 1) + 1);
+      if (!p)
+        break;
+      for (j = 0; j < serial->length; j++)
+        // Don't put the colon on the last one.
+        if (j < serial->length - 1)
+          snprintf(p + 3 * j, 4, "%02x:", serial->data[j]);
+        else
+          snprintf(p + 3 * j, 3, "%02x", serial->data[j]);
+      set_string(p, pe_obj, "signature.serial");
+      yr_free(p);
+
+      //
+      // Use a single BIO for notBefore and notAfter. Saves from having
+      // to allocate multiple BIOs. Just have to track how much is written
+      // each time.
+      //
+      date_bio = BIO_new(BIO_s_mem());
+      if (!date_bio)
+        break; // XXX
+      date_time = X509_get_notBefore(cert);
+      ASN1_TIME_print(date_bio, date_time); // XXX: free date_time?
+      // Use num_write to get the number of bytes available for reading.
+      p = (char *) yr_malloc(date_bio->num_write + 1);
+      if (!p)
+        break;
+      BIO_read(date_bio, p, date_bio->num_write);
+      p[date_bio->num_write] = '\x0';
+      set_string(p, pe_obj, "signature.notBefore");
+      yr_free(p);
+      date_time = X509_get_notAfter(cert);
+      ASN1_TIME_print(date_bio, date_time);
+      // How much is written the second time?
+      date_length = date_bio->num_write - date_bio->num_read;
+      if (date_length == 0)
+        break; // Nothing written
+      p = (char *) yr_malloc(date_length + 1);
+      if (!p)
+        break;
+      BIO_read(date_bio, p, date_length);
+      p[date_length] = '\x0';
+      set_string(p, pe_obj, "signature.notAfter");
+      yr_free(p);
+      BIO_set_close(date_bio, BIO_CLOSE);
+      BIO_free(date_bio);
+    }
+    sec_desc += sec_desc ->Length + 8 - (((unsigned int) sec_desc + sec_desc->Length) % 8);
+  }
+
+  if (cert_bio) {
+    BIO_set_close(cert_bio, BIO_CLOSE);
+    BIO_free(cert_bio);
+  }
+
+  return;
+}
+
+
 void pe_parse(
     PE* pe,
     size_t base_address,
@@ -2423,6 +2554,8 @@ void pe_parse(
   pe_get_rich_signature(pe->data, pe->data_size, pe->object);
 
   pe_parse_imports(pe);
+
+  pe_parse_certificates(pe, pe->object);
 
   pe_iterate_resources(
       pe,
@@ -2886,6 +3019,16 @@ begin_declarations;
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
   declare_function("imphash", "", "s", imphash);
+
+  begin_struct("signature");
+    declare_string("issuer");
+    declare_string("subject");
+    declare_integer("version");
+    declare_string("algorithm");
+    declare_string("serial");
+    declare_string("notBefore");
+    declare_string("notAfter");
+  end_struct("signature");
 
 end_declarations;
 
