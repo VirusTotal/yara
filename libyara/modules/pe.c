@@ -1745,10 +1745,8 @@ PIMAGE_NT_HEADERS32 pe_get_header(
 // Parse the rich signature.
 // http://www.ntcore.com/files/richsign.htm
 
-void *pe_get_rich_signature(
-    uint8_t* buffer,
-    size_t buffer_length,
-    YR_OBJECT* pe_obj)
+void pe_parse_rich_signature(
+    PE* pe)
 {
   PIMAGE_DOS_HEADER mz_header;
   PIMAGE_NT_HEADERS32 pe_header;
@@ -1760,23 +1758,23 @@ void *pe_get_rich_signature(
   size_t headers_size = 0;
   size_t rich_len = 0;
 
-  if (buffer_length < sizeof(IMAGE_DOS_HEADER))
-    return NULL;
+  if (pe->data_size < sizeof(IMAGE_DOS_HEADER))
+    return;
 
-  mz_header = (PIMAGE_DOS_HEADER) buffer;
+  mz_header = (PIMAGE_DOS_HEADER) pe->data;
 
   if (mz_header->e_magic != IMAGE_DOS_SIGNATURE)
-    return NULL;
+    return;
 
   if (mz_header->e_lfanew < 0)
-    return NULL;
+    return;
 
   headers_size = mz_header->e_lfanew + \
                  sizeof(pe_header->Signature) + \
                  sizeof(IMAGE_FILE_HEADER);
 
-  if (buffer_length < headers_size)
-    return NULL;
+  if (pe->data_size < headers_size)
+    return;
 
   // From offset 0x80 until the start of the PE header should be the Rich
   // signature. The three key values must all be equal and the first dword
@@ -1784,17 +1782,17 @@ void *pe_get_rich_signature(
   // end. Technically the XOR key should be right after "Rich" but it's not
   // important.
 
-  rich_signature = (PRICH_SIGNATURE) (buffer + 0x80);
+  rich_signature = (PRICH_SIGNATURE) (pe->data + 0x80);
 
   if (rich_signature->key1 != rich_signature->key2 ||
       rich_signature->key2 != rich_signature->key3 ||
       (rich_signature->dans ^ rich_signature->key1) != RICH_DANS)
   {
-    return NULL;
+    return;
   }
 
   for (rich_ptr = (DWORD*) rich_signature;
-       rich_ptr <= (DWORD*) (buffer + headers_size);
+       rich_ptr <= (DWORD*) (pe->data + headers_size);
        rich_ptr++)
   {
     if (*rich_ptr == RICH_RICH)
@@ -1804,11 +1802,15 @@ void *pe_get_rich_signature(
       raw_data = (BYTE*) yr_malloc(rich_len);
 
       if (!raw_data)
-        return NULL;
+        return;
 
       memcpy(raw_data, rich_signature, rich_len);
-      set_integer(bigendian(rich_signature->dans), pe_obj, "rich_signature.start");
-      set_integer(bigendian(rich_signature->key1), pe_obj, "rich_signature.key");
+
+      set_integer(
+          bigendian(rich_signature->dans), pe->object, "rich_signature.start");
+      set_integer(
+          bigendian(rich_signature->key1), pe->object, "rich_signature.key");
+
       break;
     }
   }
@@ -1821,7 +1823,7 @@ void *pe_get_rich_signature(
     if (!clear_data)
     {
       yr_free(raw_data);
-      return NULL;
+      return;
     }
 
     // Copy the entire block here to be XORed.
@@ -1835,15 +1837,15 @@ void *pe_get_rich_signature(
     }
 
     set_sized_string(
-        (char*) raw_data, rich_len, pe_obj, "rich_signature.raw_data");
+        (char*) raw_data, rich_len, pe->object, "rich_signature.raw_data");
 
     set_sized_string(
-        (char*) clear_data, rich_len, pe_obj, "rich_signature.clear_data");
+        (char*) clear_data, rich_len, pe->object, "rich_signature.clear_data");
 
-    return NULL;
+    return;
   }
 
-  return NULL;
+  return;
 }
 
 
@@ -2283,7 +2285,8 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
 // calculation.
 //
 
-void pe_parse_imports(PE* pe)
+IMPORTED_DLL* pe_parse_imports(
+    PE* pe)
 {
   IMPORTED_DLL* head = NULL;
   IMPORTED_DLL* tail = NULL;
@@ -2292,12 +2295,12 @@ void pe_parse_imports(PE* pe)
       pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
 
   if (directory->VirtualAddress == 0)
-    return;
+    return NULL;
 
   uint64_t offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
   if (offset == 0 || !struct_fits_in_pe(pe, offset, IMAGE_IMPORT_DESCRIPTOR))
-    return;
+    return NULL;
 
   PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR) \
       (pe->data + offset);
@@ -2339,11 +2342,11 @@ void pe_parse_imports(PE* pe)
     imports++;
   }
 
-  pe->imported_dlls = head;
+  return head;
 }
 
 
-void pe_parse(
+void pe_parse_header(
     PE* pe,
     size_t base_address,
     int flags)
@@ -2418,11 +2421,6 @@ void pe_parse(
   set_integer(
       OptionalHeader(Subsystem),
       pe->object, "subsystem");
-
-  // Get the rich signature.
-  pe_get_rich_signature(pe->data, pe->data_size, pe->object);
-
-  pe_parse_imports(pe);
 
   pe_iterate_resources(
       pe,
@@ -3010,10 +3008,10 @@ int module_load(
 
         module_object->data = pe;
 
-        pe_parse(
-            pe,
-            block->base,
-            context->flags);
+        pe_parse_header(pe, block->base, context->flags);
+        pe_parse_rich_signature(pe);
+
+        pe->imported_dlls = pe_parse_imports(pe);
 
         break;
       }
