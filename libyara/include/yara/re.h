@@ -189,6 +189,10 @@ SIZED_STRING* yr_re_extract_literal(
     RE* re);
 
 
+int yr_re_contains_dot_star(
+    RE* re);
+
+
 int yr_re_split_at_chaining_point(
     RE* re,
     RE** result_re,

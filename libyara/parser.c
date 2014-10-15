@@ -485,6 +485,17 @@ YR_STRING* yr_parser_reduce_string_declaration(
     if (re->flags & RE_FLAGS_FAST_HEX_REGEXP)
       string_flags |= STRING_GFLAGS_FAST_HEX_REGEXP;
 
+    if (yr_re_contains_dot_star(re))
+    {
+      snprintf(
+        message,
+        sizeof(message),
+        "%s contains .*, consider using .{N} with a reasonable value for N",
+        identifier);
+
+        yywarning(yyscanner, message);
+    }
+
     compiler->last_result = yr_re_split_at_chaining_point(
         re, &re, &remainder_re, &min_gap, &max_gap);
 

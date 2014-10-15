@@ -416,6 +416,29 @@ SIZED_STRING* yr_re_extract_literal(
 }
 
 
+int _yr_re_node_contains_dot_star(
+    RE_NODE* re_node)
+{
+  if (re_node->type == RE_NODE_STAR && re_node->left->type == RE_NODE_ANY)
+    return TRUE;
+
+  if (re_node->left != NULL && _yr_re_node_contains_dot_star(re_node->left))
+    return TRUE;
+
+  if (re_node->right != NULL && _yr_re_node_contains_dot_star(re_node->right))
+    return TRUE;
+
+  return FALSE;
+}
+
+
+int yr_re_contains_dot_star(
+    RE* re)
+{
+  return _yr_re_node_contains_dot_star(re->root_node);
+}
+
+
 int yr_re_split_at_chaining_point(
     RE* re,
     RE** result_re,
