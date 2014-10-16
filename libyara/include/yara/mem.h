@@ -27,6 +27,7 @@ limitations under the License.
 #define yr_realloc realloc
 #define yr_free free
 #define yr_strdup strdup
+#define yr_strndup strndup
 
 #include <dmalloc.h>
 
@@ -48,6 +49,9 @@ void yr_free(
 
 char* yr_strdup(
     const char *str);
+
+char* yr_strndup(
+	const char *str, size_t n);
 
 #endif
 

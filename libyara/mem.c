@@ -72,13 +72,31 @@ void yr_free(void* ptr)
 
 char* yr_strdup(const char *str)
 {
-  size_t len = strlen(str) + 1;
-  void *dup = yr_malloc(len);
+  size_t len = strlen(str);
+  void *dup = yr_malloc(len + 1);
 
-  if (dup != NULL)
-    memcpy(dup, str, len);
+  if (dup == NULL)
+    return NULL;
+
+  memcpy(dup, str, len);
+  dup[len] = '\0';
 
   return (char*) dup;
+}
+
+
+char* yr_strndup(const char *str, size_t n)
+{
+  size_t len = strnlen(str, n);
+  void *dup = yr_malloc(len + 1);
+
+  if (dup == NULL)
+    return NULL;
+
+  memcpy(dup, s, len);
+  dup[len] = '\0';
+
+  return (char *) dup;
 }
 
 #else
@@ -128,6 +146,12 @@ void yr_free(void *ptr)
 char* yr_strdup(const char *str)
 {
   return strdup(str);
+}
+
+
+char* yr_strndup(const char *str, size_t n)
+{
+  return strndup(str, n);
 }
 
 #endif
