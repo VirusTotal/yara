@@ -2313,9 +2313,10 @@ IMPORTED_DLL* pe_parse_imports(
   {
     uint64_t offset = pe_rva_to_offset(pe, imports->Name);
 
-    if (offset != 0)
+    if (offset != 0 && offset < pe->data_size)
     {
-      char* dll_name = yr_strdup((char *) (pe->data + offset));
+      char* dll_name = yr_strndup(
+          (char *) (pe->data + offset), pe->data_size - offset);
 
       IMPORTED_FUNCTION* functions = pe_parse_import_descriptor(
           pe, imports, dll_name);
