@@ -2186,7 +2186,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
               (pe->data + offset);
 
           name = (char *) yr_strndup(
-              import->Name, available_space(pe, import->Name));
+              (char*) import->Name, available_space(pe, import->Name));
         }
       }
       else
@@ -2235,7 +2235,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
               (pe->data + offset);
 
           name = (char *) yr_strndup(
-              import->Name, available_space(pe, import->Name));
+              (char*) import->Name, available_space(pe, import->Name));
         }
       }
       else
