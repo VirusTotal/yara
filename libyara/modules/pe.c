@@ -2177,21 +2177,24 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
 
       if (!(thunks64->u1.Ordinal & IMAGE_ORDINAL_FLAG64))
       {
-        // If exported by name
+        // If imported by name
         offset = pe_rva_to_offset(pe, thunks64->u1.Function);
 
-        if (offset != 0 && struct_fits_in_pe(pe, offset, IMAGE_IMPORT_BY_NAME))
+        if (offset != 0)
         {
           PIMAGE_IMPORT_BY_NAME import = (PIMAGE_IMPORT_BY_NAME) \
               (pe->data + offset);
 
-          name = (char *) yr_strndup(
-              (char*) import->Name, available_space(pe, import->Name));
+          if (struct_fits_in_pe(pe, import, IMAGE_IMPORT_BY_NAME))
+          {
+            name = (char *) yr_strndup(
+                (char*) import->Name, available_space(pe, import->Name));
+          }
         }
       }
       else
       {
-        // Lookup the ordinal.
+        // If imported by ordinal. Lookup the ordinal.
         name = ord_lookup(dll_name, thunks64->u1.Ordinal & 0xFFFF);
       }
 
@@ -2226,21 +2229,24 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
 
       if (!(thunks32->u1.Ordinal & IMAGE_ORDINAL_FLAG32))
       {
-        // If exported by name
+        // If imported by name
         offset = pe_rva_to_offset(pe, thunks32->u1.Function);
 
-        if (offset != 0 && struct_fits_in_pe(pe, offset, IMAGE_IMPORT_BY_NAME))
+        if (offset != 0)
         {
           PIMAGE_IMPORT_BY_NAME import = (PIMAGE_IMPORT_BY_NAME) \
               (pe->data + offset);
 
-          name = (char *) yr_strndup(
-              (char*) import->Name, available_space(pe, import->Name));
+          if (struct_fits_in_pe(pe, import, IMAGE_IMPORT_BY_NAME))
+          {
+            name = (char *) yr_strndup(
+                (char*) import->Name, available_space(pe, import->Name));
+          }
         }
       }
       else
       {
-        // Lookup the ordinal.
+        // If imported by ordinal. Lookup the ordinal.
         name = ord_lookup(dll_name, thunks32->u1.Ordinal & 0xFFFF);
       }
 
@@ -2288,7 +2294,7 @@ IMPORTED_DLL* pe_parse_imports(
 
   uint64_t offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
-  if (offset == 0 || !struct_fits_in_pe(pe, offset, IMAGE_IMPORT_DESCRIPTOR))
+  if (offset == 0)
     return NULL;
 
   PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR) \
