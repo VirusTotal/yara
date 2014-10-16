@@ -2413,26 +2413,26 @@ void pe_parse_certificates(
       set_string(sig_alg, pe->object, "signature.algorithm");
 
       serial = X509_get_serialNumber(cert);
-      if (serial->length <= 0)
-        continue;
-      //
-      // Convert serial number to "common" string format: 00:01:02:03:04...
-      // The (length * 2) is for each of the bytes in the integer to convert
-      // to hexlified format. The (length - 1) is for the colons. The extra
-      // byte is for the NULL terminator.
-      //
-      p = (char *) yr_malloc((serial->length * 2) + (serial->length - 1) + 1);
-      if (!p)
-        break;
-      for (j = 0; j < serial->length; j++) {
+      if (serial->length > 0) {
+        //
+        // Convert serial number to "common" string format: 00:01:02:03:04...
+        // The (length * 2) is for each of the bytes in the integer to convert
+        // to hexlified format. The (length - 1) is for the colons. The extra
+        // byte is for the NULL terminator.
+        //
+        p = (char *) yr_malloc((serial->length * 2) + (serial->length - 1) + 1);
+        if (!p)
+          break;
+        for (j = 0; j < serial->length; j++) {
         // Don't put the colon on the last one.
-        if (j < serial->length - 1)
-          snprintf(p + 3 * j, 4, "%02x:", serial->data[j]);
-        else
-          snprintf(p + 3 * j, 3, "%02x", serial->data[j]);
+          if (j < serial->length - 1)
+            snprintf(p + 3 * j, 4, "%02x:", serial->data[j]);
+          else
+            snprintf(p + 3 * j, 3, "%02x", serial->data[j]);
+        }
+        set_string(p, pe->object, "signature.serial");
+        yr_free(p);
       }
-      set_string(p, pe->object, "signature.serial");
-      yr_free(p);
 
       //
       // Use a single BIO for notBefore and notAfter. Saves from having
