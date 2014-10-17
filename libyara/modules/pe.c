@@ -2567,7 +2567,7 @@ define_function(imphash)
   // If not a PE, return 0.
 
   if (!pe)
-    return_integer(UNDEFINED);
+    return_string(UNDEFINED);
 
   MD5_Init(&ctx);
 
@@ -2658,6 +2658,9 @@ define_function(richhash)
   char digest_ascii[SHA256_DIGEST_LENGTH * 2 + 1];
 
   SIZED_STRING *clear_data = get_string(parent, "clear_data");
+
+  if (!clear_data)
+    return_string(UNDEFINED);
 
   SHA256_Init(&ctx);
   SHA256_Update(&ctx, clear_data->c_string, clear_data->length);
