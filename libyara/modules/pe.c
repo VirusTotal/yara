@@ -2567,7 +2567,7 @@ define_function(imphash)
   // If not a PE, return 0.
 
   if (!pe)
-    return_integer(UNDEFINED);
+    return_string(UNDEFINED);
 
   MD5_Init(&ctx);
 
