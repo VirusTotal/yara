@@ -2356,6 +2356,7 @@ void pe_parse_certificates(
   PKCS7 *p7;
   X509 *cert;
   int i, j;
+  size_t end;
   char *p;
   const char *sig_alg;
   unsigned long date_length;
@@ -2467,7 +2468,8 @@ void pe_parse_certificates(
       BIO_set_close(date_bio, BIO_CLOSE);
       BIO_free(date_bio);
     }
-    sec_desc += sec_desc ->Length + 8 - (((unsigned int) sec_desc + sec_desc->Length) % 8);
+    end = ((size_t) sec_desc) + sec_desc->Length;
+    sec_desc = (PIMAGE_SECURITY_DESCRIPTOR) (end + (end % 8));
   }
 
   if (cert_bio) {
