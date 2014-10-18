@@ -2352,11 +2352,11 @@ void pe_parse_certificates(
 {
   PIMAGE_DATA_DIRECTORY directory;
   PIMAGE_SECURITY_DESCRIPTOR sec_desc;
-  BIO *cert_bio, *date_bio;
+  BIO *date_bio, *cert_bio = NULL;
   PKCS7 *p7;
   X509 *cert;
   int i, j;
-  size_t end;
+  uintptr_t end;
   char *p;
   const char *sig_alg;
   unsigned long date_length;
@@ -2377,9 +2377,26 @@ void pe_parse_certificates(
   // directory.
   //
   sec_desc = (PIMAGE_SECURITY_DESCRIPTOR) (pe->data + directory->VirtualAddress);
+  //
+  // I've seen cases where the size of the directory is correct, but there is
+  // unknown values and padding after the only certificate in the directory.
+  //
   while (struct_fits_in_pe(pe, sec_desc, IMAGE_SECURITY_DESCRIPTOR) &&
-         (uint8_t *) sec_desc <= pe->data + directory->VirtualAddress + directory->Size)
+         (uint8_t *) sec_desc < (uint8_t *) (pe->data + directory->VirtualAddress + directory->Size))
   {
+    // Make sure the certificate length fits.
+    if (sec_desc->Certificate + sec_desc->Length > pe->data + pe->data_size)
+      break;
+
+    // Don't support legacy revision for now.
+    // Make sure type is PKCS#7 too.
+    if (sec_desc->Revision != WIN_CERT_REVISION_2_0 ||
+        sec_desc->CertificateType != WIN_CERT_TYPE_PKCS_SIGNED_DATA) {
+      end = (uintptr_t) ((uint8_t *) sec_desc) + sec_desc->Length;
+      sec_desc = (PIMAGE_SECURITY_DESCRIPTOR) (end + (end % 8));
+      continue;
+    }
+
     cert_bio = BIO_new_mem_buf(sec_desc->Certificate, sec_desc->Length);
     if (!cert_bio)
       break;
@@ -2468,8 +2485,11 @@ void pe_parse_certificates(
       BIO_set_close(date_bio, BIO_CLOSE);
       BIO_free(date_bio);
     }
-    end = ((size_t) sec_desc) + sec_desc->Length;
+    end = (uintptr_t) ((uint8_t *) sec_desc) + sec_desc->Length;
     sec_desc = (PIMAGE_SECURITY_DESCRIPTOR) (end + (end % 8));
+
+    BIO_set_close(cert_bio, BIO_CLOSE);
+    BIO_free(cert_bio);
   }
 
   if (cert_bio) {
