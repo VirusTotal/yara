@@ -2384,8 +2384,13 @@ void pe_parse_certificates(
   while (struct_fits_in_pe(pe, sec_desc, IMAGE_SECURITY_DESCRIPTOR) &&
          (uint8_t *) sec_desc < (uint8_t *) (pe->data + directory->VirtualAddress + directory->Size))
   {
-    // Make sure the certificate length fits.
-    if (sec_desc->Certificate + sec_desc->Length > pe->data + pe->data_size)
+    //
+    // Make sure the certificate length fits. Subtract 8 because the docs say
+    // that the length is only for the Certificate, but the next paragraph
+    // contradicts that. Also, all the binaries I've seen the length is
+    // of the entire structure.
+    //
+    if ((sec_desc->Certificate + sec_desc->Length) - 8 > pe->data + pe->data_size)
       break;
 
     // Don't support legacy revision for now.
@@ -2490,6 +2495,7 @@ void pe_parse_certificates(
 
     BIO_set_close(cert_bio, BIO_CLOSE);
     BIO_free(cert_bio);
+    cert_bio = NULL;
   }
 
   if (cert_bio) {
