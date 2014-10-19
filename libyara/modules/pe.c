@@ -2392,7 +2392,8 @@ void pe_parse_certificates(
     //
     // Some malware will stuff config blocks onto the end of the file. This
     // is most often the cause of this check failing.
-    if ((sec_desc->Certificate + sec_desc->Length) - 8 > pe->data + pe->data_size) {
+    end = (uintptr_t) (sec_desc->Certificate + sec_desc->Length) - 8;
+    if (end > (uintptr_t) pe->data + directory->VirtualAddress + directory->Size) {
       break;
     }
 
