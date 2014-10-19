@@ -2390,8 +2390,11 @@ void pe_parse_certificates(
     // contradicts that. Also, all the binaries I've seen the length is
     // of the entire structure.
     //
-    if ((sec_desc->Certificate + sec_desc->Length) - 8 > pe->data + pe->data_size)
+    // Some malware will stuff config blocks onto the end of the file. This
+    // is most often the cause of this check failing.
+    if ((sec_desc->Certificate + sec_desc->Length) - 8 > pe->data + pe->data_size) {
       break;
+    }
 
     // Don't support legacy revision for now.
     // Make sure type is PKCS#7 too.
