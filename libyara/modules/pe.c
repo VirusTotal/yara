@@ -2357,6 +2357,7 @@ void pe_parse_certificates(
   X509 *cert;
   int i, j;
   uintptr_t end;
+  uint8_t *eod; // End of directory.
   char *p;
   const char *sig_alg;
   unsigned long date_length;
@@ -2367,36 +2368,29 @@ void pe_parse_certificates(
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
   // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
   if (directory->VirtualAddress == 0 ||
-      directory->VirtualAddress + sizeof(IMAGE_SECURITY_DESCRIPTOR) > pe->data_size) {
+      directory->VirtualAddress + directory->Size > pe->data_size) {
     return;
   }
 
-  //
-  // Walk the directory, pulling out certificates. Make sure the current
-  // certificate fits in pe, and that we don't walk past the end of the
-  // directory.
-  //
+  // Store the end of directory, making comparisons easier.
+  eod = pe->data + directory->VirtualAddress + directory->Size;
+
   sec_desc = (PIMAGE_SECURITY_DESCRIPTOR) (pe->data + directory->VirtualAddress);
   //
-  // I've seen cases where the size of the directory is correct, but there is
-  // unknown values and padding after the only certificate in the directory.
+  // Walk the directory, pulling out certificates.
+  //
+  // Make sure IMAGE_SECURITY_DESCRIPTOR fits within the directory.
+  // Make sure the Length specified fits within directory too.
+  //
+  // Subtracting 8 because the docs say that the length is only for the
+  // Certificate, but the next paragraph contradicts that. All the binaries
+  // I've seen have the Length being the entire structure (Certificate
+  // included).
   //
   while (struct_fits_in_pe(pe, sec_desc, IMAGE_SECURITY_DESCRIPTOR) &&
-         (uint8_t *) sec_desc < (uint8_t *) (pe->data + directory->VirtualAddress + directory->Size))
+         (uint8_t *) sec_desc + sizeof(IMAGE_SECURITY_DESCRIPTOR) < eod &&
+         (uint8_t *) sec_desc->Certificate + sec_desc->Length - 8 < eod)
   {
-    //
-    // Make sure the certificate length fits. Subtract 8 because the docs say
-    // that the length is only for the Certificate, but the next paragraph
-    // contradicts that. Also, all the binaries I've seen the length is
-    // of the entire structure.
-    //
-    // Some malware will stuff config blocks onto the end of the file. This
-    // is most often the cause of this check failing.
-    end = (uintptr_t) (sec_desc->Certificate + sec_desc->Length) - 8;
-    if (end > (uintptr_t) pe->data + directory->VirtualAddress + directory->Size) {
-      break;
-    }
-
     // Don't support legacy revision for now.
     // Make sure type is PKCS#7 too.
     if (sec_desc->Revision != WIN_CERT_REVISION_2_0 ||
