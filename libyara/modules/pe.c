@@ -2351,7 +2351,7 @@ void pe_parse_certificates(
   PE* pe)
 {
   PIMAGE_DATA_DIRECTORY directory;
-  PIMAGE_SECURITY_DESCRIPTOR sec_desc;
+  PWIN_CERTIFICATE win_cert;
   BIO *date_bio, *cert_bio = NULL;
   PKCS7 *p7;
   X509 *cert;
@@ -2375,11 +2375,11 @@ void pe_parse_certificates(
   // Store the end of directory, making comparisons easier.
   eod = pe->data + directory->VirtualAddress + directory->Size;
 
-  sec_desc = (PIMAGE_SECURITY_DESCRIPTOR) (pe->data + directory->VirtualAddress);
+  win_cert = (PWIN_CERTIFICATE) (pe->data + directory->VirtualAddress);
   //
   // Walk the directory, pulling out certificates.
   //
-  // Make sure IMAGE_SECURITY_DESCRIPTOR fits within the directory.
+  // Make sure WIN_CERTIFICATE fits within the directory.
   // Make sure the Length specified fits within directory too.
   //
   // Subtracting 8 because the docs say that the length is only for the
@@ -2387,20 +2387,20 @@ void pe_parse_certificates(
   // I've seen have the Length being the entire structure (Certificate
   // included).
   //
-  while (struct_fits_in_pe(pe, sec_desc, IMAGE_SECURITY_DESCRIPTOR) &&
-         (uint8_t *) sec_desc + sizeof(IMAGE_SECURITY_DESCRIPTOR) < eod &&
-         (uint8_t *) sec_desc->Certificate + sec_desc->Length - 8 < eod)
+  while (struct_fits_in_pe(pe, win_cert, WIN_CERTIFICATE) &&
+         (uint8_t *) win_cert + sizeof(WIN_CERTIFICATE) < eod &&
+         (uint8_t *) win_cert->Certificate + win_cert->Length - 8 < eod)
   {
     // Don't support legacy revision for now.
     // Make sure type is PKCS#7 too.
-    if (sec_desc->Revision != WIN_CERT_REVISION_2_0 ||
-        sec_desc->CertificateType != WIN_CERT_TYPE_PKCS_SIGNED_DATA) {
-      end = (uintptr_t) ((uint8_t *) sec_desc) + sec_desc->Length;
-      sec_desc = (PIMAGE_SECURITY_DESCRIPTOR) (end + (end % 8));
+    if (win_cert->Revision != WIN_CERT_REVISION_2_0 ||
+        win_cert->CertificateType != WIN_CERT_TYPE_PKCS_SIGNED_DATA) {
+      end = (uintptr_t) ((uint8_t *) win_cert) + win_cert->Length;
+      win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
       continue;
     }
 
-    cert_bio = BIO_new_mem_buf(sec_desc->Certificate, sec_desc->Length);
+    cert_bio = BIO_new_mem_buf(win_cert->Certificate, win_cert->Length);
     if (!cert_bio)
       break;
     p7 = d2i_PKCS7_bio(cert_bio, NULL);
@@ -2488,8 +2488,8 @@ void pe_parse_certificates(
       BIO_set_close(date_bio, BIO_CLOSE);
       BIO_free(date_bio);
     }
-    end = (uintptr_t) ((uint8_t *) sec_desc) + sec_desc->Length;
-    sec_desc = (PIMAGE_SECURITY_DESCRIPTOR) (end + (end % 8));
+    end = (uintptr_t) ((uint8_t *) win_cert) + win_cert->Length;
+    win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
 
     BIO_set_close(cert_bio, BIO_CLOSE);
     BIO_free(cert_bio);
