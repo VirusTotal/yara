@@ -2388,8 +2388,8 @@ void pe_parse_certificates(
   // included).
   //
   while (struct_fits_in_pe(pe, win_cert, WIN_CERTIFICATE) &&
-         (uint8_t *) win_cert + sizeof(WIN_CERTIFICATE) < eod &&
-         (uint8_t *) win_cert->Certificate + win_cert->Length - 8 < eod)
+         (uint8_t *) win_cert + sizeof(WIN_CERTIFICATE) <= eod &&
+         (uint8_t *) win_cert->Certificate + win_cert->Length - 8 <= eod)
   {
     // Don't support legacy revision for now.
     // Make sure type is PKCS#7 too.
