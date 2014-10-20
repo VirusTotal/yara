@@ -2496,11 +2496,6 @@ void pe_parse_certificates(
     cert_bio = NULL;
   }
 
-  if (cert_bio) {
-    BIO_set_close(cert_bio, BIO_CLOSE);
-    BIO_free(cert_bio);
-  }
-
   return;
 }
 
