@@ -2498,7 +2498,8 @@ void pe_parse_certificates(
   }
 
   // Decrement counter as it gets incremented one extra time erroneously.
-  counter--;
+  if (counter > 0)
+    counter--;
   set_integer(counter, pe->object, "signature_length");
   return;
 }
