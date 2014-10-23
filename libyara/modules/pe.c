@@ -2355,7 +2355,7 @@ void pe_parse_certificates(
   BIO *date_bio, *cert_bio = NULL;
   PKCS7 *p7;
   X509 *cert;
-  int i, j;
+  int i, j, counter = 0;
   uintptr_t end;
   uint8_t *eod; // End of directory.
   char *p;
@@ -2411,20 +2411,20 @@ void pe_parse_certificates(
       p = X509_NAME_oneline(X509_get_issuer_name(cert), NULL, 0);
       if (!p)
         break;
-      set_string(p, pe->object, "signature.issuer");
+      set_string(p, pe->object, "signature[%i].issuer", counter);
       yr_free(p);
 
       p = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
       if (!p)
         break;
-      set_string(p, pe->object, "signature.subject");
+      set_string(p, pe->object, "signature[%i].subject", counter);
       yr_free(p);
 
       // Versions are zero based, so add one.
-      set_integer(X509_get_version(cert) + 1, pe->object, "signature.version");
+      set_integer(X509_get_version(cert) + 1, pe->object, "signature[%i].version", counter);
 
       sig_alg = OBJ_nid2ln(OBJ_obj2nid(cert->sig_alg->algorithm));
-      set_string(sig_alg, pe->object, "signature.algorithm");
+      set_string(sig_alg, pe->object, "signature[%i].algorithm", counter);
 
       serial = X509_get_serialNumber(cert);
       if (serial->length > 0) {
@@ -2444,7 +2444,7 @@ void pe_parse_certificates(
           else
             snprintf(p + 3 * j, 3, "%02x", serial->data[j]);
         }
-        set_string(p, pe->object, "signature.serial");
+        set_string(p, pe->object, "signature[%i].serial", counter);
         yr_free(p);
       }
 
@@ -2467,7 +2467,7 @@ void pe_parse_certificates(
       }
       BIO_read(date_bio, p, date_bio->num_write);
       p[date_bio->num_write] = '\x0';
-      set_string(p, pe->object, "signature.notBefore");
+      set_string(p, pe->object, "signature[%i].notBefore", counter);
       yr_free(p);
       date_time = X509_get_notAfter(cert);
       ASN1_TIME_print(date_bio, date_time);
@@ -2482,11 +2482,12 @@ void pe_parse_certificates(
         }
         BIO_read(date_bio, p, date_length);
         p[date_length] = '\x0';
-        set_string(p, pe->object, "signature.notAfter");
+        set_string(p, pe->object, "signature[%i].notAfter", counter);
         yr_free(p);
       }
       BIO_set_close(date_bio, BIO_CLOSE);
       BIO_free(date_bio);
+      counter++;
     }
     end = (uintptr_t) ((uint8_t *) win_cert) + win_cert->Length;
     win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
@@ -2496,6 +2497,7 @@ void pe_parse_certificates(
     cert_bio = NULL;
   }
 
+  set_integer(counter, pe->object, "signature_length");
   return;
 }
 
@@ -3041,7 +3043,7 @@ begin_declarations;
   declare_function("language", "i", "i", language);
   declare_function("imphash", "", "s", imphash);
 
-  begin_struct("signature");
+  begin_struct_array("signature");
     declare_string("issuer");
     declare_string("subject");
     declare_integer("version");
@@ -3049,7 +3051,8 @@ begin_declarations;
     declare_string("serial");
     declare_string("notBefore");
     declare_string("notAfter");
-  end_struct("signature");
+  end_struct_array("signature");
+  declare_integer("signature_length");
 
 end_declarations;
 
