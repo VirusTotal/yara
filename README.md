@@ -53,5 +53,6 @@ yara-python extension.
 * [Blueliv](http://www.blueliv.com)
 * [Adlice](http://www.adlice.com/)
 * [Tanium](http://www.tanium.com/)
+* [Trend Micro](http://www.trendmicro.com)
 
 Are you using it? Want to see your site listed here?
