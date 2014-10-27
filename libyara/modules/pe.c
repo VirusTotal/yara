@@ -2417,6 +2417,8 @@ PX509_TIMESTAMPS pe_parse_certificates(
       break;
     p7 = d2i_PKCS7_bio(cert_bio, NULL);
     certs = PKCS7_get0_signers(p7, NULL, 0);
+    if (!certs)
+      break;
     for (i = 0; i < sk_X509_num(certs); i++) {
       cert = sk_X509_value(certs, i);
 
@@ -2522,6 +2524,7 @@ PX509_TIMESTAMPS pe_parse_certificates(
     BIO_set_close(cert_bio, BIO_CLOSE);
     BIO_free(cert_bio);
     cert_bio = NULL;
+    sk_X509_free(certs);
   }
 
   // Decrement counter as it gets incremented one extra time erroneously.
