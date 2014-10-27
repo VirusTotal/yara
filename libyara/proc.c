@@ -142,6 +142,10 @@ int yr_process_get_memory(
 
 #define _XOPEN_SOURCE 500
 
+#if defined(__FreeBSD__)
+#define __BSD_VISIBLE 1
+#endif
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
