@@ -119,6 +119,15 @@ typedef struct _IMPORTED_FUNCTION
 } IMPORTED_FUNCTION, *PIMPORTED_FUNCTION;
 
 
+typedef struct _X509_TIMESTAMPS
+{
+  ASN1_TIME *not_before;
+  ASN1_TIME *not_after;
+  struct _X509_TIMESTAMPS *next;
+
+} X509_TIMESTAMPS, *PX509_TIMESTAMPS;
+
+
 typedef struct _PE
 {
   uint8_t* data;
@@ -127,6 +136,7 @@ typedef struct _PE
   PIMAGE_NT_HEADERS32 header;
   YR_OBJECT* object;
   IMPORTED_DLL* imported_dlls;
+  PX509_TIMESTAMPS x509_timestamps;
 
 } PE;
 
@@ -2347,11 +2357,13 @@ IMPORTED_DLL* pe_parse_imports(
 }
 
 
-void pe_parse_certificates(
+PX509_TIMESTAMPS pe_parse_certificates(
   PE* pe)
 {
   PIMAGE_DATA_DIRECTORY directory;
   PWIN_CERTIFICATE win_cert;
+  PX509_TIMESTAMPS head = NULL;
+  PX509_TIMESTAMPS tail = NULL;
   BIO *date_bio, *cert_bio = NULL;
   PKCS7 *p7;
   X509 *cert;
@@ -2369,7 +2381,7 @@ void pe_parse_certificates(
   // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
   if (directory->VirtualAddress == 0 ||
       directory->VirtualAddress + directory->Size > pe->data_size) {
-    return;
+    return NULL;
   }
 
   // Store the end of directory, making comparisons easier.
@@ -2469,6 +2481,19 @@ void pe_parse_certificates(
       p[date_bio->num_write] = '\x0';
       set_string(p, pe->object, "signatures[%i].not_before", counter);
       yr_free(p);
+      // Store the ASN1_TIME structure in a list.
+      PX509_TIMESTAMPS x509_timestamp = (PX509_TIMESTAMPS)
+            yr_calloc(1, sizeof(X509_TIMESTAMPS));
+      if (!x509_timestamp)
+        break;
+      x509_timestamp->not_before = date_time;
+      if (head == NULL)
+        head = x509_timestamp;
+      if (tail != NULL)
+        tail->next = x509_timestamp;
+      tail = x509_timestamp;
+
+      // Do the same for notAfter.
       date_time = X509_get_notAfter(cert);
       ASN1_TIME_print(date_bio, date_time);
       // How much is written the second time?
@@ -2484,6 +2509,8 @@ void pe_parse_certificates(
         p[date_length] = '\x0';
         set_string(p, pe->object, "signatures[%i].not_after", counter);
         yr_free(p);
+        // Store the ASN1_TIME structure in a list.
+        x509_timestamp->not_after = date_time;
       }
       BIO_set_close(date_bio, BIO_CLOSE);
       BIO_free(date_bio);
@@ -2501,7 +2528,7 @@ void pe_parse_certificates(
   if (counter > 0)
     counter--;
   set_integer(counter, pe->object, "number_of_signatures");
-  return;
+  return head;
 }
 
 
@@ -3182,7 +3209,7 @@ int module_load(
 
         pe_parse_header(pe, block->base, context->flags);
         pe_parse_rich_signature(pe);
-        pe_parse_certificates(pe);
+        pe->x509_timestamps = pe_parse_certificates(pe);
 
         pe->imported_dlls = pe_parse_imports(pe);
 
@@ -3197,6 +3224,8 @@ int module_load(
 
 int module_unload(YR_OBJECT* module_object)
 {
+  X509_TIMESTAMPS* x509_timestamp = NULL;
+  X509_TIMESTAMPS* next_x509_timestamp = NULL;
   IMPORTED_DLL* dll = NULL;
   IMPORTED_DLL* next_dll = NULL;
   IMPORTED_FUNCTION* func = NULL;
@@ -3223,6 +3252,18 @@ int module_unload(YR_OBJECT* module_object)
     next_dll = dll->next;
     yr_free(dll);
     dll = next_dll;
+  }
+
+  x509_timestamp = pe->x509_timestamps;
+  while (x509_timestamp)
+  {
+    if (x509_timestamp->not_before)
+      yr_free(x509_timestamp->not_before);
+    if (x509_timestamp->not_after)
+      yr_free(x509_timestamp->not_after);
+    next_x509_timestamp = x509_timestamp->next;
+    yr_free(x509_timestamp);
+    x509_timestamp = next_x509_timestamp;
   }
 
   yr_free(pe);
