@@ -2411,20 +2411,20 @@ void pe_parse_certificates(
       p = X509_NAME_oneline(X509_get_issuer_name(cert), NULL, 0);
       if (!p)
         break;
-      set_string(p, pe->object, "signature[%i].issuer", counter);
+      set_string(p, pe->object, "signatures[%i].issuer", counter);
       yr_free(p);
 
       p = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
       if (!p)
         break;
-      set_string(p, pe->object, "signature[%i].subject", counter);
+      set_string(p, pe->object, "signatures[%i].subject", counter);
       yr_free(p);
 
       // Versions are zero based, so add one.
-      set_integer(X509_get_version(cert) + 1, pe->object, "signature[%i].version", counter);
+      set_integer(X509_get_version(cert) + 1, pe->object, "signatures[%i].version", counter);
 
       sig_alg = OBJ_nid2ln(OBJ_obj2nid(cert->sig_alg->algorithm));
-      set_string(sig_alg, pe->object, "signature[%i].algorithm", counter);
+      set_string(sig_alg, pe->object, "signatures[%i].algorithm", counter);
 
       serial = X509_get_serialNumber(cert);
       if (serial->length > 0) {
@@ -2444,7 +2444,7 @@ void pe_parse_certificates(
           else
             snprintf(p + 3 * j, 3, "%02x", serial->data[j]);
         }
-        set_string(p, pe->object, "signature[%i].serial", counter);
+        set_string(p, pe->object, "signatures[%i].serial", counter);
         yr_free(p);
       }
 
@@ -2467,7 +2467,7 @@ void pe_parse_certificates(
       }
       BIO_read(date_bio, p, date_bio->num_write);
       p[date_bio->num_write] = '\x0';
-      set_string(p, pe->object, "signature[%i].notBefore", counter);
+      set_string(p, pe->object, "signatures[%i].notBefore", counter);
       yr_free(p);
       date_time = X509_get_notAfter(cert);
       ASN1_TIME_print(date_bio, date_time);
@@ -2482,7 +2482,7 @@ void pe_parse_certificates(
         }
         BIO_read(date_bio, p, date_length);
         p[date_length] = '\x0';
-        set_string(p, pe->object, "signature[%i].notAfter", counter);
+        set_string(p, pe->object, "signatures[%i].notAfter", counter);
         yr_free(p);
       }
       BIO_set_close(date_bio, BIO_CLOSE);
@@ -2500,7 +2500,7 @@ void pe_parse_certificates(
   // Decrement counter as it gets incremented one extra time erroneously.
   if (counter > 0)
     counter--;
-  set_integer(counter, pe->object, "signature_length");
+  set_integer(counter, pe->object, "number_of_signatures");
   return;
 }
 
@@ -3046,7 +3046,7 @@ begin_declarations;
   declare_function("language", "i", "i", language);
   declare_function("imphash", "", "s", imphash);
 
-  begin_struct_array("signature");
+  begin_struct_array("signatures");
     declare_string("issuer");
     declare_string("subject");
     declare_integer("version");
@@ -3054,8 +3054,8 @@ begin_declarations;
     declare_string("serial");
     declare_string("notBefore");
     declare_string("notAfter");
-  end_struct_array("signature");
-  declare_integer("signature_length");
+  end_struct_array("signatures");
+  declare_integer("number_of_signatures");
 
 end_declarations;
 
