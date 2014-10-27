@@ -2467,7 +2467,7 @@ void pe_parse_certificates(
       }
       BIO_read(date_bio, p, date_bio->num_write);
       p[date_bio->num_write] = '\x0';
-      set_string(p, pe->object, "signatures[%i].notBefore", counter);
+      set_string(p, pe->object, "signatures[%i].not_before", counter);
       yr_free(p);
       date_time = X509_get_notAfter(cert);
       ASN1_TIME_print(date_bio, date_time);
@@ -2482,7 +2482,7 @@ void pe_parse_certificates(
         }
         BIO_read(date_bio, p, date_length);
         p[date_length] = '\x0';
-        set_string(p, pe->object, "signatures[%i].notAfter", counter);
+        set_string(p, pe->object, "signatures[%i].not_after", counter);
         yr_free(p);
       }
       BIO_set_close(date_bio, BIO_CLOSE);
@@ -3052,8 +3052,8 @@ begin_declarations;
     declare_integer("version");
     declare_string("algorithm");
     declare_string("serial");
-    declare_string("notBefore");
-    declare_string("notAfter");
+    declare_string("not_before");
+    declare_string("not_after");
   end_struct_array("signatures");
   declare_integer("number_of_signatures");
 
