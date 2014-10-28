@@ -14,6 +14,7 @@ endif
 if HASH
 MODULES += modules/hash.c
 endif
+
 #
 # Add your modules here:
 #

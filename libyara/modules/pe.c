@@ -18,8 +18,13 @@ limitations under the License.
 
 #include <stdio.h>
 #include <ctype.h>
+
+#include <config.h>
+
+#if defined(HAVE_LIBCRYPTO)
 #include <openssl/md5.h>
 #include <openssl/sha.h>
+#endif
 
 #include <yara/pe.h>
 #include <yara/modules.h>
@@ -2543,6 +2548,8 @@ define_function(exports)
 }
 
 
+#if defined(HAVE_LIBCRYPTO)
+
 //
 // Generate an import hash:
 // https://www.mandiant.com/blog/tracking-malware-import-hashing/
@@ -2675,6 +2682,8 @@ define_function(richhash)
 
   return_string(digest_ascii);
 }
+
+#endif  // defined(HAVE_LIBCRYPTO)
 
 
 define_function(imports)
@@ -2868,20 +2877,26 @@ begin_declarations;
     declare_integer("raw_data_size");
   end_struct_array("sections");
 
+
   begin_struct("rich_signature");
     declare_integer("start");
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
+    #if defined(HAVE_LIBCRYPTO)
     declare_function("hash", "", "s", richhash);
+    #endif
   end_struct("rich_signature");
+
+  #if defined(HAVE_LIBCRYPTO)
+  declare_function("imphash", "", "s", imphash);
+  #endif
 
   declare_function("section_index", "s", "i", section_index);
   declare_function("exports", "s", "i", exports);
   declare_function("imports", "ss", "i", imports);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
-  declare_function("imphash", "", "s", imphash);
 
 end_declarations;
 

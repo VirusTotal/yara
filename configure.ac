@@ -20,36 +20,59 @@ LT_INIT
 AC_PROG_LIBTOOL
 
 AC_ARG_ENABLE([dmalloc],
-  [AS_HELP_STRING([--enable-dmalloc], [enable dmalloc to debug heap-related issues])],
+  [AS_HELP_STRING([--enable-dmalloc],
+    [enable dmalloc to debug heap-related issues])],
   [if test x$enableval = xyes; then
-    AC_CHECK_LIB(dmalloc, dmalloc_malloc,, AC_MSG_ERROR(please install dmalloc library))
+    AC_CHECK_LIB(dmalloc, dmalloc_malloc,,
+      AC_MSG_ERROR([please install dmalloc library]))
     AC_DEFINE([DMALLOC], [1], [enable dmalloc])
   fi])
 
 AC_ARG_ENABLE([cuckoo],
   [AS_HELP_STRING([--enable-cuckoo], [enable cuckoo module])],
   [if test x$enableval = xyes; then
-    cuckoo=true
-    AC_CHECK_LIB(jansson, json_loadb,, AC_MSG_ERROR(please install Jansson library))
+    build_cuckoo_module=true
+    AC_CHECK_LIB(jansson, json_loadb,,
+      AC_MSG_ERROR([please install Jansson library]))
     AC_DEFINE([CUCKOO], [1], [enable cuckoo module])
   fi])
 
 AC_ARG_ENABLE([magic],
   [AS_HELP_STRING([--enable-magic], [enable magic module])],
   [if test x$enableval = xyes; then
-    magic=true
-    AC_CHECK_LIB(magic, magic_open,, AC_MSG_ERROR(please install libmagic library))
+    build_magic_module=true
+    AC_CHECK_LIB(magic, magic_open,,
+      AC_MSG_ERROR([please install libmagic library]))
     AC_DEFINE([MAGIC], [1], [enable magic module])
   fi])
 
-AC_ARG_ENABLE([hash],
-  [AS_HELP_STRING([--enable-hash], [enable hash module for files and memory blocks])],
-  [if test x$enableval = xyes; then
-    hash=true
-    AC_CHECK_HEADERS([openssl/md5.h])
-    AC_CHECK_LIB(crypto, MD5_Update,, AC_MSG_ERROR(please install openssl libcrypto library))
-    AC_DEFINE([HASH], [1], [enable hash module])
-  fi])
+AC_ARG_WITH([crypto],
+  AS_HELP_STRING([--without-crypto],
+    [ignore presence of OpenSSL and disable it]))
+
+  AS_IF([test "x$with_crypto" != "xno"],
+    [
+      AC_CHECK_LIB(crypto, MD5_Init,, [have_crypto=no])
+      AC_CHECK_LIB(crypto, MD5_Update,, [have_crypto=no])
+      AC_CHECK_LIB(crypto, MD5_Final,, [have_crypto=no])
+      AC_CHECK_LIB(crypto, SHA256_Init,, [have_crypto=no])
+      AC_CHECK_LIB(crypto, SHA256_Update,, [have_crypto=no])
+      AC_CHECK_LIB(crypto, SHA256_Final,, [have_crypto=no])
+    ],
+    [
+      have_crypto=no
+    ])
+
+  AS_IF([test "x$have_crypto" = "xno"],
+    [
+      AS_IF([test "x$with_crypto" = "xyes"],
+        [
+          AC_MSG_ERROR([OpenSSL requested but not found])
+        ])
+    ],
+    [
+      build_hash_module=true
+    ])
 
 ACX_PTHREAD(
     [LIBS="$PTHREAD_LIBS $LIBS"
@@ -59,9 +82,9 @@ ACX_PTHREAD(
 
 AC_CHECK_FUNCS_ONCE(strlcpy strlcat)
 
-AM_CONDITIONAL([CUCKOO], [test x$cuckoo = xtrue])
-AM_CONDITIONAL([MAGIC], [test x$magic = xtrue])
-AM_CONDITIONAL([HASH], [test x$hash = xtrue])
+AM_CONDITIONAL([CUCKOO], [test x$build_cuckoo_module = xtrue])
+AM_CONDITIONAL([MAGIC], [test x$build_magic_module = xtrue])
+AM_CONDITIONAL([HASH], [test x$build_hash_module = xtrue])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libyara/Makefile])
