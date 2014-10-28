@@ -3312,7 +3312,7 @@ yyreduce:
             compiler->sz_arena,
             (yyvsp[(1) - (1)].sized_string),
             (yyvsp[(1) - (1)].sized_string)->length + sizeof(SIZED_STRING),
-            (void*) &sized_string);
+            (void**) &sized_string);
 
         yr_free((yyvsp[(1) - (1)].sized_string));
 
