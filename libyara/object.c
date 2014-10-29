@@ -519,6 +519,8 @@ int yr_object_copy(
 
   YR_ARRAY_ITEMS* array_items;
   YR_STRUCTURE_MEMBER* structure_member;
+  YR_OBJECT_FUNCTION* func;
+  YR_OBJECT_FUNCTION* func_copy;
 
   int i;
 
@@ -542,6 +544,20 @@ int yr_object_copy(
 
     case OBJECT_TYPE_REGEXP:
       ((YR_OBJECT_REGEXP*) copy)->value = NULL;
+      break;
+
+    case OBJECT_TYPE_FUNCTION:
+
+      func = (YR_OBJECT_FUNCTION*) object;
+      func_copy = (YR_OBJECT_FUNCTION*) copy;
+
+      FAIL_ON_ERROR_WITH_CLEANUP(
+        yr_object_copy(func->return_obj, &func_copy->return_obj),
+        yr_object_destroy(copy));
+
+      for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+        func_copy->prototypes[i] = func->prototypes[i];
+
       break;
 
     case OBJECT_TYPE_STRUCTURE:
