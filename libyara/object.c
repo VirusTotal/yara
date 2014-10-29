@@ -203,18 +203,18 @@ int yr_object_function_create(
         yr_object_create(return_type, "result", f, &return_obj),
         yr_object_destroy(f));
 
-	((YR_OBJECT_FUNCTION*) f)->return_obj = return_obj;
+    ((YR_OBJECT_FUNCTION*) f)->return_obj = return_obj;
   }
 
   for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
   {
     if (((YR_OBJECT_FUNCTION*) f)->prototypes[i].arguments_fmt == NULL)
-	{
+    {
       ((YR_OBJECT_FUNCTION*) f)->prototypes[i].arguments_fmt = arguments_fmt;
       ((YR_OBJECT_FUNCTION*) f)->prototypes[i].code = code;
 
-	  break;
-	}
+      break;
+    }
   }
 
   if (function != NULL)
