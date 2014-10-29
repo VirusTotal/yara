@@ -848,13 +848,13 @@ order, you can get their values with:
 
 .. code-block:: c
 
-    char* arg_1 = string_argument(1);
+    SIZED_STRING* arg_1 = string_argument(1);
     RE_CODE arg_2 = regexp_argument(2);
     int64_t arg_3 = integer_argument(3);
 
 
-Notice that the C type for integer arguments is ``int64_t`` and for regular
-expressions is ``RE_CODE``.
+Notice that the C type for string arguments is ``SIZED_STRING``, integer
+arguments is ``int64_t`` and for regular expressions is ``RE_CODE``.
 
 Return values
 -------------
