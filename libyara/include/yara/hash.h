@@ -33,7 +33,7 @@ typedef struct _YR_HASH_TABLE
 {
   int size;
 
-  YR_HASH_TABLE_ENTRY* buckets[0];
+  YR_HASH_TABLE_ENTRY* buckets[1];
 
 } YR_HASH_TABLE;
 
