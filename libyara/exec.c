@@ -24,10 +24,11 @@ limitations under the License.
 #include <yara/object.h>
 #include <yara/modules.h>
 #include <yara/re.h>
+#include <yara/strutils.h>
 #include <yara/utils.h>
 
-
 #include <yara.h>
+
 
 #define STACK_SIZE 16384
 #define MEM_SIZE   MAX_LOOP_NESTING * LOOP_LOCAL_VARS

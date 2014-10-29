@@ -21,14 +21,15 @@ limitations under the License.
 
 #include "config.h"
 
-uint64_t xtoi(const char* hexstr)
+uint64_t xtoi(
+    const char* hexstr)
 {
   int l = strlen(hexstr);
   uint64_t r = 0;
 
   for (int i = 0; i < l; i++)
   {
-    switch(hexstr[i])
+    switch (hexstr[i])
     {
       case '0':
       case '1':
@@ -75,13 +76,16 @@ the following implementations were taken from OpenBSD.
 
 #if !HAVE_STRLCPY
 
-size_t strlcpy(char* dst, const char* src, size_t size)
+size_t strlcpy(
+    char* dst,
+    const char* src,
+    size_t size)
 {
   register char* d = dst;
   register const char* s = src;
   register size_t n = size;
 
-  /* Copy as many bytes as will fit */
+  // Copy as many bytes as will fit
 
   if (n != 0 && --n != 0)
   {
@@ -93,17 +97,17 @@ size_t strlcpy(char* dst, const char* src, size_t size)
     } while (--n != 0);
   }
 
-  /* Not enough room in dst, add NUL and traverse rest of src */
+  // Not enough room in dst, add NUL and traverse rest of src
 
   if (n == 0)
   {
     if (size != 0)
-      *d = '\0';    /* NUL-terminate dst */
+      *d = '\0';    // NULL-terminate dst
 
     while (*s++);
   }
 
-  return(s - src - 1);  /* count does not include NUL */
+  return (s - src - 1);  // count does not include NULL
 }
 
 #endif
@@ -111,17 +115,19 @@ size_t strlcpy(char* dst, const char* src, size_t size)
 
 #if !HAVE_STRLCAT
 
-size_t strlcat(char* dst, const char* src, size_t size)
+size_t strlcat(
+    char* dst,
+    const char* src,
+    size_t size)
 {
   register char* d = dst;
   register const char* s = src;
   register size_t n = size;
   size_t dlen;
 
-  /* Find the end of dst and adjust bytes left but don't go past end */
+  // Find the end of dst and adjust bytes left but don't go past end
 
-  while (n-- != 0 && *d != '\0')
-    d++;
+  while (n-- != 0 && *d != '\0') d++;
 
   dlen = d - dst;
   n = size - dlen;
@@ -141,13 +147,14 @@ size_t strlcat(char* dst, const char* src, size_t size)
 
   *d = '\0';
 
-  return(dlen + (s - src));  /* count does not include NUL */
+  return (dlen + (s - src));  // count does not include NULL
 }
 
 #endif
 
 
-int strlen_w(const char* w_str)
+int strlen_w(
+    const char* w_str)
 {
   int len = 0;
 
@@ -161,7 +168,9 @@ int strlen_w(const char* w_str)
 }
 
 
-int strcmp_w(const char* w_str, const char* str)
+int strcmp_w(
+    const char* w_str,
+    const char* str)
 {
   while (*w_str != 0 && *str != 0 && *w_str == *str)
   {
@@ -178,7 +187,11 @@ int strcmp_w(const char* w_str, const char* str)
   return -1;
 }
 
-size_t strlcpy_w(char* dst, const char* w_src, size_t n)
+
+size_t strlcpy_w(
+    char* dst,
+    const char* w_src,
+    size_t n)
 {
   register char* d = dst;
   register const char* s = w_src;
@@ -197,3 +210,31 @@ size_t strlcpy_w(char* dst, const char* w_src, size_t n)
 
   return (s - w_src) / 2;
 }
+
+
+#ifdef _MSC_VER
+void* memmem(
+    const void *haystack,
+    size_t haystack_size,
+    const void *needle,
+    size_t needle_size)
+{
+  char *sp = (char *) haystack;
+  char *pp = (char *) needle;
+  char *eos = sp + haystack_size - needle_size;
+
+  if (haystack == NULL || haystack_size == 0 ||
+      needle == NULL || needle_size == 0)
+    return NULL;
+
+  while (sp <= eos)
+  {
+    if (*sp == *pp && memcmp(sp, pp, needle_size) == 0)
+      return sp;
+
+    sp++;
+  }
+
+  return NULL;
+}
+#endif
