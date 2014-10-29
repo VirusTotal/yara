@@ -55,7 +55,7 @@ void* memmem(
     const void *haystack,
     size_t haystack_size,
     const void *needle,
-    size_t needle_size)
+    size_t needle_size);
 #endif
 
 
