@@ -2385,7 +2385,8 @@ PX509_TIMESTAMPS pe_parse_certificates(
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
   // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
   if (directory->VirtualAddress == 0 ||
-      directory->VirtualAddress + directory->Size > pe->data_size) {
+      directory->VirtualAddress + directory->Size > pe->data_size)
+  {
     return NULL;
   }
 
@@ -2411,7 +2412,8 @@ PX509_TIMESTAMPS pe_parse_certificates(
     // Don't support legacy revision for now.
     // Make sure type is PKCS#7 too.
     if (win_cert->Revision != WIN_CERT_REVISION_2_0 ||
-        win_cert->CertificateType != WIN_CERT_TYPE_PKCS_SIGNED_DATA) {
+        win_cert->CertificateType != WIN_CERT_TYPE_PKCS_SIGNED_DATA)
+    {
       end = (uintptr_t) ((uint8_t *) win_cert) + win_cert->Length;
       win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
       continue;
@@ -2424,7 +2426,8 @@ PX509_TIMESTAMPS pe_parse_certificates(
     certs = PKCS7_get0_signers(p7, NULL, 0);
     if (!certs)
       break;
-    for (i = 0; i < sk_X509_num(certs); i++) {
+    for (i = 0; i < sk_X509_num(certs); i++)
+    {
       cert = sk_X509_value(certs, i);
 
       p = X509_NAME_oneline(X509_get_issuer_name(cert), NULL, 0);
@@ -2446,7 +2449,8 @@ PX509_TIMESTAMPS pe_parse_certificates(
       set_string(sig_alg, pe->object, "signatures[%i].algorithm", counter);
 
       serial = X509_get_serialNumber(cert);
-      if (serial->length > 0) {
+      if (serial->length > 0)
+      {
         //
         // Convert serial number to "common" string format: 00:01:02:03:04...
         // The (length * 2) is for each of the bytes in the integer to convert
@@ -2456,8 +2460,9 @@ PX509_TIMESTAMPS pe_parse_certificates(
         p = (char *) yr_malloc((serial->length * 2) + (serial->length - 1) + 1);
         if (!p)
           break;
-        for (j = 0; j < serial->length; j++) {
-        // Don't put the colon on the last one.
+        for (j = 0; j < serial->length; j++)
+        {
+          // Don't put the colon on the last one.
           if (j < serial->length - 1)
             snprintf(p + 3 * j, 4, "%02x:", serial->data[j]);
           else
@@ -2479,7 +2484,8 @@ PX509_TIMESTAMPS pe_parse_certificates(
       ASN1_TIME_print(date_bio, date_time);
       // Use num_write to get the number of bytes available for reading.
       p = (char *) yr_malloc(date_bio->num_write + 1);
-      if (!p) {
+      if (!p)
+      {
         BIO_set_close(date_bio, BIO_CLOSE);
         BIO_free(date_bio);
         break;
@@ -2505,9 +2511,11 @@ PX509_TIMESTAMPS pe_parse_certificates(
       ASN1_TIME_print(date_bio, date_time);
       // How much is written the second time?
       date_length = date_bio->num_write - date_bio->num_read;
-      if (date_length != 0) {
+      if (date_length != 0)
+      {
         p = (char *) yr_malloc(date_length + 1);
-        if (!p) {
+        if (!p)
+        {
           BIO_set_close(date_bio, BIO_CLOSE);
           BIO_free(date_bio);
           break;
