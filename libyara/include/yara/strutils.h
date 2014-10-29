@@ -29,21 +29,49 @@ limitations under the License.
 #define strncasecmp _strnicmp
 #endif
 
-uint64_t xtoi(const char* hexstr);
+
+uint64_t xtoi(
+    const char* hexstr);
+
 
 #if !HAVE_STRLCPY
-size_t strlcpy(char *dst, const char *src, size_t size);
+size_t strlcpy(
+    char *dst,
+    const char *src,
+    size_t size);
 #endif
+
 
 #if !HAVE_STRLCAT
-size_t strlcat(char *dst, const char *src, size_t size);
+size_t strlcat(
+    char *dst,
+    const char *src,
+    size_t size);
 #endif
 
-int strlen_w(const char* w_str);
 
-int strcmp_w(const char* w_str, const char* str);
+#ifdef _MSC_VER
+void* memmem(
+    const void *haystack,
+    size_t haystack_size,
+    const void *needle,
+    size_t needle_size);
+#endif
 
-size_t strlcpy_w(char* dst, const char* w_src, size_t n);
+
+int strlen_w(
+    const char* w_str);
+
+
+int strcmp_w(
+    const char* w_str,
+    const char* str);
+
+
+size_t strlcpy_w(
+    char* dst,
+    const char* w_src,
+    size_t n);
 
 #endif
 

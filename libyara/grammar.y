@@ -1560,7 +1560,7 @@ primary_expression
             compiler->sz_arena,
             $1,
             $1->length + sizeof(SIZED_STRING),
-            (void*) &sized_string);
+            (void**) &sized_string);
 
         yr_free($1);
 
