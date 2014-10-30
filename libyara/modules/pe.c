@@ -2361,7 +2361,7 @@ IMPORTED_DLL* pe_parse_imports(
   return head;
 }
 
-
+#if defined(HAVE_LIBCRYPTO)
 PX509_TIMESTAMPS pe_parse_certificates(
   PE* pe)
 {
@@ -2504,6 +2504,13 @@ PX509_TIMESTAMPS pe_parse_certificates(
   set_integer(counter, pe->object, "number_of_signatures");
   return head;
 }
+#else
+PX509_TIMESTAMPS pe_parse_certificates(
+  PE* pe)
+{
+  return NULL;
+}
+#endif  // defined(HAVE_LIBCRYPTO)
 
 
 void pe_parse_header(
@@ -2623,6 +2630,7 @@ void pe_parse_header(
   }
 }
 
+#if defined(HAVE_LIBCRYPTO)
 // Given a string, see if any of the stored notBefore matches, exactly.
 define_function(not_before_string)
 {
@@ -2664,7 +2672,6 @@ define_function(not_before_string)
 
   return_integer(0);
 }
-
 
 //
 // Given an integer argument return 1 if any of the stored notBefore values
@@ -2774,6 +2781,7 @@ define_function(not_after_integer)
   return_integer(0);
 }
 
+#endif  // defined(HAVE_LIBCRYPTO)
 
 define_function(section_index)
 {
@@ -3207,7 +3215,7 @@ begin_declarations;
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
 
-// XXX: Wrap in HAVE_LIBCRYPTO
+  #if defined(HAVE_LIBCRYPTO)
   begin_struct_array("signatures");
     declare_string("issuer");
     declare_string("subject");
@@ -3220,6 +3228,7 @@ begin_declarations;
     declare_function("not_after", "i", "i", not_after_integer);
   end_struct_array("signatures");
   declare_integer("number_of_signatures");
+  #endif
 
 end_declarations;
 
