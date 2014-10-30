@@ -2629,7 +2629,7 @@ define_function(not_before_string)
   char *p;
   BIO* date_bio;
   X509_TIMESTAMPS* x509_timestamp;
-  SIZED_STRING* not_before = string_argument(1);
+  char* not_before = string_argument(1);
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
@@ -2652,7 +2652,7 @@ define_function(not_before_string)
     p[date_bio->num_write] = '\x0';
     BIO_set_close(date_bio, BIO_CLOSE);
     BIO_free(date_bio);
-    if (strcasecmp(p, not_before->c_string) == 0)
+    if (strcasecmp(p, not_before) == 0)
     {
       yr_free(p);
       return_integer(1);
@@ -2705,7 +2705,7 @@ define_function(not_after_string)
   char *p;
   BIO* date_bio;
   X509_TIMESTAMPS* x509_timestamp;
-  SIZED_STRING* not_after = string_argument(1);
+  char* not_after = string_argument(1);
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
@@ -2728,7 +2728,7 @@ define_function(not_after_string)
     p[date_bio->num_write] = '\x0';
     BIO_set_close(date_bio, BIO_CLOSE);
     BIO_free(date_bio);
-    if (strcasecmp(p, not_after->c_string) == 0)
+    if (strcasecmp(p, not_after) == 0)
     {
       yr_free(p);
       return_integer(1);
