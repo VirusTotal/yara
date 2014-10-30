@@ -536,6 +536,13 @@ int yr_execute_code(
         pop(r2);
 
         function = UINT64_TO_PTR(YR_OBJECT_FUNCTION*, r2);
+
+        if (IS_UNDEFINED(function))
+        {
+          push(UNDEFINED);
+          break;
+        }
+
         result = ERROR_INTERNAL_FATAL_ERROR;
 
         for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
