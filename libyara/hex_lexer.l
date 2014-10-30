@@ -197,6 +197,7 @@ int yr_parse_hex_string(
 
   lex_env.last_error_code = ERROR_SUCCESS;
   lex_env.inside_or = 0;
+  lex_env.token_count = 0;
 
   #ifdef _WIN32
   TlsSetValue(recovery_state_key, (LPVOID) &recovery_state);

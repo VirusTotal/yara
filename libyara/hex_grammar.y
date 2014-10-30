@@ -94,10 +94,26 @@ tokens : token
          }
        | tokens token
          {
+            lex_env->token_count++;
+
+            if (lex_env->token_count >= MAX_HEX_STRING_TOKENS)
+            {
+              yr_re_node_destroy($1);
+              yr_re_node_destroy($2);
+
+              yyerror(yyscanner, lex_env, "string too long");
+
+              YYABORT;
+            }
+
+            DESTROY_NODE_IF($$ == NULL, $1);
+            DESTROY_NODE_IF($$ == NULL, $2);
+
             $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
 
             DESTROY_NODE_IF($$ == NULL, $1);
             DESTROY_NODE_IF($$ == NULL, $2);
+
             ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        ;
