@@ -2369,7 +2369,7 @@ PX509_TIMESTAMPS pe_parse_certificates(
   PWIN_CERTIFICATE win_cert;
   PX509_TIMESTAMPS head = NULL;
   PX509_TIMESTAMPS tail = NULL;
-  BIO *date_bio, *cert_bio = NULL;
+  BIO *cert_bio = NULL;
   PKCS7 *p7;
   X509 *cert;
   int i, j, counter = 0;
@@ -2377,7 +2377,6 @@ PX509_TIMESTAMPS pe_parse_certificates(
   uint8_t *eod; // End of directory.
   char *p;
   const char *sig_alg;
-  unsigned long date_length;
   ASN1_INTEGER *serial;
   ASN1_TIME *date_time;
   STACK_OF(X509) *certs;
@@ -2472,63 +2471,22 @@ PX509_TIMESTAMPS pe_parse_certificates(
         yr_free(p);
       }
 
-      //
-      // Use a single BIO for notBefore and notAfter. Saves from having
-      // to allocate multiple BIOs. Just have to track how much is written
-      // each time.
-      //
-      date_bio = BIO_new(BIO_s_mem());
-      if (!date_bio)
-        break;
-      date_time = X509_get_notBefore(cert);
-      ASN1_TIME_print(date_bio, date_time);
-      // Use num_write to get the number of bytes available for reading.
-      p = (char *) yr_malloc(date_bio->num_write + 1);
-      if (!p)
-      {
-        BIO_set_close(date_bio, BIO_CLOSE);
-        BIO_free(date_bio);
-        break;
-      }
-      BIO_read(date_bio, p, date_bio->num_write);
-      p[date_bio->num_write] = '\x0';
-      set_string(p, pe->object, "signatures[%i].not_before", counter);
-      yr_free(p);
-      // Store the ASN1_TIME structure in a list.
+      // Store the ASN1_TIME structures in a list.
       PX509_TIMESTAMPS x509_timestamp = (PX509_TIMESTAMPS)
             yr_calloc(1, sizeof(X509_TIMESTAMPS));
       if (!x509_timestamp)
         break;
-      x509_timestamp->not_before = date_time;
       if (head == NULL)
         head = x509_timestamp;
       if (tail != NULL)
         tail->next = x509_timestamp;
       tail = x509_timestamp;
 
-      // Do the same for notAfter.
+      date_time = X509_get_notBefore(cert);
+      x509_timestamp->not_before = date_time;
       date_time = X509_get_notAfter(cert);
-      ASN1_TIME_print(date_bio, date_time);
-      // How much is written the second time?
-      date_length = date_bio->num_write - date_bio->num_read;
-      if (date_length != 0)
-      {
-        p = (char *) yr_malloc(date_length + 1);
-        if (!p)
-        {
-          BIO_set_close(date_bio, BIO_CLOSE);
-          BIO_free(date_bio);
-          break;
-        }
-        BIO_read(date_bio, p, date_length);
-        p[date_length] = '\x0';
-        set_string(p, pe->object, "signatures[%i].not_after", counter);
-        yr_free(p);
-        // Store the ASN1_TIME structure in a list.
-        x509_timestamp->not_after = date_time;
-      }
-      BIO_set_close(date_bio, BIO_CLOSE);
-      BIO_free(date_bio);
+      x509_timestamp->not_after = date_time;
+
       counter++;
     }
     end = (uintptr_t) ((uint8_t *) win_cert) + win_cert->Length;
@@ -2663,6 +2621,157 @@ void pe_parse_header(
 
     section++;
   }
+}
+
+// Given a string, see if any of the stored notBefore matches, exactly.
+define_function(not_before_string)
+{
+  char *p;
+  BIO* date_bio;
+  X509_TIMESTAMPS* x509_timestamp;
+  SIZED_STRING* not_before = string_argument(1);
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  x509_timestamp = pe->x509_timestamps;
+  while (x509_timestamp)
+  {
+    date_bio = BIO_new(BIO_s_mem());
+    if (!date_bio)
+      break;
+    ASN1_TIME_print(date_bio, x509_timestamp->not_before);
+    // Use num_write to get the number of bytes available for reading.
+    p = (char *) yr_malloc(date_bio->num_write + 1);
+    if (!p)
+    {
+      BIO_set_close(date_bio, BIO_CLOSE);
+      BIO_free(date_bio);
+      break;
+    }
+    BIO_read(date_bio, p, date_bio->num_write);
+    p[date_bio->num_write] = '\x0';
+    BIO_set_close(date_bio, BIO_CLOSE);
+    BIO_free(date_bio);
+    if (strcasecmp(p, not_before->c_string) == 0)
+    {
+      yr_free(p);
+      return_integer(1);
+    }
+    yr_free(p);
+
+    x509_timestamp = x509_timestamp->next;
+  }
+
+  return_integer(0);
+}
+
+
+//
+// Given an integer argument return 1 if any of the stored notBefore values
+// come "after" it. For example, to find a binary with a notBefore in 2014
+// or later you can use 1388534400, which is Wed Jan  1 00:00:00 UTC 2014.
+// 
+// Note that the comparison is inclusive. So if it is an exact match this
+// function will return 1. This is due to how X509_cmp_time() works. :(
+//
+// Looks like X509_cmp_time returns:
+// 0 on failure
+// 1 if the second argument is "before" the first.
+// A negative number if the second argument is "after" the first.
+// If the timestamps are identical -1 is returned.
+//
+define_function(not_before_integer)
+{
+  X509_TIMESTAMPS* x509_timestamp;
+  time_t time = (time_t) integer_argument(1);
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+  x509_timestamp = pe->x509_timestamps;
+
+  while (x509_timestamp)
+  {
+    if (X509_cmp_time(x509_timestamp->not_before, &time) < 0)
+      return_integer(1);
+    x509_timestamp = x509_timestamp->next;
+  }
+
+  return_integer(0);
+}
+
+
+// Given a string, see if any of the stored notAfter matches, exactly.
+define_function(not_after_string)
+{
+  char *p;
+  BIO* date_bio;
+  X509_TIMESTAMPS* x509_timestamp;
+  SIZED_STRING* not_after = string_argument(1);
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  x509_timestamp = pe->x509_timestamps;
+  while (x509_timestamp)
+  {
+    date_bio = BIO_new(BIO_s_mem());
+    if (!date_bio)
+      break;
+    ASN1_TIME_print(date_bio, x509_timestamp->not_after);
+    // Use num_write to get the number of bytes available for reading.
+    p = (char *) yr_malloc(date_bio->num_write + 1);
+    if (!p)
+    {
+      BIO_set_close(date_bio, BIO_CLOSE);
+      BIO_free(date_bio);
+      break;
+    }
+    BIO_read(date_bio, p, date_bio->num_write);
+    p[date_bio->num_write] = '\x0';
+    BIO_set_close(date_bio, BIO_CLOSE);
+    BIO_free(date_bio);
+    if (strcasecmp(p, not_after->c_string) == 0)
+    {
+      yr_free(p);
+      return_integer(1);
+    }
+    yr_free(p);
+
+    x509_timestamp = x509_timestamp->next;
+  }
+
+  return_integer(0);
+}
+
+
+//
+// Given an integer argument return 1 if any of the stored notAfter values
+// come "before" it. For example, to find a binary with a notAfter in 2014
+// or later you can use 1388534399, which is Tue, 31 Dec 2013 23:59:59 GMT.
+//
+// Note that the comparison is not inclusive. So if it is an exact match this
+// function will still return 0. This is due to how X509_cmp_time() works. :(
+//
+// Looks like X509_cmp_time returns:
+// 0 on failure
+// 1 if the second argument is "before" the first.
+// A negative number if the second argument is "after" the first.
+// If the timestamps are identical -1 is returned.
+//
+define_function(not_after_integer)
+{
+  X509_TIMESTAMPS* x509_timestamp;
+  time_t time = (time_t) integer_argument(1);
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+  x509_timestamp = pe->x509_timestamps;
+
+  while (x509_timestamp)
+  {
+    if (X509_cmp_time(x509_timestamp->not_after, &time) == 1)
+      return_integer(1);
+    x509_timestamp = x509_timestamp->next;
+  }
+
+  return_integer(0);
 }
 
 
@@ -3078,7 +3187,6 @@ begin_declarations;
     declare_integer("raw_data_size");
   end_struct_array("sections");
 
-
   begin_struct("rich_signature");
     declare_integer("start");
     declare_integer("key");
@@ -3099,14 +3207,17 @@ begin_declarations;
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
 
+// XXX: Wrap in HAVE_LIBCRYPTO
   begin_struct_array("signatures");
     declare_string("issuer");
     declare_string("subject");
     declare_integer("version");
     declare_string("algorithm");
     declare_string("serial");
-    declare_string("not_before");
-    declare_string("not_after");
+    declare_function("not_before", "s", "i", not_before_string);
+    declare_function("not_before", "i", "i", not_before_integer);
+    declare_function("not_after", "s", "i", not_after_string);
+    declare_function("not_after", "i", "i", not_after_integer);
   end_struct_array("signatures");
   declare_integer("number_of_signatures");
 
