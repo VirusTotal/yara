@@ -2469,7 +2469,7 @@ define_function(section_index)
 {
   YR_OBJECT* module = module();
   SIZED_STRING* sect;
-  char* name = string_argument(1);
+  SIZED_STRING* name = string_argument(1);
 
   int64_t n = get_integer(module, "number_of_sections");
   int64_t i;
@@ -2480,7 +2480,9 @@ define_function(section_index)
   for (i = 0; i < n; i++)
   {
     sect = get_string(module, "sections[%i].name", i);
-    if (strcmp(name, sect->c_string) == 0)
+    if (name->length != sect->length)
+      continue;
+    if (strcmp(name->c_string, sect->c_string) == 0)
       return_integer(i);
   }
 
@@ -2490,7 +2492,7 @@ define_function(section_index)
 
 define_function(exports)
 {
-  char* function_name = string_argument(1);
+  SIZED_STRING* function_name = string_argument(1);
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
@@ -2540,7 +2542,7 @@ define_function(exports)
 
     name = (char*)(pe->data + offset);
 
-    if (strncmp(name, function_name, pe->data_size - offset) == 0)
+    if (strncmp(name, function_name->c_string, pe->data_size - offset) == 0)
       return_integer(1);
   }
 
@@ -2688,8 +2690,8 @@ define_function(richhash)
 
 define_function(imports)
 {
-  char* dll_name = string_argument(1);
-  char* function_name = string_argument(2);
+  SIZED_STRING* dll_name = string_argument(1);
+  SIZED_STRING* function_name = string_argument(2);
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
@@ -2704,13 +2706,13 @@ define_function(imports)
 
   while (imported_dll != NULL)
   {
-    if (strcasecmp(imported_dll->name, dll_name) == 0)
+    if (strcasecmp(imported_dll->name, dll_name->c_string) == 0)
     {
       imported_func = imported_dll->functions;
 
       while (imported_func)
       {
-        if (strcasecmp(imported_func->name, function_name) == 0)
+        if (strcasecmp(imported_func->name, function_name->c_string) == 0)
           return_integer(1);
 
         imported_dll = imported_dll->next;
