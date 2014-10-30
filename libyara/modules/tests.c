@@ -43,6 +43,14 @@ define_function(sum_3)
   return_integer(a + b + c);
 }
 
+
+define_function(length)
+{
+  char* s = string_argument(1);
+
+  return_integer(strlen(s));
+}
+
 begin_declarations;
 
   begin_struct("constants");
@@ -69,6 +77,7 @@ begin_declarations;
 
   declare_function("sum", "ii", "i", sum_2);
   declare_function("sum", "iii", "i", sum_3);
+  declare_function("length", "s", "i", length);
 
 end_declarations;
 
