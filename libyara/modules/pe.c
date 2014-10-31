@@ -910,10 +910,6 @@ void pe_parse_certificates(
     sk_X509_free(certs);
   }
 
-  // Decrement counter as it gets incremented one extra time erroneously.
-  if (counter > 0)
-    counter--;
-
   set_integer(counter, pe->object, "number_of_signatures");
 }
 
