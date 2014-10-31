@@ -124,15 +124,6 @@ typedef struct _IMPORTED_FUNCTION
 } IMPORTED_FUNCTION, *PIMPORTED_FUNCTION;
 
 
-typedef struct _X509_TIMESTAMPS
-{
-  ASN1_TIME *not_before;
-  ASN1_TIME *not_after;
-  struct _X509_TIMESTAMPS *next;
-
-} X509_TIMESTAMPS, *PX509_TIMESTAMPS;
-
-
 typedef struct _PE
 {
   uint8_t* data;
@@ -141,7 +132,6 @@ typedef struct _PE
   PIMAGE_NT_HEADERS32 header;
   YR_OBJECT* object;
   IMPORTED_DLL* imported_dlls;
-  PX509_TIMESTAMPS x509_timestamps;
 
 } PE;
 
@@ -2362,13 +2352,54 @@ IMPORTED_DLL* pe_parse_imports(
 }
 
 #if defined(HAVE_LIBCRYPTO)
-PX509_TIMESTAMPS pe_parse_certificates(
+//
+// Taken from http://stackoverflow.com/questions/10975542/asn1-time-conversion
+// and cleaned up. Also uses timegm(3) instead of mktime(3).
+//
+static time_t ASN1_GetTimeT(
+  ASN1_TIME* time)
+{
+  struct tm t;
+  const char* str = (const char*) time->data;
+  size_t i = 0;
+
+  memset(&t, 0, sizeof(t));
+
+  if (time->type == V_ASN1_UTCTIME) /* two digit year */
+  {
+    t.tm_year = (str[i++] - '0') * 10;
+    t.tm_year += (str[i++] - '0');
+    if (t.tm_year < 70)
+      t.tm_year += 100;
+  }
+  else if (time->type == V_ASN1_GENERALIZEDTIME) /* four digit year */
+  {
+    t.tm_year = (str[i++] - '0') * 1000;
+    t.tm_year += (str[i++] - '0') * 100;
+    t.tm_year += (str[i++] - '0') * 10;
+    t.tm_year += (str[i++] - '0');
+    t.tm_year -= 1900;
+  }
+  t.tm_mon = (str[i++] - '0') * 10;
+  t.tm_mon += (str[i++] - '0') - 1; // -1 since January is 0 not 1.
+  t.tm_mday = (str[i++] - '0') * 10;
+  t.tm_mday += (str[i++] - '0');
+  t.tm_hour = (str[i++] - '0') * 10;
+  t.tm_hour += (str[i++] - '0');
+  t.tm_min = (str[i++] - '0') * 10;
+  t.tm_min += (str[i++] - '0');
+  t.tm_sec = (str[i++] - '0') * 10;
+  t.tm_sec += (str[i++] - '0');
+
+  /* Note: we did not adjust the time based on time zone information */
+  return timegm(&t);
+}
+
+void pe_parse_certificates(
   PE* pe)
 {
   PIMAGE_DATA_DIRECTORY directory;
   PWIN_CERTIFICATE win_cert;
-  PX509_TIMESTAMPS head = NULL;
-  PX509_TIMESTAMPS tail = NULL;
   BIO *cert_bio = NULL;
   PKCS7 *p7;
   X509 *cert;
@@ -2378,7 +2409,7 @@ PX509_TIMESTAMPS pe_parse_certificates(
   char *p;
   const char *sig_alg;
   ASN1_INTEGER *serial;
-  ASN1_TIME *date_time;
+  time_t date_time;
   STACK_OF(X509) *certs;
 
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
@@ -2386,7 +2417,7 @@ PX509_TIMESTAMPS pe_parse_certificates(
   if (directory->VirtualAddress == 0 ||
       directory->VirtualAddress + directory->Size > pe->data_size)
   {
-    return NULL;
+    return;
   }
 
   // Store the end of directory, making comparisons easier.
@@ -2471,21 +2502,10 @@ PX509_TIMESTAMPS pe_parse_certificates(
         yr_free(p);
       }
 
-      // Store the ASN1_TIME structures in a list.
-      PX509_TIMESTAMPS x509_timestamp = (PX509_TIMESTAMPS)
-            yr_calloc(1, sizeof(X509_TIMESTAMPS));
-      if (!x509_timestamp)
-        break;
-      if (head == NULL)
-        head = x509_timestamp;
-      if (tail != NULL)
-        tail->next = x509_timestamp;
-      tail = x509_timestamp;
-
-      date_time = X509_get_notBefore(cert);
-      x509_timestamp->not_before = date_time;
-      date_time = X509_get_notAfter(cert);
-      x509_timestamp->not_after = date_time;
+      date_time = ASN1_GetTimeT(X509_get_notBefore(cert));
+      set_integer(date_time, pe->object, "signatures[%i].not_before", counter);
+      date_time = ASN1_GetTimeT(X509_get_notAfter(cert));
+      set_integer(date_time, pe->object, "signatures[%i].not_after", counter);
 
       counter++;
     }
@@ -2502,13 +2522,7 @@ PX509_TIMESTAMPS pe_parse_certificates(
   if (counter > 0)
     counter--;
   set_integer(counter, pe->object, "number_of_signatures");
-  return head;
-}
-#else
-PX509_TIMESTAMPS pe_parse_certificates(
-  PE* pe)
-{
-  return NULL;
+  return;
 }
 #endif  // defined(HAVE_LIBCRYPTO)
 
@@ -2629,159 +2643,6 @@ void pe_parse_header(
     section++;
   }
 }
-
-#if defined(HAVE_LIBCRYPTO)
-// Given a string, see if any of the stored notBefore matches, exactly.
-define_function(not_before_string)
-{
-  char *p;
-  BIO* date_bio;
-  X509_TIMESTAMPS* x509_timestamp;
-  char* not_before = string_argument(1);
-  YR_OBJECT* module = module();
-  PE* pe = (PE*) module->data;
-
-  x509_timestamp = pe->x509_timestamps;
-  while (x509_timestamp)
-  {
-    date_bio = BIO_new(BIO_s_mem());
-    if (!date_bio)
-      break;
-    ASN1_TIME_print(date_bio, x509_timestamp->not_before);
-    // Use num_write to get the number of bytes available for reading.
-    p = (char *) yr_malloc(date_bio->num_write + 1);
-    if (!p)
-    {
-      BIO_set_close(date_bio, BIO_CLOSE);
-      BIO_free(date_bio);
-      break;
-    }
-    BIO_read(date_bio, p, date_bio->num_write);
-    p[date_bio->num_write] = '\x0';
-    BIO_set_close(date_bio, BIO_CLOSE);
-    BIO_free(date_bio);
-    if (strcasecmp(p, not_before) == 0)
-    {
-      yr_free(p);
-      return_integer(1);
-    }
-    yr_free(p);
-
-    x509_timestamp = x509_timestamp->next;
-  }
-
-  return_integer(0);
-}
-
-//
-// Given an integer argument return 1 if any of the stored notBefore values
-// come "after" it. For example, to find a binary with a notBefore in 2014
-// or later you can use 1388534400, which is Wed Jan  1 00:00:00 UTC 2014.
-// 
-// Note that the comparison is inclusive. So if it is an exact match this
-// function will return 1. This is due to how X509_cmp_time() works. :(
-//
-// Looks like X509_cmp_time returns:
-// 0 on failure
-// 1 if the second argument is "before" the first.
-// A negative number if the second argument is "after" the first.
-// If the timestamps are identical -1 is returned.
-//
-define_function(not_before_integer)
-{
-  X509_TIMESTAMPS* x509_timestamp;
-  time_t time = (time_t) integer_argument(1);
-  YR_OBJECT* module = module();
-  PE* pe = (PE*) module->data;
-  x509_timestamp = pe->x509_timestamps;
-
-  while (x509_timestamp)
-  {
-    if (X509_cmp_time(x509_timestamp->not_before, &time) < 0)
-      return_integer(1);
-    x509_timestamp = x509_timestamp->next;
-  }
-
-  return_integer(0);
-}
-
-
-// Given a string, see if any of the stored notAfter matches, exactly.
-define_function(not_after_string)
-{
-  char *p;
-  BIO* date_bio;
-  X509_TIMESTAMPS* x509_timestamp;
-  char* not_after = string_argument(1);
-  YR_OBJECT* module = module();
-  PE* pe = (PE*) module->data;
-
-  x509_timestamp = pe->x509_timestamps;
-  while (x509_timestamp)
-  {
-    date_bio = BIO_new(BIO_s_mem());
-    if (!date_bio)
-      break;
-    ASN1_TIME_print(date_bio, x509_timestamp->not_after);
-    // Use num_write to get the number of bytes available for reading.
-    p = (char *) yr_malloc(date_bio->num_write + 1);
-    if (!p)
-    {
-      BIO_set_close(date_bio, BIO_CLOSE);
-      BIO_free(date_bio);
-      break;
-    }
-    BIO_read(date_bio, p, date_bio->num_write);
-    p[date_bio->num_write] = '\x0';
-    BIO_set_close(date_bio, BIO_CLOSE);
-    BIO_free(date_bio);
-    if (strcasecmp(p, not_after) == 0)
-    {
-      yr_free(p);
-      return_integer(1);
-    }
-    yr_free(p);
-
-    x509_timestamp = x509_timestamp->next;
-  }
-
-  return_integer(0);
-}
-
-
-//
-// Given an integer argument return 1 if any of the stored notAfter values
-// come "before" it. For example, to find a binary with a notAfter in 2014
-// or later you can use 1388534399, which is Tue, 31 Dec 2013 23:59:59 GMT.
-//
-// Note that the comparison is not inclusive. So if it is an exact match this
-// function will still return 0. This is due to how X509_cmp_time() works. :(
-//
-// Looks like X509_cmp_time returns:
-// 0 on failure
-// 1 if the second argument is "before" the first.
-// A negative number if the second argument is "after" the first.
-// If the timestamps are identical -1 is returned.
-//
-define_function(not_after_integer)
-{
-  X509_TIMESTAMPS* x509_timestamp;
-  time_t time = (time_t) integer_argument(1);
-  YR_OBJECT* module = module();
-  PE* pe = (PE*) module->data;
-  x509_timestamp = pe->x509_timestamps;
-
-  while (x509_timestamp)
-  {
-    if (X509_cmp_time(x509_timestamp->not_after, &time) == 1)
-      return_integer(1);
-    x509_timestamp = x509_timestamp->next;
-  }
-
-  return_integer(0);
-}
-
-#endif  // defined(HAVE_LIBCRYPTO)
 
 define_function(section_index)
 {
@@ -3125,6 +2986,7 @@ define_function(language)
   }
 }
 
+
 begin_declarations;
 
   declare_integer("MACHINE_I386");
@@ -3222,10 +3084,8 @@ begin_declarations;
     declare_integer("version");
     declare_string("algorithm");
     declare_string("serial");
-    declare_function("not_before", "s", "i", not_before_string);
-    declare_function("not_before", "i", "i", not_before_integer);
-    declare_function("not_after", "s", "i", not_after_string);
-    declare_function("not_after", "i", "i", not_after_integer);
+    declare_integer("not_before");
+    declare_integer("not_after");
   end_struct_array("signatures");
   declare_integer("number_of_signatures");
   #endif
@@ -3355,7 +3215,9 @@ int module_load(
 
         pe_parse_header(pe, block->base, context->flags);
         pe_parse_rich_signature(pe);
-        pe->x509_timestamps = pe_parse_certificates(pe);
+        #if defined(HAVE_LIBCRYPTO)
+        pe_parse_certificates(pe);
+        #endif
 
         pe->imported_dlls = pe_parse_imports(pe);
 
@@ -3370,8 +3232,6 @@ int module_load(
 
 int module_unload(YR_OBJECT* module_object)
 {
-  X509_TIMESTAMPS* x509_timestamp = NULL;
-  X509_TIMESTAMPS* next_x509_timestamp = NULL;
   IMPORTED_DLL* dll = NULL;
   IMPORTED_DLL* next_dll = NULL;
   IMPORTED_FUNCTION* func = NULL;
@@ -3398,18 +3258,6 @@ int module_unload(YR_OBJECT* module_object)
     next_dll = dll->next;
     yr_free(dll);
     dll = next_dll;
-  }
-
-  x509_timestamp = pe->x509_timestamps;
-  while (x509_timestamp)
-  {
-    if (x509_timestamp->not_before)
-      yr_free(x509_timestamp->not_before);
-    if (x509_timestamp->not_after)
-      yr_free(x509_timestamp->not_after);
-    next_x509_timestamp = x509_timestamp->next;
-    yr_free(x509_timestamp);
-    x509_timestamp = next_x509_timestamp;
   }
 
   yr_free(pe);
