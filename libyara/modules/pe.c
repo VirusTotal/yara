@@ -24,6 +24,11 @@ limitations under the License.
 #if defined(HAVE_LIBCRYPTO)
 #include <openssl/md5.h>
 #include <openssl/sha.h>
+#include <openssl/safestack.h>
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
+#include <openssl/pkcs7.h>
+#include <openssl/x509.h>
 #endif
 
 #include <yara/pe.h>
@@ -2346,6 +2351,181 @@ IMPORTED_DLL* pe_parse_imports(
   return head;
 }
 
+#if defined(HAVE_LIBCRYPTO)
+//
+// Taken from http://stackoverflow.com/questions/10975542/asn1-time-conversion
+// and cleaned up. Also uses timegm(3) instead of mktime(3).
+//
+static time_t ASN1_GetTimeT(
+  ASN1_TIME* time)
+{
+  struct tm t;
+  const char* str = (const char*) time->data;
+  size_t i = 0;
+
+  memset(&t, 0, sizeof(t));
+
+  if (time->type == V_ASN1_UTCTIME) /* two digit year */
+  {
+    t.tm_year = (str[i++] - '0') * 10;
+    t.tm_year += (str[i++] - '0');
+    if (t.tm_year < 70)
+      t.tm_year += 100;
+  }
+  else if (time->type == V_ASN1_GENERALIZEDTIME) /* four digit year */
+  {
+    t.tm_year = (str[i++] - '0') * 1000;
+    t.tm_year += (str[i++] - '0') * 100;
+    t.tm_year += (str[i++] - '0') * 10;
+    t.tm_year += (str[i++] - '0');
+    t.tm_year -= 1900;
+  }
+  t.tm_mon = (str[i++] - '0') * 10;
+  t.tm_mon += (str[i++] - '0') - 1; // -1 since January is 0 not 1.
+  t.tm_mday = (str[i++] - '0') * 10;
+  t.tm_mday += (str[i++] - '0');
+  t.tm_hour = (str[i++] - '0') * 10;
+  t.tm_hour += (str[i++] - '0');
+  t.tm_min = (str[i++] - '0') * 10;
+  t.tm_min += (str[i++] - '0');
+  t.tm_sec = (str[i++] - '0') * 10;
+  t.tm_sec += (str[i++] - '0');
+
+  /* Note: we did not adjust the time based on time zone information */
+  return timegm(&t);
+}
+
+void pe_parse_certificates(
+  PE* pe)
+{
+  PIMAGE_DATA_DIRECTORY directory;
+  PWIN_CERTIFICATE win_cert;
+  BIO *cert_bio = NULL;
+  PKCS7 *p7;
+  X509 *cert;
+  int i, j, counter = 0;
+  uintptr_t end;
+  uint8_t *eod; // End of directory.
+  char *p;
+  const char *sig_alg;
+  ASN1_INTEGER *serial;
+  time_t date_time;
+  STACK_OF(X509) *certs;
+
+  directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
+  // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
+  if (directory->VirtualAddress == 0 ||
+      directory->VirtualAddress + directory->Size > pe->data_size)
+  {
+    return;
+  }
+
+  // Store the end of directory, making comparisons easier.
+  eod = pe->data + directory->VirtualAddress + directory->Size;
+
+  win_cert = (PWIN_CERTIFICATE) (pe->data + directory->VirtualAddress);
+  //
+  // Walk the directory, pulling out certificates.
+  //
+  // Make sure WIN_CERTIFICATE fits within the directory.
+  // Make sure the Length specified fits within directory too.
+  //
+  // Subtracting 8 because the docs say that the length is only for the
+  // Certificate, but the next paragraph contradicts that. All the binaries
+  // I've seen have the Length being the entire structure (Certificate
+  // included).
+  //
+  while (struct_fits_in_pe(pe, win_cert, WIN_CERTIFICATE) &&
+         (uint8_t *) win_cert + sizeof(WIN_CERTIFICATE) <= eod &&
+         (uint8_t *) win_cert->Certificate + win_cert->Length - 8 <= eod)
+  {
+    // Don't support legacy revision for now.
+    // Make sure type is PKCS#7 too.
+    if (win_cert->Revision != WIN_CERT_REVISION_2_0 ||
+        win_cert->CertificateType != WIN_CERT_TYPE_PKCS_SIGNED_DATA)
+    {
+      end = (uintptr_t) ((uint8_t *) win_cert) + win_cert->Length;
+      win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
+      continue;
+    }
+
+    cert_bio = BIO_new_mem_buf(win_cert->Certificate, win_cert->Length);
+    if (!cert_bio)
+      break;
+    p7 = d2i_PKCS7_bio(cert_bio, NULL);
+    certs = PKCS7_get0_signers(p7, NULL, 0);
+    if (!certs)
+      break;
+    for (i = 0; i < sk_X509_num(certs); i++)
+    {
+      cert = sk_X509_value(certs, i);
+
+      p = X509_NAME_oneline(X509_get_issuer_name(cert), NULL, 0);
+      if (!p)
+        break;
+      set_string(p, pe->object, "signatures[%i].issuer", counter);
+      yr_free(p);
+
+      p = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
+      if (!p)
+        break;
+      set_string(p, pe->object, "signatures[%i].subject", counter);
+      yr_free(p);
+
+      // Versions are zero based, so add one.
+      set_integer(X509_get_version(cert) + 1, pe->object, "signatures[%i].version", counter);
+
+      sig_alg = OBJ_nid2ln(OBJ_obj2nid(cert->sig_alg->algorithm));
+      set_string(sig_alg, pe->object, "signatures[%i].algorithm", counter);
+
+      serial = X509_get_serialNumber(cert);
+      if (serial->length > 0)
+      {
+        //
+        // Convert serial number to "common" string format: 00:01:02:03:04...
+        // The (length * 2) is for each of the bytes in the integer to convert
+        // to hexlified format. The (length - 1) is for the colons. The extra
+        // byte is for the NULL terminator.
+        //
+        p = (char *) yr_malloc((serial->length * 2) + (serial->length - 1) + 1);
+        if (!p)
+          break;
+        for (j = 0; j < serial->length; j++)
+        {
+          // Don't put the colon on the last one.
+          if (j < serial->length - 1)
+            snprintf(p + 3 * j, 4, "%02x:", serial->data[j]);
+          else
+            snprintf(p + 3 * j, 3, "%02x", serial->data[j]);
+        }
+        set_string(p, pe->object, "signatures[%i].serial", counter);
+        yr_free(p);
+      }
+
+      date_time = ASN1_GetTimeT(X509_get_notBefore(cert));
+      set_integer(date_time, pe->object, "signatures[%i].not_before", counter);
+      date_time = ASN1_GetTimeT(X509_get_notAfter(cert));
+      set_integer(date_time, pe->object, "signatures[%i].not_after", counter);
+
+      counter++;
+    }
+    end = (uintptr_t) ((uint8_t *) win_cert) + win_cert->Length;
+    win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
+
+    BIO_set_close(cert_bio, BIO_CLOSE);
+    BIO_free(cert_bio);
+    cert_bio = NULL;
+    sk_X509_free(certs);
+  }
+
+  // Decrement counter as it gets incremented one extra time erroneously.
+  if (counter > 0)
+    counter--;
+  set_integer(counter, pe->object, "number_of_signatures");
+  return;
+}
+#endif  // defined(HAVE_LIBCRYPTO)
+
 
 void pe_parse_header(
     PE* pe,
@@ -2462,6 +2642,75 @@ void pe_parse_header(
 
     section++;
   }
+}
+
+
+// Given an integer argument, make sure the not_before comes "after" it.
+// Be inclusive in the search here.
+define_function(valid_after)
+{
+  int64_t time = integer_argument(1);
+  YR_STRUCTURE_MEMBER* member = NULL;
+  YR_OBJECT* object = NULL;
+  YR_OBJECT_STRUCTURE* parent = (YR_OBJECT_STRUCTURE*) parent();
+  // Walk each member of the structure looking for "not_before".
+  member = parent->members;
+  while (member)
+  {
+    object = member->object;
+    if (strcmp(object->identifier, "not_before") == 0)
+      return_integer(time <= ((YR_OBJECT_INTEGER*)object)->value);
+    member = member->next;
+  }
+  return_integer(0);
+}
+
+
+// Given an integer argument, make sure the not_after comes "before" it.
+// Be inclusive in the search here.
+define_function(valid_before)
+{
+  int64_t time = integer_argument(1);
+  YR_STRUCTURE_MEMBER* member = NULL;
+  YR_OBJECT* object = NULL;
+  YR_OBJECT_STRUCTURE* parent = (YR_OBJECT_STRUCTURE*) parent();
+  // Walk each member of the structure looking for "not_before".
+  member = parent->members;
+  while (member)
+  {
+    object = member->object;
+    if (strcmp(object->identifier, "not_after") == 0)
+      return_integer(time >= ((YR_OBJECT_INTEGER*)object)->value);
+    member = member->next;
+  }
+  return_integer(0);
+}
+
+// Given an integer argument, make sure not_before <= arg <= not_after
+define_function(valid_on)
+{
+  int64_t time = integer_argument(1);
+  int64_t not_before = 0;
+  int64_t not_after = 0;
+  YR_STRUCTURE_MEMBER* member = NULL;
+  YR_OBJECT* object = NULL;
+  YR_OBJECT_STRUCTURE* parent = (YR_OBJECT_STRUCTURE*) parent();
+  // Walk each member of the structure looking for "not_before".
+  member = parent->members;
+  while (member)
+  {
+    object = member->object;
+    if (strcmp(object->identifier, "not_before") == 0)
+      not_before = ((YR_OBJECT_INTEGER*)object)->value;
+    else if (strcmp(object->identifier, "not_after") == 0)
+      not_after = ((YR_OBJECT_INTEGER*)object)->value;
+
+    if (not_before && not_after)
+      return_integer((not_before <= time) && (time <= not_after));
+
+    member = member->next;
+  }
+  return_integer(0);
 }
 
 
@@ -2807,6 +3056,7 @@ define_function(language)
   }
 }
 
+
 begin_declarations;
 
   declare_integer("MACHINE_I386");
@@ -2877,7 +3127,6 @@ begin_declarations;
     declare_integer("raw_data_size");
   end_struct_array("sections");
 
-
   begin_struct("rich_signature");
     declare_integer("start");
     declare_integer("key");
@@ -2897,6 +3146,22 @@ begin_declarations;
   declare_function("imports", "ss", "i", imports);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
+
+  #if defined(HAVE_LIBCRYPTO)
+  begin_struct_array("signatures");
+    declare_string("issuer");
+    declare_string("subject");
+    declare_integer("version");
+    declare_string("algorithm");
+    declare_string("serial");
+    declare_integer("not_before");
+    declare_integer("not_after");
+    declare_function("valid_after", "i", "i", valid_after);
+    declare_function("valid_before", "i", "i", valid_before);
+    declare_function("valid_on", "i", "i", valid_on);
+  end_struct_array("signatures");
+  declare_integer("number_of_signatures");
+  #endif
 
 end_declarations;
 
@@ -3023,6 +3288,9 @@ int module_load(
 
         pe_parse_header(pe, block->base, context->flags);
         pe_parse_rich_signature(pe);
+        #if defined(HAVE_LIBCRYPTO)
+        pe_parse_certificates(pe);
+        #endif
 
         pe->imported_dlls = pe_parse_imports(pe);
 
