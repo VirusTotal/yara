@@ -779,7 +779,7 @@ IMPORTED_DLL* pe_parse_imports(
 #if defined(HAVE_LIBCRYPTO)
 
 void pe_parse_certificates(
-  PE* pe)
+    PE* pe)
 {
   int counter = 0;
 
@@ -824,6 +824,7 @@ void pe_parse_certificates(
     {
       uintptr_t end = (uintptr_t) ((uint8_t *) win_cert) + win_cert->Length;
       win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
+
       continue;
     }
 
@@ -836,7 +837,10 @@ void pe_parse_certificates(
     STACK_OF(X509)* certs = PKCS7_get0_signers(pkcs7, NULL, 0);
 
     if (!certs)
+    {
+      BIO_free(cert_bio);
       break;
+    }
 
     for (int i = 0; i < sk_X509_num(certs); i++)
     {
@@ -867,7 +871,6 @@ void pe_parse_certificates(
 
       if (serial->length > 0)
       {
-        //
         // Convert serial number to "common" string format: 00:01:02:03:04...
         // For each byte in the integer to convert to hexlified format we
         // need three bytes, two for the byte itself and one for colon. The
@@ -876,20 +879,22 @@ void pe_parse_certificates(
 
         char* serial_number = (char *) yr_malloc(serial->length * 3);
 
-        if (!serial_number)
-          break;
-
-        for (int j = 0; j < serial->length; j++)
+        if (serial_number != NULL)
         {
-          // Don't put the colon on the last one.
-          if (j < serial->length - 1)
-            snprintf(serial_number + 3 * j, 4, "%02x:", serial->data[j]);
-          else
-            snprintf(serial_number + 3 * j, 3, "%02x", serial->data[j]);
-        }
+          for (int j = 0; j < serial->length; j++)
+          {
+            // Don't put the colon on the last one.
+            if (j < serial->length - 1)
+              snprintf(serial_number + 3 * j, 4, "%02x:", serial->data[j]);
+            else
+              snprintf(serial_number + 3 * j, 3, "%02x", serial->data[j]);
+          }
 
-        set_string(serial_number, pe->object, "signatures[%i].serial", counter);
-        yr_free(serial_number);
+          set_string(
+              serial_number, pe->object, "signatures[%i].serial", counter);
+
+          yr_free(serial_number);
+        }
       }
 
       time_t date_time = ASN1_get_time_t(X509_get_notBefore(cert));
