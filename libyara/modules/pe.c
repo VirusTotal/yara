@@ -782,7 +782,6 @@ void pe_parse_certificates(
   PE* pe)
 {
   int counter = 0;
-  char *p;
 
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
@@ -841,23 +840,20 @@ void pe_parse_certificates(
 
     for (int i = 0; i < sk_X509_num(certs); i++)
     {
+
       X509* cert = sk_X509_value(certs, i);
 
-      p = X509_NAME_oneline(X509_get_issuer_name(cert), NULL, 0);
+      char string[256];
 
-      if (!p)
-        break;
+      X509_NAME_oneline(
+          X509_get_issuer_name(cert), buffer, sizeof(buffer));
 
-      set_string(p, pe->object, "signatures[%i].issuer", counter);
-      yr_free(p);
+      set_string(buffer, pe->object, "signatures[%i].issuer", counter);
 
-      p = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
+      X509_NAME_oneline(
+          X509_get_subject_name(cert), buffer, sizeof(buffer));
 
-      if (!p)
-        break;
-
-      set_string(p, pe->object, "signatures[%i].subject", counter);
-      yr_free(p);
+      set_string(buffer, pe->object, "signatures[%i].subject", counter);
 
       set_integer(
           X509_get_version(cert) + 1, // Versions are zero based, so add one.
@@ -879,7 +875,7 @@ void pe_parse_certificates(
         // byte is for the NULL terminator.
         //
 
-        p = (char *) yr_malloc((serial->length * 2) + (serial->length - 1) + 1);
+        char* p = (char *) yr_malloc((serial->length * 2) + (serial->length - 1) + 1);
 
         if (!p)
           break;
