@@ -840,10 +840,9 @@ void pe_parse_certificates(
 
     for (int i = 0; i < sk_X509_num(certs); i++)
     {
-
       X509* cert = sk_X509_value(certs, i);
 
-      char string[256];
+      char buffer[256];
 
       X509_NAME_oneline(
           X509_get_issuer_name(cert), buffer, sizeof(buffer));
