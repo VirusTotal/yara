@@ -870,27 +870,27 @@ void pe_parse_certificates(
       {
         //
         // Convert serial number to "common" string format: 00:01:02:03:04...
-        // The (length * 2) is for each of the bytes in the integer to convert
-        // to hexlified format. The (length - 1) is for the colons. The extra
-        // byte is for the NULL terminator.
-        //
+        // For each byte in the integer to convert to hexlified format we
+        // need three bytes, two for the byte itself and one for colon. The
+        // last one doesn't have the colon, but the extra byte is used for the
+        // NULL terminator.
 
-        char* p = (char *) yr_malloc((serial->length * 2) + (serial->length - 1) + 1);
+        char* serial_number = (char *) yr_malloc(serial->length * 3);
 
-        if (!p)
+        if (!serial_number)
           break;
 
         for (int j = 0; j < serial->length; j++)
         {
           // Don't put the colon on the last one.
           if (j < serial->length - 1)
-            snprintf(p + 3 * j, 4, "%02x:", serial->data[j]);
+            snprintf(serial_number + 3 * j, 4, "%02x:", serial->data[j]);
           else
-            snprintf(p + 3 * j, 3, "%02x", serial->data[j]);
+            snprintf(serial_number + 3 * j, 3, "%02x", serial->data[j]);
         }
 
-        set_string(p, pe->object, "signatures[%i].serial", counter);
-        yr_free(p);
+        set_string(serial_number, pe->object, "signatures[%i].serial", counter);
+        yr_free(serial_number);
       }
 
       time_t date_time = ASN1_get_time_t(X509_get_notBefore(cert));
