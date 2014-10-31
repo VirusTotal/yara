@@ -904,9 +904,7 @@ void pe_parse_certificates(
     uintptr_t end = (uintptr_t) ((uint8_t *) win_cert) + win_cert->Length;
     win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
 
-    BIO_set_close(cert_bio, BIO_CLOSE);
     BIO_free(cert_bio);
-
     sk_X509_free(certs);
   }
 
