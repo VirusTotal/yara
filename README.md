@@ -54,5 +54,6 @@ yara-python extension.
 * [Adlice](http://www.adlice.com/)
 * [Tanium](http://www.tanium.com/)
 * [Trend Micro](http://www.trendmicro.com)
+* [Metaflows](http://www.metaflows.com)
 
 Are you using it? Want to see your site listed here?
