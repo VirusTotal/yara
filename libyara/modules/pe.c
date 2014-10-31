@@ -2644,6 +2644,49 @@ void pe_parse_header(
   }
 }
 
+
+// Given an integer argument, make sure the not_before comes "after" it.
+// Be inclusive in the search here.
+define_function(valid_after)
+{
+  int64_t time = integer_argument(1);
+  YR_STRUCTURE_MEMBER* member = NULL;
+  YR_OBJECT* object = NULL;
+  YR_OBJECT_STRUCTURE* parent = (YR_OBJECT_STRUCTURE*) parent();
+  // Walk each member of the structure looking for "not_before".
+  member = parent->members;
+  while (member)
+  {
+    object = member->object;
+    if (strcmp(object->identifier, "not_before") == 0)
+      return_integer(time <= ((YR_OBJECT_INTEGER*)object)->value);
+    member = member->next;
+  }
+  return_integer(0);
+}
+
+
+// Given an integer argument, make sure the not_after comes "before" it.
+// Be inclusive in the search here.
+define_function(valid_before)
+{
+  int64_t time = integer_argument(1);
+  YR_STRUCTURE_MEMBER* member = NULL;
+  YR_OBJECT* object = NULL;
+  YR_OBJECT_STRUCTURE* parent = (YR_OBJECT_STRUCTURE*) parent();
+  // Walk each member of the structure looking for "not_before".
+  member = parent->members;
+  while (member)
+  {
+    object = member->object;
+    if (strcmp(object->identifier, "not_after") == 0)
+      return_integer(time >= ((YR_OBJECT_INTEGER*)object)->value);
+    member = member->next;
+  }
+  return_integer(0);
+}
+
+
 define_function(section_index)
 {
   YR_OBJECT* module = module();
@@ -3086,6 +3129,8 @@ begin_declarations;
     declare_string("serial");
     declare_integer("not_before");
     declare_integer("not_after");
+    declare_function("valid_after", "i", "i", valid_after);
+    declare_function("valid_before", "i", "i", valid_before);
   end_struct_array("signatures");
   declare_integer("number_of_signatures");
   #endif
