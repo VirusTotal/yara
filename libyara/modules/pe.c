@@ -2686,6 +2686,33 @@ define_function(valid_before)
   return_integer(0);
 }
 
+// Given an integer argument, make sure not_before <= arg <= not_after
+define_function(valid_on)
+{
+  int64_t time = integer_argument(1);
+  int64_t not_before = 0;
+  int64_t not_after = 0;
+  YR_STRUCTURE_MEMBER* member = NULL;
+  YR_OBJECT* object = NULL;
+  YR_OBJECT_STRUCTURE* parent = (YR_OBJECT_STRUCTURE*) parent();
+  // Walk each member of the structure looking for "not_before".
+  member = parent->members;
+  while (member)
+  {
+    object = member->object;
+    if (strcmp(object->identifier, "not_before") == 0)
+      not_before = ((YR_OBJECT_INTEGER*)object)->value;
+    else if (strcmp(object->identifier, "not_after") == 0)
+      not_after = ((YR_OBJECT_INTEGER*)object)->value;
+
+    if (not_before && not_after)
+      return_integer((not_before <= time) && (time <= not_after));
+
+    member = member->next;
+  }
+  return_integer(0);
+}
+
 
 define_function(section_index)
 {
@@ -3131,6 +3158,7 @@ begin_declarations;
     declare_integer("not_after");
     declare_function("valid_after", "i", "i", valid_after);
     declare_function("valid_before", "i", "i", valid_before);
+    declare_function("valid_on", "i", "i", valid_on);
   end_struct_array("signatures");
   declare_integer("number_of_signatures");
   #endif
