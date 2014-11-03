@@ -70,28 +70,28 @@ YR_OBJECT* yr_object_lookup(
 
 int64_t yr_object_get_integer(
     YR_OBJECT* object,
-    char* field,
+    const char* field,
     ...);
 
 
 SIZED_STRING* yr_object_get_string(
     YR_OBJECT* object,
-    char* field,
+    const char* field,
     ...);
 
 
 void yr_object_set_integer(
     int64_t value,
     YR_OBJECT* object,
-    char* field,
+    const char* field,
     ...);
 
 
 void yr_object_set_string(
-    char* value,
+    const char* value,
     size_t len,
     YR_OBJECT* object,
-    char* field,
+    const char* field,
     ...);
 
 

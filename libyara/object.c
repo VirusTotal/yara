@@ -808,7 +808,7 @@ int yr_object_dict_set_item(
 
 int64_t yr_object_get_integer(
     YR_OBJECT* object,
-    char* field,
+    const char* field,
     ...)
 {
   YR_OBJECT* integer_obj;
@@ -835,7 +835,7 @@ int64_t yr_object_get_integer(
 
 SIZED_STRING* yr_object_get_string(
     YR_OBJECT* object,
-    char* field,
+    const char* field,
     ...)
 {
   YR_OBJECT* string_obj;
@@ -863,7 +863,7 @@ SIZED_STRING* yr_object_get_string(
 void yr_object_set_integer(
     int64_t value,
     YR_OBJECT* object,
-    char* field,
+    const char* field,
     ...)
 {
   YR_OBJECT* integer_obj;
@@ -887,10 +887,10 @@ void yr_object_set_integer(
 
 
 void yr_object_set_string(
-    char* value,
+    const char* value,
     size_t len,
     YR_OBJECT* object,
-    char* field,
+    const char* field,
     ...)
 {
   YR_OBJECT_STRING* string_obj;
