@@ -80,7 +80,7 @@ ACX_PTHREAD(
      CC="$PTHREAD_CC"],
     [AC_MSG_ERROR([pthread API support is required.])])
 
-AC_CHECK_FUNCS_ONCE(strlcpy strlcat)
+AC_CHECK_FUNCS_ONCE(strlcpy strlcat memmem)
 
 AM_CONDITIONAL([CUCKOO], [test x$build_cuckoo_module = xtrue])
 AM_CONDITIONAL([MAGIC], [test x$build_magic_module = xtrue])

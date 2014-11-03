@@ -212,7 +212,7 @@ size_t strlcpy_w(
 }
 
 
-#ifdef _MSC_VER
+#if !HAVE_MEMMEM
 void* memmem(
     const void *haystack,
     size_t haystack_size,
