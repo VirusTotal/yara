@@ -1375,7 +1375,7 @@ define_function(imports)
         if (strcasecmp(imported_func->name, function_name) == 0)
           return_integer(1);
 
-        imported_dll = imported_dll->next;
+        imported_func = imported_func->next;
       }
     }
     imported_dll = imported_dll->next;
