@@ -789,6 +789,7 @@ void pe_parse_certificates(
   // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
 
   if (directory->VirtualAddress == 0 ||
+      directory->Size > pe->data_size ||
       directory->VirtualAddress + directory->Size > pe->data_size)
   {
     return;
@@ -812,10 +813,18 @@ void pe_parse_certificates(
   // included).
   //
 
-  while (struct_fits_in_pe(pe, win_cert, WIN_CERTIFICATE) &&
-         (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) <= eod &&
+  while ((uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) <= eod &&
          (uint8_t*) win_cert->Certificate + win_cert->Length - 8 <= eod)
   {
+    // Some sanity checks
+
+    if (win_cert->Length == 0 ||
+        (win_cert->CertificateType != WIN_CERT_REVISION_1_0 &&
+         win_cert->CertificateType != WIN_CERT_REVISION_2_0))
+    {
+      break;
+    }
+
     // Don't support legacy revision for now.
     // Make sure type is PKCS#7 too.
 
@@ -906,8 +915,8 @@ void pe_parse_certificates(
       counter++;
     }
 
-    uintptr_t end = (uintptr_t) ((uint8_t *) win_cert) + win_cert->Length;
-    win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
+    uintptr_t end = (uintptr_t)((uint8_t *) win_cert) + win_cert->Length;
+    win_cert = (PWIN_CERTIFICATE)(end + (end % 8));
 
     BIO_free(cert_bio);
     sk_X509_free(certs);
@@ -1370,7 +1379,7 @@ define_function(imports)
     {
       imported_func = imported_dll->functions;
 
-      while (imported_func)
+      while (imported_func != NULL)
       {
         if (strcasecmp(imported_func->name, function_name) == 0)
           return_integer(1);
