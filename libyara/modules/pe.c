@@ -819,8 +819,8 @@ void pe_parse_certificates(
     // Some sanity checks
 
     if (win_cert->Length == 0 ||
-        (win_cert->CertificateType != WIN_CERT_REVISION_1_0 &&
-         win_cert->CertificateType != WIN_CERT_REVISION_2_0))
+        (win_cert->Revision != WIN_CERT_REVISION_1_0 &&
+         win_cert->Revision != WIN_CERT_REVISION_2_0))
     {
       break;
     }
