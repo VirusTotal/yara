@@ -83,10 +83,6 @@ int yr_atoms_min_quality(
     YR_ATOM_LIST_ITEM* atom_list);
 
 
-int yr_atoms_min_length(
-    YR_ATOM_LIST_ITEM* atom_list);
-
-
 void yr_atoms_list_destroy(
     YR_ATOM_LIST_ITEM* list_head);
 

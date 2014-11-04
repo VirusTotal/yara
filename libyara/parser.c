@@ -382,7 +382,7 @@ int _yr_parser_write_string(
     else
       max_string_len = (*string)->length;
 
-    if (max_string_len == yr_atoms_min_length(atom_list))
+    if (max_string_len <= MAX_ATOM_LENGTH)
       (*string)->g_flags |= STRING_GFLAGS_FITS_IN_ATOM;
   }
 

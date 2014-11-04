@@ -740,10 +740,7 @@ int _yr_scan_verify_literal_match(
 
   if (STRING_FITS_IN_ATOM(string))
   {
-    if (STRING_IS_WIDE(string))
-      forward_matches = string->length * 2;
-    else
-      forward_matches = string->length;
+    forward_matches = ac_match->backtrack;
   }
   else if (STRING_IS_NO_CASE(string))
   {
@@ -786,52 +783,26 @@ int _yr_scan_verify_literal_match(
     }
   }
 
-  if (forward_matches > 0)
-  {
-    if (STRING_IS_FULL_WORD(string))
-    {
-      if (STRING_IS_WIDE(string))
-      {
-        if (offset >= 2 &&
-            *(data + offset - 1) == 0 &&
-            isalnum(*(data + offset - 2)))
-          return ERROR_SUCCESS;
+  if (forward_matches == 0)
+    return ERROR_SUCCESS;
 
-        if (offset + forward_matches + 1 < data_size &&
-            *(data + offset + forward_matches + 1) == 0 &&
-            isalnum(*(data + offset + forward_matches)))
-          return ERROR_SUCCESS;
-      }
-      else
-      {
-        if (offset >= 1 &&
-            isalnum(*(data + offset - 1)))
-          return ERROR_SUCCESS;
+  if (forward_matches == string->length * 2)
+    flags |= RE_FLAGS_WIDE;
 
-        if (offset + forward_matches < data_size &&
-            isalnum(*(data + offset + forward_matches)))
-          return ERROR_SUCCESS;
-      }
-    }
+  if (STRING_IS_NO_CASE(string))
+    flags |= RE_FLAGS_NO_CASE;
 
-    if (STRING_IS_WIDE(string))
-      flags |= RE_FLAGS_WIDE;
+  callback_args.string = string;
+  callback_args.data = data;
+  callback_args.data_size = data_size;
+  callback_args.data_base = data_base;
+  callback_args.matches_arena = matches_arena;
+  callback_args.forward_matches = forward_matches;
+  callback_args.full_word = STRING_IS_FULL_WORD(string);
+  callback_args.tidx = yr_get_tidx();
 
-    if (STRING_IS_NO_CASE(string))
-      flags |= RE_FLAGS_NO_CASE;
-
-    callback_args.string = string;
-    callback_args.data = data;
-    callback_args.data_size = data_size;
-    callback_args.data_base = data_base;
-    callback_args.matches_arena = matches_arena;
-    callback_args.forward_matches = forward_matches;
-    callback_args.full_word = STRING_IS_FULL_WORD(string);
-    callback_args.tidx = yr_get_tidx();
-
-    FAIL_ON_ERROR(_yr_scan_match_callback(
-        data + offset, 0, flags, &callback_args));
-  }
+  FAIL_ON_ERROR(_yr_scan_match_callback(
+      data + offset, 0, flags, &callback_args));
 
   return ERROR_SUCCESS;
 }

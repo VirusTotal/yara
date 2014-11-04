@@ -320,6 +320,7 @@ class TestYara(unittest.TestCase):
 
         self.assertTrueRules([
             'rule test { strings: $a = "a" condition: $a }',
+            'rule test { strings: $a = "ab" condition: $a }',
             'rule test { strings: $a = "abc" condition: $a }',
             'rule test { strings: $a = "xyz" condition: $a }',
             'rule test { strings: $a = "abc" nocase fullword condition: $a }',
@@ -327,11 +328,21 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = "abc" fullword condition: $a }',
         ], "---- abc ---- xyz")
 
+        self.assertFalseRules([
+            'rule test { strings: $a = "a" fullword condition: $a }',
+            'rule test { strings: $a = "ab" fullword condition: $a }',
+            'rule test { strings: $a = "abc" wide fullword condition: $a }',
+        ], "---- abc ---- xyz")
+
         self.assertTrueRules([
             'rule test { strings: $a = "a" wide condition: $a }',
+            'rule test { strings: $a = "a" wide ascii condition: $a }',
+            'rule test { strings: $a = "ab" wide condition: $a }',
+            'rule test { strings: $a = "ab" wide ascii condition: $a }',
             'rule test { strings: $a = "abc" wide condition: $a }',
             'rule test { strings: $a = "abc" wide nocase fullword condition: $a }',
             'rule test { strings: $a = "aBc" wide nocase condition: $a }',
+            'rule test { strings: $a = "aBc" wide ascii nocase condition: $a }',
             'rule test { strings: $a = "---xyz" wide nocase condition: $a }'
         ], "---- a\x00b\x00c\x00 -\x00-\x00-\x00-\x00x\x00y\x00z\x00")
 
@@ -350,6 +361,14 @@ class TestYara(unittest.TestCase):
         self.assertFalseRules([
             'rule test { strings: $a = "abc" fullword condition: $a }',
         ], "abcx")
+
+        self.assertFalseRules([
+            'rule test { strings: $a = "abc" ascii wide fullword condition: $a }',
+        ], "abcx")
+
+        self.assertTrueRules([
+            'rule test { strings: $a = "abc" ascii wide fullword condition: $a }',
+        ], "a\x00abc")
 
         self.assertTrueRules([
             'rule test { strings: $a = "abc" wide fullword condition: $a }',

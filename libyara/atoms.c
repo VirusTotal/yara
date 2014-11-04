@@ -182,35 +182,6 @@ int yr_atoms_min_quality(
 
 
 //
-// yr_atoms_min_length
-//
-// Returns the length for the shortest atom in a list.
-//
-
-int yr_atoms_min_length(
-    YR_ATOM_LIST_ITEM* atom_list)
-{
-  YR_ATOM_LIST_ITEM* atom;
-
-  int min_length = 100000;
-
-  if (atom_list == NULL)
-    return 0;
-
-  atom = atom_list;
-
-  while (atom != NULL)
-  {
-    if (atom->atom_length < min_length)
-      min_length = atom->atom_length;
-
-    atom = atom->next;
-  }
-
-  return min_length;
-}
-
-//
 // _yr_atoms_tree_node_create
 //
 // Creates a new node for an atoms tree.
