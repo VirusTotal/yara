@@ -1,5 +1,45 @@
 
-#if defined(HAVE_LIBCRYPTO)
+
+#if !HAVE_TIMEGM
+
+static int is_leap(
+    unsigned int year)
+{
+  year += 1900;
+  return (year % 4) == 0 && ((year % 100) != 0 || (year % 400) == 0);
+}
+
+
+time_t timegm(
+    struct tm *tm)
+{
+  static const unsigned ndays[2][12] = {
+      {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
+      {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}};
+
+  time_t res = 0;
+  int i;
+
+  for (i = 70; i < tm->tm_year; ++i)
+    res += is_leap(i) ? 366 : 365;
+
+  for (i = 0; i < tm->tm_mon; ++i)
+    res += ndays[is_leap(tm->tm_year)][i];
+
+  res += tm->tm_mday - 1;
+  res *= 24;
+  res += tm->tm_hour;
+  res *= 60;
+  res += tm->tm_min;
+  res *= 60;
+  res += tm->tm_sec;
+
+  return res;
+}
+
+#endif
+
+#if HAVE_LIBCRYPTO
 
 // Taken from http://stackoverflow.com/questions/10975542/asn1-time-conversion
 // and cleaned up. Also uses timegm(3) instead of mktime(3).
