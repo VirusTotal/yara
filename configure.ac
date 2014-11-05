@@ -72,6 +72,7 @@ AC_ARG_WITH([crypto],
     ],
     [
       build_hash_module=true
+      AC_DEFINE([HASH], [1], [enable hash module])
     ])
 
 ACX_PTHREAD(
