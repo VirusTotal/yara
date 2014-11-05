@@ -1039,10 +1039,13 @@ expression
         compiler->loop_depth--;
         mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
 
-        // The value at the top of the stack is 1 if latest
-        // expression was true or 0 otherwise. Add this value
-        // to the counter for number of expressions evaluating
-        // to true.
+        // The value at the top of the stack is the result of
+        // evaluating the boolean expression, so it could be
+        // 0, 1 or UNDEFINED. Add this value to a counter
+        // keeping the number of expressions evaluating to true.
+        // If the value is UNDEFINED instruction OP_ADD_M
+        // does nothing.
+
         yr_parser_emit_with_arg(
             yyscanner, OP_ADD_M, mem_offset + 1, NULL);
 
@@ -1148,7 +1151,9 @@ expression
         mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
 
         // Increment counter by the value returned by the
-        // boolean expression (0 or 1).
+        // boolean expression (0 or 1). If the boolean expression
+        // returned UNDEFINED the OP_ADD_M won't do anything.
+
         yr_parser_emit_with_arg(
             yyscanner, OP_ADD_M, mem_offset + 1, NULL);
 

@@ -138,7 +138,8 @@ int yr_execute_code(
         r1 = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         pop(r2);
-        mem[r1] += r2;
+        if (!IS_UNDEFINED(r2))
+          mem[r1] += r2;
         break;
 
       case OP_INCR_M:
