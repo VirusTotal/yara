@@ -1051,93 +1051,28 @@ void pe_parse_header(
 }
 
 
-// Given an integer argument, make sure the not_before comes "after" it.
-// Be inclusive in the search here.
+//
+// Given a posix timestamp argument, make sure not_before <= arg <= not_after
+//
 
-define_function(valid_after)
-{
-  int64_t time = integer_argument(1);
-
-  YR_STRUCTURE_MEMBER* member = NULL;
-  YR_OBJECT* object = NULL;
-  YR_OBJECT_STRUCTURE* parent = (YR_OBJECT_STRUCTURE*) parent();
-
-  // Walk each member of the structure looking for "not_before".
-
-  member = parent->members;
-
-  while (member)
-  {
-    object = member->object;
-
-    if (strcmp(object->identifier, "not_before") == 0)
-      return_integer(time <= ((YR_OBJECT_INTEGER*)object)->value);
-
-    member = member->next;
-  }
-
-  return_integer(0);
-}
-
-
-// Given an integer argument, make sure the not_after comes "before" it.
-// Be inclusive in the search here.
-
-define_function(valid_before)
-{
-  int64_t time = integer_argument(1);
-
-  YR_STRUCTURE_MEMBER* member = NULL;
-  YR_OBJECT* object = NULL;
-  YR_OBJECT_STRUCTURE* parent = (YR_OBJECT_STRUCTURE*) parent();
-
-  // Walk each member of the structure looking for "not_before".
-
-  member = parent->members;
-
-  while (member)
-  {
-    object = member->object;
-
-    if (strcmp(object->identifier, "not_after") == 0)
-      return_integer(time >= ((YR_OBJECT_INTEGER*) object)->value);
-
-    member = member->next;
-  }
-
-  return_integer(0);
-}
-
-// Given an integer argument, make sure not_before <= arg <= not_after
 define_function(valid_on)
 {
-  int64_t time = integer_argument(1);
-  int64_t not_before = 0;
-  int64_t not_after = 0;
+  int64_t timestamp = integer_argument(1);
 
-  YR_STRUCTURE_MEMBER* member = NULL;
-  YR_OBJECT* object = NULL;
-  YR_OBJECT_STRUCTURE* parent = (YR_OBJECT_STRUCTURE*) parent();
+  YR_OBJECT_INTEGER* not_before = (YR_OBJECT_INTEGER*)
+      yr_object_lookup_field(parent(), "not_before");
 
-  // Walk each member of the structure looking for "not_before".
+  YR_OBJECT_INTEGER* not_after = (YR_OBJECT_INTEGER*)
+      yr_object_lookup_field(parent(), "not_after");
 
-  member = parent->members;
-
-  while (member)
+  if (IS_UNDEFINED(not_before->value) ||
+      IS_UNDEFINED(not_after->value))
   {
-    object = member->object;
-
-    if (strcmp(object->identifier, "not_before") == 0)
-      not_before = ((YR_OBJECT_INTEGER*)object)->value;
-    else if (strcmp(object->identifier, "not_after") == 0)
-      not_after = ((YR_OBJECT_INTEGER*)object)->value;
-
-    if (not_before && not_after)
-      return_integer((not_before <= time) && (time <= not_after));
-
-    member = member->next;
+    return_integer(UNDEFINED);
   }
-  return_integer(0);
+
+  return_integer(timestamp >= not_before->value  &&
+                 timestamp <= not_after->value);
 }
 
 
@@ -1583,8 +1518,6 @@ begin_declarations;
     declare_string("serial");
     declare_integer("not_before");
     declare_integer("not_after");
-    declare_function("valid_after", "i", "i", valid_after);
-    declare_function("valid_before", "i", "i", valid_before);
     declare_function("valid_on", "i", "i", valid_on);
   end_struct_array("signatures");
   declare_integer("number_of_signatures");
