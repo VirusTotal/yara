@@ -714,6 +714,32 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
   return head;
 }
 
+
+int pe_valid_dll_name(
+    const char* dll_name, size_t n)
+{
+  const char* c = dll_name;
+  size_t l = 0;
+
+  while (*c != '\0' && l < n)
+  {
+    if ((*c >= 'a' && *c <= 'z') ||
+        (*c >= 'A' && *c <= 'Z') ||
+        (*c >= '0' && *c <= '9') ||
+        (*c == '_' || *c == '.'))
+    {
+      c++;
+      l++;
+    }
+    else
+    {
+      return FALSE;
+    }
+  }
+
+  return l < n;
+}
+
 //
 // Walk the imports and collect relevant information. It is used in the
 // "imports" function for comparison and in the "imphash" function for
@@ -747,8 +773,10 @@ IMPORTED_DLL* pe_parse_imports(
 
     if (offset != 0 && offset < pe->data_size)
     {
-      char* dll_name = yr_strndup(
-          (char *) (pe->data + offset), pe->data_size - offset);
+      char* dll_name = (char *) (pe->data + offset);
+
+      if (!pe_valid_dll_name(dll_name, pe->data_size - offset))
+        break;
 
       IMPORTED_FUNCTION* functions = pe_parse_import_descriptor(
           pe, imports, dll_name);
@@ -760,7 +788,7 @@ IMPORTED_DLL* pe_parse_imports(
 
         if (imported_dll != NULL)
         {
-          imported_dll->name = dll_name;
+          imported_dll->name = yr_strdup(dll_name);;
           imported_dll->functions = functions;
           imported_dll->next = NULL;
 
