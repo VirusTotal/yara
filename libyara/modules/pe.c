@@ -737,7 +737,7 @@ int pe_valid_dll_name(
     }
   }
 
-  return l < n;
+  return (l > 0 && l < n);
 }
 
 //
