@@ -794,6 +794,7 @@ void pe_parse_certificates(
   // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
 
   if (directory->VirtualAddress == 0 ||
+      directory->VirtualAddress > pe->data_size ||
       directory->Size > pe->data_size ||
       directory->VirtualAddress + directory->Size > pe->data_size)
   {
@@ -1648,6 +1649,7 @@ int module_load(
 
         pe_parse_header(pe, block->base, context->flags);
         pe_parse_rich_signature(pe);
+
         #if defined(HAVE_LIBCRYPTO)
         pe_parse_certificates(pe);
         #endif
