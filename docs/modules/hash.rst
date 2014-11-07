@@ -34,9 +34,10 @@ of your file and create signatures based on those hashes.
 
 .. c:function:: sha1(offset, size)
 
-    Returns the SHA1 hash for *size* bytes starting at *offset*. When scanning a
-    running process the *offset* argument should be a virtual address within
-    the process address space. The returned string is always in lowercase.
+    Returns the SHA1 hash for the *size* bytes starting at *offset*. When
+    scanning a running process the *offset* argument should be a virtual address
+    within the process address space. The returned string is always in
+    lowercase.
 
 .. c:function:: sha1(string)
 
@@ -44,10 +45,22 @@ of your file and create signatures based on those hashes.
 
 .. c:function:: sha256(offset, size)
 
-    Returns the SHA256 hash for *size* bytes starting at *offset*. When scanning a
-    running process the *offset* argument should be a virtual address within
-    the process address space. The returned string is always in lowercase.
+    Returns the SHA256 hash for the *size* bytes starting at *offset*. When
+    scanning a running process the *offset* argument should be a virtual address
+    within the process address space. The returned string is always in
+    lowercase.
 
 .. c:function:: sha256(string)
 
     Returns the SHA256 hash for the given string.
+
+.. c:function:: checksum32(offset, size)
+
+    Returns a 32-bits checksum for the *size* bytes starting at *offset*. The
+    checksum is just the sum of all the bytes (unsigned).
+
+.. c:function:: checksum32(string)
+
+    Returns a 32-bits checksum for the given string. The checksum is just the
+    sum of all the bytes in the string (unsigned).
+
