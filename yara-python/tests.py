@@ -739,6 +739,17 @@ class TestYara(unittest.TestCase):
             'import "tests" rule test { condition: tests.sum(1,1) == 3}',
           ])
 
+    def testIntegerFunctions(self):
+
+        self.assertTrueRules([
+            'rule test { condition: uint8(0) == 0xAA}',
+            'rule test { condition: uint16(0) == 0xBBAA}',
+            'rule test { condition: uint32(0) == 0xDDCCBBAA}',
+            'rule test { condition: uint8be(0) == 0xAA}',
+            'rule test { condition: uint16be(0) == 0xAABB}',
+            'rule test { condition: uint32be(0) == 0xAABBCCDD}',
+          ], '\xAA\xBB\xCC\xDD')
+
 
 if __name__ == "__main__":
     unittest.main()

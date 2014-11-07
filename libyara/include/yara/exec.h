@@ -76,16 +76,25 @@ limitations under the License.
 #define OP_JLE            46
 #define OP_FILESIZE       47
 #define OP_ENTRYPOINT     48
-#define OP_INT8           49
-#define OP_INT16          50
-#define OP_INT32          51
-#define OP_UINT8          52
-#define OP_UINT16         53
-#define OP_UINT32         54
-#define OP_CONTAINS       55
-#define OP_MATCHES        56
-#define OP_IMPORT         57
-#define OP_LOOKUP_DICT    58
+#define OP_CONTAINS       49
+#define OP_MATCHES        50
+#define OP_IMPORT         51
+#define OP_LOOKUP_DICT    52
+
+
+#define OP_INT            100
+#define OP_INT8           (OP_INT + 0)
+#define OP_INT16          (OP_INT + 1)
+#define OP_INT32          (OP_INT + 2)
+#define OP_UINT8          (OP_INT + 3)
+#define OP_UINT16         (OP_INT + 4)
+#define OP_UINT32         (OP_INT + 5)
+#define OP_INT8BE         (OP_INT + 6)
+#define OP_INT16BE        (OP_INT + 7)
+#define OP_INT32BE        (OP_INT + 8)
+#define OP_UINT8BE        (OP_INT + 9)
+#define OP_UINT16BE       (OP_INT + 10)
+#define OP_UINT32BE       (OP_INT + 11)
 
 
 #define OPERATION(operator, op1, op2) \

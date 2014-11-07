@@ -114,12 +114,6 @@ hexdigit      [a-fA-F0-9]
 "any"                   { return _ANY_;         }
 "entrypoint"            { return _ENTRYPOINT_;  }
 "filesize"              { return _FILESIZE_;    }
-"uint8"                 { return _UINT8_;       }
-"uint16"                { return _UINT16_;      }
-"uint32"                { return _UINT32_;      }
-"int8"                  { return _INT8_;        }
-"int16"                 { return _INT16_;       }
-"int32"                 { return _INT32_;       }
 "matches"               { return _MATCHES_;     }
 "contains"              { return _CONTAINS_;    }
 "import"                { return _IMPORT_;      }
@@ -320,6 +314,45 @@ $({letter}|{digit}|_)*  {
 
   yylval->c_string[0] = '$'; /* replace @ by $*/
   return _STRING_OFFSET_;
+}
+
+
+u?int(8|16|32)(be)? {
+
+  char* text = yytext;
+
+  if (*text == 'u')
+  {
+    yylval->integer = 3;
+    text++;
+  }
+  else
+  {
+    yylval->integer = 0;
+  }
+
+  if (strstr(text, "int8") == text)
+  {
+    yylval->integer += 0;
+    text += 4;
+  }
+  else if (strstr(text, "int16") == text)
+  {
+    yylval->integer += 1;
+    text += 5;
+  }
+  else if (strstr(text, "int32") == text)
+  {
+    yylval->integer += 2;
+    text += 5;
+  }
+
+  if (strcmp(text, "be") == 0)
+  {
+    yylval->integer += 6;
+  }
+
+  return _INTEGER_FUNCTION_;
 }
 
 

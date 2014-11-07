@@ -107,6 +107,7 @@ limitations under the License.
 %token <c_string> _STRING_OFFSET_
 %token <c_string> _STRING_IDENTIFIER_WITH_WILDCARD_
 %token <integer> _NUMBER_
+%token <integer> _INTEGER_FUNCTION_
 %token <sized_string> _TEXT_STRING_
 %token <sized_string> _HEX_STRING_
 %token <sized_string> _REGEXP_
@@ -123,12 +124,6 @@ limitations under the License.
 %token _OF_
 %token _FOR_
 %token _THEM_
-%token _INT8_
-%token _INT16_
-%token _INT32_
-%token _UINT8_
-%token _UINT16_
-%token _UINT32_
 %token _MATCHES_
 %token _CONTAINS_
 %token _IMPORT_
@@ -1475,72 +1470,16 @@ primary_expression
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = UNDEFINED;
       }
-    | _INT8_ '(' primary_expression ')'
+    | _INTEGER_FUNCTION_ '(' primary_expression ')'
       {
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "int8");
+        //CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "int8");
+
+        // _INTEGER_FUNCTION_ could be any of int8, int16, int32, uint8,
+        // uint32, etc. $1 contains an index that added to OP_INT results
+        // in the proper OP_INTXX opcode.
 
         compiler->last_result = yr_parser_emit(
-            yyscanner, OP_INT8, NULL);
-
-        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-
-        $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
-      }
-    | _INT16_ '(' primary_expression ')'
-      {
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "int16");
-
-        compiler->last_result = yr_parser_emit(
-            yyscanner, OP_INT16, NULL);
-
-        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-
-        $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
-      }
-    | _INT32_ '(' primary_expression ')'
-      {
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "int32");
-
-        compiler->last_result = yr_parser_emit(
-            yyscanner, OP_INT32, NULL);
-
-        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-
-        $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
-      }
-    | _UINT8_ '(' primary_expression ')'
-      {
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "uint8");
-
-        compiler->last_result = yr_parser_emit(
-            yyscanner, OP_UINT8, NULL);
-
-        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-
-        $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
-      }
-    | _UINT16_ '(' primary_expression ')'
-      {
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "uint16");
-
-        compiler->last_result = yr_parser_emit(
-            yyscanner, OP_UINT16, NULL);
-
-        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-
-        $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
-      }
-    | _UINT32_ '(' primary_expression ')'
-      {
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "uint32");
-
-        compiler->last_result = yr_parser_emit(
-            yyscanner, OP_UINT32, NULL);
+            yyscanner, OP_INT + $1, NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 

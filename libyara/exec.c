@@ -46,8 +46,32 @@ limitations under the License.
 #define pop(x)  x = stack[--sp]
 
 
-#define function_read(type) \
-    int64_t read_##type(YR_MEMORY_BLOCK* block, size_t offset) \
+#define little_endian_uint8_t(x)     (x)
+#define little_endian_uint16_t(x)    (x)
+#define little_endian_uint32_t(x)    (x)
+#define little_endian_int8_t(x)      (x)
+#define little_endian_int16_t(x)     (x)
+#define little_endian_int32_t(x)     (x)
+
+#define big_endian_uint8_t(x)         (x)
+
+#define big_endian_uint16_t(x) \
+    (((((uint16_t)(x) & 0xFF)) << 8) | \
+     ((((uint16_t)(x) & 0xFF00)) >> 8))
+
+#define big_endian_uint32_t(x) \
+    (((((uint32_t)(x) & 0xFF)) << 24) | \
+     ((((uint32_t)(x) & 0xFF00)) << 8) | \
+     ((((uint32_t)(x) & 0xFF0000)) >> 8) | \
+     ((((uint32_t)(x) & 0xFF000000)) >> 24))
+
+#define big_endian_int8_t(x)   big_endian_uint8_t(x)
+#define big_endian_int16_t(x)  big_endian_uint16_t(x)
+#define big_endian_int32_t(x)  big_endian_uint32_t(x)
+
+
+#define function_read(type, endianess) \
+    int64_t read_##type##_##endianess(YR_MEMORY_BLOCK* block, size_t offset) \
     { \
       while (block != NULL) \
       { \
@@ -55,19 +79,28 @@ limitations under the License.
             block->size >= sizeof(type) && \
             offset <= block->base + block->size - sizeof(type)) \
         { \
-          return *((type *) (block->data + offset - block->base)); \
+          type result = *(type *)(block->data + offset - block->base); \
+          result = endianess##_##type(result); \
+          return result; \
         } \
         block = block->next; \
       } \
       return UNDEFINED; \
     };
 
-function_read(uint8_t)
-function_read(uint16_t)
-function_read(uint32_t)
-function_read(int8_t)
-function_read(int16_t)
-function_read(int32_t)
+
+function_read(uint8_t, little_endian)
+function_read(uint16_t, little_endian)
+function_read(uint32_t, little_endian)
+function_read(int8_t, little_endian)
+function_read(int16_t, little_endian)
+function_read(int32_t, little_endian)
+function_read(uint8_t, big_endian)
+function_read(uint16_t, big_endian)
+function_read(uint32_t, big_endian)
+function_read(int8_t, big_endian)
+function_read(int16_t, big_endian)
+function_read(int32_t, big_endian)
 
 
 int yr_execute_code(
@@ -718,32 +751,62 @@ int yr_execute_code(
 
       case OP_INT8:
         pop(r1);
-        push(read_int8_t(context->mem_block, r1));
+        push(read_int8_t_little_endian(context->mem_block, r1));
         break;
 
       case OP_INT16:
         pop(r1);
-        push(read_int16_t(context->mem_block, r1));
+        push(read_int16_t_little_endian(context->mem_block, r1));
         break;
 
       case OP_INT32:
         pop(r1);
-        push(read_int32_t(context->mem_block, r1));
+        push(read_int32_t_little_endian(context->mem_block, r1));
         break;
 
       case OP_UINT8:
         pop(r1);
-        push(read_uint8_t(context->mem_block, r1));
+        push(read_uint8_t_little_endian(context->mem_block, r1));
         break;
 
       case OP_UINT16:
         pop(r1);
-        push(read_uint16_t(context->mem_block, r1));
+        push(read_uint16_t_little_endian(context->mem_block, r1));
         break;
 
       case OP_UINT32:
         pop(r1);
-        push(read_uint32_t(context->mem_block, r1));
+        push(read_uint32_t_little_endian(context->mem_block, r1));
+        break;
+
+      case OP_INT8BE:
+        pop(r1);
+        push(read_int8_t_big_endian(context->mem_block, r1));
+        break;
+
+      case OP_INT16BE:
+        pop(r1);
+        push(read_int16_t_big_endian(context->mem_block, r1));
+        break;
+
+      case OP_INT32BE:
+        pop(r1);
+        push(read_int32_t_big_endian(context->mem_block, r1));
+        break;
+
+      case OP_UINT8BE:
+        pop(r1);
+        push(read_uint8_t_big_endian(context->mem_block, r1));
+        break;
+
+      case OP_UINT16BE:
+        pop(r1);
+        push(read_uint16_t_big_endian(context->mem_block, r1));
+        break;
+
+      case OP_UINT32BE:
+        pop(r1);
+        push(read_uint32_t_big_endian(context->mem_block, r1));
         break;
 
       case OP_CONTAINS:
