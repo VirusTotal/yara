@@ -197,7 +197,8 @@ rules
     | rules rule
     | rules import
     | rules error rule      /* on error skip until next rule..*/
-    | rules error 'include' /* .. or include statement */
+    | rules error import    /* .. or import statement */
+    | rules error "include" /* .. or include statement */
     ;
 
 
