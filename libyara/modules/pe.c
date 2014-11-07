@@ -1287,38 +1287,6 @@ define_function(imphash)
   return_string(digest_ascii);
 }
 
-
-//
-// Nothing fancy here. Just a sha256 of the clear data.
-//
-
-define_function(richhash)
-{
-  YR_OBJECT* parent = parent();
-  SHA256_CTX ctx;
-
-  unsigned char digest[SHA256_DIGEST_LENGTH];
-  char digest_ascii[SHA256_DIGEST_LENGTH * 2 + 1];
-
-  SIZED_STRING *clear_data = get_string(parent, "clear_data");
-
-  if (!clear_data)
-    return_string(UNDEFINED);
-
-  SHA256_Init(&ctx);
-  SHA256_Update(&ctx, clear_data->c_string, clear_data->length);
-  SHA256_Final(digest, &ctx);
-
-  for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
-  {
-    sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
-  }
-
-  digest_ascii[SHA256_DIGEST_LENGTH * 2] = '\0';
-
-  return_string(digest_ascii);
-}
-
 #endif  // defined(HAVE_LIBCRYPTO)
 
 
@@ -1520,9 +1488,6 @@ begin_declarations;
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
-    #if defined(HAVE_LIBCRYPTO)
-    declare_function("hash", "", "s", richhash);
-    #endif
   end_struct("rich_signature");
 
   #if defined(HAVE_LIBCRYPTO)
