@@ -106,6 +106,22 @@ define_function(string_sha1)
 }
 
 
+define_function(string_checksum32)
+{
+  SIZED_STRING* s = sized_string_argument(1);
+
+  if (IS_UNDEFINED(s))
+    return_integer(UNDEFINED);
+
+  uint32_t checksum = 0;
+
+  for (int i = 0; i < s->length; i++)
+    checksum += (uint8_t)(s->c_string[i]);
+
+  return_integer(checksum);
+}
+
+
 define_function(data_md5)
 {
   int64_t offset = integer_argument(1);   // offset where to start
@@ -305,15 +321,77 @@ define_function(data_sha256)
 }
 
 
+define_function(data_checksum32)
+{
+  int64_t offset = integer_argument(1);   // offset where to start
+  int64_t length = integer_argument(2);   // length of bytes we want hash on
+
+  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
+    return_integer(UNDEFINED);
+
+  YR_SCAN_CONTEXT* context = scan_context();
+  YR_MEMORY_BLOCK* block = NULL;
+
+  uint32_t checksum = 0;
+  bool past_first_block = false;
+
+  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  {
+    return ERROR_WRONG_ARGUMENTS;
+  }
+
+  foreach_memory_block(context, block)
+  {
+    if (offset >= block->base &&
+        offset < block->base + block->size)
+    {
+      uint64_t data_offset = offset - block->base;
+      uint64_t data_len = min(length, block->size - data_offset);
+
+      offset += data_len;
+      length -= data_len;
+
+      for (int i = 0; i < data_len; i++)
+        checksum += *(block->data + data_offset + i);
+
+      past_first_block = true;
+    }
+    else if (past_first_block)
+    {
+      // If offset is not within current block and we already
+      // past the first block then the we are trying to compute
+      // the checksum over a range of non contiguos blocks. As
+      // range contains gaps of undefined data the checksum is
+      // undefined.
+
+      return_integer(UNDEFINED);
+    }
+
+    if (block->base + block->size > offset + length)
+      break;
+  }
+
+  if (!past_first_block)
+    return_integer(UNDEFINED);
+
+  return_integer(checksum);
+}
+
+
+
 begin_declarations;
 
   declare_function("md5", "ii", "s", data_md5);
-  declare_function("sha1", "ii", "s", data_sha1);
-  declare_function("sha256", "ii", "s", data_sha256);
-
   declare_function("md5", "s", "s", string_md5);
+
+  declare_function("sha1", "ii", "s", data_sha1);
   declare_function("sha1", "s", "s", string_sha1);
+
+  declare_function("sha256", "ii", "s", data_sha256);
   declare_function("sha256", "s", "s", string_sha256);
+
+  declare_function("checksum32", "ii", "i", data_checksum32);
+  declare_function("checksum32", "s", "i", string_checksum32);
 
 end_declarations;
 
