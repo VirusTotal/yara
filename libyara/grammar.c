@@ -227,7 +227,7 @@
           break; \
         case EXPRESSION_TYPE_STRING: \
           yr_compiler_set_error_extra_info( \
-              compiler, "wrong type \"string\" for \"" op "\" operator"); \
+              compiler, "wrong type \"string\" for " op " operator"); \
           break; \
       } \
       compiler->last_result = ERROR_WRONG_TYPE; \
@@ -3168,7 +3168,7 @@ yyreduce:
   case 92:
 #line 1474 "grammar.y"
     {
-        //CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "int8");
+        CHECK_TYPE((yyvsp[(3) - (4)].expression), EXPRESSION_TYPE_INTEGER, "intXXXX or uintXXXX");
 
         // _INTEGER_FUNCTION_ could be any of int8, int16, int32, uint8,
         // uint32, etc. $1 contains an index that added to OP_INT results
