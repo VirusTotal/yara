@@ -30,7 +30,83 @@ limitations under the License.
 #define MODULE_NAME hash
 
 
-define_function(md5_hash)
+void digest_to_ascii(
+    unsigned char* digest,
+    char* digest_ascii,
+    size_t digest_length)
+{
+  for (int i = 0; i < digest_length; i++)
+    sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
+
+  digest_ascii[digest_length * 2] = '\0';
+}
+
+
+define_function(string_md5)
+{
+  SIZED_STRING* s = sized_string_argument(1);
+
+  if (IS_UNDEFINED(s))
+    return_string(UNDEFINED);
+
+  MD5_CTX md5_context;
+
+  unsigned char digest[MD5_DIGEST_LENGTH];
+  char digest_ascii[MD5_DIGEST_LENGTH * 2 + 1];
+
+  MD5_Init(&md5_context);
+  MD5_Update(&md5_context, s->c_string, s->length);
+  MD5_Final(digest, &md5_context);
+
+  digest_to_ascii(digest, digest_ascii, MD5_DIGEST_LENGTH);
+
+  return_string(digest_ascii);
+}
+
+
+define_function(string_sha256)
+{
+  SIZED_STRING* s = sized_string_argument(1);
+
+  if (IS_UNDEFINED(s))
+    return_string(UNDEFINED);
+
+  SHA256_CTX sha256_context;
+  unsigned char digest[SHA256_DIGEST_LENGTH];
+  char digest_ascii[SHA256_DIGEST_LENGTH * 2 + 1];
+
+  SHA256_Init(&sha256_context);
+  SHA256_Update(&sha256_context, s->c_string, s->length);
+  SHA256_Final(digest, &sha256_context);
+
+  digest_to_ascii(digest, digest_ascii, SHA256_DIGEST_LENGTH);
+
+  return_string(digest_ascii);
+}
+
+
+define_function(string_sha1)
+{
+  SIZED_STRING* s = sized_string_argument(1);
+
+  if (IS_UNDEFINED(s))
+    return_string(UNDEFINED);
+
+  SHA_CTX sha_context;
+  unsigned char digest[SHA_DIGEST_LENGTH];
+  char digest_ascii[SHA_DIGEST_LENGTH * 2 + 1];
+
+  SHA1_Init(&sha_context);
+  SHA1_Update(&sha_context, s->c_string, s->length);
+  SHA1_Final(digest, &sha_context);
+
+  digest_to_ascii(digest, digest_ascii, SHA_DIGEST_LENGTH);
+
+  return_string(digest_ascii);
+}
+
+
+define_function(data_md5)
 {
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
@@ -83,20 +159,13 @@ define_function(md5_hash)
 
   MD5_Final(digest, &md5_context);
 
-  // transform the binary digest to ascii
-
-  for (int i = 0; i < MD5_DIGEST_LENGTH; i++)
-  {
-    sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
-  }
-
-  digest_ascii[MD5_DIGEST_LENGTH * 2] = '\0';
+  digest_to_ascii(digest, digest_ascii, MD5_DIGEST_LENGTH);
 
   return_string(digest_ascii);
 }
 
 
-define_function(sha1_hash)
+define_function(data_sha1)
 {
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
@@ -148,20 +217,13 @@ define_function(sha1_hash)
 
   SHA1_Final(digest, &sha_context);
 
-  // transform the binary digest to ascii
-
-  for (int i = 0; i < SHA_DIGEST_LENGTH; i++)
-  {
-    sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
-  }
-
-  digest_ascii[SHA_DIGEST_LENGTH * 2] = '\0';
+  digest_to_ascii(digest, digest_ascii, SHA_DIGEST_LENGTH);
 
   return_string(digest_ascii);
 }
 
 
-define_function(sha256_hash)
+define_function(data_sha256)
 {
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
@@ -213,24 +275,23 @@ define_function(sha256_hash)
 
   SHA256_Final(digest, &sha256_context);
 
-  // transform the binary digest to ascii
-
-  for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
-  {
-    sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
-  }
-
-  digest_ascii[SHA256_DIGEST_LENGTH * 2] = '\0';
+  digest_to_ascii(digest, digest_ascii, SHA256_DIGEST_LENGTH);
 
   return_string(digest_ascii);
 }
 
 
+
+
 begin_declarations;
 
-  declare_function("md5", "ii", "s", md5_hash);
-  declare_function("sha1", "ii", "s", sha1_hash);
-  declare_function("sha256", "ii", "s", sha256_hash)
+  declare_function("md5", "ii", "s", data_md5);
+  declare_function("sha1", "ii", "s", data_sha1);
+  declare_function("sha256", "ii", "s", data_sha256);
+
+  declare_function("md5", "s", "s", string_md5);
+  declare_function("sha1", "s", "s", string_sha1);
+  declare_function("sha256", "s", "s", string_sha256);
 
 end_declarations;
 

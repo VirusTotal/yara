@@ -24,7 +24,7 @@ limitations under the License.
 
 
 #define UNDEFINED           0xFFFABADAFABADAFFLL
-#define IS_UNDEFINED(x)     ((x) == UNDEFINED)
+#define IS_UNDEFINED(x)     ((uint64_t)(x) == UNDEFINED)
 
 #define OP_HALT           255
 
