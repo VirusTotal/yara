@@ -36,16 +36,7 @@ limitations under the License.
 #include <yara/mem.h>
 #include <yara/strutils.h>
 
-
 #include "pe_utils.c"
-
-
-#define bigendian(n) \
-    (((((uint32_t)(n) & 0xFF)) << 24) | \
-     ((((uint32_t)(n) & 0xFF00)) << 8) | \
-     ((((uint32_t)(n) & 0xFF0000)) >> 8) | \
-     ((((uint32_t)(n) & 0xFF000000)) >> 24))
-
 
 #define MODULE_NAME pe
 
@@ -188,7 +179,8 @@ PIMAGE_NT_HEADERS32 pe_get_header(
 // http://www.ntcore.com/files/richsign.htm
 
 void pe_parse_rich_signature(
-    PE* pe)
+    PE* pe,
+    size_t base_address)
 {
   PIMAGE_DOS_HEADER mz_header;
   PIMAGE_NT_HEADERS32 pe_header;
@@ -249,9 +241,13 @@ void pe_parse_rich_signature(
       memcpy(raw_data, rich_signature, rich_len);
 
       set_integer(
-          bigendian(rich_signature->dans), pe->object, "rich_signature.start");
+          base_address + 0x80, pe->object, "rich_signature.offset");
+
       set_integer(
-          bigendian(rich_signature->key1), pe->object, "rich_signature.key");
+          rich_len, pe->object, "rich_signature.length");
+
+      set_integer(
+          rich_signature->key1, pe->object, "rich_signature.key");
 
       break;
     }
@@ -1519,7 +1515,8 @@ begin_declarations;
   end_struct_array("sections");
 
   begin_struct("rich_signature");
-    declare_integer("start");
+    declare_integer("offset");
+    declare_integer("length");
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
@@ -1676,7 +1673,7 @@ int module_load(
         module_object->data = pe;
 
         pe_parse_header(pe, block->base, context->flags);
-        pe_parse_rich_signature(pe);
+        pe_parse_rich_signature(pe, block->base);
 
         #if defined(HAVE_LIBCRYPTO)
         pe_parse_certificates(pe);
