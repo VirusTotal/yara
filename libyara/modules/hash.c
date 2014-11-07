@@ -114,14 +114,14 @@ define_function(data_md5)
   if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
     return_string(UNDEFINED);
 
-  YR_SCAN_CONTEXT*  context = scan_context();
+  YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
 
   MD5_CTX md5_context;
 
   unsigned char digest[MD5_DIGEST_LENGTH];
   char digest_ascii[MD5_DIGEST_LENGTH * 2 + 1];
-  bool md5_updated = false;
+  bool past_first_block = false;
 
   MD5_Init(&md5_context);
 
@@ -145,11 +145,16 @@ define_function(data_md5)
 
       MD5_Update(&md5_context, block->data + data_offset, data_len);
 
-      md5_updated = true;
+      past_first_block = true;
     }
-    else if (md5_updated)
+    else if (past_first_block)
     {
-      // non contigous block
+      // If offset is not within current block and we already
+      // past the first block then the we are trying to compute
+      // the checksum over a range of non contiguos blocks. As
+      // range contains gaps of undefined data the checksum is
+      // undefined.
+
       return_string(UNDEFINED);
     }
 
@@ -157,7 +162,7 @@ define_function(data_md5)
       break;
   }
 
-  if (!md5_updated)
+  if (!past_first_block)
     return_string(UNDEFINED);
 
   MD5_Final(digest, &md5_context);
@@ -176,14 +181,14 @@ define_function(data_sha1)
   if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
     return_string(UNDEFINED);
 
-  YR_SCAN_CONTEXT*  context = scan_context();
+  YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
 
   SHA_CTX sha_context;
 
   unsigned char digest[SHA_DIGEST_LENGTH];
   char digest_ascii[SHA_DIGEST_LENGTH * 2 + 1];
-  bool sha_updated = false;
+  bool past_first_block = false;
 
   SHA1_Init(&sha_context);
 
@@ -206,11 +211,16 @@ define_function(data_sha1)
 
       SHA1_Update(&sha_context, block->data + data_offset, data_len);
 
-      sha_updated = true;
+      past_first_block = true;
     }
-    else if (sha_updated)
+    else if (past_first_block)
     {
-      // non-contigous
+      // If offset is not within current block and we already
+      // past the first block then the we are trying to compute
+      // the checksum over a range of non contiguos blocks. As
+      // range contains gaps of undefined data the checksum is
+      // undefined.
+
       return_string(UNDEFINED);
     }
 
@@ -218,7 +228,7 @@ define_function(data_sha1)
       break;
   }
 
-  if (!sha_updated)
+  if (!past_first_block)
     return_string(UNDEFINED);
 
   SHA1_Final(digest, &sha_context);
@@ -237,14 +247,14 @@ define_function(data_sha256)
   if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
     return_string(UNDEFINED);
 
-  YR_SCAN_CONTEXT*  context = scan_context();
+  YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
 
   SHA256_CTX sha256_context;
 
   unsigned char digest[SHA256_DIGEST_LENGTH];
   char digest_ascii[SHA256_DIGEST_LENGTH * 2 + 1];
-  bool sha256_updated = false;
+  bool past_first_block = false;
 
   SHA256_Init(&sha256_context);
 
@@ -267,11 +277,16 @@ define_function(data_sha256)
 
       SHA256_Update(&sha256_context, block->data + data_offset, data_len);
 
-      sha256_updated = true;
+      past_first_block = true;
     }
-    else if (sha256_updated)
+    else if (past_first_block)
     {
-      // non-contigous
+      // If offset is not within current block and we already
+      // past the first block then the we are trying to compute
+      // the checksum over a range of non contiguos blocks. As
+      // range contains gaps of undefined data the checksum is
+      // undefined.
+
       return_string(UNDEFINED);
     }
 
@@ -279,7 +294,7 @@ define_function(data_sha256)
       break;
   }
 
-  if (!sha256_updated)
+  if (!past_first_block)
     return_string(UNDEFINED);
 
   SHA256_Final(digest, &sha256_context);
