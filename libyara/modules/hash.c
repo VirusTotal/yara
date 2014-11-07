@@ -111,6 +111,9 @@ define_function(data_md5)
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
 
+  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
+    return_string(UNDEFINED);
+
   YR_SCAN_CONTEXT*  context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
 
@@ -170,6 +173,9 @@ define_function(data_sha1)
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
 
+  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
+    return_string(UNDEFINED);
+
   YR_SCAN_CONTEXT*  context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
 
@@ -228,6 +234,9 @@ define_function(data_sha256)
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
 
+  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
+    return_string(UNDEFINED);
+
   YR_SCAN_CONTEXT*  context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
 
@@ -279,8 +288,6 @@ define_function(data_sha256)
 
   return_string(digest_ascii);
 }
-
-
 
 
 begin_declarations;
