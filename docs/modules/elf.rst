@@ -5,6 +5,8 @@
 ELF module
 ##########
 
+.. versionadded:: 3.2.0
+
 The ELF module is very similar to the :ref:`pe-module`, but for ELF files. This
 module exposes most of the fields present in a ELF header. Let's see some
 examples::

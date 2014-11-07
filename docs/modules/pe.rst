@@ -159,23 +159,23 @@ Reference
 
         Section name.
 
-    .. c:type:: characteristics
+    .. c:member:: characteristics
 
         Section characteristics.
 
-    .. c:type:: virtual_address
+    .. c:member:: virtual_address
 
         Section virtual address.
 
-    .. c:type:: virtual_size
+    .. c:member:: virtual_size
 
         Section virtual size.
 
-    .. c:type:: raw_data_offset
+    .. c:member:: raw_data_offset
 
         Section raw offset.
 
-    .. c:type:: raw_data_size
+    .. c:member:: raw_data_size
 
         Section raw size.
 
@@ -202,6 +202,91 @@ Reference
 
     *Example:  pe.version_info["CompanyName"] contains "Microsoft"*
 
+    .. versionadded:: 3.2.0
+
+.. c:type:: number_of_signatures
+
+    Number of authenticode signatures in the PE.
+
+.. c:type:: signatures
+
+    An zero-based array of signature objects, one for each authenticode
+    signature in the PE file. Usually PE files have a single signature.
+
+    .. c:member:: issuer
+
+        A string containing information about the issuer. These are some
+        examples::
+
+            "/C=US/ST=Washington/L=Redmond/O=Microsoft Corporation/CN=Microsoft Code Signing PCA"
+
+            "/C=US/O=VeriSign, Inc./OU=VeriSign Trust Network/OU=Terms of use at https://www.verisign.com/rpa (c)10/CN=VeriSign Class 3 Code Signing 2010 CA"
+
+            "/C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO Code Signing CA 2"
+
+    .. c:member:: subject
+
+        A string containing information about the subject.
+
+    .. c:member:: version
+
+        Version number.
+
+    .. c:member:: algorithm
+
+        Algorithm used for this signature. Usually "sha1WithRSAEncryption".
+
+    .. c:member:: serial
+
+        A string containing the serial number. This is an example::
+
+        "52:00:e5:aa:25:56:fc:1a:86:ed:96:c9:d4:4b:33:c7"
+
+    .. c:member:: not_before
+
+        Unix timestamp on which validity period for this signature begins.
+
+    .. c:member:: not_after
+
+        Unix timestamp on which validity period for this signature ends.
+
+    .. c:member:: valid_on(timestamp)
+
+        Function returning true if the signature was valid the on date
+        indicated by *timestamp*. The following sentence::
+
+            pe.signature[n].valid_on(timestamp)
+
+        Is equivalent to::
+
+            timestamp >= pe.signature[n].not_before and timestamp <= pe.signature[n].not_after
+
+.. c:type:: rich_signature
+
+    Structure containing information about PE's rich signature as documented
+    `here <http://www.ntcore.com/files/richsign.htm>`_.
+
+    .. c:member:: offset
+
+        Offset where the rich signature starts. It will be undefined if the
+        file doesn't have a rich signature.
+
+    .. c:member:: length
+
+        Length of the rich signature, not including the final "Rich" marker.
+
+    .. c:member:: key
+
+        Key used to encrypt the data with XOR.
+
+    .. c:member:: raw_data
+
+        Raw data as it appears in the file.
+
+    .. c:member:: clear_data
+
+        Data after being decrypted by XORing it with the key.
+
 .. c:function:: exports(function_name)
 
     Function returning true if the PE exports *function_name* or
@@ -225,6 +310,8 @@ Reference
 
     *Example: pe.locale(0x0419) // Russian (RU)*
 
+    .. versionadded:: 3.2.0
+
 .. c:function:: language(language_identifier)
 
     Function returning true if the PE has a resource with the specified language
@@ -234,3 +321,15 @@ Reference
 
     *Example: pe.language(0x0A) // Spanish*
 
+    .. versionadded:: 3.2.0
+
+.. c:function:: imphash()
+
+    Function returning the import hash or imphash for the PE. The imphash is
+    a MD5 hash of the PE's import table after some normalization. The imphash
+    for a PE can be also computed with `pefile <http://code.google.com/p/pefile/>`_ and you can find more information in
+    `Mandiant's blog <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_.
+
+    *Example: pe.imphash() == "b8bb385806b89680e13fc0cf24f4431e"*
+
+    .. versionadded:: 3.2.0

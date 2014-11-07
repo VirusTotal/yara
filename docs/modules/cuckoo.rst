@@ -108,6 +108,13 @@ Reference
         Similar to :func:`http_request`, but only takes into account POST
         requests.
 
+    .. function:: dns_lookup(regexp)
+
+        Function returning true if the program sent a domain name resolution
+        request for a domain matching the provided regular expression.
+
+        *Example: cuckoo.network.dns_lookop(/evil\\.com/)*
+
 .. type:: registry
 
     .. function:: key_access(regexp)

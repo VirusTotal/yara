@@ -5,6 +5,8 @@
 Magic module
 ############
 
+.. versionadded:: 3.1.0
+
 The Magic module allows you to identify the type of the file based on the
 output of `file <http://en.wikipedia.org/wiki/File_(command)>`_, the standard
 Unix command.

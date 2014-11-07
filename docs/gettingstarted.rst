@@ -23,6 +23,14 @@ way::
     make
     sudo make install
 
+Some YARA's features depends on the OpenSSL library. Those features are
+built into YARA only if you have the OpenSSL library installed in your
+system. The ``configure`` script will automatically detect if OpenSSL is
+installed or not. If you want to make sure that YARA is built with
+OpenSSL-dependant features you must pass ``--with-crypto`` to the ``configure``
+script.
+
+
 The following modules are not copiled into YARA by default:
 
 * cuckoo
@@ -36,7 +44,6 @@ For example::
     ./configure --enable-cuckoo
     ./configure --enable-magic
     ./configure --enable-cuckoo --enable-magic
-
 
 Modules usually depends on external libraries, depending on the modules you
 choose to install you'll need the following libraries:

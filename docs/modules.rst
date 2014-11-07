@@ -12,10 +12,11 @@ the :ref:`writing-modules` section.
 .. toctree::
    :maxdepth: 3
 
-   modules/pe
-   modules/elf
-   modules/cuckoo
-   modules/magic
+   PE <modules/pe>
+   ELF <modules/elf>
+   Cuckoo <modules/cuckoo>
+   Magic <modules/magic>
+   Hash <modules/hash>
 
 
 

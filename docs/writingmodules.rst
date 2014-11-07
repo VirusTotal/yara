@@ -365,6 +365,8 @@ when you start initializing its values.
 Dictionaries
 ------------
 
+.. versionadded:: 3.2.0
+
 You can also declare dictionaries of integers, strings, or structures::
 
     begin_declarations;
@@ -445,6 +447,20 @@ the declaration section, like this::
       ...your code here
     }
 
+Functions can be overloaded as in C++ and other programming languages. You can
+declare two functions with the same name as long as they differ in the type or
+number of arguments. One example of overloaded functions can be found in the
+:ref:`hash-module`, it has two functions for calculating MD5 hashes, one
+receiving an offset and length within the file and another one receiving a
+string::
+
+    begin_declarations;
+
+        declare_function("md5", "ii", "s", data_md5);
+        declare_function("md5", "s", "s", string_md5);
+
+    end_declarations;
+
 We are going to discuss function implementation more in depth in the
 :ref:`implementing-functions` section.
 
@@ -475,8 +491,6 @@ structure it may need, but most of the times they are just empty functions:
     }
 
 Any returned value different from ``ERROR_SUCCESS`` will abort YARA's execution.
-
-
 
 Implementing the module's logic
 ===============================
@@ -634,9 +648,9 @@ declared in the declarations section, once you've parsed or analized the scanned
 data and/or any additional module's data. This is done by using the
 ``set_integer`` and ``set_string`` functions:
 
-.. c:function:: void set_integer(int64_t value, YR_OBJECT* object, char* field, ...)
+.. c:function:: void set_integer(int64_t value, YR_OBJECT* object, const char* field, ...)
 
-.. c:function:: void set_string(char* value, YR_OBJECT* object, char* field, ...)
+.. c:function:: void set_string(const char* value, YR_OBJECT* object, const char* field, ...)
 
 Both functions receive a value to be assigned to the variable, a pointer to a
 ``YR_OBJECT`` representing the variable itself or some ancestor of
@@ -751,13 +765,13 @@ implementation of your functions to retrieve values previously stored by
 ``module_load``.
 
 
-.. c:function:: int64_t get_integer(YR_OBJECT* object, char* field, ...)
+.. c:function:: int64_t get_integer(YR_OBJECT* object, const char* field, ...)
 
-.. c:function:: char* get_string(YR_OBJECT* object, char* field, ...)
+.. c:function:: char* get_string(YR_OBJECT* object, const char* field, ...)
 
 There's also a function to the get any ``YR_OBJECT`` in the objects tree:
 
-.. c:function:: YR_OBJECT* get_object(YR_OBJECT* object, char* field, ...)
+.. c:function:: YR_OBJECT* get_object(YR_OBJECT* object, const char* field, ...)
 
 Here goes a little exam...
 
@@ -839,22 +853,37 @@ Function arguments
 ------------------
 
 Within the function's code you get its arguments by using
-``integer_argument(n)``, ``string_argument(n)`` or ``regexp_argument(n)``
-depending on the type of the argument, where *n* is the 1-based argument's
-number.
+``integer_argument(n)``, ``regexp_argument(n)``, ``string_argument(n)`` or
+``sized_string_argument(n)`` depending on the type of the argument, where
+*n* is the 1-based argument's number.
 
-If your function receives a string, a regular expression and an integer in that
-order, you can get their values with:
+``string_argument(n)`` can be used when your function expects to receive a
+NULL-terminated C string, if your function can receive arbitrary binary data
+possibly containing NULL characters you must use ``sized_string_argument(n)``.
+
+Here you have some examples:
 
 .. code-block:: c
 
-    char* arg_1 = string_argument(1);
+    int64_t arg_1 = integer_argument(1);
     RE_CODE arg_2 = regexp_argument(2);
-    int64_t arg_3 = integer_argument(3);
+    char* arg_3 = string_argument(3);
+    SIZED_STRING* arg_4 = sized_string_argument(4);
 
+The C type for integer arguments is ``int64_t``, for regular expressions is
+``RE_CODE``, for NULL-terminated strings is ``char*`` and for string possibly
+contaning NULL characters is ``SIZED_STRING*``. ``SIZED_STRING*``.
+``SIZED_STRING`` structures have the following attributes:
 
-Notice that the C type for integer arguments is ``int64_t`` and for regular
-expressions is ``RE_CODE``.
+.. c:type:: SIZED_STRING
+
+    .. c:member:: length
+
+        String's length.
+
+    .. c:member:: c_string
+
+       ``char*`` pointing to the string content.
 
 Return values
 -------------

@@ -42,21 +42,28 @@ reserved and cannot be used as an identifier:
      - int8
      - int16
      - int32
+     - int8be
+     - int16be
+   * - int32be
      - matches
      - meta
-   * - nocase
+     - nocase
      - not
      - or
      - of
-     - private
+   * - private
      - rule
      - strings
-   * - them
+     - them
      - true
      - uint8
      - uint16
-     - uint32
+   * - uint32
+     - uint8be
+     - uint16be
+     - uint32be
      - wide
+     -
      -
 
 Rules are generally composed of two sections: strings definition and condition.
@@ -509,7 +516,7 @@ In the majority of cases, when a string identifier is used in a condition, we
 are willing to know if the associated string is anywhere within the file or
 process memory, but sometimes we need to know if the string is at some specific
 offset on the file or at some virtual address within the process address space.
-In such situations the operator ``at` is what we need. This operator is used as
+In such situations the operator ``at`` is what we need. This operator is used as
 shown in the following example::
 
     rule AtExample
@@ -623,22 +630,29 @@ Accessing data at a given position
 There are many situations in which you may want to write conditions that
 depends on data stored at a certain file offset or memory virtual address,
 depending if we are scanning a file or a running process. In those situations
-you can use one of the following functions to read from the file at the given
-offset::
+you can use one of the following functions to read data from the file at the given offset::
 
     int8(<offset or virtual address>)
     int16(<offset or virtual address>)
     int32(<offset or virtual address>)
+
     uint8(<offset or virtual address>)
     uint16(<offset or virtual address>)
     uint32(<offset or virtual address>)
 
+    int8be(<offset or virtual address>)
+    int16be(<offset or virtual address>)
+    int32be(<offset or virtual address>)
+
+    uint8be(<offset or virtual address>)
+    uint16be(<offset or virtual address>)
+    uint32be(<offset or virtual address>)
+
 The ``intXX`` functions read 8, 16, and 32 bits signed integers from
 <offset or virtual address>, while functions ``uintXX`` read unsigned integers.
-Both 16 and 32 bits integer are considered to be little-endian.
-The <offset or virtual address> parameter can be any expression returning
-an unsigned integer, including the return value of one the ``uintXX`` functions
-itself. As an example let's see a rule to distinguish PE files::
+Both 16 and 32 bits integer are considered to be little-endian. If you
+want to read a big-endian integer use the corresponding function ending
+in ``be``. The <offset or virtual address> parameter can be any expression returning an unsigned integer, including the return value of one the ``uintXX`` functions itself. As an example let's see a rule to distinguish PE files::
 
     rule IsPE
     {
