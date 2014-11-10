@@ -36,7 +36,7 @@ from files.
 #include <yara/error.h>
 #include <yara/limits.h>
 
-#define ARENA_FILE_VERSION      3
+#define ARENA_FILE_VERSION      4
 
 
 #pragma pack(push)
