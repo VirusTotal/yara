@@ -53,7 +53,7 @@ yarainclude_HEADERS = \
 
 lib_LTLIBRARIES = libyara.la
 
-libyara_la_LDFLAGS = -export-symbols libyara.sym -version-number 3:1
+libyara_la_LDFLAGS = -export-symbols libyara.sym -version-number 3:2:0
 
 libyara_la_SOURCES = \
   $(MODULES) \

@@ -9,10 +9,10 @@
 #define PACKAGE_NAME "yara"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "yara 3.1"
+#define PACKAGE_STRING "yara 3.2.0"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.1"
+#define PACKAGE_VERSION "3.2.0"
 
 /* Version number of package */
-#define VERSION "3.1"
+#define VERSION "3.2.0"

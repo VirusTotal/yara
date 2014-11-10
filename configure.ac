@@ -1,4 +1,4 @@
-AC_INIT([yara], [3.1], [vmalvarez@virustotal.com])
+AC_INIT([yara], [3.2.0], [vmalvarez@virustotal.com])
 
 AC_CONFIG_SRCDIR([yara.c])
 
