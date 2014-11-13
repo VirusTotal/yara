@@ -418,7 +418,7 @@ int _yr_compiler_compile_rules(
     rules_file_header->rules_list_head = (YR_RULE*) yr_arena_base_address(
         compiler->rules_arena);
 
-    rules_file_header->externals_list_head = (YR_EXTERNAL_VARIABLE*) 
+    rules_file_header->externals_list_head = (YR_EXTERNAL_VARIABLE*)
 		yr_arena_base_address(compiler->externals_arena);
 
     rules_file_header->code_start = (uint8_t*) yr_arena_base_address(
@@ -734,6 +734,13 @@ YR_API char* yr_compiler_get_error_message(
           buffer,
           buffer_size,
           "\"%s\" is not an array or dictionary",
+          compiler->last_error_extra_info);
+      break;
+    case ERROR_NOT_A_FUNCTION:
+      snprintf(
+          buffer,
+          buffer_size,
+          "\"%s\" is not a function",
           compiler->last_error_extra_info);
       break;
     case ERROR_INVALID_FIELD_NAME:

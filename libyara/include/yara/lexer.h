@@ -57,7 +57,10 @@ typedef struct _EXPRESSION
 
   union {
     int64_t integer;
+    YR_OBJECT* object;
   } value;
+
+  const char* identifier;
 
 } EXPRESSION;
 

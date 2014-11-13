@@ -45,6 +45,7 @@ limitations under the License.
 #define EXPRESSION_TYPE_INTEGER   2
 #define EXPRESSION_TYPE_STRING    3
 #define EXPRESSION_TYPE_REGEXP    4
+#define EXPRESSION_TYPE_OBJECT    5
 
 
 #define ERROR_IF(x) \
@@ -67,6 +68,10 @@ limitations under the License.
         case EXPRESSION_TYPE_STRING: \
           yr_compiler_set_error_extra_info( \
               compiler, "wrong type \"string\" for " op " operator"); \
+          break; \
+        case EXPRESSION_TYPE_BOOLEAN: \
+          yr_compiler_set_error_extra_info( \
+              compiler, "wrong type \"boolean\" for " op " operator"); \
           break; \
       } \
       compiler->last_result = ERROR_WRONG_TYPE; \
@@ -160,11 +165,11 @@ limitations under the License.
 %type <integer> rule_modifier
 %type <integer> rule_modifiers
 
-%type <object> identifier
 
 %type <expression> primary_expression
 %type <expression> boolean_expression
 %type <expression> expression
+%type <expression> identifier
 %type <expression> regexp
 
 %type <c_string> arguments_list
@@ -186,7 +191,6 @@ limitations under the License.
   int64_t         integer;
   YR_STRING*      string;
   YR_META*        meta;
-  YR_OBJECT*      object;
 }
 
 
@@ -520,41 +524,35 @@ string_modifier
 identifier
     : _IDENTIFIER_
       {
-        YR_OBJECT* object = NULL;
-        YR_RULE* rule;
-
-        char* id;
-        char* ns = NULL;
-
-        int var_index;
-
-        var_index = yr_parser_lookup_loop_variable(yyscanner, $1);
+        int var_index = yr_parser_lookup_loop_variable(yyscanner, $1);
 
         if (var_index >= 0)
         {
           compiler->last_result = yr_parser_emit_with_arg(
-            yyscanner,
-            OP_PUSH_M,
-            LOOP_LOCAL_VARS * var_index,
-            NULL);
+              yyscanner,
+              OP_PUSH_M,
+              LOOP_LOCAL_VARS * var_index,
+              NULL);
 
-          $$ = (YR_OBJECT*) -1;
+          $$.type = EXPRESSION_TYPE_INTEGER;
+          $$.value.integer = UNDEFINED;
+          $$.identifier = compiler->loop_identifier[var_index];
         }
         else
         {
           // Search for identifier within the global namespace, where the
           // externals variables reside.
 
-          object = (YR_OBJECT*) yr_hash_table_lookup(
-                compiler->objects_table,
-                $1,
-                NULL);
+          YR_OBJECT* object = (YR_OBJECT*) yr_hash_table_lookup(
+              compiler->objects_table,
+              $1,
+              NULL);
 
           if (object == NULL)
           {
             // If not found, search within the current namespace.
+            char* ns = compiler->current_namespace->name;
 
-            ns = compiler->current_namespace->name;
             object = (YR_OBJECT*) yr_hash_table_lookup(
                 compiler->objects_table,
                 $1,
@@ -563,6 +561,8 @@ identifier
 
           if (object != NULL)
           {
+            char* id;
+
             compiler->last_result = yr_arena_write_string(
                 compiler->sz_arena,
                 $1,
@@ -575,11 +575,13 @@ identifier
                   PTR_TO_UINT64(id),
                   NULL);
 
-            $$ = object;
+            $$.type = EXPRESSION_TYPE_OBJECT;
+            $$.value.object = object;
+            $$.identifier = object->identifier;
           }
           else
           {
-            rule = (YR_RULE*) yr_hash_table_lookup(
+            YR_RULE* rule = (YR_RULE*) yr_hash_table_lookup(
                 compiler->rules_table,
                 $1,
                 compiler->current_namespace->name);
@@ -591,14 +593,16 @@ identifier
                   OP_PUSH_RULE,
                   PTR_TO_UINT64(rule),
                   NULL);
+
+              $$.type = EXPRESSION_TYPE_BOOLEAN;
+              $$.value.integer = UNDEFINED;
+              $$.identifier = rule->identifier;
             }
             else
             {
               yr_compiler_set_error_extra_info(compiler, $1);
               compiler->last_result = ERROR_UNDEFINED_IDENTIFIER;
             }
-
-            $$ = (YR_OBJECT*) -2;
           }
         }
 
@@ -608,20 +612,17 @@ identifier
       }
     | identifier '.' _IDENTIFIER_
       {
-        YR_OBJECT* object = $1;
         YR_OBJECT* field = NULL;
 
-        char* ident;
-
-        if (object != NULL &&
-            object != (YR_OBJECT*) -1 &&    // not a loop variable identifier
-            object != (YR_OBJECT*) -2 &&    // not a rule identifier
-            object->type == OBJECT_TYPE_STRUCTURE)
+        if ($1.type == EXPRESSION_TYPE_OBJECT &&
+            $1.value.object->type == OBJECT_TYPE_STRUCTURE)
         {
-          field = yr_object_lookup_field(object, $3);
+          field = yr_object_lookup_field($1.value.object, $3);
 
           if (field != NULL)
           {
+            char* ident;
+
             compiler->last_result = yr_arena_write_string(
               compiler->sz_arena,
               $3,
@@ -633,6 +634,10 @@ identifier
                   OP_OBJ_FIELD,
                   PTR_TO_UINT64(ident),
                   NULL);
+
+            $$.type = EXPRESSION_TYPE_OBJECT;
+            $$.value.object = field;
+            $$.identifier = field->identifier;
           }
           else
           {
@@ -644,12 +649,10 @@ identifier
         {
           yr_compiler_set_error_extra_info(
               compiler,
-              object->identifier);
+              $1.identifier);
 
           compiler->last_result = ERROR_NOT_A_STRUCTURE;
         }
-
-        $$ = field;
 
         yr_free($3);
 
@@ -657,7 +660,8 @@ identifier
       }
     | identifier '[' primary_expression ']'
       {
-        if ($1 != NULL && $1->type == OBJECT_TYPE_ARRAY)
+        if ($1.type == EXPRESSION_TYPE_OBJECT &&
+            $1.value.object->type == OBJECT_TYPE_ARRAY)
         {
           if ($3.type != EXPRESSION_TYPE_INTEGER)
           {
@@ -673,9 +677,14 @@ identifier
               OP_INDEX_ARRAY,
               NULL);
 
-          $$ = ((YR_OBJECT_ARRAY*) $1)->prototype_item;
+          YR_OBJECT_ARRAY* array = (YR_OBJECT_ARRAY*) $1.value.object;
+
+          $$.type = EXPRESSION_TYPE_OBJECT;
+          $$.value.object = array->prototype_item;
+          $$.identifier = array->identifier;
         }
-        else if ($1 != NULL && $1->type == OBJECT_TYPE_DICTIONARY)
+        else if ($1.type == EXPRESSION_TYPE_OBJECT &&
+                 $1.value.object->type == OBJECT_TYPE_DICTIONARY)
         {
           if ($3.type != EXPRESSION_TYPE_STRING)
           {
@@ -691,13 +700,17 @@ identifier
               OP_LOOKUP_DICT,
               NULL);
 
-          $$ = ((YR_OBJECT_DICTIONARY*) $1)->prototype_item;
+          YR_OBJECT_DICTIONARY* dict = (YR_OBJECT_DICTIONARY*) $1.value.object;
+
+          $$.type = EXPRESSION_TYPE_OBJECT;
+          $$.value.object = dict->prototype_item;
+          $$.identifier = dict->identifier;
         }
         else
         {
           yr_compiler_set_error_extra_info(
               compiler,
-              $1->identifier);
+              $1.identifier);
 
           compiler->last_result = ERROR_NOT_INDEXABLE;
         }
@@ -709,10 +722,11 @@ identifier
       {
         char* args_fmt;
 
-        if ($1 != NULL && $1->type == OBJECT_TYPE_FUNCTION)
+        if ($1.type == EXPRESSION_TYPE_OBJECT &&
+            $1.value.object->type == OBJECT_TYPE_FUNCTION)
         {
           compiler->last_result = yr_parser_check_types(
-              compiler, (YR_OBJECT_FUNCTION*) $1, $3);
+              compiler, (YR_OBJECT_FUNCTION*) $1.value.object, $3);
 
           if (compiler->last_result == ERROR_SUCCESS)
             compiler->last_result = yr_arena_write_string(
@@ -727,13 +741,17 @@ identifier
                 PTR_TO_UINT64(args_fmt),
                 NULL);
 
-          $$ = ((YR_OBJECT_FUNCTION*) $1)->return_obj;
+          YR_OBJECT_FUNCTION* function = (YR_OBJECT_FUNCTION*) $1.value.object;
+
+          $$.type = EXPRESSION_TYPE_OBJECT;
+          $$.value.object = function->return_obj;
+          $$.identifier = function->identifier;
         }
         else
         {
           yr_compiler_set_error_extra_info(
               compiler,
-              $1->identifier);
+              $1.identifier);
 
           compiler->last_result = ERROR_NOT_A_FUNCTION;
         }
@@ -1574,21 +1592,22 @@ primary_expression
       }
     | identifier
       {
-        if ($1 == (YR_OBJECT*) -1)  // loop identifier
+        if ($1.type == EXPRESSION_TYPE_INTEGER)  // loop identifier
         {
           $$.type = EXPRESSION_TYPE_INTEGER;
           $$.value.integer = UNDEFINED;
         }
-        else if ($1 == (YR_OBJECT*) -2)  // rule identifier
+        else if ($1.type == EXPRESSION_TYPE_BOOLEAN)  // rule identifier
         {
           $$.type = EXPRESSION_TYPE_BOOLEAN;
+          $$.value.integer = UNDEFINED;
         }
-        else if ($1 != NULL)
+        else if ($1.type == EXPRESSION_TYPE_OBJECT)
         {
           compiler->last_result = yr_parser_emit(
               yyscanner, OP_OBJ_VALUE, NULL);
 
-          switch($1->type)
+          switch($1.value.object->type)
           {
             case OBJECT_TYPE_INTEGER:
               $$.type = EXPRESSION_TYPE_INTEGER;
@@ -1603,7 +1622,7 @@ primary_expression
         }
         else
         {
-          yr_compiler_set_error_extra_info(compiler, $1->identifier);
+          yr_compiler_set_error_extra_info(compiler, $1.identifier);
           compiler->last_result = ERROR_WRONG_TYPE;
         }
 
