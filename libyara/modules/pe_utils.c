@@ -1661,7 +1661,7 @@ static char *ord_lookup(
   }
 
   if (name[0] == '\0')
-    return NULL;
+    sprintf(name, "ord%u", ord);
 
   return yr_strdup(name);
 }
