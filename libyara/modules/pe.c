@@ -634,22 +634,19 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
         name = ord_lookup(dll_name, thunks64->u1.Ordinal & 0xFFFF);
       }
 
-      if (name != NULL)
-      {
-        IMPORTED_FUNCTION* imported_func = (IMPORTED_FUNCTION*)
-            yr_calloc(1, sizeof(IMPORTED_FUNCTION));
+      IMPORTED_FUNCTION* imported_func = (IMPORTED_FUNCTION*)
+          yr_calloc(1, sizeof(IMPORTED_FUNCTION));
 
-        imported_func->name = name;
-        imported_func->next = NULL;
+      imported_func->name = name;
+      imported_func->next = NULL;
 
-        if (head == NULL)
-          head = imported_func;
+      if (head == NULL)
+        head = imported_func;
 
-        if (tail != NULL)
-          tail->next = imported_func;
+      if (tail != NULL)
+        tail->next = imported_func;
 
-        tail = imported_func;
-      }
+      tail = imported_func;
 
       thunks64++;
     }
@@ -686,22 +683,19 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
         name = ord_lookup(dll_name, thunks32->u1.Ordinal & 0xFFFF);
       }
 
-      if (name != NULL)
-      {
-        IMPORTED_FUNCTION* imported_func = (IMPORTED_FUNCTION*)
-            yr_calloc(1, sizeof(IMPORTED_FUNCTION));
+      IMPORTED_FUNCTION* imported_func = (IMPORTED_FUNCTION*)
+          yr_calloc(1, sizeof(IMPORTED_FUNCTION));
 
-        imported_func->name = name;
-        imported_func->next = NULL;
+      imported_func->name = name;
+      imported_func->next = NULL;
 
-        if (head == NULL)
-          head = imported_func;
+      if (head == NULL)
+        head = imported_func;
 
-        if (tail != NULL)
-          tail->next = imported_func;
+      if (tail != NULL)
+        tail->next = imported_func;
 
-        tail = imported_func;
-      }
+      tail = imported_func;
 
       thunks32++;
     }
