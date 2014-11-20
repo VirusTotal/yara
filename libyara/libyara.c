@@ -19,10 +19,9 @@ limitations under the License.
 #include <ctype.h>
 
 #include <yara/error.h>
-#include <yara/mem.h>
 #include <yara/re.h>
 #include <yara/modules.h>
-
+#include <yara/mem.h>
 
 #ifdef _WIN32
 #define snprintf _snprintf

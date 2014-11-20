@@ -24,6 +24,7 @@ limitations under the License.
 #ifdef DMALLOC
 
 #define yr_malloc malloc
+#define yr_calloc calloc
 #define yr_realloc realloc
 #define yr_free free
 #define yr_strdup strdup
