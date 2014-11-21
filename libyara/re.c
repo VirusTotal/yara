@@ -87,9 +87,9 @@ typedef struct _RE_THREAD_STORAGE
 
 
 #ifdef _WIN32
-DWORD thread_storage_key;
+DWORD thread_storage_key = INVALID_HANDLE_VALUE;
 #else
-pthread_key_t thread_storage_key;
+pthread_key_t thread_storage_key = 0;
 #endif
 
 //
@@ -121,8 +121,10 @@ int yr_re_finalize(void)
 {
   #ifdef _WIN32
   TlsFree(thread_storage_key);
+  thread_storage_key = INVALID_HANDLE_VALUE;
   #else
   pthread_key_delete(thread_storage_key);
+  thread_storage_key = 0;
   #endif
 
   return ERROR_SUCCESS;
@@ -142,9 +144,15 @@ int yr_re_finalize_thread(void)
   RE_THREAD_STORAGE* storage;
 
   #ifdef _WIN32
-  storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
+  if (thread_storage_key != INVALID_HANDLE_VALUE)
+    storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
+  else
+    return ERROR_SUCCESS;
   #else
-  storage = (RE_THREAD_STORAGE*) pthread_getspecific(thread_storage_key);
+  if (thread_storage_key != 0)
+    storage = (RE_THREAD_STORAGE*) pthread_getspecific(thread_storage_key);
+  else
+    return ERROR_SUCCESS;
   #endif
 
   if (storage != NULL)
