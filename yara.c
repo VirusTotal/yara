@@ -115,8 +115,7 @@ typedef struct _EXTERNAL
 typedef struct _MODULE_DATA
 {
   const char* module_name;
-  void* module_data;
-  size_t module_data_size;
+  YR_MAPPED_FILE mapped_file;
   struct _MODULE_DATA* next;
 
 } MODULE_DATA;
@@ -593,8 +592,8 @@ int callback(int message, void* message_data, void* user_data)
       {
         if (strcmp(module_data->module_name, mi->module_name) == 0)
         {
-          mi->module_data = module_data->module_data;
-          mi->module_data_size = module_data->module_data_size;
+          mi->module_data = module_data->mapped_file.data;
+          mi->module_data_size = module_data->mapped_file.size;
           break;
         }
 
@@ -690,7 +689,12 @@ void cleanup()
   while(module_data != NULL)
   {
     next_module_data = module_data->next;
-    free(module_data);
+
+    yr_filemap_unmap(&module_data->mapped_file);
+
+    free((void*) module_data->module_name);
+    free((void*) module_data);
+
     module_data = next_module_data;
   }
 
@@ -722,8 +726,6 @@ int process_cmd_line(
   IDENTIFIER* identifier;
   EXTERNAL* external;
   MODULE_DATA* module_data;
-
-  YR_MAPPED_FILE mapped_file;
 
   opterr = 0;
 
@@ -848,8 +850,14 @@ int process_cmd_line(
 
         module_data = (MODULE_DATA*) malloc(sizeof(MODULE_DATA));
 
-        if (module_data == NULL)
+        if (module_data != NULL)
+          module_data->module_name = strdup(optarg);
+
+        if (module_data == NULL || module_data->module_name == NULL)
         {
+          if (module_data != NULL)
+            free(module_data);
+
           fprintf(stderr, "Not enough memory.\n");
           return 0;
         }
@@ -857,16 +865,13 @@ int process_cmd_line(
         *equal_sign = '\0';
         value = equal_sign + 1;
 
-        if (yr_filemap_map(value, &mapped_file) != ERROR_SUCCESS)
+        if (yr_filemap_map(value, &module_data->mapped_file) != ERROR_SUCCESS)
         {
           free(module_data);
           fprintf(stderr, "Could not open file \"%s\".\n", value);
           return 0;
         }
 
-        module_data->module_name = strdup(optarg);
-        module_data->module_data = mapped_file.data;
-        module_data->module_data_size = mapped_file.size;
         module_data->next = modules_data_list;
         modules_data_list = module_data;
 
