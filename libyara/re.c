@@ -87,7 +87,7 @@ typedef struct _RE_THREAD_STORAGE
 
 
 #ifdef _WIN32
-DWORD thread_storage_key = INVALID_HANDLE_VALUE;
+DWORD thread_storage_key = 0;
 #else
 pthread_key_t thread_storage_key = 0;
 #endif
@@ -121,12 +121,11 @@ int yr_re_finalize(void)
 {
   #ifdef _WIN32
   TlsFree(thread_storage_key);
-  thread_storage_key = INVALID_HANDLE_VALUE;
   #else
   pthread_key_delete(thread_storage_key);
-  thread_storage_key = 0;
   #endif
 
+  thread_storage_key = 0;
   return ERROR_SUCCESS;
 }
 
@@ -143,17 +142,14 @@ int yr_re_finalize_thread(void)
   RE_FIBER* next_fiber;
   RE_THREAD_STORAGE* storage;
 
-  #ifdef _WIN32
-  if (thread_storage_key != INVALID_HANDLE_VALUE)
-    storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
-  else
-    return ERROR_SUCCESS;
-  #else
   if (thread_storage_key != 0)
+    #ifdef _WIN32
+    storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
+    #else
     storage = (RE_THREAD_STORAGE*) pthread_getspecific(thread_storage_key);
+    #endif
   else
     return ERROR_SUCCESS;
-  #endif
 
   if (storage != NULL)
   {
