@@ -25,7 +25,6 @@ limitations under the License.
 #else
 
 #include <windows.h>
-#include "getopt.h"
 
 #define PRIx64 "llx"
 
@@ -35,34 +34,13 @@ limitations under the License.
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
+#include <argparse/argparse.h>
 #include <yara.h>
 
 #include "threading.h"
 #include "config.h"
 
-
-#define USAGE \
-"usage:  yara [OPTION]... RULES_FILE FILE | PID\n"\
-"options:\n"\
-"  -t <tag>                 only print rules tagged as <tag>.\n"\
-"  -i <identifier>          only print rules named <identifier>.\n"\
-"  -n                       only print not satisfied rules (negate).\n"\
-"  -g                       print tags.\n"\
-"  -m                       print metadata.\n"\
-"  -s                       print matching strings.\n"\
-"  -p <number>              use the specified <number> of threads to scan a directory.\n"\
-"  -l <number>              abort scanning after matching a number rules.\n"\
-"  -a <seconds>             abort scanning after a number of seconds has elapsed.\n"\
-"  -d <identifier>=<value>  define external variable.\n"\
-"  -x <module>=<file>       pass file's content as extra data to module.\n"\
-"  -r                       recursively search directories.\n"\
-"  -f                       fast matching mode.\n"\
-"  -w                       disable warnings.\n"\
-"  -v                       show version information.\n"
-
-#define EXTERNAL_TYPE_INTEGER   1
-#define EXTERNAL_TYPE_BOOLEAN   2
-#define EXTERNAL_TYPE_STRING    3
 
 #define ERROR_COULD_NOT_CREATE_THREAD  100
 
@@ -82,36 +60,6 @@ limitations under the License.
 #define MAX_QUEUED_FILES 64
 
 
-typedef struct _TAG
-{
-  char* identifier;
-  struct _TAG* next;
-
-} TAG;
-
-
-typedef struct _IDENTIFIER
-{
-  char* name;
-  struct _IDENTIFIER* next;
-
-} IDENTIFIER;
-
-
-typedef struct _EXTERNAL
-{
-  char type;
-  char*  name;
-  union {
-    char* string;
-    int integer;
-    int boolean;
-  };
-  struct _EXTERNAL* next;
-
-} EXTERNAL;
-
-
 typedef struct _MODULE_DATA
 {
   const char* module_name;
@@ -128,13 +76,23 @@ typedef struct _QUEUED_FILE {
 } QUEUED_FILE;
 
 
+#define MAX_ARGS_TAG            32
+#define MAX_ARGS_IDENTIFIER     32
+#define MAX_ARGS_EXT_VAR        32
+#define MAX_ARGS_MODULE_DATA    32
+
+char* tags[MAX_ARGS_TAG + 1];
+char* identifiers[MAX_ARGS_IDENTIFIER + 1];
+char* ext_vars[MAX_ARGS_EXT_VAR + 1];
+char* modules_data[MAX_ARGS_EXT_VAR + 1];
+
 int recursive_search = FALSE;
 int show_tags = FALSE;
 int show_specified_tags = FALSE;
 int show_specified_rules = FALSE;
 int show_strings = FALSE;
-int show_warnings = TRUE;
 int show_meta = FALSE;
+int ignore_warnings = FALSE;
 int fast_scan = FALSE;
 int negate = FALSE;
 int count = 0;
@@ -143,10 +101,59 @@ int timeout = 0;
 int threads = 8;
 
 
-TAG* specified_tags_list = NULL;
-IDENTIFIER* specified_rules_list = NULL;
-EXTERNAL* externals_list = NULL;
-MODULE_DATA* modules_data_list = NULL;
+static const char *const usage[] = {
+   "yara [OPTION]... RULES_FILE FILE | DIRECTORY | PID",
+   NULL,
+};
+
+
+struct argparse_option options[] =
+{
+  OPT_STRING_MULTI('t', "tag", &tags, MAX_ARGS_TAG,
+      "only print rules tagged as <tag>.", "<tag>"),
+
+  OPT_STRING_MULTI('i', "identifier", &identifiers, MAX_ARGS_IDENTIFIER,
+      "only print rules named <identifier>.", "<identifier>"),
+
+  OPT_BOOLEAN('n', "negate", &negate,
+      "only print not satisfied rules (negate)", NULL),
+
+  OPT_BOOLEAN('g', "print-tags", &show_tags,
+      "print tags"),
+
+  OPT_BOOLEAN('m', "print-meta", &show_meta,
+      "print metadata"),
+
+  OPT_BOOLEAN('s', "print-strings", &show_strings,
+      "print matching strings"),
+
+  OPT_INTEGER('p', "threads", &threads,
+      "use the specified number of threads to scan a directory", "<number>"),
+
+  OPT_INTEGER('l', "max-rules", &limit,
+      "abort scanning after matching a number rules", "<number>"),
+
+  OPT_STRING_MULTI('d', NULL, &ext_vars, MAX_ARGS_EXT_VAR,
+      "define external variable", "<identifier>=<value>"),
+
+  OPT_STRING_MULTI('x', NULL, &modules_data, MAX_ARGS_MODULE_DATA,
+      "pass file's content as extra data to module", "<module>=<file>"),
+
+  OPT_INTEGER('a', "timeout", &timeout,
+      "abort scanning after matching a number of  rules", "<number>"),
+
+  OPT_BOOLEAN('r', "recursive", &recursive_search,
+      "recursively search directories"),
+
+  OPT_BOOLEAN('f', "fast-scan", &fast_scan,
+      "fast matching mode"),
+
+  OPT_BOOLEAN('w', "no-warnings", &ignore_warnings,
+      "disable warnings"),
+
+  OPT_HELP(),
+  OPT_END()
+};
 
 
 // file_queue is size-limited queue stored as a circular array, files are
@@ -165,6 +172,8 @@ SEMAPHORE unused_slots;
 
 MUTEX queue_mutex;
 MUTEX output_mutex;
+
+MODULE_DATA* modules_data_list = NULL;
 
 
 int file_queue_init()
@@ -263,20 +272,19 @@ void scan_dir(
     YR_RULES* rules,
     YR_CALLBACK_FUNC callback)
 {
-  WIN32_FIND_DATA FindFileData;
-  HANDLE hFind;
-
-  char full_path[MAX_PATH];
   static char path_and_mask[MAX_PATH];
 
   snprintf(path_and_mask, sizeof(path_and_mask), "%s\\*", dir);
 
-  hFind = FindFirstFile(path_and_mask, &FindFileData);
+  WIN32_FIND_DATA FindFileData;
+  HANDLE hFind = FindFirstFile(path_and_mask, &FindFileData);
 
   if (hFind != INVALID_HANDLE_VALUE)
   {
     do
     {
+      char full_path[MAX_PATH];
+
       snprintf(full_path, sizeof(full_path), "%s\\%s",
                dir, FindFileData.cFileName);
 
@@ -314,19 +322,17 @@ void scan_dir(
     YR_RULES* rules,
     YR_CALLBACK_FUNC callback)
 {
-  DIR *dp;
-  struct dirent *de;
-  struct stat st;
-  char full_path[MAX_PATH];
-
-  dp = opendir(dir);
+  DIR* dp = opendir(dir);
 
   if (dp)
   {
-    de = readdir(dp);
+    struct dirent* de = readdir(dp);
 
     while (de)
     {
+      char full_path[MAX_PATH];
+      struct stat st;
+
       snprintf(full_path, sizeof(full_path), "%s/%s", dir, de->d_name);
 
       int err = lstat(full_path, &st);
@@ -359,12 +365,9 @@ void print_string(
     uint8_t* data,
     int length)
 {
-  int i;
-  char* str;
+  char* str = (char*) (data);
 
-  str = (char*) (data);
-
-  for (i = 0; i < length; i++)
+  for (int i = 0; i < length; i++)
   {
     if (str[i] >= 32 && str[i] <= 126)
       printf("%c", str[i]);
@@ -375,13 +378,12 @@ void print_string(
   printf("\n");
 }
 
+
 void print_hex_string(
     uint8_t* data,
     int length)
 {
-  int i;
-
-  for (i = 0; i < min(32, length); i++)
+  for (int i = 0; i < min(32, length); i++)
     printf("%02X ", (uint8_t) data[i]);
 
   if (length > 32)
@@ -434,7 +436,7 @@ void print_compiler_error(
   }
   else
   {
-    if (show_warnings)
+    if (!ignore_warnings)
       fprintf(stderr, "%s(%d): warning: %s\n", file_name, line_number, message);
   }
 }
@@ -442,55 +444,47 @@ void print_compiler_error(
 
 int handle_message(int message, YR_RULE* rule, void* data)
 {
-  TAG* tag;
-  IDENTIFIER* identifier;
-  YR_STRING* string;
-  YR_MATCH* match;
-  YR_META* meta;
-
-  const char* tag_name;
-
-  int is_matching;
+  const char* tag;
   int show = TRUE;
 
-  if (show_specified_tags)
+  if (tags[0] != NULL)
   {
-    show = FALSE;
-    tag = specified_tags_list;
+    // The user specified one or more -t <tag> arguments, let's show this rule
+    // only if it's tagged with some of the specified tags.
 
-    while (tag != NULL)
+    show = FALSE;
+
+    for (int i = 0; !show && tags[i] != NULL; i++)
     {
-      yr_rule_tags_foreach(rule, tag_name)
+      yr_rule_tags_foreach(rule, tag)
       {
-        if (strcmp(tag_name, tag->identifier) == 0)
+        if (strcmp(tag, tags[i]) == 0)
         {
           show = TRUE;
           break;
         }
       }
-
-      tag = tag->next;
     }
   }
 
-  if (show_specified_rules)
+  if (identifiers[0] != NULL)
   {
-    show = FALSE;
-    identifier = specified_rules_list;
+    // The user specified one or more -i <identifier> arguments, let's show
+    // this rule only if it's identifier is among of the provided ones.
 
-    while (identifier != NULL)
+    show = FALSE;
+
+    for (int i = 0; !show && identifiers[i] != NULL; i++)
     {
-      if (strcmp(identifier->name, rule->identifier) == 0)
+      if (strcmp(identifiers[i], rule->identifier) == 0)
       {
         show = TRUE;
         break;
       }
-
-      identifier = identifier->next;
     }
   }
 
-  is_matching = (message == CALLBACK_MSG_RULE_MATCHING);
+  int is_matching = (message == CALLBACK_MSG_RULE_MATCHING);
 
   show = show && ((!negate && is_matching) || (negate && !is_matching));
 
@@ -503,13 +497,13 @@ int handle_message(int message, YR_RULE* rule, void* data)
     {
       printf("[");
 
-      yr_rule_tags_foreach(rule, tag_name)
+      yr_rule_tags_foreach(rule, tag)
       {
         // print a comma except for the first tag
-        if (tag_name != rule->tags)
+        if (tag != rule->tags)
           printf(",");
 
-        printf("%s", tag_name);
+        printf("%s", tag);
       }
 
       printf("] ");
@@ -519,6 +513,8 @@ int handle_message(int message, YR_RULE* rule, void* data)
 
     if (show_meta)
     {
+      YR_META* meta;
+
       printf("[");
 
       yr_rule_metas_foreach(rule, meta)
@@ -543,8 +539,12 @@ int handle_message(int message, YR_RULE* rule, void* data)
 
     if (show_strings)
     {
+      YR_STRING* string;
+
       yr_rule_strings_foreach(rule, string)
       {
+        YR_MATCH* match;
+
         yr_string_matches_foreach(string, match)
         {
           printf("0x%" PRIx64 ":%s: ",
@@ -613,14 +613,11 @@ void* scanning_thread(void* param)
 #endif
 {
   YR_RULES* rules = (YR_RULES*) param;
-  char* file_path;
-  int result;
-
-  file_path = file_queue_get();
+  char* file_path = file_queue_get();
 
   while (file_path != NULL)
   {
-    result = yr_rules_scan_file(
+    int result = yr_rules_scan_file(
         rules,
         file_path,
         fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
@@ -631,7 +628,7 @@ void* scanning_thread(void* param)
     if (result != ERROR_SUCCESS)
     {
       mutex_lock(&output_mutex);
-      fprintf(stderr, "Error scanning %s: ", file_path);
+      fprintf(stderr, "error scanning %s: ", file_path);
       print_scanner_error(result);
       mutex_unlock(&output_mutex);
     }
@@ -643,61 +640,6 @@ void* scanning_thread(void* param)
   yr_finalize_thread();
 
   return 0;
-}
-
-
-void cleanup()
-{
-  IDENTIFIER* identifier;
-  IDENTIFIER* next_identifier;
-  TAG* tag;
-  TAG* next_tag;
-  EXTERNAL* external;
-  EXTERNAL* next_external;
-  MODULE_DATA* module_data;
-  MODULE_DATA* next_module_data;
-
-  tag = specified_tags_list;
-
-  while(tag != NULL)
-  {
-    next_tag = tag->next;
-    free(tag);
-    tag = next_tag;
-  }
-
-  external = externals_list;
-
-  while(external != NULL)
-  {
-    next_external = external->next;
-    free(external);
-    external = next_external;
-  }
-
-  identifier = specified_rules_list;
-
-  while(identifier != NULL)
-  {
-    next_identifier = identifier->next;
-    free(identifier);
-    identifier = next_identifier;
-  }
-
-  module_data = modules_data_list;
-
-  while(module_data != NULL)
-  {
-    next_module_data = module_data->next;
-
-    yr_filemap_unmap(&module_data->mapped_file);
-
-    free((void*) module_data->module_name);
-    free((void*) module_data);
-
-    module_data = next_module_data;
-  }
-
 }
 
 
@@ -714,399 +656,271 @@ int is_numeric(
 }
 
 
-int process_cmd_line(
-    int argc,
-    char const* argv[])
+int define_external_variables(
+    YR_RULES* rules,
+    YR_COMPILER* compiler)
 {
-  char* equal_sign;
-  char* value;
-  int c;
-
-  TAG* tag;
-  IDENTIFIER* identifier;
-  EXTERNAL* external;
-  MODULE_DATA* module_data;
-
-  opterr = 0;
-
-  while ((c = getopt (argc, (char**) argv, "wrnsvgma:l:t:i:d:x:p:f")) != -1)
+  for (int i = 0; ext_vars[i] != NULL; i++)
   {
-    switch (c)
+    char* equal_sign = strchr(ext_vars[i], '=');
+
+    if (!equal_sign)
     {
-      case 'v':
-        printf("%s\n", PACKAGE_STRING);
-        return 0;
+      fprintf(stderr, "error: wrong syntax for `-d` option.\n");
+      return FALSE;
+    }
 
-      case 'r':
-        recursive_search = TRUE;
-        break;
+    // Replace the equal sign with null character to split the external
+    // variable definition (i.e: myvar=somevalue) in two strings: identifier
+    // and value.
 
-      case 'g':
-        show_tags = TRUE;
-        break;
+    *equal_sign = '\0';
 
-      case 'm':
-        show_meta = TRUE;
-        break;
+    char* identifier = ext_vars[i];
+    char* value = equal_sign + 1;
 
-      case 's':
-        show_strings = TRUE;
-        break;
+    if (is_numeric(value))
+    {
+      if (rules != NULL)
+        yr_rules_define_integer_variable(
+            rules,
+            identifier,
+            atoi(value));
 
-      case 'w':
-        show_warnings = FALSE;
-        break;
+      if (compiler != NULL)
+        yr_compiler_define_integer_variable(
+            compiler,
+            identifier,
+            atoi(value));
+    }
+    else if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0)
+    {
+      if (rules != NULL)
+        yr_rules_define_boolean_variable(
+            rules,
+            identifier,
+            strcmp(value, "true") == 0);
 
-      case 'f':
-        fast_scan = TRUE;
-        break;
+      if (compiler != NULL)
+        yr_compiler_define_boolean_variable(
+            compiler,
+            identifier,
+            strcmp(value, "true") == 0);
+    }
+    else
+    {
+      if (rules != NULL)
+        yr_rules_define_string_variable(
+            rules,
+            identifier,
+            value);
 
-      case 'n':
-        negate = TRUE;
-        break;
-
-      case 't':
-        show_specified_tags = TRUE;
-        tag = (TAG*) malloc(sizeof(TAG));
-
-        if (tag != NULL)
-        {
-          tag->identifier = optarg;
-          tag->next = specified_tags_list;
-          specified_tags_list = tag;
-        }
-        else
-        {
-          fprintf(stderr, "Not enough memory.\n");
-          return 0;
-        }
-        break;
-
-      case 'i':
-        show_specified_rules = TRUE;
-        identifier = (IDENTIFIER*) malloc(sizeof(IDENTIFIER));
-
-        if (identifier != NULL)
-        {
-          identifier->name = optarg;
-          identifier->next = specified_rules_list;
-          specified_rules_list = identifier;
-        }
-        else
-        {
-          fprintf(stderr, "Not enough memory.\n");
-          return 0;
-        }
-        break;
-
-      case 'd':
-        equal_sign = strchr(optarg, '=');
-        external = (EXTERNAL*) malloc(sizeof(EXTERNAL));
-
-        if (external != NULL)
-        {
-          external->name = optarg;
-          external->next = externals_list;
-          externals_list = external;
-        }
-        else
-        {
-          fprintf(stderr, "Not enough memory.\n");
-          return 0;
-        }
-
-        if (equal_sign != NULL)
-        {
-          *equal_sign = '\0';
-          value = equal_sign + 1;
-
-          if (is_numeric(value))
-          {
-            external->type = EXTERNAL_TYPE_INTEGER;
-            external->integer = atoi(value);
-          }
-          else if (strcmp(value, "true") == 0  || strcmp(value, "false") == 0)
-          {
-            external->type = EXTERNAL_TYPE_BOOLEAN;
-            external->boolean = strcmp(value, "true") == 0;
-          }
-          else
-          {
-            external->type = EXTERNAL_TYPE_STRING;
-            external->string = value;
-          }
-        }
-        break;
-
-      case 'x':
-
-        equal_sign = strchr(optarg, '=');
-
-        if (equal_sign == NULL)
-        {
-          fprintf(stderr, "Wrong syntax for -x modifier.\n");
-          return 0;
-        }
-
-        module_data = (MODULE_DATA*) malloc(sizeof(MODULE_DATA));
-
-        if (module_data != NULL)
-          module_data->module_name = strdup(optarg);
-
-        if (module_data == NULL || module_data->module_name == NULL)
-        {
-          if (module_data != NULL)
-            free(module_data);
-
-          fprintf(stderr, "Not enough memory.\n");
-          return 0;
-        }
-
-        *equal_sign = '\0';
-        value = equal_sign + 1;
-
-        if (yr_filemap_map(value, &module_data->mapped_file) != ERROR_SUCCESS)
-        {
-          free(module_data);
-          fprintf(stderr, "Could not open file \"%s\".\n", value);
-          return 0;
-        }
-
-        module_data->next = modules_data_list;
-        modules_data_list = module_data;
-
-        break;
-
-      case 'l':
-        limit = atoi(optarg);
-        break;
-
-      case 'a':
-        timeout = atoi(optarg);
-        break;
-
-      case 'p':
-        threads = atoi(optarg);
-        break;
-
-      case '?':
-        if (optopt == 't')
-        {
-          fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-        }
-        else if (isprint(optopt))
-        {
-          fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-        }
-        else
-        {
-          fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
-        }
-        return 0;
-
-      default:
-        abort();
+      if (compiler != NULL)
+        yr_compiler_define_string_variable(
+            compiler,
+            identifier,
+            value);
     }
   }
 
-  return 1;
-
+  return TRUE;
 }
 
 
-void show_help()
+int load_modules_data()
 {
-  printf(USAGE);
-  printf("\nReport bugs to: <%s>\n", PACKAGE_BUGREPORT);
+  for (int i = 0; modules_data[i] != NULL; i++)
+  {
+    char* equal_sign = strchr(modules_data[i], '=');
+
+    if (!equal_sign)
+    {
+      fprintf(stderr, "error: wrong syntax for `-x` option.\n");
+      return FALSE;
+    }
+
+    *equal_sign = '\0';
+
+    MODULE_DATA* module_data = (MODULE_DATA*) malloc(sizeof(MODULE_DATA));
+
+    if (module_data != NULL)
+    {
+      module_data->module_name = modules_data[i];
+
+      int result = yr_filemap_map(equal_sign + 1, &module_data->mapped_file);
+
+      if (result != ERROR_SUCCESS)
+      {
+        free(module_data);
+        fprintf(stderr, "error: could not open file \"%s\".\n", equal_sign + 1);
+        return FALSE;
+      }
+
+      module_data->next = modules_data_list;
+      modules_data_list = module_data;
+    }
+  }
+
+  return TRUE;
 }
 
+
+void unload_modules_data()
+{
+  MODULE_DATA* module_data = modules_data_list;
+
+  while(module_data != NULL)
+  {
+    MODULE_DATA* next_module_data = module_data->next;
+
+    yr_filemap_unmap(&module_data->mapped_file);
+    free(module_data);
+
+    module_data = next_module_data;
+  }
+
+  modules_data_list = NULL;
+}
+
+
+#define exit_with_code(code) { result = code; goto _exit; }
 
 int main(
     int argc,
-    char const* argv[])
+    const char** argv)
 {
-  YR_COMPILER* compiler;
-  YR_RULES* rules;
-  FILE* rule_file;
-  EXTERNAL* external;
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
 
-  int pid;
-  int i;
-  int errors;
+  struct argparse argparse;
   int result;
 
-  THREAD thread[MAX_THREADS];
+  argparse_init(&argparse, options, usage, 0);
 
-  if (!process_cmd_line(argc, argv))
-    return EXIT_FAILURE;
+  argc = argparse_parse(&argparse, argc, argv);
 
-  if (argc == 1 || optind == argc)
+  if (argc != 2)
   {
-    show_help();
-    cleanup();
+    // After parsing the command-line options we expect two additional
+    // arguments, the rules file and the target file, directory or pid to
+    // be scanned.
+
+    fprintf(stderr, "error: wrong number of arguments\n");
+    argparse_usage(&argparse);
     return EXIT_FAILURE;
   }
+
+  if (!load_modules_data())
+    exit_with_code(EXIT_FAILURE);
 
   result = yr_initialize();
 
   if (result != ERROR_SUCCESS)
   {
-    fprintf(stderr, "initialization error: %d\n", result);
-    cleanup();
-    return EXIT_FAILURE;
+    fprintf(stderr, "error: initialization error (%d)\n", result);
+    exit_with_code(EXIT_FAILURE);
   }
 
-  result = yr_rules_load(argv[optind], &rules);
+  // Try to load the rules file as a binary file containing
+  // compiled rules first
+
+  result = yr_rules_load(argv[0], &rules);
+
+  // Accepted result are ERROR_SUCCESS or ERROR_INVALID_FILE
+  // if we are passing the rules in source form, if result is
+  // different from those exit with error.
 
   if (result != ERROR_SUCCESS &&
       result != ERROR_INVALID_FILE)
   {
     print_scanner_error(result);
-    yr_finalize();
-    cleanup();
-    return EXIT_FAILURE;
+    exit_with_code(EXIT_FAILURE);
   }
 
   if (result == ERROR_SUCCESS)
   {
-    external = externals_list;
-
-    while (external != NULL)
-    {
-      switch (external->type)
-      {
-        case EXTERNAL_TYPE_INTEGER:
-          yr_rules_define_integer_variable(
-              rules,
-              external->name,
-              external->integer);
-          break;
-
-        case EXTERNAL_TYPE_BOOLEAN:
-          yr_rules_define_boolean_variable(
-              rules,
-              external->name,
-              external->boolean);
-          break;
-
-        case EXTERNAL_TYPE_STRING:
-          yr_rules_define_string_variable(
-              rules,
-              external->name,
-              external->string);
-          break;
-      }
-      external = external->next;
-    }
+    if (!define_external_variables(rules, NULL))
+      exit_with_code(EXIT_FAILURE);
   }
   else
   {
+    // Rules file didn't contain compiled rules, let's handle it
+    // as a text file containing rules in source form.
+
     if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
-    {
-      yr_finalize();
-      cleanup();
-      return EXIT_FAILURE;
-    }
+      exit_with_code(EXIT_FAILURE);
 
-    external = externals_list;
-
-    while (external != NULL)
-    {
-      switch (external->type)
-      {
-        case EXTERNAL_TYPE_INTEGER:
-          yr_compiler_define_integer_variable(
-              compiler,
-              external->name,
-              external->integer);
-          break;
-
-        case EXTERNAL_TYPE_BOOLEAN:
-          yr_compiler_define_boolean_variable(
-              compiler,
-              external->name,
-              external->boolean);
-          break;
-
-        case EXTERNAL_TYPE_STRING:
-          yr_compiler_define_string_variable(
-              compiler,
-              external->name,
-              external->string);
-          break;
-      }
-      external = external->next;
-    }
+    if (!define_external_variables(NULL, compiler))
+      exit_with_code(EXIT_FAILURE);
 
     yr_compiler_set_callback(compiler, print_compiler_error);
 
-    rule_file = fopen(argv[optind], "r");
+    FILE* rule_file = fopen(argv[0], "r");
 
     if (rule_file == NULL)
     {
-      fprintf(stderr, "could not open file: %s\n", argv[optind]);
-      yr_compiler_destroy(compiler);
-      yr_finalize();
-      cleanup();
-      return EXIT_FAILURE;
+      fprintf(stderr, "error: could not open file: %s\n", argv[0]);
+      exit_with_code(EXIT_FAILURE);
     }
 
-    errors = yr_compiler_add_file(compiler, rule_file, NULL, argv[optind]);
+    int errors = yr_compiler_add_file(compiler, rule_file, NULL, argv[0]);
 
     fclose(rule_file);
 
     if (errors > 0)
-    {
-      yr_compiler_destroy(compiler);
-      yr_finalize();
-      cleanup();
-      return EXIT_FAILURE;
-    }
+      exit_with_code(EXIT_FAILURE);
 
     result = yr_compiler_get_rules(compiler, &rules);
 
     yr_compiler_destroy(compiler);
 
+    compiler = NULL;
+
     if (result != ERROR_SUCCESS)
-    {
-      yr_finalize();
-      cleanup();
-      return EXIT_FAILURE;
-    }
+      exit_with_code(EXIT_FAILURE);
   }
 
   mutex_init(&output_mutex);
 
-  if (is_numeric(argv[argc - 1]))
+  if (is_numeric(argv[1]))
   {
-    pid = atoi(argv[argc - 1]);
+    int pid = atoi(argv[1]);
+
     result = yr_rules_scan_proc(
         rules,
         pid,
         fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
         callback,
-        (void*) argv[argc - 1],
+        (void*) argv[1],
         timeout);
 
     if (result != ERROR_SUCCESS)
+    {
       print_scanner_error(result);
+      exit_with_code(EXIT_FAILURE);
+    }
   }
-  else if (is_directory(argv[argc - 1]))
+  else if (is_directory(argv[1]))
   {
     if (file_queue_init() != 0)
+    {
       print_scanner_error(ERROR_INTERNAL_FATAL_ERROR);
+      exit_with_code(EXIT_FAILURE);
+    }
 
-    for (i = 0; i < threads; i++)
+    THREAD thread[MAX_THREADS];
+
+    for (int i = 0; i < threads; i++)
     {
       if (create_thread(&thread[i], scanning_thread, (void*) rules) != 0)
       {
         print_scanner_error(ERROR_COULD_NOT_CREATE_THREAD);
-        return EXIT_FAILURE;
+        exit_with_code(EXIT_FAILURE);
       }
     }
 
     scan_dir(
-        argv[argc - 1],
+        argv[1],
         recursive_search,
         rules,
         callback);
@@ -1114,7 +928,7 @@ int main(
     file_queue_finish();
 
     // Wait for scan threads to finish
-    for (i = 0; i < threads; i++)
+    for (int i = 0; i < threads; i++)
       thread_join(&thread[i]);
 
     file_queue_destroy();
@@ -1123,16 +937,17 @@ int main(
   {
     result = yr_rules_scan_file(
         rules,
-        argv[argc - 1],
+        argv[1],
         fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
         callback,
-        (void*) argv[argc - 1],
+        (void*) argv[1],
         timeout);
 
     if (result != ERROR_SUCCESS)
     {
-      fprintf(stderr, "Error scanning %s: ", argv[argc - 1]);
+      fprintf(stderr, "error scanning %s: ", argv[1]);
       print_scanner_error(result);
+      exit_with_code(EXIT_FAILURE);
     }
   }
 
@@ -1140,11 +955,19 @@ int main(
   yr_rules_print_profiling_info(rules);
   #endif
 
-  yr_rules_destroy(rules);
+  result = EXIT_SUCCESS;
+
+_exit:
+
+  unload_modules_data();
+
+  if (compiler != NULL)
+    yr_compiler_destroy(compiler);
+
+  if (rules != NULL)
+    yr_rules_destroy(rules);
+
   yr_finalize();
 
-  mutex_destroy(&output_mutex);
-  cleanup();
-
-  return EXIT_SUCCESS;
+  return result;
 }

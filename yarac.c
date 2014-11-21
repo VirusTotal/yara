@@ -24,7 +24,6 @@ limitations under the License.
 #else
 
 #include <windows.h>
-#include "getopt.h"
 
 #endif
 
@@ -32,6 +31,7 @@ limitations under the License.
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <argparse/argparse.h>
 #include <yara.h>
 
 #include "config.h"
@@ -40,19 +40,30 @@ limitations under the License.
 #define MAX_PATH 255
 #endif
 
+#define MAX_ARGS_EXT_VAR   32
 
-int show_warnings = TRUE;
+
+char* ext_vars[MAX_ARGS_EXT_VAR + 1];
+int ignore_warnings = FALSE;
 
 
-void show_help()
+static const char *const usage[] = {
+   "yarac [option]... [namespace:]rules_file... output_file",
+   NULL,
+};
+
+
+struct argparse_option options[] =
 {
-  printf("usage:  yarac [OPTION]... [RULE_FILE]... OUTPUT_FILE\n");
-  printf("options:\n");
-  printf("  -d <identifier>=<value>   define external variable.\n");
-  printf("  -w                        disable warnings.\n");
-  printf("  -v                        show version information.\n");
-  printf("\nReport bugs to: <%s>\n", PACKAGE_BUGREPORT);
-}
+  OPT_STRING_MULTI('d', NULL, &ext_vars, MAX_ARGS_EXT_VAR,
+      "define external variable"),
+
+  OPT_BOOLEAN('w', "no-warnings", &ignore_warnings,
+      "disable warnings", NULL),
+
+  OPT_HELP(),
+  OPT_END()
+};
 
 
 int is_numeric(
@@ -62,81 +73,6 @@ int is_numeric(
   {
     if(!isdigit(*str++))
       return 0;
-  }
-
-  return 1;
-}
-
-
-int process_cmd_line(
-    YR_COMPILER* compiler,
-    int argc,
-    char const* argv[])
-{
-  char* equal_sign;
-  char* value;
-  char c;
-  opterr = 0;
-
-  while ((c = getopt (argc, (char**) argv, "wvd:")) != -1)
-  {
-    switch (c)
-    {
-      case 'v':
-        printf("%s\n", PACKAGE_STRING);
-        return 0;
-
-      case 'w':
-        show_warnings = FALSE;
-        break;
-
-      case 'd':
-        equal_sign = strchr(optarg, '=');
-
-        if (equal_sign != NULL)
-        {
-          *equal_sign = '\0';
-          value = equal_sign + 1;
-
-          if (is_numeric(value))
-          {
-            yr_compiler_define_integer_variable(
-                compiler,
-                optarg,
-                atol(value));
-          }
-          else if (strcmp(value, "true") == 0  || strcmp(value, "false") == 0)
-          {
-            yr_compiler_define_boolean_variable(
-                compiler,
-                optarg,
-                strcmp(value, "true") == 0);
-          }
-          else
-          {
-            yr_compiler_define_string_variable(
-                compiler,
-                optarg,
-                value);
-          }
-        }
-        break;
-
-      case '?':
-
-        if (isprint(optopt))
-        {
-          fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-        }
-        else
-        {
-          fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
-        }
-        return 0;
-
-      default:
-        abort();
-    }
   }
 
   return 1;
@@ -155,70 +91,130 @@ void report_error(
   }
   else
   {
-    if (show_warnings)
+    if (!ignore_warnings)
       fprintf(stderr, "%s(%d): warning: %s\n", file_name, line_number, message);
   }
 }
 
 
+int define_external_variables(
+    YR_COMPILER* compiler)
+{
+  for (int i = 0; ext_vars[i] != NULL; i++)
+  {
+    char* equal_sign = strchr(ext_vars[i], '=');
+
+    if (!equal_sign)
+    {
+      fprintf(stderr, "error: wrong syntax for `-d` option.\n");
+      return FALSE;
+    }
+
+    // Replace the equal sign with null character to split the external
+    // variable definition (i.e: myvar=somevalue) in two strings: identifier
+    // and value.
+
+    *equal_sign = '\0';
+
+    char* identifier = ext_vars[i];
+    char* value = equal_sign + 1;
+
+    if (is_numeric(value))
+    {
+      yr_compiler_define_integer_variable(
+          compiler,
+          identifier,
+          atoi(value));
+    }
+    else if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0)
+    {
+      yr_compiler_define_boolean_variable(
+          compiler,
+          identifier,
+          strcmp(value, "true") == 0);
+    }
+    else
+    {
+      yr_compiler_define_string_variable(
+          compiler,
+          identifier,
+          value);
+    }
+  }
+
+  return TRUE;
+}
+
+
+#define exit_with_code(code) { result = code; goto _exit; }
+
+
 int main(
     int argc,
-    char const* argv[])
+    const char** argv)
 {
-  int i, result, errors;
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
 
-  YR_COMPILER* compiler;
-  YR_RULES* rules;
-  FILE* rule_file;
+  struct argparse argparse;
+  int result;
+
+  argparse_init(&argparse, options, usage, 0);
+
+  argc = argparse_parse(&argparse, argc, argv);
+
+  if (argc < 2)
+  {
+    fprintf(stderr, "error: wrong number of arguments\n");
+    exit_with_code(EXIT_FAILURE);
+  }
 
   result = yr_initialize();
 
   if (result != ERROR_SUCCESS)
-    return EXIT_FAILURE;
+    exit_with_code(EXIT_FAILURE);
 
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
-  {
-    yr_finalize();
-    return EXIT_FAILURE;
-  }
+    exit_with_code(EXIT_FAILURE);
 
-  if (!process_cmd_line(compiler, argc, argv))
-  {
-    yr_compiler_destroy(compiler);
-    yr_finalize();
-    return EXIT_FAILURE;
-  }
-
-  if (argc == 1 || optind == argc)
-  {
-    show_help();
-    yr_compiler_destroy(compiler);
-    yr_finalize();
-    return EXIT_FAILURE;
-  }
+  if (!define_external_variables(compiler))
+    exit_with_code(EXIT_FAILURE);
 
   yr_compiler_set_callback(compiler, report_error);
 
-  for (i = optind; i < argc - 1; i++)
+  for (int i = 0; i < argc - 1; i++)
   {
-    rule_file = fopen(argv[i], "r");
+    const char* ns;
+    const char* file_name;
+    char* colon = strchr(argv[i], ':');
+
+    if (colon)
+    {
+      file_name = colon + 1;
+      *colon = '\0';
+      ns = argv[i];
+    }
+    else
+    {
+      file_name = argv[i];
+      ns = NULL;
+    }
+
+    FILE* rule_file = fopen(file_name, "r");
 
     if (rule_file != NULL)
     {
-      errors = yr_compiler_add_file(compiler, rule_file, NULL, argv[i]);
+      int errors = yr_compiler_add_file(
+          compiler, rule_file, ns, file_name);
 
       fclose(rule_file);
 
       if (errors) // errors during compilation
-      {
-        yr_compiler_destroy(compiler);
-        yr_finalize();
-        return EXIT_FAILURE;
-      }
+        exit_with_code(EXIT_FAILURE);
     }
     else
     {
-      fprintf(stderr, "could not open file: %s\n", argv[i]);
+      fprintf(stderr, "error: could not open file: %s\n", file_name);
     }
   }
 
@@ -227,7 +223,7 @@ int main(
   if (result != ERROR_SUCCESS)
   {
     fprintf(stderr, "error: %d\n", result);
-    return EXIT_FAILURE;
+    exit_with_code(EXIT_FAILURE);
   }
 
   result = yr_rules_save(rules, argv[argc - 1]);
@@ -235,14 +231,21 @@ int main(
   if (result != ERROR_SUCCESS)
   {
     fprintf(stderr, "error: %d\n", result);
-    return EXIT_FAILURE;
+    exit_with_code(EXIT_FAILURE);
   }
 
-  yr_rules_destroy(rules);
-  yr_compiler_destroy(compiler);
+  result = EXIT_SUCCESS;
+
+_exit:
+
+  if (compiler != NULL)
+    yr_compiler_destroy(compiler);
+
+  if (rules != NULL)
+    yr_rules_destroy(rules);
 
   yr_finalize();
 
-  return EXIT_SUCCESS;
+  return result;
 }
 
