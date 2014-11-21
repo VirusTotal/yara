@@ -92,6 +92,7 @@ int show_specified_tags = FALSE;
 int show_specified_rules = FALSE;
 int show_strings = FALSE;
 int show_meta = FALSE;
+int show_namespace = FALSE;
 int ignore_warnings = FALSE;
 int fast_scan = FALSE;
 int negate = FALSE;
@@ -126,6 +127,9 @@ struct argparse_option options[] =
 
   OPT_BOOLEAN('s', "print-strings", &show_strings,
       "print matching strings"),
+
+  OPT_BOOLEAN('e', "print-namespace", &show_namespace,
+      "print rules' namespace"),
 
   OPT_INTEGER('p', "threads", &threads,
       "use the specified number of threads to scan a directory", "<number>"),
@@ -491,6 +495,10 @@ int handle_message(int message, YR_RULE* rule, void* data)
   if (show)
   {
     mutex_lock(&output_mutex);
+
+    if (show_namespace)
+      printf("%s:", rule->ns->name);
+
     printf("%s ", rule->identifier);
 
     if (show_tags)
