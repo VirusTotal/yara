@@ -186,7 +186,7 @@ int main(
   {
     const char* ns;
     const char* file_name;
-    char* colon = strchr(argv[i], ':');
+    char* colon = (char*) strchr(argv[i], ':');
 
     if (colon)
     {
