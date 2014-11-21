@@ -300,7 +300,7 @@ argparse_usage(struct argparse *self)
             else
                 len += strlen("<str>");
         }
-        len = ceil((float)len / 4) * 4;
+        len = (len / 4) * 4 + 4;
         if (usage_opts_width < len) {
             usage_opts_width = len;
         }

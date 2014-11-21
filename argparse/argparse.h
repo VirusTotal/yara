@@ -22,11 +22,14 @@
  */
 
 #include <assert.h>
-#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct argparse;
 struct argparse_option;
@@ -144,8 +147,8 @@ int argparse_help_cb(struct argparse *self,
     OPT_STRING_MULTI(short_name, long_name, value, 1, __VA_ARGS__)
 
 
-#define OPT_GROUP(h)   { ARGPARSE_OPT_GROUP, 0, NULL, NULL, 0, h, NULL, NULL }
-#define OPT_END()      { ARGPARSE_OPT_END }
+#define OPT_GROUP(h)   { ARGPARSE_OPT_GROUP, 0, NULL, NULL, h }
+#define OPT_END()      { ARGPARSE_OPT_END, 0 }
 
 #define OPT_HELP()     OPT_BOOLEAN('h', "help", NULL, "show self help message and exit", NULL, argparse_help_cb)
 
@@ -154,5 +157,9 @@ int argparse_init(struct argparse *self, struct argparse_option *options,
                   const char *const *usage, int flags);
 int argparse_parse(struct argparse *self, int argc, const char **argv);
 void argparse_usage(struct argparse *self);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
