@@ -35,9 +35,9 @@ limitations under the License.
 #include <string.h>
 #include <ctype.h>
 
-#include <argparse/argparse.h>
 #include <yara.h>
 
+#include "args.h"
 #include "threading.h"
 #include "config.h"
 
@@ -93,6 +93,8 @@ int show_specified_rules = FALSE;
 int show_strings = FALSE;
 int show_meta = FALSE;
 int show_namespace = FALSE;
+int show_version = FALSE;
+int show_help = FALSE;
 int ignore_warnings = FALSE;
 int fast_scan = FALSE;
 int negate = FALSE;
@@ -102,22 +104,20 @@ int timeout = 0;
 int threads = 8;
 
 
-static const char *const usage[] = {
-   "yara [OPTION]... RULES_FILE FILE | DIRECTORY | PID",
-   NULL,
-};
+#define USAGE_STRING \
+    "Usage: yara [OPTION]... RULES_FILE FILE | DIR | PID"
 
 
-struct argparse_option options[] =
+args_option_t options[] =
 {
   OPT_STRING_MULTI('t', "tag", &tags, MAX_ARGS_TAG,
-      "only print rules tagged as <tag>.", "<tag>"),
+      "print only rules tagged as TAG", "TAG"),
 
   OPT_STRING_MULTI('i', "identifier", &identifiers, MAX_ARGS_IDENTIFIER,
-      "only print rules named <identifier>.", "<identifier>"),
+      "print only rules named IDENTIFIER", "IDENTIFIER"),
 
   OPT_BOOLEAN('n', "negate", &negate,
-      "only print not satisfied rules (negate)", NULL),
+      "print only not satisfied rules (negate)", NULL),
 
   OPT_BOOLEAN('g', "print-tags", &show_tags,
       "print tags"),
@@ -132,19 +132,19 @@ struct argparse_option options[] =
       "print rules' namespace"),
 
   OPT_INTEGER('p', "threads", &threads,
-      "use the specified number of threads to scan a directory", "<number>"),
+      "use the specified NUMBER of threads to scan a directory", "NUMBER"),
 
   OPT_INTEGER('l', "max-rules", &limit,
-      "abort scanning after matching a number rules", "<number>"),
+      "abort scanning after matching a NUMBER of rules", "NUMBER"),
 
   OPT_STRING_MULTI('d', NULL, &ext_vars, MAX_ARGS_EXT_VAR,
-      "define external variable", "<identifier>=<value>"),
+      "define external variable", "VAR=VALUE"),
 
   OPT_STRING_MULTI('x', NULL, &modules_data, MAX_ARGS_MODULE_DATA,
-      "pass file's content as extra data to module", "<module>=<file>"),
+      "pass FILE's content as extra data to MODULE", "MODULE=FILE"),
 
   OPT_INTEGER('a', "timeout", &timeout,
-      "abort scanning after matching a number of  rules", "<number>"),
+      "abort scanning after the given number of SECONDS", "SECONDS"),
 
   OPT_BOOLEAN('r', "recursive", &recursive_search,
       "recursively search directories"),
@@ -155,7 +155,12 @@ struct argparse_option options[] =
   OPT_BOOLEAN('w', "no-warnings", &ignore_warnings,
       "disable warnings"),
 
-  OPT_HELP(),
+  OPT_BOOLEAN('v', "version", &show_version,
+      "show version information"),
+
+  OPT_BOOLEAN('h', "help", &show_help,
+      "show this help and exit"),
+
   OPT_END()
 };
 
@@ -800,12 +805,29 @@ int main(
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
 
-  struct argparse argparse;
   int result;
 
-  argparse_init(&argparse, options, usage, 0);
+  argc = args_parse(options, argc, argv);
 
-  argc = argparse_parse(&argparse, argc, argv);
+  if (show_version)
+  {
+    printf("%s\n", PACKAGE_STRING);
+    return EXIT_FAILURE;
+  }
+
+  if (show_help)
+  {
+    printf(
+      "YARA %s, the pattern matching swiss army knife.\n"
+      "%s\n\n"
+      "Mandatory arguments to long options are mandatory for "
+      "short options too.\n\n", PACKAGE_VERSION, USAGE_STRING);
+
+    args_print_usage(options, 35);
+    printf("\nSend bug reports and suggestions to: %s.\n", PACKAGE_BUGREPORT);
+
+    return EXIT_FAILURE;
+  }
 
   if (argc != 2)
   {
@@ -813,8 +835,10 @@ int main(
     // arguments, the rules file and the target file, directory or pid to
     // be scanned.
 
-    fprintf(stderr, "error: wrong number of arguments\n");
-    argparse_usage(&argparse);
+    fprintf(stderr, "yara: wrong number of arguments\n");
+    fprintf(stderr, "%s\n\n", USAGE_STRING);
+    fprintf(stderr, "Try `--help` for more options\n");
+
     return EXIT_FAILURE;
   }
 

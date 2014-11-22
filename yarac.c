@@ -31,9 +31,9 @@ limitations under the License.
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <argparse/argparse.h>
 #include <yara.h>
 
+#include "args.h"
 #include "config.h"
 
 #ifndef MAX_PATH
@@ -45,23 +45,27 @@ limitations under the License.
 
 char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 int ignore_warnings = FALSE;
+int show_version = FALSE;
+int show_help = FALSE;
 
 
-static const char *const usage[] = {
-   "yarac [option]... [namespace:]rules_file... output_file",
-   NULL,
-};
+#define USAGE_STRING \
+    "Usage: yarac [OPTION]... [NAMESPACE:]SOURCE_FILE... OUTPUT_FILE"
 
-
-struct argparse_option options[] =
+args_option_t options[] =
 {
   OPT_STRING_MULTI('d', NULL, &ext_vars, MAX_ARGS_EXT_VAR,
-      "define external variable"),
+      "define external variable", "VAR=VALUE"),
 
   OPT_BOOLEAN('w', "no-warnings", &ignore_warnings,
-      "disable warnings", NULL),
+      "disable warnings"),
 
-  OPT_HELP(),
+  OPT_BOOLEAN('v', "version", &show_version,
+      "show version information"),
+
+  OPT_BOOLEAN('h', "help", &show_help,
+      "show this help and exit"),
+
   OPT_END()
 };
 
@@ -156,16 +160,34 @@ int main(
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
 
-  struct argparse argparse;
   int result;
 
-  argparse_init(&argparse, options, usage, 0);
+  argc = args_parse(options, argc, argv);
 
-  argc = argparse_parse(&argparse, argc, argv);
+  if (show_version)
+  {
+    printf("%s\n", PACKAGE_STRING);
+    printf("\nSend bug reports and suggestions to: %s.\n", PACKAGE_BUGREPORT);
+
+    return EXIT_FAILURE;
+  }
+
+  if (show_help)
+  {
+    printf("%s\n\n", USAGE_STRING);
+
+    args_print_usage(options, 25);
+    printf("\nSend bug reports and suggestions to: %s.\n", PACKAGE_BUGREPORT);
+
+    return EXIT_FAILURE;
+  }
 
   if (argc < 2)
   {
-    fprintf(stderr, "error: wrong number of arguments\n");
+    fprintf(stderr, "yarac: wrong number of arguments\n");
+    fprintf(stderr, "%s\n\n", USAGE_STRING);
+    fprintf(stderr, "Try `--help` for more options\n");
+
     exit_with_code(EXIT_FAILURE);
   }
 
