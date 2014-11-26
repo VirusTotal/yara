@@ -68,6 +68,13 @@ typedef struct _MODULE_DATA
 
 } MODULE_DATA;
 
+typedef struct _THREAD_ARGS
+{
+  YR_RULES* rules;
+  time_t start_time;
+
+} THREAD_ARGS;
+
 
 typedef struct _QUEUED_FILE {
 
@@ -278,6 +285,7 @@ int is_directory(
 void scan_dir(
     const char* dir,
     int recursive,
+    time_t start_time,
     YR_RULES* rules,
     YR_CALLBACK_FUNC callback)
 {
@@ -303,7 +311,7 @@ void scan_dir(
       }
       else if (recursive && FindFileData.cFileName[0] != '.' )
       {
-        scan_dir(full_path, recursive, rules, callback);
+        scan_dir(full_path, recursive, start_time, rules, callback);
       }
 
     } while (FindNextFile(hFind, &FindFileData));
@@ -328,6 +336,7 @@ int is_directory(
 void scan_dir(
     const char* dir,
     int recursive,
+    time_t start_time,
     YR_RULES* rules,
     YR_CALLBACK_FUNC callback)
 {
@@ -337,7 +346,7 @@ void scan_dir(
   {
     struct dirent* de = readdir(dp);
 
-    while (de)
+    while (de && difftime(time(NULL), start_time) < timeout)
     {
       char full_path[MAX_PATH];
       struct stat st;
@@ -357,7 +366,7 @@ void scan_dir(
                 !S_ISLNK(st.st_mode) &&
                 de->d_name[0] != '.')
         {
-          scan_dir(full_path, recursive, rules, callback);
+          scan_dir(full_path, recursive, start_time, rules, callback);
         }
       }
 
@@ -625,29 +634,39 @@ DWORD WINAPI scanning_thread(LPVOID param)
 void* scanning_thread(void* param)
 #endif
 {
-  YR_RULES* rules = (YR_RULES*) param;
+  int result = ERROR_SUCCESS;
+  THREAD_ARGS* args = (THREAD_ARGS*) param;
   char* file_path = file_queue_get();
 
   while (file_path != NULL)
   {
-    int result = yr_rules_scan_file(
-        rules,
-        file_path,
-        fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
-        callback,
-        file_path,
-        timeout);
+    double elapsed_time = difftime(time(NULL), args->start_time);
 
-    if (result != ERROR_SUCCESS)
+    if (elapsed_time < timeout)
     {
-      mutex_lock(&output_mutex);
-      fprintf(stderr, "error scanning %s: ", file_path);
-      print_scanner_error(result);
-      mutex_unlock(&output_mutex);
-    }
+      result = yr_rules_scan_file(
+          args->rules,
+          file_path,
+          fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
+          callback,
+          file_path,
+          timeout - elapsed_time);
 
-    free(file_path);
-    file_path = file_queue_get();
+      if (result != ERROR_SUCCESS)
+      {
+        mutex_lock(&output_mutex);
+        fprintf(stderr, "error scanning %s: ", file_path);
+        print_scanner_error(result);
+        mutex_unlock(&output_mutex);
+      }
+
+      free(file_path);
+      file_path = file_queue_get();
+    }
+    else
+    {
+      file_path = NULL;
+    }
   }
 
   yr_finalize_thread();
@@ -941,10 +960,16 @@ int main(
     }
 
     THREAD thread[MAX_THREADS];
+    THREAD_ARGS thread_args;
+
+    time_t start_time = time(NULL);
+
+    thread_args.rules = rules;
+    thread_args.start_time = start_time;
 
     for (int i = 0; i < threads; i++)
     {
-      if (create_thread(&thread[i], scanning_thread, (void*) rules) != 0)
+      if (create_thread(&thread[i], scanning_thread, (void*) &thread_args))
       {
         print_scanner_error(ERROR_COULD_NOT_CREATE_THREAD);
         exit_with_code(EXIT_FAILURE);
@@ -954,6 +979,7 @@ int main(
     scan_dir(
         argv[1],
         recursive_search,
+        start_time,
         rules,
         callback);
 
