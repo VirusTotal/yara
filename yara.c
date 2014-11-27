@@ -680,8 +680,9 @@ int is_numeric(
 {
   while(*str)
   {
-    if(!isdigit(*str++))
+    if (!isdigit(*str))
       return 0;
+    str++;
   }
 
   return 1;
