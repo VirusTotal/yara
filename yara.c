@@ -107,7 +107,7 @@ int fast_scan = FALSE;
 int negate = FALSE;
 int count = 0;
 int limit = 0;
-int timeout = 0;
+int timeout = 1000000;
 int threads = 8;
 
 
