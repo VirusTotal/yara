@@ -54,6 +54,12 @@ char* yr_strdup(
 char* yr_strndup(
 	const char *str, size_t n);
 
+
+int yr_set_mem_wrapper_functions(
+        void *(*_malloc)(size_t size), void *(*_calloc)(size_t count, size_t size), void *(*_realloc)(void *ptr, size_t size),
+        void (*_free)(void *ptr),
+        char *(*_strdup)(const char *str), char *(*_strndup)(const char *str, size_t size) );
+
 #endif
 
 int yr_heap_alloc();
