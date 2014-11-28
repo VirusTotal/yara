@@ -161,12 +161,6 @@ int yr_re_compile(
     RE_ERROR* error);
 
 
-RE_NODE* yr_re_node_create(
-    int type,
-    RE_NODE* left,
-    RE_NODE* right);
-
-
 void yr_re_destroy(
     RE* re);
 
