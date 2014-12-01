@@ -1022,7 +1022,7 @@ static PyObject * Rules_match(
       }
     }
 
-    if (externals != NULL)
+    if (externals != NULL && externals != Py_None)
     {
       if (PyDict_Check(externals))
       {
@@ -1350,7 +1350,7 @@ static PyObject * yara_compile(
       }
     }
 
-    if (externals != NULL)
+    if (externals != NULL && externals != Py_None)
     {
       if (PyDict_Check(externals))
       {
@@ -1495,7 +1495,7 @@ static PyObject * yara_compile(
           rules->rules = yara_rules;
           rules->iter_current_rule = rules->rules->rules_list_head;
 
-          if (externals != NULL)
+          if (externals != NULL && externals != Py_None)
             rules->externals = PyDict_Copy(externals);
           else
             rules->externals = NULL;
