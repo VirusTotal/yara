@@ -1431,7 +1431,7 @@ int _yr_re_fiber_sync(
     {
       case RE_OPCODE_SPLIT_A:
         new_fiber = _yr_re_fiber_split(fiber, fiber_list, fiber_pool);
-        if (! new_fiber)
+        if (new_fiber == NULL)
           return ERROR_INSUFICIENT_MEMORY;
 
         new_fiber->ip += *(int16_t*)(fiber->ip + 1);
@@ -1440,7 +1440,7 @@ int _yr_re_fiber_sync(
 
       case RE_OPCODE_SPLIT_B:
         new_fiber = _yr_re_fiber_split(fiber, fiber_list, fiber_pool);
-        if (! new_fiber)
+        if (new_fiber == NULL)
           return ERROR_INSUFICIENT_MEMORY;
 
         new_fiber->ip += 3;
@@ -1522,7 +1522,7 @@ int yr_re_exec(
   RE_FIBER* fiber;
   RE_FIBER* next_fiber;
 
-  int rc;
+  int error;
   int count;
   int max_count;
   int match;
@@ -1564,8 +1564,9 @@ int yr_re_exec(
   fibers.head = fiber;
   fibers.tail = fiber;
 
-  rc = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
-  if (rc != ERROR_SUCCESS)
+  error = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+
+  if (error != ERROR_SUCCESS)
     return -2;
 
   while (fibers.head != NULL)
@@ -1756,15 +1757,15 @@ int yr_re_exec(
 
         case ACTION_CONTINUE:
           fiber->ip += 1;
-          rc = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
-          if (rc != ERROR_SUCCESS)
+          error = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+          if (error != ERROR_SUCCESS)
             return -2;
           break;
 
         default:
           next_fiber = fiber->next;
-          rc = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
-          if (rc != ERROR_SUCCESS)
+          error = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+          if (error != ERROR_SUCCESS)
             return -2;
           fiber = next_fiber;
       }
@@ -1786,8 +1787,10 @@ int yr_re_exec(
       fiber->ip = re_code;
 
       _yr_re_fiber_append(&fibers, fiber);
-      rc = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
-      if (rc != ERROR_SUCCESS)
+
+      error = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+
+      if (error != ERROR_SUCCESS)
         return -2;
     }
   }
