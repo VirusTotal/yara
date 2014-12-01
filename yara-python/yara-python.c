@@ -23,6 +23,7 @@ limitations under the License.
 #elif PY_VERSION_HEX < 0x02060000
 #define PyBytes_AsString PyString_AsString
 #define PyBytes_Check PyString_Check
+#define PyBytes_FromStringAndSize PyString_FromStringAndSize
 #endif
 
 #include <time.h>
