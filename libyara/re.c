@@ -1411,7 +1411,7 @@ void _yr_re_fiber_kill_all(
 // also synced.
 //
 
-void _yr_re_fiber_sync(
+int _yr_re_fiber_sync(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_LIST* fiber_pool,
     RE_FIBER* fiber_to_sync)
@@ -1431,12 +1431,18 @@ void _yr_re_fiber_sync(
     {
       case RE_OPCODE_SPLIT_A:
         new_fiber = _yr_re_fiber_split(fiber, fiber_list, fiber_pool);
+        if (! new_fiber)
+          return ERROR_INSUFICIENT_MEMORY;
+
         new_fiber->ip += *(int16_t*)(fiber->ip + 1);
         fiber->ip += 3;
         break;
 
       case RE_OPCODE_SPLIT_B:
         new_fiber = _yr_re_fiber_split(fiber, fiber_list, fiber_pool);
+        if (! new_fiber)
+          return ERROR_INSUFICIENT_MEMORY;
+
         new_fiber->ip += 3;
         fiber->ip += *(int16_t*)(fiber->ip + 1);
         break;
@@ -1470,6 +1476,7 @@ void _yr_re_fiber_sync(
           fiber = fiber->next;
     }
   }
+  return ERROR_SUCCESS;
 }
 
 
@@ -1515,6 +1522,7 @@ int yr_re_exec(
   RE_FIBER* fiber;
   RE_FIBER* next_fiber;
 
+  int rc;
   int count;
   int max_count;
   int match;
@@ -1556,7 +1564,9 @@ int yr_re_exec(
   fibers.head = fiber;
   fibers.tail = fiber;
 
-  _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+  rc = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+  if (rc != ERROR_SUCCESS)
+    return -2;
 
   while (fibers.head != NULL)
   {
@@ -1746,12 +1756,16 @@ int yr_re_exec(
 
         case ACTION_CONTINUE:
           fiber->ip += 1;
-          _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+          rc = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+          if (rc != ERROR_SUCCESS)
+            return -2;
           break;
 
         default:
           next_fiber = fiber->next;
-          _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+          rc = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+          if (rc != ERROR_SUCCESS)
+            return -2;
           fiber = next_fiber;
       }
     }
@@ -1772,7 +1786,9 @@ int yr_re_exec(
       fiber->ip = re_code;
 
       _yr_re_fiber_append(&fibers, fiber);
-      _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+      rc = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
+      if (rc != ERROR_SUCCESS)
+        return -2;
     }
   }
 
