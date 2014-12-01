@@ -218,10 +218,17 @@ limitations under the License.
         YR_OBJECT_FUNCTION* __function_obj)
 
 
-#define sized_string_argument(n) ((SIZED_STRING*)((int64_t*) __args)[n-1])
-#define string_argument(n)       (sized_string_argument(n)->c_string)
-#define integer_argument(n)      (((int64_t*) __args)[n-1])
-#define regexp_argument(n)       ((RE_CODE)((int64_t*) __args)[n-1])
+#define sized_string_argument(n) \
+    ((SIZED_STRING*)(size_t)((int64_t*) __args)[n-1])
+
+#define string_argument(n) \
+    (sized_string_argument(n)->c_string)
+
+#define integer_argument(n) \
+    (((int64_t*) __args)[n-1])
+
+#define regexp_argument(n) \
+    ((RE_CODE)((int64_t*) __args)[n-1])
 
 
 #define module()        yr_object_get_root((YR_OBJECT*) __function_obj)

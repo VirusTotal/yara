@@ -100,6 +100,8 @@ char* yr_strndup(const char *str, size_t n)
 
 #else
 
+#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
