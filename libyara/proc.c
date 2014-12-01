@@ -262,34 +262,45 @@ int yr_process_get_memory(
     YR_MEMORY_BLOCK** first_block)
 {
   char buffer[256];
-  unsigned char* data;
+  unsigned char* data = NULL;
   size_t begin, end, length;
 
   YR_MEMORY_BLOCK* new_block;
   YR_MEMORY_BLOCK* current_block = NULL;
+  int mem = -1;
+  FILE *maps = NULL;
+  int ret;
+  int attached = 0;
 
   *first_block = NULL;
 
   snprintf(buffer, sizeof(buffer), "/proc/%u/maps", pid);
 
-  FILE* maps = fopen(buffer, "r");
+  maps = fopen(buffer, "r");
 
   if (maps == NULL)
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+  {
+    ret = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+    goto end;
+  }
 
   snprintf(buffer, sizeof(buffer), "/proc/%u/mem", pid);
 
-  int mem = open(buffer, O_RDONLY);
+  mem = open(buffer, O_RDONLY);
 
   if (mem == -1)
   {
-    fclose(maps);
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+    ret = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+    goto end;
   }
 
   if (ptrace(PTRACE_ATTACH, pid, NULL, 0) == -1)
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+  {
+    ret = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+    goto end;
+  }
 
+  attached = 1;
   wait(NULL);
 
   while (fgets(buffer, sizeof(buffer), maps) != NULL)
@@ -301,7 +312,10 @@ int yr_process_get_memory(
     data = yr_malloc(length);
 
     if (data == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
+    {
+      ret = ERROR_INSUFICIENT_MEMORY;
+      goto end;
+    }
 
     if (pread(mem, data, length, begin) != -1)
     {
@@ -309,8 +323,8 @@ int yr_process_get_memory(
 
       if (new_block == NULL)
       {
-        yr_free(data);
-        return ERROR_INSUFICIENT_MEMORY;
+        ret = ERROR_INSUFICIENT_MEMORY;
+        goto end;
       }
 
       if (*first_block == NULL)
@@ -329,15 +343,27 @@ int yr_process_get_memory(
     else
     {
       yr_free(data);
+      data = NULL;
     }
   }
 
-  ptrace(PTRACE_DETACH, pid, NULL, 0);
+  ret = ERROR_SUCCESS;
 
-  close(mem);
-  fclose(maps);
+ end:
 
-  return ERROR_SUCCESS;
+  if (attached)
+    ptrace(PTRACE_DETACH, pid, NULL, 0);
+
+  if (mem != -1)
+    close(mem);
+
+  if (maps != NULL)
+    fclose(maps);
+
+  if (data)
+    yr_free(data);
+
+  return ret;
 }
 
 #endif
