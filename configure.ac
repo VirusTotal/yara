@@ -13,6 +13,7 @@ ${CFLAGS=""}
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 AC_PROG_CC
+AM_PROG_CC_C_O
 AM_PROG_LEX
 AC_PROG_YACC
 
@@ -81,7 +82,7 @@ ACX_PTHREAD(
      CC="$PTHREAD_CC"],
     [AC_MSG_ERROR([pthread API support is required.])])
 
-AC_CHECK_FUNCS_ONCE(strlcpy strlcat memmem timegm)
+AC_CHECK_FUNCS([strlcpy strlcat memmem timegm])
 
 AM_CONDITIONAL([CUCKOO], [test x$build_cuckoo_module = xtrue])
 AM_CONDITIONAL([MAGIC], [test x$build_magic_module = xtrue])
