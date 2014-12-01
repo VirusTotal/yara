@@ -490,6 +490,8 @@ string_declaration
         yr_free($4);
 
         ERROR_IF($$ == NULL);
+
+        compiler->error_line = 0;
       }
     | _STRING_IDENTIFIER_ '=' _HEX_STRING_
       {
