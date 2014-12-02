@@ -267,9 +267,11 @@ int yr_process_get_memory(
 
   YR_MEMORY_BLOCK* new_block;
   YR_MEMORY_BLOCK* current_block = NULL;
-  int mem = -1;
+
   FILE *maps = NULL;
-  int ret;
+
+  int mem = -1;
+  int result;
   int attached = 0;
 
   *first_block = NULL;
@@ -280,8 +282,8 @@ int yr_process_get_memory(
 
   if (maps == NULL)
   {
-    ret = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-    goto end;
+    result = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+    goto _exit;
   }
 
   snprintf(buffer, sizeof(buffer), "/proc/%u/mem", pid);
@@ -290,17 +292,20 @@ int yr_process_get_memory(
 
   if (mem == -1)
   {
-    ret = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-    goto end;
+    result = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+    goto _exit;
   }
 
-  if (ptrace(PTRACE_ATTACH, pid, NULL, 0) == -1)
+  if (ptrace(PTRACE_ATTACH, pid, NULL, 0) != -1)
   {
-    ret = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-    goto end;
+    attached = 1;
+  }
+  else
+  {
+    result = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+    goto _exit;
   }
 
-  attached = 1;
   wait(NULL);
 
   while (fgets(buffer, sizeof(buffer), maps) != NULL)
@@ -313,8 +318,8 @@ int yr_process_get_memory(
 
     if (data == NULL)
     {
-      ret = ERROR_INSUFICIENT_MEMORY;
-      goto end;
+      result = ERROR_INSUFICIENT_MEMORY;
+      goto _exit;
     }
 
     if (pread(mem, data, length, begin) != -1)
@@ -323,8 +328,8 @@ int yr_process_get_memory(
 
       if (new_block == NULL)
       {
-        ret = ERROR_INSUFICIENT_MEMORY;
-        goto end;
+        result = ERROR_INSUFICIENT_MEMORY;
+        goto _exit;
       }
 
       if (*first_block == NULL)
@@ -347,9 +352,9 @@ int yr_process_get_memory(
     }
   }
 
-  ret = ERROR_SUCCESS;
+  result = ERROR_SUCCESS;
 
- end:
+_exit:
 
   if (attached)
     ptrace(PTRACE_DETACH, pid, NULL, 0);
@@ -360,7 +365,7 @@ int yr_process_get_memory(
   if (maps != NULL)
     fclose(maps);
 
-  if (data)
+  if (data != NULL)
     yr_free(data);
 
   return ret;
