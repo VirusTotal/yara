@@ -127,7 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\argparse\argparse.c" />
+    <ClCompile Include="..\..\args.c" />
     <ClCompile Include="..\..\yarac.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

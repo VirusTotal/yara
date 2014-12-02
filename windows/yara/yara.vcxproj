@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\argparse\argparse.c" />
+    <ClCompile Include="..\..\args.c" />
     <ClCompile Include="..\..\threading.c" />
     <ClCompile Include="..\..\yara.c" />
   </ItemGroup>
