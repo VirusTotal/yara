@@ -54,7 +54,7 @@ args_option_t* args_get_long_option(
   {
     if (options->long_name != NULL)
     {
-      int l = strlen(options->long_name);
+      size_t l = strlen(options->long_name);
 
       if ((arg[l] == '\0' || arg[l] == '=') &&
           strstr(arg, options->long_name) == arg)

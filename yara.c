@@ -19,7 +19,6 @@ limitations under the License.
 #include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
-#include <time.h>
 #include <inttypes.h>
 
 #else
@@ -30,6 +29,7 @@ limitations under the License.
 
 #endif
 
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -640,7 +640,7 @@ void* scanning_thread(void* param)
 
   while (file_path != NULL)
   {
-    double elapsed_time = difftime(time(NULL), args->start_time);
+    int elapsed_time = (int) difftime(time(NULL), args->start_time);
 
     if (elapsed_time < timeout)
     {
