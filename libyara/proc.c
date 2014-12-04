@@ -368,7 +368,7 @@ _exit:
   if (data != NULL)
     yr_free(data);
 
-  return ret;
+  return result;
 }
 
 #endif
