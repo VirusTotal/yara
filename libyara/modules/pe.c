@@ -126,6 +126,7 @@ typedef struct _PE
   PIMAGE_NT_HEADERS32 header;
   YR_OBJECT* object;
   IMPORTED_DLL* imported_dlls;
+  uint32_t resources;
 
 } PE;
 
@@ -465,9 +466,24 @@ int pe_iterate_resources(
     if (offset != 0 &&
         offset < pe->data_size)
     {
+      PIMAGE_RESOURCE_DIRECTORY rsrc_dir =
+        (PIMAGE_RESOURCE_DIRECTORY) (pe->data + offset);
+
+      set_integer(rsrc_dir->TimeDateStamp,
+                  pe->object,
+                  "resource_timestamp",
+                  pe->resources);
+      set_integer(rsrc_dir->MajorVersion,
+                  pe->object,
+                  "resource_major_version",
+                  pe->resources);
+      set_integer(rsrc_dir->MinorVersion,
+                  pe->object,
+                  "resource_minor_version",
+                  pe->resources);
       _pe_iterate_resources(
           pe,
-          (PIMAGE_RESOURCE_DIRECTORY) (pe->data + offset),
+          rsrc_dir,
           pe->data + offset,
           0,
           &type,
@@ -493,11 +509,8 @@ int pe_iterate_resources(
     (typeof(ptr)) ((uint8_t*) (ptr) + ((offset + 3) & ~3))
 
 
-int pe_find_version_info_cb(
+void pe_parse_version_info(
     PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
-    int rsrc_type,
-    int rsrc_id,
-    int rsrc_language,
     PE* pe)
 {
   PVERSION_INFO version_info;
@@ -508,78 +521,101 @@ int pe_find_version_info_cb(
 
   size_t version_info_offset;
 
-  if (rsrc_type == RESOURCE_TYPE_VERSION)
+  version_info_offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
+
+  if (version_info_offset == 0)
+    return;
+
+  version_info = (PVERSION_INFO) (pe->data + version_info_offset);
+
+  if (!struct_fits_in_pe(pe, version_info, VERSION_INFO))
+    return;
+
+  if (!fits_in_pe(pe, version_info, sizeof("VS_VERSION_INFO")))
+    return;
+
+  if (strcmp_w(version_info->Key, "VS_VERSION_INFO") != 0)
+    return;
+
+  string_file_info = ADD_OFFSET(version_info, sizeof(VERSION_INFO) + 86);
+
+  if (!struct_fits_in_pe(pe, string_file_info, VERSION_INFO))
+    return;
+
+  if (!fits_in_pe(pe, string_file_info, sizeof("StringFileInfo")))
+    return;
+
+  while(strcmp_w(string_file_info->Key, "StringFileInfo") == 0)
   {
-    version_info_offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
+    PVERSION_INFO string_table = ADD_OFFSET(
+        string_file_info,
+        sizeof(VERSION_INFO) + 30);
 
-    if (version_info_offset == 0)
-      return RESOURCE_CALLBACK_CONTINUE;
+    string_file_info = ADD_OFFSET(
+        string_file_info,
+        string_file_info->Length);
 
-    version_info = (PVERSION_INFO) (pe->data + version_info_offset);
-
-    if (!struct_fits_in_pe(pe, version_info, VERSION_INFO))
-      return RESOURCE_CALLBACK_CONTINUE;
-
-    if (!fits_in_pe(pe, version_info, sizeof("VS_VERSION_INFO")))
-      return RESOURCE_CALLBACK_CONTINUE;
-
-    if (strcmp_w(version_info->Key, "VS_VERSION_INFO") != 0)
-      return RESOURCE_CALLBACK_CONTINUE;
-
-    string_file_info = ADD_OFFSET(version_info, sizeof(VERSION_INFO) + 86);
-
-    if (!struct_fits_in_pe(pe, string_file_info, VERSION_INFO))
-      return RESOURCE_CALLBACK_CONTINUE;
-
-    if (!fits_in_pe(pe, string_file_info, sizeof("StringFileInfo")))
-      return RESOURCE_CALLBACK_CONTINUE;
-
-    while(strcmp_w(string_file_info->Key, "StringFileInfo") == 0)
+    while (string_table < string_file_info)
     {
-      PVERSION_INFO string_table = ADD_OFFSET(
-          string_file_info,
-          sizeof(VERSION_INFO) + 30);
+      PVERSION_INFO string = ADD_OFFSET(
+          string_table,
+          sizeof(VERSION_INFO) + 2 * (strlen_w(string_table->Key) + 1));
 
-      string_file_info = ADD_OFFSET(
-          string_file_info,
-          string_file_info->Length);
+      string_table = ADD_OFFSET(
+          string_table,
+          string_table->Length);
 
-      while (string_table < string_file_info)
+      while (string < string_table)
       {
-        PVERSION_INFO string = ADD_OFFSET(
-            string_table,
-            sizeof(VERSION_INFO) + 2 * (strlen_w(string_table->Key) + 1));
+        char* string_value = (char*) ADD_OFFSET(
+            string,
+            sizeof(VERSION_INFO) + 2 * (strlen_w(string->Key) + 1));
 
-        string_table = ADD_OFFSET(
-            string_table,
-            string_table->Length);
+        strlcpy_w(key, string->Key, sizeof(key));
+        strlcpy_w(value, string_value, sizeof(value));
 
-        while (string < string_table)
-        {
-          char* string_value = (char*) ADD_OFFSET(
-              string,
-              sizeof(VERSION_INFO) + 2 * (strlen_w(string->Key) + 1));
+        set_string(value, pe->object, "version_info[%s]", key);
 
-          strlcpy_w(key, string->Key, sizeof(key));
-          strlcpy_w(value, string_value, sizeof(value));
-
-          set_string(value, pe->object, "version_info[%s]", key);
-
-          if (string->Length == 0)
-            break;
-
-          string = ADD_OFFSET(string, string->Length);
-        }
-
-        if (string_table->Length == 0)
+        if (string->Length == 0)
           break;
+
+        string = ADD_OFFSET(string, string->Length);
       }
+
+      if (string_table->Length == 0)
+        break;
     }
-
-    return RESOURCE_CALLBACK_ABORT;
   }
+}
 
-  return RESOURCE_CALLBACK_CONTINUE;
+
+int pe_collect_resources(
+    PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
+    int rsrc_type,
+    int rsrc_id,
+    int rsrc_language,
+    PE* pe)
+{
+    size_t offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
+    if (offset == 0 || !fits_in_pe(pe, offset, rsrc_data->Size))
+      return RESOURCE_CALLBACK_CONTINUE;
+
+    set_integer(rsrc_type, pe->object, "resources[%i].type", pe->resources);
+    set_integer(rsrc_id, pe->object, "resources[%i].id", pe->resources);
+    set_integer(
+        rsrc_language, pe->object, "resources[%i].language", pe->resources);
+    set_integer(
+        rsrc_data->Size, pe->object, "resources[%i].size", pe->resources);
+    set_sized_string(
+        (char*) (pe->data + offset), rsrc_data->Size, pe->object,
+        "resources[%i].data", pe->resources);
+
+    // Resources we do extra parsing on
+    if (rsrc_type == RESOURCE_TYPE_VERSION)
+        pe_parse_version_info(rsrc_data, pe);
+
+    pe->resources += 1;
+    return RESOURCE_CALLBACK_CONTINUE;
 }
 
 
@@ -1038,8 +1074,10 @@ void pe_parse_header(
 
   pe_iterate_resources(
       pe,
-      (RESOURCE_CALLBACK_FUNC) pe_find_version_info_cb,
+      (RESOURCE_CALLBACK_FUNC) pe_collect_resources,
       (void*) pe);
+
+  set_integer(pe->resources, pe->object, "number_of_resources");
 
   section = IMAGE_FIRST_SECTION(pe->header);
 
@@ -1329,88 +1367,53 @@ define_function(imports)
 }
 
 
-typedef struct _FIND_LANGUAGE_CB_DATA
-{
-  uint64_t locale;
-  uint64_t mask;
-
-  int found;
-
-} FIND_LANGUAGE_CB_DATA;
-
-
-int pe_find_language_cb(
-    PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
-    int rsrc_type,
-    int rsrc_id,
-    int rsrc_language,
-    FIND_LANGUAGE_CB_DATA* cb_data)
-{
-  if ((rsrc_language & cb_data->mask) == cb_data->locale)
-  {
-    cb_data->found = TRUE;
-    return RESOURCE_CALLBACK_ABORT;
-  }
-
-  return RESOURCE_CALLBACK_CONTINUE;
-}
-
-
 define_function(locale)
 {
-  FIND_LANGUAGE_CB_DATA cb_data;
-
-  cb_data.locale = integer_argument(1);
-  cb_data.mask = 0xFFFF;
-  cb_data.found = FALSE;
+  int64_t n;
+  uint64_t rsrc_language;
+  uint64_t locale = integer_argument(1);
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
   // If not a PE file, return UNDEFINED
-
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  if (pe_iterate_resources(pe,
-          (RESOURCE_CALLBACK_FUNC) pe_find_language_cb,
-          (void*) &cb_data))
+  n = get_integer(module, "number_of_resources");
+  for (int i = 0; i < n; i++)
   {
-    return_integer(cb_data.found);
+    rsrc_language = get_integer(module, "resources[%i].language", i);
+    if ((rsrc_language & 0xFFFF) == locale)
+      return_integer(1);
   }
-  else
-  {
-    return_integer(UNDEFINED);
-  }
+
+  return_integer(0);
 }
 
 
 define_function(language)
 {
-  FIND_LANGUAGE_CB_DATA cb_data;
-
-  cb_data.locale = integer_argument(1);
-  cb_data.mask = 0xFF;
-  cb_data.found = FALSE;
+  int64_t n;
+  uint64_t rsrc_language;
+  uint64_t language = integer_argument(1);
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
   // If not a PE file, return UNDEFINED
-
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  if (pe_iterate_resources(pe,
-          (RESOURCE_CALLBACK_FUNC) pe_find_language_cb,
-          (void*) &cb_data))
+  n = get_integer(module, "number_of_resources");
+  for (int i = 0; i < n; i++)
   {
-    return_integer(cb_data.found);
+    rsrc_language = get_integer(module, "resources[%i].language", i);
+    if ((rsrc_language & 0xFF) == language)
+      return_integer(1);
   }
-  else
-  {
-    return_integer(UNDEFINED);
-  }
+
+  return_integer(0);
 }
 
 
@@ -1501,6 +1504,18 @@ begin_declarations;
   declare_function("imports", "ss", "i", imports);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
+
+  declare_integer("resource_timestamp")
+  declare_integer("resource_major_version")
+  declare_integer("resource_minor_version")
+  begin_struct_array("resources");
+    declare_integer("type")
+    declare_integer("id")
+    declare_integer("language")
+    declare_integer("size")
+    declare_string("data")
+  end_struct_array("resources");
+  declare_integer("number_of_resources");
 
   #if defined(HAVE_LIBCRYPTO)
   begin_struct_array("signatures");
@@ -1636,6 +1651,7 @@ int module_load(
         pe->data_size = block->size;
         pe->header = pe_header;
         pe->object = module_object;
+        pe->resources = 0;
 
         module_object->data = pe;
 
