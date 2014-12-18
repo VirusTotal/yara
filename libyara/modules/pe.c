@@ -18,7 +18,7 @@ limitations under the License.
 
 #include <stdio.h>
 #include <ctype.h>
-
+#include <time.h>
 #include <config.h>
 
 #if defined(HAVE_LIBCRYPTO)
