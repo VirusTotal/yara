@@ -625,7 +625,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
           {
             name = (char *) yr_strndup(
                 (char*) import->Name,
-                max(available_space(pe, import->Name), 512));
+                min(available_space(pe, import->Name), 512));
           }
         }
       }
@@ -678,7 +678,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
           {
             name = (char *) yr_strndup(
                 (char*) import->Name,
-                max(available_space(pe, import->Name), 512));
+                min(available_space(pe, import->Name), 512));
           }
         }
       }
