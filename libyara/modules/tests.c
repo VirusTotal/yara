@@ -19,6 +19,18 @@ limitations under the License.
 #define MODULE_NAME tests
 
 
+define_function(double_sum)
+{
+  double a = double_argument(1);
+  double b = double_argument(2);
+
+  if (a == UNDEFINED || b == UNDEFINED)
+    return_double(UNDEFINED);
+
+  printf("\n%f\n", a + b);
+  return_double(a + b);
+}
+
 define_function(sum_2)
 {
   int64_t a = integer_argument(1);
@@ -78,6 +90,7 @@ begin_declarations;
   declare_function("sum", "ii", "i", sum_2);
   declare_function("sum", "iii", "i", sum_3);
   declare_function("length", "s", "i", length);
+  declare_function("double_sum", "dd", "d", double_sum);
 
 end_declarations;
 

@@ -29,6 +29,7 @@ limitations under the License.
 #define OBJECT_TYPE_FUNCTION    5
 #define OBJECT_TYPE_REGEXP      6
 #define OBJECT_TYPE_DICTIONARY  7
+#define OBJECT_TYPE_DOUBLE      8
 
 
 int yr_object_create(
@@ -82,6 +83,13 @@ SIZED_STRING* yr_object_get_string(
 
 void yr_object_set_integer(
     int64_t value,
+    YR_OBJECT* object,
+    const char* field,
+    ...);
+
+
+void yr_object_set_double(
+    double value,
     YR_OBJECT* object,
     const char* field,
     ...);

@@ -32,11 +32,11 @@ define_function(string_entropy)
   SIZED_STRING* s = sized_string_argument(1);
 
   if (IS_UNDEFINED(s))
-    return_integer(UNDEFINED);
+    return_double(UNDEFINED);
 
   data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
   if (data == NULL)
-    return_integer(UNDEFINED);
+    return_double(UNDEFINED);
 
   for (i = 0; i < s->length; i++)
   {
@@ -54,7 +54,7 @@ define_function(string_entropy)
   }
 
   yr_free(data);
-  return_integer((int) entropy);
+  return_double(entropy);
 }
 
 
@@ -71,7 +71,7 @@ define_function(data_entropy)
   int64_t length = integer_argument(2);   // length of bytes we want entropy on
 
   if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
-    return_integer(UNDEFINED);
+    return_double(UNDEFINED);
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
@@ -83,7 +83,7 @@ define_function(data_entropy)
 
   data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
   if (data == NULL)
-    return_integer(UNDEFINED);
+    return_double(UNDEFINED);
 
   foreach_memory_block(context, block)
   {
@@ -114,7 +114,7 @@ define_function(data_entropy)
       // undefined.
 
       yr_free(data);
-      return_integer(UNDEFINED);
+      return_double(UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -124,7 +124,7 @@ define_function(data_entropy)
   if (!past_first_block)
   {
     yr_free(data);
-    return_integer(UNDEFINED);
+    return_double(UNDEFINED);
   }
 
   for (i = 0; i < 256; i++)
@@ -136,14 +136,14 @@ define_function(data_entropy)
     }
   }
   yr_free(data);
-  return_integer((int) entropy);
+  return_double(entropy);
 }
 
 
 begin_declarations;
 
-  declare_function("entropy", "ii", "i", data_entropy);
-  declare_function("entropy", "s", "i", string_entropy);
+  declare_function("entropy", "ii", "d", data_entropy);
+  declare_function("entropy", "s", "d", string_entropy);
 
 end_declarations;
 

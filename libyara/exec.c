@@ -498,6 +498,10 @@ int yr_execute_code(
             push(((YR_OBJECT_INTEGER*) object)->value);
             break;
 
+          case OBJECT_TYPE_DOUBLE:
+            push(((YR_OBJECT_DOUBLE*) object)->value);
+            break;
+
           case OBJECT_TYPE_STRING:
             if (((YR_OBJECT_STRING*) object)->value != NULL)
               push(PTR_TO_UINT64(((YR_OBJECT_STRING*) object)->value));

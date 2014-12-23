@@ -46,6 +46,7 @@ limitations under the License.
 #define EXPRESSION_TYPE_STRING    3
 #define EXPRESSION_TYPE_REGEXP    4
 #define EXPRESSION_TYPE_OBJECT    5
+#define EXPRESSION_TYPE_DOUBLE    6
 
 
 #define ERROR_IF(x) \
@@ -56,14 +57,16 @@ limitations under the License.
     } \
 
 
-#define CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op, cleanup) \
-    if (expression.type != expected_type) \
-    { \
+#define CLEANUP(op, expression) \
       switch(expression.type) \
       { \
         case EXPRESSION_TYPE_INTEGER: \
           yr_compiler_set_error_extra_info( \
               compiler, "wrong type \"integer\" for " op " operator"); \
+          break; \
+        case EXPRESSION_TYPE_DOUBLE: \
+          yr_compiler_set_error_extra_info( \
+              compiler, "wrong type \"double\" for " op " operator"); \
           break; \
         case EXPRESSION_TYPE_STRING: \
           yr_compiler_set_error_extra_info( \
@@ -75,15 +78,39 @@ limitations under the License.
           break; \
       } \
       compiler->last_result = ERROR_WRONG_TYPE; \
-      cleanup; \
+      yyerror(yyscanner, compiler, NULL); \
+      YYERROR;
+
+#define CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op) \
+    if (expression.type != expected_type) \
+    { \
+      CLEANUP(op, expression) \
+    }
+
+#define CHECK_TYPE(expression, expected_type, op) \
+    CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op) \
+
+// Similar to CHECK_TYPE but does not fail. Used in combination with CLEANUP
+// to fail. This is because with the addition of double values we need to have
+// multiple conditionals.
+//
+// For example: When doing an addition we need to make sure that both types
+// are the same (both EXPRESSION_TYPE_INTEGER or EXPRESSION_TYPE_DOUBLE).
+// This is done by ensuring that $1 is either EXPRESSION_TYPE_INTEGER or
+// EXPRESSION_TYPE_DOUBLE, and that $3 type matches $1 type via
+// TYPE_INEQUALITY.
+#define CHECK_TYPE_NO_CLEANUP(expression, expected_type) \
+    (expression.type != expected_type)
+
+#define TYPE_INEQUALITY(expression_left, expression_right, op) \
+    if (expression_left.type != expression_right.type) \
+    { \
+      yr_compiler_set_error_extra_info( \
+          compiler, "type mismatch for " op " operator"); \
+      compiler->last_result = ERROR_WRONG_TYPE; \
       yyerror(yyscanner, compiler, NULL); \
       YYERROR; \
     }
-
-
-#define CHECK_TYPE(expression, expected_type, op) \
-    CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op, ) \
-
 
 #define MSG(op)  "wrong type \"string\" for \"" op "\" operator"
 
@@ -112,6 +139,7 @@ limitations under the License.
 %token <c_string> _STRING_OFFSET_
 %token <c_string> _STRING_IDENTIFIER_WITH_WILDCARD_
 %token <integer> _NUMBER_
+%token <double_> _DOUBLE_
 %token <integer> _INTEGER_FUNCTION_
 %token <sized_string> _TEXT_STRING_
 %token <sized_string> _HEX_STRING_
@@ -189,6 +217,7 @@ limitations under the License.
   SIZED_STRING*   sized_string;
   char*           c_string;
   int64_t         integer;
+  double          double_;
   YR_STRING*      string;
   YR_META*        meta;
 }
@@ -779,6 +808,9 @@ arguments_list
           case EXPRESSION_TYPE_INTEGER:
             strlcpy($$, "i", MAX_FUNCTION_ARGS);
             break;
+          case EXPRESSION_TYPE_DOUBLE:
+            strlcpy($$, "d", MAX_FUNCTION_ARGS);
+            break;
           case EXPRESSION_TYPE_BOOLEAN:
             strlcpy($$, "b", MAX_FUNCTION_ARGS);
             break;
@@ -804,6 +836,9 @@ arguments_list
           {
             case EXPRESSION_TYPE_INTEGER:
               strlcat($1, "i", MAX_FUNCTION_ARGS);
+              break;
+            case EXPRESSION_TYPE_DOUBLE:
+              strlcat($1, "d", MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_BOOLEAN:
               strlcat($1, "b", MAX_FUNCTION_ARGS);
@@ -1234,8 +1269,17 @@ expression
       }
     | primary_expression _LT_ primary_expression
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "<");
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "<");
+        if (CHECK_TYPE_NO_CLEANUP($1, EXPRESSION_TYPE_INTEGER) &&
+            CHECK_TYPE_NO_CLEANUP($1, EXPRESSION_TYPE_DOUBLE))
+        {
+          CLEANUP("<", $1);
+        }
+        if (CHECK_TYPE_NO_CLEANUP($3, EXPRESSION_TYPE_INTEGER) &&
+            CHECK_TYPE_NO_CLEANUP($3, EXPRESSION_TYPE_DOUBLE))
+        {
+          CLEANUP("<", $3);
+        }
+        TYPE_INEQUALITY($1, $3, "<")
 
         yr_parser_emit(yyscanner, OP_LT, NULL);
 
@@ -1243,8 +1287,17 @@ expression
       }
     | primary_expression _GT_ primary_expression
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, ">");
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, ">");
+        if (CHECK_TYPE_NO_CLEANUP($1, EXPRESSION_TYPE_INTEGER) &&
+            CHECK_TYPE_NO_CLEANUP($1, EXPRESSION_TYPE_DOUBLE))
+        {
+          CLEANUP(">", $1);
+        }
+        if (CHECK_TYPE_NO_CLEANUP($3, EXPRESSION_TYPE_INTEGER) &&
+            CHECK_TYPE_NO_CLEANUP($3, EXPRESSION_TYPE_DOUBLE))
+        {
+          CLEANUP(">", $3);
+        }
+        TYPE_INEQUALITY($1, $3, ">")
 
         yr_parser_emit(yyscanner, OP_GT, NULL);
 
@@ -1252,8 +1305,17 @@ expression
       }
     | primary_expression _LE_ primary_expression
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "<=");
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "<=");
+        if (CHECK_TYPE_NO_CLEANUP($1, EXPRESSION_TYPE_INTEGER) &&
+            CHECK_TYPE_NO_CLEANUP($1, EXPRESSION_TYPE_DOUBLE))
+        {
+          CLEANUP("<=", $1);
+        }
+        if (CHECK_TYPE_NO_CLEANUP($3, EXPRESSION_TYPE_INTEGER) &&
+            CHECK_TYPE_NO_CLEANUP($3, EXPRESSION_TYPE_DOUBLE))
+        {
+          CLEANUP("<=", $3);
+        }
+        TYPE_INEQUALITY($1, $3, "<=")
 
         yr_parser_emit(yyscanner, OP_LE, NULL);
 
@@ -1261,8 +1323,17 @@ expression
       }
     | primary_expression _GE_ primary_expression
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, ">=");
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, ">=");
+        if (CHECK_TYPE_NO_CLEANUP($1, EXPRESSION_TYPE_INTEGER) &&
+            CHECK_TYPE_NO_CLEANUP($1, EXPRESSION_TYPE_DOUBLE))
+        {
+          CLEANUP(">=", $1);
+        }
+        if (CHECK_TYPE_NO_CLEANUP($3, EXPRESSION_TYPE_INTEGER) &&
+            CHECK_TYPE_NO_CLEANUP($3, EXPRESSION_TYPE_DOUBLE))
+        {
+          CLEANUP(">=", $3);
+        }
+        TYPE_INEQUALITY($1, $3, ">=")
 
         yr_parser_emit(yyscanner, OP_GE, NULL);
 
@@ -1517,6 +1588,16 @@ primary_expression
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = $1;
       }
+    | _DOUBLE_
+      {
+        compiler->last_result = yr_parser_emit_with_arg_double(
+            yyscanner, OP_PUSH, $1, NULL);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+        $$.type = EXPRESSION_TYPE_DOUBLE;
+        $$.value.double_ = $1;
+      }
     | _TEXT_STRING_
       {
         SIZED_STRING* sized_string;
@@ -1613,6 +1694,10 @@ primary_expression
           {
             case OBJECT_TYPE_INTEGER:
               $$.type = EXPRESSION_TYPE_INTEGER;
+              $$.value.integer = UNDEFINED;
+              break;
+            case OBJECT_TYPE_DOUBLE:
+              $$.type = EXPRESSION_TYPE_DOUBLE;
               $$.value.integer = UNDEFINED;
               break;
             case OBJECT_TYPE_STRING:

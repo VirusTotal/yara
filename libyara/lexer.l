@@ -390,6 +390,10 @@ u?int(8|16|32)(be)? {
   return _NUMBER_;
 }
 
+{digit}+"."{digit}+  {
+  yylval->double_ = atof(yytext);
+  return _DOUBLE_;
+}
 
 0x{hexdigit}+  {
 
