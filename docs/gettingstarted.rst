@@ -68,7 +68,7 @@ To build and install the ``yara-python`` extension::
 
     cd yara-python
     python setup.py build
-    sudo setup.py install
+    sudo python setup.py install
 
 You may need to install the Python development package (usually ``python-dev``)
 before compiling ``yara-python``. Additionally, ``yara-python`` depends on the
