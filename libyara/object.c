@@ -106,7 +106,7 @@ int yr_object_create(
       ((YR_OBJECT_INTEGER*) obj)->value = UNDEFINED;
       break;
     case OBJECT_TYPE_DOUBLE:
-      ((YR_OBJECT_INTEGER*) obj)->value = UNDEFINED;
+      ((YR_OBJECT_DOUBLE*) obj)->value = UNDEFINED;
       break;
     case OBJECT_TYPE_STRING:
       ((YR_OBJECT_STRING*) obj)->value = NULL;
