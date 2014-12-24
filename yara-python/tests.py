@@ -467,6 +467,10 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = "ssi" condition: $a at 2 and $a at 5 }',
         ], 'mississippi')
 
+        self.assertTrueRules([
+            'rule test { strings: $a = { 00 00 00 00 ?? 74 65 78 74 } condition: $a at 308}',
+        ], PE32_FILE)
+
     def testOffset(self):
 
         self.assertTrueRules([
