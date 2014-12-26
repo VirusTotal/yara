@@ -46,6 +46,7 @@ typedef struct _YR_FIXUP
 } YR_FIXUP;
 
 
+
 typedef struct _YR_COMPILER
 {
   int               errors;
@@ -100,6 +101,7 @@ typedef struct _YR_COMPILER
   void*             user_data;
 
   YR_COMPILER_CALLBACK_FUNC  callback;
+  void*                      user_data;
 
 } YR_COMPILER;
 
