@@ -27,7 +27,6 @@ define_function(double_sum)
   if (a == UNDEFINED || b == UNDEFINED)
     return_double(UNDEFINED);
 
-  printf("\n%f\n", a + b);
   return_double(a + b);
 }
 
