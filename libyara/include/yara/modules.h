@@ -257,6 +257,10 @@ limitations under the License.
     yr_object_get_integer(object, __VA_ARGS__)
 
 
+#define get_double(object, ...) \
+    yr_object_get_double(object, __VA_ARGS__)
+
+
 #define get_string(object, ...) \
     yr_object_get_string(object, __VA_ARGS__)
 
