@@ -81,14 +81,49 @@ limitations under the License.
       yyerror(yyscanner, compiler, NULL); \
       YYERROR;
 
+
 #define CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op) \
     if (expression.type != expected_type) \
     { \
       CLEANUP(op, expression) \
     }
 
+
 #define CHECK_TYPE(expression, expected_type, op) \
     CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op)
+
+
+// If the types do not match, handle casting from integer to double.
+#define DO_CASTS(left, right, op) \
+    if (left.type == EXPRESSION_TYPE_INTEGER && \
+        right.type == EXPRESSION_TYPE_DOUBLE) \
+    { \
+      compiler->last_result = yr_parser_emit_with_arg( \
+          yyscanner, \
+          OP_ITD, \
+          2, \
+          NULL); \
+      ERROR_IF(compiler->last_result != ERROR_SUCCESS); \
+    } \
+    else if (left.type == EXPRESSION_TYPE_DOUBLE && \
+             right.type == EXPRESSION_TYPE_INTEGER) \
+    { \
+      compiler->last_result = yr_parser_emit_with_arg( \
+          yyscanner, \
+          OP_ITD, \
+          1, \
+          NULL); \
+      ERROR_IF(compiler->last_result != ERROR_SUCCESS); \
+    } \
+    else \
+    { \
+      yr_compiler_set_error_extra_info( \
+          compiler, "mismatching types for " op " operator"); \
+      compiler->last_result = ERROR_WRONG_TYPE; \
+      yyerror(yyscanner, compiler, NULL); \
+      YYERROR; \
+    }
+
 
 %}
 
@@ -1247,37 +1282,7 @@ expression
       {
         if ($1.type != $3.type)
         {
-          if ($1.type == EXPRESSION_TYPE_INTEGER &&
-              $3.type == EXPRESSION_TYPE_DOUBLE)
-          {
-            // Cast left side to double.
-            compiler->last_result = yr_parser_emit_with_arg(
-                yyscanner,
-                OP_ITD,
-                2,
-                NULL);
-            ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-          }
-          else if ($1.type == EXPRESSION_TYPE_DOUBLE &&
-                   $3.type == EXPRESSION_TYPE_INTEGER)
-          {
-            // Cast right side to double.
-            compiler->last_result = yr_parser_emit_with_arg(
-                yyscanner,
-                OP_ITD,
-                1,
-                NULL);
-            ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-          }
-          else
-          {
-            yr_compiler_set_error_extra_info(
-                compiler, "mismatching types for < operator");
-            compiler->last_result = ERROR_WRONG_TYPE;
-            yyerror(yyscanner, compiler, NULL);
-            YYERROR;
-          }
-
+          DO_CASTS($1, $3, "<");
           compiler->last_result = yr_parser_emit(yyscanner, OP_LTD, NULL);
         }
         else if ($1.type == EXPRESSION_TYPE_INTEGER)
@@ -1301,37 +1306,7 @@ expression
       {
         if ($1.type != $3.type)
         {
-          if ($1.type == EXPRESSION_TYPE_INTEGER &&
-              $3.type == EXPRESSION_TYPE_DOUBLE)
-          {
-            // Cast left side to double.
-            compiler->last_result = yr_parser_emit_with_arg(
-                yyscanner,
-                OP_ITD,
-                2,
-                NULL);
-            ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-          }
-          else if ($1.type == EXPRESSION_TYPE_DOUBLE &&
-                   $3.type == EXPRESSION_TYPE_INTEGER)
-          {
-            // Cast right side to double.
-            compiler->last_result = yr_parser_emit_with_arg(
-                yyscanner,
-                OP_ITD,
-                1,
-                NULL);
-            ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-          }
-          else
-          {
-            yr_compiler_set_error_extra_info(
-                compiler, "mismatching types for > operator");
-            compiler->last_result = ERROR_WRONG_TYPE;
-            yyerror(yyscanner, compiler, NULL);
-            YYERROR;
-          }
-
+          DO_CASTS($1, $3, ">");
           compiler->last_result = yr_parser_emit(yyscanner, OP_GTD, NULL);
         }
         else if ($1.type == EXPRESSION_TYPE_INTEGER)
@@ -1354,37 +1329,7 @@ expression
       {
         if ($1.type != $3.type)
         {
-          if ($1.type == EXPRESSION_TYPE_INTEGER &&
-              $3.type == EXPRESSION_TYPE_DOUBLE)
-          {
-            // Cast left side to double.
-            compiler->last_result = yr_parser_emit_with_arg(
-                yyscanner,
-                OP_ITD,
-                2,
-                NULL);
-            ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-          }
-          else if ($1.type == EXPRESSION_TYPE_DOUBLE &&
-                   $3.type == EXPRESSION_TYPE_INTEGER)
-          {
-            // Cast right side to double.
-            compiler->last_result = yr_parser_emit_with_arg(
-                yyscanner,
-                OP_ITD,
-                1,
-                NULL);
-            ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-          }
-          else
-          {
-            yr_compiler_set_error_extra_info(
-                compiler, "mismatching types for <= operator");
-            compiler->last_result = ERROR_WRONG_TYPE;
-            yyerror(yyscanner, compiler, NULL);
-            YYERROR;
-          }
-
+          DO_CASTS($1, $3, "<=");
           compiler->last_result = yr_parser_emit(yyscanner, OP_LED, NULL);
         }
         else if ($1.type == EXPRESSION_TYPE_INTEGER)
@@ -1408,37 +1353,7 @@ expression
       {
         if ($1.type != $3.type)
         {
-          if ($1.type == EXPRESSION_TYPE_INTEGER &&
-              $3.type == EXPRESSION_TYPE_DOUBLE)
-          {
-            // Cast left side to double.
-            compiler->last_result = yr_parser_emit_with_arg(
-                yyscanner,
-                OP_ITD,
-                2,
-                NULL);
-            ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-          }
-          else if ($1.type == EXPRESSION_TYPE_DOUBLE &&
-                   $3.type == EXPRESSION_TYPE_INTEGER)
-          {
-            // Cast right side to double.
-            compiler->last_result = yr_parser_emit_with_arg(
-                yyscanner,
-                OP_ITD,
-                1,
-                NULL);
-            ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-          }
-          else
-          {
-            yr_compiler_set_error_extra_info(
-                compiler, "mismatching types for >= operator");
-            compiler->last_result = ERROR_WRONG_TYPE;
-            yyerror(yyscanner, compiler, NULL);
-            YYERROR;
-          }
-
+          DO_CASTS($1, $3, ">=");
           compiler->last_result = yr_parser_emit(yyscanner, OP_GED, NULL);
         }
         else if ($1.type == EXPRESSION_TYPE_INTEGER)
@@ -1462,37 +1377,7 @@ expression
       {
         if ($1.type != $3.type)
         {
-          if ($1.type == EXPRESSION_TYPE_INTEGER &&
-              $3.type == EXPRESSION_TYPE_DOUBLE)
-          {
-            // Cast left side to double.
-            compiler->last_result = yr_parser_emit_with_arg(
-                yyscanner,
-                OP_ITD,
-                2,
-                NULL);
-            ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-          }
-          else if ($1.type == EXPRESSION_TYPE_DOUBLE &&
-                   $3.type == EXPRESSION_TYPE_INTEGER)
-          {
-            // Cast right side to double.
-            compiler->last_result = yr_parser_emit_with_arg(
-                yyscanner,
-                OP_ITD,
-                1,
-                NULL);
-            ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-          }
-          else
-          {
-            yr_compiler_set_error_extra_info(
-                compiler, "mismatching types for == operator");
-            compiler->last_result = ERROR_WRONG_TYPE;
-            yyerror(yyscanner, compiler, NULL);
-            YYERROR;
-          }
-
+          DO_CASTS($1, $3, "==");
           compiler->last_result = yr_parser_emit(yyscanner, OP_EQD, NULL);
         }
         else if ($1.type == EXPRESSION_TYPE_STRING)
@@ -1547,37 +1432,7 @@ expression
       {
         if ($1.type != $3.type)
         {
-          if ($1.type == EXPRESSION_TYPE_INTEGER &&
-              $3.type == EXPRESSION_TYPE_DOUBLE)
-          {
-            // Cast left side to double.
-            compiler->last_result = yr_parser_emit_with_arg(
-                yyscanner,
-                OP_ITD,
-                2,
-                NULL);
-            ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-          }
-          else if ($1.type == EXPRESSION_TYPE_DOUBLE &&
-                   $3.type == EXPRESSION_TYPE_INTEGER)
-          {
-            // Cast right side to double.
-            compiler->last_result = yr_parser_emit_with_arg(
-                yyscanner,
-                OP_ITD,
-                1,
-                NULL);
-            ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-          }
-          else
-          {
-            yr_compiler_set_error_extra_info(
-                compiler, "mismatching types for != operator");
-            compiler->last_result = ERROR_WRONG_TYPE;
-            yyerror(yyscanner, compiler, NULL);
-            YYERROR;
-          }
-
+          DO_CASTS($1, $3, "!=");
           compiler->last_result = yr_parser_emit(yyscanner, OP_NEQD, NULL);
         }
         else if ($1.type == EXPRESSION_TYPE_STRING)
@@ -1904,27 +1759,7 @@ primary_expression
       {
         if ($1.type != $3.type)
         {
-          if ($1.type == EXPRESSION_TYPE_INTEGER &&
-              $3.type == EXPRESSION_TYPE_DOUBLE)
-          {
-            // Cast left side to double.
-            yr_parser_emit_with_arg(yyscanner, OP_ITD, 2, NULL);
-          }
-          else if ($1.type == EXPRESSION_TYPE_DOUBLE &&
-                   $3.type == EXPRESSION_TYPE_INTEGER)
-          {
-            // Cast right side to double.
-            yr_parser_emit_with_arg(yyscanner, OP_ITD, 1, NULL);
-          }
-          else
-          {
-            yr_compiler_set_error_extra_info(
-                compiler, "mismatching types for + operator");
-            compiler->last_result = ERROR_WRONG_TYPE;
-            yyerror(yyscanner, compiler, NULL);
-            YYERROR;
-          }
-
+          DO_CASTS($1, $3, "+");
           yr_parser_emit(yyscanner, OP_ADD_DBL, NULL);
           $$.type = EXPRESSION_TYPE_DOUBLE;
           $$.value.double_ = OPERATION(+, $1.value.double_, $3.value.double_);
@@ -1950,27 +1785,7 @@ primary_expression
       {
         if ($1.type != $3.type)
         {
-          if ($1.type == EXPRESSION_TYPE_INTEGER &&
-              $3.type == EXPRESSION_TYPE_DOUBLE)
-          {
-            // Cast left side to double.
-            yr_parser_emit_with_arg(yyscanner, OP_ITD, 2, NULL);
-          }
-          else if ($1.type == EXPRESSION_TYPE_DOUBLE &&
-                   $3.type == EXPRESSION_TYPE_INTEGER)
-          {
-            // Cast right side to double.
-            yr_parser_emit_with_arg(yyscanner, OP_ITD, 1, NULL);
-          }
-          else
-          {
-            yr_compiler_set_error_extra_info(
-                compiler, "mismatching types for - operator");
-            compiler->last_result = ERROR_WRONG_TYPE;
-            yyerror(yyscanner, compiler, NULL);
-            YYERROR;
-          }
-
+          DO_CASTS($1, $3, "-");
           yr_parser_emit(yyscanner, OP_SUB_DBL, NULL);
           $$.type = EXPRESSION_TYPE_DOUBLE;
           $$.value.double_ = OPERATION(-, $1.value.double_, $3.value.double_);
@@ -1996,27 +1811,7 @@ primary_expression
       {
         if ($1.type != $3.type)
         {
-          if ($1.type == EXPRESSION_TYPE_INTEGER &&
-              $3.type == EXPRESSION_TYPE_DOUBLE)
-          {
-            // Cast left side to double.
-            yr_parser_emit_with_arg(yyscanner, OP_ITD, 2, NULL);
-          }
-          else if ($1.type == EXPRESSION_TYPE_DOUBLE &&
-                   $3.type == EXPRESSION_TYPE_INTEGER)
-          {
-            // Cast right side to double.
-            yr_parser_emit_with_arg(yyscanner, OP_ITD, 1, NULL);
-          }
-          else
-          {
-            yr_compiler_set_error_extra_info(
-                compiler, "mismatching types for * operator");
-            compiler->last_result = ERROR_WRONG_TYPE;
-            yyerror(yyscanner, compiler, NULL);
-            YYERROR;
-          }
-
+          DO_CASTS($1, $3, "*");
           yr_parser_emit(yyscanner, OP_MUL_DBL, NULL);
           $$.type = EXPRESSION_TYPE_DOUBLE;
           $$.value.double_ = OPERATION(*, $1.value.double_, $3.value.double_);
@@ -2042,27 +1837,7 @@ primary_expression
       {
         if ($1.type != $3.type)
         {
-          if ($1.type == EXPRESSION_TYPE_INTEGER &&
-              $3.type == EXPRESSION_TYPE_DOUBLE)
-          {
-            // Cast left side to double.
-            yr_parser_emit_with_arg(yyscanner, OP_ITD, 2, NULL);
-          }
-          else if ($1.type == EXPRESSION_TYPE_DOUBLE &&
-                   $3.type == EXPRESSION_TYPE_INTEGER)
-          {
-            // Cast right side to double.
-            yr_parser_emit_with_arg(yyscanner, OP_ITD, 1, NULL);
-          }
-          else
-          {
-            yr_compiler_set_error_extra_info(
-                compiler, "mismatching types for \\ operator");
-            compiler->last_result = ERROR_WRONG_TYPE;
-            yyerror(yyscanner, compiler, NULL);
-            YYERROR;
-          }
-
+          DO_CASTS($1, $3, "\\");
           yr_parser_emit(yyscanner, OP_DIV_DBL, NULL);
           $$.type = EXPRESSION_TYPE_DOUBLE;
           $$.value.double_ = OPERATION(/, $1.value.double_, $3.value.double_);
