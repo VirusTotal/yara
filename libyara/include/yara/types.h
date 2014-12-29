@@ -407,6 +407,14 @@ typedef struct _YR_OBJECT_INTEGER
 } YR_OBJECT_INTEGER;
 
 
+typedef struct _YR_OBJECT_DOUBLE
+{
+  OBJECT_COMMON_FIELDS
+  double value;
+
+} YR_OBJECT_DOUBLE;
+
+
 typedef struct _YR_OBJECT_STRING
 {
   OBJECT_COMMON_FIELDS

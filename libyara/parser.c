@@ -47,6 +47,29 @@ int yr_parser_emit(
 }
 
 
+int yr_parser_emit_with_arg_double(
+    yyscan_t yyscanner,
+    int8_t instruction,
+    double argument,
+    int8_t** instruction_address)
+{
+  int result = yr_arena_write_data(
+      yyget_extra(yyscanner)->code_arena,
+      &instruction,
+      sizeof(int8_t),
+      (void**) instruction_address);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_arena_write_data(
+        yyget_extra(yyscanner)->code_arena,
+        &argument,
+        sizeof(double),
+        NULL);
+
+  return result;
+}
+
+
 int yr_parser_emit_with_arg(
     yyscan_t yyscanner,
     int8_t instruction,

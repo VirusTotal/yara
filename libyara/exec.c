@@ -43,7 +43,55 @@ limitations under the License.
     } while(0)
 
 
+// Used when pushing a double to the stack, which looses precision when
+// using push().
+#define push_dbl(x)  \
+    do { \
+      if (sp < STACK_SIZE) \
+      { \
+        dsp = (double*) (stack + sp); \
+        *dsp = (x); \
+        sp++; \
+      } \
+      else return ERROR_EXEC_STACK_OVERFLOW; \
+    } while(0)
+
+
 #define pop(x)  x = stack[--sp]
+
+
+#define pop_dbl(x)  x = *(double*) &stack[--sp]
+
+
+// The _rel() variants are used to push or pop at specific offsets from sp.
+// This is useful when you need have a stack with an integer that needs to be
+// converted to a double at stack[0] and a double at stack[1]. In this case
+// sp would be 2, so you can do:
+//
+// pop_rel(2, r1)
+// push_dbl_rel(2, r1)
+#define push_rel(offset, x) \
+    do { \
+      if (offset <= 0 || sp - offset < 0) return ERROR_EXEC_STACK_OVERFLOW; \
+      else stack[sp - offset] = (x); \
+    } while(0)
+
+
+#define push_dbl_rel(offset, x) \
+    do { \
+      if (offset <= 0 || sp - offset < 0) return ERROR_EXEC_STACK_OVERFLOW; \
+      else \
+      { \
+        dsp = (double *) ((stack + sp) - offset); \
+        *dsp = (x); \
+      } \
+    } while(0)
+
+#define pop_rel(offset, x) \
+    do { \
+      if (offset < 0 || sp - offset < 0) return ERROR_EXEC_STACK_OVERFLOW; \
+      else x = stack[sp - offset]; \
+    } while(0)
 
 
 #define little_endian_uint8_t(x)     (x)
@@ -112,8 +160,11 @@ int yr_execute_code(
   int64_t r1;
   int64_t r2;
   int64_t r3;
+  double dr1;
+  double dr2;
   int64_t mem[MEM_SIZE];
   int64_t stack[STACK_SIZE];
+  double* dsp = 0;
   int64_t args[MAX_FUNCTION_ARGS];
   int32_t sp = 0;
   uint8_t* ip = rules->code_start;
@@ -498,6 +549,10 @@ int yr_execute_code(
             push(((YR_OBJECT_INTEGER*) object)->value);
             break;
 
+          case OBJECT_TYPE_DOUBLE:
+            push_dbl(((YR_OBJECT_DOUBLE*) object)->value);
+            break;
+
           case OBJECT_TYPE_STRING:
             if (((YR_OBJECT_STRING*) object)->value != NULL)
               push(PTR_TO_UINT64(((YR_OBJECT_STRING*) object)->value));
@@ -858,6 +913,85 @@ int yr_execute_code(
           NULL);
 
         push(result >= 0);
+        break;
+
+      case OP_ITD:
+        r1 = *(uint64_t*)(ip + 1);
+        ip += sizeof(uint64_t);
+
+        pop_rel(r1, r2);
+
+        if (IS_UNDEFINED(r2))
+        {
+          push(UNDEFINED);
+        }
+        else
+        {
+          push_dbl_rel(r1, r2);
+        }
+        break;
+
+      // Double comparisons do not use push_dbl because the result is just
+      // an integer.
+      case OP_LTD:
+        pop_dbl(dr2);
+        pop_dbl(dr1);
+        push(COMPARISON(<, dr1, dr2));
+        break;
+
+      case OP_GTD:
+        pop_dbl(dr2);
+        pop_dbl(dr1);
+        push(COMPARISON(>, dr1, dr2));
+        break;
+
+      case OP_LED:
+        pop_dbl(dr2);
+        pop_dbl(dr1);
+        push(COMPARISON(<=, dr1, dr2));
+        break;
+
+      case OP_GED:
+        pop_dbl(dr2);
+        pop_dbl(dr1);
+        push(COMPARISON(>=, dr1, dr2));
+        break;
+
+      case OP_EQD:
+        pop_dbl(dr2);
+        pop_dbl(dr1);
+        push(COMPARISON(==, dr1, dr2));
+        break;
+
+      case OP_NEQD:
+        pop_dbl(dr2);
+        pop_dbl(dr1);
+        push(COMPARISON(!=, dr1, dr2));
+        break;
+
+      // Double operations do use push_dbl because the result is a double.
+      case OP_ADD_DBL:
+        pop_dbl(dr2);
+        pop_dbl(dr1);
+        push_dbl(OPERATION(+, dr1, dr2));
+        break;
+
+      case OP_SUB_DBL:
+        pop_dbl(dr2);
+        pop_dbl(dr1);
+        push_dbl(OPERATION(-, dr1, dr2));
+        break;
+
+      case OP_MUL_DBL:
+        pop_dbl(dr2);
+        pop_dbl(dr1);
+        push_dbl(OPERATION(*, dr1, dr2));
+        break;
+
+      case OP_DIV_DBL:
+        pop_dbl(dr2);
+        pop_dbl(dr1);
+        push_dbl(OPERATION(/, dr1, dr2));
         break;
 
       default:

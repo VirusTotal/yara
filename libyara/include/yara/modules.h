@@ -227,6 +227,9 @@ limitations under the License.
 #define integer_argument(n) \
     (((int64_t*) __args)[n-1])
 
+#define double_argument(n) \
+    (((double*) __args)[n-1])
+
 #define regexp_argument(n) \
     ((RE_CODE)((int64_t*) __args)[n-1])
 
@@ -254,6 +257,10 @@ limitations under the License.
     yr_object_get_integer(object, __VA_ARGS__)
 
 
+#define get_double(object, ...) \
+    yr_object_get_double(object, __VA_ARGS__)
+
+
 #define get_string(object, ...) \
     yr_object_get_string(object, __VA_ARGS__)
 
@@ -276,6 +283,18 @@ limitations under the License.
           "return type differs from function declaration"); \
       yr_object_set_integer( \
           (integer), \
+          __function_obj->return_obj, \
+          NULL); \
+      return ERROR_SUCCESS; \
+    }
+
+
+#define return_double(double_) { \
+      assertf( \
+          __function_obj->return_obj->type == OBJECT_TYPE_DOUBLE, \
+          "return type differs from function declaration"); \
+      yr_object_set_double( \
+          (double_), \
           __function_obj->return_obj, \
           NULL); \
       return ERROR_SUCCESS; \

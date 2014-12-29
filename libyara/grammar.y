@@ -46,6 +46,7 @@ limitations under the License.
 #define EXPRESSION_TYPE_STRING    3
 #define EXPRESSION_TYPE_REGEXP    4
 #define EXPRESSION_TYPE_OBJECT    5
+#define EXPRESSION_TYPE_DOUBLE    6
 
 
 #define ERROR_IF(x) \
@@ -56,14 +57,16 @@ limitations under the License.
     } \
 
 
-#define CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op, cleanup) \
-    if (expression.type != expected_type) \
-    { \
+#define CLEANUP(op, expression) \
       switch(expression.type) \
       { \
         case EXPRESSION_TYPE_INTEGER: \
           yr_compiler_set_error_extra_info( \
               compiler, "wrong type \"integer\" for " op " operator"); \
+          break; \
+        case EXPRESSION_TYPE_DOUBLE: \
+          yr_compiler_set_error_extra_info( \
+              compiler, "wrong type \"double\" for " op " operator"); \
           break; \
         case EXPRESSION_TYPE_STRING: \
           yr_compiler_set_error_extra_info( \
@@ -75,17 +78,52 @@ limitations under the License.
           break; \
       } \
       compiler->last_result = ERROR_WRONG_TYPE; \
-      cleanup; \
       yyerror(yyscanner, compiler, NULL); \
-      YYERROR; \
+      YYERROR;
+
+
+#define CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op) \
+    if (expression.type != expected_type) \
+    { \
+      CLEANUP(op, expression) \
     }
 
 
 #define CHECK_TYPE(expression, expected_type, op) \
-    CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op, ) \
+    CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op)
 
 
-#define MSG(op)  "wrong type \"string\" for \"" op "\" operator"
+// If the types do not match, handle casting from integer to double.
+#define DO_CASTS(left, right, op) \
+    if (left.type == EXPRESSION_TYPE_INTEGER && \
+        right.type == EXPRESSION_TYPE_DOUBLE) \
+    { \
+      compiler->last_result = yr_parser_emit_with_arg( \
+          yyscanner, \
+          OP_ITD, \
+          2, \
+          NULL); \
+      ERROR_IF(compiler->last_result != ERROR_SUCCESS); \
+    } \
+    else if (left.type == EXPRESSION_TYPE_DOUBLE && \
+             right.type == EXPRESSION_TYPE_INTEGER) \
+    { \
+      compiler->last_result = yr_parser_emit_with_arg( \
+          yyscanner, \
+          OP_ITD, \
+          1, \
+          NULL); \
+      ERROR_IF(compiler->last_result != ERROR_SUCCESS); \
+    } \
+    else \
+    { \
+      yr_compiler_set_error_extra_info( \
+          compiler, "mismatching types for " op " operator"); \
+      compiler->last_result = ERROR_WRONG_TYPE; \
+      yyerror(yyscanner, compiler, NULL); \
+      YYERROR; \
+    }
+
 
 %}
 
@@ -112,6 +150,7 @@ limitations under the License.
 %token <c_string> _STRING_OFFSET_
 %token <c_string> _STRING_IDENTIFIER_WITH_WILDCARD_
 %token <integer> _NUMBER_
+%token <double_> _DOUBLE_
 %token <integer> _INTEGER_FUNCTION_
 %token <sized_string> _TEXT_STRING_
 %token <sized_string> _HEX_STRING_
@@ -189,6 +228,7 @@ limitations under the License.
   SIZED_STRING*   sized_string;
   char*           c_string;
   int64_t         integer;
+  double          double_;
   YR_STRING*      string;
   YR_META*        meta;
 }
@@ -779,6 +819,9 @@ arguments_list
           case EXPRESSION_TYPE_INTEGER:
             strlcpy($$, "i", MAX_FUNCTION_ARGS);
             break;
+          case EXPRESSION_TYPE_DOUBLE:
+            strlcpy($$, "d", MAX_FUNCTION_ARGS);
+            break;
           case EXPRESSION_TYPE_BOOLEAN:
             strlcpy($$, "b", MAX_FUNCTION_ARGS);
             break;
@@ -804,6 +847,9 @@ arguments_list
           {
             case EXPRESSION_TYPE_INTEGER:
               strlcat($1, "i", MAX_FUNCTION_ARGS);
+              break;
+            case EXPRESSION_TYPE_DOUBLE:
+              strlcat($1, "d", MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_BOOLEAN:
               strlcat($1, "b", MAX_FUNCTION_ARGS);
@@ -1234,37 +1280,96 @@ expression
       }
     | primary_expression _LT_ primary_expression
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "<");
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "<");
+        if ($1.type != $3.type)
+        {
+          DO_CASTS($1, $3, "<");
+          compiler->last_result = yr_parser_emit(yyscanner, OP_LTD, NULL);
+        }
+        else if ($1.type == EXPRESSION_TYPE_INTEGER)
+        {
+          compiler->last_result = yr_parser_emit(yyscanner, OP_LT, NULL);
+        }
+        else if ($1.type == EXPRESSION_TYPE_DOUBLE)
+        {
+          compiler->last_result = yr_parser_emit(yyscanner, OP_LTD, NULL);
+        }
+        else
+        {
+          CLEANUP("<", $1);
+        }
 
-        yr_parser_emit(yyscanner, OP_LT, NULL);
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _GT_ primary_expression
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, ">");
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, ">");
+        if ($1.type != $3.type)
+        {
+          DO_CASTS($1, $3, ">");
+          compiler->last_result = yr_parser_emit(yyscanner, OP_GTD, NULL);
+        }
+        else if ($1.type == EXPRESSION_TYPE_INTEGER)
+        {
+          compiler->last_result = yr_parser_emit(yyscanner, OP_GT, NULL);
+        }
+        else if ($1.type == EXPRESSION_TYPE_DOUBLE)
+        {
+          compiler->last_result = yr_parser_emit(yyscanner, OP_GTD, NULL);
+        }
+        else
+        {
+          CLEANUP(">", $1);
+        }
 
-        yr_parser_emit(yyscanner, OP_GT, NULL);
-
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _LE_ primary_expression
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "<=");
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "<=");
+        if ($1.type != $3.type)
+        {
+          DO_CASTS($1, $3, "<=");
+          compiler->last_result = yr_parser_emit(yyscanner, OP_LED, NULL);
+        }
+        else if ($1.type == EXPRESSION_TYPE_INTEGER)
+        {
+          compiler->last_result = yr_parser_emit(yyscanner, OP_LE, NULL);
+        }
+        else if ($1.type == EXPRESSION_TYPE_DOUBLE)
+        {
+          compiler->last_result = yr_parser_emit(yyscanner, OP_LED, NULL);
+        }
+        else
+        {
+          CLEANUP("<=", $1);
+        }
 
-        yr_parser_emit(yyscanner, OP_LE, NULL);
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _GE_ primary_expression
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, ">=");
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, ">=");
+        if ($1.type != $3.type)
+        {
+          DO_CASTS($1, $3, ">=");
+          compiler->last_result = yr_parser_emit(yyscanner, OP_GED, NULL);
+        }
+        else if ($1.type == EXPRESSION_TYPE_INTEGER)
+        {
+          compiler->last_result = yr_parser_emit(yyscanner, OP_GE, NULL);
+        }
+        else if ($1.type == EXPRESSION_TYPE_DOUBLE)
+        {
+          compiler->last_result = yr_parser_emit(yyscanner, OP_GED, NULL);
+        }
+        else
+        {
+          CLEANUP(">=", $1);
+        }
 
-        yr_parser_emit(yyscanner, OP_GE, NULL);
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -1272,23 +1377,24 @@ expression
       {
         if ($1.type != $3.type)
         {
-          yr_compiler_set_error_extra_info(
-              compiler, "mismatching types for == operator");
-          compiler->last_result = ERROR_WRONG_TYPE;
+          DO_CASTS($1, $3, "==");
+          compiler->last_result = yr_parser_emit(yyscanner, OP_EQD, NULL);
         }
         else if ($1.type == EXPRESSION_TYPE_STRING)
         {
-          compiler->last_result = yr_parser_emit(
-              yyscanner,
-              OP_STR_EQ,
-              NULL);
+          compiler->last_result = yr_parser_emit(yyscanner, OP_STR_EQ, NULL);
+        }
+        else if ($1.type == EXPRESSION_TYPE_INTEGER)
+        {
+          compiler->last_result = yr_parser_emit(yyscanner, OP_EQ, NULL);
+        }
+        else if ($1.type == EXPRESSION_TYPE_DOUBLE)
+        {
+          compiler->last_result = yr_parser_emit(yyscanner, OP_EQD, NULL);
         }
         else
         {
-          compiler->last_result = yr_parser_emit(
-              yyscanner,
-              OP_EQ,
-              NULL);
+          CLEANUP("==", $1);
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -1326,23 +1432,24 @@ expression
       {
         if ($1.type != $3.type)
         {
-          yr_compiler_set_error_extra_info(
-              compiler, "mismatching types for != operator");
-          compiler->last_result = ERROR_WRONG_TYPE;
+          DO_CASTS($1, $3, "!=");
+          compiler->last_result = yr_parser_emit(yyscanner, OP_NEQD, NULL);
         }
         else if ($1.type == EXPRESSION_TYPE_STRING)
         {
-          compiler->last_result = yr_parser_emit(
-              yyscanner,
-              OP_STR_NEQ,
-              NULL);
+          compiler->last_result = yr_parser_emit(yyscanner, OP_STR_NEQ, NULL);
+        }
+        else if ($1.type == EXPRESSION_TYPE_INTEGER)
+        {
+          compiler->last_result = yr_parser_emit(yyscanner, OP_NEQ, NULL);
+        }
+        else if ($1.type == EXPRESSION_TYPE_DOUBLE)
+        {
+          compiler->last_result = yr_parser_emit(yyscanner, OP_NEQD, NULL);
         }
         else
         {
-          compiler->last_result = yr_parser_emit(
-              yyscanner,
-              OP_NEQ,
-              NULL);
+          CLEANUP("!=", $1);
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -1518,6 +1625,16 @@ primary_expression
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = $1;
       }
+    | _DOUBLE_
+      {
+        compiler->last_result = yr_parser_emit_with_arg_double(
+            yyscanner, OP_PUSH, $1, NULL);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+        $$.type = EXPRESSION_TYPE_DOUBLE;
+        $$.value.double_ = $1;
+      }
     | _TEXT_STRING_
       {
         SIZED_STRING* sized_string;
@@ -1616,6 +1733,10 @@ primary_expression
               $$.type = EXPRESSION_TYPE_INTEGER;
               $$.value.integer = UNDEFINED;
               break;
+            case OBJECT_TYPE_DOUBLE:
+              $$.type = EXPRESSION_TYPE_DOUBLE;
+              $$.value.double_ = UNDEFINED;
+              break;
             case OBJECT_TYPE_STRING:
               $$.type = EXPRESSION_TYPE_STRING;
               break;
@@ -1636,43 +1757,107 @@ primary_expression
       }
     | primary_expression '+' primary_expression
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "+");
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "+");
-
-        yr_parser_emit(yyscanner, OP_ADD, NULL);
-
-        $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = OPERATION(+, $1.value.integer, $3.value.integer);
+        if ($1.type != $3.type)
+        {
+          DO_CASTS($1, $3, "+");
+          yr_parser_emit(yyscanner, OP_ADD_DBL, NULL);
+          $$.type = EXPRESSION_TYPE_DOUBLE;
+          $$.value.double_ = OPERATION(+, $1.value.double_, $3.value.double_);
+        }
+        else if ($1.type == EXPRESSION_TYPE_INTEGER)
+        {
+          yr_parser_emit(yyscanner, OP_ADD, NULL);
+          $$.type = EXPRESSION_TYPE_INTEGER;
+          $$.value.integer = OPERATION(+, $1.value.integer, $3.value.integer);
+        }
+        else if ($1.type == EXPRESSION_TYPE_DOUBLE)
+        {
+          yr_parser_emit(yyscanner, OP_ADD_DBL, NULL);
+          $$.type = EXPRESSION_TYPE_DOUBLE;
+          $$.value.double_ = OPERATION(+, $1.value.double_, $3.value.double_);
+        }
+        else
+        {
+          CLEANUP("+", $1);
+        }
       }
     | primary_expression '-' primary_expression
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "-");
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "-");
-
-        yr_parser_emit(yyscanner, OP_SUB, NULL);
-
-        $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = OPERATION(-, $1.value.integer, $3.value.integer);
+        if ($1.type != $3.type)
+        {
+          DO_CASTS($1, $3, "-");
+          yr_parser_emit(yyscanner, OP_SUB_DBL, NULL);
+          $$.type = EXPRESSION_TYPE_DOUBLE;
+          $$.value.double_ = OPERATION(-, $1.value.double_, $3.value.double_);
+        }
+        else if ($1.type == EXPRESSION_TYPE_INTEGER)
+        {
+          yr_parser_emit(yyscanner, OP_SUB, NULL);
+          $$.type = EXPRESSION_TYPE_INTEGER;
+          $$.value.integer = OPERATION(-, $1.value.integer, $3.value.integer);
+        }
+        else if ($1.type == EXPRESSION_TYPE_DOUBLE)
+        {
+          yr_parser_emit(yyscanner, OP_SUB_DBL, NULL);
+          $$.type = EXPRESSION_TYPE_DOUBLE;
+          $$.value.double_ = OPERATION(-, $1.value.double_, $3.value.double_);
+        }
+        else
+        {
+          CLEANUP("-", $1);
+        }
       }
     | primary_expression '*' primary_expression
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "*");
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "*");
-
-        yr_parser_emit(yyscanner, OP_MUL, NULL);
-
-        $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = OPERATION(*, $1.value.integer, $3.value.integer);
+        if ($1.type != $3.type)
+        {
+          DO_CASTS($1, $3, "*");
+          yr_parser_emit(yyscanner, OP_MUL_DBL, NULL);
+          $$.type = EXPRESSION_TYPE_DOUBLE;
+          $$.value.double_ = OPERATION(*, $1.value.double_, $3.value.double_);
+        }
+        else if ($1.type == EXPRESSION_TYPE_INTEGER)
+        {
+          yr_parser_emit(yyscanner, OP_MUL, NULL);
+          $$.type = EXPRESSION_TYPE_INTEGER;
+          $$.value.integer = OPERATION(*, $1.value.integer, $3.value.integer);
+        }
+        else if ($1.type == EXPRESSION_TYPE_DOUBLE)
+        {
+          yr_parser_emit(yyscanner, OP_MUL_DBL, NULL);
+          $$.type = EXPRESSION_TYPE_DOUBLE;
+          $$.value.double_ = OPERATION(*, $1.value.double_, $3.value.double_);
+        }
+        else
+        {
+          CLEANUP("*", $1);
+        }
       }
     | primary_expression '\\' primary_expression
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_INTEGER, "\\");
-        CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "\\");
-
-        yr_parser_emit(yyscanner, OP_DIV, NULL);
-
-        $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = OPERATION(/, $1.value.integer, $3.value.integer);
+        if ($1.type != $3.type)
+        {
+          DO_CASTS($1, $3, "\\");
+          yr_parser_emit(yyscanner, OP_DIV_DBL, NULL);
+          $$.type = EXPRESSION_TYPE_DOUBLE;
+          $$.value.double_ = OPERATION(/, $1.value.double_, $3.value.double_);
+        }
+        else if ($1.type == EXPRESSION_TYPE_INTEGER)
+        {
+          yr_parser_emit(yyscanner, OP_DIV, NULL);
+          $$.type = EXPRESSION_TYPE_INTEGER;
+          $$.value.integer = OPERATION(*, $1.value.integer, $3.value.integer);
+        }
+        else if ($1.type == EXPRESSION_TYPE_DOUBLE)
+        {
+          yr_parser_emit(yyscanner, OP_DIV_DBL, NULL);
+          $$.type = EXPRESSION_TYPE_DOUBLE;
+          $$.value.double_ = OPERATION(/, $1.value.double_, $3.value.double_);
+        }
+        else
+        {
+          CLEANUP("\\", $1);
+        }
       }
     | primary_expression '%' primary_expression
       {

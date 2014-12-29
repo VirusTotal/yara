@@ -34,6 +34,13 @@ int yr_parser_emit_with_arg(
     int8_t** instruction_address);
 
 
+int yr_parser_emit_with_arg_double(
+    yyscan_t yyscanner,
+    int8_t instruction,
+    double argument,
+    int8_t** instruction_address);
+
+
 int yr_parser_emit_with_arg_reloc(
     yyscan_t yyscanner,
     int8_t instruction,

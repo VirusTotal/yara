@@ -57,6 +57,7 @@ typedef struct _EXPRESSION
 
   union {
     int64_t integer;
+    double double_;
     YR_OBJECT* object;
   } value;
 

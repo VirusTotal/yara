@@ -80,6 +80,17 @@ limitations under the License.
 #define OP_MATCHES        50
 #define OP_IMPORT         51
 #define OP_LOOKUP_DICT    52
+#define OP_ITD            53
+#define OP_LTD            54
+#define OP_GTD            55
+#define OP_LED            56
+#define OP_GED            57
+#define OP_EQD            58
+#define OP_NEQD           59
+#define OP_ADD_DBL        60
+#define OP_SUB_DBL        61
+#define OP_MUL_DBL        62
+#define OP_DIV_DBL        63
 
 
 #define OP_INT            100
