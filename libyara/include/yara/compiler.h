@@ -100,6 +100,13 @@ typedef struct _YR_COMPILER
         sizeof(compiler->last_error_extra_info)); \
 
 
+#define yr_compiler_set_error_extra_info_fmt(compiler, fmt, ...) \
+    snprintf( \
+        compiler->last_error_extra_info, \
+        sizeof(compiler->last_error_extra_info), \
+        fmt, __VA_ARGS__);
+        
+
 int _yr_compiler_push_file(
     YR_COMPILER* compiler,
     FILE* fh);

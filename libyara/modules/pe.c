@@ -582,7 +582,8 @@ void pe_parse_version_info(
         string = ADD_OFFSET(string, string->Length);
       }
 
-      if (string_table->Length == 0)
+      if (!struct_fits_in_pe(pe, string_table, VERSION_INFO) ||
+          string_table->Length == 0)
         break;
     }
   }

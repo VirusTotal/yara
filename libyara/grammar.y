@@ -1757,7 +1757,8 @@ primary_expression
     | _ENTRYPOINT_
       {
         yywarning(yyscanner,
-            "Using deprecated \"entrypoint\" keyword. Use the \"entry_point\" " "function from PE module instead.");
+            "Using deprecated \"entrypoint\" keyword. Use the \"entry_point\" "
+            "function from PE module instead.");
 
         compiler->last_result = yr_parser_emit(
             yyscanner, OP_ENTRYPOINT, NULL);
@@ -1909,13 +1910,16 @@ primary_expression
               $$.type = EXPRESSION_TYPE_STRING;
               break;
             default:
-              assert(FALSE);
+              yr_compiler_set_error_extra_info_fmt(
+                  compiler,
+                  "wrong usage of identifier \"%s\"",
+                  $1.identifier);
+              compiler->last_result = ERROR_WRONG_TYPE;
           }
         }
         else
         {
-          yr_compiler_set_error_extra_info(compiler, $1.identifier);
-          compiler->last_result = ERROR_WRONG_TYPE;
+          assert(FALSE);
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);

@@ -312,6 +312,15 @@ int _yr_parser_write_string(
       flags |= STRING_GFLAGS_LITERAL;
       free_literal = TRUE;
     }
+    else
+    {
+      // Non-literal strings can't be marked as fixed offset because once we
+      // find a string atom in the scanned data we don't know the offset where
+      // the string should start, as the non-literal strings can contain
+      // variable-length portions.
+
+      flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+    }
   }
   else
   {
