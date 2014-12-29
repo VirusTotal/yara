@@ -597,26 +597,48 @@ int pe_collect_resources(
     int rsrc_language,
     PE* pe)
 {
-    size_t offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
-    if (offset == 0 || !fits_in_pe(pe, offset, rsrc_data->Size))
-      return RESOURCE_CALLBACK_CONTINUE;
+  size_t offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
 
-    set_integer(rsrc_type, pe->object, "resources[%i].type", pe->resources);
-    set_integer(rsrc_id, pe->object, "resources[%i].id", pe->resources);
-    set_integer(
-        rsrc_language, pe->object, "resources[%i].language", pe->resources);
-    set_integer(
-        rsrc_data->Size, pe->object, "resources[%i].size", pe->resources);
-    set_sized_string(
-        (char*) (pe->data + offset), rsrc_data->Size, pe->object,
-        "resources[%i].data", pe->resources);
-
-    // Resources we do extra parsing on
-    if (rsrc_type == RESOURCE_TYPE_VERSION)
-        pe_parse_version_info(rsrc_data, pe);
-
-    pe->resources += 1;
+  if (offset == 0 || !fits_in_pe(pe, offset, rsrc_data->Size))
     return RESOURCE_CALLBACK_CONTINUE;
+
+  set_integer(
+        rsrc_type,
+        pe->object,
+        "resources[%i].type",
+        pe->resources);
+
+  set_integer(
+        rsrc_id,
+        pe->object,
+        "resources[%i].id",
+        pe->resources);
+
+  set_integer(
+        rsrc_language,
+        pe->object,
+        "resources[%i].language",
+        pe->resources);
+
+  set_integer(
+        rsrc_data->Size,
+        pe->object,
+        "resources[%i].size",
+        pe->resources);
+
+  set_sized_string(
+        (char*) (pe->data + offset),
+        rsrc_data->Size,
+        pe->object,
+        "resources[%i].data",
+        pe->resources);
+
+  // Resources we do extra parsing on
+  if (rsrc_type == RESOURCE_TYPE_VERSION)
+    pe_parse_version_info(rsrc_data, pe);
+
+  pe->resources += 1;
+  return RESOURCE_CALLBACK_CONTINUE;
 }
 
 
