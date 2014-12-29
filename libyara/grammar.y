@@ -57,7 +57,7 @@ limitations under the License.
     } \
 
 
-#define CLEANUP(op, expression) \
+#define TYPE_ERROR(op, expression) \
       switch(expression.type) \
       { \
         case EXPRESSION_TYPE_INTEGER: \
@@ -82,18 +82,15 @@ limitations under the License.
       YYERROR;
 
 
-#define CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op) \
+#define CHECK_TYPE(expression, expected_type, op) \
     if (expression.type != expected_type) \
     { \
-      CLEANUP(op, expression) \
+      TYPE_ERROR(op, expression) \
     }
 
 
-#define CHECK_TYPE(expression, expected_type, op) \
-    CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op)
-
-
 // If the types do not match, handle casting from integer to double.
+
 #define DO_CASTS(left, right, op) \
     if (left.type == EXPRESSION_TYPE_INTEGER && \
         right.type == EXPRESSION_TYPE_DOUBLE) \
@@ -1295,7 +1292,7 @@ expression
         }
         else
         {
-          CLEANUP("<", $1);
+          TYPE_ERROR("<", $1);
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -1319,10 +1316,11 @@ expression
         }
         else
         {
-          CLEANUP(">", $1);
+          TYPE_ERROR(">", $1);
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _LE_ primary_expression
@@ -1342,7 +1340,7 @@ expression
         }
         else
         {
-          CLEANUP("<=", $1);
+          TYPE_ERROR("<=", $1);
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -1366,7 +1364,7 @@ expression
         }
         else
         {
-          CLEANUP(">=", $1);
+          TYPE_ERROR(">=", $1);
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -1394,7 +1392,7 @@ expression
         }
         else
         {
-          CLEANUP("==", $1);
+          TYPE_ERROR("==", $1);
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -1415,6 +1413,10 @@ expression
               yyscanner,
               OP_STR_EQ,
               NULL);
+        }
+        else if ($1.type == EXPRESSION_TYPE_DOUBLE)
+        {
+          compiler->last_result = yr_parser_emit(yyscanner, OP_DBL_EQ, NULL);
         }
         else
         {
@@ -1449,7 +1451,7 @@ expression
         }
         else
         {
-          CLEANUP("!=", $1);
+          TYPE_ERROR("!=", $1);
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -1778,7 +1780,7 @@ primary_expression
         }
         else
         {
-          CLEANUP("+", $1);
+          TYPE_ERROR("+", $1);
         }
       }
     | primary_expression '-' primary_expression
@@ -1804,7 +1806,7 @@ primary_expression
         }
         else
         {
-          CLEANUP("-", $1);
+          TYPE_ERROR("-", $1);
         }
       }
     | primary_expression '*' primary_expression
@@ -1830,7 +1832,7 @@ primary_expression
         }
         else
         {
-          CLEANUP("*", $1);
+          TYPE_ERROR("*", $1);
         }
       }
     | primary_expression '\\' primary_expression
@@ -1856,7 +1858,7 @@ primary_expression
         }
         else
         {
-          CLEANUP("\\", $1);
+          TYPE_ERROR("\\", $1);
         }
       }
     | primary_expression '%' primary_expression

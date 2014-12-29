@@ -142,7 +142,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 226 "grammar.y"
+#line 223 "grammar.y"
 {
   EXPRESSION      expression;
   SIZED_STRING*   sized_string;
