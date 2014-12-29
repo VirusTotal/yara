@@ -915,7 +915,7 @@ int yr_execute_code(
         push(result >= 0);
         break;
 
-      case OP_ITD:
+      case OP_INT_TO_DBL:
         r1 = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
 
@@ -933,62 +933,63 @@ int yr_execute_code(
 
       // Double comparisons do not use push_dbl because the result is just
       // an integer.
-      case OP_LTD:
+
+      case OP_DBL_LT:
         pop_dbl(dr2);
         pop_dbl(dr1);
         push(COMPARISON(<, dr1, dr2));
         break;
 
-      case OP_GTD:
+      case OP_DBL_GT:
         pop_dbl(dr2);
         pop_dbl(dr1);
         push(COMPARISON(>, dr1, dr2));
         break;
 
-      case OP_LED:
+      case OP_DBL_LE:
         pop_dbl(dr2);
         pop_dbl(dr1);
         push(COMPARISON(<=, dr1, dr2));
         break;
 
-      case OP_GED:
+      case OP_DBL_GE:
         pop_dbl(dr2);
         pop_dbl(dr1);
         push(COMPARISON(>=, dr1, dr2));
         break;
 
-      case OP_EQD:
+      case OP_DBL_EQ:
         pop_dbl(dr2);
         pop_dbl(dr1);
         push(COMPARISON(==, dr1, dr2));
         break;
 
-      case OP_NEQD:
+      case OP_DBL_NEQ:
         pop_dbl(dr2);
         pop_dbl(dr1);
         push(COMPARISON(!=, dr1, dr2));
         break;
 
       // Double operations do use push_dbl because the result is a double.
-      case OP_ADD_DBL:
+      case OP_DBL_ADD:
         pop_dbl(dr2);
         pop_dbl(dr1);
         push_dbl(OPERATION(+, dr1, dr2));
         break;
 
-      case OP_SUB_DBL:
+      case OP_DBL_SUB:
         pop_dbl(dr2);
         pop_dbl(dr1);
         push_dbl(OPERATION(-, dr1, dr2));
         break;
 
-      case OP_MUL_DBL:
+      case OP_DBL_MUL:
         pop_dbl(dr2);
         pop_dbl(dr1);
         push_dbl(OPERATION(*, dr1, dr2));
         break;
 
-      case OP_DIV_DBL:
+      case OP_DBL_DIV:
         pop_dbl(dr2);
         pop_dbl(dr1);
         push_dbl(OPERATION(/, dr1, dr2));
