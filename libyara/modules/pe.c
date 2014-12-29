@@ -565,7 +565,8 @@ void pe_parse_version_info(
           string_table,
           string_table->Length);
 
-      while (string < string_table)
+      while (struct_fits_in_pe(pe, string, VERSION_INFO) &&
+             string < string_table)
       {
         char* string_value = (char*) ADD_OFFSET(
             string,
