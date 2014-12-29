@@ -554,7 +554,8 @@ int pe_find_version_info_cb(
             string_table,
             string_table->Length);
 
-        while (string < string_table)
+        while (struct_fits_in_pe(pe, string, VERSION_INFO) &&
+               string < string_table)
         {
           char* string_value = (char*) ADD_OFFSET(
               string,
@@ -571,7 +572,8 @@ int pe_find_version_info_cb(
           string = ADD_OFFSET(string, string->Length);
         }
 
-        if (string_table->Length == 0)
+        if (!struct_fits_in_pe(pe, string_table, VERSION_INFO) ||
+            string_table->Length == 0)
           break;
       }
     }
