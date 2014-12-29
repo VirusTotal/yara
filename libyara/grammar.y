@@ -88,31 +88,7 @@ limitations under the License.
     }
 
 #define CHECK_TYPE(expression, expected_type, op) \
-    CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op) \
-
-// Similar to CHECK_TYPE but does not fail. Used in combination with CLEANUP
-// to fail. This is because with the addition of double values we need to have
-// multiple conditionals.
-//
-// For example: When doing an addition we need to make sure that both types
-// are the same (both EXPRESSION_TYPE_INTEGER or EXPRESSION_TYPE_DOUBLE).
-// This is done by ensuring that $1 is either EXPRESSION_TYPE_INTEGER or
-// EXPRESSION_TYPE_DOUBLE, and that $3 type matches $1 type via
-// TYPE_INEQUALITY.
-#define CHECK_TYPE_NO_CLEANUP(expression, expected_type) \
-    (expression.type != expected_type)
-
-#define TYPE_INEQUALITY(expression_left, expression_right, op) \
-    if (expression_left.type != expression_right.type) \
-    { \
-      yr_compiler_set_error_extra_info( \
-          compiler, "type mismatch for " op " operator"); \
-      compiler->last_result = ERROR_WRONG_TYPE; \
-      yyerror(yyscanner, compiler, NULL); \
-      YYERROR; \
-    }
-
-#define MSG(op)  "wrong type \"string\" for \"" op "\" operator"
+    CHECK_TYPE_WITH_CLEANUP(expression, expected_type, op)
 
 %}
 
