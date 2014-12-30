@@ -604,6 +604,12 @@ int pe_collect_resources(
     return RESOURCE_CALLBACK_CONTINUE;
 
   set_integer(
+        offset,
+        pe->object,
+        "resources[%i].offset",
+        pe->resources);
+
+  set_integer(
         rsrc_type,
         pe->object,
         "resources[%i].type",
@@ -624,14 +630,7 @@ int pe_collect_resources(
   set_integer(
         rsrc_data->Size,
         pe->object,
-        "resources[%i].size",
-        pe->resources);
-
-  set_sized_string(
-        (char*) (pe->data + offset),
-        rsrc_data->Size,
-        pe->object,
-        "resources[%i].data",
+        "resources[%i].length",
         pe->resources);
 
   // Resources we do extra parsing on
@@ -1533,11 +1532,11 @@ begin_declarations;
   declare_integer("resource_major_version")
   declare_integer("resource_minor_version")
   begin_struct_array("resources");
+    declare_integer("offset")
     declare_integer("type")
     declare_integer("id")
     declare_integer("language")
-    declare_integer("size")
-    declare_string("data")
+    declare_integer("length")
   end_struct_array("resources");
   declare_integer("number_of_resources");
 
