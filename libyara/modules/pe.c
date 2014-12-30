@@ -633,13 +633,6 @@ int pe_collect_resources(
         "resources[%i].length",
         pe->resources);
 
-  set_sized_string(
-        (char*) (pe->data + offset),
-        rsrc_data->Size,
-        pe->object,
-        "resources[%i].data",
-        pe->resources);
-
   // Resources we do extra parsing on
   if (rsrc_type == RESOURCE_TYPE_VERSION)
     pe_parse_version_info(rsrc_data, pe);
@@ -1544,7 +1537,6 @@ begin_declarations;
     declare_integer("id")
     declare_integer("language")
     declare_integer("length")
-    declare_string("data")
   end_struct_array("resources");
   declare_integer("number_of_resources");
 
