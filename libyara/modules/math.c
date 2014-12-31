@@ -20,7 +20,7 @@ limitations under the License.
 #include <yara/modules.h>
 #include <yara/mem.h>
 
-#define MODULE_NAME entropy
+#define MODULE_NAME math
 
 
 define_function(string_entropy)
