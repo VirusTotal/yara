@@ -35,33 +35,25 @@ limitations under the License.
 #define STACK_SIZE 16384
 #define MEM_SIZE   MAX_LOOP_NESTING * LOOP_LOCAL_VARS
 
+union STACK_ITEM {
+  int64_t i;
+  double  d;
+};
 
 #define push(x)  \
     do { \
-      if (sp < STACK_SIZE) stack[sp++] = (x); \
+      if (sp < STACK_SIZE) stack[sp++].i = (x); \
       else return ERROR_EXEC_STACK_OVERFLOW; \
     } while(0)
 
-
-// Used when pushing a double to the stack, which looses precision when
-// using push().
 #define push_dbl(x)  \
     do { \
-      if (sp < STACK_SIZE) \
-      { \
-        dsp = (double*) (stack + sp); \
-        *dsp = (x); \
-        sp++; \
-      } \
+      if (sp < STACK_SIZE) stack[sp++].d = (x); \
       else return ERROR_EXEC_STACK_OVERFLOW; \
     } while(0)
 
-
-#define pop(x)  x = stack[--sp]
-
-
-#define pop_dbl(x)  x = *(double*) &stack[--sp]
-
+#define pop(x)  x = stack[--sp].i
+#define pop_dbl(x)  x = stack[--sp].d
 
 // The _rel() variants are used to push or pop at specific offsets from sp.
 // This is useful when you need have a stack with an integer that needs to be
@@ -70,27 +62,18 @@ limitations under the License.
 //
 // pop_rel(2, r1)
 // push_dbl_rel(2, r1)
-#define push_rel(offset, x) \
-    do { \
-      if (offset <= 0 || sp - offset < 0) return ERROR_EXEC_STACK_OVERFLOW; \
-      else stack[sp - offset] = (x); \
-    } while(0)
-
 
 #define push_dbl_rel(offset, x) \
     do { \
       if (offset <= 0 || sp - offset < 0) return ERROR_EXEC_STACK_OVERFLOW; \
-      else \
-      { \
-        dsp = (double *) ((stack + sp) - offset); \
-        *dsp = (x); \
-      } \
+      else stack[sp - offset].d = (x); \
     } while(0)
+
 
 #define pop_rel(offset, x) \
     do { \
       if (offset < 0 || sp - offset < 0) return ERROR_EXEC_STACK_OVERFLOW; \
-      else x = stack[sp - offset]; \
+      else x = stack[sp - offset].i; \
     } while(0)
 
 
@@ -171,11 +154,11 @@ int yr_execute_code(
   double dr1;
   double dr2;
   int64_t mem[MEM_SIZE];
-  int64_t stack[STACK_SIZE];
-  double* dsp = 0;
   int64_t args[MAX_FUNCTION_ARGS];
   int32_t sp = 0;
   uint8_t* ip = rules->code_start;
+
+  union STACK_ITEM stack[STACK_SIZE];
 
   YR_RULE* rule;
   YR_STRING* string;
