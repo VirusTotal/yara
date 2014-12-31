@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013. The YARA Authors. All Rights Reserved.
+Copyright (c) 2013-2014. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -111,7 +111,11 @@ limitations under the License.
 #define OP_STR_BEGIN      140
 #define OP_STR_EQ         (OP_STR_BEGIN + _OP_EQ)
 #define OP_STR_NEQ        (OP_STR_BEGIN + _OP_NEQ)
-#define OP_STR_END        OP_STR_NEQ
+#define OP_STR_LT         (OP_STR_BEGIN + _OP_LT)
+#define OP_STR_GT         (OP_STR_BEGIN + _OP_GT)
+#define OP_STR_LE         (OP_STR_BEGIN + _OP_LE)
+#define OP_STR_GE         (OP_STR_BEGIN + _OP_GE)
+#define OP_STR_END        OP_STR_GE
 
 #define IS_INT_OP(x)      ((x) >= OP_INT_BEGIN && (x) <= OP_INT_END)
 #define IS_DBL_OP(x)      ((x) >= OP_DBL_BEGIN && (x) <= OP_DBL_END)

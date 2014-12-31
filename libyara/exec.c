@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013. The YARA Authors. All Rights Reserved.
+Copyright (c) 2013-2014. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -909,29 +909,12 @@ int yr_execute_code(
         break;
 
       case OP_STR_EQ:
-        pop(r2);
-        pop(r1);
-
-        break_if_undefined(r1);
-        break_if_undefined(r2);
-
-        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
-        sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2);
-
-        if (sized_str_1->length == sized_str_2->length)
-        {
-          push(memcmp(sized_str_1->c_string,
-                      sized_str_2->c_string,
-                      sized_str_2->length) == 0);
-        }
-        else
-        {
-          push(FALSE);
-        }
-
-        break;
-
       case OP_STR_NEQ:
+      case OP_STR_LT:
+      case OP_STR_LE:
+      case OP_STR_GT:
+      case OP_STR_GE:
+
         pop(r2);
         pop(r1);
 
@@ -941,15 +924,28 @@ int yr_execute_code(
         sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
         sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2);
 
-        if (sized_str_1->length == sized_str_2->length)
+        int r = sized_string_cmp(sized_str_1, sized_str_2);
+
+        switch(*ip)
         {
-          push(memcmp(sized_str_1->c_string,
-                      sized_str_2->c_string,
-                      sized_str_2->length) != 0);
-        }
-        else
-        {
-          push(TRUE);
+          case OP_STR_EQ:
+            push(r == 0);
+            break;
+          case OP_STR_NEQ:
+            push(r != 0);
+            break;
+          case OP_STR_LT:
+            push(r < 0);
+            break;
+          case OP_STR_LE:
+            push(r <= 0);
+            break;
+          case OP_STR_GT:
+            push(r > 0);
+            break;
+          case OP_STR_GE:
+            push(r >= 0);
+            break;
         }
 
         break;

@@ -94,8 +94,8 @@ libyara_la_SOURCES = \
   re_lexer.l \
   rules.c \
   scan.c \
+  sizedstr.c \
   sizedstr.h \
   strutils.c \
+  strutils.h \
   utils.h
-
-
