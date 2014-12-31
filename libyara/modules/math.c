@@ -140,10 +140,111 @@ define_function(data_entropy)
 }
 
 
+define_function(string_arithmetic_mean)
+{
+  int i;
+  double sum = 0.0;
+  SIZED_STRING* s = sized_string_argument(1);
+
+  if (IS_UNDEFINED(s))
+    return_double(UNDEFINED);
+
+  for (i = 0; i < s->length; i++)
+    sum += (double) s->c_string[i];
+
+  return_double(sum / (double) s->length);
+}
+
+
+define_function(data_arithmetic_mean)
+{
+  int i;
+  double sum = 0.0;
+  bool past_first_block = false;
+  uint64_t total_len = 0;
+
+  int64_t offset = integer_argument(1);
+  int64_t length = integer_argument(2);
+
+  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
+    return_double(UNDEFINED);
+
+  YR_SCAN_CONTEXT* context = scan_context();
+  YR_MEMORY_BLOCK* block = NULL;
+
+  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  {
+    return ERROR_WRONG_ARGUMENTS;
+  }
+
+  foreach_memory_block(context, block)
+  {
+    if (offset >= block->base &&
+        offset < block->base + block->size)
+    {
+      uint64_t data_offset = offset - block->base;
+      uint64_t data_len = min(length, block->size - data_offset);
+      total_len += data_len;
+
+      offset += data_len;
+      length -= data_len;
+
+      for (i = 0; i < data_len; i++)
+        sum += (double) *(block->data + data_offset + i);
+
+      past_first_block = true;
+    }
+    else if (past_first_block)
+    {
+      // If offset is not within current block and we already
+      // past the first block then the we are trying to compute
+      // the checksum over a range of non contiguos blocks. As
+      // range contains gaps of undefined data the checksum is
+      // undefined.
+      return_double(UNDEFINED);
+    }
+
+    if (block->base + block->size > offset + length)
+      break;
+  }
+
+  if (!past_first_block)
+    return_double(UNDEFINED);
+
+  return_double(sum / (double) total_len);
+}
+
+
+define_function(absolute_integer)
+{
+  int64_t x = integer_argument(1);
+
+  if (IS_UNDEFINED(x))
+    return_integer(UNDEFINED);
+
+  return_integer(abs(x));
+}
+
+
+define_function(absolute_double)
+{
+  double x = double_argument(1);
+
+  if (IS_UNDEFINED(x))
+    return_double(UNDEFINED);
+
+  return_double(fabs(x));
+}
+
+
 begin_declarations;
 
+  declare_function("arithmetic_mean", "ii", "d", data_arithmetic_mean);
+  declare_function("arithmetic_mean", "s", "d", string_arithmetic_mean);
   declare_function("entropy", "ii", "d", data_entropy);
   declare_function("entropy", "s", "d", string_entropy);
+  declare_function("abs", "i", "i", absolute_integer);
+  declare_function("fabs", "d", "d", absolute_double);
 
 end_declarations;
 
