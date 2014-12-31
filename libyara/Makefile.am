@@ -2,7 +2,7 @@
 MODULES =  modules/tests.c
 MODULES += modules/pe.c
 MODULES += modules/elf.c
-MODULES += modules/entropy.c
+MODULES += modules/math.c
 
 if CUCKOO
 MODULES += modules/cuckoo.c

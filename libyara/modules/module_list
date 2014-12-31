@@ -1,7 +1,7 @@
 MODULE(tests)
 MODULE(pe)
 MODULE(elf)
-MODULE(entropy)
+MODULE(math)
 
 #ifdef CUCKOO
 MODULE(cuckoo)
