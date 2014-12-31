@@ -1006,7 +1006,7 @@ int _yr_parser_operator_to_opcode(
   }
   else if (op[0] == '*')
   {
-    opcode += _OP_SUB;
+    opcode += _OP_MUL;
   }
   else if (op[0] == '\\')
   {
