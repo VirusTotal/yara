@@ -128,7 +128,7 @@ limitations under the License.
 %left _OR_
 %left _AND_
 %left '&' '|' '^'
-%left _LT_ _LE_ _GT_ _GE_ _EQ_ _NEQ_ _IS_
+%left _LT_ _LE_ _GT_ _GE_ _EQ_ _NEQ_
 %left _SHIFT_LEFT_ _SHIFT_RIGHT_
 %left '+' '-'
 %left '*' '\\' '%'
@@ -1265,15 +1265,6 @@ expression
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | primary_expression _EQ_ primary_expression
-      {
-        compiler->last_result = yr_parser_reduce_operation(
-            yyscanner, "==", $1, $3);
-
-        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-
-        $$.type = EXPRESSION_TYPE_BOOLEAN;
-      }
-    | primary_expression _IS_ primary_expression
       {
         compiler->last_result = yr_parser_reduce_operation(
             yyscanner, "==", $1, $3);
