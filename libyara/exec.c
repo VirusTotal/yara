@@ -94,6 +94,14 @@ limitations under the License.
     } while(0)
 
 
+#define break_if_undefined(x) \
+    if (IS_UNDEFINED(x)) \
+    { \
+      push(UNDEFINED); \
+      break; \
+    }
+
+
 #define little_endian_uint8_t(x)     (x)
 #define little_endian_uint16_t(x)    (x)
 #define little_endian_uint32_t(x)    (x)
@@ -248,17 +256,17 @@ int yr_execute_code(
         r1 = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         pop(r2);
-        if (r2 != UNDEFINED)
-          push(r2);
-        else
+        if (IS_UNDEFINED(r2))
           push(mem[r1]);
+        else
+          push(r2);
         break;
 
       case OP_JNUNDEF:
         pop(r1);
         push(r1);
 
-        if (r1 != UNDEFINED)
+        if (!IS_UNDEFINED(r1))
         {
           ip = *(uint8_t**)(ip + 1);
           // ip will be incremented at the end of the loop,
@@ -316,128 +324,6 @@ int yr_execute_code(
           push(UNDEFINED);
         else
           push(!r1);
-        break;
-
-      case OP_INT_LT:
-        pop(r2);
-        pop(r1);
-        push(COMPARISON(<, r1, r2));
-        break;
-
-      case OP_INT_GT:
-        pop(r2);
-        pop(r1);
-        push(COMPARISON(>, r1, r2));
-        break;
-
-      case OP_INT_LE:
-        pop(r2);
-        pop(r1);
-        push(COMPARISON(<=, r1, r2));
-        break;
-
-      case OP_INT_GE:
-        pop(r2);
-        pop(r1);
-        push(COMPARISON(>=, r1, r2));
-        break;
-
-      case OP_INT_EQ:
-        pop(r2);
-        pop(r1);
-        push(COMPARISON(==, r1, r2));
-        break;
-
-      case OP_INT_NEQ:
-        pop(r2);
-        pop(r1);
-        push(COMPARISON(!=, r1, r2));
-        break;
-
-      case OP_STR_EQ:
-        pop(r2);
-        pop(r1);
-
-        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
-        {
-          push(UNDEFINED);
-        }
-        else
-        {
-          sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
-          sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2);
-
-          if (sized_str_1->length == sized_str_2->length)
-          {
-            push(memcmp(sized_str_1->c_string,
-                        sized_str_2->c_string,
-                        sized_str_2->length) == 0);
-          }
-          else
-          {
-            push(FALSE);
-          }
-        }
-        break;
-
-      case OP_STR_NEQ:
-        pop(r2);
-        pop(r1);
-
-        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
-        {
-          push(UNDEFINED);
-        }
-        else
-        {
-          sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
-          sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2);
-
-          if (sized_str_1->length == sized_str_2->length)
-          {
-            push(memcmp(sized_str_1->c_string,
-                        sized_str_2->c_string,
-                        sized_str_2->length) != 0);
-          }
-          else
-          {
-            push(TRUE);
-          }
-        }
-        break;
-
-      case OP_STR_TO_BOOL:
-        pop(r1);
-
-        if (IS_UNDEFINED(r1))
-          push(UNDEFINED);
-        else
-          push(UINT64_TO_PTR(SIZED_STRING*, r1)->length > 0);
-
-        break;
-
-      case OP_INT_ADD:
-        pop(r2);
-        pop(r1);
-        push(OPERATION(+, r1, r2));
-        break;
-
-      case OP_INT_SUB:
-        pop(r2);
-        pop(r1);
-        push(OPERATION(-, r1, r2));
-        break;
-
-      case OP_INT_MUL:
-        pop(r2);
-        pop(r1);
-        push(OPERATION(*, r1, r2));
-        break;
-
-      case OP_INT_DIV:
-        pop(r2);
-        pop(r1);
-        push(OPERATION(/, r1, r2));
         break;
 
       case OP_MOD:
@@ -515,31 +401,23 @@ int yr_execute_code(
         break;
 
       case OP_OBJ_FIELD:
-        pop(r1);
-
         identifier = *(char**)(ip + 1);
         ip += sizeof(uint64_t);
 
-        if (IS_UNDEFINED(r1))
-        {
-          push(UNDEFINED);
-          break;
-        }
+        pop(r1);
+        break_if_undefined(r1);
 
         object = UINT64_TO_PTR(YR_OBJECT*, r1);
         object = yr_object_lookup_field(object, identifier);
+
         assert(object != NULL);
         push(PTR_TO_UINT64(object));
+
         break;
 
       case OP_OBJ_VALUE:
         pop(r1);
-
-        if (IS_UNDEFINED(r1))
-        {
-          push(UNDEFINED);
-          break;
-        }
+        break_if_undefined(r1);
 
         object = UINT64_TO_PTR(YR_OBJECT*, r1);
 
@@ -570,11 +448,7 @@ int yr_execute_code(
         pop(r1);  // index
         pop(r2);  // array
 
-        if (IS_UNDEFINED(r1))
-        {
-          push(UNDEFINED);
-          break;
-        }
+        break_if_undefined(r1);
 
         object = UINT64_TO_PTR(YR_OBJECT*, r2);
         assert(object->type == OBJECT_TYPE_ARRAY);
@@ -591,11 +465,7 @@ int yr_execute_code(
         pop(r1);  // key
         pop(r2);  // dictionary
 
-        if (IS_UNDEFINED(r1))
-        {
-          push(UNDEFINED);
-          break;
-        }
+        break_if_undefined(r1);
 
         object = UINT64_TO_PTR(YR_OBJECT*, r2);
         assert(object->type == OBJECT_TYPE_DICTIONARY);
@@ -625,12 +495,7 @@ int yr_execute_code(
         }
 
         pop(r2);
-
-        if (IS_UNDEFINED(r2))
-        {
-          push(UNDEFINED);
-          break;
-        }
+        break_if_undefined(r2);
 
         function = UINT64_TO_PTR(YR_OBJECT_FUNCTION*, r2);
         result = ERROR_INTERNAL_FATAL_ERROR;
@@ -705,11 +570,8 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
-        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
-        {
-          push(UNDEFINED);
-          break;
-        }
+        break_if_undefined(r1);
+        break_if_undefined(r2);
 
         string = UINT64_TO_PTR(YR_STRING*, r3);
         match = string->matches[tidx].head;
@@ -744,12 +606,7 @@ int yr_execute_code(
       case OP_OFFSET:
         pop(r2);
         pop(r1);
-
-        if (IS_UNDEFINED(r1))
-        {
-          push(UNDEFINED);
-          break;
-        }
+        break_if_undefined(r1);
 
         string = UINT64_TO_PTR(YR_STRING*, r2);
         match = string->matches[tidx].head;
@@ -778,7 +635,7 @@ int yr_execute_code(
         count = 0;
         pop(r1);
 
-        while (r1 != UNDEFINED)
+        while (!IS_UNDEFINED(r1))
         {
           string = UINT64_TO_PTR(YR_STRING*, r1);
           if (string->matches[tidx].tail != NULL)
@@ -789,10 +646,10 @@ int yr_execute_code(
 
         pop(r2);
 
-        if (r2 != UNDEFINED)
-          push(found >= r2 ? 1 : 0);
-        else
+        if (IS_UNDEFINED(r2))
           push(found >= count ? 1 : 0);
+        else
+          push(found >= r2 ? 1 : 0);
 
         break;
 
@@ -868,18 +725,14 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
-        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
-        {
-          push(UNDEFINED);
-        }
-        else
-        {
-          sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
-          sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2);
+        break_if_undefined(r1);
+        break_if_undefined(r2);
 
-          push(memmem(sized_str_1->c_string, sized_str_1->length,
-                      sized_str_2->c_string, sized_str_2->length) != NULL);
-        }
+        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
+        sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2);
+
+        push(memmem(sized_str_1->c_string, sized_str_1->length,
+                    sized_str_2->c_string, sized_str_2->length) != NULL);
         break;
 
       case OP_IMPORT:
@@ -920,15 +773,74 @@ int yr_execute_code(
         ip += sizeof(uint64_t);
 
         pop_rel(r1, r2);
+        break_if_undefined(r2);
+        push_dbl_rel(r1, r2);
+        break;
 
-        if (IS_UNDEFINED(r2))
-        {
-          push(UNDEFINED);
-        }
-        else
-        {
-          push_dbl_rel(r1, r2);
-        }
+      case OP_STR_TO_BOOL:
+        pop(r1);
+        break_if_undefined(r1);
+        push(UINT64_TO_PTR(SIZED_STRING*, r1)->length > 0);
+        break;
+
+      case OP_INT_EQ:
+        pop(r2);
+        pop(r1);
+        push(COMPARISON(==, r1, r2));
+        break;
+
+      case OP_INT_NEQ:
+        pop(r2);
+        pop(r1);
+        push(COMPARISON(!=, r1, r2));
+        break;
+
+      case OP_INT_LT:
+        pop(r2);
+        pop(r1);
+        push(COMPARISON(<, r1, r2));
+        break;
+
+      case OP_INT_GT:
+        pop(r2);
+        pop(r1);
+        push(COMPARISON(>, r1, r2));
+        break;
+
+      case OP_INT_LE:
+        pop(r2);
+        pop(r1);
+        push(COMPARISON(<=, r1, r2));
+        break;
+
+      case OP_INT_GE:
+        pop(r2);
+        pop(r1);
+        push(COMPARISON(>=, r1, r2));
+        break;
+
+      case OP_INT_ADD:
+        pop(r2);
+        pop(r1);
+        push(OPERATION(+, r1, r2));
+        break;
+
+      case OP_INT_SUB:
+        pop(r2);
+        pop(r1);
+        push(OPERATION(-, r1, r2));
+        break;
+
+      case OP_INT_MUL:
+        pop(r2);
+        pop(r1);
+        push(OPERATION(*, r1, r2));
+        break;
+
+      case OP_INT_DIV:
+        pop(r2);
+        pop(r1);
+        push(OPERATION(/, r1, r2));
         break;
 
       // Double comparisons do not use push_dbl because the result is just
@@ -971,6 +883,7 @@ int yr_execute_code(
         break;
 
       // Double operations do use push_dbl because the result is a double.
+
       case OP_DBL_ADD:
         pop_dbl(dr2);
         pop_dbl(dr1);
@@ -993,6 +906,52 @@ int yr_execute_code(
         pop_dbl(dr2);
         pop_dbl(dr1);
         push_dbl(OPERATION(/, dr1, dr2));
+        break;
+
+      case OP_STR_EQ:
+        pop(r2);
+        pop(r1);
+
+        break_if_undefined(r1);
+        break_if_undefined(r2);
+
+        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
+        sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2);
+
+        if (sized_str_1->length == sized_str_2->length)
+        {
+          push(memcmp(sized_str_1->c_string,
+                      sized_str_2->c_string,
+                      sized_str_2->length) == 0);
+        }
+        else
+        {
+          push(FALSE);
+        }
+
+        break;
+
+      case OP_STR_NEQ:
+        pop(r2);
+        pop(r1);
+
+        break_if_undefined(r1);
+        break_if_undefined(r2);
+
+        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
+        sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2);
+
+        if (sized_str_1->length == sized_str_2->length)
+        {
+          push(memcmp(sized_str_1->c_string,
+                      sized_str_2->c_string,
+                      sized_str_2->length) != 0);
+        }
+        else
+        {
+          push(TRUE);
+        }
+
         break;
 
       default:
