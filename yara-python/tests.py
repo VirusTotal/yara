@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007-2013. The YARA Authors. All Rights Reserved.
+# Copyright (c) 2007-2014. The YARA Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -291,19 +291,42 @@ class TestYara(unittest.TestCase):
             'rule test { condition: 1 < 2 }',
             'rule test { condition: 2 >= 1 }',
             'rule test { condition: 1 <= 1 }',
-            'rule test { condition: 1 == 1 }'
+            'rule test { condition: 1 == 1 }',
+            'rule test { condition: 1.5 == 1.5}',
+            'rule test { condition: 1.0 == 1}',
+            'rule test { condition: 1.5 >= 1.0}',
+            'rule test { condition: 1.5 >= 1}',
+            'rule test { condition: 1.0 >= 1}',
+            'rule test { condition: 0.5 < 1}',
+            'rule test { condition: 0.5 <= 1}',
+            'rule rest { condition: 1.0 <= 1}',
+            'rule rest { condition: "abc" == "abc"}',
+            'rule rest { condition: "abc" <= "abc"}',
+            'rule rest { condition: "abc" >= "abc"}',
+            'rule rest { condition: "ab" < "abc"}',
+            'rule rest { condition: "abc" > "ab"}',
+            'rule rest { condition: "abc" < "abd"}',
+            'rule rest { condition: "abd" > "abc"}',
         ])
 
         self.assertFalseRules([
             'rule test { condition: 1 != 1}',
+            'rule test { condition: 1 != 1.0}',
             'rule test { condition: 2 > 3}',
+            'rule test { condition: 2.1 < 2}',
+            'rule test { condition: "abc" != "abc"}',
+            'rule test { condition: "abc" > "abc"}',
+            'rule test { condition: "abc" < "abc"}',
         ])
 
     def testArithmeticOperators(self):
 
         self.assertTrueRules([
             'rule test { condition: (1 + 1) * 2 == (9 - 1) \ 2 }',
-            'rule test { condition: 5 % 2 == 1 }'
+            'rule test { condition: 5 % 2 == 1 }',
+            'rule test { condition: 1.5 + 1.5 == 3}',
+            'rule test { condition: 3 \ 2 == 1}',
+            'rule test { condition: 3.0 \ 2 == 1.5}'
         ])
 
     def testBitwiseOperators(self):
