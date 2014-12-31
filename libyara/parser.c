@@ -952,3 +952,143 @@ int yr_parser_reduce_import(
 
   return compiler->last_result;
 }
+
+
+int _yr_parser_operator_to_opcode(
+    const char* op,
+    int expression_type)
+{
+  int opcode;
+
+  switch(expression_type)
+  {
+    case EXPRESSION_TYPE_INTEGER:
+      opcode = OP_INT_BEGIN;
+      break;
+    case EXPRESSION_TYPE_DOUBLE:
+      opcode = OP_DBL_BEGIN;
+      break;
+    case EXPRESSION_TYPE_STRING:
+      opcode = OP_STR_BEGIN;
+      break;
+    default:
+      assert(FALSE);
+  }
+
+  if (op[0] == '<')
+  {
+    if (op[1] == '=')
+      opcode += _OP_LE;
+    else
+      opcode += _OP_LT;
+  }
+  else if (op[0] == '>')
+  {
+    if (op[1] == '=')
+      opcode += _OP_GE;
+    else
+      opcode += _OP_GT;
+  }
+  else if (op[1] == '=')
+  {
+    if (op[0] == '=')
+      opcode += _OP_EQ;
+    else
+      opcode += _OP_NEQ;
+  }
+  else if (op[0] == '+')
+  {
+    opcode += _OP_ADD;
+  }
+  else if (op[0] == '-')
+  {
+    opcode += _OP_SUB;
+  }
+  else if (op[0] == '*')
+  {
+    opcode += _OP_SUB;
+  }
+  else if (op[0] == '\\')
+  {
+    opcode += _OP_DIV;
+  }
+
+  if (IS_INT_OP(opcode) || IS_DBL_OP(opcode) || IS_STR_OP(opcode))
+  {
+    return opcode;
+  }
+
+  return OP_ERROR;
+}
+
+
+int yr_parser_reduce_operation(
+    yyscan_t yyscanner,
+    const char* op,
+    EXPRESSION left_operand,
+    EXPRESSION right_operand)
+{
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
+
+  if ((left_operand.type == EXPRESSION_TYPE_INTEGER ||
+       left_operand.type == EXPRESSION_TYPE_DOUBLE) &&
+      (right_operand.type == EXPRESSION_TYPE_INTEGER ||
+       right_operand.type == EXPRESSION_TYPE_DOUBLE))
+  {
+    if (left_operand.type != right_operand.type)
+    {
+      // One operand is double and the other is integer,
+      // cast the integer to double
+
+      compiler->last_result = yr_parser_emit_with_arg(
+          yyscanner,
+          OP_INT_TO_DBL,
+          (left_operand.type == EXPRESSION_TYPE_INTEGER) ? 2 : 1,
+          NULL);
+    }
+
+    if (compiler->last_result == ERROR_SUCCESS)
+    {
+      int expression_type = EXPRESSION_TYPE_DOUBLE;
+
+      if (left_operand.type == EXPRESSION_TYPE_INTEGER &&
+          right_operand.type == EXPRESSION_TYPE_INTEGER)
+      {
+        expression_type = EXPRESSION_TYPE_INTEGER;
+      }
+
+      compiler->last_result = yr_parser_emit(
+          yyscanner,
+          _yr_parser_operator_to_opcode(op, expression_type),
+          NULL);
+    }
+
+  }
+  else if (left_operand.type == EXPRESSION_TYPE_STRING &&
+           right_operand.type == EXPRESSION_TYPE_STRING)
+  {
+    int opcode = _yr_parser_operator_to_opcode(op, EXPRESSION_TYPE_STRING);
+
+    if (opcode != OP_ERROR)
+    {
+      compiler->last_result = yr_parser_emit(
+          yyscanner,
+          opcode,
+          NULL);
+    }
+    else
+    {
+      yr_compiler_set_error_extra_info_fmt(
+          compiler, "strings don't support \"%s\" operation", op);
+
+      compiler->last_result = ERROR_WRONG_TYPE;
+    }
+  }
+  else
+  {
+    yr_compiler_set_error_extra_info(compiler, "type mismatch");
+    compiler->last_result = ERROR_WRONG_TYPE;
+  }
+
+  return compiler->last_result;
+}

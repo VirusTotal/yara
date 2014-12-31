@@ -318,37 +318,37 @@ int yr_execute_code(
           push(!r1);
         break;
 
-      case OP_LT:
+      case OP_INT_LT:
         pop(r2);
         pop(r1);
         push(COMPARISON(<, r1, r2));
         break;
 
-      case OP_GT:
+      case OP_INT_GT:
         pop(r2);
         pop(r1);
         push(COMPARISON(>, r1, r2));
         break;
 
-      case OP_LE:
+      case OP_INT_LE:
         pop(r2);
         pop(r1);
         push(COMPARISON(<=, r1, r2));
         break;
 
-      case OP_GE:
+      case OP_INT_GE:
         pop(r2);
         pop(r1);
         push(COMPARISON(>=, r1, r2));
         break;
 
-      case OP_EQ:
+      case OP_INT_EQ:
         pop(r2);
         pop(r1);
         push(COMPARISON(==, r1, r2));
         break;
 
-      case OP_NEQ:
+      case OP_INT_NEQ:
         pop(r2);
         pop(r1);
         push(COMPARISON(!=, r1, r2));
@@ -416,25 +416,25 @@ int yr_execute_code(
 
         break;
 
-      case OP_ADD:
+      case OP_INT_ADD:
         pop(r2);
         pop(r1);
         push(OPERATION(+, r1, r2));
         break;
 
-      case OP_SUB:
+      case OP_INT_SUB:
         pop(r2);
         pop(r1);
         push(OPERATION(-, r1, r2));
         break;
 
-      case OP_MUL:
+      case OP_INT_MUL:
         pop(r2);
         pop(r1);
         push(OPERATION(*, r1, r2));
         break;
 
-      case OP_DIV:
+      case OP_INT_DIV:
         pop(r2);
         pop(r1);
         push(OPERATION(/, r1, r2));

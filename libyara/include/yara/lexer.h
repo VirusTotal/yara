@@ -51,13 +51,19 @@ typedef void* yyscan_t;
 #ifndef YY_TYPEDEF_EXPRESSION_T
 #define YY_TYPEDEF_EXPRESSION_T
 
+#define EXPRESSION_TYPE_BOOLEAN   1
+#define EXPRESSION_TYPE_INTEGER   2
+#define EXPRESSION_TYPE_STRING    3
+#define EXPRESSION_TYPE_REGEXP    4
+#define EXPRESSION_TYPE_OBJECT    5
+#define EXPRESSION_TYPE_DOUBLE    6
+
 typedef struct _EXPRESSION
 {
   int type;
 
   union {
     int64_t integer;
-    double double_;
     YR_OBJECT* object;
   } value;
 
