@@ -237,10 +237,127 @@ define_function(absolute_double)
 }
 
 
+define_function(data_serial_correlation)
+{
+  int i;
+  double scc, sccun, scclast, scct1, scct2, scct3;
+  bool past_first_block = false;
+  bool first_byte = true;
+  uint64_t total_len = 0;
+
+  int64_t offset = integer_argument(1);
+  int64_t length = integer_argument(2);
+
+  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
+    return_double(UNDEFINED);
+
+  YR_SCAN_CONTEXT* context = scan_context();
+  YR_MEMORY_BLOCK* block = NULL;
+
+  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  {
+    return ERROR_WRONG_ARGUMENTS;
+  }
+
+  scct1 = scct2 = scct3 = 0.0;
+  foreach_memory_block(context, block)
+  {
+    if (offset >= block->base &&
+        offset < block->base + block->size)
+    {
+      uint64_t data_offset = offset - block->base;
+      uint64_t data_len = min(length, block->size - data_offset);
+      total_len += data_len;
+
+      offset += data_len;
+      length -= data_len;
+
+      for (i = 0; i < data_len; i++)
+      {
+        sccun = (double) *(block->data + data_offset + i);
+        if (first_byte)
+          first_byte = false;
+        else
+          scct1 += scclast * sccun;
+
+        scct2 += sccun;
+        scct3 += sccun * sccun;
+        scclast = sccun;
+      }
+
+      past_first_block = true;
+    }
+    else if (past_first_block)
+    {
+      // If offset is not within current block and we already
+      // past the first block then the we are trying to compute
+      // the checksum over a range of non contiguos blocks. As
+      // range contains gaps of undefined data the checksum is
+      // undefined.
+      return_double(UNDEFINED);
+    }
+
+    if (block->base + block->size > offset + length)
+      break;
+  }
+
+  if (!past_first_block)
+    return_double(UNDEFINED);
+
+  scct1 += scclast * sccun;
+  scct2 *= scct2;
+  scc = total_len * scct3 - scct2;
+  if (scc == 0)
+    scc = -100000;
+  else
+    scc = (total_len * scct1 - scct2) / scc;
+
+  return_double(scc);
+}
+
+
+define_function(string_serial_correlation)
+{
+  int i;
+  bool first_byte = true;
+  double scc, sccun, scclast, scct1, scct2, scct3;
+  SIZED_STRING* s = sized_string_argument(1);
+
+  if (IS_UNDEFINED(s))
+    return_double(UNDEFINED);
+
+  scct1 = scct2 = scct3 = 0.0;
+  for (i = 0; i < s->length; i++)
+  {
+    sccun = (double) s->c_string[i];
+    if (first_byte)
+      first_byte = false;
+    else
+      scct1 += scclast * sccun;
+
+    scct2 += sccun;
+    scct3 += sccun * sccun;
+    scclast = sccun;
+  }
+
+  scct1 += scclast * sccun;
+  scct2 *= scct2;
+  scc = s->length * scct3 - scct2;
+  if (scc == 0)
+    scc = -100000;
+  else
+    scc = (s->length * scct1 - scct2) / scc;
+
+  return_double(scc);
+}
+
+
 begin_declarations;
 
   declare_function("arithmetic_mean", "ii", "d", data_arithmetic_mean);
   declare_function("arithmetic_mean", "s", "d", string_arithmetic_mean);
+  declare_function("serial_correlation", "ii", "d", data_serial_correlation);
+  declare_function("serial_correlation", "s", "d", string_serial_correlation);
   declare_function("entropy", "ii", "d", data_entropy);
   declare_function("entropy", "s", "d", string_entropy);
   declare_function("abs", "i", "i", absolute_integer);
