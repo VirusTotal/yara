@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2014. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,29 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _SIZEDSTR_H
-#define _SIZEDSTR_H
-
-//
-// This struct is used to support strings containing null chars. The length of
-// the string is stored along the string data. However the string data is also
-// terminated with a null char.
-//
-
-#define SIZED_STRING_FLAGS_NO_CASE  1
-#define SIZED_STRING_FLAGS_DOT_ALL  2
-
-typedef struct _SIZED_STRING
-{
-  int length;
-  int flags;
-  char c_string[1];
-
-} SIZED_STRING;
+#include <yara/sizedstr.h>
 
 
 int sized_string_cmp(
   SIZED_STRING* s1,
-  SIZED_STRING* s2);
+  SIZED_STRING* s2)
+{
+  int i = 0;
 
-#endif
+  while (s1->length > i &&
+         s2->length > i &&
+         s1->c_string[i] == s2->c_string[i])
+  {
+    i++;
+  }
+
+  if (i == s1->length && i == s2->length)
+    return 0;
+  else if (i == s1->length)
+    return -1;
+  else if (i == s2->length)
+    return 1;
+  else if (s1->c_string[i] < s2->c_string[i])
+    return -1;
+  else
+    return 1;
+}

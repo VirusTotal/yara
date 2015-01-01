@@ -23,6 +23,7 @@ limitations under the License.
 
 #define ARENA_FLAGS_FIXED_SIZE   1
 #define ARENA_FLAGS_COALESCED    2
+#define ARENA_FILE_VERSION       5
 
 #define EOL ((size_t) -1)
 

@@ -110,4 +110,11 @@ int yr_parser_reduce_import(
     yyscan_t yyscanner,
     SIZED_STRING* module_name);
 
+
+int yr_parser_reduce_operation(
+    yyscan_t yyscanner,
+    const char* operation,
+    EXPRESSION left_operand,
+    EXPRESSION right_operand);
+
 #endif

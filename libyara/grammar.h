@@ -76,16 +76,15 @@
      _FALSE_ = 292,
      _OR_ = 293,
      _AND_ = 294,
-     _IS_ = 295,
-     _NEQ_ = 296,
-     _EQ_ = 297,
-     _GE_ = 298,
-     _GT_ = 299,
-     _LE_ = 300,
-     _LT_ = 301,
-     _SHIFT_RIGHT_ = 302,
-     _SHIFT_LEFT_ = 303,
-     _NOT_ = 304
+     _NEQ_ = 295,
+     _EQ_ = 296,
+     _GE_ = 297,
+     _GT_ = 298,
+     _LE_ = 299,
+     _LT_ = 300,
+     _SHIFT_RIGHT_ = 301,
+     _SHIFT_LEFT_ = 302,
+     _NOT_ = 303
    };
 #endif
 /* Tokens.  */
@@ -126,23 +125,22 @@
 #define _FALSE_ 292
 #define _OR_ 293
 #define _AND_ 294
-#define _IS_ 295
-#define _NEQ_ 296
-#define _EQ_ 297
-#define _GE_ 298
-#define _GT_ 299
-#define _LE_ 300
-#define _LT_ 301
-#define _SHIFT_RIGHT_ 302
-#define _SHIFT_LEFT_ 303
-#define _NOT_ 304
+#define _NEQ_ 295
+#define _EQ_ 296
+#define _GE_ 297
+#define _GT_ 298
+#define _LE_ 299
+#define _LT_ 300
+#define _SHIFT_RIGHT_ 301
+#define _SHIFT_LEFT_ 302
+#define _NOT_ 303
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 223 "grammar.y"
+#line 176 "grammar.y"
 {
   EXPRESSION      expression;
   SIZED_STRING*   sized_string;
@@ -153,7 +151,7 @@ typedef union YYSTYPE
   YR_META*        meta;
 }
 /* Line 1529 of yacc.c.  */
-#line 157 "grammar.h"
+#line 155 "grammar.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
