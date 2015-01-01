@@ -22,6 +22,8 @@ limitations under the License.
 
 #define MODULE_NAME math
 
+#define PI 3.141592653589793
+
 
 define_function(string_entropy)
 {
@@ -352,12 +354,129 @@ define_function(string_serial_correlation)
 }
 
 
+define_function(data_monte_carlo_pi)
+{
+  int i, j;
+  bool past_first_block = false;
+  unsigned int monte[6];
+  int idx = 0;
+  int mcount = 0;
+  int inmont = 0;
+  double incirc = pow(pow(256.0, 3.0) - 1, 2.0);
+  double mx, my, mpi;
+
+  int64_t offset = integer_argument(1);
+  int64_t length = integer_argument(2);
+
+  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
+    return_double(UNDEFINED);
+
+  YR_SCAN_CONTEXT* context = scan_context();
+  YR_MEMORY_BLOCK* block = NULL;
+
+  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  {
+    return ERROR_WRONG_ARGUMENTS;
+  }
+
+  foreach_memory_block(context, block)
+  {
+    if (offset >= block->base &&
+        offset < block->base + block->size)
+    {
+      uint64_t data_offset = offset - block->base;
+      uint64_t data_len = min(length, block->size - data_offset);
+
+      offset += data_len;
+      length -= data_len;
+
+      for (i = 0; i < data_len; i++)
+      {
+        monte[idx++] = (unsigned int) *(block->data + data_offset + i);
+        if (idx == 6)
+        {
+          idx = 0;
+          mcount++;
+          mx = my = 0;
+          for (j = 0; j < 3; j++)
+          {
+            mx = (mx * 256.0) + monte[j];
+            my = (my * 256.0) + monte[j + 3];
+          }
+          if ((mx * mx + my * my) <= incirc)
+            inmont++;
+        }
+      }
+      past_first_block = true;
+    }
+    else if (past_first_block)
+    {
+      // If offset is not within current block and we already
+      // past the first block then the we are trying to compute
+      // the checksum over a range of non contiguos blocks. As
+      // range contains gaps of undefined data the checksum is
+      // undefined.
+      return_double(UNDEFINED);
+    }
+
+    if (block->base + block->size > offset + length)
+      break;
+  }
+
+  if (!past_first_block)
+    return_double(UNDEFINED);
+
+  mpi = 4.0 * ((double) inmont / mcount);
+  return_double(fabs((mpi - PI) / PI));
+}
+
+
+define_function(string_monte_carlo_pi)
+{
+  int i, j;
+  unsigned int monte[6];
+  int idx = 0;
+  int mcount = 0;
+  int inmont = 0;
+  double incirc = pow(pow(256.0, 3.0) - 1, 2.0);
+  double mx, my, mpi;
+
+  SIZED_STRING* s = sized_string_argument(1);
+
+  if (IS_UNDEFINED(s))
+    return_double(UNDEFINED);
+
+  for (i = 0; i < s->length; i++)
+  {
+    monte[idx++] = (unsigned int) s->c_string[i];
+    if (idx == 6)
+    {
+      idx = 0;
+      mcount++;
+      mx = my = 0;
+      for (j = 0; j < 3; j++)
+      {
+        mx = (mx * 256.0) + monte[j];
+        my = (my * 256.0) + monte[j + 3];
+      }
+      if ((mx * mx + my * my) <= incirc)
+        inmont++;
+    }
+  }
+
+  mpi = 4.0 * ((double) inmont / mcount);
+  return_double(fabs((mpi - PI) / PI));
+}
+
+
 begin_declarations;
 
   declare_function("arithmetic_mean", "ii", "d", data_arithmetic_mean);
   declare_function("arithmetic_mean", "s", "d", string_arithmetic_mean);
   declare_function("serial_correlation", "ii", "d", data_serial_correlation);
   declare_function("serial_correlation", "s", "d", string_serial_correlation);
+  declare_function("monte_carlo_pi", "ii", "d", data_monte_carlo_pi);
+  declare_function("monte_carlo_pi", "s", "d", string_monte_carlo_pi);
   declare_function("entropy", "ii", "d", data_entropy);
   declare_function("entropy", "s", "d", string_entropy);
   declare_function("abs", "i", "i", absolute_integer);
