@@ -154,7 +154,9 @@ define_function(string_arithmetic_mean)
   for (i = 0; i < s->length; i++)
     sum += (double) s->c_string[i];
 
-  return_double(sum / (double) s->length);
+
+  sum = sum / (double) s->length;
+  return_double(fabs((sum - 127.5) / 127.5));
 }
 
 
@@ -213,29 +215,8 @@ define_function(data_arithmetic_mean)
   if (!past_first_block)
     return_double(UNDEFINED);
 
-  return_double(sum / (double) total_len);
-}
-
-
-define_function(absolute_integer)
-{
-  int64_t x = integer_argument(1);
-
-  if (IS_UNDEFINED(x))
-    return_integer(UNDEFINED);
-
-  return_integer(abs(x));
-}
-
-
-define_function(absolute_double)
-{
-  double x = double_argument(1);
-
-  if (IS_UNDEFINED(x))
-    return_double(UNDEFINED);
-
-  return_double(fabs(x));
+  sum = sum / (double) total_len;
+  return_double(fabs((sum - 127.5) / 127.5));
 }
 
 
@@ -479,8 +460,6 @@ begin_declarations;
   declare_function("monte_carlo_pi", "s", "d", string_monte_carlo_pi);
   declare_function("entropy", "ii", "d", data_entropy);
   declare_function("entropy", "s", "d", string_entropy);
-  declare_function("abs", "i", "i", absolute_integer);
-  declare_function("fabs", "d", "d", absolute_double);
 
 end_declarations;
 
