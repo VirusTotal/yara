@@ -289,6 +289,10 @@ limitations under the License.
       (context)->mem_block
 
 
+#define is_undefined(object, ...) \
+    yr_object_has_undefined_value(object, __VA_ARGS__)
+
+
 #define get_object(object, ...) \
     yr_object_lookup(object, 0, __VA_ARGS__)
 
