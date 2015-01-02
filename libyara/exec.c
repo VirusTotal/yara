@@ -490,18 +490,33 @@ int yr_execute_code(
         ip += sizeof(uint64_t);
 
         i = strlen(args_fmt);
+        count = 0;
 
         // pop arguments from stack and copy them to args array
 
         while (i > 0)
         {
           pop(r1);
+
+          if (is_undef(r1))  // count the number of undefined args
+            count++;
+
           args[i - 1] = r1.i;
           i--;
         }
 
         pop(r2);
         ensure_defined(r2);
+
+        if (count > 0)
+        {
+          // if there are undefined args, result for function call
+          // is undefined as well.
+
+          r1.i = UNDEFINED;
+          push(r1);
+          break;
+        }
 
         function = UINT64_TO_PTR(YR_OBJECT_FUNCTION*, r2.i);
         result = ERROR_INTERNAL_FATAL_ERROR;

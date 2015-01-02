@@ -24,9 +24,6 @@ define_function(double_sum)
   double a = double_argument(1);
   double b = double_argument(2);
 
-  if (a == UNDEFINED || b == UNDEFINED)
-    return_double(UNDEFINED);
-
   return_double(a + b);
 }
 
@@ -34,9 +31,6 @@ define_function(sum_2)
 {
   int64_t a = integer_argument(1);
   int64_t b = integer_argument(2);
-
-  if (a == UNDEFINED || b == UNDEFINED)
-    return_integer(UNDEFINED);
 
   return_integer(a + b);
 }
@@ -47,9 +41,6 @@ define_function(sum_3)
   int64_t a = integer_argument(1);
   int64_t b = integer_argument(2);
   int64_t c = integer_argument(3);
-
-  if (a == UNDEFINED || b == UNDEFINED || c == UNDEFINED)
-    return_integer(UNDEFINED);
 
   return_integer(a + b + c);
 }
@@ -69,6 +60,11 @@ begin_declarations;
     declare_integer("two");
     declare_string("foo");
   end_struct("constants");
+
+  begin_struct("undefined");
+    declare_integer("i");
+    declare_double("d");
+  end_struct("undefined");
 
   declare_integer_array("integer_array");
   declare_string_array("string_array");
