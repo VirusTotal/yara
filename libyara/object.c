@@ -20,6 +20,7 @@ limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #if _WIN32
 #define PRIu64 "%I64d"
@@ -106,7 +107,7 @@ int yr_object_create(
       ((YR_OBJECT_INTEGER*) obj)->value = UNDEFINED;
       break;
     case OBJECT_TYPE_DOUBLE:
-      ((YR_OBJECT_DOUBLE*) obj)->value = UNDEFINED;
+      ((YR_OBJECT_DOUBLE*) obj)->value = NAN;
       break;
     case OBJECT_TYPE_STRING:
       ((YR_OBJECT_STRING*) obj)->value = NULL;
@@ -860,7 +861,7 @@ double yr_object_get_double(
   va_end(args);
 
   if (double_obj == NULL)
-    return UNDEFINED;
+    return NAN;
 
   assertf(double_obj->type == OBJECT_TYPE_DOUBLE,
           "type of \"%s\" is not double\n", field);

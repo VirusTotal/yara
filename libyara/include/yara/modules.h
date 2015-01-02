@@ -20,6 +20,7 @@ limitations under the License.
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include <yara/utils.h>
 #include <yara/limits.h>
@@ -160,6 +161,45 @@ limitations under the License.
   }
 
 
+#define declare_double(name) { \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_DOUBLE, \
+        name, \
+        stack[stack_top], \
+        NULL)); \
+  }
+
+
+#define declare_double_array(name) { \
+    YR_OBJECT* array; \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_ARRAY, \
+        name, \
+        stack[stack_top], \
+        &array)); \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_DOUBLE, \
+        name, \
+        array, \
+        NULL)); \
+  }
+
+
+#define declare_double_dictionary(name) { \
+    YR_OBJECT* dict; \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_DICTIONARY, \
+        name, \
+        stack[stack_top], \
+        &dict)); \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_DOUBLE, \
+        name, \
+        dict, \
+        NULL)); \
+  }
+
+
 #define declare_string(name) { \
     FAIL_ON_ERROR(yr_object_create( \
         OBJECT_TYPE_STRING, \
@@ -293,8 +333,9 @@ limitations under the License.
       assertf( \
           __function_obj->return_obj->type == OBJECT_TYPE_DOUBLE, \
           "return type differs from function declaration"); \
+      double d = (double) (double_); \
       yr_object_set_double( \
-          (double_), \
+          (d != (double) UNDEFINED) ? d : NAN, \
           __function_obj->return_obj, \
           NULL); \
       return ERROR_SUCCESS; \
