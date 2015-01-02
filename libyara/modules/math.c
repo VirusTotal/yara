@@ -142,6 +142,84 @@ define_function(data_entropy)
 }
 
 
+define_function(string_mean_deviation)
+{
+  int i;
+  double sum = 0.0;
+
+  SIZED_STRING* s = sized_string_argument(1);
+  double mean = double_argument(2);
+
+  if (IS_UNDEFINED(s) || IS_UNDEFINED(mean))
+    return_double(UNDEFINED);
+
+  for (i = 0; i < s->length; i++)
+    sum += fabs(((double) s->c_string[i]) - mean);
+
+  return_double(((double) 1 / s->length) * sum);
+}
+
+
+define_function(data_mean_deviation)
+{
+  int i;
+  double sum = 0.0;
+  bool past_first_block = false;
+  uint64_t total_len = 0;
+
+  int64_t offset = integer_argument(1);
+  int64_t length = integer_argument(2);
+  double mean = double_argument(3);
+
+  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length) || IS_UNDEFINED(mean))
+    return_double(UNDEFINED);
+
+  YR_SCAN_CONTEXT* context = scan_context();
+  YR_MEMORY_BLOCK* block = NULL;
+
+  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  {
+    return ERROR_WRONG_ARGUMENTS;
+  }
+
+  foreach_memory_block(context, block)
+  {
+    if (offset >= block->base &&
+        offset < block->base + block->size)
+    {
+      uint64_t data_offset = offset - block->base;
+      uint64_t data_len = min(length, block->size - data_offset);
+      total_len += data_len;
+
+      offset += data_len;
+      length -= data_len;
+
+      for (i = 0; i < data_len; i++)
+        sum += fabs(((double) *(block->data + data_offset + i)) - mean);
+
+      past_first_block = true;
+    }
+    else if (past_first_block)
+    {
+      // If offset is not within current block and we already
+      // past the first block then the we are trying to compute
+      // the checksum over a range of non contiguos blocks. As
+      // range contains gaps of undefined data the checksum is
+      // undefined.
+      return_double(UNDEFINED);
+    }
+
+    if (block->base + block->size > offset + length)
+      break;
+  }
+
+  if (!past_first_block)
+    return_double(UNDEFINED);
+
+  return_double(((double) 1 / total_len) * sum);
+}
+
+
 define_function(string_mean_err)
 {
   int i;
@@ -455,6 +533,8 @@ define_function(string_monte_carlo_pi)
 
 begin_declarations;
 
+  declare_function("mean_deviation", "iid", "d", data_mean_deviation);
+  declare_function("mean_deviation", "sd", "d", string_mean_deviation);
   declare_function("mean_err", "iid", "d", data_mean_err);
   declare_function("mean_err", "sd", "d", string_mean_err);
   declare_function("serial_correlation", "ii", "d", data_serial_correlation);
