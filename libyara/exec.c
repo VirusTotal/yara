@@ -52,7 +52,7 @@ union STACK_ITEM {
 
 #define is_undef(x) IS_UNDEFINED((x).i)
 
-#define break_if_undef(x) \
+#define ensure_defined(x) \
     if (is_undef(x)) \
     { \
       r1.i = UNDEFINED; \
@@ -306,8 +306,8 @@ int yr_execute_code(
       case OP_MOD:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i % r2.i;
         push(r1);
         break;
@@ -315,8 +315,8 @@ int yr_execute_code(
       case OP_SHR:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i >> r2.i;
         push(r1);
         break;
@@ -324,15 +324,15 @@ int yr_execute_code(
       case OP_SHL:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i << r2.i;
         push(r1);
         break;
 
       case OP_BITWISE_NOT:
         pop(r1);
-        break_if_undef(r1);
+        ensure_defined(r1);
         r1.i = ~r1.i;
         push(r1);
         break;
@@ -340,6 +340,8 @@ int yr_execute_code(
       case OP_BITWISE_AND:
         pop(r2);
         pop(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i & r2.i;
         push(r1);
         break;
@@ -347,6 +349,8 @@ int yr_execute_code(
       case OP_BITWISE_OR:
         pop(r2);
         pop(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i | r2.i;
         push(r1);
         break;
@@ -354,6 +358,8 @@ int yr_execute_code(
       case OP_BITWISE_XOR:
         pop(r2);
         pop(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i ^ r2.i;
         push(r1);
         break;
@@ -398,7 +404,7 @@ int yr_execute_code(
         ip += sizeof(uint64_t);
 
         pop(r1);
-        break_if_undef(r1);
+        ensure_defined(r1);
 
         object = UINT64_TO_PTR(YR_OBJECT*, r1.i);
         object = yr_object_lookup_field(object, identifier);
@@ -410,7 +416,7 @@ int yr_execute_code(
 
       case OP_OBJ_VALUE:
         pop(r1);
-        break_if_undef(r1);
+        ensure_defined(r1);
 
         object = UINT64_TO_PTR(YR_OBJECT*, r1.i);
 
@@ -445,7 +451,7 @@ int yr_execute_code(
         pop(r1);  // index
         pop(r2);  // array
 
-        break_if_undef(r1);
+        ensure_defined(r1);
 
         object = UINT64_TO_PTR(YR_OBJECT*, r2.i);
         assert(object->type == OBJECT_TYPE_ARRAY);
@@ -463,7 +469,7 @@ int yr_execute_code(
         pop(r1);  // key
         pop(r2);  // dictionary
 
-        break_if_undef(r1);
+        ensure_defined(r1);
 
         object = UINT64_TO_PTR(YR_OBJECT*, r2.i);
         assert(object->type == OBJECT_TYPE_DICTIONARY);
@@ -495,7 +501,7 @@ int yr_execute_code(
         }
 
         pop(r2);
-        break_if_undef(r2);
+        ensure_defined(r2);
 
         function = UINT64_TO_PTR(YR_OBJECT_FUNCTION*, r2.i);
         result = ERROR_INTERNAL_FATAL_ERROR;
@@ -574,8 +580,8 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
-        break_if_undef(r1);
-        break_if_undef(r2);
+        ensure_defined(r1);
+        ensure_defined(r2);
 
         string = UINT64_TO_PTR(YR_STRING*, r3.i);
         match = string->matches[tidx].head;
@@ -609,7 +615,7 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
-        break_if_undef(r1);
+        ensure_defined(r1);
 
         string = UINT64_TO_PTR(YR_STRING*, r2.i);
         match = string->matches[tidx].head;
@@ -738,8 +744,8 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
-        break_if_undef(r1);
-        break_if_undef(r2);
+        ensure_defined(r1);
+        ensure_defined(r2);
 
         sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1.i);
         sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2.i);
@@ -796,7 +802,7 @@ int yr_execute_code(
 
       case OP_STR_TO_BOOL:
         pop(r1);
-        break_if_undef(r1);
+        ensure_defined(r1);
         r1.i = UINT64_TO_PTR(SIZED_STRING*, r1.i)->length > 0;
         push(r1);
         break;
@@ -804,8 +810,8 @@ int yr_execute_code(
       case OP_INT_EQ:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i == r2.i;
         push(r1);
         break;
@@ -813,8 +819,8 @@ int yr_execute_code(
       case OP_INT_NEQ:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i != r2.i;
         push(r1);
         break;
@@ -822,8 +828,8 @@ int yr_execute_code(
       case OP_INT_LT:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i < r2.i;
         push(r1);
         break;
@@ -831,8 +837,8 @@ int yr_execute_code(
       case OP_INT_GT:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i > r2.i;
         push(r1);
         break;
@@ -840,8 +846,8 @@ int yr_execute_code(
       case OP_INT_LE:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i <= r2.i;
         push(r1);
         break;
@@ -849,8 +855,8 @@ int yr_execute_code(
       case OP_INT_GE:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i >= r2.i;
         push(r1);
         break;
@@ -858,8 +864,8 @@ int yr_execute_code(
       case OP_INT_ADD:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i + r2.i;
         push(r1);
         break;
@@ -867,8 +873,8 @@ int yr_execute_code(
       case OP_INT_SUB:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i - r2.i;
         push(r1);
         break;
@@ -876,8 +882,8 @@ int yr_execute_code(
       case OP_INT_MUL:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i * r2.i;
         push(r1);
         break;
@@ -885,8 +891,8 @@ int yr_execute_code(
       case OP_INT_DIV:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.i / r2.i;
         push(r1);
         break;
@@ -894,8 +900,8 @@ int yr_execute_code(
       case OP_DBL_LT:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.d < r2.d;
         push(r1);
         break;
@@ -903,8 +909,8 @@ int yr_execute_code(
       case OP_DBL_GT:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.d > r2.d;
         push(r1);
         break;
@@ -912,8 +918,8 @@ int yr_execute_code(
       case OP_DBL_LE:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.d <= r2.d;
         push(r1);
         break;
@@ -921,8 +927,8 @@ int yr_execute_code(
       case OP_DBL_GE:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.d >= r2.d;
         push(r1);
         break;
@@ -930,8 +936,8 @@ int yr_execute_code(
       case OP_DBL_EQ:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.d == r2.d;
         push(r1);
         break;
@@ -939,8 +945,8 @@ int yr_execute_code(
       case OP_DBL_NEQ:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.i = r1.d != r2.d;
         push(r1);
         break;
@@ -948,8 +954,8 @@ int yr_execute_code(
       case OP_DBL_ADD:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.d = r1.d + r2.d;
         push(r1);
         break;
@@ -957,8 +963,8 @@ int yr_execute_code(
       case OP_DBL_SUB:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.d = r1.d - r2.d;
         push(r1);
         break;
@@ -966,8 +972,8 @@ int yr_execute_code(
       case OP_DBL_MUL:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.d = r1.d * r2.d;
         push(r1);
         break;
@@ -975,8 +981,8 @@ int yr_execute_code(
       case OP_DBL_DIV:
         pop(r2);
         pop(r1);
-        break_if_undef(r2);
-        break_if_undef(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
         r1.d = r1.d / r2.d;
         push(r1);
         break;
@@ -991,8 +997,8 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
-        break_if_undef(r1);
-        break_if_undef(r2);
+        ensure_defined(r1);
+        ensure_defined(r2);
 
         sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1.i);
         sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2.i);
