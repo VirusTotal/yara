@@ -130,6 +130,15 @@ limitations under the License.
   }
 
 
+#define declare_double(name) { \
+    FAIL_ON_ERROR(yr_object_create( \
+        OBJECT_TYPE_DOUBLE, \
+        name, \
+        stack[stack_top], \
+        NULL)); \
+  }
+
+
 #define declare_integer_array(name) { \
     YR_OBJECT* array; \
     FAIL_ON_ERROR(yr_object_create( \
@@ -267,6 +276,10 @@ limitations under the License.
 
 #define set_integer(value, object, ...) \
     yr_object_set_integer(value, object, __VA_ARGS__)
+
+
+#define set_double(value, object, ...) \
+    yr_object_set_double(value, object, __VA_ARGS__)
 
 
 #define set_sized_string(value, len, object, ...) \
