@@ -142,13 +142,15 @@ define_function(data_entropy)
 }
 
 
-define_function(string_arithmetic_mean)
+define_function(string_mean_err)
 {
   int i;
   double sum = 0.0;
-  SIZED_STRING* s = sized_string_argument(1);
 
-  if (IS_UNDEFINED(s))
+  SIZED_STRING* s = sized_string_argument(1);
+  double mean = double_argument(2);
+
+  if (IS_UNDEFINED(s) || IS_UNDEFINED(mean))
     return_double(UNDEFINED);
 
   for (i = 0; i < s->length; i++)
@@ -156,11 +158,11 @@ define_function(string_arithmetic_mean)
 
 
   sum = sum / (double) s->length;
-  return_double(fabs((sum - 127.5) / 127.5));
+  return_double(fabs((sum - mean) / mean));
 }
 
 
-define_function(data_arithmetic_mean)
+define_function(data_mean_err)
 {
   int i;
   double sum = 0.0;
@@ -169,8 +171,9 @@ define_function(data_arithmetic_mean)
 
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
+  double mean = double_argument(3);
 
-  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
+  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length) || IS_UNDEFINED(mean))
     return_double(UNDEFINED);
 
   YR_SCAN_CONTEXT* context = scan_context();
@@ -216,7 +219,7 @@ define_function(data_arithmetic_mean)
     return_double(UNDEFINED);
 
   sum = sum / (double) total_len;
-  return_double(fabs((sum - 127.5) / 127.5));
+  return_double(fabs((sum - mean) / mean));
 }
 
 
@@ -452,8 +455,8 @@ define_function(string_monte_carlo_pi)
 
 begin_declarations;
 
-  declare_function("arithmetic_mean", "ii", "d", data_arithmetic_mean);
-  declare_function("arithmetic_mean", "s", "d", string_arithmetic_mean);
+  declare_function("mean_err", "iid", "d", data_mean_err);
+  declare_function("mean_err", "sd", "d", string_mean_err);
   declare_function("serial_correlation", "ii", "d", data_serial_correlation);
   declare_function("serial_correlation", "s", "d", string_serial_correlation);
   declare_function("monte_carlo_pi", "ii", "d", data_monte_carlo_pi);
