@@ -1145,22 +1145,18 @@ void pe_parse_header(
 
 define_function(valid_on)
 {
-  int64_t timestamp = integer_argument(1);
-
-  YR_OBJECT_INTEGER* not_before = (YR_OBJECT_INTEGER*)
-      yr_object_lookup_field(parent(), "not_before");
-
-  YR_OBJECT_INTEGER* not_after = (YR_OBJECT_INTEGER*)
-      yr_object_lookup_field(parent(), "not_after");
-
-  if (IS_UNDEFINED(not_before->value) ||
-      IS_UNDEFINED(not_after->value))
+  if (is_undefined(parent(), "not_before") ||
+      is_undefined(parent(), "not_after"))
   {
     return_integer(UNDEFINED);
   }
 
-  return_integer(timestamp >= not_before->value  &&
-                 timestamp <= not_after->value);
+  int64_t timestamp = integer_argument(1);
+
+  int64_t not_before = get_integer(parent(), "not_before");
+  int64_t not_after = get_integer(parent(), "not_after");
+
+  return_integer(timestamp >= not_before  && timestamp <= not_after);
 }
 
 
