@@ -522,11 +522,11 @@ int pe_iterate_resources(
                   pe->resources);
       set_integer(rsrc_dir->MajorVersion,
                   pe->object,
-                  "resource_major_version",
+                  "resource_version.major",
                   pe->resources);
       set_integer(rsrc_dir->MinorVersion,
                   pe->object,
-                  "resource_minor_version",
+                  "resource_version.minor",
                   pe->resources);
       _pe_iterate_resources(
           pe,
@@ -1610,8 +1610,10 @@ begin_declarations;
   declare_function("language", "i", "i", language);
 
   declare_integer("resource_timestamp")
-  declare_integer("resource_major_version")
-  declare_integer("resource_minor_version")
+  begin_struct("resource_version");
+    declare_integer("major");
+    declare_integer("minor");
+  end_struct("resource_version");
   begin_struct_array("resources");
     declare_integer("offset");
     declare_integer("length");
