@@ -533,6 +533,7 @@ define_function(string_monte_carlo_pi)
 
 begin_declarations;
 
+  declare_double("MEAN_BYTES");
   declare_function("mean_deviation", "iid", "d", data_mean_deviation);
   declare_function("mean_deviation", "sd", "d", string_mean_deviation);
   declare_function("mean_err", "iid", "d", data_mean_err);
@@ -567,7 +568,7 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-
+  set_double(127.5, module_object, "MEAN_BYTES");
   return ERROR_SUCCESS;
 }
 
