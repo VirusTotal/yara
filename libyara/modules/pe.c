@@ -91,6 +91,9 @@ typedef int (*RESOURCE_CALLBACK_FUNC) ( \
      int rsrc_type, \
      int rsrc_id, \
      int rsrc_language, \
+     uint8_t* type_string, \
+     uint8_t* name_string, \
+     uint8_t* lang_string, \
      void* cb_data);
 
 
@@ -343,6 +346,35 @@ uint64_t pe_rva_to_offset(
 }
 
 
+// Return a pointer to the resource directory string or NULL.
+// The callback function will parse this and call set_sized_string().
+// The pointer is guranteed to have enough space to contain the entire string.
+uint8_t* parse_resource_name(
+    PE* pe,
+    uint8_t* rsrc_data,
+    PIMAGE_RESOURCE_DIRECTORY_ENTRY entry)
+{
+  // If high bit is set it is an offset relative to rsrc_data, which contains
+  // a resource directory string.
+  if (entry->Name & 0x80000000)
+  {
+    uint8_t* rsrc_str_ptr = rsrc_data + (entry->Name & 0x7FFFFFFF);
+    // A resource directory string is 2 bytes for a string and then a variable
+    // length Unicode string. Make sure we at least have two bytes.
+    if (!fits_in_pe(pe, rsrc_str_ptr, 2))
+      return NULL;
+
+    DWORD length = *rsrc_str_ptr;
+    // Move past the length and make sure we have enough bytes for the string.
+    if (!fits_in_pe(pe, rsrc_str_ptr + 2, length))
+      return NULL;
+
+    return rsrc_str_ptr;
+  }
+
+  return NULL;
+}
+
 int _pe_iterate_resources(
     PE* pe,
     PIMAGE_RESOURCE_DIRECTORY resource_dir,
@@ -351,6 +383,9 @@ int _pe_iterate_resources(
     int* type,
     int* id,
     int* language,
+    uint8_t* type_string,
+    uint8_t* name_string,
+    uint8_t* lang_string,
     RESOURCE_CALLBACK_FUNC callback,
     void* callback_data)
 {
@@ -385,12 +420,15 @@ int _pe_iterate_resources(
     {
       case 0:
         *type = entry->Name;
+        type_string = parse_resource_name(pe, rsrc_data, entry);
         break;
       case 1:
         *id = entry->Name;
+        name_string = parse_resource_name(pe, rsrc_data, entry);
         break;
       case 2:
         *language = entry->Name;
+        lang_string = parse_resource_name(pe, rsrc_data, entry);
         break;
     }
 
@@ -409,6 +447,9 @@ int _pe_iterate_resources(
             type,
             id,
             language,
+            type_string,
+            name_string,
+            lang_string,
             callback,
             callback_data);
 
@@ -428,6 +469,9 @@ int _pe_iterate_resources(
             *type,
             *id,
             *language,
+            type_string,
+            name_string,
+            lang_string,
             callback_data);
       }
 
@@ -455,6 +499,9 @@ int pe_iterate_resources(
   int type = -1;
   int id = -1;
   int language = -1;
+  uint8_t* type_string = NULL;
+  uint8_t* name_string = NULL;
+  uint8_t* lang_string = NULL;
 
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_RESOURCE);
@@ -489,6 +536,9 @@ int pe_iterate_resources(
           &type,
           &id,
           &language,
+          type_string,
+          name_string,
+          lang_string,
           callback,
           callback_data);
 
@@ -596,8 +646,12 @@ int pe_collect_resources(
     int rsrc_type,
     int rsrc_id,
     int rsrc_language,
+    uint8_t* type_string,
+    uint8_t* name_string,
+    uint8_t* lang_string,
     PE* pe)
 {
+  DWORD length;
   size_t offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
 
   if (offset == 0 || !fits_in_pe(pe, offset, rsrc_data->Size))
@@ -632,6 +686,33 @@ int pe_collect_resources(
         pe->object,
         "resources[%i].length",
         pe->resources);
+
+  if (type_string)
+  {
+    // Multiply by 2 because it is a Unicode string.
+    length = ((DWORD) *type_string) * 2;
+    type_string += 2;
+    set_sized_string(
+        (char*) type_string, length, pe->object, "resources[%i].type_string");
+  }
+
+  if (name_string)
+  {
+    // Multiply by 2 because it is a Unicode string.
+    length = ((DWORD) *name_string) * 2;
+    name_string += 2;
+    set_sized_string(
+        (char*) name_string, length, pe->object, "resources[%i].name_string");
+  }
+
+  if (lang_string)
+  {
+    // Multiply by 2 because it is a Unicode string.
+    length = ((DWORD) *lang_string) * 2;
+    lang_string += 2;
+    set_sized_string(
+        (char*) lang_string, length, pe->object, "resources[%i].language_string");
+  }
 
   // Resources we do extra parsing on
   if (rsrc_type == RESOURCE_TYPE_VERSION)
@@ -1532,11 +1613,14 @@ begin_declarations;
   declare_integer("resource_major_version")
   declare_integer("resource_minor_version")
   begin_struct_array("resources");
-    declare_integer("offset")
-    declare_integer("type")
-    declare_integer("id")
-    declare_integer("language")
-    declare_integer("length")
+    declare_integer("offset");
+    declare_integer("length");
+    declare_integer("type");
+    declare_integer("id");
+    declare_integer("language");
+    declare_string("type_string");
+    declare_string("name_string");
+    declare_string("language_string");
   end_struct_array("resources");
   declare_integer("number_of_resources");
 
