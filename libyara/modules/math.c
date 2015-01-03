@@ -220,7 +220,7 @@ define_function(data_mean_deviation)
 }
 
 
-define_function(string_mean_err)
+define_function(string_mean)
 {
   int i;
   double sum = 0.0;
@@ -235,12 +235,11 @@ define_function(string_mean_err)
     sum += (double) s->c_string[i];
 
 
-  sum = sum / (double) s->length;
-  return_double(fabs((sum - mean) / mean));
+  return_double(sum / (double) s->length);
 }
 
 
-define_function(data_mean_err)
+define_function(data_mean)
 {
   int i;
   double sum = 0.0;
@@ -296,8 +295,7 @@ define_function(data_mean_err)
   if (!past_first_block)
     return_double(UNDEFINED);
 
-  sum = sum / (double) total_len;
-  return_double(fabs((sum - mean) / mean));
+  return_double(sum / (double) total_len);
 }
 
 
@@ -536,8 +534,8 @@ begin_declarations;
   declare_double("MEAN_BYTES");
   declare_function("mean_deviation", "iid", "d", data_mean_deviation);
   declare_function("mean_deviation", "sd", "d", string_mean_deviation);
-  declare_function("mean_err", "iid", "d", data_mean_err);
-  declare_function("mean_err", "sd", "d", string_mean_err);
+  declare_function("mean", "ii", "d", data_mean);
+  declare_function("mean", "s", "d", string_mean);
   declare_function("serial_correlation", "ii", "d", data_serial_correlation);
   declare_function("serial_correlation", "s", "d", string_serial_correlation);
   declare_function("monte_carlo_pi", "ii", "d", data_monte_carlo_pi);
