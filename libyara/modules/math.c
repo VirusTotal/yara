@@ -529,9 +529,23 @@ define_function(string_monte_carlo_pi)
 }
 
 
+define_function(in_range)
+{
+  double test = double_argument(1);
+  double lower = double_argument(2);
+  double upper = double_argument(3);
+
+  if (IS_UNDEFINED(test) || IS_UNDEFINED(lower) || IS_UNDEFINED(upper))
+    return_double(UNDEFINED);
+
+  return_integer((lower <= test && test <= upper) ? 1 : 0);
+}
+
+
 begin_declarations;
 
   declare_double("MEAN_BYTES");
+  declare_function("in_range", "ddd", "i", in_range);
   declare_function("deviation", "iid", "d", data_deviation);
   declare_function("deviation", "sd", "d", string_deviation);
   declare_function("mean", "ii", "d", data_mean);
