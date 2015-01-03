@@ -518,16 +518,13 @@ int pe_iterate_resources(
 
       set_integer(rsrc_dir->TimeDateStamp,
                   pe->object,
-                  "resource_timestamp",
-                  pe->resources);
+                  "resource_timestamp");
       set_integer(rsrc_dir->MajorVersion,
                   pe->object,
-                  "resource_version.major",
-                  pe->resources);
+                  "resource_version.major");
       set_integer(rsrc_dir->MinorVersion,
                   pe->object,
-                  "resource_version.minor",
-                  pe->resources);
+                  "resource_version.minor");
       _pe_iterate_resources(
           pe,
           rsrc_dir,
