@@ -142,7 +142,7 @@ define_function(data_entropy)
 }
 
 
-define_function(string_mean_deviation)
+define_function(string_deviation)
 {
   int i;
   double sum = 0.0;
@@ -160,7 +160,7 @@ define_function(string_mean_deviation)
 }
 
 
-define_function(data_mean_deviation)
+define_function(data_deviation)
 {
   int i;
   double sum = 0.0;
@@ -532,8 +532,8 @@ define_function(string_monte_carlo_pi)
 begin_declarations;
 
   declare_double("MEAN_BYTES");
-  declare_function("mean_deviation", "iid", "d", data_mean_deviation);
-  declare_function("mean_deviation", "sd", "d", string_mean_deviation);
+  declare_function("deviation", "iid", "d", data_deviation);
+  declare_function("deviation", "sd", "d", string_deviation);
   declare_function("mean", "ii", "d", data_mean);
   declare_function("mean", "s", "d", string_mean);
   declare_function("serial_correlation", "ii", "d", data_serial_correlation);
