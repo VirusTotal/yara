@@ -40,19 +40,28 @@ limitations under the License.
 
 #define MODULE_NAME pe
 
-#define RESOURCE_TYPE_CURSOR         1
-#define RESOURCE_TYPE_BITMAP         2
-#define RESOURCE_TYPE_ICON           3
-#define RESOURCE_TYPE_MENU           4
-#define RESOURCE_TYPE_DIALOG         5
-#define RESOURCE_TYPE_STRING         6
-#define RESOURCE_TYPE_FONTDIR        7
-#define RESOURCE_TYPE_FONT           8
-#define RESOURCE_TYPE_ACCELERATOR    9
-#define RESOURCE_TYPE_RCDATA         10
-#define RESOURCE_TYPE_MESSAGETABLE   11
-#define RESOURCE_TYPE_VERSION        16
-#define RESOURCE_TYPE_MANIFEST       24
+// http://msdn.microsoft.com/en-us/library/ms648009(v=vs.85).aspx
+#define RESOURCE_TYPE_CURSOR       1
+#define RESOURCE_TYPE_BITMAP       2
+#define RESOURCE_TYPE_ICON         3
+#define RESOURCE_TYPE_MENU         4
+#define RESOURCE_TYPE_DIALOG       5
+#define RESOURCE_TYPE_STRING       6
+#define RESOURCE_TYPE_FONTDIR      7
+#define RESOURCE_TYPE_FONT         8
+#define RESOURCE_TYPE_ACCELERATOR  9
+#define RESOURCE_TYPE_RCDATA       10
+#define RESOURCE_TYPE_MESSAGETABLE 11
+#define RESOURCE_TYPE_GROUP_CURSOR 12 // MAKEINTRESOURCE((ULONG_PTR)(RT_CURSOR) + 11)
+#define RESOURCE_TYPE_GROUP_ICON   14 // MAKEINTRESOURCE((ULONG_PTR)(RT_ICON) + 11)
+#define RESOURCE_TYPE_VERSION      16
+#define RESOURCE_TYPE_DLGINCLUDE   17
+#define RESOURCE_TYPE_PLUGPLAY     19
+#define RESOURCE_TYPE_VXD          20
+#define RESOURCE_TYPE_ANICURSOR    21
+#define RESOURCE_TYPE_ANIICON      22
+#define RESOURCE_TYPE_HTML         23
+#define RESOURCE_TYPE_MANIFEST     24
 
 
 #define RESOURCE_CALLBACK_CONTINUE   0
@@ -1550,6 +1559,28 @@ begin_declarations;
   declare_integer("UP_SYSTEM_ONLY");
   declare_integer("BYTES_REVERSED_HI");
 
+  declare_integer("RESOURCE_TYPE_CURSOR");
+  declare_integer("RESOURCE_TYPE_BITMAP");
+  declare_integer("RESOURCE_TYPE_ICON");
+  declare_integer("RESOURCE_TYPE_MENU");
+  declare_integer("RESOURCE_TYPE_DIALOG");
+  declare_integer("RESOURCE_TYPE_STRING");
+  declare_integer("RESOURCE_TYPE_FONTDIR");
+  declare_integer("RESOURCE_TYPE_FONT");
+  declare_integer("RESOURCE_TYPE_ACCELERATOR");
+  declare_integer("RESOURCE_TYPE_RCDATA");
+  declare_integer("RESOURCE_TYPE_MESSAGETABLE");
+  declare_integer("RESOURCE_TYPE_GROUP_CURSOR");
+  declare_integer("RESOURCE_TYPE_GROUP_ICON");
+  declare_integer("RESOURCE_TYPE_VERSION");
+  declare_integer("RESOURCE_TYPE_DLGINCLUDE");
+  declare_integer("RESOURCE_TYPE_PLUGPLAY");
+  declare_integer("RESOURCE_TYPE_VXD");
+  declare_integer("RESOURCE_TYPE_ANICURSOR");
+  declare_integer("RESOURCE_TYPE_ANIICON");
+  declare_integer("RESOURCE_TYPE_HTML");
+  declare_integer("RESOURCE_TYPE_MANIFEST");
+
   declare_integer("machine");
   declare_integer("number_of_sections");
   declare_integer("timestamp");
@@ -1737,6 +1768,70 @@ int module_load(
   set_integer(
       IMAGE_FILE_BYTES_REVERSED_HI, module_object,
       "BYTES_REVERSED_HI");
+
+  set_integer(
+      RESOURCE_TYPE_CURSOR, module_object,
+      "RESOURCE_TYPE_CURSOR");
+  set_integer(
+      RESOURCE_TYPE_BITMAP, module_object,
+      "RESOURCE_TYPE_BITMAP");
+  set_integer(
+      RESOURCE_TYPE_ICON, module_object,
+      "RESOURCE_TYPE_ICON");
+  set_integer(
+      RESOURCE_TYPE_MENU, module_object,
+      "RESOURCE_TYPE_MENU");
+  set_integer(
+      RESOURCE_TYPE_DIALOG, module_object,
+      "RESOURCE_TYPE_DIALOG");
+  set_integer(
+      RESOURCE_TYPE_STRING, module_object,
+      "RESOURCE_TYPE_STRING");
+  set_integer(
+      RESOURCE_TYPE_FONTDIR, module_object,
+      "RESOURCE_TYPE_FONTDIR");
+  set_integer(
+      RESOURCE_TYPE_FONT, module_object,
+      "RESOURCE_TYPE_FONT");
+  set_integer(
+      RESOURCE_TYPE_ACCELERATOR, module_object,
+      "RESOURCE_TYPE_ACCELERATOR");
+  set_integer(
+      RESOURCE_TYPE_RCDATA, module_object,
+      "RESOURCE_TYPE_RCDATA");
+  set_integer(
+      RESOURCE_TYPE_MESSAGETABLE, module_object,
+      "RESOURCE_TYPE_MESSAGETABLE");
+  set_integer(
+      RESOURCE_TYPE_GROUP_CURSOR, module_object,
+      "RESOURCE_TYPE_GROUP_CURSOR");
+  set_integer(
+      RESOURCE_TYPE_GROUP_ICON, module_object,
+      "RESOURCE_TYPE_GROUP_ICON");
+  set_integer(
+      RESOURCE_TYPE_VERSION, module_object,
+      "RESOURCE_TYPE_VERSION");
+  set_integer(
+      RESOURCE_TYPE_DLGINCLUDE, module_object,
+      "RESOURCE_TYPE_DLGINCLUDE");
+  set_integer(
+      RESOURCE_TYPE_PLUGPLAY, module_object,
+      "RESOURCE_TYPE_PLUGPLAY");
+  set_integer(
+      RESOURCE_TYPE_VXD, module_object,
+      "RESOURCE_TYPE_VXD");
+  set_integer(
+      RESOURCE_TYPE_ANICURSOR, module_object,
+      "RESOURCE_TYPE_ANICURSOR");
+  set_integer(
+      RESOURCE_TYPE_ANIICON, module_object,
+      "RESOURCE_TYPE_ANIICON");
+  set_integer(
+      RESOURCE_TYPE_HTML, module_object,
+      "RESOURCE_TYPE_HTML");
+  set_integer(
+      RESOURCE_TYPE_MANIFEST, module_object,
+      "RESOURCE_TYPE_MANIFEST");
 
   YR_MEMORY_BLOCK* block;
 
