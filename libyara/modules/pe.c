@@ -690,7 +690,8 @@ int pe_collect_resources(
     length = ((DWORD) *type_string) * 2;
     type_string += 2;
     set_sized_string(
-        (char*) type_string, length, pe->object, "resources[%i].type_string");
+        (char*) type_string, length, pe->object,
+        "resources[%i].type_string", pe->resources);
   }
 
   if (name_string)
@@ -699,7 +700,8 @@ int pe_collect_resources(
     length = ((DWORD) *name_string) * 2;
     name_string += 2;
     set_sized_string(
-        (char*) name_string, length, pe->object, "resources[%i].name_string");
+        (char*) name_string, length, pe->object,
+        "resources[%i].name_string", pe->resources);
   }
 
   if (lang_string)
@@ -708,7 +710,8 @@ int pe_collect_resources(
     length = ((DWORD) *lang_string) * 2;
     lang_string += 2;
     set_sized_string(
-        (char*) lang_string, length, pe->object, "resources[%i].language_string");
+        (char*) lang_string, length, pe->object,
+        "resources[%i].language_string", pe->resources);
   }
 
   // Resources we do extra parsing on
