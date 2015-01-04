@@ -19,6 +19,7 @@ limitations under the License.
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#include <math.h>
 
 #include <yara/exec.h>
 #include <yara/limits.h>
@@ -42,45 +43,20 @@ union STACK_ITEM {
 
 #define push(x)  \
     do { \
-      if (sp < STACK_SIZE) stack[sp++].i = (x); \
+      if (sp < STACK_SIZE) stack[sp++] = (x); \
       else return ERROR_EXEC_STACK_OVERFLOW; \
     } while(0)
 
-#define push_dbl(x)  \
-    do { \
-      if (sp < STACK_SIZE) stack[sp++].d = (x); \
-      else return ERROR_EXEC_STACK_OVERFLOW; \
-    } while(0)
 
-#define pop(x)  x = stack[--sp].i
-#define pop_dbl(x)  x = stack[--sp].d
+#define pop(x)  x = stack[--sp]
 
-// The _rel() variants are used to push or pop at specific offsets from sp.
-// This is useful when you need have a stack with an integer that needs to be
-// converted to a double at stack[0] and a double at stack[1]. In this case
-// sp would be 2, so you can do:
-//
-// pop_rel(2, r1)
-// push_dbl_rel(2, r1)
+#define is_undef(x) IS_UNDEFINED((x).i)
 
-#define push_dbl_rel(offset, x) \
-    do { \
-      if (offset <= 0 || sp - offset < 0) return ERROR_EXEC_STACK_OVERFLOW; \
-      else stack[sp - offset].d = (x); \
-    } while(0)
-
-
-#define pop_rel(offset, x) \
-    do { \
-      if (offset < 0 || sp - offset < 0) return ERROR_EXEC_STACK_OVERFLOW; \
-      else x = stack[sp - offset].i; \
-    } while(0)
-
-
-#define break_if_undefined(x) \
-    if (IS_UNDEFINED(x)) \
+#define ensure_defined(x) \
+    if (is_undef(x)) \
     { \
-      push(UNDEFINED); \
+      r1.i = UNDEFINED; \
+      push(r1); \
       break; \
     }
 
@@ -148,17 +124,15 @@ int yr_execute_code(
     int timeout,
     time_t start_time)
 {
-  int64_t r1;
-  int64_t r2;
-  int64_t r3;
-  double dr1;
-  double dr2;
   int64_t mem[MEM_SIZE];
   int64_t args[MAX_FUNCTION_ARGS];
   int32_t sp = 0;
   uint8_t* ip = rules->code_start;
 
   union STACK_ITEM stack[STACK_SIZE];
+  union STACK_ITEM r1;
+  union STACK_ITEM r2;
+  union STACK_ITEM r3;
 
   YR_RULE* rule;
   YR_STRING* string;
@@ -194,7 +168,7 @@ int yr_execute_code(
         return ERROR_SUCCESS;
 
       case OP_PUSH:
-        r1 = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         push(r1);
         break;
@@ -204,52 +178,58 @@ int yr_execute_code(
         break;
 
       case OP_CLEAR_M:
-        r1 = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
-        mem[r1] = 0;
+        mem[r1.i] = 0;
         break;
 
       case OP_ADD_M:
-        r1 = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         pop(r2);
-        if (!IS_UNDEFINED(r2))
-          mem[r1] += r2;
+        if (!is_undef(r2))
+          mem[r1.i] += r2.i;
         break;
 
       case OP_INCR_M:
-        r1 = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
-        mem[r1]++;
+        mem[r1.i]++;
         break;
 
       case OP_PUSH_M:
-        r1 = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
-        push(mem[r1]);
+        r1.i = mem[r1.i];
+        push(r1);
         break;
 
       case OP_POP_M:
-        r1 = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
-        pop(mem[r1]);
+        pop(r2);
+        mem[r1.i] = r2.i;
         break;
 
       case OP_SWAPUNDEF:
-        r1 = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         pop(r2);
-        if (IS_UNDEFINED(r2))
-          push(mem[r1]);
+        if (is_undef(r2))
+        {
+          r1.i = mem[r1.i];
+          push(r1);
+        }
         else
+        {
           push(r2);
+        }
         break;
 
       case OP_JNUNDEF:
         pop(r1);
         push(r1);
-
-        if (!IS_UNDEFINED(r1))
+        if (!is_undef(r1))
         {
           ip = *(uint8_t**)(ip + 1);
           // ip will be incremented at the end of the loop,
@@ -268,7 +248,7 @@ int yr_execute_code(
         push(r1);
         push(r2);
 
-        if (r1 <= r2)
+        if (r1.i <= r2.i)
         {
           ip = *(uint8_t**)(ip + 1);
           // ip will be incremented at the end of the loop,
@@ -284,76 +264,111 @@ int yr_execute_code(
       case OP_AND:
         pop(r2);
         pop(r1);
-        if (IS_UNDEFINED(r1) || IS_UNDEFINED(r2))
-          push(0);
+
+        if (is_undef(r1) || is_undef(r2))
+          r1.i = 0;
         else
-          push(r1 && r2);
+          r1.i = r1.i && r2.i;
+
+        push(r1);
         break;
 
       case OP_OR:
         pop(r2);
         pop(r1);
-        if (IS_UNDEFINED(r1))
+
+        if (is_undef(r1))
+        {
           push(r2);
-        else if (IS_UNDEFINED(r2))
+        }
+        else if (is_undef(r2))
+        {
           push(r1);
+        }
         else
-          push(r1 || r2);
+        {
+          r1.i = r1.i || r2.i;
+          push(r1);
+        }
         break;
 
       case OP_NOT:
         pop(r1);
-        if (IS_UNDEFINED(r1))
-          push(UNDEFINED);
+
+        if (is_undef(r1))
+          r1.i = UNDEFINED;
         else
-          push(!r1);
+          r1.i= !r1.i;
+
+        push(r1);
         break;
 
       case OP_MOD:
         pop(r2);
         pop(r1);
-        push(OPERATION(%, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i % r2.i;
+        push(r1);
         break;
 
       case OP_SHR:
         pop(r2);
         pop(r1);
-        push(OPERATION(>>, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i >> r2.i;
+        push(r1);
         break;
 
       case OP_SHL:
         pop(r2);
         pop(r1);
-        push(OPERATION(<<, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i << r2.i;
+        push(r1);
         break;
 
       case OP_BITWISE_NOT:
         pop(r1);
-        push(IS_UNDEFINED(r1) ? UNDEFINED : ~r1);
+        ensure_defined(r1);
+        r1.i = ~r1.i;
+        push(r1);
         break;
 
       case OP_BITWISE_AND:
         pop(r2);
         pop(r1);
-        push(OPERATION(&, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i & r2.i;
+        push(r1);
         break;
 
       case OP_BITWISE_OR:
         pop(r2);
         pop(r1);
-        push(OPERATION(|, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i | r2.i;
+        push(r1);
         break;
 
       case OP_BITWISE_XOR:
         pop(r2);
         pop(r1);
-        push(OPERATION(^, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i ^ r2.i;
+        push(r1);
         break;
 
       case OP_PUSH_RULE:
         rule = *(YR_RULE**)(ip + 1);
         ip += sizeof(uint64_t);
-        push(rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0);
+        r1.i = rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0;
+        push(r1);
         break;
 
       case OP_MATCH_RULE:
@@ -361,7 +376,7 @@ int yr_execute_code(
         rule = *(YR_RULE**)(ip + 1);
         ip += sizeof(uint64_t);
 
-        if (!IS_UNDEFINED(r1) && r1)
+        if (!is_undef(r1) && r1.i)
           rule->t_flags[tidx] |= RULE_TFLAGS_MATCH;
 
         #ifdef PROFILING_ENABLED
@@ -380,7 +395,8 @@ int yr_execute_code(
             NULL);
 
         assert(object != NULL);
-        push(PTR_TO_UINT64(object));
+        r1.i = PTR_TO_UINT64(object);
+        push(r1);
         break;
 
       case OP_OBJ_FIELD:
@@ -388,79 +404,85 @@ int yr_execute_code(
         ip += sizeof(uint64_t);
 
         pop(r1);
-        break_if_undefined(r1);
+        ensure_defined(r1);
 
-        object = UINT64_TO_PTR(YR_OBJECT*, r1);
+        object = UINT64_TO_PTR(YR_OBJECT*, r1.i);
         object = yr_object_lookup_field(object, identifier);
 
         assert(object != NULL);
-        push(PTR_TO_UINT64(object));
-
+        r1.i = PTR_TO_UINT64(object);
+        push(r1);
         break;
 
       case OP_OBJ_VALUE:
         pop(r1);
-        break_if_undefined(r1);
+        ensure_defined(r1);
 
-        object = UINT64_TO_PTR(YR_OBJECT*, r1);
+        object = UINT64_TO_PTR(YR_OBJECT*, r1.i);
 
         switch(object->type)
         {
           case OBJECT_TYPE_INTEGER:
-            push(((YR_OBJECT_INTEGER*) object)->value);
+            r1.i = ((YR_OBJECT_INTEGER*) object)->value;
             break;
 
           case OBJECT_TYPE_DOUBLE:
-            push_dbl(((YR_OBJECT_DOUBLE*) object)->value);
+            if (isnan(((YR_OBJECT_DOUBLE*) object)->value))
+              r1.i = UNDEFINED;
+            else
+              r1.d = ((YR_OBJECT_DOUBLE*) object)->value;
             break;
 
           case OBJECT_TYPE_STRING:
-            if (((YR_OBJECT_STRING*) object)->value != NULL)
-              push(PTR_TO_UINT64(((YR_OBJECT_STRING*) object)->value));
+            if (((YR_OBJECT_STRING*) object)->value == NULL)
+              r1.i = UNDEFINED;
             else
-              push(UNDEFINED);
+              r1.i = PTR_TO_UINT64(((YR_OBJECT_STRING*) object)->value);
             break;
 
           default:
             assert(FALSE);
         }
 
+        push(r1);
         break;
 
       case OP_INDEX_ARRAY:
         pop(r1);  // index
         pop(r2);  // array
 
-        break_if_undefined(r1);
+        ensure_defined(r1);
 
-        object = UINT64_TO_PTR(YR_OBJECT*, r2);
+        object = UINT64_TO_PTR(YR_OBJECT*, r2.i);
         assert(object->type == OBJECT_TYPE_ARRAY);
-        object = yr_object_array_get_item(object, 0, r1);
+        object = yr_object_array_get_item(object, 0, r1.i);
 
         if (object != NULL)
-          push(PTR_TO_UINT64(object));
+          r1.i = PTR_TO_UINT64(object);
         else
-          push(UNDEFINED);
+          r1.i = UNDEFINED;
 
+        push(r1);
         break;
 
       case OP_LOOKUP_DICT:
         pop(r1);  // key
         pop(r2);  // dictionary
 
-        break_if_undefined(r1);
+        ensure_defined(r1);
 
-        object = UINT64_TO_PTR(YR_OBJECT*, r2);
+        object = UINT64_TO_PTR(YR_OBJECT*, r2.i);
         assert(object->type == OBJECT_TYPE_DICTIONARY);
 
         object = yr_object_dict_get_item(
-            object, 0, UINT64_TO_PTR(SIZED_STRING*, r1)->c_string);
+            object, 0, UINT64_TO_PTR(SIZED_STRING*, r1.i)->c_string);
 
         if (object != NULL)
-          push(PTR_TO_UINT64(object));
+          r1.i = PTR_TO_UINT64(object);
         else
-          push(UNDEFINED);
+          r1.i = UNDEFINED;
 
+        push(r1);
         break;
 
       case OP_CALL:
@@ -468,19 +490,35 @@ int yr_execute_code(
         ip += sizeof(uint64_t);
 
         i = strlen(args_fmt);
+        count = 0;
 
         // pop arguments from stack and copy them to args array
 
         while (i > 0)
         {
-          pop(args[i - 1]);
+          pop(r1);
+
+          if (is_undef(r1))  // count the number of undefined args
+            count++;
+
+          args[i - 1] = r1.i;
           i--;
         }
 
         pop(r2);
-        break_if_undefined(r2);
+        ensure_defined(r2);
 
-        function = UINT64_TO_PTR(YR_OBJECT_FUNCTION*, r2);
+        if (count > 0)
+        {
+          // if there are undefined args, result for function call
+          // is undefined as well.
+
+          r1.i = UNDEFINED;
+          push(r1);
+          break;
+        }
+
+        function = UINT64_TO_PTR(YR_OBJECT_FUNCTION*, r2.i);
         result = ERROR_INTERNAL_FATAL_ERROR;
 
         for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
@@ -502,50 +540,54 @@ int yr_execute_code(
         assert(i < MAX_OVERLOADED_FUNCTIONS);
 
         if (result == ERROR_SUCCESS)
-          push(PTR_TO_UINT64(function->return_obj));
+        {
+          r1.i = PTR_TO_UINT64(function->return_obj);
+          push(r1);
+        }
         else
+        {
           return result;
+        }
 
         break;
 
       case OP_FOUND:
         pop(r1);
-        string = UINT64_TO_PTR(YR_STRING*, r1);
-        push(string->matches[tidx].tail != NULL ? 1 : 0);
+        string = UINT64_TO_PTR(YR_STRING*, r1.i);
+        r1.i = string->matches[tidx].tail != NULL ? 1 : 0;
+        push(r1);
         break;
 
       case OP_FOUND_AT:
         pop(r2);
         pop(r1);
 
-        if (IS_UNDEFINED(r1))
+        if (is_undef(r1))
         {
-          push(0);
+          r1.i = 0;
+          push(r1);
           break;
         }
 
-        string = UINT64_TO_PTR(YR_STRING*, r2);
+        string = UINT64_TO_PTR(YR_STRING*, r2.i);
         match = string->matches[tidx].head;
-        found = 0;
+        r3.i = FALSE;
 
         while (match != NULL)
         {
-          if (r1 == match->base + match->offset)
+          if (r1.i == match->base + match->offset)
           {
-            push(1);
-            found = 1;
+            r3.i = TRUE;
             break;
           }
 
-          if (r1 < match->base + match->offset)
+          if (r1.i < match->base + match->offset)
             break;
 
           match = match->next;
         }
 
-        if (!found)
-          push(0);
-
+        push(r3);
         break;
 
       case OP_FOUND_IN:
@@ -553,64 +595,58 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
-        break_if_undefined(r1);
-        break_if_undefined(r2);
+        ensure_defined(r1);
+        ensure_defined(r2);
 
-        string = UINT64_TO_PTR(YR_STRING*, r3);
+        string = UINT64_TO_PTR(YR_STRING*, r3.i);
         match = string->matches[tidx].head;
-        found = FALSE;
+        r3.i = FALSE;
 
-        while (match != NULL && !found)
+        while (match != NULL && !r3.i)
         {
-          if (match->base + match->offset >= r1 &&
-              match->base + match->offset <= r2)
+          if (match->base + match->offset >= r1.i &&
+              match->base + match->offset <= r2.i)
           {
-            push(1);
-            found = TRUE;
+            r3.i = TRUE;
           }
 
-          if (match->base + match->offset > r2)
+          if (match->base + match->offset > r2.i)
             break;
 
           match = match->next;
         }
 
-        if (!found)
-          push(0);
-
+        push(r3);
         break;
 
       case OP_COUNT:
         pop(r1);
-        string = UINT64_TO_PTR(YR_STRING*, r1);
-        push(string->matches[tidx].count);
+        string = UINT64_TO_PTR(YR_STRING*, r1.i);
+        r1.i = string->matches[tidx].count;
+        push(r1);
         break;
 
       case OP_OFFSET:
         pop(r2);
         pop(r1);
-        break_if_undefined(r1);
 
-        string = UINT64_TO_PTR(YR_STRING*, r2);
+        ensure_defined(r1);
+
+        string = UINT64_TO_PTR(YR_STRING*, r2.i);
         match = string->matches[tidx].head;
         i = 1;
-        found = FALSE;
+        r3.i = UNDEFINED;
 
-        while (match != NULL && !found)
+        while (match != NULL && r3.i == UNDEFINED)
         {
-          if (r1 == i)
-          {
-            push(match->base + match->offset);
-            found = TRUE;
-          }
+          if (r1.i == i)
+            r3.i = match->base + match->offset;
 
           i++;
           match = match->next;
         }
 
-        if (!found)
-          push(UNDEFINED);
-
+        push(r3);
         break;
 
       case OP_OF:
@@ -618,9 +654,9 @@ int yr_execute_code(
         count = 0;
         pop(r1);
 
-        while (!IS_UNDEFINED(r1))
+        while (!is_undef(r1))
         {
-          string = UINT64_TO_PTR(YR_STRING*, r1);
+          string = UINT64_TO_PTR(YR_STRING*, r1.i);
           if (string->matches[tidx].tail != NULL)
             found++;
           count++;
@@ -629,101 +665,117 @@ int yr_execute_code(
 
         pop(r2);
 
-        if (IS_UNDEFINED(r2))
-          push(found >= count ? 1 : 0);
+        if (is_undef(r2))
+          r1.i = found >= count ? 1 : 0;
         else
-          push(found >= r2 ? 1 : 0);
+          r1.i = found >= r2.i ? 1 : 0;
 
+        push(r1);
         break;
 
       case OP_FILESIZE:
-        push(context->file_size);
+        r1.i = context->file_size;
+        push(r1);
         break;
 
       case OP_ENTRYPOINT:
-        push(context->entry_point);
+        r1.i = context->entry_point;
+        push(r1);
         break;
 
       case OP_INT8:
         pop(r1);
-        push(read_int8_t_little_endian(context->mem_block, r1));
+        r1.i = read_int8_t_little_endian(context->mem_block, r1.i);
+        push(r1);
         break;
 
       case OP_INT16:
         pop(r1);
-        push(read_int16_t_little_endian(context->mem_block, r1));
+        r1.i = read_int16_t_little_endian(context->mem_block, r1.i);
+        push(r1);
         break;
 
       case OP_INT32:
         pop(r1);
-        push(read_int32_t_little_endian(context->mem_block, r1));
+        r1.i = read_int32_t_little_endian(context->mem_block, r1.i);
+        push(r1);
         break;
 
       case OP_UINT8:
         pop(r1);
-        push(read_uint8_t_little_endian(context->mem_block, r1));
+        r1.i = read_uint8_t_little_endian(context->mem_block, r1.i);
+        push(r1);
         break;
 
       case OP_UINT16:
         pop(r1);
-        push(read_uint16_t_little_endian(context->mem_block, r1));
+        r1.i = read_uint16_t_little_endian(context->mem_block, r1.i);
+        push(r1);
         break;
 
       case OP_UINT32:
         pop(r1);
-        push(read_uint32_t_little_endian(context->mem_block, r1));
+        r1.i = read_uint32_t_little_endian(context->mem_block, r1.i);
+        push(r1);
         break;
 
       case OP_INT8BE:
         pop(r1);
-        push(read_int8_t_big_endian(context->mem_block, r1));
+        r1.i = read_int8_t_big_endian(context->mem_block, r1.i);
+        push(r1);
         break;
 
       case OP_INT16BE:
         pop(r1);
-        push(read_int16_t_big_endian(context->mem_block, r1));
+        r1.i = read_int16_t_big_endian(context->mem_block, r1.i);
+        push(r1);
         break;
 
       case OP_INT32BE:
         pop(r1);
-        push(read_int32_t_big_endian(context->mem_block, r1));
+        r1.i = read_int32_t_big_endian(context->mem_block, r1.i);
+        push(r1);
         break;
 
       case OP_UINT8BE:
         pop(r1);
-        push(read_uint8_t_big_endian(context->mem_block, r1));
+        r1.i = read_uint8_t_big_endian(context->mem_block, r1.i);
+        push(r1);
         break;
 
       case OP_UINT16BE:
         pop(r1);
-        push(read_uint16_t_big_endian(context->mem_block, r1));
+        r1.i = read_uint16_t_big_endian(context->mem_block, r1.i);
+        push(r1);
         break;
 
       case OP_UINT32BE:
         pop(r1);
-        push(read_uint32_t_big_endian(context->mem_block, r1));
+        r1.i = read_uint32_t_big_endian(context->mem_block, r1.i);
+        push(r1);
         break;
 
       case OP_CONTAINS:
         pop(r2);
         pop(r1);
 
-        break_if_undefined(r1);
-        break_if_undefined(r2);
+        ensure_defined(r1);
+        ensure_defined(r2);
 
-        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
-        sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2);
+        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1.i);
+        sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2.i);
 
-        push(memmem(sized_str_1->c_string, sized_str_1->length,
-                    sized_str_2->c_string, sized_str_2->length) != NULL);
+        r1.i = memmem(sized_str_1->c_string, sized_str_1->length,
+                      sized_str_2->c_string, sized_str_2->length) != NULL;
+        push(r1);
         break;
 
       case OP_IMPORT:
-        r1 = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
 
         FAIL_ON_ERROR(yr_modules_load(
-            UINT64_TO_PTR(char*, r1),
+            UINT64_TO_PTR(char*, r1.i),
             context));
 
         break;
@@ -732,163 +784,222 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
-        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
+        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1.i);
 
         if (sized_str_1->length == 0)
         {
-          push(FALSE);
+          r1.i = FALSE;
+          push(r1);
           break;
         }
 
         result = yr_re_exec(
-          UINT64_TO_PTR(uint8_t*, r2),
+          UINT64_TO_PTR(uint8_t*, r2.i),
           (uint8_t*) sized_str_1->c_string,
           sized_str_1->length,
           RE_FLAGS_SCAN,
           NULL,
           NULL);
 
-        push(result >= 0);
+        r1.i = result >= 0;
+        push(r1);
         break;
 
       case OP_INT_TO_DBL:
-        r1 = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
-
-        pop_rel(r1, r2);
-        break_if_undefined(r2);
-        push_dbl_rel(r1, r2);
+        r2 = stack[sp - r1.i];
+        if (is_undef(r2))
+          stack[sp - r1.i].i = UNDEFINED;
+        else
+          stack[sp - r1.i].d = r2.i;
         break;
 
       case OP_STR_TO_BOOL:
         pop(r1);
-        break_if_undefined(r1);
-        push(UINT64_TO_PTR(SIZED_STRING*, r1)->length > 0);
+        ensure_defined(r1);
+        r1.i = UINT64_TO_PTR(SIZED_STRING*, r1.i)->length > 0;
+        push(r1);
         break;
 
       case OP_INT_EQ:
         pop(r2);
         pop(r1);
-        push(COMPARISON(==, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i == r2.i;
+        push(r1);
         break;
 
       case OP_INT_NEQ:
         pop(r2);
         pop(r1);
-        push(COMPARISON(!=, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i != r2.i;
+        push(r1);
         break;
 
       case OP_INT_LT:
         pop(r2);
         pop(r1);
-        push(COMPARISON(<, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i < r2.i;
+        push(r1);
         break;
 
       case OP_INT_GT:
         pop(r2);
         pop(r1);
-        push(COMPARISON(>, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i > r2.i;
+        push(r1);
         break;
 
       case OP_INT_LE:
         pop(r2);
         pop(r1);
-        push(COMPARISON(<=, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i <= r2.i;
+        push(r1);
         break;
 
       case OP_INT_GE:
         pop(r2);
         pop(r1);
-        push(COMPARISON(>=, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i >= r2.i;
+        push(r1);
         break;
 
       case OP_INT_ADD:
         pop(r2);
         pop(r1);
-        push(OPERATION(+, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i + r2.i;
+        push(r1);
         break;
 
       case OP_INT_SUB:
         pop(r2);
         pop(r1);
-        push(OPERATION(-, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i - r2.i;
+        push(r1);
         break;
 
       case OP_INT_MUL:
         pop(r2);
         pop(r1);
-        push(OPERATION(*, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i * r2.i;
+        push(r1);
         break;
 
       case OP_INT_DIV:
         pop(r2);
         pop(r1);
-        push(OPERATION(/, r1, r2));
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.i / r2.i;
+        push(r1);
         break;
 
-      // Double comparisons do not use push_dbl because the result is just
-      // an integer.
-
       case OP_DBL_LT:
-        pop_dbl(dr2);
-        pop_dbl(dr1);
-        push(COMPARISON(<, dr1, dr2));
+        pop(r2);
+        pop(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.d < r2.d;
+        push(r1);
         break;
 
       case OP_DBL_GT:
-        pop_dbl(dr2);
-        pop_dbl(dr1);
-        push(COMPARISON(>, dr1, dr2));
+        pop(r2);
+        pop(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.d > r2.d;
+        push(r1);
         break;
 
       case OP_DBL_LE:
-        pop_dbl(dr2);
-        pop_dbl(dr1);
-        push(COMPARISON(<=, dr1, dr2));
+        pop(r2);
+        pop(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.d <= r2.d;
+        push(r1);
         break;
 
       case OP_DBL_GE:
-        pop_dbl(dr2);
-        pop_dbl(dr1);
-        push(COMPARISON(>=, dr1, dr2));
+        pop(r2);
+        pop(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.d >= r2.d;
+        push(r1);
         break;
 
       case OP_DBL_EQ:
-        pop_dbl(dr2);
-        pop_dbl(dr1);
-        push(COMPARISON(==, dr1, dr2));
+        pop(r2);
+        pop(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.d == r2.d;
+        push(r1);
         break;
 
       case OP_DBL_NEQ:
-        pop_dbl(dr2);
-        pop_dbl(dr1);
-        push(COMPARISON(!=, dr1, dr2));
+        pop(r2);
+        pop(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.i = r1.d != r2.d;
+        push(r1);
         break;
 
-      // Double operations do use push_dbl because the result is a double.
-
       case OP_DBL_ADD:
-        pop_dbl(dr2);
-        pop_dbl(dr1);
-        push_dbl(OPERATION(+, dr1, dr2));
+        pop(r2);
+        pop(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.d = r1.d + r2.d;
+        push(r1);
         break;
 
       case OP_DBL_SUB:
-        pop_dbl(dr2);
-        pop_dbl(dr1);
-        push_dbl(OPERATION(-, dr1, dr2));
+        pop(r2);
+        pop(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.d = r1.d - r2.d;
+        push(r1);
         break;
 
       case OP_DBL_MUL:
-        pop_dbl(dr2);
-        pop_dbl(dr1);
-        push_dbl(OPERATION(*, dr1, dr2));
+        pop(r2);
+        pop(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.d = r1.d * r2.d;
+        push(r1);
         break;
 
       case OP_DBL_DIV:
-        pop_dbl(dr2);
-        pop_dbl(dr1);
-        push_dbl(OPERATION(/, dr1, dr2));
+        pop(r2);
+        pop(r1);
+        ensure_defined(r2);
+        ensure_defined(r1);
+        r1.d = r1.d / r2.d;
+        push(r1);
         break;
 
       case OP_STR_EQ:
@@ -901,36 +1012,37 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
-        break_if_undefined(r1);
-        break_if_undefined(r2);
+        ensure_defined(r1);
+        ensure_defined(r2);
 
-        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1);
-        sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2);
+        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1.i);
+        sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2.i);
 
         int r = sized_string_cmp(sized_str_1, sized_str_2);
 
         switch(*ip)
         {
           case OP_STR_EQ:
-            push(r == 0);
+            r1.i = (r == 0);
             break;
           case OP_STR_NEQ:
-            push(r != 0);
+            r1.i = (r != 0);
             break;
           case OP_STR_LT:
-            push(r < 0);
+            r1.i = (r < 0);
             break;
           case OP_STR_LE:
-            push(r <= 0);
+            r1.i = (r <= 0);
             break;
           case OP_STR_GT:
-            push(r > 0);
+            r1.i = (r > 0);
             break;
           case OP_STR_GE:
-            push(r >= 0);
+            r1.i = (r >= 0);
             break;
         }
 
+        push(r1);
         break;
 
       default:

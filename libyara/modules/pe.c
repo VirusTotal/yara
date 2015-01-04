@@ -1145,40 +1145,35 @@ void pe_parse_header(
 
 define_function(valid_on)
 {
-  int64_t timestamp = integer_argument(1);
-
-  YR_OBJECT_INTEGER* not_before = (YR_OBJECT_INTEGER*)
-      yr_object_lookup_field(parent(), "not_before");
-
-  YR_OBJECT_INTEGER* not_after = (YR_OBJECT_INTEGER*)
-      yr_object_lookup_field(parent(), "not_after");
-
-  if (IS_UNDEFINED(not_before->value) ||
-      IS_UNDEFINED(not_after->value))
+  if (is_undefined(parent(), "not_before") ||
+      is_undefined(parent(), "not_after"))
   {
     return_integer(UNDEFINED);
   }
 
-  return_integer(timestamp >= not_before->value  &&
-                 timestamp <= not_after->value);
+  int64_t timestamp = integer_argument(1);
+
+  int64_t not_before = get_integer(parent(), "not_before");
+  int64_t not_after = get_integer(parent(), "not_after");
+
+  return_integer(timestamp >= not_before  && timestamp <= not_after);
 }
 
 
 define_function(section_index)
 {
   YR_OBJECT* module = module();
-  SIZED_STRING* sect;
-  char* name = string_argument(1);
 
-  int64_t n = get_integer(module, "number_of_sections");
-  int64_t i;
-
-  if (n == UNDEFINED)
+  if (is_undefined(module, "number_of_sections"))
     return_integer(UNDEFINED);
 
-  for (i = 0; i < n; i++)
+  char* name = string_argument(1);
+  int64_t n = get_integer(module, "number_of_sections");
+
+  for (int64_t i = 0; i < n; i++)
   {
-    sect = get_string(module, "sections[%i].name", i);
+    SIZED_STRING* sect = get_string(module, "sections[%i].name", i);
+
     if (strcmp(name, sect->c_string) == 0)
       return_integer(i);
   }
@@ -1194,33 +1189,27 @@ define_function(exports)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
-  PIMAGE_DATA_DIRECTORY directory;
-  PIMAGE_EXPORT_DIRECTORY exports;
-  DWORD* names;
-
-  char* name;
-  int i;
-  uint64_t offset;
-
   // If not a PE file, return UNDEFINED
 
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_EXPORT);
+  PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
+      pe, IMAGE_DIRECTORY_ENTRY_EXPORT);
 
   // If the PE doesn't export any functions, return FALSE
 
   if (directory->VirtualAddress == 0)
     return_integer(0);
 
-  offset = pe_rva_to_offset(pe, directory->VirtualAddress);
+  uint64_t offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
   if (offset == 0 ||
       offset >= pe->data_size)
     return_integer(0);
 
-  exports = (PIMAGE_EXPORT_DIRECTORY)(pe->data + offset);
+  PIMAGE_EXPORT_DIRECTORY exports = (PIMAGE_EXPORT_DIRECTORY) \
+      (pe->data + offset);
 
   offset = pe_rva_to_offset(pe, exports->AddressOfNames);
 
@@ -1228,16 +1217,16 @@ define_function(exports)
       offset + exports->NumberOfNames * sizeof(DWORD) > pe->data_size)
     return_integer(0);
 
-  names = (DWORD*)(pe->data + offset);
+  DWORD* names = (DWORD*)(pe->data + offset);
 
-  for (i = 0; i < exports->NumberOfNames; i++)
+  for (int i = 0; i < exports->NumberOfNames; i++)
   {
     offset = pe_rva_to_offset(pe, names[i]);
 
     if (offset == 0 || offset >= pe->data_size)
       return_integer(0);
 
-    name = (char*)(pe->data + offset);
+    char* name = (char*)(pe->data + offset);
 
     if (strncmp(name, function_name, pe->data_size - offset) == 0)
       return_integer(1);
@@ -1270,7 +1259,7 @@ define_function(imphash)
 
   PE* pe = (PE*) module->data;
 
-  // If not a PE, return 0.
+  // If not a PE, return UNDEFINED.
 
   if (!pe)
     return_string(UNDEFINED);
@@ -1383,6 +1372,7 @@ define_function(imports)
         imported_func = imported_func->next;
       }
     }
+
     imported_dll = imported_dll->next;
   }
 
@@ -1392,21 +1382,25 @@ define_function(imports)
 
 define_function(locale)
 {
-  int64_t n;
-  uint64_t rsrc_language;
-  uint64_t locale = integer_argument(1);
-
   YR_OBJECT* module = module();
+
+  if (is_undefined(module, "number_of_resources"))
+    return_integer(UNDEFINED);
+
+  uint64_t locale = integer_argument(1);
   PE* pe = (PE*) module->data;
 
   // If not a PE file, return UNDEFINED
+
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  n = get_integer(module, "number_of_resources");
-  for (int i = 0; i < n; i++)
+  int64_t n = get_integer(module, "number_of_resources");
+
+  for (int64_t i = 0; i < n; i++)
   {
-    rsrc_language = get_integer(module, "resources[%i].language", i);
+    uint64_t rsrc_language = get_integer(module, "resources[%i].language", i);
+
     if ((rsrc_language & 0xFFFF) == locale)
       return_integer(1);
   }
@@ -1417,21 +1411,25 @@ define_function(locale)
 
 define_function(language)
 {
-  int64_t n;
-  uint64_t rsrc_language;
-  uint64_t language = integer_argument(1);
-
   YR_OBJECT* module = module();
+
+  if (is_undefined(module, "number_of_resources"))
+    return_integer(UNDEFINED);
+
+  uint64_t language = integer_argument(1);
   PE* pe = (PE*) module->data;
 
   // If not a PE file, return UNDEFINED
+
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  n = get_integer(module, "number_of_resources");
-  for (int i = 0; i < n; i++)
+  int64_t n = get_integer(module, "number_of_resources");
+
+  for (int64_t i = 0; i < n; i++)
   {
-    rsrc_language = get_integer(module, "resources[%i].language", i);
+    uint64_t rsrc_language = get_integer(module, "resources[%i].language", i);
+
     if ((rsrc_language & 0xFF) == language)
       return_integer(1);
   }

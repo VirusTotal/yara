@@ -69,6 +69,11 @@ YR_OBJECT* yr_object_lookup(
     ...);
 
 
+int yr_object_has_undefined_value(
+    YR_OBJECT* object,
+    const char* field,
+    ...);
+
 int64_t yr_object_get_integer(
     YR_OBJECT* object,
     const char* field,

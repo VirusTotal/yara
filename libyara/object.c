@@ -20,6 +20,7 @@ limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #if _WIN32
 #define PRIu64 "%I64d"
@@ -106,7 +107,7 @@ int yr_object_create(
       ((YR_OBJECT_INTEGER*) obj)->value = UNDEFINED;
       break;
     case OBJECT_TYPE_DOUBLE:
-      ((YR_OBJECT_DOUBLE*) obj)->value = UNDEFINED;
+      ((YR_OBJECT_DOUBLE*) obj)->value = NAN;
       break;
     case OBJECT_TYPE_STRING:
       ((YR_OBJECT_STRING*) obj)->value = NULL;
@@ -815,6 +816,40 @@ int yr_object_dict_set_item(
 }
 
 
+int yr_object_has_undefined_value(
+    YR_OBJECT* object,
+    const char* field,
+    ...)
+{
+  YR_OBJECT* field_obj;
+
+  va_list args;
+  va_start(args, field);
+
+  if (field != NULL)
+    field_obj = _yr_object_lookup(object, 0, field, args);
+  else
+    field_obj = object;
+
+  va_end(args);
+
+  if (field_obj == NULL)
+    return TRUE;
+
+  switch(field_obj->type)
+  {
+    case OBJECT_TYPE_DOUBLE:
+      return isnan(((YR_OBJECT_DOUBLE*) field_obj)->value);
+    case OBJECT_TYPE_STRING:
+      return ((YR_OBJECT_STRING*) field_obj)->value == NULL;
+    case OBJECT_TYPE_INTEGER:
+      return ((YR_OBJECT_INTEGER*) field_obj)->value == UNDEFINED;
+  }
+
+  return FALSE;
+}
+
+
 int64_t yr_object_get_integer(
     YR_OBJECT* object,
     const char* field,
@@ -860,7 +895,7 @@ double yr_object_get_double(
   va_end(args);
 
   if (double_obj == NULL)
-    return UNDEFINED;
+    return NAN;
 
   assertf(double_obj->type == OBJECT_TYPE_DOUBLE,
           "type of \"%s\" is not double\n", field);

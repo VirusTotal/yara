@@ -82,6 +82,7 @@ ACX_PTHREAD(
      CC="$PTHREAD_CC"],
     [AC_MSG_ERROR([pthread API support is required.])])
 
+AC_CHECK_LIB(m, isnan)
 AC_CHECK_LIB(m, log2)
 AC_CHECK_FUNCS([strlcpy strlcat memmem timegm])
 
