@@ -33,9 +33,6 @@ define_function(string_entropy)
   double entropy = 0.0;
   SIZED_STRING* s = sized_string_argument(1);
 
-  if (IS_UNDEFINED(s))
-    return_double(UNDEFINED);
-
   data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
   if (data == NULL)
     return_double(UNDEFINED);
@@ -71,9 +68,6 @@ define_function(data_entropy)
 
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want entropy on
-
-  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
-    return_double(UNDEFINED);
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
@@ -150,9 +144,6 @@ define_function(string_deviation)
   SIZED_STRING* s = sized_string_argument(1);
   double mean = double_argument(2);
 
-  if (IS_UNDEFINED(s) || IS_UNDEFINED(mean))
-    return_double(UNDEFINED);
-
   for (i = 0; i < s->length; i++)
     sum += fabs(((double) s->c_string[i]) - mean);
 
@@ -170,9 +161,6 @@ define_function(data_deviation)
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
   double mean = double_argument(3);
-
-  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length) || IS_UNDEFINED(mean))
-    return_double(UNDEFINED);
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
@@ -228,9 +216,6 @@ define_function(string_mean)
   SIZED_STRING* s = sized_string_argument(1);
   double mean = double_argument(2);
 
-  if (IS_UNDEFINED(s) || IS_UNDEFINED(mean))
-    return_double(UNDEFINED);
-
   for (i = 0; i < s->length; i++)
     sum += (double) s->c_string[i];
 
@@ -249,9 +234,6 @@ define_function(data_mean)
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
   double mean = double_argument(3);
-
-  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length) || IS_UNDEFINED(mean))
-    return_double(UNDEFINED);
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
@@ -309,9 +291,6 @@ define_function(data_serial_correlation)
 
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
-
-  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
-    return_double(UNDEFINED);
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
@@ -385,9 +364,6 @@ define_function(string_serial_correlation)
   double scc, sccun, scclast, scct1, scct2, scct3;
   SIZED_STRING* s = sized_string_argument(1);
 
-  if (IS_UNDEFINED(s))
-    return_double(UNDEFINED);
-
   scct1 = scct2 = scct3 = 0.0;
   for (i = 0; i < s->length; i++)
   {
@@ -427,9 +403,6 @@ define_function(data_monte_carlo_pi)
 
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
-
-  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
-    return_double(UNDEFINED);
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
@@ -503,9 +476,6 @@ define_function(string_monte_carlo_pi)
 
   SIZED_STRING* s = sized_string_argument(1);
 
-  if (IS_UNDEFINED(s))
-    return_double(UNDEFINED);
-
   for (i = 0; i < s->length; i++)
   {
     monte[idx++] = (unsigned int) s->c_string[i];
@@ -534,9 +504,6 @@ define_function(in_range)
   double test = double_argument(1);
   double lower = double_argument(2);
   double upper = double_argument(3);
-
-  if (IS_UNDEFINED(test) || IS_UNDEFINED(lower) || IS_UNDEFINED(upper))
-    return_double(UNDEFINED);
 
   return_integer((lower <= test && test <= upper) ? 1 : 0);
 }
