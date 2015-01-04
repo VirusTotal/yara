@@ -163,8 +163,28 @@ PIMAGE_NT_HEADERS32 pe_get_header(
   headers_size += pe_header->FileHeader.SizeOfOptionalHeader;
 
   if (pe_header->Signature == IMAGE_NT_SIGNATURE &&
-      (pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64) &&
+      (pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_UNKNOWN ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AM33 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARMNT ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM64 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_EBC ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_IA64 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_M32R ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPS16 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPSFPU ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPSFPU16 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_POWERPC ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_POWERPCFP ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_R4000 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH3 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH3DSP ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH4 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH5 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_THUMB ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_WCEMIPSV2) &&
       data_size > headers_size)
   {
     return pe_header;
