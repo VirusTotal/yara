@@ -45,10 +45,6 @@ void digest_to_ascii(
 define_function(string_md5)
 {
   SIZED_STRING* s = sized_string_argument(1);
-
-  if (IS_UNDEFINED(s))
-    return_string(UNDEFINED);
-
   MD5_CTX md5_context;
 
   unsigned char digest[MD5_DIGEST_LENGTH];
@@ -67,11 +63,8 @@ define_function(string_md5)
 define_function(string_sha256)
 {
   SIZED_STRING* s = sized_string_argument(1);
-
-  if (IS_UNDEFINED(s))
-    return_string(UNDEFINED);
-
   SHA256_CTX sha256_context;
+
   unsigned char digest[SHA256_DIGEST_LENGTH];
   char digest_ascii[SHA256_DIGEST_LENGTH * 2 + 1];
 
@@ -88,11 +81,8 @@ define_function(string_sha256)
 define_function(string_sha1)
 {
   SIZED_STRING* s = sized_string_argument(1);
-
-  if (IS_UNDEFINED(s))
-    return_string(UNDEFINED);
-
   SHA_CTX sha_context;
+
   unsigned char digest[SHA_DIGEST_LENGTH];
   char digest_ascii[SHA_DIGEST_LENGTH * 2 + 1];
 
@@ -109,10 +99,6 @@ define_function(string_sha1)
 define_function(string_checksum32)
 {
   SIZED_STRING* s = sized_string_argument(1);
-
-  if (IS_UNDEFINED(s))
-    return_integer(UNDEFINED);
-
   uint32_t checksum = 0;
 
   for (int i = 0; i < s->length; i++)
@@ -126,9 +112,6 @@ define_function(data_md5)
 {
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
-
-  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
-    return_string(UNDEFINED);
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
@@ -194,9 +177,6 @@ define_function(data_sha1)
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
 
-  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
-    return_string(UNDEFINED);
-
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
 
@@ -260,9 +240,6 @@ define_function(data_sha256)
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
 
-  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
-    return_string(UNDEFINED);
-
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
 
@@ -325,9 +302,6 @@ define_function(data_checksum32)
 {
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
-
-  if (IS_UNDEFINED(offset) || IS_UNDEFINED(length))
-    return_integer(UNDEFINED);
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
