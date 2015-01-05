@@ -289,7 +289,7 @@ define_function(data_serial_correlation)
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  double scc, sccun;
+  double sccun = 0;
   double scclast = 0;
   double scct1 = 0;
   double scct2 = 0;
@@ -337,7 +337,8 @@ define_function(data_serial_correlation)
 
   scct1 += scclast * sccun;
   scct2 *= scct2;
-  scc = total_len * scct3 - scct2;
+
+  double scc = total_len * scct3 - scct2;
 
   if (scc == 0)
     scc = -100000;
