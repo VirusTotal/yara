@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2014-2015. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,27 +27,26 @@ limitations under the License.
 
 define_function(string_entropy)
 {
-  int i;
-  double x;
-  uint32_t* data;
-  double entropy = 0.0;
   SIZED_STRING* s = sized_string_argument(1);
 
-  data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
+  uint32_t* data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
+
   if (data == NULL)
     return_double(UNDEFINED);
 
-  for (i = 0; i < s->length; i++)
+  for (int i = 0; i < s->length; i++)
   {
     uint8_t c = s->c_string[i];
     data[c] += 1;
   }
 
-  for (i = 0; i < 256; i++)
+  double entropy = 0.0;
+
+  for (int i = 0; i < 256; i++)
   {
     if (data[i] != 0)
     {
-      x = (double) (data[i]) / s->length;
+      double x = (double) (data[i]) / s->length;
       entropy -= x * log2(x);
     }
   }
@@ -59,13 +58,6 @@ define_function(string_entropy)
 
 define_function(data_entropy)
 {
-  int i;
-  double x;
-  uint32_t* data;
-  double entropy = 0.0;
-  bool past_first_block = false;
-  uint64_t total_len = 0;
-
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want entropy on
 
@@ -77,9 +69,13 @@ define_function(data_entropy)
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
+  uint32_t* data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
+
   if (data == NULL)
     return_double(UNDEFINED);
+
+  bool past_first_block = false;
+  uint64_t total_len = 0;
 
   foreach_memory_block(context, block)
   {
@@ -93,7 +89,7 @@ define_function(data_entropy)
       offset += data_len;
       length -= data_len;
 
-      for (i = 0; i < data_len; i++)
+      for (int i = 0; i < data_len; i++)
       {
         uint8_t c = *(block->data + data_offset + i);
         data[c] += 1;
@@ -123,14 +119,17 @@ define_function(data_entropy)
     return_double(UNDEFINED);
   }
 
-  for (i = 0; i < 256; i++)
+  double entropy = 0.0;
+
+  for (int i = 0; i < 256; i++)
   {
     if (data[i] != 0)
     {
-      x = (double) (data[i]) / total_len;
+      double x = (double) (data[i]) / total_len;
       entropy -= x * log2(x);
     }
   }
+
   yr_free(data);
   return_double(entropy);
 }
@@ -138,29 +137,24 @@ define_function(data_entropy)
 
 define_function(string_deviation)
 {
-  int i;
-  double sum = 0.0;
-
   SIZED_STRING* s = sized_string_argument(1);
   double mean = double_argument(2);
+  double sum = 0.0;
 
-  for (i = 0; i < s->length; i++)
+  for (int i = 0; i < s->length; i++)
     sum += fabs(((double) s->c_string[i]) - mean);
 
-  return_double(((double) 1 / s->length) * sum);
+  return_double(sum / s->length);
 }
 
 
 define_function(data_deviation)
 {
-  int i;
-  double sum = 0.0;
-  bool past_first_block = false;
-  uint64_t total_len = 0;
-
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
+
   double mean = double_argument(3);
+  double sum = 0.0;
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
@@ -169,6 +163,9 @@ define_function(data_deviation)
   {
     return ERROR_WRONG_ARGUMENTS;
   }
+
+  bool past_first_block = false;
+  uint64_t total_len = 0;
 
   foreach_memory_block(context, block)
   {
@@ -182,7 +179,7 @@ define_function(data_deviation)
       offset += data_len;
       length -= data_len;
 
-      for (i = 0; i < data_len; i++)
+      for (int i = 0; i < data_len; i++)
         sum += fabs(((double) *(block->data + data_offset + i)) - mean);
 
       past_first_block = true;
@@ -204,32 +201,25 @@ define_function(data_deviation)
   if (!past_first_block)
     return_double(UNDEFINED);
 
-  return_double(((double) 1 / total_len) * sum);
+  return_double(sum / total_len);
 }
 
 
 define_function(string_mean)
 {
-  int i;
-  double sum = 0.0;
-
   SIZED_STRING* s = sized_string_argument(1);
 
-  for (i = 0; i < s->length; i++)
+  double sum = 0.0;
+
+  for (int i = 0; i < s->length; i++)
     sum += (double) s->c_string[i];
 
-
-  return_double(sum / (double) s->length);
+  return_double(sum / s->length);
 }
 
 
 define_function(data_mean)
 {
-  int i;
-  double sum = 0.0;
-  bool past_first_block = false;
-  uint64_t total_len = 0;
-
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
 
@@ -241,6 +231,10 @@ define_function(data_mean)
     return ERROR_WRONG_ARGUMENTS;
   }
 
+  bool past_first_block = false;
+  uint64_t total_len = 0;
+  double sum = 0.0;
+
   foreach_memory_block(context, block)
   {
     if (offset >= block->base &&
@@ -248,12 +242,12 @@ define_function(data_mean)
     {
       uint64_t data_offset = offset - block->base;
       uint64_t data_len = min(length, block->size - data_offset);
-      total_len += data_len;
 
+      total_len += data_len;
       offset += data_len;
       length -= data_len;
 
-      for (i = 0; i < data_len; i++)
+      for (int i = 0; i < data_len; i++)
         sum += (double) *(block->data + data_offset + i);
 
       past_first_block = true;
@@ -275,14 +269,12 @@ define_function(data_mean)
   if (!past_first_block)
     return_double(UNDEFINED);
 
-  return_double(sum / (double) total_len);
+  return_double(sum / total_len);
 }
 
 
 define_function(data_serial_correlation)
 {
-  int i;
-  double scc, sccun, scclast, scct1, scct2, scct3;
   bool past_first_block = false;
   bool first_byte = true;
   uint64_t total_len = 0;
@@ -298,7 +290,10 @@ define_function(data_serial_correlation)
     return ERROR_WRONG_ARGUMENTS;
   }
 
+  double scc, sccun, scclast, scct1, scct2, scct3;
+
   scct1 = scct2 = scct3 = 0.0;
+
   foreach_memory_block(context, block)
   {
     if (offset >= block->base &&
@@ -306,14 +301,15 @@ define_function(data_serial_correlation)
     {
       uint64_t data_offset = offset - block->base;
       uint64_t data_len = min(length, block->size - data_offset);
-      total_len += data_len;
 
+      total_len += data_len;
       offset += data_len;
       length -= data_len;
 
-      for (i = 0; i < data_len; i++)
+      for (int i = 0; i < data_len; i++)
       {
         sccun = (double) *(block->data + data_offset + i);
+
         if (first_byte)
           first_byte = false;
         else
@@ -346,6 +342,7 @@ define_function(data_serial_correlation)
   scct1 += scclast * sccun;
   scct2 *= scct2;
   scc = total_len * scct3 - scct2;
+
   if (scc == 0)
     scc = -100000;
   else
@@ -357,15 +354,16 @@ define_function(data_serial_correlation)
 
 define_function(string_serial_correlation)
 {
-  int i;
-  bool first_byte = true;
-  double scc, sccun, scclast, scct1, scct2, scct3;
   SIZED_STRING* s = sized_string_argument(1);
 
+  bool first_byte = true;
+  double scc, sccun, scclast, scct1, scct2, scct3;
   scct1 = scct2 = scct3 = 0.0;
-  for (i = 0; i < s->length; i++)
+
+  for (int i = 0; i < s->length; i++)
   {
     sccun = (double) s->c_string[i];
+
     if (first_byte)
       first_byte = false;
     else
@@ -379,6 +377,7 @@ define_function(string_serial_correlation)
   scct1 += scclast * sccun;
   scct2 *= scct2;
   scc = s->length * scct3 - scct2;
+
   if (scc == 0)
     scc = -100000;
   else
@@ -390,15 +389,6 @@ define_function(string_serial_correlation)
 
 define_function(data_monte_carlo_pi)
 {
-  int i, j;
-  bool past_first_block = false;
-  unsigned int monte[6];
-  int idx = 0;
-  int mcount = 0;
-  int inmont = 0;
-  double incirc = pow(pow(256.0, 3.0) - 1, 2.0);
-  double mx, my, mpi;
-
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
 
@@ -409,6 +399,13 @@ define_function(data_monte_carlo_pi)
   {
     return ERROR_WRONG_ARGUMENTS;
   }
+
+  double INCIRC = pow(pow(256.0, 3.0) - 1, 2.0);
+
+  int mcount = 0;
+  int inmont = 0;
+
+  bool past_first_block = false;
 
   foreach_memory_block(context, block)
   {
@@ -421,23 +418,30 @@ define_function(data_monte_carlo_pi)
       offset += data_len;
       length -= data_len;
 
-      for (i = 0; i < data_len; i++)
+      unsigned int monte[6];
+
+      for (int i = 0; i < data_len; i++)
       {
-        monte[idx++] = (unsigned int) *(block->data + data_offset + i);
-        if (idx == 6)
+        monte[i % 6] = (unsigned int) *(block->data + data_offset + i);
+
+        if (i % 6 == 5)
         {
-          idx = 0;
           mcount++;
-          mx = my = 0;
-          for (j = 0; j < 3; j++)
+
+          double mx = 0;
+          double my = 0;
+
+          for (int j = 0; j < 3; j++)
           {
             mx = (mx * 256.0) + monte[j];
             my = (my * 256.0) + monte[j + 3];
           }
-          if ((mx * mx + my * my) <= incirc)
+
+          if ((mx * mx + my * my) <= INCIRC)
             inmont++;
         }
       }
+
       past_first_block = true;
     }
     else if (past_first_block)
@@ -457,42 +461,45 @@ define_function(data_monte_carlo_pi)
   if (!past_first_block)
     return_double(UNDEFINED);
 
-  mpi = 4.0 * ((double) inmont / mcount);
+  double mpi = 4.0 * ((double) inmont / mcount);
+
   return_double(fabs((mpi - PI) / PI));
 }
 
 
 define_function(string_monte_carlo_pi)
 {
-  int i, j;
-  unsigned int monte[6];
-  int idx = 0;
-  int mcount = 0;
-  int inmont = 0;
-  double incirc = pow(pow(256.0, 3.0) - 1, 2.0);
-  double mx, my, mpi;
-
   SIZED_STRING* s = sized_string_argument(1);
 
-  for (i = 0; i < s->length; i++)
+  double INCIRC = pow(pow(256.0, 3.0) - 1, 2.0);
+  unsigned int monte[6];
+
+  int mcount = 0;
+  int inmont = 0;
+
+  for (int i = 0; i < s->length; i++)
   {
-    monte[idx++] = (unsigned int) s->c_string[i];
-    if (idx == 6)
+    monte[i % 6] = (unsigned int) s->c_string[i];
+
+    if (i % 6 == 5)
     {
-      idx = 0;
       mcount++;
-      mx = my = 0;
-      for (j = 0; j < 3; j++)
+
+      double mx = 0;
+      double my = 0;
+
+      for (int j = 0; j < 3; j++)
       {
         mx = (mx * 256.0) + monte[j];
         my = (my * 256.0) + monte[j + 3];
       }
-      if ((mx * mx + my * my) <= incirc)
+
+      if ((mx * mx + my * my) <= INCIRC)
         inmont++;
     }
   }
 
-  mpi = 4.0 * ((double) inmont / mcount);
+  double mpi = 4.0 * ((double) inmont / mcount);
   return_double(fabs((mpi - PI) / PI));
 }
 
