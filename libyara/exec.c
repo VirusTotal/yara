@@ -991,27 +991,27 @@ int yr_execute_code(
         ensure_defined(r1);
         ensure_defined(r2);
 
-        int r = sized_string_cmp(r1.ss, r2.ss);
+        result = sized_string_cmp(r1.ss, r2.ss);
 
         switch(*ip)
         {
           case OP_STR_EQ:
-            r1.i = (r == 0);
+            r1.i = (result == 0);
             break;
           case OP_STR_NEQ:
-            r1.i = (r != 0);
+            r1.i = (result != 0);
             break;
           case OP_STR_LT:
-            r1.i = (r < 0);
+            r1.i = (result < 0);
             break;
           case OP_STR_LE:
-            r1.i = (r <= 0);
+            r1.i = (result <= 0);
             break;
           case OP_STR_GT:
-            r1.i = (r > 0);
+            r1.i = (result > 0);
             break;
           case OP_STR_GE:
-            r1.i = (r >= 0);
+            r1.i = (result >= 0);
             break;
         }
 
