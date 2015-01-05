@@ -326,7 +326,11 @@ class TestYara(unittest.TestCase):
             'rule test { condition: 5 % 2 == 1 }',
             'rule test { condition: 1.5 + 1.5 == 3}',
             'rule test { condition: 3 \ 2 == 1}',
-            'rule test { condition: 3.0 \ 2 == 1.5}'
+            'rule test { condition: 3.0 \ 2 == 1.5}',
+            'rule test { condition: 1 + -1 == 0}',
+            'rule test { condition: -1 + -1 == -2}',
+            'rule test { condition: -2 * 2 == -4}',
+            'rule test { condition: -1.0 * 1 == -1.0}',
         ])
 
     def testBitwiseOperators(self):
