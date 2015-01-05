@@ -353,7 +353,7 @@ define_function(string_serial_correlation)
 {
   SIZED_STRING* s = sized_string_argument(1);
 
-  double scc, sccun;
+  double sccun = 0;
   double scclast = 0;
   double scct1 = 0;
   double scct2 = 0;
@@ -370,7 +370,8 @@ define_function(string_serial_correlation)
 
   scct1 += scclast * sccun;
   scct2 *= scct2;
-  scc = s->length * scct3 - scct2;
+
+  double scc = s->length * scct3 - scct2;
 
   if (scc == 0)
     scc = -100000;
