@@ -214,7 +214,6 @@ define_function(string_mean)
   double sum = 0.0;
 
   SIZED_STRING* s = sized_string_argument(1);
-  double mean = double_argument(2);
 
   for (i = 0; i < s->length; i++)
     sum += (double) s->c_string[i];
@@ -233,7 +232,6 @@ define_function(data_mean)
 
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
-  double mean = double_argument(3);
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
