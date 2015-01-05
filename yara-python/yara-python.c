@@ -485,7 +485,7 @@ int yara_callback(
   yr_rule_metas_foreach(rule, meta)
   {
     if (meta->type == META_TYPE_INTEGER)
-      object = Py_BuildValue("I", meta->integer);
+      object = Py_BuildValue("i", meta->integer);
     else if (meta->type == META_TYPE_BOOLEAN)
       object = PyBool_FromLong(meta->integer);
     else
@@ -927,7 +927,7 @@ static PyObject * Rules_next(PyObject *self)
     yr_rule_metas_foreach(rules->iter_current_rule, meta)
     {
       if (meta->type == META_TYPE_INTEGER)
-        object = Py_BuildValue("I", meta->integer);
+        object = Py_BuildValue("i", meta->integer);
       else if (meta->type == META_TYPE_BOOLEAN)
         object = PyBool_FromLong(meta->integer);
       else

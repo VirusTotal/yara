@@ -38,7 +38,11 @@ limitations under the License.
 
 union STACK_ITEM {
   int64_t i;
-  double  d;
+  double d;
+  void* p;
+  YR_OBJECT* o;
+  YR_STRING* s;
+  SIZED_STRING* ss;
 };
 
 #define push(x)  \
@@ -135,13 +139,8 @@ int yr_execute_code(
   union STACK_ITEM r3;
 
   YR_RULE* rule;
-  YR_STRING* string;
   YR_MATCH* match;
-  YR_OBJECT* object;
   YR_OBJECT_FUNCTION* function;
-
-  SIZED_STRING* sized_str_1;
-  SIZED_STRING* sized_str_2;
 
   char* identifier;
   char* args_fmt;
@@ -389,13 +388,12 @@ int yr_execute_code(
         identifier = *(char**)(ip + 1);
         ip += sizeof(uint64_t);
 
-        object = (YR_OBJECT*) yr_hash_table_lookup(
+        r1.o = (YR_OBJECT*) yr_hash_table_lookup(
             context->objects_table,
             identifier,
             NULL);
 
-        assert(object != NULL);
-        r1.i = PTR_TO_UINT64(object);
+        assert(r1.o != NULL);
         push(r1);
         break;
 
@@ -406,11 +404,9 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r1);
 
-        object = UINT64_TO_PTR(YR_OBJECT*, r1.i);
-        object = yr_object_lookup_field(object, identifier);
+        r1.o = yr_object_lookup_field(r1.o, identifier);
 
-        assert(object != NULL);
-        r1.i = PTR_TO_UINT64(object);
+        assert(r1.o != NULL);
         push(r1);
         break;
 
@@ -418,26 +414,24 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r1);
 
-        object = UINT64_TO_PTR(YR_OBJECT*, r1.i);
-
-        switch(object->type)
+        switch(r1.o->type)
         {
           case OBJECT_TYPE_INTEGER:
-            r1.i = ((YR_OBJECT_INTEGER*) object)->value;
+            r1.i = ((YR_OBJECT_INTEGER*) r1.o)->value;
             break;
 
           case OBJECT_TYPE_DOUBLE:
-            if (isnan(((YR_OBJECT_DOUBLE*) object)->value))
+            if (isnan(((YR_OBJECT_DOUBLE*) r1.o)->value))
               r1.i = UNDEFINED;
             else
-              r1.d = ((YR_OBJECT_DOUBLE*) object)->value;
+              r1.d = ((YR_OBJECT_DOUBLE*) r1.o)->value;
             break;
 
           case OBJECT_TYPE_STRING:
-            if (((YR_OBJECT_STRING*) object)->value == NULL)
+            if (((YR_OBJECT_STRING*) r1.o)->value == NULL)
               r1.i = UNDEFINED;
             else
-              r1.i = PTR_TO_UINT64(((YR_OBJECT_STRING*) object)->value);
+              r1.p = ((YR_OBJECT_STRING*) r1.o)->value;
             break;
 
           default:
@@ -452,14 +446,11 @@ int yr_execute_code(
         pop(r2);  // array
 
         ensure_defined(r1);
+        assert(r2.o->type == OBJECT_TYPE_ARRAY);
 
-        object = UINT64_TO_PTR(YR_OBJECT*, r2.i);
-        assert(object->type == OBJECT_TYPE_ARRAY);
-        object = yr_object_array_get_item(object, 0, r1.i);
+        r1.o = yr_object_array_get_item(r2.o, 0, r1.i);
 
-        if (object != NULL)
-          r1.i = PTR_TO_UINT64(object);
-        else
+        if (r1.o == NULL)
           r1.i = UNDEFINED;
 
         push(r1);
@@ -470,16 +461,12 @@ int yr_execute_code(
         pop(r2);  // dictionary
 
         ensure_defined(r1);
+        assert(r2.o->type == OBJECT_TYPE_DICTIONARY);
 
-        object = UINT64_TO_PTR(YR_OBJECT*, r2.i);
-        assert(object->type == OBJECT_TYPE_DICTIONARY);
+        r1.o = yr_object_dict_get_item(
+            r2.o, 0, r1.ss->c_string);
 
-        object = yr_object_dict_get_item(
-            object, 0, UINT64_TO_PTR(SIZED_STRING*, r1.i)->c_string);
-
-        if (object != NULL)
-          r1.i = PTR_TO_UINT64(object);
-        else
+        if (r1.o == NULL)
           r1.i = UNDEFINED;
 
         push(r1);
@@ -518,7 +505,7 @@ int yr_execute_code(
           break;
         }
 
-        function = UINT64_TO_PTR(YR_OBJECT_FUNCTION*, r2.i);
+        function = (YR_OBJECT_FUNCTION*) r2.o;
         result = ERROR_INTERNAL_FATAL_ERROR;
 
         for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
@@ -541,7 +528,7 @@ int yr_execute_code(
 
         if (result == ERROR_SUCCESS)
         {
-          r1.i = PTR_TO_UINT64(function->return_obj);
+          r1.o = function->return_obj;
           push(r1);
         }
         else
@@ -553,8 +540,7 @@ int yr_execute_code(
 
       case OP_FOUND:
         pop(r1);
-        string = UINT64_TO_PTR(YR_STRING*, r1.i);
-        r1.i = string->matches[tidx].tail != NULL ? 1 : 0;
+        r1.i = r1.s->matches[tidx].tail != NULL ? 1 : 0;
         push(r1);
         break;
 
@@ -569,8 +555,7 @@ int yr_execute_code(
           break;
         }
 
-        string = UINT64_TO_PTR(YR_STRING*, r2.i);
-        match = string->matches[tidx].head;
+        match = r2.s->matches[tidx].head;
         r3.i = FALSE;
 
         while (match != NULL)
@@ -598,8 +583,7 @@ int yr_execute_code(
         ensure_defined(r1);
         ensure_defined(r2);
 
-        string = UINT64_TO_PTR(YR_STRING*, r3.i);
-        match = string->matches[tidx].head;
+        match = r3.s->matches[tidx].head;
         r3.i = FALSE;
 
         while (match != NULL && !r3.i)
@@ -621,8 +605,7 @@ int yr_execute_code(
 
       case OP_COUNT:
         pop(r1);
-        string = UINT64_TO_PTR(YR_STRING*, r1.i);
-        r1.i = string->matches[tidx].count;
+        r1.i = r1.s->matches[tidx].count;
         push(r1);
         break;
 
@@ -632,8 +615,7 @@ int yr_execute_code(
 
         ensure_defined(r1);
 
-        string = UINT64_TO_PTR(YR_STRING*, r2.i);
-        match = string->matches[tidx].head;
+        match = r2.s->matches[tidx].head;
         i = 1;
         r3.i = UNDEFINED;
 
@@ -656,8 +638,7 @@ int yr_execute_code(
 
         while (!is_undef(r1))
         {
-          string = UINT64_TO_PTR(YR_STRING*, r1.i);
-          if (string->matches[tidx].tail != NULL)
+          if (r1.s->matches[tidx].tail != NULL)
             found++;
           count++;
           pop(r1);
@@ -762,11 +743,8 @@ int yr_execute_code(
         ensure_defined(r1);
         ensure_defined(r2);
 
-        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1.i);
-        sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2.i);
-
-        r1.i = memmem(sized_str_1->c_string, sized_str_1->length,
-                      sized_str_2->c_string, sized_str_2->length) != NULL;
+        r1.i = memmem(r1.ss->c_string, r1.ss->length,
+                      r2.ss->c_string, r2.ss->length) != NULL;
         push(r1);
         break;
 
@@ -775,7 +753,7 @@ int yr_execute_code(
         ip += sizeof(uint64_t);
 
         FAIL_ON_ERROR(yr_modules_load(
-            UINT64_TO_PTR(char*, r1.i),
+            (char*) r1.p,
             context));
 
         break;
@@ -784,9 +762,7 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
-        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1.i);
-
-        if (sized_str_1->length == 0)
+        if (r1.ss->length == 0)
         {
           r1.i = FALSE;
           push(r1);
@@ -794,9 +770,9 @@ int yr_execute_code(
         }
 
         result = yr_re_exec(
-          UINT64_TO_PTR(uint8_t*, r2.i),
-          (uint8_t*) sized_str_1->c_string,
-          sized_str_1->length,
+          (uint8_t*) r2.p,
+          (uint8_t*) r1.ss->c_string,
+          r1.ss->length,
           RE_FLAGS_SCAN,
           NULL,
           NULL);
@@ -818,7 +794,7 @@ int yr_execute_code(
       case OP_STR_TO_BOOL:
         pop(r1);
         ensure_defined(r1);
-        r1.i = UINT64_TO_PTR(SIZED_STRING*, r1.i)->length > 0;
+        r1.i = r1.ss->length > 0;
         push(r1);
         break;
 
@@ -1015,30 +991,27 @@ int yr_execute_code(
         ensure_defined(r1);
         ensure_defined(r2);
 
-        sized_str_1 = UINT64_TO_PTR(SIZED_STRING*, r1.i);
-        sized_str_2 = UINT64_TO_PTR(SIZED_STRING*, r2.i);
-
-        int r = sized_string_cmp(sized_str_1, sized_str_2);
+        result = sized_string_cmp(r1.ss, r2.ss);
 
         switch(*ip)
         {
           case OP_STR_EQ:
-            r1.i = (r == 0);
+            r1.i = (result == 0);
             break;
           case OP_STR_NEQ:
-            r1.i = (r != 0);
+            r1.i = (result != 0);
             break;
           case OP_STR_LT:
-            r1.i = (r < 0);
+            r1.i = (result < 0);
             break;
           case OP_STR_LE:
-            r1.i = (r <= 0);
+            r1.i = (result <= 0);
             break;
           case OP_STR_GT:
-            r1.i = (r > 0);
+            r1.i = (result > 0);
             break;
           case OP_STR_GE:
-            r1.i = (r >= 0);
+            r1.i = (result >= 0);
             break;
         }
 

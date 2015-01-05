@@ -31,7 +31,7 @@ limitations under the License.
 #endif
 
 #ifdef __cplusplus
-#define YR_API extern "C" 
+#define YR_API extern "C"
 #else
 #define YR_API
 #endif
@@ -44,8 +44,6 @@ limitations under the License.
 #define max(x, y) ((x > y) ? (x) : (y))
 #endif
 
-
-#define UINT64_TO_PTR(type, x)  ((type)(size_t) x)
 
 #define PTR_TO_UINT64(x)  ((uint64_t) (size_t) x)
 

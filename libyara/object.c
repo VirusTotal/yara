@@ -656,6 +656,9 @@ YR_OBJECT* yr_object_array_get_item(
 
   assert(object->type == OBJECT_TYPE_ARRAY);
 
+  if (index < 0)
+    return NULL;
+
   array = (YR_OBJECT_ARRAY*) object;
 
   if (array->items != NULL && array->items->count > index)
@@ -683,6 +686,7 @@ int yr_object_array_set_item(
   int i;
   int count;
 
+  assert(index >= 0);
   assert(object->type == OBJECT_TYPE_ARRAY);
 
   array = ((YR_OBJECT_ARRAY*) object);
