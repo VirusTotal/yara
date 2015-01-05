@@ -375,9 +375,9 @@ u?int(8|16|32)(be)? {
 }
 
 
-{digit}+(MB|KB){0,1}  {
+-?{digit}+(MB|KB){0,1}  {
 
-  yylval->integer = (size_t) atol(yytext);
+  yylval->integer = strtoll(yytext, NULL, 10);
 
   if (strstr(yytext, "KB") != NULL)
   {
@@ -390,7 +390,7 @@ u?int(8|16|32)(be)? {
   return _NUMBER_;
 }
 
-{digit}+"."{digit}+  {
+-?{digit}+"."{digit}+  {
   yylval->double_ = atof(yytext);
   return _DOUBLE_;
 }
