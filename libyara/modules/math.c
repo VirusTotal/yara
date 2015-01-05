@@ -84,8 +84,8 @@ define_function(data_entropy)
     {
       uint64_t data_offset = offset - block->base;
       uint64_t data_len = min(length, block->size - data_offset);
-      total_len += data_len;
 
+      total_len += data_len;
       offset += data_len;
       length -= data_len;
 
@@ -174,8 +174,8 @@ define_function(data_deviation)
     {
       uint64_t data_offset = offset - block->base;
       uint64_t data_len = min(length, block->size - data_offset);
-      total_len += data_len;
 
+      total_len += data_len;
       offset += data_len;
       length -= data_len;
 
@@ -276,7 +276,6 @@ define_function(data_mean)
 define_function(data_serial_correlation)
 {
   bool past_first_block = false;
-  bool first_byte = true;
   uint64_t total_len = 0;
 
   int64_t offset = integer_argument(1);
@@ -290,9 +289,11 @@ define_function(data_serial_correlation)
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  double scc, sccun, scclast, scct1, scct2, scct3;
-
-  scct1 = scct2 = scct3 = 0.0;
+  double scc, sccun;
+  double scclast = 0;
+  double scct1 = 0;
+  double scct2 = 0;
+  double scct3 = 0;
 
   foreach_memory_block(context, block)
   {
@@ -309,12 +310,7 @@ define_function(data_serial_correlation)
       for (int i = 0; i < data_len; i++)
       {
         sccun = (double) *(block->data + data_offset + i);
-
-        if (first_byte)
-          first_byte = false;
-        else
-          scct1 += scclast * sccun;
-
+        scct1 += scclast * sccun;
         scct2 += sccun;
         scct3 += sccun * sccun;
         scclast = sccun;
@@ -356,19 +352,16 @@ define_function(string_serial_correlation)
 {
   SIZED_STRING* s = sized_string_argument(1);
 
-  bool first_byte = true;
-  double scc, sccun, scclast, scct1, scct2, scct3;
-  scct1 = scct2 = scct3 = 0.0;
+  double scc, sccun;
+  double scclast = 0;
+  double scct1 = 0;
+  double scct2 = 0;
+  double scct3 = 0;
 
   for (int i = 0; i < s->length; i++)
   {
     sccun = (double) s->c_string[i];
-
-    if (first_byte)
-      first_byte = false;
-    else
-      scct1 += scclast * sccun;
-
+    scct1 += scclast * sccun;
     scct2 += sccun;
     scct3 += sccun * sccun;
     scclast = sccun;
