@@ -314,7 +314,11 @@ PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
 {
   PIMAGE_DATA_DIRECTORY result;
 
-  if (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
+  // The first WORD in the OptionalHeader (32 or 64 bit) is a Magic value
+  // which determines the appropriate structure to use (PIMAGE_NT_HEADERS64
+  // or PIMAGE_NT_HEADERS32). As such, just cast pe->header to
+  // PIMAGE_NT_HEADERS64 and check the magic value, then cast accordingly.
+  if (((PIMAGE_NT_HEADERS64) pe->header)->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
     result = &((PIMAGE_NT_HEADERS64) pe->header)->
         OptionalHeader.DataDirectory[entry];
   else
@@ -681,7 +685,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
   if (offset == 0)
     return NULL;
 
-  if (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
+  if (((PIMAGE_NT_HEADERS64) pe->header)->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
   {
     PIMAGE_THUNK_DATA64 thunks64 = (PIMAGE_THUNK_DATA64)(pe->data + offset);
 
@@ -1049,7 +1053,7 @@ void pe_parse_header(
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
 
 #define OptionalHeader(field) \
-  (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64 ? \
+  (((PIMAGE_NT_HEADERS64) pe->header)->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC ? \
    ((PIMAGE_NT_HEADERS64) pe->header)->OptionalHeader.field : \
      pe->header->OptionalHeader.field)
 
