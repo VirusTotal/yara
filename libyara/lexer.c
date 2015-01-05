@@ -1488,7 +1488,7 @@ YY_RULE_SETUP
 #line 378 "lexer.l"
 {
 
-  yylval->integer = (size_t) atol(yytext);
+  yylval->integer = strtoll(yytext, NULL, 10);
 
   if (strstr(yytext, "KB") != NULL)
   {

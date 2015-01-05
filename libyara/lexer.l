@@ -377,7 +377,7 @@ u?int(8|16|32)(be)? {
 
 -?{digit}+(MB|KB){0,1}  {
 
-  yylval->integer = (size_t) atol(yytext);
+  yylval->integer = strtoll(yytext, NULL, 10);
 
   if (strstr(yytext, "KB") != NULL)
   {
