@@ -349,7 +349,7 @@ int _yr_parser_write_string(
     result = yr_arena_write_data(
         compiler->sz_arena,
         literal_string->c_string,
-        literal_string->length,
+        literal_string->length + 1,
         (void**) &(*string)->string);
 
     if (result == ERROR_SUCCESS)
