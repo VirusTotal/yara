@@ -101,7 +101,7 @@ int yr_object_create(
       break;
     case OBJECT_TYPE_DICTIONARY:
       ((YR_OBJECT_DICTIONARY*) obj)->items = NULL;
-      ((YR_OBJECT_ARRAY*) obj)->prototype_item = NULL;
+      ((YR_OBJECT_DICTIONARY*) obj)->prototype_item = NULL;
       break;
     case OBJECT_TYPE_INTEGER:
       ((YR_OBJECT_INTEGER*) obj)->value = UNDEFINED;
@@ -815,6 +815,7 @@ int yr_object_dict_set_item(
   dict->items->objects[dict->items->used].obj = item;
 
   dict->items->used++;
+  dict->items->free--;
 
   return ERROR_SUCCESS;
 }

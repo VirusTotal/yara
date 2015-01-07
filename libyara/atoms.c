@@ -113,10 +113,10 @@ int _yr_atoms_quality(
 
   for (i = 0; i < atom_length; i++)
   {
-    if (atom[i] == 0x00 || atom[i] == 0xFF)
+    if (atom[i] == 0x00 || atom[i] == 0xFF || atom[i] == 0x20 ||
+        atom[i] == 0x0A || atom[i] == 0x0D)
     {
-      // Penalize common bytes like 0x00 and 0xFF, specially if they are
-      // in the first two positions.
+      // Penalize common bytes, specially if they are in the first two positions.
 
       switch(i)
       {
