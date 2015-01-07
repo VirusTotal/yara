@@ -815,7 +815,7 @@ int yr_object_dict_set_item(
   dict->items->objects[dict->items->used].obj = item;
 
   dict->items->used++;
-  dict->items->free++;
+  dict->items->free--;
 
   return ERROR_SUCCESS;
 }
