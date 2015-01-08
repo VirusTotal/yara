@@ -99,3 +99,14 @@ libyara_la_SOURCES = \
   strutils.c \
   strutils.h \
   utils.h
+
+pkgconfigdir = $(libdir)/pkgconfig
+nodist_pkgconfig_DATA = yara.pc
+
+yara.pc: yara.pc.in
+		sed -e 's![@]prefix[@]!$(prefix)!g' \
+		    -e 's![@]exec_prefix[@]!$(exec_prefix)!g' \
+		    -e 's![@]includedir[@]!$(includedir)!g' \
+		    -e 's![@]libdir[@]!$(libdir)!g' \
+		    -e 's![@]PACKAGE_VERSION[@]!$(PACKAGE_VERSION)!g' \
+		    $(srcdir)/yara.pc.in > $@
