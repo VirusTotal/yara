@@ -179,7 +179,7 @@ int yr_object_function_create(
     case 's':
       return_type = OBJECT_TYPE_STRING;
       break;
-    case 'd':
+    case 'f':
       return_type = OBJECT_TYPE_FLOAT;
       break;
     default:
