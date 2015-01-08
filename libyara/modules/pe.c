@@ -670,24 +670,6 @@ int pe_collect_resources(
         pe->resources);
 
   set_integer(
-        rsrc_type,
-        pe->object,
-        "resources[%i].type",
-        pe->resources);
-
-  set_integer(
-        rsrc_id,
-        pe->object,
-        "resources[%i].id",
-        pe->resources);
-
-  set_integer(
-        rsrc_language,
-        pe->object,
-        "resources[%i].language",
-        pe->resources);
-
-  set_integer(
         rsrc_data->Size,
         pe->object,
         "resources[%i].length",
@@ -702,6 +684,14 @@ int pe_collect_resources(
         (char*) type_string, length, pe->object,
         "resources[%i].type_string", pe->resources);
   }
+  else
+  {
+    set_integer(
+          rsrc_type,
+          pe->object,
+          "resources[%i].type",
+          pe->resources);
+  }
 
   if (name_string)
   {
@@ -712,6 +702,14 @@ int pe_collect_resources(
         (char*) name_string, length, pe->object,
         "resources[%i].name_string", pe->resources);
   }
+  else
+  {
+    set_integer(
+          rsrc_id,
+          pe->object,
+          "resources[%i].id",
+          pe->resources);
+  }
 
   if (lang_string)
   {
@@ -721,6 +719,14 @@ int pe_collect_resources(
     set_sized_string(
         (char*) lang_string, length, pe->object,
         "resources[%i].language_string", pe->resources);
+  }
+  else
+  {
+    set_integer(
+          rsrc_language,
+          pe->object,
+          "resources[%i].language",
+          pe->resources);
   }
 
   // Resources we do extra parsing on
