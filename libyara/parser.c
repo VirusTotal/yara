@@ -965,7 +965,7 @@ int _yr_parser_operator_to_opcode(
     case EXPRESSION_TYPE_INTEGER:
       opcode = OP_INT_BEGIN;
       break;
-    case EXPRESSION_TYPE_DOUBLE:
+    case EXPRESSION_TYPE_FLOAT:
       opcode = OP_DBL_BEGIN;
       break;
     case EXPRESSION_TYPE_STRING:
@@ -1031,9 +1031,9 @@ int yr_parser_reduce_operation(
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   if ((left_operand.type == EXPRESSION_TYPE_INTEGER ||
-       left_operand.type == EXPRESSION_TYPE_DOUBLE) &&
+       left_operand.type == EXPRESSION_TYPE_FLOAT) &&
       (right_operand.type == EXPRESSION_TYPE_INTEGER ||
-       right_operand.type == EXPRESSION_TYPE_DOUBLE))
+       right_operand.type == EXPRESSION_TYPE_FLOAT))
   {
     if (left_operand.type != right_operand.type)
     {
@@ -1049,7 +1049,7 @@ int yr_parser_reduce_operation(
 
     if (compiler->last_result == ERROR_SUCCESS)
     {
-      int expression_type = EXPRESSION_TYPE_DOUBLE;
+      int expression_type = EXPRESSION_TYPE_FLOAT;
 
       if (left_operand.type == EXPRESSION_TYPE_INTEGER &&
           right_operand.type == EXPRESSION_TYPE_INTEGER)

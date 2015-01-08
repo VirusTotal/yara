@@ -56,7 +56,7 @@ typedef void* yyscan_t;
 #define EXPRESSION_TYPE_STRING    3
 #define EXPRESSION_TYPE_REGEXP    4
 #define EXPRESSION_TYPE_OBJECT    5
-#define EXPRESSION_TYPE_DOUBLE    6
+#define EXPRESSION_TYPE_FLOAT     6
 
 typedef struct _EXPRESSION
 {
