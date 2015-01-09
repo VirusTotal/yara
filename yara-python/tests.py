@@ -760,14 +760,17 @@ class TestYara(unittest.TestCase):
             'import "tests" rule test { condition: tests.string_array[2] == "baz"}',
             'import "tests" rule test { condition: tests.string_dict["foo"] == "foo"}',
             'import "tests" rule test { condition: tests.string_dict["bar"] == "bar"}',
-            'import "tests" rule test { condition: tests.sum(1,2) == 3}',
-            'import "tests" rule test { condition: tests.sum(1,2,3) == 6}',
+            'import "tests" rule test { condition: tests.isum(1,2) == 3}',
+            'import "tests" rule test { condition: tests.isum(1,2,3) == 6}',
+            'import "tests" rule test { condition: tests.fsum(1.0,2.0) == 3.0}',
+            'import "tests" rule test { condition: tests.fsum(1.0,2.0,3.0) == 6.0}',
             'import "tests" rule test { condition: tests.length("dummy") == 5}',
           ])
 
         self.assertFalseRules([
             'import "tests" rule test { condition: tests.struct_array[0].i == 1 }',
-            'import "tests" rule test { condition: tests.sum(1,1) == 3}',
+            'import "tests" rule test { condition: tests.isum(1,1) == 3}',
+            'import "tests" rule test { condition: tests.fsum(1.0,1.0) == 3.0}',
           ])
 
     def testIntegerFunctions(self):

@@ -58,9 +58,9 @@ limitations under the License.
           yr_compiler_set_error_extra_info( \
               compiler, "wrong type \"integer\" for " op " operator"); \
           break; \
-        case EXPRESSION_TYPE_DOUBLE: \
+        case EXPRESSION_TYPE_FLOAT: \
           yr_compiler_set_error_extra_info( \
-              compiler, "wrong type \"double\" for " op " operator"); \
+              compiler, "wrong type \"float\" for " op " operator"); \
           break; \
         case EXPRESSION_TYPE_STRING: \
           yr_compiler_set_error_extra_info( \
@@ -769,8 +769,8 @@ arguments_list
           case EXPRESSION_TYPE_INTEGER:
             strlcpy($$, "i", MAX_FUNCTION_ARGS);
             break;
-          case EXPRESSION_TYPE_DOUBLE:
-            strlcpy($$, "d", MAX_FUNCTION_ARGS);
+          case EXPRESSION_TYPE_FLOAT:
+            strlcpy($$, "f", MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_BOOLEAN:
             strlcpy($$, "b", MAX_FUNCTION_ARGS);
@@ -798,8 +798,8 @@ arguments_list
             case EXPRESSION_TYPE_INTEGER:
               strlcat($1, "i", MAX_FUNCTION_ARGS);
               break;
-            case EXPRESSION_TYPE_DOUBLE:
-              strlcat($1, "d", MAX_FUNCTION_ARGS);
+            case EXPRESSION_TYPE_FLOAT:
+              strlcat($1, "f", MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_BOOLEAN:
               strlcat($1, "b", MAX_FUNCTION_ARGS);
@@ -1458,7 +1458,7 @@ primary_expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        $$.type = EXPRESSION_TYPE_DOUBLE;
+        $$.type = EXPRESSION_TYPE_FLOAT;
       }
     | _TEXT_STRING_
       {
@@ -1558,8 +1558,8 @@ primary_expression
               $$.type = EXPRESSION_TYPE_INTEGER;
               $$.value.integer = UNDEFINED;
               break;
-            case OBJECT_TYPE_DOUBLE:
-              $$.type = EXPRESSION_TYPE_DOUBLE;
+            case OBJECT_TYPE_FLOAT:
+              $$.type = EXPRESSION_TYPE_FLOAT;
               break;
             case OBJECT_TYPE_STRING:
               $$.type = EXPRESSION_TYPE_STRING;
@@ -1594,7 +1594,7 @@ primary_expression
         }
         else
         {
-          $$.type = EXPRESSION_TYPE_DOUBLE;
+          $$.type = EXPRESSION_TYPE_FLOAT;
         }
       }
     | primary_expression '-' primary_expression
@@ -1612,7 +1612,7 @@ primary_expression
         }
         else
         {
-          $$.type = EXPRESSION_TYPE_DOUBLE;
+          $$.type = EXPRESSION_TYPE_FLOAT;
         }
       }
     | primary_expression '*' primary_expression
@@ -1630,7 +1630,7 @@ primary_expression
         }
         else
         {
-          $$.type = EXPRESSION_TYPE_DOUBLE;
+          $$.type = EXPRESSION_TYPE_FLOAT;
         }
       }
     | primary_expression '\\' primary_expression
@@ -1648,7 +1648,7 @@ primary_expression
         }
         else
         {
-          $$.type = EXPRESSION_TYPE_DOUBLE;
+          $$.type = EXPRESSION_TYPE_FLOAT;
         }
       }
     | primary_expression '%' primary_expression

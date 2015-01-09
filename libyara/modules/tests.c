@@ -19,15 +19,24 @@ limitations under the License.
 #define MODULE_NAME tests
 
 
-define_function(double_sum)
+define_function(fsum_2)
 {
-  double a = double_argument(1);
-  double b = double_argument(2);
+  double a = float_argument(1);
+  double b = float_argument(2);
 
-  return_double(a + b);
+  return_float(a + b);
 }
 
-define_function(sum_2)
+define_function(fsum_3)
+{
+  double a = float_argument(1);
+  double b = float_argument(2);
+  double c = float_argument(3);
+
+  return_float(a + b + c);
+}
+
+define_function(isum_2)
 {
   int64_t a = integer_argument(1);
   int64_t b = integer_argument(2);
@@ -36,7 +45,7 @@ define_function(sum_2)
 }
 
 
-define_function(sum_3)
+define_function(isum_3)
 {
   int64_t a = integer_argument(1);
   int64_t b = integer_argument(2);
@@ -63,7 +72,7 @@ begin_declarations;
 
   begin_struct("undefined");
     declare_integer("i");
-    declare_double("d");
+    declare_float("f");
   end_struct("undefined");
 
   declare_integer_array("integer_array");
@@ -82,10 +91,11 @@ begin_declarations;
     declare_string("s");
   end_struct_dictionary("struct_dict");
 
-  declare_function("sum", "ii", "i", sum_2);
-  declare_function("sum", "iii", "i", sum_3);
+  declare_function("isum", "ii", "i", isum_2);
+  declare_function("isum", "iii", "i", isum_3);
+  declare_function("fsum", "ff", "f", fsum_2);
+  declare_function("fsum", "fff", "f", fsum_3);
   declare_function("length", "s", "i", length);
-  declare_function("double_sum", "dd", "d", double_sum);
 
 end_declarations;
 

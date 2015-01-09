@@ -131,15 +131,6 @@ limitations under the License.
   }
 
 
-#define declare_double(name) { \
-    FAIL_ON_ERROR(yr_object_create( \
-        OBJECT_TYPE_DOUBLE, \
-        name, \
-        stack[stack_top], \
-        NULL)); \
-  }
-
-
 #define declare_integer_array(name) { \
     YR_OBJECT* array; \
     FAIL_ON_ERROR(yr_object_create( \
@@ -170,16 +161,16 @@ limitations under the License.
   }
 
 
-#define declare_double(name) { \
+#define declare_float(name) { \
     FAIL_ON_ERROR(yr_object_create( \
-        OBJECT_TYPE_DOUBLE, \
+        OBJECT_TYPE_FLOAT, \
         name, \
         stack[stack_top], \
         NULL)); \
   }
 
 
-#define declare_double_array(name) { \
+#define declare_float_array(name) { \
     YR_OBJECT* array; \
     FAIL_ON_ERROR(yr_object_create( \
         OBJECT_TYPE_ARRAY, \
@@ -187,14 +178,14 @@ limitations under the License.
         stack[stack_top], \
         &array)); \
     FAIL_ON_ERROR(yr_object_create( \
-        OBJECT_TYPE_DOUBLE, \
+        OBJECT_TYPE_FLOAT, \
         name, \
         array, \
         NULL)); \
   }
 
 
-#define declare_double_dictionary(name) { \
+#define declare_float_dictionary(name) { \
     YR_OBJECT* dict; \
     FAIL_ON_ERROR(yr_object_create( \
         OBJECT_TYPE_DICTIONARY, \
@@ -202,7 +193,7 @@ limitations under the License.
         stack[stack_top], \
         &dict)); \
     FAIL_ON_ERROR(yr_object_create( \
-        OBJECT_TYPE_DOUBLE, \
+        OBJECT_TYPE_FLOAT, \
         name, \
         dict, \
         NULL)); \
@@ -276,7 +267,7 @@ limitations under the License.
 #define integer_argument(n) \
     (((int64_t*) __args)[n-1])
 
-#define double_argument(n) \
+#define float_argument(n) \
     (((double*) __args)[n-1])
 
 #define regexp_argument(n) \
@@ -310,8 +301,8 @@ limitations under the License.
     yr_object_get_integer(object, __VA_ARGS__)
 
 
-#define get_double(object, ...) \
-    yr_object_get_double(object, __VA_ARGS__)
+#define get_float(object, ...) \
+    yr_object_get_float(object, __VA_ARGS__)
 
 
 #define get_string(object, ...) \
@@ -322,8 +313,8 @@ limitations under the License.
     yr_object_set_integer(value, object, __VA_ARGS__)
 
 
-#define set_double(value, object, ...) \
-    yr_object_set_double(value, object, __VA_ARGS__)
+#define set_float(value, object, ...) \
+    yr_object_set_float(value, object, __VA_ARGS__)
 
 
 #define set_sized_string(value, len, object, ...) \
@@ -346,12 +337,12 @@ limitations under the License.
     }
 
 
-#define return_double(double_) { \
+#define return_float(double_) { \
       assertf( \
-          __function_obj->return_obj->type == OBJECT_TYPE_DOUBLE, \
+          __function_obj->return_obj->type == OBJECT_TYPE_FLOAT, \
           "return type differs from function declaration"); \
       double d = (double) (double_); \
-      yr_object_set_double( \
+      yr_object_set_float( \
           (d != (double) UNDEFINED) ? d : NAN, \
           __function_obj->return_obj, \
           NULL); \

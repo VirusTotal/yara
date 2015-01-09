@@ -420,7 +420,7 @@ int yr_execute_code(
             r1.i = ((YR_OBJECT_INTEGER*) r1.o)->value;
             break;
 
-          case OBJECT_TYPE_DOUBLE:
+          case OBJECT_TYPE_FLOAT:
             if (isnan(((YR_OBJECT_DOUBLE*) r1.o)->value))
               r1.i = UNDEFINED;
             else
