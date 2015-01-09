@@ -1160,7 +1160,38 @@ define_function(valid_on)
 }
 
 
-define_function(section_index)
+define_function(section_index_addr)
+{
+  YR_OBJECT* module = module();
+  YR_SCAN_CONTEXT* context = scan_context();
+
+  if (is_undefined(module, "number_of_sections"))
+    return_integer(UNDEFINED);
+
+  int64_t addr = integer_argument(1);
+  int64_t n = get_integer(module, "number_of_sections");
+
+  if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
+  {
+    int64_t base_address = get_integer(module, "image_base");
+    addr += base_address;
+  }
+
+  for (int64_t i = 0; i < n; i++)
+  {
+    int64_t offset = get_integer(module, "sections[%i].raw_data_offset", i);
+    int64_t size = get_integer(module, "sections[%i].raw_data_size", i);
+
+    SIZED_STRING* sect = get_string(module, "sections[%i].name", i);
+    if (addr >= offset && addr < offset + size)
+      return_integer(i);
+  }
+
+  return_integer(UNDEFINED);
+}
+
+
+define_function(section_index_name)
 {
   YR_OBJECT* module = module();
 
@@ -1556,7 +1587,8 @@ begin_declarations;
   declare_function("imphash", "", "s", imphash);
   #endif
 
-  declare_function("section_index", "s", "i", section_index);
+  declare_function("section_index", "s", "i", section_index_name);
+  declare_function("section_index", "i", "i", section_index_addr);
   declare_function("exports", "s", "i", exports);
   declare_function("imports", "ss", "i", imports);
   declare_function("locale", "i", "i", locale);
