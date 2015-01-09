@@ -127,7 +127,7 @@ void parse_elf_header_##bits(                                                  \
                                                                                \
     char* str_table = NULL;                                                    \
                                                                                \
-    if (section[elf->sh_str_table_index].offset < elf_size);                   \
+    if (section[elf->sh_str_table_index].offset < elf_size)                    \
       str_table = (char*) elf + section[elf->sh_str_table_index].offset;       \
                                                                                \
     for (int i = 0; i < elf->sh_entry_count; i++)                              \
