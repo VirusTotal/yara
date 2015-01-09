@@ -1467,6 +1467,42 @@ begin_declarations;
   declare_integer("UP_SYSTEM_ONLY");
   declare_integer("BYTES_REVERSED_HI");
 
+  declare_integer("SECTION_TYPE_NO_PAD");
+  declare_integer("SECTION_CNT_CODE");
+  declare_integer("SECTION_CNT_INITIALIZED_DATA");
+  declare_integer("SECTION_CNT_UNINITIALIZED_DATA");
+  declare_integer("SECTION_LNK_OTHER");
+  declare_integer("SECTION_LNK_INFO");
+  declare_integer("SECTION_LNK_REMOVE");
+  declare_integer("SECTION_LNK_COMDAT");
+  declare_integer("SECTION_GPREL");
+  declare_integer("SECTION_MEM_PURGEABLE");
+  declare_integer("SECTION_MEM_16BIT");
+  declare_integer("SECTION_MEM_LOCKED");
+  declare_integer("SECTION_MEM_PRELOAD");
+  declare_integer("SECTION_ALIGN_1BYTES");
+  declare_integer("SECTION_ALIGN_2BYTES");
+  declare_integer("SECTION_ALIGN_4BYTES");
+  declare_integer("SECTION_ALIGN_8BYTES");
+  declare_integer("SECTION_ALIGN_16BYTES");
+  declare_integer("SECTION_ALIGN_32BYTES");
+  declare_integer("SECTION_ALIGN_64BYTES");
+  declare_integer("SECTION_ALIGN_128BYTES");
+  declare_integer("SECTION_ALIGN_256BYTES");
+  declare_integer("SECTION_ALIGN_512BYTES");
+  declare_integer("SECTION_ALIGN_1024BYTES");
+  declare_integer("SECTION_ALIGN_2048BYTES");
+  declare_integer("SECTION_ALIGN_4096BYTES");
+  declare_integer("SECTION_ALIGN_8192BYTES");
+  declare_integer("SECTION_LNK_NRELOC_OVFL");
+  declare_integer("SECTION_MEM_DISCARDABLE");
+  declare_integer("SECTION_MEM_NOT_CACHED");
+  declare_integer("SECTION_MEM_NOT_PAGED");
+  declare_integer("SECTION_MEM_SHARED");
+  declare_integer("SECTION_MEM_EXECUTE");
+  declare_integer("SECTION_MEM_READ");
+  declare_integer("SECTION_MEM_WRITE");
+
   declare_integer("machine");
   declare_integer("number_of_sections");
   declare_integer("timestamp");
@@ -1649,6 +1685,46 @@ int module_load(
   set_integer(
       IMAGE_FILE_BYTES_REVERSED_HI, module_object,
       "BYTES_REVERSED_HI");
+
+  set_integer(
+      SECTION_CNT_CODE, module_object,
+      "SECTION_CNT_CODE");
+  set_integer(
+      SECTION_CNT_INITIALIZED_DATA, module_object,
+      "SECTION_CNT_INITIALIZED_DATA");
+  set_integer(
+      SECTION_CNT_UNINITIALIZED_DATA, module_object,
+      "SECTION_CNT_UNINITIALIZED_DATA");
+  set_integer(
+      SECTION_GPREL, module_object,
+      "SECTION_GPREL");
+  set_integer(
+      SECTION_MEM_16BIT, module_object,
+      "SECTION_MEM_16BIT");
+  set_integer(
+      SECTION_LNK_NRELOC_OVFL, module_object,
+      "SECTION_LNK_NRELOC_OVFL");
+  set_integer(
+      SECTION_MEM_DISCARDABLE, module_object,
+      "SECTION_MEM_DISCARDABLE");
+  set_integer(
+      SECTION_MEM_NOT_CACHED, module_object,
+      "SECTION_MEM_NOT_CACHED");
+  set_integer(
+      SECTION_MEM_NOT_PAGED, module_object,
+      "SECTION_MEM_NOT_PAGED");
+  set_integer(
+      SECTION_MEM_SHARED, module_object,
+      "SECTION_MEM_SHARED");
+  set_integer(
+      SECTION_MEM_EXECUTE, module_object,
+      "SECTION_MEM_EXECUTE");
+  set_integer(
+      SECTION_MEM_READ, module_object,
+      "SECTION_MEM_READ");
+  set_integer(
+      SECTION_MEM_WRITE, module_object,
+      "SECTION_MEM_WRITE");
 
   YR_MEMORY_BLOCK* block;
 
