@@ -32,7 +32,7 @@ define_function(string_entropy)
   uint32_t* data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
 
   if (data == NULL)
-    return_double(UNDEFINED);
+    return_float(UNDEFINED);
 
   for (int i = 0; i < s->length; i++)
   {
@@ -52,7 +52,7 @@ define_function(string_entropy)
   }
 
   yr_free(data);
-  return_double(entropy);
+  return_float(entropy);
 }
 
 
@@ -72,7 +72,7 @@ define_function(data_entropy)
   uint32_t* data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
 
   if (data == NULL)
-    return_double(UNDEFINED);
+    return_float(UNDEFINED);
 
   bool past_first_block = false;
   uint64_t total_len = 0;
@@ -106,7 +106,7 @@ define_function(data_entropy)
       // undefined.
 
       yr_free(data);
-      return_double(UNDEFINED);
+      return_float(UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -116,7 +116,7 @@ define_function(data_entropy)
   if (!past_first_block)
   {
     yr_free(data);
-    return_double(UNDEFINED);
+    return_float(UNDEFINED);
   }
 
   double entropy = 0.0;
@@ -131,20 +131,20 @@ define_function(data_entropy)
   }
 
   yr_free(data);
-  return_double(entropy);
+  return_float(entropy);
 }
 
 
 define_function(string_deviation)
 {
   SIZED_STRING* s = sized_string_argument(1);
-  double mean = double_argument(2);
+  double mean = float_argument(2);
   double sum = 0.0;
 
   for (int i = 0; i < s->length; i++)
     sum += fabs(((double) s->c_string[i]) - mean);
 
-  return_double(sum / s->length);
+  return_float(sum / s->length);
 }
 
 
@@ -153,7 +153,7 @@ define_function(data_deviation)
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
 
-  double mean = double_argument(3);
+  double mean = float_argument(3);
   double sum = 0.0;
 
   YR_SCAN_CONTEXT* context = scan_context();
@@ -191,7 +191,7 @@ define_function(data_deviation)
       // the checksum over a range of non contiguos blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
-      return_double(UNDEFINED);
+      return_float(UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -199,9 +199,9 @@ define_function(data_deviation)
   }
 
   if (!past_first_block)
-    return_double(UNDEFINED);
+    return_float(UNDEFINED);
 
-  return_double(sum / total_len);
+  return_float(sum / total_len);
 }
 
 
@@ -214,7 +214,7 @@ define_function(string_mean)
   for (int i = 0; i < s->length; i++)
     sum += (double) s->c_string[i];
 
-  return_double(sum / s->length);
+  return_float(sum / s->length);
 }
 
 
@@ -259,7 +259,7 @@ define_function(data_mean)
       // the checksum over a range of non contiguos blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
-      return_double(UNDEFINED);
+      return_float(UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -267,9 +267,9 @@ define_function(data_mean)
   }
 
   if (!past_first_block)
-    return_double(UNDEFINED);
+    return_float(UNDEFINED);
 
-  return_double(sum / total_len);
+  return_float(sum / total_len);
 }
 
 
@@ -325,7 +325,7 @@ define_function(data_serial_correlation)
       // the checksum over a range of non contiguos blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
-      return_double(UNDEFINED);
+      return_float(UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -333,7 +333,7 @@ define_function(data_serial_correlation)
   }
 
   if (!past_first_block)
-    return_double(UNDEFINED);
+    return_float(UNDEFINED);
 
   scct1 += scclast * sccun;
   scct2 *= scct2;
@@ -345,7 +345,7 @@ define_function(data_serial_correlation)
   else
     scc = (total_len * scct1 - scct2) / scc;
 
-  return_double(scc);
+  return_float(scc);
 }
 
 
@@ -378,7 +378,7 @@ define_function(string_serial_correlation)
   else
     scc = (s->length * scct1 - scct2) / scc;
 
-  return_double(scc);
+  return_float(scc);
 }
 
 
@@ -446,7 +446,7 @@ define_function(data_monte_carlo_pi)
       // the checksum over a range of non contiguos blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
-      return_double(UNDEFINED);
+      return_float(UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -454,11 +454,11 @@ define_function(data_monte_carlo_pi)
   }
 
   if (!past_first_block)
-    return_double(UNDEFINED);
+    return_float(UNDEFINED);
 
   double mpi = 4.0 * ((double) inmont / mcount);
 
-  return_double(fabs((mpi - PI) / PI));
+  return_float(fabs((mpi - PI) / PI));
 }
 
 
@@ -495,15 +495,15 @@ define_function(string_monte_carlo_pi)
   }
 
   double mpi = 4.0 * ((double) inmont / mcount);
-  return_double(fabs((mpi - PI) / PI));
+  return_float(fabs((mpi - PI) / PI));
 }
 
 
 define_function(in_range)
 {
-  double test = double_argument(1);
-  double lower = double_argument(2);
-  double upper = double_argument(3);
+  double test = float_argument(1);
+  double lower = float_argument(2);
+  double upper = float_argument(3);
 
   return_integer((lower <= test && test <= upper) ? 1 : 0);
 }
@@ -511,18 +511,18 @@ define_function(in_range)
 
 begin_declarations;
 
-  declare_double("MEAN_BYTES");
-  declare_function("in_range", "ddd", "i", in_range);
-  declare_function("deviation", "iid", "d", data_deviation);
-  declare_function("deviation", "sd", "d", string_deviation);
-  declare_function("mean", "ii", "d", data_mean);
-  declare_function("mean", "s", "d", string_mean);
-  declare_function("serial_correlation", "ii", "d", data_serial_correlation);
-  declare_function("serial_correlation", "s", "d", string_serial_correlation);
-  declare_function("monte_carlo_pi", "ii", "d", data_monte_carlo_pi);
-  declare_function("monte_carlo_pi", "s", "d", string_monte_carlo_pi);
-  declare_function("entropy", "ii", "d", data_entropy);
-  declare_function("entropy", "s", "d", string_entropy);
+  declare_float("MEAN_BYTES");
+  declare_function("in_range", "fff", "i", in_range);
+  declare_function("deviation", "iif", "f", data_deviation);
+  declare_function("deviation", "sf", "f", string_deviation);
+  declare_function("mean", "ii", "f", data_mean);
+  declare_function("mean", "s", "f", string_mean);
+  declare_function("serial_correlation", "ii", "f", data_serial_correlation);
+  declare_function("serial_correlation", "s", "f", string_serial_correlation);
+  declare_function("monte_carlo_pi", "ii", "f", data_monte_carlo_pi);
+  declare_function("monte_carlo_pi", "s", "f", string_monte_carlo_pi);
+  declare_function("entropy", "ii", "f", data_entropy);
+  declare_function("entropy", "s", "f", string_entropy);
 
 end_declarations;
 
@@ -547,7 +547,7 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-  set_double(127.5, module_object, "MEAN_BYTES");
+  set_float(127.5, module_object, "MEAN_BYTES");
   return ERROR_SUCCESS;
 }
 

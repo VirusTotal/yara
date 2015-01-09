@@ -58,7 +58,7 @@ int yr_object_create(
     case OBJECT_TYPE_INTEGER:
       object_size = sizeof(YR_OBJECT_INTEGER);
       break;
-    case OBJECT_TYPE_DOUBLE:
+    case OBJECT_TYPE_FLOAT:
       object_size = sizeof(YR_OBJECT_DOUBLE);
       break;
     case OBJECT_TYPE_STRING:
@@ -106,7 +106,7 @@ int yr_object_create(
     case OBJECT_TYPE_INTEGER:
       ((YR_OBJECT_INTEGER*) obj)->value = UNDEFINED;
       break;
-    case OBJECT_TYPE_DOUBLE:
+    case OBJECT_TYPE_FLOAT:
       ((YR_OBJECT_DOUBLE*) obj)->value = NAN;
       break;
     case OBJECT_TYPE_STRING:
@@ -179,8 +179,8 @@ int yr_object_function_create(
     case 's':
       return_type = OBJECT_TYPE_STRING;
       break;
-    case 'd':
-      return_type = OBJECT_TYPE_DOUBLE;
+    case 'f':
+      return_type = OBJECT_TYPE_FLOAT;
       break;
     default:
       return ERROR_INVALID_FORMAT;
@@ -843,7 +843,7 @@ int yr_object_has_undefined_value(
 
   switch(field_obj->type)
   {
-    case OBJECT_TYPE_DOUBLE:
+    case OBJECT_TYPE_FLOAT:
       return isnan(((YR_OBJECT_DOUBLE*) field_obj)->value);
     case OBJECT_TYPE_STRING:
       return ((YR_OBJECT_STRING*) field_obj)->value == NULL;
@@ -882,7 +882,7 @@ int64_t yr_object_get_integer(
 }
 
 
-double yr_object_get_double(
+double yr_object_get_float(
     YR_OBJECT* object,
     const char* field,
     ...)
@@ -902,7 +902,7 @@ double yr_object_get_double(
   if (double_obj == NULL)
     return NAN;
 
-  assertf(double_obj->type == OBJECT_TYPE_DOUBLE,
+  assertf(double_obj->type == OBJECT_TYPE_FLOAT,
           "type of \"%s\" is not double\n", field);
 
   return ((YR_OBJECT_DOUBLE*) double_obj)->value;
@@ -962,7 +962,7 @@ void yr_object_set_integer(
 }
 
 
-void yr_object_set_double(
+void yr_object_set_float(
     double value,
     YR_OBJECT* object,
     const char* field,
@@ -982,7 +982,7 @@ void yr_object_set_double(
   va_end(args);
 
   assert(double_obj != NULL);
-  assert(double_obj->type == OBJECT_TYPE_DOUBLE);
+  assert(double_obj->type == OBJECT_TYPE_FLOAT);
 
   ((YR_OBJECT_DOUBLE*) double_obj)->value = value;
 }

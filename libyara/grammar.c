@@ -219,9 +219,9 @@
           yr_compiler_set_error_extra_info( \
               compiler, "wrong type \"integer\" for " op " operator"); \
           break; \
-        case EXPRESSION_TYPE_DOUBLE: \
+        case EXPRESSION_TYPE_FLOAT: \
           yr_compiler_set_error_extra_info( \
-              compiler, "wrong type \"double\" for " op " operator"); \
+              compiler, "wrong type \"float\" for " op " operator"); \
           break; \
         case EXPRESSION_TYPE_STRING: \
           yr_compiler_set_error_extra_info( \
@@ -2379,8 +2379,8 @@ yyreduce:
           case EXPRESSION_TYPE_INTEGER:
             strlcpy((yyval.c_string), "i", MAX_FUNCTION_ARGS);
             break;
-          case EXPRESSION_TYPE_DOUBLE:
-            strlcpy((yyval.c_string), "d", MAX_FUNCTION_ARGS);
+          case EXPRESSION_TYPE_FLOAT:
+            strlcpy((yyval.c_string), "f", MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_BOOLEAN:
             strlcpy((yyval.c_string), "b", MAX_FUNCTION_ARGS);
@@ -2411,8 +2411,8 @@ yyreduce:
             case EXPRESSION_TYPE_INTEGER:
               strlcat((yyvsp[(1) - (3)].c_string), "i", MAX_FUNCTION_ARGS);
               break;
-            case EXPRESSION_TYPE_DOUBLE:
-              strlcat((yyvsp[(1) - (3)].c_string), "d", MAX_FUNCTION_ARGS);
+            case EXPRESSION_TYPE_FLOAT:
+              strlcat((yyvsp[(1) - (3)].c_string), "f", MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_BOOLEAN:
               strlcat((yyvsp[(1) - (3)].c_string), "b", MAX_FUNCTION_ARGS);
@@ -3155,7 +3155,7 @@ yyreduce:
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        (yyval.expression).type = EXPRESSION_TYPE_DOUBLE;
+        (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
       }
     break;
 
@@ -3270,8 +3270,8 @@ yyreduce:
               (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
               (yyval.expression).value.integer = UNDEFINED;
               break;
-            case OBJECT_TYPE_DOUBLE:
-              (yyval.expression).type = EXPRESSION_TYPE_DOUBLE;
+            case OBJECT_TYPE_FLOAT:
+              (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
               break;
             case OBJECT_TYPE_STRING:
               (yyval.expression).type = EXPRESSION_TYPE_STRING;
@@ -3309,7 +3309,7 @@ yyreduce:
         }
         else
         {
-          (yyval.expression).type = EXPRESSION_TYPE_DOUBLE;
+          (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
         }
       }
     break;
@@ -3330,7 +3330,7 @@ yyreduce:
         }
         else
         {
-          (yyval.expression).type = EXPRESSION_TYPE_DOUBLE;
+          (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
         }
       }
     break;
@@ -3351,7 +3351,7 @@ yyreduce:
         }
         else
         {
-          (yyval.expression).type = EXPRESSION_TYPE_DOUBLE;
+          (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
         }
       }
     break;
@@ -3372,7 +3372,7 @@ yyreduce:
         }
         else
         {
-          (yyval.expression).type = EXPRESSION_TYPE_DOUBLE;
+          (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
         }
       }
     break;
