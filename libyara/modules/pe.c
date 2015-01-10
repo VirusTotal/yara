@@ -1182,7 +1182,6 @@ define_function(section_index_addr)
     int64_t offset = get_integer(module, "sections[%i].raw_data_offset", i);
     int64_t size = get_integer(module, "sections[%i].raw_data_size", i);
 
-    SIZED_STRING* sect = get_string(module, "sections[%i].name", i);
     if (addr >= offset && addr < offset + size)
       return_integer(i);
   }
