@@ -1164,6 +1164,8 @@ define_function(section_index_addr)
 {
   YR_OBJECT* module = module();
   YR_SCAN_CONTEXT* context = scan_context();
+  int64_t offset;
+  int64_t size;
 
   if (is_undefined(module, "number_of_sections"))
     return_integer(UNDEFINED);
@@ -1173,8 +1175,16 @@ define_function(section_index_addr)
 
   for (int64_t i = 0; i < n; i++)
   {
-    int64_t offset = get_integer(module, "sections[%i].raw_data_offset", i);
-    int64_t size = get_integer(module, "sections[%i].raw_data_size", i);
+    if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
+    {
+      offset = get_integer(module, "sections[%i].virtual_address", i);
+      size = get_integer(module, "sections[%i].virtual_size", i);
+    }
+    else
+    {
+      offset = get_integer(module, "sections[%i].raw_data_offset", i);
+      size = get_integer(module, "sections[%i].raw_data_size", i);
+    }
 
     if (addr >= offset && addr < offset + size)
       return_integer(i);
