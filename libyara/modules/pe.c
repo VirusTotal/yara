@@ -1171,12 +1171,6 @@ define_function(section_index_addr)
   int64_t addr = integer_argument(1);
   int64_t n = get_integer(module, "number_of_sections");
 
-  if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
-  {
-    int64_t base_address = get_integer(module, "image_base");
-    addr += base_address;
-  }
-
   for (int64_t i = 0; i < n; i++)
   {
     int64_t offset = get_integer(module, "sections[%i].raw_data_offset", i);
