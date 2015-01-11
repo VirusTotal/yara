@@ -11,10 +11,10 @@ The Math module allows you to calculate certain values from portions of your
 file and create signatures based on those results.
 
 .. important::
-    Where noted these functions often return floating point numbers. YARA is
-    able to convert integers to floating point numbers during most operations.
-    For example this will convert 7 to 7.0 automatically, because the return
-    type of the entropy function is a floating point value:
+    Where noted these functions return floating point numbers. YARA is able to
+    convert integers to floating point numbers during most operations. For
+    example this will convert 7 to 7.0 automatically, because the return type
+    of the entropy function is a floating point value:
 
     *math.entropy(0, filesize) >= 7*
 
