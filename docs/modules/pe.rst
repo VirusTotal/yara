@@ -37,10 +37,32 @@ Reference
 
     Integer with one of the following values:
 
-    .. c:type:: MACHINE_I386
+    .. c:type:: MACHINE_UNKNOWN
+    .. c:type:: MACHINE_AM33
     .. c:type:: MACHINE_AMD64
+    .. c:type:: MACHINE_ARM
+    .. c:type:: MACHINE_ARMNT
+    .. c:type:: MACHINE_ARM64
+    .. c:type:: MACHINE_EBC
+    .. c:type:: MACHINE_I386
+    .. c:type:: MACHINE_IA64
+    .. c:type:: MACHINE_M32R
+    .. c:type:: MACHINE_MIPS16
+    .. c:type:: MACHINE_MIPSFPU
+    .. c:type:: MACHINE_MIPSFPU16
+    .. c:type:: MACHINE_POWERPC
+    .. c:type:: MACHINE_POWERPCFP
+    .. c:type:: MACHINE_R4000
+    .. c:type:: MACHINE_SH3
+    .. c:type:: MACHINE_SH3DSP
+    .. c:type:: MACHINE_SH4
+    .. c:type:: MACHINE_SH5
+    .. c:type:: MACHINE_THUMB
+    .. c:type:: MACHINE_WCEMIPSV2
 
     *Example: pe.machine == pe.MACHINE_AMD64*
+
+    .. versionadded:: Expanded in 3.3.0
 
 .. c:type:: subsystem
 
@@ -180,6 +202,118 @@ Reference
         Section raw size.
 
     *Example:  pe.sections[0].name == ".text"*
+
+    Individual section characteristics can be inspected using a bitwise AND
+    operation with the following constants:
+
+    .. c:type:: SECTION_CNT_CODE
+    .. c:type:: SECTION_CNT_INITIALIZED_DATA
+    .. c:type:: SECTION_CNT_UNINITIALIZED_DATA
+    .. c:type:: SECTION_GPREL
+    .. c:type:: SECTION_MEM_16BIT
+    .. c:type:: SECTION_LNK_NRELOC_OVFL
+    .. c:type:: SECTION_MEM_DISCARDABLE
+    .. c:type:: SECTION_MEM_NOT_CACHED
+    .. c:type:: SECTION_MEM_NOT_PAGED
+    .. c:type:: SECTION_MEM_SHARED
+    .. c:type:: SECTION_MEM_EXECUTE
+    .. c:type:: SECTION_MEM_READ
+    .. c:type:: SECTION_MEM_WRITE
+
+    .. versionadded:: Constants added in 3.3.0
+
+.. c:type:: number_of_resources
+
+    Number of resources in the PE.
+
+.. c:type:: resource_timestamp
+
+    Resource timestamp. This is stored as an integer.
+
+.. c:type:: resource_version
+
+    An object with two integer attributes, major and minor versions.
+
+    .. c:member:: major
+
+        Major resource version.
+
+    .. c:member:: minor
+
+        Minor resource version.
+
+.. c:type:: resources
+
+    An zero-based array of resource objects, one for each resource the PE has.
+    Individual resources can be accessed by using the [] operator. Each
+    resource object has the following attributes:
+
+    .. c:member:: offset
+
+        Offset for the resource data.
+
+    .. c:member:: length
+
+        Length of the resource data.
+
+    .. c:member:: type
+
+        Type of the resource (integer).
+
+    .. c:member:: id
+
+        ID of the resource (integer).
+
+    .. c:member:: language
+
+        Language of the resource (integer).
+
+    .. c:member:: type_string
+
+        Type of the resource as a string, if specified.
+
+    .. c:member:: name_string
+
+        Name of the resource as a string, if specified.
+
+    .. c:member:: language_string
+
+        Language of the resource as a string, if specified.
+
+    All resources must have an type, id (name), and language specified. They
+    can be either an integer or string, but never both, for any given level.
+
+    *Example:  pe.sections[0].type == pe.RESOURCE_TYPE_RCDATA and pe.sections[0].name == "F\x00I\x00L\x00E\x00"*
+
+    Resource types can be inspected using the following constants:
+
+    .. c:type:: RESOURCE_TYPE_CURSOR
+    .. c:type:: RESOURCE_TYPE_BITMAP
+    .. c:type:: RESOURCE_TYPE_ICON
+    .. c:type:: RESOURCE_TYPE_MENU
+    .. c:type:: RESOURCE_TYPE_DIALOG
+    .. c:type:: RESOURCE_TYPE_STRING
+    .. c:type:: RESOURCE_TYPE_FONTDIR
+    .. c:type:: RESOURCE_TYPE_FONT
+    .. c:type:: RESOURCE_TYPE_ACCELERATOR
+    .. c:type:: RESOURCE_TYPE_RCDATA
+    .. c:type:: RESOURCE_TYPE_MESSAGETABLE
+    .. c:type:: RESOURCE_TYPE_GROUP_CURSOR
+    .. c:type:: RESOURCE_TYPE_GROUP_ICON
+    .. c:type:: RESOURCE_TYPE_VERSION
+    .. c:type:: RESOURCE_TYPE_DLGINCLUDE
+    .. c:type:: RESOURCE_TYPE_PLUGPLAY
+    .. c:type:: RESOURCE_TYPE_VXD
+    .. c:type:: RESOURCE_TYPE_ANICURSOR
+    .. c:type:: RESOURCE_TYPE_ANIICON
+    .. c:type:: RESOURCE_TYPE_HTML
+    .. c:type:: RESOURCE_TYPE_MANIFEST
+
+    For more information refer to:
+
+    http://msdn.microsoft.com/en-us/library/ms648009(v=vs.85).aspx
+
+    .. versionadded:: Expanded in 3.3.0
 
 .. c:type:: version_info
 
@@ -333,3 +467,19 @@ Reference
     *Example: pe.imphash() == "b8bb385806b89680e13fc0cf24f4431e"*
 
     .. versionadded:: 3.2.0
+
+.. c:function:: section_index(name)
+
+  Function returning the index into the sections array for the section that has
+  *name*. *name* is case sensitive.
+
+  *Example: pe.section_index(".TEXT")*
+
+.. c:function:: section_index(addr)
+
+  Function returning the index into the sections array for the section that has
+  *addr*. *addr* can be an offset into the file or a memory address.
+
+  *Example: pe.section_index(pe.entry_point)*
+
+  .. versionadded:: 3.3.0
