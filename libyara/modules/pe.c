@@ -287,7 +287,6 @@ void pe_parse_rich_signature(
   return;
 }
 
-
 PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
     PE* pe,
     int entry)
@@ -1290,6 +1289,9 @@ define_function(imphash)
     // Allocate a new string to hold the dll name.
 
     char* dll_name = (char *) yr_malloc(dll_name_len + 1);
+    if (! dll_name)
+      return ERROR_INSUFICIENT_MEMORY;
+
     strlcpy(dll_name, dll->name, dll_name_len + 1);
 
     func = dll->functions;
@@ -1304,7 +1306,10 @@ define_function(imphash)
       char* final_name = (char*) yr_malloc(final_name_len + 1);
 
       if (final_name == NULL)
-        break;
+        {
+          yr_free(dll_name);
+          break;
+        }
 
       sprintf(final_name, first ? "%s.%s": ",%s.%s", dll_name, func->name);
 
@@ -1322,6 +1327,7 @@ define_function(imphash)
     }
 
     yr_free(dll_name);
+
     dll = dll->next;
   }
 
