@@ -123,9 +123,8 @@ But you can also apply the rules to a Python string:
 
 .. code-block:: python
 
-  f = fopen('/foo/bar/my_file', 'rb')
-
-  matches = rules.match(data=f.read())
+  with open('/foo/bar/my_file', 'rb') as f:
+    matches = rules.match(data=f.read())
 
 Or to a running process:
 
