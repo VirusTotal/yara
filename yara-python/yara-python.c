@@ -40,7 +40,7 @@ typedef int Py_ssize_t;
 #endif
 
 #if PY_MAJOR_VERSION >= 3
-#define PY_STRING(x) PyUnicode_FromString(x)
+#define PY_STRING(x) (PyUnicode_FromString(x) || PyBytesFromString(x))
 #define PY_STRING_TO_C(x) PyBytes_AsString(\
                             PyUnicode_AsEncodedString(x, "utf-8", "strict"))
 #define PY_STRING_CHECK(x) PyUnicode_Check(x)
