@@ -1458,7 +1458,7 @@ begin_declarations;
   declare_integer("AGGRESIVE_WS_TRIM");
   declare_integer("LARGE_ADDRESS_AWARE");
   declare_integer("BYTES_REVERSED_LO");
-  declare_integer("I386_MACHINE");
+  declare_integer("MACHINE_32BIT");
   declare_integer("DEBUG_STRIPPED");
   declare_integer("REMOVABLE_RUN_FROM_SWAP");
   declare_integer("NET_RUN_FROM_SWAP");
@@ -1627,7 +1627,7 @@ int module_load(
       "BYTES_REVERSED_LO");
   set_integer(
       IMAGE_FILE_32BIT_MACHINE, module_object,
-      "I386_MACHINE");
+      "MACHINE_32BIT");
   set_integer(
       IMAGE_FILE_DEBUG_STRIPPED, module_object,
       "DEBUG_STRIPPED");
