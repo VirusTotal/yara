@@ -114,8 +114,28 @@ typedef struct _IMAGE_FILE_HEADER {
 #define IMAGE_FILE_BYTES_REVERSED_HI         0x8000  // Bytes of machine word are reversed.
 
 
-#define IMAGE_FILE_MACHINE_I386              0x014c  // Intel 386.
-#define IMAGE_FILE_MACHINE_AMD64             0x8664  // Intel x64.
+#define IMAGE_FILE_MACHINE_UNKNOWN           0x0000
+#define IMAGE_FILE_MACHINE_AM33              0x01d3
+#define IMAGE_FILE_MACHINE_AMD64             0x8664
+#define IMAGE_FILE_MACHINE_ARM               0x01c0
+#define IMAGE_FILE_MACHINE_ARMNT             0x01c4
+#define IMAGE_FILE_MACHINE_ARM64             0xaa64
+#define IMAGE_FILE_MACHINE_EBC               0x0ebc
+#define IMAGE_FILE_MACHINE_I386              0x014c
+#define IMAGE_FILE_MACHINE_IA64              0x0200
+#define IMAGE_FILE_MACHINE_M32R              0x9041
+#define IMAGE_FILE_MACHINE_MIPS16            0x0266
+#define IMAGE_FILE_MACHINE_MIPSFPU           0x0366
+#define IMAGE_FILE_MACHINE_MIPSFPU16         0x0466
+#define IMAGE_FILE_MACHINE_POWERPC           0x01f0
+#define IMAGE_FILE_MACHINE_POWERPCFP         0x01f1
+#define IMAGE_FILE_MACHINE_R4000             0x0166
+#define IMAGE_FILE_MACHINE_SH3               0x01a2
+#define IMAGE_FILE_MACHINE_SH3DSP            0x01a3
+#define IMAGE_FILE_MACHINE_SH4               0x01a6
+#define IMAGE_FILE_MACHINE_SH5               0x01a8
+#define IMAGE_FILE_MACHINE_THUMB             0x01c2
+#define IMAGE_FILE_MACHINE_WCEMIPSV2         0x0169
 
 //
 // Directory format.
