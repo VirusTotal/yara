@@ -17,6 +17,7 @@ the :ref:`writing-modules` section.
    Cuckoo <modules/cuckoo>
    Magic <modules/magic>
    Hash <modules/hash>
+   Math <modules/math>
 
 
 
