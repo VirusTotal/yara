@@ -82,7 +82,7 @@ Reference
     .. c:type:: AGGRESIVE_WS_TRIM
     .. c:type:: LARGE_ADDRESS_AWARE
     .. c:type:: BYTES_REVERSED_LO
-    .. c:type:: 32BIT_MACHINE
+    .. c:type:: MACHINE_32BIT
     .. c:type:: DEBUG_STRIPPED
     .. c:type:: REMOVABLE_RUN_FROM_SWAP
     .. c:type:: NET_RUN_FROM_SWAP
