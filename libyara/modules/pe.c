@@ -163,8 +163,28 @@ PIMAGE_NT_HEADERS32 pe_get_header(
   headers_size += pe_header->FileHeader.SizeOfOptionalHeader;
 
   if (pe_header->Signature == IMAGE_NT_SIGNATURE &&
-      (pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64) &&
+      (pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_UNKNOWN ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AM33 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARMNT ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM64 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_EBC ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_IA64 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_M32R ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPS16 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPSFPU ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPSFPU16 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_POWERPC ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_POWERPCFP ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_R4000 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH3 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH3DSP ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH4 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH5 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_THUMB ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_WCEMIPSV2) &&
       data_size > headers_size)
   {
     return pe_header;
@@ -294,7 +314,11 @@ PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
 {
   PIMAGE_DATA_DIRECTORY result;
 
-  if (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
+  // The first WORD in the OptionalHeader (32 or 64 bit) is a Magic value
+  // which determines the appropriate structure to use (PIMAGE_NT_HEADERS64
+  // or PIMAGE_NT_HEADERS32). As such, just cast pe->header to
+  // PIMAGE_NT_HEADERS64 and check the magic value, then cast accordingly.
+  if (((PIMAGE_NT_HEADERS64) pe->header)->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
     result = &((PIMAGE_NT_HEADERS64) pe->header)->
         OptionalHeader.DataDirectory[entry];
   else
@@ -661,7 +685,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
   if (offset == 0)
     return NULL;
 
-  if (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
+  if (((PIMAGE_NT_HEADERS64) pe->header)->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
   {
     PIMAGE_THUNK_DATA64 thunks64 = (PIMAGE_THUNK_DATA64)(pe->data + offset);
 
@@ -1029,7 +1053,7 @@ void pe_parse_header(
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
 
 #define OptionalHeader(field) \
-  (pe->header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64 ? \
+  (((PIMAGE_NT_HEADERS64) pe->header)->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC ? \
    ((PIMAGE_NT_HEADERS64) pe->header)->OptionalHeader.field : \
      pe->header->OptionalHeader.field)
 
@@ -1440,8 +1464,28 @@ define_function(language)
 
 begin_declarations;
 
-  declare_integer("MACHINE_I386");
-  declare_integer("MACHINE_AMD64");
+  declare_integer("MACHINE_UNKNOWN")
+  declare_integer("MACHINE_AM33")
+  declare_integer("MACHINE_AMD64")
+  declare_integer("MACHINE_ARM")
+  declare_integer("MACHINE_ARMNT")
+  declare_integer("MACHINE_ARM64")
+  declare_integer("MACHINE_EBC")
+  declare_integer("MACHINE_I386")
+  declare_integer("MACHINE_IA64")
+  declare_integer("MACHINE_M32R")
+  declare_integer("MACHINE_MIPS16")
+  declare_integer("MACHINE_MIPSFPU")
+  declare_integer("MACHINE_MIPSFPU16")
+  declare_integer("MACHINE_POWERPC")
+  declare_integer("MACHINE_POWERPCFP")
+  declare_integer("MACHINE_R4000")
+  declare_integer("MACHINE_SH3")
+  declare_integer("MACHINE_SH3DSP")
+  declare_integer("MACHINE_SH4")
+  declare_integer("MACHINE_SH5")
+  declare_integer("MACHINE_THUMB")
+  declare_integer("MACHINE_WCEMIPSV2")
 
   declare_integer("SUBSYSTEM_UNKNOWN");
   declare_integer("SUBSYSTEM_NATIVE");
@@ -1576,11 +1620,71 @@ int module_load(
     size_t module_data_size)
 {
   set_integer(
-      IMAGE_FILE_MACHINE_I386, module_object,
-      "MACHINE_I386");
+      IMAGE_FILE_MACHINE_UNKNOWN, module_object,
+      "MACHINE_UNKNOWN");
+  set_integer(
+      IMAGE_FILE_MACHINE_AM33, module_object,
+      "MACHINE_AM33");
   set_integer(
       IMAGE_FILE_MACHINE_AMD64, module_object,
       "MACHINE_AMD64");
+  set_integer(
+      IMAGE_FILE_MACHINE_ARM, module_object,
+      "MACHINE_ARM");
+  set_integer(
+      IMAGE_FILE_MACHINE_ARMNT, module_object,
+      "MACHINE_ARMNT");
+  set_integer(
+      IMAGE_FILE_MACHINE_ARM64, module_object,
+      "MACHINE_ARM64");
+  set_integer(
+      IMAGE_FILE_MACHINE_EBC, module_object,
+      "MACHINE_EBC");
+  set_integer(
+      IMAGE_FILE_MACHINE_I386, module_object,
+      "MACHINE_I386");
+  set_integer(
+      IMAGE_FILE_MACHINE_IA64, module_object,
+      "MACHINE_IA64");
+  set_integer(
+      IMAGE_FILE_MACHINE_M32R, module_object,
+      "MACHINE_M32R");
+  set_integer(
+      IMAGE_FILE_MACHINE_MIPS16, module_object,
+      "MACHINE_MIPS16");
+  set_integer(
+      IMAGE_FILE_MACHINE_MIPSFPU, module_object,
+      "MACHINE_MIPSFPU");
+  set_integer(
+      IMAGE_FILE_MACHINE_MIPSFPU16, module_object,
+      "MACHINE_MIPSFPU16");
+  set_integer(
+      IMAGE_FILE_MACHINE_POWERPC, module_object,
+      "MACHINE_POWERPC");
+  set_integer(
+      IMAGE_FILE_MACHINE_POWERPCFP, module_object,
+      "MACHINE_POWERPCFP");
+  set_integer(
+      IMAGE_FILE_MACHINE_R4000, module_object,
+      "MACHINE_R4000");
+  set_integer(
+      IMAGE_FILE_MACHINE_SH3, module_object,
+      "MACHINE_SH3");
+  set_integer(
+      IMAGE_FILE_MACHINE_SH3DSP, module_object,
+      "MACHINE_SH3DSP");
+  set_integer(
+      IMAGE_FILE_MACHINE_SH4, module_object,
+      "MACHINE_SH4");
+  set_integer(
+      IMAGE_FILE_MACHINE_SH5, module_object,
+      "MACHINE_SH5");
+  set_integer(
+      IMAGE_FILE_MACHINE_THUMB, module_object,
+      "MACHINE_THUMB");
+  set_integer(
+      IMAGE_FILE_MACHINE_WCEMIPSV2, module_object,
+      "MACHINE_WCEMIPSV2");
 
   set_integer(
       IMAGE_SUBSYSTEM_UNKNOWN, module_object,
