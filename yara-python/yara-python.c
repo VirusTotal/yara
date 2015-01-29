@@ -1200,7 +1200,8 @@ void raise_exception_on_error(
     int error_level,
     const char* file_name,
     int line_number,
-    const char* message)
+    const char* message,
+    void* user_data)
 {
   if (error_level == YARA_ERROR_LEVEL_ERROR)
   {
@@ -1224,7 +1225,8 @@ void raise_exception_on_error_or_warning(
     int error_level,
     const char* file_name,
     int line_number,
-    const char* message)
+    const char* message,
+    void* user_data)
 {
   if (error_level == YARA_ERROR_LEVEL_ERROR)
   {
@@ -1313,7 +1315,7 @@ static PyObject * yara_compile(
     if (error != ERROR_SUCCESS)
       return handle_error(error, NULL);
 
-    yr_compiler_set_callback(compiler, raise_exception_on_error);
+    yr_compiler_set_callback(compiler, raise_exception_on_error, NULL);
 
     if (error_on_warning != NULL)
     {
@@ -1323,7 +1325,8 @@ static PyObject * yara_compile(
         {
           yr_compiler_set_callback(
               compiler,
-              raise_exception_on_error_or_warning);
+              raise_exception_on_error_or_warning,
+              NULL);
         }
       }
       else

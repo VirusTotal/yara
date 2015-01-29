@@ -446,7 +446,8 @@ void print_compiler_error(
     int error_level,
     const char* file_name,
     int line_number,
-    const char* message)
+    const char* message,
+    void* user_data)
 {
   if (error_level == YARA_ERROR_LEVEL_ERROR)
   {
@@ -905,7 +906,7 @@ int main(
     if (!define_external_variables(NULL, compiler))
       exit_with_code(EXIT_FAILURE);
 
-    yr_compiler_set_callback(compiler, print_compiler_error);
+    yr_compiler_set_callback(compiler, print_compiler_error, NULL);
 
     FILE* rule_file = fopen(argv[0], "r");
 

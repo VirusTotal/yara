@@ -34,7 +34,8 @@ typedef void (*YR_COMPILER_CALLBACK_FUNC)(
     int error_level,
     const char* file_name,
     int line_number,
-    const char* message);
+    const char* message,
+    void* user_data);
 
 
 typedef struct _YR_COMPILER
@@ -87,6 +88,7 @@ typedef struct _YR_COMPILER
   unsigned short    lex_buf_len;
 
   char              include_base_dir[MAX_PATH];
+  void*             user_data;
 
   YR_COMPILER_CALLBACK_FUNC  callback;
 
@@ -135,7 +137,8 @@ YR_API void yr_compiler_destroy(
 
 YR_API void yr_compiler_set_callback(
     YR_COMPILER* compiler,
-    YR_COMPILER_CALLBACK_FUNC callback);
+    YR_COMPILER_CALLBACK_FUNC callback,
+    void* user_data);
 
 
 YR_API int yr_compiler_add_file(

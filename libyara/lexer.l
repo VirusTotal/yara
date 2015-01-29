@@ -610,7 +610,8 @@ void yywarning(
       YARA_ERROR_LEVEL_WARNING,
       file_name,
       yyget_lineno(yyscanner),
-      warning_message);
+      warning_message,
+      compiler->user_data);
 }
 
 
@@ -668,7 +669,8 @@ void yyerror(
           YARA_ERROR_LEVEL_ERROR,
           file_name,
           compiler->last_error_line,
-          error_message);
+          error_message,
+          compiler->user_data);
     }
   }
   else
@@ -683,7 +685,8 @@ void yyerror(
         YARA_ERROR_LEVEL_ERROR,
         file_name,
         compiler->last_error_line,
-        message);
+        message,
+        compiler->user_data);
     }
   }
 
