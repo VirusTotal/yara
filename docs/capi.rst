@@ -49,14 +49,18 @@ callback function has the following prototype:
       int error_level,
       const char* file_name,
       int line_number,
-      const char* message)
+      const char* message,
+      void* user_data)
+
+.. versionchanged:: 3.4.0
 
 Possible values for ``error_level`` are ``YARA_ERROR_LEVEL_ERROR`` and
 ``YARA_ERROR_LEVEL_WARNING``. The arguments ``file_name`` and ``line_number``
 contains the file name and line number where the error or warning occurs.
 ``file_name`` is the one passed to :c:func:`yr_compiler_add_file`. It can
 be ``NULL`` if you passed ``NULL`` or if you're using
-:c:func:`yr_compiler_add_string`.
+:c:func:`yr_compiler_add_string`. The ``user_data`` pointer is the same you
+passed to :c:func:`yr_compiler_set_callback`.
 
 After you successfully added some sources you can get the compiled rules
 using the :c:func:`yr_compiler_get_rules()` function. You'll get a pointer to
@@ -289,9 +293,12 @@ Functions
 
   Destroy a YARA compiler.
 
-.. c:function:: void yr_compiler_set_callback(YR_COMPILER* compiler, YR_COMPILER_CALLBACK_FUNC callback)
+.. c:function:: void yr_compiler_set_callback(YR_COMPILER* compiler, YR_COMPILER_CALLBACK_FUNC callback, void* user_data)
 
-  Set a callback for receiving error and warning information.
+  Set a callback for receiving error and warning information. The *user_data*
+  pointer is passed to the callback function.
+
+.. versionchanged:: 3.4.0
 
 .. c:function:: int yr_compiler_add_file(YR_COMPILER* compiler, FILE* file, const char* namespace, const char* file_name)
 

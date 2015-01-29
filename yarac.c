@@ -88,7 +88,8 @@ void report_error(
     int error_level,
     const char* file_name,
     int line_number,
-    const char* message)
+    const char* message,
+    void* user_data)
 {
   if (error_level == YARA_ERROR_LEVEL_ERROR)
   {
@@ -203,7 +204,7 @@ int main(
   if (!define_external_variables(compiler))
     exit_with_code(EXIT_FAILURE);
 
-  yr_compiler_set_callback(compiler, report_error);
+  yr_compiler_set_callback(compiler, report_error, NULL);
 
   for (int i = 0; i < argc - 1; i++)
   {
