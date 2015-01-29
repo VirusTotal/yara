@@ -598,6 +598,9 @@ void yywarning(
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   char* file_name;
 
+  if (compiler->callback == NULL)
+    return;
+
   if (compiler->file_name_stack_ptr > 0)
     file_name = compiler->file_name_stack[compiler->file_name_stack_ptr - 1];
   else
