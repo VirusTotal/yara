@@ -52,7 +52,7 @@ callback function has the following prototype:
       const char* message,
       void* user_data)
 
-.. versionchanged:: 3.4.0
+.. versionchanged:: 3.3.0
 
 Possible values for ``error_level`` are ``YARA_ERROR_LEVEL_ERROR`` and
 ``YARA_ERROR_LEVEL_WARNING``. The arguments ``file_name`` and ``line_number``
@@ -298,7 +298,7 @@ Functions
   Set a callback for receiving error and warning information. The *user_data*
   pointer is passed to the callback function.
 
-.. versionchanged:: 3.4.0
+.. versionchanged:: 3.3.0
 
 .. c:function:: int yr_compiler_add_file(YR_COMPILER* compiler, FILE* file, const char* namespace, const char* file_name)
 
