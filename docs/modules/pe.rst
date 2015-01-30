@@ -62,7 +62,7 @@ Reference
 
     *Example: pe.machine == pe.MACHINE_AMD64*
 
-    .. versionadded:: Expanded in 3.3.0
+    .. versionchanged:: 3.3.0
 
 .. c:type:: subsystem
 
@@ -220,7 +220,7 @@ Reference
     .. c:type:: SECTION_MEM_READ
     .. c:type:: SECTION_MEM_WRITE
 
-    .. versionadded:: Constants added in 3.3.0
+    .. versionadded:: 3.3.0
 
 .. c:type:: number_of_resources
 
@@ -313,7 +313,7 @@ Reference
 
     http://msdn.microsoft.com/en-us/library/ms648009(v=vs.85).aspx
 
-    .. versionadded:: Expanded in 3.3.0
+    .. versionchanged:: 3.3.0
 
 .. c:type:: version_info
 
