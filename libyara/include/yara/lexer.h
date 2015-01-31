@@ -51,12 +51,19 @@ typedef void* yyscan_t;
 #ifndef YY_TYPEDEF_EXPRESSION_T
 #define YY_TYPEDEF_EXPRESSION_T
 
+
+// Expression type constants are powers of two because they are used as flags.
+// For example:
+//   CHECK_TYPE(whatever, EXPRESSION_TYPE_INTEGER | EXPRESSION_TYPE_FLOAT)
+// The expression above is used to ensure that the type of "whatever" is either
+// integer or float.
+
 #define EXPRESSION_TYPE_BOOLEAN   1
 #define EXPRESSION_TYPE_INTEGER   2
-#define EXPRESSION_TYPE_STRING    3
-#define EXPRESSION_TYPE_REGEXP    4
-#define EXPRESSION_TYPE_OBJECT    5
-#define EXPRESSION_TYPE_FLOAT     6
+#define EXPRESSION_TYPE_STRING    4
+#define EXPRESSION_TYPE_REGEXP    8
+#define EXPRESSION_TYPE_OBJECT    16
+#define EXPRESSION_TYPE_FLOAT     32
 
 typedef struct _EXPRESSION
 {
