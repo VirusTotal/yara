@@ -81,6 +81,7 @@ limitations under the License.
 #define _OP_SUB           7
 #define _OP_MUL           8
 #define _OP_DIV           9
+#define _OP_MINUS         10
 
 #define OP_INT_BEGIN      100
 #define OP_INT_EQ         (OP_INT_BEGIN + _OP_EQ)
@@ -93,7 +94,8 @@ limitations under the License.
 #define OP_INT_SUB        (OP_INT_BEGIN + _OP_SUB)
 #define OP_INT_MUL        (OP_INT_BEGIN + _OP_MUL)
 #define OP_INT_DIV        (OP_INT_BEGIN + _OP_DIV)
-#define OP_INT_END        OP_INT_DIV
+#define OP_INT_MINUS      (OP_INT_BEGIN + _OP_MINUS)
+#define OP_INT_END        OP_INT_MINUS
 
 #define OP_DBL_BEGIN      120
 #define OP_DBL_EQ         (OP_DBL_BEGIN + _OP_EQ)
@@ -106,7 +108,8 @@ limitations under the License.
 #define OP_DBL_SUB        (OP_DBL_BEGIN + _OP_SUB)
 #define OP_DBL_MUL        (OP_DBL_BEGIN + _OP_MUL)
 #define OP_DBL_DIV        (OP_DBL_BEGIN + _OP_DIV)
-#define OP_DBL_END        OP_DBL_DIV
+#define OP_DBL_MINUS      (OP_DBL_BEGIN + _OP_MINUS)
+#define OP_DBL_END        OP_DBL_MINUS
 
 #define OP_STR_BEGIN      140
 #define OP_STR_EQ         (OP_STR_BEGIN + _OP_EQ)

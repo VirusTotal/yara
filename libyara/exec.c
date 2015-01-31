@@ -888,6 +888,13 @@ int yr_execute_code(
         push(r1);
         break;
 
+      case OP_INT_MINUS:
+        pop(r1);
+        ensure_defined(r1);
+        r1.i = -r1.i;
+        push(r1);
+        break;
+
       case OP_DBL_LT:
         pop(r2);
         pop(r1);
@@ -975,6 +982,13 @@ int yr_execute_code(
         ensure_defined(r2);
         ensure_defined(r1);
         r1.d = r1.d / r2.d;
+        push(r1);
+        break;
+
+      case OP_DBL_MINUS:
+        pop(r1);
+        ensure_defined(r1);
+        r1.d = -r1.d;
         push(r1);
         break;
 

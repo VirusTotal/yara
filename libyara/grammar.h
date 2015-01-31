@@ -84,7 +84,8 @@
      _LT_ = 300,
      _SHIFT_RIGHT_ = 301,
      _SHIFT_LEFT_ = 302,
-     _NOT_ = 303
+     _NOT_ = 303,
+     UNARY_MINUS = 304
    };
 #endif
 /* Tokens.  */
@@ -134,13 +135,14 @@
 #define _SHIFT_RIGHT_ 301
 #define _SHIFT_LEFT_ 302
 #define _NOT_ 303
+#define UNARY_MINUS 304
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 176 "grammar.y"
+#line 177 "grammar.y"
 {
   EXPRESSION      expression;
   SIZED_STRING*   sized_string;
@@ -151,7 +153,7 @@ typedef union YYSTYPE
   YR_META*        meta;
 }
 /* Line 1529 of yacc.c.  */
-#line 155 "grammar.h"
+#line 157 "grammar.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
