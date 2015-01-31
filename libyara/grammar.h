@@ -84,8 +84,8 @@
      _LT_ = 300,
      _SHIFT_RIGHT_ = 301,
      _SHIFT_LEFT_ = 302,
-     _NOT_ = 303,
-     UNARY_MINUS = 304
+     UNARY_MINUS = 303,
+     _NOT_ = 304
    };
 #endif
 /* Tokens.  */
@@ -134,15 +134,15 @@
 #define _LT_ 300
 #define _SHIFT_RIGHT_ 301
 #define _SHIFT_LEFT_ 302
-#define _NOT_ 303
-#define UNARY_MINUS 304
+#define UNARY_MINUS 303
+#define _NOT_ 304
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 177 "grammar.y"
+#line 178 "grammar.y"
 {
   EXPRESSION      expression;
   SIZED_STRING*   sized_string;
