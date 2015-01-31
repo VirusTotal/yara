@@ -127,14 +127,15 @@ limitations under the License.
 
 %left _OR_
 %left _AND_
-%left '&' '|' '^'
-%left _LT_ _LE_ _GT_ _GE_ _EQ_ _NEQ_
+%left '|'
+%left '^'
+%left '&'
+%left _EQ_ _NEQ_
+%left _LT_ _LE_ _GT_ _GE_
 %left _SHIFT_LEFT_ _SHIFT_RIGHT_
 %left '+' '-'
 %left '*' '\\' '%'
-%right _NOT_
-%right '~'
-%left UNARY_MINUS
+%right _NOT_ '~' UNARY_MINUS
 
 %type <string> strings
 %type <string> string_declaration
