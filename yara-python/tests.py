@@ -497,6 +497,7 @@ class TestYara(unittest.TestCase):
 
         self.assertTrueRules([
             'rule test { strings: $a = "ssi" condition: $a at 2 and $a at 5 }',
+            'rule test { strings: $a = "mis" condition: $a at ~0xFF & 0xFF }'
         ], 'mississippi')
 
         self.assertTrueRules([

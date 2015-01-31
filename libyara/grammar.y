@@ -1719,7 +1719,7 @@ primary_expression
 
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = ($2.value.integer == UNDEFINED) ?
-            UNDEFINED : $2.value.integer;
+            UNDEFINED : ~($2.value.integer);
       }
     | primary_expression _SHIFT_LEFT_ primary_expression
       {
