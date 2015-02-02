@@ -1556,6 +1556,13 @@ int yr_re_exec(
     input -= character_size;
 
   max_count = min(input_size, RE_SCAN_LIMIT);
+
+  // round down max_count to a multiple of character size, this way if
+  // character_size is 2 and the input size is impair we are ignoring the
+  // extra byte which can't match anyways.
+
+  max_count = max_count - max_count % character_size;
+
   count = 0;
 
   fiber = _yr_re_fiber_create(&storage->fiber_pool);
@@ -1771,7 +1778,7 @@ int yr_re_exec(
       }
     }
 
-    if (flags & RE_FLAGS_WIDE && count + 1 < max_count && *(input + 1) != 0)
+    if (flags & RE_FLAGS_WIDE && *(input + 1) != 0)
       _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool);
 
     if (flags & RE_FLAGS_BACKWARDS)
