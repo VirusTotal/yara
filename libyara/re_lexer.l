@@ -312,35 +312,40 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\S {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
-    LEX_ENV->class_vector[i] = 0xFF;
-
-  LEX_ENV->class_vector[' ' / 8] &= ~(1 << ' ' % 8);
-  LEX_ENV->class_vector['\t' / 8] &= ~(1 << '\t' % 8);
+  for (int i = 0; i < 32; i++)
+  {
+    if (i == ' ' / 8)
+      LEX_ENV->class_vector[i] |= ~(1 << ' ' % 8);
+    else if (i == '\t' / 8)
+      LEX_ENV->class_vector[i] |= ~(1 << '\t' % 8);
+    else
+      LEX_ENV->class_vector[i] = 0xFF;
+  }
 }
 
 
 <char_class>\\d {
 
-  char c;
-
-  for (c = '0'; c <= '9'; c++)
+  for (char c = '0'; c <= '9'; c++)
     LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
 }
 
 
 <char_class>\\D {
 
-  int i;
-  char c;
+  for (int i = 0; i < 32; i++)
+  {
+    // digits 0-7 are in the sixth byte of the vector, let that byte alone
+    if (i == 6)
+      continue;
 
-  for (i = 0; i < 32; i++)
-    LEX_ENV->class_vector[i] = 0xFF;
-
-  for (c = '0'; c <= '9'; c++)
-    LEX_ENV->class_vector[c / 8] &= ~(1 << c % 8);
+    // digits 8 and 9 are the lowest two bits in the senventh byte of the
+    // vector, let those bits alone.
+    if (i == 7)
+      LEX_ENV->class_vector[i] |= 0xFC;
+    else
+      LEX_ENV->class_vector[i] = 0xFF;
+  }
 }
 
 
