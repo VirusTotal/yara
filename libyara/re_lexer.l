@@ -223,14 +223,12 @@ hex_digit     [0-9a-fA-F]
 
   // End of character class.
 
-  int i;
-
   yylval->class_vector = (uint8_t*) yr_malloc(32);
   memcpy(yylval->class_vector, LEX_ENV->class_vector, 32);
 
   if (LEX_ENV->negated_class)
   {
-    for(i = 0; i < 32; i++)
+    for(int i = 0; i < 32; i++)
       yylval->class_vector[i] = ~yylval->class_vector[i];
   }
 
@@ -245,8 +243,6 @@ hex_digit     [0-9a-fA-F]
   // A range inside a character class.
   //  [abc0-9]
   //      ^- matching here
-
-  int c;
 
   uint8_t start = yytext[0];
   uint8_t end = yytext[2];
@@ -270,7 +266,7 @@ hex_digit     [0-9a-fA-F]
     yyterminate();
   }
 
-  for (c = start; c <= end; c++)
+  for (int c = start; c <= end; c++)
   {
     LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
   }
@@ -279,26 +275,24 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\w {
 
-  int i;
   char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
                         0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->class_vector[i] |= word_chars[i];
 }
 
 
 <char_class>\\W {
 
-  int i;
   char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
                         0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->class_vector[i] |= ~word_chars[i];
 }
 
