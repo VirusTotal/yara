@@ -197,6 +197,15 @@ hex_digit     [0-9a-fA-F]
 }
 
 
+\\b {
+  return _WORD_BOUNDARY_;
+}
+
+\\B {
+  return _NON_WORD_BOUNDARY_;
+}
+
+
 \\{digit}+ {
 
   yyerror(yyscanner, lex_env, "backreferences are not allowed");

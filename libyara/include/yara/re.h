@@ -17,6 +17,8 @@ limitations under the License.
 #ifndef YR_RE_H
 #define YR_RE_H
 
+#include <ctype.h>
+
 #include <yara/arena.h>
 #include <yara/sizedstr.h>
 
@@ -38,6 +40,8 @@ limitations under the License.
 #define RE_NODE_EMPTY               16
 #define RE_NODE_ANCHOR_START        17
 #define RE_NODE_ANCHOR_END          18
+#define RE_NODE_WORD_BOUNDARY       19
+#define RE_NODE_NON_WORD_BOUNDARY   20
 
 
 #define RE_OPCODE_ANY                   0xA0
@@ -54,15 +58,18 @@ limitations under the License.
 #define RE_OPCODE_DIGIT                 0xAB
 #define RE_OPCODE_NON_DIGIT             0xAC
 #define RE_OPCODE_MATCH                 0xAD
-#define RE_OPCODE_MATCH_AT_END          0xAE
-#define RE_OPCODE_MATCH_AT_START        0xAF
 
-#define RE_OPCODE_SPLIT_A               0xB0
-#define RE_OPCODE_SPLIT_B               0xB1
-#define RE_OPCODE_PUSH                  0xB2
-#define RE_OPCODE_POP                   0xB3
-#define RE_OPCODE_JNZ                   0xB4
-#define RE_OPCODE_JUMP                  0xB5
+#define RE_OPCODE_MATCH_AT_END          0xB0
+#define RE_OPCODE_MATCH_AT_START        0xB1
+#define RE_OPCODE_WORD_BOUNDARY         0xB2
+#define RE_OPCODE_NON_WORD_BOUNDARY     0xB3
+
+#define RE_OPCODE_SPLIT_A               0xC0
+#define RE_OPCODE_SPLIT_B               0xC1
+#define RE_OPCODE_PUSH                  0xC2
+#define RE_OPCODE_POP                   0xC3
+#define RE_OPCODE_JNZ                   0xC4
+#define RE_OPCODE_JUMP                  0xC5
 
 
 #define RE_FLAGS_FAST_HEX_REGEXP          0x02
@@ -83,6 +90,10 @@ typedef uint8_t* RE_CODE;
 
 #define CHAR_IN_CLASS(chr, cls)  \
     ((cls)[(chr) / 8] & 1 << ((chr) % 8))
+
+
+#define IS_WORD_CHAR(chr) \
+    (isalnum(chr) || (chr) == '_')
 
 
 struct RE_NODE
