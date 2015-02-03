@@ -72,6 +72,8 @@ limitations under the License.
 %token _NON_SPACE_
 %token _DIGIT_
 %token _NON_DIGIT_
+%token _WORD_BOUNDARY_
+%token _NON_WORD_BOUNDARY_
 
 %type <re_node>  alternative concatenation repeat single
 
@@ -199,6 +201,18 @@ repeat : single '*'
        | single
          {
             $$ = $1;
+         }
+       | _WORD_BOUNDARY_
+         {
+            $$ = yr_re_node_create(RE_NODE_WORD_BOUNDARY, NULL, NULL);
+
+            ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+         }
+       | _NON_WORD_BOUNDARY_
+         {
+            $$ = yr_re_node_create(RE_NODE_NON_WORD_BOUNDARY, NULL, NULL);
+
+            ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
          }
        | '^'
          {

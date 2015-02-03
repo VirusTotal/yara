@@ -26,7 +26,6 @@ order to avoid confusion with operating system threads.
 */
 
 #include <assert.h>
-#include <ctype.h>
 #include <string.h>
 #include <limits.h>
 
@@ -688,6 +687,24 @@ int _yr_re_emit(
     FAIL_ON_ERROR(_yr_emit_inst(
         arena,
         RE_OPCODE_NON_WORD_CHAR,
+        &instruction_addr,
+        code_size));
+    break;
+
+  case RE_NODE_WORD_BOUNDARY:
+
+    FAIL_ON_ERROR(_yr_emit_inst(
+        arena,
+        RE_OPCODE_WORD_BOUNDARY,
+        &instruction_addr,
+        code_size));
+    break;
+
+  case RE_NODE_NON_WORD_BOUNDARY:
+
+    FAIL_ON_ERROR(_yr_emit_inst(
+        arena,
+        RE_OPCODE_NON_WORD_BOUNDARY,
         &instruction_addr,
         code_size));
     break;
@@ -1527,6 +1544,7 @@ int yr_re_exec(
   int max_count;
   int match;
   int character_size;
+  int input_incr;
   int kill;
   int action;
   int result = -1;
@@ -1551,14 +1569,18 @@ int yr_re_exec(
     character_size = 1;
 
   input = input_data;
+  input_incr = character_size;
 
   if (flags & RE_FLAGS_BACKWARDS)
+  {
     input -= character_size;
+    input_incr = -input_incr;
+  }
 
   max_count = min(input_size, RE_SCAN_LIMIT);
 
-  // round down max_count to a multiple of character size, this way if
-  // character_size is 2 and the input size is impair we are ignoring the
+  // Round down max_count to a multiple of character_size, this way if
+  // character_size is 2 and input_size is impair we are ignoring the
   // extra byte which can't match anyways.
 
   max_count = max_count - max_count % character_size;
@@ -1645,14 +1667,14 @@ int yr_re_exec(
 
         case RE_OPCODE_WORD_CHAR:
           prolog;
-          match = (isalnum(*input) || *input == '_');
+          match = IS_WORD_CHAR(*input);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_NON_WORD_CHAR:
           prolog;
-          match = (!isalnum(*input) && *input != '_');
+          match = !IS_WORD_CHAR(*input);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
@@ -1709,6 +1731,26 @@ int yr_re_exec(
           match = !isdigit(*input);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
+          break;
+
+        case RE_OPCODE_WORD_BOUNDARY:
+        case RE_OPCODE_NON_WORD_BOUNDARY:
+
+          if (count == 0 &&
+              !(flags & RE_FLAGS_NOT_AT_START) &&
+              !(flags & RE_FLAGS_BACKWARDS))
+            match = TRUE;
+          else if (count >= max_count)
+            match = TRUE;
+          else if (IS_WORD_CHAR(*(input - input_incr)) != IS_WORD_CHAR(*input))
+            match = TRUE;
+          else
+            match = FALSE;
+
+          if (*ip == RE_OPCODE_NON_WORD_BOUNDARY)
+            match = !match;
+
+          action = match ? ACTION_CONTINUE : ACTION_KILL;
           break;
 
         case RE_OPCODE_MATCH_AT_START:
@@ -1781,11 +1823,7 @@ int yr_re_exec(
     if (flags & RE_FLAGS_WIDE && *(input + 1) != 0)
       _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool);
 
-    if (flags & RE_FLAGS_BACKWARDS)
-      input -= character_size;
-    else
-      input += character_size;
-
+    input += input_incr;
     count += character_size;
 
     if (flags & RE_FLAGS_SCAN && count < max_count)
