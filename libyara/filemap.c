@@ -108,15 +108,15 @@ YR_API int yr_filemap_map_ex(
   if (pmapped_file->file == INVALID_HANDLE_VALUE)
     return ERROR_COULD_NOT_OPEN_FILE;
 
-  LARGE_INTEGER size;
+  LARGE_INTEGER fs;
   size_t file_size;
 
-  if (GetFileSizeEx(pmapped_file->file, &size))
+  if (GetFileSizeEx(pmapped_file->file, &fs))
   {
     #ifdef _WIN64
-    file_size = size.QuadPart;
+    file_size = fs.QuadPart;
     #else
-    file_size = size.LowPart;
+    file_size = fs.LowPart;
     #endif
   }
   else
