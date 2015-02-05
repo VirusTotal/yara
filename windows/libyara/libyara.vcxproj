@@ -73,11 +73,12 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HAVE_LIBCRYPTO</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..;..\..\libyara;..\..\libyara\include;..\..\windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4005;4273;4090;</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
@@ -91,7 +92,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>CUCKOO;HAVE_LIBCRYPTO</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..;..\..\libyara;..\..\libyara\include;..\..\windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090;</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -107,11 +108,12 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HAVE_LIBCRYPTO</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..;..\..\libyara;..\..\libyara\include;..\..\windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4005;4273;4090;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Lib>
       <AdditionalDependencies>advapi32.lib;jansson32.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -121,10 +123,11 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>CUCKOO;HAVE_LIBCRYPTO</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..;..\..\libyara;..\..\libyara\include;..\..\windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Lib>
       <AdditionalDependencies>advapi32.lib;jansson64.lib;libeay64.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -151,6 +154,8 @@
     <ClCompile Include="..\..\libyara\modules.c" />
     <ClCompile Include="..\..\libyara\modules\cuckoo.c" />
     <ClCompile Include="..\..\libyara\modules\elf.c" />
+    <ClCompile Include="..\..\libyara\modules\hash.c" />
+    <ClCompile Include="..\..\libyara\modules\math.c" />
     <ClCompile Include="..\..\libyara\modules\pe.c" />
     <ClCompile Include="..\..\libyara\modules\tests.c" />
     <ClCompile Include="..\..\libyara\object.c" />
@@ -161,6 +166,7 @@
     <ClCompile Include="..\..\libyara\re_lexer.c" />
     <ClCompile Include="..\..\libyara\rules.c" />
     <ClCompile Include="..\..\libyara\scan.c" />
+    <ClCompile Include="..\..\libyara\sizedstr.c" />
     <ClCompile Include="..\..\libyara\strutils.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
