@@ -377,7 +377,11 @@ u?int(8|16|32)(be)? {
 
 {digit}+(MB|KB){0,1}  {
 
-  yylval->integer = strtoll(yytext, NULL, 10);
+  #ifdef _MSC_VER
+  yylval->integer = _atoi64(yytext);
+  #else
+  yylval->integer = atoll(yytext);
+  #endif
 
   if (strstr(yytext, "KB") != NULL)
   {
