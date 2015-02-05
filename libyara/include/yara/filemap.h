@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007. The YARA Authors. All Rights Reserved.
+Copyright (c) 2007-2015. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ limitations under the License.
 #include <windows.h>
 #define FILE_DESCRIPTOR         HANDLE
 #else
+#include <sys/types.h>
 #define FILE_DESCRIPTOR         int
 #endif
 
@@ -44,6 +45,13 @@ typedef struct _YR_MAPPED_FILE
 
 YR_API int yr_filemap_map(
     const char* file_path,
+    YR_MAPPED_FILE* pmapped_file);
+
+
+YR_API int yr_filemap_map_ex(
+    const char* file_path,
+    off_t offset,
+    size_t size,
     YR_MAPPED_FILE* pmapped_file);
 
 
