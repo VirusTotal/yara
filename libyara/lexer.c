@@ -1487,7 +1487,11 @@ YY_RULE_SETUP
 #line 378 "lexer.l"
 {
 
-  yylval->integer = strtoll(yytext, NULL, 10);
+  #ifdef _MSC_VER
+  yylval->integer = _atoi64(yytext);
+  #else
+  yylval->integer = atoll(yytext);
+  #endif
 
   if (strstr(yytext, "KB") != NULL)
   {
@@ -1502,7 +1506,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 393 "lexer.l"
+#line 397 "lexer.l"
 {
   yylval->double_ = atof(yytext);
   return _DOUBLE_;
@@ -1510,7 +1514,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 398 "lexer.l"
+#line 402 "lexer.l"
 {
 
   yylval->integer = xtoi(yytext + 2);
@@ -1519,7 +1523,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 405 "lexer.l"
+#line 409 "lexer.l"
 {     /* saw closing quote - all done */
 
   SIZED_STRING* s;
@@ -1545,7 +1549,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 429 "lexer.l"
+#line 433 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\t", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1555,7 +1559,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 437 "lexer.l"
+#line 441 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\n", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1565,7 +1569,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 445 "lexer.l"
+#line 449 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\"", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1575,7 +1579,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 453 "lexer.l"
+#line 457 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\\", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1585,7 +1589,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 461 "lexer.l"
+#line 465 "lexer.l"
 {
 
    int result;
@@ -1598,13 +1602,13 @@ YY_RULE_SETUP
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 472 "lexer.l"
+#line 476 "lexer.l"
 { YYTEXT_TO_BUFFER; }
 	YY_BREAK
 case 59:
 /* rule 59 can match eol */
 YY_RULE_SETUP
-#line 475 "lexer.l"
+#line 479 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "unterminated string");
@@ -1614,7 +1618,7 @@ YY_RULE_SETUP
 case 60:
 /* rule 60 can match eol */
 YY_RULE_SETUP
-#line 481 "lexer.l"
+#line 485 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "illegal escape sequence");
@@ -1622,7 +1626,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 487 "lexer.l"
+#line 491 "lexer.l"
 {
 
   SIZED_STRING* s;
@@ -1655,7 +1659,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 518 "lexer.l"
+#line 522 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("/", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1665,7 +1669,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 526 "lexer.l"
+#line 530 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1676,13 +1680,13 @@ YY_RULE_SETUP
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 535 "lexer.l"
+#line 539 "lexer.l"
 { YYTEXT_TO_BUFFER; }
 	YY_BREAK
 case 65:
 /* rule 65 can match eol */
 YY_RULE_SETUP
-#line 538 "lexer.l"
+#line 542 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "unterminated regular expression");
@@ -1691,7 +1695,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 545 "lexer.l"
+#line 549 "lexer.l"
 {
 
   yyextra->lex_buf_ptr = yyextra->lex_buf;
@@ -1701,7 +1705,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 553 "lexer.l"
+#line 557 "lexer.l"
 {
 
   yyextra->lex_buf_ptr = yyextra->lex_buf;
@@ -1712,7 +1716,7 @@ YY_RULE_SETUP
 case 68:
 /* rule 68 can match eol */
 YY_RULE_SETUP
-#line 561 "lexer.l"
+#line 565 "lexer.l"
 {
 
   int len = strlen(yytext);
@@ -1730,12 +1734,12 @@ YY_RULE_SETUP
 case 69:
 /* rule 69 can match eol */
 YY_RULE_SETUP
-#line 576 "lexer.l"
+#line 580 "lexer.l"
 /* skip whitespace */
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 578 "lexer.l"
+#line 582 "lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1751,10 +1755,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 591 "lexer.l"
+#line 595 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1758 "lexer.c"
+#line 1762 "lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2884,7 +2888,7 @@ void yara_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 591 "lexer.l"
+#line 595 "lexer.l"
 
 
 
