@@ -19,10 +19,11 @@ limitations under the License.
 
 #ifdef _WIN32
 #include <windows.h>
-#define FILE_DESCRIPTOR         HANDLE
+#define FILE_DESCRIPTOR    HANDLE
+#define off_t              int64_t
 #else
 #include <sys/types.h>
-#define FILE_DESCRIPTOR         int
+#define FILE_DESCRIPTOR    int
 #endif
 
 #include <stdlib.h>
