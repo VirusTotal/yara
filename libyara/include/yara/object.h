@@ -17,6 +17,13 @@ limitations under the License.
 #ifndef YR_OBJECT_H
 #define YR_OBJECT_H
 
+#ifdef _MSC_VER
+#include <float.h>
+#define isnan _isnan
+#define INFINITY (DBL_MAX + DBL_MAX)
+#define NAN (INFINITY-INFINITY)
+#endif
+
 #include <yara/types.h>
 
 
