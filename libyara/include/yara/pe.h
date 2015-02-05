@@ -18,6 +18,17 @@ limitations under the License.
 
 #ifdef _WIN32
 #include <windows.h>
+
+// These definitions are not present in older Windows headers.
+
+#ifndef IMAGE_FILE_MACHINE_ARMNT
+#define IMAGE_FILE_MACHINE_ARMNT             0x01c4
+#endif
+
+#ifndef IMAGE_FILE_MACHINE_ARM64
+#define IMAGE_FILE_MACHINE_ARM64             0xaa64
+#endif
+
 #else
 
 #include <stdint.h>
