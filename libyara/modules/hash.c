@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <stdbool.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 
@@ -120,7 +119,7 @@ define_function(data_md5)
 
   unsigned char digest[MD5_DIGEST_LENGTH];
   char digest_ascii[MD5_DIGEST_LENGTH * 2 + 1];
-  bool past_first_block = false;
+  int past_first_block = FALSE;
 
   MD5_Init(&md5_context);
 
@@ -144,7 +143,7 @@ define_function(data_md5)
 
       MD5_Update(&md5_context, block->data + data_offset, data_len);
 
-      past_first_block = true;
+      past_first_block = TRUE;
     }
     else if (past_first_block)
     {
@@ -184,7 +183,7 @@ define_function(data_sha1)
 
   unsigned char digest[SHA_DIGEST_LENGTH];
   char digest_ascii[SHA_DIGEST_LENGTH * 2 + 1];
-  bool past_first_block = false;
+  int past_first_block = FALSE;
 
   SHA1_Init(&sha_context);
 
@@ -207,7 +206,7 @@ define_function(data_sha1)
 
       SHA1_Update(&sha_context, block->data + data_offset, data_len);
 
-      past_first_block = true;
+      past_first_block = TRUE;
     }
     else if (past_first_block)
     {
@@ -247,7 +246,7 @@ define_function(data_sha256)
 
   unsigned char digest[SHA256_DIGEST_LENGTH];
   char digest_ascii[SHA256_DIGEST_LENGTH * 2 + 1];
-  bool past_first_block = false;
+  int past_first_block = FALSE;
 
   SHA256_Init(&sha256_context);
 
@@ -270,7 +269,7 @@ define_function(data_sha256)
 
       SHA256_Update(&sha256_context, block->data + data_offset, data_len);
 
-      past_first_block = true;
+      past_first_block = TRUE;
     }
     else if (past_first_block)
     {
@@ -307,7 +306,7 @@ define_function(data_checksum32)
   YR_MEMORY_BLOCK* block = NULL;
 
   uint32_t checksum = 0;
-  bool past_first_block = false;
+  int past_first_block = FALSE;
 
   if (offset < 0 || length < 0 || offset < context->mem_block->base)
   {
@@ -328,7 +327,7 @@ define_function(data_checksum32)
       for (int i = 0; i < data_len; i++)
         checksum += *(block->data + data_offset + i);
 
-      past_first_block = true;
+      past_first_block = TRUE;
     }
     else if (past_first_block)
     {

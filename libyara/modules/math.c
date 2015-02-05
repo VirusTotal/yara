@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <stdbool.h>
 #include <math.h>
 
 #include <yara/modules.h>
@@ -74,7 +73,7 @@ define_function(data_entropy)
   if (data == NULL)
     return_float(UNDEFINED);
 
-  bool past_first_block = false;
+  int past_first_block = FALSE;
   uint64_t total_len = 0;
 
   foreach_memory_block(context, block)
@@ -95,7 +94,7 @@ define_function(data_entropy)
         data[c] += 1;
       }
 
-      past_first_block = true;
+      past_first_block = TRUE;
     }
     else if (past_first_block)
     {
@@ -164,7 +163,7 @@ define_function(data_deviation)
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  bool past_first_block = false;
+  int past_first_block = FALSE;
   uint64_t total_len = 0;
 
   foreach_memory_block(context, block)
@@ -182,7 +181,7 @@ define_function(data_deviation)
       for (int i = 0; i < data_len; i++)
         sum += fabs(((double) *(block->data + data_offset + i)) - mean);
 
-      past_first_block = true;
+      past_first_block = TRUE;
     }
     else if (past_first_block)
     {
@@ -231,7 +230,7 @@ define_function(data_mean)
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  bool past_first_block = false;
+  int past_first_block = FALSE;
   uint64_t total_len = 0;
   double sum = 0.0;
 
@@ -250,7 +249,7 @@ define_function(data_mean)
       for (int i = 0; i < data_len; i++)
         sum += (double) *(block->data + data_offset + i);
 
-      past_first_block = true;
+      past_first_block = TRUE;
     }
     else if (past_first_block)
     {
@@ -275,7 +274,7 @@ define_function(data_mean)
 
 define_function(data_serial_correlation)
 {
-  bool past_first_block = false;
+  int past_first_block = FALSE;
   uint64_t total_len = 0;
 
   int64_t offset = integer_argument(1);
@@ -316,7 +315,7 @@ define_function(data_serial_correlation)
         scclast = sccun;
       }
 
-      past_first_block = true;
+      past_first_block = TRUE;
     }
     else if (past_first_block)
     {
@@ -400,7 +399,7 @@ define_function(data_monte_carlo_pi)
   int mcount = 0;
   int inmont = 0;
 
-  bool past_first_block = false;
+  int past_first_block = FALSE;
 
   foreach_memory_block(context, block)
   {
@@ -437,7 +436,7 @@ define_function(data_monte_carlo_pi)
         }
       }
 
-      past_first_block = true;
+      past_first_block = TRUE;
     }
     else if (past_first_block)
     {
