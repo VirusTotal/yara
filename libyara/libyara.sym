@@ -2,6 +2,7 @@ yr_initialize
 yr_finalize
 yr_finalize_thread
 yr_filemap_map
+yr_filemap_map_ex
 yr_filemap_unmap
 yr_get_tidx
 yr_set_tidx
