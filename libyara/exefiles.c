@@ -312,21 +312,3 @@ uint64_t yr_get_entry_point_address(
 
   return UNDEFINED;
 }
-
-
-int yr_file_is_pe(
-    uint8_t* buffer,
-    size_t buffer_length)
-{
-  return (yr_get_pe_header(buffer, buffer_length) != NULL);
-}
-
-
-int yr_file_is_elf(
-    uint8_t* buffer,
-    size_t buffer_length)
-{
-  int type = yr_get_elf_type(buffer, buffer_length);
-
-  return (type == ELF_CLASS_32 || type == ELF_CLASS_64);
-}
