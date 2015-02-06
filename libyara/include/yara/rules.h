@@ -93,6 +93,11 @@ YR_API int yr_rules_load(
     YR_RULES** rules);
 
 
+YR_API int yr_rules_load_stream(
+    YR_STREAM* stream,
+    YR_RULES** rules);
+
+
 YR_API int yr_rules_destroy(
     YR_RULES* rules);
 
