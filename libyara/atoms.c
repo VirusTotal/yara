@@ -1056,7 +1056,10 @@ int yr_atoms_extract_from_re(
 
     FAIL_ON_ERROR_WITH_CLEANUP(
         yr_atoms_extract_triplets(re->root_node, &triplet_atoms),
-        yr_atoms_list_destroy(*atoms));
+        {
+          yr_atoms_list_destroy(*atoms);
+          *atoms = NULL;
+        });
 
     if (min_atom_quality < yr_atoms_min_quality(triplet_atoms))
     {
@@ -1073,7 +1076,10 @@ int yr_atoms_extract_from_re(
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_wide(*atoms, &wide_atoms),
-        yr_atoms_list_destroy(*atoms));
+        {
+          yr_atoms_list_destroy(*atoms);
+          *atoms = NULL;
+        });
 
     if (flags & STRING_GFLAGS_ASCII)
     {
@@ -1090,7 +1096,10 @@ int yr_atoms_extract_from_re(
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_case_insentive(*atoms, &case_insentive_atoms),
-        yr_atoms_list_destroy(*atoms));
+        {
+          yr_atoms_list_destroy(*atoms);
+          *atoms = NULL;
+        });
 
     *atoms = _yr_atoms_list_concat(*atoms, case_insentive_atoms);
   }
@@ -1158,7 +1167,10 @@ int yr_atoms_extract_from_string(
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_wide(*atoms, &wide_atoms),
-        yr_atoms_list_destroy(*atoms));
+        {
+          yr_atoms_list_destroy(*atoms);
+          *atoms = NULL;
+        });
 
     if (flags & STRING_GFLAGS_ASCII)
     {
@@ -1175,7 +1187,10 @@ int yr_atoms_extract_from_string(
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_case_insentive(*atoms, &case_insentive_atoms),
-        yr_atoms_list_destroy(*atoms));
+        {
+          yr_atoms_list_destroy(*atoms);
+          *atoms = NULL;
+        });
 
     *atoms = _yr_atoms_list_concat(*atoms, case_insentive_atoms);
   }
