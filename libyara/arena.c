@@ -1083,3 +1083,87 @@ int yr_arena_load(
 
   return ERROR_SUCCESS;
 }
+
+//
+// yr_arena_load_stream
+//
+// Loads an arena from a stream.
+//
+// Args:
+//    YR_STREAM* stream  - stream object
+//    YR_ARENA**         - Address where a pointer to the loaded arena
+//                         will be returned
+//
+// Returns:
+//    ERROR_SUCCESS if successful, appropriate error code otherwise.
+//
+
+int yr_arena_load_stream(
+    YR_STREAM* stream,
+    YR_ARENA** arena)
+{
+  YR_ARENA_PAGE* page;
+  YR_ARENA* new_arena;
+  ARENA_FILE_HEADER header;
+
+  int32_t reloc_offset;
+  uint8_t** reloc_address;
+  uint8_t* reloc_target;
+
+  int result;
+
+  if (yr_stream_read(&header, sizeof(header), 1, stream) != 1)
+    return ERROR_INVALID_FILE;
+
+  if (header.magic[0] != 'Y' ||
+      header.magic[1] != 'A' ||
+      header.magic[2] != 'R' ||
+      header.magic[3] != 'A')
+    return ERROR_INVALID_FILE;
+
+  if (header.version > ARENA_FILE_VERSION)
+    return ERROR_UNSUPPORTED_FILE_VERSION;
+
+  result = yr_arena_create(header.size, 0, &new_arena);
+
+  if (result != ERROR_SUCCESS)
+    return result;
+
+  page = new_arena->current_page;
+
+  if (yr_stream_read(page->address, header.size, 1, stream) != 1) {
+    yr_arena_destroy(new_arena);
+    return ERROR_CORRUPT_FILE;
+  }
+
+  page->used = header.size;
+
+  if (yr_stream_read(&reloc_offset, sizeof(reloc_offset), 1, stream) != 1)
+  {
+    yr_arena_destroy(new_arena);
+    return ERROR_CORRUPT_FILE;
+  }
+
+  while (reloc_offset != -1)
+  {
+    yr_arena_make_relocatable(new_arena, page->address, reloc_offset, EOL);
+
+    reloc_address = (uint8_t**) (page->address + reloc_offset);
+    reloc_target = *reloc_address;
+
+    if (reloc_target != (uint8_t*) (size_t) 0xFFFABADA)
+      *reloc_address += (size_t) page->address;
+    else
+      *reloc_address = 0;
+
+    if (yr_stream_read(&reloc_offset, sizeof(reloc_offset), 1, stream) != 1)
+    {
+      yr_arena_destroy(new_arena);
+      return ERROR_CORRUPT_FILE;
+    }
+  }
+
+  *arena = new_arena;
+
+  return ERROR_SUCCESS;
+}
