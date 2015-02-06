@@ -116,9 +116,10 @@ void yr_hash_table_destroy(
   YR_HASH_TABLE_ENTRY* entry;
   YR_HASH_TABLE_ENTRY* next_entry;
 
-  int i;
+  if (table == NULL)
+    return;
 
-  for (i = 0; i < table->size; i++)
+  for (int i = 0; i < table->size; i++)
   {
     entry = table->buckets[i];
 

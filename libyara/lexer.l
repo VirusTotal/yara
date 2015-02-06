@@ -52,6 +52,20 @@ limitations under the License.
       } \
     }
 
+#define ALLOC_SIZED_STRING(str, str_len) \
+  SIZED_STRING* str = (SIZED_STRING*) yr_malloc( \
+      str_len + sizeof(SIZED_STRING)); \
+  if (str == NULL) \
+  { \
+    yyerror(yyscanner, compiler, "not enough memory"); \
+    yyterminate(); \
+  } \
+  else \
+  { \
+    str->length = (str_len); \
+    str->flags = 0; \
+  } \
+
 #ifdef _WIN32
 #define snprintf _snprintf
 #endif
@@ -408,8 +422,6 @@ u?int(8|16|32)(be)? {
 
 <str>\"   {     /* saw closing quote - all done */
 
-  SIZED_STRING* s;
-
   if (yyextra->lex_buf_len == 0)
   {
     yyerror(yyscanner, compiler, "empty string");
@@ -418,10 +430,7 @@ u?int(8|16|32)(be)? {
   *yyextra->lex_buf_ptr = '\0';
 
   BEGIN(INITIAL);
-
-  s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
-  s->length = yyextra->lex_buf_len;
-  s->flags = 0;
+  ALLOC_SIZED_STRING(s, yyextra->lex_buf_len);
 
   memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
   yylval->sized_string = s;
@@ -490,8 +499,6 @@ u?int(8|16|32)(be)? {
 
 <regexp>\/i?s?  {
 
-  SIZED_STRING* s;
-
   if (yyextra->lex_buf_len == 0)
   {
     yyerror(yyscanner, compiler, "empty regular expression");
@@ -500,9 +507,7 @@ u?int(8|16|32)(be)? {
   *yyextra->lex_buf_ptr = '\0';
 
   BEGIN(INITIAL);
-
-  s = (SIZED_STRING*) yr_malloc(yyextra->lex_buf_len + sizeof(SIZED_STRING));
-  s->flags = 0;
+  ALLOC_SIZED_STRING(s, yyextra->lex_buf_len);
 
   if (yytext[1] == 'i')
     s->flags |= SIZED_STRING_FLAGS_NO_CASE;
@@ -510,7 +515,6 @@ u?int(8|16|32)(be)? {
   if (yytext[1] == 's' || yytext[2] == 's')
     s->flags |= SIZED_STRING_FLAGS_DOT_ALL;
 
-  s->length = yyextra->lex_buf_len;
   strlcpy(s->c_string, yyextra->lex_buf, s->length + 1);
 
   yylval->sized_string = s;
@@ -564,11 +568,7 @@ u?int(8|16|32)(be)? {
 
 \{({hexdigit}|[ \-|\?\[\]\(\)\n\t])+\}  {
 
-  int len = strlen(yytext);
-  SIZED_STRING* s = (SIZED_STRING*) yr_malloc(len + sizeof(SIZED_STRING));
-
-  s->length = len;
-  s->flags = 0;
+  ALLOC_SIZED_STRING(s, strlen(yytext));
 
   strlcpy(s->c_string, yytext, s->length + 1);
   yylval->sized_string = s;

@@ -84,12 +84,6 @@ int yr_object_create(
   obj->parent = parent;
   obj->data = NULL;
 
-  if (obj->identifier == NULL)
-  {
-    yr_free(obj);
-    return ERROR_INSUFICIENT_MEMORY;
-  }
-
   switch(type)
   {
     case OBJECT_TYPE_STRUCTURE:
@@ -125,6 +119,12 @@ int yr_object_create(
       break;
   }
 
+  if (obj->identifier == NULL)
+  {
+    yr_free(obj);
+    return ERROR_INSUFICIENT_MEMORY;
+  }
+
   if (parent != NULL)
   {
     assert(parent->type == OBJECT_TYPE_STRUCTURE ||
@@ -137,7 +137,10 @@ int yr_object_create(
       case OBJECT_TYPE_STRUCTURE:
         FAIL_ON_ERROR_WITH_CLEANUP(
             yr_object_structure_set_member(parent, obj),
-            yr_free(obj));
+            {
+              yr_free((void*) obj->identifier);
+              yr_free(obj);
+            });
         break;
 
       case OBJECT_TYPE_ARRAY:
@@ -166,7 +169,8 @@ int yr_object_function_create(
     YR_OBJECT** function)
 {
   YR_OBJECT* return_obj;
-  YR_OBJECT* f = NULL;
+  YR_OBJECT* o = NULL;
+  YR_OBJECT_FUNCTION* f = NULL;
 
   int8_t return_type;
   int i;
@@ -193,42 +197,44 @@ int yr_object_function_create(
     // Try to find if the structure already has a function
     // with that name. In that case this is a function oveload.
 
-    f = yr_object_lookup_field(parent, identifier);
+    f = (YR_OBJECT_FUNCTION*) yr_object_lookup_field(parent, identifier);
 
-    if (f != NULL && return_type != ((YR_OBJECT_FUNCTION*) f)->return_obj->type)
+    if (f != NULL && return_type != f->return_obj->type)
       return ERROR_WRONG_RETURN_TYPE;
   }
 
-  if (f == NULL)
+  if (f == NULL) // Function doesn't exist yet
   {
-    // Function doesn't exist yet, create it.
+    // Let's create the result object first
 
-    FAIL_ON_ERROR(yr_object_create(
-        OBJECT_TYPE_FUNCTION,
-        identifier,
-        parent,
-        &f));
+    FAIL_ON_ERROR(yr_object_create(return_type, "result", NULL, &return_obj));
 
     FAIL_ON_ERROR_WITH_CLEANUP(
-        yr_object_create(return_type, "result", f, &return_obj),
-        yr_object_destroy(f));
+        yr_object_create(
+            OBJECT_TYPE_FUNCTION,
+            identifier,
+            parent,
+            &o),
+        yr_object_destroy(return_obj));
 
-    ((YR_OBJECT_FUNCTION*) f)->return_obj = return_obj;
+    f = (YR_OBJECT_FUNCTION*) o;
+    f->return_obj = return_obj;
+    f->return_obj->parent = (YR_OBJECT*) f;
   }
 
   for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
   {
-    if (((YR_OBJECT_FUNCTION*) f)->prototypes[i].arguments_fmt == NULL)
+    if (f->prototypes[i].arguments_fmt == NULL)
     {
-      ((YR_OBJECT_FUNCTION*) f)->prototypes[i].arguments_fmt = arguments_fmt;
-      ((YR_OBJECT_FUNCTION*) f)->prototypes[i].code = code;
+      f->prototypes[i].arguments_fmt = arguments_fmt;
+      f->prototypes[i].code = code;
 
       break;
     }
   }
 
   if (function != NULL)
-    *function = f;
+    *function = (YR_OBJECT*) f;
 
   return ERROR_SUCCESS;
 }
@@ -297,8 +303,11 @@ void yr_object_destroy(
   YR_DICTIONARY_ITEMS* dict_items;
 
   RE* re;
-  int i;
   SIZED_STRING* str;
+  int i;
+
+  if (object == NULL)
+    return;
 
   switch(object->type)
   {
@@ -936,7 +945,7 @@ SIZED_STRING* yr_object_get_string(
 }
 
 
-void yr_object_set_integer(
+int yr_object_set_integer(
     int64_t value,
     YR_OBJECT* object,
     const char* field,
@@ -959,10 +968,12 @@ void yr_object_set_integer(
   assert(integer_obj->type == OBJECT_TYPE_INTEGER);
 
   ((YR_OBJECT_INTEGER*) integer_obj)->value = value;
+
+  return ERROR_SUCCESS;
 }
 
 
-void yr_object_set_float(
+int yr_object_set_float(
     double value,
     YR_OBJECT* object,
     const char* field,
@@ -985,10 +996,12 @@ void yr_object_set_float(
   assert(double_obj->type == OBJECT_TYPE_FLOAT);
 
   ((YR_OBJECT_DOUBLE*) double_obj)->value = value;
+
+  return ERROR_SUCCESS;
 }
 
 
-void yr_object_set_string(
+int yr_object_set_string(
     const char* value,
     size_t len,
     YR_OBJECT* object,
@@ -1017,6 +1030,10 @@ void yr_object_set_string(
   if (value != NULL)
   {
     string_obj->value = (SIZED_STRING*) yr_malloc(len + sizeof(SIZED_STRING));
+
+    if (string_obj->value == NULL)
+      return ERROR_INSUFICIENT_MEMORY;
+
     string_obj->value->length = len;
     string_obj->value->flags = 0;
 
@@ -1026,6 +1043,8 @@ void yr_object_set_string(
   {
     string_obj->value = NULL;
   }
+
+  return ERROR_SUCCESS;
 }
 
 

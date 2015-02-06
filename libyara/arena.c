@@ -266,6 +266,9 @@ void yr_arena_destroy(
   YR_ARENA_PAGE* page;
   YR_ARENA_PAGE* next_page;
 
+  if (arena == NULL)
+    return;
+
   page = arena->page_list_head;
 
   while(page != NULL)

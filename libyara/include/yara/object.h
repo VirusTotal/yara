@@ -93,21 +93,21 @@ SIZED_STRING* yr_object_get_string(
     ...);
 
 
-void yr_object_set_integer(
+int yr_object_set_integer(
     int64_t value,
     YR_OBJECT* object,
     const char* field,
     ...);
 
 
-void yr_object_set_float(
+int yr_object_set_float(
     double value,
     YR_OBJECT* object,
     const char* field,
     ...);
 
 
-void yr_object_set_string(
+int yr_object_set_string(
     const char* value,
     size_t len,
     YR_OBJECT* object,
