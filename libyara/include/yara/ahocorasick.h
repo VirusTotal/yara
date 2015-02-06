@@ -39,7 +39,7 @@ YR_AC_STATE* yr_ac_next_state(
     uint8_t input);
 
 
-void yr_ac_create_failure_links(
+int yr_ac_create_failure_links(
     YR_ARENA* arena,
     YR_AC_AUTOMATON* automaton);
 

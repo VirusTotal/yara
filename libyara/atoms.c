@@ -1019,6 +1019,9 @@ int yr_atoms_extract_from_re(
   atom_tree->root_node = _yr_atoms_extract_from_re_node(
       re->root_node, atom_tree, atom_tree->root_node);
 
+  if (atom_tree->root_node == NULL)
+    return ERROR_INSUFICIENT_MEMORY;
+
   if (atom_tree->current_leaf != NULL)
     _yr_atoms_tree_node_append(atom_tree->root_node, atom_tree->current_leaf);
 

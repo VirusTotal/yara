@@ -357,7 +357,7 @@ YR_AC_STATE* _yr_ac_create_state(
 // be called after all the strings have been added to the automaton.
 //
 
-void yr_ac_create_failure_links(
+int yr_ac_create_failure_links(
     YR_ARENA* arena,
     YR_AC_AUTOMATON* automaton)
 {
@@ -387,7 +387,7 @@ void yr_ac_create_failure_links(
 
   while (state != NULL)
   {
-    _yr_ac_queue_push(&queue, state);
+    FAIL_ON_ERROR(_yr_ac_queue_push(&queue, state));
     state->failure = root_state;
     state = _yr_ac_next_transition(root_state, &transition);
   }
@@ -420,7 +420,7 @@ void yr_ac_create_failure_links(
 
     while (transition_state != NULL)
     {
-      _yr_ac_queue_push(&queue, transition_state);
+      FAIL_ON_ERROR(_yr_ac_queue_push(&queue, transition_state));
       failure_state = current_state->failure;
 
       while (1)
@@ -469,6 +469,8 @@ void yr_ac_create_failure_links(
     }
 
   } // while(!__yr_ac_queue_is_empty(&queue))
+
+  return ERROR_SUCCESS;
 }
 
 

@@ -35,7 +35,7 @@ YR_API int yr_compiler_create(
   int result;
   YR_COMPILER* new_compiler;
 
-  new_compiler = (YR_COMPILER*) yr_malloc(sizeof(YR_COMPILER));
+  new_compiler = (YR_COMPILER*) yr_calloc(1, sizeof(YR_COMPILER));
 
   if (new_compiler == NULL)
     return ERROR_INSUFICIENT_MEMORY;
@@ -71,7 +71,7 @@ YR_API int yr_compiler_create(
     result = yr_arena_create(65536, 0, &new_compiler->strings_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(65536, 0, &new_compiler->code_arena);
+      result = yr_arena_create(65536, 0, &new_compiler->code_arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(65536, 0, &new_compiler->re_code_arena);
@@ -109,37 +109,16 @@ YR_API int yr_compiler_create(
 YR_API void yr_compiler_destroy(
     YR_COMPILER* compiler)
 {
-  int i;
-
-  if (compiler->compiled_rules_arena != NULL)
-    yr_arena_destroy(compiler->compiled_rules_arena);
-
-  if (compiler->sz_arena != NULL)
-    yr_arena_destroy(compiler->sz_arena);
-
-  if (compiler->rules_arena != NULL)
-    yr_arena_destroy(compiler->rules_arena);
-
-  if (compiler->strings_arena != NULL)
-    yr_arena_destroy(compiler->strings_arena);
-
-  if (compiler->code_arena != NULL)
-    yr_arena_destroy(compiler->code_arena);
-
-  if (compiler->re_code_arena != NULL)
-    yr_arena_destroy(compiler->re_code_arena);
-
-  if (compiler->automaton_arena != NULL)
-    yr_arena_destroy(compiler->automaton_arena);
-
-  if (compiler->externals_arena != NULL)
-    yr_arena_destroy(compiler->externals_arena);
-
-  if (compiler->namespaces_arena != NULL)
-    yr_arena_destroy(compiler->namespaces_arena);
-
-  if (compiler->metas_arena != NULL)
-    yr_arena_destroy(compiler->metas_arena);
+  yr_arena_destroy(compiler->compiled_rules_arena);
+  yr_arena_destroy(compiler->sz_arena);
+  yr_arena_destroy(compiler->rules_arena);
+  yr_arena_destroy(compiler->strings_arena);
+  yr_arena_destroy(compiler->code_arena);
+  yr_arena_destroy(compiler->re_code_arena);
+  yr_arena_destroy(compiler->automaton_arena);
+  yr_arena_destroy(compiler->externals_arena);
+  yr_arena_destroy(compiler->namespaces_arena);
+  yr_arena_destroy(compiler->metas_arena);
 
   yr_hash_table_destroy(
       compiler->rules_table,
@@ -149,7 +128,7 @@ YR_API void yr_compiler_destroy(
       compiler->objects_table,
       (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
-  for (i = 0; i < compiler->file_name_stack_ptr; i++)
+  for (int i = 0; i < compiler->file_name_stack_ptr; i++)
     yr_free(compiler->file_name_stack[i]);
 
   yr_free(compiler);
@@ -333,11 +312,20 @@ YR_API int yr_compiler_add_file(
     _yr_compiler_push_file_name(compiler, file_name);
 
   if (namespace_ != NULL)
-    _yr_compiler_set_namespace(compiler, namespace_);
+    compiler->last_result = _yr_compiler_set_namespace(compiler, namespace_);
   else
-    _yr_compiler_set_namespace(compiler, "default");
+    compiler->last_result = _yr_compiler_set_namespace(compiler, "default");
 
-  return yr_lex_parse_rules_file(rules_file, compiler);
+  if (compiler->last_result == ERROR_SUCCESS)
+  {
+    return yr_lex_parse_rules_file(rules_file, compiler);
+  }
+  else
+  {
+    compiler->errors++;
+    return compiler->errors;
+  }
+
 }
 
 
@@ -352,11 +340,19 @@ YR_API int yr_compiler_add_string(
   assert(compiler->compiled_rules_arena == NULL);
 
   if (namespace_ != NULL)
-    _yr_compiler_set_namespace(compiler, namespace_);
+    compiler->last_result = _yr_compiler_set_namespace(compiler, namespace_);
   else
-    _yr_compiler_set_namespace(compiler, "default");
+    compiler->last_result = _yr_compiler_set_namespace(compiler, "default");
 
-  return yr_lex_parse_rules_string(rules_string, compiler);
+  if (compiler->last_result == ERROR_SUCCESS)
+  {
+    return yr_lex_parse_rules_string(rules_string, compiler);
+  }
+  else
+  {
+    compiler->errors++;
+    return compiler->errors;
+  }
 }
 
 int _yr_compiler_compile_rules(
@@ -398,11 +394,12 @@ int _yr_compiler_compile_rules(
       NULL);
 
   // Create Aho-Corasick automaton's failure links.
-  yr_ac_create_failure_links(
+  result = yr_ac_create_failure_links(
       compiler->automaton_arena,
       compiler->automaton);
 
-  result = yr_arena_create(1024, 0, &arena);
+  if (result == ERROR_SUCCESS)
+    result = yr_arena_create(1024, 0, &arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_allocate_struct(

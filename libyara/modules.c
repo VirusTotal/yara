@@ -133,12 +133,6 @@ int yr_modules_load(
       NULL,
       &module_structure));
 
-  yr_hash_table_add(
-      context->objects_table,
-      module_name,
-      NULL,
-      module_structure);
-
   mi.module_name = module_name;
   mi.module_data = NULL;
   mi.module_data_size = 0;
@@ -151,9 +145,17 @@ int yr_modules_load(
   if (result == CALLBACK_ERROR)
     return ERROR_CALLBACK_ERROR;
 
-  yr_modules_do_declarations(
-        module_name,
-        module_structure);
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_modules_do_declarations(module_name, module_structure),
+      yr_object_destroy(module_structure));
+
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_hash_table_add(
+          context->objects_table,
+          module_name,
+          NULL,
+          module_structure),
+      yr_object_destroy(module_structure));
 
   for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
@@ -165,8 +167,10 @@ int yr_modules_load(
           mi.module_data,
           mi.module_data_size);
 
-      if (result == ERROR_SUCCESS)
-        yr_modules_table[i].is_loaded |= 1 << yr_get_tidx();
+      if (result != ERROR_SUCCESS)
+        return result;
+
+      yr_modules_table[i].is_loaded |= 1 << yr_get_tidx();
     }
   }
 
