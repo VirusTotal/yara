@@ -193,6 +193,9 @@ ATOM_TREE_NODE* _yr_atoms_tree_node_create(
   ATOM_TREE_NODE* new_node;
 
   new_node = (ATOM_TREE_NODE*) yr_malloc(sizeof(ATOM_TREE_NODE));
+  if (! new_node)
+    return NULL;
+
   new_node->type = type;
   new_node->atom_length = 0;
   new_node->next_sibling = NULL;
@@ -347,6 +350,8 @@ int _yr_atoms_choose(
   case ATOM_TREE_LEAF:
 
     item = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
+    if (! item)
+      return 0;
 
     for (i = 0; i < node->atom_length; i++)
       item->atom[i] = node->atom[i];
@@ -974,6 +979,9 @@ int yr_atoms_extract_from_re(
   YR_ATOM_LIST_ITEM* triplet_atoms;
 
   int min_atom_quality = 0;
+
+  if (! atom_tree)
+    return ERROR_INSUFICIENT_MEMORY;
 
   atom_tree->root_node = _yr_atoms_tree_node_create(ATOM_TREE_OR);;
   atom_tree->current_leaf = NULL;
