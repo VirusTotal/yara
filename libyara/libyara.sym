@@ -23,6 +23,7 @@ yr_rules_scan_file
 yr_rules_scan_proc
 yr_rules_save
 yr_rules_load
+yr_rules_load_stream
 yr_rules_destroy
 yr_rules_define_integer_variable
 yr_rules_define_boolean_variable
