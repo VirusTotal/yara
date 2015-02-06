@@ -50,6 +50,7 @@ yarainclude_HEADERS = \
   include/yara/modules.h \
   include/yara/object.h \
   include/yara/strutils.h \
+  include/yara/stream.h \
   include/yara/libyara.h
 
 lib_LTLIBRARIES = libyara.la
@@ -98,6 +99,8 @@ libyara_la_SOURCES = \
   sizedstr.h \
   strutils.c \
   strutils.h \
+  stream.c \
+  stream.h \
   utils.h
 
 pkgconfigdir = $(libdir)/pkgconfig
