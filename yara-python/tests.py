@@ -641,6 +641,7 @@ class TestYara(unittest.TestCase):
         f.seek(0)
 
         r = yara.compile(file=f)
+        f.close()
         self.assertTrue(r.match(data=PE32_FILE))
 
     def testCompileFiles(self):
