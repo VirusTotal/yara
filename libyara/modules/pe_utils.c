@@ -2,6 +2,8 @@
 
 #if !HAVE_TIMEGM
 
+#include <time.h>
+
 static int is_leap(
     unsigned int year)
 {
