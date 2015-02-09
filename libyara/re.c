@@ -1821,7 +1821,7 @@ int yr_re_exec(
       }
     }
 
-    if (flags & RE_FLAGS_WIDE && *(input + 1) != 0)
+    if (flags & RE_FLAGS_WIDE && count < max_count && *(input + 1) != 0)
       _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool);
 
     input += input_incr;
