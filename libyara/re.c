@@ -1519,7 +1519,9 @@ int _yr_re_fiber_sync(
 //    Integer indicating the number of matching bytes, including 0 when
 //    matching an empty regexp. Negative values indicate:
 //      -1  No match
-//      -2  An error ocurred
+//      -2  Not enough memory
+//      -3  Too many matches
+//      -4  Unknown fatal error
 
 int yr_re_exec(
     RE_CODE re_code,
@@ -1758,12 +1760,25 @@ int yr_re_exec(
           {
             if (callback != NULL)
             {
+              int cb_result;
+
               if (flags & RE_FLAGS_BACKWARDS)
-                callback(input + character_size, count,
-                         flags, callback_args);
+                cb_result = callback(
+                    input + character_size, count, flags, callback_args);
               else
-                callback(input_data, count,
-                         flags, callback_args);
+                cb_result = callback(
+                    input_data, count, flags, callback_args);
+
+              switch(cb_result)
+              {
+                case ERROR_INSUFICIENT_MEMORY:
+                  return -2;
+                case ERROR_TOO_MANY_MATCHES:
+                  return -3;
+                default:
+                  if (cb_result != ERROR_SUCCESS)
+                    return -4;
+              }
             }
 
             action = ACTION_KILL;

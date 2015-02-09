@@ -202,11 +202,23 @@ int _yr_scan_fast_hex_re_exec(
       {
         if (flags & RE_FLAGS_EXHAUSTIVE)
         {
-            callback(
+            int cb_result = callback(
                flags & RE_FLAGS_BACKWARDS ? current_input + 1 : input,
                matches,
                flags,
                callback_args);
+
+            switch(cb_result)
+            {
+              case ERROR_INSUFICIENT_MEMORY:
+                return -2;
+              case ERROR_TOO_MANY_MATCHES:
+                return -3;
+              default:
+                if (cb_result != ERROR_SUCCESS)
+                  return -4;
+            }
+
             break;
         }
         else
@@ -285,7 +297,7 @@ int _yr_scan_fast_hex_re_exec(
               assert(sp < MAX_FAST_HEX_RE_STACK);
 
               if (sp >= MAX_FAST_HEX_RE_STACK)
-                return -3;
+                return -4;
 
               code_stack[sp] = ip + 11;
               input_stack[sp] = next_input;
@@ -683,6 +695,8 @@ int _yr_scan_verify_re_match(
     case -2:
       return ERROR_INSUFICIENT_MEMORY;
     case -3:
+      return ERROR_TOO_MANY_MATCHES;
+    case -4:
       return ERROR_INTERNAL_FATAL_ERROR;
   }
 
@@ -708,11 +722,15 @@ int _yr_scan_verify_re_match(
         _yr_scan_match_callback,
         (void*) &callback_args);
 
-    if (backward_matches == -2)
-      return ERROR_INSUFICIENT_MEMORY;
-
-    if (backward_matches == -3)
-      return ERROR_INTERNAL_FATAL_ERROR;
+    switch(backward_matches)
+    {
+      case -2:
+        return ERROR_INSUFICIENT_MEMORY;
+      case -3:
+        return ERROR_TOO_MANY_MATCHES;
+      case -4:
+        return ERROR_INTERNAL_FATAL_ERROR;
+    }
   }
   else
   {
