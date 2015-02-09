@@ -1183,7 +1183,41 @@ define_function(valid_on)
 }
 
 
-define_function(section_index)
+define_function(section_index_addr)
+{
+  YR_OBJECT* module = module();
+  YR_SCAN_CONTEXT* context = scan_context();
+  int64_t offset;
+  int64_t size;
+
+  if (is_undefined(module, "number_of_sections"))
+    return_integer(UNDEFINED);
+
+  int64_t addr = integer_argument(1);
+  int64_t n = get_integer(module, "number_of_sections");
+
+  for (int64_t i = 0; i < n; i++)
+  {
+    if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
+    {
+      offset = get_integer(module, "sections[%i].virtual_address", i);
+      size = get_integer(module, "sections[%i].virtual_size", i);
+    }
+    else
+    {
+      offset = get_integer(module, "sections[%i].raw_data_offset", i);
+      size = get_integer(module, "sections[%i].raw_data_size", i);
+    }
+
+    if (addr >= offset && addr < offset + size)
+      return_integer(i);
+  }
+
+  return_integer(UNDEFINED);
+}
+
+
+define_function(section_index_name)
 {
   YR_OBJECT* module = module();
 
@@ -1517,6 +1551,20 @@ begin_declarations;
   declare_integer("UP_SYSTEM_ONLY");
   declare_integer("BYTES_REVERSED_HI");
 
+  declare_integer("SECTION_CNT_CODE");
+  declare_integer("SECTION_CNT_INITIALIZED_DATA");
+  declare_integer("SECTION_CNT_UNINITIALIZED_DATA");
+  declare_integer("SECTION_GPREL");
+  declare_integer("SECTION_MEM_16BIT");
+  declare_integer("SECTION_LNK_NRELOC_OVFL");
+  declare_integer("SECTION_MEM_DISCARDABLE");
+  declare_integer("SECTION_MEM_NOT_CACHED");
+  declare_integer("SECTION_MEM_NOT_PAGED");
+  declare_integer("SECTION_MEM_SHARED");
+  declare_integer("SECTION_MEM_EXECUTE");
+  declare_integer("SECTION_MEM_READ");
+  declare_integer("SECTION_MEM_WRITE");
+
   declare_integer("machine");
   declare_integer("number_of_sections");
   declare_integer("timestamp");
@@ -1570,7 +1618,8 @@ begin_declarations;
   declare_function("imphash", "", "s", imphash);
   #endif
 
-  declare_function("section_index", "s", "i", section_index);
+  declare_function("section_index", "s", "i", section_index_name);
+  declare_function("section_index", "i", "i", section_index_addr);
   declare_function("exports", "s", "i", exports);
   declare_function("imports", "ss", "i", imports);
   declare_function("locale", "i", "i", locale);
@@ -1759,6 +1808,46 @@ int module_load(
   set_integer(
       IMAGE_FILE_BYTES_REVERSED_HI, module_object,
       "BYTES_REVERSED_HI");
+
+  set_integer(
+      SECTION_CNT_CODE, module_object,
+      "SECTION_CNT_CODE");
+  set_integer(
+      SECTION_CNT_INITIALIZED_DATA, module_object,
+      "SECTION_CNT_INITIALIZED_DATA");
+  set_integer(
+      SECTION_CNT_UNINITIALIZED_DATA, module_object,
+      "SECTION_CNT_UNINITIALIZED_DATA");
+  set_integer(
+      SECTION_GPREL, module_object,
+      "SECTION_GPREL");
+  set_integer(
+      SECTION_MEM_16BIT, module_object,
+      "SECTION_MEM_16BIT");
+  set_integer(
+      SECTION_LNK_NRELOC_OVFL, module_object,
+      "SECTION_LNK_NRELOC_OVFL");
+  set_integer(
+      SECTION_MEM_DISCARDABLE, module_object,
+      "SECTION_MEM_DISCARDABLE");
+  set_integer(
+      SECTION_MEM_NOT_CACHED, module_object,
+      "SECTION_MEM_NOT_CACHED");
+  set_integer(
+      SECTION_MEM_NOT_PAGED, module_object,
+      "SECTION_MEM_NOT_PAGED");
+  set_integer(
+      SECTION_MEM_SHARED, module_object,
+      "SECTION_MEM_SHARED");
+  set_integer(
+      SECTION_MEM_EXECUTE, module_object,
+      "SECTION_MEM_EXECUTE");
+  set_integer(
+      SECTION_MEM_READ, module_object,
+      "SECTION_MEM_READ");
+  set_integer(
+      SECTION_MEM_WRITE, module_object,
+      "SECTION_MEM_WRITE");
 
   YR_MEMORY_BLOCK* block;
 
