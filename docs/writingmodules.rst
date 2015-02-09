@@ -261,16 +261,21 @@ a declaration section like this::
 Basic types
 -----------
 
-Within the declaration section you can use ``declare_string(<variable name>)``
-and ``declare_integer(<variable name>)`` to declare string or integer variables
-respectively. For example::
+Within the declaration section you can use ``declare_string(<variable name>)``,
+``declare_integer(<variable name>)`` and ``declare_float(<variable name>)`` to
+declare string, integer, or float variables respectively. For example::
 
     begin_declarations;
 
         declare_integer("foo");
         declare_string("bar");
+        declare_float("baz");
 
     end_declarations;
+
+.. note::
+    Floating-point variables requiere YARA version 3.3.0 or later.
+
 
 Variable names can't contain characters other than letters, numbers and
 underscores. These variables can be used later in your rules at any place where
@@ -291,6 +296,7 @@ Your declarations can be organized in a more structured way::
 
         declare_integer("foo");
         declare_string("bar");
+        declare_float("baz");
 
         begin_struct("some_structure");
 
@@ -308,7 +314,8 @@ Your declarations can be organized in a more structured way::
 
             declare_integer("foo");
             declare_string("bar");
-            declare_string("baz")
+            declare_string("baz");
+            declare_float("tux");
 
         end_struct("another_structure");
 
@@ -332,18 +339,19 @@ When refering to these variables from your rules it would be like this::
 Arrays
 ------
 
-In the same way you declare individual strings, integers or structures, you can
-declare arrays of them::
+In the same way you declare individual strings, integers, floats or structures,
+you can declare arrays of them::
 
     begin_declarations;
 
         declare_integer_array("foo");
         declare_string_array("bar");
+        declare_float_array("baz");
 
         begin_struct_array("struct_array");
 
-            declare_integer("baz");
-            declare_string("qux");
+            declare_integer("foo");
+            declare_string("bar");
 
         end_struct_array("struct_array");
 
@@ -355,8 +363,9 @@ languages::
 
     foo[0]
     bar[1]
-    struct_array[3].baz
-    struct_array[1].qux
+    baz[3]
+    struct_array[4].foo
+    struct_array[1].bar
 
 Arrays are zero-based and don't have a fixed size, they will grow as needed
 when you start initializing its values.
@@ -367,17 +376,18 @@ Dictionaries
 
 .. versionadded:: 3.2.0
 
-You can also declare dictionaries of integers, strings, or structures::
+You can also declare dictionaries of integers, floats, strings, or structures::
 
     begin_declarations;
 
         declare_integer_dictionary("foo");
         declare_string_dictionary("bar");
+        declare_float_dictionary("baz")
 
         begin_struct_dictionary("struct_dict");
 
-            declare_integer("baz");
-            declare_string("qux");
+            declare_integer("foo");
+            declare_string("bar");
 
         end_struct_dictionary("struct_dict");
 
@@ -387,8 +397,9 @@ Individual values in the dictionary are accessed by using a string key::
 
     foo["somekey"]
     bar["anotherkey"]
-    struct_dict["k1"].baz
-    struct_dict["k1"].qux
+    baz["yetanotherkey"]
+    struct_dict["k1"].foo
+    struct_dict["k1"].bar
 
 .. _declaring-functions:
 
@@ -406,15 +417,15 @@ the function.
 
 *<argument types>* is a string containing one character per
 function argument, where the character indicates the type of the argument.
-Functions can receive three different types of arguments: string, integer and
-regular expression, denoted by characters: **s**, **i** and **r**
+Functions can receive four different types of arguments: string, integer, float
+and regular expression, denoted by characters: **s**, **i**, **r** and **f**
 respectively. If your function receives two integers *<argument types>* must be
 *"ii"*, if it receives an integer as the first argument and a string as the
-second one *<argument types>* must be *"is"*, if it receives three strings
-*<argument types>* must be "*sss*".
+second one *<argument types>* must be *"is"*, if it receives three strings and
+a float *<argument types>* must be "*sssf*".
 
 *<return type>* is a string with a single character indicating the return type.
-Possible return types are string (*"s"*) and integer (*"i"*).
+Possible return types are string (*"s"*) integer (*"i"*) and float (*"f"*).
 
 *<C function>* is the identifier for the actual implementation of your function.
 
@@ -422,13 +433,18 @@ Here you have a full example:
 
 .. code-block:: c
 
-    define_function(sum)
+    define_function(isum)
     {
       int64_t a = integer_argument(1);
       int64_t b = integer_argument(2);
 
-      if (a == UNDEFINED || b == UNDEFINED)
-        return_integer(UNDEFINED);
+      return_integer(a + b);
+    }
+
+    define_function(fsum)
+    {
+      double a = float_argument(1);
+      double b = float_argument(2);
 
       return_integer(a + b);
     }
@@ -853,9 +869,9 @@ Function arguments
 ------------------
 
 Within the function's code you get its arguments by using
-``integer_argument(n)``, ``regexp_argument(n)``, ``string_argument(n)`` or
-``sized_string_argument(n)`` depending on the type of the argument, where
-*n* is the 1-based argument's number.
+``integer_argument(n)``, ``float_argument(n)``, ``regexp_argument(n)``,
+``string_argument(n)`` or ``sized_string_argument(n)`` depending on the type of
+the argument, where *n* is the 1-based argument's number.
 
 ``string_argument(n)`` can be used when your function expects to receive a
 NULL-terminated C string, if your function can receive arbitrary binary data
@@ -869,11 +885,13 @@ Here you have some examples:
     RE_CODE arg_2 = regexp_argument(2);
     char* arg_3 = string_argument(3);
     SIZED_STRING* arg_4 = sized_string_argument(4);
+    double arg_5 = float_argument(1);
 
-The C type for integer arguments is ``int64_t``, for regular expressions is
-``RE_CODE``, for NULL-terminated strings is ``char*`` and for string possibly
-contaning NULL characters is ``SIZED_STRING*``. ``SIZED_STRING*``.
-``SIZED_STRING`` structures have the following attributes:
+The C type for integer arguments is ``int64_t``, for float arguments is
+``double``, for regular expressions is ``RE_CODE``, for NULL-terminated strings
+is ``char*`` and for string possibly contaning NULL characters is
+``SIZED_STRING*``. ``SIZED_STRING`` structures have the
+following attributes:
 
 .. c:type:: SIZED_STRING
 
@@ -888,18 +906,19 @@ contaning NULL characters is ``SIZED_STRING*``. ``SIZED_STRING*``.
 Return values
 -------------
 
-Functions can return two types of values: strings and integers. Instead of
-using the C *return* statement you must use ``return_string(x)`` or
-``return_integer(x)`` to return from a function, depending on the function's
-return type. In both cases *x* is a constant, variable, or expression
-evaluating to ``char*`` or ``int64_t`` respectively.
+Functions can return three types of values: strings, integers and floats.
+Instead of using the C *return* statement you must use ``return_string(x)``,
+``return_integer(x)`` or ``return_float(x)`` to return from a function,
+depending on the function's return type. In all cases *x* is a constant,
+variable, or expression evaluating to ``char*``, ``int64_t`` or ``double``
+respectively.
 
-You can use ``return_string(UNDEFINED)`` and ``return_integer(UNDEFINED)`` to
-return undefined values from the function. This is useful in many situations,
-for example if the arguments passed to the functions don't make sense, or if
-your module expects a particular file format and the scanned file is from
-another format, or in any other case where your function can't a return a valid
-value.
+You can use ``return_string(UNDEFINED)``, ``return_float(UNDEFINED)`` and
+``return_integer(UNDEFINED)`` to return undefined values from the function.
+This is useful in many situations, for example if the arguments passed to the
+functions don't make sense, or if your module expects a particular file format
+and the scanned file is from another format, or in any other case where your
+function can't a return a valid value.
 
 
 .. warning:: Don't use the C *return* statement for returning from a function.

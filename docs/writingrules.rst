@@ -344,10 +344,10 @@ of double-quotes, like in the Perl programming language. ::
     {
         strings:
             $re1 = /md5: [0-9a-zA-Z]{32}/
-           $re2 = /state: (on|off)/
+            $re2 = /state: (on|off)/
 
         condition:
-           $re1 and $re2
+            $re1 and $re2
     }
 
 Regular expressions can be also followed by ``nocase``, ``ascii``, ``wide``,
@@ -457,6 +457,18 @@ These are the recognised character classes:
      - Match a decimal digit character
    * - ``\D``
      - Match a non-digit character
+
+
+Starting with version 3.3.0 these zero-with assertions are also recognized:
+
+.. list-table::
+   :widths: 3 10
+
+   * - ``\b``
+     - Match a word boundary
+   * - ``\B``
+     - Match except at a word boundary
+
 
 Conditions
 ==========
