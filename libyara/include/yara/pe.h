@@ -148,6 +148,21 @@ typedef struct _IMAGE_FILE_HEADER {
 #define IMAGE_FILE_MACHINE_THUMB             0x01c2
 #define IMAGE_FILE_MACHINE_WCEMIPSV2         0x0169
 
+// Section characteristics
+#define SECTION_CNT_CODE                     0x00000020
+#define SECTION_CNT_INITIALIZED_DATA         0x00000040
+#define SECTION_CNT_UNINITIALIZED_DATA       0x00000080
+#define SECTION_GPREL                        0x00008000
+#define SECTION_MEM_16BIT                    0x00020000
+#define SECTION_LNK_NRELOC_OVFL              0x01000000
+#define SECTION_MEM_DISCARDABLE              0x02000000
+#define SECTION_MEM_NOT_CACHED               0x04000000
+#define SECTION_MEM_NOT_PAGED                0x08000000
+#define SECTION_MEM_SHARED                   0x10000000
+#define SECTION_MEM_EXECUTE                  0x20000000
+#define SECTION_MEM_READ                     0x40000000
+#define SECTION_MEM_WRITE                    0x80000000
+
 //
 // Directory format.
 //
