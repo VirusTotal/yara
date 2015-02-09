@@ -17,13 +17,13 @@
 from distutils.core import setup, Extension
 
 setup(name='yara-python',
-      version='3.2.0',
+      version='3.3.0',
       author='Victor M. Alvarez',
       author_email='plusvic@gmail.com;vmalvarez@virustotal.com',
       ext_modules=[Extension(
         name='yara',
         sources=['yara-python.c'],
         libraries=['yara'],
-        include_dirs=['../windows/include', '../libyara/include'],
+        include_dirs=['../libyara/include'],
         library_dirs=['../libyara/.libs'],
     )])
