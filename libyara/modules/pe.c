@@ -1948,43 +1948,43 @@ int module_load(
       "BYTES_REVERSED_HI");
 
   set_integer(
-      SECTION_CNT_CODE, module_object,
+      IMAGE_SCN_CNT_CODE, module_object,
       "SECTION_CNT_CODE");
   set_integer(
-      SECTION_CNT_INITIALIZED_DATA, module_object,
+      IMAGE_SCN_CNT_INITIALIZED_DATA, module_object,
       "SECTION_CNT_INITIALIZED_DATA");
   set_integer(
-      SECTION_CNT_UNINITIALIZED_DATA, module_object,
+      IMAGE_SCN_CNT_UNINITIALIZED_DATA, module_object,
       "SECTION_CNT_UNINITIALIZED_DATA");
   set_integer(
-      SECTION_GPREL, module_object,
+      IMAGE_SCN_GPREL, module_object,
       "SECTION_GPREL");
   set_integer(
-      SECTION_MEM_16BIT, module_object,
+      IMAGE_SCN_MEM_16BIT, module_object,
       "SECTION_MEM_16BIT");
   set_integer(
-      SECTION_LNK_NRELOC_OVFL, module_object,
+      IMAGE_SCN_LNK_NRELOC_OVFL, module_object,
       "SECTION_LNK_NRELOC_OVFL");
   set_integer(
-      SECTION_MEM_DISCARDABLE, module_object,
+      IMAGE_SCN_MEM_DISCARDABLE, module_object,
       "SECTION_MEM_DISCARDABLE");
   set_integer(
-      SECTION_MEM_NOT_CACHED, module_object,
+      IMAGE_SCN_MEM_NOT_CACHED, module_object,
       "SECTION_MEM_NOT_CACHED");
   set_integer(
-      SECTION_MEM_NOT_PAGED, module_object,
+      IMAGE_SCN_MEM_NOT_PAGED, module_object,
       "SECTION_MEM_NOT_PAGED");
   set_integer(
-      SECTION_MEM_SHARED, module_object,
+      IMAGE_SCN_MEM_SHARED, module_object,
       "SECTION_MEM_SHARED");
   set_integer(
-      SECTION_MEM_EXECUTE, module_object,
+      IMAGE_SCN_MEM_EXECUTE, module_object,
       "SECTION_MEM_EXECUTE");
   set_integer(
-      SECTION_MEM_READ, module_object,
+      IMAGE_SCN_MEM_READ, module_object,
       "SECTION_MEM_READ");
   set_integer(
-      SECTION_MEM_WRITE, module_object,
+      IMAGE_SCN_MEM_WRITE, module_object,
       "SECTION_MEM_WRITE");
 
   set_integer(
