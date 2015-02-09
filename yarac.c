@@ -169,8 +169,6 @@ int main(
   if (show_version)
   {
     printf("%s\n", PACKAGE_STRING);
-    printf("\nSend bug reports and suggestions to: %s.\n", PACKAGE_BUGREPORT);
-
     return EXIT_FAILURE;
   }
 
