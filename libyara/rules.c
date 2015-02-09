@@ -73,7 +73,7 @@ YR_API int yr_rules_define_integer_variable(
   {
     if (strcmp(external->identifier, identifier) == 0)
     {
-      external->integer = value;
+      external->value.i = value;
       break;
     }
 
@@ -97,7 +97,31 @@ YR_API int yr_rules_define_boolean_variable(
   {
     if (strcmp(external->identifier, identifier) == 0)
     {
-      external->integer = value;
+      external->value.i = value;
+      break;
+    }
+
+    external++;
+  }
+
+  return ERROR_SUCCESS;
+}
+
+
+YR_API int yr_rules_define_float_variable(
+    YR_RULES* rules,
+    const char* identifier,
+    double value)
+{
+  YR_EXTERNAL_VARIABLE* external;
+
+  external = rules->externals_list_head;
+
+  while (!EXTERNAL_VARIABLE_IS_NULL(external))
+  {
+    if (strcmp(external->identifier, identifier) == 0)
+    {
+      external->value.f = value;
       break;
     }
 
@@ -122,15 +146,15 @@ YR_API int yr_rules_define_string_variable(
     if (strcmp(external->identifier, identifier) == 0)
     {
       if (external->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING &&
-          external->string != NULL)
+          external->value.s != NULL)
       {
-        yr_free(external->string);
+        yr_free(external->value.s);
       }
 
       external->type = EXTERNAL_VARIABLE_TYPE_MALLOC_STRING;
-      external->string = yr_strdup(value);
+      external->value.s = yr_strdup(value);
 
-      if (external->string == NULL)
+      if (external->value.s == NULL)
         return ERROR_INSUFICIENT_MEMORY;
       else
         return ERROR_SUCCESS;
@@ -636,7 +660,7 @@ YR_API int yr_rules_destroy(
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
     if (external->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
-      yr_free(external->string);
+      yr_free(external->value.s);
 
     external++;
   }

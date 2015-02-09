@@ -15,6 +15,7 @@ yr_compiler_get_error_message
 yr_compiler_get_current_file_name
 yr_compiler_define_integer_variable
 yr_compiler_define_boolean_variable
+yr_compiler_define_float_variable
 yr_compiler_define_string_variable
 yr_compiler_get_rules
 yr_rules_scan_mem
@@ -25,5 +26,6 @@ yr_rules_load
 yr_rules_destroy
 yr_rules_define_integer_variable
 yr_rules_define_boolean_variable
+yr_rules_define_float_variable
 yr_rules_define_string_variable
 yr_rules_print_profiling_info

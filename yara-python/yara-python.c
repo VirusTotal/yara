@@ -628,6 +628,13 @@ int process_compile_externals(
           identifier,
           PyLong_AsLong(value));
     }
+    else if (PyFloat_Check(value))
+    {
+      yr_compiler_define_float_variable(
+          compiler,
+          identifier,
+          PyFloat_AsDouble(value));
+    }
     else if (PY_STRING_CHECK(value))
     {
       yr_compiler_define_string_variable(
@@ -675,6 +682,13 @@ int process_match_externals(
           rules,
           identifier,
           PyLong_AsLong(value));
+    }
+    else if (PyFloat_Check(value))
+    {
+      yr_rules_define_float_variable(
+          rules,
+          identifier,
+          PyFloat_AsDouble(value));
     }
     else if (PY_STRING_CHECK(value))
     {
@@ -1034,7 +1048,7 @@ static PyObject * Rules_match(
 
           return PyErr_Format(
               PyExc_TypeError,
-              "external values must be of type integer, boolean or string");
+              "external values must be of type integer, float, boolean or string");
         }
       }
       else
@@ -1363,7 +1377,7 @@ static PyObject * yara_compile(
           yr_compiler_destroy(compiler);
           return PyErr_Format(
               PyExc_TypeError,
-              "external values must be of type integer, boolean or string");
+              "external values must be of type integer, float, boolean or string");
         }
       }
       else
@@ -1569,19 +1583,25 @@ static PyObject * yara_load(
           PyDict_SetItemString(
               rules->externals,
               external->identifier,
-              PyBool_FromLong((long) external->integer));
+              PyBool_FromLong((long) external->value.i));
           break;
         case EXTERNAL_VARIABLE_TYPE_INTEGER:
           PyDict_SetItemString(
               rules->externals,
               external->identifier,
-              PyLong_FromLong((long) external->integer));
+              PyLong_FromLong((long) external->value.i));
+          break;
+        case EXTERNAL_VARIABLE_TYPE_FLOAT:
+          PyDict_SetItemString(
+              rules->externals,
+              external->identifier,
+              PyFloat_FromDouble(external->value.f));
           break;
         case EXTERNAL_VARIABLE_TYPE_STRING:
           PyDict_SetItemString(
               rules->externals,
               external->identifier,
-              PY_STRING(external->string));
+              PY_STRING(external->value.s));
           break;
       }
 

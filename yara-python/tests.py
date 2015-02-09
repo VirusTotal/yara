@@ -694,6 +694,15 @@ class TestYara(unittest.TestCase):
         r = yara.compile(source='rule test { condition: ext_int == 15 }', externals={'ext_int': 15})
         self.assertTrue(r.match(data='dummy'))
 
+        r = yara.compile(source='rule test { condition: ext_int == -15}', externals={'ext_int': -15})
+        self.assertTrue(r.match(data='dummy'))
+
+        r = yara.compile(source='rule test { condition: ext_float == 3.14 }', externals={'ext_float': 3.14})
+        self.assertTrue(r.match(data='dummy'))
+
+        r = yara.compile(source='rule test { condition: ext_float == -0.5 }', externals={'ext_float': -0.5})
+        self.assertTrue(r.match(data='dummy'))
+
         r = yara.compile(source='rule test { condition: ext_bool }', externals={'ext_bool': True})
         self.assertTrue(r.match(data='dummy'))
 
