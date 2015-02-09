@@ -676,17 +676,47 @@ void* scanning_thread(void* param)
 }
 
 
-int is_numeric(
+int is_integer(
     const char *str)
 {
+  if (*str == '-')
+    str++;
+  
   while(*str)
   {
     if (!isdigit(*str))
-      return 0;
+      return FALSE;
     str++;
   }
 
-  return 1;
+  return TRUE;
+}
+
+
+int is_float(
+    const char *str)
+{
+  int point = FALSE;
+
+  if (*str == '-')
+    str++;
+
+  while(*str)
+  {
+    if (*str == '.')
+    {
+      if (point)      // two points seen, not a float
+        return FALSE;
+      point = TRUE;
+    }
+    else if (!isdigit(*str))
+    {
+      return FALSE;
+    }
+    str++;
+  }
+
+  return TRUE;
 }
 
 
@@ -713,7 +743,22 @@ int define_external_variables(
     char* identifier = ext_vars[i];
     char* value = equal_sign + 1;
 
-    if (is_numeric(value))
+
+    if (is_float(value))
+    {
+      if (rules != NULL)
+        yr_rules_define_float_variable(
+            rules,
+            identifier,
+            atof(value));
+
+      if (compiler != NULL)
+        yr_compiler_define_float_variable(
+            compiler,
+            identifier,
+            atof(value));
+    }
+    else if (is_integer(value))
     {
       if (rules != NULL)
         yr_rules_define_integer_variable(
@@ -935,7 +980,7 @@ int main(
 
   mutex_init(&output_mutex);
 
-  if (is_numeric(argv[1]))
+  if (is_integer(argv[1]))
   {
     int pid = atoi(argv[1]);
 

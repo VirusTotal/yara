@@ -327,6 +327,10 @@ Functions
 
   Defines an integer external variable.
 
+.. c:function:: int yr_compiler_define_float_variable(YR_COMPILER* compiler, const char* identifier, double value)
+
+  Defines a float external variable.
+
 .. c:function:: int yr_compiler_define_boolean_variable(YR_COMPILER* compiler, const char* identifier, int value)
 
   Defines a boolean external variable.

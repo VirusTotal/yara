@@ -109,6 +109,12 @@ YR_API int yr_rules_define_boolean_variable(
     int value);
 
 
+YR_API int yr_rules_define_float_variable(
+    YR_RULES* rules,
+    const char* identifier,
+    double value);
+
+
 YR_API int yr_rules_define_string_variable(
     YR_RULES* rules,
     const char* identifier,

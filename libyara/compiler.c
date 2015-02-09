@@ -571,13 +571,11 @@ YR_API int yr_compiler_define_integer_variable(
       sizeof(YR_EXTERNAL_VARIABLE),
       (void**) &external,
       offsetof(YR_EXTERNAL_VARIABLE, identifier),
-      offsetof(YR_EXTERNAL_VARIABLE, string),
       EOL));
 
   external->type = EXTERNAL_VARIABLE_TYPE_INTEGER;
   external->identifier = id;
-  external->integer = value;
-  external->string = NULL;
+  external->value.i = value;
 
   FAIL_ON_COMPILER_ERROR(yr_object_from_external_variable(
       external,
@@ -602,6 +600,48 @@ YR_API int yr_compiler_define_boolean_variable(
       compiler,
       identifier,
       value);
+}
+
+
+YR_API int yr_compiler_define_float_variable(
+    YR_COMPILER* compiler,
+    const char* identifier,
+    double value)
+{
+  YR_EXTERNAL_VARIABLE* external;
+  YR_OBJECT* object;
+
+  char* id;
+
+  compiler->last_result = ERROR_SUCCESS;
+
+  FAIL_ON_COMPILER_ERROR(yr_arena_write_string(
+      compiler->sz_arena,
+      identifier,
+      &id));
+
+  FAIL_ON_COMPILER_ERROR(yr_arena_allocate_struct(
+      compiler->externals_arena,
+      sizeof(YR_EXTERNAL_VARIABLE),
+      (void**) &external,
+      offsetof(YR_EXTERNAL_VARIABLE, identifier),
+      EOL));
+
+  external->type = EXTERNAL_VARIABLE_TYPE_FLOAT;
+  external->identifier = id;
+  external->value.f = value;
+
+  FAIL_ON_COMPILER_ERROR(yr_object_from_external_variable(
+      external,
+      &object));
+
+  FAIL_ON_COMPILER_ERROR(yr_hash_table_add(
+      compiler->objects_table,
+      external->identifier,
+      NULL,
+      (void*) object));
+
+  return ERROR_SUCCESS;
 }
 
 
@@ -633,13 +673,12 @@ YR_API int yr_compiler_define_string_variable(
       sizeof(YR_EXTERNAL_VARIABLE),
       (void**) &external,
       offsetof(YR_EXTERNAL_VARIABLE, identifier),
-      offsetof(YR_EXTERNAL_VARIABLE, string),
+      offsetof(YR_EXTERNAL_VARIABLE, value.s),
       EOL));
 
   external->type = EXTERNAL_VARIABLE_TYPE_STRING;
   external->identifier = id;
-  external->integer = 0;
-  external->string = val;
+  external->value.s = val;
 
   FAIL_ON_COMPILER_ERROR(yr_object_from_external_variable(
       external,

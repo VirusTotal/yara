@@ -255,6 +255,10 @@ int yr_object_from_external_variable(
       obj_type = OBJECT_TYPE_INTEGER;
       break;
 
+    case EXTERNAL_VARIABLE_TYPE_FLOAT:
+      obj_type = OBJECT_TYPE_FLOAT;
+      break;
+
     case EXTERNAL_VARIABLE_TYPE_STRING:
     case EXTERNAL_VARIABLE_TYPE_MALLOC_STRING:
       obj_type = OBJECT_TYPE_STRING;
@@ -276,14 +280,17 @@ int yr_object_from_external_variable(
     {
       case EXTERNAL_VARIABLE_TYPE_INTEGER:
       case EXTERNAL_VARIABLE_TYPE_BOOLEAN:
-        yr_object_set_integer(
-            external->integer, obj, NULL);
+        yr_object_set_integer(external->value.i, obj, NULL);
+        break;
+
+      case EXTERNAL_VARIABLE_TYPE_FLOAT:
+        yr_object_set_float(external->value.f, obj, NULL);
         break;
 
       case EXTERNAL_VARIABLE_TYPE_STRING:
       case EXTERNAL_VARIABLE_TYPE_MALLOC_STRING:
         yr_object_set_string(
-            external->string, strlen(external->string), obj, NULL);
+            external->value.s, strlen(external->value.s), obj, NULL);
         break;
     }
 

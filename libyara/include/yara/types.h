@@ -238,11 +238,12 @@ typedef struct _YR_RULE
 } YR_RULE;
 
 
-#define EXTERNAL_VARIABLE_TYPE_NULL          	0
-#define EXTERNAL_VARIABLE_TYPE_INTEGER       	2
-#define EXTERNAL_VARIABLE_TYPE_BOOLEAN       	3
-#define EXTERNAL_VARIABLE_TYPE_STRING        	4
-#define EXTERNAL_VARIABLE_TYPE_MALLOC_STRING 	5
+#define EXTERNAL_VARIABLE_TYPE_NULL           0
+#define EXTERNAL_VARIABLE_TYPE_FLOAT          1
+#define EXTERNAL_VARIABLE_TYPE_INTEGER        2
+#define EXTERNAL_VARIABLE_TYPE_BOOLEAN        3
+#define EXTERNAL_VARIABLE_TYPE_STRING         4
+#define EXTERNAL_VARIABLE_TYPE_MALLOC_STRING  5
 
 
 #define EXTERNAL_VARIABLE_IS_NULL(x) \
@@ -252,10 +253,14 @@ typedef struct _YR_RULE
 typedef struct _YR_EXTERNAL_VARIABLE
 {
   int32_t type;
-  int64_t integer;
+
+  union {
+    int64_t i;
+    double f;
+    char* s;
+  } value;
 
   DECLARE_REFERENCE(char*, identifier);
-  DECLARE_REFERENCE(char*, string);
 
 } YR_EXTERNAL_VARIABLE;
 
