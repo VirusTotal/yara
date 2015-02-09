@@ -222,6 +222,8 @@ Reference
 
     .. versionadded:: 3.3.0
 
+    *Example: pe.sections[1].characteristics & SECTION_CNT_CODE*
+
 .. c:type:: number_of_resources
 
     Number of resources in the PE.
@@ -283,7 +285,9 @@ Reference
     All resources must have an type, id (name), and language specified. They
     can be either an integer or string, but never both, for any given level.
 
-    *Example:  pe.resources[0].type == pe.RESOURCE_TYPE_RCDATA and pe.resources[0].name_string == "F\x00I\x00L\x00E\x00"*
+    *Example: pe.resources[0].type == pe.RESOURCE_TYPE_RCDATA*
+
+    *Example: pe.resources[0].name_string == "F\\x00I\\x00L\\x00E\\x00"*
 
     Resource types can be inspected using the following constants:
 

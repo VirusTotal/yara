@@ -323,6 +323,18 @@ Functions
 
     :c:macro:`ERROR_INSUFICENT_MEMORY`
 
+.. c:function:: int yr_compiler_define_integer_variable(YR_COMPILER* compiler, const char* identifier, int64_t value)
+
+  Defines an integer external variable.
+
+.. c:function:: int yr_compiler_define_boolean_variable(YR_COMPILER* compiler, const char* identifier, int value)
+
+  Defines a boolean external variable.
+
+.. c:function:: int yr_compiler_define_string_variable(YR_COMPILER* compiler, const char* identifier, const char* value)
+
+  Defines a string external variable.
+
 .. c:function:: void yr_rules_destroy(YR_RULES* rules)
 
   Destroy compiled rules.
