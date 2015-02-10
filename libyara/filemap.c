@@ -96,7 +96,7 @@ YR_API int yr_filemap_map_ex(
   if (offset >> 20 << 20 != offset)
     return ERROR_INVALID_ARGUMENT;
 
-  pmapped_file->file = CreateFile(
+  pmapped_file->file = CreateFileA(
       file_path,
       GENERIC_READ,
       FILE_SHARE_READ,
