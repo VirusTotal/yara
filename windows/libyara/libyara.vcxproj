@@ -78,7 +78,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4005;4273;4090;</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
-      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
@@ -96,6 +96,7 @@
       <AdditionalIncludeDirectories>..\..;..\..\libyara;..\..\libyara\include;..\..\windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090;</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
