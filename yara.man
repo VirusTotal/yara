@@ -18,39 +18,39 @@ The options to
 .IR yara (1)
 are:
 .TP
-.BI \-t " tag"
+.BI \-t " tag" " --tag=" tag
 Print rules tagged as
 .I tag
 and ignore the rest. This option can be used multiple times.
 .TP
-.BI \-i " identifier"
+.BI \-i " identifier" " --identifier=" identifier
 Print rules named
 .I identifier
 and ignore the rest. This option can be used multiple times.
 .TP
-.B \-n
+.B \-n " --negate"
 Print rules that doesn't apply (negate)
 .TP
-.B \-g
+.B \-g " --print-tags"
 Print the tags associated to the rule.
 .TP
-.B \-m
+.B \-m " --print-meta"
 Print metadata associated to the rule.
 .TP
-.B \-s
+.B \-s " --print-strings"
 Print strings found in the file.
 .TP
-.BI \-p " number"
+.BI \-p " number" " --threads=" number
 Use the specified
 .I number
 of threads to scan a directory.
 .TP
-.BI \-l " number"
+.BI \-l " number" " --max-rules=" number
 Abort scanning after a
 .I number
 of rules matched.
 .TP
-.BI \-a " seconds"
+.BI \-a " seconds" " --timeout=" seconds
 Abort scanning after a number of
 .I seconds
 has elapsed.
@@ -62,17 +62,17 @@ Define an external variable. This option can be used multiple times.
 Pass file's content as extra data to module. This option can be used multiple
 times.
 .TP
-.B \-r
+.B \-r " --recursive"
 Scan files in directories recursively.
 .TP
-.B \-f
+.B \-f " --fast-scan"
 Speeds up scanning by searching only for the first occurrence of each pattern.
 .TP
-.B \-w
+.B \-w " --no-warnings"
 Disable warnings.
 .TP
-.B \-v
-Show version information.
+.B \-v " --version"
+Show version information. 
 .SH EXAMPLES
 $ yara /foo/bar/rules1 /foo/bar/rules2 .
 .RS
