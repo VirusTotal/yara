@@ -24,7 +24,7 @@ endif
 
 AM_YFLAGS=-d
 
-AM_CFLAGS=-O3 -Wall -std=gnu99 -I./include
+AM_CFLAGS=-O3 -Wall -Wno-deprecated-declarations -std=gnu99 -I./include
 
 ACLOCAL_AMFLAGS=-I m4
 
