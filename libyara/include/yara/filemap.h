@@ -17,12 +17,16 @@ limitations under the License.
 #ifndef YR_FILEMAP_H
 #define YR_FILEMAP_H
 
-#ifdef _WIN32
-#include <windows.h>
-#define FILE_DESCRIPTOR    HANDLE
+#ifdef _MSC_VER
 #define off_t              int64_t
 #else
 #include <sys/types.h>
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
+#define FILE_DESCRIPTOR    HANDLE
+#else
 #define FILE_DESCRIPTOR    int
 #endif
 
