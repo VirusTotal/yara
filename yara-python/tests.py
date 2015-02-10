@@ -371,7 +371,7 @@ class TestYara(unittest.TestCase):
             'rule test { condition: 1 << 3 == 8 }',
             'rule test { condition: 1 | 3 ^ 3 == 1 | (3 ^ 3) }'
             ])
-            
+
         self.assertFalseRules([
             'rule test { condition: ~0xAA ^ 0x5A & 0xFF == 0x0F }',
             'rule test { condition: 1 | 3 ^ 3 == (1 | 3) ^ 3}'
@@ -827,7 +827,7 @@ class TestYara(unittest.TestCase):
             'rule test { condition: uint8be(0) == 0xAA}',
             'rule test { condition: uint16be(0) == 0xAABB}',
             'rule test { condition: uint32be(0) == 0xAABBCCDD}',
-          ], '\xAA\xBB\xCC\xDD')
+          ], b'\xAA\xBB\xCC\xDD')
 
 
 if __name__ == "__main__":
