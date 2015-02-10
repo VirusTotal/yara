@@ -633,10 +633,8 @@ void pe_parse_version_info(
   if (!struct_fits_in_pe(pe, string_file_info, VERSION_INFO))
     return;
 
-  if (!fits_in_pe(pe, string_file_info, sizeof("StringFileInfo")))
-    return;
-
-  while(strcmp_w(string_file_info->Key, "StringFileInfo") == 0)
+  while(fits_in_pe(pe, string_file_info, sizeof("StringFileInfo")) &&
+        strcmp_w(string_file_info->Key, "StringFileInfo") == 0)
   {
     PVERSION_INFO string_table = ADD_OFFSET(
         string_file_info,
