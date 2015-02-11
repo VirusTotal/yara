@@ -619,10 +619,7 @@ void pe_parse_version_info(
 
   version_info = (PVERSION_INFO) (pe->data + version_info_offset);
 
-  if (!struct_fits_in_pe(pe, version_info, VERSION_INFO))
-    return;
-
-  if (!fits_in_pe(pe, version_info, sizeof("VS_VERSION_INFO")))
+  if (!fits_in_pe(pe, version_info->Key, sizeof("VS_VERSION_INFO")))
     return;
 
   if (strcmp_w(version_info->Key, "VS_VERSION_INFO") != 0)
@@ -630,13 +627,8 @@ void pe_parse_version_info(
 
   string_file_info = ADD_OFFSET(version_info, sizeof(VERSION_INFO) + 86);
 
-  if (!struct_fits_in_pe(pe, string_file_info, VERSION_INFO))
-    return;
-
-  if (!fits_in_pe(pe, string_file_info, sizeof("StringFileInfo")))
-    return;
-
-  while(strcmp_w(string_file_info->Key, "StringFileInfo") == 0)
+  while(fits_in_pe(pe, string_file_info->Key, sizeof("StringFileInfo")) &&
+      strcmp_w(string_file_info->Key, "StringFileInfo") == 0)
   {
     PVERSION_INFO string_table = ADD_OFFSET(
         string_file_info,
@@ -646,37 +638,37 @@ void pe_parse_version_info(
         string_file_info,
         string_file_info->Length);
 
-    while (string_table < string_file_info)
+    while (struct_fits_in_pe(pe, string_table, VERSION_INFO) &&
+        string_table->Length != 0 &&
+        string_table < string_file_info)
     {
       PVERSION_INFO string = ADD_OFFSET(
           string_table,
-          sizeof(VERSION_INFO) + 2 * (strlen_w(string_table->Key) + 1));
+          sizeof(VERSION_INFO) + 2 * (strnlen_w(string_table->Key,
+              available_space(pe, string_table->Key)) + 1));
 
       string_table = ADD_OFFSET(
           string_table,
           string_table->Length);
 
       while (struct_fits_in_pe(pe, string, VERSION_INFO) &&
+             string->Length != 0 &&
              string < string_table)
       {
         char* string_value = (char*) ADD_OFFSET(
             string,
-            sizeof(VERSION_INFO) + 2 * (strlen_w(string->Key) + 1));
+            sizeof(VERSION_INFO) + 2 * (strnlen_w(string->Key,
+                available_space(pe, string->Key)) + 1));
 
-        strlcpy_w(key, string->Key, sizeof(key));
-        strlcpy_w(value, string_value, sizeof(value));
+        strlcpy_w(key, string->Key, min(sizeof(key),
+            available_space(pe, string->Key)));
+        strlcpy_w(value, string_value, min(sizeof(value),
+            available_space(pe, string_value)));
 
         set_string(value, pe->object, "version_info[%s]", key);
 
-        if (string->Length == 0)
-          break;
-
         string = ADD_OFFSET(string, string->Length);
       }
-
-      if (!struct_fits_in_pe(pe, string_table, VERSION_INFO) ||
-          string_table->Length == 0)
-        break;
     }
   }
 }
