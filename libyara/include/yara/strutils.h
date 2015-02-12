@@ -59,8 +59,9 @@ void* memmem(
 #endif
 
 
-int strlen_w(
-    const char* w_str);
+int strnlen_w(
+    const char* w_str,
+    size_t maxbytes);
 
 
 int strcmp_w(
