@@ -1540,6 +1540,34 @@ static PyObject * yara_compile(
 }
 
 
+/* YR_STREAM read method for "file-like objects" */
+static size_t flo_read(
+  void* ptr,
+  size_t size,
+  size_t nmemb,
+  void* user_data)
+{
+  PyObject* obj = (PyObject*)user_data;
+  int i;
+  for (i = 0; i < nmemb; i++)
+  {
+    PyGILState_STATE gil_state = PyGILState_Ensure();
+    PyObject* rv = PyObject_CallMethod(obj, "read", "n", (Py_ssize_t)size);
+    PyGILState_Release(gil_state);
+    if (rv == NULL)
+      return i;
+    Py_ssize_t len;
+    char* buf;
+    if (PyBytes_AsStringAndSize(rv, &buf, &len) == -1)
+      return i;
+    if (len < size)
+      return i;
+    memcpy(ptr + i*size, buf, size);
+  }
+  return nmemb;
+}
+
+
 static PyObject * yara_load(
     PyObject *self,
     PyObject *args)
@@ -1547,25 +1575,50 @@ static PyObject * yara_load(
   YR_EXTERNAL_VARIABLE* external;
 
   int error;
-  char* filepath;
 
   Rules* rules;
 
-  if (PyArg_ParseTuple(args, "s", &filepath))
+  PyObject* param;
+
+  if (PyArg_UnpackTuple(args, "load", 1, 1, &param))
   {
     rules = PyObject_NEW(Rules, &Rules_Type);
+    if (rules == NULL)
+      return PyErr_NoMemory();
 
-    Py_BEGIN_ALLOW_THREADS
-
-    if (rules != NULL)
+    if (PY_STRING_CHECK(param))
+    {
+      char* filepath = PY_STRING_TO_C(param);
+      Py_BEGIN_ALLOW_THREADS;
       error = yr_rules_load(filepath, &rules->rules);
+      Py_END_ALLOW_THREADS;
+
+      if (error != ERROR_SUCCESS)
+        return handle_error(error, filepath);
+    }
     else
-      error = ERROR_INSUFICIENT_MEMORY;
+    {
+      if (PyObject_HasAttrString(param, "read"))
+      {
+        YR_STREAM stream = {
+          .user_data = param,
+          .read = flo_read
+        };
 
-    Py_END_ALLOW_THREADS
+        Py_BEGIN_ALLOW_THREADS;
+        error = yr_rules_load_stream(&stream, &rules->rules);
+        Py_END_ALLOW_THREADS;
 
-    if (error != ERROR_SUCCESS)
-      return handle_error(error, filepath);
+        if (error != ERROR_SUCCESS)
+          return handle_error(error, "<file-like-object>");
+      }
+      else
+      {
+        return PyErr_Format(
+          PyExc_TypeError,
+          "can't use argument");
+      }
+    }
 
     external = rules->rules->externals_list_head;
     rules->iter_current_rule = rules->rules->rules_list_head;

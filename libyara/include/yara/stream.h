@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2013. The YARA Authors. All Rights Reserved.
+Copyright (c) 2015. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,16 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef YR_YARA_H
-#define YR_YARA_H
+#ifndef YR_STREAM_H
+#define YR_STREAM_H
 
-#include "yara/utils.h"
-#include "yara/filemap.h"
-#include "yara/compiler.h"
-#include "yara/modules.h"
-#include "yara/object.h"
-#include "yara/libyara.h"
-#include "yara/error.h"
-#include "yara/stream.h"
+#include <stddef.h>
+
+typedef size_t (*YR_STREAM_READ_FUNC)(
+    void* ptr,
+    size_t size,
+    size_t nmemb,
+    void* user_data);
+
+
+typedef struct _YR_STREAM
+{
+  void* user_data;
+  YR_STREAM_READ_FUNC read;
+} YR_STREAM;
+
+
+size_t yr_stream_read(
+    void* ptr,
+    size_t size,
+    size_t nmemb,
+    YR_STREAM* stream);
+
 
 #endif

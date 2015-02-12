@@ -20,6 +20,7 @@ limitations under the License.
 #include <stdint.h>
 #include <stddef.h>
 
+#include <yara/stream.h>
 
 #define ARENA_FLAGS_FIXED_SIZE   1
 #define ARENA_FLAGS_COALESCED    2
@@ -137,6 +138,11 @@ int yr_arena_save(
 
 int yr_arena_load(
     const char* filename,
+    YR_ARENA** arena);
+
+
+int yr_arena_load_stream(
+    YR_STREAM* stream,
     YR_ARENA** arena);
 
 
