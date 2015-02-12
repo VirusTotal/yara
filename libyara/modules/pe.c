@@ -619,7 +619,7 @@ void pe_parse_version_info(
 
   version_info = (PVERSION_INFO) (pe->data + version_info_offset);
 
-  if (!fits_in_pe(pe, version_info->Key, sizeof("VS_VERSION_INFO")))
+  if (!fits_in_pe(pe, version_info->Key, sizeof("VS_VERSION_INFO") * 2))
     return;
 
   if (strcmp_w(version_info->Key, "VS_VERSION_INFO") != 0)
@@ -627,7 +627,7 @@ void pe_parse_version_info(
 
   string_file_info = ADD_OFFSET(version_info, sizeof(VERSION_INFO) + 86);
 
-  while(fits_in_pe(pe, string_file_info->Key, sizeof("StringFileInfo")) &&
+  while(fits_in_pe(pe, string_file_info->Key, sizeof("StringFileInfo") * 2) &&
       strcmp_w(string_file_info->Key, "StringFileInfo") == 0)
   {
     PVERSION_INFO string_table = ADD_OFFSET(
