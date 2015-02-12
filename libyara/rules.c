@@ -650,6 +650,53 @@ YR_API int yr_rules_load(
 }
 
 
+YR_API int yr_rules_load_stream(
+  YR_STREAM* stream,
+  YR_RULES** rules)
+{
+  YR_RULES* new_rules;
+  YARA_RULES_FILE_HEADER* header;
+
+  int result;
+
+  new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
+
+  if (new_rules == NULL)
+    return ERROR_INSUFICIENT_MEMORY;
+
+  result = yr_arena_load_stream(stream, &new_rules->arena);
+
+  if (result != ERROR_SUCCESS)
+  {
+    yr_free(new_rules);
+    return result;
+  }
+
+  header = (YARA_RULES_FILE_HEADER*) yr_arena_base_address(new_rules->arena);
+  new_rules->automaton = header->automaton;
+  new_rules->code_start = header->code_start;
+  new_rules->externals_list_head = header->externals_list_head;
+  new_rules->rules_list_head = header->rules_list_head;
+  new_rules->tidx_mask = 0;
+
+  #if _WIN32
+  new_rules->mutex = CreateMutex(NULL, FALSE, NULL);
+
+  if (new_rules->mutex == NULL)
+    return ERROR_INTERNAL_FATAL_ERROR;
+  #else
+  result = pthread_mutex_init(&new_rules->mutex, NULL);
+
+  if (result != 0)
+    return ERROR_INTERNAL_FATAL_ERROR;
+  #endif
+
+  *rules = new_rules;
+
+  return ERROR_SUCCESS;
+}
+
+
 YR_API int yr_rules_destroy(
     YR_RULES* rules)
 {
