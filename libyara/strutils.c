@@ -181,6 +181,7 @@ int strcmp_w(
   }
 
   // Higher-order byte of wide char non-zero? -> w_str is larger than str
+
   if (w_str[1] != 0)
     return 1;
 
