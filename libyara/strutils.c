@@ -153,15 +153,17 @@ size_t strlcat(
 #endif
 
 
-int strlen_w(
-    const char* w_str)
+int strnlen_w(
+    const char* w_str,
+    size_t maxbytes)
 {
   int len = 0;
 
-  while (*w_str != 0)
+  while (maxbytes >= 2 && (w_str[0] || w_str[1]))
   {
     w_str += 2;
     len += 1;
+    maxbytes -= 2;
   }
 
   return len;
@@ -172,19 +174,17 @@ int strcmp_w(
     const char* w_str,
     const char* str)
 {
-  while (*w_str != 0 && *str != 0 && *w_str == *str)
+  while (*str != 0 && w_str[0] == *str && w_str[1] == 0)
   {
     w_str += 2;
     str += 1;
   }
 
-  if (*w_str == *str)
-    return 0;
-
-  if (*w_str > *str)
+  // Higher-order byte of wide char non-zero? -> w_str is larger than str
+  if (w_str[1] != 0)
     return 1;
 
-  return -1;
+  return w_str[0] - *str;
 }
 
 
