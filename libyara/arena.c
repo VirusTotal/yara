@@ -636,7 +636,8 @@ int yr_arena_allocate_struct(
 
   va_end(offsets);
 
-  memset(*allocated_memory, 0, size);
+  if (result == ERROR_SUCCESS)
+    memset(*allocated_memory, 0, size);
 
   return result;
 }
