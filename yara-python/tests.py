@@ -926,13 +926,25 @@ class TestYara(unittest.TestCase):
 
         # Python 2/3
         try:
-            yac = StringIO.StringIO(YAC_FILE)
+            yac1 = StringIO.StringIO(YAC_FILE)
+            yac2 = StringIO.StringIO()
         except:
-            yac = io.BytesIO(YAC_FILE)
+            yac1 = io.BytesIO(YAC_FILE)
+            yac2 = io.BytesIO()
 
-        r = yara.load(yac)
+        r = yara.load(yac1)
+        r.save(yac2)
+
         m = r.match(data="dummy")
         self.assertTrue(len(m) == 1)
+
+        yac2.seek(0)
+        r = yara.load(yac2)
+
+        m = r.match(data="dummy")
+        self.assertTrue(len(m) == 1)
+
+
 
 if __name__ == "__main__":
     unittest.main()

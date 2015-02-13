@@ -17,11 +17,28 @@ limitations under the License.
 #include <stddef.h>
 #include <yara/stream.h>
 
+
 size_t yr_stream_read(
     void* ptr,
     size_t size,
-    size_t nmemb,
+    size_t count,
     YR_STREAM* stream)
 {
-  return stream->read(ptr, size, nmemb, stream->user_data);
+  if (stream->read == NULL)
+  	return 0;
+
+  return stream->read(ptr, size, count, stream->user_data);
+}
+
+
+size_t yr_stream_write(
+    const void* ptr,
+    size_t size,
+    size_t count,
+    YR_STREAM* stream)
+{
+  if (stream->write == NULL)
+  	return 0;
+
+  return stream->write(ptr, size, count, stream->user_data);
 }
