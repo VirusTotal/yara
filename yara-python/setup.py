@@ -26,4 +26,5 @@ setup(name='yara-python',
         libraries=['yara'],
         include_dirs=['../libyara/include'],
         library_dirs=['../libyara/.libs'],
+        extra_compile_args=['-std=gnu99']
     )])
