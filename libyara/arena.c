@@ -1020,7 +1020,7 @@ int yr_arena_save_stream(
   header.version = ARENA_FILE_VERSION;
 
   yr_stream_write(&header, sizeof(header), 1, stream);
-  yr_stream_write(page->address, sizeof(uint8_t), header.size, stream);
+  yr_stream_write(page->address, header.size, 1, stream);
 
   reloc = page->reloc_list_head;
 
