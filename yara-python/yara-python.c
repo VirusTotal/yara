@@ -604,7 +604,8 @@ static size_t flo_read(
     size_t count,
     void* user_data)
 {
-  for (int i = 0; i < count; i++)
+  int i;
+  for (i = 0; i < count; i++)
   {
     PyGILState_STATE gil_state = PyGILState_Ensure();
 
@@ -645,7 +646,8 @@ static size_t flo_write(
     size_t count,
     void* user_data)
 {
-  for (int i = 0; i < count; i++)
+  int i;
+  for (i = 0; i < count; i++)
   {
     PyGILState_STATE gil_state = PyGILState_Ensure();
 
