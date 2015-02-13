@@ -88,6 +88,11 @@ YR_API int yr_rules_save(
     const char* filename);
 
 
+YR_API int yr_rules_save_stream(
+    YR_RULES* rules,
+    YR_STREAM* stream);
+
+
 YR_API int yr_rules_load(
     const char* filename,
     YR_RULES** rules);

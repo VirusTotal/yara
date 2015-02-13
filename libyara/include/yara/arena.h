@@ -131,19 +131,14 @@ int yr_arena_append(
     YR_ARENA* source_arena);
 
 
-int yr_arena_save(
-    YR_ARENA* arena,
-    const char* filename);
-
-
-int yr_arena_load(
-    const char* filename,
-    YR_ARENA** arena);
-
-
 int yr_arena_load_stream(
     YR_STREAM* stream,
     YR_ARENA** arena);
+
+
+int yr_arena_save_stream(
+  YR_ARENA* arena,
+  YR_STREAM* stream);
 
 
 int yr_arena_duplicate(

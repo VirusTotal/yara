@@ -873,224 +873,12 @@ int yr_arena_duplicate(
 
 
 //
-// yr_arena_save
-//
-// Saves the arena into a file. If the file exists its overwritten. This
-// function requires the arena to be coalesced.
-//
-// Args:
-//    YR_ARENA* arena          - Pointer to the arena.
-//    const char* filename     - File path.
-//
-// Returns:
-//    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
-//
-
-int yr_arena_save(
-  YR_ARENA* arena,
-  const char* filename)
-{
-  YR_ARENA_PAGE* page;
-  YR_RELOC* reloc;
-  FILE* fh;
-  ARENA_FILE_HEADER header;
-
-  int32_t end_marker = -1;
-  uint8_t** reloc_address;
-  uint8_t* reloc_target;
-
-  // Only coalesced arenas can be saved.
-  assert(arena->flags & ARENA_FLAGS_COALESCED);
-
-  fh = fopen(filename, "wb");
-
-  if (fh == NULL)
-    return ERROR_COULD_NOT_OPEN_FILE;
-
-  page = arena->page_list_head;
-  reloc = page->reloc_list_head;
-
-  // Convert pointers to offsets before saving.
-  while (reloc != NULL)
-  {
-    reloc_address = (uint8_t**) (page->address + reloc->offset);
-    reloc_target = *reloc_address;
-
-    if (reloc_target != NULL)
-    {
-      assert(reloc_target >= page->address);
-      assert(reloc_target < page->address + page->used);
-      *reloc_address = (uint8_t*) (*reloc_address - page->address);
-    }
-    else
-    {
-      *reloc_address = (uint8_t*) (size_t) 0xFFFABADA;
-    }
-
-    reloc = reloc->next;
-  }
-
-  header.magic[0] = 'Y';
-  header.magic[1] = 'A';
-  header.magic[2] = 'R';
-  header.magic[3] = 'A';
-  header.size = page->size;
-  header.version = ARENA_FILE_VERSION;
-
-  fwrite(&header, sizeof(header), 1, fh);
-  fwrite(page->address, sizeof(uint8_t), header.size, fh);
-
-  reloc = page->reloc_list_head;
-
-  // Convert offsets back to pointers.
-  while (reloc != NULL)
-  {
-    fwrite(&reloc->offset, sizeof(reloc->offset), 1, fh);
-
-    reloc_address = (uint8_t**) (page->address + reloc->offset);
-    reloc_target = *reloc_address;
-
-    if (reloc_target != (void*) (size_t) 0xFFFABADA)
-      *reloc_address += (size_t) page->address;
-    else
-      *reloc_address = 0;
-
-    reloc = reloc->next;
-  }
-
-  fwrite(&end_marker, sizeof(end_marker), 1, fh);
-  fclose(fh);
-
-  return ERROR_SUCCESS;
-}
-
-
-//
-// yr_arena_load
-//
-// Loads an arena from a file.
-//
-// Args:
-//    const char* filename  - File path.
-//    YR_ARENA**            - Address where a pointer to the loaded arena
-//                            will be returned.
-//
-// Returns:
-//    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
-//
-
-int yr_arena_load(
-    const char* filename,
-    YR_ARENA** arena)
-{
-  FILE* fh;
-  YR_ARENA_PAGE* page;
-  YR_ARENA* new_arena;
-  ARENA_FILE_HEADER header;
-
-  int32_t reloc_offset;
-  uint8_t** reloc_address;
-  uint8_t* reloc_target;
-
-  long file_size;
-  int result;
-
-  fh = fopen(filename, "rb");
-
-  if (fh == NULL)
-    return ERROR_COULD_NOT_OPEN_FILE;
-
-  fseek(fh, 0, SEEK_END);
-  file_size = ftell(fh);
-  fseek(fh, 0, SEEK_SET);
-
-  if (fread(&header, sizeof(header), 1, fh) != 1)
-  {
-    fclose(fh);
-    return ERROR_INVALID_FILE;
-  }
-
-  if (header.magic[0] != 'Y' ||
-      header.magic[1] != 'A' ||
-      header.magic[2] != 'R' ||
-      header.magic[3] != 'A')
-  {
-    fclose(fh);
-    return ERROR_INVALID_FILE;
-  }
-
-  if (header.size >= file_size)
-  {
-    fclose(fh);
-    return ERROR_CORRUPT_FILE;
-  }
-
-  if (header.version > ARENA_FILE_VERSION)
-  {
-    fclose(fh);
-    return ERROR_UNSUPPORTED_FILE_VERSION;
-  }
-
-  result = yr_arena_create(header.size, 0, &new_arena);
-
-  if (result != ERROR_SUCCESS)
-  {
-    fclose(fh);
-    return result;
-  }
-
-  page = new_arena->current_page;
-
-  if (fread(page->address, header.size, 1, fh) != 1)
-  {
-    fclose(fh);
-    yr_arena_destroy(new_arena);
-    return ERROR_CORRUPT_FILE;
-  }
-
-  page->used = header.size;
-
-  if (fread(&reloc_offset, sizeof(reloc_offset), 1, fh) != 1)
-  {
-    fclose(fh);
-    yr_arena_destroy(new_arena);
-    return ERROR_CORRUPT_FILE;
-  }
-
-  while (reloc_offset != -1)
-  {
-    yr_arena_make_relocatable(new_arena, page->address, reloc_offset, EOL);
-
-    reloc_address = (uint8_t**) (page->address + reloc_offset);
-    reloc_target = *reloc_address;
-
-    if (reloc_target != (uint8_t*) (size_t) 0xFFFABADA)
-      *reloc_address += (size_t) page->address;
-    else
-      *reloc_address = 0;
-
-    if (fread(&reloc_offset, sizeof(reloc_offset), 1, fh) != 1)
-    {
-      fclose(fh);
-      yr_arena_destroy(new_arena);
-      return ERROR_CORRUPT_FILE;
-    }
-  }
-
-  fclose(fh);
-
-  *arena = new_arena;
-
-  return ERROR_SUCCESS;
-}
-
-//
 // yr_arena_load_stream
 //
 // Loads an arena from a stream.
 //
 // Args:
-//    YR_STREAM* stream  - stream object
+//    YR_STREAM* stream  - Pointer to stream object
 //    YR_ARENA**         - Address where a pointer to the loaded arena
 //                         will be returned
 //
@@ -1119,7 +907,9 @@ int yr_arena_load_stream(
       header.magic[1] != 'A' ||
       header.magic[2] != 'R' ||
       header.magic[3] != 'A')
+  {
     return ERROR_INVALID_FILE;
+  }
 
   if (header.version > ARENA_FILE_VERSION)
     return ERROR_UNSUPPORTED_FILE_VERSION;
@@ -1131,7 +921,8 @@ int yr_arena_load_stream(
 
   page = new_arena->current_page;
 
-  if (yr_stream_read(page->address, header.size, 1, stream) != 1) {
+  if (yr_stream_read(page->address, header.size, 1, stream) != 1)
+  {
     yr_arena_destroy(new_arena);
     return ERROR_CORRUPT_FILE;
   }
@@ -1167,3 +958,90 @@ int yr_arena_load_stream(
 
   return ERROR_SUCCESS;
 }
+
+
+//
+// yr_arena_save_stream
+//
+// Saves the arena into a stream. If the file exists its overwritten. This
+// function requires the arena to be coalesced.
+//
+// Args:
+//    YR_ARENA* arena         - Pointer to the arena.
+//    YR_STREAM* stream       - Pointer to stream object.
+//
+// Returns:
+//    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
+//
+
+int yr_arena_save_stream(
+  YR_ARENA* arena,
+  YR_STREAM* stream)
+{
+  YR_ARENA_PAGE* page;
+  YR_RELOC* reloc;
+  ARENA_FILE_HEADER header;
+
+  int32_t end_marker = -1;
+  uint8_t** reloc_address;
+  uint8_t* reloc_target;
+
+  // Only coalesced arenas can be saved.
+  assert(arena->flags & ARENA_FLAGS_COALESCED);
+
+  page = arena->page_list_head;
+  reloc = page->reloc_list_head;
+
+  // Convert pointers to offsets before saving.
+  while (reloc != NULL)
+  {
+    reloc_address = (uint8_t**) (page->address + reloc->offset);
+    reloc_target = *reloc_address;
+
+    if (reloc_target != NULL)
+    {
+      assert(reloc_target >= page->address);
+      assert(reloc_target < page->address + page->used);
+      *reloc_address = (uint8_t*) (*reloc_address - page->address);
+    }
+    else
+    {
+      *reloc_address = (uint8_t*) (size_t) 0xFFFABADA;
+    }
+
+    reloc = reloc->next;
+  }
+
+  header.magic[0] = 'Y';
+  header.magic[1] = 'A';
+  header.magic[2] = 'R';
+  header.magic[3] = 'A';
+  header.size = page->size;
+  header.version = ARENA_FILE_VERSION;
+
+  yr_stream_write(&header, sizeof(header), 1, stream);
+  yr_stream_write(page->address, sizeof(uint8_t), header.size, stream);
+
+  reloc = page->reloc_list_head;
+
+  // Convert offsets back to pointers.
+  while (reloc != NULL)
+  {
+    yr_stream_write(&reloc->offset, sizeof(reloc->offset), 1, stream);
+
+    reloc_address = (uint8_t**) (page->address + reloc->offset);
+    reloc_target = *reloc_address;
+
+    if (reloc_target != (void*) (size_t) 0xFFFABADA)
+      *reloc_address += (size_t) page->address;
+    else
+      *reloc_address = 0;
+
+    reloc = reloc->next;
+  }
+
+  yr_stream_write(&end_marker, sizeof(end_marker), 1, stream);
+
+  return ERROR_SUCCESS;
+}
+

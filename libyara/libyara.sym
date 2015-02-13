@@ -22,6 +22,7 @@ yr_rules_scan_mem
 yr_rules_scan_file
 yr_rules_scan_proc
 yr_rules_save
+yr_rules_save_stream
 yr_rules_load
 yr_rules_load_stream
 yr_rules_destroy

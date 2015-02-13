@@ -594,106 +594,98 @@ YR_API int yr_rules_scan_proc(
 }
 
 
-YR_API int yr_rules_save(
-    YR_RULES* rules,
-    const char* filename)
+YR_API int yr_rules_load_stream(
+    YR_STREAM* stream,
+    YR_RULES** rules)
 {
-  assert(rules->tidx_mask == 0);
-  return yr_arena_save(rules->arena, filename);
+  YR_RULES* new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
+
+  if (new_rules == NULL)
+    return ERROR_INSUFICIENT_MEMORY;
+
+  int result = yr_arena_load_stream(stream, &new_rules->arena);
+
+  if (result != ERROR_SUCCESS)
+  {
+    yr_free(new_rules);
+    return result;
+  }
+
+  YARA_RULES_FILE_HEADER* header = (YARA_RULES_FILE_HEADER*)
+      yr_arena_base_address(new_rules->arena);
+
+  new_rules->automaton = header->automaton;
+  new_rules->code_start = header->code_start;
+  new_rules->externals_list_head = header->externals_list_head;
+  new_rules->rules_list_head = header->rules_list_head;
+  new_rules->tidx_mask = 0;
+
+  #if _WIN32
+  new_rules->mutex = CreateMutex(NULL, FALSE, NULL);
+
+  if (new_rules->mutex == NULL)
+    return ERROR_INTERNAL_FATAL_ERROR;
+  #else
+  result = pthread_mutex_init(&new_rules->mutex, NULL);
+
+  if (result != 0)
+    return ERROR_INTERNAL_FATAL_ERROR;
+  #endif
+
+  *rules = new_rules;
+
+  return ERROR_SUCCESS;
 }
 
 
 YR_API int yr_rules_load(
-  const char* filename,
-  YR_RULES** rules)
+    const char* filename,
+    YR_RULES** rules)
 {
-  YR_RULES* new_rules;
-  YARA_RULES_FILE_HEADER* header;
+  FILE* fh = fopen(filename, "rb");
 
-  int result;
+  if (fh == NULL)
+    return ERROR_COULD_NOT_OPEN_FILE;
 
-  new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
+  YR_STREAM stream = {
+    .user_data = fh,
+    .read = (YR_STREAM_READ_FUNC) fread
+  };
 
-  if (new_rules == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+  int result = yr_rules_load_stream(&stream, rules);
 
-  result = yr_arena_load(filename, &new_rules->arena);
-
-  if (result != ERROR_SUCCESS)
-  {
-    yr_free(new_rules);
-    return result;
-  }
-
-  header = (YARA_RULES_FILE_HEADER*) yr_arena_base_address(new_rules->arena);
-  new_rules->automaton = header->automaton;
-  new_rules->code_start = header->code_start;
-  new_rules->externals_list_head = header->externals_list_head;
-  new_rules->rules_list_head = header->rules_list_head;
-  new_rules->tidx_mask = 0;
-
-  #if _WIN32
-  new_rules->mutex = CreateMutex(NULL, FALSE, NULL);
-
-  if (new_rules->mutex == NULL)
-    return ERROR_INTERNAL_FATAL_ERROR;
-  #else
-  result = pthread_mutex_init(&new_rules->mutex, NULL);
-
-  if (result != 0)
-    return ERROR_INTERNAL_FATAL_ERROR;
-  #endif
-
-  *rules = new_rules;
-
-  return ERROR_SUCCESS;
+  fclose(fh);
+  return result;
 }
 
 
-YR_API int yr_rules_load_stream(
-  YR_STREAM* stream,
-  YR_RULES** rules)
+YR_API int yr_rules_save_stream(
+    YR_RULES* rules,
+    YR_STREAM* stream)
 {
-  YR_RULES* new_rules;
-  YARA_RULES_FILE_HEADER* header;
+  assert(rules->tidx_mask == 0);
+  return yr_arena_save_stream(rules->arena, stream);
+}
 
-  int result;
 
-  new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
+YR_API int yr_rules_save(
+    YR_RULES* rules,
+    const char* filename)
+{
+  FILE* fh = fopen(filename, "wb");
 
-  if (new_rules == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+  if (fh == NULL)
+    return ERROR_COULD_NOT_OPEN_FILE;
 
-  result = yr_arena_load_stream(stream, &new_rules->arena);
+  YR_STREAM stream = {
+    .user_data = fh,
+    .write = (YR_STREAM_WRITE_FUNC) fwrite,
+  };
 
-  if (result != ERROR_SUCCESS)
-  {
-    yr_free(new_rules);
-    return result;
-  }
+  int result = yr_rules_save_stream(rules, &stream);
 
-  header = (YARA_RULES_FILE_HEADER*) yr_arena_base_address(new_rules->arena);
-  new_rules->automaton = header->automaton;
-  new_rules->code_start = header->code_start;
-  new_rules->externals_list_head = header->externals_list_head;
-  new_rules->rules_list_head = header->rules_list_head;
-  new_rules->tidx_mask = 0;
-
-  #if _WIN32
-  new_rules->mutex = CreateMutex(NULL, FALSE, NULL);
-
-  if (new_rules->mutex == NULL)
-    return ERROR_INTERNAL_FATAL_ERROR;
-  #else
-  result = pthread_mutex_init(&new_rules->mutex, NULL);
-
-  if (result != 0)
-    return ERROR_INTERNAL_FATAL_ERROR;
-  #endif
-
-  *rules = new_rules;
-
-  return ERROR_SUCCESS;
+  fclose(fh);
+  return result;
 }
 
 
