@@ -47,7 +47,7 @@ typedef int Py_ssize_t;
 #else
 #define PY_STRING(x) PyString_FromString(x)
 #define PY_STRING_TO_C(x) PyString_AsString(x)
-#define PY_STRING_CHECK(x) PyString_Check(x)
+#define PY_STRING_CHECK(x) (PyString_Check(x) || PyUnicode_Check(x))
 #endif
 
 /* Module globals */
