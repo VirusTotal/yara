@@ -628,7 +628,8 @@ void pe_parse_version_info(
   string_file_info = ADD_OFFSET(version_info, sizeof(VERSION_INFO) + 86);
 
   while(fits_in_pe(pe, string_file_info->Key, sizeof("StringFileInfo") * 2) &&
-        strcmp_w(string_file_info->Key, "StringFileInfo") == 0)
+        strcmp_w(string_file_info->Key, "StringFileInfo") == 0 &&
+        string_file_info->Length != 0)
   {
     PVERSION_INFO string_table = ADD_OFFSET(
         string_file_info,
