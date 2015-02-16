@@ -656,18 +656,20 @@ void pe_parse_version_info(
              string->Length != 0 &&
              string < string_table)
       {
-        char* string_value = (char*) ADD_OFFSET(
-            string,
-            sizeof(VERSION_INFO) + 2 * (strnlen_w(string->Key,
-                available_space(pe, string->Key)) + 1));
+        if (string->ValueLength > 0)
+        {
+          char* string_value = (char*) ADD_OFFSET(string,
+              sizeof(VERSION_INFO) + 2 * (strnlen_w(string->Key,
+                  available_space(pe, string->Key)) + 1));
 
-        strlcpy_w(key, string->Key,
-            min(sizeof(key), available_space(pe, string->Key)));
+          strlcpy_w(key, string->Key,
+              min(sizeof(key), available_space(pe, string->Key)));
 
-        strlcpy_w(value, string_value,
-            min(sizeof(value), available_space(pe, string_value)));
+          strlcpy_w(value, string_value,
+              min(sizeof(value), available_space(pe, string_value)));
 
-        set_string(value, pe->object, "version_info[%s]", key);
+          set_string(value, pe->object, "version_info[%s]", key);
+        }
 
         string = ADD_OFFSET(string, string->Length);
       }
