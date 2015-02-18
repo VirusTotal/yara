@@ -56,5 +56,6 @@ yara-python extension.
 * [Trend Micro](http://www.trendmicro.com)
 * [Metaflows](http://www.metaflows.com)
 * [Radare2](http://rada.re)
+* [Websense](http://www.websense.com)
 
 Are you using it? Want to see your site listed here?
