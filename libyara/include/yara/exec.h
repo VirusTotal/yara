@@ -70,6 +70,8 @@ limitations under the License.
 #define OP_MATCHES        39
 #define OP_IMPORT         40
 #define OP_LOOKUP_DICT    41
+#define OP_JFALSE         42
+#define OP_JTRUE          43
 
 #define _OP_EQ            0
 #define _OP_NEQ           1
