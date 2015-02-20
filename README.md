@@ -32,9 +32,11 @@ you'll find explained in [YARA's documentation](http://yara.readthedocs.org/).
 
 YARA is multi-platform, running on Windows, Linux and Mac OS X, and can be used
 through its command-line interface or from your own Python scripts with the
-yara-python extension. If you plan to use YARA to scan compressed files
-(.zip, .tar, etc) you should take a look at [yextend](https://github.com/BayshoreNetworks/yextend)
-a project open sourced by Bayshore Networks.
+yara-python extension.
+
+If you plan to use YARA to scan compressed files (.zip, .tar, etc) you should
+take a look at [yextend](https://github.com/BayshoreNetworks/yextend), a very
+helpful extension to YARA developed and open-sourced by Bayshore Networks.
 
 ## Who's using YARA
 
