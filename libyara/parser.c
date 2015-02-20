@@ -36,8 +36,8 @@ limitations under the License.
 
 int yr_parser_emit(
     yyscan_t yyscanner,
-    int8_t instruction,
-    int8_t** instruction_address)
+    uint8_t instruction,
+    uint8_t** instruction_address)
 {
   return yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
@@ -49,14 +49,14 @@ int yr_parser_emit(
 
 int yr_parser_emit_with_arg_double(
     yyscan_t yyscanner,
-    int8_t instruction,
+    uint8_t instruction,
     double argument,
-    int8_t** instruction_address)
+    uint8_t** instruction_address)
 {
   int result = yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
       &instruction,
-      sizeof(int8_t),
+      sizeof(uint8_t),
       (void**) instruction_address);
 
   if (result == ERROR_SUCCESS)
@@ -72,14 +72,14 @@ int yr_parser_emit_with_arg_double(
 
 int yr_parser_emit_with_arg(
     yyscan_t yyscanner,
-    int8_t instruction,
+    uint8_t instruction,
     int64_t argument,
-    int8_t** instruction_address)
+    uint8_t** instruction_address)
 {
   int result = yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
       &instruction,
-      sizeof(int8_t),
+      sizeof(uint8_t),
       (void**) instruction_address);
 
   if (result == ERROR_SUCCESS)
@@ -95,16 +95,16 @@ int yr_parser_emit_with_arg(
 
 int yr_parser_emit_with_arg_reloc(
     yyscan_t yyscanner,
-    int8_t instruction,
+    uint8_t instruction,
     int64_t argument,
-    int8_t** instruction_address)
+    uint8_t** instruction_address)
 {
   void* ptr;
 
   int result = yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
       &instruction,
-      sizeof(int8_t),
+      sizeof(uint8_t),
       (void**) instruction_address);
 
   if (result == ERROR_SUCCESS)
@@ -745,7 +745,7 @@ int yr_parser_reduce_rule_declaration(
 int yr_parser_reduce_string_identifier(
     yyscan_t yyscanner,
     const char* identifier,
-    int8_t instruction,
+    uint8_t instruction,
     uint64_t at_offset)
 {
   YR_STRING* string;

@@ -122,6 +122,30 @@ function_read(int16_t, big_endian)
 function_read(int32_t, big_endian)
 
 
+static uint8_t* jmp_if(
+    int condition,
+    uint8_t* ip)
+{
+  uint8_t* result;
+
+  if (condition)
+  {
+    result = *(uint8_t**)(ip + 1);
+
+    // ip will be incremented at the end of the execution loop,
+    // decrement it here to compensate.
+
+    result--;
+  }
+  else
+  {
+    result = ip + sizeof(uint64_t);
+  }
+
+  return result;
+}
+
+
 int yr_execute_code(
     YR_RULES* rules,
     YR_SCAN_CONTEXT* context,
@@ -214,6 +238,7 @@ int yr_execute_code(
         r1.i = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
         pop(r2);
+
         if (is_undef(r2))
         {
           r1.i = mem[r1.i];
@@ -228,17 +253,8 @@ int yr_execute_code(
       case OP_JNUNDEF:
         pop(r1);
         push(r1);
-        if (!is_undef(r1))
-        {
-          ip = *(uint8_t**)(ip + 1);
-          // ip will be incremented at the end of the loop,
-          // decrement it here to compensate.
-          ip--;
-        }
-        else
-        {
-          ip += sizeof(uint64_t);
-        }
+
+        ip = jmp_if(!is_undef(r1), ip);
         break;
 
       case OP_JLE:
@@ -247,17 +263,21 @@ int yr_execute_code(
         push(r1);
         push(r2);
 
-        if (r1.i <= r2.i)
-        {
-          ip = *(uint8_t**)(ip + 1);
-          // ip will be incremented at the end of the loop,
-          // decrement it here to compensate.
-          ip--;
-        }
-        else
-        {
-          ip += sizeof(uint64_t);
-        }
+        ip = jmp_if(r1.i <= r2.i, ip);
+        break;
+
+      case OP_JTRUE:
+        pop(r1);
+        push(r1);
+
+        ip = jmp_if(!is_undef(r1) && r1.i, ip);
+        break;
+
+      case OP_JFALSE:
+        pop(r1);
+        push(r1);
+
+        ip = jmp_if(is_undef(r1) || !r1.i, ip);
         break;
 
       case OP_AND:

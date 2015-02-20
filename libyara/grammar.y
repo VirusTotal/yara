@@ -1014,7 +1014,7 @@ expression
       integer_set ':'
       {
         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
-        int8_t* addr;
+        uint8_t* addr;
 
         // Clear counter for number of expressions evaluating
         // to TRUE.
@@ -1128,7 +1128,7 @@ expression
     | _FOR_ for_expression _OF_ string_set ':'
       {
         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
-        int8_t* addr;
+        uint8_t* addr;
 
         if (compiler->loop_depth == MAX_LOOP_NESTING)
           compiler->last_result = \
@@ -1216,17 +1216,86 @@ expression
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
-    | boolean_expression _AND_ boolean_expression
+    | boolean_expression _AND_
       {
-        yr_parser_emit(yyscanner, OP_AND, NULL);
+        uint8_t* jmp_addr;
+
+        compiler->last_result = yr_parser_emit_with_arg_reloc(
+            yyscanner,
+            OP_JFALSE,
+            0,          // still don't know the jump destination
+            &jmp_addr);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+        // create a fixup entry for the jump and push it in the stack
+        YR_FIXUP* fixup = yr_malloc(sizeof(YR_FIXUP));
+
+        if (fixup == NULL)
+          compiler->last_error = ERROR_INSUFICIENT_MEMORY;
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+        fixup->address = (uint64_t*) (jmp_addr + 1);
+        fixup->next = compiler->fixup_stack_head;
+        compiler->fixup_stack_head = fixup;
+      }
+      boolean_expression
+      {
+        uint8_t* and_addr;
+
+        compiler->last_result = yr_parser_emit(yyscanner, OP_AND, &and_addr);
+
+        // Now we know the jump destination, which is the address of the
+        // instruction following the OP_AND. Let's fixup the jump address.
+
+        YR_FIXUP* fixup = compiler->fixup_stack_head;
+        *(fixup->address) = PTR_TO_UINT64(and_addr + 1);
+        compiler->fixup_stack_head = fixup->next;
+        yr_free(fixup);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
-    | boolean_expression _OR_ boolean_expression
+    | boolean_expression _OR_
       {
-        CHECK_TYPE($1, EXPRESSION_TYPE_BOOLEAN, "or");
+        uint8_t* jmp_addr;
 
-        yr_parser_emit(yyscanner, OP_OR, NULL);
+        compiler->last_result = yr_parser_emit_with_arg_reloc(
+            yyscanner,
+            OP_JTRUE,
+            0,         // still don't know the jump destination
+            &jmp_addr);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+        YR_FIXUP* fixup = yr_malloc(sizeof(YR_FIXUP));
+
+        if (fixup == NULL)
+          compiler->last_error = ERROR_INSUFICIENT_MEMORY;
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+        fixup->address = (uint64_t*) (jmp_addr + 1);
+        fixup->next = compiler->fixup_stack_head;
+        compiler->fixup_stack_head = fixup;
+      }
+      boolean_expression
+      {
+        uint8_t* or_addr;
+
+        compiler->last_result = yr_parser_emit(yyscanner, OP_OR, &or_addr);
+
+        // Now we know the jump destination, which is the address of the
+        // instruction following the OP_OR. Let's fixup the jump address.
+
+        YR_FIXUP* fixup = compiler->fixup_stack_head;
+        *(fixup->address) = PTR_TO_UINT64(or_addr + 1);
+        compiler->fixup_stack_head = fixup->next;
+        yr_free(fixup);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -1588,7 +1657,7 @@ primary_expression
         if ($2.type == EXPRESSION_TYPE_INTEGER)
         {
           $$.type = EXPRESSION_TYPE_INTEGER;
-          $$.value.integer = ($2.value.integer == UNDEFINED) ? 
+          $$.value.integer = ($2.value.integer == UNDEFINED) ?
               UNDEFINED : -($2.value.integer);
           compiler->last_result = yr_parser_emit(yyscanner, OP_INT_MINUS, NULL);
         }
