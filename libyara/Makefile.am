@@ -24,7 +24,7 @@ endif
 
 AM_YFLAGS=-d
 
-AM_CFLAGS=-O3 -Wall -Wno-deprecated-declarations -std=gnu99 -I./include
+AM_CFLAGS=-O3 -Wall -Wno-deprecated-declarations -std=gnu99 -I$(srcdir)/include
 
 ACLOCAL_AMFLAGS=-I m4
 
@@ -55,7 +55,7 @@ yarainclude_HEADERS = \
 
 lib_LTLIBRARIES = libyara.la
 
-libyara_la_LDFLAGS = -export-symbols libyara.sym -version-number 3:3:0
+libyara_la_LDFLAGS = -export-symbols $(srcdir)/libyara.sym -version-number 3:3:0
 
 libyara_la_SOURCES = \
   $(MODULES) \
