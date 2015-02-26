@@ -20,6 +20,12 @@ AC_PROG_YACC
 LT_INIT
 AC_PROG_LIBTOOL
 
+AC_CANONICAL_HOST
+
+case $host_alias in
+     i?86-*-mingw*) CFLAGS="$CFLAGS -D__MINGW_USE_VC2005_COMPAT" ;;
+esac
+
 AC_ARG_ENABLE([dmalloc],
   [AS_HELP_STRING([--enable-dmalloc],
     [enable dmalloc to debug heap-related issues])],
