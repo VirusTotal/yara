@@ -140,7 +140,11 @@ int yr_process_get_memory(
 
 #else
 
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || \
+    defined(__OpenBSD__) || defined(__MACH__)
+#else
 #define _XOPEN_SOURCE 500
+#endif
 
 #include <fcntl.h>
 #include <unistd.h>
