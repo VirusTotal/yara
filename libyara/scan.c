@@ -329,10 +329,12 @@ void _yr_scan_update_match_chain_length(
 
   if (match_to_update->chain_length == chain_length)
     return;
+
   match_to_update->chain_length = chain_length;
 
   if (string->chained_to == NULL)
     return;
+
   match = string->chained_to->unconfirmed_matches[tidx].head;
 
   while (match != NULL)
@@ -542,6 +544,7 @@ int _yr_scan_verify_chained_string_match(
       new_match->offset = match_offset;
       new_match->length = match_length;
       new_match->data = match_data;
+      new_match->chain_length = 0;
       new_match->prev = NULL;
       new_match->next = NULL;
 
