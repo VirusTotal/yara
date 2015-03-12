@@ -92,7 +92,9 @@ limitations under the License.
 
 
 #define fits_in_pe(pe, pointer, size) \
-    ((uint8_t*)(pointer) + size <= pe->data + pe->data_size)
+    (size <= pe->data_size && \
+     (uint8_t*)(pointer) >= pe->data && \
+     (uint8_t*)(pointer) + size <= pe->data + pe->data_size)
 
 
 #define struct_fits_in_pe(pe, pointer, struct_type) \
