@@ -321,6 +321,8 @@ void pe_parse_rich_signature(
     set_sized_string(
         (char*) clear_data, rich_len, pe->object, "rich_signature.clear_data");
 
+    yr_free(raw_data);
+    yr_free(clear_data);
     return;
   }
 
@@ -2107,10 +2109,14 @@ int module_unload(YR_OBJECT* module_object)
 
   while (dll)
   {
+    if (dll->name)
+      yr_free(dll->name);
     func = dll->functions;
 
     while (func)
     {
+      if (func->name)
+        yr_free(func->name);
       next_func = func->next;
       yr_free(func);
       func = next_func;
