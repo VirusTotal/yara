@@ -798,15 +798,14 @@ int yr_execute_code(
           break;
         }
 
-        result = yr_re_exec(
+        r1.i = yr_re_exec(
           (uint8_t*) r2.p,
           (uint8_t*) r1.ss->c_string,
           r1.ss->length,
           RE_FLAGS_SCAN,
           NULL,
-          NULL);
+          NULL) >= 0;
 
-        r1.i = result >= 0;
         push(r1);
         break;
 
@@ -1034,27 +1033,25 @@ int yr_execute_code(
         ensure_defined(r1);
         ensure_defined(r2);
 
-        result = sized_string_cmp(r1.ss, r2.ss);
-
         switch(*ip)
         {
           case OP_STR_EQ:
-            r1.i = (result == 0);
+            r1.i = (sized_string_cmp(r1.ss, r2.ss) == 0);
             break;
           case OP_STR_NEQ:
-            r1.i = (result != 0);
+            r1.i = (sized_string_cmp(r1.ss, r2.ss) != 0);
             break;
           case OP_STR_LT:
-            r1.i = (result < 0);
+            r1.i = (sized_string_cmp(r1.ss, r2.ss) < 0);
             break;
           case OP_STR_LE:
-            r1.i = (result <= 0);
+            r1.i = (sized_string_cmp(r1.ss, r2.ss) <= 0);
             break;
           case OP_STR_GT:
-            r1.i = (result > 0);
+            r1.i = (sized_string_cmp(r1.ss, r2.ss) > 0);
             break;
           case OP_STR_GE:
-            r1.i = (result >= 0);
+            r1.i = (sized_string_cmp(r1.ss, r2.ss) >= 0);
             break;
         }
 
