@@ -42,7 +42,7 @@ limitations under the License.
 
 #define LOOP_LOCAL_VARS                 4
 #define STRING_CHAINING_THRESHOLD       200
-#define LEX_BUF_SIZE                    1024
+#define LEX_BUF_SIZE                    8192
 
 
 #endif
