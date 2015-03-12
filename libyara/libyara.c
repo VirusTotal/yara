@@ -161,3 +161,27 @@ YR_API int yr_get_tidx(void)
   return (int) (size_t) pthread_getspecific(tidx_key) - 1;
   #endif
 }
+
+
+//
+// _yr_set_mem_functions
+//
+// Override the functions that Yara uses for memory management.
+//
+// Returns:
+//    ERROR_SUCCESS if handler set without error
+//    ERROR_WRONG_ARGUMENTS if an handler is missing
+//
+
+YR_API int yr_set_mem_functions(
+        void *(*_malloc)(size_t size), void *(*_calloc)(size_t count, size_t size), void *(*_realloc)(void *ptr, size_t size),
+        void (*_free)(void *ptr),
+        char *(*_strdup)(const char *str), char *(*_strndup)(const char *str, size_t size) )
+{
+  #ifdef _WIN32
+  #else
+    #ifndef DMALLOC
+    return yr_set_mem_wrapper_functions(_malloc,_calloc,_realloc,_free,_strdup,_strndup);
+    #endif
+  #endif
+}

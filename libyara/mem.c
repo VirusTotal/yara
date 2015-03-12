@@ -108,6 +108,44 @@ char* yr_strndup(const char *str, size_t n)
 
 #include <yara/error.h>
 
+
+struct mem_wrappers
+{
+    void *(*_malloc)(size_t size);
+    void *(*_calloc)(size_t count, size_t size);
+    void *(*_realloc)(void* ptr, size_t size);
+    void (*_free)(void *ptr);
+    char *(*_strdup)(const char *str);
+    char *(*_strndup)(const char *s, size_t size);
+};
+
+static struct mem_wrappers _wrappers = {
+        malloc, calloc, realloc,
+        free,
+        strdup, strndup
+};
+
+
+int yr_set_mem_wrapper_functions(
+        void *(*_malloc)(size_t size), void *(*_calloc)(size_t count, size_t size), void *(*_realloc)(void *ptr, size_t size),
+        void (*_free)(void *ptr),
+        char *(*_strdup)(const char *str), char *(*_strndup)(const char *str, size_t size) )
+{
+    if ( ! (_malloc && _calloc && _realloc && _free && _strdup && _strndup ) )
+        return ERROR_WRONG_ARGUMENTS;
+
+
+    _wrappers._malloc = _malloc;
+    _wrappers._calloc = _calloc;
+    _wrappers._realloc = _realloc;
+    _wrappers._free = _free;
+    _wrappers._strdup = _strdup;
+    _wrappers._strndup = _strndup;
+
+    return ERROR_SUCCESS;
+}
+
+
 int yr_heap_alloc()
 {
   return ERROR_SUCCESS;
@@ -122,37 +160,37 @@ int yr_heap_free()
 
 void* yr_calloc(size_t count, size_t size)
 {
-  return calloc(count, size);
+  return _wrappers._calloc(count, size);
 }
 
 
 void* yr_malloc(size_t size)
 {
-  return malloc(size);
+  return _wrappers._malloc(size);
 }
 
 
 void* yr_realloc(void* ptr, size_t size)
 {
-  return realloc(ptr, size);
+  return _wrappers._realloc(ptr, size);
 }
 
 
 void yr_free(void *ptr)
 {
-  free(ptr);
+  return _wrappers._free(ptr);
 }
 
 
 char* yr_strdup(const char *str)
 {
-  return strdup(str);
+  return _wrappers._strdup(str);
 }
 
 
 char* yr_strndup(const char *str, size_t n)
 {
-  return strndup(str, n);
+  return _wrappers._strndup(str, n);
 }
 
 #endif
