@@ -344,7 +344,7 @@ void yr_object_destroy(
 
     case OBJECT_TYPE_ARRAY:
       if (((YR_OBJECT_ARRAY*) object)->prototype_item != NULL)
-        yr_free(((YR_OBJECT_ARRAY*) object)->prototype_item);
+        yr_object_destroy(((YR_OBJECT_ARRAY*) object)->prototype_item);
 
       array_items = ((YR_OBJECT_ARRAY*) object)->items;
 
@@ -360,7 +360,7 @@ void yr_object_destroy(
 
     case OBJECT_TYPE_DICTIONARY:
       if (((YR_OBJECT_DICTIONARY*) object)->prototype_item != NULL)
-        yr_free(((YR_OBJECT_DICTIONARY*) object)->prototype_item);
+        yr_object_destroy(((YR_OBJECT_DICTIONARY*) object)->prototype_item);
 
       dict_items = ((YR_OBJECT_DICTIONARY*) object)->items;
 
