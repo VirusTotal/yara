@@ -360,6 +360,12 @@ YR_API int yr_rules_scan_mem_blocks(
 
   yr_set_tidx(tidx);
 
+  /* Allocate the stack for the scanner in exec.c:yr_execute_code. */
+  context.scan_stack = yr_calloc(YR_SCAN_STACK_SIZE, sizeof(union STACK_ITEM));
+
+  if (context.scan_stack == NULL)
+    goto _exit;
+
   result = yr_arena_create(1024, 0, &matches_arena);
 
   if (result != ERROR_SUCCESS)
@@ -489,6 +495,9 @@ _exit:
   _yr_rules_lock(rules);
   rules->tidx_mask &= ~(1 << tidx);
   _yr_rules_unlock(rules);
+
+  if (context.scan_stack != NULL)
+     yr_free(context.scan_stack);
 
   yr_set_tidx(-1);
 

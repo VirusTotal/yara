@@ -22,6 +22,7 @@ limitations under the License.
 #include <yara/re.h>
 #include <yara/limits.h>
 #include <yara/hash.h>
+#include <yara/sizedstr.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -374,22 +375,6 @@ typedef int (*YR_CALLBACK_FUNC)(
     void* user_data);
 
 
-typedef struct _YR_SCAN_CONTEXT
-{
-  uint64_t  file_size;
-  uint64_t  entry_point;
-
-  int flags;
-  void* user_data;
-
-  YR_MEMORY_BLOCK*  mem_block;
-  YR_HASH_TABLE*  objects_table;
-  YR_CALLBACK_FUNC  callback;
-
-} YR_SCAN_CONTEXT;
-
-
-
 #define OBJECT_COMMON_FIELDS \
     int8_t type; \
     const char* identifier; \
@@ -402,6 +387,33 @@ typedef struct _YR_OBJECT
   OBJECT_COMMON_FIELDS
 
 } YR_OBJECT;
+
+
+union STACK_ITEM {
+  int64_t i;
+  double d;
+  void* p;
+  YR_OBJECT* o;
+  YR_STRING* s;
+  SIZED_STRING* ss;
+};
+
+
+typedef struct _YR_SCAN_CONTEXT
+{
+  uint64_t  file_size;
+  uint64_t  entry_point;
+
+  int flags;
+  void* user_data;
+
+  YR_MEMORY_BLOCK*  mem_block;
+  YR_HASH_TABLE*  objects_table;
+  YR_CALLBACK_FUNC  callback;
+
+  union STACK_ITEM *scan_stack;
+
+} YR_SCAN_CONTEXT;
 
 
 typedef struct _YR_OBJECT_INTEGER

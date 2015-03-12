@@ -32,22 +32,11 @@ limitations under the License.
 
 #include <yara.h>
 
-
-#define STACK_SIZE 16384
 #define MEM_SIZE   MAX_LOOP_NESTING * LOOP_LOCAL_VARS
-
-union STACK_ITEM {
-  int64_t i;
-  double d;
-  void* p;
-  YR_OBJECT* o;
-  YR_STRING* s;
-  SIZED_STRING* ss;
-};
 
 #define push(x)  \
     do { \
-      if (sp < STACK_SIZE) stack[sp++] = (x); \
+      if (sp < YR_SCAN_STACK_SIZE) stack[sp++] = (x); \
       else return ERROR_EXEC_STACK_OVERFLOW; \
     } while(0)
 
@@ -157,7 +146,7 @@ int yr_execute_code(
   int32_t sp = 0;
   uint8_t* ip = rules->code_start;
 
-  union STACK_ITEM stack[STACK_SIZE];
+  union STACK_ITEM *stack = context->scan_stack;
   union STACK_ITEM r1;
   union STACK_ITEM r2;
   union STACK_ITEM r3;

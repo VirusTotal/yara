@@ -44,5 +44,7 @@ limitations under the License.
 #define STRING_CHAINING_THRESHOLD       200
 #define LEX_BUF_SIZE                    1024
 
+/* Stack size pulled from exec.c */
+#define YR_SCAN_STACK_SIZE              16384
 
 #endif
