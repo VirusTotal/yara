@@ -37,14 +37,17 @@ limitations under the License.
 #define STACK_SIZE 16384
 #define MEM_SIZE   MAX_LOOP_NESTING * LOOP_LOCAL_VARS
 
-union STACK_ITEM {
+typedef union _STACK_ITEM {
+
   int64_t i;
   double d;
   void* p;
   YR_OBJECT* o;
   YR_STRING* s;
   SIZED_STRING* ss;
-};
+
+} STACK_ITEM;
+
 
 #define push(x)  \
     do { \
@@ -158,10 +161,10 @@ int yr_execute_code(
   int32_t sp = 0;
   uint8_t* ip = rules->code_start;
 
-  union STACK_ITEM *stack;
-  union STACK_ITEM r1;
-  union STACK_ITEM r2;
-  union STACK_ITEM r3;
+  STACK_ITEM *stack;
+  STACK_ITEM r1;
+  STACK_ITEM r2;
+  STACK_ITEM r3;
 
   YR_RULE* rule;
   YR_MATCH* match;
@@ -173,7 +176,8 @@ int yr_execute_code(
   int i;
   int found;
   int count;
-  int result;
+  int result = ERROR_SUCCESS;
+  int stop = FALSE;
   int cycle = 0;
   int tidx = yr_get_tidx();
 
@@ -181,20 +185,19 @@ int yr_execute_code(
   clock_t start = clock();
   #endif
 
-  stack = (union STACK_ITEM *) yr_malloc(STACK_SIZE * sizeof(union STACK_ITEM));
+  stack = (STACK_ITEM *) yr_malloc(STACK_SIZE * sizeof(STACK_ITEM));
+
   if (stack == NULL)
     return ERROR_INSUFICIENT_MEMORY;
 
-  while(1)
+  while(!stop)
   {
     switch(*ip)
     {
       case OP_HALT:
-        // When the halt instruction is reached the stack
-        // should be empty.
-        assert(sp == 0);
-        yr_free(stack);
-        return ERROR_SUCCESS;
+        assert(sp == 0); // When HALT is reached the stack should be empty.
+        stop = TRUE;
+        break;
 
       case OP_PUSH:
         r1.i = *(uint64_t*)(ip + 1);
@@ -559,7 +562,7 @@ int yr_execute_code(
         }
         else
         {
-          return result;
+          stop = TRUE;
         }
 
         break;
@@ -1070,7 +1073,10 @@ int yr_execute_code(
       if (++cycle == 10)
       {
         if (difftime(time(NULL), start_time) > timeout)
-          return ERROR_SCAN_TIMEOUT;
+        {
+          result = ERROR_SCAN_TIMEOUT;
+          stop = TRUE;
+        }
 
         cycle = 0;
       }
@@ -1079,8 +1085,6 @@ int yr_execute_code(
     ip++;
   }
 
-  // After executing the code the stack should be empty.
-  assert(sp == 0);
   yr_free(stack);
-  return ERROR_SUCCESS;
+  return result;
 }
