@@ -29,6 +29,7 @@ limitations under the License.
 #include <yara/re.h>
 #include <yara/strutils.h>
 #include <yara/utils.h>
+#include <yara/mem.h>
 
 #include <yara.h>
 
@@ -157,7 +158,7 @@ int yr_execute_code(
   int32_t sp = 0;
   uint8_t* ip = rules->code_start;
 
-  union STACK_ITEM stack[STACK_SIZE];
+  union STACK_ITEM *stack;
   union STACK_ITEM r1;
   union STACK_ITEM r2;
   union STACK_ITEM r3;
@@ -180,6 +181,10 @@ int yr_execute_code(
   clock_t start = clock();
   #endif
 
+  stack = (union STACK_ITEM *) yr_malloc(STACK_SIZE * sizeof(union STACK_ITEM));
+  if (stack == NULL)
+    return ERROR_INSUFICIENT_MEMORY;
+
   while(1)
   {
     switch(*ip)
@@ -188,6 +193,7 @@ int yr_execute_code(
         // When the halt instruction is reached the stack
         // should be empty.
         assert(sp == 0);
+        yr_free(stack);
         return ERROR_SUCCESS;
 
       case OP_PUSH:
@@ -1075,6 +1081,6 @@ int yr_execute_code(
 
   // After executing the code the stack should be empty.
   assert(sp == 0);
-
+  yr_free(stack);
   return ERROR_SUCCESS;
 }

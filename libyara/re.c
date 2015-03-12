@@ -46,7 +46,7 @@ order to avoid confusion with operating system threads.
 
 
 #define RE_MAX_STACK      1024  // Maxium stack size for regexp evaluation
-#define RE_MAX_CODE_SIZE  16384 // Maximum code size for a compiled regexp
+#define RE_MAX_CODE_SIZE  32768 // Maximum code size for a compiled regexp
 #define RE_SCAN_LIMIT     4096  // Maximum input size scanned by yr_re_exec
 
 
