@@ -36,6 +36,7 @@ limitations under the License.
 #define YR_API
 #endif
 
+#ifndef NOMINMAX
 #ifndef min
 #define min(x, y) ((x < y) ? (x) : (y))
 #endif
@@ -43,6 +44,7 @@ limitations under the License.
 #ifndef max
 #define max(x, y) ((x > y) ? (x) : (y))
 #endif
+#endif /* NOMINMAX */
 
 
 #define PTR_TO_UINT64(x)  ((uint64_t) (size_t) x)
