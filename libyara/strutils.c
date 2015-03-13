@@ -154,16 +154,14 @@ size_t strlcat(
 
 
 int strnlen_w(
-    const char* w_str,
-    size_t maxbytes)
+    const char* w_str)
 {
   int len = 0;
 
-  while (maxbytes >= 2 && (w_str[0] || w_str[1]))
+  while (w_str[0] || w_str[1])
   {
     w_str += 2;
     len += 1;
-    maxbytes -= 2;
   }
 
   return len;

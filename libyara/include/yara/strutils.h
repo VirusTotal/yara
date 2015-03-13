@@ -60,8 +60,7 @@ void* memmem(
 
 
 int strnlen_w(
-    const char* w_str,
-    size_t maxbytes);
+    const char* w_str);
 
 
 int strcmp_w(
