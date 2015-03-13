@@ -153,6 +153,25 @@ typedef struct _PE
 } PE;
 
 
+int wide_string_fits_in_pe(
+    PE* pe,
+    char* data)
+{
+  size_t i = 0;
+  size_t space_left = available_space(pe, data);
+
+  while (space_left >= 2)
+  {
+    if (data[i] == 0 && data[i + 1] == 0)
+      return 1;
+    space_left -= 2;
+    i += 2;
+  }
+
+  return 0;
+}
+
+
 PIMAGE_NT_HEADERS32 pe_get_header(
     uint8_t* data,
     size_t data_size)
@@ -644,35 +663,35 @@ void pe_parse_version_info(
         string_file_info->Length);
 
     while (struct_fits_in_pe(pe, string_table, VERSION_INFO) &&
+           wide_string_fits_in_pe(pe, string_table->Key) &&
            string_table->Length != 0 &&
            string_table < string_file_info)
     {
       PVERSION_INFO string = ADD_OFFSET(
           string_table,
-          sizeof(VERSION_INFO) + 2 * (strnlen_w(string_table->Key,
-              available_space(pe, string_table->Key)) + 1));
+          sizeof(VERSION_INFO) + 2 * (strnlen_w(string_table->Key) + 1));
 
       string_table = ADD_OFFSET(
           string_table,
           string_table->Length);
 
       while (struct_fits_in_pe(pe, string, VERSION_INFO) &&
+             wide_string_fits_in_pe(pe, string->Key) &&
              string->Length != 0 &&
              string < string_table)
       {
         if (string->ValueLength > 0)
         {
           char* string_value = (char*) ADD_OFFSET(string,
-              sizeof(VERSION_INFO) + 2 * (strnlen_w(string->Key,
-                  available_space(pe, string->Key)) + 1));
+              sizeof(VERSION_INFO) + 2 * (strnlen_w(string->Key) + 1));
 
-          strlcpy_w(key, string->Key,
-              min(sizeof(key), available_space(pe, string->Key)));
+          if (wide_string_fits_in_pe(pe, string_value))
+          {
+            strlcpy_w(key, string->Key, sizeof(key));
+            strlcpy_w(value, string_value, sizeof(value));
 
-          strlcpy_w(value, string_value,
-              min(sizeof(value), available_space(pe, string_value)));
-
-          set_string(value, pe->object, "version_info[%s]", key);
+            set_string(value, pe->object, "version_info[%s]", key);
+          }
         }
 
         string = ADD_OFFSET(string, string->Length);
