@@ -526,6 +526,7 @@ identifier
               yyscanner,
               OP_PUSH_M,
               LOOP_LOCAL_VARS * var_index,
+              NULL,
               NULL);
 
           $$.type = EXPRESSION_TYPE_INTEGER;
@@ -566,7 +567,8 @@ identifier
               compiler->last_result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_OBJ_LOAD,
-                  PTR_TO_UINT64(id),
+                  PTR_TO_INT64(id),
+                  NULL,
                   NULL);
 
             $$.type = EXPRESSION_TYPE_OBJECT;
@@ -585,7 +587,8 @@ identifier
               compiler->last_result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_PUSH_RULE,
-                  PTR_TO_UINT64(rule),
+                  PTR_TO_INT64(rule),
+                  NULL,
                   NULL);
 
               $$.type = EXPRESSION_TYPE_BOOLEAN;
@@ -626,7 +629,8 @@ identifier
               compiler->last_result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_OBJ_FIELD,
-                  PTR_TO_UINT64(ident),
+                  PTR_TO_INT64(ident),
+                  NULL,
                   NULL);
 
             $$.type = EXPRESSION_TYPE_OBJECT;
@@ -732,7 +736,8 @@ identifier
             compiler->last_result = yr_parser_emit_with_arg_reloc(
                 yyscanner,
                 OP_CALL,
-                PTR_TO_UINT64(args_fmt),
+                PTR_TO_INT64(args_fmt),
+                NULL,
                 NULL);
 
           YR_OBJECT_FUNCTION* function = (YR_OBJECT_FUNCTION*) $1.value.object;
@@ -855,7 +860,8 @@ regexp
           compiler->last_result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              PTR_TO_UINT64(re->root_node->forward_code),
+              PTR_TO_INT64(re->root_node->forward_code),
+              NULL,
               NULL);
 
         yr_re_destroy(re);
@@ -888,7 +894,7 @@ expression
     : _TRUE_
       {
         compiler->last_result = yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, 1, NULL);
+            yyscanner, OP_PUSH, 1, NULL, NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
@@ -897,7 +903,7 @@ expression
     | _FALSE_
       {
         compiler->last_result = yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, 0, NULL);
+            yyscanner, OP_PUSH, 0, NULL, NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
@@ -1007,6 +1013,7 @@ expression
             yyscanner,
             OP_PUSH,
             UNDEFINED,
+            NULL,
             NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -1019,27 +1026,27 @@ expression
         // Clear counter for number of expressions evaluating
         // to TRUE.
         yr_parser_emit_with_arg(
-            yyscanner, OP_CLEAR_M, mem_offset + 1, NULL);
+            yyscanner, OP_CLEAR_M, mem_offset + 1, NULL, NULL);
 
         // Clear iterations counter
         yr_parser_emit_with_arg(
-            yyscanner, OP_CLEAR_M, mem_offset + 2, NULL);
+            yyscanner, OP_CLEAR_M, mem_offset + 2, NULL, NULL);
 
         if ($6 == INTEGER_SET_ENUMERATION)
         {
           // Pop the first integer
           yr_parser_emit_with_arg(
-              yyscanner, OP_POP_M, mem_offset, &addr);
+              yyscanner, OP_POP_M, mem_offset, &addr, NULL);
         }
         else // INTEGER_SET_RANGE
         {
           // Pop higher bound of set range
           yr_parser_emit_with_arg(
-              yyscanner, OP_POP_M, mem_offset + 3, &addr);
+              yyscanner, OP_POP_M, mem_offset + 3, &addr, NULL);
 
           // Pop lower bound of set range
           yr_parser_emit_with_arg(
-              yyscanner, OP_POP_M, mem_offset, NULL);
+              yyscanner, OP_POP_M, mem_offset, NULL, NULL);
         }
 
         compiler->loop_address[compiler->loop_depth] = addr;
@@ -1061,42 +1068,44 @@ expression
         // does nothing.
 
         yr_parser_emit_with_arg(
-            yyscanner, OP_ADD_M, mem_offset + 1, NULL);
+            yyscanner, OP_ADD_M, mem_offset + 1, NULL, NULL);
 
         // Increment iterations counter
         yr_parser_emit_with_arg(
-            yyscanner, OP_INCR_M, mem_offset + 2, NULL);
+            yyscanner, OP_INCR_M, mem_offset + 2, NULL, NULL);
 
         if ($6 == INTEGER_SET_ENUMERATION)
         {
           yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_JNUNDEF,
-              PTR_TO_UINT64(
+              PTR_TO_INT64(
                   compiler->loop_address[compiler->loop_depth]),
+              NULL,
               NULL);
         }
         else // INTEGER_SET_RANGE
         {
           // Increment lower bound of integer set
           yr_parser_emit_with_arg(
-              yyscanner, OP_INCR_M, mem_offset, NULL);
+              yyscanner, OP_INCR_M, mem_offset, NULL, NULL);
 
           // Push lower bound of integer set
           yr_parser_emit_with_arg(
-              yyscanner, OP_PUSH_M, mem_offset, NULL);
+              yyscanner, OP_PUSH_M, mem_offset, NULL, NULL);
 
           // Push higher bound of integer set
           yr_parser_emit_with_arg(
-              yyscanner, OP_PUSH_M, mem_offset + 3, NULL);
+              yyscanner, OP_PUSH_M, mem_offset + 3, NULL, NULL);
 
           // Compare higher bound with lower bound, do loop again
           // if lower bound is still lower or equal than higher bound
           yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_JLE,
-              PTR_TO_UINT64(
+              PTR_TO_INT64(
                 compiler->loop_address[compiler->loop_depth]),
+              NULL,
               NULL);
 
           yr_parser_emit(yyscanner, OP_POP, NULL);
@@ -1111,12 +1120,12 @@ expression
         // is undefined (meaning "all") and replace it with the
         // iterations counter in that case.
         yr_parser_emit_with_arg(
-            yyscanner, OP_SWAPUNDEF, mem_offset + 2, NULL);
+            yyscanner, OP_SWAPUNDEF, mem_offset + 2, NULL, NULL);
 
         // Compare the loop quantifier with the number of
         // expressions evaluating to TRUE.
         yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH_M, mem_offset + 1, NULL);
+            yyscanner, OP_PUSH_M, mem_offset + 1, NULL, NULL);
 
         yr_parser_emit(yyscanner, OP_INT_LE, NULL);
 
@@ -1141,14 +1150,14 @@ expression
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
         yr_parser_emit_with_arg(
-            yyscanner, OP_CLEAR_M, mem_offset + 1, NULL);
+            yyscanner, OP_CLEAR_M, mem_offset + 1, NULL, NULL);
 
         yr_parser_emit_with_arg(
-            yyscanner, OP_CLEAR_M, mem_offset + 2, NULL);
+            yyscanner, OP_CLEAR_M, mem_offset + 2, NULL, NULL);
 
         // Pop the first string.
         yr_parser_emit_with_arg(
-            yyscanner, OP_POP_M, mem_offset, &addr);
+            yyscanner, OP_POP_M, mem_offset, &addr, NULL);
 
         compiler->loop_for_of_mem_offset = mem_offset;
         compiler->loop_address[compiler->loop_depth] = addr;
@@ -1169,19 +1178,20 @@ expression
         // returned UNDEFINED the OP_ADD_M won't do anything.
 
         yr_parser_emit_with_arg(
-            yyscanner, OP_ADD_M, mem_offset + 1, NULL);
+            yyscanner, OP_ADD_M, mem_offset + 1, NULL, NULL);
 
         // Increment iterations counter.
         yr_parser_emit_with_arg(
-            yyscanner, OP_INCR_M, mem_offset + 2, NULL);
+            yyscanner, OP_INCR_M, mem_offset + 2, NULL, NULL);
 
         // If next string is not undefined, go back to the
         // begining of the loop.
         yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JNUNDEF,
-            PTR_TO_UINT64(
+            PTR_TO_INT64(
                 compiler->loop_address[compiler->loop_depth]),
+            NULL,
             NULL);
 
         // Pop end-of-list marker.
@@ -1192,12 +1202,12 @@ expression
         // undefined (meaning "all") and replace it with the
         // iterations counter in that case.
         yr_parser_emit_with_arg(
-            yyscanner, OP_SWAPUNDEF, mem_offset + 2, NULL);
+            yyscanner, OP_SWAPUNDEF, mem_offset + 2, NULL, NULL);
 
         // Compare the loop quantifier with the number of
         // expressions evaluating to TRUE.
         yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH_M, mem_offset + 1, NULL);
+            yyscanner, OP_PUSH_M, mem_offset + 1, NULL, NULL);
 
         yr_parser_emit(yyscanner, OP_INT_LE, NULL);
 
@@ -1218,13 +1228,14 @@ expression
       }
     | boolean_expression _AND_
       {
-        uint8_t* jmp_addr;
+        int64_t* jmp_destination_addr;
 
         compiler->last_result = yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JFALSE,
             0,          // still don't know the jump destination
-            &jmp_addr);
+            NULL,
+            &jmp_destination_addr);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
@@ -1236,7 +1247,7 @@ expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        fixup->address = (uint64_t*) (jmp_addr + 1);
+        fixup->address = jmp_destination_addr;
         fixup->next = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup;
       }
@@ -1244,29 +1255,47 @@ expression
       {
         uint8_t* and_addr;
 
-        compiler->last_result = yr_parser_emit(yyscanner, OP_AND, &and_addr);
+        // Ensure that we have at least two consecutive bytes in the arena's 
+        // current page, one for the AND opcode and one for opcode following the
+        // AND. This is necessary because we need to compute the address for the
+        // opcode following the AND, and we don't want the AND in one page and
+        // the following opcode in another page.
 
-        // Now we know the jump destination, which is the address of the
-        // instruction following the OP_AND. Let's fixup the jump address.
-
-        YR_FIXUP* fixup = compiler->fixup_stack_head;
-        *(fixup->address) = PTR_TO_UINT64(and_addr + 1);
-        compiler->fixup_stack_head = fixup->next;
-        yr_free(fixup);
+        compiler->last_result = yr_arena_reserve_memory(
+            compiler->code_arena, 2);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+        compiler->last_result = yr_parser_emit(yyscanner, OP_AND, &and_addr);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+        // Now we know the jump destination, which is the address of the
+        // instruction following the AND. Let's fixup the jump address.
+
+        YR_FIXUP* fixup = compiler->fixup_stack_head;
+
+        // We know that the AND opcode and the following one are within the same
+        // page, so we can compute the address for the opcode following the AND
+        // by simply adding one to its address.
+        
+        *(fixup->address) = PTR_TO_INT64(and_addr + 1);
+        
+        compiler->fixup_stack_head = fixup->next;
+        yr_free(fixup);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | boolean_expression _OR_
       {
-        uint8_t* jmp_addr;
+        int64_t* jmp_destination_addr;
 
         compiler->last_result = yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JTRUE,
             0,         // still don't know the jump destination
-            &jmp_addr);
+            NULL,
+            &jmp_destination_addr);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
@@ -1277,7 +1306,7 @@ expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        fixup->address = (uint64_t*) (jmp_addr + 1);
+        fixup->address = jmp_destination_addr;
         fixup->next = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup;
       }
@@ -1285,17 +1314,34 @@ expression
       {
         uint8_t* or_addr;
 
+        // Ensure that we have at least two consecutive bytes in the arena's 
+        // current page, one for the OR opcode and one for opcode following the
+        // OR. This is necessary because we need to compute the address for the
+        // opcode following the OR, and we don't want the OR in one page and
+        // the following opcode in another page.
+
+        compiler->last_result = yr_arena_reserve_memory(
+            compiler->code_arena, 2);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
         compiler->last_result = yr_parser_emit(yyscanner, OP_OR, &or_addr);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
         // Now we know the jump destination, which is the address of the
         // instruction following the OP_OR. Let's fixup the jump address.
 
         YR_FIXUP* fixup = compiler->fixup_stack_head;
-        *(fixup->address) = PTR_TO_UINT64(or_addr + 1);
+
+        // We know that the OR opcode and the following one are within the same
+        // page, so we can compute the address for the opcode following the OR
+        // by simply adding one to its address.
+
+        *(fixup->address) = PTR_TO_INT64(or_addr + 1);
+
         compiler->fixup_stack_head = fixup->next;
         yr_free(fixup);
-
-        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -1423,12 +1469,12 @@ string_set
     : '('
       {
         // Push end-of-list marker
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL, NULL);
       }
       string_enumeration ')'
     | _THEM_
       {
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL, NULL);
         yr_parser_emit_pushes_for_strings(yyscanner, "$*");
       }
     ;
@@ -1458,11 +1504,11 @@ for_expression
     : primary_expression
     | _ALL_
       {
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL, NULL);
       }
     | _ANY_
       {
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, 1, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_PUSH, 1, NULL, NULL);
       }
     ;
 
@@ -1515,7 +1561,7 @@ primary_expression
     | _NUMBER_
       {
         compiler->last_result = yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, $1, NULL);
+            yyscanner, OP_PUSH, $1, NULL, NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
@@ -1525,7 +1571,7 @@ primary_expression
     | _DOUBLE_
       {
         compiler->last_result = yr_parser_emit_with_arg_double(
-            yyscanner, OP_PUSH, $1, NULL);
+            yyscanner, OP_PUSH, $1, NULL, NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
@@ -1547,7 +1593,8 @@ primary_expression
           compiler->last_result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              PTR_TO_UINT64(sized_string),
+              PTR_TO_INT64(sized_string),
+              NULL,
               NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -1590,6 +1637,7 @@ primary_expression
             yyscanner,
             OP_PUSH,
             1,
+            NULL,
             NULL);
 
         if (compiler->last_result == ERROR_SUCCESS)

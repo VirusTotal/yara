@@ -40,7 +40,7 @@ typedef void (*YR_COMPILER_CALLBACK_FUNC)(
 
 typedef struct _YR_FIXUP
 {
-  uint64_t* address;
+  int64_t* address;
   struct _YR_FIXUP* next;
 
 } YR_FIXUP;
