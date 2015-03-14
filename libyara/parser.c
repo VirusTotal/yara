@@ -51,7 +51,8 @@ int yr_parser_emit_with_arg_double(
     yyscan_t yyscanner,
     uint8_t instruction,
     double argument,
-    uint8_t** instruction_address)
+    uint8_t** instruction_address,
+    double** argument_address)
 {
   int result = yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
@@ -64,7 +65,7 @@ int yr_parser_emit_with_arg_double(
         yyget_extra(yyscanner)->code_arena,
         &argument,
         sizeof(double),
-        NULL);
+        (void**) argument_address);
 
   return result;
 }
@@ -74,7 +75,8 @@ int yr_parser_emit_with_arg(
     yyscan_t yyscanner,
     uint8_t instruction,
     int64_t argument,
-    uint8_t** instruction_address)
+    uint8_t** instruction_address,
+    int64_t** argument_address)
 {
   int result = yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
@@ -87,7 +89,7 @@ int yr_parser_emit_with_arg(
         yyget_extra(yyscanner)->code_arena,
         &argument,
         sizeof(int64_t),
-        NULL);
+        (void**) argument_address);
 
   return result;
 }
@@ -97,9 +99,10 @@ int yr_parser_emit_with_arg_reloc(
     yyscan_t yyscanner,
     uint8_t instruction,
     int64_t argument,
-    uint8_t** instruction_address)
+    uint8_t** instruction_address,
+    int64_t** argument_address)
 {
-  void* ptr;
+  int64_t* ptr;
 
   int result = yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
@@ -112,7 +115,7 @@ int yr_parser_emit_with_arg_reloc(
         yyget_extra(yyscanner)->code_arena,
         &argument,
         sizeof(int64_t),
-        &ptr);
+        (void**) &ptr);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_make_relocatable(
@@ -120,6 +123,9 @@ int yr_parser_emit_with_arg_reloc(
         ptr,
         0,
         EOL);
+
+  if (argument_address != NULL)
+    *argument_address = ptr;
 
   return result;
 }
@@ -161,7 +167,8 @@ int yr_parser_emit_pushes_for_strings(
         yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_PUSH,
-            PTR_TO_UINT64(string),
+            PTR_TO_INT64(string),
+            NULL,
             NULL);
 
         string->g_flags |= STRING_GFLAGS_REFERENCED;
@@ -726,7 +733,8 @@ int yr_parser_reduce_rule_declaration(
   FAIL_ON_COMPILER_ERROR(yr_parser_emit_with_arg_reloc(
       yyscanner,
       OP_MATCH_RULE,
-      PTR_TO_UINT64(rule),
+      PTR_TO_INT64(rule),
+      NULL,
       NULL));
 
   FAIL_ON_COMPILER_ERROR(yr_hash_table_add(
@@ -759,6 +767,7 @@ int yr_parser_reduce_string_identifier(
           yyscanner,
           OP_PUSH_M,
           compiler->loop_for_of_mem_offset,
+          NULL,
           NULL);
 
       yr_parser_emit(yyscanner, instruction, NULL);
@@ -810,7 +819,8 @@ int yr_parser_reduce_string_identifier(
       yr_parser_emit_with_arg_reloc(
           yyscanner,
           OP_PUSH,
-          PTR_TO_UINT64(string),
+          PTR_TO_INT64(string),
+          NULL,
           NULL);
 
       if (instruction != OP_FOUND)
@@ -947,7 +957,8 @@ int yr_parser_reduce_import(
     compiler->last_result = yr_parser_emit_with_arg_reloc(
         yyscanner,
         OP_IMPORT,
-        PTR_TO_UINT64(name),
+        PTR_TO_INT64(name),
+        NULL,
         NULL);
 
   return compiler->last_result;
@@ -1044,6 +1055,7 @@ int yr_parser_reduce_operation(
           yyscanner,
           OP_INT_TO_DBL,
           (left_operand.type == EXPRESSION_TYPE_INTEGER) ? 2 : 1,
+          NULL,
           NULL);
     }
 

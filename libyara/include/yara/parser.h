@@ -31,21 +31,24 @@ int yr_parser_emit_with_arg(
     yyscan_t yyscanner,
     uint8_t instruction,
     int64_t argument,
-    uint8_t** instruction_address);
+    uint8_t** instruction_address,
+    int64_t** argument_address);
 
 
 int yr_parser_emit_with_arg_double(
     yyscan_t yyscanner,
     uint8_t instruction,
     double argument,
-    uint8_t** instruction_address);
+    uint8_t** instruction_address,
+    double** argument_address);
 
 
 int yr_parser_emit_with_arg_reloc(
     yyscan_t yyscanner,
     uint8_t instruction,
     int64_t argument,
-    uint8_t** instruction_address);
+    uint8_t** instruction_address,
+    int64_t** argument_address);
 
 
 int yr_parser_check_types(

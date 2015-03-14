@@ -45,7 +45,7 @@ limitations under the License.
 #endif
 
 
-#define PTR_TO_UINT64(x)  ((uint64_t) (size_t) x)
+#define PTR_TO_INT64(x)  ((int64_t) (size_t) x)
 
 
 #ifdef NDEBUG
