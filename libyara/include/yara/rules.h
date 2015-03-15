@@ -20,6 +20,7 @@ limitations under the License.
 
 #include <yara/types.h>
 #include <yara/utils.h>
+#include <yara/filemap.h>
 
 
 #define CALLBACK_MSG_RULE_MATCHING              1
@@ -68,6 +69,15 @@ YR_API int yr_rules_scan_mem(
 YR_API int yr_rules_scan_file(
     YR_RULES* rules,
     const char* filename,
+    int flags,
+    YR_CALLBACK_FUNC callback,
+    void* user_data,
+    int timeout);
+
+
+YR_API int yr_rules_scan_fd(
+    YR_RULES* rules,
+    FILE_DESCRIPTOR fd,
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
