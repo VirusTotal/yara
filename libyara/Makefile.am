@@ -26,6 +26,10 @@ AM_YFLAGS=-d
 
 AM_CFLAGS=-O3 -Wall -Wno-deprecated-declarations -std=gnu99 -I$(srcdir)/include
 
+if GCC
+AM_CFLAGS+=-fvisibility=hidden
+endif
+
 ACLOCAL_AMFLAGS=-I m4
 
 include_HEADERS = include/yara.h
@@ -55,7 +59,7 @@ yarainclude_HEADERS = \
 
 lib_LTLIBRARIES = libyara.la
 
-libyara_la_LDFLAGS = -export-symbols $(srcdir)/libyara.sym -version-number 3:3:0
+libyara_la_LDFLAGS = -version-number 3:3:0
 
 libyara_la_SOURCES = \
   $(MODULES) \

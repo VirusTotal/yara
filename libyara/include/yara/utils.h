@@ -31,9 +31,17 @@ limitations under the License.
 #endif
 
 #ifdef __cplusplus
-#define YR_API extern "C"
+#define EXTERNC extern "C"
 #else
-#define YR_API
+#define EXTERNC
+#endif
+
+#if defined(__GNUC__)
+#define YR_API EXTERNC __attribute__((visibility("default")))
+#elif defined(_MSC_VER)
+#define YR_API EXTERNC __declspec(dllexport)
+#else
+#deinfe YR_API EXTERNC
 #endif
 
 #ifndef min
