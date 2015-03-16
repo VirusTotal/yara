@@ -709,7 +709,7 @@ int yr_object_array_set_item(
 
   if (array->items == NULL)
   {
-    count = max(64, (index + 1) * 2);
+    count = yr_max(64, (index + 1) * 2);
 
     array->items = (YR_ARRAY_ITEMS*) yr_malloc(
         sizeof(YR_ARRAY_ITEMS) + count * sizeof(YR_OBJECT*));
@@ -1076,7 +1076,7 @@ void yr_object_print_data(
 
   char indent_spaces[32];
 
-  indent = min(indent, sizeof(indent_spaces));
+  indent = yr_min(indent, sizeof(indent_spaces));
 
   memset(indent_spaces, '\t', indent);
   indent_spaces[indent] = '\0';

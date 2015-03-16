@@ -1579,7 +1579,7 @@ int yr_re_exec(
     input_incr = -input_incr;
   }
 
-  max_count = min(input_size, RE_SCAN_LIMIT);
+  max_count = yr_min(input_size, RE_SCAN_LIMIT);
 
   // Round down max_count to a multiple of character_size, this way if
   // character_size is 2 and input_size is impair we are ignoring the

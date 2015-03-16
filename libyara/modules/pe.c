@@ -376,7 +376,7 @@ uint64_t pe_rva_to_offset(
 
   int i = 0;
 
-  while(i < min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS))
+  while(i < yr_min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS))
   {
     if ((uint8_t*) section - \
         (uint8_t*) pe->data + sizeof(IMAGE_SECTION_HEADER) < pe->data_size)
@@ -828,7 +828,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
           {
             name = (char *) yr_strndup(
                 (char*) import->Name,
-                min(available_space(pe, import->Name), 512));
+                yr_min(available_space(pe, import->Name), 512));
           }
         }
       }
@@ -881,7 +881,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
           {
             name = (char *) yr_strndup(
                 (char*) import->Name,
-                min(available_space(pe, import->Name), 512));
+                yr_min(available_space(pe, import->Name), 512));
           }
         }
       }
@@ -1250,7 +1250,7 @@ void pe_parse_header(
 
   section = IMAGE_FIRST_SECTION(pe->header);
 
-  int scount = min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS);
+  int scount = yr_min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS);
 
   for (int i = 0; i < scount; i++)
   {

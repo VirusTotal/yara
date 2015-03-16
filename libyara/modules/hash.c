@@ -136,7 +136,7 @@ define_function(data_md5)
         offset < block->base + block->size)
     {
       uint64_t data_offset = offset - block->base;
-      uint64_t data_len = min(length, block->size - data_offset);
+      uint64_t data_len = yr_min(length, block->size - data_offset);
 
       offset += data_len;
       length -= data_len;
@@ -199,7 +199,7 @@ define_function(data_sha1)
         offset < block->base + block->size)
     {
       uint64_t data_offset = offset - block->base;
-      uint64_t data_len = min(length, block->size - data_offset);
+      uint64_t data_len = yr_min(length, block->size - data_offset);
 
       offset += data_len;
       length -= data_len;
@@ -262,7 +262,7 @@ define_function(data_sha256)
         offset < block->base + block->size)
     {
       uint64_t data_offset = offset - block->base;
-      uint64_t data_len = min(length, block->size - data_offset);
+      uint64_t data_len = yr_min(length, block->size - data_offset);
 
       offset += data_len;
       length -= data_len;
@@ -319,7 +319,7 @@ define_function(data_checksum32)
         offset < block->base + block->size)
     {
       uint64_t data_offset = offset - block->base;
-      uint64_t data_len = min(length, block->size - data_offset);
+      uint64_t data_len = yr_min(length, block->size - data_offset);
 
       offset += data_len;
       length -= data_len;
