@@ -95,6 +95,7 @@ AC_CHECK_FUNCS([strlcpy strlcat memmem timegm])
 AM_CONDITIONAL([CUCKOO], [test x$build_cuckoo_module = xtrue])
 AM_CONDITIONAL([MAGIC], [test x$build_magic_module = xtrue])
 AM_CONDITIONAL([HASH], [test x$build_hash_module = xtrue])
+AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libyara/Makefile])
