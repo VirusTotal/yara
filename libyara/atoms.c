@@ -591,7 +591,7 @@ int _yr_atoms_wide(
         break;
     }
 
-    new_atom->atom_length = min(atom->atom_length * 2, MAX_ATOM_LENGTH);
+    new_atom->atom_length = yr_min(atom->atom_length * 2, MAX_ATOM_LENGTH);
     new_atom->forward_code = atom->forward_code;
     new_atom->backward_code = atom->backward_code;
     new_atom->backtrack = atom->backtrack * 2;
@@ -1137,7 +1137,7 @@ int yr_atoms_extract_from_string(
   item->next = NULL;
   item->backtrack = 0;
 
-  length = min(string_length, MAX_ATOM_LENGTH);
+  length = yr_min(string_length, MAX_ATOM_LENGTH);
 
   for (i = 0; i < length; i++)
     item->atom[i] = string[i];

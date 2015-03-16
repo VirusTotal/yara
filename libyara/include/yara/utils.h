@@ -44,14 +44,8 @@ limitations under the License.
 #deinfe YR_API EXTERNC
 #endif
 
-#ifndef min
-#define min(x, y) ((x < y) ? (x) : (y))
-#endif
-
-#ifndef max
-#define max(x, y) ((x > y) ? (x) : (y))
-#endif
-
+#define yr_min(x, y) ((x < y) ? (x) : (y))
+#define yr_max(x, y) ((x > y) ? (x) : (y))
 
 #define PTR_TO_INT64(x)  ((int64_t) (size_t) x)
 

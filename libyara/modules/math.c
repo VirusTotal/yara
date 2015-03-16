@@ -91,7 +91,7 @@ define_function(data_entropy)
         offset < block->base + block->size)
     {
       uint64_t data_offset = offset - block->base;
-      uint64_t data_len = min(length, block->size - data_offset);
+      uint64_t data_len = yr_min(length, block->size - data_offset);
 
       total_len += data_len;
       offset += data_len;
@@ -181,7 +181,7 @@ define_function(data_deviation)
         offset < block->base + block->size)
     {
       uint64_t data_offset = offset - block->base;
-      uint64_t data_len = min(length, block->size - data_offset);
+      uint64_t data_len = yr_min(length, block->size - data_offset);
 
       total_len += data_len;
       offset += data_len;
@@ -249,7 +249,7 @@ define_function(data_mean)
         offset < block->base + block->size)
     {
       uint64_t data_offset = offset - block->base;
-      uint64_t data_len = min(length, block->size - data_offset);
+      uint64_t data_len = yr_min(length, block->size - data_offset);
 
       total_len += data_len;
       offset += data_len;
@@ -309,7 +309,7 @@ define_function(data_serial_correlation)
         offset < block->base + block->size)
     {
       uint64_t data_offset = offset - block->base;
-      uint64_t data_len = min(length, block->size - data_offset);
+      uint64_t data_len = yr_min(length, block->size - data_offset);
 
       total_len += data_len;
       offset += data_len;
@@ -416,7 +416,7 @@ define_function(data_monte_carlo_pi)
         offset < block->base + block->size)
     {
       uint64_t data_offset = offset - block->base;
-      uint64_t data_len = min(length, block->size - data_offset);
+      uint64_t data_len = yr_min(length, block->size - data_offset);
 
       offset += data_len;
       length -= data_len;

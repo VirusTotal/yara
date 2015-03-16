@@ -132,7 +132,7 @@ YR_API int yr_filemap_map_ex(
   if (size == 0)
     size = file_size - offset;
 
-  pmapped_file->size = min(size, file_size - offset);
+  pmapped_file->size = yr_min(size, file_size - offset);
 
   if (pmapped_file->size != 0)
   {
@@ -211,7 +211,7 @@ YR_API int yr_filemap_map_ex(
   if (pmapped_file->file == -1)
     return ERROR_COULD_NOT_OPEN_FILE;
 
-  pmapped_file->size = min(size, fstat.st_size - offset);
+  pmapped_file->size = yr_min(size, fstat.st_size - offset);
 
   if (pmapped_file->size != 0)
   {

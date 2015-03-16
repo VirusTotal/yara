@@ -633,7 +633,7 @@ void _yr_ac_print_automaton_state(
     {
       printf("{ ");
 
-      for (i = 0; i < min(match->string->length, 10); i++)
+      for (i = 0; i < yr_min(match->string->length, 10); i++)
         printf("%02x ", match->string->string[i]);
 
       printf("}");
@@ -642,7 +642,7 @@ void _yr_ac_print_automaton_state(
     {
       printf("/");
 
-      for (i = 0; i < min(match->string->length, 10); i++)
+      for (i = 0; i < yr_min(match->string->length, 10); i++)
         printf("%c", match->string->string[i]);
 
       printf("/");
@@ -651,7 +651,7 @@ void _yr_ac_print_automaton_state(
     {
       printf("\"");
 
-      for (i = 0; i < min(match->string->length, 10); i++)
+      for (i = 0; i < yr_min(match->string->length, 10); i++)
         printf("%c", match->string->string[i]);
 
       printf("\"");
