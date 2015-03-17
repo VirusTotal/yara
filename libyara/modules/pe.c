@@ -707,7 +707,7 @@ int pe_collect_resources(
   DWORD length;
   size_t offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
 
-  if (offset == 0 || !fits_in_pe(pe, offset, rsrc_data->Size))
+  if (offset == 0 || !fits_in_pe(pe, pe->data + offset, rsrc_data->Size))
     return RESOURCE_CALLBACK_CONTINUE;
 
   set_integer(
