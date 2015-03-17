@@ -40,7 +40,7 @@ limitations under the License.
 // Returns:
 //    One of the following error codes:
 //       ERROR_SUCCESS
-//       ERROR_INVALID_ARGUMENT
+//       ERROR_YARA_INVALID_ARGUMENT
 //       ERROR_COULD_NOT_OPEN_FILE
 //       ERROR_COULD_NOT_MAP_FILE
 //
@@ -71,7 +71,7 @@ YR_API int yr_filemap_map(
 // Returns:
 //    One of the following error codes:
 //       ERROR_SUCCESS
-//       ERROR_INVALID_ARGUMENT
+//       ERROR_YARA_INVALID_ARGUMENT
 //       ERROR_COULD_NOT_OPEN_FILE
 //       ERROR_COULD_NOT_MAP_FILE
 //
@@ -90,11 +90,11 @@ YR_API int yr_filemap_map_ex(
   pmapped_file->size = 0;
 
   if (file_path == NULL)
-    return ERROR_INVALID_ARGUMENT;
+    return ERROR_YARA_INVALID_ARGUMENT;
 
   // Ensure that offset is aligned to 1MB
   if (offset >> 20 << 20 != offset)
-    return ERROR_INVALID_ARGUMENT;
+    return ERROR_YARA_INVALID_ARGUMENT;
 
   pmapped_file->file = CreateFileA(
       file_path,
@@ -191,11 +191,11 @@ YR_API int yr_filemap_map_ex(
   pmapped_file->file = -1;
 
   if (file_path == NULL)
-    return ERROR_INVALID_ARGUMENT;
+    return ERROR_YARA_INVALID_ARGUMENT;
 
   // Ensure that offset is aligned to 1MB
   if (offset >> 20 << 20 != offset)
-    return ERROR_INVALID_ARGUMENT;
+    return ERROR_YARA_INVALID_ARGUMENT;
 
   if (stat(file_path, &fstat) != 0 || S_ISDIR(fstat.st_mode))
       return ERROR_COULD_NOT_OPEN_FILE;

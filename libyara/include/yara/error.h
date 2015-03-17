@@ -45,12 +45,12 @@ limitations under the License.
 #define ERROR_MISPLACED_ANONYMOUS_STRING        21
 #define ERROR_INCLUDES_CIRCULAR_REFERENCE       22
 #define ERROR_INCLUDE_DEPTH_EXCEEDED            23
-#define ERROR_WRONG_TYPE                        24
+#define ERROR_YARA_WRONG_TYPE                        24
 #define ERROR_EXEC_STACK_OVERFLOW               25
 #define ERROR_SCAN_TIMEOUT                      26
 #define ERROR_TOO_MANY_SCAN_THREADS             27
 #define ERROR_CALLBACK_ERROR                    28
-#define ERROR_INVALID_ARGUMENT                  29
+#define ERROR_YARA_INVALID_ARGUMENT                  29
 #define ERROR_TOO_MANY_MATCHES                  30
 #define ERROR_INTERNAL_FATAL_ERROR              31
 #define ERROR_NESTED_FOR_OF_LOOP                32

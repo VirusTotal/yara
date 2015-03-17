@@ -852,7 +852,7 @@ YR_API char* yr_compiler_get_error_message(
     case ERROR_INVALID_HEX_STRING:
     case ERROR_INVALID_REGULAR_EXPRESSION:
     case ERROR_SYNTAX_ERROR:
-    case ERROR_WRONG_TYPE:
+    case ERROR_YARA_WRONG_TYPE:
       snprintf(
           buffer,
           buffer_size,

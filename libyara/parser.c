@@ -1093,13 +1093,13 @@ int yr_parser_reduce_operation(
       yr_compiler_set_error_extra_info_fmt(
           compiler, "strings don't support \"%s\" operation", op);
 
-      compiler->last_result = ERROR_WRONG_TYPE;
+      compiler->last_result = ERROR_YARA_WRONG_TYPE;
     }
   }
   else
   {
     yr_compiler_set_error_extra_info(compiler, "type mismatch");
-    compiler->last_result = ERROR_WRONG_TYPE;
+    compiler->last_result = ERROR_YARA_WRONG_TYPE;
   }
 
   return compiler->last_result;

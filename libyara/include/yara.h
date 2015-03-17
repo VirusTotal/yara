@@ -20,10 +20,10 @@ limitations under the License.
 #include "yara/utils.h"
 #include "yara/filemap.h"
 #include "yara/compiler.h"
-#include "yara/modules.h"
 #include "yara/object.h"
 #include "yara/libyara.h"
 #include "yara/error.h"
 #include "yara/stream.h"
+#include "yara/rules.h"
 
 #endif

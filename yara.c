@@ -36,6 +36,7 @@ limitations under the License.
 #include <ctype.h>
 
 #include <yara.h>
+#include <yara/modules.h>
 
 #include "args.h"
 #include "threading.h"

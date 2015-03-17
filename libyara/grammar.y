@@ -71,7 +71,7 @@ limitations under the License.
               compiler, "wrong type \"boolean\" for " op " operator"); \
           break; \
       } \
-      compiler->last_result = ERROR_WRONG_TYPE; \
+      compiler->last_result = ERROR_YARA_WRONG_TYPE; \
       yyerror(yyscanner, compiler, NULL); \
       YYERROR; \
     }
@@ -665,7 +665,7 @@ identifier
           {
             yr_compiler_set_error_extra_info(
                 compiler, "array indexes must be of integer type");
-            compiler->last_result = ERROR_WRONG_TYPE;
+            compiler->last_result = ERROR_YARA_WRONG_TYPE;
           }
 
           ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -688,7 +688,7 @@ identifier
           {
             yr_compiler_set_error_extra_info(
                 compiler, "dictionary keys must be of string type");
-            compiler->last_result = ERROR_WRONG_TYPE;
+            compiler->last_result = ERROR_YARA_WRONG_TYPE;
           }
 
           ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -1423,14 +1423,14 @@ range
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for range's lower bound");
-          compiler->last_result = ERROR_WRONG_TYPE;
+          compiler->last_result = ERROR_YARA_WRONG_TYPE;
         }
 
         if ($5.type != EXPRESSION_TYPE_INTEGER)
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for range's upper bound");
-          compiler->last_result = ERROR_WRONG_TYPE;
+          compiler->last_result = ERROR_YARA_WRONG_TYPE;
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -1445,7 +1445,7 @@ integer_enumeration
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for enumeration item");
-          compiler->last_result = ERROR_WRONG_TYPE;
+          compiler->last_result = ERROR_YARA_WRONG_TYPE;
 
         }
 
@@ -1457,7 +1457,7 @@ integer_enumeration
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for enumeration item");
-          compiler->last_result = ERROR_WRONG_TYPE;
+          compiler->last_result = ERROR_YARA_WRONG_TYPE;
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
@@ -1688,7 +1688,7 @@ primary_expression
                   compiler,
                   "wrong usage of identifier \"%s\"",
                   $1.identifier);
-              compiler->last_result = ERROR_WRONG_TYPE;
+              compiler->last_result = ERROR_YARA_WRONG_TYPE;
           }
         }
         else
