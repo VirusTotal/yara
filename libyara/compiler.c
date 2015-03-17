@@ -50,13 +50,12 @@ YR_API int yr_compiler_create(
   new_compiler->file_name_stack_ptr = 0;
   new_compiler->fixup_stack_head = NULL;
   new_compiler->current_rule_flags = 0;
-  new_compiler->allow_includes = TRUE;
+  new_compiler->allow_includes = 1;
   new_compiler->loop_depth = 0;
   new_compiler->loop_for_of_mem_offset = -1;
   new_compiler->compiled_rules_arena = NULL;
   new_compiler->namespaces_count = 0;
   new_compiler->current_rule_strings = NULL;
-  new_compiler->inside_integer_set = FALSE;
 
   result = yr_hash_table_create(10007, &new_compiler->rules_table);
 

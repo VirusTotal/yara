@@ -1017,8 +1017,6 @@ expression
             NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-
-        compiler->inside_integer_set = TRUE;
       }
       integer_set ':'
       {
@@ -1051,7 +1049,6 @@ expression
               yyscanner, OP_POP_M, mem_offset, NULL, NULL);
         }
 
-        compiler->inside_integer_set = FALSE;
         compiler->loop_address[compiler->loop_depth] = addr;
         compiler->loop_identifier[compiler->loop_depth] = $3;
         compiler->loop_depth++;
@@ -1258,7 +1255,7 @@ expression
       {
         uint8_t* and_addr;
 
-        // Ensure that we have at least two consecutive bytes in the arena's
+        // Ensure that we have at least two consecutive bytes in the arena's 
         // current page, one for the AND opcode and one for opcode following the
         // AND. This is necessary because we need to compute the address for the
         // opcode following the AND, and we don't want the AND in one page and
@@ -1281,9 +1278,9 @@ expression
         // We know that the AND opcode and the following one are within the same
         // page, so we can compute the address for the opcode following the AND
         // by simply adding one to its address.
-
+        
         *(fixup->address) = PTR_TO_INT64(and_addr + 1);
-
+        
         compiler->fixup_stack_head = fixup->next;
         yr_free(fixup);
 
@@ -1317,7 +1314,7 @@ expression
       {
         uint8_t* or_addr;
 
-        // Ensure that we have at least two consecutive bytes in the arena's
+        // Ensure that we have at least two consecutive bytes in the arena's 
         // current page, one for the OR opcode and one for opcode following the
         // OR. This is necessary because we need to compute the address for the
         // opcode following the OR, and we don't want the OR in one page and
@@ -1436,12 +1433,6 @@ range
           compiler->last_result = ERROR_WRONG_TYPE;
         }
 
-        if (compiler->inside_integer_set &&
-            ($2.value.integer == UNDEFINED || $5.value.integer == UNDEFINED))
-        {
-          yywarning(yyscanner, "this loop can be potentially slow");
-        }
-
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
       }
     ;
@@ -1455,6 +1446,7 @@ integer_enumeration
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for enumeration item");
           compiler->last_result = ERROR_WRONG_TYPE;
+
         }
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
