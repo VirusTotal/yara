@@ -489,7 +489,8 @@ YR_OBJECT* _yr_object_lookup(
         return NULL;
       }
 
-      assert(*p++ == ']');
+      assert(*p == ']');
+      p++;
       assert(*p == '.' || *p == '\0');
 
       switch(obj->type)
