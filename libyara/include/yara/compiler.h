@@ -71,11 +71,10 @@ typedef struct _YR_COMPILER
   YR_HASH_TABLE*    rules_table;
   YR_HASH_TABLE*    objects_table;
   YR_NAMESPACE*     current_namespace;
-  YR_STRING*        current_rule_strings;
+  YR_RULE*          current_rule;
 
   YR_FIXUP*         fixup_stack_head;
 
-  int               current_rule_flags;
   int               namespaces_count;
 
   uint8_t*          loop_address[MAX_LOOP_NESTING];

@@ -142,7 +142,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 178 "grammar.y"
+#line 180 "grammar.y"
 {
   EXPRESSION      expression;
   SIZED_STRING*   sized_string;
@@ -151,9 +151,10 @@ typedef union YYSTYPE
   double          double_;
   YR_STRING*      string;
   YR_META*        meta;
+  YR_RULE*        rule;
 }
 /* Line 1529 of yacc.c.  */
-#line 157 "grammar.h"
+#line 158 "grammar.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

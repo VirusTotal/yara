@@ -166,6 +166,7 @@ int yr_execute_code(
   STACK_ITEM r2;
   STACK_ITEM r3;
 
+  YR_RULE* current_rule = NULL;
   YR_RULE* rule;
   YR_MATCH* match;
   YR_OBJECT_FUNCTION* function;
@@ -397,6 +398,11 @@ int yr_execute_code(
         ip += sizeof(uint64_t);
         r1.i = rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0;
         push(r1);
+        break;
+
+      case OP_INIT_RULE:
+        current_rule = *(YR_RULE**)(ip + 1);
+        ip += sizeof(uint64_t);
         break;
 
       case OP_MATCH_RULE:
@@ -1071,6 +1077,10 @@ int yr_execute_code(
       {
         if (difftime(time(NULL), start_time) > timeout)
         {
+          #ifdef PROFILING_ENABLED
+          assert(current_rule != NULL);
+          current_rule->clock_ticks += clock() - start;
+          #endif
           result = ERROR_SCAN_TIMEOUT;
           stop = TRUE;
         }

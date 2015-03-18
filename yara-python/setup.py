@@ -14,9 +14,18 @@
 # limitations under the License.
 #
 
+import sys
 from distutils.core import setup, Extension
 
-setup(name='yara-python',
+args = sys.argv[1:]
+macros = []
+
+if '--with-profiling' in args:
+  macros.append(('PROFILING_ENABLED','1'))
+  args.remove('--with-profiling')
+
+setup(script_args=args,
+      name='yara-python',
       version='3.3.0',
       author='Victor M. Alvarez',
       author_email='plusvic@gmail.com;vmalvarez@virustotal.com',
@@ -26,5 +35,6 @@ setup(name='yara-python',
         libraries=['yara'],
         include_dirs=['../libyara/include'],
         library_dirs=['../libyara/.libs'],
+        define_macros=macros,
         extra_compile_args=['-std=gnu99']
     )])
