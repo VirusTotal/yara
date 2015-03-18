@@ -1191,9 +1191,27 @@ static PyObject * Rules_match(
       Py_DECREF(callback_data.matches);
 
       if (error == ERROR_CALLBACK_ERROR)
+      {
         return NULL;
+      }
       else
-        return handle_error(error, filepath);
+      {
+        handle_error(error, filepath);
+
+#ifdef PROFILING_ENABLED
+        PyObject* exception = PyErr_Occurred();
+
+        if (exception != NULL && error == ERROR_SCAN_TIMEOUT)
+        {
+          PyObject_SetAttrString(
+              exception,
+              "profiling_info",
+              Rules_profiling_info(self, NULL));
+        }
+#endif
+
+        return NULL;
+      }
     }
   }
 

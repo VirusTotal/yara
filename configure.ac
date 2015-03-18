@@ -26,6 +26,13 @@ case $host_alias in
      i?86-*-mingw*) CFLAGS="$CFLAGS -D__MINGW_USE_VC2005_COMPAT" ;;
 esac
 
+
+AC_ARG_ENABLE([profiling],
+  [AS_HELP_STRING([--enable-profiling], [enable profiling support])],
+  [if test x$enableval = xyes; then
+    CFLAGS="$CFLAGS -DPROFILING_ENABLED"
+  fi])
+
 AC_ARG_ENABLE([dmalloc],
   [AS_HELP_STRING([--enable-dmalloc],
     [enable dmalloc to debug heap-related issues])],

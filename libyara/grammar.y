@@ -137,6 +137,8 @@ limitations under the License.
 %left '*' '\\' '%'
 %right _NOT_ '~' UNARY_MINUS
 
+%type <rule>   rule
+
 %type <string> strings
 %type <string> string_declaration
 %type <string> string_declarations
@@ -183,6 +185,7 @@ limitations under the License.
   double          double_;
   YR_STRING*      string;
   YR_META*        meta;
+  YR_RULE*        rule;
 }
 
 
@@ -211,9 +214,9 @@ import
 
 
 rule
-    : rule_modifiers _RULE_ _IDENTIFIER_ tags '{' meta strings condition '}'
+    : rule_modifiers _RULE_ _IDENTIFIER_ tags '{' meta strings
       {
-        int result = yr_parser_reduce_rule_declaration(
+        YR_RULE* rule = yr_parser_reduce_rule_declaration_phase_1(
             yyscanner,
             $1,
             $3,
@@ -221,9 +224,20 @@ rule
             $7,
             $6);
 
+        ERROR_IF(rule == NULL);
+
+        $$ = rule;
+      }
+      condition '}'
+      {
+        YR_RULE* rule = $<rule>8; // rule created in phase 1
+
+        compiler->last_result = yr_parser_reduce_rule_declaration_phase_2(
+            yyscanner, rule);
+
         yr_free($3);
 
-        ERROR_IF(result != ERROR_SUCCESS);
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
       }
     ;
 
@@ -263,7 +277,6 @@ strings
     : /* empty */
       {
         $$ = NULL;
-        compiler->current_rule_strings = $$;
       }
     | _STRINGS_ ':' string_declarations
       {
@@ -286,7 +299,6 @@ strings
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        compiler->current_rule_strings = $3;
         $$ = $3;
       }
     ;
@@ -1255,7 +1267,7 @@ expression
       {
         uint8_t* and_addr;
 
-        // Ensure that we have at least two consecutive bytes in the arena's 
+        // Ensure that we have at least two consecutive bytes in the arena's
         // current page, one for the AND opcode and one for opcode following the
         // AND. This is necessary because we need to compute the address for the
         // opcode following the AND, and we don't want the AND in one page and
@@ -1278,9 +1290,9 @@ expression
         // We know that the AND opcode and the following one are within the same
         // page, so we can compute the address for the opcode following the AND
         // by simply adding one to its address.
-        
+
         *(fixup->address) = PTR_TO_INT64(and_addr + 1);
-        
+
         compiler->fixup_stack_head = fixup->next;
         yr_free(fixup);
 
@@ -1314,7 +1326,7 @@ expression
       {
         uint8_t* or_addr;
 
-        // Ensure that we have at least two consecutive bytes in the arena's 
+        // Ensure that we have at least two consecutive bytes in the arena's
         // current page, one for the OR opcode and one for opcode following the
         // OR. This is necessary because we need to compute the address for the
         // opcode following the OR, and we don't want the OR in one page and
