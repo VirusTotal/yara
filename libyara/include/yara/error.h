@@ -88,7 +88,7 @@ limitations under the License.
 
 
 #ifdef NDEBUG
-#define assertf(expr, msg)  ((void)0)
+#define assertf(expr, msg, ...)  ((void)0)
 #else
 #define assertf(expr, msg, ...) \
     if(!(expr)) { \
