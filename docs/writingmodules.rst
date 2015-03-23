@@ -61,7 +61,7 @@ as our starting point. The file looks like this:
         void* module_data,
         size_t module_data_size)
     {
-      set_string("Hello World!", module, "greeting");
+      set_string("Hello World!", module_object, "greeting");
       return ERROR_SUCCESS;
     }
 
