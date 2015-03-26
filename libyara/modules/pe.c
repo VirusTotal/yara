@@ -73,6 +73,7 @@ limitations under the License.
 
 
 #define MAX_PE_SECTIONS              96
+#define MAX_PE_IMPORTS               256
 
 
 #define IS_RESOURCE_SUBDIRECTORY(entry) \
@@ -809,12 +810,13 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
   if (offset == 0)
     return NULL;
 
+  int num_functions = 0;
   if (IS_64BITS_PE(pe))
   {
     PIMAGE_THUNK_DATA64 thunks64 = (PIMAGE_THUNK_DATA64)(pe->data + offset);
 
     while (struct_fits_in_pe(pe, thunks64, IMAGE_THUNK_DATA64) &&
-           thunks64->u1.Ordinal != 0)
+           thunks64->u1.Ordinal != 0 && num_functions < MAX_PE_IMPORTS)
     {
       char* name = NULL;
 
@@ -858,7 +860,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
 
         tail = imported_func;
       }
-
+      num_functions++;
       thunks64++;
     }
   }
@@ -867,7 +869,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
     PIMAGE_THUNK_DATA32 thunks32 = (PIMAGE_THUNK_DATA32)(pe->data + offset);
 
     while (struct_fits_in_pe(pe, thunks32, IMAGE_THUNK_DATA32) &&
-           thunks32->u1.Ordinal != 0)
+           thunks32->u1.Ordinal != 0 && num_functions < MAX_PE_IMPORTS)
     {
       char* name = NULL;
 
@@ -911,11 +913,10 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
 
         tail = imported_func;
       }
-
+      num_functions++;
       thunks32++;
     }
   }
-
   return head;
 }
 
@@ -971,16 +972,14 @@ IMPORTED_DLL* pe_parse_imports(
 
   PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR) \
       (pe->data + offset);
-
+  int num_imports = 0;
   while (struct_fits_in_pe(pe, imports, IMAGE_IMPORT_DESCRIPTOR) &&
-         imports->Name != 0)
+         imports->Name != 0 && num_imports < MAX_PE_IMPORTS)
   {
     uint64_t offset = pe_rva_to_offset(pe, imports->Name);
-
     if (offset != 0 && offset < pe->data_size)
     {
       char* dll_name = (char *) (pe->data + offset);
-
       if (!pe_valid_dll_name(dll_name, pe->data_size - offset))
         break;
 
@@ -1008,10 +1007,9 @@ IMPORTED_DLL* pe_parse_imports(
         }
       }
     }
-
+    num_imports++;
     imports++;
   }
-
   return head;
 }
 
