@@ -103,10 +103,16 @@ void parse_elf_header_##bits(                                                  \
   YR_OBJECT* elf_obj)                                                          \
 {                                                                              \
   elf##bits##_section_header_t* section;                                       \
+  elf##bits##_program_header_t* segment;                                       \
                                                                                \
   set_integer(elf->type, elf_obj, "type");                                     \
   set_integer(elf->machine, elf_obj, "machine");                               \
+  set_integer(elf->sh_offset, elf_obj, "sh_offset");                           \
+  set_integer(elf->sh_entry_size, elf_obj, "sh_entry_size");                   \
   set_integer(elf->sh_entry_count, elf_obj, "number_of_sections");             \
+  set_integer(elf->ph_offset, elf_obj, "ph_offset");                           \
+  set_integer(elf->ph_entry_size, elf_obj, "ph_entry_size");                   \
+  set_integer(elf->ph_entry_count, elf_obj, "number_of_segments");             \
                                                                                \
   if (elf->entry != 0)                                                         \
   {                                                                            \
@@ -146,7 +152,28 @@ void parse_elf_header_##bits(                                                  \
       section++;                                                               \
     }                                                                          \
   }                                                                            \
-}
+                                                                               \
+  if(elf->ph_entry_count &&                                                    \
+     elf->ph_offset + elf->ph_entry_count *                                    \
+        sizeof(elf##bits##_program_header_t) <= elf_size)                      \
+  {                                                                            \
+    segment = (elf##bits##_program_header_t*)                                  \
+        ((uint8_t*) elf + elf->ph_offset);                                     \
+                                                                               \
+    for (int i = 0; i < elf->ph_entry_count; i++)                              \
+    {                                                                          \
+      set_integer(segment->type, elf_obj, "segments[%i].type", i);             \
+      set_integer(segment->flags, elf_obj, "segments[%i].flags", i);           \
+      set_integer(segment->offset, elf_obj, "segments[%i].offset", i);         \
+      set_integer(segment->virt_addr, elf_obj, "segments[%i].virt_addr", i);   \
+      set_integer(segment->phys_addr, elf_obj, "segments[%i].phys_addr", i);   \
+      set_integer(segment->file_size, elf_obj, "segments[%i].file_size", i);   \
+      set_integer(segment->mem_size, elf_obj, "segments[%i].mem_size", i);     \
+      set_integer(segment->alignment, elf_obj, "segments[%i].alignment", i);   \
+      segment++;                                                               \
+    }                                                                          \
+  }                                                                            \
+}                                                                                                             
 
 
 ELF_RVA_TO_OFFSET(32);
@@ -196,8 +223,15 @@ begin_declarations;
   declare_integer("type");
   declare_integer("machine");
   declare_integer("entry_point");
+  
   declare_integer("number_of_sections");
-
+  declare_integer("sh_offset");
+  declare_integer("sh_entry_size");
+  
+  declare_integer("number_of_segments");
+  declare_integer("ph_offset");
+  declare_integer("ph_entry_size");
+  
   begin_struct_array("sections");
     declare_integer("type");
     declare_integer("flags");
@@ -205,6 +239,32 @@ begin_declarations;
     declare_integer("size");
     declare_integer("offset");
   end_struct_array("sections");
+  
+  declare_integer("PT_NULL");
+  declare_integer("PT_LOAD");
+  declare_integer("PT_DYNAMIC");
+  declare_integer("PT_INTERP");
+  declare_integer("PT_NOTE");
+  declare_integer("PT_SHLIB");
+  declare_integer("PT_PHDR");
+  declare_integer("PT_TLS");
+  declare_integer("PT_GNU_EH_FRAME");
+  declare_integer("PT_GNU_STACK");
+  
+  declare_integer("PF_X");
+  declare_integer("PF_W");
+  declare_integer("PF_R");
+  
+  begin_struct_array("segments");
+    declare_integer("type");    
+    declare_integer("flags");    
+    declare_integer("offset");    
+    declare_integer("virt_addr");    
+    declare_integer("phys_addr");    
+    declare_integer("file_size");    
+    declare_integer("mem_size");    
+    declare_integer("alignment");    
+  end_struct_array("segments");
 
 end_declarations;
 
@@ -267,6 +327,21 @@ int module_load(
   set_integer(ELF_SHF_WRITE, module_object, "SHF_WRITE");
   set_integer(ELF_SHF_ALLOC, module_object, "SHF_ALLOC");
   set_integer(ELF_SHF_EXECINSTR, module_object, "SHF_EXECINSTR");
+  
+  set_integer(ELF_PT_NULL, module_object, "PT_NULL");
+  set_integer(ELF_PT_LOAD, module_object, "PT_LOAD");
+  set_integer(ELF_PT_DYNAMIC, module_object, "PT_DYNAMIC");
+  set_integer(ELF_PT_INTERP, module_object, "PT_INTERP");
+  set_integer(ELF_PT_NOTE, module_object, "PT_NOTE");
+  set_integer(ELF_PT_SHLIB, module_object, "PT_SHLIB");
+  set_integer(ELF_PT_PHDR, module_object, "PT_PHDR");
+  set_integer(ELF_PT_TLS, module_object, "PT_TLS");
+  set_integer(ELF_PT_GNU_EH_FRAME, module_object, "PT_GNU_EH_FRAME");
+  set_integer(ELF_PT_GNU_STACK, module_object, "PT_GNU_STACK");
+  
+  set_integer(ELF_PF_X, module_object, "PF_X");
+  set_integer(ELF_PF_W, module_object, "PF_W");
+  set_integer(ELF_PF_R, module_object, "PF_R");
 
   foreach_memory_block(context, block)
   {
