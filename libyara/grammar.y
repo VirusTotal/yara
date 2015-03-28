@@ -226,7 +226,7 @@ rule
 
         ERROR_IF(rule == NULL);
 
-        $$ = rule;
+        $<rule>$ = rule;
       }
       condition '}'
       {
