@@ -91,7 +91,8 @@ typedef uint64_t elf64_xword_t;
 #define ELF_PT_SHLIB         5     // Reserved, unspecified semantics
 #define ELF_PT_PHDR          6     // Location and size of program header table
 #define ELF_PT_TLS           7     // Thread-Local Storage 
-#define ELF_PT_GNU_EH_FRAME  0x6474e550 
+#define ELF_PT_GNU_EH_FRAME  0x6474e550
+#define ELF_PT_GNU_STACK     0x6474e551
  
 #define ELF_PF_X             0x1   // Segment is executable
 #define ELF_PF_W             0x2   // Segment is writable
