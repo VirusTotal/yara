@@ -83,6 +83,20 @@ typedef uint64_t elf64_xword_t;
 #define ELF_SHF_ALLOC        0x2   // Section is present during execution
 #define ELF_SHF_EXECINSTR    0x4   // Section contains executable instructions
 
+#define ELF_PT_NULL          0     // The array element is unused
+#define ELF_PT_LOAD          1     // Loadable segment    
+#define ELF_PT_DYNAMIC       2     // Segment contains dynamic linking info
+#define ELF_PT_INTERP        3     // Contains interpreter pathname
+#define ELF_PT_NOTE          4     // Location & size of auxiliary info
+#define ELF_PT_SHLIB         5     // Reserved, unspecified semantics
+#define ELF_PT_PHDR          6     // Location and size of program header table
+#define ELF_PT_TLS           7     // Thread-Local Storage 
+#define ELF_PT_GNU_EH_FRAME  0x6474e550 
+ 
+#define ELF_PF_X             0x1   // Segment is executable
+#define ELF_PF_W             0x2   // Segment is writable
+#define ELF_PF_R             0x4   // Segment is readable
+
 #pragma pack(push,1)
 
 typedef struct
