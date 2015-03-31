@@ -1095,11 +1095,22 @@ void yr_object_print_data(
 
     case OBJECT_TYPE_STRING:
       if (((YR_OBJECT_STRING*) object)->value != NULL)
+      {
         printf(
-            "%s%s = \"%s\"\n",
+            "%s%s = \"",
             indent_spaces,
-            object->identifier,
-            ((YR_OBJECT_STRING*) object)->value->c_string);
+            object->identifier);
+        for (int i = 0; i < ((YR_OBJECT_STRING*) object)->value->length; i++)
+        {
+          if (isprint(((YR_OBJECT_STRING*) object)->value->c_string[i]))
+            printf("%c",
+                ((YR_OBJECT_STRING*) object)->value->c_string[i]);
+          else
+            printf("\\x%02x",
+                (unsigned char) ((YR_OBJECT_STRING*) object)->value->c_string[i]);
+        }
+        printf("\"\n");
+      }
       break;
 
     case OBJECT_TYPE_STRUCTURE:
