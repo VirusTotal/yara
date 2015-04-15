@@ -849,6 +849,9 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
         IMPORTED_FUNCTION* imported_func = (IMPORTED_FUNCTION*)
             yr_calloc(1, sizeof(IMPORTED_FUNCTION));
 
+        if (!imported_func)
+          continue;
+
         imported_func->name = name;
         imported_func->next = NULL;
 
@@ -901,6 +904,9 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
       {
         IMPORTED_FUNCTION* imported_func = (IMPORTED_FUNCTION*)
             yr_calloc(1, sizeof(IMPORTED_FUNCTION));
+
+        if (!imported_func)
+          continue;
 
         imported_func->name = name;
         imported_func->next = NULL;
