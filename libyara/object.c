@@ -1100,15 +1100,17 @@ void yr_object_print_data(
             "%s%s = \"",
             indent_spaces,
             object->identifier);
+
         for (int i = 0; i < ((YR_OBJECT_STRING*) object)->value->length; i++)
         {
-          if (isprint(((YR_OBJECT_STRING*) object)->value->c_string[i]))
-            printf("%c",
-                ((YR_OBJECT_STRING*) object)->value->c_string[i]);
+          char c = ((YR_OBJECT_STRING*) object)->value->c_string[i];
+
+          if (isprint(c))
+            printf("%c", c);
           else
-            printf("\\x%02x",
-                (unsigned char) ((YR_OBJECT_STRING*) object)->value->c_string[i]);
+            printf("\\x%02x", (unsigned char) c);
         }
+
         printf("\"\n");
       }
       break;
