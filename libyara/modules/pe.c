@@ -73,6 +73,7 @@ limitations under the License.
 
 
 #define MAX_PE_SECTIONS              96
+#define MAX_PE_IMPORTS               256
 
 
 #define IS_RESOURCE_SUBDIRECTORY(entry) \
@@ -476,7 +477,9 @@ int _pe_iterate_resources(
   for (int i = 0; i < total_entries; i++)
   {
     if (!struct_fits_in_pe(pe, entry, IMAGE_RESOURCE_DIRECTORY_ENTRY))
-      break;
+    {
+      return RESOURCE_ITERATOR_ABORTED;
+    }
 
     switch(rsrc_tree_level)
     {
@@ -499,43 +502,45 @@ int _pe_iterate_resources(
       PIMAGE_RESOURCE_DIRECTORY directory = (PIMAGE_RESOURCE_DIRECTORY) \
           (rsrc_data + RESOURCE_OFFSET(entry));
 
-      if (struct_fits_in_pe(pe, directory, IMAGE_RESOURCE_DIRECTORY))
+      if (!struct_fits_in_pe(pe, directory, IMAGE_RESOURCE_DIRECTORY))
       {
-        result = _pe_iterate_resources(
-            pe,
-            directory,
-            rsrc_data,
-            rsrc_tree_level + 1,
-            type,
-            id,
-            language,
-            type_string,
-            name_string,
-            lang_string,
-            callback,
-            callback_data);
-
-        if (result == RESOURCE_ITERATOR_ABORTED)
-          return RESOURCE_ITERATOR_ABORTED;
+        return RESOURCE_ITERATOR_ABORTED;
       }
+
+      result = _pe_iterate_resources(
+          pe,
+          directory,
+          rsrc_data,
+          rsrc_tree_level + 1,
+          type,
+          id,
+          language,
+          type_string,
+          name_string,
+          lang_string,
+          callback,
+          callback_data);
+      if (result == RESOURCE_ITERATOR_ABORTED)
+        return RESOURCE_ITERATOR_ABORTED;
     }
     else
     {
       PIMAGE_RESOURCE_DATA_ENTRY data_entry = (PIMAGE_RESOURCE_DATA_ENTRY) \
           (rsrc_data + RESOURCE_OFFSET(entry));
 
-      if (struct_fits_in_pe(pe, data_entry, IMAGE_RESOURCE_DATA_ENTRY))
+      if (!struct_fits_in_pe(pe, data_entry, IMAGE_RESOURCE_DATA_ENTRY))
       {
-        result = callback(
-            data_entry,
-            *type,
-            *id,
-            *language,
-            type_string,
-            name_string,
-            lang_string,
-            callback_data);
+        return RESOURCE_ITERATOR_ABORTED;
       }
+      result = callback(
+          data_entry,
+          *type,
+          *id,
+          *language,
+          type_string,
+          name_string,
+          lang_string,
+          callback_data);
 
       if (result == RESOURCE_CALLBACK_ABORT)
         return RESOURCE_ITERATOR_ABORTED;
@@ -805,12 +810,13 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
   if (offset == 0)
     return NULL;
 
+  int num_functions = 0;
   if (IS_64BITS_PE(pe))
   {
     PIMAGE_THUNK_DATA64 thunks64 = (PIMAGE_THUNK_DATA64)(pe->data + offset);
 
     while (struct_fits_in_pe(pe, thunks64, IMAGE_THUNK_DATA64) &&
-           thunks64->u1.Ordinal != 0)
+           thunks64->u1.Ordinal != 0 && num_functions < MAX_PE_IMPORTS)
     {
       char* name = NULL;
 
@@ -854,7 +860,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
 
         tail = imported_func;
       }
-
+      num_functions++;
       thunks64++;
     }
   }
@@ -863,7 +869,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
     PIMAGE_THUNK_DATA32 thunks32 = (PIMAGE_THUNK_DATA32)(pe->data + offset);
 
     while (struct_fits_in_pe(pe, thunks32, IMAGE_THUNK_DATA32) &&
-           thunks32->u1.Ordinal != 0)
+           thunks32->u1.Ordinal != 0 && num_functions < MAX_PE_IMPORTS)
     {
       char* name = NULL;
 
@@ -907,11 +913,10 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
 
         tail = imported_func;
       }
-
+      num_functions++;
       thunks32++;
     }
   }
-
   return head;
 }
 
@@ -967,16 +972,14 @@ IMPORTED_DLL* pe_parse_imports(
 
   PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR) \
       (pe->data + offset);
-
+  int num_imports = 0;
   while (struct_fits_in_pe(pe, imports, IMAGE_IMPORT_DESCRIPTOR) &&
-         imports->Name != 0)
+         imports->Name != 0 && num_imports < MAX_PE_IMPORTS)
   {
     uint64_t offset = pe_rva_to_offset(pe, imports->Name);
-
     if (offset != 0 && offset < pe->data_size)
     {
       char* dll_name = (char *) (pe->data + offset);
-
       if (!pe_valid_dll_name(dll_name, pe->data_size - offset))
         break;
 
@@ -1004,10 +1007,9 @@ IMPORTED_DLL* pe_parse_imports(
         }
       }
     }
-
+    num_imports++;
     imports++;
   }
-
   return head;
 }
 
