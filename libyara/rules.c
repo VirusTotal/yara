@@ -470,7 +470,7 @@ YR_API int yr_rules_scan_mem_blocks(
 
 _exit:
 
-  #if PRINT_MODULE_DATA
+  #ifdef PRINT_MODULE_DATA
   yr_modules_print_data(&context);
   #endif
 
