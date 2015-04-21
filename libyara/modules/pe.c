@@ -1339,7 +1339,7 @@ define_function(section_index_addr)
   int64_t addr = integer_argument(1);
   int64_t n = get_integer(module, "number_of_sections");
 
-  for (int64_t i = 0; i < n; i++)
+  for (int64_t i = 0; i < yr_min(n, MAX_PE_SECTIONS); i++)
   {
     if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
     {
@@ -1370,11 +1370,11 @@ define_function(section_index_name)
   char* name = string_argument(1);
   int64_t n = get_integer(module, "number_of_sections");
 
-  for (int64_t i = 0; i < n; i++)
+  for (int64_t i = 0; i < yr_min(n, MAX_PE_SECTIONS); i++)
   {
     SIZED_STRING* sect = get_string(module, "sections[%i].name", i);
 
-    if (strcmp(name, sect->c_string) == 0)
+    if (sect != NULL && strcmp(name, sect->c_string) == 0)
       return_integer(i);
   }
 
