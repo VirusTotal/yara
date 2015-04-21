@@ -19,8 +19,10 @@ limitations under the License.
 
 #include <yara/types.h>
 
+// Bitmasks for flags.
 #define SCAN_FLAGS_FAST_MODE         1
 #define SCAN_FLAGS_PROCESS_MEMORY    2
+#define SHOW_MODULE_INFO             4
 
 
 int yr_scan_verify_match(

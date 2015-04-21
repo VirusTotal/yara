@@ -94,6 +94,7 @@ char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 char* modules_data[MAX_ARGS_EXT_VAR + 1];
 
 int recursive_search = FALSE;
+int show_module_info = FALSE;
 int show_tags = FALSE;
 int show_specified_tags = FALSE;
 int show_specified_rules = FALSE;
@@ -125,6 +126,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN('n', "negate", &negate,
       "print only not satisfied rules (negate)", NULL),
+
+  OPT_BOOLEAN('D', "print-module-info", &show_module_info,
+      "print module information"),
 
   OPT_BOOLEAN('g', "print-tags", &show_tags,
       "print tags"),
@@ -639,6 +643,12 @@ void* scanning_thread(void* param)
   THREAD_ARGS* args = (THREAD_ARGS*) param;
   char* file_path = file_queue_get();
 
+  int flags = 0;
+  if (fast_scan)
+    flags |= SCAN_FLAGS_FAST_MODE;
+  if (show_module_info)
+    flags |= SHOW_MODULE_INFO;
+
   while (file_path != NULL)
   {
     int elapsed_time = (int) difftime(time(NULL), args->start_time);
@@ -648,7 +658,7 @@ void* scanning_thread(void* param)
       result = yr_rules_scan_file(
           args->rules,
           file_path,
-          fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
+          flags,
           callback,
           file_path,
           timeout - elapsed_time);
@@ -984,10 +994,16 @@ int main(
   {
     int pid = atoi(argv[1]);
 
+    int flags = 0;
+    if (fast_scan)
+      flags |= SCAN_FLAGS_FAST_MODE;
+    if (show_module_info)
+      flags |= SHOW_MODULE_INFO;
+
     result = yr_rules_scan_proc(
         rules,
         pid,
-        fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
+        flags,
         callback,
         (void*) argv[1],
         timeout);
@@ -1040,10 +1056,16 @@ int main(
   }
   else
   {
+    int flags = 0;
+    if (fast_scan)
+      flags |= SCAN_FLAGS_FAST_MODE;
+    if (show_module_info)
+      flags |= SHOW_MODULE_INFO;
+
     result = yr_rules_scan_file(
         rules,
         argv[1],
-        fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
+        flags,
         callback,
         (void*) argv[1],
         timeout);
