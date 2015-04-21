@@ -74,6 +74,7 @@ limitations under the License.
 
 #define MAX_PE_SECTIONS              96
 #define MAX_PE_IMPORTS               256
+#define MAX_PE_EXPORTS               65535
 
 
 #define IS_RESOURCE_SUBDIRECTORY(entry) \
@@ -95,7 +96,7 @@ limitations under the License.
 #define fits_in_pe(pe, pointer, size) \
     (size <= pe->data_size && \
      (uint8_t*)(pointer) >= pe->data && \
-     (uint8_t*)(pointer) + size <= pe->data + pe->data_size)
+     (uint8_t*)(pointer) <= pe->data + pe->data_size - size)
 
 
 #define struct_fits_in_pe(pe, pointer, struct_type) \
@@ -367,26 +368,30 @@ PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
 }
 
 
-uint64_t pe_rva_to_offset(
+int64_t pe_rva_to_offset(
     PE* pe,
     uint64_t rva)
 {
   PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pe->header);
+
   DWORD section_rva = 0;
   DWORD section_offset = 0;
+  DWORD section_virtual_size = 0;
+  DWORD section_raw_size = 0;
 
   int i = 0;
 
   while(i < yr_min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS))
   {
-    if ((uint8_t*) section - \
-        (uint8_t*) pe->data + sizeof(IMAGE_SECTION_HEADER) < pe->data_size)
+    if (struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
     {
       if (rva >= section->VirtualAddress &&
           section_rva <= section->VirtualAddress)
       {
         section_rva = section->VirtualAddress;
         section_offset = section->PointerToRawData;
+        section_virtual_size = section->Misc.VirtualSize;
+        section_raw_size = section->SizeOfRawData;
       }
 
       section++;
@@ -394,11 +399,24 @@ uint64_t pe_rva_to_offset(
     }
     else
     {
-      return 0;
+      return -1;
     }
   }
 
-  return section_offset + (rva - section_rva);
+  // Many sections, have a raw (on disk) size smaller than their in-memory size.
+  // Check for rva's that map to this sparse space, and therefore have no valid
+  // associated file offset.
+
+  if ((rva - section_rva) >= section_raw_size)
+    return -1;
+
+  int64_t result = section_offset + (rva - section_rva);
+
+  // Check that the offset fits within the file.
+  if (result >= pe->data_size)
+    return -1;
+
+  return result;
 }
 
 
@@ -428,7 +446,7 @@ uint8_t* parse_resource_name(
     DWORD length = *rsrc_str_ptr;
 
     // Move past the length and make sure we have enough bytes for the string.
-    if (!fits_in_pe(pe, rsrc_str_ptr + 2, length))
+    if (!fits_in_pe(pe, rsrc_str_ptr + 2, length * 2))
       return NULL;
 
     return rsrc_str_ptr;
@@ -562,7 +580,7 @@ int pe_iterate_resources(
     RESOURCE_CALLBACK_FUNC callback,
     void* callback_data)
 {
-  uint64_t offset;
+  int64_t offset;
 
   int type = -1;
   int id = -1;
@@ -579,21 +597,25 @@ int pe_iterate_resources(
   {
     offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
-    if (offset != 0 &&
-        offset < pe->data_size)
-    {
-      PIMAGE_RESOURCE_DIRECTORY rsrc_dir =
+    if (offset < 0)
+      return 0;
+
+    PIMAGE_RESOURCE_DIRECTORY rsrc_dir =
         (PIMAGE_RESOURCE_DIRECTORY) (pe->data + offset);
 
+    if (struct_fits_in_pe(pe, rsrc_dir, IMAGE_RESOURCE_DIRECTORY))
+    {
       set_integer(rsrc_dir->TimeDateStamp,
-                  pe->object,
-                  "resource_timestamp");
+          pe->object,
+          "resource_timestamp");
+
       set_integer(rsrc_dir->MajorVersion,
                   pe->object,
                   "resource_version.major");
       set_integer(rsrc_dir->MinorVersion,
                   pe->object,
                   "resource_version.minor");
+
       _pe_iterate_resources(
           pe,
           rsrc_dir,
@@ -630,12 +652,15 @@ void pe_parse_version_info(
     PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
     PE* pe)
 {
-  size_t version_info_offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
+  int64_t version_info_offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
 
-  if (version_info_offset == 0)
+  if (version_info_offset < 0)
     return;
 
   PVERSION_INFO version_info = (PVERSION_INFO) (pe->data + version_info_offset);
+
+  if (!struct_fits_in_pe(pe, version_info, VERSION_INFO))
+    return;
 
   if (!fits_in_pe(pe, version_info->Key, sizeof("VS_VERSION_INFO") * 2))
     return;
@@ -711,9 +736,10 @@ int pe_collect_resources(
     PE* pe)
 {
   DWORD length;
-  size_t offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
 
-  if (offset == 0 || !fits_in_pe(pe, pe->data + offset, rsrc_data->Size))
+  int64_t offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
+
+  if (offset < 0 || !fits_in_pe(pe, pe->data + offset, rsrc_data->Size))
     return RESOURCE_CALLBACK_CONTINUE;
 
   set_integer(
@@ -733,6 +759,7 @@ int pe_collect_resources(
     // Multiply by 2 because it is a Unicode string.
     length = ((DWORD) *type_string) * 2;
     type_string += 2;
+
     set_sized_string(
         (char*) type_string, length, pe->object,
         "resources[%i].type_string", pe->resources);
@@ -799,16 +826,16 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
   IMPORTED_FUNCTION* head = NULL;
   IMPORTED_FUNCTION* tail = NULL;
 
-  uint64_t offset = pe_rva_to_offset(
+  int64_t offset = pe_rva_to_offset(
       pe, import_descriptor->OriginalFirstThunk);
 
   // I've seen binaries where OriginalFirstThunk is zero. In this case
   // use FirstThunk.
 
-  if (offset == 0)
+  if (offset < 0)
     offset = pe_rva_to_offset(pe, import_descriptor->FirstThunk);
 
-  if (offset == 0)
+  if (offset < 0)
     return NULL;
 
   int num_functions = 0;
@@ -827,7 +854,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
         // If imported by name
         offset = pe_rva_to_offset(pe, thunks64->u1.Function);
 
-        if (offset != 0)
+        if (offset >= 0)
         {
           PIMAGE_IMPORT_BY_NAME import = (PIMAGE_IMPORT_BY_NAME) \
               (pe->data + offset);
@@ -884,7 +911,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
         // If imported by name
         offset = pe_rva_to_offset(pe, thunks32->u1.Function);
 
-        if (offset != 0)
+        if (offset >= 0)
         {
           PIMAGE_IMPORT_BY_NAME import = (PIMAGE_IMPORT_BY_NAME) \
               (pe->data + offset);
@@ -976,9 +1003,9 @@ IMPORTED_DLL* pe_parse_imports(
   if (directory->VirtualAddress == 0)
     return NULL;
 
-  uint64_t offset = pe_rva_to_offset(pe, directory->VirtualAddress);
+  int64_t offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
-  if (offset == 0)
+  if (offset < 0)
     return NULL;
 
   PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR) \
@@ -989,9 +1016,9 @@ IMPORTED_DLL* pe_parse_imports(
   while (struct_fits_in_pe(pe, imports, IMAGE_IMPORT_DESCRIPTOR) &&
          imports->Name != 0 && num_imports < MAX_PE_IMPORTS)
   {
-    uint64_t offset = pe_rva_to_offset(pe, imports->Name);
+    int64_t offset = pe_rva_to_offset(pe, imports->Name);
 
-    if (offset != 0 && offset < pe->data_size)
+    if (offset >= 0)
     {
       char* dll_name = (char *) (pe->data + offset);
 
@@ -1402,19 +1429,24 @@ define_function(exports)
   if (directory->VirtualAddress == 0)
     return_integer(0);
 
-  uint64_t offset = pe_rva_to_offset(pe, directory->VirtualAddress);
+  int64_t offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
-  if (offset == 0 ||
-      offset >= pe->data_size)
+  if (offset < 0)
     return_integer(0);
 
   PIMAGE_EXPORT_DIRECTORY exports = (PIMAGE_EXPORT_DIRECTORY) \
       (pe->data + offset);
 
+  if (!struct_fits_in_pe(pe, exports, IMAGE_EXPORT_DIRECTORY))
+    return_integer(0);
+
   offset = pe_rva_to_offset(pe, exports->AddressOfNames);
 
-  if (offset == 0 ||
-      offset + exports->NumberOfNames * sizeof(DWORD) > pe->data_size)
+  if (offset < 0)
+    return_integer(0);
+
+  if (exports->NumberOfNames > MAX_PE_EXPORTS ||
+      exports->NumberOfNames * sizeof(DWORD) > pe->data_size - offset)
     return_integer(0);
 
   DWORD* names = (DWORD*)(pe->data + offset);
@@ -1423,7 +1455,7 @@ define_function(exports)
   {
     offset = pe_rva_to_offset(pe, names[i]);
 
-    if (offset == 0 || offset >= pe->data_size)
+    if (offset < 0)
       return_integer(0);
 
     char* name = (char*)(pe->data + offset);
