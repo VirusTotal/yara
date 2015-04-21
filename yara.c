@@ -647,7 +647,7 @@ void* scanning_thread(void* param)
   if (fast_scan)
     flags |= SCAN_FLAGS_FAST_MODE;
   if (show_module_info)
-    flags |= SHOW_MODULE_INFO;
+    flags |= SCAN_FLAGS_SHOW_MODULE_INFO;
 
   while (file_path != NULL)
   {
@@ -998,7 +998,7 @@ int main(
     if (fast_scan)
       flags |= SCAN_FLAGS_FAST_MODE;
     if (show_module_info)
-      flags |= SHOW_MODULE_INFO;
+      flags |= SCAN_FLAGS_SHOW_MODULE_INFO;
 
     result = yr_rules_scan_proc(
         rules,
@@ -1060,7 +1060,7 @@ int main(
     if (fast_scan)
       flags |= SCAN_FLAGS_FAST_MODE;
     if (show_module_info)
-      flags |= SHOW_MODULE_INFO;
+      flags |= SCAN_FLAGS_SHOW_MODULE_INFO;
 
     result = yr_rules_scan_file(
         rules,
