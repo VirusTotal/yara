@@ -40,6 +40,7 @@ stamp-h1
 /missing
 /ylwrap
 /m4
+!/m4/acx_pthread.m4
 
 # Project specific files
 /yara
