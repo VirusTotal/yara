@@ -644,8 +644,10 @@ void* scanning_thread(void* param)
   char* file_path = file_queue_get();
 
   int flags = 0;
+
   if (fast_scan)
     flags |= SCAN_FLAGS_FAST_MODE;
+
   if (show_module_info)
     flags |= SCAN_FLAGS_SHOW_MODULE_INFO;
 
@@ -691,7 +693,7 @@ int is_integer(
 {
   if (*str == '-')
     str++;
-  
+
   while(*str)
   {
     if (!isdigit(*str))
@@ -993,10 +995,11 @@ int main(
   if (is_integer(argv[1]))
   {
     int pid = atoi(argv[1]);
-
     int flags = 0;
+
     if (fast_scan)
       flags |= SCAN_FLAGS_FAST_MODE;
+
     if (show_module_info)
       flags |= SCAN_FLAGS_SHOW_MODULE_INFO;
 
@@ -1057,8 +1060,10 @@ int main(
   else
   {
     int flags = 0;
+
     if (fast_scan)
       flags |= SCAN_FLAGS_FAST_MODE;
+
     if (show_module_info)
       flags |= SCAN_FLAGS_SHOW_MODULE_INFO;
 
