@@ -64,6 +64,7 @@ limitations under the License.
 #define ERROR_WRONG_ARGUMENTS                   40
 #define ERROR_WRONG_RETURN_TYPE                 41
 #define ERROR_DUPLICATED_STRUCTURE_MEMBER       42
+#define ERROR_EMPTY_STRING                      43
 
 
 #define FAIL_ON_ERROR(x) { \

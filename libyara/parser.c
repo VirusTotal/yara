@@ -463,6 +463,13 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
   RE_ERROR re_error;
 
+  if (str->length == 0)
+  {
+    compiler->last_result = ERROR_EMPTY_STRING;
+    yr_compiler_set_error_extra_info(compiler, identifier);
+    goto _exit;
+  }
+
   if (str->flags & SIZED_STRING_FLAGS_NO_CASE)
     string_flags |= STRING_GFLAGS_NO_CASE;
 
