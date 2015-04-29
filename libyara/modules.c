@@ -55,10 +55,36 @@ YR_MODULE yr_modules_table[] =
 
 #undef MODULE
 
+mutex_t yr_modules_mutex;
+
+void _yr_modules_lock()
+{
+  #ifdef _WIN32
+  WaitForSingleObject(yr_modules_mutex, INFINITE);
+  #else
+  pthread_mutex_lock(&yr_modules_mutex);
+  #endif
+}
+
+void _yr_modules_unlock()
+{
+  #ifdef _WIN32
+  ReleaseMutex(yr_modules_mutex);
+  #else
+  pthread_mutex_unlock(&yr_modules_mutex);
+  #endif
+}
+
 
 int yr_modules_initialize()
 {
   int i, result;
+
+  #if _WIN32
+  yr_modules_mutex = CreateMutex(NULL, FALSE, NULL);
+  #else
+  pthread_mutex_init(&yr_modules_mutex, NULL);
+  #endif
 
   for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
@@ -75,6 +101,12 @@ int yr_modules_initialize()
 int yr_modules_finalize()
 {
   int i, result;
+
+  #if _WIN32
+  CloseHandle(yr_modules_mutex);
+  #else
+  pthread_mutex_destroy(&yr_modules_mutex);
+  #endif
 
   for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
@@ -169,8 +201,9 @@ int yr_modules_load(
 
       if (result != ERROR_SUCCESS)
         return result;
-
+      _yr_modules_lock();
       yr_modules_table[i].is_loaded |= 1 << yr_get_tidx();
+      _yr_modules_unlock();
     }
   }
 
@@ -197,7 +230,9 @@ int yr_modules_unload_all(
       assert(module_structure != NULL);
 
       yr_modules_table[i].unload(module_structure);
+      _yr_modules_lock();
       yr_modules_table[i].is_loaded &= ~tidx_mask;
+      _yr_modules_unlock();
     }
   }
 
