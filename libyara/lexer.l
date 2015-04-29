@@ -422,11 +422,6 @@ u?int(8|16|32)(be)? {
 
 <str>\"   {     /* saw closing quote - all done */
 
-  if (yyextra->lex_buf_len == 0)
-  {
-    yyerror(yyscanner, compiler, "empty string");
-  }
-
   *yyextra->lex_buf_ptr = '\0';
 
   BEGIN(INITIAL);
