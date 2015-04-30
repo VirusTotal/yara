@@ -36,26 +36,45 @@ limitations under the License.
 #include <yara/scan.h>
 #include <yara/modules.h>
 
+mutex_t _yr_rules_mutex;
+tidx_mask_t global_tidx_mask;
 
+int yr_rules_initialize()
+{
+  #if _WIN32
+  _yr_rules_mutex = CreateMutex(NULL, FALSE, NULL);
+  #else
+  pthread_mutex_init(&_yr_rules_mutex, NULL);
+  #endif
+  global_tidx_mask = 0;
+  return ERROR_SUCCESS;
+}
 
-void _yr_rules_lock(
-    YR_RULES* rules)
+int yr_rules_finalize()
+{
+  #if _WIN32
+  CloseHandle(_yr_rules_mutex);
+  #else
+  pthread_mutex_destroy(&_yr_rules_mutex);
+  #endif
+  return ERROR_SUCCESS;
+}
+
+void _yr_rules_lock()
 {
   #ifdef _WIN32
-  WaitForSingleObject(rules->mutex, INFINITE);
+  WaitForSingleObject(_yr_rules_mutex, INFINITE);
   #else
-  pthread_mutex_lock(&rules->mutex);
+  pthread_mutex_lock(&_yr_rules_mutex);
   #endif
 }
 
-
-void _yr_rules_unlock(
-    YR_RULES* rules)
+void _yr_rules_unlock()
 {
   #ifdef _WIN32
-  ReleaseMutex(rules->mutex);
+  ReleaseMutex(_yr_rules_mutex);
   #else
-  pthread_mutex_unlock(&rules->mutex);
+  pthread_mutex_unlock(&_yr_rules_mutex);
   #endif
 }
 
@@ -338,22 +357,27 @@ YR_API int yr_rules_scan_mem_blocks(
   context.entry_point = UNDEFINED;
   context.objects_table = NULL;
 
-  _yr_rules_lock(rules);
+  _yr_rules_lock();
 
   bit = 1;
 
-  while (rules->tidx_mask & bit)
+  while (rules->tidx_mask & bit || global_tidx_mask & bit)
   {
     tidx++;
     bit <<= 1;
   }
 
   if (tidx < MAX_THREADS)
+  {
     rules->tidx_mask |= bit;
+    global_tidx_mask |= bit;
+  }
   else
+  {
     result = ERROR_TOO_MANY_SCAN_THREADS;
+  }
 
-  _yr_rules_unlock(rules);
+  _yr_rules_unlock();
 
   if (result != ERROR_SUCCESS)
     return result;
@@ -485,9 +509,10 @@ _exit:
         context.objects_table,
         (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
-  _yr_rules_lock(rules);
+  _yr_rules_lock();
   rules->tidx_mask &= ~(1 << tidx);
-  _yr_rules_unlock(rules);
+  global_tidx_mask &= ~(1 << tidx);
+  _yr_rules_unlock();
 
   yr_set_tidx(-1);
 
@@ -619,17 +644,6 @@ YR_API int yr_rules_load_stream(
   new_rules->rules_list_head = header->rules_list_head;
   new_rules->tidx_mask = 0;
 
-  #if _WIN32
-  new_rules->mutex = CreateMutex(NULL, FALSE, NULL);
-
-  if (new_rules->mutex == NULL)
-    return ERROR_INTERNAL_FATAL_ERROR;
-  #else
-  result = pthread_mutex_init(&new_rules->mutex, NULL);
-
-  if (result != 0)
-    return ERROR_INTERNAL_FATAL_ERROR;
-  #endif
 
   *rules = new_rules;
 
@@ -702,12 +716,6 @@ YR_API int yr_rules_destroy(
 
     external++;
   }
-
-  #if _WIN32
-  CloseHandle(rules->mutex);
-  #else
-  pthread_mutex_destroy(&rules->mutex);
-  #endif
 
   yr_arena_destroy(rules->arena);
   yr_free(rules);

@@ -347,8 +347,6 @@ typedef struct _YR_RULES {
   tidx_mask_t tidx_mask;
   uint8_t* code_start;
 
-  mutex_t mutex;
-
   YR_ARENA* arena;
   YR_RULE* rules_list_head;
   YR_EXTERNAL_VARIABLE* externals_list_head;

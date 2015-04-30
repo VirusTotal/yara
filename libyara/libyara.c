@@ -22,6 +22,7 @@ limitations under the License.
 #include <yara/re.h>
 #include <yara/modules.h>
 #include <yara/mem.h>
+#include <yara/rules.h>
 
 #ifdef _WIN32
 #define snprintf _snprintf
@@ -75,6 +76,7 @@ YR_API int yr_initialize(void)
   pthread_key_create(&recovery_state_key, NULL);
   #endif
 
+  FAIL_ON_ERROR(yr_rules_initialize());
   FAIL_ON_ERROR(yr_re_initialize());
   FAIL_ON_ERROR(yr_modules_initialize());
 
@@ -116,6 +118,7 @@ YR_API int yr_finalize(void)
 
   FAIL_ON_ERROR(yr_re_finalize());
   FAIL_ON_ERROR(yr_modules_finalize());
+  FAIL_ON_ERROR(yr_rules_finalize());
   FAIL_ON_ERROR(yr_heap_free());
 
   return ERROR_SUCCESS;
