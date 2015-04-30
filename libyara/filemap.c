@@ -53,12 +53,12 @@ YR_API int yr_filemap_map(
 }
 
 //
-// yr_filemap_map_ex
+// yr_filemap_map_file
 //
-// Maps a portion of a file into memory.
+// Maps a portion of a file (specified by descriptor) into memory.
 //
 // Args:
-//    const char* file_path        - Path of the file to map.
+//    FILE_DESCRIPTOR file         - file descriptor representing the file to map
 //    off_t offset                 - File offset where the mapping will begin.
 //                                   This offset must be multiple of 1MB and not
 //                                   greater than the actual file size.
@@ -78,35 +78,20 @@ YR_API int yr_filemap_map(
 
 #ifdef _WIN32
 
-YR_API int yr_filemap_map_ex(
-    const char* file_path,
+YR_API int yr_filemap_map_fd(
+    FILE_DESCRIPTOR file,
     off_t offset,
     size_t size,
     YR_MAPPED_FILE* pmapped_file)
 {
-  pmapped_file->file = INVALID_HANDLE_VALUE;
+  pmapped_file->file = file;
   pmapped_file->mapping = NULL;
   pmapped_file->data = NULL;
   pmapped_file->size = 0;
 
-  if (file_path == NULL)
-    return ERROR_INVALID_ARGUMENT;
-
   // Ensure that offset is aligned to 1MB
   if (offset >> 20 << 20 != offset)
     return ERROR_INVALID_ARGUMENT;
-
-  pmapped_file->file = CreateFileA(
-      file_path,
-      GENERIC_READ,
-      FILE_SHARE_READ,
-      NULL,
-      OPEN_EXISTING,
-      FILE_FLAG_SEQUENTIAL_SCAN,
-      NULL);
-
-  if (pmapped_file->file == INVALID_HANDLE_VALUE)
-    return ERROR_COULD_NOT_OPEN_FILE;
 
   LARGE_INTEGER fs;
   size_t file_size;
@@ -178,40 +163,32 @@ YR_API int yr_filemap_map_ex(
 
 #else // POSIX
 
-YR_API int yr_filemap_map_ex(
-    const char* file_path,
+YR_API int yr_filemap_map_fd(
+    FILE_DESCRIPTOR file,
     off_t offset,
     size_t size,
     YR_MAPPED_FILE* pmapped_file)
 {
-  struct stat fstat;
+  struct stat st;
 
+  pmapped_file->file = file;
   pmapped_file->data = NULL;
   pmapped_file->size = 0;
-  pmapped_file->file = -1;
-
-  if (file_path == NULL)
-    return ERROR_INVALID_ARGUMENT;
 
   // Ensure that offset is aligned to 1MB
   if (offset >> 20 << 20 != offset)
     return ERROR_INVALID_ARGUMENT;
 
-  if (stat(file_path, &fstat) != 0 || S_ISDIR(fstat.st_mode))
-      return ERROR_COULD_NOT_OPEN_FILE;
+  if (fstat(file, &st) != 0 || S_ISDIR(st.st_mode))
+    return ERROR_COULD_NOT_OPEN_FILE;
 
-  if (offset > fstat.st_size)
+  if (offset > st.st_size)
     return ERROR_COULD_NOT_MAP_FILE;
 
   if (size == 0)
-    size = fstat.st_size - offset;
+    size = st.st_size - offset;
 
-  pmapped_file->file = open(file_path, O_RDONLY);
-
-  if (pmapped_file->file == -1)
-    return ERROR_COULD_NOT_OPEN_FILE;
-
-  pmapped_file->size = yr_min(size, fstat.st_size - offset);
+  pmapped_file->size = yr_min(size, st.st_size - offset);
 
   if (pmapped_file->size != 0)
   {
@@ -240,6 +217,77 @@ YR_API int yr_filemap_map_ex(
   }
 
   return ERROR_SUCCESS;
+}
+
+#endif
+
+//
+// yr_filemap_map_ex
+//
+// Maps a portion of a file (specified by path) into memory.
+//
+// Args:
+//    const char* file_path        - Path of the file to map.
+//    off_t offset                 - File offset where the mapping will begin.
+//                                   This offset must be multiple of 1MB and not
+//                                   greater than the actual file size.
+//    size_t size                  - Number of bytes that will be mapped. If
+//                                   zero or greater than the actual file size
+//                                   all content until the end of the file will
+//                                   be mapped.
+//    YR_MAPPED_FILE* pmapped_file - Pointer to a YR_MAPPED_FILE struct that
+//                                   will be filled with the new mapping.
+// Returns:
+//    One of the following error codes:
+//       ERROR_SUCCESS
+//       ERROR_INVALID_ARGUMENT
+//       ERROR_COULD_NOT_OPEN_FILE
+//       ERROR_COULD_NOT_MAP_FILE
+//
+
+#ifdef _WIN32
+
+YR_API int yr_filemap_map_ex(
+    const char* file_path,
+    off_t offset,
+    size_t size,
+    YR_MAPPED_FILE* pmapped_file)
+{
+  if (file_path == NULL)
+    return ERROR_INVALID_ARGUMENT;
+
+  FILE_DESCRIPTOR fd = CreateFileA(
+      file_path,
+      GENERIC_READ,
+      FILE_SHARE_READ,
+      NULL,
+      OPEN_EXISTING,
+      FILE_FLAG_SEQUENTIAL_SCAN,
+      NULL);
+
+  if (fd == INVALID_HANDLE_VALUE)
+    return ERROR_COULD_NOT_OPEN_FILE;
+
+  return yr_filemap_map_fd(fd, offset, size, pmapped_file);
+}
+
+#else // POSIX
+
+YR_API int yr_filemap_map_ex(
+    const char* file_path,
+    off_t offset,
+    size_t size,
+    YR_MAPPED_FILE* pmapped_file)
+{
+  if (file_path == NULL)
+    return ERROR_INVALID_ARGUMENT;
+
+  FILE_DESCRIPTOR fd = open(file_path, O_RDONLY);
+
+  if (fd == -1)
+    return ERROR_COULD_NOT_OPEN_FILE;
+
+  return yr_filemap_map_fd(fd, offset, size, pmapped_file);
 }
 
 #endif

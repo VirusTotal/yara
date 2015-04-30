@@ -551,6 +551,35 @@ YR_API int yr_rules_scan_file(
   return result;
 }
 
+YR_API int yr_rules_scan_fd(
+    YR_RULES* rules,
+    FILE_DESCRIPTOR fd,
+    int flags,
+    YR_CALLBACK_FUNC callback,
+    void* user_data,
+    int timeout)
+{
+  YR_MAPPED_FILE mfile;
+  int result;
+
+  result = yr_filemap_map_fd(fd, 0, 0, &mfile);
+
+  if (result == ERROR_SUCCESS)
+  {
+    result = yr_rules_scan_mem(
+        rules,
+        mfile.data,
+        mfile.size,
+        flags,
+        callback,
+        user_data,
+        timeout);
+
+    yr_filemap_unmap(&mfile);
+  }
+
+  return result;
+}
 
 YR_API int yr_rules_scan_proc(
     YR_RULES* rules,
