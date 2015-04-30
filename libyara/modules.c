@@ -39,7 +39,7 @@ limitations under the License.
 
 
 #define MODULE(name) \
-    { 0, \
+    { \
       #name, \
       name##__declarations, \
       name##__load, \
@@ -55,40 +55,12 @@ YR_MODULE yr_modules_table[] =
 
 #undef MODULE
 
-mutex_t yr_modules_mutex;
-
-void _yr_modules_lock()
-{
-  #ifdef _WIN32
-  WaitForSingleObject(yr_modules_mutex, INFINITE);
-  #else
-  pthread_mutex_lock(&yr_modules_mutex);
-  #endif
-}
-
-void _yr_modules_unlock()
-{
-  #ifdef _WIN32
-  ReleaseMutex(yr_modules_mutex);
-  #else
-  pthread_mutex_unlock(&yr_modules_mutex);
-  #endif
-}
-
 
 int yr_modules_initialize()
 {
-  int i, result;
-
-  #if _WIN32
-  yr_modules_mutex = CreateMutex(NULL, FALSE, NULL);
-  #else
-  pthread_mutex_init(&yr_modules_mutex, NULL);
-  #endif
-
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
-    result = yr_modules_table[i].initialize(&yr_modules_table[i]);
+    int result = yr_modules_table[i].initialize(&yr_modules_table[i]);
 
     if (result != ERROR_SUCCESS)
       return result;
@@ -100,17 +72,9 @@ int yr_modules_initialize()
 
 int yr_modules_finalize()
 {
-  int i, result;
-
-  #if _WIN32
-  CloseHandle(yr_modules_mutex);
-  #else
-  pthread_mutex_destroy(&yr_modules_mutex);
-  #endif
-
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
-    result = yr_modules_table[i].finalize(&yr_modules_table[i]);
+    int result = yr_modules_table[i].finalize(&yr_modules_table[i]);
 
     if (result != ERROR_SUCCESS)
       return result;
@@ -124,9 +88,7 @@ int yr_modules_do_declarations(
     const char* module_name,
     YR_OBJECT* main_structure)
 {
-  int i;
-
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
     if (strcmp(yr_modules_table[i].name, module_name) == 0)
       return yr_modules_table[i].declarations(main_structure);
@@ -140,13 +102,7 @@ int yr_modules_load(
     const char* module_name,
     YR_SCAN_CONTEXT* context)
 {
-  YR_MODULE_IMPORT mi;
-  YR_OBJECT* module_structure;
-
-  int result;
-  int i;
-
-  module_structure = (YR_OBJECT*) yr_hash_table_lookup(
+  YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_lookup(
       context->objects_table,
       module_name,
       NULL);
@@ -165,11 +121,13 @@ int yr_modules_load(
       NULL,
       &module_structure));
 
+  YR_MODULE_IMPORT mi;
+
   mi.module_name = module_name;
   mi.module_data = NULL;
   mi.module_data_size = 0;
 
-  result = context->callback(
+  int result = context->callback(
       CALLBACK_MSG_IMPORT_MODULE,
       &mi,
       context->user_data);
@@ -189,7 +147,7 @@ int yr_modules_load(
           module_structure),
       yr_object_destroy(module_structure));
 
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
     if (strcmp(yr_modules_table[i].name, module_name) == 0)
     {
@@ -201,9 +159,6 @@ int yr_modules_load(
 
       if (result != ERROR_SUCCESS)
         return result;
-      _yr_modules_lock();
-      yr_modules_table[i].is_loaded |= 1 << yr_get_tidx();
-      _yr_modules_unlock();
     }
   }
 
@@ -214,26 +169,15 @@ int yr_modules_load(
 int yr_modules_unload_all(
     YR_SCAN_CONTEXT* context)
 {
-  YR_OBJECT* module_structure;
-  tidx_mask_t tidx_mask = 1 << yr_get_tidx();
-  int i;
-
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
-    if (yr_modules_table[i].is_loaded & tidx_mask)
-    {
-      module_structure = (YR_OBJECT*) yr_hash_table_lookup(
-          context->objects_table,
-          yr_modules_table[i].name,
-          NULL);
+    YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_lookup(
+        context->objects_table,
+        yr_modules_table[i].name,
+        NULL);
 
-      assert(module_structure != NULL);
-
+    if (module_structure != NULL)
       yr_modules_table[i].unload(module_structure);
-      _yr_modules_lock();
-      yr_modules_table[i].is_loaded &= ~tidx_mask;
-      _yr_modules_unlock();
-    }
   }
 
   return ERROR_SUCCESS;
@@ -243,21 +187,14 @@ int yr_modules_unload_all(
 void yr_modules_print_data(
     YR_SCAN_CONTEXT* context)
 {
-  YR_OBJECT* module_structure;
-  tidx_mask_t tidx_mask = 1 << yr_get_tidx();
-
   for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
-    if (yr_modules_table[i].is_loaded & tidx_mask)
-    {
-      module_structure = (YR_OBJECT*) yr_hash_table_lookup(
-          context->objects_table,
-          yr_modules_table[i].name,
-          NULL);
+    YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_lookup(
+        context->objects_table,
+        yr_modules_table[i].name,
+        NULL);
 
-      assert(module_structure != NULL);
-
+    if (module_structure != NULL)
       yr_object_print_data(module_structure, 0);
-    }
   }
 }
