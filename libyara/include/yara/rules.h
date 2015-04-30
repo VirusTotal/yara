@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
 #ifndef YR_RULES_H
 #define YR_RULES_H
 
@@ -77,7 +76,7 @@ YR_API int yr_rules_scan_file(
 
 YR_API int yr_rules_scan_fd(
     YR_RULES* rules,
-    FILE_DESCRIPTOR fd,
+    YR_FILE_DESCRIPTOR fd,
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,

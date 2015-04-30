@@ -25,9 +25,9 @@ limitations under the License.
 
 #ifdef _WIN32
 #include <windows.h>
-#define FILE_DESCRIPTOR    HANDLE
+#define YR_FILE_DESCRIPTOR    HANDLE
 #else
-#define FILE_DESCRIPTOR    int
+#define YR_FILE_DESCRIPTOR    int
 #endif
 
 #include <stdlib.h>
@@ -38,7 +38,7 @@ limitations under the License.
 
 typedef struct _YR_MAPPED_FILE
 {
-  FILE_DESCRIPTOR     file;
+  YR_FILE_DESCRIPTOR  file;
   size_t              size;
   uint8_t*            data;
   #ifdef _WIN32
@@ -54,7 +54,7 @@ YR_API int yr_filemap_map(
 
 
 YR_API int yr_filemap_map_fd(
-    FILE_DESCRIPTOR file,
+    YR_FILE_DESCRIPTOR file,
     off_t offset,
     size_t size,
     YR_MAPPED_FILE* pmapped_file);
