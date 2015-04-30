@@ -53,6 +53,13 @@ YR_API int yr_filemap_map(
     YR_MAPPED_FILE* pmapped_file);
 
 
+YR_API int yr_filemap_map_fd(
+    FILE_DESCRIPTOR file,
+    off_t offset,
+    size_t size,
+    YR_MAPPED_FILE* pmapped_file);
+
+
 YR_API int yr_filemap_map_ex(
     const char* file_path,
     off_t offset,
