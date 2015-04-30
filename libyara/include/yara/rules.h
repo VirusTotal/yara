@@ -53,7 +53,9 @@ limitations under the License.
 #define yr_rules_foreach(rules, rule) \
     for (rule = rules->rules_list_head; !RULE_IS_NULL(rule); rule++)
 
+YR_API int yr_rules_initialize();
 
+YR_API int yr_rules_finalize();
 
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
