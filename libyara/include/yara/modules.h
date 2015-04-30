@@ -392,8 +392,6 @@ typedef int (*YR_EXT_UNLOAD_FUNC)(
 
 typedef struct _YR_MODULE
 {
-  tidx_mask_t is_loaded;
-
   char* name;
 
   YR_EXT_DECLARATIONS_FUNC declarations;
