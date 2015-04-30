@@ -53,12 +53,13 @@ YR_API int yr_filemap_map(
 }
 
 //
-// yr_filemap_map_file
+// yr_filemap_map_fd
 //
 // Maps a portion of a file (specified by descriptor) into memory.
 //
 // Args:
-//    FILE_DESCRIPTOR file         - file descriptor representing the file to map
+//    YR_FILE_DESCRIPTOR file      - File descriptor representing the file to
+//                                   map
 //    off_t offset                 - File offset where the mapping will begin.
 //                                   This offset must be multiple of 1MB and not
 //                                   greater than the actual file size.
@@ -79,7 +80,7 @@ YR_API int yr_filemap_map(
 #ifdef _WIN32
 
 YR_API int yr_filemap_map_fd(
-    FILE_DESCRIPTOR file,
+    YR_FILE_DESCRIPTOR file,
     off_t offset,
     size_t size,
     YR_MAPPED_FILE* pmapped_file)
@@ -164,7 +165,7 @@ YR_API int yr_filemap_map_fd(
 #else // POSIX
 
 YR_API int yr_filemap_map_fd(
-    FILE_DESCRIPTOR file,
+    YR_FILE_DESCRIPTOR file,
     off_t offset,
     size_t size,
     YR_MAPPED_FILE* pmapped_file)
@@ -256,7 +257,7 @@ YR_API int yr_filemap_map_ex(
   if (file_path == NULL)
     return ERROR_INVALID_ARGUMENT;
 
-  FILE_DESCRIPTOR fd = CreateFileA(
+  YR_FILE_DESCRIPTOR fd = CreateFileA(
       file_path,
       GENERIC_READ,
       FILE_SHARE_READ,
@@ -282,7 +283,7 @@ YR_API int yr_filemap_map_ex(
   if (file_path == NULL)
     return ERROR_INVALID_ARGUMENT;
 
-  FILE_DESCRIPTOR fd = open(file_path, O_RDONLY);
+  YR_FILE_DESCRIPTOR fd = open(file_path, O_RDONLY);
 
   if (fd == -1)
     return ERROR_COULD_NOT_OPEN_FILE;
