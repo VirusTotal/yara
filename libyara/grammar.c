@@ -2921,7 +2921,7 @@ yyreduce:
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
         // create a fixup entry for the jump and push it in the stack
-        YR_FIXUP* fixup = yr_malloc(sizeof(YR_FIXUP));
+        YR_FIXUP* fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
           compiler->last_error = ERROR_INSUFICIENT_MEMORY;
@@ -2986,7 +2986,7 @@ yyreduce:
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        YR_FIXUP* fixup = yr_malloc(sizeof(YR_FIXUP));
+        YR_FIXUP* fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
           compiler->last_error = ERROR_INSUFICIENT_MEMORY;
