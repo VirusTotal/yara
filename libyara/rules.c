@@ -675,10 +675,10 @@ YR_API int yr_rules_load(
   if (fh == NULL)
     return ERROR_COULD_NOT_OPEN_FILE;
 
-  YR_STREAM stream = {
-    .user_data = fh,
-    .read = (YR_STREAM_READ_FUNC) fread
-  };
+  YR_STREAM stream;
+
+  stream.user_data = fh;
+  stream.read = (YR_STREAM_READ_FUNC) fread;
 
   int result = yr_rules_load_stream(&stream, rules);
 
@@ -705,10 +705,10 @@ YR_API int yr_rules_save(
   if (fh == NULL)
     return ERROR_COULD_NOT_OPEN_FILE;
 
-  YR_STREAM stream = {
-    .user_data = fh,
-    .write = (YR_STREAM_WRITE_FUNC) fwrite,
-  };
+  YR_STREAM stream;
+
+  stream.user_data = fh;
+  stream.write = (YR_STREAM_WRITE_FUNC) fwrite;
 
   int result = yr_rules_save_stream(rules, &stream);
 
