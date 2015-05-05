@@ -1248,10 +1248,10 @@ static PyObject * Rules_save(
   }
   else if (PyObject_HasAttrString(param, "write"))
   {
-    YR_STREAM stream = {
-      .user_data = param,
-      .write = flo_write
-    };
+    YR_STREAM stream;
+
+    stream.user_data = param;
+    stream.write = flo_write;
 
     Py_BEGIN_ALLOW_THREADS;
     error = yr_rules_save_stream(rules->rules, &stream);
@@ -1682,10 +1682,10 @@ static PyObject * yara_load(
   }
   else if (PyObject_HasAttrString(param, "read"))
   {
-    YR_STREAM stream = {
-      .user_data = param,
-      .read = flo_read
-    };
+    YR_STREAM stream;
+
+    stream.user_data = param;
+    stream.read = flo_read;
 
     Py_BEGIN_ALLOW_THREADS;
     error = yr_rules_load_stream(&stream, &rules->rules);
