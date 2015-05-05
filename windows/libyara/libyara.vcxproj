@@ -168,6 +168,7 @@
     <ClCompile Include="..\..\libyara\rules.c" />
     <ClCompile Include="..\..\libyara\scan.c" />
     <ClCompile Include="..\..\libyara\sizedstr.c" />
+    <ClCompile Include="..\..\libyara\stream.c" />
     <ClCompile Include="..\..\libyara\strutils.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
