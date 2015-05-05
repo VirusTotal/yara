@@ -604,7 +604,9 @@ static size_t flo_read(
     size_t count,
     void* user_data)
 {
-  for (int i = 0; i < count; i++)
+  size_t i;
+
+  for (i = 0; i < count; i++)
   {
     PyGILState_STATE gil_state = PyGILState_Ensure();
 
@@ -622,10 +624,10 @@ static size_t flo_read(
 
       Py_DECREF(bytes);
 
-      if (result == -1 || len < size)
+      if (result == -1 || (size_t) len < size)
         return i;
 
-      memcpy(ptr + i * size, buffer, size);
+      memcpy((char*) ptr + i * size, buffer, size);
     }
     else
     {
@@ -645,12 +647,14 @@ static size_t flo_write(
     size_t count,
     void* user_data)
 {
-  for (int i = 0; i < count; i++)
+  size_t i;
+
+  for (i = 0; i < count; i++)
   {
     PyGILState_STATE gil_state = PyGILState_Ensure();
 
     PyObject* result = PyObject_CallMethod(
-        (PyObject*) user_data, "write", "s#", ptr + i * size, size);
+        (PyObject*) user_data, "write", "s#", (char*) ptr + i * size, size);
 
     PyGILState_Release(gil_state);
 
@@ -1656,6 +1660,8 @@ static PyObject * yara_load(
 {
   Rules* rules = PyObject_NEW(Rules, &Rules_Type);
   PyObject* param;
+  YR_EXTERNAL_VARIABLE* external;
+  int error;
 
   if (rules == NULL)
     return PyErr_NoMemory();
@@ -1666,8 +1672,6 @@ static PyObject * yara_load(
         PyExc_TypeError,
           "load() takes 1 argument");
   }
-
-  int error;
 
   if (PY_STRING_CHECK(param))
   {
@@ -1701,7 +1705,7 @@ static PyObject * yara_load(
       "load() expects either a file path or a file-like object");
   }
 
-  YR_EXTERNAL_VARIABLE* external = rules->rules->externals_list_head;
+  external = rules->rules->externals_list_head;
   rules->iter_current_rule = rules->rules->rules_list_head;
 
   if (!EXTERNAL_VARIABLE_IS_NULL(external))
