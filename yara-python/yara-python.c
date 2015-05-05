@@ -654,7 +654,11 @@ static size_t flo_write(
     PyGILState_STATE gil_state = PyGILState_Ensure();
 
     PyObject* result = PyObject_CallMethod(
-        (PyObject*) user_data, "write", "s#", (char*) ptr + i * size, size);
+    #if PY_MAJOR_VERSION >= 3
+        (PyObject*) user_data, "write", "y#", ptr + i * size, size);
+    #else
+        (PyObject*) user_data, "write", "s#", ptr + i * size, size);
+    #endif
 
     PyGILState_Release(gil_state);
 
