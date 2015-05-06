@@ -912,7 +912,7 @@ int yr_arena_load_stream(
     return ERROR_INVALID_FILE;
   }
 
-  if (header.version > ARENA_FILE_VERSION)
+  if (header.version != ARENA_FILE_VERSION)
     return ERROR_UNSUPPORTED_FILE_VERSION;
 
   result = yr_arena_create(header.size, 0, &new_arena);
