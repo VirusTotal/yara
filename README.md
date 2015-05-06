@@ -64,5 +64,6 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Metaflows](http://www.metaflows.com)
 * [Radare2](http://rada.re)
 * [Websense](http://www.websense.com)
+* [osquery](http://www.osquery.io)
 
 Are you using it? Want to see your site listed here?
