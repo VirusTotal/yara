@@ -1,3 +1,6 @@
+[![Join the chat at https://gitter.im/plusvic/yara](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/plusvic/yara?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+
 ## YARA in a nutshell
 
 YARA is a tool aimed at (but not limited to) helping malware researchers to
