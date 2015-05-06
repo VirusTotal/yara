@@ -3,6 +3,8 @@
 
 ## YARA in a nutshell
 
+[![Join the chat at https://gitter.im/plusvic/yara](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/plusvic/yara?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 YARA is a tool aimed at (but not limited to) helping malware researchers to
 identify and classify malware samples. With YARA you can create descriptions of
 malware families (or whatever you want to describe) based on textual or binary
