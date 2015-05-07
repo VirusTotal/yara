@@ -1131,6 +1131,7 @@ void pe_parse_certificates(
     if (!certs)
     {
       BIO_free(cert_bio);
+      PKCS7_free(pkcs7);
       break;
     }
 
@@ -1202,6 +1203,7 @@ void pe_parse_certificates(
     win_cert = (PWIN_CERTIFICATE)(end + (end % 8));
 
     BIO_free(cert_bio);
+    PKCS7_free(pkcs7);
     sk_X509_free(certs);
   }
 
