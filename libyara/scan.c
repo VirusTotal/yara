@@ -31,7 +31,7 @@ limitations under the License.
 typedef struct _CALLBACK_ARGS
 {
   YR_STRING* string;
-  YR_ARENA* matches_arena;
+  YR_SCAN_CONTEXT* context;
 
   uint8_t* data;
   size_t data_size;
@@ -423,8 +423,8 @@ void _yr_scan_remove_match_from_list(
 
 
 int _yr_scan_verify_chained_string_match(
-    YR_ARENA* matches_arena,
     YR_STRING* matching_string,
+    YR_SCAN_CONTEXT* context,
     uint8_t* match_data,
     size_t match_base,
     size_t match_offset,
@@ -526,6 +526,18 @@ int _yr_scan_verify_chained_string_match(
           match->prev = NULL;
           match->next = NULL;
 
+          if (string->matches[tidx].count == 0)
+          {
+            // If this is the first match for the string, put the string in the
+            // list of strings whose flags needs to be cleared after the scan.
+
+            FAIL_ON_ERROR(yr_arena_write_data(
+                context->matching_strings_arena,
+                &string,
+                sizeof(string),
+                NULL));
+          }
+
           FAIL_ON_ERROR(_yr_scan_add_match_to_list(
               match, &string->matches[tidx]));
         }
@@ -536,7 +548,7 @@ int _yr_scan_verify_chained_string_match(
     else
     {
       FAIL_ON_ERROR(yr_arena_allocate_memory(
-          matches_arena,
+          context->matches_arena,
           sizeof(YR_MATCH),
           (void**) &new_match));
 
@@ -606,8 +618,8 @@ int _yr_scan_match_callback(
   if (STRING_IS_CHAIN_PART(string))
   {
     result = _yr_scan_verify_chained_string_match(
-        callback_args->matches_arena,
         string,
+        callback_args->context,
         match_data,
         callback_args->data_base,
         match_offset,
@@ -616,8 +628,20 @@ int _yr_scan_match_callback(
   }
   else
   {
+    if (string->matches[tidx].count == 0)
+    {
+      // If this is the first match for the string, put the string in the
+      // list of strings whose flags needs to be cleared after the scan.
+
+      FAIL_ON_ERROR(yr_arena_write_data(
+          callback_args->context->matching_strings_arena,
+          &string,
+          sizeof(string),
+          NULL));
+    }
+
     result = yr_arena_allocate_memory(
-        callback_args->matches_arena,
+        callback_args->context->matches_arena,
         sizeof(YR_MATCH),
         (void**) &new_match);
 
@@ -650,12 +674,12 @@ typedef int (*RE_EXEC_FUNC)(
 
 
 int _yr_scan_verify_re_match(
+    YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,
     uint8_t* data,
     size_t data_size,
     size_t data_base,
-    size_t offset,
-    YR_ARENA* matches_arena)
+    size_t offset)
 {
   CALLBACK_ARGS callback_args;
   RE_EXEC_FUNC exec;
@@ -708,10 +732,10 @@ int _yr_scan_verify_re_match(
     return ERROR_SUCCESS;
 
   callback_args.string = ac_match->string;
+  callback_args.context = context;
   callback_args.data = data;
   callback_args.data_size = data_size;
   callback_args.data_base = data_base;
-  callback_args.matches_arena = matches_arena;
   callback_args.forward_matches = forward_matches;
   callback_args.full_word = STRING_IS_FULL_WORD(ac_match->string);
   callback_args.tidx = yr_get_tidx();
@@ -747,12 +771,12 @@ int _yr_scan_verify_re_match(
 
 
 int _yr_scan_verify_literal_match(
+    YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,
     uint8_t* data,
     size_t data_size,
     size_t data_base,
-    size_t offset,
-    YR_ARENA* matches_arena)
+    size_t offset)
 {
   int flags = 0;
   int forward_matches = 0;
@@ -814,11 +838,11 @@ int _yr_scan_verify_literal_match(
   if (STRING_IS_NO_CASE(string))
     flags |= RE_FLAGS_NO_CASE;
 
+  callback_args.context = context;
   callback_args.string = string;
   callback_args.data = data;
   callback_args.data_size = data_size;
   callback_args.data_base = data_base;
-  callback_args.matches_arena = matches_arena;
   callback_args.forward_matches = forward_matches;
   callback_args.full_word = STRING_IS_FULL_WORD(string);
   callback_args.tidx = yr_get_tidx();
@@ -831,13 +855,12 @@ int _yr_scan_verify_literal_match(
 
 
 int yr_scan_verify_match(
+    YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,
     uint8_t* data,
     size_t data_size,
     size_t data_base,
-    size_t offset,
-    YR_ARENA* matches_arena,
-    int flags)
+    size_t offset)
 {
   YR_STRING* string = ac_match->string;
 
@@ -848,7 +871,7 @@ int yr_scan_verify_match(
   if (data_size - offset <= 0)
     return ERROR_SUCCESS;
 
-  if (flags & SCAN_FLAGS_FAST_MODE &&
+  if (context->flags & SCAN_FLAGS_FAST_MODE &&
       STRING_IS_SINGLE_MATCH(string) &&
       STRING_FOUND(string))
     return ERROR_SUCCESS;
@@ -860,12 +883,12 @@ int yr_scan_verify_match(
   if (STRING_IS_LITERAL(string))
   {
     FAIL_ON_ERROR(_yr_scan_verify_literal_match(
-        ac_match, data, data_size, data_base, offset, matches_arena));
+        context, ac_match, data, data_size, data_base, offset));
   }
   else
   {
     FAIL_ON_ERROR(_yr_scan_verify_re_match(
-        ac_match, data, data_size, data_base, offset, matches_arena));
+        context, ac_match, data, data_size, data_base, offset));
   }
 
   #ifdef PROFILING_ENABLED

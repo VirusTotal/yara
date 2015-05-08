@@ -386,6 +386,9 @@ typedef struct _YR_SCAN_CONTEXT
   YR_HASH_TABLE*  objects_table;
   YR_CALLBACK_FUNC  callback;
 
+  YR_ARENA* matches_arena;
+  YR_ARENA* matching_strings_arena;
+
 } YR_SCAN_CONTEXT;
 
 
