@@ -526,18 +526,6 @@ int _yr_scan_verify_chained_string_match(
           match->prev = NULL;
           match->next = NULL;
 
-          if (string->matches[tidx].count == 0)
-          {
-            // If this is the first match for the string, put the string in the
-            // list of strings whose flags needs to be cleared after the scan.
-
-            FAIL_ON_ERROR(yr_arena_write_data(
-                context->matching_strings_arena,
-                &string,
-                sizeof(string),
-                NULL));
-          }
-
           FAIL_ON_ERROR(_yr_scan_add_match_to_list(
               match, &string->matches[tidx]));
         }
@@ -547,6 +535,19 @@ int _yr_scan_verify_chained_string_match(
     }
     else
     {
+      if (matching_string->matches[tidx].count == 0 &&
+          matching_string->unconfirmed_matches[tidx].count == 0)
+      {
+        // If this is the first match for the string, put the string in the
+        // list of strings whose flags needs to be cleared after the scan.
+
+        FAIL_ON_ERROR(yr_arena_write_data(
+            context->matching_strings_arena,
+            &matching_string,
+            sizeof(matching_string),
+            NULL));
+      }
+
       FAIL_ON_ERROR(yr_arena_allocate_memory(
           context->matches_arena,
           sizeof(YR_MATCH),
