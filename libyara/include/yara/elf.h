@@ -53,7 +53,7 @@ typedef uint64_t elf64_xword_t;
 #define ELF_EM_88K      0x0005  // Motorola 88000
 #define ELF_EM_860      0x0007  // Intel 80860
 #define ELF_EM_MIPS     0x0008  // MIPS RS3000
-#define ELF_EM_ARM      0x0032  // ARM
+#define ELF_EM_ARM      0x0028  // ARM
 #define ELF_EM_X86_64   0x003E  // AMD/Intel x86_64
 
 #define ELF_CLASS_NONE  0x0000
