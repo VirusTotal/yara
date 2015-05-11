@@ -180,7 +180,7 @@ int yr_execute_code(
   int result = ERROR_SUCCESS;
   int stop = FALSE;
   int cycle = 0;
-  int tidx = yr_get_tidx();
+  int tidx = context->tidx;
 
   #ifdef PROFILING_ENABLED
   clock_t start = clock();

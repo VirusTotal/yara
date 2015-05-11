@@ -173,7 +173,7 @@ void _yr_rules_clean_matches(
 {
   YR_RULE* rule;
 
-  int tidx = yr_get_tidx();
+  int tidx = context->tidx;
 
   yr_rules_foreach(rules, rule)
   {
@@ -322,16 +322,6 @@ YR_API int yr_rules_scan_mem_blocks(
   if (block == NULL)
     return ERROR_SUCCESS;
 
-  context.flags = flags;
-  context.callback = callback;
-  context.user_data = user_data;
-  context.file_size = block->size;
-  context.mem_block = block;
-  context.entry_point = UNDEFINED;
-  context.objects_table = NULL;
-  context.matches_arena = NULL;
-  context.matching_strings_arena = NULL;
-
   _yr_rules_lock(rules);
 
   int tidx = 0;
@@ -352,6 +342,17 @@ YR_API int yr_rules_scan_mem_blocks(
 
   if (result != ERROR_SUCCESS)
     return result;
+
+  context.tidx = tidx;
+  context.flags = flags;
+  context.callback = callback;
+  context.user_data = user_data;
+  context.file_size = block->size;
+  context.mem_block = block;
+  context.entry_point = UNDEFINED;
+  context.objects_table = NULL;
+  context.matches_arena = NULL;
+  context.matching_strings_arena = NULL;
 
   yr_set_tidx(tidx);
 

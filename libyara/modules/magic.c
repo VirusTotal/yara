@@ -36,24 +36,22 @@ define_function(magic_mime_type)
   YR_MEMORY_BLOCK* block;
   YR_SCAN_CONTEXT* context = scan_context();
 
-  int tidx = yr_get_tidx();
-
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
     return_string(UNDEFINED);
 
-  if (cached_mime_types[tidx] == NULL)
+  if (cached_mime_types[context->tidx] == NULL)
   {
     block = first_memory_block(context);
 
-    magic_setflags(magic_cookie[tidx], MAGIC_MIME_TYPE);
+    magic_setflags(magic_cookie[context->tidx], MAGIC_MIME_TYPE);
 
-    cached_mime_types[tidx] = magic_buffer(
-        magic_cookie[tidx],
+    cached_mime_types[context->tidx] = magic_buffer(
+        magic_cookie[context->tidx],
         block->data,
         block->size);
   }
 
-  return_string((char*) cached_mime_types[tidx]);
+  return_string((char*) cached_mime_types[context->tidx]);
 }
 
 
@@ -62,24 +60,22 @@ define_function(magic_type)
   YR_MEMORY_BLOCK* block;
   YR_SCAN_CONTEXT* context = scan_context();
 
-  int tidx = yr_get_tidx();
-
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
     return_string(UNDEFINED);
 
-  if (cached_types[tidx] == NULL)
+  if (cached_types[context->tidx] == NULL)
   {
     block = first_memory_block(context);
 
-    magic_setflags(magic_cookie[tidx], 0);
+    magic_setflags(magic_cookie[context->tidx], 0);
 
-    cached_types[tidx] = magic_buffer(
-        magic_cookie[tidx],
+    cached_types[context->tidx] = magic_buffer(
+        magic_cookie[context->tidx],
         block->data,
         block->size);
   }
 
-  return_string((char*) cached_types[tidx]);
+  return_string((char*) cached_types[context->tidx]);
 }
 
 begin_declarations;
@@ -117,20 +113,18 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-  int tidx = yr_get_tidx();
+  cached_types[context->tidx] = NULL;
+  cached_mime_types[context->tidx] = NULL;
 
-  cached_types[tidx] = NULL;
-  cached_mime_types[tidx] = NULL;
-
-  if (magic_cookie[tidx] == NULL)
+  if (magic_cookie[context->tidx] == NULL)
   {
-    magic_cookie[tidx] = magic_open(0);
+    magic_cookie[context->tidx] = magic_open(0);
 
-    if (magic_cookie[tidx] != NULL)
+    if (magic_cookie[context->tidx] != NULL)
     {
-      if (magic_load(magic_cookie[tidx], NULL) != 0)
+      if (magic_load(magic_cookie[context->tidx], NULL) != 0)
       {
-        magic_close(magic_cookie[tidx]);
+        magic_close(magic_cookie[context->tidx]);
         return ERROR_INTERNAL_FATAL_ERROR;
       }
     }

@@ -39,7 +39,6 @@ typedef struct _CALLBACK_ARGS
 
   int forward_matches;
   int full_word;
-  int tidx;
 
 } CALLBACK_ARGS;
 
@@ -428,8 +427,7 @@ int _yr_scan_verify_chained_string_match(
     uint8_t* match_data,
     size_t match_base,
     size_t match_offset,
-    int32_t match_length,
-    int tidx)
+    int32_t match_length)
 {
   YR_STRING* string;
   YR_MATCH* match;
@@ -440,6 +438,7 @@ int _yr_scan_verify_chained_string_match(
   size_t ending_offset;
   int32_t full_chain_length;
 
+  int tidx = context->tidx;
   int add_match = FALSE;
 
   if (matching_string->chained_to == NULL)
@@ -583,7 +582,7 @@ int _yr_scan_match_callback(
   YR_MATCH* new_match;
 
   int result = ERROR_SUCCESS;
-  int tidx = callback_args->tidx;
+  int tidx = callback_args->context->tidx;
 
   size_t match_offset = match_data - callback_args->data;
 
@@ -624,8 +623,7 @@ int _yr_scan_match_callback(
         match_data,
         callback_args->data_base,
         match_offset,
-        match_length,
-        tidx);
+        match_length);
   }
   else
   {
@@ -739,7 +737,6 @@ int _yr_scan_verify_re_match(
   callback_args.data_base = data_base;
   callback_args.forward_matches = forward_matches;
   callback_args.full_word = STRING_IS_FULL_WORD(ac_match->string);
-  callback_args.tidx = yr_get_tidx();
 
   if (ac_match->backward_code != NULL)
   {
@@ -846,7 +843,6 @@ int _yr_scan_verify_literal_match(
   callback_args.data_base = data_base;
   callback_args.forward_matches = forward_matches;
   callback_args.full_word = STRING_IS_FULL_WORD(string);
-  callback_args.tidx = yr_get_tidx();
 
   FAIL_ON_ERROR(_yr_scan_match_callback(
       data + offset, 0, flags, &callback_args));
@@ -874,7 +870,7 @@ int yr_scan_verify_match(
 
   if (context->flags & SCAN_FLAGS_FAST_MODE &&
       STRING_IS_SINGLE_MATCH(string) &&
-      STRING_FOUND(string))
+      string->matches[context->tidx].head != NULL)
     return ERROR_SUCCESS;
 
   if (STRING_IS_FIXED_OFFSET(string) &&

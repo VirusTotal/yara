@@ -43,9 +43,6 @@ typedef int32_t tidx_mask_t;
 
 #define NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL      0x01
 
-#define NAMESPACE_HAS_UNSATISFIED_GLOBAL(x) \
-    ((x)->t_flags[yr_get_tidx()] & NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL)
-
 
 typedef struct _YR_NAMESPACE
 {
@@ -380,6 +377,8 @@ typedef struct _YR_SCAN_CONTEXT
   uint64_t  entry_point;
 
   int flags;
+  int tidx;
+
   void* user_data;
 
   YR_MEMORY_BLOCK*  mem_block;
