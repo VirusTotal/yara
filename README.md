@@ -66,5 +66,6 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Websense](http://www.websense.com)
 * [osquery](http://www.osquery.io)
 * [x64dbg](http://x64dbg.com)
+* [Heroku](https://heroku.com)
 
 Are you using it? Want to see your site listed here?
