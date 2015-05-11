@@ -29,7 +29,7 @@ limitations under the License.
 // Version as a single 4-byte hex number, e.g. 0x030401 == 3.4.1.
 #define YR_VERSION_HEX ((YR_MAJOR_VERSION << 16) | \
     (YR_MINOR_VERSION << 8) | \
-    (YR_MICRO_VERSION << 0)
+    (YR_MICRO_VERSION << 0))
 
 
 YR_API int yr_initialize(void);
