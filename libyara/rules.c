@@ -168,10 +168,10 @@ YR_API int yr_rules_define_string_variable(
 
 
 void _yr_rules_clean_matches(
-    YR_RULES* rules)
+    YR_RULES* rules,
+    YR_SCAN_CONTEXT* context)
 {
   YR_RULE* rule;
-  YR_STRING* string;
 
   int tidx = yr_get_tidx();
 
@@ -179,16 +179,24 @@ void _yr_rules_clean_matches(
   {
     rule->t_flags[tidx] &= ~RULE_TFLAGS_MATCH;
     rule->ns->t_flags[tidx] &= ~NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
+  }
 
-    yr_rule_strings_foreach(rule, string)
-    {
-      string->matches[tidx].count = 0;
-      string->matches[tidx].head = NULL;
-      string->matches[tidx].tail = NULL;
-      string->unconfirmed_matches[tidx].count = 0;
-      string->unconfirmed_matches[tidx].head = NULL;
-      string->unconfirmed_matches[tidx].tail = NULL;
-    }
+  YR_STRING** string = (YR_STRING**) yr_arena_base_address(
+      context->matching_strings_arena);
+
+  while (string != NULL)
+  {
+    (*string)->matches[tidx].count = 0;
+    (*string)->matches[tidx].head = NULL;
+    (*string)->matches[tidx].tail = NULL;
+    (*string)->unconfirmed_matches[tidx].count = 0;
+    (*string)->unconfirmed_matches[tidx].head = NULL;
+    (*string)->unconfirmed_matches[tidx].tail = NULL;
+
+    string = yr_arena_next_address(
+        context->matching_strings_arena,
+        string,
+        sizeof(string));
   }
 }
 
@@ -225,22 +233,17 @@ void yr_rules_print_profiling_info(
 #endif
 
 
-int yr_rules_scan_mem_block(
+int _yr_rules_scan_mem_block(
     YR_RULES* rules,
     YR_MEMORY_BLOCK* block,
-    int flags,
+    YR_SCAN_CONTEXT* context,
     int timeout,
-    time_t start_time,
-    YR_ARENA* matches_arena)
+    time_t start_time)
 {
-  YR_AC_STATE* next_state;
   YR_AC_MATCH* ac_match;
-  YR_AC_STATE* current_state;
+  YR_AC_STATE* current_state = rules->automaton->root;
 
-  size_t i;
-
-  current_state = rules->automaton->root;
-  i = 0;
+  size_t i = 0;
 
   while (i < block->size)
   {
@@ -251,19 +254,18 @@ int yr_rules_scan_mem_block(
       if (ac_match->backtrack <= i)
       {
         FAIL_ON_ERROR(yr_scan_verify_match(
+            context,
             ac_match,
             block->data,
             block->size,
             block->base,
-            i - ac_match->backtrack,
-            matches_arena,
-            flags));
+            i - ac_match->backtrack));
       }
 
       ac_match = ac_match->next;
     }
 
-    next_state = yr_ac_next_state(current_state, block->data[i]);
+    YR_AC_STATE* next_state = yr_ac_next_state(current_state, block->data[i]);
 
     while (next_state == NULL && current_state->depth > 0)
     {
@@ -290,13 +292,12 @@ int yr_rules_scan_mem_block(
     if (ac_match->backtrack <= block->size)
     {
       FAIL_ON_ERROR(yr_scan_verify_match(
+          context,
           ac_match,
           block->data,
           block->size,
           block->base,
-          block->size - ac_match->backtrack,
-          matches_arena,
-          flags));
+          block->size - ac_match->backtrack));
     }
 
     ac_match = ac_match->next;
@@ -315,16 +316,7 @@ YR_API int yr_rules_scan_mem_blocks(
     int timeout)
 {
   YR_SCAN_CONTEXT context;
-  YR_RULE* rule;
-  YR_OBJECT* object;
-  YR_EXTERNAL_VARIABLE* external;
-  YR_ARENA* matches_arena = NULL;
 
-  time_t start_time;
-  tidx_mask_t bit;
-
-  int message;
-  int tidx = 0;
   int result = ERROR_SUCCESS;
 
   if (block == NULL)
@@ -337,10 +329,13 @@ YR_API int yr_rules_scan_mem_blocks(
   context.mem_block = block;
   context.entry_point = UNDEFINED;
   context.objects_table = NULL;
+  context.matches_arena = NULL;
+  context.matching_strings_arena = NULL;
 
   _yr_rules_lock(rules);
 
-  bit = 1;
+  int tidx = 0;
+  tidx_mask_t bit = 1;
 
   while (rules->tidx_mask & bit)
   {
@@ -360,7 +355,12 @@ YR_API int yr_rules_scan_mem_blocks(
 
   yr_set_tidx(tidx);
 
-  result = yr_arena_create(1024, 0, &matches_arena);
+  result = yr_arena_create(1024, 0, &context.matches_arena);
+
+  if (result != ERROR_SUCCESS)
+    goto _exit;
+
+  result = yr_arena_create(8, 0, &context.matching_strings_arena);
 
   if (result != ERROR_SUCCESS)
     goto _exit;
@@ -370,10 +370,12 @@ YR_API int yr_rules_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  external = rules->externals_list_head;
+  YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
+    YR_OBJECT* object;
+
     result = yr_object_from_external_variable(
         external,
         &object);
@@ -391,7 +393,7 @@ YR_API int yr_rules_scan_mem_blocks(
     external++;
   }
 
-  start_time = time(NULL);
+  time_t start_time = time(NULL);
 
   while (block != NULL)
   {
@@ -408,13 +410,12 @@ YR_API int yr_rules_scan_mem_blocks(
             block->size);
     }
 
-    result = yr_rules_scan_mem_block(
+    result = _yr_rules_scan_mem_block(
         rules,
         block,
-        flags,
+        &context,
         timeout,
-        start_time,
-        matches_arena);
+        start_time);
 
     if (result != ERROR_SUCCESS)
       goto _exit;
@@ -431,6 +432,8 @@ YR_API int yr_rules_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
+  YR_RULE* rule;
+
   yr_rules_foreach(rules, rule)
   {
     if (RULE_IS_GLOBAL(rule) && !(rule->t_flags[tidx] & RULE_TFLAGS_MATCH))
@@ -441,6 +444,8 @@ YR_API int yr_rules_scan_mem_blocks(
 
   yr_rules_foreach(rules, rule)
   {
+    int message;
+
     if (rule->t_flags[tidx] & RULE_TFLAGS_MATCH &&
         !(rule->ns->t_flags[tidx] & NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL))
     {
@@ -470,15 +475,18 @@ YR_API int yr_rules_scan_mem_blocks(
 
 _exit:
 
+  _yr_rules_clean_matches(rules, &context);
+
   if (flags & SCAN_FLAGS_SHOW_MODULE_INFO)
     yr_modules_print_data(&context);
 
   yr_modules_unload_all(&context);
 
-  _yr_rules_clean_matches(rules);
+  if (context.matches_arena != NULL)
+    yr_arena_destroy(context.matches_arena);
 
-  if (matches_arena != NULL)
-    yr_arena_destroy(matches_arena);
+  if (context.matching_strings_arena != NULL)
+    yr_arena_destroy(context.matching_strings_arena);
 
   if (context.objects_table != NULL)
     yr_hash_table_destroy(
