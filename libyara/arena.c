@@ -98,7 +98,7 @@ YR_ARENA_PAGE* _yr_arena_new_page(
 //
 // _yr_arena_page_for_address
 //
-// Returns the page within he arena where an address reside.
+// Returns the page within the arena where an address reside.
 //
 // Args:
 //    YR_ARENA* arena   - Pointer to the arena
@@ -302,12 +302,16 @@ void yr_arena_destroy(
 //    YR_ARENA* arena  - Pointer to the arena.
 //
 // Returns:
-//    A pointer
+//    A pointer to the arena's data. NULL if the no data has been written to
+//    the arena yet.
 //
 
 void* yr_arena_base_address(
   YR_ARENA* arena)
 {
+  if (arena->page_list_head->used == 0)
+    return NULL;
+
   return arena->page_list_head->address;
 }
 
