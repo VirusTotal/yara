@@ -186,28 +186,23 @@ int strcmp_w(
   return w_str[0] - *str;
 }
 
-
-size_t strlcpy_w(
-    char* dst,
+/*
+strncpy()-type function that does a quick&dirty UTF-16-LE-to-Latin1
+conversion
+*/
+char* strncpy_w(
+    char* dest,
     const char* w_src,
     size_t n)
 {
-  register char* d = dst;
-  register const char* s = w_src;
+  size_t i;
 
-  while (n > 1 && *s != 0)
-  {
-    *d = *s;
-    d += 1;
-    n -= 1;
-    s += 2;
-  }
+  for (i = 0; i < n && (w_src[2*i] != '\0' || w_src[2*i+1] != '\0'); i++)
+    dest[i] = w_src[2*i];
+  for ( ; i < n; i++)
+    dest[i] = '\0';
 
-  while (*s) s += 2;
-
-  *d = '\0';
-
-  return (s - w_src) / 2;
+  return dest;
 }
 
 
