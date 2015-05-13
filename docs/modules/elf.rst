@@ -65,9 +65,12 @@ Reference
     .. c:type:: EM_88K
     .. c:type:: EM_860
     .. c:type:: EM_MIPS
-    .. c:type:: EM_ARM"
-    .. c:type:: EM_MIPS
+    .. c:type:: EM_MIPS_RS3_LE
+    .. c:type:: EM_PPC
+    .. c:type:: EM_PPC64
+    .. c:type:: EM_ARM
     .. c:type:: EM_X86_64
+    .. c:type:: EM_AARCH64
 
     *Example: elf.machine == elf.EM_X86_64*
 
