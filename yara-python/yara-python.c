@@ -622,12 +622,15 @@ static size_t flo_read(
 
       int result = PyBytes_AsStringAndSize(bytes, &buffer, &len);
 
-      Py_DECREF(bytes);
-
       if (result == -1 || (size_t) len < size)
+      {
+        Py_DECREF(bytes);
         return i;
+      }
 
       memcpy((char*) ptr + i * size, buffer, size);
+
+      Py_DECREF(bytes);
     }
     else
     {
