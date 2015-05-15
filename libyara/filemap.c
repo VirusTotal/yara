@@ -211,6 +211,8 @@ YR_API int yr_filemap_map_fd(
 
       return ERROR_COULD_NOT_MAP_FILE;
     }
+
+    madvise(pmapped_file->data, pmapped_file->size, MADV_SEQUENTIAL);
   }
   else
   {
