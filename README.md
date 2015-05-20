@@ -67,5 +67,6 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [osquery](http://www.osquery.io)
 * [x64dbg](http://x64dbg.com)
 * [Heroku](https://heroku.com)
+* [Raytheon Cyber Products, Inc.](http://www.raytheoncyber.com/capabilities/products/sureview-threatprotection/)
 
 Are you using it? Want to see your site listed here?
