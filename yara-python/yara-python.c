@@ -288,6 +288,9 @@ typedef struct
   YR_RULE* iter_current_rule;
 } Rules;
 
+
+static Rules * Rules_NEW();
+
 static void Rules_dealloc(
     PyObject *self);
 
@@ -973,12 +976,28 @@ static PyObject * Rule_getattro(
   return PyObject_GenericGetAttr(self, name);
 }
 
+
+static Rules * Rules_NEW()
+{
+  Rules *rules = PyObject_NEW(Rules, &Rules_Type);
+
+  if (rules != NULL)
+  {
+    rules->rules = NULL;
+    rules->externals = NULL;
+  }
+
+  return rules;
+}
+
 static void Rules_dealloc(PyObject *self)
 {
   Rules *object = (Rules *) self;
 
   Py_XDECREF(object->externals);
-  yr_rules_destroy(object->rules);
+
+  if (object->rules != NULL)
+    yr_rules_destroy(object->rules);
 
   PyObject_Del(self);
 }
@@ -1621,7 +1640,7 @@ static PyObject * yara_compile(
 
     if (PyErr_Occurred() == NULL)
     {
-      rules = PyObject_NEW(Rules, &Rules_Type);
+      rules = Rules_NEW();
 
       if (rules != NULL)
       {
@@ -1636,20 +1655,17 @@ static PyObject * yara_compile(
 
           if (externals != NULL && externals != Py_None)
             rules->externals = PyDict_Copy(externals);
-          else
-            rules->externals = NULL;
 
           result = (PyObject*) rules;
         }
         else
         {
-          printf("yr_compiler_get_rules: %d\n", error);
+          Py_DECREF(rules);
           result = handle_error(error, NULL);
         }
       }
       else
       {
-        printf("PyObject_NEW: ERROR_INSUFICIENT_MEMORY\n");
         result = handle_error(ERROR_INSUFICIENT_MEMORY, NULL);
       }
     }
@@ -1664,14 +1680,13 @@ static PyObject * yara_compile(
 static PyObject * yara_load(
     PyObject *self,
     PyObject *args)
-{
-  Rules* rules = PyObject_NEW(Rules, &Rules_Type);
-  PyObject* param;
+{ 
   YR_EXTERNAL_VARIABLE* external;
-  int error;
 
-  if (rules == NULL)
-    return PyErr_NoMemory();
+  Rules* rules = NULL;
+  PyObject* param;
+
+  int error;
 
   if (!PyArg_UnpackTuple(args, "load", 1, 1, &param))
   {
@@ -1684,12 +1699,20 @@ static PyObject * yara_load(
   {
     char* filepath = PY_STRING_TO_C(param);
 
+    rules = Rules_NEW();
+
+    if (rules == NULL)
+      return PyErr_NoMemory();
+
     Py_BEGIN_ALLOW_THREADS;
     error = yr_rules_load(filepath, &rules->rules);
     Py_END_ALLOW_THREADS;
 
     if (error != ERROR_SUCCESS)
+    {
+      Py_DECREF(rules);
       return handle_error(error, filepath);
+    }
   }
   else if (PyObject_HasAttrString(param, "read"))
   {
@@ -1698,12 +1721,20 @@ static PyObject * yara_load(
     stream.user_data = param;
     stream.read = flo_read;
 
+    rules = Rules_NEW();
+
+    if (rules == NULL)
+      return PyErr_NoMemory();
+
     Py_BEGIN_ALLOW_THREADS;
     error = yr_rules_load_stream(&stream, &rules->rules);
     Py_END_ALLOW_THREADS;
 
     if (error != ERROR_SUCCESS)
+    {
+      Py_DECREF(rules);
       return handle_error(error, "<file-like-object>");
+    }
   }
   else
   {
@@ -1717,8 +1748,6 @@ static PyObject * yara_load(
 
   if (!EXTERNAL_VARIABLE_IS_NULL(external))
     rules->externals = PyDict_New();
-  else
-    rules->externals = NULL;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
