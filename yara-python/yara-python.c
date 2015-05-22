@@ -52,10 +52,10 @@ typedef int Py_ssize_t;
 
 /* Module globals */
 
-static PyObject *YaraError = NULL;
-static PyObject *YaraSyntaxError = NULL;
-static PyObject *YaraTimeoutError = NULL;
-static PyObject *YaraWarningError = NULL;
+static PyObject* YaraError = NULL;
+static PyObject* YaraSyntaxError = NULL;
+static PyObject* YaraTimeoutError = NULL;
+static PyObject* YaraWarningError = NULL;
 
 
 #define YARA_DOC "\
@@ -117,7 +117,7 @@ static PyMemberDef Match_members[] = {
   { NULL } // End marker
 };
 
-static PyObject * Match_NEW(
+static PyObject* Match_NEW(
     const char* rule,
     const char* ns,
     PyObject* tags,
@@ -125,22 +125,22 @@ static PyObject * Match_NEW(
     PyObject* strings);
 
 static void Match_dealloc(
-  PyObject *self);
+  PyObject* self);
 
-static PyObject * Match_repr(
-    PyObject *self);
+static PyObject* Match_repr(
+    PyObject* self);
 
-static PyObject * Match_getattro(
-    PyObject *self,
-    PyObject *name);
+static PyObject* Match_getattro(
+    PyObject* self,
+    PyObject* name);
 
-static PyObject * Match_richcompare(
-    PyObject *self,
-    PyObject *other,
+static PyObject* Match_richcompare(
+    PyObject* self,
+    PyObject* other,
     int op);
 
 static long Match_hash(
-    PyObject *self);
+    PyObject* self);
 
 
 static PyMethodDef Match_methods[] =
@@ -200,11 +200,11 @@ typedef struct
 } Rule;
 
 static void Rule_dealloc(
-    PyObject *self);
+    PyObject* self);
 
-static PyObject * Rule_getattro(
-    PyObject *self,
-    PyObject *name);
+static PyObject* Rule_getattro(
+    PyObject* self,
+    PyObject* name);
 
 static PyMemberDef Rule_members[] = {
   {
@@ -241,7 +241,7 @@ static PyTypeObject Rule_Type = {
   "yara.Rule",                /*tp_name*/
   sizeof(Rule),               /*tp_basicsize*/
   0,                          /*tp_itemsize*/
-  (destructor)Rule_dealloc,   /*tp_dealloc*/
+  (destructor) Rule_dealloc,  /*tp_dealloc*/
   0,                          /*tp_print*/
   0,                          /*tp_getattr*/
   0,                          /*tp_setattr*/
@@ -289,30 +289,30 @@ typedef struct
 } Rules;
 
 
-static Rules * Rules_NEW();
+static Rules* Rules_NEW();
 
 static void Rules_dealloc(
-    PyObject *self);
+    PyObject* self);
 
-static PyObject * Rules_match(
-    PyObject *self,
-    PyObject *args,
-    PyObject *keywords);
+static PyObject* Rules_match(
+    PyObject* self,
+    PyObject* args,
+    PyObject* keywords);
 
-static PyObject * Rules_save(
-    PyObject *self,
-    PyObject *args);
+static PyObject* Rules_save(
+    PyObject* self,
+    PyObject* args);
 
-static PyObject * Rules_profiling_info(
-    PyObject *self,
-    PyObject *args);
+static PyObject* Rules_profiling_info(
+    PyObject* self,
+    PyObject* args);
 
-static PyObject * Rules_getattro(
-    PyObject *self,
-    PyObject *name);
+static PyObject* Rules_getattro(
+    PyObject* self,
+    PyObject* name);
 
-static PyObject * Rules_next(
-    PyObject *self);
+static PyObject* Rules_next(
+    PyObject* self);
 
 static PyMethodDef Rules_methods[] =
 {
@@ -342,7 +342,7 @@ static PyTypeObject Rules_Type = {
   "yara.Rules",               /*tp_name*/
   sizeof(Rules),              /*tp_basicsize*/
   0,                          /*tp_itemsize*/
-  (destructor)Rules_dealloc,  /*tp_dealloc*/
+  (destructor) Rules_dealloc, /*tp_dealloc*/
   0,                          /*tp_print*/
   0,                          /*tp_getattr*/
   0,                          /*tp_setattr*/
@@ -380,9 +380,9 @@ static PyTypeObject Rules_Type = {
 
 typedef struct _CALLBACK_DATA
 {
-  PyObject *matches;
-  PyObject *callback;
-  PyObject *modules_data;
+  PyObject* matches;
+  PyObject* callback;
+  PyObject* modules_data;
 
 } CALLBACK_DATA;
 
@@ -682,7 +682,8 @@ int process_compile_externals(
     PyObject* externals,
     YR_COMPILER* compiler)
 {
-  PyObject *key, *value;
+  PyObject* key; 
+  PyObject* value;
   Py_ssize_t pos = 0;
 
   char* identifier = NULL;
@@ -737,7 +738,8 @@ int process_match_externals(
     PyObject* externals,
     YR_RULES* rules)
 {
-  PyObject *key, *value;
+  PyObject* key;
+  PyObject* value;
   Py_ssize_t pos = 0;
 
   char* identifier = NULL;
@@ -833,16 +835,14 @@ PyObject* handle_error(
 }
 
 
-static PyObject * Match_NEW(
+static PyObject* Match_NEW(
     const char* rule,
     const char* ns,
     PyObject* tags,
     PyObject* meta,
     PyObject* strings)
 {
-  Match* object;
-
-  object = PyObject_NEW(Match, &Match_Type);
+  Match* object = PyObject_NEW(Match, &Match_Type);
 
   if (object != NULL)
   {
@@ -857,14 +857,14 @@ static PyObject * Match_NEW(
     Py_INCREF(strings);
   }
 
-  return (PyObject *)object;
+  return (PyObject*) object;
 }
 
 
 static void Match_dealloc(
-    PyObject *self)
+    PyObject* self)
 {
-  Match *object = (Match *) self;
+  Match* object = (Match*) self;
 
   Py_DECREF(object->rule);
   Py_DECREF(object->ns);
@@ -876,32 +876,32 @@ static void Match_dealloc(
 }
 
 
-static PyObject * Match_repr(
-    PyObject *self)
+static PyObject* Match_repr(
+    PyObject* self)
 {
-  Match *object = (Match *) self;
+  Match* object = (Match*) self;
   Py_INCREF(object->rule);
   return object->rule;
 }
 
 
-static PyObject * Match_getattro(
-    PyObject *self,
-    PyObject *name)
+static PyObject* Match_getattro(
+    PyObject* self,
+    PyObject* name)
 {
   return PyObject_GenericGetAttr(self, name);
 }
 
 
-static PyObject * Match_richcompare(
-    PyObject *self,
-    PyObject *other,
+static PyObject* Match_richcompare(
+    PyObject* self,
+    PyObject* other,
     int op)
 {
   PyObject* result = NULL;
 
-  Match *a = (Match *) self;
-  Match *b = (Match *) other;
+  Match* a = (Match*) self;
+  Match* b = (Match*) other;
 
   if(PyObject_TypeCheck(other, &Match_Type))
   {
@@ -951,35 +951,36 @@ static PyObject * Match_richcompare(
 
 
 static long Match_hash(
-    PyObject *self)
+    PyObject* self)
 {
-  Match *match = (Match *) self;
+  Match* match = (Match*) self;
   return PyObject_Hash(match->rule) + PyObject_Hash(match->ns);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 
-static void Rule_dealloc(PyObject *self)
+static void Rule_dealloc(
+    PyObject* self)
 {
-  Rule *object = (Rule *) self;
+  Rule* object = (Rule*) self;
   Py_XDECREF(object->identifier);
   Py_XDECREF(object->tags);
   Py_XDECREF(object->meta);
   PyObject_Del(self);
 }
 
-static PyObject * Rule_getattro(
-    PyObject *self,
-    PyObject *name)
+static PyObject* Rule_getattro(
+    PyObject* self,
+    PyObject* name)
 {
   return PyObject_GenericGetAttr(self, name);
 }
 
 
-static Rules * Rules_NEW()
+static Rules* Rules_NEW()
 {
-  Rules *rules = PyObject_NEW(Rules, &Rules_Type);
+  Rules* rules = PyObject_NEW(Rules, &Rules_Type);
 
   if (rules != NULL)
   {
@@ -990,9 +991,10 @@ static Rules * Rules_NEW()
   return rules;
 }
 
-static void Rules_dealloc(PyObject *self)
+static void Rules_dealloc(
+    PyObject* self)
 {
-  Rules *object = (Rules *) self;
+  Rules* object = (Rules*) self;
 
   Py_XDECREF(object->externals);
 
@@ -1002,17 +1004,18 @@ static void Rules_dealloc(PyObject *self)
   PyObject_Del(self);
 }
 
-static PyObject * Rules_next(PyObject *self)
+static PyObject* Rules_next(
+    PyObject* self)
 {
-  Rule *rule;
-  PyObject *tag_list;
-  PyObject *object;
-  PyObject *meta_list;
-  YR_META *meta;
-  Rules *rules;
-  const char *tag;
+  PyObject* tag_list;
+  PyObject* object;
+  PyObject* meta_list;
 
-  rules = (Rules *) self;
+  YR_META* meta;
+  const char* tag;
+
+  Rule* rule;
+  Rules* rules = (Rules *) self;
 
   // Generate new Rule object based upon iter_current_rule and increment
   // iter_current_rule.
@@ -1053,7 +1056,7 @@ static PyObject * Rules_next(PyObject *self)
     rule->tags = tag_list;
     rule->meta = meta_list;
     rules->iter_current_rule++;
-    return (PyObject *) rule;
+    return (PyObject*) rule;
   }
   else
   {
@@ -1063,12 +1066,12 @@ static PyObject * Rules_next(PyObject *self)
   }
 }
 
-static PyObject * Rules_match(
-    PyObject *self,
-    PyObject *args,
-    PyObject *keywords)
+static PyObject* Rules_match(
+    PyObject* self,
+    PyObject* args,
+    PyObject* keywords)
 {
-  static char *kwlist[] = {
+  static char* kwlist[] = {
       "filepath", "pid", "data", "externals",
       "callback", "fast", "timeout", "modules_data", NULL
       };
@@ -1082,8 +1085,8 @@ static PyObject * Rules_match(
   int error = ERROR_SUCCESS;
   int fast_mode = FALSE;
 
-  PyObject *externals = NULL;
-  PyObject *fast = NULL;
+  PyObject* externals = NULL;
+  PyObject* fast = NULL;
 
   Rules* object = (Rules*) self;
 
@@ -1249,9 +1252,9 @@ static PyObject * Rules_match(
 }
 
 
-static PyObject * Rules_save(
-    PyObject *self,
-    PyObject *args)
+static PyObject* Rules_save(
+    PyObject* self,
+    PyObject* args)
 {
   int error;
 
@@ -1301,9 +1304,9 @@ static PyObject * Rules_save(
 }
 
 
-static PyObject * Rules_profiling_info(
-    PyObject *self,
-    PyObject *args)
+static PyObject* Rules_profiling_info(
+    PyObject* self,
+    PyObject* args)
 {
 
 #ifdef PROFILING_ENABLED
@@ -1342,9 +1345,9 @@ static PyObject * Rules_profiling_info(
 }
 
 
-static PyObject * Rules_getattro(
-    PyObject *self,
-    PyObject *name)
+static PyObject* Rules_getattro(
+    PyObject* self,
+    PyObject* name)
 {
   return PyObject_GenericGetAttr(self, name);
 }
@@ -1416,10 +1419,10 @@ void raise_exception_on_error_or_warning(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static PyObject * yara_compile(
-    PyObject *self,
-    PyObject *args,
-    PyObject *keywords)
+static PyObject* yara_compile(
+    PyObject* self,
+    PyObject* args,
+    PyObject* keywords)
 {
   static char *kwlist[] = {
     "filepath", "source", "file", "filepaths", "sources",
@@ -1429,22 +1432,22 @@ static PyObject * yara_compile(
   YR_RULES* yara_rules;
   FILE* fh;
 
-  int fd;
-  int error = 0;
-
   Rules* rules;
-  PyObject *result = NULL;
-  PyObject *file = NULL;
 
-  PyObject *sources_dict = NULL;
-  PyObject *filepaths_dict = NULL;
-  PyObject *includes = NULL;
-  PyObject *externals = NULL;
-  PyObject *error_on_warning = NULL;
-
-  PyObject *key, *value;
+  PyObject* key;
+  PyObject* value;
+  PyObject* result = NULL;
+  PyObject* file = NULL;
+  PyObject* sources_dict = NULL;
+  PyObject* filepaths_dict = NULL;
+  PyObject* includes = NULL;
+  PyObject* externals = NULL;
+  PyObject* error_on_warning = NULL;
 
   Py_ssize_t pos = 0;
+
+  int fd;
+  int error = 0;
 
   char* filepath = NULL;
   char* source = NULL;
@@ -1677,9 +1680,9 @@ static PyObject * yara_compile(
 }
 
 
-static PyObject * yara_load(
-    PyObject *self,
-    PyObject *args)
+static PyObject* yara_load(
+    PyObject* self,
+    PyObject* args)
 { 
   YR_EXTERNAL_VARIABLE* external;
 
@@ -1827,7 +1830,7 @@ static PyMethodDef yara_methods[] = {
 
 MOD_INIT(yara)
 {
-  PyObject *m;
+  PyObject* m;
 
   MOD_DEF(m, "yara", YARA_DOC, yara_methods)
 
