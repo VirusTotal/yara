@@ -84,6 +84,54 @@ endianness, no matter the operating system or if they are 32-bits or 64-bits
 systems. However files saved with older versions of YARA may not work with
 newer version due to changes in the file layout.
 
+You can also save and retrieve your rules to and from generic data streams by
+using functions :c:func:`yr_rules_save_stream` and
+:c:func:`yr_rules_load_stream`. These functions receive a pointer to a
+:c:type:`YR_STREAM` structure, defined as:
+
+.. code-block:: c
+
+  typedef struct _YR_STREAM
+  {
+    void* user_data;
+
+    YR_STREAM_READ_FUNC read;
+    YR_STREAM_WRITE_FUNC write;
+
+  } YR_STREAM;
+
+You must provide your own implementation for ``read`` and ``write`` functions.
+The ``read`` function is used by :c:func:`yr_rules_load_stream` to read data
+from your stream and the ``write`` function is used by
+:c:func:`yr_rules_save_stream` to write data into your stream.
+
+Your ``read`` and ``write`` functions must respond to these prototypes:
+
+.. code-block:: c
+
+  size_t read(
+      void* ptr,
+      size_t size,
+      size_t count,
+      void* user_data);
+
+  size_t write(
+      const void* ptr,
+      size_t size,
+      size_t count,
+      void* user_data);
+
+The ``ptr`` argument is a pointer to the buffer where your ``read`` function
+should put the read data, or where your ``write`` function will find the data
+that needs to be written to the stream. In both cases ``size`` is the size of
+each element being read or written and ``count`` the number of elements. The
+total size of the data being read or written is ``size`` * ``count``.
+
+The ``user_data`` pointer is the same you specified in the
+:c:type:`YR_STREAM` structure. You can use it to pass arbitrary data to your
+``read`` and ``write`` functions.
+
+
 .. _scanning-data:
 
 Scanning data
@@ -131,10 +179,23 @@ Lastly, the callback function is also called with the
 ``CALLBACK_MSG_SCAN_FINISHED`` message when the scan is finished. In this case
 ``message_data`` is ``NULL``.
 
-In all cases the ``user_data`` argument is the same passed to
-:c:func:`yr_rules_scan_file` or :c:func:`yr_rules_scan_mem`. This pointer is
-not touched by YARA, it's just a way for your program to pass arbitrary data
-to the callback function.
+Your callback function must return one of the following values::
+
+  CALLBACK_CONTINUE
+  CALLBACK_ABORT
+  CALLBACK_ERROR
+
+If it returns ``CALLBACK_CONTINUE`` YARA will continue normally,
+``CALLBACK_ABORT`` will abort the scan but the result from the
+``yr_rules_scan_x`` function will be ``ERROR_SUCCESS``. On the other hand
+``CALLBACK_ERROR`` will abort the scanning too, but the result from
+``yr_rules_scan_x`` will be ``ERROR_CALLBACK_ERROR``.
+
+
+The ``user_data`` argument passed to your callback function is the same you
+passed to :c:func:`yr_rules_scan_file` or :c:func:`yr_rules_scan_mem`. This
+pointer is not touched by YARA, it's just a way for your program to pass
+arbitrary data to the callback function.
 
 Both :c:func:`yr_rules_scan_file` and :c:func:`yr_rules_scan_mem` receive a
 ``flags`` argument and a ``timeout`` argument. The only flag defined at this
@@ -161,9 +222,61 @@ Data structures
 
   Data structure representing a YARA compiler.
 
-.. c:type:: YR_RULES
+.. c:type:: YR_MATCH
 
-  Data structure representing a set of compiled rules.
+  Data structure representing a string match.
+
+  .. c:member:: int64_t base
+
+    Base offset/address for the match. While scanning a file this field is
+    usually zero, while scanning a process memory space this field is the
+    virtual address of the memory block where the match was found.
+
+  .. c:member:: int64_t offset
+
+    Offset of the match relative to *base*.
+
+  .. c:member:: int32_t length
+
+    Length of the matching string
+
+  .. c:member:: uint8_t* data
+
+    Pointer to the matching string.
+
+.. c:type:: YR_META
+
+  Data structure representing a metadata value.
+
+  .. c:member:: const char* identifier
+
+    Meta identifier.
+
+  .. c:member:: int32_t type
+
+    One of the following metadata types:
+
+      ``META_TYPE_NULL``
+      ``META_TYPE_INTEGER``
+      ``META_TYPE_STRING``
+      ``META_TYPE_BOOLEAN``
+
+.. c:type:: YR_MODULE_IMPORT
+
+  .. c:member:: const char* module_name
+
+    Name of the module being imported.
+
+  .. c:member:: void* module_data
+
+    Pointer to additional data passed to the module. Initially set to
+    ``NULL``, your program is responsible of setting this pointer while
+    handling the CALLBACK_MSG_IMPORT_MODULE message.
+
+  .. c:member:: size_t module_data_size
+
+    Size of additional data passed to module. Your program must set the
+    appropriate value if ``module_data`` is modified.
 
 .. c:type:: YR_RULE
 
@@ -190,22 +303,26 @@ Data structures
     Pointer to a sequence of :c:type:`YR_STRING` structures. To iterate over the
     structures use :c:func:`yr_rule_strings_foreach`.
 
-.. c:type:: YR_META
+.. c:type:: YR_RULES
 
-  Data structure representing a metadata value.
+  Data structure representing a set of compiled rules.
 
-  .. c:member:: const char* identifier
+.. c:type:: YR_STREAM
 
-    Meta identifier.
+  Data structure representing a stream used with functions
+  :c:func:`yr_rules_load_stream` and :c:func:`yr_rules_save_stream`.
 
-  .. c:member:: int32_t type
+  .. c:member:: void* user_data
 
-    One of the following metadata types:
+    A user-defined pointer.
 
-      ``META_TYPE_NULL``
-      ``META_TYPE_INTEGER``
-      ``META_TYPE_STRING``
-      ``META_TYPE_BOOLEAN``
+  .. c:member:: YR_STREAM_READ_FUNC read
+
+    A pointer to the stream's read function provided by the user.
+
+  .. c:member:: YR_STREAM_WRITE_FUNC write
+
+    A pointer to the stream's write function provided by the user.
 
 .. c:type:: YR_STRING
 
@@ -214,48 +331,6 @@ Data structures
   .. c:member:: const char* identifier
 
       String identifier.
-
-
-.. c:type:: YR_MATCH
-
-  Data structure representing a string match.
-
-  .. c:member:: int64_t base
-
-    Base offset/address for the match. While scanning a file this field is
-    usually zero, while scanning a process memory space this field is the
-    virtual address of the memory block where the match was found.
-
-  .. c:member:: int64_t offset
-
-    Offset of the match relative to *base*.
-
-  .. c:member:: int32_t length
-
-    Length of the matching string
-
-  .. c:member:: uint8_t* data
-
-    Pointer to the matching string.
-
-
-.. c:type:: YR_MODULE_IMPORT
-
-  .. c:member:: const char* module_name
-
-    Name of the module being imported.
-
-  .. c:member:: void* module_data
-
-    Pointer to additional data passed to the module. Initially set to
-    ``NULL``, your program is responsible of setting this pointer while
-    handling the CALLBACK_MSG_IMPORT_MODULE message.
-
-  .. c:member:: size_t module_data_size
-
-    Size of additional data passed to module. Your program must set the
-    appropriate value if ``module_data`` is modified.
-
 
 Functions
 ---------
@@ -352,6 +427,12 @@ Functions
 
     :c:macro:`ERROR_COULD_NOT_OPEN_FILE`
 
+.. c:function:: int yr_rules_save_stream(YR_RULES* rules, YR_STREAM* stream)
+
+  Save *rules* into *stream*. Returns one of the following error codes:
+
+    :c:macro:`ERROR_SUCCESS`
+
 .. c:function:: int yr_rules_load(const char* filename, YR_RULES** rules)
 
   Load rules from the file specified by *filename*. Returns one of the
@@ -369,7 +450,19 @@ Functions
 
     :c:macro:`ERROR_UNSUPPORTED_FILE_VERSION`
 
+.. c:function:: int yr_rules_load_stream(YR_STREAM* stream, YR_RULES** rules)
+
+  Load rules from *stream*. Returns one of the following error codes:
+
+    :c:macro:`ERROR_SUCCESS`
+
     :c:macro:`ERROR_INSUFICENT_MEMORY`
+
+    :c:macro:`ERROR_INVALID_FILE`
+
+    :c:macro:`ERROR_CORRUPT_FILE`
+
+    :c:macro:`ERROR_UNSUPPORTED_FILE_VERSION`
 
 .. c:function:: int yr_rules_scan_mem(YR_RULES* rules, uint8_t* buffer, size_t buffer_size, int flags, YR_CALLBACK_FUNC callback, void* user_data, int timeout)
 
