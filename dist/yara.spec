@@ -14,13 +14,12 @@
 Name:           yara
 Version:        3.2.0
 Release:        1
-License:        GPL-2.0+
+License:        Apache License 2.0
 Summary:        A malware identification and classification tool
-Url:            http://code.google.com/p/yara-project
+Url:            http://plusvic.github.io/yara/
 Group:          System/Filesystems
 Source:         yara-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-BuildRequires:  pcre-devel
 BuildRequires:  autoconf automake libtool
 
 %description
