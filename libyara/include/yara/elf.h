@@ -45,16 +45,20 @@ typedef uint64_t elf64_xword_t;
 #define ELF_ET_LOPROC   0xFF00  // Processor-specific
 #define ELF_ET_HIPROC   0x00FF  // Processor-specific
 
-#define ELF_EM_NONE     0x0000  // no type
-#define ELF_EM_M32      0x0001  // AT&T WE 32100
-#define ELF_EM_SPARC    0x0002  // SPARC
-#define ELF_EM_386      0x0003  // Intel 80386
-#define ELF_EM_68K      0x0004  // Motorola 68000
-#define ELF_EM_88K      0x0005  // Motorola 88000
-#define ELF_EM_860      0x0007  // Intel 80860
-#define ELF_EM_MIPS     0x0008  // MIPS RS3000
-#define ELF_EM_ARM      0x0032  // ARM
-#define ELF_EM_X86_64   0x003E  // AMD/Intel x86_64
+#define ELF_EM_NONE         0x0000  // no type
+#define ELF_EM_M32          0x0001  // AT&T WE 32100
+#define ELF_EM_SPARC        0x0002  // SPARC
+#define ELF_EM_386          0x0003  // Intel 80386
+#define ELF_EM_68K          0x0004  // Motorola 68000
+#define ELF_EM_88K          0x0005  // Motorola 88000
+#define ELF_EM_860          0x0007  // Intel 80860
+#define ELF_EM_MIPS         0x0008  // MIPS I Architecture
+#define ELF_EM_MIPS_RS3_LE  0x000A  // MIPS RS3000 Little-endian
+#define ELF_EM_PPC          0x0014  // PowerPC
+#define ELF_EM_PPC64        0x0015  // 64-bit PowerPC
+#define ELF_EM_ARM          0x0028  // ARM
+#define ELF_EM_X86_64       0x003E  // AMD/Intel x86_64
+#define ELF_EM_AARCH64      0x00B7  // 64-bit ARM
 
 #define ELF_CLASS_NONE  0x0000
 #define ELF_CLASS_32    0x0001  // 32bit file
