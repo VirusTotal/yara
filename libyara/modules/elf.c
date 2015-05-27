@@ -199,9 +199,13 @@ begin_declarations;
   declare_integer("EM_68K");
   declare_integer("EM_88K");
   declare_integer("EM_860");
-  declare_integer("EM_ARM");
   declare_integer("EM_MIPS");
+  declare_integer("EM_MIPS_RS3_LE");
+  declare_integer("EM_PPC");
+  declare_integer("EM_PPC64");
+  declare_integer("EM_ARM");
   declare_integer("EM_X86_64");
+  declare_integer("EM_AARCH64");
 
   declare_integer("SHT_NULL");
   declare_integer("SHT_PROGBITS");
@@ -307,9 +311,13 @@ int module_load(
   set_integer(ELF_EM_68K, module_object, "EM_68K");
   set_integer(ELF_EM_88K, module_object, "EM_88K");
   set_integer(ELF_EM_860, module_object, "EM_860");
-  set_integer(ELF_EM_ARM, module_object, "EM_ARM");
   set_integer(ELF_EM_MIPS, module_object, "EM_MIPS");
+  set_integer(ELF_EM_MIPS_RS3_LE, module_object, "EM_MIPS_RS3_LE");
+  set_integer(ELF_EM_PPC, module_object, "EM_PPC");
+  set_integer(ELF_EM_PPC64, module_object, "EM_PPC64");
+  set_integer(ELF_EM_ARM, module_object, "EM_ARM");
   set_integer(ELF_EM_X86_64, module_object, "EM_X86_64");
+  set_integer(ELF_EM_AARCH64, module_object, "EM_AARCH64");
 
   set_integer(ELF_SHT_NULL, module_object, "SHT_NULL");
   set_integer(ELF_SHT_PROGBITS, module_object, "SHT_PROGBITS");

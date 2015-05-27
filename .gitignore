@@ -45,3 +45,7 @@ stamp-h1
 # Project specific files
 /yara
 /yarac
+
+# Linux and Mac files
+*.swp
+.DS_Store
