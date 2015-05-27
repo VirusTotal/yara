@@ -173,7 +173,7 @@ void parse_elf_header_##bits(                                                  \
       segment++;                                                               \
     }                                                                          \
   }                                                                            \
-}                                                                                                             
+}
 
 
 ELF_RVA_TO_OFFSET(32);
@@ -227,15 +227,15 @@ begin_declarations;
   declare_integer("type");
   declare_integer("machine");
   declare_integer("entry_point");
-  
+
   declare_integer("number_of_sections");
   declare_integer("sh_offset");
   declare_integer("sh_entry_size");
-  
+
   declare_integer("number_of_segments");
   declare_integer("ph_offset");
   declare_integer("ph_entry_size");
-  
+
   begin_struct_array("sections");
     declare_integer("type");
     declare_integer("flags");
@@ -243,7 +243,7 @@ begin_declarations;
     declare_integer("size");
     declare_integer("offset");
   end_struct_array("sections");
-  
+
   declare_integer("PT_NULL");
   declare_integer("PT_LOAD");
   declare_integer("PT_DYNAMIC");
@@ -254,20 +254,20 @@ begin_declarations;
   declare_integer("PT_TLS");
   declare_integer("PT_GNU_EH_FRAME");
   declare_integer("PT_GNU_STACK");
-  
+
   declare_integer("PF_X");
   declare_integer("PF_W");
   declare_integer("PF_R");
-  
+
   begin_struct_array("segments");
-    declare_integer("type");    
-    declare_integer("flags");    
-    declare_integer("offset");    
-    declare_integer("virt_addr");    
-    declare_integer("phys_addr");    
-    declare_integer("file_size");    
-    declare_integer("mem_size");    
-    declare_integer("alignment");    
+    declare_integer("type");
+    declare_integer("flags");
+    declare_integer("offset");
+    declare_integer("virt_addr");
+    declare_integer("phys_addr");
+    declare_integer("file_size");
+    declare_integer("mem_size");
+    declare_integer("alignment");
   end_struct_array("segments");
 
 end_declarations;
@@ -335,7 +335,7 @@ int module_load(
   set_integer(ELF_SHF_WRITE, module_object, "SHF_WRITE");
   set_integer(ELF_SHF_ALLOC, module_object, "SHF_ALLOC");
   set_integer(ELF_SHF_EXECINSTR, module_object, "SHF_EXECINSTR");
-  
+
   set_integer(ELF_PT_NULL, module_object, "PT_NULL");
   set_integer(ELF_PT_LOAD, module_object, "PT_LOAD");
   set_integer(ELF_PT_DYNAMIC, module_object, "PT_DYNAMIC");
@@ -346,7 +346,7 @@ int module_load(
   set_integer(ELF_PT_TLS, module_object, "PT_TLS");
   set_integer(ELF_PT_GNU_EH_FRAME, module_object, "PT_GNU_EH_FRAME");
   set_integer(ELF_PT_GNU_STACK, module_object, "PT_GNU_STACK");
-  
+
   set_integer(ELF_PF_X, module_object, "PF_X");
   set_integer(ELF_PF_W, module_object, "PF_W");
   set_integer(ELF_PF_R, module_object, "PF_R");
