@@ -843,11 +843,11 @@ class TestYara(unittest.TestCase):
             stream = io.BytesIO()
 
         r1 = yara.compile(source='rule test { condition: true }')
-        r1.save(stream)
+        r1.save(file=stream)
 
         stream.seek(0)
 
-        r2 = yara.load(stream)
+        r2 = yara.load(file=stream)
         m = r2.match(data="dummy")
 
         self.assertTrue(len(m) == 1)

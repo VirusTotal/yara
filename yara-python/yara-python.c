@@ -301,7 +301,8 @@ static PyObject* Rules_match(
 
 static PyObject* Rules_save(
     PyObject* self,
-    PyObject* args);
+    PyObject* args,
+    PyObject* keywords);
 
 static PyObject* Rules_profiling_info(
     PyObject* self,
@@ -324,7 +325,7 @@ static PyMethodDef Rules_methods[] =
   {
     "save",
     (PyCFunction) Rules_save,
-    METH_VARARGS
+    METH_VARARGS | METH_KEYWORDS
   },
   {
     "profiling_info",
@@ -682,7 +683,7 @@ int process_compile_externals(
     PyObject* externals,
     YR_COMPILER* compiler)
 {
-  PyObject* key; 
+  PyObject* key;
   PyObject* value;
   Py_ssize_t pos = 0;
 
@@ -1254,24 +1255,32 @@ static PyObject* Rules_match(
 
 static PyObject* Rules_save(
     PyObject* self,
-    PyObject* args)
+    PyObject* args,
+    PyObject* keywords)
 {
-  int error;
+  static char* kwlist[] = {
+      "filepath", "file",  NULL
+      };
 
-  PyObject* param;
+  char* filepath = NULL;
+  PyObject* file = NULL;
   Rules* rules = (Rules*) self;
 
-  if (!PyArg_UnpackTuple(args, "save", 1, 1, &param))
+  int error;
+
+  if (!PyArg_ParseTupleAndKeywords(
+      args,
+      keywords,
+      "|sO",
+      kwlist,
+      &filepath,
+      &file))
   {
-    return PyErr_Format(
-        PyExc_TypeError,
-          "save() takes 1 argument");
+    return NULL;
   }
 
-  if (PY_STRING_CHECK(param))
+  if (filepath != NULL)
   {
-    char* filepath = PY_STRING_TO_C(param);
-
     Py_BEGIN_ALLOW_THREADS
     error = yr_rules_save(rules->rules, filepath);
     Py_END_ALLOW_THREADS
@@ -1279,11 +1288,11 @@ static PyObject* Rules_save(
     if (error != ERROR_SUCCESS)
       return handle_error(error, filepath);
   }
-  else if (PyObject_HasAttrString(param, "write"))
+  else if (file != NULL && PyObject_HasAttrString(file, "write"))
   {
     YR_STREAM stream;
 
-    stream.user_data = param;
+    stream.user_data = file;
     stream.write = flo_write;
 
     Py_BEGIN_ALLOW_THREADS;
@@ -1682,26 +1691,34 @@ static PyObject* yara_compile(
 
 static PyObject* yara_load(
     PyObject* self,
-    PyObject* args)
-{ 
+    PyObject* args,
+    PyObject* keywords)
+{
+  static char* kwlist[] = {
+      "filepath", "file",  NULL
+      };
+
   YR_EXTERNAL_VARIABLE* external;
 
   Rules* rules = NULL;
-  PyObject* param;
+  PyObject* file = NULL;
+  char* filepath = NULL;
 
   int error;
 
-  if (!PyArg_UnpackTuple(args, "load", 1, 1, &param))
+  if (!PyArg_ParseTupleAndKeywords(
+      args,
+      keywords,
+      "|sO",
+      kwlist,
+      &filepath,
+      &file))
   {
-    return PyErr_Format(
-        PyExc_TypeError,
-          "load() takes 1 argument");
+    return NULL;
   }
 
-  if (PY_STRING_CHECK(param))
+  if (filepath != NULL)
   {
-    char* filepath = PY_STRING_TO_C(param);
-
     rules = Rules_NEW();
 
     if (rules == NULL)
@@ -1717,11 +1734,11 @@ static PyObject* yara_load(
       return handle_error(error, filepath);
     }
   }
-  else if (PyObject_HasAttrString(param, "read"))
+  else if (file != NULL && PyObject_HasAttrString(file, "read"))
   {
     YR_STREAM stream;
 
-    stream.user_data = param;
+    stream.user_data = file;
     stream.read = flo_read;
 
     rules = Rules_NEW();
@@ -1805,7 +1822,7 @@ static PyMethodDef yara_methods[] = {
   {
     "load",
     (PyCFunction) yara_load,
-    METH_VARARGS,
+    METH_VARARGS | METH_KEYWORDS,
     "Loads a previously saved YARA rules file and returns an instance of class Rules"
   },
   { NULL, NULL }
