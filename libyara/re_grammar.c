@@ -392,16 +392,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  22
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   43
+#define YYLAST   45
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  24
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  6
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  30
+#define YYNRULES  31
 /* YYNRULES -- Number of states.  */
-#define YYNSTATES  34
+#define YYNSTATES  35
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
@@ -448,9 +448,9 @@ static const yytype_uint8 yytranslate[] =
 static const yytype_uint8 yyprhs[] =
 {
        0,     0,     3,     5,     7,     9,    13,    16,    18,    21,
-      24,    28,    31,    35,    38,    42,    45,    47,    49,    51,
-      53,    55,    59,    61,    63,    65,    67,    69,    71,    73,
-      75
+      24,    28,    31,    35,    38,    42,    45,    49,    51,    53,
+      55,    57,    59,    63,    65,    67,    69,    71,    73,    75,
+      77,    79
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
@@ -460,19 +460,20 @@ static const yytype_int8 yyrhs[] =
       15,    27,    -1,    26,    15,    -1,    28,    -1,    27,    28,
       -1,    29,    16,    -1,    29,    16,    17,    -1,    29,    18,
       -1,    29,    18,    17,    -1,    29,    17,    -1,    29,    17,
-      17,    -1,    29,     5,    -1,    29,    -1,    13,    -1,    14,
-      -1,    19,    -1,    20,    -1,    21,    26,    22,    -1,    23,
-      -1,     3,    -1,     7,    -1,     8,    -1,     9,    -1,    10,
-      -1,    11,    -1,    12,    -1,     6,    -1
+      17,    -1,    29,     5,    -1,    29,     5,    17,    -1,    29,
+      -1,    13,    -1,    14,    -1,    19,    -1,    20,    -1,    21,
+      26,    22,    -1,    23,    -1,     3,    -1,     7,    -1,     8,
+      -1,     9,    -1,    10,    -1,    11,    -1,    12,    -1,     6,
+      -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
        0,    88,    88,    93,    96,   100,   109,   124,   128,   138,
-     145,   154,   161,   170,   180,   191,   201,   205,   211,   217,
-     223,   231,   235,   241,   249,   255,   261,   267,   273,   279,
-     285
+     145,   154,   161,   170,   180,   191,   201,   212,   216,   222,
+     228,   234,   242,   246,   252,   260,   266,   272,   278,   284,
+     290,   296
 };
 #endif
 
@@ -505,17 +506,17 @@ static const yytype_uint8 yyr1[] =
 {
        0,    24,    25,    25,    26,    26,    26,    27,    27,    28,
       28,    28,    28,    28,    28,    28,    28,    28,    28,    28,
-      28,    29,    29,    29,    29,    29,    29,    29,    29,    29,
-      29
+      28,    28,    29,    29,    29,    29,    29,    29,    29,    29,
+      29,    29
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
        0,     2,     1,     1,     1,     3,     2,     1,     2,     2,
-       3,     2,     3,     2,     3,     2,     1,     1,     1,     1,
-       1,     3,     1,     1,     1,     1,     1,     1,     1,     1,
-       1
+       3,     2,     3,     2,     3,     2,     3,     1,     1,     1,
+       1,     1,     3,     1,     1,     1,     1,     1,     1,     1,
+       1,     1
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -523,10 +524,10 @@ static const yytype_uint8 yyr2[] =
    means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     3,    23,    30,    24,    25,    26,    27,    28,    29,
-      17,    18,    19,    20,     0,    22,     0,     2,     4,     7,
-      16,     0,     1,     6,     8,    15,     9,    13,    11,    21,
-       5,    10,    14,    12
+       0,     3,    24,    31,    25,    26,    27,    28,    29,    30,
+      18,    19,    20,    21,     0,    23,     0,     2,     4,     7,
+      17,     0,     1,     6,     8,    15,     9,    13,    11,    22,
+       5,    16,    10,    14,    12
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
@@ -542,14 +543,14 @@ static const yytype_int8 yypact[] =
 {
       -1,   -12,   -12,   -12,   -12,   -12,   -12,   -12,   -12,   -12,
      -12,   -12,   -12,   -12,    18,   -12,     1,   -11,    18,   -12,
-      -2,    21,   -12,    18,   -12,   -12,     0,    16,    17,   -12,
-      18,   -12,   -12,   -12
+      -2,    21,   -12,    18,   -12,     0,    16,    17,    23,   -12,
+      18,   -12,   -12,   -12,   -12
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -12,   -12,    26,    19,     5,   -12
+     -12,   -12,    28,    22,     5,   -12
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
@@ -563,16 +564,16 @@ static const yytype_uint8 yytable[] =
        8,     9,    10,    11,    26,    27,    28,    31,    12,    13,
       14,     2,    15,    24,     3,     4,     5,     6,     7,     8,
        9,    10,    11,    32,    33,    24,    23,    12,    13,    14,
-      21,    15,    30,    29
+      34,    15,    21,    29,     0,    30
 };
 
-static const yytype_uint8 yycheck[] =
+static const yytype_int8 yycheck[] =
 {
        1,     0,     3,     5,    15,     6,     7,     8,     9,    10,
       11,    12,    13,    14,    16,    17,    18,    17,    19,    20,
       21,     3,    23,    18,     6,     7,     8,     9,    10,    11,
       12,    13,    14,    17,    17,    30,    15,    19,    20,    21,
-      14,    23,    23,    22
+      17,    23,    14,    22,    -1,    23
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -582,7 +583,7 @@ static const yytype_uint8 yystos[] =
        0,     1,     3,     6,     7,     8,     9,    10,    11,    12,
       13,    14,    19,    20,    21,    23,    25,    26,    27,    28,
       29,    26,     0,    15,    28,     5,    16,    17,    18,    22,
-      27,    17,    17,    17
+      27,    17,    17,    17,    17
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -1105,27 +1106,27 @@ yydestruct (yymsg, yytype, yyvaluep, yyscanner, lex_env)
       case 6: /* "_CLASS_" */
 #line 80 "re_grammar.y"
 	{ yr_free((yyvaluep->class_vector)); };
-#line 1109 "re_grammar.c"
+#line 1110 "re_grammar.c"
 	break;
       case 26: /* "alternative" */
 #line 81 "re_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1114 "re_grammar.c"
+#line 1115 "re_grammar.c"
 	break;
       case 27: /* "concatenation" */
 #line 82 "re_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1119 "re_grammar.c"
+#line 1120 "re_grammar.c"
 	break;
       case 28: /* "repeat" */
 #line 83 "re_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1124 "re_grammar.c"
+#line 1125 "re_grammar.c"
 	break;
       case 29: /* "single" */
 #line 84 "re_grammar.y"
 	{ yr_re_node_destroy((yyvaluep->re_node)); };
-#line 1129 "re_grammar.c"
+#line 1130 "re_grammar.c"
 	break;
 
       default:
@@ -1582,12 +1583,26 @@ yyreduce:
   case 16:
 #line 202 "re_grammar.y"
     {
-            (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
+            (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, (yyvsp[(1) - (3)].re_node), NULL);
+
+            DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[(1) - (3)].re_node));
+            ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+
+            (yyval.re_node)->start = (yyvsp[(2) - (3)].range) & 0xFFFF;;
+            (yyval.re_node)->end = (yyvsp[(2) - (3)].range) >> 16;;
+            (yyval.re_node)->greedy = FALSE;
          }
     break;
 
   case 17:
-#line 206 "re_grammar.y"
+#line 213 "re_grammar.y"
+    {
+            (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
+         }
+    break;
+
+  case 18:
+#line 217 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_WORD_BOUNDARY, NULL, NULL);
 
@@ -1595,8 +1610,8 @@ yyreduce:
          }
     break;
 
-  case 18:
-#line 212 "re_grammar.y"
+  case 19:
+#line 223 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_NON_WORD_BOUNDARY, NULL, NULL);
 
@@ -1604,8 +1619,8 @@ yyreduce:
          }
     break;
 
-  case 19:
-#line 218 "re_grammar.y"
+  case 20:
+#line 229 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_ANCHOR_START, NULL, NULL);
 
@@ -1613,8 +1628,8 @@ yyreduce:
          }
     break;
 
-  case 20:
-#line 224 "re_grammar.y"
+  case 21:
+#line 235 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_ANCHOR_END, NULL, NULL);
 
@@ -1622,15 +1637,15 @@ yyreduce:
          }
     break;
 
-  case 21:
-#line 232 "re_grammar.y"
+  case 22:
+#line 243 "re_grammar.y"
     {
             (yyval.re_node) = (yyvsp[(2) - (3)].re_node);
          }
     break;
 
-  case 22:
-#line 236 "re_grammar.y"
+  case 23:
+#line 247 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
@@ -1638,8 +1653,8 @@ yyreduce:
          }
     break;
 
-  case 23:
-#line 242 "re_grammar.y"
+  case 24:
+#line 253 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
@@ -1649,8 +1664,8 @@ yyreduce:
          }
     break;
 
-  case 24:
-#line 250 "re_grammar.y"
+  case 25:
+#line 261 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_WORD_CHAR, NULL, NULL);
 
@@ -1658,8 +1673,8 @@ yyreduce:
          }
     break;
 
-  case 25:
-#line 256 "re_grammar.y"
+  case 26:
+#line 267 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_NON_WORD_CHAR, NULL, NULL);
 
@@ -1667,8 +1682,8 @@ yyreduce:
          }
     break;
 
-  case 26:
-#line 262 "re_grammar.y"
+  case 27:
+#line 273 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_SPACE, NULL, NULL);
 
@@ -1676,8 +1691,8 @@ yyreduce:
          }
     break;
 
-  case 27:
-#line 268 "re_grammar.y"
+  case 28:
+#line 279 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_NON_SPACE, NULL, NULL);
 
@@ -1685,8 +1700,8 @@ yyreduce:
          }
     break;
 
-  case 28:
-#line 274 "re_grammar.y"
+  case 29:
+#line 285 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_DIGIT, NULL, NULL);
 
@@ -1694,8 +1709,8 @@ yyreduce:
          }
     break;
 
-  case 29:
-#line 280 "re_grammar.y"
+  case 30:
+#line 291 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_NON_DIGIT, NULL, NULL);
 
@@ -1703,8 +1718,8 @@ yyreduce:
          }
     break;
 
-  case 30:
-#line 286 "re_grammar.y"
+  case 31:
+#line 297 "re_grammar.y"
     {
             (yyval.re_node) = yr_re_node_create(RE_NODE_CLASS, NULL, NULL);
 
@@ -1716,7 +1731,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1720 "re_grammar.c"
+#line 1735 "re_grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1930,6 +1945,6 @@ yyreturn:
 }
 
 
-#line 296 "re_grammar.y"
+#line 307 "re_grammar.y"
 
 
