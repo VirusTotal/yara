@@ -962,14 +962,25 @@ int _yr_re_emit(
 
   case RE_NODE_RANGE:
 
-    // Code for e1{n,m} looks like:
+    // Code for e{n,m} looks like:
     //
-    //            code for e1 (n times)
-    //            push m-n
+    //            code for e       (repeated n times)
+    //            push m-n-1
     //        L0: split L1, L2
-    //        L1: code for e1
-    //            jnztop L0
+    //        L1: code for e
+    //            jnz L0
     //        L2: pop
+    //            split L3, L4
+    //        L3: code for e
+    //        L4:
+    //
+    // Instead of generating a loop with m-n iterations, we generate a loop
+    // with m-n-1 iterations and the last one is unrolled outside the loop.
+    // This is because re_node->backward_code pointers *must* point to code
+    // past the loop. If they point to code before the loop then when some atom
+    // contained inside "e" is found, the loop will be executed in both
+    // forward and backward code. This causes an overlap in forward and backward
+    // matches and the reported matching string will be longer than expected.
 
     if (re_node->start > 0)
     {
@@ -1000,57 +1011,80 @@ int _yr_re_emit(
       }
     }
 
-    // m == n, no more code needed.
-    if (re_node->end == re_node->start)
-      break;
+    if (re_node->end > re_node->start + 1)
+    {
+      FAIL_ON_ERROR(_yr_emit_inst_arg_uint16(
+          arena,
+          RE_OPCODE_PUSH,
+          re_node->end - re_node->start - 1,
+          re_node->start == 0 ? &instruction_addr : NULL,
+          NULL,
+          &inst_size));
 
-    FAIL_ON_ERROR(_yr_emit_inst_arg_uint16(
-        arena,
-        RE_OPCODE_PUSH,
-        re_node->end - re_node->start,
-        re_node->start == 0 ? &instruction_addr : NULL,
-        NULL,
-        &inst_size));
+      *code_size += inst_size;
 
-    *code_size += inst_size;
+      FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
+          arena,
+          re_node->greedy ? RE_OPCODE_SPLIT_A : RE_OPCODE_SPLIT_B,
+          0,
+          NULL,
+          &split_offset_addr,
+          &split_size));
 
-    FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
-        arena,
-        re_node->greedy ? RE_OPCODE_SPLIT_A : RE_OPCODE_SPLIT_B,
-        0,
-        NULL,
-        &split_offset_addr,
-        &split_size));
+      *code_size += split_size;
 
-    *code_size += split_size;
+      FAIL_ON_ERROR(_yr_re_emit(
+          re_node->left,
+          arena,
+          flags | EMIT_DONT_SET_FORWARDS_CODE | EMIT_DONT_SET_BACKWARDS_CODE,
+          NULL,
+          &branch_size));
 
-    FAIL_ON_ERROR(_yr_re_emit(
-        re_node->left,
-        arena,
-        flags | EMIT_DONT_SET_FORWARDS_CODE | EMIT_DONT_SET_BACKWARDS_CODE,
-        NULL,
-        &branch_size));
+      *code_size += branch_size;
 
-    *code_size += branch_size;
+      FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
+          arena,
+          RE_OPCODE_JNZ,
+          -(branch_size + split_size),
+          NULL,
+          &jmp_offset_addr,
+          &jmp_size));
 
-    FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
-        arena,
-        RE_OPCODE_JNZ,
-        -(branch_size + split_size),
-        NULL,
-        &jmp_offset_addr,
-        &jmp_size));
+      *code_size += jmp_size;
+      *split_offset_addr = split_size + branch_size + jmp_size;
 
-    *code_size += jmp_size;
-    *split_offset_addr = split_size + branch_size + jmp_size;
+      FAIL_ON_ERROR(_yr_emit_inst(
+          arena,
+          RE_OPCODE_POP,
+          NULL,
+          &inst_size));
 
-    FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
-        RE_OPCODE_POP,
-        NULL,
-        &inst_size));
+      *code_size += inst_size;
+    }
 
-    *code_size += inst_size;
+    if (re_node->end > re_node->start)
+    {
+      FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
+          arena,
+          re_node->greedy ? RE_OPCODE_SPLIT_A : RE_OPCODE_SPLIT_B,
+          0,
+          NULL,
+          &split_offset_addr,
+          &split_size));
+
+      *code_size += split_size;
+
+      FAIL_ON_ERROR(_yr_re_emit(
+          re_node->left,
+          arena,
+          flags | EMIT_DONT_SET_FORWARDS_CODE,
+          re_node->start == 0 && re_node->end == 1 ? &instruction_addr : NULL,
+          &branch_size));
+
+      *code_size += branch_size;
+      *split_offset_addr = split_size + branch_size;
+    }
+
     break;
   }
 
