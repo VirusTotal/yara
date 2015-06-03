@@ -6,6 +6,10 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 
 AC_CONFIG_MACRO_DIR([m4])
 
+# AC_PROG_CC sets CFLAGS to "-g -O2" if it wasn't previously set. Let's set
+# an empty CFLAGS
+: ${CFLAGS=""}
+
 # automake 1.12 seems to require AM_PROG_AR, but automake 1.11 doesn't
 # recognize it
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
