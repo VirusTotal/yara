@@ -198,6 +198,17 @@ repeat : single '*'
             $$->start = $2 & 0xFFFF;;
             $$->end = $2 >> 16;;
          }
+       | single _RANGE_ '?'
+         {
+            $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
+
+            DESTROY_NODE_IF($$ == NULL, $1);
+            ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+
+            $$->start = $2 & 0xFFFF;;
+            $$->end = $2 >> 16;;
+            $$->greedy = FALSE;
+         }
        | single
          {
             $$ = $1;
