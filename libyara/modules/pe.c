@@ -376,7 +376,6 @@ int64_t pe_rva_to_offset(
 
   DWORD section_rva = 0;
   DWORD section_offset = 0;
-  DWORD section_virtual_size = 0;
   DWORD section_raw_size = 0;
 
   int i = 0;
@@ -390,7 +389,6 @@ int64_t pe_rva_to_offset(
       {
         section_rva = section->VirtualAddress;
         section_offset = section->PointerToRawData;
-        section_virtual_size = section->Misc.VirtualSize;
         section_raw_size = section->SizeOfRawData;
       }
 
