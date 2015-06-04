@@ -162,14 +162,23 @@ void parse_elf_header_##bits(                                                  \
                                                                                \
     for (int i = 0; i < elf->ph_entry_count; i++)                              \
     {                                                                          \
-      set_integer(segment->type, elf_obj, "segments[%i].type", i);             \
-      set_integer(segment->flags, elf_obj, "segments[%i].flags", i);           \
-      set_integer(segment->offset, elf_obj, "segments[%i].offset", i);         \
-      set_integer(segment->virt_addr, elf_obj, "segments[%i].virt_addr", i);   \
-      set_integer(segment->phys_addr, elf_obj, "segments[%i].phys_addr", i);   \
-      set_integer(segment->file_size, elf_obj, "segments[%i].file_size", i);   \
-      set_integer(segment->mem_size, elf_obj, "segments[%i].mem_size", i);     \
-      set_integer(segment->alignment, elf_obj, "segments[%i].alignment", i);   \
+      set_integer(                                                             \
+          segment->type, elf_obj, "segments[%i].type", i);                     \
+      set_integer(                                                             \
+          segment->flags, elf_obj, "segments[%i].flags", i);                   \
+      set_integer(                                                             \
+          segment->offset, elf_obj, "segments[%i].offset", i);                 \
+      set_integer(                                                             \
+          segment->virt_addr, elf_obj, "segments[%i].virtual_address", i);     \
+      set_integer(                                                             \
+          segment->phys_addr, elf_obj, "segments[%i].physical_address", i);    \
+      set_integer(                                                             \
+          segment->file_size, elf_obj, "segments[%i].file_size", i);           \
+      set_integer(                                                             \
+          segment->mem_size, elf_obj, "segments[%i].memory_size", i);          \
+      set_integer(                                                             \
+          segment->alignment, elf_obj, "segments[%i].alignment", i);           \
+                                                                               \
       segment++;                                                               \
     }                                                                          \
   }                                                                            \
@@ -263,10 +272,10 @@ begin_declarations;
     declare_integer("type");
     declare_integer("flags");
     declare_integer("offset");
-    declare_integer("virt_addr");
-    declare_integer("phys_addr");
+    declare_integer("virtual_address");
+    declare_integer("physical_address");
     declare_integer("file_size");
-    declare_integer("mem_size");
+    declare_integer("memory_size");
     declare_integer("alignment");
   end_struct_array("segments");
 
