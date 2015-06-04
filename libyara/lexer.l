@@ -27,8 +27,9 @@ function. When they include something like %option noyy_fatal_error as they do
 with noyywrap then we can remove this pragma.
 */
 
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wunused-function"
-
+#endif
 
 #include <math.h>
 #include <stdio.h>
