@@ -771,7 +771,8 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
 
     case RE_NODE_RANGE:
 
-      append_current_leaf_to_node(current_node);
+      if (re_node->start == 0)
+        append_current_leaf_to_node(current_node);
 
       for (i = 0; i < re_node->start; i++)
       {
@@ -782,7 +783,7 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
           return NULL;
       }
 
-      if (re_node->start > 0)
+      if (re_node->start != re_node->end)
         append_current_leaf_to_node(current_node);
 
       return current_node;
