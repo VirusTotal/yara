@@ -29,7 +29,7 @@ with noyywrap then we can remove this pragma.
 
 #ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wunused-function"
-##
+#endif
 
 #include <assert.h>
 #include <setjmp.h>
