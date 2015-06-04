@@ -109,11 +109,27 @@ The compiled rules can be loaded later by using the ``load`` method:
 
   rules = yara.load('/foo/bar/my_compiled_rules')
 
+Starting with YARA 3.4 both ``save`` and ``load`` accept file objects. For
+example, you can save your rules to a memory buffer with this code:
+
+.. code-block:: python
+
+  import StringIO
+
+  buff = StringIO.StringIO()
+  rules.save(file=buff)
+
+The saved rules can be loaded from the memory buffer:
+
+.. code-block:: python
+
+  buff.seek(0)
+  rule = yara.load(file=buff)
 
 The result of ``load`` is also an instance of the class :py:class:`yara.Rules`.
 
 Instances of ``Rules`` also have a ``match`` method, which allows to apply the
-rules to a file:
+rules to a file::
 
 .. code-block:: python
 
@@ -206,12 +222,12 @@ Reference
 
   Compile YARA sources.
 
-  One of *filepath*, *source*, *file*, *filepaths* or *sources* must be
+  Either *filepath*, *source*, *file*, *filepaths* or *sources* must be
   provided. The remaining arguments are optional.
 
   :param str filepath: Path to the source file.
   :param str source: String containing the rules code.
-  :param file file: Source file as a file object.
+  :param file-object file: Source file as a file object.
   :param dict filepaths: Dictionary where keys are namespaces and values are
     paths to source files.
   :param dict sources: Dictionary where keys are namespaces and values are
@@ -227,12 +243,13 @@ Reference
   :raises YaraSyntaxError: If a syntax error was found.
   :raises YaraError: If an error occurred.
 
-.. py:function:: yara.load(filepath)
+.. py:function:: yara.load(...)
 
-  Load compiled rules from a file.
+  Load compiled rules from a path or file object. Either *filepath* or
+  *file* must be provided.
 
-  :param str filepath: Path to the file.
-
+  :param str filepath: Path to a compiled rules file
+  :param file-object file: A file object supporting the ``read`` method.
   :return: Compiled rules object.
   :rtype: :py:class:`yara.Rules`
   :raises: **YaraError**: If an error occurred while loading the file.
@@ -246,7 +263,7 @@ Reference
 
     Scan a file, process memory or data string.
 
-    One of *filepath*, *pid* or *data* must be provided. The remaining
+    Either *filepath*, *pid* or *data* must be provided. The remaining
     arguments are optional.
 
     :param str filepath: Path to the file to be scanned.
@@ -264,11 +281,12 @@ Reference
     :raises YaraTimeoutError: If the timeout was reached.
     :raises YaraError: If an error occurred during the scan.
 
-  .. py:method:: save(filepath)
+  .. py:method:: save(...)
 
-    Save compiled rules to a file.
+    Save compiled rules to a file. Either *filepath* or *file* must be provided.
 
     :param str filepath: Path to the file.
+    :param file-object file: A file object supporting the ``write`` method.
     :raises: **YaraError**: If an error occurred while saving the file.
 
 
