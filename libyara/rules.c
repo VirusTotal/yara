@@ -193,7 +193,7 @@ void _yr_rules_clean_matches(
     (*string)->unconfirmed_matches[tidx].head = NULL;
     (*string)->unconfirmed_matches[tidx].tail = NULL;
 
-    string = yr_arena_next_address(
+    string = (YR_STRING**) yr_arena_next_address(
         context->matching_strings_arena,
         string,
         sizeof(string));
