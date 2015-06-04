@@ -493,8 +493,9 @@ function. When they include something like %option noyy_fatal_error as they do
 with noyywrap then we can remove this pragma.
 */
 
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wunused-function"
-
+#endif
 
 #include <setjmp.h>
 
@@ -522,7 +523,7 @@ with noyywrap then we can remove this pragma.
 #define YY_NO_UNISTD_H 1
 #define YY_NO_INPUT 1
 
-#line 526 "hex_lexer.c"
+#line 527 "hex_lexer.c"
 
 #define INITIAL 0
 #define range 1
@@ -787,11 +788,11 @@ YY_DECL
 		}
 
 	{
-#line 78 "hex_lexer.l"
+#line 79 "hex_lexer.l"
 
 
 
-#line 795 "hex_lexer.c"
+#line 796 "hex_lexer.c"
 
 	while ( 1 )		/* loops until end-of-file is reached */
 		{
@@ -858,7 +859,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 81 "hex_lexer.l"
+#line 82 "hex_lexer.l"
 {
 
   yylval->integer = xtoi(yytext);
@@ -867,7 +868,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 87 "hex_lexer.l"
+#line 88 "hex_lexer.l"
 {
 
   yytext[1] = '0'; // replace ? by 0
@@ -877,7 +878,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 94 "hex_lexer.l"
+#line 95 "hex_lexer.l"
 {
 
   yytext[0] = '0'; // replace ? by 0
@@ -887,7 +888,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 101 "hex_lexer.l"
+#line 102 "hex_lexer.l"
 {
 
   yylval->integer = 0x0000;
@@ -896,7 +897,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 107 "hex_lexer.l"
+#line 108 "hex_lexer.l"
 {
 
   BEGIN(range);
@@ -905,21 +906,21 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 113 "hex_lexer.l"
+#line 114 "hex_lexer.l"
 {
   return yytext[0];
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 117 "hex_lexer.l"
+#line 118 "hex_lexer.l"
 {
   return yytext[0];
 }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 121 "hex_lexer.l"
+#line 122 "hex_lexer.l"
 {
 
   yylval->integer = atoi(yytext);
@@ -928,7 +929,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 127 "hex_lexer.l"
+#line 128 "hex_lexer.l"
 {
 
   BEGIN(INITIAL);
@@ -938,12 +939,12 @@ YY_RULE_SETUP
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 134 "hex_lexer.l"
+#line 135 "hex_lexer.l"
 // skip whitespace
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 137 "hex_lexer.l"
+#line 138 "hex_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -959,10 +960,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 150 "hex_lexer.l"
+#line 151 "hex_lexer.l"
 ECHO;
 	YY_BREAK
-#line 966 "hex_lexer.c"
+#line 967 "hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(range):
 	yyterminate();
@@ -2098,7 +2099,7 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 150 "hex_lexer.l"
+#line 151 "hex_lexer.l"
 
 
 
