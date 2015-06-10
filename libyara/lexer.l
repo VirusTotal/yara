@@ -109,6 +109,7 @@ hexdigit      [a-fA-F0-9]
 
 %%
 
+".."                    { return _DOT_DOT_;     }
 "<"                     { return _LT_;          }
 ">"                     { return _GT_;          }
 "<="                    { return _LE_;          }
