@@ -10,7 +10,7 @@
     <version>3.3.0-SNAPSHOT</version>
 
     <properties>
-        <hawtjni-version>1.12-SNAPSHOT</hawtjni-version>
+        <hawtjni-version>1.11</hawtjni-version>
         <hawtjni-verbose>true</hawtjni-verbose>
     </properties>
 
