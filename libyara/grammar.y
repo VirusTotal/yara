@@ -78,7 +78,7 @@ limitations under the License.
 %}
 
 
-%expect 2   // expect 2 shift/reduce conflicts
+%expect 1   // expect 1 shift/reduce conflicts
 
 %debug
 %name-prefix="yara_yy"
@@ -88,6 +88,7 @@ limitations under the License.
 %lex-param {yyscan_t yyscanner}
 %lex-param {YR_COMPILER* compiler}
 
+%token _DOT_DOT_
 %token _RULE_
 %token _PRIVATE_
 %token _GLOBAL_
@@ -1429,7 +1430,7 @@ integer_set
 
 
 range
-    : '(' primary_expression '.' '.'  primary_expression ')'
+    : '(' primary_expression _DOT_DOT_  primary_expression ')'
       {
         if ($2.type != EXPRESSION_TYPE_INTEGER)
         {
@@ -1438,7 +1439,7 @@ range
           compiler->last_result = ERROR_WRONG_TYPE;
         }
 
-        if ($5.type != EXPRESSION_TYPE_INTEGER)
+        if ($4.type != EXPRESSION_TYPE_INTEGER)
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for range's upper bound");

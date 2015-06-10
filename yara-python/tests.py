@@ -539,6 +539,12 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = { 00 00 00 00 ?? 74 65 78 74 } condition: $a at 308}',
         ], PE32_FILE)
 
+    def testIn(self):
+
+        self.assertTrueRules([
+            'import "pe" rule test { strings: $a = { 6a 2a 58 c3 } condition: $a in (pe.entry_point .. pe.entry_point + 1) }',
+        ], PE32_FILE)
+
     def testOffset(self):
 
         self.assertTrueRules([
