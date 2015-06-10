@@ -18,7 +18,7 @@
         <dependency>
             <groupId>org.fusesource.hawtjni</groupId>
             <artifactId>hawtjni-runtime</artifactId>
-            <version>1.12-SNAPSHOT</version>
+            <version>1.11</version>
         </dependency>
 
         <dependency>
