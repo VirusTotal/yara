@@ -157,7 +157,7 @@ public class YaraCompilerTest {
                 compiler.addRules(YARA_RULE_NOOP, null);
             }
             catch (YaraException e) {
-                assertEquals(1L, e.getCode());
+                assertEquals(1L, e.getNativeCode());
             }
         }
     }

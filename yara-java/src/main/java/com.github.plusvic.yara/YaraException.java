@@ -12,7 +12,11 @@ public class YaraException extends RuntimeException {
         this.code = code;
     }
 
-    public int getCode() {
+    public int getNativeCode() {
         return this.code;
+    }
+
+    public ErrorCode getCode() {
+        return  ErrorCode.from(this.code);
     }
 }

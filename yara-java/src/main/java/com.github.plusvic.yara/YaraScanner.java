@@ -78,7 +78,11 @@ public class YaraScanner implements AutoCloseable {
      */
     public void setCallback(YaraScanCallback cbk) {
         Preconditions.checkArgument(cbk != null);
-        Preconditions.checkState(callback == null);
+
+        if (callback != null) {
+            callback.dispose();
+            callback = null;
+        }
 
         callback = new Callback(new NativeScanCallback(library, cbk), "nativeOnScan", 3);
     }
@@ -89,6 +93,10 @@ public class YaraScanner implements AutoCloseable {
      */
     public void scan(File file) {
         Preconditions.checkState(callback != null);
-        library.yr_rules_scan_file(peer, file.getAbsolutePath(), 0, callback.getAddress(), 0, timeout);
+
+        int ret = library.yr_rules_scan_file(peer, file.getAbsolutePath(), 0, callback.getAddress(), 0, timeout);
+        if (!ErrorCode.isSuccess(ret)) {
+            throw new YaraException(ret);
+        }
     }
 }
