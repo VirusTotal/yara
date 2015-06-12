@@ -1,10 +1,10 @@
 package com.github.plusvic.yara;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 abstract class GenericIterator<T> implements Iterator<T> {
     private boolean ended = false;
-    private boolean used  = false;
     private T next;
 
     @Override
@@ -12,24 +12,25 @@ abstract class GenericIterator<T> implements Iterator<T> {
         if (ended) {
             return false;
         }
-        if (!used && next != null) {
-            return true;
+
+        if (next == null) {
+            if (null == (next = getNext())) {
+                ended = true;
+            }
         }
 
-        if (null == (next = getNext())) {
-            ended = true;
-            return false;
-        }
-
-        return true;
+        return (next != null);
     }
 
     @Override
     public T next() {
-        if (hasNext()) {
-            used = true;
+        if (!hasNext()) {
+            throw new NoSuchElementException();
         }
-        return next;
+
+        T temp = next;
+        next = null;
+        return temp;
     }
 
     protected abstract T getNext();
