@@ -1,4 +1,4 @@
-package com.github.plusvic.yara;
+package com.github.plusvic.yara.embedded;
 
 
 import org.fusesource.hawtjni.runtime.*;

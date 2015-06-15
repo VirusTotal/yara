@@ -3,7 +3,7 @@ package com.github.plusvic.yara;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-abstract class GenericIterator<T> implements Iterator<T> {
+public abstract class GenericIterator<T> implements Iterator<T> {
     private boolean ended = false;
     private T next;
 

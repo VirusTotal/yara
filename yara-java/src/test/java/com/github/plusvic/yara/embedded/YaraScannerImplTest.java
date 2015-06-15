@@ -1,5 +1,6 @@
-package com.github.plusvic.yara;
+package com.github.plusvic.yara.embedded;
 
+import com.github.plusvic.yara.*;
 import net.jcip.annotations.NotThreadSafe;
 import org.junit.After;
 import org.junit.Before;
@@ -21,7 +22,7 @@ import static org.junit.Assert.*;
  * Time: 6:38 PM
  */
 @NotThreadSafe
-public class YaraScannerTest {
+public class YaraScannerImplTest {
     private static final String YARA_RULE_HELLO = "rule HelloWorld\n"+
             "{\n"+
             "\tmeta:\n" +
@@ -35,11 +36,11 @@ public class YaraScannerTest {
             "\t\t$a\n"+
             "}";
 
-    private Yara yara;
+    private YaraImpl yara;
 
     @Before
     public void setup() {
-        this.yara = new Yara();
+        this.yara = new YaraImpl();
     }
 
     @After
@@ -50,22 +51,22 @@ public class YaraScannerTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateNoRules() {
-        new YaraScanner(new YaraLibrary(), 0);
+        new YaraScannerImpl(new YaraLibrary(), 0);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCreateNoLibrary() {
-        new YaraScanner(null, 1);
+        new YaraScannerImpl(null, 1);
     }
 
     @Test
     public void testCreate() {
-        new YaraScanner(new YaraLibrary(), 1);
+        new YaraScannerImpl(new YaraLibrary(), 1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testWrongTimeout() {
-        new YaraScanner(new YaraLibrary(), 1).setTimeout(-1);
+        new YaraScannerImpl(new YaraLibrary(), 1).setTimeout(-1);
     }
 
     @Test
@@ -80,7 +81,7 @@ public class YaraScannerTest {
 
         YaraScanCallback scanCallback = new YaraScanCallback() {
             @Override
-            public void onMatch(YaraRule v) {
+            public void onMatch(YaraRuleImpl v) {
             }
         };
 
@@ -116,7 +117,7 @@ public class YaraScannerTest {
 
         YaraScanCallback scanCallback = new YaraScanCallback() {
             @Override
-            public void onMatch(YaraRule v) {
+            public void onMatch(YaraRuleImpl v) {
                 assertEquals("HelloWorld", v.getIdentifier());
                 assertMetas(v.getMetadata());
                 assertStrings(v.getStrings());
@@ -160,7 +161,7 @@ public class YaraScannerTest {
 
         YaraScanCallback scanCallback = new YaraScanCallback() {
             @Override
-            public void onMatch(YaraRule v) {
+            public void onMatch(YaraRuleImpl v) {
                 match.set(true);
             }
         };

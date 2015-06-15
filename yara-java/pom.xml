@@ -12,6 +12,7 @@
     <properties>
         <hawtjni-version>1.11</hawtjni-version>
         <hawtjni-verbose>true</hawtjni-verbose>
+        <easymock-version>3.2</easymock-version>
     </properties>
 
     <dependencies>
@@ -33,7 +34,12 @@
             <version>1.2.14</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.easymock</groupId>
+            <artifactId>easymock</artifactId>
+            <version>${easymock-version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>net.jcip</groupId>
             <artifactId>jcip-annotations</artifactId>
@@ -68,6 +74,7 @@
                 <version>${hawtjni-version}</version>
                 <executions>
                     <execution>
+                        <phase>compile</phase>
                         <goals>
                             <goal>generate</goal>
                             <goal>build</goal>
@@ -76,6 +83,53 @@
                         </goals>
                         <configuration>
                             <name>yara-wrapper</name>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>package-native</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <dirset dir="${project.build.directory}/generated-sources/hawtjni/lib/META-INF/native/" id="platform">
+                                    <include name="*" />
+                                </dirset>
+                                <copy file="${project.basedir}/../yara"
+                                      tofile="${project.build.directory}/generated-sources/hawtjni/lib/META-INF/native/${toString:platform}/yara"/>
+                                <copy file="${project.basedir}/../yarac"
+                                      tofile="${project.build.directory}/generated-sources/hawtjni/lib/META-INF/native/${toString:platform}/yarac"/>
+                                <jar destfile="${project.build.directory}/${artifactId}-${version}-${toString:platform}.jar"
+                                        basedir="${project.build.directory}/generated-sources/hawtjni/lib/"
+                                        update="true">
+                                </jar>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-native</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <dirset dir="${project.build.directory}/generated-sources/hawtjni/lib/META-INF/native/" id="platform">
+                                    <include name="*" />
+                                </dirset>
+                                <copy file="${project.basedir}/../yara"
+                                      tofile="${project.build.directory}/test-classes/META-INF/native/${toString:platform}/yara"/>
+                                <copy file="${project.basedir}/../yarac"
+                                      tofile="${project.build.directory}/test-classes/META-INF/native/${toString:platform}/yarac"/>
+                            </tasks>
                         </configuration>
                     </execution>
                 </executions>

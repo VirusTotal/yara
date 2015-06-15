@@ -1,5 +1,9 @@
-package com.github.plusvic.yara;
+package com.github.plusvic.yara.embedded;
 
+import com.github.plusvic.yara.YaraCompilationCallback;
+import com.github.plusvic.yara.YaraException;
+import com.github.plusvic.yara.YaraCompiler;
+import com.github.plusvic.yara.YaraScanner;
 import net.jcip.annotations.NotThreadSafe;
 import org.junit.After;
 import org.junit.Before;
@@ -18,8 +22,8 @@ import static org.junit.Assert.*;
  * Time: 6:58 PM
  */
 @NotThreadSafe
-public class YaraCompilerTest {
-    private final static Logger LOGGER = Logger.getLogger(YaraCompilerTest.class.getName());
+public class YaraCompilerImplTest {
+    private final static Logger LOGGER = Logger.getLogger(YaraCompilerImplTest.class.getName());
 
     private static final String YARA_RULE_HELLO = "rule HelloWorld\n"+
             "{\n"+
@@ -48,11 +52,11 @@ public class YaraCompilerTest {
             "\t\t$a or $b\n"+
             "}";
 
-    private Yara yara;
+    private YaraImpl yara;
 
     @Before
     public void setup() {
-        this.yara = new Yara();
+        this.yara = new YaraImpl();
     }
 
     @After

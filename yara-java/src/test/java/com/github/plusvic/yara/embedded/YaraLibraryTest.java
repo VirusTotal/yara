@@ -1,5 +1,6 @@
-package com.github.plusvic.yara;
+package com.github.plusvic.yara.embedded;
 
+import com.github.plusvic.yara.embedded.YaraLibrary;
 import net.jcip.annotations.NotThreadSafe;
 import org.junit.Test;
 

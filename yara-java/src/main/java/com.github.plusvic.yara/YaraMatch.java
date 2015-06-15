@@ -1,33 +1,19 @@
 package com.github.plusvic.yara;
 
 /**
- * Yara rule match
+ * Yara match
+ *
  */
-public class YaraMatch {
-    private final YaraLibrary library;
-    private final long peer;
-
-    YaraMatch(YaraLibrary library, long peer) {
-        Preconditions.checkArgument(library != null);
-        Preconditions.checkArgument(peer != 0);
-
-        this.library = library;
-        this.peer = peer;
-    }
-
+public interface YaraMatch {
     /**
      * Value that was matched
      * @return
      */
-    public String getValue() {
-        return library.yara_match_value(null, peer);
-    }
+    String getValue();
 
     /**
      * Offset where match was found
      * @return
      */
-    public long getOffset() {
-        return library.yara_match_offset(null, peer);
-    }
+    long getOffset();
 }

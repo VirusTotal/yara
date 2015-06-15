@@ -1,12 +1,10 @@
 package com.github.plusvic.yara;
 
 /**
- * User: pba
- * Date: 6/9/15
- * Time: 3:06 PM
+ * Yara meta
  */
-public class YaraMeta {
-    public enum Type {
+public interface YaraMeta {
+    enum Type {
         NULL(0),
         INTEGER(1),
         STRING(2),
@@ -29,30 +27,27 @@ public class YaraMeta {
         }
     }
 
-    private final YaraLibrary library;
-    private final long peer;
+    /**
+     * Get metadata type
+     * @return
+     */
+    Type getType();
 
-    YaraMeta(YaraLibrary library, long peer) {
-        Preconditions.checkArgument(library != null);
-        Preconditions.checkArgument(peer != 0);
+    /**
+     * Get metadata identifier
+     * @return
+     */
+    String getIndentifier();
 
-        this.library = library;
-        this.peer = peer;
-    }
+    /**
+     * Get metadata string value
+     * @return
+     */
+    String getString();
 
-    public Type getType() {
-        return Type.from(library.yara_meta_type(null, peer));
-    }
-
-    public String getIndentifier() {
-        return library.yara_meta_identifier(null, peer);
-    }
-
-    public String getString() {
-        return library.yara_meta_string(null, peer);
-    }
-
-    public int getInteger() {
-        return library.yara_meta_integer(null, peer);
-    }
+    /**
+     * Get metadata integer value
+     * @return
+     */
+    int getInteger();
 }
