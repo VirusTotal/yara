@@ -81,7 +81,7 @@ public class YaraScannerImplTest {
 
         YaraScanCallback scanCallback = new YaraScanCallback() {
             @Override
-            public void onMatch(YaraRuleImpl v) {
+            public void onMatch(YaraRule v) {
             }
         };
 
@@ -117,7 +117,7 @@ public class YaraScannerImplTest {
 
         YaraScanCallback scanCallback = new YaraScanCallback() {
             @Override
-            public void onMatch(YaraRuleImpl v) {
+            public void onMatch(YaraRule v) {
                 assertEquals("HelloWorld", v.getIdentifier());
                 assertMetas(v.getMetadata());
                 assertStrings(v.getStrings());
@@ -161,7 +161,7 @@ public class YaraScannerImplTest {
 
         YaraScanCallback scanCallback = new YaraScanCallback() {
             @Override
-            public void onMatch(YaraRuleImpl v) {
+            public void onMatch(YaraRule v) {
                 match.set(true);
             }
         };
