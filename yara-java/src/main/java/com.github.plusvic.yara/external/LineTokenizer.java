@@ -2,14 +2,17 @@ package com.github.plusvic.yara.external;
 
 import com.github.plusvic.yara.Preconditions;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Line tokenizer
  */
 public class LineTokenizer {
     public enum TokenType {
+        /**
+         * Empty (no) token
+         */
+        EMPTY,
         /**
          * Java-like identifier
          */
@@ -81,6 +84,36 @@ public class LineTokenizer {
         }
     }
 
+    public static final class Token {
+        public static final Token EMPTY = new Token(TokenType.EMPTY, null);
+
+        public final TokenType  Type;
+        public final String     Value;
+
+        public Token(TokenType type) {
+            this(type, null);
+        }
+
+        public Token(TokenType type, String value) {
+            this.Type = type;
+            this.Value = value;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+
+            if (obj instanceof Token) {
+                Token w = (Token)obj;
+                return  Objects.equals(w.Type, this.Type) &&
+                        Objects.equals(w.Value, this.Value);
+            }
+            return false;
+        }
+    }
+
     /**
      * All separators and whitespaces
      */
@@ -90,12 +123,22 @@ public class LineTokenizer {
             TokenType.NUMBER
     );
 
+    private static final Set<Character> HEX_DIGITS = new HashSet<>(Arrays.asList(
+            'a','A','b','B',
+            'c','C','d','D',
+            'e','E','f','F')
+    );
+
     /**
      * All separators and whitespaces
      */
     public static final TokenType[] TOKENS_ALL = TokenType.all();
+    /**
+     * Empty tokens list
+     */
+    public static final Iterable<Token> EMPTY_TOKENS = Collections.emptyList();
 
-    private int current, last;
+    private int current;
     private String line;
     private Character term;
 
@@ -107,7 +150,6 @@ public class LineTokenizer {
         Preconditions.checkArgument(line != null);
         this.line = line;
         this.current = 0;
-        this.last = 0;
         this.term = term;
     }
 
@@ -123,10 +165,17 @@ public class LineTokenizer {
         return current >= line.length();
     }
 
-    public String rest() {
-        return (current < line.length() ?
-                    line.substring(current) :
-                    null);
+    public Token rest() {
+        if (hasEnded()) {
+            return Token.EMPTY;
+        }
+
+        skip(TokenType.WHITESPACE);
+
+        Token temp = new Token(TokenType.STRING, line.substring(current));
+        current = line.length();
+
+        return temp;
     }
 
     private String readIdentifier() {
@@ -241,6 +290,8 @@ public class LineTokenizer {
             return null;
         }
 
+        boolean hex = false;
+
         Character c = line.charAt(current);
         if (c != '-' && !Character.isDigit(c)) {
             return null;
@@ -255,43 +306,67 @@ public class LineTokenizer {
 
             if (Character.isDigit(c)) {
                 temp.append(c);
-                current++;
+            }
+            else if (hex && HEX_DIGITS.contains(c)) {
+                temp.append(c);
+            }
+            // Hex string
+            else if ((c == 'x' || c == 'X') && temp.toString().equals("0")) {
+                temp.append(c);
+                hex = true;
             }
             else {
                 break;
             }
+
+            current++;
         }
 
         return (temp.length() > 0 ? temp.toString() : null);
     }
 
-    private String nextInternal(TokenType tokenType, boolean skipWs) {
+    private Token nextInternal(TokenType tokenType, boolean skipWs) {
         if (skipWs && tokenType != TokenType.WHITESPACE) {
             skip(TokenType.WHITESPACE);
         }
 
+        String value = null;
+
         switch (tokenType) {
+            case EMPTY:
+                break;
             case IDENTIFIER:
-                return readIdentifier();
+                value = readIdentifier();
+               break;
             case WHITESPACE:
-                return readWhitespace();
+                value = readWhitespace();
+                break;
             case NUMBER:
-                return readNumber();
+                value = readNumber();
+                break;
             case EQUALS:
-                return readTerm('=');
+                value = readTerm('=');
+                break;
             case STRING:
-                return readString();
+                value = readString();
+                break;
             case COLON:
-                return readTerm(':');
+                value = readTerm(':');
+                break;
             case COMMA:
-                return readTerm(',');
+                value = readTerm(',');
+                break;
             case LFTSQ_BRACKET:
-                return readTerm('[');
+                value = readTerm('[');
+                break;
             case RGTSQ_BRACKET:
-                return readTerm(']');
+                value = readTerm(']');
+                break;
             default:
                 throw new IllegalArgumentException();
         }
+
+        return (value != null ? new Token(tokenType, value) : Token.EMPTY);
     }
 
     /**
@@ -299,7 +374,7 @@ public class LineTokenizer {
      * @param tokenType
      * @return Token value if read, null otherwise
      */
-    public String next(TokenType tokenType) {
+    public Token next(TokenType tokenType) {
         return nextInternal(tokenType, true);
     }
 
@@ -308,30 +383,101 @@ public class LineTokenizer {
      * @param tokenTypes
      * @return All read token types, null otherwise
      */
-    public String next(TokenType...tokenTypes) {
+    public Iterable<Token> next(TokenType...tokenTypes) {
         if (hasEnded()) {
-            return null;
+            return Collections.emptyList();
         }
 
-        boolean data = false;
-        StringBuffer buffer = new StringBuffer();
-
+        boolean data;
+        List<Token> tokens = new ArrayList<>();
 
         do {
             data = false;
 
             for (TokenType tt : tokenTypes) {
-                String temp = nextInternal(tt, false);
+                Token temp = nextInternal(tt, true);
 
-                if (temp != null) {
-                    buffer.append(temp);
+                if (temp != null && !temp.equals(Token.EMPTY)) {
+                    tokens.add(temp);
                     data = true;
                 }
             }
         }
         while (data);
 
-        return (buffer.length() > 0 ? buffer.toString() : null);
+        return tokens;
+    }
+
+    /**
+     * Read until we find token type
+     * @param tokenTypes
+     * @return List of tokens including token of type
+     */
+    public Iterable<Token> nextUntil(TokenType...tokenTypes) {
+        TokenType[] types = TokenType.except(tokenTypes);
+
+        List<Token> tokens = new ArrayList<>();
+
+        for (Token t : next(types)) {
+            tokens.add(t);
+        }
+
+        for (TokenType tt : tokenTypes) {
+            Token t = next(tt);
+            if (t != null && t.Type.equals(tt)) {
+                tokens.add(t);
+                break;
+            }
+        }
+        return tokens;
+    }
+
+    /**
+     * Match sequence of tokens
+     * @param sequence
+     * @return Maximum sequence matched
+     */
+    public Iterable<Token> nextSequence(TokenType...sequence) {
+        List<Token> tokens = new ArrayList<>();
+
+        for (TokenType tokenType : sequence) {
+            if (tokenType == TokenType.EMPTY) {
+                tokens.add(Token.EMPTY);
+                continue;
+            }
+
+            Token token = next(tokenType);
+            if (token.equals(Token.EMPTY)) {
+                break;
+            }
+
+            tokens.add(token);
+        }
+
+        return tokens;
+    }
+
+    /**
+     * Verify sequence matches
+     * @param values
+     * @param sequence
+     * @return
+     */
+    public boolean checkSequence(Iterable<Token> values, TokenType...sequence) {
+        Iterator<Token> tokens = values.iterator();
+
+        try {
+            for (TokenType type : sequence) {
+                if (!type.equals(tokens.next().Type)) {
+                    return false;
+                }
+            }
+        }
+        catch (NoSuchElementException e) {
+            return false;
+        }
+
+        return !tokens.hasNext();
     }
 
     /**
@@ -355,7 +501,7 @@ public class LineTokenizer {
      * @param type
      * @return
      */
-    public String skipUntil(TokenType type) {
+    public Token skipUntil(TokenType type) {
         skip(TokenType.except(type));
         return next(type);
     }

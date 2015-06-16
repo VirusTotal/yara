@@ -3,14 +3,12 @@ package com.github.plusvic.yara.external;
 
 import com.github.plusvic.yara.*;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 public class YaraRuleImpl implements YaraRule {
     private String indentifier;
-    private Set<YaraMeta> metas = new HashSet<>();
-    private Set<YaraString> strings = new HashSet<>();
+    private List<YaraMeta> metas = new ArrayList<>();
+    private List<YaraString> strings = new ArrayList<>();
 
     public YaraRuleImpl(String identifier) {
         Preconditions.checkArgument(!Utils.isNullOrEmpty(identifier));
@@ -28,7 +26,7 @@ public class YaraRuleImpl implements YaraRule {
 
     @Override
     public String getIdentifier() {
-        return getIdentifier();
+        return indentifier;
     }
 
     @Override
