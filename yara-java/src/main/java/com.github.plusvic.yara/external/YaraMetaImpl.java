@@ -20,7 +20,7 @@ public class YaraMetaImpl implements YaraMeta {
     public YaraMetaImpl(String identifier, int value) {
         Preconditions.checkArgument(!Utils.isNullOrEmpty(identifier));
         this.identifier = identifier;
-        this.type = Type.STRING;
+        this.type = Type.INTEGER;
         this.integer = value;
     }
 

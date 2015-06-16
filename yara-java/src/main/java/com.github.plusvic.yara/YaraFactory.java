@@ -18,6 +18,7 @@ public class YaraFactory {
             case EMBEDDED:
                 return new YaraImpl();
             case EXERNAL:
+                return new com.github.plusvic.yara.external.YaraImpl();
             default:
                 throw new NotImplementedException();
         }

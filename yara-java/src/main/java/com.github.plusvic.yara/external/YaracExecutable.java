@@ -19,7 +19,7 @@ import java.util.logging.Logger;
 public class YaracExecutable {
     private static final Logger LOGGER = Logger.getLogger(YaracExecutable.class.getName());
 
-    private static final String GLOBAL_NAMESPACE = "";
+    public static final String GLOBAL_NAMESPACE = "";
 
     private NativeExecutable executable;
     private Map<String, Set<Path>> rules = new HashMap<>();
