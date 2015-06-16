@@ -400,6 +400,39 @@ void print_string(
   printf("\n");
 }
 
+void print_escaped(
+        char* str,
+        int length)
+{
+  for (int i = 0; i < length; i++) {
+    switch (str[i]) {
+      case '\"':
+            printf("\\\"");
+            break;
+      case '\'':
+            printf("\\\'");
+            break;
+      case '\\':
+            printf("\\\\");
+            break;
+      case '\a':
+            printf("\\a");
+            break;
+      case '\b':
+            printf("\\b");
+            break;
+      case '\n':
+            printf("\\n");
+            break;
+      case '\t':
+            printf("\\t");
+            break;
+            // and so on
+      default:
+        printf("%c", str[i]);
+    }
+  }
+}
 
 void print_hex_string(
     uint8_t* data,
@@ -553,8 +586,11 @@ int handle_message(int message, YR_RULE* rule, void* data)
           printf("%s=%d", meta->identifier, meta->integer);
         else if (meta->type == META_TYPE_BOOLEAN)
           printf("%s=%s", meta->identifier, meta->integer ? "true" : "false");
-        else
-          printf("%s=\"%s\"", meta->identifier, meta->string);
+        else {
+          printf("%s=\"", meta->identifier);
+          print_escaped(meta->string, strlen(meta->string));
+          printf("\"");
+        }
       }
 
       printf("] ");
