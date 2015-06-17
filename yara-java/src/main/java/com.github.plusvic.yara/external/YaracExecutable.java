@@ -1,5 +1,6 @@
 package com.github.plusvic.yara.external;
 
+import com.github.plusvic.yara.Preconditions;
 import com.github.plusvic.yara.Utils;
 import com.github.plusvic.yara.YaraCompilationCallback;
 
@@ -8,6 +9,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,6 +23,7 @@ public class YaracExecutable {
 
     public static final String GLOBAL_NAMESPACE = "";
 
+    private int timeout = 60;
     private NativeExecutable executable;
     private Map<String, Set<Path>> rules = new HashMap<>();
 
@@ -58,6 +61,13 @@ public class YaracExecutable {
         return this;
     }
 
+    public YaracExecutable setTimeout(int timeout) {
+        Preconditions.checkArgument(timeout > 0);
+        this.timeout = timeout;
+
+        return this;
+    }
+
     private String[] getCommandLine(Path output) {
         List<String> args = new ArrayList<>();
 
@@ -83,6 +93,8 @@ public class YaracExecutable {
             Path output = File.createTempFile(UUID.randomUUID().toString(), "yaracc").toPath();
 
             Process process = executable.execute(getCommandLine(output));
+            process.waitFor(timeout, TimeUnit.SECONDS);
+
             try (BufferedReader pout = new BufferedReader(new InputStreamReader(process.getInputStream()));
                  BufferedReader perr  = new BufferedReader(new InputStreamReader(process.getErrorStream())))
             {

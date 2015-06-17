@@ -10,7 +10,6 @@ import java.nio.file.Path;
 
 
 public class YaraScannerImpl implements YaraScanner {
-    private int timeout = 60;
     private YaraExecutable yara;
     private YaraScanCallback callback;
 
@@ -22,8 +21,7 @@ public class YaraScannerImpl implements YaraScanner {
 
     @Override
     public void setTimeout(int timeout) {
-        Preconditions.checkArgument(timeout > 0);
-        this.timeout = timeout;
+        this.yara.setTimeout(timeout);
     }
 
     @Override

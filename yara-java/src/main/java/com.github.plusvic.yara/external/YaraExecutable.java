@@ -1,5 +1,6 @@
 package com.github.plusvic.yara.external;
 
+import com.github.plusvic.yara.Preconditions;
 import com.github.plusvic.yara.Utils;
 import com.github.plusvic.yara.YaraException;
 import com.github.plusvic.yara.YaraScanCallback;
@@ -11,12 +12,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class YaraExecutable {
     private static final Logger LOGGER = Logger.getLogger(YaraExecutable.class.getName());
 
+    private int timeout = 60;
     private NativeExecutable executable;
     private Set<Path> rules = new HashSet<>();
 
@@ -42,6 +45,13 @@ public class YaraExecutable {
         return this;
     }
 
+    public YaraExecutable setTimeout(int timeout) {
+        Preconditions.checkArgument(timeout > 0);
+        this.timeout = timeout;
+
+        return this;
+    }
+
     private String[] getCommandLine(Path target) {
         List<String> args = new ArrayList<>();
         //args.add("-g");  // tags
@@ -64,6 +74,8 @@ public class YaraExecutable {
 
         try {
             Process process = executable.execute(getCommandLine(target));
+            process.waitFor(timeout, TimeUnit.SECONDS);
+
             try (BufferedReader pout = new BufferedReader(new InputStreamReader(process.getInputStream()));
                  BufferedReader perr  = new BufferedReader(new InputStreamReader(process.getErrorStream())))
             {
