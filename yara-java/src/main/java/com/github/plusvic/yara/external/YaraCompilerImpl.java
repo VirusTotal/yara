@@ -15,8 +15,10 @@ public class YaraCompilerImpl implements YaraCompiler {
 
     private YaraCompilationCallback callback;
     private YaracExecutable yarac;
+    private Path   rules;
 
     public YaraCompilerImpl() {
+        this.rules = null;
         this.yarac = new YaracExecutable();
     }
 
@@ -29,6 +31,11 @@ public class YaraCompilerImpl implements YaraCompiler {
     @Override
     public boolean addRules(String content, String namespace) {
         Preconditions.checkArgument(!Utils.isNullOrEmpty(content));
+
+        if (rules != null) {
+            // Mimic embedded behavior
+            throw new YaraException(ErrorCode.INSUFICIENT_MEMORY.getValue());
+        }
 
         try {
             String ns = (namespace != null ? namespace : YaracExecutable.GLOBAL_NAMESPACE);
@@ -50,8 +57,10 @@ public class YaraCompilerImpl implements YaraCompiler {
     @Override
     public YaraScanner createScanner() {
         try {
-            Path path = yarac.compile(callback);
-            return new YaraScannerImpl(path);
+            if (rules == null) {
+                rules = yarac.compile(callback);
+            }
+            return new YaraScannerImpl(rules);
         }
         catch (Exception e) {
             throw new YaraException(e.getMessage());

@@ -155,6 +155,7 @@ public class YaraCompilerTest {
             // Subsequent add rule should fail
             try {
                 compiler.addRules(YARA_RULE_NOOP, null);
+                fail();
             }
             catch (YaraException e) {
                 assertEquals(1L, e.getNativeCode());

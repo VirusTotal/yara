@@ -28,8 +28,7 @@ public class YaracExecutable {
     private Map<String, Set<Path>> rules = new HashMap<>();
 
     public YaracExecutable() {
-        this.executable = new NativeExecutable("yarac");
-        this.executable.load();
+        this.executable = YaraExecutableManager.getYarac();
     }
 
     public YaracExecutable(NativeExecutable executable) {

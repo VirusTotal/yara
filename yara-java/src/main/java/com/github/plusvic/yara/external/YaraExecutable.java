@@ -24,8 +24,7 @@ public class YaraExecutable {
     private Set<Path> rules = new HashSet<>();
 
     public YaraExecutable() {
-        this.executable = new NativeExecutable("yara");
-        this.executable.load();
+        this.executable = YaraExecutableManager.getYara();
     }
 
     public YaraExecutable(NativeExecutable executable) {
