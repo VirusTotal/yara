@@ -1,9 +1,6 @@
 package com.github.plusvic.yara.external;
 
-import com.github.plusvic.yara.Preconditions;
-import com.github.plusvic.yara.YaraException;
-import com.github.plusvic.yara.YaraScanCallback;
-import com.github.plusvic.yara.YaraScanner;
+import com.github.plusvic.yara.*;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -33,6 +30,10 @@ public class YaraScannerImpl implements YaraScanner {
     @Override
     public void scan(File file) {
         Preconditions.checkArgument(file != null);
+
+        if (!file.exists()) {
+            throw new YaraException(ErrorCode.COULD_NOT_OPEN_FILE.getValue());
+        }
 
         try {
             yara.match(file.toPath(), callback);
