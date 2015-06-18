@@ -1069,7 +1069,8 @@ YR_OBJECT* yr_object_get_root(
 
 void yr_object_print_data(
     YR_OBJECT* object,
-    int indent)
+    int indent,
+    int print_identifier)
 {
   YR_DICTIONARY_ITEMS* dict_items;
   YR_ARRAY_ITEMS* array_items;
@@ -1082,24 +1083,22 @@ void yr_object_print_data(
   memset(indent_spaces, '\t', indent);
   indent_spaces[indent] = '\0';
 
+  if (print_identifier && object->type != OBJECT_TYPE_FUNCTION)
+    printf("%s%s", indent_spaces, object->identifier);
+
   switch(object->type)
   {
     case OBJECT_TYPE_INTEGER:
       if (((YR_OBJECT_INTEGER*) object)->value != UNDEFINED)
-        printf(
-            "%s%s = %" PRIu64 "\n",
-            indent_spaces,
-            object->identifier,
-            ((YR_OBJECT_INTEGER*) object)->value);
+        printf(" = %" PRIu64, ((YR_OBJECT_INTEGER*) object)->value);
+      else
+        printf(" = UNDEFINED");
       break;
 
     case OBJECT_TYPE_STRING:
       if (((YR_OBJECT_STRING*) object)->value != NULL)
       {
-        printf(
-            "%s%s = \"",
-            indent_spaces,
-            object->identifier);
+        printf(" = \"");
 
         for (int i = 0; i < ((YR_OBJECT_STRING*) object)->value->length; i++)
         {
@@ -1111,21 +1110,26 @@ void yr_object_print_data(
             printf("\\x%02x", (unsigned char) c);
         }
 
-        printf("\"\n");
+        printf("\"");
       }
+      else
+      {
+        printf(" = UNDEFINED");
+      }
+
       break;
 
     case OBJECT_TYPE_STRUCTURE:
-      printf(
-          "%s%s\n",
-          indent_spaces,
-          object->identifier);
 
       member = ((YR_OBJECT_STRUCTURE*) object)->members;
 
       while (member != NULL)
       {
-        yr_object_print_data(member->object, indent + 1);
+        if (member->object->type != OBJECT_TYPE_FUNCTION)
+        {
+          printf("\n");
+          yr_object_print_data(member->object, indent + 1, 1);
+        }
         member = member->next;
       }
 
@@ -1140,8 +1144,8 @@ void yr_object_print_data(
         {
           if (array_items->objects[i] != NULL)
           {
-            printf("%s[%d]\n", indent_spaces, i);
-            yr_object_print_data(array_items->objects[i], indent + 1);
+            printf("\n%s\t[%d]", indent_spaces, i);
+            yr_object_print_data(array_items->objects[i], indent + 1, 0);
           }
         }
       }
@@ -1149,18 +1153,18 @@ void yr_object_print_data(
       break;
 
     case OBJECT_TYPE_DICTIONARY:
+
       dict_items = ((YR_OBJECT_DICTIONARY*) object)->items;
 
       if (dict_items != NULL)
       {
-        printf("%s%s\n", indent_spaces, object->identifier);
-
         for (int i = 0; i < dict_items->used; i++)
         {
-          printf("%s\t%s\n", indent_spaces, dict_items->objects[i].key);
-          yr_object_print_data(dict_items->objects[i].obj, indent + 1);
+          printf("\n%s\t%s", indent_spaces, dict_items->objects[i].key);
+          yr_object_print_data(dict_items->objects[i].obj, indent + 1, 0);
         }
       }
+
       break;
   }
 }
