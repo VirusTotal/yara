@@ -31,6 +31,9 @@ and ignore the rest. This option can be used multiple times.
 .B \-n " --negate"
 Print rules that doesn't apply (negate)
 .TP
+.B \-D " --print-module-data"
+Print module data.
+.TP
 .B \-g " --print-tags"
 Print the tags associated to the rule.
 .TP
@@ -72,7 +75,7 @@ Speeds up scanning by searching only for the first occurrence of each pattern.
 Disable warnings.
 .TP
 .B \-v " --version"
-Show version information. 
+Show version information.
 .SH EXAMPLES
 $ yara /foo/bar/rules1 /foo/bar/rules2 .
 .RS

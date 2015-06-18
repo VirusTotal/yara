@@ -26,65 +26,73 @@ Available options are:
 
 .. program:: yara
 
-.. option:: -t <tag>
+.. option:: -t <tag> --tag=<tag>
 
-   Print rules tagged as <tag> and ignore the rest.
+  Print rules tagged as <tag> and ignore the rest.
 
-.. option:: -i <identifier>
+.. option:: -i <identifier> --identifier=<identifier>
 
-   Print rules named <identifier> and ignore the rest.
+  Print rules named <identifier> and ignore the rest.
 
 .. option:: -n
 
-   Print not satisfied rules only (negate).
+  Print not satisfied rules only (negate).
 
-.. option:: -g
+.. option:: -D --print-module-data
 
-   Print tags.
+  Print module data.
 
-.. option:: -m
+.. option:: -g --print-tags
 
-   Print metadata.
+  Print tags.
 
-.. option:: -s
+.. option:: -m --print-meta
 
-   Print matching strings.
+  Print metadata.
 
-.. option:: -p <number>
+.. option:: -s --print-strings
 
-   Use the specified <number> of threads to scan a directory.
+  Print matching strings.
 
-.. option:: -l <number>
+.. option:: -p <number> --threads=<number>
 
-   Abort scanning after matching a number of rules.
+  Use the specified <number> of threads to scan a directory.
 
-.. option:: -a <seconds>
+.. option:: -l <number> --max-rules=<number>
 
-   Abort scanning after a number of seconds has elapsed.
+  Abort scanning after matching a number of rules.
+
+.. option:: -a <seconds> --timeout=<seconds>
+
+  Abort scanning after a number of seconds has elapsed.
 
 .. option:: -d <identifier>=<value>
 
-   Define external variable.
+  Define external variable.
 
 .. option:: -x <module>=<file>
 
-   Pass file's content as extra data to module.
+  Pass file's content as extra data to module.
 
-.. option:: -r
+.. option:: -r --recursive
 
-   Recursively search for directories.
+  Recursively search for directories.
 
-.. option:: -f
+.. option:: -f --fast-scan
 
-   Fast matching mode.
+  Fast matching mode.
 
-.. option:: -w
+.. option:: -w --no-warnings
 
-   Disable warnings.
+  Disable warnings.
 
-.. option:: -v
+.. option:: -v --version
 
-   Show version information.
+  Show version information.
+
+.. option:: -h --help
+
+  Show help.
 
 Here you have some examples:
 
