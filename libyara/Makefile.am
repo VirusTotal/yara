@@ -59,7 +59,7 @@ yarainclude_HEADERS = \
 
 lib_LTLIBRARIES = libyara.la
 
-libyara_la_LDFLAGS = -version-number 3:3:0
+libyara_la_LDFLAGS = -version-number 3:4:0
 
 libyara_la_SOURCES = \
   $(MODULES) \

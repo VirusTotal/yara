@@ -20,11 +20,11 @@ limitations under the License.
 #include <yara/utils.h>
 
 #define YR_MAJOR_VERSION   3
-#define YR_MINOR_VERSION   3
+#define YR_MINOR_VERSION   4
 #define YR_MICRO_VERSION   0
 
 // Version as a string
-#define YR_VERSION         "3.3.0"
+#define YR_VERSION         "3.4.0"
 
 // Version as a single 4-byte hex number, e.g. 0x030401 == 3.4.1.
 #define YR_VERSION_HEX ((YR_MAJOR_VERSION << 16) | \
