@@ -195,6 +195,9 @@ void yr_modules_print_data(
         NULL);
 
     if (module_structure != NULL)
-      yr_object_print_data(module_structure, 0);
+    {
+      yr_object_print_data(module_structure, 0, 1);
+      printf("\n");
+    }
   }
 }
