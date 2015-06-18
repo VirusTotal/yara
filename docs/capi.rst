@@ -121,11 +121,12 @@ Your ``read`` and ``write`` functions must respond to these prototypes:
       size_t count,
       void* user_data);
 
-The ``ptr`` argument is a pointer to the buffer where your ``read`` function
-should put the read data, or where your ``write`` function will find the data
+The ``ptr`` argument is a pointer to the buffer where the ``read`` function
+should put the read data, or where the ``write`` function will find the data
 that needs to be written to the stream. In both cases ``size`` is the size of
 each element being read or written and ``count`` the number of elements. The
-total size of the data being read or written is ``size`` * ``count``.
+total size of the data being read or written is ``size`` * ``count``. Both
+functions must return the total size of the data read/written.
 
 The ``user_data`` pointer is the same you specified in the
 :c:type:`YR_STREAM` structure. You can use it to pass arbitrary data to your
@@ -137,11 +138,10 @@ The ``user_data`` pointer is the same you specified in the
 Scanning data
 =============
 
-Once you have an instance of :c:type:`YR_RULES` you can use it to scan data
-either from a file or a memory buffer with :c:func:`yr_rules_scan_file` and
-:c:func:`yr_rules_scan_mem` respectively. The results from the scan are
-notified to your program via a callback function. The callback has the following
-prototype:
+Once you have an instance of :c:type:`YR_RULES` you can use it with either
+:c:func:`yr_rules_scan_file`, :c:func:`yr_rules_scan_fd` or
+:c:func:`yr_rules_scan_mem`. The results from the scan are notified to your
+program via a callback function. The callback has the following prototype:
 
 .. code-block:: c
 
@@ -157,7 +157,7 @@ Possible values for ``message`` are::
   CALLBACK_MSG_SCAN_FINISHED
   CALLBACK_MSG_IMPORT_MODULE
 
-Your callback function will be called once for each existing rule with either
+Your callback function will be called once for each rule with either
 a ``CALLBACK_MSG_RULE_MATCHING`` or ``CALLBACK_MSG_RULE_NOT_MATCHING`` message,
 depending if the rule is matching or not. In both cases a pointer to the
 :c:type:`YR_RULE` structure associated to the rule is passed in the
@@ -187,22 +187,20 @@ Your callback function must return one of the following values::
 
 If it returns ``CALLBACK_CONTINUE`` YARA will continue normally,
 ``CALLBACK_ABORT`` will abort the scan but the result from the
-``yr_rules_scan_x`` function will be ``ERROR_SUCCESS``. On the other hand
+``yr_rules_scan_XXXX`` function will be ``ERROR_SUCCESS``. On the other hand
 ``CALLBACK_ERROR`` will abort the scanning too, but the result from
-``yr_rules_scan_x`` will be ``ERROR_CALLBACK_ERROR``.
+``yr_rules_scan_XXXX`` will be ``ERROR_CALLBACK_ERROR``.
 
 
 The ``user_data`` argument passed to your callback function is the same you
-passed to :c:func:`yr_rules_scan_file` or :c:func:`yr_rules_scan_mem`. This
-pointer is not touched by YARA, it's just a way for your program to pass
-arbitrary data to the callback function.
+passed ``yr_rules_scan_XXXX``. This pointer is not touched by YARA, it's just a
+way for your program to pass arbitrary data to the callback function.
 
-Both :c:func:`yr_rules_scan_file` and :c:func:`yr_rules_scan_mem` receive a
-``flags`` argument and a ``timeout`` argument. The only flag defined at this
-time is ``SCAN_FLAGS_FAST_MODE``, so you must pass either this flag or a zero
-value. The ``timeout`` argument forces the function to return after
-the specified number of seconds aproximately, with a zero meaning no
-timeout at all.
+All ``yr_rules_scan_XXXX`` functions receive a ``flags`` argument and a
+``timeout`` argument. The only flag defined at this time is
+``SCAN_FLAGS_FAST_MODE``, so you must pass either this flag or a zero value.
+The ``timeout`` argument forces the function to return after the specified
+number of seconds aproximately, with a zero meaning no timeout at all.
 
 The ``SCAN_FLAGS_FAST_MODE`` flag makes the scanning a little faster by avoiding
 multiple matches of the same string when not necessary. Once the string was
@@ -309,6 +307,8 @@ Data structures
 
 .. c:type:: YR_STREAM
 
+  .. versionadded:: 3.4.0
+
   Data structure representing a stream used with functions
   :c:func:`yr_rules_load_stream` and :c:func:`yr_rules_save_stream`.
 
@@ -370,10 +370,11 @@ Functions
 
 .. c:function:: void yr_compiler_set_callback(YR_COMPILER* compiler, YR_COMPILER_CALLBACK_FUNC callback, void* user_data)
 
+  .. versionchanged:: 3.3.0
+
   Set a callback for receiving error and warning information. The *user_data*
   pointer is passed to the callback function.
 
-.. versionchanged:: 3.3.0
 
 .. c:function:: int yr_compiler_add_file(YR_COMPILER* compiler, FILE* file, const char* namespace, const char* file_name)
 
@@ -429,6 +430,8 @@ Functions
 
 .. c:function:: int yr_rules_save_stream(YR_RULES* rules, YR_STREAM* stream)
 
+  .. versionadded:: 3.4.0
+
   Save *rules* into *stream*. Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
@@ -451,6 +454,8 @@ Functions
     :c:macro:`ERROR_UNSUPPORTED_FILE_VERSION`
 
 .. c:function:: int yr_rules_load_stream(YR_STREAM* stream, YR_RULES** rules)
+
+  .. versionadded:: 3.4.0
 
   Load rules from *stream*. Returns one of the following error codes:
 
@@ -484,6 +489,31 @@ Functions
 .. c:function:: int yr_rules_scan_file(YR_RULES* rules, const char* filename, int flags, YR_CALLBACK_FUNC callback, void* user_data, int timeout)
 
   Scan a file. Returns one of the following error codes:
+
+    :c:macro:`ERROR_SUCCESS`
+
+    :c:macro:`ERROR_INSUFICENT_MEMORY`
+
+    :c:macro:`ERROR_COULD_NOT_MAP_FILE`
+
+    :c:macro:`ERROR_ZERO_LENGTH_FILE`
+
+    :c:macro:`ERROR_TOO_MANY_SCAN_THREADS`
+
+    :c:macro:`ERROR_SCAN_TIMEOUT`
+
+    :c:macro:`ERROR_CALLBACK_ERROR`
+
+    :c:macro:`ERROR_TOO_MANY_MATCHES`
+
+.. c:function:: int yr_rules_scan_fd(YR_RULES* rules, YR_FILE_DESCRIPTOR fd, int flags, YR_CALLBACK_FUNC callback, void* user_data, int timeout)
+
+  Scan a file descriptor. In POSIX systems ``YR_FILE_DESCRIPTOR`` is an ``int``,
+  as returned by the `open()` function. In Windows ``YR_FILE_DESCRIPTOR`` is a
+  ``HANDLE`` as returned by `CreateFile()`.
+
+
+  Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
 

@@ -245,6 +245,8 @@ Reference
 
 .. py:function:: yara.load(...)
 
+  .. versionchanged:: 3.4.0
+
   Load compiled rules from a path or file object. Either *filepath* or
   *file* must be provided.
 
@@ -282,6 +284,8 @@ Reference
     :raises YaraError: If an error occurred during the scan.
 
   .. py:method:: save(...)
+
+    .. versionchanged:: 3.4.0
 
     Save compiled rules to a file. Either *filepath* or *file* must be provided.
 
