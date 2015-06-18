@@ -86,7 +86,7 @@ Reference
 
 .. c:type:: sections
 
-    An zero-based array of section objects, one for each section the ELF has.
+    A zero-based array of section objects, one for each section the ELF has.
     Individual sections can be accessed by using the [] operator. Each section
     object has the following attributes:
 
@@ -186,8 +186,75 @@ Reference
         *Example: elf.section[2].flags & elf.SHF_WRITE*
 
 
+.. c:type:: number_of_segments
 
+    .. versionadded:: 3.4.0
 
+    Number of segments in the ELF file.
+
+.. c:type:: segments
+
+    .. versionadded:: 3.4.0
+
+    A zero-based array of segments objects, one for each segment the ELF has.
+    Individual segments can be accessed by using the [] operator. Each segment
+    object has the following attributes:
+
+    .. c:member:: alignment
+
+        Value to which the segments are aligned in memory and in the file.
+
+    .. c:member:: file_size
+
+        Number of bytes in the file image of the segment.  It may be zero.
+
+    .. c:member:: flags
+
+        A combination of the following segment flags:
+
+        .. c:type:: PF_R
+
+            The segment is readable.
+
+        .. c:type:: PF_W
+
+            The segment is writable.
+
+        .. c:type:: PF_X
+
+            The segment is executable.
+
+    .. c:member:: memory_size
+
+        On-memory segment size.
+
+    .. c:member:: offset
+
+        Offset from the beginning of the file where the segment resides.
+
+    .. c:member:: physical_address
+
+        On systems for which physical addressing is relevant, contains the
+        segment's physical address.
+
+    .. c:member:: type
+
+        Type of segment indicated by one of the following values:
+
+        .. c:type:: PT_NULL
+        .. c:type:: PT_LOAD
+        .. c:type:: PT_DYNAMIC
+        .. c:type:: PT_INTERP
+        .. c:type:: PT_NOTE
+        .. c:type:: PT_SHLIB
+        .. c:type:: PT_PHDR
+        .. c:type:: PT_LOPROC
+        .. c:type:: PT_HIPROC
+        .. c:type:: PT_GNU_STACK
+
+    .. c:member:: virtual_address
+
+        Virtual address at which the segment resides in memory.
 
 
 
