@@ -166,7 +166,10 @@ int yr_execute_code(
   STACK_ITEM r2;
   STACK_ITEM r3;
 
+  #ifdef PROFILING_ENABLED
   YR_RULE* current_rule = NULL;
+  #endif
+
   YR_RULE* rule;
   YR_MATCH* match;
   YR_OBJECT_FUNCTION* function;
@@ -401,7 +404,9 @@ int yr_execute_code(
         break;
 
       case OP_INIT_RULE:
+        #ifdef PROFILING_ENABLED
         current_rule = *(YR_RULE**)(ip + 1);
+        #endif
         ip += sizeof(uint64_t);
         break;
 
