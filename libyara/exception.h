@@ -17,6 +17,8 @@ limitations under the License.
 #ifndef YR_EXCEPTION_H
 #define YR_EXCEPTION_H
 
+#include <assert.h>
+
 #if _WIN32
 
 #include <windows.h>
@@ -38,8 +40,8 @@ static LONG CALLBACK exception_handler(
     case EXCEPTION_ACCESS_VIOLATION:
       if (tidx != -1 && exc_jmp_buf[tidx] != NULL)
         longjmp(*exc_jmp_buf[tidx], 1);
-      else
-        abort();
+
+      assert(FALSE);  // We should not reach this point.
   }
 
   return EXCEPTION_CONTINUE_SEARCH;
@@ -50,8 +52,7 @@ static LONG CALLBACK exception_handler(
   {                                                                     \
     HANDLE exh = AddVectoredExceptionHandler(1, exception_handler);     \
     int tidx = yr_get_tidx();                                           \
-    if (tidx == -1)                                                     \
-      abort();                                                          \
+    assert(tidx != -1);                                                 \
     jmp_buf jb;                                                         \
     exc_jmp_buf[tidx] = &jb;                                            \
     if (setjmp(jb) == 0)                                                \
@@ -77,8 +78,7 @@ static void exception_handler(int sig) {
     if (tidx != -1 && exc_jmp_buf[tidx] != NULL)
       siglongjmp(*exc_jmp_buf[tidx], 1);
 
-    // We should not reach this point.
-    abort();
+    assert(FALSE);  // We should not reach this point.
   }
 }
 
@@ -96,8 +96,7 @@ typedef struct sigaction sa;
     pthread_sigmask(SIG_SETMASK, &act.sa_mask, &oldmask);       \
     sigaction(SIGBUS, &act, &oldact);                           \
     int tidx = yr_get_tidx();                                   \
-    if (tidx == -1)                                             \
-      abort();                                                  \
+    assert(tidx != -1);                                         \
     sigjmp_buf jb;                                              \
     exc_jmp_buf[tidx] = &jb;                                    \
     if (sigsetjmp(jb, 1) == 0)                                  \
