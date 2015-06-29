@@ -1,5 +1,21 @@
-#ifndef _EXCEPTION_H_
-#define _EXCEPTION_H_
+/*
+Copyright (c) 2015. The YARA Authors. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+#ifndef YR_EXCEPTION_H
+#define YR_EXCEPTION_H
 
 #if _WIN32
 
@@ -7,35 +23,38 @@
 #include <setjmp.h>
 
 #define YR_EXCEPT(_try_clause_, _catch_clause_) \
-  _try_clause_
+    _try_clause_
 
 jmp_buf *exc_jmp_buf[MAX_THREADS];
 
 static LONG CALLBACK exception_handler(
     PEXCEPTION_POINTERS ExceptionInfo)
 {
-  switch(ExceptionInfo->ExceptionRecord->ExceptionCode) {
-  case EXCEPTION_IN_PAGE_ERROR:
-  case EXCEPTION_ACCESS_VIOLATION:
-    break;
-  default:
-    return EXCEPTION_CONTINUE_SEARCH;
+  switch(ExceptionInfo->ExceptionRecord->ExceptionCode)
+  {
+    case EXCEPTION_IN_PAGE_ERROR:
+    case EXCEPTION_ACCESS_VIOLATION:
+      break;
+    default:
+      return EXCEPTION_CONTINUE_SEARCH;
   }
+
   int tidx = yr_get_tidx();
-  if (tidx != -1 && exc_jmp_buf[tidx] != NULL) {
+
+  if (tidx != -1 && exc_jmp_buf[tidx] != NULL)
     longjmp(*exc_jmp_buf[tidx], 1);
-  }
-  /* We should not reach this point. */
+
+  // We should not reach this point.
   abort();
 }
 
-#define YR_TRYCATCH(_try_clause_,_catch_clause_)                        \
-  do {                                                                  \
+#define YR_TRYCATCH(_try_clause_, _catch_clause_)                       \
+  do                                                                    \
+  {                                                                     \
     HANDLE exh = AddVectoredExceptionHandler(1, exception_handler);     \
     int tidx = yr_get_tidx();                                           \
-    if (tidx == -1) {                                                   \
+    if (tidx == -1)                                                     \
       abort();                                                          \
-    }                                                                   \
     jmp_buf jb;                                                         \
     exc_jmp_buf[tidx] = &jb;                                            \
     if (setjmp(jb) == 0)                                                \
@@ -54,20 +73,23 @@ static LONG CALLBACK exception_handler(
 sigjmp_buf *exc_jmp_buf[MAX_THREADS];
 
 static void exception_handler(int sig) {
-  if (sig == SIGBUS) {
+  if (sig == SIGBUS)
+  {
     int tidx = yr_get_tidx();
-    if (tidx != -1 && exc_jmp_buf[tidx] != NULL) {
+
+    if (tidx != -1 && exc_jmp_buf[tidx] != NULL)
       siglongjmp(*exc_jmp_buf[tidx], 1);
-    }
-    /* We should not reach this point. */
+
+    // We should not reach this point.
     abort();
   }
 }
 
 typedef struct sigaction sa;
 
-#define YR_TRYCATCH(_try_clause_,_catch_clause_)                \
-  do {                                                          \
+#define YR_TRYCATCH(_try_clause_, _catch_clause_)               \
+  do                                                            \
+  {                                                             \
     struct sigaction oldact;                                    \
     struct sigaction act;                                       \
     sigset_t oldmask;                                           \
@@ -77,9 +99,8 @@ typedef struct sigaction sa;
     pthread_sigmask(SIG_SETMASK, &act.sa_mask, &oldmask);       \
     sigaction(SIGBUS, &act, &oldact);                           \
     int tidx = yr_get_tidx();                                   \
-    if (tidx == -1) {                                           \
+    if (tidx == -1)                                             \
       abort();                                                  \
-    }                                                           \
     sigjmp_buf jb;                                              \
     exc_jmp_buf[tidx] = &jb;                                    \
     if (sigsetjmp(jb, 1) == 0)                                  \
@@ -93,4 +114,4 @@ typedef struct sigaction sa;
 
 #endif
 
-#endif /* _EXCEPTION_H_ */
+#endif
