@@ -30,22 +30,19 @@ jmp_buf *exc_jmp_buf[MAX_THREADS];
 static LONG CALLBACK exception_handler(
     PEXCEPTION_POINTERS ExceptionInfo)
 {
+  int tidx = yr_get_tidx();
+
   switch(ExceptionInfo->ExceptionRecord->ExceptionCode)
   {
     case EXCEPTION_IN_PAGE_ERROR:
     case EXCEPTION_ACCESS_VIOLATION:
-      break;
-    default:
-      return EXCEPTION_CONTINUE_SEARCH;
+      if (tidx != -1 && exc_jmp_buf[tidx] != NULL)
+        longjmp(*exc_jmp_buf[tidx], 1);
+      else
+        abort();
   }
 
-  int tidx = yr_get_tidx();
-
-  if (tidx != -1 && exc_jmp_buf[tidx] != NULL)
-    longjmp(*exc_jmp_buf[tidx], 1);
-
-  // We should not reach this point.
-  abort();
+  return EXCEPTION_CONTINUE_SEARCH;
 }
 
 #define YR_TRYCATCH(_try_clause_, _catch_clause_)                       \
