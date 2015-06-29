@@ -24,9 +24,6 @@ limitations under the License.
 #include <windows.h>
 #include <setjmp.h>
 
-#define YR_EXCEPT(_try_clause_, _catch_clause_) \
-    _try_clause_
-
 jmp_buf *exc_jmp_buf[MAX_THREADS];
 
 static LONG CALLBACK exception_handler(
