@@ -49,8 +49,12 @@ with noyywrap then we can remove this pragma.
 #endif
 
 
-uint8_t escaped_char_value(char* text);
-uint8_t read_escaped_char(yyscan_t yyscanner);
+uint8_t escaped_char_value(
+    char* text);
+
+int read_escaped_char(
+    yyscan_t yyscanner,
+    uint8_t* escaped_char);
 
 %}
 
@@ -227,8 +231,19 @@ hex_digit     [0-9a-fA-F]
 
 
 \\ {
-  yylval->integer = read_escaped_char(yyscanner);
-  return _CHAR_;
+
+  uint8_t c;
+
+  if (read_escaped_char(yyscanner, &c))
+  {
+    yylval->integer = c;
+    return _CHAR_;
+  }
+  else
+  {
+    yyerror(yyscanner, lex_env, "unexpected end of buffer");
+    yyterminate();
+  }
 }
 
 
@@ -271,7 +286,13 @@ hex_digit     [0-9a-fA-F]
   }
 
   if (end == '\\')
-    end = read_escaped_char(yyscanner);
+  {
+    if (!read_escaped_char(yyscanner, &end))
+    {
+      yyerror(yyscanner, lex_env, "unexpected end of buffer");
+      yyterminate();
+    }
+  }
 
   if (end < start)
   {
@@ -358,8 +379,17 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\ {
 
-  uint8_t c = read_escaped_char(yyscanner);
-  LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
+  uint8_t c;
+
+  if (read_escaped_char(yyscanner, &c))
+  {
+    LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
+  }
+  else
+  {
+    yyerror(yyscanner, lex_env, "unexpected end of buffer");
+    yyterminate();
+  }
 }
 
 
@@ -410,7 +440,8 @@ hex_digit     [0-9a-fA-F]
 
 %%
 
-uint8_t escaped_char_value(char* text)
+uint8_t escaped_char_value(
+    char* text)
 {
   char hex[3];
   int result;
@@ -454,30 +485,41 @@ uint8_t escaped_char_value(char* text)
 }
 
 
-uint8_t read_escaped_char(yyscan_t yyscanner)
+#ifdef __cplusplus
+#define INPUT yyinput
+#else
+#define INPUT input
+#endif
+
+
+int read_escaped_char(
+    yyscan_t yyscanner,
+    uint8_t* escaped_char)
 {
   char text[4];
 
   text[0] = '\\';
+  text[1] = INPUT(yyscanner);
 
-  #ifdef __cplusplus
-  text[1] = yyinput(yyscanner);
-  #else
-  text[1] = input(yyscanner);
-  #endif
+  if (text[1] == EOF)
+    return 0;
 
   if (text[1] == 'x')
   {
-    #ifdef __cplusplus
-    text[2] = yyinput(yyscanner);
-    text[3] = yyinput(yyscanner);
-    #else
-    text[2] = input(yyscanner);
-    text[3] = input(yyscanner);
-    #endif
+    text[2] = INPUT(yyscanner);
+
+    if (text[2] == EOF)
+      return 0;
+
+    text[3] = INPUT(yyscanner);
+
+    if (text[3] == EOF)
+      return 0;
   }
 
-  return escaped_char_value(text);
+  *escaped_char = escaped_char_value(text);
+
+  return 1;
 }
 
 
