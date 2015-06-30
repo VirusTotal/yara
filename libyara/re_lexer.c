@@ -2494,9 +2494,9 @@ uint8_t escaped_char_value(
 
 
 #ifdef __cplusplus
-#define INPUT yyinput
+#define RE_YY_INPUT yyinput
 #else
-#define INPUT input
+#define RE_YY_INPUT input
 #endif
 
 
@@ -2507,19 +2507,19 @@ int read_escaped_char(
   char text[4];
 
   text[0] = '\\';
-  text[1] = INPUT(yyscanner);
+  text[1] = RE_YY_INPUT(yyscanner);
 
   if (text[1] == EOF)
     return 0;
 
   if (text[1] == 'x')
   {
-    text[2] = INPUT(yyscanner);
+    text[2] = RE_YY_INPUT(yyscanner);
 
     if (text[2] == EOF)
       return 0;
 
-    text[3] = INPUT(yyscanner);
+    text[3] = RE_YY_INPUT(yyscanner);
 
     if (text[3] == EOF)
       return 0;
