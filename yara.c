@@ -708,7 +708,7 @@ int is_integer(
 int is_float(
     const char *str)
 {
-  int point = FALSE;
+  int has_dot = FALSE;
 
   if (*str == '-')
     str++;
@@ -717,18 +717,20 @@ int is_float(
   {
     if (*str == '.')
     {
-      if (point)      // two points seen, not a float
+      if (has_dot)      // two dots, not a float
         return FALSE;
-      point = TRUE;
+
+      has_dot = TRUE;
     }
     else if (!isdigit(*str))
     {
       return FALSE;
     }
+
     str++;
   }
 
-  return TRUE;
+  return has_dot; // to be float must contain a dot
 }
 
 
