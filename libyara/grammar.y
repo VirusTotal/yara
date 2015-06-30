@@ -166,8 +166,8 @@ limitations under the License.
 %type <expression> identifier
 %type <expression> regexp
 
+%type <c_string> arguments
 %type <c_string> arguments_list
-
 
 %destructor { yr_free($$); } _IDENTIFIER_
 %destructor { yr_free($$); } _STRING_IDENTIFIER_
@@ -729,7 +729,7 @@ identifier
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
       }
 
-    | identifier '(' arguments_list ')'
+    | identifier '(' arguments ')'
       {
         char* args_fmt;
 
@@ -775,12 +775,13 @@ identifier
     ;
 
 
+arguments
+    : /* empty */     { $$ = yr_strdup(""); }
+    | arguments_list  { $$ = $1; }
+
+
 arguments_list
-    : /* empty */
-      {
-        $$ = yr_strdup("");
-      }
-    | expression
+    : expression
       {
         $$ = (char*) yr_malloc(MAX_FUNCTION_ARGS + 1);
 
