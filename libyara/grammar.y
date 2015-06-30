@@ -1795,8 +1795,16 @@ primary_expression
         if ($1.type == EXPRESSION_TYPE_INTEGER &&
             $3.type == EXPRESSION_TYPE_INTEGER)
         {
-          $$.value.integer = OPERATION(/, $1.value.integer, $3.value.integer);
-          $$.type = EXPRESSION_TYPE_INTEGER;
+          if ($3.value.integer != 0)
+          {
+            $$.value.integer = OPERATION(/, $1.value.integer, $3.value.integer);
+            $$.type = EXPRESSION_TYPE_INTEGER;
+          }
+          else
+          {
+            compiler->last_result = ERROR_DIVISION_BY_ZERO;
+            ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+          }
         }
         else
         {
@@ -1810,8 +1818,16 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_MOD, NULL);
 
-        $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = OPERATION(%, $1.value.integer, $3.value.integer);
+        if ($3.value.integer != 0)
+        {
+          $$.value.integer = OPERATION(%, $1.value.integer, $3.value.integer);
+          $$.type = EXPRESSION_TYPE_INTEGER;
+        }
+        else
+        {
+          compiler->last_result = ERROR_DIVISION_BY_ZERO;
+          ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+        }
       }
     | primary_expression '^' primary_expression
       {
