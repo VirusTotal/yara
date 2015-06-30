@@ -258,6 +258,8 @@ RE_TESTS = [
   ('(bc+d$|ef*g.|h?i(j|k))', 'bcdd', FAIL),
   ('(bc+d$|ef*g.|h?i(j|k))', 'reffgz', SUCCEED, 'effgz'),
 
+  # Test case for issue #324
+  ('whatever|   x.   x', '   xy   x', SUCCEED, '   xy   x'),
 ]
 
 

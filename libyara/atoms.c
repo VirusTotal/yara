@@ -338,7 +338,7 @@ int _yr_atoms_choose(
   YR_ATOM_LIST_ITEM* tail;
 
   int i, quality;
-  int max_quality = 0;
+  int max_quality = -10000;
   int min_quality = 10000;
 
   *choosen_atoms = NULL;
@@ -401,12 +401,15 @@ int _yr_atoms_choose(
       if (quality < min_quality)
         min_quality = quality;
 
-      tail = item;
-      while (tail->next != NULL)
-        tail = tail->next;
+      if (item != NULL)
+      {
+        tail = item;
+        while (tail->next != NULL)
+          tail = tail->next;
 
-      tail->next = *choosen_atoms;
-      *choosen_atoms = item;
+        tail->next = *choosen_atoms;
+        *choosen_atoms = item;
+      }
 
       child = child->next_sibling;
     }
