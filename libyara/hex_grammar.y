@@ -108,9 +108,6 @@ tokens
           YYABORT;
         }
 
-        DESTROY_NODE_IF($$ == NULL, $1);
-        DESTROY_NODE_IF($$ == NULL, $2);
-
         $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
 
         DESTROY_NODE_IF($$ == NULL, $1);
