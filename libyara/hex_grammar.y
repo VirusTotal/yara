@@ -80,231 +80,237 @@ limitations under the License.
 
 %%
 
-hex_string : '{' tokens '}'
-              {
-                RE* re = yyget_extra(yyscanner);
-                re->root_node = $2;
-              }
-           ;
+hex_string
+    : '{' tokens '}'
+      {
+        RE* re = yyget_extra(yyscanner);
+        re->root_node = $2;
+      }
+    ;
 
 
-tokens : token
-         {
-            $$ = $1;
-         }
-       | tokens token
-         {
-            lex_env->token_count++;
+tokens
+    : token
+      {
+        $$ = $1;
+      }
+    | tokens token
+      {
+        lex_env->token_count++;
 
-            if (lex_env->token_count >= MAX_HEX_STRING_TOKENS)
-            {
-              yr_re_node_destroy($1);
-              yr_re_node_destroy($2);
-
-              yyerror(yyscanner, lex_env, "string too long");
-
-              YYABORT;
-            }
-
-            DESTROY_NODE_IF($$ == NULL, $1);
-            DESTROY_NODE_IF($$ == NULL, $2);
-
-            $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
-
-            DESTROY_NODE_IF($$ == NULL, $1);
-            DESTROY_NODE_IF($$ == NULL, $2);
-
-            ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
-         }
-       ;
-
-
-token : byte
+        if (lex_env->token_count >= MAX_HEX_STRING_TOKENS)
         {
+          yr_re_node_destroy($1);
+          yr_re_node_destroy($2);
+
+          yyerror(yyscanner, lex_env, "string too long");
+
+          YYABORT;
+        }
+
+        DESTROY_NODE_IF($$ == NULL, $1);
+        DESTROY_NODE_IF($$ == NULL, $2);
+
+        $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
+
+        DESTROY_NODE_IF($$ == NULL, $1);
+        DESTROY_NODE_IF($$ == NULL, $2);
+
+        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+      }
+    ;
+
+
+token
+    : byte
+      {
+        $$ = $1;
+      }
+    | '('
+      {
+        lex_env->inside_or++;
+      }
+      alternatives ')'
+      {
+        $$ = $3;
+        lex_env->inside_or--;
+      }
+    | '[' range ']'
+      {
+        $$ = $2;
+        $$->greedy = FALSE;
+      }
+    ;
+
+
+range
+    : _NUMBER_
+      {
+        RE_NODE* re_any;
+
+        if ($1 < 0)
+        {
+          yyerror(yyscanner, lex_env, "invalid negative jump length");
+          YYABORT;
+        }
+
+        if (lex_env->inside_or && $1 > STRING_CHAINING_THRESHOLD)
+        {
+          yyerror(yyscanner, lex_env, "jumps over "
+              STR(STRING_CHAINING_THRESHOLD)
+              " now allowed inside alternation (|)");
+          YYABORT;
+        }
+
+        re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
+
+        ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+
+        $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
+
+        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+
+        $$->start = $1;
+        $$->end = $1;
+      }
+    | _NUMBER_ '-' _NUMBER_
+      {
+        RE_NODE* re_any;
+
+        if (lex_env->inside_or &&
+            ($1 > STRING_CHAINING_THRESHOLD ||
+             $3 > STRING_CHAINING_THRESHOLD) )
+        {
+          yyerror(yyscanner, lex_env, "jumps over "
+              STR(STRING_CHAINING_THRESHOLD)
+              " now allowed inside alternation (|)");
+
+          YYABORT;
+        }
+
+        if ($1 < 0 || $3 < 0)
+        {
+          yyerror(yyscanner, lex_env, "invalid negative jump length");
+          YYABORT;
+        }
+
+        if ($1 > $3)
+        {
+          yyerror(yyscanner, lex_env, "invalid jump range");
+          YYABORT;
+        }
+
+        re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
+
+        ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+
+        $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
+
+        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+
+        $$->start = $1;
+        $$->end = $3;
+      }
+    | _NUMBER_ '-'
+      {
+        RE_NODE* re_any;
+
+        if (lex_env->inside_or)
+        {
+          yyerror(yyscanner, lex_env,
+              "unbounded jumps not allowed inside alternation (|)");
+          YYABORT;
+        }
+
+        if ($1 < 0)
+        {
+          yyerror(yyscanner, lex_env, "invalid negative jump length");
+          YYABORT;
+        }
+
+        re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
+
+        ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+
+        $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
+
+        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+
+        $$->start = $1;
+        $$->end = INT_MAX;
+      }
+    | '-'
+      {
+        RE_NODE* re_any;
+
+        if (lex_env->inside_or)
+        {
+          yyerror(yyscanner, lex_env,
+              "unbounded jumps not allowed inside alternation (|)");
+          YYABORT;
+        }
+
+        re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
+
+        ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+
+        $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
+
+        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+
+        $$->start = 0;
+        $$->end = INT_MAX;
+      }
+    ;
+
+
+alternatives
+    : tokens
+      {
           $$ = $1;
-        }
-      | '('
+      }
+    | alternatives '|' tokens
+      {
+        mark_as_not_fast_hex_regexp();
+
+        $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
+
+        DESTROY_NODE_IF($$ == NULL, $1);
+        DESTROY_NODE_IF($$ == NULL, $3);
+
+        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+      }
+    ;
+
+byte
+    : _BYTE_
+      {
+        $$ = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
+
+        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+
+        $$->value = $1;
+      }
+    | _MASKED_BYTE_
+      {
+        uint8_t mask = $1 >> 8;
+
+        if (mask == 0x00)
         {
-          lex_env->inside_or++;
+          $$ = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
+
+          ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
         }
-        alternatives ')'
+        else
         {
-          $$ = $3;
-          lex_env->inside_or--;
-        }
-      | '[' range ']'
-        {
-          $$ = $2;
-          $$->greedy = FALSE;
-        }
-      ;
-
-
-range : _NUMBER_
-        {
-          RE_NODE* re_any;
-
-          if ($1 < 0)
-          {
-            yyerror(yyscanner, lex_env, "invalid negative jump length");
-            YYABORT;
-          }
-
-          if (lex_env->inside_or && $1 > STRING_CHAINING_THRESHOLD)
-          {
-            yyerror(yyscanner, lex_env, "jumps over "
-                STR(STRING_CHAINING_THRESHOLD)
-                " now allowed inside alternation (|)");
-            YYABORT;
-          }
-
-          re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
-
-          ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
-
-          $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
+          $$ = yr_re_node_create(RE_NODE_MASKED_LITERAL, NULL, NULL);
 
           ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
-          $$->start = $1;
-          $$->end = $1;
+          $$->value = $1 & 0xFF;
+          $$->mask = mask;
         }
-      | _NUMBER_ '-' _NUMBER_
-        {
-          RE_NODE* re_any;
-
-          if (lex_env->inside_or &&
-              ($1 > STRING_CHAINING_THRESHOLD ||
-               $3 > STRING_CHAINING_THRESHOLD) )
-          {
-            yyerror(yyscanner, lex_env, "jumps over "
-                STR(STRING_CHAINING_THRESHOLD)
-                " now allowed inside alternation (|)");
-
-            YYABORT;
-          }
-
-          if ($1 < 0 || $3 < 0)
-          {
-            yyerror(yyscanner, lex_env, "invalid negative jump length");
-            YYABORT;
-          }
-
-          if ($1 > $3)
-          {
-            yyerror(yyscanner, lex_env, "invalid jump range");
-            YYABORT;
-          }
-
-          re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
-
-          ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
-
-          $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
-
-          ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
-
-          $$->start = $1;
-          $$->end = $3;
-        }
-      | _NUMBER_ '-'
-        {
-          RE_NODE* re_any;
-
-          if (lex_env->inside_or)
-          {
-            yyerror(yyscanner, lex_env,
-                "unbounded jumps not allowed inside alternation (|)");
-            YYABORT;
-          }
-
-          if ($1 < 0)
-          {
-            yyerror(yyscanner, lex_env, "invalid negative jump length");
-            YYABORT;
-          }
-
-          re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
-
-          ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
-
-          $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
-
-          ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
-
-          $$->start = $1;
-          $$->end = INT_MAX;
-        }
-      | '-'
-        {
-          RE_NODE* re_any;
-
-          if (lex_env->inside_or)
-          {
-            yyerror(yyscanner, lex_env,
-                "unbounded jumps not allowed inside alternation (|)");
-            YYABORT;
-          }
-
-          re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
-
-          ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
-
-          $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
-
-          ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
-
-          $$->start = 0;
-          $$->end = INT_MAX;
-        }
-      ;
-
-
-alternatives : tokens
-               {
-                  $$ = $1;
-               }
-             | alternatives '|' tokens
-               {
-                  mark_as_not_fast_hex_regexp();
-
-                  $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
-
-                  DESTROY_NODE_IF($$ == NULL, $1);
-                  DESTROY_NODE_IF($$ == NULL, $3);
-
-                  ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
-               }
-             ;
-
-byte  : _BYTE_
-        {
-          $$ = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
-
-          ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
-
-          $$->value = $1;
-        }
-      | _MASKED_BYTE_
-        {
-          uint8_t mask = $1 >> 8;
-
-          if (mask == 0x00)
-          {
-            $$ = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
-
-            ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
-          }
-          else
-          {
-            $$ = yr_re_node_create(RE_NODE_MASKED_LITERAL, NULL, NULL);
-
-            ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
-
-            $$->value = $1 & 0xFF;
-            $$->mask = mask;
-          }
-        }
-      ;
+      }
+    ;
 
 %%
