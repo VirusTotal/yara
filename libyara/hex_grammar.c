@@ -454,9 +454,9 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    91,    91,   100,   104,   113,   172,   176,   189,   193,
-     202,   216,   215,   228,   257,   295,   323,   349,   353,   367,
-     375
+       0,    91,    91,   100,   104,   113,   174,   178,   191,   195,
+     204,   218,   217,   230,   259,   297,   325,   351,   355,   369,
+     377
 };
 #endif
 
@@ -1454,25 +1454,27 @@ yyreduce:
     {
         (yyval.re_node) = NULL;
 
-        // Some portions of the code (i.e: yr_re_split_at_chaining_point)
-        // expect a left-unbalanced tree where the right child of a concat node
-        // can't be another concat node. A concat node must be always the left
-        // child of its parent if the parent is also a concat. For this reason
-        // the can't simply create two new concat nodes arranged like this:
-        //
-        //         concat
-        //          /   \
-        //         /     \
-        //     token's    \
-        //     subtree  concat
-        //              /    \
-        //             /      \
-        //            /        \
-        //    token_sequence's  token's
-        //        subtree       subtree
-        //
-        // Instead we must insert the subtree for the first token as the
-        // leftmost node of the token_sequence subtree.
+        /*
+        Some portions of the code (i.e: yr_re_split_at_chaining_point)
+        expect a left-unbalanced tree where the right child of a concat node
+        can't be another concat node. A concat node must be always the left
+        child of its parent if the parent is also a concat. For this reason
+        the can't simply create two new concat nodes arranged like this:
+
+                concat
+                 /   \
+                /     \
+            token's    \
+            subtree  concat
+                     /    \
+                    /      \
+                   /        \
+           token_sequence's  token's
+               subtree       subtree
+
+        Instead we must insert the subtree for the first token as the
+        leftmost node of the token_sequence subtree.
+        */
 
         RE_NODE* leftmost_concat = NULL;
         RE_NODE* leftmost_node = (yyvsp[(2) - (3)].re_node);
@@ -1508,14 +1510,14 @@ yyreduce:
     break;
 
   case 6:
-#line 173 "hex_grammar.y"
+#line 175 "hex_grammar.y"
     {
         (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
       }
     break;
 
   case 7:
-#line 177 "hex_grammar.y"
+#line 179 "hex_grammar.y"
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[(1) - (2)].re_node), (yyvsp[(2) - (2)].re_node));
 
@@ -1527,14 +1529,14 @@ yyreduce:
     break;
 
   case 8:
-#line 190 "hex_grammar.y"
+#line 192 "hex_grammar.y"
     {
         (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
       }
     break;
 
   case 9:
-#line 194 "hex_grammar.y"
+#line 196 "hex_grammar.y"
     {
         (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
         (yyval.re_node)->greedy = FALSE;
@@ -1542,7 +1544,7 @@ yyreduce:
     break;
 
   case 10:
-#line 203 "hex_grammar.y"
+#line 205 "hex_grammar.y"
     {
         lex_env->token_count++;
 
@@ -1558,14 +1560,14 @@ yyreduce:
     break;
 
   case 11:
-#line 216 "hex_grammar.y"
+#line 218 "hex_grammar.y"
     {
         lex_env->inside_or++;
       }
     break;
 
   case 12:
-#line 220 "hex_grammar.y"
+#line 222 "hex_grammar.y"
     {
         (yyval.re_node) = (yyvsp[(3) - (4)].re_node);
         lex_env->inside_or--;
@@ -1573,7 +1575,7 @@ yyreduce:
     break;
 
   case 13:
-#line 229 "hex_grammar.y"
+#line 231 "hex_grammar.y"
     {
         RE_NODE* re_any;
 
@@ -1605,7 +1607,7 @@ yyreduce:
     break;
 
   case 14:
-#line 258 "hex_grammar.y"
+#line 260 "hex_grammar.y"
     {
         RE_NODE* re_any;
 
@@ -1646,7 +1648,7 @@ yyreduce:
     break;
 
   case 15:
-#line 296 "hex_grammar.y"
+#line 298 "hex_grammar.y"
     {
         RE_NODE* re_any;
 
@@ -1677,7 +1679,7 @@ yyreduce:
     break;
 
   case 16:
-#line 324 "hex_grammar.y"
+#line 326 "hex_grammar.y"
     {
         RE_NODE* re_any;
 
@@ -1702,14 +1704,14 @@ yyreduce:
     break;
 
   case 17:
-#line 350 "hex_grammar.y"
+#line 352 "hex_grammar.y"
     {
           (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
       }
     break;
 
   case 18:
-#line 354 "hex_grammar.y"
+#line 356 "hex_grammar.y"
     {
         mark_as_not_fast_hex_regexp();
 
@@ -1723,7 +1725,7 @@ yyreduce:
     break;
 
   case 19:
-#line 368 "hex_grammar.y"
+#line 370 "hex_grammar.y"
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
@@ -1734,7 +1736,7 @@ yyreduce:
     break;
 
   case 20:
-#line 376 "hex_grammar.y"
+#line 378 "hex_grammar.y"
     {
         uint8_t mask = (yyvsp[(1) - (1)].integer) >> 8;
 
@@ -1758,7 +1760,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1762 "hex_grammar.c"
+#line 1764 "hex_grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1972,6 +1974,6 @@ yyreturn:
 }
 
 
-#line 397 "hex_grammar.y"
+#line 399 "hex_grammar.y"
 
 

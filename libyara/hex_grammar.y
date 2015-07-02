@@ -114,25 +114,27 @@ tokens
       {
         $$ = NULL;
 
-        // Some portions of the code (i.e: yr_re_split_at_chaining_point)
-        // expect a left-unbalanced tree where the right child of a concat node
-        // can't be another concat node. A concat node must be always the left
-        // child of its parent if the parent is also a concat. For this reason
-        // the can't simply create two new concat nodes arranged like this:
-        //
-        //         concat
-        //          /   \
-        //         /     \
-        //     token's    \
-        //     subtree  concat
-        //              /    \
-        //             /      \
-        //            /        \
-        //    token_sequence's  token's
-        //        subtree       subtree
-        //
-        // Instead we must insert the subtree for the first token as the
-        // leftmost node of the token_sequence subtree.
+        /*
+        Some portions of the code (i.e: yr_re_split_at_chaining_point)
+        expect a left-unbalanced tree where the right child of a concat node
+        can't be another concat node. A concat node must be always the left
+        child of its parent if the parent is also a concat. For this reason
+        the can't simply create two new concat nodes arranged like this:
+
+                concat
+                 /   \
+                /     \
+            token's    \
+            subtree  concat
+                     /    \
+                    /      \
+                   /        \
+           token_sequence's  token's
+               subtree       subtree
+
+        Instead we must insert the subtree for the first token as the
+        leftmost node of the token_sequence subtree.
+        */
 
         RE_NODE* leftmost_concat = NULL;
         RE_NODE* leftmost_node = $2;
