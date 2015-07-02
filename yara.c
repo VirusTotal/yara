@@ -710,8 +710,11 @@ int is_float(
 {
   int has_dot = FALSE;
 
-  if (*str == '-')
+  if (*str == '-')      // skip the minus sign if present
     str++;
+
+  if (*str == '.')      // float can't start with a dot
+    return FALSE;
 
   while(*str)
   {
