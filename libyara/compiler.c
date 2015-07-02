@@ -877,6 +877,13 @@ YR_API char* yr_compiler_get_error_message(
           buffer_size,
           "division by zero");
       break;
+    case ERROR_REGULAR_EXPRESSION_TOO_LARGE:
+      snprintf(
+          buffer,
+          buffer_size,
+          "regular expression is too large");
+      break;
+
   }
 
   return buffer;
