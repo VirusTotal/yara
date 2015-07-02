@@ -1148,7 +1148,8 @@ int yr_re_emit_code(
 
   total_size += code_size;
 
-  assert(total_size < RE_MAX_CODE_SIZE);
+  if (total_size > RE_MAX_CODE_SIZE)
+    return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
   yr_arena_reserve_memory(arena, RE_MAX_CODE_SIZE);
 
@@ -1173,7 +1174,8 @@ int yr_re_emit_code(
 
   total_size += code_size;
 
-  assert(total_size < RE_MAX_CODE_SIZE);
+  if (total_size > RE_MAX_CODE_SIZE)
+    return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
   return ERROR_SUCCESS;
 }
