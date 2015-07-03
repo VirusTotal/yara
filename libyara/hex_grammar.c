@@ -1579,9 +1579,9 @@ yyreduce:
     {
         RE_NODE* re_any;
 
-        if ((yyvsp[(2) - (3)].integer) < 0)
+        if ((yyvsp[(2) - (3)].integer) <= 0)
         {
-          yyerror(yyscanner, lex_env, "invalid negative jump length");
+          yyerror(yyscanner, lex_env, "invalid jump length");
           YYABORT;
         }
 
