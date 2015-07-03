@@ -524,6 +524,7 @@ class TestYara(unittest.TestCase):
         ], '123456789')
 
         self.assertSyntaxError([
+          'rule test { strings: $a = { 01 [0] 02 } condition: $a }',
           'rule test { strings: $a = { [-] 01 02 } condition: $a }',
           'rule test { strings: $a = { 01 02 [-] } condition: $a }',
           'rule test { strings: $a = { 01 02 ([-] 03 | 04) } condition: $a }',

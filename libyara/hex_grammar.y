@@ -231,9 +231,9 @@ range
       {
         RE_NODE* re_any;
 
-        if ($2 < 0)
+        if ($2 <= 0)
         {
-          yyerror(yyscanner, lex_env, "invalid negative jump length");
+          yyerror(yyscanner, lex_env, "invalid jump length");
           YYABORT;
         }
 
