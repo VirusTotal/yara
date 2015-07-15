@@ -94,6 +94,8 @@ RE_TESTS = [
   ('ab*c', 'ac', SUCCEED, 'ac'),
   ('ab*bc', 'abc', SUCCEED, 'abc'),
   ('ab*bc', 'abbc', SUCCEED, 'abbc'),
+  ('a.*bb', 'abbbb', SUCCEED, 'abbbb'),
+  ('a.*?bbb', 'abbbbbb', SUCCEED, 'abbb'),
   ('a.*c', 'ac', SUCCEED, 'ac'),
   ('a.*c', 'axyzc', SUCCEED, 'axyzc'),
   ('ab+c', 'abbc', SUCCEED, 'abbc'),

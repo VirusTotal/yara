@@ -391,7 +391,8 @@ void _yr_scan_update_match_chain_length(
 
 int _yr_scan_add_match_to_list(
     YR_MATCH* match,
-    YR_MATCHES* matches_list)
+    YR_MATCHES* matches_list,
+    int replace_if_exists)
 {
   YR_MATCH* insertion_point = matches_list->tail;
 
@@ -402,7 +403,9 @@ int _yr_scan_add_match_to_list(
   {
     if (match->offset == insertion_point->offset)
     {
-      insertion_point->length = match->length;
+      if (replace_if_exists)
+        insertion_point->length = match->length;
+
       return ERROR_SUCCESS;
     }
 
@@ -563,7 +566,7 @@ int _yr_scan_verify_chained_string_match(
           match->next = NULL;
 
           FAIL_ON_ERROR(_yr_scan_add_match_to_list(
-              match, &string->matches[tidx]));
+              match, &string->matches[tidx], FALSE));
         }
 
         match = next_match;
@@ -599,7 +602,8 @@ int _yr_scan_verify_chained_string_match(
 
       FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,
-          &matching_string->unconfirmed_matches[tidx]));
+          &matching_string->unconfirmed_matches[tidx],
+          FALSE));
     }
   }
 
@@ -692,7 +696,8 @@ int _yr_scan_match_callback(
 
       FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,
-          &string->matches[tidx]));
+          &string->matches[tidx],
+          STRING_IS_GREEDY_REGEXP(string)));
     }
   }
 
@@ -723,6 +728,9 @@ int _yr_scan_verify_re_match(
   int forward_matches = -1;
   int backward_matches = -1;
   int flags = 0;
+
+  if (STRING_IS_GREEDY_REGEXP(ac_match->string))
+    flags |= RE_FLAGS_GREEDY;
 
   if (STRING_IS_FAST_HEX_REGEXP(ac_match->string))
     exec = _yr_scan_fast_hex_re_exec;
