@@ -38,7 +38,7 @@ typedef int32_t tidx_mask_t;
     union { type name; int64_t name##_; }
 
 #pragma pack(push)
-#pragma pack(1)
+#pragma pack(8)
 
 
 #define NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL      0x01
