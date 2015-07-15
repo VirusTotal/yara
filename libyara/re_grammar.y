@@ -109,9 +109,7 @@ alternative
       }
     | alternative '|'
       {
-        RE_NODE* node;
-
-        node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
+        RE_NODE* node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
 
         DESTROY_NODE_IF($$ == NULL, $1);
         ERROR_IF(node == NULL, ERROR_INSUFICIENT_MEMORY);
@@ -140,6 +138,9 @@ concatenation
 repeat
     : single '*'
       {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_GREEDY;
+
          $$ = yr_re_node_create(RE_NODE_STAR, $1, NULL);
 
          DESTROY_NODE_IF($$ == NULL, $1);
@@ -147,6 +148,9 @@ repeat
       }
     | single '*' '?'
       {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_UNGREEDY;
+
          $$ = yr_re_node_create(RE_NODE_STAR, $1, NULL);
 
          DESTROY_NODE_IF($$ == NULL, $1);
@@ -156,6 +160,9 @@ repeat
       }
     | single '+'
       {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_GREEDY;
+
          $$ = yr_re_node_create(RE_NODE_PLUS, $1, NULL);
 
          DESTROY_NODE_IF($$ == NULL, $1);
@@ -163,6 +170,9 @@ repeat
       }
     | single '+' '?'
       {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_UNGREEDY;
+
          $$ = yr_re_node_create(RE_NODE_PLUS, $1, NULL);
 
          DESTROY_NODE_IF($$ == NULL, $1);
@@ -172,6 +182,9 @@ repeat
       }
     | single '?'
       {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_GREEDY;
+
          $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
 
          DESTROY_NODE_IF($$ == NULL, $1);
@@ -182,6 +195,9 @@ repeat
       }
     | single '?' '?'
       {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_UNGREEDY;
+
          $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
 
          DESTROY_NODE_IF($$ == NULL, $1);
@@ -193,6 +209,9 @@ repeat
       }
     | single _RANGE_
       {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_GREEDY;
+
          $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
 
          DESTROY_NODE_IF($$ == NULL, $1);
@@ -203,6 +222,9 @@ repeat
       }
     | single _RANGE_ '?'
       {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_UNGREEDY;
+
          $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
 
          DESTROY_NODE_IF($$ == NULL, $1);

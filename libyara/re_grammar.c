@@ -470,10 +470,10 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    88,    88,    93,    97,   101,   110,   126,   130,   141,
-     148,   157,   164,   173,   183,   194,   204,   215,   219,   225,
-     231,   237,   246,   250,   256,   264,   270,   276,   282,   288,
-     294,   300
+       0,    88,    88,    93,    97,   101,   110,   124,   128,   139,
+     149,   161,   171,   183,   196,   210,   223,   237,   241,   247,
+     253,   259,   268,   272,   278,   286,   292,   298,   304,   310,
+     316,   322
 };
 #endif
 
@@ -1465,9 +1465,7 @@ yyreduce:
   case 6:
 #line 111 "re_grammar.y"
     {
-        RE_NODE* node;
-
-        node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
+        RE_NODE* node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
 
         DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[(1) - (2)].re_node));
         ERROR_IF(node == NULL, ERROR_INSUFICIENT_MEMORY);
@@ -1479,14 +1477,14 @@ yyreduce:
     break;
 
   case 7:
-#line 127 "re_grammar.y"
+#line 125 "re_grammar.y"
     {
         (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
       }
     break;
 
   case 8:
-#line 131 "re_grammar.y"
+#line 129 "re_grammar.y"
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[(1) - (2)].re_node), (yyvsp[(2) - (2)].re_node));
 
@@ -1497,8 +1495,11 @@ yyreduce:
     break;
 
   case 9:
-#line 142 "re_grammar.y"
+#line 140 "re_grammar.y"
     {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_GREEDY;
+
          (yyval.re_node) = yr_re_node_create(RE_NODE_STAR, (yyvsp[(1) - (2)].re_node), NULL);
 
          DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[(1) - (2)].re_node));
@@ -1507,8 +1508,11 @@ yyreduce:
     break;
 
   case 10:
-#line 149 "re_grammar.y"
+#line 150 "re_grammar.y"
     {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_UNGREEDY;
+
          (yyval.re_node) = yr_re_node_create(RE_NODE_STAR, (yyvsp[(1) - (3)].re_node), NULL);
 
          DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[(1) - (3)].re_node));
@@ -1519,8 +1523,11 @@ yyreduce:
     break;
 
   case 11:
-#line 158 "re_grammar.y"
+#line 162 "re_grammar.y"
     {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_GREEDY;
+
          (yyval.re_node) = yr_re_node_create(RE_NODE_PLUS, (yyvsp[(1) - (2)].re_node), NULL);
 
          DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[(1) - (2)].re_node));
@@ -1529,8 +1536,11 @@ yyreduce:
     break;
 
   case 12:
-#line 165 "re_grammar.y"
+#line 172 "re_grammar.y"
     {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_UNGREEDY;
+
          (yyval.re_node) = yr_re_node_create(RE_NODE_PLUS, (yyvsp[(1) - (3)].re_node), NULL);
 
          DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[(1) - (3)].re_node));
@@ -1541,8 +1551,11 @@ yyreduce:
     break;
 
   case 13:
-#line 174 "re_grammar.y"
+#line 184 "re_grammar.y"
     {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_GREEDY;
+
          (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, (yyvsp[(1) - (2)].re_node), NULL);
 
          DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[(1) - (2)].re_node));
@@ -1554,8 +1567,11 @@ yyreduce:
     break;
 
   case 14:
-#line 184 "re_grammar.y"
+#line 197 "re_grammar.y"
     {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_UNGREEDY;
+
          (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, (yyvsp[(1) - (3)].re_node), NULL);
 
          DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[(1) - (3)].re_node));
@@ -1568,8 +1584,11 @@ yyreduce:
     break;
 
   case 15:
-#line 195 "re_grammar.y"
+#line 211 "re_grammar.y"
     {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_GREEDY;
+
          (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, (yyvsp[(1) - (2)].re_node), NULL);
 
          DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[(1) - (2)].re_node));
@@ -1581,8 +1600,11 @@ yyreduce:
     break;
 
   case 16:
-#line 205 "re_grammar.y"
+#line 224 "re_grammar.y"
     {
+         RE* re = yyget_extra(yyscanner);
+         re->flags |= RE_FLAGS_UNGREEDY;
+
          (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, (yyvsp[(1) - (3)].re_node), NULL);
 
          DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[(1) - (3)].re_node));
@@ -1595,14 +1617,14 @@ yyreduce:
     break;
 
   case 17:
-#line 216 "re_grammar.y"
+#line 238 "re_grammar.y"
     {
          (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
       }
     break;
 
   case 18:
-#line 220 "re_grammar.y"
+#line 242 "re_grammar.y"
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_WORD_BOUNDARY, NULL, NULL);
 
@@ -1611,7 +1633,7 @@ yyreduce:
     break;
 
   case 19:
-#line 226 "re_grammar.y"
+#line 248 "re_grammar.y"
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_NON_WORD_BOUNDARY, NULL, NULL);
 
@@ -1620,7 +1642,7 @@ yyreduce:
     break;
 
   case 20:
-#line 232 "re_grammar.y"
+#line 254 "re_grammar.y"
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_ANCHOR_START, NULL, NULL);
 
@@ -1629,7 +1651,7 @@ yyreduce:
     break;
 
   case 21:
-#line 238 "re_grammar.y"
+#line 260 "re_grammar.y"
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_ANCHOR_END, NULL, NULL);
 
@@ -1638,14 +1660,14 @@ yyreduce:
     break;
 
   case 22:
-#line 247 "re_grammar.y"
+#line 269 "re_grammar.y"
     {
          (yyval.re_node) = (yyvsp[(2) - (3)].re_node);
       }
     break;
 
   case 23:
-#line 251 "re_grammar.y"
+#line 273 "re_grammar.y"
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
@@ -1654,7 +1676,7 @@ yyreduce:
     break;
 
   case 24:
-#line 257 "re_grammar.y"
+#line 279 "re_grammar.y"
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
@@ -1665,7 +1687,7 @@ yyreduce:
     break;
 
   case 25:
-#line 265 "re_grammar.y"
+#line 287 "re_grammar.y"
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_WORD_CHAR, NULL, NULL);
 
@@ -1674,7 +1696,7 @@ yyreduce:
     break;
 
   case 26:
-#line 271 "re_grammar.y"
+#line 293 "re_grammar.y"
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_NON_WORD_CHAR, NULL, NULL);
 
@@ -1683,7 +1705,7 @@ yyreduce:
     break;
 
   case 27:
-#line 277 "re_grammar.y"
+#line 299 "re_grammar.y"
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_SPACE, NULL, NULL);
 
@@ -1692,7 +1714,7 @@ yyreduce:
     break;
 
   case 28:
-#line 283 "re_grammar.y"
+#line 305 "re_grammar.y"
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_NON_SPACE, NULL, NULL);
 
@@ -1701,7 +1723,7 @@ yyreduce:
     break;
 
   case 29:
-#line 289 "re_grammar.y"
+#line 311 "re_grammar.y"
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_DIGIT, NULL, NULL);
 
@@ -1710,7 +1732,7 @@ yyreduce:
     break;
 
   case 30:
-#line 295 "re_grammar.y"
+#line 317 "re_grammar.y"
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_NON_DIGIT, NULL, NULL);
 
@@ -1719,7 +1741,7 @@ yyreduce:
     break;
 
   case 31:
-#line 301 "re_grammar.y"
+#line 323 "re_grammar.y"
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_CLASS, NULL, NULL);
 
@@ -1731,7 +1753,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1735 "re_grammar.c"
+#line 1757 "re_grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1945,6 +1967,6 @@ yyreturn:
 }
 
 
-#line 309 "re_grammar.y"
+#line 331 "re_grammar.y"
 
 
