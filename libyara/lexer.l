@@ -345,6 +345,21 @@ $({letter}|{digit}|_)*  {
 }
 
 
+!({letter}|{digit}|_)*  {
+
+  yylval->c_string = yr_strdup(yytext);
+
+  if (yylval->c_string == NULL)
+  {
+    yyerror(yyscanner, compiler, "not enough memory");
+    yyterminate();
+  }
+
+  yylval->c_string[0] = '$'; /* replace ! by $*/
+  return _STRING_LENGTH_;
+}
+
+
 u?int(8|16|32)(be)? {
 
   char* text = yytext;

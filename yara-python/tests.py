@@ -573,6 +573,21 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = "ssi" condition: @a[2] == 5 }'
         ], 'mississippi')
 
+    def testLength(self):
+
+        self.assertTrueRules([
+            'rule test { strings: $a = /m.*?ssi/ condition: !a == 5 }',
+            'rule test { strings: $a = /m.*?ssi/ condition: !a[1] == 5 }',
+            'rule test { strings: $a = /m.*ssi/ condition: !a == 8 }',
+            'rule test { strings: $a = /m.*ssi/ condition: !a[1] == 8 }',
+            'rule test { strings: $a = /ssi.*ppi/ condition: !a[1] == 9 }',
+            'rule test { strings: $a = /ssi.*ppi/ condition: !a[2] == 6 }',
+            'rule test { strings: $a = { 6D [1-3] 73 73 69 } condition: !a == 5}',
+            'rule test { strings: $a = { 6D [-] 73 73 69 } condition: !a == 5}',
+            'rule test { strings: $a = { 6D [-] 70 70 69 } condition: !a == 11}',
+            'rule test { strings: $a = { 6D 69 73 73 [-] 70 69 } condition: !a == 11}',
+        ], 'mississippi')
+
     def testOf(self):
 
         self.assertTrueRules([
