@@ -99,6 +99,7 @@ limitations under the License.
 %token <c_string> _STRING_IDENTIFIER_
 %token <c_string> _STRING_COUNT_
 %token <c_string> _STRING_OFFSET_
+%token <c_string> _STRING_LENGTH_
 %token <c_string> _STRING_IDENTIFIER_WITH_WILDCARD_
 %token <integer> _NUMBER_
 %token <double_> _DOUBLE_
@@ -170,9 +171,10 @@ limitations under the License.
 %type <c_string> arguments_list
 
 %destructor { yr_free($$); } _IDENTIFIER_
-%destructor { yr_free($$); } _STRING_IDENTIFIER_
 %destructor { yr_free($$); } _STRING_COUNT_
 %destructor { yr_free($$); } _STRING_OFFSET_
+%destructor { yr_free($$); } _STRING_LENGTH_
+%destructor { yr_free($$); } _STRING_IDENTIFIER_
 %destructor { yr_free($$); } _STRING_IDENTIFIER_WITH_WILDCARD_
 %destructor { yr_free($$); } _TEXT_STRING_
 %destructor { yr_free($$); } _HEX_STRING_
@@ -1659,6 +1661,44 @@ primary_expression
               yyscanner,
               $1,
               OP_OFFSET,
+              UNDEFINED);
+
+        yr_free($1);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = UNDEFINED;
+      }
+    | _STRING_LENGTH_ '[' primary_expression ']'
+      {
+        compiler->last_result = yr_parser_reduce_string_identifier(
+            yyscanner,
+            $1,
+            OP_LENGTH,
+            UNDEFINED);
+
+        yr_free($1);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = UNDEFINED;
+      }
+    | _STRING_LENGTH_
+      {
+        compiler->last_result = yr_parser_emit_with_arg(
+            yyscanner,
+            OP_PUSH,
+            1,
+            NULL,
+            NULL);
+
+        if (compiler->last_result == ERROR_SUCCESS)
+          compiler->last_result = yr_parser_reduce_string_identifier(
+              yyscanner,
+              $1,
+              OP_LENGTH,
               UNDEFINED);
 
         yr_free($1);

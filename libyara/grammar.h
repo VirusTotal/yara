@@ -50,43 +50,44 @@
      _STRING_IDENTIFIER_ = 266,
      _STRING_COUNT_ = 267,
      _STRING_OFFSET_ = 268,
-     _STRING_IDENTIFIER_WITH_WILDCARD_ = 269,
-     _NUMBER_ = 270,
-     _DOUBLE_ = 271,
-     _INTEGER_FUNCTION_ = 272,
-     _TEXT_STRING_ = 273,
-     _HEX_STRING_ = 274,
-     _REGEXP_ = 275,
-     _ASCII_ = 276,
-     _WIDE_ = 277,
-     _NOCASE_ = 278,
-     _FULLWORD_ = 279,
-     _AT_ = 280,
-     _FILESIZE_ = 281,
-     _ENTRYPOINT_ = 282,
-     _ALL_ = 283,
-     _ANY_ = 284,
-     _IN_ = 285,
-     _OF_ = 286,
-     _FOR_ = 287,
-     _THEM_ = 288,
-     _MATCHES_ = 289,
-     _CONTAINS_ = 290,
-     _IMPORT_ = 291,
-     _TRUE_ = 292,
-     _FALSE_ = 293,
-     _OR_ = 294,
-     _AND_ = 295,
-     _NEQ_ = 296,
-     _EQ_ = 297,
-     _GE_ = 298,
-     _GT_ = 299,
-     _LE_ = 300,
-     _LT_ = 301,
-     _SHIFT_RIGHT_ = 302,
-     _SHIFT_LEFT_ = 303,
-     UNARY_MINUS = 304,
-     _NOT_ = 305
+     _STRING_LENGTH_ = 269,
+     _STRING_IDENTIFIER_WITH_WILDCARD_ = 270,
+     _NUMBER_ = 271,
+     _DOUBLE_ = 272,
+     _INTEGER_FUNCTION_ = 273,
+     _TEXT_STRING_ = 274,
+     _HEX_STRING_ = 275,
+     _REGEXP_ = 276,
+     _ASCII_ = 277,
+     _WIDE_ = 278,
+     _NOCASE_ = 279,
+     _FULLWORD_ = 280,
+     _AT_ = 281,
+     _FILESIZE_ = 282,
+     _ENTRYPOINT_ = 283,
+     _ALL_ = 284,
+     _ANY_ = 285,
+     _IN_ = 286,
+     _OF_ = 287,
+     _FOR_ = 288,
+     _THEM_ = 289,
+     _MATCHES_ = 290,
+     _CONTAINS_ = 291,
+     _IMPORT_ = 292,
+     _TRUE_ = 293,
+     _FALSE_ = 294,
+     _OR_ = 295,
+     _AND_ = 296,
+     _NEQ_ = 297,
+     _EQ_ = 298,
+     _GE_ = 299,
+     _GT_ = 300,
+     _LE_ = 301,
+     _LT_ = 302,
+     _SHIFT_RIGHT_ = 303,
+     _SHIFT_LEFT_ = 304,
+     UNARY_MINUS = 305,
+     _NOT_ = 306
    };
 #endif
 /* Tokens.  */
@@ -101,50 +102,51 @@
 #define _STRING_IDENTIFIER_ 266
 #define _STRING_COUNT_ 267
 #define _STRING_OFFSET_ 268
-#define _STRING_IDENTIFIER_WITH_WILDCARD_ 269
-#define _NUMBER_ 270
-#define _DOUBLE_ 271
-#define _INTEGER_FUNCTION_ 272
-#define _TEXT_STRING_ 273
-#define _HEX_STRING_ 274
-#define _REGEXP_ 275
-#define _ASCII_ 276
-#define _WIDE_ 277
-#define _NOCASE_ 278
-#define _FULLWORD_ 279
-#define _AT_ 280
-#define _FILESIZE_ 281
-#define _ENTRYPOINT_ 282
-#define _ALL_ 283
-#define _ANY_ 284
-#define _IN_ 285
-#define _OF_ 286
-#define _FOR_ 287
-#define _THEM_ 288
-#define _MATCHES_ 289
-#define _CONTAINS_ 290
-#define _IMPORT_ 291
-#define _TRUE_ 292
-#define _FALSE_ 293
-#define _OR_ 294
-#define _AND_ 295
-#define _NEQ_ 296
-#define _EQ_ 297
-#define _GE_ 298
-#define _GT_ 299
-#define _LE_ 300
-#define _LT_ 301
-#define _SHIFT_RIGHT_ 302
-#define _SHIFT_LEFT_ 303
-#define UNARY_MINUS 304
-#define _NOT_ 305
+#define _STRING_LENGTH_ 269
+#define _STRING_IDENTIFIER_WITH_WILDCARD_ 270
+#define _NUMBER_ 271
+#define _DOUBLE_ 272
+#define _INTEGER_FUNCTION_ 273
+#define _TEXT_STRING_ 274
+#define _HEX_STRING_ 275
+#define _REGEXP_ 276
+#define _ASCII_ 277
+#define _WIDE_ 278
+#define _NOCASE_ 279
+#define _FULLWORD_ 280
+#define _AT_ 281
+#define _FILESIZE_ 282
+#define _ENTRYPOINT_ 283
+#define _ALL_ 284
+#define _ANY_ 285
+#define _IN_ 286
+#define _OF_ 287
+#define _FOR_ 288
+#define _THEM_ 289
+#define _MATCHES_ 290
+#define _CONTAINS_ 291
+#define _IMPORT_ 292
+#define _TRUE_ 293
+#define _FALSE_ 294
+#define _OR_ 295
+#define _AND_ 296
+#define _NEQ_ 297
+#define _EQ_ 298
+#define _GE_ 299
+#define _GT_ 300
+#define _LE_ 301
+#define _LT_ 302
+#define _SHIFT_RIGHT_ 303
+#define _SHIFT_LEFT_ 304
+#define UNARY_MINUS 305
+#define _NOT_ 306
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 181 "grammar.y"
+#line 183 "grammar.y"
 {
   EXPRESSION      expression;
   SIZED_STRING*   sized_string;
@@ -156,7 +158,7 @@ typedef union YYSTYPE
   YR_RULE*        rule;
 }
 /* Line 1529 of yacc.c.  */
-#line 160 "grammar.h"
+#line 162 "grammar.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

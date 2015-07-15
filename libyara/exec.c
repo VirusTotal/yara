@@ -674,6 +674,28 @@ int yr_execute_code(
         push(r3);
         break;
 
+      case OP_LENGTH:
+        pop(r2);
+        pop(r1);
+
+        ensure_defined(r1);
+
+        match = r2.s->matches[tidx].head;
+        i = 1;
+        r3.i = UNDEFINED;
+
+        while (match != NULL && r3.i == UNDEFINED)
+        {
+          if (r1.i == i)
+            r3.i = match->length;
+
+          i++;
+          match = match->next;
+        }
+
+        push(r3);
+        break;
+
       case OP_OF:
         found = 0;
         count = 0;
