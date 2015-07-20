@@ -68,7 +68,7 @@ int strcmp_w(
     const char* str);
 
 
-size_t strlcpy_w(
+char* strncpy_w(
     char* dst,
     const char* w_src,
     size_t n);

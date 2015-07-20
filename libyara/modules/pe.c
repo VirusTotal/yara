@@ -709,8 +709,10 @@ void pe_parse_version_info(
             char key[64];
             char value[256];
 
-            strlcpy_w(key, string->Key, sizeof(key));
-            strlcpy_w(value, string_value, sizeof(value));
+            strncpy_w(key, string->Key, sizeof(key));
+            key[sizeof(key)-1] = 0;
+            strncpy_w(value, string_value, sizeof(value));
+            value[sizeof(value)-1] = 0;
 
             set_string(value, pe->object, "version_info[%s]", key);
           }
@@ -1304,7 +1306,8 @@ void pe_parse_header(
     if (!struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
       break;
 
-    strlcpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME + 1);
+    strncpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME + 1);
+    section_name[IMAGE_SIZEOF_SHORT_NAME] = 0;
 
     set_string(
         section_name,
