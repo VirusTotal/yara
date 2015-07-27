@@ -788,10 +788,46 @@ int yr_parser_reduce_rule_declaration_phase_2(
       NULL,
       NULL);
 
+  const char* tag;
+  yr_rule_tags_foreach(rule, tag) {
+    FAIL_ON_COMPILER_ERROR(yr_hash_table_add(
+        compiler->tags_table,
+        tag,
+        NULL,
+        (void*) 1))
+  }
+
   return compiler->last_result;
 }
 
 
+int yr_parser_store_tag(
+    yyscan_t yyscanner,
+    const char* identifier,
+    char **tag)
+{
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
+
+  void* tag_exists = yr_hash_table_lookup(
+      compiler->tags_table,
+      identifier,
+      NULL);
+
+  if (tag_exists != NULL)
+  {
+    compiler->last_result = yr_arena_write_string(
+        compiler->sz_arena,
+        identifier,
+        tag);
+  }
+  else
+  {
+    yr_compiler_set_error_extra_info(compiler, identifier);
+    compiler->last_result = ERROR_UNDEFINED_IDENTIFIER;
+  }
+
+  return compiler->last_result;
+}
 
 int yr_parser_reduce_string_identifier(
     yyscan_t yyscanner,

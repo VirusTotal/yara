@@ -176,6 +176,7 @@ int yr_execute_code(
 
   char* identifier;
   char* args_fmt;
+  char* tag;
 
   int i;
   int found;
@@ -404,6 +405,37 @@ int yr_execute_code(
         ip += sizeof(uint64_t);
         r1.i = rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0;
         push(r1);
+        break;
+
+      case OP_PUSH_TAG:
+        tag = *(char**)(ip + 1);
+        ip += sizeof(uint64_t);
+
+        pop(r1);
+
+        ensure_defined(r1);
+
+        r2.i = 0;
+        if (tag != NULL)
+        {
+          found = 0;
+          const char *rule_tag;
+          yr_rules_foreach(rules, rule) {
+            if (!(rule->t_flags[tidx] & RULE_TFLAGS_MATCH))
+              continue;
+            yr_rule_tags_foreach(rule, rule_tag) {
+              if (strcmp(rule_tag, tag) == 0) {
+                found++;
+                break;
+              }
+            }
+            if (found >= r1.i) {
+              r2.i = 1;
+              break;
+            }
+          }
+        }
+        push(r2);
         break;
 
       case OP_INIT_RULE:

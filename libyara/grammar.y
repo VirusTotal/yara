@@ -612,8 +612,31 @@ identifier
             }
             else
             {
-              yr_compiler_set_error_extra_info(compiler, $1);
-              compiler->last_result = ERROR_UNDEFINED_IDENTIFIER;
+              char *tag = NULL;
+
+              int result = yr_parser_store_tag(
+                  yyscanner,
+                  $1,
+                  &tag);
+              ERROR_IF(result != ERROR_SUCCESS);
+
+              compiler->last_result = yr_parser_emit_with_arg(
+                  yyscanner,
+                  OP_PUSH,
+                  1,
+                  NULL,
+                  NULL);
+
+              compiler->last_result = yr_parser_emit_with_arg_reloc(
+                  yyscanner,
+                  OP_PUSH_TAG,
+                  PTR_TO_INT64(tag),
+                  NULL,
+                  NULL);
+
+              $$.type = EXPRESSION_TYPE_BOOLEAN;
+              $$.value.integer = UNDEFINED;
+              $$.identifier = $1;
             }
           }
         }
@@ -1233,6 +1256,25 @@ expression
     | for_expression _OF_ string_set
       {
         yr_parser_emit(yyscanner, OP_OF, NULL);
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | for_expression _OF_ _IDENTIFIER_
+      {
+        char *tag = NULL;
+
+        int result = yr_parser_store_tag(
+            yyscanner,
+            $3,
+            &tag);
+        ERROR_IF(result != ERROR_SUCCESS);
+
+        compiler->last_result = yr_parser_emit_with_arg_reloc(
+            yyscanner,
+            OP_PUSH_TAG,
+            PTR_TO_INT64(tag),
+            NULL,
+            NULL);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }

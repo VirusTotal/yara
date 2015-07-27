@@ -59,6 +59,9 @@ YR_API int yr_compiler_create(
   result = yr_hash_table_create(10007, &new_compiler->rules_table);
 
   if (result == ERROR_SUCCESS)
+    result = yr_hash_table_create(10007, &new_compiler->tags_table);
+
+  if (result == ERROR_SUCCESS)
     result = yr_hash_table_create(10007, &new_compiler->objects_table);
 
   if (result == ERROR_SUCCESS)
@@ -123,6 +126,8 @@ YR_API void yr_compiler_destroy(
   yr_hash_table_destroy(
       compiler->rules_table,
       NULL);
+
+  yr_hash_table_destroy(compiler->tags_table, NULL);
 
   yr_hash_table_destroy(
       compiler->objects_table,

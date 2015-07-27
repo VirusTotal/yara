@@ -96,6 +96,12 @@ YR_META* yr_parser_reduce_meta_declaration(
     int32_t integer);
 
 
+int yr_parser_store_tag(
+    yyscan_t yyscanner,
+    const char* identifier,
+    char **tag);
+
+
 int yr_parser_reduce_string_identifier(
     yyscan_t yyscanner,
     const char* identifier,
