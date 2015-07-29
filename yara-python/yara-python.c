@@ -1481,8 +1481,6 @@ static PyObject* yara_compile(
     if (error != ERROR_SUCCESS)
       return handle_error(error, NULL);
 
-    yr_compiler_set_callback(compiler, raise_exception_on_error, NULL);
-
     if (error_on_warning != NULL)
     {
       if (PyBool_Check(error_on_warning))
