@@ -94,7 +94,7 @@ char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 char* modules_data[MAX_ARGS_EXT_VAR + 1];
 
 int recursive_search = FALSE;
-int show_module_info = FALSE;
+int show_module_data = FALSE;
 int show_tags = FALSE;
 int show_specified_tags = FALSE;
 int show_specified_rules = FALSE;
@@ -127,8 +127,8 @@ args_option_t options[] =
   OPT_BOOLEAN('n', "negate", &negate,
       "print only not satisfied rules (negate)", NULL),
 
-  OPT_BOOLEAN('D', "print-module-info", &show_module_info,
-      "print module information"),
+  OPT_BOOLEAN('D', "print-module-data", &show_module_data,
+      "print module data"),
 
   OPT_BOOLEAN('g', "print-tags", &show_tags,
       "print tags"),
@@ -684,8 +684,8 @@ void* scanning_thread(void* param)
   if (fast_scan)
     flags |= SCAN_FLAGS_FAST_MODE;
 
-  if (show_module_info)
-    flags |= SCAN_FLAGS_SHOW_MODULE_INFO;
+  if (show_module_data)
+    flags |= SCAN_FLAGS_SHOW_MODULE_DATA;
 
   while (file_path != NULL)
   {
@@ -744,27 +744,32 @@ int is_integer(
 int is_float(
     const char *str)
 {
-  int point = FALSE;
+  int has_dot = FALSE;
 
-  if (*str == '-')
+  if (*str == '-')      // skip the minus sign if present
     str++;
+
+  if (*str == '.')      // float can't start with a dot
+    return FALSE;
 
   while(*str)
   {
     if (*str == '.')
     {
-      if (point)      // two points seen, not a float
+      if (has_dot)      // two dots, not a float
         return FALSE;
-      point = TRUE;
+
+      has_dot = TRUE;
     }
     else if (!isdigit(*str))
     {
       return FALSE;
     }
+
     str++;
   }
 
-  return TRUE;
+  return has_dot; // to be float must contain a dot
 }
 
 
@@ -1036,8 +1041,8 @@ int main(
     if (fast_scan)
       flags |= SCAN_FLAGS_FAST_MODE;
 
-    if (show_module_info)
-      flags |= SCAN_FLAGS_SHOW_MODULE_INFO;
+    if (show_module_data)
+      flags |= SCAN_FLAGS_SHOW_MODULE_DATA;
 
     result = yr_rules_scan_proc(
         rules,
@@ -1100,8 +1105,8 @@ int main(
     if (fast_scan)
       flags |= SCAN_FLAGS_FAST_MODE;
 
-    if (show_module_info)
-      flags |= SCAN_FLAGS_SHOW_MODULE_INFO;
+    if (show_module_data)
+      flags |= SCAN_FLAGS_SHOW_MODULE_DATA;
 
     result = yr_rules_scan_file(
         rules,

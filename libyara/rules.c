@@ -36,7 +36,7 @@ limitations under the License.
 #include <yara/scan.h>
 #include <yara/modules.h>
 
-
+#include "exception.h"
 
 void _yr_rules_lock(
     YR_RULES* rules)
@@ -400,23 +400,29 @@ YR_API int yr_rules_scan_mem_blocks(
   {
     if (context.entry_point == UNDEFINED)
     {
-      if (flags & SCAN_FLAGS_PROCESS_MEMORY)
-        context.entry_point = yr_get_entry_point_address(
-            block->data,
-            block->size,
-            block->base);
-      else
-        context.entry_point = yr_get_entry_point_offset(
-            block->data,
-            block->size);
+      YR_TRYCATCH({
+          if (flags & SCAN_FLAGS_PROCESS_MEMORY)
+            context.entry_point = yr_get_entry_point_address(
+                block->data,
+                block->size,
+                block->base);
+          else
+            context.entry_point = yr_get_entry_point_offset(
+                block->data,
+                block->size);
+        },{});
     }
 
-    result = _yr_rules_scan_mem_block(
-        rules,
-        block,
-        &context,
-        timeout,
-        start_time);
+    YR_TRYCATCH({
+        result = _yr_rules_scan_mem_block(
+            rules,
+            block,
+            &context,
+            timeout,
+            start_time);
+      },{
+        result = ERROR_COULD_NOT_MAP_FILE;
+      });
 
     if (result != ERROR_SUCCESS)
       goto _exit;
@@ -424,11 +430,15 @@ YR_API int yr_rules_scan_mem_blocks(
     block = block->next;
   }
 
-  result = yr_execute_code(
-      rules,
-      &context,
-      timeout,
-      start_time);
+  YR_TRYCATCH({
+      result = yr_execute_code(
+          rules,
+          &context,
+          timeout,
+          start_time);
+    },{
+      result = ERROR_COULD_NOT_MAP_FILE;
+    });
 
   if (result != ERROR_SUCCESS)
     goto _exit;
@@ -478,7 +488,7 @@ _exit:
 
   _yr_rules_clean_matches(rules, &context);
 
-  if (flags & SCAN_FLAGS_SHOW_MODULE_INFO)
+  if (flags & SCAN_FLAGS_SHOW_MODULE_DATA)
     yr_modules_print_data(&context);
 
   yr_modules_unload_all(&context);

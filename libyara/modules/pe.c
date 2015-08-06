@@ -1304,7 +1304,8 @@ void pe_parse_header(
     if (!struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
       break;
 
-    strlcpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME + 1);
+    strncpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME);
+    section_name[IMAGE_SIZEOF_SHORT_NAME] = '\0';
 
     set_string(
         section_name,

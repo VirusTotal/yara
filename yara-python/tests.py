@@ -94,6 +94,8 @@ RE_TESTS = [
   ('ab*c', 'ac', SUCCEED, 'ac'),
   ('ab*bc', 'abc', SUCCEED, 'abc'),
   ('ab*bc', 'abbc', SUCCEED, 'abbc'),
+  ('a.*bb', 'abbbb', SUCCEED, 'abbbb'),
+  ('a.*?bbb', 'abbbbbb', SUCCEED, 'abbb'),
   ('a.*c', 'ac', SUCCEED, 'ac'),
   ('a.*c', 'axyzc', SUCCEED, 'axyzc'),
   ('ab+c', 'abbc', SUCCEED, 'abbc'),
@@ -258,6 +260,8 @@ RE_TESTS = [
   ('(bc+d$|ef*g.|h?i(j|k))', 'bcdd', FAIL),
   ('(bc+d$|ef*g.|h?i(j|k))', 'reffgz', SUCCEED, 'effgz'),
 
+  # Test case for issue #324
+  ('whatever|   x.   x', '   xy   x', SUCCEED, '   xy   x'),
 ]
 
 
@@ -266,14 +270,19 @@ class TestYara(unittest.TestCase):
     def assertTrueRules(self, rules, data='dummy'):
 
         for r in rules:
-            r = yara.compile(source=r)
-            self.assertTrue(r.match(data=data))
+          r = yara.compile(source=r)
+          self.assertTrue(r.match(data=data))
 
     def assertFalseRules(self, rules, data='dummy'):
 
         for r in rules:
-            r = yara.compile(source=r)
-            self.assertFalse(r.match(data=data))
+          r = yara.compile(source=r)
+          self.assertFalse(r.match(data=data))
+
+    def assertSyntaxError(self, rules):
+
+        for r in rules:
+          self.assertRaises(yara.SyntaxError, yara.compile, source=r)
 
     def runReTest(self, test):
 
@@ -485,10 +494,12 @@ class TestYara(unittest.TestCase):
         self.assertTrueRules([
             'rule test { strings: $a = { 64 01 00 00 60 01 } condition: $a }',
             'rule test { strings: $a = { 64 0? 00 00 ?0 01 } condition: $a }',
+            'rule test { strings: $a = { 6? 01 00 00 60 0? } condition: $a }',
             'rule test { strings: $a = { 64 01 [1-3] 60 01 } condition: $a }',
             'rule test { strings: $a = { 64 01 [1-3] (60|61) 01 } condition: $a }',
             'rule test { strings: $a = { 4D 5A [-] 6A 2A [-] 58 C3} condition: $a }',
-            'rule test { strings: $a = { 4D 5A [300-] 6A 2A [-] 58 C3} condition: $a }'
+            'rule test { strings: $a = { 4D 5A [300-] 6A 2A [-] 58 C3} condition: $a }',
+            'rule test { strings: $a = { 2e 7? (65 | ??) 78 } condition: $a }'
         ], PE32_FILE)
 
         self.assertFalseRules([
@@ -513,6 +524,15 @@ class TestYara(unittest.TestCase):
           'rule test { strings: $a = { 31 32 [2-] 34 35 } condition: $a }',
           'rule test { strings: $a = { 31 32 [0-3] 37 38 } condition: $a }',
         ], '123456789')
+
+        self.assertSyntaxError([
+          'rule test { strings: $a = { 01 [0] 02 } condition: $a }',
+          'rule test { strings: $a = { [-] 01 02 } condition: $a }',
+          'rule test { strings: $a = { 01 02 [-] } condition: $a }',
+          'rule test { strings: $a = { 01 02 ([-] 03 | 04) } condition: $a }',
+          'rule test { strings: $a = { 01 02 (03 [-] | 04) } condition: $a }',
+          'rule test { strings: $a = { 01 02 (03 | 04 [-]) } condition: $a }'
+        ])
 
         rules = yara.compile(source='rule test { strings: $a = { 61 [0-3] (62|63) } condition: $a }')
         matches = rules.match(data='abbb')
@@ -551,6 +571,21 @@ class TestYara(unittest.TestCase):
             'rule test { strings: $a = "ssi" condition: @a == 2 }',
             'rule test { strings: $a = "ssi" condition: @a == @a[1] }',
             'rule test { strings: $a = "ssi" condition: @a[2] == 5 }'
+        ], 'mississippi')
+
+    def testLength(self):
+
+        self.assertTrueRules([
+            'rule test { strings: $a = /m.*?ssi/ condition: !a == 5 }',
+            'rule test { strings: $a = /m.*?ssi/ condition: !a[1] == 5 }',
+            'rule test { strings: $a = /m.*ssi/ condition: !a == 8 }',
+            'rule test { strings: $a = /m.*ssi/ condition: !a[1] == 8 }',
+            'rule test { strings: $a = /ssi.*ppi/ condition: !a[1] == 9 }',
+            'rule test { strings: $a = /ssi.*ppi/ condition: !a[2] == 6 }',
+            'rule test { strings: $a = { 6D [1-3] 73 73 69 } condition: !a == 5}',
+            'rule test { strings: $a = { 6D [-] 73 73 69 } condition: !a == 5}',
+            'rule test { strings: $a = { 6D [-] 70 70 69 } condition: !a == 11}',
+            'rule test { strings: $a = { 6D 69 73 73 [-] 70 69 } condition: !a == 11}',
         ], 'mississippi')
 
     def testOf(self):

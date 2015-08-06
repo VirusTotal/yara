@@ -166,7 +166,10 @@ int yr_execute_code(
   STACK_ITEM r2;
   STACK_ITEM r3;
 
+  #ifdef PROFILING_ENABLED
   YR_RULE* current_rule = NULL;
+  #endif
+
   YR_RULE* rule;
   YR_MATCH* match;
   YR_OBJECT_FUNCTION* function;
@@ -337,7 +340,10 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r2);
         ensure_defined(r1);
-        r1.i = r1.i % r2.i;
+        if (r2.i != 0)
+          r1.i = r1.i % r2.i;
+        else
+          r1.i = UNDEFINED;
         push(r1);
         break;
 
@@ -401,7 +407,9 @@ int yr_execute_code(
         break;
 
       case OP_INIT_RULE:
+        #ifdef PROFILING_ENABLED
         current_rule = *(YR_RULE**)(ip + 1);
+        #endif
         ip += sizeof(uint64_t);
         break;
 
@@ -666,6 +674,28 @@ int yr_execute_code(
         push(r3);
         break;
 
+      case OP_LENGTH:
+        pop(r2);
+        pop(r1);
+
+        ensure_defined(r1);
+
+        match = r2.s->matches[tidx].head;
+        i = 1;
+        r3.i = UNDEFINED;
+
+        while (match != NULL && r3.i == UNDEFINED)
+        {
+          if (r1.i == i)
+            r3.i = match->length;
+
+          i++;
+          match = match->next;
+        }
+
+        push(r3);
+        break;
+
       case OP_OF:
         found = 0;
         count = 0;
@@ -918,7 +948,10 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r2);
         ensure_defined(r1);
-        r1.i = r1.i / r2.i;
+        if (r2.i != 0)
+          r1.i = r1.i / r2.i;
+        else
+          r1.i = UNDEFINED;
         push(r1);
         break;
 

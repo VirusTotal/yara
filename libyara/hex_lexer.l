@@ -111,11 +111,7 @@ hexdigit      [a-fA-F0-9]
   return yytext[0];
 }
 
-<range>- {
-  return yytext[0];
-}
-
-<range>\. {
+<range>\- {
   return yytext[0];
 }
 
@@ -131,21 +127,25 @@ hexdigit      [a-fA-F0-9]
   return yytext[0];
 }
 
+<range>[ \t\r\n]   // skip whitespaces
 
-[ \t\r\n]   // skip whitespace
+<range>. {
 
+  yyerror(yyscanner, lex_env, "invalid character in hex string jump");
+  yyterminate();
+}
 
-. {
+[ \t\r\n]         // skip whitespaces
 
-  if (yytext[0] >= 32 && yytext[0] < 127)
-  {
-    return yytext[0];
-  }
-  else
-  {
-    yyerror(yyscanner, lex_env, "non-ascii character");
-    yyterminate();
-  }
+[{}()|]  {        // pass valid characters to the parser
+
+  return yytext[0];
+}
+
+. {               // reject all other characters
+
+  yyerror(yyscanner, lex_env, "invalid character in hex string");
+  yyterminate();
 }
 
 %%
@@ -198,10 +198,10 @@ void yyerror(
 
 
 int yr_parse_hex_string(
-  const char* hex_string,
-  int flags,
-  RE** re,
-  RE_ERROR* error)
+    const char* hex_string,
+    int flags,
+    RE** re,
+    RE_ERROR* error)
 {
   yyscan_t yyscanner;
   jmp_buf recovery_state;

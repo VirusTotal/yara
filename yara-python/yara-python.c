@@ -289,7 +289,7 @@ typedef struct
 } Rules;
 
 
-static Rules* Rules_NEW();
+static Rules* Rules_NEW(void);
 
 static void Rules_dealloc(
     PyObject* self);
@@ -979,7 +979,7 @@ static PyObject* Rule_getattro(
 }
 
 
-static Rules* Rules_NEW()
+static Rules* Rules_NEW(void)
 {
   Rules* rules = PyObject_NEW(Rules, &Rules_Type);
 

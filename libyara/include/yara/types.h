@@ -38,7 +38,7 @@ typedef int32_t tidx_mask_t;
     union { type name; int64_t name##_; }
 
 #pragma pack(push)
-#pragma pack(1)
+#pragma pack(8)
 
 
 #define NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL      0x01
@@ -115,6 +115,7 @@ typedef struct _YR_MATCHES
 #define STRING_GFLAGS_CHAIN_PART        0x2000
 #define STRING_GFLAGS_CHAIN_TAIL        0x4000
 #define STRING_GFLAGS_FIXED_OFFSET      0x8000
+#define STRING_GFLAGS_GREEDY_REGEXP     0x10000
 
 
 #define STRING_IS_HEX(x) \
@@ -131,6 +132,9 @@ typedef struct _YR_MATCHES
 
 #define STRING_IS_REGEXP(x) \
     (((x)->g_flags) & STRING_GFLAGS_REGEXP)
+
+#define STRING_IS_GREEDY_REGEXP(x) \
+    (((x)->g_flags) & STRING_GFLAGS_GREEDY_REGEXP)
 
 #define STRING_IS_FULL_WORD(x) \
     (((x)->g_flags) & STRING_GFLAGS_FULL_WORD)
