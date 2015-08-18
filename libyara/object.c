@@ -23,7 +23,7 @@ limitations under the License.
 #include <math.h>
 
 #if _WIN32
-#define PRIu64 "%I64d"
+#define PRIu64 "I64d"
 #else
 #include <inttypes.h>
 #endif
