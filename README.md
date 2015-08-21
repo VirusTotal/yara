@@ -55,6 +55,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Heroku](https://heroku.com)
 * [jsunpack-n](http://jsunpack.jeek.org/)
 * [Koodous](https://koodous.com/)
+* [Laika BOSS](https://github.com/lmco/laikaboss)
 * [Lastline, Inc.](http://www.lastline.com)
 * [Metaflows](http://www.metaflows.com)
 * [osquery](http://www.osquery.io)
