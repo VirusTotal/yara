@@ -52,6 +52,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Fidelis XPS](http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
 * [FireEye, Inc.](http://www.fireeye.com)
 * [Fox-IT](https://www.fox-it.com)
+* [FSF](https://github.com/EmersonElectricCo/fsf)
 * [Heroku](https://heroku.com)
 * [jsunpack-n](http://jsunpack.jeek.org/)
 * [Koodous](https://koodous.com/)
