@@ -1858,6 +1858,9 @@ MOD_INIT(yara)
 
   PyModule_AddIntConstant(m, "CALLBACK_CONTINUE", 0);
   PyModule_AddIntConstant(m, "CALLBACK_ABORT", 1);
+  PyModule_AddStringConstant(m, "__version__", YR_VERSION);
+  PyModule_AddStringConstant(m, "YARA_VERSION", YR_VERSION);
+  PyModule_AddIntConstant(m, "YARA_VERSION_HEX", YR_VERSION_HEX);
 
 #if PYTHON_API_VERSION >= 1007
   YaraError = PyErr_NewException("yara.Error", PyExc_Exception, NULL);
