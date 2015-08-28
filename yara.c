@@ -45,7 +45,7 @@ limitations under the License.
 #define ERROR_COULD_NOT_CREATE_THREAD  100
 
 #ifndef MAX_PATH
-#define MAX_PATH 255
+#define MAX_PATH 256
 #endif
 
 #ifndef min
