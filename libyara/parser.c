@@ -732,6 +732,9 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
       identifier,
       (char**) &rule->identifier);
 
+  if (compiler->last_result != ERROR_SUCCESS)
+    return NULL;
+
   compiler->last_result = yr_parser_emit_with_arg_reloc(
       yyscanner,
       OP_INIT_RULE,
