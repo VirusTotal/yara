@@ -1615,6 +1615,30 @@ define_function(imports)
   return_integer(0);
 }
 
+define_function(imports_dll)
+{
+  char* dll_name = string_argument(1);
+
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  if (!pe)
+    return_integer(UNDEFINED);
+
+  IMPORTED_DLL* imported_dll = pe->imported_dlls;
+
+  while (imported_dll != NULL)
+  {
+    if (strcasecmp(imported_dll->name, dll_name) == 0)
+    {
+      return_integer(1);
+    }
+
+    imported_dll = imported_dll->next;
+  }
+
+  return_integer(0);
+}
 
 define_function(locale)
 {
@@ -1816,6 +1840,7 @@ begin_declarations;
   declare_function("section_index", "i", "i", section_index_addr);
   declare_function("exports", "s", "i", exports);
   declare_function("imports", "ss", "i", imports);
+  declare_function("imports", "s", "i", imports_dll);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
 
