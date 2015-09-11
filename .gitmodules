@@ -1,0 +1,3 @@
+[submodule "yara-python"]
+	path = yara-python
+	url = https://github.com/plusvic/yara-python
