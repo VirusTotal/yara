@@ -21,7 +21,7 @@ int sized_string_cmp(
   SIZED_STRING* s1,
   SIZED_STRING* s2)
 {
-  int i = 0;
+  size_t i = 0;
 
   while (s1->length > i &&
          s2->length > i &&

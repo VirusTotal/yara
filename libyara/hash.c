@@ -70,9 +70,9 @@ uint32_t byte_to_int32[]  =
 uint32_t hash(
     uint32_t seed,
     uint8_t* buffer,
-    int len)
+    size_t len)
 {
-  int i;
+  size_t i;
   uint32_t result = seed;
 
   for (i = len - 1; i > 0; i--)

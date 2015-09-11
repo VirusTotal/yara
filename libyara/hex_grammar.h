@@ -56,7 +56,7 @@
 typedef union YYSTYPE
 #line 64 "hex_grammar.y"
 {
-  int integer;
+  int64_t integer;
   RE_NODE *re_node;
 }
 /* Line 1529 of yacc.c.  */

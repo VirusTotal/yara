@@ -351,7 +351,7 @@ int _yr_parser_write_string(
 
   if (flags & STRING_GFLAGS_LITERAL)
   {
-    (*string)->length = literal_string->length;
+    (*string)->length = (uint32_t) literal_string->length;
 
     result = yr_arena_write_data(
         compiler->sz_arena,
@@ -363,7 +363,7 @@ int _yr_parser_write_string(
     {
       result = yr_atoms_extract_from_string(
           (uint8_t*) literal_string->c_string,
-          literal_string->length,
+          (int32_t) literal_string->length,
           flags,
           &atom_list);
     }
@@ -909,7 +909,7 @@ YR_META* yr_parser_reduce_meta_declaration(
     int32_t type,
     const char* identifier,
     const char* string,
-    int32_t integer)
+    int64_t integer)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   YR_META* meta;

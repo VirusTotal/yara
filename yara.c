@@ -550,7 +550,7 @@ int handle_message(int message, YR_RULE* rule, void* data)
           printf(",");
 
         if (meta->type == META_TYPE_INTEGER)
-          printf("%s=%d", meta->identifier, meta->integer);
+          printf("%s=%" PRId64, meta->identifier, meta->integer);
         else if (meta->type == META_TYPE_BOOLEAN)
           printf("%s=%s", meta->identifier, meta->integer ? "true" : "false");
         else
