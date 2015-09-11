@@ -42,7 +42,7 @@ from files.
 typedef struct _ARENA_FILE_HEADER
 {
   char      magic[4];
-  uint32_t  size;
+  uint64_t  size;
   uint8_t   version;
 
 } ARENA_FILE_HEADER;
@@ -340,7 +340,7 @@ void* yr_arena_base_address(
 void* yr_arena_next_address(
   YR_ARENA* arena,
   void* address,
-  int offset)
+  size_t offset)
 {
   YR_ARENA_PAGE* page;
 

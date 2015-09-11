@@ -45,9 +45,9 @@ typedef struct _CALLBACK_ARGS
 
 int _yr_scan_compare(
     uint8_t* data,
-    int data_size,
+    size_t data_size,
     uint8_t* string,
-    int string_length)
+    size_t string_length)
 {
   uint8_t* s1 = data;
   uint8_t* s2 = string;
@@ -65,9 +65,9 @@ int _yr_scan_compare(
 
 int _yr_scan_icompare(
     uint8_t* data,
-    int data_size,
+    size_t data_size,
     uint8_t* string,
-    int string_length)
+    size_t string_length)
 {
   uint8_t* s1 = data;
   uint8_t* s2 = string;
@@ -85,9 +85,9 @@ int _yr_scan_icompare(
 
 int _yr_scan_wcompare(
     uint8_t* data,
-    int data_size,
+    size_t data_size,
     uint8_t* string,
-    int string_length)
+    size_t string_length)
 {
   uint8_t* s1 = data;
   uint8_t* s2 = string;
@@ -109,9 +109,9 @@ int _yr_scan_wcompare(
 
 int _yr_scan_wicompare(
     uint8_t* data,
-    int data_size,
+    size_t data_size,
     uint8_t* string,
-    int string_length)
+    size_t string_length)
 {
   uint8_t* s1 = data;
   uint8_t* s2 = string;
@@ -560,7 +560,9 @@ int _yr_scan_verify_chained_string_match(
           _yr_scan_remove_match_from_list(
               match, &string->unconfirmed_matches[tidx]);
 
-          match->length = match_offset - match->offset + match_length;
+          match->length = (int32_t) \
+              (match_offset - match->offset + match_length);
+
           match->data = match_data - match_offset + match->offset;
           match->prev = NULL;
           match->next = NULL;

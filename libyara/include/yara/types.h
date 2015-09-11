@@ -64,7 +64,7 @@ typedef struct _YR_NAMESPACE
 typedef struct _YR_META
 {
   int32_t type;
-  int32_t integer;
+  int64_t integer;
 
   DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(char*, string);

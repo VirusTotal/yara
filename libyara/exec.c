@@ -491,7 +491,7 @@ int yr_execute_code(
         ensure_defined(r1);
         assert(r2.o->type == OBJECT_TYPE_ARRAY);
 
-        r1.o = yr_object_array_get_item(r2.o, 0, r1.i);
+        r1.o = yr_object_array_get_item(r2.o, 0, (int) r1.i);
 
         if (r1.o == NULL)
           r1.i = UNDEFINED;
@@ -519,7 +519,7 @@ int yr_execute_code(
         args_fmt = *(char**)(ip + 1);
         ip += sizeof(uint64_t);
 
-        i = strlen(args_fmt);
+        i = (int) strlen(args_fmt);
         count = 0;
 
         // pop arguments from stack and copy them to args array

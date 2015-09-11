@@ -1120,7 +1120,7 @@ int yr_atoms_extract_from_re(
 
 int yr_atoms_extract_from_string(
     uint8_t* string,
-    int string_length,
+    int32_t string_length,
     int flags,
     YR_ATOM_LIST_ITEM** atoms)
 {

@@ -470,7 +470,7 @@ YR_OBJECT* _yr_object_lookup(
       }
       else if (*p >= '0' && *p <= '9')
       {
-        index = strtol(p, (char**) &p, 10);
+        index = (int) strtol(p, (char**) &p, 10);
       }
       else if (*p == '"')
       {

@@ -24,14 +24,14 @@ limitations under the License.
 
 #define ARENA_FLAGS_FIXED_SIZE   1
 #define ARENA_FLAGS_COALESCED    2
-#define ARENA_FILE_VERSION       9
+#define ARENA_FILE_VERSION       10
 
 #define EOL ((size_t) -1)
 
 
 typedef struct _YR_RELOC
 {
-  int32_t offset;
+  size_t offset;
   struct _YR_RELOC* next;
 
 } YR_RELOC;
@@ -82,7 +82,7 @@ void* yr_arena_base_address(
 void* yr_arena_next_address(
     YR_ARENA* arena,
     void* address,
-    int offset);
+    size_t offset);
 
 
 int yr_arena_coalesce(

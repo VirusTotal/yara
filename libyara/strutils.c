@@ -24,10 +24,10 @@ limitations under the License.
 uint64_t xtoi(
     const char* hexstr)
 {
-  int l = strlen(hexstr);
+  size_t l = strlen(hexstr);
   uint64_t r = 0;
 
-  for (int i = 0; i < l; i++)
+  for (size_t i = 0; i < l; i++)
   {
     switch (hexstr[i])
     {

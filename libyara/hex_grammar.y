@@ -62,7 +62,7 @@ limitations under the License.
 %lex-param {HEX_LEX_ENVIRONMENT *lex_env}
 
 %union {
-  int integer;
+  int64_t integer;
   RE_NODE *re_node;
 }
 
@@ -253,8 +253,8 @@ range
 
         ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
-        $$->start = $2;
-        $$->end = $2;
+        $$->start = (int) $2;
+        $$->end = (int) $2;
       }
     | '[' _NUMBER_ '-' _NUMBER_ ']'
       {
@@ -291,8 +291,8 @@ range
 
         ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
-        $$->start = $2;
-        $$->end = $4;
+        $$->start = (int) $2;
+        $$->end = (int) $4;
       }
     | '[' _NUMBER_ '-' ']'
       {
@@ -319,7 +319,7 @@ range
 
         ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
-        $$->start = $2;
+        $$->start = (int) $2;
         $$->end = INT_MAX;
       }
     | '[' '-' ']'
@@ -372,7 +372,7 @@ byte
 
         ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
 
-        $$->value = $1;
+        $$->value = (int) $1;
       }
     | _MASKED_BYTE_
       {
