@@ -1,0 +1,6 @@
+HelloWorld [name="InstallsDriver",description="The file attempted to install a driver",categories="Process ",= Creation",type="external",behaviors="InstallsDriver",output="([^"]*)$",template="%s"] test.bla
+0xf:$a: Hello World
+0x59:$a: Hello World
+HereIsATest [name="Here is a test",description="Some description",intermal=true,value=1] test.bla
+0x20:$a: here
+0x52:$a: here
