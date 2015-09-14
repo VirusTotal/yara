@@ -731,73 +731,73 @@ int yr_execute_code(
 
       case OP_INT8:
         pop(r1);
-        r1.i = read_int8_t_little_endian(context->mem_block, r1.i);
+        r1.i = read_int8_t_little_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT16:
         pop(r1);
-        r1.i = read_int16_t_little_endian(context->mem_block, r1.i);
+        r1.i = read_int16_t_little_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT32:
         pop(r1);
-        r1.i = read_int32_t_little_endian(context->mem_block, r1.i);
+        r1.i = read_int32_t_little_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT8:
         pop(r1);
-        r1.i = read_uint8_t_little_endian(context->mem_block, r1.i);
+        r1.i = read_uint8_t_little_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT16:
         pop(r1);
-        r1.i = read_uint16_t_little_endian(context->mem_block, r1.i);
+        r1.i = read_uint16_t_little_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT32:
         pop(r1);
-        r1.i = read_uint32_t_little_endian(context->mem_block, r1.i);
+        r1.i = read_uint32_t_little_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT8BE:
         pop(r1);
-        r1.i = read_int8_t_big_endian(context->mem_block, r1.i);
+        r1.i = read_int8_t_big_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT16BE:
         pop(r1);
-        r1.i = read_int16_t_big_endian(context->mem_block, r1.i);
+        r1.i = read_int16_t_big_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT32BE:
         pop(r1);
-        r1.i = read_int32_t_big_endian(context->mem_block, r1.i);
+        r1.i = read_int32_t_big_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT8BE:
         pop(r1);
-        r1.i = read_uint8_t_big_endian(context->mem_block, r1.i);
+        r1.i = read_uint8_t_big_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT16BE:
         pop(r1);
-        r1.i = read_uint16_t_big_endian(context->mem_block, r1.i);
+        r1.i = read_uint16_t_big_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT32BE:
         pop(r1);
-        r1.i = read_uint32_t_big_endian(context->mem_block, r1.i);
+        r1.i = read_uint32_t_big_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 

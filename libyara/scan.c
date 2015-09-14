@@ -360,9 +360,6 @@ void _yr_scan_update_match_chain_length(
     YR_MATCH* match_to_update,
     int chain_length)
 {
-  YR_MATCH* match;
-  size_t ending_offset;
-
   if (match_to_update->chain_length == chain_length)
     return;
 
@@ -371,11 +368,11 @@ void _yr_scan_update_match_chain_length(
   if (string->chained_to == NULL)
     return;
 
-  match = string->chained_to->unconfirmed_matches[tidx].head;
+  YR_MATCH* match = string->chained_to->unconfirmed_matches[tidx].head;
 
   while (match != NULL)
   {
-    ending_offset = match->offset + match->length;
+    int64_t ending_offset = match->offset + match->length;
 
     if (ending_offset + string->chain_gap_max >= match_to_update->offset &&
         ending_offset + string->chain_gap_min <= match_to_update->offset)
@@ -465,8 +462,8 @@ int _yr_scan_verify_chained_string_match(
     YR_STRING* matching_string,
     YR_SCAN_CONTEXT* context,
     uint8_t* match_data,
-    size_t match_base,
-    size_t match_offset,
+    uint64_t match_base,
+    uint64_t match_offset,
     int32_t match_length)
 {
   YR_STRING* string;
@@ -474,8 +471,8 @@ int _yr_scan_verify_chained_string_match(
   YR_MATCH* next_match;
   YR_MATCH* new_match;
 
-  size_t lower_offset;
-  size_t ending_offset;
+  uint64_t lower_offset;
+  uint64_t ending_offset;
   int32_t full_chain_length;
 
   int tidx = context->tidx;

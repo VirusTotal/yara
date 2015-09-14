@@ -187,9 +187,9 @@ YR_API int yr_filemap_map_fd(
     return ERROR_COULD_NOT_MAP_FILE;
 
   if (size == 0)
-    size = st.st_size - offset;
+    size = (size_t) (st.st_size - offset);
 
-  pmapped_file->size = yr_min(size, st.st_size - offset);
+  pmapped_file->size = yr_min(size, (size_t) (st.st_size - offset));
 
   if (pmapped_file->size != 0)
   {

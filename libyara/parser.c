@@ -1015,7 +1015,7 @@ int _yr_parser_operator_to_opcode(
     const char* op,
     int expression_type)
 {
-  int opcode;
+  int opcode = 0;
 
   switch(expression_type)
   {
