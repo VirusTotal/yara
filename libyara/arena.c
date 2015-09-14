@@ -42,7 +42,7 @@ from files.
 typedef struct _ARENA_FILE_HEADER
 {
   char      magic[4];
-  uint64_t  size;
+  uint32_t  size;
   uint8_t   version;
 
 } ARENA_FILE_HEADER;
@@ -1027,11 +1027,13 @@ int yr_arena_save_stream(
     reloc = reloc->next;
   }
 
+  assert(page->size < 0x100000000);  // 4GB
+
   header.magic[0] = 'Y';
   header.magic[1] = 'A';
   header.magic[2] = 'R';
   header.magic[3] = 'A';
-  header.size = page->size;
+  header.size = (int32_t) page->size;
   header.version = ARENA_FILE_VERSION;
 
   yr_stream_write(&header, sizeof(header), 1, stream);

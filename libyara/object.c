@@ -42,7 +42,7 @@ int yr_object_create(
     YR_OBJECT** object)
 {
   YR_OBJECT* obj;
-  size_t object_size;
+  size_t object_size = 0;
 
   switch (type)
   {
