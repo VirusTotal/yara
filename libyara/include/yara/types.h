@@ -31,6 +31,10 @@ typedef HANDLE mutex_t;
 typedef pthread_mutex_t mutex_t;
 #endif
 
+#ifdef PROFILING_ENABLED
+#include <time.h>
+#endif
+
 typedef int32_t tidx_mask_t;
 
 
@@ -194,7 +198,7 @@ typedef struct _YR_STRING
   YR_MATCHES unconfirmed_matches[MAX_THREADS];
 
   #ifdef PROFILING_ENABLED
-  uint64_t clock_ticks;
+  clock_t clock_ticks;
   #endif
 
 } YR_STRING;
@@ -233,7 +237,7 @@ typedef struct _YR_RULE
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);
 
   #ifdef PROFILING_ENABLED
-  uint64_t clock_ticks;
+  clock_t clock_ticks;
   #endif
 
 } YR_RULE;
