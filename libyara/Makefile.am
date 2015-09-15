@@ -24,8 +24,7 @@ endif
 
 AM_YFLAGS=-d
 
-AM_CFLAGS=-O3 -Wall -Wno-deprecated-declarations -Wstrict-prototypes \
-  -Wshorten-64-to-32 -std=gnu99 -I$(srcdir)/include
+AM_CFLAGS=-O3 -Wall -Wno-deprecated-declarations -std=gnu99 -I$(srcdir)/include
 
 if GCC
 AM_CFLAGS+=-fvisibility=hidden
