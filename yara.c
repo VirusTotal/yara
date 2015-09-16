@@ -26,6 +26,7 @@ limitations under the License.
 #include <windows.h>
 
 #define PRIx64 "llx"
+#define PRId64 "lld"
 
 #endif
 
