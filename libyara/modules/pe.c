@@ -1020,7 +1020,7 @@ IMPORTED_DLL* pe_parse_imports(
     {
       char* dll_name = (char *) (pe->data + offset);
 
-      if (!pe_valid_dll_name(dll_name, pe->data_size - offset))
+      if (!pe_valid_dll_name(dll_name, pe->data_size - (size_t) offset))
         break;
 
       IMPORTED_FUNCTION* functions = pe_parse_import_descriptor(
@@ -1462,7 +1462,7 @@ define_function(exports)
 
     char* name = (char*)(pe->data + offset);
 
-    if (strncmp(name, function_name, pe->data_size - offset) == 0)
+    if (strncmp(name, function_name, pe->data_size - (size_t) offset) == 0)
       return_integer(1);
   }
 

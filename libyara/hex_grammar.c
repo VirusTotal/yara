@@ -147,7 +147,7 @@
 typedef union YYSTYPE
 #line 64 "hex_grammar.y"
 {
-  int integer;
+  int64_t integer;
   RE_NODE *re_node;
 }
 /* Line 193 of yacc.c.  */
@@ -1601,8 +1601,8 @@ yyreduce:
 
         ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
 
-        (yyval.re_node)->start = (yyvsp[(2) - (3)].integer);
-        (yyval.re_node)->end = (yyvsp[(2) - (3)].integer);
+        (yyval.re_node)->start = (int) (yyvsp[(2) - (3)].integer);
+        (yyval.re_node)->end = (int) (yyvsp[(2) - (3)].integer);
       }
     break;
 
@@ -1642,8 +1642,8 @@ yyreduce:
 
         ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
 
-        (yyval.re_node)->start = (yyvsp[(2) - (5)].integer);
-        (yyval.re_node)->end = (yyvsp[(4) - (5)].integer);
+        (yyval.re_node)->start = (int) (yyvsp[(2) - (5)].integer);
+        (yyval.re_node)->end = (int) (yyvsp[(4) - (5)].integer);
       }
     break;
 
@@ -1673,7 +1673,7 @@ yyreduce:
 
         ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
 
-        (yyval.re_node)->start = (yyvsp[(2) - (4)].integer);
+        (yyval.re_node)->start = (int) (yyvsp[(2) - (4)].integer);
         (yyval.re_node)->end = INT_MAX;
       }
     break;
@@ -1731,7 +1731,7 @@ yyreduce:
 
         ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
 
-        (yyval.re_node)->value = (yyvsp[(1) - (1)].integer);
+        (yyval.re_node)->value = (int) (yyvsp[(1) - (1)].integer);
       }
     break;
 

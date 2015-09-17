@@ -14,9 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
-#include <config.h>
-
 #include <yara/exec.h>
 #include <yara/modules.h>
 #include <yara/libyara.h>
