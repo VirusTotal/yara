@@ -340,7 +340,7 @@ void* yr_arena_base_address(
 void* yr_arena_next_address(
   YR_ARENA* arena,
   void* address,
-  int offset)
+  size_t offset)
 {
   YR_ARENA_PAGE* page;
 
@@ -1027,11 +1027,13 @@ int yr_arena_save_stream(
     reloc = reloc->next;
   }
 
+  assert(page->size < 0x100000000);  // 4GB
+
   header.magic[0] = 'Y';
   header.magic[1] = 'A';
   header.magic[2] = 'R';
   header.magic[3] = 'A';
-  header.size = page->size;
+  header.size = (int32_t) page->size;
   header.version = ARENA_FILE_VERSION;
 
   yr_stream_write(&header, sizeof(header), 1, stream);

@@ -220,12 +220,7 @@ rule
     : rule_modifiers _RULE_ _IDENTIFIER_ tags '{' meta strings
       {
         YR_RULE* rule = yr_parser_reduce_rule_declaration_phase_1(
-            yyscanner,
-            $1,
-            $3,
-            $4,
-            $7,
-            $6);
+            yyscanner, (int32_t) $1, $3, $4, $7, $6);
 
         ERROR_IF(rule == NULL);
 
@@ -471,10 +466,7 @@ string_declaration
     : _STRING_IDENTIFIER_ '=' _TEXT_STRING_ string_modifiers
       {
         $$ = yr_parser_reduce_string_declaration(
-            yyscanner,
-            $4,
-            $1,
-            $3);
+            yyscanner, (int32_t) $4, $1, $3);
 
         yr_free($1);
         yr_free($3);
@@ -488,10 +480,7 @@ string_declaration
       _REGEXP_ string_modifiers
       {
         $$ = yr_parser_reduce_string_declaration(
-            yyscanner,
-            $5 | STRING_GFLAGS_REGEXP,
-            $1,
-            $4);
+            yyscanner, (int32_t) $5 | STRING_GFLAGS_REGEXP, $1, $4);
 
         yr_free($1);
         yr_free($4);
@@ -503,10 +492,7 @@ string_declaration
     | _STRING_IDENTIFIER_ '=' _HEX_STRING_
       {
         $$ = yr_parser_reduce_string_declaration(
-            yyscanner,
-            STRING_GFLAGS_HEXADECIMAL,
-            $1,
-            $3);
+            yyscanner, STRING_GFLAGS_HEXADECIMAL, $1, $3);
 
         yr_free($1);
         yr_free($3);
@@ -554,9 +540,7 @@ identifier
           // externals variables reside.
 
           YR_OBJECT* object = (YR_OBJECT*) yr_hash_table_lookup(
-              compiler->objects_table,
-              $1,
-              NULL);
+              compiler->objects_table, $1, NULL);
 
           if (object == NULL)
           {
@@ -564,9 +548,7 @@ identifier
             char* ns = compiler->current_namespace->name;
 
             object = (YR_OBJECT*) yr_hash_table_lookup(
-                compiler->objects_table,
-                $1,
-                ns);
+                compiler->objects_table, $1, ns);
           }
 
           if (object != NULL)
@@ -574,9 +556,7 @@ identifier
             char* id;
 
             compiler->last_result = yr_arena_write_string(
-                compiler->sz_arena,
-                $1,
-                &id);
+                compiler->sz_arena, $1, &id);
 
             if (compiler->last_result == ERROR_SUCCESS)
               compiler->last_result = yr_parser_emit_with_arg_reloc(
@@ -636,9 +616,7 @@ identifier
             char* ident;
 
             compiler->last_result = yr_arena_write_string(
-              compiler->sz_arena,
-              $3,
-              &ident);
+              compiler->sz_arena, $3, &ident);
 
             if (compiler->last_result == ERROR_SUCCESS)
               compiler->last_result = yr_parser_emit_with_arg_reloc(
@@ -661,8 +639,7 @@ identifier
         else
         {
           yr_compiler_set_error_extra_info(
-              compiler,
-              $1.identifier);
+              compiler, $1.identifier);
 
           compiler->last_result = ERROR_NOT_A_STRUCTURE;
         }
@@ -686,9 +663,7 @@ identifier
           ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
           compiler->last_result = yr_parser_emit(
-              yyscanner,
-              OP_INDEX_ARRAY,
-              NULL);
+              yyscanner, OP_INDEX_ARRAY, NULL);
 
           YR_OBJECT_ARRAY* array = (YR_OBJECT_ARRAY*) $1.value.object;
 
@@ -709,9 +684,7 @@ identifier
           ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
           compiler->last_result = yr_parser_emit(
-              yyscanner,
-              OP_LOOKUP_DICT,
-              NULL);
+              yyscanner, OP_LOOKUP_DICT, NULL);
 
           YR_OBJECT_DICTIONARY* dict = (YR_OBJECT_DICTIONARY*) $1.value.object;
 
@@ -722,8 +695,7 @@ identifier
         else
         {
           yr_compiler_set_error_extra_info(
-              compiler,
-              $1.identifier);
+              compiler, $1.identifier);
 
           compiler->last_result = ERROR_NOT_INDEXABLE;
         }
@@ -743,9 +715,7 @@ identifier
 
           if (compiler->last_result == ERROR_SUCCESS)
             compiler->last_result = yr_arena_write_string(
-              compiler->sz_arena,
-              $3,
-              &args_fmt);
+              compiler->sz_arena, $3, &args_fmt);
 
           if (compiler->last_result == ERROR_SUCCESS)
             compiler->last_result = yr_parser_emit_with_arg_reloc(
@@ -764,8 +734,7 @@ identifier
         else
         {
           yr_compiler_set_error_extra_info(
-              compiler,
-              $1.identifier);
+              compiler, $1.identifier);
 
           compiler->last_result = ERROR_NOT_A_FUNCTION;
         }
@@ -895,9 +864,7 @@ boolean_expression
         if ($1.type == EXPRESSION_TYPE_STRING)
         {
           compiler->last_result = yr_parser_emit(
-              yyscanner,
-              OP_STR_TO_BOOL,
-              NULL);
+              yyscanner, OP_STR_TO_BOOL, NULL);
 
           ERROR_IF(compiler->last_result != ERROR_SUCCESS);
         }
@@ -946,9 +913,7 @@ expression
         CHECK_TYPE($3, EXPRESSION_TYPE_STRING, "contains");
 
         compiler->last_result = yr_parser_emit(
-            yyscanner,
-            OP_CONTAINS,
-            NULL);
+            yyscanner, OP_CONTAINS, NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
@@ -973,10 +938,7 @@ expression
         CHECK_TYPE($3, EXPRESSION_TYPE_INTEGER, "at");
 
         compiler->last_result = yr_parser_reduce_string_identifier(
-            yyscanner,
-            $1,
-            OP_FOUND_AT,
-            $3.value.integer);
+            yyscanner, $1, OP_FOUND_AT, $3.value.integer);
 
         yr_free($1);
 
@@ -987,10 +949,7 @@ expression
     | _STRING_IDENTIFIER_ _IN_ range
       {
         compiler->last_result = yr_parser_reduce_string_identifier(
-            yyscanner,
-            $1,
-            OP_FOUND_IN,
-            UNDEFINED);
+            yyscanner, $1, OP_FOUND_IN, UNDEFINED);
 
         yr_free($1);
 
@@ -1009,14 +968,12 @@ expression
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
         var_index = yr_parser_lookup_loop_variable(
-            yyscanner,
-            $3);
+            yyscanner, $3);
 
         if (var_index >= 0)
         {
           yr_compiler_set_error_extra_info(
-              compiler,
-              $3);
+              compiler, $3);
 
           compiler->last_result = \
               ERROR_DUPLICATED_LOOP_IDENTIFIER;
@@ -1026,11 +983,7 @@ expression
 
         // Push end-of-list marker
         compiler->last_result = yr_parser_emit_with_arg(
-            yyscanner,
-            OP_PUSH,
-            UNDEFINED,
-            NULL,
-            NULL);
+            yyscanner, OP_PUSH, UNDEFINED, NULL, NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
       }
@@ -1620,10 +1573,7 @@ primary_expression
     | _STRING_COUNT_
       {
         compiler->last_result = yr_parser_reduce_string_identifier(
-            yyscanner,
-            $1,
-            OP_COUNT,
-            UNDEFINED);
+            yyscanner, $1, OP_COUNT, UNDEFINED);
 
         yr_free($1);
 
@@ -1635,10 +1585,7 @@ primary_expression
     | _STRING_OFFSET_ '[' primary_expression ']'
       {
         compiler->last_result = yr_parser_reduce_string_identifier(
-            yyscanner,
-            $1,
-            OP_OFFSET,
-            UNDEFINED);
+            yyscanner, $1, OP_OFFSET, UNDEFINED);
 
         yr_free($1);
 
@@ -1650,18 +1597,11 @@ primary_expression
     | _STRING_OFFSET_
       {
         compiler->last_result = yr_parser_emit_with_arg(
-            yyscanner,
-            OP_PUSH,
-            1,
-            NULL,
-            NULL);
+            yyscanner, OP_PUSH, 1, NULL, NULL);
 
         if (compiler->last_result == ERROR_SUCCESS)
           compiler->last_result = yr_parser_reduce_string_identifier(
-              yyscanner,
-              $1,
-              OP_OFFSET,
-              UNDEFINED);
+              yyscanner, $1, OP_OFFSET, UNDEFINED);
 
         yr_free($1);
 
@@ -1673,10 +1613,7 @@ primary_expression
     | _STRING_LENGTH_ '[' primary_expression ']'
       {
         compiler->last_result = yr_parser_reduce_string_identifier(
-            yyscanner,
-            $1,
-            OP_LENGTH,
-            UNDEFINED);
+            yyscanner, $1, OP_LENGTH, UNDEFINED);
 
         yr_free($1);
 
@@ -1688,18 +1625,11 @@ primary_expression
     | _STRING_LENGTH_
       {
         compiler->last_result = yr_parser_emit_with_arg(
-            yyscanner,
-            OP_PUSH,
-            1,
-            NULL,
-            NULL);
+            yyscanner, OP_PUSH, 1, NULL, NULL);
 
         if (compiler->last_result == ERROR_SUCCESS)
           compiler->last_result = yr_parser_reduce_string_identifier(
-              yyscanner,
-              $1,
-              OP_LENGTH,
-              UNDEFINED);
+              yyscanner, $1, OP_LENGTH, UNDEFINED);
 
         yr_free($1);
 

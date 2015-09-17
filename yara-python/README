@@ -1,9 +1,0 @@
-
-YARA for Python
-===============
-
-This is a Python extension that gives you access to YARA's powerful features from
-your own Python scripts.
-
-Refer to http://yara.readthedocs.org for more information about how to build and
-use yara-python.
