@@ -42,7 +42,9 @@ define_function(string_entropy)
   if (data == NULL)
     return_float(UNDEFINED);
 
-  for (int i = 0; i < s->length; i++)
+  int i;
+
+  for (i = 0; i < s->length; i++)
   {
     uint8_t c = s->c_string[i];
     data[c] += 1;
@@ -50,7 +52,7 @@ define_function(string_entropy)
 
   double entropy = 0.0;
 
-  for (int i = 0; i < 256; i++)
+  for (i = 0; i < 256; i++)
   {
     if (data[i] != 0)
     {
