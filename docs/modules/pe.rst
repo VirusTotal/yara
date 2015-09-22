@@ -439,6 +439,24 @@ Reference
 
     *Example:  pe.imports("kernel32.dll", "WriteProcessMemory")*
 
+.. c:function:: imports(dll_name)
+
+    .. versionadded:: 3.5.0
+
+    Function returning true if the PE imports anything from *dll_name*,
+    or false otherwise. *dll_name* is case insensitive.
+
+    *Example:  pe.imports("kernel32.dll")*
+
+.. c:function:: imports(dll_name, ordinal)
+
+    .. versionadded:: 3.5.0
+
+    Function returning true if the PE imports *ordinal* from *dll_name*,
+    or false otherwise. *dll_name* is case insensitive.
+
+    *Example:  pe.imports("WS2_32.DLL", 3)*
+
 .. c:function:: locale(locale_identifier)
 
     .. versionadded:: 3.2.0

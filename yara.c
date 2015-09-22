@@ -402,6 +402,45 @@ void print_string(
 }
 
 
+static char cescapes[] = 
+{
+  0  , 0  , 0  , 0  , 0  , 0  , 0  , 'a',
+  'b', 't', 'n', 'v', 'f', 'r', 0  , 0  ,
+  0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
+  0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
+};
+
+
+void print_escaped(
+    uint8_t* data,
+    int length)
+{
+  int i;
+
+  for (i = 0; i < length; i++)
+  {
+    switch (data[i])
+    {
+      case '\"':
+      case '\'':
+      case '\\':
+        printf("\\%c", data[i]);
+        break;
+  
+      default:
+        if (data[i] >= 127) 
+          printf("\\%03o", data[i]);
+        else if (data[i] >= 32)
+          putchar(data[i]);
+        else if (cescapes[data[i]] != 0) 
+          printf("\\%c", cescapes[data[i]]);
+        else 
+          printf("\\%03o", data[i]);
+    }
+  }
+}
+
+
 void print_hex_string(
     uint8_t* data,
     int length)
@@ -551,11 +590,19 @@ int handle_message(int message, YR_RULE* rule, void* data)
           printf(",");
 
         if (meta->type == META_TYPE_INTEGER)
+        {
           printf("%s=%" PRId64, meta->identifier, meta->integer);
+        }
         else if (meta->type == META_TYPE_BOOLEAN)
+        {
           printf("%s=%s", meta->identifier, meta->integer ? "true" : "false");
-        else
-          printf("%s=\"%s\"", meta->identifier, meta->string);
+        }
+        else 
+        {
+          printf("%s=\"", meta->identifier);
+          print_escaped((uint8_t*) (meta->string), strlen(meta->string));
+          putchar('"');
+        }
       }
 
       printf("] ");

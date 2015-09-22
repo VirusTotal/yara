@@ -42,6 +42,7 @@ pthread_key_t tidx_key;
 pthread_key_t recovery_state_key;
 #endif
 
+static int init_count = 0;
 
 char lowercase[256];
 char altercase[256];
@@ -73,6 +74,11 @@ void locking_function(int mode, int n, const char *file, int line)
 YR_API int yr_initialize(void)
 {
   int i;
+
+  init_count++;
+
+  if (init_count > 1)
+    return ERROR_SUCCESS;
 
   for (i = 0; i < 256; i++)
   {
@@ -143,6 +149,9 @@ YR_API int yr_finalize(void)
     pthread_mutex_destroy(&locks[i]);
   OPENSSL_free(locks);
   #endif
+
+  if (--init_count > 0)
+    return ERROR_SUCCESS;
 
   #ifdef _WIN32
   TlsFree(tidx_key);
