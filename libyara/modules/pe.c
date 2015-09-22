@@ -133,6 +133,9 @@ typedef struct _IMPORTED_DLL
 typedef struct _IMPORTED_FUNCTION
 {
   char *name;
+  uint8_t has_ordinal;
+  uint16_t ordinal;
+
   struct _IMPORTED_FUNCTION *next;
 
 } IMPORTED_FUNCTION, *PIMPORTED_FUNCTION;
@@ -846,6 +849,8 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
            thunks64->u1.Ordinal != 0 && num_functions < MAX_PE_IMPORTS)
     {
       char* name = NULL;
+      uint16_t ordinal = 0;
+      uint8_t has_ordinal = 0;
 
       if (!(thunks64->u1.Ordinal & IMAGE_ORDINAL_FLAG64))
       {
@@ -869,9 +874,12 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
       {
         // If imported by ordinal. Lookup the ordinal.
         name = ord_lookup(dll_name, thunks64->u1.Ordinal & 0xFFFF);
+        // Also store the ordinal.
+        ordinal = thunks64->u1.Ordinal & 0xFFFF;
+        has_ordinal = 1;
       }
 
-      if (name != NULL)
+      if (name != NULL || has_ordinal == 1)
       {
         IMPORTED_FUNCTION* imported_func = (IMPORTED_FUNCTION*)
             yr_calloc(1, sizeof(IMPORTED_FUNCTION));
@@ -880,6 +888,8 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
           continue;
 
         imported_func->name = name;
+        imported_func->ordinal = ordinal;
+        imported_func->has_ordinal = has_ordinal;
         imported_func->next = NULL;
 
         if (head == NULL)
@@ -903,6 +913,8 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
            thunks32->u1.Ordinal != 0 && num_functions < MAX_PE_IMPORTS)
     {
       char* name = NULL;
+      uint16_t ordinal = 0;
+      uint8_t has_ordinal = 0;
 
       if (!(thunks32->u1.Ordinal & IMAGE_ORDINAL_FLAG32))
       {
@@ -926,9 +938,12 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
       {
         // If imported by ordinal. Lookup the ordinal.
         name = ord_lookup(dll_name, thunks32->u1.Ordinal & 0xFFFF);
+        // Also store the ordinal.
+        ordinal = thunks32->u1.Ordinal & 0xFFFF;
+        has_ordinal = 1;
       }
 
-      if (name != NULL)
+      if (name != NULL || has_ordinal == 1)
       {
         IMPORTED_FUNCTION* imported_func = (IMPORTED_FUNCTION*)
             yr_calloc(1, sizeof(IMPORTED_FUNCTION));
@@ -937,6 +952,8 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
           continue;
 
         imported_func->name = name;
+        imported_func->ordinal = ordinal;
+        imported_func->has_ordinal = has_ordinal;
         imported_func->next = NULL;
 
         if (head == NULL)
@@ -1602,7 +1619,8 @@ define_function(imports)
 
       while (imported_func != NULL)
       {
-        if (strcasecmp(imported_func->name, function_name) == 0)
+        if (imported_func->name &&
+            strcasecmp(imported_func->name, function_name) == 0)
           return_integer(1);
 
         imported_func = imported_func->next;
@@ -1615,6 +1633,64 @@ define_function(imports)
   return_integer(0);
 }
 
+define_function(imports_ordinal)
+{
+  char* dll_name = string_argument(1);
+  uint64_t ordinal = integer_argument(2);
+
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  if (!pe)
+    return_integer(UNDEFINED);
+
+  IMPORTED_DLL* imported_dll = pe->imported_dlls;
+
+  while (imported_dll != NULL)
+  {
+    if (strcasecmp(imported_dll->name, dll_name) == 0)
+    {
+      IMPORTED_FUNCTION* imported_func = imported_dll->functions;
+
+      while (imported_func != NULL)
+      {
+        if (imported_func->has_ordinal && imported_func->ordinal == ordinal)
+          return_integer(1);
+
+        imported_func = imported_func->next;
+      }
+    }
+
+    imported_dll = imported_dll->next;
+  }
+
+  return_integer(0);
+}
+
+define_function(imports_dll)
+{
+  char* dll_name = string_argument(1);
+
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  if (!pe)
+    return_integer(UNDEFINED);
+
+  IMPORTED_DLL* imported_dll = pe->imported_dlls;
+
+  while (imported_dll != NULL)
+  {
+    if (strcasecmp(imported_dll->name, dll_name) == 0)
+    {
+      return_integer(1);
+    }
+
+    imported_dll = imported_dll->next;
+  }
+
+  return_integer(0);
+}
 
 define_function(locale)
 {
@@ -1816,6 +1892,8 @@ begin_declarations;
   declare_function("section_index", "i", "i", section_index_addr);
   declare_function("exports", "s", "i", exports);
   declare_function("imports", "ss", "i", imports);
+  declare_function("imports", "si", "i", imports_ordinal);
+  declare_function("imports", "s", "i", imports_dll);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
 
