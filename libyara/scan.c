@@ -329,8 +329,6 @@ int _yr_scan_fast_hex_re_exec(
                 (*(ip + 11) == RE_OPCODE_LITERAL &&
                  *(ip + 12) == *next_input))
             {
-              assert(sp < MAX_FAST_HEX_RE_STACK);
-
               if (sp >= MAX_FAST_HEX_RE_STACK)
                 return -4;
 
