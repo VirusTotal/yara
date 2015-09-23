@@ -85,6 +85,9 @@ YR_API int yr_filemap_map_fd(
     size_t size,
     YR_MAPPED_FILE* pmapped_file)
 {
+  LARGE_INTEGER fs;
+  size_t file_size;
+
   pmapped_file->file = file;
   pmapped_file->mapping = NULL;
   pmapped_file->data = NULL;
@@ -93,9 +96,6 @@ YR_API int yr_filemap_map_fd(
   // Ensure that offset is aligned to 1MB
   if (offset >> 20 << 20 != offset)
     return ERROR_INVALID_ARGUMENT;
-
-  LARGE_INTEGER fs;
-  size_t file_size;
 
   if (GetFileSizeEx(pmapped_file->file, &fs))
   {
@@ -116,9 +116,9 @@ YR_API int yr_filemap_map_fd(
     return ERROR_COULD_NOT_MAP_FILE;
 
   if (size == 0)
-    size = file_size - offset;
+    size = (size_t) (file_size - offset);
 
-  pmapped_file->size = yr_min(size, file_size - offset);
+  pmapped_file->size = yr_min(size, (size_t) (file_size - offset));
 
   if (pmapped_file->size != 0)
   {
@@ -256,10 +256,12 @@ YR_API int yr_filemap_map_ex(
     size_t size,
     YR_MAPPED_FILE* pmapped_file)
 {
+  YR_FILE_DESCRIPTOR fd;
+
   if (file_path == NULL)
     return ERROR_INVALID_ARGUMENT;
 
-  YR_FILE_DESCRIPTOR fd = CreateFileA(
+  fd = CreateFileA(
       file_path,
       GENERIC_READ,
       FILE_SHARE_READ,
@@ -282,10 +284,12 @@ YR_API int yr_filemap_map_ex(
     size_t size,
     YR_MAPPED_FILE* pmapped_file)
 {
+  YR_FILE_DESCRIPTOR fd;
+
   if (file_path == NULL)
     return ERROR_INVALID_ARGUMENT;
 
-  YR_FILE_DESCRIPTOR fd = open(file_path, O_RDONLY);
+  fd = open(file_path, O_RDONLY);
 
   if (fd == -1)
     return ERROR_COULD_NOT_OPEN_FILE;

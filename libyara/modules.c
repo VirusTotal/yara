@@ -57,7 +57,9 @@ YR_MODULE yr_modules_table[] =
 
 int yr_modules_initialize()
 {
-  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  int i;
+
+  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
     int result = yr_modules_table[i].initialize(&yr_modules_table[i]);
 
@@ -71,7 +73,9 @@ int yr_modules_initialize()
 
 int yr_modules_finalize()
 {
-  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  int i;
+
+  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
     int result = yr_modules_table[i].finalize(&yr_modules_table[i]);
 
@@ -87,7 +91,9 @@ int yr_modules_do_declarations(
     const char* module_name,
     YR_OBJECT* main_structure)
 {
-  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  int i;
+
+  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
     if (strcmp(yr_modules_table[i].name, module_name) == 0)
       return yr_modules_table[i].declarations(main_structure);
@@ -101,6 +107,10 @@ int yr_modules_load(
     const char* module_name,
     YR_SCAN_CONTEXT* context)
 {
+  int i, result;
+
+  YR_MODULE_IMPORT mi;
+
   YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_lookup(
       context->objects_table,
       module_name,
@@ -120,13 +130,11 @@ int yr_modules_load(
       NULL,
       &module_structure));
 
-  YR_MODULE_IMPORT mi;
-
   mi.module_name = module_name;
   mi.module_data = NULL;
   mi.module_data_size = 0;
 
-  int result = context->callback(
+  result = context->callback(
       CALLBACK_MSG_IMPORT_MODULE,
       &mi,
       context->user_data);
@@ -146,7 +154,7 @@ int yr_modules_load(
           module_structure),
       yr_object_destroy(module_structure));
 
-  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
     if (strcmp(yr_modules_table[i].name, module_name) == 0)
     {
@@ -168,7 +176,9 @@ int yr_modules_load(
 int yr_modules_unload_all(
     YR_SCAN_CONTEXT* context)
 {
-  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  int i;
+
+  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
     YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_lookup(
         context->objects_table,
@@ -186,7 +196,9 @@ int yr_modules_unload_all(
 void yr_modules_print_data(
     YR_SCAN_CONTEXT* context)
 {
-  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  int i;
+
+  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
     YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_lookup(
         context->objects_table,

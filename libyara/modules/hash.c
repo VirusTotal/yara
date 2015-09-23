@@ -34,7 +34,9 @@ void digest_to_ascii(
     char* digest_ascii,
     size_t digest_length)
 {
-  for (int i = 0; i < digest_length; i++)
+  size_t i;
+
+  for (i = 0; i < digest_length; i++)
     sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
 
   digest_ascii[digest_length * 2] = '\0';
@@ -42,12 +44,12 @@ void digest_to_ascii(
 
 
 define_function(string_md5)
-{
-  SIZED_STRING* s = sized_string_argument(1);
-  MD5_CTX md5_context;
-
+{ 
   unsigned char digest[MD5_DIGEST_LENGTH];
   char digest_ascii[MD5_DIGEST_LENGTH * 2 + 1];
+  
+  MD5_CTX md5_context;
+  SIZED_STRING* s = sized_string_argument(1);
 
   MD5_Init(&md5_context);
   MD5_Update(&md5_context, s->c_string, s->length);
@@ -61,11 +63,11 @@ define_function(string_md5)
 
 define_function(string_sha256)
 {
-  SIZED_STRING* s = sized_string_argument(1);
-  SHA256_CTX sha256_context;
-
   unsigned char digest[SHA256_DIGEST_LENGTH];
   char digest_ascii[SHA256_DIGEST_LENGTH * 2 + 1];
+
+  SHA256_CTX sha256_context;
+  SIZED_STRING* s = sized_string_argument(1);
 
   SHA256_Init(&sha256_context);
   SHA256_Update(&sha256_context, s->c_string, s->length);
@@ -78,12 +80,12 @@ define_function(string_sha256)
 
 
 define_function(string_sha1)
-{
-  SIZED_STRING* s = sized_string_argument(1);
-  SHA_CTX sha_context;
-
+{ 
   unsigned char digest[SHA_DIGEST_LENGTH];
   char digest_ascii[SHA_DIGEST_LENGTH * 2 + 1];
+
+  SHA_CTX sha_context;
+  SIZED_STRING* s = sized_string_argument(1);
 
   SHA1_Init(&sha_context);
   SHA1_Update(&sha_context, s->c_string, s->length);
@@ -97,10 +99,12 @@ define_function(string_sha1)
 
 define_function(string_checksum32)
 {
+  size_t i;
+
   SIZED_STRING* s = sized_string_argument(1);
   uint32_t checksum = 0;
 
-  for (int i = 0; i < s->length; i++)
+  for (i = 0; i < s->length; i++)
     checksum += (uint8_t)(s->c_string[i]);
 
   return_integer(checksum);
@@ -109,17 +113,18 @@ define_function(string_checksum32)
 
 define_function(data_md5)
 {
-  int64_t offset = integer_argument(1);   // offset where to start
-  int64_t length = integer_argument(2);   // length of bytes we want hash on
-
-  YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK* block = NULL;
-
   MD5_CTX md5_context;
 
   unsigned char digest[MD5_DIGEST_LENGTH];
   char digest_ascii[MD5_DIGEST_LENGTH * 2 + 1];
+
   int past_first_block = FALSE;
+
+  YR_SCAN_CONTEXT* context = scan_context();
+  YR_MEMORY_BLOCK* block = NULL;
+
+  int64_t offset = integer_argument(1);   // offset where to start
+  int64_t length = integer_argument(2);   // length of bytes we want hash on
 
   MD5_Init(&md5_context);
 
@@ -174,17 +179,18 @@ define_function(data_md5)
 
 define_function(data_sha1)
 {
+  SHA_CTX sha_context;
+
+  unsigned char digest[SHA_DIGEST_LENGTH];
+  char digest_ascii[SHA_DIGEST_LENGTH * 2 + 1];
+
+  int past_first_block = FALSE;
+
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
-
-  SHA_CTX sha_context;
-
-  unsigned char digest[SHA_DIGEST_LENGTH];
-  char digest_ascii[SHA_DIGEST_LENGTH * 2 + 1];
-  int past_first_block = FALSE;
 
   SHA1_Init(&sha_context);
 
@@ -237,18 +243,19 @@ define_function(data_sha1)
 
 
 define_function(data_sha256)
-{
+{   
+  SHA256_CTX sha256_context;
+
+  unsigned char digest[SHA256_DIGEST_LENGTH];
+  char digest_ascii[SHA256_DIGEST_LENGTH * 2 + 1];
+
+  int past_first_block = FALSE;
+
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
-
-  SHA256_CTX sha256_context;
-
-  unsigned char digest[SHA256_DIGEST_LENGTH];
-  char digest_ascii[SHA256_DIGEST_LENGTH * 2 + 1];
-  int past_first_block = FALSE;
 
   SHA256_Init(&sha256_context);
 
@@ -320,13 +327,15 @@ define_function(data_checksum32)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
+	  size_t i;
+
       size_t data_offset = (size_t) (offset - block->base);
       size_t data_len = (size_t) yr_min(length, block->size - data_offset);
 
       offset += data_len;
       length -= data_len;
 
-      for (int i = 0; i < data_len; i++)
+      for (i = 0; i < data_len; i++)
         checksum += *(block->data + data_offset + i);
 
       past_first_block = TRUE;

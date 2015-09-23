@@ -650,6 +650,9 @@ identifier
       }
     | identifier '[' primary_expression ']'
       {
+        YR_OBJECT_ARRAY* array;
+        YR_OBJECT_DICTIONARY* dict;
+
         if ($1.type == EXPRESSION_TYPE_OBJECT &&
             $1.value.object->type == OBJECT_TYPE_ARRAY)
         {
@@ -665,7 +668,7 @@ identifier
           compiler->last_result = yr_parser_emit(
               yyscanner, OP_INDEX_ARRAY, NULL);
 
-          YR_OBJECT_ARRAY* array = (YR_OBJECT_ARRAY*) $1.value.object;
+          array = (YR_OBJECT_ARRAY*) $1.value.object;
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = array->prototype_item;
@@ -686,7 +689,7 @@ identifier
           compiler->last_result = yr_parser_emit(
               yyscanner, OP_LOOKUP_DICT, NULL);
 
-          YR_OBJECT_DICTIONARY* dict = (YR_OBJECT_DICTIONARY*) $1.value.object;
+          dict = (YR_OBJECT_DICTIONARY*) $1.value.object;
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = dict->prototype_item;
@@ -705,6 +708,7 @@ identifier
 
     | identifier '(' arguments ')'
       {
+        YR_OBJECT_FUNCTION* function;
         char* args_fmt;
 
         if ($1.type == EXPRESSION_TYPE_OBJECT &&
@@ -725,7 +729,7 @@ identifier
                 NULL,
                 NULL);
 
-          YR_OBJECT_FUNCTION* function = (YR_OBJECT_FUNCTION*) $1.value.object;
+          function = (YR_OBJECT_FUNCTION*) $1.value.object;
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = function->return_obj;
@@ -1197,6 +1201,7 @@ expression
       }
     | boolean_expression _AND_
       {
+        YR_FIXUP* fixup;
         int64_t* jmp_destination_addr;
 
         compiler->last_result = yr_parser_emit_with_arg_reloc(
@@ -1209,7 +1214,7 @@ expression
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
         // create a fixup entry for the jump and push it in the stack
-        YR_FIXUP* fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
+        fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
           compiler->last_error = ERROR_INSUFICIENT_MEMORY;
@@ -1222,6 +1227,7 @@ expression
       }
       boolean_expression
       {
+        YR_FIXUP* fixup;
         uint8_t* and_addr;
 
         // Ensure that we have at least two consecutive bytes in the arena's
@@ -1242,7 +1248,7 @@ expression
         // Now we know the jump destination, which is the address of the
         // instruction following the AND. Let's fixup the jump address.
 
-        YR_FIXUP* fixup = compiler->fixup_stack_head;
+        fixup = compiler->fixup_stack_head;
 
         // We know that the AND opcode and the following one are within the same
         // page, so we can compute the address for the opcode following the AND
@@ -1257,6 +1263,7 @@ expression
       }
     | boolean_expression _OR_
       {
+        YR_FIXUP* fixup;
         int64_t* jmp_destination_addr;
 
         compiler->last_result = yr_parser_emit_with_arg_reloc(
@@ -1268,7 +1275,7 @@ expression
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        YR_FIXUP* fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
+        fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
           compiler->last_error = ERROR_INSUFICIENT_MEMORY;
@@ -1281,6 +1288,7 @@ expression
       }
       boolean_expression
       {
+        YR_FIXUP* fixup;
         uint8_t* or_addr;
 
         // Ensure that we have at least two consecutive bytes in the arena's
@@ -1301,7 +1309,7 @@ expression
         // Now we know the jump destination, which is the address of the
         // instruction following the OP_OR. Let's fixup the jump address.
 
-        YR_FIXUP* fixup = compiler->fixup_stack_head;
+        fixup = compiler->fixup_stack_head;
 
         // We know that the OR opcode and the following one are within the same
         // page, so we can compute the address for the opcode following the OR
