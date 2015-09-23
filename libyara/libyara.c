@@ -143,15 +143,15 @@ YR_API int yr_finalize(void)
 {
   yr_re_finalize_thread();
 
+  if (--init_count > 0)
+    return ERROR_SUCCESS;
+
   #ifdef HAVE_LIBCRYPTO
   int i;
   for (i = 0; i < CRYPTO_num_locks(); i ++)
     pthread_mutex_destroy(&locks[i]);
   OPENSSL_free(locks);
   #endif
-
-  if (--init_count > 0)
-    return ERROR_SUCCESS;
 
   #ifdef _WIN32
   TlsFree(tidx_key);
