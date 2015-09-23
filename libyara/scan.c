@@ -43,7 +43,7 @@ typedef struct _CALLBACK_ARGS
 } CALLBACK_ARGS;
 
 
-int _yr_scan_compare(
+size_t _yr_scan_compare(
     uint8_t* data,
     size_t data_size,
     uint8_t* string,
@@ -51,7 +51,8 @@ int _yr_scan_compare(
 {
   uint8_t* s1 = data;
   uint8_t* s2 = string;
-  int i = 0;
+
+  size_t i = 0;
 
   if (data_size < string_length)
     return 0;
@@ -63,7 +64,7 @@ int _yr_scan_compare(
 }
 
 
-int _yr_scan_icompare(
+size_t _yr_scan_icompare(
     uint8_t* data,
     size_t data_size,
     uint8_t* string,
@@ -71,7 +72,8 @@ int _yr_scan_icompare(
 {
   uint8_t* s1 = data;
   uint8_t* s2 = string;
-  int i = 0;
+
+  size_t i = 0;
 
   if (data_size < string_length)
     return 0;
@@ -83,7 +85,7 @@ int _yr_scan_icompare(
 }
 
 
-int _yr_scan_wcompare(
+size_t _yr_scan_wcompare(
     uint8_t* data,
     size_t data_size,
     uint8_t* string,
@@ -91,7 +93,8 @@ int _yr_scan_wcompare(
 {
   uint8_t* s1 = data;
   uint8_t* s2 = string;
-  int i = 0;
+
+  size_t i = 0;
 
   if (data_size < string_length * 2)
     return 0;
@@ -107,7 +110,7 @@ int _yr_scan_wcompare(
 }
 
 
-int _yr_scan_wicompare(
+size_t _yr_scan_wicompare(
     uint8_t* data,
     size_t data_size,
     uint8_t* string,
@@ -115,7 +118,8 @@ int _yr_scan_wicompare(
 {
   uint8_t* s1 = data;
   uint8_t* s2 = string;
-  int i = 0;
+
+  size_t i = 0;
 
   if (data_size < string_length * 2)
     return 0;
@@ -358,6 +362,8 @@ void _yr_scan_update_match_chain_length(
     YR_MATCH* match_to_update,
     int chain_length)
 {
+  YR_MATCH* match;
+
   if (match_to_update->chain_length == chain_length)
     return;
 
@@ -366,7 +372,7 @@ void _yr_scan_update_match_chain_length(
   if (string->chained_to == NULL)
     return;
 
-  YR_MATCH* match = string->chained_to->unconfirmed_matches[tidx].head;
+  match = string->chained_to->unconfirmed_matches[tidx].head;
 
   while (match != NULL)
   {

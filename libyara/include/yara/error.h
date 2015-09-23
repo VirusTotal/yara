@@ -19,6 +19,10 @@ limitations under the License.
 
 #include <string.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #ifndef ERROR_SUCCESS
 #define ERROR_SUCCESS                           0
 #endif

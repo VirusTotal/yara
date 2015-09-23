@@ -1097,12 +1097,14 @@ YY_RULE_SETUP
 
   // End of character class.
 
+  int i;
+
   yylval->class_vector = (uint8_t*) yr_malloc(32);
   memcpy(yylval->class_vector, LEX_ENV->class_vector, 32);
 
   if (LEX_ENV->negated_class)
   {
-    for(int i = 0; i < 32; i++)
+    for(i = 0; i < 32; i++)
       yylval->class_vector[i] = ~yylval->class_vector[i];
   }
 
@@ -1113,13 +1115,14 @@ YY_RULE_SETUP
 case 19:
 /* rule 19 can match eol */
 YY_RULE_SETUP
-#line 269 "re_lexer.l"
+#line 271 "re_lexer.l"
 {
 
   // A range inside a character class.
   //  [abc0-9]
   //      ^- matching here
 
+  uint8_t c;
   uint8_t start = yytext[0];
   uint8_t end = yytext[2];
 
@@ -1148,7 +1151,7 @@ YY_RULE_SETUP
     yyterminate();
   }
 
-  for (int c = start; c <= end; c++)
+  for (c = start; c <= end; c++)
   {
     LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
   }
@@ -1156,35 +1159,37 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 310 "re_lexer.l"
+#line 313 "re_lexer.l"
 {
 
+  int i;
   char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
                         0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-  for (int i = 0; i < 32; i++)
+  for (i = 0; i < 32; i++)
     LEX_ENV->class_vector[i] |= word_chars[i];
 }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 322 "re_lexer.l"
+#line 326 "re_lexer.l"
 {
 
+  int i;
   char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
                         0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-  for (int i = 0; i < 32; i++)
+  for (i = 0; i < 32; i++)
     LEX_ENV->class_vector[i] |= ~word_chars[i];
 }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 334 "re_lexer.l"
+#line 339 "re_lexer.l"
 {
 
   LEX_ENV->class_vector[' ' / 8] |= 1 << ' ' % 8;
@@ -1193,10 +1198,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 341 "re_lexer.l"
+#line 346 "re_lexer.l"
 {
 
-  for (int i = 0; i < 32; i++)
+  int i;
+
+  for (i = 0; i < 32; i++)
   {
     if (i == ' ' / 8)
       LEX_ENV->class_vector[i] |= ~(1 << ' ' % 8);
@@ -1209,19 +1216,23 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 355 "re_lexer.l"
+#line 362 "re_lexer.l"
 {
 
-  for (char c = '0'; c <= '9'; c++)
+  char c;
+
+  for (c = '0'; c <= '9'; c++)
     LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
 }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 362 "re_lexer.l"
+#line 371 "re_lexer.l"
 {
 
-  for (int i = 0; i < 32; i++)
+  int i;
+
+  for (i = 0; i < 32; i++)
   {
     // digits 0-7 are in the sixth byte of the vector, let that byte alone
     if (i == 6)
@@ -1238,7 +1249,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 380 "re_lexer.l"
+#line 391 "re_lexer.l"
 {
 
   uint8_t c;
@@ -1256,7 +1267,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 396 "re_lexer.l"
+#line 407 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1274,7 +1285,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(char_class):
-#line 413 "re_lexer.l"
+#line 424 "re_lexer.l"
 {
 
   // End of regexp reached while scanning a character class.
@@ -1285,7 +1296,7 @@ case YY_STATE_EOF(char_class):
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 422 "re_lexer.l"
+#line 433 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1300,7 +1311,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 436 "re_lexer.l"
+#line 447 "re_lexer.l"
 {
 
   yyterminate();
@@ -1308,10 +1319,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 441 "re_lexer.l"
+#line 452 "re_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1315 "re_lexer.c"
+#line 1326 "re_lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2444,7 +2455,7 @@ void re_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 441 "re_lexer.l"
+#line 452 "re_lexer.l"
 
 
 
