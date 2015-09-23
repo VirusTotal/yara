@@ -327,7 +327,7 @@ define_function(data_checksum32)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-	  size_t i;
+      size_t i;
 
       size_t data_offset = (size_t) (offset - block->base);
       size_t data_len = (size_t) yr_min(length, block->size - data_offset);
