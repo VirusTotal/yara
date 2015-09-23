@@ -54,10 +54,11 @@ YR_API int yr_initialize(void)
 {
   int i;
 
-  init_count++;
-
-  if (init_count > 1)
+  if (init_count > 0)
+  {
+    init_count++;
     return ERROR_SUCCESS;
+  }
 
   for (i = 0; i < 256; i++)
   {
@@ -83,6 +84,8 @@ YR_API int yr_initialize(void)
 
   FAIL_ON_ERROR(yr_re_initialize());
   FAIL_ON_ERROR(yr_modules_initialize());
+
+  init_count++;
 
   return ERROR_SUCCESS;
 }
