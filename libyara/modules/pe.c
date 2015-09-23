@@ -438,7 +438,7 @@ uint8_t* parse_resource_name(
 
   if (entry->Name & 0x80000000)
   {
-	DWORD length;
+    DWORD length;
 
     uint8_t* rsrc_str_ptr = rsrc_data + (entry->Name & 0x7FFFFFFF);
 
@@ -557,6 +557,7 @@ int _pe_iterate_resources(
       {
         return RESOURCE_ITERATOR_ABORTED;
       }
+
       result = callback(
           data_entry,
           *type,
@@ -601,7 +602,7 @@ int pe_iterate_resources(
 
   if (directory->VirtualAddress != 0)
   {
-	PIMAGE_RESOURCE_DIRECTORY rsrc_dir;
+    PIMAGE_RESOURCE_DIRECTORY rsrc_dir;
 
     offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
@@ -1128,9 +1129,9 @@ void pe_parse_certificates(
          (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) <= eod &&
          (uint8_t*) win_cert->Certificate + win_cert->Length - 8 <= eod)
   {
-	BIO* cert_bio;
-	PKCS7* pkcs7;
-	STACK_OF(X509)* certs;
+    BIO* cert_bio;
+    PKCS7* pkcs7;
+    STACK_OF(X509)* certs;
 
     // Some sanity checks
 
@@ -1170,11 +1171,12 @@ void pe_parse_certificates(
 
     for (i = 0; i < sk_X509_num(certs); i++)
     {
-	  ASN1_INTEGER* serial;
-      X509* cert = sk_X509_value(certs, i);
-
-	  const char* sig_alg;
+      const char* sig_alg;
       char buffer[256];
+
+      ASN1_INTEGER* serial;
+
+      X509* cert = sk_X509_value(certs, i);
 
       X509_NAME_oneline(
           X509_get_issuer_name(cert), buffer, sizeof(buffer));
@@ -1209,7 +1211,7 @@ void pe_parse_certificates(
 
         if (serial_number != NULL)
         {
-		  int j;
+          int j;
 
           for (j = 0; j < serial->length; j++)
           {
@@ -1557,9 +1559,10 @@ define_function(imphash)
 
   while (dll)
   {  
-	IMPORTED_FUNCTION* func;
+    IMPORTED_FUNCTION* func;
+
     size_t dll_name_len;
-	char* dll_name;
+    char* dll_name;
 
     // If extension is 'ocx', 'sys' or 'dll', chop it.
 
@@ -1589,7 +1592,7 @@ define_function(imphash)
 
     while (func)
     {
-	  char* final_name;
+      char* final_name;
       size_t final_name_len = dll_name_len + strlen(func->name) + 1;
 
       if (!first)

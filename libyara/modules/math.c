@@ -185,7 +185,7 @@ define_function(data_deviation)
     {
       size_t data_offset = offset - block->base;
       size_t data_len = (size_t) yr_min(
-		  length, (size_t) (block->size - data_offset));
+          length, (size_t) (block->size - data_offset));
 
       total_len += data_len;
       offset += data_len;
@@ -421,9 +421,9 @@ define_function(data_monte_carlo_pi)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-	  unsigned int monte[6];
+      unsigned int monte[6];
 
-	  size_t data_offset = offset - block->base;
+      size_t data_offset = offset - block->base;
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
@@ -436,11 +436,11 @@ define_function(data_monte_carlo_pi)
 
         if (i % 6 == 5)
         { 
-	      double mx = 0;
+          double mx = 0;
           double my = 0;
           int j;
 
-		  mcount++;
+          mcount++;
 
           for (j = 0; j < 3; j++)
           {
