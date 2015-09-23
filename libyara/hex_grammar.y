@@ -112,6 +112,10 @@ tokens
       }
     | token token_sequence token
       {
+        RE_NODE* new_concat;
+        RE_NODE* leftmost_concat = NULL;
+        RE_NODE* leftmost_node = $2;
+
         $$ = NULL;
 
         /*
@@ -136,16 +140,13 @@ tokens
         leftmost node of the token_sequence subtree.
         */
 
-        RE_NODE* leftmost_concat = NULL;
-        RE_NODE* leftmost_node = $2;
-
         while (leftmost_node->type == RE_NODE_CONCAT)
         {
           leftmost_concat = leftmost_node;
           leftmost_node = leftmost_node->left;
         }
 
-        RE_NODE* new_concat = yr_re_node_create(
+        new_concat = yr_re_node_create(
             RE_NODE_CONCAT, $1, leftmost_node);
 
         if (new_concat != NULL)
@@ -376,7 +377,7 @@ byte
       }
     | _MASKED_BYTE_
       {
-        uint8_t mask = $1 >> 8;
+        uint8_t mask = (uint8_t) ($1 >> 8);
 
         if (mask == 0x00)
         {

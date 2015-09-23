@@ -172,6 +172,7 @@ void _yr_rules_clean_matches(
     YR_SCAN_CONTEXT* context)
 {
   YR_RULE* rule;
+  YR_STRING** string;
 
   int tidx = context->tidx;
 
@@ -181,7 +182,7 @@ void _yr_rules_clean_matches(
     rule->ns->t_flags[tidx] &= ~NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
   }
 
-  YR_STRING** string = (YR_STRING**) yr_arena_base_address(
+  string = (YR_STRING**) yr_arena_base_address(
       context->matching_strings_arena);
 
   while (string != NULL)
@@ -241,6 +242,7 @@ int _yr_rules_scan_mem_block(
     time_t start_time)
 {
   YR_AC_MATCH* ac_match;
+  YR_AC_STATE* next_state;
   YR_AC_STATE* current_state = rules->automaton->root;
 
   size_t i = 0;
@@ -265,7 +267,7 @@ int _yr_rules_scan_mem_block(
       ac_match = ac_match->next;
     }
 
-    YR_AC_STATE* next_state = yr_ac_next_state(current_state, block->data[i]);
+    next_state = yr_ac_next_state(current_state, block->data[i]);
 
     while (next_state == NULL && current_state->depth > 0)
     {
@@ -315,17 +317,20 @@ YR_API int yr_rules_scan_mem_blocks(
     void* user_data,
     int timeout)
 {
+  YR_EXTERNAL_VARIABLE* external;
+  YR_RULE* rule;
   YR_SCAN_CONTEXT context;
+  
+  time_t start_time;
+  tidx_mask_t bit = 1;
 
+  int tidx = 0;
   int result = ERROR_SUCCESS;
 
   if (block == NULL)
     return ERROR_SUCCESS;
 
   _yr_rules_lock(rules);
-
-  int tidx = 0;
-  tidx_mask_t bit = 1;
 
   while (rules->tidx_mask & bit)
   {
@@ -371,7 +376,7 @@ YR_API int yr_rules_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
+  external = rules->externals_list_head;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -394,7 +399,7 @@ YR_API int yr_rules_scan_mem_blocks(
     external++;
   }
 
-  time_t start_time = time(NULL);
+  start_time = time(NULL);
 
   while (block != NULL)
   {
@@ -442,8 +447,6 @@ YR_API int yr_rules_scan_mem_blocks(
 
   if (result != ERROR_SUCCESS)
     goto _exit;
-
-  YR_RULE* rule;
 
   yr_rules_foreach(rules, rule)
   {
@@ -549,9 +552,8 @@ YR_API int yr_rules_scan_file(
     int timeout)
 {
   YR_MAPPED_FILE mfile;
-  int result;
 
-  result = yr_filemap_map(filename, &mfile);
+  int result = yr_filemap_map(filename, &mfile);
 
   if (result == ERROR_SUCCESS)
   {
@@ -579,9 +581,8 @@ YR_API int yr_rules_scan_fd(
     int timeout)
 {
   YR_MAPPED_FILE mfile;
-  int result;
-
-  result = yr_filemap_map_fd(fd, 0, 0, &mfile);
+  
+  int result = yr_filemap_map_fd(fd, 0, 0, &mfile);
 
   if (result == ERROR_SUCCESS)
   {
@@ -612,9 +613,7 @@ YR_API int yr_rules_scan_proc(
   YR_MEMORY_BLOCK* next_block;
   YR_MEMORY_BLOCK* block;
 
-  int result;
-
-  result = yr_process_get_memory(pid, &first_block);
+  int result = yr_process_get_memory(pid, &first_block);
 
   if (result == ERROR_SUCCESS)
     result = yr_rules_scan_mem_blocks(
@@ -645,12 +644,15 @@ YR_API int yr_rules_load_stream(
     YR_STREAM* stream,
     YR_RULES** rules)
 {
+  int result;
+
+  YARA_RULES_FILE_HEADER* header;
   YR_RULES* new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
 
   if (new_rules == NULL)
     return ERROR_INSUFICIENT_MEMORY;
 
-  int result = yr_arena_load_stream(stream, &new_rules->arena);
+  result = yr_arena_load_stream(stream, &new_rules->arena);
 
   if (result != ERROR_SUCCESS)
   {
@@ -658,7 +660,7 @@ YR_API int yr_rules_load_stream(
     return result;
   }
 
-  YARA_RULES_FILE_HEADER* header = (YARA_RULES_FILE_HEADER*)
+  header = (YARA_RULES_FILE_HEADER*)
       yr_arena_base_address(new_rules->arena);
 
   new_rules->automaton = header->automaton;
@@ -689,17 +691,18 @@ YR_API int yr_rules_load(
     const char* filename,
     YR_RULES** rules)
 {
-  FILE* fh = fopen(filename, "rb");
-
-  if (fh == NULL)
-    return ERROR_COULD_NOT_OPEN_FILE;
+  int result;
 
   YR_STREAM stream;
+  FILE* fh = fopen(filename, "rb");
+ 
+  if (fh == NULL)
+    return ERROR_COULD_NOT_OPEN_FILE;
 
   stream.user_data = fh;
   stream.read = (YR_STREAM_READ_FUNC) fread;
 
-  int result = yr_rules_load_stream(&stream, rules);
+  result = yr_rules_load_stream(&stream, rules);
 
   fclose(fh);
   return result;
@@ -719,17 +722,18 @@ YR_API int yr_rules_save(
     YR_RULES* rules,
     const char* filename)
 {
+  int result;
+  
+  YR_STREAM stream;
   FILE* fh = fopen(filename, "wb");
 
   if (fh == NULL)
     return ERROR_COULD_NOT_OPEN_FILE;
 
-  YR_STREAM stream;
-
   stream.user_data = fh;
   stream.write = (YR_STREAM_WRITE_FUNC) fwrite;
 
-  int result = yr_rules_save_stream(rules, &stream);
+  result = yr_rules_save_stream(rules, &stream);
 
   fclose(fh);
   return result;
@@ -739,9 +743,7 @@ YR_API int yr_rules_save(
 YR_API int yr_rules_destroy(
     YR_RULES* rules)
 {
-  YR_EXTERNAL_VARIABLE* external;
-
-  external = rules->externals_list_head;
+  YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {

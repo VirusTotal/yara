@@ -378,6 +378,8 @@ int64_t pe_rva_to_offset(
   DWORD section_offset = 0;
   DWORD section_raw_size = 0;
 
+  int64_t result;
+
   int i = 0;
 
   while(i < yr_min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS))
@@ -408,7 +410,7 @@ int64_t pe_rva_to_offset(
   if ((rva - section_rva) >= section_raw_size)
     return -1;
 
-  int64_t result = section_offset + (rva - section_rva);
+  result = section_offset + (rva - section_rva);
 
   // Check that the offset fits within the file.
   if (result >= pe->data_size)
@@ -433,6 +435,8 @@ uint8_t* parse_resource_name(
 
   if (entry->Name & 0x80000000)
   {
+	DWORD length;
+
     uint8_t* rsrc_str_ptr = rsrc_data + (entry->Name & 0x7FFFFFFF);
 
     // A resource directory string is 2 bytes for a string and then a variable
@@ -441,7 +445,7 @@ uint8_t* parse_resource_name(
     if (!fits_in_pe(pe, rsrc_str_ptr, 2))
       return NULL;
 
-    DWORD length = *rsrc_str_ptr;
+    length = *rsrc_str_ptr;
 
     // Move past the length and make sure we have enough bytes for the string.
     if (!fits_in_pe(pe, rsrc_str_ptr + 2, length * 2))
@@ -468,7 +472,10 @@ int _pe_iterate_resources(
     RESOURCE_CALLBACK_FUNC callback,
     void* callback_data)
 {
-  int result = RESOURCE_ITERATOR_FINISHED;
+  int i, result = RESOURCE_ITERATOR_FINISHED;
+  int total_entries;
+
+  PIMAGE_RESOURCE_DIRECTORY_ENTRY entry;
 
   // A few sanity checks to avoid corrupt files
 
@@ -479,10 +486,8 @@ int _pe_iterate_resources(
     return result;
   }
 
-  int total_entries = resource_dir->NumberOfNamedEntries +
-                      resource_dir->NumberOfIdEntries;
-
-  PIMAGE_RESOURCE_DIRECTORY_ENTRY entry;
+  total_entries = resource_dir->NumberOfNamedEntries +
+                  resource_dir->NumberOfIdEntries;
 
   // The first directory entry is just after the resource directory,
   // by incrementing resource_dir we skip sizeof(resource_dir) bytes
@@ -490,7 +495,7 @@ int _pe_iterate_resources(
 
   entry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY) (resource_dir + 1);
 
-  for (int i = 0; i < total_entries; i++)
+  for (i = 0; i < total_entries; i++)
   {
     if (!struct_fits_in_pe(pe, entry, IMAGE_RESOURCE_DIRECTORY_ENTRY))
     {
@@ -593,13 +598,14 @@ int pe_iterate_resources(
 
   if (directory->VirtualAddress != 0)
   {
+	PIMAGE_RESOURCE_DIRECTORY rsrc_dir;
+
     offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
     if (offset < 0)
       return 0;
 
-    PIMAGE_RESOURCE_DIRECTORY rsrc_dir =
-        (PIMAGE_RESOURCE_DIRECTORY) (pe->data + offset);
+    rsrc_dir = (PIMAGE_RESOURCE_DIRECTORY) (pe->data + offset);
 
     if (struct_fits_in_pe(pe, rsrc_dir, IMAGE_RESOURCE_DIRECTORY))
     {
@@ -636,26 +642,25 @@ int pe_iterate_resources(
 }
 
 
-#ifdef __cplusplus
-#define typeof decltype
-#endif
-
 // Align offset to a 32-bit boundary and add it to a pointer
 
 #define ADD_OFFSET(ptr, offset) \
-    (typeof(ptr)) ((uint8_t*) (ptr) + ((offset + 3) & ~3))
+    (PVERSION_INFO) ((uint8_t*) (ptr) + ((offset + 3) & ~3))
 
 
 void pe_parse_version_info(
     PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
     PE* pe)
 {
+  PVERSION_INFO version_info;
+  PVERSION_INFO string_file_info;
+
   int64_t version_info_offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
 
   if (version_info_offset < 0)
     return;
 
-  PVERSION_INFO version_info = (PVERSION_INFO) (pe->data + version_info_offset);
+  version_info = (PVERSION_INFO) (pe->data + version_info_offset);
 
   if (!struct_fits_in_pe(pe, version_info, VERSION_INFO))
     return;
@@ -666,7 +671,7 @@ void pe_parse_version_info(
   if (strcmp_w(version_info->Key, "VS_VERSION_INFO") != 0)
     return;
 
-  PVERSION_INFO string_file_info = ADD_OFFSET(
+  string_file_info = ADD_OFFSET(
       version_info, sizeof(VERSION_INFO) + 86);
 
   while(fits_in_pe(pe, string_file_info->Key, sizeof("StringFileInfo") * 2) &&
@@ -824,6 +829,8 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
   IMPORTED_FUNCTION* head = NULL;
   IMPORTED_FUNCTION* tail = NULL;
 
+  int num_functions = 0;
+
   int64_t offset = pe_rva_to_offset(
       pe, import_descriptor->OriginalFirstThunk);
 
@@ -835,8 +842,6 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
 
   if (offset < 0)
     return NULL;
-
-  int num_functions = 0;
 
   if (IS_64BITS_PE(pe))
   {
@@ -992,8 +997,13 @@ int pe_valid_dll_name(
 IMPORTED_DLL* pe_parse_imports(
     PE* pe)
 {
+  int64_t offset;
+  int num_imports = 0;
+
   IMPORTED_DLL* head = NULL;
   IMPORTED_DLL* tail = NULL;
+
+  PIMAGE_IMPORT_DESCRIPTOR imports;
 
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
@@ -1001,15 +1011,13 @@ IMPORTED_DLL* pe_parse_imports(
   if (directory->VirtualAddress == 0)
     return NULL;
 
-  int64_t offset = pe_rva_to_offset(pe, directory->VirtualAddress);
+  offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
   if (offset < 0)
     return NULL;
 
-  PIMAGE_IMPORT_DESCRIPTOR imports = (PIMAGE_IMPORT_DESCRIPTOR) \
+  imports = (PIMAGE_IMPORT_DESCRIPTOR) \
       (pe->data + offset);
-
-  int num_imports = 0;
 
   while (struct_fits_in_pe(pe, imports, IMAGE_IMPORT_DESCRIPTOR) &&
          imports->Name != 0 && num_imports < MAX_PE_IMPORTS)
@@ -1018,12 +1026,14 @@ IMPORTED_DLL* pe_parse_imports(
 
     if (offset >= 0)
     {
+      IMPORTED_FUNCTION* functions;
+
       char* dll_name = (char *) (pe->data + offset);
 
       if (!pe_valid_dll_name(dll_name, pe->data_size - (size_t) offset))
         break;
 
-      IMPORTED_FUNCTION* functions = pe_parse_import_descriptor(
+      functions = pe_parse_import_descriptor(
           pe, imports, dll_name);
 
       if (functions != NULL)
@@ -1061,7 +1071,10 @@ IMPORTED_DLL* pe_parse_imports(
 void pe_parse_certificates(
     PE* pe)
 {
-  int counter = 0;
+  int i, counter = 0;  
+  uint8_t* eod;
+
+  PWIN_CERTIFICATE win_cert;
 
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
@@ -1077,9 +1090,9 @@ void pe_parse_certificates(
   }
 
   // Store the end of directory, making comparisons easier.
-  uint8_t* eod = pe->data + directory->VirtualAddress + directory->Size;
+  eod = pe->data + directory->VirtualAddress + directory->Size;
 
-  PWIN_CERTIFICATE win_cert = (PWIN_CERTIFICATE) \
+  win_cert = (PWIN_CERTIFICATE) \
       (pe->data + directory->VirtualAddress);
 
   //
@@ -1098,6 +1111,10 @@ void pe_parse_certificates(
          (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) <= eod &&
          (uint8_t*) win_cert->Certificate + win_cert->Length - 8 <= eod)
   {
+	BIO* cert_bio;
+	PKCS7* pkcs7;
+	STACK_OF(X509)* certs;
+
     // Some sanity checks
 
     if (win_cert->Length == 0 ||
@@ -1119,13 +1136,13 @@ void pe_parse_certificates(
       continue;
     }
 
-    BIO* cert_bio = BIO_new_mem_buf(win_cert->Certificate, win_cert->Length);
+    cert_bio = BIO_new_mem_buf(win_cert->Certificate, win_cert->Length);
 
     if (!cert_bio)
       break;
 
-    PKCS7* pkcs7 = d2i_PKCS7_bio(cert_bio, NULL);
-    STACK_OF(X509)* certs = PKCS7_get0_signers(pkcs7, NULL, 0);
+    pkcs7 = d2i_PKCS7_bio(cert_bio, NULL);
+    certs = PKCS7_get0_signers(pkcs7, NULL, 0);
 
     if (!certs)
     {
@@ -1134,10 +1151,12 @@ void pe_parse_certificates(
       break;
     }
 
-    for (int i = 0; i < sk_X509_num(certs); i++)
+    for (i = 0; i < sk_X509_num(certs); i++)
     {
+	  ASN1_INTEGER* serial;
       X509* cert = sk_X509_value(certs, i);
 
+	  const char* sig_alg;
       char buffer[256];
 
       X509_NAME_oneline(
@@ -1155,11 +1174,11 @@ void pe_parse_certificates(
           pe->object,
           "signatures[%i].version", counter);
 
-      const char* sig_alg = OBJ_nid2ln(OBJ_obj2nid(cert->sig_alg->algorithm));
+      sig_alg = OBJ_nid2ln(OBJ_obj2nid(cert->sig_alg->algorithm));
 
       set_string(sig_alg, pe->object, "signatures[%i].algorithm", counter);
 
-      ASN1_INTEGER *serial = X509_get_serialNumber(cert);
+      serial = X509_get_serialNumber(cert);
 
       if (serial->length > 0)
       {
@@ -1173,7 +1192,9 @@ void pe_parse_certificates(
 
         if (serial_number != NULL)
         {
-          for (int j = 0; j < serial->length; j++)
+		  int j;
+
+          for (j = 0; j < serial->length; j++)
           {
             // Don't put the colon on the last one.
             if (j < serial->length - 1)
@@ -1220,6 +1241,7 @@ void pe_parse_header(
   PIMAGE_SECTION_HEADER section;
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
+  int i, scount;
 
 #define OptionalHeader(field) \
     (IS_64BITS_PE(pe) ? \
@@ -1297,9 +1319,9 @@ void pe_parse_header(
 
   section = IMAGE_FIRST_SECTION(pe->header);
 
-  int scount = yr_min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS);
+  scount = yr_min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS);
 
-  for (int i = 0; i < scount; i++)
+  for (i = 0; i < scount; i++)
   {
     if (!struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
       break;
@@ -1339,16 +1361,20 @@ void pe_parse_header(
 
 define_function(valid_on)
 {
+  int64_t timestamp;
+  int64_t not_before;
+  int64_t not_after;
+
   if (is_undefined(parent(), "not_before") ||
       is_undefined(parent(), "not_after"))
   {
     return_integer(UNDEFINED);
   }
 
-  int64_t timestamp = integer_argument(1);
+  timestamp = integer_argument(1);
 
-  int64_t not_before = get_integer(parent(), "not_before");
-  int64_t not_after = get_integer(parent(), "not_after");
+  not_before = get_integer(parent(), "not_before");
+  not_after = get_integer(parent(), "not_after");
 
   return_integer(timestamp >= not_before  && timestamp <= not_after);
 }
@@ -1359,16 +1385,17 @@ define_function(section_index_addr)
   YR_OBJECT* module = module();
   YR_SCAN_CONTEXT* context = scan_context();
 
+  int64_t i;
   int64_t offset;
   int64_t size;
+  
+  int64_t addr = integer_argument(1);
+  int64_t n = get_integer(module, "number_of_sections");
 
   if (is_undefined(module, "number_of_sections"))
     return_integer(UNDEFINED);
 
-  int64_t addr = integer_argument(1);
-  int64_t n = get_integer(module, "number_of_sections");
-
-  for (int64_t i = 0; i < yr_min(n, MAX_PE_SECTIONS); i++)
+  for (i = 0; i < yr_min(n, MAX_PE_SECTIONS); i++)
   {
     if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
     {
@@ -1393,13 +1420,15 @@ define_function(section_index_name)
 {
   YR_OBJECT* module = module();
 
+  char* name = string_argument(1);
+
+  int64_t n = get_integer(module, "number_of_sections");
+  int64_t i;
+  
   if (is_undefined(module, "number_of_sections"))
     return_integer(UNDEFINED);
 
-  char* name = string_argument(1);
-  int64_t n = get_integer(module, "number_of_sections");
-
-  for (int64_t i = 0; i < yr_min(n, MAX_PE_SECTIONS); i++)
+  for (i = 0; i < yr_min(n, MAX_PE_SECTIONS); i++)
   {
     SIZED_STRING* sect = get_string(module, "sections[%i].name", i);
 
@@ -1418,12 +1447,19 @@ define_function(exports)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
+  PIMAGE_DATA_DIRECTORY directory;
+  PIMAGE_EXPORT_DIRECTORY exports;
+  DWORD* names;
+
+  int64_t offset;
+  int i;
+
   // If not a PE file, return UNDEFINED
 
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
+  directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_EXPORT);
 
   // If the PE doesn't export any functions, return FALSE
@@ -1431,12 +1467,12 @@ define_function(exports)
   if (directory->VirtualAddress == 0)
     return_integer(0);
 
-  int64_t offset = pe_rva_to_offset(pe, directory->VirtualAddress);
+  offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
   if (offset < 0)
     return_integer(0);
 
-  PIMAGE_EXPORT_DIRECTORY exports = (PIMAGE_EXPORT_DIRECTORY) \
+  exports = (PIMAGE_EXPORT_DIRECTORY) \
       (pe->data + offset);
 
   if (!struct_fits_in_pe(pe, exports, IMAGE_EXPORT_DIRECTORY))
@@ -1451,16 +1487,17 @@ define_function(exports)
       exports->NumberOfNames * sizeof(DWORD) > pe->data_size - offset)
     return_integer(0);
 
-  DWORD* names = (DWORD*)(pe->data + offset);
+  names = (DWORD*)(pe->data + offset);
 
-  for (int i = 0; i < exports->NumberOfNames; i++)
+  for (i = 0; i < exports->NumberOfNames; i++)
   {
+    char* name;
     offset = pe_rva_to_offset(pe, names[i]);
 
     if (offset < 0)
       return_integer(0);
 
-    char* name = (char*)(pe->data + offset);
+    name = (char*)(pe->data + offset);
 
     if (strncmp(name, function_name, pe->data_size - (size_t) offset) == 0)
       return_integer(1);
@@ -1482,11 +1519,13 @@ define_function(exports)
 define_function(imphash)
 {
   YR_OBJECT* module = module();
+
+  IMPORTED_DLL* dll;
   MD5_CTX ctx;
 
   unsigned char digest[MD5_DIGEST_LENGTH];
   char digest_ascii[MD5_DIGEST_LENGTH * 2 + 1];
-  int first = TRUE;
+  int i, first = TRUE;
 
   PE* pe = (PE*) module->data;
 
@@ -1497,11 +1536,13 @@ define_function(imphash)
 
   MD5_Init(&ctx);
 
-  IMPORTED_DLL* dll = pe->imported_dlls;
+  dll = pe->imported_dlls;
 
   while (dll)
-  {
+  {  
+	IMPORTED_FUNCTION* func;
     size_t dll_name_len;
+	char* dll_name;
 
     // If extension is 'ocx', 'sys' or 'dll', chop it.
 
@@ -1520,23 +1561,24 @@ define_function(imphash)
 
     // Allocate a new string to hold the dll name.
 
-    char* dll_name = (char *) yr_malloc(dll_name_len + 1);
+    dll_name = (char *) yr_malloc(dll_name_len + 1);
 
     if (!dll_name)
       return ERROR_INSUFICIENT_MEMORY;
 
     strlcpy(dll_name, dll->name, dll_name_len + 1);
 
-    IMPORTED_FUNCTION* func = dll->functions;
+    func = dll->functions;
 
     while (func)
     {
+	  char* final_name;
       size_t final_name_len = dll_name_len + strlen(func->name) + 1;
 
       if (!first)
         final_name_len++;   // Additional byte to accommodate the extra comma
 
-      char* final_name = (char*) yr_malloc(final_name_len + 1);
+      final_name = (char*) yr_malloc(final_name_len + 1);
 
       if (final_name == NULL)
       {
@@ -1548,7 +1590,7 @@ define_function(imphash)
 
       // Lowercase the whole thing.
 
-      for (int i = 0; i < final_name_len; i++)
+      for (i = 0; i < final_name_len; i++)
         final_name[i] = tolower(final_name[i]);
 
       MD5_Update(&ctx, final_name, final_name_len);
@@ -1568,7 +1610,7 @@ define_function(imphash)
 
   // Transform the binary digest to ascii
 
-  for (int i = 0; i < MD5_DIGEST_LENGTH; i++)
+  for (i = 0; i < MD5_DIGEST_LENGTH; i++)
   {
     sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
   }
@@ -1589,10 +1631,12 @@ define_function(imports)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
+  IMPORTED_DLL* imported_dll;
+
   if (!pe)
     return_integer(UNDEFINED);
 
-  IMPORTED_DLL* imported_dll = pe->imported_dlls;
+  imported_dll = pe->imported_dlls;
 
   while (imported_dll != NULL)
   {
@@ -1619,21 +1663,22 @@ define_function(imports)
 define_function(locale)
 {
   YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+  
+  uint64_t locale = integer_argument(1);
+  int64_t n, i;
 
   if (is_undefined(module, "number_of_resources"))
     return_integer(UNDEFINED);
-
-  uint64_t locale = integer_argument(1);
-  PE* pe = (PE*) module->data;
 
   // If not a PE file, return UNDEFINED
 
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  int64_t n = get_integer(module, "number_of_resources");
+  n = get_integer(module, "number_of_resources");
 
-  for (int64_t i = 0; i < n; i++)
+  for (i = 0; i < n; i++)
   {
     uint64_t rsrc_language = get_integer(module, "resources[%i].language", i);
 
@@ -1648,21 +1693,22 @@ define_function(locale)
 define_function(language)
 {
   YR_OBJECT* module = module();
+  PE* pe = module->data;
+
+  uint64_t language = integer_argument(1);
+  int64_t n, i;
 
   if (is_undefined(module, "number_of_resources"))
     return_integer(UNDEFINED);
-
-  uint64_t language = integer_argument(1);
-  PE* pe = (PE*) module->data;
 
   // If not a PE file, return UNDEFINED
 
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  int64_t n = get_integer(module, "number_of_resources");
+  n = get_integer(module, "number_of_resources");
 
-  for (int64_t i = 0; i < n; i++)
+  for (i = 0; i < n; i++)
   {
     uint64_t rsrc_language = get_integer(module, "resources[%i].language", i);
 
@@ -1873,6 +1919,8 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
+  YR_MEMORY_BLOCK* block;
+
   set_integer(
       IMAGE_FILE_MACHINE_UNKNOWN, module_object,
       "MACHINE_UNKNOWN");
@@ -2111,8 +2159,6 @@ int module_load(
   set_integer(
       RESOURCE_TYPE_MANIFEST, module_object,
       "RESOURCE_TYPE_MANIFEST");
-
-  YR_MEMORY_BLOCK* block;
 
   foreach_memory_block(context, block)
   {

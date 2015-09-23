@@ -42,6 +42,7 @@ int yr_object_create(
     YR_OBJECT** object)
 {
   YR_OBJECT* obj;
+  int i;
   size_t object_size = 0;
 
   switch (type)
@@ -111,7 +112,7 @@ int yr_object_create(
       break;
     case OBJECT_TYPE_FUNCTION:
       ((YR_OBJECT_FUNCTION*) obj)->return_obj = NULL;
-      for (int i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+      for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
       {
         ((YR_OBJECT_FUNCTION*) obj)->prototypes[i].arguments_fmt = NULL;
         ((YR_OBJECT_FUNCTION*) obj)->prototypes[i].code = NULL;
@@ -750,6 +751,8 @@ YR_OBJECT* yr_object_dict_get_item(
     int flags,
     const char* key)
 {
+  int i;
+
   YR_OBJECT* result = NULL;
   YR_OBJECT_DICTIONARY* dict;
 
@@ -759,7 +762,7 @@ YR_OBJECT* yr_object_dict_get_item(
 
   if (dict->items != NULL)
   {
-    for (int i = 0; i < dict->items->used; i++)
+    for (i = 0; i < dict->items->used; i++)
     {
       if (strcmp(dict->items->objects[i].key, key) == 0)
         result = dict->items->objects[i].obj;
@@ -1077,6 +1080,7 @@ void yr_object_print_data(
   YR_STRUCTURE_MEMBER* member;
 
   char indent_spaces[32];
+  int i;
 
   indent = yr_min(indent, sizeof(indent_spaces));
 
@@ -1100,7 +1104,7 @@ void yr_object_print_data(
       {
         printf(" = \"");
 
-        for (int i = 0; i < ((YR_OBJECT_STRING*) object)->value->length; i++)
+        for (i = 0; i < ((YR_OBJECT_STRING*) object)->value->length; i++)
         {
           char c = ((YR_OBJECT_STRING*) object)->value->c_string[i];
 
@@ -1140,7 +1144,7 @@ void yr_object_print_data(
 
       if (array_items != NULL)
       {
-        for (int i = 0; i < array_items->count; i++)
+        for (i = 0; i < array_items->count; i++)
         {
           if (array_items->objects[i] != NULL)
           {
@@ -1158,7 +1162,7 @@ void yr_object_print_data(
 
       if (dict_items != NULL)
       {
-        for (int i = 0; i < dict_items->used; i++)
+        for (i = 0; i < dict_items->used; i++)
         {
           printf("\n%s\t%s", indent_spaces, dict_items->objects[i].key);
           yr_object_print_data(dict_items->objects[i].obj, indent + 1, 0);

@@ -454,9 +454,9 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    91,    91,   100,   104,   113,   174,   178,   191,   195,
-     204,   218,   217,   230,   259,   297,   325,   351,   355,   369,
-     377
+       0,    91,    91,   100,   104,   113,   175,   179,   192,   196,
+     205,   219,   218,   231,   260,   298,   326,   352,   356,   370,
+     378
 };
 #endif
 
@@ -1452,6 +1452,10 @@ yyreduce:
   case 5:
 #line 114 "hex_grammar.y"
     {
+        RE_NODE* new_concat;
+        RE_NODE* leftmost_concat = NULL;
+        RE_NODE* leftmost_node = (yyvsp[(2) - (3)].re_node);
+
         (yyval.re_node) = NULL;
 
         /*
@@ -1476,16 +1480,13 @@ yyreduce:
         leftmost node of the token_sequence subtree.
         */
 
-        RE_NODE* leftmost_concat = NULL;
-        RE_NODE* leftmost_node = (yyvsp[(2) - (3)].re_node);
-
         while (leftmost_node->type == RE_NODE_CONCAT)
         {
           leftmost_concat = leftmost_node;
           leftmost_node = leftmost_node->left;
         }
 
-        RE_NODE* new_concat = yr_re_node_create(
+        new_concat = yr_re_node_create(
             RE_NODE_CONCAT, (yyvsp[(1) - (3)].re_node), leftmost_node);
 
         if (new_concat != NULL)
@@ -1510,14 +1511,14 @@ yyreduce:
     break;
 
   case 6:
-#line 175 "hex_grammar.y"
+#line 176 "hex_grammar.y"
     {
         (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
       }
     break;
 
   case 7:
-#line 179 "hex_grammar.y"
+#line 180 "hex_grammar.y"
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[(1) - (2)].re_node), (yyvsp[(2) - (2)].re_node));
 
@@ -1529,14 +1530,14 @@ yyreduce:
     break;
 
   case 8:
-#line 192 "hex_grammar.y"
+#line 193 "hex_grammar.y"
     {
         (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
       }
     break;
 
   case 9:
-#line 196 "hex_grammar.y"
+#line 197 "hex_grammar.y"
     {
         (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
         (yyval.re_node)->greedy = FALSE;
@@ -1544,7 +1545,7 @@ yyreduce:
     break;
 
   case 10:
-#line 205 "hex_grammar.y"
+#line 206 "hex_grammar.y"
     {
         lex_env->token_count++;
 
@@ -1560,14 +1561,14 @@ yyreduce:
     break;
 
   case 11:
-#line 218 "hex_grammar.y"
+#line 219 "hex_grammar.y"
     {
         lex_env->inside_or++;
       }
     break;
 
   case 12:
-#line 222 "hex_grammar.y"
+#line 223 "hex_grammar.y"
     {
         (yyval.re_node) = (yyvsp[(3) - (4)].re_node);
         lex_env->inside_or--;
@@ -1575,7 +1576,7 @@ yyreduce:
     break;
 
   case 13:
-#line 231 "hex_grammar.y"
+#line 232 "hex_grammar.y"
     {
         RE_NODE* re_any;
 
@@ -1607,7 +1608,7 @@ yyreduce:
     break;
 
   case 14:
-#line 260 "hex_grammar.y"
+#line 261 "hex_grammar.y"
     {
         RE_NODE* re_any;
 
@@ -1648,7 +1649,7 @@ yyreduce:
     break;
 
   case 15:
-#line 298 "hex_grammar.y"
+#line 299 "hex_grammar.y"
     {
         RE_NODE* re_any;
 
@@ -1679,7 +1680,7 @@ yyreduce:
     break;
 
   case 16:
-#line 326 "hex_grammar.y"
+#line 327 "hex_grammar.y"
     {
         RE_NODE* re_any;
 
@@ -1704,14 +1705,14 @@ yyreduce:
     break;
 
   case 17:
-#line 352 "hex_grammar.y"
+#line 353 "hex_grammar.y"
     {
           (yyval.re_node) = (yyvsp[(1) - (1)].re_node);
       }
     break;
 
   case 18:
-#line 356 "hex_grammar.y"
+#line 357 "hex_grammar.y"
     {
         mark_as_not_fast_hex_regexp();
 
@@ -1725,7 +1726,7 @@ yyreduce:
     break;
 
   case 19:
-#line 370 "hex_grammar.y"
+#line 371 "hex_grammar.y"
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
@@ -1736,9 +1737,9 @@ yyreduce:
     break;
 
   case 20:
-#line 378 "hex_grammar.y"
+#line 379 "hex_grammar.y"
     {
-        uint8_t mask = (yyvsp[(1) - (1)].integer) >> 8;
+        uint8_t mask = (uint8_t) ((yyvsp[(1) - (1)].integer) >> 8);
 
         if (mask == 0x00)
         {
@@ -1760,7 +1761,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1764 "hex_grammar.c"
+#line 1765 "hex_grammar.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1974,6 +1975,6 @@ yyreturn:
 }
 
 
-#line 399 "hex_grammar.y"
+#line 400 "hex_grammar.y"
 
 
