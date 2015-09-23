@@ -31,7 +31,7 @@ limitations under the License.
 
 typedef struct _YR_RELOC
 {
-  size_t offset;
+  uint32_t offset;
   struct _YR_RELOC* next;
 
 } YR_RELOC;

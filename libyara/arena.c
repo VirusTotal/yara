@@ -900,7 +900,7 @@ int yr_arena_load_stream(
   YR_ARENA* new_arena;
   ARENA_FILE_HEADER header;
 
-  int32_t reloc_offset;
+  uint32_t reloc_offset;
   uint8_t** reloc_address;
   uint8_t* reloc_target;
 
@@ -944,7 +944,7 @@ int yr_arena_load_stream(
     return ERROR_CORRUPT_FILE;
   }
 
-  while (reloc_offset != -1)
+  while (reloc_offset != 0xFFFFFFFF)
   {
     if (reloc_offset > header.size - sizeof(uint8_t*))
     {
@@ -997,7 +997,7 @@ int yr_arena_save_stream(
   YR_RELOC* reloc;
   ARENA_FILE_HEADER header;
 
-  int32_t end_marker = -1;
+  uint32_t end_marker = 0xFFFFFFFF;
   uint8_t** reloc_address;
   uint8_t* reloc_target;
 
