@@ -198,7 +198,9 @@ int yr_parser_check_types(
     YR_OBJECT_FUNCTION* function,
     const char* actual_args_fmt)
 {
-  for (int i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+  int i;
+
+  for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
   {
     if (function->prototypes[i].arguments_fmt == NULL)
       break;

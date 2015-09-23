@@ -1591,13 +1591,13 @@ YY_RULE_SETUP
 #line 452 "lexer.l"
 {     /* saw closing quote - all done */
 
-  *yyextra->lex_buf_ptr = '\0';
-
-  BEGIN(INITIAL);
   ALLOC_SIZED_STRING(s, yyextra->lex_buf_len);
 
+  *yyextra->lex_buf_ptr = '\0';
   memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
   yylval->sized_string = s;
+
+  BEGIN(INITIAL);
 
   return _TEXT_STRING_;
 }
@@ -1684,26 +1684,26 @@ YY_RULE_SETUP
 #line 524 "lexer.l"
 {
 
-  if (yyextra->lex_buf_len == 0)
+  if (yyextra->lex_buf_len > 0)
+  {
+    ALLOC_SIZED_STRING(s, yyextra->lex_buf_len);
+
+    if (yytext[1] == 'i')
+      s->flags |= SIZED_STRING_FLAGS_NO_CASE;
+
+    if (yytext[1] == 's' || yytext[2] == 's')
+      s->flags |= SIZED_STRING_FLAGS_DOT_ALL;
+
+    *yyextra->lex_buf_ptr = '\0';
+    strlcpy(s->c_string, yyextra->lex_buf, s->length + 1);
+    yylval->sized_string = s;
+  }
+  else
   {
     yyerror(yyscanner, compiler, "empty regular expression");
   }
 
-  *yyextra->lex_buf_ptr = '\0';
-
   BEGIN(INITIAL);
-  ALLOC_SIZED_STRING(s, yyextra->lex_buf_len);
-
-  if (yytext[1] == 'i')
-    s->flags |= SIZED_STRING_FLAGS_NO_CASE;
-
-  if (yytext[1] == 's' || yytext[2] == 's')
-    s->flags |= SIZED_STRING_FLAGS_DOT_ALL;
-
-  strlcpy(s->c_string, yyextra->lex_buf, s->length + 1);
-
-  yylval->sized_string = s;
-
   return _REGEXP_;
 }
 	YY_BREAK

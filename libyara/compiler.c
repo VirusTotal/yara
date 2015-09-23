@@ -109,6 +109,9 @@ YR_API int yr_compiler_create(
 YR_API void yr_compiler_destroy(
     YR_COMPILER* compiler)
 {
+  YR_FIXUP* fixup;
+  int i;
+
   yr_arena_destroy(compiler->compiled_rules_arena);
   yr_arena_destroy(compiler->sz_arena);
   yr_arena_destroy(compiler->rules_arena);
@@ -128,10 +131,10 @@ YR_API void yr_compiler_destroy(
       compiler->objects_table,
       (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
-  for (int i = 0; i < compiler->file_name_stack_ptr; i++)
+  for (i = 0; i < compiler->file_name_stack_ptr; i++)
     yr_free(compiler->file_name_stack[i]);
 
-  YR_FIXUP* fixup = compiler->fixup_stack_head;
+  fixup = compiler->fixup_stack_head;
 
   while (fixup != NULL)
   {

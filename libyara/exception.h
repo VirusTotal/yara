@@ -47,10 +47,10 @@ static LONG CALLBACK exception_handler(
 #define YR_TRYCATCH(_try_clause_, _catch_clause_)                       \
   do                                                                    \
   {                                                                     \
+    jmp_buf jb;                                                         \
     HANDLE exh = AddVectoredExceptionHandler(1, exception_handler);     \
     int tidx = yr_get_tidx();                                           \
     assert(tidx != -1);                                                 \
-    jmp_buf jb;                                                         \
     exc_jmp_buf[tidx] = &jb;                                            \
     if (setjmp(jb) == 0)                                                \
       { _try_clause_ }                                                  \

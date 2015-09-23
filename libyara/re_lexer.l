@@ -251,12 +251,14 @@ hex_digit     [0-9a-fA-F]
 
   // End of character class.
 
+  int i;
+
   yylval->class_vector = (uint8_t*) yr_malloc(32);
   memcpy(yylval->class_vector, LEX_ENV->class_vector, 32);
 
   if (LEX_ENV->negated_class)
   {
-    for(int i = 0; i < 32; i++)
+    for(i = 0; i < 32; i++)
       yylval->class_vector[i] = ~yylval->class_vector[i];
   }
 
@@ -272,6 +274,7 @@ hex_digit     [0-9a-fA-F]
   //  [abc0-9]
   //      ^- matching here
 
+  uint8_t c;
   uint8_t start = yytext[0];
   uint8_t end = yytext[2];
 
@@ -300,7 +303,7 @@ hex_digit     [0-9a-fA-F]
     yyterminate();
   }
 
-  for (int c = start; c <= end; c++)
+  for (c = start; c <= end; c++)
   {
     LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
   }
@@ -309,24 +312,26 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\w {
 
+  int i;
   char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
                         0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-  for (int i = 0; i < 32; i++)
+  for (i = 0; i < 32; i++)
     LEX_ENV->class_vector[i] |= word_chars[i];
 }
 
 
 <char_class>\\W {
 
+  int i;
   char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
                         0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-  for (int i = 0; i < 32; i++)
+  for (i = 0; i < 32; i++)
     LEX_ENV->class_vector[i] |= ~word_chars[i];
 }
 
@@ -340,7 +345,9 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\S {
 
-  for (int i = 0; i < 32; i++)
+  int i;
+
+  for (i = 0; i < 32; i++)
   {
     if (i == ' ' / 8)
       LEX_ENV->class_vector[i] |= ~(1 << ' ' % 8);
@@ -354,14 +361,18 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\d {
 
-  for (char c = '0'; c <= '9'; c++)
+  char c;
+
+  for (c = '0'; c <= '9'; c++)
     LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
 }
 
 
 <char_class>\\D {
 
-  for (int i = 0; i < 32; i++)
+  int i;
+
+  for (i = 0; i < 32; i++)
   {
     // digits 0-7 are in the sixth byte of the vector, let that byte alone
     if (i == 6)
