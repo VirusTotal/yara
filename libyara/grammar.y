@@ -38,6 +38,9 @@ limitations under the License.
 
 #define YYERROR_VERBOSE
 
+#define YYMALLOC yr_malloc
+#define YYFREE yr_free
+
 #define INTEGER_SET_ENUMERATION   1
 #define INTEGER_SET_RANGE         2
 
