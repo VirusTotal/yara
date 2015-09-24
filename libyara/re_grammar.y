@@ -28,6 +28,9 @@ limitations under the License.
 
 #define YYERROR_VERBOSE
 
+#define YYMALLOC yr_malloc
+#define YYFREE yr_free
+
 #define ERROR_IF(x, error) \
     if (x) \
     { \

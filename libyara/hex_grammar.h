@@ -54,7 +54,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 64 "hex_grammar.y"
+#line 67 "hex_grammar.y"
 {
   int64_t integer;
   RE_NODE *re_node;
