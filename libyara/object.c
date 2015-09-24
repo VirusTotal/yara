@@ -1102,11 +1102,12 @@ void yr_object_print_data(
     case OBJECT_TYPE_STRING:
       if (((YR_OBJECT_STRING*) object)->value != NULL)
       {
+        size_t l;
         printf(" = \"");
 
-        for (i = 0; i < ((YR_OBJECT_STRING*) object)->value->length; i++)
+        for (l = 0; l < ((YR_OBJECT_STRING*) object)->value->length; l++)
         {
-          char c = ((YR_OBJECT_STRING*) object)->value->c_string[i];
+          char c = ((YR_OBJECT_STRING*) object)->value->c_string[l];
 
           if (isprint(c))
             printf("%c", c);
