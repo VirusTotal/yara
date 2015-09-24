@@ -1528,7 +1528,7 @@ primary_expression
         // in the proper OP_INTXX opcode.
 
         compiler->last_result = yr_parser_emit(
-            yyscanner, OP_READ_INT + $1, NULL);
+            yyscanner, (uint8_t) (OP_READ_INT + $1), NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
