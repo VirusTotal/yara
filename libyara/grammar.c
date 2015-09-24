@@ -3254,7 +3254,7 @@ yyreduce:
         // in the proper OP_INTXX opcode.
 
         compiler->last_result = yr_parser_emit(
-            yyscanner, OP_READ_INT + (yyvsp[(1) - (4)].integer), NULL);
+            yyscanner, (uint8_t) (OP_READ_INT + (yyvsp[(1) - (4)].integer)), NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
