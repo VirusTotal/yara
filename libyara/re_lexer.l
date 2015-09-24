@@ -274,7 +274,7 @@ hex_digit     [0-9a-fA-F]
   //  [abc0-9]
   //      ^- matching here
 
-  uint8_t c;
+  uint16_t c;
   uint8_t start = yytext[0];
   uint8_t end = yytext[2];
 
