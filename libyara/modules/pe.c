@@ -1471,7 +1471,7 @@ define_function(exports)
   DWORD* names;
 
   int64_t offset;
-  int i;
+  uint32_t i;
 
   // If not a PE file, return UNDEFINED
 
@@ -1688,10 +1688,12 @@ define_function(imports_ordinal)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
+  IMPORTED_DLL* imported_dll;
+
   if (!pe)
     return_integer(UNDEFINED);
 
-  IMPORTED_DLL* imported_dll = pe->imported_dlls;
+  imported_dll = pe->imported_dlls;
 
   while (imported_dll != NULL)
   {
@@ -1721,10 +1723,12 @@ define_function(imports_dll)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
+  IMPORTED_DLL* imported_dll;
+
   if (!pe)
     return_integer(UNDEFINED);
 
-  IMPORTED_DLL* imported_dll = pe->imported_dlls;
+  imported_dll = pe->imported_dlls;
 
   while (imported_dll != NULL)
   {

@@ -852,7 +852,7 @@ int yr_execute_code(
         if (is_undef(r2))
           stack[sp - r1.i].i = UNDEFINED;
         else
-          stack[sp - r1.i].d = r2.i;
+          stack[sp - r1.i].d = (double) r2.i;
         break;
 
       case OP_STR_TO_BOOL:

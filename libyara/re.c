@@ -1618,7 +1618,7 @@ int yr_re_exec(
   max_count = (int) yr_min(input_size, RE_SCAN_LIMIT);
 
   // Round down max_count to a multiple of character_size, this way if
-  // character_size is 2 and input_size is impair we are ignoring the
+  // character_size is 2 and input_size is odd we are ignoring the
   // extra byte which can't match anyways.
 
   max_count = max_count - max_count % character_size;
@@ -1779,14 +1779,14 @@ int yr_re_exec(
 
         case RE_OPCODE_MATCH_AT_START:
           if (flags & RE_FLAGS_BACKWARDS)
-            kill = input_size > count;
+            kill = input_size > (size_t) count;
           else
             kill = (flags & RE_FLAGS_NOT_AT_START) || (count != 0);
           action = kill ? ACTION_KILL : ACTION_CONTINUE;
           break;
 
         case RE_OPCODE_MATCH_AT_END:
-          action = input_size > count ? ACTION_KILL : ACTION_CONTINUE;
+          action = input_size > (size_t) count ? ACTION_KILL : ACTION_CONTINUE;
           break;
 
         case RE_OPCODE_MATCH:

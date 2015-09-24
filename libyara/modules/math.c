@@ -35,7 +35,7 @@ double log2(double n)
 
 define_function(string_entropy)
 {
-  int i;
+  size_t i;
   double entropy = 0.0;
 
   SIZED_STRING* s = sized_string_argument(1);
@@ -67,10 +67,12 @@ define_function(string_entropy)
 
 define_function(data_entropy)
 {
-  int i, past_first_block = FALSE;
+  int past_first_block = FALSE;
   double entropy = 0.0;
 
   size_t total_len = 0;
+  size_t i;
+
   uint32_t* data;
 
   int64_t offset = integer_argument(1);   // offset where to start
@@ -92,7 +94,7 @@ define_function(data_entropy)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      size_t data_offset = offset - block->base;
+      size_t data_offset = (size_t) (offset - block->base);
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
@@ -151,7 +153,7 @@ define_function(string_deviation)
   double mean = float_argument(2);
   double sum = 0.0;
 
-  int i;
+  size_t i;
 
   for (i = 0; i < s->length; i++)
     sum += fabs(((double) s->c_string[i]) - mean);
@@ -162,7 +164,7 @@ define_function(string_deviation)
 
 define_function(data_deviation)
 {  
-  int i, past_first_block = FALSE;
+  int past_first_block = FALSE;
 
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
@@ -171,6 +173,7 @@ define_function(data_deviation)
   double sum = 0.0;
 
   size_t total_len = 0;
+  size_t i;
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
@@ -183,7 +186,7 @@ define_function(data_deviation)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      size_t data_offset = offset - block->base;
+      size_t data_offset = (size_t) (offset - block->base);
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
@@ -219,7 +222,7 @@ define_function(data_deviation)
 
 define_function(string_mean)
 {
-  int i;
+  size_t i;
   double sum = 0.0;
   
   SIZED_STRING* s = sized_string_argument(1);
@@ -233,7 +236,7 @@ define_function(string_mean)
 
 define_function(data_mean)
 {  
-  int i, past_first_block = FALSE;
+  int past_first_block = FALSE;
   double sum = 0.0;
 
   int64_t offset = integer_argument(1);
@@ -243,6 +246,7 @@ define_function(data_mean)
   YR_MEMORY_BLOCK* block = NULL;
 
   size_t total_len = 0;
+  size_t i;
 
   if (offset < 0 || length < 0 || offset < context->mem_block->base)
     return ERROR_WRONG_ARGUMENTS;
@@ -252,7 +256,7 @@ define_function(data_mean)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      size_t data_offset = offset - block->base;
+      size_t data_offset = (size_t) (offset - block->base);
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
@@ -288,8 +292,10 @@ define_function(data_mean)
 
 define_function(data_serial_correlation)
 {
-  int i, past_first_block = FALSE;
+  int past_first_block = FALSE;
+
   size_t total_len = 0;
+  size_t i;
 
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
@@ -312,7 +318,7 @@ define_function(data_serial_correlation)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      size_t data_offset = offset - block->base;
+      size_t data_offset = (size_t) (offset - block->base);
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
@@ -373,7 +379,7 @@ define_function(string_serial_correlation)
   double scct3 = 0;
   double scc = 0;
 
-  int i;
+  size_t i;
 
   for (i = 0; i < s->length; i++)
   {
@@ -400,12 +406,14 @@ define_function(string_serial_correlation)
 
 define_function(data_monte_carlo_pi)
 {
-  int i, past_first_block = FALSE;
+  int past_first_block = FALSE;
   int mcount = 0;
   int inmont = 0;
 
   double INCIRC = pow(pow(256.0, 3.0) - 1, 2.0);
   double mpi = 0;
+
+  size_t i;
 
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
@@ -423,7 +431,7 @@ define_function(data_monte_carlo_pi)
     {
       unsigned int monte[6];
 
-      size_t data_offset = offset - block->base;
+	  size_t data_offset = (size_t) (offset - block->base);
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
@@ -489,7 +497,8 @@ define_function(string_monte_carlo_pi)
 
   int mcount = 0;
   int inmont = 0;
-  int i;
+  
+  size_t i;
 
   for (i = 0; i < s->length; i++)
   {
