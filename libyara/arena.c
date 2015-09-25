@@ -184,7 +184,7 @@ int _yr_arena_make_relocatable(
     if (reloc == NULL)
       return ERROR_INSUFICIENT_MEMORY;
 
-    reloc->offset = base_offset + offset;
+    reloc->offset = (uint32_t) (base_offset + offset);
     reloc->next = NULL;
 
     if (page->reloc_list_head == NULL)
@@ -410,7 +410,7 @@ int yr_arena_coalesce(
 
   uint8_t** reloc_address;
   uint8_t* reloc_target;
-  int total_size = 0;
+  size_t total_size = 0;
 
   page = arena->page_list_head;
 
@@ -438,7 +438,7 @@ int yr_arena_coalesce(
 
     while(reloc != NULL)
     {
-      reloc->offset += big_page->used;
+      reloc->offset += (uint32_t) big_page->used;
       reloc = reloc->next;
     }
 

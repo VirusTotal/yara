@@ -43,7 +43,7 @@ typedef struct _CALLBACK_ARGS
 } CALLBACK_ARGS;
 
 
-size_t _yr_scan_compare(
+int _yr_scan_compare(
     uint8_t* data,
     size_t data_size,
     uint8_t* string,
@@ -60,11 +60,11 @@ size_t _yr_scan_compare(
   while (i < string_length && *s1++ == *s2++)
     i++;
 
-  return ((i == string_length) ? i : 0);
+  return (int) ((i == string_length) ? i : 0);
 }
 
 
-size_t _yr_scan_icompare(
+int _yr_scan_icompare(
     uint8_t* data,
     size_t data_size,
     uint8_t* string,
@@ -81,11 +81,11 @@ size_t _yr_scan_icompare(
   while (i < string_length && lowercase[*s1++] == lowercase[*s2++])
     i++;
 
-  return ((i == string_length) ? i : 0);
+  return (int) ((i == string_length) ? i : 0);
 }
 
 
-size_t _yr_scan_wcompare(
+int _yr_scan_wcompare(
     uint8_t* data,
     size_t data_size,
     uint8_t* string,
@@ -106,11 +106,11 @@ size_t _yr_scan_wcompare(
     i++;
   }
 
-  return ((i == string_length) ? i * 2 : 0);
+  return (int) ((i == string_length) ? i * 2 : 0);
 }
 
 
-size_t _yr_scan_wicompare(
+int _yr_scan_wicompare(
     uint8_t* data,
     size_t data_size,
     uint8_t* string,
@@ -131,7 +131,7 @@ size_t _yr_scan_wicompare(
     i++;
   }
 
-  return ((i == string_length) ? i * 2 : 0);
+  return (int) ((i == string_length) ? i * 2 : 0);
 }
 
 
