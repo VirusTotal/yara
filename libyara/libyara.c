@@ -107,7 +107,6 @@ YR_API int yr_initialize(void)
   for (i = 0; i < CRYPTO_num_locks(); i++)
     pthread_mutex_init(&locks[i], NULL);
 
-  // XXX ifdef CRYPTO
   CRYPTO_set_id_callback((unsigned long (*)())pthreads_thread_id);
   CRYPTO_set_locking_callback(locking_function);
   #endif
