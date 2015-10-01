@@ -140,13 +140,16 @@ YR_API void yr_finalize_thread(void)
 
 YR_API int yr_finalize(void)
 {
+  #ifdef HAVE_LIBCRYPTO
+  int i;
+  #endif
+
   yr_re_finalize_thread();
 
   if (--init_count > 0)
     return ERROR_SUCCESS;
 
   #ifdef HAVE_LIBCRYPTO
-  int i;
   for (i = 0; i < CRYPTO_num_locks(); i ++)
     pthread_mutex_destroy(&locks[i]);
   OPENSSL_free(locks);
