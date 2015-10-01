@@ -73,7 +73,7 @@ limitations under the License.
 
 
 #define MAX_PE_SECTIONS              96
-#define MAX_PE_IMPORTS               256
+#define MAX_PE_IMPORTS               16384
 #define MAX_PE_EXPORTS               65535
 
 
