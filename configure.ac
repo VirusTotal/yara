@@ -28,6 +28,10 @@ case $host_alias in
      i?86-*-mingw*) CFLAGS="$CFLAGS -D__MINGW_USE_VC2005_COMPAT" ;;
 esac
 
+case $host_os in
+    darwin*) CFLAGS="$CFLAGS -I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib" ;;
+esac
+
 
 AC_ARG_ENABLE([profiling],
   [AS_HELP_STRING([--enable-profiling], [enable profiling support])],
