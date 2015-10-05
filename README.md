@@ -62,6 +62,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [osquery](http://www.osquery.io)
 * [Radare2](http://rada.re)
 * [Raytheon Cyber Products, Inc.](http://www.raytheoncyber.com/capabilities/products/sureview-threatprotection/)
+* [ReversingLabs](http://reversinglabs.com)
 * [RSA ECAT](http://www.emc.com/security/rsa-ecat.htm)
 * [Symantec](http://www.symantec.com)
 * [Tanium](http://www.tanium.com/)
