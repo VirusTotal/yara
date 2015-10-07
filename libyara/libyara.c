@@ -23,6 +23,10 @@ limitations under the License.
 #include <yara/modules.h>
 #include <yara/mem.h>
 
+#ifdef HAVE_LIBCRYPTO
+#include <openssl/crypto.h>
+#endif
+
 #ifdef _WIN32
 #define snprintf _snprintf
 #endif
@@ -42,6 +46,23 @@ static int init_count = 0;
 
 char lowercase[256];
 char altercase[256];
+
+#ifdef HAVE_LIBCRYPTO
+pthread_mutex_t *locks;
+
+unsigned long pthreads_thread_id(void)
+{
+  return (unsigned long) pthread_self();
+}
+
+void locking_function(int mode, int n, const char *file, int line)
+{
+  if (mode & CRYPTO_LOCK)
+    pthread_mutex_lock(&locks[n]);
+  else
+    pthread_mutex_unlock(&locks[n]);
+}
+#endif
 
 //
 // yr_initialize
@@ -82,6 +103,15 @@ YR_API int yr_initialize(void)
   pthread_key_create(&recovery_state_key, NULL);
   #endif
 
+  #ifdef HAVE_LIBCRYPTO
+  locks = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
+  for (i = 0; i < CRYPTO_num_locks(); i++)
+    pthread_mutex_init(&locks[i], NULL);
+
+  CRYPTO_set_id_callback((unsigned long (*)())pthreads_thread_id);
+  CRYPTO_set_locking_callback(locking_function);
+  #endif
+
   FAIL_ON_ERROR(yr_re_initialize());
   FAIL_ON_ERROR(yr_modules_initialize());
 
@@ -113,10 +143,20 @@ YR_API void yr_finalize_thread(void)
 
 YR_API int yr_finalize(void)
 {
+  #ifdef HAVE_LIBCRYPTO
+  int i;
+  #endif
+
   yr_re_finalize_thread();
 
   if (--init_count > 0)
     return ERROR_SUCCESS;
+
+  #ifdef HAVE_LIBCRYPTO
+  for (i = 0; i < CRYPTO_num_locks(); i ++)
+    pthread_mutex_destroy(&locks[i]);
+  OPENSSL_free(locks);
+  #endif
 
   #ifdef _WIN32
   TlsFree(tidx_key);
