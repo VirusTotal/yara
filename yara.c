@@ -110,6 +110,7 @@ int negate = FALSE;
 int count = 0;
 int limit = 0;
 int timeout = 1000000;
+unsigned int stacksize = 16384;
 int threads = 8;
 
 
@@ -158,7 +159,7 @@ args_option_t options[] =
   OPT_INTEGER('a', "timeout", &timeout,
       "abort scanning after the given number of SECONDS", "SECONDS"),
 
-  OPT_INTEGER('k', "stack-size", &timeout,
+  OPT_INTEGER('k', "stack-size", &stacksize,
       "Set stack size to allocate in exec() to BYTES", "BYTES"),
 
   OPT_BOOLEAN('r', "recursive", &recursive_search,
