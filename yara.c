@@ -158,6 +158,9 @@ args_option_t options[] =
   OPT_INTEGER('a', "timeout", &timeout,
       "abort scanning after the given number of SECONDS", "SECONDS"),
 
+  OPT_INTEGER('k', "stack-size", &timeout,
+      "Set stack size to allocate in exec() to BYTES", "BYTES"),
+
   OPT_BOOLEAN('r', "recursive", &recursive_search,
       "recursively search directories"),
 
