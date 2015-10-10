@@ -386,6 +386,7 @@ typedef struct _YR_SCAN_CONTEXT
 
   int flags;
   int tidx;
+  unsigned int stacksize;
 
   void* user_data;
 
