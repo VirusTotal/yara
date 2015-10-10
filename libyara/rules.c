@@ -315,7 +315,8 @@ YR_API int yr_rules_scan_mem_blocks(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int timeout)
+    int timeout,
+    unsigned int stacksize)
 {
   YR_EXTERNAL_VARIABLE* external;
   YR_RULE* rule;
@@ -358,6 +359,7 @@ YR_API int yr_rules_scan_mem_blocks(
   context.objects_table = NULL;
   context.matches_arena = NULL;
   context.matching_strings_arena = NULL;
+  context.stacksize = stacksize;
 
   yr_set_tidx(tidx);
 
@@ -524,7 +526,8 @@ YR_API int yr_rules_scan_mem(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int timeout)
+    int timeout,
+    unsigned int stacksize)
 {
   YR_MEMORY_BLOCK block;
 
@@ -539,7 +542,8 @@ YR_API int yr_rules_scan_mem(
       flags,
       callback,
       user_data,
-      timeout);
+      timeout,
+      stacksize);
 }
 
 
@@ -549,7 +553,8 @@ YR_API int yr_rules_scan_file(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int timeout)
+    int timeout,
+    unsigned int stacksize)
 {
   YR_MAPPED_FILE mfile;
 
@@ -564,7 +569,8 @@ YR_API int yr_rules_scan_file(
         flags,
         callback,
         user_data,
-        timeout);
+        timeout,
+        stacksize);
 
     yr_filemap_unmap(&mfile);
   }
@@ -578,7 +584,8 @@ YR_API int yr_rules_scan_fd(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int timeout)
+    int timeout,
+    unsigned int stacksize)
 {
   YR_MAPPED_FILE mfile;
   
@@ -593,7 +600,8 @@ YR_API int yr_rules_scan_fd(
         flags,
         callback,
         user_data,
-        timeout);
+        timeout,
+        stacksize);
 
     yr_filemap_unmap(&mfile);
   }
@@ -607,7 +615,8 @@ YR_API int yr_rules_scan_proc(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int timeout)
+    int timeout,
+    unsigned int stacksize)
 {
   YR_MEMORY_BLOCK* first_block;
   YR_MEMORY_BLOCK* next_block;
@@ -622,7 +631,8 @@ YR_API int yr_rules_scan_proc(
         flags | SCAN_FLAGS_PROCESS_MEMORY,
         callback,
         user_data,
-        timeout);
+        timeout,
+        stacksize);
 
   block = first_block;
 
