@@ -89,6 +89,8 @@ typedef struct _QUEUED_FILE {
 #define MAX_ARGS_EXT_VAR        32
 #define MAX_ARGS_MODULE_DATA    32
 
+#define DEFAULT_STACK_SIZE   16384
+
 char* tags[MAX_ARGS_TAG + 1];
 char* identifiers[MAX_ARGS_IDENTIFIER + 1];
 char* ext_vars[MAX_ARGS_EXT_VAR + 1];
@@ -110,7 +112,7 @@ int negate = FALSE;
 int count = 0;
 int limit = 0;
 int timeout = 1000000;
-unsigned int stacksize = 16384;
+unsigned int stacksize = DEFAULT_STACK_SIZE;
 int threads = 8;
 
 
