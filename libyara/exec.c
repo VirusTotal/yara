@@ -34,7 +34,6 @@ limitations under the License.
 #include <yara.h>
 
 
-#define STACK_SIZE 16384
 #define MEM_SIZE   MAX_LOOP_NESTING * LOOP_LOCAL_VARS
 
 typedef union _STACK_ITEM {
@@ -51,7 +50,7 @@ typedef union _STACK_ITEM {
 
 #define push(x)  \
     do { \
-      if (sp < STACK_SIZE) stack[sp++] = (x); \
+      if (sp < context->stacksize) stack[sp++] = (x); \
       else return ERROR_EXEC_STACK_OVERFLOW; \
     } while(0)
 
@@ -189,7 +188,7 @@ int yr_execute_code(
   clock_t start = clock();
   #endif
 
-  stack = (STACK_ITEM *) yr_malloc(STACK_SIZE * sizeof(STACK_ITEM));
+  stack = (STACK_ITEM *) yr_malloc(context->stacksize * sizeof(STACK_ITEM));
 
   if (stack == NULL)
     return ERROR_INSUFICIENT_MEMORY;
