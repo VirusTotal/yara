@@ -162,7 +162,7 @@ args_option_t options[] =
       "abort scanning after the given number of SECONDS", "SECONDS"),
 
   OPT_INTEGER('k', "stack-size", &stacksize,
-      "Set stack size to allocate in exec() to BYTES", "BYTES"),
+      "Set stack size to allocate in exec() to SLOTS (default=16384)", "SLOTS"),
 
   OPT_BOOLEAN('r', "recursive", &recursive_search,
       "recursively search directories"),
