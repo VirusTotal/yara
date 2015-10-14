@@ -1500,6 +1500,8 @@ void pe_parse_com(
       g++;
       guid_size -= 16;
     }
+
+    set_integer(g, pe->object, "number_of_dotnet_guids");
   }
 
   // Parse the #~ stream, which includes various tables of interest.
@@ -2806,6 +2808,7 @@ begin_declarations;
   end_struct_array("dotnet_streams");
   declare_integer("number_of_dotnet_streams");
   declare_string_array("dotnet_guids");
+  declare_integer("number_of_dotnet_guids");
   begin_struct_array("dotnet_resources");
     declare_integer("offset");
     declare_integer("length");
