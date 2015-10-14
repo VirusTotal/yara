@@ -458,10 +458,202 @@ typedef struct _RICH_SIGNATURE {
 #define RICH_DANS 0x536e6144 // "DanS"
 #define RICH_RICH 0x68636952 // "Rich"
 
-typedef struct _RICH_DATA {
-    size_t len;
-    BYTE* raw_data;
-    BYTE* clear_data;
-} RICH_DATA, *PRICH_DATA;
+
+//
+// CLI header.
+// ECMA-335 Section II.25.3.3
+//
+typedef struct _CLI_HEADER {
+    DWORD Size; // Called "Cb" in documentation.
+    WORD MajorRuntimeVersion;
+    WORD MinorRuntimeVersion;
+    IMAGE_DATA_DIRECTORY MetaData;
+    DWORD Flags;
+    DWORD EntryPointToken;
+    IMAGE_DATA_DIRECTORY Resources;
+    IMAGE_DATA_DIRECTORY StrongNameSignature;
+    ULONGLONG CodeManagerTable;
+    IMAGE_DATA_DIRECTORY VTableFixups;
+    ULONGLONG ExportAddressTableJumps;
+    ULONGLONG ManagedNativeHeader;
+} CLI_HEADER, *PCLI_HEADER;
+
+#define NET_METADATA_MAGIC 0x424a5342
+
+//
+// CLI MetaData
+// ECMA-335 Section II.24.2.1
+//
+// Note: This is only part of the struct, as the rest of it is variable length.
+//
+typedef struct _NET_METADATA {
+    DWORD Magic;
+    WORD MajorVersion;
+    WORD MinorVersion;
+    DWORD Reserved;
+    DWORD Length;
+    char Version[0];
+} NET_METADATA, *PNET_METADATA;
+
+#define DOTNET_STREAM_NAME_SIZE 32
+
+//
+// CLI Stream Header
+// ECMA-335 Section II.24.2.2
+//
+typedef struct _STREAM_HEADER {
+    DWORD Offset;
+    DWORD Size;
+    char Name[0];
+} STREAM_HEADER, *PSTREAM_HEADER;
+
+
+//
+// CLI #~ Stream Header
+// ECMA-335 Section II.24.2.6
+//
+typedef struct _TILDE_HEADER {
+    DWORD Reserved1;
+    BYTE MajorVersion;
+    BYTE MinorVersion;
+    BYTE HeapSizes;
+    BYTE Reserved2;
+    ULONGLONG Valid;
+    ULONGLONG Sorted;
+} TILDE_HEADER, *PTILDE_HEADER;
+
+// These are the bit positions in Valid which will be set if the table
+// exists.
+#define BIT_MODULE                   0x00
+#define BIT_TYPEREF                  0x01
+#define BIT_TYPEDEF                  0x02
+#define BIT_FIELDPTR                 0x03 // Not documented in ECMA-335
+#define BIT_FIELD                    0x04
+#define BIT_METHODDEFPTR             0x05 // Not documented in ECMA-335
+#define BIT_METHODDEF                0x06
+#define BIT_PARAMPTR                 0x07 // Not documented in ECMA-335
+#define BIT_PARAM                    0x08
+#define BIT_INTERFACEIMPL            0x09
+#define BIT_MEMBERREF                0x0A
+#define BIT_CONSTANT                 0x0B
+#define BIT_CUSTOMATTRIBUTE          0x0C
+#define BIT_FIELDMARSHAL             0x0D
+#define BIT_DECLSECURITY             0x0E
+#define BIT_CLASSLAYOUT              0x0F
+#define BIT_FIELDLAYOUT              0x10
+#define BIT_STANDALONESIG            0x11
+#define BIT_EVENTMAP                 0x12
+#define BIT_EVENTPTR                 0x13 // Not documented in ECMA-335
+#define BIT_EVENT                    0x14
+#define BIT_PROPERTYMAP              0x15
+#define BIT_PROPERTYPTR              0x16 // Not documented in ECMA-335
+#define BIT_PROPERTY                 0x17
+#define BIT_METHODSEMANTICS          0x18
+#define BIT_METHODIMPL               0x19
+#define BIT_MODULEREF                0x1A
+#define BIT_TYPESPEC                 0x1B
+#define BIT_IMPLMAP                  0x1C
+#define BIT_FIELDRVA                 0x1D
+// These two are not documented in ECMA-335 nor is it clear what the format
+// is. I have yet to see them in the wild too.
+//#define BIT_ENCLOG                 0x1E // Not documented in ECMA-335
+//#define BIT_ENCMAP                 0x1F // Not documented in ECMA-335
+#define BIT_ASSEMBLY                 0x20
+#define BIT_ASSEMBLYPROCESSOR        0x21
+#define BIT_ASSEMBLYOS               0x22
+#define BIT_ASSEMBLYREF              0x23
+#define BIT_ASSEMBLYREFPROCESSOR     0x24
+#define BIT_ASSEMBLYREFOS            0x25
+#define BIT_FILE                     0x26
+#define BIT_EXPORTEDTYPE             0x27
+#define BIT_MANIFESTRESOURCE         0x28
+#define BIT_NESTEDCLASS              0x29
+#define BIT_GENERICPARAM             0x2A
+#define BIT_METHODSPEC               0x2B
+#define BIT_GENERICPARAMCONSTRAINT   0x2C
+// These are not documented in ECMA-335 nor is it clear what the format is.
+// They are for debugging information as far as I can tell.
+//#define BIT_DOCUMENT               0x30
+//#define BIT_METHODDEBUGINFORMATION 0x31
+//#define BIT_LOCALSCOPE             0x32
+//#define BIT_LOCALVARIABLE          0x33
+//#define BIT_LOCALCONSTANT          0x34
+//#define BIT_IMPORTSCOPE            0x35
+//#define BIT_STATEMACHINEMETHOD     0x36
+
+//
+// Module table
+// ECMA-335 Section II.22.30
+//
+typedef struct _MODULE_TABLE {
+    WORD Generation;
+    union {
+        WORD Name_Short;
+        DWORD Name_Long;
+    } Name;
+    union {
+        WORD Mvid_Short;
+        DWORD Mvid_Long;
+    } Mvid;
+    union {
+        WORD EncId_Short;
+        DWORD EncId_Long;
+    } EncId;
+    union {
+        WORD EncBaseId_Short;
+        DWORD EncBaseId_Long;
+    } EncBaseId;
+} MODULE_TABLE, *PMODULE_TABLE;
+
+//
+// Assembly Table
+// ECMA-335 Section II.22.2
+//
+typedef struct _ASSEMBLY_TABLE {
+    DWORD HashAlgId;
+    WORD MajorVersion;
+    WORD MinorVersion;
+    WORD BuildNumber;
+    WORD RevisionNumber;
+    DWORD Flags;
+    union {
+        WORD PublicKey_Short;
+        DWORD PublicKey_Long;
+    } PublicKey;
+    union {
+        WORD Name_Short;
+        DWORD Name_Long;
+    } Name;
+} ASSEMBLY_TABLE, *PASSEMBLY_TABLE;
+
+//
+// Manifest Resource Table
+// ECMA-335 Section II.22.24
+//
+typedef struct _MANIFESTRESOURCE_TABLE {
+    DWORD Offset;
+    DWORD Flags;
+    union {
+        WORD Name_Short;
+        DWORD Name_Long;
+    } Name;
+    union {
+        WORD Implementation_Short;
+        DWORD Implementation_Long;
+    } Implementation;
+} MANIFESTRESOURCE_TABLE, *PMANIFESTRESOURCE_TABLE;
+
+//
+// ModuleRef Table
+// ECMA-335 Section II.22.31
+//
+// This is a short table, but necessary because the field size can change.
+//
+typedef struct _MODULEREF_TABLE {
+  union {
+      WORD Name_Short;
+      DWORD Name_Long;
+  } Name;
+} MODULEREF_TABLE, *PMODULEREF_TABLE;
 
 #pragma pack(pop)
