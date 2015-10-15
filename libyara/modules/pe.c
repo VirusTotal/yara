@@ -657,7 +657,6 @@ void pe_parse_version_info(
     PE* pe)
 {
   PVERSION_INFO version_info;
-  PVERSION_INFO string_file_info;
 
   int64_t version_info_offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
 
@@ -675,25 +674,34 @@ void pe_parse_version_info(
   if (strcmp_w(version_info->Key, "VS_VERSION_INFO") != 0)
     return;
 
-  string_file_info = ADD_OFFSET(
+  version_info = ADD_OFFSET(
       version_info, sizeof(VERSION_INFO) + 86);
 
-  while(fits_in_pe(pe, string_file_info->Key, sizeof("StringFileInfo") * 2) &&
-        strcmp_w(string_file_info->Key, "StringFileInfo") == 0 &&
-        string_file_info->Length != 0)
+  while(fits_in_pe(pe, version_info->Key, sizeof("VarFileInfo") * 2) &&
+        strcmp_w(version_info->Key, "VarFileInfo") == 0 &&
+        version_info->Length != 0)
+  {
+    version_info = ADD_OFFSET(
+        version_info,
+        version_info->Length);
+  }
+
+  while(fits_in_pe(pe, version_info->Key, sizeof("StringFileInfo") * 2) &&
+        strcmp_w(version_info->Key, "StringFileInfo") == 0 &&
+        version_info->Length != 0)
   {
     PVERSION_INFO string_table = ADD_OFFSET(
-        string_file_info,
+        version_info,
         sizeof(VERSION_INFO) + 30);
 
-    string_file_info = ADD_OFFSET(
-        string_file_info,
-        string_file_info->Length);
+    version_info = ADD_OFFSET(
+        version_info,
+        version_info->Length);
 
     while (struct_fits_in_pe(pe, string_table, VERSION_INFO) &&
            wide_string_fits_in_pe(pe, string_table->Key) &&
            string_table->Length != 0 &&
-           string_table < string_file_info)
+           string_table < version_info)
     {
       PVERSION_INFO string = ADD_OFFSET(
           string_table,
