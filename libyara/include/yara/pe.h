@@ -554,10 +554,8 @@ typedef struct _TILDE_HEADER {
 #define BIT_TYPESPEC                 0x1B
 #define BIT_IMPLMAP                  0x1C
 #define BIT_FIELDRVA                 0x1D
-// These two are not documented in ECMA-335 nor is it clear what the format
-// is. I have yet to see them in the wild too.
-//#define BIT_ENCLOG                 0x1E // Not documented in ECMA-335
-//#define BIT_ENCMAP                 0x1F // Not documented in ECMA-335
+#define BIT_ENCLOG                   0x1E // Not documented in ECMA-335
+#define BIT_ENCMAP                   0x1F // Not documented in ECMA-335
 #define BIT_ASSEMBLY                 0x20
 #define BIT_ASSEMBLYPROCESSOR        0x21
 #define BIT_ASSEMBLYOS               0x22

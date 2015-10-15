@@ -1259,11 +1259,12 @@ char* pe_get_dotnet_string(
   size_t remaining;
 
   // Start of string must be within boundary
-  if (!(string_offset >= pe->data && string_offset < pe->data + pe->data_size))
+  if (!(string_offset + string_index >= pe->data &&
+        string_offset + string_index < pe->data + pe->data_size))
     return NULL;
 
   // Calculate how much until end of boundary, don't scan past that.
-  remaining = (pe->data + pe->data_size) - string_offset;
+  remaining = (pe->data + pe->data_size) - (string_offset + string_index);
 
   // Search for a NULL terminator from string_offset, up to remaining.
   return strnstr((char *) (string_offset + string_index), "\0", remaining);
@@ -1307,11 +1308,10 @@ void pe_parse_com(
   PMODULEREF_TABLE moduleref_table;
   WORD streams;
   DWORD guid_size;
-  DWORD string_size;
   DWORD resource_size;
   DWORD implementation;
   int64_t metadata_root, offset, resource_base, resource_offset;
-  uint32_t row_size;
+  uint32_t row_size, counter;
   uint8_t* guid_offset = NULL;
   uint32_t* row_offset = NULL;
   uint8_t* table_offset = NULL;
@@ -1454,14 +1454,11 @@ void pe_parse_com(
     // instead of a #~ (215e1b54ae1aac153e55596e6f1a4350). This isn't in the
     // documentation anywhere but the structure is the same. I'm chosing not
     // to parse it for now.
-    else if (strncmp(stream_name, "#~", 2) == 0)
-    {
+    else if (strncmp(stream_name, "#~", 2) == 0 && tilde_header == NULL)
       tilde_header = (PTILDE_HEADER) ((uint8_t*) pe->data + metadata_root + stream_header->Offset);
-    }
-    else if (strncmp(stream_name, "#Strings", 8) == 0)
+    else if (strncmp(stream_name, "#Strings", 8) == 0 && string_offset == NULL)
     {
       string_offset = pe->data + metadata_root + stream_header->Offset;
-      string_size = stream_header->Size;
     }
 
     // Stream name is padded to a multiple of 4.
@@ -1845,10 +1842,11 @@ void pe_parse_com(
           table_offset += (typedef_index_size + (index_size * 2)) * num_rows;
           break;
         case BIT_MODULEREF:
-          set_integer(num_rows, pe->object, "number_of_dotnet_modulerefs");
-
           row_ptr = table_offset;
 
+          // Can't use 'g' here because we only set the string if it is not
+          // NULL. Instead use 'counter'.
+          counter = 0;
           for (g = 0; g < num_rows; g++)
           {
             moduleref_table = (PMODULEREF_TABLE) row_ptr;
@@ -1857,10 +1855,16 @@ void pe_parse_com(
                 DOTNET_STRING_INDEX(string_index_size,
                 moduleref_table->Name));
             if (name != NULL)
+            {
               set_string(name, pe->object, "dotnet_modulerefs[%i]", g);
+              counter++;
+            }
 
             row_ptr += string_index_size;
           }
+
+          set_integer(counter, pe->object, "number_of_dotnet_modulerefs");
+
           table_offset += (string_index_size) * num_rows;
           break;
         case BIT_TYPESPEC:
@@ -1878,6 +1882,12 @@ void pe_parse_com(
           break;
         case BIT_FIELDRVA:
           table_offset += (4 + field_index_size) * num_rows;
+          break;
+        case BIT_ENCLOG:
+          table_offset += (4 + 4) * num_rows;
+          break;
+        case BIT_ENCMAP:
+          table_offset += (4) * num_rows;
           break;
         case BIT_ASSEMBLY:
           row_size = (4 + 2 + 2 + 2 + 2 + 4 + blob_index_size + (string_index_size * 2));
@@ -1956,8 +1966,6 @@ void pe_parse_com(
           table_offset += (4 + 4 + (string_index_size * 2) + index_size) * num_rows;
           break;
         case BIT_MANIFESTRESOURCE:
-          set_integer(num_rows, pe->object, "number_of_dotnet_resources");
-
           // This is an Implementation coded index with no 3rd bit specified.
           rows = max_rows(2, file_rows, assemblyref_rows);
 
@@ -1970,6 +1978,9 @@ void pe_parse_com(
 
           resource_base = pe_rva_to_offset(pe, cli_header->Resources.VirtualAddress);
 
+          // Using 'g' is insufficent since we may skip certain resources and
+          // it would give an inaccurate count in that case.
+          counter = 0;
           row_ptr = table_offset;
           // First DWORD is the offset.
           for (g = 0; g < num_rows; g++)
@@ -2023,7 +2034,10 @@ void pe_parse_com(
               set_string(name, pe->object, "dotnet_resources[%i].name", g);
 
             row_ptr += row_size;
+            counter++;
           }
+
+          set_integer(counter, pe->object, "number_of_dotnet_resources");
 
           table_offset += row_size * num_rows;
           break;
