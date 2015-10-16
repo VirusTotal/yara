@@ -1,3 +1,146 @@
+#include <string.h>
+#include <strings.h>
+
+#include <yara/utils.h>
+#include <yara/strutils.h>
+#include <yara/mem.h>
+#include <yara/pe_utils.h>
+#include <yara/pe.h>
+
+#if HAVE_LIBCRYPTO
+#include <openssl/asn1.h>
+#endif
+
+PIMAGE_NT_HEADERS32 pe_get_header(
+    uint8_t* data,
+    size_t data_size)
+{
+  PIMAGE_DOS_HEADER mz_header;
+  PIMAGE_NT_HEADERS32 pe_header;
+
+  size_t headers_size = 0;
+
+  if (data_size < sizeof(IMAGE_DOS_HEADER))
+    return NULL;
+
+  mz_header = (PIMAGE_DOS_HEADER) data;
+
+  if (mz_header->e_magic != IMAGE_DOS_SIGNATURE)
+    return NULL;
+
+  if (mz_header->e_lfanew < 0)
+    return NULL;
+
+  headers_size = mz_header->e_lfanew + \
+                 sizeof(pe_header->Signature) + \
+                 sizeof(IMAGE_FILE_HEADER);
+
+  if (data_size < headers_size)
+    return NULL;
+
+  pe_header = (PIMAGE_NT_HEADERS32) (data + mz_header->e_lfanew);
+
+  headers_size += pe_header->FileHeader.SizeOfOptionalHeader;
+
+  if (pe_header->Signature == IMAGE_NT_SIGNATURE &&
+      (pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_UNKNOWN ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AM33 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARMNT ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM64 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_EBC ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_IA64 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_M32R ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPS16 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPSFPU ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPSFPU16 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_POWERPC ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_POWERPCFP ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_R4000 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH3 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH3DSP ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH4 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH5 ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_THUMB ||
+       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_WCEMIPSV2) &&
+      data_size > headers_size)
+  {
+    return pe_header;
+  }
+  else
+  {
+    return NULL;
+  }
+}
+
+
+PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
+    PE* pe,
+    int entry)
+{
+  PIMAGE_DATA_DIRECTORY result;
+
+  if (IS_64BITS_PE(pe))
+    result = &pe->header64->OptionalHeader.DataDirectory[entry];
+  else
+    result = &pe->header->OptionalHeader.DataDirectory[entry];
+
+  return result;
+}
+
+
+int64_t pe_rva_to_offset(
+    PE* pe,
+    uint64_t rva)
+{
+  PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pe->header);
+
+  DWORD section_rva = 0;
+  DWORD section_offset = 0;
+  DWORD section_raw_size = 0;
+
+  int64_t result;
+
+  int i = 0;
+
+  while(i < yr_min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS))
+  {
+    if (struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
+    {
+      if (rva >= section->VirtualAddress &&
+          section_rva <= section->VirtualAddress)
+      {
+        section_rva = section->VirtualAddress;
+        section_offset = section->PointerToRawData;
+        section_raw_size = section->SizeOfRawData;
+      }
+
+      section++;
+      i++;
+    }
+    else
+    {
+      return -1;
+    }
+  }
+
+  // Many sections, have a raw (on disk) size smaller than their in-memory size.
+  // Check for rva's that map to this sparse space, and therefore have no valid
+  // associated file offset.
+
+  if ((rva - section_rva) >= section_raw_size)
+    return -1;
+
+  result = section_offset + (rva - section_rva);
+
+  // Check that the offset fits within the file.
+  if (result >= pe->data_size)
+    return -1;
+
+  return result;
+}
 
 
 #if !HAVE_TIMEGM
@@ -47,7 +190,7 @@ time_t timegm(
 // Taken from http://stackoverflow.com/questions/10975542/asn1-time-conversion
 // and cleaned up. Also uses timegm(3) instead of mktime(3).
 
-static time_t ASN1_get_time_t(
+time_t ASN1_get_time_t(
   	ASN1_TIME* time)
 {
   struct tm t;
@@ -95,7 +238,7 @@ static time_t ASN1_get_time_t(
 // "ordN" and if that fails, return NULL. The caller is responsible for freeing
 // the returned string.
 
-static char *ord_lookup(
+char *ord_lookup(
     char *dll,
     uint16_t ord)
 {
