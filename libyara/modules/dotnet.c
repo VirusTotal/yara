@@ -727,92 +727,81 @@ void dotnet_parse_tilde(
     if (!((tilde_header->Valid >> bit_check) & 0x01))
       continue;
 
+#define ROW_CHECK(name) \
+    rows.name = *(row_offset + matched_bits);
+
+#define ROW_CHECK_WITH_INDEX(name) \
+    ROW_CHECK(name); \
+    if (rows.name > 0xFFFF) \
+      index_sizes.name = 4;
+
     switch (bit_check)
     {
       case BIT_MODULE:
-        rows.module = *(row_offset + matched_bits);
+        ROW_CHECK(module);
         break;
       case BIT_MODULEREF:
-        rows.moduleref = *(row_offset + matched_bits);
-        if (rows.moduleref > 0xFFFF)
-          index_sizes.moduleref = 4;
+        ROW_CHECK_WITH_INDEX(moduleref);
         break;
       case BIT_ASSEMBLYREF:
-        rows.assemblyref = *(row_offset + matched_bits);
-        if (rows.assemblyref > 0xFFFF)
-          index_sizes.assemblyref = 4;
+        ROW_CHECK_WITH_INDEX(assemblyref);
         break;
       case BIT_ASSEMBLYREFPROCESSOR:
-        rows.assemblyrefprocessor = *(row_offset + matched_bits);
-        if (rows.assemblyrefprocessor > 0xFFFF)
-          index_sizes.assemblyrefprocessor = 4;
+        ROW_CHECK_WITH_INDEX(assemblyrefprocessor);
         break;
       case BIT_TYPEREF:
-        rows.typeref = *(row_offset + matched_bits);
+        ROW_CHECK(typeref);
+        break;
       case BIT_METHODDEF:
-        rows.methoddef = *(row_offset + matched_bits);
-        if (rows.methoddef > 0xFFFF)
-          index_sizes.methoddef = 4;
+        ROW_CHECK_WITH_INDEX(methoddef);
         break;
       case BIT_MEMBERREF:
-        rows.memberref = *(row_offset + matched_bits);
+        ROW_CHECK(memberref);
         break;
       case BIT_TYPEDEF:
-        rows.typedef_ = *(row_offset + matched_bits);
-        if (rows.typedef_ > 0xFFFF)
-          index_sizes.typedef_ = 4;
+        ROW_CHECK_WITH_INDEX(typedef_);
         break;
       case BIT_TYPESPEC:
-        rows.typespec = *(row_offset + matched_bits);
+        ROW_CHECK(typespec);
         break;
       case BIT_FIELD:
-        rows.field = *(row_offset + matched_bits);
-        if (rows.field > 0xFFFF)
-          index_sizes.field = 4;
+        ROW_CHECK_WITH_INDEX(field);
         break;
       case BIT_PARAM:
-        rows.param = *(row_offset + matched_bits);
-        if (rows.param > 0xFFFF)
-          index_sizes.param = 4;
+        ROW_CHECK_WITH_INDEX(param);
         break;
       case BIT_PROPERTY:
-        rows.property = *(row_offset + matched_bits);
-        if (rows.property > 0xFFFF)
-          index_sizes.property = 4;
+        ROW_CHECK_WITH_INDEX(property);
         break;
       case BIT_INTERFACEIMPL:
-        rows.interfaceimpl = *(row_offset + matched_bits);
+        ROW_CHECK(interfaceimpl);
         break;
       case BIT_EVENT:
-        rows.event = *(row_offset + matched_bits);
-        if (rows.event > 0xFFFF)
-          index_sizes.event = 4;
+        ROW_CHECK_WITH_INDEX(event);
         break;
       case BIT_STANDALONESIG:
-        rows.standalonesig = *(row_offset + matched_bits);
+        ROW_CHECK(standalonesig);
         break;
       case BIT_ASSEMBLY:
-        rows.assembly = *(row_offset + matched_bits);
+        ROW_CHECK(assembly);
         break;
       case BIT_FILE:
-        rows.file = *(row_offset + matched_bits);
+        ROW_CHECK(file);
         break;
       case BIT_EXPORTEDTYPE:
-        rows.exportedtype = *(row_offset + matched_bits);
+        ROW_CHECK(exportedtype);
         break;
       case BIT_MANIFESTRESOURCE:
-        rows.manifestresource = *(row_offset + matched_bits);
+        ROW_CHECK(manifestresource);
         break;
       case BIT_GENERICPARAM:
-        rows.genericparam = *(row_offset + matched_bits);
-        if (rows.genericparam > 0xFFFF)
-          index_sizes.genericparam = 4;
+        ROW_CHECK_WITH_INDEX(genericparam);
         break;
       case BIT_GENERICPARAMCONSTRAINT:
-        rows.genericparamconstraint = *(row_offset + matched_bits);
+        ROW_CHECK(genericparamconstraint);
         break;
       case BIT_METHODSPEC:
-        rows.methodspec = *(row_offset + matched_bits);
+        ROW_CHECK(methodspec);
         break;
       default:
         break;
