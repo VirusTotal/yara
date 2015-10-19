@@ -637,7 +637,7 @@ void dotnet_parse_tilde_2(
       case BIT_METHODSPEC:
         row_count = max_rows(2, rows.methoddef, rows.memberref);
 
-        if (row_count > (0xFFFF >> 0x1))
+        if (row_count > (0xFFFF >> 0x01))
           index_size = 4;
         else
           index_size = 2;
