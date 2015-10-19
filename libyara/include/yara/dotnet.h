@@ -196,4 +196,55 @@ typedef struct _MODULEREF_TABLE {
       DWORD Name_Long;
   } Name;
 } MODULEREF_TABLE, *PMODULEREF_TABLE;
+
+
+// Used to return offsets to the various headers.
+typedef struct _STREAMS {
+    PSTREAM_HEADER guid;
+    PSTREAM_HEADER tilde;
+    PSTREAM_HEADER string;
+} STREAMS, *PSTREAMS;
+
+
+typedef struct _ROWS {
+    uint32_t module;
+    uint32_t moduleref;
+    uint32_t assemblyref;
+    uint32_t typeref;
+    uint32_t methoddef;
+    uint32_t memberref;
+    uint32_t typedef_;
+    uint32_t typespec;
+    uint32_t field;
+    uint32_t param;
+    uint32_t property;
+    uint32_t interfaceimpl;
+    uint32_t event;
+    uint32_t standalonesig;
+    uint32_t assembly;
+    uint32_t file;
+    uint32_t exportedtype;
+    uint32_t manifestresource;
+    uint32_t genericparam;
+    uint32_t genericparamconstraint;
+    uint32_t methodspec;
+    uint32_t assemblyrefprocessor;
+} ROWS, *PROWS;
+
+
+typedef struct _INDEX_SIZES {
+    uint8_t string;
+    uint8_t guid;
+    uint8_t blob;
+    uint8_t field;
+    uint8_t methoddef;
+    uint8_t param;
+    uint8_t event;
+    uint8_t typedef_;
+    uint8_t property;
+    uint8_t moduleref;
+    uint8_t assemblyrefprocessor;
+    uint8_t assemblyref;
+    uint8_t genericparam;
+} INDEX_SIZES, *PINDEX_SIZES;
 #endif
