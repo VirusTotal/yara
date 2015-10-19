@@ -68,6 +68,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Tanium](http://www.tanium.com/)
 * [ThreatConnect](http://www.threatconnect.com)
 * [ThreatStream, Inc.](http://threatstream.com)
+* [Thug](https://github.com/buffer/thug)
 * [Trend Micro](http://www.trendmicro.com)
 * [VirusTotal Intelligence](https://www.virustotal.com/intelligence/)
 * [We Watch Your Website](http://www.wewatchyourwebsite.com/)
