@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef YR_HASH_H
 #define YR_HASH_H
 
+#include <yara/utils.h>
 
 typedef struct _YR_HASH_TABLE_ENTRY
 {
