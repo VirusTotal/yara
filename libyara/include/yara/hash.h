@@ -41,23 +41,23 @@ typedef struct _YR_HASH_TABLE
 typedef int (*YR_HASH_TABLE_FREE_VALUE_FUNC)(void* value);
 
 
-int yr_hash_table_create(
+YR_API int yr_hash_table_create(
     int size,
     YR_HASH_TABLE** table);
 
 
-void yr_hash_table_destroy(
+YR_API void yr_hash_table_destroy(
     YR_HASH_TABLE* table,
     YR_HASH_TABLE_FREE_VALUE_FUNC free_value);
 
 
-void* yr_hash_table_lookup(
+YR_API void* yr_hash_table_lookup(
     YR_HASH_TABLE* table,
     const char* key,
     const char* ns);
 
 
-int yr_hash_table_add(
+YR_API int yr_hash_table_add(
     YR_HASH_TABLE* table,
     const char* key,
     const char* ns,
