@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013. Victor M. Alvarez [plusvic@gmail.com].
+Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,26 +18,15 @@ limitations under the License.
 #include <stddef.h>
 #include <string.h>
 
-#include "arena.h"
-#include "atoms.h"
-#include "mem.h"
-#include "utils.h"
-#include "yara.h"
+#include <yara/arena.h>
+#include <yara/ahocorasick.h>
+#include <yara/error.h>
+#include <yara/utils.h>
+#include <yara/mem.h>
 
 
 #define MAX_TABLE_BASED_STATES_DEPTH 1
 
-#ifdef _MSC_VER
-#define inline __inline
-#endif
-
-#ifndef min
-#define min(x, y) ((x < y) ? (x) : (y))
-#endif
-
-#ifndef max
-#define max(x, y) ((x > y) ? (x) : (y))
-#endif
 
 typedef struct _QUEUE_NODE
 {
@@ -76,7 +65,7 @@ int _yr_ac_queue_push(
 {
   QUEUE_NODE* pushed_node;
 
-  pushed_node = yr_malloc(sizeof(QUEUE_NODE));
+  pushed_node = (QUEUE_NODE*) yr_malloc(sizeof(QUEUE_NODE));
 
   if (pushed_node == NULL)
     return ERROR_INSUFICIENT_MEMORY;
@@ -368,7 +357,7 @@ YR_AC_STATE* _yr_ac_create_state(
 // be called after all the strings have been added to the automaton.
 //
 
-void yr_ac_create_failure_links(
+int yr_ac_create_failure_links(
     YR_ARENA* arena,
     YR_AC_AUTOMATON* automaton)
 {
@@ -398,7 +387,7 @@ void yr_ac_create_failure_links(
 
   while (state != NULL)
   {
-    _yr_ac_queue_push(&queue, state);
+    FAIL_ON_ERROR(_yr_ac_queue_push(&queue, state));
     state->failure = root_state;
     state = _yr_ac_next_transition(root_state, &transition);
   }
@@ -431,7 +420,7 @@ void yr_ac_create_failure_links(
 
     while (transition_state != NULL)
     {
-      _yr_ac_queue_push(&queue, transition_state);
+      FAIL_ON_ERROR(_yr_ac_queue_push(&queue, transition_state));
       failure_state = current_state->failure;
 
       while (1)
@@ -480,6 +469,8 @@ void yr_ac_create_failure_links(
     }
 
   } // while(!__yr_ac_queue_is_empty(&queue))
+
+  return ERROR_SUCCESS;
 }
 
 
@@ -642,7 +633,7 @@ void _yr_ac_print_automaton_state(
     {
       printf("{ ");
 
-      for (i = 0; i < min(match->string->length, 10); i++)
+      for (i = 0; i < yr_min(match->string->length, 10); i++)
         printf("%02x ", match->string->string[i]);
 
       printf("}");
@@ -651,7 +642,7 @@ void _yr_ac_print_automaton_state(
     {
       printf("/");
 
-      for (i = 0; i < min(match->string->length, 10); i++)
+      for (i = 0; i < yr_min(match->string->length, 10); i++)
         printf("%c", match->string->string[i]);
 
       printf("/");
@@ -660,7 +651,7 @@ void _yr_ac_print_automaton_state(
     {
       printf("\"");
 
-      for (i = 0; i < min(match->string->length, 10); i++)
+      for (i = 0; i < yr_min(match->string->length, 10); i++)
         printf("%c", match->string->string[i]);
 
       printf("\"");

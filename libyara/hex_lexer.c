@@ -9,7 +9,7 @@
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 5
-#define YY_FLEX_SUBMINOR_VERSION 35
+#define YY_FLEX_SUBMINOR_VERSION 39
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -47,7 +47,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -55,7 +54,6 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
-#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -85,6 +83,8 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
+
+#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -189,9 +189,16 @@ typedef size_t yy_size_t;
      */
     #define  YY_LESS_LINENO(n) \
             do { \
-                yy_size_t yyl;\
+                int yyl;\
                 for ( yyl = n; yyl < yyleng; ++yyl )\
                     if ( yytext[yyl] == '\n' )\
+                        --yylineno;\
+            }while(0)
+    #define YY_LINENO_REWIND_TO(dst) \
+            do {\
+                const char *p;\
+                for ( p = yy_cp-1; p >= (dst); --p)\
+                    if ( *p == '\n' )\
                         --yylineno;\
             }while(0)
     
@@ -339,7 +346,7 @@ void hex_yyfree (void * ,yyscan_t yyscanner );
 
 /* Begin user sect3 */
 
-#define hex_yywrap(n) 1
+#define hex_yywrap(yyscanner) 1
 #define YY_SKIP_YYWRAP
 
 typedef unsigned char YY_CHAR;
@@ -358,13 +365,13 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	yyleng = (size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
 
-#define YY_NUM_RULES 12
-#define YY_END_OF_BUFFER 13
+#define YY_NUM_RULES 14
+#define YY_END_OF_BUFFER 15
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -372,11 +379,11 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[23] =
+static yyconst flex_int16_t yy_accept[25] =
     {   0,
-        0,    0,    0,    0,   13,   11,   10,   10,   11,   11,
-        5,   12,    6,    7,    8,    9,    1,    2,    3,    4,
-        8,    0
+        0,    0,    0,    0,   15,   13,   11,   11,   12,   13,
+       13,    5,   10,    9,    9,    6,    7,    8,    1,    2,
+        3,    4,    7,    0
     } ;
 
 static yyconst flex_int32_t yy_ec[256] =
@@ -384,8 +391,8 @@ static yyconst flex_int32_t yy_ec[256] =
         1,    1,    1,    1,    1,    1,    1,    1,    2,    3,
         1,    1,    2,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    2,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    4,    5,    1,    6,    6,    6,
+        1,    2,    1,    1,    1,    1,    1,    1,    1,    4,
+        4,    1,    1,    1,    5,    1,    1,    6,    6,    6,
         6,    6,    6,    6,    6,    6,    6,    1,    1,    1,
         1,    1,    7,    1,    8,    8,    8,    8,    8,    8,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -394,7 +401,7 @@ static yyconst flex_int32_t yy_ec[256] =
 
         8,    8,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
+        1,    1,    4,    4,    4,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -416,40 +423,40 @@ static yyconst flex_int32_t yy_meta[11] =
         1,    1,    1,    1,    1,    2,    2,    2,    1,    1
     } ;
 
-static yyconst flex_int16_t yy_base[26] =
+static yyconst flex_int16_t yy_base[27] =
     {   0,
-        0,    0,    7,   14,   27,   28,   28,   28,   16,   15,
-       28,   28,   28,   28,   15,   28,   28,   28,   28,   28,
-       10,   28,   24,   13,   12
+        0,    0,   10,    0,   27,   28,   28,   28,   28,   19,
+       18,   28,   28,   28,   28,   28,   18,   28,   28,   28,
+       28,   28,   17,   28,   20,   19
     } ;
 
-static yyconst flex_int16_t yy_def[26] =
+static yyconst flex_int16_t yy_def[27] =
     {   0,
-       22,    1,   23,   23,   22,   22,   22,   22,   24,   25,
-       22,   22,   22,   22,   22,   22,   22,   22,   22,   22,
-       22,    0,   22,   22,   22
+       24,    1,   24,    3,   24,   24,   24,   24,   24,   25,
+       26,   24,   24,   24,   24,   24,   24,   24,   24,   24,
+       24,   24,   24,    0,   24,   24
     } ;
 
 static yyconst flex_int16_t yy_nxt[39] =
     {   0,
-        6,    7,    8,    6,    6,    9,   10,    9,   11,    6,
-       13,   14,   15,   19,   17,   21,   16,   13,   14,   15,
-       21,   20,   18,   16,   12,   12,   22,    5,   22,   22,
-       22,   22,   22,   22,   22,   22,   22,   22
+        6,    7,    8,    9,    6,   10,   11,   10,   12,    6,
+       13,   14,   15,   13,   16,   17,   13,   13,   13,   18,
+       21,   19,   23,   23,   22,   20,   24,    5,   24,   24,
+       24,   24,   24,   24,   24,   24,   24,   24
     } ;
 
 static yyconst flex_int16_t yy_chk[39] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        3,    3,    3,   25,   24,   21,    3,    4,    4,    4,
-       15,   10,    9,    4,   23,   23,    5,   22,   22,   22,
-       22,   22,   22,   22,   22,   22,   22,   22
+        3,    3,    3,    3,    3,    3,    3,    3,    3,    3,
+       26,   25,   23,   17,   11,   10,    5,   24,   24,   24,
+       24,   24,   24,   24,   24,   24,   24,   24
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static yyconst flex_int32_t yy_rule_can_match_eol[13] =
+static yyconst flex_int32_t yy_rule_can_match_eol[15] =
     {   0,
-0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,     };
+0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0,     };
 
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
@@ -460,7 +467,7 @@ static yyconst flex_int32_t yy_rule_can_match_eol[13] =
 #define YY_RESTORE_YY_MORE_OFFSET
 #line 1 "hex_lexer.l"
 /*
-Copyright (c) 2013. Victor M. Alvarez [plusvic@gmail.com].
+Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -477,21 +484,31 @@ limitations under the License.
 /* Lexical analyzer for hex strings */
 #line 20 "hex_lexer.l"
 
-#include "yara.h"
-#include "atoms.h"
-#include "mem.h"
-#include "re.h"
-#include "hex_grammar.h"
-#include "hex_lexer.h"
-#include "utils.h"
+/* Disable warnings for unused functions in this file.
 
-#include "config.h"
+As we redefine YY_FATAL_ERROR macro to use our own function hex_yyfatal, the
+yy_fatal_error function generated by Flex is not actually used, causing a
+compiler warning. Flex doesn't offer any options to remove the yy_fatal_error
+function. When they include something like %option noyy_fatal_error as they do
+with noyywrap then we can remove this pragma.
+*/
 
-#ifdef DMALLOC
-#include <dmalloc.h>
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 
-#ifdef WIN32
+#include <setjmp.h>
+
+#include <yara/limits.h>
+#include <yara/error.h>
+#include <yara/mem.h>
+#include <yara/re.h>
+#include <yara/strutils.h>
+#include <yara/hex_lexer.h>
+
+#include "hex_grammar.h"
+
+#ifdef _WIN32
 #define snprintf _snprintf
 #endif
 
@@ -506,7 +523,7 @@ limitations under the License.
 #define YY_NO_UNISTD_H 1
 #define YY_NO_INPUT 1
 
-#line 510 "hex_lexer.c"
+#line 527 "hex_lexer.c"
 
 #define INITIAL 0
 #define range 1
@@ -598,6 +615,10 @@ int hex_yyget_lineno (yyscan_t yyscanner );
 
 void hex_yyset_lineno (int line_number ,yyscan_t yyscanner );
 
+int hex_yyget_column  (yyscan_t yyscanner );
+
+void hex_yyset_column (int column_no ,yyscan_t yyscanner );
+
 YYSTYPE * hex_yyget_lval (yyscan_t yyscanner );
 
 void hex_yyset_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
@@ -642,7 +663,7 @@ static int input (yyscan_t yyscanner );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( yytext, yyleng, 1, yyout )
+#define ECHO do { if (fwrite( yytext, yyleng, 1, yyout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -653,7 +674,7 @@ static int input (yyscan_t yyscanner );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		yy_size_t n; \
+		size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -738,12 +759,6 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 68 "hex_lexer.l"
-
-
-
-#line 746 "hex_lexer.c"
-
     yylval = yylval_param;
 
 	if ( !yyg->yy_init )
@@ -772,6 +787,13 @@ YY_DECL
 		hex_yy_load_buffer_state(yyscanner );
 		}
 
+	{
+#line 79 "hex_lexer.l"
+
+
+
+#line 796 "hex_lexer.c"
+
 	while ( 1 )		/* loops until end-of-file is reached */
 		{
 		yy_cp = yyg->yy_c_buf_p;
@@ -788,7 +810,7 @@ YY_DECL
 yy_match:
 		do
 			{
-			register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
+			register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)] ;
 			if ( yy_accept[yy_current_state] )
 				{
 				yyg->yy_last_accepting_state = yy_current_state;
@@ -797,22 +819,18 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 23 )
+				if ( yy_current_state >= 25 )
 					yy_c = yy_meta[(unsigned int) yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 28 );
+		while ( yy_current_state != 24 );
+		yy_cp = yyg->yy_last_accepting_cpos;
+		yy_current_state = yyg->yy_last_accepting_state;
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
-		if ( yy_act == 0 )
-			{ /* have to back up */
-			yy_cp = yyg->yy_last_accepting_cpos;
-			yy_current_state = yyg->yy_last_accepting_state;
-			yy_act = yy_accept[yy_current_state];
-			}
 
 		YY_DO_BEFORE_ACTION;
 
@@ -841,7 +859,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 71 "hex_lexer.l"
+#line 82 "hex_lexer.l"
 {
 
   yylval->integer = xtoi(yytext);
@@ -850,7 +868,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 77 "hex_lexer.l"
+#line 88 "hex_lexer.l"
 {
 
   yytext[1] = '0'; // replace ? by 0
@@ -860,7 +878,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 84 "hex_lexer.l"
+#line 95 "hex_lexer.l"
 {
 
   yytext[0] = '0'; // replace ? by 0
@@ -870,7 +888,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 91 "hex_lexer.l"
+#line 102 "hex_lexer.l"
 {
 
   yylval->integer = 0x0000;
@@ -879,7 +897,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 97 "hex_lexer.l"
+#line 108 "hex_lexer.l"
 {
 
   BEGIN(range);
@@ -888,64 +906,73 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 103 "hex_lexer.l"
+#line 114 "hex_lexer.l"
 {
   return yytext[0];
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 107 "hex_lexer.l"
-{
-  return yytext[0];
-}
-	YY_BREAK
-case 8:
-YY_RULE_SETUP
-#line 111 "hex_lexer.l"
+#line 118 "hex_lexer.l"
 {
 
   yylval->integer = atoi(yytext);
   return _NUMBER_;
 }
 	YY_BREAK
-case 9:
+case 8:
 YY_RULE_SETUP
-#line 117 "hex_lexer.l"
+#line 124 "hex_lexer.l"
 {
 
   BEGIN(INITIAL);
   return yytext[0];
 }
 	YY_BREAK
-case 10:
-/* rule 10 can match eol */
+case 9:
+/* rule 9 can match eol */
 YY_RULE_SETUP
-#line 124 "hex_lexer.l"
-// skip whitespace
+#line 130 "hex_lexer.l"
+// skip whitespaces
 	YY_BREAK
-case 11:
+case 10:
 YY_RULE_SETUP
-#line 127 "hex_lexer.l"
+#line 132 "hex_lexer.l"
 {
 
-  if (yytext[0] >= 32 && yytext[0] < 127)
-  {
-    return yytext[0];
-  }
-  else
-  {
-    yyerror(yyscanner, lex_env, "non-ascii character");
-    yyterminate();
-  }
+  yyerror(yyscanner, lex_env, "invalid character in hex string jump");
+  yyterminate();
 }
+	YY_BREAK
+case 11:
+/* rule 11 can match eol */
+YY_RULE_SETUP
+#line 138 "hex_lexer.l"
+// skip whitespaces
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
 #line 140 "hex_lexer.l"
+{        // pass valid characters to the parser
+
+  return yytext[0];
+}
+	YY_BREAK
+case 13:
+YY_RULE_SETUP
+#line 145 "hex_lexer.l"
+{               // reject all other characters
+
+  yyerror(yyscanner, lex_env, "invalid character in hex string");
+  yyterminate();
+}
+	YY_BREAK
+case 14:
+YY_RULE_SETUP
+#line 151 "hex_lexer.l"
 ECHO;
 	YY_BREAK
-#line 949 "hex_lexer.c"
+#line 976 "hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(range):
 	yyterminate();
@@ -1013,7 +1040,8 @@ case YY_STATE_EOF(range):
 
 			else
 				{
-				yy_cp = yyg->yy_c_buf_p;
+				yy_cp = yyg->yy_last_accepting_cpos;
+				yy_current_state = yyg->yy_last_accepting_state;
 				goto yy_find_action;
 				}
 			}
@@ -1077,6 +1105,7 @@ case YY_STATE_EOF(range):
 			"fatal flex scanner internal error--no action found" );
 	} /* end of action switch */
 		} /* end of scanning one token */
+	} /* end of user's declarations */
 } /* end of hex_yylex */
 
 /* yy_get_next_buffer - try to read in a new buffer
@@ -1140,7 +1169,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 			{ /* Not enough room in the buffer - grow it. */
 
 			/* just a shorter name for the current buffer */
-			YY_BUFFER_STATE b = YY_CURRENT_BUFFER;
+			YY_BUFFER_STATE b = YY_CURRENT_BUFFER_LVALUE;
 
 			int yy_c_buf_p_offset =
 				(int) (yyg->yy_c_buf_p - b->yy_ch_buf);
@@ -1240,7 +1269,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 23 )
+			if ( yy_current_state >= 25 )
 				yy_c = yy_meta[(unsigned int) yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
@@ -1269,12 +1298,13 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 23 )
+		if ( yy_current_state >= 25 )
 			yy_c = yy_meta[(unsigned int) yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-	yy_is_jam = (yy_current_state == 22);
+	yy_is_jam = (yy_current_state == 24);
 
+	(void)yyg;
 	return yy_is_jam ? 0 : yy_current_state;
 }
 
@@ -1327,7 +1357,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( hex_yywrap(yyscanner ) )
-						return 0;
+						return EOF;
 
 					if ( ! yyg->yy_did_buffer_switch_on_eof )
 						YY_NEW_FILE;
@@ -1474,10 +1504,6 @@ static void hex_yy_load_buffer_state  (yyscan_t yyscanner)
 	hex_yyfree((void *) b ,yyscanner );
 }
 
-#ifndef __cplusplus
-extern int isatty (int );
-#endif /* __cplusplus */
-    
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
  * such as during a hex_yyrestart() or at EOF.
@@ -1502,7 +1528,7 @@ extern int isatty (int );
         b->yy_bs_column = 0;
     }
 
-        b->yy_is_interactive = file ? (isatty( fileno(file) ) > 0) : 0;
+        b->yy_is_interactive = 0;
     
 	errno = oerrno;
 }
@@ -1687,8 +1713,8 @@ YY_BUFFER_STATE hex_yy_scan_string (yyconst char * yystr , yyscan_t yyscanner)
 
 /** Setup the input buffer state to scan the given bytes. The next call to hex_yylex() will
  * scan from a @e copy of @a bytes.
- * @param bytes the byte buffer to scan
- * @param len the number of bytes in the buffer pointed to by @a bytes.
+ * @param yybytes the byte buffer to scan
+ * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  */
@@ -1696,7 +1722,8 @@ YY_BUFFER_STATE hex_yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t n, i;
+	yy_size_t n;
+	yy_size_t i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
@@ -1842,7 +1869,7 @@ void hex_yyset_lineno (int  line_number , yyscan_t yyscanner)
 
         /* lineno is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "hex_yyset_lineno called with no buffer" , yyscanner); 
+           YY_FATAL_ERROR( "hex_yyset_lineno called with no buffer" );
     
     yylineno = line_number;
 }
@@ -1857,7 +1884,7 @@ void hex_yyset_column (int  column_no , yyscan_t yyscanner)
 
         /* column is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "hex_yyset_column called with no buffer" , yyscanner); 
+           YY_FATAL_ERROR( "hex_yyset_column called with no buffer" );
     
     yycolumn = column_no;
 }
@@ -2081,14 +2108,16 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 140 "hex_lexer.l"
+#line 151 "hex_lexer.l"
 
 
 
 
-#ifdef WIN32
+#ifdef _WIN32
+#include <windows.h>
 extern DWORD recovery_state_key;
 #else
+#include <pthread.h>
 extern pthread_key_t recovery_state_key;
 #endif
 
@@ -2099,10 +2128,10 @@ void yyfatal(
 {
   jmp_buf* recovery_state;
 
-  #ifdef WIN32
-  recovery_state = TlsGetValue(recovery_state_key) ;
+  #ifdef _WIN32
+  recovery_state = (jmp_buf*) TlsGetValue(recovery_state_key) ;
   #else
-  recovery_state = pthread_getspecific(recovery_state_key);
+  recovery_state = (jmp_buf*) pthread_getspecific(recovery_state_key);
   #endif
 
   longjmp(*recovery_state, 1);
@@ -2110,38 +2139,41 @@ void yyfatal(
 
 void yyerror(
     yyscan_t yyscanner,
-    LEX_ENVIRONMENT* lex_env,
+    HEX_LEX_ENVIRONMENT* lex_env,
     const char *error_message)
 {
-  if (lex_env->last_error_message == NULL)
+  // if lex_env->last_error_code was set to some error code before
+  // don't overwrite it, we are interested in the first error, not in
+  // subsequent errors like "syntax error, unexpected $end" caused by
+  // early parser termination.
+
+  if (lex_env->last_error_code == ERROR_SUCCESS)
   {
-    lex_env->last_error_message = yr_strdup(error_message);
+    lex_env->last_error_code = ERROR_INVALID_HEX_STRING;
+
+    strlcpy(
+        lex_env->last_error_message,
+        error_message,
+        sizeof(lex_env->last_error_message));
   }
 }
 
+
 int yr_parse_hex_string(
-  const char* hex_string,
-  RE** re)
+    const char* hex_string,
+    int flags,
+    RE** re,
+    RE_ERROR* error)
 {
   yyscan_t yyscanner;
   jmp_buf recovery_state;
-  LEX_ENVIRONMENT lex_env;
+  HEX_LEX_ENVIRONMENT lex_env;
 
-  lex_env.last_error_message = NULL;
+  lex_env.last_error_code = ERROR_SUCCESS;
   lex_env.inside_or = 0;
+  lex_env.token_count = 0;
 
-  FAIL_ON_ERROR(yr_re_create(re));
-
-  // The RE_FLAGS_FAST_HEX_REGEXP flag indicates a regular expression derived
-  // from a hex string that can be matched by faster algorithm. These regular
-  // expressions come from hex strings not contaning alternatives
-  // (like in 01 02 | 03 04).
-  //
-  // This flag is unset later during parsing if necessary.
-
-  (*re)->flags |= RE_FLAGS_FAST_HEX_REGEXP;
-
-  #ifdef WIN32
+  #ifdef _WIN32
   TlsSetValue(recovery_state_key, (LPVOID) &recovery_state);
   #else
   pthread_setspecific(recovery_state_key, (void*) &recovery_state);
@@ -2150,22 +2182,34 @@ int yr_parse_hex_string(
   if (setjmp(recovery_state) != 0)
     return ERROR_INTERNAL_FATAL_ERROR;
 
+  FAIL_ON_ERROR(yr_re_create(re));
+
+  // The RE_FLAGS_FAST_HEX_REGEXP flag indicates a regular expression derived
+  // from a hex string that can be matched by faster algorithm. These regular
+  // expressions come from hex strings not contaning alternatives, like in:
+  // { ( 01 02 | 03 04) 05 06 }.
+  //
+  // This flag is unset later during parsing if alternatives are used.
+
+  (*re)->flags |= RE_FLAGS_FAST_HEX_REGEXP;
+
+  // Set RE_FLAGS_DOT_ALL because in hex strings the "dot" (?? in this case)
+  // must match all characters including new-line.
+
+  (*re)->flags |= RE_FLAGS_DOT_ALL;
+
   hex_yylex_init(&yyscanner);
   hex_yyset_extra(*re,yyscanner);
   hex_yy_scan_string(hex_string,yyscanner);
   yyparse(yyscanner, &lex_env);
   hex_yylex_destroy(yyscanner);
 
-  if (lex_env.last_error_message != NULL)
+  if (lex_env.last_error_code != ERROR_SUCCESS)
   {
-    (*re)->error_message = lex_env.last_error_message;
-    return ERROR_INVALID_HEX_STRING;
+    strlcpy(error->message, lex_env.last_error_message, sizeof(error->message));
+    return lex_env.last_error_code;
   }
 
-  return (*re)->error_code;
+  return ERROR_SUCCESS;
 }
-
-
-
-
 

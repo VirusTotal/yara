@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007. Victor M. Alvarez [plusvic@gmail.com].
+Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,30 +18,51 @@ limitations under the License.
 #include <stdio.h>
 #include <ctype.h>
 
-#include "mem.h"
-#include "re.h"
-#include "yara.h"
+#include <yara/error.h>
+#include <yara/re.h>
+#include <yara/modules.h>
+#include <yara/mem.h>
 
-#ifdef WIN32
+#ifdef HAVE_LIBCRYPTO
+#include <openssl/crypto.h>
+#endif
+
+#ifdef _WIN32
 #define snprintf _snprintf
 #endif
 
-#ifdef WIN32
-#else
-#include <pthread.h>
-#endif
 
-char lowercase[256];
-char altercase[256];
-
-#ifdef WIN32
+#ifdef _WIN32
+#include <windows.h>
 DWORD tidx_key;
 DWORD recovery_state_key;
 #else
+#include <pthread.h>
 pthread_key_t tidx_key;
 pthread_key_t recovery_state_key;
 #endif
 
+static int init_count = 0;
+
+char lowercase[256];
+char altercase[256];
+
+#ifdef HAVE_LIBCRYPTO
+pthread_mutex_t *locks;
+
+unsigned long pthreads_thread_id(void)
+{
+  return (unsigned long) pthread_self();
+}
+
+void locking_function(int mode, int n, const char *file, int line)
+{
+  if (mode & CRYPTO_LOCK)
+    pthread_mutex_lock(&locks[n]);
+  else
+    pthread_mutex_unlock(&locks[n]);
+}
+#endif
 
 //
 // yr_initialize
@@ -50,9 +71,15 @@ pthread_key_t recovery_state_key;
 // function from libyara.
 //
 
-void yr_initialize(void)
+YR_API int yr_initialize(void)
 {
   int i;
+
+  if (init_count > 0)
+  {
+    init_count++;
+    return ERROR_SUCCESS;
+  }
 
   for (i = 0; i < 256; i++)
   {
@@ -66,9 +93,9 @@ void yr_initialize(void)
     lowercase[i] = tolower(i);
   }
 
-  yr_heap_alloc();
+  FAIL_ON_ERROR(yr_heap_alloc());
 
-  #ifdef WIN32
+  #ifdef _WIN32
   tidx_key = TlsAlloc();
   recovery_state_key = TlsAlloc();
   #else
@@ -76,7 +103,21 @@ void yr_initialize(void)
   pthread_key_create(&recovery_state_key, NULL);
   #endif
 
-  yr_re_initialize();
+  #ifdef HAVE_LIBCRYPTO
+  locks = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
+  for (i = 0; i < CRYPTO_num_locks(); i++)
+    pthread_mutex_init(&locks[i], NULL);
+
+  CRYPTO_set_id_callback((unsigned long (*)())pthreads_thread_id);
+  CRYPTO_set_locking_callback(locking_function);
+  #endif
+
+  FAIL_ON_ERROR(yr_re_initialize());
+  FAIL_ON_ERROR(yr_modules_initialize());
+
+  init_count++;
+
+  return ERROR_SUCCESS;
 }
 
 
@@ -86,7 +127,7 @@ void yr_initialize(void)
 // Should be called by ALL threads using libyara before exiting.
 //
 
-void yr_finalize_thread(void)
+YR_API void yr_finalize_thread(void)
 {
   yr_re_finalize_thread();
 }
@@ -100,11 +141,24 @@ void yr_finalize_thread(void)
 // calls it.
 //
 
-void yr_finalize(void)
+YR_API int yr_finalize(void)
 {
+  #ifdef HAVE_LIBCRYPTO
+  int i;
+  #endif
+
   yr_re_finalize_thread();
 
-  #ifdef WIN32
+  if (--init_count > 0)
+    return ERROR_SUCCESS;
+
+  #ifdef HAVE_LIBCRYPTO
+  for (i = 0; i < CRYPTO_num_locks(); i ++)
+    pthread_mutex_destroy(&locks[i]);
+  OPENSSL_free(locks);
+  #endif
+
+  #ifdef _WIN32
   TlsFree(tidx_key);
   TlsFree(recovery_state_key);
   #else
@@ -112,8 +166,11 @@ void yr_finalize(void)
   pthread_key_delete(recovery_state_key);
   #endif
 
-  yr_re_finalize();
-  yr_heap_free();
+  FAIL_ON_ERROR(yr_re_finalize());
+  FAIL_ON_ERROR(yr_modules_finalize());
+  FAIL_ON_ERROR(yr_heap_free());
+
+  return ERROR_SUCCESS;
 }
 
 //
@@ -128,9 +185,9 @@ void yr_finalize(void)
 //                 thread.
 //
 
-void yr_set_tidx(int tidx)
+YR_API void yr_set_tidx(int tidx)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   TlsSetValue(tidx_key, (LPVOID) (tidx + 1));
   #else
   pthread_setspecific(tidx_key, (void*) (size_t) (tidx + 1));
@@ -148,9 +205,9 @@ void yr_set_tidx(int tidx)
 //    have any tidx associated.
 //
 
-int yr_get_tidx(void)
+YR_API int yr_get_tidx(void)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   return (int) TlsGetValue(tidx_key) - 1;
   #else
   return (int) (size_t) pthread_getspecific(tidx_key) - 1;

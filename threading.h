@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013. Victor M. Alvarez [plusvic@gmail.com].
+Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ limitations under the License.
 #ifndef YR_THREADING_H
 #define YR_THREADING_H
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #else
 #include <sys/stat.h>
@@ -26,7 +26,7 @@ limitations under the License.
 #include <semaphore.h>
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 
 typedef HANDLE SEMAPHORE;
 typedef HANDLE MUTEX;
