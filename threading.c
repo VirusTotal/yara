@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013. Victor M. Alvarez [plusvic@gmail.com].
+Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@ limitations under the License.
 
 #include <fcntl.h>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <errno.h>
 #endif
 
@@ -26,7 +26,7 @@ limitations under the License.
 int mutex_init(
     MUTEX* mutex)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   *mutex = CreateMutex(NULL, FALSE, NULL);
   if (*mutex == NULL)
     return GetLastError();
@@ -40,7 +40,7 @@ int mutex_init(
 void mutex_destroy(
     MUTEX* mutex)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   CloseHandle(*mutex);
   #else
   pthread_mutex_destroy(mutex);
@@ -51,7 +51,7 @@ void mutex_destroy(
 void mutex_lock(
     MUTEX* mutex)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   WaitForSingleObject(*mutex, INFINITE);
   #else
   pthread_mutex_lock(mutex);
@@ -62,7 +62,7 @@ void mutex_lock(
 void mutex_unlock(
     MUTEX* mutex)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   ReleaseMutex(*mutex);
   #else
   pthread_mutex_unlock(mutex);
@@ -74,7 +74,7 @@ int semaphore_init(
     SEMAPHORE* semaphore,
     int value)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   *semaphore = CreateSemaphore(NULL, value, 65535, NULL);
   if (*semaphore == NULL)
     return GetLastError();
@@ -100,7 +100,7 @@ int semaphore_init(
 void semaphore_destroy(
     SEMAPHORE* semaphore)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   CloseHandle(*semaphore);
   #else
   sem_close(*semaphore);
@@ -111,7 +111,7 @@ void semaphore_destroy(
 void semaphore_wait(
     SEMAPHORE* semaphore)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   WaitForSingleObject(*semaphore, INFINITE);
   #else
   sem_wait(*semaphore);
@@ -122,9 +122,9 @@ void semaphore_wait(
 void semaphore_release(
     SEMAPHORE* semaphore)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   ReleaseSemaphore(*semaphore, 1, NULL);
-  #else
+  #else   
   sem_post(*semaphore);
   #endif
 }
@@ -135,7 +135,7 @@ int create_thread(
     THREAD_START_ROUTINE start_routine,
     void* param)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   *thread = CreateThread(NULL, 0, start_routine, param, 0, NULL);
   if (*thread == NULL)
     return GetLastError();
@@ -150,13 +150,9 @@ int create_thread(
 void thread_join(
     THREAD* thread)
 {
-  #ifdef WIN32
+  #ifdef _WIN32
   WaitForSingleObject(*thread, INFINITE);
   #else
   pthread_join(*thread, NULL);
   #endif
 }
-
-
-
-

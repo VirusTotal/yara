@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007. Victor M. Alvarez [plusvic@gmail.com].
+Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ limitations under the License.
 #include <stdint.h>
 #include <string.h>
 
-#include "hash.h"
-#include "mem.h"
+#include <yara/hash.h>
+#include <yara/mem.h>
+#include <yara/error.h>
 
 #define ROTATE_INT32(x, shift) \
     ((x << (shift % 32)) | (x >> (32 - (shift % 32))))
@@ -69,9 +70,9 @@ uint32_t byte_to_int32[]  =
 uint32_t hash(
     uint32_t seed,
     uint8_t* buffer,
-    int len)
+    size_t len)
 {
-  int i;
+  size_t i;
   uint32_t result = seed;
 
   for (i = len - 1; i > 0; i--)
@@ -85,14 +86,14 @@ uint32_t hash(
 }
 
 
-int yr_hash_table_create(
+YR_API int yr_hash_table_create(
     int size,
     YR_HASH_TABLE** table)
 {
   YR_HASH_TABLE* new_table;
   int i;
 
-  new_table = yr_malloc(
+  new_table = (YR_HASH_TABLE*) yr_malloc(
       sizeof(YR_HASH_TABLE) + size * sizeof(YR_HASH_TABLE_ENTRY*));
 
   if (new_table == NULL)
@@ -108,13 +109,17 @@ int yr_hash_table_create(
   return ERROR_SUCCESS;
 }
 
-void yr_hash_table_destroy(
-    YR_HASH_TABLE* table)
+YR_API void yr_hash_table_destroy(
+    YR_HASH_TABLE* table,
+    YR_HASH_TABLE_FREE_VALUE_FUNC free_value)
 {
   YR_HASH_TABLE_ENTRY* entry;
   YR_HASH_TABLE_ENTRY* next_entry;
 
   int i;
+
+  if (table == NULL)
+    return;
 
   for (i = 0; i < table->size; i++)
   {
@@ -123,10 +128,16 @@ void yr_hash_table_destroy(
     while (entry != NULL)
     {
       next_entry = entry->next;
+
+      if (free_value != NULL)
+        free_value(entry->value);
+
       if (entry->ns != NULL)
         yr_free(entry->ns);
+
       yr_free(entry->key);
       yr_free(entry);
+
       entry = next_entry;
     }
   }
@@ -135,7 +146,7 @@ void yr_hash_table_destroy(
 }
 
 
-void* yr_hash_table_lookup(
+YR_API void* yr_hash_table_lookup(
     YR_HASH_TABLE* table,
     const char* key,
     const char* ns)
@@ -167,7 +178,8 @@ void* yr_hash_table_lookup(
   return NULL;
 }
 
-int yr_hash_table_add(
+
+YR_API int yr_hash_table_add(
     YR_HASH_TABLE* table,
     const char* key,
     const char* ns,
@@ -190,9 +202,21 @@ int yr_hash_table_add(
   }
 
   if (ns != NULL)
+  {
     entry->ns = yr_strdup(ns);
+
+    if (entry->ns == NULL)
+    {
+      yr_free(entry->key);
+      yr_free(entry);
+
+      return ERROR_INSUFICIENT_MEMORY;
+    }
+  }
   else
+  {
     entry->ns = NULL;
+  }
 
   entry->value = value;
   bucket_index = hash(0, (uint8_t*) key, strlen(key));
@@ -207,5 +231,3 @@ int yr_hash_table_add(
 
   return ERROR_SUCCESS;
 }
-
-

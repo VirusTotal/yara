@@ -1,6 +1,5 @@
 /*
-Copyright (c) 2007. Victor M. Alvarez [plusvic@gmail.com] &
-                    Stefan Buehlmann [stefan.buehlmann@joebox.org].
+Copyright (c) 2007-2013. The YARA Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,14 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #include <windows.h>
 
-#include "errors.h"
-#include "mem.h"
-#include "proc.h"
-
+#include <yara/mem.h>
+#include <yara/error.h>
+#include <yara/proc.h>
 
 int yr_process_get_memory(
     int pid,
@@ -142,7 +140,11 @@ int yr_process_get_memory(
 
 #else
 
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || \
+    defined(__OpenBSD__) || defined(__MACH__)
+#else
 #define _XOPEN_SOURCE 500
+#endif
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -150,10 +152,12 @@ int yr_process_get_memory(
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 
-#include "mem.h"
-#include "proc.h"
+#include <yara/error.h>
+#include <yara/proc.h>
+#include <yara/mem.h>
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__MACH__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || \
+    defined(__OpenBSD__) || defined(__MACH__)
 #define PTRACE_ATTACH PT_ATTACH
 #define PTRACE_DETACH PT_DETACH
 #endif
@@ -263,33 +267,49 @@ int yr_process_get_memory(
     YR_MEMORY_BLOCK** first_block)
 {
   char buffer[256];
-  unsigned char* data;
+  unsigned char* data = NULL;
   size_t begin, end, length;
 
   YR_MEMORY_BLOCK* new_block;
   YR_MEMORY_BLOCK* current_block = NULL;
 
+  FILE *maps = NULL;
+
+  int mem = -1;
+  int result;
+  int attached = 0;
+
   *first_block = NULL;
 
-  sprintf(buffer, "/proc/%u/maps", pid);
+  snprintf(buffer, sizeof(buffer), "/proc/%u/maps", pid);
 
-  FILE* maps = fopen(buffer, "r");
+  maps = fopen(buffer, "r");
 
   if (maps == NULL)
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+  {
+    result = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+    goto _exit;
+  }
 
-  sprintf(buffer, "/proc/%u/mem", pid);
+  snprintf(buffer, sizeof(buffer), "/proc/%u/mem", pid);
 
-  int mem = open(buffer, O_RDONLY);
+  mem = open(buffer, O_RDONLY);
 
   if (mem == -1)
   {
-    fclose(maps);
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+    result = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+    goto _exit;
   }
 
-  if (ptrace(PTRACE_ATTACH, pid, NULL, 0) == -1)
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+  if (ptrace(PTRACE_ATTACH, pid, NULL, 0) != -1)
+  {
+    attached = 1;
+  }
+  else
+  {
+    result = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+    goto _exit;
+  }
 
   wait(NULL);
 
@@ -302,7 +322,10 @@ int yr_process_get_memory(
     data = yr_malloc(length);
 
     if (data == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
+    {
+      result = ERROR_INSUFICIENT_MEMORY;
+      goto _exit;
+    }
 
     if (pread(mem, data, length, begin) != -1)
     {
@@ -310,8 +333,8 @@ int yr_process_get_memory(
 
       if (new_block == NULL)
       {
-        yr_free(data);
-        return ERROR_INSUFICIENT_MEMORY;
+        result = ERROR_INSUFICIENT_MEMORY;
+        goto _exit;
       }
 
       if (*first_block == NULL)
@@ -330,17 +353,28 @@ int yr_process_get_memory(
     else
     {
       yr_free(data);
+      data = NULL;
     }
   }
 
-  ptrace(PTRACE_DETACH, pid, NULL, 0);
+  result = ERROR_SUCCESS;
 
-  close(mem);
-  fclose(maps);
+_exit:
 
-  return ERROR_SUCCESS;
+  if (attached)
+    ptrace(PTRACE_DETACH, pid, NULL, 0);
+
+  if (mem != -1)
+    close(mem);
+
+  if (maps != NULL)
+    fclose(maps);
+
+  if (data != NULL)
+    yr_free(data);
+
+  return result;
 }
 
 #endif
 #endif
-

@@ -1,16 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libyara", "..\libyara\libyara.vcxproj", "{632EE910-8B6F-A478-8D69-83878CE26140}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libyara", "..\libyara\libyara.vcxproj", "{6A0FF993-CEDB-5133-B51F-E15D389664EF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "yara", "yara.vcxproj", "{E203D7BB-29B9-4152-9208-BB410983CE8C}"
 	ProjectSection(ProjectDependencies) = postProject
-		{632EE910-8B6F-A478-8D69-83878CE26140} = {632EE910-8B6F-A478-8D69-83878CE26140}
+		{6A0FF993-CEDB-5133-B51F-E15D389664EF} = {6A0FF993-CEDB-5133-B51F-E15D389664EF}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "yarac", "..\yarac\yarac.vcxproj", "{C2EE445F-2BA5-4E2D-A9E5-44ADE8CAF8E4}"
 	ProjectSection(ProjectDependencies) = postProject
-		{632EE910-8B6F-A478-8D69-83878CE26140} = {632EE910-8B6F-A478-8D69-83878CE26140}
+		{6A0FF993-CEDB-5133-B51F-E15D389664EF} = {6A0FF993-CEDB-5133-B51F-E15D389664EF}
 	EndProjectSection
 EndProject
 Global
@@ -21,14 +21,14 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{632EE910-8B6F-A478-8D69-83878CE26140}.Debug|Win32.ActiveCfg = Debug|Win32
-		{632EE910-8B6F-A478-8D69-83878CE26140}.Debug|Win32.Build.0 = Debug|Win32
-		{632EE910-8B6F-A478-8D69-83878CE26140}.Debug|x64.ActiveCfg = Debug|x64
-		{632EE910-8B6F-A478-8D69-83878CE26140}.Debug|x64.Build.0 = Debug|x64
-		{632EE910-8B6F-A478-8D69-83878CE26140}.Release|Win32.ActiveCfg = Release|Win32
-		{632EE910-8B6F-A478-8D69-83878CE26140}.Release|Win32.Build.0 = Release|Win32
-		{632EE910-8B6F-A478-8D69-83878CE26140}.Release|x64.ActiveCfg = Release|x64
-		{632EE910-8B6F-A478-8D69-83878CE26140}.Release|x64.Build.0 = Release|x64
+		{6A0FF993-CEDB-5133-B51F-E15D389664EF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6A0FF993-CEDB-5133-B51F-E15D389664EF}.Debug|Win32.Build.0 = Debug|Win32
+		{6A0FF993-CEDB-5133-B51F-E15D389664EF}.Debug|x64.ActiveCfg = Debug|x64
+		{6A0FF993-CEDB-5133-B51F-E15D389664EF}.Debug|x64.Build.0 = Debug|x64
+		{6A0FF993-CEDB-5133-B51F-E15D389664EF}.Release|Win32.ActiveCfg = Release|Win32
+		{6A0FF993-CEDB-5133-B51F-E15D389664EF}.Release|Win32.Build.0 = Release|Win32
+		{6A0FF993-CEDB-5133-B51F-E15D389664EF}.Release|x64.ActiveCfg = Release|x64
+		{6A0FF993-CEDB-5133-B51F-E15D389664EF}.Release|x64.Build.0 = Release|x64
 		{E203D7BB-29B9-4152-9208-BB410983CE8C}.Debug|Win32.ActiveCfg = Debug|Win32
 		{E203D7BB-29B9-4152-9208-BB410983CE8C}.Debug|Win32.Build.0 = Debug|Win32
 		{E203D7BB-29B9-4152-9208-BB410983CE8C}.Debug|x64.ActiveCfg = Debug|x64

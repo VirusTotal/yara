@@ -48,7 +48,9 @@
      _SPACE_ = 264,
      _NON_SPACE_ = 265,
      _DIGIT_ = 266,
-     _NON_DIGIT_ = 267
+     _NON_DIGIT_ = 267,
+     _WORD_BOUNDARY_ = 268,
+     _NON_WORD_BOUNDARY_ = 269
    };
 #endif
 /* Tokens.  */
@@ -62,13 +64,15 @@
 #define _NON_SPACE_ 265
 #define _DIGIT_ 266
 #define _NON_DIGIT_ 267
+#define _WORD_BOUNDARY_ 268
+#define _NON_WORD_BOUNDARY_ 269
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 67 "re_grammar.y"
+#line 60 "re_grammar.y"
 {
   int integer;
   uint32_t range;
@@ -76,7 +80,7 @@ typedef union YYSTYPE
   uint8_t* class_vector;
 }
 /* Line 1529 of yacc.c.  */
-#line 80 "re_grammar.h"
+#line 84 "re_grammar.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
