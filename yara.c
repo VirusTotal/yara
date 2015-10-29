@@ -646,6 +646,17 @@ int handle_message(int message, YR_RULE* rule, void* data)
   return CALLBACK_CONTINUE;
 }
 
+int handle_module_data(YR_OBJECT* object)
+{
+  mutex_lock(&output_mutex);
+
+  yr_object_print_data((YR_OBJECT*) object, 0, 1);
+  printf("\n");
+
+  mutex_unlock(&output_mutex);
+
+  return CALLBACK_CONTINUE;
+}
 
 int callback(int message, void* message_data, void* user_data)
 {
@@ -676,6 +687,9 @@ int callback(int message, void* message_data, void* user_data)
       }
 
       return CALLBACK_CONTINUE;
+
+    case CALLBACK_MSG_MODULE_DATA:
+      return handle_module_data((YR_OBJECT*) message_data);
   }
 
   return CALLBACK_ERROR;
