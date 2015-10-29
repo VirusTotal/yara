@@ -1070,7 +1070,7 @@ YR_OBJECT* yr_object_get_root(
   return o;
 }
 
-void yr_object_print_data(
+YR_API void yr_object_print_data(
     YR_OBJECT* object,
     int indent,
     int print_identifier)
