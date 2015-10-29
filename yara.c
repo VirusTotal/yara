@@ -650,7 +650,7 @@ int handle_module_data(YR_OBJECT* object)
 {
   mutex_lock(&output_mutex);
 
-  yr_object_print_data((YR_OBJECT*) object, 0, 1);
+  yr_object_print_data(object, 0, 1);
   printf("\n");
 
   mutex_unlock(&output_mutex);
