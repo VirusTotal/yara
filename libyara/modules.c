@@ -194,7 +194,9 @@ int yr_modules_unload_all(
 
 
 void yr_modules_print_data(
-    YR_SCAN_CONTEXT* context)
+    YR_SCAN_CONTEXT* context,
+    YR_CALLBACK_FUNC callback,
+    void* user_data)
 {
   int i;
 
@@ -207,8 +209,7 @@ void yr_modules_print_data(
 
     if (module_structure != NULL)
     {
-      yr_object_print_data(module_structure, 0, 1);
-      printf("\n");
+      callback(CALLBACK_MSG_MODULE_DATA, module_structure, user_data);
     }
   }
 }

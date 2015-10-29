@@ -433,5 +433,7 @@ int yr_modules_unload_all(
 
 
 void yr_modules_print_data(
-    YR_SCAN_CONTEXT* context);
+    YR_SCAN_CONTEXT* context,
+    YR_CALLBACK_FUNC callback,
+    void* user_data);
 #endif
