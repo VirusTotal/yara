@@ -94,9 +94,9 @@ limitations under the License.
 
 
 #define fits_in_pe(pe, pointer, size) \
-    (size <= pe->data_size && \
-     (uint8_t*)(pointer) >= pe->data && \
-     (uint8_t*)(pointer) <= pe->data + pe->data_size - size)
+    ((size_t) size <= pe->data_size && \
+     (uint8_t*) (pointer) >= pe->data && \
+     (uint8_t*) (pointer) <= pe->data + pe->data_size - size)
 
 
 #define struct_fits_in_pe(pe, pointer, struct_type) \
@@ -1097,7 +1097,7 @@ IMPORTED_DLL* pe_parse_imports(
 void pe_parse_certificates(
     PE* pe)
 {
-  int i, counter = 0;  
+  int i, counter = 0;
   uint8_t* eod;
 
   PWIN_CERTIFICATE win_cert;
@@ -1134,7 +1134,10 @@ void pe_parse_certificates(
   //
 
   while (struct_fits_in_pe(pe, win_cert, WIN_CERTIFICATE) &&
+         fits_in_pe(pe, win_cert->Certificate, win_cert->Length) &&
+         win_cert->Length >= 8 &&
          (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) <= eod &&
+         (uint8_t*) win_cert->Certificate < eod &&
          (uint8_t*) win_cert->Certificate + win_cert->Length - 8 <= eod)
   {
     BIO* cert_bio;
@@ -1207,7 +1210,10 @@ void pe_parse_certificates(
 
       serial = X509_get_serialNumber(cert);
 
-      if (serial->length > 0)
+      // According to X.509 specification the maximum length for the serial
+      // number is 20 octets.
+
+      if (serial->length > 0 && serial->length <= 20)
       {
         // Convert serial number to "common" string format: 00:01:02:03:04...
         // For each byte in the integer to convert to hexlified format we
@@ -1415,7 +1421,7 @@ define_function(section_index_addr)
   int64_t i;
   int64_t offset;
   int64_t size;
-  
+
   int64_t addr = integer_argument(1);
   int64_t n = get_integer(module, "number_of_sections");
 
@@ -1451,7 +1457,7 @@ define_function(section_index_name)
 
   int64_t n = get_integer(module, "number_of_sections");
   int64_t i;
-  
+
   if (is_undefined(module, "number_of_sections"))
     return_integer(UNDEFINED);
 
@@ -1566,7 +1572,7 @@ define_function(imphash)
   dll = pe->imported_dlls;
 
   while (dll)
-  {  
+  {
     IMPORTED_FUNCTION* func;
 
     size_t dll_name_len;
@@ -1755,7 +1761,7 @@ define_function(locale)
 {
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
-  
+
   uint64_t locale = integer_argument(1);
   int64_t n, i;
 
