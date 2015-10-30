@@ -84,7 +84,6 @@ uint64_t elf_rva_to_offset_##bits(                                             \
   {                                                                            \
     if (section->type != ELF_SHT_NULL &&                                       \
         section->type != ELF_SHT_NOBITS &&                                     \
-        section->size <= elf_size &&                                           \
         rva >= section->addr &&                                                \
         rva < section->addr + section->size)                                   \
     {                                                                          \
