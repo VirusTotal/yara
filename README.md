@@ -65,6 +65,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Raytheon Cyber Products, Inc.](http://www.raytheoncyber.com/capabilities/products/sureview-threatprotection/)
 * [ReversingLabs](http://reversinglabs.com)
 * [RSA ECAT](http://www.emc.com/security/rsa-ecat.htm)
+* [SpamStopsHere](https://www.spamstopshere.com)
 * [Symantec](http://www.symantec.com)
 * [Tanium](http://www.tanium.com/)
 * [ThreatConnect](http://www.threatconnect.com)
