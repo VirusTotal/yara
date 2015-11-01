@@ -1127,18 +1127,16 @@ void pe_parse_certificates(
   // Make sure WIN_CERTIFICATE fits within the directory.
   // Make sure the Length specified fits within directory too.
   //
-  // Subtracting 8 because the docs say that the length is only for the
-  // Certificate, but the next paragraph contradicts that. All the binaries
-  // I've seen have the Length being the entire structure (Certificate
-  // included).
+  // The docs say that the length is only for the Certificate, but the next 
+  // paragraph contradicts that. All the binaries I've seen have the Length
+  // being the entire structure (Certificate included).
   //
 
   while (struct_fits_in_pe(pe, win_cert, WIN_CERTIFICATE) &&
-         fits_in_pe(pe, win_cert->Certificate, win_cert->Length) &&
-         win_cert->Length >= 8 &&
-         (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) <= eod &&
-         (uint8_t*) win_cert->Certificate < eod &&
-         (uint8_t*) win_cert->Certificate + win_cert->Length - 8 <= eod)
+         win_cert->Length > sizeof(WIN_CERTIFICATE) &&
+         fits_in_pe(pe, win_cert, win_cert->Length) &&
+         (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) < eod &&
+         (uint8_t*) win_cert + win_cert->Length <= eod)
   {
     BIO* cert_bio;
     PKCS7* pkcs7;
