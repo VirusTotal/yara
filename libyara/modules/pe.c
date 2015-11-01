@@ -1134,7 +1134,7 @@ void pe_parse_certificates(
   //
 
   while (struct_fits_in_pe(pe, win_cert, WIN_CERTIFICATE) &&
-         fits_in_pe(pe, win_cert->Certificate, win_cert->Length) &&
+         fits_in_pe(pe, win_cert->Certificate, (win_cert->Length - (sizeof(DWORD) + (sizeof(WORD) * 2)))) &&
          win_cert->Length >= 8 &&
          (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) <= eod &&
          (uint8_t*) win_cert->Certificate < eod &&
