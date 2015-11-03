@@ -827,6 +827,9 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
+        ensure_defined(r2);
+        ensure_defined(r1);
+
         if (r1.ss->length == 0)
         {
           r1.i = FALSE;
