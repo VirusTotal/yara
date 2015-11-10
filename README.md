@@ -60,6 +60,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Lastline, Inc.](http://www.lastline.com)
 * [Metaflows](http://www.metaflows.com)
 * [osquery](http://www.osquery.io)
+* [PhishMe](http://phishme.com/)
 * [Picus Security](http://www.picussecurity.com/)
 * [Radare2](http://rada.re)
 * [Raytheon Cyber Products, Inc.](http://www.raytheoncyber.com/capabilities/products/sureview-threatprotection/)
