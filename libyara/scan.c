@@ -284,6 +284,23 @@ int _yr_scan_fast_hex_re_exec(
 
           break;
 
+        case RE_OPCODE_SPLIT_B:
+
+          // This is how the code looks like after the SPLIT:
+          //            split L3, L4    (3 bytes long)
+          //        L3: any             (1 byte long)
+          //        L4: ...
+          //
+          // The opcode following the ANY is located at ip + 4
+
+          code_stack[sp] = ip + 4;
+          input_stack[sp] = current_input;
+          matches_stack[sp] = matches;
+          sp++;
+          ip += 3;
+          
+          break;
+
         case RE_OPCODE_PUSH:
 
           // A PUSH operation indicates the begining of a code sequence 
