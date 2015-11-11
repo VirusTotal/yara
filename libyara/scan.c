@@ -293,6 +293,9 @@ int _yr_scan_fast_hex_re_exec(
           //
           // The opcode following the ANY is located at ip + 4
 
+          if (sp >= MAX_FAST_HEX_RE_STACK)
+            return -4;
+
           code_stack[sp] = ip + 4;
           input_stack[sp] = current_input;
           matches_stack[sp] = matches;
