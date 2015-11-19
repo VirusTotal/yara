@@ -48,6 +48,7 @@ char lowercase[256];
 char altercase[256];
 
 #ifdef HAVE_LIBCRYPTO
+#ifdef HAVE_PTHREAD
 pthread_mutex_t *locks;
 
 unsigned long pthreads_thread_id(void)
@@ -62,6 +63,7 @@ void locking_function(int mode, int n, const char *file, int line)
   else
     pthread_mutex_unlock(&locks[n]);
 }
+#endif
 #endif
 
 //
@@ -104,12 +106,14 @@ YR_API int yr_initialize(void)
   #endif
 
   #ifdef HAVE_LIBCRYPTO
+  #ifdef HAVE_PTHREAD
   locks = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
   for (i = 0; i < CRYPTO_num_locks(); i++)
     pthread_mutex_init(&locks[i], NULL);
 
   CRYPTO_set_id_callback((unsigned long (*)())pthreads_thread_id);
   CRYPTO_set_locking_callback(locking_function);
+  #endif
   #endif
 
   FAIL_ON_ERROR(yr_re_initialize());
@@ -153,9 +157,11 @@ YR_API int yr_finalize(void)
     return ERROR_SUCCESS;
 
   #ifdef HAVE_LIBCRYPTO
+  #ifdef HAVE_PTHREAD
   for (i = 0; i < CRYPTO_num_locks(); i ++)
     pthread_mutex_destroy(&locks[i]);
   OPENSSL_free(locks);
+  #endif
   #endif
 
   #ifdef _WIN32
