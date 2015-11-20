@@ -1814,6 +1814,44 @@ define_function(language)
   return_integer(0);
 }
 
+define_function(rich_version)
+{
+    YR_OBJECT* module = module();
+    PE* pe = (PE*)module->data;
+    uint64_t version = integer_argument(1);
+    size_t rich_len;
+    PRICH_SIGNATURE clear_rich_signature;
+    SIZED_STRING* rich_string;
+    int i;
+
+    // Check if the required fields are set
+    if (is_undefined(module, "rich_signature.length"))
+        return_integer(UNDEFINED);
+
+    // If not a PE file, return UNDEFINED
+    if (pe == NULL)
+        return_integer(UNDEFINED);
+
+    rich_len = get_integer(module, "rich_signature.length");
+    rich_string = get_string(module, "rich_signature.clear_data");
+
+    // If the clear_data was not set, return UNDEFINED
+    if (rich_string == NULL)
+        return_integer(UNDEFINED);
+
+    clear_rich_signature = (PRICH_SIGNATURE)rich_string->c_string;
+
+    // Loop over the versions in the rich signature
+    for (i = 0;
+        i < (rich_len - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
+        i++)
+    {
+        if(version == RICH_VERSION_VERSION(clear_rich_signature->versions[i].id_version))
+            return_integer(1);
+    }
+
+    return_integer(0);
+}
 
 begin_declarations;
 
@@ -1961,6 +1999,7 @@ begin_declarations;
   declare_function("imports", "s", "i", imports_dll);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
+  declare_function("rich_version", "i", "i", rich_version);
 
   declare_integer("resource_timestamp")
   begin_struct("resource_version");
