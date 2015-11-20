@@ -47,6 +47,39 @@ static int init_count = 0;
 char lowercase[256];
 char altercase[256];
 
+#ifndef HAVE_PTHREAD
+#ifdef _WIN32
+
+typedef HANDLE pthread_mutex_t;
+
+unsigned long pthread_self()
+{
+    return GetCurrentThreadId();
+}
+
+int pthread_mutex_init(pthread_mutex_t *mutex, void* attr)
+{
+    *mutex = CreateSemaphore(NULL, 1, 1, NULL);
+    return *mutex == NULL;
+}
+
+int pthread_mutex_destroy(pthread_mutex_t *mutex)
+{
+    return CloseHandle(mutex) == TRUE ? 0 : -1;
+}
+
+int pthread_mutex_lock(pthread_mutex_t mutex)
+{
+    return WaitForSingleObject(mutex, INFINITE) == WAIT_OBJECT_0 ? 0 : -1;
+}
+
+int pthread_mutex_unlock(pthread_mutex_t mutex)
+{
+    return ReleaseSemaphore(mutex, 1, NULL) == TRUE ? 0 : -1;
+}
+#endif
+#endif
+
 #ifdef HAVE_LIBCRYPTO
 pthread_mutex_t *locks;
 
@@ -104,7 +137,7 @@ YR_API int yr_initialize(void)
   #endif
 
   #ifdef HAVE_LIBCRYPTO
-  locks = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
+  locks = (pthread_mutex_t*)OPENSSL_malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
   for (i = 0; i < CRYPTO_num_locks(); i++)
     pthread_mutex_init(&locks[i], NULL);
 
