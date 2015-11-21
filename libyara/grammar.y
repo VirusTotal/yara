@@ -1456,6 +1456,8 @@ string_set
       {
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL, NULL);
         yr_parser_emit_pushes_for_strings(yyscanner, "$*");
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
       }
     ;
 
@@ -1471,11 +1473,15 @@ string_enumeration_item
       {
         yr_parser_emit_pushes_for_strings(yyscanner, $1);
         yr_free($1);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
       }
     | _STRING_IDENTIFIER_WITH_WILDCARD_
       {
         yr_parser_emit_pushes_for_strings(yyscanner, $1);
         yr_free($1);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
       }
     ;
 

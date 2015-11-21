@@ -488,7 +488,7 @@ typedef struct _WIN_CERTIFICATE {
     DWORD Length;
     WORD  Revision;
     WORD  CertificateType;
-    BYTE  Certificate[1];
+    BYTE  Certificate[0];
 } WIN_CERTIFICATE, *PWIN_CERTIFICATE;
 
 
