@@ -187,11 +187,9 @@ YR_API int yr_finalize(void)
     return ERROR_SUCCESS;
 
   #ifdef HAVE_LIBCRYPTO
-  #ifdef HAVE_PTHREAD
   for (i = 0; i < CRYPTO_num_locks(); i ++)
     pthread_mutex_destroy(&locks[i]);
   OPENSSL_free(locks);
-  #endif
   #endif
 
   #ifdef _WIN32
