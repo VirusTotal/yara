@@ -17,6 +17,7 @@ limitations under the License.
 #define _GNU_SOURCE
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
 #include <config.h>
@@ -37,6 +38,8 @@ char* pe_get_dotnet_string(
     DWORD string_index)
 {
   size_t remaining;
+  char* start;
+  char* eos;
 
   // Start of string must be within boundary
   if (!(string_offset + string_index >= pe->data &&
@@ -46,8 +49,13 @@ char* pe_get_dotnet_string(
   // Calculate how much until end of boundary, don't scan past that.
   remaining = (pe->data + pe->data_size) - (string_offset + string_index);
 
-  // Search for a NULL terminator from string_offset, up to remaining.
-  return strnstr((char *) (string_offset + string_index), "\0", remaining);
+  // Search for a NULL terminator from start of string, up to remaining.
+  start = (char*) (string_offset + string_index);
+  eos = (char*) memmem((void*) start, remaining, "\0", 1);
+  if (eos == NULL)
+    return eos;
+
+  return start;
 }
 
 
