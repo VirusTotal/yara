@@ -50,25 +50,19 @@ stamp-h1
 *.swp
 .DS_Store
 
-+
- +# Windows build files
- +Debug/
- +Release/
- +*.vcxproj.user
- +*.sdf
- +*.suo
- +*.opensdf
- +*.obj
- +*.log
-*.log
+# Windows build files
+Debug/
+Release/
+*.vcxproj.user
+*.sdf
+*.suo
 *.opensdf
 *.obj
+*.log
 *.pdb
 *.tlog
-*.sdf
 windows/libyara/Release/libyara64.lib
-*.sdf
-*.sdf
+windows/libyara/Release/libyara32.lib
 *.suo
 windows/.vs/Yara/v14/.suo
 *.sdf
