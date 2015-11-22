@@ -49,3 +49,26 @@ stamp-h1
 # Linux and Mac files
 *.swp
 .DS_Store
+
++
+ +# Windows build files
+ +Debug/
+ +Release/
+ +*.vcxproj.user
+ +*.sdf
+ +*.suo
+ +*.opensdf
+ +*.obj
+ +*.log
+*.log
+*.opensdf
+*.obj
+*.pdb
+*.tlog
+*.sdf
+windows/libyara/Release/libyara64.lib
+*.sdf
+*.sdf
+*.suo
+windows/.vs/Yara/v14/.suo
+*.sdf
