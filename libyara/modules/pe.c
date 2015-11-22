@@ -88,16 +88,6 @@ limitations under the License.
     (pe->data + pe->data_size - (uint8_t*)(pointer))
 
 
-#define fits_in_pe(pe, pointer, size) \
-    ((size_t) size <= pe->data_size && \
-     (uint8_t*) (pointer) >= pe->data && \
-     (uint8_t*) (pointer) <= pe->data + pe->data_size - size)
-
-
-#define struct_fits_in_pe(pe, pointer, struct_type) \
-    fits_in_pe(pe, pointer, sizeof(struct_type))
-
-
 typedef int (*RESOURCE_CALLBACK_FUNC) ( \
      PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, \
      int rsrc_type, \

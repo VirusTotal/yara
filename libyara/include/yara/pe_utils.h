@@ -9,9 +9,9 @@
     (pe->header64->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
 
 #define fits_in_pe(pe, pointer, size) \
-    (size <= pe->data_size && \
-     (uint8_t*)(pointer) >= pe->data && \
-     (uint8_t*)(pointer) <= pe->data + pe->data_size - size)
+    ((size_t) size <= pe->data_size && \
+     (uint8_t*) (pointer) >= pe->data && \
+     (uint8_t*) (pointer) <= pe->data + pe->data_size - size)
 
 #define struct_fits_in_pe(pe, pointer, struct_type) \
     fits_in_pe(pe, pointer, sizeof(struct_type))
