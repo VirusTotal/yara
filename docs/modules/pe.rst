@@ -425,6 +425,28 @@ Reference
 
         Data after being decrypted by XORing it with the key.
 
+    .. c:function:: version(version)
+
+    .. versionadded:: 3.5.0
+
+        Function returning true if the PE has the specified *version* in the PE's rich
+        signature. More information can be found here:
+
+        http://www.ntcore.com/files/richsign.htm
+
+        *Example: pe.rich_signature.version(21005)*
+
+    .. c:function:: toolid(id)
+
+    .. versionadded:: 3.5.0
+
+        Function returning true if the PE has the specified *id* in the PE's rich
+        signature. More information can be found here:
+
+        http://www.ntcore.com/files/richsign.htm
+
+        *Example: pe.rich_signature.toolid(222)*
+
 .. c:function:: exports(function_name)
 
     Function returning true if the PE exports *function_name* or
@@ -505,14 +527,3 @@ Reference
   *addr*. *addr* can be an offset into the file or a memory address.
 
   *Example: pe.section_index(pe.entry_point)*
-
-.. c:function:: rich_version(version)
-
- .. versionadded:: 3.5.0
-
-  Function returning true if the PE has the specified *version* in the PE's rich
-  signature. More information can be found here:
-
-  http://www.ntcore.com/files/richsign.htm
-
-  *Example: pe.rich_version(21005)*
