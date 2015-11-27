@@ -425,23 +425,25 @@ Reference
 
         Data after being decrypted by XORing it with the key.
 
-    .. c:function:: version(version)
+    .. c:function:: version(version, [toolid])
 
     .. versionadded:: 3.5.0
 
         Function returning true if the PE has the specified *version* in the PE's rich
-        signature. More information can be found here:
+        signature. Provide the optional *toolid* argument to only match when both match
+        for one entry. More information can be found here:
 
         http://www.ntcore.com/files/richsign.htm
 
         *Example: pe.rich_signature.version(21005)*
 
-    .. c:function:: toolid(id)
+    .. c:function:: toolid(toolid, [version])
 
     .. versionadded:: 3.5.0
 
         Function returning true if the PE has the specified *id* in the PE's rich
-        signature. More information can be found here:
+        signature. Provide the optional *version* argument to only match when both
+        match for one entry. More information can be found here:
 
         http://www.ntcore.com/files/richsign.htm
 
