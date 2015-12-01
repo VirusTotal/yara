@@ -448,11 +448,20 @@ typedef struct _WIN_CERTIFICATE {
 // http://www.ntcore.com/files/richsign.htm
 //
 
+#define RICH_VERSION_ID(id_version) (id_version >> 16)
+#define RICH_VERSION_VERSION(id_version) (id_version & 0xFFFF)
+
+typedef struct _RICH_VERSION_INFO {
+    DWORD id_version; //tool id and version (use RICH_VERSION_ID and RICH_VERSION_VERSION macros)
+    DWORD times; //number of times this tool was used
+} RICH_VERSION_INFO, *PRICH_VERSION_INFO;
+
 typedef struct _RICH_SIGNATURE {
     DWORD dans;
     DWORD key1;
     DWORD key2;
     DWORD key3;
+    RICH_VERSION_INFO versions[0];
 } RICH_SIGNATURE, *PRICH_SIGNATURE;
 
 #define RICH_DANS 0x536e6144 // "DanS"
