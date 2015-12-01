@@ -1208,6 +1208,7 @@ void pe_parse_certificates(
       set_string(sig_alg, pe->object, "signatures[%i].algorithm", counter);
 
       serial = X509_get_serialNumber(cert);
+
       if (serial)
       {
         // ASN1_INTEGER can be negative (serial->type & V_ASN1_NEG_INTEGER),
@@ -1234,15 +1235,16 @@ void pe_parse_certificates(
           // Now that we know the size of the serial number allocate enough
           // space to hold it, and use i2c_ASN1_INTEGER() one last time to
           // hold it in the allocated buffer.
+
           unsigned char* serial_bytes = (unsigned char*)  yr_malloc(bytes);
 
           if (serial_bytes != NULL)
           {
-
             bytes = i2c_ASN1_INTEGER(serial, &serial_bytes);
 
             // i2c_ASN1_INTEGER() moves the pointer as it writes into
             // serial_bytes. Move it back.
+
             serial_bytes -= bytes;
 
             // Also allocate space to hold the "common" string format:
@@ -1252,25 +1254,33 @@ void pe_parse_certificates(
             // need three bytes, two for the byte itself and one for colon.
             // The last one doesn't have the colon, but the extra byte is used
             // for the NULL terminator.
+            
             char *serial_ascii = (char*) yr_malloc(bytes * 3);
+
             if (serial_ascii)
             {
-
               int j;
+             
               for (j = 0; j < bytes; j++)
               {
                 // Don't put the colon on the last one.
                 if (j < bytes - 1)
-                  snprintf((char*) serial_ascii + 3 * j, 4, "%02x:", serial_bytes[j]);
+                  snprintf(
+                    (char*) serial_ascii + 3 * j, 4, "%02x:", serial_bytes[j]);
                 else
-                  snprintf((char*) serial_ascii + 3 * j, 3, "%02x", serial_bytes[j]);
+                  snprintf(
+                    (char*) serial_ascii + 3 * j, 3, "%02x", serial_bytes[j]);
               }
 
               set_string(
-                  (char*) serial_ascii, pe->object,"signatures[%i].serial", counter);
+                  (char*) serial_ascii, 
+                  pe->object,
+                  "signatures[%i].serial", 
+                  counter);
 
               yr_free(serial_ascii);
             }
+
             yr_free(serial_bytes);
           }
         }
