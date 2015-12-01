@@ -491,9 +491,6 @@ _exit:
 
   _yr_rules_clean_matches(rules, &context);
 
-  if (flags & SCAN_FLAGS_SHOW_MODULE_DATA)
-    yr_modules_print_data(&context, callback, user_data);
-
   yr_modules_unload_all(&context);
 
   if (context.matches_arena != NULL)

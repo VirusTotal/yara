@@ -169,6 +169,11 @@ int yr_modules_load(
     }
   }
 
+  result = context->callback(
+      CALLBACK_MSG_MODULE_IMPORTED,
+      module_structure,
+      context->user_data);
+
   return ERROR_SUCCESS;
 }
 
@@ -190,26 +195,4 @@ int yr_modules_unload_all(
   }
 
   return ERROR_SUCCESS;
-}
-
-
-void yr_modules_print_data(
-    YR_SCAN_CONTEXT* context,
-    YR_CALLBACK_FUNC callback,
-    void* user_data)
-{
-  int i;
-
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
-  {
-    YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_lookup(
-        context->objects_table,
-        yr_modules_table[i].name,
-        NULL);
-
-    if (module_structure != NULL)
-    {
-      callback(CALLBACK_MSG_MODULE_DATA, module_structure, user_data);
-    }
-  }
 }
