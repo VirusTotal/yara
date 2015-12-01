@@ -1859,6 +1859,76 @@ define_function(language)
   return_integer(0);
 }
 
+static uint64_t rich_internal(YR_OBJECT* module, uint64_t version, uint64_t toolid)
+{
+    size_t rich_len;
+    PRICH_SIGNATURE clear_rich_signature;
+    SIZED_STRING* rich_string;
+    int i;
+
+    // Check if the required fields are set
+    if (is_undefined(module, "rich_signature.length"))
+        return UNDEFINED;
+
+    rich_len = get_integer(module, "rich_signature.length");
+    rich_string = get_string(module, "rich_signature.clear_data");
+
+    // If the clear_data was not set, return UNDEFINED
+    if (rich_string == NULL)
+        return UNDEFINED;
+
+    if (version == UNDEFINED && toolid == UNDEFINED)
+        return 0;
+
+    clear_rich_signature = (PRICH_SIGNATURE)rich_string->c_string;
+
+    // Loop over the versions in the rich signature
+    for (i = 0;
+        i < (rich_len - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
+        i++)
+    {
+        DWORD id_version = clear_rich_signature->versions[i].id_version;
+        bool matchVersion = version == RICH_VERSION_VERSION(id_version);
+        bool matchToolid = toolid == RICH_VERSION_ID(id_version);
+        if (version != UNDEFINED && toolid != UNDEFINED) //check version and toolid
+        {
+            if (matchVersion && matchToolid)
+                return 1;
+        }
+        else if (version != UNDEFINED) //check only version
+        {
+            if (matchVersion)
+                return 1;
+        }
+        else if (toolid != UNDEFINED) //check only toolid
+        {
+            if (matchToolid)
+                return 1;
+        }
+    }
+
+    return 0;
+}
+
+define_function(rich_version)
+{
+    return_integer(rich_internal(module(), integer_argument(1), UNDEFINED));
+}
+
+define_function(rich_version_toolid)
+{
+    return_integer(rich_internal(module(), integer_argument(1), integer_argument(2)));
+}
+
+define_function(rich_toolid)
+{
+    return_integer(rich_internal(module(), UNDEFINED, integer_argument(1)));
+}
+
+define_function(rich_toolid_version)
+{
+    return_integer(rich_internal(module(), integer_argument(2), integer_argument(1)));
+}
 
 begin_declarations;
 
@@ -1992,6 +2062,10 @@ begin_declarations;
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
+    declare_function("version", "i", "i", rich_version);
+    declare_function("version", "ii", "i", rich_version_toolid);
+    declare_function("toolid", "i", "i", rich_toolid);
+    declare_function("toolid", "ii", "i", rich_toolid_version);
   end_struct("rich_signature");
 
   #if defined(HAVE_LIBCRYPTO)
