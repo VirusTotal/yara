@@ -1859,11 +1859,18 @@ define_function(language)
   return_integer(0);
 }
 
-static uint64_t rich_internal(YR_OBJECT* module, uint64_t version, uint64_t toolid)
+
+static uint64_t rich_internal(
+    YR_OBJECT* module, 
+    uint64_t version, 
+    uint64_t toolid)
 {
     size_t rich_len;
+
     PRICH_SIGNATURE clear_rich_signature;
     SIZED_STRING* rich_string;
+
+    int rich_signature_count;
     int i;
 
     // Check if the required fields are set
@@ -1878,82 +1885,97 @@ static uint64_t rich_internal(YR_OBJECT* module, uint64_t version, uint64_t tool
         return UNDEFINED;
 
     if (version == UNDEFINED && toolid == UNDEFINED)
-        return 0;
+        return FALSE;
 
-    clear_rich_signature = (PRICH_SIGNATURE)rich_string->c_string;
+    clear_rich_signature = (PRICH_SIGNATURE) rich_string->c_string;
 
     // Loop over the versions in the rich signature
-    for (i = 0;
-        i < (rich_len - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
-        i++)
+
+    rich_signature_count = \
+        (rich_len - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
+
+    for (i = 0; i < rich_signature_count; i++)
     {
         DWORD id_version = clear_rich_signature->versions[i].id_version;
-        bool matchVersion = version == RICH_VERSION_VERSION(id_version);
-        bool matchToolid = toolid == RICH_VERSION_ID(id_version);
-        if (version != UNDEFINED && toolid != UNDEFINED) //check version and toolid
+        
+        int match_version = version == RICH_VERSION_VERSION(id_version);
+        int match_toolid = toolid == RICH_VERSION_ID(id_version);
+
+        if (version != UNDEFINED && toolid != UNDEFINED) 
         {
-            if (matchVersion && matchToolid)
-                return 1;
+          // check version and toolid
+          if (match_version && match_toolid)
+            return TRUE;
         }
-        else if (version != UNDEFINED) //check only version
+        else if (version != UNDEFINED) 
         {
-            if (matchVersion)
-                return 1;
+          // check only version
+          if (match_version)
+            return TRUE;
         }
-        else if (toolid != UNDEFINED) //check only toolid
+        else if (toolid != UNDEFINED)
         {
-            if (matchToolid)
-                return 1;
+          // check only toolid
+          if (match_toolid)
+            return TRUE;
         }
     }
 
-    return 0;
+    return FALSE;
 }
+
 
 define_function(rich_version)
 {
-    return_integer(rich_internal(module(), integer_argument(1), UNDEFINED));
+  return_integer(
+      rich_internal(module(), integer_argument(1), UNDEFINED));
 }
+
 
 define_function(rich_version_toolid)
 {
-    return_integer(rich_internal(module(), integer_argument(1), integer_argument(2)));
+  return_integer(
+      rich_internal(module(), integer_argument(1), integer_argument(2)));
 }
+
 
 define_function(rich_toolid)
 {
-    return_integer(rich_internal(module(), UNDEFINED, integer_argument(1)));
+    return_integer(
+       rich_internal(module(), UNDEFINED, integer_argument(1)));
 }
+
 
 define_function(rich_toolid_version)
 {
-    return_integer(rich_internal(module(), integer_argument(2), integer_argument(1)));
+  return_integer(
+      rich_internal(module(), integer_argument(2), integer_argument(1)));
 }
 
 begin_declarations;
 
-  declare_integer("MACHINE_UNKNOWN")
-  declare_integer("MACHINE_AM33")
-  declare_integer("MACHINE_AMD64")
-  declare_integer("MACHINE_ARM")
-  declare_integer("MACHINE_ARMNT")
-  declare_integer("MACHINE_ARM64")
-  declare_integer("MACHINE_EBC")
-  declare_integer("MACHINE_I386")
-  declare_integer("MACHINE_IA64")
-  declare_integer("MACHINE_M32R")
-  declare_integer("MACHINE_MIPS16")
-  declare_integer("MACHINE_MIPSFPU")
-  declare_integer("MACHINE_MIPSFPU16")
-  declare_integer("MACHINE_POWERPC")
-  declare_integer("MACHINE_POWERPCFP")
-  declare_integer("MACHINE_R4000")
-  declare_integer("MACHINE_SH3")
-  declare_integer("MACHINE_SH3DSP")
-  declare_integer("MACHINE_SH4")
-  declare_integer("MACHINE_SH5")
-  declare_integer("MACHINE_THUMB")
-  declare_integer("MACHINE_WCEMIPSV2")
+  declare_integer("MACHINE_UNKNOWN");
+  declare_integer("MACHINE_AM33");
+  declare_integer("MACHINE_AMD64");
+  declare_integer("MACHINE_ARM");
+  declare_integer("MACHINE_ARMNT");
+  declare_integer("MACHINE_ARM64");
+  declare_integer("MACHINE_EBC");
+  declare_integer("MACHINE_I386");
+  declare_integer("MACHINE_IA64");
+  declare_integer("MACHINE_M32R");
+  declare_integer("MACHINE_MIPS16");
+  declare_integer("MACHINE_MIPSFPU");
+  declare_integer("MACHINE_MIPSFPU16");
+  declare_integer("MACHINE_POWERPC");
+  declare_integer("MACHINE_POWERPCFP");
+  declare_integer("MACHINE_R4000");
+  declare_integer("MACHINE_SH3");
+  declare_integer("MACHINE_SH3DSP");
+  declare_integer("MACHINE_SH4");
+  declare_integer("MACHINE_SH5");
+  declare_integer("MACHINE_THUMB");
+  declare_integer("MACHINE_WCEMIPSV2");
 
   declare_integer("SUBSYSTEM_UNKNOWN");
   declare_integer("SUBSYSTEM_NATIVE");
@@ -2081,11 +2103,13 @@ begin_declarations;
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
 
-  declare_integer("resource_timestamp")
+  declare_integer("resource_timestamp");
+  
   begin_struct("resource_version");
     declare_integer("major");
     declare_integer("minor");
   end_struct("resource_version");
+
   begin_struct_array("resources");
     declare_integer("offset");
     declare_integer("length");
@@ -2096,6 +2120,7 @@ begin_declarations;
     declare_string("name_string");
     declare_string("language_string");
   end_struct_array("resources");
+  
   declare_integer("number_of_resources");
 
   #if defined(HAVE_LIBCRYPTO)
@@ -2109,6 +2134,7 @@ begin_declarations;
     declare_integer("not_after");
     declare_function("valid_on", "i", "i", valid_on);
   end_struct_array("signatures");
+  
   declare_integer("number_of_signatures");
   #endif
 
