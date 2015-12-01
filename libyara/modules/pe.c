@@ -1182,6 +1182,7 @@ void pe_parse_certificates(
     {
       const char* sig_alg;
       char buffer[256];
+      int bytes;
 
       ASN1_INTEGER* serial;
 
@@ -1207,37 +1208,71 @@ void pe_parse_certificates(
       set_string(sig_alg, pe->object, "signatures[%i].algorithm", counter);
 
       serial = X509_get_serialNumber(cert);
-
-      // According to X.509 specification the maximum length for the serial
-      // number is 20 octets.
-
-      if (serial->length > 0 && serial->length <= 20)
+      if (serial)
       {
-        // Convert serial number to "common" string format: 00:01:02:03:04...
-        // For each byte in the integer to convert to hexlified format we
-        // need three bytes, two for the byte itself and one for colon. The
-        // last one doesn't have the colon, but the extra byte is used for the
-        // NULL terminator.
+        // ASN1_INTEGER can be negative (serial->type & V_ASN1_NEG_INTEGER),
+        // in which case the serial number will be stored in 2's complement.
+        //
+        // Handle negative serial numbers, which are technically not allowed
+        // by RFC5280, but do exist. An example binary which has a negative
+        // serial number is: 4bfe05f182aa273e113db6ed7dae4bb8.
+        //
+        // Negative serial numbers are handled by calling i2c_ASN1_INTEGER()
+        // with a NULL second parameter. This will return the size of the
+        // buffer necessary to store the proper serial number.
+        //
+        // Do this even for positive serial numbers because it makes the code
+        // cleaner and easier to read.
 
-        char* serial_number = (char *) yr_malloc(serial->length * 3);
+        bytes = i2c_ASN1_INTEGER(serial, NULL);
 
-        if (serial_number != NULL)
+        // According to X.509 specification the maximum length for the serial
+        // number is 20 octets.
+
+        if (bytes > 0 && bytes <= 20)
         {
-          int j;
+          // Now that we know the size of the serial number allocate enough
+          // space to hold it, and use i2c_ASN1_INTEGER() one last time to
+          // hold it in the allocated buffer.
+          unsigned char* serial_bytes = (unsigned char*)  yr_malloc(bytes);
 
-          for (j = 0; j < serial->length; j++)
+          if (serial_bytes != NULL)
           {
-            // Don't put the colon on the last one.
-            if (j < serial->length - 1)
-              snprintf(serial_number + 3 * j, 4, "%02x:", serial->data[j]);
-            else
-              snprintf(serial_number + 3 * j, 3, "%02x", serial->data[j]);
+
+            bytes = i2c_ASN1_INTEGER(serial, &serial_bytes);
+
+            // i2c_ASN1_INTEGER() moves the pointer as it writes into
+            // serial_bytes. Move it back.
+            serial_bytes -= bytes;
+
+            // Also allocate space to hold the "common" string format:
+            // 00:01:02:03:04...
+            //
+            // For each byte in the serial to convert to hexlified format we
+            // need three bytes, two for the byte itself and one for colon.
+            // The last one doesn't have the colon, but the extra byte is used
+            // for the NULL terminator.
+            char *serial_ascii = (char*) yr_malloc(bytes * 3);
+            if (serial_ascii)
+            {
+
+              int j;
+              for (j = 0; j < bytes; j++)
+              {
+                // Don't put the colon on the last one.
+                if (j < bytes - 1)
+                  snprintf((char*) serial_ascii + 3 * j, 4, "%02x:", serial_bytes[j]);
+                else
+                  snprintf((char*) serial_ascii + 3 * j, 3, "%02x", serial_bytes[j]);
+              }
+
+              set_string(
+                  (char*) serial_ascii, pe->object,"signatures[%i].serial", counter);
+
+              yr_free(serial_ascii);
+            }
+            yr_free(serial_bytes);
           }
-
-          set_string(
-              serial_number, pe->object, "signatures[%i].serial", counter);
-
-          yr_free(serial_number);
         }
       }
 
