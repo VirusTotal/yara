@@ -338,6 +338,7 @@ int is_directory(
   return 0;
 }
 
+
 void scan_dir(
     const char* dir,
     int recursive,
@@ -455,7 +456,8 @@ void print_hex_string(
 }
 
 
-void print_scanner_error(int error)
+void print_scanner_error(
+    int error)
 {
   switch (error)
   {
@@ -505,7 +507,10 @@ void print_compiler_error(
 }
 
 
-int handle_message(int message, YR_RULE* rule, void* data)
+int handle_message(
+    int message, 
+    YR_RULE* rule, 
+    void* data)
 {
   const char* tag;
   int show = TRUE;
@@ -646,24 +651,14 @@ int handle_message(int message, YR_RULE* rule, void* data)
   return CALLBACK_CONTINUE;
 }
 
-int handle_module_data(YR_OBJECT* object)
-{
-  if (show_module_data)
-  {
-    mutex_lock(&output_mutex);
 
-    yr_object_print_data(object, 0, 1);
-    printf("\n");
-
-    mutex_unlock(&output_mutex);
-  }
-
-  return CALLBACK_CONTINUE;
-}
-
-int callback(int message, void* message_data, void* user_data)
+int callback(
+    int message, 
+    void* message_data, 
+    void* user_data)
 {
   YR_MODULE_IMPORT* mi;
+  YR_OBJECT* object;
   MODULE_DATA* module_data;
 
   switch(message)
@@ -673,8 +668,8 @@ int callback(int message, void* message_data, void* user_data)
       return handle_message(message, (YR_RULE*) message_data, user_data);
 
     case CALLBACK_MSG_IMPORT_MODULE:
-      mi = (YR_MODULE_IMPORT*) message_data;
 
+      mi = (YR_MODULE_IMPORT*) message_data;
       module_data = modules_data_list;
 
       while (module_data != NULL)
@@ -692,11 +687,25 @@ int callback(int message, void* message_data, void* user_data)
       return CALLBACK_CONTINUE;
 
     case CALLBACK_MSG_MODULE_IMPORTED:
-      return handle_module_data((YR_OBJECT*) message_data);
+
+      if (show_module_data)
+      {
+        object = (YR_OBJECT*) message_data;
+
+        mutex_lock(&output_mutex);
+
+        yr_object_print_data(object, 0, 1);
+        printf("\n");
+
+        mutex_unlock(&output_mutex);
+      }
+
+      return CALLBACK_CONTINUE;
   }
 
   return CALLBACK_ERROR;
 }
+
 
 #ifdef _WIN32
 DWORD WINAPI scanning_thread(LPVOID param)
