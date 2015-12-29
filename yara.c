@@ -646,6 +646,20 @@ int handle_message(int message, YR_RULE* rule, void* data)
   return CALLBACK_CONTINUE;
 }
 
+int handle_module_data(YR_OBJECT* object)
+{
+  if (show_module_data)
+  {
+    mutex_lock(&output_mutex);
+
+    yr_object_print_data(object, 0, 1);
+    printf("\n");
+
+    mutex_unlock(&output_mutex);
+  }
+
+  return CALLBACK_CONTINUE;
+}
 
 int callback(int message, void* message_data, void* user_data)
 {
@@ -676,6 +690,9 @@ int callback(int message, void* message_data, void* user_data)
       }
 
       return CALLBACK_CONTINUE;
+
+    case CALLBACK_MSG_MODULE_IMPORTED:
+      return handle_module_data((YR_OBJECT*) message_data);
   }
 
   return CALLBACK_ERROR;
@@ -695,9 +712,6 @@ void* scanning_thread(void* param)
 
   if (fast_scan)
     flags |= SCAN_FLAGS_FAST_MODE;
-
-  if (show_module_data)
-    flags |= SCAN_FLAGS_SHOW_MODULE_DATA;
 
   while (file_path != NULL)
   {
@@ -1053,9 +1067,6 @@ int main(
     if (fast_scan)
       flags |= SCAN_FLAGS_FAST_MODE;
 
-    if (show_module_data)
-      flags |= SCAN_FLAGS_SHOW_MODULE_DATA;
-
     result = yr_rules_scan_proc(
         rules,
         pid,
@@ -1116,9 +1127,6 @@ int main(
 
     if (fast_scan)
       flags |= SCAN_FLAGS_FAST_MODE;
-
-    if (show_module_data)
-      flags |= SCAN_FLAGS_SHOW_MODULE_DATA;
 
     result = yr_rules_scan_file(
         rules,
