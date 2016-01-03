@@ -156,6 +156,7 @@ Possible values for ``message`` are::
   CALLBACK_MSG_RULE_NOT_MATCHING
   CALLBACK_MSG_SCAN_FINISHED
   CALLBACK_MSG_IMPORT_MODULE
+  CALLBACK_MSG_MODULE_IMPORTED
 
 Your callback function will be called once for each rule with either
 a ``CALLBACK_MSG_RULE_MATCHING`` or ``CALLBACK_MSG_RULE_NOT_MATCHING`` message,
@@ -174,6 +175,11 @@ but your program can assign a pointer to some arbitrary data to ``module_data``
 while setting ``module_data_size`` to the size of the data. This way you can
 pass additional data to those modules requiring it, like the
 :ref:`Cuckoo-module` for example.
+
+The callback is also called once for each file that is scanned by each module
+that is imported. When this happens ``message_data`` points to a
+:c:type:`YR_OBJECT_STRUCTURE` structure. This structure contains all the
+information from the module, including any stored data and functions.
 
 Lastly, the callback function is also called with the
 ``CALLBACK_MSG_SCAN_FINISHED`` message when the scan is finished. In this case
