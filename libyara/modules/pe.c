@@ -1860,6 +1860,43 @@ define_function(language)
 }
 
 
+define_function(is_dll)
+{
+  int64_t characteristics;
+  YR_OBJECT* module = module();
+
+  if (is_undefined(module, "characteristics"))
+    return_integer(UNDEFINED);
+
+  characteristics = get_integer(module, "characteristics");
+  return_integer(characteristics & IMAGE_FILE_DLL);
+}
+
+
+define_function(is_32bit)
+{
+  YR_OBJECT* module = module();
+  PE* pe = module->data;
+
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  return_integer(IS_64BITS_PE(pe) ? 0 : 1);
+}
+
+
+define_function(is_64bit)
+{
+  YR_OBJECT* module = module();
+  PE* pe = module->data;
+
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  return_integer(IS_64BITS_PE(pe) ? 1 : 0);
+}
+
+
 static uint64_t rich_internal(
     YR_OBJECT* module, 
     uint64_t version, 
@@ -2102,6 +2139,9 @@ begin_declarations;
   declare_function("imports", "s", "i", imports_dll);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
+  declare_function("is_dll", "", "i", is_dll);
+  declare_function("is_32bit", "", "i", is_32bit);
+  declare_function("is_64bit", "", "i", is_64bit);
 
   declare_integer("resource_timestamp");
   
