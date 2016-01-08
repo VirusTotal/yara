@@ -628,6 +628,21 @@ int yr_object_copy(
       }
 
       break;
+
+    case OBJECT_TYPE_DICTIONARY:
+      ;
+      YR_OBJECT_DICTIONARY *dict = (YR_OBJECT_DICTIONARY *) object;
+      YR_OBJECT *prototype_item;
+
+      yr_object_copy(dict->prototype_item, &prototype_item);
+
+      ((YR_OBJECT_DICTIONARY *)copy)->prototype_item = prototype_item;
+
+      break;
+
+    default:
+      assert(FALSE);
+
   }
 
   *object_copy = copy;
