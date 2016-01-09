@@ -14,3 +14,5 @@ MODULE(magic)
 #ifdef HASH
 MODULE(hash)
 #endif
+
+MODULE(demo)

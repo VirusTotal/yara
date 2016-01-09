@@ -504,6 +504,7 @@ int yr_execute_code(
         pop(r2);  // dictionary
 
         ensure_defined(r1);
+        ensure_defined(r2);
         assert(r2.o->type == OBJECT_TYPE_DICTIONARY);
 
         r1.o = yr_object_dict_get_item(

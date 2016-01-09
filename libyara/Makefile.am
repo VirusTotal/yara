@@ -16,6 +16,8 @@ if HASH
 MODULES += modules/hash.c
 endif
 
+MODULES += modules/demo.c
+
 #
 # Add your modules here:
 #
