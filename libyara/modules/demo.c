@@ -22,6 +22,17 @@ begin_declarations;
 
   declare_string("greeting");
 
+  begin_struct_dictionary("d1");
+    declare_integer("i1");
+  end_struct_dictionary("d1");
+
+  begin_struct_dictionary("d2");
+    declare_integer("i2");
+    begin_struct_dictionary("d2_2");
+      declare_integer("i3");
+    end_struct_dictionary("d2_2");
+  end_struct_dictionary("d2");
+
 end_declarations;
 
 
@@ -46,6 +57,10 @@ int module_load(
     size_t module_data_size)
 {
   set_string("Hello World!", module_object, "greeting");
+
+  set_integer(5, module_object, "d1[\"abc\"].i1");
+  set_integer(5, module_object, "d2[\"def\"].i2");
+  set_integer(5, module_object, "d2[\"def\"].d2_2[\"ghi\"].i3");
 
   return ERROR_SUCCESS;
 }
