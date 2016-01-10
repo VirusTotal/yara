@@ -609,6 +609,28 @@ int yr_object_copy(
       break;
 
     case OBJECT_TYPE_ARRAY:
+      ;
+      YR_OBJECT_ARRAY *array = (YR_OBJECT_ARRAY *) object;
+      YR_OBJECT *array_prototype_item;
+
+      yr_object_copy(array->prototype_item, &array_prototype_item);
+
+      ((YR_OBJECT_ARRAY *)copy)->prototype_item = array_prototype_item;
+
+      if (array->items == NULL)
+      {
+        uint8_t init_size = 64;
+
+        array->items = (YR_ARRAY_ITEMS*) yr_malloc(
+            sizeof(YR_ARRAY_ITEMS) + init_size * sizeof(YR_OBJECT*));
+
+        if (array->items == NULL)
+          return ERROR_INSUFICIENT_MEMORY;
+
+        memset(array->items->objects, 0, init_size * sizeof(YR_OBJECT*));
+
+        array->items->count = 0;
+      }
 
       array_items = ((YR_OBJECT_ARRAY*) object)->items;
 
@@ -632,11 +654,11 @@ int yr_object_copy(
     case OBJECT_TYPE_DICTIONARY:
       ;
       YR_OBJECT_DICTIONARY *dict = (YR_OBJECT_DICTIONARY *) object;
-      YR_OBJECT *prototype_item;
+      YR_OBJECT *dictionary_prototype_item;
 
-      yr_object_copy(dict->prototype_item, &prototype_item);
+      yr_object_copy(dict->prototype_item, &dictionary_prototype_item);
 
-      ((YR_OBJECT_DICTIONARY *)copy)->prototype_item = prototype_item;
+      ((YR_OBJECT_DICTIONARY *)copy)->prototype_item = dictionary_prototype_item;
 
       break;
 
