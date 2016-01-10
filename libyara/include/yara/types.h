@@ -22,6 +22,7 @@ limitations under the License.
 #include <yara/re.h>
 #include <yara/limits.h>
 #include <yara/hash.h>
+#include <yara/utils.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -39,7 +40,7 @@ typedef int32_t tidx_mask_t;
 
 
 #define DECLARE_REFERENCE(type, name) \
-    union { type name; int64_t name##_; }
+    union { type name; int64_t name##_; } YR_ALIGN(8)
 
 #pragma pack(push)
 #pragma pack(8)
@@ -68,7 +69,7 @@ typedef struct _YR_NAMESPACE
 typedef struct _YR_META
 {
   int32_t type;
-  int64_t integer;
+  YR_ALIGN(8) int64_t integer;
 
   DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(char*, string);
@@ -85,10 +86,10 @@ typedef struct _YR_MATCH
   union {
     uint8_t* data;           // Confirmed matches use "data",
     int32_t chain_length;    // unconfirmed ones use "chain_length"
-  };
+  } YR_ALIGN(8);
 
-  struct _YR_MATCH*  prev;
-  struct _YR_MATCH*  next;
+  YR_ALIGN(8) struct _YR_MATCH* prev;
+  YR_ALIGN(8) struct _YR_MATCH* next;
 
 } YR_MATCH;
 
@@ -259,7 +260,7 @@ typedef struct _YR_EXTERNAL_VARIABLE
 {
   int32_t type;
 
-  union {
+  YR_ALIGN(8) union {
     int64_t i;
     double f;
     char* s;
