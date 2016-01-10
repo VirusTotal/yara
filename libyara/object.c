@@ -545,7 +545,6 @@ int yr_object_copy(
   YR_OBJECT* copy;
   YR_OBJECT* o;
 
-  YR_ARRAY_ITEMS* array_items;
   YR_STRUCTURE_MEMBER* structure_member;
   YR_OBJECT_FUNCTION* func;
   YR_OBJECT_FUNCTION* func_copy;
@@ -609,56 +608,22 @@ int yr_object_copy(
       break;
 
     case OBJECT_TYPE_ARRAY:
-      ;
-      YR_OBJECT_ARRAY *array = (YR_OBJECT_ARRAY *) object;
-      YR_OBJECT *array_prototype_item;
 
-      yr_object_copy(array->prototype_item, &array_prototype_item);
+      yr_object_copy(
+        ((YR_OBJECT_ARRAY *) object)->prototype_item,
+        &o);
 
-      ((YR_OBJECT_ARRAY *)copy)->prototype_item = array_prototype_item;
-
-      if (array->items == NULL)
-      {
-        uint8_t init_size = 64;
-
-        array->items = (YR_ARRAY_ITEMS*) yr_malloc(
-            sizeof(YR_ARRAY_ITEMS) + init_size * sizeof(YR_OBJECT*));
-
-        if (array->items == NULL)
-          return ERROR_INSUFICIENT_MEMORY;
-
-        memset(array->items->objects, 0, init_size * sizeof(YR_OBJECT*));
-
-        array->items->count = 0;
-      }
-
-      array_items = ((YR_OBJECT_ARRAY*) object)->items;
-
-      for (i = 0; i < array_items->count; i++)
-      {
-        if (array_items->objects[i] != NULL)
-        {
-          FAIL_ON_ERROR_WITH_CLEANUP(
-              yr_object_copy(array_items->objects[i], &o),
-              yr_object_destroy(copy));
-
-          FAIL_ON_ERROR_WITH_CLEANUP(
-                yr_object_array_set_item(copy, o, i),
-                yr_free(o);
-                yr_object_destroy(copy));
-        }
-      }
+      ((YR_OBJECT_ARRAY *)copy)->prototype_item = o;
 
       break;
 
     case OBJECT_TYPE_DICTIONARY:
-      ;
-      YR_OBJECT_DICTIONARY *dict = (YR_OBJECT_DICTIONARY *) object;
-      YR_OBJECT *dictionary_prototype_item;
 
-      yr_object_copy(dict->prototype_item, &dictionary_prototype_item);
+      yr_object_copy(
+        ((YR_OBJECT_DICTIONARY *) object)->prototype_item,
+        &o);
 
-      ((YR_OBJECT_DICTIONARY *)copy)->prototype_item = dictionary_prototype_item;
+      ((YR_OBJECT_DICTIONARY *)copy)->prototype_item = o;
 
       break;
 
