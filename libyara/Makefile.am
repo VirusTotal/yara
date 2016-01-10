@@ -110,6 +110,10 @@ libyara_la_SOURCES = \
 pkgconfigdir = $(libdir)/pkgconfig
 nodist_pkgconfig_DATA = yara.pc
 
+TESTS = $(check_PROGRAMS)
+check_PROGRAMS = test-alignment
+test_alignment_SOURCES = test-alignment.c
+
 yara.pc: yara.pc.in
 		sed -e 's![@]prefix[@]!$(prefix)!g' \
 		    -e 's![@]exec_prefix[@]!$(exec_prefix)!g' \
