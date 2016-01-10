@@ -529,3 +529,27 @@ Reference
   *addr*. *addr* can be an offset into the file or a memory address.
 
   *Example: pe.section_index(pe.entry_point)*
+
+.. c:function:: is_dll()
+
+    .. versionadded:: 3.5.0
+
+    Function returning true if the PE is a DLL.
+
+    *Example: pe.is_dll()*
+
+.. c:function:: is_32bit()
+
+    .. versionadded:: 3.5.0
+
+    Function returning true if the PE is 32bits.
+
+    *Example: pe.is_32bit()*
+
+.. c:function:: is_64bit()
+
+    .. versionadded:: 3.5.0
+
+    Function returning true if the PE is 64bits.
+
+    *Example: pe.is_64bit()*
