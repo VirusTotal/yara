@@ -41,7 +41,7 @@ limitations under the License.
 #elif defined(_MSC_VER)
 #define YR_API EXTERNC __declspec(dllexport)
 #else
-#deinfe YR_API EXTERNC
+#define YR_API EXTERNC
 #endif
 
 #define yr_min(x, y) ((x < y) ? (x) : (y))
