@@ -301,12 +301,12 @@ int _yr_scan_fast_hex_re_exec(
           matches_stack[sp] = matches;
           sp++;
           ip += 3;
-          
+
           break;
 
         case RE_OPCODE_PUSH:
 
-          // A PUSH operation indicates the begining of a code sequence 
+          // A PUSH operation indicates the begining of a code sequence
           // generated for a jump. (example: { 01 02 [n-m] 03 04 }) The
           // code sequence looks like this:
           //
