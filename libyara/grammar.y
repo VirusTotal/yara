@@ -474,15 +474,20 @@ string_declarations
 
 
 string_declaration
-    : _STRING_IDENTIFIER_ '=' _TEXT_STRING_ string_modifiers
+    : _STRING_IDENTIFIER_ '='
+      {
+        compiler->error_line = yyget_lineno(yyscanner);
+      }
+      _TEXT_STRING_ string_modifiers
       {
         $$ = yr_parser_reduce_string_declaration(
-            yyscanner, (int32_t) $4, $1, $3);
+            yyscanner, (int32_t) $5, $1, $4);
 
         yr_free($1);
-        yr_free($3);
+        yr_free($4);
 
         ERROR_IF($$ == NULL);
+        compiler->error_line = 0;
       }
     | _STRING_IDENTIFIER_ '='
       {
