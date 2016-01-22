@@ -320,7 +320,7 @@ YR_API int yr_rules_scan_mem_blocks(
   YR_EXTERNAL_VARIABLE* external;
   YR_RULE* rule;
   YR_SCAN_CONTEXT context;
-  
+
   time_t start_time;
   tidx_mask_t bit = 1;
 
@@ -578,7 +578,7 @@ YR_API int yr_rules_scan_fd(
     int timeout)
 {
   YR_MAPPED_FILE mfile;
-  
+
   int result = yr_filemap_map_fd(fd, 0, 0, &mfile);
 
   if (result == ERROR_SUCCESS)
@@ -692,7 +692,7 @@ YR_API int yr_rules_load(
 
   YR_STREAM stream;
   FILE* fh = fopen(filename, "rb");
- 
+
   if (fh == NULL)
     return ERROR_COULD_NOT_OPEN_FILE;
 
@@ -720,7 +720,7 @@ YR_API int yr_rules_save(
     const char* filename)
 {
   int result;
-  
+
   YR_STREAM stream;
   FILE* fh = fopen(filename, "wb");
 
