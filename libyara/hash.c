@@ -109,7 +109,8 @@ YR_API int yr_hash_table_create(
   return ERROR_SUCCESS;
 }
 
-YR_API void yr_hash_table_destroy(
+
+YR_API void yr_hash_table_clean(
     YR_HASH_TABLE* table,
     YR_HASH_TABLE_FREE_VALUE_FUNC free_value)
 {
@@ -140,8 +141,17 @@ YR_API void yr_hash_table_destroy(
 
       entry = next_entry;
     }
-  }
 
+    table->buckets[i] = NULL;
+  }
+}
+
+
+YR_API void yr_hash_table_destroy(
+    YR_HASH_TABLE* table,
+    YR_HASH_TABLE_FREE_VALUE_FUNC free_value)
+{
+  yr_hash_table_clean(table, free_value);
   yr_free(table);
 }
 
