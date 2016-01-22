@@ -1529,6 +1529,8 @@ define_function(exports)
 
   int64_t offset;
   uint32_t i;
+  size_t remaining;
+  size_t searchlen;
 
   // If not a PE file, return UNDEFINED
 
@@ -1563,6 +1565,7 @@ define_function(exports)
       exports->NumberOfNames * sizeof(DWORD) > pe->data_size - offset)
     return_integer(0);
 
+  searchlen = strlen(function_name);
   names = (DWORD*)(pe->data + offset);
 
   for (i = 0; i < exports->NumberOfNames; i++)
@@ -1572,6 +1575,10 @@ define_function(exports)
 
     if (offset < 0)
       return_integer(0);
+
+    remaining = pe->data_size - (size_t) offset;
+    if (remaining < searchlen)
+      continue;
 
     name = (char*)(pe->data + offset);
 
