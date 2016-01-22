@@ -403,7 +403,7 @@ u?int(8|16|32)(be)? {
 
   if (strlen(yytext) > 128)
   {
-    yyerror(yyscanner, compiler, "indentifier too long");
+    yyerror(yyscanner, compiler, "identifier too long");
   }
 
   yylval->c_string = yr_strdup(yytext);
