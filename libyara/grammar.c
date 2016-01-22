@@ -1809,7 +1809,7 @@ yyreduce:
   case 10:
 #line 233 "grammar.y"
     {
-        YR_RULE* rule = (yyvsp[(6) - (8)].rule); // rule created in phase 1
+        YR_RULE* rule = (yyvsp[(4) - (8)].rule); // rule created in phase 1
 
         rule->tags = (yyvsp[(5) - (8)].c_string);
         rule->metas = (yyvsp[(7) - (8)].meta);
@@ -1820,7 +1820,7 @@ yyreduce:
   case 11:
 #line 241 "grammar.y"
     {
-        YR_RULE* rule = (yyvsp[(6) - (11)].rule); // rule created in phase 1
+        YR_RULE* rule = (yyvsp[(4) - (11)].rule); // rule created in phase 1
 
         compiler->last_result = yr_parser_reduce_rule_declaration_phase_2(
             yyscanner, rule);
