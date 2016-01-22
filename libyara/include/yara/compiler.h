@@ -70,6 +70,7 @@ typedef struct _YR_COMPILER
   YR_AC_AUTOMATON*  automaton;
   YR_HASH_TABLE*    rules_table;
   YR_HASH_TABLE*    objects_table;
+  YR_HASH_TABLE*    strings_table;
   YR_NAMESPACE*     current_namespace;
   YR_RULE*          current_rule;
 

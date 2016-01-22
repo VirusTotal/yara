@@ -220,18 +220,26 @@ import
 
 
 rule
-    : rule_modifiers _RULE_ _IDENTIFIER_ tags '{' meta strings
+    : rule_modifiers _RULE_ _IDENTIFIER_
       {
         YR_RULE* rule = yr_parser_reduce_rule_declaration_phase_1(
-            yyscanner, (int32_t) $1, $3, $4, $7, $6);
+            yyscanner, (int32_t) $1, $3);
 
         ERROR_IF(rule == NULL);
 
         $<rule>$ = rule;
       }
+      tags '{' meta strings
+      {
+        YR_RULE* rule = $<rule>6; // rule created in phase 1
+
+        rule->tags = $5;
+        rule->metas = $7;
+        rule->strings = $8;
+      }
       condition '}'
       {
-        YR_RULE* rule = $<rule>8; // rule created in phase 1
+        YR_RULE* rule = $<rule>6; // rule created in phase 1
 
         compiler->last_result = yr_parser_reduce_rule_declaration_phase_2(
             yyscanner, rule);
