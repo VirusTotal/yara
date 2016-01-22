@@ -231,7 +231,7 @@ rule
       }
       tags '{' meta strings
       {
-        YR_RULE* rule = $<rule>6; // rule created in phase 1
+        YR_RULE* rule = $<rule>4; // rule created in phase 1
 
         rule->tags = $5;
         rule->metas = $7;
@@ -239,7 +239,7 @@ rule
       }
       condition '}'
       {
-        YR_RULE* rule = $<rule>6; // rule created in phase 1
+        YR_RULE* rule = $<rule>4; // rule created in phase 1
 
         compiler->last_result = yr_parser_reduce_rule_declaration_phase_2(
             yyscanner, rule);
