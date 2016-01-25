@@ -545,7 +545,6 @@ int yr_object_copy(
   YR_OBJECT* copy;
   YR_OBJECT* o;
 
-  YR_ARRAY_ITEMS* array_items;
   YR_STRUCTURE_MEMBER* structure_member;
   YR_OBJECT_FUNCTION* func;
   YR_OBJECT_FUNCTION* func_copy;
@@ -610,24 +609,27 @@ int yr_object_copy(
 
     case OBJECT_TYPE_ARRAY:
 
-      array_items = ((YR_OBJECT_ARRAY*) object)->items;
+      yr_object_copy(
+        ((YR_OBJECT_ARRAY *) object)->prototype_item,
+        &o);
 
-      for (i = 0; i < array_items->count; i++)
-      {
-        if (array_items->objects[i] != NULL)
-        {
-          FAIL_ON_ERROR_WITH_CLEANUP(
-              yr_object_copy(array_items->objects[i], &o),
-              yr_object_destroy(copy));
-
-          FAIL_ON_ERROR_WITH_CLEANUP(
-                yr_object_array_set_item(copy, o, i),
-                yr_free(o);
-                yr_object_destroy(copy));
-        }
-      }
+      ((YR_OBJECT_ARRAY *)copy)->prototype_item = o;
 
       break;
+
+    case OBJECT_TYPE_DICTIONARY:
+
+      yr_object_copy(
+        ((YR_OBJECT_DICTIONARY *) object)->prototype_item,
+        &o);
+
+      ((YR_OBJECT_DICTIONARY *)copy)->prototype_item = o;
+
+      break;
+
+    default:
+      assert(FALSE);
+
   }
 
   *object_copy = copy;

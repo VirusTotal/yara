@@ -17,7 +17,7 @@ limitations under the License.
 
 /*
 
-This modules implements a regular expressions engine based on Thompson's
+This module implements a regular expressions engine based on Thompson's
 algorithm as described by Russ Cox in http://swtch.com/~rsc/regexp/regexp2.html.
 
 What the article names a "thread" has been named a "fiber" in this code, in
@@ -244,7 +244,7 @@ void yr_re_destroy(
 //
 // yr_re_parse
 //
-// Parses a regexp but don't emit its code. A further call to y
+// Parses a regexp but don't emit its code. A further call to
 // yr_re_emit_code is required to get the code.
 //
 
@@ -1121,9 +1121,9 @@ int yr_re_emit_code(
   if (re->flags & RE_FLAGS_DOT_ALL)
     emit_flags |= EMIT_DOT_ALL;
 
-  // Ensure that we have enough contiguos memory space in the arena to
+  // Ensure that we have enough contiguous memory space in the arena to
   // contain the regular expression code. The code can't span over multiple
-  // non-contiguos pages.
+  // non-contiguous pages.
 
   yr_arena_reserve_memory(arena, RE_MAX_CODE_SIZE);
 

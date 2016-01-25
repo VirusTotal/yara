@@ -465,6 +465,23 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
   RE_ERROR re_error;
 
+  // Determine if a string with the same identifier was already defined
+  // by searching for the identifier in string_table.
+
+  string = yr_hash_table_lookup(
+      compiler->strings_table,
+      identifier,
+      NULL);
+
+  if (string != NULL)
+  {
+    compiler->last_result = ERROR_DUPLICATED_STRING_IDENTIFIER;
+    yr_compiler_set_error_extra_info(compiler, identifier);
+    goto _exit;
+  }
+
+  // Empty strings are now allowed
+
   if (str->length == 0)
   {
     compiler->last_result = ERROR_EMPTY_STRING;
@@ -653,6 +670,15 @@ YR_STRING* yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
+  compiler->last_result = yr_hash_table_add(
+      compiler->strings_table,
+      identifier,
+      NULL,
+      string);
+
+  if (compiler->last_result != ERROR_SUCCESS)
+    goto _exit;
+
   if (min_atom_quality < 3 && compiler->callback != NULL)
   {
     snprintf(
@@ -680,10 +706,7 @@ _exit:
 YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
     yyscan_t yyscanner,
     int32_t flags,
-    const char* identifier,
-    char* tags,
-    YR_STRING* strings,
-    YR_META* metas)
+    const char* identifier)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   YR_RULE* rule = NULL;
@@ -720,9 +743,6 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
     return NULL;
 
   rule->g_flags = flags;
-  rule->tags = tags;
-  rule->strings = strings;
-  rule->metas = metas;
   rule->ns = compiler->current_namespace;
 
   #ifdef PROFILING_ENABLED
@@ -751,8 +771,10 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
         compiler->current_namespace->name,
         (void*) rule);
 
-  compiler->current_rule = rule;
+  // Clean strings_table as we are starting to parse a new rule.
+  yr_hash_table_clean(compiler->strings_table, NULL);
 
+  compiler->current_rule = rule;
   return rule;
 }
 
@@ -795,7 +817,6 @@ int yr_parser_reduce_rule_declaration_phase_2(
 
   return compiler->last_result;
 }
-
 
 
 int yr_parser_reduce_string_identifier(

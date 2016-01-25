@@ -1061,4 +1061,3 @@ int yr_arena_save_stream(
 
   return ERROR_SUCCESS;
 }
-

@@ -936,7 +936,7 @@ void pe_parse_certificates(
   // Make sure WIN_CERTIFICATE fits within the directory.
   // Make sure the Length specified fits within directory too.
   //
-  // The docs say that the length is only for the Certificate, but the next 
+  // The docs say that the length is only for the Certificate, but the next
   // paragraph contradicts that. All the binaries I've seen have the Length
   // being the entire structure (Certificate included).
   //
@@ -1063,13 +1063,13 @@ void pe_parse_certificates(
             // need three bytes, two for the byte itself and one for colon.
             // The last one doesn't have the colon, but the extra byte is used
             // for the NULL terminator.
-            
+
             char *serial_ascii = (char*) yr_malloc(bytes * 3);
 
             if (serial_ascii)
             {
               int j;
-             
+
               for (j = 0; j < bytes; j++)
               {
                 // Don't put the colon on the last one.
@@ -1082,9 +1082,9 @@ void pe_parse_certificates(
               }
 
               set_string(
-                  (char*) serial_ascii, 
+                  (char*) serial_ascii,
                   pe->object,
-                  "signatures[%i].serial", 
+                  "signatures[%i].serial",
                   counter);
 
               yr_free(serial_ascii);
@@ -1327,7 +1327,7 @@ define_function(section_index_name)
 
 define_function(exports)
 {
-  char* function_name = string_argument(1);
+  SIZED_STRING* function_name = sized_string_argument(1);
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
@@ -1338,6 +1338,7 @@ define_function(exports)
 
   int64_t offset;
   uint32_t i;
+  size_t remaining;
 
   // If not a PE file, return UNDEFINED
 
@@ -1382,10 +1383,14 @@ define_function(exports)
     if (offset < 0)
       return_integer(0);
 
+    remaining = pe->data_size - (size_t) offset;
     name = (char*)(pe->data + offset);
 
-    if (strncmp(name, function_name, pe->data_size - (size_t) offset) == 0)
+    if (remaining >= function_name->length &&
+        strncmp(name, function_name->c_string, remaining) == 0)
+    {
       return_integer(1);
+    }
   }
 
   return_integer(0);
@@ -1707,8 +1712,8 @@ define_function(is_64bit)
 
 
 static uint64_t rich_internal(
-    YR_OBJECT* module, 
-    uint64_t version, 
+    YR_OBJECT* module,
+    uint64_t version,
     uint64_t toolid)
 {
     size_t rich_len;
@@ -1743,17 +1748,17 @@ static uint64_t rich_internal(
     for (i = 0; i < rich_signature_count; i++)
     {
         DWORD id_version = clear_rich_signature->versions[i].id_version;
-        
+
         int match_version = version == RICH_VERSION_VERSION(id_version);
         int match_toolid = toolid == RICH_VERSION_ID(id_version);
 
-        if (version != UNDEFINED && toolid != UNDEFINED) 
+        if (version != UNDEFINED && toolid != UNDEFINED)
         {
           // check version and toolid
           if (match_version && match_toolid)
             return TRUE;
         }
-        else if (version != UNDEFINED) 
+        else if (version != UNDEFINED)
         {
           // check only version
           if (match_version)
@@ -1953,7 +1958,7 @@ begin_declarations;
   declare_function("is_64bit", "", "i", is_64bit);
 
   declare_integer("resource_timestamp");
-  
+
   begin_struct("resource_version");
     declare_integer("major");
     declare_integer("minor");
@@ -1969,7 +1974,7 @@ begin_declarations;
     declare_string("name_string");
     declare_string("language_string");
   end_struct_array("resources");
-  
+
   declare_integer("number_of_resources");
 
   #if defined(HAVE_LIBCRYPTO)
@@ -1983,7 +1988,7 @@ begin_declarations;
     declare_integer("not_after");
     declare_function("valid_on", "i", "i", valid_on);
   end_struct_array("signatures");
-  
+
   declare_integer("number_of_signatures");
   #endif
 

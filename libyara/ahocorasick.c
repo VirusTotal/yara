@@ -683,6 +683,3 @@ void yr_ac_print_automaton(YR_AC_AUTOMATON* automaton)
   _yr_ac_print_automaton_state(automaton->root);
   printf("-------------------------------------------------------\n");
 }
-
-
-
