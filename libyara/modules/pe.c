@@ -1386,6 +1386,10 @@ void pe_parse_header(
       OptionalHeader(Subsystem),
       pe->object, "subsystem");
 
+  set_integer(
+      OptionalHeader(DllCharacteristics),
+      pe->object, "dllcharacteristics");
+
   pe_iterate_resources(
       pe,
       (RESOURCE_CALLBACK_FUNC) pe_collect_resources,
@@ -2026,6 +2030,21 @@ begin_declarations;
   declare_integer("SUBSYSTEM_OS2_CUI");
   declare_integer("SUBSYSTEM_POSIX_CUI");
   declare_integer("SUBSYSTEM_NATIVE_WINDOWS");
+  declare_integer("SUBSYSTEM_WINDOWS_CE_GUI");
+  declare_integer("SUBSYSTEM_EFI_APPLICATION");
+  declare_integer("SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER");
+  declare_integer("SUBSYSTEM_EFI_RUNTIME_DRIVER");
+  declare_integer("SUBSYSTEM_XBOX");
+  declare_integer("SUBSYSTEM_WINDOWS_BOOT_APPLICATION");
+
+  declare_integer("DLLCHARACTERISTICS_DYNAMIC_BASE");
+  declare_integer("DLLCHARACTERISTICS_FORCE_INTEGRITY");
+  declare_integer("DLLCHARACTERISTICS_NX_COMPAT");
+  declare_integer("DLLCHARACTERISTICS_NO_ISOLATION");
+  declare_integer("DLLCHARACTERISTICS_NO_SEH");
+  declare_integer("DLLCHARACTERISTICS_NO_BIND");
+  declare_integer("DLLCHARACTERISTICS_WDM_DRIVER");
+  declare_integer("DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE");
 
   declare_integer("RELOCS_STRIPPED");
   declare_integer("EXECUTABLE_IMAGE");
@@ -2110,6 +2129,8 @@ begin_declarations;
   end_struct("subsystem_version");
 
   declare_integer("subsystem");
+
+  declare_integer("dllcharacteristics");
 
   begin_struct_array("sections");
     declare_string("name");
@@ -2296,6 +2317,49 @@ int module_load(
   set_integer(
       IMAGE_SUBSYSTEM_NATIVE_WINDOWS, module_object,
       "SUBSYSTEM_NATIVE_WINDOWS");
+  set_integer(
+      IMAGE_SUBSYSTEM_WINDOWS_CE_GUI, module_object,
+      "SUBSYSTEM_WINDOWS_CE_GUI");
+  set_integer(
+      IMAGE_SUBSYSTEM_EFI_APPLICATION, module_object,
+	  "SUBSYSTEM_EFI_APPLICATION");
+  set_integer(
+      IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER, module_object,
+	  "SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER");
+  set_integer(
+      IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER, module_object,
+	  "SUBSYSTEM_EFI_RUNTIME_DRIVER");
+  set_integer(
+      IMAGE_SUBSYSTEM_XBOX, module_object,
+	  "SUBSYSTEM_XBOX");
+  set_integer(
+      IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION, module_object,
+	  "SUBSYSTEM_WINDOWS_BOOT_APPLICATION");
+
+  set_integer(
+      IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE, module_object,
+	  "DLLCHARACTERISTICS_DYNAMIC_BASE");
+  set_integer(
+      IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY, module_object,
+	  "DLLCHARACTERISTICS_FORCE_INTEGRITY");
+  set_integer(
+      IMAGE_DLLCHARACTERISTICS_NX_COMPAT, module_object,
+	  "DLLCHARACTERISTICS_NX_COMPAT");
+  set_integer(
+      IMAGE_DLLCHARACTERISTICS_NO_ISOLATION, module_object,
+	  "DLLCHARACTERISTICS_NO_ISOLATION");
+  set_integer(
+      IMAGE_DLLCHARACTERISTICS_NO_SEH, module_object,
+	  "DLLCHARACTERISTICS_NO_SEH");
+  set_integer(
+      IMAGE_DLLCHARACTERISTICS_NO_BIND, module_object,
+	  "DLLCHARACTERISTICS_NO_BIND");
+  set_integer(
+      IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, module_object,
+	  "DLLCHARACTERISTICS_WDM_DRIVER");
+  set_integer(
+      IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE, module_object,
+	  "DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE");
 
   set_integer(
       IMAGE_FILE_RELOCS_STRIPPED, module_object,
