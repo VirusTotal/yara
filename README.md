@@ -43,6 +43,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 
 ## Who's using YARA
 
+* [ActiveCanopy](https://activecanopy.com/)
 * [Adlice](http://www.adlice.com/)
 * [BAE Systems](http://www.baesystems.com/home?r=ai)
 * [Bayshore Networks, Inc.](http://www.bayshorenetworks.com)
