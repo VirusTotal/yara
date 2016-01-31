@@ -670,14 +670,17 @@ YR_STRING* yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
-  compiler->last_result = yr_hash_table_add(
+  if (!STRING_IS_ANONYMOUS(string))
+  {
+    compiler->last_result = yr_hash_table_add(
       compiler->strings_table,
       identifier,
       NULL,
       string);
 
-  if (compiler->last_result != ERROR_SUCCESS)
-    goto _exit;
+    if (compiler->last_result != ERROR_SUCCESS)
+      goto _exit;  
+  }
 
   if (min_atom_quality < 3 && compiler->callback != NULL)
   {
