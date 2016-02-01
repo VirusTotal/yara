@@ -57,6 +57,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Guidance Software](http://www.guidancesoftware.com/endpointsecurity)
 * [Heroku](https://heroku.com)
 * [jsunpack-n](http://jsunpack.jeek.org/)
+* [Kaspersky Lab](http://www.kaspersky.com)
 * [Koodous](https://koodous.com/)
 * [Laika BOSS](https://github.com/lmco/laikaboss)
 * [Lastline, Inc.](http://www.lastline.com)
