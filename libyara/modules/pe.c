@@ -2130,7 +2130,7 @@ begin_declarations;
 
   declare_integer("subsystem");
 
-  declare_integer("dllcharacteristics");
+  declare_integer("dll_characteristics");
 
   begin_struct_array("sections");
     declare_string("name");
