@@ -1388,7 +1388,7 @@ void pe_parse_header(
 
   set_integer(
       OptionalHeader(DllCharacteristics),
-      pe->object, "dllcharacteristics");
+      pe->object, "dll_characteristics");
 
   pe_iterate_resources(
       pe,
@@ -1842,7 +1842,7 @@ define_function(locale)
 define_function(language)
 {
   YR_OBJECT* module = module();
-  PE* pe = module->data;
+  PE* pe = (PE *)module->data;
 
   uint64_t language = integer_argument(1);
   int64_t n, i;
@@ -1885,7 +1885,7 @@ define_function(is_dll)
 define_function(is_32bit)
 {
   YR_OBJECT* module = module();
-  PE* pe = module->data;
+  PE* pe = (PE *)module->data;
 
   if (pe == NULL)
     return_integer(UNDEFINED);
@@ -1897,7 +1897,7 @@ define_function(is_32bit)
 define_function(is_64bit)
 {
   YR_OBJECT* module = module();
-  PE* pe = module->data;
+  PE* pe = (PE *)module->data;
 
   if (pe == NULL)
     return_integer(UNDEFINED);
@@ -2037,14 +2037,14 @@ begin_declarations;
   declare_integer("SUBSYSTEM_XBOX");
   declare_integer("SUBSYSTEM_WINDOWS_BOOT_APPLICATION");
 
-  declare_integer("DLLCHARACTERISTICS_DYNAMIC_BASE");
-  declare_integer("DLLCHARACTERISTICS_FORCE_INTEGRITY");
-  declare_integer("DLLCHARACTERISTICS_NX_COMPAT");
-  declare_integer("DLLCHARACTERISTICS_NO_ISOLATION");
-  declare_integer("DLLCHARACTERISTICS_NO_SEH");
-  declare_integer("DLLCHARACTERISTICS_NO_BIND");
-  declare_integer("DLLCHARACTERISTICS_WDM_DRIVER");
-  declare_integer("DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE");
+  declare_integer("DYNAMIC_BASE");
+  declare_integer("FORCE_INTEGRITY");
+  declare_integer("NX_COMPAT");
+  declare_integer("NO_ISOLATION");
+  declare_integer("NO_SEH");
+  declare_integer("NO_BIND");
+  declare_integer("WDM_DRIVER");
+  declare_integer("TERMINAL_SERVER_AWARE");
 
   declare_integer("RELOCS_STRIPPED");
   declare_integer("EXECUTABLE_IMAGE");
@@ -2338,28 +2338,28 @@ int module_load(
 
   set_integer(
       IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE, module_object,
-	  "DLLCHARACTERISTICS_DYNAMIC_BASE");
+	  "DYNAMIC_BASE");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY, module_object,
-	  "DLLCHARACTERISTICS_FORCE_INTEGRITY");
+	  "FORCE_INTEGRITY");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_NX_COMPAT, module_object,
-	  "DLLCHARACTERISTICS_NX_COMPAT");
+	  "_NX_COMPAT");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_NO_ISOLATION, module_object,
-	  "DLLCHARACTERISTICS_NO_ISOLATION");
+	  "NO_ISOLATION");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_NO_SEH, module_object,
-	  "DLLCHARACTERISTICS_NO_SEH");
+	  "NO_SEH");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_NO_BIND, module_object,
-	  "DLLCHARACTERISTICS_NO_BIND");
+	  "NO_BIND");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, module_object,
-	  "DLLCHARACTERISTICS_WDM_DRIVER");
+	  "WDM_DRIVER");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE, module_object,
-	  "DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE");
+	  "TERMINAL_SERVER_AWARE");
 
   set_integer(
       IMAGE_FILE_RELOCS_STRIPPED, module_object,
