@@ -75,6 +75,12 @@ Reference
     .. c:type:: SUBSYSTEM_OS2_CUI
     .. c:type:: SUBSYSTEM_POSIX_CUI
     .. c:type:: SUBSYSTEM_NATIVE_WINDOWS
+    .. c:type:: SUBSYSTEM_WINDOWS_CE_GUI
+    .. c:type:: SUBSYSTEM_EFI_APPLICATION
+    .. c:type:: SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER
+    .. c:type:: SUBSYSTEM_EFI_RUNTIME_DRIVER
+    .. c:type:: SUBSYSTEM_XBOX
+    .. c:type:: SUBSYSTEM_WINDOWS_BOOT_APPLICATION
 
     *Example: pe.subsystem == pe.SUBSYSTEM_NATIVE*
 
@@ -94,8 +100,9 @@ Reference
 
 .. c:type:: characteristics
 
-    Bitmap with PE characteristics. Individual characteristics can be inspected
-    by performing a bitwise AND operation with the following constants:
+    Bitmap with PE FileHeader characteristics. Individual characteristics 
+    can be inspected by performing a bitwise AND operation with the 
+    following constants:
 
     .. c:type:: RELOCS_STRIPPED
     .. c:type:: EXECUTABLE_IMAGE
@@ -166,6 +173,37 @@ Reference
     .. c:member:: minor
 
         Minor subsystem version.
+
+.. c:type:: dll_characteristics
+
+    Bitmap with PE OptionalHeader DllCharacteristics.  Do not confuse these
+    flags with the PE FileHeader Characteristics. Individual 
+    characteristics can be inspected by performing a bitwise AND 
+    operation with the following constants:
+
+    .. c:type:: DYNAMIC_BASE
+
+        File can be relocated - also marks the file as ASLR compatible
+
+    .. c:type:: FORCE_INTEGRITY
+    .. c:type:: NX_COMPAT
+
+        Marks the file as DEP compatible
+
+    .. c:type:: NO_ISOLATION
+    .. c:type:: NO_SEH
+
+        The file does not contain structured exception handlers, this must be 
+        set to use SafeSEH
+
+    .. c:type:: NO_BIND
+    .. c:type:: WDM_DRIVER
+
+        Marks the file as a Windows Driver Model (WDM) device driver.
+
+    .. c:type:: TERMINAL_SERVER_AWARE
+
+        Marks the file as terminal server compatible
 
 .. c:type:: number_of_sections
 
