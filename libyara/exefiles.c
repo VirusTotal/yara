@@ -61,8 +61,6 @@ PIMAGE_NT_HEADERS32 yr_get_pe_header(
   headers_size += pe_header->FileHeader.SizeOfOptionalHeader;
 
   if (pe_header->Signature == IMAGE_NT_SIGNATURE &&
-      (pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64) &&
       buffer_length > headers_size)
   {
     return pe_header;
@@ -141,48 +139,87 @@ uint64_t yr_elf_rva_to_offset_32(
     size_t buffer_length)
 {
   int i;
+  int sections = TRUE;
   elf32_section_header_t* section;
+  elf32_program_header_t* segment;
 
   if (elf_header->sh_offset == 0 || elf_header->sh_entry_count == 0)
-    return 0;
+    sections = FALSE;
 
   // check to prevent integer wraps
 
-  if (ULONG_MAX - elf_header->sh_entry_count <
-      sizeof(elf32_section_header_t) * elf_header->sh_entry_count)
-    return 0;
+  if (sections == TRUE && (ULONG_MAX - elf_header->sh_entry_count <
+      sizeof(elf32_section_header_t) * elf_header->sh_entry_count))
+    sections = FALSE;
 
   // check that 'sh_offset' doesn't wrap when added to the
   // size of entries.
 
-  if (ULONG_MAX - elf_header->sh_offset <
-      sizeof(elf32_section_header_t) * elf_header->sh_entry_count)
-    return 0;
+  if (sections == TRUE && (ULONG_MAX - elf_header->sh_offset <
+      sizeof(elf32_section_header_t) * elf_header->sh_entry_count))
+    sections = FALSE;
 
-  if (elf_header->sh_offset + \
+  if (sections == TRUE && (elf_header->sh_offset + \
       sizeof(elf32_section_header_t) * \
-      elf_header->sh_entry_count > buffer_length)
-    return 0;
+      elf_header->sh_entry_count > buffer_length))
+    sections = FALSE;
 
-  section = (elf32_section_header_t*) \
+  if (sections == TRUE)
+  {
+    section = (elf32_section_header_t*) \
       ((unsigned char*) elf_header + elf_header->sh_offset);
 
-  for (i = 0; i < elf_header->sh_entry_count; i++)
-  {
-    if (section->type != ELF_SHT_NULL &&
-        section->type != ELF_SHT_NOBITS &&
-        rva >= section->addr &&
-        rva <  section->addr + section->size)
+    for (i = 0; i < elf_header->sh_entry_count; i++)
     {
-      // prevent integer wrapping with the return value
+      if (section->type != ELF_SHT_NULL &&
+          section->type != ELF_SHT_NOBITS &&
+          rva >= section->addr &&
+          rva <  section->addr + section->size)
+      {
+        // prevent integer wrapping with the return value
 
-      if (ULONG_MAX - section->offset < (rva - section->addr))
+        if (ULONG_MAX - section->offset < (rva - section->addr))
+          return 0;
+        else
+          return section->offset + (rva - section->addr);
+      }
+
+      section++;
+    }
+  }
+
+  if (elf_header->ph_offset == 0 || elf_header->ph_entry_count == 0)
+    return 0;
+
+  if (ULONG_MAX - elf_header->ph_entry_count <
+      sizeof(elf32_program_header_t) * elf_header->ph_entry_count)
+    return 0;
+
+  if (ULONG_MAX - elf_header->ph_offset <
+      sizeof(elf32_program_header_t) * elf_header->ph_entry_count)
+    return 0;
+
+  if (elf_header->ph_offset + \
+      sizeof(elf32_program_header_t) * \
+      elf_header->ph_entry_count > buffer_length)
+    return 0;
+
+  segment = (elf32_program_header_t*) \
+      ((unsigned char*) elf_header + elf_header->ph_offset);
+
+  for (i = 0; i < elf_header->ph_entry_count; i++)
+  {
+    if (segment->type != ELF_PT_NULL &&
+        rva >= segment->virt_addr &&
+        rva <  segment->virt_addr + segment->mem_size)
+    {
+      if (ULONG_MAX - segment->offset < (rva - segment->virt_addr))
         return 0;
       else
-        return section->offset + (rva - section->addr);
+        return segment->offset + (rva - segment->virt_addr);
     }
 
-    section++;
+    segment++;
   }
 
   return 0;
@@ -196,36 +233,68 @@ uint64_t yr_elf_rva_to_offset_64(
     size_t buffer_length)
 {
   int i;
+  int sections = TRUE;
   elf64_section_header_t* section;
+  elf64_program_header_t* segment;
 
   if (elf_header->sh_offset == 0 || elf_header->sh_entry_count == 0)
-    return 0;
+    sections = FALSE;
 
   // check that 'sh_offset' doesn't wrap when added to the
   // size of entries.
-  if(ULONG_MAX - elf_header->sh_offset <
-     sizeof(elf64_section_header_t) * elf_header->sh_entry_count)
-    return 0;
+  if(sections == TRUE && (ULONG_MAX - elf_header->sh_offset <
+     sizeof(elf64_section_header_t) * elf_header->sh_entry_count))
+    sections = FALSE;
 
-  if (elf_header->sh_offset + \
+  if (sections == TRUE && (elf_header->sh_offset + \
       sizeof(elf64_section_header_t) * \
-      elf_header->sh_entry_count > buffer_length)
+      elf_header->sh_entry_count > buffer_length))
+    sections = FALSE;
+
+  if (sections == TRUE)
+  {
+    section = (elf64_section_header_t*) \
+        ((uint8_t*) elf_header + elf_header->sh_offset);
+
+    for (i = 0; i < elf_header->sh_entry_count; i++)
+    {
+      if (section->type != ELF_SHT_NULL &&
+          section->type != ELF_SHT_NOBITS &&
+          rva >= section->addr &&
+          rva <  section->addr + section->size)
+      {
+        return section->offset + (rva - section->addr);
+      }
+
+      section++;
+    }
+  }
+
+  if (elf_header->ph_offset == 0 || elf_header->ph_entry_count == 0)
     return 0;
 
-  section = (elf64_section_header_t*) \
-      ((uint8_t*) elf_header + elf_header->sh_offset);
+  if(ULONG_MAX - elf_header->ph_offset <
+     sizeof(elf64_program_header_t) * elf_header->ph_entry_count)
+    return 0;
 
-  for (i = 0; i < elf_header->sh_entry_count; i++)
+  if (elf_header->ph_offset + \
+      sizeof(elf64_program_header_t) * \
+      elf_header->ph_entry_count > buffer_length)
+    return 0;
+
+  segment = (elf64_program_header_t*) \
+        ((uint8_t*) elf_header + elf_header->ph_offset);
+
+  for (i = 0; i < elf_header->ph_entry_count; i++)
   {
-    if (section->type != ELF_SHT_NULL &&
-        section->type != ELF_SHT_NOBITS &&
-        rva >= section->addr &&
-        rva <  section->addr + section->size)
+    if (segment->type != ELF_PT_NULL &&
+        rva >= segment->virt_addr &&
+        rva <  segment->virt_addr + segment->mem_size)
     {
-      return section->offset + (rva - section->addr);
+      return segment->offset + (rva - segment->virt_addr);
     }
 
-    section++;
+    segment++;
   }
 
   return 0;
