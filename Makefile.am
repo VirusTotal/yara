@@ -15,8 +15,10 @@ yarac_SOURCES = args.c args.h yarac.c
 yarac_LDADD = libyara/.libs/libyara.a
 
 TESTS = $(check_PROGRAMS)
-check_PROGRAMS = test-alignment
+check_PROGRAMS = test-alignment test-syntax
 test_alignment_SOURCES = tests/test-alignment.c
+test_syntax_SOURCES = tests/test-syntax.c
+test_syntax_LDADD = libyara/.libs/libyara.la
 
 # man pages
 man1_MANS = yara.man yarac.man
