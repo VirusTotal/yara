@@ -23,7 +23,7 @@ limitations under the License.
 #include <sys/types.h>
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #define YR_FILE_DESCRIPTOR    HANDLE
 #else
@@ -41,7 +41,7 @@ typedef struct _YR_MAPPED_FILE
   YR_FILE_DESCRIPTOR  file;
   size_t              size;
   uint8_t*            data;
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   HANDLE              mapping;
   #endif
 
