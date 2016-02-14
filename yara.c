@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__CYGWIN__)
 
 #include <sys/stat.h>
 #include <dirent.h>
@@ -273,7 +273,7 @@ char* file_queue_get()
 }
 
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 
 int is_directory(
     const char* path)
@@ -403,7 +403,7 @@ void print_string(
 }
 
 
-static char cescapes[] = 
+static char cescapes[] =
 {
   0  , 0  , 0  , 0  , 0  , 0  , 0  , 'a',
   'b', 't', 'n', 'v', 'f', 'r', 0  , 0  ,
@@ -427,15 +427,15 @@ void print_escaped(
       case '\\':
         printf("\\%c", data[i]);
         break;
-  
+
       default:
-        if (data[i] >= 127) 
+        if (data[i] >= 127)
           printf("\\%03o", data[i]);
         else if (data[i] >= 32)
           putchar(data[i]);
-        else if (cescapes[data[i]] != 0) 
+        else if (cescapes[data[i]] != 0)
           printf("\\%c", cescapes[data[i]]);
-        else 
+        else
           printf("\\%03o", data[i]);
     }
   }
@@ -508,8 +508,8 @@ void print_compiler_error(
 
 
 int handle_message(
-    int message, 
-    YR_RULE* rule, 
+    int message,
+    YR_RULE* rule,
     void* data)
 {
   const char* tag;
@@ -602,7 +602,7 @@ int handle_message(
         {
           printf("%s=%s", meta->identifier, meta->integer ? "true" : "false");
         }
-        else 
+        else
         {
           printf("%s=\"", meta->identifier);
           print_escaped((uint8_t*) (meta->string), strlen(meta->string));
@@ -653,8 +653,8 @@ int handle_message(
 
 
 int callback(
-    int message, 
-    void* message_data, 
+    int message,
+    void* message_data,
     void* user_data)
 {
   YR_MODULE_IMPORT* mi;
@@ -707,7 +707,7 @@ int callback(
 }
 
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 DWORD WINAPI scanning_thread(LPVOID param)
 #else
 void* scanning_thread(void* param)
