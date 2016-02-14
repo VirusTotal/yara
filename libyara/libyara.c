@@ -27,12 +27,12 @@ limitations under the License.
 #include <openssl/crypto.h>
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #define snprintf _snprintf
 #endif
 
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 DWORD tidx_key;
 DWORD recovery_state_key;
@@ -95,7 +95,7 @@ YR_API int yr_initialize(void)
 
   FAIL_ON_ERROR(yr_heap_alloc());
 
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   tidx_key = TlsAlloc();
   recovery_state_key = TlsAlloc();
   #else
@@ -158,7 +158,7 @@ YR_API int yr_finalize(void)
   OPENSSL_free(locks);
   #endif
 
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   TlsFree(tidx_key);
   TlsFree(recovery_state_key);
   #else
@@ -187,7 +187,7 @@ YR_API int yr_finalize(void)
 
 YR_API void yr_set_tidx(int tidx)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   TlsSetValue(tidx_key, (LPVOID) (tidx + 1));
   #else
   pthread_setspecific(tidx_key, (void*) (size_t) (tidx + 1));
@@ -207,7 +207,7 @@ YR_API void yr_set_tidx(int tidx)
 
 YR_API int yr_get_tidx(void)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   return (int) TlsGetValue(tidx_key) - 1;
   #else
   return (int) (size_t) pthread_getspecific(tidx_key) - 1;

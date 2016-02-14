@@ -41,7 +41,7 @@ limitations under the License.
 void _yr_rules_lock(
     YR_RULES* rules)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   WaitForSingleObject(rules->mutex, INFINITE);
   #else
   pthread_mutex_lock(&rules->mutex);
@@ -52,7 +52,7 @@ void _yr_rules_lock(
 void _yr_rules_unlock(
     YR_RULES* rules)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   ReleaseMutex(rules->mutex);
   #else
   pthread_mutex_unlock(&rules->mutex);
@@ -666,7 +666,7 @@ YR_API int yr_rules_load_stream(
   new_rules->rules_list_head = header->rules_list_head;
   new_rules->tidx_mask = 0;
 
-  #if _WIN32
+  #if _WIN32 || __CYGWIN__
   new_rules->mutex = CreateMutex(NULL, FALSE, NULL);
 
   if (new_rules->mutex == NULL)
@@ -750,7 +750,7 @@ YR_API int yr_rules_destroy(
     external++;
   }
 
-  #if _WIN32
+  #if _WIN32 || __CYGWIN__
   CloseHandle(rules->mutex);
   #else
   pthread_mutex_destroy(&rules->mutex);
