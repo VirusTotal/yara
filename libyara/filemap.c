@@ -16,7 +16,7 @@ limitations under the License.
 
 #include <fcntl.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #else
 #include <sys/stat.h>
@@ -77,7 +77,7 @@ YR_API int yr_filemap_map(
 //       ERROR_COULD_NOT_MAP_FILE
 //
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 
 YR_API int yr_filemap_map_fd(
     YR_FILE_DESCRIPTOR file,
@@ -248,7 +248,7 @@ YR_API int yr_filemap_map_fd(
 //       ERROR_COULD_NOT_MAP_FILE
 //
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 
 YR_API int yr_filemap_map_ex(
     const char* file_path,

@@ -113,7 +113,7 @@ Reference
         Function returning true if the program sent a domain name resolution
         request for a domain matching the provided regular expression.
 
-        *Example: cuckoo.network.dns_lookop(/evil\\.com/)*
+        *Example: cuckoo.network.dns_lookup(/evil\\.com/)*
 
 .. type:: registry
 

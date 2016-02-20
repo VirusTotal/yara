@@ -25,7 +25,7 @@ size_t yr_stream_read(
     YR_STREAM* stream)
 {
   if (stream->read == NULL)
-  	return 0;
+    return 0;
 
   return stream->read(ptr, size, count, stream->user_data);
 }
@@ -38,7 +38,7 @@ size_t yr_stream_write(
     YR_STREAM* stream)
 {
   if (stream->write == NULL)
-  	return 0;
+    return 0;
 
   return stream->write(ptr, size, count, stream->user_data);
 }

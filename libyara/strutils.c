@@ -23,7 +23,7 @@ limitations under the License.
 
 uint64_t xtoi(
     const char* hexstr)
-{ 
+{
   size_t i;
   size_t l = strlen(hexstr);
 
