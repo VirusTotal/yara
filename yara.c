@@ -89,8 +89,6 @@ typedef struct _QUEUED_FILE {
 #define MAX_ARGS_EXT_VAR        32
 #define MAX_ARGS_MODULE_DATA    32
 
-#define DEFAULT_STACK_SIZE   16384
-
 char* tags[MAX_ARGS_TAG + 1];
 char* identifiers[MAX_ARGS_IDENTIFIER + 1];
 char* ext_vars[MAX_ARGS_EXT_VAR + 1];
@@ -734,6 +732,11 @@ void* scanning_thread(void* param)
 
     if (elapsed_time < timeout)
     {
+      if(stacksize != DEFAULT_STACK_SIZE) {
+        // If the user chose a different stack size than default,
+        // modify the yara config here
+        yr_set_configuration(YR_CONFIG_STACK_SIZE, &stacksize);
+      }
       result = yr_rules_scan_file(
           args->rules,
           file_path,

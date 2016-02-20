@@ -31,6 +31,14 @@ limitations under the License.
     (YR_MINOR_VERSION << 8) | \
     (YR_MICRO_VERSION << 0))
 
+// Enumerated type listing configuration options
+enum yr_cfg_name {
+  YR_CONFIG_STACK_SIZE,
+  YR_CONFIG_MAX
+};
+
+#define DEFAULT_STACK_SIZE 16384
+
 
 YR_API int yr_initialize(void);
 
@@ -45,5 +53,11 @@ YR_API int yr_get_tidx(void);
 
 
 YR_API void yr_set_tidx(int);
+
+
+YR_API int yr_set_configuration(enum yr_cfg_name, void *);
+
+
+YR_API int yr_get_configuration(enum yr_cfg_name, void *);
 
 #endif
