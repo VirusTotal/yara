@@ -228,30 +228,30 @@ YR_API int yr_get_tidx(void)
 
 YR_API int yr_set_configuration(enum yr_cfg_name cfgname, void *src) {
   if(src == NULL) {
-    return 1;
+    return ERROR_INTERNAL_FATAL_ERROR;
   }
   switch(cfgname) { // lump all the cases using same types together in one cascade
     case YR_CONFIG_STACK_SIZE:
       yr_cfgs[cfgname].data.ui = *(unsigned int*)src;
       break;
     default:
-      return 1;
+      return ERROR_INTERNAL_FATAL_ERROR;
   }
 
-  return 0;
+  return ERROR_SUCCESS;
 }
 
 YR_API int yr_get_configuration(enum yr_cfg_name cfgname, void *dest) {
   if(dest == NULL) {
-    return 1;
+    return ERROR_INTERNAL_FATAL_ERROR;
   }
   switch(cfgname) { // lump all the cases using same types together in one cascade
     case YR_CONFIG_STACK_SIZE:
       *(size_t*)dest = yr_cfgs[cfgname].data.ui;
       break;
     default:
-      return 1;
+      return ERROR_INTERNAL_FATAL_ERROR;
   }
 
-  return 0;
+  return ERROR_SUCCESS;
 }
