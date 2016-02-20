@@ -488,6 +488,7 @@ int yr_execute_code(
         pop(r2);  // array
 
         ensure_defined(r1);
+        ensure_defined(r2);
         assert(r2.o->type == OBJECT_TYPE_ARRAY);
 
         r1.o = yr_object_array_get_item(r2.o, 0, (int) r1.i);
@@ -503,6 +504,7 @@ int yr_execute_code(
         pop(r2);  // dictionary
 
         ensure_defined(r1);
+        ensure_defined(r2);
         assert(r2.o->type == OBJECT_TYPE_DICTIONARY);
 
         r1.o = yr_object_dict_get_item(
@@ -825,6 +827,9 @@ int yr_execute_code(
       case OP_MATCHES:
         pop(r2);
         pop(r1);
+
+        ensure_defined(r2);
+        ensure_defined(r1);
 
         if (r1.ss->length == 0)
         {

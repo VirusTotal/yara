@@ -17,7 +17,7 @@ limitations under the License.
 
 /*
 
-This modules implements a regular expressions engine based on Thompson's
+This module implements a regular expressions engine based on Thompson's
 algorithm as described by Russ Cox in http://swtch.com/~rsc/regexp/regexp2.html.
 
 What the article names a "thread" has been named a "fiber" in this code, in
@@ -29,7 +29,7 @@ order to avoid confusion with operating system threads.
 #include <string.h>
 #include <limits.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #else
 #include <pthread.h>
@@ -85,7 +85,7 @@ typedef struct _RE_THREAD_STORAGE
 } RE_THREAD_STORAGE;
 
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 DWORD thread_storage_key = 0;
 #else
 pthread_key_t thread_storage_key = 0;
@@ -100,7 +100,7 @@ pthread_key_t thread_storage_key = 0;
 
 int yr_re_initialize(void)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   thread_storage_key = TlsAlloc();
   #else
   pthread_key_create(&thread_storage_key, NULL);
@@ -118,7 +118,7 @@ int yr_re_initialize(void)
 
 int yr_re_finalize(void)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   TlsFree(thread_storage_key);
   #else
   pthread_key_delete(thread_storage_key);
@@ -142,7 +142,7 @@ int yr_re_finalize_thread(void)
   RE_THREAD_STORAGE* storage;
 
   if (thread_storage_key != 0)
-    #ifdef _WIN32
+    #if defined(_WIN32) || defined(__CYGWIN__)
     storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
     #else
     storage = (RE_THREAD_STORAGE*) pthread_getspecific(thread_storage_key);
@@ -164,7 +164,7 @@ int yr_re_finalize_thread(void)
     yr_free(storage);
   }
 
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   TlsSetValue(thread_storage_key, NULL);
   #else
   pthread_setspecific(thread_storage_key, NULL);
@@ -244,7 +244,7 @@ void yr_re_destroy(
 //
 // yr_re_parse
 //
-// Parses a regexp but don't emit its code. A further call to y
+// Parses a regexp but don't emit its code. A further call to
 // yr_re_emit_code is required to get the code.
 //
 
@@ -1121,9 +1121,9 @@ int yr_re_emit_code(
   if (re->flags & RE_FLAGS_DOT_ALL)
     emit_flags |= EMIT_DOT_ALL;
 
-  // Ensure that we have enough contiguos memory space in the arena to
+  // Ensure that we have enough contiguous memory space in the arena to
   // contain the regular expression code. The code can't span over multiple
-  // non-contiguos pages.
+  // non-contiguous pages.
 
   yr_arena_reserve_memory(arena, RE_MAX_CODE_SIZE);
 
@@ -1184,7 +1184,7 @@ int yr_re_emit_code(
 int _yr_re_alloc_storage(
     RE_THREAD_STORAGE** storage)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   *storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
   #else
   *storage = (RE_THREAD_STORAGE*) pthread_getspecific(thread_storage_key);
@@ -1200,7 +1200,7 @@ int _yr_re_alloc_storage(
     (*storage)->fiber_pool.head = NULL;
     (*storage)->fiber_pool.tail = NULL;
 
-    #ifdef _WIN32
+    #if defined(_WIN32) || defined(__CYGWIN__)
     TlsSetValue(thread_storage_key, *storage);
     #else
     pthread_setspecific(thread_storage_key, *storage);
