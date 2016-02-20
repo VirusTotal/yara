@@ -732,11 +732,6 @@ void* scanning_thread(void* param)
 
     if (elapsed_time < timeout)
     {
-      if(stacksize != DEFAULT_STACK_SIZE) {
-        // If the user chose a different stack size than default,
-        // modify the yara config here
-        yr_set_configuration(YR_CONFIG_STACK_SIZE, &stacksize);
-      }
       result = yr_rules_scan_file(
           args->rules,
           file_path,
@@ -1009,6 +1004,12 @@ int main(
     exit_with_code(EXIT_FAILURE);
 
   result = yr_initialize();
+
+  if(stacksize != DEFAULT_STACK_SIZE) {
+    // If the user chose a different stack size than default,
+    // modify the yara config here
+    yr_set_configuration(YR_CONFIG_STACK_SIZE, &stacksize);
+  }
 
   if (result != ERROR_SUCCESS)
   {
