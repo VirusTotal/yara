@@ -51,6 +51,9 @@ define_function(magic_mime_type)
         block->size);
   }
 
+  if (cached_mime_types[context->tidx] == NULL)
+    return_string(UNDEFINED);
+
   return_string((char*) cached_mime_types[context->tidx]);
 }
 
@@ -74,6 +77,9 @@ define_function(magic_type)
         block->data,
         block->size);
   }
+
+  if (cached_types[context->tidx] == NULL)
+    return_string(UNDEFINED);
 
   return_string((char*) cached_types[context->tidx]);
 }

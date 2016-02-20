@@ -94,9 +94,9 @@ limitations under the License.
 
 
 #define fits_in_pe(pe, pointer, size) \
-    (size <= pe->data_size && \
-     (uint8_t*)(pointer) >= pe->data && \
-     (uint8_t*)(pointer) <= pe->data + pe->data_size - size)
+    ((size_t) size <= pe->data_size && \
+     (uint8_t*) (pointer) >= pe->data && \
+     (uint8_t*) (pointer) <= pe->data + pe->data_size - size)
 
 
 #define struct_fits_in_pe(pe, pointer, struct_type) \
@@ -657,7 +657,6 @@ void pe_parse_version_info(
     PE* pe)
 {
   PVERSION_INFO version_info;
-  PVERSION_INFO string_file_info;
 
   int64_t version_info_offset = pe_rva_to_offset(pe, rsrc_data->OffsetToData);
 
@@ -675,25 +674,34 @@ void pe_parse_version_info(
   if (strcmp_w(version_info->Key, "VS_VERSION_INFO") != 0)
     return;
 
-  string_file_info = ADD_OFFSET(
+  version_info = ADD_OFFSET(
       version_info, sizeof(VERSION_INFO) + 86);
 
-  while(fits_in_pe(pe, string_file_info->Key, sizeof("StringFileInfo") * 2) &&
-        strcmp_w(string_file_info->Key, "StringFileInfo") == 0 &&
-        string_file_info->Length != 0)
+  while(fits_in_pe(pe, version_info->Key, sizeof("VarFileInfo") * 2) &&
+        strcmp_w(version_info->Key, "VarFileInfo") == 0 &&
+        version_info->Length != 0)
+  {
+    version_info = ADD_OFFSET(
+        version_info,
+        version_info->Length);
+  }
+
+  while(fits_in_pe(pe, version_info->Key, sizeof("StringFileInfo") * 2) &&
+        strcmp_w(version_info->Key, "StringFileInfo") == 0 &&
+        version_info->Length != 0)
   {
     PVERSION_INFO string_table = ADD_OFFSET(
-        string_file_info,
+        version_info,
         sizeof(VERSION_INFO) + 30);
 
-    string_file_info = ADD_OFFSET(
-        string_file_info,
-        string_file_info->Length);
+    version_info = ADD_OFFSET(
+        version_info,
+        version_info->Length);
 
     while (struct_fits_in_pe(pe, string_table, VERSION_INFO) &&
            wide_string_fits_in_pe(pe, string_table->Key) &&
            string_table->Length != 0 &&
-           string_table < string_file_info)
+           string_table < version_info)
     {
       PVERSION_INFO string = ADD_OFFSET(
           string_table,
@@ -1089,7 +1097,7 @@ IMPORTED_DLL* pe_parse_imports(
 void pe_parse_certificates(
     PE* pe)
 {
-  int i, counter = 0;  
+  int i, counter = 0;
   uint8_t* eod;
 
   PWIN_CERTIFICATE win_cert;
@@ -1119,15 +1127,16 @@ void pe_parse_certificates(
   // Make sure WIN_CERTIFICATE fits within the directory.
   // Make sure the Length specified fits within directory too.
   //
-  // Subtracting 8 because the docs say that the length is only for the
-  // Certificate, but the next paragraph contradicts that. All the binaries
-  // I've seen have the Length being the entire structure (Certificate
-  // included).
+  // The docs say that the length is only for the Certificate, but the next
+  // paragraph contradicts that. All the binaries I've seen have the Length
+  // being the entire structure (Certificate included).
   //
 
   while (struct_fits_in_pe(pe, win_cert, WIN_CERTIFICATE) &&
-         (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) <= eod &&
-         (uint8_t*) win_cert->Certificate + win_cert->Length - 8 <= eod)
+         win_cert->Length > sizeof(WIN_CERTIFICATE) &&
+         fits_in_pe(pe, win_cert, win_cert->Length) &&
+         (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) < eod &&
+         (uint8_t*) win_cert + win_cert->Length <= eod)
   {
     BIO* cert_bio;
     PKCS7* pkcs7;
@@ -1173,6 +1182,7 @@ void pe_parse_certificates(
     {
       const char* sig_alg;
       char buffer[256];
+      int bytes;
 
       ASN1_INTEGER* serial;
 
@@ -1199,33 +1209,80 @@ void pe_parse_certificates(
 
       serial = X509_get_serialNumber(cert);
 
-      if (serial->length > 0)
+      if (serial)
       {
-        // Convert serial number to "common" string format: 00:01:02:03:04...
-        // For each byte in the integer to convert to hexlified format we
-        // need three bytes, two for the byte itself and one for colon. The
-        // last one doesn't have the colon, but the extra byte is used for the
-        // NULL terminator.
+        // ASN1_INTEGER can be negative (serial->type & V_ASN1_NEG_INTEGER),
+        // in which case the serial number will be stored in 2's complement.
+        //
+        // Handle negative serial numbers, which are technically not allowed
+        // by RFC5280, but do exist. An example binary which has a negative
+        // serial number is: 4bfe05f182aa273e113db6ed7dae4bb8.
+        //
+        // Negative serial numbers are handled by calling i2c_ASN1_INTEGER()
+        // with a NULL second parameter. This will return the size of the
+        // buffer necessary to store the proper serial number.
+        //
+        // Do this even for positive serial numbers because it makes the code
+        // cleaner and easier to read.
 
-        char* serial_number = (char *) yr_malloc(serial->length * 3);
+        bytes = i2c_ASN1_INTEGER(serial, NULL);
 
-        if (serial_number != NULL)
+        // According to X.509 specification the maximum length for the serial
+        // number is 20 octets.
+
+        if (bytes > 0 && bytes <= 20)
         {
-          int j;
+          // Now that we know the size of the serial number allocate enough
+          // space to hold it, and use i2c_ASN1_INTEGER() one last time to
+          // hold it in the allocated buffer.
 
-          for (j = 0; j < serial->length; j++)
+          unsigned char* serial_bytes = (unsigned char*)  yr_malloc(bytes);
+
+          if (serial_bytes != NULL)
           {
-            // Don't put the colon on the last one.
-            if (j < serial->length - 1)
-              snprintf(serial_number + 3 * j, 4, "%02x:", serial->data[j]);
-            else
-              snprintf(serial_number + 3 * j, 3, "%02x", serial->data[j]);
+            bytes = i2c_ASN1_INTEGER(serial, &serial_bytes);
+
+            // i2c_ASN1_INTEGER() moves the pointer as it writes into
+            // serial_bytes. Move it back.
+
+            serial_bytes -= bytes;
+
+            // Also allocate space to hold the "common" string format:
+            // 00:01:02:03:04...
+            //
+            // For each byte in the serial to convert to hexlified format we
+            // need three bytes, two for the byte itself and one for colon.
+            // The last one doesn't have the colon, but the extra byte is used
+            // for the NULL terminator.
+
+            char *serial_ascii = (char*) yr_malloc(bytes * 3);
+
+            if (serial_ascii)
+            {
+              int j;
+
+              for (j = 0; j < bytes; j++)
+              {
+                // Don't put the colon on the last one.
+                if (j < bytes - 1)
+                  snprintf(
+                    (char*) serial_ascii + 3 * j, 4, "%02x:", serial_bytes[j]);
+                else
+                  snprintf(
+                    (char*) serial_ascii + 3 * j, 3, "%02x", serial_bytes[j]);
+              }
+
+              set_string(
+                  (char*) serial_ascii,
+                  pe->object,
+                  "signatures[%i].serial",
+                  counter);
+
+              yr_free(serial_ascii);
+            }
+
+            yr_free(serial_bytes);
           }
-
-          set_string(
-              serial_number, pe->object, "signatures[%i].serial", counter);
-
-          yr_free(serial_number);
         }
       }
 
@@ -1407,7 +1464,7 @@ define_function(section_index_addr)
   int64_t i;
   int64_t offset;
   int64_t size;
-  
+
   int64_t addr = integer_argument(1);
   int64_t n = get_integer(module, "number_of_sections");
 
@@ -1443,7 +1500,7 @@ define_function(section_index_name)
 
   int64_t n = get_integer(module, "number_of_sections");
   int64_t i;
-  
+
   if (is_undefined(module, "number_of_sections"))
     return_integer(UNDEFINED);
 
@@ -1461,7 +1518,7 @@ define_function(section_index_name)
 
 define_function(exports)
 {
-  char* function_name = string_argument(1);
+  SIZED_STRING* function_name = sized_string_argument(1);
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
@@ -1472,6 +1529,7 @@ define_function(exports)
 
   int64_t offset;
   uint32_t i;
+  size_t remaining;
 
   // If not a PE file, return UNDEFINED
 
@@ -1516,10 +1574,14 @@ define_function(exports)
     if (offset < 0)
       return_integer(0);
 
+    remaining = pe->data_size - (size_t) offset;
     name = (char*)(pe->data + offset);
 
-    if (strncmp(name, function_name, pe->data_size - (size_t) offset) == 0)
+    if (remaining >= function_name->length &&
+        strncmp(name, function_name->c_string, remaining) == 0)
+    {
       return_integer(1);
+    }
   }
 
   return_integer(0);
@@ -1558,7 +1620,7 @@ define_function(imphash)
   dll = pe->imported_dlls;
 
   while (dll)
-  {  
+  {
     IMPORTED_FUNCTION* func;
 
     size_t dll_name_len;
@@ -1747,7 +1809,7 @@ define_function(locale)
 {
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
-  
+
   uint64_t locale = integer_argument(1);
   int64_t n, i;
 
@@ -1803,30 +1865,159 @@ define_function(language)
 }
 
 
+define_function(is_dll)
+{
+  int64_t characteristics;
+  YR_OBJECT* module = module();
+
+  if (is_undefined(module, "characteristics"))
+    return_integer(UNDEFINED);
+
+  characteristics = get_integer(module, "characteristics");
+  return_integer(characteristics & IMAGE_FILE_DLL);
+}
+
+
+define_function(is_32bit)
+{
+  YR_OBJECT* module = module();
+  PE* pe = module->data;
+
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  return_integer(IS_64BITS_PE(pe) ? 0 : 1);
+}
+
+
+define_function(is_64bit)
+{
+  YR_OBJECT* module = module();
+  PE* pe = module->data;
+
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  return_integer(IS_64BITS_PE(pe) ? 1 : 0);
+}
+
+
+static uint64_t rich_internal(
+    YR_OBJECT* module,
+    uint64_t version,
+    uint64_t toolid)
+{
+    size_t rich_len;
+
+    PRICH_SIGNATURE clear_rich_signature;
+    SIZED_STRING* rich_string;
+
+    int rich_signature_count;
+    int i;
+
+    // Check if the required fields are set
+    if (is_undefined(module, "rich_signature.length"))
+        return UNDEFINED;
+
+    rich_len = get_integer(module, "rich_signature.length");
+    rich_string = get_string(module, "rich_signature.clear_data");
+
+    // If the clear_data was not set, return UNDEFINED
+    if (rich_string == NULL)
+        return UNDEFINED;
+
+    if (version == UNDEFINED && toolid == UNDEFINED)
+        return FALSE;
+
+    clear_rich_signature = (PRICH_SIGNATURE) rich_string->c_string;
+
+    // Loop over the versions in the rich signature
+
+    rich_signature_count = \
+        (rich_len - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
+
+    for (i = 0; i < rich_signature_count; i++)
+    {
+        DWORD id_version = clear_rich_signature->versions[i].id_version;
+
+        int match_version = version == RICH_VERSION_VERSION(id_version);
+        int match_toolid = toolid == RICH_VERSION_ID(id_version);
+
+        if (version != UNDEFINED && toolid != UNDEFINED)
+        {
+          // check version and toolid
+          if (match_version && match_toolid)
+            return TRUE;
+        }
+        else if (version != UNDEFINED)
+        {
+          // check only version
+          if (match_version)
+            return TRUE;
+        }
+        else if (toolid != UNDEFINED)
+        {
+          // check only toolid
+          if (match_toolid)
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+
+define_function(rich_version)
+{
+  return_integer(
+      rich_internal(module(), integer_argument(1), UNDEFINED));
+}
+
+
+define_function(rich_version_toolid)
+{
+  return_integer(
+      rich_internal(module(), integer_argument(1), integer_argument(2)));
+}
+
+
+define_function(rich_toolid)
+{
+    return_integer(
+       rich_internal(module(), UNDEFINED, integer_argument(1)));
+}
+
+
+define_function(rich_toolid_version)
+{
+  return_integer(
+      rich_internal(module(), integer_argument(2), integer_argument(1)));
+}
+
 begin_declarations;
 
-  declare_integer("MACHINE_UNKNOWN")
-  declare_integer("MACHINE_AM33")
-  declare_integer("MACHINE_AMD64")
-  declare_integer("MACHINE_ARM")
-  declare_integer("MACHINE_ARMNT")
-  declare_integer("MACHINE_ARM64")
-  declare_integer("MACHINE_EBC")
-  declare_integer("MACHINE_I386")
-  declare_integer("MACHINE_IA64")
-  declare_integer("MACHINE_M32R")
-  declare_integer("MACHINE_MIPS16")
-  declare_integer("MACHINE_MIPSFPU")
-  declare_integer("MACHINE_MIPSFPU16")
-  declare_integer("MACHINE_POWERPC")
-  declare_integer("MACHINE_POWERPCFP")
-  declare_integer("MACHINE_R4000")
-  declare_integer("MACHINE_SH3")
-  declare_integer("MACHINE_SH3DSP")
-  declare_integer("MACHINE_SH4")
-  declare_integer("MACHINE_SH5")
-  declare_integer("MACHINE_THUMB")
-  declare_integer("MACHINE_WCEMIPSV2")
+  declare_integer("MACHINE_UNKNOWN");
+  declare_integer("MACHINE_AM33");
+  declare_integer("MACHINE_AMD64");
+  declare_integer("MACHINE_ARM");
+  declare_integer("MACHINE_ARMNT");
+  declare_integer("MACHINE_ARM64");
+  declare_integer("MACHINE_EBC");
+  declare_integer("MACHINE_I386");
+  declare_integer("MACHINE_IA64");
+  declare_integer("MACHINE_M32R");
+  declare_integer("MACHINE_MIPS16");
+  declare_integer("MACHINE_MIPSFPU");
+  declare_integer("MACHINE_MIPSFPU16");
+  declare_integer("MACHINE_POWERPC");
+  declare_integer("MACHINE_POWERPCFP");
+  declare_integer("MACHINE_R4000");
+  declare_integer("MACHINE_SH3");
+  declare_integer("MACHINE_SH3DSP");
+  declare_integer("MACHINE_SH4");
+  declare_integer("MACHINE_SH5");
+  declare_integer("MACHINE_THUMB");
+  declare_integer("MACHINE_WCEMIPSV2");
 
   declare_integer("SUBSYSTEM_UNKNOWN");
   declare_integer("SUBSYSTEM_NATIVE");
@@ -1935,6 +2126,10 @@ begin_declarations;
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
+    declare_function("version", "i", "i", rich_version);
+    declare_function("version", "ii", "i", rich_version_toolid);
+    declare_function("toolid", "i", "i", rich_toolid);
+    declare_function("toolid", "ii", "i", rich_toolid_version);
   end_struct("rich_signature");
 
   #if defined(HAVE_LIBCRYPTO)
@@ -1949,12 +2144,17 @@ begin_declarations;
   declare_function("imports", "s", "i", imports_dll);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
+  declare_function("is_dll", "", "i", is_dll);
+  declare_function("is_32bit", "", "i", is_32bit);
+  declare_function("is_64bit", "", "i", is_64bit);
 
-  declare_integer("resource_timestamp")
+  declare_integer("resource_timestamp");
+
   begin_struct("resource_version");
     declare_integer("major");
     declare_integer("minor");
   end_struct("resource_version");
+
   begin_struct_array("resources");
     declare_integer("offset");
     declare_integer("length");
@@ -1965,6 +2165,7 @@ begin_declarations;
     declare_string("name_string");
     declare_string("language_string");
   end_struct_array("resources");
+
   declare_integer("number_of_resources");
 
   #if defined(HAVE_LIBCRYPTO)
@@ -1978,6 +2179,7 @@ begin_declarations;
     declare_integer("not_after");
     declare_function("valid_on", "i", "i", valid_on);
   end_struct_array("signatures");
+
   declare_integer("number_of_signatures");
   #endif
 

@@ -82,7 +82,7 @@ define_function(data_entropy)
   YR_MEMORY_BLOCK* block = NULL;
   
   if (offset < 0 || length < 0 || offset < context->mem_block->base)
-    return ERROR_WRONG_ARGUMENTS;
+    return_float(UNDEFINED);
 
   data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
 
@@ -179,7 +179,7 @@ define_function(data_deviation)
   YR_MEMORY_BLOCK* block = NULL;
 
   if (offset < 0 || length < 0 || offset < context->mem_block->base)
-    return ERROR_WRONG_ARGUMENTS;
+    return_float(UNDEFINED);
  
   foreach_memory_block(context, block)
   {
@@ -249,7 +249,7 @@ define_function(data_mean)
   size_t i;
 
   if (offset < 0 || length < 0 || offset < context->mem_block->base)
-    return ERROR_WRONG_ARGUMENTS;
+    return_float(UNDEFINED);
  
   foreach_memory_block(context, block)
   {
@@ -311,7 +311,7 @@ define_function(data_serial_correlation)
   double scc = 0;
 
   if (offset < 0 || length < 0 || offset < context->mem_block->base)
-    return ERROR_WRONG_ARGUMENTS;
+    return_float(UNDEFINED);
  
   foreach_memory_block(context, block)
   {
@@ -422,7 +422,7 @@ define_function(data_monte_carlo_pi)
   YR_MEMORY_BLOCK* block = NULL;
 
   if (offset < 0 || length < 0 || offset < context->mem_block->base)
-    return ERROR_WRONG_ARGUMENTS;
+    return_float(UNDEFINED);
  
   foreach_memory_block(context, block)
   {
