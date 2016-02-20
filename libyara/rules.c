@@ -41,7 +41,7 @@ limitations under the License.
 void _yr_rules_lock(
     YR_RULES* rules)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   WaitForSingleObject(rules->mutex, INFINITE);
   #else
   pthread_mutex_lock(&rules->mutex);
@@ -52,7 +52,7 @@ void _yr_rules_lock(
 void _yr_rules_unlock(
     YR_RULES* rules)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   ReleaseMutex(rules->mutex);
   #else
   pthread_mutex_unlock(&rules->mutex);
@@ -321,7 +321,7 @@ YR_API int yr_rules_scan_mem_blocks(
   YR_EXTERNAL_VARIABLE* external;
   YR_RULE* rule;
   YR_SCAN_CONTEXT context;
-  
+
   time_t start_time;
   tidx_mask_t bit = 1;
 
@@ -493,9 +493,6 @@ _exit:
 
   _yr_rules_clean_matches(rules, &context);
 
-  if (flags & SCAN_FLAGS_SHOW_MODULE_DATA)
-    yr_modules_print_data(&context);
-
   yr_modules_unload_all(&context);
 
   if (context.matches_arena != NULL)
@@ -588,7 +585,7 @@ YR_API int yr_rules_scan_fd(
     unsigned int stacksize)
 {
   YR_MAPPED_FILE mfile;
-  
+
   int result = yr_filemap_map_fd(fd, 0, 0, &mfile);
 
   if (result == ERROR_SUCCESS)
@@ -679,7 +676,7 @@ YR_API int yr_rules_load_stream(
   new_rules->rules_list_head = header->rules_list_head;
   new_rules->tidx_mask = 0;
 
-  #if _WIN32
+  #if _WIN32 || __CYGWIN__
   new_rules->mutex = CreateMutex(NULL, FALSE, NULL);
 
   if (new_rules->mutex == NULL)
@@ -705,7 +702,7 @@ YR_API int yr_rules_load(
 
   YR_STREAM stream;
   FILE* fh = fopen(filename, "rb");
- 
+
   if (fh == NULL)
     return ERROR_COULD_NOT_OPEN_FILE;
 
@@ -733,7 +730,7 @@ YR_API int yr_rules_save(
     const char* filename)
 {
   int result;
-  
+
   YR_STREAM stream;
   FILE* fh = fopen(filename, "wb");
 
@@ -763,7 +760,7 @@ YR_API int yr_rules_destroy(
     external++;
   }
 
-  #if _WIN32
+  #if _WIN32 || __CYGWIN__
   CloseHandle(rules->mutex);
   #else
   pthread_mutex_destroy(&rules->mutex);

@@ -25,5 +25,6 @@ limitations under the License.
 #include "yara/libyara.h"
 #include "yara/error.h"
 #include "yara/stream.h"
+#include "yara/hash.h"
 
 #endif

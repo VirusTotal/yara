@@ -85,7 +85,7 @@ uint64_t elf_rva_to_offset_##bits(                                             \
     if (section->type != ELF_SHT_NULL &&                                       \
         section->type != ELF_SHT_NOBITS &&                                     \
         rva >= section->addr &&                                                \
-        rva <  section->addr + section->size)                                  \
+        rva < section->addr + section->size)                                   \
     {                                                                          \
       return section->offset + (rva - section->addr);                          \
     }                                                                          \
@@ -127,7 +127,8 @@ void parse_elf_header_##bits(                                                  \
         elf_obj, "entry_point");                                               \
   }                                                                            \
                                                                                \
-  if (elf->sh_str_table_index < elf->sh_entry_count &&                         \
+  if (elf->sh_entry_count < ELF_SHN_LORESERVE &&                               \
+      elf->sh_str_table_index < elf->sh_entry_count &&                         \
       elf->sh_offset < elf_size &&                                             \
       elf->sh_offset + elf->sh_entry_count *                                   \
          sizeof(elf##bits##_section_header_t) <= elf_size)                     \
@@ -147,7 +148,8 @@ void parse_elf_header_##bits(                                                  \
       set_integer(section->size, elf_obj, "sections[%i].size", i);             \
       set_integer(section->offset, elf_obj, "sections[%i].offset", i);         \
                                                                                \
-      if (str_table != NULL &&                                                 \
+      if (section->name < elf_size &&                                          \
+          str_table > (char*) elf &&                                           \
           str_table + section->name < (char*) elf + elf_size)                  \
       {                                                                        \
         set_string(str_table + section->name, elf_obj, "sections[%i].name", i);\
@@ -157,8 +159,10 @@ void parse_elf_header_##bits(                                                  \
     }                                                                          \
   }                                                                            \
                                                                                \
-  if(elf->ph_entry_count &&                                                    \
-     elf->ph_offset + elf->ph_entry_count *                                    \
+  if (elf->ph_entry_count > 0 &&                                               \
+      elf->ph_entry_count < ELF_PN_XNUM &&                                     \
+      elf->ph_offset < elf_size &&                                             \
+      elf->ph_offset + elf->ph_entry_count *                                   \
         sizeof(elf##bits##_program_header_t) <= elf_size)                      \
   {                                                                            \
     segment = (elf##bits##_program_header_t*)                                  \
