@@ -743,8 +743,7 @@ void* scanning_thread(void* param)
           flags,
           callback,
           file_path,
-          timeout - elapsed_time,
-          stacksize);
+          timeout - elapsed_time);
 
       if (result != ERROR_SUCCESS)
       {
@@ -1092,8 +1091,7 @@ int main(
         flags,
         callback,
         (void*) argv[1],
-        timeout,
-        stacksize);
+        timeout);
 
     if (result != ERROR_SUCCESS)
     {
@@ -1154,8 +1152,7 @@ int main(
         flags,
         callback,
         (void*) argv[1],
-        timeout,
-        stacksize);
+        timeout);
 
     if (result != ERROR_SUCCESS)
     {
