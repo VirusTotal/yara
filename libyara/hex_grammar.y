@@ -91,10 +91,10 @@ limitations under the License.
 %%
 
 hex_string
-    : '{' tokens '}'
+    : tokens
       {
         RE* re = yyget_extra(yyscanner);
-        re->root_node = $2;
+        re->root_node = $1;
       }
     ;
 
