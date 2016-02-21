@@ -308,6 +308,8 @@ int _yr_rules_scan_mem_block(
   return ERROR_SUCCESS;
 }
 
+// TODO: break up this function
+// into one that take a context
 
 YR_API int yr_rules_scan_mem_blocks(
     YR_RULES* rules,
@@ -636,6 +638,42 @@ YR_API int yr_rules_scan_proc(
   return result;
 }
 
+YR_API int yr_rules_scan_proc2(
+    YR_RULES* rules,
+    int pid,
+    int flags,
+    YR_CALLBACK_FUNC callback,
+    void* user_data,
+    int timeout)
+{
+  YR_SECTION_READER* reader;
+
+  int result = yr_open_section_reader(pid, &reader);
+
+  if (result != ERROR_SUCCESS)
+    goto _exit;
+
+  while ((result = yr_read_next_section(reader)) == ERROR_SUCCESS)
+  {
+    if(reader->block != NULL)
+      result = yr_rules_scan_mem_blocks(
+        rules,
+        reader->block,
+        flags | SCAN_FLAGS_PROCESS_MEMORY,
+        callback,
+        user_data,
+        timeout);
+  }
+
+  if (result == ERROR_SECTION_READER_COMPLETE)
+    result = ERROR_SUCCESS;
+
+_exit:
+  if (reader != NULL)
+    yr_close_section_reader(reader);
+
+  return result;
+}
 
 YR_API int yr_rules_load_stream(
     YR_STREAM* stream,

@@ -1076,7 +1076,7 @@ int main(
     if (fast_scan)
       flags |= SCAN_FLAGS_FAST_MODE;
 
-    result = yr_rules_scan_proc(
+    result = yr_rules_scan_proc2(
         rules,
         pid,
         flags,
