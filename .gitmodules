@@ -1,0 +1,3 @@
+[submodule "windows/yara-VS2015"]
+	path = windows/yara-VS2015
+	url = https://github.com/kallanreed/yara-VS2015.git
