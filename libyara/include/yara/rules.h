@@ -92,6 +92,13 @@ YR_API int yr_rules_scan_proc(
     void* user_data,
     int timeout);
 
+YR_API int yr_rules_scan_proc2(
+    YR_RULES* rules,
+    int pid,
+    int flags,
+    YR_CALLBACK_FUNC callback,
+    void* user_data,
+    int timeout);
 
 YR_API int yr_rules_save(
     YR_RULES* rules,

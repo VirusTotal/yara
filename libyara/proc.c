@@ -22,6 +22,222 @@ limitations under the License.
 #include <yara/error.h>
 #include <yara/proc.h>
 
+
+int _attach_process(
+    int pid,
+    void** hProcess)
+{
+  TOKEN_PRIVILEGES tokenPriv;
+  LUID luidDebug;
+  HANDLE hToken = NULL;
+
+  if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken) &&
+    LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luidDebug))
+  {
+    tokenPriv.PrivilegeCount = 1;
+    tokenPriv.Privileges[0].Luid = luidDebug;
+    tokenPriv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    AdjustTokenPrivileges(
+      hToken,
+      FALSE,
+      &tokenPriv,
+      sizeof(tokenPriv),
+      NULL,
+      NULL);
+  }
+
+  if (hToken != NULL)
+    CloseHandle(hToken);
+
+  *hProcess = OpenProcess(
+    PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
+    FALSE,
+    pid);
+
+  if (*hProcess == NULL)
+    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+
+  return ERROR_SUCCESS;
+}
+
+int _detach_process(
+    void* hProcess)
+{
+  if (hProcess != NULL)
+    CloseHandle(hProcess);
+
+  return ERROR_SUCCESS;
+}
+
+int _get_sections(
+    void* hProcess,
+    YR_SECTION_READER* reader)
+{
+  PVOID address;
+  int result = ERROR_SUCCESS;
+  int sections = 0;
+
+  YR_MEMORY_SECTION* new_section;
+  YR_MEMORY_SECTION* current = NULL;
+
+  SYSTEM_INFO si;
+  MEMORY_BASIC_INFORMATION mbi;
+
+  GetSystemInfo(&si);
+
+  address = si.lpMinimumApplicationAddress;
+
+  while (address < si.lpMaximumApplicationAddress &&
+    VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
+  {
+    if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
+    {
+      YR_MEMORY_SECTION* new_section = (YR_MEMORY_SECTION*)yr_malloc(sizeof(YR_MEMORY_SECTION));
+
+      new_section->base = (size_t)mbi.BaseAddress;
+      new_section->size = mbi.RegionSize;
+
+      if (reader->sections == NULL)
+        reader->sections = new_section;
+
+      if (current != NULL)
+        current->next = new_section;
+
+      current = new_section;
+
+      ++sections;
+    }
+
+    address = (uint8_t*)address + mbi.RegionSize;
+  }
+
+  printf("%lu sections\n", sections);
+
+  return result;
+}
+int _read_section(
+    void* hProcess,
+    YR_MEMORY_SECTION* section,
+    YR_MEMORY_BLOCK** block)
+{
+  SIZE_T read;
+  uint8_t* data;
+  int result = ERROR_SUCCESS;
+  *block = NULL;
+
+  data = (uint8_t*)yr_malloc(section->size);
+
+  if (data == NULL)
+  {
+    result = ERROR_INSUFICIENT_MEMORY;
+    goto error;
+  }
+
+  if (ReadProcessMemory(
+    (HANDLE)hProcess,
+    (LPCVOID)section->base,
+    data,
+    (SIZE_T)section->size,
+    &read))
+  {
+    *block = (YR_MEMORY_BLOCK*)yr_malloc(sizeof(YR_MEMORY_BLOCK));
+
+    if (*block == NULL)
+    {
+      result = ERROR_INSUFICIENT_MEMORY;
+      goto error;
+    }
+
+    (*block)->base = section->base;
+    (*block)->size = (size_t)read;
+    (*block)->data = data;
+  }
+
+  return result;
+
+error:
+  if (data != NULL)
+    yr_free(data);
+
+  return result;
+}
+
+int yr_open_section_reader(
+    int pid,
+    YR_SECTION_READER** reader)
+{
+  *reader = (YR_SECTION_READER*)yr_malloc(sizeof(YR_SECTION_READER));
+
+  int result = _attach_process(pid, &(*reader)->context);
+
+  result = _get_sections((*reader)->context, *reader);
+
+  return result;
+}
+
+int yr_read_next_section(
+    YR_SECTION_READER* reader)
+{
+  int result = ERROR_SUCCESS;
+
+  // free the previous memory block
+  if (reader->block != NULL)
+  {
+    yr_free(reader->block->data);
+    yr_free(reader->block);
+    reader->block = NULL;
+  }
+
+  // set current to first or next
+  if(reader->current == NULL)
+    reader->current = reader->sections;
+  else
+    reader->current = reader->current->next;
+
+  if (reader->current == NULL)
+    return ERROR_SECTION_READER_COMPLETE;
+
+  result = _read_section(
+    reader->context,
+    reader->current,
+    &reader->block);
+
+  return result;
+}
+
+void yr_close_section_reader(
+    YR_SECTION_READER* reader)
+{
+  YR_MEMORY_SECTION* current;
+  YR_MEMORY_SECTION* next;
+
+  _detach_process(reader->context);
+
+  // free the list of sections
+  current = reader->sections;
+
+  while (current != NULL)
+  {
+    next = current->next;
+
+    yr_free(current);
+
+    current = next;
+  }
+
+  // free the memory block
+  if (reader->block != NULL)
+  {
+    yr_free(reader->block->data);
+    yr_free(reader->block);
+  }
+
+  // free the reader
+  yr_free(reader);
+}
+
+
 int yr_process_get_memory(
     int pid,
     YR_MEMORY_BLOCK** first_block)
@@ -77,6 +293,7 @@ int yr_process_get_memory(
   GetSystemInfo(&si);
 
   address = si.lpMinimumApplicationAddress;
+  size_t allocated = 0;
 
   while (address < si.lpMaximumApplicationAddress &&
          VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
@@ -90,6 +307,8 @@ int yr_process_get_memory(
         result = ERROR_INSUFICIENT_MEMORY;
         break;
       }
+
+      allocated += mbi.RegionSize;
 
       if (ReadProcessMemory(
               hProcess,
@@ -128,6 +347,8 @@ int yr_process_get_memory(
 
     address = (PVOID)((ULONG_PTR) mbi.BaseAddress + mbi.RegionSize);
   }
+
+  printf("Allocated %lu bytes\n", allocated);
 
   if (hToken != NULL)
     CloseHandle(hToken);

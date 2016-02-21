@@ -374,6 +374,25 @@ typedef struct _YR_MEMORY_BLOCK
 } YR_MEMORY_BLOCK;
 
 
+typedef struct _YR_MEMORY_SECTION
+{
+  size_t  base;
+  size_t  size;
+
+  _YR_MEMORY_SECTION* next;
+
+} YR_MEMORY_SECTION;
+
+typedef struct _YR_SECTION_READER
+{
+  void* context;
+
+  YR_MEMORY_SECTION*  sections;
+  YR_MEMORY_SECTION*  current;
+  YR_MEMORY_BLOCK*    block;
+
+} YR_SECTION_READER;
+
 typedef int (*YR_CALLBACK_FUNC)(
     int message,
     void* message_data,
