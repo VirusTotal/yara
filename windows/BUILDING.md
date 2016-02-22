@@ -16,7 +16,7 @@ The core yara project include binary libs (`jansson` and `libeay`) compiled with
 
 VS2015 projects are included as a submodule that must be downloaded manually. To download the VS2015 project, run the following git command
 
-  git submodule update --init windows/yara-VS2015
+    git submodule update --init windows/yara-VS2015
 
 This will unpack the submodule into `yara/windows/yara-VS2015`. Open the `yara/windows/yara-VS2015/yara-2015.sln` and build as normal.
 
