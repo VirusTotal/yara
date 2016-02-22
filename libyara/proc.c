@@ -23,7 +23,7 @@ limitations under the License.
 #include <yara/proc.h>
 
 
-int _attach_process(
+int _yr_attach_process(
     int pid,
     void** hProcess)
 {
@@ -61,7 +61,7 @@ int _attach_process(
   return ERROR_SUCCESS;
 }
 
-int _detach_process(
+int _yr_detach_process(
     void* hProcess)
 {
   if (hProcess != NULL)
@@ -70,7 +70,7 @@ int _detach_process(
   return ERROR_SUCCESS;
 }
 
-int _get_sections(
+int _yr_get_sections(
     void* hProcess,
     YR_SECTION_READER* reader)
 {
@@ -116,7 +116,8 @@ int _get_sections(
 
   return result;
 }
-int _read_section(
+
+int _yr_read_section(
     void* hProcess,
     YR_MEMORY_SECTION* section,
     YR_MEMORY_BLOCK** block)
@@ -163,79 +164,6 @@ error:
   return result;
 }
 
-int yr_open_section_reader(
-    int pid,
-    YR_SECTION_READER** reader)
-{
-  *reader = (YR_SECTION_READER*)yr_malloc(sizeof(YR_SECTION_READER));
-
-  int result = _attach_process(pid, &(*reader)->context);
-
-  result = _get_sections((*reader)->context, *reader);
-
-  return result;
-}
-
-int yr_read_next_section(
-    YR_SECTION_READER* reader)
-{
-  int result = ERROR_SUCCESS;
-
-  // free the previous memory block
-  if (reader->block != NULL)
-  {
-    yr_free(reader->block->data);
-    yr_free(reader->block);
-    reader->block = NULL;
-  }
-
-  // set current to first or next
-  if(reader->current == NULL)
-    reader->current = reader->sections;
-  else
-    reader->current = reader->current->next;
-
-  if (reader->current == NULL)
-    return ERROR_SECTION_READER_COMPLETE;
-
-  result = _read_section(
-    reader->context,
-    reader->current,
-    &reader->block);
-
-  return result;
-}
-
-void yr_close_section_reader(
-    YR_SECTION_READER* reader)
-{
-  YR_MEMORY_SECTION* current;
-  YR_MEMORY_SECTION* next;
-
-  _detach_process(reader->context);
-
-  // free the list of sections
-  current = reader->sections;
-
-  while (current != NULL)
-  {
-    next = current->next;
-
-    yr_free(current);
-
-    current = next;
-  }
-
-  // free the memory block
-  if (reader->block != NULL)
-  {
-    yr_free(reader->block->data);
-    yr_free(reader->block);
-  }
-
-  // free the reader
-  yr_free(reader);
-}
 
 
 int yr_process_get_memory(
@@ -599,3 +527,87 @@ _exit:
 
 #endif
 #endif
+
+// section reader abstraction
+
+int yr_open_section_reader(
+  int pid,
+  YR_SECTION_READER** reader)
+{
+  *reader = (YR_SECTION_READER*)yr_malloc(sizeof(YR_SECTION_READER));
+
+  (*reader)->block = NULL;
+  (*reader)->current = NULL;
+
+  int result = _yr_attach_process(pid, &(*reader)->context);
+
+  result = _yr_get_sections((*reader)->context, *reader);
+
+  return result;
+}
+
+int yr_read_next_section(
+  YR_SECTION_READER* reader)
+{
+  int result = ERROR_SUCCESS;
+
+  // free the previous memory block
+  if (reader->block != NULL)
+  {
+    yr_free(reader->block->data);
+    yr_free(reader->block);
+    reader->block = NULL;
+  }
+
+  do {
+    // set current to first or next
+    if (reader->current == NULL)
+      reader->current = reader->sections;
+    else
+      reader->current = reader->current->next;
+
+    if (reader->current == NULL) break;
+
+    result = _yr_read_section(
+      reader->context,
+      reader->current,
+      &reader->block);
+
+    if (result != ERROR_SUCCESS) break;
+
+  } while (reader->block == NULL);
+
+  return result;
+}
+
+void yr_close_section_reader(
+  YR_SECTION_READER* reader)
+{
+  YR_MEMORY_SECTION* current;
+  YR_MEMORY_SECTION* next;
+
+  // NOTE: detach is responsible for freeing any allocated context
+  _yr_detach_process(reader->context);
+
+  // free the list of sections
+  current = reader->sections;
+
+  while (current != NULL)
+  {
+    next = current->next;
+
+    yr_free(current);
+
+    current = next;
+  }
+
+  // free the memory block
+  if (reader->block != NULL)
+  {
+    yr_free(reader->block->data);
+    yr_free(reader->block);
+  }
+
+  // free the reader
+  yr_free(reader);
+}
