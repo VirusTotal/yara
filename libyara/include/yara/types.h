@@ -373,6 +373,13 @@ typedef struct _YR_MEMORY_BLOCK
 
 } YR_MEMORY_BLOCK;
 
+typedef struct _YR_BLOCK_READER
+{
+  YR_MEMORY_BLOCK* current;
+  YR_MEMORY_BLOCK* blocks;
+
+} YR_BLOCK_READER;
+
 
 typedef struct _YR_MEMORY_SECTION
 {
@@ -392,6 +399,10 @@ typedef struct _YR_SECTION_READER
   YR_MEMORY_BLOCK*    block;
 
 } YR_SECTION_READER;
+
+typedef int (*YR_BLOCK_ITERATOR)(
+    void* reader,
+    YR_MEMORY_BLOCK** block);
 
 typedef int (*YR_CALLBACK_FUNC)(
     int message,
