@@ -23,14 +23,11 @@ int yr_process_get_memory(
     int pid,
     YR_MEMORY_BLOCK** first_block);
 
-int yr_open_section_reader(
+int yr_open_process_iterator(
     int pid,
-    YR_SECTION_READER** reader);
+    YR_BLOCK_ITERATOR* iterator);
 
-int yr_read_next_section(
-    YR_SECTION_READER* reader);
-
-void yr_close_section_reader(
-    YR_SECTION_READER* reader);
+int yr_close_process_iterator(
+    YR_BLOCK_ITERATOR* iterator);
 
 #endif
