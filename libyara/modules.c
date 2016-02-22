@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
 #include <config.h>
 
 #include <yara/exec.h>
@@ -39,7 +38,7 @@ limitations under the License.
 
 
 #define MODULE(name) \
-    { 0, \
+    { \
       #name, \
       name##__declarations, \
       name##__load, \
@@ -58,11 +57,11 @@ YR_MODULE yr_modules_table[] =
 
 int yr_modules_initialize()
 {
-  int i, result;
+  int i;
 
   for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
-    result = yr_modules_table[i].initialize(&yr_modules_table[i]);
+    int result = yr_modules_table[i].initialize(&yr_modules_table[i]);
 
     if (result != ERROR_SUCCESS)
       return result;
@@ -74,11 +73,11 @@ int yr_modules_initialize()
 
 int yr_modules_finalize()
 {
-  int i, result;
+  int i;
 
   for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
-    result = yr_modules_table[i].finalize(&yr_modules_table[i]);
+    int result = yr_modules_table[i].finalize(&yr_modules_table[i]);
 
     if (result != ERROR_SUCCESS)
       return result;
@@ -108,13 +107,11 @@ int yr_modules_load(
     const char* module_name,
     YR_SCAN_CONTEXT* context)
 {
+  int i, result;
+
   YR_MODULE_IMPORT mi;
-  YR_OBJECT* module_structure;
 
-  int result;
-  int i;
-
-  module_structure = (YR_OBJECT*) yr_hash_table_lookup(
+  YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_lookup(
       context->objects_table,
       module_name,
       NULL);
@@ -169,10 +166,13 @@ int yr_modules_load(
 
       if (result != ERROR_SUCCESS)
         return result;
-
-      yr_modules_table[i].is_loaded |= 1 << yr_get_tidx();
     }
   }
+
+  result = context->callback(
+      CALLBACK_MSG_MODULE_IMPORTED,
+      module_structure,
+      context->user_data);
 
   return ERROR_SUCCESS;
 }
@@ -181,48 +181,18 @@ int yr_modules_load(
 int yr_modules_unload_all(
     YR_SCAN_CONTEXT* context)
 {
-  YR_OBJECT* module_structure;
-  tidx_mask_t tidx_mask = 1 << yr_get_tidx();
   int i;
 
   for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
-    if (yr_modules_table[i].is_loaded & tidx_mask)
-    {
-      module_structure = (YR_OBJECT*) yr_hash_table_lookup(
-          context->objects_table,
-          yr_modules_table[i].name,
-          NULL);
+    YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_lookup(
+        context->objects_table,
+        yr_modules_table[i].name,
+        NULL);
 
-      assert(module_structure != NULL);
-
+    if (module_structure != NULL)
       yr_modules_table[i].unload(module_structure);
-      yr_modules_table[i].is_loaded &= ~tidx_mask;
-    }
   }
 
   return ERROR_SUCCESS;
-}
-
-
-void yr_modules_print_data(
-    YR_SCAN_CONTEXT* context)
-{
-  YR_OBJECT* module_structure;
-  tidx_mask_t tidx_mask = 1 << yr_get_tidx();
-
-  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
-  {
-    if (yr_modules_table[i].is_loaded & tidx_mask)
-    {
-      module_structure = (YR_OBJECT*) yr_hash_table_lookup(
-          context->objects_table,
-          yr_modules_table[i].name,
-          NULL);
-
-      assert(module_structure != NULL);
-
-      yr_object_print_data(module_structure, 0);
-    }
-  }
 }

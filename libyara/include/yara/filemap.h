@@ -23,11 +23,11 @@ limitations under the License.
 #include <sys/types.h>
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
-#define FILE_DESCRIPTOR    HANDLE
+#define YR_FILE_DESCRIPTOR    HANDLE
 #else
-#define FILE_DESCRIPTOR    int
+#define YR_FILE_DESCRIPTOR    int
 #endif
 
 #include <stdlib.h>
@@ -38,10 +38,10 @@ limitations under the License.
 
 typedef struct _YR_MAPPED_FILE
 {
-  FILE_DESCRIPTOR     file;
+  YR_FILE_DESCRIPTOR  file;
   size_t              size;
   uint8_t*            data;
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   HANDLE              mapping;
   #endif
 
@@ -50,6 +50,13 @@ typedef struct _YR_MAPPED_FILE
 
 YR_API int yr_filemap_map(
     const char* file_path,
+    YR_MAPPED_FILE* pmapped_file);
+
+
+YR_API int yr_filemap_map_fd(
+    YR_FILE_DESCRIPTOR file,
+    off_t offset,
+    size_t size,
     YR_MAPPED_FILE* pmapped_file);
 
 

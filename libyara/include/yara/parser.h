@@ -70,10 +70,7 @@ int yr_parser_lookup_loop_variable(
 YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
     yyscan_t yyscanner,
     int32_t flags,
-    const char* identifier,
-    char* tags,
-    YR_STRING* strings,
-    YR_META* metas);
+    const char* identifier);
 
 
 int yr_parser_reduce_rule_declaration_phase_2(
@@ -83,7 +80,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
 
 YR_STRING* yr_parser_reduce_string_declaration(
     yyscan_t yyscanner,
-    int flags,
+    int32_t flags,
     const char* identifier,
     SIZED_STRING* str);
 
@@ -93,7 +90,7 @@ YR_META* yr_parser_reduce_meta_declaration(
     int32_t type,
     const char* identifier,
     const char* string,
-    int32_t integer);
+    int64_t integer);
 
 
 int yr_parser_reduce_string_identifier(

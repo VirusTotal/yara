@@ -24,10 +24,12 @@ limitations under the License.
 uint64_t xtoi(
     const char* hexstr)
 {
-  int l = strlen(hexstr);
+  size_t i;
+  size_t l = strlen(hexstr);
+
   uint64_t r = 0;
 
-  for (int i = 0; i < l; i++)
+  for (i = 0; i < l; i++)
   {
     switch (hexstr[i])
     {
@@ -74,7 +76,7 @@ the following implementations were taken from OpenBSD.
 
 */
 
-#if !HAVE_STRLCPY
+#if !HAVE_STRLCPY && !defined(strlcpy)
 
 size_t strlcpy(
     char* dst,
@@ -113,7 +115,7 @@ size_t strlcpy(
 #endif
 
 
-#if !HAVE_STRLCAT
+#if !HAVE_STRLCAT && !defined(strlcat)
 
 size_t strlcat(
     char* dst,
@@ -211,7 +213,7 @@ size_t strlcpy_w(
 }
 
 
-#if !HAVE_MEMMEM
+#if !HAVE_MEMMEM && !defined(memmem)
 void* memmem(
     const void *haystack,
     size_t haystack_size,

@@ -22,8 +22,8 @@ limitations under the License.
 #include <string.h>
 #include <math.h>
 
-#if _WIN32
-#define PRIu64 "%I64d"
+#if _WIN32 || __CYGWIN__
+#define PRIu64 "I64d"
 #else
 #include <inttypes.h>
 #endif
@@ -42,7 +42,8 @@ int yr_object_create(
     YR_OBJECT** object)
 {
   YR_OBJECT* obj;
-  size_t object_size;
+  int i;
+  size_t object_size = 0;
 
   switch (type)
   {
@@ -111,7 +112,7 @@ int yr_object_create(
       break;
     case OBJECT_TYPE_FUNCTION:
       ((YR_OBJECT_FUNCTION*) obj)->return_obj = NULL;
-      for (int i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+      for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
       {
         ((YR_OBJECT_FUNCTION*) obj)->prototypes[i].arguments_fmt = NULL;
         ((YR_OBJECT_FUNCTION*) obj)->prototypes[i].code = NULL;
@@ -470,7 +471,7 @@ YR_OBJECT* _yr_object_lookup(
       }
       else if (*p >= '0' && *p <= '9')
       {
-        index = strtol(p, (char**) &p, 10);
+        index = (int) strtol(p, (char**) &p, 10);
       }
       else if (*p == '"')
       {
@@ -544,7 +545,6 @@ int yr_object_copy(
   YR_OBJECT* copy;
   YR_OBJECT* o;
 
-  YR_ARRAY_ITEMS* array_items;
   YR_STRUCTURE_MEMBER* structure_member;
   YR_OBJECT_FUNCTION* func;
   YR_OBJECT_FUNCTION* func_copy;
@@ -609,24 +609,27 @@ int yr_object_copy(
 
     case OBJECT_TYPE_ARRAY:
 
-      array_items = ((YR_OBJECT_ARRAY*) object)->items;
+      yr_object_copy(
+        ((YR_OBJECT_ARRAY *) object)->prototype_item,
+        &o);
 
-      for (i = 0; i < array_items->count; i++)
-      {
-        if (array_items->objects[i] != NULL)
-        {
-          FAIL_ON_ERROR_WITH_CLEANUP(
-              yr_object_copy(array_items->objects[i], &o),
-              yr_object_destroy(copy));
-
-          FAIL_ON_ERROR_WITH_CLEANUP(
-                yr_object_array_set_item(copy, o, i),
-                yr_free(o);
-                yr_object_destroy(copy));
-        }
-      }
+      ((YR_OBJECT_ARRAY *)copy)->prototype_item = o;
 
       break;
+
+    case OBJECT_TYPE_DICTIONARY:
+
+      yr_object_copy(
+        ((YR_OBJECT_DICTIONARY *) object)->prototype_item,
+        &o);
+
+      ((YR_OBJECT_DICTIONARY *)copy)->prototype_item = o;
+
+      break;
+
+    default:
+      assert(FALSE);
+
   }
 
   *object_copy = copy;
@@ -750,6 +753,8 @@ YR_OBJECT* yr_object_dict_get_item(
     int flags,
     const char* key)
 {
+  int i;
+
   YR_OBJECT* result = NULL;
   YR_OBJECT_DICTIONARY* dict;
 
@@ -759,7 +764,7 @@ YR_OBJECT* yr_object_dict_get_item(
 
   if (dict->items != NULL)
   {
-    for (int i = 0; i < dict->items->used; i++)
+    for (i = 0; i < dict->items->used; i++)
     {
       if (strcmp(dict->items->objects[i].key, key) == 0)
         result = dict->items->objects[i].obj;
@@ -1067,65 +1072,71 @@ YR_OBJECT* yr_object_get_root(
   return o;
 }
 
-void yr_object_print_data(
+YR_API void yr_object_print_data(
     YR_OBJECT* object,
-    int indent)
+    int indent,
+    int print_identifier)
 {
   YR_DICTIONARY_ITEMS* dict_items;
   YR_ARRAY_ITEMS* array_items;
   YR_STRUCTURE_MEMBER* member;
 
   char indent_spaces[32];
+  int i;
 
   indent = yr_min(indent, sizeof(indent_spaces));
 
   memset(indent_spaces, '\t', indent);
   indent_spaces[indent] = '\0';
 
+  if (print_identifier && object->type != OBJECT_TYPE_FUNCTION)
+    printf("%s%s", indent_spaces, object->identifier);
+
   switch(object->type)
   {
     case OBJECT_TYPE_INTEGER:
       if (((YR_OBJECT_INTEGER*) object)->value != UNDEFINED)
-        printf(
-            "%s%s = %" PRIu64 "\n",
-            indent_spaces,
-            object->identifier,
-            ((YR_OBJECT_INTEGER*) object)->value);
+        printf(" = %" PRIu64, ((YR_OBJECT_INTEGER*) object)->value);
+      else
+        printf(" = UNDEFINED");
       break;
 
     case OBJECT_TYPE_STRING:
       if (((YR_OBJECT_STRING*) object)->value != NULL)
       {
-        printf(
-            "%s%s = \"",
-            indent_spaces,
-            object->identifier);
+        size_t l;
+        printf(" = \"");
 
-        for (int i = 0; i < ((YR_OBJECT_STRING*) object)->value->length; i++)
+        for (l = 0; l < ((YR_OBJECT_STRING*) object)->value->length; l++)
         {
-          char c = ((YR_OBJECT_STRING*) object)->value->c_string[i];
+          char c = ((YR_OBJECT_STRING*) object)->value->c_string[l];
 
-          if (isprint(c))
+          if (isprint((unsigned char) c))
             printf("%c", c);
           else
             printf("\\x%02x", (unsigned char) c);
         }
 
-        printf("\"\n");
+        printf("\"");
       }
+      else
+      {
+        printf(" = UNDEFINED");
+      }
+
       break;
 
     case OBJECT_TYPE_STRUCTURE:
-      printf(
-          "%s%s\n",
-          indent_spaces,
-          object->identifier);
 
       member = ((YR_OBJECT_STRUCTURE*) object)->members;
 
       while (member != NULL)
       {
-        yr_object_print_data(member->object, indent + 1);
+        if (member->object->type != OBJECT_TYPE_FUNCTION)
+        {
+          printf("\n");
+          yr_object_print_data(member->object, indent + 1, 1);
+        }
         member = member->next;
       }
 
@@ -1136,12 +1147,12 @@ void yr_object_print_data(
 
       if (array_items != NULL)
       {
-        for (int i = 0; i < array_items->count; i++)
+        for (i = 0; i < array_items->count; i++)
         {
           if (array_items->objects[i] != NULL)
           {
-            printf("%s[%d]\n", indent_spaces, i);
-            yr_object_print_data(array_items->objects[i], indent + 1);
+            printf("\n%s\t[%d]", indent_spaces, i);
+            yr_object_print_data(array_items->objects[i], indent + 1, 0);
           }
         }
       }
@@ -1149,18 +1160,18 @@ void yr_object_print_data(
       break;
 
     case OBJECT_TYPE_DICTIONARY:
+
       dict_items = ((YR_OBJECT_DICTIONARY*) object)->items;
 
       if (dict_items != NULL)
       {
-        printf("%s%s\n", indent_spaces, object->identifier);
-
-        for (int i = 0; i < dict_items->used; i++)
+        for (i = 0; i < dict_items->used; i++)
         {
-          printf("%s\t%s\n", indent_spaces, dict_items->objects[i].key);
-          yr_object_print_data(dict_items->objects[i].obj, indent + 1);
+          printf("\n%s\t%s", indent_spaces, dict_items->objects[i].key);
+          yr_object_print_data(dict_items->objects[i].obj, indent + 1, 0);
         }
       }
+
       break;
   }
 }

@@ -23,7 +23,8 @@ limitations under the License.
 
 #include "config.h"
 
-#ifdef _WIN32
+// Cygwin already has these functions.
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #define snprintf _snprintf
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp
@@ -34,7 +35,7 @@ uint64_t xtoi(
     const char* hexstr);
 
 
-#if !HAVE_STRLCPY
+#if !HAVE_STRLCPY && !defined(strlcpy)
 size_t strlcpy(
     char *dst,
     const char *src,
@@ -42,7 +43,7 @@ size_t strlcpy(
 #endif
 
 
-#if !HAVE_STRLCAT
+#if !HAVE_STRLCAT && !defined(strlcat)
 size_t strlcat(
     char *dst,
     const char *src,
@@ -50,7 +51,7 @@ size_t strlcat(
 #endif
 
 
-#if !HAVE_MEMMEM
+#if !HAVE_MEMMEM && !defined(memmem)
 void* memmem(
     const void *haystack,
     size_t haystack_size,
@@ -74,4 +75,3 @@ size_t strlcpy_w(
     size_t n);
 
 #endif
-

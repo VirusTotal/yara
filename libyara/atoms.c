@@ -338,7 +338,7 @@ int _yr_atoms_choose(
   YR_ATOM_LIST_ITEM* tail;
 
   int i, quality;
-  int max_quality = 0;
+  int max_quality = -10000;
   int min_quality = 10000;
 
   *choosen_atoms = NULL;
@@ -401,12 +401,15 @@ int _yr_atoms_choose(
       if (quality < min_quality)
         min_quality = quality;
 
-      tail = item;
-      while (tail->next != NULL)
-        tail = tail->next;
+      if (item != NULL)
+      {
+        tail = item;
+        while (tail->next != NULL)
+          tail = tail->next;
 
-      tail->next = *choosen_atoms;
-      *choosen_atoms = item;
+        tail->next = *choosen_atoms;
+        *choosen_atoms = item;
+      }
 
       child = child->next_sibling;
     }
@@ -771,7 +774,8 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
 
     case RE_NODE_RANGE:
 
-      append_current_leaf_to_node(current_node);
+      if (re_node->start == 0)
+        append_current_leaf_to_node(current_node);
 
       for (i = 0; i < re_node->start; i++)
       {
@@ -782,7 +786,7 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
           return NULL;
       }
 
-      if (re_node->start > 0)
+      if (re_node->start != re_node->end)
         append_current_leaf_to_node(current_node);
 
       return current_node;
@@ -845,6 +849,9 @@ int yr_atoms_extract_triplets(
     RE_NODE* left_child;
     RE_NODE* left_grand_child;
 
+	int i;
+	int shift;
+
     *atoms = NULL;
 
     if (re_node->type == RE_NODE_CONCAT)
@@ -863,7 +870,7 @@ int yr_atoms_extract_triplets(
     if (left_child->left->type == RE_NODE_LITERAL &&
         (left_child->right->type == RE_NODE_ANY))
     {
-      for (int i = 0; i < 256; i++)
+      for (i = 0; i < 256; i++)
       {
         YR_ATOM_LIST_ITEM* atom = (YR_ATOM_LIST_ITEM*)
             yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
@@ -890,15 +897,13 @@ int yr_atoms_extract_triplets(
     if (left_child->left->type == RE_NODE_LITERAL &&
         (left_child->right->type == RE_NODE_MASKED_LITERAL))
     {
-      for (int i = 0; i < 16; i++)
+      for (i = 0; i < 16; i++)
       {
         YR_ATOM_LIST_ITEM* atom = (YR_ATOM_LIST_ITEM*)
             yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
         if (atom == NULL)
           return ERROR_INSUFICIENT_MEMORY;
-
-        int shift;
 
         if (left_child->right->mask == 0xF0)
           shift = 0;
@@ -925,7 +930,7 @@ int yr_atoms_extract_triplets(
         left_grand_child->right->type == RE_NODE_LITERAL &&
         (left_child->right->type == RE_NODE_ANY))
     {
-      for (int i = 0; i < 256; i++)
+      for (i = 0; i < 256; i++)
       {
         YR_ATOM_LIST_ITEM* atom = (YR_ATOM_LIST_ITEM*)
             yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
@@ -953,15 +958,13 @@ int yr_atoms_extract_triplets(
         left_grand_child->right->type == RE_NODE_LITERAL &&
         (left_child->right->type == RE_NODE_MASKED_LITERAL))
     {
-      for (int i = 0; i < 16; i++)
+      for (i = 0; i < 16; i++)
       {
         YR_ATOM_LIST_ITEM* atom = (YR_ATOM_LIST_ITEM*)
             yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
         if (atom == NULL)
           return ERROR_INSUFICIENT_MEMORY;
-
-        int shift;
 
         if (left_child->right->mask == 0xF0)
           shift = 0;
@@ -1116,7 +1119,7 @@ int yr_atoms_extract_from_re(
 
 int yr_atoms_extract_from_string(
     uint8_t* string,
-    int string_length,
+    int32_t string_length,
     int flags,
     YR_ATOM_LIST_ITEM** atoms)
 {

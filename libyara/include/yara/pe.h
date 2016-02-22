@@ -16,7 +16,7 @@ limitations under the License.
 
 #pragma pack(push, 1)
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 
 // These definitions are not present in older Windows headers.
@@ -439,7 +439,7 @@ typedef struct _WIN_CERTIFICATE {
     DWORD Length;
     WORD  Revision;
     WORD  CertificateType;
-    BYTE  Certificate[1];
+    BYTE  Certificate[0];
 } WIN_CERTIFICATE, *PWIN_CERTIFICATE;
 
 
@@ -448,11 +448,20 @@ typedef struct _WIN_CERTIFICATE {
 // http://www.ntcore.com/files/richsign.htm
 //
 
+#define RICH_VERSION_ID(id_version) (id_version >> 16)
+#define RICH_VERSION_VERSION(id_version) (id_version & 0xFFFF)
+
+typedef struct _RICH_VERSION_INFO {
+    DWORD id_version; //tool id and version (use RICH_VERSION_ID and RICH_VERSION_VERSION macros)
+    DWORD times; //number of times this tool was used
+} RICH_VERSION_INFO, *PRICH_VERSION_INFO;
+
 typedef struct _RICH_SIGNATURE {
     DWORD dans;
     DWORD key1;
     DWORD key2;
     DWORD key3;
+    RICH_VERSION_INFO versions[0];
 } RICH_SIGNATURE, *PRICH_SIGNATURE;
 
 #define RICH_DANS 0x536e6144 // "DanS"

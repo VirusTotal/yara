@@ -58,6 +58,8 @@ uint64_t elf_rva_to_offset_##bits(                                             \
     uint64_t rva,                                                              \
     size_t elf_size)                                                           \
 {                                                                              \
+  int i;                                                                       \
+                                                                               \
   elf##bits##_section_header_t* section;                                       \
                                                                                \
   /* check that sh_offset doesn't wrap when added to SIZE_OF_SECTION_TABLE */  \
@@ -78,12 +80,12 @@ uint64_t elf_rva_to_offset_##bits(                                             \
   section = (elf##bits##_section_header_t*)                                    \
       ((uint8_t*) elf_header + elf_header->sh_offset);                         \
                                                                                \
-  for (int i = 0; i < elf_header->sh_entry_count; i++)                         \
+  for (i = 0; i < elf_header->sh_entry_count; i++)                             \
   {                                                                            \
     if (section->type != ELF_SHT_NULL &&                                       \
         section->type != ELF_SHT_NOBITS &&                                     \
         rva >= section->addr &&                                                \
-        rva <  section->addr + section->size)                                  \
+        rva < section->addr + section->size)                                   \
     {                                                                          \
       return section->offset + (rva - section->addr);                          \
     }                                                                          \
@@ -102,11 +104,19 @@ void parse_elf_header_##bits(                                                  \
   int flags,                                                                   \
   YR_OBJECT* elf_obj)                                                          \
 {                                                                              \
+  int i;                                                                       \
+                                                                               \
   elf##bits##_section_header_t* section;                                       \
+  elf##bits##_program_header_t* segment;                                       \
                                                                                \
   set_integer(elf->type, elf_obj, "type");                                     \
   set_integer(elf->machine, elf_obj, "machine");                               \
+  set_integer(elf->sh_offset, elf_obj, "sh_offset");                           \
+  set_integer(elf->sh_entry_size, elf_obj, "sh_entry_size");                   \
   set_integer(elf->sh_entry_count, elf_obj, "number_of_sections");             \
+  set_integer(elf->ph_offset, elf_obj, "ph_offset");                           \
+  set_integer(elf->ph_entry_size, elf_obj, "ph_entry_size");                   \
+  set_integer(elf->ph_entry_count, elf_obj, "number_of_segments");             \
                                                                                \
   if (elf->entry != 0)                                                         \
   {                                                                            \
@@ -117,33 +127,67 @@ void parse_elf_header_##bits(                                                  \
         elf_obj, "entry_point");                                               \
   }                                                                            \
                                                                                \
-  if (elf->sh_str_table_index < elf->sh_entry_count &&                         \
+  if (elf->sh_entry_count < ELF_SHN_LORESERVE &&                               \
+      elf->sh_str_table_index < elf->sh_entry_count &&                         \
       elf->sh_offset < elf_size &&                                             \
       elf->sh_offset + elf->sh_entry_count *                                   \
          sizeof(elf##bits##_section_header_t) <= elf_size)                     \
   {                                                                            \
+    char* str_table = NULL;                                                    \
+                                                                               \
     section = (elf##bits##_section_header_t*)                                  \
        ((uint8_t*) elf + elf->sh_offset);                                      \
-                                                                               \
-    char* str_table = NULL;                                                    \
                                                                                \
     if (section[elf->sh_str_table_index].offset < elf_size)                    \
       str_table = (char*) elf + section[elf->sh_str_table_index].offset;       \
                                                                                \
-    for (int i = 0; i < elf->sh_entry_count; i++)                              \
+    for (i = 0; i < elf->sh_entry_count; i++)                                  \
     {                                                                          \
       set_integer(section->type, elf_obj, "sections[%i].type", i);             \
       set_integer(section->flags, elf_obj, "sections[%i].flags", i);           \
       set_integer(section->size, elf_obj, "sections[%i].size", i);             \
       set_integer(section->offset, elf_obj, "sections[%i].offset", i);         \
                                                                                \
-      if (str_table != NULL &&                                                 \
+      if (section->name < elf_size &&                                          \
+          str_table > (char*) elf &&                                           \
           str_table + section->name < (char*) elf + elf_size)                  \
       {                                                                        \
         set_string(str_table + section->name, elf_obj, "sections[%i].name", i);\
       }                                                                        \
                                                                                \
       section++;                                                               \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  if (elf->ph_entry_count > 0 &&                                               \
+      elf->ph_entry_count < ELF_PN_XNUM &&                                     \
+      elf->ph_offset < elf_size &&                                             \
+      elf->ph_offset + elf->ph_entry_count *                                   \
+        sizeof(elf##bits##_program_header_t) <= elf_size)                      \
+  {                                                                            \
+    segment = (elf##bits##_program_header_t*)                                  \
+        ((uint8_t*) elf + elf->ph_offset);                                     \
+                                                                               \
+    for (i = 0; i < elf->ph_entry_count; i++)                                  \
+    {                                                                          \
+      set_integer(                                                             \
+          segment->type, elf_obj, "segments[%i].type", i);                     \
+      set_integer(                                                             \
+          segment->flags, elf_obj, "segments[%i].flags", i);                   \
+      set_integer(                                                             \
+          segment->offset, elf_obj, "segments[%i].offset", i);                 \
+      set_integer(                                                             \
+          segment->virt_addr, elf_obj, "segments[%i].virtual_address", i);     \
+      set_integer(                                                             \
+          segment->phys_addr, elf_obj, "segments[%i].physical_address", i);    \
+      set_integer(                                                             \
+          segment->file_size, elf_obj, "segments[%i].file_size", i);           \
+      set_integer(                                                             \
+          segment->mem_size, elf_obj, "segments[%i].memory_size", i);          \
+      set_integer(                                                             \
+          segment->alignment, elf_obj, "segments[%i].alignment", i);           \
+                                                                               \
+      segment++;                                                               \
     }                                                                          \
   }                                                                            \
 }
@@ -172,9 +216,13 @@ begin_declarations;
   declare_integer("EM_68K");
   declare_integer("EM_88K");
   declare_integer("EM_860");
-  declare_integer("EM_ARM");
   declare_integer("EM_MIPS");
+  declare_integer("EM_MIPS_RS3_LE");
+  declare_integer("EM_PPC");
+  declare_integer("EM_PPC64");
+  declare_integer("EM_ARM");
   declare_integer("EM_X86_64");
+  declare_integer("EM_AARCH64");
 
   declare_integer("SHT_NULL");
   declare_integer("SHT_PROGBITS");
@@ -196,7 +244,14 @@ begin_declarations;
   declare_integer("type");
   declare_integer("machine");
   declare_integer("entry_point");
+
   declare_integer("number_of_sections");
+  declare_integer("sh_offset");
+  declare_integer("sh_entry_size");
+
+  declare_integer("number_of_segments");
+  declare_integer("ph_offset");
+  declare_integer("ph_entry_size");
 
   begin_struct_array("sections");
     declare_integer("type");
@@ -205,6 +260,32 @@ begin_declarations;
     declare_integer("size");
     declare_integer("offset");
   end_struct_array("sections");
+
+  declare_integer("PT_NULL");
+  declare_integer("PT_LOAD");
+  declare_integer("PT_DYNAMIC");
+  declare_integer("PT_INTERP");
+  declare_integer("PT_NOTE");
+  declare_integer("PT_SHLIB");
+  declare_integer("PT_PHDR");
+  declare_integer("PT_TLS");
+  declare_integer("PT_GNU_EH_FRAME");
+  declare_integer("PT_GNU_STACK");
+
+  declare_integer("PF_X");
+  declare_integer("PF_W");
+  declare_integer("PF_R");
+
+  begin_struct_array("segments");
+    declare_integer("type");
+    declare_integer("flags");
+    declare_integer("offset");
+    declare_integer("virtual_address");
+    declare_integer("physical_address");
+    declare_integer("file_size");
+    declare_integer("memory_size");
+    declare_integer("alignment");
+  end_struct_array("segments");
 
 end_declarations;
 
@@ -247,9 +328,13 @@ int module_load(
   set_integer(ELF_EM_68K, module_object, "EM_68K");
   set_integer(ELF_EM_88K, module_object, "EM_88K");
   set_integer(ELF_EM_860, module_object, "EM_860");
-  set_integer(ELF_EM_ARM, module_object, "EM_ARM");
   set_integer(ELF_EM_MIPS, module_object, "EM_MIPS");
+  set_integer(ELF_EM_MIPS_RS3_LE, module_object, "EM_MIPS_RS3_LE");
+  set_integer(ELF_EM_PPC, module_object, "EM_PPC");
+  set_integer(ELF_EM_PPC64, module_object, "EM_PPC64");
+  set_integer(ELF_EM_ARM, module_object, "EM_ARM");
   set_integer(ELF_EM_X86_64, module_object, "EM_X86_64");
+  set_integer(ELF_EM_AARCH64, module_object, "EM_AARCH64");
 
   set_integer(ELF_SHT_NULL, module_object, "SHT_NULL");
   set_integer(ELF_SHT_PROGBITS, module_object, "SHT_PROGBITS");
@@ -267,6 +352,21 @@ int module_load(
   set_integer(ELF_SHF_WRITE, module_object, "SHF_WRITE");
   set_integer(ELF_SHF_ALLOC, module_object, "SHF_ALLOC");
   set_integer(ELF_SHF_EXECINSTR, module_object, "SHF_EXECINSTR");
+
+  set_integer(ELF_PT_NULL, module_object, "PT_NULL");
+  set_integer(ELF_PT_LOAD, module_object, "PT_LOAD");
+  set_integer(ELF_PT_DYNAMIC, module_object, "PT_DYNAMIC");
+  set_integer(ELF_PT_INTERP, module_object, "PT_INTERP");
+  set_integer(ELF_PT_NOTE, module_object, "PT_NOTE");
+  set_integer(ELF_PT_SHLIB, module_object, "PT_SHLIB");
+  set_integer(ELF_PT_PHDR, module_object, "PT_PHDR");
+  set_integer(ELF_PT_TLS, module_object, "PT_TLS");
+  set_integer(ELF_PT_GNU_EH_FRAME, module_object, "PT_GNU_EH_FRAME");
+  set_integer(ELF_PT_GNU_STACK, module_object, "PT_GNU_STACK");
+
+  set_integer(ELF_PF_X, module_object, "PF_X");
+  set_integer(ELF_PF_W, module_object, "PF_W");
+  set_integer(ELF_PF_R, module_object, "PF_R");
 
   foreach_memory_block(context, block)
   {

@@ -21,7 +21,7 @@ limitations under the License.
 #include <yara/re.h>
 #include <yara/modules.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #define strcasecmp _stricmp
 #endif
 

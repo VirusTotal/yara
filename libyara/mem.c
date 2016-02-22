@@ -16,7 +16,7 @@ limitations under the License.
 
 
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 
 #include <windows.h>
 #include <string.h>
@@ -25,7 +25,7 @@ limitations under the License.
 
 static HANDLE hHeap;
 
-int yr_heap_alloc()
+int yr_heap_alloc(void)
 {
   hHeap = HeapCreate(0, 0x8000, 0);
 
@@ -36,7 +36,7 @@ int yr_heap_alloc()
 }
 
 
-int yr_heap_free()
+int yr_heap_free(void)
 {
   if (HeapDestroy(hHeap))
     return ERROR_SUCCESS;
@@ -108,13 +108,13 @@ char* yr_strndup(const char *str, size_t n)
 
 #include <yara/error.h>
 
-int yr_heap_alloc()
+int yr_heap_alloc(void)
 {
   return ERROR_SUCCESS;
 }
 
 
-int yr_heap_free()
+int yr_heap_free(void)
 {
   return ERROR_SUCCESS;
 }

@@ -17,6 +17,10 @@ limitations under the License.
 #ifndef YR_LIMITS_H
 #define YR_LIMITS_H
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+#include <windows.h>
+#endif
+
 
 // MAX_THREADS is the number of threads that can use a YR_RULES
 // object simultaneosly. This value is limited by the number of

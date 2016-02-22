@@ -62,6 +62,9 @@ YR_API int yr_compiler_create(
     result = yr_hash_table_create(10007, &new_compiler->objects_table);
 
   if (result == ERROR_SUCCESS)
+    result = yr_hash_table_create(101, &new_compiler->strings_table);
+
+  if (result == ERROR_SUCCESS)
     result = yr_arena_create(65536, 0, &new_compiler->sz_arena);
 
   if (result == ERROR_SUCCESS)
@@ -109,6 +112,9 @@ YR_API int yr_compiler_create(
 YR_API void yr_compiler_destroy(
     YR_COMPILER* compiler)
 {
+  YR_FIXUP* fixup;
+  int i;
+
   yr_arena_destroy(compiler->compiled_rules_arena);
   yr_arena_destroy(compiler->sz_arena);
   yr_arena_destroy(compiler->rules_arena);
@@ -125,13 +131,17 @@ YR_API void yr_compiler_destroy(
       NULL);
 
   yr_hash_table_destroy(
+      compiler->strings_table,
+      NULL);
+
+  yr_hash_table_destroy(
       compiler->objects_table,
       (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
-  for (int i = 0; i < compiler->file_name_stack_ptr; i++)
+  for (i = 0; i < compiler->file_name_stack_ptr; i++)
     yr_free(compiler->file_name_stack[i]);
 
-  YR_FIXUP* fixup = compiler->fixup_stack_head;
+  fixup = compiler->fixup_stack_head;
 
   while (fixup != NULL)
   {
@@ -546,7 +556,7 @@ YR_API int yr_compiler_get_rules(
   yara_rules->code_start = rules_file_header->code_start;
   yara_rules->tidx_mask = 0;
 
-  #if _WIN32
+  #if _WIN32 || __CYGWIN__
   yara_rules->mutex = CreateMutex(NULL, FALSE, NULL);
   #else
   pthread_mutex_init(&yara_rules->mutex, NULL);
@@ -769,6 +779,13 @@ YR_API char* yr_compiler_get_error_message(
           "unreferenced string \"%s\"",
           compiler->last_error_extra_info);
       break;
+    case ERROR_EMPTY_STRING:
+      snprintf(
+          buffer,
+          buffer_size,
+          "empty string \"%s\"",
+          compiler->last_error_extra_info);
+      break;
     case ERROR_NOT_A_STRUCTURE:
       snprintf(
           buffer,
@@ -864,6 +881,19 @@ YR_API char* yr_compiler_get_error_message(
           buffer_size,
           "internal fatal error");
       break;
+    case ERROR_DIVISION_BY_ZERO:
+      snprintf(
+          buffer,
+          buffer_size,
+          "division by zero");
+      break;
+    case ERROR_REGULAR_EXPRESSION_TOO_LARGE:
+      snprintf(
+          buffer,
+          buffer_size,
+          "regular expression is too large");
+      break;
+
   }
 
   return buffer;

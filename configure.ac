@@ -1,4 +1,4 @@
-AC_INIT([yara], [3.3.0], [vmalvarez@virustotal.com])
+AC_INIT([yara], [3.4.0], [vmalvarez@virustotal.com])
 
 AC_CONFIG_SRCDIR([yara.c])
 
@@ -6,7 +6,9 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 
 AC_CONFIG_MACRO_DIR([m4])
 
-${CFLAGS=""}
+# AC_PROG_CC sets CFLAGS to "-g -O2" if it wasn't previously set. Let's set
+# an empty CFLAGS
+: ${CFLAGS=""}
 
 # automake 1.12 seems to require AM_PROG_AR, but automake 1.11 doesn't
 # recognize it
@@ -24,6 +26,10 @@ AC_CANONICAL_HOST
 
 case $host_alias in
      i?86-*-mingw*) CFLAGS="$CFLAGS -D__MINGW_USE_VC2005_COMPAT" ;;
+esac
+
+case $host_os in
+    darwin*) CFLAGS="$CFLAGS -I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib" ;;
 esac
 
 

@@ -62,12 +62,20 @@ define_function(length)
   return_integer(strlen(s));
 }
 
+
+define_function(empty)
+{
+  return_string("");
+}
+
+
 begin_declarations;
 
   begin_struct("constants");
     declare_integer("one");
     declare_integer("two");
     declare_string("foo");
+    declare_string("empty");
   end_struct("constants");
 
   begin_struct("undefined");
@@ -96,6 +104,7 @@ begin_declarations;
   declare_function("fsum", "ff", "f", fsum_2);
   declare_function("fsum", "fff", "f", fsum_3);
   declare_function("length", "s", "i", length);
+  declare_function("empty", "", "s", empty);
 
 end_declarations;
 
@@ -122,6 +131,7 @@ int module_load(
   set_integer(1, module_object, "constants.one");
   set_integer(2, module_object, "constants.two");
   set_string("foo", module_object, "constants.foo");
+  set_string("", module_object, "constants.empty");
 
   set_integer(1, module_object, "struct_array[1].i");
 

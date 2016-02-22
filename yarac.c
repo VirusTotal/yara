@@ -37,7 +37,7 @@ limitations under the License.
 #include "config.h"
 
 #ifndef MAX_PATH
-#define MAX_PATH 255
+#define MAX_PATH 256
 #endif
 
 #define MAX_ARGS_EXT_VAR   32
@@ -270,4 +270,3 @@ _exit:
 
   return result;
 }
-

@@ -70,9 +70,9 @@ uint32_t byte_to_int32[]  =
 uint32_t hash(
     uint32_t seed,
     uint8_t* buffer,
-    int len)
+    size_t len)
 {
-  int i;
+  size_t i;
   uint32_t result = seed;
 
   for (i = len - 1; i > 0; i--)
@@ -86,7 +86,7 @@ uint32_t hash(
 }
 
 
-int yr_hash_table_create(
+YR_API int yr_hash_table_create(
     int size,
     YR_HASH_TABLE** table)
 {
@@ -109,17 +109,20 @@ int yr_hash_table_create(
   return ERROR_SUCCESS;
 }
 
-void yr_hash_table_destroy(
+
+YR_API void yr_hash_table_clean(
     YR_HASH_TABLE* table,
     YR_HASH_TABLE_FREE_VALUE_FUNC free_value)
 {
   YR_HASH_TABLE_ENTRY* entry;
   YR_HASH_TABLE_ENTRY* next_entry;
 
+  int i;
+
   if (table == NULL)
     return;
 
-  for (int i = 0; i < table->size; i++)
+  for (i = 0; i < table->size; i++)
   {
     entry = table->buckets[i];
 
@@ -138,13 +141,22 @@ void yr_hash_table_destroy(
 
       entry = next_entry;
     }
-  }
 
+    table->buckets[i] = NULL;
+  }
+}
+
+
+YR_API void yr_hash_table_destroy(
+    YR_HASH_TABLE* table,
+    YR_HASH_TABLE_FREE_VALUE_FUNC free_value)
+{
+  yr_hash_table_clean(table, free_value);
   yr_free(table);
 }
 
 
-void* yr_hash_table_lookup(
+YR_API void* yr_hash_table_lookup(
     YR_HASH_TABLE* table,
     const char* key,
     const char* ns)
@@ -176,7 +188,8 @@ void* yr_hash_table_lookup(
   return NULL;
 }
 
-int yr_hash_table_add(
+
+YR_API int yr_hash_table_add(
     YR_HASH_TABLE* table,
     const char* key,
     const char* ns,

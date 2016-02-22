@@ -35,6 +35,8 @@ Reference
 
 .. c:type:: machine
 
+    .. versionchanged:: 3.3.0
+
     Integer with one of the following values:
 
     .. c:type:: MACHINE_UNKNOWN
@@ -61,8 +63,6 @@ Reference
     .. c:type:: MACHINE_WCEMIPSV2
 
     *Example: pe.machine == pe.MACHINE_AMD64*
-
-    .. versionchanged:: 3.3.0
 
 .. c:type:: subsystem
 
@@ -173,6 +173,8 @@ Reference
 
 .. c:type:: sections
 
+    .. versionadded:: 3.3.0
+
     An zero-based array of section objects, one for each section the PE has.
     Individual sections can be accessed by using the [] operator. Each section
     object has the following attributes:
@@ -220,8 +222,6 @@ Reference
     .. c:type:: SECTION_MEM_READ
     .. c:type:: SECTION_MEM_WRITE
 
-    .. versionadded:: 3.3.0
-
     *Example: pe.sections[1].characteristics & SECTION_CNT_CODE*
 
 .. c:type:: number_of_resources
@@ -245,6 +245,8 @@ Reference
         Minor resource version.
 
 .. c:type:: resources
+
+    .. versionchanged:: 3.3.0
 
     An zero-based array of resource objects, one for each resource the PE has.
     Individual resources can be accessed by using the [] operator. Each
@@ -317,9 +319,9 @@ Reference
 
     http://msdn.microsoft.com/en-us/library/ms648009(v=vs.85).aspx
 
-    .. versionchanged:: 3.3.0
-
 .. c:type:: version_info
+
+    .. versionadded:: 3.2.0
 
     Dictionary containing PE's version information. Typical keys are:
 
@@ -339,8 +341,6 @@ Reference
     http://msdn.microsoft.com/en-us/library/windows/desktop/ms646987(v=vs.85).aspx
 
     *Example:  pe.version_info["CompanyName"] contains "Microsoft"*
-
-    .. versionadded:: 3.2.0
 
 .. c:type:: number_of_signatures
 
@@ -393,11 +393,11 @@ Reference
         Function returning true if the signature was valid the on date
         indicated by *timestamp*. The following sentence::
 
-            pe.signature[n].valid_on(timestamp)
+            pe.signatures[n].valid_on(timestamp)
 
         Is equivalent to::
 
-            timestamp >= pe.signature[n].not_before and timestamp <= pe.signature[n].not_after
+            timestamp >= pe.signatures[n].not_before and timestamp <= pe.signatures[n].not_after
 
 .. c:type:: rich_signature
 
@@ -425,6 +425,30 @@ Reference
 
         Data after being decrypted by XORing it with the key.
 
+    .. c:function:: version(version, [toolid])
+
+    .. versionadded:: 3.5.0
+
+        Function returning true if the PE has the specified *version* in the PE's rich
+        signature. Provide the optional *toolid* argument to only match when both match
+        for one entry. More information can be found here:
+
+        http://www.ntcore.com/files/richsign.htm
+
+        *Example: pe.rich_signature.version(21005)*
+
+    .. c:function:: toolid(toolid, [version])
+
+    .. versionadded:: 3.5.0
+
+        Function returning true if the PE has the specified *id* in the PE's rich
+        signature. Provide the optional *version* argument to only match when both
+        match for one entry. More information can be found here:
+
+        http://www.ntcore.com/files/richsign.htm
+
+        *Example: pe.rich_signature.toolid(222)*
+
 .. c:function:: exports(function_name)
 
     Function returning true if the PE exports *function_name* or
@@ -439,7 +463,27 @@ Reference
 
     *Example:  pe.imports("kernel32.dll", "WriteProcessMemory")*
 
+.. c:function:: imports(dll_name)
+
+    .. versionadded:: 3.5.0
+
+    Function returning true if the PE imports anything from *dll_name*,
+    or false otherwise. *dll_name* is case insensitive.
+
+    *Example:  pe.imports("kernel32.dll")*
+
+.. c:function:: imports(dll_name, ordinal)
+
+    .. versionadded:: 3.5.0
+
+    Function returning true if the PE imports *ordinal* from *dll_name*,
+    or false otherwise. *dll_name* is case insensitive.
+
+    *Example:  pe.imports("WS2_32.DLL", 3)*
+
 .. c:function:: locale(locale_identifier)
+
+    .. versionadded:: 3.2.0
 
     Function returning true if the PE has a resource with the specified locale
     identifier. Locale identifiers are 16-bit integers and can be found here:
@@ -448,9 +492,9 @@ Reference
 
     *Example: pe.locale(0x0419) // Russian (RU)*
 
-    .. versionadded:: 3.2.0
-
 .. c:function:: language(language_identifier)
+
+    .. versionadded:: 3.2.0
 
     Function returning true if the PE has a resource with the specified language
     identifier. Language identifiers are 8-bit integers and can be found here:
@@ -459,9 +503,9 @@ Reference
 
     *Example: pe.language(0x0A) // Spanish*
 
-    .. versionadded:: 3.2.0
-
 .. c:function:: imphash()
+
+    .. versionadded:: 3.2.0
 
     Function returning the import hash or imphash for the PE. The imphash is
     a MD5 hash of the PE's import table after some normalization. The imphash
@@ -469,8 +513,6 @@ Reference
     `Mandiant's blog <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_.
 
     *Example: pe.imphash() == "b8bb385806b89680e13fc0cf24f4431e"*
-
-    .. versionadded:: 3.2.0
 
 .. c:function:: section_index(name)
 
@@ -481,9 +523,33 @@ Reference
 
 .. c:function:: section_index(addr)
 
+ .. versionadded:: 3.3.0
+
   Function returning the index into the sections array for the section that has
   *addr*. *addr* can be an offset into the file or a memory address.
 
   *Example: pe.section_index(pe.entry_point)*
 
-  .. versionadded:: 3.3.0
+.. c:function:: is_dll()
+
+    .. versionadded:: 3.5.0
+
+    Function returning true if the PE is a DLL.
+
+    *Example: pe.is_dll()*
+
+.. c:function:: is_32bit()
+
+    .. versionadded:: 3.5.0
+
+    Function returning true if the PE is 32bits.
+
+    *Example: pe.is_32bit()*
+
+.. c:function:: is_64bit()
+
+    .. versionadded:: 3.5.0
+
+    Function returning true if the PE is 64bits.
+
+    *Example: pe.is_64bit()*

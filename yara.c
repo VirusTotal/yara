@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__CYGWIN__)
 
 #include <sys/stat.h>
 #include <dirent.h>
@@ -26,6 +26,7 @@ limitations under the License.
 #include <windows.h>
 
 #define PRIx64 "llx"
+#define PRId64 "lld"
 
 #endif
 
@@ -45,7 +46,7 @@ limitations under the License.
 #define ERROR_COULD_NOT_CREATE_THREAD  100
 
 #ifndef MAX_PATH
-#define MAX_PATH 255
+#define MAX_PATH 256
 #endif
 
 #ifndef min
@@ -94,6 +95,7 @@ char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 char* modules_data[MAX_ARGS_EXT_VAR + 1];
 
 int recursive_search = FALSE;
+int show_module_data = FALSE;
 int show_tags = FALSE;
 int show_specified_tags = FALSE;
 int show_specified_rules = FALSE;
@@ -125,6 +127,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN('n', "negate", &negate,
       "print only not satisfied rules (negate)", NULL),
+
+  OPT_BOOLEAN('D', "print-module-data", &show_module_data,
+      "print module data"),
 
   OPT_BOOLEAN('g', "print-tags", &show_tags,
       "print tags"),
@@ -268,7 +273,7 @@ char* file_queue_get()
 }
 
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 
 int is_directory(
     const char* path)
@@ -332,6 +337,7 @@ int is_directory(
 
   return 0;
 }
+
 
 void scan_dir(
     const char* dir,
@@ -397,6 +403,45 @@ void print_string(
 }
 
 
+static char cescapes[] =
+{
+  0  , 0  , 0  , 0  , 0  , 0  , 0  , 'a',
+  'b', 't', 'n', 'v', 'f', 'r', 0  , 0  ,
+  0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
+  0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
+};
+
+
+void print_escaped(
+    uint8_t* data,
+    int length)
+{
+  int i;
+
+  for (i = 0; i < length; i++)
+  {
+    switch (data[i])
+    {
+      case '\"':
+      case '\'':
+      case '\\':
+        printf("\\%c", data[i]);
+        break;
+
+      default:
+        if (data[i] >= 127)
+          printf("\\%03o", data[i]);
+        else if (data[i] >= 32)
+          putchar(data[i]);
+        else if (cescapes[data[i]] != 0)
+          printf("\\%c", cescapes[data[i]]);
+        else
+          printf("\\%03o", data[i]);
+    }
+  }
+}
+
+
 void print_hex_string(
     uint8_t* data,
     int length)
@@ -411,7 +456,8 @@ void print_hex_string(
 }
 
 
-void print_scanner_error(int error)
+void print_scanner_error(
+    int error)
 {
   switch (error)
   {
@@ -461,7 +507,10 @@ void print_compiler_error(
 }
 
 
-int handle_message(int message, YR_RULE* rule, void* data)
+int handle_message(
+    int message,
+    YR_RULE* rule,
+    void* data)
 {
   const char* tag;
   int show = TRUE;
@@ -546,11 +595,19 @@ int handle_message(int message, YR_RULE* rule, void* data)
           printf(",");
 
         if (meta->type == META_TYPE_INTEGER)
-          printf("%s=%d", meta->identifier, meta->integer);
+        {
+          printf("%s=%" PRId64, meta->identifier, meta->integer);
+        }
         else if (meta->type == META_TYPE_BOOLEAN)
+        {
           printf("%s=%s", meta->identifier, meta->integer ? "true" : "false");
+        }
         else
-          printf("%s=\"%s\"", meta->identifier, meta->string);
+        {
+          printf("%s=\"", meta->identifier);
+          print_escaped((uint8_t*) (meta->string), strlen(meta->string));
+          putchar('"');
+        }
       }
 
       printf("] ");
@@ -595,9 +652,13 @@ int handle_message(int message, YR_RULE* rule, void* data)
 }
 
 
-int callback(int message, void* message_data, void* user_data)
+int callback(
+    int message,
+    void* message_data,
+    void* user_data)
 {
   YR_MODULE_IMPORT* mi;
+  YR_OBJECT* object;
   MODULE_DATA* module_data;
 
   switch(message)
@@ -607,8 +668,8 @@ int callback(int message, void* message_data, void* user_data)
       return handle_message(message, (YR_RULE*) message_data, user_data);
 
     case CALLBACK_MSG_IMPORT_MODULE:
-      mi = (YR_MODULE_IMPORT*) message_data;
 
+      mi = (YR_MODULE_IMPORT*) message_data;
       module_data = modules_data_list;
 
       while (module_data != NULL)
@@ -624,12 +685,29 @@ int callback(int message, void* message_data, void* user_data)
       }
 
       return CALLBACK_CONTINUE;
+
+    case CALLBACK_MSG_MODULE_IMPORTED:
+
+      if (show_module_data)
+      {
+        object = (YR_OBJECT*) message_data;
+
+        mutex_lock(&output_mutex);
+
+        yr_object_print_data(object, 0, 1);
+        printf("\n");
+
+        mutex_unlock(&output_mutex);
+      }
+
+      return CALLBACK_CONTINUE;
   }
 
   return CALLBACK_ERROR;
 }
 
-#ifdef _WIN32
+
+#if defined(_WIN32) || defined(__CYGWIN__)
 DWORD WINAPI scanning_thread(LPVOID param)
 #else
 void* scanning_thread(void* param)
@@ -638,6 +716,11 @@ void* scanning_thread(void* param)
   int result = ERROR_SUCCESS;
   THREAD_ARGS* args = (THREAD_ARGS*) param;
   char* file_path = file_queue_get();
+
+  int flags = 0;
+
+  if (fast_scan)
+    flags |= SCAN_FLAGS_FAST_MODE;
 
   while (file_path != NULL)
   {
@@ -648,7 +731,7 @@ void* scanning_thread(void* param)
       result = yr_rules_scan_file(
           args->rules,
           file_path,
-          fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
+          flags,
           callback,
           file_path,
           timeout - elapsed_time);
@@ -681,7 +764,7 @@ int is_integer(
 {
   if (*str == '-')
     str++;
-  
+
   while(*str)
   {
     if (!isdigit(*str))
@@ -696,27 +779,32 @@ int is_integer(
 int is_float(
     const char *str)
 {
-  int point = FALSE;
+  int has_dot = FALSE;
 
-  if (*str == '-')
+  if (*str == '-')      // skip the minus sign if present
     str++;
+
+  if (*str == '.')      // float can't start with a dot
+    return FALSE;
 
   while(*str)
   {
     if (*str == '.')
     {
-      if (point)      // two points seen, not a float
+      if (has_dot)      // two dots, not a float
         return FALSE;
-      point = TRUE;
+
+      has_dot = TRUE;
     }
     else if (!isdigit(*str))
     {
       return FALSE;
     }
+
     str++;
   }
 
-  return TRUE;
+  return has_dot; // to be float must contain a dot
 }
 
 
@@ -983,11 +1071,15 @@ int main(
   if (is_integer(argv[1]))
   {
     int pid = atoi(argv[1]);
+    int flags = 0;
+
+    if (fast_scan)
+      flags |= SCAN_FLAGS_FAST_MODE;
 
     result = yr_rules_scan_proc(
         rules,
         pid,
-        fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
+        flags,
         callback,
         (void*) argv[1],
         timeout);
@@ -1040,10 +1132,15 @@ int main(
   }
   else
   {
+    int flags = 0;
+
+    if (fast_scan)
+      flags |= SCAN_FLAGS_FAST_MODE;
+
     result = yr_rules_scan_file(
         rules,
         argv[1],
-        fast_scan ? SCAN_FLAGS_FAST_MODE : 0,
+        flags,
         callback,
         (void*) argv[1],
         timeout);

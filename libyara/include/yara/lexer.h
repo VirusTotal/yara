@@ -72,6 +72,7 @@ typedef struct _EXPRESSION
   union {
     int64_t integer;
     YR_OBJECT* object;
+    SIZED_STRING* sized_string;
   } value;
 
   const char* identifier;
@@ -112,7 +113,8 @@ void yyerror(
 
 void yywarning(
     yyscan_t yyscanner,
-    const char *warning_message);
+    const char *message_fmt,
+    ...);
 
 void yyfatal(
     yyscan_t yyscanner,

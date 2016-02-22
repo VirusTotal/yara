@@ -166,7 +166,10 @@ int yr_execute_code(
   STACK_ITEM r2;
   STACK_ITEM r3;
 
+  #ifdef PROFILING_ENABLED
   YR_RULE* current_rule = NULL;
+  #endif
+
   YR_RULE* rule;
   YR_MATCH* match;
   YR_OBJECT_FUNCTION* function;
@@ -180,7 +183,7 @@ int yr_execute_code(
   int result = ERROR_SUCCESS;
   int stop = FALSE;
   int cycle = 0;
-  int tidx = yr_get_tidx();
+  int tidx = context->tidx;
 
   #ifdef PROFILING_ENABLED
   clock_t start = clock();
@@ -337,7 +340,10 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r2);
         ensure_defined(r1);
-        r1.i = r1.i % r2.i;
+        if (r2.i != 0)
+          r1.i = r1.i % r2.i;
+        else
+          r1.i = UNDEFINED;
         push(r1);
         break;
 
@@ -401,7 +407,9 @@ int yr_execute_code(
         break;
 
       case OP_INIT_RULE:
+        #ifdef PROFILING_ENABLED
         current_rule = *(YR_RULE**)(ip + 1);
+        #endif
         ip += sizeof(uint64_t);
         break;
 
@@ -481,9 +489,10 @@ int yr_execute_code(
         pop(r2);  // array
 
         ensure_defined(r1);
+        ensure_defined(r2);
         assert(r2.o->type == OBJECT_TYPE_ARRAY);
 
-        r1.o = yr_object_array_get_item(r2.o, 0, r1.i);
+        r1.o = yr_object_array_get_item(r2.o, 0, (int) r1.i);
 
         if (r1.o == NULL)
           r1.i = UNDEFINED;
@@ -496,6 +505,7 @@ int yr_execute_code(
         pop(r2);  // dictionary
 
         ensure_defined(r1);
+        ensure_defined(r2);
         assert(r2.o->type == OBJECT_TYPE_DICTIONARY);
 
         r1.o = yr_object_dict_get_item(
@@ -511,7 +521,7 @@ int yr_execute_code(
         args_fmt = *(char**)(ip + 1);
         ip += sizeof(uint64_t);
 
-        i = strlen(args_fmt);
+        i = (int) strlen(args_fmt);
         count = 0;
 
         // pop arguments from stack and copy them to args array
@@ -666,6 +676,28 @@ int yr_execute_code(
         push(r3);
         break;
 
+      case OP_LENGTH:
+        pop(r2);
+        pop(r1);
+
+        ensure_defined(r1);
+
+        match = r2.s->matches[tidx].head;
+        i = 1;
+        r3.i = UNDEFINED;
+
+        while (match != NULL && r3.i == UNDEFINED)
+        {
+          if (r1.i == i)
+            r3.i = match->length;
+
+          i++;
+          match = match->next;
+        }
+
+        push(r3);
+        break;
+
       case OP_OF:
         found = 0;
         count = 0;
@@ -701,73 +733,73 @@ int yr_execute_code(
 
       case OP_INT8:
         pop(r1);
-        r1.i = read_int8_t_little_endian(context->mem_block, r1.i);
+        r1.i = read_int8_t_little_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT16:
         pop(r1);
-        r1.i = read_int16_t_little_endian(context->mem_block, r1.i);
+        r1.i = read_int16_t_little_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT32:
         pop(r1);
-        r1.i = read_int32_t_little_endian(context->mem_block, r1.i);
+        r1.i = read_int32_t_little_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT8:
         pop(r1);
-        r1.i = read_uint8_t_little_endian(context->mem_block, r1.i);
+        r1.i = read_uint8_t_little_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT16:
         pop(r1);
-        r1.i = read_uint16_t_little_endian(context->mem_block, r1.i);
+        r1.i = read_uint16_t_little_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT32:
         pop(r1);
-        r1.i = read_uint32_t_little_endian(context->mem_block, r1.i);
+        r1.i = read_uint32_t_little_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT8BE:
         pop(r1);
-        r1.i = read_int8_t_big_endian(context->mem_block, r1.i);
+        r1.i = read_int8_t_big_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT16BE:
         pop(r1);
-        r1.i = read_int16_t_big_endian(context->mem_block, r1.i);
+        r1.i = read_int16_t_big_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT32BE:
         pop(r1);
-        r1.i = read_int32_t_big_endian(context->mem_block, r1.i);
+        r1.i = read_int32_t_big_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT8BE:
         pop(r1);
-        r1.i = read_uint8_t_big_endian(context->mem_block, r1.i);
+        r1.i = read_uint8_t_big_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT16BE:
         pop(r1);
-        r1.i = read_uint16_t_big_endian(context->mem_block, r1.i);
+        r1.i = read_uint16_t_big_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT32BE:
         pop(r1);
-        r1.i = read_uint32_t_big_endian(context->mem_block, r1.i);
+        r1.i = read_uint32_t_big_endian(context->mem_block, (size_t) r1.i);
         push(r1);
         break;
 
@@ -797,6 +829,9 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
+        ensure_defined(r2);
+        ensure_defined(r1);
+
         if (r1.ss->length == 0)
         {
           r1.i = FALSE;
@@ -822,7 +857,7 @@ int yr_execute_code(
         if (is_undef(r2))
           stack[sp - r1.i].i = UNDEFINED;
         else
-          stack[sp - r1.i].d = r2.i;
+          stack[sp - r1.i].d = (double) r2.i;
         break;
 
       case OP_STR_TO_BOOL:
@@ -918,7 +953,10 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r2);
         ensure_defined(r1);
-        r1.i = r1.i / r2.i;
+        if (r2.i != 0)
+          r1.i = r1.i / r2.i;
+        else
+          r1.i = UNDEFINED;
         push(r1);
         break;
 

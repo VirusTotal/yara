@@ -19,6 +19,10 @@ limitations under the License.
 
 #include <string.h>
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+#include <windows.h>
+#endif
+
 #ifndef ERROR_SUCCESS
 #define ERROR_SUCCESS                           0
 #endif
@@ -64,6 +68,9 @@ limitations under the License.
 #define ERROR_WRONG_ARGUMENTS                   40
 #define ERROR_WRONG_RETURN_TYPE                 41
 #define ERROR_DUPLICATED_STRUCTURE_MEMBER       42
+#define ERROR_EMPTY_STRING                      43
+#define ERROR_DIVISION_BY_ZERO                  44
+#define ERROR_REGULAR_EXPRESSION_TOO_LARGE      45
 
 
 #define FAIL_ON_ERROR(x) { \

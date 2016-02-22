@@ -198,7 +198,9 @@ int yr_parser_check_types(
     YR_OBJECT_FUNCTION* function,
     const char* actual_args_fmt)
 {
-  for (int i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+  int i;
+
+  for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
   {
     if (function->prototypes[i].arguments_fmt == NULL)
       break;
@@ -351,7 +353,7 @@ int _yr_parser_write_string(
 
   if (flags & STRING_GFLAGS_LITERAL)
   {
-    (*string)->length = literal_string->length;
+    (*string)->length = (uint32_t) literal_string->length;
 
     result = yr_arena_write_data(
         compiler->sz_arena,
@@ -363,7 +365,7 @@ int _yr_parser_write_string(
     {
       result = yr_atoms_extract_from_string(
           (uint8_t*) literal_string->c_string,
-          literal_string->length,
+          (int32_t) literal_string->length,
           flags,
           &atom_list);
     }
@@ -463,6 +465,30 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
   RE_ERROR re_error;
 
+  // Determine if a string with the same identifier was already defined
+  // by searching for the identifier in string_table.
+
+  string = yr_hash_table_lookup(
+      compiler->strings_table,
+      identifier,
+      NULL);
+
+  if (string != NULL)
+  {
+    compiler->last_result = ERROR_DUPLICATED_STRING_IDENTIFIER;
+    yr_compiler_set_error_extra_info(compiler, identifier);
+    goto _exit;
+  }
+
+  // Empty strings are now allowed
+
+  if (str->length == 0)
+  {
+    compiler->last_result = ERROR_EMPTY_STRING;
+    yr_compiler_set_error_extra_info(compiler, identifier);
+    goto _exit;
+  }
+
   if (str->flags & SIZED_STRING_FLAGS_NO_CASE)
     string_flags |= STRING_GFLAGS_NO_CASE;
 
@@ -524,15 +550,33 @@ YR_STRING* yr_parser_reduce_string_declaration(
     if (re->flags & RE_FLAGS_FAST_HEX_REGEXP)
       string_flags |= STRING_GFLAGS_FAST_HEX_REGEXP;
 
+    // Regular expressions in the strings section can't mix greedy and ungreedy
+    // quantifiers like .* and .*?. That's because these regular expressions can
+    // be matched forwards and/or backwards depending on the atom found, and we
+    // need the regexp to be all-greedy or all-ungreedy to be able to properly
+    // calculate the length of the match.
+
+    if ((re->flags & RE_FLAGS_GREEDY) &&
+        (re->flags & RE_FLAGS_UNGREEDY))
+    {
+      compiler->last_result = ERROR_INVALID_REGULAR_EXPRESSION;
+
+      yr_compiler_set_error_extra_info(compiler,
+          "greedy and ungreedy quantifiers can't be mixed in a regular "
+          "expression");
+
+      goto _exit;
+    }
+
+    if (re->flags & RE_FLAGS_GREEDY)
+      string_flags |= STRING_GFLAGS_GREEDY_REGEXP;
+
     if (yr_re_contains_dot_star(re))
     {
-      snprintf(
-        message,
-        sizeof(message),
-        "%s contains .*, consider using .{N} with a reasonable value for N",
-        identifier);
-
-        yywarning(yyscanner, message);
+      yywarning(
+          yyscanner, 
+          "%s contains .*, consider using .{N} with a reasonable value for N", 
+          identifier);
     }
 
     compiler->last_result = yr_re_split_at_chaining_point(
@@ -623,16 +667,25 @@ YR_STRING* yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
+  if (!STRING_IS_ANONYMOUS(string))
+  {
+    compiler->last_result = yr_hash_table_add(
+      compiler->strings_table,
+      identifier,
+      NULL,
+      string);
+
+    if (compiler->last_result != ERROR_SUCCESS)
+      goto _exit;  
+  }
+
   if (min_atom_quality < 3 && compiler->callback != NULL)
   {
-    snprintf(
-        message,
-        sizeof(message),
+    yywarning(
+        yyscanner, 
         "%s is slowing down scanning%s",
         string->identifier,
         min_atom_quality < 2 ? " (critical!)" : "");
-
-    yywarning(yyscanner, message);
   }
 
 _exit:
@@ -650,10 +703,7 @@ _exit:
 YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
     yyscan_t yyscanner,
     int32_t flags,
-    const char* identifier,
-    char* tags,
-    YR_STRING* strings,
-    YR_META* metas)
+    const char* identifier)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   YR_RULE* rule = NULL;
@@ -690,9 +740,6 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
     return NULL;
 
   rule->g_flags = flags;
-  rule->tags = tags;
-  rule->strings = strings;
-  rule->metas = metas;
   rule->ns = compiler->current_namespace;
 
   #ifdef PROFILING_ENABLED
@@ -703,6 +750,9 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
       compiler->sz_arena,
       identifier,
       (char**) &rule->identifier);
+
+  if (compiler->last_result != ERROR_SUCCESS)
+    return NULL;
 
   compiler->last_result = yr_parser_emit_with_arg_reloc(
       yyscanner,
@@ -718,8 +768,10 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
         compiler->current_namespace->name,
         (void*) rule);
 
-  compiler->current_rule = rule;
+  // Clean strings_table as we are starting to parse a new rule.
+  yr_hash_table_clean(compiler->strings_table, NULL);
 
+  compiler->current_rule = rule;
   return rule;
 }
 
@@ -762,7 +814,6 @@ int yr_parser_reduce_rule_declaration_phase_2(
 
   return compiler->last_result;
 }
-
 
 
 int yr_parser_reduce_string_identifier(
@@ -878,7 +929,7 @@ YR_META* yr_parser_reduce_meta_declaration(
     int32_t type,
     const char* identifier,
     const char* string,
-    int32_t integer)
+    int64_t integer)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   YR_META* meta;
@@ -984,7 +1035,7 @@ int _yr_parser_operator_to_opcode(
     const char* op,
     int expression_type)
 {
-  int opcode;
+  int opcode = 0;
 
   switch(expression_type)
   {

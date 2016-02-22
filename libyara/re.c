@@ -17,7 +17,7 @@ limitations under the License.
 
 /*
 
-This modules implements a regular expressions engine based on Thompson's
+This module implements a regular expressions engine based on Thompson's
 algorithm as described by Russ Cox in http://swtch.com/~rsc/regexp/regexp2.html.
 
 What the article names a "thread" has been named a "fiber" in this code, in
@@ -29,7 +29,7 @@ order to avoid confusion with operating system threads.
 #include <string.h>
 #include <limits.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #else
 #include <pthread.h>
@@ -85,7 +85,7 @@ typedef struct _RE_THREAD_STORAGE
 } RE_THREAD_STORAGE;
 
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 DWORD thread_storage_key = 0;
 #else
 pthread_key_t thread_storage_key = 0;
@@ -100,7 +100,7 @@ pthread_key_t thread_storage_key = 0;
 
 int yr_re_initialize(void)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   thread_storage_key = TlsAlloc();
   #else
   pthread_key_create(&thread_storage_key, NULL);
@@ -118,7 +118,7 @@ int yr_re_initialize(void)
 
 int yr_re_finalize(void)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   TlsFree(thread_storage_key);
   #else
   pthread_key_delete(thread_storage_key);
@@ -142,7 +142,7 @@ int yr_re_finalize_thread(void)
   RE_THREAD_STORAGE* storage;
 
   if (thread_storage_key != 0)
-    #ifdef _WIN32
+    #if defined(_WIN32) || defined(__CYGWIN__)
     storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
     #else
     storage = (RE_THREAD_STORAGE*) pthread_getspecific(thread_storage_key);
@@ -164,7 +164,7 @@ int yr_re_finalize_thread(void)
     yr_free(storage);
   }
 
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   TlsSetValue(thread_storage_key, NULL);
   #else
   pthread_setspecific(thread_storage_key, NULL);
@@ -244,7 +244,7 @@ void yr_re_destroy(
 //
 // yr_re_parse
 //
-// Parses a regexp but don't emit its code. A further call to y
+// Parses a regexp but don't emit its code. A further call to
 // yr_re_emit_code is required to get the code.
 //
 
@@ -962,14 +962,25 @@ int _yr_re_emit(
 
   case RE_NODE_RANGE:
 
-    // Code for e1{n,m} looks like:
+    // Code for e{n,m} looks like:
     //
-    //            code for e1 (n times)
-    //            push m-n
+    //            code for e       (repeated n times)
+    //            push m-n-1
     //        L0: split L1, L2
-    //        L1: code for e1
-    //            jnztop L0
+    //        L1: code for e
+    //            jnz L0
     //        L2: pop
+    //            split L3, L4
+    //        L3: code for e
+    //        L4:
+    //
+    // Instead of generating a loop with m-n iterations, we generate a loop
+    // with m-n-1 iterations and the last one is unrolled outside the loop.
+    // This is because re_node->backward_code pointers *must* point to code
+    // past the loop. If they point to code before the loop then when some atom
+    // contained inside "e" is found, the loop will be executed in both
+    // forward and backward code. This causes an overlap in forward and backward
+    // matches and the reported matching string will be longer than expected.
 
     if (re_node->start > 0)
     {
@@ -1000,57 +1011,80 @@ int _yr_re_emit(
       }
     }
 
-    // m == n, no more code needed.
-    if (re_node->end == re_node->start)
-      break;
+    if (re_node->end > re_node->start + 1)
+    {
+      FAIL_ON_ERROR(_yr_emit_inst_arg_uint16(
+          arena,
+          RE_OPCODE_PUSH,
+          re_node->end - re_node->start - 1,
+          re_node->start == 0 ? &instruction_addr : NULL,
+          NULL,
+          &inst_size));
 
-    FAIL_ON_ERROR(_yr_emit_inst_arg_uint16(
-        arena,
-        RE_OPCODE_PUSH,
-        re_node->end - re_node->start,
-        re_node->start == 0 ? &instruction_addr : NULL,
-        NULL,
-        &inst_size));
+      *code_size += inst_size;
 
-    *code_size += inst_size;
+      FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
+          arena,
+          re_node->greedy ? RE_OPCODE_SPLIT_A : RE_OPCODE_SPLIT_B,
+          0,
+          NULL,
+          &split_offset_addr,
+          &split_size));
 
-    FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
-        arena,
-        re_node->greedy ? RE_OPCODE_SPLIT_A : RE_OPCODE_SPLIT_B,
-        0,
-        NULL,
-        &split_offset_addr,
-        &split_size));
+      *code_size += split_size;
 
-    *code_size += split_size;
+      FAIL_ON_ERROR(_yr_re_emit(
+          re_node->left,
+          arena,
+          flags | EMIT_DONT_SET_FORWARDS_CODE | EMIT_DONT_SET_BACKWARDS_CODE,
+          NULL,
+          &branch_size));
 
-    FAIL_ON_ERROR(_yr_re_emit(
-        re_node->left,
-        arena,
-        flags | EMIT_DONT_SET_FORWARDS_CODE | EMIT_DONT_SET_BACKWARDS_CODE,
-        NULL,
-        &branch_size));
+      *code_size += branch_size;
 
-    *code_size += branch_size;
+      FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
+          arena,
+          RE_OPCODE_JNZ,
+          -(branch_size + split_size),
+          NULL,
+          &jmp_offset_addr,
+          &jmp_size));
 
-    FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
-        arena,
-        RE_OPCODE_JNZ,
-        -(branch_size + split_size),
-        NULL,
-        &jmp_offset_addr,
-        &jmp_size));
+      *code_size += jmp_size;
+      *split_offset_addr = split_size + branch_size + jmp_size;
 
-    *code_size += jmp_size;
-    *split_offset_addr = split_size + branch_size + jmp_size;
+      FAIL_ON_ERROR(_yr_emit_inst(
+          arena,
+          RE_OPCODE_POP,
+          NULL,
+          &inst_size));
 
-    FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
-        RE_OPCODE_POP,
-        NULL,
-        &inst_size));
+      *code_size += inst_size;
+    }
 
-    *code_size += inst_size;
+    if (re_node->end > re_node->start)
+    {
+      FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
+          arena,
+          re_node->greedy ? RE_OPCODE_SPLIT_A : RE_OPCODE_SPLIT_B,
+          0,
+          NULL,
+          &split_offset_addr,
+          &split_size));
+
+      *code_size += split_size;
+
+      FAIL_ON_ERROR(_yr_re_emit(
+          re_node->left,
+          arena,
+          flags | EMIT_DONT_SET_FORWARDS_CODE,
+          re_node->start == 0 && re_node->end == 1 ? &instruction_addr : NULL,
+          &branch_size));
+
+      *code_size += branch_size;
+      *split_offset_addr = split_size + branch_size;
+    }
+
     break;
   }
 
@@ -1087,9 +1121,9 @@ int yr_re_emit_code(
   if (re->flags & RE_FLAGS_DOT_ALL)
     emit_flags |= EMIT_DOT_ALL;
 
-  // Ensure that we have enough contiguos memory space in the arena to
+  // Ensure that we have enough contiguous memory space in the arena to
   // contain the regular expression code. The code can't span over multiple
-  // non-contiguos pages.
+  // non-contiguous pages.
 
   yr_arena_reserve_memory(arena, RE_MAX_CODE_SIZE);
 
@@ -1114,7 +1148,8 @@ int yr_re_emit_code(
 
   total_size += code_size;
 
-  assert(total_size < RE_MAX_CODE_SIZE);
+  if (total_size > RE_MAX_CODE_SIZE)
+    return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
   yr_arena_reserve_memory(arena, RE_MAX_CODE_SIZE);
 
@@ -1139,7 +1174,8 @@ int yr_re_emit_code(
 
   total_size += code_size;
 
-  assert(total_size < RE_MAX_CODE_SIZE);
+  if (total_size > RE_MAX_CODE_SIZE)
+    return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
   return ERROR_SUCCESS;
 }
@@ -1148,7 +1184,7 @@ int yr_re_emit_code(
 int _yr_re_alloc_storage(
     RE_THREAD_STORAGE** storage)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   *storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
   #else
   *storage = (RE_THREAD_STORAGE*) pthread_getspecific(thread_storage_key);
@@ -1164,7 +1200,7 @@ int _yr_re_alloc_storage(
     (*storage)->fiber_pool.head = NULL;
     (*storage)->fiber_pool.tail = NULL;
 
-    #ifdef _WIN32
+    #if defined(_WIN32) || defined(__CYGWIN__)
     TlsSetValue(thread_storage_key, *storage);
     #else
     pthread_setspecific(thread_storage_key, *storage);
@@ -1579,10 +1615,10 @@ int yr_re_exec(
     input_incr = -input_incr;
   }
 
-  max_count = yr_min(input_size, RE_SCAN_LIMIT);
+  max_count = (int) yr_min(input_size, RE_SCAN_LIMIT);
 
   // Round down max_count to a multiple of character_size, this way if
-  // character_size is 2 and input_size is impair we are ignoring the
+  // character_size is 2 and input_size is odd we are ignoring the
   // extra byte which can't match anyways.
 
   max_count = max_count - max_count % character_size;
@@ -1743,14 +1779,14 @@ int yr_re_exec(
 
         case RE_OPCODE_MATCH_AT_START:
           if (flags & RE_FLAGS_BACKWARDS)
-            kill = input_size > count;
+            kill = input_size > (size_t) count;
           else
             kill = (flags & RE_FLAGS_NOT_AT_START) || (count != 0);
           action = kill ? ACTION_KILL : ACTION_CONTINUE;
           break;
 
         case RE_OPCODE_MATCH_AT_END:
-          action = input_size > count ? ACTION_KILL : ACTION_CONTINUE;
+          action = input_size > (size_t) count ? ACTION_KILL : ACTION_CONTINUE;
           break;
 
         case RE_OPCODE_MATCH:
