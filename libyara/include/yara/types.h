@@ -373,36 +373,40 @@ typedef struct _YR_MEMORY_BLOCK
 
 } YR_MEMORY_BLOCK;
 
-typedef struct _YR_BLOCK_READER
-{
-  YR_MEMORY_BLOCK* current;
-  YR_MEMORY_BLOCK* blocks;
 
-} YR_BLOCK_READER;
+// memory block iteration types
+typedef struct _YR_BLOCK_ITERATOR YR_BLOCK_ITERATOR;
 
+typedef YR_MEMORY_BLOCK* (*YR_BLOCK_ITERATOR_MOVE)(
+    YR_BLOCK_ITERATOR* self);
 
-typedef struct _YR_MEMORY_SECTION
-{
-  size_t  base;
-  size_t  size;
+typedef uint8_t* (*YR_BLOCK_ITERATOR_FETCH)(
+  YR_BLOCK_ITERATOR* self);
 
-  _YR_MEMORY_SECTION* next;
-
-} YR_MEMORY_SECTION;
-
-typedef struct _YR_SECTION_READER
+struct _YR_BLOCK_ITERATOR
 {
   void* context;
 
-  YR_MEMORY_SECTION*  sections;
-  YR_MEMORY_SECTION*  current;
-  YR_MEMORY_BLOCK*    block;
+  YR_BLOCK_ITERATOR_MOVE  first;
+  YR_BLOCK_ITERATOR_MOVE  next;
+  YR_BLOCK_ITERATOR_FETCH fetch_data;
 
-} YR_SECTION_READER;
+};
 
-typedef int (*YR_BLOCK_ITERATOR)(
-    void* reader,
-    YR_MEMORY_BLOCK** block);
+typedef struct _YR_LIST_ITERATOR_CONTEXT
+{
+  YR_MEMORY_BLOCK* head;
+  YR_MEMORY_BLOCK* current;
+
+} YR_LIST_ITERATOR_CONTEXT;
+
+typedef struct _YR_PROCESS_ITERATOR_CONTEXT
+{
+  void* process_context;
+  YR_LIST_ITERATOR_CONTEXT list_context;
+  uint8_t* data;
+} YR_PROCESS_ITERATOR_CONTEXT;
+
 
 typedef int (*YR_CALLBACK_FUNC)(
     int message,
