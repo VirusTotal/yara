@@ -45,9 +45,19 @@ order to avoid confusion with operating system threads.
 #include <yara/hex_lexer.h>
 
 
-#define RE_MAX_STACK      1024  // Maxium stack size for regexp evaluation
-#define RE_MAX_CODE_SIZE  32768 // Maximum code size for a compiled regexp
-#define RE_SCAN_LIMIT     4096  // Maximum input size scanned by yr_re_exec
+// Maximum allowed split ID, also limiting the number of split instructions
+// allowed in a regular expression. This number can't be increased
+// over 255 without changing RE_SPLIT_ID_TYPE.
+#define RE_MAX_SPLIT_ID     255
+
+// Maxium stack size for regexp evaluation
+#define RE_MAX_STACK      1024
+
+// Maximum code size for a compiled regexp
+#define RE_MAX_CODE_SIZE  32768
+
+// Maximum input size scanned by yr_re_exec
+#define RE_SCAN_LIMIT     4096
 
 
 #define EMIT_BACKWARDS                  0x01
@@ -56,6 +66,13 @@ order to avoid confusion with operating system threads.
 #define EMIT_NO_CASE                    0x08
 #define EMIT_DOT_ALL                    0x10
 
+
+typedef struct _RE_EMIT_CONTEXT {
+
+  YR_ARENA*         arena;
+  RE_SPLIT_ID_TYPE  next_split_id;
+
+} RE_EMIT_CONTEXT;
 
 typedef struct _RE_FIBER
 {
@@ -504,13 +521,13 @@ int yr_re_split_at_chaining_point(
 
 
 int _yr_emit_inst(
-    YR_ARENA* arena,
+    RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     uint8_t** instruction_addr,
     int* code_size)
 {
   FAIL_ON_ERROR(yr_arena_write_data(
-      arena,
+      emit_context->arena,
       &opcode,
       sizeof(uint8_t),
       (void**) instruction_addr));
@@ -522,7 +539,7 @@ int _yr_emit_inst(
 
 
 int _yr_emit_inst_arg_uint8(
-    YR_ARENA* arena,
+    RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     uint8_t argument,
     uint8_t** instruction_addr,
@@ -530,13 +547,13 @@ int _yr_emit_inst_arg_uint8(
     int* code_size)
 {
   FAIL_ON_ERROR(yr_arena_write_data(
-      arena,
+      emit_context->arena,
       &opcode,
       sizeof(uint8_t),
       (void**) instruction_addr));
 
   FAIL_ON_ERROR(yr_arena_write_data(
-      arena,
+      emit_context->arena,
       &argument,
       sizeof(uint8_t),
       (void**) argument_addr));
@@ -548,7 +565,7 @@ int _yr_emit_inst_arg_uint8(
 
 
 int _yr_emit_inst_arg_uint16(
-    YR_ARENA* arena,
+    RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     uint16_t argument,
     uint8_t** instruction_addr,
@@ -556,13 +573,13 @@ int _yr_emit_inst_arg_uint16(
     int* code_size)
 {
   FAIL_ON_ERROR(yr_arena_write_data(
-      arena,
+      emit_context->arena,
       &opcode,
       sizeof(uint8_t),
       (void**) instruction_addr));
 
   FAIL_ON_ERROR(yr_arena_write_data(
-      arena,
+      emit_context->arena,
       &argument,
       sizeof(uint16_t),
       (void**) argument_addr));
@@ -574,7 +591,7 @@ int _yr_emit_inst_arg_uint16(
 
 
 int _yr_emit_inst_arg_uint32(
-    YR_ARENA* arena,
+    RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     uint32_t argument,
     uint8_t** instruction_addr,
@@ -582,13 +599,13 @@ int _yr_emit_inst_arg_uint32(
     int* code_size)
 {
   FAIL_ON_ERROR(yr_arena_write_data(
-      arena,
+      emit_context->arena,
       &opcode,
       sizeof(uint8_t),
       (void**) instruction_addr));
 
   FAIL_ON_ERROR(yr_arena_write_data(
-      arena,
+      emit_context->arena,
       &argument,
       sizeof(uint32_t),
       (void**) argument_addr));
@@ -600,7 +617,7 @@ int _yr_emit_inst_arg_uint32(
 
 
 int _yr_emit_inst_arg_int16(
-    YR_ARENA* arena,
+    RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     int16_t argument,
     uint8_t** instruction_addr,
@@ -608,13 +625,13 @@ int _yr_emit_inst_arg_int16(
     int* code_size)
 {
   FAIL_ON_ERROR(yr_arena_write_data(
-      arena,
+      emit_context->arena,
       &opcode,
       sizeof(uint8_t),
       (void**) instruction_addr));
 
   FAIL_ON_ERROR(yr_arena_write_data(
-      arena,
+      emit_context->arena,
       &argument,
       sizeof(int16_t),
       (void**) argument_addr));
@@ -625,9 +642,48 @@ int _yr_emit_inst_arg_int16(
 }
 
 
+int _yr_emit_split(
+    RE_EMIT_CONTEXT* emit_context,
+    uint8_t opcode,
+    int16_t argument,
+    uint8_t** instruction_addr,
+    int16_t** argument_addr,
+    int* code_size)
+{
+  assert(opcode == RE_OPCODE_SPLIT_A || opcode == RE_OPCODE_SPLIT_B);
+
+  if (emit_context->next_split_id == RE_MAX_SPLIT_ID)
+    return ERROR_INTERNAL_FATAL_ERROR;
+
+  FAIL_ON_ERROR(yr_arena_write_data(
+      emit_context->arena,
+      &opcode,
+      sizeof(uint8_t),
+      (void**) instruction_addr));
+
+  FAIL_ON_ERROR(yr_arena_write_data(
+      emit_context->arena,
+      &emit_context->next_split_id,
+      sizeof(RE_SPLIT_ID_TYPE),
+      NULL));
+
+  emit_context->next_split_id++;
+
+  FAIL_ON_ERROR(yr_arena_write_data(
+      emit_context->arena,
+      &argument,
+      sizeof(int16_t),
+      (void**) argument_addr));
+
+  *code_size = sizeof(uint8_t) + sizeof(RE_SPLIT_ID_TYPE) + sizeof(int16_t);
+
+  return ERROR_SUCCESS;
+}
+
+
 int _yr_re_emit(
+    RE_EMIT_CONTEXT* emit_context,
     RE_NODE* re_node,
-    YR_ARENA* arena,
     int flags,
     uint8_t** code_addr,
     int* code_size)
@@ -652,7 +708,7 @@ int _yr_re_emit(
   case RE_NODE_LITERAL:
 
     FAIL_ON_ERROR(_yr_emit_inst_arg_uint8(
-        arena,
+        emit_context,
         flags & EMIT_NO_CASE ?
           RE_OPCODE_LITERAL_NO_CASE :
           RE_OPCODE_LITERAL,
@@ -665,7 +721,7 @@ int _yr_re_emit(
   case RE_NODE_MASKED_LITERAL:
 
     FAIL_ON_ERROR(_yr_emit_inst_arg_uint16(
-        arena,
+        emit_context,
         RE_OPCODE_MASKED_LITERAL,
         re_node->mask << 8 | re_node->value,
         &instruction_addr,
@@ -676,7 +732,7 @@ int _yr_re_emit(
   case RE_NODE_WORD_CHAR:
 
     FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
+        emit_context,
         RE_OPCODE_WORD_CHAR,
         &instruction_addr,
         code_size));
@@ -685,7 +741,7 @@ int _yr_re_emit(
   case RE_NODE_NON_WORD_CHAR:
 
     FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
+        emit_context,
         RE_OPCODE_NON_WORD_CHAR,
         &instruction_addr,
         code_size));
@@ -694,7 +750,7 @@ int _yr_re_emit(
   case RE_NODE_WORD_BOUNDARY:
 
     FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
+        emit_context,
         RE_OPCODE_WORD_BOUNDARY,
         &instruction_addr,
         code_size));
@@ -703,7 +759,7 @@ int _yr_re_emit(
   case RE_NODE_NON_WORD_BOUNDARY:
 
     FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
+        emit_context,
         RE_OPCODE_NON_WORD_BOUNDARY,
         &instruction_addr,
         code_size));
@@ -712,7 +768,7 @@ int _yr_re_emit(
   case RE_NODE_SPACE:
 
     FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
+        emit_context,
         RE_OPCODE_SPACE,
         &instruction_addr,
         code_size));
@@ -721,7 +777,7 @@ int _yr_re_emit(
   case RE_NODE_NON_SPACE:
 
     FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
+        emit_context,
         RE_OPCODE_NON_SPACE,
         &instruction_addr,
         code_size));
@@ -730,7 +786,7 @@ int _yr_re_emit(
   case RE_NODE_DIGIT:
 
     FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
+        emit_context,
         RE_OPCODE_DIGIT,
         &instruction_addr,
         code_size));
@@ -739,7 +795,7 @@ int _yr_re_emit(
   case RE_NODE_NON_DIGIT:
 
     FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
+        emit_context,
         RE_OPCODE_NON_DIGIT,
         &instruction_addr,
         code_size));
@@ -748,7 +804,7 @@ int _yr_re_emit(
   case RE_NODE_ANY:
 
     FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
+        emit_context,
         flags & EMIT_DOT_ALL ?
           RE_OPCODE_ANY :
           RE_OPCODE_ANY_EXCEPT_NEW_LINE,
@@ -759,7 +815,7 @@ int _yr_re_emit(
   case RE_NODE_CLASS:
 
     FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
+        emit_context,
         (flags & EMIT_NO_CASE) ?
           RE_OPCODE_CLASS_NO_CASE :
           RE_OPCODE_CLASS,
@@ -767,7 +823,7 @@ int _yr_re_emit(
         code_size));
 
     FAIL_ON_ERROR(yr_arena_write_data(
-        arena,
+        emit_context->arena,
         re_node->class_vector,
         32,
         NULL));
@@ -778,7 +834,7 @@ int _yr_re_emit(
   case RE_NODE_ANCHOR_START:
 
     FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
+        emit_context,
         RE_OPCODE_MATCH_AT_START,
         &instruction_addr,
         code_size));
@@ -787,7 +843,7 @@ int _yr_re_emit(
   case RE_NODE_ANCHOR_END:
 
     FAIL_ON_ERROR(_yr_emit_inst(
-        arena,
+        emit_context,
         RE_OPCODE_MATCH_AT_END,
         &instruction_addr,
         code_size));
@@ -807,8 +863,8 @@ int _yr_re_emit(
     }
 
     FAIL_ON_ERROR(_yr_re_emit(
+        emit_context,
         left,
-        arena,
         flags,
         &instruction_addr,
         &branch_size));
@@ -816,8 +872,8 @@ int _yr_re_emit(
     *code_size += branch_size;
 
     FAIL_ON_ERROR(_yr_re_emit(
+        emit_context,
         right,
-        arena,
         flags,
         NULL,
         &branch_size));
@@ -835,16 +891,16 @@ int _yr_re_emit(
     //          L2:
 
     FAIL_ON_ERROR(_yr_re_emit(
+        emit_context,
         re_node->left,
-        arena,
         flags,
         &instruction_addr,
         &branch_size));
 
     *code_size += branch_size;
 
-    FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
-        arena,
+    FAIL_ON_ERROR(_yr_emit_split(
+        emit_context,
         re_node->greedy ? RE_OPCODE_SPLIT_B : RE_OPCODE_SPLIT_A,
         -branch_size,
         NULL,
@@ -863,8 +919,8 @@ int _yr_re_emit(
     //              jmp L1
     //          L2:
 
-    FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
-        arena,
+    FAIL_ON_ERROR(_yr_emit_split(
+        emit_context,
         re_node->greedy ? RE_OPCODE_SPLIT_A : RE_OPCODE_SPLIT_B,
         0,
         &instruction_addr,
@@ -874,8 +930,8 @@ int _yr_re_emit(
     *code_size += split_size;
 
     FAIL_ON_ERROR(_yr_re_emit(
+        emit_context,
         re_node->left,
-        arena,
         flags,
         NULL,
         &branch_size));
@@ -885,7 +941,7 @@ int _yr_re_emit(
     // Emit jump with offset set to 0.
 
     FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
-        arena,
+        emit_context,
         RE_OPCODE_JUMP,
         -(branch_size + split_size),
         NULL,
@@ -912,8 +968,8 @@ int _yr_re_emit(
     // will be updated after we know the size of the code generated for
     // the left node (e1).
 
-    FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
-        arena,
+    FAIL_ON_ERROR(_yr_emit_split(
+        emit_context,
         RE_OPCODE_SPLIT_A,
         0,
         &instruction_addr,
@@ -923,8 +979,8 @@ int _yr_re_emit(
     *code_size += split_size;
 
     FAIL_ON_ERROR(_yr_re_emit(
+        emit_context,
         re_node->left,
-        arena,
         flags,
         NULL,
         &branch_size));
@@ -934,7 +990,7 @@ int _yr_re_emit(
     // Emit jump with offset set to 0.
 
     FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
-        arena,
+        emit_context,
         RE_OPCODE_JUMP,
         0,
         NULL,
@@ -947,8 +1003,8 @@ int _yr_re_emit(
     *split_offset_addr = split_size + branch_size + jmp_size;
 
     FAIL_ON_ERROR(_yr_re_emit(
+        emit_context,
         re_node->right,
-        arena,
         flags,
         NULL,
         &branch_size));
@@ -985,8 +1041,8 @@ int _yr_re_emit(
     if (re_node->start > 0)
     {
       FAIL_ON_ERROR(_yr_re_emit(
+          emit_context,
           re_node->left,
-          arena,
           flags,
           &instruction_addr,
           &branch_size));
@@ -1001,8 +1057,8 @@ int _yr_re_emit(
         // being updated.
 
         FAIL_ON_ERROR(_yr_re_emit(
+            emit_context,
             re_node->left,
-            arena,
             flags | EMIT_DONT_SET_FORWARDS_CODE,
             NULL,
             &branch_size));
@@ -1014,7 +1070,7 @@ int _yr_re_emit(
     if (re_node->end > re_node->start + 1)
     {
       FAIL_ON_ERROR(_yr_emit_inst_arg_uint16(
-          arena,
+          emit_context,
           RE_OPCODE_PUSH,
           re_node->end - re_node->start - 1,
           re_node->start == 0 ? &instruction_addr : NULL,
@@ -1023,8 +1079,8 @@ int _yr_re_emit(
 
       *code_size += inst_size;
 
-      FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
-          arena,
+      FAIL_ON_ERROR(_yr_emit_split(
+          emit_context,
           re_node->greedy ? RE_OPCODE_SPLIT_A : RE_OPCODE_SPLIT_B,
           0,
           NULL,
@@ -1034,8 +1090,8 @@ int _yr_re_emit(
       *code_size += split_size;
 
       FAIL_ON_ERROR(_yr_re_emit(
+          emit_context,
           re_node->left,
-          arena,
           flags | EMIT_DONT_SET_FORWARDS_CODE | EMIT_DONT_SET_BACKWARDS_CODE,
           NULL,
           &branch_size));
@@ -1043,7 +1099,7 @@ int _yr_re_emit(
       *code_size += branch_size;
 
       FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
-          arena,
+          emit_context,
           RE_OPCODE_JNZ,
           -(branch_size + split_size),
           NULL,
@@ -1054,7 +1110,7 @@ int _yr_re_emit(
       *split_offset_addr = split_size + branch_size + jmp_size;
 
       FAIL_ON_ERROR(_yr_emit_inst(
-          arena,
+          emit_context,
           RE_OPCODE_POP,
           NULL,
           &inst_size));
@@ -1064,8 +1120,8 @@ int _yr_re_emit(
 
     if (re_node->end > re_node->start)
     {
-      FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
-          arena,
+      FAIL_ON_ERROR(_yr_emit_split(
+          emit_context,
           re_node->greedy ? RE_OPCODE_SPLIT_A : RE_OPCODE_SPLIT_B,
           0,
           NULL,
@@ -1075,8 +1131,8 @@ int _yr_re_emit(
       *code_size += split_size;
 
       FAIL_ON_ERROR(_yr_re_emit(
+          emit_context,
           re_node->left,
-          arena,
           flags | EMIT_DONT_SET_FORWARDS_CODE,
           re_node->start == 0 && re_node->end == 1 ? &instruction_addr : NULL,
           &branch_size));
@@ -1110,6 +1166,8 @@ int yr_re_emit_code(
     RE* re,
     YR_ARENA* arena)
 {
+  RE_EMIT_CONTEXT emit_context;
+
   int code_size;
   int total_size;
 
@@ -1120,6 +1178,9 @@ int yr_re_emit_code(
 
   if (re->flags & RE_FLAGS_DOT_ALL)
     emit_flags |= EMIT_DOT_ALL;
+
+  emit_context.arena = arena;
+  emit_context.next_split_id = 0;
 
   // Ensure that we have enough contiguous memory space in the arena to
   // contain the regular expression code. The code can't span over multiple
@@ -1132,8 +1193,8 @@ int yr_re_emit_code(
   total_size = 0;
 
   FAIL_ON_ERROR(_yr_re_emit(
+      &emit_context,
       re->root_node,
-      arena,
       emit_flags,
       &re->code,
       &code_size));
@@ -1141,7 +1202,7 @@ int yr_re_emit_code(
   total_size += code_size;
 
   FAIL_ON_ERROR(_yr_emit_inst(
-      arena,
+      &emit_context,
       RE_OPCODE_MATCH,
       NULL,
       &code_size));
@@ -1158,8 +1219,8 @@ int yr_re_emit_code(
   total_size = 0;
 
   FAIL_ON_ERROR(_yr_re_emit(
+      &emit_context,
       re->root_node,
-      arena,
       emit_flags | EMIT_BACKWARDS,
       NULL,
       &code_size));
@@ -1167,7 +1228,7 @@ int yr_re_emit_code(
   total_size += code_size;
 
   FAIL_ON_ERROR(_yr_emit_inst(
-      arena,
+      &emit_context,
       RE_OPCODE_MATCH,
       NULL,
       &code_size));
@@ -1469,6 +1530,17 @@ int _yr_re_fiber_sync(
     RE_FIBER_LIST* fiber_pool,
     RE_FIBER* fiber_to_sync)
 {
+  // A array for keeping track of which split instructions has been already
+  // executed. Each split instruction within a regexp has an associated ID
+  // between 0 and RE_MAX_SPLIT_ID. Keeping track of executed splits is
+  // required to avoid infinite loops in regexps like (a*)* or (a|)*
+
+  RE_SPLIT_ID_TYPE splits_executed[RE_MAX_SPLIT_ID];
+  RE_SPLIT_ID_TYPE splits_executed_count = 0;
+  RE_SPLIT_ID_TYPE split_id, splits_executed_idx;
+
+  int split_already_executed;
+
   RE_FIBER* fiber;
   RE_FIBER* last;
   RE_FIBER* prev;
@@ -1483,21 +1555,56 @@ int _yr_re_fiber_sync(
     switch(*fiber->ip)
     {
       case RE_OPCODE_SPLIT_A:
-        new_fiber = _yr_re_fiber_split(fiber, fiber_list, fiber_pool);
-        if (new_fiber == NULL)
-          return ERROR_INSUFICIENT_MEMORY;
-
-        new_fiber->ip += *(int16_t*)(fiber->ip + 1);
-        fiber->ip += 3;
-        break;
-
       case RE_OPCODE_SPLIT_B:
-        new_fiber = _yr_re_fiber_split(fiber, fiber_list, fiber_pool);
-        if (new_fiber == NULL)
-          return ERROR_INSUFICIENT_MEMORY;
 
-        new_fiber->ip += 3;
-        fiber->ip += *(int16_t*)(fiber->ip + 1);
+        split_id = *(RE_SPLIT_ID_TYPE*)(fiber->ip + 1);
+        split_already_executed = FALSE;
+
+        for (splits_executed_idx = 0;
+             splits_executed_idx < splits_executed_count;
+             splits_executed_idx++)
+        {
+          if (split_id == splits_executed[splits_executed_idx])
+          {
+            split_already_executed = TRUE;
+            break;
+          }
+        }
+
+        if (split_already_executed)
+        {
+          fiber = _yr_re_fiber_kill(fiber_list, fiber_pool, fiber);
+        }
+        else
+        {
+          new_fiber = _yr_re_fiber_split(fiber, fiber_list, fiber_pool);
+
+          if (new_fiber == NULL)
+            return ERROR_INSUFICIENT_MEMORY;
+
+          if (*fiber->ip == RE_OPCODE_SPLIT_A)
+          {
+            new_fiber->ip += *(int16_t*)(
+              fiber->ip
+              + 1  // opcode size
+              + sizeof(RE_SPLIT_ID_TYPE));
+
+            fiber->ip += (sizeof(RE_SPLIT_ID_TYPE) + 3);
+          }
+          else
+          {
+            fiber->ip += *(int16_t*)(
+              fiber->ip
+              + 1  // opcode size
+              + sizeof(RE_SPLIT_ID_TYPE));
+
+            new_fiber->ip += (sizeof(RE_SPLIT_ID_TYPE) + 3);
+          }
+
+          splits_executed[splits_executed_count] = split_id;
+          splits_executed_count++;
+        }
+
         break;
 
       case RE_OPCODE_JUMP:
@@ -1529,6 +1636,7 @@ int _yr_re_fiber_sync(
           fiber = fiber->next;
     }
   }
+
   return ERROR_SUCCESS;
 }
 
