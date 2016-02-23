@@ -166,126 +166,126 @@ int _yr_detach_process(
 
 
 
-int yr_process_get_memory(
-    int pid,
-    YR_MEMORY_BLOCK** first_block)
-{
-  PVOID address;
-  SIZE_T read;
-
-  unsigned char* data;
-  int result = ERROR_SUCCESS;
-
-  SYSTEM_INFO si;
-  MEMORY_BASIC_INFORMATION mbi;
-
-  YR_MEMORY_BLOCK* new_block;
-  YR_MEMORY_BLOCK* current_block = NULL;
-
-  TOKEN_PRIVILEGES tokenPriv;
-  LUID luidDebug;
-  HANDLE hProcess = NULL;
-  HANDLE hToken = NULL;
-
-  if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken) &&
-      LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luidDebug))
-  {
-    tokenPriv.PrivilegeCount = 1;
-    tokenPriv.Privileges[0].Luid = luidDebug;
-    tokenPriv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-
-    AdjustTokenPrivileges(
-        hToken,
-        FALSE,
-        &tokenPriv,
-        sizeof(tokenPriv),
-        NULL,
-        NULL);
-  }
-
-  hProcess = OpenProcess(
-      PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
-      FALSE,
-      pid);
-
-  *first_block = NULL;
-
-  if (hProcess == NULL)
-  {
-    if (hToken != NULL)
-      CloseHandle(hToken);
-
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-  }
-
-  GetSystemInfo(&si);
-
-  address = si.lpMinimumApplicationAddress;
-  size_t allocated = 0;
-
-  while (address < si.lpMaximumApplicationAddress &&
-         VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
-  {
-    if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
-    {
-      data = (unsigned char*) yr_malloc(mbi.RegionSize);
-
-      if (data == NULL)
-      {
-        result = ERROR_INSUFICIENT_MEMORY;
-        break;
-      }
-
-      allocated += mbi.RegionSize;
-
-      if (ReadProcessMemory(
-              hProcess,
-              mbi.BaseAddress,
-              data,
-              mbi.RegionSize,
-              &read))
-      {
-        new_block = (YR_MEMORY_BLOCK*) yr_malloc(sizeof(YR_MEMORY_BLOCK));
-
-        if (new_block == NULL)
-        {
-          yr_free(data);
-          result = ERROR_INSUFICIENT_MEMORY;
-          break;
-        }
-
-        if (*first_block == NULL)
-          *first_block = new_block;
-
-        new_block->base = (size_t) mbi.BaseAddress;
-        new_block->size = mbi.RegionSize;
-        new_block->data = data;
-        new_block->next = NULL;
-
-        if (current_block != NULL)
-          current_block->next = new_block;
-
-        current_block = new_block;
-      }
-      else
-      {
-        yr_free(data);
-      }
-    }
-
-    address = (PVOID)((ULONG_PTR) mbi.BaseAddress + mbi.RegionSize);
-  }
-
-  printf("Allocated %lu bytes\n", allocated);
-
-  if (hToken != NULL)
-    CloseHandle(hToken);
-
-  if (hProcess != NULL)
-    CloseHandle(hProcess);
-
-  return result;
-}
+//int yr_process_get_memory(
+//    int pid,
+//    YR_MEMORY_BLOCK** first_block)
+//{
+//  PVOID address;
+//  SIZE_T read;
+//
+//  unsigned char* data;
+//  int result = ERROR_SUCCESS;
+//
+//  SYSTEM_INFO si;
+//  MEMORY_BASIC_INFORMATION mbi;
+//
+//  YR_MEMORY_BLOCK* new_block;
+//  YR_MEMORY_BLOCK* current_block = NULL;
+//
+//  TOKEN_PRIVILEGES tokenPriv;
+//  LUID luidDebug;
+//  HANDLE hProcess = NULL;
+//  HANDLE hToken = NULL;
+//
+//  if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken) &&
+//      LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luidDebug))
+//  {
+//    tokenPriv.PrivilegeCount = 1;
+//    tokenPriv.Privileges[0].Luid = luidDebug;
+//    tokenPriv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+//
+//    AdjustTokenPrivileges(
+//        hToken,
+//        FALSE,
+//        &tokenPriv,
+//        sizeof(tokenPriv),
+//        NULL,
+//        NULL);
+//  }
+//
+//  hProcess = OpenProcess(
+//      PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
+//      FALSE,
+//      pid);
+//
+//  *first_block = NULL;
+//
+//  if (hProcess == NULL)
+//  {
+//    if (hToken != NULL)
+//      CloseHandle(hToken);
+//
+//    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+//  }
+//
+//  GetSystemInfo(&si);
+//
+//  address = si.lpMinimumApplicationAddress;
+//  size_t allocated = 0;
+//
+//  while (address < si.lpMaximumApplicationAddress &&
+//         VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
+//  {
+//    if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
+//    {
+//      data = (unsigned char*) yr_malloc(mbi.RegionSize);
+//
+//      if (data == NULL)
+//      {
+//        result = ERROR_INSUFICIENT_MEMORY;
+//        break;
+//      }
+//
+//      allocated += mbi.RegionSize;
+//
+//      if (ReadProcessMemory(
+//              hProcess,
+//              mbi.BaseAddress,
+//              data,
+//              mbi.RegionSize,
+//              &read))
+//      {
+//        new_block = (YR_MEMORY_BLOCK*) yr_malloc(sizeof(YR_MEMORY_BLOCK));
+//
+//        if (new_block == NULL)
+//        {
+//          yr_free(data);
+//          result = ERROR_INSUFICIENT_MEMORY;
+//          break;
+//        }
+//
+//        if (*first_block == NULL)
+//          *first_block = new_block;
+//
+//        new_block->base = (size_t) mbi.BaseAddress;
+//        new_block->size = mbi.RegionSize;
+//        new_block->data = data;
+//        new_block->next = NULL;
+//
+//        if (current_block != NULL)
+//          current_block->next = new_block;
+//
+//        current_block = new_block;
+//      }
+//      else
+//      {
+//        yr_free(data);
+//      }
+//    }
+//
+//    address = (PVOID)((ULONG_PTR) mbi.BaseAddress + mbi.RegionSize);
+//  }
+//
+//  printf("Allocated %lu bytes\n", allocated);
+//
+//  if (hToken != NULL)
+//    CloseHandle(hToken);
+//
+//  if (hProcess != NULL)
+//    CloseHandle(hProcess);
+//
+//  return result;
+//}
 
 #else
 

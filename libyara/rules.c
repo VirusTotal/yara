@@ -236,6 +236,7 @@ void yr_rules_print_profiling_info(
 
 int _yr_rules_scan_mem_block(
     YR_RULES* rules,
+    uint8_t* block_data,
     YR_MEMORY_BLOCK* block,
     YR_SCAN_CONTEXT* context,
     int timeout,
@@ -258,7 +259,7 @@ int _yr_rules_scan_mem_block(
         FAIL_ON_ERROR(yr_scan_verify_match(
             context,
             ac_match,
-            block->data,
+            block_data,
             block->size,
             block->base,
             i - ac_match->backtrack));
@@ -267,12 +268,12 @@ int _yr_rules_scan_mem_block(
       ac_match = ac_match->next;
     }
 
-    next_state = yr_ac_next_state(current_state, block->data[i]);
+    next_state = yr_ac_next_state(current_state, block_data[i]);
 
     while (next_state == NULL && current_state->depth > 0)
     {
       current_state = current_state->failure;
-      next_state = yr_ac_next_state(current_state, block->data[i]);
+      next_state = yr_ac_next_state(current_state, block_data[i]);
     }
 
     if (next_state != NULL)
@@ -296,7 +297,7 @@ int _yr_rules_scan_mem_block(
       FAIL_ON_ERROR(yr_scan_verify_match(
           context,
           ac_match,
-          block->data,
+          block_data,
           block->size,
           block->base,
           block->size - ac_match->backtrack));
@@ -308,48 +309,31 @@ int _yr_rules_scan_mem_block(
   return ERROR_SUCCESS;
 }
 
-
+// Single block iterator impl TODO: belongs in this file?
 YR_MEMORY_BLOCK* _yr_get_first_block(
     YR_BLOCK_ITERATOR* iterator)
 {
-  YR_LIST_ITERATOR_CONTEXT* ctx = (YR_LIST_ITERATOR_CONTEXT*)iterator->context;
-
-  ctx->current = ctx->head;
-  return ctx->current;
+  YR_BLOCK_CONTEXT* ctx = (YR_BLOCK_CONTEXT*)iterator->context;
+  return ctx->block;
 }
 
 YR_MEMORY_BLOCK* _yr_get_next_block(
-    YR_BLOCK_ITERATOR* iterator)
+    YR_BLOCK_ITERATOR*)
 {
-  YR_LIST_ITERATOR_CONTEXT* ctx = (YR_LIST_ITERATOR_CONTEXT*)iterator->context;
-
-  if (ctx->current != NULL)
-  {
-    ctx->current = ctx->current->next;
-  }
-
-  return ctx->current;
+  return NULL;
 }
 
 uint8_t* _yr_fetch_block_data(
     YR_BLOCK_ITERATOR* iterator)
 {
-  YR_LIST_ITERATOR_CONTEXT* ctx = (YR_LIST_ITERATOR_CONTEXT*)iterator->context;
-
-  if (ctx->current != NULL)
-    return ctx->current->data;
-
-  return NULL;
+  YR_BLOCK_CONTEXT* ctx = (YR_BLOCK_CONTEXT*)iterator->context;
+  return ctx->data;
 }
 
-void _yr_get_list_iterator(
+void _yr_init_single_block_iterator(
     YR_BLOCK_ITERATOR* iterator,
-    YR_LIST_ITERATOR_CONTEXT* context,
-    YR_MEMORY_BLOCK* head)
+    YR_BLOCK_CONTEXT* context)
 {
-  context->current = NULL;
-  context->head = head;
-
   iterator->context = context;
   iterator->first = _yr_get_first_block;
   iterator->next = _yr_get_next_block;
@@ -404,7 +388,7 @@ YR_API int yr_rules_scan_mem_blocks(
   context.callback = callback;
   context.user_data = user_data;
   context.file_size = block->size;
-  context.mem_block = block;
+  context.iterator = iterator;
   context.entry_point = UNDEFINED;
   context.objects_table = NULL;
   context.matches_arena = NULL;
@@ -454,12 +438,10 @@ YR_API int yr_rules_scan_mem_blocks(
 
   while (block != NULL)
   {
-    // value copy so we don't modify the underlying block
-    YR_MEMORY_BLOCK temp_block = *block;
-    temp_block.data = iterator->fetch_data(iterator);
+    uint8_t* data = iterator->fetch_data(iterator);
 
-    // fetch_data can fail
-    if (temp_block.data == NULL)
+    // fetch may fail
+    if (data == NULL)
     {
       block = iterator->next(iterator);
       continue;
@@ -470,20 +452,21 @@ YR_API int yr_rules_scan_mem_blocks(
       YR_TRYCATCH({
           if (flags & SCAN_FLAGS_PROCESS_MEMORY)
             context.entry_point = yr_get_entry_point_address(
-                temp_block.data,
-                temp_block.size,
-                temp_block.base);
+                data,
+                block->size,
+                block->base);
           else
             context.entry_point = yr_get_entry_point_offset(
-                temp_block.data,
-                temp_block.size);
+                data,
+                block->size);
         },{});
     }
 
     YR_TRYCATCH({
         result = _yr_rules_scan_mem_block(
             rules,
-            &temp_block,
+            data,
+            block,
             &context,
             timeout,
             start_time);
@@ -586,18 +569,19 @@ YR_API int yr_rules_scan_mem(
     int timeout)
 {
   YR_MEMORY_BLOCK block;
+  YR_BLOCK_CONTEXT context;
   YR_BLOCK_ITERATOR iterator;
-  YR_LIST_ITERATOR_CONTEXT list_context;
 
-  block.data = buffer;
   block.size = buffer_size;
   block.base = 0;
   block.next = NULL;
 
-  _yr_get_list_iterator(
+  context.block = &block;
+  context.data = buffer;
+
+  _yr_init_single_block_iterator(
       &iterator,
-      &list_context,
-      &block);
+      &context);
 
   return yr_rules_scan_mem_blocks(
       rules,
@@ -668,52 +652,6 @@ YR_API int yr_rules_scan_fd(
 }
 
 YR_API int yr_rules_scan_proc(
-    YR_RULES* rules,
-    int pid,
-    int flags,
-    YR_CALLBACK_FUNC callback,
-    void* user_data,
-    int timeout)
-{
-  YR_MEMORY_BLOCK* first_block;
-  YR_MEMORY_BLOCK* next_block;
-  YR_MEMORY_BLOCK* block;
-
-  YR_BLOCK_ITERATOR iterator;
-  YR_LIST_ITERATOR_CONTEXT list_context;
-
-  int result = yr_process_get_memory(pid, &first_block);
-
-  _yr_get_list_iterator(
-      &iterator,
-      &list_context,
-      first_block);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_rules_scan_mem_blocks(
-        rules,
-        &iterator,
-        flags | SCAN_FLAGS_PROCESS_MEMORY,
-        callback,
-        user_data,
-        timeout);
-
-  block = first_block;
-
-  while (block != NULL)
-  {
-    next_block = block->next;
-
-    yr_free(block->data);
-    yr_free(block);
-
-    block = next_block;
-  }
-
-  return result;
-}
-
-YR_API int yr_rules_scan_proc2(
     YR_RULES* rules,
     int pid,
     int flags,
