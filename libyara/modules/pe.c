@@ -1907,62 +1907,62 @@ static uint64_t rich_internal(
     uint64_t version,
     uint64_t toolid)
 {
-    int64_t rich_length;
-    int64_t rich_count;
-    int64_t i;
+  int64_t rich_length;
+  int64_t rich_count;
+  int64_t i;
 
-    PRICH_SIGNATURE clear_rich_signature;
-    SIZED_STRING* rich_string;
+  PRICH_SIGNATURE clear_rich_signature;
+  SIZED_STRING* rich_string;
 
-    // Check if the required fields are set
-    if (is_undefined(module, "rich_signature.length"))
-        return UNDEFINED;
+  // Check if the required fields are set
+  if (is_undefined(module, "rich_signature.length"))
+      return UNDEFINED;
 
-    rich_length = get_integer(module, "rich_signature.length");
-    rich_string = get_string(module, "rich_signature.clear_data");
+  rich_length = get_integer(module, "rich_signature.length");
+  rich_string = get_string(module, "rich_signature.clear_data");
 
-    // If the clear_data was not set, return UNDEFINED
-    if (rich_string == NULL)
-        return UNDEFINED;
+  // If the clear_data was not set, return UNDEFINED
+  if (rich_string == NULL)
+      return UNDEFINED;
 
-    if (version == UNDEFINED && toolid == UNDEFINED)
-        return FALSE;
+  if (version == UNDEFINED && toolid == UNDEFINED)
+      return FALSE;
 
-    clear_rich_signature = (PRICH_SIGNATURE) rich_string->c_string;
+  clear_rich_signature = (PRICH_SIGNATURE) rich_string->c_string;
 
-    // Loop over the versions in the rich signature
+  // Loop over the versions in the rich signature
 
-    rich_count = \
-        (rich_length - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
+  rich_count = \
+      (rich_length - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
 
-    for (i = 0; i < rich_count; i++)
+  for (i = 0; i < rich_count; i++)
+  {
+    DWORD id_version = clear_rich_signature->versions[i].id_version;
+
+    int match_version = (version == RICH_VERSION_VERSION(id_version));
+    int match_toolid = (toolid == RICH_VERSION_ID(id_version));
+
+    if (version != UNDEFINED && toolid != UNDEFINED)
     {
-        DWORD id_version = clear_rich_signature->versions[i].id_version;
-
-        int match_version = (version == RICH_VERSION_VERSION(id_version));
-        int match_toolid = (toolid == RICH_VERSION_ID(id_version));
-
-        if (version != UNDEFINED && toolid != UNDEFINED)
-        {
-          // check version and toolid
-          if (match_version && match_toolid)
-            return TRUE;
-        }
-        else if (version != UNDEFINED)
-        {
-          // check only version
-          if (match_version)
-            return TRUE;
-        }
-        else if (toolid != UNDEFINED)
-        {
-          // check only toolid
-          if (match_toolid)
-            return TRUE;
-        }
+      // check version and toolid
+      if (match_version && match_toolid)
+        return TRUE;
     }
+    else if (version != UNDEFINED)
+    {
+      // check only version
+      if (match_version)
+        return TRUE;
+    }
+    else if (toolid != UNDEFINED)
+    {
+      // check only toolid
+      if (match_toolid)
+        return TRUE;
+    }
+  }
 
-    return FALSE;
+  return FALSE;
 }
 
 
