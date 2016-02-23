@@ -44,11 +44,10 @@ order to avoid confusion with operating system threads.
 #include <yara/re_lexer.h>
 #include <yara/hex_lexer.h>
 
-
 // Maximum allowed split ID, also limiting the number of split instructions
 // allowed in a regular expression. This number can't be increased
 // over 255 without changing RE_SPLIT_ID_TYPE.
-#define RE_MAX_SPLIT_ID     255
+#define RE_MAX_SPLIT_ID     128
 
 // Maxium stack size for regexp evaluation
 #define RE_MAX_STACK      1024
@@ -58,6 +57,9 @@ order to avoid confusion with operating system threads.
 
 // Maximum input size scanned by yr_re_exec
 #define RE_SCAN_LIMIT     4096
+
+// Maxium number of fibers
+#define RE_MAX_FIBERS     64
 
 
 #define EMIT_BACKWARDS                  0x01
@@ -73,6 +75,7 @@ typedef struct _RE_EMIT_CONTEXT {
   RE_SPLIT_ID_TYPE  next_split_id;
 
 } RE_EMIT_CONTEXT;
+
 
 typedef struct _RE_FIBER
 {
@@ -95,9 +98,17 @@ typedef struct _RE_FIBER_LIST
 } RE_FIBER_LIST;
 
 
+typedef struct _RE_FIBER_POOL
+{
+  int fiber_count;
+  RE_FIBER_LIST fibers;
+
+} RE_FIBER_POOL;
+
+
 typedef struct _RE_THREAD_STORAGE
 {
-  RE_FIBER_LIST fiber_pool;
+  RE_FIBER_POOL fiber_pool;
 
 } RE_THREAD_STORAGE;
 
@@ -169,7 +180,7 @@ int yr_re_finalize_thread(void)
 
   if (storage != NULL)
   {
-    fiber = storage->fiber_pool.head;
+    fiber = storage->fiber_pool.fibers.head;
 
     while (fiber != NULL)
     {
@@ -1258,8 +1269,9 @@ int _yr_re_alloc_storage(
     if (*storage == NULL)
       return ERROR_INSUFICIENT_MEMORY;
 
-    (*storage)->fiber_pool.head = NULL;
-    (*storage)->fiber_pool.tail = NULL;
+    (*storage)->fiber_pool.fiber_count = 0;
+    (*storage)->fiber_pool.fibers.head = NULL;
+    (*storage)->fiber_pool.fibers.tail = NULL;
 
     #if defined(_WIN32) || defined(__CYGWIN__)
     TlsSetValue(thread_storage_key, *storage);
@@ -1272,32 +1284,41 @@ int _yr_re_alloc_storage(
 }
 
 
-RE_FIBER* _yr_re_fiber_create(
-    RE_FIBER_LIST* fiber_pool)
+int _yr_re_fiber_create(
+    RE_FIBER_POOL* fiber_pool,
+    RE_FIBER** new_fiber)
 {
   RE_FIBER* fiber;
 
-  if (fiber_pool->head != NULL)
+  if (fiber_pool->fiber_count == RE_MAX_FIBERS)
+    return ERROR_TOO_MANY_RE_FIBERS;
+
+  if (fiber_pool->fibers.head != NULL)
   {
-    fiber = fiber_pool->head;
-    fiber_pool->head = fiber->next;
-    if (fiber_pool->tail == fiber)
-      fiber_pool->tail = NULL;
+    fiber = fiber_pool->fibers.head;
+    fiber_pool->fibers.head = fiber->next;
+
+    if (fiber_pool->fibers.tail == fiber)
+      fiber_pool->fibers.tail = NULL;
   }
   else
   {
     fiber = (RE_FIBER*) yr_malloc(sizeof(RE_FIBER));
+
+    if (fiber == NULL)
+      return ERROR_INSUFICIENT_MEMORY;
+
+    fiber_pool->fiber_count++;
   }
 
-  if (fiber != NULL)
-  {
-    fiber->ip = NULL;
-    fiber->sp = -1;
-    fiber->next = NULL;
-    fiber->prev = NULL;
-  }
+  fiber->ip = NULL;
+  fiber->sp = -1;
+  fiber->next = NULL;
+  fiber->prev = NULL;
 
-  return fiber;
+  *new_fiber = fiber;
+
+  return ERROR_SUCCESS;
 }
 
 
@@ -1392,40 +1413,37 @@ int _yr_re_fiber_exists(
 //
 //
 
-RE_FIBER* _yr_re_fiber_split(
+int _yr_re_fiber_split(
     RE_FIBER* fiber,
     RE_FIBER_LIST* fiber_list,
-    RE_FIBER_LIST* fiber_pool)
+    RE_FIBER_POOL* fiber_pool,
+    RE_FIBER** new_fiber)
 {
-  RE_FIBER* new_fiber;
   int32_t i;
 
-  new_fiber = _yr_re_fiber_create(fiber_pool);
+  FAIL_ON_ERROR(_yr_re_fiber_create(fiber_pool, new_fiber));
 
-  if (new_fiber == NULL)
-    return NULL;
-
-  new_fiber->sp = fiber->sp;
-  new_fiber->ip = fiber->ip;
+  (*new_fiber)->sp = fiber->sp;
+  (*new_fiber)->ip = fiber->ip;
 
   for (i = 0; i <= fiber->sp; i++)
-    new_fiber->stack[i] = fiber->stack[i];
+    (*new_fiber)->stack[i] = fiber->stack[i];
 
-  new_fiber->next = fiber->next;
-  new_fiber->prev = fiber;
+  (*new_fiber)->next = fiber->next;
+  (*new_fiber)->prev = fiber;
 
   if (fiber->next != NULL)
-    fiber->next->prev = new_fiber;
+    fiber->next->prev = *new_fiber;
 
-  fiber->next = new_fiber;
+  fiber->next = *new_fiber;
 
   if (fiber_list->tail == fiber)
-    fiber_list->tail = new_fiber;
+    fiber_list->tail = *new_fiber;
 
   assert(fiber_list->tail->next == NULL);
   assert(fiber_list->head->prev == NULL);
 
-  return new_fiber;
+  return ERROR_SUCCESS;
 }
 
 
@@ -1438,7 +1456,7 @@ RE_FIBER* _yr_re_fiber_split(
 
 RE_FIBER* _yr_re_fiber_kill(
     RE_FIBER_LIST* fiber_list,
-    RE_FIBER_LIST* fiber_pool,
+    RE_FIBER_POOL* fiber_pool,
     RE_FIBER* fiber)
 {
   RE_FIBER* next_fiber = fiber->next;
@@ -1449,8 +1467,8 @@ RE_FIBER* _yr_re_fiber_kill(
   if (next_fiber != NULL)
     next_fiber->prev = fiber->prev;
 
-  if (fiber_pool->tail != NULL)
-    fiber_pool->tail->next = fiber;
+  if (fiber_pool->fibers.tail != NULL)
+    fiber_pool->fibers.tail->next = fiber;
 
   if (fiber_list->tail == fiber)
     fiber_list->tail = fiber->prev;
@@ -1459,11 +1477,11 @@ RE_FIBER* _yr_re_fiber_kill(
     fiber_list->head = next_fiber;
 
   fiber->next = NULL;
-  fiber->prev = fiber_pool->tail;
-  fiber_pool->tail = fiber;
+  fiber->prev = fiber_pool->fibers.tail;
+  fiber_pool->fibers.tail = fiber;
 
-  if (fiber_pool->head == NULL)
-    fiber_pool->head = fiber;
+  if (fiber_pool->fibers.head == NULL)
+    fiber_pool->fibers.head = fiber;
 
   return next_fiber;
 }
@@ -1477,7 +1495,7 @@ RE_FIBER* _yr_re_fiber_kill(
 
 void _yr_re_fiber_kill_tail(
   RE_FIBER_LIST* fiber_list,
-  RE_FIBER_LIST* fiber_pool,
+  RE_FIBER_POOL* fiber_pool,
   RE_FIBER* fiber)
 {
   RE_FIBER* prev_fiber = fiber->prev;
@@ -1485,19 +1503,19 @@ void _yr_re_fiber_kill_tail(
   if (prev_fiber != NULL)
     prev_fiber->next = NULL;
 
-  fiber->prev = fiber_pool->tail;
+  fiber->prev = fiber_pool->fibers.tail;
 
-  if (fiber_pool->tail != NULL)
-    fiber_pool->tail->next = fiber;
+  if (fiber_pool->fibers.tail != NULL)
+    fiber_pool->fibers.tail->next = fiber;
 
-  fiber_pool->tail = fiber_list->tail;
+  fiber_pool->fibers.tail = fiber_list->tail;
   fiber_list->tail = prev_fiber;
 
   if (fiber_list->head == fiber)
     fiber_list->head = NULL;
 
-  if (fiber_pool->head == NULL)
-    fiber_pool->head = fiber;
+  if (fiber_pool->fibers.head == NULL)
+    fiber_pool->fibers.head = fiber;
 }
 
 
@@ -1509,7 +1527,7 @@ void _yr_re_fiber_kill_tail(
 
 void _yr_re_fiber_kill_all(
     RE_FIBER_LIST* fiber_list,
-    RE_FIBER_LIST* fiber_pool)
+    RE_FIBER_POOL* fiber_pool)
 {
   if (fiber_list->head != NULL)
     _yr_re_fiber_kill_tail(fiber_list, fiber_pool, fiber_list->head);
@@ -1527,7 +1545,7 @@ void _yr_re_fiber_kill_all(
 
 int _yr_re_fiber_sync(
     RE_FIBER_LIST* fiber_list,
-    RE_FIBER_LIST* fiber_pool,
+    RE_FIBER_POOL* fiber_pool,
     RE_FIBER* fiber_to_sync)
 {
   // A array for keeping track of which split instructions has been already
@@ -1577,10 +1595,8 @@ int _yr_re_fiber_sync(
         }
         else
         {
-          new_fiber = _yr_re_fiber_split(fiber, fiber_list, fiber_pool);
-
-          if (new_fiber == NULL)
-            return ERROR_INSUFICIENT_MEMORY;
+          FAIL_ON_ERROR(_yr_re_fiber_split(
+              fiber, fiber_list, fiber_pool, &new_fiber));
 
           if (*fiber->ip == RE_OPCODE_SPLIT_A)
           {
@@ -1665,7 +1681,8 @@ int _yr_re_fiber_sync(
 //      -1  No match
 //      -2  Not enough memory
 //      -3  Too many matches
-//      -4  Unknown fatal error
+//      -4  Too many fibers
+//      -5  Unknown fatal error
 
 int yr_re_exec(
     RE_CODE re_code,
@@ -1706,6 +1723,13 @@ int yr_re_exec(
         break; \
       }
 
+  #define fail_if_error(e) switch (e) { \
+        case ERROR_INSUFICIENT_MEMORY: \
+          return -2; \
+        case ERROR_TOO_MANY_RE_FIBERS: \
+          return -4; \
+      }
+
   if (_yr_re_alloc_storage(&storage) != ERROR_SUCCESS)
     return -2;
 
@@ -1730,19 +1754,17 @@ int yr_re_exec(
   // extra byte which can't match anyways.
 
   max_count = max_count - max_count % character_size;
-
   count = 0;
 
-  fiber = _yr_re_fiber_create(&storage->fiber_pool);
-  fiber->ip = re_code;
+  error = _yr_re_fiber_create(&storage->fiber_pool, &fiber);
+  fail_if_error(error);
 
+  fiber->ip = re_code;
   fibers.head = fiber;
   fibers.tail = fiber;
 
   error = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
-
-  if (error != ERROR_SUCCESS)
-    return -2;
+  fail_if_error(error);
 
   while (fibers.head != NULL)
   {
@@ -1952,15 +1974,13 @@ int yr_re_exec(
         case ACTION_CONTINUE:
           fiber->ip += 1;
           error = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
-          if (error != ERROR_SUCCESS)
-            return -2;
+          fail_if_error(error);
           break;
 
         default:
           next_fiber = fiber->next;
           error = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
-          if (error != ERROR_SUCCESS)
-            return -2;
+          fail_if_error(error);
           fiber = next_fiber;
       }
     }
@@ -1973,15 +1993,14 @@ int yr_re_exec(
 
     if (flags & RE_FLAGS_SCAN && count < max_count)
     {
-      fiber = _yr_re_fiber_create(&storage->fiber_pool);
-      fiber->ip = re_code;
+      error = _yr_re_fiber_create(&storage->fiber_pool, &fiber);
+      fail_if_error(error);
 
+      fiber->ip = re_code;
       _yr_re_fiber_append(&fibers, fiber);
 
       error = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
-
-      if (error != ERROR_SUCCESS)
-        return -2;
+      fail_if_error(error);
     }
   }
 
