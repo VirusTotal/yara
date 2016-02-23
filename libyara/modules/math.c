@@ -79,9 +79,10 @@ define_function(data_entropy)
   int64_t length = integer_argument(2);   // length of bytes we want entropy on
 
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK* block = NULL;
+  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_BLOCK_ITERATOR* iterator = NULL;
   
-  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  if (offset < 0 || length < 0 || offset < block->base)
     return_float(UNDEFINED);
 
   data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
@@ -89,23 +90,28 @@ define_function(data_entropy)
   if (data == NULL)
     return_float(UNDEFINED);
 
-  foreach_memory_block(context, block)
+  foreach_memory_block(context, block, iterator)
   {
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      size_t data_offset = (size_t) (offset - block->base);
-      size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
+      uint8_t* block_data = iterator->fetch_data(iterator);
 
-      total_len += data_len;
-      offset += data_len;
-      length -= data_len;
-
-      for (i = 0; i < data_len; i++)
+      if (block_data != NULL)
       {
-        uint8_t c = *(block->data + data_offset + i);
-        data[c] += 1;
+        size_t data_offset = (size_t)(offset - block->base);
+        size_t data_len = (size_t)yr_min(
+          length, (size_t)(block->size - data_offset));
+
+        total_len += data_len;
+        offset += data_len;
+        length -= data_len;
+
+        for (i = 0; i < data_len; i++)
+        {
+          uint8_t c = *(block_data + data_offset + i);
+          data[c] += 1;
+        }
       }
 
       past_first_block = TRUE;
@@ -176,26 +182,32 @@ define_function(data_deviation)
   size_t i;
 
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK* block = NULL;
+  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_BLOCK_ITERATOR* iterator = NULL;
 
-  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  if (offset < 0 || length < 0 || offset < block->base)
     return_float(UNDEFINED);
  
-  foreach_memory_block(context, block)
+  foreach_memory_block(context, block, iterator)
   {
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      size_t data_offset = (size_t) (offset - block->base);
-      size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
+      uint8_t* block_data = iterator->fetch_data(iterator);
 
-      total_len += data_len;
-      offset += data_len;
-      length -= data_len;
+      if (block_data != NULL)
+      {
+        size_t data_offset = (size_t)(offset - block->base);
+        size_t data_len = (size_t)yr_min(
+          length, (size_t)(block->size - data_offset));
 
-      for (i = 0; i < data_len; i++)
-        sum += fabs(((double) *(block->data + data_offset + i)) - mean);
+        total_len += data_len;
+        offset += data_len;
+        length -= data_len;
+
+        for (i = 0; i < data_len; i++)
+          sum += fabs(((double)*(block_data + data_offset + i)) - mean);
+      }
 
       past_first_block = TRUE;
     }
@@ -243,29 +255,35 @@ define_function(data_mean)
   int64_t length = integer_argument(2);
 
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK* block = NULL;
+  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_BLOCK_ITERATOR* iterator = NULL;
 
   size_t total_len = 0;
   size_t i;
 
-  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  if (offset < 0 || length < 0 || offset < block->base)
     return_float(UNDEFINED);
  
-  foreach_memory_block(context, block)
+  foreach_memory_block(context, block, iterator)
   {
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      size_t data_offset = (size_t) (offset - block->base);
-      size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
+      uint8_t* block_data = iterator->fetch_data(iterator);
 
-      total_len += data_len;
-      offset += data_len;
-      length -= data_len;
+      if (block_data != NULL)
+      {
+        size_t data_offset = (size_t)(offset - block->base);
+        size_t data_len = (size_t)yr_min(
+          length, (size_t)(block->size - data_offset));
 
-      for (i = 0; i < data_len; i++)
-        sum += (double) *(block->data + data_offset + i);
+        total_len += data_len;
+        offset += data_len;
+        length -= data_len;
+
+        for (i = 0; i < data_len; i++)
+          sum += (double)*(block_data + data_offset + i);
+      }
 
       past_first_block = TRUE;
     }
@@ -301,7 +319,8 @@ define_function(data_serial_correlation)
   int64_t length = integer_argument(2);
 
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK* block = NULL;
+  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_BLOCK_ITERATOR* iterator = NULL;
 
   double sccun = 0;
   double scclast = 0;
@@ -310,29 +329,34 @@ define_function(data_serial_correlation)
   double scct3 = 0;
   double scc = 0;
 
-  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  if (offset < 0 || length < 0 || offset < block->base)
     return_float(UNDEFINED);
  
-  foreach_memory_block(context, block)
+  foreach_memory_block(context, block, iterator)
   {
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      size_t data_offset = (size_t) (offset - block->base);
-      size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
+      uint8_t* block_data = iterator->fetch_data(iterator);
 
-      total_len += data_len;
-      offset += data_len;
-      length -= data_len;
-
-      for (i = 0; i < data_len; i++)
+      if (block_data != NULL)
       {
-        sccun = (double) *(block->data + data_offset + i);
-        scct1 += scclast * sccun;
-        scct2 += sccun;
-        scct3 += sccun * sccun;
-        scclast = sccun;
+        size_t data_offset = (size_t)(offset - block->base);
+        size_t data_len = (size_t)yr_min(
+          length, (size_t)(block->size - data_offset));
+
+        total_len += data_len;
+        offset += data_len;
+        length -= data_len;
+
+        for (i = 0; i < data_len; i++)
+        {
+          sccun = (double)*(block_data + data_offset + i);
+          scct1 += scclast * sccun;
+          scct2 += sccun;
+          scct3 += sccun * sccun;
+          scclast = sccun;
+        }
       }
 
       past_first_block = TRUE;
@@ -419,45 +443,50 @@ define_function(data_monte_carlo_pi)
   int64_t length = integer_argument(2);
 
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK* block = NULL;
+  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_BLOCK_ITERATOR* iterator = NULL;
 
-  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  if (offset < 0 || length < 0 || offset < block->base)
     return_float(UNDEFINED);
  
-  foreach_memory_block(context, block)
+  foreach_memory_block(context, block, iterator)
   {
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
       unsigned int monte[6];
+      uint8_t* block_data = iterator->fetch_data(iterator);
 
-	  size_t data_offset = (size_t) (offset - block->base);
-      size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
-
-      offset += data_len;
-      length -= data_len;
-
-      for (i = 0; i < data_len; i++)
+      if (block_data != NULL)
       {
-        monte[i % 6] = (unsigned int) *(block->data + data_offset + i);
+        size_t data_offset = (size_t)(offset - block->base);
+        size_t data_len = (size_t)yr_min(
+          length, (size_t)(block->size - data_offset));
 
-        if (i % 6 == 5)
-        { 
-          double mx = 0;
-          double my = 0;
-          int j;
+        offset += data_len;
+        length -= data_len;
 
-          mcount++;
+        for (i = 0; i < data_len; i++)
+        {
+          monte[i % 6] = (unsigned int)*(block_data + data_offset + i);
 
-          for (j = 0; j < 3; j++)
+          if (i % 6 == 5)
           {
-            mx = (mx * 256.0) + monte[j];
-            my = (my * 256.0) + monte[j + 3];
-          }
+            double mx = 0;
+            double my = 0;
+            int j;
 
-          if ((mx * mx + my * my) <= INCIRC)
-            inmont++;
+            mcount++;
+
+            for (j = 0; j < 3; j++)
+            {
+              mx = (mx * 256.0) + monte[j];
+              my = (my * 256.0) + monte[j + 3];
+            }
+
+            if ((mx * mx + my * my) <= INCIRC)
+              inmont++;
+          }
         }
       }
 
