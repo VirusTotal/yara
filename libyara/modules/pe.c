@@ -1907,19 +1907,18 @@ static uint64_t rich_internal(
     uint64_t version,
     uint64_t toolid)
 {
-    size_t rich_len;
+    int64_t rich_length;
+    int64_t rich_count;
+    int64_t i;
 
     PRICH_SIGNATURE clear_rich_signature;
     SIZED_STRING* rich_string;
-
-    int rich_signature_count;
-    int i;
 
     // Check if the required fields are set
     if (is_undefined(module, "rich_signature.length"))
         return UNDEFINED;
 
-    rich_len = get_integer(module, "rich_signature.length");
+    rich_length = get_integer(module, "rich_signature.length");
     rich_string = get_string(module, "rich_signature.clear_data");
 
     // If the clear_data was not set, return UNDEFINED
@@ -1933,15 +1932,15 @@ static uint64_t rich_internal(
 
     // Loop over the versions in the rich signature
 
-    rich_signature_count = \
-        (rich_len - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
+    rich_count = \
+        (rich_length - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
 
-    for (i = 0; i < rich_signature_count; i++)
+    for (i = 0; i < rich_count; i++)
     {
         DWORD id_version = clear_rich_signature->versions[i].id_version;
 
-        int match_version = version == RICH_VERSION_VERSION(id_version);
-        int match_toolid = toolid == RICH_VERSION_ID(id_version);
+        int match_version = (version == RICH_VERSION_VERSION(id_version));
+        int match_toolid = (toolid == RICH_VERSION_ID(id_version));
 
         if (version != UNDEFINED && toolid != UNDEFINED)
         {
