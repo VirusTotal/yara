@@ -29,7 +29,7 @@ case $host_alias in
 esac
 
 case $host_os in
-    darwin*) CFLAGS="$CFLAGS -I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib" ;;
+    darwin*) CFLAGS="$CFLAGS -I/opt/local/include" ;;
 esac
 
 ACX_PTHREAD(
