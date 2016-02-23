@@ -781,6 +781,8 @@ int _yr_scan_verify_re_match(
     case -3:
       return ERROR_TOO_MANY_MATCHES;
     case -4:
+      return ERROR_TOO_MANY_RE_FIBERS;
+    case -5:
       return ERROR_INTERNAL_FATAL_ERROR;
   }
 
@@ -812,6 +814,8 @@ int _yr_scan_verify_re_match(
       case -3:
         return ERROR_TOO_MANY_MATCHES;
       case -4:
+        return ERROR_TOO_MANY_RE_FIBERS;
+      case -5:
         return ERROR_INTERNAL_FATAL_ERROR;
     }
   }
