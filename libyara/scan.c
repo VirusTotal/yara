@@ -321,6 +321,8 @@ int _yr_scan_fast_hex_re_exec(
           //        L4:
           //                  15 + 2 * sizeof(RE_SPLIT_ID_TYPE) bytes in total
 
+          next_opcode = ip + 2 * sizeof(RE_SPLIT_ID_TYPE) + 15;
+
           for (i = *(uint16_t*)(ip + 1) + 1; i > 0; i--)
           {
             if (flags & RE_FLAGS_BACKWARDS)
@@ -335,8 +337,6 @@ int _yr_scan_fast_hex_re_exec(
               if (next_input >= input + input_size)
                 continue;
             }
-
-            next_opcode = ip + 2 * sizeof(RE_SPLIT_ID_TYPE) + 15;
 
             if ( *(next_opcode) != RE_OPCODE_LITERAL ||
                 (*(next_opcode) == RE_OPCODE_LITERAL &&
