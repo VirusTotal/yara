@@ -404,6 +404,8 @@ typedef struct _YR_PROCESS_CONTEXT
 {
   uint8_t* data;
   void* process_context;
+  YR_MEMORY_BLOCK* blocks;
+  YR_MEMORY_BLOCK* current;
 
 } YR_PROCESS_CONTEXT;
 

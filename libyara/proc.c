@@ -39,21 +39,21 @@ int _yr_attach_process(
     tokenPriv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
     AdjustTokenPrivileges(
-      hToken,
-      FALSE,
-      &tokenPriv,
-      sizeof(tokenPriv),
-      NULL,
-      NULL);
+        hToken,
+        FALSE,
+        &tokenPriv,
+        sizeof(tokenPriv),
+        NULL,
+        NULL);
   }
 
   if (hToken != NULL)
     CloseHandle(hToken);
 
   *hProcess = OpenProcess(
-    PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
-    FALSE,
-    pid);
+      PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
+      FALSE,
+      pid);
 
   if (*hProcess == NULL)
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
@@ -70,99 +70,90 @@ int _yr_detach_process(
   return ERROR_SUCCESS;
 }
 
-//int _yr_get_sections(
-//    void* hProcess,
-//    YR_SECTION_READER* reader)
-//{
-//  PVOID address;
-//  int result = ERROR_SUCCESS;
-//  int sections = 0;
-//
-//  YR_MEMORY_SECTION* new_section;
-//  YR_MEMORY_SECTION* current = NULL;
-//
-//  SYSTEM_INFO si;
-//  MEMORY_BASIC_INFORMATION mbi;
-//
-//  GetSystemInfo(&si);
-//
-//  address = si.lpMinimumApplicationAddress;
-//
-//  while (address < si.lpMaximumApplicationAddress &&
-//    VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
-//  {
-//    if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
-//    {
-//      YR_MEMORY_SECTION* new_section = (YR_MEMORY_SECTION*)yr_malloc(sizeof(YR_MEMORY_SECTION));
-//
-//      new_section->base = (size_t)mbi.BaseAddress;
-//      new_section->size = mbi.RegionSize;
-//
-//      if (reader->sections == NULL)
-//        reader->sections = new_section;
-//
-//      if (current != NULL)
-//        current->next = new_section;
-//
-//      current = new_section;
-//
-//      ++sections;
-//    }
-//
-//    address = (uint8_t*)address + mbi.RegionSize;
-//  }
-//
-//  printf("%lu sections\n", sections);
-//
-//  return result;
-//}
-//
-//int _yr_read_section(
-//    void* hProcess,
-//    YR_MEMORY_SECTION* section,
-//    YR_MEMORY_BLOCK** block)
-//{
-//  SIZE_T read;
-//  uint8_t* data;
-//  int result = ERROR_SUCCESS;
-//  *block = NULL;
-//
-//  data = (uint8_t*)yr_malloc(section->size);
-//
-//  if (data == NULL)
-//  {
-//    result = ERROR_INSUFICIENT_MEMORY;
-//    goto error;
-//  }
-//
-//  if (ReadProcessMemory(
-//    (HANDLE)hProcess,
-//    (LPCVOID)section->base,
-//    data,
-//    (SIZE_T)section->size,
-//    &read))
-//  {
-//    *block = (YR_MEMORY_BLOCK*)yr_malloc(sizeof(YR_MEMORY_BLOCK));
-//
-//    if (*block == NULL)
-//    {
-//      result = ERROR_INSUFICIENT_MEMORY;
-//      goto error;
-//    }
-//
-//    (*block)->base = section->base;
-//    (*block)->size = (size_t)read;
-//    (*block)->data = data;
-//  }
-//
-//  return result;
-//
-//error:
-//  if (data != NULL)
-//    yr_free(data);
-//
-//  return result;
-//}
+int _yr_get_process_blocks(
+    void* hProcess,
+    YR_MEMORY_BLOCK** head)
+{
+  PVOID address;
+  int result = ERROR_SUCCESS;
+  int sections = 0;
+
+  YR_MEMORY_BLOCK* new_block;
+  YR_MEMORY_BLOCK* current = NULL;
+
+  SYSTEM_INFO si;
+  MEMORY_BASIC_INFORMATION mbi;
+
+  GetSystemInfo(&si);
+
+  address = si.lpMinimumApplicationAddress;
+
+  while (address < si.lpMaximumApplicationAddress &&
+    VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
+  {
+    if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0)) // TODO: check for read permission?
+    {
+      new_block = (YR_MEMORY_BLOCK*)yr_malloc(sizeof(YR_MEMORY_BLOCK));
+
+      new_block->base = (size_t)mbi.BaseAddress;
+      new_block->size = mbi.RegionSize;
+
+      if (*head == NULL)
+        *head = new_block;
+
+      if (current != NULL)
+        current->next = new_block;
+
+      current = new_block;
+
+      ++sections;
+    }
+
+    address = (uint8_t*)address + mbi.RegionSize;
+  }
+
+  printf("%lu sections\n", sections);
+
+  return result;
+}
+
+int _yr_read_process_block(
+    void* hProcess,
+    YR_MEMORY_BLOCK* block,
+    uint8_t** data)
+{
+  SIZE_T read;
+  uint8_t* buffer = NULL;
+  int result = ERROR_SUCCESS;
+  *data = NULL;
+
+  buffer = (uint8_t*)yr_malloc(block->size);
+
+  if (buffer == NULL)
+    return ERROR_INSUFICIENT_MEMORY;
+
+  if (ReadProcessMemory(
+      (HANDLE)hProcess,
+      (LPCVOID)block->base,
+      buffer,
+      (SIZE_T)block->size,
+      &read) == FALSE)
+  {
+    result = ERROR_COULD_NOT_READ_PROCESS_MEMORY;
+
+    if (buffer != NULL)
+    {
+      yr_free(buffer);
+      buffer = NULL;
+    }
+  }
+
+  // TODO: compare read with block size
+
+  *data = buffer;
+
+  return result;
+}
 
 
 
@@ -530,97 +521,119 @@ _exit:
 
 // process iterator abstraction
 
+static int _yr_free_block_data(
+    YR_PROCESS_CONTEXT* context)
+{
+  if (context->data != NULL)
+  {
+    yr_free(context->data);
+    context->data = NULL;
+  }
+
+  return ERROR_SUCCESS;
+}
+
+static YR_MEMORY_BLOCK* _yr_get_first_block(
+    YR_BLOCK_ITERATOR* iterator)
+{
+  printf("!!! first block\n");
+
+  YR_PROCESS_CONTEXT* ctx = (YR_PROCESS_CONTEXT*)iterator->context;
+
+  ctx->current = ctx->blocks;
+
+  _yr_free_block_data(ctx);
+
+  return ctx->current;
+}
+
+static YR_MEMORY_BLOCK* _yr_get_next_block(
+    YR_BLOCK_ITERATOR* iterator)
+{
+  printf("next block\n");
+
+  YR_PROCESS_CONTEXT* ctx = (YR_PROCESS_CONTEXT*)iterator->context;
+
+  if (ctx->current == NULL)
+    return NULL;
+
+  ctx->current = ctx->current->next;
+
+  _yr_free_block_data(ctx);
+
+  return ctx->current;
+}
+
+static uint8_t* _yr_fetch_block_data(
+    YR_BLOCK_ITERATOR* iterator)
+{
+  printf("fetching block\n");
+
+  YR_PROCESS_CONTEXT* ctx = (YR_PROCESS_CONTEXT*)iterator->context;
+
+  if (ctx->current == NULL)
+    return NULL;
+
+  _yr_free_block_data(ctx);
+
+  _yr_read_process_block(
+      ctx->process_context,
+      ctx->current,
+      &ctx->data);
+
+  return ctx->data;
+}
+
 int yr_open_process_iterator(
     int pid,
     YR_BLOCK_ITERATOR* iterator)
 {
-  return 0;
+  YR_PROCESS_CONTEXT* context = (YR_PROCESS_CONTEXT*)yr_malloc(sizeof(YR_PROCESS_CONTEXT));
+
+  if (context == NULL)
+    return ERROR_INSUFICIENT_MEMORY;
+
+  context->blocks = NULL;
+  context->current = NULL;
+  context->data = NULL;
+  context->process_context = NULL;
+
+  iterator->context = context;
+  iterator->first = _yr_get_first_block;
+  iterator->next = _yr_get_next_block;
+  iterator->fetch_data = _yr_fetch_block_data;
+
+  int result = _yr_attach_process(
+      pid,
+      &context->process_context);
+
+  result = _yr_get_process_blocks(
+      context->process_context,
+      &context->blocks);
+
+  return result;
 }
 
 int yr_close_process_iterator(
     YR_BLOCK_ITERATOR* iterator)
 {
-  return 0;
+  YR_PROCESS_CONTEXT* ctx = (YR_PROCESS_CONTEXT*)iterator->context;
+
+  // NOTE: detach is responsible for freeing any allocated context
+  _yr_detach_process(ctx->process_context);
+
+  YR_MEMORY_BLOCK* current = ctx->blocks;
+  YR_MEMORY_BLOCK* next;
+
+  _yr_free_block_data(ctx);
+
+  // free blocks list
+  while(current != NULL)
+  {
+    next = current->next;
+    yr_free(current);
+    current = next;
+  }
+
+  return ERROR_SUCCESS;
 }
-//
-//int yr_open_section_reader(
-//  int pid,
-//  YR_SECTION_READER** reader)
-//{
-//  *reader = (YR_SECTION_READER*)yr_malloc(sizeof(YR_SECTION_READER));
-//
-//  (*reader)->block = NULL;
-//  (*reader)->current = NULL;
-//
-//  int result = _yr_attach_process(pid, &(*reader)->context);
-//
-//  result = _yr_get_sections((*reader)->context, *reader);
-//
-//  return result;
-//}
-//
-//int yr_read_next_section(
-//  YR_SECTION_READER* reader)
-//{
-//  int result = ERROR_SUCCESS;
-//
-//  // free the previous memory block
-//  if (reader->block != NULL)
-//  {
-//    yr_free(reader->block->data);
-//    yr_free(reader->block);
-//    reader->block = NULL;
-//  }
-//
-//  do {
-//    // set current to first or next
-//    if (reader->current == NULL)
-//      reader->current = reader->sections;
-//    else
-//      reader->current = reader->current->next;
-//
-//    if (reader->current == NULL) break;
-//
-//    result = _yr_read_section(
-//      reader->context,
-//      reader->current,
-//      &reader->block);
-//
-//    if (result != ERROR_SUCCESS) break;
-//
-//  } while (reader->block == NULL);
-//
-//  return result;
-//}
-//
-//void yr_close_section_reader(
-//  YR_SECTION_READER* reader)
-//{
-//  YR_MEMORY_SECTION* current;
-//  YR_MEMORY_SECTION* next;
-//
-//  // NOTE: detach is responsible for freeing any allocated context
-//  _yr_detach_process(reader->context);
-//
-//  // free the list of sections
-//  current = reader->sections;
-//
-//  while (current != NULL)
-//  {
-//    next = current->next;
-//
-//    yr_free(current);
-//
-//    current = next;
-//  }
-//
-//  // free the memory block
-//  if (reader->block != NULL)
-//  {
-//    yr_free(reader->block->data);
-//    yr_free(reader->block);
-//  }
-//
-//  // free the reader
-//  yr_free(reader);
-//}
