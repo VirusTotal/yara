@@ -49,3 +49,12 @@ stamp-h1
 # Linux and Mac files
 *.swp
 .DS_Store
+
+# Visual Studio files
+Release/
+Debug/
+x64/
+*.obj
+*.suo
+*.sdf
+*.opensdf
