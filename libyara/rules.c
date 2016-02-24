@@ -310,27 +310,27 @@ int _yr_rules_scan_mem_block(
 }
 
 // Single block iterator impl TODO: belongs in this file?
-YR_MEMORY_BLOCK* _yr_get_first_block(
+static YR_MEMORY_BLOCK* _yr_get_first_block(
     YR_BLOCK_ITERATOR* iterator)
 {
   YR_BLOCK_CONTEXT* ctx = (YR_BLOCK_CONTEXT*)iterator->context;
   return ctx->block;
 }
 
-YR_MEMORY_BLOCK* _yr_get_next_block(
+static YR_MEMORY_BLOCK* _yr_get_next_block(
     YR_BLOCK_ITERATOR*)
 {
   return NULL;
 }
 
-uint8_t* _yr_fetch_block_data(
+static uint8_t* _yr_fetch_block_data(
     YR_BLOCK_ITERATOR* iterator)
 {
   YR_BLOCK_CONTEXT* ctx = (YR_BLOCK_CONTEXT*)iterator->context;
   return ctx->data;
 }
 
-void _yr_init_single_block_iterator(
+static void _yr_init_single_block_iterator(
     YR_BLOCK_ITERATOR* iterator,
     YR_BLOCK_CONTEXT* context)
 {
@@ -659,26 +659,24 @@ YR_API int yr_rules_scan_proc(
     void* user_data,
     int timeout)
 {
-  //YR_SECTION_READER* reader;
+  YR_BLOCK_ITERATOR iterator;
 
-  //int result = yr_open_section_reader(pid, &reader);
+  int result = yr_open_process_iterator(
+      pid,
+      &iterator);
 
-  //if (result == ERROR_SUCCESS)
-  //  result = yr_rules_scan_mem_blocks(
-  //    rules,
-  //    &_yr_section_reader_next_block,
-  //    reader,
-  //    flags | SCAN_FLAGS_PROCESS_MEMORY,
-  //    callback,
-  //    user_data,
-  //    timeout);
+  if (result == ERROR_SUCCESS)
+    result = yr_rules_scan_mem_blocks(
+        rules,
+        &iterator,
+        flags | SCAN_FLAGS_PROCESS_MEMORY,
+        callback,
+        user_data,
+        timeout);
 
-  //if (reader != NULL)
-  //  yr_close_section_reader(reader);
+  yr_close_process_iterator(&iterator);
 
-  //return result;
-
-  return 0;
+  return result;
 }
 
 YR_API int yr_rules_load_stream(
