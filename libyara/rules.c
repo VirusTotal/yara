@@ -539,6 +539,56 @@ YR_API int yr_rules_scan_mem(
       timeout);
 }
 
+void print_hexdump(
+    uint8_t* data,
+    int offset,
+    int length)
+{
+  ++length;
+  int i, line;
+  int num_lines = length/16;
+  for (line = 0;line < num_lines;++line) {
+    /* line offset */
+    printf("0x%llx: ", offset+(line*16));
+    //Hexdump
+    for (i = 0;i < 16;++i) {
+      printf("%02X ", data[i+(line*16)]);
+    }
+    printf("\t");
+    //ASCII dump
+    for (i = 0;i < 16;++i)
+    {
+      if (data[i+(line*16)] >= 32 && data[i+(line*16)] <= 126)
+        printf("%c ", data[i+(line*16)]);
+      else
+        printf(". ", (uint8_t) data[i+(line*16)]);
+    }
+    printf("\n");
+  }
+  printf("\n");
+}
+
+YR_API int yr_rules_context_match(
+    const char* filename,
+    YR_MATCH* match)
+{
+  YR_MAPPED_FILE mfile;
+  int result = yr_filemap_map(filename, &mfile);
+
+  /* Calculate padding length */
+  int padding = ((match->length%48-48)*-1)/2;
+  /* Calculate context's initial position */
+  int init_pos = (match->base+match->offset)-padding;
+  /* Print result */
+  print_hexdump((mfile.data)+init_pos,
+                init_pos,
+                padding*2+match->length);
+
+  yr_filemap_unmap(&mfile);
+
+  return result;
+}
+
 
 YR_API int yr_rules_scan_file(
     YR_RULES* rules,

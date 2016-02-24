@@ -100,6 +100,7 @@ int show_tags = FALSE;
 int show_specified_tags = FALSE;
 int show_specified_rules = FALSE;
 int show_strings = FALSE;
+int show_context = FALSE;
 int show_meta = FALSE;
 int show_namespace = FALSE;
 int show_version = FALSE;
@@ -139,6 +140,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN('s', "print-strings", &show_strings,
       "print matching strings"),
+
+  OPT_BOOLEAN('c', "print-context", &show_context,
+      "print matching context"),
 
   OPT_BOOLEAN('e', "print-namespace", &show_namespace,
       "print rules' namespace"),
@@ -639,6 +643,32 @@ int handle_message(
       }
     }
 
+    //Show matched context
+
+    if (show_context)
+    {
+      YR_STRING* string;
+
+      yr_rule_strings_foreach(rule, string)
+      {
+        YR_MATCH* match;
+
+        yr_string_matches_foreach(string, match)
+        {
+          printf("0x%" PRIx64 ":%s: ",
+              match->base + match->offset,
+              string->identifier);
+
+          if (STRING_IS_HEX(string))
+            print_hex_string(match->data, match->length);
+          else
+            print_string(match->data, match->length);
+
+          yr_rules_context_match(data, match);
+        }
+      }
+    }
+
     mutex_unlock(&output_mutex);
   }
 
@@ -1068,6 +1098,7 @@ int main(
 
   mutex_init(&output_mutex);
 
+  //Scanning process
   if (is_integer(argv[1]))
   {
     int pid = atoi(argv[1]);
@@ -1090,6 +1121,7 @@ int main(
       exit_with_code(EXIT_FAILURE);
     }
   }
+  //Scanning directory
   else if (is_directory(argv[1]))
   {
     if (file_queue_init() != 0)
@@ -1130,6 +1162,7 @@ int main(
 
     file_queue_destroy();
   }
+  //Scanning file
   else
   {
     int flags = 0;
