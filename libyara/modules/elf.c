@@ -369,7 +369,7 @@ int module_load(
   set_integer(ELF_PF_W, module_object, "PF_W");
   set_integer(ELF_PF_R, module_object, "PF_R");
 
-  foreach_memory_block(context, block, iterator)
+  foreach_memory_block(iterator, block)
   {
     uint8_t* block_data = iterator->fetch_data(iterator);
 

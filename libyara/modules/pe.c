@@ -2206,7 +2206,7 @@ int module_load(
     size_t module_data_size)
 {
   YR_MEMORY_BLOCK* block;
-  YR_BLOCK_ITERATOR* iterator;
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   set_integer(
       IMAGE_FILE_MACHINE_UNKNOWN, module_object,
@@ -2447,7 +2447,7 @@ int module_load(
       RESOURCE_TYPE_MANIFEST, module_object,
       "RESOURCE_TYPE_MANIFEST");
 
-  foreach_memory_block(context, block, iterator)
+  foreach_memory_block(iterator, block)
   {
     uint8_t* data = iterator->fetch_data(iterator);
 
