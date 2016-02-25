@@ -619,13 +619,16 @@ int yr_close_process_iterator(
 {
   YR_PROCESS_CONTEXT* ctx = (YR_PROCESS_CONTEXT*)iterator->context;
 
-  // NOTE: detach is responsible for freeing any allocated context
+  if (ctx == NULL)
+    return ERROR_SUCCESS;
+
+  // NOTE: detach is responsible for freeing allocated process context
   _yr_detach_process(ctx->process_context);
+
+  _yr_free_block_data(ctx);
 
   YR_MEMORY_BLOCK* current = ctx->blocks;
   YR_MEMORY_BLOCK* next;
-
-  _yr_free_block_data(ctx);
 
   // free blocks list
   while(current != NULL)
@@ -634,6 +637,10 @@ int yr_close_process_iterator(
     yr_free(current);
     current = next;
   }
+
+  // free the context
+  yr_free(iterator->context);
+  iterator->context = NULL;
 
   return ERROR_SUCCESS;
 }

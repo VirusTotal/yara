@@ -122,7 +122,7 @@ define_function(data_md5)
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_BLOCK_ITERATOR* iterator = NULL;
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
@@ -134,7 +134,7 @@ define_function(data_md5)
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  foreach_memory_block(context, block, iterator)
+  foreach_memory_block(iterator, block)
   {
     // if desired block within current block
 
@@ -197,7 +197,7 @@ define_function(data_sha1)
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_BLOCK_ITERATOR* iterator = NULL;
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   SHA1_Init(&sha_context);
 
@@ -206,7 +206,7 @@ define_function(data_sha1)
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  foreach_memory_block(context, block, iterator)
+  foreach_memory_block(iterator, block)
   {
     // if desired block within current block
     if (offset >= block->base &&
@@ -268,7 +268,7 @@ define_function(data_sha256)
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_BLOCK_ITERATOR* iterator = NULL;
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   SHA256_Init(&sha256_context);
 
@@ -277,7 +277,7 @@ define_function(data_sha256)
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  foreach_memory_block(context, block, iterator)
+  foreach_memory_block(iterator, block)
   {
     // if desired block within current block
     if (offset >= block->base &&
@@ -331,7 +331,7 @@ define_function(data_checksum32)
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_BLOCK_ITERATOR* iterator = NULL;
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   uint32_t checksum = 0;
   int past_first_block = FALSE;
@@ -341,7 +341,7 @@ define_function(data_checksum32)
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  foreach_memory_block(context, block, iterator)
+  foreach_memory_block(iterator, block)
   {
     if (offset >= block->base &&
         offset < block->base + block->size)
