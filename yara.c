@@ -110,7 +110,7 @@ int negate = FALSE;
 int count = 0;
 int limit = 0;
 int timeout = 1000000;
-unsigned int stacksize = DEFAULT_STACK_SIZE;
+int stack_size = DEFAULT_STACK_SIZE;
 int threads = 8;
 
 
@@ -159,7 +159,7 @@ args_option_t options[] =
   OPT_INTEGER('a', "timeout", &timeout,
       "abort scanning after the given number of SECONDS", "SECONDS"),
 
-  OPT_INTEGER('k', "stack-size", &stacksize,
+  OPT_INTEGER('k', "stack-size", &stack_size,
       "Set stack size to allocate in exec() to SLOTS (default=16384)", "SLOTS"),
 
   OPT_BOOLEAN('r', "recursive", &recursive_search,
@@ -1005,10 +1005,10 @@ int main(
 
   result = yr_initialize();
 
-  if(stacksize != DEFAULT_STACK_SIZE) {
+  if(stack_size != DEFAULT_STACK_SIZE) {
     // If the user chose a different stack size than default,
     // modify the yara config here
-    yr_set_configuration(YR_CONFIG_STACK_SIZE, &stacksize);
+    yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
   }
 
   if (result != ERROR_SUCCESS)
