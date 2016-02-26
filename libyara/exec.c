@@ -50,7 +50,7 @@ typedef union _STACK_ITEM {
 
 #define push(x)  \
     do { \
-      if (sp < stack_sz) stack[sp++] = (x); \
+      if (sp < stack_size) stack[sp++] = (x); \
       else return ERROR_EXEC_STACK_OVERFLOW; \
     } while(0)
 
@@ -183,15 +183,15 @@ int yr_execute_code(
   int stop = FALSE;
   int cycle = 0;
   int tidx = context->tidx;
-  unsigned int stack_sz;
+  int stack_size;
 
   #ifdef PROFILING_ENABLED
   clock_t start = clock();
   #endif
 
-  yr_get_configuration(YR_CONFIG_STACK_SIZE, (void*)&stack_sz);
+  yr_get_configuration(YR_CONFIG_STACK_SIZE, (void*)&stack_size);
 
-  stack = (STACK_ITEM *) yr_malloc(stack_sz * sizeof(STACK_ITEM));
+  stack = (STACK_ITEM *) yr_malloc(stack_size * sizeof(STACK_ITEM));
 
   if (stack == NULL)
     return ERROR_INSUFICIENT_MEMORY;
