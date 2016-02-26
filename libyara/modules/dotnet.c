@@ -166,6 +166,8 @@ STREAMS dotnet_parse_stream_headers(
       headers.tilde = stream_header;
     else if (strncmp(stream_name, "#Strings", 8) == 0 && headers.string == NULL)
       headers.string = stream_header;
+    else if (strncmp(stream_name, "#Blob", 5) == 0)
+      headers.blob = stream_header;
 
     // Stream name is padded to a multiple of 4.
     stream_header = (PSTREAM_HEADER) ((uint8_t*) stream_header +
@@ -192,26 +194,59 @@ STREAMS dotnet_parse_stream_headers(
 void dotnet_parse_tilde_2(
     PE* pe,
     PTILDE_HEADER tilde_header,
-    uint8_t* string_offset,
     int64_t resource_base,
+    int64_t metadata_root,
     ROWS rows,
-    INDEX_SIZES index_sizes)
+    INDEX_SIZES index_sizes,
+    PSTREAMS streams)
 {
   PMODULE_TABLE module_table;
   PASSEMBLY_TABLE assembly_table;
   PMANIFESTRESOURCE_TABLE manifestresource_table;
   PMODULEREF_TABLE moduleref_table;
+  PCUSTOMATTRIBUTE_TABLE customattribute_table;
   DWORD resource_size, implementation;
   char *name;
+  char typelib[MAX_TYPELIB_SIZE + 1];
   int i, bit_check;
   int64_t resource_offset;
   uint32_t row_size, row_count, counter;
+  uint8_t* string_offset;
+  uint8_t* blob_offset;
   int matched_bits = 0;
   uint32_t num_rows = 0;
   uint32_t valid_rows = 0;
   uint32_t* row_offset = NULL;
   uint8_t* table_offset = NULL;
   uint8_t* row_ptr = NULL;
+  // These are pointers and row sizes for tables of interest to us for special
+  // parsing. For example, we are interested in pulling out any CustomAttributes
+  // that are GUIDs so we need to be able to walk these tables. To find GUID
+  // CustomAttributes you need to walk the CustomAttribute table and look for
+  // any row with a Parent that indexes into the Assembly table and Type indexes
+  // into the MemberRef table. Then you follow the index into the MemberRef
+  // table and check the Class to make sure it indexes into TypeRef table. If it
+  // does you follow that index and make sure the Name is "GuidAttribute". If
+  // all that is valid then you can take the Value from the CustomAttribute
+  // table to find out the index into the Blob stream and parse that.
+  //
+  // Luckily we can abuse the fact that the order of the tables is guranteed
+  // consistent (though some may not exist, but if they do exist they must exist
+  // in a certain order). The order is defined by their position in the Valid
+  // member of the tilde_header structure. By the time we are parsing the
+  // CustomAttribute table we have already recorded the location of the TypeRef
+  // and MemberRef tables, so we can follow the chain back up from
+  // CustomAttribute through MemberRef to TypeRef.
+  uint8_t* typeref_ptr = NULL;
+  uint8_t* memberref_ptr = NULL;
+  uint32_t typeref_row_size = 0;
+  uint32_t memberref_row_size = 0;
+  uint8_t* typeref_row = NULL;
+  uint8_t* memberref_row = NULL;
+  DWORD type_index;
+  DWORD class_index;
+  DWORD blob_index;
+  DWORD blob_length;
   // These are used to determine the size of coded indexes, which are the
   // dynamically sized columns for some tables. The coded indexes are
   // documented in ECMA-335 Section II.24.2.6.
@@ -229,6 +264,8 @@ void dotnet_parse_tilde_2(
 
 #define DOTNET_STRING_INDEX(Name) \
   index_sizes.string == 2 ? Name.Name_Short : Name.Name_Long
+
+  string_offset = pe->data + metadata_root + streams->string->Offset;
 
   // Now walk again this time parsing out what we care about.
   for (bit_check = 0; bit_check < 64; bit_check++)
@@ -275,7 +312,10 @@ void dotnet_parse_tilde_2(
         else
           index_size = 2;
 
-        table_offset += (index_size + (index_sizes.string * 2)) * num_rows;
+        row_size = (index_size + (index_sizes.string * 2));
+        typeref_row_size = row_size;
+        typeref_ptr = table_offset;
+        table_offset += row_size * num_rows;
         break;
       case BIT_TYPEDEF:
         row_count = max_rows(3, rows.typedef_, rows.typeref, rows.typespec);
@@ -323,7 +363,10 @@ void dotnet_parse_tilde_2(
         else
           index_size = 2;
 
-        table_offset += (index_size + index_sizes.string + index_sizes.blob) * num_rows;
+        row_size = (index_size + index_sizes.string + index_sizes.blob);
+        memberref_row_size = row_size;
+        memberref_ptr = table_offset;
+        table_offset += row_size * num_rows;
         break;
       case BIT_CONSTANT:
         row_count = max_rows(3, rows.param, rows.field, rows.property);
@@ -336,6 +379,7 @@ void dotnet_parse_tilde_2(
         table_offset += (1 + 1 + index_size + index_sizes.blob) * num_rows;
         break;
       case BIT_CUSTOMATTRIBUTE:
+        // index_size is size of the parent column.
         row_count = max_rows(21, rows.methoddef, rows.field, rows.typeref,
             rows.typedef_, rows.param, rows.interfaceimpl, rows.memberref,
             rows.module, rows.property, rows.event, rows.standalonesig,
@@ -348,6 +392,7 @@ void dotnet_parse_tilde_2(
         else
           index_size = 2;
 
+        // index_size2 is size of the type column.
         row_count = max_rows(2, rows.methoddef, rows.memberref);
 
         if (row_count > (0xFFFF >> 0x03))
@@ -355,7 +400,220 @@ void dotnet_parse_tilde_2(
         else
           index_size2 = 2;
 
-        table_offset += (index_size + index_size2 + index_sizes.blob) * num_rows;
+        row_size = (index_size + index_size2 + index_sizes.blob);
+        if (typeref_ptr != NULL && memberref_ptr != NULL)
+        {
+          row_ptr = table_offset;
+          for (i = 0; i < num_rows; i++)
+          {
+            if (!fits_in_pe(pe, row_ptr, row_size))
+              break;
+
+            // Check the Parent field.
+            customattribute_table = (PCUSTOMATTRIBUTE_TABLE) row_ptr;
+            if (index_size == 4)
+            {
+              // Low 5 bits tell us what this is an index into. Remaining bits
+              // tell us the index value.
+              // Parent must be an index into the Assembly (0x0E) table.
+              if ((*(DWORD*) customattribute_table & 0x1F) != 0x0E)
+              {
+                row_ptr += row_size;
+                continue;
+              }
+            }
+            else
+            {
+              // Low 5 bits tell us what this is an index into. Remaining bits
+              // tell us the index value.
+              // Parent must be an index into the Assembly (0x0E) table.
+              if ((*(WORD*) customattribute_table & 0x1F) != 0x0E)
+              {
+                row_ptr += row_size;
+                continue;
+              }
+            }
+
+            // Check the Type field.
+            customattribute_table = (PCUSTOMATTRIBUTE_TABLE) (row_ptr + index_size);
+            if (index_size2 == 4)
+            {
+              // Low 3 bits tell us what this is an index into. Remaining bits
+              // tell us the index value. Only values 2 and 3 are defined.
+              // Type must be an index into the MemberRef table.
+              if ((*(DWORD*) customattribute_table & 0x07) != 0x03)
+              {
+                row_ptr += row_size;
+                continue;
+              }
+
+              type_index = *(DWORD*) customattribute_table >> 3;
+            }
+            else
+            {
+              // Low 3 bits tell us what this is an index into. Remaining bits
+              // tell us the index value. Only values 2 and 3 are defined.
+              // Type must be an index into the MemberRef table.
+              if ((*(WORD*) customattribute_table & 0x07) != 0x03)
+              {
+                row_ptr += row_size;
+                continue;
+              }
+
+              // Cast the index to a 32bit value.
+              type_index = (DWORD) ((*(WORD*) customattribute_table >> 3));
+            }
+
+            if (type_index > 0)
+              type_index--;
+            // Now follow the Type index into the MemberRef table.
+            memberref_row = memberref_ptr + (memberref_row_size * type_index);
+            if (index_sizes.memberref == 4)
+            {
+              // Low 3 bits tell us what this is an index into. Remaining bits
+              // tell us the index value. Class must be an index into the
+              // TypeRef table.
+              if ((*(DWORD*) memberref_row & 0x07) != 0x01)
+              {
+                row_ptr += row_size;
+                continue;
+              }
+
+              class_index = *(DWORD*) memberref_row >> 3;
+            }
+            else
+            {
+              // Low 3 bits tell us what this is an index into. Remaining bits
+              // tell us the index value. Class must be an index into the
+              // TypeRef table.
+              if ((*(WORD*) memberref_row & 0x07) != 0x01)
+              {
+                row_ptr += row_size;
+                continue;
+              }
+
+              // Cast the index to a 32bit value.
+              class_index = (DWORD) (*(WORD*) memberref_row >> 3);
+            }
+
+            if (class_index > 0)
+              class_index--;
+            // Now follow the Class index into the TypeRef table.
+            typeref_row = typeref_ptr + (typeref_row_size * class_index);
+            // Skip over the ResolutionScope and check the Name field,
+            // which is an index into the Strings heap.
+            row_count = max_rows(4, rows.module, rows.moduleref,
+                                 rows.assemblyref, rows.typeref);
+            if (row_count > (0xFFFF >> 0x02))
+              typeref_row += 4;
+            else
+              typeref_row += 2;
+
+            if (index_sizes.string == 4)
+              name = pe_get_dotnet_string(pe, string_offset, *(DWORD*) typeref_row);
+            else
+              name = pe_get_dotnet_string(pe, string_offset, *(WORD*) typeref_row);
+
+            if (strncmp(name, "GuidAttribute", 13) != 0)
+            {
+              row_ptr += row_size;
+              continue;
+            }
+
+            // Get the Value field.
+            customattribute_table = (PCUSTOMATTRIBUTE_TABLE) (row_ptr + index_size + index_size2);
+            if (index_sizes.blob == 4)
+              blob_index = *(DWORD*) customattribute_table;
+            else
+              // Cast the value (index into blob table) to a 32bit value.
+              blob_index = (DWORD) (*(WORD*) customattribute_table);
+
+
+            // Everything checks out. Make sure the index into the blob field
+            // is valid (non-null and within range).
+            blob_offset = pe->data + metadata_root + streams->blob->Offset + blob_index;
+
+            // If index into blob is 0 or past the end of the blob stream, skip
+            // it. We don't know the size of the blob entry yet because that is
+            // encoded in the start.
+            if (blob_index == 0x00 || blob_offset >= pe->data + pe->data_size)
+            {
+              row_ptr += row_size;
+              continue;
+            }
+
+            // Blob size is encoded in the first 1, 2 or 4 bytes of the blob.
+            //
+            // If the high bit is not set the length is encoded in one byte.
+            //
+            // If the high 2 bits are 10 (base 2) then the length is encoded in
+            // the rest of the bits and the next byte.
+            //
+            // If the high 3 bits are 110 (base 2) then the length is encoded
+            // in the rest of the bits and the next 3 bytes.
+            //
+            // See ECMA-335 II.24.2.4 for details.
+            if ((*blob_offset & 0x80) == 0x00)
+            {
+              blob_length = (DWORD) *blob_offset;
+              blob_offset++;
+            }
+            else if (blob_offset + 1 < pe->data + pe->data_size &&
+                     (*blob_offset & 0xC0) == 0x80)
+            {
+              blob_length = (DWORD) ((*(WORD*) blob_offset) & 0x3FFF);
+              blob_offset += 2;
+            }
+            else if (blob_offset + 4 < pe->data + pe->data_size &&
+                     (*blob_offset & 0xE0) == 0xC0)
+            {
+              blob_length = (*(DWORD*) blob_offset) & 0x1FFFFFFF;
+              blob_offset += 3;
+            }
+            else
+            {
+              row_ptr += row_size;
+              continue;
+            }
+
+            // Quick sanity check to make sure the blob entry is within bounds.
+            if (blob_offset + blob_length >= pe->data + pe->data_size)
+            {
+              row_ptr += row_size;
+              continue;
+            }
+
+            // Custom attributes MUST have a 16 bit prolog of 0x0001
+            if (*(WORD*) blob_offset != 0x0001)
+            {
+              row_ptr += row_size;
+              continue;
+            }
+
+            // The next byte is the length of the string.
+            blob_offset += 2;
+            if (blob_offset + *blob_offset >= pe->data + pe->data_size)
+            {
+              row_ptr += row_size;
+              continue;
+            }
+            blob_offset += 1;
+            if (*blob_offset == 0xFF || *blob_offset == 0x00)
+            {
+              typelib[0] = '\0';
+            }
+            else
+            {
+              strncpy(typelib, (char*) blob_offset, MAX_TYPELIB_SIZE);
+              typelib[MAX_TYPELIB_SIZE] = '\0';
+            }
+            set_string(typelib, pe->object, "typelib");
+
+            row_ptr += row_size;
+          }
+        }
+
+        table_offset += row_size * num_rows;
         break;
       case BIT_FIELDMARSHAL:
         row_count = max_rows(2, rows.field, rows.param);
@@ -680,13 +938,11 @@ void dotnet_parse_tilde(
     PE* pe,
     int64_t metadata_root,
     PCLI_HEADER cli_header,
-    PSTREAM_HEADER string_header,
-    PSTREAM_HEADER stream_header)
+    PSTREAMS streams)
 {
   PTILDE_HEADER tilde_header;
   int64_t resource_base;
   uint32_t* row_offset = NULL;
-  uint8_t* string_offset;
   int bit_check;
   // This is used as an offset into the rows and tables. For every bit set in
   // Valid this will be incremented. This is because the bit position doesn't
@@ -706,8 +962,7 @@ void dotnet_parse_tilde(
   // Default index sizes are 2. Will be bumped to 4 if necessary.
   memset(&index_sizes, 2, sizeof(index_sizes));
 
-  string_offset = pe->data + metadata_root + string_header->Offset;
-  tilde_header = (PTILDE_HEADER) (pe->data + metadata_root + stream_header->Offset);
+  tilde_header = (PTILDE_HEADER) (pe->data + metadata_root + streams->tilde->Offset);
 
   if (!struct_fits_in_pe(pe, tilde_header, TILDE_HEADER))
       return;
@@ -764,7 +1019,7 @@ void dotnet_parse_tilde(
         ROW_CHECK_WITH_INDEX(methoddef);
         break;
       case BIT_MEMBERREF:
-        ROW_CHECK(memberref);
+        ROW_CHECK_WITH_INDEX(memberref);
         break;
       case BIT_TYPEDEF:
         ROW_CHECK_WITH_INDEX(typedef_);
@@ -821,8 +1076,13 @@ void dotnet_parse_tilde(
   // This is used when parsing the MANIFEST RESOURCE table.
   resource_base = pe_rva_to_offset(pe, cli_header->Resources.VirtualAddress);
 
-  dotnet_parse_tilde_2(pe, tilde_header, string_offset, resource_base, rows,
-          index_sizes);
+  dotnet_parse_tilde_2(pe,
+                       tilde_header,
+                       resource_base,
+                       metadata_root,
+                       rows,
+                       index_sizes,
+                       streams);
 }
 
 void dotnet_parse_com(
@@ -892,8 +1152,7 @@ void dotnet_parse_com(
 
   // Parse the #~ stream, which includes various tables of interest.
   if (headers.tilde != NULL)
-    dotnet_parse_tilde(pe, metadata_root, cli_header, headers.string,
-        headers.tilde);
+    dotnet_parse_tilde(pe, metadata_root, cli_header, &headers);
 }
 
 
@@ -927,6 +1186,7 @@ begin_declarations;
   end_struct("assembly");
   declare_string_array("modulerefs");
   declare_integer("number_of_modulerefs");
+  declare_string("typelib");
 
 end_declarations;
 

@@ -122,6 +122,9 @@ typedef struct _TILDE_HEADER {
 //#define BIT_IMPORTSCOPE            0x35
 //#define BIT_STATEMACHINEMETHOD     0x36
 
+// The string length of a typelib attribute is at most 0xFF.
+#define MAX_TYPELIB_SIZE 0xFF
+
 //
 // Module table
 // ECMA-335 Section II.22.30
@@ -198,14 +201,36 @@ typedef struct _MODULEREF_TABLE {
 } MODULEREF_TABLE, *PMODULEREF_TABLE;
 
 
+//
+// CustomAttribute Table
+// ECMA-335 Section II.22.10
+//
+typedef struct _CUSTOMATTRIBUTE_TABLE {
+  union {
+    WORD Parent_Short;
+    DWORD Parent_Long;
+  } Parent;
+  union {
+    WORD Type_Short;
+    DWORD Type_Long;
+  } Type;
+  union {
+    WORD Value_Short;
+    DWORD Value_Long;
+  } Value;
+} CUSTOMATTRIBUTE_TABLE, *PCUSTOMATTRIBUTE_TABLE;
+
+
 // Used to return offsets to the various headers.
 typedef struct _STREAMS {
     PSTREAM_HEADER guid;
     PSTREAM_HEADER tilde;
     PSTREAM_HEADER string;
+    PSTREAM_HEADER blob;
 } STREAMS, *PSTREAMS;
 
 
+// Used to store the number of rows of each table.
 typedef struct _ROWS {
     uint32_t module;
     uint32_t moduleref;
@@ -232,12 +257,14 @@ typedef struct _ROWS {
 } ROWS, *PROWS;
 
 
+// Used to store the index sizes for the various tables.
 typedef struct _INDEX_SIZES {
     uint8_t string;
     uint8_t guid;
     uint8_t blob;
     uint8_t field;
     uint8_t methoddef;
+    uint8_t memberref;
     uint8_t param;
     uint8_t event;
     uint8_t typedef_;
