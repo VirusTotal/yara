@@ -577,12 +577,28 @@ YR_API int yr_rules_context_match(
 
   /* Calculate padding length */
   int padding = ((match->length%48-48)*-1)/2;
+  /* Calculate length */
+  int length = padding*2+match->length;
   /* Calculate context's initial position */
   int init_pos = (match->base+match->offset)-padding;
   /* Print result */
+  /* Fixed corner cases */
+    /* Final position > filesize */
+  if (init_pos+padding*2+match->length > mfile.size) {
+    init_pos = mfile.size-padding*2-match->length;
+  }
+    /* Initial position < 0 */
+  if (init_pos < 0) {
+    init_pos = 0;
+  }
+    /* Content too short */
+  if (padding*2+match->length > mfile.size) {
+    length = mfile.size;
+  }
+  /* Print the context */
   print_hexdump((mfile.data)+init_pos,
                 init_pos,
-                padding*2+match->length);
+                length);
 
   yr_filemap_unmap(&mfile);
 
