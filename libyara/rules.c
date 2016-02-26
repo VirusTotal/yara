@@ -570,13 +570,15 @@ void print_hexdump(
 
 YR_API int yr_rules_context_match(
     const char* filename,
-    YR_MATCH* match)
+    YR_MATCH* match,
+    int lines)
 {
   YR_MAPPED_FILE mfile;
   int result = yr_filemap_map(filename, &mfile);
-
+  /* Number of characters showed */
+  int chars_number = lines*16;
   /* Calculate padding length */
-  int padding = ((match->length%48-48)*-1)/2;
+  int padding = ((match->length%chars_number-chars_number)*-1)/2;
   /* Calculate length */
   int length = padding*2+match->length;
   /* Calculate context's initial position */

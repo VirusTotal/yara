@@ -141,8 +141,8 @@ args_option_t options[] =
   OPT_BOOLEAN('s', "print-strings", &show_strings,
       "print matching strings"),
 
-  OPT_BOOLEAN('c', "print-context", &show_context,
-      "print matching context"),
+  OPT_INTEGER('c', "print-context", &show_context,
+      "print the specified LINES of matching context", "LINES"),
 
   OPT_BOOLEAN('e', "print-namespace", &show_namespace,
       "print rules' namespace"),
@@ -648,7 +648,7 @@ int handle_message(
     if (show_context)
     {
       YR_STRING* string;
-
+      printf("Showing %d lines of context\n", show_context);
       yr_rule_strings_foreach(rule, string)
       {
         YR_MATCH* match;
@@ -664,7 +664,7 @@ int handle_message(
           else
             print_string(match->data, match->length);
 
-          yr_rules_context_match(data, match);
+          yr_rules_context_match(data, match, show_context);
         }
       }
     }
