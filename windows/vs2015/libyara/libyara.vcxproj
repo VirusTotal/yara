@@ -79,7 +79,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\include;..\..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -106,7 +106,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\include;..\..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
@@ -133,7 +133,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\include;..\..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -155,7 +155,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\include;..\..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
