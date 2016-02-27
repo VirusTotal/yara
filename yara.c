@@ -648,7 +648,13 @@ int handle_message(
     if (show_context)
     {
       YR_STRING* string;
+      YR_MAPPED_FILE mfile;
+      
       printf("Showing %d lines of context\n", show_context);
+
+      /* Open map file */
+      yr_filemap_map(data, &mfile);
+
       yr_rule_strings_foreach(rule, string)
       {
         YR_MATCH* match;
@@ -664,9 +670,11 @@ int handle_message(
           else
             print_string(match->data, match->length);
 
-          yr_rules_context_match(data, match, show_context);
+          yr_rules_context_match(&mfile, match, show_context);
         }
       }
+      /* Close map file */
+      yr_filemap_unmap(&mfile);
     }
 
     mutex_unlock(&output_mutex);

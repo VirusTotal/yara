@@ -569,12 +569,12 @@ void print_hexdump(
 }
 
 YR_API int yr_rules_context_match(
-    const char* filename,
+    YR_MAPPED_FILE* mfile,
     YR_MATCH* match,
     int lines)
 {
-  YR_MAPPED_FILE mfile;
-  int result = yr_filemap_map(filename, &mfile);
+  //YR_MAPPED_FILE mfile;
+  //int result = yr_filemap_map(filename, &mfile);
   /* Number of characters showed */
   int chars_number = lines*16;
   /* Calculate padding length */
@@ -586,25 +586,25 @@ YR_API int yr_rules_context_match(
   /* Print result */
   /* Fixed corner cases */
     /* Final position > filesize */
-  if (init_pos+padding*2+match->length > mfile.size) {
-    init_pos = mfile.size-padding*2-match->length;
+  if (init_pos+padding*2+match->length > mfile->size) {
+    init_pos = mfile->size-padding*2-match->length;
   }
     /* Initial position < 0 */
   if (init_pos < 0) {
     init_pos = 0;
   }
     /* Content too short */
-  if (padding*2+match->length > mfile.size) {
-    length = mfile.size;
+  if (padding*2+match->length > mfile->size) {
+    length = mfile->size;
   }
   /* Print the context */
-  print_hexdump((mfile.data)+init_pos,
+  print_hexdump((mfile->data)+init_pos,
                 init_pos,
                 length);
 
-  yr_filemap_unmap(&mfile);
+  //yr_filemap_unmap(&mfile);
 
-  return result;
+  return 0;
 }
 
 

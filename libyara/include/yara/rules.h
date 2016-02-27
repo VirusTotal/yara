@@ -55,7 +55,7 @@ limitations under the License.
     for (rule = rules->rules_list_head; !RULE_IS_NULL(rule); rule++)
 
 YR_API int yr_rules_context_match(
-    const char* filename,
+    YR_MAPPED_FILE* mfile,
     YR_MATCH* match,
     int lines);
 
