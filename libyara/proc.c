@@ -22,7 +22,6 @@ limitations under the License.
 #include <yara/error.h>
 #include <yara/proc.h>
 
-
 int _yr_attach_process(
     int pid,
     void** hProcess)
@@ -46,6 +45,8 @@ int _yr_attach_process(
         NULL,
         NULL);
   }
+
+  // TODO: should this be COULD NOT ATTACH?
 
   if (hToken != NULL)
     CloseHandle(hToken);
@@ -75,17 +76,12 @@ int _yr_get_process_blocks(
     YR_MEMORY_BLOCK** head)
 {
   PVOID address;
-  int result = ERROR_SUCCESS;
-  int sections = 0;
-
   YR_MEMORY_BLOCK* new_block;
   YR_MEMORY_BLOCK* current = NULL;
-
   SYSTEM_INFO si;
   MEMORY_BASIC_INFORMATION mbi;
 
   GetSystemInfo(&si);
-
   address = si.lpMinimumApplicationAddress;
 
   while (address < si.lpMaximumApplicationAddress &&
@@ -93,7 +89,12 @@ int _yr_get_process_blocks(
   {
     if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0)) // TODO: check for read permission?
     {
+      // TODO: test read so we don't return blocks that can't be read
+
       new_block = (YR_MEMORY_BLOCK*)yr_malloc(sizeof(YR_MEMORY_BLOCK));
+
+      if (new_block == NULL)
+        return ERROR_INSUFICIENT_MEMORY;
 
       new_block->base = (size_t)mbi.BaseAddress;
       new_block->size = mbi.RegionSize;
@@ -105,16 +106,12 @@ int _yr_get_process_blocks(
         current->next = new_block;
 
       current = new_block;
-
-      ++sections;
     }
 
     address = (uint8_t*)address + mbi.RegionSize;
   }
 
-  printf("%lu sections\n", sections);
-
-  return result;
+  return ERROR_SUCCESS;
 }
 
 int _yr_read_process_block(
@@ -149,134 +146,11 @@ int _yr_read_process_block(
   }
 
   // TODO: compare read with block size
-
+  // it would be bad to assume block size bytes were read
   *data = buffer;
 
   return result;
 }
-
-
-
-//int yr_process_get_memory(
-//    int pid,
-//    YR_MEMORY_BLOCK** first_block)
-//{
-//  PVOID address;
-//  SIZE_T read;
-//
-//  unsigned char* data;
-//  int result = ERROR_SUCCESS;
-//
-//  SYSTEM_INFO si;
-//  MEMORY_BASIC_INFORMATION mbi;
-//
-//  YR_MEMORY_BLOCK* new_block;
-//  YR_MEMORY_BLOCK* current_block = NULL;
-//
-//  TOKEN_PRIVILEGES tokenPriv;
-//  LUID luidDebug;
-//  HANDLE hProcess = NULL;
-//  HANDLE hToken = NULL;
-//
-//  if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken) &&
-//      LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luidDebug))
-//  {
-//    tokenPriv.PrivilegeCount = 1;
-//    tokenPriv.Privileges[0].Luid = luidDebug;
-//    tokenPriv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-//
-//    AdjustTokenPrivileges(
-//        hToken,
-//        FALSE,
-//        &tokenPriv,
-//        sizeof(tokenPriv),
-//        NULL,
-//        NULL);
-//  }
-//
-//  hProcess = OpenProcess(
-//      PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
-//      FALSE,
-//      pid);
-//
-//  *first_block = NULL;
-//
-//  if (hProcess == NULL)
-//  {
-//    if (hToken != NULL)
-//      CloseHandle(hToken);
-//
-//    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-//  }
-//
-//  GetSystemInfo(&si);
-//
-//  address = si.lpMinimumApplicationAddress;
-//  size_t allocated = 0;
-//
-//  while (address < si.lpMaximumApplicationAddress &&
-//         VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
-//  {
-//    if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
-//    {
-//      data = (unsigned char*) yr_malloc(mbi.RegionSize);
-//
-//      if (data == NULL)
-//      {
-//        result = ERROR_INSUFICIENT_MEMORY;
-//        break;
-//      }
-//
-//      allocated += mbi.RegionSize;
-//
-//      if (ReadProcessMemory(
-//              hProcess,
-//              mbi.BaseAddress,
-//              data,
-//              mbi.RegionSize,
-//              &read))
-//      {
-//        new_block = (YR_MEMORY_BLOCK*) yr_malloc(sizeof(YR_MEMORY_BLOCK));
-//
-//        if (new_block == NULL)
-//        {
-//          yr_free(data);
-//          result = ERROR_INSUFICIENT_MEMORY;
-//          break;
-//        }
-//
-//        if (*first_block == NULL)
-//          *first_block = new_block;
-//
-//        new_block->base = (size_t) mbi.BaseAddress;
-//        new_block->size = mbi.RegionSize;
-//        new_block->data = data;
-//        new_block->next = NULL;
-//
-//        if (current_block != NULL)
-//          current_block->next = new_block;
-//
-//        current_block = new_block;
-//      }
-//      else
-//      {
-//        yr_free(data);
-//      }
-//    }
-//
-//    address = (PVOID)((ULONG_PTR) mbi.BaseAddress + mbi.RegionSize);
-//  }
-//
-//  printf("Allocated %lu bytes\n", allocated);
-//
-//  if (hToken != NULL)
-//    CloseHandle(hToken);
-//
-//  if (hProcess != NULL)
-//    CloseHandle(hProcess);
-//
-//  return result;
-//}
 
 #else
 
@@ -521,7 +395,7 @@ _exit:
 
 // process iterator abstraction
 
-static int _yr_free_block_data(
+static void _yr_free_context_data(
     YR_PROCESS_CONTEXT* context)
 {
   if (context->data != NULL)
@@ -529,20 +403,15 @@ static int _yr_free_block_data(
     yr_free(context->data);
     context->data = NULL;
   }
-
-  return ERROR_SUCCESS;
 }
 
 static YR_MEMORY_BLOCK* _yr_get_first_block(
     YR_BLOCK_ITERATOR* iterator)
 {
-  printf("!!! first block\n");
-
   YR_PROCESS_CONTEXT* ctx = (YR_PROCESS_CONTEXT*)iterator->context;
 
+  _yr_free_context_data(ctx);
   ctx->current = ctx->blocks;
-
-  _yr_free_block_data(ctx);
 
   return ctx->current;
 }
@@ -550,16 +419,14 @@ static YR_MEMORY_BLOCK* _yr_get_first_block(
 static YR_MEMORY_BLOCK* _yr_get_next_block(
     YR_BLOCK_ITERATOR* iterator)
 {
-  printf("next block\n");
-
   YR_PROCESS_CONTEXT* ctx = (YR_PROCESS_CONTEXT*)iterator->context;
+
+  _yr_free_context_data(ctx);
 
   if (ctx->current == NULL)
     return NULL;
 
   ctx->current = ctx->current->next;
-
-  _yr_free_block_data(ctx);
 
   return ctx->current;
 }
@@ -567,19 +434,26 @@ static YR_MEMORY_BLOCK* _yr_get_next_block(
 static uint8_t* _yr_fetch_block_data(
     YR_BLOCK_ITERATOR* iterator)
 {
-  printf("fetching block\n");
-
   YR_PROCESS_CONTEXT* ctx = (YR_PROCESS_CONTEXT*)iterator->context;
 
   if (ctx->current == NULL)
     return NULL;
 
-  _yr_free_block_data(ctx);
+  // reuse cached data if available
+  if (ctx->data != NULL)
+    return ctx->data;
 
-  _yr_read_process_block(
+  _yr_free_context_data(ctx);
+
+  int result = _yr_read_process_block(
       ctx->process_context,
       ctx->current,
       &ctx->data);
+
+  // TODO should this return error code?
+  // On one hand it's useful, on the other failure
+  // is expected in cases when the section isn't
+  // readable and that's not a reason to exit
 
   return ctx->data;
 }
@@ -607,9 +481,10 @@ int yr_open_process_iterator(
       pid,
       &context->process_context);
 
-  result = _yr_get_process_blocks(
-      context->process_context,
-      &context->blocks);
+  if(result == ERROR_SUCCESS)
+    result = _yr_get_process_blocks(
+        context->process_context,
+        &context->blocks);
 
   return result;
 }
@@ -622,10 +497,10 @@ int yr_close_process_iterator(
   if (ctx == NULL)
     return ERROR_SUCCESS;
 
-  // NOTE: detach is responsible for freeing allocated process context
+  // NOTE: detach must free allocated process context
   _yr_detach_process(ctx->process_context);
 
-  _yr_free_block_data(ctx);
+  _yr_free_context_data(ctx);
 
   YR_MEMORY_BLOCK* current = ctx->blocks;
   YR_MEMORY_BLOCK* next;
