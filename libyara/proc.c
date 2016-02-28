@@ -303,13 +303,14 @@ int yr_process_get_memory(
 
 #include <errno.h>
 
-struct _YR_PROCESS_CONTEXT
+typedef struct _YR_LINUX_CONTEXT
 {
   int pid;
   int mem_fd;
   FILE* maps;
   int attached;
-};
+
+} YR_LINUX_CONTEXT;
 
 int _yr_attach_process(
   int pid,
@@ -317,7 +318,7 @@ int _yr_attach_process(
 {
   char buffer[256];
 
-  _YR_PROCESS_CONTEXT* ctx = (_YR_PROCESS_CONTEXT*)yr_malloc(sizeof(_YR_PROCESS_CONTEXT));
+  YR_LINUX_CONTEXT* ctx = (YR_LINUX_CONTEXT*)yr_malloc(sizeof(YR_LINUX_CONTEXT));
   *context = ctx;
 
   if (ctx == NULL)
@@ -356,18 +357,20 @@ int _yr_detach_process(
   if (context == NULL)
     return ERROR_SUCCESS;
 
-  _YR_PROCESS_CONTEXT* ctx = (_YR_PROCESS_CONTEXT*)context;
+  YR_LINUX_CONTEXT* ctx = (YR_LINUX_CONTEXT*)context;
 
   if(ctx->attached)
     ptrace(PTRACE_DETACH, ctx->pid, NULL, 0);
 
   if (ctx->mem_fd != -1)
-    close(context->mem_fd);
+    close(ctx->mem_fd);
 
   if (ctx->maps != NULL)
     fclose(ctx->maps);
 
   yr_free(ctx);
+
+  return ERROR_SUCCESS;
 }
 
 int _yr_get_process_blocks(
@@ -380,7 +383,7 @@ int _yr_get_process_blocks(
   YR_MEMORY_BLOCK* new_block;
   YR_MEMORY_BLOCK* current = NULL;
 
-  _YR_PROCESS_CONTEXT* ctx = (_YR_PROCESS_CONTEXT*)context;
+  YR_LINUX_CONTEXT* ctx = (YR_LINUX_CONTEXT*)context;
 
   while (fgets(buffer, sizeof(buffer), ctx->maps) != NULL)
   {
@@ -415,7 +418,7 @@ int _yr_read_process_block(
   int result = ERROR_SUCCESS;
   *data = NULL;
 
-  _YR_PROCESS_CONTEXT* ctx = (_YR_PROCESS_CONTEXT*)context;
+  YR_LINUX_CONTEXT* ctx = (YR_LINUX_CONTEXT*)context;
 
   buffer = (uint8_t*)yr_malloc(block->size);
 
