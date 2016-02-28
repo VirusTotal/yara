@@ -1838,7 +1838,7 @@ define_function(locale)
 define_function(language)
 {
   YR_OBJECT* module = module();
-  PE* pe = (PE*)module->data;
+  PE* pe = (PE*) module->data;
 
   uint64_t language = integer_argument(1);
   int64_t n, i;
@@ -1881,7 +1881,7 @@ define_function(is_dll)
 define_function(is_32bit)
 {
   YR_OBJECT* module = module();
-  PE* pe = (PE*)module->data;
+  PE* pe = (PE*) module->data;
 
   if (pe == NULL)
     return_integer(UNDEFINED);
@@ -1893,7 +1893,7 @@ define_function(is_32bit)
 define_function(is_64bit)
 {
   YR_OBJECT* module = module();
-  PE* pe = (PE*)module->data;
+  PE* pe = (PE*) module->data;
 
   if (pe == NULL)
     return_integer(UNDEFINED);
@@ -2206,7 +2206,6 @@ int module_load(
     size_t module_data_size)
 {
   YR_MEMORY_BLOCK* block;
-  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   set_integer(
       IMAGE_FILE_MACHINE_UNKNOWN, module_object,
@@ -2447,14 +2446,9 @@ int module_load(
       RESOURCE_TYPE_MANIFEST, module_object,
       "RESOURCE_TYPE_MANIFEST");
 
-  foreach_memory_block(iterator, block)
+  foreach_memory_block(context, block)
   {
-    uint8_t* data = iterator->fetch_data(iterator);
-
-    if (data == NULL)
-      continue;
-
-    PIMAGE_NT_HEADERS32 pe_header = pe_get_header(data, block->size);
+    PIMAGE_NT_HEADERS32 pe_header = pe_get_header(block->data, block->size);
 
     if (pe_header != NULL)
     {
@@ -2468,7 +2462,7 @@ int module_load(
         if (pe == NULL)
           return ERROR_INSUFICIENT_MEMORY;
 
-        pe->data = data;
+        pe->data = block->data;
         pe->data_size = block->size;
         pe->header = pe_header;
         pe->object = module_object;
