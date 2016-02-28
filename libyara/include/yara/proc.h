@@ -19,10 +19,6 @@ limitations under the License.
 
 #include <yara/types.h>
 
-int yr_process_get_memory(
-    int pid,
-    YR_MEMORY_BLOCK** first_block);
-
 int yr_open_process_iterator(
     int pid,
     YR_BLOCK_ITERATOR* iterator);

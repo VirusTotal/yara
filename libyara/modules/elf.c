@@ -311,7 +311,7 @@ int module_load(
     size_t module_data_size)
 {
   YR_MEMORY_BLOCK* block;
-  YR_BLOCK_ITERATOR* iterator;
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   elf32_header_t* elf_header32;
   elf64_header_t* elf_header64;

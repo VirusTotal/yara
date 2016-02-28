@@ -384,8 +384,6 @@ struct _YR_BLOCK_ITERATOR
 {
   void* context;
 
-  // TODO: current ptr or fn?
-
   YR_BLOCK_ITERATOR_MOVE  first;
   YR_BLOCK_ITERATOR_MOVE  next;
   YR_BLOCK_ITERATOR_FETCH fetch_data;
