@@ -319,7 +319,7 @@ static YR_MEMORY_BLOCK* _yr_get_first_block(
 }
 
 static YR_MEMORY_BLOCK* _yr_get_next_block(
-    YR_BLOCK_ITERATOR*)
+    YR_BLOCK_ITERATOR* iterator)
 {
   return NULL;
 }
