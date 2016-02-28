@@ -72,6 +72,7 @@ limitations under the License.
 #define ERROR_DIVISION_BY_ZERO                  44
 #define ERROR_REGULAR_EXPRESSION_TOO_LARGE      45
 #define ERROR_TOO_MANY_RE_FIBERS                46
+#define ERROR_COULD_NOT_READ_PROCESS_MEMORY     47
 
 
 #define FAIL_ON_ERROR(x) { \
