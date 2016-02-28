@@ -45,8 +45,7 @@ int _yr_attach_process(
         NULL,
         NULL);
   }
-
-  // TODO: should this be COULD NOT ATTACH?
+  // TODO: should else be COULD NOT ATTACH?
 
   if (hToken != NULL)
     CloseHandle(hToken);
@@ -89,7 +88,7 @@ int _yr_get_process_blocks(
   {
     if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0)) // TODO: check for read permission?
     {
-      // TODO: test read so we don't return blocks that can't be read
+      // TODO: test read so we don't return blocks that can't be read?
 
       new_block = (YR_MEMORY_BLOCK*)yr_malloc(sizeof(YR_MEMORY_BLOCK));
 
