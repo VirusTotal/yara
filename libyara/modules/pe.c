@@ -1838,7 +1838,7 @@ define_function(locale)
 define_function(language)
 {
   YR_OBJECT* module = module();
-  PE* pe = (PE*)module->data;
+  PE* pe = (PE*) module->data;
 
   uint64_t language = integer_argument(1);
   int64_t n, i;
@@ -1881,7 +1881,7 @@ define_function(is_dll)
 define_function(is_32bit)
 {
   YR_OBJECT* module = module();
-  PE* pe = (PE*)module->data;
+  PE* pe = (PE*) module->data;
 
   if (pe == NULL)
     return_integer(UNDEFINED);
@@ -1893,7 +1893,7 @@ define_function(is_32bit)
 define_function(is_64bit)
 {
   YR_OBJECT* module = module();
-  PE* pe = (PE*)module->data;
+  PE* pe = (PE*) module->data;
 
   if (pe == NULL)
     return_integer(UNDEFINED);
