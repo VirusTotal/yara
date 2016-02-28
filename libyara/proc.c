@@ -182,6 +182,34 @@ int _yr_read_process_block(
 #include <mach/vm_region.h>
 #include <mach/vm_statistics.h>
 
+int _yr_attach_process(
+  int pid,
+  void** hProcess)
+{
+  return ERROR_SUCCESS;
+}
+
+int _yr_detach_process(
+  void* hProcess)
+{
+  return ERROR_SUCCESS;
+}
+
+int _yr_get_process_blocks(
+  void* hProcess,
+  YR_MEMORY_BLOCK** head)
+{
+  return ERROR_SUCCESS;
+}
+
+int _yr_read_process_block(
+  void* hProcess,
+  YR_MEMORY_BLOCK* block,
+  uint8_t** data)
+{
+  return ERROR_SUCCESS;
+}
+
 int yr_process_get_memory(
     pid_t pid,
     YR_MEMORY_BLOCK** first_block)
@@ -275,116 +303,137 @@ int yr_process_get_memory(
 
 #include <errno.h>
 
-int yr_process_get_memory(
-    pid_t pid,
-    YR_MEMORY_BLOCK** first_block)
+struct _YR_PROCESS_CONTEXT
+{
+  int pid;
+  int mem_fd;
+  FILE* maps;
+  int attached;
+};
+
+int _yr_attach_process(
+  int pid,
+  void** context)
 {
   char buffer[256];
-  unsigned char* data = NULL;
-  size_t begin, end, length;
 
-  YR_MEMORY_BLOCK* new_block;
-  YR_MEMORY_BLOCK* current_block = NULL;
+  _YR_PROCESS_CONTEXT* ctx = (_YR_PROCESS_CONTEXT*)yr_malloc(sizeof(_YR_PROCESS_CONTEXT));
+  *context = ctx;
 
-  FILE *maps = NULL;
+  if (ctx == NULL)
+    return ERROR_INSUFICIENT_MEMORY;
 
-  int mem = -1;
-  int result;
-  int attached = 0;
-
-  *first_block = NULL;
+  ctx->pid = pid;
+  ctx->maps = NULL;
+  ctx->mem_fd = -1;
+  ctx->attached = 0;
 
   snprintf(buffer, sizeof(buffer), "/proc/%u/maps", pid);
+  ctx->maps = fopen(buffer, "r");
 
-  maps = fopen(buffer, "r");
-
-  if (maps == NULL)
-  {
-    result = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-    goto _exit;
-  }
+  if (ctx->maps == NULL)
+    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
 
   snprintf(buffer, sizeof(buffer), "/proc/%u/mem", pid);
+  ctx->mem_fd = open(buffer, O_RDONLY);
 
-  mem = open(buffer, O_RDONLY);
-
-  if (mem == -1)
-  {
-    result = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-    goto _exit;
-  }
+  if (ctx->mem_fd != -1)
+    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
 
   if (ptrace(PTRACE_ATTACH, pid, NULL, 0) != -1)
-  {
-    attached = 1;
-  }
+    ctx->attached = 1;
   else
-  {
-    result = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-    goto _exit;
-  }
+    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
 
   wait(NULL);
 
-  while (fgets(buffer, sizeof(buffer), maps) != NULL)
+  return ERROR_SUCCESS;
+}
+
+int _yr_detach_process(
+  void* context)
+{
+  if (context == NULL)
+    return ERROR_SUCCESS;
+
+  _YR_PROCESS_CONTEXT* ctx = (_YR_PROCESS_CONTEXT*)context;
+
+  if(ctx->attached)
+    ptrace(PTRACE_DETACH, ctx->pid, NULL, 0);
+
+  if (ctx->mem_fd != -1)
+    close(context->mem_fd);
+
+  if (ctx->maps != NULL)
+    fclose(ctx->maps);
+
+  yr_free(ctx);
+}
+
+int _yr_get_process_blocks(
+  void* context,
+  YR_MEMORY_BLOCK** head)
+{
+  char buffer[256];
+  size_t begin, end;
+
+  YR_MEMORY_BLOCK* new_block;
+  YR_MEMORY_BLOCK* current = NULL;
+
+  _YR_PROCESS_CONTEXT* ctx = (_YR_PROCESS_CONTEXT*)context;
+
+  while (fgets(buffer, sizeof(buffer), ctx->maps) != NULL)
   {
     sscanf(buffer, "%zx-%zx", &begin, &end);
 
-    length = end - begin;
+    new_block = (YR_MEMORY_BLOCK*)yr_malloc(sizeof(YR_MEMORY_BLOCK));
 
-    data = yr_malloc(length);
+    if (new_block == NULL)
+      return ERROR_INSUFICIENT_MEMORY;
 
-    if (data == NULL)
+    new_block->base = begin;
+    new_block->size = end - begin;
+
+    if (*head == NULL)
+      *head = new_block;
+
+    if (current != NULL)
+      current->next = new_block;
+
+    current = new_block;
+  }
+
+  return ERROR_SUCCESS;
+}
+
+int _yr_read_process_block(
+  void* context,
+  YR_MEMORY_BLOCK* block,
+  uint8_t** data)
+{
+  uint8_t* buffer = NULL;
+  int result = ERROR_SUCCESS;
+  *data = NULL;
+
+  _YR_PROCESS_CONTEXT* ctx = (_YR_PROCESS_CONTEXT*)context;
+
+  buffer = (uint8_t*)yr_malloc(block->size);
+
+  if (buffer == NULL)
+    return ERROR_INSUFICIENT_MEMORY;
+
+  if (pread(ctx->mem_fd, data, block->size, block->base) == -1)
+  {
+    result = ERROR_COULD_NOT_READ_PROCESS_MEMORY;
+
+    if (buffer != NULL)
     {
-      result = ERROR_INSUFICIENT_MEMORY;
-      goto _exit;
-    }
-
-    if (pread(mem, data, length, begin) != -1)
-    {
-      new_block = (YR_MEMORY_BLOCK*) yr_malloc(sizeof(YR_MEMORY_BLOCK));
-
-      if (new_block == NULL)
-      {
-        result = ERROR_INSUFICIENT_MEMORY;
-        goto _exit;
-      }
-
-      if (*first_block == NULL)
-        *first_block = new_block;
-
-      new_block->base = begin;
-      new_block->size = length;
-      new_block->data = data;
-      new_block->next = NULL;
-
-      if (current_block != NULL)
-        current_block->next = new_block;
-
-      current_block = new_block;
-    }
-    else
-    {
-      yr_free(data);
-      data = NULL;
+      yr_free(buffer);
+      buffer = NULL;
     }
   }
 
-  result = ERROR_SUCCESS;
-
-_exit:
-
-  if (attached)
-    ptrace(PTRACE_DETACH, pid, NULL, 0);
-
-  if (mem != -1)
-    close(mem);
-
-  if (maps != NULL)
-    fclose(maps);
-
-  if (data != NULL)
-    yr_free(data);
+  *data = buffer;
 
   return result;
 }
