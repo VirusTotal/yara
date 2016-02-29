@@ -62,7 +62,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Laika BOSS](https://github.com/lmco/laikaboss)
 * [Lastline, Inc.](http://www.lastline.com)
 * [Metaflows](http://www.metaflows.com)
-* [NBS Systems](https://www.nbs-system.com/)
+* [NBS System](https://www.nbs-system.com/)
 * [osquery](http://www.osquery.io)
 * [PhishMe](http://phishme.com/)
 * [Picus Security](http://www.picussecurity.com/)
