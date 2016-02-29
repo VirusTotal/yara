@@ -88,8 +88,6 @@ int _yr_get_process_blocks(
   {
     if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0)) // TODO: check for read permission?
     {
-      // TODO: test read so we don't return blocks that can't be read?
-
       new_block = (YR_MEMORY_BLOCK*)yr_malloc(sizeof(YR_MEMORY_BLOCK));
 
       if (new_block == NULL)
@@ -185,57 +183,45 @@ int _yr_read_process_block(
 
 int _yr_attach_process(
   int pid,
-  void** hProcess)
+  void** context)
 {
+  *context = NULL;
+
+  if (task_for_pid(mach_task_self(), pid, *context) != KERN_SUCCESS)
+    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+
   return ERROR_SUCCESS;
 }
 
 int _yr_detach_process(
-  void* hProcess)
+  void* pTask)
 {
+  task_t task = (task_t)context;
+
+  if (task != MACH_PORT_NULL)
+    mach_port_deallocate(mach_task_self(), task);
+
   return ERROR_SUCCESS;
 }
 
 int _yr_get_process_blocks(
-  void* hProcess,
+  void* context,
   YR_MEMORY_BLOCK** head)
 {
-  return ERROR_SUCCESS;
-}
+  task_t task = (task_t)context;
 
-int _yr_read_process_block(
-  void* hProcess,
-  YR_MEMORY_BLOCK* block,
-  uint8_t** data)
-{
-  return ERROR_SUCCESS;
-}
-
-int yr_process_get_memory(
-    pid_t pid,
-    YR_MEMORY_BLOCK** first_block)
-{
-  task_t task;
   kern_return_t kr;
-
   vm_size_t size = 0;
   vm_address_t address = 0;
   vm_region_basic_info_data_64_t info;
   mach_msg_type_number_t info_count;
   mach_port_t object;
 
-  unsigned char* data;
-
   YR_MEMORY_BLOCK* new_block;
-  YR_MEMORY_BLOCK* current_block = NULL;
+  YR_MEMORY_BLOCK* current = NULL;
 
-  *first_block = NULL;
-
-  if ((kr = task_for_pid(mach_task_self(), pid, &task)) != KERN_SUCCESS)
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-
-  do {
-
+  do
+  {
     info_count = VM_REGION_BASIC_INFO_COUNT_64;
 
     kr = vm_region_64(
@@ -243,61 +229,74 @@ int yr_process_get_memory(
         &address,
         &size,
         VM_REGION_BASIC_INFO,
-        (vm_region_info_t) &info,
+        (vm_region_info_t)&info,
         &info_count,
         &object);
 
     if (kr == KERN_SUCCESS)
     {
-      data = (unsigned char*) yr_malloc(size);
+      new_block = (YR_MEMORY_BLOCK*)yr_malloc(sizeof(YR_MEMORY_BLOCK));
 
-      if (data == NULL)
+      if (new_block == NULL)
         return ERROR_INSUFICIENT_MEMORY;
 
-      if (vm_read_overwrite(
-              task,
-              address,
-              size,
-              (vm_address_t)
-              data,
-              &size) == KERN_SUCCESS)
-      {
-        new_block = (YR_MEMORY_BLOCK*) yr_malloc(sizeof(YR_MEMORY_BLOCK));
+      new_block->base = address;
+      new_block->size = size;
+      new_block->next = NULL;
 
-        if (new_block == NULL)
-        {
-          yr_free(data);
-          return ERROR_INSUFICIENT_MEMORY;
-        }
+      if (*head == NULL)
+        *head = new_block;
 
-        if (*first_block == NULL)
-          *first_block = new_block;
+      if (current != NULL)
+        current->next = new_block;
 
-        new_block->base = address;
-        new_block->size = size;
-        new_block->data = data;
-        new_block->next = NULL;
-
-        if (current_block != NULL)
-          current_block->next = new_block;
-
-        current_block = new_block;
-      }
-      else
-      {
-        yr_free(data);
-      }
-
+      current = new_block;
       address += size;
     }
 
-
   } while (kr != KERN_INVALID_ADDRESS);
 
-  if (task != MACH_PORT_NULL)
-    mach_port_deallocate(mach_task_self(), task);
-
   return ERROR_SUCCESS;
+}
+
+int _yr_read_process_block(
+  void* context,
+  YR_MEMORY_BLOCK* block,
+  uint8_t** data)
+{
+  task_t task = (task_t)context;
+
+  int result = ERROR_SUCCESS;
+  uint8_t* buffer;
+  vm_size_t size = block->size;
+  *data = NULL;
+
+  buffer = (uint8_t*)yr_malloc(size);
+
+  if (buffer == NULL)
+    return ERROR_INSUFICIENT_MEMORY;
+
+  if (vm_read_overwrite(
+      task,
+      block->base,
+      block->size,
+      buffer,
+      &size) != KERN_SUCCESS)
+  {
+    result = ERROR_COULD_NOT_READ_PROCESS_MEMORY;
+
+    if (buffer != NULL)
+    {
+      yr_free(buffer);
+      buffer = NULL;
+    }
+  }
+
+  // TODO: compare read with block size
+  // it would be bad to assume block size bytes were read
+  *data = buffer;
+
+  return result;
 }
 
 #else
