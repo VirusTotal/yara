@@ -49,3 +49,10 @@ stamp-h1
 # Linux and Mac files
 *.swp
 .DS_Store
+test-alignment
+test-alignment.log
+test-alignment.trs
+test-rules
+test-rules.log
+test-rules.trs
+test-suite.log
