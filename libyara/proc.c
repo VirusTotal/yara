@@ -45,7 +45,6 @@ int _yr_attach_process(
         NULL,
         NULL);
   }
-  // TODO: should else be COULD NOT ATTACH?
 
   if (hToken != NULL)
     CloseHandle(hToken);
@@ -86,7 +85,7 @@ int _yr_get_process_blocks(
   while (address < si.lpMaximumApplicationAddress &&
     VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
   {
-    if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0)) // TODO: check for read permission?
+    if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
     {
       new_block = (YR_MEMORY_BLOCK*)yr_malloc(sizeof(YR_MEMORY_BLOCK));
 
@@ -187,14 +186,16 @@ int _yr_attach_process(
 {
   *context = NULL;
 
-  if (task_for_pid(mach_task_self(), pid, *context) != KERN_SUCCESS)
+  kern_return_t kr;
+
+  if ((kr = task_for_pid(mach_task_self(), pid, *context)) != KERN_SUCCESS)
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
 
   return ERROR_SUCCESS;
 }
 
 int _yr_detach_process(
-  void* pTask)
+  void* context)
 {
   task_t task = (task_t)context;
 
@@ -280,6 +281,7 @@ int _yr_read_process_block(
       task,
       block->base,
       block->size,
+      (vm_address_t)
       buffer,
       &size) != KERN_SUCCESS)
   {
@@ -497,7 +499,7 @@ static uint8_t* _yr_fetch_block_data(
 
   _yr_free_context_data(ctx);
 
-  int result = _yr_read_process_block(
+  _yr_read_process_block(
       ctx->process_context,
       ctx->current,
       &ctx->data);
@@ -509,6 +511,7 @@ static uint8_t* _yr_fetch_block_data(
 
   return ctx->data;
 }
+
 
 int yr_open_process_iterator(
     int pid,

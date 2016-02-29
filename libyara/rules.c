@@ -310,7 +310,6 @@ int _yr_rules_scan_mem_block(
 }
 
 // single block iterator impl
-// TODO: belongs in this file?
 static YR_MEMORY_BLOCK* _yr_get_first_block(
     YR_BLOCK_ITERATOR* iterator)
 {
@@ -388,7 +387,7 @@ YR_API int yr_rules_scan_mem_blocks(
   context.flags = flags;
   context.callback = callback;
   context.user_data = user_data;
-  context.file_size = block->size; // TODO: does this make sense for processes?
+  context.file_size = block->size;
   context.iterator = iterator;
   context.entry_point = UNDEFINED;
   context.objects_table = NULL;
