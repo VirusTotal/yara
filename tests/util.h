@@ -17,12 +17,29 @@ limitations under the License.
 #ifndef _UTIL_H
 #define _UTIL_H
 
-YR_RULES* rule_of_string(char* string);
-int matches_blob(char* rule, uint8_t* blob, size_t len);
-int matches_string(char* rule, char* string);
-int capture_string(char* rule, char* string, char* expected_string);
 
-#define assert_true_rule(rule,string)                                   \
+YR_RULES* compile_rule(
+    char* string);
+
+
+int matches_blob(
+    char* rule,
+    uint8_t* blob,
+    size_t len);
+
+
+int matches_string(
+    char* rule,
+    char* string);
+
+
+int capture_string(
+    char* rule,
+    char* string,
+    char* expected_string);
+
+
+#define assert_true_rule(rule, string)                                  \
   do {                                                                  \
     if (!matches_string(rule, string)) {                                \
       fprintf(stderr, "%s:%d: rule does not match (but should)\n",      \
@@ -31,16 +48,16 @@ int capture_string(char* rule, char* string, char* expected_string);
     }                                                                   \
   } while (0);
 
-#define assert_true_rule_blob(rule,blob,len)                            \
+#define assert_true_rule_blob(rule, blob)                               \
   do {                                                                  \
-    if (!matches_blob(rule, blob, len)) {                               \
+    if (!matches_blob(rule, (uint8_t*) (blob), sizeof(blob))) {         \
       fprintf(stderr, "%s:%d: rule does not match (but should)\n",      \
               __FILE__, __LINE__ );                                     \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
   } while (0);
 
-#define assert_false_rule(rule,string)                                  \
+#define assert_false_rule(rule, string)                                 \
   do {                                                                  \
     if (matches_string(rule, string)) {                                 \
       fprintf(stderr, "%s:%d: rule matches (but shouldn't)\n",          \
@@ -49,9 +66,9 @@ int capture_string(char* rule, char* string, char* expected_string);
     }                                                                   \
   } while (0);
 
-#define assert_false_rule_blob(rule,blob,len)                           \
+#define assert_false_rule_blob(rule, blob)                              \
   do {                                                                  \
-    if (matches_blob(rule, blob, len)) {                                \
+    if (matches_blob(rule, (uint8_t*) (blob), sizeof(blob))) {          \
       fprintf(stderr, "%s:%d: rule matches (but shouldn't)\n",          \
               __FILE__, __LINE__ );                                     \
       exit(EXIT_FAILURE);                                               \
@@ -59,7 +76,7 @@ int capture_string(char* rule, char* string, char* expected_string);
   } while (0);
 
 #define assert_syntax_correct(rule) do {                                \
-    if (rule_of_string(rule) == NULL) {                                 \
+    if (compile_rule(rule) == NULL) {                                   \
       fprintf(stderr, "%s:%d: rule can't be compiled (but should)\n",   \
               __FILE__, __LINE__);                                      \
       exit(EXIT_FAILURE);                                               \
@@ -67,7 +84,7 @@ int capture_string(char* rule, char* string, char* expected_string);
   } while(0);
 
 #define assert_syntax_error(rule) do {                                  \
-    if (rule_of_string(rule) != NULL) {                                 \
+    if (compile_rule(rule) != NULL) {                                   \
       fprintf(stderr, "%s:%d: rule can be compiled (but shouldn't)\n",  \
               __FILE__, __LINE__);                                      \
       exit(EXIT_FAILURE);                                               \
