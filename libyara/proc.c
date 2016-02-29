@@ -97,6 +97,7 @@ int _yr_get_process_blocks(
 
       new_block->base = (size_t)mbi.BaseAddress;
       new_block->size = mbi.RegionSize;
+      new_block->next = NULL;
 
       if (*head == NULL)
         *head = new_block;
@@ -338,7 +339,7 @@ int _yr_attach_process(
   snprintf(buffer, sizeof(buffer), "/proc/%u/mem", pid);
   ctx->mem_fd = open(buffer, O_RDONLY);
 
-  if (ctx->mem_fd != -1)
+  if (ctx->mem_fd == -1)
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
 
   if (ptrace(PTRACE_ATTACH, pid, NULL, 0) != -1)
@@ -396,6 +397,7 @@ int _yr_get_process_blocks(
 
     new_block->base = begin;
     new_block->size = end - begin;
+    new_block->next = NULL;
 
     if (*head == NULL)
       *head = new_block;
@@ -425,7 +427,7 @@ int _yr_read_process_block(
   if (buffer == NULL)
     return ERROR_INSUFICIENT_MEMORY;
 
-  if (pread(ctx->mem_fd, data, block->size, block->base) == -1)
+  if (pread(ctx->mem_fd, buffer, block->size, block->base) == -1)
   {
     result = ERROR_COULD_NOT_READ_PROCESS_MEMORY;
 
