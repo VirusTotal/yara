@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef _UTIL_H
 #define _UTIL_H
 
+extern char compile_error[1024];
 
 YR_RULES* compile_rule(
     char* string);
@@ -77,8 +78,8 @@ int capture_string(
 
 #define assert_syntax_correct(rule) do {                                \
     if (compile_rule(rule) == NULL) {                                   \
-      fprintf(stderr, "%s:%d: rule can't be compiled (but should)\n",   \
-              __FILE__, __LINE__);                                      \
+      fprintf(stderr, "%s:%d: rule << %s >> can't be compiled: %s\n",   \
+              __FILE__, __LINE__, rule, compile_error);                 \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
   } while(0);
