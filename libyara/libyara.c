@@ -44,6 +44,14 @@ pthread_key_t recovery_state_key;
 
 static int init_count = 0;
 
+struct yr_config_var {
+  union {
+    size_t sz;
+    unsigned int ui;
+    char *str;
+  } data; // The data content
+} yr_cfgs[YR_CONFIG_MAX];
+
 char lowercase[256];
 char altercase[256];
 
@@ -74,6 +82,7 @@ void locking_function(int mode, int n, const char *file, int line)
 YR_API int yr_initialize(void)
 {
   int i;
+  unsigned int def_stack_size = DEFAULT_STACK_SIZE;
 
   if (init_count > 0)
   {
@@ -114,6 +123,9 @@ YR_API int yr_initialize(void)
 
   FAIL_ON_ERROR(yr_re_initialize());
   FAIL_ON_ERROR(yr_modules_initialize());
+
+  // Initialize default configuration options
+  FAIL_ON_ERROR(yr_set_configuration(YR_CONFIG_STACK_SIZE, &def_stack_size));
 
   init_count++;
 
@@ -212,4 +224,34 @@ YR_API int yr_get_tidx(void)
   #else
   return (int) (size_t) pthread_getspecific(tidx_key) - 1;
   #endif
+}
+
+YR_API int yr_set_configuration(enum yr_cfg_name cfgname, void *src) {
+  if(src == NULL) {
+    return ERROR_INTERNAL_FATAL_ERROR;
+  }
+  switch(cfgname) { // lump all the cases using same types together in one cascade
+    case YR_CONFIG_STACK_SIZE:
+      yr_cfgs[cfgname].data.ui = *(unsigned int*)src;
+      break;
+    default:
+      return ERROR_INTERNAL_FATAL_ERROR;
+  }
+
+  return ERROR_SUCCESS;
+}
+
+YR_API int yr_get_configuration(enum yr_cfg_name cfgname, void *dest) {
+  if(dest == NULL) {
+    return ERROR_INTERNAL_FATAL_ERROR;
+  }
+  switch(cfgname) { // lump all the cases using same types together in one cascade
+    case YR_CONFIG_STACK_SIZE:
+      *(size_t*)dest = yr_cfgs[cfgname].data.ui;
+      break;
+    default:
+      return ERROR_INTERNAL_FATAL_ERROR;
+  }
+
+  return ERROR_SUCCESS;
 }
