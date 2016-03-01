@@ -82,7 +82,7 @@ int capture_string(
               __FILE__, __LINE__, rule, compile_error);                 \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
-  } while(0);
+  } while (0);
 
 #define assert_syntax_error(rule) do {                                  \
     if (compile_rule(rule) != NULL) {                                   \
@@ -90,7 +90,7 @@ int capture_string(
               __FILE__, __LINE__);                                      \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
-  } while(0);
+  } while (0);
 
 #define assert_true_regexp(regexp,string,expected) do {                 \
     if (!capture_string("rule test { strings: $a = /" regexp            \
@@ -99,7 +99,7 @@ int capture_string(
               __FILE__, __LINE__);                                      \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
-} while (0);
+  } while (0);
 
 #define assert_false_regexp(regexp,string)                              \
   assert_false_rule("rule test { strings: $a = /" regexp                \
