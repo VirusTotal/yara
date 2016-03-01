@@ -213,6 +213,27 @@ Instances of this class have the same attributes as the dictionary passed to the
 callback function.
 
 
+You can also specify a module callback function when invoking ``match`` method.
+The provided function will be called for every imported module that scanned a
+file.  Your callback function should expect a single parameter of dictionary
+type, and should return ``CALLBACK_CONTINUE`` to proceed to the next rule or
+``CALLBACK_ABORT`` to stop applying rules to your data.
+
+Here is an example:
+
+.. code-block:: python
+
+  import yara
+
+  def modules_callback(data):
+    print data
+    yara.CALLBACK_CONTINUE
+
+  matches = rules.match('/foo/bar/my_file', modules_callback=modules_callback)
+
+The passed dictionary will contain the information from the module.
+
+
 Reference
 ---------
 
@@ -261,7 +282,7 @@ Reference
   Instances of this class are returned by :py:func:`yara.compile`  and
   represents a set of compiled rules.
 
-  .. py:method:: match(filepath, pid, data, externals=None, callback=None, fast=False, timeout=None, modules_data=None)
+  .. py:method:: match(filepath, pid, data, externals=None, callback=None, fast=False, timeout=None, modules_data=None, modules_callback=None)
 
     Scan a file, process memory or data string.
 
@@ -280,6 +301,7 @@ Reference
     :param dict modules_data: Dictionary with additional data to modules. Keys
       are module names and values are *bytes* objects containing the additional
       data.
+    :param function modules_callback: Callback function invoked for each module.
     :raises YaraTimeoutError: If the timeout was reached.
     :raises YaraError: If an error occurred during the scan.
 
