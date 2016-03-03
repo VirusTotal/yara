@@ -378,3 +378,22 @@ _exit:
 
 #endif
 #endif
+
+int yr_process_free_memory(
+    YR_MEMORY_BLOCK* first_block)
+{
+  YR_MEMORY_BLOCK* block;
+  YR_MEMORY_BLOCK* next_block;
+
+  block = first_block;
+  while (block != NULL)
+  {
+    next_block = block->next;
+
+    yr_free(block->data);
+    yr_free(block);
+
+    block = next_block;
+  }
+  return 0;
+}

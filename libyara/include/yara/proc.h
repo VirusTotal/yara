@@ -23,4 +23,8 @@ int yr_process_get_memory(
     int pid,
     YR_MEMORY_BLOCK** first_block);
 
+int yr_process_free_memory(
+  	YR_MEMORY_BLOCK* first_block);
+
+
 #endif
