@@ -539,9 +539,10 @@ YR_API int yr_rules_scan_mem(
       timeout);
 }
 
+
 void print_hexdump(
     uint8_t* data,
-    int offset,
+    int64_t offset,
     int length)
 {
   ++length;
@@ -559,22 +560,75 @@ void print_hexdump(
     for (i = 0;i < 16;++i)
     {
       if (data[i+(line*16)] >= 32 && data[i+(line*16)] <= 126)
-        printf("%c ", data[i+(line*16)]);
+        printf("%c", data[i+(line*16)]);
       else
-        printf(". ", (uint8_t) data[i+(line*16)]);
+        printf(".", (uint8_t) data[i+(line*16)]);
     }
     printf("\n");
   }
   printf("\n");
 }
 
+
+YR_API int yr_rules_context_pid_match(
+    YR_MEMORY_BLOCK* first_block,
+    YR_MATCH* match,
+    int lines)
+{
+  int result = ERROR_SUCCESS;
+
+  YR_MEMORY_BLOCK* next_block;
+  YR_MEMORY_BLOCK* block;
+
+  int64_t match_position = match->base+match->offset;
+
+  /* Number of characters showed */
+  int chars_number = lines*16;
+  /* Calculate padding length */
+  int padding = ((match->length%chars_number-chars_number)*-1)/2;
+  /* Calculate length */
+  int length = padding*2+match->length;
+
+  int64_t init_pos; /* Relative position from block->base */
+
+  block = first_block;
+
+  while (block != NULL)
+  {
+    next_block = block->next;
+
+    if ((block->base <= match_position) && (block->base+block->size >= match_position)) {
+      /* Calculate context's initial position */
+      init_pos = match_position-block->base-padding;
+
+      /* Fixed corner cases inside block*/
+        /* Final position > blocksize */
+      if (init_pos+padding*2+match->length > block->size) {
+        init_pos = block->size-padding*2-match->length;
+      }
+      /* Initial position < 0 */
+      if (init_pos < 0) {
+        init_pos = 0;
+      }
+
+      print_hexdump((block->data)+init_pos,
+                    block->base+init_pos,
+                    length);
+      return result;
+    }
+
+    block = next_block;
+  }
+
+  return result;
+}
+
+
 YR_API int yr_rules_context_match(
     YR_MAPPED_FILE* mfile,
     YR_MATCH* match,
     int lines)
 {
-  //YR_MAPPED_FILE mfile;
-  //int result = yr_filemap_map(filename, &mfile);
   /* Number of characters showed */
   int chars_number = lines*16;
   /* Calculate padding length */
@@ -602,9 +656,7 @@ YR_API int yr_rules_context_match(
                 init_pos,
                 length);
 
-  //yr_filemap_unmap(&mfile);
-
-  return 0;
+  return ERROR_SUCCESS;
 }
 
 

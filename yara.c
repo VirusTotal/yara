@@ -41,6 +41,7 @@ limitations under the License.
 #include "args.h"
 #include "threading.h"
 #include "config.h"
+#include "yara/proc.h"
 
 
 #define ERROR_COULD_NOT_CREATE_THREAD  100
@@ -88,6 +89,9 @@ typedef struct _QUEUED_FILE {
 #define MAX_ARGS_IDENTIFIER     32
 #define MAX_ARGS_EXT_VAR        32
 #define MAX_ARGS_MODULE_DATA    32
+
+int is_integer(const char *str);
+int is_float(const char *str);
 
 char* tags[MAX_ARGS_TAG + 1];
 char* identifiers[MAX_ARGS_IDENTIFIER + 1];
@@ -623,6 +627,7 @@ int handle_message(
 
     if (show_strings)
     {
+      printf("Message %d", message);
       YR_STRING* string;
 
       yr_rule_strings_foreach(rule, string)
@@ -644,37 +649,70 @@ int handle_message(
     }
 
     //Show matched context
-
     if (show_context)
     {
       YR_STRING* string;
-      YR_MAPPED_FILE mfile;
       
       printf("Showing %d lines of context\n", show_context);
 
-      /* Open map file */
-      yr_filemap_map(data, &mfile);
+      if (is_integer(data))
+      { //Is process
+        YR_MEMORY_BLOCK* first_block;
 
-      yr_rule_strings_foreach(rule, string)
-      {
-        YR_MATCH* match;
+        int pid = atoi(data);
 
-        yr_string_matches_foreach(string, match)
+        yr_process_get_memory(pid, &first_block);
+        yr_rule_strings_foreach(rule, string)
         {
-          printf("0x%" PRIx64 ":%s: ",
-              match->base + match->offset,
-              string->identifier);
+          YR_MATCH* match;
 
-          if (STRING_IS_HEX(string))
-            print_hex_string(match->data, match->length);
-          else
-            print_string(match->data, match->length);
+          yr_string_matches_foreach(string, match)
+          {
+            printf("0x%" PRIx64 ":%s: ",
+                match->base + match->offset,
+                string->identifier);
 
-          yr_rules_context_match(&mfile, match, show_context);
+            if (STRING_IS_HEX(string))
+              print_hex_string(match->data, match->length);
+            else
+              print_string(match->data, match->length);
+
+            yr_rules_context_pid_match(first_block, match, show_context);
+          }
         }
+
+        // Free the blocks generated
+        yr_process_free_memory(first_block);
+
       }
-      /* Close map file */
-      yr_filemap_unmap(&mfile);
+      else
+      { //Is file
+
+        YR_MAPPED_FILE mfile;
+        // Open map file
+        yr_filemap_map(data, &mfile);
+
+        yr_rule_strings_foreach(rule, string)
+        {
+          YR_MATCH* match;
+
+          yr_string_matches_foreach(string, match)
+          {
+            printf("0x%" PRIx64 ":%s: ",
+                match->base + match->offset,
+                string->identifier);
+
+            if (STRING_IS_HEX(string))
+              print_hex_string(match->data, match->length);
+            else
+              print_string(match->data, match->length);
+
+            yr_rules_context_match(&mfile, match, show_context);
+          }
+        }
+        // Close map file
+        yr_filemap_unmap(&mfile);
+      }
     }
 
     mutex_unlock(&output_mutex);
