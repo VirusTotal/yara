@@ -49,9 +49,11 @@ int err = 0;
     }                                                 \
   } while (0)
 
-int main (int argc, char **argv) {
-  CHECK_SIZE(YR_NAMESPACE, 4*MAX_THREADS + 8);
-  CHECK_OFFSET(YR_NAMESPACE, 4*MAX_THREADS, name);
+
+int main (int argc, char **argv)
+{
+  CHECK_SIZE(YR_NAMESPACE, 4 * MAX_THREADS + 8);
+  CHECK_OFFSET(YR_NAMESPACE, 4 * MAX_THREADS, name);
 
   CHECK_SIZE(YR_META, 32);
   CHECK_OFFSET(YR_META, 8,  integer);
@@ -65,13 +67,13 @@ int main (int argc, char **argv) {
   CHECK_OFFSET(YR_MATCH, 24, chain_length);
   CHECK_OFFSET(YR_MATCH, 32, prev);
   CHECK_OFFSET(YR_MATCH, 40, next);
-  
+
   CHECK_SIZE(YR_MATCHES, 24);
   CHECK_OFFSET(YR_MATCHES, 8,  head);
   CHECK_OFFSET(YR_MATCHES, 16, tail);
 
   CHECK_SIZE(YR_STRING, 48 + 2 * 24 /* YR_MATCHES */ * MAX_THREADS
-#            ifdef PROFILING_ENABLED             
+#            ifdef PROFILING_ENABLED
              + 8
 #            endif
              );
@@ -84,7 +86,7 @@ int main (int argc, char **argv) {
   CHECK_OFFSET(YR_STRING, 40, fixed_offset);
 
   CHECK_SIZE(YR_RULE, 8 + 4*MAX_THREADS + 40
-#            ifdef PROFILING_ENABLED             
+#            ifdef PROFILING_ENABLED
              + 8
 #            endif
              );
@@ -100,7 +102,7 @@ int main (int argc, char **argv) {
   CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8,  value.f);
   CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8,  value.s);
   CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 16, identifier);
-  
+
   CHECK_SIZE(YR_AC_MATCH, 40);
   CHECK_OFFSET(YR_AC_MATCH, 8,  string);
   CHECK_OFFSET(YR_AC_MATCH, 16, forward_code);
