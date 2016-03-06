@@ -180,15 +180,25 @@ int _yr_read_process_block(
 #include <mach/vm_region.h>
 #include <mach/vm_statistics.h>
 
+typedef struct _YR_MACH_CONTEXT
+{
+  task_t task;
+
+} YR_MACH_CONTEXT;
+
 int _yr_attach_process(
   int pid,
   void** context)
 {
-  *context = NULL;
+  YR_MACH_CONTEXT* ctx = (YR_MACH_CONTEXT*)yr_malloc(sizeof(YR_MACH_CONTEXT));
+  *context = ctx;
+
+  if(ctx == NULL)
+    return ERROR_INSUFICIENT_MEMORY;
 
   kern_return_t kr;
 
-  if ((kr = task_for_pid(mach_task_self(), pid, *context)) != KERN_SUCCESS)
+  if ((kr = task_for_pid(mach_task_self(), pid, &ctx->task)) != KERN_SUCCESS)
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
 
   return ERROR_SUCCESS;
@@ -197,10 +207,15 @@ int _yr_attach_process(
 int _yr_detach_process(
   void* context)
 {
-  task_t task = (task_t)context;
+  if(context == NULL)
+    return ERROR_SUCCESS;
 
-  if (task != MACH_PORT_NULL)
-    mach_port_deallocate(mach_task_self(), task);
+  YR_MACH_CONTEXT* ctx = (YR_MACH_CONTEXT*)context;
+
+  if (ctx->task != MACH_PORT_NULL)
+    mach_port_deallocate(mach_task_self(), ctx->task);
+
+  yr_free(ctx);
 
   return ERROR_SUCCESS;
 }
@@ -209,7 +224,7 @@ int _yr_get_process_blocks(
   void* context,
   YR_MEMORY_BLOCK** head)
 {
-  task_t task = (task_t)context;
+  YR_MACH_CONTEXT* ctx = (YR_MACH_CONTEXT*)context;
 
   kern_return_t kr;
   vm_size_t size = 0;
@@ -226,7 +241,7 @@ int _yr_get_process_blocks(
     info_count = VM_REGION_BASIC_INFO_COUNT_64;
 
     kr = vm_region_64(
-        task,
+        ctx->task,
         &address,
         &size,
         VM_REGION_BASIC_INFO,
@@ -265,7 +280,7 @@ int _yr_read_process_block(
   YR_MEMORY_BLOCK* block,
   uint8_t** data)
 {
-  task_t task = (task_t)context;
+  YR_MACH_CONTEXT* ctx = (YR_MACH_CONTEXT*)context;
 
   int result = ERROR_SUCCESS;
   uint8_t* buffer;
@@ -278,7 +293,7 @@ int _yr_read_process_block(
     return ERROR_INSUFICIENT_MEMORY;
 
   if (vm_read_overwrite(
-      task,
+      ctx->task,
       block->base,
       block->size,
       (vm_address_t)
@@ -305,14 +320,14 @@ int _yr_read_process_block(
 
 #include <errno.h>
 
-typedef struct _YR_LINUX_CONTEXT
+typedef struct _YR_PTRACE_CONTEXT
 {
   int pid;
   int mem_fd;
   FILE* maps;
   int attached;
 
-} YR_LINUX_CONTEXT;
+} YR_PTRACE_CONTEXT;
 
 int _yr_attach_process(
   int pid,
@@ -320,7 +335,7 @@ int _yr_attach_process(
 {
   char buffer[256];
 
-  YR_LINUX_CONTEXT* ctx = (YR_LINUX_CONTEXT*)yr_malloc(sizeof(YR_LINUX_CONTEXT));
+  YR_PTRACE_CONTEXT* ctx = (YR_PTRACE_CONTEXT*)yr_malloc(sizeof(YR_PTRACE_CONTEXT));
   *context = ctx;
 
   if (ctx == NULL)
@@ -359,7 +374,7 @@ int _yr_detach_process(
   if (context == NULL)
     return ERROR_SUCCESS;
 
-  YR_LINUX_CONTEXT* ctx = (YR_LINUX_CONTEXT*)context;
+  YR_PTRACE_CONTEXT* ctx = (YR_PTRACE_CONTEXT*)context;
 
   if(ctx->attached)
     ptrace(PTRACE_DETACH, ctx->pid, NULL, 0);
@@ -385,7 +400,7 @@ int _yr_get_process_blocks(
   YR_MEMORY_BLOCK* new_block;
   YR_MEMORY_BLOCK* current = NULL;
 
-  YR_LINUX_CONTEXT* ctx = (YR_LINUX_CONTEXT*)context;
+  YR_PTRACE_CONTEXT* ctx = (YR_PTRACE_CONTEXT*)context;
 
   while (fgets(buffer, sizeof(buffer), ctx->maps) != NULL)
   {
@@ -421,7 +436,7 @@ int _yr_read_process_block(
   int result = ERROR_SUCCESS;
   *data = NULL;
 
-  YR_LINUX_CONTEXT* ctx = (YR_LINUX_CONTEXT*)context;
+  YR_PTRACE_CONTEXT* ctx = (YR_PTRACE_CONTEXT*)context;
 
   buffer = (uint8_t*)yr_malloc(block->size);
 
