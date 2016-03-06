@@ -50,6 +50,14 @@ stamp-h1
 *.swp
 .DS_Store
 
+test-alignment
+test-alignment.log
+test-alignment.trs
+test-rules
+test-rules.log
+test-rules.trs
+test-suite.log
+
 # Visual Studio files
 Release/
 Debug/
