@@ -155,6 +155,7 @@ limitations under the License.
 %type <c_string> tags
 %type <c_string> tag_list
 
+%type <sized_string> text_string
 %type <integer> string_modifier
 %type <integer> string_modifiers
 
@@ -182,6 +183,7 @@ limitations under the License.
 %destructor { yr_free($$); } _TEXT_STRING_
 %destructor { yr_free($$); } _HEX_STRING_
 %destructor { yr_free($$); } _REGEXP_
+%destructor { yr_free($$); } text_string
 
 %union {
   EXPRESSION      expression;
@@ -485,13 +487,26 @@ string_declarations
     | string_declarations string_declaration  { $$ = $1; }
     ;
 
+text_string
+    : _TEXT_STRING_               { $$ = $1; }
+    | _TEXT_STRING_ _TEXT_STRING_
+      {
+        $$ = yr_malloc(sizeof(SIZED_STRING) + $1->length + $2->length + 1);
+        $$->flags = 0;
+        $$->c_string[0] = 0;
+        strcat($$->c_string, $1->c_string);
+        strcat($$->c_string, $2->c_string);
+        $$->length = $1->length + $2->length;
+      }
+    ;
+
 
 string_declaration
     : _STRING_IDENTIFIER_ '='
       {
         compiler->error_line = yyget_lineno(yyscanner);
       }
-      _TEXT_STRING_ string_modifiers
+      text_string string_modifiers
       {
         $$ = yr_parser_reduce_string_declaration(
             yyscanner, (int32_t) $5, $1, $4);
