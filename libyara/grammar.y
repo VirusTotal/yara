@@ -78,6 +78,8 @@ limitations under the License.
       yyerror(yyscanner, compiler, NULL); \
       YYERROR; \
     }
+
+  int inside_rule_body = 0;
 %}
 
 
@@ -156,6 +158,8 @@ limitations under the License.
 %type <c_string> tag_list
 
 %type <sized_string> text_string
+%type <sized_string> hex_string
+
 %type <integer> string_modifier
 %type <integer> string_modifiers
 
@@ -224,6 +228,7 @@ import
 rule
     : rule_modifiers _RULE_ _IDENTIFIER_
       {
+        inside_rule_body = 0;
         YR_RULE* rule = yr_parser_reduce_rule_declaration_phase_1(
             yyscanner, (int32_t) $1, $3);
 
@@ -231,16 +236,21 @@ rule
 
         $<rule>$ = rule;
       }
-      tags '{' meta strings
+      tags '{'
+      {
+        inside_rule_body = 1;
+      }
+      meta strings
       {
         YR_RULE* rule = $<rule>4; // rule created in phase 1
 
         rule->tags = $5;
-        rule->metas = $7;
-        rule->strings = $8;
+        rule->metas = $8;
+        rule->strings = $9;
       }
       condition '}'
       {
+        inside_rule_body = 0;
         YR_RULE* rule = $<rule>4; // rule created in phase 1
 
         compiler->last_result = yr_parser_reduce_rule_declaration_phase_2(
@@ -500,6 +510,18 @@ text_string
       }
     ;
 
+hex_string
+    : _HEX_STRING_              { $$ = $1; }
+    | _HEX_STRING_ _HEX_STRING_
+      {
+        $$ = yr_malloc(sizeof(SIZED_STRING) + $1->length + $2->length + 1);
+        $$->flags = 0;
+        $$->c_string[0] = 0;
+        strcat($$->c_string, $1->c_string);
+        strcat($$->c_string, $2->c_string);
+        $$->length = $1->length + $2->length;
+      }
+    ;
 
 string_declaration
     : _STRING_IDENTIFIER_ '='
@@ -533,7 +555,7 @@ string_declaration
 
         compiler->error_line = 0;
       }
-    | _STRING_IDENTIFIER_ '=' _HEX_STRING_
+    | _STRING_IDENTIFIER_ '=' hex_string
       {
         $$ = yr_parser_reduce_string_declaration(
             yyscanner, STRING_GFLAGS_HEXADECIMAL, $1, $3);
