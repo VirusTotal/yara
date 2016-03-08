@@ -66,6 +66,11 @@ Available options are:
 
   Abort scanning after a number of seconds has elapsed.
 
+.. option:: -k <slots> --stacksize=<slots>
+
+  Allocate a stack size of "slots" number of slots. Default: 16384. This
+  will allow you to use larger rules, albeit with more memory overhead.
+
 .. option:: -d <identifier>=<value>
 
   Define external variable.

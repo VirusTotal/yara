@@ -438,6 +438,19 @@ meta_declaration
 
         ERROR_IF($$ == NULL);
       }
+    | _IDENTIFIER_ '=' '-' _NUMBER_
+      {
+        $$ = yr_parser_reduce_meta_declaration(
+            yyscanner,
+            META_TYPE_INTEGER,
+            $1,
+            NULL,
+            -$4);
+
+        yr_free($1);
+
+        ERROR_IF($$ == NULL);
+      }
     | _IDENTIFIER_ '=' _TRUE_
       {
         $$ = yr_parser_reduce_meta_declaration(
