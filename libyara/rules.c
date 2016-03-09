@@ -550,7 +550,7 @@ void print_hexdump(
   int num_lines = length/16;
   for (line = 0;line < num_lines;++line) {
     /* line offset */
-    printf("0x%llx: ", offset+(line*16));
+    printf("0x%lx: ", offset+(line*16));
     //Hexdump
     for (i = 0;i < 16;++i) {
       printf("%02X ", data[i+(line*16)]);
@@ -562,7 +562,7 @@ void print_hexdump(
       if (data[i+(line*16)] >= 32 && data[i+(line*16)] <= 126)
         printf("%c", data[i+(line*16)]);
       else
-        printf(".", (uint8_t) data[i+(line*16)]);
+        printf(".");
     }
     printf("\n");
   }
