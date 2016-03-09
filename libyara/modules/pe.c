@@ -395,6 +395,13 @@ int64_t pe_rva_to_offset(
         section_rva = section->VirtualAddress;
         section_offset = section->PointerToRawData;
         section_raw_size = section->SizeOfRawData;
+
+        // If the section_offset is less than 0x200 it is rounded down to 0.
+        // See also: https://github.com/plusvic/yara/issues/399
+        // Discussion (and other awesome details) at:
+        // https://code.google.com/archive/p/corkami/wikis/PE.wiki#PointerToRawData
+        if (section_offset < 0x200)
+          section_offset = 0;
       }
 
       section++;
