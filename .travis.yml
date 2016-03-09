@@ -1,0 +1,9 @@
+language: c
+before_install:
+  - sudo apt-get install -y libjansson-dev
+  - ./bootstrap.sh
+  - ./configure
+
+script:
+  - make
+  - make check
