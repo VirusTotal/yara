@@ -627,7 +627,6 @@ int handle_message(
 
     if (show_strings)
     {
-      printf("Message %d", message);
       YR_STRING* string;
 
       yr_rule_strings_foreach(rule, string)
