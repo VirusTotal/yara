@@ -19,7 +19,7 @@ limitations under the License.
 
 #include <assert.h>
 
-#if _WIN32 || __CYGWIN__
+#if _WIN32
 
 #include <windows.h>
 #include <setjmp.h>

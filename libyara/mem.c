@@ -16,7 +16,7 @@ limitations under the License.
 
 
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#ifdef _WIN32
 
 #include <windows.h>
 #include <string.h>

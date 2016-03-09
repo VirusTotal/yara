@@ -29,7 +29,7 @@ order to avoid confusion with operating system threads.
 #include <string.h>
 #include <limits.h>
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#ifdef _WIN32
 #include <windows.h>
 #else
 #include <pthread.h>
@@ -113,7 +113,7 @@ typedef struct _RE_THREAD_STORAGE
 } RE_THREAD_STORAGE;
 
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#ifdef _WIN32
 DWORD thread_storage_key = 0;
 #else
 pthread_key_t thread_storage_key = 0;
@@ -128,7 +128,7 @@ pthread_key_t thread_storage_key = 0;
 
 int yr_re_initialize(void)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
+  #ifdef _WIN32
   thread_storage_key = TlsAlloc();
   #else
   pthread_key_create(&thread_storage_key, NULL);
@@ -146,7 +146,7 @@ int yr_re_initialize(void)
 
 int yr_re_finalize(void)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
+  #ifdef _WIN32
   TlsFree(thread_storage_key);
   #else
   pthread_key_delete(thread_storage_key);
@@ -170,7 +170,7 @@ int yr_re_finalize_thread(void)
   RE_THREAD_STORAGE* storage;
 
   if (thread_storage_key != 0)
-    #if defined(_WIN32) || defined(__CYGWIN__)
+    #ifdef _WIN32
     storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
     #else
     storage = (RE_THREAD_STORAGE*) pthread_getspecific(thread_storage_key);
@@ -192,7 +192,7 @@ int yr_re_finalize_thread(void)
     yr_free(storage);
   }
 
-  #if defined(_WIN32) || defined(__CYGWIN__)
+  #ifdef _WIN32
   TlsSetValue(thread_storage_key, NULL);
   #else
   pthread_setspecific(thread_storage_key, NULL);
@@ -1256,7 +1256,7 @@ int yr_re_emit_code(
 int _yr_re_alloc_storage(
     RE_THREAD_STORAGE** storage)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
+  #ifdef _WIN32
   *storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
   #else
   *storage = (RE_THREAD_STORAGE*) pthread_getspecific(thread_storage_key);
@@ -1273,7 +1273,7 @@ int _yr_re_alloc_storage(
     (*storage)->fiber_pool.fibers.head = NULL;
     (*storage)->fiber_pool.fibers.tail = NULL;
 
-    #if defined(_WIN32) || defined(__CYGWIN__)
+    #ifdef _WIN32
     TlsSetValue(thread_storage_key, *storage);
     #else
     pthread_setspecific(thread_storage_key, *storage);

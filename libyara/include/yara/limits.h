@@ -17,7 +17,7 @@ limitations under the License.
 #ifndef YR_LIMITS_H
 #define YR_LIMITS_H
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
