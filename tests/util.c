@@ -19,6 +19,18 @@ limitations under the License.
 
 #include <yara.h>
 
+char compile_error[1024];
+
+static void callback_function(
+    int error_level,
+    const char* file_name,
+    int line_number,
+    const char* message,
+    void* user_data)
+{
+  snprintf(compile_error, sizeof(compile_error), "line %d: %s", line_number, message);
+}
+
 
 YR_RULES* compile_rule(
     char* string)
@@ -26,11 +38,15 @@ YR_RULES* compile_rule(
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
 
+  compile_error[0] = '\0';
+
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
   {
     perror("yr_compiler_create");
     goto _exit;
   }
+
+  yr_compiler_set_callback(compiler, callback_function, NULL);
 
   if (yr_compiler_add_string(compiler, string, NULL) != 0)
   {
@@ -77,7 +93,7 @@ int matches_blob(
 
   if (rules == NULL)
   {
-    fprintf(stderr, "failed to compile rule << %s >>\n", rule);
+    fprintf(stderr, "failed to compile rule << %s >>: %s\n", rule, compile_error);
     exit(EXIT_FAILURE);
   }
 
@@ -154,7 +170,7 @@ int capture_string(
 
   if (rules == NULL)
   {
-    fprintf(stderr, "failed to compile rule << %s >>\n", rule);
+    fprintf(stderr, "failed to compile rule << %s >>: %s\n", rule, compile_error);
     exit(EXIT_FAILURE);
   }
 

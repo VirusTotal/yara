@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef _UTIL_H
 #define _UTIL_H
 
+extern char compile_error[1024];
 
 YR_RULES* compile_rule(
     char* string);
@@ -77,11 +78,11 @@ int capture_string(
 
 #define assert_syntax_correct(rule) do {                                \
     if (compile_rule(rule) == NULL) {                                   \
-      fprintf(stderr, "%s:%d: rule can't be compiled (but should)\n",   \
-              __FILE__, __LINE__);                                      \
+      fprintf(stderr, "%s:%d: rule << %s >> can't be compiled: %s\n",   \
+              __FILE__, __LINE__, rule, compile_error);                 \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
-  } while(0);
+  } while (0);
 
 #define assert_syntax_error(rule) do {                                  \
     if (compile_rule(rule) != NULL) {                                   \
@@ -89,7 +90,7 @@ int capture_string(
               __FILE__, __LINE__);                                      \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
-  } while(0);
+  } while (0);
 
 #define assert_true_regexp(regexp,string,expected) do {                 \
     if (!capture_string("rule test { strings: $a = /" regexp            \
@@ -98,7 +99,7 @@ int capture_string(
               __FILE__, __LINE__);                                      \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
-} while (0);
+  } while (0);
 
 #define assert_false_regexp(regexp,string)                              \
   assert_false_rule("rule test { strings: $a = /" regexp                \
