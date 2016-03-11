@@ -54,7 +54,15 @@ limitations under the License.
 #define yr_rules_foreach(rules, rule) \
     for (rule = rules->rules_list_head; !RULE_IS_NULL(rule); rule++)
 
+YR_API int yr_rules_context_pid_match(
+    YR_MEMORY_BLOCK* first_block,
+    YR_MATCH* match,
+    int lines);
 
+YR_API int yr_rules_context_match(
+    YR_MAPPED_FILE* mfile,
+    YR_MATCH* match,
+    int lines);
 
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,

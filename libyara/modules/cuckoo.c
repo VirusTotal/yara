@@ -33,20 +33,20 @@ define_function(network_dns_lookup)
   YR_OBJECT* network_obj = parent();
 
   json_t* network_json = (json_t*) network_obj->data;
-  json_t* dns_json = json_object_get(network_json, "dns");
+  json_t* dns_json = json_object_get(network_json, "domains");
   json_t* value;
 
   uint64_t result = 0;
   size_t index;
 
   char* ip;
-  char* hostname;
+  char* domain;
 
   json_array_foreach(dns_json, index, value)
   {
-    json_unpack(value, "{s:s, s:s}", "ip", &ip, "hostname", &hostname);
+    json_unpack(value, "{s:s, s:s}", "ip", &ip, "domain", &domain);
 
-    if (yr_re_match(regexp_argument(1), hostname) > 0)
+    if (yr_re_match(regexp_argument(1), domain) > 0)
     {
       result = 1;
       break;

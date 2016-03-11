@@ -540,6 +540,126 @@ YR_API int yr_rules_scan_mem(
 }
 
 
+void print_hexdump(
+    uint8_t* data,
+    int64_t offset,
+    int length)
+{
+  ++length;
+  int i, line;
+  int num_lines = length/16;
+  for (line = 0;line < num_lines;++line) {
+    /* line offset */
+    printf("0x%lx: ", offset+(line*16));
+    //Hexdump
+    for (i = 0;i < 16;++i) {
+      printf("%02X ", data[i+(line*16)]);
+    }
+    printf("\t");
+    //ASCII dump
+    for (i = 0;i < 16;++i)
+    {
+      if (data[i+(line*16)] >= 32 && data[i+(line*16)] <= 126)
+        printf("%c", data[i+(line*16)]);
+      else
+        printf(".");
+    }
+    printf("\n");
+  }
+  printf("\n");
+}
+
+
+YR_API int yr_rules_context_pid_match(
+    YR_MEMORY_BLOCK* first_block,
+    YR_MATCH* match,
+    int lines)
+{
+  int result = ERROR_SUCCESS;
+
+  YR_MEMORY_BLOCK* next_block;
+  YR_MEMORY_BLOCK* block;
+
+  int64_t match_position = match->base+match->offset;
+
+  /* Number of characters showed */
+  int chars_number = lines*16;
+  /* Calculate padding length */
+  int padding = ((match->length%chars_number-chars_number)*-1)/2;
+  /* Calculate length */
+  int length = padding*2+match->length;
+
+  int64_t init_pos; /* Relative position from block->base */
+
+  block = first_block;
+
+  while (block != NULL)
+  {
+    next_block = block->next;
+
+    if ((block->base <= match_position) && (block->base+block->size >= match_position)) {
+      /* Calculate context's initial position */
+      init_pos = match_position-block->base-padding;
+
+      /* Fixed corner cases inside block*/
+        /* Final position > blocksize */
+      if (init_pos+padding*2+match->length > block->size) {
+        init_pos = block->size-padding*2-match->length;
+      }
+      /* Initial position < 0 */
+      if (init_pos < 0) {
+        init_pos = 0;
+      }
+
+      print_hexdump((block->data)+init_pos,
+                    block->base+init_pos,
+                    length);
+      return result;
+    }
+
+    block = next_block;
+  }
+
+  return result;
+}
+
+
+YR_API int yr_rules_context_match(
+    YR_MAPPED_FILE* mfile,
+    YR_MATCH* match,
+    int lines)
+{
+  /* Number of characters showed */
+  int chars_number = lines*16;
+  /* Calculate padding length */
+  int padding = ((match->length%chars_number-chars_number)*-1)/2;
+  /* Calculate length */
+  int length = padding*2+match->length;
+  /* Calculate context's initial position */
+  int init_pos = (match->base+match->offset)-padding;
+  /* Print result */
+  /* Fixed corner cases */
+    /* Final position > filesize */
+  if (init_pos+padding*2+match->length > mfile->size) {
+    init_pos = mfile->size-padding*2-match->length;
+  }
+    /* Initial position < 0 */
+  if (init_pos < 0) {
+    init_pos = 0;
+  }
+    /* Content too short */
+  if (padding*2+match->length > mfile->size) {
+    length = mfile->size;
+  }
+  /* Print the context */
+  print_hexdump((mfile->data)+init_pos,
+                init_pos,
+                length);
+
+  return ERROR_SUCCESS;
+}
+
+
 YR_API int yr_rules_scan_file(
     YR_RULES* rules,
     const char* filename,
