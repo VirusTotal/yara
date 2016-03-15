@@ -17,6 +17,10 @@ limitations under the License.
 #include <stdio.h>
 #include <unistd.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include <yara.h>
 
 char compile_error[1024];
@@ -187,4 +191,33 @@ int capture_string(
   }
 
   return f.found;
+}
+
+
+int read_file(
+    char* filename, char** buf)
+{
+  int fd;
+  if ((fd = open(filename, O_RDONLY)) < 0) {
+    return -1;
+  }
+  size_t sz = lseek(fd, 0, SEEK_END);
+  int rc = -1;
+  if (sz == -1) {
+    goto _exit;
+  }
+  if (lseek(fd, 0, SEEK_SET) != 0) {
+    goto _exit;
+  }
+  if ((*buf = malloc(sz)) == NULL) {
+    goto _exit;
+  }
+  if ((rc = read(fd, *buf, sz)) != sz) {
+    rc = -1;
+    free(*buf);
+  }
+
+_exit:
+  close(fd);
+  return rc;
 }
