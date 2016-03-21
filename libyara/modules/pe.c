@@ -383,6 +383,7 @@ int64_t pe_rva_to_offset(
 {
   PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pe->header);
 
+  DWORD lowest_section_rva = 0xffffffff;
   DWORD section_rva = 0;
   DWORD section_offset = 0;
   DWORD section_raw_size = 0;
@@ -395,6 +396,11 @@ int64_t pe_rva_to_offset(
   {
     if (struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
     {
+      if (lowest_section_rva > section->VirtualAddress)
+      {
+        lowest_section_rva = section->VirtualAddress;
+      }
+
       if (rva >= section->VirtualAddress &&
           section_rva <= section->VirtualAddress)
       {
@@ -427,12 +433,22 @@ int64_t pe_rva_to_offset(
     }
   }
 
+  // Everything before the first section seems to get mapped straight
+  // relative to ImageBase.
+
+  if (rva < lowest_section_rva)
+  {
+    return rva;
+  }
+
   // Many sections, have a raw (on disk) size smaller than their in-memory size.
   // Check for rva's that map to this sparse space, and therefore have no valid
   // associated file offset.
 
   if ((rva - section_rva) >= section_raw_size)
+  {
     return -1;
+  }
 
   result = section_offset + (rva - section_rva);
 
