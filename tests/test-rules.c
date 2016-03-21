@@ -1206,6 +1206,29 @@ void test_integer_functions()
 }
 
 
+void test_file_examples()
+{
+  /* https://github.com/plusvic/yara/issues/373 */
+  assert_true_rule_file(
+      "import \"pe\" rule test { condition: pe.entry_point == 0x18 }",
+      "tests/data/old_ArmaFP.exe");
+
+  assert_true_rule_file(
+      "import \"pe\" rule test { strings: $right = { BE B0 11 40 00 } condition: $right at pe.entry_point }",
+      "tests/data/old_ArmaFP.exe");
+  /* $wrong = { 0B 01 4C 6F 61 64 4C } */
+
+  /* https://github.com/plusvic/yara/issues/399 */
+  assert_true_rule_file(
+      "import \"pe\" rule test { condition: pe.entry_point == 2 }",
+      "tests/data/cdak_1024x768.exe");
+
+  assert_true_rule_file(
+      "import \"pe\" rule test { strings: $a0 = { 68 00 00 42 00 31 C0 40 EB 58 } condition: $a0 at pe.entry_point }",
+      "tests/data/cdak_1024x768.exe");
+}
+
+
 int main(int argc, char** argv)
 {
   yr_initialize();
@@ -1239,6 +1262,7 @@ int main(int argc, char** argv)
   test_modules();
   test_integer_functions();
   // test_string_io();
+  test_file_examples();
 
   yr_finalize();
 

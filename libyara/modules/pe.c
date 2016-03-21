@@ -371,6 +371,12 @@ PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
 }
 
 
+#define OptionalHeader(pe,field)                \
+  (IS_64BITS_PE(pe) ?                           \
+   pe->header64->OptionalHeader.field :         \
+   pe->header->OptionalHeader.field)
+
+
 int64_t pe_rva_to_offset(
     PE* pe,
     uint64_t rva)
@@ -396,12 +402,20 @@ int64_t pe_rva_to_offset(
         section_offset = section->PointerToRawData;
         section_raw_size = section->SizeOfRawData;
 
-        // If the section_offset is less than 0x200 it is rounded down to 0.
-        // See also: https://github.com/plusvic/yara/issues/399
-        // Discussion (and other awesome details) at:
+        // Round section_offset down to file alignment.
+        //
+        // Rounding everything less than 0x200 to 0 as discussed in
         // https://code.google.com/archive/p/corkami/wikis/PE.wiki#PointerToRawData
-        if (section_offset < 0x200)
-          section_offset = 0;
+        // does not work for PE32_FILE from the test suite and for
+        // some tinype samples where File Alignment = 4
+        // (http://www.phreedom.org/research/tinype/).
+        int alignment = OptionalHeader(pe, FileAlignment);
+        if (alignment)
+        {
+          int rest = section_offset % alignment;
+          if (rest)
+            section_offset -= rest;
+        }
       }
 
       section++;
@@ -1326,11 +1340,6 @@ void pe_parse_header(
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
   int i, scount;
 
-#define OptionalHeader(field) \
-    (IS_64BITS_PE(pe) ? \
-        pe->header64->OptionalHeader.field : \
-        pe->header->OptionalHeader.field)
-
   set_integer(
       pe->header->FileHeader.Machine,
       pe->object, "machine");
@@ -1349,48 +1358,48 @@ void pe_parse_header(
 
   set_integer(
       flags & SCAN_FLAGS_PROCESS_MEMORY ?
-        base_address + OptionalHeader(AddressOfEntryPoint) :
-        pe_rva_to_offset(pe, OptionalHeader(AddressOfEntryPoint)),
+        base_address + OptionalHeader(pe, AddressOfEntryPoint) :
+        pe_rva_to_offset(pe, OptionalHeader(pe, AddressOfEntryPoint)),
       pe->object, "entry_point");
 
   set_integer(
-      OptionalHeader(ImageBase),
+      OptionalHeader(pe, ImageBase),
       pe->object, "image_base");
 
   set_integer(
-      OptionalHeader(MajorLinkerVersion),
+      OptionalHeader(pe, MajorLinkerVersion),
       pe->object, "linker_version.major");
 
   set_integer(
-      OptionalHeader(MinorLinkerVersion),
+      OptionalHeader(pe, MinorLinkerVersion),
       pe->object, "linker_version.minor");
 
   set_integer(
-      OptionalHeader(MajorOperatingSystemVersion),
+      OptionalHeader(pe, MajorOperatingSystemVersion),
       pe->object, "os_version.major");
 
   set_integer(
-      OptionalHeader(MinorOperatingSystemVersion),
+      OptionalHeader(pe, MinorOperatingSystemVersion),
       pe->object, "os_version.minor");
 
   set_integer(
-      OptionalHeader(MajorImageVersion),
+      OptionalHeader(pe, MajorImageVersion),
       pe->object, "image_version.major");
 
   set_integer(
-      OptionalHeader(MinorImageVersion),
+      OptionalHeader(pe, MinorImageVersion),
       pe->object, "image_version.minor");
 
   set_integer(
-      OptionalHeader(MajorSubsystemVersion),
+      OptionalHeader(pe, MajorSubsystemVersion),
       pe->object, "subsystem_version.major");
 
   set_integer(
-      OptionalHeader(MinorSubsystemVersion),
+      OptionalHeader(pe, MinorSubsystemVersion),
       pe->object, "subsystem_version.minor");
 
   set_integer(
-      OptionalHeader(Subsystem),
+      OptionalHeader(pe, Subsystem),
       pe->object, "subsystem");
 
   pe_iterate_resources(
