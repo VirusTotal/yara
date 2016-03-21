@@ -32,7 +32,12 @@ static void callback_function(
     const char* message,
     void* user_data)
 {
-  snprintf(compile_error, sizeof(compile_error), "line %d: %s", line_number, message);
+  snprintf(
+      compile_error,
+      sizeof(compile_error),
+      "line %d: %s",
+      line_number,
+      message);
 }
 
 
@@ -53,16 +58,12 @@ YR_RULES* compile_rule(
   yr_compiler_set_callback(compiler, callback_function, NULL);
 
   if (yr_compiler_add_string(compiler, string, NULL) != 0)
-  {
     goto _exit;
-  }
 
   if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
-  {
     goto _exit;
-  }
 
- _exit:
+_exit:
   yr_compiler_destroy(compiler);
   return rules;
 }
@@ -195,24 +196,28 @@ int capture_string(
 
 
 int read_file(
-    char* filename, char** buf)
+    char* filename,
+    char** buf)
 {
   int fd;
-  if ((fd = open(filename, O_RDONLY)) < 0) {
+
+  if ((fd = open(filename, O_RDONLY)) < 0)
     return -1;
-  }
+
   size_t sz = lseek(fd, 0, SEEK_END);
   int rc = -1;
-  if (sz == -1) {
+
+  if (sz == -1)
     goto _exit;
-  }
-  if (lseek(fd, 0, SEEK_SET) != 0) {
+
+  if (lseek(fd, 0, SEEK_SET) != 0)
     goto _exit;
-  }
-  if ((*buf = malloc(sz)) == NULL) {
+
+  if ((*buf = malloc(sz)) == NULL)
     goto _exit;
-  }
-  if ((rc = read(fd, *buf, sz)) != sz) {
+
+  if ((rc = read(fd, *buf, sz)) != sz)
+  {
     rc = -1;
     free(*buf);
   }

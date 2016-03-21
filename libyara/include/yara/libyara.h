@@ -26,16 +26,21 @@ limitations under the License.
 // Version as a string
 #define YR_VERSION         "3.4.0"
 
+
 // Version as a single 4-byte hex number, e.g. 0x030401 == 3.4.1.
 #define YR_VERSION_HEX ((YR_MAJOR_VERSION << 16) | \
     (YR_MINOR_VERSION << 8) | \
     (YR_MICRO_VERSION << 0))
 
+
 // Enumerated type listing configuration options
-enum yr_cfg_name {
+typedef enum _YR_CONFIG_NAME
+{
   YR_CONFIG_STACK_SIZE,
   YR_CONFIG_MAX
-};
+
+} YR_CONFIG_NAME;
+
 
 #define DEFAULT_STACK_SIZE 16384
 
@@ -55,9 +60,9 @@ YR_API int yr_get_tidx(void);
 YR_API void yr_set_tidx(int);
 
 
-YR_API int yr_set_configuration(enum yr_cfg_name, void *);
+YR_API int yr_set_configuration(YR_CONFIG_NAME, void*);
 
 
-YR_API int yr_get_configuration(enum yr_cfg_name, void *);
+YR_API int yr_get_configuration(YR_CONFIG_NAME, void*);
 
 #endif
