@@ -886,7 +886,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
   // I've seen binaries where OriginalFirstThunk is zero. In this case
   // use FirstThunk.
 
-  if (offset < 0)
+  if (offset <= 0)
     offset = pe_rva_to_offset(pe, import_descriptor->FirstThunk);
 
   if (offset < 0)
