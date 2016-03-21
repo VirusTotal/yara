@@ -40,6 +40,10 @@ int capture_string(
     char* expected_string);
 
 
+int read_file(
+    char* filename, char** buf);
+
+
 #define assert_true_rule(rule, string)                                  \
   do {                                                                  \
     if (!matches_string(rule, string)) {                                \
@@ -54,6 +58,23 @@ int capture_string(
     if (!matches_blob(rule, (uint8_t*) (blob), sizeof(blob))) {         \
       fprintf(stderr, "%s:%d: rule does not match (but should)\n",      \
               __FILE__, __LINE__ );                                     \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+  } while (0);
+
+#define assert_true_rule_file(rule, filename)                           \
+  do {                                                                  \
+    char* buf;                                                          \
+    size_t sz;                                                          \
+    if ((sz = read_file(filename, &buf)) == -1) {                       \
+      fprintf(stderr, "%s:%d: cannot read file '%s'\n",                 \
+              __FILE__, __LINE__, filename);                            \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+    if (!matches_blob(rule, (uint8_t*) (buf), sz)) {                    \
+      fprintf(stderr, "%s:%d: rule does not match contents of"          \
+              "'%s' (but should)\n",                                    \
+              __FILE__, __LINE__, filename);                            \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
   } while (0);
