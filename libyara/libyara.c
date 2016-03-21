@@ -44,16 +44,22 @@ pthread_key_t recovery_state_key;
 
 static int init_count = 0;
 
-struct yr_config_var {
-  union {
-    size_t sz;
-    unsigned int ui;
-    char *str;
-  } data; // The data content
+static struct yr_config_var
+{
+  union
+  {
+    size_t   sz;
+    uint32_t ui32;
+    uint64_t ui64;
+    char*    str;
+  };
+
 } yr_cfgs[YR_CONFIG_MAX];
+
 
 char lowercase[256];
 char altercase[256];
+
 
 #ifdef HAVE_LIBCRYPTO
 pthread_mutex_t *locks;
@@ -81,8 +87,8 @@ void locking_function(int mode, int n, const char *file, int line)
 
 YR_API int yr_initialize(void)
 {
+  uint32_t def_stack_size = DEFAULT_STACK_SIZE;
   int i;
-  unsigned int def_stack_size = DEFAULT_STACK_SIZE;
 
   if (init_count > 0)
   {
@@ -186,7 +192,7 @@ YR_API int yr_finalize(void)
 }
 
 //
-// _yr_set_tidx
+// yr_set_tidx
 //
 // Set the thread index (tidx) for the current thread. The tidx is the index
 // that will be used by the thread to access thread-specific data stored in
@@ -208,7 +214,7 @@ YR_API void yr_set_tidx(int tidx)
 
 
 //
-// _yr_get_tidx
+// yr_get_tidx
 //
 // Get the thread index (tidx) for the current thread.
 //
@@ -226,14 +232,20 @@ YR_API int yr_get_tidx(void)
   #endif
 }
 
-YR_API int yr_set_configuration(enum yr_cfg_name cfgname, void *src) {
-  if(src == NULL) {
+
+YR_API int yr_set_configuration(
+    YR_CONFIG_NAME cfgname,
+    void *src)
+{
+  if (src == NULL)
     return ERROR_INTERNAL_FATAL_ERROR;
-  }
-  switch(cfgname) { // lump all the cases using same types together in one cascade
+
+  switch (cfgname)
+  { // lump all the cases using same types together in one cascade
     case YR_CONFIG_STACK_SIZE:
-      yr_cfgs[cfgname].data.ui = *(unsigned int*)src;
+      yr_cfgs[cfgname].ui32 = *(uint32_t*) src;
       break;
+
     default:
       return ERROR_INTERNAL_FATAL_ERROR;
   }
@@ -241,14 +253,20 @@ YR_API int yr_set_configuration(enum yr_cfg_name cfgname, void *src) {
   return ERROR_SUCCESS;
 }
 
-YR_API int yr_get_configuration(enum yr_cfg_name cfgname, void *dest) {
-  if(dest == NULL) {
+
+YR_API int yr_get_configuration(
+    YR_CONFIG_NAME cfgname,
+    void *dest)
+{
+  if (dest == NULL)
     return ERROR_INTERNAL_FATAL_ERROR;
-  }
-  switch(cfgname) { // lump all the cases using same types together in one cascade
+
+  switch (cfgname)
+  { // lump all the cases using same types together in one cascade
     case YR_CONFIG_STACK_SIZE:
-      *(size_t*)dest = yr_cfgs[cfgname].data.ui;
+      *(uint32_t*) dest = yr_cfgs[cfgname].ui32;
       break;
+
     default:
       return ERROR_INTERNAL_FATAL_ERROR;
   }
