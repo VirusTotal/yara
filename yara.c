@@ -318,7 +318,9 @@ void scan_dir(
       {
         file_queue_put(full_path);
       }
-      else if (recursive && strcmp(FindFileData.cFileName, ".") != 0 && strcmp(FindFileData.cFileName, "..") != 0)
+      else if (recursive &&
+               strcmp(FindFileData.cFileName, ".") != 0 &&
+               strcmp(FindFileData.cFileName, "..") != 0)
       {
         scan_dir(full_path, recursive, start_time, rules, callback);
       }
