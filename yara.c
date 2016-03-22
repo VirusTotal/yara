@@ -318,7 +318,7 @@ void scan_dir(
       {
         file_queue_put(full_path);
       }
-      else if (recursive && FindFileData.cFileName[0] != '.' )
+      else if (recursive && strcmp(FindFileData.cFileName, ".") != 0 && strcmp(FindFileData.cFileName, "..") != 0)
       {
         scan_dir(full_path, recursive, start_time, rules, callback);
       }
@@ -374,7 +374,8 @@ void scan_dir(
         else if(recursive &&
                 S_ISDIR(st.st_mode) &&
                 !S_ISLNK(st.st_mode) &&
-                de->d_name[0] != '.')
+                strcmp(de->d_name, ".") != 0 &&
+                strcmp(de->d_name, "..") != 0)
         {
           scan_dir(full_path, recursive, start_time, rules, callback);
         }
