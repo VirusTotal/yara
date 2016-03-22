@@ -51,6 +51,12 @@ int get_elf_type(
 #define SIZE_OF_SECTION_TABLE_64 \
     (sizeof(elf64_section_header_t) * elf_header->sh_entry_count)
 
+#define SIZE_OF_PROGRAM_TABLE_32 \
+    (sizeof(elf32_program_header_t) * elf_header->ph_entry_count)
+
+#define SIZE_OF_PROGRAM_TABLE_64 \
+    (sizeof(elf64_program_header_t) * elf_header->ph_entry_count)
+
 
 #define ELF_RVA_TO_OFFSET(bits)                                                \
 uint64_t elf_rva_to_offset_##bits(                                             \
@@ -59,38 +65,74 @@ uint64_t elf_rva_to_offset_##bits(                                             \
     size_t elf_size)                                                           \
 {                                                                              \
   int i;                                                                       \
+  int sections = TRUE;                                                         \
                                                                                \
   elf##bits##_section_header_t* section;                                       \
+  elf##bits##_program_header_t* segment;                                       \
                                                                                \
   /* check that sh_offset doesn't wrap when added to SIZE_OF_SECTION_TABLE */  \
                                                                                \
   if(ULONG_MAX - elf_header->sh_offset < SIZE_OF_SECTION_TABLE_##bits)         \
   {                                                                            \
-    return UNDEFINED;                                                          \
+    sections = FALSE;                                                          \
   }                                                                            \
                                                                                \
-  if (elf_header->sh_offset == 0 ||                                            \
+  if (sections == TRUE &&                                                      \
+      (elf_header->sh_offset == 0 ||                                           \
       elf_header->sh_offset > elf_size ||                                      \
       elf_header->sh_offset + SIZE_OF_SECTION_TABLE_##bits > elf_size ||       \
-      elf_header->sh_entry_count == 0)                                         \
+      elf_header->sh_entry_count == 0))                                        \
+  {                                                                            \
+    sections = FALSE;                                                          \
+  }                                                                            \
+                                                                               \
+  if (sections == TRUE)                                                        \
+  {                                                                            \
+    section = (elf##bits##_section_header_t*)                                  \
+        ((uint8_t*) elf_header + elf_header->sh_offset);                       \
+                                                                               \
+    for (i = 0; i < elf_header->sh_entry_count; i++)                           \
+    {                                                                          \
+      if (section->type != ELF_SHT_NULL &&                                     \
+          section->type != ELF_SHT_NOBITS &&                                   \
+          rva >= section->addr &&                                              \
+          rva <  section->addr + section->size)                                \
+      {                                                                        \
+        return section->offset + (rva - section->addr);                        \
+      }                                                                        \
+                                                                               \
+      section++;                                                               \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  /* check that ph_offset doesn't wrap when added to SIZE_OF_PROGRAM_TABLE */  \
+                                                                               \
+  if(ULONG_MAX - elf_header->ph_offset < SIZE_OF_PROGRAM_TABLE_##bits)         \
   {                                                                            \
     return UNDEFINED;                                                          \
   }                                                                            \
                                                                                \
-  section = (elf##bits##_section_header_t*)                                    \
-      ((uint8_t*) elf_header + elf_header->sh_offset);                         \
-                                                                               \
-  for (i = 0; i < elf_header->sh_entry_count; i++)                             \
+  if (elf_header->ph_offset == 0 ||                                            \
+      elf_header->ph_offset > elf_size ||                                      \
+      elf_header->ph_offset + SIZE_OF_PROGRAM_TABLE_##bits > elf_size ||       \
+      elf_header->ph_entry_count == 0)                                         \
   {                                                                            \
-    if (section->type != ELF_SHT_NULL &&                                       \
-        section->type != ELF_SHT_NOBITS &&                                     \
-        rva >= section->addr &&                                                \
-        rva < section->addr + section->size)                                   \
+    return UNDEFINED;                                                          \
+  }                                                                            \
+                                                                               \
+  segment = (elf##bits##_program_header_t*)                                    \
+      ((uint8_t*) elf_header + elf_header->ph_offset);                         \
+                                                                               \
+  for (i = 0; i < elf_header->ph_entry_count; i++)                             \
+  {                                                                            \
+    if (segment->type != ELF_PT_NULL &&                                        \
+        rva >= segment->virt_addr &&                                           \
+        rva <  segment->virt_addr + segment->mem_size)                         \
     {                                                                          \
-      return section->offset + (rva - section->addr);                          \
+      return segment->offset + (rva - segment->virt_addr);                     \
     }                                                                          \
                                                                                \
-    section++;                                                                 \
+    segment++;                                                                 \
   }                                                                            \
                                                                                \
   return UNDEFINED;                                                            \
