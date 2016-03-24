@@ -276,6 +276,11 @@ typedef struct _IMAGE_OPTIONAL_HEADER64 {
 #define IMAGE_NT_OPTIONAL_HDR32_MAGIC      0x10b
 #define IMAGE_NT_OPTIONAL_HDR64_MAGIC      0x20b
 
+#define OptionalHeader(pe,field)                \
+  (IS_64BITS_PE(pe) ?                           \
+   pe->header64->OptionalHeader.field :         \
+   pe->header->OptionalHeader.field)
+
 
 typedef struct _IMAGE_NT_HEADERS32 {
     DWORD Signature;
