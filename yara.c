@@ -160,7 +160,7 @@ args_option_t options[] =
       "abort scanning after the given number of SECONDS", "SECONDS"),
 
   OPT_INTEGER('k', "stack-size", &stack_size,
-      "Set stack size to allocate in exec() to SLOTS (default=16384)", "SLOTS"),
+      "set maximum stack size (default=16384)", "SLOTS"),
 
   OPT_BOOLEAN('r', "recursive", &recursive_search,
       "recursively search directories"),
@@ -318,7 +318,9 @@ void scan_dir(
       {
         file_queue_put(full_path);
       }
-      else if (recursive && FindFileData.cFileName[0] != '.' )
+      else if (recursive &&
+               strcmp(FindFileData.cFileName, ".") != 0 &&
+               strcmp(FindFileData.cFileName, "..") != 0)
       {
         scan_dir(full_path, recursive, start_time, rules, callback);
       }
@@ -374,7 +376,8 @@ void scan_dir(
         else if(recursive &&
                 S_ISDIR(st.st_mode) &&
                 !S_ISLNK(st.st_mode) &&
-                de->d_name[0] != '.')
+                strcmp(de->d_name, ".") != 0 &&
+                strcmp(de->d_name, "..") != 0)
         {
           scan_dir(full_path, recursive, start_time, rules, callback);
         }
@@ -484,6 +487,10 @@ void print_scanner_error(
       break;
     case ERROR_CORRUPT_FILE:
       fprintf(stderr, "corrupt compiled rules file.\n");
+      break;
+    case ERROR_EXEC_STACK_OVERFLOW:
+      fprintf(stderr, "stack overflow while evaluating condition "
+                      "(see --stack-size argument).\n");
       break;
     default:
       fprintf(stderr, "internal error: %d\n", error);
@@ -1005,16 +1012,18 @@ int main(
 
   result = yr_initialize();
 
-  if(stack_size != DEFAULT_STACK_SIZE) {
-    // If the user chose a different stack size than default,
-    // modify the yara config here
-    yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
-  }
-
   if (result != ERROR_SUCCESS)
   {
     fprintf(stderr, "error: initialization error (%d)\n", result);
     exit_with_code(EXIT_FAILURE);
+  }
+
+  if (stack_size != DEFAULT_STACK_SIZE)
+  {
+    // If the user chose a different stack size than default,
+    // modify the yara config here.
+
+    yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
   }
 
   // Try to load the rules file as a binary file containing

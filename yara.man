@@ -54,6 +54,10 @@ Abort scanning after a number of
 .I seconds
 has elapsed.
 .TP
+.BI \-k " slots" " --stack-size=" slots
+Set maximum stack size to the specified number of
+.I slots.
+.TP
 .BI \-d " identifier"=value
 Define an external variable. This option can be used multiple times.
 .TP

@@ -189,9 +189,9 @@ int yr_execute_code(
   clock_t start = clock();
   #endif
 
-  yr_get_configuration(YR_CONFIG_STACK_SIZE, (void*)&stack_size);
+  yr_get_configuration(YR_CONFIG_STACK_SIZE, (void*) &stack_size);
 
-  stack = (STACK_ITEM *) yr_malloc(stack_size * sizeof(STACK_ITEM));
+  stack = (STACK_ITEM*) yr_malloc(stack_size * sizeof(STACK_ITEM));
 
   if (stack == NULL)
     return ERROR_INSUFICIENT_MEMORY;

@@ -17,7 +17,28 @@ limitations under the License.
 #include <stdio.h>
 #include <unistd.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include <yara.h>
+
+char compile_error[1024];
+
+static void callback_function(
+    int error_level,
+    const char* file_name,
+    int line_number,
+    const char* message,
+    void* user_data)
+{
+  snprintf(
+      compile_error,
+      sizeof(compile_error),
+      "line %d: %s",
+      line_number,
+      message);
+}
 
 
 YR_RULES* compile_rule(
@@ -26,23 +47,23 @@ YR_RULES* compile_rule(
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
 
+  compile_error[0] = '\0';
+
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
   {
     perror("yr_compiler_create");
     goto _exit;
   }
 
+  yr_compiler_set_callback(compiler, callback_function, NULL);
+
   if (yr_compiler_add_string(compiler, string, NULL) != 0)
-  {
     goto _exit;
-  }
 
   if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
-  {
     goto _exit;
-  }
 
- _exit:
+_exit:
   yr_compiler_destroy(compiler);
   return rules;
 }
@@ -77,7 +98,7 @@ int matches_blob(
 
   if (rules == NULL)
   {
-    fprintf(stderr, "failed to compile rule << %s >>\n", rule);
+    fprintf(stderr, "failed to compile rule << %s >>: %s\n", rule, compile_error);
     exit(EXIT_FAILURE);
   }
 
@@ -154,7 +175,7 @@ int capture_string(
 
   if (rules == NULL)
   {
-    fprintf(stderr, "failed to compile rule << %s >>\n", rule);
+    fprintf(stderr, "failed to compile rule << %s >>: %s\n", rule, compile_error);
     exit(EXIT_FAILURE);
   }
 
@@ -171,4 +192,37 @@ int capture_string(
   }
 
   return f.found;
+}
+
+
+int read_file(
+    char* filename,
+    char** buf)
+{
+  int fd;
+
+  if ((fd = open(filename, O_RDONLY)) < 0)
+    return -1;
+
+  size_t sz = lseek(fd, 0, SEEK_END);
+  int rc = -1;
+
+  if (sz == -1)
+    goto _exit;
+
+  if (lseek(fd, 0, SEEK_SET) != 0)
+    goto _exit;
+
+  if ((*buf = malloc(sz)) == NULL)
+    goto _exit;
+
+  if ((rc = read(fd, *buf, sz)) != sz)
+  {
+    rc = -1;
+    free(*buf);
+  }
+
+_exit:
+  close(fd);
+  return rc;
 }
