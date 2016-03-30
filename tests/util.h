@@ -97,6 +97,23 @@ int read_file(
     }                                                                   \
   } while (0);
 
+#define assert_false_rule_file(rule, filename)                          \
+  do {                                                                  \
+    char* buf;                                                          \
+    size_t sz;                                                          \
+    if ((sz = read_file(filename, &buf)) == -1) {                       \
+      fprintf(stderr, "%s:%d: cannot read file '%s'\n",                 \
+              __FILE__, __LINE__, filename);                            \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+    if (matches_blob(rule, (uint8_t*) (buf), sz)) {                     \
+      fprintf(stderr, "%s:%d: rule matches contents of"                 \
+              "'%s' (but shouldn't)\n",                                 \
+              __FILE__, __LINE__, filename);                            \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+  } while (0);
+
 #define assert_syntax_correct(rule) do {                                \
     if (compile_rule(rule) == NULL) {                                   \
       fprintf(stderr, "%s:%d: rule << %s >> can't be compiled: %s\n",   \
