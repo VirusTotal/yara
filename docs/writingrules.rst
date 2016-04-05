@@ -3,7 +3,7 @@ Writing YARA rules
 *******************
 
 YARA rules are easy to write and understand, and they have a syntax that
-resembles the C language. He here is the simplest rule that you can write for
+resembles the C language. Here is the simplest rule that you can write for
 YARA, which does absolutely nothing::
 
     rule dummy
@@ -150,13 +150,13 @@ circumstances you may need to define strings with chunks of variable content and
 length. In those situations you can use jumps instead of wild-cards::
 
     rule JumpExample
-        {
+    {
             strings:
                $hex_string = { F4 23 [4-6] 62 B4 }
 
             condition:
                $hex_string
-        }
+    }
 
 In the example above we have a pair of numbers enclosed in square brackets and
 separated by a hyphen, that's a jump. This jump is indicating that any arbitrary
@@ -272,13 +272,13 @@ Text strings in YARA are case-sensitive by default, however you can turn your
 string into case-insensitive mode by appending the modifier nocase at the end
 of the string definition, in the same line::
 
-    rule CaseInsensitveTextExample
+    rule CaseInsensitiveTextExample
     {
         strings:
             $text_string = "foobar" nocase
 
         condition:
-           $text_string
+            $text_string
     }
 
 With the ``nocase`` modifier the string *foobar* will match *Foobar*, *FOOBAR*,
@@ -293,10 +293,10 @@ per character, something typical in many executable binaries.
 
 
 
-In the above figure de string "Borland" appears encoded as two bytes per
+In the above figure, the string "Borland" appears encoded as two bytes per
 character, therefore the following rule will match::
 
-    rule WideCharTextExample
+    rule WideCharTextExample1
     {
         strings:
             $wide_string = "Borland" wide
@@ -311,7 +311,7 @@ strings containing non-English characters. If you want to search for strings
 in both ASCII and wide form, you can use the ``ascii`` modifier in conjunction
 with ``wide`` , no matter the order in which they appear. ::
 
-    rule WideCharTextExample
+    rule WideCharTextExample2
     {
         strings:
             $wide_and_ascii_string = "Borland" wide ascii
@@ -328,9 +328,9 @@ Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Another modifier that can be applied to text strings is ``fullword``. This
-modifier guarantee that the string will match only if it appears in the file
+modifier guarantees that the string will match only if it appears in the file
 delimited by non-alphanumeric characters. For example the string *domain*, if
-defined as ``fullword``, don't matches *www.mydomain.com* but it matches
+defined as ``fullword``, doesn't match *www.mydomain.com* but it matches
 *www.my-domain.com* and *www.domain.com*.
 
 Regular expressions
@@ -354,7 +354,7 @@ Regular expressions can be also followed by ``nocase``, ``ascii``, ``wide``,
 and ``fullword`` modifiers just like in text strings. The semantics of these
 modifiers are the same in both cases.
 
-In previous versions of YARA externals libraries like PCRE and RE2 were used
+In previous versions of YARA, external libraries like PCRE and RE2 were used
 to perform regular expression matching, but starting with version 2.0 YARA uses
 its own regular expression engine. This new engine implements most features
 found in PCRE, except a few of them like capture groups, POSIX character
@@ -394,7 +394,7 @@ The following quantifiers are recognised as well:
    * - ``{n,}``
      - Match at least n times
    * - ``{,m}``
-     - Match 0 to m times
+     - Match at most m times
    * - ``{n,m}``
      - Match n to m times
 
@@ -415,7 +415,7 @@ mark (?):
    * - ``{n,}?``
      - Match at least n times, non-greedy
    * - ``{,m}?``
-     - Match 0 to m times, non-greedy
+     - Match at most m times, non-greedy
    * - ``{n,m}?``
      - Match n to m times, non-greedy
 
@@ -446,7 +446,7 @@ These are the recognised character classes:
    :widths: 3 10
 
    * - ``\w``
-     - Match a *word* character (aphanumeric plus “_”)
+     - Match a *word* character (alphanumeric plus “_”)
    * - ``\W``
      - Match a *non-word* character
    * - ``\s``
