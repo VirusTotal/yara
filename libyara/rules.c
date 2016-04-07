@@ -592,7 +592,7 @@ YR_API int yr_rules_scan_fd(
         user_data,
         timeout);
 
-    yr_filemap_unmap(&mfile);
+    yr_filemap_unmap_fd(&mfile);
   }
 
   return result;
