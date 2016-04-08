@@ -408,14 +408,17 @@ int64_t pe_rva_to_offset(
         section_offset = section->PointerToRawData;
         section_raw_size = section->SizeOfRawData;
 
-        // Round section_offset down to file alignment.
+        // Round section_offset
         //
         // Rounding everything less than 0x200 to 0 as discussed in
         // https://code.google.com/archive/p/corkami/wikis/PE.wiki#PointerToRawData
         // does not work for PE32_FILE from the test suite and for
         // some tinype samples where File Alignment = 4
         // (http://www.phreedom.org/research/tinype/).
-        int alignment = OptionalHeader(pe, FileAlignment);
+        //
+        // If FileAlignment is >= 0x200, it is apparently ignored (see
+        // Ero Carreras's pefile.py, PE.adjust_FileAlignment).
+        int alignment = yr_min(OptionalHeader(pe, FileAlignment), 0x200);
         if (alignment)
         {
           int rest = section_offset % alignment;
