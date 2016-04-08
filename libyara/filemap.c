@@ -311,7 +311,7 @@ YR_API int yr_filemap_map_ex(
 
 #ifdef WIN32
 
-YR_API void yr_filemap_unmap(
+YR_API void yr_filemap_unmap_fd(
     YR_MAPPED_FILE* pmapped_file)
 {
   if (pmapped_file->data != NULL)
@@ -320,29 +320,45 @@ YR_API void yr_filemap_unmap(
   if (pmapped_file->mapping != NULL)
     CloseHandle(pmapped_file->mapping);
 
-  if (pmapped_file->file != INVALID_HANDLE_VALUE)
-    CloseHandle(pmapped_file->file);
-
-  pmapped_file->file = INVALID_HANDLE_VALUE;
   pmapped_file->mapping = NULL;
   pmapped_file->data = NULL;
   pmapped_file->size = 0;
 }
 
+YR_API void yr_filemap_unmap(
+    YR_MAPPED_FILE* pmapped_file)
+{
+  yr_filemap_unmap_fd(pmapped_file);
+
+  if (pmapped_file->file != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(pmapped_file->file);
+    pmapped_file->file = INVALID_HANDLE_VALUE;
+  }
+}
+
 #else // POSIX
 
-YR_API void yr_filemap_unmap(
+YR_API void yr_filemap_unmap_fd(
     YR_MAPPED_FILE* pmapped_file)
 {
   if (pmapped_file->data != NULL)
     munmap(pmapped_file->data, pmapped_file->size);
 
-  if (pmapped_file->file != -1)
-    close(pmapped_file->file);
-
-  pmapped_file->file = -1;
   pmapped_file->data = NULL;
   pmapped_file->size = 0;
+}
+
+YR_API void yr_filemap_unmap(
+    YR_MAPPED_FILE* pmapped_file)
+{
+  yr_filemap_unmap_fd(pmapped_file);
+
+  if (pmapped_file->file != -1)
+    {
+      close(pmapped_file->file);
+      pmapped_file->file = -1;
+    }
 }
 
 #endif
