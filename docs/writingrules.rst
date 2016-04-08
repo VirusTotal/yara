@@ -3,7 +3,7 @@ Writing YARA rules
 *******************
 
 YARA rules are easy to write and understand, and they have a syntax that
-resembles the C language. He here is the simplest rule that you can write for
+resembles the C language. Here is the simplest rule that you can write for
 YARA, which does absolutely nothing::
 
     rule dummy
@@ -150,13 +150,13 @@ circumstances you may need to define strings with chunks of variable content and
 length. In those situations you can use jumps instead of wild-cards::
 
     rule JumpExample
-        {
+    {
             strings:
                $hex_string = { F4 23 [4-6] 62 B4 }
 
             condition:
                $hex_string
-        }
+    }
 
 In the example above we have a pair of numbers enclosed in square brackets and
 separated by a hyphen, that's a jump. This jump is indicating that any arbitrary
@@ -272,13 +272,13 @@ Text strings in YARA are case-sensitive by default, however you can turn your
 string into case-insensitive mode by appending the modifier nocase at the end
 of the string definition, in the same line::
 
-    rule CaseInsensitveTextExample
+    rule CaseInsensitiveTextExample
     {
         strings:
             $text_string = "foobar" nocase
 
         condition:
-           $text_string
+            $text_string
     }
 
 With the ``nocase`` modifier the string *foobar* will match *Foobar*, *FOOBAR*,
@@ -293,10 +293,10 @@ per character, something typical in many executable binaries.
 
 
 
-In the above figure de string "Borland" appears encoded as two bytes per
+In the above figure, the string "Borland" appears encoded as two bytes per
 character, therefore the following rule will match::
 
-    rule WideCharTextExample
+    rule WideCharTextExample1
     {
         strings:
             $wide_string = "Borland" wide
@@ -311,7 +311,7 @@ strings containing non-English characters. If you want to search for strings
 in both ASCII and wide form, you can use the ``ascii`` modifier in conjunction
 with ``wide`` , no matter the order in which they appear. ::
 
-    rule WideCharTextExample
+    rule WideCharTextExample2
     {
         strings:
             $wide_and_ascii_string = "Borland" wide ascii
@@ -328,9 +328,9 @@ Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Another modifier that can be applied to text strings is ``fullword``. This
-modifier guarantee that the string will match only if it appears in the file
+modifier guarantees that the string will match only if it appears in the file
 delimited by non-alphanumeric characters. For example the string *domain*, if
-defined as ``fullword``, don't matches *www.mydomain.com* but it matches
+defined as ``fullword``, doesn't match *www.mydomain.com* but it matches
 *www.my-domain.com* and *www.domain.com*.
 
 Regular expressions
@@ -354,7 +354,7 @@ Regular expressions can be also followed by ``nocase``, ``ascii``, ``wide``,
 and ``fullword`` modifiers just like in text strings. The semantics of these
 modifiers are the same in both cases.
 
-In previous versions of YARA externals libraries like PCRE and RE2 were used
+In previous versions of YARA, external libraries like PCRE and RE2 were used
 to perform regular expression matching, but starting with version 2.0 YARA uses
 its own regular expression engine. This new engine implements most features
 found in PCRE, except a few of them like capture groups, POSIX character
@@ -394,7 +394,7 @@ The following quantifiers are recognised as well:
    * - ``{n,}``
      - Match at least n times
    * - ``{,m}``
-     - Match 0 to m times
+     - Match at most m times
    * - ``{n,m}``
      - Match n to m times
 
@@ -415,7 +415,7 @@ mark (?):
    * - ``{n,}?``
      - Match at least n times, non-greedy
    * - ``{,m}?``
-     - Match 0 to m times, non-greedy
+     - Match at most m times, non-greedy
    * - ``{n,m}?``
      - Match n to m times, non-greedy
 
@@ -446,7 +446,7 @@ These are the recognised character classes:
    :widths: 3 10
 
    * - ``\w``
-     - Match a *word* character (aphanumeric plus “_”)
+     - Match a *word* character (alphanumeric plus “_”)
    * - ``\W``
      - Match a *non-word* character
    * - ``\s``
@@ -516,7 +516,7 @@ For example::
     }
 
 
-This rules match any file or process containing the string $a exactly six times,
+This rules matches any file or process containing the string $a exactly six times,
 and more than ten occurrences of string $b.
 
 .. _string-offsets:
@@ -557,10 +557,10 @@ allows to search for the string within a range of offsets or addresses. ::
     {
         strings:
             $a = "dummy1"
-           $b = "dummy2"
+            $b = "dummy2"
 
         condition:
-           $a in (0..100) and $b in (100..filesize)
+            $a in (0..100) and $b in (100..filesize)
     }
 
 In the example above the string $a must be found at an offset between 0 and
@@ -602,8 +602,8 @@ Executable entry point
 
 Another special variable than can be used on a rule is ``entrypoint``. If file
 is a Portable Executable (PE) or Executable and Linkable Format (ELF), this
-variable holds the raw offset of the exectutable’s entry point in case we
-scanning a file. If we are scanning a running process entrypoint will hold
+variable holds the raw offset of the exectutable’s entry point in case we are
+scanning a file. If we are scanning a running process, the entrypoint will hold
 the virtual address of the main executable’s entry point. A typical use of
 this variable is to look for some pattern at the entry point to detect packers
 or simple file infectors. ::
@@ -664,7 +664,9 @@ The ``intXX`` functions read 8, 16, and 32 bits signed integers from
 <offset or virtual address>, while functions ``uintXX`` read unsigned integers.
 Both 16 and 32 bits integer are considered to be little-endian. If you
 want to read a big-endian integer use the corresponding function ending
-in ``be``. The <offset or virtual address> parameter can be any expression returning an unsigned integer, including the return value of one the ``uintXX`` functions itself. As an example let's see a rule to distinguish PE files::
+in ``be``. The <offset or virtual address> parameter can be any expression returning
+an unsigned integer, including the return value of one the ``uintXX`` functions 
+itself. As an example let's see a rule to distinguish PE files::
 
     rule IsPE
     {
@@ -679,7 +681,7 @@ in ``be``. The <offset or virtual address> parameter can be any expression retur
 Sets of strings
 ---------------
 
-There are circumstances in which is necessary to express that the file should
+There are circumstances in which it is necessary to express that the file should
 contain a certain number strings from a given set. None of the strings in the
 set are required to be present, but at least some of them should be. In these
 situations the operator of come into help. ::
@@ -711,7 +713,7 @@ example, or can be specified by using wild cards. For example::
             $foo3 = "foo3"
 
         condition:
-            2 of ($foo*)  /* equivalent to 2 of ($foo1,$foo2,$foo3) */
+            2 of ($foo*)  // equivalent to 2 of ($foo1,$foo2,$foo3)
     }
 
     rule OfExample3
@@ -738,18 +740,18 @@ equivalent keyword ``them`` for more legibility. ::
             $c = "dummy3"
 
         condition:
-            1 of them /* equivalent to 1 of ($*) */
+            1 of them // equivalent to 1 of ($*)
     }
 
 In all the above examples the number of strings have been specified by a
 numeric constant, but any expression returning a numeric value can be used.
 The keywords any and  all can be used as well. ::
 
-    all of them       /* all strings in the rule */
-    any of them       /* any string in the rule */
-    all of ($a*)      /* all strings whose identifier starts by $a */
-    any of ($a,$b,$c) /* any of $a, $b or $c */
-    1 of ($*)         /* same that "any of them" */
+    all of them       // all strings in the rule
+    any of them       // any string in the rule
+    all of ($a*)      // all strings whose identifier starts by $a
+    any of ($a,$b,$c) // any of $a, $b or $c
+    1 of ($*)         // same that "any of them"
 
 Applying the same condition to many strings
 -------------------------------------------
@@ -791,9 +793,9 @@ occurrences and the first offset of each string respectively. ::
 Using anonymous strings with ``of`` and ``for..of``
 ---------------------------------------------------
 
-When using the ``of`` and ``for..of`` operators followed by them, the
+When using the ``of`` and ``for..of`` operators followed by ``them``, the
 identifier assigned to each string of the rule is usually superfluous. As
-we are not referencing any string individually we don't not need to provide
+we are not referencing any string individually we do not need to provide
 a unique identifier for each of them. In those situations you can declare
 anonymous strings with identifiers consisting only in the $ character, as in
 the following example::
@@ -815,7 +817,7 @@ Iterating over string occurrences
 As seen in :ref:`string-offsets`, the offsets or virtual addresses where a given
 string appears within a file or process address space can be accessed by
 using the syntax: @a[i], where i is an index indicating which occurrence
-of the string $a are you referring to. (@a[1], @a[2],...).
+of the string $a you are referring to. (@a[1], @a[2],...).
 
 Sometimes you will need to iterate over some of these offsets and guarantee
 they satisfy a given condition. For example::
@@ -827,7 +829,7 @@ they satisfy a given condition. For example::
             $b = "dummy2"
 
         condition:
-            for all i in (1,2,3) : (@a[i] + 10 == @b[i])
+            for all i in (1,2,3) : ( @a[i] + 10 == @b[i] )
     }
 
 The previous rule tells that the first three occurrences of $b should be 10
@@ -835,13 +837,13 @@ bytes away from the first three occurrences of $a.
 
 The same condition could be written also as::
 
-    for all i in (1..3) : (@a[i] + 10 == @b[i])
+    for all i in (1..3) : ( @a[i] + 10 == @b[i] )
 
 Notice that we’re using a range (1..3) instead of enumerating the index
 values (1,2,3). Of course, we’re not forced to use constants to specify range
 boundaries, we can use expressions as well like in the following example::
 
-    for all i in (1..#a) : (@a[i] < 100)
+    for all i in (1..#a) : ( @a[i] < 100 )
 
 In this case we’re iterating over every occurrence of $a (remember that #a
 represents the number of occurrences of $a). This rule is telling that every
@@ -851,8 +853,8 @@ In case you want to express that only some occurrences of the string
 should satisfy your condition, the same logic seen in the ``for..of`` operator
 applies here::
 
-    for any i in (1..#a): ( @a[i] < 100 )
-    for 2 i in (1..#a): ( @a[i] < 100 )
+    for any i in (1..#a) : ( @a[i] < 100 )
+    for 2 i in (1..#a) : ( @a[i] < 100 )
 
 In resume, the syntax of this operator is::
 
@@ -918,7 +920,7 @@ global rules are satisfied.
 Private rules
 -------------
 
-Private rules are a very simple concept. That are just rules that are not
+Private rules are a very simple concept. They are just rules that are not
 reported by YARA when they match on a given file. Rules that are not reported
 at all may seem sterile at first glance, but when mixed with the possibility
 offered by YARA of referencing one rule from another (see
@@ -1007,37 +1009,38 @@ These statements must be placed outside any rule definition and followed by
 the module name enclosed in double-quotes. Like this::
 
 
-  import "pe"
-  import "cuckoo"
+    import "pe"
+    import "cuckoo"
 
 After importing the module you can make use of its features, always using
 ``<module name>.`` as a prefix to any variable, or function exported by the
 module. For example::
 
-  pe.entry_point == 0x1000
-  cuckoo.http_request(/someregexp/)
+    pe.entry_point == 0x1000
+    cuckoo.http_request(/someregexp/)
 
 Modules often leave variables in undefined state, for example when the variable
 doesn't make sense in the current context (think of ``pe.entry_point`` while
 scanning a non-PE file). YARA handles undefined values in way that allows the
 rule to keep its meaningfulness. Take a look at this rule::
 
-  import "pe"
+    import "pe"
 
-  rule test
-  {
-    strings:
-      $a = "some string"
-    condition:
-      $a and pe.entry_point == 0x1000
-  }
+    rule Test
+    {
+      strings:
+          $a = "some string"
+
+      condition:
+          $a and pe.entry_point == 0x1000
+    }
 
 If the scanned file is not a PE you wouldn't expect this rule matching the file,
 even if it contains the string, because **both** conditions (the presence of the
 string and the right value for the entry point) must be satisfied. However, if the
 condition is changed to::
 
-  $a or pe.entry_point == 0x1000
+    $a or pe.entry_point == 0x1000
 
 You would expect the rule matching in this case if the file contains the string,
 even if it isn't a PE file. That's exactly how YARA behaves. The logic is simple:
@@ -1139,14 +1142,3 @@ the drive letter::
 
     include "c:/yara/includes/other.yar"
     include "c:\\yara\\includes\\other.yar"
-
-
-
-
-
-
-
-
-
-
-
