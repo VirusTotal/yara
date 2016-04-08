@@ -70,4 +70,8 @@ YR_API int yr_filemap_map_ex(
 YR_API void yr_filemap_unmap(
     YR_MAPPED_FILE* pmapped_file);
 
+
+YR_API void yr_filemap_unmap_fd(
+    YR_MAPPED_FILE* pmapped_file);
+
 #endif
