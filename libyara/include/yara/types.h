@@ -24,7 +24,7 @@ limitations under the License.
 #include <yara/hash.h>
 #include <yara/utils.h>
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#ifdef _WIN32
 #include <windows.h>
 typedef HANDLE mutex_t;
 #else

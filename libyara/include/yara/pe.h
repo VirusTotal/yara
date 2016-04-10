@@ -16,7 +16,7 @@ limitations under the License.
 
 #pragma pack(push, 1)
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#ifdef _WIN32
 #include <windows.h>
 
 // These definitions are not present in older Windows headers.

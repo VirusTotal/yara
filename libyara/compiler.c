@@ -556,7 +556,7 @@ YR_API int yr_compiler_get_rules(
   yara_rules->code_start = rules_file_header->code_start;
   yara_rules->tidx_mask = 0;
 
-  #if _WIN32 || __CYGWIN__
+  #if _WIN32
   yara_rules->mutex = CreateMutex(NULL, FALSE, NULL);
   #else
   pthread_mutex_init(&yara_rules->mutex, NULL);

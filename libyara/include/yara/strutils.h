@@ -23,8 +23,7 @@ limitations under the License.
 
 #include "config.h"
 
-// Cygwin already has these functions.
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef _WIN32
 #define snprintf _snprintf
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp
@@ -75,3 +74,4 @@ size_t strlcpy_w(
     size_t n);
 
 #endif
+

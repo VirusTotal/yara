@@ -17,7 +17,7 @@ limitations under the License.
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 
-#if _WIN32 || __CYGWIN__
+#if _WIN32
 #define PRIu64 "%I64d"
 #define PRIx64 "%I64x"
 #else
@@ -44,10 +44,10 @@ void digest_to_ascii(
 
 
 define_function(string_md5)
-{
+{ 
   unsigned char digest[MD5_DIGEST_LENGTH];
   char digest_ascii[MD5_DIGEST_LENGTH * 2 + 1];
-
+  
   MD5_CTX md5_context;
   SIZED_STRING* s = sized_string_argument(1);
 
@@ -80,7 +80,7 @@ define_function(string_sha256)
 
 
 define_function(string_sha1)
-{
+{ 
   unsigned char digest[SHA_DIGEST_LENGTH];
   char digest_ascii[SHA_DIGEST_LENGTH * 2 + 1];
 
@@ -243,7 +243,7 @@ define_function(data_sha1)
 
 
 define_function(data_sha256)
-{
+{   
   SHA256_CTX sha256_context;
 
   unsigned char digest[SHA256_DIGEST_LENGTH];
