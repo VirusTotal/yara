@@ -1256,7 +1256,6 @@ int main(int argc, char** argv)
   test_of();
   test_for();
   test_re();
-  test_entrypoint();
   test_filesize();
   // test_compile_file();
   // test_compile_files();
