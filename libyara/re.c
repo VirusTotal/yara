@@ -29,18 +29,13 @@ order to avoid confusion with operating system threads.
 #include <string.h>
 #include <limits.h>
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-#include <windows.h>
-#else
-#include <pthread.h>
-#endif
-
 #include <yara/limits.h>
 #include <yara/globals.h>
 #include <yara/utils.h>
 #include <yara/mem.h>
 #include <yara/re.h>
 #include <yara/error.h>
+#include <yara/threading.h>
 #include <yara/re_lexer.h>
 #include <yara/hex_lexer.h>
 
@@ -113,11 +108,8 @@ typedef struct _RE_THREAD_STORAGE
 } RE_THREAD_STORAGE;
 
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-DWORD thread_storage_key = 0;
-#else
-pthread_key_t thread_storage_key = 0;
-#endif
+YR_THREAD_STORAGE_KEY thread_storage_key = 0;
+
 
 //
 // yr_re_initialize
@@ -128,13 +120,7 @@ pthread_key_t thread_storage_key = 0;
 
 int yr_re_initialize(void)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
-  thread_storage_key = TlsAlloc();
-  #else
-  pthread_key_create(&thread_storage_key, NULL);
-  #endif
-
-  return ERROR_SUCCESS;
+  return yr_thread_storage_create(&thread_storage_key);
 }
 
 //
@@ -146,11 +132,7 @@ int yr_re_initialize(void)
 
 int yr_re_finalize(void)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
-  TlsFree(thread_storage_key);
-  #else
-  pthread_key_delete(thread_storage_key);
-  #endif
+  yr_thread_storage_destroy(&thread_storage_key);
 
   thread_storage_key = 0;
   return ERROR_SUCCESS;
@@ -170,11 +152,8 @@ int yr_re_finalize_thread(void)
   RE_THREAD_STORAGE* storage;
 
   if (thread_storage_key != 0)
-    #if defined(_WIN32) || defined(__CYGWIN__)
-    storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
-    #else
-    storage = (RE_THREAD_STORAGE*) pthread_getspecific(thread_storage_key);
-    #endif
+    storage = (RE_THREAD_STORAGE*) yr_thread_storage_get_value(
+        &thread_storage_key);
   else
     return ERROR_SUCCESS;
 
@@ -192,13 +171,7 @@ int yr_re_finalize_thread(void)
     yr_free(storage);
   }
 
-  #if defined(_WIN32) || defined(__CYGWIN__)
-  TlsSetValue(thread_storage_key, NULL);
-  #else
-  pthread_setspecific(thread_storage_key, NULL);
-  #endif
-
-  return ERROR_SUCCESS;
+  return yr_thread_storage_set_value(&thread_storage_key, NULL);
 }
 
 
@@ -1256,11 +1229,8 @@ int yr_re_emit_code(
 int _yr_re_alloc_storage(
     RE_THREAD_STORAGE** storage)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
-  *storage = (RE_THREAD_STORAGE*) TlsGetValue(thread_storage_key);
-  #else
-  *storage = (RE_THREAD_STORAGE*) pthread_getspecific(thread_storage_key);
-  #endif
+  *storage = (RE_THREAD_STORAGE*) yr_thread_storage_get_value(
+      &thread_storage_key);
 
   if (*storage == NULL)
   {
@@ -1273,11 +1243,8 @@ int _yr_re_alloc_storage(
     (*storage)->fiber_pool.fibers.head = NULL;
     (*storage)->fiber_pool.fibers.tail = NULL;
 
-    #if defined(_WIN32) || defined(__CYGWIN__)
-    TlsSetValue(thread_storage_key, *storage);
-    #else
-    pthread_setspecific(thread_storage_key, *storage);
-    #endif
+    FAIL_ON_ERROR(
+        yr_thread_storage_set_value(&thread_storage_key, *storage));
   }
 
   return ERROR_SUCCESS;

@@ -22,6 +22,7 @@ limitations under the License.
 #include <yara/re.h>
 #include <yara/modules.h>
 #include <yara/mem.h>
+#include <yara/threading.h>
 
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/crypto.h>
@@ -32,15 +33,9 @@ limitations under the License.
 #endif
 
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-#include <windows.h>
-DWORD tidx_key;
-DWORD recovery_state_key;
-#else
-#include <pthread.h>
-pthread_key_t tidx_key;
-pthread_key_t recovery_state_key;
-#endif
+YR_THREAD_STORAGE_KEY tidx_key;
+YR_THREAD_STORAGE_KEY recovery_state_key;
+
 
 static int init_count = 0;
 
@@ -61,59 +56,32 @@ char lowercase[256];
 char altercase[256];
 
 
-#ifndef HAVE_PTHREAD
-#ifdef _WIN32
-
-typedef HANDLE pthread_mutex_t;
-
-unsigned long pthread_self()
-{
-    return GetCurrentThreadId();
-}
-
-int pthread_mutex_init(pthread_mutex_t *mutex, void* attr)
-{
-    *mutex = CreateSemaphore(NULL, 1, 1, NULL);
-    return *mutex == NULL;
-}
-
-int pthread_mutex_destroy(pthread_mutex_t *mutex)
-{
-    BOOL result;
-
-    result = CloseHandle(*mutex);
-    *mutex = NULL;
-    return result == TRUE ? 0 : -1;
-}
-
-int pthread_mutex_lock(pthread_mutex_t mutex)
-{
-    return WaitForSingleObject(mutex, INFINITE) == WAIT_OBJECT_0 ? 0 : -1;
-}
-
-int pthread_mutex_unlock(pthread_mutex_t mutex)
-{
-    return ReleaseSemaphore(mutex, 1, NULL) == TRUE ? 0 : -1;
-}
-#endif
-#endif
-
-
 #ifdef HAVE_LIBCRYPTO
-pthread_mutex_t *locks;
 
-unsigned long pthreads_thread_id(void)
+// The OpenSSL library requires some locks in order to be thread-safe. These
+// locks are initialized in yr_initialize function.
+
+YR_MUTEX *openssl_locks;
+
+
+unsigned long thread_id(void)
 {
-  return (unsigned long) pthread_self();
+  return (unsigned long) yr_current_thread_id();
 }
 
-void locking_function(int mode, int n, const char *file, int line)
+
+void locking_function(
+    int mode,
+    int n,
+    const char *file,
+    int line)
 {
   if (mode & CRYPTO_LOCK)
-    pthread_mutex_lock(&locks[n]);
+    yr_mutex_lock(&openssl_locks[n]);
   else
-    pthread_mutex_unlock(&locks[n]);
+    yr_mutex_unlock(&openssl_locks[n]);
 }
+
 #endif
 
 //
@@ -147,22 +115,20 @@ YR_API int yr_initialize(void)
   }
 
   FAIL_ON_ERROR(yr_heap_alloc());
-
-  #if defined(_WIN32) || defined(__CYGWIN__)
-  tidx_key = TlsAlloc();
-  recovery_state_key = TlsAlloc();
-  #else
-  pthread_key_create(&tidx_key, NULL);
-  pthread_key_create(&recovery_state_key, NULL);
-  #endif
+  FAIL_ON_ERROR(yr_thread_storage_create(&tidx_key));
+  FAIL_ON_ERROR(yr_thread_storage_create(&recovery_state_key));
 
   #ifdef HAVE_LIBCRYPTO
-  locks = (pthread_mutex_t*) OPENSSL_malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
-  for (i = 0; i < CRYPTO_num_locks(); i++)
-    pthread_mutex_init(&locks[i], NULL);
 
-  CRYPTO_set_id_callback((unsigned long (*)())pthreads_thread_id);
+  openssl_locks = (YR_MUTEX*) OPENSSL_malloc(
+      CRYPTO_num_locks() * sizeof(YR_MUTEX));
+
+  for (i = 0; i < CRYPTO_num_locks(); i++)
+    yr_mutex_create(&openssl_locks[i]);
+
+  CRYPTO_set_id_callback(thread_id);
   CRYPTO_set_locking_callback(locking_function);
+
   #endif
 
   FAIL_ON_ERROR(yr_re_initialize());
@@ -209,19 +175,16 @@ YR_API int yr_finalize(void)
     return ERROR_SUCCESS;
 
   #ifdef HAVE_LIBCRYPTO
+
   for (i = 0; i < CRYPTO_num_locks(); i ++)
-    pthread_mutex_destroy(&locks[i]);
-  OPENSSL_free(locks);
+    yr_mutex_destroy(&openssl_locks[i]);
+
+  OPENSSL_free(openssl_locks);
+  
   #endif
 
-  #if defined(_WIN32) || defined(__CYGWIN__)
-  TlsFree(tidx_key);
-  TlsFree(recovery_state_key);
-  #else
-  pthread_key_delete(tidx_key);
-  pthread_key_delete(recovery_state_key);
-  #endif
-
+  FAIL_ON_ERROR(yr_thread_storage_destroy(&tidx_key));
+  FAIL_ON_ERROR(yr_thread_storage_destroy(&recovery_state_key));
   FAIL_ON_ERROR(yr_re_finalize());
   FAIL_ON_ERROR(yr_modules_finalize());
   FAIL_ON_ERROR(yr_heap_free());
@@ -243,11 +206,7 @@ YR_API int yr_finalize(void)
 
 YR_API void yr_set_tidx(int tidx)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
-  TlsSetValue(tidx_key, (LPVOID) (tidx + 1));
-  #else
-  pthread_setspecific(tidx_key, (void*) (size_t) (tidx + 1));
-  #endif
+  yr_thread_storage_set_value(&tidx_key, (void*) (size_t) (tidx + 1));
 }
 
 
@@ -263,11 +222,7 @@ YR_API void yr_set_tidx(int tidx)
 
 YR_API int yr_get_tidx(void)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
-  return (int) TlsGetValue(tidx_key) - 1;
-  #else
-  return (int) (size_t) pthread_getspecific(tidx_key) - 1;
-  #endif
+  return (int) (size_t) yr_thread_storage_get_value(&tidx_key) - 1;
 }
 
 

@@ -41,6 +41,7 @@ with noyywrap then we can remove this pragma.
 #include <yara/mem.h>
 #include <yara/re.h>
 #include <yara/re_lexer.h>
+#include <yara/threading.h>
 #include <yara/strutils.h>
 
 
@@ -534,26 +535,15 @@ int read_escaped_char(
 }
 
 
+extern YR_THREAD_STORAGE_KEY recovery_state_key;
 
-#ifdef _WIN32
-#include <windows.h>
-extern DWORD recovery_state_key;
-#else
-#include <pthread.h>
-extern pthread_key_t recovery_state_key;
-#endif
 
 void yyfatal(
     yyscan_t yyscanner,
     const char *error_message)
 {
-  jmp_buf* recovery_state;
-
-  #ifdef _WIN32
-  recovery_state = (jmp_buf*) TlsGetValue(recovery_state_key) ;
-  #else
-  recovery_state = (jmp_buf*) pthread_getspecific(recovery_state_key);
-  #endif
+  jmp_buf* recovery_state = (jmp_buf*) yr_thread_storage_get_value(
+      &recovery_state_key);
 
   longjmp(*recovery_state, 1);
 }
@@ -593,11 +583,7 @@ int yr_parse_re_string(
 
   lex_env.last_error_code = ERROR_SUCCESS;
 
-  #ifdef _WIN32
-  TlsSetValue(recovery_state_key, (LPVOID) &recovery_state);
-  #else
-  pthread_setspecific(recovery_state_key, (void*) &recovery_state);
-  #endif
+  yr_thread_storage_set_value(&recovery_state_key, &recovery_state);
 
   if (setjmp(recovery_state) != 0)
     return ERROR_INTERNAL_FATAL_ERROR;
