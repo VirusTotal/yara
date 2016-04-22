@@ -553,6 +553,12 @@ with noyywrap then we can remove this pragma.
 #define snprintf _snprintf
 #endif
 
+static uint8_t word_chars[] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
+    0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
 
 uint8_t escaped_char_value(
     char* text);
@@ -563,7 +569,7 @@ int read_escaped_char(
 
 #define YY_NO_UNISTD_H 1
 
-#line 567 "re_lexer.c"
+#line 573 "re_lexer.c"
 
 #define INITIAL 0
 #define char_class 1
@@ -837,10 +843,10 @@ YY_DECL
 		}
 
 	{
-#line 80 "re_lexer.l"
+#line 86 "re_lexer.l"
 
 
-#line 844 "re_lexer.c"
+#line 850 "re_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -907,7 +913,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 82 "re_lexer.l"
+#line 88 "re_lexer.l"
 {
 
   // Examples: {3,8} {0,5} {,5} {7,}
@@ -943,7 +949,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 116 "re_lexer.l"
+#line 122 "re_lexer.l"
 {
 
   // Example: {10}
@@ -963,7 +969,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 134 "re_lexer.l"
+#line 140 "re_lexer.l"
 {
 
   // Start of a negated character class. Example: [^abcd]
@@ -975,7 +981,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 143 "re_lexer.l"
+#line 149 "re_lexer.l"
 {
 
   // Start of character negated class containing a ].
@@ -990,7 +996,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 156 "re_lexer.l"
+#line 162 "re_lexer.l"
 {
 
   // Start of character class containing a ].
@@ -1005,7 +1011,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 169 "re_lexer.l"
+#line 175 "re_lexer.l"
 {
 
   // Start of character class. Example: [abcd]
@@ -1018,7 +1024,7 @@ YY_RULE_SETUP
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 179 "re_lexer.l"
+#line 185 "re_lexer.l"
 {
 
   // Any non-special character is passed as a CHAR token to the scanner.
@@ -1029,63 +1035,63 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 188 "re_lexer.l"
+#line 194 "re_lexer.l"
 {
   return _WORD_CHAR_;
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 193 "re_lexer.l"
+#line 199 "re_lexer.l"
 {
   return _NON_WORD_CHAR_;
 }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 198 "re_lexer.l"
+#line 204 "re_lexer.l"
 {
   return _SPACE_;
 }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 203 "re_lexer.l"
+#line 209 "re_lexer.l"
 {
   return _NON_SPACE_;
 }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 208 "re_lexer.l"
+#line 214 "re_lexer.l"
 {
   return _DIGIT_;
 }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 213 "re_lexer.l"
+#line 219 "re_lexer.l"
 {
   return _NON_DIGIT_;
 }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 218 "re_lexer.l"
+#line 224 "re_lexer.l"
 {
   return _WORD_BOUNDARY_;
 }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 222 "re_lexer.l"
+#line 228 "re_lexer.l"
 {
   return _NON_WORD_BOUNDARY_;
 }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 227 "re_lexer.l"
+#line 233 "re_lexer.l"
 {
 
   yyerror(yyscanner, lex_env, "backreferences are not allowed");
@@ -1094,7 +1100,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 234 "re_lexer.l"
+#line 240 "re_lexer.l"
 {
 
   uint8_t c;
@@ -1113,7 +1119,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 251 "re_lexer.l"
+#line 257 "re_lexer.l"
 {
 
   // End of character class.
@@ -1136,7 +1142,7 @@ YY_RULE_SETUP
 case 19:
 /* rule 19 can match eol */
 YY_RULE_SETUP
-#line 272 "re_lexer.l"
+#line 278 "re_lexer.l"
 {
 
   // A range inside a character class.
@@ -1180,14 +1186,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 314 "re_lexer.l"
+#line 320 "re_lexer.l"
 {
 
   int i;
-  char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
-                        0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
   for (i = 0; i < 32; i++)
     LEX_ENV->class_vector[i] |= word_chars[i];
@@ -1195,14 +1197,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 327 "re_lexer.l"
+#line 329 "re_lexer.l"
 {
 
   int i;
-  char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
-                        0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
   for (i = 0; i < 32; i++)
     LEX_ENV->class_vector[i] |= ~word_chars[i];
@@ -1210,7 +1208,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 340 "re_lexer.l"
+#line 338 "re_lexer.l"
 {
 
   LEX_ENV->class_vector[' ' / 8] |= 1 << ' ' % 8;
@@ -1219,7 +1217,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 347 "re_lexer.l"
+#line 345 "re_lexer.l"
 {
 
   int i;
@@ -1237,7 +1235,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 363 "re_lexer.l"
+#line 361 "re_lexer.l"
 {
 
   char c;
@@ -1248,7 +1246,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 372 "re_lexer.l"
+#line 370 "re_lexer.l"
 {
 
   int i;
@@ -1270,7 +1268,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 392 "re_lexer.l"
+#line 390 "re_lexer.l"
 {
 
   uint8_t c;
@@ -1288,7 +1286,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 408 "re_lexer.l"
+#line 406 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1306,7 +1304,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(char_class):
-#line 425 "re_lexer.l"
+#line 423 "re_lexer.l"
 {
 
   // End of regexp reached while scanning a character class.
@@ -1317,7 +1315,7 @@ case YY_STATE_EOF(char_class):
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 434 "re_lexer.l"
+#line 432 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1332,7 +1330,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 448 "re_lexer.l"
+#line 446 "re_lexer.l"
 {
 
   yyterminate();
@@ -1340,10 +1338,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 453 "re_lexer.l"
+#line 451 "re_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1347 "re_lexer.c"
+#line 1345 "re_lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2492,7 +2490,7 @@ void re_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 453 "re_lexer.l"
+#line 451 "re_lexer.l"
 
 
 
