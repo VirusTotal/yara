@@ -421,9 +421,9 @@ static char cescapes[] =
 
 void print_escaped(
     uint8_t* data,
-    int length)
+    size_t length)
 {
-  int i;
+  size_t i;
 
   for (i = 0; i < length; i++)
   {

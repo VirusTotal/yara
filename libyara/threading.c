@@ -40,7 +40,7 @@ int yr_mutex_create(
 int yr_mutex_destroy(
     YR_MUTEX* mutex)
 {
-  if (CloseHandle(&mutex) == FALSE)
+  if (CloseHandle(*mutex) == FALSE)
     return ERROR_INTERNAL_FATAL_ERROR;
 
   return ERROR_SUCCESS;
@@ -50,7 +50,7 @@ int yr_mutex_destroy(
 int yr_mutex_lock(
     YR_MUTEX* mutex)
 {
-  if (WaitForSingleObject(&mutex, INFINITE) == WAIT_FAILED)
+  if (WaitForSingleObject(*mutex, INFINITE) == WAIT_FAILED)
     return ERROR_INTERNAL_FATAL_ERROR;
 
   return ERROR_SUCCESS;
@@ -60,7 +60,7 @@ int yr_mutex_lock(
 int yr_mutex_unlock(
     YR_MUTEX* mutex)
 {
-  if (ReleaseMutex(&mutex) == FALSE)
+  if (ReleaseMutex(*mutex) == FALSE)
     return ERROR_INTERNAL_FATAL_ERROR;
 
   return ERROR_SUCCESS;
@@ -86,6 +86,24 @@ int yr_thread_storage_destroy(
     return ERROR_INTERNAL_FATAL_ERROR;
 
   return ERROR_SUCCESS;
+}
+
+
+int yr_thread_storage_set_value(
+	YR_THREAD_STORAGE_KEY* storage,
+	void* value)
+{
+	if (TlsSetValue(*storage, value) == FALSE)
+		return ERROR_INTERNAL_FATAL_ERROR;
+
+	return ERROR_SUCCESS;
+}
+
+
+void* yr_thread_storage_get_value(
+	YR_THREAD_STORAGE_KEY* storage)
+{
+	return TlsGetValue(*storage);
 }
 
 

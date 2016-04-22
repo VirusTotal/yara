@@ -38,7 +38,7 @@
     <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
@@ -164,7 +164,7 @@
     </Lib>
     <Link>
       <AdditionalDependencies>advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -200,6 +200,7 @@
     <ClCompile Include="..\..\..\libyara\sizedstr.c" />
     <ClCompile Include="..\..\..\libyara\stream.c" />
     <ClCompile Include="..\..\..\libyara\strutils.c" />
+    <ClCompile Include="..\..\..\libyara\threading.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
