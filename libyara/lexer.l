@@ -84,6 +84,9 @@ with noyywrap then we can remove this pragma.
 #define snprintf _snprintf
 #endif
 
+  /* If non-zero, '{' starts a hexadecimal string */
+  extern int inside_rule_body;
+
 %}
 
 %option reentrant bison-bridge
@@ -100,6 +103,7 @@ with noyywrap then we can remove this pragma.
 %option warn
 
 %x str
+%x hex_str
 %x regexp
 %x include
 %x comment
@@ -574,6 +578,20 @@ u?int(8|16|32)(be)? {
   yyterminate();
 }
 
+<hex_str>({hexdigit}|[ \-|\?\[\]\(\)\n\t])+ { YYTEXT_TO_BUFFER; }
+
+<hex_str>\} { /* closing brace */
+  ALLOC_SIZED_STRING(s, yyextra->lex_buf_len);
+
+  *yyextra->lex_buf_ptr = '\0';
+  memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
+  yylval->sized_string = s;
+
+  BEGIN(INITIAL);
+
+  return _HEX_STRING_;
+}
+
 
 \"  {
 
@@ -591,14 +609,13 @@ u?int(8|16|32)(be)? {
 }
 
 
-\{({hexdigit}|[ \-|\?\[\]\(\)\n\t])+\}  {
-
-  ALLOC_SIZED_STRING(s, strlen(yytext));
-
-  strlcpy(s->c_string, yytext, s->length + 1);
-  yylval->sized_string = s;
-
-  return _HEX_STRING_;
+\{ {
+  if (!inside_rule_body) {
+    return '{';
+  }
+  yyextra->lex_buf_ptr = yyextra->lex_buf;
+  yyextra->lex_buf_len = 0;
+  BEGIN(hex_str);
 }
 
 

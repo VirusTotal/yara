@@ -1235,6 +1235,76 @@ void test_integer_functions()
 }
 
 
+void test_split_strings()
+{
+  char* s1 = "rule test { strings: $a = \"12\" \"34\" condition: $a }";
+  char* s2 = "rule test { strings: $a = \"12\" /* comment */ \"34\" condition: $a }";
+  char* s3 = "\
+rule test {\n\
+strings:\n\
+  $a = \"12\" // comment\n\
+       \"34\"\n\
+condition:\n\
+  $a\n\
+}";
+
+  assert_syntax_correct(s1);
+  assert_syntax_correct(s2);
+  assert_syntax_correct(s3);
+
+  assert_true_rule(s1, "1234");
+  assert_true_rule(s2, "1234");
+  assert_true_rule(s3, "1234");
+
+  assert_false_rule(s1, "3412");
+  assert_false_rule(s2, "3412");
+  assert_false_rule(s3, "3412");
+
+  assert_false_rule(s1, "12");
+  assert_false_rule(s2, "12");
+  assert_false_rule(s3, "12");
+
+  assert_false_rule(s1, "34");
+  assert_false_rule(s2, "34");
+  assert_false_rule(s3, "34");
+}
+
+
+void test_split_hex()
+{
+  char* h1 = "rule test { strings: $a = { 31 32 } { 33 34 } condition: $a }";
+  char* h2 = "rule test { strings: $a = { 31 32 } /* comment */ { 33 34 } condition: $a }";
+  char* h3 = "\
+rule test {\n\
+strings:\n\
+  $a = { 31 32 } // comment\n\
+       { 33 34 }\n\
+condition:\n\
+  $a\n\
+}";
+
+  assert_syntax_correct(h1);
+  assert_syntax_correct(h2);
+  assert_syntax_correct(h3);
+
+  assert_true_rule(h1, "1234");
+  assert_true_rule(h2, "1234");
+  assert_true_rule(h3, "1234");
+
+  assert_false_rule(h1, "3412");
+  assert_false_rule(h2, "3412");
+  assert_false_rule(h3, "3412");
+
+  assert_false_rule(h1, "12");
+  assert_false_rule(h2, "12");
+  assert_false_rule(h3, "12");
+
+  assert_false_rule(h1, "34");
+  assert_false_rule(h2, "34");
+  assert_false_rule(h3, "34");
+}
+
+
 int main(int argc, char** argv)
 {
   yr_initialize();
@@ -1268,6 +1338,8 @@ int main(int argc, char** argv)
   test_integer_functions();
   // test_string_io();
   test_entrypoint();
+  test_split_strings();
+  test_split_hex();
 
   yr_finalize();
 
