@@ -429,14 +429,6 @@ YR_API int yr_rules_scan_mem_blocks(
 
   yr_rules_foreach(rules, rule)
   {
-    if (RULE_IS_GLOBAL(rule) && !(rule->t_flags[tidx] & RULE_TFLAGS_MATCH))
-    {
-      rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
-    }
-  }
-
-  yr_rules_foreach(rules, rule)
-  {
     int message;
 
     if (rule->t_flags[tidx] & RULE_TFLAGS_MATCH &&
