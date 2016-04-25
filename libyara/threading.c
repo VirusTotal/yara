@@ -90,20 +90,20 @@ int yr_thread_storage_destroy(
 
 
 int yr_thread_storage_set_value(
-	YR_THREAD_STORAGE_KEY* storage,
-	void* value)
+    YR_THREAD_STORAGE_KEY* storage,
+    void* value)
 {
-	if (TlsSetValue(*storage, value) == FALSE)
-		return ERROR_INTERNAL_FATAL_ERROR;
+  if (TlsSetValue(*storage, value) == FALSE)
+    return ERROR_INTERNAL_FATAL_ERROR;
 
-	return ERROR_SUCCESS;
+  return ERROR_SUCCESS;
 }
 
 
 void* yr_thread_storage_get_value(
-	YR_THREAD_STORAGE_KEY* storage)
+    YR_THREAD_STORAGE_KEY* storage)
 {
-	return TlsGetValue(*storage);
+  return TlsGetValue(*storage);
 }
 
 
