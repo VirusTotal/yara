@@ -422,6 +422,8 @@ int yr_execute_code(
 
         if (!is_undef(r1) && r1.i)
           rule->t_flags[tidx] |= RULE_TFLAGS_MATCH;
+        else if (RULE_IS_GLOBAL(rule))
+          rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
 
         #ifdef PROFILING_ENABLED
         rule->clock_ticks += clock() - start;
