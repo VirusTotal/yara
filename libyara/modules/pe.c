@@ -419,9 +419,11 @@ int64_t pe_rva_to_offset(
         // If FileAlignment is >= 0x200, it is apparently ignored (see
         // Ero Carreras's pefile.py, PE.adjust_FileAlignment).
         int alignment = yr_min(OptionalHeader(pe, FileAlignment), 0x200);
+
         if (alignment)
         {
           int rest = section_offset % alignment;
+
           if (rest)
             section_offset -= rest;
         }
@@ -441,7 +443,9 @@ int64_t pe_rva_to_offset(
 
   if (rva < lowest_section_rva)
   {
-    return rva;
+    section_rva = 0;
+    section_offset = 0;
+    section_raw_size = pe->data_size;
   }
 
   // Many sections, have a raw (on disk) size smaller than their in-memory size.
@@ -449,9 +453,7 @@ int64_t pe_rva_to_offset(
   // associated file offset.
 
   if ((rva - section_rva) >= section_raw_size)
-  {
     return -1;
-  }
 
   result = section_offset + (rva - section_rva);
 
