@@ -371,12 +371,19 @@ PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
 }
 
 
+#define OptionalHeader(pe,field)                \
+  (IS_64BITS_PE(pe) ?                           \
+   pe->header64->OptionalHeader.field :         \
+   pe->header->OptionalHeader.field)
+
+
 int64_t pe_rva_to_offset(
     PE* pe,
     uint64_t rva)
 {
   PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pe->header);
 
+  DWORD lowest_section_rva = 0xffffffff;
   DWORD section_rva = 0;
   DWORD section_offset = 0;
   DWORD section_raw_size = 0;
@@ -389,12 +396,37 @@ int64_t pe_rva_to_offset(
   {
     if (struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
     {
+      if (lowest_section_rva > section->VirtualAddress)
+      {
+        lowest_section_rva = section->VirtualAddress;
+      }
+
       if (rva >= section->VirtualAddress &&
           section_rva <= section->VirtualAddress)
       {
         section_rva = section->VirtualAddress;
         section_offset = section->PointerToRawData;
         section_raw_size = section->SizeOfRawData;
+
+        // Round section_offset
+        //
+        // Rounding everything less than 0x200 to 0 as discussed in
+        // https://code.google.com/archive/p/corkami/wikis/PE.wiki#PointerToRawData
+        // does not work for PE32_FILE from the test suite and for
+        // some tinype samples where File Alignment = 4
+        // (http://www.phreedom.org/research/tinype/).
+        //
+        // If FileAlignment is >= 0x200, it is apparently ignored (see
+        // Ero Carreras's pefile.py, PE.adjust_FileAlignment).
+        int alignment = yr_min(OptionalHeader(pe, FileAlignment), 0x200);
+
+        if (alignment)
+        {
+          int rest = section_offset % alignment;
+
+          if (rest)
+            section_offset -= rest;
+        }
       }
 
       section++;
@@ -404,6 +436,16 @@ int64_t pe_rva_to_offset(
     {
       return -1;
     }
+  }
+
+  // Everything before the first section seems to get mapped straight
+  // relative to ImageBase.
+
+  if (rva < lowest_section_rva)
+  {
+    section_rva = 0;
+    section_offset = 0;
+    section_raw_size = pe->data_size;
   }
 
   // Many sections, have a raw (on disk) size smaller than their in-memory size.
@@ -849,7 +891,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
   // I've seen binaries where OriginalFirstThunk is zero. In this case
   // use FirstThunk.
 
-  if (offset < 0)
+  if (offset <= 0)
     offset = pe_rva_to_offset(pe, import_descriptor->FirstThunk);
 
   if (offset < 0)
@@ -1319,11 +1361,6 @@ void pe_parse_header(
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
   int i, scount;
 
-#define OptionalHeader(field) \
-    (IS_64BITS_PE(pe) ? \
-        pe->header64->OptionalHeader.field : \
-        pe->header->OptionalHeader.field)
-
   set_integer(
       pe->header->FileHeader.Machine,
       pe->object, "machine");
@@ -1342,48 +1379,48 @@ void pe_parse_header(
 
   set_integer(
       flags & SCAN_FLAGS_PROCESS_MEMORY ?
-        base_address + OptionalHeader(AddressOfEntryPoint) :
-        pe_rva_to_offset(pe, OptionalHeader(AddressOfEntryPoint)),
+        base_address + OptionalHeader(pe, AddressOfEntryPoint) :
+        pe_rva_to_offset(pe, OptionalHeader(pe, AddressOfEntryPoint)),
       pe->object, "entry_point");
 
   set_integer(
-      OptionalHeader(ImageBase),
+      OptionalHeader(pe, ImageBase),
       pe->object, "image_base");
 
   set_integer(
-      OptionalHeader(MajorLinkerVersion),
+      OptionalHeader(pe, MajorLinkerVersion),
       pe->object, "linker_version.major");
 
   set_integer(
-      OptionalHeader(MinorLinkerVersion),
+      OptionalHeader(pe, MinorLinkerVersion),
       pe->object, "linker_version.minor");
 
   set_integer(
-      OptionalHeader(MajorOperatingSystemVersion),
+      OptionalHeader(pe, MajorOperatingSystemVersion),
       pe->object, "os_version.major");
 
   set_integer(
-      OptionalHeader(MinorOperatingSystemVersion),
+      OptionalHeader(pe, MinorOperatingSystemVersion),
       pe->object, "os_version.minor");
 
   set_integer(
-      OptionalHeader(MajorImageVersion),
+      OptionalHeader(pe, MajorImageVersion),
       pe->object, "image_version.major");
 
   set_integer(
-      OptionalHeader(MinorImageVersion),
+      OptionalHeader(pe, MinorImageVersion),
       pe->object, "image_version.minor");
 
   set_integer(
-      OptionalHeader(MajorSubsystemVersion),
+      OptionalHeader(pe, MajorSubsystemVersion),
       pe->object, "subsystem_version.major");
 
   set_integer(
-      OptionalHeader(MinorSubsystemVersion),
+      OptionalHeader(pe, MinorSubsystemVersion),
       pe->object, "subsystem_version.minor");
 
   set_integer(
-      OptionalHeader(Subsystem),
+      OptionalHeader(pe, Subsystem),
       pe->object, "subsystem");
 
   pe_iterate_resources(
@@ -1838,7 +1875,8 @@ define_function(locale)
 define_function(language)
 {
   YR_OBJECT* module = module();
-  PE* pe = module->data;
+  PE* pe = (PE*) module->data;
+
 
   uint64_t language = integer_argument(1);
   int64_t n, i;
@@ -1881,7 +1919,7 @@ define_function(is_dll)
 define_function(is_32bit)
 {
   YR_OBJECT* module = module();
-  PE* pe = module->data;
+  PE* pe = (PE*) module->data;
 
   if (pe == NULL)
     return_integer(UNDEFINED);
@@ -1893,7 +1931,7 @@ define_function(is_32bit)
 define_function(is_64bit)
 {
   YR_OBJECT* module = module();
-  PE* pe = module->data;
+  PE* pe = (PE*) module->data;
 
   if (pe == NULL)
     return_integer(UNDEFINED);
@@ -1907,63 +1945,62 @@ static uint64_t rich_internal(
     uint64_t version,
     uint64_t toolid)
 {
-    size_t rich_len;
+  int64_t rich_length;
+  int64_t rich_count;
+  int64_t i;
 
-    PRICH_SIGNATURE clear_rich_signature;
-    SIZED_STRING* rich_string;
+  PRICH_SIGNATURE clear_rich_signature;
+  SIZED_STRING* rich_string;
 
-    int rich_signature_count;
-    int i;
+  // Check if the required fields are set
+  if (is_undefined(module, "rich_signature.length"))
+      return UNDEFINED;
 
-    // Check if the required fields are set
-    if (is_undefined(module, "rich_signature.length"))
-        return UNDEFINED;
+  rich_length = get_integer(module, "rich_signature.length");
+  rich_string = get_string(module, "rich_signature.clear_data");
 
-    rich_len = get_integer(module, "rich_signature.length");
-    rich_string = get_string(module, "rich_signature.clear_data");
+  // If the clear_data was not set, return UNDEFINED
+  if (rich_string == NULL)
+      return UNDEFINED;
 
-    // If the clear_data was not set, return UNDEFINED
-    if (rich_string == NULL)
-        return UNDEFINED;
+  if (version == UNDEFINED && toolid == UNDEFINED)
+      return FALSE;
 
-    if (version == UNDEFINED && toolid == UNDEFINED)
-        return FALSE;
+  clear_rich_signature = (PRICH_SIGNATURE) rich_string->c_string;
 
-    clear_rich_signature = (PRICH_SIGNATURE) rich_string->c_string;
+  // Loop over the versions in the rich signature
 
-    // Loop over the versions in the rich signature
+  rich_count = \
+      (rich_length - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
 
-    rich_signature_count = \
-        (rich_len - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
+  for (i = 0; i < rich_count; i++)
+  {
+    DWORD id_version = clear_rich_signature->versions[i].id_version;
 
-    for (i = 0; i < rich_signature_count; i++)
+    int match_version = (version == RICH_VERSION_VERSION(id_version));
+    int match_toolid = (toolid == RICH_VERSION_ID(id_version));
+
+    if (version != UNDEFINED && toolid != UNDEFINED)
     {
-        DWORD id_version = clear_rich_signature->versions[i].id_version;
-
-        int match_version = version == RICH_VERSION_VERSION(id_version);
-        int match_toolid = toolid == RICH_VERSION_ID(id_version);
-
-        if (version != UNDEFINED && toolid != UNDEFINED)
-        {
-          // check version and toolid
-          if (match_version && match_toolid)
-            return TRUE;
-        }
-        else if (version != UNDEFINED)
-        {
-          // check only version
-          if (match_version)
-            return TRUE;
-        }
-        else if (toolid != UNDEFINED)
-        {
-          // check only toolid
-          if (match_toolid)
-            return TRUE;
-        }
+      // check version and toolid
+      if (match_version && match_toolid)
+        return TRUE;
     }
+    else if (version != UNDEFINED)
+    {
+      // check only version
+      if (match_version)
+        return TRUE;
+    }
+    else if (toolid != UNDEFINED)
+    {
+      // check only toolid
+      if (match_toolid)
+        return TRUE;
+    }
+  }
 
-    return FALSE;
+  return FALSE;
 }
 
 

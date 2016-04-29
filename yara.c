@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__CYGWIN__)
 
 #include <sys/stat.h>
 #include <dirent.h>
@@ -110,6 +110,7 @@ int negate = FALSE;
 int count = 0;
 int limit = 0;
 int timeout = 1000000;
+int stack_size = DEFAULT_STACK_SIZE;
 int threads = 8;
 
 
@@ -157,6 +158,9 @@ args_option_t options[] =
 
   OPT_INTEGER('a', "timeout", &timeout,
       "abort scanning after the given number of SECONDS", "SECONDS"),
+
+  OPT_INTEGER('k', "stack-size", &stack_size,
+      "set maximum stack size (default=16384)", "SLOTS"),
 
   OPT_BOOLEAN('r', "recursive", &recursive_search,
       "recursively search directories"),
@@ -273,7 +277,7 @@ char* file_queue_get()
 }
 
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 
 int is_directory(
     const char* path)
@@ -314,7 +318,9 @@ void scan_dir(
       {
         file_queue_put(full_path);
       }
-      else if (recursive && FindFileData.cFileName[0] != '.' )
+      else if (recursive &&
+               strcmp(FindFileData.cFileName, ".") != 0 &&
+               strcmp(FindFileData.cFileName, "..") != 0)
       {
         scan_dir(full_path, recursive, start_time, rules, callback);
       }
@@ -370,7 +376,8 @@ void scan_dir(
         else if(recursive &&
                 S_ISDIR(st.st_mode) &&
                 !S_ISLNK(st.st_mode) &&
-                de->d_name[0] != '.')
+                strcmp(de->d_name, ".") != 0 &&
+                strcmp(de->d_name, "..") != 0)
         {
           scan_dir(full_path, recursive, start_time, rules, callback);
         }
@@ -403,7 +410,7 @@ void print_string(
 }
 
 
-static char cescapes[] = 
+static char cescapes[] =
 {
   0  , 0  , 0  , 0  , 0  , 0  , 0  , 'a',
   'b', 't', 'n', 'v', 'f', 'r', 0  , 0  ,
@@ -414,9 +421,9 @@ static char cescapes[] =
 
 void print_escaped(
     uint8_t* data,
-    int length)
+    size_t length)
 {
-  int i;
+  size_t i;
 
   for (i = 0; i < length; i++)
   {
@@ -427,15 +434,15 @@ void print_escaped(
       case '\\':
         printf("\\%c", data[i]);
         break;
-  
+
       default:
-        if (data[i] >= 127) 
+        if (data[i] >= 127)
           printf("\\%03o", data[i]);
         else if (data[i] >= 32)
           putchar(data[i]);
-        else if (cescapes[data[i]] != 0) 
+        else if (cescapes[data[i]] != 0)
           printf("\\%c", cescapes[data[i]]);
-        else 
+        else
           printf("\\%03o", data[i]);
     }
   }
@@ -481,6 +488,10 @@ void print_scanner_error(
     case ERROR_CORRUPT_FILE:
       fprintf(stderr, "corrupt compiled rules file.\n");
       break;
+    case ERROR_EXEC_STACK_OVERFLOW:
+      fprintf(stderr, "stack overflow while evaluating condition "
+                      "(see --stack-size argument).\n");
+      break;
     default:
       fprintf(stderr, "internal error: %d\n", error);
       break;
@@ -508,8 +519,8 @@ void print_compiler_error(
 
 
 int handle_message(
-    int message, 
-    YR_RULE* rule, 
+    int message,
+    YR_RULE* rule,
     void* data)
 {
   const char* tag;
@@ -602,7 +613,7 @@ int handle_message(
         {
           printf("%s=%s", meta->identifier, meta->integer ? "true" : "false");
         }
-        else 
+        else
         {
           printf("%s=\"", meta->identifier);
           print_escaped((uint8_t*) (meta->string), strlen(meta->string));
@@ -653,8 +664,8 @@ int handle_message(
 
 
 int callback(
-    int message, 
-    void* message_data, 
+    int message,
+    void* message_data,
     void* user_data)
 {
   YR_MODULE_IMPORT* mi;
@@ -707,7 +718,7 @@ int callback(
 }
 
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 DWORD WINAPI scanning_thread(LPVOID param)
 #else
 void* scanning_thread(void* param)
@@ -1005,6 +1016,14 @@ int main(
   {
     fprintf(stderr, "error: initialization error (%d)\n", result);
     exit_with_code(EXIT_FAILURE);
+  }
+
+  if (stack_size != DEFAULT_STACK_SIZE)
+  {
+    // If the user chose a different stack size than default,
+    // modify the yara config here.
+
+    yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
   }
 
   // Try to load the rules file as a binary file containing

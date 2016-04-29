@@ -468,7 +468,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
   // Determine if a string with the same identifier was already defined
   // by searching for the identifier in string_table.
 
-  string = yr_hash_table_lookup(
+  string = (YR_STRING*) yr_hash_table_lookup(
       compiler->strings_table,
       identifier,
       NULL);
@@ -573,13 +573,10 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
     if (yr_re_contains_dot_star(re))
     {
-      snprintf(
-        message,
-        sizeof(message),
-        "%s contains .*, consider using .{N} with a reasonable value for N",
-        identifier);
-
-        yywarning(yyscanner, message);
+      yywarning(
+          yyscanner, 
+          "%s contains .*, consider using .{N} with a reasonable value for N", 
+          identifier);
     }
 
     compiler->last_result = yr_re_split_at_chaining_point(
@@ -684,14 +681,11 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
   if (min_atom_quality < 3 && compiler->callback != NULL)
   {
-    snprintf(
-        message,
-        sizeof(message),
+    yywarning(
+        yyscanner, 
         "%s is slowing down scanning%s",
         string->identifier,
         min_atom_quality < 2 ? " (critical!)" : "");
-
-    yywarning(yyscanner, message);
   }
 
 _exit:

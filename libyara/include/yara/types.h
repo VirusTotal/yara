@@ -23,14 +23,9 @@ limitations under the License.
 #include <yara/limits.h>
 #include <yara/hash.h>
 #include <yara/utils.h>
+#include <yara/threading.h>
 
-#ifdef _WIN32
-#include <windows.h>
-typedef HANDLE mutex_t;
-#else
-#include <pthread.h>
-typedef pthread_mutex_t mutex_t;
-#endif
+
 
 #ifdef PROFILING_ENABLED
 #include <time.h>
@@ -353,8 +348,7 @@ typedef struct _YR_RULES {
   tidx_mask_t tidx_mask;
   uint8_t* code_start;
 
-  mutex_t mutex;
-
+  YR_MUTEX mutex;
   YR_ARENA* arena;
   YR_RULE* rules_list_head;
   YR_EXTERNAL_VARIABLE* externals_list_head;

@@ -16,7 +16,7 @@ limitations under the License.
 
 #include <fcntl.h>
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__CYGWIN__)
 #include <errno.h>
 #endif
 
@@ -26,7 +26,7 @@ limitations under the License.
 int mutex_init(
     MUTEX* mutex)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   *mutex = CreateMutex(NULL, FALSE, NULL);
   if (*mutex == NULL)
     return GetLastError();
@@ -40,7 +40,7 @@ int mutex_init(
 void mutex_destroy(
     MUTEX* mutex)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   CloseHandle(*mutex);
   #else
   pthread_mutex_destroy(mutex);
@@ -51,7 +51,7 @@ void mutex_destroy(
 void mutex_lock(
     MUTEX* mutex)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   WaitForSingleObject(*mutex, INFINITE);
   #else
   pthread_mutex_lock(mutex);
@@ -62,7 +62,7 @@ void mutex_lock(
 void mutex_unlock(
     MUTEX* mutex)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   ReleaseMutex(*mutex);
   #else
   pthread_mutex_unlock(mutex);
@@ -74,7 +74,7 @@ int semaphore_init(
     SEMAPHORE* semaphore,
     int value)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   *semaphore = CreateSemaphore(NULL, value, 65535, NULL);
   if (*semaphore == NULL)
     return GetLastError();
@@ -100,7 +100,7 @@ int semaphore_init(
 void semaphore_destroy(
     SEMAPHORE* semaphore)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   CloseHandle(*semaphore);
   #else
   sem_close(*semaphore);
@@ -111,7 +111,7 @@ void semaphore_destroy(
 void semaphore_wait(
     SEMAPHORE* semaphore)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   WaitForSingleObject(*semaphore, INFINITE);
   #else
   sem_wait(*semaphore);
@@ -122,9 +122,9 @@ void semaphore_wait(
 void semaphore_release(
     SEMAPHORE* semaphore)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   ReleaseSemaphore(*semaphore, 1, NULL);
-  #else   
+  #else
   sem_post(*semaphore);
   #endif
 }
@@ -135,7 +135,7 @@ int create_thread(
     THREAD_START_ROUTINE start_routine,
     void* param)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   *thread = CreateThread(NULL, 0, start_routine, param, 0, NULL);
   if (*thread == NULL)
     return GetLastError();
@@ -150,7 +150,7 @@ int create_thread(
 void thread_join(
     THREAD* thread)
 {
-  #ifdef _WIN32
+  #if defined(_WIN32) || defined(__CYGWIN__)
   WaitForSingleObject(*thread, INFINITE);
   #else
   pthread_join(*thread, NULL);

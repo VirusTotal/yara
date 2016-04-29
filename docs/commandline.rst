@@ -54,6 +54,10 @@ Available options are:
 
   Print matching strings.
 
+.. option:: -e --print-namespace
+
+  Print rules' namespace.
+
 .. option:: -p <number> --threads=<number>
 
   Use the specified <number> of threads to scan a directory.
@@ -65,6 +69,13 @@ Available options are:
 .. option:: -a <seconds> --timeout=<seconds>
 
   Abort scanning after a number of seconds has elapsed.
+
+.. option:: -k <slots> --stack-size=<slots>
+
+  Allocate a stack size of "slots" number of slots. Default: 16384. This
+  will allow you to use larger rules, albeit with more memory overhead.
+
+  .. versionadded:: 3.5.0
 
 .. option:: -d <identifier>=<value>
 
@@ -118,4 +129,3 @@ Here you have some examples:
   *cuckoo_json_report* to the cuckoo module::
 
     yara -x cuckoo=cuckoo_json_report /foo/bar/rules bazfile
-

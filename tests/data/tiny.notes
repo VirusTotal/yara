@@ -1,0 +1,22 @@
+tiny.exe was compiled from a simple oneliner,
+
+    int main() { return 42; }
+
+    $ i686-w64-mingw32-gcc -s -Wl,--file-alignment=4096 -o tiny.exe tiny.c
+
+To demonstrate issue #429, two patched executables have been generated
+where the PointerToRawData for the .idata section (offset 0x22c) was
+changed from 0x5000 to 0x51ff (tiny-idata-51ff.exe) and 0x5200
+(tiny-idata-5200.exe), respectively. While tiny-idata-51ff.exe can be
+executed in Windows XP, tiny-idata-5200.exe can not.
+
+
+
+Compiler version used to produce tiny.exe:
+
+$ i686-w64-mingw32-gcc --version
+i686-w64-mingw32-gcc (GCC) 5.3.1 20160205
+Copyright (C) 2015 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+

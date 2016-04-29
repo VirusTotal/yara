@@ -438,6 +438,19 @@ meta_declaration
 
         ERROR_IF($$ == NULL);
       }
+    | _IDENTIFIER_ '=' '-' _NUMBER_
+      {
+        $$ = yr_parser_reduce_meta_declaration(
+            yyscanner,
+            META_TYPE_INTEGER,
+            $1,
+            NULL,
+            -$4);
+
+        yr_free($1);
+
+        ERROR_IF($$ == NULL);
+      }
     | _IDENTIFIER_ '=' _TRUE_
       {
         $$ = yr_parser_reduce_meta_declaration(
@@ -883,6 +896,13 @@ boolean_expression
       {
         if ($1.type == EXPRESSION_TYPE_STRING)
         {
+          if ($1.value.sized_string != NULL)
+          {
+            yywarning(yyscanner,
+              "Using literal string \"%s\" in a boolean operation.",
+              $1.value.sized_string->c_string);
+          }
+
           compiler->last_result = yr_parser_emit(
               yyscanner, OP_STR_TO_BOOL, NULL);
 
@@ -1599,6 +1619,7 @@ primary_expression
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
         $$.type = EXPRESSION_TYPE_STRING;
+        $$.value.sized_string = sized_string;
       }
     | _STRING_COUNT_
       {
@@ -1696,6 +1717,7 @@ primary_expression
               break;
             case OBJECT_TYPE_STRING:
               $$.type = EXPRESSION_TYPE_STRING;
+              $$.value.sized_string = NULL;
               break;
             default:
               yr_compiler_set_error_extra_info_fmt(
