@@ -38,27 +38,6 @@ limitations under the License.
 
 #include "exception.h"
 
-void _yr_rules_lock(
-    YR_RULES* rules)
-{
-  #ifdef _WIN32
-  WaitForSingleObject(rules->mutex, INFINITE);
-  #else
-  pthread_mutex_lock(&rules->mutex);
-  #endif
-}
-
-
-void _yr_rules_unlock(
-    YR_RULES* rules)
-{
-  #ifdef _WIN32
-  ReleaseMutex(rules->mutex);
-  #else
-  pthread_mutex_unlock(&rules->mutex);
-  #endif
-}
-
 
 YR_API int yr_rules_define_integer_variable(
     YR_RULES* rules,
@@ -330,7 +309,7 @@ YR_API int yr_rules_scan_mem_blocks(
   if (block == NULL)
     return ERROR_SUCCESS;
 
-  _yr_rules_lock(rules);
+  yr_mutex_lock(&rules->mutex);
 
   while (rules->tidx_mask & bit)
   {
@@ -343,7 +322,7 @@ YR_API int yr_rules_scan_mem_blocks(
   else
     result = ERROR_TOO_MANY_SCAN_THREADS;
 
-  _yr_rules_unlock(rules);
+  yr_mutex_unlock(&rules->mutex);
 
   if (result != ERROR_SUCCESS)
     return result;
@@ -450,14 +429,6 @@ YR_API int yr_rules_scan_mem_blocks(
 
   yr_rules_foreach(rules, rule)
   {
-    if (RULE_IS_GLOBAL(rule) && !(rule->t_flags[tidx] & RULE_TFLAGS_MATCH))
-    {
-      rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
-    }
-  }
-
-  yr_rules_foreach(rules, rule)
-  {
     int message;
 
     if (rule->t_flags[tidx] & RULE_TFLAGS_MATCH &&
@@ -504,9 +475,9 @@ _exit:
         context.objects_table,
         (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
-  _yr_rules_lock(rules);
+  yr_mutex_lock(&rules->mutex);
   rules->tidx_mask &= ~(1 << tidx);
-  _yr_rules_unlock(rules);
+  yr_mutex_unlock(&rules->mutex);
 
   yr_set_tidx(-1);
 
@@ -592,7 +563,7 @@ YR_API int yr_rules_scan_fd(
         user_data,
         timeout);
 
-    yr_filemap_unmap(&mfile);
+    yr_filemap_unmap_fd(&mfile);
   }
 
   return result;
@@ -666,17 +637,7 @@ YR_API int yr_rules_load_stream(
   new_rules->rules_list_head = header->rules_list_head;
   new_rules->tidx_mask = 0;
 
-  #if _WIN32
-  new_rules->mutex = CreateMutex(NULL, FALSE, NULL);
-
-  if (new_rules->mutex == NULL)
-    return ERROR_INTERNAL_FATAL_ERROR;
-  #else
-  result = pthread_mutex_init(&new_rules->mutex, NULL);
-
-  if (result != 0)
-    return ERROR_INTERNAL_FATAL_ERROR;
-  #endif
+  FAIL_ON_ERROR(yr_mutex_create(&new_rules->mutex));
 
   *rules = new_rules;
 
@@ -750,12 +711,7 @@ YR_API int yr_rules_destroy(
     external++;
   }
 
-  #if _WIN32
-  CloseHandle(rules->mutex);
-  #else
-  pthread_mutex_destroy(&rules->mutex);
-  #endif
-
+  yr_mutex_destroy(&rules->mutex);
   yr_arena_destroy(rules->arena);
   yr_free(rules);
 

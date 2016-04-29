@@ -475,6 +475,95 @@ int yr_ac_create_failure_links(
 
 
 //
+// _yr_ac_transitions_subset
+//
+// Returns true if the transitions for state s2 are a subset of the transitions
+// for state s1. In other words, if at state s2 input X is accepted, it must be
+// accepted in s1 too.
+//
+
+int _yr_ac_transitions_subset(
+    YR_AC_STATE* s1,
+    YR_AC_STATE* s2)
+{
+  uint8_t set[32];
+
+  memset(set, 0, 32);
+
+  YR_AC_STATE_TRANSITION transition;
+  YR_AC_STATE* state = _yr_ac_first_transition(s1, &transition);
+
+  while (state != NULL)
+  {
+    set[transition.input / 8] |= 1 << transition.input % 8;
+    state = _yr_ac_next_transition(s1, &transition);
+  }
+
+  state = _yr_ac_first_transition(s2, &transition);
+
+  while (state != NULL)
+  {
+    if (!(set[transition.input / 8] & 1 << transition.input % 8))
+      return FALSE;
+
+    state = _yr_ac_next_transition(s2, &transition);
+  }
+
+  return TRUE;
+}
+
+
+int yr_ac_optimize_failure_links(
+    YR_AC_AUTOMATON* automaton)
+{
+  YR_AC_STATE_TRANSITION transition;
+
+  QUEUE queue = { NULL, NULL};
+
+  // Push root's children.
+
+  YR_AC_STATE* root_state = automaton->root;
+  YR_AC_STATE* state = _yr_ac_first_transition(root_state, &transition);
+
+  while (state != NULL)
+  {
+    FAIL_ON_ERROR(_yr_ac_queue_push(&queue, state));
+    state = _yr_ac_next_transition(root_state, &transition);
+  }
+
+  while (!_yr_ac_queue_is_empty(&queue))
+  {
+    YR_AC_STATE* current_state = _yr_ac_queue_pop(&queue);
+
+    if (current_state->failure != root_state)
+    {
+      if (_yr_ac_transitions_subset(current_state, current_state->failure))
+      {
+        current_state->failure = current_state->failure->failure;
+      }
+    }
+
+    // Push childrens of current_state
+
+    YR_AC_STATE* transition_state = _yr_ac_first_transition(
+        current_state,
+        &transition);
+
+    while (transition_state != NULL)
+    {
+      FAIL_ON_ERROR(_yr_ac_queue_push(&queue, transition_state));
+
+      transition_state = _yr_ac_next_transition(
+          current_state,
+          &transition);
+    }
+  }
+
+  return ERROR_SUCCESS;
+}
+
+
+//
 // yr_ac_create_automaton
 //
 // Creates a new automaton

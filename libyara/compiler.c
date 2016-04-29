@@ -556,11 +556,11 @@ YR_API int yr_compiler_get_rules(
   yara_rules->code_start = rules_file_header->code_start;
   yara_rules->tidx_mask = 0;
 
-  #if _WIN32
-  yara_rules->mutex = CreateMutex(NULL, FALSE, NULL);
-  #else
-  pthread_mutex_init(&yara_rules->mutex, NULL);
-  #endif
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_mutex_create(&yara_rules->mutex),
+      // cleanup
+      yr_arena_destroy(yara_rules->arena);
+      yr_free(yara_rules));
 
   *rules = yara_rules;
 

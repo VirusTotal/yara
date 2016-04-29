@@ -34,7 +34,6 @@ limitations under the License.
 #include <yara.h>
 
 
-#define STACK_SIZE 16384
 #define MEM_SIZE   MAX_LOOP_NESTING * LOOP_LOCAL_VARS
 
 typedef union _STACK_ITEM {
@@ -51,7 +50,7 @@ typedef union _STACK_ITEM {
 
 #define push(x)  \
     do { \
-      if (sp < STACK_SIZE) stack[sp++] = (x); \
+      if (sp < stack_size) stack[sp++] = (x); \
       else return ERROR_EXEC_STACK_OVERFLOW; \
     } while(0)
 
@@ -184,12 +183,15 @@ int yr_execute_code(
   int stop = FALSE;
   int cycle = 0;
   int tidx = context->tidx;
+  int stack_size;
 
   #ifdef PROFILING_ENABLED
   clock_t start = clock();
   #endif
 
-  stack = (STACK_ITEM *) yr_malloc(STACK_SIZE * sizeof(STACK_ITEM));
+  yr_get_configuration(YR_CONFIG_STACK_SIZE, (void*) &stack_size);
+
+  stack = (STACK_ITEM*) yr_malloc(stack_size * sizeof(STACK_ITEM));
 
   if (stack == NULL)
     return ERROR_INSUFICIENT_MEMORY;
@@ -420,6 +422,8 @@ int yr_execute_code(
 
         if (!is_undef(r1) && r1.i)
           rule->t_flags[tidx] |= RULE_TFLAGS_MATCH;
+        else if (RULE_IS_GLOBAL(rule))
+          rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
 
         #ifdef PROFILING_ENABLED
         rule->clock_ticks += clock() - start;

@@ -29,9 +29,18 @@ case $host_alias in
 esac
 
 case $host_os in
-    darwin*) CFLAGS="$CFLAGS -I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib" ;;
+    darwin*) CFLAGS="$CFLAGS -I/opt/local/include" ;;
 esac
 
+ACX_PTHREAD(
+    [LIBS="$PTHREAD_LIBS $LIBS"
+     CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+     CC="$PTHREAD_CC"],
+    [AC_MSG_ERROR([pthread API support is required.])])
+
+AC_CHECK_LIB(m, isnan)
+AC_CHECK_LIB(m, log2)
+AC_CHECK_FUNCS([strlcpy strlcat memmem timegm])
 
 AC_ARG_ENABLE([profiling],
   [AS_HELP_STRING([--enable-profiling], [enable profiling support])],
@@ -70,40 +79,39 @@ AC_ARG_WITH([crypto],
   AS_HELP_STRING([--without-crypto],
     [ignore presence of OpenSSL and disable it]))
 
-  AS_IF([test "x$with_crypto" != "xno"],
-    [
-      AC_CHECK_LIB(crypto, MD5_Init,, [have_crypto=no])
-      AC_CHECK_LIB(crypto, MD5_Update,, [have_crypto=no])
-      AC_CHECK_LIB(crypto, MD5_Final,, [have_crypto=no])
-      AC_CHECK_LIB(crypto, SHA256_Init,, [have_crypto=no])
-      AC_CHECK_LIB(crypto, SHA256_Update,, [have_crypto=no])
-      AC_CHECK_LIB(crypto, SHA256_Final,, [have_crypto=no])
-    ],
-    [
-      have_crypto=no
-    ])
+AS_IF([test "x$with_crypto" != "xno"],
+  [
+    AC_CHECK_LIB(crypto, MD5_Init,, [have_crypto=no])
+    AC_CHECK_LIB(crypto, MD5_Update,, [have_crypto=no])
+    AC_CHECK_LIB(crypto, MD5_Final,, [have_crypto=no])
+    AC_CHECK_LIB(crypto, SHA256_Init,, [have_crypto=no])
+    AC_CHECK_LIB(crypto, SHA256_Update,, [have_crypto=no])
+    AC_CHECK_LIB(crypto, SHA256_Final,, [have_crypto=no])
+  ],
+  [
+    have_crypto=no
+  ])
 
-  AS_IF([test "x$have_crypto" = "xno"],
-    [
-      AS_IF([test "x$with_crypto" = "xyes"],
-        [
-          AC_MSG_ERROR([OpenSSL requested but not found])
+AS_IF([test "x$have_crypto" = "xno"],
+  [
+    AS_IF([test "x$with_crypto" = "xyes"],
+      [
+        AC_MSG_ERROR([please install OpenSSL library])
+      ],
+      [
+        AC_MSG_WARN([
+*******************************************************************************
+  Could not find OpenSSL library. The "hash" module and some features in "pe"
+  module has been disabled. If you want to enable all features please install
+  it and run this script again.
+*******************************************************************************
         ])
-    ],
-    [
-      build_hash_module=true
-      AC_DEFINE([HASH], [1], [enable hash module])
-    ])
-
-ACX_PTHREAD(
-    [LIBS="$PTHREAD_LIBS $LIBS"
-     CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-     CC="$PTHREAD_CC"],
-    [AC_MSG_ERROR([pthread API support is required.])])
-
-AC_CHECK_LIB(m, isnan)
-AC_CHECK_LIB(m, log2)
-AC_CHECK_FUNCS([strlcpy strlcat memmem timegm])
+      ])
+  ],
+  [
+    build_hash_module=true
+    AC_DEFINE([HASH], [1], [enable hash module])
+  ])
 
 AM_CONDITIONAL([CUCKOO], [test x$build_cuckoo_module = xtrue])
 AM_CONDITIONAL([MAGIC], [test x$build_magic_module = xtrue])

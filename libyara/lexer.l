@@ -32,6 +32,7 @@ with noyywrap then we can remove this pragma.
 #endif
 
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -621,10 +622,16 @@ u?int(8|16|32)(be)? {
 
 void yywarning(
     yyscan_t yyscanner,
-    const char *warning_message)
+    const char *message_fmt,
+    ...)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
+
   char* file_name;
+  char message[512];
+  
+  va_list message_args;
+  va_start(message_args, message_fmt);
 
   if (compiler->callback == NULL)
     return;
@@ -634,11 +641,13 @@ void yywarning(
   else
     file_name = NULL;
 
+  vsnprintf(message, sizeof(message), message_fmt, message_args);
+
   compiler->callback(
       YARA_ERROR_LEVEL_WARNING,
       file_name,
       yyget_lineno(yyscanner),
-      warning_message,
+      message,
       compiler->user_data);
 }
 
