@@ -216,15 +216,15 @@ void yr_rules_print_profiling_info(
 int _yr_rules_scan_mem_block(
     YR_RULES* rules,
     YR_MEMORY_BLOCK* block,
-    YR_SCAN_CONTEXT* context,
-    int timeout,
-    time_t start_time)
+    YR_SCAN_CONTEXT* context)
 {
   YR_AC_MATCH* ac_match;
   YR_AC_STATE* next_state;
   YR_AC_STATE* current_state = rules->automaton->root;
 
   size_t i = 0;
+  int timeout = context->timeout;
+  time_t start_time = context->start_time;
 
   while (i < block->size)
   {
@@ -288,26 +288,47 @@ int _yr_rules_scan_mem_block(
 }
 
 
-YR_API int yr_rules_scan_mem_blocks(
+YR_API void _yr_rules_clean_scan_context(
     YR_RULES* rules,
-    YR_MEMORY_BLOCK* block,
+    YR_SCAN_CONTEXT* context)
+{
+  _yr_rules_clean_matches(rules, context);
+
+  yr_modules_unload_all(context);
+
+  if (context->matches_arena != NULL)
+    yr_arena_destroy(context->matches_arena);
+
+  if (context->matching_strings_arena != NULL)
+    yr_arena_destroy(context->matching_strings_arena);
+
+  if (context->objects_table != NULL)
+    yr_hash_table_destroy(
+        context->objects_table,
+        (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
+
+  yr_mutex_lock(&rules->mutex);
+  rules->tidx_mask &= ~(1 << context->tidx);
+  yr_mutex_unlock(&rules->mutex);
+
+  yr_set_tidx(-1);
+  yr_free(context);
+}
+
+
+YR_API int yr_rules_scan_incr_init(
+    YR_RULES* rules,
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int timeout)
+    int timeout,
+    YR_SCAN_CONTEXT** context)
 {
   YR_EXTERNAL_VARIABLE* external;
-  YR_RULE* rule;
-  YR_SCAN_CONTEXT context;
 
-  time_t start_time;
   tidx_mask_t bit = 1;
-
   int tidx = 0;
   int result = ERROR_SUCCESS;
-
-  if (block == NULL)
-    return ERROR_SUCCESS;
 
   yr_mutex_lock(&rules->mutex);
 
@@ -327,33 +348,38 @@ YR_API int yr_rules_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     return result;
 
-  context.tidx = tidx;
-  context.flags = flags;
-  context.callback = callback;
-  context.user_data = user_data;
-  context.file_size = block->size;
-  context.mem_block = block;
-  context.entry_point = UNDEFINED;
-  context.objects_table = NULL;
-  context.matches_arena = NULL;
-  context.matching_strings_arena = NULL;
+  *context = (YR_SCAN_CONTEXT*) yr_malloc(sizeof(YR_SCAN_CONTEXT));
+
+  if (*context == NULL)
+    return ERROR_INSUFICIENT_MEMORY;
+
+  (*context)->tidx = tidx;
+  (*context)->result = result;
+  (*context)->flags = flags;
+  (*context)->callback = callback;
+  (*context)->user_data = user_data;
+  (*context)->timeout = timeout;
+  (*context)->entry_point = UNDEFINED;
+  (*context)->objects_table = NULL;
+  (*context)->matches_arena = NULL;
+  (*context)->matching_strings_arena = NULL;
 
   yr_set_tidx(tidx);
 
-  result = yr_arena_create(1024, 0, &context.matches_arena);
+  result = yr_arena_create(1024, 0, &(*context)->matches_arena);
 
   if (result != ERROR_SUCCESS)
-    goto _exit;
+    goto _error;
 
-  result = yr_arena_create(8, 0, &context.matching_strings_arena);
-
-  if (result != ERROR_SUCCESS)
-    goto _exit;
-
-  result = yr_hash_table_create(64, &context.objects_table);
+  result = yr_arena_create(8, 0, &(*context)->matching_strings_arena);
 
   if (result != ERROR_SUCCESS)
-    goto _exit;
+    goto _error;
+
+  result = yr_hash_table_create(64, &(*context)->objects_table);
+
+  if (result != ERROR_SUCCESS)
+    goto _error;
 
   external = rules->externals_list_head;
 
@@ -367,59 +393,97 @@ YR_API int yr_rules_scan_mem_blocks(
 
     if (result == ERROR_SUCCESS)
       result = yr_hash_table_add(
-          context.objects_table,
+          (*context)->objects_table,
           external->identifier,
           NULL,
           (void*) object);
 
     if (result != ERROR_SUCCESS)
-      goto _exit;
+      goto _error;
 
     external++;
   }
 
-  start_time = time(NULL);
+  (*context)->start_time = time(NULL);
 
-  while (block != NULL)
+  return result;
+
+_error:
+
+  _yr_rules_clean_scan_context(rules, *context);
+
+  return result;
+}
+
+
+YR_API int _yr_rules_scan_incr_mem(
+    YR_RULES* rules,
+    YR_SCAN_CONTEXT* context,
+    YR_MEMORY_BLOCK* block)
+{
+  int result = ERROR_SUCCESS;
+
+  if (context->entry_point == UNDEFINED)
   {
-    if (context.entry_point == UNDEFINED)
-    {
-      YR_TRYCATCH({
-          if (flags & SCAN_FLAGS_PROCESS_MEMORY)
-            context.entry_point = yr_get_entry_point_address(
-                block->data,
-                block->size,
-                block->base);
-          else
-            context.entry_point = yr_get_entry_point_offset(
-                block->data,
-                block->size);
-        },{});
-    }
-
     YR_TRYCATCH({
-        result = _yr_rules_scan_mem_block(
-            rules,
-            block,
-            &context,
-            timeout,
-            start_time);
-      },{
-        result = ERROR_COULD_NOT_MAP_FILE;
-      });
-
-    if (result != ERROR_SUCCESS)
-      goto _exit;
-
-    block = block->next;
+        if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
+          context->entry_point = yr_get_entry_point_address(
+              block->data,
+              block->size,
+              block->base);
+        else
+          context->entry_point = yr_get_entry_point_offset(
+              block->data,
+              block->size);
+      },{});
   }
+
+  YR_TRYCATCH({
+      result = _yr_rules_scan_mem_block(
+          rules,
+          block,
+          context);
+    },{
+      result = ERROR_COULD_NOT_MAP_FILE;
+    });
+
+  context->result = result;
+
+  return result;
+}
+
+YR_API int yr_rules_scan_incr_mem(
+    YR_RULES* rules,
+    YR_SCAN_CONTEXT* context,
+    uint8_t* buffer,
+    size_t buffer_size)
+{
+  YR_MEMORY_BLOCK block;
+
+  block.data = buffer;
+  block.size = buffer_size;
+  block.base = 0;
+  block.next = NULL;
+
+  return _yr_rules_scan_incr_mem(rules, context, &block);
+}
+
+
+YR_API void _yr_rules_report_matches(
+    YR_RULES* rules,
+    YR_SCAN_CONTEXT* context)
+{
+  YR_RULE* rule;
+
+  int tidx = context->tidx;
+  int result = ERROR_SUCCESS;
 
   YR_TRYCATCH({
       result = yr_execute_code(
           rules,
-          &context,
-          timeout,
-          start_time);
+          context,
+          context->timeout,
+          context->start_time);
     },{
       result = ERROR_COULD_NOT_MAP_FILE;
     });
@@ -443,10 +507,9 @@ YR_API int yr_rules_scan_mem_blocks(
 
     if (!RULE_IS_PRIVATE(rule))
     {
-      switch (callback(message, rule, user_data))
+      switch (context->callback(message, rule, context->user_data))
       {
         case CALLBACK_ABORT:
-          result = ERROR_SUCCESS;
           goto _exit;
 
         case CALLBACK_ERROR:
@@ -456,32 +519,77 @@ YR_API int yr_rules_scan_mem_blocks(
     }
   }
 
-  callback(CALLBACK_MSG_SCAN_FINISHED, NULL, user_data);
+_exit:
+
+  context->result = result;
+}
+
+
+YR_API int yr_rules_scan_incr_finish(
+    YR_RULES* rules,
+    YR_SCAN_CONTEXT* context)
+{
+  if (context->result != ERROR_SUCCESS)
+    goto _exit;
+
+  _yr_rules_report_matches(rules, context);
+
+  if (context->result != ERROR_SUCCESS)
+    goto _exit;
+
+  context->callback(CALLBACK_MSG_SCAN_FINISHED, NULL, context->user_data);
 
 _exit:
 
-  _yr_rules_clean_matches(rules, &context);
+  _yr_rules_clean_scan_context(rules, context);
 
-  yr_modules_unload_all(&context);
+  return context->result;
+}
 
-  if (context.matches_arena != NULL)
-    yr_arena_destroy(context.matches_arena);
 
-  if (context.matching_strings_arena != NULL)
-    yr_arena_destroy(context.matching_strings_arena);
+YR_API int yr_rules_scan_mem_blocks(
+    YR_RULES* rules,
+    YR_MEMORY_BLOCK* block,
+    int flags,
+    YR_CALLBACK_FUNC callback,
+    void* user_data,
+    int timeout)
+{
+  int result = ERROR_SUCCESS;
+  YR_SCAN_CONTEXT* context = NULL;
 
-  if (context.objects_table != NULL)
-    yr_hash_table_destroy(
-        context.objects_table,
-        (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
+  if (block == NULL)
+    return ERROR_SUCCESS;
 
-  yr_mutex_lock(&rules->mutex);
-  rules->tidx_mask &= ~(1 << tidx);
-  yr_mutex_unlock(&rules->mutex);
+  result = yr_rules_scan_incr_init(
+      rules,
+      flags,
+      callback,
+      user_data,
+      timeout,
+      &context);
 
-  yr_set_tidx(-1);
+  if (result != ERROR_SUCCESS)
+    return result;
 
-  return result;
+  context->file_size = block->size;
+  context->mem_block = block;
+
+  while (block != NULL)
+  {
+    result = _yr_rules_scan_incr_mem(rules, context, block);
+
+    if (result != ERROR_SUCCESS)
+      goto _exit;
+
+    block = block->next;
+  }
+
+_exit:
+
+  context->result = result;
+
+  return yr_rules_scan_incr_finish(rules, context);
 }
 
 

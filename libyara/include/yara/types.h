@@ -381,8 +381,11 @@ typedef struct _YR_SCAN_CONTEXT
 
   int flags;
   int tidx;
+  int result;
 
   void* user_data;
+  time_t start_time;
+  int timeout;
 
   YR_MEMORY_BLOCK*  mem_block;
   YR_HASH_TABLE*  objects_table;

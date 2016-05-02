@@ -93,6 +93,27 @@ YR_API int yr_rules_scan_proc(
     int timeout);
 
 
+YR_API int yr_rules_scan_incr_init(
+    YR_RULES* rules,
+    int flags,
+    YR_CALLBACK_FUNC callback,
+    void* user_data,
+    int timeout,
+    YR_SCAN_CONTEXT** context);
+
+
+YR_API int yr_rules_scan_incr_mem(
+    YR_RULES* rules,
+    YR_SCAN_CONTEXT* context,
+    uint8_t* buffer,
+    size_t buffer_size);
+
+
+YR_API int yr_rules_scan_incr_finish(
+    YR_RULES* rules,
+    YR_SCAN_CONTEXT* context);
+
+
 YR_API int yr_rules_save(
     YR_RULES* rules,
     const char* filename);
