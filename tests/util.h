@@ -77,6 +77,7 @@ int read_file(
               __FILE__, __LINE__, filename);                            \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
+    free(buf);                                                          \
   } while (0);
 
 #define assert_false_rule(rule, string)                                 \
@@ -112,6 +113,7 @@ int read_file(
               __FILE__, __LINE__, filename);                            \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
+    free(buf);                                                          \
   } while (0);
 
 #define assert_syntax_correct(rule) do {                                \
