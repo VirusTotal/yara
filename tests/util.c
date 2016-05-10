@@ -191,6 +191,8 @@ int capture_string(
     exit(EXIT_FAILURE);
   }
 
+  yr_rules_destroy(rules);
+
   return f.found;
 }
 
