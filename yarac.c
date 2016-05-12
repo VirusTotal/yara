@@ -169,7 +169,7 @@ int main(
   if (show_version)
   {
     printf("%s\n", PACKAGE_STRING);
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
   }
 
   if (show_help)
