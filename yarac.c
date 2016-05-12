@@ -179,7 +179,7 @@ int main(
     args_print_usage(options, 25);
     printf("\nSend bug reports and suggestions to: %s.\n", PACKAGE_BUGREPORT);
 
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
   }
 
   if (argc < 2)
