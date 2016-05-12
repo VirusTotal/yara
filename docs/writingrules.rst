@@ -337,7 +337,7 @@ Regular expressions
 -------------------
 
 Regular expressions are one of the most powerful features of YARA. They are
-defined in the same way as text strings, but enclosed in backslashes instead
+defined in the same way as text strings, but enclosed in forward slashes instead
 of double-quotes, like in the Perl programming language. ::
 
     rule RegExpExample1
@@ -665,7 +665,7 @@ The ``intXX`` functions read 8, 16, and 32 bits signed integers from
 Both 16 and 32 bits integer are considered to be little-endian. If you
 want to read a big-endian integer use the corresponding function ending
 in ``be``. The <offset or virtual address> parameter can be any expression returning
-an unsigned integer, including the return value of one the ``uintXX`` functions 
+an unsigned integer, including the return value of one the ``uintXX`` functions
 itself. As an example let's see a rule to distinguish PE files::
 
     rule IsPE
