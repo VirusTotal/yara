@@ -53,13 +53,13 @@ YR_API int yr_rules_define_integer_variable(
     if (strcmp(external->identifier, identifier) == 0)
     {
       external->value.i = value;
-      break;
+      return ERROR_SUCCESS;
     }
 
     external++;
   }
 
-  return ERROR_SUCCESS;
+  return ERROR_INVALID_ARGUMENT;
 }
 
 
@@ -77,13 +77,13 @@ YR_API int yr_rules_define_boolean_variable(
     if (strcmp(external->identifier, identifier) == 0)
     {
       external->value.i = value;
-      break;
+      return ERROR_SUCCESS;
     }
 
     external++;
   }
 
-  return ERROR_SUCCESS;
+  return ERROR_INVALID_ARGUMENT;
 }
 
 
@@ -101,13 +101,13 @@ YR_API int yr_rules_define_float_variable(
     if (strcmp(external->identifier, identifier) == 0)
     {
       external->value.f = value;
-      break;
+      return ERROR_SUCCESS;
     }
 
     external++;
   }
 
-  return ERROR_SUCCESS;
+  return ERROR_INVALID_ARGUMENT;
 }
 
 
@@ -142,7 +142,7 @@ YR_API int yr_rules_define_string_variable(
     external++;
   }
 
-  return ERROR_SUCCESS;
+  return ERROR_INVALID_ARGUMENT;
 }
 
 
