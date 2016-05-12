@@ -42,6 +42,13 @@ AC_CHECK_LIB(m, isnan)
 AC_CHECK_LIB(m, log2)
 AC_CHECK_FUNCS([strlcpy strlcat memmem timegm])
 
+
+AC_ARG_ENABLE([debug],
+  [AS_HELP_STRING([--enable-debug], [compiles with -g option])],
+  [if test x$enableval = xyes; then
+    CFLAGS="$CFLAGS -g"
+  fi])
+
 AC_ARG_ENABLE([profiling],
   [AS_HELP_STRING([--enable-profiling], [enable profiling support])],
   [if test x$enableval = xyes; then
