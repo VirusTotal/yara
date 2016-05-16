@@ -220,72 +220,88 @@ int _yr_rules_scan_mem_block(
     int timeout,
     time_t start_time)
 {
-  YR_AC_MATCH* ac_match;
-  YR_AC_STATE* next_state;
-  YR_AC_STATE* current_state = rules->automaton->root;
+  YR_AC_TRANSITION_TABLE transition_table = rules->transition_table;
+  YR_AC_MATCH_TABLE match_table = rules->match_table;
+
+  YR_AC_MATCH* match;
+  YR_AC_TRANSITION transition;
 
   size_t i = 0;
+  uint32_t state = YR_AC_ROOT_STATE;
+  uint16_t index;
 
   while (i < block->size)
   {
-    ac_match = current_state->matches;
+    match = match_table[state];
 
-    while (ac_match != NULL)
+    while (match != NULL)
     {
-      if (ac_match->backtrack <= i)
+      if (timeout > 0 && i % 4096 == 0)
+      {
+        if (difftime(time(NULL), start_time) > timeout)
+          return ERROR_SCAN_TIMEOUT;
+      }
+
+      if (match->backtrack <= i)
       {
         FAIL_ON_ERROR(yr_scan_verify_match(
             context,
-            ac_match,
+            match,
             block->data,
             block->size,
             block->base,
-            i - ac_match->backtrack));
+            i - match->backtrack));
       }
 
-      ac_match = ac_match->next;
+      match = match->next;
     }
 
-    next_state = yr_ac_next_state(current_state, block->data[i]);
+    index = block->data[i++] + 1;
+    transition = transition_table[state + index];
 
-    while (next_state == NULL && current_state->depth > 0)
+    while (YR_AC_INVALID_TRANSITION(transition, index))
     {
-      current_state = current_state->failure;
-      next_state = yr_ac_next_state(current_state, block->data[i]);
+      if (state != YR_AC_ROOT_STATE)
+      {
+        state = transition_table[state] >> 32;
+        transition = transition_table[state + index];
+      }
+      else
+      {
+        transition = 0;
+        break;
+      }
     }
 
-    if (next_state != NULL)
-      current_state = next_state;
+    state = transition >> 32;
 
-    i++;
-
-    if (timeout > 0 && i % 256 == 0)
-    {
-      if (difftime(time(NULL), start_time) > timeout)
-        return ERROR_SCAN_TIMEOUT;
-    }
   }
 
-  ac_match = current_state->matches;
 
-  while (ac_match != NULL)
+  match = match_table[state];
+
+  while (match != NULL)
   {
-    if (ac_match->backtrack <= block->size)
+    if (match->backtrack <= i)
     {
       FAIL_ON_ERROR(yr_scan_verify_match(
           context,
-          ac_match,
+          match,
           block->data,
           block->size,
           block->base,
-          block->size - ac_match->backtrack));
+          i - match->backtrack));
     }
 
-    ac_match = ac_match->next;
+    match = match->next;
   }
+
+
 
   return ERROR_SUCCESS;
 }
+
+
 
 
 YR_API int yr_rules_scan_mem_blocks(
@@ -631,10 +647,11 @@ YR_API int yr_rules_load_stream(
   header = (YARA_RULES_FILE_HEADER*)
       yr_arena_base_address(new_rules->arena);
 
-  new_rules->automaton = header->automaton;
   new_rules->code_start = header->code_start;
   new_rules->externals_list_head = header->externals_list_head;
   new_rules->rules_list_head = header->rules_list_head;
+  new_rules->match_table = header->match_table;
+  new_rules->transition_table = header->transition_table;
   new_rules->tidx_mask = 0;
 
   FAIL_ON_ERROR(yr_mutex_create(&new_rules->mutex));

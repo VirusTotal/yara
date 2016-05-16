@@ -1107,6 +1107,22 @@ int yr_atoms_extract_from_re(
     *atoms = _yr_atoms_list_concat(*atoms, case_insentive_atoms);
   }
 
+  // No atoms has been extracted, let's add a zero-length atom.
+
+  if (*atoms == NULL)
+  {
+    *atoms = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
+
+    if (*atoms == NULL)
+      return ERROR_INSUFICIENT_MEMORY;
+
+    (*atoms)->atom_length = 0;
+    (*atoms)->backtrack = 0;
+    (*atoms)->forward_code = re->root_node->forward_code;
+    (*atoms)->backward_code = NULL;
+    (*atoms)->next = NULL;
+  }
+
   return ERROR_SUCCESS;
 }
 
