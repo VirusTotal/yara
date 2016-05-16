@@ -461,8 +461,11 @@ int _yr_ac_find_suitable_transition_table_slot(
       size_t t_bytes_size = automaton->tables_size * sizeof(YR_AC_TRANSITION);
       size_t m_bytes_size = automaton->tables_size * sizeof(YR_AC_MATCH*);
 
-      automaton->t_table = yr_realloc(automaton->t_table, t_bytes_size * 2);
-      automaton->m_table = yr_realloc(automaton->m_table, m_bytes_size * 2);
+      automaton->t_table = (YR_AC_TRANSITION_TABLE) yr_realloc(
+          automaton->t_table, t_bytes_size * 2);
+      
+	  automaton->m_table = (YR_AC_MATCH_TABLE) yr_realloc(
+          automaton->m_table, m_bytes_size * 2);
 
       if (automaton->t_table == NULL || automaton->m_table == NULL)
         return ERROR_INSUFICIENT_MEMORY;
@@ -575,10 +578,10 @@ int _yr_ac_build_transition_table(
 
   automaton->tables_size = 1024;
 
-  automaton->t_table = yr_malloc(
+  automaton->t_table = (YR_AC_TRANSITION_TABLE) yr_malloc(
       automaton->tables_size * sizeof(YR_AC_TRANSITION));
 
-  automaton->m_table = yr_malloc(
+  automaton->m_table = (YR_AC_MATCH_TABLE) yr_malloc(
       automaton->tables_size * sizeof(YR_AC_MATCH*));
 
   if (automaton->t_table == NULL || automaton->t_table == NULL)
@@ -748,8 +751,8 @@ int yr_ac_automaton_create(
   YR_AC_AUTOMATON* new_automaton;
   YR_AC_STATE* root_state;
 
-  new_automaton = yr_malloc(sizeof(YR_AC_AUTOMATON));
-  root_state = yr_malloc(sizeof(YR_AC_STATE));
+  new_automaton = (YR_AC_AUTOMATON*) yr_malloc(sizeof(YR_AC_AUTOMATON));
+  root_state = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
 
   if (new_automaton == NULL || root_state == NULL)
   {
