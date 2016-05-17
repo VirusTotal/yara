@@ -27,7 +27,7 @@ limitations under the License.
 #define YR_AC_INVALID_TRANSITION(t, c)  (((t) & 0xFFFF) != c)
 
 #define YR_AC_MAKE_TRANSITION(state, code, flags) \
-  ((uint64_t)((((uint64_t) state) << 32) | ((flags) << 16) | code))
+  ((uint64_t)((((uint64_t) state) << 32) | ((flags) << 16) | (code)))
 
 #define YR_AC_USED_FLAG    0x1
 
