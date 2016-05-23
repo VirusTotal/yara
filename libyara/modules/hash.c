@@ -25,9 +25,32 @@ limitations under the License.
 #endif
 
 #include <yara/modules.h>
+#include <yara/mem.h>
+#include <stdbool.h>
 
 #define MODULE_NAME hash
 
+
+typedef struct _CACHED_HASH {
+  bool isSet;
+  int64_t offset;
+  int64_t length;
+  char* digest;
+} CACHED_HASH;
+
+typedef struct _CACHED_CHECKSUM {
+  bool isSet;
+  int64_t offset;
+  int64_t length;
+  int64_t sum;
+} CACHED_CHECKSUM;
+
+typedef struct _CACHE {
+  CACHED_HASH md5;
+  CACHED_HASH sha1;
+  CACHED_HASH sha256;
+  CACHED_CHECKSUM crc32;
+} CACHE;
 
 void digest_to_ascii(
     unsigned char* digest,
@@ -120,6 +143,10 @@ define_function(data_md5)
 
   int past_first_block = FALSE;
 
+  YR_OBJECT* module = module();
+  CACHE* cache = (CACHE*)module->data;
+  CACHED_HASH* cached_md5 = &cache->md5;
+
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
 
@@ -132,6 +159,13 @@ define_function(data_md5)
   {
     return ERROR_WRONG_ARGUMENTS;
   }
+
+  if (cached_md5->isSet && cached_md5->offset == offset && cached_md5->length == length)
+  {
+    return_string(cached_md5->digest);
+  }
+  cached_md5->offset = offset;
+  cached_md5->length = length;
 
   foreach_memory_block(context, block)
   {
@@ -173,6 +207,9 @@ define_function(data_md5)
 
   digest_to_ascii(digest, digest_ascii, MD5_DIGEST_LENGTH);
 
+  cached_md5->isSet = true;
+  cached_md5->digest = digest_ascii;
+
   return_string(digest_ascii);
 }
 
@@ -189,6 +226,10 @@ define_function(data_sha1)
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
 
+  YR_OBJECT* module = module();
+  CACHE* cache = (CACHE*)module->data;
+  CACHED_HASH* cached_sha1 = &cache->sha1;
+
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
 
@@ -198,6 +239,13 @@ define_function(data_sha1)
   {
     return ERROR_WRONG_ARGUMENTS;
   }
+
+  if (cached_sha1->isSet && cached_sha1->offset == offset && cached_sha1->length == length)
+  {
+    return_string(cached_sha1->digest);
+  }
+  cached_sha1->offset = offset;
+  cached_sha1->length = length;
 
   foreach_memory_block(context, block)
   {
@@ -238,6 +286,9 @@ define_function(data_sha1)
 
   digest_to_ascii(digest, digest_ascii, SHA_DIGEST_LENGTH);
 
+  cached_sha1->isSet = true;
+  cached_sha1->digest = digest_ascii;
+
   return_string(digest_ascii);
 }
 
@@ -254,6 +305,10 @@ define_function(data_sha256)
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
 
+  YR_OBJECT* module = module();
+  CACHE* cache = (CACHE*)module->data;
+  CACHED_HASH* cached_sha256 = &cache->sha256;
+
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
 
@@ -263,6 +318,13 @@ define_function(data_sha256)
   {
     return ERROR_WRONG_ARGUMENTS;
   }
+
+  if (cached_sha256->isSet && cached_sha256->offset == offset && cached_sha256->length == length)
+  {
+    return_string(cached_sha256->digest);
+  }
+  cached_sha256->offset = offset;
+  cached_sha256->length = length;
 
   foreach_memory_block(context, block)
   {
@@ -301,6 +363,9 @@ define_function(data_sha256)
   SHA256_Final(digest, &sha256_context);
 
   digest_to_ascii(digest, digest_ascii, SHA256_DIGEST_LENGTH);
+  
+  cached_sha256->isSet = true;
+  cached_sha256->digest = digest_ascii;
 
   return_string(digest_ascii);
 }
@@ -310,6 +375,10 @@ define_function(data_checksum32)
 {
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
+
+  YR_OBJECT* module = module();
+  CACHE* cache = (CACHE*)module->data;
+  CACHED_CHECKSUM* cached_crc32 = &cache->crc32;
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = NULL;
@@ -321,6 +390,13 @@ define_function(data_checksum32)
   {
     return ERROR_WRONG_ARGUMENTS;
   }
+
+  if (cached_crc32->isSet && cached_crc32->offset == offset && cached_crc32->length == length)
+  {
+    return_integer(cached_crc32->sum);
+  }
+  cached_crc32->offset = offset;
+  cached_crc32->length = length;
 
   foreach_memory_block(context, block)
   {
@@ -357,6 +433,9 @@ define_function(data_checksum32)
 
   if (!past_first_block)
     return_integer(UNDEFINED);
+
+  cached_crc32->isSet = true;
+  cached_crc32->sum = checksum;
 
   return_integer(checksum);
 }
@@ -401,6 +480,7 @@ int module_load(
     size_t module_data_size)
 {
 
+  module_object->data = yr_malloc(sizeof(CACHE));
   return ERROR_SUCCESS;
 }
 
@@ -408,5 +488,6 @@ int module_load(
 int module_unload(
     YR_OBJECT* module_object)
 {
+  yr_free(module_object->data);
   return ERROR_SUCCESS;
 }
