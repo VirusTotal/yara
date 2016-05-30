@@ -22,7 +22,7 @@ int err = 0;
 #define CHECK_SIZE(expr,size)                          \
   do                                                   \
   {                                                    \
-    printf("sizeof("#expr") = %lu ...", sizeof(expr)); \
+    printf("sizeof("#expr") = %zd ...", sizeof(expr)); \
     if (sizeof(expr) == size)                          \
     {                                                  \
       puts("ok");                                      \
@@ -37,7 +37,7 @@ int err = 0;
 #define CHECK_OFFSET(expr,offset,subexpr)             \
   do                                                  \
   {                                                   \
-    printf("offsetof("#expr", "#subexpr") = %lu ...", \
+    printf("offsetof("#expr", "#subexpr") = %zd ...", \
            offsetof(expr, subexpr));                  \
     if (offsetof(expr, subexpr) == offset)            \
     {                                                 \
