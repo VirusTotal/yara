@@ -1,8 +1,16 @@
+dist: trusty
+sudo: required
 install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq libjansson-dev libmagic-dev libssl-dev autoconf automake libtool
+  - sudo dpkg --add-architecture i386
+  # Not all repositories contain i386 binary packages
+  - sudo rm -rf /etc/apt/sources.list.d/
+  - sudo apt-get update
+  - sudo apt-get install -y gcc-multilib autoconf automake libtool libjansson-dev libmagic-dev libssl-dev
 
 before_script: ./bootstrap.sh
 script: ./configure && make && make check
 
 language: c
+env:
+  - CFLAGS=-m64
+  - CFLAGS=-m32
