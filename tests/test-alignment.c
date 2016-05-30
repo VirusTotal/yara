@@ -109,14 +109,6 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_AC_MATCH, 24, backward_code);
   CHECK_OFFSET(YR_AC_MATCH, 32, next);
 
-  CHECK_SIZE(YR_AC_STATE, 40);
-  CHECK_OFFSET(YR_AC_STATE, 8,  failure);
-  CHECK_OFFSET(YR_AC_STATE, 16, first_child);
-  CHECK_OFFSET(YR_AC_STATE, 24, siblings);
-  CHECK_OFFSET(YR_AC_STATE, 32, matches);
-
-  CHECK_SIZE(YR_AC_AUTOMATON, 32);
-
   CHECK_SIZE(YARA_RULES_FILE_HEADER, 48);
   CHECK_OFFSET(YARA_RULES_FILE_HEADER, 8,  rules_list_head);
   CHECK_OFFSET(YARA_RULES_FILE_HEADER, 16, externals_list_head);
