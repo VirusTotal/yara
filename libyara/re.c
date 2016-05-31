@@ -54,7 +54,7 @@ order to avoid confusion with operating system threads.
 #define RE_SCAN_LIMIT     4096
 
 // Maxium number of fibers
-#define RE_MAX_FIBERS     64
+#define RE_MAX_FIBERS     1024
 
 
 #define EMIT_BACKWARDS                  0x01

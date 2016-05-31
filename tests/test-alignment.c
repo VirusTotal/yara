@@ -22,7 +22,7 @@ int err = 0;
 #define CHECK_SIZE(expr,size)                          \
   do                                                   \
   {                                                    \
-    printf("sizeof("#expr") = %lu ...", sizeof(expr)); \
+    printf("sizeof("#expr") = %zd ...", sizeof(expr)); \
     if (sizeof(expr) == size)                          \
     {                                                  \
       puts("ok");                                      \
@@ -37,7 +37,7 @@ int err = 0;
 #define CHECK_OFFSET(expr,offset,subexpr)             \
   do                                                  \
   {                                                   \
-    printf("offsetof("#expr", "#subexpr") = %lu ...", \
+    printf("offsetof("#expr", "#subexpr") = %zd ...", \
            offsetof(expr, subexpr));                  \
     if (offsetof(expr, subexpr) == offset)            \
     {                                                 \
@@ -85,17 +85,17 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_STRING, 36, chain_gap_max);
   CHECK_OFFSET(YR_STRING, 40, fixed_offset);
 
-  CHECK_SIZE(YR_RULE, 8 + 4*MAX_THREADS + 40
+  CHECK_SIZE(YR_RULE, 8 + 4 * MAX_THREADS + 40
 #            ifdef PROFILING_ENABLED
              + 8
 #            endif
              );
-  CHECK_OFFSET(YR_RULE, 4,                      t_flags);
-  CHECK_OFFSET(YR_RULE, 8 + 4*MAX_THREADS,      identifier);
-  CHECK_OFFSET(YR_RULE, 8 + 4*MAX_THREADS + 8,  tags);
-  CHECK_OFFSET(YR_RULE, 8 + 4*MAX_THREADS + 16, metas);
-  CHECK_OFFSET(YR_RULE, 8 + 4*MAX_THREADS + 24, strings);
-  CHECK_OFFSET(YR_RULE, 8 + 4*MAX_THREADS + 32, ns);
+  CHECK_OFFSET(YR_RULE, 4,                        t_flags);
+  CHECK_OFFSET(YR_RULE, 8 + 4 * MAX_THREADS,      identifier);
+  CHECK_OFFSET(YR_RULE, 8 + 4 * MAX_THREADS + 8,  tags);
+  CHECK_OFFSET(YR_RULE, 8 + 4 * MAX_THREADS + 16, metas);
+  CHECK_OFFSET(YR_RULE, 8 + 4 * MAX_THREADS + 24, strings);
+  CHECK_OFFSET(YR_RULE, 8 + 4 * MAX_THREADS + 32, ns);
 
   CHECK_SIZE(YR_EXTERNAL_VARIABLE, 24);
   CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8,  value.i);
@@ -109,31 +109,12 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_AC_MATCH, 24, backward_code);
   CHECK_OFFSET(YR_AC_MATCH, 32, next);
 
-  CHECK_SIZE(YR_AC_STATE,24);
-  CHECK_OFFSET(YR_AC_STATE, 8,  failure);
-  CHECK_OFFSET(YR_AC_STATE, 16, matches);
-
-  CHECK_SIZE(YR_AC_STATE_TRANSITION, 24);
-  CHECK_OFFSET(YR_AC_STATE_TRANSITION, 8,  state);
-  CHECK_OFFSET(YR_AC_STATE_TRANSITION, 16, next);
-
-  CHECK_SIZE(YR_AC_TABLE_BASED_STATE, 2072);
-  CHECK_OFFSET(YR_AC_TABLE_BASED_STATE, 8,  failure);
-  CHECK_OFFSET(YR_AC_TABLE_BASED_STATE, 16, matches);
-  CHECK_OFFSET(YR_AC_TABLE_BASED_STATE, 24, transitions);
-
-  CHECK_SIZE(YR_AC_LIST_BASED_STATE,32);
-  CHECK_OFFSET(YR_AC_LIST_BASED_STATE, 8,  failure);
-  CHECK_OFFSET(YR_AC_LIST_BASED_STATE, 16, matches);
-  CHECK_OFFSET(YR_AC_LIST_BASED_STATE, 24, transitions);
-
-  CHECK_SIZE(YR_AC_AUTOMATON, 8);
-
-  CHECK_SIZE(YARA_RULES_FILE_HEADER, 40);
+  CHECK_SIZE(YARA_RULES_FILE_HEADER, 48);
   CHECK_OFFSET(YARA_RULES_FILE_HEADER, 8,  rules_list_head);
   CHECK_OFFSET(YARA_RULES_FILE_HEADER, 16, externals_list_head);
   CHECK_OFFSET(YARA_RULES_FILE_HEADER, 24, code_start);
-  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 32, automaton);
+  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 32, match_table);
+  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 40, transition_table);
 
   return err;
 }
