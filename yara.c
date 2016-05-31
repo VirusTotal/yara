@@ -977,7 +977,7 @@ int main(
   if (show_version)
   {
     printf("%s\n", PACKAGE_STRING);
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
   }
 
   if (show_help)
@@ -991,7 +991,7 @@ int main(
     args_print_usage(options, 35);
     printf("\nSend bug reports and suggestions to: %s.\n", PACKAGE_BUGREPORT);
 
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
   }
 
   if (argc != 2)

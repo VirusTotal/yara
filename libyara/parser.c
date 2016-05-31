@@ -282,7 +282,6 @@ int _yr_parser_write_string(
     int* min_atom_quality)
 {
   SIZED_STRING* literal_string;
-  YR_AC_MATCH* new_match;
   YR_ATOM_LIST_ITEM* atom_list = NULL;
 
   int result;
@@ -381,37 +380,11 @@ int _yr_parser_write_string(
   if (result == ERROR_SUCCESS)
   {
     // Add the string to Aho-Corasick automaton.
-
-    if (atom_list != NULL)
-    {
-      result = yr_ac_add_string(
-          compiler->automaton_arena,
-          compiler->automaton,
-          *string,
-          atom_list);
-    }
-    else
-    {
-      result = yr_arena_allocate_struct(
-          compiler->automaton_arena,
-          sizeof(YR_AC_MATCH),
-          (void**) &new_match,
-          offsetof(YR_AC_MATCH, string),
-          offsetof(YR_AC_MATCH, forward_code),
-          offsetof(YR_AC_MATCH, backward_code),
-          offsetof(YR_AC_MATCH, next),
-          EOL);
-
-      if (result == ERROR_SUCCESS)
-      {
-        new_match->backtrack = 0;
-        new_match->string = *string;
-        new_match->forward_code = re->root_node->forward_code;
-        new_match->backward_code = NULL;
-        new_match->next = compiler->automaton->root->matches;
-        compiler->automaton->root->matches = new_match;
-      }
-    }
+    result = yr_ac_add_string(
+        compiler->automaton,
+        *string,
+        atom_list,
+        compiler->matches_arena);
   }
 
   *min_atom_quality = yr_atoms_min_quality(atom_list);
@@ -574,8 +547,8 @@ YR_STRING* yr_parser_reduce_string_declaration(
     if (yr_re_contains_dot_star(re))
     {
       yywarning(
-          yyscanner, 
-          "%s contains .*, consider using .{N} with a reasonable value for N", 
+          yyscanner,
+          "%s contains .*, consider using .{N} with a reasonable value for N",
           identifier);
     }
 
@@ -676,13 +649,13 @@ YR_STRING* yr_parser_reduce_string_declaration(
       string);
 
     if (compiler->last_result != ERROR_SUCCESS)
-      goto _exit;  
+      goto _exit;
   }
 
   if (min_atom_quality < 3 && compiler->callback != NULL)
   {
     yywarning(
-        yyscanner, 
+        yyscanner,
         "%s is slowing down scanning%s",
         string->identifier,
         min_atom_quality < 2 ? " (critical!)" : "");

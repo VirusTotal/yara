@@ -80,9 +80,6 @@ YR_API int yr_compiler_create(
     result = yr_arena_create(65536, 0, &new_compiler->re_code_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(65536, 0, &new_compiler->automaton_arena);
-
-  if (result == ERROR_SUCCESS)
     result = yr_arena_create(65536, 0, &new_compiler->externals_arena);
 
   if (result == ERROR_SUCCESS)
@@ -92,9 +89,13 @@ YR_API int yr_compiler_create(
     result = yr_arena_create(65536, 0, &new_compiler->metas_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_ac_create_automaton(
-        new_compiler->automaton_arena,
-        &new_compiler->automaton);
+    result = yr_arena_create(65536, 0, &new_compiler->automaton_arena);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_arena_create(65536, 0, &new_compiler->matches_arena);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_ac_automaton_create(&new_compiler->automaton);
 
   if (result == ERROR_SUCCESS)
   {
@@ -121,10 +122,13 @@ YR_API void yr_compiler_destroy(
   yr_arena_destroy(compiler->strings_arena);
   yr_arena_destroy(compiler->code_arena);
   yr_arena_destroy(compiler->re_code_arena);
-  yr_arena_destroy(compiler->automaton_arena);
   yr_arena_destroy(compiler->externals_arena);
   yr_arena_destroy(compiler->namespaces_arena);
   yr_arena_destroy(compiler->metas_arena);
+  yr_arena_destroy(compiler->automaton_arena);
+  yr_arena_destroy(compiler->matches_arena);
+
+    yr_ac_automaton_destroy(compiler->automaton);
 
   yr_hash_table_destroy(
       compiler->rules_table,
@@ -374,6 +378,7 @@ YR_API int yr_compiler_add_string(
   }
 }
 
+
 int _yr_compiler_compile_rules(
   YR_COMPILER* compiler)
 {
@@ -412,10 +417,13 @@ int _yr_compiler_compile_rules(
       sizeof(YR_EXTERNAL_VARIABLE),
       NULL);
 
-  // Create Aho-Corasick automaton's failure links.
-  result = yr_ac_create_failure_links(
+  YR_AC_TABLES tables;
+
+  // Write Aho-Corasick automaton to arena.
+  result = yr_ac_compile(
+      compiler->automaton,
       compiler->automaton_arena,
-      compiler->automaton);
+      &tables);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(1024, 0, &arena);
@@ -428,7 +436,8 @@ int _yr_compiler_compile_rules(
         offsetof(YARA_RULES_FILE_HEADER, rules_list_head),
         offsetof(YARA_RULES_FILE_HEADER, externals_list_head),
         offsetof(YARA_RULES_FILE_HEADER, code_start),
-        offsetof(YARA_RULES_FILE_HEADER, automaton),
+        offsetof(YARA_RULES_FILE_HEADER, match_table),
+        offsetof(YARA_RULES_FILE_HEADER, transition_table),
         EOL);
 
   if (result == ERROR_SUCCESS)
@@ -442,18 +451,12 @@ int _yr_compiler_compile_rules(
     rules_file_header->code_start = (uint8_t*) yr_arena_base_address(
         compiler->code_arena);
 
-    rules_file_header->automaton = (YR_AC_AUTOMATON*) yr_arena_base_address(
-        compiler->automaton_arena);
+    rules_file_header->match_table = tables.matches;
+    rules_file_header->transition_table = tables.transitions;
   }
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_append(
-        arena,
-        compiler->automaton_arena);
-
-  if (result == ERROR_SUCCESS)
   {
-    compiler->automaton_arena = NULL;
     result = yr_arena_append(
         arena,
         compiler->code_arena);
@@ -518,6 +521,22 @@ int _yr_compiler_compile_rules(
   if (result == ERROR_SUCCESS)
   {
     compiler->sz_arena = NULL;
+    result = yr_arena_append(
+        arena,
+        compiler->automaton_arena);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    compiler->automaton_arena = NULL;
+    result = yr_arena_append(
+        arena,
+        compiler->matches_arena);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    compiler->matches_arena = NULL;
     compiler->compiled_rules_arena = arena;
     result = yr_arena_coalesce(arena);
   }
@@ -552,7 +571,8 @@ YR_API int yr_compiler_get_rules(
 
   yara_rules->externals_list_head = rules_file_header->externals_list_head;
   yara_rules->rules_list_head = rules_file_header->rules_list_head;
-  yara_rules->automaton = rules_file_header->automaton;
+  yara_rules->match_table = rules_file_header->match_table;
+  yara_rules->transition_table = rules_file_header->transition_table;
   yara_rules->code_start = rules_file_header->code_start;
   yara_rules->tidx_mask = 0;
 
