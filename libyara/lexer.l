@@ -591,7 +591,9 @@ u?int(8|16|32)(be)? {
 }
 
 
-\{({hexdigit}|[ \-|\?\[\]\(\)\n\t])+\}  {
+\{(({hexdigit}|[ \-|\?\[\]\(\)\n\t]|\/\*[^*]*\*\/)+|\/\/.*)+\}  {
+  // Match hex-digits with whitespace or comments. The latter are stripped
+  // out by hex_lexer.l
 
   ALLOC_SIZED_STRING(s, strlen(yytext));
 

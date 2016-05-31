@@ -75,6 +75,7 @@ digit         [0-9]
 letter        [a-zA-Z]
 hexdigit      [a-fA-F0-9]
 
+%x comment
 %x range
 
 %%
@@ -111,6 +112,10 @@ hexdigit      [a-fA-F0-9]
   BEGIN(range);
   return yytext[0];
 }
+
+"/*"(.|\n)*"*/"    // skip comments
+
+"//".*             // skip single-line comments
 
 <range>\- {
   return yytext[0];
