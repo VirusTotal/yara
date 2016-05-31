@@ -458,12 +458,15 @@ int _yr_ac_find_suitable_transition_table_slot(
 
     if (automaton->tables_size - i < 257)
     {
-      size_t t_bytes_size = automaton->tables_size * sizeof(YR_AC_TRANSITION);
-      size_t m_bytes_size = automaton->tables_size * sizeof(YR_AC_MATCH*);
+      size_t t_bytes_size = automaton->tables_size *
+          sizeof(YR_AC_TRANSITION);
+
+      size_t m_bytes_size = automaton->tables_size * 
+          sizeof(YR_AC_MATCH_TABLE_ENTRY);
 
       automaton->t_table = (YR_AC_TRANSITION_TABLE) yr_realloc(
           automaton->t_table, t_bytes_size * 2);
-      
+
 	  automaton->m_table = (YR_AC_MATCH_TABLE) yr_realloc(
           automaton->m_table, m_bytes_size * 2);
 
@@ -582,7 +585,7 @@ int _yr_ac_build_transition_table(
       automaton->tables_size * sizeof(YR_AC_TRANSITION));
 
   automaton->m_table = (YR_AC_MATCH_TABLE) yr_malloc(
-      automaton->tables_size * sizeof(YR_AC_MATCH*));
+      automaton->tables_size * sizeof(YR_AC_MATCH_TABLE_ENTRY));
 
   if (automaton->t_table == NULL || automaton->t_table == NULL)
   {
@@ -596,10 +599,10 @@ int _yr_ac_build_transition_table(
       automaton->tables_size * sizeof(YR_AC_TRANSITION));
 
   memset(automaton->m_table, 0,
-      automaton->tables_size * sizeof(YR_AC_MATCH*));
+      automaton->tables_size * sizeof(YR_AC_MATCH_TABLE_ENTRY));
 
   automaton->t_table[0] = YR_AC_MAKE_TRANSITION(0, 0, YR_AC_USED_FLAG);
-  automaton->m_table[0] = root_state->matches;
+  automaton->m_table[0].match = root_state->matches;
 
   // Index 0 is for root node. Unused indexes start at 1.
   automaton->t_table_unused_candidate = 1;
@@ -632,7 +635,7 @@ int _yr_ac_build_transition_table(
     automaton->t_table[slot] = YR_AC_MAKE_TRANSITION(
         state->failure->t_table_slot, 0, YR_AC_USED_FLAG);
 
-    automaton->m_table[slot] = state->matches;
+    automaton->m_table[slot].match = state->matches;
 
     // Push childrens of current_state
 
@@ -909,13 +912,13 @@ int yr_ac_compile(
   FAIL_ON_ERROR(yr_arena_write_data(
       arena,
       automaton->m_table,
-      sizeof(YR_AC_MATCH*),
+      sizeof(YR_AC_MATCH_TABLE_ENTRY),
       (void**) &tables->matches));
 
   FAIL_ON_ERROR(yr_arena_make_relocatable(
       arena,
       tables->matches,
-      0,
+      offsetof(YR_AC_MATCH_TABLE_ENTRY, match),
       EOL));
 
   for (i = 1; i < automaton->tables_size; i++)
@@ -925,13 +928,13 @@ int yr_ac_compile(
     FAIL_ON_ERROR(yr_arena_write_data(
         arena,
         automaton->m_table + i,
-        sizeof(YR_AC_MATCH*),
+        sizeof(YR_AC_MATCH_TABLE_ENTRY),
         (void**) &ptr));
 
     FAIL_ON_ERROR(yr_arena_make_relocatable(
         arena,
         ptr,
-        0,
+        offsetof(YR_AC_MATCH_TABLE_ENTRY, match),
         EOL));
   }
 

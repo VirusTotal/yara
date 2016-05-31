@@ -278,9 +278,16 @@ typedef struct _YR_AC_MATCH
 } YR_AC_MATCH;
 
 
-typedef uint64_t            YR_AC_TRANSITION;
-typedef YR_AC_TRANSITION*   YR_AC_TRANSITION_TABLE;
-typedef YR_AC_MATCH**       YR_AC_MATCH_TABLE;
+typedef struct _YR_AC_MATCH_TABLE_ENTRY
+{
+  DECLARE_REFERENCE(YR_AC_MATCH*, match);
+
+} YR_AC_MATCH_TABLE_ENTRY;
+
+
+typedef uint64_t                  YR_AC_TRANSITION;
+typedef YR_AC_TRANSITION*         YR_AC_TRANSITION_TABLE;
+typedef YR_AC_MATCH_TABLE_ENTRY*  YR_AC_MATCH_TABLE;
 
 
 typedef struct _YARA_RULES_FILE_HEADER

@@ -232,7 +232,7 @@ int _yr_rules_scan_mem_block(
 
   while (i < block->size)
   {
-    match = match_table[state];
+    match = match_table[state].match;
 
     while (match != NULL)
     {
@@ -278,7 +278,7 @@ int _yr_rules_scan_mem_block(
   }
 
 
-  match = match_table[state];
+  match = match_table[state].match;
 
   while (match != NULL)
   {
