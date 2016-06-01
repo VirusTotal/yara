@@ -1043,7 +1043,7 @@ int yr_arena_save_stream(
     reloc = reloc->next;
   }
 
-  assert(page->size < 0x100000000);  // 4GB
+  assert(page->size < 0x80000000);  // 2GB
 
   header.magic[0] = 'Y';
   header.magic[1] = 'A';
