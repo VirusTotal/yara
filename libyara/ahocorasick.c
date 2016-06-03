@@ -461,7 +461,7 @@ int _yr_ac_find_suitable_transition_table_slot(
       size_t t_bytes_size = automaton->tables_size *
           sizeof(YR_AC_TRANSITION);
 
-      size_t m_bytes_size = automaton->tables_size * 
+      size_t m_bytes_size = automaton->tables_size *
           sizeof(YR_AC_MATCH_TABLE_ENTRY);
 
       automaton->t_table = (YR_AC_TRANSITION_TABLE) yr_realloc(
@@ -587,7 +587,7 @@ int _yr_ac_build_transition_table(
   automaton->m_table = (YR_AC_MATCH_TABLE) yr_malloc(
       automaton->tables_size * sizeof(YR_AC_MATCH_TABLE_ENTRY));
 
-  if (automaton->t_table == NULL || automaton->t_table == NULL)
+  if (automaton->t_table == NULL || automaton->m_table == NULL)
   {
     yr_free(automaton->t_table);
     yr_free(automaton->m_table);
