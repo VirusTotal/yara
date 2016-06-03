@@ -102,7 +102,7 @@ int yr_parser_emit_with_arg_reloc(
     uint8_t** instruction_address,
     int64_t** argument_address)
 {
-  int64_t* ptr;
+  int64_t* ptr = NULL;
 
   int result = yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
