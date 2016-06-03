@@ -479,8 +479,8 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-
   module_object->data = yr_malloc(sizeof(CACHE));
+  memset(module_object->data, 0, sizeof(CACHE));
   return ERROR_SUCCESS;
 }
 
