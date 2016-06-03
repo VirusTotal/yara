@@ -1700,11 +1700,8 @@ define_function(imphash)
       final_name = (char*) yr_malloc(final_name_len + 1);
 
       if (final_name == NULL)
-      {
-        yr_free(dll_name);
         break;
-      }
-
+    
       sprintf(final_name, first ? "%s.%s": ",%s.%s", dll_name, func->name);
 
       // Lowercase the whole thing.
