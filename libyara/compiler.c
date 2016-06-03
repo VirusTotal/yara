@@ -383,7 +383,7 @@ int _yr_compiler_compile_rules(
   YR_COMPILER* compiler)
 {
   YARA_RULES_FILE_HEADER* rules_file_header = NULL;
-  YR_ARENA* arena;
+  YR_ARENA* arena = NULL;
   YR_RULE null_rule;
   YR_EXTERNAL_VARIABLE null_external;
 
