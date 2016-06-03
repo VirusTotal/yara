@@ -631,7 +631,7 @@ void yywarning(
 
   char* file_name;
   char message[512];
-  
+
   va_list message_args;
   va_start(message_args, message_fmt);
 
@@ -651,6 +651,8 @@ void yywarning(
       yyget_lineno(yyscanner),
       message,
       compiler->user_data);
+
+  va_end(message_args);
 }
 
 
