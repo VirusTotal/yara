@@ -540,6 +540,10 @@ int _yr_compiler_compile_rules(
     compiler->compiled_rules_arena = arena;
     result = yr_arena_coalesce(arena);
   }
+  else
+  {
+    yr_arena_destroy(arena);
+  }
 
   return result;
 }

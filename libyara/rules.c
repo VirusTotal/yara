@@ -628,21 +628,16 @@ YR_API int yr_rules_load_stream(
     YR_STREAM* stream,
     YR_RULES** rules)
 {
-  int result;
-
   YARA_RULES_FILE_HEADER* header;
   YR_RULES* new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
 
   if (new_rules == NULL)
     return ERROR_INSUFICIENT_MEMORY;
 
-  result = yr_arena_load_stream(stream, &new_rules->arena);
-
-  if (result != ERROR_SUCCESS)
-  {
-    yr_free(new_rules);
-    return result;
-  }
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_arena_load_stream(stream, &new_rules->arena),
+      // cleanup
+      yr_free(new_rules));
 
   header = (YARA_RULES_FILE_HEADER*)
       yr_arena_base_address(new_rules->arena);
@@ -654,7 +649,10 @@ YR_API int yr_rules_load_stream(
   new_rules->transition_table = header->transition_table;
   new_rules->tidx_mask = 0;
 
-  FAIL_ON_ERROR(yr_mutex_create(&new_rules->mutex));
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_mutex_create(&new_rules->mutex),
+      // cleanup
+      yr_free(new_rules));
 
   *rules = new_rules;
 

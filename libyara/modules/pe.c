@@ -941,7 +941,10 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
             yr_calloc(1, sizeof(IMPORTED_FUNCTION));
 
         if (imported_func == NULL)
+        {
+          yr_free(name);
           continue;
+        }
 
         imported_func->name = name;
         imported_func->ordinal = ordinal;
@@ -1094,22 +1097,21 @@ IMPORTED_DLL* pe_parse_imports(
 
     if (offset >= 0)
     {
-      IMPORTED_FUNCTION* functions;
+      IMPORTED_DLL* imported_dll;
 
       char* dll_name = (char *) (pe->data + offset);
 
       if (!pe_valid_dll_name(dll_name, pe->data_size - (size_t) offset))
         break;
 
-      functions = pe_parse_import_descriptor(
-          pe, imports, dll_name);
+      imported_dll = (IMPORTED_DLL*) yr_calloc(1, sizeof(IMPORTED_DLL));
 
-      if (functions != NULL)
+      if (imported_dll != NULL)
       {
-        IMPORTED_DLL* imported_dll = (IMPORTED_DLL*) yr_calloc(
-            1, sizeof(IMPORTED_DLL));
+        IMPORTED_FUNCTION* functions = pe_parse_import_descriptor(
+            pe, imports, dll_name);
 
-        if (imported_dll != NULL)
+        if (functions != NULL)
         {
           imported_dll->name = yr_strdup(dll_name);;
           imported_dll->functions = functions;
@@ -1122,6 +1124,10 @@ IMPORTED_DLL* pe_parse_imports(
             tail->next = imported_dll;
 
           tail = imported_dll;
+        }
+        else
+        {
+          yr_free(imported_dll);
         }
       }
     }
@@ -1701,7 +1707,7 @@ define_function(imphash)
 
       if (final_name == NULL)
         break;
-    
+
       sprintf(final_name, first ? "%s.%s": ",%s.%s", dll_name, func->name);
 
       // Lowercase the whole thing.
