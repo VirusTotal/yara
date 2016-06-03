@@ -830,23 +830,14 @@ int yr_arena_duplicate(
   // Only coalesced arenas can be duplicated.
   assert(arena->flags & ARENA_FLAGS_COALESCED);
 
-  new_arena = (YR_ARENA*) yr_malloc(sizeof(YR_ARENA));
-
-  if (new_arena == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
-
   page = arena->page_list_head;
-  new_page = _yr_arena_new_page(page->size);
 
-  if (new_page == NULL)
-  {
-    yr_free(new_arena);
-    return ERROR_INSUFICIENT_MEMORY;
-  }
+  FAIL_ON_ERROR(yr_arena_create(page->size, arena->flags, &new_arena));
+
+  new_page = new_arena->current_page;
+  new_page->used = page->used;
 
   memcpy(new_page->address, page->address, page->size);
-
-  new_page->used = page->used;
 
   reloc = page->reloc_list_head;
 
@@ -855,7 +846,10 @@ int yr_arena_duplicate(
     new_reloc = (YR_RELOC*) yr_malloc(sizeof(YR_RELOC));
 
     if (new_reloc == NULL)
+    {
+      yr_arena_destroy(new_arena);
       return ERROR_INSUFICIENT_MEMORY;
+    }
 
     new_reloc->offset = reloc->offset;
     new_reloc->next = NULL;
@@ -883,10 +877,6 @@ int yr_arena_duplicate(
 
     reloc = reloc->next;
   }
-
-  new_arena->page_list_head = new_page;
-  new_arena->current_page = new_page;
-  new_arena->flags |= ARENA_FLAGS_COALESCED;
 
   *duplicated = new_arena;
 

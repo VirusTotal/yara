@@ -434,7 +434,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
   YR_STRING* prev_string;
 
   RE* re = NULL;
-  RE* remainder_re;
+  RE* remainder_re = NULL;
 
   RE_ERROR re_error;
 
@@ -584,7 +584,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
     while (remainder_re != NULL)
     {
-      // Destroy regexp pointed by 're' before yr_re_split_at_jmp
+      // Destroy regexp pointed by 're' before yr_re_split_at_chaining_point
       // overwrites 're' with another value.
 
       yr_re_destroy(re);
@@ -665,6 +665,9 @@ _exit:
 
   if (re != NULL)
     yr_re_destroy(re);
+
+  if (remainder_re != NULL)
+    yr_re_destroy(remainder_re);
 
   if (compiler->last_result != ERROR_SUCCESS)
     return NULL;

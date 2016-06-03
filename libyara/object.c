@@ -45,6 +45,8 @@ int yr_object_create(
   int i;
   size_t object_size = 0;
 
+  assert(parent != NULL || object != NULL);
+
   switch (type)
   {
     case OBJECT_TYPE_STRUCTURE:

@@ -140,8 +140,11 @@ int yr_modules_load(
       context->user_data);
 
   if (result == CALLBACK_ERROR)
+  {
+    yr_object_destroy(module_structure);
     return ERROR_CALLBACK_ERROR;
-
+  }
+    
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_modules_do_declarations(module_name, module_structure),
       yr_object_destroy(module_structure));

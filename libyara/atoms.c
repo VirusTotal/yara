@@ -1015,7 +1015,10 @@ int yr_atoms_extract_from_re(
   atom_tree->root_node = _yr_atoms_tree_node_create(ATOM_TREE_OR);
 
   if (atom_tree->root_node == NULL)
+  {
+    _yr_atoms_tree_destroy(atom_tree);
     return ERROR_INSUFICIENT_MEMORY;
+  }
 
   atom_tree->current_leaf = NULL;
 
@@ -1023,7 +1026,10 @@ int yr_atoms_extract_from_re(
       re->root_node, atom_tree, atom_tree->root_node);
 
   if (atom_tree->root_node == NULL)
+  {
+    _yr_atoms_tree_destroy(atom_tree);
     return ERROR_INSUFICIENT_MEMORY;
+  }
 
   if (atom_tree->current_leaf != NULL)
     _yr_atoms_tree_node_append(atom_tree->root_node, atom_tree->current_leaf);
