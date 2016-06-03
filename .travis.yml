@@ -14,3 +14,18 @@ language: c
 env:
   - CFLAGS=-m64
   - CFLAGS=-m32
+
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "55t40B0koR7jhDkxsC8n38T1ZT+gRov6YJwxnh8pgRzzlwD+ObbFINKEISV1vjRWV4Ily4b7SQOyWBee40313ZSKvDrzKxvPGRCpq0GCA6Wb5dN1I4zC/8XqojWYxMFDOOVJMqI4Bzyd5t007nJWvNZ2hZD9fsc6eUN5plQEL4Kn9lumHdRWK1oIrfpv5g6SivKib8AQDoAQGs9AHO2MYcjqpSb+oeGwEUIAAKYzkfpWXFNocFrXjBGt431V8nUYBBtgxB3/nS+2ngc5Rzm9hSdWJxwTn0KrmQqXE5z3lF9+MdmL+Ct9RvpN31YcM4iASTyV8HFTM05CjAKMelrQ3ILmSbIrPBtzDA8AoDMlDgjFnP7BZUplNA0GYr+DgoWdF//LDqOfIimyyBD0Fev+8JE/I0dDbUo5gxIWELdMzUCM4FrYz6xm1n67ofo1QgaIm35pWxC6idGdeqJPHmi6NrpCtovOPj7Fjjbk6undS3ZwFuf3LLR/QsvIGaX8hOydSXGlCuMKvNA0EPueO/NbqWecpH0lEk3YSepGJJ32uYRCERLkOajkXwcpJ0Fx0yiIxVpY43zBxabHA2ih/0/MEp+nc8wJyui8A337oJHFfexyb9XY0dU8e3/BxskShLybyNzADz5UvY7mJZIdPrQ0nobgP9SyTtsl1WsZBWuGoQg="
+
+addons:
+  coverity_scan:
+    project:
+      name: "plusvic/yara"
+      description: "Build submitted via Travis CI"
+    notification_email: plusvic@gmail.com
+    build_command_prepend: "./configure; make clean"
+    build_command:   "make -j 4"
+    branch_pattern: master
