@@ -198,9 +198,17 @@ include[ \t]+\"         {
     b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
     #endif
 
+    #ifdef _WIN32
     if (s != NULL || b != NULL)
+    #else
+    if (s != NULL)
+    #endif
     {
+      #ifdef _WIN32
       f = (b > s)? (b + 1): (s + 1);
+      #else
+      f = s + 1;
+      #endif
 
       strlcpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
 
