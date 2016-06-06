@@ -435,7 +435,7 @@ YR_OBJECT* _yr_object_lookup(
   {
     i = 0;
 
-    while(*p != '\0' && *p != '.' && *p != '[' && i < sizeof(str))
+    while(*p != '\0' && *p != '.' && *p != '[' && i < sizeof(str) - 1)
     {
       str[i++] = *p++;
     }
@@ -1086,7 +1086,7 @@ YR_API void yr_object_print_data(
   char indent_spaces[32];
   int i;
 
-  indent = yr_min(indent, sizeof(indent_spaces));
+  indent = yr_min(indent, sizeof(indent_spaces) - 1);
 
   memset(indent_spaces, '\t', indent);
   indent_spaces[indent] = '\0';
