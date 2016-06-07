@@ -171,7 +171,9 @@ include[ \t]+\"         {
   char            buffer[1024];
   char            *current_file_name;
   char            *s = NULL;
+  #ifdef _WIN32
   char            *b = NULL;
+  #endif
   char            *f;
   FILE*           fh;
 
