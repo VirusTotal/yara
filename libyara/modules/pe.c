@@ -1008,8 +1008,11 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
             yr_calloc(1, sizeof(IMPORTED_FUNCTION));
 
         if (imported_func == NULL)
+        {
+          yr_free(name);
           continue;
-
+        }
+ 
         imported_func->name = name;
         imported_func->ordinal = ordinal;
         imported_func->has_ordinal = has_ordinal;
