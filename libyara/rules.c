@@ -215,6 +215,7 @@ void yr_rules_print_profiling_info(
 
 int _yr_rules_scan_mem_block(
     YR_RULES* rules,
+    uint8_t* block_data,
     YR_MEMORY_BLOCK* block,
     YR_SCAN_CONTEXT* context,
     int timeout,
@@ -247,7 +248,7 @@ int _yr_rules_scan_mem_block(
         FAIL_ON_ERROR(yr_scan_verify_match(
             context,
             match,
-            block->data,
+            block_data,
             block->size,
             block->base,
             i - match->backtrack));
@@ -256,7 +257,7 @@ int _yr_rules_scan_mem_block(
       match = match->next;
     }
 
-    index = block->data[i++] + 1;
+    index = block_data[i++] + 1;
     transition = transition_table[state + index];
 
     while (YR_AC_INVALID_TRANSITION(transition, index))
@@ -277,7 +278,6 @@ int _yr_rules_scan_mem_block(
 
   }
 
-
   match = match_table[state].match;
 
   while (match != NULL)
@@ -287,7 +287,7 @@ int _yr_rules_scan_mem_block(
       FAIL_ON_ERROR(yr_scan_verify_match(
           context,
           match,
-          block->data,
+          block_data,
           block->size,
           block->base,
           i - match->backtrack));
@@ -296,17 +296,13 @@ int _yr_rules_scan_mem_block(
     match = match->next;
   }
 
-
-
   return ERROR_SUCCESS;
 }
 
 
-
-
 YR_API int yr_rules_scan_mem_blocks(
     YR_RULES* rules,
-    YR_MEMORY_BLOCK* block,
+    YR_BLOCK_ITERATOR* iterator,
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
@@ -315,12 +311,15 @@ YR_API int yr_rules_scan_mem_blocks(
   YR_EXTERNAL_VARIABLE* external;
   YR_RULE* rule;
   YR_SCAN_CONTEXT context;
+  YR_MEMORY_BLOCK* block;
 
   time_t start_time;
   tidx_mask_t bit = 1;
 
   int tidx = 0;
   int result = ERROR_SUCCESS;
+
+  block = iterator->first(iterator);
 
   if (block == NULL)
     return ERROR_SUCCESS;
@@ -348,7 +347,7 @@ YR_API int yr_rules_scan_mem_blocks(
   context.callback = callback;
   context.user_data = user_data;
   context.file_size = block->size;
-  context.mem_block = block;
+  context.iterator = iterator;
   context.entry_point = UNDEFINED;
   context.objects_table = NULL;
   context.matches_arena = NULL;
@@ -398,17 +397,26 @@ YR_API int yr_rules_scan_mem_blocks(
 
   while (block != NULL)
   {
+    uint8_t* data = iterator->fetch_data(iterator);
+
+    // fetch may fail
+    if (data == NULL)
+    {
+      block = iterator->next(iterator);
+      continue;
+    }
+
     if (context.entry_point == UNDEFINED)
     {
       YR_TRYCATCH({
           if (flags & SCAN_FLAGS_PROCESS_MEMORY)
             context.entry_point = yr_get_entry_point_address(
-                block->data,
+                data,
                 block->size,
                 block->base);
           else
             context.entry_point = yr_get_entry_point_offset(
-                block->data,
+                data,
                 block->size);
         },{});
     }
@@ -416,6 +424,7 @@ YR_API int yr_rules_scan_mem_blocks(
     YR_TRYCATCH({
         result = _yr_rules_scan_mem_block(
             rules,
+            data,
             block,
             &context,
             timeout,
@@ -427,7 +436,7 @@ YR_API int yr_rules_scan_mem_blocks(
     if (result != ERROR_SUCCESS)
       goto _exit;
 
-    block = block->next;
+    block = iterator->next(iterator);
   }
 
   YR_TRYCATCH({
@@ -501,6 +510,29 @@ _exit:
 }
 
 
+static YR_MEMORY_BLOCK* _yr_get_first_block(
+    YR_BLOCK_ITERATOR* iterator)
+{
+  YR_BLOCK_CONTEXT* ctx = (YR_BLOCK_CONTEXT*) iterator->context;
+  return ctx->block;
+}
+
+
+static YR_MEMORY_BLOCK* _yr_get_next_block(
+    YR_BLOCK_ITERATOR* iterator)
+{
+  return NULL;
+}
+
+
+static uint8_t* _yr_fetch_block_data(
+    YR_BLOCK_ITERATOR* iterator)
+{
+  YR_BLOCK_CONTEXT* ctx = (YR_BLOCK_CONTEXT*) iterator->context;
+  return ctx->data;
+}
+
+
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
     uint8_t* buffer,
@@ -511,15 +543,24 @@ YR_API int yr_rules_scan_mem(
     int timeout)
 {
   YR_MEMORY_BLOCK block;
+  YR_BLOCK_CONTEXT context;
+  YR_BLOCK_ITERATOR iterator;
 
-  block.data = buffer;
   block.size = buffer_size;
   block.base = 0;
   block.next = NULL;
 
+  context.block = &block;
+  context.data = buffer;
+
+  iterator.context = &context;
+  iterator.first = _yr_get_first_block;
+  iterator.next = _yr_get_next_block;
+  iterator.fetch_data = _yr_fetch_block_data;
+
   return yr_rules_scan_mem_blocks(
       rules,
-      &block,
+      &iterator,
       flags,
       callback,
       user_data,
@@ -556,6 +597,7 @@ YR_API int yr_rules_scan_file(
   return result;
 }
 
+
 YR_API int yr_rules_scan_fd(
     YR_RULES* rules,
     YR_FILE_DESCRIPTOR fd,
@@ -585,6 +627,7 @@ YR_API int yr_rules_scan_fd(
   return result;
 }
 
+
 YR_API int yr_rules_scan_proc(
     YR_RULES* rules,
     int pid,
@@ -593,32 +636,22 @@ YR_API int yr_rules_scan_proc(
     void* user_data,
     int timeout)
 {
-  YR_MEMORY_BLOCK* first_block;
-  YR_MEMORY_BLOCK* next_block;
-  YR_MEMORY_BLOCK* block;
+  YR_BLOCK_ITERATOR iterator;
 
-  int result = yr_process_get_memory(pid, &first_block);
+  int result = yr_process_open_iterator(
+      pid,
+      &iterator);
 
   if (result == ERROR_SUCCESS)
     result = yr_rules_scan_mem_blocks(
         rules,
-        first_block,
+        &iterator,
         flags | SCAN_FLAGS_PROCESS_MEMORY,
         callback,
         user_data,
         timeout);
 
-  block = first_block;
-
-  while (block != NULL)
-  {
-    next_block = block->next;
-
-    yr_free(block->data);
-    yr_free(block);
-
-    block = next_block;
-  }
+  yr_process_close_iterator(&iterator);
 
   return result;
 }

@@ -1012,7 +1012,7 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
           yr_free(name);
           continue;
         }
- 
+
         imported_func->name = name;
         imported_func->ordinal = ordinal;
         imported_func->has_ordinal = has_ordinal;
@@ -2250,6 +2250,7 @@ int module_load(
     size_t module_data_size)
 {
   YR_MEMORY_BLOCK* block;
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   set_integer(
       IMAGE_FILE_MACHINE_UNKNOWN, module_object,
@@ -2490,9 +2491,14 @@ int module_load(
       RESOURCE_TYPE_MANIFEST, module_object,
       "RESOURCE_TYPE_MANIFEST");
 
-  foreach_memory_block(context, block)
+  foreach_memory_block(iterator, block)
   {
-    PIMAGE_NT_HEADERS32 pe_header = pe_get_header(block->data, block->size);
+    uint8_t* block_data = iterator->fetch_data(iterator);
+
+    if (block_data == NULL)
+      continue;
+
+    PIMAGE_NT_HEADERS32 pe_header = pe_get_header(block_data, block->size);
 
     if (pe_header != NULL)
     {
@@ -2506,7 +2512,7 @@ int module_load(
         if (pe == NULL)
           return ERROR_INSUFICIENT_MEMORY;
 
-        pe->data = block->data;
+        pe->data = block_data;
         pe->data_size = block->size;
         pe->header = pe_header;
         pe->object = module_object;
