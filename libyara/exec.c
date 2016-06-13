@@ -93,19 +93,22 @@ typedef union _STACK_ITEM {
 
 
 #define function_read(type, endianess) \
-    int64_t read_##type##_##endianess(YR_MEMORY_BLOCK* block, size_t offset) \
+    int64_t read_##type##_##endianess(YR_BLOCK_ITERATOR* iterator, size_t offset) \
     { \
+      YR_MEMORY_BLOCK* block = iterator->first(iterator); \
       while (block != NULL) \
       { \
         if (offset >= block->base && \
             block->size >= sizeof(type) && \
             offset <= block->base + block->size - sizeof(type)) \
         { \
-          type result = *(type *)(block->data + offset - block->base); \
+          uint8_t* data = iterator->fetch_data(iterator); \
+          if(data == NULL) return UNDEFINED; \
+          type result = *(type *)(data + offset - block->base); \
           result = endianess##_##type(result); \
           return result; \
         } \
-        block = block->next; \
+        block = iterator->next(iterator); \
       } \
       return UNDEFINED; \
     };
@@ -737,73 +740,73 @@ int yr_execute_code(
 
       case OP_INT8:
         pop(r1);
-        r1.i = read_int8_t_little_endian(context->mem_block, (size_t) r1.i);
+        r1.i = read_int8_t_little_endian(context->iterator, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT16:
         pop(r1);
-        r1.i = read_int16_t_little_endian(context->mem_block, (size_t) r1.i);
+        r1.i = read_int16_t_little_endian(context->iterator, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT32:
         pop(r1);
-        r1.i = read_int32_t_little_endian(context->mem_block, (size_t) r1.i);
+        r1.i = read_int32_t_little_endian(context->iterator, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT8:
         pop(r1);
-        r1.i = read_uint8_t_little_endian(context->mem_block, (size_t) r1.i);
+        r1.i = read_uint8_t_little_endian(context->iterator, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT16:
         pop(r1);
-        r1.i = read_uint16_t_little_endian(context->mem_block, (size_t) r1.i);
+        r1.i = read_uint16_t_little_endian(context->iterator, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT32:
         pop(r1);
-        r1.i = read_uint32_t_little_endian(context->mem_block, (size_t) r1.i);
+        r1.i = read_uint32_t_little_endian(context->iterator, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT8BE:
         pop(r1);
-        r1.i = read_int8_t_big_endian(context->mem_block, (size_t) r1.i);
+        r1.i = read_int8_t_big_endian(context->iterator, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT16BE:
         pop(r1);
-        r1.i = read_int16_t_big_endian(context->mem_block, (size_t) r1.i);
+        r1.i = read_int16_t_big_endian(context->iterator, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_INT32BE:
         pop(r1);
-        r1.i = read_int32_t_big_endian(context->mem_block, (size_t) r1.i);
+        r1.i = read_int32_t_big_endian(context->iterator, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT8BE:
         pop(r1);
-        r1.i = read_uint8_t_big_endian(context->mem_block, (size_t) r1.i);
+        r1.i = read_uint8_t_big_endian(context->iterator, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT16BE:
         pop(r1);
-        r1.i = read_uint16_t_big_endian(context->mem_block, (size_t) r1.i);
+        r1.i = read_uint16_t_big_endian(context->iterator, (size_t) r1.i);
         push(r1);
         break;
 
       case OP_UINT32BE:
         pop(r1);
-        r1.i = read_uint32_t_big_endian(context->mem_block, (size_t) r1.i);
+        r1.i = read_uint32_t_big_endian(context->iterator, (size_t) r1.i);
         push(r1);
         break;
 

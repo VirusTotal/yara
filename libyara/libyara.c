@@ -180,7 +180,7 @@ YR_API int yr_finalize(void)
     yr_mutex_destroy(&openssl_locks[i]);
 
   OPENSSL_free(openssl_locks);
-  
+
   #endif
 
   FAIL_ON_ERROR(yr_thread_storage_destroy(&tidx_key));

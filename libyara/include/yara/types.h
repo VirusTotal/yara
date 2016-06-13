@@ -360,15 +360,55 @@ typedef struct _YR_RULES {
 } YR_RULES;
 
 
+// memory block iteration types
 typedef struct _YR_MEMORY_BLOCK
 {
-  uint8_t* data;
   size_t size;
   size_t base;
 
   struct _YR_MEMORY_BLOCK* next;
 
 } YR_MEMORY_BLOCK;
+
+
+typedef struct _YR_BLOCK_ITERATOR YR_BLOCK_ITERATOR;
+
+
+typedef YR_MEMORY_BLOCK* (*YR_BLOCK_ITERATOR_MOVE)(
+    YR_BLOCK_ITERATOR* self);
+
+
+typedef uint8_t* (*YR_BLOCK_ITERATOR_FETCH)(
+    YR_BLOCK_ITERATOR* self);
+
+
+struct _YR_BLOCK_ITERATOR
+{
+  void* context;
+
+  YR_BLOCK_ITERATOR_MOVE  first;
+  YR_BLOCK_ITERATOR_MOVE  next;
+  YR_BLOCK_ITERATOR_FETCH fetch_data;
+
+};
+
+// a memory block in context with its data
+typedef struct _YR_BLOCK_CONTEXT
+{
+  uint8_t* data;
+  YR_MEMORY_BLOCK* block;
+
+} YR_BLOCK_CONTEXT;
+
+
+typedef struct _YR_PROCESS_CONTEXT
+{
+  uint8_t* data;
+  void* process_context;
+  YR_MEMORY_BLOCK* blocks;
+  YR_MEMORY_BLOCK* current;
+
+} YR_PROCESS_CONTEXT;
 
 
 typedef int (*YR_CALLBACK_FUNC)(
@@ -387,7 +427,7 @@ typedef struct _YR_SCAN_CONTEXT
 
   void* user_data;
 
-  YR_MEMORY_BLOCK*  mem_block;
+  YR_BLOCK_ITERATOR*  iterator;
   YR_HASH_TABLE*  objects_table;
   YR_CALLBACK_FUNC  callback;
 

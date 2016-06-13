@@ -279,14 +279,14 @@ limitations under the License.
 #define scan_context()  (__context)
 
 
-#define foreach_memory_block(context, block) \
-  for (block = (context)->mem_block; \
+#define foreach_memory_block(iterator, block) \
+  for (block = iterator->first(iterator); \
        block != NULL; \
-       block = block->next) \
+       block = iterator->next(iterator)) \
 
 
 #define first_memory_block(context) \
-      (context)->mem_block
+      (context)->iterator->first((context)->iterator)
 
 
 #define is_undefined(object, ...) \

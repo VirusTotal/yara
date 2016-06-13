@@ -311,6 +311,7 @@ int module_load(
     size_t module_data_size)
 {
   YR_MEMORY_BLOCK* block;
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   elf32_header_t* elf_header32;
   elf64_header_t* elf_header64;
@@ -368,15 +369,20 @@ int module_load(
   set_integer(ELF_PF_W, module_object, "PF_W");
   set_integer(ELF_PF_R, module_object, "PF_R");
 
-  foreach_memory_block(context, block)
+  foreach_memory_block(iterator, block)
   {
-    switch(get_elf_type(block->data, block->size))
+    uint8_t* block_data = iterator->fetch_data(iterator);
+
+    if (block_data == NULL)
+      continue;
+
+    switch(get_elf_type(block_data, block->size))
     {
       case ELF_CLASS_32:
 
         if (block->size > sizeof(elf32_header_t))
         {
-          elf_header32 = (elf32_header_t*) block->data;
+          elf_header32 = (elf32_header_t*) block_data;
 
           if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
               elf_header32->type == ELF_ET_EXEC)
@@ -396,7 +402,7 @@ int module_load(
 
         if (block->size > sizeof(elf64_header_t))
         {
-          elf_header64 = (elf64_header_t*) block->data;
+          elf_header64 = (elf64_header_t*) block_data;
 
           if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
               elf_header64->type == ELF_ET_EXEC)

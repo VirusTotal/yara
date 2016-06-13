@@ -121,33 +121,39 @@ define_function(data_md5)
   int past_first_block = FALSE;
 
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK* block = NULL;
+  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
 
   MD5_Init(&md5_context);
 
-  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  if (offset < 0 || length < 0 || offset < block->base)
   {
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  foreach_memory_block(context, block)
+  foreach_memory_block(iterator, block)
   {
     // if desired block within current block
 
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      size_t data_offset = (size_t) (offset - block->base);
-      size_t data_len = (size_t) yr_min(
+      uint8_t* block_data = iterator->fetch_data(iterator);
+
+      if (block_data != NULL)
+      {
+        size_t data_offset = (size_t) (offset - block->base);
+        size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
-      offset += data_len;
-      length -= data_len;
+        offset += data_len;
+        length -= data_len;
 
-      MD5_Update(&md5_context, block->data + data_offset, data_len);
+        MD5_Update(&md5_context, block_data + data_offset, data_len);
+      }
 
       past_first_block = TRUE;
     }
@@ -190,29 +196,35 @@ define_function(data_sha1)
   int64_t length = integer_argument(2);   // length of bytes we want hash on
 
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK* block = NULL;
+  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   SHA1_Init(&sha_context);
 
-  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  if (offset < 0 || length < 0 || offset < block->base)
   {
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  foreach_memory_block(context, block)
+  foreach_memory_block(iterator, block)
   {
     // if desired block within current block
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      size_t data_offset = (size_t) (offset - block->base);
-      size_t data_len = (size_t) yr_min(
+      uint8_t* block_data = iterator->fetch_data(iterator);
+
+      if (block_data != NULL)
+      {
+        size_t data_offset = (size_t) (offset - block->base);
+        size_t data_len = (size_t) yr_min(
           length, (size_t) block->size - data_offset);
 
-      offset += data_len;
-      length -= data_len;
+        offset += data_len;
+        length -= data_len;
 
-      SHA1_Update(&sha_context, block->data + data_offset, data_len);
+        SHA1_Update(&sha_context, block_data + data_offset, data_len);
+      }
 
       past_first_block = TRUE;
     }
@@ -255,28 +267,34 @@ define_function(data_sha256)
   int64_t length = integer_argument(2);   // length of bytes we want hash on
 
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK* block = NULL;
+  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   SHA256_Init(&sha256_context);
 
-  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  if (offset < 0 || length < 0 || offset < block->base)
   {
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  foreach_memory_block(context, block)
+  foreach_memory_block(iterator, block)
   {
     // if desired block within current block
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      size_t data_offset = (size_t) (offset - block->base);
-      size_t data_len = (size_t) yr_min(length, block->size - data_offset);
+      uint8_t* block_data = iterator->fetch_data(iterator);
 
-      offset += data_len;
-      length -= data_len;
+      if (block_data != NULL)
+      {
+        size_t data_offset = (size_t) (offset - block->base);
+        size_t data_len = (size_t) yr_min(length, block->size - data_offset);
 
-      SHA256_Update(&sha256_context, block->data + data_offset, data_len);
+        offset += data_len;
+        length -= data_len;
+
+        SHA256_Update(&sha256_context, block_data + data_offset, data_len);
+      }
 
       past_first_block = TRUE;
     }
@@ -312,31 +330,37 @@ define_function(data_checksum32)
   int64_t length = integer_argument(2);   // length of bytes we want hash on
 
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK* block = NULL;
+  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   uint32_t checksum = 0;
   int past_first_block = FALSE;
 
-  if (offset < 0 || length < 0 || offset < context->mem_block->base)
+  if (offset < 0 || length < 0 || offset < block->base)
   {
     return ERROR_WRONG_ARGUMENTS;
   }
 
-  foreach_memory_block(context, block)
+  foreach_memory_block(iterator, block)
   {
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      size_t i;
+      uint8_t* block_data = iterator->fetch_data(iterator);
 
-      size_t data_offset = (size_t) (offset - block->base);
-      size_t data_len = (size_t) yr_min(length, block->size - data_offset);
+      if (block_data != NULL)
+      {
+        size_t i;
 
-      offset += data_len;
-      length -= data_len;
+        size_t data_offset = (size_t) (offset - block->base);
+        size_t data_len = (size_t) yr_min(length, block->size - data_offset);
 
-      for (i = 0; i < data_len; i++)
-        checksum += *(block->data + data_offset + i);
+        offset += data_len;
+        length -= data_len;
+
+        for (i = 0; i < data_len; i++)
+          checksum += *(block_data + data_offset + i);
+      }
 
       past_first_block = TRUE;
     }
