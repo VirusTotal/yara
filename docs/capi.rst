@@ -240,13 +240,20 @@ Data structures
 
     Offset of the match relative to *base*.
 
-  .. c:member:: int32_t length
+  .. c:member:: int32_t match_length
 
     Length of the matching string
 
   .. c:member:: uint8_t* data
 
-    Pointer to the matching string.
+    Pointer to a buffer containing a portion of the matching string.
+
+  .. c:member:: int32_t data_length
+
+    Length of ``data`` buffer. ``data_length`` is the minimum of
+    ``match_length`` and ``MAX_MATCH_DATA``.
+
+  .. versionchanged:: 3.5.0
 
 .. c:type:: YR_META
 

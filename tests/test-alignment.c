@@ -60,14 +60,6 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_META, 16, identifier);
   CHECK_OFFSET(YR_META, 24, string);
 
-  CHECK_SIZE(YR_MATCH, 48);
-  CHECK_OFFSET(YR_MATCH, 8,  offset);
-  CHECK_OFFSET(YR_MATCH, 16, length);
-  CHECK_OFFSET(YR_MATCH, 24, data);
-  CHECK_OFFSET(YR_MATCH, 24, chain_length);
-  CHECK_OFFSET(YR_MATCH, 32, prev);
-  CHECK_OFFSET(YR_MATCH, 40, next);
-
   CHECK_SIZE(YR_MATCHES, 24);
   CHECK_OFFSET(YR_MATCHES, 8,  head);
   CHECK_OFFSET(YR_MATCHES, 16, tail);

@@ -643,9 +643,9 @@ int handle_message(
               string->identifier);
 
           if (STRING_IS_HEX(string))
-            print_hex_string(match->data, match->length);
+            print_hex_string(match->data, match->data_length);
           else
-            print_string(match->data, match->length);
+            print_string(match->data, match->data_length);
         }
       }
     }
