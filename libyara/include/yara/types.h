@@ -182,29 +182,15 @@ typedef struct _YR_META
 } YR_META;
 
 
-typedef struct _YR_MATCH
-{
-  int64_t base;
-  int64_t offset;
-  int32_t length;
-
-  union {
-    uint8_t* data;           // Confirmed matches use "data",
-    int32_t chain_length;    // unconfirmed ones use "chain_length"
-  } YR_ALIGN(8);
-
-  YR_ALIGN(8) struct _YR_MATCH* prev;
-  YR_ALIGN(8) struct _YR_MATCH* next;
-
-} YR_MATCH;
+struct _YR_MATCH;
 
 
 typedef struct _YR_MATCHES
 {
   int32_t count;
 
-  DECLARE_REFERENCE(YR_MATCH*, head);
-  DECLARE_REFERENCE(YR_MATCH*, tail);
+  DECLARE_REFERENCE(struct _YR_MATCH*, head);
+  DECLARE_REFERENCE(struct _YR_MATCH*, tail);
 
 } YR_MATCHES;
 
@@ -308,6 +294,29 @@ typedef struct _YARA_RULES_FILE_HEADER
 //
 // Structs defined below are never stored in the compiled rules file
 //
+
+typedef struct _YR_MATCH
+{
+  int64_t base;              // Base address for the match
+  int64_t offset;            // Offset relative to base for the match
+  int32_t match_length;      // Match length
+  int32_t data_length;
+
+  // Pointer to a buffer containing a portion of the matched data. The size of
+  // the buffer is data_length. data_length is always <= length and is limited
+  // to MAX_MATCH_DATA bytes.
+
+  uint8_t* data;
+
+  // If the match belongs to a chained string chain_length contains the
+  // length of the chain. This field is used only in unconfirmed matches.
+
+  int32_t chain_length;
+
+  struct _YR_MATCH* prev;
+  struct _YR_MATCH* next;
+
+} YR_MATCH;
 
 
 struct _YR_AC_STATE;

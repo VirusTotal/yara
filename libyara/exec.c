@@ -103,7 +103,8 @@ typedef union _STACK_ITEM {
             offset <= block->base + block->size - sizeof(type)) \
         { \
           uint8_t* data = iterator->fetch_data(iterator); \
-          if(data == NULL) return UNDEFINED; \
+          if (data == NULL) \
+            return UNDEFINED; \
           type result = *(type *)(data + offset - block->base); \
           result = endianess##_##type(result); \
           return result; \
@@ -696,7 +697,7 @@ int yr_execute_code(
         while (match != NULL && r3.i == UNDEFINED)
         {
           if (r1.i == i)
-            r3.i = match->length;
+            r3.i = match->match_length;
 
           i++;
           match = match->next;

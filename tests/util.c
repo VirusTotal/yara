@@ -156,7 +156,10 @@ static int capture_matches(
 
       yr_string_matches_foreach(string, match)
       {
-        if (strncmp(f->expected, (char*)(match->data), match->length) == 0)
+        int r = strncmp(
+            f->expected, (char*) (match->data), match->data_length);
+            
+        if (r == 0)
           f->found++;
       }
     }

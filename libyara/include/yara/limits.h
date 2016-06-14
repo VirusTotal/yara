@@ -43,6 +43,7 @@ limitations under the License.
 #define MAX_FAST_HEX_RE_STACK           300
 #define MAX_OVERLOADED_FUNCTIONS        10
 #define MAX_HEX_STRING_TOKENS           10000
+#define MAX_MATCH_DATA                  4096
 
 #define LOOP_LOCAL_VARS                 4
 #define STRING_CHAINING_THRESHOLD       200
