@@ -1,5 +1,12 @@
 dist: trusty
 sudo: required
+
+before_install:
+  # The certificate for scan.coverity.com is too new and is not recognized by
+  # wget. This command adds the certificate to /etc/ssl/certs/ca-certificates.crt
+  # See: https://github.com/travis-ci/travis-ci/issues/6142
+  - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
+
 install:
   - sudo dpkg --add-architecture i386
   # Not all repositories contain i386 binary packages
@@ -8,8 +15,11 @@ install:
   - sudo apt-get install -y gcc-multilib autoconf automake libtool libjansson-dev libmagic-dev libssl-dev
 
 before_script: ./bootstrap.sh
+
 script: ./configure && make && make check
+
 language: c
+
 env:
   global:
     # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
