@@ -536,6 +536,9 @@ int _yr_scan_verify_chained_string_match(
   {
     if (STRING_IS_CHAIN_TAIL(matching_string))
     {
+      // Chain tails must be chained to some other string
+      assert(matching_string->chained_to != NULL);
+
       match = matching_string->chained_to->unconfirmed_matches[tidx].head;
 
       while (match != NULL)
