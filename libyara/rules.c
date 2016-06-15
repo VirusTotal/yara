@@ -160,22 +160,25 @@ void _yr_rules_clean_matches(
     rule->ns->t_flags[tidx] &= ~NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
   }
 
-  string = (YR_STRING**) yr_arena_base_address(
-      context->matching_strings_arena);
-
-  while (string != NULL)
+  if (context->matching_strings_arena != NULL)
   {
-    (*string)->matches[tidx].count = 0;
-    (*string)->matches[tidx].head = NULL;
-    (*string)->matches[tidx].tail = NULL;
-    (*string)->unconfirmed_matches[tidx].count = 0;
-    (*string)->unconfirmed_matches[tidx].head = NULL;
-    (*string)->unconfirmed_matches[tidx].tail = NULL;
+    string = (YR_STRING**) yr_arena_base_address(
+        context->matching_strings_arena);
 
-    string = (YR_STRING**) yr_arena_next_address(
-        context->matching_strings_arena,
-        string,
-        sizeof(string));
+    while (string != NULL)
+    {
+      (*string)->matches[tidx].count = 0;
+      (*string)->matches[tidx].head = NULL;
+      (*string)->matches[tidx].tail = NULL;
+      (*string)->unconfirmed_matches[tidx].count = 0;
+      (*string)->unconfirmed_matches[tidx].head = NULL;
+      (*string)->unconfirmed_matches[tidx].tail = NULL;
+
+      string = (YR_STRING**) yr_arena_next_address(
+          context->matching_strings_arena,
+          string,
+          sizeof(YR_STRING*));
+    }
   }
 }
 
