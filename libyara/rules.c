@@ -34,7 +34,6 @@ limitations under the License.
 #include <yara/globals.h>
 #include <yara/libyara.h>
 #include <yara/scan.h>
-#include <yara/modules.h>
 
 #include "exception.h"
 
@@ -486,8 +485,6 @@ YR_API int yr_rules_scan_mem_blocks(
 _exit:
 
   _yr_rules_clean_matches(rules, &context);
-
-  yr_modules_unload_all(&context);
 
   if (context.matches_arena != NULL)
     yr_arena_destroy(context.matches_arena);

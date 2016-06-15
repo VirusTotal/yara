@@ -1138,6 +1138,8 @@ int yr_execute_code(
     ip++;
   }
 
+  yr_modules_unload_all(context);
   yr_free(stack);
+
   return result;
 }
