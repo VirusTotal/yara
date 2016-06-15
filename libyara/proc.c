@@ -85,6 +85,8 @@ int _yr_process_get_blocks(
   GetSystemInfo(&si);
   address = si.lpMinimumApplicationAddress;
 
+  *head = NULL;
+
   while (address < si.lpMaximumApplicationAddress &&
     VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
   {
@@ -242,6 +244,8 @@ int _yr_process_get_blocks(
 
   YR_MEMORY_BLOCK* new_block;
   YR_MEMORY_BLOCK* current = NULL;
+
+  *head = NULL;
 
   do
   {
@@ -412,7 +416,9 @@ int _yr_process_get_blocks(
   YR_MEMORY_BLOCK* new_block;
   YR_MEMORY_BLOCK* current = NULL;
 
-  YR_PTRACE_CONTEXT* ctx = (YR_PTRACE_CONTEXT*)context;
+  YR_PTRACE_CONTEXT* ctx = (YR_PTRACE_CONTEXT*) context;
+
+  *head = NULL;
 
   while (fgets(buffer, sizeof(buffer), ctx->maps) != NULL)
   {
