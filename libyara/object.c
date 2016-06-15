@@ -153,6 +153,10 @@ int yr_object_create(
       case OBJECT_TYPE_DICTIONARY:
         ((YR_OBJECT_DICTIONARY*) parent)->prototype_item = obj;
         break;
+
+      case OBJECT_TYPE_FUNCTION:
+        ((YR_OBJECT_FUNCTION*) parent)->return_obj = obj;
+        break;
     }
   }
 
@@ -195,12 +199,16 @@ int yr_object_function_create(
 
   if (parent != NULL)
   {
+    // The parent of a function must be a structure.
+
     assert(parent->type == OBJECT_TYPE_STRUCTURE);
 
     // Try to find if the structure already has a function
-    // with that name. In that case this is a function oveload.
+    // with that name. In that case this is a function overload.
 
     f = (YR_OBJECT_FUNCTION*) yr_object_lookup_field(parent, identifier);
+
+    // Overloaded functions must have the same return type.
 
     if (f != NULL && return_type != f->return_obj->type)
       return ERROR_WRONG_RETURN_TYPE;
@@ -208,21 +216,22 @@ int yr_object_function_create(
 
   if (f == NULL) // Function doesn't exist yet
   {
-    // Let's create the result object first
-
-    FAIL_ON_ERROR(yr_object_create(return_type, "result", NULL, &return_obj));
-
-    FAIL_ON_ERROR_WITH_CLEANUP(
+    FAIL_ON_ERROR(
         yr_object_create(
             OBJECT_TYPE_FUNCTION,
             identifier,
             parent,
-            &o),
-        yr_object_destroy(return_obj));
+            &o));
+
+    FAIL_ON_ERROR_WITH_CLEANUP(
+        yr_object_create(
+            return_type,
+            "result",
+            o,
+            &return_obj),
+        yr_object_destroy(o));
 
     f = (YR_OBJECT_FUNCTION*) o;
-    f->return_obj = return_obj;
-    f->return_obj->parent = (YR_OBJECT*) f;
   }
 
   for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
