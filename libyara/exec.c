@@ -49,10 +49,16 @@ typedef union _STACK_ITEM {
 
 
 #define push(x)  \
-    do { \
-      if (sp < stack_size) stack[sp++] = (x); \
-      else return ERROR_EXEC_STACK_OVERFLOW; \
-    } while(0)
+    if (sp < stack_size) \
+    { \
+      stack[sp++] = (x); \
+    } \
+    else \
+    { \
+      result = ERROR_EXEC_STACK_OVERFLOW; \
+      stop = TRUE; \
+      break; \
+    } \
 
 
 #define pop(x)  x = stack[--sp]
