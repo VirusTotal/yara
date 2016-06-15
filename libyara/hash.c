@@ -170,17 +170,17 @@ YR_API void* yr_hash_table_lookup(
     bucket_index = hash(bucket_index, (uint8_t*) ns, strlen(ns));
 
   bucket_index = bucket_index % table->size;
-
   entry = table->buckets[bucket_index];
 
   while (entry != NULL)
   {
-    if (strcmp(entry->key, key) == 0 &&
-        (entry->ns == ns ||
-         strcmp(entry->ns, ns) == 0))
-    {
+    int key_match = strcmp(entry->key, key) == 0;
+    int ns_match = (
+        (entry->ns == ns) ||
+        (entry->ns != NULL && ns != NULL && strcmp(entry->ns, ns) == 0));
+
+    if (key_match && ns_match)
       return entry->value;
-    }
 
     entry = entry->next;
   }
