@@ -95,23 +95,26 @@ define_function(data_entropy)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = iterator->fetch_data(iterator);
-
-      if (block_data != NULL)
-      {
-        size_t data_offset = (size_t) (offset - block->base);
-        size_t data_len = (size_t) yr_min(
+      size_t data_offset = (size_t) (offset - block->base);
+      size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
-        total_len += data_len;
-        offset += data_len;
-        length -= data_len;
+      uint8_t* block_data = iterator->fetch_data(iterator);
 
-        for (i = 0; i < data_len; i++)
-        {
-          uint8_t c = *(block_data + data_offset + i);
-          data[c] += 1;
-        }
+      if (block_data == NULL)
+      {
+        yr_free(data);
+        return_float(UNDEFINED);
+      }
+
+      total_len += data_len;
+      offset += data_len;
+      length -= data_len;
+
+      for (i = 0; i < data_len; i++)
+      {
+        uint8_t c = *(block_data + data_offset + i);
+        data[c] += 1;
       }
 
       past_first_block = TRUE;
@@ -195,19 +198,19 @@ define_function(data_deviation)
     {
       uint8_t* block_data = iterator->fetch_data(iterator);
 
-      if (block_data != NULL)
-      {
-        size_t data_offset = (size_t) (offset - block->base);
-        size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
+      if (block_data == NULL)
+        return_float(UNDEFINED);
 
-        total_len += data_len;
-        offset += data_len;
-        length -= data_len;
+      size_t data_offset = (size_t) (offset - block->base);
+      size_t data_len = (size_t) yr_min(
+        length, (size_t) (block->size - data_offset));
 
-        for (i = 0; i < data_len; i++)
-          sum += fabs(((double)* (block_data + data_offset + i)) - mean);
-      }
+      total_len += data_len;
+      offset += data_len;
+      length -= data_len;
+
+      for (i = 0; i < data_len; i++)
+        sum += fabs(((double)* (block_data + data_offset + i)) - mean);
 
       past_first_block = TRUE;
     }
@@ -269,21 +272,21 @@ define_function(data_mean)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = iterator->fetch_data(iterator);
-
-      if (block_data != NULL)
-      {
-        size_t data_offset = (size_t) (offset - block->base);
-        size_t data_len = (size_t) yr_min(
+      size_t data_offset = (size_t) (offset - block->base);
+      size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
-        total_len += data_len;
-        offset += data_len;
-        length -= data_len;
+      uint8_t* block_data = iterator->fetch_data(iterator);
 
-        for (i = 0; i < data_len; i++)
-          sum += (double)* (block_data + data_offset + i);
-      }
+      if (block_data == NULL)
+        return_float(UNDEFINED);
+
+      total_len += data_len;
+      offset += data_len;
+      length -= data_len;
+
+      for (i = 0; i < data_len; i++)
+        sum += (double)* (block_data + data_offset + i);
 
       past_first_block = TRUE;
     }
@@ -337,26 +340,26 @@ define_function(data_serial_correlation)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = iterator->fetch_data(iterator);
-
-      if (block_data != NULL)
-      {
-        size_t data_offset = (size_t)(offset - block->base);
-        size_t data_len = (size_t) yr_min(
+      size_t data_offset = (size_t)(offset - block->base);
+      size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
-        total_len += data_len;
-        offset += data_len;
-        length -= data_len;
+      uint8_t* block_data = iterator->fetch_data(iterator);
 
-        for (i = 0; i < data_len; i++)
-        {
-          sccun = (double)* (block_data + data_offset + i);
-          scct1 += scclast * sccun;
-          scct2 += sccun;
-          scct3 += sccun * sccun;
-          scclast = sccun;
-        }
+      if (block_data == NULL)
+        return_float(UNDEFINED);
+
+      total_len += data_len;
+      offset += data_len;
+      length -= data_len;
+
+      for (i = 0; i < data_len; i++)
+      {
+        sccun = (double)* (block_data + data_offset + i);
+        scct1 += scclast * sccun;
+        scct2 += sccun;
+        scct3 += sccun * sccun;
+        scclast = sccun;
       }
 
       past_first_block = TRUE;
@@ -455,38 +458,39 @@ define_function(data_monte_carlo_pi)
         offset < block->base + block->size)
     {
       unsigned int monte[6];
-      uint8_t* block_data = iterator->fetch_data(iterator);
 
-      if (block_data != NULL)
-      {
-        size_t data_offset = (size_t) (offset - block->base);
-        size_t data_len = (size_t) yr_min(
+      size_t data_offset = (size_t) (offset - block->base);
+      size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
-        offset += data_len;
-        length -= data_len;
+      uint8_t* block_data = iterator->fetch_data(iterator);
 
-        for (i = 0; i < data_len; i++)
+      if (block_data == NULL)
+        return_float(UNDEFINED);
+
+      offset += data_len;
+      length -= data_len;
+
+      for (i = 0; i < data_len; i++)
+      {
+        monte[i % 6] = (unsigned int)* (block_data + data_offset + i);
+
+        if (i % 6 == 5)
         {
-          monte[i % 6] = (unsigned int)* (block_data + data_offset + i);
+          double mx = 0;
+          double my = 0;
+          int j;
 
-          if (i % 6 == 5)
+          mcount++;
+
+          for (j = 0; j < 3; j++)
           {
-            double mx = 0;
-            double my = 0;
-            int j;
-
-            mcount++;
-
-            for (j = 0; j < 3; j++)
-            {
-              mx = (mx * 256.0) + monte[j];
-              my = (my * 256.0) + monte[j + 3];
-            }
-
-            if ((mx * mx + my * my) <= INCIRC)
-              inmont++;
+            mx = (mx * 256.0) + monte[j];
+            my = (my * 256.0) + monte[j + 3];
           }
+
+          if ((mx * mx + my * my) <= INCIRC)
+            inmont++;
         }
       }
 
@@ -506,7 +510,7 @@ define_function(data_monte_carlo_pi)
       break;
   }
 
-  if (!past_first_block)
+  if (!past_first_block || mcount == 0)
     return_float(UNDEFINED);
 
   mpi = 4.0 * ((double) inmont / mcount);
@@ -552,6 +556,9 @@ define_function(string_monte_carlo_pi)
         inmont++;
     }
   }
+
+  if (mcount == 0)
+    return_float(UNDEFINED);
 
   mpi = 4.0 * ((double) inmont / mcount);
   return_float(fabs((mpi - PI) / PI));
