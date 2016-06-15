@@ -827,9 +827,10 @@ int yr_execute_code(
         r1.i = *(uint64_t*)(ip + 1);
         ip += sizeof(uint64_t);
 
-        FAIL_ON_ERROR(yr_modules_load(
-            (char*) r1.p,
-            context));
+        result = yr_modules_load((char*) r1.p, context);
+
+        if (result != ERROR_SUCCESS)
+          stop = TRUE;
 
         break;
 
