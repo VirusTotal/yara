@@ -1067,6 +1067,7 @@ int yr_atoms_extract_from_re(
         yr_atoms_extract_triplets(re->root_node, &triplet_atoms),
         {
           yr_atoms_list_destroy(*atoms);
+          yr_atoms_list_destroy(triplet_atoms);
           *atoms = NULL;
         });
 
@@ -1087,6 +1088,7 @@ int yr_atoms_extract_from_re(
         _yr_atoms_wide(*atoms, &wide_atoms),
         {
           yr_atoms_list_destroy(*atoms);
+          yr_atoms_list_destroy(wide_atoms);
           *atoms = NULL;
         });
 
@@ -1107,6 +1109,7 @@ int yr_atoms_extract_from_re(
         _yr_atoms_case_insentive(*atoms, &case_insentive_atoms),
         {
           yr_atoms_list_destroy(*atoms);
+          yr_atoms_list_destroy(case_insentive_atoms);
           *atoms = NULL;
         });
 
@@ -1194,6 +1197,7 @@ int yr_atoms_extract_from_string(
         _yr_atoms_wide(*atoms, &wide_atoms),
         {
           yr_atoms_list_destroy(*atoms);
+          yr_atoms_list_destroy(wide_atoms);
           *atoms = NULL;
         });
 
@@ -1214,6 +1218,7 @@ int yr_atoms_extract_from_string(
         _yr_atoms_case_insentive(*atoms, &case_insentive_atoms),
         {
           yr_atoms_list_destroy(*atoms);
+          yr_atoms_list_destroy(case_insentive_atoms);
           *atoms = NULL;
         });
 
