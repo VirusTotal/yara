@@ -51,6 +51,9 @@ YR_API int yr_rules_define_integer_variable(
   {
     if (strcmp(external->identifier, identifier) == 0)
     {
+      if (external->type != EXTERNAL_VARIABLE_TYPE_INTEGER)
+        return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
       external->value.i = value;
       return ERROR_SUCCESS;
     }
@@ -75,6 +78,9 @@ YR_API int yr_rules_define_boolean_variable(
   {
     if (strcmp(external->identifier, identifier) == 0)
     {
+      if (external->type != EXTERNAL_VARIABLE_TYPE_BOOLEAN)
+        return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
       external->value.i = value;
       return ERROR_SUCCESS;
     }
@@ -99,6 +105,9 @@ YR_API int yr_rules_define_float_variable(
   {
     if (strcmp(external->identifier, identifier) == 0)
     {
+      if (external->type != EXTERNAL_VARIABLE_TYPE_FLOAT)
+        return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
       external->value.f = value;
       return ERROR_SUCCESS;
     }
@@ -123,6 +132,10 @@ YR_API int yr_rules_define_string_variable(
   {
     if (strcmp(external->identifier, identifier) == 0)
     {
+      if (external->type != EXTERNAL_VARIABLE_TYPE_STRING &&
+          external->type != EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
+        return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
       if (external->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING &&
           external->value.s != NULL)
       {
