@@ -18,6 +18,7 @@ limitations under the License.
 #define _SIZEDSTR_H
 
 #include <stddef.h>
+#include <inttypes.h>
 
 //
 // This struct is used to support strings containing null chars. The length of
@@ -28,13 +29,19 @@ limitations under the License.
 #define SIZED_STRING_FLAGS_NO_CASE  1
 #define SIZED_STRING_FLAGS_DOT_ALL  2
 
+#pragma pack(push)
+#pragma pack(8)
+
+
 typedef struct _SIZED_STRING
 {
-  size_t length;
-  int flags;
+  uint64_t length;
+  uint32_t flags;
   char c_string[1];
 
 } SIZED_STRING;
+
+#pragma pack(pop)
 
 
 int sized_string_cmp(
