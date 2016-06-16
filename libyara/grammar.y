@@ -16,6 +16,7 @@ limitations under the License.
 
 %{
 
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -83,7 +84,11 @@ limitations under the License.
 
 %expect 1   // expect 1 shift/reduce conflicts
 
-%debug
+// Uncomment this line to print parsing information that can be useful to
+// debug YARA's grammar.
+
+// %debug
+
 %name-prefix="yara_yy"
 %pure-parser
 %parse-param {void *yyscanner}

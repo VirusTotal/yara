@@ -46,8 +46,6 @@ limitations under the License.
 
 %}
 
-%debug
-
 %name-prefix="re_yy"
 %pure-parser
 

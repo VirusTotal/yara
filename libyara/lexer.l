@@ -758,12 +758,12 @@ int yr_lex_parse_rules_string(
 
   yylex_init(&yyscanner);
 
-  yyset_debug(1, yyscanner);
+  #if YYDEBUG
+  yydebug = 1;
+  #endif
 
   yyset_extra(compiler, yyscanner);
-
   yy_scan_string(rules_string, yyscanner);
-
   yyset_lineno(1, yyscanner);
   yyparse(yyscanner, compiler);
   yylex_destroy(yyscanner);
@@ -786,10 +786,8 @@ int yr_lex_parse_rules_file(
   yylex_init(&yyscanner);
 
   #if YYDEBUG
-  printf("debug enabled");
+  yydebug = 1;
   #endif
-
-  yyset_debug(1, yyscanner);
 
   yyset_in(rules_file, yyscanner);
   yyset_extra(compiler, yyscanner);

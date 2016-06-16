@@ -53,8 +53,6 @@ limitations under the License.
 
 %}
 
-%debug
-
 %name-prefix="hex_yy"
 %pure-parser
 
