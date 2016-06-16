@@ -96,11 +96,10 @@ YR_API int yr_initialize(void)
   uint32_t def_stack_size = DEFAULT_STACK_SIZE;
   int i;
 
-  if (init_count > 0)
-  {
-    init_count++;
+  init_count++;
+
+  if (init_count > 1)
     return ERROR_SUCCESS;
-  }
 
   for (i = 0; i < 256; i++)
   {
@@ -137,8 +136,6 @@ YR_API int yr_initialize(void)
   // Initialize default configuration options
   FAIL_ON_ERROR(yr_set_configuration(YR_CONFIG_STACK_SIZE, &def_stack_size));
 
-  init_count++;
-
   return ERROR_SUCCESS;
 }
 
@@ -169,9 +166,16 @@ YR_API int yr_finalize(void)
   int i;
   #endif
 
+  // yr_finalize shouldn't be called without calling yr_initialize first
+
+  if (init_count == 0)
+    return ERROR_INTERNAL_FATAL_ERROR;
+
   yr_re_finalize_thread();
 
-  if (--init_count > 0)
+  init_count--;
+
+  if (init_count > 0)
     return ERROR_SUCCESS;
 
   #ifdef HAVE_LIBCRYPTO
