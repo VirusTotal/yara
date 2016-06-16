@@ -492,6 +492,9 @@ void print_scanner_error(
       fprintf(stderr, "stack overflow while evaluating condition "
                       "(see --stack-size argument).\n");
       break;
+    case ERROR_INVALID_EXTERNAL_VARIABLE_TYPE:
+      fprintf(stderr, "invalid type for external variable.\n");
+      break;
     default:
       fprintf(stderr, "internal error: %d\n", error);
       break;
@@ -823,6 +826,8 @@ int define_external_variables(
     YR_RULES* rules,
     YR_COMPILER* compiler)
 {
+  int result = ERROR_SUCCESS;
+
   for (int i = 0; ext_vars[i] != NULL; i++)
   {
     char* equal_sign = strchr(ext_vars[i], '=');
@@ -830,7 +835,7 @@ int define_external_variables(
     if (!equal_sign)
     {
       fprintf(stderr, "error: wrong syntax for `-d` option.\n");
-      return FALSE;
+      return ERROR_SUCCESS;
     }
 
     // Replace the equal sign with null character to split the external
@@ -842,17 +847,16 @@ int define_external_variables(
     char* identifier = ext_vars[i];
     char* value = equal_sign + 1;
 
-
     if (is_float(value))
     {
       if (rules != NULL)
-        yr_rules_define_float_variable(
+        result = yr_rules_define_float_variable(
             rules,
             identifier,
             atof(value));
 
       if (compiler != NULL)
-        yr_compiler_define_float_variable(
+        result = yr_compiler_define_float_variable(
             compiler,
             identifier,
             atof(value));
@@ -860,13 +864,13 @@ int define_external_variables(
     else if (is_integer(value))
     {
       if (rules != NULL)
-        yr_rules_define_integer_variable(
+        result = yr_rules_define_integer_variable(
             rules,
             identifier,
             atoi(value));
 
       if (compiler != NULL)
-        yr_compiler_define_integer_variable(
+        result = yr_compiler_define_integer_variable(
             compiler,
             identifier,
             atoi(value));
@@ -874,13 +878,13 @@ int define_external_variables(
     else if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0)
     {
       if (rules != NULL)
-        yr_rules_define_boolean_variable(
+        result = yr_rules_define_boolean_variable(
             rules,
             identifier,
             strcmp(value, "true") == 0);
 
       if (compiler != NULL)
-        yr_compiler_define_boolean_variable(
+        result = yr_compiler_define_boolean_variable(
             compiler,
             identifier,
             strcmp(value, "true") == 0);
@@ -888,20 +892,20 @@ int define_external_variables(
     else
     {
       if (rules != NULL)
-        yr_rules_define_string_variable(
+        result = yr_rules_define_string_variable(
             rules,
             identifier,
             value);
 
       if (compiler != NULL)
-        yr_compiler_define_string_variable(
+        result = yr_compiler_define_string_variable(
             compiler,
             identifier,
             value);
     }
   }
 
-  return TRUE;
+  return result;
 }
 
 
@@ -1044,8 +1048,13 @@ int main(
 
   if (result == ERROR_SUCCESS)
   {
-    if (!define_external_variables(rules, NULL))
+    result = define_external_variables(rules, NULL);
+
+    if (result != ERROR_SUCCESS)
+    {
+      print_scanner_error(result);
       exit_with_code(EXIT_FAILURE);
+    }
   }
   else
   {
@@ -1055,8 +1064,13 @@ int main(
     if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
       exit_with_code(EXIT_FAILURE);
 
-    if (!define_external_variables(NULL, compiler))
+    result = define_external_variables(NULL, compiler);
+
+    if (result != ERROR_SUCCESS)
+    {
+      print_scanner_error(result);
       exit_with_code(EXIT_FAILURE);
+    }
 
     yr_compiler_set_callback(compiler, print_compiler_error, NULL);
 
