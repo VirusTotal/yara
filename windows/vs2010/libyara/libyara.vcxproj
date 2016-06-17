@@ -74,7 +74,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..;..\..\libyara;..\..\libyara\include;..\..\windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..;..\..\..\libyara;..\..\..\libyara\include;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4005;4273;4090;</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -98,7 +98,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..;..\..\libyara;..\..\libyara\include;..\..\windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..;..\..\..\libyara;..\..\..\libyara\include;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090;</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
@@ -120,7 +120,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..;..\..\libyara;..\..\libyara\include;..\..\windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..;..\..\..\libyara;..\..\..\libyara\include;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4005;4273;4090;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -140,7 +140,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PreprocessorDefinitions>CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..;..\..\libyara;..\..\libyara\include;..\..\windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..;..\..\..\libyara;..\..\..\libyara\include;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
@@ -158,39 +158,38 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\libyara\ahocorasick.c" />
-    <ClCompile Include="..\..\libyara\arena.c" />
-    <ClCompile Include="..\..\libyara\atoms.c" />
-    <ClCompile Include="..\..\libyara\compiler.c" />
-    <ClCompile Include="..\..\libyara\exec.c" />
-    <ClCompile Include="..\..\libyara\exefiles.c" />
-    <ClCompile Include="..\..\libyara\filemap.c" />
-    <ClCompile Include="..\..\libyara\grammar.c" />
-    <ClCompile Include="..\..\libyara\hash.c" />
-    <ClCompile Include="..\..\libyara\hex_grammar.c" />
-    <ClCompile Include="..\..\libyara\hex_lexer.c" />
-    <ClCompile Include="..\..\libyara\lexer.c" />
-    <ClCompile Include="..\..\libyara\libyara.c" />
-    <ClCompile Include="..\..\libyara\mem.c" />
-    <ClCompile Include="..\..\libyara\modules.c" />
-    <ClCompile Include="..\..\libyara\modules\cuckoo.c" />
-    <ClCompile Include="..\..\libyara\modules\elf.c" />
-    <ClCompile Include="..\..\libyara\modules\hash.c" />
-    <ClCompile Include="..\..\libyara\modules\math.c" />
-    <ClCompile Include="..\..\libyara\modules\pe.c" />
-    <ClCompile Include="..\..\libyara\modules\tests.c" />
-    <ClCompile Include="..\..\libyara\object.c" />
-    <ClCompile Include="..\..\libyara\parser.c" />
-    <ClCompile Include="..\..\libyara\proc.c" />
-    <ClCompile Include="..\..\libyara\re.c" />
-    <ClCompile Include="..\..\libyara\re_grammar.c" />
-    <ClCompile Include="..\..\libyara\re_lexer.c" />
-    <ClCompile Include="..\..\libyara\rules.c" />
-    <ClCompile Include="..\..\libyara\scan.c" />
-    <ClCompile Include="..\..\libyara\sizedstr.c" />
-    <ClCompile Include="..\..\libyara\stream.c" />
-    <ClCompile Include="..\..\libyara\strutils.c" />
-    <ClCompile Include="..\..\libyara\threading.c" />
+    <ClCompile Include="..\..\..\libyara\ahocorasick.c" />
+    <ClCompile Include="..\..\..\libyara\arena.c" />
+    <ClCompile Include="..\..\..\libyara\atoms.c" />
+    <ClCompile Include="..\..\..\libyara\compiler.c" />
+    <ClCompile Include="..\..\..\libyara\exec.c" />
+    <ClCompile Include="..\..\..\libyara\exefiles.c" />
+    <ClCompile Include="..\..\..\libyara\filemap.c" />
+    <ClCompile Include="..\..\..\libyara\grammar.c" />
+    <ClCompile Include="..\..\..\libyara\hash.c" />
+    <ClCompile Include="..\..\..\libyara\hex_grammar.c" />
+    <ClCompile Include="..\..\..\libyara\hex_lexer.c" />
+    <ClCompile Include="..\..\..\libyara\lexer.c" />
+    <ClCompile Include="..\..\..\libyara\libyara.c" />
+    <ClCompile Include="..\..\..\libyara\mem.c" />
+    <ClCompile Include="..\..\..\libyara\modules.c" />
+    <ClCompile Include="..\..\..\libyara\modules\cuckoo.c" />
+    <ClCompile Include="..\..\..\libyara\modules\elf.c" />
+    <ClCompile Include="..\..\..\libyara\modules\hash.c" />
+    <ClCompile Include="..\..\..\libyara\modules\math.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe.c" />
+    <ClCompile Include="..\..\..\libyara\modules\tests.c" />
+    <ClCompile Include="..\..\..\libyara\object.c" />
+    <ClCompile Include="..\..\..\libyara\parser.c" />
+    <ClCompile Include="..\..\..\libyara\proc.c" />
+    <ClCompile Include="..\..\..\libyara\re.c" />
+    <ClCompile Include="..\..\..\libyara\re_grammar.c" />
+    <ClCompile Include="..\..\..\libyara\re_lexer.c" />
+    <ClCompile Include="..\..\..\libyara\rules.c" />
+    <ClCompile Include="..\..\..\libyara\scan.c" />
+    <ClCompile Include="..\..\..\libyara\sizedstr.c" />
+    <ClCompile Include="..\..\..\libyara\stream.c" />
+    <ClCompile Include="..\..\..\libyara\strutils.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
