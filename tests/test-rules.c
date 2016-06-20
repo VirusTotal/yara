@@ -1022,7 +1022,7 @@ static void test_entrypoint()
       "rule test { condition: entrypoint >= 0 }",
       NULL);
 
-  /* https://github.com/plusvic/yara/issues/373 */
+  /* https://github.com/VirusTotal/yara/issues/373 */
   assert_true_rule_file(
       "import \"pe\" \
        rule test { \
@@ -1037,7 +1037,7 @@ static void test_entrypoint()
       "tests/data/old_ArmaFP.exe");
   /* $wrong = { 0B 01 4C 6F 61 64 4C } */
 
-  /* https://github.com/plusvic/yara/issues/399 */
+  /* https://github.com/VirusTotal/yara/issues/399 */
   assert_true_rule_file(
       "import \"pe\" \
        rule test { \
