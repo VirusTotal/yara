@@ -76,7 +76,7 @@ with noyywrap then we can remove this pragma.
   } \
   else \
   { \
-    str->length = (str_len); \
+    str->length = (uint32_t) (str_len); \
     str->flags = 0; \
   } \
 
