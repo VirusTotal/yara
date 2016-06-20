@@ -18,7 +18,7 @@ limitations under the License.
 #define _SIZEDSTR_H
 
 #include <stddef.h>
-#include <inttypes.h>
+#include <stdint.h>
 
 //
 // This struct is used to support strings containing null chars. The length of
