@@ -573,6 +573,21 @@ $a by using @a[i]. The indexes are one-based, so the first occurrence would be
 number of occurrences of the string, the result will be a NaN (Not A Number)
 value.
 
+
+Match length
+------------
+
+For many regular expressions and hex strings containing jumps, the length of
+the match is variable. If you have the regular expression /fo*/ the strings
+"fo", "foo" and "fooo" can be matches, all of them with a different length.
+
+You can use the length of the matches as part of your condition by using the
+character ! in front of the string identifier, in a similar way you use the @
+character for the offset. !a[1] is the length for the first match of $a, !a[2]
+is the length for the second match, and so on. !a is a abbreviated form of
+!a[1].
+
+
 File size
 ---------
 
