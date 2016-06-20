@@ -108,10 +108,11 @@ typedef union _STACK_ITEM {
             block->size >= sizeof(type) && \
             offset <= block->base + block->size - sizeof(type)) \
         { \
+          type result; \
           uint8_t* data = iterator->fetch_data(iterator); \
           if (data == NULL) \
             return UNDEFINED; \
-          type result = *(type *)(data + offset - block->base); \
+          result = *(type *)(data + offset - block->base); \
           result = endianess##_##type(result); \
           return result; \
         } \

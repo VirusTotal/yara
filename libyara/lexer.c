@@ -3063,11 +3063,11 @@ void yywarning(
 
   char* file_name;
   char message[512];
+  va_list message_args;
 
   if (compiler->callback == NULL)
     return;
 
-  va_list message_args;
   va_start(message_args, message_fmt);
 
   if (compiler->file_name_stack_ptr > 0)
