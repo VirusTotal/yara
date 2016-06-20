@@ -386,6 +386,7 @@ int _yr_compiler_compile_rules(
   YR_ARENA* arena = NULL;
   YR_RULE null_rule;
   YR_EXTERNAL_VARIABLE null_external;
+  YR_AC_TABLES tables;
 
   int8_t halt = OP_HALT;
   int result;
@@ -416,8 +417,6 @@ int _yr_compiler_compile_rules(
       &null_external,
       sizeof(YR_EXTERNAL_VARIABLE),
       NULL);
-
-  YR_AC_TABLES tables;
 
   // Write Aho-Corasick automaton to arena.
   result = yr_ac_compile(
