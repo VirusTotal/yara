@@ -35,8 +35,9 @@ limitations under the License.
 
 typedef struct _SIZED_STRING
 {
-  uint64_t length;
+  uint32_t length;
   uint32_t flags;
+  
   char c_string[1];
 
 } SIZED_STRING;
