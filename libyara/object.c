@@ -1058,7 +1058,7 @@ int yr_object_set_string(
     if (string_obj->value == NULL)
       return ERROR_INSUFICIENT_MEMORY;
 
-    string_obj->value->length = len;
+    string_obj->value->length = (uint32_t) len;
     string_obj->value->flags = 0;
 
     memcpy(string_obj->value->c_string, value, len);

@@ -445,7 +445,7 @@ int64_t pe_rva_to_offset(
   {
     section_rva = 0;
     section_offset = 0;
-    section_raw_size = pe->data_size;
+    section_raw_size = (DWORD) pe->data_size;
   }
 
   // Many sections, have a raw (on disk) size smaller than their in-memory size.
