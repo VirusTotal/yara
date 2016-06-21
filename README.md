@@ -46,6 +46,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 
 * [ActiveCanopy](https://activecanopy.com/)
 * [Adlice](http://www.adlice.com/)
+* [Apple](http://www.apple.com/)
 * [BAE Systems](http://www.baesystems.com/home?r=ai)
 * [Bayshore Networks, Inc.](http://www.bayshorenetworks.com)
 * [Blue Coat](http://www.bluecoat.com/products/malware-analysis-appliance)
