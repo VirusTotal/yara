@@ -18,6 +18,8 @@ before_script: ./bootstrap.sh
 
 script: ./configure --enable-cuckoo --enable-magic && make && make check
 
+after_failure: if [ -e test-suite.log ]; then cat test-suite.log; fi
+
 language: c
 
 env:
