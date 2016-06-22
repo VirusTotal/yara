@@ -16,7 +16,7 @@ install:
 
 before_script: ./bootstrap.sh
 
-script: ./configure && make && make check
+script: ./configure --enable-cuckoo --enable-magic && make && make check
 
 language: c
 
