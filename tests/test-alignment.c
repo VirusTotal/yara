@@ -108,9 +108,9 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YARA_RULES_FILE_HEADER, 32, match_table);
   CHECK_OFFSET(YARA_RULES_FILE_HEADER, 40, transition_table);
 
-  CHECK_SIZE(SIZED_STRING, 16);
-  CHECK_OFFSET(SIZED_STRING, 8, flags);
-  CHECK_OFFSET(SIZED_STRING, 12, c_string);
+  CHECK_SIZE(SIZED_STRING, 12);
+  CHECK_OFFSET(SIZED_STRING, 4, flags);
+  CHECK_OFFSET(SIZED_STRING, 8, c_string);
 
   return err;
 }
