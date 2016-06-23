@@ -35,6 +35,7 @@ define_function(magic_mime_type)
 {
   YR_MEMORY_BLOCK* block;
   YR_SCAN_CONTEXT* context = scan_context();
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
     return_string(UNDEFINED);
@@ -45,10 +46,14 @@ define_function(magic_mime_type)
 
     magic_setflags(magic_cookie[context->tidx], MAGIC_MIME_TYPE);
 
-    cached_mime_types[context->tidx] = magic_buffer(
-        magic_cookie[context->tidx],
-        block->data,
-        block->size);
+    uint8_t* block_data = iterator->fetch_data(iterator);
+    if (block_data != NULL)
+    {
+      cached_mime_types[context->tidx] = magic_buffer(
+          block_data,
+          context->iterator->fetch_data((context)->iterator),
+          block->size);
+    }
   }
 
   if (cached_mime_types[context->tidx] == NULL)
@@ -62,6 +67,7 @@ define_function(magic_type)
 {
   YR_MEMORY_BLOCK* block;
   YR_SCAN_CONTEXT* context = scan_context();
+  YR_BLOCK_ITERATOR* iterator = context->iterator;
 
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
     return_string(UNDEFINED);
@@ -72,10 +78,14 @@ define_function(magic_type)
 
     magic_setflags(magic_cookie[context->tidx], 0);
 
-    cached_types[context->tidx] = magic_buffer(
-        magic_cookie[context->tidx],
-        block->data,
-        block->size);
+    uint8_t* block_data = iterator->fetch_data(iterator);
+    if (block_data != NULL)
+    {
+      cached_types[context->tidx] = magic_buffer(
+          magic_cookie[context->tidx],
+          block_data,
+          block->size);
+    }
   }
 
   if (cached_types[context->tidx] == NULL)
