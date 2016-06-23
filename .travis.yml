@@ -16,7 +16,14 @@ install:
 
 before_script: ./bootstrap.sh
 
-script: ./configure --enable-cuckoo --enable-magic && make && make check
+script: |
+  set -e
+  case "$CFLAGS" in
+    -m64) ./configure --enable-cuckoo --enable-magic ;;
+    -m32) ./configure ;;
+  esac
+  make
+  make check
 
 after_failure: if [ -e test-suite.log ]; then cat test-suite.log; fi
 
