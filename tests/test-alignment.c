@@ -16,6 +16,8 @@ limitations under the License.
 
 #include <yara.h>
 #include <stdio.h>
+#undef NDEBUG
+#include <assert.h>
 
 int err = 0;
 
@@ -52,6 +54,8 @@ int err = 0;
 
 int main (int argc, char **argv)
 {
+  assert(ARENA_FILE_VERSION == 11);
+
   CHECK_SIZE(YR_NAMESPACE, 4 * MAX_THREADS + 8);
   CHECK_OFFSET(YR_NAMESPACE, 4 * MAX_THREADS, name);
 
