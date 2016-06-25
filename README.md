@@ -51,6 +51,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Blue Coat](http://www.bluecoat.com/products/malware-analysis-appliance)
 * [Blueliv](http://www.blueliv.com)
 * [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
+* [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
 * [Fidelis XPS](http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
 * [FireEye, Inc.](http://www.fireeye.com)
 * [Fox-IT](https://www.fox-it.com)
