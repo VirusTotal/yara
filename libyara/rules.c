@@ -663,7 +663,8 @@ YR_API int yr_rules_scan_proc(
       pid,
       &iterator);
 
-  if (result == ERROR_SUCCESS)
+  if (result == ERROR_SUCCESS) 
+  {
     result = yr_rules_scan_mem_blocks(
         rules,
         &iterator,
@@ -672,7 +673,8 @@ YR_API int yr_rules_scan_proc(
         user_data,
         timeout);
 
-  yr_process_close_iterator(&iterator);
+    yr_process_close_iterator(&iterator);
+  }
 
   return result;
 }

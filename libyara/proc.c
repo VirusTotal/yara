@@ -204,7 +204,8 @@ typedef struct _YR_PROC_ITERATOR_CTX {
   int             pid;
   int             mem_fd;
   FILE*           maps;
-  uint8_t*        current_block_data;
+  uint8_t*        buffer;
+  size_t          buffer_size;
   YR_MEMORY_BLOCK current_block;
 
 } YR_PROC_ITERATOR_CTX;
