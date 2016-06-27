@@ -112,7 +112,7 @@ typedef union _STACK_ITEM {
 
 
 #define function_read(type, endianess) \
-    int64_t read_##type##_##endianess(YR_BLOCK_ITERATOR* iterator, size_t offset) \
+    int64_t read_##type##_##endianess(YR_MEMORY_BLOCK_ITERATOR* iterator, size_t offset) \
     { \
       YR_MEMORY_BLOCK* block = iterator->first(iterator); \
       while (block != NULL) \
@@ -122,7 +122,7 @@ typedef union _STACK_ITEM {
             offset <= block->base + block->size - sizeof(type)) \
         { \
           type result; \
-          uint8_t* data = iterator->fetch_data(iterator); \
+          uint8_t* data = block->fetch_data(block); \
           if (data == NULL) \
             return UNDEFINED; \
           result = *(type *)(data + offset - block->base); \
