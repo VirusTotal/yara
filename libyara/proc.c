@@ -39,7 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef struct _YR_PROC_ITERATOR_CTX
 {
-  HANDLE*         hProcess;
+  HANDLE          hProcess;
   uint8_t*        buffer;
   size_t          buffer_size;
   SYSTEM_INFO     si;
@@ -108,7 +108,7 @@ uint8_t* _yr_fetch_block_data(
     if (context->buffer != NULL)
       yr_free(context->buffer);
 
-    context->buffer = yr_malloc(block->size);
+    context->buffer = (uint8_t*) yr_malloc(block->size);
 
     if (context->buffer != NULL)
     {
@@ -141,7 +141,8 @@ YR_MEMORY_BLOCK* _yr_get_next_block(
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
 
   MEMORY_BASIC_INFORMATION mbi;
-  PVOID address = context->current_block.base + context->current_block.size;
+  PVOID address = (PVOID) (context->current_block.base + \
+	                       context->current_block.size);
 
   while (address < context->si.lpMaximumApplicationAddress &&
     VirtualQueryEx(context->hProcess, address, &mbi, sizeof(mbi)) != 0)
@@ -166,7 +167,7 @@ YR_MEMORY_BLOCK* _yr_get_first_block(
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
 
-  context->current_block.base = context->si.lpMinimumApplicationAddress;
+  context->current_block.base = (size_t) context->si.lpMinimumApplicationAddress;
   context->current_block.size = 0;
 
   return _yr_get_next_block(iterator);
