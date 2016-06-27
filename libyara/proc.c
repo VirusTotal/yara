@@ -37,6 +37,141 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Windows
 
+typedef struct _YR_PROC_ITERATOR_CTX
+{
+  HANDLE*         hProcess;
+  uint8_t*        buffer;
+  size_t          buffer_size;
+  SYSTEM_INFO     si;
+  YR_MEMORY_BLOCK current_block;
+
+} YR_PROC_ITERATOR_CTX;
+
+
+int _yr_process_attach(
+    int pid,
+    YR_PROC_ITERATOR_CTX* context)
+{
+  TOKEN_PRIVILEGES tokenPriv;
+  LUID luidDebug;
+  HANDLE hToken = NULL;
+
+  if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken) &&
+      LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luidDebug))
+  {
+    tokenPriv.PrivilegeCount = 1;
+    tokenPriv.Privileges[0].Luid = luidDebug;
+    tokenPriv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    AdjustTokenPrivileges(
+        hToken,
+        FALSE,
+        &tokenPriv,
+        sizeof(tokenPriv),
+        NULL,
+        NULL);
+  }
+
+  if (hToken != NULL)
+    CloseHandle(hToken);
+
+  context->hProcess = OpenProcess(
+      PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
+      FALSE,
+      pid);
+
+  if (context->hProcess == NULL)
+    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+
+  GetSystemInfo(&context->si);
+
+  return ERROR_SUCCESS;
+}
+
+
+int _yr_process_detach(
+    YR_PROC_ITERATOR_CTX* context)
+{
+  CloseHandle(context->hProcess);
+  return ERROR_SUCCESS;
+}
+
+
+uint8_t* _yr_fetch_block_data(
+    YR_MEMORY_BLOCK* block)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
+  SIZE_T read;
+
+  if (context->buffer_size < block->size)
+  {
+    if (context->buffer != NULL)
+      yr_free(context->buffer);
+
+    context->buffer = yr_malloc(block->size);
+
+    if (context->buffer != NULL)
+    {
+      context->buffer_size = block->size;
+    }
+    else
+    {
+      context->buffer_size = 0;
+      return NULL;
+    }
+  }
+
+  if (ReadProcessMemory(
+        context->hProcess,
+        (LPCVOID) block->base,
+        context->buffer,
+        (SIZE_T) block->size,
+        &read) == FALSE)
+    {
+      return NULL;
+    }
+
+  return context->buffer;
+}
+
+
+YR_MEMORY_BLOCK* _yr_get_next_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+
+  MEMORY_BASIC_INFORMATION mbi;
+  PVOID address = context->current_block.base + context->current_block.size;
+
+  while (address < context->si.lpMaximumApplicationAddress &&
+    VirtualQueryEx(context->hProcess, address, &mbi, sizeof(mbi)) != 0)
+  {
+    if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
+    {
+      context->current_block.base = (size_t) mbi.BaseAddress;
+      context->current_block.size = mbi.RegionSize;
+
+      return &context->current_block;
+    }
+
+    address = (uint8_t*) address + mbi.RegionSize;
+  }
+
+  return NULL;
+}
+
+
+YR_MEMORY_BLOCK* _yr_get_first_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+
+  context->current_block.base = context->si.lpMinimumApplicationAddress;
+  context->current_block.size = 0;
+
+  return _yr_get_next_block(iterator);
+}
+
 #else
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || \
