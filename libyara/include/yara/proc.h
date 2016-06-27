@@ -34,9 +34,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int yr_process_open_iterator(
     int pid,
-    YR_BLOCK_ITERATOR* iterator);
+    YR_MEMORY_BLOCK_ITERATOR* iterator);
 
 int yr_process_close_iterator(
-    YR_BLOCK_ITERATOR* iterator);
+    YR_MEMORY_BLOCK_ITERATOR* iterator);
 
 #endif

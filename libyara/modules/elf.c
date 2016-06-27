@@ -324,7 +324,7 @@ int module_load(
     size_t module_data_size)
 {
   YR_MEMORY_BLOCK* block;
-  YR_BLOCK_ITERATOR* iterator = context->iterator;
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   elf32_header_t* elf_header32;
   elf64_header_t* elf_header64;
@@ -384,7 +384,7 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
-    uint8_t* block_data = iterator->fetch_data(iterator);
+    uint8_t* block_data = block->fetch_data(block);
 
     if (block_data == NULL)
       continue;
