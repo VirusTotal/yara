@@ -330,7 +330,7 @@ int _yr_rules_scan_mem_block(
 
 YR_API int yr_rules_scan_mem_blocks(
     YR_RULES* rules,
-    YR_BLOCK_ITERATOR* iterator,
+    YR_MEMORY_BLOCK_ITERATOR* iterator,
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
@@ -425,7 +425,7 @@ YR_API int yr_rules_scan_mem_blocks(
 
   while (block != NULL)
   {
-    uint8_t* data = iterator->fetch_data(iterator);
+    uint8_t* data = block->fetch_data(block);
 
     // fetch may fail
     if (data == NULL)
@@ -536,26 +536,25 @@ _exit:
 }
 
 
+
 static YR_MEMORY_BLOCK* _yr_get_first_block(
-    YR_BLOCK_ITERATOR* iterator)
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_BLOCK_CONTEXT* ctx = (YR_BLOCK_CONTEXT*) iterator->context;
-  return ctx->block;
+  return (YR_MEMORY_BLOCK*) iterator->context;
 }
 
 
 static YR_MEMORY_BLOCK* _yr_get_next_block(
-    YR_BLOCK_ITERATOR* iterator)
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   return NULL;
 }
 
 
 static uint8_t* _yr_fetch_block_data(
-    YR_BLOCK_ITERATOR* iterator)
+    YR_MEMORY_BLOCK* block)
 {
-  YR_BLOCK_CONTEXT* ctx = (YR_BLOCK_CONTEXT*) iterator->context;
-  return ctx->data;
+  return (uint8_t*) block->context;
 }
 
 
@@ -569,20 +568,16 @@ YR_API int yr_rules_scan_mem(
     int timeout)
 {
   YR_MEMORY_BLOCK block;
-  YR_BLOCK_CONTEXT context;
-  YR_BLOCK_ITERATOR iterator;
+  YR_MEMORY_BLOCK_ITERATOR iterator;
 
   block.size = buffer_size;
   block.base = 0;
-  block.next = NULL;
+  block.fetch_data = _yr_fetch_block_data;
+  block.context = buffer;
 
-  context.block = &block;
-  context.data = buffer;
-
-  iterator.context = &context;
+  iterator.context = &block;
   iterator.first = _yr_get_first_block;
   iterator.next = _yr_get_next_block;
-  iterator.fetch_data = _yr_fetch_block_data;
 
   return yr_rules_scan_mem_blocks(
       rules,
@@ -662,7 +657,7 @@ YR_API int yr_rules_scan_proc(
     void* user_data,
     int timeout)
 {
-  YR_BLOCK_ITERATOR iterator;
+  YR_MEMORY_BLOCK_ITERATOR iterator;
 
   int result = yr_process_open_iterator(
       pid,

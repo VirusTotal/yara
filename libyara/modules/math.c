@@ -93,7 +93,7 @@ define_function(data_entropy)
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_BLOCK_ITERATOR* iterator = context->iterator;
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   if (offset < 0 || length < 0 || offset < block->base)
     return_float(UNDEFINED);
@@ -112,7 +112,7 @@ define_function(data_entropy)
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
-      uint8_t* block_data = iterator->fetch_data(iterator);
+      uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
       {
@@ -199,7 +199,7 @@ define_function(data_deviation)
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_BLOCK_ITERATOR* iterator = context->iterator;
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   if (offset < 0 || length < 0 || offset < block->base)
     return_float(UNDEFINED);
@@ -209,7 +209,7 @@ define_function(data_deviation)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = iterator->fetch_data(iterator);
+      uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
         return_float(UNDEFINED);
@@ -272,7 +272,7 @@ define_function(data_mean)
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_BLOCK_ITERATOR* iterator = context->iterator;
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   size_t total_len = 0;
   size_t i;
@@ -289,7 +289,7 @@ define_function(data_mean)
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
-      uint8_t* block_data = iterator->fetch_data(iterator);
+      uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
         return_float(UNDEFINED);
@@ -336,7 +336,7 @@ define_function(data_serial_correlation)
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_BLOCK_ITERATOR* iterator = context->iterator;
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   double sccun = 0;
   double scclast = 0;
@@ -357,7 +357,7 @@ define_function(data_serial_correlation)
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
-      uint8_t* block_data = iterator->fetch_data(iterator);
+      uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
         return_float(UNDEFINED);
@@ -460,7 +460,7 @@ define_function(data_monte_carlo_pi)
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_BLOCK_ITERATOR* iterator = context->iterator;
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   if (offset < 0 || length < 0 || offset < block->base)
     return_float(UNDEFINED);
@@ -476,7 +476,7 @@ define_function(data_monte_carlo_pi)
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
-      uint8_t* block_data = iterator->fetch_data(iterator);
+      uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
         return_float(UNDEFINED);

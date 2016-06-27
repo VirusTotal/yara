@@ -135,7 +135,7 @@ define_function(data_md5)
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_BLOCK_ITERATOR* iterator = context->iterator;
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
@@ -154,7 +154,7 @@ define_function(data_md5)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = iterator->fetch_data(iterator);
+      uint8_t* block_data = block->fetch_data(block);
 
       if (block_data != NULL)
       {
@@ -210,7 +210,7 @@ define_function(data_sha1)
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_BLOCK_ITERATOR* iterator = context->iterator;
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   SHA1_Init(&sha_context);
 
@@ -225,7 +225,7 @@ define_function(data_sha1)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = iterator->fetch_data(iterator);
+      uint8_t* block_data = block->fetch_data(block);
 
       if (block_data != NULL)
       {
@@ -281,7 +281,7 @@ define_function(data_sha256)
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_BLOCK_ITERATOR* iterator = context->iterator;
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   SHA256_Init(&sha256_context);
 
@@ -296,7 +296,7 @@ define_function(data_sha256)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = iterator->fetch_data(iterator);
+      uint8_t* block_data = block->fetch_data(block);
 
       if (block_data != NULL)
       {
@@ -344,7 +344,7 @@ define_function(data_checksum32)
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_BLOCK_ITERATOR* iterator = context->iterator;
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   uint32_t checksum = 0;
   int past_first_block = FALSE;
@@ -359,7 +359,7 @@ define_function(data_checksum32)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = iterator->fetch_data(iterator);
+      uint8_t* block_data = block->fetch_data(block);
 
       if (block_data != NULL)
       {
