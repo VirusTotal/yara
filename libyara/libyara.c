@@ -69,10 +69,11 @@ char lowercase[256];
 char altercase[256];
 
 
-#ifdef HAVE_LIBCRYPTO
+#if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
 
-// The OpenSSL library requires some locks in order to be thread-safe. These
-// locks are initialized in yr_initialize function.
+// The OpenSSL library before version 1.1 requires some locks in order
+// to be thread-safe. These locks are initialized in yr_initialize
+// function.
 
 YR_MUTEX *openssl_locks;
 
@@ -130,7 +131,7 @@ YR_API int yr_initialize(void)
   FAIL_ON_ERROR(yr_thread_storage_create(&tidx_key));
   FAIL_ON_ERROR(yr_thread_storage_create(&recovery_state_key));
 
-  #ifdef HAVE_LIBCRYPTO
+  #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
 
   openssl_locks = (YR_MUTEX*) OPENSSL_malloc(
       CRYPTO_num_locks() * sizeof(YR_MUTEX));
@@ -175,7 +176,7 @@ YR_API void yr_finalize_thread(void)
 
 YR_API int yr_finalize(void)
 {
-  #ifdef HAVE_LIBCRYPTO
+  #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
   int i;
   #endif
 
@@ -191,7 +192,7 @@ YR_API int yr_finalize(void)
   if (init_count > 0)
     return ERROR_SUCCESS;
 
-  #ifdef HAVE_LIBCRYPTO
+  #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
 
   for (i = 0; i < CRYPTO_num_locks(); i ++)
     yr_mutex_destroy(&openssl_locks[i]);
