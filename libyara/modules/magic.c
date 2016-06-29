@@ -48,7 +48,6 @@ define_function(magic_mime_type)
 {
   YR_MEMORY_BLOCK* block;
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   uint8_t* block_data;
 
@@ -82,7 +81,6 @@ define_function(magic_type)
 {
   YR_MEMORY_BLOCK* block;
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   uint8_t* block_data;
 
