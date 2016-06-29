@@ -82,19 +82,21 @@ uint32_t byte_to_int32[]  =
 
 uint32_t hash(
     uint32_t seed,
-    uint8_t* buffer,
+    const void* buffer,
     size_t len)
 {
-  size_t i;
+  const uint8_t* b = (uint8_t*) buffer;
+
   uint32_t result = seed;
+  size_t i;
 
   for (i = len - 1; i > 0; i--)
   {
-    result ^= ROTATE_INT32(byte_to_int32[*buffer], i);
-    buffer++;
+    result ^= ROTATE_INT32(byte_to_int32[*b], i);
+    b++;
   }
 
-  result ^= byte_to_int32[*buffer];
+  result ^= byte_to_int32[*b];
   return result;
 }
 
@@ -169,15 +171,16 @@ YR_API void yr_hash_table_destroy(
 }
 
 
-YR_API void* yr_hash_table_lookup(
+YR_API void* yr_hash_table_lookup_raw_key(
     YR_HASH_TABLE* table,
-    const char* key,
+    const void* key,
+    size_t key_length,
     const char* ns)
 {
   YR_HASH_TABLE_ENTRY* entry;
   uint32_t bucket_index;
 
-  bucket_index = hash(0, (uint8_t*) key, strlen(key));
+  bucket_index = hash(0, key, key_length);
 
   if (ns != NULL)
     bucket_index = hash(bucket_index, (uint8_t*) ns, strlen(ns));
@@ -187,7 +190,10 @@ YR_API void* yr_hash_table_lookup(
 
   while (entry != NULL)
   {
-    int key_match = strcmp(entry->key, key) == 0;
+    int key_match = (
+        (entry->key_length == key_length) &&
+        (memcmp(entry->key, key, key_length) == 0));
+
     int ns_match = (
         (entry->ns == ns) ||
         (entry->ns != NULL && ns != NULL && strcmp(entry->ns, ns) == 0));
@@ -202,9 +208,10 @@ YR_API void* yr_hash_table_lookup(
 }
 
 
-YR_API int yr_hash_table_add(
+YR_API int yr_hash_table_add_raw_key(
     YR_HASH_TABLE* table,
-    const char* key,
+    const void* key,
+    size_t key_length,
     const char* ns,
     void* value)
 {
@@ -216,7 +223,7 @@ YR_API int yr_hash_table_add(
   if (entry == NULL)
     return ERROR_INSUFICIENT_MEMORY;
 
-  entry->key = yr_strdup(key);
+  entry->key = yr_malloc(key_length);
 
   if (entry->key == NULL)
   {
@@ -241,8 +248,12 @@ YR_API int yr_hash_table_add(
     entry->ns = NULL;
   }
 
+  entry->key_length = key_length;
   entry->value = value;
-  bucket_index = hash(0, (uint8_t*) key, strlen(key));
+
+  memcpy(entry->key, key, key_length);
+
+  bucket_index = hash(0, key, key_length);
 
   if (ns != NULL)
     bucket_index = hash(bucket_index, (uint8_t*) ns, strlen(ns));
@@ -253,4 +264,32 @@ YR_API int yr_hash_table_add(
   table->buckets[bucket_index] = entry;
 
   return ERROR_SUCCESS;
+}
+
+
+YR_API void* yr_hash_table_lookup(
+    YR_HASH_TABLE* table,
+    const char* key,
+    const char* ns)
+{
+  return yr_hash_table_lookup_raw_key(
+      table,
+      (void*) key,
+      strlen(key),
+      ns);
+}
+
+
+YR_API int yr_hash_table_add(
+    YR_HASH_TABLE* table,
+    const char* key,
+    const char* ns,
+    void* value)
+{
+  return yr_hash_table_add_raw_key(
+      table,
+      (void*) key,
+      strlen(key),
+      ns,
+      value);
 }

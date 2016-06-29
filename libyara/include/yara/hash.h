@@ -34,7 +34,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef struct _YR_HASH_TABLE_ENTRY
 {
-  char* key;
+  void* key;
+  size_t key_length;
   char* ns;
   void* value;
 
@@ -79,6 +80,21 @@ YR_API void* yr_hash_table_lookup(
 YR_API int yr_hash_table_add(
     YR_HASH_TABLE* table,
     const char* key,
+    const char* ns,
+    void* value);
+
+
+YR_API void* yr_hash_table_lookup_raw_key(
+    YR_HASH_TABLE* table,
+    const void* key,
+    size_t key_length,
+    const char* ns);
+
+
+YR_API int yr_hash_table_add_raw_key(
+    YR_HASH_TABLE* table,
+    const void* key,
+    size_t key_length,
     const char* ns,
     void* value);
 
