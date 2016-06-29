@@ -61,7 +61,7 @@ AC_ARG_ENABLE([dmalloc],
   [if test x$enableval = xyes; then
     AC_CHECK_LIB(dmalloc, dmalloc_malloc,,
       AC_MSG_ERROR([please install dmalloc library]))
-    AC_DEFINE([DMALLOC], [1], [enable dmalloc])
+    CFLAGS="$CFLAGS -DDMALLOC"
   fi])
 
 AC_ARG_ENABLE([cuckoo],
@@ -70,7 +70,7 @@ AC_ARG_ENABLE([cuckoo],
     build_cuckoo_module=true
     AC_CHECK_LIB(jansson, json_loadb,,
       AC_MSG_ERROR([please install Jansson library]))
-    AC_DEFINE([CUCKOO], [1], [enable cuckoo module])
+    CFLAGS="$CFLAGS -DCUCKOO_MODULE"
   fi])
 
 AC_ARG_ENABLE([magic],
@@ -79,7 +79,7 @@ AC_ARG_ENABLE([magic],
     build_magic_module=true
     AC_CHECK_LIB(magic, magic_open,,
       AC_MSG_ERROR([please install libmagic library]))
-    AC_DEFINE([MAGIC], [1], [enable magic module])
+    CFLAGS="$CFLAGS -DMAGIC_MODULE"
   fi])
 
 AC_ARG_WITH([crypto],
@@ -117,12 +117,12 @@ AS_IF([test "x$have_crypto" = "xno"],
   ],
   [
     build_hash_module=true
-    AC_DEFINE([HASH], [1], [enable hash module])
+    CFLAGS="$CFLAGS -DHASH_MODULE"
   ])
 
-AM_CONDITIONAL([CUCKOO], [test x$build_cuckoo_module = xtrue])
-AM_CONDITIONAL([MAGIC], [test x$build_magic_module = xtrue])
-AM_CONDITIONAL([HASH], [test x$build_hash_module = xtrue])
+AM_CONDITIONAL([CUCKOO_MODULE], [test x$build_cuckoo_module = xtrue])
+AM_CONDITIONAL([MAGIC_MODULE], [test x$build_magic_module = xtrue])
+AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
 AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
 
 AC_CONFIG_FILES([Makefile])
