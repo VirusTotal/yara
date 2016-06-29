@@ -4,15 +4,15 @@ MODULES += modules/pe.c
 MODULES += modules/elf.c
 MODULES += modules/math.c
 
-if CUCKOO
+if CUCKOO_MODULE
 MODULES += modules/cuckoo.c
 endif
 
-if MAGIC
+if MAGIC_MODULE
 MODULES += modules/magic.c
 endif
 
-if HASH
+if HASH_MODULE
 MODULES += modules/hash.c
 endif
 
