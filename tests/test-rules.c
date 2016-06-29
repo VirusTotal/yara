@@ -1263,7 +1263,7 @@ static void test_modules()
       NULL);
 }
 
-
+#if defined(HASH_MODULE)
 static void test_hash_module()
 {
   uint8_t blob[] = {0x61, 0x62, 0x63, 0x64, 0x65};
@@ -1312,6 +1312,7 @@ static void test_hash_module()
       }",
       blob);
 }
+#endif
 
 
 void test_integer_functions()
@@ -1372,11 +1373,14 @@ int main(int argc, char** argv)
   // test_compare();
   test_comments();
   test_modules();
-  test_hash_module();
   test_integer_functions();
   // test_string_io();
   test_entrypoint();
   test_global_rules();
+
+  #if defined(HASH_MODULE)
+  test_hash_module();
+  #endif
 
   yr_finalize();
 
