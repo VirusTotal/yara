@@ -184,7 +184,7 @@ The *module_list* file looks like this::
     MODULE(tests)
     MODULE(pe)
 
-    #ifdef CUCKOO
+    #ifdef CUCKOO_MODULE
     MODULE(cuckoo)
     #endif
 
@@ -194,7 +194,7 @@ In our case the resulting *module_list* is::
     MODULE(tests)
     MODULE(pe)
 
-    #ifdef CUCKOO
+    #ifdef CUCKOO_MODULE
     MODULE(cuckoo)
     #endif
 
@@ -207,7 +207,7 @@ very beginning of *libyara/Makefile.am* you'll find this::
     MODULES =  modules/tests.c
     MODULES += modules/pe.c
 
-    if CUCKOO
+    if CUCKOO_MODULE
     MODULES += modules/cuckoo.c
     endif
 
@@ -217,7 +217,7 @@ Just add a new line for your module::
     MODULES =  modules/tests.c
     MODULES += modules/pe.c
 
-    if CUCKOO
+    if CUCKOO_MODULE
     MODULES += modules/cuckoo.c
     endif
 
@@ -609,9 +609,9 @@ blocks by using the ``foreach_memory_block`` macro:
 Each memory block is represented by a ``YR_MEMORY_BLOCK`` structure with the
 following attributes:
 
-.. c:type:: uint8_t*   data
+.. c:type:: YR_MEMORY_BLOCK_FETCH_DATA_FUNC  fetch_data
 
-    Pointer to the actual data for this memory block.
+    Pointer to a function returning a pointer to the block's data.
 
 .. c:type:: size_t   size
 
@@ -633,7 +633,7 @@ and your module should be prepared to handle that.
 
 The story is very different for processes. While scanning a process memory
 space your module will definitely receive a large number of blocks, one for each
-committed memory region in the proccess address space.
+committed memory region in the process address space.
 
 However, there are some cases where you don't actually need to iterate over the
 blocks. If your module just parses the header of some file format you can safely
@@ -650,11 +650,43 @@ checks in your code nevertheless). In those cases you can use the
         size_t module_data_size)
     {
         YR_MEMORY_BLOCK* block;
+        uint8_t* block_data;
 
         block = first_memory_block(context);
+        block_data = block->fetch_data(block)
 
-        ..do something with the memory block
+        if (block_data != NULL)
+        {
+          ..do something with the memory block
+        }
     }
+
+In the previous example you can also see how to use the ``fetch_data`` function.
+This function, which is a member of the ``YR_MEMORY_BLOCK`` structure, receives
+a pointer to the same block (as a ``self`` or ``this`` pointer) and returns a
+pointer to the block's data. Your module doesn't own the memory pointed to by
+this pointer, freeing that memory is not your responsibility. However keep in
+mind that the pointer is valid only until you ask for the next memory block. As
+long you use the pointer within the scope of a ``foreach_memory_block`` you are
+on the safe side. Also take into account that ``fetch_data`` can return a NULL
+pointer, your code must be prepared for that case.
+
+.. code-block:: c
+
+    uint8_t* block_data;
+
+    foreach_memory_block(context, block)
+    {
+      block_data = block->fetch_data(block);
+
+      if (block_data != NULL)
+      {
+        // using block_data is safe here.
+      }
+    }
+
+    // the memory pointed to by block_data can be already freed here.
+
 
 Setting variable's values
 -------------------------
@@ -985,10 +1017,3 @@ you get a pointer to the ``YR_SCAN_CONTEXT`` structure:
 .. code-block:: c
 
     YR_SCAN_CONTEXT* context = scan_context();
-
-
-
-
-
-
-
