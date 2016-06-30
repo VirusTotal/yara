@@ -651,10 +651,40 @@ YR_API int yr_compiler_define_boolean_variable(
     const char* identifier,
     int value)
 {
-  return yr_compiler_define_integer_variable(
-      compiler,
+  YR_EXTERNAL_VARIABLE* external;
+  YR_OBJECT* object;
+
+  char* id;
+
+  compiler->last_result = ERROR_SUCCESS;
+
+  FAIL_ON_COMPILER_ERROR(yr_arena_write_string(
+      compiler->sz_arena,
       identifier,
-      value);
+      &id));
+
+  FAIL_ON_COMPILER_ERROR(yr_arena_allocate_struct(
+      compiler->externals_arena,
+      sizeof(YR_EXTERNAL_VARIABLE),
+      (void**) &external,
+      offsetof(YR_EXTERNAL_VARIABLE, identifier),
+      EOL));
+
+  external->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
+  external->identifier = id;
+  external->value.i = value;
+
+  FAIL_ON_COMPILER_ERROR(yr_object_from_external_variable(
+      external,
+      &object));
+
+  FAIL_ON_COMPILER_ERROR(yr_hash_table_add(
+      compiler->objects_table,
+      external->identifier,
+      NULL,
+      (void*) object));
+
+  return ERROR_SUCCESS;
 }
 
 
