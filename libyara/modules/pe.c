@@ -1304,7 +1304,7 @@ void pe_parse_certificates(
           // space to hold it, and use i2d_ASN1_INTEGER() one last time to
           // hold it in the allocated buffer.
 
-          unsigned char* serial_der = yr_malloc(bytes);
+          unsigned char* serial_der = (unsigned char*) yr_malloc(bytes);
 
           if (serial_der != NULL)
           {
