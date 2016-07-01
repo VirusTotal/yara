@@ -136,51 +136,200 @@ define_function(network_http_post)
 }
 
 
-define_function(registry_key_access)
-{
-  YR_OBJECT* registry_obj = parent();
+#define REGISTRY_KEY_ACCESS         0x00
+#define REGISTRY_KEY_READ           0x01
+#define REGISTRY_KEY_WRITE          0x02
+#define REGISTRY_KEY_DELETE         0x03
+#define REGISTRY_KEY_VALUE_ACCESS   0x04
 
-  json_t* keys_json = (json_t*) registry_obj->data;
+
+uint64_t registry_match(
+  YR_OBJECT* registry_obj,
+  RE_CODE name_regexp,
+  int registry_operation_type)
+{
+  static const char* const registry_names[] = {
+    "keys",
+    "read_keys",
+    "write_keys",
+    "delete_keys"
+  };
+
+  json_t* summary_json = json_object_get((json_t*) registry_obj->data, "summary");
+  json_t* registry_json = json_object_get(summary_json, registry_names[registry_operation_type]);
   json_t* value;
 
   uint64_t result = 0;
   size_t index;
 
-  json_array_foreach(keys_json, index, value)
+  json_array_foreach(registry_json, index, value)
   {
-    if (yr_re_match(regexp_argument(1), json_string_value(value)) > 0)
+    if (yr_re_match(name_regexp, json_string_value(value)) > 0)
     {
       result = 1;
       break;
     }
   }
 
+  return result;
+}
+
+
+define_function(registry_key_access)
+{
+  return_integer(
+    registry_match(
+      parent(),
+      regexp_argument(1),
+      REGISTRY_KEY_ACCESS));
+}
+
+
+define_function(registry_key_read)
+{
+  return_integer(
+    registry_match(
+      parent(),
+      regexp_argument(1),
+      REGISTRY_KEY_READ));
+}
+
+
+define_function(registry_key_write)
+{
+  return_integer(
+    registry_match(
+      parent(),
+      regexp_argument(1),
+      REGISTRY_KEY_WRITE));
+}
+
+
+define_function(registry_key_delete)
+{
+  return_integer(
+    registry_match(
+      parent(),
+      regexp_argument(1),
+      REGISTRY_KEY_DELETE));
+}
+
+
+define_function(registry_key_value_access)
+{
+  YR_OBJECT* registry_obj = parent();
+
+  json_t* enhanced_json = json_object_get((json_t*) registry_obj->data, "enhanced");
+  json_t* value;
+
+  uint64_t result = 0;
+  size_t index;
+
+  json_array_foreach(enhanced_json, index, value)
+  {
+    json_t* enhanced_json_object = json_object_get(value, "object");
+
+    if (strcasecmp(json_string_value(enhanced_json_object), "registry") == 0)
+    {
+      json_t* registry_data = json_object_get(value, "data");
+
+      json_t* regkey  = json_object_get(registry_data, "regkey");
+      json_t* content = json_object_get(registry_data, "content");
+
+      const char* regkey_str = json_string_value(regkey);
+      const char* content_str = json_string_value(content);
+
+      if (regkey_str  != NULL &&
+          content_str != NULL &&
+          yr_re_match(regexp_argument(1), regkey_str)  > 0 &&
+          yr_re_match(regexp_argument(2), content_str) > 0)
+      {
+        result = 1;
+        break;
+      }
+    }
+  }
+
   return_integer(result);
+}
+
+
+#define FILESYSTEM_FILE_ACCESS  0x00
+#define FILESYSTEM_FILE_READ    0x01
+#define FILESYSTEM_FILE_WRITE   0x02
+#define FILESYSTEM_FILE_DELETE  0x03
+
+
+uint64_t filesystem_match(
+  YR_OBJECT* filesystem_obj,
+  RE_CODE name_regexp,
+  int file_operation_type)
+{
+  static const char* const filesystem_names[] = {
+    "files",
+    "read_files",
+    "write_files",
+    "delete_files",
+  };
+
+  json_t* summary_json = (json_t*) filesystem_obj->data;
+  json_t* filesystem_json = json_object_get(summary_json, filesystem_names[file_operation_type]);
+  json_t* value;
+
+  uint64_t result = 0;
+  size_t index;
+
+  json_array_foreach(filesystem_json, index, value)
+  {
+    if (yr_re_match(name_regexp, json_string_value(value)) > 0)
+    {
+      result = 1;
+      break;
+    }
+  }
+
+  return result;
 }
 
 
 define_function(filesystem_file_access)
 {
-  YR_OBJECT* filesystem_obj = parent();
-
-  json_t* files_json = (json_t*) filesystem_obj->data;
-  json_t* value;
-
-  uint64_t result = 0;
-  size_t index;
-
-  json_array_foreach(files_json, index, value)
-  {
-    if (yr_re_match(regexp_argument(1), json_string_value(value)) > 0)
-    {
-      result = 1;
-      break;
-    }
-  }
-
-  return_integer(result);
+  return_integer(
+    filesystem_match(
+      parent(),
+      regexp_argument(1),
+      FILESYSTEM_FILE_ACCESS));
 }
 
+
+define_function(filesystem_file_read)
+{
+  return_integer(
+    filesystem_match(
+      parent(),
+      regexp_argument(1),
+      FILESYSTEM_FILE_READ));
+}
+
+
+define_function(filesystem_file_write)
+{
+  return_integer(
+    filesystem_match(
+      parent(),
+      regexp_argument(1),
+      FILESYSTEM_FILE_WRITE));
+}
+
+
+define_function(filesystem_file_delete)
+{
+  return_integer(
+    filesystem_match(
+      parent(),
+      regexp_argument(1),
+      FILESYSTEM_FILE_DELETE));
+}
 
 
 define_function(sync_mutex)
@@ -206,6 +355,29 @@ define_function(sync_mutex)
 }
 
 
+define_function(process_executed_command)
+{
+  YR_OBJECT* process_obj = parent();
+
+  json_t* executed_commands_json = (json_t*) process_obj->data;
+  json_t* value;
+
+  uint64_t result = 0;
+  size_t index;
+
+  json_array_foreach(executed_commands_json, index, value)
+  {
+    if (yr_re_match(regexp_argument(1), json_string_value(value)) > 0)
+    {
+      result = 1;
+      break;
+    }
+  }
+
+  return_integer(result);
+}
+
+
 begin_declarations;
 
   begin_struct("network");
@@ -217,15 +389,26 @@ begin_declarations;
 
   begin_struct("registry");
     declare_function("key_access", "r", "i", registry_key_access);
+    declare_function("key_read", "r", "i", registry_key_read);
+    declare_function("key_write", "r", "i", registry_key_write);
+    declare_function("key_delete", "r", "i", registry_key_delete);
+    declare_function("key_value_access", "rr", "i", registry_key_value_access);
   end_struct("registry");
 
   begin_struct("filesystem");
     declare_function("file_access", "r", "i", filesystem_file_access);
+    declare_function("file_read", "r", "i", filesystem_file_read);
+    declare_function("file_write", "r", "i", filesystem_file_write);
+    declare_function("file_delete", "r", "i", filesystem_file_delete);
   end_struct("filesystem");
 
   begin_struct("sync");
     declare_function("mutex", "r", "i", sync_mutex);
   end_struct("sync");
+
+  begin_struct("process");
+    declare_function("executed_command", "r", "i", process_executed_command);
+  end_struct("process");
 
 end_declarations;
 
@@ -254,6 +437,7 @@ int module_load(
   YR_OBJECT* registry_obj;
   YR_OBJECT* filesystem_obj;
   YR_OBJECT* sync_obj;
+  YR_OBJECT* process_obj;
 
   json_error_t json_error;
 
@@ -278,15 +462,17 @@ int module_load(
   registry_obj = get_object(module_object, "registry");
   filesystem_obj = get_object(module_object, "filesystem");
   sync_obj = get_object(module_object, "sync");
+  process_obj = get_object(module_object, "process");
 
   network_obj->data = (void*) json_object_get(json, "network");
 
   json = json_object_get(json, "behavior");
   summary_json = json_object_get(json, "summary");
 
-  registry_obj->data = (void*) json_object_get(summary_json, "keys");
-  filesystem_obj->data = (void*) json_object_get(summary_json, "files");
+  registry_obj->data = (void*) json;
+  filesystem_obj->data = (void*) summary_json;
   sync_obj->data = (void*) json_object_get(summary_json, "mutexes");
+  process_obj->data = (void*) json_object_get(summary_json, "executed_commands");
 
   return ERROR_SUCCESS;
 }
