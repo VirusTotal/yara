@@ -42,6 +42,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <openssl/bio.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define X509_get_signature_nid(o) OBJ_obj2nid((o)->sig_alg->algorithm)
+#endif
 #endif
 
 #include <yara/pe.h>
@@ -1267,7 +1270,7 @@ void pe_parse_certificates(
           pe->object,
           "signatures[%i].version", counter);
 
-      sig_alg = OBJ_nid2ln(OBJ_obj2nid(cert->sig_alg->algorithm));
+      sig_alg = OBJ_nid2ln(X509_get_signature_nid(cert));
 
       set_string(sig_alg, pe->object, "signatures[%i].algorithm", counter);
 
@@ -1282,34 +1285,39 @@ void pe_parse_certificates(
         // by RFC5280, but do exist. An example binary which has a negative
         // serial number is: 4bfe05f182aa273e113db6ed7dae4bb8.
         //
-        // Negative serial numbers are handled by calling i2c_ASN1_INTEGER()
+        // Negative serial numbers are handled by calling i2d_ASN1_INTEGER()
         // with a NULL second parameter. This will return the size of the
         // buffer necessary to store the proper serial number.
         //
         // Do this even for positive serial numbers because it makes the code
         // cleaner and easier to read.
 
-        bytes = i2c_ASN1_INTEGER(serial, NULL);
+        bytes = i2d_ASN1_INTEGER(serial, NULL);
 
-        // According to X.509 specification the maximum length for the serial
-        // number is 20 octets.
+        // According to X.509 specification the maximum length for the
+        // serial number is 20 octets. Add two bytes to account for
+        // DER type and length information.
 
-        if (bytes > 0 && bytes <= 20)
+        if (bytes > 2 && bytes <= 22)
         {
           // Now that we know the size of the serial number allocate enough
-          // space to hold it, and use i2c_ASN1_INTEGER() one last time to
+          // space to hold it, and use i2d_ASN1_INTEGER() one last time to
           // hold it in the allocated buffer.
 
-          unsigned char* serial_bytes = (unsigned char*)  yr_malloc(bytes);
+          unsigned char* serial_der = yr_malloc(bytes);
 
-          if (serial_bytes != NULL)
+          if (serial_der != NULL)
           {
-            bytes = i2c_ASN1_INTEGER(serial, &serial_bytes);
+            bytes = i2d_ASN1_INTEGER(serial, &serial_der);
 
-            // i2c_ASN1_INTEGER() moves the pointer as it writes into
+            // i2d_ASN1_INTEGER() moves the pointer as it writes into
             // serial_bytes. Move it back.
 
-            serial_bytes -= bytes;
+            serial_der -= bytes;
+
+            // Skip over DER type, length information
+            unsigned char* serial_bytes = serial_der + 2;
+            bytes -= 2;
 
             // Also allocate space to hold the "common" string format:
             // 00:01:02:03:04...
@@ -1345,7 +1353,7 @@ void pe_parse_certificates(
               yr_free(serial_ascii);
             }
 
-            yr_free(serial_bytes);
+            yr_free(serial_der);
           }
         }
       }
