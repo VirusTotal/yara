@@ -78,7 +78,7 @@ char* get_from_cache(
   key.offset = offset;
   key.length = length;
 
-  return yr_hash_table_lookup_raw_key(
+  return (char*) yr_hash_table_lookup_raw_key(
       hash_table,
       &key,
       sizeof(key),
