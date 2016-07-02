@@ -420,10 +420,6 @@ int64_t pe_rva_to_offset(
       if (rva >= section->VirtualAddress &&
           section_rva <= section->VirtualAddress)
       {
-        section_rva = section->VirtualAddress;
-        section_offset = section->PointerToRawData;
-        section_raw_size = section->SizeOfRawData;
-
         // Round section_offset
         //
         // Rounding everything less than 0x200 to 0 as discussed in
@@ -434,7 +430,12 @@ int64_t pe_rva_to_offset(
         //
         // If FileAlignment is >= 0x200, it is apparently ignored (see
         // Ero Carreras's pefile.py, PE.adjust_FileAlignment).
+
         int alignment = yr_min(OptionalHeader(pe, FileAlignment), 0x200);
+
+        section_rva = section->VirtualAddress;
+        section_offset = section->PointerToRawData;
+        section_raw_size = section->SizeOfRawData;
 
         if (alignment)
         {
@@ -2514,12 +2515,14 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
-    uint8_t* block_data = block->fetch_data(block);
+	PIMAGE_NT_HEADERS32 pe_header;
+
+	uint8_t* block_data = block->fetch_data(block);
 
     if (block_data == NULL)
       continue;
 
-    PIMAGE_NT_HEADERS32 pe_header = pe_get_header(block_data, block->size);
+    Ppe_header = pe_get_header(block_data, block->size);
 
     if (pe_header != NULL)
     {
