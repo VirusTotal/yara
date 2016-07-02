@@ -2522,7 +2522,7 @@ int module_load(
     if (block_data == NULL)
       continue;
 
-    Ppe_header = pe_get_header(block_data, block->size);
+    pe_header = pe_get_header(block_data, block->size);
 
     if (pe_header != NULL)
     {
