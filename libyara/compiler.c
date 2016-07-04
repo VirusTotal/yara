@@ -365,6 +365,37 @@ YR_API int yr_compiler_add_file(
 }
 
 
+YR_API int yr_compiler_add_fd(
+    YR_COMPILER* compiler,
+    YR_FILE_DESCRIPTOR rules_fd,
+    const char* namespace_,
+    const char* file_name)
+{
+  // Don't allow yr_compiler_add_fd() after
+  // yr_compiler_get_rules() has been called.
+
+  assert(compiler->compiled_rules_arena == NULL);
+
+  if (file_name != NULL)
+    _yr_compiler_push_file_name(compiler, file_name);
+
+  if (namespace_ != NULL)
+    compiler->last_result = _yr_compiler_set_namespace(compiler, namespace_);
+  else
+    compiler->last_result = _yr_compiler_set_namespace(compiler, "default");
+
+  if (compiler->last_result == ERROR_SUCCESS)
+  {
+    return yr_lex_parse_rules_fd(rules_fd, compiler);
+  }
+  else
+  {
+    compiler->errors++;
+    return compiler->errors;
+  }
+}
+
+
 YR_API int yr_compiler_add_string(
     YR_COMPILER* compiler,
     const char* rules_string,

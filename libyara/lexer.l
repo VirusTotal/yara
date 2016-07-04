@@ -50,6 +50,7 @@ with noyywrap then we can remove this pragma.
 #include <stdint.h>
 #include <string.h>
 #include <setjmp.h>
+#include <unistd.h>
 
 
 #include <yara/lexer.h>
@@ -804,6 +805,49 @@ int yr_lex_parse_rules_file(
 
   yyset_in(rules_file, yyscanner);
   yyset_extra(compiler, yyscanner);
+  yyparse(yyscanner, compiler);
+  yylex_destroy(yyscanner);
+
+  return compiler->errors;
+}
+
+
+int yr_lex_parse_rules_fd(
+  YR_FILE_DESCRIPTOR rules_fd,
+  YR_COMPILER* compiler)
+{
+  yyscan_t yyscanner;
+
+  compiler->errors = 0;
+
+  if (setjmp(compiler->error_recovery) != 0)
+    return compiler->errors;
+
+  yylex_init(&yyscanner);
+
+  #if YYDEBUG
+  yydebug = 1;
+  #endif
+
+  char buf[1024];
+  int len;
+
+  yyset_extra(compiler, yyscanner);
+  while (1)
+  {
+    len = read(rules_fd, buf, sizeof(buf));
+    if (len < 0)
+    {
+      if (errno == EINTR)
+        continue;
+      else
+        break;
+    }
+    if (len == 0)
+      break;
+    yy_scan_bytes(buf, len, yyscanner);
+  }
+
   yyparse(yyscanner, compiler);
   yylex_destroy(yyscanner);
 
