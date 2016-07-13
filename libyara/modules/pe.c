@@ -1173,8 +1173,10 @@ void pe_parse_certificates(
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
 
-  // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
+  // Default to 0 signatures until we know otherwise.
+  set_integer(0, pe->object, "number_of_signatures");
 
+  // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
   if (directory->VirtualAddress == 0 ||
       directory->VirtualAddress > pe->data_size ||
       directory->Size > pe->data_size ||
