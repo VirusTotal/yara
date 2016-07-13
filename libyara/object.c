@@ -1075,6 +1075,7 @@ int yr_object_set_string(
     string_obj->value->flags = 0;
 
     memcpy(string_obj->value->c_string, value, len);
+    string_obj->value->c_string[len] = '\0';
   }
   else
   {
