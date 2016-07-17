@@ -31,7 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _SIZEDSTR_H
 
 #include <stddef.h>
-#include <stdint.h>
+
+#include <yara/integers.h>
 
 //
 // This struct is used to support strings containing null chars. The length of

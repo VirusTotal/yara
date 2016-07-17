@@ -30,9 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_ARENA_H
 #define YR_ARENA_H
 
-#include <stdint.h>
 #include <stddef.h>
 
+#include <yara/integers.h>
 #include <yara/stream.h>
 
 #define ARENA_FLAGS_FIXED_SIZE   1

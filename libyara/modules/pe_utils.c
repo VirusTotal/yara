@@ -3,7 +3,8 @@
 #if !HAVE_TIMEGM
 
 #include <time.h>
-#include <stdint.h>
+
+#include <yara/integers.h>
 
 static int is_leap(
     unsigned int year)

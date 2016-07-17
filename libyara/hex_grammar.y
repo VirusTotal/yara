@@ -30,9 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %{
 
 #include <string.h>
-#include <stdint.h>
 #include <limits.h>
 
+#include <yara/integers.h>
 #include <yara/utils.h>
 #include <yara/hex_lexer.h>
 #include <yara/limits.h>
