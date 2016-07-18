@@ -197,6 +197,10 @@ define_function(data_deviation)
   size_t total_len = 0;
   size_t i;
 
+  size_t data_offset = 0;
+  size_t data_len = 0;
+  uint8_t* block_data = NULL;
+
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
@@ -209,10 +213,10 @@ define_function(data_deviation)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      size_t data_offset = (size_t)(offset - block->base);
-      size_t data_len = (size_t)yr_min(
+      data_offset = (size_t)(offset - block->base);
+      data_len = (size_t)yr_min(
           length, (size_t)(block->size - data_offset));
-      uint8_t* block_data = block->fetch_data(block);
+      block_data = block->fetch_data(block);
 
       if (block_data == NULL)
         return_float(UNDEFINED);
