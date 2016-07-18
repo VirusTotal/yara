@@ -408,6 +408,9 @@ int64_t pe_rva_to_offset(
 
   int i = 0;
 
+  int alignment = 0;
+  int rest = 0;
+
   while(i < yr_min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS))
   {
     if (struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
@@ -431,7 +434,7 @@ int64_t pe_rva_to_offset(
         // If FileAlignment is >= 0x200, it is apparently ignored (see
         // Ero Carreras's pefile.py, PE.adjust_FileAlignment).
 
-        int alignment = yr_min(OptionalHeader(pe, FileAlignment), 0x200);
+        alignment = yr_min(OptionalHeader(pe, FileAlignment), 0x200);
 
         section_rva = section->VirtualAddress;
         section_offset = section->PointerToRawData;
@@ -439,7 +442,7 @@ int64_t pe_rva_to_offset(
 
         if (alignment)
         {
-          int rest = section_offset % alignment;
+          rest = section_offset % alignment;
 
           if (rest)
             section_offset -= rest;
@@ -2276,6 +2279,10 @@ int module_load(
   YR_MEMORY_BLOCK* block;
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
+  PIMAGE_NT_HEADERS32 pe_header;
+  uint8_t* block_data = NULL;
+  PE* pe = NULL;
+
   set_integer(
       IMAGE_FILE_MACHINE_UNKNOWN, module_object,
       "MACHINE_UNKNOWN");
@@ -2517,9 +2524,7 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
-	PIMAGE_NT_HEADERS32 pe_header;
-
-	uint8_t* block_data = block->fetch_data(block);
+	block_data = block->fetch_data(block);
 
     if (block_data == NULL)
       continue;
@@ -2533,7 +2538,7 @@ int module_load(
       if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
           !(pe_header->FileHeader.Characteristics & IMAGE_FILE_DLL))
       {
-        PE* pe = (PE*) yr_malloc(sizeof(PE));
+        pe = (PE*) yr_malloc(sizeof(PE));
 
         if (pe == NULL)
           return ERROR_INSUFICIENT_MEMORY;
