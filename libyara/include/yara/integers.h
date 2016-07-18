@@ -27,64 +27,40 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YR_FILEMAP_H
-#define YR_FILEMAP_H
+#ifndef YR_INTEGERS_H
+#define YR_INTEGERS_H
 
-#ifdef _MSC_VER
-#define off_t              int64_t
-#else
-#include <sys/types.h>
+/* Integer type definitions
+ */
+#if ( defined( _MSC_VER ) && ( _MSC_VER < 1600 ) ) || ( defined( __BORLANDC__ ) && ( __BORLANDC__ <= 0x0560 ) )
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-#include <windows.h>
-#define YR_FILE_DESCRIPTOR    HANDLE
-#else
-#define YR_FILE_DESCRIPTOR    int
+/* Microsoft Visual Studio C++ before Visual Studio 2010 or earlier versions of the Borland C++ Builder
+ * do not support the (u)int#_t type definitions but have __int# defintions instead
+ */
+typedef __int8 int8_t;
+typedef unsigned __int8 uint8_t;
+typedef __int16 int16_t;
+typedef unsigned __int16 uint16_t;
+typedef __int32 int32_t;
+typedef unsigned __int32 uint32_t;
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+
+#ifdef __cplusplus
+}
 #endif
 
-#include <stdlib.h>
+#else
 
-#include <yara/integers.h>
-#include <yara/utils.h>
+/* Other "compilers" and later versions of Microsoft Visual Studio C++ and
+ * Borland C/C++ define the types in <stdint.h>
+ */
+#include <stdint.h>
 
-
-typedef struct _YR_MAPPED_FILE
-{
-  YR_FILE_DESCRIPTOR  file;
-  size_t              size;
-  uint8_t*            data;
-  #if defined(_WIN32) || defined(__CYGWIN__)
-  HANDLE              mapping;
-  #endif
-
-} YR_MAPPED_FILE;
-
-
-YR_API int yr_filemap_map(
-    const char* file_path,
-    YR_MAPPED_FILE* pmapped_file);
-
-
-YR_API int yr_filemap_map_fd(
-    YR_FILE_DESCRIPTOR file,
-    off_t offset,
-    size_t size,
-    YR_MAPPED_FILE* pmapped_file);
-
-
-YR_API int yr_filemap_map_ex(
-    const char* file_path,
-    off_t offset,
-    size_t size,
-    YR_MAPPED_FILE* pmapped_file);
-
-
-YR_API void yr_filemap_unmap(
-    YR_MAPPED_FILE* pmapped_file);
-
-
-YR_API void yr_filemap_unmap_fd(
-    YR_MAPPED_FILE* pmapped_file);
+#endif
 
 #endif

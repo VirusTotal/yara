@@ -32,12 +32,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <assert.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 #include <limits.h>
 #include <stddef.h>
 
 
+#include <yara/integers.h>
 #include <yara/utils.h>
 #include <yara/strutils.h>
 #include <yara/compiler.h>

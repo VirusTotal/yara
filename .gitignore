@@ -25,6 +25,7 @@ stamp-h1
 /aclocal.m4
 /ar-lib
 /autom4te.cache/
+/compile
 /config.guess
 /config.h
 /config.h.in
@@ -38,6 +39,7 @@ stamp-h1
 /libtool
 /ltmain.sh
 /missing
+/test-driver
 /ylwrap
 /m4
 !/m4/acx_pthread.m4
@@ -45,6 +47,7 @@ stamp-h1
 # Project specific files
 /yara
 /yarac
+/libyara/modules/.dirstamp
 
 # Linux and Mac files
 *.swp

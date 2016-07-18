@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _ELF_H
 #define _ELF_H
 
-#include <stdint.h>
+#include <yara/integers.h>
 
 
 // 32-bit ELF base types
