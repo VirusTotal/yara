@@ -422,8 +422,9 @@ int _yr_parser_write_string(
   return result;
 }
 
-#include <stdint.h>
 #include <limits.h>
+
+#include <yara/integers.h>
 
 
 YR_STRING* yr_parser_reduce_string_declaration(

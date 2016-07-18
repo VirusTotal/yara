@@ -44,8 +44,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #else
 
-#include <stdint.h>
 #include <stdlib.h>
+
+#include <yara/integers.h>
 
 typedef uint8_t   BYTE;
 typedef uint16_t  WORD;
