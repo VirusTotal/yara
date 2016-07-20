@@ -170,6 +170,7 @@ typedef struct _PE
   YR_OBJECT* object;
   IMPORTED_DLL* imported_dlls;
   uint32_t resources;
+  uint32_t resources_dir;
 
 } PE;
 
@@ -542,10 +543,46 @@ int _pe_iterate_resources(
 
   PIMAGE_RESOURCE_DIRECTORY_ENTRY entry;
 
-  // A few sanity checks to avoid corrupt files
+  // The directory entry should be populated even if the sanity checks aren't
+  // satisfied to allow for signatures on malformed files.
 
-  if (resource_dir->Characteristics != 0 ||
-      resource_dir->NumberOfNamedEntries > 32768 ||
+  set_integer(
+      resource_dir->Characteristics,
+      pe->object,
+      "resources_dir[%i].characteristics",
+      pe->resources_dir);
+  set_integer(
+      resource_dir->TimeDateStamp,
+      pe->object,
+      "resources_dir[%i].time_date_stamp",
+      pe->resources_dir);
+  set_integer(
+      resource_dir->MajorVersion,
+      pe->object,
+      "resources_dir[%i].major_version",
+      pe->resources_dir);
+  set_integer(
+      resource_dir->MinorVersion,
+      pe->object,
+      "resources_dir[%i].minor_version",
+      pe->resources_dir);
+  set_integer(
+      resource_dir->NumberOfNamedEntries,
+      pe->object,
+      "resources_dir[%i].number_of_named_entries",
+      pe->resources_dir);
+  set_integer(
+      resource_dir->NumberOfIdEntries,
+      pe->object,
+      "resources_dir[%i].number_of_id_entries",
+      pe->resources_dir);
+  pe->resources_dir += 1;
+
+  // A few sanity checks to avoid corrupt files. Characteristics of 0 shouldn't
+  // be used for sanity check as valid resource entries can have arbitrary
+  // values of this field.
+
+  if (resource_dir->NumberOfNamedEntries > 32768 ||
       resource_dir->NumberOfIdEntries > 32768)
   {
     return result;
@@ -1465,6 +1502,7 @@ void pe_parse_header(
       (void*) pe);
 
   set_integer(pe->resources, pe->object, "number_of_resources");
+  set_integer(pe->resources_dir, pe->object, "number_of_resources_dir");
 
   section = IMAGE_FIRST_SECTION(pe->header);
 
@@ -2237,6 +2275,15 @@ begin_declarations;
   end_struct_array("resources");
 
   declare_integer("number_of_resources");
+  begin_struct_array("resources_dir");
+    declare_integer("characteristics");
+    declare_integer("time_date_stamp");
+    declare_integer("major_version");
+    declare_integer("minor_version");
+    declare_integer("number_of_named_entries");
+    declare_integer("number_of_id_entries");
+  end_struct_array("resources_dir");
+  declare_integer("number_of_resources_dir");
 
   #if defined(HAVE_LIBCRYPTO)
   begin_struct_array("signatures");
@@ -2548,6 +2595,7 @@ int module_load(
         pe->header = pe_header;
         pe->object = module_object;
         pe->resources = 0;
+        pe->resources_dir = 0;
 
         module_object->data = pe;
 
