@@ -1212,10 +1212,17 @@ int module_load(
     size_t module_data_size)
 {
   YR_MEMORY_BLOCK* block;
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
+  uint8_t* block_data = NULL;
 
-  foreach_memory_block(context, block)
+  foreach_memory_block(iterator, block)
   {
-    PIMAGE_NT_HEADERS32 pe_header = pe_get_header(block->data, block->size);
+	block_data = block->fetch_data(block);
+
+    if (block_data == NULL)
+      continue;
+
+    PIMAGE_NT_HEADERS32 pe_header = pe_get_header(block_data, block->size);
 
     if (pe_header != NULL)
     {
@@ -1229,7 +1236,7 @@ int module_load(
         if (pe == NULL)
           return ERROR_INSUFICIENT_MEMORY;
 
-        pe->data = block->data;
+        pe->data = block_data;
         pe->data_size = block->size;
         pe->object = module_object;
         pe->header = pe_header;
