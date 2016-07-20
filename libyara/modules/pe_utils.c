@@ -91,6 +91,12 @@ PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
 }
 
 
+#define OptionalHeader(pe,field)                \
+  (IS_64BITS_PE(pe) ?                           \
+   pe->header64->OptionalHeader.field :         \
+   pe->header->OptionalHeader.field)
+
+
 int64_t pe_rva_to_offset(
     PE* pe,
     uint64_t rva)
@@ -106,6 +112,9 @@ int64_t pe_rva_to_offset(
 
   int i = 0;
 
+  int alignment = 0;
+  int rest = 0;
+
   while(i < yr_min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS))
   {
     if (struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
@@ -118,21 +127,27 @@ int64_t pe_rva_to_offset(
       if (rva >= section->VirtualAddress &&
           section_rva <= section->VirtualAddress)
       {
-        section_rva = section->VirtualAddress;
-        section_offset = section->PointerToRawData;
-        section_raw_size = section->SizeOfRawData;
-
-        // Round section_offset down to file alignment.
+        // Round section_offset
         //
         // Rounding everything less than 0x200 to 0 as discussed in
         // https://code.google.com/archive/p/corkami/wikis/PE.wiki#PointerToRawData
         // does not work for PE32_FILE from the test suite and for
         // some tinype samples where File Alignment = 4
         // (http://www.phreedom.org/research/tinype/).
-        int alignment = OptionalHeader(pe, FileAlignment);
+        //
+        // If FileAlignment is >= 0x200, it is apparently ignored (see
+        // Ero Carreras's pefile.py, PE.adjust_FileAlignment).
+
+        alignment = yr_min(OptionalHeader(pe, FileAlignment), 0x200);
+
+        section_rva = section->VirtualAddress;
+        section_offset = section->PointerToRawData;
+        section_raw_size = section->SizeOfRawData;
+
         if (alignment)
         {
-          int rest = section_offset % alignment;
+          rest = section_offset % alignment;
+
           if (rest)
             section_offset -= rest;
         }
@@ -152,7 +167,9 @@ int64_t pe_rva_to_offset(
 
   if (rva < lowest_section_rva)
   {
-    return rva;
+    section_rva = 0;
+    section_offset = 0;
+    section_raw_size = (DWORD) pe->data_size;
   }
 
   // Many sections, have a raw (on disk) size smaller than their in-memory size.
@@ -160,9 +177,7 @@ int64_t pe_rva_to_offset(
   // associated file offset.
 
   if ((rva - section_rva) >= section_raw_size)
-  {
     return -1;
-  }
 
   result = section_offset + (rva - section_rva);
 
@@ -177,7 +192,8 @@ int64_t pe_rva_to_offset(
 #if !HAVE_TIMEGM
 
 #include <time.h>
-#include <stdint.h>
+
+#include <yara/integers.h>
 
 static int is_leap(
     unsigned int year)

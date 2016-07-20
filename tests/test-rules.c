@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2016. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <yara.h>
@@ -445,6 +458,26 @@ static void test_hex_strings()
   assert_true_rule(
       "rule test { \
         strings: $a = { 31 32 [-] 38 39 } \
+        condition: $a }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [-] // Inline comment\n\
+          38 39 } \
+        condition: $a }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 /* Inline comment */ [-] 38 39 } \
+        condition: $a }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 /* Inline multi-line\n\
+                                 comment */ [-] 38 39 } \
         condition: $a }",
       "1234567890");
 
@@ -1002,7 +1035,7 @@ static void test_entrypoint()
       "rule test { condition: entrypoint >= 0 }",
       NULL);
 
-  /* https://github.com/plusvic/yara/issues/373 */
+  /* https://github.com/VirusTotal/yara/issues/373 */
   assert_true_rule_file(
       "import \"pe\" \
        rule test { \
@@ -1017,7 +1050,7 @@ static void test_entrypoint()
       "tests/data/old_ArmaFP.exe");
   /* $wrong = { 0B 01 4C 6F 61 64 4C } */
 
-  /* https://github.com/plusvic/yara/issues/399 */
+  /* https://github.com/VirusTotal/yara/issues/399 */
   assert_true_rule_file(
       "import \"pe\" \
        rule test { \
@@ -1060,6 +1093,30 @@ static void test_comments()
                  this is a comment\n\
              */\n\
              true\n\
+      }",
+      NULL);
+}
+
+
+static void test_global_rules()
+{
+  assert_true_rule(
+      "global private rule global_rule { \
+        condition: \
+          true \
+      } \
+      rule test { \
+        condition: true \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "global private rule global_rule { \
+        condition: \
+          false \
+      } \
+      rule test { \
+        condition: true \
       }",
       NULL);
 }
@@ -1206,6 +1263,57 @@ static void test_modules()
       NULL);
 }
 
+#if defined(HASH_MODULE)
+static void test_hash_module()
+{
+  uint8_t blob[] = {0x61, 0x62, 0x63, 0x64, 0x65};
+
+  assert_true_rule_blob(
+      "import \"hash\" \
+       rule test { \
+        condition: \
+          hash.md5(0, filesize) == \
+            \"ab56b4d92b40713acc5af89985d4b786\" \
+            and \
+          hash.md5(1, filesize) == \
+            \"e02cfbe5502b64aa5ae9f2d0d69eaa8d\" \
+            and \
+          hash.sha1(0, filesize) == \
+            \"03de6c570bfe24bfc328ccd7ca46b76eadaf4334\" \
+            and \
+          hash.sha1(1, filesize) == \
+            \"a302d65ae4d9e768a1538d53605f203fd8e2d6e2\" \
+            and \
+          hash.sha256(0, filesize) == \
+            \"36bbe50ed96841d10443bcb670d6554f0a34b761be67ec9c4a8ad2c0c44ca42c\" \
+            and \
+          hash.sha256(1, filesize) == \
+            \"aaaaf2863e043b9df604158ad5c16ff1adaf3fd7e9fcea5dcb322b6762b3b59a\" \
+      }",
+      blob);
+
+  // Test hash caching mechanism
+
+  assert_true_rule_blob(
+      "import \"hash\" \
+       rule test { \
+        condition: \
+          hash.md5(0, filesize) == \
+            \"ab56b4d92b40713acc5af89985d4b786\" \
+            and \
+          hash.md5(1, filesize) == \
+            \"e02cfbe5502b64aa5ae9f2d0d69eaa8d\" \
+            and \
+          hash.md5(0, filesize) == \
+            \"ab56b4d92b40713acc5af89985d4b786\" \
+            and \
+          hash.md5(1, filesize) == \
+            \"e02cfbe5502b64aa5ae9f2d0d69eaa8d\" \
+      }",
+      blob);
+}
+#endif
+
 
 void test_integer_functions()
 {
@@ -1268,6 +1376,11 @@ int main(int argc, char** argv)
   test_integer_functions();
   // test_string_io();
   test_entrypoint();
+  test_global_rules();
+
+  #if defined(HASH_MODULE)
+  test_hash_module();
+  #endif
 
   yr_finalize();
 

@@ -337,7 +337,7 @@ Regular expressions
 -------------------
 
 Regular expressions are one of the most powerful features of YARA. They are
-defined in the same way as text strings, but enclosed in backslashes instead
+defined in the same way as text strings, but enclosed in forward slashes instead
 of double-quotes, like in the Perl programming language. ::
 
     rule RegExpExample1
@@ -573,6 +573,21 @@ $a by using @a[i]. The indexes are one-based, so the first occurrence would be
 number of occurrences of the string, the result will be a NaN (Not A Number)
 value.
 
+
+Match length
+------------
+
+For many regular expressions and hex strings containing jumps, the length of
+the match is variable. If you have the regular expression /fo*/ the strings
+"fo", "foo" and "fooo" can be matches, all of them with a different length.
+
+You can use the length of the matches as part of your condition by using the
+character ! in front of the string identifier, in a similar way you use the @
+character for the offset. !a[1] is the length for the first match of $a, !a[2]
+is the length for the second match, and so on. !a is a abbreviated form of
+!a[1].
+
+
 File size
 ---------
 
@@ -665,7 +680,7 @@ The ``intXX`` functions read 8, 16, and 32 bits signed integers from
 Both 16 and 32 bits integer are considered to be little-endian. If you
 want to read a big-endian integer use the corresponding function ending
 in ``be``. The <offset or virtual address> parameter can be any expression returning
-an unsigned integer, including the return value of one the ``uintXX`` functions 
+an unsigned integer, including the return value of one the ``uintXX`` functions
 itself. As an example let's see a rule to distinguish PE files::
 
     rule IsPE

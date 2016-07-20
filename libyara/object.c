@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2014. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
@@ -44,6 +57,8 @@ int yr_object_create(
   YR_OBJECT* obj;
   int i;
   size_t object_size = 0;
+
+  assert(parent != NULL || object != NULL);
 
   switch (type)
   {
@@ -151,6 +166,10 @@ int yr_object_create(
       case OBJECT_TYPE_DICTIONARY:
         ((YR_OBJECT_DICTIONARY*) parent)->prototype_item = obj;
         break;
+
+      case OBJECT_TYPE_FUNCTION:
+        ((YR_OBJECT_FUNCTION*) parent)->return_obj = obj;
+        break;
     }
   }
 
@@ -193,12 +212,16 @@ int yr_object_function_create(
 
   if (parent != NULL)
   {
+    // The parent of a function must be a structure.
+
     assert(parent->type == OBJECT_TYPE_STRUCTURE);
 
     // Try to find if the structure already has a function
-    // with that name. In that case this is a function oveload.
+    // with that name. In that case this is a function overload.
 
     f = (YR_OBJECT_FUNCTION*) yr_object_lookup_field(parent, identifier);
+
+    // Overloaded functions must have the same return type.
 
     if (f != NULL && return_type != f->return_obj->type)
       return ERROR_WRONG_RETURN_TYPE;
@@ -206,21 +229,22 @@ int yr_object_function_create(
 
   if (f == NULL) // Function doesn't exist yet
   {
-    // Let's create the result object first
-
-    FAIL_ON_ERROR(yr_object_create(return_type, "result", NULL, &return_obj));
-
-    FAIL_ON_ERROR_WITH_CLEANUP(
+    FAIL_ON_ERROR(
         yr_object_create(
             OBJECT_TYPE_FUNCTION,
             identifier,
             parent,
-            &o),
-        yr_object_destroy(return_obj));
+            &o));
+
+    FAIL_ON_ERROR_WITH_CLEANUP(
+        yr_object_create(
+            return_type,
+            "result",
+            o,
+            &return_obj),
+        yr_object_destroy(o));
 
     f = (YR_OBJECT_FUNCTION*) o;
-    f->return_obj = return_obj;
-    f->return_obj->parent = (YR_OBJECT*) f;
   }
 
   for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
@@ -433,7 +457,7 @@ YR_OBJECT* _yr_object_lookup(
   {
     i = 0;
 
-    while(*p != '\0' && *p != '.' && *p != '[' && i < sizeof(str))
+    while(*p != '\0' && *p != '.' && *p != '[' && i < sizeof(str) - 1)
     {
       str[i++] = *p++;
     }
@@ -1047,10 +1071,11 @@ int yr_object_set_string(
     if (string_obj->value == NULL)
       return ERROR_INSUFICIENT_MEMORY;
 
-    string_obj->value->length = len;
+    string_obj->value->length = (uint32_t) len;
     string_obj->value->flags = 0;
 
     memcpy(string_obj->value->c_string, value, len);
+    string_obj->value->c_string[len] = '\0';
   }
   else
   {
@@ -1084,7 +1109,7 @@ YR_API void yr_object_print_data(
   char indent_spaces[32];
   int i;
 
-  indent = yr_min(indent, sizeof(indent_spaces));
+  indent = yr_min(indent, sizeof(indent_spaces) - 1);
 
   memset(indent_spaces, '\t', indent);
   indent_spaces[indent] = '\0';

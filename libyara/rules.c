@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
@@ -34,30 +47,8 @@ limitations under the License.
 #include <yara/globals.h>
 #include <yara/libyara.h>
 #include <yara/scan.h>
-#include <yara/modules.h>
 
 #include "exception.h"
-
-void _yr_rules_lock(
-    YR_RULES* rules)
-{
-  #if defined(_WIN32) || defined(__CYGWIN__)
-  WaitForSingleObject(rules->mutex, INFINITE);
-  #else
-  pthread_mutex_lock(&rules->mutex);
-  #endif
-}
-
-
-void _yr_rules_unlock(
-    YR_RULES* rules)
-{
-  #if defined(_WIN32) || defined(__CYGWIN__)
-  ReleaseMutex(rules->mutex);
-  #else
-  pthread_mutex_unlock(&rules->mutex);
-  #endif
-}
 
 
 YR_API int yr_rules_define_integer_variable(
@@ -73,14 +64,17 @@ YR_API int yr_rules_define_integer_variable(
   {
     if (strcmp(external->identifier, identifier) == 0)
     {
+      if (external->type != EXTERNAL_VARIABLE_TYPE_INTEGER)
+        return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
       external->value.i = value;
-      break;
+      return ERROR_SUCCESS;
     }
 
     external++;
   }
 
-  return ERROR_SUCCESS;
+  return ERROR_INVALID_ARGUMENT;
 }
 
 
@@ -97,14 +91,17 @@ YR_API int yr_rules_define_boolean_variable(
   {
     if (strcmp(external->identifier, identifier) == 0)
     {
+      if (external->type != EXTERNAL_VARIABLE_TYPE_BOOLEAN)
+        return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
       external->value.i = value;
-      break;
+      return ERROR_SUCCESS;
     }
 
     external++;
   }
 
-  return ERROR_SUCCESS;
+  return ERROR_INVALID_ARGUMENT;
 }
 
 
@@ -121,14 +118,17 @@ YR_API int yr_rules_define_float_variable(
   {
     if (strcmp(external->identifier, identifier) == 0)
     {
+      if (external->type != EXTERNAL_VARIABLE_TYPE_FLOAT)
+        return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
       external->value.f = value;
-      break;
+      return ERROR_SUCCESS;
     }
 
     external++;
   }
 
-  return ERROR_SUCCESS;
+  return ERROR_INVALID_ARGUMENT;
 }
 
 
@@ -145,6 +145,10 @@ YR_API int yr_rules_define_string_variable(
   {
     if (strcmp(external->identifier, identifier) == 0)
     {
+      if (external->type != EXTERNAL_VARIABLE_TYPE_STRING &&
+          external->type != EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
+        return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
       if (external->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING &&
           external->value.s != NULL)
       {
@@ -163,7 +167,7 @@ YR_API int yr_rules_define_string_variable(
     external++;
   }
 
-  return ERROR_SUCCESS;
+  return ERROR_INVALID_ARGUMENT;
 }
 
 
@@ -182,22 +186,25 @@ void _yr_rules_clean_matches(
     rule->ns->t_flags[tidx] &= ~NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
   }
 
-  string = (YR_STRING**) yr_arena_base_address(
-      context->matching_strings_arena);
-
-  while (string != NULL)
+  if (context->matching_strings_arena != NULL)
   {
-    (*string)->matches[tidx].count = 0;
-    (*string)->matches[tidx].head = NULL;
-    (*string)->matches[tidx].tail = NULL;
-    (*string)->unconfirmed_matches[tidx].count = 0;
-    (*string)->unconfirmed_matches[tidx].head = NULL;
-    (*string)->unconfirmed_matches[tidx].tail = NULL;
+    string = (YR_STRING**) yr_arena_base_address(
+        context->matching_strings_arena);
 
-    string = (YR_STRING**) yr_arena_next_address(
-        context->matching_strings_arena,
-        string,
-        sizeof(string));
+    while (string != NULL)
+    {
+      (*string)->matches[tidx].count = 0;
+      (*string)->matches[tidx].head = NULL;
+      (*string)->matches[tidx].tail = NULL;
+      (*string)->unconfirmed_matches[tidx].count = 0;
+      (*string)->unconfirmed_matches[tidx].head = NULL;
+      (*string)->unconfirmed_matches[tidx].tail = NULL;
+
+      string = (YR_STRING**) yr_arena_next_address(
+          context->matching_strings_arena,
+          string,
+          sizeof(YR_STRING*));
+    }
   }
 }
 
@@ -236,73 +243,85 @@ void yr_rules_print_profiling_info(
 
 int _yr_rules_scan_mem_block(
     YR_RULES* rules,
+    uint8_t* block_data,
     YR_MEMORY_BLOCK* block,
     YR_SCAN_CONTEXT* context,
     int timeout,
     time_t start_time)
 {
-  YR_AC_MATCH* ac_match;
-  YR_AC_STATE* next_state;
-  YR_AC_STATE* current_state = rules->automaton->root;
+  YR_AC_TRANSITION_TABLE transition_table = rules->transition_table;
+  YR_AC_MATCH_TABLE match_table = rules->match_table;
+
+  YR_AC_MATCH* match;
+  YR_AC_TRANSITION transition;
 
   size_t i = 0;
+  uint32_t state = YR_AC_ROOT_STATE;
+  uint16_t index;
 
   while (i < block->size)
   {
-    ac_match = current_state->matches;
+    match = match_table[state].match;
 
-    while (ac_match != NULL)
+    while (match != NULL)
     {
-      if (ac_match->backtrack <= i)
+      if (timeout > 0 && i % 4096 == 0)
+      {
+        if (difftime(time(NULL), start_time) > timeout)
+          return ERROR_SCAN_TIMEOUT;
+      }
+
+      if (match->backtrack <= i)
       {
         FAIL_ON_ERROR(yr_scan_verify_match(
             context,
-            ac_match,
-            block->data,
+            match,
+            block_data,
             block->size,
             block->base,
-            i - ac_match->backtrack));
+            i - match->backtrack));
       }
 
-      ac_match = ac_match->next;
+      match = match->next;
     }
 
-    next_state = yr_ac_next_state(current_state, block->data[i]);
+    index = block_data[i++] + 1;
+    transition = transition_table[state + index];
 
-    while (next_state == NULL && current_state->depth > 0)
+    while (YR_AC_INVALID_TRANSITION(transition, index))
     {
-      current_state = current_state->failure;
-      next_state = yr_ac_next_state(current_state, block->data[i]);
+      if (state != YR_AC_ROOT_STATE)
+      {
+        state = transition_table[state] >> 32;
+        transition = transition_table[state + index];
+      }
+      else
+      {
+        transition = 0;
+        break;
+      }
     }
 
-    if (next_state != NULL)
-      current_state = next_state;
+    state = transition >> 32;
 
-    i++;
-
-    if (timeout > 0 && i % 256 == 0)
-    {
-      if (difftime(time(NULL), start_time) > timeout)
-        return ERROR_SCAN_TIMEOUT;
-    }
   }
 
-  ac_match = current_state->matches;
+  match = match_table[state].match;
 
-  while (ac_match != NULL)
+  while (match != NULL)
   {
-    if (ac_match->backtrack <= block->size)
+    if (match->backtrack <= i)
     {
       FAIL_ON_ERROR(yr_scan_verify_match(
           context,
-          ac_match,
-          block->data,
+          match,
+          block_data,
           block->size,
           block->base,
-          block->size - ac_match->backtrack));
+          i - match->backtrack));
     }
 
-    ac_match = ac_match->next;
+    match = match->next;
   }
 
   return ERROR_SUCCESS;
@@ -311,7 +330,7 @@ int _yr_rules_scan_mem_block(
 
 YR_API int yr_rules_scan_mem_blocks(
     YR_RULES* rules,
-    YR_MEMORY_BLOCK* block,
+    YR_MEMORY_BLOCK_ITERATOR* iterator,
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
@@ -320,6 +339,7 @@ YR_API int yr_rules_scan_mem_blocks(
   YR_EXTERNAL_VARIABLE* external;
   YR_RULE* rule;
   YR_SCAN_CONTEXT context;
+  YR_MEMORY_BLOCK* block;
 
   time_t start_time;
   tidx_mask_t bit = 1;
@@ -327,10 +347,12 @@ YR_API int yr_rules_scan_mem_blocks(
   int tidx = 0;
   int result = ERROR_SUCCESS;
 
+  block = iterator->first(iterator);
+
   if (block == NULL)
     return ERROR_SUCCESS;
 
-  _yr_rules_lock(rules);
+  yr_mutex_lock(&rules->mutex);
 
   while (rules->tidx_mask & bit)
   {
@@ -343,7 +365,7 @@ YR_API int yr_rules_scan_mem_blocks(
   else
     result = ERROR_TOO_MANY_SCAN_THREADS;
 
-  _yr_rules_unlock(rules);
+  yr_mutex_unlock(&rules->mutex);
 
   if (result != ERROR_SUCCESS)
     return result;
@@ -353,7 +375,7 @@ YR_API int yr_rules_scan_mem_blocks(
   context.callback = callback;
   context.user_data = user_data;
   context.file_size = block->size;
-  context.mem_block = block;
+  context.iterator = iterator;
   context.entry_point = UNDEFINED;
   context.objects_table = NULL;
   context.matches_arena = NULL;
@@ -403,17 +425,26 @@ YR_API int yr_rules_scan_mem_blocks(
 
   while (block != NULL)
   {
+    uint8_t* data = block->fetch_data(block);
+
+    // fetch may fail
+    if (data == NULL)
+    {
+      block = iterator->next(iterator);
+      continue;
+    }
+
     if (context.entry_point == UNDEFINED)
     {
       YR_TRYCATCH({
           if (flags & SCAN_FLAGS_PROCESS_MEMORY)
             context.entry_point = yr_get_entry_point_address(
-                block->data,
+                data,
                 block->size,
                 block->base);
           else
             context.entry_point = yr_get_entry_point_offset(
-                block->data,
+                data,
                 block->size);
         },{});
     }
@@ -421,6 +452,7 @@ YR_API int yr_rules_scan_mem_blocks(
     YR_TRYCATCH({
         result = _yr_rules_scan_mem_block(
             rules,
+            data,
             block,
             &context,
             timeout,
@@ -432,7 +464,7 @@ YR_API int yr_rules_scan_mem_blocks(
     if (result != ERROR_SUCCESS)
       goto _exit;
 
-    block = block->next;
+    block = iterator->next(iterator);
   }
 
   YR_TRYCATCH({
@@ -447,14 +479,6 @@ YR_API int yr_rules_scan_mem_blocks(
 
   if (result != ERROR_SUCCESS)
     goto _exit;
-
-  yr_rules_foreach(rules, rule)
-  {
-    if (RULE_IS_GLOBAL(rule) && !(rule->t_flags[tidx] & RULE_TFLAGS_MATCH))
-    {
-      rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
-    }
-  }
 
   yr_rules_foreach(rules, rule)
   {
@@ -491,8 +515,6 @@ _exit:
 
   _yr_rules_clean_matches(rules, &context);
 
-  yr_modules_unload_all(&context);
-
   if (context.matches_arena != NULL)
     yr_arena_destroy(context.matches_arena);
 
@@ -504,13 +526,35 @@ _exit:
         context.objects_table,
         (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
-  _yr_rules_lock(rules);
+  yr_mutex_lock(&rules->mutex);
   rules->tidx_mask &= ~(1 << tidx);
-  _yr_rules_unlock(rules);
+  yr_mutex_unlock(&rules->mutex);
 
   yr_set_tidx(-1);
 
   return result;
+}
+
+
+
+static YR_MEMORY_BLOCK* _yr_get_first_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  return (YR_MEMORY_BLOCK*) iterator->context;
+}
+
+
+static YR_MEMORY_BLOCK* _yr_get_next_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  return NULL;
+}
+
+
+static uint8_t* _yr_fetch_block_data(
+    YR_MEMORY_BLOCK* block)
+{
+  return (uint8_t*) block->context;
 }
 
 
@@ -524,15 +568,20 @@ YR_API int yr_rules_scan_mem(
     int timeout)
 {
   YR_MEMORY_BLOCK block;
+  YR_MEMORY_BLOCK_ITERATOR iterator;
 
-  block.data = buffer;
   block.size = buffer_size;
   block.base = 0;
-  block.next = NULL;
+  block.fetch_data = _yr_fetch_block_data;
+  block.context = buffer;
+
+  iterator.context = &block;
+  iterator.first = _yr_get_first_block;
+  iterator.next = _yr_get_next_block;
 
   return yr_rules_scan_mem_blocks(
       rules,
-      &block,
+      &iterator,
       flags,
       callback,
       user_data,
@@ -569,6 +618,7 @@ YR_API int yr_rules_scan_file(
   return result;
 }
 
+
 YR_API int yr_rules_scan_fd(
     YR_RULES* rules,
     YR_FILE_DESCRIPTOR fd,
@@ -598,6 +648,7 @@ YR_API int yr_rules_scan_fd(
   return result;
 }
 
+
 YR_API int yr_rules_scan_proc(
     YR_RULES* rules,
     int pid,
@@ -606,31 +657,23 @@ YR_API int yr_rules_scan_proc(
     void* user_data,
     int timeout)
 {
-  YR_MEMORY_BLOCK* first_block;
-  YR_MEMORY_BLOCK* next_block;
-  YR_MEMORY_BLOCK* block;
+  YR_MEMORY_BLOCK_ITERATOR iterator;
 
-  int result = yr_process_get_memory(pid, &first_block);
+  int result = yr_process_open_iterator(
+      pid,
+      &iterator);
 
-  if (result == ERROR_SUCCESS)
+  if (result == ERROR_SUCCESS) 
+  {
     result = yr_rules_scan_mem_blocks(
         rules,
-        first_block,
+        &iterator,
         flags | SCAN_FLAGS_PROCESS_MEMORY,
         callback,
         user_data,
         timeout);
 
-  block = first_block;
-
-  while (block != NULL)
-  {
-    next_block = block->next;
-
-    yr_free(block->data);
-    yr_free(block);
-
-    block = next_block;
+    yr_process_close_iterator(&iterator);
   }
 
   return result;
@@ -641,42 +684,31 @@ YR_API int yr_rules_load_stream(
     YR_STREAM* stream,
     YR_RULES** rules)
 {
-  int result;
-
   YARA_RULES_FILE_HEADER* header;
   YR_RULES* new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
 
   if (new_rules == NULL)
     return ERROR_INSUFICIENT_MEMORY;
 
-  result = yr_arena_load_stream(stream, &new_rules->arena);
-
-  if (result != ERROR_SUCCESS)
-  {
-    yr_free(new_rules);
-    return result;
-  }
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_arena_load_stream(stream, &new_rules->arena),
+      // cleanup
+      yr_free(new_rules));
 
   header = (YARA_RULES_FILE_HEADER*)
       yr_arena_base_address(new_rules->arena);
 
-  new_rules->automaton = header->automaton;
   new_rules->code_start = header->code_start;
   new_rules->externals_list_head = header->externals_list_head;
   new_rules->rules_list_head = header->rules_list_head;
+  new_rules->match_table = header->match_table;
+  new_rules->transition_table = header->transition_table;
   new_rules->tidx_mask = 0;
 
-  #if _WIN32 || __CYGWIN__
-  new_rules->mutex = CreateMutex(NULL, FALSE, NULL);
-
-  if (new_rules->mutex == NULL)
-    return ERROR_INTERNAL_FATAL_ERROR;
-  #else
-  result = pthread_mutex_init(&new_rules->mutex, NULL);
-
-  if (result != 0)
-    return ERROR_INTERNAL_FATAL_ERROR;
-  #endif
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_mutex_create(&new_rules->mutex),
+      // cleanup
+      yr_free(new_rules));
 
   *rules = new_rules;
 
@@ -750,12 +782,7 @@ YR_API int yr_rules_destroy(
     external++;
   }
 
-  #if _WIN32 || __CYGWIN__
-  CloseHandle(rules->mutex);
-  #else
-  pthread_mutex_destroy(&rules->mutex);
-  #endif
-
+  yr_mutex_destroy(&rules->mutex);
   yr_arena_destroy(rules->arena);
   yr_free(rules);
 

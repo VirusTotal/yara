@@ -1,28 +1,43 @@
 /*
 Copyright (c) 2016. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <yara.h>
 #include <stdio.h>
+#undef NDEBUG
+#include <assert.h>
 
 int err = 0;
 
 #define CHECK_SIZE(expr,size)                          \
   do                                                   \
   {                                                    \
-    printf("sizeof("#expr") = %lu ...", sizeof(expr)); \
+    printf("sizeof("#expr") = %zd ...", sizeof(expr)); \
     if (sizeof(expr) == size)                          \
     {                                                  \
       puts("ok");                                      \
@@ -37,7 +52,7 @@ int err = 0;
 #define CHECK_OFFSET(expr,offset,subexpr)             \
   do                                                  \
   {                                                   \
-    printf("offsetof("#expr", "#subexpr") = %lu ...", \
+    printf("offsetof("#expr", "#subexpr") = %zd ...", \
            offsetof(expr, subexpr));                  \
     if (offsetof(expr, subexpr) == offset)            \
     {                                                 \
@@ -52,6 +67,8 @@ int err = 0;
 
 int main (int argc, char **argv)
 {
+  assert(ARENA_FILE_VERSION == 11);
+
   CHECK_SIZE(YR_NAMESPACE, 4 * MAX_THREADS + 8);
   CHECK_OFFSET(YR_NAMESPACE, 4 * MAX_THREADS, name);
 
@@ -59,14 +76,6 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_META, 8,  integer);
   CHECK_OFFSET(YR_META, 16, identifier);
   CHECK_OFFSET(YR_META, 24, string);
-
-  CHECK_SIZE(YR_MATCH, 48);
-  CHECK_OFFSET(YR_MATCH, 8,  offset);
-  CHECK_OFFSET(YR_MATCH, 16, length);
-  CHECK_OFFSET(YR_MATCH, 24, data);
-  CHECK_OFFSET(YR_MATCH, 24, chain_length);
-  CHECK_OFFSET(YR_MATCH, 32, prev);
-  CHECK_OFFSET(YR_MATCH, 40, next);
 
   CHECK_SIZE(YR_MATCHES, 24);
   CHECK_OFFSET(YR_MATCHES, 8,  head);
@@ -85,17 +94,17 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_STRING, 36, chain_gap_max);
   CHECK_OFFSET(YR_STRING, 40, fixed_offset);
 
-  CHECK_SIZE(YR_RULE, 8 + 4*MAX_THREADS + 40
+  CHECK_SIZE(YR_RULE, 8 + 4 * MAX_THREADS + 40
 #            ifdef PROFILING_ENABLED
              + 8
 #            endif
              );
-  CHECK_OFFSET(YR_RULE, 4,                      t_flags);
-  CHECK_OFFSET(YR_RULE, 8 + 4*MAX_THREADS,      identifier);
-  CHECK_OFFSET(YR_RULE, 8 + 4*MAX_THREADS + 8,  tags);
-  CHECK_OFFSET(YR_RULE, 8 + 4*MAX_THREADS + 16, metas);
-  CHECK_OFFSET(YR_RULE, 8 + 4*MAX_THREADS + 24, strings);
-  CHECK_OFFSET(YR_RULE, 8 + 4*MAX_THREADS + 32, ns);
+  CHECK_OFFSET(YR_RULE, 4,                        t_flags);
+  CHECK_OFFSET(YR_RULE, 8 + 4 * MAX_THREADS,      identifier);
+  CHECK_OFFSET(YR_RULE, 8 + 4 * MAX_THREADS + 8,  tags);
+  CHECK_OFFSET(YR_RULE, 8 + 4 * MAX_THREADS + 16, metas);
+  CHECK_OFFSET(YR_RULE, 8 + 4 * MAX_THREADS + 24, strings);
+  CHECK_OFFSET(YR_RULE, 8 + 4 * MAX_THREADS + 32, ns);
 
   CHECK_SIZE(YR_EXTERNAL_VARIABLE, 24);
   CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8,  value.i);
@@ -109,31 +118,16 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_AC_MATCH, 24, backward_code);
   CHECK_OFFSET(YR_AC_MATCH, 32, next);
 
-  CHECK_SIZE(YR_AC_STATE,24);
-  CHECK_OFFSET(YR_AC_STATE, 8,  failure);
-  CHECK_OFFSET(YR_AC_STATE, 16, matches);
-
-  CHECK_SIZE(YR_AC_STATE_TRANSITION, 24);
-  CHECK_OFFSET(YR_AC_STATE_TRANSITION, 8,  state);
-  CHECK_OFFSET(YR_AC_STATE_TRANSITION, 16, next);
-
-  CHECK_SIZE(YR_AC_TABLE_BASED_STATE, 2072);
-  CHECK_OFFSET(YR_AC_TABLE_BASED_STATE, 8,  failure);
-  CHECK_OFFSET(YR_AC_TABLE_BASED_STATE, 16, matches);
-  CHECK_OFFSET(YR_AC_TABLE_BASED_STATE, 24, transitions);
-
-  CHECK_SIZE(YR_AC_LIST_BASED_STATE,32);
-  CHECK_OFFSET(YR_AC_LIST_BASED_STATE, 8,  failure);
-  CHECK_OFFSET(YR_AC_LIST_BASED_STATE, 16, matches);
-  CHECK_OFFSET(YR_AC_LIST_BASED_STATE, 24, transitions);
-
-  CHECK_SIZE(YR_AC_AUTOMATON, 8);
-
-  CHECK_SIZE(YARA_RULES_FILE_HEADER, 40);
+  CHECK_SIZE(YARA_RULES_FILE_HEADER, 48);
   CHECK_OFFSET(YARA_RULES_FILE_HEADER, 8,  rules_list_head);
   CHECK_OFFSET(YARA_RULES_FILE_HEADER, 16, externals_list_head);
   CHECK_OFFSET(YARA_RULES_FILE_HEADER, 24, code_start);
-  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 32, automaton);
+  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 32, match_table);
+  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 40, transition_table);
+
+  CHECK_SIZE(SIZED_STRING, 12);
+  CHECK_OFFSET(SIZED_STRING, 4, flags);
+  CHECK_OFFSET(SIZED_STRING, 8, c_string);
 
   return err;
 }

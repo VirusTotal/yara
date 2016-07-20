@@ -4,14 +4,14 @@ MODULE(elf)
 MODULE(math)
 MODULE(dotnet)
 
-#ifdef CUCKOO
+#ifdef CUCKOO_MODULE
 MODULE(cuckoo)
 #endif
 
-#ifdef MAGIC
+#ifdef MAGIC_MODULE
 MODULE(magic)
 #endif
 
-#ifdef HASH
+#ifdef HASH_MODULE
 MODULE(hash)
 #endif

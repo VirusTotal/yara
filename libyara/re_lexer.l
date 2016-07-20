@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /* Lexical analyzer for regular expressions */
@@ -41,12 +54,19 @@ with noyywrap then we can remove this pragma.
 #include <yara/mem.h>
 #include <yara/re.h>
 #include <yara/re_lexer.h>
+#include <yara/threading.h>
 #include <yara/strutils.h>
 
 
 #ifdef _WIN32
 #define snprintf _snprintf
 #endif
+
+static uint8_t word_chars[] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
+    0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 
 uint8_t escaped_char_value(
@@ -313,10 +333,6 @@ hex_digit     [0-9a-fA-F]
 <char_class>\\w {
 
   int i;
-  char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
-                        0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
   for (i = 0; i < 32; i++)
     LEX_ENV->class_vector[i] |= word_chars[i];
@@ -326,10 +342,6 @@ hex_digit     [0-9a-fA-F]
 <char_class>\\W {
 
   int i;
-  char word_chars[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
-                        0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
   for (i = 0; i < 32; i++)
     LEX_ENV->class_vector[i] |= ~word_chars[i];
@@ -534,26 +546,15 @@ int read_escaped_char(
 }
 
 
+extern YR_THREAD_STORAGE_KEY recovery_state_key;
 
-#ifdef _WIN32
-#include <windows.h>
-extern DWORD recovery_state_key;
-#else
-#include <pthread.h>
-extern pthread_key_t recovery_state_key;
-#endif
 
 void yyfatal(
     yyscan_t yyscanner,
     const char *error_message)
 {
-  jmp_buf* recovery_state;
-
-  #ifdef _WIN32
-  recovery_state = (jmp_buf*) TlsGetValue(recovery_state_key) ;
-  #else
-  recovery_state = (jmp_buf*) pthread_getspecific(recovery_state_key);
-  #endif
+  jmp_buf* recovery_state = (jmp_buf*) yr_thread_storage_get_value(
+      &recovery_state_key);
 
   longjmp(*recovery_state, 1);
 }
@@ -593,11 +594,7 @@ int yr_parse_re_string(
 
   lex_env.last_error_code = ERROR_SUCCESS;
 
-  #ifdef _WIN32
-  TlsSetValue(recovery_state_key, (LPVOID) &recovery_state);
-  #else
-  pthread_setspecific(recovery_state_key, (void*) &recovery_state);
-  #endif
+  yr_thread_storage_set_value(&recovery_state_key, &recovery_state);
 
   if (setjmp(recovery_state) != 0)
     return ERROR_INTERNAL_FATAL_ERROR;

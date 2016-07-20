@@ -165,8 +165,9 @@ depending if the rule is matching or not. In both cases a pointer to the
 ``message_data`` argument. You just need to perform a typecast from
 ``void*`` to ``YR_RULE*`` to access the structure.
 
-The callback is also called once for each imported module, with the
-``CALLBACK_MSG_IMPORT_MODULE`` message. In this case ``message_data`` points
+This callback is also called with the ``CALLBACK_MSG_IMPORT_MODULE`` message.
+All modules referenced by a ``import`` statement in the rules are imported once
+for every file being scanned. . In this case ``message_data`` points
 to a :c:type:`YR_MODULE_IMPORT` structure. This structure contains a
 ``module_name`` field pointing to a null terminated string with the name of the
 module being imported and two other fields ``module_data`` and
@@ -176,10 +177,10 @@ while setting ``module_data_size`` to the size of the data. This way you can
 pass additional data to those modules requiring it, like the
 :ref:`Cuckoo-module` for example.
 
-The callback is also called once for each file that is scanned by each module
-that is imported. When this happens ``message_data`` points to a
+Once a module is imported the callback is called again with the
+CALLBACK_MSG_MODULE_IMPORTED. When this happens ``message_data`` points to a
 :c:type:`YR_OBJECT_STRUCTURE` structure. This structure contains all the
-information from the module, including any stored data and functions.
+information provided by the module about the currently scanned file.
 
 Lastly, the callback function is also called with the
 ``CALLBACK_MSG_SCAN_FINISHED`` message when the scan is finished. In this case
@@ -240,13 +241,20 @@ Data structures
 
     Offset of the match relative to *base*.
 
-  .. c:member:: int32_t length
+  .. c:member:: int32_t match_length
 
     Length of the matching string
 
   .. c:member:: uint8_t* data
 
-    Pointer to the matching string.
+    Pointer to a buffer containing a portion of the matching string.
+
+  .. c:member:: int32_t data_length
+
+    Length of ``data`` buffer. ``data_length`` is the minimum of
+    ``match_length`` and ``MAX_MATCH_DATA``.
+
+  .. versionchanged:: 3.5.0
 
 .. c:type:: YR_META
 

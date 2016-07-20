@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
@@ -80,9 +93,6 @@ YR_API int yr_compiler_create(
     result = yr_arena_create(65536, 0, &new_compiler->re_code_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(65536, 0, &new_compiler->automaton_arena);
-
-  if (result == ERROR_SUCCESS)
     result = yr_arena_create(65536, 0, &new_compiler->externals_arena);
 
   if (result == ERROR_SUCCESS)
@@ -92,9 +102,13 @@ YR_API int yr_compiler_create(
     result = yr_arena_create(65536, 0, &new_compiler->metas_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_ac_create_automaton(
-        new_compiler->automaton_arena,
-        &new_compiler->automaton);
+    result = yr_arena_create(65536, 0, &new_compiler->automaton_arena);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_arena_create(65536, 0, &new_compiler->matches_arena);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_ac_automaton_create(&new_compiler->automaton);
 
   if (result == ERROR_SUCCESS)
   {
@@ -121,10 +135,13 @@ YR_API void yr_compiler_destroy(
   yr_arena_destroy(compiler->strings_arena);
   yr_arena_destroy(compiler->code_arena);
   yr_arena_destroy(compiler->re_code_arena);
-  yr_arena_destroy(compiler->automaton_arena);
   yr_arena_destroy(compiler->externals_arena);
   yr_arena_destroy(compiler->namespaces_arena);
   yr_arena_destroy(compiler->metas_arena);
+  yr_arena_destroy(compiler->automaton_arena);
+  yr_arena_destroy(compiler->matches_arena);
+
+    yr_ac_automaton_destroy(compiler->automaton);
 
   yr_hash_table_destroy(
       compiler->rules_table,
@@ -374,13 +391,15 @@ YR_API int yr_compiler_add_string(
   }
 }
 
+
 int _yr_compiler_compile_rules(
   YR_COMPILER* compiler)
 {
   YARA_RULES_FILE_HEADER* rules_file_header = NULL;
-  YR_ARENA* arena;
+  YR_ARENA* arena = NULL;
   YR_RULE null_rule;
   YR_EXTERNAL_VARIABLE null_external;
+  YR_AC_TABLES tables;
 
   int8_t halt = OP_HALT;
   int result;
@@ -412,10 +431,11 @@ int _yr_compiler_compile_rules(
       sizeof(YR_EXTERNAL_VARIABLE),
       NULL);
 
-  // Create Aho-Corasick automaton's failure links.
-  result = yr_ac_create_failure_links(
+  // Write Aho-Corasick automaton to arena.
+  result = yr_ac_compile(
+      compiler->automaton,
       compiler->automaton_arena,
-      compiler->automaton);
+      &tables);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(1024, 0, &arena);
@@ -428,7 +448,8 @@ int _yr_compiler_compile_rules(
         offsetof(YARA_RULES_FILE_HEADER, rules_list_head),
         offsetof(YARA_RULES_FILE_HEADER, externals_list_head),
         offsetof(YARA_RULES_FILE_HEADER, code_start),
-        offsetof(YARA_RULES_FILE_HEADER, automaton),
+        offsetof(YARA_RULES_FILE_HEADER, match_table),
+        offsetof(YARA_RULES_FILE_HEADER, transition_table),
         EOL);
 
   if (result == ERROR_SUCCESS)
@@ -442,18 +463,12 @@ int _yr_compiler_compile_rules(
     rules_file_header->code_start = (uint8_t*) yr_arena_base_address(
         compiler->code_arena);
 
-    rules_file_header->automaton = (YR_AC_AUTOMATON*) yr_arena_base_address(
-        compiler->automaton_arena);
+    rules_file_header->match_table = tables.matches;
+    rules_file_header->transition_table = tables.transitions;
   }
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_append(
-        arena,
-        compiler->automaton_arena);
-
-  if (result == ERROR_SUCCESS)
   {
-    compiler->automaton_arena = NULL;
     result = yr_arena_append(
         arena,
         compiler->code_arena);
@@ -518,8 +533,28 @@ int _yr_compiler_compile_rules(
   if (result == ERROR_SUCCESS)
   {
     compiler->sz_arena = NULL;
+    result = yr_arena_append(
+        arena,
+        compiler->automaton_arena);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    compiler->automaton_arena = NULL;
+    result = yr_arena_append(
+        arena,
+        compiler->matches_arena);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    compiler->matches_arena = NULL;
     compiler->compiled_rules_arena = arena;
     result = yr_arena_coalesce(arena);
+  }
+  else
+  {
+    yr_arena_destroy(arena);
   }
 
   return result;
@@ -552,15 +587,16 @@ YR_API int yr_compiler_get_rules(
 
   yara_rules->externals_list_head = rules_file_header->externals_list_head;
   yara_rules->rules_list_head = rules_file_header->rules_list_head;
-  yara_rules->automaton = rules_file_header->automaton;
+  yara_rules->match_table = rules_file_header->match_table;
+  yara_rules->transition_table = rules_file_header->transition_table;
   yara_rules->code_start = rules_file_header->code_start;
   yara_rules->tidx_mask = 0;
 
-  #if _WIN32 || __CYGWIN__
-  yara_rules->mutex = CreateMutex(NULL, FALSE, NULL);
-  #else
-  pthread_mutex_init(&yara_rules->mutex, NULL);
-  #endif
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_mutex_create(&yara_rules->mutex),
+      // cleanup
+      yr_arena_destroy(yara_rules->arena);
+      yr_free(yara_rules));
 
   *rules = yara_rules;
 
@@ -615,10 +651,40 @@ YR_API int yr_compiler_define_boolean_variable(
     const char* identifier,
     int value)
 {
-  return yr_compiler_define_integer_variable(
-      compiler,
+  YR_EXTERNAL_VARIABLE* external;
+  YR_OBJECT* object;
+
+  char* id;
+
+  compiler->last_result = ERROR_SUCCESS;
+
+  FAIL_ON_COMPILER_ERROR(yr_arena_write_string(
+      compiler->sz_arena,
       identifier,
-      value);
+      &id));
+
+  FAIL_ON_COMPILER_ERROR(yr_arena_allocate_struct(
+      compiler->externals_arena,
+      sizeof(YR_EXTERNAL_VARIABLE),
+      (void**) &external,
+      offsetof(YR_EXTERNAL_VARIABLE, identifier),
+      EOL));
+
+  external->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
+  external->identifier = id;
+  external->value.i = value;
+
+  FAIL_ON_COMPILER_ERROR(yr_object_from_external_variable(
+      external,
+      &object));
+
+  FAIL_ON_COMPILER_ERROR(yr_hash_table_add(
+      compiler->objects_table,
+      external->identifier,
+      NULL,
+      (void*) object));
+
+  return ERROR_SUCCESS;
 }
 
 

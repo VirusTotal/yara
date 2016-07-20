@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2007-2013. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -22,25 +35,25 @@ limitations under the License.
 #include <yara/error.h>
 #include <yara/proc.h>
 
-int yr_process_get_memory(
-    int pid,
-    YR_MEMORY_BLOCK** first_block)
+// Windows
+
+typedef struct _YR_PROC_ITERATOR_CTX
 {
-  PVOID address;
-  SIZE_T read;
+  HANDLE          hProcess;
+  uint8_t*        buffer;
+  size_t          buffer_size;
+  SYSTEM_INFO     si;
+  YR_MEMORY_BLOCK current_block;
 
-  unsigned char* data;
-  int result = ERROR_SUCCESS;
+} YR_PROC_ITERATOR_CTX;
 
-  SYSTEM_INFO si;
-  MEMORY_BASIC_INFORMATION mbi;
 
-  YR_MEMORY_BLOCK* new_block;
-  YR_MEMORY_BLOCK* current_block = NULL;
-
+int _yr_process_attach(
+    int pid,
+    YR_PROC_ITERATOR_CTX* context)
+{
   TOKEN_PRIVILEGES tokenPriv;
   LUID luidDebug;
-  HANDLE hProcess = NULL;
   HANDLE hToken = NULL;
 
   if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken) &&
@@ -59,83 +72,105 @@ int yr_process_get_memory(
         NULL);
   }
 
-  hProcess = OpenProcess(
+  if (hToken != NULL)
+    CloseHandle(hToken);
+
+  context->hProcess = OpenProcess(
       PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
       FALSE,
       pid);
 
-  *first_block = NULL;
-
-  if (hProcess == NULL)
-  {
-    if (hToken != NULL)
-      CloseHandle(hToken);
-
+  if (context->hProcess == NULL)
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+
+  GetSystemInfo(&context->si);
+
+  return ERROR_SUCCESS;
+}
+
+
+int _yr_process_detach(
+    YR_PROC_ITERATOR_CTX* context)
+{
+  CloseHandle(context->hProcess);
+  return ERROR_SUCCESS;
+}
+
+
+uint8_t* _yr_fetch_block_data(
+    YR_MEMORY_BLOCK* block)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
+  SIZE_T read;
+
+  if (context->buffer_size < block->size)
+  {
+    if (context->buffer != NULL)
+      yr_free(context->buffer);
+
+    context->buffer = (uint8_t*) yr_malloc(block->size);
+
+    if (context->buffer != NULL)
+    {
+      context->buffer_size = block->size;
+    }
+    else
+    {
+      context->buffer_size = 0;
+      return NULL;
+    }
   }
 
-  GetSystemInfo(&si);
+  if (ReadProcessMemory(
+        context->hProcess,
+        (LPCVOID) block->base,
+        context->buffer,
+        (SIZE_T) block->size,
+        &read) == FALSE)
+    {
+      return NULL;
+    }
 
-  address = si.lpMinimumApplicationAddress;
+  return context->buffer;
+}
 
-  while (address < si.lpMaximumApplicationAddress &&
-         VirtualQueryEx(hProcess, address, &mbi, sizeof(mbi)) != 0)
+
+YR_MEMORY_BLOCK* _yr_get_next_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+
+  MEMORY_BASIC_INFORMATION mbi;
+  PVOID address = (PVOID) (context->current_block.base + \
+	                       context->current_block.size);
+
+  while (address < context->si.lpMaximumApplicationAddress &&
+    VirtualQueryEx(context->hProcess, address, &mbi, sizeof(mbi)) != 0)
   {
     if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
     {
-      data = (unsigned char*) yr_malloc(mbi.RegionSize);
+      context->current_block.base = (size_t) mbi.BaseAddress;
+      context->current_block.size = mbi.RegionSize;
 
-      if (data == NULL)
-      {
-        result = ERROR_INSUFICIENT_MEMORY;
-        break;
-      }
-
-      if (ReadProcessMemory(
-              hProcess,
-              mbi.BaseAddress,
-              data,
-              mbi.RegionSize,
-              &read))
-      {
-        new_block = (YR_MEMORY_BLOCK*) yr_malloc(sizeof(YR_MEMORY_BLOCK));
-
-        if (new_block == NULL)
-        {
-          yr_free(data);
-          result = ERROR_INSUFICIENT_MEMORY;
-          break;
-        }
-
-        if (*first_block == NULL)
-          *first_block = new_block;
-
-        new_block->base = (size_t) mbi.BaseAddress;
-        new_block->size = mbi.RegionSize;
-        new_block->data = data;
-        new_block->next = NULL;
-
-        if (current_block != NULL)
-          current_block->next = new_block;
-
-        current_block = new_block;
-      }
-      else
-      {
-        yr_free(data);
-      }
+      return &context->current_block;
     }
 
-    address = (PVOID)((ULONG_PTR) mbi.BaseAddress + mbi.RegionSize);
+    address = (uint8_t*) address + mbi.RegionSize;
   }
 
-  if (hToken != NULL)
-    CloseHandle(hToken);
+  return NULL;
+}
 
-  if (hProcess != NULL)
-    CloseHandle(hProcess);
 
-  return result;
+YR_MEMORY_BLOCK* _yr_get_first_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+
+  context->current_block.base = (size_t) context->si.lpMinimumApplicationAddress;
+  context->current_block.size = 0;
+
+  return _yr_get_next_block(iterator);
 }
 
 #else
@@ -169,35 +204,97 @@ int yr_process_get_memory(
 #include <mach/vm_region.h>
 #include <mach/vm_statistics.h>
 
-int yr_process_get_memory(
-    pid_t pid,
-    YR_MEMORY_BLOCK** first_block)
+// Mac OS X
+
+typedef struct _YR_PROC_ITERATOR_CTX {
+
+  task_t            task;
+  uint8_t*          buffer;
+  size_t            buffer_size;
+  YR_MEMORY_BLOCK   current_block;
+
+} YR_PROC_ITERATOR_CTX;
+
+
+int _yr_process_attach(
+    int pid,
+    YR_PROC_ITERATOR_CTX* context)
 {
-  task_t task;
-  kern_return_t kr;
+  kern_return_t kr = task_for_pid(mach_task_self(), pid, &context->task);
 
-  vm_size_t size = 0;
-  vm_address_t address = 0;
-  vm_region_basic_info_data_64_t info;
-  mach_msg_type_number_t info_count;
-  mach_port_t object;
-
-  unsigned char* data;
-
-  YR_MEMORY_BLOCK* new_block;
-  YR_MEMORY_BLOCK* current_block = NULL;
-
-  *first_block = NULL;
-
-  if ((kr = task_for_pid(mach_task_self(), pid, &task)) != KERN_SUCCESS)
+  if (kr != KERN_SUCCESS)
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
 
-  do {
+  return ERROR_SUCCESS;
+}
 
+
+int _yr_process_detach(
+    YR_PROC_ITERATOR_CTX* context)
+{
+  if (context->task != MACH_PORT_NULL)
+    mach_port_deallocate(mach_task_self(), context->task);
+
+  return ERROR_SUCCESS;
+}
+
+
+uint8_t* _yr_fetch_block_data(
+    YR_MEMORY_BLOCK* block)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
+  vm_size_t size = block->size;
+
+  if (context->buffer_size < block->size)
+  {
+    if (context->buffer != NULL)
+      yr_free(context->buffer);
+
+    context->buffer = yr_malloc(block->size);
+
+    if (context->buffer != NULL)
+    {
+      context->buffer_size = block->size;
+    }
+    else
+    {
+      context->buffer_size = 0;
+      return NULL;
+    }
+  }
+
+  if (vm_read_overwrite(
+      context->task,
+      block->base,
+      block->size,
+      (vm_address_t) context->buffer,
+      &size) != KERN_SUCCESS)
+  {
+    return NULL;
+  }
+
+  return context->buffer;
+}
+
+
+YR_MEMORY_BLOCK* _yr_get_next_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+
+  kern_return_t kr;
+  mach_msg_type_number_t info_count;
+  mach_port_t object;
+  vm_region_basic_info_data_64_t info;
+  vm_size_t size = 0;
+  vm_address_t address = context->current_block.base \
+                       + context->current_block.size;
+  do
+  {
     info_count = VM_REGION_BASIC_INFO_COUNT_64;
 
     kr = vm_region_64(
-        task,
+        context->task,
         &address,
         &size,
         VM_REGION_BASIC_INFO,
@@ -207,174 +304,219 @@ int yr_process_get_memory(
 
     if (kr == KERN_SUCCESS)
     {
-      data = (unsigned char*) yr_malloc(size);
+      context->current_block.base = address;
+      context->current_block.size = size;
 
-      if (data == NULL)
-        return ERROR_INSUFICIENT_MEMORY;
-
-      if (vm_read_overwrite(
-              task,
-              address,
-              size,
-              (vm_address_t)
-              data,
-              &size) == KERN_SUCCESS)
-      {
-        new_block = (YR_MEMORY_BLOCK*) yr_malloc(sizeof(YR_MEMORY_BLOCK));
-
-        if (new_block == NULL)
-        {
-          yr_free(data);
-          return ERROR_INSUFICIENT_MEMORY;
-        }
-
-        if (*first_block == NULL)
-          *first_block = new_block;
-
-        new_block->base = address;
-        new_block->size = size;
-        new_block->data = data;
-        new_block->next = NULL;
-
-        if (current_block != NULL)
-          current_block->next = new_block;
-
-        current_block = new_block;
-      }
-      else
-      {
-        yr_free(data);
-      }
-
-      address += size;
+      return &context->current_block;
     }
-
 
   } while (kr != KERN_INVALID_ADDRESS);
 
-  if (task != MACH_PORT_NULL)
-    mach_port_deallocate(mach_task_self(), task);
-
-  return ERROR_SUCCESS;
+  return NULL;
 }
+
+
+YR_MEMORY_BLOCK* _yr_get_first_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+
+  context->current_block.base = 0;
+  context->current_block.size = 0;
+
+  return _yr_get_next_block(iterator);
+}
+
 
 #else
 
 #include <errno.h>
 
-int yr_process_get_memory(
-    pid_t pid,
-    YR_MEMORY_BLOCK** first_block)
+// Linux
+
+
+typedef struct _YR_PROC_ITERATOR_CTX {
+
+  int             pid;
+  int             mem_fd;
+  FILE*           maps;
+  uint8_t*        buffer;
+  size_t          buffer_size;
+  YR_MEMORY_BLOCK current_block;
+
+} YR_PROC_ITERATOR_CTX;
+
+
+
+int _yr_process_attach(
+    int pid,
+    YR_PROC_ITERATOR_CTX* context)
 {
   char buffer[256];
-  unsigned char* data = NULL;
-  size_t begin, end, length;
 
-  YR_MEMORY_BLOCK* new_block;
-  YR_MEMORY_BLOCK* current_block = NULL;
-
-  FILE *maps = NULL;
-
-  int mem = -1;
-  int result;
-  int attached = 0;
-
-  *first_block = NULL;
+  context->pid = pid;
+  context->maps = NULL;
+  context->mem_fd = -1;
 
   snprintf(buffer, sizeof(buffer), "/proc/%u/maps", pid);
+  context->maps = fopen(buffer, "r");
 
-  maps = fopen(buffer, "r");
-
-  if (maps == NULL)
-  {
-    result = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-    goto _exit;
-  }
+  if (context->maps == NULL)
+    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
 
   snprintf(buffer, sizeof(buffer), "/proc/%u/mem", pid);
+  context->mem_fd = open(buffer, O_RDONLY);
 
-  mem = open(buffer, O_RDONLY);
-
-  if (mem == -1)
+  if (context->mem_fd == -1)
   {
-    result = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-    goto _exit;
+    fclose(context->maps);
+    context->maps = NULL;
+
+    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
   }
 
-  if (ptrace(PTRACE_ATTACH, pid, NULL, 0) != -1)
+  if (ptrace(PTRACE_ATTACH, pid, NULL, 0) == -1)
   {
-    attached = 1;
+    fclose(context->maps);
+    context->maps = NULL;
+
+    close(context->mem_fd);
+    context->mem_fd = -1;
+
+    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
   }
-  else
+
+  return ERROR_SUCCESS;
+}
+
+
+int _yr_process_detach(
+    YR_PROC_ITERATOR_CTX* context)
+{
+  fclose(context->maps);
+  close(context->mem_fd);
+  ptrace(PTRACE_DETACH, context->pid, NULL, 0);
+
+  return ERROR_SUCCESS;
+}
+
+
+uint8_t* _yr_fetch_block_data(
+    YR_MEMORY_BLOCK* block)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
+
+  if (context->buffer_size < block->size)
   {
-    result = ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-    goto _exit;
-  }
+    if (context->buffer != NULL)
+      yr_free(context->buffer);
 
-  wait(NULL);
+    context->buffer = yr_malloc(block->size);
 
-  while (fgets(buffer, sizeof(buffer), maps) != NULL)
-  {
-    sscanf(buffer, "%zx-%zx", &begin, &end);
-
-    length = end - begin;
-
-    data = yr_malloc(length);
-
-    if (data == NULL)
+    if (context->buffer != NULL)
     {
-      result = ERROR_INSUFICIENT_MEMORY;
-      goto _exit;
-    }
-
-    if (pread(mem, data, length, begin) != -1)
-    {
-      new_block = (YR_MEMORY_BLOCK*) yr_malloc(sizeof(YR_MEMORY_BLOCK));
-
-      if (new_block == NULL)
-      {
-        result = ERROR_INSUFICIENT_MEMORY;
-        goto _exit;
-      }
-
-      if (*first_block == NULL)
-        *first_block = new_block;
-
-      new_block->base = begin;
-      new_block->size = length;
-      new_block->data = data;
-      new_block->next = NULL;
-
-      if (current_block != NULL)
-        current_block->next = new_block;
-
-      current_block = new_block;
+      context->buffer_size = block->size;
     }
     else
     {
-      yr_free(data);
-      data = NULL;
+      context->buffer_size = 0;
+      return NULL;
     }
   }
 
-  result = ERROR_SUCCESS;
+  if (pread(context->mem_fd,
+            context->buffer,
+            block->size,
+            block->base) == -1)
+  {
+    return NULL;
+  }
 
-_exit:
-
-  if (attached)
-    ptrace(PTRACE_DETACH, pid, NULL, 0);
-
-  if (mem != -1)
-    close(mem);
-
-  if (maps != NULL)
-    fclose(maps);
-
-  if (data != NULL)
-    yr_free(data);
-
-  return result;
+  return context->buffer;
 }
 
+
+YR_MEMORY_BLOCK* _yr_get_next_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+
+  char buffer[256];
+  size_t begin, end;
+
+  if (fgets(buffer, sizeof(buffer), context->maps) != NULL)
+  {
+    sscanf(buffer, "%zx-%zx", &begin, &end);
+
+    context->current_block.base = begin;
+    context->current_block.size = end - begin;
+
+    return &context->current_block;
+  }
+
+  return NULL;
+}
+
+
+YR_MEMORY_BLOCK* _yr_get_first_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+
+  if (fseek(context->maps, 0, SEEK_SET) != 0)
+    return NULL;
+
+  return _yr_get_next_block(iterator);
+}
+
+
 #endif
 #endif
+
+
+
+int yr_process_open_iterator(
+    int pid,
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) \
+      yr_malloc(sizeof(YR_PROC_ITERATOR_CTX));
+
+  if (context == NULL)
+    return ERROR_INSUFICIENT_MEMORY;
+
+  iterator->context = context;
+  iterator->first = _yr_get_first_block;
+  iterator->next = _yr_get_next_block;
+
+  context->buffer = NULL;
+  context->buffer_size = 0;
+
+  context->current_block.base = 0;
+  context->current_block.size = 0;
+  context->current_block.context = context;
+  context->current_block.fetch_data = _yr_fetch_block_data;
+
+  return _yr_process_attach(pid, context);
+}
+
+
+int yr_process_close_iterator(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+
+  if (context != NULL)
+  {
+    _yr_process_detach(context);
+
+    if (context->buffer != NULL)
+      yr_free(context->buffer);
+
+    yr_free(context);
+
+    iterator->context = NULL;
+  }
+
+  return ERROR_SUCCESS;
+}

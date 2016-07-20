@@ -1,5 +1,5 @@
-[![Join the chat at https://gitter.im/plusvic/yara](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/plusvic/yara?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/plusvic/yara.svg)](https://travis-ci.org/plusvic/yara)
+[![Join the chat at https://gitter.im/VirusTotal/yara](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/VirusTotal/yara?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status](https://travis-ci.org/VirusTotal/yara.svg)](https://travis-ci.org/VirusTotal/yara)
 
 
 ## YARA in a nutshell
@@ -51,6 +51,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Blue Coat](http://www.bluecoat.com/products/malware-analysis-appliance)
 * [Blueliv](http://www.blueliv.com)
 * [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
+* [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
 * [Fidelis XPS](http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
 * [FireEye, Inc.](http://www.fireeye.com)
 * [Fox-IT](https://www.fox-it.com)

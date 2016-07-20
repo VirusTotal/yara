@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2007-2013. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /* Lexical analyzer for YARA */
@@ -34,11 +47,10 @@ with noyywrap then we can remove this pragma.
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 #include <setjmp.h>
 
-
+#include <yara/integers.h>
 #include <yara/lexer.h>
 #include <yara/sizedstr.h>
 #include <yara/error.h>
@@ -76,7 +88,7 @@ with noyywrap then we can remove this pragma.
   } \
   else \
   { \
-    str->length = (str_len); \
+    str->length = (uint32_t) (str_len); \
     str->flags = 0; \
   } \
 
@@ -171,7 +183,9 @@ include[ \t]+\"         {
   char            buffer[1024];
   char            *current_file_name;
   char            *s = NULL;
+  #ifdef _WIN32
   char            *b = NULL;
+  #endif
   char            *f;
   FILE*           fh;
 
@@ -198,9 +212,17 @@ include[ \t]+\"         {
     b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
     #endif
 
+    #ifdef _WIN32
     if (s != NULL || b != NULL)
+    #else
+    if (s != NULL)
+    #endif
     {
+      #ifdef _WIN32
       f = (b > s)? (b + 1): (s + 1);
+      #else
+      f = s + 1;
+      #endif
 
       strlcpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
 
@@ -591,7 +613,9 @@ u?int(8|16|32)(be)? {
 }
 
 
-\{({hexdigit}|[ \-|\?\[\]\(\)\n\t])+\}  {
+\{(({hexdigit}|[ \-|\?\[\]\(\)\n\t]|\/\*[^*]*\*\/)+|\/\/.*)+\}  {
+  // Match hex-digits with whitespace or comments. The latter are stripped
+  // out by hex_lexer.l
 
   ALLOC_SIZED_STRING(s, strlen(yytext));
 
@@ -629,12 +653,12 @@ void yywarning(
 
   char* file_name;
   char message[512];
-  
   va_list message_args;
-  va_start(message_args, message_fmt);
 
   if (compiler->callback == NULL)
     return;
+
+  va_start(message_args, message_fmt);
 
   if (compiler->file_name_stack_ptr > 0)
     file_name = compiler->file_name_stack[compiler->file_name_stack_ptr - 1];
@@ -649,6 +673,8 @@ void yywarning(
       yyget_lineno(yyscanner),
       message,
       compiler->user_data);
+
+  va_end(message_args);
 }
 
 
@@ -744,12 +770,12 @@ int yr_lex_parse_rules_string(
 
   yylex_init(&yyscanner);
 
-  yyset_debug(1, yyscanner);
+  #if YYDEBUG
+  yydebug = 1;
+  #endif
 
   yyset_extra(compiler, yyscanner);
-
   yy_scan_string(rules_string, yyscanner);
-
   yyset_lineno(1, yyscanner);
   yyparse(yyscanner, compiler);
   yylex_destroy(yyscanner);
@@ -772,10 +798,8 @@ int yr_lex_parse_rules_file(
   yylex_init(&yyscanner);
 
   #if YYDEBUG
-  printf("debug enabled");
+  yydebug = 1;
   #endif
-
-  yyset_debug(1, yyscanner);
 
   yyset_in(rules_file, yyscanner);
   yyset_extra(compiler, yyscanner);

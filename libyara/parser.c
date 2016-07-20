@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <stddef.h>
@@ -102,7 +115,7 @@ int yr_parser_emit_with_arg_reloc(
     uint8_t** instruction_address,
     int64_t** argument_address)
 {
-  int64_t* ptr;
+  int64_t* ptr = NULL;
 
   int result = yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
@@ -282,7 +295,6 @@ int _yr_parser_write_string(
     int* min_atom_quality)
 {
   SIZED_STRING* literal_string;
-  YR_AC_MATCH* new_match;
   YR_ATOM_LIST_ITEM* atom_list = NULL;
 
   int result;
@@ -381,37 +393,11 @@ int _yr_parser_write_string(
   if (result == ERROR_SUCCESS)
   {
     // Add the string to Aho-Corasick automaton.
-
-    if (atom_list != NULL)
-    {
-      result = yr_ac_add_string(
-          compiler->automaton_arena,
-          compiler->automaton,
-          *string,
-          atom_list);
-    }
-    else
-    {
-      result = yr_arena_allocate_struct(
-          compiler->automaton_arena,
-          sizeof(YR_AC_MATCH),
-          (void**) &new_match,
-          offsetof(YR_AC_MATCH, string),
-          offsetof(YR_AC_MATCH, forward_code),
-          offsetof(YR_AC_MATCH, backward_code),
-          offsetof(YR_AC_MATCH, next),
-          EOL);
-
-      if (result == ERROR_SUCCESS)
-      {
-        new_match->backtrack = 0;
-        new_match->string = *string;
-        new_match->forward_code = re->root_node->forward_code;
-        new_match->backward_code = NULL;
-        new_match->next = compiler->automaton->root->matches;
-        compiler->automaton->root->matches = new_match;
-      }
-    }
+    result = yr_ac_add_string(
+        compiler->automaton,
+        *string,
+        atom_list,
+        compiler->matches_arena);
   }
 
   *min_atom_quality = yr_atoms_min_quality(atom_list);
@@ -436,8 +422,9 @@ int _yr_parser_write_string(
   return result;
 }
 
-#include <stdint.h>
 #include <limits.h>
+
+#include <yara/integers.h>
 
 
 YR_STRING* yr_parser_reduce_string_declaration(
@@ -461,7 +448,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
   YR_STRING* prev_string;
 
   RE* re = NULL;
-  RE* remainder_re;
+  RE* remainder_re = NULL;
 
   RE_ERROR re_error;
 
@@ -574,8 +561,8 @@ YR_STRING* yr_parser_reduce_string_declaration(
     if (yr_re_contains_dot_star(re))
     {
       yywarning(
-          yyscanner, 
-          "%s contains .*, consider using .{N} with a reasonable value for N", 
+          yyscanner,
+          "%s contains .*, consider using .{N} with a reasonable value for N",
           identifier);
     }
 
@@ -611,7 +598,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
     while (remainder_re != NULL)
     {
-      // Destroy regexp pointed by 're' before yr_re_split_at_jmp
+      // Destroy regexp pointed by 're' before yr_re_split_at_chaining_point
       // overwrites 're' with another value.
 
       yr_re_destroy(re);
@@ -676,13 +663,13 @@ YR_STRING* yr_parser_reduce_string_declaration(
       string);
 
     if (compiler->last_result != ERROR_SUCCESS)
-      goto _exit;  
+      goto _exit;
   }
 
   if (min_atom_quality < 3 && compiler->callback != NULL)
   {
     yywarning(
-        yyscanner, 
+        yyscanner,
         "%s is slowing down scanning%s",
         string->identifier,
         min_atom_quality < 2 ? " (critical!)" : "");
@@ -692,6 +679,9 @@ _exit:
 
   if (re != NULL)
     yr_re_destroy(re);
+
+  if (remainder_re != NULL)
+    yr_re_destroy(remainder_re);
 
   if (compiler->last_result != ERROR_SUCCESS)
     return NULL;
