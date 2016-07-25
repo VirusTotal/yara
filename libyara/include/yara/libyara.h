@@ -33,11 +33,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/utils.h>
 
 #define YR_MAJOR_VERSION   3
-#define YR_MINOR_VERSION   4
+#define YR_MINOR_VERSION   5
 #define YR_MICRO_VERSION   0
 
 // Version as a string
-#define YR_VERSION         "3.4.0"
+#define YR_VERSION         "3.5.0"
 
 
 // Version as a single 4-byte hex number, e.g. 0x030401 == 3.4.1.
