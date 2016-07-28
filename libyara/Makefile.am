@@ -56,6 +56,7 @@ yarainclude_HEADERS = \
   include/yara/strutils.h \
   include/yara/stream.h \
   include/yara/threading.h \
+  include/yara/integers.h \
   include/yara/libyara.h
 
 lib_LTLIBRARIES = libyara.la
