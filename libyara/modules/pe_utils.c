@@ -2,6 +2,7 @@
 
 #if !HAVE_TIMEGM
 
+#include <stdio.h>
 #include <time.h>
 
 #include <yara/integers.h>
