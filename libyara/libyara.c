@@ -42,7 +42,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)
+#if !defined(_MSC_VER) || (defined(_MSC_VER) && (_MSC_VER < 1900))
 #define snprintf _snprintf
+#endif
 #endif
 
 
