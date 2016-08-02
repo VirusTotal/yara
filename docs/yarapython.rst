@@ -227,7 +227,7 @@ Here is an example:
 
   def modules_callback(data):
     print data
-    yara.CALLBACK_CONTINUE
+    return yara.CALLBACK_CONTINUE
 
   matches = rules.match('/foo/bar/my_file', modules_callback=modules_callback)
 
