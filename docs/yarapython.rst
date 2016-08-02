@@ -186,7 +186,7 @@ Here is an example:
 
   def mycallback(data):
     print data
-    yara.CALLBACK_CONTINUE
+    return yara.CALLBACK_CONTINUE
 
   matches = rules.match('/foo/bar/my_file', callback=mycallback)
 
@@ -314,11 +314,3 @@ Reference
     :param str filepath: Path to the file.
     :param file-object file: A file object supporting the ``write`` method.
     :raises: **YaraError**: If an error occurred while saving the file.
-
-
-
-
-
-
-
-
