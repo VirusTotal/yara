@@ -82,6 +82,13 @@ AC_ARG_ENABLE([magic],
     CFLAGS="$CFLAGS -DMAGIC_MODULE"
   fi])
 
+AC_ARG_ENABLE([dotnet],
+  [AS_HELP_STRING([--enable-dotnet], [enable dotnet module])],
+  [if test x$enableval = xyes; then
+    build_dotnet_module=true
+    CFLAGS="$CFLAGS -DDOTNET_MODULE"
+  fi])
+
 AC_ARG_WITH([crypto],
   AS_HELP_STRING([--without-crypto],
     [ignore presence of OpenSSL and disable it]))
@@ -123,6 +130,7 @@ AS_IF([test "x$have_crypto" = "xno"],
 AM_CONDITIONAL([CUCKOO_MODULE], [test x$build_cuckoo_module = xtrue])
 AM_CONDITIONAL([MAGIC_MODULE], [test x$build_magic_module = xtrue])
 AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
+AM_CONDITIONAL([DOTNET_MODULE], [test x$build_dotnet_module = xtrue])
 AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
 
 AC_CONFIG_FILES([Makefile])
