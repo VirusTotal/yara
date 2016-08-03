@@ -3,6 +3,7 @@ MODULES =  modules/tests.c
 MODULES += modules/pe.c
 MODULES += modules/elf.c
 MODULES += modules/math.c
+MODULES += modules/dotnet.c
 
 if CUCKOO_MODULE
 MODULES += modules/cuckoo.c
@@ -15,6 +16,9 @@ endif
 if HASH_MODULE
 MODULES += modules/hash.c
 endif
+
+# This isn't really a module, but needs to be compiled with them.
+MODULES += modules/pe_utils.c
 
 #
 # Add your modules here:

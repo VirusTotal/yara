@@ -2,6 +2,7 @@ MODULE(tests)
 MODULE(pe)
 MODULE(elf)
 MODULE(math)
+MODULE(dotnet)
 
 #ifdef CUCKOO_MODULE
 MODULE(cuckoo)
