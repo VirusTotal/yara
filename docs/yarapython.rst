@@ -129,7 +129,7 @@ The saved rules can be loaded from the memory buffer:
 The result of ``load`` is also an instance of the class :py:class:`yara.Rules`.
 
 Instances of ``Rules`` also have a ``match`` method, which allows to apply the
-rules to a file::
+rules to a file:
 
 .. code-block:: python
 
@@ -314,11 +314,3 @@ Reference
     :param str filepath: Path to the file.
     :param file-object file: A file object supporting the ``write`` method.
     :raises: **YaraError**: If an error occurred while saving the file.
-
-
-
-
-
-
-
-
