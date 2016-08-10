@@ -1159,6 +1159,9 @@ void pe_parse_header(
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
   int i, scount;
+  uint64_t highest_sec_siz = 0;
+  uint64_t highest_sec_ofs = 0;
+  uint64_t last_section_end;
 
   set_integer(
       pe->header->FileHeader.Machine,
@@ -1262,40 +1265,19 @@ void pe_parse_header(
         section->Misc.VirtualSize,
         pe->object, "sections[%i].virtual_size", i);
 
-    section++;
-  }
-}
-
-//
-// An overlay is data appended to a PE file. Its location is RawData + RawOffset of the last section.
-// but we cannot trust in section ordering so we use the section with the highest offset.
-//
-
-void pe_parse_overlay(PE *pe)
-{
-  PIMAGE_SECTION_HEADER section;
-  uint64_t scount;
-  uint64_t highest_sec_siz = 0;
-  uint64_t highest_sec_ofs = 0;
-  uint64_t last_section_end;
-  uint64_t i;
-
-  section = IMAGE_FIRST_SECTION(pe->header);
-  scount =  yr_min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS);
-
-  for (i = 0; i < scount; i++)
-  {
-    if (section == NULL)
-      return;
-
+    // This will catch the section with the highest raw offset to help checking
+    // if overlay data is present
     if (section->PointerToRawData > highest_sec_ofs)
     {
       highest_sec_ofs = section->PointerToRawData;
       highest_sec_siz = section->SizeOfRawData;
     }
+
     section++;
   }
 
+  // An overlay is data appended to a PE file. Its location is RawData + RawOffset of the last
+  // section on the physical file
   last_section_end = highest_sec_siz + highest_sec_ofs;
 
   // This way "overlay" is set to UNDEFINED for files that do not have an overlay section
@@ -2366,7 +2348,6 @@ int module_load(
         #endif
 
         pe->imported_dlls = pe_parse_imports(pe);
-        pe_parse_overlay(pe);
 
         break;
       }
