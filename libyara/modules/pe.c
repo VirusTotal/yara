@@ -1301,8 +1301,8 @@ void pe_parse_overlay(PE *pe)
   // This way "overlay" is set to UNDEFINED for files that do not have an overlay section
   if (last_section_end && (pe->data_size > last_section_end))
   {
-    set_integer(last_section_end, pe->object, "overlay");
-    set_integer(pe->data_size - last_section_end, pe->object, "overlay_size");
+    set_integer(last_section_end, pe->object, "overlay.offset");
+    set_integer(pe->data_size - last_section_end, pe->object, "overlay.size");
   }
 }
 
@@ -1992,8 +1992,10 @@ begin_declarations;
     declare_integer("raw_data_size");
   end_struct_array("sections");
 
-  declare_integer("overlay");
-  declare_integer("overlay_size");
+  begin_struct("overlay");
+    declare_integer("offset");
+    declare_integer("size");
+  end_struct("overlay");
 
   begin_struct("rich_signature");
     declare_integer("offset");
