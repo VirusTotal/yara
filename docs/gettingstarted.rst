@@ -19,12 +19,12 @@ Download the source tarball and get prepared for compiling it::
 Make sure you have ``automake``, ``libtool``, ``make``  and ``gcc`` installed
 in your system. Ubuntu and Debian users can use::
 
-    sudo apt-get automake libtool make gcc
+    sudo apt-get install automake libtool make gcc
 
 If you plan to modify YARA's source code you may also need ``flex`` and
 ``bison`` for generating lexers and parsers::
 
-   sudo apt-get flex bison
+   sudo apt-get install flex bison
 
 Compile and install YARA in the standard way::
 
