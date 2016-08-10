@@ -1266,6 +1266,42 @@ void pe_parse_header(
   }
 }
 
+//
+// An overlay is data appended to a PE file. Its location is RawData + RawOffset of the last section.
+// but we cannot trust in section ordering so we use the section with the highest offset.
+//
+
+void pe_parse_overlay(PE *pe)
+{
+  PIMAGE_SECTION_HEADER section;
+  uint64_t scount;
+  uint64_t highest_sec_siz = 0;
+  uint64_t highest_sec_ofs = 0;
+  uint64_t last_section_end;
+  uint64_t i;
+
+  section = IMAGE_FIRST_SECTION(pe->header);
+  scount =  yr_min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS);
+
+  for (i = 0; i < scount; i++)
+  {
+    if (section == NULL)
+      return;
+
+    if (section->PointerToRawData > highest_sec_ofs)
+    {
+      highest_sec_ofs = section->PointerToRawData;
+      highest_sec_siz = section->SizeOfRawData;
+    }
+    section++;
+  }
+
+  last_section_end = highest_sec_siz + highest_sec_ofs;
+
+  // This way "overlay" is set to UNDEFINED for files that do not have an overlay section
+  if (last_section_end && (pe->data_size > last_section_end))
+    set_integer(last_section_end, pe->object, "overlay");
+}
 
 //
 // Given a posix timestamp argument, make sure not_before <= arg <= not_after
@@ -1953,6 +1989,8 @@ begin_declarations;
     declare_integer("raw_data_size");
   end_struct_array("sections");
 
+  declare_integer("overlay");
+
   begin_struct("rich_signature");
     declare_integer("offset");
     declare_integer("length");
@@ -2322,6 +2360,7 @@ int module_load(
         #endif
 
         pe->imported_dlls = pe_parse_imports(pe);
+        pe_parse_overlay(pe);
 
         break;
       }
