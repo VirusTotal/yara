@@ -85,7 +85,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_OPCODE_JUMP                  0xC5
 
 
-#define RE_FLAGS_FAST_HEX_REGEXP        0x02
 #define RE_FLAGS_BACKWARDS              0x04
 #define RE_FLAGS_EXHAUSTIVE             0x08
 #define RE_FLAGS_WIDE                   0x10

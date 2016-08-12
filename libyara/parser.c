@@ -534,9 +534,6 @@ YR_STRING* yr_parser_reduce_string_declaration(
       goto _exit;
     }
 
-    if (re->flags & RE_FLAGS_FAST_HEX_REGEXP)
-      string_flags |= STRING_GFLAGS_FAST_HEX_REGEXP;
-
     // Regular expressions in the strings section can't mix greedy and ungreedy
     // quantifiers like .* and .*?. That's because these regular expressions can
     // be matched forwards and/or backwards depending on the atom found, and we

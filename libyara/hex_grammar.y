@@ -137,7 +137,7 @@ tokens
         expect a left-unbalanced tree where the right child of a concat node
         can't be another concat node. A concat node must be always the left
         child of its parent if the parent is also a concat. For this reason
-        the can't simply create two new concat nodes arranged like this:
+        we can't simply create two new concat nodes arranged like this:
 
                 concat
                  /   \
@@ -369,8 +369,6 @@ alternatives
       }
     | alternatives '|' tokens
       {
-        mark_as_not_fast_hex_regexp();
-
         $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
 
         DESTROY_NODE_IF($$ == NULL, $1);

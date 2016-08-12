@@ -61,7 +61,6 @@ typedef int32_t tidx_mask_t;
 #define STRING_GFLAGS_ASCII             0x08
 #define STRING_GFLAGS_WIDE              0x10
 #define STRING_GFLAGS_REGEXP            0x20
-#define STRING_GFLAGS_FAST_HEX_REGEXP   0x40
 #define STRING_GFLAGS_FULL_WORD         0x80
 #define STRING_GFLAGS_ANONYMOUS         0x100
 #define STRING_GFLAGS_SINGLE_MATCH      0x200
@@ -108,9 +107,6 @@ typedef int32_t tidx_mask_t;
 
 #define STRING_IS_LITERAL(x) \
     (((x)->g_flags) & STRING_GFLAGS_LITERAL)
-
-#define STRING_IS_FAST_HEX_REGEXP(x) \
-    (((x)->g_flags) & STRING_GFLAGS_FAST_HEX_REGEXP)
 
 #define STRING_IS_CHAIN_PART(x) \
     (((x)->g_flags) & STRING_GFLAGS_CHAIN_PART)

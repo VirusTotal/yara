@@ -514,7 +514,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 /* Lexical analyzer for hex strings */
-#line 20 "hex_lexer.l"
+#line 33 "hex_lexer.l"
 
 /* Disable warnings for unused functions in this file.
 
@@ -557,7 +557,7 @@ with noyywrap then we can remove this pragma.
 #define YY_NO_INPUT 1
 
 
-#line 548 "hex_lexer.c"
+#line 561 "hex_lexer.c"
 
 #define INITIAL 0
 #define comment 1
@@ -832,11 +832,11 @@ YY_DECL
 		}
 
 	{
-#line 81 "hex_lexer.l"
+#line 94 "hex_lexer.l"
 
 
 
-#line 827 "hex_lexer.c"
+#line 840 "hex_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -903,7 +903,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 84 "hex_lexer.l"
+#line 97 "hex_lexer.l"
 {
 
   yylval->integer = xtoi(yytext);
@@ -912,7 +912,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 90 "hex_lexer.l"
+#line 103 "hex_lexer.l"
 {
 
   yytext[1] = '0'; // replace ? by 0
@@ -922,7 +922,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 97 "hex_lexer.l"
+#line 110 "hex_lexer.l"
 {
 
   yytext[0] = '0'; // replace ? by 0
@@ -932,7 +932,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 104 "hex_lexer.l"
+#line 117 "hex_lexer.l"
 {
 
   yylval->integer = 0x0000;
@@ -941,7 +941,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 110 "hex_lexer.l"
+#line 123 "hex_lexer.l"
 {
 
   BEGIN(range);
@@ -951,24 +951,24 @@ YY_RULE_SETUP
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 116 "hex_lexer.l"
+#line 129 "hex_lexer.l"
 // skip comments
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 118 "hex_lexer.l"
+#line 131 "hex_lexer.l"
 // skip single-line comments
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 120 "hex_lexer.l"
+#line 133 "hex_lexer.l"
 {
   return yytext[0];
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 124 "hex_lexer.l"
+#line 137 "hex_lexer.l"
 {
 
   yylval->integer = atoi(yytext);
@@ -977,7 +977,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 130 "hex_lexer.l"
+#line 143 "hex_lexer.l"
 {
 
   BEGIN(INITIAL);
@@ -987,12 +987,12 @@ YY_RULE_SETUP
 case 11:
 /* rule 11 can match eol */
 YY_RULE_SETUP
-#line 136 "hex_lexer.l"
+#line 149 "hex_lexer.l"
 // skip whitespaces
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 138 "hex_lexer.l"
+#line 151 "hex_lexer.l"
 {
 
   yyerror(yyscanner, lex_env, "invalid character in hex string jump");
@@ -1002,12 +1002,12 @@ YY_RULE_SETUP
 case 13:
 /* rule 13 can match eol */
 YY_RULE_SETUP
-#line 144 "hex_lexer.l"
+#line 157 "hex_lexer.l"
 // skip whitespaces
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 146 "hex_lexer.l"
+#line 159 "hex_lexer.l"
 {        // pass valid characters to the parser
 
   return yytext[0];
@@ -1015,7 +1015,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 151 "hex_lexer.l"
+#line 164 "hex_lexer.l"
 {               // reject all other characters
 
   yyerror(yyscanner, lex_env, "invalid character in hex string");
@@ -1024,10 +1024,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 157 "hex_lexer.l"
+#line 170 "hex_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1018 "hex_lexer.c"
+#line 1031 "hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(comment):
 case YY_STATE_EOF(range):
@@ -2180,7 +2180,7 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 157 "hex_lexer.l"
+#line 170 "hex_lexer.l"
 
 
 
@@ -2239,15 +2239,6 @@ int yr_parse_hex_string(
     return ERROR_INTERNAL_FATAL_ERROR;
 
   FAIL_ON_ERROR(yr_re_create(re));
-
-  // The RE_FLAGS_FAST_HEX_REGEXP flag indicates a regular expression derived
-  // from a hex string that can be matched by faster algorithm. These regular
-  // expressions come from hex strings not contaning alternatives, like in:
-  // { ( 01 02 | 03 04) 05 06 }.
-  //
-  // This flag is unset later during parsing if alternatives are used.
-
-  (*re)->flags |= RE_FLAGS_FAST_HEX_REGEXP;
 
   // Set RE_FLAGS_DOT_ALL because in hex strings the "dot" (?? in this case)
   // must match all characters including new-line.
