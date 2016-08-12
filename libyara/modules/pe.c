@@ -922,6 +922,7 @@ IMPORTED_DLL* pe_parse_imports(
     imports++;
   }
 
+  set_integer(num_imports, pe->object, "number_of_imports");
   return head;
 }
 
@@ -1980,6 +1981,8 @@ begin_declarations;
   declare_function("is_dll", "", "i", is_dll);
   declare_function("is_32bit", "", "i", is_32bit);
   declare_function("is_64bit", "", "i", is_64bit);
+
+  declare_integer("number_of_imports");
 
   declare_integer("resource_timestamp");
 
