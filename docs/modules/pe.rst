@@ -224,6 +224,22 @@ Reference
 
     *Example: pe.sections[1].characteristics & SECTION_CNT_CODE*
 
+.. c:type:: overlay
+
+    .. versionadded:: 3.6.0
+
+    A structure containing the following integer members:
+
+    .. c:member:: offset
+
+        Overlay section offset.
+
+    .. c:member:: size
+
+        Overlay section size.
+
+    *Example: uint8(0x0d) at pe.overlay.offset and pe.overlay.size > 1024*
+
 .. c:type:: number_of_resources
 
     Number of resources in the PE.
