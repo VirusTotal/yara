@@ -1159,6 +1159,9 @@ void pe_parse_header(
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
   int i, scount;
+  uint64_t highest_sec_siz = 0;
+  uint64_t highest_sec_ofs = 0;
+  uint64_t last_section_end;
 
   set_integer(
       pe->header->FileHeader.Machine,
@@ -1262,10 +1265,28 @@ void pe_parse_header(
         section->Misc.VirtualSize,
         pe->object, "sections[%i].virtual_size", i);
 
+    // This will catch the section with the highest raw offset to help checking
+    // if overlay data is present
+    if (section->PointerToRawData > highest_sec_ofs)
+    {
+      highest_sec_ofs = section->PointerToRawData;
+      highest_sec_siz = section->SizeOfRawData;
+    }
+
     section++;
   }
-}
 
+  // An overlay is data appended to a PE file. Its location is RawData + RawOffset of the last
+  // section on the physical file
+  last_section_end = highest_sec_siz + highest_sec_ofs;
+
+  // This way "overlay" is set to UNDEFINED for files that do not have an overlay section
+  if (last_section_end && (pe->data_size > last_section_end))
+  {
+    set_integer(last_section_end, pe->object, "overlay.offset");
+    set_integer(pe->data_size - last_section_end, pe->object, "overlay.size");
+  }
+}
 
 //
 // Given a posix timestamp argument, make sure not_before <= arg <= not_after
@@ -1952,6 +1973,11 @@ begin_declarations;
     declare_integer("raw_data_offset");
     declare_integer("raw_data_size");
   end_struct_array("sections");
+
+  begin_struct("overlay");
+    declare_integer("offset");
+    declare_integer("size");
+  end_struct("overlay");
 
   begin_struct("rich_signature");
     declare_integer("offset");
