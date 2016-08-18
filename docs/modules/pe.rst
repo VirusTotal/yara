@@ -472,6 +472,12 @@ Reference
 
     *Example:  pe.exports("CPlApplet")*
 
+.. c:type:: number_of_imports
+
+    .. versionadded:: 3.6.0
+
+    Number of imports in the PE.
+
 .. c:function:: imports(dll_name, function_name)
 
     Function returning true if the PE imports *function_name* from *dll_name*,
