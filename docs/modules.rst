@@ -18,6 +18,7 @@ the :ref:`writing-modules` section.
    Magic <modules/magic>
    Hash <modules/hash>
    Math <modules/math>
+   Dotnet <modules/dotnet>
 
 
 
