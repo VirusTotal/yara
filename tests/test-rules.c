@@ -463,7 +463,7 @@ static void test_hex_strings()
 
   assert_true_rule(
       "rule test { \
-        strings: $a = { 31 32 [-] // Inline comment\n\
+        strings: $a = { 31 32 [-] // Inline comment\n\r \
           38 39 } \
         condition: $a }",
       "1234567890");
@@ -476,8 +476,14 @@ static void test_hex_strings()
 
   assert_true_rule(
       "rule test { \
-        strings: $a = { 31 32 /* Inline multi-line\n\
+        strings: $a = { 31 32 /* Inline multi-line\n\r \
                                  comment */ [-] 38 39 } \
+        condition: $a }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = {\n 31 32 [-] 38 39 \n\r} \
         condition: $a }",
       "1234567890");
 
