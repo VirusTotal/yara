@@ -970,6 +970,14 @@ int yr_parser_reduce_import(
 
   char* name;
 
+  if (module_name->length == 0)
+  {
+    compiler->last_result = ERROR_UNKNOWN_MODULE;
+    yr_compiler_set_error_extra_info(compiler, "");
+
+    return ERROR_UNKNOWN_MODULE;
+  }
+
   module_structure = (YR_OBJECT*) yr_hash_table_lookup(
       compiler->objects_table,
       module_name->c_string,
