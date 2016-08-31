@@ -1211,7 +1211,6 @@ int yr_re_emit_code(
     emit_flags |= EMIT_DOT_ALL;
 
   emit_context.arena = arena;
-  emit_context.next_split_id = 0;
 
   // Ensure that we have enough contiguous memory space in the arena to
   // contain the regular expression code. The code can't span over multiple
@@ -1222,6 +1221,7 @@ int yr_re_emit_code(
   // Emit code for matching the regular expressions forwards.
 
   total_size = 0;
+  emit_context.next_split_id = 0;
 
   FAIL_ON_ERROR(_yr_re_emit(
       &emit_context,
@@ -1248,6 +1248,7 @@ int yr_re_emit_code(
   // Emit code for matching the regular expressions backwards.
 
   total_size = 0;
+  emit_context.next_split_id = 0;
 
   FAIL_ON_ERROR(_yr_re_emit(
       &emit_context,
