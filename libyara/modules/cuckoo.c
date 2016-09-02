@@ -88,12 +88,13 @@ define_function(network_dns_lookup)
 
   json_array_foreach(dns_info_json, index, value)
   {
-    json_unpack(value, "{s:s, s:s}", "ip", &ip, field_name, &hostname);
-
-    if (yr_re_match(regexp_argument(1), hostname) > 0)
+    if (json_unpack(value, "{s:s, s:s}", "ip", &ip, field_name, &hostname) == 0)
     {
-      result = 1;
-      break;
+      if (yr_re_match(regexp_argument(1), hostname) > 0)
+      {
+        result = 1;
+        break;
+      }
     }
   }
 
@@ -122,14 +123,15 @@ uint64_t http_request(
 
   json_array_foreach(http_json, index, value)
   {
-    json_unpack(value, "{s:s, s:s}", "uri", &uri, "method", &method);
-
-    if (((methods & METHOD_GET && strcasecmp(method, "get") == 0) ||
-         (methods & METHOD_POST && strcasecmp(method, "post") == 0)) &&
-         yr_re_match(uri_regexp, uri) > 0)
+    if (json_unpack(value, "{s:s, s:s}", "uri", &uri, "method", &method) == 0)
     {
-      result = 1;
-      break;
+      if (((methods & METHOD_GET && strcasecmp(method, "get") == 0) ||
+           (methods & METHOD_POST && strcasecmp(method, "post") == 0)) &&
+           yr_re_match(uri_regexp, uri) > 0)
+      {
+        result = 1;
+        break;
+      }
     }
   }
 
