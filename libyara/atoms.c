@@ -89,6 +89,10 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 #include <yara/types.h>
 
 
+#define YR_MAX_ATOM_QUALITY   100000
+#define YR_MIN_ATOM_QUALITY  -100000
+
+
 #define append_current_leaf_to_node(node) \
     if (atom_tree->current_leaf != NULL) \
     { \
@@ -173,10 +177,10 @@ int yr_atoms_min_quality(
   YR_ATOM_LIST_ITEM* atom;
 
   int quality;
-  int min_quality = 100000;
+  int min_quality = YR_MAX_ATOM_QUALITY;
 
   if (atom_list == NULL)
-    return 0;
+    return YR_MIN_ATOM_QUALITY;
 
   atom = atom_list;
 
@@ -351,8 +355,8 @@ int _yr_atoms_choose(
   YR_ATOM_LIST_ITEM* tail;
 
   int i, quality;
-  int max_quality = -10000;
-  int min_quality = 10000;
+  int max_quality = YR_MIN_ATOM_QUALITY;
+  int min_quality = YR_MAX_ATOM_QUALITY;
 
   *choosen_atoms = NULL;
 
@@ -1020,7 +1024,7 @@ int yr_atoms_extract_from_re(
   YR_ATOM_LIST_ITEM* case_insentive_atoms;
   YR_ATOM_LIST_ITEM* triplet_atoms;
 
-  int min_atom_quality = 0;
+  int min_atom_quality = YR_MIN_ATOM_QUALITY;
 
   if (atom_tree == NULL)
     return ERROR_INSUFICIENT_MEMORY;
