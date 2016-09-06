@@ -78,6 +78,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else
 
 #include <stdlib.h>
+#include <limits.h>
 
 #define assertf(expr, msg, ...) \
     if(!(expr)) { \
@@ -86,5 +87,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     }
 
 #endif
+
+// Set, unset, and test bits in an array of unsigned characters by integer
+// index. The underlying array must be of type char or unsigned char to
+// ensure compatibility with the CHAR_BIT constant used in these definitions.
+
+#define YR_BITARRAY_SET(uchar_array_base, bitnum) \
+          (((uchar_array_base)[(bitnum)/CHAR_BIT]) = \
+            ((uchar_array_base)[(bitnum)/CHAR_BIT] | (1 << ((bitnum) % CHAR_BIT))))
+
+#define YR_BITARRAY_UNSET(uchar_array_base, bitnum) \
+          (((uchar_array_base)[(bitnum)/CHAR_BIT]) = \
+            ((uchar_array_base)[(bitnum)/CHAR_BIT] & (~(1 << ((bitnum) % CHAR_BIT)))))
+
+#define YR_BITARRAY_TEST(uchar_array_base, bitnum) \
+          (((uchar_array_base)[(bitnum)/CHAR_BIT] & (1 << ((bitnum) % CHAR_BIT))) != 0)
+
+#define YR_BITARRAY_NCHARS(bitnum) \
+          (((bitnum)+(CHAR_BIT-1))/CHAR_BIT)
 
 #endif
