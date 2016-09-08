@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/arena.h>
 #include <yara/hash.h>
 #include <yara/utils.h>
+#include <yara/filemap.h>
 
 
 #define YARA_ERROR_LEVEL_ERROR   0
@@ -168,6 +169,13 @@ YR_API void yr_compiler_set_callback(
 YR_API int yr_compiler_add_file(
     YR_COMPILER* compiler,
     FILE* rules_file,
+    const char* namespace_,
+    const char* file_name);
+
+
+YR_API int yr_compiler_add_fd(
+    YR_COMPILER* compiler,
+    YR_FILE_DESCRIPTOR rules_fd,
     const char* namespace_,
     const char* file_name);
 

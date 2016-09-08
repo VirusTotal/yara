@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "blob.h"
 #include "util.h"
 
+#include <unistd.h>
+#include <fcntl.h>
 
 static void test_boolean_operators()
 {
@@ -1320,6 +1322,47 @@ void test_integer_functions()
 }
 
 
+void test_file_descriptor()
+{
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+  
+  int fd = open("tests/data/true.yar", O_RDONLY);
+  if (fd < 0) {
+    perror("open");
+    exit(EXIT_FAILURE);
+  }
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_add_fd(compiler, fd, NULL, NULL) != 0) {
+    perror("yr_compiler_add_fd");
+    exit(EXIT_FAILURE);
+  }
+  
+  close(fd);
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS) {
+    perror("yr_compiler_add_fd");
+    exit(EXIT_FAILURE);
+  }
+
+  if (compiler)
+  {
+    yr_compiler_destroy(compiler);
+  }
+  if (rules)
+  {
+    yr_rules_destroy(rules);
+  }
+  
+  return;
+}
+
+
 int main(int argc, char** argv)
 {
   yr_initialize();
@@ -1358,6 +1401,8 @@ int main(int argc, char** argv)
   #if defined(HASH_MODULE)
   test_hash_module();
   #endif
+
+  test_file_descriptor();
 
   yr_finalize();
 
