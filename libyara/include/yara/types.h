@@ -44,8 +44,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #endif
 
-typedef int32_t tidx_mask_t;
-
 
 #define DECLARE_REFERENCE(type, name) \
     union { type name; int64_t name##_; } YR_ALIGN(8)
@@ -369,7 +367,7 @@ typedef struct _YR_AC_AUTOMATON
 
 typedef struct _YR_RULES {
 
-  tidx_mask_t tidx_mask;
+  unsigned char tidx_mask[YR_BITARRAY_NCHARS(MAX_THREADS)];
   uint8_t* code_start;
 
   YR_MUTEX mutex;
