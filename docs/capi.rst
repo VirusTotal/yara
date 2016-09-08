@@ -401,6 +401,8 @@ Functions
 
 .. c:function:: int yr_compiler_add_fd(YR_COMPILER* compiler, YR_FILE_DESCRIPTOR rules_fd, const char* namespace, const char* file_name)
 
+  .. versionadded:: 3.6.0
+
   Compile rules from a *file descriptor*. Rules are put into the specified *namespace*,
   if *namespace* is ``NULL`` they will be put into the default namespace.
   *file_name* is the name of the file for error reporting purposes and can be
