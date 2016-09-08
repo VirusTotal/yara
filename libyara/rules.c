@@ -353,7 +353,7 @@ YR_API int yr_rules_scan_mem_blocks(
 
   yr_mutex_lock(&rules->mutex);
 
-  while (YR_BITARRAY_TEST(rules->tidx_mask, tidx) && tidx < MAX_THREADS)
+  while (tidx < MAX_THREADS && YR_BITARRAY_TEST(rules->tidx_mask, tidx))
   {
     tidx++;
   }
