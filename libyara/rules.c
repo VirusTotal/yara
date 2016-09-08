@@ -342,7 +342,6 @@ YR_API int yr_rules_scan_mem_blocks(
   YR_MEMORY_BLOCK* block;
 
   time_t start_time;
-  tidx_mask_t bit = 1;
 
   int tidx = 0;
   int result = ERROR_SUCCESS;
@@ -354,16 +353,16 @@ YR_API int yr_rules_scan_mem_blocks(
 
   yr_mutex_lock(&rules->mutex);
 
-  while (rules->tidx_mask & bit)
+  while (YR_BITARRAY_TEST(rules->tidx_mask, tidx) && tidx < MAX_THREADS)
   {
     tidx++;
-    bit <<= 1;
   }
 
-  if (tidx < MAX_THREADS)
-    rules->tidx_mask |= bit;
-  else
+  if (tidx < MAX_THREADS) {
+    YR_BITARRAY_SET(rules->tidx_mask, tidx);
+  } else {
     result = ERROR_TOO_MANY_SCAN_THREADS;
+  }
 
   yr_mutex_unlock(&rules->mutex);
 
@@ -527,7 +526,7 @@ _exit:
         (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
   yr_mutex_lock(&rules->mutex);
-  rules->tidx_mask &= ~(1 << tidx);
+  YR_BITARRAY_UNSET(rules->tidx_mask, tidx);
   yr_mutex_unlock(&rules->mutex);
 
   yr_set_tidx(-1);
@@ -703,7 +702,7 @@ YR_API int yr_rules_load_stream(
   new_rules->rules_list_head = header->rules_list_head;
   new_rules->match_table = header->match_table;
   new_rules->transition_table = header->transition_table;
-  new_rules->tidx_mask = 0;
+  memset(new_rules->tidx_mask, 0, sizeof(new_rules->tidx_mask));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_mutex_create(&new_rules->mutex),
@@ -742,7 +741,9 @@ YR_API int yr_rules_save_stream(
     YR_RULES* rules,
     YR_STREAM* stream)
 {
-  assert(rules->tidx_mask == 0);
+  for (int i = 0; i < YR_BITARRAY_NCHARS(MAX_THREADS); ++i) {
+    assert(rules->tidx_mask[i] == 0);
+  }
   return yr_arena_save_stream(rules->arena, stream);
 }
 

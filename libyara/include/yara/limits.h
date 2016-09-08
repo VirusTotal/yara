@@ -34,10 +34,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #endif
 
+#include "utils.h"
 
 // MAX_THREADS is the number of threads that can use a YR_RULES
-// object simultaneosly. This value is limited by the number of
-// bits in tidx_mask.
+// object simultaneosly.
 
 #define MAX_THREADS 32
 
