@@ -28,7 +28,7 @@ form. For that purpose you'll need a YARA compiler, which can be created with
 :c:func:`yr_compiler_create`. After being used, the compiler must be destroyed
 with :c:func:`yr_compiler_destroy`.
 
-You can use either :c:func:`yr_compiler_add_file` or
+You can use :c:func:`yr_compiler_add_file`, :c:func:`yr_compiler_add_fd`, or
 :c:func:`yr_compiler_add_string` to add one or more input sources to be
 compiled. Both of these functions receive an optional namespace. Rules added
 under the same namespace behaves as if they were contained within the same
@@ -36,12 +36,13 @@ source file or string, so, rule identifiers must be unique among all the sources
 sharing a namespace. If the namespace argument is ``NULL`` the rules are put
 in the *default* namespace.
 
-Both :c:func:`yr_compiler_add_file` and :c:func:`yr_compiler_add_string` return
+The :c:func:`yr_compiler_add_file`, :c:func:`yr_compiler_add_fd`, and
+:c:func:`yr_compiler_add_string` functions return
 the number of errors found in the source code. If the rules are correct they
 will return 0. For more detailed error information you must set a callback
 function by using :c:func:`yr_compiler_set_callback` before calling
-:c:func:`yr_compiler_add_file` or :c:func:`yr_compiler_add_string`. The
-callback function has the following prototype:
+any of the compiling functions. The callback function has the following
+prototype:
 
 .. code-block:: c
 
@@ -57,10 +58,10 @@ callback function has the following prototype:
 Possible values for ``error_level`` are ``YARA_ERROR_LEVEL_ERROR`` and
 ``YARA_ERROR_LEVEL_WARNING``. The arguments ``file_name`` and ``line_number``
 contains the file name and line number where the error or warning occurs.
-``file_name`` is the one passed to :c:func:`yr_compiler_add_file`. It can
-be ``NULL`` if you passed ``NULL`` or if you're using
-:c:func:`yr_compiler_add_string`. The ``user_data`` pointer is the same you
-passed to :c:func:`yr_compiler_set_callback`.
+``file_name`` is the one passed to :c:func:`yr_compiler_add_file` or
+:c:func:`yr_compiler_add_fd`. It can be ``NULL`` if you passed ``NULL`` or
+ if you're using :c:func:`yr_compiler_add_string`. The ``user_data`` pointer
+is the same you passed to :c:func:`yr_compiler_set_callback`.
 
 After you successfully added some sources you can get the compiled rules
 using the :c:func:`yr_compiler_get_rules()` function. You'll get a pointer to
@@ -393,6 +394,14 @@ Functions
 .. c:function:: int yr_compiler_add_file(YR_COMPILER* compiler, FILE* file, const char* namespace, const char* file_name)
 
   Compile rules from a *file*. Rules are put into the specified *namespace*,
+  if *namespace* is ``NULL`` they will be put into the default namespace.
+  *file_name* is the name of the file for error reporting purposes and can be
+  set to ``NULL``. Returns the number of errors found during compilation.
+
+
+.. c:function:: int yr_compiler_add_fd(YR_COMPILER* compiler, YR_FILE_DESCRIPTOR rules_fd, const char* namespace, const char* file_name)
+
+  Compile rules from a *file descriptor*. Rules are put into the specified *namespace*,
   if *namespace* is ``NULL`` they will be put into the default namespace.
   *file_name* is the name of the file for error reporting purposes and can be
   set to ``NULL``. Returns the number of errors found during compilation.
