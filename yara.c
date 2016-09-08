@@ -1011,6 +1011,12 @@ int main(
     return EXIT_SUCCESS;
   }
 
+  if (threads > MAX_THREADS)
+  {
+    fprintf(stderr, "maximum number of threads is %d\n", MAX_THREADS);
+    return EXIT_FAILURE;
+  }
+
   if (argc != 2)
   {
     // After parsing the command-line options we expect two additional
