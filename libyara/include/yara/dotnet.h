@@ -227,7 +227,16 @@ typedef struct _STREAMS {
     PSTREAM_HEADER tilde;
     PSTREAM_HEADER string;
     PSTREAM_HEADER blob;
+    PSTREAM_HEADER us;
 } STREAMS, *PSTREAMS;
+
+
+// Used to return the value of parsing a #US or #Blob entry.
+// ECMA-335 Section II.24.2.4
+typedef struct _BLOB_PARSE_RESULT {
+    uint8_t size; // Number of bytes parsed. This is the new offset.
+    DWORD length; // Value of the bytes parsed. This is the blob length.
+} BLOB_PARSE_RESULT, *PBLOB_PARSE_RESULT;
 
 
 // Used to store the number of rows of each table.
