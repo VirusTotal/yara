@@ -123,6 +123,96 @@ void dotnet_parse_guid(
 }
 
 
+// Given an offset into a #US or #Blob stream, parse the entry at that position.
+// The offset is relative to the start of the PE file.
+BLOB_PARSE_RESULT dotnet_parse_blob_entry(
+    PE* pe,
+    uint8_t* offset)
+{
+  BLOB_PARSE_RESULT result;
+
+  // Blob size is encoded in the first 1, 2 or 4 bytes of the blob.
+  //
+  // If the high bit is not set the length is encoded in one byte.
+  //
+  // If the high 2 bits are 10 (base 2) then the length is encoded in
+  // the rest of the bits and the next byte.
+  //
+  // If the high 3 bits are 110 (base 2) then the length is encoded
+  // in the rest of the bits and the next 3 bytes.
+  //
+  // See ECMA-335 II.24.2.4 for details.
+  if ((*offset & 0x80) == 0x00)
+  {
+    result.length = (DWORD) *offset;
+    result.size = 1;
+  }
+  else if (offset + 1 < pe->data + pe->data_size && (*offset & 0xC0) == 0x80)
+  {
+    // Shift remaining 6 bits left by 8 and OR in the remaining byte.
+    result.length = ((*offset & 0x3F) << 8) | *(offset + 1);
+    result.size = 2;
+  }
+  else if (offset + 4 < pe->data + pe->data_size && (*offset & 0xE0) == 0xC0)
+  {
+    result.length = ((*offset & 0x1F) << 24) |
+                     (*(offset + 1) << 16) |
+                     (*(offset + 2) << 8) |
+                      *(offset + 3);
+    result.size = 3;
+  }
+  else
+  {
+    // Return a 0 size as an error.
+    result.size = 0;
+  }
+
+  return result;
+}
+
+
+void dotnet_parse_us(
+    PE* pe,
+    int64_t metadata_root,
+    PSTREAM_HEADER us_header)
+{
+  BLOB_PARSE_RESULT blob_result;
+  int i = 0;
+  uint8_t* offset = pe->data + metadata_root + us_header->Offset;
+  uint8_t* end_of_header = offset + us_header->Size;
+
+  // Make sure end of header is not past end of PE, and the first entry MUST be
+  // a single NULL byte.
+  if (!fits_in_pe(pe, offset, us_header->Size) || *offset != 0x00)
+    return;
+
+  offset++;
+
+  while (offset < end_of_header)
+  {
+    blob_result = dotnet_parse_blob_entry(pe, offset);
+    if (blob_result.size == 0 || !fits_in_pe(pe, offset, blob_result.length))
+    {
+      set_integer(i, pe->object, "number_of_user_strings");
+      return;
+    }
+
+    offset += blob_result.size;
+    // Avoid empty strings, which usually happen as padding at the end of the
+    // stream.
+    if (blob_result.length > 0)
+    {
+      set_sized_string(
+         (char*) offset, blob_result.length, pe->object, "user_strings[%i]", i);
+      i++;
+      offset += blob_result.length;
+    }
+  }
+
+  set_integer(i, pe->object, "number_of_user_strings");
+}
+
+
 STREAMS dotnet_parse_stream_headers(
     PE* pe,
     int64_t offset,
@@ -169,6 +259,8 @@ STREAMS dotnet_parse_stream_headers(
       headers.string = stream_header;
     else if (strncmp(stream_name, "#Blob", 5) == 0)
       headers.blob = stream_header;
+    else if (strncmp(stream_name, "#US", 3) == 0 && headers.us == NULL)
+      headers.us = stream_header;
 
     // Stream name is padded to a multiple of 4.
     stream_header = (PSTREAM_HEADER) ((uint8_t*) stream_header +
@@ -246,6 +338,7 @@ void dotnet_parse_tilde_2(
   uint8_t* memberref_row = NULL;
   DWORD type_index;
   DWORD class_index;
+  BLOB_PARSE_RESULT blob_result;
   DWORD blob_index;
   DWORD blob_length;
   // These are used to determine the size of coded indexes, which are the
@@ -543,39 +636,14 @@ void dotnet_parse_tilde_2(
               continue;
             }
 
-            // Blob size is encoded in the first 1, 2 or 4 bytes of the blob.
-            //
-            // If the high bit is not set the length is encoded in one byte.
-            //
-            // If the high 2 bits are 10 (base 2) then the length is encoded in
-            // the rest of the bits and the next byte.
-            //
-            // If the high 3 bits are 110 (base 2) then the length is encoded
-            // in the rest of the bits and the next 3 bytes.
-            //
-            // See ECMA-335 II.24.2.4 for details.
-            if ((*blob_offset & 0x80) == 0x00)
-            {
-              blob_length = (DWORD) *blob_offset;
-              blob_offset++;
-            }
-            else if (blob_offset + 1 < pe->data + pe->data_size &&
-                     (*blob_offset & 0xC0) == 0x80)
-            {
-              blob_length = (DWORD) ((*(WORD*) blob_offset) & 0x3FFF);
-              blob_offset += 2;
-            }
-            else if (blob_offset + 4 < pe->data + pe->data_size &&
-                     (*blob_offset & 0xE0) == 0xC0)
-            {
-              blob_length = (*(DWORD*) blob_offset) & 0x1FFFFFFF;
-              blob_offset += 3;
-            }
-            else
+            blob_result = dotnet_parse_blob_entry(pe, blob_offset);
+            if (blob_result.size == 0)
             {
               row_ptr += row_size;
               continue;
             }
+            blob_length = blob_result.length;
+            blob_offset += blob_result.size;
 
             // Quick sanity check to make sure the blob entry is within bounds.
             if (blob_offset + blob_length >= pe->data + pe->data_size)
@@ -1154,6 +1222,9 @@ void dotnet_parse_com(
   // Parse the #~ stream, which includes various tables of interest.
   if (headers.tilde != NULL)
     dotnet_parse_tilde(pe, metadata_root, cli_header, &headers);
+
+  if (headers.us != NULL)
+    dotnet_parse_us(pe, metadata_root, headers.us);
 }
 
 
@@ -1187,6 +1258,8 @@ begin_declarations;
   end_struct("assembly");
   declare_string_array("modulerefs");
   declare_integer("number_of_modulerefs");
+  declare_string_array("user_strings");
+  declare_integer("number_of_user_strings");
   declare_string("typelib");
 
 end_declarations;
