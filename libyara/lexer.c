@@ -1784,11 +1784,12 @@ YY_RULE_SETUP
 {
 
   yyerror(yyscanner, compiler, "illegal escape sequence");
+  yyterminate();
 }
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 548 "lexer.l"
+#line 549 "lexer.l"
 {
 
   if (yyextra->lex_buf_len > 0)
@@ -1808,6 +1809,7 @@ YY_RULE_SETUP
   else
   {
     yyerror(yyscanner, compiler, "empty regular expression");
+    yyterminate();
   }
 
   BEGIN(INITIAL);
@@ -1816,7 +1818,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 574 "lexer.l"
+#line 576 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("/", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1826,7 +1828,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 582 "lexer.l"
+#line 584 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1837,13 +1839,13 @@ YY_RULE_SETUP
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 591 "lexer.l"
+#line 593 "lexer.l"
 { YYTEXT_TO_BUFFER; }
 	YY_BREAK
 case 67:
 /* rule 67 can match eol */
 YY_RULE_SETUP
-#line 594 "lexer.l"
+#line 596 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "unterminated regular expression");
@@ -1852,7 +1854,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 601 "lexer.l"
+#line 603 "lexer.l"
 {
 
   yyextra->lex_buf_ptr = yyextra->lex_buf;
@@ -1862,7 +1864,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 609 "lexer.l"
+#line 611 "lexer.l"
 {
 
   yyextra->lex_buf_ptr = yyextra->lex_buf;
@@ -1873,7 +1875,7 @@ YY_RULE_SETUP
 case 70:
 /* rule 70 can match eol */
 YY_RULE_SETUP
-#line 617 "lexer.l"
+#line 619 "lexer.l"
 {
   // Match hex-digits with whitespace or comments. The latter are stripped
   // out by hex_lexer.l
@@ -1889,12 +1891,12 @@ YY_RULE_SETUP
 case 71:
 /* rule 71 can match eol */
 YY_RULE_SETUP
-#line 630 "lexer.l"
+#line 632 "lexer.l"
 /* skip whitespace */
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 632 "lexer.l"
+#line 634 "lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1910,10 +1912,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 645 "lexer.l"
+#line 647 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1917 "lexer.c"
+#line 1919 "lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3062,7 +3064,7 @@ void yara_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 645 "lexer.l"
+#line 647 "lexer.l"
 
 
 
