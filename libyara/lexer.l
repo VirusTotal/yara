@@ -541,6 +541,7 @@ u?int(8|16|32)(be)? {
 <str>\\(.|\n) {
 
   yyerror(yyscanner, compiler, "illegal escape sequence");
+  yyterminate();
 }
 
 
@@ -563,6 +564,7 @@ u?int(8|16|32)(be)? {
   else
   {
     yyerror(yyscanner, compiler, "empty regular expression");
+    yyterminate();
   }
 
   BEGIN(INITIAL);
