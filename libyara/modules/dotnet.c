@@ -26,6 +26,7 @@ limitations under the License.
 #include <yara/dotnet.h>
 #include <yara/modules.h>
 #include <yara/mem.h>
+#include <yara/strutils.h>
 
 #include <yara/pe_utils.h>
 
