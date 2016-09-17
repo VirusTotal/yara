@@ -170,6 +170,28 @@ typedef struct _ASSEMBLY_TABLE {
     } Name;
 } ASSEMBLY_TABLE, *PASSEMBLY_TABLE;
 
+
+//
+// Assembly Reference Table
+// ECMA-335 Section II.22.5
+//
+typedef struct _ASSEMBLYREF_TABLE {
+    WORD MajorVersion;
+    WORD MinorVersion;
+    WORD BuildNumber;
+    WORD RevisionNumber;
+    DWORD Flags;
+    union {
+        WORD PublicKeyOrToken_Short;
+        DWORD PublicKeyOrToken_Long;
+    } PublicKeyOrToken;
+    union {
+        WORD Name_Short;
+        DWORD Name_Long;
+    } Name;
+} ASSEMBLYREF_TABLE, *PASSEMBLYREF_TABLE;
+
+
 //
 // Manifest Resource Table
 // ECMA-335 Section II.22.24
