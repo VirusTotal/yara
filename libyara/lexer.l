@@ -49,7 +49,12 @@ with noyywrap then we can remove this pragma.
 #include <stdio.h>
 #include <string.h>
 #include <setjmp.h>
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+#include <fileapi.h>
+#else
 #include <unistd.h>
+#endif
 
 #include <yara/integers.h>
 #include <yara/lexer.h>
@@ -831,12 +836,16 @@ int yr_lex_parse_rules_fd(
   #endif
 
   char buf[1024];
-  int len;
 
   yyset_extra(compiler, yyscanner);
   while (1)
   {
-    len = read(rules_fd, buf, sizeof(buf));
+#if defined(_WIN32) || defined(__CYGWIN__)
+    DWORD len;
+    if (!ReadFile(rules_fd, buf, sizeof(buf), &len, NULL))
+      break;
+#else
+    int len = read(rules_fd, buf, sizeof(buf));
     if (len < 0)
     {
       if (errno == EINTR)
@@ -844,6 +853,7 @@ int yr_lex_parse_rules_fd(
       else
         break;
     }
+#endif
     if (len == 0)
       break;
     yy_scan_bytes(buf, len, yyscanner);
