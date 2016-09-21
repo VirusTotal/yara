@@ -29,12 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 
-#if defined(WIN32)
-#include <string.h>
-#define strncasecmp _strnicmp
+#if defined(_WIN32)
 #define timegm _mkgmtime
-#else
-#include <strings.h>
 #endif
 
 #include <string.h>
