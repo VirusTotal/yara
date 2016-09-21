@@ -1,0 +1,20 @@
+# AppVeyor CI for Windows
+
+version: 3.5.{build}
+pull_requests:
+  do_not_increment_build_number: true
+configuration: Release
+platform:
+- x64
+- x86
+before_build:
+- ps: nuget restore windows/vs2015/yara.sln
+build:
+  project: windows/vs2015/yara.sln
+  verbosity: minimal
+test: off
+notifications:
+- provider: GitHubPullRequest
+  on_build_success: true
+  on_build_failure: true
+  on_build_status_changed: false
