@@ -758,7 +758,7 @@ with noyywrap then we can remove this pragma.
 #include <setjmp.h>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-#include <Windows.h>
+#include <windows.h>
 #else
 #include <unistd.h>
 #endif
