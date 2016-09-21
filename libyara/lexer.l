@@ -51,7 +51,7 @@ with noyywrap then we can remove this pragma.
 #include <setjmp.h>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-#include <fileapi.h>
+#include <Windows.h>
 #else
 #include <unistd.h>
 #endif
