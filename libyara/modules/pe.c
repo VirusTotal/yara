@@ -1223,6 +1223,10 @@ void pe_parse_header(
       pe->object, "subsystem_version.minor");
 
   set_integer(
+      OptionalHeader(pe, CheckSum),
+      pe->object, "checksum");
+
+  set_integer(
       OptionalHeader(pe, Subsystem),
       pe->object, "subsystem");
 
@@ -1964,6 +1968,7 @@ begin_declarations;
     declare_integer("minor");
   end_struct("subsystem_version");
 
+  declare_integer("checksum");
   declare_integer("subsystem");
 
   begin_struct_array("sections");
