@@ -78,7 +78,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -103,7 +103,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -128,7 +128,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -148,7 +148,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO;HASH;HAVE_LIBCRYPTO</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
@@ -185,6 +185,7 @@
     <ClCompile Include="..\..\..\libyara\mem.c" />
     <ClCompile Include="..\..\..\libyara\modules.c" />
     <ClCompile Include="..\..\..\libyara\modules\cuckoo.c" />
+    <ClCompile Include="..\..\..\libyara\modules\dotnet.c" />
     <ClCompile Include="..\..\..\libyara\modules\elf.c" />
     <ClCompile Include="..\..\..\libyara\modules\hash.c" />
     <ClCompile Include="..\..\..\libyara\modules\math.c" />
