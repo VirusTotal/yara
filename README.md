@@ -1,5 +1,6 @@
 [![Join the chat at https://gitter.im/VirusTotal/yara](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/VirusTotal/yara?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/VirusTotal/yara.svg)](https://travis-ci.org/VirusTotal/yara)
+[![Travis build status](https://travis-ci.org/VirusTotal/yara.svg)](https://travis-ci.org/VirusTotal/yara)
+[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/7glqg19w4oolm7pr?svg=true)](https://ci.appveyor.com/project/plusvic/yara)
 
 
 ## YARA in a nutshell
