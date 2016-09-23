@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "util.h"
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-#include <fileapi.h>
+#include <Windows.h>
 #else
 #include <unistd.h>
 #endif
