@@ -1223,6 +1223,10 @@ void pe_parse_header(
       pe->object, "subsystem_version.minor");
 
   set_integer(
+      OptionalHeader(pe, CheckSum),
+      pe->object, "checksum");
+
+  set_integer(
       OptionalHeader(pe, Subsystem),
       pe->object, "subsystem");
 
@@ -1849,6 +1853,48 @@ define_function(rich_toolid_version)
       rich_internal(module(), integer_argument(2), integer_argument(1)));
 }
 
+
+define_function(calculate_checksum)
+{
+  uint64_t csum = 0;
+
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  int csum_offset = ((uint8_t*)&(pe->header->OptionalHeader) +
+		     offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum)) - pe->data;
+  for (int i = 0; i <= pe->data_size / 4; i++)
+  {
+    // Treat the CheckSum field as 0 -- the offset is the same for
+    // PE32 and PE64.
+    if (4 * i == csum_offset)
+      continue;
+    if (4 * i+4 < pe->data_size)
+    {
+      csum += ((uint64_t) pe->data[4 * i] +
+	       ((uint64_t) pe->data[4 * i + 1] << 8)  +
+	       ((uint64_t) pe->data[4 * i + 2] << 16) +
+	       ((uint64_t) pe->data[4 * i + 3] << 24));
+    }
+    else
+    {
+      for (int j = 0; j < pe->data_size % 4; j++)
+	csum += (uint64_t) pe->data[4 * i + j] << (8 * j);
+    }
+    if (csum > 0xffffffff)
+      csum = (csum & 0xffffffff) + (csum >> 32);
+  }
+  csum = (csum & 0xffff) + (csum >> 16);
+  csum += (csum >> 16);
+  csum &= 0xffff;
+  csum += pe->data_size;
+
+  return_integer(csum);
+}
+
+
 begin_declarations;
 
   declare_integer("MACHINE_UNKNOWN");
@@ -1964,6 +2010,8 @@ begin_declarations;
     declare_integer("minor");
   end_struct("subsystem_version");
 
+  declare_integer("checksum");
+  declare_function("calculate_checksum", "", "i", calculate_checksum);
   declare_integer("subsystem");
 
   begin_struct_array("sections");

@@ -64,6 +64,20 @@ Reference
 
     *Example: pe.machine == pe.MACHINE_AMD64*
 
+.. c:type:: checksum
+
+    .. versionadded:: 3.6.0
+
+    Integer with the "PE checksum" as stored in the OptionalHeader
+
+.. c:type:: calculate_checksum
+
+    .. versionadded:: 3.6.0
+
+    Function that calculates the "PE checksum"
+
+    *Example: pe.checksum == pe.calculate_checksum()*
+
 .. c:type:: subsystem
 
     Integer with one of the following values:
