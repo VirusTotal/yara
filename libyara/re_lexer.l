@@ -519,7 +519,7 @@ int read_escaped_char(
     yyscan_t yyscanner,
     uint8_t* escaped_char)
 {
-  char text[4];
+  char text[4] = {0, 0, 0, 0};
 
   text[0] = '\\';
   text[1] = RE_YY_INPUT(yyscanner);
