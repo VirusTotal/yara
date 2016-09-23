@@ -20,7 +20,7 @@ script: |
   set -e
   unset CC # A pre-set CC overrides --host settings.
   ./configure $CONFIGFLAGS
-  make
+  make clean && make
   case "$CONFIGFLAGS" in
     *--host=*) ;;
     *) make check ;;
