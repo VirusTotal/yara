@@ -987,7 +987,7 @@ int main(
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
 
-  int result;
+  int result, i;
 
   argc = args_parse(options, argc, argv);
 
@@ -1158,7 +1158,6 @@ int main(
     thread_args.rules = rules;
     thread_args.start_time = start_time;
 
-    int i;
     for (i = 0; i < threads; i++)
     {
       if (create_thread(&thread[i], scanning_thread, (void*) &thread_args))
