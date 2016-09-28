@@ -1158,7 +1158,8 @@ int main(
     thread_args.rules = rules;
     thread_args.start_time = start_time;
 
-    for (int i = 0; i < threads; i++)
+    int i;
+    for (i = 0; i < threads; i++)
     {
       if (create_thread(&thread[i], scanning_thread, (void*) &thread_args))
       {
@@ -1177,7 +1178,7 @@ int main(
     file_queue_finish();
 
     // Wait for scan threads to finish
-    for (int i = 0; i < threads; i++)
+    for (i = 0; i < threads; i++)
       thread_join(&thread[i]);
 
     file_queue_destroy();
