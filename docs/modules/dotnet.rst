@@ -141,3 +141,36 @@ Reference
 .. c:type:: typelib
 
     The typelib of the file.
+
+.. c:type:: assembly_refs
+
+    Object for .NET assembly reference information.
+
+    .. c:member:: version
+
+        An object with integer values representing version information for this
+        assembly. Attributes are:
+
+        ``major``
+        ``minor``
+        ``build_number``
+        ``revision_number``
+
+    .. c:member:: name
+
+        String containing the assembly name.
+
+    .. c:member:: public_key_or_token
+
+        String containing the public key or token which identifies the author of
+        this assembly.
+        assembly.
+
+.. c:type:: number_of_user_strings
+
+    The number of user strings in the file.
+
+.. c:type:: user_strings
+
+    An zero-based array of user strings, one for each stream contained in the
+    file. Individual strings can be accessed by using the [] operator.
