@@ -142,19 +142,41 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(
   // in the rest of the bits and the next 3 bytes.
   //
   // See ECMA-335 II.24.2.4 for details.
+
+  // Make sure we have at least one byte.
+  if (!fits_in_pe(pe, offset, 1))
+  {
+    result.size = 0;
+    return result;
+  }
+
   if ((*offset & 0x80) == 0x00)
   {
     result.length = (DWORD) *offset;
     result.size = 1;
   }
-  else if (offset + 1 < pe->data + pe->data_size && (*offset & 0xC0) == 0x80)
+  else if ((*offset & 0xC0) == 0x80)
   {
+    // Make sure we have one more byte.
+    if (!fits_in_pe(pe, offset, 2))
+    {
+      result.size = 0;
+      return result;
+    }
+
     // Shift remaining 6 bits left by 8 and OR in the remaining byte.
     result.length = ((*offset & 0x3F) << 8) | *(offset + 1);
     result.size = 2;
   }
   else if (offset + 4 < pe->data + pe->data_size && (*offset & 0xE0) == 0xC0)
   {
+    // Make sure we have 3 more bytes.
+    if (!fits_in_pe(pe, offset, 4))
+    {
+      result.size = 0;
+      return result;
+    }
+
     result.length = ((*offset & 0x1F) << 24) |
                      (*(offset + 1) << 16) |
                      (*(offset + 2) << 8) |
