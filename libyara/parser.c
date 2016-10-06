@@ -983,6 +983,15 @@ int yr_parser_reduce_import(
       module_name->c_string,
       compiler->current_namespace->name);
 
+  // if unable to lookup module, error
+
+  if (module_structure == NULL)
+  {
+    yr_compiler_set_error_extra_info(compiler, module_name->c_string);
+    compiler->last_result = ERROR_UNKNOWN_MODULE;
+    return compiler->last_result;
+  }
+
   // if module already imported, do nothing
 
   if (module_structure != NULL)
