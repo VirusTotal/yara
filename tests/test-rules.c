@@ -236,6 +236,9 @@ static void test_syntax()
 {
   assert_syntax_error(
       "rule test { strings: $a = \"a\" $a = \"a\" condition: all of them }");
+
+  assert_syntax_error(
+      "import \"\x00\" rule test { condition: false }");
 }
 
 

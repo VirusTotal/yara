@@ -180,9 +180,6 @@ YR_API void* yr_hash_table_lookup_raw_key(
   YR_HASH_TABLE_ENTRY* entry;
   uint32_t bucket_index;
 
-  if (key_length == 0)
-    return NULL;
-
   bucket_index = hash(0, key, key_length);
 
   if (ns != NULL)
