@@ -68,8 +68,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define yr_min(x, y) ((x < y) ? (x) : (y))
 #define yr_max(x, y) ((x > y) ? (x) : (y))
 
-#define PTR_TO_INT64(x)  ((int64_t) (size_t) x)
-
 
 #ifdef NDEBUG
 
