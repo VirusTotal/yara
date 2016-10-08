@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <stddef.h>
@@ -102,7 +115,7 @@ int yr_parser_emit_with_arg_reloc(
     uint8_t** instruction_address,
     int64_t** argument_address)
 {
-  int64_t* ptr;
+  int64_t* ptr = NULL;
 
   int result = yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
@@ -409,8 +422,9 @@ int _yr_parser_write_string(
   return result;
 }
 
-#include <stdint.h>
 #include <limits.h>
+
+#include <yara/integers.h>
 
 
 YR_STRING* yr_parser_reduce_string_declaration(
@@ -434,7 +448,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
   YR_STRING* prev_string;
 
   RE* re = NULL;
-  RE* remainder_re;
+  RE* remainder_re = NULL;
 
   RE_ERROR re_error;
 
@@ -584,7 +598,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
     while (remainder_re != NULL)
     {
-      // Destroy regexp pointed by 're' before yr_re_split_at_jmp
+      // Destroy regexp pointed by 're' before yr_re_split_at_chaining_point
       // overwrites 're' with another value.
 
       yr_re_destroy(re);
@@ -665,6 +679,9 @@ _exit:
 
   if (re != NULL)
     yr_re_destroy(re);
+
+  if (remainder_re != NULL)
+    yr_re_destroy(remainder_re);
 
   if (compiler->last_result != ERROR_SUCCESS)
     return NULL;
@@ -952,6 +969,14 @@ int yr_parser_reduce_import(
   YR_OBJECT* module_structure;
 
   char* name;
+
+  if (module_name->length == 0)
+  {
+    compiler->last_result = ERROR_UNKNOWN_MODULE;
+    yr_compiler_set_error_extra_info(compiler, "");
+
+    return ERROR_UNKNOWN_MODULE;
+  }
 
   module_structure = (YR_OBJECT*) yr_hash_table_lookup(
       compiler->objects_table,

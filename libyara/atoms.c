@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /*
@@ -74,6 +87,10 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 #include <yara/mem.h>
 #include <yara/error.h>
 #include <yara/types.h>
+
+
+#define YR_MAX_ATOM_QUALITY   100000
+#define YR_MIN_ATOM_QUALITY  -100000
 
 
 #define append_current_leaf_to_node(node) \
@@ -160,10 +177,10 @@ int yr_atoms_min_quality(
   YR_ATOM_LIST_ITEM* atom;
 
   int quality;
-  int min_quality = 100000;
+  int min_quality = YR_MAX_ATOM_QUALITY;
 
   if (atom_list == NULL)
-    return 0;
+    return YR_MIN_ATOM_QUALITY;
 
   atom = atom_list;
 
@@ -338,8 +355,8 @@ int _yr_atoms_choose(
   YR_ATOM_LIST_ITEM* tail;
 
   int i, quality;
-  int max_quality = -10000;
-  int min_quality = 10000;
+  int max_quality = YR_MIN_ATOM_QUALITY;
+  int min_quality = YR_MAX_ATOM_QUALITY;
 
   *choosen_atoms = NULL;
 
@@ -1007,7 +1024,7 @@ int yr_atoms_extract_from_re(
   YR_ATOM_LIST_ITEM* case_insentive_atoms;
   YR_ATOM_LIST_ITEM* triplet_atoms;
 
-  int min_atom_quality = 0;
+  int min_atom_quality = YR_MIN_ATOM_QUALITY;
 
   if (atom_tree == NULL)
     return ERROR_INSUFICIENT_MEMORY;
@@ -1015,7 +1032,10 @@ int yr_atoms_extract_from_re(
   atom_tree->root_node = _yr_atoms_tree_node_create(ATOM_TREE_OR);
 
   if (atom_tree->root_node == NULL)
+  {
+    _yr_atoms_tree_destroy(atom_tree);
     return ERROR_INSUFICIENT_MEMORY;
+  }
 
   atom_tree->current_leaf = NULL;
 
@@ -1023,7 +1043,10 @@ int yr_atoms_extract_from_re(
       re->root_node, atom_tree, atom_tree->root_node);
 
   if (atom_tree->root_node == NULL)
+  {
+    _yr_atoms_tree_destroy(atom_tree);
     return ERROR_INSUFICIENT_MEMORY;
+  }
 
   if (atom_tree->current_leaf != NULL)
     _yr_atoms_tree_node_append(atom_tree->root_node, atom_tree->current_leaf);
@@ -1061,6 +1084,7 @@ int yr_atoms_extract_from_re(
         yr_atoms_extract_triplets(re->root_node, &triplet_atoms),
         {
           yr_atoms_list_destroy(*atoms);
+          yr_atoms_list_destroy(triplet_atoms);
           *atoms = NULL;
         });
 
@@ -1081,6 +1105,7 @@ int yr_atoms_extract_from_re(
         _yr_atoms_wide(*atoms, &wide_atoms),
         {
           yr_atoms_list_destroy(*atoms);
+          yr_atoms_list_destroy(wide_atoms);
           *atoms = NULL;
         });
 
@@ -1101,6 +1126,7 @@ int yr_atoms_extract_from_re(
         _yr_atoms_case_insentive(*atoms, &case_insentive_atoms),
         {
           yr_atoms_list_destroy(*atoms);
+          yr_atoms_list_destroy(case_insentive_atoms);
           *atoms = NULL;
         });
 
@@ -1188,6 +1214,7 @@ int yr_atoms_extract_from_string(
         _yr_atoms_wide(*atoms, &wide_atoms),
         {
           yr_atoms_list_destroy(*atoms);
+          yr_atoms_list_destroy(wide_atoms);
           *atoms = NULL;
         });
 
@@ -1208,6 +1235,7 @@ int yr_atoms_extract_from_string(
         _yr_atoms_case_insentive(*atoms, &case_insentive_atoms),
         {
           yr_atoms_list_destroy(*atoms);
+          yr_atoms_list_destroy(case_insentive_atoms);
           *atoms = NULL;
         });
 

@@ -3,7 +3,7 @@ Getting started
 ***************
 
 YARA is a multi-platform program running on Windows, Linux and Mac OS X. You can
-find the latest release at https://github.com/plusvic/yara/releases.
+find the latest release at https://github.com/VirusTotal/yara/releases.
 
 .. _compiling-yara:
 
@@ -12,24 +12,37 @@ Compiling and installing YARA
 
 Download the source tarball and get prepared for compiling it::
 
-    tar -zxf yara-3.1.0.tar.gz
-    cd yara-3.1.0
+    tar -zxf yara-3.5.0.tar.gz
+    cd yara-3.5.0
     ./bootstrap.sh
 
-YARA uses GNU autotools, so it's compiled and installed in the standard
-way::
+Make sure you have ``automake``, ``libtool``, ``make``  and ``gcc`` installed
+in your system. Ubuntu and Debian users can use::
+
+    sudo apt-get install automake libtool make gcc
+
+If you plan to modify YARA's source code you may also need ``flex`` and
+``bison`` for generating lexers and parsers::
+
+   sudo apt-get install flex bison
+
+Compile and install YARA in the standard way::
 
     ./configure
     make
     sudo make install
 
-Some YARA's features depends on the OpenSSL library. Those features are
-built into YARA only if you have the OpenSSL library installed in your
-system. The ``configure`` script will automatically detect if OpenSSL is
-installed or not. If you want to make sure that YARA is built with
-OpenSSL-dependant features you must pass ``--with-crypto`` to the ``configure``
-script.
+Run the test cases to make sure that everything is fine::
 
+    make check
+
+Some YARA's features depends on the OpenSSL library. Those features are
+enabled only if you have the OpenSSL library installed in your system. If not,
+YARA is going to work fine but you won't be able to use the disabled features.
+The ``configure`` script will automatically detect if OpenSSL is installed or
+not. If you want to enforce the OpenSSL-dependant features you must pass
+``--with-crypto`` to the ``configure`` script. Ubuntu and Debian users can
+use ``sudo apt-get install libssl-dev`` to install the OpenSSL library.
 
 The following modules are not copiled into YARA by default:
 
@@ -64,17 +77,6 @@ choose to install you'll need the following libraries:
         `here <ftp://ftp.astron.com/pub/file/>`_.
 
 
-To build and install the ``yara-python`` extension::
-
-    cd yara-python
-    python setup.py build
-    sudo python setup.py install
-
-You may need to install the Python development package (usually ``python-dev``)
-before compiling ``yara-python``. Additionally, ``yara-python`` depends on the
-``libyara`` library which gets installed with YARA, so don't proceed to build
-``yara-python`` without previously installing YARA as described above.
-
 Installing on Windows
 ---------------------
 
@@ -87,8 +89,9 @@ corresponding to the version of Python you're using.
 
 `Download Windows binaries <https://b161268c3bf5a87bc67309e7c870820f5f39f672.googledrive.com/host/0BznOMqZ9f3VUek8yN3VvSGdhRFU/>`_
 
-If you want to build YARA yourself you can use the *Visual Studio 2010* project
-found in the source tree under *./windows/yara*.
+If you want to build YARA yourself you can use the *Visual Studio 2010* or
+*Visual Studio 2015* projects found in the source tree under *./windows/vs2010*
+and *./windows/vs2015* respectively.
 
 Installing on Mac OS X with Homebrew
 ------------------------------------
@@ -96,6 +99,13 @@ Installing on Mac OS X with Homebrew
 To install YARA using `Homebrew <http://brew.sh>`_ simply type
 ``brew install yara``.
 
+
+Installing yara-python
+----------------------
+
+If you plan to use YARA from your Python scripts you need to install the
+``yara-python`` extension. Please refer to https://github.com/VirusTotal/yara-python
+for instructions on how to install it.
 
 
 Running YARA for the first time
@@ -129,7 +139,3 @@ libraries in this path by default, we must instruct him to do so by adding
 
     sudo echo "/usr/local/lib" >> /etc/ld.so.conf
     sudo ldconfig
-
-
-
-

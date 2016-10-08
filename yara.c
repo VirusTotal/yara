@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2007-2013. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #if !defined(_WIN32) && !defined(__CYGWIN__)
@@ -25,8 +38,8 @@ limitations under the License.
 
 #include <windows.h>
 
-#define PRIx64 "llx"
-#define PRId64 "lld"
+#define PRIx64 "I64x"
+#define PRId64 "I64d"
 
 #endif
 
@@ -492,6 +505,9 @@ void print_scanner_error(
       fprintf(stderr, "stack overflow while evaluating condition "
                       "(see --stack-size argument).\n");
       break;
+    case ERROR_INVALID_EXTERNAL_VARIABLE_TYPE:
+      fprintf(stderr, "invalid type for external variable.\n");
+      break;
     default:
       fprintf(stderr, "internal error: %d\n", error);
       break;
@@ -643,9 +659,9 @@ int handle_message(
               string->identifier);
 
           if (STRING_IS_HEX(string))
-            print_hex_string(match->data, match->length);
+            print_hex_string(match->data, match->data_length);
           else
-            print_string(match->data, match->length);
+            print_string(match->data, match->data_length);
         }
       }
     }
@@ -823,6 +839,8 @@ int define_external_variables(
     YR_RULES* rules,
     YR_COMPILER* compiler)
 {
+  int result = ERROR_SUCCESS;
+
   for (int i = 0; ext_vars[i] != NULL; i++)
   {
     char* equal_sign = strchr(ext_vars[i], '=');
@@ -830,7 +848,7 @@ int define_external_variables(
     if (!equal_sign)
     {
       fprintf(stderr, "error: wrong syntax for `-d` option.\n");
-      return FALSE;
+      return ERROR_SUCCESS;
     }
 
     // Replace the equal sign with null character to split the external
@@ -842,17 +860,16 @@ int define_external_variables(
     char* identifier = ext_vars[i];
     char* value = equal_sign + 1;
 
-
     if (is_float(value))
     {
       if (rules != NULL)
-        yr_rules_define_float_variable(
+        result = yr_rules_define_float_variable(
             rules,
             identifier,
             atof(value));
 
       if (compiler != NULL)
-        yr_compiler_define_float_variable(
+        result = yr_compiler_define_float_variable(
             compiler,
             identifier,
             atof(value));
@@ -860,13 +877,13 @@ int define_external_variables(
     else if (is_integer(value))
     {
       if (rules != NULL)
-        yr_rules_define_integer_variable(
+        result = yr_rules_define_integer_variable(
             rules,
             identifier,
             atoi(value));
 
       if (compiler != NULL)
-        yr_compiler_define_integer_variable(
+        result = yr_compiler_define_integer_variable(
             compiler,
             identifier,
             atoi(value));
@@ -874,13 +891,13 @@ int define_external_variables(
     else if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0)
     {
       if (rules != NULL)
-        yr_rules_define_boolean_variable(
+        result = yr_rules_define_boolean_variable(
             rules,
             identifier,
             strcmp(value, "true") == 0);
 
       if (compiler != NULL)
-        yr_compiler_define_boolean_variable(
+        result = yr_compiler_define_boolean_variable(
             compiler,
             identifier,
             strcmp(value, "true") == 0);
@@ -888,20 +905,20 @@ int define_external_variables(
     else
     {
       if (rules != NULL)
-        yr_rules_define_string_variable(
+        result = yr_rules_define_string_variable(
             rules,
             identifier,
             value);
 
       if (compiler != NULL)
-        yr_compiler_define_string_variable(
+        result = yr_compiler_define_string_variable(
             compiler,
             identifier,
             value);
     }
   }
 
-  return TRUE;
+  return result;
 }
 
 
@@ -970,7 +987,7 @@ int main(
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
 
-  int result;
+  int result, i;
 
   argc = args_parse(options, argc, argv);
 
@@ -992,6 +1009,12 @@ int main(
     printf("\nSend bug reports and suggestions to: %s.\n", PACKAGE_BUGREPORT);
 
     return EXIT_SUCCESS;
+  }
+
+  if (threads > MAX_THREADS)
+  {
+    fprintf(stderr, "maximum number of threads is %d\n", MAX_THREADS);
+    return EXIT_FAILURE;
   }
 
   if (argc != 2)
@@ -1044,8 +1067,13 @@ int main(
 
   if (result == ERROR_SUCCESS)
   {
-    if (!define_external_variables(rules, NULL))
+    result = define_external_variables(rules, NULL);
+
+    if (result != ERROR_SUCCESS)
+    {
+      print_scanner_error(result);
       exit_with_code(EXIT_FAILURE);
+    }
   }
   else
   {
@@ -1055,8 +1083,13 @@ int main(
     if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
       exit_with_code(EXIT_FAILURE);
 
-    if (!define_external_variables(NULL, compiler))
+    result = define_external_variables(NULL, compiler);
+
+    if (result != ERROR_SUCCESS)
+    {
+      print_scanner_error(result);
       exit_with_code(EXIT_FAILURE);
+    }
 
     yr_compiler_set_callback(compiler, print_compiler_error, NULL);
 
@@ -1125,7 +1158,7 @@ int main(
     thread_args.rules = rules;
     thread_args.start_time = start_time;
 
-    for (int i = 0; i < threads; i++)
+    for (i = 0; i < threads; i++)
     {
       if (create_thread(&thread[i], scanning_thread, (void*) &thread_args))
       {
@@ -1144,7 +1177,7 @@ int main(
     file_queue_finish();
 
     // Wait for scan threads to finish
-    for (int i = 0; i < threads; i++)
+    for (i = 0; i < threads; i++)
       thread_join(&thread[i]);
 
     file_queue_destroy();

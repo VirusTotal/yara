@@ -507,20 +507,33 @@ static yyconst flex_int32_t yy_rule_can_match_eol[30] =
 /*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 /* Lexical analyzer for regular expressions */
-#line 20 "re_lexer.l"
+#line 33 "re_lexer.l"
 
 /* Disable warnings for unused functions in this file.
 
@@ -569,7 +582,7 @@ int read_escaped_char(
 
 #define YY_NO_UNISTD_H 1
 
-#line 573 "re_lexer.c"
+#line 586 "re_lexer.c"
 
 #define INITIAL 0
 #define char_class 1
@@ -843,10 +856,10 @@ YY_DECL
 		}
 
 	{
-#line 86 "re_lexer.l"
+#line 99 "re_lexer.l"
 
 
-#line 850 "re_lexer.c"
+#line 863 "re_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -913,7 +926,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 88 "re_lexer.l"
+#line 101 "re_lexer.l"
 {
 
   // Examples: {3,8} {0,5} {,5} {7,}
@@ -949,7 +962,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 122 "re_lexer.l"
+#line 135 "re_lexer.l"
 {
 
   // Example: {10}
@@ -969,7 +982,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 140 "re_lexer.l"
+#line 153 "re_lexer.l"
 {
 
   // Start of a negated character class. Example: [^abcd]
@@ -981,7 +994,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 149 "re_lexer.l"
+#line 162 "re_lexer.l"
 {
 
   // Start of character negated class containing a ].
@@ -996,7 +1009,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 162 "re_lexer.l"
+#line 175 "re_lexer.l"
 {
 
   // Start of character class containing a ].
@@ -1011,7 +1024,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 175 "re_lexer.l"
+#line 188 "re_lexer.l"
 {
 
   // Start of character class. Example: [abcd]
@@ -1024,7 +1037,7 @@ YY_RULE_SETUP
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 185 "re_lexer.l"
+#line 198 "re_lexer.l"
 {
 
   // Any non-special character is passed as a CHAR token to the scanner.
@@ -1035,63 +1048,63 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 194 "re_lexer.l"
+#line 207 "re_lexer.l"
 {
   return _WORD_CHAR_;
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 199 "re_lexer.l"
+#line 212 "re_lexer.l"
 {
   return _NON_WORD_CHAR_;
 }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 204 "re_lexer.l"
+#line 217 "re_lexer.l"
 {
   return _SPACE_;
 }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 209 "re_lexer.l"
+#line 222 "re_lexer.l"
 {
   return _NON_SPACE_;
 }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 214 "re_lexer.l"
+#line 227 "re_lexer.l"
 {
   return _DIGIT_;
 }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 219 "re_lexer.l"
+#line 232 "re_lexer.l"
 {
   return _NON_DIGIT_;
 }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 224 "re_lexer.l"
+#line 237 "re_lexer.l"
 {
   return _WORD_BOUNDARY_;
 }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 228 "re_lexer.l"
+#line 241 "re_lexer.l"
 {
   return _NON_WORD_BOUNDARY_;
 }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 233 "re_lexer.l"
+#line 246 "re_lexer.l"
 {
 
   yyerror(yyscanner, lex_env, "backreferences are not allowed");
@@ -1100,7 +1113,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 240 "re_lexer.l"
+#line 253 "re_lexer.l"
 {
 
   uint8_t c;
@@ -1119,7 +1132,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 257 "re_lexer.l"
+#line 270 "re_lexer.l"
 {
 
   // End of character class.
@@ -1142,7 +1155,7 @@ YY_RULE_SETUP
 case 19:
 /* rule 19 can match eol */
 YY_RULE_SETUP
-#line 278 "re_lexer.l"
+#line 291 "re_lexer.l"
 {
 
   // A range inside a character class.
@@ -1186,7 +1199,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 320 "re_lexer.l"
+#line 333 "re_lexer.l"
 {
 
   int i;
@@ -1197,7 +1210,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 329 "re_lexer.l"
+#line 342 "re_lexer.l"
 {
 
   int i;
@@ -1208,7 +1221,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 338 "re_lexer.l"
+#line 351 "re_lexer.l"
 {
 
   LEX_ENV->class_vector[' ' / 8] |= 1 << ' ' % 8;
@@ -1217,7 +1230,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 345 "re_lexer.l"
+#line 358 "re_lexer.l"
 {
 
   int i;
@@ -1235,7 +1248,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 361 "re_lexer.l"
+#line 374 "re_lexer.l"
 {
 
   char c;
@@ -1246,7 +1259,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 370 "re_lexer.l"
+#line 383 "re_lexer.l"
 {
 
   int i;
@@ -1268,7 +1281,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 390 "re_lexer.l"
+#line 403 "re_lexer.l"
 {
 
   uint8_t c;
@@ -1286,7 +1299,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 406 "re_lexer.l"
+#line 419 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1304,7 +1317,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(char_class):
-#line 423 "re_lexer.l"
+#line 436 "re_lexer.l"
 {
 
   // End of regexp reached while scanning a character class.
@@ -1315,7 +1328,7 @@ case YY_STATE_EOF(char_class):
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 432 "re_lexer.l"
+#line 445 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1330,7 +1343,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 446 "re_lexer.l"
+#line 459 "re_lexer.l"
 {
 
   yyterminate();
@@ -1338,10 +1351,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 451 "re_lexer.l"
+#line 464 "re_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1345 "re_lexer.c"
+#line 1358 "re_lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2490,7 +2503,7 @@ void re_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 451 "re_lexer.l"
+#line 464 "re_lexer.l"
 
 
 
@@ -2550,7 +2563,7 @@ int read_escaped_char(
     yyscan_t yyscanner,
     uint8_t* escaped_char)
 {
-  char text[4];
+  char text[4] = {0, 0, 0, 0};
 
   text[0] = '\\';
   text[1] = RE_YY_INPUT(yyscanner);

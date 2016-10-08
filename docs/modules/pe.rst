@@ -64,6 +64,20 @@ Reference
 
     *Example: pe.machine == pe.MACHINE_AMD64*
 
+.. c:type:: checksum
+
+    .. versionadded:: 3.6.0
+
+    Integer with the "PE checksum" as stored in the OptionalHeader
+
+.. c:type:: calculate_checksum
+
+    .. versionadded:: 3.6.0
+
+    Function that calculates the "PE checksum"
+
+    *Example: pe.checksum == pe.calculate_checksum()*
+
 .. c:type:: subsystem
 
     Integer with one of the following values:
@@ -223,6 +237,22 @@ Reference
     .. c:type:: SECTION_MEM_WRITE
 
     *Example: pe.sections[1].characteristics & SECTION_CNT_CODE*
+
+.. c:type:: overlay
+
+    .. versionadded:: 3.6.0
+
+    A structure containing the following integer members:
+
+    .. c:member:: offset
+
+        Overlay section offset.
+
+    .. c:member:: size
+
+        Overlay section size.
+
+    *Example: uint8(0x0d) at pe.overlay.offset and pe.overlay.size > 1024*
 
 .. c:type:: number_of_resources
 
@@ -455,6 +485,12 @@ Reference
     false otherwise.
 
     *Example:  pe.exports("CPlApplet")*
+
+.. c:type:: number_of_imports
+
+    .. versionadded:: 3.6.0
+
+    Number of imports in the PE.
 
 .. c:function:: imports(dll_name, function_name)
 

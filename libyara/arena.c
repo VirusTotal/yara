@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /*
@@ -830,23 +843,14 @@ int yr_arena_duplicate(
   // Only coalesced arenas can be duplicated.
   assert(arena->flags & ARENA_FLAGS_COALESCED);
 
-  new_arena = (YR_ARENA*) yr_malloc(sizeof(YR_ARENA));
-
-  if (new_arena == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
-
   page = arena->page_list_head;
-  new_page = _yr_arena_new_page(page->size);
 
-  if (new_page == NULL)
-  {
-    yr_free(new_arena);
-    return ERROR_INSUFICIENT_MEMORY;
-  }
+  FAIL_ON_ERROR(yr_arena_create(page->size, arena->flags, &new_arena));
+
+  new_page = new_arena->current_page;
+  new_page->used = page->used;
 
   memcpy(new_page->address, page->address, page->size);
-
-  new_page->used = page->used;
 
   reloc = page->reloc_list_head;
 
@@ -855,7 +859,10 @@ int yr_arena_duplicate(
     new_reloc = (YR_RELOC*) yr_malloc(sizeof(YR_RELOC));
 
     if (new_reloc == NULL)
+    {
+      yr_arena_destroy(new_arena);
       return ERROR_INSUFICIENT_MEMORY;
+    }
 
     new_reloc->offset = reloc->offset;
     new_reloc->next = NULL;
@@ -883,10 +890,6 @@ int yr_arena_duplicate(
 
     reloc = reloc->next;
   }
-
-  new_arena->page_list_head = new_page;
-  new_arena->current_page = new_page;
-  new_arena->flags |= ARENA_FLAGS_COALESCED;
 
   *duplicated = new_arena;
 
@@ -1043,7 +1046,7 @@ int yr_arena_save_stream(
     reloc = reloc->next;
   }
 
-  assert(page->size < 0x100000000);  // 4GB
+  assert(page->size < 0x80000000);  // 2GB
 
   header.magic[0] = 'Y';
   header.magic[1] = 'A';

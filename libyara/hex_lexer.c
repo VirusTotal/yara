@@ -381,8 +381,8 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
 
-#define YY_NUM_RULES 14
-#define YY_END_OF_BUFFER 15
+#define YY_NUM_RULES 16
+#define YY_END_OF_BUFFER 17
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -390,11 +390,12 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[25] =
+static yyconst flex_int16_t yy_accept[35] =
     {   0,
-        0,    0,    0,    0,   15,   13,   11,   11,   12,   13,
-       13,    5,   10,    9,    9,    6,    7,    8,    1,    2,
-        3,    4,    7,    0
+        0,    0,    0,    0,    0,    0,   17,   15,   13,   13,
+       14,   15,   15,   15,    5,   16,   12,   11,   11,    8,
+        9,   10,    0,    7,    1,    2,    3,    4,    9,    0,
+        0,    7,    6,    0
     } ;
 
 static yyconst YY_CHAR yy_ec[256] =
@@ -403,14 +404,14 @@ static yyconst YY_CHAR yy_ec[256] =
         1,    1,    2,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    2,    1,    1,    1,    1,    1,    1,    1,    4,
-        4,    1,    1,    1,    5,    1,    1,    6,    6,    6,
-        6,    6,    6,    6,    6,    6,    6,    1,    1,    1,
-        1,    1,    7,    1,    8,    8,    8,    8,    8,    8,
+        4,    5,    1,    1,    6,    1,    7,    8,    8,    8,
+        8,    8,    8,    8,    8,    8,    8,    1,    1,    1,
+        1,    1,    9,    1,   10,   10,   10,   10,   10,   10,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        9,    1,   10,    1,    1,    1,    8,    8,    8,    8,
+       11,    1,   12,    1,    1,    1,   10,   10,   10,   10,
 
-        8,    8,    1,    1,    1,    1,    1,    1,    1,    1,
+       10,   10,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    4,    4,    4,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -429,45 +430,52 @@ static yyconst YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static yyconst YY_CHAR yy_meta[11] =
+static yyconst YY_CHAR yy_meta[13] =
     {   0,
-        1,    1,    1,    1,    1,    2,    2,    2,    1,    1
+        1,    1,    2,    1,    1,    1,    1,    3,    3,    3,
+        1,    1
     } ;
 
-static yyconst flex_uint16_t yy_base[27] =
+static yyconst flex_uint16_t yy_base[40] =
     {   0,
-        0,    0,   10,    0,   27,   28,   28,   28,   28,   19,
-       18,   28,   28,   28,   28,   28,   18,   28,   28,   28,
-       28,   28,   17,   28,   20,   19
+        0,    0,    0,    0,   12,    0,   46,   47,   47,   47,
+       47,   20,   36,   35,   47,   47,   47,   47,   47,   47,
+       35,   47,   37,    0,   47,   47,   47,   47,   33,   35,
+       23,    0,   33,   47,   30,   26,   23,   33,   36
     } ;
 
-static yyconst flex_int16_t yy_def[27] =
+static yyconst flex_int16_t yy_def[40] =
     {   0,
-       24,    1,   24,    3,   24,   24,   24,   24,   24,   25,
-       26,   24,   24,   24,   24,   24,   24,   24,   24,   24,
-       24,   24,   24,    0,   24,   24
+       34,    1,   35,   35,   34,    5,   34,   34,   34,   34,
+       34,   34,   36,   37,   34,   34,   34,   34,   34,   34,
+       34,   34,   38,   39,   34,   34,   34,   34,   34,   38,
+       38,   39,   38,    0,   34,   34,   34,   34,   34
     } ;
 
-static yyconst flex_uint16_t yy_nxt[39] =
+static yyconst flex_uint16_t yy_nxt[60] =
     {   0,
-        6,    7,    8,    9,    6,   10,   11,   10,   12,    6,
-       13,   14,   15,   13,   16,   17,   13,   13,   13,   18,
-       21,   19,   23,   23,   22,   20,   24,    5,   24,   24,
-       24,   24,   24,   24,   24,   24,   24,   24
+        8,    9,   10,   11,    8,    8,   12,   13,   14,   13,
+       15,    8,   17,   18,   19,   17,   17,   20,   17,   21,
+       17,   17,   17,   22,   23,   27,   24,   31,   25,   33,
+       16,   16,   16,   30,   30,   30,   32,   31,   32,   31,
+       29,   31,   29,   28,   26,   34,    7,   34,   34,   34,
+       34,   34,   34,   34,   34,   34,   34,   34,   34
     } ;
 
-static yyconst flex_int16_t yy_chk[39] =
+static yyconst flex_int16_t yy_chk[60] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        3,    3,    3,    3,    3,    3,    3,    3,    3,    3,
-       26,   25,   23,   17,   11,   10,    5,   24,   24,   24,
-       24,   24,   24,   24,   24,   24,   24,   24
+        1,    1,    5,    5,    5,    5,    5,    5,    5,    5,
+        5,    5,    5,    5,   12,   37,   12,   31,   36,   31,
+       35,   35,   35,   38,   38,   38,   39,   33,   39,   30,
+       29,   23,   21,   14,   13,    7,   34,   34,   34,   34,
+       34,   34,   34,   34,   34,   34,   34,   34,   34
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static yyconst flex_int32_t yy_rule_can_match_eol[15] =
+static yyconst flex_int32_t yy_rule_can_match_eol[17] =
     {   0,
-0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0,     };
+0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0,     };
 
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
@@ -480,17 +488,30 @@ static yyconst flex_int32_t yy_rule_can_match_eol[15] =
 /*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 /* Lexical analyzer for hex strings */
 #line 20 "hex_lexer.l"
@@ -535,10 +556,12 @@ with noyywrap then we can remove this pragma.
 #define YY_NO_UNISTD_H 1
 #define YY_NO_INPUT 1
 
-#line 539 "hex_lexer.c"
+
+#line 548 "hex_lexer.c"
 
 #define INITIAL 0
-#define range 1
+#define comment 1
+#define range 2
 
 #ifndef YY_NO_UNISTD_H
 /* Special case for "unistd.h", since it is non-ANSI. We include it way
@@ -809,11 +832,11 @@ YY_DECL
 		}
 
 	{
-#line 80 "hex_lexer.l"
+#line 81 "hex_lexer.l"
 
 
 
-#line 817 "hex_lexer.c"
+#line 827 "hex_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -840,13 +863,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 25 )
+				if ( yy_current_state >= 35 )
 					yy_c = yy_meta[(unsigned int) yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 			++yy_cp;
 			}
-		while ( yy_current_state != 24 );
+		while ( yy_current_state != 34 );
 		yy_cp = yyg->yy_last_accepting_cpos;
 		yy_current_state = yyg->yy_last_accepting_state;
 
@@ -880,7 +903,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 83 "hex_lexer.l"
+#line 84 "hex_lexer.l"
 {
 
   yylval->integer = xtoi(yytext);
@@ -889,7 +912,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 89 "hex_lexer.l"
+#line 90 "hex_lexer.l"
 {
 
   yytext[1] = '0'; // replace ? by 0
@@ -899,7 +922,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 96 "hex_lexer.l"
+#line 97 "hex_lexer.l"
 {
 
   yytext[0] = '0'; // replace ? by 0
@@ -909,7 +932,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 103 "hex_lexer.l"
+#line 104 "hex_lexer.l"
 {
 
   yylval->integer = 0x0000;
@@ -918,7 +941,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 109 "hex_lexer.l"
+#line 110 "hex_lexer.l"
 {
 
   BEGIN(range);
@@ -926,75 +949,87 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case 6:
+/* rule 6 can match eol */
 YY_RULE_SETUP
-#line 115 "hex_lexer.l"
+#line 116 "hex_lexer.l"
+// skip comments
+	YY_BREAK
+case 7:
+YY_RULE_SETUP
+#line 118 "hex_lexer.l"
+// skip single-line comments
+	YY_BREAK
+case 8:
+YY_RULE_SETUP
+#line 120 "hex_lexer.l"
 {
   return yytext[0];
 }
 	YY_BREAK
-case 7:
+case 9:
 YY_RULE_SETUP
-#line 119 "hex_lexer.l"
+#line 124 "hex_lexer.l"
 {
 
   yylval->integer = atoi(yytext);
   return _NUMBER_;
 }
 	YY_BREAK
-case 8:
+case 10:
 YY_RULE_SETUP
-#line 125 "hex_lexer.l"
+#line 130 "hex_lexer.l"
 {
 
   BEGIN(INITIAL);
   return yytext[0];
 }
 	YY_BREAK
-case 9:
-/* rule 9 can match eol */
+case 11:
+/* rule 11 can match eol */
 YY_RULE_SETUP
-#line 131 "hex_lexer.l"
+#line 136 "hex_lexer.l"
 // skip whitespaces
 	YY_BREAK
-case 10:
+case 12:
 YY_RULE_SETUP
-#line 133 "hex_lexer.l"
+#line 138 "hex_lexer.l"
 {
 
   yyerror(yyscanner, lex_env, "invalid character in hex string jump");
   yyterminate();
 }
 	YY_BREAK
-case 11:
-/* rule 11 can match eol */
+case 13:
+/* rule 13 can match eol */
 YY_RULE_SETUP
-#line 139 "hex_lexer.l"
+#line 144 "hex_lexer.l"
 // skip whitespaces
 	YY_BREAK
-case 12:
+case 14:
 YY_RULE_SETUP
-#line 141 "hex_lexer.l"
+#line 146 "hex_lexer.l"
 {        // pass valid characters to the parser
 
   return yytext[0];
 }
 	YY_BREAK
-case 13:
+case 15:
 YY_RULE_SETUP
-#line 146 "hex_lexer.l"
+#line 151 "hex_lexer.l"
 {               // reject all other characters
 
   yyerror(yyscanner, lex_env, "invalid character in hex string");
   yyterminate();
 }
 	YY_BREAK
-case 14:
+case 16:
 YY_RULE_SETUP
-#line 152 "hex_lexer.l"
+#line 157 "hex_lexer.l"
 ECHO;
 	YY_BREAK
-#line 997 "hex_lexer.c"
+#line 1018 "hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
+case YY_STATE_EOF(comment):
 case YY_STATE_EOF(range):
 	yyterminate();
 
@@ -1290,7 +1325,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 25 )
+			if ( yy_current_state >= 35 )
 				yy_c = yy_meta[(unsigned int) yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
@@ -1319,11 +1354,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 25 )
+		if ( yy_current_state >= 35 )
 			yy_c = yy_meta[(unsigned int) yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-	yy_is_jam = (yy_current_state == 24);
+	yy_is_jam = (yy_current_state == 34);
 
 	(void)yyg;
 	return yy_is_jam ? 0 : yy_current_state;
@@ -2145,7 +2180,7 @@ void hex_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 152 "hex_lexer.l"
+#line 157 "hex_lexer.l"
 
 
 

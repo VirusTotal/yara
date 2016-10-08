@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
@@ -352,6 +365,37 @@ YR_API int yr_compiler_add_file(
 }
 
 
+YR_API int yr_compiler_add_fd(
+    YR_COMPILER* compiler,
+    YR_FILE_DESCRIPTOR rules_fd,
+    const char* namespace_,
+    const char* file_name)
+{
+  // Don't allow yr_compiler_add_fd() after
+  // yr_compiler_get_rules() has been called.
+
+  assert(compiler->compiled_rules_arena == NULL);
+
+  if (file_name != NULL)
+    _yr_compiler_push_file_name(compiler, file_name);
+
+  if (namespace_ != NULL)
+    compiler->last_result = _yr_compiler_set_namespace(compiler, namespace_);
+  else
+    compiler->last_result = _yr_compiler_set_namespace(compiler, "default");
+
+  if (compiler->last_result == ERROR_SUCCESS)
+  {
+    return yr_lex_parse_rules_fd(rules_fd, compiler);
+  }
+  else
+  {
+    compiler->errors++;
+    return compiler->errors;
+  }
+}
+
+
 YR_API int yr_compiler_add_string(
     YR_COMPILER* compiler,
     const char* rules_string,
@@ -383,9 +427,10 @@ int _yr_compiler_compile_rules(
   YR_COMPILER* compiler)
 {
   YARA_RULES_FILE_HEADER* rules_file_header = NULL;
-  YR_ARENA* arena;
+  YR_ARENA* arena = NULL;
   YR_RULE null_rule;
   YR_EXTERNAL_VARIABLE null_external;
+  YR_AC_TABLES tables;
 
   int8_t halt = OP_HALT;
   int result;
@@ -416,8 +461,6 @@ int _yr_compiler_compile_rules(
       &null_external,
       sizeof(YR_EXTERNAL_VARIABLE),
       NULL);
-
-  YR_AC_TABLES tables;
 
   // Write Aho-Corasick automaton to arena.
   result = yr_ac_compile(
@@ -540,6 +583,10 @@ int _yr_compiler_compile_rules(
     compiler->compiled_rules_arena = arena;
     result = yr_arena_coalesce(arena);
   }
+  else
+  {
+    yr_arena_destroy(arena);
+  }
 
   return result;
 }
@@ -574,7 +621,7 @@ YR_API int yr_compiler_get_rules(
   yara_rules->match_table = rules_file_header->match_table;
   yara_rules->transition_table = rules_file_header->transition_table;
   yara_rules->code_start = rules_file_header->code_start;
-  yara_rules->tidx_mask = 0;
+  memset(yara_rules->tidx_mask, 0, sizeof(yara_rules->tidx_mask));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_mutex_create(&yara_rules->mutex),
@@ -635,10 +682,40 @@ YR_API int yr_compiler_define_boolean_variable(
     const char* identifier,
     int value)
 {
-  return yr_compiler_define_integer_variable(
-      compiler,
+  YR_EXTERNAL_VARIABLE* external;
+  YR_OBJECT* object;
+
+  char* id;
+
+  compiler->last_result = ERROR_SUCCESS;
+
+  FAIL_ON_COMPILER_ERROR(yr_arena_write_string(
+      compiler->sz_arena,
       identifier,
-      value);
+      &id));
+
+  FAIL_ON_COMPILER_ERROR(yr_arena_allocate_struct(
+      compiler->externals_arena,
+      sizeof(YR_EXTERNAL_VARIABLE),
+      (void**) &external,
+      offsetof(YR_EXTERNAL_VARIABLE, identifier),
+      EOL));
+
+  external->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
+  external->identifier = id;
+  external->value.i = value;
+
+  FAIL_ON_COMPILER_ERROR(yr_object_from_external_variable(
+      external,
+      &object));
+
+  FAIL_ON_COMPILER_ERROR(yr_hash_table_add(
+      compiler->objects_table,
+      external->identifier,
+      NULL,
+      (void*) object));
+
+  return ERROR_SUCCESS;
 }
 
 
@@ -913,6 +990,11 @@ YR_API char* yr_compiler_get_error_message(
           buffer_size,
           "regular expression is too large");
       break;
+    case ERROR_REGULAR_EXPRESSION_TOO_COMPLEX:
+      snprintf(
+          buffer,
+          buffer_size,
+          "regular expression is too complex");
 
   }
 

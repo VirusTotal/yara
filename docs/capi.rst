@@ -28,7 +28,7 @@ form. For that purpose you'll need a YARA compiler, which can be created with
 :c:func:`yr_compiler_create`. After being used, the compiler must be destroyed
 with :c:func:`yr_compiler_destroy`.
 
-You can use either :c:func:`yr_compiler_add_file` or
+You can use :c:func:`yr_compiler_add_file`, :c:func:`yr_compiler_add_fd`, or
 :c:func:`yr_compiler_add_string` to add one or more input sources to be
 compiled. Both of these functions receive an optional namespace. Rules added
 under the same namespace behaves as if they were contained within the same
@@ -36,12 +36,13 @@ source file or string, so, rule identifiers must be unique among all the sources
 sharing a namespace. If the namespace argument is ``NULL`` the rules are put
 in the *default* namespace.
 
-Both :c:func:`yr_compiler_add_file` and :c:func:`yr_compiler_add_string` return
+The :c:func:`yr_compiler_add_file`, :c:func:`yr_compiler_add_fd`, and
+:c:func:`yr_compiler_add_string` functions return
 the number of errors found in the source code. If the rules are correct they
 will return 0. For more detailed error information you must set a callback
 function by using :c:func:`yr_compiler_set_callback` before calling
-:c:func:`yr_compiler_add_file` or :c:func:`yr_compiler_add_string`. The
-callback function has the following prototype:
+any of the compiling functions. The callback function has the following
+prototype:
 
 .. code-block:: c
 
@@ -57,10 +58,10 @@ callback function has the following prototype:
 Possible values for ``error_level`` are ``YARA_ERROR_LEVEL_ERROR`` and
 ``YARA_ERROR_LEVEL_WARNING``. The arguments ``file_name`` and ``line_number``
 contains the file name and line number where the error or warning occurs.
-``file_name`` is the one passed to :c:func:`yr_compiler_add_file`. It can
-be ``NULL`` if you passed ``NULL`` or if you're using
-:c:func:`yr_compiler_add_string`. The ``user_data`` pointer is the same you
-passed to :c:func:`yr_compiler_set_callback`.
+``file_name`` is the one passed to :c:func:`yr_compiler_add_file` or
+:c:func:`yr_compiler_add_fd`. It can be ``NULL`` if you passed ``NULL`` or
+ if you're using :c:func:`yr_compiler_add_string`. The ``user_data`` pointer
+is the same you passed to :c:func:`yr_compiler_set_callback`.
 
 After you successfully added some sources you can get the compiled rules
 using the :c:func:`yr_compiler_get_rules()` function. You'll get a pointer to
@@ -165,8 +166,9 @@ depending if the rule is matching or not. In both cases a pointer to the
 ``message_data`` argument. You just need to perform a typecast from
 ``void*`` to ``YR_RULE*`` to access the structure.
 
-The callback is also called once for each imported module, with the
-``CALLBACK_MSG_IMPORT_MODULE`` message. In this case ``message_data`` points
+This callback is also called with the ``CALLBACK_MSG_IMPORT_MODULE`` message.
+All modules referenced by a ``import`` statement in the rules are imported once
+for every file being scanned. . In this case ``message_data`` points
 to a :c:type:`YR_MODULE_IMPORT` structure. This structure contains a
 ``module_name`` field pointing to a null terminated string with the name of the
 module being imported and two other fields ``module_data`` and
@@ -176,10 +178,10 @@ while setting ``module_data_size`` to the size of the data. This way you can
 pass additional data to those modules requiring it, like the
 :ref:`Cuckoo-module` for example.
 
-The callback is also called once for each file that is scanned by each module
-that is imported. When this happens ``message_data`` points to a
+Once a module is imported the callback is called again with the
+CALLBACK_MSG_MODULE_IMPORTED. When this happens ``message_data`` points to a
 :c:type:`YR_OBJECT_STRUCTURE` structure. This structure contains all the
-information from the module, including any stored data and functions.
+information provided by the module about the currently scanned file.
 
 Lastly, the callback function is also called with the
 ``CALLBACK_MSG_SCAN_FINISHED`` message when the scan is finished. In this case
@@ -240,13 +242,20 @@ Data structures
 
     Offset of the match relative to *base*.
 
-  .. c:member:: int32_t length
+  .. c:member:: int32_t match_length
 
     Length of the matching string
 
   .. c:member:: uint8_t* data
 
-    Pointer to the matching string.
+    Pointer to a buffer containing a portion of the matching string.
+
+  .. c:member:: int32_t data_length
+
+    Length of ``data`` buffer. ``data_length`` is the minimum of
+    ``match_length`` and ``MAX_MATCH_DATA``.
+
+  .. versionchanged:: 3.5.0
 
 .. c:type:: YR_META
 
@@ -385,6 +394,16 @@ Functions
 .. c:function:: int yr_compiler_add_file(YR_COMPILER* compiler, FILE* file, const char* namespace, const char* file_name)
 
   Compile rules from a *file*. Rules are put into the specified *namespace*,
+  if *namespace* is ``NULL`` they will be put into the default namespace.
+  *file_name* is the name of the file for error reporting purposes and can be
+  set to ``NULL``. Returns the number of errors found during compilation.
+
+
+.. c:function:: int yr_compiler_add_fd(YR_COMPILER* compiler, YR_FILE_DESCRIPTOR rules_fd, const char* namespace, const char* file_name)
+
+  .. versionadded:: 3.6.0
+
+  Compile rules from a *file descriptor*. Rules are put into the specified *namespace*,
   if *namespace* is ``NULL`` they will be put into the default namespace.
   *file_name* is the name of the file for error reporting purposes and can be
   set to ``NULL``. Returns the number of errors found during compilation.

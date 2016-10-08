@@ -1,17 +1,30 @@
 /*
 Copyright (c) 2014. The YARA Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-   http://www.apache.org/licenses/LICENSE-2.0
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define _GNU_SOURCE
@@ -29,6 +42,9 @@ limitations under the License.
 #include <openssl/bio.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define X509_get_signature_nid(o) OBJ_obj2nid((o)->sig_alg->algorithm)
+#endif
 #endif
 
 #include <yara/pe.h>
@@ -36,7 +52,7 @@ limitations under the License.
 #include <yara/mem.h>
 #include <yara/strutils.h>
 
-#include "pe_utils.c"
+#include <yara/pe_utils.h>
 
 #define MODULE_NAME pe
 
@@ -72,7 +88,6 @@ limitations under the License.
 #define RESOURCE_ITERATOR_ABORTED    1
 
 
-#define MAX_PE_SECTIONS              96
 #define MAX_PE_IMPORTS               16384
 #define MAX_PE_EXPORTS               65535
 
@@ -85,22 +100,8 @@ limitations under the License.
     ((entry)->OffsetToData & 0x7FFFFFFF)
 
 
-#define IS_64BITS_PE(pe) \
-    (pe->header64->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-
-
 #define available_space(pe, pointer) \
     (pe->data + pe->data_size - (uint8_t*)(pointer))
-
-
-#define fits_in_pe(pe, pointer, size) \
-    ((size_t) size <= pe->data_size && \
-     (uint8_t*) (pointer) >= pe->data && \
-     (uint8_t*) (pointer) <= pe->data + pe->data_size - size)
-
-
-#define struct_fits_in_pe(pe, pointer, struct_type) \
-    fits_in_pe(pe, pointer, sizeof(struct_type))
 
 
 typedef int (*RESOURCE_CALLBACK_FUNC) ( \
@@ -112,50 +113,6 @@ typedef int (*RESOURCE_CALLBACK_FUNC) ( \
      uint8_t* name_string, \
      uint8_t* lang_string, \
      void* cb_data);
-
-
-//
-// Imports are stored in a linked list. Each node (IMPORTED_DLL) contains the
-// name of the DLL and a pointer to another linked list of IMPORTED_FUNCTION
-// structures containing the names of imported functions.
-//
-
-typedef struct _IMPORTED_DLL
-{
-  char *name;
-
-  struct _IMPORTED_FUNCTION *functions;
-  struct _IMPORTED_DLL *next;
-
-} IMPORTED_DLL, *PIMPORTED_DLL;
-
-
-typedef struct _IMPORTED_FUNCTION
-{
-  char *name;
-  uint8_t has_ordinal;
-  uint16_t ordinal;
-
-  struct _IMPORTED_FUNCTION *next;
-
-} IMPORTED_FUNCTION, *PIMPORTED_FUNCTION;
-
-
-typedef struct _PE
-{
-  uint8_t* data;
-  size_t data_size;
-
-  union {
-    PIMAGE_NT_HEADERS32 header;
-    PIMAGE_NT_HEADERS64 header64;
-  };
-
-  YR_OBJECT* object;
-  IMPORTED_DLL* imported_dlls;
-  uint32_t resources;
-
-} PE;
 
 
 int wide_string_fits_in_pe(
@@ -174,71 +131,6 @@ int wide_string_fits_in_pe(
   }
 
   return 0;
-}
-
-
-PIMAGE_NT_HEADERS32 pe_get_header(
-    uint8_t* data,
-    size_t data_size)
-{
-  PIMAGE_DOS_HEADER mz_header;
-  PIMAGE_NT_HEADERS32 pe_header;
-
-  size_t headers_size = 0;
-
-  if (data_size < sizeof(IMAGE_DOS_HEADER))
-    return NULL;
-
-  mz_header = (PIMAGE_DOS_HEADER) data;
-
-  if (mz_header->e_magic != IMAGE_DOS_SIGNATURE)
-    return NULL;
-
-  if (mz_header->e_lfanew < 0)
-    return NULL;
-
-  headers_size = mz_header->e_lfanew + \
-                 sizeof(pe_header->Signature) + \
-                 sizeof(IMAGE_FILE_HEADER);
-
-  if (data_size < headers_size)
-    return NULL;
-
-  pe_header = (PIMAGE_NT_HEADERS32) (data + mz_header->e_lfanew);
-
-  headers_size += pe_header->FileHeader.SizeOfOptionalHeader;
-
-  if (pe_header->Signature == IMAGE_NT_SIGNATURE &&
-      (pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_UNKNOWN ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AM33 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARMNT ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM64 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_EBC ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_IA64 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_M32R ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPS16 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPSFPU ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPSFPU16 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_POWERPC ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_POWERPCFP ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_R4000 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH3 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH3DSP ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH4 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH5 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_THUMB ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_WCEMIPSV2) &&
-      data_size > headers_size)
-  {
-    return pe_header;
-  }
-  else
-  {
-    return NULL;
-  }
 }
 
 
@@ -353,115 +245,6 @@ void pe_parse_rich_signature(
   }
 
   return;
-}
-
-
-PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
-    PE* pe,
-    int entry)
-{
-  PIMAGE_DATA_DIRECTORY result;
-
-  if (IS_64BITS_PE(pe))
-    result = &pe->header64->OptionalHeader.DataDirectory[entry];
-  else
-    result = &pe->header->OptionalHeader.DataDirectory[entry];
-
-  return result;
-}
-
-
-#define OptionalHeader(pe,field)                \
-  (IS_64BITS_PE(pe) ?                           \
-   pe->header64->OptionalHeader.field :         \
-   pe->header->OptionalHeader.field)
-
-
-int64_t pe_rva_to_offset(
-    PE* pe,
-    uint64_t rva)
-{
-  PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pe->header);
-
-  DWORD lowest_section_rva = 0xffffffff;
-  DWORD section_rva = 0;
-  DWORD section_offset = 0;
-  DWORD section_raw_size = 0;
-
-  int64_t result;
-
-  int i = 0;
-
-  while(i < yr_min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS))
-  {
-    if (struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
-    {
-      if (lowest_section_rva > section->VirtualAddress)
-      {
-        lowest_section_rva = section->VirtualAddress;
-      }
-
-      if (rva >= section->VirtualAddress &&
-          section_rva <= section->VirtualAddress)
-      {
-        section_rva = section->VirtualAddress;
-        section_offset = section->PointerToRawData;
-        section_raw_size = section->SizeOfRawData;
-
-        // Round section_offset
-        //
-        // Rounding everything less than 0x200 to 0 as discussed in
-        // https://code.google.com/archive/p/corkami/wikis/PE.wiki#PointerToRawData
-        // does not work for PE32_FILE from the test suite and for
-        // some tinype samples where File Alignment = 4
-        // (http://www.phreedom.org/research/tinype/).
-        //
-        // If FileAlignment is >= 0x200, it is apparently ignored (see
-        // Ero Carreras's pefile.py, PE.adjust_FileAlignment).
-        int alignment = yr_min(OptionalHeader(pe, FileAlignment), 0x200);
-
-        if (alignment)
-        {
-          int rest = section_offset % alignment;
-
-          if (rest)
-            section_offset -= rest;
-        }
-      }
-
-      section++;
-      i++;
-    }
-    else
-    {
-      return -1;
-    }
-  }
-
-  // Everything before the first section seems to get mapped straight
-  // relative to ImageBase.
-
-  if (rva < lowest_section_rva)
-  {
-    section_rva = 0;
-    section_offset = 0;
-    section_raw_size = pe->data_size;
-  }
-
-  // Many sections, have a raw (on disk) size smaller than their in-memory size.
-  // Check for rva's that map to this sparse space, and therefore have no valid
-  // associated file offset.
-
-  if ((rva - section_rva) >= section_raw_size)
-    return -1;
-
-  result = section_offset + (rva - section_rva);
-
-  // Check that the offset fits within the file.
-  if (result >= pe->data_size)
-    return -1;
-
-  return result;
 }
 
 
@@ -941,7 +724,10 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
             yr_calloc(1, sizeof(IMPORTED_FUNCTION));
 
         if (imported_func == NULL)
+        {
+          yr_free(name);
           continue;
+        }
 
         imported_func->name = name;
         imported_func->ordinal = ordinal;
@@ -1005,7 +791,10 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
             yr_calloc(1, sizeof(IMPORTED_FUNCTION));
 
         if (imported_func == NULL)
+        {
+          yr_free(name);
           continue;
+        }
 
         imported_func->name = name;
         imported_func->ordinal = ordinal;
@@ -1094,22 +883,21 @@ IMPORTED_DLL* pe_parse_imports(
 
     if (offset >= 0)
     {
-      IMPORTED_FUNCTION* functions;
+      IMPORTED_DLL* imported_dll;
 
       char* dll_name = (char *) (pe->data + offset);
 
       if (!pe_valid_dll_name(dll_name, pe->data_size - (size_t) offset))
         break;
 
-      functions = pe_parse_import_descriptor(
-          pe, imports, dll_name);
+      imported_dll = (IMPORTED_DLL*) yr_calloc(1, sizeof(IMPORTED_DLL));
 
-      if (functions != NULL)
+      if (imported_dll != NULL)
       {
-        IMPORTED_DLL* imported_dll = (IMPORTED_DLL*) yr_calloc(
-            1, sizeof(IMPORTED_DLL));
+        IMPORTED_FUNCTION* functions = pe_parse_import_descriptor(
+            pe, imports, dll_name);
 
-        if (imported_dll != NULL)
+        if (functions != NULL)
         {
           imported_dll->name = yr_strdup(dll_name);;
           imported_dll->functions = functions;
@@ -1123,6 +911,10 @@ IMPORTED_DLL* pe_parse_imports(
 
           tail = imported_dll;
         }
+        else
+        {
+          yr_free(imported_dll);
+        }
       }
     }
 
@@ -1130,6 +922,7 @@ IMPORTED_DLL* pe_parse_imports(
     imports++;
   }
 
+  set_integer(num_imports, pe->object, "number_of_imports");
   return head;
 }
 
@@ -1147,8 +940,10 @@ void pe_parse_certificates(
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
 
-  // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
+  // Default to 0 signatures until we know otherwise.
+  set_integer(0, pe->object, "number_of_signatures");
 
+  // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
   if (directory->VirtualAddress == 0 ||
       directory->VirtualAddress > pe->data_size ||
       directory->Size > pe->data_size ||
@@ -1245,7 +1040,7 @@ void pe_parse_certificates(
           pe->object,
           "signatures[%i].version", counter);
 
-      sig_alg = OBJ_nid2ln(OBJ_obj2nid(cert->sig_alg->algorithm));
+      sig_alg = OBJ_nid2ln(X509_get_signature_nid(cert));
 
       set_string(sig_alg, pe->object, "signatures[%i].algorithm", counter);
 
@@ -1260,34 +1055,39 @@ void pe_parse_certificates(
         // by RFC5280, but do exist. An example binary which has a negative
         // serial number is: 4bfe05f182aa273e113db6ed7dae4bb8.
         //
-        // Negative serial numbers are handled by calling i2c_ASN1_INTEGER()
+        // Negative serial numbers are handled by calling i2d_ASN1_INTEGER()
         // with a NULL second parameter. This will return the size of the
         // buffer necessary to store the proper serial number.
         //
         // Do this even for positive serial numbers because it makes the code
         // cleaner and easier to read.
 
-        bytes = i2c_ASN1_INTEGER(serial, NULL);
+        bytes = i2d_ASN1_INTEGER(serial, NULL);
 
-        // According to X.509 specification the maximum length for the serial
-        // number is 20 octets.
+        // According to X.509 specification the maximum length for the
+        // serial number is 20 octets. Add two bytes to account for
+        // DER type and length information.
 
-        if (bytes > 0 && bytes <= 20)
+        if (bytes > 2 && bytes <= 22)
         {
           // Now that we know the size of the serial number allocate enough
-          // space to hold it, and use i2c_ASN1_INTEGER() one last time to
+          // space to hold it, and use i2d_ASN1_INTEGER() one last time to
           // hold it in the allocated buffer.
 
-          unsigned char* serial_bytes = (unsigned char*)  yr_malloc(bytes);
+          unsigned char* serial_der = (unsigned char*) yr_malloc(bytes);
 
-          if (serial_bytes != NULL)
+          if (serial_der != NULL)
           {
-            bytes = i2c_ASN1_INTEGER(serial, &serial_bytes);
+            bytes = i2d_ASN1_INTEGER(serial, &serial_der);
 
-            // i2c_ASN1_INTEGER() moves the pointer as it writes into
+            // i2d_ASN1_INTEGER() moves the pointer as it writes into
             // serial_bytes. Move it back.
 
-            serial_bytes -= bytes;
+            serial_der -= bytes;
+
+            // Skip over DER type, length information
+            unsigned char* serial_bytes = serial_der + 2;
+            bytes -= 2;
 
             // Also allocate space to hold the "common" string format:
             // 00:01:02:03:04...
@@ -1323,7 +1123,7 @@ void pe_parse_certificates(
               yr_free(serial_ascii);
             }
 
-            yr_free(serial_bytes);
+            yr_free(serial_der);
           }
         }
       }
@@ -1360,6 +1160,9 @@ void pe_parse_header(
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
   int i, scount;
+  uint64_t highest_sec_siz = 0;
+  uint64_t highest_sec_ofs = 0;
+  uint64_t last_section_end;
 
   set_integer(
       pe->header->FileHeader.Machine,
@@ -1420,6 +1223,10 @@ void pe_parse_header(
       pe->object, "subsystem_version.minor");
 
   set_integer(
+      OptionalHeader(pe, CheckSum),
+      pe->object, "checksum");
+
+  set_integer(
       OptionalHeader(pe, Subsystem),
       pe->object, "subsystem");
 
@@ -1463,10 +1270,28 @@ void pe_parse_header(
         section->Misc.VirtualSize,
         pe->object, "sections[%i].virtual_size", i);
 
+    // This will catch the section with the highest raw offset to help checking
+    // if overlay data is present
+    if (section->PointerToRawData > highest_sec_ofs)
+    {
+      highest_sec_ofs = section->PointerToRawData;
+      highest_sec_siz = section->SizeOfRawData;
+    }
+
     section++;
   }
-}
 
+  // An overlay is data appended to a PE file. Its location is RawData + RawOffset of the last
+  // section on the physical file
+  last_section_end = highest_sec_siz + highest_sec_ofs;
+
+  // This way "overlay" is set to UNDEFINED for files that do not have an overlay section
+  if (last_section_end && (pe->data_size > last_section_end))
+  {
+    set_integer(last_section_end, pe->object, "overlay.offset");
+    set_integer(pe->data_size - last_section_end, pe->object, "overlay.size");
+  }
+}
 
 //
 // Given a posix timestamp argument, make sure not_before <= arg <= not_after
@@ -1700,10 +1525,7 @@ define_function(imphash)
       final_name = (char*) yr_malloc(final_name_len + 1);
 
       if (final_name == NULL)
-      {
-        yr_free(dll_name);
         break;
-      }
 
       sprintf(final_name, first ? "%s.%s": ",%s.%s", dll_name, func->name);
 
@@ -2031,6 +1853,48 @@ define_function(rich_toolid_version)
       rich_internal(module(), integer_argument(2), integer_argument(1)));
 }
 
+
+define_function(calculate_checksum)
+{
+  uint64_t csum = 0;
+
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  int csum_offset = ((uint8_t*)&(pe->header->OptionalHeader) +
+		     offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum)) - pe->data;
+  for (int i = 0; i <= pe->data_size / 4; i++)
+  {
+    // Treat the CheckSum field as 0 -- the offset is the same for
+    // PE32 and PE64.
+    if (4 * i == csum_offset)
+      continue;
+    if (4 * i+4 < pe->data_size)
+    {
+      csum += ((uint64_t) pe->data[4 * i] +
+	       ((uint64_t) pe->data[4 * i + 1] << 8)  +
+	       ((uint64_t) pe->data[4 * i + 2] << 16) +
+	       ((uint64_t) pe->data[4 * i + 3] << 24));
+    }
+    else
+    {
+      for (int j = 0; j < pe->data_size % 4; j++)
+	csum += (uint64_t) pe->data[4 * i + j] << (8 * j);
+    }
+    if (csum > 0xffffffff)
+      csum = (csum & 0xffffffff) + (csum >> 32);
+  }
+  csum = (csum & 0xffff) + (csum >> 16);
+  csum += (csum >> 16);
+  csum &= 0xffff;
+  csum += pe->data_size;
+
+  return_integer(csum);
+}
+
+
 begin_declarations;
 
   declare_integer("MACHINE_UNKNOWN");
@@ -2146,6 +2010,8 @@ begin_declarations;
     declare_integer("minor");
   end_struct("subsystem_version");
 
+  declare_integer("checksum");
+  declare_function("calculate_checksum", "", "i", calculate_checksum);
   declare_integer("subsystem");
 
   begin_struct_array("sections");
@@ -2156,6 +2022,11 @@ begin_declarations;
     declare_integer("raw_data_offset");
     declare_integer("raw_data_size");
   end_struct_array("sections");
+
+  begin_struct("overlay");
+    declare_integer("offset");
+    declare_integer("size");
+  end_struct("overlay");
 
   begin_struct("rich_signature");
     declare_integer("offset");
@@ -2184,6 +2055,8 @@ begin_declarations;
   declare_function("is_dll", "", "i", is_dll);
   declare_function("is_32bit", "", "i", is_32bit);
   declare_function("is_64bit", "", "i", is_64bit);
+
+  declare_integer("number_of_imports");
 
   declare_integer("resource_timestamp");
 
@@ -2244,6 +2117,11 @@ int module_load(
     size_t module_data_size)
 {
   YR_MEMORY_BLOCK* block;
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
+
+  PIMAGE_NT_HEADERS32 pe_header;
+  uint8_t* block_data = NULL;
+  PE* pe = NULL;
 
   set_integer(
       IMAGE_FILE_MACHINE_UNKNOWN, module_object,
@@ -2484,9 +2362,14 @@ int module_load(
       RESOURCE_TYPE_MANIFEST, module_object,
       "RESOURCE_TYPE_MANIFEST");
 
-  foreach_memory_block(context, block)
+  foreach_memory_block(iterator, block)
   {
-    PIMAGE_NT_HEADERS32 pe_header = pe_get_header(block->data, block->size);
+	block_data = block->fetch_data(block);
+
+    if (block_data == NULL)
+      continue;
+
+    pe_header = pe_get_header(block_data, block->size);
 
     if (pe_header != NULL)
     {
@@ -2495,12 +2378,12 @@ int module_load(
       if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
           !(pe_header->FileHeader.Characteristics & IMAGE_FILE_DLL))
       {
-        PE* pe = (PE*) yr_malloc(sizeof(PE));
+        pe = (PE*) yr_malloc(sizeof(PE));
 
         if (pe == NULL)
           return ERROR_INSUFICIENT_MEMORY;
 
-        pe->data = block->data;
+        pe->data = block_data;
         pe->data_size = block->size;
         pe->header = pe_header;
         pe->object = module_object;

@@ -3,18 +3,22 @@ MODULES =  modules/tests.c
 MODULES += modules/pe.c
 MODULES += modules/elf.c
 MODULES += modules/math.c
+MODULES += modules/dotnet.c
 
-if CUCKOO
+if CUCKOO_MODULE
 MODULES += modules/cuckoo.c
 endif
 
-if MAGIC
+if MAGIC_MODULE
 MODULES += modules/magic.c
 endif
 
-if HASH
+if HASH_MODULE
 MODULES += modules/hash.c
 endif
+
+# This isn't really a module, but needs to be compiled with them.
+MODULES += modules/pe_utils.c
 
 #
 # Add your modules here:
@@ -56,11 +60,12 @@ yarainclude_HEADERS = \
   include/yara/strutils.h \
   include/yara/stream.h \
   include/yara/threading.h \
+  include/yara/integers.h \
   include/yara/libyara.h
 
 lib_LTLIBRARIES = libyara.la
 
-libyara_la_LDFLAGS = -version-number 3:4:0
+libyara_la_LDFLAGS = -version-number 3:5:0
 
 libyara_la_SOURCES = \
   $(MODULES) \
