@@ -87,5 +87,6 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Websense](http://www.websense.com)
 * [x64dbg](http://x64dbg.com)
 * [YALIH](https://github.com/Masood-M/YALIH)
+* [Scanii](https://scanii.com)
 
 Are you using it? Want to see your site listed here?
