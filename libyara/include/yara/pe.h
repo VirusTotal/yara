@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_PE_H
 
 #include <yara/types.h>
+#include <yara/utils.h>
 
 #pragma pack(push, 1)
 
@@ -312,7 +313,7 @@ typedef struct _IMAGE_NT_HEADERS64 {
 #define IMAGE_FIRST_SECTION( ntheader ) ((PIMAGE_SECTION_HEADER) \
     ((BYTE*)ntheader + \
      FIELD_OFFSET( IMAGE_NT_HEADERS32, OptionalHeader ) + \
-     ((PIMAGE_NT_HEADERS32)(ntheader))->FileHeader.SizeOfOptionalHeader \
+     yr_le16toh(((PIMAGE_NT_HEADERS32)(ntheader))->FileHeader.SizeOfOptionalHeader) \
     ))
 
 // Subsystem Values
