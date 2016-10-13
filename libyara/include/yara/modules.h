@@ -272,7 +272,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define sized_string_argument(n) \
-    ((SIZED_STRING*)(size_t)((int64_t*) __args)[n-1])
+    (*(SIZED_STRING**) &(((int64_t*) __args)[n-1]))
 
 #define string_argument(n) \
     (sized_string_argument(n)->c_string)

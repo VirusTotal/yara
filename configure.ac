@@ -32,6 +32,8 @@ case $host_os in
     darwin*) CFLAGS="$CFLAGS -I/opt/local/include" ;;
 esac
 
+AC_C_BIGENDIAN
+
 ACX_PTHREAD(
     [LIBS="$PTHREAD_LIBS $LIBS"
      CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
