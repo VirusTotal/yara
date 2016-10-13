@@ -613,10 +613,9 @@ static void test_at()
 static void test_in()
 {
   assert_true_rule_blob(
-      "import \"pe\" \
-       rule test { \
+      "rule test { \
         strings: $a = { 6a 2a 58 c3 } \
-        condition: $a in (pe.entry_point .. pe.entry_point + 1) }",
+        condition: $a in (entrypoint .. entrypoint + 1) }",
       PE32_FILE);
 }
 

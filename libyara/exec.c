@@ -88,27 +88,18 @@ typedef union _STACK_ITEM {
 
 
 #define little_endian_uint8_t(x)     (x)
-#define little_endian_uint16_t(x)    (x)
-#define little_endian_uint32_t(x)    (x)
 #define little_endian_int8_t(x)      (x)
-#define little_endian_int16_t(x)     (x)
-#define little_endian_int32_t(x)     (x)
+#define little_endian_uint16_t(x)    yr_le16toh(x)
+#define little_endian_int16_t(x)     yr_le16toh(x)
+#define little_endian_uint32_t(x)    yr_le32toh(x)
+#define little_endian_int32_t(x)     yr_le32toh(x)
 
-#define big_endian_uint8_t(x)         (x)
-
-#define big_endian_uint16_t(x) \
-    (((((uint16_t)(x) & 0xFF)) << 8) | \
-     ((((uint16_t)(x) & 0xFF00)) >> 8))
-
-#define big_endian_uint32_t(x) \
-    (((((uint32_t)(x) & 0xFF)) << 24) | \
-     ((((uint32_t)(x) & 0xFF00)) << 8) | \
-     ((((uint32_t)(x) & 0xFF0000)) >> 8) | \
-     ((((uint32_t)(x) & 0xFF000000)) >> 24))
-
-#define big_endian_int8_t(x)   big_endian_uint8_t(x)
-#define big_endian_int16_t(x)  big_endian_uint16_t(x)
-#define big_endian_int32_t(x)  big_endian_uint32_t(x)
+#define big_endian_uint8_t(x)        (x)
+#define big_endian_int8_t(x)         (x)
+#define big_endian_uint16_t(x)       yr_be16toh(x)
+#define big_endian_int16_t(x)        yr_be16toh(x)
+#define big_endian_uint32_t(x)       yr_be32toh(x)
+#define big_endian_int32_t(x)        yr_be32toh(x)
 
 
 #define function_read(type, endianess) \
