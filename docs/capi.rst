@@ -446,7 +446,7 @@ Functions
 
 .. c:function:: int yr_rules_save(YR_RULES* rules, const char* filename)
 
-  Save *rules* into the file specified by *filename*. Returns one of the
+  Save compiled *rules* into the file specified by *filename*. Returns one of the
   following error codes:
 
     :c:macro:`ERROR_SUCCESS`
@@ -457,13 +457,13 @@ Functions
 
   .. versionadded:: 3.4.0
 
-  Save *rules* into *stream*. Returns one of the following error codes:
+  Save compiled *rules* into *stream*. Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
 
 .. c:function:: int yr_rules_load(const char* filename, YR_RULES** rules)
 
-  Load rules from the file specified by *filename*. Returns one of the
+  Load compiled rules from the file specified by *filename*. Returns one of the
   following error codes:
 
     :c:macro:`ERROR_SUCCESS`
@@ -482,7 +482,7 @@ Functions
 
   .. versionadded:: 3.4.0
 
-  Load rules from *stream*. Returns one of the following error codes:
+  Load compiled rules from *stream*. Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
 
