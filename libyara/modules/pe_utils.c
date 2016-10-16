@@ -60,46 +60,46 @@ PIMAGE_NT_HEADERS32 pe_get_header(
 
   mz_header = (PIMAGE_DOS_HEADER) data;
 
-  if (mz_header->e_magic != IMAGE_DOS_SIGNATURE)
+  if (yr_le16toh(mz_header->e_magic) != IMAGE_DOS_SIGNATURE)
     return NULL;
 
-  if (mz_header->e_lfanew < 0)
+  if (yr_le32toh(mz_header->e_lfanew) < 0)
     return NULL;
 
-  headers_size = mz_header->e_lfanew + \
+  headers_size = yr_le32toh(mz_header->e_lfanew) +      \
                  sizeof(pe_header->Signature) + \
                  sizeof(IMAGE_FILE_HEADER);
 
   if (data_size < headers_size)
     return NULL;
 
-  pe_header = (PIMAGE_NT_HEADERS32) (data + mz_header->e_lfanew);
+  pe_header = (PIMAGE_NT_HEADERS32) (data + yr_le32toh(mz_header->e_lfanew));
 
-  headers_size += pe_header->FileHeader.SizeOfOptionalHeader;
+  headers_size += yr_le16toh(pe_header->FileHeader.SizeOfOptionalHeader);
 
-  if (pe_header->Signature == IMAGE_NT_SIGNATURE &&
-      (pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_UNKNOWN ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AM33 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARMNT ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM64 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_EBC ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_IA64 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_M32R ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPS16 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPSFPU ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_MIPSFPU16 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_POWERPC ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_POWERPCFP ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_R4000 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH3 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH3DSP ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH4 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_SH5 ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_THUMB ||
-       pe_header->FileHeader.Machine == IMAGE_FILE_MACHINE_WCEMIPSV2) &&
+  if (yr_le32toh(pe_header->Signature) == IMAGE_NT_SIGNATURE &&
+      (yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_UNKNOWN ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_AM33 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_AMD64 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_ARM ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_ARMNT ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_ARM64 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_EBC ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_I386 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_IA64 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_M32R ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_MIPS16 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_MIPSFPU ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_MIPSFPU16 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_POWERPC ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_POWERPCFP ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_R4000 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_SH3 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_SH3DSP ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_SH4 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_SH5 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_THUMB ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_WCEMIPSV2) &&
       data_size > headers_size)
   {
     return pe_header;
@@ -144,17 +144,17 @@ int64_t pe_rva_to_offset(
   int alignment = 0;
   int rest = 0;
 
-  while(i < yr_min(pe->header->FileHeader.NumberOfSections, MAX_PE_SECTIONS))
+  while(i < yr_min(yr_le16toh(pe->header->FileHeader.NumberOfSections), MAX_PE_SECTIONS))
   {
     if (struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
     {
-      if (lowest_section_rva > section->VirtualAddress)
+      if (lowest_section_rva > yr_le32toh(section->VirtualAddress))
       {
-        lowest_section_rva = section->VirtualAddress;
+        lowest_section_rva = yr_le32toh(section->VirtualAddress);
       }
 
-      if (rva >= section->VirtualAddress &&
-          section_rva <= section->VirtualAddress)
+      if (rva >= yr_le32toh(section->VirtualAddress) &&
+          section_rva <= yr_le32toh(section->VirtualAddress))
       {
         // Round section_offset
         //
@@ -167,11 +167,11 @@ int64_t pe_rva_to_offset(
         // If FileAlignment is >= 0x200, it is apparently ignored (see
         // Ero Carreras's pefile.py, PE.adjust_FileAlignment).
 
-        alignment = yr_min(OptionalHeader(pe, FileAlignment), 0x200);
+        alignment = yr_min(yr_le32toh(OptionalHeader(pe, FileAlignment)), 0x200);
 
-        section_rva = section->VirtualAddress;
-        section_offset = section->PointerToRawData;
-        section_raw_size = section->SizeOfRawData;
+        section_rva = yr_le32toh(section->VirtualAddress);
+        section_offset = yr_le32toh(section->PointerToRawData);
+        section_raw_size = yr_le32toh(section->SizeOfRawData);
 
         if (alignment)
         {
