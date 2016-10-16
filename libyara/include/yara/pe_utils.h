@@ -7,7 +7,7 @@
 
 
 #define IS_64BITS_PE(pe) \
-    (pe->header64->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    (yr_le16toh(pe->header64->OptionalHeader.Magic) == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
 
 
 #define OptionalHeader(pe,field)                \
