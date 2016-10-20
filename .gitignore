@@ -74,6 +74,7 @@ x64/
 *.sdf
 *.opendb
 *.opensdf
+*.VC.db
 
 # NuGet
 windows/*/packages/
