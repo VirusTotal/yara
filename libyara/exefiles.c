@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <limits.h>
 
+#include <yara/endian.h>
 #include <yara/pe.h>
 #include <yara/elf.h>
 #include <yara/exec.h>
