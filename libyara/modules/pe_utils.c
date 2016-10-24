@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string.h>
 
+#include <yara/endian.h>
 #include <yara/utils.h>
 #include <yara/strutils.h>
 #include <yara/mem.h>

@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits.h>
 
 #include <yara/elf.h>
+#include <yara/endian.h>
 #include <yara/modules.h>
 #include <yara/mem.h>
 
