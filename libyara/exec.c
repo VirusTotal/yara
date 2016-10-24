@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #include <math.h>
 
+#include <yara/endian.h>
 #include <yara/exec.h>
 #include <yara/limits.h>
 #include <yara/error.h>

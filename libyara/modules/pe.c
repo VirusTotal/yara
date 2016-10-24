@@ -47,6 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #endif
 
+#include <yara/endian.h>
 #include <yara/pe.h>
 #include <yara/modules.h>
 #include <yara/mem.h>

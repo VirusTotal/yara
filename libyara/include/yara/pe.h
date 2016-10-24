@@ -30,8 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_PE_H
 #define YR_PE_H
 
+#include <yara/endian.h>
 #include <yara/types.h>
-#include <yara/utils.h>
 
 #pragma pack(push, 1)
 
