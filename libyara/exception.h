@@ -104,7 +104,6 @@ typedef struct sigaction sa;
     act.sa_flags = 0; /* SA_ONSTACK? */                         \
     sigemptyset(&oldmask);                                      \
     sigemptyset(&act.sa_mask);                                  \
-    sigemptyset(&oldmask);                                      \
     pthread_sigmask(SIG_SETMASK, &act.sa_mask, &oldmask);       \
     sigaction(SIGBUS, &act, &oldact);                           \
     int tidx = yr_get_tidx();                                   \
