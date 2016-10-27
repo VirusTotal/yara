@@ -75,6 +75,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [root9B](https://www.root9b.com)
 * [RSA ECAT](http://www.emc.com/security/rsa-ecat.htm)
 * [SpamStopsHere](https://www.spamstopshere.com)
+* [stoQ](http://stoq.punchcyber.com)
 * [Symantec](http://www.symantec.com)
 * [Tanium](http://www.tanium.com/)
 * [The DigiTrust Group](http://www.digitrustgroup.com/)
