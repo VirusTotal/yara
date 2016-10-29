@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <signal.h>
 
 #include <yara.h>
 #include "util.h"
@@ -61,15 +62,24 @@ int main(int argc, char **argv)
   YR_RULES* rules_a = compile_rule("rule test { strings: $a = \"aaaa\" condition: all of them }");
   YR_RULES* rules_0 = compile_rule("rule test { strings: $a = { 00 00 00 00 } condition: all of them }");
 
+  puts("Scanning for \"aaaa\"...");
   int matches = 0;
   int rc = yr_rules_scan_mem(rules_a, mapped_region, 4*sizeof(wbuf), 0, count_matches, &matches, 0);
-  printf("Scan for \"aaaa\": err = %d, matches = %d\n", rc, matches);
+  printf("err = %d, matches = %d\n", rc, matches);
   if (rc == ERROR_SUCCESS || matches != 0)
     return 1;
 
+  puts("Sending blocked SIGUSR1 to ourselves...");
+  sigset_t set;
+  sigemptyset(&set);
+  sigaddset(&set, SIGUSR1);
+  sigprocmask(SIG_BLOCK, &set, NULL);
+  kill(getpid(), SIGUSR1);
+
+  puts("Scanning for {00 00 00 00}...");
   matches = 0;
   rc = yr_rules_scan_mem(rules_0, mapped_region, 4*sizeof(wbuf), 0, count_matches, &matches, 0);
-  printf("Scan for {00 00 00 00}: err = %d, matches = %d\n", rc, matches);
+  printf("err = %d, matches = %d\n", rc, matches);
   if (rc == ERROR_SUCCESS || matches != 0)
     return 1;
 
