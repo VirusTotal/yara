@@ -99,12 +99,9 @@ typedef struct sigaction sa;
   {                                                             \
     struct sigaction oldact;                                    \
     struct sigaction act;                                       \
-    sigset_t oldmask;                                           \
     act.sa_handler = exception_handler;                         \
     act.sa_flags = 0; /* SA_ONSTACK? */                         \
-    sigemptyset(&oldmask);                                      \
-    sigemptyset(&act.sa_mask);                                  \
-    pthread_sigmask(SIG_SETMASK, &act.sa_mask, &oldmask);       \
+    sigfillset(&act.sa_mask);                                   \
     sigaction(SIGBUS, &act, &oldact);                           \
     int tidx = yr_get_tidx();                                   \
     assert(tidx != -1);                                         \
@@ -116,7 +113,6 @@ typedef struct sigaction sa;
       { _catch_clause_ }                                        \
     exc_jmp_buf[tidx] = NULL;                                   \
     sigaction(SIGBUS, &oldact, NULL);                           \
-    pthread_sigmask(SIG_SETMASK, &oldmask, NULL);               \
   } while (0)
 
 #endif
