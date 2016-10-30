@@ -56,6 +56,14 @@ int main(int argc, char **argv)
 
   uint8_t* mapped_region = mmap(NULL, 4*sizeof(wbuf), PROT_READ, MAP_SHARED, fd, 0);
   ftruncate(fd, 2*sizeof(wbuf));
+  /*
+    mapped_region is now only partially backed by the open file
+    referred to by fd. Accessing the memory beyond
+
+        mapped_region + 2*sizeof(wbuf)
+
+    causes SIGBUS to be raised.
+  */
 
   yr_initialize();
 
@@ -64,6 +72,14 @@ int main(int argc, char **argv)
 
   puts("Scanning for \"aaaa\"...");
   int matches = 0;
+
+  /*
+    If YR_TRYCATCH is redefined like this
+
+        #define YR_TRYCATCH(_try_clause_,_catch_clause_) {_try_clause_}
+
+    yr_rules_scan_mem() will terminate the process.
+  */
   int rc = yr_rules_scan_mem(rules_a, mapped_region, 4*sizeof(wbuf), 0, count_matches, &matches, 0);
   printf("err = %d, matches = %d\n", rc, matches);
   if (rc == ERROR_SUCCESS || matches != 0)
@@ -78,6 +94,11 @@ int main(int argc, char **argv)
 
   puts("Scanning for {00 00 00 00}...");
   matches = 0;
+
+  /*
+    This tests that SIGUSR1 is not delivered when setting up SIGBUS
+    signal handling -- or during SIGBUS signal handling
+  */
   rc = yr_rules_scan_mem(rules_0, mapped_region, 4*sizeof(wbuf), 0, count_matches, &matches, 0);
   printf("err = %d, matches = %d\n", rc, matches);
   if (rc == ERROR_SUCCESS || matches != 0)
