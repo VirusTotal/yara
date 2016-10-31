@@ -36,6 +36,12 @@ YR_RULES* compile_rule(
     char* string);
 
 
+int count_matches(
+    int message,
+    void* message_data,
+    void* user_data);
+
+
 int matches_blob(
     char* rule,
     uint8_t* blob,
@@ -66,14 +72,17 @@ int read_file(
     }                                                                   \
   } while (0);
 
-#define assert_true_rule_blob(rule, blob)                               \
+#define assert_true_rule_blob_size(rule, blob, size)                    \
   do {                                                                  \
-    if (!matches_blob(rule, (uint8_t*) (blob), sizeof(blob))) {         \
+    if (!matches_blob(rule, (uint8_t*) (blob), size)) {                 \
       fprintf(stderr, "%s:%d: rule does not match (but should)\n",      \
               __FILE__, __LINE__ );                                     \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
   } while (0);
+
+#define assert_true_rule_blob(rule, blob)               \
+  assert_true_rule_blob_size(rule, blob, sizeof(blob))
 
 #define assert_true_rule_file(rule, filename)                           \
   do {                                                                  \
@@ -102,14 +111,17 @@ int read_file(
     }                                                                   \
   } while (0);
 
-#define assert_false_rule_blob(rule, blob)                              \
+#define assert_false_rule_blob_size(rule, blob, size)                   \
   do {                                                                  \
-    if (matches_blob(rule, (uint8_t*) (blob), sizeof(blob))) {          \
+    if (matches_blob(rule, (uint8_t*) (blob), size)) {                  \
       fprintf(stderr, "%s:%d: rule matches (but shouldn't)\n",          \
               __FILE__, __LINE__ );                                     \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
   } while (0);
+
+#define assert_false_rule_blob(rule, blob)              \
+  assert_false_rule_blob_size(rule, blob, sizeof(blob))
 
 #define assert_false_rule_file(rule, filename)                          \
   do {                                                                  \
