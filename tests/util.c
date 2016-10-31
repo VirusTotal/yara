@@ -82,7 +82,7 @@ _exit:
 }
 
 
-static int count_matches(
+int count_matches(
     int message,
     void* message_data,
     void* user_data)
