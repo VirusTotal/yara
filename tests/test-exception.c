@@ -36,11 +36,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara.h>
 #include "util.h"
 
+#define COUNT 128
+char wbuf[1024];
+
 int main(int argc, char **argv)
 {
   char* filename = strdup("yara-testblob.XXXXXX");
   int fd = mkstemp(filename);
-  char wbuf[4096];
   int i;
 
   if (fd <= 0)
@@ -53,21 +55,21 @@ int main(int argc, char **argv)
 
   memset(wbuf, 'a', sizeof(wbuf));
 
-  for (i = 0; i <= 3; i++)
+  for (i = 0; i < COUNT; i++)
     write(fd, wbuf, sizeof(wbuf));
 
   uint8_t* mapped_region = mmap(
-      NULL, 4 * sizeof(wbuf), PROT_READ, MAP_SHARED, fd, 0);
+      NULL, COUNT * sizeof(wbuf), PROT_READ, MAP_SHARED, fd, 0);
 
-  ftruncate(fd, 2 * sizeof(wbuf));
+  ftruncate(fd, COUNT * sizeof(wbuf) / 2);
 
   /*
     mapped_region is now only partially backed by the open file
     referred to by fd. Accessing the memory beyond
 
-        mapped_region + 2 * sizeof(wbuf)
+        mapped_region + COUNT * sizeof(wbuf) / 2
 
-    causes SIGBUS to be raised.
+    should cause a signal (usually SIGBUS) to be raised.
   */
 
   yr_initialize();
@@ -91,7 +93,7 @@ int main(int argc, char **argv)
   */
 
   int rc = yr_rules_scan_mem(
-      rules_a, mapped_region, 4 * sizeof(wbuf), 0, count_matches, &matches, 0);
+      rules_a, mapped_region, COUNT * sizeof(wbuf), 0, count_matches, &matches, 0);
 
   printf("err = %d, matches = %d\n", rc, matches);
 
@@ -115,7 +117,7 @@ int main(int argc, char **argv)
   */
 
   rc = yr_rules_scan_mem(
-      rules_0, mapped_region, 4 * sizeof(wbuf), 0, count_matches, &matches, 0);
+      rules_0, mapped_region, COUNT * sizeof(wbuf), 0, count_matches, &matches, 0);
 
   printf("err = %d, matches = %d\n", rc, matches);
 
