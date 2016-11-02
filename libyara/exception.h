@@ -81,7 +81,7 @@ static LONG CALLBACK exception_handler(
 sigjmp_buf *exc_jmp_buf[MAX_THREADS];
 
 static void exception_handler(int sig) {
-  if (sig == SIGBUS)
+  if (sig == SIGBUS || sig == SIGSEGV)
   {
     int tidx = yr_get_tidx();
 
@@ -97,12 +97,14 @@ typedef struct sigaction sa;
 #define YR_TRYCATCH(_try_clause_, _catch_clause_)               \
   do                                                            \
   {                                                             \
-    struct sigaction oldact;                                    \
+    struct sigaction old_sigbus_act;                            \
+    struct sigaction old_sigsegv_act;                           \
     struct sigaction act;                                       \
     act.sa_handler = exception_handler;                         \
     act.sa_flags = 0; /* SA_ONSTACK? */                         \
     sigfillset(&act.sa_mask);                                   \
-    sigaction(SIGBUS, &act, &oldact);                           \
+    sigaction(SIGBUS, &act, &old_sigbus_act);                   \
+    sigaction(SIGSEGV, &act, &old_sigsegv_act);                 \
     int tidx = yr_get_tidx();                                   \
     assert(tidx != -1);                                         \
     sigjmp_buf jb;                                              \
@@ -112,7 +114,8 @@ typedef struct sigaction sa;
     else                                                        \
       { _catch_clause_ }                                        \
     exc_jmp_buf[tidx] = NULL;                                   \
-    sigaction(SIGBUS, &oldact, NULL);                           \
+    sigaction(SIGBUS, &old_sigbus_act, NULL);                   \
+    sigaction(SIGSEGV, &old_sigsegv_act, NULL);                 \
   } while (0)
 
 #endif
