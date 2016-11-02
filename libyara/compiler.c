@@ -959,7 +959,12 @@ YR_API char* yr_compiler_get_error_message(
           buffer_size,
           "regular expression is too large");
       break;
-
+    case ERROR_TOO_MANY_RE_SPLITS:
+      snprintf(
+          buffer,
+          buffer_size,
+          "regular expression has too many splits. Increase RE_MAX_SPLIT_ID and recompile.");
+      break;
   }
 
   return buffer;

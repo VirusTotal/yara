@@ -650,7 +650,7 @@ int _yr_emit_split(
   assert(opcode == RE_OPCODE_SPLIT_A || opcode == RE_OPCODE_SPLIT_B);
 
   if (emit_context->next_split_id == RE_MAX_SPLIT_ID)
-    return ERROR_INTERNAL_FATAL_ERROR;
+    return ERROR_TOO_MANY_RE_SPLITS;
 
   FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
