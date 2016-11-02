@@ -434,7 +434,9 @@ YR_API int yr_rules_scan_mem_blocks(
 
     if (context.entry_point == UNDEFINED)
     {
-      YR_TRYCATCH({
+      YR_TRYCATCH(
+        !(flags & SCAN_FLAGS_NO_TRYCATCH),
+        {
           if (flags & SCAN_FLAGS_PROCESS_MEMORY)
             context.entry_point = yr_get_entry_point_address(
                 data,
@@ -447,7 +449,9 @@ YR_API int yr_rules_scan_mem_blocks(
         },{});
     }
 
-    YR_TRYCATCH({
+    YR_TRYCATCH(
+      !(flags & SCAN_FLAGS_NO_TRYCATCH),
+      {
         result = _yr_rules_scan_mem_block(
             rules,
             data,
@@ -465,7 +469,9 @@ YR_API int yr_rules_scan_mem_blocks(
     block = iterator->next(iterator);
   }
 
-  YR_TRYCATCH({
+  YR_TRYCATCH(
+    !(flags & SCAN_FLAGS_NO_TRYCATCH),
+    {
       result = yr_execute_code(
           rules,
           &context,
