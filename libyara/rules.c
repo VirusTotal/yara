@@ -170,6 +170,329 @@ YR_API int yr_rules_define_string_variable(
   return ERROR_INVALID_ARGUMENT;
 }
 
+YR_API int yr_rules_define_local_integer_variable(
+    YR_RULES* rules,
+    const char* identifier,
+    int64_t value)
+{
+  YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
+  YR_EXTERNAL_VARIABLE* external_overrides = (YR_EXTERNAL_VARIABLE*)yr_arena_base_address(rules->external_overrides);
+  YR_EXTERNAL_VARIABLE* new_external = NULL;
+  YR_EXTERNAL_VARIABLE* open_external = NULL;
+
+  while (!EXTERNAL_VARIABLE_IS_NULL(external))
+  {
+    if (strcmp(external->identifier, identifier) == 0)
+    {
+      if (external->type != EXTERNAL_VARIABLE_TYPE_INTEGER)
+        return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
+      while (!EXTERNAL_VARIABLE_IS_NULL(external_overrides))
+      {
+        if (external_overrides->type == EXTERNAL_VARIABLE_TYPE_OPEN) {
+          open_external = external_overrides++;
+          continue;
+        }
+
+        if (external_overrides->thread_id == pthread_self())
+        {
+          if (strcmp(external_overrides->identifier, identifier) == 0)
+          {
+            external_overrides->value.i = value;
+            return ERROR_SUCCESS;
+          }
+        }
+
+        external_overrides++;
+      }
+
+      if (open_external != NULL && open_external->type == EXTERNAL_VARIABLE_TYPE_OPEN)
+      {
+        new_external->type = EXTERNAL_VARIABLE_TYPE_INTEGER;
+        new_external->thread_id = pthread_self();
+        new_external->identifier = external->identifier;
+        new_external->value.i = value;
+
+        return ERROR_SUCCESS;
+      }
+
+      FAIL_ON_ERROR(yr_arena_allocate_struct(
+          rules->external_overrides,
+          sizeof(YR_EXTERNAL_VARIABLE),
+          (void**) &new_external,
+          offsetof(YR_EXTERNAL_VARIABLE, identifier),
+          EOL));
+
+      new_external->type = EXTERNAL_VARIABLE_TYPE_INTEGER;
+      new_external->thread_id = pthread_self();
+      new_external->identifier = external->identifier;
+      new_external->value.i = value;
+
+      return ERROR_SUCCESS;
+    }
+
+    external++;
+  }
+
+  return ERROR_INVALID_ARGUMENT;
+}
+
+
+YR_API int yr_rules_define_local_boolean_variable(
+    YR_RULES* rules,
+    const char* identifier,
+    int value)
+{
+  YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
+  YR_EXTERNAL_VARIABLE* external_overrides = (YR_EXTERNAL_VARIABLE*)yr_arena_base_address(rules->external_overrides);
+  YR_EXTERNAL_VARIABLE* new_external = NULL;
+  YR_EXTERNAL_VARIABLE* open_external = NULL;
+
+  while (!EXTERNAL_VARIABLE_IS_NULL(external))
+  {
+    if (strcmp(external->identifier, identifier) == 0)
+    {
+      if (external->type != EXTERNAL_VARIABLE_TYPE_BOOLEAN)
+        return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
+      while (!EXTERNAL_VARIABLE_IS_NULL(external_overrides))
+      {
+        if (external_overrides->type == EXTERNAL_VARIABLE_TYPE_OPEN) {
+          open_external = external_overrides++;
+          continue;
+        }
+
+        if (external_overrides->thread_id == pthread_self())
+        {
+          if (strcmp(external_overrides->identifier, identifier) == 0)
+          {
+            external_overrides->value.i = value;
+            return ERROR_SUCCESS;
+          }
+        }
+
+        external_overrides++;
+      }
+
+      if (open_external != NULL && open_external->type == EXTERNAL_VARIABLE_TYPE_OPEN)
+      {
+        new_external->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
+        new_external->thread_id = pthread_self();
+        new_external->identifier = external->identifier;
+        new_external->value.i = value;
+      }
+
+      FAIL_ON_ERROR(yr_arena_allocate_struct(
+          rules->external_overrides,
+          sizeof(YR_EXTERNAL_VARIABLE),
+          (void**) &new_external,
+          offsetof(YR_EXTERNAL_VARIABLE, identifier),
+          EOL));
+
+      new_external->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
+      new_external->thread_id = pthread_self();
+      new_external->identifier = external->identifier;
+      new_external->value.i = value;
+
+      return ERROR_SUCCESS;
+    }
+
+    external++;
+  }
+
+  return ERROR_INVALID_ARGUMENT;
+}
+
+
+YR_API int yr_rules_define_local_float_variable(
+    YR_RULES* rules,
+    const char* identifier,
+    double value)
+{
+  YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
+  YR_EXTERNAL_VARIABLE* external_overrides = (YR_EXTERNAL_VARIABLE*)yr_arena_base_address(rules->external_overrides);
+  YR_EXTERNAL_VARIABLE* new_external = NULL;
+  YR_EXTERNAL_VARIABLE* open_external = NULL;
+
+  while (!EXTERNAL_VARIABLE_IS_NULL(external))
+  {
+    if (strcmp(external->identifier, identifier) == 0)
+    {
+      if (external->type != EXTERNAL_VARIABLE_TYPE_FLOAT)
+        return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
+      while (!EXTERNAL_VARIABLE_IS_NULL(external_overrides))
+      {
+        if (external_overrides->type == EXTERNAL_VARIABLE_TYPE_OPEN) {
+          open_external = external_overrides++;
+          continue;
+        }
+
+        if (external_overrides->thread_id == pthread_self())
+        {
+          if (strcmp(external_overrides->identifier, identifier) == 0)
+          {
+            external_overrides->value.f = value;
+            return ERROR_SUCCESS;
+          }
+        }
+
+        external_overrides++;
+      }
+
+      if (open_external != NULL && open_external->type == EXTERNAL_VARIABLE_TYPE_OPEN)
+      {
+        new_external->type = EXTERNAL_VARIABLE_TYPE_FLOAT;
+        new_external->thread_id = pthread_self();
+        new_external->identifier = external->identifier;
+        new_external->value.f = value;
+      }
+
+      FAIL_ON_ERROR(yr_arena_allocate_struct(
+          rules->external_overrides,
+          sizeof(YR_EXTERNAL_VARIABLE),
+          (void**) &new_external,
+          offsetof(YR_EXTERNAL_VARIABLE, identifier),
+          EOL));
+
+      new_external->type = EXTERNAL_VARIABLE_TYPE_FLOAT;
+      new_external->thread_id = pthread_self();
+      new_external->identifier = external->identifier;
+      new_external->value.f = value;
+
+      return ERROR_SUCCESS;
+    }
+
+    external++;
+  }
+
+  return ERROR_INVALID_ARGUMENT;
+}
+
+
+YR_API int yr_rules_define_local_string_variable(
+    YR_RULES* rules,
+    const char* identifier,
+    const char* value)
+{
+  YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
+  YR_EXTERNAL_VARIABLE* external_overrides = (YR_EXTERNAL_VARIABLE*)yr_arena_base_address(rules->external_overrides);
+  YR_EXTERNAL_VARIABLE* new_external = NULL;
+  YR_EXTERNAL_VARIABLE* open_external = NULL;
+
+  while (!EXTERNAL_VARIABLE_IS_NULL(external))
+  {
+    if (strcmp(external->identifier, identifier) == 0)
+    {
+      if (external->type != EXTERNAL_VARIABLE_TYPE_STRING &&
+          external->type != EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
+        return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
+      while (!EXTERNAL_VARIABLE_IS_NULL(external_overrides))
+      {
+        if (external_overrides->type == EXTERNAL_VARIABLE_TYPE_OPEN) {
+          open_external = external_overrides++;
+          continue;
+        }
+
+        if (external_overrides->thread_id == pthread_self())
+        {
+          if (strcmp(external_overrides->identifier, identifier) == 0)
+          {
+            if (external_overrides->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING &&
+                external_overrides->value.s != NULL)
+            {
+              yr_free(external_overrides->value.s);
+            }
+
+            external_overrides->type = EXTERNAL_VARIABLE_TYPE_MALLOC_STRING;
+            external_overrides->value.s = yr_strdup(value);
+
+            if (external_overrides->value.s == NULL)
+              return ERROR_INSUFICIENT_MEMORY;
+            else
+              return ERROR_SUCCESS;
+          }
+        }
+
+        external_overrides++;
+      }
+
+      if (open_external != NULL && open_external->type == EXTERNAL_VARIABLE_TYPE_OPEN)
+      {
+        new_external->type = EXTERNAL_VARIABLE_TYPE_MALLOC_STRING;
+        new_external->thread_id = pthread_self();
+        new_external->identifier = external->identifier;
+        new_external->value.s = yr_strdup(value);
+
+        if (new_external->value.s == NULL)
+          return ERROR_INSUFICIENT_MEMORY;
+        else
+          return ERROR_SUCCESS;
+      }
+
+      FAIL_ON_ERROR(yr_arena_allocate_struct(
+          rules->external_overrides,
+          sizeof(YR_EXTERNAL_VARIABLE),
+          (void**) &new_external,
+          offsetof(YR_EXTERNAL_VARIABLE, identifier),
+          EOL));
+
+      new_external->type = EXTERNAL_VARIABLE_TYPE_MALLOC_STRING;
+      new_external->thread_id = pthread_self();
+      new_external->identifier = external->identifier;
+      new_external->value.s = yr_strdup(value);
+
+      if (new_external->value.s == NULL)
+        return ERROR_INSUFICIENT_MEMORY;
+      else
+        return ERROR_SUCCESS;
+    }
+
+    external++;
+  }
+
+  return ERROR_INVALID_ARGUMENT;
+}
+
+YR_API int yr_rules_undefine_local_variable(
+    YR_RULES* rules,
+    const char* identifier)
+{
+  YR_EXTERNAL_VARIABLE* external_overrides;
+
+  external_overrides = (YR_EXTERNAL_VARIABLE*)yr_arena_base_address(rules->external_overrides);
+
+  while (!EXTERNAL_VARIABLE_IS_NULL(external_overrides))
+  {
+    if (external_overrides->type == EXTERNAL_VARIABLE_TYPE_OPEN) {
+      external_overrides++;
+      continue;
+    }
+
+    if (external_overrides->thread_id == pthread_self())
+    {
+      if (strcmp(external_overrides->identifier, identifier) == 0)
+      {
+        if (external_overrides->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING &&
+            external_overrides->value.s != NULL)
+        {
+          yr_free(external_overrides->value.s);
+        }
+
+        external_overrides->type = EXTERNAL_VARIABLE_TYPE_OPEN;
+
+        return ERROR_SUCCESS;
+      }
+    }
+
+    external_overrides++;
+  }
+
+
+  return ERROR_INVALID_ARGUMENT;
+}
+
 
 void _yr_rules_clean_matches(
     YR_RULES* rules,
@@ -337,6 +660,7 @@ YR_API int yr_rules_scan_mem_blocks(
     int timeout)
 {
   YR_EXTERNAL_VARIABLE* external;
+  YR_EXTERNAL_VARIABLE* external_overrides;
   YR_RULE* rule;
   YR_SCAN_CONTEXT context;
   YR_MEMORY_BLOCK* block;
@@ -417,6 +741,38 @@ YR_API int yr_rules_scan_mem_blocks(
       goto _exit;
 
     external++;
+  }
+
+  external_overrides = (YR_EXTERNAL_VARIABLE*)yr_arena_base_address(rules->external_overrides);
+
+  while (!EXTERNAL_VARIABLE_IS_NULL(external_overrides))
+  {
+    if (external_overrides->type == EXTERNAL_VARIABLE_TYPE_OPEN) {
+      external_overrides++;
+      continue;
+    }
+
+    if (external_overrides->thread_id == pthread_self())
+    {
+      YR_OBJECT* object;
+
+      result = yr_object_from_external_variable(
+          external_overrides,
+          &object);
+
+      if (result == ERROR_SUCCESS)
+        result = yr_hash_table_add(
+            context.objects_table,
+            external_overrides->identifier,
+            NULL,
+            (void*) object);
+
+      if (result != ERROR_SUCCESS)
+        goto _exit;
+
+    }
+
+    external_overrides++;
   }
 
   start_time = time(NULL);
@@ -708,6 +1064,11 @@ YR_API int yr_rules_load_stream(
       // cleanup
       yr_free(new_rules));
 
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_arena_create(65536, 0, &new_rules->external_overrides),
+      yr_arena_destroy(new_rules->external_overrides);
+      yr_free(new_rules));
+
   *rules = new_rules;
 
   return ERROR_SUCCESS;
@@ -773,6 +1134,7 @@ YR_API int yr_rules_destroy(
     YR_RULES* rules)
 {
   YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
+  YR_EXTERNAL_VARIABLE* external_overrides = (YR_EXTERNAL_VARIABLE*)yr_arena_base_address(rules->external_overrides);
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -782,8 +1144,17 @@ YR_API int yr_rules_destroy(
     external++;
   }
 
+  while (!EXTERNAL_VARIABLE_IS_NULL(external_overrides))
+  {
+    if (external_overrides->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
+      yr_free(external_overrides->value.s);
+
+    external_overrides++;
+  }
+
   yr_mutex_destroy(&rules->mutex);
   yr_arena_destroy(rules->arena);
+  yr_arena_destroy(rules->external_overrides);
   yr_free(rules);
 
   return ERROR_SUCCESS;

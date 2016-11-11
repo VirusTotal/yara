@@ -629,6 +629,11 @@ YR_API int yr_compiler_get_rules(
       yr_arena_destroy(yara_rules->arena);
       yr_free(yara_rules));
 
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_arena_create(65536, 0, &yara_rules->external_overrides),
+      yr_arena_destroy(yara_rules->external_overrides);
+      yr_free(yara_rules));
+
   *rules = yara_rules;
 
   return ERROR_SUCCESS;
@@ -660,6 +665,7 @@ YR_API int yr_compiler_define_integer_variable(
       EOL));
 
   external->type = EXTERNAL_VARIABLE_TYPE_INTEGER;
+  external->thread_id = pthread_self();
   external->identifier = id;
   external->value.i = value;
 
@@ -702,6 +708,7 @@ YR_API int yr_compiler_define_boolean_variable(
       EOL));
 
   external->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
+  external->thread_id = pthread_self();
   external->identifier = id;
   external->value.i = value;
 
@@ -744,6 +751,7 @@ YR_API int yr_compiler_define_float_variable(
       EOL));
 
   external->type = EXTERNAL_VARIABLE_TYPE_FLOAT;
+  external->thread_id = pthread_self();
   external->identifier = id;
   external->value.f = value;
 
@@ -793,6 +801,7 @@ YR_API int yr_compiler_define_string_variable(
       EOL));
 
   external->type = EXTERNAL_VARIABLE_TYPE_STRING;
+  external->thread_id = pthread_self();
   external->identifier = id;
   external->value.s = val;
 
