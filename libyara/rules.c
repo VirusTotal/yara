@@ -194,7 +194,7 @@ YR_API int yr_rules_define_local_integer_variable(
           continue;
         }
 
-        if (external_overrides->thread_id == pthread_self())
+        if (pthread_equal(external_overrides->thread_id, pthread_self()))
         {
           if (strcmp(external_overrides->identifier, identifier) == 0)
           {
@@ -262,7 +262,7 @@ YR_API int yr_rules_define_local_boolean_variable(
           continue;
         }
 
-        if (external_overrides->thread_id == pthread_self())
+        if (pthread_equal(external_overrides->thread_id, pthread_self()))
         {
           if (strcmp(external_overrides->identifier, identifier) == 0)
           {
@@ -328,7 +328,7 @@ YR_API int yr_rules_define_local_float_variable(
           continue;
         }
 
-        if (external_overrides->thread_id == pthread_self())
+        if (pthread_equal(external_overrides->thread_id, pthread_self()))
         {
           if (strcmp(external_overrides->identifier, identifier) == 0)
           {
@@ -395,7 +395,7 @@ YR_API int yr_rules_define_local_string_variable(
           continue;
         }
 
-        if (external_overrides->thread_id == pthread_self())
+        if (pthread_equal(external_overrides->thread_id, pthread_self()))
         {
           if (strcmp(external_overrides->identifier, identifier) == 0)
           {
@@ -470,7 +470,7 @@ YR_API int yr_rules_undefine_local_variable(
       continue;
     }
 
-    if (external_overrides->thread_id == pthread_self())
+    if (pthread_equal(external_overrides->thread_id, pthread_self()))
     {
       if (strcmp(external_overrides->identifier, identifier) == 0)
       {
@@ -752,7 +752,7 @@ YR_API int yr_rules_scan_mem_blocks(
       continue;
     }
 
-    if (external_overrides->thread_id == pthread_self())
+    if (pthread_equal(external_overrides->thread_id, pthread_self()))
     {
       YR_OBJECT* object;
 
