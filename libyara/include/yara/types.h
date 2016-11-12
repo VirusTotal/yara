@@ -252,7 +252,7 @@ typedef struct _YR_RULE
 typedef struct _YR_EXTERNAL_VARIABLE
 {
   int32_t type;
-  YR_THREAD_ID thread_id;
+  YR_ALIGN(8) YR_THREAD_ID thread_id;
 
   YR_ALIGN(8) union {
     int64_t i;

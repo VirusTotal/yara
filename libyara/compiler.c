@@ -665,7 +665,7 @@ YR_API int yr_compiler_define_integer_variable(
       EOL));
 
   external->type = EXTERNAL_VARIABLE_TYPE_INTEGER;
-  external->thread_id = pthread_self();
+  external->thread_id = yr_current_thread_id();
   external->identifier = id;
   external->value.i = value;
 
@@ -708,7 +708,7 @@ YR_API int yr_compiler_define_boolean_variable(
       EOL));
 
   external->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
-  external->thread_id = pthread_self();
+  external->thread_id = yr_current_thread_id();
   external->identifier = id;
   external->value.i = value;
 
@@ -751,7 +751,7 @@ YR_API int yr_compiler_define_float_variable(
       EOL));
 
   external->type = EXTERNAL_VARIABLE_TYPE_FLOAT;
-  external->thread_id = pthread_self();
+  external->thread_id = yr_current_thread_id();
   external->identifier = id;
   external->value.f = value;
 
@@ -801,7 +801,7 @@ YR_API int yr_compiler_define_string_variable(
       EOL));
 
   external->type = EXTERNAL_VARIABLE_TYPE_STRING;
-  external->thread_id = pthread_self();
+  external->thread_id = yr_current_thread_id();
   external->identifier = id;
   external->value.s = val;
 

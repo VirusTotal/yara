@@ -51,6 +51,7 @@ typedef pthread_mutex_t YR_MUTEX;
 #endif
 
 YR_THREAD_ID yr_current_thread_id(void);
+int yr_compare_thread_id(YR_THREAD_ID, YR_THREAD_ID);
 
 int yr_mutex_create(YR_MUTEX*);
 int yr_mutex_destroy(YR_MUTEX*);
