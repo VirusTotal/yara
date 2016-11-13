@@ -41,6 +41,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_THREADS 32
 
+// MAX_CONTEXTS is the number of external variable contexts that may
+// be allocated for a YR_RULES object.
+
+#define MAX_CONTEXTS 255
+
 
 #ifndef MAX_PATH
 #define MAX_PATH 1024
