@@ -995,13 +995,15 @@ void pe_parse_certificates(
     if (yr_le16toh(win_cert->Revision) != WIN_CERT_REVISION_2_0 ||
         yr_le16toh(win_cert->CertificateType) != WIN_CERT_TYPE_PKCS_SIGNED_DATA)
     {
-      uintptr_t end = (uintptr_t) ((uint8_t *) win_cert) + yr_le32toh(win_cert->Length);
+      uintptr_t end = (uintptr_t) 
+          ((uint8_t *) win_cert) + yr_le32toh(win_cert->Length);
+      
       win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
-
       continue;
     }
 
-    cert_bio = BIO_new_mem_buf(win_cert->Certificate, yr_le32toh(win_cert->Length));
+    cert_bio = BIO_new_mem_buf(
+        win_cert->Certificate, yr_le32toh(win_cert->Length));
 
     if (!cert_bio)
       break;
@@ -1242,7 +1244,8 @@ void pe_parse_header(
 
   section = IMAGE_FIRST_SECTION(pe->header);
 
-  scount = yr_min(yr_le16toh(pe->header->FileHeader.NumberOfSections), MAX_PE_SECTIONS);
+  scount = yr_min(
+      yr_le16toh(pe->header->FileHeader.NumberOfSections), MAX_PE_SECTIONS);
 
   for (i = 0; i < scount; i++)
   {
@@ -1705,7 +1708,6 @@ define_function(language)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
-
   uint64_t language = integer_argument(1);
   int64_t n, i;
 
@@ -1862,36 +1864,43 @@ define_function(rich_toolid_version)
 
 define_function(calculate_checksum)
 {
-  uint64_t csum = 0;
-
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
+
+  uint64_t csum = 0;
+  size_t csum_offset;
+
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  int csum_offset = ((uint8_t*)&(pe->header->OptionalHeader) +
-		     offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum)) - pe->data;
+  csum_offset = ((uint8_t*) &(pe->header->OptionalHeader) +
+      offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum)) - pe->data;
+
   for (int i = 0; i <= pe->data_size / 4; i++)
   {
     // Treat the CheckSum field as 0 -- the offset is the same for
     // PE32 and PE64.
+
     if (4 * i == csum_offset)
       continue;
-    if (4 * i+4 < pe->data_size)
+
+    if (4 * i + 4 < pe->data_size)
     {
       csum += ((uint64_t) pe->data[4 * i] +
-	       ((uint64_t) pe->data[4 * i + 1] << 8)  +
-	       ((uint64_t) pe->data[4 * i + 2] << 16) +
-	       ((uint64_t) pe->data[4 * i + 3] << 24));
+          ((uint64_t) pe->data[4 * i + 1] << 8)  +
+          ((uint64_t) pe->data[4 * i + 2] << 16) +
+          ((uint64_t) pe->data[4 * i + 3] << 24));
     }
     else
     {
       for (int j = 0; j < pe->data_size % 4; j++)
-	csum += (uint64_t) pe->data[4 * i + j] << (8 * j);
+        csum += (uint64_t) pe->data[4 * i + j] << (8 * j);
     }
+
     if (csum > 0xffffffff)
       csum = (csum & 0xffffffff) + (csum >> 32);
   }
+
   csum = (csum & 0xffff) + (csum >> 16);
   csum += (csum >> 16);
   csum &= 0xffff;
