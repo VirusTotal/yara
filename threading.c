@@ -40,13 +40,8 @@ int mutex_init(
     MUTEX* mutex)
 {
   #if defined(_WIN32) || defined(__CYGWIN__)
-  __try {
     InitializeCriticalSection(mutex);
     return 0;
-  }
-  __except (STATUS_NO_MEMORY) {
-    return STATUS_NO_MEMORY;
-  }
   #else
   return pthread_mutex_init(mutex, NULL);
   #endif
