@@ -40,10 +40,7 @@ int mutex_init(
     MUTEX* mutex)
 {
   #if defined(_WIN32) || defined(__CYGWIN__)
-  *mutex = CreateMutex(NULL, FALSE, NULL);
-  if (*mutex == NULL)
-    return GetLastError();
-  else
+    InitializeCriticalSection(mutex);
     return 0;
   #else
   return pthread_mutex_init(mutex, NULL);
@@ -54,7 +51,7 @@ void mutex_destroy(
     MUTEX* mutex)
 {
   #if defined(_WIN32) || defined(__CYGWIN__)
-  CloseHandle(*mutex);
+  DeleteCriticalSection(mutex);
   #else
   pthread_mutex_destroy(mutex);
   #endif
@@ -65,7 +62,7 @@ void mutex_lock(
     MUTEX* mutex)
 {
   #if defined(_WIN32) || defined(__CYGWIN__)
-  WaitForSingleObject(*mutex, INFINITE);
+  EnterCriticalSection(mutex);
   #else
   pthread_mutex_lock(mutex);
   #endif
@@ -76,7 +73,7 @@ void mutex_unlock(
     MUTEX* mutex)
 {
   #if defined(_WIN32) || defined(__CYGWIN__)
-  ReleaseMutex(*mutex);
+  LeaveCriticalSection(mutex);
   #else
   pthread_mutex_unlock(mutex);
   #endif
