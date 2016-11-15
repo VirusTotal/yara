@@ -165,8 +165,10 @@ void parse_elf_header_##bits##_##bo(                                           \
       ((uint8_t*) elf + yr_##bo##bits##toh(elf->sh_offset));                   \
                                                                                \
     if (section[yr_##bo##16toh(elf->sh_str_table_index)].offset < elf_size)    \
-      str_table = (char*) elf +                                                \
-        yr_##bo##bits##toh(section[yr_##bo##16toh(elf->sh_str_table_index)].offset); \
+    {                                                                          \
+      str_table = (char*) elf + yr_##bo##bits##toh(                            \
+          section[yr_##bo##16toh(elf->sh_str_table_index)].offset);            \
+    }                                                                          \
                                                                                \
     for (i = 0; i < yr_##bo##16toh(elf->sh_entry_count); i++)                  \
     {                                                                          \
@@ -422,7 +424,7 @@ int module_load(
 
     switch(get_elf_class_data(block_data, block->size))
     {
-      case CLASS_DATA(ELF_CLASS_32,ELF_DATA_2LSB):
+      case CLASS_DATA(ELF_CLASS_32, ELF_DATA_2LSB):
 
         if (block->size > sizeof(elf32_header_t))
         {
@@ -442,7 +444,7 @@ int module_load(
 
         break;
 
-      case CLASS_DATA(ELF_CLASS_32,ELF_DATA_2MSB):
+      case CLASS_DATA(ELF_CLASS_32, ELF_DATA_2MSB):
 
         if (block->size > sizeof(elf32_header_t))
         {
