@@ -33,7 +33,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _MSC_VER
 
 #include <float.h>
+#ifndef isnan
 #define isnan _isnan
+#endif
 
 #ifndef INFINITY
 #define INFINITY (DBL_MAX + DBL_MAX)
