@@ -65,6 +65,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Koodous](https://koodous.com/)
 * [Laika BOSS](https://github.com/lmco/laikaboss)
 * [Lastline, Inc.](http://www.lastline.com)
+* [McAfee Advanced Threat Defense](http://mcafee.com/atd)
 * [Metaflows](http://www.metaflows.com)
 * [NBS System](https://www.nbs-system.com/)
 * [osquery](http://www.osquery.io)
