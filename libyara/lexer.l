@@ -845,7 +845,7 @@ int yr_lex_parse_rules_fd(
     if (!ReadFile(rules_fd, buf, sizeof(buf), &len, NULL))
       break;
 #else
-    int len = read(rules_fd, buf, sizeof(buf));
+    ssize_t len = read(rules_fd, buf, sizeof(buf));
     if (len < 0)
     {
       if (errno == EINTR)
