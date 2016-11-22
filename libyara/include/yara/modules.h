@@ -45,8 +45,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Concatenation that macro-expands its arguments.
 
-#define CONCAT(arg1, arg2) _CONCAT(arg1, arg2) // expands the arguments.
-#define _CONCAT(arg1, arg2) arg1 ## arg2       // do the actual concatenation.
+#define CONCAT(arg1, arg2) YR_CONCAT_IMPL(arg1, arg2) // expands the arguments.
+#define YR_CONCAT_IMPL(arg1, arg2) arg1 ## arg2       // do the actual concatenation.
 
 
 #define module_declarations CONCAT(MODULE_NAME, __declarations)
