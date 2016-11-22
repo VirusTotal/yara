@@ -562,10 +562,13 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
     if (yr_re_contains_dot_star(re))
     {
-      yywarning(
-          yyscanner,
-          "%s contains .*, consider using .{N} with a reasonable value for N",
-          identifier);
+	  if (compiler->safe) {
+	    snprintf(message, sizeof(message), "%s contains .*, consider using .{N} with a reasonable value for N", identifier);
+        yyerror(yyscanner, compiler, message);
+	  }
+	  else {
+		yywarning(yyscanner, "%s contains .*, consider using .{N} with a reasonable value for N", identifier);
+	  }
     }
 
     compiler->last_result = yr_re_split_at_chaining_point(
@@ -670,11 +673,12 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
   if (min_atom_quality < 3 && compiler->callback != NULL)
   {
-    yywarning(
-        yyscanner,
-        "%s is slowing down scanning%s",
-        string->identifier,
-        min_atom_quality < 2 ? " (critical!)" : "");
+    if (compiler->safe) {
+	  snprintf(message, sizeof(message), "%s is slowing down scanning%s", string->identifier, min_atom_quality < 2 ? " (critical!)" : "");
+	  yyerror(yyscanner, compiler, message);
+	} else {
+      yywarning(yyscanner, "%s is slowing down scanning%s", string->identifier, min_atom_quality < 2 ? " (critical!)" : "");
+	}
   }
 
 _exit:

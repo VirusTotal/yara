@@ -1345,7 +1345,7 @@ void test_file_descriptor()
     exit(EXIT_FAILURE);
   }
 #endif
-  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  if (yr_compiler_create(&compiler, FALSE) != ERROR_SUCCESS)
   {
     perror("yr_compiler_create");
     exit(EXIT_FAILURE);

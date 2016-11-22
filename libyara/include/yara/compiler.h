@@ -92,6 +92,7 @@ typedef struct _YR_COMPILER
   YR_FIXUP*         fixup_stack_head;
 
   int               namespaces_count;
+  int				safe;
 
   uint8_t*          loop_address[MAX_LOOP_NESTING];
   char*             loop_identifier[MAX_LOOP_NESTING];
@@ -153,7 +154,7 @@ void _yr_compiler_pop_file_name(
 
 
 YR_API int yr_compiler_create(
-    YR_COMPILER** compiler);
+    YR_COMPILER** compiler, int safe);
 
 
 YR_API void yr_compiler_destroy(
