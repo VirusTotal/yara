@@ -45,15 +45,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Concatenation that macro-expands its arguments.
 
-#define CONCAT(arg1, arg2) _CONCAT(arg1, arg2) // expands the arguments.
-#define _CONCAT(arg1, arg2) arg1 ## arg2       // do the actual concatenation.
+#define YR_CONCAT(arg1, arg2) _YR_CONCAT(arg1, arg2) // expands the arguments.
+#define _YR_CONCAT(arg1, arg2) arg1 ## arg2  // do the actual concatenation.
 
 
-#define module_declarations CONCAT(MODULE_NAME, __declarations)
-#define module_load CONCAT(MODULE_NAME, __load)
-#define module_unload CONCAT(MODULE_NAME, __unload)
-#define module_initialize CONCAT(MODULE_NAME, __initialize)
-#define module_finalize CONCAT(MODULE_NAME, __finalize)
+#define module_declarations YR_CONCAT(MODULE_NAME, __declarations)
+#define module_load YR_CONCAT(MODULE_NAME, __load)
+#define module_unload YR_CONCAT(MODULE_NAME, __unload)
+#define module_initialize YR_CONCAT(MODULE_NAME, __initialize)
+#define module_finalize YR_CONCAT(MODULE_NAME, __finalize)
 
 #define begin_declarations \
     int module_declarations(YR_OBJECT* module) { \
