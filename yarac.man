@@ -29,13 +29,15 @@ if it’s a path to a directory all the files contained in it will be scanned.
 \fB-d\fP <identifier>=<value>
 define external variable.
 .TP
-.B
-\fB-w\fP
-disable warnings.
+.B \-w " --no-warnings"
+Disable warnings.
 .TP
-.B
-\fB-v\fP
-show version information.
+.B "    --fail-on-warnings"
+Treat warnings as errors. Has no effect if used with
+.B --no-warnings.
+.TP
+.B \-v " --version"
+Show version information.
 .SH EXAMPLE
 The \fB-d\fP is used to define external variables. For example:
 .PP

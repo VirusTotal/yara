@@ -97,6 +97,10 @@ Available options are:
 
   Disable warnings.
 
+.. option:: --fail-on-warnings
+
+  Treat warnings as errors. Has no effect if used with --no-warnings.
+
 .. option:: -v --version
 
   Show version information.
