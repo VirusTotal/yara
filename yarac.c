@@ -186,6 +186,8 @@ int main(
     int argc,
     const char** argv)
 {
+  COMPILER_RESULTS cr;
+
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
 
@@ -229,10 +231,8 @@ int main(
   if (!define_external_variables(compiler))
     exit_with_code(EXIT_FAILURE);
 
-  COMPILER_RESULTS cr = {
-      .errors = 0,
-      .warnings = 0
-  };
+  cr.errors = 0;
+  cr.warnings = 0;
 
   yr_compiler_set_callback(compiler, report_error, &cr);
 
