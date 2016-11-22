@@ -1405,6 +1405,7 @@ yyparse (void *yyscanner, YR_COMPILER* compiler)
 {
 /* The lookahead symbol.  */
 int yychar;
+char message[512];
 
 
 /* The semantic value of the lookahead symbol.  */
@@ -2457,9 +2458,12 @@ yyreduce:
         {
           if ((yyvsp[0].expression).value.sized_string != NULL)
           {
-            yywarning(yyscanner,
-              "Using literal string \"%s\" in a boolean operation.",
-              (yyvsp[0].expression).value.sized_string->c_string);
+		    if (compiler->safe) {
+			  snprintf(message, sizeof(message), "Using literal string \"%s\" in a boolean operation.", (yyvsp[0].expression).value.sized_string->c_string);
+			  yyerror(yyscanner, compiler, message);
+			} else {
+              yywarning(yyscanner, "Using literal string \"%s\" in a boolean operation.", (yyvsp[0].expression).value.sized_string->c_string);
+			}
           }
 
           compiler->last_result = yr_parser_emit(
@@ -3228,9 +3232,11 @@ yyreduce:
   case 98:
 #line 1566 "grammar.y" /* yacc.c:1646  */
     {
-        yywarning(yyscanner,
-            "Using deprecated \"entrypoint\" keyword. Use the \"entry_point\" "
-            "function from PE module instead.");
+	    if (compiler->safe) {
+		  yyerror(yyscanner, compiler, "Using deprecated \"entrypoint\" keyword. Use the \"entry_point\" function from PE module instead.");
+		} else {
+          yywarning(yyscanner, "Using deprecated \"entrypoint\" keyword. Use the \"entry_point\" function from PE module instead.");
+		}
 
         compiler->last_result = yr_parser_emit(
             yyscanner, OP_ENTRYPOINT, NULL);

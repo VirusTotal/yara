@@ -125,6 +125,7 @@ int limit = 0;
 int timeout = 1000000;
 int stack_size = DEFAULT_STACK_SIZE;
 int threads = 8;
+int safe = FALSE;
 
 
 #define USAGE_STRING \
@@ -189,6 +190,8 @@ args_option_t options[] =
 
   OPT_BOOLEAN('h', "help", &show_help,
       "show this help and exit"),
+
+  OPT_BOOLEAN('r', "safe", &safe, "treat warnings as errors"),
 
   OPT_END()
 };
@@ -1080,7 +1083,7 @@ int main(
     // Rules file didn't contain compiled rules, let's handle it
     // as a text file containing rules in source form.
 
-    if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+    if (yr_compiler_create(&compiler, safe) != ERROR_SUCCESS)
       exit_with_code(EXIT_FAILURE);
 
     result = define_external_variables(NULL, compiler);

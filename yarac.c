@@ -60,6 +60,7 @@ char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 int ignore_warnings = FALSE;
 int show_version = FALSE;
 int show_help = FALSE;
+int safe = FALSE;
 
 
 #define USAGE_STRING \
@@ -78,6 +79,8 @@ args_option_t options[] =
 
   OPT_BOOLEAN('h', "help", &show_help,
       "show this help and exit"),
+	  
+  OPT_BOOLEAN('r', "safe", &safe, "treat warnings as errors"),
 
   OPT_END()
 };
@@ -209,7 +212,7 @@ int main(
   if (result != ERROR_SUCCESS)
     exit_with_code(EXIT_FAILURE);
 
-  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  if (yr_compiler_create(&compiler, safe) != ERROR_SUCCESS)
     exit_with_code(EXIT_FAILURE);
 
   if (!define_external_variables(compiler))

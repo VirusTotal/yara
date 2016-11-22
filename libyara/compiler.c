@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 YR_API int yr_compiler_create(
-    YR_COMPILER** compiler)
+    YR_COMPILER** compiler, int safe)
 {
   int result;
   YR_COMPILER* new_compiler;
@@ -68,6 +68,7 @@ YR_API int yr_compiler_create(
   new_compiler->compiled_rules_arena = NULL;
   new_compiler->namespaces_count = 0;
   new_compiler->current_rule = NULL;
+  new_compiler->safe = safe;
 
   result = yr_hash_table_create(10007, &new_compiler->rules_table);
 
