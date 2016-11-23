@@ -74,6 +74,10 @@ Speeds up scanning by searching only for the first occurrence of each pattern.
 .B \-w " --no-warnings"
 Disable warnings.
 .TP
+.B "    --fail-on-warnings"
+Treat warnings as errors. Has no effect if used with
+.B --no-warnings.
+.TP
 .B \-v " --version"
 Show version information.
 .SH EXAMPLES

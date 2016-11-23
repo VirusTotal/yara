@@ -56,10 +56,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_ARGS_EXT_VAR   32
 
 
+typedef struct COMPILER_RESULTS
+{
+  int errors;
+  int warnings;
+
+} COMPILER_RESULTS;
+
+
 char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 int ignore_warnings = FALSE;
 int show_version = FALSE;
 int show_help = FALSE;
+int fail_on_warnings = FALSE;
 
 
 #define USAGE_STRING \
@@ -72,6 +81,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN('w', "no-warnings", &ignore_warnings,
       "disable warnings"),
+
+  OPT_BOOLEAN(0, "fail-on-warnings", &fail_on_warnings,
+      "fail on warnings"),
 
   OPT_BOOLEAN('v', "version", &show_version,
       "show version information"),
@@ -108,10 +120,12 @@ void report_error(
   {
     fprintf(stderr, "%s(%d): error: %s\n", file_name, line_number, message);
   }
-  else
+  else if (!ignore_warnings)
   {
-    if (!ignore_warnings)
-      fprintf(stderr, "%s(%d): warning: %s\n", file_name, line_number, message);
+    COMPILER_RESULTS* compiler_results = (COMPILER_RESULTS*) user_data;
+    compiler_results->warnings++;
+
+    fprintf(stderr, "%s(%d): warning: %s\n", file_name, line_number, message);
   }
 }
 
@@ -172,6 +186,8 @@ int main(
     int argc,
     const char** argv)
 {
+  COMPILER_RESULTS cr;
+
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
 
@@ -189,7 +205,7 @@ int main(
   {
     printf("%s\n\n", USAGE_STRING);
 
-    args_print_usage(options, 25);
+    args_print_usage(options, 35);
     printf("\nSend bug reports and suggestions to: %s.\n", PACKAGE_BUGREPORT);
 
     return EXIT_SUCCESS;
@@ -215,7 +231,10 @@ int main(
   if (!define_external_variables(compiler))
     exit_with_code(EXIT_FAILURE);
 
-  yr_compiler_set_callback(compiler, report_error, NULL);
+  cr.errors = 0;
+  cr.warnings = 0;
+
+  yr_compiler_set_callback(compiler, report_error, &cr);
 
   for (int i = 0; i < argc - 1; i++)
   {
@@ -239,12 +258,15 @@ int main(
 
     if (rule_file != NULL)
     {
-      int errors = yr_compiler_add_file(
+      cr.errors = yr_compiler_add_file(
           compiler, rule_file, ns, file_name);
 
       fclose(rule_file);
 
-      if (errors) // errors during compilation
+      if (cr.errors) // errors during compilation
+        exit_with_code(EXIT_FAILURE);
+
+      if (fail_on_warnings && cr.warnings > 0)
         exit_with_code(EXIT_FAILURE);
     }
     else
