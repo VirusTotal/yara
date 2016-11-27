@@ -121,7 +121,7 @@ AS_IF([test "x$have_crypto" = "xno"],
         AC_MSG_WARN([
 *******************************************************************************
   Could not find OpenSSL library. The "hash" module and some features in "pe"
-  module has been disabled. If you want to enable all features please install
+  module have been disabled. If you want to enable all features please install
   it and run this script again.
 *******************************************************************************
         ])
