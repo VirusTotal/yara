@@ -659,13 +659,13 @@ int pe_collect_resources(
 }
 
 
-IMPORTED_FUNCTION* pe_parse_import_descriptor(
+IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
     PE* pe,
     PIMAGE_IMPORT_DESCRIPTOR import_descriptor,
     char* dll_name)
 {
-  IMPORTED_FUNCTION* head = NULL;
-  IMPORTED_FUNCTION* tail = NULL;
+  IMPORT_EXPORT_FUNCTION* head = NULL;
+  IMPORT_EXPORT_FUNCTION* tail = NULL;
 
   int num_functions = 0;
 
@@ -721,8 +721,8 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
 
       if (name != NULL || has_ordinal == 1)
       {
-        IMPORTED_FUNCTION* imported_func = (IMPORTED_FUNCTION*)
-            yr_calloc(1, sizeof(IMPORTED_FUNCTION));
+        IMPORT_EXPORT_FUNCTION* imported_func = (IMPORT_EXPORT_FUNCTION*)
+            yr_calloc(1, sizeof(IMPORT_EXPORT_FUNCTION));
 
         if (imported_func == NULL)
         {
@@ -788,8 +788,8 @@ IMPORTED_FUNCTION* pe_parse_import_descriptor(
 
       if (name != NULL || has_ordinal == 1)
       {
-        IMPORTED_FUNCTION* imported_func = (IMPORTED_FUNCTION*)
-            yr_calloc(1, sizeof(IMPORTED_FUNCTION));
+        IMPORT_EXPORT_FUNCTION* imported_func = (IMPORT_EXPORT_FUNCTION*)
+            yr_calloc(1, sizeof(IMPORT_EXPORT_FUNCTION));
 
         if (imported_func == NULL)
         {
@@ -895,7 +895,7 @@ IMPORTED_DLL* pe_parse_imports(
 
       if (imported_dll != NULL)
       {
-        IMPORTED_FUNCTION* functions = pe_parse_import_descriptor(
+        IMPORT_EXPORT_FUNCTION* functions = pe_parse_import_descriptor(
             pe, imports, dll_name);
 
         if (functions != NULL)
@@ -924,6 +924,123 @@ IMPORTED_DLL* pe_parse_imports(
   }
 
   set_integer(num_imports, pe->object, "number_of_imports");
+  return head;
+}
+
+//
+// Walk the exports and collect relevant information. It is used in the
+// "exports" function for comparison.
+//
+
+IMPORT_EXPORT_FUNCTION* pe_parse_exports(
+    PE* pe)
+{
+  IMPORT_EXPORT_FUNCTION* head = NULL;
+  IMPORT_EXPORT_FUNCTION* tail = NULL;
+
+  PIMAGE_DATA_DIRECTORY directory;
+  PIMAGE_EXPORT_DIRECTORY exports;
+  DWORD* names;
+  WORD* ordinals;
+
+  int64_t offset;
+  uint32_t i;
+  size_t remaining;
+  uint8_t* eos;
+  int num_exports = 0;
+
+  // If not a PE file, return UNDEFINED
+
+  if (pe == NULL)
+    return NULL;
+
+  directory = pe_get_directory_entry(
+      pe, IMAGE_DIRECTORY_ENTRY_EXPORT);
+
+  if (yr_le32toh(directory->VirtualAddress) == 0)
+    return NULL;
+
+  offset = pe_rva_to_offset(pe, directory->VirtualAddress);
+
+  if (offset < 0)
+    return NULL;
+
+  exports = (PIMAGE_EXPORT_DIRECTORY) \
+      (pe->data + offset);
+
+  if (!struct_fits_in_pe(pe, exports, IMAGE_EXPORT_DIRECTORY))
+    return NULL;
+
+  offset = pe_rva_to_offset(pe, yr_le32toh(exports->AddressOfNames));
+
+  if (offset < 0)
+    return NULL;
+
+  if (yr_le32toh(exports->NumberOfFunctions) > MAX_PE_EXPORTS ||
+      yr_le32toh(exports->NumberOfFunctions) * sizeof(DWORD) > pe->data_size - offset)
+    return NULL;
+
+  names = (DWORD*)(pe->data + offset);
+
+  offset = pe_rva_to_offset(pe, yr_le32toh(exports->AddressOfNameOrdinals));
+
+  if (offset < 0)
+    return NULL;
+
+  ordinals = (WORD*)(pe->data + offset);
+
+  // Walk the number of functions, not the number of names as each exported
+  // symbol has an ordinal value, but names are optional.
+  for (i = 0; i < yr_le32toh(exports->NumberOfFunctions); i++)
+  {
+    char* name;
+    uint16_t ordinal = 0;
+    offset = pe_rva_to_offset(pe, names[i]);
+
+    if (offset < 0)
+      return head;
+
+    // The name is a NULL terminated string of variable length, so search for it
+    // but be sure not to go too far.
+    remaining = pe->data_size - (size_t) offset;
+    eos = (uint8_t*) memmem((void*) (pe->data + offset), remaining, "\0", 1);
+    if (eos == NULL)
+      // No NULL terminator found. Abort!
+      continue;
+    else
+      // NULL found. Save the string!
+      name = (char *) yr_strndup((char*) offset, (size_t) (eos - (pe->data + offset)));
+
+    // Get the corresponding ordinal. Note that we are not subtracting the
+    // ordinal base here as we don't intend to index into the export address
+    // table.
+    ordinal = yr_le16toh(ordinals[i]);
+
+    // Now add it to the list...
+    IMPORT_EXPORT_FUNCTION* exported_func = (IMPORT_EXPORT_FUNCTION*)
+        yr_calloc(1, sizeof(IMPORT_EXPORT_FUNCTION));
+
+    if (exported_func == NULL)
+    {
+      yr_free(name);
+      continue;
+    }
+
+    exported_func->name = name;
+    exported_func->ordinal = ordinal;
+    exported_func->next = NULL;
+
+    if (head == NULL)
+      head = exported_func;
+
+    if (tail != NULL)
+      tail->next = exported_func;
+
+    tail = exported_func;
+    num_exports++;
+  }
+
+  set_integer(num_exports, pe->object, "number_of_exports");
   return head;
 }
 
@@ -1394,70 +1511,47 @@ define_function(exports)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
-  PIMAGE_DATA_DIRECTORY directory;
-  PIMAGE_EXPORT_DIRECTORY exports;
-  DWORD* names;
-
-  int64_t offset;
-  uint32_t i;
-  size_t remaining;
-
-  // If not a PE file, return UNDEFINED
+  // If not a PE, return UNDEFINED.
 
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  directory = pe_get_directory_entry(
-      pe, IMAGE_DIRECTORY_ENTRY_EXPORT);
+  IMPORT_EXPORT_FUNCTION* exported_func = pe->exported_dlls;
 
-  // If the PE doesn't export any functions, return FALSE
-
-  if (yr_le32toh(directory->VirtualAddress) == 0)
-    return_integer(0);
-
-  offset = pe_rva_to_offset(pe, directory->VirtualAddress);
-
-  if (offset < 0)
-    return_integer(0);
-
-  exports = (PIMAGE_EXPORT_DIRECTORY) \
-      (pe->data + offset);
-
-  if (!struct_fits_in_pe(pe, exports, IMAGE_EXPORT_DIRECTORY))
-    return_integer(0);
-
-  offset = pe_rva_to_offset(pe, yr_le32toh(exports->AddressOfNames));
-
-  if (offset < 0)
-    return_integer(0);
-
-  if (yr_le32toh(exports->NumberOfNames) > MAX_PE_EXPORTS ||
-      yr_le32toh(exports->NumberOfNames) * sizeof(DWORD) > pe->data_size - offset)
-    return_integer(0);
-
-  names = (DWORD*)(pe->data + offset);
-
-  for (i = 0; i < yr_le32toh(exports->NumberOfNames); i++)
+  while (exported_func != NULL)
   {
-    char* name;
-    offset = pe_rva_to_offset(pe, names[i]);
-
-    if (offset < 0)
-      return_integer(0);
-
-    remaining = pe->data_size - (size_t) offset;
-    name = (char*)(pe->data + offset);
-
-    if (remaining >= function_name->length &&
-        strncmp(name, function_name->c_string, remaining) == 0)
-    {
+    if (strcasecmp(exported_func->name, function_name->c_string) == 0)
       return_integer(1);
-    }
+
+    exported_func = exported_func->next;
   }
 
   return_integer(0);
 }
 
+
+define_function(exports_ordinal)
+{
+  uint64_t ordinal = integer_argument(1);
+
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  if (!pe)
+    return_integer(UNDEFINED);
+
+  IMPORT_EXPORT_FUNCTION* exported_func = pe->exported_dlls;
+
+  while (exported_func != NULL)
+  {
+    if (exported_func->ordinal == ordinal)
+      return_integer(1);
+
+    exported_func = exported_func->next;
+  }
+
+  return_integer(0);
+}
 
 #if defined(HAVE_LIBCRYPTO)
 
@@ -1492,7 +1586,7 @@ define_function(imphash)
 
   while (dll)
   {
-    IMPORTED_FUNCTION* func;
+    IMPORT_EXPORT_FUNCTION* func;
 
     size_t dll_name_len;
     char* dll_name;
@@ -1592,7 +1686,7 @@ define_function(imports)
   {
     if (strcasecmp(imported_dll->name, dll_name) == 0)
     {
-      IMPORTED_FUNCTION* imported_func = imported_dll->functions;
+      IMPORT_EXPORT_FUNCTION* imported_func = imported_dll->functions;
 
       while (imported_func != NULL)
       {
@@ -1629,7 +1723,7 @@ define_function(imports_ordinal)
   {
     if (strcasecmp(imported_dll->name, dll_name) == 0)
     {
-      IMPORTED_FUNCTION* imported_func = imported_dll->functions;
+      IMPORT_EXPORT_FUNCTION* imported_func = imported_dll->functions;
 
       while (imported_func != NULL)
       {
@@ -2062,6 +2156,7 @@ begin_declarations;
   declare_function("section_index", "s", "i", section_index_name);
   declare_function("section_index", "i", "i", section_index_addr);
   declare_function("exports", "s", "i", exports);
+  declare_function("exports", "i", "i", exports_ordinal);
   declare_function("imports", "ss", "i", imports);
   declare_function("imports", "si", "i", imports_ordinal);
   declare_function("imports", "s", "i", imports_dll);
@@ -2072,6 +2167,7 @@ begin_declarations;
   declare_function("is_64bit", "", "i", is_64bit);
 
   declare_integer("number_of_imports");
+  declare_integer("number_of_exports");
 
   declare_integer("resource_timestamp");
 
@@ -2414,6 +2510,7 @@ int module_load(
         #endif
 
         pe->imported_dlls = pe_parse_imports(pe);
+        pe->exported_dlls = pe_parse_exports(pe);
 
         break;
       }
@@ -2429,8 +2526,8 @@ int module_unload(
 {
   IMPORTED_DLL* dll = NULL;
   IMPORTED_DLL* next_dll = NULL;
-  IMPORTED_FUNCTION* func = NULL;
-  IMPORTED_FUNCTION* next_func = NULL;
+  IMPORT_EXPORT_FUNCTION* func = NULL;
+  IMPORT_EXPORT_FUNCTION* next_func = NULL;
 
   PE* pe = (PE *) module_object->data;
 
@@ -2463,5 +2560,13 @@ int module_unload(
 
   yr_free(pe);
 
+  func = pe->exported_dlls;
+  while (func)
+  {
+    yr_free(func->name);
+    next_func = func->next;
+    yr_free(func);
+    func = next_func;
+  }
   return ERROR_SUCCESS;
 }
