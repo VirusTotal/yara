@@ -1009,7 +1009,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
       continue;
     else
       // NULL found. Save the string!
-      name = (char *) yr_strndup((char*) offset, (size_t) (eos - (pe->data + offset)));
+      name = (char *) yr_strndup((char*) (pe->data + offset), (size_t) (eos - (pe->data + offset)));
 
     // Get the corresponding ordinal. Note that we are not subtracting the
     // ordinal base here as we don't intend to index into the export address
