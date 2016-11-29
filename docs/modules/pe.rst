@@ -486,6 +486,21 @@ Reference
 
     *Example:  pe.exports("CPlApplet")*
 
+.. c:function:: exports(ordinal)
+
+    .. versionadded:: 3.6.0
+
+    Function returning true if the PE exports *ordinal* or
+    false otherwise.
+
+    *Example:  pe.exports(72)*
+
+.. c:type:: number_of_exports
+
+    .. versionadded:: 3.6.0
+
+    Number of exports in the PE.
+
 .. c:type:: number_of_imports
 
     .. versionadded:: 3.6.0
