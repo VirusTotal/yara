@@ -123,6 +123,7 @@ int show_specified_tags = FALSE;
 int show_specified_rules = FALSE;
 int show_strings = FALSE;
 int show_meta = FALSE;
+int file_is_manifest = FALSE;
 int show_namespace = FALSE;
 int show_version = FALSE;
 int show_help = FALSE;
@@ -160,6 +161,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN('m', "print-meta", &show_meta,
       "print metadata"),
+
+  OPT_BOOLEAN('M', "manifest", &file_is_manifest,
+      "read FILE as a manifest with PID or filename per line"),
 
   OPT_BOOLEAN('s', "print-strings", &show_strings,
       "print matching strings"),
@@ -993,6 +997,72 @@ void unload_modules_data()
 }
 
 
+struct manifest_entry
+{
+  char* name;
+  struct manifest_entry* next;
+};
+
+
+struct manifest_entry* get_manifest_entries(const char* filename)
+{
+  FILE* manifest_file = fopen(filename, "r");
+  if (manifest_file == NULL)
+  {
+    return NULL;
+  }
+
+  struct manifest_entry* entries = NULL;
+  struct manifest_entry** current = &entries;
+
+  char line_buffer[8192];
+  while (fgets(line_buffer, sizeof(line_buffer), manifest_file))
+  {
+    // Replace trailing whitespace with null bytes.
+    char* c = strchr(line_buffer, '\0');
+    if (c != NULL)
+    {
+      do
+      {
+        *c = '\0';
+        c--;
+      } while ((c >= line_buffer) && isspace(*c));
+    }
+
+    // Skip empty lines.
+    size_t filename_len = strlen(line_buffer);
+    if (filename_len <= 0)
+    {
+      continue;
+    }
+
+    // Allocate the entry we just read.
+    *current = (manifest_entry*) malloc(sizeof(struct manifest_entry));
+    (*current)->name = (char*) malloc(filename_len + 1);
+    strncpy((*current)->name, line_buffer, filename_len + 1);
+    (*current)->next = NULL;
+
+    // Set current to the address of the next one in case we need it.
+    current = &((*current)->next);
+  }
+
+  fclose(manifest_file);
+  return entries;
+}
+
+
+void free_manifest_entries(struct manifest_entry* entries)
+{
+  while (entries)
+  {
+    struct manifest_entry* next = entries->next;
+    free(entries->name);
+    free(entries);
+    entries = next;
+  }
+}
+
+
 #define exit_with_code(code) { result = code; goto _exit; }
 
 int main(
@@ -1162,6 +1232,93 @@ int main(
     if (result != ERROR_SUCCESS)
     {
       print_scanner_error(result);
+      exit_with_code(EXIT_FAILURE);
+    }
+  }
+  else if (file_is_manifest)
+  {
+    // Read the FILE argument as a manifest file,
+    // containing a filename or PID per line.
+    struct manifest_entry* entries = get_manifest_entries(argv[1]);
+    if (entries == NULL)
+    {
+      fprintf(stderr,
+          "error: could not read manifest file (possibly empty): %s\n",
+          argv[1]);
+      exit_with_code(EXIT_FAILURE);
+    }
+
+    int did_scan_any = 0;
+    struct manifest_entry* entry;
+    for (entry = entries; entry; entry = entry->next)
+    {
+      int flags = 0;
+
+      if (fast_scan)
+        flags |= SCAN_FLAGS_FAST_MODE;
+
+      const char* entry_name = entry->name;
+      if (is_integer(entry_name))
+      {
+        // Scan the entry as a PID.
+        int pid = atoi(entry_name);
+        result = yr_rules_scan_proc(
+            rules,
+            pid,
+            flags,
+            callback,
+            (void*) entry_name,
+            timeout);
+
+        if (result == ERROR_SUCCESS)
+        {
+          did_scan_any = 1;
+        }
+        else
+        {
+          print_scanner_error(result);
+          if (fail_on_warnings)
+          {
+            exit_with_code(EXIT_FAILURE);
+          }
+        }
+      }
+      else
+      {
+        // Scan the entry as a FILE.
+        result = yr_rules_scan_file(
+            rules,
+            entry_name,
+            flags,
+            callback,
+            (void*) entry_name,
+            timeout);
+
+        if (result == ERROR_SUCCESS)
+        {
+          did_scan_any = 1;
+        }
+        else
+        {
+          fprintf(stderr, "error scanning %s: ", entry_name);
+          print_scanner_error(result);
+          if (fail_on_warnings)
+          {
+            exit_with_code(EXIT_FAILURE);
+          }
+        }
+      }
+    }
+
+    free_manifest_entries(entries);
+
+    if (did_scan_any)
+    {
+      result = EXIT_SUCCESS;
+    }
+    else
+    {
+      fprintf(stderr, "error: could not scan any manifest entries.\n");
       exit_with_code(EXIT_FAILURE);
     }
   }

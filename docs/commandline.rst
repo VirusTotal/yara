@@ -50,6 +50,10 @@ Available options are:
 
   Print metadata.
 
+.. options:: -M --manifest
+
+  Read FILE as a manifest with PID or filename per line.
+
 .. option:: -s --print-strings
 
   Print matching strings.
