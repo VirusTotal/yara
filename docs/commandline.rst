@@ -54,6 +54,10 @@ Available options are:
 
   Print matching strings.
 
+.. option:: -L --print-string-length
+
+  Print length of matching strings.
+
 .. option:: -e --print-namespace
 
   Print rules' namespace.
