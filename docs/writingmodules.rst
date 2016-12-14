@@ -328,7 +328,7 @@ can put any other declarations you want, including another structure
 declaration. Also notice that members of different structures can have the same
 name, but members within the same structure must have unique names.
 
-When refering to these variables from your rules it would be like this::
+When referring to these variables from your rules it would be like this::
 
     mymodule.foo
     mymodule.some_structure.foo
