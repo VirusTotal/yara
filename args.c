@@ -148,7 +148,7 @@ void args_print_error(
 {
   switch(error)
   {
-    case ARGS_ERROR_UKNOWN_OPT:
+    case ARGS_ERROR_UNKNOWN_OPT:
       fprintf(stderr, "unknown option `%s`\n", option);
       break;
     case ARGS_ERROR_TOO_MANY:
@@ -198,7 +198,7 @@ int args_parse(
       }
       else
       {
-        error = ARGS_ERROR_UKNOWN_OPT;
+        error = ARGS_ERROR_UNKNOWN_OPT;
       }
     }
     else if (args_is_short_arg(arg))
@@ -230,7 +230,7 @@ int args_parse(
         }
         else
         {
-          error = ARGS_ERROR_UKNOWN_OPT;
+          error = ARGS_ERROR_UNKNOWN_OPT;
         }
 
         if (error != ARGS_ERROR_OK)
