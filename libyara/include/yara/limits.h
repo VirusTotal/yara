@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "utils.h"
 
 // MAX_THREADS is the number of threads that can use a YR_RULES
-// object simultaneosly.
+// object simultaneously.
 
 #define MAX_THREADS 32
 

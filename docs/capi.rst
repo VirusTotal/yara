@@ -678,7 +678,7 @@ Error codes
 .. c:macro:: ERROR_TOO_MANY_SCAN_THREADS
 
   Too many threads trying to use the same :c:type:`YR_RULES` object
-  simultaneosly. The limit is defined by ``MAX_THREADS`` in
+  simultaneously. The limit is defined by ``MAX_THREADS`` in
   *./include/yara/limits.h*
 
 .. c:macro:: ERROR_SCAN_TIMEOUT
