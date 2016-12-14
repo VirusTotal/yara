@@ -510,13 +510,13 @@ uint8_t* _yr_atoms_case_combinations(
     sizeof(int)
 
 //
-// _yr_atoms_case_insentive
+// _yr_atoms_case_insensitive
 //
 // For a given list of atoms returns another list of atoms
 // with every case combination.
 //
 
-int _yr_atoms_case_insentive(
+int _yr_atoms_case_insensitive(
     YR_ATOM_LIST_ITEM* atoms,
     YR_ATOM_LIST_ITEM** case_insensitive_atoms)
 {
@@ -1021,7 +1021,7 @@ int yr_atoms_extract_from_re(
   ATOM_TREE* atom_tree = (ATOM_TREE*) yr_malloc(sizeof(ATOM_TREE));
   ATOM_TREE_NODE* temp;
   YR_ATOM_LIST_ITEM* wide_atoms;
-  YR_ATOM_LIST_ITEM* case_insentive_atoms;
+  YR_ATOM_LIST_ITEM* case_insensitive_atoms;
   YR_ATOM_LIST_ITEM* triplet_atoms;
 
   int min_atom_quality = YR_MIN_ATOM_QUALITY;
@@ -1123,14 +1123,14 @@ int yr_atoms_extract_from_re(
   if (flags & STRING_GFLAGS_NO_CASE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
-        _yr_atoms_case_insentive(*atoms, &case_insentive_atoms),
+        _yr_atoms_case_insensitive(*atoms, &case_insensitive_atoms),
         {
           yr_atoms_list_destroy(*atoms);
-          yr_atoms_list_destroy(case_insentive_atoms);
+          yr_atoms_list_destroy(case_insensitive_atoms);
           *atoms = NULL;
         });
 
-    *atoms = _yr_atoms_list_concat(*atoms, case_insentive_atoms);
+    *atoms = _yr_atoms_list_concat(*atoms, case_insensitive_atoms);
   }
 
   // No atoms has been extracted, let's add a zero-length atom.
@@ -1166,7 +1166,7 @@ int yr_atoms_extract_from_string(
     YR_ATOM_LIST_ITEM** atoms)
 {
   YR_ATOM_LIST_ITEM* item;
-  YR_ATOM_LIST_ITEM* case_insentive_atoms;
+  YR_ATOM_LIST_ITEM* case_insensitive_atoms;
   YR_ATOM_LIST_ITEM* wide_atoms;
 
   int max_quality;
@@ -1232,14 +1232,14 @@ int yr_atoms_extract_from_string(
   if (flags & STRING_GFLAGS_NO_CASE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
-        _yr_atoms_case_insentive(*atoms, &case_insentive_atoms),
+        _yr_atoms_case_insensitive(*atoms, &case_insensitive_atoms),
         {
           yr_atoms_list_destroy(*atoms);
-          yr_atoms_list_destroy(case_insentive_atoms);
+          yr_atoms_list_destroy(case_insensitive_atoms);
           *atoms = NULL;
         });
 
-    *atoms = _yr_atoms_list_concat(*atoms, case_insentive_atoms);
+    *atoms = _yr_atoms_list_concat(*atoms, case_insensitive_atoms);
   }
 
   return ERROR_SUCCESS;
