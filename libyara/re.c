@@ -57,7 +57,7 @@ order to avoid confusion with operating system threads.
 // over 255 without changing RE_SPLIT_ID_TYPE.
 #define RE_MAX_SPLIT_ID     128
 
-// Maxium stack size for regexp evaluation
+// Maximum stack size for regexp evaluation
 #define RE_MAX_STACK      1024
 
 // Maximum code size for a compiled regexp
@@ -66,7 +66,7 @@ order to avoid confusion with operating system threads.
 // Maximum input size scanned by yr_re_exec
 #define RE_SCAN_LIMIT     4096
 
-// Maxium number of fibers
+// Maximum number of fibers
 #define RE_MAX_FIBERS     1024
 
 
