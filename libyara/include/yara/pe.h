@@ -129,7 +129,7 @@ typedef struct _IMAGE_FILE_HEADER {
 
 
 #define IMAGE_FILE_RELOCS_STRIPPED           0x0001  // Relocation info stripped from file.
-#define IMAGE_FILE_EXECUTABLE_IMAGE          0x0002  // File is executable  (i.e. no unresolved externel references).
+#define IMAGE_FILE_EXECUTABLE_IMAGE          0x0002  // File is executable  (i.e. no unresolved external references).
 #define IMAGE_FILE_LINE_NUMS_STRIPPED        0x0004  // Line nunbers stripped from file.
 #define IMAGE_FILE_LOCAL_SYMS_STRIPPED       0x0008  // Local symbols stripped from file.
 #define IMAGE_FILE_AGGRESIVE_WS_TRIM         0x0010  // Aggressively trim working set
