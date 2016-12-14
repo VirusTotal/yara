@@ -251,7 +251,7 @@ void pe_parse_rich_signature(
 
 // Return a pointer to the resource directory string or NULL.
 // The callback function will parse this and call set_sized_string().
-// The pointer is guranteed to have enough space to contain the entire string.
+// The pointer is guaranteed to have enough space to contain the entire string.
 
 uint8_t* parse_resource_name(
     PE* pe,

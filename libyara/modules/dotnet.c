@@ -231,7 +231,7 @@ void dotnet_parse_tilde_2(
   // all that is valid then you can take the Value from the CustomAttribute
   // table to find out the index into the Blob stream and parse that.
   //
-  // Luckily we can abuse the fact that the order of the tables is guranteed
+  // Luckily we can abuse the fact that the order of the tables is guaranteed
   // consistent (though some may not exist, but if they do exist they must exist
   // in a certain order). The order is defined by their position in the Valid
   // member of the tilde_header structure. By the time we are parsing the
