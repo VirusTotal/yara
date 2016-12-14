@@ -11,7 +11,7 @@ Initalizing and finalizing *libyara*
 
 The first thing your program must do when using *libyara* is initializing the
 library. This is done by calling the :c:func:`yr_initialize()` function. This
-function allocates any resources needed by the library and initalizes internal
+function allocates any resources needed by the library and initializes internal
 data structures. Its counterpart is :c:func:`yr_finalize`, which must be called
 when you are finished using the library.
 
@@ -352,7 +352,7 @@ Functions
 
 .. c:function:: int yr_initialize(void)
 
-  Initalize the library. Must be called by the main thread before using any
+  Initialize the library. Must be called by the main thread before using any
   other function. Return :c:macro:`ERROR_SUCCESS` on success another error
   code in case of error. The list of possible return codes vary according
   to the modules compiled into YARA.
