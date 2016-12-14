@@ -921,7 +921,7 @@ Here you have some examples:
 
 The C type for integer arguments is ``int64_t``, for float arguments is
 ``double``, for regular expressions is ``RE_CODE``, for NULL-terminated strings
-is ``char*`` and for string possibly contaning NULL characters is
+is ``char*`` and for string possibly containing NULL characters is
 ``SIZED_STRING*``. ``SIZED_STRING`` structures have the
 following attributes:
 
