@@ -672,20 +672,20 @@ int handle_message(
 
         yr_string_matches_foreach(string, match)
         {
-		  if (show_str_len)
+          if (show_str_len)
             printf("0x%" PRIx64 ":%d:%s", match->base + match->offset, match->data_length, string->identifier);
-		  else
-		    printf("0x%" PRIx64 ":%s", match->base + match->offset, string->identifier);
+          else
+            printf("0x%" PRIx64 ":%s", match->base + match->offset, string->identifier);
 
-		  if (show_strings) {
-			  printf(": ");
-			  if (STRING_IS_HEX(string))
-				  print_hex_string(match->data, match->data_length);
-			  else
-				  print_string(match->data, match->data_length);
-		  }
-		  else
-			  printf("\n");
+          if (show_strings) {
+            printf(": ");
+            if (STRING_IS_HEX(string))
+              print_hex_string(match->data, match->data_length);
+            else
+              print_string(match->data, match->data_length);
+          }
+          else
+            printf("\n");
         }
       }
     }
