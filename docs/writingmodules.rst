@@ -692,7 +692,7 @@ Setting variable's values
 -------------------------
 
 The ``module_load`` function is where you assign values to the variables
-declared in the declarations section, once you've parsed or analized the scanned
+declared in the declarations section, once you've parsed or analyzed the scanned
 data and/or any additional module's data. This is done by using the
 ``set_integer`` and ``set_string`` functions:
 
