@@ -548,7 +548,7 @@ int _yr_ac_find_suitable_transition_table_slot(
 // link must be used instead.
 //
 // The transition table for state S starts at T[S] and spans the next 257
-// slots in the array (1 for the failure link and 256 for all the posible
+// slots in the array (1 for the failure link and 256 for all the possible
 // transitions). But many of those slots are for invalid transitions, so
 // the transitions for multiple states can be interleaved as long as they don't
 // collide. For example, instead of having this transition table with state S1
