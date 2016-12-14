@@ -95,7 +95,7 @@ int args_parse(
 
 void args_print_usage(
     args_option_t *options,
-    int aligment);
+    int alignment);
 
 
 #ifdef __cplusplus
