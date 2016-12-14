@@ -2796,7 +2796,7 @@ yyreduce:
             yyscanner, OP_INCR_M, mem_offset + 2, NULL, NULL);
 
         // If next string is not undefined, go back to the
-        // begining of the loop.
+        // beginning of the loop.
         yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JNUNDEF,
