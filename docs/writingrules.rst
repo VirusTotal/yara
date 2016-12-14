@@ -1133,7 +1133,7 @@ Including files
 
 In order to allow you a more flexible organization of your rules files,
 YARA provides the ``include`` directive. This directive works in a similar way
-to the *#include* pre-procesor directive in your C programs, which inserts the
+to the *#include* pre-processor directive in your C programs, which inserts the
 content of the specified source file into the current file during compilation.
 The following example will include the content of *other.yar* into the current
 file::
