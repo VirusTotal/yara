@@ -849,7 +849,7 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
 // yr_atoms_extract_triplets
 //
 // On certain cases YARA can not extract long enough atoms from a regexp, but
-// can infer them. For example, in the hex string { 01 ?? 02 } the only explict
+// can infer them. For example, in the hex string { 01 ?? 02 } the only explicit
 // atoms are 01 and 02, and both of them are too short to be efficiently used.
 // However YARA can use simultaneously atoms 01 00 02, 01 01 02, 01 02 02,
 // 01 03 02, and so on up to 01 FF 02. Searching for 256 three-bytes atoms is
