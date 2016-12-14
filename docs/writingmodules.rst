@@ -274,7 +274,7 @@ declare string, integer, or float variables respectively. For example::
     end_declarations;
 
 .. note::
-    Floating-point variables requiere YARA version 3.3.0 or later.
+    Floating-point variables require YARA version 3.3.0 or later.
 
 
 Variable names can't contain characters other than letters, numbers and

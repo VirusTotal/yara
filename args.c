@@ -155,10 +155,10 @@ void args_print_error(
       fprintf(stderr, "too many `%s` options\n", option);
       break;
     case ARGS_ERROR_REQUIRED_INTEGER_ARG:
-      fprintf(stderr, "option `%s` requieres an integer argument\n", option);
+      fprintf(stderr, "option `%s` requires an integer argument\n", option);
       break;
     case ARGS_ERROR_REQUIRED_STRING_ARG:
-      fprintf(stderr, "option `%s` requieres a string argument\n", option);
+      fprintf(stderr, "option `%s` requires a string argument\n", option);
       break;
     case ARGS_ERROR_UNEXPECTED_ARG:
       fprintf(stderr, "option `%s` doesn't expect an argument\n", option);
