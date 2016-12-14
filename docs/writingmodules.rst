@@ -968,7 +968,7 @@ the corresponding ``YR_OBJECT`` first. There are two functions to do that:
 the top-level ``YR_OBJECT`` corresponding to the module, the same one passed
 to the ``module_load`` function. The ``parent()`` function returns a pointer to
 the ``YR_OBJECT`` corresponding to the structure where the function is
-contained. For example, consider the following code snipet:
+contained. For example, consider the following code snippet:
 
 .. code-block:: c
 
