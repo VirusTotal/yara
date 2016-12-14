@@ -347,7 +347,7 @@ YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
 
 int _yr_atoms_choose(
     ATOM_TREE_NODE* node,
-    YR_ATOM_LIST_ITEM** choosen_atoms,
+    YR_ATOM_LIST_ITEM** chosen_atoms,
     int* atoms_quality)
 {
   ATOM_TREE_NODE* child;
@@ -358,7 +358,7 @@ int _yr_atoms_choose(
   int max_quality = YR_MIN_ATOM_QUALITY;
   int min_quality = YR_MAX_ATOM_QUALITY;
 
-  *choosen_atoms = NULL;
+  *chosen_atoms = NULL;
 
   switch (node->type)
   {
@@ -378,7 +378,7 @@ int _yr_atoms_choose(
     item->backtrack = 0;
     item->next = NULL;
 
-    *choosen_atoms = item;
+    *chosen_atoms = item;
     *atoms_quality = _yr_atoms_quality(node->atom, node->atom_length);
     break;
 
@@ -393,8 +393,8 @@ int _yr_atoms_choose(
       if (quality > max_quality)
       {
         max_quality = quality;
-        yr_atoms_list_destroy(*choosen_atoms);
-        *choosen_atoms = item;
+        yr_atoms_list_destroy(*chosen_atoms);
+        *chosen_atoms = item;
       }
       else
       {
@@ -424,8 +424,8 @@ int _yr_atoms_choose(
         while (tail->next != NULL)
           tail = tail->next;
 
-        tail->next = *choosen_atoms;
-        *choosen_atoms = item;
+        tail->next = *chosen_atoms;
+        *chosen_atoms = item;
       }
 
       child = child->next_sibling;
@@ -1077,7 +1077,7 @@ int yr_atoms_extract_from_re(
 
   if (min_atom_quality <= 2)
   {
-    // Choosen atoms contain low quality ones, let's try infering some higher
+    // Chosen atoms contain low quality ones, let's try infering some higher
     // quality atoms.
 
     FAIL_ON_ERROR_WITH_CLEANUP(
