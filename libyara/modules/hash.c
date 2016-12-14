@@ -241,7 +241,7 @@ define_function(data_md5)
     {
       // If offset is not within current block and we already
       // past the first block then the we are trying to compute
-      // the checksum over a range of non contiguos blocks. As
+      // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
 
@@ -325,7 +325,7 @@ define_function(data_sha1)
     {
       // If offset is not within current block and we already
       // past the first block then the we are trying to compute
-      // the checksum over a range of non contiguos blocks. As
+      // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
 
@@ -408,7 +408,7 @@ define_function(data_sha256)
     {
       // If offset is not within current block and we already
       // past the first block then the we are trying to compute
-      // the checksum over a range of non contiguos blocks. As
+      // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
 
@@ -477,7 +477,7 @@ define_function(data_checksum32)
     {
       // If offset is not within current block and we already
       // past the first block then the we are trying to compute
-      // the checksum over a range of non contiguos blocks. As
+      // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
 
