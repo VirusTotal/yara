@@ -322,7 +322,7 @@ Your declarations can be organized in a more structured way::
     end_declarations;
 
 In this example we're using ``begin_struct(<structure name>)`` and
-``end_struct(<structure name>)`` to delimite two structures named
+``end_struct(<structure name>)`` to delimit two structures named
 *some_structure* and *another_structure*. Within the structure delimiters you
 can put any other declarations you want, including another structure
 declaration. Also notice that members of different structures can have the same
