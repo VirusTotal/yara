@@ -195,7 +195,7 @@ int _yr_arena_make_relocatable(
     reloc = (YR_RELOC*) yr_malloc(sizeof(YR_RELOC));
 
     if (reloc == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     reloc->offset = (uint32_t) (base_offset + offset);
     reloc->next = NULL;
@@ -241,14 +241,14 @@ int yr_arena_create(
   new_arena = (YR_ARENA*) yr_malloc(sizeof(YR_ARENA));
 
   if (new_arena == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   new_page = _yr_arena_new_page(initial_size);
 
   if (new_page == NULL)
   {
     yr_free(new_arena);
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
   }
 
   new_arena->page_list_head = new_page;
@@ -437,7 +437,7 @@ int yr_arena_coalesce(
   big_page = _yr_arena_new_page(total_size);
 
   if (big_page == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   // Copy data from current pages to the big page and adjust relocs.
   page = arena->page_list_head;
@@ -532,7 +532,7 @@ int yr_arena_reserve_memory(
   if (size > free_space(arena->current_page))
   {
     if (arena->flags & ARENA_FLAGS_FIXED_SIZE)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     // Requested space is bigger than current page's empty space,
     // lets calculate the size for a new page.
@@ -551,7 +551,7 @@ int yr_arena_reserve_memory(
           new_page_size);
 
       if (new_page_address == NULL)
-        return ERROR_INSUFICIENT_MEMORY;
+        return ERROR_INSUFFICIENT_MEMORY;
 
       arena->current_page->address = new_page_address;
       arena->current_page->size = new_page_size;
@@ -561,7 +561,7 @@ int yr_arena_reserve_memory(
       new_page = _yr_arena_new_page(new_page_size);
 
       if (new_page == NULL)
-        return ERROR_INSUFICIENT_MEMORY;
+        return ERROR_INSUFFICIENT_MEMORY;
 
       new_page->prev = arena->current_page;
       arena->current_page->next = new_page;
@@ -861,7 +861,7 @@ int yr_arena_duplicate(
     if (new_reloc == NULL)
     {
       yr_arena_destroy(new_arena);
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
     }
 
     new_reloc->offset = reloc->offset;

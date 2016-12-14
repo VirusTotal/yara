@@ -1517,7 +1517,7 @@ define_function(imphash)
     dll_name = (char *) yr_malloc(dll_name_len + 1);
 
     if (!dll_name)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     strlcpy(dll_name, dll->name, dll_name_len + 1);
 
@@ -2396,7 +2396,7 @@ int module_load(
         pe = (PE*) yr_malloc(sizeof(PE));
 
         if (pe == NULL)
-          return ERROR_INSUFICIENT_MEMORY;
+          return ERROR_INSUFFICIENT_MEMORY;
 
         pe->data = block_data;
         pe->data_size = block->size;

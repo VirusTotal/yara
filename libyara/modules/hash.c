@@ -102,7 +102,7 @@ int add_to_cache(
   key.length = length;
 
   if (copy == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   return yr_hash_table_add_raw_key(
       hash_table,

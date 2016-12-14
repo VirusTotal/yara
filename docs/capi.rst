@@ -377,7 +377,7 @@ Functions
 
     :c:macro:`ERROR_SUCCESS`
 
-    :c:macro:`ERROR_INSUFICENT_MEMORY`
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
 .. c:function:: void yr_compiler_destroy(YR_COMPILER* compiler)
 
@@ -422,7 +422,7 @@ Functions
 
     :c:macro:`ERROR_SUCCESS`
 
-    :c:macro:`ERROR_INSUFICENT_MEMORY`
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
 .. c:function:: int yr_compiler_define_integer_variable(YR_COMPILER* compiler, const char* identifier, int64_t value)
 
@@ -468,7 +468,7 @@ Functions
 
     :c:macro:`ERROR_SUCCESS`
 
-    :c:macro:`ERROR_INSUFICENT_MEMORY`
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
     :c:macro:`ERROR_COULD_NOT_OPEN_FILE`
 
@@ -486,7 +486,7 @@ Functions
 
     :c:macro:`ERROR_SUCCESS`
 
-    :c:macro:`ERROR_INSUFICENT_MEMORY`
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
     :c:macro:`ERROR_INVALID_FILE`
 
@@ -500,7 +500,7 @@ Functions
 
       :c:macro:`ERROR_SUCCESS`
 
-      :c:macro:`ERROR_INSUFICENT_MEMORY`
+      :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
       :c:macro:`ERROR_TOO_MANY_SCAN_THREADS`
 
@@ -517,7 +517,7 @@ Functions
 
     :c:macro:`ERROR_SUCCESS`
 
-    :c:macro:`ERROR_INSUFICENT_MEMORY`
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
     :c:macro:`ERROR_COULD_NOT_MAP_FILE`
 
@@ -542,7 +542,7 @@ Functions
 
     :c:macro:`ERROR_SUCCESS`
 
-    :c:macro:`ERROR_INSUFICENT_MEMORY`
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
     :c:macro:`ERROR_COULD_NOT_MAP_FILE`
 
@@ -647,9 +647,9 @@ Error codes
 
   Everything went fine.
 
-.. c:macro:: ERROR_INSUFICENT_MEMORY
+.. c:macro:: ERROR_INSUFFICIENT_MEMORY
 
-  Insuficient memory to complete the operation.
+  Insufficient memory to complete the operation.
 
 .. c:macro:: ERROR_COULD_NOT_OPEN_FILE
 

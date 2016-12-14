@@ -367,7 +367,7 @@ int _yr_atoms_choose(
     item = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
     if (item == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     for (i = 0; i < node->atom_length; i++)
       item->atom[i] = node->atom[i];
@@ -548,7 +548,7 @@ int _yr_atoms_case_insensitive(
       new_atom = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
       if (new_atom == NULL)
-        return ERROR_INSUFICIENT_MEMORY;
+        return ERROR_INSUFFICIENT_MEMORY;
 
       for (i = 0; i < atom_length; i++)
         new_atom->atom[i] = atoms_cursor[i];
@@ -598,7 +598,7 @@ int _yr_atoms_wide(
     new_atom = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
     if (new_atom == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     for (i = 0; i < MAX_ATOM_LENGTH; i++)
       new_atom->atom[i] = 0;
@@ -893,7 +893,7 @@ int yr_atoms_extract_triplets(
             yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
         if (atom == NULL)
-          return ERROR_INSUFICIENT_MEMORY;
+          return ERROR_INSUFFICIENT_MEMORY;
 
         atom->atom[0] = left_child->left->value;
         atom->atom[1] = i;
@@ -920,7 +920,7 @@ int yr_atoms_extract_triplets(
             yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
         if (atom == NULL)
-          return ERROR_INSUFICIENT_MEMORY;
+          return ERROR_INSUFFICIENT_MEMORY;
 
         if (left_child->right->mask == 0xF0)
           shift = 0;
@@ -953,7 +953,7 @@ int yr_atoms_extract_triplets(
             yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
         if (atom == NULL)
-          return ERROR_INSUFICIENT_MEMORY;
+          return ERROR_INSUFFICIENT_MEMORY;
 
         atom->atom[0] = left_grand_child->right->value;
         atom->atom[1] = i;
@@ -981,7 +981,7 @@ int yr_atoms_extract_triplets(
             yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
         if (atom == NULL)
-          return ERROR_INSUFICIENT_MEMORY;
+          return ERROR_INSUFFICIENT_MEMORY;
 
         if (left_child->right->mask == 0xF0)
           shift = 0;
@@ -1027,14 +1027,14 @@ int yr_atoms_extract_from_re(
   int min_atom_quality = YR_MIN_ATOM_QUALITY;
 
   if (atom_tree == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   atom_tree->root_node = _yr_atoms_tree_node_create(ATOM_TREE_OR);
 
   if (atom_tree->root_node == NULL)
   {
     _yr_atoms_tree_destroy(atom_tree);
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
   }
 
   atom_tree->current_leaf = NULL;
@@ -1045,7 +1045,7 @@ int yr_atoms_extract_from_re(
   if (atom_tree->root_node == NULL)
   {
     _yr_atoms_tree_destroy(atom_tree);
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
   }
 
   if (atom_tree->current_leaf != NULL)
@@ -1140,7 +1140,7 @@ int yr_atoms_extract_from_re(
     *atoms = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
     if (*atoms == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     (*atoms)->atom_length = 0;
     (*atoms)->backtrack = 0;
@@ -1175,7 +1175,7 @@ int yr_atoms_extract_from_string(
   item = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
   if (item == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   item->forward_code = NULL;
   item->backward_code = NULL;

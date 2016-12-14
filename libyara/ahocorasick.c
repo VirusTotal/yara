@@ -79,7 +79,7 @@ int _yr_ac_queue_push(
   pushed_node = (QUEUE_NODE*) yr_malloc(sizeof(QUEUE_NODE));
 
   if (pushed_node == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   pushed_node->previous = queue->tail;
   pushed_node->next = NULL;
@@ -484,7 +484,7 @@ int _yr_ac_find_suitable_transition_table_slot(
           automaton->m_table, m_bytes_size * 2);
 
       if (automaton->t_table == NULL || automaton->m_table == NULL)
-        return ERROR_INSUFICIENT_MEMORY;
+        return ERROR_INSUFFICIENT_MEMORY;
 
       memset((uint8_t*) automaton->t_table + t_bytes_size, 0, t_bytes_size);
       memset((uint8_t*) automaton->m_table + m_bytes_size, 0, m_bytes_size);
@@ -605,7 +605,7 @@ int _yr_ac_build_transition_table(
     yr_free(automaton->t_table);
     yr_free(automaton->m_table);
 
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
   }
 
   memset(automaton->t_table, 0,
@@ -775,7 +775,7 @@ int yr_ac_automaton_create(
     yr_free(new_automaton);
     yr_free(root_state);
 
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
   }
 
   root_state->depth = 0;
@@ -850,7 +850,7 @@ int yr_ac_add_string(
         next_state = _yr_ac_state_create(state, atom->atom[i]);
 
         if (next_state == NULL)
-          return ERROR_INSUFICIENT_MEMORY;
+          return ERROR_INSUFFICIENT_MEMORY;
       }
 
       state = next_state;

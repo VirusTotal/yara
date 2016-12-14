@@ -1235,7 +1235,7 @@ int module_load(
         PE* pe = (PE*) yr_malloc(sizeof(PE));
 
         if (pe == NULL)
-          return ERROR_INSUFICIENT_MEMORY;
+          return ERROR_INSUFFICIENT_MEMORY;
 
         pe->data = block_data;
         pe->data_size = block->size;
