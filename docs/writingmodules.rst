@@ -123,7 +123,7 @@ After the declaration section you'll find a pair of functions:
       return ERROR_SUCCESS;
     }
 
-The ``module_initialize`` function is called during YARA's initializtion while
+The ``module_initialize`` function is called during YARA's initialization while
 its counterpart ``module_finalize`` is called while finalizing YARA. These
 functions allows you initialize and finalize any global data structure you may
 need to use in your module.
