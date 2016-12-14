@@ -617,7 +617,7 @@ Executable entry point
 
 Another special variable than can be used on a rule is ``entrypoint``. If file
 is a Portable Executable (PE) or Executable and Linkable Format (ELF), this
-variable holds the raw offset of the exectutable’s entry point in case we are
+variable holds the raw offset of the executable’s entry point in case we are
 scanning a file. If we are scanning a running process, the entrypoint will hold
 the virtual address of the main executable’s entry point. A typical use of
 this variable is to look for some pattern at the entry point to detect packers
