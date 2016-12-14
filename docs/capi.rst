@@ -208,7 +208,7 @@ All ``yr_rules_scan_XXXX`` functions receive a ``flags`` argument and a
 ``timeout`` argument. The only flag defined at this time is
 ``SCAN_FLAGS_FAST_MODE``, so you must pass either this flag or a zero value.
 The ``timeout`` argument forces the function to return after the specified
-number of seconds aproximately, with a zero meaning no timeout at all.
+number of seconds approximately, with a zero meaning no timeout at all.
 
 The ``SCAN_FLAGS_FAST_MODE`` flag makes the scanning a little faster by avoiding
 multiple matches of the same string when not necessary. Once the string was
