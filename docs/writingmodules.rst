@@ -798,7 +798,7 @@ in a dictionary:
     set_integer(<value>, module, "foo[%s]", "key");
     set_string(<value>, module, "bar[%s].baz", "another_key");
 
-If you don't explicitely assign a value to a declared variable, array or
+If you don't explicitly assign a value to a declared variable, array or
 dictionary item it will remain in undefined state. That's not a problem at all,
 and is even useful in many cases. For example, if your module parses files from
 certain format and it receives one from a different format, you can safely leave
