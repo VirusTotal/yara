@@ -7,7 +7,7 @@ language.
 [OPTION]... RULES_FILE FILE | DIR | PID
 .SH DESCRIPTION
 yara scans the given FILE, all files contained in directory DIR, or the process
-indentified by PID looking for matches of patterns and rules provided in a
+identified by PID looking for matches of patterns and rules provided in a
 special purpose-language. The rules are read from RULES_FILE.
 .PP
 The options to

@@ -1345,7 +1345,7 @@ yyreduce:
         DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[-1].re_node));
         DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[0].re_node));
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
 #line 1351 "hex_grammar.c" /* yacc.c:1646  */
     break;
@@ -1407,7 +1407,7 @@ yyreduce:
         DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[-1].re_node));
         DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[0].re_node));
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
 #line 1413 "hex_grammar.c" /* yacc.c:1646  */
     break;
@@ -1428,7 +1428,7 @@ yyreduce:
         DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[-1].re_node));
         DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[0].re_node));
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
 #line 1434 "hex_grammar.c" /* yacc.c:1646  */
     break;
@@ -1505,11 +1505,11 @@ yyreduce:
 
         re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
-        ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF(re_any == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->start = (int) (yyvsp[-1].integer);
         (yyval.re_node)->end = (int) (yyvsp[-1].integer);
@@ -1547,11 +1547,11 @@ yyreduce:
 
         re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
-        ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF(re_any == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->start = (int) (yyvsp[-3].integer);
         (yyval.re_node)->end = (int) (yyvsp[-1].integer);
@@ -1579,11 +1579,11 @@ yyreduce:
 
         re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
-        ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF(re_any == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->start = (int) (yyvsp[-2].integer);
         (yyval.re_node)->end = INT_MAX;
@@ -1605,11 +1605,11 @@ yyreduce:
 
         re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
-        ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF(re_any == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->start = 0;
         (yyval.re_node)->end = INT_MAX;
@@ -1635,7 +1635,7 @@ yyreduce:
         DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[-2].re_node));
         DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[0].re_node));
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
 #line 1641 "hex_grammar.c" /* yacc.c:1646  */
     break;
@@ -1645,7 +1645,7 @@ yyreduce:
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->value = (int) (yyvsp[0].integer);
       }
@@ -1661,13 +1661,13 @@ yyreduce:
         {
           (yyval.re_node) = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
-          ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+          ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
         }
         else
         {
           (yyval.re_node) = yr_re_node_create(RE_NODE_MASKED_LITERAL, NULL, NULL);
 
-          ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFICIENT_MEMORY);
+          ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
           (yyval.re_node)->value = (yyvsp[0].integer) & 0xFF;
           (yyval.re_node)->mask = mask;

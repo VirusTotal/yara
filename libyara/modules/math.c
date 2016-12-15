@@ -136,7 +136,7 @@ define_function(data_entropy)
     {
       // If offset is not within current block and we already
       // past the first block then the we are trying to compute
-      // the checksum over a range of non contiguos blocks. As
+      // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
 
@@ -234,7 +234,7 @@ define_function(data_deviation)
     {
       // If offset is not within current block and we already
       // past the first block then the we are trying to compute
-      // the checksum over a range of non contiguos blocks. As
+      // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
       return_float(UNDEFINED);
@@ -310,7 +310,7 @@ define_function(data_mean)
     {
       // If offset is not within current block and we already
       // past the first block then the we are trying to compute
-      // the checksum over a range of non contiguos blocks. As
+      // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
       return_float(UNDEFINED);
@@ -384,7 +384,7 @@ define_function(data_serial_correlation)
     {
       // If offset is not within current block and we already
       // past the first block then the we are trying to compute
-      // the checksum over a range of non contiguos blocks. As
+      // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
       return_float(UNDEFINED);
@@ -516,7 +516,7 @@ define_function(data_monte_carlo_pi)
     {
       // If offset is not within current block and we already
       // past the first block then the we are trying to compute
-      // the checksum over a range of non contiguos blocks. As
+      // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
       return_float(UNDEFINED);

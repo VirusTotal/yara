@@ -122,7 +122,7 @@ tokens
         DESTROY_NODE_IF($$ == NULL, $1);
         DESTROY_NODE_IF($$ == NULL, $2);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
     | token token_sequence token
       {
@@ -180,7 +180,7 @@ tokens
         DESTROY_NODE_IF($$ == NULL, $2);
         DESTROY_NODE_IF($$ == NULL, $3);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
     ;
 
@@ -197,7 +197,7 @@ token_sequence
         DESTROY_NODE_IF($$ == NULL, $1);
         DESTROY_NODE_IF($$ == NULL, $2);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
     ;
 
@@ -262,11 +262,11 @@ range
 
         re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
-        ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF(re_any == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->start = (int) $2;
         $$->end = (int) $2;
@@ -300,11 +300,11 @@ range
 
         re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
-        ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF(re_any == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->start = (int) $2;
         $$->end = (int) $4;
@@ -328,11 +328,11 @@ range
 
         re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
-        ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF(re_any == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->start = (int) $2;
         $$->end = INT_MAX;
@@ -350,11 +350,11 @@ range
 
         re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
-        ERROR_IF(re_any == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF(re_any == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->start = 0;
         $$->end = INT_MAX;
@@ -376,7 +376,7 @@ alternatives
         DESTROY_NODE_IF($$ == NULL, $1);
         DESTROY_NODE_IF($$ == NULL, $3);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
     ;
 
@@ -385,7 +385,7 @@ byte
       {
         $$ = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->value = (int) $1;
       }
@@ -397,13 +397,13 @@ byte
         {
           $$ = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
-          ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+          ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
         }
         else
         {
           $$ = yr_re_node_create(RE_NODE_MASKED_LITERAL, NULL, NULL);
 
-          ERROR_IF($$ == NULL, ERROR_INSUFICIENT_MEMORY);
+          ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
           $$->value = $1 & 0xFF;
           $$->mask = mask;

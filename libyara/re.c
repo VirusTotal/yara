@@ -57,7 +57,7 @@ order to avoid confusion with operating system threads.
 // over 255 without changing RE_SPLIT_ID_TYPE.
 #define RE_MAX_SPLIT_ID     128
 
-// Maxium stack size for regexp evaluation
+// Maximum stack size for regexp evaluation
 #define RE_MAX_STACK      1024
 
 // Maximum code size for a compiled regexp
@@ -66,7 +66,7 @@ order to avoid confusion with operating system threads.
 // Maximum input size scanned by yr_re_exec
 #define RE_SCAN_LIMIT     4096
 
-// Maxium number of fibers
+// Maximum number of fibers
 #define RE_MAX_FIBERS     1024
 
 
@@ -231,7 +231,7 @@ int yr_re_create(
   *re = (RE*) yr_malloc(sizeof(RE));
 
   if (*re == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   (*re)->flags = 0;
   (*re)->root_node = NULL;
@@ -1250,7 +1250,7 @@ int _yr_re_alloc_storage(
     *storage = (RE_THREAD_STORAGE*) yr_malloc(sizeof(RE_THREAD_STORAGE));
 
     if (*storage == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     (*storage)->fiber_pool.fiber_count = 0;
     (*storage)->fiber_pool.fibers.head = NULL;
@@ -1286,7 +1286,7 @@ int _yr_re_fiber_create(
     fiber = (RE_FIBER*) yr_malloc(sizeof(RE_FIBER));
 
     if (fiber == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     fiber_pool->fiber_count++;
   }
@@ -1704,7 +1704,7 @@ int yr_re_exec(
       }
 
   #define fail_if_error(e) switch (e) { \
-        case ERROR_INSUFICIENT_MEMORY: \
+        case ERROR_INSUFFICIENT_MEMORY: \
           return -2; \
         case ERROR_TOO_MANY_RE_FIBERS: \
           return -4; \
@@ -1917,7 +1917,7 @@ int yr_re_exec(
 
               switch(cb_result)
               {
-                case ERROR_INSUFICIENT_MEMORY:
+                case ERROR_INSUFFICIENT_MEMORY:
                   return -2;
                 case ERROR_TOO_MANY_MATCHES:
                   return -3;
