@@ -93,7 +93,7 @@ int yr_object_create(
   obj = (YR_OBJECT*) yr_malloc(object_size);
 
   if (obj == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   obj->type = type;
   obj->identifier = yr_strdup(identifier);
@@ -138,7 +138,7 @@ int yr_object_create(
   if (obj->identifier == NULL)
   {
     yr_free(obj);
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
   }
 
   if (parent != NULL)
@@ -678,7 +678,7 @@ int yr_object_structure_set_member(
   sm = (YR_STRUCTURE_MEMBER*) yr_malloc(sizeof(YR_STRUCTURE_MEMBER));
 
   if (sm == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   member->parent = object;
   sm->object = member;
@@ -743,7 +743,7 @@ int yr_object_array_set_item(
         sizeof(YR_ARRAY_ITEMS) + count * sizeof(YR_OBJECT*));
 
     if (array->items == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     memset(array->items->objects, 0, count * sizeof(YR_OBJECT*));
 
@@ -757,7 +757,7 @@ int yr_object_array_set_item(
         sizeof(YR_ARRAY_ITEMS) + count * sizeof(YR_OBJECT*));
 
     if (array->items == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     for (i = array->items->count; i < count; i++)
       array->items->objects[i] = NULL;
@@ -829,7 +829,7 @@ int yr_object_dict_set_item(
         sizeof(YR_DICTIONARY_ITEMS) + count * sizeof(dict->items->objects[0]));
 
     if (dict->items == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     memset(dict->items->objects, 0, count * sizeof(dict->items->objects[0]));
 
@@ -844,7 +844,7 @@ int yr_object_dict_set_item(
         sizeof(YR_DICTIONARY_ITEMS) + count * sizeof(dict->items->objects[0]));
 
     if (dict->items == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     for (i = dict->items->used; i < count; i++)
     {
@@ -1069,7 +1069,7 @@ int yr_object_set_string(
     string_obj->value = (SIZED_STRING*) yr_malloc(len + sizeof(SIZED_STRING));
 
     if (string_obj->value == NULL)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     string_obj->value->length = (uint32_t) len;
     string_obj->value->flags = 0;

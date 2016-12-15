@@ -52,7 +52,7 @@ typedef uint64_t elf64_xword_t;
 
 #define ELF_ET_NONE     0x0000  // no type
 #define ELF_ET_REL      0x0001  // relocatable
-#define ELF_ET_EXEC     0x0002  // executeable
+#define ELF_ET_EXEC     0x0002  // executable
 #define ELF_ET_DYN      0x0003  // Shared-Object-File
 #define ELF_ET_CORE     0x0004  // Corefile
 #define ELF_ET_LOPROC   0xFF00  // Processor-specific

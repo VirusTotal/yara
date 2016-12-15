@@ -2796,7 +2796,7 @@ yyreduce:
             yyscanner, OP_INCR_M, mem_offset + 2, NULL, NULL);
 
         // If next string is not undefined, go back to the
-        // begining of the loop.
+        // beginning of the loop.
         yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JNUNDEF,
@@ -2866,7 +2866,7 @@ yyreduce:
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
-          compiler->last_error = ERROR_INSUFICIENT_MEMORY;
+          compiler->last_error = ERROR_INSUFFICIENT_MEMORY;
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
@@ -2935,7 +2935,7 @@ yyreduce:
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
-          compiler->last_error = ERROR_INSUFICIENT_MEMORY;
+          compiler->last_error = ERROR_INSUFFICIENT_MEMORY;
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 

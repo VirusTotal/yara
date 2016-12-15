@@ -148,17 +148,17 @@ void args_print_error(
 {
   switch(error)
   {
-    case ARGS_ERROR_UKNOWN_OPT:
+    case ARGS_ERROR_UNKNOWN_OPT:
       fprintf(stderr, "unknown option `%s`\n", option);
       break;
     case ARGS_ERROR_TOO_MANY:
       fprintf(stderr, "too many `%s` options\n", option);
       break;
     case ARGS_ERROR_REQUIRED_INTEGER_ARG:
-      fprintf(stderr, "option `%s` requieres an integer argument\n", option);
+      fprintf(stderr, "option `%s` requires an integer argument\n", option);
       break;
     case ARGS_ERROR_REQUIRED_STRING_ARG:
-      fprintf(stderr, "option `%s` requieres a string argument\n", option);
+      fprintf(stderr, "option `%s` requires a string argument\n", option);
       break;
     case ARGS_ERROR_UNEXPECTED_ARG:
       fprintf(stderr, "option `%s` doesn't expect an argument\n", option);
@@ -198,7 +198,7 @@ int args_parse(
       }
       else
       {
-        error = ARGS_ERROR_UKNOWN_OPT;
+        error = ARGS_ERROR_UNKNOWN_OPT;
       }
     }
     else if (args_is_short_arg(arg))
@@ -230,7 +230,7 @@ int args_parse(
         }
         else
         {
-          error = ARGS_ERROR_UKNOWN_OPT;
+          error = ARGS_ERROR_UNKNOWN_OPT;
         }
 
         if (error != ARGS_ERROR_OK)
