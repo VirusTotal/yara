@@ -159,7 +159,7 @@ YR_API int yr_rules_define_string_variable(
       external->value.s = yr_strdup(value);
 
       if (external->value.s == NULL)
-        return ERROR_INSUFICIENT_MEMORY;
+        return ERROR_INSUFFICIENT_MEMORY;
       else
         return ERROR_SUCCESS;
     }
@@ -692,7 +692,7 @@ YR_API int yr_rules_load_stream(
   YR_RULES* new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
 
   if (new_rules == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_arena_load_stream(stream, &new_rules->arena),

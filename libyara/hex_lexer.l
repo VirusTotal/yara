@@ -227,7 +227,7 @@ int yr_parse_hex_string(
 
   // The RE_FLAGS_FAST_HEX_REGEXP flag indicates a regular expression derived
   // from a hex string that can be matched by faster algorithm. These regular
-  // expressions come from hex strings not contaning alternatives, like in:
+  // expressions come from hex strings not containing alternatives, like in:
   // { ( 01 02 | 03 04) 05 06 }.
   //
   // This flag is unset later during parsing if alternatives are used.

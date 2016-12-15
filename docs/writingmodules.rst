@@ -123,7 +123,7 @@ After the declaration section you'll find a pair of functions:
       return ERROR_SUCCESS;
     }
 
-The ``module_initialize`` function is called during YARA's initializtion while
+The ``module_initialize`` function is called during YARA's initialization while
 its counterpart ``module_finalize`` is called while finalizing YARA. These
 functions allows you initialize and finalize any global data structure you may
 need to use in your module.
@@ -274,7 +274,7 @@ declare string, integer, or float variables respectively. For example::
     end_declarations;
 
 .. note::
-    Floating-point variables requiere YARA version 3.3.0 or later.
+    Floating-point variables require YARA version 3.3.0 or later.
 
 
 Variable names can't contain characters other than letters, numbers and
@@ -322,13 +322,13 @@ Your declarations can be organized in a more structured way::
     end_declarations;
 
 In this example we're using ``begin_struct(<structure name>)`` and
-``end_struct(<structure name>)`` to delimite two structures named
+``end_struct(<structure name>)`` to delimit two structures named
 *some_structure* and *another_structure*. Within the structure delimiters you
 can put any other declarations you want, including another structure
 declaration. Also notice that members of different structures can have the same
 name, but members within the same structure must have unique names.
 
-When refering to these variables from your rules it would be like this::
+When referring to these variables from your rules it would be like this::
 
     mymodule.foo
     mymodule.some_structure.foo
@@ -692,7 +692,7 @@ Setting variable's values
 -------------------------
 
 The ``module_load`` function is where you assign values to the variables
-declared in the declarations section, once you've parsed or analized the scanned
+declared in the declarations section, once you've parsed or analyzed the scanned
 data and/or any additional module's data. This is done by using the
 ``set_integer`` and ``set_string`` functions:
 
@@ -798,7 +798,7 @@ in a dictionary:
     set_integer(<value>, module, "foo[%s]", "key");
     set_string(<value>, module, "bar[%s].baz", "another_key");
 
-If you don't explicitely assign a value to a declared variable, array or
+If you don't explicitly assign a value to a declared variable, array or
 dictionary item it will remain in undefined state. That's not a problem at all,
 and is even useful in many cases. For example, if your module parses files from
 certain format and it receives one from a different format, you can safely leave
@@ -921,7 +921,7 @@ Here you have some examples:
 
 The C type for integer arguments is ``int64_t``, for float arguments is
 ``double``, for regular expressions is ``RE_CODE``, for NULL-terminated strings
-is ``char*`` and for string possibly contaning NULL characters is
+is ``char*`` and for string possibly containing NULL characters is
 ``SIZED_STRING*``. ``SIZED_STRING`` structures have the
 following attributes:
 
@@ -968,7 +968,7 @@ the corresponding ``YR_OBJECT`` first. There are two functions to do that:
 the top-level ``YR_OBJECT`` corresponding to the module, the same one passed
 to the ``module_load`` function. The ``parent()`` function returns a pointer to
 the ``YR_OBJECT`` corresponding to the structure where the function is
-contained. For example, consider the following code snipet:
+contained. For example, consider the following code snippet:
 
 .. code-block:: c
 

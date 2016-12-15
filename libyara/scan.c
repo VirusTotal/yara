@@ -227,7 +227,7 @@ int _yr_scan_fast_hex_re_exec(
 
             switch(cb_result)
             {
-              case ERROR_INSUFICIENT_MEMORY:
+              case ERROR_INSUFFICIENT_MEMORY:
                 return -2;
               case ERROR_TOO_MANY_MATCHES:
                 return -3;
@@ -320,7 +320,7 @@ int _yr_scan_fast_hex_re_exec(
 
         case RE_OPCODE_PUSH:
 
-          // A PUSH operation indicates the begining of a code sequence
+          // A PUSH operation indicates the beginning of a code sequence
           // generated for a jump. (example: { 01 02 [n-m] 03 04 }) The
           // code sequence looks like this:
           //
@@ -815,7 +815,7 @@ int _yr_scan_verify_re_match(
     case -1:
       return ERROR_SUCCESS;
     case -2:
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
     case -3:
       return ERROR_TOO_MANY_MATCHES;
     case -4:
@@ -848,7 +848,7 @@ int _yr_scan_verify_re_match(
     switch(backward_matches)
     {
       case -2:
-        return ERROR_INSUFICIENT_MEMORY;
+        return ERROR_INSUFFICIENT_MEMORY;
       case -3:
         return ERROR_TOO_MANY_MATCHES;
       case -4:

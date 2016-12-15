@@ -499,7 +499,7 @@ void print_scanner_error(
     case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
       fprintf(stderr, "can not attach to process (try running as root)\n");
       break;
-    case ERROR_INSUFICIENT_MEMORY:
+    case ERROR_INSUFFICIENT_MEMORY:
       fprintf(stderr, "not enough memory\n");
       break;
     case ERROR_SCAN_TIMEOUT:

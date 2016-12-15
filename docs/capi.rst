@@ -2,16 +2,16 @@
 The C API
 *********
 
-You can integrate YARA into your C/C++ project by using the API privided by the
+You can integrate YARA into your C/C++ project by using the API provided by the
 *libyara* library. This API gives you access to every YARA feature and it's the
 same API used by the command-line tools ``yara`` and ``yarac``.
 
-Initalizing and finalizing *libyara*
+Initializing and finalizing *libyara*
 ====================================
 
 The first thing your program must do when using *libyara* is initializing the
 library. This is done by calling the :c:func:`yr_initialize()` function. This
-function allocates any resources needed by the library and initalizes internal
+function allocates any resources needed by the library and initializes internal
 data structures. Its counterpart is :c:func:`yr_finalize`, which must be called
 when you are finished using the library.
 
@@ -208,7 +208,7 @@ All ``yr_rules_scan_XXXX`` functions receive a ``flags`` argument and a
 ``timeout`` argument. The only flag defined at this time is
 ``SCAN_FLAGS_FAST_MODE``, so you must pass either this flag or a zero value.
 The ``timeout`` argument forces the function to return after the specified
-number of seconds aproximately, with a zero meaning no timeout at all.
+number of seconds approximately, with a zero meaning no timeout at all.
 
 The ``SCAN_FLAGS_FAST_MODE`` flag makes the scanning a little faster by avoiding
 multiple matches of the same string when not necessary. Once the string was
@@ -352,7 +352,7 @@ Functions
 
 .. c:function:: int yr_initialize(void)
 
-  Initalize the library. Must be called by the main thread before using any
+  Initialize the library. Must be called by the main thread before using any
   other function. Return :c:macro:`ERROR_SUCCESS` on success another error
   code in case of error. The list of possible return codes vary according
   to the modules compiled into YARA.
@@ -377,7 +377,7 @@ Functions
 
     :c:macro:`ERROR_SUCCESS`
 
-    :c:macro:`ERROR_INSUFICENT_MEMORY`
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
 .. c:function:: void yr_compiler_destroy(YR_COMPILER* compiler)
 
@@ -422,7 +422,7 @@ Functions
 
     :c:macro:`ERROR_SUCCESS`
 
-    :c:macro:`ERROR_INSUFICENT_MEMORY`
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
 .. c:function:: int yr_compiler_define_integer_variable(YR_COMPILER* compiler, const char* identifier, int64_t value)
 
@@ -468,7 +468,7 @@ Functions
 
     :c:macro:`ERROR_SUCCESS`
 
-    :c:macro:`ERROR_INSUFICENT_MEMORY`
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
     :c:macro:`ERROR_COULD_NOT_OPEN_FILE`
 
@@ -486,7 +486,7 @@ Functions
 
     :c:macro:`ERROR_SUCCESS`
 
-    :c:macro:`ERROR_INSUFICENT_MEMORY`
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
     :c:macro:`ERROR_INVALID_FILE`
 
@@ -500,7 +500,7 @@ Functions
 
       :c:macro:`ERROR_SUCCESS`
 
-      :c:macro:`ERROR_INSUFICENT_MEMORY`
+      :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
       :c:macro:`ERROR_TOO_MANY_SCAN_THREADS`
 
@@ -517,7 +517,7 @@ Functions
 
     :c:macro:`ERROR_SUCCESS`
 
-    :c:macro:`ERROR_INSUFICENT_MEMORY`
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
     :c:macro:`ERROR_COULD_NOT_MAP_FILE`
 
@@ -542,7 +542,7 @@ Functions
 
     :c:macro:`ERROR_SUCCESS`
 
-    :c:macro:`ERROR_INSUFICENT_MEMORY`
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
     :c:macro:`ERROR_COULD_NOT_MAP_FILE`
 
@@ -647,9 +647,9 @@ Error codes
 
   Everything went fine.
 
-.. c:macro:: ERROR_INSUFICENT_MEMORY
+.. c:macro:: ERROR_INSUFFICIENT_MEMORY
 
-  Insuficient memory to complete the operation.
+  Insufficient memory to complete the operation.
 
 .. c:macro:: ERROR_COULD_NOT_OPEN_FILE
 
@@ -678,7 +678,7 @@ Error codes
 .. c:macro:: ERROR_TOO_MANY_SCAN_THREADS
 
   Too many threads trying to use the same :c:type:`YR_RULES` object
-  simultaneosly. The limit is defined by ``MAX_THREADS`` in
+  simultaneously. The limit is defined by ``MAX_THREADS`` in
   *./include/yara/limits.h*
 
 .. c:macro:: ERROR_SCAN_TIMEOUT
