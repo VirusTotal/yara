@@ -50,6 +50,7 @@ script: |
     *--host=*mingw*) ;;
     *) make check ;;
   esac
+  set +e
 
 after_failure: if [ -e test-suite.log ]; then cat test-suite.log; fi
 
