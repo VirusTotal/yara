@@ -1015,6 +1015,11 @@ expression
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
+    | _FOR_ for_expression error
+      {
+        compiler->loop_depth--;
+        compiler->loop_identifier[compiler->loop_depth] = NULL;
+      }
     | _FOR_ for_expression _IDENTIFIER_ _IN_
       {
         int var_index;
