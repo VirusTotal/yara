@@ -583,6 +583,13 @@ u?int(8|16|32)(be)? {
 <regexp>\\. {
 
   LEX_CHECK_SPACE_OK("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
+
+  if (yytext[1] == 0)
+  {
+    yyerror(yyscanner, compiler, "malformed regular expression");
+    yyterminate();
+  }
+
   *yyextra->lex_buf_ptr++ = yytext[0];
   *yyextra->lex_buf_ptr++ = yytext[1];
   yyextra->lex_buf_len += 2;

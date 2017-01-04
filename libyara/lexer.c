@@ -1831,6 +1831,13 @@ YY_RULE_SETUP
 {
 
   LEX_CHECK_SPACE_OK("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
+
+  if (yytext[1] == 0)
+  {
+    yyerror(yyscanner, compiler, "malformed regular expression");
+    yyterminate();
+  }
+
   *yyextra->lex_buf_ptr++ = yytext[0];
   *yyextra->lex_buf_ptr++ = yytext[1];
   yyextra->lex_buf_len += 2;
@@ -1838,13 +1845,13 @@ YY_RULE_SETUP
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 592 "lexer.l"
+#line 599 "lexer.l"
 { YYTEXT_TO_BUFFER; }
 	YY_BREAK
 case 67:
 /* rule 67 can match eol */
 YY_RULE_SETUP
-#line 595 "lexer.l"
+#line 602 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "unterminated regular expression");
@@ -1853,7 +1860,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 602 "lexer.l"
+#line 609 "lexer.l"
 {
 
   yyextra->lex_buf_ptr = yyextra->lex_buf;
@@ -1863,7 +1870,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 610 "lexer.l"
+#line 617 "lexer.l"
 {
 
   yyextra->lex_buf_ptr = yyextra->lex_buf;
@@ -1874,7 +1881,7 @@ YY_RULE_SETUP
 case 70:
 /* rule 70 can match eol */
 YY_RULE_SETUP
-#line 618 "lexer.l"
+#line 625 "lexer.l"
 {
   // Match hex-digits with whitespace or comments. The latter are stripped
   // out by hex_lexer.l
@@ -1890,12 +1897,12 @@ YY_RULE_SETUP
 case 71:
 /* rule 71 can match eol */
 YY_RULE_SETUP
-#line 631 "lexer.l"
+#line 638 "lexer.l"
 /* skip whitespace */
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 633 "lexer.l"
+#line 640 "lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1911,10 +1918,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 646 "lexer.l"
+#line 653 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1918 "lexer.c"
+#line 1925 "lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3063,7 +3070,7 @@ void yara_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 646 "lexer.l"
+#line 653 "lexer.l"
 
 
 
