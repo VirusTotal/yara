@@ -390,7 +390,7 @@ hex_digit     [0-9a-fA-F]
     if (i == 6)
       continue;
 
-    // digits 8 and 9 are the lowest two bits in the senventh byte of the
+    // digits 8 and 9 are the lowest two bits in the seventh byte of the
     // vector, let those bits alone.
     if (i == 7)
       LEX_ENV->class_vector[i] |= 0xFC;

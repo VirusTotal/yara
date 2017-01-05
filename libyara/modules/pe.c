@@ -251,7 +251,7 @@ void pe_parse_rich_signature(
 
 // Return a pointer to the resource directory string or NULL.
 // The callback function will parse this and call set_sized_string().
-// The pointer is guranteed to have enough space to contain the entire string.
+// The pointer is guaranteed to have enough space to contain the entire string.
 
 uint8_t* parse_resource_name(
     PE* pe,
@@ -1517,7 +1517,7 @@ define_function(imphash)
     dll_name = (char *) yr_malloc(dll_name_len + 1);
 
     if (!dll_name)
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
 
     strlcpy(dll_name, dll->name, dll_name_len + 1);
 
@@ -2396,7 +2396,7 @@ int module_load(
         pe = (PE*) yr_malloc(sizeof(PE));
 
         if (pe == NULL)
-          return ERROR_INSUFICIENT_MEMORY;
+          return ERROR_INSUFFICIENT_MEMORY;
 
         pe->data = block_data;
         pe->data_size = block->size;

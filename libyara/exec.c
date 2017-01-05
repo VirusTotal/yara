@@ -199,7 +199,7 @@ int yr_execute_code(
   stack = (YR_VALUE*) yr_malloc(stack_size * sizeof(YR_VALUE));
 
   if (stack == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   while(!stop)
   {

@@ -112,7 +112,7 @@ YR_API int yr_hash_table_create(
       sizeof(YR_HASH_TABLE) + size * sizeof(YR_HASH_TABLE_ENTRY*));
 
   if (new_table == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   new_table->size = size;
 
@@ -221,14 +221,14 @@ YR_API int yr_hash_table_add_raw_key(
   entry = (YR_HASH_TABLE_ENTRY*) yr_malloc(sizeof(YR_HASH_TABLE_ENTRY));
 
   if (entry == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   entry->key = yr_malloc(key_length);
 
   if (entry->key == NULL)
   {
     yr_free(entry);
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
   }
 
   if (ns != NULL)
@@ -240,7 +240,7 @@ YR_API int yr_hash_table_add_raw_key(
       yr_free(entry->key);
       yr_free(entry);
 
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
     }
   }
   else

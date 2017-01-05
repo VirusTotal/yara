@@ -121,7 +121,7 @@ int yr_parser_emit_pushes_for_strings(
 int yr_parser_reduce_external(
     yyscan_t yyscanner,
     const char* identifier,
-    uint8_t intruction);
+    uint8_t instruction);
 
 
 int yr_parser_reduce_import(

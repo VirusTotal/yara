@@ -172,7 +172,7 @@ YR_API void yr_finalize_thread(void)
 // yr_finalize
 //
 // Should be called by main thread before exiting. Main thread doesn't
-// need to explicitely call yr_finalize_thread because yr_finalize already
+// need to explicitly call yr_finalize_thread because yr_finalize already
 // calls it.
 //
 

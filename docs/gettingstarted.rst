@@ -44,7 +44,7 @@ not. If you want to enforce the OpenSSL-dependant features you must pass
 ``--with-crypto`` to the ``configure`` script. Ubuntu and Debian users can
 use ``sudo apt-get install libssl-dev`` to install the OpenSSL library.
 
-The following modules are not copiled into YARA by default:
+The following modules are not compiled into YARA by default:
 
 * cuckoo
 * magic

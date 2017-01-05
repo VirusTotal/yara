@@ -483,7 +483,7 @@ int yr_process_open_iterator(
       yr_malloc(sizeof(YR_PROC_ITERATOR_CTX));
 
   if (context == NULL)
-    return ERROR_INSUFICIENT_MEMORY;
+    return ERROR_INSUFFICIENT_MEMORY;
 
   iterator->context = context;
   iterator->first = _yr_get_first_block;

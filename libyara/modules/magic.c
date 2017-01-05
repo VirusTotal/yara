@@ -161,7 +161,7 @@ int module_load(
     }
     else
     {
-      return ERROR_INSUFICIENT_MEMORY;
+      return ERROR_INSUFFICIENT_MEMORY;
     }
   }
 

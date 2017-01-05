@@ -40,7 +40,7 @@ extern "C" {
 
 typedef enum _args_error_type {
   ARGS_ERROR_OK,
-  ARGS_ERROR_UKNOWN_OPT,
+  ARGS_ERROR_UNKNOWN_OPT,
   ARGS_ERROR_TOO_MANY,
   ARGS_ERROR_REQUIRED_INTEGER_ARG,
   ARGS_ERROR_REQUIRED_STRING_ARG,
@@ -95,7 +95,7 @@ int args_parse(
 
 void args_print_usage(
     args_option_t *options,
-    int aligment);
+    int alignment);
 
 
 #ifdef __cplusplus
