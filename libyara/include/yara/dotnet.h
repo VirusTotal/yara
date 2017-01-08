@@ -122,6 +122,15 @@ typedef struct _TILDE_HEADER {
 //#define BIT_IMPORTSCOPE            0x35
 //#define BIT_STATEMACHINEMETHOD     0x36
 
+
+//
+// Element types. Note this is not a complete list as we aren't parsing all of
+// them. This only includes the ones we care about.
+// ECMA-335 Section II.23.1.16
+//
+#define ELEMENT_TYPE_STRING 0x0E
+
+
 // The string length of a typelib attribute is at most 0xFF.
 #define MAX_TYPELIB_SIZE 0xFF
 
@@ -241,6 +250,23 @@ typedef struct _CUSTOMATTRIBUTE_TABLE {
     DWORD Value_Long;
   } Value;
 } CUSTOMATTRIBUTE_TABLE, *PCUSTOMATTRIBUTE_TABLE;
+
+
+//
+// Constant TAble
+// ECMA-335 Section II.22.9
+//
+typedef struct _CONSTANT_TABLE {
+  WORD Type;
+  union {
+    WORD Parent_Short;
+    DWORD Parent_Long;
+  } Parent;
+  union {
+    WORD Value_Short;
+    DWORD Value_Long;
+  } Value;
+} CONSTANT_TABLE, *PCONSTANT_TABLE;
 
 
 // Used to return offsets to the various headers.

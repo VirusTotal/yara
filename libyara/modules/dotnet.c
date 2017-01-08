@@ -321,6 +321,7 @@ void dotnet_parse_tilde_2(
   PMANIFESTRESOURCE_TABLE manifestresource_table;
   PMODULEREF_TABLE moduleref_table;
   PCUSTOMATTRIBUTE_TABLE customattribute_table;
+  PCONSTANT_TABLE constant_table;
   DWORD resource_size, implementation;
   char *name;
   char typelib[MAX_TYPELIB_SIZE + 1];
@@ -421,8 +422,7 @@ void dotnet_parse_tilde_2(
         table_offset += (2 + index_sizes.string + (index_sizes.guid * 3)) * num_rows;
         break;
       case BIT_TYPEREF:
-        row_count = max_rows(4, rows.module, rows.moduleref, rows.assemblyref,
-            rows.typeref);
+        row_count = max_rows(4, rows.module, rows.moduleref, rows.assemblyref, rows.typeref);
 
         if (row_count > (0xFFFF >> 0x02))
           index_size = 4;
@@ -493,7 +493,60 @@ void dotnet_parse_tilde_2(
         else
           index_size = 2;
 
-        table_offset += (1 + 1 + index_size + index_sizes.blob) * num_rows;
+        // Using 'i' is insufficent since we may skip certain constants and
+        // it would give an inaccurate count in that case.
+        counter = 0;
+        row_size = (1 + 1 + index_size + index_sizes.blob);
+        row_ptr = table_offset;
+        for (i = 0; i < num_rows; i++)
+        {
+          if (!fits_in_pe(pe, row_ptr, row_size))
+            break;
+
+          constant_table = (PCONSTANT_TABLE) row_ptr;
+          // Only look for constants of type string.
+          if (constant_table->Type != ELEMENT_TYPE_STRING)
+          {
+            row_ptr += row_size;
+            continue;
+          }
+
+          // Get the blob offset and pull it out of the blob table.
+          blob_offset = ((uint8_t*) constant_table) + 2 + index_size;
+          if (index_sizes.blob == 4)
+            blob_index = *(DWORD*) blob_offset;
+          else
+            // Cast the value (index into blob table) to a 32bit value.
+            blob_index = (DWORD) (*(WORD*) blob_offset);
+
+          // Everything checks out. Make sure the index into the blob field
+          // is valid (non-null and within range).
+          blob_offset = pe->data + metadata_root + streams->blob->Offset + blob_index;
+          blob_result = dotnet_parse_blob_entry(pe, blob_offset);
+
+          if (blob_result.size == 0)
+          {
+            row_ptr += row_size;
+            continue;
+          }
+
+          blob_length = blob_result.length;
+          blob_offset += blob_result.size;
+
+          // Quick sanity check to make sure the blob entry is within bounds.
+          if (blob_offset + blob_length >= pe->data + pe->data_size)
+          {
+            row_ptr += row_size;
+            continue;
+          }
+
+          set_sized_string((char*) blob_offset, blob_result.length, pe->object, "constants[%i]", i);
+          counter++;
+          row_ptr += row_size;
+        }
+
+        set_integer(counter, pe->object, "number_of_constants");
+        table_offset += row_size * num_rows;
         break;
       case BIT_CUSTOMATTRIBUTE:
         // index_size is size of the parent column.
@@ -644,7 +697,6 @@ void dotnet_parse_tilde_2(
             else
               // Cast the value (index into blob table) to a 32bit value.
               blob_index = (DWORD) (*(WORD*) customattribute_table);
-
 
             // Everything checks out. Make sure the index into the blob field
             // is valid (non-null and within range).
@@ -1352,6 +1404,8 @@ begin_declarations;
   declare_string_array("user_strings");
   declare_integer("number_of_user_strings");
   declare_string("typelib");
+  declare_string_array("constants");
+  declare_integer("number_of_constants");
 
 end_declarations;
 
