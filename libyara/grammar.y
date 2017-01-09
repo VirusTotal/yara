@@ -1017,8 +1017,11 @@ expression
       }
     | _FOR_ for_expression error
       {
-        compiler->loop_depth--;
-        compiler->loop_identifier[compiler->loop_depth] = NULL;
+        if (compiler->loop_depth > 0)
+        {
+          compiler->loop_depth--;
+          compiler->loop_identifier[compiler->loop_depth] = NULL;
+        }
       }
     | _FOR_ for_expression _IDENTIFIER_ _IN_
       {
