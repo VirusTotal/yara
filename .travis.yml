@@ -36,8 +36,7 @@ matrix:
         sudo apt-get update
         sudo apt-get install -y gcc-mingw-w64 autoconf automake libtool
     - os: osx
-      # Xcode 7.0.1 GM on OS X 10.10. This still includes OpenSSL.
-      osx_image: xcode7
+      osx_image: xcode7.3
 
 before_script: ./bootstrap.sh
 
