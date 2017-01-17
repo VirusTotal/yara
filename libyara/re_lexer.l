@@ -261,7 +261,7 @@ hex_digit     [0-9a-fA-F]
   }
   else
   {
-    yyerror(yyscanner, lex_env, "unexpected end of buffer");
+    yyerror(yyscanner, lex_env, "illegal escape sequence");
     yyterminate();
   }
 }
@@ -312,7 +312,7 @@ hex_digit     [0-9a-fA-F]
   {
     if (!read_escaped_char(yyscanner, &end))
     {
-      yyerror(yyscanner, lex_env, "unexpected end of buffer");
+      yyerror(yyscanner, lex_env, "illegal escape sequence");
       yyterminate();
     }
   }
@@ -410,7 +410,7 @@ hex_digit     [0-9a-fA-F]
   }
   else
   {
-    yyerror(yyscanner, lex_env, "unexpected end of buffer");
+    yyerror(yyscanner, lex_env, "illegal escape sequence");
     yyterminate();
   }
 }
@@ -524,19 +524,19 @@ int read_escaped_char(
   text[0] = '\\';
   text[1] = RE_YY_INPUT(yyscanner);
 
-  if (text[1] == EOF)
+  if (text[1] == EOF || text[1] == 0)
     return 0;
 
   if (text[1] == 'x')
   {
     text[2] = RE_YY_INPUT(yyscanner);
 
-    if (text[2] == EOF)
+    if (!isxdigit(text[2]))
       return 0;
 
     text[3] = RE_YY_INPUT(yyscanner);
 
-    if (text[3] == EOF)
+    if (!isxdigit(text[3]))
       return 0;
   }
 

@@ -1013,6 +1013,12 @@ void test_re()
 
   // Test case for issue #324
   assert_true_regexp("whatever|   x.   x", "   xy   x", "   xy   x");
+
+  // test case for issue #503, \x without two following hex-digits
+  assert_regexp_syntax_error("\\x0");
+  assert_regexp_syntax_error("\\x");
+
+  assert_regexp_syntax_error("\\xxy");
 }
 
 
