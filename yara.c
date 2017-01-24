@@ -1037,7 +1037,7 @@ struct manifest_entry* get_manifest_entries(const char* filename)
     }
 
     // Allocate the entry we just read.
-    *current = (manifest_entry*) malloc(sizeof(struct manifest_entry));
+    *current = (struct manifest_entry*) malloc(sizeof(struct manifest_entry));
     (*current)->name = (char*) malloc(filename_len + 1);
     strncpy((*current)->name, line_buffer, filename_len + 1);
     (*current)->next = NULL;
