@@ -995,9 +995,9 @@ void pe_parse_certificates(
     if (yr_le16toh(win_cert->Revision) != WIN_CERT_REVISION_2_0 ||
         yr_le16toh(win_cert->CertificateType) != WIN_CERT_TYPE_PKCS_SIGNED_DATA)
     {
-      uintptr_t end = (uintptr_t) 
+      uintptr_t end = (uintptr_t)
           ((uint8_t *) win_cert) + yr_le32toh(win_cert->Length);
-      
+
       win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
       continue;
     }
@@ -1870,13 +1870,15 @@ define_function(calculate_checksum)
   uint64_t csum = 0;
   size_t csum_offset;
 
+  int i, j;
+
   if (pe == NULL)
     return_integer(UNDEFINED);
 
   csum_offset = ((uint8_t*) &(pe->header->OptionalHeader) +
       offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum)) - pe->data;
 
-  for (int i = 0; i <= pe->data_size / 4; i++)
+  for (i = 0; i <= pe->data_size / 4; i++)
   {
     // Treat the CheckSum field as 0 -- the offset is the same for
     // PE32 and PE64.
@@ -1893,7 +1895,7 @@ define_function(calculate_checksum)
     }
     else
     {
-      for (int j = 0; j < pe->data_size % 4; j++)
+      for (j = 0; j < pe->data_size % 4; j++)
         csum += (uint64_t) pe->data[4 * i + j] << (8 * j);
     }
 
