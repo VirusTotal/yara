@@ -53,6 +53,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Blueliv](http://www.blueliv.com)
 * [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
 * [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
+* [ESET](https://www.eset.com)
 * [Fidelis XPS](http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
 * [FireEye, Inc.](http://www.fireeye.com)
 * [Fox-IT](https://www.fox-it.com)

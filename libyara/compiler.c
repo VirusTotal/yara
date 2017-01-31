@@ -141,7 +141,7 @@ YR_API void yr_compiler_destroy(
   yr_arena_destroy(compiler->automaton_arena);
   yr_arena_destroy(compiler->matches_arena);
 
-    yr_ac_automaton_destroy(compiler->automaton);
+  yr_ac_automaton_destroy(compiler->automaton);
 
   yr_hash_table_destroy(
       compiler->rules_table,

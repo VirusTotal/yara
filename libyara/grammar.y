@@ -824,6 +824,8 @@ arguments_list
           case EXPRESSION_TYPE_REGEXP:
             strlcpy($$, "r", MAX_FUNCTION_ARGS);
             break;
+          default:
+            assert(FALSE);
         }
 
         ERROR_IF($$ == NULL);
@@ -853,6 +855,8 @@ arguments_list
             case EXPRESSION_TYPE_REGEXP:
               strlcat($1, "r", MAX_FUNCTION_ARGS);
               break;
+            default:
+              assert(FALSE);
           }
         }
 
@@ -1017,8 +1021,13 @@ expression
       }
     | _FOR_ for_expression error
       {
-        compiler->loop_depth--;
-        compiler->loop_identifier[compiler->loop_depth] = NULL;
+        if (compiler->loop_depth > 0)
+        {
+          compiler->loop_depth--;
+          compiler->loop_identifier[compiler->loop_depth] = NULL;
+        }
+
+        YYERROR;
       }
     | _FOR_ for_expression _IDENTIFIER_ _IN_
       {
