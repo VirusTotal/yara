@@ -73,6 +73,7 @@ libyara_la_SOURCES = \
   arena.c \
   atoms.c \
   compiler.c \
+  endian.c \
   exec.c \
   exefiles.c \
   exefiles.h \
