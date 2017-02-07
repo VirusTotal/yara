@@ -35,29 +35,61 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define GCC_48 (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
 
-#if (defined(__has_builtin) && __has_builtin(__builtin_bswap16)) || GCC_48
-#define yr_bswap16(x) __builtin_bswap16(x)
-#elif defined(_MSC_VER)
-#define yr_bswap16(x) _byteswap_ushort(x)
-#else
-uint16_t _yr_bswap16(uint16_t x);
-#define yr_bswap16(x) _yr_bswap16(x)
+#if defined(__has_builtin)
+#  if __has_builtin(__builtin_bswap16)
+#    define yr_bswap16(x) __builtin_bswap16(x)
+#  endif
 #endif
 
-#if (defined(__has_builtin) && __has_builtin(__builtin_bswap32)) || GCC_48
-#define yr_bswap32(x) __builtin_bswap32(x)
-#elif defined(_MSC_VER)
-#define yr_bswap32(x) _byteswap_ulong(x)
-#else
+#if !defined(yr_bswap16) && defined(GCC_48)
+#  define yr_bswap16(x) __builtin_bswap16(x)
+#endif
+
+#if !defined(yr_bswap16) && defined(_MSC_VER)
+#  define yr_bswap16(x) _byteswap_ushort(x)
+#endif
+
+#if !defined(yr_bswap16)
+uint16_t _yr_bswap16(uint16_t x);
+# define yr_bswap16(x) _yr_bswap16(x)
+#endif
+
+
+#if defined(__has_builtin)
+#  if __has_builtin(__builtin_bswap32)
+#    define yr_bswap32(x) __builtin_bswap32(x)
+#  endif
+#endif
+
+#if !defined(yr_bswap32) && defined(GCC_48)
+#  define yr_bswap32(x) __builtin_bswap32(x)
+#endif
+
+#if !defined(yr_bswap32) && defined(_MSC_VER)
+#  define yr_bswap32(x) _byteswap_ushort(x)
+#endif
+
+#if !defined(yr_bswap32)
 uint32_t _yr_bswap32(uint32_t x);
 #define yr_bswap32(x) _yr_bswap32(x)
 #endif
 
-#if (defined(__has_builtin) && __has_builtin(__builtin_bswap64)) || GCC_48
-#define yr_bswap64(x) __builtin_bswap32(x)
-#elif defined(_MSC_VER)
-#define yr_bswap64(x) _byteswap_uint64(x)
-#else
+
+#if defined(__has_builtin)
+#  if __has_builtin(__builtin_bswap64)
+#    define yr_bswap64(x) __builtin_bswap32(x)
+#  endif
+#endif
+
+#if !defined(yr_bswap32) && defined(GCC_48)
+#  define yr_bswap64(x) __builtin_bswap32(x)
+#endif
+
+#if !defined(yr_bswap32) && defined(_MSC_VER)
+#  define yr_bswap64(x) _byteswap_uint64(x)
+#endif
+
+#if !defined(yr_bswap32)
 uint64_t _yr_bswap64(uint64_t x);
 #define yr_bswap64(x) _yr_bswap64(x)
 #endif
