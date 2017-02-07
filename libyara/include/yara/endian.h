@@ -77,19 +77,19 @@ uint32_t _yr_bswap32(uint32_t x);
 
 #if defined(__has_builtin)
 #  if __has_builtin(__builtin_bswap64)
-#    define yr_bswap64(x) __builtin_bswap32(x)
+#    define yr_bswap64(x) __builtin_bswap64(x)
 #  endif
 #endif
 
-#if !defined(yr_bswap32) && defined(GCC_48)
-#  define yr_bswap64(x) __builtin_bswap32(x)
+#if !defined(yr_bswap64) && defined(GCC_48)
+#  define yr_bswap64(x) __builtin_bswap64(x)
 #endif
 
-#if !defined(yr_bswap32) && defined(_MSC_VER)
+#if !defined(yr_bswap64) && defined(_MSC_VER)
 #  define yr_bswap64(x) _byteswap_uint64(x)
 #endif
 
-#if !defined(yr_bswap32)
+#if !defined(yr_bswap64)
 uint64_t _yr_bswap64(uint64_t x);
 #define yr_bswap64(x) _yr_bswap64(x)
 #endif
