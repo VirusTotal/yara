@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016. The YARA Authors. All Rights Reserved.
+Copyright (c) 2017. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,56 +27,27 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YR_ENDIAN_H
-#define YR_ENDIAN_H
+#include <yara/endian.h>
 
-#include <stdint.h>
-#include <config.h>
+uint16_t _yr_bswap16(uint16_t x)
+{
+  return (x >> 8 | x << 8);
+}
 
-#define GCC_48 (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+uint32_t _yr_bswap32(uint32_t x)
+{
+  return ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >>  8) |
+          (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24));
+}
 
-#if (defined(__has_builtin) && __has_builtin(__builtin_bswap16)) || GCC_48
-#define yr_bswap16(x) __builtin_bswap16(x)
-#elif defined(_MSC_VER)
-#define yr_bswap16(x) _byteswap_ushort(x)
-#else
-uint16_t _yr_bswap16(uint16_t x);
-#define yr_bswap16(x) _yr_bswap16(x)
-#endif
-
-#if (defined(__has_builtin) && __has_builtin(__builtin_bswap32)) || GCC_48
-#define yr_bswap32(x) __builtin_bswap32(x)
-#elif defined(_MSC_VER)
-#define yr_bswap32(x) _byteswap_ulong(x)
-#else
-uint32_t _yr_bswap32(uint32_t x);
-#define yr_bswap32(x) _yr_bswap32(x)
-#endif
-
-#if (defined(__has_builtin) && __has_builtin(__builtin_bswap64)) || GCC_48
-#define yr_bswap64(x) __builtin_bswap32(x)
-#elif defined(_MSC_VER)
-#define yr_bswap64(x) _byteswap_uint64(x)
-#else
-uint64_t _yr_bswap64(uint64_t x);
-#define yr_bswap64(x) _yr_bswap64(x)
-#endif
-
-
-#if defined(WORDS_BIGENDIAN)
-#define yr_le16toh(x) yr_bswap16(x)
-#define yr_le32toh(x) yr_bswap32(x)
-#define yr_le64toh(x) yr_bswap64(x)
-#define yr_be16toh(x) (x)
-#define yr_be32toh(x) (x)
-#define yr_be64toh(x) (x)
-#else
-#define yr_le16toh(x) (x)
-#define yr_le32toh(x) (x)
-#define yr_le64toh(x) (x)
-#define yr_be16toh(x) yr_bswap16(x)
-#define yr_be32toh(x) yr_bswap32(x)
-#define yr_be64toh(x) yr_bswap64(x)
-#endif
-
-#endif
+uint64_t _yr_bswap64(uint64_t x)
+{
+  return ((((x) & 0xff00000000000000ull) >> 56)
+        | (((x) & 0x00ff000000000000ull) >> 40)
+        | (((x) & 0x0000ff0000000000ull) >> 24)
+        | (((x) & 0x000000ff00000000ull) >> 8)
+        | (((x) & 0x00000000ff000000ull) << 8)
+        | (((x) & 0x0000000000ff0000ull) << 24)
+        | (((x) & 0x000000000000ff00ull) << 40)
+        | (((x) & 0x00000000000000ffull) << 56));
+}
