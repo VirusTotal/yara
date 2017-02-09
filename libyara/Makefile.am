@@ -4,6 +4,7 @@ MODULES += modules/pe.c
 MODULES += modules/elf.c
 MODULES += modules/math.c
 MODULES += modules/dotnet.c
+MODULES += modules/dex.c
 
 if CUCKOO_MODULE
 MODULES += modules/cuckoo.c
