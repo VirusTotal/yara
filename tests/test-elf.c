@@ -24,6 +24,11 @@ int main(int argc, char** argv)
         condition: $a at elf.entry_point }",
       ELF64_FILE);
 
+  assert_true_rule_blob(
+      "import \"elf\" rule test { condition: elf.entry_point == 0xa0 }", ELF32_NOSECTIONS)
+
+  assert_true_rule_blob(
+      "import \"elf\" rule test { condition: elf.entry_point == 0x1a0 }", ELF32_SHAREDOBJ)
+
   yr_finalize();
-  return 0;
 }
