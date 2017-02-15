@@ -8,7 +8,7 @@ ELF module
 .. versionadded:: 3.2.0
 
 The ELF module is very similar to the :ref:`pe-module`, but for ELF files. This
-module exposes most of the fields present in a ELF header. Let's see some
+module exposes most of the fields present in an ELF header. Let's see some
 examples::
 
     import "elf"
@@ -76,9 +76,9 @@ Reference
 
 .. c:type:: entry_point
 
-    Entry point raw offset or virtual address depending if YARA is scanning a
-    file or process memory respectively. This is equivalent to the deprecated
-    ``entrypoint`` keyword.
+    Entry point raw offset or virtual address depending on whether YARA is
+    scanning a file or process memory respectively. This is equivalent to the
+    deprecated ``entrypoint`` keyword.
 
 .. c:type:: number_of_sections
 
@@ -112,7 +112,7 @@ Reference
 
     .. c:member:: type
 
-        Integer with one of the following value:
+        Integer with one of the following values:
 
         .. c:type:: SHT_NULL
 
@@ -127,7 +127,7 @@ Reference
 
         .. c:type:: SHT_SYMTAB
 
-            The section hold a symbol table.
+            The section holds a symbol table.
 
         .. c:type:: SHT_STRTAB
 
@@ -168,7 +168,7 @@ Reference
 
     .. c:member:: flags
 
-        Integer with sections's flags as defined below:
+        Integer with section's flags as defined below:
 
         .. c:type:: SHF_WRITE
 
@@ -196,7 +196,7 @@ Reference
 
     .. versionadded:: 3.4.0
 
-    A zero-based array of segments objects, one for each segment the ELF has.
+    A zero-based array of segment objects, one for each segment the ELF has.
     Individual segments can be accessed by using the [] operator. Each segment
     object has the following attributes:
 
@@ -226,7 +226,7 @@ Reference
 
     .. c:member:: memory_size
 
-        On-memory segment size.
+        In-memory segment size.
 
     .. c:member:: offset
 

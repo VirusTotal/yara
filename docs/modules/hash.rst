@@ -56,11 +56,11 @@ of your file and create signatures based on those hashes.
 
 .. c:function:: checksum32(offset, size)
 
-    Returns a 32-bits checksum for the *size* bytes starting at *offset*. The
+    Returns a 32-bit checksum for the *size* bytes starting at *offset*. The
     checksum is just the sum of all the bytes (unsigned).
 
 .. c:function:: checksum32(string)
 
-    Returns a 32-bits checksum for the given string. The checksum is just the
+    Returns a 32-bit checksum for the given string. The checksum is just the
     sum of all the bytes in the string (unsigned).
 
