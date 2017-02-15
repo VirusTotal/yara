@@ -14,7 +14,7 @@ The target can be a file, a folder, or a process. ::
 Rule files can be passed directly in source code form, or can be previously
 compiled with the ``yarac`` tool. You may prefer to use your rules in compiled
 form if you are going to invoke YARA multiple times with the same rules. This
-way you’ll save time, because for YARA is faster to load compiled rules than
+way you’ll save time, because for YARA it is faster to load compiled rules than
 compiling the same rules over and over again.
 
 The rules will be applied to the target specified as the last argument to YARA,
@@ -111,12 +111,12 @@ Available options are:
 
 Here you have some examples:
 
-* Apply rules on */foo/bar/rules1* and */foo/bar/rules2* to all files on current
-  directory. Subdirectories are not scanned::
+* Apply rules in */foo/bar/rules1* and */foo/bar/rules2* to all files in the
+  current directory. Subdirectories are not scanned::
 
     yara /foo/bar/rules1 /foo/bar/rules2 .
 
-* Apply rules on */foo/bar/rules* to *bazfile*. Only reports rules tagged as
+* Apply rules in */foo/bar/rules* to *bazfile*. Only reports rules tagged as
   *Packer* or *Compiler*::
 
     yara -t Packer -t Compiler /foo/bar/rules bazfile
@@ -129,7 +129,7 @@ Here you have some examples:
 
     yara -d mybool=true -d myint=5 -d mystring="my string" /foo/bar/rules bazfile
 
-* Apply rules on */foo/bar/rules* to *bazfile* while passing the content of
+* Apply rules in */foo/bar/rules* to *bazfile* while passing the content of
   *cuckoo_json_report* to the cuckoo module::
 
     yara -x cuckoo=cuckoo_json_report /foo/bar/rules bazfile
