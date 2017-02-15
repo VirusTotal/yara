@@ -94,7 +94,7 @@ Reference
 
         Section's name.
 
-        *Example: elf.section[3].name == ".bss"*
+        *Example: elf.sections[3].name == ".bss"*
 
     .. c:member:: size
 
@@ -183,7 +183,7 @@ Reference
 
             The section contains executable machine instructions.
 
-        *Example: elf.section[2].flags & elf.SHF_WRITE*
+        *Example: elf.sections[2].flags & elf.SHF_WRITE*
 
 
 .. c:type:: number_of_segments

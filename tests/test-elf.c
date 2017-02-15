@@ -25,10 +25,31 @@ int main(int argc, char** argv)
       ELF64_FILE);
 
   assert_true_rule_blob(
-      "import \"elf\" rule test { condition: elf.entry_point == 0xa0 }", ELF32_NOSECTIONS)
+      "import \"elf\" rule test { condition: elf.entry_point == 0xa0 }", ELF32_NOSECTIONS);
 
   assert_true_rule_blob(
-      "import \"elf\" rule test { condition: elf.entry_point == 0x1a0 }", ELF32_SHAREDOBJ)
+      "import \"elf\" rule test { condition: elf.entry_point == 0x1a0 }", ELF32_SHAREDOBJ);
+
+  assert_true_rule_blob("import \"elf\" rule test { \
+    condition: elf.sections[2].name == \".comment\" }", ELF64_FILE);
+
+  assert_true_rule_blob("import \"elf\" rule test { \
+    condition: elf.machine == elf.EM_MIPS }", ELF32_MIPS_FILE);
+
+  assert_true_rule_blob("import \"elf\" rule test { \
+    condition: elf.number_of_sections == 11 and \
+    elf.number_of_segments == 3 }", ELF32_MIPS_FILE);
+
+  assert_true_rule_blob("import \"elf\" rule test { \
+    condition: for any i in (0..elf.number_of_sections): ( \
+    elf.sections[i].type == elf.SHT_PROGBITS and \
+    elf.sections[i].name == \".text\")}", ELF32_MIPS_FILE);
+
+  assert_true_rule_blob("import \"elf\" rule test { \
+    condition: for any i in (0..elf.number_of_segments): ( \
+    elf.segments[i].type == elf.PT_LOAD and \
+    elf.segments[i].virtual_address == 0x00400000 and \
+    elf.segments[i].file_size == 0xe0)}", ELF32_MIPS_FILE);
 
   yr_finalize();
 }

@@ -206,7 +206,8 @@ void parse_elf_header_##bits##_##bo(                                           \
     section = (elf##bits##_section_header_t*)                                  \
       ((uint8_t*) elf + yr_##bo##bits##toh(elf->sh_offset));                   \
                                                                                \
-    if (section[yr_##bo##16toh(elf->sh_str_table_index)].offset < elf_size)    \
+    if (yr_##bo##bits##toh(                                                    \
+      section[yr_##bo##16toh(elf->sh_str_table_index)].offset) < elf_size)     \
     {                                                                          \
       str_table = (char*) elf + yr_##bo##bits##toh(                            \
           section[yr_##bo##16toh(elf->sh_str_table_index)].offset);            \
