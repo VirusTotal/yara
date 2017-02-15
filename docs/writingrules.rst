@@ -85,7 +85,7 @@ in text or hexadecimal form, as shown in the following example::
             $my_text_string or $my_hex_string
     }
 
-Text strings are enclosed on double quotes just like in the C language. Hex
+Text strings are enclosed in double quotes just like in the C language. Hex
 strings are enclosed by curly brackets, and they are composed by a sequence of
 hexadecimal numbers that can appear contiguously or separated by spaces. Decimal
 numbers are not allowed in hex strings.
@@ -110,7 +110,7 @@ single-line and multi-line C-style comments are supported. ::
     rule CommentExample   // ... and this is single-line comment
     {
         condition:
-           false  // just an dummy rule, don't do this
+           false  // just a dummy rule, don't do this
     }
 
 Strings
@@ -167,9 +167,9 @@ following strings will match the pattern::
     F4 23 00 00 00 00 00 62 B4
     F4 23 15 82 A3 04 45 22 62 B4
 
-Any jump [X-Y] must met the condition 0 <= X <= Y. In previous versions of YARA
-both X and Y must be lower than 256, but starting with YARA 2.0 there is no
-limit for X and Y.
+Any jump [X-Y] must meet the condition 0 <= X <= Y. In previous versions of
+YARA both X and Y must be lower than 256, but starting with YARA 2.0 there is
+no limit for X and Y.
 
 These are valid jumps::
 
@@ -320,7 +320,7 @@ with ``wide`` , no matter the order in which they appear. ::
            $wide_and_ascii_string
     }
 
-The ``ascii`` modifier can appear along, without an accompanying ``wide``
+The ``ascii`` modifier can appear alone, without an accompanying ``wide``
 modifier, but it's not necessary to write it because in absence of ``wide`` the
 string is assumed to be ASCII by default.
 
@@ -343,7 +343,7 @@ of double-quotes, like in the Perl programming language. ::
     rule RegExpExample1
     {
         strings:
-            $re1 = /md5: [0-9a-zA-Z]{32}/
+            $re1 = /md5: [0-9a-fA-F]{32}/
             $re2 = /state: (on|off)/
 
         condition:
@@ -430,8 +430,6 @@ The following escape sequences are recognised:
      - New line (LF, NL)
    * - ``\r``
      - Return (CR)
-   * - ``\n``
-     - New line (LF, NL)
    * - ``\f``
      - Form feed (FF)
    * - ``\a``
@@ -459,7 +457,7 @@ These are the recognised character classes:
      - Match a non-digit character
 
 
-Starting with version 3.3.0 these zero-with assertions are also recognized:
+Starting with version 3.3.0 these zero-width assertions are also recognized:
 
 .. list-table::
    :widths: 3 10
@@ -516,7 +514,7 @@ For example::
     }
 
 
-This rules matches any file or process containing the string $a exactly six times,
+This rule matches any file or process containing the string $a exactly six times,
 and more than ten occurrences of string $b.
 
 .. _string-offsets:
@@ -594,7 +592,7 @@ File size
 String identifiers are not the only variables that can appear in a condition
 (in fact, rules can be defined without any string definition as will be shown
 below), there are other special variables that can be used as well. One of
-these especial variables is ``filesize``, which holds, as its name indicates,
+these special variables is ``filesize``, which holds, as its name indicates,
 the size of the file being scanned. The size is expressed in bytes. ::
 
     rule FileSizeExample
@@ -603,23 +601,23 @@ the size of the file being scanned. The size is expressed in bytes. ::
            filesize > 200KB
     }
 
-The previous example also demonstrate the use of the ``KB`` postfix. This
+The previous example also demonstrates the use of the ``KB`` postfix. This
 postfix, when attached to a numerical constant, automatically multiplies the
 value of the constant by 1024. The ``MB`` postfix can be used to multiply the
 value by 2^20. Both postfixes can be used only with decimal constants.
 
 The use of ``filesize`` only makes sense when the rule is applied to a file, if
-the rule is applied to a running process won’t never match because ``filesize``
+the rule is applied to a running process it won’t ever match because ``filesize``
 doesn’t make sense in this context.
 
 Executable entry point
 ----------------------
 
-Another special variable than can be used on a rule is ``entrypoint``. If file
-is a Portable Executable (PE) or Executable and Linkable Format (ELF), this
-variable holds the raw offset of the executable’s entry point in case we are
-scanning a file. If we are scanning a running process, the entrypoint will hold
-the virtual address of the main executable’s entry point. A typical use of
+Another special variable than can be used in a rule is ``entrypoint``. If the
+file is a Portable Executable (PE) or Executable and Linkable Format (ELF),
+this variable holds the raw offset of the executable’s entry point in case we
+are scanning a file. If we are scanning a running process, the entrypoint will
+hold the virtual address of the main executable’s entry point. A typical use of
 this variable is to look for some pattern at the entry point to detect packers
 or simple file infectors. ::
 
@@ -654,10 +652,10 @@ this variable evaluates to false.
 Accessing data at a given position
 ----------------------------------
 
-There are many situations in which you may want to write conditions that
-depends on data stored at a certain file offset or memory virtual address,
-depending if we are scanning a file or a running process. In those situations
-you can use one of the following functions to read data from the file at the given offset::
+There are many situations in which you may want to write conditions that depend
+on data stored at a certain file offset or memory virtual address, depending if
+we are scanning a file or a running process. In those situations you can use
+one of the following functions to read data from the file at the given offset::
 
     int8(<offset or virtual address>)
     int16(<offset or virtual address>)
@@ -677,7 +675,7 @@ you can use one of the following functions to read data from the file at the giv
 
 The ``intXX`` functions read 8, 16, and 32 bits signed integers from
 <offset or virtual address>, while functions ``uintXX`` read unsigned integers.
-Both 16 and 32 bits integer are considered to be little-endian. If you
+Both 16 and 32 bit integers are considered to be little-endian. If you
 want to read a big-endian integer use the corresponding function ending
 in ``be``. The <offset or virtual address> parameter can be any expression returning
 an unsigned integer, including the return value of one the ``uintXX`` functions
@@ -699,7 +697,7 @@ Sets of strings
 There are circumstances in which it is necessary to express that the file should
 contain a certain number strings from a given set. None of the strings in the
 set are required to be present, but at least some of them should be. In these
-situations the operator of come into help. ::
+situations the operator ``of`` comes in to help. ::
 
     rule OfExample1
     {
@@ -713,7 +711,7 @@ situations the operator of come into help. ::
     }
 
 What this rule says is that at least two of the strings in the set ($a,$b,$c)
-must be present on the file, no matter which. Of course, when using this
+must be present in the file, no matter which. Of course, when using this
 operator, the number before the ``of`` keyword must be equal to or less than
 the number of strings in the set.
 
@@ -760,7 +758,7 @@ equivalent keyword ``them`` for more legibility. ::
 
 In all the above examples the number of strings have been specified by a
 numeric constant, but any expression returning a numeric value can be used.
-The keywords any and  all can be used as well. ::
+The keywords any and all can be used as well. ::
 
     all of them       // all strings in the rule
     any of them       // any string in the rule
@@ -780,12 +778,13 @@ And its meaning is: from those strings in ``string_set`` at least ``expression``
 of them must satisfy ``boolean_expression``.
 
 In other words: ``boolean_expression`` is evaluated for every string in
-``string_set`` and must be at least ``expression`` of them returning True.
+``string_set`` and there must be at least ``expression`` of them returning
+True.
 
 Of course, ``boolean_expression`` can be any boolean expression accepted in
 the condition section of a rule, except for one important detail: here you
 can (and should) use a dollar sign ($) as a place-holder for the string being
-evaluated. Take a look to the following expression::
+evaluated. Take a look at the following expression::
 
     for any of ($a,$b,$c) : ( $ at entrypoint  )
 
@@ -812,7 +811,7 @@ When using the ``of`` and ``for..of`` operators followed by ``them``, the
 identifier assigned to each string of the rule is usually superfluous. As
 we are not referencing any string individually we do not need to provide
 a unique identifier for each of them. In those situations you can declare
-anonymous strings with identifiers consisting only in the $ character, as in
+anonymous strings with identifiers consisting only of the $ character, as in
 the following example::
 
     rule AnonymousStrings
@@ -861,7 +860,7 @@ boundaries, we can use expressions as well like in the following example::
     for all i in (1..#a) : ( @a[i] < 100 )
 
 In this case we’re iterating over every occurrence of $a (remember that #a
-represents the number of occurrences of $a). This rule is telling that every
+represents the number of occurrences of $a). This rule is specifying that every
 occurrence of $a should be within the first 100 bytes of the file.
 
 In case you want to express that only some occurrences of the string
@@ -871,7 +870,7 @@ applies here::
     for any i in (1..#a) : ( @a[i] < 100 )
     for 2 i in (1..#a) : ( @a[i] < 100 )
 
-In resume, the syntax of this operator is::
+In summary, the syntax of this operator is::
 
     for expression identifier in indexes : ( boolean_expression )
 
@@ -883,7 +882,7 @@ Referencing other rules
 When writing the condition for a rule you can also make reference to a
 previously defined rule in a manner that resembles a function invocation of
 traditional programming languages. In this way you can create rules that
-depends on others. Let's see an example::
+depend on others. Let's see an example::
 
     rule Rule1
     {
@@ -904,13 +903,13 @@ depends on others. Let's see an example::
     }
 
 As can be seen in the example, a file will satisfy Rule2 only if it contains
-the string "dummy2" and satisfy Rule1. Note that is strictly necessary to
+the string "dummy2" and satisfies Rule1. Note that it is strictly necessary to
 define the rule being invoked before the one that will make the invocation.
 
 More about rules
 ================
 
-There are some aspects of YARA rules that has not been covered yet, but still
+There are some aspects of YARA rules that have not been covered yet, but still
 are very important. They are: global rules, private rules, tags and metadata.
 
 Global rules
@@ -918,7 +917,7 @@ Global rules
 
 Global rules give you the possibility of imposing restrictions in all your
 rules at once. For example, suppose that you want all your rules ignoring
-those files that exceed certain size limit, you could go rule by rule doing
+those files that exceed a certain size limit, you could go rule by rule doing
 the required modifications to their conditions, or just write a global rule
 like this one::
 
@@ -929,7 +928,7 @@ like this one::
     }
 
 You can define as many global rules as you want, they will be evaluated
-before the rest of the rules, which in turn will be evaluated only of all
+before the rest of the rules, which in turn will be evaluated only if all
 global rules are satisfied.
 
 Private rules
@@ -949,15 +948,15 @@ just add the keyword ``private`` before the rule declaration. ::
         ...
     }
 
-You can apply both ``private`` and ``global`` modifiers to a rule, resulting a
-global rule that does not get reported by YARA but must be satisfied.
+You can apply both ``private`` and ``global`` modifiers to a rule, resulting in
+a global rule that does not get reported by YARA but must be satisfied.
 
 Rule tags
 ---------
 
 Another useful feature of YARA is the possibility of adding tags to rules.
 Those tags can be used later to filter YARA's output and show only the rules
-that you are interesting in. You can add as many tags as you want to a rule,
+that you are interested in. You can add as many tags as you want to a rule,
 they are declared after the rule identifier as shown below::
 
     rule TagsExample1 : Foo Bar Baz
@@ -1014,12 +1013,12 @@ about the rule.
 Using modules
 =============
 
-Modules are extensions to YARA's core functionality. Some modules like the
+Modules are extensions to YARA's core functionality. Some modules like
 the :ref:`PE module <pe-module>` and the :ref:`Cuckoo module <cuckoo-module>`
 are officially distributed with YARA and some of them can be created by
 third-parties or even by yourself as described in :ref:`writing-modules`.
 
-The first step to use a module is importing it with the ``import`` statement.
+The first step to using a module is importing it with the ``import`` statement.
 These statements must be placed outside any rule definition and followed by
 the module name enclosed in double-quotes. Like this::
 
@@ -1034,10 +1033,10 @@ module. For example::
     pe.entry_point == 0x1000
     cuckoo.http_request(/someregexp/)
 
-Modules often leave variables in undefined state, for example when the variable
-doesn't make sense in the current context (think of ``pe.entry_point`` while
-scanning a non-PE file). YARA handles undefined values in way that allows the
-rule to keep its meaningfulness. Take a look at this rule::
+Modules often leave variables in an undefined state, for example when the
+variable doesn't make sense in the current context (think of ``pe.entry_point``
+while scanning a non-PE file). YARA handles undefined values in way that allows
+the rule to keep its meaningfulness. Take a look at this rule::
 
     import "pe"
 
@@ -1090,8 +1089,8 @@ For example::
            bool_ext_var or filesize < int_ext_var
     }
 
-External variables of type string can be used with operators contains and
-matches. The ``contains`` operator returns true if the string contains the
+External variables of type string can be used with operators ``contains`` and
+``matches``. The ``contains`` operator returns true if the string contains the
 specified substring. The operator ``matches`` returns true if the string
 matches the given regular expression. ::
 

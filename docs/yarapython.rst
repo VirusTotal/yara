@@ -41,7 +41,7 @@ Or you can compile them directly from a Python string:
   rules = yara.compile(source='rule dummy { condition: true }')
 
 If you want to compile a group of files or strings at the same time you can do
-it by using the filepaths or sources named arguments:
+it by using the ``filepaths`` or ``sources`` named arguments:
 
 .. code-block:: python
 
@@ -62,7 +62,7 @@ of string type. The dictionary keys are used as a namespace identifier, allowing
 to differentiate between rules with the same name in different sources, as
 occurs in the second example with the *dummy* name.
 
-The ``compile`` method also have an optional boolean parameter named
+The ``compile`` method also has an optional boolean parameter named
 ``includes`` which allows you to control whether or not the include directive
 should be accepted in the source files, for example:
 
@@ -75,10 +75,9 @@ If the source file contains include directives the previous line would raise
 an exception.
 
 If you are using external variables in your rules you must define those
-externals variables either while compiling the rules, or while applying
-the rules to some file. To define your variables at the moment of
-compilation you should pass the ``externals`` parameter to the ``compile``
-method. For example:
+external variables either while compiling the rules, or while applying the
+rules to some file. To define your variables at the moment of compilation you
+should pass the ``externals`` parameter to the ``compile`` method. For example:
 
 .. code-block:: python
 
@@ -96,7 +95,7 @@ The default value for the ``error_on_warning`` argument is False.
 
 
 In all cases ``compile`` returns an instance of the class :py:class:`yara.Rules`
-Rules. This class have a ``save`` method that can be used to save the compiled
+Rules. This class has a ``save`` method that can be used to save the compiled
 rules to a file:
 
 .. code-block:: python
@@ -128,8 +127,8 @@ The saved rules can be loaded from the memory buffer:
 
 The result of ``load`` is also an instance of the class :py:class:`yara.Rules`.
 
-Instances of ``Rules`` also have a ``match`` method, which allows to apply the
-rules to a file:
+Instances of ``Rules`` also have a ``match`` method, which allows you to apply
+the rules to a file:
 
 .. code-block:: python
 
@@ -149,14 +148,14 @@ Or to a running process:
   matches = rules.match(pid=1234)
 
 As in the case of ``compile``, the ``match`` method can receive definitions for
-externals variables in the ``externals`` argument.
+external variables in the ``externals`` argument.
 
 .. code-block:: python
 
   matches = rules.match('/foo/bar/my_file',
     externals= {'var1': 'some other string', 'var2': 100})
 
-Externals variables defined during compile-time don’t need to be defined again
+External variables defined during compile-time don’t need to be defined again
 in subsequent calls to the ``match`` method. However you can redefine
 any variable as needed, or provide additional definitions that weren’t provided
 during compilation.
@@ -172,7 +171,7 @@ find useful the ``timeout`` argument:
 If the ``match`` function does not finish before the specified number of
 seconds elapsed, a ``TimeoutError`` exception is raised.
 
-You can also specify a callback function when invoking ``match`` method. The
+You can also specify a callback function when invoking the ``match`` method. The
 provided function will be called for every rule, no matter if matching or not.
 Your callback function should expect a single parameter of dictionary type,
 and should return ``CALLBACK_CONTINUE`` to proceed to the next rule or
@@ -203,7 +202,7 @@ The passed dictionary will be something like this:
     'strings': [(81L, '$a', 'abc'), (141L, '$b', 'def')]
   }
 
-The *matches* field indicates if the rules matches the data or not. The
+The *matches* field indicates if the rule matches the data or not. The
 *strings* fields is a list of matching strings, with vectors of the form::
 
   (<offset>, <string identifier>, <string data>)
@@ -213,11 +212,11 @@ Instances of this class have the same attributes as the dictionary passed to the
 callback function.
 
 
-You can also specify a module callback function when invoking ``match`` method.
-The provided function will be called for every imported module that scanned a
-file.  Your callback function should expect a single parameter of dictionary
-type, and should return ``CALLBACK_CONTINUE`` to proceed to the next rule or
-``CALLBACK_ABORT`` to stop applying rules to your data.
+You can also specify a module callback function when invoking the ``match``
+method.  The provided function will be called for every imported module that
+scanned a file.  Your callback function should expect a single parameter of
+dictionary type, and should return ``CALLBACK_CONTINUE`` to proceed to the next
+rule or ``CALLBACK_ABORT`` to stop applying rules to your data.
 
 Here is an example:
 

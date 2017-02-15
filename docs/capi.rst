@@ -7,7 +7,7 @@ You can integrate YARA into your C/C++ project by using the API provided by the
 same API used by the command-line tools ``yara`` and ``yarac``.
 
 Initializing and finalizing *libyara*
-====================================
+=====================================
 
 The first thing your program must do when using *libyara* is initializing the
 library. This is done by calling the :c:func:`yr_initialize()` function. This
@@ -31,7 +31,7 @@ with :c:func:`yr_compiler_destroy`.
 You can use :c:func:`yr_compiler_add_file`, :c:func:`yr_compiler_add_fd`, or
 :c:func:`yr_compiler_add_string` to add one or more input sources to be
 compiled. Both of these functions receive an optional namespace. Rules added
-under the same namespace behaves as if they were contained within the same
+under the same namespace behave as if they were contained within the same
 source file or string, so, rule identifiers must be unique among all the sources
 sharing a namespace. If the namespace argument is ``NULL`` the rules are put
 in the *default* namespace.
@@ -59,9 +59,9 @@ Possible values for ``error_level`` are ``YARA_ERROR_LEVEL_ERROR`` and
 ``YARA_ERROR_LEVEL_WARNING``. The arguments ``file_name`` and ``line_number``
 contains the file name and line number where the error or warning occurs.
 ``file_name`` is the one passed to :c:func:`yr_compiler_add_file` or
-:c:func:`yr_compiler_add_fd`. It can be ``NULL`` if you passed ``NULL`` or
- if you're using :c:func:`yr_compiler_add_string`. The ``user_data`` pointer
-is the same you passed to :c:func:`yr_compiler_set_callback`.
+:c:func:`yr_compiler_add_fd`. It can be ``NULL`` if you passed ``NULL`` or if
+you're using :c:func:`yr_compiler_add_string`. The ``user_data`` pointer is the
+same you passed to :c:func:`yr_compiler_set_callback`.
 
 After you successfully added some sources you can get the compiled rules
 using the :c:func:`yr_compiler_get_rules()` function. You'll get a pointer to
@@ -81,9 +81,9 @@ Saving and retrieving compiled rules
 Compiled rules can be saved to a file and retrieved later by using
 :c:func:`yr_rules_save` and :c:func:`yr_rules_load`. Rules compiled and saved
 in one machine can be loaded in another machine as long as they have the same
-endianness, no matter the operating system or if they are 32-bits or 64-bits
+endianness, no matter the operating system or if they are 32-bit or 64-bit
 systems. However files saved with older versions of YARA may not work with
-newer version due to changes in the file layout.
+newer versions due to changes in the file layout.
 
 You can also save and retrieve your rules to and from generic data streams by
 using functions :c:func:`yr_rules_save_stream` and
@@ -141,7 +141,7 @@ Scanning data
 
 Once you have an instance of :c:type:`YR_RULES` you can use it with either
 :c:func:`yr_rules_scan_file`, :c:func:`yr_rules_scan_fd` or
-:c:func:`yr_rules_scan_mem`. The results from the scan are notified to your
+:c:func:`yr_rules_scan_mem`. The results from the scan are returned to your
 program via a callback function. The callback has the following prototype:
 
 .. code-block:: c
@@ -162,21 +162,20 @@ Possible values for ``message`` are::
 Your callback function will be called once for each rule with either
 a ``CALLBACK_MSG_RULE_MATCHING`` or ``CALLBACK_MSG_RULE_NOT_MATCHING`` message,
 depending if the rule is matching or not. In both cases a pointer to the
-:c:type:`YR_RULE` structure associated to the rule is passed in the
+:c:type:`YR_RULE` structure associated with the rule is passed in the
 ``message_data`` argument. You just need to perform a typecast from
 ``void*`` to ``YR_RULE*`` to access the structure.
 
 This callback is also called with the ``CALLBACK_MSG_IMPORT_MODULE`` message.
-All modules referenced by a ``import`` statement in the rules are imported once
-for every file being scanned. . In this case ``message_data`` points
-to a :c:type:`YR_MODULE_IMPORT` structure. This structure contains a
-``module_name`` field pointing to a null terminated string with the name of the
-module being imported and two other fields ``module_data`` and
-``module_data_size``. These fields are initially set to ``NULL`` and ``0`` ,
-but your program can assign a pointer to some arbitrary data to ``module_data``
-while setting ``module_data_size`` to the size of the data. This way you can
-pass additional data to those modules requiring it, like the
-:ref:`Cuckoo-module` for example.
+All modules referenced by an ``import`` statement in the rules are imported
+once for every file being scanned. In this case ``message_data`` points to a
+:c:type:`YR_MODULE_IMPORT` structure. This structure contains a ``module_name``
+field pointing to a null terminated string with the name of the module being
+imported and two other fields ``module_data`` and ``module_data_size``. These
+fields are initially set to ``NULL`` and ``0``, but your program can assign a
+pointer to some arbitrary data to ``module_data`` while setting
+``module_data_size`` to the size of the data. This way you can pass additional
+data to those modules requiring it, like the :ref:`Cuckoo-module` for example.
 
 Once a module is imported the callback is called again with the
 CALLBACK_MSG_MODULE_IMPORTED. When this happens ``message_data`` points to a
@@ -283,7 +282,7 @@ Data structures
   .. c:member:: void* module_data
 
     Pointer to additional data passed to the module. Initially set to
-    ``NULL``, your program is responsible of setting this pointer while
+    ``NULL``, your program is responsible for setting this pointer while
     handling the CALLBACK_MSG_IMPORT_MODULE message.
 
   .. c:member:: size_t module_data_size
@@ -574,7 +573,7 @@ Functions
 
 .. c:function:: yr_rule_metas_foreach(rule, meta)
 
-  Iterate over the :c:type:`YR_META` structures associated to a given rule
+  Iterate over the :c:type:`YR_META` structures associated with a given rule
   running the block of code that follows each time with a different value for
   *meta*. Example:
 
@@ -591,7 +590,7 @@ Functions
 
 .. c:function:: yr_rule_strings_foreach(rule, string)
 
-  Iterate over the :c:type:`YR_STRING` structures associated to a given rule
+  Iterate over the :c:type:`YR_STRING` structures associated with a given rule
   running the block of code that follows each time with a different value for
   *string*. Example:
 
@@ -608,7 +607,7 @@ Functions
 
 .. c:function:: yr_string_matches_foreach(string, match)
 
-  Iterate over the :c:type:`YR_MATCH` structures associated to a given string
+  Iterate over the :c:type:`YR_MATCH` structures associated with a given string
   running the block of code that follows each time with a different value for
   *match*. Example:
 
