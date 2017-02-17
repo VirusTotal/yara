@@ -1,9 +1,9 @@
 
 .. _dotnet-module:
 
-#########
+#############
 dotnet module
-#########
+#############
 
 The dotnet module allows you to create more fine-grained rules for .NET files by
 using attributes and features of the .NET file format. Let's see some examples::
@@ -46,7 +46,7 @@ Reference
 
 .. c:type:: streams 
 
-    An zero-based array of steram objects, one for each stream contained in the
+    A zero-based array of stream objects, one for each stream contained in the
     file. Individual streams can be accessed by using the [] operator. Each
     stream object has the following attributes:
 
@@ -70,7 +70,7 @@ Reference
 
 .. c:type:: guids
 
-    An zero-based array of strings, one for each GUID. Individual guids can be
+    A zero-based array of strings, one for each GUID. Individual guids can be
     accessed by using the [] operator.
 
     *Example: pe.guids[0].name == "99c08ffd-f378-a891-10ab-c02fe11be6ef"*
@@ -82,8 +82,8 @@ Reference
 
 .. c:type:: resources
 
-    An zero-based array of resource objects, one for each resource the PE has.
-    Individual resources can be accessed by using the [] operator. Each
+    A zero-based array of resource objects, one for each resource the .NET file
+    has.  Individual resources can be accessed by using the [] operator. Each
     resource object has the following attributes:
 
     .. c:member:: offset
@@ -131,10 +131,11 @@ Reference
 
     The number of module references in the .NET file.
 
-.. c:type:: resources
+.. c:type:: modulerefs
 
-    An zero-based array of strings, one for each module reference the PE has.
-    Individual module references can be accessed by using the [] operator.
+    A zero-based array of strings, one for each module reference the .NET file
+    has.  Individual module references can be accessed by using the []
+    operator.
 
     *Example: dotnet.modulerefs[0] == "kernel32"*
 

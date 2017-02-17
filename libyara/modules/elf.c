@@ -63,7 +63,8 @@ int get_elf_class_data(
 #define ELF_SIZE_OF_SECTION_TABLE(bits,bo,h)       \
   (sizeof(elf##bits##_section_header_t) * yr_##bo##16toh(h->sh_entry_count))
 
-
+#define ELF_SIZE_OF_PROGRAM_TABLE(bits,bo,h)       \
+  (sizeof(elf##bits##_program_header_t) * yr_##bo##16toh(h->ph_entry_count))
 
 #define ELF_RVA_TO_OFFSET(bits,bo)                                             \
 uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
@@ -71,45 +72,86 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
     uint64_t rva,                                                              \
     size_t elf_size)                                                           \
 {                                                                              \
-  int i;                                                                       \
-                                                                               \
-  elf##bits##_section_header_t* section;                                       \
-                                                                               \
-  /* check that sh_offset doesn't wrap when added to SIZE_OF_SECTION_TABLE */  \
-                                                                               \
-  if(ULONG_MAX - yr_##bo##bits##toh(elf_header->sh_offset) <                   \
-     ELF_SIZE_OF_SECTION_TABLE(bits,bo,elf_header))                            \
+  if (elf_header->type == ELF_ET_EXEC)                                         \
   {                                                                            \
-    return UNDEFINED;                                                          \
-  }                                                                            \
+    int i;                                                                     \
                                                                                \
-  if (yr_##bo##bits##toh(elf_header->sh_offset) == 0 ||                        \
-      yr_##bo##bits##toh(elf_header->sh_offset) > elf_size ||                  \
-      yr_##bo##bits##toh(elf_header->sh_offset) +                              \
-        ELF_SIZE_OF_SECTION_TABLE(bits,bo,elf_header) > elf_size ||            \
-      yr_##bo##16toh(elf_header->sh_entry_count) == 0)                         \
-  {                                                                            \
-    return UNDEFINED;                                                          \
-  }                                                                            \
+    elf##bits##_program_header_t* program;                                     \
                                                                                \
-  section = (elf##bits##_section_header_t*)                                    \
-      ((uint8_t*) elf_header + yr_##bo##bits##toh(elf_header->sh_offset));     \
+    /* check that ph_offset doesn't wrap when added to SIZE_OF_PROGRAM_TABLE */\
                                                                                \
-  for (i = 0; i < yr_##bo##16toh(elf_header->sh_entry_count); i++)             \
-  {                                                                            \
-    if (yr_##bo##32toh(section->type) != ELF_SHT_NULL &&                       \
-        yr_##bo##32toh(section->type) != ELF_SHT_NOBITS &&                     \
-        rva >= yr_##bo##bits##toh(section->addr) &&                            \
-        rva < yr_##bo##bits##toh(section->addr) +                              \
-          yr_##bo##bits##toh(section->size))                                   \
+    if(ULONG_MAX - yr_##bo##bits##toh(elf_header->ph_offset) <                 \
+       ELF_SIZE_OF_PROGRAM_TABLE(bits,bo,elf_header))                          \
     {                                                                          \
-      return yr_##bo##bits##toh(section->offset) +                             \
-        (rva - yr_##bo##bits##toh(section->addr));                             \
+      return UNDEFINED;                                                        \
     }                                                                          \
                                                                                \
-    section++;                                                                 \
-  }                                                                            \
+    if (yr_##bo##bits##toh(elf_header->ph_offset) == 0 ||                      \
+        yr_##bo##bits##toh(elf_header->ph_offset) > elf_size ||                \
+        yr_##bo##bits##toh(elf_header->ph_offset) +                            \
+         ELF_SIZE_OF_PROGRAM_TABLE(bits,bo,elf_header) > elf_size ||           \
+        yr_##bo##16toh(elf_header->ph_entry_count) == 0)                       \
+    {                                                                          \
+      return UNDEFINED;                                                        \
+    }                                                                          \
                                                                                \
+    program = (elf##bits##_program_header_t*)                                  \
+        ((uint8_t*) elf_header + yr_##bo##bits##toh(elf_header->ph_offset));   \
+                                                                               \
+    for (i = 0; i < yr_##bo##16toh(elf_header->ph_entry_count); i++)           \
+    {                                                                          \
+      if (rva >= yr_##bo##bits##toh(program->virt_addr) &&                     \
+          rva < yr_##bo##bits##toh(program->virt_addr) +                       \
+          yr_##bo##bits##toh(program->mem_size))                               \
+      {                                                                        \
+        return yr_##bo##bits##toh(program->offset) +                           \
+          (rva - yr_##bo##bits##toh(program->virt_addr));                      \
+      }                                                                        \
+                                                                               \
+      program++;                                                               \
+    }                                                                          \
+  }                                                                            \
+  else                                                                         \
+  {                                                                            \
+    int i;                                                                     \
+                                                                               \
+    elf##bits##_section_header_t* section;                                     \
+                                                                               \
+    /* check that sh_offset doesn't wrap when added to SIZE_OF_SECTION_TABLE */\
+                                                                               \
+    if(ULONG_MAX - yr_##bo##bits##toh(elf_header->sh_offset) <                 \
+       ELF_SIZE_OF_SECTION_TABLE(bits,bo,elf_header))                          \
+    {                                                                          \
+      return UNDEFINED;                                                        \
+    }                                                                          \
+                                                                               \
+    if (yr_##bo##bits##toh(elf_header->sh_offset) == 0 ||                      \
+        yr_##bo##bits##toh(elf_header->sh_offset) > elf_size ||                \
+        yr_##bo##bits##toh(elf_header->sh_offset) +                            \
+         ELF_SIZE_OF_SECTION_TABLE(bits,bo,elf_header) > elf_size ||           \
+        yr_##bo##16toh(elf_header->sh_entry_count) == 0)                       \
+    {                                                                          \
+      return UNDEFINED;                                                        \
+    }                                                                          \
+                                                                               \
+    section = (elf##bits##_section_header_t*)                                  \
+        ((uint8_t*) elf_header + yr_##bo##bits##toh(elf_header->sh_offset));   \
+                                                                               \
+    for (i = 0; i < yr_##bo##16toh(elf_header->sh_entry_count); i++)           \
+    {                                                                          \
+      if (yr_##bo##32toh(section->type) != ELF_SHT_NULL &&                     \
+          yr_##bo##32toh(section->type) != ELF_SHT_NOBITS &&                   \
+          rva >= yr_##bo##bits##toh(section->addr) &&                          \
+          rva < yr_##bo##bits##toh(section->addr) +                            \
+          yr_##bo##bits##toh(section->size))                                   \
+      {                                                                        \
+        return yr_##bo##bits##toh(section->offset) +                           \
+          (rva - yr_##bo##bits##toh(section->addr));                           \
+      }                                                                        \
+                                                                               \
+      section++;                                                               \
+    }                                                                          \
+  }                                                                            \
   return UNDEFINED;                                                            \
 }
 
@@ -164,7 +206,8 @@ void parse_elf_header_##bits##_##bo(                                           \
     section = (elf##bits##_section_header_t*)                                  \
       ((uint8_t*) elf + yr_##bo##bits##toh(elf->sh_offset));                   \
                                                                                \
-    if (section[yr_##bo##16toh(elf->sh_str_table_index)].offset < elf_size)    \
+    if (yr_##bo##bits##toh(                                                    \
+      section[yr_##bo##16toh(elf->sh_str_table_index)].offset) < elf_size)     \
     {                                                                          \
       str_table = (char*) elf + yr_##bo##bits##toh(                            \
           section[yr_##bo##16toh(elf->sh_str_table_index)].offset);            \

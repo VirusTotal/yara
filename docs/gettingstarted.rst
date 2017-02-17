@@ -36,21 +36,21 @@ Run the test cases to make sure that everything is fine::
 
     make check
 
-Some YARA's features depends on the OpenSSL library. Those features are
+Some of YARA's features depend on the OpenSSL library. Those features are
 enabled only if you have the OpenSSL library installed in your system. If not,
 YARA is going to work fine but you won't be able to use the disabled features.
 The ``configure`` script will automatically detect if OpenSSL is installed or
-not. If you want to enforce the OpenSSL-dependant features you must pass
-``--with-crypto`` to the ``configure`` script. Ubuntu and Debian users can
-use ``sudo apt-get install libssl-dev`` to install the OpenSSL library.
+not. If you want to enforce the OpenSSL-dependent features you must pass
+``--with-crypto`` to the ``configure`` script. Ubuntu and Debian users can use
+``sudo apt-get install libssl-dev`` to install the OpenSSL library.
 
 The following modules are not compiled into YARA by default:
 
 * cuckoo
 * magic
 
-If you plan to use them must pass the corresponding ``--enable-<module name>``
-arguments to the ``configure`` script.
+If you plan to use them you must pass the corresponding ``--enable-<module
+name>`` arguments to the ``configure`` script.
 
 For example::
 
@@ -58,7 +58,7 @@ For example::
     ./configure --enable-magic
     ./configure --enable-cuckoo --enable-magic
 
-Modules usually depends on external libraries, depending on the modules you
+Modules usually depend on external libraries, depending on the modules you
 choose to install you'll need the following libraries:
 
 * cuckoo:
@@ -80,11 +80,11 @@ choose to install you'll need the following libraries:
 Installing on Windows
 ---------------------
 
-Compiled binaries for Windows in both 32 and 64 bits flavors can be found
-in the link below. Just download the version of you want, unzip the archive,
-and put the ``yara.exe`` and ``yarac.exe`` binaries anywhere in your disk.
+Compiled binaries for Windows in both 32 and 64 bit flavors can be found in the
+link below. Just download the version you want, unzip the archive, and put the
+``yara.exe`` and ``yarac.exe`` binaries anywhere in your disk.
 
-To install the ``yara-python`` extension download an execute the installer
+To install the ``yara-python`` extension download and execute the installer
 corresponding to the version of Python you're using.
 
 `Download Windows binaries <https://b161268c3bf5a87bc67309e7c870820f5f39f672.googledrive.com/host/0BznOMqZ9f3VUek8yN3VvSGdhRFU/>`_
@@ -134,7 +134,7 @@ If you get an error like this::
 
 It means that the loader is not finding the ``libyara`` library which is
 located in ``/usr/local/lib``. In some Linux flavors the loader doesn't look for
-libraries in this path by default, we must instruct him to do so by adding
+libraries in this path by default, we must instruct it to do so by adding
 ``/usr/local/lib`` to the loader configuration file ``/etc/ld.so.conf``::
 
     sudo echo "/usr/local/lib" >> /etc/ld.so.conf
