@@ -972,7 +972,7 @@ int yr_parser_reduce_import(
 
   char* name;
 
-  if (module_name->length == 0)
+  if (module_name->length == 0 || strlen(module_name->c_string) == 0)
   {
     compiler->last_result = ERROR_UNKNOWN_MODULE;
     yr_compiler_set_error_extra_info(compiler, "");
