@@ -616,7 +616,8 @@ YR_API int yr_compiler_get_rules(
   rules_file_header = (YARA_RULES_FILE_HEADER*) yr_arena_base_address(
       yara_rules->arena);
 
-  yara_rules->externals_list_head = rules_file_header->externals_list_head;
+  memset(&yara_rules->externals_list_head[1], 0, MAX_CONTEXTS * sizeof(YR_EXTERNAL_VARIABLE*));
+  yara_rules->externals_list_head[0] = rules_file_header->externals_list_head;
   yara_rules->rules_list_head = rules_file_header->rules_list_head;
   yara_rules->match_table = rules_file_header->match_table;
   yara_rules->transition_table = rules_file_header->transition_table;

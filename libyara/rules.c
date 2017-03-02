@@ -51,14 +51,91 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "exception.h"
 
 
-YR_API int yr_rules_define_integer_variable(
+YR_API int yr_rules_allocate_local_variable_context(
     YR_RULES* rules,
+    uint16_t *context)
+{
+  YR_EXTERNAL_VARIABLE** g = &(rules->externals_list_head[0]);
+  YR_EXTERNAL_VARIABLE** n = NULL;
+  *context = 0;
+  int count;
+
+  for (count=0; !EXTERNAL_VARIABLE_IS_NULL(*g + count); count++);
+
+  yr_mutex_lock(&rules->mutex);
+  for (int i=1; i < MAX_CONTEXTS+1; i++)
+  {
+    if (rules->externals_list_head[i] == NULL)
+    {
+      *context = i;
+      n = &(rules->externals_list_head[i]);
+      if (*n == NULL)
+      {
+        int rc = yr_arena_allocate_memory(rules->arena,
+            (count+1) * sizeof(YR_EXTERNAL_VARIABLE), (void**)n);
+        if (rc != ERROR_SUCCESS)
+        {
+          yr_mutex_unlock(&rules->mutex);
+          return rc;
+        }
+      }
+      else
+      {
+        /* Avoid races after mutex unlock; this is overwritten below. */
+        (*n)[0].type = 1;
+      }
+      break;
+    }
+  }
+  yr_mutex_unlock(&rules->mutex);
+
+  if (*context == 0)
+    return ERROR_TOO_MANY_VARIABLE_CONTEXTS;
+
+  memcpy(*n, *g, sizeof(YR_EXTERNAL_VARIABLE) * (count + 1));
+
+  for (int i=0; i < count; i++)
+  {
+    if ((*g)[i].type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
+      (*n)[i].value.s = strdup((*g)[i].value.s);
+  }
+
+  return 0;
+}
+
+
+YR_API int yr_rules_free_local_variable_context(
+    YR_RULES* rules,
+    uint16_t context)
+{
+  if (context == 0 || context > MAX_CONTEXTS)
+    return ERROR_INVALID_ARGUMENT;
+
+  YR_EXTERNAL_VARIABLE* external = rules->externals_list_head[context];
+  while (!EXTERNAL_VARIABLE_IS_NULL(external))
+  {
+    if (external->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
+      yr_free(external->value.s);
+    external++;
+  }
+
+  // No mutex is needed here because the marker for the allocator is
+  // the last piece that is modified.
+  rules->externals_list_head[context]->type = EXTERNAL_VARIABLE_TYPE_NULL;
+
+  return 0;
+}
+
+
+YR_API int yr_rules_define_local_integer_variable(
+    YR_RULES* rules,
+    uint16_t context,
     const char* identifier,
     int64_t value)
 {
   YR_EXTERNAL_VARIABLE* external;
 
-  external = rules->externals_list_head;
+  external = rules->externals_list_head[context];
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -78,14 +155,24 @@ YR_API int yr_rules_define_integer_variable(
 }
 
 
-YR_API int yr_rules_define_boolean_variable(
+YR_API int yr_rules_define_integer_variable(
     YR_RULES* rules,
+    const char* identifier,
+    int64_t value)
+{
+  return yr_rules_define_local_integer_variable(rules, 0, identifier, value);
+}
+
+
+YR_API int yr_rules_define_local_boolean_variable(
+    YR_RULES* rules,
+    uint16_t context,
     const char* identifier,
     int value)
 {
   YR_EXTERNAL_VARIABLE* external;
 
-  external = rules->externals_list_head;
+  external = rules->externals_list_head[context];
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -105,14 +192,24 @@ YR_API int yr_rules_define_boolean_variable(
 }
 
 
-YR_API int yr_rules_define_float_variable(
+YR_API int yr_rules_define_boolean_variable(
     YR_RULES* rules,
+    const char* identifier,
+    int value)
+{
+  return yr_rules_define_local_boolean_variable(rules, 0, identifier, value);
+}
+
+
+YR_API int yr_rules_define_local_float_variable(
+    YR_RULES* rules,
+    uint16_t context,
     const char* identifier,
     double value)
 {
   YR_EXTERNAL_VARIABLE* external;
 
-  external = rules->externals_list_head;
+  external = rules->externals_list_head[context];
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -132,14 +229,24 @@ YR_API int yr_rules_define_float_variable(
 }
 
 
-YR_API int yr_rules_define_string_variable(
+YR_API int yr_rules_define_float_variable(
     YR_RULES* rules,
+    const char* identifier,
+    double value)
+{
+  return yr_rules_define_local_float_variable(rules, 0, identifier, value);
+}
+
+
+YR_API int yr_rules_define_local_string_variable(
+    YR_RULES* rules,
+    uint16_t context,
     const char* identifier,
     const char* value)
 {
   YR_EXTERNAL_VARIABLE* external;
 
-  external = rules->externals_list_head;
+  external = rules->externals_list_head[context];
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -168,6 +275,15 @@ YR_API int yr_rules_define_string_variable(
   }
 
   return ERROR_INVALID_ARGUMENT;
+}
+
+
+YR_API int yr_rules_define_string_variable(
+    YR_RULES* rules,
+    const char* identifier,
+    const char* value)
+{
+  return yr_rules_define_local_string_variable(rules, 0, identifier, value);
 }
 
 
@@ -396,7 +512,8 @@ YR_API int yr_rules_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  external = rules->externals_list_head;
+  uint16_t ext_context = (flags >> 16) & 0xff;
+  external = rules->externals_list_head[ext_context];
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -703,7 +820,8 @@ YR_API int yr_rules_load_stream(
       yr_arena_base_address(new_rules->arena);
 
   new_rules->code_start = header->code_start;
-  new_rules->externals_list_head = header->externals_list_head;
+  memset(&new_rules->externals_list_head[1], 0, MAX_CONTEXTS * sizeof(YR_EXTERNAL_VARIABLE*));
+  new_rules->externals_list_head[0] = header->externals_list_head;
   new_rules->rules_list_head = header->rules_list_head;
   new_rules->match_table = header->match_table;
   new_rules->transition_table = header->transition_table;
@@ -780,14 +898,17 @@ YR_API int yr_rules_save(
 YR_API int yr_rules_destroy(
     YR_RULES* rules)
 {
-  YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
-
-  while (!EXTERNAL_VARIABLE_IS_NULL(external))
+  for (int i=0; i < MAX_CONTEXTS + 1; i++)
   {
-    if (external->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
-      yr_free(external->value.s);
+    YR_EXTERNAL_VARIABLE* external = rules->externals_list_head[i];
 
-    external++;
+    while (!EXTERNAL_VARIABLE_IS_NULL(external))
+    {
+      if (external->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
+        yr_free(external->value.s);
+
+      external++;
+    }
   }
 
   yr_mutex_destroy(&rules->mutex);

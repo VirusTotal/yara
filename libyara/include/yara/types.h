@@ -373,9 +373,9 @@ typedef struct _YR_RULES {
   YR_MUTEX mutex;
   YR_ARENA* arena;
   YR_RULE* rules_list_head;
-  YR_EXTERNAL_VARIABLE* externals_list_head;
   YR_AC_TRANSITION_TABLE transition_table;
   YR_AC_MATCH_TABLE match_table;
+  YR_EXTERNAL_VARIABLE *externals_list_head[MAX_CONTEXTS+1];
 
 } YR_RULES;
 

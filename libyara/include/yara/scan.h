@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SCAN_FLAGS_PROCESS_MEMORY    2
 #define SCAN_FLAGS_NO_TRYCATCH       4
 
+#define SCAN_EXTERNAL_VAR_CONTEXT(ctx) (((int)ctx & 0xff) << 16)
 
 int yr_scan_verify_match(
     YR_SCAN_CONTEXT* context,
