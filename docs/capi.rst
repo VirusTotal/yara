@@ -315,6 +315,10 @@ Data structures
     Pointer to a sequence of :c:type:`YR_STRING` structures. To iterate over the
     structures use :c:func:`yr_rule_strings_foreach`.
 
+  .. c:member:: YR_NAMESPACE* ns
+
+    Pointer to a :c:type:`YR_NAMESPACE` structure.
+
 .. c:type:: YR_RULES
 
   Data structure representing a set of compiled rules.
@@ -345,6 +349,14 @@ Data structures
   .. c:member:: const char* identifier
 
       String identifier.
+
+.. c:type:: YR_NAMESPACE
+
+  Data structure representing a rule namespace.
+
+  .. c:member:: const char* name
+
+    Rule namespace.
 
 Functions
 ---------
