@@ -34,6 +34,39 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MODULE_NAME macho
 
+typedef struct _FAT_DATA {
+
+    // Single Mach-O file headers may be out of current block in fat Mach-O
+    // binaries. This structure stores auxiliary information for such cases.
+
+    // Number of bytes that were already parsed in previous blocks.
+
+    size_t parsed_size;
+
+    // Number of files that were already parsed
+
+    size_t parsed_count;
+
+    // File offsets that were not yet parsed.
+
+    size_t count;
+    size_t* offsets;
+
+} FAT_DATA;
+
+
+// Initialize FAT_MACHO_DATA structure.
+
+void init_fat_macho_data_storage(
+    FAT_DATA* storage)
+{
+  storage->parsed_size = 0;
+  storage->parsed_count = 0;
+  storage->count = 0;
+  storage->offsets = NULL;
+}
+
+
 // Check if file is for 32-bit architecture.
 
 int macho_is_32(uint8_t* magic)
@@ -412,6 +445,8 @@ void macho_parse_fat_file(
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
+  FAT_DATA* st = object->data;
+
   // All data in Mach-O fat binary header(s) is in big-endian byte order.
 
   fat_header_t* header = (fat_header_t*)data;
@@ -432,18 +467,24 @@ void macho_parse_fat_file(
     set_integer(yr_be32toh(archs[i].align),
                 object, "fat_arch[%i].align", i);
 
-    if (size < yr_be32toh(archs[i].offset) + yr_be32toh(archs[i].size))
+    // Store offsets of files that are out of current block.
+    size_t offset = yr_be32toh(archs[i].offset);
+    if (size < offset)
     {
-      // TODO: parse targeted Mach-O files which are out of current block.
+      st->offsets = yr_realloc(st->offsets, sizeof(size_t) * (st->count + 1));
+      st->offsets[st->count++] = offset;
       continue;
     }
 
     // Force 'file' array entry creation.
-    set_integer(yr_be32toh(archs[i].cputype), object, "file[%i].cputype", i);
+    set_integer(UNDEFINED, object, "file[%i].magic", i);
 
     // Get specific Mach-O file data.
     void* file_data = (uint8_t*)data + yr_be32toh(archs[i].offset);
     macho_parse_file(file_data, get_object(object, "file[%i]", i), context);
+
+    // Increase file count.
+    st->parsed_count++;
   }
 }
 
@@ -1018,6 +1059,10 @@ int module_load(
   YR_MEMORY_BLOCK* block;
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
+  // Prepare structure for handling multiple blocks.
+  FAT_DATA* storage = module_object->data = yr_malloc(sizeof(FAT_DATA));
+  init_fat_macho_data_storage(module_object->data);
+
   // Iterate over blocks.
   foreach_memory_block(iterator, block)
   {
@@ -1026,15 +1071,38 @@ int module_load(
     if (block_data == NULL)
       continue;
 
-    // Parse either as Mach-O or Mach-O fat binary.
+    // Parse as Mach-O.
     if (macho_check_block(block_data))
     {
       macho_parse_file(block_data, module_object, context);
+      break;
     }
-    else if (macho_check_fat_block(block_data))
+
+    // Parse as Mach-O fat binary.
+    if (macho_check_fat_block(block_data))
     {
       macho_parse_fat_file(block_data, block->size, module_object, context);
     }
+
+    // Parse previously out of block files.
+    for (size_t i = 0; i < storage->count; ++i)
+    {
+      int64_t offset = storage->offsets[i] - storage->parsed_size;
+      if (offset > 0 && offset < block->size)
+      {
+        /*
+        // Force 'file' array entry creation.
+        set_integer(UNDEFINED, object, "file[%i].magic", storage->parsed_count);
+
+
+        // Get specific Mach-O file data.
+        void* file_data = (uint8_t*)data + yr_be32toh(archs[i].offset);
+        macho_parse_file(file_data, get_object(object, "file[%i]", i), context);
+        */
+      }
+    }
+
+    storage->parsed_size += block->size;
   }
 
   macho_set_definitions(module_object);
