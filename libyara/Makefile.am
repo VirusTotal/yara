@@ -3,6 +3,7 @@ MODULES =  modules/tests.c
 MODULES += modules/pe.c
 MODULES += modules/elf.c
 MODULES += modules/math.c
+MODULES += modules/macho.c
 MODULES += modules/dotnet.c
 
 if CUCKOO_MODULE
