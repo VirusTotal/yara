@@ -39,29 +39,22 @@ typedef struct _FAT_DATA {
     // Single Mach-O file headers may be out of current block in fat Mach-O
     // binaries. This structure stores auxiliary information for such cases.
 
-    // Number of bytes that were already parsed in previous blocks.
+    size_t parsed_size; // Number of already parsed bytes
+    size_t file_count;  // Number of already parsed files
 
-    size_t parsed_size;
-
-    // Number of files that were already parsed
-
-    size_t parsed_count;
-
-    // File offsets that were not yet parsed.
-
-    size_t count;
-    size_t* offsets;
+    size_t count;    // Number of out of block offsets
+    size_t* offsets; // Mach-O files offsets
 
 } FAT_DATA;
 
 
 // Initialize FAT_MACHO_DATA structure.
 
-void init_fat_macho_data_storage(
+void macho_init_fat_data_storage(
     FAT_DATA* storage)
 {
   storage->parsed_size = 0;
-  storage->parsed_count = 0;
+  storage->file_count = 0;
   storage->count = 0;
   storage->offsets = NULL;
 }
@@ -87,7 +80,7 @@ int macho_is_big(uint8_t* magic)
 
 // Check for Mach-O fat binary signature.
 
-int macho_check_fat_block(uint32_t* magic)
+int macho_is_fat_file_block(uint32_t* magic)
 {
   return *magic == FAT_MAGIC || *magic == FAT_CIGAM;
 }
@@ -95,7 +88,7 @@ int macho_check_fat_block(uint32_t* magic)
 
 // Check for Mach-O binary signatures.
 
-int macho_check_block(uint32_t* magic)
+int macho_is_file_block(uint32_t* magic)
 {
   return *magic == MH_MAGIC || *magic == MH_MAGIC_64 ||
       *magic == MH_CIGAM || *magic == MH_CIGAM_64;
@@ -288,9 +281,9 @@ MACHO_HANDLE_MAIN(be)
 #define MACHO_HANDLE_SEGMENTS_SECTIONS(bits,bo)                                \
 void macho_handle_segments_sections_##bits##_##bo(                             \
     void* command,                                                             \
+    uint64_t i,                                                                \
     YR_OBJECT* object)                                                         \
 {                                                                              \
-  uint64_t i = *((uint64_t*)object->data);                                     \
   segment_command_##bits##_t* sg = (segment_command_##bits##_t*)command;       \
                                                                                \
   set_sized_string(sg->segname, macho_limited_strlen(sg->segname, 16),         \
@@ -378,9 +371,7 @@ void macho_parse_file_##bits##_##bo(                                           \
     set_integer(yr_##bo##32toh(header_64->reserved), object, "reserved");      \
   }                                                                            \
                                                                                \
-  uint64_t segment_count = 0;                                                  \
-  object->data = &segment_count;                                               \
-                                                                               \
+  uint64_t num_sg = 0;                                                         \
   uint8_t *command = (uint8_t*)(header + 1);                                   \
   for (unsigned i = 0; i < yr_##bo##32toh(header->ncmds); ++i)                 \
   {                                                                            \
@@ -390,8 +381,8 @@ void macho_parse_file_##bits##_##bo(                                           \
       case LC_SEGMENT:                                                         \
       case LC_SEGMENT_64:                                                      \
       {                                                                        \
-        macho_handle_segments_sections_##bits##_##bo(command, object);         \
-        segment_count++;                                                       \
+        macho_handle_segments_sections_##bits##_##bo(command, num_sg, object); \
+        num_sg++;                                                              \
         break;                                                                 \
       }                                                                        \
       case LC_UNIXTHREAD:                                                      \
@@ -408,7 +399,7 @@ void macho_parse_file_##bits##_##bo(                                           \
     command += yr_##bo##32toh(command_struct->cmdsize);                        \
   }                                                                            \
                                                                                \
-  set_integer(segment_count, object, "number_of_segments");                    \
+  set_integer(num_sg, object, "number_of_segments");                           \
 }                                                                              \
 
 MACHO_PARSE_FILE(32,le)
@@ -480,11 +471,11 @@ void macho_parse_fat_file(
     set_integer(UNDEFINED, object, "file[%i].magic", i);
 
     // Get specific Mach-O file data.
-    void* file_data = (uint8_t*)data + yr_be32toh(archs[i].offset);
+    void* file_data = (uint8_t*)data + offset;
     macho_parse_file(file_data, get_object(object, "file[%i]", i), context);
 
     // Increase file count.
-    st->parsed_count++;
+    st->file_count++;
   }
 }
 
@@ -712,7 +703,7 @@ define_function(file_index_type)
 
 // Get Mach-O file index in fat file by cputype and cpusubtype fields.
 
-define_function(file_index_type_subtype)
+define_function(file_index_subtype)
 {
   YR_OBJECT* module = module();
 
@@ -731,6 +722,61 @@ define_function(file_index_type_subtype)
     if (type == type_arg && subtype == subtype_arg)
     {
       return_integer(i);
+    }
+  }
+  return_integer(UNDEFINED);
+}
+
+
+// Get real entry point offset for specific architecture in fat Mach-O.
+
+define_function(entry_point_for_arch_type)
+{
+  YR_OBJECT* module = module();
+
+  int64_t type_arg = integer_argument(1);
+
+  uint64_t nfat = get_integer(module, "nfat_arch");
+  if (is_undefined(module, "nfat_arch"))
+    return_integer(UNDEFINED);
+
+  for (uint64_t i = 0; i < nfat; ++i)
+  {
+    int64_t type = get_integer(module, "fat_arch[%i].cputype", i);
+    if (type == type_arg)
+    {
+      uint64_t file_offset = get_integer(module, "fat_arch[%i].offset", i);
+      uint64_t entry_point = get_integer(module, "file[%i].entry_point", i);
+      return_integer(file_offset + entry_point);
+    }
+  }
+  return_integer(UNDEFINED);
+}
+
+
+// Get real entry point offset for specific architecture in fat Mach-O.
+
+define_function(entry_point_for_arch_subtype)
+{
+  YR_OBJECT* module = module();
+
+  int64_t type_arg = integer_argument(1);
+  int64_t subtype_arg = integer_argument(2);
+
+  uint64_t nfat = get_integer(module, "nfat_arch");
+  if (is_undefined(module, "nfat_arch"))
+    return_integer(UNDEFINED);
+
+  for (uint64_t i = 0; i < nfat; ++i)
+  {
+    int64_t type = get_integer(module, "fat_arch[%i].cputype", i);
+    int64_t subtype = get_integer(module, "fat_arch[%i].cpusubtype", i);
+
+    if (type == type_arg && subtype == subtype_arg)
+    {
+      uint64_t file_offset = get_integer(module, "fat_arch[%i].offset", i);
+      uint64_t entry_point = get_integer(module, "file[%i].entry_point", i);
+      return_integer(file_offset + entry_point);
     }
   }
   return_integer(UNDEFINED);
@@ -1033,8 +1079,10 @@ begin_declarations;
 
   // Mach-O fat binary helper functions
 
-  declare_function("file_index_arch", "i", "i", file_index_type);
-  declare_function("file_index_arch", "ii", "i", file_index_type_subtype);
+  declare_function("file_index", "i", "i", file_index_type);
+  declare_function("file_index", "ii", "i", file_index_subtype);
+  declare_function("ep_for_arch", "i", "i", entry_point_for_arch_type);
+  declare_function("ep_for_arch", "ii", "i", entry_point_for_arch_subtype);
 
 end_declarations;
 
@@ -1059,50 +1107,57 @@ int module_load(
   YR_MEMORY_BLOCK* block;
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
-  // Prepare structure for handling multiple blocks.
-  FAT_DATA* storage = module_object->data = yr_malloc(sizeof(FAT_DATA));
-  init_fat_macho_data_storage(module_object->data);
+  // Prepare storage.
+  FAT_DATA* st = module_object->data = yr_malloc(sizeof(FAT_DATA));
+  macho_init_fat_data_storage(st);
 
-  // Iterate over blocks.
   foreach_memory_block(iterator, block)
   {
     void* block_data = block->fetch_data(block);
-
     if (block_data == NULL)
       continue;
 
-    // Parse as Mach-O.
-    if (macho_check_block(block_data))
+    // Parse classic Mach-O file.
+    if (macho_is_file_block(block_data))
     {
       macho_parse_file(block_data, module_object, context);
+
+      // In case of classic Mach-O files, everything will be in the first block
+      // so program does not have to check rest of the blocks.
+
       break;
     }
 
-    // Parse as Mach-O fat binary.
-    if (macho_check_fat_block(block_data))
+    // Parse Mach-O fat binary.
+    if (macho_is_fat_file_block(block_data))
     {
       macho_parse_fat_file(block_data, block->size, module_object, context);
+
+      // In case of fat Mach-O files, some necessary data may be out of block.
+
+      continue;
     }
 
     // Parse previously out of block files.
-    for (size_t i = 0; i < storage->count; ++i)
+    for (size_t i = 0; i < st->count; ++i)
     {
-      int64_t offset = storage->offsets[i] - storage->parsed_size;
+      size_t offset = st->offsets[i] - st->parsed_size;
       if (offset > 0 && offset < block->size)
       {
-        /*
         // Force 'file' array entry creation.
-        set_integer(UNDEFINED, object, "file[%i].magic", storage->parsed_count);
-
+        set_integer(UNDEFINED, module_object,
+                    "file[%i].magic", st->file_count);
 
         // Get specific Mach-O file data.
-        void* file_data = (uint8_t*)data + yr_be32toh(archs[i].offset);
-        macho_parse_file(file_data, get_object(object, "file[%i]", i), context);
-        */
+        void* file_data = (uint8_t*)block_data + offset;
+        YR_OBJECT* object = get_object(module_object, "file[%i]",
+                                       st->file_count);
+        macho_parse_file(file_data, object, context);
+        st->file_count++;
       }
     }
 
-    storage->parsed_size += block->size;
+    st->parsed_size += block->size;
   }
 
   macho_set_definitions(module_object);
@@ -1112,5 +1167,9 @@ int module_load(
 int module_unload(
     YR_OBJECT* module_object)
 {
+  FAT_DATA* st = module_object->data;
+  yr_free(st->offsets);
+  yr_free(st);
+
   return ERROR_SUCCESS;
 }

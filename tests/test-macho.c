@@ -157,21 +157,34 @@ int main(int argc, char** argv)
   // Helper functions
 
   assert_true_rule_file("import \"macho\" rule test { condition: \
-    macho.file[macho.file_index_arch(macho.CPU_TYPE_I386)].entry_point == \
+    macho.file[macho.file_index(macho.CPU_TYPE_I386)].entry_point == \
     macho.file[0].entry_point }", "tests/data/tiny-universal");
   assert_true_rule_file("import \"macho\" rule test { condition: \
-    macho.file[macho.file_index_arch(macho.CPU_TYPE_X86_64)].entry_point == \
+    macho.file[macho.file_index(macho.CPU_TYPE_X86_64)].entry_point == \
     macho.file[1].entry_point }", "tests/data/tiny-universal");
 
   assert_true_rule_file("import \"macho\" rule test { condition: \
-    macho.file[macho.file_index_arch(macho.CPU_TYPE_I386, \
+    macho.file[macho.file_index(macho.CPU_TYPE_I386, \
                macho.CPU_SUBTYPE_I386_ALL)].entry_point == \
     macho.file[0].entry_point }", "tests/data/tiny-universal");
   assert_true_rule_file("import \"macho\" rule test { condition: \
-    macho.file[macho.file_index_arch(macho.CPU_TYPE_X86_64, \
+    macho.file[macho.file_index(macho.CPU_TYPE_X86_64, \
                macho.CPU_SUBTYPE_X86_64_ALL | \
                macho.CPU_SUBTYPE_LIB64)].entry_point == \
     macho.file[1].entry_point }", "tests/data/tiny-universal");
+
+  // Entry point for specific architecture
+
+  assert_true_rule_file("import \"macho\" rule test { \
+    strings: $1 = { 55 89 e5 56 83 ec 34 } \
+    condition: $1 at macho.ep_for_arch(macho.CPU_TYPE_I386, \
+                                       macho.CPU_SUBTYPE_I386_ALL) }",
+    "tests/data/tiny-universal");
+
+  assert_true_rule_file("import \"macho\" rule test { \
+    strings: $1 = { 55 48 89 e5 48 83 ec 20 } \
+    condition: $1 at macho.ep_for_arch(macho.CPU_TYPE_X86_64) }",
+    "tests/data/tiny-universal");
 
   yr_finalize();
 }
