@@ -963,6 +963,19 @@ YR_META* yr_parser_reduce_meta_declaration(
 }
 
 
+int _yr_parser_valid_module_name(
+    SIZED_STRING* module_name)
+{
+  if (module_name->length == 0)
+    return FALSE;
+
+  if (strlen(module_name->c_string) != module_name->length)
+    return FALSE;
+
+  return TRUE;
+}
+
+
 int yr_parser_reduce_import(
     yyscan_t yyscanner,
     SIZED_STRING* module_name)
@@ -972,12 +985,12 @@ int yr_parser_reduce_import(
 
   char* name;
 
-  if (module_name->length == 0)
+  if (!_yr_parser_valid_module_name(module_name))
   {
-    compiler->last_result = ERROR_UNKNOWN_MODULE;
-    yr_compiler_set_error_extra_info(compiler, "");
+    compiler->last_result = ERROR_INVALID_MODULE_NAME;
+    yr_compiler_set_error_extra_info(compiler, module_name->c_string);
 
-    return ERROR_UNKNOWN_MODULE;
+    return ERROR_INVALID_MODULE_NAME;
   }
 
   module_structure = (YR_OBJECT*) yr_hash_table_lookup(
