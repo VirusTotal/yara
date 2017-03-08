@@ -234,8 +234,9 @@ static void test_bitwise_operators()
 
 static void test_syntax()
 {
-  assert_syntax_error(
-      "rule test { strings: $a = \"a\" $a = \"a\" condition: all of them }");
+  assert_error(
+      "rule test { strings: $a = \"a\" $a = \"a\" condition: all of them }",
+      ERROR_DUPLICATED_STRING_IDENTIFIER);
 }
 
 
@@ -553,34 +554,40 @@ static void test_hex_strings()
         condition: $a }",
       "1234567890");
 
-  assert_syntax_error(
+  assert_error(
       "rule test { \
         strings: $a = { 01 [0] 02 } \
-        condition: $a }");
+        condition: $a }",
+      ERROR_INVALID_HEX_STRING);
 
-  assert_syntax_error(
+  assert_error(
       "rule test { \
-        strings: $a = { [-] 01 02 } condition: $a }");
+        strings: $a = { [-] 01 02 } condition: $a }",
+      ERROR_INVALID_HEX_STRING);
 
-  assert_syntax_error(
+  assert_error(
       "rule test { \
         strings: $a = { 01 02 [-] } \
-        condition: $a }");
+        condition: $a }",
+      ERROR_INVALID_HEX_STRING);
 
-  assert_syntax_error(
+  assert_error(
       "rule test { \
         strings: $a = { 01 02 ([-] 03 | 04) } \
-        condition: $a }");
+        condition: $a }",
+      ERROR_INVALID_HEX_STRING);
 
-  assert_syntax_error(
+  assert_error(
       "rule test { \
         strings: $a = { 01 02 (03 [-] | 04) } \
-        condition: $a }");
+        condition: $a }",
+      ERROR_INVALID_HEX_STRING);
 
-  assert_syntax_error(
+  assert_error(
       "rule test { \
         strings: $a = { 01 02 (03 | 04 [-]) } \
-        condition: $a ");
+        condition: $a ",
+      ERROR_INVALID_HEX_STRING);
 
   /* TODO: tests.py:551 ff. */
 }
@@ -730,11 +737,13 @@ static void test_of()
       }",
       "mississippi");
 
-  assert_syntax_error(
-      "rule test { condition: all of ($a*) }");
+  assert_error(
+      "rule test { condition: all of ($a*) }",
+      ERROR_UNDEFINED_STRING);
 
-  assert_syntax_error(
-      "rule test { condition: all of them }");
+  assert_error(
+      "rule test { condition: all of them }",
+      ERROR_UNDEFINED_STRING);
 }
 
 
@@ -913,10 +922,8 @@ void test_re()
   assert_regexp_syntax_error("(abc");
   assert_regexp_syntax_error("abc)");
   assert_regexp_syntax_error("a[]b");
-  assert_regexp_syntax_error("a\\");
   assert_true_regexp("a[\\-b]", "a-", "a-");
   assert_true_regexp("a[\\-b]", "ab", "ab");
-  assert_regexp_syntax_error("a[\\");
   assert_true_regexp("a]", "a]", "a]");
   assert_true_regexp("a[]]b", "a]b", "a]b");
   assert_true_regexp("a[\\]]b", "a]b", "a]b");
@@ -1025,6 +1032,14 @@ void test_re()
   assert_regexp_syntax_error("\\x");
 
   assert_regexp_syntax_error("\\xxy");
+
+  assert_error(
+      "rule test { strings: $a = /a\\/ condition: $a }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(
+      "rule test { strings: $a = /[a\\/ condition: $a }",
+      ERROR_SYNTAX_ERROR);
 }
 
 
@@ -1249,6 +1264,14 @@ static void test_modules()
       rule test { condition: tests.fsum(1.0,1.0) == 3.0 \
       }",
       NULL);
+
+  assert_error(
+      "import \"\\x00\"",
+      ERROR_INVALID_MODULE_NAME);
+
+  assert_error(
+      "import \"\"",
+      ERROR_INVALID_MODULE_NAME);
 }
 
 #if defined(HASH_MODULE)
@@ -1335,7 +1358,7 @@ void test_file_descriptor()
 {
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
-  
+
 #if defined(_WIN32) || defined(__CYGWIN__)
   HANDLE fd = CreateFile("tests/data/true.yar", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
   if (fd == INVALID_HANDLE_VALUE)
@@ -1361,7 +1384,7 @@ void test_file_descriptor()
     perror("yr_compiler_add_fd");
     exit(EXIT_FAILURE);
   }
-  
+
 #if defined(_WIN32) || defined(__CYGWIN__)
   CloseHandle(fd);
 #else
@@ -1381,7 +1404,7 @@ void test_file_descriptor()
   {
     yr_rules_destroy(rules);
   }
-  
+
   return;
 }
 
