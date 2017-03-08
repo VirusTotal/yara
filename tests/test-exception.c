@@ -74,11 +74,17 @@ int main(int argc, char **argv)
 
   yr_initialize();
 
-  YR_RULES* rules_a = compile_rule(
-      "rule test { strings: $a = \"aaaa\" condition: all of them }");
+  YR_RULES* rules_a;
 
-  YR_RULES* rules_0 = compile_rule(
-      "rule test { strings: $a = { 00 00 00 00 } condition: all of them }");
+  compile_rule(
+      "rule test { strings: $a = \"aaaa\" condition: all of them }",
+      &rules_a);
+
+  YR_RULES* rules_0;
+
+  compile_rule(
+      "rule test { strings: $a = { 00 00 00 00 } condition: all of them }",
+      &rules_0);
 
   puts("Scanning for \"aaaa\"...");
 
