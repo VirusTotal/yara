@@ -83,6 +83,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_OPCODE_POP                   0xC3
 #define RE_OPCODE_JNZ                   0xC4
 #define RE_OPCODE_JUMP                  0xC5
+#define RE_OPCODE_REPEAT_START_GREEDY   0xC6
+#define RE_OPCODE_REPEAT_END_GREEDY     0xC7
+#define RE_OPCODE_REPEAT_START_UNGREEDY 0xC8
+#define RE_OPCODE_REPEAT_END_UNGREEDY   0xC9
 
 
 #define RE_FLAGS_FAST_HEX_REGEXP        0x02
@@ -148,10 +152,9 @@ struct RE {
 };
 
 
-struct RE_ERROR {
-
+struct RE_ERROR
+{
   char message[512];
-
 };
 
 

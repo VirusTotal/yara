@@ -782,10 +782,10 @@ int _yr_scan_verify_re_match(
   if (STRING_IS_GREEDY_REGEXP(ac_match->string))
     flags |= RE_FLAGS_GREEDY;
 
-  if (STRING_IS_FAST_HEX_REGEXP(ac_match->string))
-    exec = _yr_scan_fast_hex_re_exec;
-  else
-    exec = yr_re_exec;
+  //if (STRING_IS_FAST_HEX_REGEXP(ac_match->string))
+  //  exec = _yr_scan_fast_hex_re_exec;
+  //else
+  exec = yr_re_exec;
 
   if (STRING_IS_ASCII(ac_match->string))
   {

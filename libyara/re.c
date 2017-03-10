@@ -76,6 +76,14 @@ order to avoid confusion with operating system threads.
 #define EMIT_NO_CASE                    0x08
 #define EMIT_DOT_ALL                    0x10
 
+typedef struct _RE_REPEAT_ARGS
+{
+  int16_t   min;
+  int16_t   max;
+  int16_t   offset;
+
+} RE_REPEAT_ARGS;
+
 
 typedef struct _RE_EMIT_CONTEXT {
 
@@ -639,6 +647,33 @@ int _yr_emit_inst_arg_int16(
 }
 
 
+int _yr_emit_inst_arg_struct(
+    RE_EMIT_CONTEXT* emit_context,
+    uint8_t opcode,
+    void* structure,
+    size_t structure_size,
+    uint8_t** instruction_addr,
+    void** argument_addr,
+    int* code_size)
+{
+  FAIL_ON_ERROR(yr_arena_write_data(
+      emit_context->arena,
+      &opcode,
+      sizeof(uint8_t),
+      (void**) instruction_addr));
+
+  FAIL_ON_ERROR(yr_arena_write_data(
+      emit_context->arena,
+      structure,
+      structure_size,
+      (void**) argument_addr));
+
+  *code_size = sizeof(uint8_t) + structure_size;
+
+  return ERROR_SUCCESS;
+}
+
+
 int _yr_emit_split(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
@@ -690,6 +725,10 @@ int _yr_re_emit(
   int split_size;
   int inst_size;
   int jmp_size;
+  int subcode_size;
+
+  RE_REPEAT_ARGS repeat_args;
+  RE_REPEAT_ARGS* repeat_args_addr;
 
   RE_NODE* left;
   RE_NODE* right;
@@ -1012,7 +1051,106 @@ int _yr_re_emit(
     *jmp_offset_addr = branch_size + jmp_size;
     break;
 
+ case RE_NODE_RANGE:
 
+    // Code for e{n,m} looks like:
+    //
+    //        L0: range_start n,m,L1
+    //            code for e
+    //        L1: range_end n,m,L0
+    //
+
+    if (re_node->start > 0)
+    {
+      FAIL_ON_ERROR(_yr_re_emit(
+          emit_context,
+          re_node->left,
+          flags,
+          &instruction_addr,
+          &branch_size));
+
+       *code_size += branch_size;
+    }
+
+    if (re_node->start > 1 || re_node->end > 1)
+    {
+      repeat_args.min = (re_node->start > 0) ?
+          re_node->start - 1 :
+          re_node->start;
+
+      repeat_args.max = (re_node->end > 0) ?
+          re_node->end - 1 :
+          re_node->end;
+
+      repeat_args.offset = 0;
+
+      FAIL_ON_ERROR(_yr_emit_inst_arg_struct(
+          emit_context,
+          re_node->greedy ?
+              RE_OPCODE_REPEAT_START_GREEDY :
+              RE_OPCODE_REPEAT_START_UNGREEDY,
+          &repeat_args,
+          sizeof(repeat_args),
+          re_node->start == 0 ? &instruction_addr : NULL,
+          (void**) &repeat_args_addr,
+          &inst_size));
+
+      *code_size += inst_size;
+
+      FAIL_ON_ERROR(_yr_re_emit(
+          emit_context,
+          re_node->left,
+          flags | EMIT_DONT_SET_FORWARDS_CODE | EMIT_DONT_SET_BACKWARDS_CODE,
+          NULL,
+          &branch_size));
+
+      *code_size += branch_size;
+
+      repeat_args_addr->offset = 2 * inst_size + branch_size;
+      repeat_args.offset = -branch_size;
+
+      FAIL_ON_ERROR(_yr_emit_inst_arg_struct(
+          emit_context,
+          re_node->greedy ?
+              RE_OPCODE_REPEAT_END_GREEDY :
+              RE_OPCODE_REPEAT_END_UNGREEDY,
+          &repeat_args,
+          sizeof(repeat_args),
+          NULL,
+          NULL,
+          &inst_size));
+
+      *code_size += inst_size;
+    }
+
+    if (re_node->end > 0)
+    {
+      FAIL_ON_ERROR(_yr_emit_split(
+          emit_context,
+          re_node->greedy ?
+              RE_OPCODE_SPLIT_A :
+              RE_OPCODE_SPLIT_B,
+          0,
+          NULL,
+          &split_offset_addr,
+          &split_size));
+
+      *code_size += split_size;
+
+      FAIL_ON_ERROR(_yr_re_emit(
+          emit_context,
+          re_node->left,
+          re_node->start > 0 ? flags | EMIT_DONT_SET_FORWARDS_CODE : flags,
+          re_node->start == 0 && re_node->end == 1 ? &instruction_addr : NULL,
+          &branch_size));
+
+      *code_size += branch_size;
+      *split_offset_addr = split_size + branch_size;
+    }
+
+    break;
+
+/*
   case RE_NODE_RANGE:
 
     // Code for e{n,m} looks like:
@@ -1138,7 +1276,8 @@ int _yr_re_emit(
       *split_offset_addr = split_size + branch_size;
     }
 
-    break;
+    break;*/
+
   }
 
   if (flags & EMIT_BACKWARDS)
@@ -1539,6 +1678,8 @@ int _yr_re_fiber_sync(
 
   int split_already_executed;
 
+  RE_REPEAT_ARGS* repeat_args;
+
   RE_FIBER* fiber;
   RE_FIBER* last;
   RE_FIBER* prev;
@@ -1599,6 +1740,73 @@ int _yr_re_fiber_sync(
 
           splits_executed[splits_executed_count] = split_id;
           splits_executed_count++;
+        }
+
+        break;
+
+      case RE_OPCODE_REPEAT_START_GREEDY:
+      case RE_OPCODE_REPEAT_START_UNGREEDY:
+
+        repeat_args = (RE_REPEAT_ARGS*)(fiber->ip + 1);
+        assert(repeat_args->max > 0);
+
+        if (repeat_args->min == 0)
+        {
+          FAIL_ON_ERROR(_yr_re_fiber_split(
+              fiber, fiber_list, fiber_pool, &new_fiber));
+
+          if (*fiber->ip == RE_OPCODE_REPEAT_START_GREEDY)
+          {
+            new_fiber->ip += repeat_args->offset;
+            fiber->stack[++fiber->sp] = 0;
+            fiber->ip += (1 + sizeof(RE_REPEAT_ARGS));
+          }
+          else
+          {
+            fiber->ip += repeat_args->offset;
+            new_fiber->stack[++new_fiber->sp] = 0;
+            new_fiber->ip += (1 + sizeof(RE_REPEAT_ARGS));
+          }
+        }
+        else
+        {
+          fiber->stack[++fiber->sp] = 0;
+          fiber->ip += (1 + sizeof(RE_REPEAT_ARGS));
+        }
+
+        break;
+
+      case RE_OPCODE_REPEAT_END_GREEDY:
+      case RE_OPCODE_REPEAT_END_UNGREEDY:
+
+        repeat_args = (RE_REPEAT_ARGS*)(fiber->ip + 1);
+        fiber->stack[fiber->sp]++;
+
+        if (fiber->stack[fiber->sp] < repeat_args->min)
+        {
+          fiber->ip += repeat_args->offset;
+        }
+        else if (fiber->stack[fiber->sp] < repeat_args->max)
+        {
+          FAIL_ON_ERROR(_yr_re_fiber_split(
+              fiber, fiber_list, fiber_pool, &new_fiber));
+
+          if (*fiber->ip == RE_OPCODE_REPEAT_END_GREEDY)
+          {
+            fiber->ip += repeat_args->offset;
+            new_fiber->ip += (1 + sizeof(RE_REPEAT_ARGS));
+            new_fiber->sp--;
+          }
+          else
+          {
+            new_fiber->ip += repeat_args->offset;
+            fiber->ip += (1 + sizeof(RE_REPEAT_ARGS));
+            fiber->sp--;
+          }
+        }
+        else
+        {
+          fiber->ip += (1 + sizeof(RE_REPEAT_ARGS));
         }
 
         break;
