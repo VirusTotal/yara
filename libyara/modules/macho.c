@@ -281,7 +281,7 @@ MACHO_HANDLE_MAIN(be)
 #define MACHO_HANDLE_SEGMENTS_SECTIONS(bits,bo)                                \
 void macho_handle_segments_sections_##bits##_##bo(                             \
     void* command,                                                             \
-    uint64_t i,                                                                \
+    uint32_t i,                                                                \
     YR_OBJECT* object)                                                         \
 {                                                                              \
   segment_command_##bits##_t* sg = (segment_command_##bits##_t*)command;       \
