@@ -79,14 +79,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define RE_OPCODE_SPLIT_A               0xC0
 #define RE_OPCODE_SPLIT_B               0xC1
-#define RE_OPCODE_PUSH                  0xC2
-#define RE_OPCODE_POP                   0xC3
-#define RE_OPCODE_JNZ                   0xC4
-#define RE_OPCODE_JUMP                  0xC5
-#define RE_OPCODE_REPEAT_START_GREEDY   0xC6
-#define RE_OPCODE_REPEAT_END_GREEDY     0xC7
-#define RE_OPCODE_REPEAT_START_UNGREEDY 0xC8
-#define RE_OPCODE_REPEAT_END_UNGREEDY   0xC9
+#define RE_OPCODE_JUMP                  0xC2
+#define RE_OPCODE_REPEAT_START_GREEDY   0xC3
+#define RE_OPCODE_REPEAT_END_GREEDY     0xC4
+#define RE_OPCODE_REPEAT_START_UNGREEDY 0xC5
+#define RE_OPCODE_REPEAT_END_UNGREEDY   0xC6
 
 
 #define RE_FLAGS_FAST_HEX_REGEXP        0x02

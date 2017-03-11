@@ -318,56 +318,6 @@ int _yr_scan_fast_hex_re_exec(
 
           break;
 
-        case RE_OPCODE_PUSH:
-
-          // A PUSH operation indicates the beginning of a code sequence
-          // generated for a jump. (example: { 01 02 [n-m] 03 04 }) The
-          // code sequence looks like this:
-          //
-          //            push m-n-1    (3 bytes long)
-          //        L0: split L1, L2  (3 + sizeof(RE_SPLIT_ID_TYPE) bytes long)
-          //        L1: any           (1 byte long)
-          //            jnz L0        (3 bytes long)
-          //        L2: pop           (1 byte long)
-          //            split L3, L4  (3 + sizeof(RE_SPLIT_ID_TYPE) bytes long)
-          //        L3: any           (1 byte long)
-          //        L4:
-          //                  15 + 2 * sizeof(RE_SPLIT_ID_TYPE) bytes in total
-
-          next_opcode = ip + 2 * sizeof(RE_SPLIT_ID_TYPE) + 15;
-
-          for (i = *(uint16_t*)(ip + 1) + 1; i > 0; i--)
-          {
-            if (flags & RE_FLAGS_BACKWARDS)
-            {
-              next_input = current_input - i;
-              if (next_input <= input - input_size)
-                continue;
-            }
-            else
-            {
-              next_input = current_input + i;
-              if (next_input >= input + input_size)
-                continue;
-            }
-
-            if ( *(next_opcode) != RE_OPCODE_LITERAL ||
-                (*(next_opcode) == RE_OPCODE_LITERAL &&
-                 *(next_opcode + 1) == *next_input))
-            {
-              if (sp >= MAX_FAST_HEX_RE_STACK)
-                return -4;
-
-              code_stack[sp] = next_opcode;
-              input_stack[sp] = next_input;
-              matches_stack[sp] = matches + i;
-              sp++;
-            }
-          }
-
-          ip = next_opcode;
-          break;
-
         default:
           assert(FALSE);
       }
