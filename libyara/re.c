@@ -73,7 +73,7 @@ order to avoid confusion with operating system threads.
 #define EMIT_BACKWARDS                  0x01
 #define EMIT_DONT_SET_FORWARDS_CODE     0x02
 #define EMIT_DONT_SET_BACKWARDS_CODE    0x04
-#define EMIT_NO_CASE                    0x08
+
 #define EMIT_DOT_ALL                    0x10
 
 typedef struct _RE_REPEAT_ARGS
@@ -743,9 +743,7 @@ int _yr_re_emit(
 
     FAIL_ON_ERROR(_yr_emit_inst_arg_uint8(
         emit_context,
-        flags & EMIT_NO_CASE ?
-          RE_OPCODE_LITERAL_NO_CASE :
-          RE_OPCODE_LITERAL,
+        RE_OPCODE_LITERAL,
         re_node->value,
         &instruction_addr,
         NULL,
@@ -850,9 +848,7 @@ int _yr_re_emit(
 
     FAIL_ON_ERROR(_yr_emit_inst(
         emit_context,
-        (flags & EMIT_NO_CASE) ?
-          RE_OPCODE_CLASS_NO_CASE :
-          RE_OPCODE_CLASS,
+        RE_OPCODE_CLASS,
         &instruction_addr,
         code_size));
 
@@ -1183,9 +1179,6 @@ int yr_re_emit_code(
   int total_size;
 
   int emit_flags = 0;
-
-  if (re->flags & RE_FLAGS_NO_CASE)
-    emit_flags |= EMIT_NO_CASE;
 
   if (re->flags & RE_FLAGS_DOT_ALL)
     emit_flags |= EMIT_DOT_ALL;
@@ -1697,6 +1690,7 @@ int _yr_re_fiber_sync(
 //      RE_FLAGS_EXHAUSTIVE
 //      RE_FLAGS_WIDE
 //      RE_FLAGS_NOT_AT_START
+//      RE_FLAGS_NO_CASE
 //   RE_MATCH_CALLBACK_FUNC callback  - Callback function
 //   void* callback_args              - Callback argument
 //
@@ -1817,14 +1811,10 @@ int yr_re_exec(
 
         case RE_OPCODE_LITERAL:
           prolog;
-          match = (*input == *(ip + 1));
-          action = match ? ACTION_NONE : ACTION_KILL;
-          fiber->ip += 2;
-          break;
-
-        case RE_OPCODE_LITERAL_NO_CASE:
-          prolog;
-          match = lowercase[*input] == lowercase[*(ip + 1)];
+          if (flags & RE_FLAGS_NO_CASE)
+            match = lowercase[*input] == lowercase[*(ip + 1)];
+          else
+            match = (*input == *(ip + 1));
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 2;
           break;
@@ -1846,14 +1836,8 @@ int yr_re_exec(
         case RE_OPCODE_CLASS:
           prolog;
           match = CHAR_IN_CLASS(*input, ip + 1);
-          action = match ? ACTION_NONE : ACTION_KILL;
-          fiber->ip += 33;
-          break;
-
-        case RE_OPCODE_CLASS_NO_CASE:
-          prolog;
-          match = CHAR_IN_CLASS(*input, ip + 1) ||
-                  CHAR_IN_CLASS(altercase[*input], ip + 1);
+          if (!match && (flags & RE_FLAGS_NO_CASE))
+            match = CHAR_IN_CLASS(altercase[*input], ip + 1);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 33;
           break;

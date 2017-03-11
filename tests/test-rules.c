@@ -1118,6 +1118,21 @@ static void test_comments()
       NULL);
 }
 
+static void test_matches_operator()
+{
+  assert_true_rule(
+      "rule test { condition: \"foo\" matches /foo/ }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"foo\" matches /bar/ }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"FoO\" matches /fOo/i }",
+      NULL);
+}
+
 
 static void test_global_rules()
 {
@@ -1435,6 +1450,7 @@ int main(int argc, char** argv)
   test_comparison_operators();
   test_arithmetic_operators();
   test_bitwise_operators();
+  test_matches_operator();
   test_syntax();
   test_anonymous_strings();
   test_strings();

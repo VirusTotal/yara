@@ -60,10 +60,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_OPCODE_ANY                   0xA0
 #define RE_OPCODE_ANY_EXCEPT_NEW_LINE   0xA1
 #define RE_OPCODE_LITERAL               0xA2
-#define RE_OPCODE_LITERAL_NO_CASE       0xA3
 #define RE_OPCODE_MASKED_LITERAL        0xA4
 #define RE_OPCODE_CLASS                 0xA5
-#define RE_OPCODE_CLASS_NO_CASE         0xA6
 #define RE_OPCODE_WORD_CHAR             0xA7
 #define RE_OPCODE_NON_WORD_CHAR         0xA8
 #define RE_OPCODE_SPACE                 0xA9

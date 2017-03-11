@@ -904,6 +904,14 @@ regexp
               NULL,
               NULL);
 
+        if (compiler->last_result == ERROR_SUCCESS)
+          compiler->last_result = yr_parser_emit_with_arg(
+              yyscanner,
+              OP_PUSH,
+              re_flags,
+              NULL,
+              NULL);
+
         yr_re_destroy(re);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
