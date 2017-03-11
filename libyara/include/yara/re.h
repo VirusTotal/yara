@@ -166,21 +166,18 @@ int yr_re_create(
 
 int yr_re_parse(
     const char* re_string,
-    int flags,
     RE** re,
     RE_ERROR* error);
 
 
 int yr_re_parse_hex(
     const char* hex_string,
-    int flags,
     RE** re,
     RE_ERROR* error);
 
 
 int yr_re_compile(
     const char* re_string,
-    int flags,
     YR_ARENA* code_arena,
     RE** re,
     RE_ERROR* error);

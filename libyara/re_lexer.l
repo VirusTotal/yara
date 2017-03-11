@@ -584,7 +584,6 @@ void yyerror(
 
 int yr_parse_re_string(
   const char* re_string,
-  int flags,
   RE** re,
   RE_ERROR* error)
 {
@@ -600,8 +599,6 @@ int yr_parse_re_string(
     return ERROR_INTERNAL_FATAL_ERROR;
 
   FAIL_ON_ERROR(yr_re_create(re));
-
-  (*re)->flags = flags;
 
   yylex_init(&yyscanner);
   yyset_extra(*re, yyscanner);

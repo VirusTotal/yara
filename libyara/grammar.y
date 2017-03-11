@@ -884,7 +884,6 @@ regexp
 
         compiler->last_result = yr_re_compile(
             sized_string->c_string,
-            re_flags,
             compiler->re_code_arena,
             &re,
             &error);

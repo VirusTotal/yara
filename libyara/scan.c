@@ -735,6 +735,9 @@ int _yr_scan_verify_re_match(
   if (STRING_IS_NO_CASE(ac_match->string))
     flags |= RE_FLAGS_NO_CASE;
 
+  if (STRING_IS_DOT_ALL(ac_match->string))
+    flags |= RE_FLAGS_DOT_ALL;
+
   //if (STRING_IS_FAST_HEX_REGEXP(ac_match->string))
   //  exec = _yr_scan_fast_hex_re_exec;
   //else

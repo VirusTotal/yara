@@ -74,7 +74,6 @@ order to avoid confusion with operating system threads.
 #define EMIT_DONT_SET_FORWARDS_CODE     0x02
 #define EMIT_DONT_SET_BACKWARDS_CODE    0x04
 
-#define EMIT_DOT_ALL                    0x10
 
 typedef struct _RE_REPEAT_ARGS
 {
@@ -272,11 +271,10 @@ void yr_re_destroy(
 
 int yr_re_parse(
     const char* re_string,
-    int flags,
     RE** re,
     RE_ERROR* error)
 {
-  return yr_parse_re_string(re_string, flags, re, error);
+  return yr_parse_re_string(re_string, re, error);
 }
 
 
@@ -289,11 +287,10 @@ int yr_re_parse(
 
 int yr_re_parse_hex(
     const char* hex_string,
-    int flags,
     RE** re,
     RE_ERROR* error)
 {
-  return yr_parse_hex_string(hex_string, flags, re, error);
+  return yr_parse_hex_string(hex_string, re, error);
 }
 
 
@@ -306,7 +303,6 @@ int yr_re_parse_hex(
 
 int yr_re_compile(
     const char* re_string,
-    int flags,
     YR_ARENA* code_arena,
     RE** re,
     RE_ERROR* error)
@@ -316,7 +312,7 @@ int yr_re_compile(
 
   *re = NULL;
 
-  FAIL_ON_ERROR(yr_re_parse(re_string, flags, &compiled_re, error));
+  FAIL_ON_ERROR(yr_re_parse(re_string, &compiled_re, error));
 
   if (code_arena == NULL)
   {
@@ -837,9 +833,7 @@ int _yr_re_emit(
 
     FAIL_ON_ERROR(_yr_emit_inst(
         emit_context,
-        flags & EMIT_DOT_ALL ?
-          RE_OPCODE_ANY :
-          RE_OPCODE_ANY_EXCEPT_NEW_LINE,
+        RE_OPCODE_ANY,
         &instruction_addr,
         code_size));
     break;
@@ -1178,11 +1172,6 @@ int yr_re_emit_code(
   int code_size;
   int total_size;
 
-  int emit_flags = 0;
-
-  if (re->flags & RE_FLAGS_DOT_ALL)
-    emit_flags |= EMIT_DOT_ALL;
-
   emit_context.arena = arena;
 
   // Ensure that we have enough contiguous memory space in the arena to
@@ -1199,7 +1188,7 @@ int yr_re_emit_code(
   FAIL_ON_ERROR(_yr_re_emit(
       &emit_context,
       re->root_node,
-      emit_flags,
+      0,
       &re->code,
       &code_size));
 
@@ -1226,7 +1215,7 @@ int yr_re_emit_code(
   FAIL_ON_ERROR(_yr_re_emit(
       &emit_context,
       re->root_node,
-      emit_flags | EMIT_BACKWARDS,
+      EMIT_BACKWARDS,
       NULL,
       &code_size));
 
@@ -1691,6 +1680,7 @@ int _yr_re_fiber_sync(
 //      RE_FLAGS_WIDE
 //      RE_FLAGS_NOT_AT_START
 //      RE_FLAGS_NO_CASE
+//      RE_FLAGS_DOT_ALL
 //   RE_MATCH_CALLBACK_FUNC callback  - Callback function
 //   void* callback_args              - Callback argument
 //
@@ -1798,13 +1788,7 @@ int yr_re_exec(
       {
         case RE_OPCODE_ANY:
           prolog;
-          action = ACTION_NONE;
-          fiber->ip += 1;
-          break;
-
-        case RE_OPCODE_ANY_EXCEPT_NEW_LINE:
-          prolog;
-          match = (*input != 0x0A);
+          match = (flags & RE_FLAGS_DOT_ALL) || (*input != 0x0A);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;

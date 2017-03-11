@@ -9,7 +9,7 @@
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 6
-#define YY_FLEX_SUBMINOR_VERSION 1
+#define YY_FLEX_SUBMINOR_VERSION 0
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -88,13 +88,25 @@ typedef unsigned int flex_uint32_t;
 
 #endif /* ! FLEXINT_H */
 
-/* TODO: this is always defined, so inline it */
-#define yyconst const
+#ifdef __cplusplus
 
-#if defined(__GNUC__) && __GNUC__ >= 3
-#define yynoreturn __attribute__((__noreturn__))
+/* The "const" storage-class-modifier is valid. */
+#define YY_USE_CONST
+
+#else	/* ! __cplusplus */
+
+/* C99 requires __STDC__ to be defined as 1. */
+#if defined (__STDC__)
+
+#define YY_USE_CONST
+
+#endif	/* defined (__STDC__) */
+#endif	/* ! __cplusplus */
+
+#ifdef YY_USE_CONST
+#define yyconst const
 #else
-#define yynoreturn
+#define yyconst
 #endif
 
 /* Returned upon end-of-file. */
@@ -226,12 +238,12 @@ struct yy_buffer_state
 	/* Size of input buffer in bytes, not including room for EOB
 	 * characters.
 	 */
-	int yy_buf_size;
+	yy_size_t yy_buf_size;
 
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	int yy_n_chars;
+	yy_size_t yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -310,7 +322,7 @@ static void hex_yy_init_buffer (YY_BUFFER_STATE b,FILE *file ,yyscan_t yyscanner
 
 YY_BUFFER_STATE hex_yy_scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
 YY_BUFFER_STATE hex_yy_scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
-YY_BUFFER_STATE hex_yy_scan_bytes (yyconst char *bytes,int len ,yyscan_t yyscanner );
+YY_BUFFER_STATE hex_yy_scan_bytes (yyconst char *bytes,yy_size_t len ,yyscan_t yyscanner );
 
 void *hex_yyalloc (yy_size_t ,yyscan_t yyscanner );
 void *hex_yyrealloc (void *,yy_size_t ,yyscan_t yyscanner );
@@ -354,14 +366,17 @@ typedef int yy_state_type;
 static yy_state_type yy_get_previous_state (yyscan_t yyscanner );
 static yy_state_type yy_try_NUL_trans (yy_state_type current_state  ,yyscan_t yyscanner);
 static int yy_get_next_buffer (yyscan_t yyscanner );
-static void yynoreturn yy_fatal_error (yyconst char* msg ,yyscan_t yyscanner );
+#if defined(__GNUC__) && __GNUC__ >= 3
+__attribute__((__noreturn__))
+#endif
+static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
 
 /* Done after the current pattern has been matched and before the
  * corresponding action - sets up yytext.
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (int) (yy_cp - yy_bp); \
+	yyleng = (size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
@@ -542,7 +557,7 @@ with noyywrap then we can remove this pragma.
 #define YY_NO_INPUT 1
 
 
-#line 546 "hex_lexer.c"
+#line 561 "hex_lexer.c"
 
 #define INITIAL 0
 #define comment 1
@@ -573,8 +588,8 @@ struct yyguts_t
     size_t yy_buffer_stack_max; /**< capacity of stack. */
     YY_BUFFER_STATE * yy_buffer_stack; /**< Stack as an array. */
     char yy_hold_char;
-    int yy_n_chars;
-    int yyleng_r;
+    yy_size_t yy_n_chars;
+    yy_size_t yyleng_r;
     char *yy_c_buf_p;
     int yy_init;
     int yy_start;
@@ -627,7 +642,7 @@ FILE *hex_yyget_out (yyscan_t yyscanner );
 
 void hex_yyset_out  (FILE * _out_str ,yyscan_t yyscanner );
 
-			int hex_yyget_leng (yyscan_t yyscanner );
+yy_size_t hex_yyget_leng (yyscan_t yyscanner );
 
 char *hex_yyget_text (yyscan_t yyscanner );
 
@@ -692,7 +707,7 @@ static int input (yyscan_t yyscanner );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO do { if (fwrite( yytext, (size_t) yyleng, 1, yyout )) {} } while (0)
+#define ECHO do { if (fwrite( yytext, yyleng, 1, yyout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -716,7 +731,7 @@ static int input (yyscan_t yyscanner );
 	else \
 		{ \
 		errno=0; \
-		while ( (result = (int) fread(buf, 1, max_size, yyin))==0 && ferror(yyin)) \
+		while ( (result = fread(buf, 1, max_size, yyin))==0 && ferror(yyin)) \
 			{ \
 			if( errno != EINTR) \
 				{ \
@@ -821,7 +836,7 @@ YY_DECL
 
 
 
-#line 825 "hex_lexer.c"
+#line 840 "hex_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -851,7 +866,7 @@ yy_match:
 				if ( yy_current_state >= 35 )
 					yy_c = yy_meta[(unsigned int) yy_c];
 				}
-			yy_current_state = yy_nxt[yy_base[yy_current_state] + (flex_int16_t) yy_c];
+			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 			++yy_cp;
 			}
 		while ( yy_current_state != 34 );
@@ -1012,7 +1027,7 @@ YY_RULE_SETUP
 #line 170 "hex_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1016 "hex_lexer.c"
+#line 1031 "hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(comment):
 case YY_STATE_EOF(range):
@@ -1203,7 +1218,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 	else
 		{
-			int num_to_read =
+			yy_size_t num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -1217,7 +1232,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 			if ( b->yy_is_our_buffer )
 				{
-				int new_size = b->yy_buf_size * 2;
+				yy_size_t new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -1230,7 +1245,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 				}
 			else
 				/* Can't grow it, we don't own it. */
-				b->yy_ch_buf = NULL;
+				b->yy_ch_buf = 0;
 
 			if ( ! b->yy_ch_buf )
 				YY_FATAL_ERROR(
@@ -1272,9 +1287,9 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	else
 		ret_val = EOB_ACT_CONTINUE_SCAN;
 
-	if ((int) (yyg->yy_n_chars + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+	if ((yy_size_t) (yyg->yy_n_chars + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
-		int new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
+		yy_size_t new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
 		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) hex_yyrealloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,new_size ,yyscanner );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
 			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
@@ -1313,7 +1328,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 			if ( yy_current_state >= 35 )
 				yy_c = yy_meta[(unsigned int) yy_c];
 			}
-		yy_current_state = yy_nxt[yy_base[yy_current_state] + (flex_int16_t) yy_c];
+		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 		}
 
 	return yy_current_state;
@@ -1342,7 +1357,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		if ( yy_current_state >= 35 )
 			yy_c = yy_meta[(unsigned int) yy_c];
 		}
-	yy_current_state = yy_nxt[yy_base[yy_current_state] + (flex_int16_t) yy_c];
+	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 	yy_is_jam = (yy_current_state == 34);
 
 	(void)yyg;
@@ -1378,7 +1393,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 		else
 			{ /* need more input */
-			int offset = yyg->yy_c_buf_p - yyg->yytext_ptr;
+			yy_size_t offset = yyg->yy_c_buf_p - yyg->yytext_ptr;
 			++yyg->yy_c_buf_p;
 
 			switch ( yy_get_next_buffer( yyscanner ) )
@@ -1402,7 +1417,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( hex_yywrap(yyscanner ) )
-						return 0;
+						return EOF;
 
 					if ( ! yyg->yy_did_buffer_switch_on_eof )
 						YY_NEW_FILE;
@@ -1665,7 +1680,7 @@ void hex_yypop_buffer_state (yyscan_t yyscanner)
  */
 static void hex_yyensure_buffer_stack (yyscan_t yyscanner)
 {
-	int num_to_alloc;
+	yy_size_t num_to_alloc;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 	if (!yyg->yy_buffer_stack) {
@@ -1674,7 +1689,7 @@ static void hex_yyensure_buffer_stack (yyscan_t yyscanner)
 		 * scanner will even need a stack. We use 2 instead of 1 to avoid an
 		 * immediate realloc on the next call.
          */
-      num_to_alloc = 1; /* After all that talk, this was set to 1 anyways... */
+		num_to_alloc = 1; // After all that talk, this was set to 1 anyways...
 		yyg->yy_buffer_stack = (struct yy_buffer_state**)hex_yyalloc
 								(num_to_alloc * sizeof(struct yy_buffer_state*)
 								, yyscanner);
@@ -1721,7 +1736,7 @@ YY_BUFFER_STATE hex_yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yys
 	     base[size-2] != YY_END_OF_BUFFER_CHAR ||
 	     base[size-1] != YY_END_OF_BUFFER_CHAR )
 		/* They forgot to leave room for the EOB's. */
-		return NULL;
+		return 0;
 
 	b = (YY_BUFFER_STATE) hex_yyalloc(sizeof( struct yy_buffer_state ) ,yyscanner );
 	if ( ! b )
@@ -1730,7 +1745,7 @@ YY_BUFFER_STATE hex_yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yys
 	b->yy_buf_size = size - 2;	/* "- 2" to take care of EOB's */
 	b->yy_buf_pos = b->yy_ch_buf = base;
 	b->yy_is_our_buffer = 0;
-	b->yy_input_file = NULL;
+	b->yy_input_file = 0;
 	b->yy_n_chars = b->yy_buf_size;
 	b->yy_is_interactive = 0;
 	b->yy_at_bol = 1;
@@ -1753,7 +1768,7 @@ YY_BUFFER_STATE hex_yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yys
 YY_BUFFER_STATE hex_yy_scan_string (yyconst char * yystr , yyscan_t yyscanner)
 {
     
-	return hex_yy_scan_bytes(yystr,(int) strlen(yystr) ,yyscanner);
+	return hex_yy_scan_bytes(yystr,strlen(yystr) ,yyscanner);
 }
 
 /** Setup the input buffer state to scan the given bytes. The next call to hex_yylex() will
@@ -1763,7 +1778,7 @@ YY_BUFFER_STATE hex_yy_scan_string (yyconst char * yystr , yyscan_t yyscanner)
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE hex_yy_scan_bytes  (yyconst char * yybytes, int  _yybytes_len , yyscan_t yyscanner)
+YY_BUFFER_STATE hex_yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
 	char *buf;
@@ -1771,7 +1786,7 @@ YY_BUFFER_STATE hex_yy_scan_bytes  (yyconst char * yybytes, int  _yybytes_len , 
 	yy_size_t i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
-	n = (yy_size_t) _yybytes_len + 2;
+	n = _yybytes_len + 2;
 	buf = (char *) hex_yyalloc(n ,yyscanner );
 	if ( ! buf )
 		YY_FATAL_ERROR( "out of dynamic memory in hex_yy_scan_bytes()" );
@@ -1797,7 +1812,7 @@ YY_BUFFER_STATE hex_yy_scan_bytes  (yyconst char * yybytes, int  _yybytes_len , 
 #define YY_EXIT_FAILURE 2
 #endif
 
-static void yynoreturn yy_fatal_error (yyconst char* msg , yyscan_t yyscanner)
+static void yy_fatal_error (yyconst char* msg , yyscan_t yyscanner)
 {
 	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	(void)yyg;
@@ -1880,7 +1895,7 @@ FILE *hex_yyget_out  (yyscan_t yyscanner)
 /** Get the length of the current token.
  * @param yyscanner The scanner object.
  */
-int hex_yyget_leng  (yyscan_t yyscanner)
+yy_size_t hex_yyget_leng  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yyleng;
@@ -2051,10 +2066,10 @@ static int yy_init_globals (yyscan_t yyscanner)
      * This function is called from hex_yylex_destroy(), so don't allocate here.
      */
 
-    yyg->yy_buffer_stack = NULL;
+    yyg->yy_buffer_stack = 0;
     yyg->yy_buffer_stack_top = 0;
     yyg->yy_buffer_stack_max = 0;
-    yyg->yy_c_buf_p = NULL;
+    yyg->yy_c_buf_p = (char *) 0;
     yyg->yy_init = 0;
     yyg->yy_start = 0;
 
@@ -2067,8 +2082,8 @@ static int yy_init_globals (yyscan_t yyscanner)
     yyin = stdin;
     yyout = stdout;
 #else
-    yyin = NULL;
-    yyout = NULL;
+    yyin = (FILE *) 0;
+    yyout = (FILE *) 0;
 #endif
 
     /* For future reference: Set errno on error, since we are called by
@@ -2138,7 +2153,7 @@ void *hex_yyalloc (yy_size_t  size , yyscan_t yyscanner)
 {
 	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	(void)yyg;
-	return malloc(size);
+	return (void *) malloc( size );
 }
 
 void *hex_yyrealloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
@@ -2153,7 +2168,7 @@ void *hex_yyrealloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
 	 * any pointer type to void*, and deal with argument conversions
 	 * as though doing an assignment.
 	 */
-	return realloc(ptr, size);
+	return (void *) realloc( (char *) ptr, size );
 }
 
 void hex_yyfree (void * ptr , yyscan_t yyscanner)
@@ -2206,7 +2221,6 @@ void yyerror(
 
 int yr_parse_hex_string(
     const char* hex_string,
-    int flags,
     RE** re,
     RE_ERROR* error)
 {

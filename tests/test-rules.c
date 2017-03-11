@@ -554,6 +554,12 @@ static void test_hex_strings()
         condition: $a }",
       "1234567890");
 
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [1] 33 34 } \
+        condition: $a }",
+      "12\n34");
+
   assert_error(
       "rule test { \
         strings: $a = { 01 [0] 02 } \
@@ -1130,6 +1136,14 @@ static void test_matches_operator()
 
   assert_true_rule(
       "rule test { condition: \"FoO\" matches /fOo/i }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foo\\nbar\" matches /foo.*bar/s }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"foo\\nbar\" matches /foo.*bar/ }",
       NULL);
 }
 

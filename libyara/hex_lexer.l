@@ -206,7 +206,6 @@ void yyerror(
 
 int yr_parse_hex_string(
     const char* hex_string,
-    int flags,
     RE** re,
     RE_ERROR* error)
 {

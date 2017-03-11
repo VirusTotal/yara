@@ -437,7 +437,6 @@ YR_STRING* yr_parser_reduce_string_declaration(
 {
   int min_atom_quality;
   int min_atom_quality_aux;
-  int re_flags = 0;
 
   int32_t min_gap;
   int32_t max_gap;
@@ -482,7 +481,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
     string_flags |= STRING_GFLAGS_NO_CASE;
 
   if (str->flags & SIZED_STRING_FLAGS_DOT_ALL)
-    re_flags |= RE_FLAGS_DOT_ALL;
+    string_flags |= STRING_GFLAGS_DOT_ALL;
 
   if (strcmp(identifier,"$") == 0)
     string_flags |= STRING_GFLAGS_ANONYMOUS;
@@ -490,8 +489,9 @@ YR_STRING* yr_parser_reduce_string_declaration(
   if (!(string_flags & STRING_GFLAGS_WIDE))
     string_flags |= STRING_GFLAGS_ASCII;
 
-  if (string_flags & STRING_GFLAGS_NO_CASE)
-    re_flags |= RE_FLAGS_NO_CASE;
+  // Hex strings are always handled as DOT_ALL regexps.
+  if (string_flags & STRING_GFLAGS_HEXADECIMAL)
+    string_flags |= STRING_GFLAGS_DOT_ALL;
 
   // The STRING_GFLAGS_SINGLE_MATCH flag indicates that finding
   // a single match for the string is enough. This is true in
@@ -514,10 +514,10 @@ YR_STRING* yr_parser_reduce_string_declaration(
   {
     if (string_flags & STRING_GFLAGS_HEXADECIMAL)
       compiler->last_result = yr_re_parse_hex(
-          str->c_string, re_flags, &re, &re_error);
+          str->c_string, &re, &re_error);
     else
       compiler->last_result = yr_re_parse(
-          str->c_string, re_flags, &re, &re_error);
+          str->c_string, &re, &re_error);
 
     if (compiler->last_result != ERROR_SUCCESS)
     {
