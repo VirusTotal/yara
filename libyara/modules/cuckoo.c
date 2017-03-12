@@ -108,7 +108,7 @@ define_function(network_dns_lookup)
 
 uint64_t http_request(
     YR_OBJECT* network_obj,
-    RE_CODE uri_regexp,
+    RE_COMPILED* uri_regexp,
     int methods)
 {
   json_t* network_json = (json_t*) network_obj->data;
