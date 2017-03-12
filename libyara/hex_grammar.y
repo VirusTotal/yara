@@ -298,7 +298,11 @@ range
           YYABORT;
         }
 
-        $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
+        re_any = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
+
+        ERROR_IF(re_any == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+        $$ = yr_re_node_create(RE_NODE_RANGE, re_any, NULL);
 
         ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
