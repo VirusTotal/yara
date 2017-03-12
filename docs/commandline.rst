@@ -111,10 +111,10 @@ Available options are:
 
 Here you have some examples:
 
-* Apply rules in */foo/bar/rules1* and */foo/bar/rules2* to all files in the
-  current directory. Subdirectories are not scanned::
+* Apply rule in */foo/bar/rules* to all files in the current directory.
+  Subdirectories are not scanned::
 
-    yara /foo/bar/rules1 /foo/bar/rules2 .
+    yara /foo/bar/rules  .
 
 * Apply rules in */foo/bar/rules* to *bazfile*. Only reports rules tagged as
   *Packer* or *Compiler*::
