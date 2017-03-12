@@ -35,19 +35,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="bonoofbono.rc" />
-    <ClCompile Include="bonoofbono.c" />
-    <Inf Include="bonoofbono.inf" />
+    <ResourceCompile Include="Bonok.rc" />
+    <ClCompile Include="Bonok.c" />
+    <Inf Include="Bonok.inf" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{F3D5CCA3-6061-4443-947C-5267EEBCDBA6}</ProjectGuid>
+    <ProjectGuid>{C3100DD2-DAD2-490B-9FBC-0BCD2D5969E2}</ProjectGuid>
     <TemplateGuid>{f2f62967-0815-4fd7-9b86-6eedcac766eb}</TemplateGuid>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <MinimumVisualStudioVersion>12.0</MinimumVisualStudioVersion>
     <Configuration>Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">Win32</Platform>
-    <RootNamespace>bonoofbono</RootNamespace>
-    <ProjectName>bonoofbono_driver</ProjectName>
+    <RootNamespace>Bonok</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

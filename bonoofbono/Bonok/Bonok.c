@@ -2,11 +2,11 @@
 
 Module Name:
 
-    bonoofbono.c
+    Bonok.c
 
 Abstract:
 
-    This is the main module of the bonoofbono miniFilter driver.
+    This is the main module of the Bonok miniFilter driver.
 
 Environment:
 
@@ -49,7 +49,7 @@ DriverEntry (
     );
 
 NTSTATUS
-bonoofbonoInstanceSetup (
+BonokInstanceSetup (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_SETUP_FLAGS Flags,
     _In_ DEVICE_TYPE VolumeDeviceType,
@@ -57,37 +57,37 @@ bonoofbonoInstanceSetup (
     );
 
 VOID
-bonoofbonoInstanceTeardownStart (
+BonokInstanceTeardownStart (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_TEARDOWN_FLAGS Flags
     );
 
 VOID
-bonoofbonoInstanceTeardownComplete (
+BonokInstanceTeardownComplete (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_TEARDOWN_FLAGS Flags
     );
 
 NTSTATUS
-bonoofbonoUnload (
+BonokUnload (
     _In_ FLT_FILTER_UNLOAD_FLAGS Flags
     );
 
 NTSTATUS
-bonoofbonoInstanceQueryTeardown (
+BonokInstanceQueryTeardown (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_QUERY_TEARDOWN_FLAGS Flags
     );
 
 FLT_PREOP_CALLBACK_STATUS
-bonoofbonoPreOperation (
+BonokPreOperation (
     _Inout_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _Flt_CompletionContext_Outptr_ PVOID *CompletionContext
     );
 
 VOID
-bonoofbonoOperationStatusCallback (
+BonokOperationStatusCallback (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ PFLT_IO_PARAMETER_BLOCK ParameterSnapshot,
     _In_ NTSTATUS OperationStatus,
@@ -95,7 +95,7 @@ bonoofbonoOperationStatusCallback (
     );
 
 FLT_POSTOP_CALLBACK_STATUS
-bonoofbonoPostOperation (
+BonokPostOperation (
     _Inout_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_opt_ PVOID CompletionContext,
@@ -103,14 +103,14 @@ bonoofbonoPostOperation (
     );
 
 FLT_PREOP_CALLBACK_STATUS
-bonoofbonoPreOperationNoPostOperation (
+BonokPreOperationNoPostOperation (
     _Inout_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _Flt_CompletionContext_Outptr_ PVOID *CompletionContext
     );
 
 BOOLEAN
-bonoofbonoDoRequestOperationStatus(
+BonokDoRequestOperationStatus(
     _In_ PFLT_CALLBACK_DATA Data
     );
 
@@ -122,11 +122,11 @@ EXTERN_C_END
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, DriverEntry)
-#pragma alloc_text(PAGE, bonoofbonoUnload)
-#pragma alloc_text(PAGE, bonoofbonoInstanceQueryTeardown)
-#pragma alloc_text(PAGE, bonoofbonoInstanceSetup)
-#pragma alloc_text(PAGE, bonoofbonoInstanceTeardownStart)
-#pragma alloc_text(PAGE, bonoofbonoInstanceTeardownComplete)
+#pragma alloc_text(PAGE, BonokUnload)
+#pragma alloc_text(PAGE, BonokInstanceQueryTeardown)
+#pragma alloc_text(PAGE, BonokInstanceSetup)
+#pragma alloc_text(PAGE, BonokInstanceTeardownStart)
+#pragma alloc_text(PAGE, BonokInstanceTeardownComplete)
 #endif
 
 //
@@ -138,198 +138,198 @@ CONST FLT_OPERATION_REGISTRATION Callbacks[] = {
 #if 0 // TODO - List all of the requests to filter.
     { IRP_MJ_CREATE,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_CREATE_NAMED_PIPE,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_CLOSE,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_READ,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_WRITE,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_QUERY_INFORMATION,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_SET_INFORMATION,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_QUERY_EA,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_SET_EA,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_FLUSH_BUFFERS,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_QUERY_VOLUME_INFORMATION,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_SET_VOLUME_INFORMATION,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_DIRECTORY_CONTROL,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_FILE_SYSTEM_CONTROL,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_DEVICE_CONTROL,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_INTERNAL_DEVICE_CONTROL,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_SHUTDOWN,
       0,
-      bonoofbonoPreOperationNoPostOperation,
+      BonokPreOperationNoPostOperation,
       NULL },                               //post operations not supported
 
     { IRP_MJ_LOCK_CONTROL,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_CLEANUP,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_CREATE_MAILSLOT,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_QUERY_SECURITY,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_SET_SECURITY,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_QUERY_QUOTA,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_SET_QUOTA,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_PNP,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_ACQUIRE_FOR_SECTION_SYNCHRONIZATION,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_RELEASE_FOR_SECTION_SYNCHRONIZATION,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_ACQUIRE_FOR_MOD_WRITE,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_RELEASE_FOR_MOD_WRITE,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_ACQUIRE_FOR_CC_FLUSH,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_RELEASE_FOR_CC_FLUSH,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_FAST_IO_CHECK_IF_POSSIBLE,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_NETWORK_QUERY_OPEN,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_MDL_READ,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_MDL_READ_COMPLETE,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_PREPARE_MDL_WRITE,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_MDL_WRITE_COMPLETE,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_VOLUME_MOUNT,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
     { IRP_MJ_VOLUME_DISMOUNT,
       0,
-      bonoofbonoPreOperation,
-      bonoofbonoPostOperation },
+      BonokPreOperation,
+      BonokPostOperation },
 
 #endif // TODO
 
@@ -349,12 +349,12 @@ CONST FLT_REGISTRATION FilterRegistration = {
     NULL,                               //  Context
     Callbacks,                          //  Operation callbacks
 
-    bonoofbonoUnload,                           //  MiniFilterUnload
+    BonokUnload,                           //  MiniFilterUnload
 
-    bonoofbonoInstanceSetup,                    //  InstanceSetup
-    bonoofbonoInstanceQueryTeardown,            //  InstanceQueryTeardown
-    bonoofbonoInstanceTeardownStart,            //  InstanceTeardownStart
-    bonoofbonoInstanceTeardownComplete,         //  InstanceTeardownComplete
+    BonokInstanceSetup,                    //  InstanceSetup
+    BonokInstanceQueryTeardown,            //  InstanceQueryTeardown
+    BonokInstanceTeardownStart,            //  InstanceTeardownStart
+    BonokInstanceTeardownComplete,         //  InstanceTeardownComplete
 
     NULL,                               //  GenerateFileName
     NULL,                               //  GenerateDestinationFileName
@@ -365,7 +365,7 @@ CONST FLT_REGISTRATION FilterRegistration = {
 
 
 NTSTATUS
-bonoofbonoInstanceSetup (
+BonokInstanceSetup (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_SETUP_FLAGS Flags,
     _In_ DEVICE_TYPE VolumeDeviceType,
@@ -403,14 +403,14 @@ Return Value:
     PAGED_CODE();
 
     PT_DBG_PRINT( PTDBG_TRACE_ROUTINES,
-                  ("bonoofbono!bonoofbonoInstanceSetup: Entered\n") );
+                  ("Bonok!BonokInstanceSetup: Entered\n") );
 
     return STATUS_SUCCESS;
 }
 
 
 NTSTATUS
-bonoofbonoInstanceQueryTeardown (
+BonokInstanceQueryTeardown (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_QUERY_TEARDOWN_FLAGS Flags
     )
@@ -445,14 +445,14 @@ Return Value:
     PAGED_CODE();
 
     PT_DBG_PRINT( PTDBG_TRACE_ROUTINES,
-                  ("bonoofbono!bonoofbonoInstanceQueryTeardown: Entered\n") );
+                  ("Bonok!BonokInstanceQueryTeardown: Entered\n") );
 
     return STATUS_SUCCESS;
 }
 
 
 VOID
-bonoofbonoInstanceTeardownStart (
+BonokInstanceTeardownStart (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_TEARDOWN_FLAGS Flags
     )
@@ -481,12 +481,12 @@ Return Value:
     PAGED_CODE();
 
     PT_DBG_PRINT( PTDBG_TRACE_ROUTINES,
-                  ("bonoofbono!bonoofbonoInstanceTeardownStart: Entered\n") );
+                  ("Bonok!BonokInstanceTeardownStart: Entered\n") );
 }
 
 
 VOID
-bonoofbonoInstanceTeardownComplete (
+BonokInstanceTeardownComplete (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_TEARDOWN_FLAGS Flags
     )
@@ -515,7 +515,7 @@ Return Value:
     PAGED_CODE();
 
     PT_DBG_PRINT( PTDBG_TRACE_ROUTINES,
-                  ("bonoofbono!bonoofbonoInstanceTeardownComplete: Entered\n") );
+                  ("Bonok!BonokInstanceTeardownComplete: Entered\n") );
 }
 
 
@@ -554,7 +554,7 @@ Return Value:
     UNREFERENCED_PARAMETER( RegistryPath );
 
     PT_DBG_PRINT( PTDBG_TRACE_ROUTINES,
-                  ("bonoofbono!DriverEntry: Entered\n") );
+                  ("Bonok!DriverEntry: Entered\n") );
 
     //
     //  Register with FltMgr to tell it our callback routines
@@ -584,7 +584,7 @@ Return Value:
 }
 
 NTSTATUS
-bonoofbonoUnload (
+BonokUnload (
     _In_ FLT_FILTER_UNLOAD_FLAGS Flags
     )
 /*++
@@ -611,7 +611,7 @@ Return Value:
     PAGED_CODE();
 
     PT_DBG_PRINT( PTDBG_TRACE_ROUTINES,
-                  ("bonoofbono!bonoofbonoUnload: Entered\n") );
+                  ("Bonok!BonokUnload: Entered\n") );
 
     FltUnregisterFilter( gFilterHandle );
 
@@ -623,7 +623,7 @@ Return Value:
     MiniFilter callback routines.
 *************************************************************************/
 FLT_PREOP_CALLBACK_STATUS
-bonoofbonoPreOperation (
+BonokPreOperation (
     _Inout_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _Flt_CompletionContext_Outptr_ PVOID *CompletionContext
@@ -659,7 +659,7 @@ Return Value:
     UNREFERENCED_PARAMETER( CompletionContext );
 
     PT_DBG_PRINT( PTDBG_TRACE_ROUTINES,
-                  ("bonoofbono!bonoofbonoPreOperation: Entered\n") );
+                  ("Bonok!BonokPreOperation: Entered\n") );
 
     //
     //  See if this is an operation we would like the operation status
@@ -670,15 +670,15 @@ Return Value:
     //        actually granted.
     //
 
-    if (bonoofbonoDoRequestOperationStatus( Data )) {
+    if (BonokDoRequestOperationStatus( Data )) {
 
         status = FltRequestOperationStatusCallback( Data,
-                                                    bonoofbonoOperationStatusCallback,
+                                                    BonokOperationStatusCallback,
                                                     (PVOID)(++OperationStatusCtx) );
         if (!NT_SUCCESS(status)) {
 
             PT_DBG_PRINT( PTDBG_TRACE_OPERATION_STATUS,
-                          ("bonoofbono!bonoofbonoPreOperation: FltRequestOperationStatusCallback Failed, status=%08x\n",
+                          ("Bonok!BonokPreOperation: FltRequestOperationStatusCallback Failed, status=%08x\n",
                            status) );
         }
     }
@@ -693,7 +693,7 @@ Return Value:
 
 
 VOID
-bonoofbonoOperationStatusCallback (
+BonokOperationStatusCallback (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ PFLT_IO_PARAMETER_BLOCK ParameterSnapshot,
     _In_ NTSTATUS OperationStatus,
@@ -735,10 +735,10 @@ Return Value:
     UNREFERENCED_PARAMETER( FltObjects );
 
     PT_DBG_PRINT( PTDBG_TRACE_ROUTINES,
-                  ("bonoofbono!bonoofbonoOperationStatusCallback: Entered\n") );
+                  ("Bonok!BonokOperationStatusCallback: Entered\n") );
 
     PT_DBG_PRINT( PTDBG_TRACE_OPERATION_STATUS,
-                  ("bonoofbono!bonoofbonoOperationStatusCallback: Status=%08x ctx=%p IrpMj=%02x.%02x \"%s\"\n",
+                  ("Bonok!BonokOperationStatusCallback: Status=%08x ctx=%p IrpMj=%02x.%02x \"%s\"\n",
                    OperationStatus,
                    RequesterContext,
                    ParameterSnapshot->MajorFunction,
@@ -748,7 +748,7 @@ Return Value:
 
 
 FLT_POSTOP_CALLBACK_STATUS
-bonoofbonoPostOperation (
+BonokPostOperation (
     _Inout_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_opt_ PVOID CompletionContext,
@@ -787,14 +787,14 @@ Return Value:
     UNREFERENCED_PARAMETER( Flags );
 
     PT_DBG_PRINT( PTDBG_TRACE_ROUTINES,
-                  ("bonoofbono!bonoofbonoPostOperation: Entered\n") );
+                  ("Bonok!BonokPostOperation: Entered\n") );
 
     return FLT_POSTOP_FINISHED_PROCESSING;
 }
 
 
 FLT_PREOP_CALLBACK_STATUS
-bonoofbonoPreOperationNoPostOperation (
+BonokPreOperationNoPostOperation (
     _Inout_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _Flt_CompletionContext_Outptr_ PVOID *CompletionContext
@@ -829,7 +829,7 @@ Return Value:
     UNREFERENCED_PARAMETER( CompletionContext );
 
     PT_DBG_PRINT( PTDBG_TRACE_ROUTINES,
-                  ("bonoofbono!bonoofbonoPreOperationNoPostOperation: Entered\n") );
+                  ("Bonok!BonokPreOperationNoPostOperation: Entered\n") );
 
     // This template code does not do anything with the callbackData, but
     // rather returns FLT_PREOP_SUCCESS_NO_CALLBACK.
@@ -840,7 +840,7 @@ Return Value:
 
 
 BOOLEAN
-bonoofbonoDoRequestOperationStatus(
+BonokDoRequestOperationStatus(
     _In_ PFLT_CALLBACK_DATA Data
     )
 /*++

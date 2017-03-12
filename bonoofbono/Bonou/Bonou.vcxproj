@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{4F9E37A6-C3BB-4356-AD02-3E9EE6E4A557}</ProjectGuid>
+    <ProjectGuid>{74D8EB19-8CBE-49B4-AA54-D8F112B859CF}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>bonoofbono_user</RootNamespace>
+    <RootNamespace>Bonou</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

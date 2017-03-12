@@ -19,17 +19,17 @@
     </Filter>
   </ItemGroup>
  <ItemGroup>
-    <Inf Include="bonoofbono.inf">
+    <Inf Include="Bonok.inf">
       <Filter>Driver Files</Filter>
     </Inf>
   </ItemGroup>  
   <ItemGroup>
-    <ClCompile Include="bonoofbono.c">
+    <ClCompile Include="Bonok.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="bonoofbono.rc">
+    <ResourceCompile Include="Bonok.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

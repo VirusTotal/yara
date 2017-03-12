@@ -1,5 +1,5 @@
 ;;;
-;;; bonoofbono
+;;; Bonok
 ;;;
 
 [Version]
@@ -11,7 +11,7 @@ Class = "_TODO_Change_Class_appropriately_"
 ClassGuid = {_TODO_Change_ClassGuid_appropriately_}
 Provider    = %ManufacturerName%
 DriverVer   = 
-CatalogFile = bonoofbono.cat
+CatalogFile = Bonok.cat
 
 [DestinationDirs]
 DefaultDestDir          = 12
@@ -74,7 +74,7 @@ HKR,"Instances\"%Instance1.Name%,"Flags",0x00010001,%Instance1.Flags%
 %DriverName%.sys
 
 [SourceDisksFiles]
-bonoofbono.sys = 1,,
+Bonok.sys = 1,,
 
 [SourceDisksNames]
 1 = %DiskId1%,,,
@@ -86,14 +86,14 @@ bonoofbono.sys = 1,,
 [Strings]
 ; TODO - Add your manufacturer
 ManufacturerName        = "Template"
-ServiceDescription      = "bonoofbono Mini-Filter Driver"
-ServiceName             = "bonoofbono"
-DriverName              = "bonoofbono"
-DiskId1                 = "bonoofbono Device Installation Disk"
+ServiceDescription      = "Bonok Mini-Filter Driver"
+ServiceName             = "Bonok"
+DriverName              = "Bonok"
+DiskId1                 = "Bonok Device Installation Disk"
 
 ;Instances specific information.
-DefaultInstance         = "bonoofbono Instance"
-Instance1.Name          = "bonoofbono Instance"
+DefaultInstance         = "Bonok Instance"
+Instance1.Name          = "Bonok Instance"
 ; TODO - Change the altitude value, see http://connect.microsoft.com/site221/content/content.aspx?ContentID=2512
 ;Instance1.Altitude      = "370030"
 Instance.Altitude       = "_TODO_Change_Altitude_appropriately_"
