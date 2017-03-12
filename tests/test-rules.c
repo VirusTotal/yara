@@ -1139,6 +1139,22 @@ static void test_matches_operator()
       NULL);
 
   assert_true_rule(
+      "rule test { condition: \"xxFoOxx\" matches /fOo/i }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"xxFoOxx\" matches /^fOo/i }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"xxFoOxx\" matches /fOo$/i }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foo\" matches /^foo$/i }",
+      NULL);
+
+  assert_true_rule(
       "rule test { condition: \"foo\\nbar\" matches /foo.*bar/s }",
       NULL);
 
