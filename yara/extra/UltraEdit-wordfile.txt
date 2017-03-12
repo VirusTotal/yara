@@ -1,0 +1,33 @@
+/L20"YARA rules" YARA_LANG Line Comment = // Block Comment On = /* Block Comment Off = */ Escape Char = \ String Chars = " File Extensions = YAR
+/Marker Characters = "//" 
+/Delimiters = ~!@%^&*()-+=|\/{}[]<>:;"' ,	.?
+/Function String = "rule [a-zA-Z0-9_]*"
+/Indent Strings = "{"
+/Unindent Strings = "}"
+/Open Brace Strings = "{" "(" "["
+/Close Brace Strings = "}" ")" "]"
+
+/C1"YARA Keywords"
+and at any all ascii
+condition contains
+entrypoint
+for false filesize fullword
+global
+is in include int8 int16 int32
+meta matches
+nocase not
+or of
+private
+rule rva
+section strings
+them true
+uint8 uint16 uint32
+wide
+
+/C4"YARA Strings"
+"
+// /
+
+
+
+
