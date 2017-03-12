@@ -525,6 +525,7 @@ typedef union _YR_VALUE {
   YR_OBJECT* o;
   YR_STRING* s;
   SIZED_STRING* ss;
+  RE_COMPILED* re;
 
 } YR_VALUE;
 

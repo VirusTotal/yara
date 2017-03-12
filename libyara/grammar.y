@@ -871,7 +871,7 @@ regexp
     : _REGEXP_
       {
         SIZED_STRING* sized_string = $1;
-        RE* re;
+        RE_COMPILED* re_compiled;
         RE_ERROR error;
 
         int re_flags = 0;
@@ -884,8 +884,9 @@ regexp
 
         compiler->last_result = yr_re_compile(
             sized_string->c_string,
+            re_flags,
             compiler->re_code_arena,
-            &re,
+            &re_compiled,
             &error);
 
         yr_free($1);
@@ -893,25 +894,13 @@ regexp
         if (compiler->last_result == ERROR_INVALID_REGULAR_EXPRESSION)
           yr_compiler_set_error_extra_info(compiler, error.message);
 
-        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-
         if (compiler->last_result == ERROR_SUCCESS)
           compiler->last_result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              re->root_node->forward_code,
+              re_compiled,
               NULL,
               NULL);
-
-        if (compiler->last_result == ERROR_SUCCESS)
-          compiler->last_result = yr_parser_emit_with_arg(
-              yyscanner,
-              OP_PUSH,
-              re_flags,
-              NULL,
-              NULL);
-
-        yr_re_destroy(re);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 

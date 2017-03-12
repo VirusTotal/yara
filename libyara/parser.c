@@ -386,7 +386,12 @@ int _yr_parser_write_string(
   }
   else
   {
-    result = yr_re_emit_code(re, compiler->re_code_arena);
+    // Emit forwards code
+    result = yr_re_emit_code(re, compiler->re_code_arena, FALSE);
+
+    // Emit backwards code
+    if (result == ERROR_SUCCESS)
+      result = yr_re_emit_code(re, compiler->re_code_arena, TRUE);
 
     if (result == ERROR_SUCCESS)
       result = yr_atoms_extract_from_re(re, flags, &atom_list);
@@ -490,6 +495,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
     string_flags |= STRING_GFLAGS_ASCII;
 
   // Hex strings are always handled as DOT_ALL regexps.
+
   if (string_flags & STRING_GFLAGS_HEXADECIMAL)
     string_flags |= STRING_GFLAGS_DOT_ALL;
 

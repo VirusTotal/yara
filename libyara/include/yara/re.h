@@ -97,11 +97,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 typedef struct RE RE;
+typedef struct RE_COMPILED RE_COMPILED;
 typedef struct RE_NODE RE_NODE;
 typedef struct RE_ERROR RE_ERROR;
 
 typedef uint8_t RE_SPLIT_ID_TYPE;
-typedef uint8_t* RE_CODE;
+
 
 #define CHAR_IN_CLASS(chr, cls)  \
     ((cls)[(chr) / 8] & 1 << ((chr) % 8))
@@ -133,17 +134,22 @@ struct RE_NODE
   RE_NODE* left;
   RE_NODE* right;
 
-  RE_CODE forward_code;
-  RE_CODE backward_code;
+  uint8_t* forward_code;
+  uint8_t* backward_code;
 };
 
 
-struct RE {
-
+struct RE
+{
   uint32_t flags;
   RE_NODE* root_node;
-  YR_ARENA* code_arena;
-  RE_CODE code;
+};
+
+
+struct RE_COMPILED
+{
+  uint32_t flags;
+  uint8_t code[0];
 };
 
 
@@ -178,8 +184,9 @@ int yr_re_parse_hex(
 
 int yr_re_compile(
     const char* re_string,
+    int flags,
     YR_ARENA* code_arena,
-    RE** re,
+    RE_COMPILED** re_compiled,
     RE_ERROR* error);
 
 
@@ -198,7 +205,7 @@ RE_NODE* yr_re_node_create(
 
 
 void yr_re_node_destroy(
-  RE_NODE* node);
+    RE_NODE* node);
 
 
 SIZED_STRING* yr_re_extract_literal(
@@ -219,11 +226,12 @@ int yr_re_split_at_chaining_point(
 
 int yr_re_emit_code(
     RE* re,
-    YR_ARENA* arena);
+    YR_ARENA* arena,
+    int backwards_code);
 
 
 int yr_re_exec(
-    RE_CODE re_code,
+    uint8_t* re_code,
     uint8_t* input,
     size_t input_size,
     int flags,
@@ -232,7 +240,7 @@ int yr_re_exec(
 
 
 int yr_re_match(
-    RE_CODE re_code,
+    RE_COMPILED* re_compiled,
     const char* target);
 
 

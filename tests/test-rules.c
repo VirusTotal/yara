@@ -1312,6 +1312,30 @@ static void test_modules()
       }",
       NULL);
 
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { condition: tests.match(/foo/,\"foo\") == 3 \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { condition: tests.match(/foo/,\"bar\") == -1\
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { condition: tests.match(/foo.bar/i,\"FOO\\nBAR\") == -1\
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { condition: tests.match(/foo.bar/is,\"FOO\\nBAR\") == 7\
+      }",
+      NULL);
+
   assert_error(
       "import \"\\x00\"",
       ERROR_INVALID_MODULE_NAME);

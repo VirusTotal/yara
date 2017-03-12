@@ -833,11 +833,9 @@ int yr_execute_code(
 
       case OP_MATCHES:
 
-        pop(r3);
         pop(r2);
         pop(r1);
 
-        ensure_defined(r3);
         ensure_defined(r2);
         ensure_defined(r1);
 
@@ -849,10 +847,10 @@ int yr_execute_code(
         }
 
         r1.i = yr_re_exec(
-          (uint8_t*) r2.p,
+          (uint8_t*) r2.re->code,
           (uint8_t*) r1.ss->c_string,
           r1.ss->length,
-          r3.i | RE_FLAGS_SCAN,
+          r2.re->flags,
           NULL,
           NULL) >= 0;
 

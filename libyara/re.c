@@ -94,7 +94,7 @@ typedef struct _RE_EMIT_CONTEXT {
 
 typedef struct _RE_FIBER
 {
-  RE_CODE  ip;
+  uint8_t* ip;
   int32_t  sp;
 
   uint16_t stack[RE_MAX_STACK];
@@ -242,8 +242,6 @@ int yr_re_create(
 
   (*re)->flags = 0;
   (*re)->root_node = NULL;
-  (*re)->code_arena = NULL;
-  (*re)->code = NULL;
 
   return ERROR_SUCCESS;
 }
@@ -254,9 +252,6 @@ void yr_re_destroy(
 {
   if (re->root_node != NULL)
     yr_re_node_destroy(re->root_node);
-
-  if (re->code_arena != NULL)
-    yr_arena_destroy(re->code_arena);
 
   yr_free(re);
 }
@@ -297,44 +292,39 @@ int yr_re_parse_hex(
 //
 // yr_re_compile
 //
-// Parses the regexp and emit its code to the provided code_arena,
-// if code_arena is NULL the function creates a new arena of its own.
+// Parses the regexp and emit its code to the provided code_arena.
 //
 
 int yr_re_compile(
     const char* re_string,
+    int flags,
     YR_ARENA* code_arena,
-    RE** re,
+    RE_COMPILED** re_compiled,
     RE_ERROR* error)
 {
-  RE* compiled_re;
-  YR_ARENA* arena;
+  RE* re;
+  RE_COMPILED _re_compiled;
 
-  *re = NULL;
+  FAIL_ON_ERROR(yr_arena_reserve_memory(
+      code_arena, sizeof(int64_t) + RE_MAX_CODE_SIZE));
 
-  FAIL_ON_ERROR(yr_re_parse(re_string, &compiled_re, error));
+  FAIL_ON_ERROR(yr_re_parse(re_string, &re, error));
 
-  if (code_arena == NULL)
-  {
-    FAIL_ON_ERROR_WITH_CLEANUP(
-        yr_arena_create(
-            RE_MAX_CODE_SIZE,
-            ARENA_FLAGS_FIXED_SIZE,
-            &arena),
-        yr_re_destroy(compiled_re));
-
-    compiled_re->code_arena = arena;
-  }
-  else
-  {
-    arena = code_arena;
-  }
+  _re_compiled.flags = flags;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_re_emit_code(compiled_re, arena),
-      yr_re_destroy(compiled_re));
+      yr_arena_write_data(
+          code_arena,
+          &_re_compiled,
+          sizeof(_re_compiled),
+          (void**) re_compiled),
+      yr_re_destroy(re));
 
-  *re = compiled_re;
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_re_emit_code(re, code_arena, FALSE),
+      yr_re_destroy(re));
+
+  yr_re_destroy(re);
 
   return ERROR_SUCCESS;
 }
@@ -346,25 +336,22 @@ int yr_re_compile(
 // Verifies if the target string matches the pattern
 //
 // Args:
-//    uint8_t* re_code    -  A pointer to regexp code
-//    char* target        -  Target string
+//    RE_COMPILED* re_compiled    -  A pointer to a compiled regexp
+//    char* target                -  Target string
 //
 // Returns:
-//    Integer indicating the number of matching bytes, including 0 when
-//    matching an empty regexp. Negative values indicate:
-//      -1  No match
-//      -2  An error ocurred
+//    See return codes for yr_re_exec
 
 
 int yr_re_match(
-    RE_CODE re_code,
+    RE_COMPILED* re_compiled,
     const char* target)
 {
   return yr_re_exec(
-      re_code,
+      re_compiled->code,
       (uint8_t*) target,
       strlen(target),
-      RE_FLAGS_SCAN,
+      re_compiled->flags | RE_FLAGS_SCAN,
       NULL,
       NULL);
 }
@@ -1165,57 +1152,30 @@ int _yr_re_emit(
 
 int yr_re_emit_code(
     RE* re,
-    YR_ARENA* arena)
+    YR_ARENA* arena,
+    int backwards_code)
 {
   RE_EMIT_CONTEXT emit_context;
 
   int code_size;
   int total_size;
 
-  emit_context.arena = arena;
-
   // Ensure that we have enough contiguous memory space in the arena to
   // contain the regular expression code. The code can't span over multiple
   // non-contiguous pages.
 
-  yr_arena_reserve_memory(arena, RE_MAX_CODE_SIZE);
+  FAIL_ON_ERROR(yr_arena_reserve_memory(arena, RE_MAX_CODE_SIZE));
 
   // Emit code for matching the regular expressions forwards.
 
   total_size = 0;
+  emit_context.arena = arena;
   emit_context.next_split_id = 0;
 
   FAIL_ON_ERROR(_yr_re_emit(
       &emit_context,
       re->root_node,
-      0,
-      &re->code,
-      &code_size));
-
-  total_size += code_size;
-
-  FAIL_ON_ERROR(_yr_emit_inst(
-      &emit_context,
-      RE_OPCODE_MATCH,
-      NULL,
-      &code_size));
-
-  total_size += code_size;
-
-  if (total_size > RE_MAX_CODE_SIZE)
-    return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
-
-  yr_arena_reserve_memory(arena, RE_MAX_CODE_SIZE);
-
-  // Emit code for matching the regular expressions backwards.
-
-  total_size = 0;
-  emit_context.next_split_id = 0;
-
-  FAIL_ON_ERROR(_yr_re_emit(
-      &emit_context,
-      re->root_node,
-      EMIT_BACKWARDS,
+      backwards_code ? EMIT_BACKWARDS : 0,
       NULL,
       &code_size));
 
@@ -1670,7 +1630,7 @@ int _yr_re_fiber_sync(
 // Executes a regular expression
 //
 // Args:
-//   RE_CODE re_code                  - Regexp code be executed
+//   uint8_t* re_code                 - Regexp code be executed
 //   uint8_t* input                   - Pointer to input data
 //   size_t input_size                - Input data size
 //   int flags                        - Flags:
@@ -1694,18 +1654,18 @@ int _yr_re_fiber_sync(
 //      -5  Unknown fatal error
 
 int yr_re_exec(
-    RE_CODE re_code,
+    uint8_t* re_code,
     uint8_t* input_data,
     size_t input_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
     void* callback_args)
 {
+  uint8_t* ip;
   uint8_t* input;
   uint8_t mask;
   uint8_t value;
 
-  RE_CODE ip;
   RE_FIBER_LIST fibers;
   RE_THREAD_STORAGE* storage;
   RE_FIBER* fiber;
