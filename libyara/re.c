@@ -77,11 +77,19 @@ order to avoid confusion with operating system threads.
 
 typedef struct _RE_REPEAT_ARGS
 {
-  int16_t   min;
-  int16_t   max;
-  int16_t   offset;
+  uint16_t  min;
+  uint16_t  max;
+  int32_t   offset;
 
 } RE_REPEAT_ARGS;
+
+
+typedef struct _RE_REPEAT_ANY_ARGS
+{
+  uint16_t   min;
+  uint16_t   max;
+
+} RE_REPEAT_ANY_ARGS;
 
 
 typedef struct _RE_EMIT_CONTEXT {
@@ -94,8 +102,9 @@ typedef struct _RE_EMIT_CONTEXT {
 
 typedef struct _RE_FIBER
 {
-  uint8_t* ip;
-  int32_t  sp;
+  uint8_t* ip;    // instruction pointer
+  int32_t  sp;    // stack pointer
+  int32_t  rc;    // repeat counter
 
   uint16_t stack[RE_MAX_STACK];
 
@@ -447,6 +456,23 @@ int yr_re_contains_dot_star(
 }
 
 
+//
+// yr_re_split_at_chaining_point
+//
+// In some cases splitting a regular expression in two is more efficient that
+// having a single regular expression. This happens when the regular expression
+// contains a large repetition of any character, for example: /foo.{0,1000}bar/
+// In this case the regexp is split in /foo/ and /bar/ where /bar/ is "chained"
+// to /foo/. This means that /foo/ and /bar/ are handled as individual regexps
+// and when both matches YARA verifies if the distance between the matches
+// complies with the {0,1000} restriction.
+
+// This function traverses the regexp's tree looking for nodes where the regxp
+// should be split. It expects a left-unbalanced tree where the right child of
+// a RE_NODE_CONCAT can't be another RE_NODE_CONCAT. A RE_NODE_CONCAT must be
+// always the left child of its parent if the parent is also a RE_NODE_CONCAT.
+//
+
 int yr_re_split_at_chaining_point(
     RE* re,
     RE** result_re,
@@ -468,9 +494,8 @@ int yr_re_split_at_chaining_point(
   while (child != NULL && child->type == RE_NODE_CONCAT)
   {
     if (child->right != NULL &&
-        child->right->type == RE_NODE_RANGE &&
+        child->right->type == RE_NODE_RANGE_ANY &&
         child->right->greedy == FALSE &&
-        child->right->left->type == RE_NODE_ANY &&
         (child->right->start > STRING_CHAINING_THRESHOLD ||
          child->right->end > STRING_CHAINING_THRESHOLD))
     {
@@ -708,8 +733,14 @@ int _yr_re_emit(
   int inst_size;
   int jmp_size;
 
+  int emit_split;
+  int emit_repeat;
+  int emit_prolog;
+  int emit_epilog;
+
   RE_REPEAT_ARGS repeat_args;
   RE_REPEAT_ARGS* repeat_args_addr;
+  RE_REPEAT_ANY_ARGS repeat_any_args;
 
   RE_NODE* left;
   RE_NODE* right;
@@ -1026,22 +1057,77 @@ int _yr_re_emit(
     *jmp_offset_addr = branch_size + jmp_size;
     break;
 
- case RE_NODE_RANGE:
+  case RE_NODE_RANGE_ANY:
+
+    repeat_any_args.min = re_node->start;
+    repeat_any_args.max = re_node->end;
+
+    FAIL_ON_ERROR(_yr_emit_inst_arg_struct(
+        emit_context,
+        re_node->greedy ?
+            RE_OPCODE_REPEAT_ANY_GREEDY :
+            RE_OPCODE_REPEAT_ANY_UNGREEDY,
+        &repeat_any_args,
+        sizeof(repeat_any_args),
+        &instruction_addr,
+        NULL,
+        &inst_size));
+
+    *code_size += inst_size;
+    break;
+
+  case RE_NODE_RANGE:
 
     // Code for e{n,m} looks like:
     //
-    //            code for e              ---   (if n > 0)
-    //
+    //            code for e              ---   prolog
     //            repeat_start n, m, L1   --+
-    //        L0: code for e                |   (if n > 1 or m > 1)
+    //        L0: code for e                |   repeat
     //            repeat_end n, m, L0     --+
+    //        L1: split L2, L3            ---   split
+    //        L2: code for e              ---   epilog
+    //        L3:
     //
-    //        L1: split L2, L3            --+
-    //        L2: code for e                |   (if m > 0)
-    //        L3:                         --+
+    // Not all sections (prolog, repeat, split and epilog) are generated in all
+    // cases, it depends on the values of n and m. The following table shows
+    // which sections are generated for the first few values of n and m.
     //
+    //        n,m   prolog  repeat      split  epilog
+    //                      (min,max)
+    //        ---------------------------------------
+    //        0,0     -       -           -      -
+    //        0,1     -       -           X      X
+    //        0,2     -       0,1         X      X
+    //        0,3     -       0,2         X      X
+    //        0,M     -       0,M-1       X      X
+    //
+    //        1,1     X       -           -      -
+    //        1,2     X       -           X      X
+    //        1,3     X       0,1         X      X
+    //        1,4     X       1,2         X      X
+    //        1,M     X       1,M-2       X      X
+    //
+    //        2,2     X       -           -      X
+    //        2,3     X       1,1         X      X
+    //        2,4     X       1,2         X      X
+    //        2,M     X       1,M-2       X      X
+    //
+    //        3,3     X       1,1         -      X
+    //        3,4     X       2,2         X      X
+    //        3,M     X       2,M-1       X      X
+    //
+    // The code can't consists simply in the repeat section, the prolog and
+    // epilog are required because we can't have atoms pointing to code inside
+    // the repeat loop. Atoms' forwards_code will point to code in the prolog
+    // and backwards_code will point to code in the epilog (or in prolog if
+    // epilog wasn't generated, like in n=1,m=1)
 
-    if (re_node->start > 0)
+    emit_prolog = re_node->start > 0;
+    emit_repeat = re_node->end > re_node->start + 1 || re_node->end > 2;
+    emit_split = re_node->end > re_node->start;
+    emit_epilog = re_node->end > re_node->start || re_node->end > 1;
+
+    if (emit_prolog)
     {
       FAIL_ON_ERROR(_yr_re_emit(
           emit_context,
@@ -1053,15 +1139,21 @@ int _yr_re_emit(
        *code_size += branch_size;
     }
 
-    if (re_node->start > 1 || re_node->end > 1)
+    if (emit_repeat)
     {
-      repeat_args.min = (re_node->start > 0) ?
-          re_node->start - 1 :
-          re_node->start;
+      repeat_args.min = re_node->start;
+      repeat_args.max = re_node->end;
 
-      repeat_args.max = (re_node->end > 0) ?
-          re_node->end - 1 :
-          re_node->end;
+      if (emit_prolog)
+      {
+        repeat_args.max--;
+        repeat_args.min--;
+      }
+
+      if (emit_split)
+        repeat_args.max--;
+      else
+        repeat_args.min--;
 
       repeat_args.offset = 0;
 
@@ -1072,7 +1164,7 @@ int _yr_re_emit(
               RE_OPCODE_REPEAT_START_UNGREEDY,
           &repeat_args,
           sizeof(repeat_args),
-          re_node->start == 0 ? &instruction_addr : NULL,
+          emit_prolog ? NULL : &instruction_addr,
           (void**) &repeat_args_addr,
           &inst_size));
 
@@ -1104,7 +1196,7 @@ int _yr_re_emit(
       *code_size += inst_size;
     }
 
-    if (re_node->end > 0)
+    if (emit_split)
     {
       FAIL_ON_ERROR(_yr_emit_split(
           emit_context,
@@ -1117,17 +1209,23 @@ int _yr_re_emit(
           &split_size));
 
       *code_size += split_size;
+    }
 
+    if (emit_epilog)
+    {
       FAIL_ON_ERROR(_yr_re_emit(
           emit_context,
           re_node->left,
-          re_node->start > 0 ? flags | EMIT_DONT_SET_FORWARDS_CODE : flags,
-          re_node->start == 0 && re_node->end == 1 ? &instruction_addr : NULL,
+          emit_prolog ? flags | EMIT_DONT_SET_FORWARDS_CODE : flags,
+          emit_prolog || emit_repeat ? NULL : &instruction_addr,
           &branch_size));
 
       *code_size += branch_size;
-      *split_offset_addr = split_size + branch_size;
     }
+
+
+    if (emit_split)
+      *split_offset_addr = split_size + branch_size;
 
     break;
   }
@@ -1250,6 +1348,7 @@ int _yr_re_fiber_create(
 
   fiber->ip = NULL;
   fiber->sp = -1;
+  fiber->rc = -1;
   fiber->next = NULL;
   fiber->prev = NULL;
 
@@ -1290,7 +1389,7 @@ void _yr_re_fiber_append(
 //
 // _yr_re_fiber_exists
 //
-// Verifies if a fiber with the same properties (ip, sp, and stack values)
+// Verifies if a fiber with the same properties (ip, rc, sp, and stack values)
 // than 'target_fiber' exists in 'fiber_list'. The list is iterated from
 // the start until 'last_fiber' (inclusive). Fibers past 'last_fiber' are not
 // taken into account.
@@ -1313,7 +1412,8 @@ int _yr_re_fiber_exists(
   while (fiber != last_fiber->next)
   {
     if (fiber->ip == target_fiber->ip &&
-        fiber->sp == target_fiber->sp)
+        fiber->sp == target_fiber->sp &&
+        fiber->rc == target_fiber->rc)
     {
       equal_stacks = TRUE;
 
@@ -1362,6 +1462,7 @@ int _yr_re_fiber_split(
 
   (*new_fiber)->sp = fiber->sp;
   (*new_fiber)->ip = fiber->ip;
+  (*new_fiber)->rc = fiber->rc;
 
   for (i = 0; i <= fiber->sp; i++)
     (*new_fiber)->stack[i] = fiber->stack[i];
@@ -1497,10 +1598,12 @@ int _yr_re_fiber_sync(
   int split_already_executed;
 
   RE_REPEAT_ARGS* repeat_args;
+  RE_REPEAT_ANY_ARGS* repeat_any_args;
 
   RE_FIBER* fiber;
   RE_FIBER* last;
   RE_FIBER* prev;
+  RE_FIBER* next;
   RE_FIBER* branch_a;
   RE_FIBER* branch_b;
 
@@ -1608,6 +1711,46 @@ int _yr_re_fiber_sync(
         branch_a->ip += (1 + sizeof(RE_REPEAT_ARGS));
         break;
 
+      case RE_OPCODE_REPEAT_ANY_GREEDY:
+      case RE_OPCODE_REPEAT_ANY_UNGREEDY:
+
+        repeat_any_args = (RE_REPEAT_ANY_ARGS*)(fiber->ip + 1);
+
+        if (fiber->rc == -1)
+          fiber->rc = 0;
+
+        if (fiber->rc < repeat_any_args->min)
+        {
+          fiber->rc++;
+          fiber = fiber->next;
+        }
+        else if (fiber->rc < repeat_any_args->max)
+        {
+          next = fiber->next;
+          branch_a = fiber;
+
+          FAIL_ON_ERROR(_yr_re_fiber_split(
+              fiber_list, fiber_pool, branch_a, &branch_b));
+
+          if (opcode == RE_OPCODE_REPEAT_END_GREEDY)
+            yr_swap(branch_a, branch_b, RE_FIBER*);
+
+          branch_a->rc++;
+          branch_b->ip += (1 + sizeof(RE_REPEAT_ANY_ARGS));
+          branch_b->rc = -1;
+
+          _yr_re_fiber_sync(fiber_list, fiber_pool, branch_b);
+
+          fiber = next;
+        }
+        else
+        {
+          fiber->ip += (1 + sizeof(RE_REPEAT_ANY_ARGS));
+          fiber->rc = -1;
+        }
+
+        break;
+
       case RE_OPCODE_JUMP:
         fiber->ip += *(int16_t*)(fiber->ip + 1);
         break;
@@ -1672,8 +1815,8 @@ int yr_re_exec(
   RE_FIBER* next_fiber;
 
   int error;
-  int count;
-  int max_count;
+  int bytes_matched;
+  int max_bytes_matched;
   int match;
   int character_size;
   int input_incr;
@@ -1686,7 +1829,7 @@ int yr_re_exec(
   #define ACTION_KILL       2
   #define ACTION_KILL_TAIL  3
 
-  #define prolog if (count >= max_count) \
+  #define prolog if (bytes_matched >= max_bytes_matched) \
       { \
         action = ACTION_KILL; \
         break; \
@@ -1716,14 +1859,14 @@ int yr_re_exec(
     input_incr = -input_incr;
   }
 
-  max_count = (int) yr_min(input_size, RE_SCAN_LIMIT);
+  max_bytes_matched = (int) yr_min(input_size, RE_SCAN_LIMIT);
 
-  // Round down max_count to a multiple of character_size, this way if
+  // Round down max_bytes_matched to a multiple of character_size, this way if
   // character_size is 2 and input_size is odd we are ignoring the
   // extra byte which can't match anyways.
 
-  max_count = max_count - max_count % character_size;
-  count = 0;
+  max_bytes_matched = max_bytes_matched - max_bytes_matched % character_size;
+  bytes_matched = 0;
 
   error = _yr_re_fiber_create(&storage->fiber_pool, &fiber);
   fail_if_error(error);
@@ -1751,6 +1894,13 @@ int yr_re_exec(
           match = (flags & RE_FLAGS_DOT_ALL) || (*input != 0x0A);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
+          break;
+
+        case RE_OPCODE_REPEAT_ANY_GREEDY:
+        case RE_OPCODE_REPEAT_ANY_UNGREEDY:
+          prolog;
+          match = (flags & RE_FLAGS_DOT_ALL) || (*input != 0x0A);
+          action = match ? ACTION_NONE : ACTION_KILL;
           break;
 
         case RE_OPCODE_LITERAL:
@@ -1802,6 +1952,7 @@ int yr_re_exec(
 
         case RE_OPCODE_SPACE:
         case RE_OPCODE_NON_SPACE:
+
           prolog;
 
           switch(*input)
@@ -1814,7 +1965,6 @@ int yr_re_exec(
             case '\f':
               match = TRUE;
               break;
-
             default:
               match = FALSE;
           }
@@ -1843,11 +1993,11 @@ int yr_re_exec(
         case RE_OPCODE_WORD_BOUNDARY:
         case RE_OPCODE_NON_WORD_BOUNDARY:
 
-          if (count == 0 &&
+          if (bytes_matched == 0 &&
               !(flags & RE_FLAGS_NOT_AT_START) &&
               !(flags & RE_FLAGS_BACKWARDS))
             match = TRUE;
-          else if (count >= max_count)
+          else if (bytes_matched >= max_bytes_matched)
             match = TRUE;
           else if (IS_WORD_CHAR(*(input - input_incr)) != IS_WORD_CHAR(*input))
             match = TRUE;
@@ -1862,18 +2012,21 @@ int yr_re_exec(
 
         case RE_OPCODE_MATCH_AT_START:
           if (flags & RE_FLAGS_BACKWARDS)
-            kill = input_size > (size_t) count;
+            kill = input_size > (size_t) bytes_matched;
           else
-            kill = (flags & RE_FLAGS_NOT_AT_START) || (count != 0);
+            kill = (flags & RE_FLAGS_NOT_AT_START) || (bytes_matched != 0);
           action = kill ? ACTION_KILL : ACTION_CONTINUE;
           break;
 
         case RE_OPCODE_MATCH_AT_END:
-          action = input_size > (size_t) count ? ACTION_KILL : ACTION_CONTINUE;
+          action = input_size > (size_t) bytes_matched ?
+              ACTION_KILL :
+              ACTION_CONTINUE;
           break;
 
         case RE_OPCODE_MATCH:
-          result = count;
+
+          result = bytes_matched;
 
           if (flags & RE_FLAGS_EXHAUSTIVE)
           {
@@ -1883,10 +2036,16 @@ int yr_re_exec(
 
               if (flags & RE_FLAGS_BACKWARDS)
                 cb_result = callback(
-                    input + character_size, count, flags, callback_args);
+                    input + character_size,
+                    bytes_matched,
+                    flags,
+                    callback_args);
               else
                 cb_result = callback(
-                    input_data, count, flags, callback_args);
+                    input_data,
+                    bytes_matched,
+                    flags,
+                    callback_args);
 
               switch(cb_result)
               {
@@ -1938,13 +2097,17 @@ int yr_re_exec(
       }
     }
 
-    if (flags & RE_FLAGS_WIDE && count < max_count && *(input + 1) != 0)
+    if (flags & RE_FLAGS_WIDE &&
+        bytes_matched < max_bytes_matched &&
+        *(input + 1) != 0)
+    {
       _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool);
+    }
 
     input += input_incr;
-    count += character_size;
+    bytes_matched += character_size;
 
-    if (flags & RE_FLAGS_SCAN && count < max_count)
+    if (flags & RE_FLAGS_SCAN && bytes_matched < max_bytes_matched)
     {
       error = _yr_re_fiber_create(&storage->fiber_pool, &fiber);
       fail_if_error(error);
@@ -1958,6 +2121,171 @@ int yr_re_exec(
   }
 
   return result;
+}
+
+
+int yr_re_fast_exec(
+    uint8_t* code,
+    uint8_t* input_data,
+    size_t input_size,
+    int flags,
+    RE_MATCH_CALLBACK_FUNC callback,
+    void* callback_args)
+{
+  RE_REPEAT_ANY_ARGS* repeat_any_args;
+
+  uint8_t* code_stack[MAX_FAST_HEX_RE_STACK];
+  uint8_t* input_stack[MAX_FAST_HEX_RE_STACK];
+  int matches_stack[MAX_FAST_HEX_RE_STACK];
+
+  uint8_t* ip = code;
+  uint8_t* input = input_data;
+  uint8_t* next_input;
+  uint8_t* next_opcode;
+  uint8_t mask;
+  uint8_t value;
+
+  int i;
+  int stop;
+  int input_incr;
+  int sp = 0;
+  int bytes_matched;
+  int max_bytes_matched = input_size;
+
+  input_incr = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
+
+  if (flags & RE_FLAGS_BACKWARDS)
+    input--;
+
+  code_stack[sp] = code;
+  input_stack[sp] = input;
+  matches_stack[sp] = 0;
+  sp++;
+
+  while (sp > 0)
+  {
+    sp--;
+    ip = code_stack[sp];
+    input = input_stack[sp];
+    bytes_matched = matches_stack[sp];
+    stop = FALSE;
+
+    while(!stop)
+    {
+      if (*ip == RE_OPCODE_MATCH)
+      {
+        if (flags & RE_FLAGS_EXHAUSTIVE)
+        {
+          int cb_result = callback(
+             flags & RE_FLAGS_BACKWARDS ? input + 1 : input_data,
+             bytes_matched,
+             flags,
+             callback_args);
+
+          switch(cb_result)
+          {
+            case ERROR_INSUFFICIENT_MEMORY:
+              return -2;
+            case ERROR_TOO_MANY_MATCHES:
+              return -3;
+            default:
+              if (cb_result != ERROR_SUCCESS)
+                return -4;
+          }
+
+          break;
+        }
+        else
+        {
+          return bytes_matched;
+        }
+      }
+
+      if (bytes_matched >= max_bytes_matched)
+        break;
+
+      switch(*ip)
+      {
+        case RE_OPCODE_LITERAL:
+
+          if (*input == *(ip + 1))
+          {
+            bytes_matched++;
+            input += input_incr;
+            ip += 2;
+          }
+          else
+          {
+            stop = TRUE;
+          }
+
+          break;
+
+        case RE_OPCODE_MASKED_LITERAL:
+
+          value = *(int16_t*)(ip + 1) & 0xFF;
+          mask = *(int16_t*)(ip + 1) >> 8;
+
+          if ((*input & mask) == value)
+          {
+            bytes_matched++;
+            input += input_incr;
+            ip += 3;
+          }
+          else
+          {
+            stop = TRUE;
+          }
+
+          break;
+
+        case RE_OPCODE_ANY:
+
+          bytes_matched++;
+          input += input_incr;
+          ip += 1;
+
+          break;
+
+        case RE_OPCODE_REPEAT_ANY_UNGREEDY:
+
+          repeat_any_args = (RE_REPEAT_ANY_ARGS*)(ip + 1);
+          next_opcode = ip + 1 + sizeof(RE_REPEAT_ANY_ARGS);
+
+          for (i = repeat_any_args->min + 1; i <= repeat_any_args->max; i++)
+          {
+            next_input = input + i * input_incr;
+
+            if (bytes_matched + i >= max_bytes_matched)
+              break;
+
+            if ( *(next_opcode) != RE_OPCODE_LITERAL ||
+                (*(next_opcode) == RE_OPCODE_LITERAL &&
+                 *(next_opcode + 1) == *next_input))
+            {
+              if (sp >= MAX_FAST_HEX_RE_STACK)
+                return -4;
+
+              code_stack[sp] = next_opcode;
+              input_stack[sp] = next_input;
+              matches_stack[sp] = bytes_matched + i;
+              sp++;
+            }
+          }
+
+          input += input_incr * repeat_any_args->min;
+          bytes_matched += repeat_any_args->min;
+          ip = next_opcode;
+
+          break;
+
+        default:
+          assert(FALSE);
+      }
+    }
+  }
+
+  return -1;
 }
 
 

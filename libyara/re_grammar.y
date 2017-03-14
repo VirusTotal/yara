@@ -43,6 +43,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YYMALLOC yr_malloc
 #define YYFREE yr_free
 
+#define mark_as_not_fast_regexp() \
+    ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
+
 #define ERROR_IF(x, error) \
     if (x) \
     { \
@@ -113,6 +116,8 @@ alternative
       }
     | alternative '|' concatenation
       {
+        mark_as_not_fast_regexp();
+
         $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
 
         DESTROY_NODE_IF($$ == NULL, $1);
@@ -122,6 +127,8 @@ alternative
       }
     | alternative '|'
       {
+        mark_as_not_fast_regexp();
+
         RE_NODE* node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
 
         DESTROY_NODE_IF($$ == NULL, $1);
@@ -151,6 +158,8 @@ concatenation
 repeat
     : single '*'
       {
+        mark_as_not_fast_regexp();
+
         RE* re = yyget_extra(yyscanner);
         re->flags |= RE_FLAGS_GREEDY;
 
@@ -161,6 +170,8 @@ repeat
       }
     | single '*' '?'
       {
+        mark_as_not_fast_regexp();
+
         RE* re = yyget_extra(yyscanner);
         re->flags |= RE_FLAGS_UNGREEDY;
 
@@ -173,6 +184,8 @@ repeat
       }
     | single '+'
       {
+        mark_as_not_fast_regexp();
+
         RE* re = yyget_extra(yyscanner);
         re->flags |= RE_FLAGS_GREEDY;
 
@@ -183,6 +196,8 @@ repeat
       }
     | single '+' '?'
       {
+        mark_as_not_fast_regexp();
+
         RE* re = yyget_extra(yyscanner);
         re->flags |= RE_FLAGS_UNGREEDY;
 
@@ -198,7 +213,17 @@ repeat
         RE* re = yyget_extra(yyscanner);
         re->flags |= RE_FLAGS_GREEDY;
 
-        $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
+        if ($1->type == RE_NODE_ANY)
+        {
+          $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
+          DESTROY_NODE_IF(TRUE, $1);
+        }
+        else
+        {
+          mark_as_not_fast_regexp();
+          $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
+          DESTROY_NODE_IF($$ == NULL, $1);
+        }
 
         DESTROY_NODE_IF($$ == NULL, $1);
         ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
@@ -211,7 +236,17 @@ repeat
         RE* re = yyget_extra(yyscanner);
         re->flags |= RE_FLAGS_UNGREEDY;
 
-        $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
+        if ($1->type == RE_NODE_ANY)
+        {
+          $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
+          DESTROY_NODE_IF(TRUE, $1);
+        }
+        else
+        {
+          mark_as_not_fast_regexp();
+          $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
+          DESTROY_NODE_IF($$ == NULL, $1);
+        }
 
         DESTROY_NODE_IF($$ == NULL, $1);
         ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
@@ -225,9 +260,18 @@ repeat
         RE* re = yyget_extra(yyscanner);
         re->flags |= RE_FLAGS_GREEDY;
 
-        $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
+        if ($1->type == RE_NODE_ANY)
+        {
+          $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
+          DESTROY_NODE_IF(TRUE, $1);
+        }
+        else
+        {
+          mark_as_not_fast_regexp();
+          $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
+          DESTROY_NODE_IF($$ == NULL, $1);
+        }
 
-        DESTROY_NODE_IF($$ == NULL, $1);
         ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->start = $2 & 0xFFFF;;
@@ -238,9 +282,18 @@ repeat
         RE* re = yyget_extra(yyscanner);
         re->flags |= RE_FLAGS_UNGREEDY;
 
-        $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
+        if ($1->type == RE_NODE_ANY)
+        {
+          $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
+          DESTROY_NODE_IF(TRUE, $1);
+        }
+        else
+        {
+          mark_as_not_fast_regexp();
+          $$ = yr_re_node_create(RE_NODE_RANGE, $1, NULL);
+          DESTROY_NODE_IF($$ == NULL, $1);
+        }
 
-        DESTROY_NODE_IF($$ == NULL, $1);
         ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->start = $2 & 0xFFFF;;

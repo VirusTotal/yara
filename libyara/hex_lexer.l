@@ -224,14 +224,15 @@ int yr_parse_hex_string(
 
   FAIL_ON_ERROR(yr_re_create(re));
 
-  // The RE_FLAGS_FAST_HEX_REGEXP flag indicates a regular expression derived
-  // from a hex string that can be matched by faster algorithm. These regular
-  // expressions come from hex strings not containing alternatives, like in:
+  // The RE_FLAGS_FAST_REGEXP flag indicates a regular expression can be
+  // matched by faster algorithm. These regular expressions come from hex
+  // strings that do not contain alternatives, like in:
+  //
   // { ( 01 02 | 03 04) 05 06 }.
   //
   // This flag is unset later during parsing if alternatives are used.
 
-  (*re)->flags |= RE_FLAGS_FAST_HEX_REGEXP;
+  (*re)->flags |= RE_FLAGS_FAST_REGEXP;
 
   // Set RE_FLAGS_DOT_ALL because in hex strings the "dot" (?? in this case)
   // must match all characters including new-line.

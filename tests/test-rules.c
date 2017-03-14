@@ -446,7 +446,7 @@ static void test_hex_strings()
 
   assert_true_rule_blob(
       "rule test { \
-        strings: $a = { 2e 7? (65 | ?""?"") 78 } \
+        strings: $a = { 2e 7? (65 | ?? ) 78 } \
         condition: $a }",
       PE32_FILE);
 
@@ -526,6 +526,24 @@ static void test_hex_strings()
 
   assert_true_rule(
       "rule test { \
+        strings: $a = { 31 32 [0-1] 33 } \
+        condition: !a == 3}",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-1] 34 } \
+        condition: !a == 4}",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-2] 34 } \
+        condition: !a == 4 }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
         strings: $a = { 31 32 [-] 38 39 } \
         condition: all of them }",
       "1234567890");
@@ -548,6 +566,18 @@ static void test_hex_strings()
         condition: $a }",
       "1234567890");
 
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-1] 33 34 [0-2] 36 37 } \
+        condition: $a }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-1] 34 35 [0-2] 36 37 } \
+        condition: $a }",
+      "1234567890");
+
   assert_false_rule(
       "rule test { \
         strings: $a = { 31 32 [0-3] 37 38 } \
@@ -559,6 +589,12 @@ static void test_hex_strings()
         strings: $a = { 31 32 [1] 33 34 } \
         condition: $a }",
       "12\n34");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = {31 32 [3-6] 32} \
+        condition: !a == 6 }",
+      "12111222");
 
   assert_error(
       "rule test { \
@@ -851,6 +887,14 @@ void test_re()
       "rule test { strings: $a = /^[isp]+/ condition: $a }",
       "mississippi");
 
+  assert_true_rule_blob(
+      "rule test { strings: $a = /a.{1,2}b/ wide condition: !a == 6 }",
+      "a\0x\0b\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /a.{1,2}b/ wide condition: !a == 8 }",
+      "a\0x\0x\0b\0");
+
   assert_regexp_syntax_error(")");
   assert_true_regexp("abc", "abc", "abc");
   assert_false_regexp("abc", "xbc");
@@ -919,7 +963,29 @@ void test_re()
   assert_true_regexp("ab{,3}c", "abbbc", "abbbc");
   assert_false_regexp("ab{,2}c", "abbbc");
   assert_false_regexp("ab{4,5}bc", "abbbbc");
+  assert_true_regexp("ab{0,1}", "abbbbb", "ab");
+  assert_true_regexp("ab{0,2}", "abbbbb", "abb");
+  assert_true_regexp("ab{0,3}", "abbbbb", "abbb");
+  assert_true_regexp("ab{0,4}", "abbbbb", "abbbb");
+  assert_true_regexp("ab{1,1}", "abbbbb", "ab");
+  assert_true_regexp("ab{1,2}", "abbbbb", "abb");
+  assert_true_regexp("ab{1,3}", "abbbbb", "abbb");
+  assert_true_regexp("ab{2,2}", "abbbbb", "abb");
+  assert_true_regexp("ab{2,3}", "abbbbb", "abbb");
+  assert_true_regexp("ab{1,3}?", "abbbbb", "ab");
+  assert_true_regexp("ab{0,1}?", "abbbbb", "a");
+  assert_true_regexp("ab{0,2}?", "abbbbb", "a");
+  assert_true_regexp("ab{0,3}?", "abbbbb", "a");
+  assert_true_regexp("ab{0,4}?", "abbbbb", "a");
+  assert_true_regexp("ab{1,1}?", "abbbbb", "ab");
+  assert_true_regexp("ab{1,2}?", "abbbbb", "ab");
+  assert_true_regexp("ab{1,3}?", "abbbbb", "ab");
+  assert_true_regexp("ab{2,2}?", "abbbbb", "abb");
   assert_true_regexp("ab{2,3}?", "abbbbb", "abb");
+  assert_true_regexp(".(abc){0,1}", "xabcabcabcabc", "xabc");
+  assert_true_regexp(".(abc){0,2}", "xabcabcabcabc", "xabcabc");
+  assert_true_regexp("x{1,2}abcd", "xxxxabcd", "xxabcd");
+  assert_true_regexp("x{1,2}abcd", "xxxxabcd", "xxabcd");
   assert_true_regexp("ab{.*}", "ab{c}", "ab{c}");
   assert_true_regexp(".(aa){1,2}", "aaaaaaaaaa", "aaaaa");
   assert_true_regexp("a.(bc.){2}", "aabcabca", "aabcabca");
@@ -1064,6 +1130,18 @@ void test_re()
   assert_error(
       "rule test { strings: $a = /[a\\/ condition: $a }",
       ERROR_SYNTAX_ERROR);
+
+  assert_true_rule_blob(
+      "rule test { \
+        strings: $a = /MZ.{300,}t/ \
+        condition: !a == 317 }",
+      PE32_FILE);
+
+  assert_true_rule_blob(
+      "rule test { \
+        strings: $a = /MZ.{300,}?t/ \
+        condition: !a == 314 }",
+      PE32_FILE);
 }
 
 

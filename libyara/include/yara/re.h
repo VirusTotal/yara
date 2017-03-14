@@ -55,6 +55,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_NODE_ANCHOR_END          18
 #define RE_NODE_WORD_BOUNDARY       19
 #define RE_NODE_NON_WORD_BOUNDARY   20
+#define RE_NODE_RANGE_ANY           21
 
 
 #define RE_OPCODE_ANY                   0xA0
@@ -74,6 +75,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_OPCODE_MATCH_AT_START        0xB1
 #define RE_OPCODE_WORD_BOUNDARY         0xB2
 #define RE_OPCODE_NON_WORD_BOUNDARY     0xB3
+#define RE_OPCODE_REPEAT_ANY_GREEDY     0xB4
+#define RE_OPCODE_REPEAT_ANY_UNGREEDY   0xB5
 
 #define RE_OPCODE_SPLIT_A               0xC0
 #define RE_OPCODE_SPLIT_B               0xC1
@@ -84,7 +87,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_OPCODE_REPEAT_END_UNGREEDY   0xC6
 
 
-#define RE_FLAGS_FAST_HEX_REGEXP        0x02
+#define RE_FLAGS_FAST_REGEXP            0x02
 #define RE_FLAGS_BACKWARDS              0x04
 #define RE_FLAGS_EXHAUSTIVE             0x08
 #define RE_FLAGS_WIDE                   0x10
@@ -231,6 +234,15 @@ int yr_re_emit_code(
 
 
 int yr_re_exec(
+    uint8_t* re_code,
+    uint8_t* input,
+    size_t input_size,
+    int flags,
+    RE_MATCH_CALLBACK_FUNC callback,
+    void* callback_args);
+
+
+int yr_re_fast_exec(
     uint8_t* re_code,
     uint8_t* input,
     size_t input_size,

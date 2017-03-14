@@ -663,6 +663,9 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
 
         atom_tree->current_leaf->forward_code = re_node->forward_code;
         atom_tree->current_leaf->backward_code = re_node->backward_code;
+
+        assert(atom_tree->current_leaf->forward_code != NULL);
+        assert(atom_tree->current_leaf->backward_code != NULL);
       }
 
       current_leaf = atom_tree->current_leaf;
@@ -701,6 +704,9 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
 
           current_leaf->backward_code = \
               current_leaf->recent_nodes[0]->backward_code;
+
+          assert(current_leaf->forward_code != NULL);
+          assert(current_leaf->backward_code != NULL);
         }
       }
 
@@ -820,6 +826,7 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
       return current_node;
 
     case RE_NODE_ANY:
+    case RE_NODE_RANGE_ANY:
     case RE_NODE_STAR:
     case RE_NODE_CLASS:
     case RE_NODE_MASKED_LITERAL:
