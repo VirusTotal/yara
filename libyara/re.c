@@ -2134,9 +2134,9 @@ int yr_re_fast_exec(
 {
   RE_REPEAT_ANY_ARGS* repeat_any_args;
 
-  uint8_t* code_stack[MAX_FAST_HEX_RE_STACK];
-  uint8_t* input_stack[MAX_FAST_HEX_RE_STACK];
-  int matches_stack[MAX_FAST_HEX_RE_STACK];
+  uint8_t* code_stack[MAX_FAST_RE_STACK];
+  uint8_t* input_stack[MAX_FAST_RE_STACK];
+  int matches_stack[MAX_FAST_RE_STACK];
 
   uint8_t* ip = code;
   uint8_t* input = input_data;
@@ -2263,7 +2263,7 @@ int yr_re_fast_exec(
                 (*(next_opcode) == RE_OPCODE_LITERAL &&
                  *(next_opcode + 1) == *next_input))
             {
-              if (sp >= MAX_FAST_HEX_RE_STACK)
+              if (sp >= MAX_FAST_RE_STACK)
                 return -4;
 
               code_stack[sp] = next_opcode;

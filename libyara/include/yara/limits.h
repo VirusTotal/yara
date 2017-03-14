@@ -53,7 +53,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_INCLUDE_DEPTH               16
 #define MAX_STRING_MATCHES              1000000
 #define MAX_FUNCTION_ARGS               128
-#define MAX_FAST_HEX_RE_STACK           300
+#define MAX_FAST_RE_STACK               300
 #define MAX_OVERLOADED_FUNCTIONS        10
 #define MAX_HEX_STRING_TOKENS           10000
 #define MAX_MATCH_DATA                  4096
