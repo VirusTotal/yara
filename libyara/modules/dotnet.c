@@ -123,6 +123,118 @@ void dotnet_parse_guid(
 }
 
 
+// Given an offset into a #US or #Blob stream, parse the entry at that position.
+// The offset is relative to the start of the PE file.
+BLOB_PARSE_RESULT dotnet_parse_blob_entry(
+    PE* pe,
+    uint8_t* offset)
+{
+  BLOB_PARSE_RESULT result;
+
+  // Blob size is encoded in the first 1, 2 or 4 bytes of the blob.
+  //
+  // If the high bit is not set the length is encoded in one byte.
+  //
+  // If the high 2 bits are 10 (base 2) then the length is encoded in
+  // the rest of the bits and the next byte.
+  //
+  // If the high 3 bits are 110 (base 2) then the length is encoded
+  // in the rest of the bits and the next 3 bytes.
+  //
+  // See ECMA-335 II.24.2.4 for details.
+
+  // Make sure we have at least one byte.
+  if (!fits_in_pe(pe, offset, 1))
+  {
+    result.size = 0;
+    return result;
+  }
+
+  if ((*offset & 0x80) == 0x00)
+  {
+    result.length = (DWORD) *offset;
+    result.size = 1;
+  }
+  else if ((*offset & 0xC0) == 0x80)
+  {
+    // Make sure we have one more byte.
+    if (!fits_in_pe(pe, offset, 2))
+    {
+      result.size = 0;
+      return result;
+    }
+
+    // Shift remaining 6 bits left by 8 and OR in the remaining byte.
+    result.length = ((*offset & 0x3F) << 8) | *(offset + 1);
+    result.size = 2;
+  }
+  else if (offset + 4 < pe->data + pe->data_size && (*offset & 0xE0) == 0xC0)
+  {
+    // Make sure we have 3 more bytes.
+    if (!fits_in_pe(pe, offset, 4))
+    {
+      result.size = 0;
+      return result;
+    }
+
+    result.length = ((*offset & 0x1F) << 24) |
+                     (*(offset + 1) << 16) |
+                     (*(offset + 2) << 8) |
+                      *(offset + 3);
+    result.size = 3;
+  }
+  else
+  {
+    // Return a 0 size as an error.
+    result.size = 0;
+  }
+
+  return result;
+}
+
+
+void dotnet_parse_us(
+    PE* pe,
+    int64_t metadata_root,
+    PSTREAM_HEADER us_header)
+{
+  BLOB_PARSE_RESULT blob_result;
+  int i = 0;
+  uint8_t* offset = pe->data + metadata_root + us_header->Offset;
+  uint8_t* end_of_header = offset + us_header->Size;
+
+  // Make sure end of header is not past end of PE, and the first entry MUST be
+  // a single NULL byte.
+  if (!fits_in_pe(pe, offset, us_header->Size) || *offset != 0x00)
+    return;
+
+  offset++;
+
+  while (offset < end_of_header)
+  {
+    blob_result = dotnet_parse_blob_entry(pe, offset);
+    if (blob_result.size == 0 || !fits_in_pe(pe, offset, blob_result.length))
+    {
+      set_integer(i, pe->object, "number_of_user_strings");
+      return;
+    }
+
+    offset += blob_result.size;
+    // Avoid empty strings, which usually happen as padding at the end of the
+    // stream.
+    if (blob_result.length > 0)
+    {
+      set_sized_string(
+         (char*) offset, blob_result.length, pe->object, "user_strings[%i]", i);
+      i++;
+      offset += blob_result.length;
+    }
+  }
+
+  set_integer(i, pe->object, "number_of_user_strings");
+}
+
+
 STREAMS dotnet_parse_stream_headers(
     PE* pe,
     int64_t offset,
@@ -169,6 +281,8 @@ STREAMS dotnet_parse_stream_headers(
       headers.string = stream_header;
     else if (strncmp(stream_name, "#Blob", 5) == 0)
       headers.blob = stream_header;
+    else if (strncmp(stream_name, "#US", 3) == 0 && headers.us == NULL)
+      headers.us = stream_header;
 
     // Stream name is padded to a multiple of 4.
     stream_header = (PSTREAM_HEADER) ((uint8_t*) stream_header +
@@ -203,9 +317,11 @@ void dotnet_parse_tilde_2(
 {
   PMODULE_TABLE module_table;
   PASSEMBLY_TABLE assembly_table;
+  PASSEMBLYREF_TABLE assemblyref_table;
   PMANIFESTRESOURCE_TABLE manifestresource_table;
   PMODULEREF_TABLE moduleref_table;
   PCUSTOMATTRIBUTE_TABLE customattribute_table;
+  PCONSTANT_TABLE constant_table;
   DWORD resource_size, implementation;
   char *name;
   char typelib[MAX_TYPELIB_SIZE + 1];
@@ -246,6 +362,7 @@ void dotnet_parse_tilde_2(
   uint8_t* memberref_row = NULL;
   DWORD type_index;
   DWORD class_index;
+  BLOB_PARSE_RESULT blob_result;
   DWORD blob_index;
   DWORD blob_length;
   // These are used to determine the size of coded indexes, which are the
@@ -305,8 +422,7 @@ void dotnet_parse_tilde_2(
         table_offset += (2 + index_sizes.string + (index_sizes.guid * 3)) * num_rows;
         break;
       case BIT_TYPEREF:
-        row_count = max_rows(4, rows.module, rows.moduleref, rows.assemblyref,
-            rows.typeref);
+        row_count = max_rows(4, rows.module, rows.moduleref, rows.assemblyref, rows.typeref);
 
         if (row_count > (0xFFFF >> 0x02))
           index_size = 4;
@@ -377,7 +493,60 @@ void dotnet_parse_tilde_2(
         else
           index_size = 2;
 
-        table_offset += (1 + 1 + index_size + index_sizes.blob) * num_rows;
+        // Using 'i' is insufficent since we may skip certain constants and
+        // it would give an inaccurate count in that case.
+        counter = 0;
+        row_size = (1 + 1 + index_size + index_sizes.blob);
+        row_ptr = table_offset;
+        for (i = 0; i < num_rows; i++)
+        {
+          if (!fits_in_pe(pe, row_ptr, row_size))
+            break;
+
+          constant_table = (PCONSTANT_TABLE) row_ptr;
+          // Only look for constants of type string.
+          if (constant_table->Type != ELEMENT_TYPE_STRING)
+          {
+            row_ptr += row_size;
+            continue;
+          }
+
+          // Get the blob offset and pull it out of the blob table.
+          blob_offset = ((uint8_t*) constant_table) + 2 + index_size;
+          if (index_sizes.blob == 4)
+            blob_index = *(DWORD*) blob_offset;
+          else
+            // Cast the value (index into blob table) to a 32bit value.
+            blob_index = (DWORD) (*(WORD*) blob_offset);
+
+          // Everything checks out. Make sure the index into the blob field
+          // is valid (non-null and within range).
+          blob_offset = pe->data + metadata_root + streams->blob->Offset + blob_index;
+          blob_result = dotnet_parse_blob_entry(pe, blob_offset);
+
+          if (blob_result.size == 0)
+          {
+            row_ptr += row_size;
+            continue;
+          }
+
+          blob_length = blob_result.length;
+          blob_offset += blob_result.size;
+
+          // Quick sanity check to make sure the blob entry is within bounds.
+          if (blob_offset + blob_length >= pe->data + pe->data_size)
+          {
+            row_ptr += row_size;
+            continue;
+          }
+
+          set_sized_string((char*) blob_offset, blob_result.length, pe->object, "constants[%i]", i);
+          counter++;
+          row_ptr += row_size;
+        }
+
+        set_integer(counter, pe->object, "number_of_constants");
+        table_offset += row_size * num_rows;
         break;
       case BIT_CUSTOMATTRIBUTE:
         // index_size is size of the parent column.
@@ -529,7 +698,6 @@ void dotnet_parse_tilde_2(
               // Cast the value (index into blob table) to a 32bit value.
               blob_index = (DWORD) (*(WORD*) customattribute_table);
 
-
             // Everything checks out. Make sure the index into the blob field
             // is valid (non-null and within range).
             blob_offset = pe->data + metadata_root + streams->blob->Offset + blob_index;
@@ -543,39 +711,14 @@ void dotnet_parse_tilde_2(
               continue;
             }
 
-            // Blob size is encoded in the first 1, 2 or 4 bytes of the blob.
-            //
-            // If the high bit is not set the length is encoded in one byte.
-            //
-            // If the high 2 bits are 10 (base 2) then the length is encoded in
-            // the rest of the bits and the next byte.
-            //
-            // If the high 3 bits are 110 (base 2) then the length is encoded
-            // in the rest of the bits and the next 3 bytes.
-            //
-            // See ECMA-335 II.24.2.4 for details.
-            if ((*blob_offset & 0x80) == 0x00)
-            {
-              blob_length = (DWORD) *blob_offset;
-              blob_offset++;
-            }
-            else if (blob_offset + 1 < pe->data + pe->data_size &&
-                     (*blob_offset & 0xC0) == 0x80)
-            {
-              blob_length = (DWORD) ((*(WORD*) blob_offset) & 0x3FFF);
-              blob_offset += 2;
-            }
-            else if (blob_offset + 4 < pe->data + pe->data_size &&
-                     (*blob_offset & 0xE0) == 0xC0)
-            {
-              blob_length = (*(DWORD*) blob_offset) & 0x1FFFFFFF;
-              blob_offset += 3;
-            }
-            else
+            blob_result = dotnet_parse_blob_entry(pe, blob_offset);
+            if (blob_result.size == 0)
             {
               row_ptr += row_size;
               continue;
             }
+            blob_length = blob_result.length;
+            blob_offset += blob_result.size;
 
             // Quick sanity check to make sure the blob entry is within bounds.
             if (blob_offset + blob_length >= pe->data + pe->data_size)
@@ -794,7 +937,64 @@ void dotnet_parse_tilde_2(
         table_offset += (4 + 4 + 4) * num_rows;
         break;
       case BIT_ASSEMBLYREF:
-        table_offset += (2 + 2 + 2 + 2 + 4 + (index_sizes.blob * 2) + (index_sizes.string * 2)) * num_rows;
+        row_size = (2 + 2 + 2 + 2 + 4 + (index_sizes.blob * 2) + (index_sizes.string * 2));
+        row_ptr = table_offset;
+        for (i = 0; i < num_rows; i++)
+        {
+          if (!fits_in_pe(pe, table_offset, row_size))
+            break;
+
+          assemblyref_table = (PASSEMBLYREF_TABLE) row_ptr;
+          set_integer(assemblyref_table->MajorVersion,
+              pe->object, "assembly_refs[%i].version.major", i);
+          set_integer(assemblyref_table->MinorVersion,
+              pe->object, "assembly_refs[%i].version.minor", i);
+          set_integer(assemblyref_table->BuildNumber,
+              pe->object, "assembly_refs[%i].version.build_number", i);
+          set_integer(assembly_table->RevisionNumber,
+              pe->object, "assembly_refs[%i].version.revision_number", i);
+
+          blob_offset = pe->data + metadata_root + streams->blob->Offset;
+          if (index_sizes.blob == 4)
+            blob_offset += assemblyref_table->PublicKeyOrToken.PublicKeyOrToken_Long;
+          else
+            blob_offset += assemblyref_table->PublicKeyOrToken.PublicKeyOrToken_Short;
+
+          blob_result = dotnet_parse_blob_entry(pe, blob_offset);
+          if (blob_result.size == 0 || !fits_in_pe(pe, blob_offset, blob_result.length))
+          {
+            row_ptr += row_size;
+            continue;
+          }
+
+          // Avoid empty strings.
+          if (blob_result.length > 0)
+          {
+            blob_offset += blob_result.size;
+            set_sized_string((char*) blob_offset,
+                blob_result.length, pe->object,
+                "assembly_refs[%i].public_key_or_token", i);
+          }
+
+          // Can't use assemblyref_table here because the PublicKey comes before
+          // Name and is a variable length field.
+          if (index_sizes.string == 4)
+            name = pe_get_dotnet_string(pe,
+                string_offset,
+                *(DWORD*) (row_ptr + 2 + 2 + 2 + 2 + 4 + index_sizes.blob));
+          else
+            name = pe_get_dotnet_string(pe,
+                string_offset,
+                *(WORD*) (row_ptr + 2 + 2 + 2 + 2 + 4 + index_sizes.blob));
+
+          if (name != NULL)
+            set_string(name, pe->object, "assembly_refs[%i].name", i);
+
+          row_ptr += row_size;
+        }
+
+        set_integer(i, pe->object, "number_of_assembly_refs");
+        table_offset += row_size * num_rows;
         break;
       case BIT_ASSEMBLYREFPROCESSOR:
         table_offset += (4 + index_sizes.assemblyrefprocessor) * num_rows;
@@ -1154,6 +1354,9 @@ void dotnet_parse_com(
   // Parse the #~ stream, which includes various tables of interest.
   if (headers.tilde != NULL)
     dotnet_parse_tilde(pe, metadata_root, cli_header, &headers);
+
+  if (headers.us != NULL)
+    dotnet_parse_us(pe, metadata_root, headers.us);
 }
 
 
@@ -1175,6 +1378,17 @@ begin_declarations;
     declare_string("name");
   end_struct_array("resources");
   declare_integer("number_of_resources");
+  begin_struct_array("assembly_refs")
+    begin_struct("version");
+      declare_integer("major");
+      declare_integer("minor");
+      declare_integer("build_number");
+      declare_integer("revision_number");
+    end_struct("version");
+    declare_string("public_key_or_token");
+    declare_string("name");
+  end_struct_array("assembly_refs")
+  declare_integer("number_of_assembly_refs");
   begin_struct("assembly");
     begin_struct("version");
       declare_integer("major");
@@ -1187,7 +1401,11 @@ begin_declarations;
   end_struct("assembly");
   declare_string_array("modulerefs");
   declare_integer("number_of_modulerefs");
+  declare_string_array("user_strings");
+  declare_integer("number_of_user_strings");
   declare_string("typelib");
+  declare_string_array("constants");
+  declare_integer("number_of_constants");
 
 end_declarations;
 
