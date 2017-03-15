@@ -627,3 +627,11 @@ Reference
     Function returning true if the PE is 64bits.
 
     *Example: pe.is_64bit()*
+
+.. c:function:: rva_to_offset(addr)
+
+ .. versionadded:: 3.6.0
+
+  Function returning the file offset for RVA *addr*.
+
+  *Example: pe.rva_to_offset(pe.entry_point)*
