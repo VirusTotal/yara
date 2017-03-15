@@ -83,9 +83,6 @@ int yr_object_create(
     case OBJECT_TYPE_FUNCTION:
       object_size = sizeof(YR_OBJECT_FUNCTION);
       break;
-    case OBJECT_TYPE_REGEXP:
-      object_size = sizeof(YR_OBJECT_REGEXP);
-      break;
     default:
       assert(FALSE);
   }
@@ -121,9 +118,6 @@ int yr_object_create(
       break;
     case OBJECT_TYPE_STRING:
       ((YR_OBJECT_STRING*) obj)->value = NULL;
-      break;
-    case OBJECT_TYPE_REGEXP:
-      ((YR_OBJECT_REGEXP*) obj)->value = NULL;
       break;
     case OBJECT_TYPE_FUNCTION:
       ((YR_OBJECT_FUNCTION*) obj)->return_obj = NULL;
@@ -334,7 +328,6 @@ void yr_object_destroy(
   YR_ARRAY_ITEMS* array_items;
   YR_DICTIONARY_ITEMS* dict_items;
 
-  RE_AST* re_ast;
   SIZED_STRING* str;
   int i;
 
@@ -359,12 +352,6 @@ void yr_object_destroy(
       str = ((YR_OBJECT_STRING*) object)->value;
       if (str != NULL)
         yr_free(str);
-      break;
-
-    case OBJECT_TYPE_REGEXP:
-      re_ast = ((YR_OBJECT_REGEXP*) object)->value;
-      if (re_ast != NULL)
-        yr_re_ast_destroy(re_ast);
       break;
 
     case OBJECT_TYPE_ARRAY:
@@ -591,10 +578,6 @@ int yr_object_copy(
 
     case OBJECT_TYPE_STRING:
       ((YR_OBJECT_STRING*) copy)->value = NULL;
-      break;
-
-    case OBJECT_TYPE_REGEXP:
-      ((YR_OBJECT_REGEXP*) copy)->value = NULL;
       break;
 
     case OBJECT_TYPE_FUNCTION:
