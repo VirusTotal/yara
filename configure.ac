@@ -47,11 +47,23 @@ AC_CHECK_LIB(m, isnan)
 AC_CHECK_LIB(m, log2)
 AC_CHECK_FUNCS([strlcpy strlcat memmem timegm])
 
-
 AC_ARG_ENABLE([debug],
   [AS_HELP_STRING([--enable-debug], [compiles with -g option])],
   [if test x$enableval = xyes; then
-    CFLAGS="$CFLAGS -g"
+    debug=true
+  fi])
+
+AC_ARG_ENABLE([optimization],
+  [AS_HELP_STRING([--disable-optimization], [disable compiler optimizations with -O0])],
+  [if test x$enableval = xyes; then
+    optimization=false
+  fi],
+  [optimization=true])
+
+AC_ARG_ENABLE([address-sanitizer],
+  [AS_HELP_STRING([--enable-address-sanitizer], [compiles with -fsanitize=address])],
+  [if test x$enableval = xyes; then
+    address_sanitizer=true
   fi])
 
 AC_ARG_ENABLE([profiling],
@@ -132,6 +144,9 @@ AS_IF([test "x$have_crypto" = "xno"],
     CFLAGS="$CFLAGS -DHASH_MODULE"
   ])
 
+AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
+AM_CONDITIONAL([OPTIMIZATION], [test x$optimization = xtrue])
+AM_CONDITIONAL([ADDRESS_SANITIZER], [test x$address_sanitizer = xtrue])
 AM_CONDITIONAL([CUCKOO_MODULE], [test x$build_cuckoo_module = xtrue])
 AM_CONDITIONAL([MAGIC_MODULE], [test x$build_magic_module = xtrue])
 AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])

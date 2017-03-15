@@ -59,7 +59,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STRING_GFLAGS_ASCII             0x08
 #define STRING_GFLAGS_WIDE              0x10
 #define STRING_GFLAGS_REGEXP            0x20
-#define STRING_GFLAGS_FAST_HEX_REGEXP   0x40
+#define STRING_GFLAGS_FAST_REGEXP       0x40
 #define STRING_GFLAGS_FULL_WORD         0x80
 #define STRING_GFLAGS_ANONYMOUS         0x100
 #define STRING_GFLAGS_SINGLE_MATCH      0x200
@@ -70,12 +70,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STRING_GFLAGS_CHAIN_TAIL        0x4000
 #define STRING_GFLAGS_FIXED_OFFSET      0x8000
 #define STRING_GFLAGS_GREEDY_REGEXP     0x10000
+#define STRING_GFLAGS_DOT_ALL           0x20000
 
 #define STRING_IS_HEX(x) \
     (((x)->g_flags) & STRING_GFLAGS_HEXADECIMAL)
 
 #define STRING_IS_NO_CASE(x) \
     (((x)->g_flags) & STRING_GFLAGS_NO_CASE)
+
+#define STRING_IS_DOT_ALL(x) \
+    (((x)->g_flags) & STRING_GFLAGS_DOT_ALL)
 
 #define STRING_IS_ASCII(x) \
     (((x)->g_flags) & STRING_GFLAGS_ASCII)
@@ -107,8 +111,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STRING_IS_LITERAL(x) \
     (((x)->g_flags) & STRING_GFLAGS_LITERAL)
 
-#define STRING_IS_FAST_HEX_REGEXP(x) \
-    (((x)->g_flags) & STRING_GFLAGS_FAST_HEX_REGEXP)
+#define STRING_IS_FAST_REGEXP(x) \
+    (((x)->g_flags) & STRING_GFLAGS_FAST_REGEXP)
 
 #define STRING_IS_CHAIN_PART(x) \
     (((x)->g_flags) & STRING_GFLAGS_CHAIN_PART)
@@ -482,7 +486,7 @@ typedef struct _YR_OBJECT_STRING
 typedef struct _YR_OBJECT_REGEXP
 {
   OBJECT_COMMON_FIELDS
-  RE* value;
+  RE_AST* value;
 
 } YR_OBJECT_REGEXP;
 
@@ -521,6 +525,7 @@ typedef union _YR_VALUE {
   YR_OBJECT* o;
   YR_STRING* s;
   SIZED_STRING* ss;
+  RE* re;
 
 } YR_VALUE;
 

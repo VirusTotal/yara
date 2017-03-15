@@ -894,17 +894,13 @@ regexp
         if (compiler->last_result == ERROR_INVALID_REGULAR_EXPRESSION)
           yr_compiler_set_error_extra_info(compiler, error.message);
 
-        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-
         if (compiler->last_result == ERROR_SUCCESS)
           compiler->last_result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              re->root_node->forward_code,
+              re,
               NULL,
               NULL);
-
-        yr_re_destroy(re);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 

@@ -292,7 +292,7 @@ int _yr_parser_write_string(
     int flags,
     YR_COMPILER* compiler,
     SIZED_STRING* str,
-    RE* re,
+    RE_AST* re_ast,
     YR_STRING** string,
     int* min_atom_quality)
 {
@@ -328,7 +328,7 @@ int _yr_parser_write_string(
   if (flags & STRING_GFLAGS_HEXADECIMAL ||
       flags & STRING_GFLAGS_REGEXP)
   {
-    literal_string = yr_re_extract_literal(re);
+    literal_string = yr_re_ast_extract_literal(re_ast);
 
     if (literal_string != NULL)
     {
@@ -386,10 +386,15 @@ int _yr_parser_write_string(
   }
   else
   {
-    result = yr_re_emit_code(re, compiler->re_code_arena);
+    // Emit forwards code
+    result = yr_re_ast_emit_code(re_ast, compiler->re_code_arena, FALSE);
+
+    // Emit backwards code
+    if (result == ERROR_SUCCESS)
+      result = yr_re_ast_emit_code(re_ast, compiler->re_code_arena, TRUE);
 
     if (result == ERROR_SUCCESS)
-      result = yr_atoms_extract_from_re(re, flags, &atom_list);
+      result = yr_atoms_extract_from_re(re_ast, flags, &atom_list);
   }
 
   if (result == ERROR_SUCCESS)
@@ -437,7 +442,6 @@ YR_STRING* yr_parser_reduce_string_declaration(
 {
   int min_atom_quality;
   int min_atom_quality_aux;
-  int re_flags = 0;
 
   int32_t min_gap;
   int32_t max_gap;
@@ -449,8 +453,8 @@ YR_STRING* yr_parser_reduce_string_declaration(
   YR_STRING* aux_string;
   YR_STRING* prev_string;
 
-  RE* re = NULL;
-  RE* remainder_re = NULL;
+  RE_AST* re_ast = NULL;
+  RE_AST* remainder_re_ast = NULL;
 
   RE_ERROR re_error;
 
@@ -482,7 +486,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
     string_flags |= STRING_GFLAGS_NO_CASE;
 
   if (str->flags & SIZED_STRING_FLAGS_DOT_ALL)
-    re_flags |= RE_FLAGS_DOT_ALL;
+    string_flags |= STRING_GFLAGS_DOT_ALL;
 
   if (strcmp(identifier,"$") == 0)
     string_flags |= STRING_GFLAGS_ANONYMOUS;
@@ -490,8 +494,10 @@ YR_STRING* yr_parser_reduce_string_declaration(
   if (!(string_flags & STRING_GFLAGS_WIDE))
     string_flags |= STRING_GFLAGS_ASCII;
 
-  if (string_flags & STRING_GFLAGS_NO_CASE)
-    re_flags |= RE_FLAGS_NO_CASE;
+  // Hex strings are always handled as DOT_ALL regexps.
+
+  if (string_flags & STRING_GFLAGS_HEXADECIMAL)
+    string_flags |= STRING_GFLAGS_DOT_ALL;
 
   // The STRING_GFLAGS_SINGLE_MATCH flag indicates that finding
   // a single match for the string is enough. This is true in
@@ -514,10 +520,10 @@ YR_STRING* yr_parser_reduce_string_declaration(
   {
     if (string_flags & STRING_GFLAGS_HEXADECIMAL)
       compiler->last_result = yr_re_parse_hex(
-          str->c_string, re_flags, &re, &re_error);
+          str->c_string, &re_ast, &re_error);
     else
       compiler->last_result = yr_re_parse(
-          str->c_string, re_flags, &re, &re_error);
+          str->c_string, &re_ast, &re_error);
 
     if (compiler->last_result != ERROR_SUCCESS)
     {
@@ -536,8 +542,8 @@ YR_STRING* yr_parser_reduce_string_declaration(
       goto _exit;
     }
 
-    if (re->flags & RE_FLAGS_FAST_HEX_REGEXP)
-      string_flags |= STRING_GFLAGS_FAST_HEX_REGEXP;
+    if (re_ast->flags & RE_FLAGS_FAST_REGEXP)
+      string_flags |= STRING_GFLAGS_FAST_REGEXP;
 
     // Regular expressions in the strings section can't mix greedy and ungreedy
     // quantifiers like .* and .*?. That's because these regular expressions can
@@ -545,8 +551,8 @@ YR_STRING* yr_parser_reduce_string_declaration(
     // need the regexp to be all-greedy or all-ungreedy to be able to properly
     // calculate the length of the match.
 
-    if ((re->flags & RE_FLAGS_GREEDY) &&
-        (re->flags & RE_FLAGS_UNGREEDY))
+    if ((re_ast->flags & RE_FLAGS_GREEDY) &&
+        (re_ast->flags & RE_FLAGS_UNGREEDY))
     {
       compiler->last_result = ERROR_INVALID_REGULAR_EXPRESSION;
 
@@ -557,10 +563,10 @@ YR_STRING* yr_parser_reduce_string_declaration(
       goto _exit;
     }
 
-    if (re->flags & RE_FLAGS_GREEDY)
+    if (re_ast->flags & RE_FLAGS_GREEDY)
       string_flags |= STRING_GFLAGS_GREEDY_REGEXP;
 
-    if (yr_re_contains_dot_star(re))
+    if (yr_re_ast_contains_dot_star(re_ast))
     {
       yywarning(
           yyscanner,
@@ -568,8 +574,8 @@ YR_STRING* yr_parser_reduce_string_declaration(
           identifier);
     }
 
-    compiler->last_result = yr_re_split_at_chaining_point(
-        re, &re, &remainder_re, &min_gap, &max_gap);
+    compiler->last_result = yr_re_ast_split_at_chaining_point(
+        re_ast, &re_ast, &remainder_re_ast, &min_gap, &max_gap);
 
     if (compiler->last_result != ERROR_SUCCESS)
       goto _exit;
@@ -579,14 +585,14 @@ YR_STRING* yr_parser_reduce_string_declaration(
         string_flags,
         compiler,
         NULL,
-        re,
+        re_ast,
         &string,
         &min_atom_quality);
 
     if (compiler->last_result != ERROR_SUCCESS)
       goto _exit;
 
-    if (remainder_re != NULL)
+    if (remainder_re_ast != NULL)
     {
       string->g_flags |= STRING_GFLAGS_CHAIN_TAIL | STRING_GFLAGS_CHAIN_PART;
       string->chain_gap_min = min_gap;
@@ -598,15 +604,15 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
     aux_string = string;
 
-    while (remainder_re != NULL)
+    while (remainder_re_ast != NULL)
     {
-      // Destroy regexp pointed by 're' before yr_re_split_at_chaining_point
-      // overwrites 're' with another value.
+      // Destroy regexp pointed by 're_ast' before yr_re_split_at_chaining_point
+      // overwrites 're_ast' with another value.
 
-      yr_re_destroy(re);
+      yr_re_ast_destroy(re_ast);
 
-      compiler->last_result = yr_re_split_at_chaining_point(
-          remainder_re, &re, &remainder_re, &min_gap, &max_gap);
+      compiler->last_result = yr_re_ast_split_at_chaining_point(
+          remainder_re_ast, &re_ast, &remainder_re_ast, &min_gap, &max_gap);
 
       if (compiler->last_result != ERROR_SUCCESS)
         goto _exit;
@@ -618,7 +624,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
           string_flags,
           compiler,
           NULL,
-          re,
+          re_ast,
           &aux_string,
           &min_atom_quality_aux);
 
@@ -679,11 +685,11 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
 _exit:
 
-  if (re != NULL)
-    yr_re_destroy(re);
+  if (re_ast != NULL)
+    yr_re_ast_destroy(re_ast);
 
-  if (remainder_re != NULL)
-    yr_re_destroy(remainder_re);
+  if (remainder_re_ast != NULL)
+    yr_re_ast_destroy(remainder_re_ast);
 
   if (compiler->last_result != ERROR_SUCCESS)
     return NULL;

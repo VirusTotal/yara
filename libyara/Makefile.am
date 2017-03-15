@@ -28,7 +28,21 @@ MODULES += modules/pe_utils.c
 
 AM_YFLAGS=-d
 
-AM_CFLAGS=-O3 -Wall -Wno-deprecated-declarations -std=gnu99 -I$(srcdir)/include
+AM_CFLAGS=-Wall -Wno-deprecated-declarations -std=gnu99 -I$(srcdir)/include
+
+if DEBUG
+AM_CFLAGS+=-g
+endif
+
+if OPTIMIZATION
+AM_CFLAGS+=-O3
+else
+AM_CFLAGS+=-O0
+endif
+
+if ADDRESS_SANITIZER
+AM_CFLAGS+=-fsanitize=address
+endif
 
 if GCC
 AM_CFLAGS+=-fvisibility=hidden
