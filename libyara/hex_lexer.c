@@ -548,8 +548,8 @@ with noyywrap then we can remove this pragma.
 #define ERROR_IF(x, error) \
     if (x) \
     { \
-      RE* re = hex_yyget_extra(yyscanner); \
-      re->error_code = error; \
+      RE_AST* re_ast = hex_yyget_extra(yyscanner); \
+      re_ast->error_code = error; \
       YYABORT; \
     } \
 
@@ -2221,7 +2221,7 @@ void yyerror(
 
 int yr_parse_hex_string(
     const char* hex_string,
-    RE** re,
+    RE_AST** re_ast,
     RE_ERROR* error)
 {
   yyscan_t yyscanner;
@@ -2237,7 +2237,7 @@ int yr_parse_hex_string(
   if (setjmp(recovery_state) != 0)
     return ERROR_INTERNAL_FATAL_ERROR;
 
-  FAIL_ON_ERROR(yr_re_create(re));
+  FAIL_ON_ERROR(yr_re_ast_create(re_ast));
 
   // The RE_FLAGS_FAST_REGEXP flag indicates a regular expression can be
   // matched by faster algorithm. These regular expressions come from hex
@@ -2247,15 +2247,15 @@ int yr_parse_hex_string(
   //
   // This flag is unset later during parsing if alternatives are used.
 
-  (*re)->flags |= RE_FLAGS_FAST_REGEXP;
+  (*re_ast)->flags |= RE_FLAGS_FAST_REGEXP;
 
   // Set RE_FLAGS_DOT_ALL because in hex strings the "dot" (?? in this case)
   // must match all characters including new-line.
 
-  (*re)->flags |= RE_FLAGS_DOT_ALL;
+  (*re_ast)->flags |= RE_FLAGS_DOT_ALL;
 
   hex_yylex_init(&yyscanner);
-  hex_yyset_extra(*re,yyscanner);
+  hex_yyset_extra(*re_ast,yyscanner);
   hex_yy_scan_string(hex_string,yyscanner);
   yyparse(yyscanner, &lex_env);
   hex_yylex_destroy(yyscanner);

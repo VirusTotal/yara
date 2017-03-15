@@ -241,28 +241,28 @@ void yr_re_node_destroy(
 }
 
 
-int yr_re_create(
-    RE** re)
+int yr_re_ast_create(
+    RE_AST** re_ast)
 {
-  *re = (RE*) yr_malloc(sizeof(RE));
+  *re_ast = (RE_AST*) yr_malloc(sizeof(RE_AST));
 
-  if (*re == NULL)
+  if (*re_ast == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  (*re)->flags = 0;
-  (*re)->root_node = NULL;
+  (*re_ast)->flags = 0;
+  (*re_ast)->root_node = NULL;
 
   return ERROR_SUCCESS;
 }
 
 
-void yr_re_destroy(
-    RE* re)
+void yr_re_ast_destroy(
+    RE_AST* re_ast)
 {
-  if (re->root_node != NULL)
-    yr_re_node_destroy(re->root_node);
+  if (re_ast->root_node != NULL)
+    yr_re_node_destroy(re_ast->root_node);
 
-  yr_free(re);
+  yr_free(re_ast);
 }
 
 
@@ -275,10 +275,10 @@ void yr_re_destroy(
 
 int yr_re_parse(
     const char* re_string,
-    RE** re,
+    RE_AST** re_ast,
     RE_ERROR* error)
 {
-  return yr_parse_re_string(re_string, re, error);
+  return yr_parse_re_string(re_string, re_ast, error);
 }
 
 
@@ -291,10 +291,10 @@ int yr_re_parse(
 
 int yr_re_parse_hex(
     const char* hex_string,
-    RE** re,
+    RE_AST** re_ast,
     RE_ERROR* error)
 {
-  return yr_parse_hex_string(hex_string, re, error);
+  return yr_parse_hex_string(hex_string, re_ast, error);
 }
 
 
@@ -308,32 +308,32 @@ int yr_re_compile(
     const char* re_string,
     int flags,
     YR_ARENA* code_arena,
-    RE_COMPILED** re_compiled,
+    RE** re,
     RE_ERROR* error)
 {
-  RE* re;
-  RE_COMPILED _re_compiled;
+  RE_AST* re_ast;
+  RE _re;
 
   FAIL_ON_ERROR(yr_arena_reserve_memory(
       code_arena, sizeof(int64_t) + RE_MAX_CODE_SIZE));
 
-  FAIL_ON_ERROR(yr_re_parse(re_string, &re, error));
+  FAIL_ON_ERROR(yr_re_parse(re_string, &re_ast, error));
 
-  _re_compiled.flags = flags;
+  _re.flags = flags;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_arena_write_data(
           code_arena,
-          &_re_compiled,
-          sizeof(_re_compiled),
-          (void**) re_compiled),
-      yr_re_destroy(re));
+          &_re,
+          sizeof(_re),
+          (void**) re),
+      yr_re_ast_destroy(re_ast));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_re_emit_code(re, code_arena, FALSE),
-      yr_re_destroy(re));
+      yr_re_ast_emit_code(re_ast, code_arena, FALSE),
+      yr_re_ast_destroy(re_ast));
 
-  yr_re_destroy(re);
+  yr_re_ast_destroy(re_ast);
 
   return ERROR_SUCCESS;
 }
@@ -345,29 +345,29 @@ int yr_re_compile(
 // Verifies if the target string matches the pattern
 //
 // Args:
-//    RE_COMPILED* re_compiled    -  A pointer to a compiled regexp
-//    char* target                -  Target string
+//    RE* re          -  A pointer to a compiled regexp
+//    char* target    -  Target string
 //
 // Returns:
 //    See return codes for yr_re_exec
 
 
 int yr_re_match(
-    RE_COMPILED* re_compiled,
+    RE* re,
     const char* target)
 {
   return yr_re_exec(
-      re_compiled->code,
+      re->code,
       (uint8_t*) target,
       strlen(target),
-      re_compiled->flags | RE_FLAGS_SCAN,
+      re->flags | RE_FLAGS_SCAN,
       NULL,
       NULL);
 }
 
 
 //
-// yr_re_extract_literal
+// yr_re_ast_extract_literal
 //
 // Verifies if the provided regular expression is just a literal string
 // like "abc", "12345", without any wildcard, operator, etc. In that case
@@ -377,11 +377,11 @@ int yr_re_match(
 // calling yr_free.
 //
 
-SIZED_STRING* yr_re_extract_literal(
-    RE* re)
+SIZED_STRING* yr_re_ast_extract_literal(
+    RE_AST* re_ast)
 {
   SIZED_STRING* string;
-  RE_NODE* node = re->root_node;
+  RE_NODE* node = re_ast->root_node;
 
   int i, length = 0;
   char tmp;
@@ -410,7 +410,7 @@ SIZED_STRING* yr_re_extract_literal(
 
   string->length = 0;
 
-  node = re->root_node;
+  node = re_ast->root_node;
 
   while (node->type == RE_NODE_CONCAT)
   {
@@ -449,15 +449,15 @@ int _yr_re_node_contains_dot_star(
 }
 
 
-int yr_re_contains_dot_star(
-    RE* re)
+int yr_re_ast_contains_dot_star(
+    RE_AST* re_ast)
 {
-  return _yr_re_node_contains_dot_star(re->root_node);
+  return _yr_re_node_contains_dot_star(re_ast->root_node);
 }
 
 
 //
-// yr_re_split_at_chaining_point
+// yr_re_ast_split_at_chaining_point
 //
 // In some cases splitting a regular expression in two is more efficient that
 // having a single regular expression. This happens when the regular expression
@@ -473,21 +473,21 @@ int yr_re_contains_dot_star(
 // always the left child of its parent if the parent is also a RE_NODE_CONCAT.
 //
 
-int yr_re_split_at_chaining_point(
-    RE* re,
-    RE** result_re,
-    RE** remainder_re,
+int yr_re_ast_split_at_chaining_point(
+    RE_AST* re_ast,
+    RE_AST** result_re_ast,
+    RE_AST** remainder_re_ast,
     int32_t* min_gap,
     int32_t* max_gap)
 {
-  RE_NODE* node = re->root_node;
-  RE_NODE* child = re->root_node->left;
+  RE_NODE* node = re_ast->root_node;
+  RE_NODE* child = re_ast->root_node->left;
   RE_NODE* parent = NULL;
 
   int result;
 
-  *result_re = re;
-  *remainder_re = NULL;
+  *result_re_ast = re_ast;
+  *remainder_re_ast = NULL;
   *min_gap = 0;
   *max_gap = 0;
 
@@ -499,20 +499,20 @@ int yr_re_split_at_chaining_point(
         (child->right->start > STRING_CHAINING_THRESHOLD ||
          child->right->end > STRING_CHAINING_THRESHOLD))
     {
-      result = yr_re_create(remainder_re);
+      result = yr_re_ast_create(remainder_re_ast);
 
       if (result != ERROR_SUCCESS)
         return result;
 
-      (*remainder_re)->root_node = child->left;
-      (*remainder_re)->flags = re->flags;
+      (*remainder_re_ast)->root_node = child->left;
+      (*remainder_re_ast)->flags = re_ast->flags;
 
       child->left = NULL;
 
       if (parent != NULL)
         parent->left = node->right;
       else
-        (*result_re)->root_node = node->right;
+        (*result_re_ast)->root_node = node->right;
 
       node->right = NULL;
 
@@ -1248,8 +1248,8 @@ int _yr_re_emit(
 }
 
 
-int yr_re_emit_code(
-    RE* re,
+int yr_re_ast_emit_code(
+    RE_AST* re_ast,
     YR_ARENA* arena,
     int backwards_code)
 {
@@ -1272,7 +1272,7 @@ int yr_re_emit_code(
 
   FAIL_ON_ERROR(_yr_re_emit(
       &emit_context,
-      re->root_node,
+      re_ast->root_node,
       backwards_code ? EMIT_BACKWARDS : 0,
       NULL,
       &code_size));
@@ -2384,7 +2384,7 @@ void _yr_re_print_node(
 }
 
 void yr_re_print(
-    RE* re)
+    RE_AST* re_ast)
 {
-  _yr_re_print_node(re->root_node);
+  _yr_re_print_node(re_ast->root_node);
 }

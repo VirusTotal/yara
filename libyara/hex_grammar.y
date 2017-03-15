@@ -49,7 +49,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YYFREE yr_free
 
 #define mark_as_not_fast_regexp() \
-    ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
+    ((RE_AST*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
 
 #define ERROR_IF(x, error) \
     if (x) \
@@ -104,8 +104,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 hex_string
     : '{' tokens '}'
       {
-        RE* re = yyget_extra(yyscanner);
-        re->root_node = $2;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->root_node = $2;
       }
     ;
 

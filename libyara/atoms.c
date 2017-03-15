@@ -1021,7 +1021,7 @@ int yr_atoms_extract_triplets(
 //
 
 int yr_atoms_extract_from_re(
-    RE* re,
+    RE_AST* re_ast,
     int flags,
     YR_ATOM_LIST_ITEM** atoms)
 {
@@ -1047,7 +1047,7 @@ int yr_atoms_extract_from_re(
   atom_tree->current_leaf = NULL;
 
   atom_tree->root_node = _yr_atoms_extract_from_re_node(
-      re->root_node, atom_tree, atom_tree->root_node);
+      re_ast->root_node, atom_tree, atom_tree->root_node);
 
   if (atom_tree->root_node == NULL)
   {
@@ -1088,7 +1088,7 @@ int yr_atoms_extract_from_re(
     // quality atoms.
 
     FAIL_ON_ERROR_WITH_CLEANUP(
-        yr_atoms_extract_triplets(re->root_node, &triplet_atoms),
+        yr_atoms_extract_triplets(re_ast->root_node, &triplet_atoms),
         {
           yr_atoms_list_destroy(*atoms);
           yr_atoms_list_destroy(triplet_atoms);
@@ -1151,7 +1151,7 @@ int yr_atoms_extract_from_re(
 
     (*atoms)->atom_length = 0;
     (*atoms)->backtrack = 0;
-    (*atoms)->forward_code = re->root_node->forward_code;
+    (*atoms)->forward_code = re_ast->root_node->forward_code;
     (*atoms)->backward_code = NULL;
     (*atoms)->next = NULL;
   }

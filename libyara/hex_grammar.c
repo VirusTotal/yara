@@ -91,7 +91,7 @@
 #define YYFREE yr_free
 
 #define mark_as_not_fast_regexp() \
-    ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
+    ((RE_AST*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
 
 #define ERROR_IF(x, error) \
     if (x) \
@@ -1323,8 +1323,8 @@ yyreduce:
         case 2:
 #line 106 "hex_grammar.y" /* yacc.c:1646  */
     {
-        RE* re = yyget_extra(yyscanner);
-        re->root_node = (yyvsp[-1].re_node);
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->root_node = (yyvsp[-1].re_node);
       }
 #line 1330 "hex_grammar.c" /* yacc.c:1646  */
     break;

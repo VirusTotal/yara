@@ -2628,7 +2628,7 @@ void yyerror(
 
 int yr_parse_re_string(
   const char* re_string,
-  RE** re,
+  RE_AST** re_ast,
   RE_ERROR* error)
 {
   yyscan_t yyscanner;
@@ -2642,18 +2642,18 @@ int yr_parse_re_string(
   if (setjmp(recovery_state) != 0)
     return ERROR_INTERNAL_FATAL_ERROR;
 
-  FAIL_ON_ERROR(yr_re_create(re));
+  FAIL_ON_ERROR(yr_re_ast_create(re_ast));
 
   re_yylex_init(&yyscanner);
-  re_yyset_extra(*re,yyscanner);
+  re_yyset_extra(*re_ast,yyscanner);
   re_yy_scan_string(re_string,yyscanner);
   yyparse(yyscanner, &lex_env);
   re_yylex_destroy(yyscanner);
 
   if (lex_env.last_error_code != ERROR_SUCCESS)
   {
-    yr_re_destroy(*re);
-    *re = NULL;
+    yr_re_ast_destroy(*re_ast);
+    *re_ast = NULL;
 
     strlcpy(
         error->message,

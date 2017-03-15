@@ -486,7 +486,7 @@ typedef struct _YR_OBJECT_STRING
 typedef struct _YR_OBJECT_REGEXP
 {
   OBJECT_COMMON_FIELDS
-  RE* value;
+  RE_AST* value;
 
 } YR_OBJECT_REGEXP;
 
@@ -525,7 +525,7 @@ typedef union _YR_VALUE {
   YR_OBJECT* o;
   YR_STRING* s;
   SIZED_STRING* ss;
-  RE_COMPILED* re;
+  RE* re;
 
 } YR_VALUE;
 

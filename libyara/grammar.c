@@ -2412,7 +2412,7 @@ yyreduce:
 #line 872 "grammar.y" /* yacc.c:1646  */
     {
         SIZED_STRING* sized_string = (yyvsp[0].sized_string);
-        RE_COMPILED* re_compiled;
+        RE* re;
         RE_ERROR error;
 
         int re_flags = 0;
@@ -2427,7 +2427,7 @@ yyreduce:
             sized_string->c_string,
             re_flags,
             compiler->re_code_arena,
-            &re_compiled,
+            &re,
             &error);
 
         yr_free((yyvsp[0].sized_string));
@@ -2439,7 +2439,7 @@ yyreduce:
           compiler->last_result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              re_compiled,
+              re,
               NULL,
               NULL);
 
@@ -3933,4 +3933,3 @@ yyreturn:
   return yyresult;
 }
 #line 1945 "grammar.y" /* yacc.c:1906  */
-

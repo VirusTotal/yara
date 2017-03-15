@@ -100,7 +100,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 typedef struct RE RE;
-typedef struct RE_COMPILED RE_COMPILED;
+typedef struct RE_AST RE_AST;
 typedef struct RE_NODE RE_NODE;
 typedef struct RE_ERROR RE_ERROR;
 
@@ -142,14 +142,14 @@ struct RE_NODE
 };
 
 
-struct RE
+struct RE_AST
 {
   uint32_t flags;
   RE_NODE* root_node;
 };
 
 
-struct RE_COMPILED
+struct RE
 {
   uint32_t flags;
   uint8_t code[0];
@@ -169,36 +169,35 @@ typedef int RE_MATCH_CALLBACK_FUNC(
     void* args);
 
 
-int yr_re_create(
-    RE** re);
+int yr_re_ast_create(
+    RE_AST** re_ast);
+
+void yr_re_ast_destroy(
+    RE_AST* re_ast);
+
+void yr_re_ast_print(
+    RE_AST* re_ast);
+
+SIZED_STRING* yr_re_ast_extract_literal(
+    RE_AST* re_ast);
 
 
-int yr_re_parse(
-    const char* re_string,
-    RE** re,
-    RE_ERROR* error);
+int yr_re_ast_contains_dot_star(
+    RE_AST* re_ast);
 
 
-int yr_re_parse_hex(
-    const char* hex_string,
-    RE** re,
-    RE_ERROR* error);
+int yr_re_ast_split_at_chaining_point(
+    RE_AST* re_ast,
+    RE_AST** result_re_ast,
+    RE_AST** remainder_re_ast,
+    int32_t* min_gap,
+    int32_t* max_gap);
 
 
-int yr_re_compile(
-    const char* re_string,
-    int flags,
-    YR_ARENA* code_arena,
-    RE_COMPILED** re_compiled,
-    RE_ERROR* error);
-
-
-void yr_re_destroy(
-    RE* re);
-
-
-void yr_re_print(
-    RE* re);
+int yr_re_ast_emit_code(
+    RE_AST* re_ast,
+    YR_ARENA* arena,
+    int backwards_code);
 
 
 RE_NODE* yr_re_node_create(
@@ -209,28 +208,6 @@ RE_NODE* yr_re_node_create(
 
 void yr_re_node_destroy(
     RE_NODE* node);
-
-
-SIZED_STRING* yr_re_extract_literal(
-    RE* re);
-
-
-int yr_re_contains_dot_star(
-    RE* re);
-
-
-int yr_re_split_at_chaining_point(
-    RE* re,
-    RE** result_re,
-    RE** remainder_re,
-    int32_t* min_gap,
-    int32_t* max_gap);
-
-
-int yr_re_emit_code(
-    RE* re,
-    YR_ARENA* arena,
-    int backwards_code);
 
 
 int yr_re_exec(
@@ -251,8 +228,28 @@ int yr_re_fast_exec(
     void* callback_args);
 
 
+int yr_re_parse(
+    const char* re_string,
+    RE_AST** re_ast,
+    RE_ERROR* error);
+
+
+int yr_re_parse_hex(
+    const char* hex_string,
+    RE_AST** re_ast,
+    RE_ERROR* error);
+
+
+int yr_re_compile(
+    const char* re_string,
+    int flags,
+    YR_ARENA* code_arena,
+    RE** re,
+    RE_ERROR* error);
+
+
 int yr_re_match(
-    RE_COMPILED* re_compiled,
+    RE* re,
     const char* target);
 
 

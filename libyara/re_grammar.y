@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YYFREE yr_free
 
 #define mark_as_not_fast_regexp() \
-    ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
+    ((RE_AST*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
 
 #define ERROR_IF(x, error) \
     if (x) \
@@ -103,8 +103,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 re  : alternative
       {
-        RE* re = yyget_extra(yyscanner);
-        re->root_node = $1;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->root_node = $1;
       }
     | error
     ;
@@ -160,8 +160,8 @@ repeat
       {
         mark_as_not_fast_regexp();
 
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_GREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_GREEDY;
 
         $$ = yr_re_node_create(RE_NODE_STAR, $1, NULL);
 
@@ -172,8 +172,8 @@ repeat
       {
         mark_as_not_fast_regexp();
 
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_UNGREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_UNGREEDY;
 
         $$ = yr_re_node_create(RE_NODE_STAR, $1, NULL);
 
@@ -186,8 +186,8 @@ repeat
       {
         mark_as_not_fast_regexp();
 
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_GREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_GREEDY;
 
         $$ = yr_re_node_create(RE_NODE_PLUS, $1, NULL);
 
@@ -198,8 +198,8 @@ repeat
       {
         mark_as_not_fast_regexp();
 
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_UNGREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_UNGREEDY;
 
         $$ = yr_re_node_create(RE_NODE_PLUS, $1, NULL);
 
@@ -210,8 +210,8 @@ repeat
       }
     | single '?'
       {
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_GREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_GREEDY;
 
         if ($1->type == RE_NODE_ANY)
         {
@@ -233,8 +233,8 @@ repeat
       }
     | single '?' '?'
       {
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_UNGREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_UNGREEDY;
 
         if ($1->type == RE_NODE_ANY)
         {
@@ -257,8 +257,8 @@ repeat
       }
     | single _RANGE_
       {
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_GREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_GREEDY;
 
         if ($1->type == RE_NODE_ANY)
         {
@@ -279,8 +279,8 @@ repeat
       }
     | single _RANGE_ '?'
       {
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_UNGREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_UNGREEDY;
 
         if ($1->type == RE_NODE_ANY)
         {

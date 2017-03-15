@@ -86,7 +86,7 @@
 #define YYFREE yr_free
 
 #define mark_as_not_fast_regexp() \
-    ((RE*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
+    ((RE_AST*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
 
 #define ERROR_IF(x, error) \
     if (x) \
@@ -1333,8 +1333,8 @@ yyreduce:
         case 2:
 #line 105 "re_grammar.y" /* yacc.c:1646  */
     {
-        RE* re = yyget_extra(yyscanner);
-        re->root_node = (yyvsp[0].re_node);
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->root_node = (yyvsp[0].re_node);
       }
 #line 1340 "re_grammar.c" /* yacc.c:1646  */
     break;
@@ -1404,8 +1404,8 @@ yyreduce:
     {
         mark_as_not_fast_regexp();
 
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_GREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_GREEDY;
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_STAR, (yyvsp[-1].re_node), NULL);
 
@@ -1420,8 +1420,8 @@ yyreduce:
     {
         mark_as_not_fast_regexp();
 
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_UNGREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_UNGREEDY;
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_STAR, (yyvsp[-2].re_node), NULL);
 
@@ -1438,8 +1438,8 @@ yyreduce:
     {
         mark_as_not_fast_regexp();
 
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_GREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_GREEDY;
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_PLUS, (yyvsp[-1].re_node), NULL);
 
@@ -1454,8 +1454,8 @@ yyreduce:
     {
         mark_as_not_fast_regexp();
 
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_UNGREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_UNGREEDY;
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_PLUS, (yyvsp[-2].re_node), NULL);
 
@@ -1470,8 +1470,8 @@ yyreduce:
   case 13:
 #line 212 "re_grammar.y" /* yacc.c:1646  */
     {
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_GREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_GREEDY;
 
         if ((yyvsp[-1].re_node)->type == RE_NODE_ANY)
         {
@@ -1497,8 +1497,8 @@ yyreduce:
   case 14:
 #line 235 "re_grammar.y" /* yacc.c:1646  */
     {
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_UNGREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_UNGREEDY;
 
         if ((yyvsp[-2].re_node)->type == RE_NODE_ANY)
         {
@@ -1525,8 +1525,8 @@ yyreduce:
   case 15:
 #line 259 "re_grammar.y" /* yacc.c:1646  */
     {
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_GREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_GREEDY;
 
         if ((yyvsp[-1].re_node)->type == RE_NODE_ANY)
         {
@@ -1551,8 +1551,8 @@ yyreduce:
   case 16:
 #line 281 "re_grammar.y" /* yacc.c:1646  */
     {
-        RE* re = yyget_extra(yyscanner);
-        re->flags |= RE_FLAGS_UNGREEDY;
+        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast->flags |= RE_FLAGS_UNGREEDY;
 
         if ((yyvsp[-2].re_node)->type == RE_NODE_ANY)
         {

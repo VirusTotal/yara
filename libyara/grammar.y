@@ -871,7 +871,7 @@ regexp
     : _REGEXP_
       {
         SIZED_STRING* sized_string = $1;
-        RE_COMPILED* re_compiled;
+        RE* re;
         RE_ERROR error;
 
         int re_flags = 0;
@@ -886,7 +886,7 @@ regexp
             sized_string->c_string,
             re_flags,
             compiler->re_code_arena,
-            &re_compiled,
+            &re,
             &error);
 
         yr_free($1);
@@ -898,7 +898,7 @@ regexp
           compiler->last_result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              re_compiled,
+              re,
               NULL,
               NULL);
 

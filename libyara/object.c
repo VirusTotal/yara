@@ -334,7 +334,7 @@ void yr_object_destroy(
   YR_ARRAY_ITEMS* array_items;
   YR_DICTIONARY_ITEMS* dict_items;
 
-  RE* re;
+  RE_AST* re_ast;
   SIZED_STRING* str;
   int i;
 
@@ -362,9 +362,9 @@ void yr_object_destroy(
       break;
 
     case OBJECT_TYPE_REGEXP:
-      re = ((YR_OBJECT_REGEXP*) object)->value;
-      if (re != NULL)
-        yr_re_destroy(re);
+      re_ast = ((YR_OBJECT_REGEXP*) object)->value;
+      if (re_ast != NULL)
+        yr_re_ast_destroy(re_ast);
       break;
 
     case OBJECT_TYPE_ARRAY:
