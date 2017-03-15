@@ -1916,6 +1916,25 @@ define_function(calculate_checksum)
 }
 
 
+define_function(rva_to_offset)
+{
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  uint64_t rva, offset;
+
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  rva = integer_argument(1);
+  offset = pe_rva_to_offset(pe, rva);
+  if (offset == -1)
+    return_integer(UNDEFINED);
+
+  return_integer(offset);
+}
+
+
 begin_declarations;
 
   declare_integer("MACHINE_UNKNOWN");
@@ -2130,6 +2149,8 @@ begin_declarations;
 
   declare_integer("number_of_signatures");
   #endif
+
+  declare_function("rva_to_offset", "i", "i", rva_to_offset);
 
 end_declarations;
 
