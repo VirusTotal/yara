@@ -48,6 +48,7 @@ The following modules are not compiled into YARA by default:
 
 * cuckoo
 * magic
+* dotnet
 
 If you plan to use them you must pass the corresponding ``--enable-<module
 name>`` arguments to the ``configure`` script.
@@ -56,7 +57,8 @@ For example::
 
     ./configure --enable-cuckoo
     ./configure --enable-magic
-    ./configure --enable-cuckoo --enable-magic
+    ./configure --enable-dotnet
+    ./configure --enable-cuckoo --enable-magic --enable-dotnet
 
 Modules usually depend on external libraries, depending on the modules you
 choose to install you'll need the following libraries:
@@ -87,7 +89,7 @@ link below. Just download the version you want, unzip the archive, and put the
 To install the ``yara-python`` extension download and execute the installer
 corresponding to the version of Python you're using.
 
-`Download Windows binaries <https://b161268c3bf5a87bc67309e7c870820f5f39f672.googledrive.com/host/0BznOMqZ9f3VUek8yN3VvSGdhRFU/>`_
+`Download Windows binaries <https://www.dropbox.com/sh/umip8ndplytwzj1/AADdLRsrpJL1CM1vPVAxc5JZa?dl=0>`_
 
 If you want to build YARA yourself you can use the *Visual Studio 2010* or
 *Visual Studio 2015* projects found in the source tree under *./windows/vs2010*
