@@ -1504,7 +1504,6 @@ void dotnet_parse_com(
   PCLI_HEADER cli_header;
   PNET_METADATA metadata;
   int64_t metadata_root, offset;
-  char *version;
   STREAMS headers;
   WORD num_streams;
 
@@ -1537,14 +1536,7 @@ void dotnet_parse_com(
     return;
   }
 
-  version = (char*) yr_malloc(metadata->Length + 1);
-
-  if (!version)
-    return;
-
-  strncpy(version, metadata->Version, metadata->Length);
-  set_string(version, pe->object, "version");
-  yr_free(version);
+  set_sized_string(metadata->Version, metadata->Length, pe->object, "version");
 
   // The metadata structure has some variable length records after the version.
   // We must manually parse things from here on out.
