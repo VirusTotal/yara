@@ -328,7 +328,8 @@ int _pe_iterate_resources(
   {
     if (!struct_fits_in_pe(pe, entry, IMAGE_RESOURCE_DIRECTORY_ENTRY))
     {
-      return RESOURCE_ITERATOR_ABORTED;
+      result = RESOURCE_ITERATOR_ABORTED;
+      break;
     }
 
     switch(rsrc_tree_level)
@@ -352,59 +353,60 @@ int _pe_iterate_resources(
       PIMAGE_RESOURCE_DIRECTORY directory = (PIMAGE_RESOURCE_DIRECTORY) \
           (rsrc_data + RESOURCE_OFFSET(entry));
 
-      if (!struct_fits_in_pe(pe, directory, IMAGE_RESOURCE_DIRECTORY))
+      if (struct_fits_in_pe(pe, directory, IMAGE_RESOURCE_DIRECTORY))
       {
-        return RESOURCE_ITERATOR_ABORTED;
+        result = _pe_iterate_resources(
+            pe,
+            directory,
+            rsrc_data,
+            rsrc_tree_level + 1,
+            type,
+            id,
+            language,
+            type_string,
+            name_string,
+            lang_string,
+            callback,
+            callback_data);
       }
-
-      result = _pe_iterate_resources(
-          pe,
-          directory,
-          rsrc_data,
-          rsrc_tree_level + 1,
-          type,
-          id,
-          language,
-          type_string,
-          name_string,
-          lang_string,
-          callback,
-          callback_data);
-
-      if (result == RESOURCE_ITERATOR_ABORTED)
-        return RESOURCE_ITERATOR_ABORTED;
+      else
+      {
+        result = RESOURCE_ITERATOR_ABORTED;
+      }
     }
     else
     {
       PIMAGE_RESOURCE_DATA_ENTRY data_entry = (PIMAGE_RESOURCE_DATA_ENTRY) \
           (rsrc_data + RESOURCE_OFFSET(entry));
 
-      if (!struct_fits_in_pe(pe, data_entry, IMAGE_RESOURCE_DATA_ENTRY))
+      if (struct_fits_in_pe(pe, data_entry, IMAGE_RESOURCE_DATA_ENTRY))
       {
-        return RESOURCE_ITERATOR_ABORTED;
+        if (callback(
+            data_entry,
+            *type,
+            *id,
+            *language,
+            type_string,
+            name_string,
+            lang_string,
+            callback_data) == RESOURCE_CALLBACK_ABORT)
+        {
+          result = RESOURCE_ITERATOR_ABORTED;
+        }
       }
-
-      result = callback(
-          data_entry,
-          *type,
-          *id,
-          *language,
-          type_string,
-          name_string,
-          lang_string,
-          callback_data);
-
-      if (result == RESOURCE_CALLBACK_ABORT)
-        return RESOURCE_ITERATOR_ABORTED;
+      else
+      {
+        result = RESOURCE_ITERATOR_ABORTED;
+      }
     }
 
     if (result == RESOURCE_ITERATOR_ABORTED)
-      return result;
+      break;
 
     entry++;
   }
 
-  return RESOURCE_ITERATOR_FINISHED;
+  return result;
 }
 
 
