@@ -67,7 +67,7 @@ int err = 0;
 
 int main (int argc, char **argv)
 {
-  assert(ARENA_FILE_VERSION == 11);
+  assert(ARENA_FILE_VERSION == 12);
 
   CHECK_SIZE(YR_NAMESPACE, 4 * MAX_THREADS + 8);
   CHECK_OFFSET(YR_NAMESPACE, 4 * MAX_THREADS, name);
