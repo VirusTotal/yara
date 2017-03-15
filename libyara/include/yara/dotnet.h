@@ -122,6 +122,15 @@ typedef struct _TILDE_HEADER {
 //#define BIT_IMPORTSCOPE            0x35
 //#define BIT_STATEMACHINEMETHOD     0x36
 
+
+//
+// Element types. Note this is not a complete list as we aren't parsing all of
+// them. This only includes the ones we care about.
+// ECMA-335 Section II.23.1.16
+//
+#define ELEMENT_TYPE_STRING 0x0E
+
+
 // The string length of a typelib attribute is at most 0xFF.
 #define MAX_TYPELIB_SIZE 0xFF
 
@@ -169,6 +178,28 @@ typedef struct _ASSEMBLY_TABLE {
         DWORD Name_Long;
     } Name;
 } ASSEMBLY_TABLE, *PASSEMBLY_TABLE;
+
+
+//
+// Assembly Reference Table
+// ECMA-335 Section II.22.5
+//
+typedef struct _ASSEMBLYREF_TABLE {
+    WORD MajorVersion;
+    WORD MinorVersion;
+    WORD BuildNumber;
+    WORD RevisionNumber;
+    DWORD Flags;
+    union {
+        WORD PublicKeyOrToken_Short;
+        DWORD PublicKeyOrToken_Long;
+    } PublicKeyOrToken;
+    union {
+        WORD Name_Short;
+        DWORD Name_Long;
+    } Name;
+} ASSEMBLYREF_TABLE, *PASSEMBLYREF_TABLE;
+
 
 //
 // Manifest Resource Table
@@ -221,13 +252,39 @@ typedef struct _CUSTOMATTRIBUTE_TABLE {
 } CUSTOMATTRIBUTE_TABLE, *PCUSTOMATTRIBUTE_TABLE;
 
 
+//
+// Constant TAble
+// ECMA-335 Section II.22.9
+//
+typedef struct _CONSTANT_TABLE {
+  WORD Type;
+  union {
+    WORD Parent_Short;
+    DWORD Parent_Long;
+  } Parent;
+  union {
+    WORD Value_Short;
+    DWORD Value_Long;
+  } Value;
+} CONSTANT_TABLE, *PCONSTANT_TABLE;
+
+
 // Used to return offsets to the various headers.
 typedef struct _STREAMS {
     PSTREAM_HEADER guid;
     PSTREAM_HEADER tilde;
     PSTREAM_HEADER string;
     PSTREAM_HEADER blob;
+    PSTREAM_HEADER us;
 } STREAMS, *PSTREAMS;
+
+
+// Used to return the value of parsing a #US or #Blob entry.
+// ECMA-335 Section II.24.2.4
+typedef struct _BLOB_PARSE_RESULT {
+    uint8_t size; // Number of bytes parsed. This is the new offset.
+    DWORD length; // Value of the bytes parsed. This is the blob length.
+} BLOB_PARSE_RESULT, *PBLOB_PARSE_RESULT;
 
 
 // Used to store the number of rows of each table.
