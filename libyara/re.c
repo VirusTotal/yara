@@ -739,7 +739,7 @@ int _yr_re_emit(
   int emit_epilog;
 
   RE_REPEAT_ARGS repeat_args;
-  RE_REPEAT_ARGS* repeat_args_addr;
+  RE_REPEAT_ARGS* repeat_start_args_addr;
   RE_REPEAT_ANY_ARGS repeat_any_args;
 
   RE_NODE* left;
@@ -1165,7 +1165,7 @@ int _yr_re_emit(
           &repeat_args,
           sizeof(repeat_args),
           emit_prolog ? NULL : &instruction_addr,
-          (void**) &repeat_args_addr,
+          (void**) &repeat_start_args_addr,
           &inst_size));
 
       *code_size += inst_size;
@@ -1179,7 +1179,7 @@ int _yr_re_emit(
 
       *code_size += branch_size;
 
-      repeat_args_addr->offset = 2 * inst_size + branch_size;
+      repeat_start_args_addr->offset = 2 * inst_size + branch_size;
       repeat_args.offset = -branch_size;
 
       FAIL_ON_ERROR(_yr_emit_inst_arg_struct(
@@ -1222,7 +1222,6 @@ int _yr_re_emit(
 
       *code_size += branch_size;
     }
-
 
     if (emit_split)
       *split_offset_addr = split_size + branch_size;
@@ -1645,10 +1644,21 @@ int _yr_re_fiber_sync(
           FAIL_ON_ERROR(_yr_re_fiber_split(
               fiber_list, fiber_pool, branch_a, &branch_b));
 
+          // With RE_OPCODE_SPLIT_A the current fiber continues at the next
+          // instruction in the stream (branch A), while the newly created
+          // fiber starts at the address indicated by the instruction (branch B)
+          // RE_OPCODE_SPLIT_B has the opposite behavior.
+
           if (opcode == RE_OPCODE_SPLIT_B)
             yr_swap(branch_a, branch_b, RE_FIBER*);
 
+          // Branch A continues at the next instruction
+
           branch_a->ip += (sizeof(RE_SPLIT_ID_TYPE) + 3);
+
+          // Branch B adds the offset encoded in the opcode to its instruction
+          // pointer.
+
           branch_b->ip += *(int16_t*)(
               branch_b->ip
               + 1  // opcode size
@@ -1716,16 +1726,30 @@ int _yr_re_fiber_sync(
 
         repeat_any_args = (RE_REPEAT_ANY_ARGS*)(fiber->ip + 1);
 
+        // If repetition counter (rc) is -1 it means that we are reaching this
+        // instruction from the previous one in the instructions stream. In
+        // this case let's initialize the counter to 0 and start looping.
+
         if (fiber->rc == -1)
           fiber->rc = 0;
 
         if (fiber->rc < repeat_any_args->min)
         {
+          // Increase repetition counter and continue with next fiber. The
+          // instruction pointer for this fiber is not incremented yet, this
+          // fiber spins in this same instruction until reaching the minimum
+          // number of repetitions.
+
           fiber->rc++;
           fiber = fiber->next;
         }
         else if (fiber->rc < repeat_any_args->max)
         {
+          // Once the minimum number of repetitions are matched one fiber
+          // remains spinning in this instruction until reaching the maximum
+          // number of repetitions while new fibers are created. New fibers
+          // start executing at the next instruction.
+
           next = fiber->next;
           branch_a = fiber;
 
@@ -1745,6 +1769,11 @@ int _yr_re_fiber_sync(
         }
         else
         {
+          // When the maximum number of repetitions is reached the fiber keeps
+          // executing at the next instruction. The repetition counter is set
+          // to -1 indicating that we are not spinning in a repeat instruction
+          // anymore.
+
           fiber->ip += (1 + sizeof(RE_REPEAT_ANY_ARGS));
           fiber->rc = -1;
         }
@@ -1901,6 +1930,12 @@ int yr_re_exec(
           prolog;
           match = (flags & RE_FLAGS_DOT_ALL) || (*input != 0x0A);
           action = match ? ACTION_NONE : ACTION_KILL;
+
+          // The instruction pointer is not incremented here. The current fiber
+          // spins in this instruction until reaching the required number of
+          // repetitions. The code controlling the number of repetitions is in
+          // _yr_re_fiber_sync.
+
           break;
 
         case RE_OPCODE_LITERAL:
@@ -2008,6 +2043,7 @@ int yr_re_exec(
             match = !match;
 
           action = match ? ACTION_CONTINUE : ACTION_KILL;
+          fiber->ip += 1;
           break;
 
         case RE_OPCODE_MATCH_AT_START:
@@ -2016,12 +2052,14 @@ int yr_re_exec(
           else
             kill = (flags & RE_FLAGS_NOT_AT_START) || (bytes_matched != 0);
           action = kill ? ACTION_KILL : ACTION_CONTINUE;
+          fiber->ip += 1;
           break;
 
         case RE_OPCODE_MATCH_AT_END:
           action = input_size > (size_t) bytes_matched ?
               ACTION_KILL :
               ACTION_CONTINUE;
+          fiber->ip += 1;
           break;
 
         case RE_OPCODE_MATCH:
@@ -2084,7 +2122,6 @@ int yr_re_exec(
           break;
 
         case ACTION_CONTINUE:
-          fiber->ip += 1;
           error = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
           fail_if_error(error);
           break;
