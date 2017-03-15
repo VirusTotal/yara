@@ -915,13 +915,13 @@ Here you have some examples:
 .. code-block:: c
 
     int64_t arg_1 = integer_argument(1);
-    RE_CODE arg_2 = regexp_argument(2);
+    RE* arg_2 = regexp_argument(2);
     char* arg_3 = string_argument(3);
     SIZED_STRING* arg_4 = sized_string_argument(4);
     double arg_5 = float_argument(1);
 
 The C type for integer arguments is ``int64_t``, for float arguments is
-``double``, for regular expressions is ``RE_CODE``, for NULL-terminated strings
+``double``, for regular expressions is ``RE*``, for NULL-terminated strings
 is ``char*`` and for strings possibly containing NULL characters is
 ``SIZED_STRING*``. ``SIZED_STRING`` structures have the
 following attributes:
