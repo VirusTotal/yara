@@ -157,11 +157,12 @@ static uint64_t yr_elf_rva_to_offset_32(
 {
   // if the binary is an executable then prefer the program headers to resolve
   // the offset
-  if (elf_header->type == ELF_ET_EXEC)
+  if (yr_le16toh(elf_header->type) == ELF_ET_EXEC)
   {
     int i;
     elf32_program_header_t* program;
-    if (elf_header->ph_offset == 0 || elf_header->ph_entry_count == 0)
+    if (yr_le32toh(elf_header->ph_offset) == 0 ||
+        yr_le16toh(elf_header->ph_entry_count == 0))
       return 0;
 
     // check to prevent integer wraps
@@ -199,7 +200,8 @@ static uint64_t yr_elf_rva_to_offset_32(
     int i;
     elf32_section_header_t* section;
 
-    if (elf_header->sh_offset == 0 || elf_header->sh_entry_count == 0)
+    if (yr_le32toh(elf_header->sh_offset) == 0 ||
+        yr_le16toh(elf_header->sh_entry_count == 0))
       return 0;
 
     // check to prevent integer wraps
@@ -253,11 +255,12 @@ static uint64_t yr_elf_rva_to_offset_64(
 {
   // if the binary is an executable then prefer the program headers to resolve
   // the offset
-  if (elf_header->type == ELF_ET_EXEC)
+  if (yr_le16toh(elf_header->type) == ELF_ET_EXEC)
   {
     int i;
     elf64_program_header_t* program;
-    if (elf_header->ph_offset == 0 || elf_header->ph_entry_count == 0)
+    if (yr_le64toh(elf_header->ph_offset) == 0 ||
+        yr_le16toh(elf_header->ph_entry_count == 0))
       return 0;
 
     // check that 'ph_offset' doesn't wrap when added to the
@@ -290,7 +293,8 @@ static uint64_t yr_elf_rva_to_offset_64(
     int i;
     elf64_section_header_t* section;
 
-    if (elf_header->sh_offset == 0 || elf_header->sh_entry_count == 0)
+    if (yr_le64toh(elf_header->sh_offset) == 0 ||
+        yr_le16toh(elf_header->sh_entry_count) == 0)
       return 0;
 
     // check that 'sh_offset' doesn't wrap when added to the
