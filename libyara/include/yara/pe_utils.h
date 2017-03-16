@@ -18,29 +18,38 @@
 
 //
 // Imports are stored in a linked list. Each node (IMPORTED_DLL) contains the
-// name of the DLL and a pointer to another linked list of IMPORTED_FUNCTION
-// structures containing the names of imported functions.
+// name of the DLL and a pointer to another linked list of
+// IMPORT_EXPORT_FUNCTION structures containing the details of imported
+// functions.
 //
 
 typedef struct _IMPORTED_DLL
 {
   char *name;
 
-  struct _IMPORTED_FUNCTION *functions;
+  struct _IMPORT_EXPORT_FUNCTION *functions;
   struct _IMPORTED_DLL *next;
 
 } IMPORTED_DLL, *PIMPORTED_DLL;
 
 
-typedef struct _IMPORTED_FUNCTION
+//
+// This is used to track imported and exported functions. The "has_ordinal"
+// field is only used in the case of imports as those are optional. Every export
+// has an ordinal so we don't need the field there, but in the interest of
+// keeping duplicate code to a minimum we use this function for both imports and
+// exports.
+//
+
+typedef struct _IMPORT_EXPORT_FUNCTION
 {
   char *name;
   uint8_t has_ordinal;
   uint16_t ordinal;
 
-  struct _IMPORTED_FUNCTION *next;
+  struct _IMPORT_EXPORT_FUNCTION *next;
 
-} IMPORTED_FUNCTION, *PIMPORTED_FUNCTION;
+} IMPORT_EXPORT_FUNCTION, *PIMPORT_EXPORT_FUNCTION;
 
 
 typedef struct _PE
@@ -55,6 +64,7 @@ typedef struct _PE
 
   YR_OBJECT* object;
   IMPORTED_DLL* imported_dlls;
+  IMPORT_EXPORT_FUNCTION* exported_dlls;
   uint32_t resources;
 
 } PE;
