@@ -134,6 +134,7 @@ int limit = 0;
 int timeout = 1000000;
 int stack_size = DEFAULT_STACK_SIZE;
 int threads = 8;
+int show_str_len = FALSE;
 int fail_on_warnings = FALSE;
 
 
@@ -202,6 +203,8 @@ args_option_t options[] =
 
   OPT_BOOLEAN('h', "help", &show_help,
       "show this help and exit"),
+
+  OPT_BOOLEAN('L', "print-string-length", &show_str_len, "print length of matched strings"),
 
   OPT_END()
 };
@@ -659,7 +662,7 @@ int handle_message(
 
     // Show matched strings.
 
-    if (show_strings)
+    if (show_strings || show_str_len)
     {
       YR_STRING* string;
 
@@ -669,14 +672,20 @@ int handle_message(
 
         yr_string_matches_foreach(string, match)
         {
-          printf("0x%" PRIx64 ":%s: ",
-              match->base + match->offset,
-              string->identifier);
-
-          if (STRING_IS_HEX(string))
-            print_hex_string(match->data, match->data_length);
+          if (show_str_len)
+            printf("0x%" PRIx64 ":%d:%s", match->base + match->offset, match->data_length, string->identifier);
           else
-            print_string(match->data, match->data_length);
+            printf("0x%" PRIx64 ":%s", match->base + match->offset, string->identifier);
+
+          if (show_strings) {
+            printf(": ");
+            if (STRING_IS_HEX(string))
+              print_hex_string(match->data, match->data_length);
+            else
+              print_string(match->data, match->data_length);
+          }
+          else
+            printf("\n");
         }
       }
     }
