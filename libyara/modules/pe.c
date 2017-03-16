@@ -542,7 +542,7 @@ void pe_parse_version_info(
              yr_le16toh(string->Length) != 0 &&
              string < string_table)
       {
-        if (string->ValueLength > 0)
+        if (yr_le16toh(string->ValueLength) > 0)
         {
           char* string_value = (char*) ADD_OFFSET(string,
               sizeof(VERSION_INFO) + 2 * (strnlen_w(string->Key) + 1));
@@ -559,7 +559,7 @@ void pe_parse_version_info(
           }
         }
 
-        string = ADD_OFFSET(string, string->Length);
+        string = ADD_OFFSET(string, yr_le16toh(string->Length));
       }
     }
   }
@@ -953,7 +953,9 @@ void pe_parse_certificates(
   }
 
   // Store the end of directory, making comparisons easier.
-  eod = pe->data + yr_le32toh(directory->VirtualAddress) + directory->Size;
+  eod = pe->data + \
+        yr_le32toh(directory->VirtualAddress) + \
+        yr_le32toh(directory->Size);
 
   win_cert = (PWIN_CERTIFICATE) \
     (pe->data + yr_le32toh(directory->VirtualAddress));
@@ -1137,7 +1139,10 @@ void pe_parse_certificates(
       counter++;
     }
 
-    uintptr_t end = (uintptr_t)((uint8_t *) win_cert) + win_cert->Length;
+    uintptr_t end = \
+        (uintptr_t)((uint8_t *) win_cert) + \
+        yr_le32toh(win_cert->Length);
+
     win_cert = (PWIN_CERTIFICATE)(end + (end % 8));
 
     BIO_free(cert_bio);
@@ -1777,7 +1782,7 @@ static uint64_t rich_internal(
 
   for (i = 0; i < rich_count; i++)
   {
-    DWORD id_version = clear_rich_signature->versions[i].id_version;
+    DWORD id_version = yr_le32toh(clear_rich_signature->versions[i].id_version);
 
     int match_version = (version == RICH_VERSION_VERSION(id_version));
     int match_toolid = (toolid == RICH_VERSION_ID(id_version));
