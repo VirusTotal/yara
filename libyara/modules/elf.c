@@ -72,7 +72,7 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
     uint64_t rva,                                                              \
     size_t elf_size)                                                           \
 {                                                                              \
-  if (elf_header->type == ELF_ET_EXEC)                                         \
+  if (yr_##bo##16toh(elf_header->type) == ELF_ET_EXEC)                         \
   {                                                                            \
     int i;                                                                     \
                                                                                \
@@ -229,12 +229,12 @@ void parse_elf_header_##bits##_##bo(                                           \
       set_integer(yr_##bo##bits##toh(section->offset), elf_obj,                \
                   "sections[%i].offset", i);                                   \
                                                                                \
-      if (yr_##bo##bits##toh(section->name) < elf_size &&                      \
+      if (yr_##bo##32toh(section->name) < elf_size &&                          \
           str_table > (char*) elf &&                                           \
-          str_table + yr_##bo##bits##toh(section->name) <                      \
+          str_table + yr_##bo##32toh(section->name) <                          \
             (char*) elf + elf_size)                                            \
       {                                                                        \
-        set_string(str_table + yr_##bo##bits##toh(section->name), elf_obj,     \
+        set_string(str_table + yr_##bo##32toh(section->name), elf_obj,         \
                    "sections[%i].name", i);                                    \
       }                                                                        \
                                                                                \
