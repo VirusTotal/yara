@@ -39,6 +39,9 @@ Print metadata associated to the rule.
 .B \-s " --print-strings"
 Print strings found in the file.
 .TP
+.B \-L " --print-string-length"
+Print length of strings found in the file.
+.TP
 .BI \-p " number" " --threads=" number
 Use the specified
 .I number
