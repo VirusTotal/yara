@@ -64,7 +64,8 @@ typedef struct _PE
 
   YR_OBJECT* object;
   IMPORTED_DLL* imported_dlls;
-  IMPORT_EXPORT_FUNCTION* exported_dlls;
+  IMPORT_EXPORT_FUNCTION* exported_functions;
+  
   uint32_t resources;
 
 } PE;
