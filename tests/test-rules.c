@@ -596,6 +596,12 @@ static void test_hex_strings()
         condition: !a == 6 }",
       "12111222");
 
+  assert_true_rule(
+      "rule test { \
+        strings: $a = {31 [0-3] (32|33)} \
+        condition: !a == 2 }",
+      "122222222");
+
   assert_error(
       "rule test { \
         strings: $a = { 01 [0] 02 } \

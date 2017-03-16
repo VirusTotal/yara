@@ -1756,7 +1756,7 @@ int _yr_re_fiber_sync(
           FAIL_ON_ERROR(_yr_re_fiber_split(
               fiber_list, fiber_pool, branch_a, &branch_b));
 
-          if (opcode == RE_OPCODE_REPEAT_END_GREEDY)
+          if (opcode == RE_OPCODE_REPEAT_ANY_UNGREEDY)
             yr_swap(branch_a, branch_b, RE_FIBER*);
 
           branch_a->rc++;
