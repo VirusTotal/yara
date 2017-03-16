@@ -968,7 +968,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
   if (yr_le32toh(directory->VirtualAddress) == 0)
     return NULL;
 
-  offset = pe_rva_to_offset(pe, directory->VirtualAddress);
+  offset = pe_rva_to_offset(pe, yr_le32toh(directory->VirtualAddress));
 
   if (offset < 0)
     return NULL;
@@ -1008,16 +1008,8 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
     if (offset < 0)
       return head;
 
-    // The name is a NULL terminated string of variable length, so search for it
-    // but be sure not to go too far.
     remaining = pe->data_size - (size_t) offset;
-    eos = (uint8_t*) memmem((void*) (pe->data + offset), remaining, "\0", 1);
-    if (eos == NULL)
-      // No NULL terminator found. Abort!
-      continue;
-    else
-      // NULL found. Save the string!
-      name = (char *) yr_strndup((char*) (pe->data + offset), (size_t) (eos - (pe->data + offset)));
+    name = yr_strndup((char*) (pe->data + offset), remaining);
 
     // Get the corresponding ordinal. Note that we are not subtracting the
     // ordinal base here as we don't intend to index into the export address
