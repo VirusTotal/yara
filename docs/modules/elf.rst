@@ -185,6 +185,12 @@ Reference
 
         *Example: elf.sections[2].flags & elf.SHF_WRITE*
 
+    .. c:member:: address
+
+        .. versionadded:: 3.6.0
+
+        The virtual address the section starts at.
+
 
 .. c:type:: number_of_segments
 
@@ -255,6 +261,112 @@ Reference
     .. c:member:: virtual_address
 
         Virtual address at which the segment resides in memory.
+
+.. c:type:: dynamic_section_entries
+
+    .. versionadded:: 3.6.0
+
+    Number of entries in the dynamic section in the ELF file.
+
+.. c:type:: dynamic
+
+    .. versionadded:: 3.6.0
+
+    A zero-based array of dynamic objects, one for each entry in found in the
+    ELF's dynamic section. Individual dynamic objects can be accessed by using
+    the [] operator. Each dynamic object has the following attributes:
+
+    .. c:member:: type
+
+        Value that describes the type of dynamic section. Builtin values are:
+
+        .. c:type:: DT_NULL
+        .. c:type:: DT_NEEDED
+        .. c:type:: DT_PLTRELSZ
+        .. c:type:: DT_PLTGOT
+        .. c:type:: DT_HASH
+        .. c:type:: DT_STRTAB
+        .. c:type:: DT_SYMTAB
+        .. c:type:: DT_RELA
+        .. c:type:: DT_RELASZ
+        .. c:type:: DT_RELAENT
+        .. c:type:: DT_STRSZ
+        .. c:type:: DT_SYMENT
+        .. c:type:: DT_INIT
+        .. c:type:: DT_FINI
+        .. c:type:: DT_SONAME
+        .. c:type:: DT_RPATH
+        .. c:type:: DT_SYMBOLIC
+        .. c:type:: DT_REL
+        .. c:type:: DT_RELSZ
+        .. c:type:: DT_RELENT
+        .. c:type:: DT_PLTREL
+        .. c:type:: DT_DEBUG
+        .. c:type:: DT_TEXTREL
+        .. c:type:: DT_JMPREL
+        .. c:type:: DT_BIND_NOW
+        .. c:type:: DT_INIT_ARRAY
+        .. c:type:: DT_FINI_ARRAY
+        .. c:type:: DT_INIT_ARRAYSZ
+        .. c:type:: DT_FINI_ARRAYSZ
+        .. c:type:: DT_RUNPATH
+        .. c:type:: DT_FLAGS
+        .. c:type:: DT_ENCODING
+
+    .. c:member:: value
+
+        A value associated with the given type. The type of value (address,
+        size, etc.) is dependant on the type of dynamic entry.
+
+.. c:type:: symtab_entries
+
+    .. versionadded:: 3.6.0
+
+    Number of entries in the symbol table found in the ELF file.
+
+.. c:type:: symtab
+
+    .. versionadded:: 3.6.0
+
+    A zero-based array of symbol objects, one for each entry in found in the
+    ELF's SYMBTAB. Individual symbol objects can be accessed by using the []
+    operator. Each symbol object has the following attributes:
+
+    .. c:member:: name
+
+        The symbol's name.
+
+    .. c:member:: value
+
+        A value associated with the symbol. Generally a virtual address.
+
+    .. c:member:: size
+
+        The symbol's size.
+
+    .. c:member:: type
+
+        The type of symbol. Built values are:
+
+        .. c:type:: STT_NOTYPE
+        .. c:type:: STT_OBJECT
+        .. c:type:: STT_FUNC
+        .. c:type:: STT_SECTION
+        .. c:type:: STT_FILE
+        .. c:type:: STT_COMMON
+        .. c:type:: STT_TLS
+
+    .. c:member:: bind
+
+        The binding of the symbol. Builtin values are:
+
+        .. c:type:: STB_LOCAL
+        .. c:type:: STB_GLOBAL
+        .. c:type:: STB_WEAK
+
+    .. c:member:: shndx
+
+        The section index which the symbol is associated with.
 
 
 
