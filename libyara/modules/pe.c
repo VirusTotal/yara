@@ -486,7 +486,8 @@ void pe_parse_version_info(
 {
   PVERSION_INFO version_info;
 
-  int64_t version_info_offset = pe_rva_to_offset(pe, yr_le32toh(rsrc_data->OffsetToData));
+  int64_t version_info_offset = pe_rva_to_offset(
+      pe, yr_le32toh(rsrc_data->OffsetToData));
 
   if (version_info_offset < 0)
     return;
@@ -582,7 +583,10 @@ int pe_collect_resources(
 
   int64_t offset = pe_rva_to_offset(pe, yr_le32toh(rsrc_data->OffsetToData));
 
-  if (offset < 0 || !fits_in_pe(pe, pe->data + offset, yr_le32toh(rsrc_data->Size)))
+  if (offset < 0)
+    return RESOURCE_CALLBACK_CONTINUE;
+
+  if (!fits_in_pe(pe, pe->data + offset, yr_le32toh(rsrc_data->Size)))
     return RESOURCE_CALLBACK_CONTINUE;
 
   set_integer(
@@ -688,7 +692,8 @@ IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
     PIMAGE_THUNK_DATA64 thunks64 = (PIMAGE_THUNK_DATA64)(pe->data + offset);
 
     while (struct_fits_in_pe(pe, thunks64, IMAGE_THUNK_DATA64) &&
-           yr_le64toh(thunks64->u1.Ordinal) != 0 && num_functions < MAX_PE_IMPORTS)
+           yr_le64toh(thunks64->u1.Ordinal) != 0 &&
+           num_functions < MAX_PE_IMPORTS)
     {
       char* name = NULL;
       uint16_t ordinal = 0;
@@ -942,13 +947,14 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
 
   PIMAGE_DATA_DIRECTORY directory;
   PIMAGE_EXPORT_DIRECTORY exports;
+
   DWORD* names;
   WORD* ordinals;
 
   int64_t offset;
   uint32_t i;
   size_t remaining;
-  uint8_t* eos;
+
   int num_exports = 0;
 
   // If not a PE file, return UNDEFINED
@@ -967,8 +973,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
   if (offset < 0)
     return NULL;
 
-  exports = (PIMAGE_EXPORT_DIRECTORY) \
-      (pe->data + offset);
+  exports = (PIMAGE_EXPORT_DIRECTORY) (pe->data + offset);
 
   if (!struct_fits_in_pe(pe, exports, IMAGE_EXPORT_DIRECTORY))
     return NULL;
@@ -993,6 +998,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
 
   // Walk the number of functions, not the number of names as each exported
   // symbol has an ordinal value, but names are optional.
+
   for (i = 0; i < yr_le32toh(exports->NumberOfFunctions); i++)
   {
     char* name;
