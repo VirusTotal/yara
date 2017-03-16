@@ -2650,9 +2650,8 @@ int module_unload(
     dll = next_dll;
   }
 
-  yr_free(pe);
-
   func = pe->exported_dlls;
+
   while (func)
   {
     yr_free(func->name);
@@ -2660,5 +2659,8 @@ int module_unload(
     yr_free(func);
     func = next_func;
   }
+
+  yr_free(pe);
+
   return ERROR_SUCCESS;
 }
