@@ -1525,7 +1525,7 @@ define_function(exports)
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  IMPORT_EXPORT_FUNCTION* exported_func = pe->exported_dlls;
+  IMPORT_EXPORT_FUNCTION* exported_func = pe->exported_functions;
 
   while (exported_func != NULL)
   {
@@ -1549,7 +1549,7 @@ define_function(exports_ordinal)
   if (!pe)
     return_integer(UNDEFINED);
 
-  IMPORT_EXPORT_FUNCTION* exported_func = pe->exported_dlls;
+  IMPORT_EXPORT_FUNCTION* exported_func = pe->exported_functions;
 
   while (exported_func != NULL)
   {
@@ -2602,7 +2602,7 @@ int module_load(
         #endif
 
         pe->imported_dlls = pe_parse_imports(pe);
-        pe->exported_dlls = pe_parse_exports(pe);
+        pe->exported_functions = pe_parse_exports(pe);
 
         break;
       }
@@ -2650,7 +2650,7 @@ int module_unload(
     dll = next_dll;
   }
 
-  func = pe->exported_dlls;
+  func = pe->exported_functions;
 
   while (func)
   {
