@@ -1135,6 +1135,7 @@ int module_load(
 
       // In case of fat Mach-O files, some necessary data may be out of block.
 
+      st->parsed_size += block->size;
       continue;
     }
 
