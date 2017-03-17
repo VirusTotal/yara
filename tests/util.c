@@ -54,11 +54,12 @@ static void callback_function(
 }
 
 
-YR_RULES* compile_rule(
-    char* string)
+int compile_rule(
+    char* string,
+    YR_RULES** rules)
 {
   YR_COMPILER* compiler = NULL;
-  YR_RULES* rules = NULL;
+  int result = ERROR_SUCCESS;
 
   compile_error[0] = '\0';
 
@@ -71,14 +72,16 @@ YR_RULES* compile_rule(
   yr_compiler_set_callback(compiler, callback_function, NULL);
 
   if (yr_compiler_add_string(compiler, string, NULL) != 0)
+  {
+    result = compiler->last_error;
     goto _exit;
+  }
 
-  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
-    goto _exit;
+  result = yr_compiler_get_rules(compiler, rules);
 
 _exit:
   yr_compiler_destroy(compiler);
-  return rules;
+  return result;
 }
 
 
@@ -101,15 +104,15 @@ int matches_blob(
     uint8_t* blob,
     size_t len)
 {
+  YR_RULES* rules;
+
   if (blob == NULL)
   {
     blob = (uint8_t*) "dummy";
     len = 5;
   }
 
-  YR_RULES* rules = compile_rule(rule);
-
-  if (rules == NULL)
+  if (compile_rule(rule, &rules) != ERROR_SUCCESS)
   {
     fprintf(stderr, "failed to compile rule << %s >>: %s\n", rule, compile_error);
     exit(EXIT_FAILURE);
@@ -171,7 +174,7 @@ static int capture_matches(
       {
         int r = strncmp(
             f->expected, (char*) (match->data), match->data_length);
-            
+
         if (r == 0)
           f->found++;
       }
@@ -187,9 +190,9 @@ int capture_string(
     char* string,
     char* expected_string)
 {
-  YR_RULES* rules = compile_rule(rule);
+  YR_RULES* rules;
 
-  if (rules == NULL)
+  if (compile_rule(rule, &rules) != ERROR_SUCCESS)
   {
     fprintf(stderr, "failed to compile rule << %s >>: %s\n", rule, compile_error);
     exit(EXIT_FAILURE);

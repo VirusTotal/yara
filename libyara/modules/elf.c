@@ -72,7 +72,7 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
     uint64_t rva,                                                              \
     size_t elf_size)                                                           \
 {                                                                              \
-  if (elf_header->type == ELF_ET_EXEC)                                         \
+  if (yr_##bo##16toh(elf_header->type) == ELF_ET_EXEC)                         \
   {                                                                            \
     int i;                                                                     \
                                                                                \
@@ -213,27 +213,85 @@ void parse_elf_header_##bits##_##bo(                                           \
           section[yr_##bo##16toh(elf->sh_str_table_index)].offset);            \
     }                                                                          \
                                                                                \
+    elf##bits##_section_header_t* symtab = NULL;                               \
+    elf##bits##_section_header_t* sym_strtab = NULL;                           \
+                                                                               \
     for (i = 0; i < yr_##bo##16toh(elf->sh_entry_count); i++)                  \
     {                                                                          \
       set_integer(yr_##bo##32toh(section->type), elf_obj,                      \
                   "sections[%i].type", i);                                     \
       set_integer(yr_##bo##32toh(section->flags), elf_obj,                     \
                   "sections[%i].flags", i);                                    \
+      set_integer(yr_##bo##bits##toh(section->addr), elf_obj,                  \
+                  "sections[%i].address", i);                                  \
       set_integer(yr_##bo##bits##toh(section->size), elf_obj,                  \
                   "sections[%i].size", i);                                     \
       set_integer(yr_##bo##bits##toh(section->offset), elf_obj,                \
                   "sections[%i].offset", i);                                   \
                                                                                \
-      if (yr_##bo##bits##toh(section->name) < elf_size &&                      \
+      if (yr_##bo##32toh(section->name) < elf_size &&                          \
           str_table > (char*) elf &&                                           \
-          str_table + yr_##bo##bits##toh(section->name) <                      \
+          str_table + yr_##bo##32toh(section->name) <                          \
             (char*) elf + elf_size)                                            \
       {                                                                        \
-        set_string(str_table + yr_##bo##bits##toh(section->name), elf_obj,     \
+        set_string(str_table + yr_##bo##32toh(section->name), elf_obj,         \
                    "sections[%i].name", i);                                    \
       }                                                                        \
                                                                                \
+      if (yr_##bo##32toh(section->type) == ELF_SHT_SYMTAB)                     \
+      {                                                                        \
+        symtab = section;                                                      \
+        if (yr_##bo##32toh(symtab->link) < elf->sh_entry_count)                \
+        {                                                                      \
+          sym_strtab = ((elf##bits##_section_header_t*)((uint8_t*)             \
+            elf + yr_##bo##bits##toh(elf->sh_offset))) +                       \
+            yr_##bo##32toh(symtab->link);                                      \
+                                                                               \
+          if (yr_##bo##32toh(sym_strtab->type) != ELF_SHT_STRTAB ||            \
+              (yr_##bo##bits##toh(symtab->offset) +                            \
+               yr_##bo##bits##toh(symtab->size)) > elf_size ||                 \
+              (yr_##bo##bits##toh(sym_strtab->offset) +                        \
+               yr_##bo##bits##toh(sym_strtab->size)) > elf_size)               \
+          {                                                                    \
+            symtab = NULL;                                                     \
+            sym_strtab = NULL;                                                 \
+          }                                                                    \
+        }                                                                      \
+      }                                                                        \
       section++;                                                               \
+    }                                                                          \
+                                                                               \
+    if (symtab && sym_strtab)                                                  \
+    {                                                                          \
+      char* str_ptr = ((char*)elf) + yr_##bo##bits##toh(sym_strtab->offset);   \
+      char* end_str_ptr = str_ptr + yr_##bo##bits##toh(sym_strtab->size);      \
+                                                                               \
+      elf##bits##_sym_t* symbol = (elf##bits##_sym_t*)((char*) elf +           \
+        yr_##bo##bits##toh(symtab->offset));                                   \
+      char* end_symtab = (char*)elf + yr_##bo##bits##toh(symtab->offset) +     \
+        yr_##bo##bits##toh(symtab->size);                                      \
+                                                                               \
+      int j = 0;                                                               \
+      for ( ; ((char*)symbol + sizeof(elf##bits##_sym_t)) <= end_symtab;       \
+        symbol++, j++)                                                         \
+      {                                                                        \
+        set_integer(symbol->info >> 4, elf_obj, "symtab[%i].bind", j);         \
+        set_integer(symbol->info & 0xf, elf_obj, "symtab[%i].type", j);        \
+        set_integer(yr_##bo##16toh(symbol->shndx), elf_obj,                    \
+            "symtab[%i].shndx", j);                                            \
+        set_integer(yr_##bo##bits##toh(symbol->value), elf_obj,                \
+            "symtab[%i].value", j);                                            \
+        set_integer(yr_##bo##bits##toh(symbol->size), elf_obj,                 \
+            "symtab[%i].size", j);                                             \
+        if (yr_##bo##32toh(symbol->name) <                                     \
+            yr_##bo##bits##toh(sym_strtab->size) &&                            \
+            (str_ptr + yr_##bo##32toh(symbol->name)) < end_str_ptr)            \
+        {                                                                      \
+          set_string(str_ptr + yr_##bo##32toh(symbol->name), elf_obj,          \
+            "symtab[%i].name", j);                                             \
+        }                                                                      \
+      }                                                                        \
+      set_integer(j, elf_obj, "symtab_entries");                               \
     }                                                                          \
   }                                                                            \
                                                                                \
@@ -272,6 +330,32 @@ void parse_elf_header_##bits##_##bo(                                           \
           yr_##bo##bits##toh(segment->alignment), elf_obj,                     \
           "segments[%i].alignment", i);                                        \
                                                                                \
+      if (yr_##bo##32toh(segment->type) == ELF_PT_DYNAMIC)                     \
+      {                                                                        \
+        if ((yr_##bo##bits##toh(segment->offset) +                             \
+          sizeof(elf##bits##_dyn_t)) < elf_size)                               \
+        {                                                                      \
+          elf##bits##_dyn_t* dyn = (elf##bits##_dyn_t*)((char*)elf +           \
+            yr_##bo##bits##toh(segment->offset));                              \
+                                                                               \
+          int j = 0;                                                           \
+          for ( ; (((char*)dyn) + sizeof(elf##bits##_dyn_t)) <                 \
+            ((char*)elf + elf_size); dyn++, j++)                               \
+          {                                                                    \
+            set_integer(                                                       \
+                yr_##bo##bits##toh(dyn->tag), elf_obj, "dynamic[%i].type", j); \
+            set_integer(                                                       \
+                yr_##bo##bits##toh(dyn->val), elf_obj, "dynamic[%i].val", j);  \
+                                                                               \
+            if (dyn->tag == ELF_DT_NULL)                                       \
+            {                                                                  \
+              j++;                                                             \
+              break;                                                           \
+            }                                                                  \
+          }                                                                    \
+          set_integer(j, elf_obj, "dynamic_section_entries");                  \
+        }                                                                      \
+      }                                                                        \
       segment++;                                                               \
     }                                                                          \
   }                                                                            \
@@ -345,6 +429,7 @@ begin_declarations;
   begin_struct_array("sections");
     declare_integer("type");
     declare_integer("flags");
+    declare_integer("address");
     declare_string("name");
     declare_integer("size");
     declare_integer("offset");
@@ -361,6 +446,51 @@ begin_declarations;
   declare_integer("PT_GNU_EH_FRAME");
   declare_integer("PT_GNU_STACK");
 
+  declare_integer("DT_NULL");
+  declare_integer("DT_NEEDED");
+  declare_integer("DT_PLTRELSZ");
+  declare_integer("DT_PLTGOT");
+  declare_integer("DT_HASH");
+  declare_integer("DT_STRTAB");
+  declare_integer("DT_SYMTAB");
+  declare_integer("DT_RELA");
+  declare_integer("DT_RELASZ");
+  declare_integer("DT_RELAENT");
+  declare_integer("DT_STRSZ");
+  declare_integer("DT_SYMENT");
+  declare_integer("DT_INIT");
+  declare_integer("DT_FINI");
+  declare_integer("DT_SONAME");
+  declare_integer("DT_RPATH");
+  declare_integer("DT_SYMBOLIC");
+  declare_integer("DT_REL");
+  declare_integer("DT_RELSZ");
+  declare_integer("DT_RELENT");
+  declare_integer("DT_PLTREL");
+  declare_integer("DT_DEBUG");
+  declare_integer("DT_TEXTREL");
+  declare_integer("DT_JMPREL");
+  declare_integer("DT_BIND_NOW");
+  declare_integer("DT_INIT_ARRAY");
+  declare_integer("DT_FINI_ARRAY");
+  declare_integer("DT_INIT_ARRAYSZ");
+  declare_integer("DT_FINI_ARRAYSZ");
+  declare_integer("DT_RUNPATH");
+  declare_integer("DT_FLAGS");
+  declare_integer("DT_ENCODING");
+
+  declare_integer("STT_NOTYPE");
+  declare_integer("STT_OBJECT");
+  declare_integer("STT_FUNC");
+  declare_integer("STT_SECTION");
+  declare_integer("STT_FILE");
+  declare_integer("STT_COMMON");
+  declare_integer("STT_TLS");
+
+  declare_integer("STB_LOCAL");
+  declare_integer("STB_GLOBAL");
+  declare_integer("STB_WEAK");
+
   declare_integer("PF_X");
   declare_integer("PF_W");
   declare_integer("PF_R");
@@ -375,6 +505,22 @@ begin_declarations;
     declare_integer("memory_size");
     declare_integer("alignment");
   end_struct_array("segments");
+
+  declare_integer("dynamic_section_entries");
+  begin_struct_array("dynamic");
+    declare_integer("type");
+    declare_integer("val");
+  end_struct_array("dynamic");
+
+  declare_integer("symtab_entries");
+  begin_struct_array("symtab");
+    declare_string("name");
+    declare_integer("value");
+    declare_integer("size");
+    declare_integer("type");
+    declare_integer("bind");
+    declare_integer("shndx");
+  end_struct_array("symtab");
 
 end_declarations;
 
@@ -453,6 +599,51 @@ int module_load(
   set_integer(ELF_PT_TLS, module_object, "PT_TLS");
   set_integer(ELF_PT_GNU_EH_FRAME, module_object, "PT_GNU_EH_FRAME");
   set_integer(ELF_PT_GNU_STACK, module_object, "PT_GNU_STACK");
+
+  set_integer(ELF_DT_NULL, module_object, "DT_NULL");
+  set_integer(ELF_DT_NEEDED, module_object, "DT_NEEDED");
+  set_integer(ELF_DT_PLTRELSZ, module_object, "DT_PLTRELSZ");
+  set_integer(ELF_DT_PLTGOT, module_object, "DT_PLTGOT");
+  set_integer(ELF_DT_HASH, module_object, "DT_HASH");
+  set_integer(ELF_DT_STRTAB, module_object, "DT_STRTAB");
+  set_integer(ELF_DT_SYMTAB, module_object, "DT_SYMTAB");
+  set_integer(ELF_DT_RELA, module_object, "DT_RELA");
+  set_integer(ELF_DT_RELASZ, module_object, "DT_RELASZ");
+  set_integer(ELF_DT_RELAENT, module_object, "DT_RELAENT");
+  set_integer(ELF_DT_STRSZ, module_object, "DT_STRSZ");
+  set_integer(ELF_DT_SYMENT, module_object, "DT_SYMENT");
+  set_integer(ELF_DT_INIT, module_object, "DT_INIT");
+  set_integer(ELF_DT_FINI, module_object, "DT_FINI");
+  set_integer(ELF_DT_SONAME, module_object, "DT_SONAME");
+  set_integer(ELF_DT_RPATH, module_object, "DT_RPATH");
+  set_integer(ELF_DT_SYMBOLIC, module_object, "DT_SYMBOLIC");
+  set_integer(ELF_DT_REL, module_object, "DT_REL");
+  set_integer(ELF_DT_RELSZ, module_object, "DT_RELSZ");
+  set_integer(ELF_DT_RELENT, module_object, "DT_RELENT");
+  set_integer(ELF_DT_PLTREL, module_object, "DT_PLTREL");
+  set_integer(ELF_DT_DEBUG, module_object, "DT_DEBUG");
+  set_integer(ELF_DT_TEXTREL, module_object, "DT_TEXTREL");
+  set_integer(ELF_DT_JMPREL, module_object, "DT_JMPREL");
+  set_integer(ELF_DT_BIND_NOW, module_object, "DT_BIND_NOW");
+  set_integer(ELF_DT_INIT_ARRAY, module_object, "DT_INIT_ARRAY");
+  set_integer(ELF_DT_FINI_ARRAY, module_object, "DT_FINI_ARRAY");
+  set_integer(ELF_DT_INIT_ARRAYSZ, module_object, "DT_INIT_ARRAYSZ");
+  set_integer(ELF_DT_FINI_ARRAYSZ, module_object, "DT_FINI_ARRAYSZ");
+  set_integer(ELF_DT_RUNPATH, module_object, "DT_RUNPATH");
+  set_integer(ELF_DT_FLAGS, module_object, "DT_FLAGS");
+  set_integer(ELF_DT_ENCODING, module_object, "DT_ENCODING");
+
+  set_integer(ELF_STT_NOTYPE, module_object, "STT_NOTYPE");
+  set_integer(ELF_STT_OBJECT, module_object, "STT_OBJECT");
+  set_integer(ELF_STT_FUNC, module_object, "STT_FUNC");
+  set_integer(ELF_STT_SECTION, module_object, "STT_SECTION");
+  set_integer(ELF_STT_FILE, module_object, "STT_FILE");
+  set_integer(ELF_STT_COMMON, module_object, "STT_COMMON");
+  set_integer(ELF_STT_TLS, module_object, "STT_TLS");
+
+  set_integer(ELF_STB_LOCAL, module_object, "STB_LOCAL");
+  set_integer(ELF_STB_GLOBAL, module_object, "STB_GLOBAL");
+  set_integer(ELF_STB_WEAK, module_object, "STB_WEAK");
 
   set_integer(ELF_PF_X, module_object, "PF_X");
   set_integer(ELF_PF_W, module_object, "PF_W");

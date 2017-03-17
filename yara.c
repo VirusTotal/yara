@@ -122,6 +122,7 @@ int show_tags = FALSE;
 int show_specified_tags = FALSE;
 int show_specified_rules = FALSE;
 int show_strings = FALSE;
+int show_string_length = FALSE;
 int show_meta = FALSE;
 int show_namespace = FALSE;
 int show_version = FALSE;
@@ -163,6 +164,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN('s', "print-strings", &show_strings,
       "print matching strings"),
+
+  OPT_BOOLEAN('L', "print-string-length", &show_string_length,
+      "print length of matched strings"),
 
   OPT_BOOLEAN('e', "print-namespace", &show_namespace,
       "print rules' namespace"),
@@ -659,7 +663,7 @@ int handle_message(
 
     // Show matched strings.
 
-    if (show_strings)
+    if (show_strings || show_string_length)
     {
       YR_STRING* string;
 
@@ -669,14 +673,29 @@ int handle_message(
 
         yr_string_matches_foreach(string, match)
         {
-          printf("0x%" PRIx64 ":%s: ",
+          if (show_string_length)
+            printf("0x%" PRIx64 ":%d:%s",
+              match->base + match->offset,
+              match->data_length,
+              string->identifier);
+          else
+            printf("0x%" PRIx64 ":%s",
               match->base + match->offset,
               string->identifier);
 
-          if (STRING_IS_HEX(string))
-            print_hex_string(match->data, match->data_length);
+          if (show_strings)
+          {
+            printf(": ");
+
+            if (STRING_IS_HEX(string))
+              print_hex_string(match->data, match->data_length);
+            else
+              print_string(match->data, match->data_length);
+          }
           else
-            print_string(match->data, match->data_length);
+          {
+            printf("\n");
+          }
         }
       }
     }
