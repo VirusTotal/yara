@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     macho.segments[2].nsects == 2 and \
     macho.segments[3].fsize == 0x118 }", MACHO_X86_FILE);
 
-  // sectionss
+  // sections
 
   assert_true_rule_blob("import \"macho\" rule test { condition: \
     macho.segments[1].sections[0].addr == 0x1e90 and \
