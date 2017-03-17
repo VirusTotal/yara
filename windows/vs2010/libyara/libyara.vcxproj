@@ -178,6 +178,7 @@
     <ClCompile Include="..\..\..\libyara\modules\elf.c" />
     <ClCompile Include="..\..\..\libyara\modules\hash.c" />
     <ClCompile Include="..\..\..\libyara\modules\math.c" />
+    <ClCompile Include="..\..\..\libyara\modules\macho.c" />
     <ClCompile Include="..\..\..\libyara\modules\pe.c" />
     <ClCompile Include="..\..\..\libyara\modules\tests.c" />
     <ClCompile Include="..\..\..\libyara\object.c" />
