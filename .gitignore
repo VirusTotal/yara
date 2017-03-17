@@ -70,10 +70,13 @@ Release/
 Debug/
 x64/
 *.obj
-*.suo
-*.sdf
 *.opendb
 *.opensdf
+*.sdf
+*.suo
+*.user
+*.VC.db
+
 
 # NuGet
 windows/*/packages/
