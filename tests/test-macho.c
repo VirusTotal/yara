@@ -1,7 +1,6 @@
 #include <yara.h>
 #include "util.h"
 #include "blob.h"
-#include "endian.h"
 
 int main(int argc, char** argv)
 {
