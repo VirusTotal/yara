@@ -388,7 +388,7 @@ int _yr_process_attach(
   }
 
   status = 0;
-  if (waitpid(-1, &status, 0) == -1)
+  if (waitpid(pid, &status, 0) == -1)
   {
     // this is a strange error state where we attached but the proc didn't
     // stop. Try to detach and clean up.
