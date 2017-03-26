@@ -16,6 +16,9 @@ if HASH_MODULE
 MODULES += modules/hash.c
 endif
 
+# This isn't really a module, but needs to be compiled with them.
+MODULES += modules/pe_utils.c
+
 #
 # Add your modules here:
 #
