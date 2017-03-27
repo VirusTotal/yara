@@ -266,25 +266,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define define_function(func) \
     int func ( \
-        void* __args, \
+        YR_VALUE* __args, \
         YR_SCAN_CONTEXT* __context, \
         YR_OBJECT_FUNCTION* __function_obj)
 
 
 #define sized_string_argument(n) \
-    ((SIZED_STRING*)(size_t)((int64_t*) __args)[n-1])
+    (__args[n-1].ss)
 
 #define string_argument(n) \
     (sized_string_argument(n)->c_string)
 
 #define integer_argument(n) \
-    (((int64_t*) __args)[n-1])
+    (__args[n-1].i)
 
 #define float_argument(n) \
-    (((double*) __args)[n-1])
+    (__args[n-1].d)
 
 #define regexp_argument(n) \
-    ((RE_CODE)((int64_t*) __args)[n-1])
+    ((RE_CODE)(__args[n-1].p))
 
 
 #define module()        yr_object_get_root((YR_OBJECT*) __function_obj)

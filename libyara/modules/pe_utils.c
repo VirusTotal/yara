@@ -1,15 +1,223 @@
+/*
+Copyright (c) 2014-2015. The YARA Authors. All Rights Reserved.
 
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include <stdio.h>
 
-#include <yara/mem.h>
-#include <yara/integers.h>
-
-#if defined(WIN32)
-#include <string.h>
-#define strncasecmp _strnicmp
+#if defined(_WIN32)
 #define timegm _mkgmtime
 #endif
+
+#include <string.h>
+
+#include <yara/endian.h>
+#include <yara/utils.h>
+#include <yara/strutils.h>
+#include <yara/mem.h>
+#include <yara/integers.h>
+#include <yara/pe_utils.h>
+#include <yara/pe.h>
+
+#if HAVE_LIBCRYPTO
+#include <openssl/asn1.h>
+#endif
+
+PIMAGE_NT_HEADERS32 pe_get_header(
+    uint8_t* data,
+    size_t data_size)
+{
+  PIMAGE_DOS_HEADER mz_header;
+  PIMAGE_NT_HEADERS32 pe_header;
+
+  size_t headers_size = 0;
+
+  if (data_size < sizeof(IMAGE_DOS_HEADER))
+    return NULL;
+
+  mz_header = (PIMAGE_DOS_HEADER) data;
+
+  if (yr_le16toh(mz_header->e_magic) != IMAGE_DOS_SIGNATURE)
+    return NULL;
+
+  if (yr_le32toh(mz_header->e_lfanew) < 0)
+    return NULL;
+
+  headers_size = yr_le32toh(mz_header->e_lfanew) +      \
+                 sizeof(pe_header->Signature) + \
+                 sizeof(IMAGE_FILE_HEADER);
+
+  if (data_size < headers_size)
+    return NULL;
+
+  pe_header = (PIMAGE_NT_HEADERS32) (data + yr_le32toh(mz_header->e_lfanew));
+
+  headers_size += yr_le16toh(pe_header->FileHeader.SizeOfOptionalHeader);
+
+  if (yr_le32toh(pe_header->Signature) == IMAGE_NT_SIGNATURE &&
+      (yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_UNKNOWN ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_AM33 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_AMD64 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_ARM ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_ARMNT ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_ARM64 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_EBC ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_I386 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_IA64 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_M32R ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_MIPS16 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_MIPSFPU ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_MIPSFPU16 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_POWERPC ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_POWERPCFP ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_R4000 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_SH3 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_SH3DSP ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_SH4 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_SH5 ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_THUMB ||
+       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_WCEMIPSV2) &&
+      data_size > headers_size)
+  {
+    return pe_header;
+  }
+  else
+  {
+    return NULL;
+  }
+}
+
+
+PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
+    PE* pe,
+    int entry)
+{
+  PIMAGE_DATA_DIRECTORY result;
+
+  if (IS_64BITS_PE(pe))
+    result = &pe->header64->OptionalHeader.DataDirectory[entry];
+  else
+    result = &pe->header->OptionalHeader.DataDirectory[entry];
+
+  return result;
+}
+
+
+int64_t pe_rva_to_offset(
+    PE* pe,
+    uint64_t rva)
+{
+  PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pe->header);
+
+  DWORD lowest_section_rva = 0xffffffff;
+  DWORD section_rva = 0;
+  DWORD section_offset = 0;
+  DWORD section_raw_size = 0;
+
+  int64_t result;
+
+  int i = 0;
+
+  int alignment = 0;
+  int rest = 0;
+
+  while(i < yr_min(yr_le16toh(pe->header->FileHeader.NumberOfSections), MAX_PE_SECTIONS))
+  {
+    if (struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
+    {
+      if (lowest_section_rva > yr_le32toh(section->VirtualAddress))
+      {
+        lowest_section_rva = yr_le32toh(section->VirtualAddress);
+      }
+
+      if (rva >= yr_le32toh(section->VirtualAddress) &&
+          section_rva <= yr_le32toh(section->VirtualAddress))
+      {
+        // Round section_offset
+        //
+        // Rounding everything less than 0x200 to 0 as discussed in
+        // https://code.google.com/archive/p/corkami/wikis/PE.wiki#PointerToRawData
+        // does not work for PE32_FILE from the test suite and for
+        // some tinype samples where File Alignment = 4
+        // (http://www.phreedom.org/research/tinype/).
+        //
+        // If FileAlignment is >= 0x200, it is apparently ignored (see
+        // Ero Carreras's pefile.py, PE.adjust_FileAlignment).
+
+        alignment = yr_min(yr_le32toh(OptionalHeader(pe, FileAlignment)), 0x200);
+
+        section_rva = yr_le32toh(section->VirtualAddress);
+        section_offset = yr_le32toh(section->PointerToRawData);
+        section_raw_size = yr_le32toh(section->SizeOfRawData);
+
+        if (alignment)
+        {
+          rest = section_offset % alignment;
+
+          if (rest)
+            section_offset -= rest;
+        }
+      }
+
+      section++;
+      i++;
+    }
+    else
+    {
+      return -1;
+    }
+  }
+
+  // Everything before the first section seems to get mapped straight
+  // relative to ImageBase.
+
+  if (rva < lowest_section_rva)
+  {
+    section_rva = 0;
+    section_offset = 0;
+    section_raw_size = (DWORD) pe->data_size;
+  }
+
+  // Many sections, have a raw (on disk) size smaller than their in-memory size.
+  // Check for rva's that map to this sparse space, and therefore have no valid
+  // associated file offset.
+
+  if ((rva - section_rva) >= section_raw_size)
+    return -1;
+
+  result = section_offset + (rva - section_rva);
+
+  // Check that the offset fits within the file.
+  if (result >= pe->data_size)
+    return -1;
+
+  return result;
+}
+
 
 #if !HAVE_TIMEGM && !defined(WIN32)
 
@@ -57,7 +265,7 @@ time_t timegm(
 // Taken from http://stackoverflow.com/questions/10975542/asn1-time-conversion
 // and cleaned up. Also uses timegm(3) instead of mktime(3).
 
-static time_t ASN1_get_time_t(
+time_t ASN1_get_time_t(
   	ASN1_TIME* time)
 {
   struct tm t;
@@ -105,7 +313,7 @@ static time_t ASN1_get_time_t(
 // "ordN" and if that fails, return NULL. The caller is responsible for freeing
 // the returned string.
 
-static char *ord_lookup(
+char *ord_lookup(
     char *dll,
     uint16_t ord)
 {

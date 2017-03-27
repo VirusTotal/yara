@@ -541,6 +541,7 @@ u?int(8|16|32)(be)? {
 <str>\\(.|\n) {
 
   yyerror(yyscanner, compiler, "illegal escape sequence");
+  yyterminate();
 }
 
 
@@ -563,6 +564,7 @@ u?int(8|16|32)(be)? {
   else
   {
     yyerror(yyscanner, compiler, "empty regular expression");
+    yyterminate();
   }
 
   BEGIN(INITIAL);
@@ -581,6 +583,13 @@ u?int(8|16|32)(be)? {
 <regexp>\\. {
 
   LEX_CHECK_SPACE_OK("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
+
+  if (yytext[1] == 0)
+  {
+    yyerror(yyscanner, compiler, "malformed regular expression");
+    yyterminate();
+  }
+
   *yyextra->lex_buf_ptr++ = yytext[0];
   *yyextra->lex_buf_ptr++ = yytext[1];
   yyextra->lex_buf_len += 2;
@@ -613,7 +622,7 @@ u?int(8|16|32)(be)? {
 }
 
 
-\{(({hexdigit}|[ \-|\?\[\]\(\)\n\t]|\/\*[^*]*\*\/)+|\/\/.*)+\}  {
+\{(({hexdigit}|[ \-|\?\[\]\(\)\n\r\t]|\/\*[^*]*\*\/)+|\/\/.*)+\}  {
   // Match hex-digits with whitespace or comments. The latter are stripped
   // out by hex_lexer.l
 

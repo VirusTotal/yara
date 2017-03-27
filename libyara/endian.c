@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013. The YARA Authors. All Rights Reserved.
+Copyright (c) 2017. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,66 +27,27 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <yara/endian.h>
 
-#ifndef THREADING_H
-#define THREADING_H
+uint16_t _yr_bswap16(uint16_t x)
+{
+  return (x >> 8 | x << 8);
+}
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-#include <windows.h>
-#else
-#include <sys/stat.h>
-#include <pthread.h>
-#include <semaphore.h>
-#endif
+uint32_t _yr_bswap32(uint32_t x)
+{
+  return ((((x) & 0xff000000) >> 24) | (((x) & 0x00ff0000) >>  8) |
+          (((x) & 0x0000ff00) <<  8) | (((x) & 0x000000ff) << 24));
+}
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-
-typedef HANDLE SEMAPHORE;
-typedef CRITICAL_SECTION MUTEX;
-typedef HANDLE THREAD;
-
-typedef LPTHREAD_START_ROUTINE THREAD_START_ROUTINE;
-
-#else
-
-typedef sem_t* SEMAPHORE;
-typedef pthread_mutex_t MUTEX;
-typedef pthread_t THREAD;
-typedef void *(*THREAD_START_ROUTINE) (void *);
-
-#endif
-
-int mutex_init(
-    MUTEX* mutex);
-
-void mutex_destroy(
-    MUTEX* mutex);
-
-void mutex_lock(
-    MUTEX* mutex);
-
-void mutex_unlock(
-    MUTEX* mutex);
-
-int semaphore_init(
-    SEMAPHORE* semaphore,
-    int value);
-
-void semaphore_destroy(
-    SEMAPHORE* semaphore);
-
-void semaphore_wait(
-    SEMAPHORE* semaphore);
-
-void semaphore_release(
-    SEMAPHORE* semaphore);
-
-int create_thread(
-    THREAD* thread,
-    THREAD_START_ROUTINE start_routine,
-    void* param);
-
-void thread_join(
-    THREAD* thread);
-
-#endif
+uint64_t _yr_bswap64(uint64_t x)
+{
+  return ((((x) & 0xff00000000000000ull) >> 56)
+        | (((x) & 0x00ff000000000000ull) >> 40)
+        | (((x) & 0x0000ff0000000000ull) >> 24)
+        | (((x) & 0x000000ff00000000ull) >> 8)
+        | (((x) & 0x00000000ff000000ull) << 8)
+        | (((x) & 0x0000000000ff0000ull) << 24)
+        | (((x) & 0x000000000000ff00ull) << 40)
+        | (((x) & 0x00000000000000ffull) << 56));
+}

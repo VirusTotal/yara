@@ -38,8 +38,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
-#define PRIx64 "llx"
-#define PRId64 "lld"
+#define PRIx64 "I64x"
+#define PRId64 "I64d"
 
 #endif
 

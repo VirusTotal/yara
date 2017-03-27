@@ -382,7 +382,6 @@ typedef struct _YR_RULES {
 } YR_RULES;
 
 
-
 struct _YR_MEMORY_BLOCK;
 struct _YR_MEMORY_BLOCK_ITERATOR;
 
@@ -516,11 +515,23 @@ typedef struct _YR_OBJECT_DICTIONARY
 } YR_OBJECT_DICTIONARY;
 
 
+typedef union _YR_VALUE {
+
+  int64_t i;
+  double d;
+  void* p;
+  YR_OBJECT* o;
+  YR_STRING* s;
+  SIZED_STRING* ss;
+
+} YR_VALUE;
+
+
 struct _YR_OBJECT_FUNCTION;
 
 
 typedef int (*YR_MODULE_FUNC)(
-    void* args,
+    YR_VALUE* args,
     YR_SCAN_CONTEXT* context,
     struct _YR_OBJECT_FUNCTION* function_obj);
 

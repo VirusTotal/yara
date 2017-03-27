@@ -111,11 +111,13 @@ int yr_parser_emit_with_arg(
 int yr_parser_emit_with_arg_reloc(
     yyscan_t yyscanner,
     uint8_t instruction,
-    int64_t argument,
+    void* argument,
     uint8_t** instruction_address,
-    int64_t** argument_address)
+    void** argument_address)
 {
   int64_t* ptr = NULL;
+  DECLARE_REFERENCE(void*, argument) a;
+  a.argument = argument;
 
   int result = yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
@@ -126,7 +128,7 @@ int yr_parser_emit_with_arg_reloc(
   if (result == ERROR_SUCCESS)
     result = yr_arena_write_data(
         yyget_extra(yyscanner)->code_arena,
-        &argument,
+        &a,
         sizeof(int64_t),
         (void**) &ptr);
 
@@ -138,7 +140,7 @@ int yr_parser_emit_with_arg_reloc(
         EOL);
 
   if (argument_address != NULL)
-    *argument_address = ptr;
+    *argument_address = (void*)ptr;
 
   return result;
 }
@@ -180,7 +182,7 @@ int yr_parser_emit_pushes_for_strings(
         yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_PUSH,
-            PTR_TO_INT64(string),
+            string,
             NULL,
             NULL);
 
@@ -747,7 +749,7 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
   compiler->last_result = yr_parser_emit_with_arg_reloc(
       yyscanner,
       OP_INIT_RULE,
-      PTR_TO_INT64(rule),
+      rule,
       NULL,
       NULL);
 
@@ -798,7 +800,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
   compiler->last_result = yr_parser_emit_with_arg_reloc(
       yyscanner,
       OP_MATCH_RULE,
-      PTR_TO_INT64(rule),
+      rule,
       NULL,
       NULL);
 
@@ -875,7 +877,7 @@ int yr_parser_reduce_string_identifier(
       yr_parser_emit_with_arg_reloc(
           yyscanner,
           OP_PUSH,
-          PTR_TO_INT64(string),
+          string,
           NULL,
           NULL);
 
@@ -961,6 +963,19 @@ YR_META* yr_parser_reduce_meta_declaration(
 }
 
 
+int _yr_parser_valid_module_name(
+    SIZED_STRING* module_name)
+{
+  if (module_name->length == 0)
+    return FALSE;
+
+  if (strlen(module_name->c_string) != module_name->length)
+    return FALSE;
+
+  return TRUE;
+}
+
+
 int yr_parser_reduce_import(
     yyscan_t yyscanner,
     SIZED_STRING* module_name)
@@ -969,6 +984,14 @@ int yr_parser_reduce_import(
   YR_OBJECT* module_structure;
 
   char* name;
+
+  if (!_yr_parser_valid_module_name(module_name))
+  {
+    compiler->last_result = ERROR_INVALID_MODULE_NAME;
+    yr_compiler_set_error_extra_info(compiler, module_name->c_string);
+
+    return ERROR_INVALID_MODULE_NAME;
+  }
 
   module_structure = (YR_OBJECT*) yr_hash_table_lookup(
       compiler->objects_table,
@@ -1013,7 +1036,7 @@ int yr_parser_reduce_import(
     compiler->last_result = yr_parser_emit_with_arg_reloc(
         yyscanner,
         OP_IMPORT,
-        PTR_TO_INT64(name),
+        name,
         NULL,
         NULL);
 

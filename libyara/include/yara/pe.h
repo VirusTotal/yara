@@ -27,6 +27,12 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef YR_PE_H
+#define YR_PE_H
+
+#include <yara/endian.h>
+#include <yara/types.h>
+
 #pragma pack(push, 1)
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -301,14 +307,13 @@ typedef struct _IMAGE_NT_HEADERS64 {
 
 } IMAGE_NT_HEADERS64, *PIMAGE_NT_HEADERS64;
 
-
 // IMAGE_FIRST_SECTION doesn't need 32/64 versions since the file header is
 // the same either way.
 
 #define IMAGE_FIRST_SECTION( ntheader ) ((PIMAGE_SECTION_HEADER) \
     ((BYTE*)ntheader + \
      FIELD_OFFSET( IMAGE_NT_HEADERS32, OptionalHeader ) + \
-     ((PIMAGE_NT_HEADERS32)(ntheader))->FileHeader.SizeOfOptionalHeader \
+     yr_le16toh(((PIMAGE_NT_HEADERS32)(ntheader))->FileHeader.SizeOfOptionalHeader) \
     ))
 
 // Subsystem Values
@@ -481,10 +486,6 @@ typedef struct _RICH_SIGNATURE {
 #define RICH_DANS 0x536e6144 // "DanS"
 #define RICH_RICH 0x68636952 // "Rich"
 
-typedef struct _RICH_DATA {
-    size_t len;
-    BYTE* raw_data;
-    BYTE* clear_data;
-} RICH_DATA, *PRICH_DATA;
 
 #pragma pack(pop)
+#endif

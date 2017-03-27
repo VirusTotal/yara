@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #include <math.h>
 
+#include <yara/endian.h>
 #include <yara/exec.h>
 #include <yara/limits.h>
 #include <yara/error.h>
@@ -48,17 +49,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define MEM_SIZE   MAX_LOOP_NESTING * LOOP_LOCAL_VARS
-
-typedef union _STACK_ITEM {
-
-  int64_t i;
-  double d;
-  void* p;
-  YR_OBJECT* o;
-  YR_STRING* s;
-  SIZED_STRING* ss;
-
-} STACK_ITEM;
 
 
 #define push(x)  \
@@ -88,27 +78,18 @@ typedef union _STACK_ITEM {
 
 
 #define little_endian_uint8_t(x)     (x)
-#define little_endian_uint16_t(x)    (x)
-#define little_endian_uint32_t(x)    (x)
 #define little_endian_int8_t(x)      (x)
-#define little_endian_int16_t(x)     (x)
-#define little_endian_int32_t(x)     (x)
+#define little_endian_uint16_t(x)    yr_le16toh(x)
+#define little_endian_int16_t(x)     yr_le16toh(x)
+#define little_endian_uint32_t(x)    yr_le32toh(x)
+#define little_endian_int32_t(x)     yr_le32toh(x)
 
-#define big_endian_uint8_t(x)         (x)
-
-#define big_endian_uint16_t(x) \
-    (((((uint16_t)(x) & 0xFF)) << 8) | \
-     ((((uint16_t)(x) & 0xFF00)) >> 8))
-
-#define big_endian_uint32_t(x) \
-    (((((uint32_t)(x) & 0xFF)) << 24) | \
-     ((((uint32_t)(x) & 0xFF00)) << 8) | \
-     ((((uint32_t)(x) & 0xFF0000)) >> 8) | \
-     ((((uint32_t)(x) & 0xFF000000)) >> 24))
-
-#define big_endian_int8_t(x)   big_endian_uint8_t(x)
-#define big_endian_int16_t(x)  big_endian_uint16_t(x)
-#define big_endian_int32_t(x)  big_endian_uint32_t(x)
+#define big_endian_uint8_t(x)        (x)
+#define big_endian_int8_t(x)         (x)
+#define big_endian_uint16_t(x)       yr_be16toh(x)
+#define big_endian_int16_t(x)        yr_be16toh(x)
+#define big_endian_uint32_t(x)       yr_be32toh(x)
+#define big_endian_int32_t(x)        yr_be32toh(x)
 
 
 #define function_read(type, endianess) \
@@ -180,14 +161,14 @@ int yr_execute_code(
     time_t start_time)
 {
   int64_t mem[MEM_SIZE];
-  int64_t args[MAX_FUNCTION_ARGS];
   int32_t sp = 0;
   uint8_t* ip = rules->code_start;
 
-  STACK_ITEM *stack;
-  STACK_ITEM r1;
-  STACK_ITEM r2;
-  STACK_ITEM r3;
+  YR_VALUE args[MAX_FUNCTION_ARGS];
+  YR_VALUE *stack;
+  YR_VALUE r1;
+  YR_VALUE r2;
+  YR_VALUE r3;
 
   #ifdef PROFILING_ENABLED
   YR_RULE* current_rule = NULL;
@@ -215,7 +196,7 @@ int yr_execute_code(
 
   yr_get_configuration(YR_CONFIG_STACK_SIZE, (void*) &stack_size);
 
-  stack = (STACK_ITEM*) yr_malloc(stack_size * sizeof(STACK_ITEM));
+  stack = (YR_VALUE*) yr_malloc(stack_size * sizeof(YR_VALUE));
 
   if (stack == NULL)
     return ERROR_INSUFICIENT_MEMORY;
@@ -561,7 +542,7 @@ int yr_execute_code(
           if (is_undef(r1))  // count the number of undefined args
             count++;
 
-          args[i - 1] = r1.i;
+          args[i - 1] = r1;
           i--;
         }
 
@@ -588,11 +569,7 @@ int yr_execute_code(
 
           if (strcmp(function->prototypes[i].arguments_fmt, args_fmt) == 0)
           {
-            result = function->prototypes[i].code(
-                (void*) args,
-                context,
-                function);
-
+            result = function->prototypes[i].code(args, context, function);
             break;
           }
         }

@@ -609,7 +609,7 @@ identifier
               compiler->last_result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_OBJ_LOAD,
-                  PTR_TO_INT64(id),
+                  id,
                   NULL,
                   NULL);
 
@@ -629,7 +629,7 @@ identifier
               compiler->last_result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_PUSH_RULE,
-                  PTR_TO_INT64(rule),
+                  rule,
                   NULL,
                   NULL);
 
@@ -669,7 +669,7 @@ identifier
               compiler->last_result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_OBJ_FIELD,
-                  PTR_TO_INT64(ident),
+                  ident,
                   NULL,
                   NULL);
 
@@ -772,7 +772,7 @@ identifier
             compiler->last_result = yr_parser_emit_with_arg_reloc(
                 yyscanner,
                 OP_CALL,
-                PTR_TO_INT64(args_fmt),
+                args_fmt,
                 NULL,
                 NULL);
 
@@ -824,6 +824,8 @@ arguments_list
           case EXPRESSION_TYPE_REGEXP:
             strlcpy($$, "r", MAX_FUNCTION_ARGS);
             break;
+          default:
+            assert(FALSE);
         }
 
         ERROR_IF($$ == NULL);
@@ -853,6 +855,8 @@ arguments_list
             case EXPRESSION_TYPE_REGEXP:
               strlcat($1, "r", MAX_FUNCTION_ARGS);
               break;
+            default:
+              assert(FALSE);
           }
         }
 
@@ -896,7 +900,7 @@ regexp
           compiler->last_result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              PTR_TO_INT64(re->root_node->forward_code),
+              re->root_node->forward_code,
               NULL,
               NULL);
 
@@ -1015,6 +1019,16 @@ expression
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
+    | _FOR_ for_expression error
+      {
+        if (compiler->loop_depth > 0)
+        {
+          compiler->loop_depth--;
+          compiler->loop_identifier[compiler->loop_depth] = NULL;
+        }
+
+        YYERROR;
+      }
     | _FOR_ for_expression _IDENTIFIER_ _IN_
       {
         int var_index;
@@ -1106,8 +1120,7 @@ expression
           yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_JNUNDEF,
-              PTR_TO_INT64(
-                  compiler->loop_address[compiler->loop_depth]),
+              compiler->loop_address[compiler->loop_depth],
               NULL,
               NULL);
         }
@@ -1130,8 +1143,7 @@ expression
           yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_JLE,
-              PTR_TO_INT64(
-                compiler->loop_address[compiler->loop_depth]),
+              compiler->loop_address[compiler->loop_depth],
               NULL,
               NULL);
 
@@ -1216,8 +1228,7 @@ expression
         yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JNUNDEF,
-            PTR_TO_INT64(
-                compiler->loop_address[compiler->loop_depth]),
+            compiler->loop_address[compiler->loop_depth],
             NULL,
             NULL);
 
@@ -1256,7 +1267,7 @@ expression
     | boolean_expression _AND_
       {
         YR_FIXUP* fixup;
-        int64_t* jmp_destination_addr;
+        void* jmp_destination_addr;
 
         compiler->last_result = yr_parser_emit_with_arg_reloc(
             yyscanner,
@@ -1308,7 +1319,7 @@ expression
         // page, so we can compute the address for the opcode following the AND
         // by simply adding one to its address.
 
-        *(fixup->address) = PTR_TO_INT64(and_addr + 1);
+        *(void**)(fixup->address) = (void*)(and_addr + 1);
 
         compiler->fixup_stack_head = fixup->next;
         yr_free(fixup);
@@ -1318,7 +1329,7 @@ expression
     | boolean_expression _OR_
       {
         YR_FIXUP* fixup;
-        int64_t* jmp_destination_addr;
+        void* jmp_destination_addr;
 
         compiler->last_result = yr_parser_emit_with_arg_reloc(
             yyscanner,
@@ -1369,7 +1380,7 @@ expression
         // page, so we can compute the address for the opcode following the OR
         // by simply adding one to its address.
 
-        *(fixup->address) = PTR_TO_INT64(or_addr + 1);
+        *(void**)(fixup->address) = (void*)(or_addr + 1);
 
         compiler->fixup_stack_head = fixup->next;
         yr_free(fixup);
@@ -1630,7 +1641,7 @@ primary_expression
           compiler->last_result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              PTR_TO_INT64(sized_string),
+              sized_string,
               NULL,
               NULL);
 

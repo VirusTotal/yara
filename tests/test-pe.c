@@ -1,4 +1,6 @@
 #include <yara.h>
+#include <config.h>
+#include <stdio.h>
 #include "util.h"
 
 int main(int argc, char** argv)

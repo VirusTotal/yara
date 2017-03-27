@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2016. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,63 +27,75 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef YR_ENDIAN_H
+#define YR_ENDIAN_H
 
-#ifndef YR_UTILS_H
-#define YR_UTILS_H
-
+#include <stdint.h>
 #include <config.h>
 
-#ifndef TRUE
-#define TRUE 1
+
+#if defined(__has_builtin)
+#  if __has_builtin(__builtin_bswap16)
+#    define yr_bswap16(x) __builtin_bswap16(x)
+#  endif
 #endif
 
-#ifndef FALSE
-#define FALSE 0
+#if !defined(yr_bswap16) && defined(_MSC_VER)
+#  define yr_bswap16(x) _byteswap_ushort(x)
 #endif
 
-#ifndef NULL
-#define NULL 0
+#if !defined(yr_bswap16)
+uint16_t _yr_bswap16(uint16_t x);
+# define yr_bswap16(x) _yr_bswap16(x)
 #endif
 
-#ifdef __cplusplus
-#define EXTERNC extern "C"
+
+#if defined(__has_builtin)
+#  if __has_builtin(__builtin_bswap32)
+#    define yr_bswap32(x) __builtin_bswap32(x)
+#  endif
+#endif
+
+#if !defined(yr_bswap32) && defined(_MSC_VER)
+#  define yr_bswap32(x) _byteswap_ulong(x)
+#endif
+
+#if !defined(yr_bswap32)
+uint32_t _yr_bswap32(uint32_t x);
+#define yr_bswap32(x) _yr_bswap32(x)
+#endif
+
+
+#if defined(__has_builtin)
+#  if __has_builtin(__builtin_bswap64)
+#    define yr_bswap64(x) __builtin_bswap64(x)
+#  endif
+#endif
+
+#if !defined(yr_bswap64) && defined(_MSC_VER)
+#  define yr_bswap64(x) _byteswap_uint64(x)
+#endif
+
+#if !defined(yr_bswap64)
+uint64_t _yr_bswap64(uint64_t x);
+#define yr_bswap64(x) _yr_bswap64(x)
+#endif
+
+
+#if defined(WORDS_BIGENDIAN)
+#define yr_le16toh(x) yr_bswap16(x)
+#define yr_le32toh(x) yr_bswap32(x)
+#define yr_le64toh(x) yr_bswap64(x)
+#define yr_be16toh(x) (x)
+#define yr_be32toh(x) (x)
+#define yr_be64toh(x) (x)
 #else
-#define EXTERNC
-#endif
-
-#if defined(__GNUC__)
-#define YR_API EXTERNC __attribute__((visibility("default")))
-#elif defined(_MSC_VER)
-#define YR_API EXTERNC __declspec(dllexport)
-#else
-#define YR_API EXTERNC
-#endif
-
-#if defined(__GNUC__)
-#define YR_ALIGN(n) __attribute__((aligned(n)))
-#elif defined(_MSC_VER)
-#define YR_ALIGN(n) __declspec(align(n))
-#else
-#define YR_ALIGN(n)
-#endif
-
-#define yr_min(x, y) ((x < y) ? (x) : (y))
-#define yr_max(x, y) ((x > y) ? (x) : (y))
-
-#ifdef NDEBUG
-
-#define assertf(expr, msg, ...)  ((void)0)
-
-#else
-
-#include <stdlib.h>
-
-#define assertf(expr, msg, ...) \
-    if(!(expr)) { \
-      fprintf(stderr, "%s:%d: " msg "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
-      abort(); \
-    }
-
+#define yr_le16toh(x) (x)
+#define yr_le32toh(x) (x)
+#define yr_le64toh(x) (x)
+#define yr_be16toh(x) yr_bswap16(x)
+#define yr_be32toh(x) yr_bswap32(x)
+#define yr_be64toh(x) yr_bswap64(x)
 #endif
 
 #endif
