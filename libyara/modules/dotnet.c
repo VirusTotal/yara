@@ -607,7 +607,7 @@ void dotnet_parse_tilde_2(
               blob_result.length,
               pe->object,
               "constants[%i]",
-              i);
+              counter);
 
           counter++;
           row_ptr += row_size;
