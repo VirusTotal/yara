@@ -57,7 +57,27 @@ static LONG CALLBACK exception_handler(
   return EXCEPTION_CONTINUE_SEARCH;
 }
 
-#define YR_TRYCATCH(_do_,_try_clause_, _catch_clause_)                  \
+#ifdef _MSC_VER
+
+#include <excpt.h>
+
+#define YR_TRYCATCH(_do_,_try_clause_,_catch_clause_)           \
+  do                                                            \
+  {                                                             \
+    if (_do_)                                                   \
+    {                                                           \
+      __try                                                     \
+      { _try_clause_ }                                          \
+      __except(exception_handler(GetExceptionInformation()))    \
+      { _catch_clause_ }                                        \
+    }                                                           \
+    else                                                        \
+    { _try_clause_ }                                            \
+  } while(0)
+
+#else
+
+#define YR_TRYCATCH(_do_,_try_clause_,_catch_clause_)                   \
   do                                                                    \
   {                                                                     \
     if (_do_)                                                           \
@@ -79,6 +99,8 @@ static LONG CALLBACK exception_handler(
       _try_clause_                                                      \
     }                                                                   \
   } while(0)
+
+#endif
 
 #else
 
