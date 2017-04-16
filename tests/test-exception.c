@@ -92,6 +92,24 @@ void setup_rules()
       &rules_0);
 }
 
+void* crasher_func (void* x)
+{
+  sleep(1);
+  int *i = 0;
+  puts("crashing process...");
+  *i = 0;
+  return NULL;
+}
+
+/* Set up a thread that will cause a null pointer dereference after one second */
+void setup_crasher()
+{
+  pthread_t t;
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  pthread_create(&t, &attr, &crasher_func, NULL);
+}
+
 /* Simple yr_scan_* callback function that delays execution by 2 seconds */
 int delay_callback(int message,
     void* message_data,
@@ -129,8 +147,36 @@ int test_crash(int handle_exceptions)
 }
 
 /*
-This tests that SIGUSR1 is not delivered when setting up SIGBUS signal
-handling -- or during SIGBUS signal handling
+Scan memory while another thread accesses invalid memory. The signal
+for that invalid memory access should not be caught by the handler set
+up using YR_TRYCATCH.
+*/
+int test_crash_other_thread()
+{
+  setup_mmap();
+  setup_rules();
+  setup_crasher();
+
+  uint8_t mem[4096];
+  memset(mem, 'a', sizeof(mem));
+
+  puts("Scanning for \"aaaa\"...");
+  int matches = 0;
+
+  int rc = yr_rules_scan_mem(
+      rules_a, mem, sizeof(mem), 0, delay_callback, &matches, 0);
+
+  printf("err = %d, matches = %d\n", rc, matches);
+
+  if (rc == ERROR_SUCCESS || matches != 0)
+    return 1;
+
+  return 0;
+}
+
+/*
+  This tests that SIGUSR1 is not delivered when setting up SIGBUS
+  signal handling -- or during SIGBUS signal handling
 */
 int test_blocked_signal() {
   setup_mmap();
@@ -201,6 +247,15 @@ int main(int argc, char **argv)
     if (status != 0)
       return 1;
 
+    puts("Test: crash-other-thread");
+    setenv("TEST_OP", "CRASH-OTHER-THREAD", 1);
+    status = reexec(argv[0]);
+    if (!WIFSIGNALED(status))
+    {
+      fputs("Expected subprocess to be terminated by signal\n", stderr);
+      return 1;
+    }
+
     puts("Done.");
   }
   else if (!strcmp(op, "CRASH"))
@@ -209,6 +264,8 @@ int main(int argc, char **argv)
     return test_crash(0);
   else if (!strcmp(op, "BLOCKED-SIGNAL"))
     return test_blocked_signal();
+  else if (!strcmp(op, "CRASH-OTHER-THREAD"))
+    return test_crash_other_thread();
   else
   {
     fprintf(stderr, "wrong op '%s'\n", op);
