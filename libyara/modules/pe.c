@@ -2598,6 +2598,7 @@ int module_load(
         pe_parse_rich_signature(pe, block->base);
 
         #if defined(HAVE_LIBCRYPTO)
+        set_integer(0, pe->object, "number_of_signatures");
         pe_parse_certificates(pe);
         #endif
 
