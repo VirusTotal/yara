@@ -484,12 +484,9 @@ void print_hex_string(
     int length)
 {
   for (int i = 0; i < min(32, length); i++)
-    printf("%02X ", (uint8_t) data[i]);
+    printf("%s%02X", (i == 0 ? "" : " "), (uint8_t) data[i]);
 
-  if (length > 32)
-    printf("...");
-
-  printf("\n");
+  puts(length > 32 ? " ..." : "");
 }
 
 
