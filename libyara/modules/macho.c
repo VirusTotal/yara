@@ -687,11 +687,11 @@ define_function(file_index_type)
 
   int64_t type_arg = integer_argument(1);
 
-  int64_t nfat = get_integer(module, "nfat_arch");
+  uint32_t nfat = get_integer(module, "nfat_arch");
   if (is_undefined(module, "nfat_arch"))
     return_integer(UNDEFINED);
 
-  for (int64_t i = 0; i < nfat; i++)
+  for (uint32_t i = 0; i < nfat; i++)
   {
     int64_t type = get_integer(module, "file[%i].cputype", i);
     if (type == type_arg)
@@ -712,11 +712,11 @@ define_function(file_index_subtype)
   int64_t type_arg = integer_argument(1);
   int64_t subtype_arg = integer_argument(2);
 
-  uint64_t nfat = get_integer(module, "nfat_arch");
+  uint32_t nfat = get_integer(module, "nfat_arch");
   if (is_undefined(module, "nfat_arch"))
     return_integer(UNDEFINED);
 
-  for (uint64_t i = 0; i < nfat; i++)
+  for (uint32_t i = 0; i < nfat; i++)
   {
     int64_t type = get_integer(module, "file[%i].cputype", i);
     int64_t subtype = get_integer(module, "file[%i].cpusubtype", i);
@@ -738,7 +738,7 @@ define_function(entry_point_for_arch_type)
 
   int64_t type_arg = integer_argument(1);
 
-  uint64_t nfat = get_integer(module, "nfat_arch");
+  uint32_t nfat = get_integer(module, "nfat_arch");
   if (is_undefined(module, "nfat_arch"))
     return_integer(UNDEFINED);
 
@@ -765,7 +765,7 @@ define_function(entry_point_for_arch_subtype)
   int64_t type_arg = integer_argument(1);
   int64_t subtype_arg = integer_argument(2);
 
-  uint64_t nfat = get_integer(module, "nfat_arch");
+  uint32_t nfat = get_integer(module, "nfat_arch");
   if (is_undefined(module, "nfat_arch"))
     return_integer(UNDEFINED);
 
