@@ -607,7 +607,7 @@ void dotnet_parse_tilde_2(
               blob_result.length,
               pe->object,
               "constants[%i]",
-              i);
+              counter);
 
           counter++;
           row_ptr += row_size;
@@ -790,7 +790,7 @@ void dotnet_parse_tilde_2(
                   pe, string_offset, *(WORD*) typeref_row);
             }
 
-            if (strncmp(name, "GuidAttribute", 13) != 0)
+            if (name != NULL && strncmp(name, "GuidAttribute", 13) != 0)
             {
               row_ptr += row_size;
               continue;
