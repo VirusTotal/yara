@@ -115,7 +115,7 @@ int macho_rva_to_offset(
     )
 {
   uint64_t segment_count = get_integer(object, "number_of_segments");
-  for (uint64_t i = 0; i < segment_count; ++i)
+  for (uint64_t i = 0; i < segment_count; i++)
   {
     uint64_t start = get_integer(object, "segments[%i].vmaddr", i);
     uint64_t end = start + get_integer(object, "segments[%i].vmsize", i);
@@ -140,7 +140,7 @@ int macho_offset_to_rva(
     )
 {
   uint64_t segment_count = get_integer(object, "number_of_segments");
-  for (uint64_t i = 0; i < segment_count; ++i)
+  for (uint64_t i = 0; i < segment_count; i++)
   {
     uint64_t start = get_integer(object, "segments[%i].fileoff", i);
     uint64_t end = start + get_integer(object, "segments[%i].filesize", i);
@@ -373,7 +373,7 @@ void macho_parse_file_##bits##_##bo(                                           \
                                                                                \
   uint64_t num_sg = 0;                                                         \
   uint8_t *command = (uint8_t*)(header + 1);                                   \
-  for (unsigned i = 0; i < yr_##bo##32toh(header->ncmds); ++i)                 \
+  for (unsigned i = 0; i < yr_##bo##32toh(header->ncmds); i++)                 \
   {                                                                            \
     load_command_t* command_struct = (load_command_t*)command;                 \
     switch(yr_##bo##32toh(command_struct->cmd))                                \
@@ -446,7 +446,7 @@ void macho_parse_fat_file(
   set_integer(yr_be32toh(header->nfat_arch), object, "nfat_arch");
 
   fat_arch_t* archs = (fat_arch_t*)(header + 1);
-  for (size_t i = 0; i < yr_be32toh(header->nfat_arch); ++i)
+  for (size_t i = 0; i < yr_be32toh(header->nfat_arch); i++)
   {
     set_integer(yr_be32toh(archs[i].cputype),
                 object, "fat_arch[%i].cputype", i);
@@ -691,7 +691,7 @@ define_function(file_index_type)
   if (is_undefined(module, "nfat_arch"))
     return_integer(UNDEFINED);
 
-  for (int64_t i = 0; i < nfat; ++i)
+  for (int64_t i = 0; i < nfat; i++)
   {
     int64_t type = get_integer(module, "file[%i].cputype", i);
     if (type == type_arg)
@@ -716,7 +716,7 @@ define_function(file_index_subtype)
   if (is_undefined(module, "nfat_arch"))
     return_integer(UNDEFINED);
 
-  for (uint64_t i = 0; i < nfat; ++i)
+  for (uint64_t i = 0; i < nfat; i++)
   {
     int64_t type = get_integer(module, "file[%i].cputype", i);
     int64_t subtype = get_integer(module, "file[%i].cpusubtype", i);
@@ -742,7 +742,7 @@ define_function(entry_point_for_arch_type)
   if (is_undefined(module, "nfat_arch"))
     return_integer(UNDEFINED);
 
-  for (uint64_t i = 0; i < nfat; ++i)
+  for (uint32_t i = 0; i < nfat; i++)
   {
     int64_t type = get_integer(module, "fat_arch[%i].cputype", i);
     if (type == type_arg)
@@ -769,7 +769,7 @@ define_function(entry_point_for_arch_subtype)
   if (is_undefined(module, "nfat_arch"))
     return_integer(UNDEFINED);
 
-  for (uint64_t i = 0; i < nfat; ++i)
+  for (uint32_t i = 0; i < nfat; i++)
   {
     int64_t type = get_integer(module, "fat_arch[%i].cputype", i);
     int64_t subtype = get_integer(module, "fat_arch[%i].cpusubtype", i);
@@ -1144,7 +1144,7 @@ int module_load(
     }
 
     // Parse previously out of block files.
-    for (size_t i = 0; i < st->count; ++i)
+    for (size_t i = 0; i < st->count; i++)
     {
       size_t offset = st->offsets[i] - st->parsed_size;
       if (offset > 0 && offset < block->size)
