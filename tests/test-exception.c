@@ -56,12 +56,16 @@ int main(int argc, char **argv)
   memset(wbuf, 'a', sizeof(wbuf));
 
   for (i = 0; i < COUNT; i++)
-    write(fd, wbuf, sizeof(wbuf));
+  {
+    if (write(fd, wbuf, sizeof(wbuf)) != sizeof(wbuf))
+      exit(EXIT_FAILURE);
+  }
 
   uint8_t* mapped_region = mmap(
       NULL, COUNT * sizeof(wbuf), PROT_READ, MAP_SHARED, fd, 0);
 
-  ftruncate(fd, COUNT * sizeof(wbuf) / 2);
+  if (ftruncate(fd, COUNT * sizeof(wbuf) / 2) != 0)
+    exit(EXIT_FAILURE);
 
   /*
     mapped_region is now only partially backed by the open file
