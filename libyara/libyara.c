@@ -77,7 +77,7 @@ char altercase[256];
 // to be thread-safe. These locks are initialized in yr_initialize
 // function.
 
-YR_MUTEX *openssl_locks;
+static YR_MUTEX *openssl_locks;
 
 
 unsigned long thread_id(void)
