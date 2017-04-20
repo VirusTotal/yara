@@ -1941,7 +1941,7 @@ int yr_re_exec(
         case RE_OPCODE_LITERAL:
           prolog;
           if (flags & RE_FLAGS_NO_CASE)
-            match = lowercase[*input] == lowercase[*(ip + 1)];
+            match = yr_lowercase[*input] == yr_lowercase[*(ip + 1)];
           else
             match = (*input == *(ip + 1));
           action = match ? ACTION_NONE : ACTION_KILL;
@@ -1966,7 +1966,7 @@ int yr_re_exec(
           prolog;
           match = CHAR_IN_CLASS(*input, ip + 1);
           if (!match && (flags & RE_FLAGS_NO_CASE))
-            match = CHAR_IN_CLASS(altercase[*input], ip + 1);
+            match = CHAR_IN_CLASS(yr_altercase[*input], ip + 1);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 33;
           break;
