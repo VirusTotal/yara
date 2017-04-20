@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/threading.h>
 
-#ifdef HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
+#if defined(HAVE_LIBCRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000L
 #include <openssl/crypto.h>
 #endif
 
@@ -71,7 +71,7 @@ char yr_lowercase[256];
 char yr_altercase[256];
 
 
-#if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
+#if defined(HAVE_LIBCRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000L
 
 // The OpenSSL library before version 1.1 requires some locks in order
 // to be thread-safe. These locks are initialized in yr_initialize
