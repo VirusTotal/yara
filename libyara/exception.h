@@ -50,8 +50,6 @@ static LONG CALLBACK exception_handler(
     case EXCEPTION_ACCESS_VIOLATION:
       if (tidx != -1 && exc_jmp_buf[tidx] != NULL)
         longjmp(*exc_jmp_buf[tidx], 1);
-
-      assert(FALSE);  // We should not reach this point.
   }
 
   return EXCEPTION_CONTINUE_SEARCH;
