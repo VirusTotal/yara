@@ -64,11 +64,11 @@ typedef struct COMPILER_RESULTS
 } COMPILER_RESULTS;
 
 
-char* ext_vars[MAX_ARGS_EXT_VAR + 1];
-int ignore_warnings = FALSE;
-int show_version = FALSE;
-int show_help = FALSE;
-int fail_on_warnings = FALSE;
+static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
+static int ignore_warnings = FALSE;
+static int show_version = FALSE;
+static int show_help = FALSE;
+static int fail_on_warnings = FALSE;
 
 
 #define USAGE_STRING \
