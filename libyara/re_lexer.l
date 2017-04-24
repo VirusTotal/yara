@@ -126,6 +126,12 @@ hex_digit     [0-9a-fA-F]
     yyterminate();
   }
 
+  if (hi_bound == 0 && lo_bound == 0)
+  {
+    yyerror(yyscanner, lex_env, "bad repeat interval");
+    yyterminate();
+  }
+
   yylval->range = (hi_bound << 16) | lo_bound;
 
   return _RANGE_;
@@ -141,6 +147,12 @@ hex_digit     [0-9a-fA-F]
   if (value > INT16_MAX)
   {
     yyerror(yyscanner, lex_env, "repeat interval too large");
+    yyterminate();
+  }
+
+  if (value == 0)
+  {
+    yyerror(yyscanner, lex_env, "bad repeat interval");
     yyterminate();
   }
 
