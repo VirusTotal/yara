@@ -963,7 +963,6 @@ void test_re()
   assert_false_regexp("ab{1,}b", "ab");
   assert_false_regexp("ab{1}c", "abbc");
   assert_true_regexp("ab{0,}c", "ac", "ac");
-  assert_true_regexp("ab{0,0}c", "ac", "ac");
   assert_true_regexp("ab{1,1}c", "abc", "abc");
   assert_true_regexp("ab{0,}c", "abbbc", "abbbc");
   assert_true_regexp("ab{,3}c", "abbbc", "abbbc");
@@ -1126,6 +1125,9 @@ void test_re()
   // test case for issue #503, \x without two following hex-digits
   assert_regexp_syntax_error("\\x0");
   assert_regexp_syntax_error("\\x");
+
+  assert_regexp_syntax_error("x{0,0}");
+  assert_regexp_syntax_error("x{0}");
 
   assert_regexp_syntax_error("\\xxy");
 
