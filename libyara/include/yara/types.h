@@ -293,8 +293,6 @@ typedef YR_AC_MATCH_TABLE_ENTRY*  YR_AC_MATCH_TABLE;
 
 typedef struct _YARA_RULES_FILE_HEADER
 {
-  uint32_t version;
-
   DECLARE_REFERENCE(YR_RULE*, rules_list_head);
   DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
   DECLARE_REFERENCE(uint8_t*, code_start);
