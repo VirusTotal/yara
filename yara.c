@@ -132,7 +132,7 @@ static int count = 0;
 static int limit = 0;
 static int timeout = 1000000;
 static int stack_size = DEFAULT_STACK_SIZE;
-static int threads = 8;
+static int threads = MAX_THREADS;
 static int fail_on_warnings = FALSE;
 
 

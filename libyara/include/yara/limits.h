@@ -39,7 +39,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // MAX_THREADS is the number of threads that can use a YR_RULES
 // object simultaneously.
 
+#ifndef MAX_THREADS
 #define MAX_THREADS 32
+#endif
 
 
 #ifndef MAX_PATH

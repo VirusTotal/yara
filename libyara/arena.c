@@ -56,7 +56,7 @@ typedef struct _ARENA_FILE_HEADER
 {
   char      magic[4];
   uint32_t  size;
-  uint8_t   version;
+  uint32_t  version;
 
 } ARENA_FILE_HEADER;
 
