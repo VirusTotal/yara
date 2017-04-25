@@ -480,7 +480,7 @@ int _yr_ac_find_suitable_transition_table_slot(
       automaton->t_table = (YR_AC_TRANSITION_TABLE) yr_realloc(
           automaton->t_table, t_bytes_size * 2);
 
-	  automaton->m_table = (YR_AC_MATCH_TABLE) yr_realloc(
+      automaton->m_table = (YR_AC_MATCH_TABLE) yr_realloc(
           automaton->m_table, m_bytes_size * 2);
 
       if (automaton->t_table == NULL || automaton->m_table == NULL)
