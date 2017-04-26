@@ -140,6 +140,22 @@ typedef struct _RE_THREAD_STORAGE
 YR_THREAD_STORAGE_KEY thread_storage_key = 0;
 
 
+#define CHAR_IN_CLASS(chr, cls)  \
+    ((cls)[(chr) / 8] & 1 << ((chr) % 8))
+
+
+int IS_WORD_CHAR(uint8_t* input, int character_size)
+{
+  int result = ((isalnum(*input) || (*input) == '_'));
+
+  if (character_size == 2)
+    result = result && (*(input + 1) == 0);
+
+  return result;
+}
+
+
+
 //
 // yr_re_initialize
 //
@@ -360,6 +376,7 @@ int yr_re_match(
       re->code,
       (uint8_t*) target,
       strlen(target),
+      0,
       re->flags | RE_FLAGS_SCAN,
       NULL,
       NULL);
@@ -1799,18 +1816,30 @@ int _yr_re_fiber_sync(
 //
 // yr_re_exec
 //
-// Executes a regular expression
+// Executes a regular expression. The specified regular expression will try to
+// match the data starting at the address specified by "input". The "input"
+// pointer can point to any address inside a memory buffer. Arguments
+// "input_forwards_size" and "input_backwards_size" indicate how many bytes
+// can be accesible starting at "input" and going forwards and backwards
+// respectively.
+//
+//   <--- input_backwards_size -->|<----------- input_forwards_size -------->
+//  |--------  memory buffer  -----------------------------------------------|
+//                                ^
+//                              input
 //
 // Args:
 //   uint8_t* re_code                 - Regexp code be executed
 //   uint8_t* input                   - Pointer to input data
-//   size_t input_size                - Input data size
+//   size_t input_forwards_size       - Number of accessible bytes starting at
+//                                      "input" and going forwards.
+//   size_t input_backwards_size      - Number of accessible bytes starting at
+//                                      "input" and going backwards
 //   int flags                        - Flags:
 //      RE_FLAGS_SCAN
 //      RE_FLAGS_BACKWARDS
 //      RE_FLAGS_EXHAUSTIVE
 //      RE_FLAGS_WIDE
-//      RE_FLAGS_NOT_AT_START
 //      RE_FLAGS_NO_CASE
 //      RE_FLAGS_DOT_ALL
 //   RE_MATCH_CALLBACK_FUNC callback  - Callback function
@@ -1825,10 +1854,12 @@ int _yr_re_fiber_sync(
 //      -4  Too many fibers
 //      -5  Unknown fatal error
 
+
 int yr_re_exec(
     uint8_t* re_code,
     uint8_t* input_data,
-    size_t input_size,
+    size_t input_forwards_size,
+    size_t input_backwards_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
     void* callback_args)
@@ -1858,18 +1889,23 @@ int yr_re_exec(
   #define ACTION_KILL       2
   #define ACTION_KILL_TAIL  3
 
-  #define prolog if (bytes_matched >= max_bytes_matched) \
+  #define prolog { \
+      if ((bytes_matched >= max_bytes_matched) || \
+          (character_size == 2 && *(input + 1) != 0)) \
       { \
         action = ACTION_KILL; \
         break; \
-      }
+      } \
+    }
 
-  #define fail_if_error(e) switch (e) { \
+  #define fail_if_error(e) { \
+      switch (e) { \
         case ERROR_INSUFFICIENT_MEMORY: \
           return -2; \
         case ERROR_TOO_MANY_RE_FIBERS: \
           return -4; \
-      }
+      } \
+    }
 
   if (_yr_re_alloc_storage(&storage) != ERROR_SUCCESS)
     return -2;
@@ -1884,14 +1920,17 @@ int yr_re_exec(
 
   if (flags & RE_FLAGS_BACKWARDS)
   {
+    max_bytes_matched = (int) yr_min(input_backwards_size, RE_SCAN_LIMIT);
     input -= character_size;
     input_incr = -input_incr;
   }
-
-  max_bytes_matched = (int) yr_min(input_size, RE_SCAN_LIMIT);
+  else
+  {
+    max_bytes_matched = (int) yr_min(input_forwards_size, RE_SCAN_LIMIT);
+  }
 
   // Round down max_bytes_matched to a multiple of character_size, this way if
-  // character_size is 2 and input_size is odd we are ignoring the
+  // character_size is 2 and max_bytes_matched is odd we are ignoring the
   // extra byte which can't match anyways.
 
   max_bytes_matched = max_bytes_matched - max_bytes_matched % character_size;
@@ -1973,14 +2012,14 @@ int yr_re_exec(
 
         case RE_OPCODE_WORD_CHAR:
           prolog;
-          match = IS_WORD_CHAR(*input);
+          match = IS_WORD_CHAR(input, character_size);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_NON_WORD_CHAR:
           prolog;
-          match = !IS_WORD_CHAR(*input);
+          match = !IS_WORD_CHAR(input, character_size);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
@@ -2028,16 +2067,25 @@ int yr_re_exec(
         case RE_OPCODE_WORD_BOUNDARY:
         case RE_OPCODE_NON_WORD_BOUNDARY:
 
-          if (bytes_matched == 0 &&
-              !(flags & RE_FLAGS_NOT_AT_START) &&
-              !(flags & RE_FLAGS_BACKWARDS))
+          if (bytes_matched == 0 && input_backwards_size < character_size)
+          {
             match = TRUE;
+          }
           else if (bytes_matched >= max_bytes_matched)
+          {
             match = TRUE;
-          else if (IS_WORD_CHAR(*(input - input_incr)) != IS_WORD_CHAR(*input))
-            match = TRUE;
+          }
           else
-            match = FALSE;
+          {
+            assert(input <  input_data + input_forwards_size);
+            assert(input >= input_data - input_backwards_size);
+
+            assert(input - input_incr <  input_data + input_forwards_size);
+            assert(input - input_incr >= input_data - input_backwards_size);
+
+            match = IS_WORD_CHAR(input - input_incr, character_size) != \
+                    IS_WORD_CHAR(input, character_size);
+          }
 
           if (*ip == RE_OPCODE_NON_WORD_BOUNDARY)
             match = !match;
@@ -2048,16 +2096,16 @@ int yr_re_exec(
 
         case RE_OPCODE_MATCH_AT_START:
           if (flags & RE_FLAGS_BACKWARDS)
-            kill = input_size > (size_t) bytes_matched;
+            kill = input_backwards_size > (size_t) bytes_matched;
           else
-            kill = (flags & RE_FLAGS_NOT_AT_START) || (bytes_matched != 0);
+            kill = input_backwards_size > 0 || (bytes_matched != 0);
           action = kill ? ACTION_KILL : ACTION_CONTINUE;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_MATCH_AT_END:
           kill = flags & RE_FLAGS_BACKWARDS ||
-                 input_size > (size_t) bytes_matched;
+                 input_forwards_size > (size_t) bytes_matched;
           action = kill ? ACTION_KILL : ACTION_CONTINUE;
           fiber->ip += 1;
           break;
@@ -2134,13 +2182,6 @@ int yr_re_exec(
       }
     }
 
-    if (flags & RE_FLAGS_WIDE &&
-        bytes_matched < max_bytes_matched &&
-        *(input + 1) != 0)
-    {
-      _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool);
-    }
-
     input += input_incr;
     bytes_matched += character_size;
 
@@ -2164,7 +2205,8 @@ int yr_re_exec(
 int yr_re_fast_exec(
     uint8_t* code,
     uint8_t* input_data,
-    size_t input_size,
+    size_t input_forwards_size,
+    size_t input_backwards_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
     void* callback_args)
@@ -2187,7 +2229,11 @@ int yr_re_fast_exec(
   int input_incr;
   int sp = 0;
   int bytes_matched;
-  int max_bytes_matched = input_size;
+  int max_bytes_matched;
+
+  max_bytes_matched = flags & RE_FLAGS_BACKWARDS ?
+      input_backwards_size :
+      input_forwards_size;
 
   input_incr = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
 

@@ -528,7 +528,8 @@ int _yr_scan_match_callback(
 typedef int (*RE_EXEC_FUNC)(
     uint8_t* code,
     uint8_t* input,
-    size_t input_size,
+    size_t input_forwards_size,
+    size_t input_backwards_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
     void* callback_args);
@@ -569,7 +570,8 @@ int _yr_scan_verify_re_match(
         ac_match->forward_code,
         data + offset,
         data_size - offset,
-        offset > 0 ? flags | RE_FLAGS_NOT_AT_START : flags,
+        offset,
+        flags,
         NULL,
         NULL);
   }
@@ -581,7 +583,8 @@ int _yr_scan_verify_re_match(
         ac_match->forward_code,
         data + offset,
         data_size - offset,
-        offset > 0 ? flags | RE_FLAGS_NOT_AT_START : flags,
+        offset,
+        flags,
         NULL,
         NULL);
   }
@@ -616,6 +619,7 @@ int _yr_scan_verify_re_match(
     backward_matches = exec(
         ac_match->backward_code,
         data + offset,
+        data_size - offset,
         offset,
         flags | RE_FLAGS_BACKWARDS | RE_FLAGS_EXHAUSTIVE,
         _yr_scan_match_callback,
