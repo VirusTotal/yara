@@ -2056,9 +2056,9 @@ int yr_re_exec(
           break;
 
         case RE_OPCODE_MATCH_AT_END:
-          action = input_size > (size_t) bytes_matched ?
-              ACTION_KILL :
-              ACTION_CONTINUE;
+          kill = flags & RE_FLAGS_BACKWARDS ||
+                 input_size > (size_t) bytes_matched;
+          action = kill ? ACTION_KILL : ACTION_CONTINUE;
           fiber->ip += 1;
           break;
 
