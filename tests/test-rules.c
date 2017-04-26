@@ -1111,7 +1111,14 @@ void test_re()
   assert_false_regexp("^abc$", "abcc");
   assert_true_regexp("^abc", "abcc", "abc");
   assert_false_regexp("^abc$", "aabc");
+  assert_false_regexp("abc^", "abc");
+  assert_false_regexp("ab^c", "abc");
+  assert_false_regexp("a^bcdef", "abcdef")
   assert_true_regexp("abc$", "aabc", "abc");
+  assert_false_regexp("$abc", "abc");
+  assert_true_regexp("(a|a$)bcd", "abcd", "abcd");
+  assert_false_regexp("(a$|a$)bcd", "abcd");
+  assert_false_regexp("(abc$|ab$)", "abcd");
   assert_true_regexp("^a(bc+|b[eh])g|.h$", "abhg", "abhg");
   assert_true_regexp("(bc+d$|ef*g.|h?i(j|k))", "effgz", "effgz");
   assert_true_regexp("(bc+d$|ef*g.|h?i(j|k))", "ij", "ij");
