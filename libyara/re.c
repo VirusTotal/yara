@@ -1787,7 +1787,8 @@ int _yr_re_fiber_sync(
           branch_b->ip += (1 + sizeof(RE_REPEAT_ANY_ARGS));
           branch_b->rc = -1;
 
-          _yr_re_fiber_sync(fiber_list, fiber_pool, branch_b);
+          FAIL_ON_ERROR(_yr_re_fiber_sync(
+              fiber_list, fiber_pool, branch_b));
 
           fiber = next;
         }
