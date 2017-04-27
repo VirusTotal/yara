@@ -846,15 +846,20 @@ int yr_execute_code(
           break;
         }
 
-        r1.i = yr_re_exec(
+        result = yr_re_exec(
           (uint8_t*) r2.re->code,
           (uint8_t*) r1.ss->c_string,
           r1.ss->length,
           0,
           r2.re->flags | RE_FLAGS_SCAN,
           NULL,
-          NULL) >= 0;
+          NULL,
+          &found);
 
+        if (result != ERROR_SUCCESS)
+          stop = TRUE;
+
+        r1.i = found >= 0;
         push(r1);
         break;
 

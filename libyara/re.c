@@ -374,14 +374,19 @@ int yr_re_match(
     RE* re,
     const char* target)
 {
-  return yr_re_exec(
+  int result;
+
+  yr_re_exec(
       re->code,
       (uint8_t*) target,
       strlen(target),
       0,
       re->flags | RE_FLAGS_SCAN,
       NULL,
-      NULL);
+      NULL,
+      &result);
+
+  return result;
 }
 
 
@@ -1846,16 +1851,12 @@ int _yr_re_fiber_sync(
 //      RE_FLAGS_DOT_ALL
 //   RE_MATCH_CALLBACK_FUNC callback  - Callback function
 //   void* callback_args              - Callback argument
-//
+//   int*  matches                    - Pointer to an integer receiving the
+//                                      number of matching bytes. Notice that
+//                                      0 means a zero-length match, while no
+//                                      matches is -1.
 // Returns:
-//    Integer indicating the number of matching bytes, including 0 when
-//    matching an empty regexp. Negative values indicate:
-//      -1  No match
-//      -2  Not enough memory
-//      -3  Too many matches
-//      -4  Too many fibers
-//      -5  Unknown fatal error
-
+//    ERROR_SUCCESS or any other error code.
 
 int yr_re_exec(
     uint8_t* re_code,
@@ -1864,7 +1865,8 @@ int yr_re_exec(
     size_t input_backwards_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
-    void* callback_args)
+    void* callback_args,
+    int* matches)
 {
   uint8_t* ip;
   uint8_t* input;
@@ -1876,7 +1878,6 @@ int yr_re_exec(
   RE_FIBER* fiber;
   RE_FIBER* next_fiber;
 
-  int error;
   int bytes_matched;
   int max_bytes_matched;
   int match;
@@ -1884,7 +1885,6 @@ int yr_re_exec(
   int input_incr;
   int kill;
   int action;
-  int result = -1;
 
   #define ACTION_NONE       0
   #define ACTION_CONTINUE   1
@@ -1900,14 +1900,8 @@ int yr_re_exec(
       } \
     }
 
-  #define fail_if_error(e) { \
-      switch (e) { \
-        case ERROR_INSUFFICIENT_MEMORY: \
-          return -2; \
-        case ERROR_TOO_MANY_RE_FIBERS: \
-          return -4; \
-      } \
-    }
+  if (matches != NULL)
+    *matches = -1;
 
   if (_yr_re_alloc_storage(&storage) != ERROR_SUCCESS)
     return -2;
@@ -1938,15 +1932,13 @@ int yr_re_exec(
   max_bytes_matched = max_bytes_matched - max_bytes_matched % character_size;
   bytes_matched = 0;
 
-  error = _yr_re_fiber_create(&storage->fiber_pool, &fiber);
-  fail_if_error(error);
+  FAIL_ON_ERROR(_yr_re_fiber_create(&storage->fiber_pool, &fiber));
 
   fiber->ip = re_code;
   fibers.head = fiber;
   fibers.tail = fiber;
 
-  error = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
-  fail_if_error(error);
+  FAIL_ON_ERROR(_yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber));
 
   while (fibers.head != NULL)
   {
@@ -2114,36 +2106,28 @@ int yr_re_exec(
 
         case RE_OPCODE_MATCH:
 
-          result = bytes_matched;
+          if (matches != NULL)
+            *matches = bytes_matched;
 
           if (flags & RE_FLAGS_EXHAUSTIVE)
           {
             if (callback != NULL)
             {
-              int cb_result;
-
               if (flags & RE_FLAGS_BACKWARDS)
-                cb_result = callback(
+              {
+                FAIL_ON_ERROR(callback(
                     input + character_size,
                     bytes_matched,
                     flags,
-                    callback_args);
+                    callback_args));
+              }
               else
-                cb_result = callback(
+              {
+                FAIL_ON_ERROR(callback(
                     input_data,
                     bytes_matched,
                     flags,
-                    callback_args);
-
-              switch(cb_result)
-              {
-                case ERROR_INSUFFICIENT_MEMORY:
-                  return -2;
-                case ERROR_TOO_MANY_MATCHES:
-                  return -3;
-                default:
-                  if (cb_result != ERROR_SUCCESS)
-                    return -4;
+                    callback_args));
               }
             }
 
@@ -2172,14 +2156,14 @@ int yr_re_exec(
           break;
 
         case ACTION_CONTINUE:
-          error = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
-          fail_if_error(error);
+          FAIL_ON_ERROR(
+              _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber))
           break;
 
         default:
           next_fiber = fiber->next;
-          error = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
-          fail_if_error(error);
+          FAIL_ON_ERROR(
+              _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber));
           fiber = next_fiber;
       }
     }
@@ -2189,18 +2173,16 @@ int yr_re_exec(
 
     if (flags & RE_FLAGS_SCAN && bytes_matched < max_bytes_matched)
     {
-      error = _yr_re_fiber_create(&storage->fiber_pool, &fiber);
-      fail_if_error(error);
+      FAIL_ON_ERROR(_yr_re_fiber_create(&storage->fiber_pool, &fiber));
 
       fiber->ip = re_code;
       _yr_re_fiber_append(&fibers, fiber);
 
-      error = _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber);
-      fail_if_error(error);
+      FAIL_ON_ERROR(_yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber));
     }
   }
 
-  return result;
+  return ERROR_SUCCESS;
 }
 
 
@@ -2211,7 +2193,8 @@ int yr_re_fast_exec(
     size_t input_backwards_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
-    void* callback_args)
+    void* callback_args,
+    int* matches)
 {
   RE_REPEAT_ANY_ARGS* repeat_any_args;
 
@@ -2261,28 +2244,20 @@ int yr_re_fast_exec(
       {
         if (flags & RE_FLAGS_EXHAUSTIVE)
         {
-          int cb_result = callback(
+          FAIL_ON_ERROR(callback(
              flags & RE_FLAGS_BACKWARDS ? input + 1 : input_data,
              bytes_matched,
              flags,
-             callback_args);
-
-          switch(cb_result)
-          {
-            case ERROR_INSUFFICIENT_MEMORY:
-              return -2;
-            case ERROR_TOO_MANY_MATCHES:
-              return -3;
-            default:
-              if (cb_result != ERROR_SUCCESS)
-                return -4;
-          }
+             callback_args));
 
           break;
         }
         else
         {
-          return bytes_matched;
+          if (matches != NULL)
+            *matches = bytes_matched;
+
+          return ERROR_SUCCESS;
         }
       }
 
@@ -2370,7 +2345,10 @@ int yr_re_fast_exec(
     }
   }
 
-  return -1;
+  if (matches != NULL)
+    *matches = -1;
+
+  return ERROR_SUCCESS;
 }
 
 
