@@ -1324,9 +1324,6 @@ int _yr_re_fiber_create(
 {
   RE_FIBER* fiber;
 
-  if (fiber_pool->fiber_count == RE_MAX_FIBERS)
-    return ERROR_TOO_MANY_RE_FIBERS;
-
   if (fiber_pool->fibers.head != NULL)
   {
     fiber = fiber_pool->fibers.head;
@@ -1337,6 +1334,9 @@ int _yr_re_fiber_create(
   }
   else
   {
+    if (fiber_pool->fiber_count == RE_MAX_FIBERS)
+      return ERROR_TOO_MANY_RE_FIBERS;
+
     fiber = (RE_FIBER*) yr_malloc(sizeof(RE_FIBER));
 
     if (fiber == NULL)
