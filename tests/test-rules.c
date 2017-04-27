@@ -901,6 +901,50 @@ void test_re()
       "rule test { strings: $a = /a.{1,2}b/ wide condition: !a == 8 }",
       "a\0x\0x\0b\0");
 
+  assert_true_rule_blob(
+      "rule test { strings: $a = /\\babc/ wide condition: $a }",
+      "a\0b\0c\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /\\babc/ wide condition: $a }",
+      "\0a\0b\0c\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /\\babc/ wide condition: $a }",
+      "\ta\0b\0c\0");
+
+  assert_false_rule_blob(
+      "rule test { strings: $a = /\\babc/ wide condition: $a }",
+      "x\0a\0b\0c\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /\\babc/ wide condition: $a }",
+      "x\ta\0b\0c\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /abc\\b/ wide condition: $a }",
+      "a\0b\0c\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /abc\\b/ wide condition: $a }",
+      "a\0b\0c\0\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /abc\\b/ wide condition: $a }",
+      "a\0b\0c\0\t");
+
+  assert_false_rule_blob(
+      "rule test { strings: $a = /abc\\b/ wide condition: $a }",
+      "a\0b\0c\0x\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /abc\\b/ wide condition: $a }",
+      "a\0b\0c\0b\t");
+
+  assert_false_rule_blob(
+      "rule test { strings: $a = /\\b/ wide condition: $a }",
+      "abc");
+
   assert_regexp_syntax_error(")");
   assert_true_regexp("abc", "abc", "abc");
   assert_false_regexp("abc", "xbc");
