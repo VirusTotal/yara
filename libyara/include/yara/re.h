@@ -208,17 +208,19 @@ int yr_re_exec(
     size_t input_backwards_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
-    void* callback_args);
+    void* callback_args,
+    int* matches);
 
 
 int yr_re_fast_exec(
-    uint8_t* re_code,
-    uint8_t* input,
+    uint8_t* code,
+    uint8_t* input_data,
     size_t input_forwards_size,
     size_t input_backwards_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
-    void* callback_args);
+    void* callback_args,
+    int* matches);
 
 
 int yr_re_parse(

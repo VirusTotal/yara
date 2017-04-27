@@ -532,7 +532,8 @@ typedef int (*RE_EXEC_FUNC)(
     size_t input_backwards_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
-    void* callback_args);
+    void* callback_args,
+    int* matches);
 
 
 int _yr_scan_verify_re_match(
@@ -566,42 +567,33 @@ int _yr_scan_verify_re_match(
 
   if (STRING_IS_ASCII(ac_match->string))
   {
-    forward_matches = exec(
+    FAIL_ON_ERROR(exec(
         ac_match->forward_code,
         data + offset,
         data_size - offset,
         offset,
         flags,
         NULL,
-        NULL);
+        NULL,
+        &forward_matches));
   }
 
   if (STRING_IS_WIDE(ac_match->string) && forward_matches == -1)
   {
     flags |= RE_FLAGS_WIDE;
-    forward_matches = exec(
+    FAIL_ON_ERROR(exec(
         ac_match->forward_code,
         data + offset,
         data_size - offset,
         offset,
         flags,
         NULL,
-        NULL);
+        NULL,
+        &forward_matches));
   }
 
-  switch(forward_matches)
-  {
-    case -1:
-      return ERROR_SUCCESS;
-    case -2:
-      return ERROR_INSUFFICIENT_MEMORY;
-    case -3:
-      return ERROR_TOO_MANY_MATCHES;
-    case -4:
-      return ERROR_TOO_MANY_RE_FIBERS;
-    case -5:
-      return ERROR_INTERNAL_FATAL_ERROR;
-  }
+  if (forward_matches == -1)
+    return ERROR_SUCCESS;
 
   if (forward_matches == 0 && ac_match->backward_code == NULL)
     return ERROR_SUCCESS;
@@ -616,26 +608,15 @@ int _yr_scan_verify_re_match(
 
   if (ac_match->backward_code != NULL)
   {
-    backward_matches = exec(
+    FAIL_ON_ERROR(exec(
         ac_match->backward_code,
         data + offset,
         data_size - offset,
         offset,
         flags | RE_FLAGS_BACKWARDS | RE_FLAGS_EXHAUSTIVE,
         _yr_scan_match_callback,
-        (void*) &callback_args);
-
-    switch(backward_matches)
-    {
-      case -2:
-        return ERROR_INSUFFICIENT_MEMORY;
-      case -3:
-        return ERROR_TOO_MANY_MATCHES;
-      case -4:
-        return ERROR_TOO_MANY_RE_FIBERS;
-      case -5:
-        return ERROR_INTERNAL_FATAL_ERROR;
-    }
+        (void*) &callback_args,
+        &backward_matches));
   }
   else
   {
