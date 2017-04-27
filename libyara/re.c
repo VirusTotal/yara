@@ -144,7 +144,9 @@ YR_THREAD_STORAGE_KEY thread_storage_key = 0;
     ((cls)[(chr) / 8] & 1 << ((chr) % 8))
 
 
-int IS_WORD_CHAR(uint8_t* input, int character_size)
+int _yr_re_is_word_char(
+    uint8_t* input,
+    int character_size)
 {
   int result = ((isalnum(*input) || (*input) == '_'));
 
@@ -2012,14 +2014,14 @@ int yr_re_exec(
 
         case RE_OPCODE_WORD_CHAR:
           prolog;
-          match = IS_WORD_CHAR(input, character_size);
+          match = _yr_re_is_word_char(input, character_size);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
 
         case RE_OPCODE_NON_WORD_CHAR:
           prolog;
-          match = !IS_WORD_CHAR(input, character_size);
+          match = !_yr_re_is_word_char(input, character_size);
           action = match ? ACTION_NONE : ACTION_KILL;
           fiber->ip += 1;
           break;
@@ -2083,8 +2085,8 @@ int yr_re_exec(
             assert(input - input_incr <  input_data + input_forwards_size);
             assert(input - input_incr >= input_data - input_backwards_size);
 
-            match = IS_WORD_CHAR(input - input_incr, character_size) != \
-                    IS_WORD_CHAR(input, character_size);
+            match = _yr_re_is_word_char(input, character_size) != \
+                    _yr_re_is_word_char(input - input_incr, character_size);
           }
 
           if (*ip == RE_OPCODE_NON_WORD_BOUNDARY)
