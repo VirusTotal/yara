@@ -81,6 +81,7 @@ void setup_mmap()
 
   if (ftruncate(fd, COUNT * sizeof(wbuf) / 2) != 0)
     exit(EXIT_FAILURE);
+}
 
 void setup_rules()
 {
