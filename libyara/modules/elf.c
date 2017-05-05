@@ -220,7 +220,7 @@ void parse_elf_header_##bits##_##bo(                                           \
     {                                                                          \
       set_integer(yr_##bo##32toh(section->type), elf_obj,                      \
                   "sections[%i].type", i);                                     \
-      set_integer(yr_##bo##32toh(section->flags), elf_obj,                     \
+      set_integer(yr_##bo##bits##toh(section->flags), elf_obj,                 \
                   "sections[%i].flags", i);                                    \
       set_integer(yr_##bo##bits##toh(section->addr), elf_obj,                  \
                   "sections[%i].address", i);                                  \
