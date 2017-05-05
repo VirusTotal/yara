@@ -1203,8 +1203,8 @@ int _yr_re_emit(
 
       *code_size += branch_size;
 
-      repeat_start_args_addr->offset = 2 * inst_size + branch_size;
-      repeat_args.offset = -branch_size;
+      repeat_start_args_addr->offset = (int32_t)(2 * inst_size + branch_size);
+      repeat_args.offset = -((int32_t) branch_size);
 
       FAIL_ON_ERROR(_yr_emit_inst_arg_struct(
           emit_context,
