@@ -2218,8 +2218,8 @@ int yr_re_fast_exec(
   int max_bytes_matched;
 
   max_bytes_matched = flags & RE_FLAGS_BACKWARDS ?
-      input_backwards_size :
-      input_forwards_size;
+      (int) input_backwards_size :
+      (int) input_forwards_size;
 
   input_incr = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
 
