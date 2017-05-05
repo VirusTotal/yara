@@ -561,7 +561,7 @@ int _yr_emit_inst(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     uint8_t** instruction_addr,
-    int* code_size)
+    size_t* code_size)
 {
   FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
@@ -581,7 +581,7 @@ int _yr_emit_inst_arg_uint8(
     uint8_t argument,
     uint8_t** instruction_addr,
     uint8_t** argument_addr,
-    int* code_size)
+    size_t* code_size)
 {
   FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
@@ -607,7 +607,7 @@ int _yr_emit_inst_arg_uint16(
     uint16_t argument,
     uint8_t** instruction_addr,
     uint16_t** argument_addr,
-    int* code_size)
+    size_t* code_size)
 {
   FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
@@ -633,7 +633,7 @@ int _yr_emit_inst_arg_uint32(
     uint32_t argument,
     uint8_t** instruction_addr,
     uint32_t** argument_addr,
-    int* code_size)
+    size_t* code_size)
 {
   FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
@@ -659,7 +659,7 @@ int _yr_emit_inst_arg_int16(
     int16_t argument,
     uint8_t** instruction_addr,
     int16_t** argument_addr,
-    int* code_size)
+    size_t* code_size)
 {
   FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
@@ -686,7 +686,7 @@ int _yr_emit_inst_arg_struct(
     size_t structure_size,
     uint8_t** instruction_addr,
     void** argument_addr,
-    int* code_size)
+    size_t* code_size)
 {
   FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
@@ -712,7 +712,7 @@ int _yr_emit_split(
     int16_t argument,
     uint8_t** instruction_addr,
     int16_t** argument_addr,
-    int* code_size)
+    size_t* code_size)
 {
   assert(opcode == RE_OPCODE_SPLIT_A || opcode == RE_OPCODE_SPLIT_B);
 
@@ -750,12 +750,12 @@ int _yr_re_emit(
     RE_NODE* re_node,
     int flags,
     uint8_t** code_addr,
-    int* code_size)
+    size_t* code_size)
 {
-  int branch_size;
-  int split_size;
-  int inst_size;
-  int jmp_size;
+  size_t branch_size;
+  size_t split_size;
+  size_t inst_size;
+  size_t jmp_size;
 
   int emit_split;
   int emit_repeat;
@@ -1278,8 +1278,8 @@ int yr_re_ast_emit_code(
 {
   RE_EMIT_CONTEXT emit_context;
 
-  int code_size;
-  int total_size;
+  size_t code_size;
+  size_t total_size;
 
   // Ensure that we have enough contiguous memory space in the arena to
   // contain the regular expression code. The code can't span over multiple
