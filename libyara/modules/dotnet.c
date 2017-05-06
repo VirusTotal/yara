@@ -1132,7 +1132,7 @@ void dotnet_parse_tilde_2(
               pe->object, "assembly_refs[%i].version.minor", i);
           set_integer(assemblyref_table->BuildNumber,
               pe->object, "assembly_refs[%i].version.build_number", i);
-          set_integer(assembly_table->RevisionNumber,
+          set_integer(assemblyref_table->RevisionNumber,
               pe->object, "assembly_refs[%i].version.revision_number", i);
 
           blob_offset = pe->data + metadata_root + streams->blob->Offset;
