@@ -1557,7 +1557,9 @@ void dotnet_parse_com(
     dotnet_parse_guid(pe, metadata_root, headers.guid);
 
   // Parse the #~ stream, which includes various tables of interest.
-  if (headers.tilde != NULL)
+  // These tables reference the blob and string streams, so we need to ensure
+  // those are not NULL also.
+  if (headers.tilde != NULL && headers.string != NULL && headers.blob != NULL)
     dotnet_parse_tilde(pe, metadata_root, cli_header, &headers);
 
   if (headers.us != NULL)
