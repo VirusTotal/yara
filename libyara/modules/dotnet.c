@@ -185,7 +185,7 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(
                      (*(offset + 1) << 16) |
                      (*(offset + 2) << 8) |
                       *(offset + 3);
-    result.size = 3;
+    result.size = 4;
   }
   else
   {
