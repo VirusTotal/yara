@@ -1652,12 +1652,14 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
+    PIMAGE_NT_HEADERS32 pe_header;
+
     block_data = block->fetch_data(block);
 
     if (block_data == NULL)
       continue;
 
-    PIMAGE_NT_HEADERS32 pe_header = pe_get_header(block_data, block->size);
+    pe_header = pe_get_header(block_data, block->size);
 
     if (pe_header != NULL)
     {

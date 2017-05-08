@@ -116,10 +116,12 @@ int yr_parser_emit_with_arg_reloc(
     void** argument_address)
 {
   int64_t* ptr = NULL;
+  int result;
+
   DECLARE_REFERENCE(void*, argument) a;
   a.argument = argument;
 
-  int result = yr_arena_write_data(
+  result = yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
       &instruction,
       sizeof(uint8_t),

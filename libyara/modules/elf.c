@@ -203,6 +203,9 @@ void parse_elf_header_##bits##_##bo(                                           \
   {                                                                            \
     char* str_table = NULL;                                                    \
                                                                                \
+    elf##bits##_section_header_t* symtab = NULL;                               \
+    elf##bits##_section_header_t* sym_strtab = NULL;                           \
+                                                                               \
     section = (elf##bits##_section_header_t*)                                  \
       ((uint8_t*) elf + yr_##bo##bits##toh(elf->sh_offset));                   \
                                                                                \
@@ -212,9 +215,6 @@ void parse_elf_header_##bits##_##bo(                                           \
       str_table = (char*) elf + yr_##bo##bits##toh(                            \
           section[yr_##bo##16toh(elf->sh_str_table_index)].offset);            \
     }                                                                          \
-                                                                               \
-    elf##bits##_section_header_t* symtab = NULL;                               \
-    elf##bits##_section_header_t* sym_strtab = NULL;                           \
                                                                                \
     for (i = 0; i < yr_##bo##16toh(elf->sh_entry_count); i++)                  \
     {                                                                          \
