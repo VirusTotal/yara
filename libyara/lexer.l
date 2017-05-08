@@ -830,6 +830,7 @@ int yr_lex_parse_rules_fd(
   YR_COMPILER* compiler)
 {
   yyscan_t yyscanner;
+  char buf[1024];
 
   compiler->errors = 0;
 
@@ -841,8 +842,6 @@ int yr_lex_parse_rules_fd(
   #if YYDEBUG
   yydebug = 1;
   #endif
-
-  char buf[1024];
 
   yyset_extra(compiler, yyscanner);
   while (1)
