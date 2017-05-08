@@ -127,9 +127,11 @@ alternative
       }
     | alternative '|'
       {
+        RE_NODE* node;
+
         mark_as_not_fast_regexp();
 
-        RE_NODE* node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
+        node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
 
         DESTROY_NODE_IF($$ == NULL, $1);
         ERROR_IF(node == NULL, ERROR_INSUFFICIENT_MEMORY);
@@ -158,9 +160,11 @@ concatenation
 repeat
     : single '*'
       {
+        RE_AST* re_ast;
+
         mark_as_not_fast_regexp();
 
-        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast = yyget_extra(yyscanner);
         re_ast->flags |= RE_FLAGS_GREEDY;
 
         $$ = yr_re_node_create(RE_NODE_STAR, $1, NULL);
@@ -170,9 +174,11 @@ repeat
       }
     | single '*' '?'
       {
+        RE_AST* re_ast;
+
         mark_as_not_fast_regexp();
 
-        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast = yyget_extra(yyscanner);
         re_ast->flags |= RE_FLAGS_UNGREEDY;
 
         $$ = yr_re_node_create(RE_NODE_STAR, $1, NULL);
@@ -184,9 +190,11 @@ repeat
       }
     | single '+'
       {
+        RE_AST* re_ast;
+
         mark_as_not_fast_regexp();
 
-        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast = yyget_extra(yyscanner);
         re_ast->flags |= RE_FLAGS_GREEDY;
 
         $$ = yr_re_node_create(RE_NODE_PLUS, $1, NULL);
@@ -196,9 +204,11 @@ repeat
       }
     | single '+' '?'
       {
+        RE_AST* re_ast;
+
         mark_as_not_fast_regexp();
 
-        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast = yyget_extra(yyscanner);
         re_ast->flags |= RE_FLAGS_UNGREEDY;
 
         $$ = yr_re_node_create(RE_NODE_PLUS, $1, NULL);
