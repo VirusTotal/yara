@@ -1001,8 +1001,11 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
 
   for (i = 0; i < yr_le32toh(exports->NumberOfFunctions); i++)
   {
-    char* name;
+    IMPORT_EXPORT_FUNCTION* exported_func;
+
     uint16_t ordinal = 0;
+    char* name;
+
     offset = pe_rva_to_offset(pe, names[i]);
 
     if (offset < 0)
@@ -1017,7 +1020,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
     ordinal = yr_le16toh(ordinals[i]);
 
     // Now add it to the list...
-    IMPORT_EXPORT_FUNCTION* exported_func = (IMPORT_EXPORT_FUNCTION*)
+    exported_func = (IMPORT_EXPORT_FUNCTION*)
         yr_calloc(1, sizeof(IMPORT_EXPORT_FUNCTION));
 
     if (exported_func == NULL)
@@ -1051,7 +1054,9 @@ void pe_parse_certificates(
     PE* pe)
 {
   int i, counter = 0;
+
   uint8_t* eod;
+  uintptr_t end;
 
   PWIN_CERTIFICATE win_cert;
 
@@ -1139,6 +1144,7 @@ void pe_parse_certificates(
 
     for (i = 0; i < sk_X509_num(certs); i++)
     {
+      time_t date_time;
       const char* sig_alg;
       char buffer[256];
       int bytes;
@@ -1250,7 +1256,7 @@ void pe_parse_certificates(
         }
       }
 
-      time_t date_time = ASN1_get_time_t(X509_get_notBefore(cert));
+      date_time = ASN1_get_time_t(X509_get_notBefore(cert));
       set_integer(date_time, pe->object, "signatures[%i].not_before", counter);
 
       date_time = ASN1_get_time_t(X509_get_notAfter(cert));
@@ -1259,10 +1265,7 @@ void pe_parse_certificates(
       counter++;
     }
 
-    uintptr_t end = \
-        (uintptr_t)((uint8_t *) win_cert) + \
-        yr_le32toh(win_cert->Length);
-
+    end = (uintptr_t)((uint8_t *) win_cert) + yr_le32toh(win_cert->Length);
     win_cert = (PWIN_CERTIFICATE)(end + (end % 8));
 
     BIO_free(cert_bio);
@@ -1520,12 +1523,14 @@ define_function(exports)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
+  IMPORT_EXPORT_FUNCTION* exported_func;
+
   // If not a PE, return UNDEFINED.
 
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  IMPORT_EXPORT_FUNCTION* exported_func = pe->exported_functions;
+  exported_func = pe->exported_functions;
 
   while (exported_func != NULL)
   {
@@ -1546,10 +1551,12 @@ define_function(exports_ordinal)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
+  IMPORT_EXPORT_FUNCTION* exported_func;
+
   if (!pe)
     return_integer(UNDEFINED);
 
-  IMPORT_EXPORT_FUNCTION* exported_func = pe->exported_functions;
+  exported_func = pe->exported_functions;
 
   while (exported_func != NULL)
   {
