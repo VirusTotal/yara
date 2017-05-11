@@ -205,6 +205,9 @@ int yr_execute_code(
   {
     switch(*ip)
     {
+      case OP_NOP:
+        break;
+        
       case OP_HALT:
         assert(sp == 0); // When HALT is reached the stack should be empty.
         stop = TRUE;
