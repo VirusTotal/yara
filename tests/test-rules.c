@@ -1442,6 +1442,20 @@ static void test_modules()
   assert_true_rule(
       "import \"tests\" \
        rule test { \
+        condition: tests.foobar(1) == tests.foobar(1) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+       rule test { \
+        condition: tests.foobar(1) != tests.foobar(2) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+       rule test { \
         condition: tests.length(\"dummy\") == 5 \
       }",
       NULL);
