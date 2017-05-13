@@ -61,7 +61,8 @@ int sized_string_cmp(
 SIZED_STRING* sized_string_dup(
     SIZED_STRING* s)
 {
-  SIZED_STRING* result = yr_malloc(sizeof(SIZED_STRING) + s->length);
+  SIZED_STRING* result = (SIZED_STRING*) yr_malloc(
+      sizeof(SIZED_STRING) + s->length);
 
   if (result == NULL)
     return NULL;
