@@ -88,6 +88,23 @@ define_function(match)
 }
 
 
+define_function(foobar)
+{
+  int64_t arg = integer_argument(1);
+
+  switch (arg)
+  {
+    case 1:
+      return_string("foo");
+      break;
+    case 2:
+      return_string("bar");
+      break;
+  }
+
+  return_string("oops")
+}
+
 begin_declarations;
 
   begin_struct("constants");
@@ -125,6 +142,7 @@ begin_declarations;
   declare_function("fsum", "fff", "f", fsum_3);
   declare_function("length", "s", "i", length);
   declare_function("empty", "", "s", empty);
+  declare_function("foobar", "i", "s", foobar);
 
 end_declarations;
 
