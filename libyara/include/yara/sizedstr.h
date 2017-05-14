@@ -51,7 +51,7 @@ typedef struct _SIZED_STRING
 {
   uint32_t length;
   uint32_t flags;
-  
+
   char c_string[1];
 
 } SIZED_STRING;
@@ -60,7 +60,11 @@ typedef struct _SIZED_STRING
 
 
 int sized_string_cmp(
-  SIZED_STRING* s1,
-  SIZED_STRING* s2);
+    SIZED_STRING* s1,
+    SIZED_STRING* s2);
+
+
+SIZED_STRING* sized_string_dup(
+    SIZED_STRING* s);
 
 #endif
