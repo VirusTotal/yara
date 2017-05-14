@@ -573,11 +573,23 @@ int yr_object_copy(
   switch(object->type)
   {
     case OBJECT_TYPE_INTEGER:
-      ((YR_OBJECT_INTEGER*) copy)->value = UNDEFINED;
+      ((YR_OBJECT_INTEGER*) copy)->value = ((YR_OBJECT_INTEGER*) object)->value;
       break;
 
     case OBJECT_TYPE_STRING:
-      ((YR_OBJECT_STRING*) copy)->value = NULL;
+      if (((YR_OBJECT_STRING*) object)->value != NULL)
+      {
+        ((YR_OBJECT_STRING*) copy)->value = sized_string_dup(
+            ((YR_OBJECT_STRING*) object)->value);
+      }
+      else
+      {
+        ((YR_OBJECT_STRING*) copy)->value = NULL;
+      }
+      break;
+
+    case OBJECT_TYPE_FLOAT:
+      ((YR_OBJECT_DOUBLE*) copy)->value = ((YR_OBJECT_DOUBLE*) object)->value;
       break;
 
     case OBJECT_TYPE_FUNCTION:

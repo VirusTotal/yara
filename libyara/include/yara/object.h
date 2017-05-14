@@ -86,6 +86,11 @@ void yr_object_destroy(
     YR_OBJECT* object);
 
 
+int yr_object_copy(
+    YR_OBJECT* object,
+    YR_OBJECT** object_copy);
+
+
 YR_OBJECT* yr_object_lookup_field(
     YR_OBJECT* object,
     const char* field_name);
