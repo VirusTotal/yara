@@ -155,6 +155,5 @@ AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libyara/Makefile])
-AC_CONFIG_HEADERS([config.h])
 
 AC_OUTPUT

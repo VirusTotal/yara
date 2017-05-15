@@ -32,7 +32,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <ctype.h>
 #include <time.h>
-#include <config.h>
 
 #if defined(HAVE_LIBCRYPTO)
 #include <openssl/md5.h>
