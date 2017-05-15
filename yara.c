@@ -53,7 +53,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "args.h"
 #include "threading.h"
-#include "config.h"
 
 
 #define ERROR_COULD_NOT_CREATE_THREAD  100
@@ -1024,7 +1023,7 @@ int main(
 
   if (show_version)
   {
-    printf("%s\n", PACKAGE_STRING);
+    printf("%s\n", YR_VERSION);
     return EXIT_SUCCESS;
   }
 
@@ -1034,10 +1033,10 @@ int main(
       "YARA %s, the pattern matching swiss army knife.\n"
       "%s\n\n"
       "Mandatory arguments to long options are mandatory for "
-      "short options too.\n\n", PACKAGE_VERSION, USAGE_STRING);
+      "short options too.\n\n", YR_VERSION, USAGE_STRING);
 
     args_print_usage(options, 35);
-    printf("\nSend bug reports and suggestions to: %s.\n", PACKAGE_BUGREPORT);
+    printf("\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n");
 
     return EXIT_SUCCESS;
   }
