@@ -507,7 +507,7 @@ string_declarations
 string_declaration
     : _STRING_IDENTIFIER_ '='
       {
-        compiler->error_line = yyget_lineno(yyscanner);
+        compiler->current_line = yyget_lineno(yyscanner);
       }
       _TEXT_STRING_ string_modifiers
       {
@@ -518,11 +518,11 @@ string_declaration
         yr_free($4);
 
         ERROR_IF($$ == NULL);
-        compiler->error_line = 0;
+        compiler->current_line = 0;
       }
     | _STRING_IDENTIFIER_ '='
       {
-        compiler->error_line = yyget_lineno(yyscanner);
+        compiler->current_line = yyget_lineno(yyscanner);
       }
       _REGEXP_ string_modifiers
       {
@@ -534,7 +534,7 @@ string_declaration
 
         ERROR_IF($$ == NULL);
 
-        compiler->error_line = 0;
+        compiler->current_line = 0;
       }
     | _STRING_IDENTIFIER_ '=' _HEX_STRING_
       {
