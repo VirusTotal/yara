@@ -715,7 +715,7 @@ identifier
           compiler->last_result = yr_parser_emit(
               yyscanner, OP_INDEX_ARRAY, NULL);
 
-          array = (YR_OBJECT_ARRAY*) $1.value.object;
+          array = object_as_array($1.value.object);
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = array->prototype_item;
@@ -736,7 +736,7 @@ identifier
           compiler->last_result = yr_parser_emit(
               yyscanner, OP_LOOKUP_DICT, NULL);
 
-          dict = (YR_OBJECT_DICTIONARY*) $1.value.object;
+          dict = object_as_dictionary($1.value.object);
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = dict->prototype_item;
@@ -762,7 +762,7 @@ identifier
             $1.value.object->type == OBJECT_TYPE_FUNCTION)
         {
           compiler->last_result = yr_parser_check_types(
-              compiler, (YR_OBJECT_FUNCTION*) $1.value.object, $3);
+              compiler, object_as_function($1.value.object), $3);
 
           if (compiler->last_result == ERROR_SUCCESS)
             compiler->last_result = yr_arena_write_string(
@@ -776,7 +776,7 @@ identifier
                 NULL,
                 NULL);
 
-          function = (YR_OBJECT_FUNCTION*) $1.value.object;
+          function = object_as_function($1.value.object);
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = function->return_obj;
