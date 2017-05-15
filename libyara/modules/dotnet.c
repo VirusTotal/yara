@@ -20,7 +20,6 @@ limitations under the License.
 #include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
-#include <config.h>
 
 #include <yara/pe.h>
 #include <yara/dotnet.h>
