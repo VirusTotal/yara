@@ -214,7 +214,7 @@ int yr_execute_code(
     {
       case OP_NOP:
         break;
-        
+
       case OP_HALT:
         assert(sp == 0); // When HALT is reached the stack should be empty.
         stop = TRUE;
@@ -481,21 +481,21 @@ int yr_execute_code(
         switch(r1.o->type)
         {
           case OBJECT_TYPE_INTEGER:
-            r1.i = ((YR_OBJECT_INTEGER*) r1.o)->value;
+            r1.i = r1.o->value.i;
             break;
 
           case OBJECT_TYPE_FLOAT:
-            if (isnan(((YR_OBJECT_DOUBLE*) r1.o)->value))
+            if (isnan(r1.o->value.d))
               r1.i = UNDEFINED;
             else
-              r1.d = ((YR_OBJECT_DOUBLE*) r1.o)->value;
+              r1.d = r1.o->value.d;
             break;
 
           case OBJECT_TYPE_STRING:
-            if (((YR_OBJECT_STRING*) r1.o)->value == NULL)
+            if (r1.o->value.ss == NULL)
               r1.i = UNDEFINED;
             else
-              r1.p = ((YR_OBJECT_STRING*) r1.o)->value;
+              r1.ss = r1.o->value.ss;
             break;
 
           default:
@@ -571,7 +571,7 @@ int yr_execute_code(
           break;
         }
 
-        function = (YR_OBJECT_FUNCTION*) r2.o;
+        function = object_as_function(r2.o);
         result = ERROR_INTERNAL_FATAL_ERROR;
 
         for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)

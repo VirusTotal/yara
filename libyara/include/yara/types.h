@@ -442,51 +442,35 @@ typedef struct _YR_SCAN_CONTEXT
 } YR_SCAN_CONTEXT;
 
 
+struct _YR_OBJECT;
+
+
+typedef union _YR_VALUE
+{
+  int64_t i;
+  double d;
+  void* p;
+  struct _YR_OBJECT* o;
+  YR_STRING* s;
+  SIZED_STRING* ss;
+  RE* re;
+
+} YR_VALUE;
+
 
 #define OBJECT_COMMON_FIELDS \
     int8_t type; \
     const char* identifier; \
-    void* data; \
-    struct _YR_OBJECT* parent;
+    struct _YR_OBJECT* parent; \
+    void* data;
 
 
 typedef struct _YR_OBJECT
 {
   OBJECT_COMMON_FIELDS
+  YR_VALUE value;
 
 } YR_OBJECT;
-
-
-typedef struct _YR_OBJECT_INTEGER
-{
-  OBJECT_COMMON_FIELDS
-  int64_t value;
-
-} YR_OBJECT_INTEGER;
-
-
-typedef struct _YR_OBJECT_DOUBLE
-{
-  OBJECT_COMMON_FIELDS
-  double value;
-
-} YR_OBJECT_DOUBLE;
-
-
-typedef struct _YR_OBJECT_STRING
-{
-  OBJECT_COMMON_FIELDS
-  SIZED_STRING* value;
-
-} YR_OBJECT_STRING;
-
-
-typedef struct _YR_OBJECT_REGEXP
-{
-  OBJECT_COMMON_FIELDS
-  RE_AST* value;
-
-} YR_OBJECT_REGEXP;
 
 
 typedef struct _YR_OBJECT_STRUCTURE
@@ -515,19 +499,6 @@ typedef struct _YR_OBJECT_DICTIONARY
 } YR_OBJECT_DICTIONARY;
 
 
-typedef union _YR_VALUE {
-
-  int64_t i;
-  double d;
-  void* p;
-  YR_OBJECT* o;
-  YR_STRING* s;
-  SIZED_STRING* ss;
-  RE* re;
-
-} YR_VALUE;
-
-
 struct _YR_OBJECT_FUNCTION;
 
 
@@ -540,15 +511,22 @@ typedef int (*YR_MODULE_FUNC)(
 typedef struct _YR_OBJECT_FUNCTION
 {
   OBJECT_COMMON_FIELDS
-
   YR_OBJECT* return_obj;
 
-  struct {
+  struct
+  {
     const char* arguments_fmt;
     YR_MODULE_FUNC code;
+
   } prototypes[MAX_OVERLOADED_FUNCTIONS];
 
 } YR_OBJECT_FUNCTION;
+
+
+#define object_as_structure(obj)  ((YR_OBJECT_STRUCTURE*) (obj))
+#define object_as_array(obj)      ((YR_OBJECT_ARRAY*) (obj))
+#define object_as_dictionary(obj) ((YR_OBJECT_DICTIONARY*) (obj))
+#define object_as_function(obj)   ((YR_OBJECT_FUNCTION*) (obj))
 
 
 typedef struct _YR_STRUCTURE_MEMBER
