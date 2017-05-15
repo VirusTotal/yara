@@ -146,7 +146,7 @@ YR_THREAD_STORAGE_KEY thread_storage_key = 0;
 
 int _yr_re_is_word_char(
     uint8_t* input,
-    int character_size)
+    uint8_t character_size)
 {
   int result = ((isalnum(*input) || (*input) == '_'));
 
@@ -968,7 +968,7 @@ int _yr_re_emit(
     FAIL_ON_ERROR(_yr_emit_split(
         emit_context,
         re_node->greedy ? RE_OPCODE_SPLIT_B : RE_OPCODE_SPLIT_A,
-        -branch_size,
+        -((int16_t) branch_size),
         NULL,
         &split_offset_addr,
         &split_size));
@@ -1009,7 +1009,7 @@ int _yr_re_emit(
     FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
         emit_context,
         RE_OPCODE_JUMP,
-        -(branch_size + split_size),
+        -((uint16_t)(branch_size + split_size)),
         NULL,
         &jmp_offset_addr,
         &jmp_size));
@@ -1873,6 +1873,7 @@ int yr_re_exec(
   uint8_t* input;
   uint8_t mask;
   uint8_t value;
+  uint8_t character_size;
 
   RE_FIBER_LIST fibers;
   RE_THREAD_STORAGE* storage;
@@ -1882,7 +1883,6 @@ int yr_re_exec(
   int bytes_matched;
   int max_bytes_matched;
   int match;
-  int character_size;
   int input_incr;
   int kill;
   int action;

@@ -445,7 +445,7 @@ int yr_execute_code(
         start = clock();
         #endif
 
-        assert(sp == 0);
+        assert(sp == 0); // at this point the stack should be empty.
         break;
 
       case OP_OBJ_LOAD:
