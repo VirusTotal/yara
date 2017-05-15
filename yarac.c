@@ -47,7 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara.h>
 
 #include "args.h"
-#include "config.h"
+
 
 #ifndef MAX_PATH
 #define MAX_PATH 256
@@ -197,7 +197,7 @@ int main(
 
   if (show_version)
   {
-    printf("%s\n", PACKAGE_STRING);
+    printf("%s\n", YR_VERSION);
     return EXIT_SUCCESS;
   }
 
@@ -206,7 +206,7 @@ int main(
     printf("%s\n\n", USAGE_STRING);
 
     args_print_usage(options, 35);
-    printf("\nSend bug reports and suggestions to: %s.\n", PACKAGE_BUGREPORT);
+    printf("\nSend bug reports and suggestions to: vmalvarez@virustotal.com\n");
 
     return EXIT_SUCCESS;
   }
