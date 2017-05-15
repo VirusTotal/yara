@@ -146,6 +146,7 @@ YR_ARENA_PAGE* _yr_arena_page_for_address(
     if ((uint8_t*) address >= page->address &&
         (uint8_t*) address < page->address + page->used)
       return page;
+
     page = page->next;
   }
 
@@ -449,7 +450,7 @@ int yr_arena_coalesce(
 
     reloc = page->reloc_list_head;
 
-    while(reloc != NULL)
+    while (reloc != NULL)
     {
       reloc->offset += (uint32_t) big_page->used;
       reloc = reloc->next;
