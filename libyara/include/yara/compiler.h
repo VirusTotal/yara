@@ -63,7 +63,7 @@ typedef struct _YR_FIXUP
 typedef struct _YR_COMPILER
 {
   int               errors;
-  int               error_line;
+  int               current_line;
   int               last_error;
   int               last_error_line;
   int               last_result;

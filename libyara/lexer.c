@@ -3107,7 +3107,7 @@ void yywarning(
   compiler->callback(
       YARA_ERROR_LEVEL_WARNING,
       file_name,
-      yara_yyget_lineno(yyscanner),
+      compiler->current_line ? compiler->current_line : yara_yyget_lineno(yyscanner),
       message,
       compiler->user_data);
 
@@ -3142,12 +3142,12 @@ void yyerror(
 
   compiler->errors++;
 
-  if (compiler->error_line != 0)
-    compiler->last_error_line = compiler->error_line;
+  if (compiler->current_line != 0)
+    compiler->last_error_line = compiler->current_line;
   else
     compiler->last_error_line = yara_yyget_lineno(yyscanner);
 
-  compiler->error_line = 0;
+  compiler->current_line = 0;
 
   if (compiler->file_name_stack_ptr > 0)
   {
