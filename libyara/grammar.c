@@ -1988,7 +1988,7 @@ yyreduce:
   case 34:
 #line 509 "grammar.y" /* yacc.c:1661  */
     {
-        compiler->error_line = yyget_lineno(yyscanner);
+        compiler->current_line = yyget_lineno(yyscanner);
       }
 #line 1994 "grammar.c" /* yacc.c:1661  */
     break;
@@ -2003,7 +2003,7 @@ yyreduce:
         yr_free((yyvsp[-1].sized_string));
 
         ERROR_IF((yyval.string) == NULL);
-        compiler->error_line = 0;
+        compiler->current_line = 0;
       }
 #line 2009 "grammar.c" /* yacc.c:1661  */
     break;
@@ -2011,7 +2011,7 @@ yyreduce:
   case 36:
 #line 524 "grammar.y" /* yacc.c:1661  */
     {
-        compiler->error_line = yyget_lineno(yyscanner);
+        compiler->current_line = yyget_lineno(yyscanner);
       }
 #line 2017 "grammar.c" /* yacc.c:1661  */
     break;
@@ -2027,7 +2027,7 @@ yyreduce:
 
         ERROR_IF((yyval.string) == NULL);
 
-        compiler->error_line = 0;
+        compiler->current_line = 0;
       }
 #line 2033 "grammar.c" /* yacc.c:1661  */
     break;
