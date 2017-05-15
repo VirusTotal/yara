@@ -577,10 +577,12 @@ int yr_object_copy(
       break;
 
     case OBJECT_TYPE_STRING:
+
       if (object->value.ss != NULL)
         copy->value.ss = sized_string_dup(object->value.ss);
       else
         copy->value.ss = NULL;
+
       break;
 
     case OBJECT_TYPE_FUNCTION:
