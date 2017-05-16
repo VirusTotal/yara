@@ -255,6 +255,8 @@ STREAMS dotnet_parse_stream_headers(
   PSTREAM_HEADER stream_header;
   STREAMS headers;
 
+  char *start;
+  char *eos;
   char stream_name[DOTNET_STREAM_NAME_SIZE + 1];
   int i;
 
@@ -265,6 +267,14 @@ STREAMS dotnet_parse_stream_headers(
   for (i = 0; i < num_streams; i++)
   {
     if (!struct_fits_in_pe(pe, stream_header, STREAM_HEADER))
+      break;
+
+    start = (char*) stream_header->Name;
+    if (!fits_in_pe(pe, start, DOTNET_STREAM_NAME_SIZE))
+      break;
+
+    eos = (char*) memmem((void*) start, DOTNET_STREAM_NAME_SIZE, "\0", 1);
+    if (eos == NULL)
       break;
 
     strncpy(stream_name, stream_header->Name, DOTNET_STREAM_NAME_SIZE);
