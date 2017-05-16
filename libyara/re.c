@@ -1581,7 +1581,7 @@ void _yr_re_fiber_kill_tail(
 
 
 //
-// _yr_re_fiber_kill_tail
+// _yr_re_fiber_kill_all
 //
 // Kills all fibers in the fiber list.
 //
@@ -1939,7 +1939,9 @@ int yr_re_exec(
   fibers.head = fiber;
   fibers.tail = fiber;
 
-  FAIL_ON_ERROR(_yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber));
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber),
+      _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
 
   while (fibers.head != NULL)
   {
@@ -2116,19 +2118,23 @@ int yr_re_exec(
             {
               if (flags & RE_FLAGS_BACKWARDS)
               {
-                FAIL_ON_ERROR(callback(
-                    input + character_size,
-                    bytes_matched,
-                    flags,
-                    callback_args));
+                FAIL_ON_ERROR_WITH_CLEANUP(
+                    callback(
+                        input + character_size,
+                        bytes_matched,
+                        flags,
+                        callback_args),
+                    _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
               }
               else
               {
-                FAIL_ON_ERROR(callback(
-                    input_data,
-                    bytes_matched,
-                    flags,
-                    callback_args));
+                FAIL_ON_ERROR_WITH_CLEANUP(
+                    callback(
+                        input_data,
+                        bytes_matched,
+                        flags,
+                        callback_args),
+                    _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
               }
             }
 
@@ -2157,14 +2163,16 @@ int yr_re_exec(
           break;
 
         case ACTION_CONTINUE:
-          FAIL_ON_ERROR(
-              _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber))
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber),
+              _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
           break;
 
         default:
           next_fiber = fiber->next;
-          FAIL_ON_ERROR(
-              _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber));
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber),
+              _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
           fiber = next_fiber;
       }
     }
@@ -2174,12 +2182,16 @@ int yr_re_exec(
 
     if (flags & RE_FLAGS_SCAN && bytes_matched < max_bytes_matched)
     {
-      FAIL_ON_ERROR(_yr_re_fiber_create(&storage->fiber_pool, &fiber));
+      FAIL_ON_ERROR_WITH_CLEANUP(
+          _yr_re_fiber_create(&storage->fiber_pool, &fiber),
+          _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
 
       fiber->ip = re_code;
       _yr_re_fiber_append(&fibers, fiber);
 
-      FAIL_ON_ERROR(_yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber));
+      FAIL_ON_ERROR_WITH_CLEANUP(
+          _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber),
+          _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
     }
   }
 
