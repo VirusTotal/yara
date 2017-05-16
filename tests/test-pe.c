@@ -1,5 +1,4 @@
 #include <yara.h>
-#include <config.h>
 #include <stdio.h>
 #include "util.h"
 
