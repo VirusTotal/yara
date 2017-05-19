@@ -140,11 +140,22 @@ struct RE_AST
 };
 
 
+// Disable warning due to zero length array in Microsoft's compiler
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4200)
+#endif
+
 struct RE
 {
   uint32_t flags;
   uint8_t code[0];
 };
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 
 struct RE_ERROR
