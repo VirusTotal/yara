@@ -1016,8 +1016,10 @@ int _yr_re_emit(
 
     *code_size += jmp_size;
 
+    assert(split_size + branch_size + jmp_size < INT16_MAX);
+
     // Update split offset.
-    *split_offset_addr = split_size + branch_size + jmp_size;
+    *split_offset_addr = (int16_t) (split_size + branch_size + jmp_size);
     break;
 
   case RE_NODE_ALT:
@@ -1065,8 +1067,10 @@ int _yr_re_emit(
 
     *code_size += jmp_size;
 
+    assert(split_size + branch_size + jmp_size < INT16_MAX);
+
     // Update split offset.
-    *split_offset_addr = split_size + branch_size + jmp_size;
+    *split_offset_addr = (int16_t) (split_size + branch_size + jmp_size);
 
     FAIL_ON_ERROR(_yr_re_emit(
         emit_context,
@@ -1077,8 +1081,10 @@ int _yr_re_emit(
 
     *code_size += branch_size;
 
+    assert(branch_size + jmp_size < INT16_MAX);
+
     // Update offset for jmp instruction.
-    *jmp_offset_addr = branch_size + jmp_size;
+    *jmp_offset_addr = (int16_t) (branch_size + jmp_size);
     break;
 
   case RE_NODE_RANGE_ANY:
@@ -1248,7 +1254,10 @@ int _yr_re_emit(
     }
 
     if (emit_split)
-      *split_offset_addr = split_size + branch_size;
+    {
+      assert(split_size + branch_size  < INT16_MAX);
+      *split_offset_addr = (int16_t) (split_size + branch_size);
+    }
 
     break;
   }
