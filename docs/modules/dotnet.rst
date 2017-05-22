@@ -5,6 +5,8 @@
 dotnet module
 #############
 
+.. versionadded:: 3.6.0
+
 The dotnet module allows you to create more fine-grained rules for .NET files by
 using attributes and features of the .NET file format. Let's see some examples::
 
@@ -28,13 +30,11 @@ Reference
 
 .. c:type:: version
 
-    .. versionchanged:: 3.6.0
-
     The version string contained in the metadata root.
 
     *Example: dotnet.version == "v2.0.50727"*
 
-.. c:type:: module_name 
+.. c:type:: module_name
 
     The name of the module.
 
@@ -44,7 +44,7 @@ Reference
 
     The number of streams in the file.
 
-.. c:type:: streams 
+.. c:type:: streams
 
     A zero-based array of stream objects, one for each stream contained in the
     file. Individual streams can be accessed by using the [] operator. Each
@@ -54,11 +54,11 @@ Reference
 
         Stream name.
 
-    .. c:member:: offset 
+    .. c:member:: offset
 
         Stream offset.
 
-    .. c:member:: size 
+    .. c:member:: size
 
         Stream size.
 
@@ -75,7 +75,7 @@ Reference
 
     *Example: pe.guids[0].name == "99c08ffd-f378-a891-10ab-c02fe11be6ef"*
 
-.. c:type:: number_of_resources 
+.. c:type:: number_of_resources
 
     The number of resources in the .NET file. These are different from normal PE
     resources.
