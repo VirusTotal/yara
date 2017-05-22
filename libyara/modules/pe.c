@@ -1205,6 +1205,9 @@ void pe_parse_certificates(
 
           if (serial_der != NULL)
           {
+            unsigned char* serial_bytes;
+            char *serial_ascii;
+
             bytes = i2d_ASN1_INTEGER(serial, &serial_der);
 
             // i2d_ASN1_INTEGER() moves the pointer as it writes into
@@ -1213,7 +1216,7 @@ void pe_parse_certificates(
             serial_der -= bytes;
 
             // Skip over DER type, length information
-            unsigned char* serial_bytes = serial_der + 2;
+            serial_bytes = serial_der + 2;
             bytes -= 2;
 
             // Also allocate space to hold the "common" string format:
@@ -1224,7 +1227,7 @@ void pe_parse_certificates(
             // The last one doesn't have the colon, but the extra byte is used
             // for the NULL terminator.
 
-            char *serial_ascii = (char*) yr_malloc(bytes * 3);
+            serial_ascii = (char*) yr_malloc(bytes * 3);
 
             if (serial_ascii)
             {
@@ -1235,14 +1238,14 @@ void pe_parse_certificates(
                 // Don't put the colon on the last one.
                 if (j < bytes - 1)
                   snprintf(
-                    (char*) serial_ascii + 3 * j, 4, "%02x:", serial_bytes[j]);
+                    serial_ascii + 3 * j, 4, "%02x:", serial_bytes[j]);
                 else
                   snprintf(
-                    (char*) serial_ascii + 3 * j, 3, "%02x", serial_bytes[j]);
+                    serial_ascii + 3 * j, 3, "%02x", serial_bytes[j]);
               }
 
               set_string(
-                  (char*) serial_ascii,
+                  serial_ascii,
                   pe->object,
                   "signatures[%i].serial",
                   counter);
