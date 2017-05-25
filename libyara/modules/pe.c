@@ -1421,16 +1421,18 @@ void pe_parse_header(
     section++;
   }
 
-  // An overlay is data appended to a PE file. Its location is RawData + RawOffset of the last
-  // section on the physical file
+  // An overlay is data appended to a PE file. Its location is at
+  // RawData + RawOffset of the last section on the physical file
   last_section_end = highest_sec_siz + highest_sec_ofs;
 
-  // This way "overlay" is set to UNDEFINED for files that do not have an overlay section
+  // "overlay.offset" is set to UNDEFINED for files that do not have an overlay
   if (last_section_end && (pe->data_size > last_section_end))
-  {
     set_integer(last_section_end, pe->object, "overlay.offset");
+
+  // "overlay.size" is zero for well formed PE files that don not have an
+  // overlay and UNDEFINED for malformed PE files or non-PE files.
+  if (last_section_end && (pe->data_size >= last_section_end))
     set_integer(pe->data_size - last_section_end, pe->object, "overlay.size");
-  }
 }
 
 //
