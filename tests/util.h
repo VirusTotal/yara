@@ -32,8 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern char compile_error[1024];
 
-YR_RULES* compile_rule(
-    char* string);
+int compile_rule(
+    char* string,
+    YR_RULES** rules);
 
 
 int count_matches(
@@ -141,18 +142,12 @@ int read_file(
     free(buf);                                                          \
   } while (0);
 
-#define assert_syntax_correct(rule) do {                                \
-    if (compile_rule(rule) == NULL) {                                   \
-      fprintf(stderr, "%s:%d: rule << %s >> can't be compiled: %s\n",   \
-              __FILE__, __LINE__, rule, compile_error);                 \
-      exit(EXIT_FAILURE);                                               \
-    }                                                                   \
-  } while (0);
-
-#define assert_syntax_error(rule) do {                                  \
-    if (compile_rule(rule) != NULL) {                                   \
-      fprintf(stderr, "%s:%d: rule can be compiled (but shouldn't)\n",  \
-              __FILE__, __LINE__);                                      \
+#define assert_error(rule, error) do {                                  \
+    YR_RULES* rules;                                                    \
+    int result = compile_rule(rule, &rules);                            \
+    if (result != error) {                                              \
+      fprintf(stderr, "%s:%d: expecting error %d but returned %d\n",    \
+              __FILE__, __LINE__, error, result);                       \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
   } while (0);
@@ -170,8 +165,8 @@ int read_file(
   assert_false_rule("rule test { strings: $a = /" regexp                \
                     "/ condition: $a }", string)
 
-#define assert_regexp_syntax_error(regexp)                      \
-  assert_syntax_error("rule test { strings: $a = /" regexp      \
-                      "/ condition: $a }")
+#define assert_regexp_syntax_error(regexp)                              \
+  assert_error("rule test { strings: $a = /" regexp "/ condition: $a }",\
+               ERROR_INVALID_REGULAR_EXPRESSION)
 
 #endif /* _UTIL_H */

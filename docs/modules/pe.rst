@@ -89,6 +89,12 @@ Reference
     .. c:type:: SUBSYSTEM_OS2_CUI
     .. c:type:: SUBSYSTEM_POSIX_CUI
     .. c:type:: SUBSYSTEM_NATIVE_WINDOWS
+    .. c:type:: SUBSYSTEM_WINDOWS_CE_GUI
+    .. c:type:: SUBSYSTEM_EFI_APPLICATION
+    .. c:type:: SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER
+    .. c:type:: SUBSYSTEM_EFI_RUNTIME_DRIVER
+    .. c:type:: SUBSYSTEM_XBOX
+    .. c:type:: SUBSYSTEM_WINDOWS_BOOT_APPLICATION
 
     *Example: pe.subsystem == pe.SUBSYSTEM_NATIVE*
 
@@ -98,9 +104,9 @@ Reference
 
 .. c:type:: entry_point
 
-    Entry point raw offset or virtual address depending if YARA is scanning a
-    file or process memory respectively. This is equivalent to the deprecated
-    ``entrypoint`` keyword.
+    Entry point raw offset or virtual address depending on whether YARA is
+    scanning a file or process memory respectively. This is equivalent to the
+    deprecated ``entrypoint`` keyword.
 
 .. c:type:: image_base
 
@@ -108,8 +114,9 @@ Reference
 
 .. c:type:: characteristics
 
-    Bitmap with PE characteristics. Individual characteristics can be inspected
-    by performing a bitwise AND operation with the following constants:
+    Bitmap with PE FileHeader characteristics. Individual characteristics 
+    can be inspected by performing a bitwise AND operation with the 
+    following constants:
 
     .. c:type:: RELOCS_STRIPPED
     .. c:type:: EXECUTABLE_IMAGE
@@ -181,6 +188,37 @@ Reference
 
         Minor subsystem version.
 
+.. c:type:: dll_characteristics
+
+    Bitmap with PE OptionalHeader DllCharacteristics.  Do not confuse these
+    flags with the PE FileHeader Characteristics. Individual 
+    characteristics can be inspected by performing a bitwise AND 
+    operation with the following constants:
+
+    .. c:type:: DYNAMIC_BASE
+
+        File can be relocated - also marks the file as ASLR compatible
+
+    .. c:type:: FORCE_INTEGRITY
+    .. c:type:: NX_COMPAT
+
+        Marks the file as DEP compatible
+
+    .. c:type:: NO_ISOLATION
+    .. c:type:: NO_SEH
+
+        The file does not contain structured exception handlers, this must be 
+        set to use SafeSEH
+
+    .. c:type:: NO_BIND
+    .. c:type:: WDM_DRIVER
+
+        Marks the file as a Windows Driver Model (WDM) device driver.
+
+    .. c:type:: TERMINAL_SERVER_AWARE
+
+        Marks the file as terminal server compatible
+
 .. c:type:: number_of_sections
 
     Number of sections in the PE.
@@ -189,7 +227,7 @@ Reference
 
     .. versionadded:: 3.3.0
 
-    An zero-based array of section objects, one for each section the PE has.
+    A zero-based array of section objects, one for each section the PE has.
     Individual sections can be accessed by using the [] operator. Each section
     object has the following attributes:
 
@@ -278,7 +316,7 @@ Reference
 
     .. versionchanged:: 3.3.0
 
-    An zero-based array of resource objects, one for each resource the PE has.
+    A zero-based array of resource objects, one for each resource the PE has.
     Individual resources can be accessed by using the [] operator. Each
     resource object has the following attributes:
 
@@ -314,8 +352,8 @@ Reference
 
         Language of the resource as a string, if specified.
 
-    All resources must have an type, id (name), and language specified. They
-    can be either an integer or string, but never both, for any given level.
+    All resources must have a type, id (name), and language specified. They can
+    be either an integer or string, but never both, for any given level.
 
     *Example: pe.resources[0].type == pe.RESOURCE_TYPE_RCDATA*
 
@@ -353,7 +391,7 @@ Reference
 
     .. versionadded:: 3.2.0
 
-    Dictionary containing PE's version information. Typical keys are:
+    Dictionary containing the PE's version information. Typical keys are:
 
         ``Comments``
         ``CompanyName``
@@ -378,7 +416,7 @@ Reference
 
 .. c:type:: signatures
 
-    An zero-based array of signature objects, one for each authenticode
+    A zero-based array of signature objects, one for each authenticode
     signature in the PE file. Usually PE files have a single signature.
 
     .. c:member:: issuer
@@ -412,15 +450,15 @@ Reference
 
     .. c:member:: not_before
 
-        Unix timestamp on which validity period for this signature begins.
+        Unix timestamp on which the validity period for this signature begins.
 
     .. c:member:: not_after
 
-        Unix timestamp on which validity period for this signature ends.
+        Unix timestamp on which the validity period for this signature ends.
 
     .. c:member:: valid_on(timestamp)
 
-        Function returning true if the signature was valid the on date
+        Function returning true if the signature was valid on the date
         indicated by *timestamp*. The following sentence::
 
             pe.signatures[n].valid_on(timestamp)
@@ -431,8 +469,8 @@ Reference
 
 .. c:type:: rich_signature
 
-    Structure containing information about PE's rich signature as documented
-    `here <http://www.ntcore.com/files/richsign.htm>`_.
+    Structure containing information about the PE's rich signature as
+    documented `here <http://www.ntcore.com/files/richsign.htm>`_.
 
     .. c:member:: offset
 
@@ -485,6 +523,21 @@ Reference
     false otherwise.
 
     *Example:  pe.exports("CPlApplet")*
+
+.. c:function:: exports(ordinal)
+
+    .. versionadded:: 3.6.0
+
+    Function returning true if the PE exports *ordinal* or
+    false otherwise.
+
+    *Example:  pe.exports(72)*
+
+.. c:type:: number_of_exports
+
+    .. versionadded:: 3.6.0
+
+    Number of exports in the PE.
 
 .. c:type:: number_of_imports
 
@@ -589,3 +642,11 @@ Reference
     Function returning true if the PE is 64bits.
 
     *Example: pe.is_64bit()*
+
+.. c:function:: rva_to_offset(addr)
+
+ .. versionadded:: 3.6.0
+
+  Function returning the file offset for RVA *addr*.
+
+  *Example: pe.rva_to_offset(pe.entry_point)*

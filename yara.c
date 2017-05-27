@@ -53,7 +53,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "args.h"
 #include "threading.h"
-#include "config.h"
 
 
 #define ERROR_COULD_NOT_CREATE_THREAD  100
@@ -111,30 +110,29 @@ typedef struct COMPILER_RESULTS
 #define MAX_ARGS_EXT_VAR        32
 #define MAX_ARGS_MODULE_DATA    32
 
-char* tags[MAX_ARGS_TAG + 1];
-char* identifiers[MAX_ARGS_IDENTIFIER + 1];
-char* ext_vars[MAX_ARGS_EXT_VAR + 1];
-char* modules_data[MAX_ARGS_EXT_VAR + 1];
+static char* tags[MAX_ARGS_TAG + 1];
+static char* identifiers[MAX_ARGS_IDENTIFIER + 1];
+static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
+static char* modules_data[MAX_ARGS_EXT_VAR + 1];
 
-int recursive_search = FALSE;
-int show_module_data = FALSE;
-int show_tags = FALSE;
-int show_specified_tags = FALSE;
-int show_specified_rules = FALSE;
-int show_strings = FALSE;
-int show_meta = FALSE;
-int show_namespace = FALSE;
-int show_version = FALSE;
-int show_help = FALSE;
-int ignore_warnings = FALSE;
-int fast_scan = FALSE;
-int negate = FALSE;
-int count = 0;
-int limit = 0;
-int timeout = 1000000;
-int stack_size = DEFAULT_STACK_SIZE;
-int threads = 8;
-int fail_on_warnings = FALSE;
+static int recursive_search = FALSE;
+static int show_module_data = FALSE;
+static int show_tags = FALSE;
+static int show_strings = FALSE;
+static int show_string_length = FALSE;
+static int show_meta = FALSE;
+static int show_namespace = FALSE;
+static int show_version = FALSE;
+static int show_help = FALSE;
+static int ignore_warnings = FALSE;
+static int fast_scan = FALSE;
+static int negate = FALSE;
+static int count = 0;
+static int limit = 0;
+static int timeout = 1000000;
+static int stack_size = DEFAULT_STACK_SIZE;
+static int threads = MAX_THREADS;
+static int fail_on_warnings = FALSE;
 
 
 #define USAGE_STRING \
@@ -163,6 +161,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN('s', "print-strings", &show_strings,
       "print matching strings"),
+
+  OPT_BOOLEAN('L', "print-string-length", &show_string_length,
+      "print length of matched strings"),
 
   OPT_BOOLEAN('e', "print-namespace", &show_namespace,
       "print rules' namespace"),
@@ -480,12 +481,9 @@ void print_hex_string(
     int length)
 {
   for (int i = 0; i < min(32, length); i++)
-    printf("%02X ", (uint8_t) data[i]);
+    printf("%s%02X", (i == 0 ? "" : " "), (uint8_t) data[i]);
 
-  if (length > 32)
-    printf("...");
-
-  printf("\n");
+  puts(length > 32 ? " ..." : "");
 }
 
 
@@ -659,7 +657,7 @@ int handle_message(
 
     // Show matched strings.
 
-    if (show_strings)
+    if (show_strings || show_string_length)
     {
       YR_STRING* string;
 
@@ -669,14 +667,29 @@ int handle_message(
 
         yr_string_matches_foreach(string, match)
         {
-          printf("0x%" PRIx64 ":%s: ",
+          if (show_string_length)
+            printf("0x%" PRIx64 ":%d:%s",
+              match->base + match->offset,
+              match->data_length,
+              string->identifier);
+          else
+            printf("0x%" PRIx64 ":%s",
               match->base + match->offset,
               string->identifier);
 
-          if (STRING_IS_HEX(string))
-            print_hex_string(match->data, match->data_length);
+          if (show_strings)
+          {
+            printf(": ");
+
+            if (STRING_IS_HEX(string))
+              print_hex_string(match->data, match->data_length);
+            else
+              print_string(match->data, match->data_length);
+          }
           else
-            print_string(match->data, match->data_length);
+          {
+            printf("\n");
+          }
         }
       }
     }
@@ -1010,7 +1023,7 @@ int main(
 
   if (show_version)
   {
-    printf("%s\n", PACKAGE_STRING);
+    printf("%s\n", YR_VERSION);
     return EXIT_SUCCESS;
   }
 
@@ -1020,10 +1033,10 @@ int main(
       "YARA %s, the pattern matching swiss army knife.\n"
       "%s\n\n"
       "Mandatory arguments to long options are mandatory for "
-      "short options too.\n\n", PACKAGE_VERSION, USAGE_STRING);
+      "short options too.\n\n", YR_VERSION, USAGE_STRING);
 
     args_print_usage(options, 35);
-    printf("\nSend bug reports and suggestions to: %s.\n", PACKAGE_BUGREPORT);
+    printf("\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n");
 
     return EXIT_SUCCESS;
   }

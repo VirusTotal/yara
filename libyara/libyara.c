@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/threading.h>
 
-#ifdef HAVE_LIBCRYPTO
+#if defined(HAVE_LIBCRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000L
 #include <openssl/crypto.h>
 #endif
 
@@ -48,8 +48,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
-YR_THREAD_STORAGE_KEY tidx_key;
-YR_THREAD_STORAGE_KEY recovery_state_key;
+YR_THREAD_STORAGE_KEY yr_tidx_key;
+YR_THREAD_STORAGE_KEY yr_recovery_state_key;
 
 
 static int init_count = 0;
@@ -67,17 +67,17 @@ static struct yr_config_var
 } yr_cfgs[YR_CONFIG_MAX];
 
 
-char lowercase[256];
-char altercase[256];
+char yr_lowercase[256];
+char yr_altercase[256];
 
 
-#if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
+#if defined(HAVE_LIBCRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000L
 
 // The OpenSSL library before version 1.1 requires some locks in order
 // to be thread-safe. These locks are initialized in yr_initialize
 // function.
 
-YR_MUTEX *openssl_locks;
+static YR_MUTEX *openssl_locks;
 
 
 unsigned long thread_id(void)
@@ -120,18 +120,18 @@ YR_API int yr_initialize(void)
   for (i = 0; i < 256; i++)
   {
     if (i >= 'a' && i <= 'z')
-      altercase[i] = i - 32;
+      yr_altercase[i] = i - 32;
     else if (i >= 'A' && i <= 'Z')
-      altercase[i] = i + 32;
+      yr_altercase[i] = i + 32;
     else
-      altercase[i] = i;
+      yr_altercase[i] = i;
 
-    lowercase[i] = tolower(i);
+    yr_lowercase[i] = tolower(i);
   }
 
   FAIL_ON_ERROR(yr_heap_alloc());
-  FAIL_ON_ERROR(yr_thread_storage_create(&tidx_key));
-  FAIL_ON_ERROR(yr_thread_storage_create(&recovery_state_key));
+  FAIL_ON_ERROR(yr_thread_storage_create(&yr_tidx_key));
+  FAIL_ON_ERROR(yr_thread_storage_create(&yr_recovery_state_key));
 
   #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
 
@@ -203,8 +203,8 @@ YR_API int yr_finalize(void)
 
   #endif
 
-  FAIL_ON_ERROR(yr_thread_storage_destroy(&tidx_key));
-  FAIL_ON_ERROR(yr_thread_storage_destroy(&recovery_state_key));
+  FAIL_ON_ERROR(yr_thread_storage_destroy(&yr_tidx_key));
+  FAIL_ON_ERROR(yr_thread_storage_destroy(&yr_recovery_state_key));
   FAIL_ON_ERROR(yr_re_finalize());
   FAIL_ON_ERROR(yr_modules_finalize());
   FAIL_ON_ERROR(yr_heap_free());
@@ -226,7 +226,7 @@ YR_API int yr_finalize(void)
 
 YR_API void yr_set_tidx(int tidx)
 {
-  yr_thread_storage_set_value(&tidx_key, (void*) (size_t) (tidx + 1));
+  yr_thread_storage_set_value(&yr_tidx_key, (void*) (size_t) (tidx + 1));
 }
 
 
@@ -242,7 +242,7 @@ YR_API void yr_set_tidx(int tidx)
 
 YR_API int yr_get_tidx(void)
 {
-  return (int) (size_t) yr_thread_storage_get_value(&tidx_key) - 1;
+  return (int) (size_t) yr_thread_storage_get_value(&yr_tidx_key) - 1;
 }
 
 

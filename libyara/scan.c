@@ -91,7 +91,7 @@ int _yr_scan_icompare(
   if (data_size < string_length)
     return 0;
 
-  while (i < string_length && lowercase[*s1++] == lowercase[*s2++])
+  while (i < string_length && yr_lowercase[*s1++] == yr_lowercase[*s2++])
     i++;
 
   return (int) ((i == string_length) ? i : 0);
@@ -137,7 +137,7 @@ int _yr_scan_wicompare(
   if (data_size < string_length * 2)
     return 0;
 
-  while (i < string_length && lowercase[*s1] == lowercase[*s2])
+  while (i < string_length && yr_lowercase[*s1] == yr_lowercase[*s2])
   {
     s1+=2;
     s2++;
@@ -145,236 +145,6 @@ int _yr_scan_wicompare(
   }
 
   return (int) ((i == string_length) ? i * 2 : 0);
-}
-
-
-//
-// _yr_scan_fast_hex_re_exec
-//
-// This function is a replacement for yr_re_exec in some particular cases of
-// regular expressions where a faster algorithm can be used. These regular
-// expressions are those derived from hex strings not containing OR (|)
-// operations. The following hex strings would apply:
-//
-//   { 01 ?? 03 04 05 }
-//   { 01 02 0? 04 04 }
-//   { 01 02 [1] 04 05 }
-//   { 01 02 [2-6] 04 06 }
-//
-// In order to match these strings we don't need to use the general case
-// matching algorithm (yr_re_exec), instead we can take advance of the
-// characteristics of the code generated for this kind of strings and do the
-// matching in a faster way.
-//
-// See return values in yr_re_exec (re.c)
-//
-
-int _yr_scan_fast_hex_re_exec(
-    uint8_t* code,
-    uint8_t* input,
-    size_t input_size,
-    int flags,
-    RE_MATCH_CALLBACK_FUNC callback,
-    void* callback_args)
-{
-  uint8_t* code_stack[MAX_FAST_HEX_RE_STACK];
-  uint8_t* input_stack[MAX_FAST_HEX_RE_STACK];
-  int matches_stack[MAX_FAST_HEX_RE_STACK];
-
-  int sp = 0;
-
-  uint8_t* ip = code;
-  uint8_t* current_input = input;
-  uint8_t* next_input;
-  uint8_t* next_opcode;
-  uint8_t mask;
-  uint8_t value;
-
-  int i;
-  int matches;
-  int stop;
-  int increment;
-
-  increment = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
-
-  if (flags & RE_FLAGS_BACKWARDS)
-    input--;
-
-  code_stack[sp] = code;
-  input_stack[sp] = input;
-  matches_stack[sp] = 0;
-  sp++;
-
-  while (sp > 0)
-  {
-    sp--;
-    ip = code_stack[sp];
-    current_input = input_stack[sp];
-    matches = matches_stack[sp];
-    stop = FALSE;
-
-    while(!stop)
-    {
-      if (*ip == RE_OPCODE_MATCH)
-      {
-        if (flags & RE_FLAGS_EXHAUSTIVE)
-        {
-            int cb_result = callback(
-               flags & RE_FLAGS_BACKWARDS ? current_input + 1 : input,
-               matches,
-               flags,
-               callback_args);
-
-            switch(cb_result)
-            {
-              case ERROR_INSUFFICIENT_MEMORY:
-                return -2;
-              case ERROR_TOO_MANY_MATCHES:
-                return -3;
-              default:
-                if (cb_result != ERROR_SUCCESS)
-                  return -4;
-            }
-
-            break;
-        }
-        else
-        {
-          return matches;
-        }
-      }
-
-      if (flags & RE_FLAGS_BACKWARDS)
-      {
-        if (current_input <= input - input_size)
-          break;
-      }
-      else
-      {
-        if (current_input >= input + input_size)
-          break;
-      }
-
-      switch(*ip)
-      {
-        case RE_OPCODE_LITERAL:
-
-          if (*current_input == *(ip + 1))
-          {
-            matches++;
-            current_input += increment;
-            ip += 2;
-          }
-          else
-          {
-            stop = TRUE;
-          }
-
-          break;
-
-        case RE_OPCODE_MASKED_LITERAL:
-
-          value = *(int16_t*)(ip + 1) & 0xFF;
-          mask = *(int16_t*)(ip + 1) >> 8;
-
-          if ((*current_input & mask) == value)
-          {
-            matches++;
-            current_input += increment;
-            ip += 3;
-          }
-          else
-          {
-            stop = TRUE;
-          }
-
-          break;
-
-        case RE_OPCODE_ANY:
-
-          matches++;
-          current_input += increment;
-          ip += 1;
-
-          break;
-
-        case RE_OPCODE_SPLIT_B:
-
-          // This is how the code looks like after the SPLIT:
-          //            split L3, L4  (3 + sizeof(RE_SPLIT_ID_TYPE) bytes long)
-          //        L3: any           (1 byte long)
-          //        L4: ...
-          //
-          // The opcode following the ANY is located at ip + 4
-
-          if (sp >= MAX_FAST_HEX_RE_STACK)
-            return -4;
-
-          code_stack[sp] = ip + sizeof(RE_SPLIT_ID_TYPE) + 4;
-          input_stack[sp] = current_input;
-          matches_stack[sp] = matches;
-          sp++;
-          ip += (3 + sizeof(RE_SPLIT_ID_TYPE));
-
-          break;
-
-        case RE_OPCODE_PUSH:
-
-          // A PUSH operation indicates the beginning of a code sequence
-          // generated for a jump. (example: { 01 02 [n-m] 03 04 }) The
-          // code sequence looks like this:
-          //
-          //            push m-n-1    (3 bytes long)
-          //        L0: split L1, L2  (3 + sizeof(RE_SPLIT_ID_TYPE) bytes long)
-          //        L1: any           (1 byte long)
-          //            jnz L0        (3 bytes long)
-          //        L2: pop           (1 byte long)
-          //            split L3, L4  (3 + sizeof(RE_SPLIT_ID_TYPE) bytes long)
-          //        L3: any           (1 byte long)
-          //        L4:
-          //                  15 + 2 * sizeof(RE_SPLIT_ID_TYPE) bytes in total
-
-          next_opcode = ip + 2 * sizeof(RE_SPLIT_ID_TYPE) + 15;
-
-          for (i = *(uint16_t*)(ip + 1) + 1; i > 0; i--)
-          {
-            if (flags & RE_FLAGS_BACKWARDS)
-            {
-              next_input = current_input - i;
-              if (next_input <= input - input_size)
-                continue;
-            }
-            else
-            {
-              next_input = current_input + i;
-              if (next_input >= input + input_size)
-                continue;
-            }
-
-            if ( *(next_opcode) != RE_OPCODE_LITERAL ||
-                (*(next_opcode) == RE_OPCODE_LITERAL &&
-                 *(next_opcode + 1) == *next_input))
-            {
-              if (sp >= MAX_FAST_HEX_RE_STACK)
-                return -4;
-
-              code_stack[sp] = next_opcode;
-              input_stack[sp] = next_input;
-              matches_stack[sp] = matches + i;
-              sp++;
-            }
-          }
-
-          ip = next_opcode;
-          break;
-
-        default:
-          assert(FALSE);
-      }
-    }
-  }
-
-  return -1;
 }
 
 
@@ -758,10 +528,12 @@ int _yr_scan_match_callback(
 typedef int (*RE_EXEC_FUNC)(
     uint8_t* code,
     uint8_t* input,
-    size_t input_size,
+    size_t input_forwards_size,
+    size_t input_backwards_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
-    void* callback_args);
+    void* callback_args,
+    int* matches);
 
 
 int _yr_scan_verify_re_match(
@@ -782,47 +554,46 @@ int _yr_scan_verify_re_match(
   if (STRING_IS_GREEDY_REGEXP(ac_match->string))
     flags |= RE_FLAGS_GREEDY;
 
-  if (STRING_IS_FAST_HEX_REGEXP(ac_match->string))
-    exec = _yr_scan_fast_hex_re_exec;
+  if (STRING_IS_NO_CASE(ac_match->string))
+    flags |= RE_FLAGS_NO_CASE;
+
+  if (STRING_IS_DOT_ALL(ac_match->string))
+    flags |= RE_FLAGS_DOT_ALL;
+
+  if (STRING_IS_FAST_REGEXP(ac_match->string))
+    exec = yr_re_fast_exec;
   else
     exec = yr_re_exec;
 
   if (STRING_IS_ASCII(ac_match->string))
   {
-    forward_matches = exec(
+    FAIL_ON_ERROR(exec(
         ac_match->forward_code,
         data + offset,
         data_size - offset,
-        offset > 0 ? flags | RE_FLAGS_NOT_AT_START : flags,
+        offset,
+        flags,
         NULL,
-        NULL);
+        NULL,
+        &forward_matches));
   }
 
   if (STRING_IS_WIDE(ac_match->string) && forward_matches == -1)
   {
     flags |= RE_FLAGS_WIDE;
-    forward_matches = exec(
+    FAIL_ON_ERROR(exec(
         ac_match->forward_code,
         data + offset,
         data_size - offset,
-        offset > 0 ? flags | RE_FLAGS_NOT_AT_START : flags,
+        offset,
+        flags,
         NULL,
-        NULL);
+        NULL,
+        &forward_matches));
   }
 
-  switch(forward_matches)
-  {
-    case -1:
-      return ERROR_SUCCESS;
-    case -2:
-      return ERROR_INSUFFICIENT_MEMORY;
-    case -3:
-      return ERROR_TOO_MANY_MATCHES;
-    case -4:
-      return ERROR_TOO_MANY_RE_FIBERS;
-    case -5:
-      return ERROR_INTERNAL_FATAL_ERROR;
-  }
+  if (forward_matches == -1)
+    return ERROR_SUCCESS;
 
   if (forward_matches == 0 && ac_match->backward_code == NULL)
     return ERROR_SUCCESS;
@@ -837,25 +608,15 @@ int _yr_scan_verify_re_match(
 
   if (ac_match->backward_code != NULL)
   {
-    backward_matches = exec(
+    FAIL_ON_ERROR(exec(
         ac_match->backward_code,
         data + offset,
+        data_size - offset,
         offset,
         flags | RE_FLAGS_BACKWARDS | RE_FLAGS_EXHAUSTIVE,
         _yr_scan_match_callback,
-        (void*) &callback_args);
-
-    switch(backward_matches)
-    {
-      case -2:
-        return ERROR_INSUFFICIENT_MEMORY;
-      case -3:
-        return ERROR_TOO_MANY_MATCHES;
-      case -4:
-        return ERROR_TOO_MANY_RE_FIBERS;
-      case -5:
-        return ERROR_INTERNAL_FATAL_ERROR;
-    }
+        (void*) &callback_args,
+        &backward_matches));
   }
   else
   {

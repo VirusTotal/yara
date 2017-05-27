@@ -46,6 +46,7 @@ with noyywrap then we can remove this pragma.
 
 #include <setjmp.h>
 
+#include <yara/globals.h>
 #include <yara/limits.h>
 #include <yara/error.h>
 #include <yara/mem.h>
@@ -63,8 +64,8 @@ with noyywrap then we can remove this pragma.
 #define ERROR_IF(x, error) \
     if (x) \
     { \
-      RE* re = yyget_extra(yyscanner); \
-      re->error_code = error; \
+      RE_AST* re_ast = yyget_extra(yyscanner); \
+      re_ast->error_code = error; \
       YYABORT; \
     } \
 
@@ -169,15 +170,12 @@ hexdigit      [a-fA-F0-9]
 
 %%
 
-extern YR_THREAD_STORAGE_KEY recovery_state_key;
-
-
 void yyfatal(
     yyscan_t yyscanner,
     const char *error_message)
 {
   jmp_buf* recovery_state = (jmp_buf*) yr_thread_storage_get_value(
-      &recovery_state_key);
+      &yr_recovery_state_key);
 
   longjmp(*recovery_state, 1);
 }
@@ -206,8 +204,7 @@ void yyerror(
 
 int yr_parse_hex_string(
     const char* hex_string,
-    int flags,
-    RE** re,
+    RE_AST** re_ast,
     RE_ERROR* error)
 {
   yyscan_t yyscanner;
@@ -218,29 +215,30 @@ int yr_parse_hex_string(
   lex_env.inside_or = 0;
   lex_env.token_count = 0;
 
-  yr_thread_storage_set_value(&recovery_state_key, &recovery_state);
+  yr_thread_storage_set_value(&yr_recovery_state_key, &recovery_state);
 
   if (setjmp(recovery_state) != 0)
     return ERROR_INTERNAL_FATAL_ERROR;
 
-  FAIL_ON_ERROR(yr_re_create(re));
+  FAIL_ON_ERROR(yr_re_ast_create(re_ast));
 
-  // The RE_FLAGS_FAST_HEX_REGEXP flag indicates a regular expression derived
-  // from a hex string that can be matched by faster algorithm. These regular
-  // expressions come from hex strings not containing alternatives, like in:
+  // The RE_FLAGS_FAST_REGEXP flag indicates a regular expression can be
+  // matched by faster algorithm. These regular expressions come from hex
+  // strings that do not contain alternatives, like in:
+  //
   // { ( 01 02 | 03 04) 05 06 }.
   //
   // This flag is unset later during parsing if alternatives are used.
 
-  (*re)->flags |= RE_FLAGS_FAST_HEX_REGEXP;
+  (*re_ast)->flags |= RE_FLAGS_FAST_REGEXP;
 
   // Set RE_FLAGS_DOT_ALL because in hex strings the "dot" (?? in this case)
   // must match all characters including new-line.
 
-  (*re)->flags |= RE_FLAGS_DOT_ALL;
+  (*re_ast)->flags |= RE_FLAGS_DOT_ALL;
 
   yylex_init(&yyscanner);
-  yyset_extra(*re, yyscanner);
+  yyset_extra(*re_ast, yyscanner);
   yy_scan_string(hex_string, yyscanner);
   yyparse(yyscanner, &lex_env);
   yylex_destroy(yyscanner);

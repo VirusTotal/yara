@@ -39,6 +39,9 @@ Print metadata associated to the rule.
 .B \-s " --print-strings"
 Print strings found in the file.
 .TP
+.B \-L " --print-string-length"
+Print length of strings found in the file.
+.TP
 .BI \-p " number" " --threads=" number
 Use the specified
 .I number
@@ -81,13 +84,11 @@ Treat warnings as errors. Has no effect if used with
 .B \-v " --version"
 Show version information.
 .SH EXAMPLES
-$ yara /foo/bar/rules1 /foo/bar/rules2 .
+$ yara /foo/bar/rules .
 .RS
 .PP
 Apply rules on
-.I /foo/bar/rules1
-and
-.I /foo/bar/rules2
+.I /foo/bar/rules
 to all files on current directory. Subdirectories are not scanned.
 .RE
 .PP
@@ -104,7 +105,7 @@ or
 .I Compiler.
 .RE
 .PP
-$ cat /foo/bar/rules1 | yara -r /foo
+$ cat /foo/bar/rules | yara -r /foo
 .RS
 .PP
 Scan all files in the

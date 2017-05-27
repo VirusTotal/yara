@@ -234,8 +234,9 @@ static void test_bitwise_operators()
 
 static void test_syntax()
 {
-  assert_syntax_error(
-      "rule test { strings: $a = \"a\" $a = \"a\" condition: all of them }");
+  assert_error(
+      "rule test { strings: $a = \"a\" $a = \"a\" condition: all of them }",
+      ERROR_DUPLICATED_STRING_IDENTIFIER);
 }
 
 
@@ -445,7 +446,7 @@ static void test_hex_strings()
 
   assert_true_rule_blob(
       "rule test { \
-        strings: $a = { 2e 7? (65 | ?""?"") 78 } \
+        strings: $a = { 2e 7? (65 | ?? ) 78 } \
         condition: $a }",
       PE32_FILE);
 
@@ -525,6 +526,24 @@ static void test_hex_strings()
 
   assert_true_rule(
       "rule test { \
+        strings: $a = { 31 32 [0-1] 33 } \
+        condition: !a == 3}",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-1] 34 } \
+        condition: !a == 4}",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-2] 34 } \
+        condition: !a == 4 }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
         strings: $a = { 31 32 [-] 38 39 } \
         condition: all of them }",
       "1234567890");
@@ -547,40 +566,76 @@ static void test_hex_strings()
         condition: $a }",
       "1234567890");
 
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-1] 33 34 [0-2] 36 37 } \
+        condition: $a }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-1] 34 35 [0-2] 36 37 } \
+        condition: $a }",
+      "1234567890");
+
   assert_false_rule(
       "rule test { \
         strings: $a = { 31 32 [0-3] 37 38 } \
         condition: $a }",
       "1234567890");
 
-  assert_syntax_error(
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [1] 33 34 } \
+        condition: $a }",
+      "12\n34");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = {31 32 [3-6] 32} \
+        condition: !a == 6 }",
+      "12111222");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = {31 [0-3] (32|33)} \
+        condition: !a == 2 }",
+      "122222222");
+
+  assert_error(
       "rule test { \
         strings: $a = { 01 [0] 02 } \
-        condition: $a }");
+        condition: $a }",
+      ERROR_INVALID_HEX_STRING);
 
-  assert_syntax_error(
+  assert_error(
       "rule test { \
-        strings: $a = { [-] 01 02 } condition: $a }");
+        strings: $a = { [-] 01 02 } condition: $a }",
+      ERROR_INVALID_HEX_STRING);
 
-  assert_syntax_error(
+  assert_error(
       "rule test { \
         strings: $a = { 01 02 [-] } \
-        condition: $a }");
+        condition: $a }",
+      ERROR_INVALID_HEX_STRING);
 
-  assert_syntax_error(
+  assert_error(
       "rule test { \
         strings: $a = { 01 02 ([-] 03 | 04) } \
-        condition: $a }");
+        condition: $a }",
+      ERROR_INVALID_HEX_STRING);
 
-  assert_syntax_error(
+  assert_error(
       "rule test { \
         strings: $a = { 01 02 (03 [-] | 04) } \
-        condition: $a }");
+        condition: $a }",
+      ERROR_INVALID_HEX_STRING);
 
-  assert_syntax_error(
+  assert_error(
       "rule test { \
         strings: $a = { 01 02 (03 | 04 [-]) } \
-        condition: $a ");
+        condition: $a ",
+      ERROR_INVALID_HEX_STRING);
 
   /* TODO: tests.py:551 ff. */
 }
@@ -730,11 +785,13 @@ static void test_of()
       }",
       "mississippi");
 
-  assert_syntax_error(
-      "rule test { condition: all of ($a*) }");
+  assert_error(
+      "rule test { condition: all of ($a*) }",
+      ERROR_UNDEFINED_STRING);
 
-  assert_syntax_error(
-      "rule test { condition: all of them }");
+  assert_error(
+      "rule test { condition: all of them }",
+      ERROR_UNDEFINED_STRING);
 }
 
 
@@ -836,6 +893,58 @@ void test_re()
       "rule test { strings: $a = /^[isp]+/ condition: $a }",
       "mississippi");
 
+  assert_true_rule_blob(
+      "rule test { strings: $a = /a.{1,2}b/ wide condition: !a == 6 }",
+      "a\0x\0b\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /a.{1,2}b/ wide condition: !a == 8 }",
+      "a\0x\0x\0b\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /\\babc/ wide condition: $a }",
+      "a\0b\0c\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /\\babc/ wide condition: $a }",
+      "\0a\0b\0c\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /\\babc/ wide condition: $a }",
+      "\ta\0b\0c\0");
+
+  assert_false_rule_blob(
+      "rule test { strings: $a = /\\babc/ wide condition: $a }",
+      "x\0a\0b\0c\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /\\babc/ wide condition: $a }",
+      "x\ta\0b\0c\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /abc\\b/ wide condition: $a }",
+      "a\0b\0c\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /abc\\b/ wide condition: $a }",
+      "a\0b\0c\0\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /abc\\b/ wide condition: $a }",
+      "a\0b\0c\0\t");
+
+  assert_false_rule_blob(
+      "rule test { strings: $a = /abc\\b/ wide condition: $a }",
+      "a\0b\0c\0x\0");
+
+  assert_true_rule_blob(
+      "rule test { strings: $a = /abc\\b/ wide condition: $a }",
+      "a\0b\0c\0b\t");
+
+  assert_false_rule_blob(
+      "rule test { strings: $a = /\\b/ wide condition: $a }",
+      "abc");
+
   assert_regexp_syntax_error(")");
   assert_true_regexp("abc", "abc", "abc");
   assert_false_regexp("abc", "xbc");
@@ -866,7 +975,7 @@ void test_re()
   assert_false_regexp("ab?bc", "abbbbc");
   assert_true_regexp("ab?c", "abc", "abc");
   assert_true_regexp("ab*?", "abbb", "a");
-  assert_true_regexp("ab?c", "abc", "abc");
+  assert_true_regexp("ab?c", "ac", "ac");
   assert_true_regexp("ab??", "ab", "a");
   assert_true_regexp("a(b|x)c", "abc", "abc");
   assert_true_regexp("a(b|x)c", "axc", "axc");
@@ -876,17 +985,56 @@ void test_re()
   assert_true_regexp("a|b|c|d|e", "e", "e");
   assert_true_regexp("(a|b|c|d|e)f", "ef", "ef");
   assert_true_regexp(".b{2}", "abb", "abb");
+  assert_true_regexp(".b{2,3}", "abbb", "abbb");
+  assert_true_regexp(".b{2,3}?", "abbb", "abb");
+  assert_true_regexp("ab{2,3}c", "abbbc", "abbbc");
+  assert_true_regexp("ab{2,3}?c", "abbbc", "abbbc");
+  assert_true_regexp(".b{2,3}cccc", "abbbcccc", "abbbcccc");
+  assert_true_regexp(".b{2,3}?cccc", "abbbcccc", "bbbcccc");
+  assert_true_regexp("a.b{2,3}cccc", "aabbbcccc", "aabbbcccc");
+  assert_true_regexp("ab{2,3}c", "abbbc", "abbbc");
+  assert_true_regexp("ab{2,3}?c", "abbbc", "abbbc");
+  assert_true_regexp("ab{0,1}?c", "abc", "abc");
+  assert_true_regexp("a{0,1}?bc", "abc", "abc");
+  assert_true_regexp("a{0,1}bc", "bbc", "bc");
+  assert_true_regexp("a{0,1}?bc", "abc", "bc");
+  assert_true_regexp("aa{0,1}?bc", "abc", "abc");
+  assert_true_regexp("aa{0,1}?bc", "abc", "abc");
+  assert_true_regexp("aa{0,1}bc", "abc", "abc");
   assert_true_regexp("ab{1}c", "abc", "abc");
   assert_true_regexp("ab{1,2}c", "abbc", "abbc");
   assert_true_regexp("ab{1,}c", "abbbc", "abbbc");
   assert_false_regexp("ab{1,}b", "ab");
   assert_false_regexp("ab{1}c", "abbc");
   assert_true_regexp("ab{0,}c", "ac", "ac");
+  assert_true_regexp("ab{1,1}c", "abc", "abc");
   assert_true_regexp("ab{0,}c", "abbbc", "abbbc");
   assert_true_regexp("ab{,3}c", "abbbc", "abbbc");
   assert_false_regexp("ab{,2}c", "abbbc");
   assert_false_regexp("ab{4,5}bc", "abbbbc");
+  assert_true_regexp("ab{0,1}", "abbbbb", "ab");
+  assert_true_regexp("ab{0,2}", "abbbbb", "abb");
+  assert_true_regexp("ab{0,3}", "abbbbb", "abbb");
+  assert_true_regexp("ab{0,4}", "abbbbb", "abbbb");
+  assert_true_regexp("ab{1,1}", "abbbbb", "ab");
+  assert_true_regexp("ab{1,2}", "abbbbb", "abb");
+  assert_true_regexp("ab{1,3}", "abbbbb", "abbb");
+  assert_true_regexp("ab{2,2}", "abbbbb", "abb");
+  assert_true_regexp("ab{2,3}", "abbbbb", "abbb");
+  assert_true_regexp("ab{1,3}?", "abbbbb", "ab");
+  assert_true_regexp("ab{0,1}?", "abbbbb", "a");
+  assert_true_regexp("ab{0,2}?", "abbbbb", "a");
+  assert_true_regexp("ab{0,3}?", "abbbbb", "a");
+  assert_true_regexp("ab{0,4}?", "abbbbb", "a");
+  assert_true_regexp("ab{1,1}?", "abbbbb", "ab");
+  assert_true_regexp("ab{1,2}?", "abbbbb", "ab");
+  assert_true_regexp("ab{1,3}?", "abbbbb", "ab");
+  assert_true_regexp("ab{2,2}?", "abbbbb", "abb");
   assert_true_regexp("ab{2,3}?", "abbbbb", "abb");
+  assert_true_regexp(".(abc){0,1}", "xabcabcabcabc", "xabc");
+  assert_true_regexp(".(abc){0,2}", "xabcabcabcabc", "xabcabc");
+  assert_true_regexp("x{1,2}abcd", "xxxxabcd", "xxabcd");
+  assert_true_regexp("x{1,2}abcd", "xxxxabcd", "xxabcd");
   assert_true_regexp("ab{.*}", "ab{c}", "ab{c}");
   assert_true_regexp(".(aa){1,2}", "aaaaaaaaaa", "aaaaa");
   assert_true_regexp("a.(bc.){2}", "aabcabca", "aabcabca");
@@ -913,10 +1061,8 @@ void test_re()
   assert_regexp_syntax_error("(abc");
   assert_regexp_syntax_error("abc)");
   assert_regexp_syntax_error("a[]b");
-  assert_regexp_syntax_error("a\\");
   assert_true_regexp("a[\\-b]", "a-", "a-");
   assert_true_regexp("a[\\-b]", "ab", "ab");
-  assert_regexp_syntax_error("a[\\");
   assert_true_regexp("a]", "a]", "a]");
   assert_true_regexp("a[]]b", "a]b", "a]b");
   assert_true_regexp("a[\\]]b", "a]b", "a]b");
@@ -1009,7 +1155,14 @@ void test_re()
   assert_false_regexp("^abc$", "abcc");
   assert_true_regexp("^abc", "abcc", "abc");
   assert_false_regexp("^abc$", "aabc");
+  assert_false_regexp("abc^", "abc");
+  assert_false_regexp("ab^c", "abc");
+  assert_false_regexp("a^bcdef", "abcdef")
   assert_true_regexp("abc$", "aabc", "abc");
+  assert_false_regexp("$abc", "abc");
+  assert_true_regexp("(a|a$)bcd", "abcd", "abcd");
+  assert_false_regexp("(a$|a$)bcd", "abcd");
+  assert_false_regexp("(abc$|ab$)", "abcd");
   assert_true_regexp("^a(bc+|b[eh])g|.h$", "abhg", "abhg");
   assert_true_regexp("(bc+d$|ef*g.|h?i(j|k))", "effgz", "effgz");
   assert_true_regexp("(bc+d$|ef*g.|h?i(j|k))", "ij", "ij");
@@ -1024,7 +1177,30 @@ void test_re()
   assert_regexp_syntax_error("\\x0");
   assert_regexp_syntax_error("\\x");
 
+  assert_regexp_syntax_error("x{0,0}");
+  assert_regexp_syntax_error("x{0}");
+
   assert_regexp_syntax_error("\\xxy");
+
+  assert_error(
+      "rule test { strings: $a = /a\\/ condition: $a }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(
+      "rule test { strings: $a = /[a\\/ condition: $a }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_true_rule_blob(
+      "rule test { \
+        strings: $a = /MZ.{300,}t/ \
+        condition: !a == 317 }",
+      PE32_FILE);
+
+  assert_true_rule_blob(
+      "rule test { \
+        strings: $a = /MZ.{300,}?t/ \
+        condition: !a == 314 }",
+      PE32_FILE);
 }
 
 
@@ -1082,6 +1258,45 @@ static void test_comments()
              */\n\
              true\n\
       }",
+      NULL);
+}
+
+static void test_matches_operator()
+{
+  assert_true_rule(
+      "rule test { condition: \"foo\" matches /foo/ }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"foo\" matches /bar/ }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"FoO\" matches /fOo/i }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"xxFoOxx\" matches /fOo/i }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"xxFoOxx\" matches /^fOo/i }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"xxFoOxx\" matches /fOo$/i }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foo\" matches /^foo$/i }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foo\\nbar\" matches /foo.*bar/s }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"foo\\nbar\" matches /foo.*bar/ }",
       NULL);
 }
 
@@ -1227,6 +1442,20 @@ static void test_modules()
   assert_true_rule(
       "import \"tests\" \
        rule test { \
+        condition: tests.foobar(1) == tests.foobar(1) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+       rule test { \
+        condition: tests.foobar(1) != tests.foobar(2) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+       rule test { \
         condition: tests.length(\"dummy\") == 5 \
       }",
       NULL);
@@ -1249,6 +1478,38 @@ static void test_modules()
       rule test { condition: tests.fsum(1.0,1.0) == 3.0 \
       }",
       NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { condition: tests.match(/foo/,\"foo\") == 3 \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { condition: tests.match(/foo/,\"bar\") == -1\
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { condition: tests.match(/foo.bar/i,\"FOO\\nBAR\") == -1\
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { condition: tests.match(/foo.bar/is,\"FOO\\nBAR\") == 7\
+      }",
+      NULL);
+
+  assert_error(
+      "import \"\\x00\"",
+      ERROR_INVALID_MODULE_NAME);
+
+  assert_error(
+      "import \"\"",
+      ERROR_INVALID_MODULE_NAME);
 }
 
 #if defined(HASH_MODULE)
@@ -1335,7 +1596,7 @@ void test_file_descriptor()
 {
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
-  
+
 #if defined(_WIN32) || defined(__CYGWIN__)
   HANDLE fd = CreateFile("tests/data/true.yar", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
   if (fd == INVALID_HANDLE_VALUE)
@@ -1361,7 +1622,7 @@ void test_file_descriptor()
     perror("yr_compiler_add_fd");
     exit(EXIT_FAILURE);
   }
-  
+
 #if defined(_WIN32) || defined(__CYGWIN__)
   CloseHandle(fd);
 #else
@@ -1381,7 +1642,7 @@ void test_file_descriptor()
   {
     yr_rules_destroy(rules);
   }
-  
+
   return;
 }
 
@@ -1394,6 +1655,7 @@ int main(int argc, char** argv)
   test_comparison_operators();
   test_arithmetic_operators();
   test_bitwise_operators();
+  test_matches_operator();
   test_syntax();
   test_anonymous_strings();
   test_strings();

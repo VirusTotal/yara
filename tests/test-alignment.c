@@ -67,8 +67,6 @@ int err = 0;
 
 int main (int argc, char **argv)
 {
-  assert(ARENA_FILE_VERSION == 11);
-
   CHECK_SIZE(YR_NAMESPACE, 4 * MAX_THREADS + 8);
   CHECK_OFFSET(YR_NAMESPACE, 4 * MAX_THREADS, name);
 
@@ -118,12 +116,12 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_AC_MATCH, 24, backward_code);
   CHECK_OFFSET(YR_AC_MATCH, 32, next);
 
-  CHECK_SIZE(YARA_RULES_FILE_HEADER, 48);
-  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 8,  rules_list_head);
-  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 16, externals_list_head);
-  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 24, code_start);
-  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 32, match_table);
-  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 40, transition_table);
+  CHECK_SIZE(YARA_RULES_FILE_HEADER, 40);
+  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 0,  rules_list_head);
+  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 8, externals_list_head);
+  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 16, code_start);
+  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 24, match_table);
+  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 32, transition_table);
 
   CHECK_SIZE(SIZED_STRING, 12);
   CHECK_OFFSET(SIZED_STRING, 4, flags);

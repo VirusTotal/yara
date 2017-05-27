@@ -50,14 +50,32 @@ static LONG CALLBACK exception_handler(
     case EXCEPTION_ACCESS_VIOLATION:
       if (tidx != -1 && exc_jmp_buf[tidx] != NULL)
         longjmp(*exc_jmp_buf[tidx], 1);
-
-      assert(FALSE);  // We should not reach this point.
   }
 
   return EXCEPTION_CONTINUE_SEARCH;
 }
 
-#define YR_TRYCATCH(_do_,_try_clause_, _catch_clause_)                  \
+#ifdef _MSC_VER
+
+#include <excpt.h>
+
+#define YR_TRYCATCH(_do_,_try_clause_,_catch_clause_)           \
+  do                                                            \
+  {                                                             \
+    if (_do_)                                                   \
+    {                                                           \
+      __try                                                     \
+      { _try_clause_ }                                          \
+      __except(exception_handler(GetExceptionInformation()))    \
+      { _catch_clause_ }                                        \
+    }                                                           \
+    else                                                        \
+    { _try_clause_ }                                            \
+  } while(0)
+
+#else
+
+#define YR_TRYCATCH(_do_,_try_clause_,_catch_clause_)                   \
   do                                                                    \
   {                                                                     \
     if (_do_)                                                           \
@@ -79,6 +97,8 @@ static LONG CALLBACK exception_handler(
       _try_clause_                                                      \
     }                                                                   \
   } while(0)
+
+#endif
 
 #else
 

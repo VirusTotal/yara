@@ -27,6 +27,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <string.h>
+#include <yara/mem.h>
 #include <yara/sizedstr.h>
 
 
@@ -53,4 +55,22 @@ int sized_string_cmp(
     return -1;
   else
     return 1;
+}
+
+
+SIZED_STRING* sized_string_dup(
+    SIZED_STRING* s)
+{
+  SIZED_STRING* result = (SIZED_STRING*) yr_malloc(
+      sizeof(SIZED_STRING) + s->length);
+
+  if (result == NULL)
+    return NULL;
+
+  result->length = s->length;
+  result->flags = s->flags;
+
+  strncpy(result->c_string, s->c_string, s->length + 1);
+
+  return result;
 }

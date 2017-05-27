@@ -1,9 +1,11 @@
 
 .. _dotnet-module:
 
-#########
+#############
 dotnet module
-#########
+#############
+
+.. versionadded:: 3.6.0
 
 The dotnet module allows you to create more fine-grained rules for .NET files by
 using attributes and features of the .NET file format. Let's see some examples::
@@ -28,13 +30,11 @@ Reference
 
 .. c:type:: version
 
-    .. versionchanged:: 3.6.0
-
     The version string contained in the metadata root.
 
     *Example: dotnet.version == "v2.0.50727"*
 
-.. c:type:: module_name 
+.. c:type:: module_name
 
     The name of the module.
 
@@ -44,9 +44,9 @@ Reference
 
     The number of streams in the file.
 
-.. c:type:: streams 
+.. c:type:: streams
 
-    An zero-based array of steram objects, one for each stream contained in the
+    A zero-based array of stream objects, one for each stream contained in the
     file. Individual streams can be accessed by using the [] operator. Each
     stream object has the following attributes:
 
@@ -54,11 +54,11 @@ Reference
 
         Stream name.
 
-    .. c:member:: offset 
+    .. c:member:: offset
 
         Stream offset.
 
-    .. c:member:: size 
+    .. c:member:: size
 
         Stream size.
 
@@ -70,20 +70,20 @@ Reference
 
 .. c:type:: guids
 
-    An zero-based array of strings, one for each GUID. Individual guids can be
+    A zero-based array of strings, one for each GUID. Individual guids can be
     accessed by using the [] operator.
 
     *Example: pe.guids[0].name == "99c08ffd-f378-a891-10ab-c02fe11be6ef"*
 
-.. c:type:: number_of_resources 
+.. c:type:: number_of_resources
 
     The number of resources in the .NET file. These are different from normal PE
     resources.
 
 .. c:type:: resources
 
-    An zero-based array of resource objects, one for each resource the PE has.
-    Individual resources can be accessed by using the [] operator. Each
+    A zero-based array of resource objects, one for each resource the .NET file
+    has.  Individual resources can be accessed by using the [] operator. Each
     resource object has the following attributes:
 
     .. c:member:: offset
@@ -131,13 +131,47 @@ Reference
 
     The number of module references in the .NET file.
 
-.. c:type:: resources
+.. c:type:: modulerefs
 
-    An zero-based array of strings, one for each module reference the PE has.
-    Individual module references can be accessed by using the [] operator.
+    A zero-based array of strings, one for each module reference the .NET file
+    has.  Individual module references can be accessed by using the []
+    operator.
 
     *Example: dotnet.modulerefs[0] == "kernel32"*
 
 .. c:type:: typelib
 
     The typelib of the file.
+
+.. c:type:: assembly_refs
+
+    Object for .NET assembly reference information.
+
+    .. c:member:: version
+
+        An object with integer values representing version information for this
+        assembly. Attributes are:
+
+        ``major``
+        ``minor``
+        ``build_number``
+        ``revision_number``
+
+    .. c:member:: name
+
+        String containing the assembly name.
+
+    .. c:member:: public_key_or_token
+
+        String containing the public key or token which identifies the author of
+        this assembly.
+        assembly.
+
+.. c:type:: number_of_user_strings
+
+    The number of user strings in the file.
+
+.. c:type:: user_strings
+
+    An zero-based array of user strings, one for each stream contained in the
+    file. Individual strings can be accessed by using the [] operator.

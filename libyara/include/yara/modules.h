@@ -284,7 +284,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     (__args[n-1].d)
 
 #define regexp_argument(n) \
-    ((RE_CODE)(__args[n-1].p))
+    ((RE*)(__args[n-1].re))
 
 
 #define module()        yr_object_get_root((YR_OBJECT*) __function_obj)

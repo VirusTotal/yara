@@ -27,6 +27,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <assert.h>
 #include <string.h>
 
 #include <yara/integers.h>
@@ -34,9 +35,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/error.h>
 
-#define ROTATE_INT32(x, shift) \
-    ((x << (shift % 32)) | (x >> (32 - (shift % 32))))
+// Constant-time left rotate that does not invoke undefined behavior.
+// http://blog.regehr.org/archives/1063
+uint32_t rotl32(uint32_t x, uint32_t shift) {
+  assert(shift < 32);
+  return (x << shift) | (x >> (-shift & 31));
+}
 
+#define ROTATE_INT32(x, shift) \
+    rotl32(x, shift % 32)
 
 uint32_t byte_to_int32[]  =
 {
@@ -89,6 +96,8 @@ uint32_t hash(
 
   uint32_t result = seed;
   size_t i;
+
+  assert(len > 0);
 
   for (i = len - 1; i > 0; i--)
   {

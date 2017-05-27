@@ -57,7 +57,7 @@ YR_API int yr_compiler_create(
   new_compiler->callback = NULL;
   new_compiler->last_error = ERROR_SUCCESS;
   new_compiler->last_error_line = 0;
-  new_compiler->error_line = 0;
+  new_compiler->current_line = 0;
   new_compiler->last_result = ERROR_SUCCESS;
   new_compiler->file_stack_ptr = 0;
   new_compiler->file_name_stack_ptr = 0;
@@ -943,6 +943,13 @@ YR_API char* yr_compiler_get_error_message(
           buffer,
           buffer_size,
           "unknown module \"%s\"",
+          compiler->last_error_extra_info);
+      break;
+    case ERROR_INVALID_MODULE_NAME:
+      snprintf(
+          buffer,
+          buffer_size,
+          "invalid module name \"%s\"",
           compiler->last_error_extra_info);
       break;
     case ERROR_DUPLICATED_STRUCTURE_MEMBER:

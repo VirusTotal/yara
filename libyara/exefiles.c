@@ -150,54 +150,97 @@ int yr_get_elf_type(
 }
 
 
-uint64_t yr_elf_rva_to_offset_32(
+static uint64_t yr_elf_rva_to_offset_32(
     elf32_header_t* elf_header,
     uint64_t rva,
     size_t buffer_length)
 {
-  int i;
-  elf32_section_header_t* section;
+  // if the binary is an executable then prefer the program headers to resolve
+  // the offset
+  if (yr_le16toh(elf_header->type) == ELF_ET_EXEC)
+  {
+    int i;
+    elf32_program_header_t* program;
+    if (yr_le32toh(elf_header->ph_offset) == 0 ||
+        yr_le16toh(elf_header->ph_entry_count == 0))
+      return 0;
 
-  if (elf_header->sh_offset == 0 || elf_header->sh_entry_count == 0)
-    return 0;
+    // check to prevent integer wraps
+    if (ULONG_MAX - yr_le16toh(elf_header->ph_entry_count) <
+     sizeof(elf32_program_header_t) * yr_le16toh(elf_header->ph_entry_count))
+      return 0;
 
-  // check to prevent integer wraps
+    // check that 'ph_offset' doesn't wrap when added to the
+    // size of entries.
+    if(ULONG_MAX - yr_le32toh(elf_header->ph_offset) <
+     sizeof(elf32_program_header_t) * yr_le16toh(elf_header->ph_entry_count))
+      return 0;
 
-  if (ULONG_MAX - yr_le16toh(elf_header->sh_entry_count) <
-      sizeof(elf32_section_header_t) * yr_le16toh(elf_header->sh_entry_count))
-    return 0;
+    // ensure we don't exceed the buffer size
+    if (yr_le32toh(elf_header->ph_offset) + sizeof(elf32_program_header_t) *
+        yr_le16toh(elf_header->ph_entry_count) > buffer_length)
+      return 0;
 
-  // check that 'sh_offset' doesn't wrap when added to the
-  // size of entries.
+    program = (elf32_program_header_t*)
+      ((uint8_t*) elf_header + yr_le32toh(elf_header->ph_offset));
 
-  if (ULONG_MAX - yr_le32toh(elf_header->sh_offset) <
-      sizeof(elf32_section_header_t) * yr_le16toh(elf_header->sh_entry_count))
-    return 0;
+    for (i = 0; i < yr_le16toh(elf_header->ph_entry_count); i++)
+    {
+      if (rva >= yr_le32toh(program->virt_addr) &&
+          rva <  yr_le32toh(program->virt_addr) + yr_le32toh(program->mem_size))
+      {
+        return yr_le32toh(program->offset) + (rva - yr_le32toh(program->virt_addr));
+      }
 
-  if (yr_le32toh(elf_header->sh_offset) + \
-      sizeof(elf32_section_header_t) * \
-      yr_le16toh(elf_header->sh_entry_count) > buffer_length)
-    return 0;
+      program++;
+    }
+  }
+  else
+  {
+    int i;
+    elf32_section_header_t* section;
 
-  section = (elf32_section_header_t*) \
+    if (yr_le32toh(elf_header->sh_offset) == 0 ||
+        yr_le16toh(elf_header->sh_entry_count == 0))
+      return 0;
+
+    // check to prevent integer wraps
+
+    if (ULONG_MAX - yr_le16toh(elf_header->sh_entry_count) <
+     sizeof(elf32_section_header_t) * yr_le16toh(elf_header->sh_entry_count))
+      return 0;
+
+    // check that 'sh_offset' doesn't wrap when added to the
+    // size of entries.
+
+    if (ULONG_MAX - yr_le32toh(elf_header->sh_offset) <
+     sizeof(elf32_section_header_t) * yr_le16toh(elf_header->sh_entry_count))
+      return 0;
+
+    if (yr_le32toh(elf_header->sh_offset) + sizeof(elf32_section_header_t) *
+     yr_le16toh(elf_header->sh_entry_count) > buffer_length)
+      return 0;
+
+    section = (elf32_section_header_t*)
       ((unsigned char*) elf_header + yr_le32toh(elf_header->sh_offset));
 
-  for (i = 0; i < yr_le16toh(elf_header->sh_entry_count); i++)
-  {
-    if (yr_le32toh(section->type) != ELF_SHT_NULL &&
-        yr_le32toh(section->type) != ELF_SHT_NOBITS &&
-        rva >= yr_le32toh(section->addr) &&
-        rva <  yr_le32toh(section->addr) + yr_le32toh(section->size))
+    for (i = 0; i < yr_le16toh(elf_header->sh_entry_count); i++)
     {
-      // prevent integer wrapping with the return value
+      if (yr_le32toh(section->type) != ELF_SHT_NULL &&
+          yr_le32toh(section->type) != ELF_SHT_NOBITS &&
+          rva >= yr_le32toh(section->addr) &&
+          rva <  yr_le32toh(section->addr) + yr_le32toh(section->size))
+      {
+        // prevent integer wrapping with the return value
 
-      if (ULONG_MAX - yr_le32toh(section->offset) < (rva - yr_le32toh(section->addr)))
-        return 0;
-      else
-        return yr_le32toh(section->offset) + (rva - yr_le32toh(section->addr));
+        if (ULONG_MAX - yr_le32toh(section->offset) < (rva - yr_le32toh(section->addr)))
+          return 0;
+        else
+          return yr_le32toh(section->offset) + (rva - yr_le32toh(section->addr));
+      }
+
+      section++;
     }
-
-    section++;
   }
 
   return 0;
@@ -205,42 +248,80 @@ uint64_t yr_elf_rva_to_offset_32(
 }
 
 
-uint64_t yr_elf_rva_to_offset_64(
+static uint64_t yr_elf_rva_to_offset_64(
     elf64_header_t* elf_header,
     uint64_t rva,
     size_t buffer_length)
 {
-  int i;
-  elf64_section_header_t* section;
-
-  if (elf_header->sh_offset == 0 || elf_header->sh_entry_count == 0)
-    return 0;
-
-  // check that 'sh_offset' doesn't wrap when added to the
-  // size of entries.
-  if(ULONG_MAX - yr_le64toh(elf_header->sh_offset) <
-     sizeof(elf64_section_header_t) * yr_le16toh(elf_header->sh_entry_count))
-    return 0;
-
-  if (yr_le64toh(elf_header->sh_offset) + \
-      sizeof(elf64_section_header_t) * \
-      yr_le16toh(elf_header->sh_entry_count) > buffer_length)
-    return 0;
-
-  section = (elf64_section_header_t*) \
-    ((uint8_t*) elf_header + yr_le64toh(elf_header->sh_offset));
-
-  for (i = 0; i < yr_le16toh(elf_header->sh_entry_count); i++)
+  // if the binary is an executable then prefer the program headers to resolve
+  // the offset
+  if (yr_le16toh(elf_header->type) == ELF_ET_EXEC)
   {
-    if (yr_le32toh(section->type) != ELF_SHT_NULL &&
-        yr_le32toh(section->type) != ELF_SHT_NOBITS &&
-        rva >= yr_le64toh(section->addr) &&
-        rva <  yr_le64toh(section->addr) + yr_le64toh(section->size))
-    {
-      return yr_le64toh(section->offset) + (rva - yr_le64toh(section->addr));
-    }
+    int i;
+    elf64_program_header_t* program;
+    if (yr_le64toh(elf_header->ph_offset) == 0 ||
+        yr_le16toh(elf_header->ph_entry_count == 0))
+      return 0;
 
-    section++;
+    // check that 'ph_offset' doesn't wrap when added to the
+    // size of entries.
+    if(ULONG_MAX - yr_le64toh(elf_header->ph_offset) <
+     sizeof(elf64_program_header_t) * yr_le16toh(elf_header->ph_entry_count))
+      return 0;
+
+    // ensure we don't exceed the buffer size
+    if (yr_le64toh(elf_header->ph_offset) + sizeof(elf64_program_header_t) *
+        yr_le16toh(elf_header->ph_entry_count) > buffer_length)
+      return 0;
+
+    program = (elf64_program_header_t*)
+      ((uint8_t*) elf_header + yr_le64toh(elf_header->ph_offset));
+
+    for (i = 0; i < yr_le16toh(elf_header->ph_entry_count); i++)
+    {
+      if (rva >= yr_le64toh(program->virt_addr) &&
+          rva <  yr_le64toh(program->virt_addr) + yr_le64toh(program->mem_size))
+      {
+        return yr_le64toh(program->offset) + (rva - yr_le64toh(program->virt_addr));
+      }
+
+      program++;
+    }
+  }
+  else
+  {
+    int i;
+    elf64_section_header_t* section;
+
+    if (yr_le64toh(elf_header->sh_offset) == 0 ||
+        yr_le16toh(elf_header->sh_entry_count) == 0)
+      return 0;
+
+    // check that 'sh_offset' doesn't wrap when added to the
+    // size of entries.
+    if(ULONG_MAX - yr_le64toh(elf_header->sh_offset) <
+     sizeof(elf64_section_header_t) * yr_le16toh(elf_header->sh_entry_count))
+      return 0;
+
+    if (yr_le64toh(elf_header->sh_offset) + sizeof(elf64_section_header_t) *
+        yr_le16toh(elf_header->sh_entry_count) > buffer_length)
+      return 0;
+
+    section = (elf64_section_header_t*)
+      ((uint8_t*) elf_header + yr_le64toh(elf_header->sh_offset));
+
+    for (i = 0; i < yr_le16toh(elf_header->sh_entry_count); i++)
+    {
+      if (yr_le32toh(section->type) != ELF_SHT_NULL &&
+          yr_le32toh(section->type) != ELF_SHT_NOBITS &&
+          rva >= yr_le64toh(section->addr) &&
+          rva <  yr_le64toh(section->addr) + yr_le64toh(section->size))
+      {
+        return yr_le64toh(section->offset) + (rva - yr_le64toh(section->addr));
+      }
+
+      section++;
+    }
   }
 
   return 0;

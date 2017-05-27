@@ -190,7 +190,7 @@ typedef size_t yy_size_t;
 
     /* Note: We specifically omit the test for yy_rule_can_match_eol because it requires
      *       access to the local variable yy_act. Since yyless() is a macro, it would break
-     *       existing scanners that call yyless() from OUTSIDE re_yylex.
+     *       existing scanners that call yyless() from OUTSIDE re_yylex. 
      *       One obvious solution it to make yy_act a global. I tried that, and saw
      *       a 5% performance hit in a non-yylineno scanner, because yy_act is
      *       normally declared as a register variable-- so it is not worth it.
@@ -266,7 +266,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-
+    
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
 	 */
@@ -551,7 +551,7 @@ with noyywrap then we can remove this pragma.
 #include <assert.h>
 #include <setjmp.h>
 
-
+#include <yara/globals.h>
 #include <yara/utils.h>
 #include <yara/error.h>
 #include <yara/limits.h>
@@ -906,7 +906,7 @@ yy_find_action:
 			yy_size_t yyl;
 			for ( yyl = 0; yyl < yyleng; ++yyl )
 				if ( yytext[yyl] == '\n' )
-					
+					   
     do{ yylineno++;
         yycolumn=0;
     }while(0)
@@ -955,6 +955,12 @@ YY_RULE_SETUP
     yyterminate();
   }
 
+  if (hi_bound == 0 && lo_bound == 0)
+  {
+    yyerror(yyscanner, lex_env, "bad repeat interval");
+    yyterminate();
+  }
+
   yylval->range = (hi_bound << 16) | lo_bound;
 
   return _RANGE_;
@@ -962,7 +968,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 135 "re_lexer.l"
+#line 141 "re_lexer.l"
 {
 
   // Example: {10}
@@ -975,6 +981,12 @@ YY_RULE_SETUP
     yyterminate();
   }
 
+  if (value == 0)
+  {
+    yyerror(yyscanner, lex_env, "bad repeat interval");
+    yyterminate();
+  }
+
   yylval->range = (value << 16) | value;
 
   return _RANGE_;
@@ -982,7 +994,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 153 "re_lexer.l"
+#line 165 "re_lexer.l"
 {
 
   // Start of a negated character class. Example: [^abcd]
@@ -994,7 +1006,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 162 "re_lexer.l"
+#line 174 "re_lexer.l"
 {
 
   // Start of character negated class containing a ].
@@ -1009,7 +1021,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 175 "re_lexer.l"
+#line 187 "re_lexer.l"
 {
 
   // Start of character class containing a ].
@@ -1024,7 +1036,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 188 "re_lexer.l"
+#line 200 "re_lexer.l"
 {
 
   // Start of character class. Example: [abcd]
@@ -1037,7 +1049,7 @@ YY_RULE_SETUP
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 198 "re_lexer.l"
+#line 210 "re_lexer.l"
 {
 
   // Any non-special character is passed as a CHAR token to the scanner.
@@ -1048,63 +1060,63 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 207 "re_lexer.l"
+#line 219 "re_lexer.l"
 {
   return _WORD_CHAR_;
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 212 "re_lexer.l"
+#line 224 "re_lexer.l"
 {
   return _NON_WORD_CHAR_;
 }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 217 "re_lexer.l"
+#line 229 "re_lexer.l"
 {
   return _SPACE_;
 }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 222 "re_lexer.l"
+#line 234 "re_lexer.l"
 {
   return _NON_SPACE_;
 }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 227 "re_lexer.l"
+#line 239 "re_lexer.l"
 {
   return _DIGIT_;
 }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 232 "re_lexer.l"
+#line 244 "re_lexer.l"
 {
   return _NON_DIGIT_;
 }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 237 "re_lexer.l"
+#line 249 "re_lexer.l"
 {
   return _WORD_BOUNDARY_;
 }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 241 "re_lexer.l"
+#line 253 "re_lexer.l"
 {
   return _NON_WORD_BOUNDARY_;
 }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 246 "re_lexer.l"
+#line 258 "re_lexer.l"
 {
 
   yyerror(yyscanner, lex_env, "backreferences are not allowed");
@@ -1113,7 +1125,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 253 "re_lexer.l"
+#line 265 "re_lexer.l"
 {
 
   uint8_t c;
@@ -1132,7 +1144,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 270 "re_lexer.l"
+#line 282 "re_lexer.l"
 {
 
   // End of character class.
@@ -1155,7 +1167,7 @@ YY_RULE_SETUP
 case 19:
 /* rule 19 can match eol */
 YY_RULE_SETUP
-#line 291 "re_lexer.l"
+#line 303 "re_lexer.l"
 {
 
   // A range inside a character class.
@@ -1199,7 +1211,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 333 "re_lexer.l"
+#line 345 "re_lexer.l"
 {
 
   int i;
@@ -1210,7 +1222,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 342 "re_lexer.l"
+#line 354 "re_lexer.l"
 {
 
   int i;
@@ -1221,7 +1233,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 351 "re_lexer.l"
+#line 363 "re_lexer.l"
 {
 
   LEX_ENV->class_vector[' ' / 8] |= 1 << ' ' % 8;
@@ -1230,7 +1242,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 358 "re_lexer.l"
+#line 370 "re_lexer.l"
 {
 
   int i;
@@ -1248,7 +1260,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 374 "re_lexer.l"
+#line 386 "re_lexer.l"
 {
 
   char c;
@@ -1259,7 +1271,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 383 "re_lexer.l"
+#line 395 "re_lexer.l"
 {
 
   int i;
@@ -1281,7 +1293,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 403 "re_lexer.l"
+#line 415 "re_lexer.l"
 {
 
   uint8_t c;
@@ -1299,7 +1311,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 419 "re_lexer.l"
+#line 431 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1317,7 +1329,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(char_class):
-#line 436 "re_lexer.l"
+#line 448 "re_lexer.l"
 {
 
   // End of regexp reached while scanning a character class.
@@ -1328,7 +1340,7 @@ case YY_STATE_EOF(char_class):
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 445 "re_lexer.l"
+#line 457 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1343,7 +1355,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 459 "re_lexer.l"
+#line 471 "re_lexer.l"
 {
 
   yyterminate();
@@ -1351,10 +1363,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 464 "re_lexer.l"
+#line 476 "re_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1358 "re_lexer.c"
+#line 1370 "re_lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1763,7 +1775,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	yyg->yy_hold_char = *++yyg->yy_c_buf_p;
 
 	if ( c == '\n' )
-		
+		   
     do{ yylineno++;
         yycolumn=0;
     }while(0)
@@ -2018,9 +2030,9 @@ static void re_yyensure_buffer_stack (yyscan_t yyscanner)
 								, yyscanner);
 		if ( ! yyg->yy_buffer_stack )
 			YY_FATAL_ERROR( "out of dynamic memory in re_yyensure_buffer_stack()" );
-
+								  
 		memset(yyg->yy_buffer_stack, 0, num_to_alloc * sizeof(struct yy_buffer_state*));
-
+				
 		yyg->yy_buffer_stack_max = num_to_alloc;
 		yyg->yy_buffer_stack_top = 0;
 		return;
@@ -2049,7 +2061,7 @@ static void re_yyensure_buffer_stack (yyscan_t yyscanner)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * @param yyscanner The scanner object.
- * @return the newly allocated buffer state object.
+ * @return the newly allocated buffer state object. 
  */
 YY_BUFFER_STATE re_yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscanner)
 {
@@ -2177,7 +2189,7 @@ YY_EXTRA_TYPE re_yyget_extra  (yyscan_t yyscanner)
 int re_yyget_lineno  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-
+    
         if (! YY_CURRENT_BUFFER)
             return 0;
     
@@ -2190,7 +2202,7 @@ int re_yyget_lineno  (yyscan_t yyscanner)
 int re_yyget_column  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-
+    
         if (! YY_CURRENT_BUFFER)
             return 0;
     
@@ -2365,20 +2377,20 @@ int re_yylex_init_extra(YY_EXTRA_TYPE yy_user_defined,yyscan_t* ptr_yy_globals )
         errno = EINVAL;
         return 1;
     }
-
+	
     *ptr_yy_globals = (yyscan_t) re_yyalloc ( sizeof( struct yyguts_t ), &dummy_yyguts );
-
+	
     if (*ptr_yy_globals == NULL){
         errno = ENOMEM;
         return 1;
     }
-
+    
     /* By setting to 0xAA, we expose bugs in
     yy_init_globals. Leave at 0x00 for releases. */
     memset(*ptr_yy_globals,0x00,sizeof(struct yyguts_t));
-
+    
     re_yyset_extra (yy_user_defined, *ptr_yy_globals);
-
+    
     return yy_init_globals ( *ptr_yy_globals );
 }
 
@@ -2503,7 +2515,7 @@ void re_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 464 "re_lexer.l"
+#line 476 "re_lexer.l"
 
 
 
@@ -2590,15 +2602,12 @@ int read_escaped_char(
 }
 
 
-extern YR_THREAD_STORAGE_KEY recovery_state_key;
-
-
 void yyfatal(
     yyscan_t yyscanner,
     const char *error_message)
 {
   jmp_buf* recovery_state = (jmp_buf*) yr_thread_storage_get_value(
-      &recovery_state_key);
+      &yr_recovery_state_key);
 
   longjmp(*recovery_state, 1);
 }
@@ -2628,8 +2637,7 @@ void yyerror(
 
 int yr_parse_re_string(
   const char* re_string,
-  int flags,
-  RE** re,
+  RE_AST** re_ast,
   RE_ERROR* error)
 {
   yyscan_t yyscanner;
@@ -2638,25 +2646,23 @@ int yr_parse_re_string(
 
   lex_env.last_error_code = ERROR_SUCCESS;
 
-  yr_thread_storage_set_value(&recovery_state_key, &recovery_state);
+  yr_thread_storage_set_value(&yr_recovery_state_key, &recovery_state);
 
   if (setjmp(recovery_state) != 0)
     return ERROR_INTERNAL_FATAL_ERROR;
 
-  FAIL_ON_ERROR(yr_re_create(re));
-
-  (*re)->flags = flags;
+  FAIL_ON_ERROR(yr_re_ast_create(re_ast));
 
   re_yylex_init(&yyscanner);
-  re_yyset_extra(*re,yyscanner);
+  re_yyset_extra(*re_ast,yyscanner);
   re_yy_scan_string(re_string,yyscanner);
   yyparse(yyscanner, &lex_env);
   re_yylex_destroy(yyscanner);
 
   if (lex_env.last_error_code != ERROR_SUCCESS)
   {
-    yr_re_destroy(*re);
-    *re = NULL;
+    yr_re_ast_destroy(*re_ast);
+    *re_ast = NULL;
 
     strlcpy(
         error->message,
