@@ -136,6 +136,7 @@ struct RE_NODE
 struct RE_AST
 {
   uint32_t flags;
+  uint16_t levels;
   RE_NODE* root_node;
 };
 
