@@ -52,23 +52,6 @@ order to avoid confusion with operating system threads.
 #include <yara/re_lexer.h>
 #include <yara/hex_lexer.h>
 
-// Maximum allowed split ID, also limiting the number of split instructions
-// allowed in a regular expression. This number can't be increased
-// over 255 without changing RE_SPLIT_ID_TYPE.
-#define RE_MAX_SPLIT_ID     128
-
-// Maximum stack size for regexp evaluation
-#define RE_MAX_STACK      1024
-
-// Maximum code size for a compiled regexp
-#define RE_MAX_CODE_SIZE  32768
-
-// Maximum input size scanned by yr_re_exec
-#define RE_SCAN_LIMIT     4096
-
-// Maximum number of fibers
-#define RE_MAX_FIBERS     1024
-
 
 #define EMIT_BACKWARDS                  0x01
 #define EMIT_DONT_SET_FORWARDS_CODE     0x02
@@ -268,6 +251,7 @@ int yr_re_ast_create(
     return ERROR_INSUFFICIENT_MEMORY;
 
   (*re_ast)->flags = 0;
+  (*re_ast)->levels = 0;
   (*re_ast)->root_node = NULL;
 
   return ERROR_SUCCESS;
