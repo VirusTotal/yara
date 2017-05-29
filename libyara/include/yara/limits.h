@@ -83,6 +83,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_MAX_FIBERS                   1024
 
 // Maximum number of levels in regexp's AST
-#define RE_MAX_AST_LEVELS               1000
+#define RE_MAX_AST_LEVELS               2000
 
 #endif
