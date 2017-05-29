@@ -234,52 +234,50 @@ int module_load(
     }
 
     PDEX_HEADER dex_header = dex_get_header(block_data, block->size);
-    if (dex_header == NULL) {
-      return ERROR_INVALID_FILE;
+    if (dex_header != NULL) {
+      /*
+      printf("Endian tag: 0x%x (%d)\n", *dex_header->endian_tag, *dex_header->endian_tag);
+      printf("Link size: %d\n", *dex_header->link_size);
+      printf("Link offset: 0x%x\n", *dex_header->link_offset);
+      printf("Map list offset: 0x%x\n", *dex_header->map_offset);
+      printf("String IDs size: %d\n", *dex_header->string_ids_size);
+      printf("String IDs offset: 0x%x\n", *dex_header->string_ids_offset);
+      printf("Type IDs size: %d\n", *dex_header->type_ids_size);
+      printf("Type IDS offset: 0x%x\n", *dex_header->type_ids_offset);
+      printf("Prototype IDs size: %d\n", *dex_header->proto_ids_size);
+      printf("Prototype IDs offset: 0x%x\n", *dex_header->proto_ids_offset);
+      printf("Field IDs size: %d\n", *dex_header->field_ids_size);
+      printf("Field IDs offset: 0x%x\n", *dex_header->field_ids_offset);
+      printf("Method IDs size: %d\n", *dex_header->method_ids_size);
+      printf("Method IDs offset: 0x%x\n", *dex_header->method_ids_offset);
+      printf("Class definitions size: %d\n", *dex_header->class_defs_size);
+      printf("Class definitions offset: 0x%x\n", *dex_header->class_defs_offset);
+      printf("Data size: %d bytes\n", *dex_header->data_size);
+      printf("Data offset: 0x%x\n", *dex_header->data_offset);
+      */
+
+      if (is_dex_corrupt(dex_header)) {
+        return ERROR_INVALID_FILE;
+      }
+
+      if (load_header(dex_header, module_object)) {
+        return errno;
+      }
+
+      if (load_string_ids(dex_header, block_data, block->size, module_object)) {
+        return errno;
+      }
+
+      load_type_ids(dex_header, block_data, block->size, module_object);
+      load_class_defs(dex_header, block_data, block->size, module_object);
+      load_proto_ids(dex_header, block_data, block->size, module_object);
+      load_type_ids(dex_header, block_data, block->size, module_object);
+      load_field_ids(dex_header, block_data, block->size, module_object);
+      load_method_ids(dex_header, block_data, block->size, module_object);
+      load_map_list(dex_header, block_data, block->size, module_object);
+
+      break;
     }
-
-    /*
-    printf("Endian tag: 0x%x (%d)\n", *dex_header->endian_tag, *dex_header->endian_tag);
-    printf("Link size: %d\n", *dex_header->link_size);
-    printf("Link offset: 0x%x\n", *dex_header->link_offset);
-    printf("Map list offset: 0x%x\n", *dex_header->map_offset);
-    printf("String IDs size: %d\n", *dex_header->string_ids_size);
-    printf("String IDs offset: 0x%x\n", *dex_header->string_ids_offset);
-    printf("Type IDs size: %d\n", *dex_header->type_ids_size);
-    printf("Type IDS offset: 0x%x\n", *dex_header->type_ids_offset);
-    printf("Prototype IDs size: %d\n", *dex_header->proto_ids_size);
-    printf("Prototype IDs offset: 0x%x\n", *dex_header->proto_ids_offset);
-    printf("Field IDs size: %d\n", *dex_header->field_ids_size);
-    printf("Field IDs offset: 0x%x\n", *dex_header->field_ids_offset);
-    printf("Method IDs size: %d\n", *dex_header->method_ids_size);
-    printf("Method IDs offset: 0x%x\n", *dex_header->method_ids_offset);
-    printf("Class definitions size: %d\n", *dex_header->class_defs_size);
-    printf("Class definitions offset: 0x%x\n", *dex_header->class_defs_offset);
-    printf("Data size: %d bytes\n", *dex_header->data_size);
-    printf("Data offset: 0x%x\n", *dex_header->data_offset);
-    */
-
-    if (is_dex_corrupt(dex_header)) {
-      return ERROR_INVALID_FILE;
-    }
-
-    if (load_header(dex_header, module_object)) {
-      return errno;
-    }
-
-    if (load_string_ids(dex_header, block_data, block->size, module_object)) {
-      return errno;
-    }
-
-    load_type_ids(dex_header, block_data, block->size, module_object);
-    load_class_defs(dex_header, block_data, block->size, module_object);
-    load_proto_ids(dex_header, block_data, block->size, module_object);
-    load_type_ids(dex_header, block_data, block->size, module_object);
-    load_field_ids(dex_header, block_data, block->size, module_object);
-    load_method_ids(dex_header, block_data, block->size, module_object);
-    load_map_list(dex_header, block_data, block->size, module_object);
-
-    break;
   }
 
   return ERROR_SUCCESS;
