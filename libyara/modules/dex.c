@@ -1,7 +1,9 @@
-#include <yara/modules.h>
-#include <yara/mem.h>
 #include <stdbool.h>
 #include <stdint.h>
+
+#include <yara/modules.h>
+#include <yara/mem.h>
+#include <yara/endian.h>
 
 #define IMAGE_DEX_SIGNATURE_035 (uint8_t[8]) { 0x64, 0x65, 0x78, 0x0A, 0x30, 0x33, 0x35, 0x00 }
 #define IMAGE_DEX_SIGNATURE_036 (uint8_t[8]) { 0x64, 0x65, 0x78, 0x0A, 0x30, 0x33, 0x36, 0x00 }
@@ -360,7 +362,7 @@ static int load_header(PDEX_HEADER dex_header, YR_OBJECT *module) {
 
 
 static int load_string_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_size, YR_OBJECT *module) {
-  uint32_t offset = *dex_header->string_ids_offset;
+  uint32_t offset = yr_le32toh(*dex_header->string_ids_offset);
   uint32_t string_ids_size = sizeof(STRING_ID_ITEM[*dex_header->string_ids_size]);
   if (offset + string_ids_size > data_size) {
     set_integer(1, module, "invalid_dex");
@@ -378,7 +380,7 @@ static int load_string_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_si
   int i;
   int p;
   for (i = 0, p = 0; p < string_ids_size; i += 1, p += sizeof(STRING_ID_ITEM)) {
-    uint32_t offset = *string_ids[i].string_data_offset;
+    uint32_t offset = yr_le32toh(*string_ids[i].string_data_offset);
     uint8_t *string_data = data + offset;
     unsigned int uleb_size = 0;
     uint32_t max_string_size = string_ids_size - offset;
@@ -417,7 +419,7 @@ static int load_string_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_si
 
 
 static int load_type_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_size, YR_OBJECT *module) {
-  uint32_t offset = *dex_header->type_ids_offset;
+  uint32_t offset = yr_le32toh(*dex_header->type_ids_offset);
   int type_ids_size = sizeof(TYPE_ID_ITEM[*dex_header->type_ids_size]);
   if (offset + type_ids_size >= data_size) {
     set_integer(1, module, "invalid_dex");
@@ -435,7 +437,7 @@ static int load_type_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_size
   int i;
   int p;
   for (i = 0, p = 0; p < type_ids_size; i += 1, p += sizeof(TYPE_ID_ITEM)) {
-    uint32_t descriptor_idx = *type_ids[i].descriptor_idx;
+    uint32_t descriptor_idx = yr_le32toh(*type_ids[i].descriptor_idx);
     set_integer(descriptor_idx, module, "type_ids[%i].descriptor_idx", i);
   }
   yr_free(type_ids);
@@ -445,7 +447,7 @@ static int load_type_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_size
 
 
 static int load_class_defs(PDEX_HEADER dex_header, uint8_t *data, size_t data_size, YR_OBJECT *module) {
-  uint32_t offset = *dex_header->class_defs_offset;
+  uint32_t offset = yr_le32toh(*dex_header->class_defs_offset);
   int class_defs_size = sizeof(CLASS_DEF_ITEM[*dex_header->class_defs_size]);
   if (offset + class_defs_size > data_size) {
     set_integer(1, module, "invalid_dex");
@@ -463,14 +465,14 @@ static int load_class_defs(PDEX_HEADER dex_header, uint8_t *data, size_t data_si
   int i;
   int p;
   for (i = 0, p = 0; p < class_defs_size; i += 1, p += sizeof(CLASS_DEF_ITEM)) {
-    uint32_t class_idx = *class_defs[i].class_idx;
-    uint32_t access_flags = *class_defs[i].access_flags;
-    uint32_t superclass_idx = *class_defs[i].superclass_idx;
-    uint32_t interfaces_offset = *class_defs[i].interfaces_offset;
-    uint32_t source_file_idx = *class_defs[i].source_file_idx;
-    uint32_t annotations_offset = *class_defs[i].annotations_offset;
-    uint32_t class_data_offset = *class_defs[i].class_data_offset;
-    uint32_t static_values_offset = *class_defs[i].static_values_offset;
+    uint32_t class_idx = yr_le32toh(*class_defs[i].class_idx);
+    uint32_t access_flags = yr_le32toh(*class_defs[i].access_flags);
+    uint32_t superclass_idx = yr_le32toh(*class_defs[i].superclass_idx);
+    uint32_t interfaces_offset = yr_le32toh(*class_defs[i].interfaces_offset);
+    uint32_t source_file_idx = yr_le32toh(*class_defs[i].source_file_idx);
+    uint32_t annotations_offset = yr_le32toh(*class_defs[i].annotations_offset);
+    uint32_t class_data_offset = yr_le32toh(*class_defs[i].class_data_offset);
+    uint32_t static_values_offset = yr_le32toh(*class_defs[i].static_values_offset);
 
     set_integer(class_idx, module, "class_defs[%i].class_idx", i);
     set_integer(access_flags, module, "class_defs[%i].access_flags", i);
@@ -488,7 +490,7 @@ static int load_class_defs(PDEX_HEADER dex_header, uint8_t *data, size_t data_si
 
 
 static int load_proto_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_size, YR_OBJECT *module) {
-  uint32_t offset = *dex_header->proto_ids_offset;
+  uint32_t offset = yr_le32toh(*dex_header->proto_ids_offset);
   int proto_ids_size = sizeof(PROTO_ID_ITEM[*dex_header->proto_ids_size]);
   if (offset + proto_ids_size > data_size) {
     set_integer(1, module, "invalid_dex");
@@ -506,9 +508,9 @@ static int load_proto_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_siz
   int i;
   int p;
   for (i = 0, p = 0; p < proto_ids_size; i += 1, p += sizeof(PROTO_ID_ITEM)) {
-    uint32_t shorty_idx = *proto_ids[i].shorty_idx;
-    uint32_t return_type_idx = *proto_ids[i].return_type_idx;
-    uint32_t parameters_offset =  *proto_ids[i].parameters_offset;
+    uint32_t shorty_idx = yr_le32toh(*proto_ids[i].shorty_idx);
+    uint32_t return_type_idx = yr_le32toh(*proto_ids[i].return_type_idx);
+    uint32_t parameters_offset =  yr_le32toh(*proto_ids[i].parameters_offset);
 
     set_integer(shorty_idx, module, "proto_ids[%i].shorty_idx", i);
     set_integer(return_type_idx, module, "proto_ids[%i].return_type_idx", i);
@@ -523,7 +525,7 @@ static int load_proto_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_siz
 
 
 static int load_field_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_size, YR_OBJECT *module) {
-  uint32_t offset = *dex_header->field_ids_offset;
+  uint32_t offset = yr_le32toh(*dex_header->field_ids_offset);
   int field_ids_size = sizeof(FIELD_ID_ITEM[*dex_header->field_ids_size]);
   if (offset + field_ids_size > data_size) {
     set_integer(1, module, "invalid_dex");
@@ -541,9 +543,9 @@ static int load_field_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_siz
   int i;
   int p;
   for (i = 0, p = 0; p < field_ids_size; i += 1, p += sizeof(FIELD_ID_ITEM)) {
-    uint16_t class_idx = *field_ids[i].class_idx;
-    uint16_t type_idx = *field_ids[i].type_idx;
-    uint32_t name_idx =  *field_ids[i].name_idx;
+    uint16_t class_idx = yr_le16toh(*field_ids[i].class_idx);
+    uint16_t type_idx = yr_le16toh(*field_ids[i].type_idx);
+    uint32_t name_idx =  yr_le32toh(*field_ids[i].name_idx);
 
     set_integer(class_idx, module, "field_ids[%i].class_idx", i);
     set_integer(type_idx, module, "field_ids[%i].type_idx", i);
@@ -563,7 +565,7 @@ static int load_field_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_siz
 
 
 static int load_method_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_size, YR_OBJECT *module) {
-  uint32_t offset = *dex_header->method_ids_offset;
+  uint32_t offset = yr_le32toh(*dex_header->method_ids_offset);
   int method_ids_size = sizeof(METHOD_ID_ITEM[*dex_header->method_ids_size]);
   if (offset + method_ids_size > data_size) {
     set_integer(1, module, "invalid_dex");
@@ -581,9 +583,9 @@ static int load_method_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_si
   int i;
   int p;
   for (i = 0, p = 0; p < method_ids_size; i += 1, p += sizeof(METHOD_ID_ITEM)) {
-    uint16_t class_idx = *method_ids[i].class_idx;
-    uint16_t proto_idx = *method_ids[i].proto_idx;
-    uint32_t name_idx =  *method_ids[i].name_idx;
+    uint16_t class_idx = yr_le16toh(*method_ids[i].class_idx);
+    uint16_t proto_idx = yr_le16toh(*method_ids[i].proto_idx);
+    uint32_t name_idx =  yr_le32toh(*method_ids[i].name_idx);
 
     set_integer(class_idx, module, "method_ids[%i].class_idx", i);
     set_integer(proto_idx, module, "method_ids[%i].proto_idx", i);
@@ -605,7 +607,7 @@ static int load_method_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_si
 
 
 static int load_map_list(PDEX_HEADER dex_header, uint8_t *data, size_t data_size, YR_OBJECT *module) {
-  uint32_t offset = *dex_header->map_offset;
+  uint32_t offset = yr_le32toh(*dex_header->map_offset);
   uint8_t *pmap_list = data + offset;
   size_t map_size = *pmap_list;
   uint32_t map_data_size = sizeof(MAP_LIST) + ((uint32_t) map_size * sizeof(MAP_ITEM));
