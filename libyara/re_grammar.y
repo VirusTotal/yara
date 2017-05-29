@@ -46,6 +46,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define mark_as_not_fast_regexp() \
     ((RE_AST*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
 
+#define incr_ast_levels() \
+    if (((RE_AST*) yyget_extra(yyscanner))->levels++ > RE_MAX_AST_LEVELS) \
+    { \
+      lex_env->last_error_code = ERROR_INVALID_REGULAR_EXPRESSION; \
+      YYABORT; \
+    }
+
+
 #define ERROR_IF(x, error) \
     if (x) \
     { \
@@ -117,6 +125,7 @@ alternative
     | alternative '|' concatenation
       {
         mark_as_not_fast_regexp();
+        incr_ast_levels();
 
         $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
 
@@ -130,6 +139,7 @@ alternative
         RE_NODE* node;
 
         mark_as_not_fast_regexp();
+        incr_ast_levels();
 
         node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
 
@@ -149,6 +159,8 @@ concatenation
       }
     | concatenation repeat
       {
+        incr_ast_levels();
+
         $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
 
         DESTROY_NODE_IF($$ == NULL, $1);
@@ -343,6 +355,8 @@ repeat
 single
     : '(' alternative ')'
       {
+        incr_ast_levels();
+
         $$ = $2;
       }
     | '.'
