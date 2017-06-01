@@ -68,7 +68,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Maximum allowed split ID, also limiting the number of split instructions
 // allowed in a regular expression. This number can't be increased
 // over 255 without changing RE_SPLIT_ID_TYPE.
-#define RE_MAX_SPLIT_ID                 128
+#define RE_MAX_SPLIT_ID                 255
 
 // Maximum stack size for regexp evaluation
 #define RE_MAX_STACK                    1024
