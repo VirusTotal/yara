@@ -85,6 +85,8 @@ AC_ARG_ENABLE([cuckoo],
   [AS_HELP_STRING([--enable-cuckoo], [enable cuckoo module])],
   [if test x$enableval = xyes; then
     build_cuckoo_module=true
+    AC_CHECK_HEADERS([jansson.h],,
+      AC_MSG_ERROR([please install Jansson library]))
     AC_CHECK_LIB(jansson, json_loadb,,
       AC_MSG_ERROR([please install Jansson library]))
     CFLAGS="$CFLAGS -DCUCKOO_MODULE"
@@ -94,6 +96,8 @@ AC_ARG_ENABLE([magic],
   [AS_HELP_STRING([--enable-magic], [enable magic module])],
   [if test x$enableval = xyes; then
     build_magic_module=true
+    AC_CHECK_HEADERS([magic.h],,
+      AC_MSG_ERROR([please install libmagic library]))
     AC_CHECK_LIB(magic, magic_open,,
       AC_MSG_ERROR([please install libmagic library]))
     CFLAGS="$CFLAGS -DMAGIC_MODULE"
@@ -112,6 +116,14 @@ AC_ARG_WITH([crypto],
 
 AS_IF([test "x$with_crypto" != "xno"],
   [
+    AC_CHECK_HEADERS([openssl/md5.h],, [have_crypto=no])
+    AC_CHECK_HEADERS([openssl/sha.h],, [have_crypto=no])
+    AC_CHECK_HEADERS([openssl/asn1.h],, [have_crypto=no])
+    AC_CHECK_HEADERS([openssl/crypto.h],, [have_crypto=no])
+    AC_CHECK_HEADERS([openssl/bio.h],, [have_crypto=no])
+    AC_CHECK_HEADERS([openssl/pkcs7.h],, [have_crypto=no])
+    AC_CHECK_HEADERS([openssl/x509.h],, [have_crypto=no])
+    AC_CHECK_HEADERS([openssl/safestack.h],, [have_crypto=no])
     AC_CHECK_LIB(crypto, MD5_Init,, [have_crypto=no])
     AC_CHECK_LIB(crypto, MD5_Update,, [have_crypto=no])
     AC_CHECK_LIB(crypto, MD5_Final,, [have_crypto=no])
