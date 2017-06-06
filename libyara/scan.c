@@ -443,6 +443,9 @@ int _yr_scan_match_callback(
   // total match length is the sum of backward and forward matches.
   match_length += callback_args->forward_matches;
 
+  // make sure that match fits into the data.
+  assert(match_offset + match_length <= callback_args->data_size);
+
   if (callback_args->full_word)
   {
     if (flags & RE_FLAGS_WIDE)

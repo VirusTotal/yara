@@ -2320,10 +2320,10 @@ int yr_re_fast_exec(
 
           for (i = repeat_any_args->min + 1; i <= repeat_any_args->max; i++)
           {
-            next_input = input + i * input_incr;
-
             if (bytes_matched + i >= max_bytes_matched)
               break;
+
+            next_input = input + i * input_incr;
 
             if ( *(next_opcode) != RE_OPCODE_LITERAL ||
                 (*(next_opcode) == RE_OPCODE_LITERAL &&
@@ -2341,6 +2341,7 @@ int yr_re_fast_exec(
 
           input += input_incr * repeat_any_args->min;
           bytes_matched += repeat_any_args->min;
+          bytes_matched = yr_min(bytes_matched, max_bytes_matched);
           ip = next_opcode;
 
           break;
