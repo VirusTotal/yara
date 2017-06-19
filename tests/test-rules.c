@@ -1182,6 +1182,9 @@ void test_re()
 
   assert_regexp_syntax_error("\\xxy");
 
+  // Test case for issue #682
+  assert_true_regexp("(a|\\b)[a]{1,}", "aaaa", "aaaa");
+
   assert_error(
       "rule test { strings: $a = /a\\/ condition: $a }",
       ERROR_SYNTAX_ERROR);
