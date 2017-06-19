@@ -1617,13 +1617,11 @@ int _yr_re_fiber_sync(
 
   RE_FIBER* fiber;
   RE_FIBER* last;
-  RE_FIBER* prev;
   RE_FIBER* next;
   RE_FIBER* branch_a;
   RE_FIBER* branch_b;
 
   fiber = fiber_to_sync;
-  prev = fiber_to_sync->prev;
   last = fiber_to_sync->next;
 
   while (fiber != last)
