@@ -203,6 +203,9 @@ void parse_elf_header_##bits##_##bo(                                           \
   {                                                                            \
     char* str_table = NULL;                                                    \
                                                                                \
+    elf##bits##_section_header_t* symtab = NULL;                               \
+    elf##bits##_section_header_t* sym_strtab = NULL;                           \
+                                                                               \
     section = (elf##bits##_section_header_t*)                                  \
       ((uint8_t*) elf + yr_##bo##bits##toh(elf->sh_offset));                   \
                                                                                \
@@ -213,14 +216,11 @@ void parse_elf_header_##bits##_##bo(                                           \
           section[yr_##bo##16toh(elf->sh_str_table_index)].offset);            \
     }                                                                          \
                                                                                \
-    elf##bits##_section_header_t* symtab = NULL;                               \
-    elf##bits##_section_header_t* sym_strtab = NULL;                           \
-                                                                               \
     for (i = 0; i < yr_##bo##16toh(elf->sh_entry_count); i++)                  \
     {                                                                          \
       set_integer(yr_##bo##32toh(section->type), elf_obj,                      \
                   "sections[%i].type", i);                                     \
-      set_integer(yr_##bo##32toh(section->flags), elf_obj,                     \
+      set_integer(yr_##bo##bits##toh(section->flags), elf_obj,                 \
                   "sections[%i].flags", i);                                    \
       set_integer(yr_##bo##bits##toh(section->addr), elf_obj,                  \
                   "sections[%i].address", i);                                  \

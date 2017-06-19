@@ -46,6 +46,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define mark_as_not_fast_regexp() \
     ((RE_AST*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
 
+#define incr_ast_levels() \
+    if (((RE_AST*) yyget_extra(yyscanner))->levels++ > RE_MAX_AST_LEVELS) \
+    { \
+      lex_env->last_error_code = ERROR_INVALID_REGULAR_EXPRESSION; \
+      YYABORT; \
+    }
+
+
 #define ERROR_IF(x, error) \
     if (x) \
     { \
@@ -117,6 +125,7 @@ alternative
     | alternative '|' concatenation
       {
         mark_as_not_fast_regexp();
+        incr_ast_levels();
 
         $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
 
@@ -127,9 +136,12 @@ alternative
       }
     | alternative '|'
       {
-        mark_as_not_fast_regexp();
+        RE_NODE* node;
 
-        RE_NODE* node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
+        mark_as_not_fast_regexp();
+        incr_ast_levels();
+
+        node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
 
         DESTROY_NODE_IF($$ == NULL, $1);
         ERROR_IF(node == NULL, ERROR_INSUFFICIENT_MEMORY);
@@ -147,6 +159,8 @@ concatenation
       }
     | concatenation repeat
       {
+        incr_ast_levels();
+
         $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
 
         DESTROY_NODE_IF($$ == NULL, $1);
@@ -158,9 +172,11 @@ concatenation
 repeat
     : single '*'
       {
+        RE_AST* re_ast;
+
         mark_as_not_fast_regexp();
 
-        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast = yyget_extra(yyscanner);
         re_ast->flags |= RE_FLAGS_GREEDY;
 
         $$ = yr_re_node_create(RE_NODE_STAR, $1, NULL);
@@ -170,9 +186,11 @@ repeat
       }
     | single '*' '?'
       {
+        RE_AST* re_ast;
+
         mark_as_not_fast_regexp();
 
-        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast = yyget_extra(yyscanner);
         re_ast->flags |= RE_FLAGS_UNGREEDY;
 
         $$ = yr_re_node_create(RE_NODE_STAR, $1, NULL);
@@ -184,9 +202,11 @@ repeat
       }
     | single '+'
       {
+        RE_AST* re_ast;
+
         mark_as_not_fast_regexp();
 
-        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast = yyget_extra(yyscanner);
         re_ast->flags |= RE_FLAGS_GREEDY;
 
         $$ = yr_re_node_create(RE_NODE_PLUS, $1, NULL);
@@ -196,9 +216,11 @@ repeat
       }
     | single '+' '?'
       {
+        RE_AST* re_ast;
+
         mark_as_not_fast_regexp();
 
-        RE_AST* re_ast = yyget_extra(yyscanner);
+        re_ast = yyget_extra(yyscanner);
         re_ast->flags |= RE_FLAGS_UNGREEDY;
 
         $$ = yr_re_node_create(RE_NODE_PLUS, $1, NULL);
@@ -333,6 +355,8 @@ repeat
 single
     : '(' alternative ')'
       {
+        incr_ast_levels();
+
         $$ = $2;
       }
     | '.'

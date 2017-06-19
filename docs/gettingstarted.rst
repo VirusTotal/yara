@@ -12,8 +12,8 @@ Compiling and installing YARA
 
 Download the source tarball and get prepared for compiling it::
 
-    tar -zxf yara-3.5.0.tar.gz
-    cd yara-3.5.0
+    tar -zxf yara-3.6.0.tar.gz
+    cd yara-3.6.0
     ./bootstrap.sh
 
 Make sure you have ``automake``, ``libtool``, ``make``  and ``gcc`` installed
@@ -91,9 +91,6 @@ corresponding to the version of Python you're using.
 
 `Download Windows binaries <https://www.dropbox.com/sh/umip8ndplytwzj1/AADdLRsrpJL1CM1vPVAxc5JZa?dl=0>`_
 
-If you want to build YARA yourself you can use the *Visual Studio 2010* or
-*Visual Studio 2015* projects found in the source tree under *./windows/vs2010*
-and *./windows/vs2015* respectively.
 
 Installing on Mac OS X with Homebrew
 ------------------------------------

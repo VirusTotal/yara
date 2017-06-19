@@ -94,7 +94,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_FLAGS_NO_CASE                0x20
 #define RE_FLAGS_SCAN                   0x40
 #define RE_FLAGS_DOT_ALL                0x80
-#define RE_FLAGS_NOT_AT_START          0x100
 #define RE_FLAGS_GREEDY                0x400
 #define RE_FLAGS_UNGREEDY              0x800
 
@@ -105,14 +104,6 @@ typedef struct RE_NODE RE_NODE;
 typedef struct RE_ERROR RE_ERROR;
 
 typedef uint8_t RE_SPLIT_ID_TYPE;
-
-
-#define CHAR_IN_CLASS(chr, cls)  \
-    ((cls)[(chr) / 8] & 1 << ((chr) % 8))
-
-
-#define IS_WORD_CHAR(chr) \
-    (isalnum(chr) || (chr) == '_')
 
 
 struct RE_NODE
@@ -145,15 +136,27 @@ struct RE_NODE
 struct RE_AST
 {
   uint32_t flags;
+  uint16_t levels;
   RE_NODE* root_node;
 };
 
+
+// Disable warning due to zero length array in Microsoft's compiler
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4200)
+#endif
 
 struct RE
 {
   uint32_t flags;
   uint8_t code[0];
 };
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 
 struct RE_ERROR
@@ -213,19 +216,23 @@ void yr_re_node_destroy(
 int yr_re_exec(
     uint8_t* re_code,
     uint8_t* input,
-    size_t input_size,
+    size_t input_forwards_size,
+    size_t input_backwards_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
-    void* callback_args);
+    void* callback_args,
+    int* matches);
 
 
 int yr_re_fast_exec(
-    uint8_t* re_code,
-    uint8_t* input,
-    size_t input_size,
+    uint8_t* code,
+    uint8_t* input_data,
+    size_t input_forwards_size,
+    size_t input_backwards_size,
     int flags,
     RE_MATCH_CALLBACK_FUNC callback,
-    void* callback_args);
+    void* callback_args,
+    int* matches);
 
 
 int yr_re_parse(

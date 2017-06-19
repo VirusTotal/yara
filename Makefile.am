@@ -29,7 +29,7 @@ yarac_SOURCES = args.c args.h yarac.c
 yarac_LDADD = libyara/.libs/libyara.a
 
 TESTS = $(check_PROGRAMS)
-check_PROGRAMS = test-alignment test-rules test-pe test-macho test-elf
+check_PROGRAMS = test-alignment test-rules test-pe test-elf test-macho test-version
 
 # The -fsanitize=address option makes test-exception fail. Include the test
 # only if the option is not enabled.
@@ -49,6 +49,7 @@ test_macho_SOURCES = tests/test-macho.c tests/util.c
 test_macho_LDADD = libyara/.libs/libyara.a
 test_exception_SOURCES = tests/test-exception.c tests/util.c
 test_exception_LDADD = libyara/.libs/libyara.a
+test_version_SOURCES = tests/test-version.c
 
 # man pages
 man1_MANS = yara.man yarac.man

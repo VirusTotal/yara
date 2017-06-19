@@ -46,6 +46,7 @@ with noyywrap then we can remove this pragma.
 
 #include <setjmp.h>
 
+#include <yara/globals.h>
 #include <yara/limits.h>
 #include <yara/error.h>
 #include <yara/mem.h>
@@ -169,15 +170,12 @@ hexdigit      [a-fA-F0-9]
 
 %%
 
-extern YR_THREAD_STORAGE_KEY recovery_state_key;
-
-
 void yyfatal(
     yyscan_t yyscanner,
     const char *error_message)
 {
   jmp_buf* recovery_state = (jmp_buf*) yr_thread_storage_get_value(
-      &recovery_state_key);
+      &yr_recovery_state_key);
 
   longjmp(*recovery_state, 1);
 }
@@ -217,7 +215,7 @@ int yr_parse_hex_string(
   lex_env.inside_or = 0;
   lex_env.token_count = 0;
 
-  yr_thread_storage_set_value(&recovery_state_key, &recovery_state);
+  yr_thread_storage_set_value(&yr_recovery_state_key, &recovery_state);
 
   if (setjmp(recovery_state) != 0)
     return ERROR_INTERNAL_FATAL_ERROR;

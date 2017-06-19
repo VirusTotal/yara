@@ -30,8 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_ENDIAN_H
 #define YR_ENDIAN_H
 
-#include <stdint.h>
-#include <config.h>
+#include <yara/integers.h>
 
 
 #if defined(__has_builtin)

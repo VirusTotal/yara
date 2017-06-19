@@ -116,10 +116,14 @@ int yr_parser_emit_with_arg_reloc(
     void** argument_address)
 {
   int64_t* ptr = NULL;
-  DECLARE_REFERENCE(void*, argument) a;
-  a.argument = argument;
+  int result;
 
-  int result = yr_arena_write_data(
+  DECLARE_REFERENCE(void*, ptr) arg;
+
+  memset(&arg, 0, sizeof(arg));
+  arg.ptr = argument;
+
+  result = yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
       &instruction,
       sizeof(uint8_t),
@@ -128,8 +132,8 @@ int yr_parser_emit_with_arg_reloc(
   if (result == ERROR_SUCCESS)
     result = yr_arena_write_data(
         yyget_extra(yyscanner)->code_arena,
-        &a,
-        sizeof(int64_t),
+        &arg,
+        sizeof(arg),
         (void**) &ptr);
 
   if (result == ERROR_SUCCESS)
@@ -140,7 +144,7 @@ int yr_parser_emit_with_arg_reloc(
         EOL);
 
   if (argument_address != NULL)
-    *argument_address = (void*)ptr;
+    *argument_address = (void*) ptr;
 
   return result;
 }

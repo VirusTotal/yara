@@ -1,5 +1,4 @@
 #include <yara.h>
-#include <config.h>
 #include <stdio.h>
 #include "util.h"
 
@@ -125,6 +124,22 @@ int main(int argc, char** argv)
       rule test { \
         condition: \
           pe.checksum == pe.calculate_checksum() \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.overlay.offset == 0x8000 and pe.overlay.size == 7 \
+      }",
+      "tests/data/tiny-overlay");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+         pe.overlay.size == 0 \
       }",
       "tests/data/tiny");
 

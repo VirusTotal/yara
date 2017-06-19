@@ -56,7 +56,7 @@ typedef struct _ARENA_FILE_HEADER
 {
   char      magic[4];
   uint32_t  size;
-  uint8_t   version;
+  uint32_t  version;
 
 } ARENA_FILE_HEADER;
 
@@ -146,6 +146,7 @@ YR_ARENA_PAGE* _yr_arena_page_for_address(
     if ((uint8_t*) address >= page->address &&
         (uint8_t*) address < page->address + page->used)
       return page;
+
     page = page->next;
   }
 
@@ -316,7 +317,7 @@ void yr_arena_destroy(
 //    YR_ARENA* arena  - Pointer to the arena.
 //
 // Returns:
-//    A pointer to the arena's data. NULL if the no data has been written to
+//    A pointer to the arena's data. NULL if no data has been written to
 //    the arena yet.
 //
 
@@ -449,7 +450,7 @@ int yr_arena_coalesce(
 
     reloc = page->reloc_list_head;
 
-    while(reloc != NULL)
+    while (reloc != NULL)
     {
       reloc->offset += (uint32_t) big_page->used;
       reloc = reloc->next;

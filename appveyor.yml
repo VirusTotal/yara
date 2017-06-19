@@ -1,15 +1,24 @@
 # AppVeyor CI for Windows
 
-version: 3.5.{build}
+version: 3.6.{build}
+
 pull_requests:
   do_not_increment_build_number: true
+
 configuration: Release
+
 platform:
 - x64
 - x86
+
 before_build:
 - ps: nuget restore windows/vs2015/yara.sln
+
 build:
   project: windows/vs2015/yara.sln
   verbosity: minimal
+
+artifacts:
+  - path: windows\**\*.exe
+
 test: off

@@ -20,7 +20,6 @@ limitations under the License.
 #include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
-#include <config.h>
 
 #include <yara/pe.h>
 #include <yara/dotnet.h>
@@ -185,7 +184,7 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(
                      (*(offset + 1) << 16) |
                      (*(offset + 2) << 8) |
                       *(offset + 3);
-    result.size = 3;
+    result.size = 4;
   }
   else
   {
@@ -256,6 +255,8 @@ STREAMS dotnet_parse_stream_headers(
   PSTREAM_HEADER stream_header;
   STREAMS headers;
 
+  char *start;
+  char *eos;
   char stream_name[DOTNET_STREAM_NAME_SIZE + 1];
   int i;
 
@@ -266,6 +267,14 @@ STREAMS dotnet_parse_stream_headers(
   for (i = 0; i < num_streams; i++)
   {
     if (!struct_fits_in_pe(pe, stream_header, STREAM_HEADER))
+      break;
+
+    start = (char*) stream_header->Name;
+    if (!fits_in_pe(pe, start, DOTNET_STREAM_NAME_SIZE))
+      break;
+
+    eos = (char*) memmem((void*) start, DOTNET_STREAM_NAME_SIZE, "\0", 1);
+    if (eos == NULL)
       break;
 
     strncpy(stream_name, stream_header->Name, DOTNET_STREAM_NAME_SIZE);
@@ -1132,7 +1141,7 @@ void dotnet_parse_tilde_2(
               pe->object, "assembly_refs[%i].version.minor", i);
           set_integer(assemblyref_table->BuildNumber,
               pe->object, "assembly_refs[%i].version.build_number", i);
-          set_integer(assembly_table->RevisionNumber,
+          set_integer(assemblyref_table->RevisionNumber,
               pe->object, "assembly_refs[%i].version.revision_number", i);
 
           blob_offset = pe->data + metadata_root + streams->blob->Offset;
@@ -1557,7 +1566,9 @@ void dotnet_parse_com(
     dotnet_parse_guid(pe, metadata_root, headers.guid);
 
   // Parse the #~ stream, which includes various tables of interest.
-  if (headers.tilde != NULL)
+  // These tables reference the blob and string streams, so we need to ensure
+  // those are not NULL also.
+  if (headers.tilde != NULL && headers.string != NULL && headers.blob != NULL)
     dotnet_parse_tilde(pe, metadata_root, cli_header, &headers);
 
   if (headers.us != NULL)
@@ -1650,12 +1661,14 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
+    PIMAGE_NT_HEADERS32 pe_header;
+
     block_data = block->fetch_data(block);
 
     if (block_data == NULL)
       continue;
 
-    PIMAGE_NT_HEADERS32 pe_header = pe_get_header(block_data, block->size);
+    pe_header = pe_get_header(block_data, block->size);
 
     if (pe_header != NULL)
     {

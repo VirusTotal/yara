@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #include <math.h>
 
+#include <yara/arena.h>
 #include <yara/endian.h>
 #include <yara/exec.h>
 #include <yara/limits.h>
@@ -177,6 +178,8 @@ int yr_execute_code(
   YR_RULE* rule;
   YR_MATCH* match;
   YR_OBJECT_FUNCTION* function;
+  YR_OBJECT** obj_ptr;
+  YR_ARENA* obj_arena;
 
   char* identifier;
   char* args_fmt;
@@ -201,10 +204,17 @@ int yr_execute_code(
   if (stack == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_arena_create(1024, 0, &obj_arena),
+      yr_free(stack));
+
   while(!stop)
   {
     switch(*ip)
     {
+      case OP_NOP:
+        break;
+
       case OP_HALT:
         assert(sp == 0); // When HALT is reached the stack should be empty.
         stop = TRUE;
@@ -434,6 +444,8 @@ int yr_execute_code(
         rule->clock_ticks += clock() - start;
         start = clock();
         #endif
+
+        assert(sp == 0); // at this point the stack should be empty.
         break;
 
       case OP_OBJ_LOAD:
@@ -469,21 +481,21 @@ int yr_execute_code(
         switch(r1.o->type)
         {
           case OBJECT_TYPE_INTEGER:
-            r1.i = ((YR_OBJECT_INTEGER*) r1.o)->value;
+            r1.i = r1.o->value.i;
             break;
 
           case OBJECT_TYPE_FLOAT:
-            if (isnan(((YR_OBJECT_DOUBLE*) r1.o)->value))
+            if (isnan(r1.o->value.d))
               r1.i = UNDEFINED;
             else
-              r1.d = ((YR_OBJECT_DOUBLE*) r1.o)->value;
+              r1.d = r1.o->value.d;
             break;
 
           case OBJECT_TYPE_STRING:
-            if (((YR_OBJECT_STRING*) r1.o)->value == NULL)
+            if (r1.o->value.ss == NULL)
               r1.i = UNDEFINED;
             else
-              r1.p = ((YR_OBJECT_STRING*) r1.o)->value;
+              r1.ss = r1.o->value.ss;
             break;
 
           default:
@@ -559,7 +571,7 @@ int yr_execute_code(
           break;
         }
 
-        function = (YR_OBJECT_FUNCTION*) r2.o;
+        function = object_as_function(r2.o);
         result = ERROR_INTERNAL_FATAL_ERROR;
 
         for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
@@ -574,18 +586,26 @@ int yr_execute_code(
           }
         }
 
+        // if i == MAX_OVERLOADED_FUNCTIONS at this point no matching
+        // prototype was found, but this shouldn't happen.
+
         assert(i < MAX_OVERLOADED_FUNCTIONS);
 
-        if (result == ERROR_SUCCESS)
-        {
-          r1.o = function->return_obj;
-          push(r1);
-        }
-        else
-        {
-          stop = TRUE;
-        }
+        // make a copy of the returned object and push the copy into the stack
+        // function->return_obj can't be pushed because it can change in
+        // subsequent calls to the same function.
 
+        if (result == ERROR_SUCCESS)
+          result = yr_object_copy(function->return_obj, &r1.o);
+
+        // a pointer to the copied object is stored in a arena in order to
+        // free the object before exiting yr_execute_code
+
+        if (result == ERROR_SUCCESS)
+          result = yr_arena_write_data(obj_arena, &r1.o, sizeof(r1.o), NULL);
+
+        stop = (result != ERROR_SUCCESS);
+        push(r1);
         break;
 
       case OP_FOUND:
@@ -846,14 +866,20 @@ int yr_execute_code(
           break;
         }
 
-        r1.i = yr_re_exec(
+        result = yr_re_exec(
           (uint8_t*) r2.re->code,
           (uint8_t*) r1.ss->c_string,
           r1.ss->length,
+          0,
           r2.re->flags | RE_FLAGS_SCAN,
           NULL,
-          NULL) >= 0;
+          NULL,
+          &found);
 
+        if (result != ERROR_SUCCESS)
+          stop = TRUE;
+
+        r1.i = found >= 0;
         push(r1);
         break;
 
@@ -1137,6 +1163,17 @@ int yr_execute_code(
     ip++;
   }
 
+  obj_ptr = (YR_OBJECT**) yr_arena_base_address(obj_arena);
+
+  while (obj_ptr != NULL)
+  {
+    yr_object_destroy(*obj_ptr);
+
+    obj_ptr = (YR_OBJECT**) yr_arena_next_address(
+        obj_arena, obj_ptr, sizeof(YR_OBJECT*));
+  }
+
+  yr_arena_destroy(obj_arena);
   yr_modules_unload_all(context);
   yr_free(stack);
 

@@ -32,7 +32,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <ctype.h>
 #include <time.h>
-#include <config.h>
 
 #if defined(HAVE_LIBCRYPTO)
 #include <openssl/md5.h>
@@ -42,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <openssl/bio.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 #define X509_get_signature_nid(o) OBJ_obj2nid((o)->sig_alg->algorithm)
 #endif
 #endif
@@ -1001,8 +1000,11 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
 
   for (i = 0; i < yr_le32toh(exports->NumberOfFunctions); i++)
   {
-    char* name;
+    IMPORT_EXPORT_FUNCTION* exported_func;
+
     uint16_t ordinal = 0;
+    char* name;
+
     offset = pe_rva_to_offset(pe, names[i]);
 
     if (offset < 0)
@@ -1017,7 +1019,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
     ordinal = yr_le16toh(ordinals[i]);
 
     // Now add it to the list...
-    IMPORT_EXPORT_FUNCTION* exported_func = (IMPORT_EXPORT_FUNCTION*)
+    exported_func = (IMPORT_EXPORT_FUNCTION*)
         yr_calloc(1, sizeof(IMPORT_EXPORT_FUNCTION));
 
     if (exported_func == NULL)
@@ -1051,7 +1053,9 @@ void pe_parse_certificates(
     PE* pe)
 {
   int i, counter = 0;
+
   uint8_t* eod;
+  uintptr_t end;
 
   PWIN_CERTIFICATE win_cert;
 
@@ -1139,6 +1143,7 @@ void pe_parse_certificates(
 
     for (i = 0; i < sk_X509_num(certs); i++)
     {
+      time_t date_time;
       const char* sig_alg;
       char buffer[256];
       int bytes;
@@ -1200,6 +1205,9 @@ void pe_parse_certificates(
 
           if (serial_der != NULL)
           {
+            unsigned char* serial_bytes;
+            char *serial_ascii;
+
             bytes = i2d_ASN1_INTEGER(serial, &serial_der);
 
             // i2d_ASN1_INTEGER() moves the pointer as it writes into
@@ -1208,7 +1216,7 @@ void pe_parse_certificates(
             serial_der -= bytes;
 
             // Skip over DER type, length information
-            unsigned char* serial_bytes = serial_der + 2;
+            serial_bytes = serial_der + 2;
             bytes -= 2;
 
             // Also allocate space to hold the "common" string format:
@@ -1219,7 +1227,7 @@ void pe_parse_certificates(
             // The last one doesn't have the colon, but the extra byte is used
             // for the NULL terminator.
 
-            char *serial_ascii = (char*) yr_malloc(bytes * 3);
+            serial_ascii = (char*) yr_malloc(bytes * 3);
 
             if (serial_ascii)
             {
@@ -1230,14 +1238,14 @@ void pe_parse_certificates(
                 // Don't put the colon on the last one.
                 if (j < bytes - 1)
                   snprintf(
-                    (char*) serial_ascii + 3 * j, 4, "%02x:", serial_bytes[j]);
+                    serial_ascii + 3 * j, 4, "%02x:", serial_bytes[j]);
                 else
                   snprintf(
-                    (char*) serial_ascii + 3 * j, 3, "%02x", serial_bytes[j]);
+                    serial_ascii + 3 * j, 3, "%02x", serial_bytes[j]);
               }
 
               set_string(
-                  (char*) serial_ascii,
+                  serial_ascii,
                   pe->object,
                   "signatures[%i].serial",
                   counter);
@@ -1250,7 +1258,7 @@ void pe_parse_certificates(
         }
       }
 
-      time_t date_time = ASN1_get_time_t(X509_get_notBefore(cert));
+      date_time = ASN1_get_time_t(X509_get_notBefore(cert));
       set_integer(date_time, pe->object, "signatures[%i].not_before", counter);
 
       date_time = ASN1_get_time_t(X509_get_notAfter(cert));
@@ -1259,10 +1267,7 @@ void pe_parse_certificates(
       counter++;
     }
 
-    uintptr_t end = \
-        (uintptr_t)((uint8_t *) win_cert) + \
-        yr_le32toh(win_cert->Length);
-
+    end = (uintptr_t)((uint8_t *) win_cert) + yr_le32toh(win_cert->Length);
     win_cert = (PWIN_CERTIFICATE)(end + (end % 8));
 
     BIO_free(cert_bio);
@@ -1416,16 +1421,18 @@ void pe_parse_header(
     section++;
   }
 
-  // An overlay is data appended to a PE file. Its location is RawData + RawOffset of the last
-  // section on the physical file
+  // An overlay is data appended to a PE file. Its location is at
+  // RawData + RawOffset of the last section on the physical file
   last_section_end = highest_sec_siz + highest_sec_ofs;
 
-  // This way "overlay" is set to UNDEFINED for files that do not have an overlay section
+  // "overlay.offset" is set to UNDEFINED for files that do not have an overlay
   if (last_section_end && (pe->data_size > last_section_end))
-  {
     set_integer(last_section_end, pe->object, "overlay.offset");
+
+  // "overlay.size" is zero for well formed PE files that don not have an
+  // overlay and UNDEFINED for malformed PE files or non-PE files.
+  if (last_section_end && (pe->data_size >= last_section_end))
     set_integer(pe->data_size - last_section_end, pe->object, "overlay.size");
-  }
 }
 
 //
@@ -1520,12 +1527,14 @@ define_function(exports)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
+  IMPORT_EXPORT_FUNCTION* exported_func;
+
   // If not a PE, return UNDEFINED.
 
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  IMPORT_EXPORT_FUNCTION* exported_func = pe->exported_functions;
+  exported_func = pe->exported_functions;
 
   while (exported_func != NULL)
   {
@@ -1546,10 +1555,12 @@ define_function(exports_ordinal)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
+  IMPORT_EXPORT_FUNCTION* exported_func;
+
   if (!pe)
     return_integer(UNDEFINED);
 
-  IMPORT_EXPORT_FUNCTION* exported_func = pe->exported_functions;
+  exported_func = pe->exported_functions;
 
   while (exported_func != NULL)
   {

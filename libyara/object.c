@@ -72,13 +72,13 @@ int yr_object_create(
       object_size = sizeof(YR_OBJECT_DICTIONARY);
       break;
     case OBJECT_TYPE_INTEGER:
-      object_size = sizeof(YR_OBJECT_INTEGER);
+      object_size = sizeof(YR_OBJECT);
       break;
     case OBJECT_TYPE_FLOAT:
-      object_size = sizeof(YR_OBJECT_DOUBLE);
+      object_size = sizeof(YR_OBJECT);
       break;
     case OBJECT_TYPE_STRING:
-      object_size = sizeof(YR_OBJECT_STRING);
+      object_size = sizeof(YR_OBJECT);
       break;
     case OBJECT_TYPE_FUNCTION:
       object_size = sizeof(YR_OBJECT_FUNCTION);
@@ -99,32 +99,32 @@ int yr_object_create(
 
   switch(type)
   {
-    case OBJECT_TYPE_STRUCTURE:
-      ((YR_OBJECT_STRUCTURE*) obj)->members = NULL;
-      break;
-    case OBJECT_TYPE_ARRAY:
-      ((YR_OBJECT_ARRAY*) obj)->items = NULL;
-      ((YR_OBJECT_ARRAY*) obj)->prototype_item = NULL;
-      break;
-    case OBJECT_TYPE_DICTIONARY:
-      ((YR_OBJECT_DICTIONARY*) obj)->items = NULL;
-      ((YR_OBJECT_DICTIONARY*) obj)->prototype_item = NULL;
-      break;
     case OBJECT_TYPE_INTEGER:
-      ((YR_OBJECT_INTEGER*) obj)->value = UNDEFINED;
+      obj->value.i = UNDEFINED;
       break;
     case OBJECT_TYPE_FLOAT:
-      ((YR_OBJECT_DOUBLE*) obj)->value = NAN;
+      obj->value.d = NAN;
       break;
     case OBJECT_TYPE_STRING:
-      ((YR_OBJECT_STRING*) obj)->value = NULL;
+      obj->value.ss = NULL;
+      break;
+    case OBJECT_TYPE_STRUCTURE:
+      object_as_structure(obj)->members = NULL;
+      break;
+    case OBJECT_TYPE_ARRAY:
+      object_as_array(obj)->items = NULL;
+      object_as_array(obj)->prototype_item = NULL;
+      break;
+    case OBJECT_TYPE_DICTIONARY:
+      object_as_dictionary(obj)->items = NULL;
+      object_as_dictionary(obj)->prototype_item = NULL;
       break;
     case OBJECT_TYPE_FUNCTION:
-      ((YR_OBJECT_FUNCTION*) obj)->return_obj = NULL;
+      object_as_function(obj)->return_obj = NULL;
       for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
       {
-        ((YR_OBJECT_FUNCTION*) obj)->prototypes[i].arguments_fmt = NULL;
-        ((YR_OBJECT_FUNCTION*) obj)->prototypes[i].code = NULL;
+        object_as_function(obj)->prototypes[i].arguments_fmt = NULL;
+        object_as_function(obj)->prototypes[i].code = NULL;
       }
       break;
   }
@@ -154,15 +154,15 @@ int yr_object_create(
         break;
 
       case OBJECT_TYPE_ARRAY:
-        ((YR_OBJECT_ARRAY*) parent)->prototype_item = obj;
+        object_as_array(parent)->prototype_item = obj;
         break;
 
       case OBJECT_TYPE_DICTIONARY:
-        ((YR_OBJECT_DICTIONARY*) parent)->prototype_item = obj;
+        object_as_dictionary(parent)->prototype_item = obj;
         break;
 
       case OBJECT_TYPE_FUNCTION:
-        ((YR_OBJECT_FUNCTION*) parent)->return_obj = obj;
+        object_as_function(parent)->return_obj = obj;
         break;
     }
   }
@@ -213,7 +213,7 @@ int yr_object_function_create(
     // Try to find if the structure already has a function
     // with that name. In that case this is a function overload.
 
-    f = (YR_OBJECT_FUNCTION*) yr_object_lookup_field(parent, identifier);
+    f = object_as_function(yr_object_lookup_field(parent, identifier));
 
     // Overloaded functions must have the same return type.
 
@@ -238,7 +238,7 @@ int yr_object_function_create(
             &return_obj),
         yr_object_destroy(o));
 
-    f = (YR_OBJECT_FUNCTION*) o;
+    f = object_as_function(o);
   }
 
   for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
@@ -328,7 +328,6 @@ void yr_object_destroy(
   YR_ARRAY_ITEMS* array_items;
   YR_DICTIONARY_ITEMS* dict_items;
 
-  SIZED_STRING* str;
   int i;
 
   if (object == NULL)
@@ -337,7 +336,7 @@ void yr_object_destroy(
   switch(object->type)
   {
     case OBJECT_TYPE_STRUCTURE:
-      member = ((YR_OBJECT_STRUCTURE*) object)->members;
+      member = object_as_structure(object)->members;
 
       while (member != NULL)
       {
@@ -349,16 +348,15 @@ void yr_object_destroy(
       break;
 
     case OBJECT_TYPE_STRING:
-      str = ((YR_OBJECT_STRING*) object)->value;
-      if (str != NULL)
-        yr_free(str);
+      if (object->value.ss != NULL)
+        yr_free(object->value.ss);
       break;
 
     case OBJECT_TYPE_ARRAY:
-      if (((YR_OBJECT_ARRAY*) object)->prototype_item != NULL)
-        yr_object_destroy(((YR_OBJECT_ARRAY*) object)->prototype_item);
+      if (object_as_array(object)->prototype_item != NULL)
+        yr_object_destroy(object_as_array(object)->prototype_item);
 
-      array_items = ((YR_OBJECT_ARRAY*) object)->items;
+      array_items = object_as_array(object)->items;
 
       if (array_items != NULL)
       {
@@ -371,10 +369,10 @@ void yr_object_destroy(
       break;
 
     case OBJECT_TYPE_DICTIONARY:
-      if (((YR_OBJECT_DICTIONARY*) object)->prototype_item != NULL)
-        yr_object_destroy(((YR_OBJECT_DICTIONARY*) object)->prototype_item);
+      if (object_as_dictionary(object)->prototype_item != NULL)
+        yr_object_destroy(object_as_dictionary(object)->prototype_item);
 
-      dict_items = ((YR_OBJECT_DICTIONARY*) object)->items;
+      dict_items = object_as_dictionary(object)->items;
 
       if (dict_items != NULL)
       {
@@ -392,7 +390,7 @@ void yr_object_destroy(
       break;
 
     case OBJECT_TYPE_FUNCTION:
-      yr_object_destroy(((YR_OBJECT_FUNCTION*) object)->return_obj);
+      yr_object_destroy(object_as_function(object)->return_obj);
       break;
   }
 
@@ -410,7 +408,7 @@ YR_OBJECT* yr_object_lookup_field(
   assert(object != NULL);
   assert(object->type == OBJECT_TYPE_STRUCTURE);
 
-  member = ((YR_OBJECT_STRUCTURE*) object)->members;
+  member = object_as_structure(object)->members;
 
   while (member != NULL)
   {
@@ -557,8 +555,6 @@ int yr_object_copy(
   YR_OBJECT* o;
 
   YR_STRUCTURE_MEMBER* structure_member;
-  YR_OBJECT_FUNCTION* func;
-  YR_OBJECT_FUNCTION* func_copy;
 
   int i;
 
@@ -573,30 +569,39 @@ int yr_object_copy(
   switch(object->type)
   {
     case OBJECT_TYPE_INTEGER:
-      ((YR_OBJECT_INTEGER*) copy)->value = UNDEFINED;
+      copy->value.i = object->value.i;
+      break;
+
+    case OBJECT_TYPE_FLOAT:
+      copy->value.d = object->value.d;
       break;
 
     case OBJECT_TYPE_STRING:
-      ((YR_OBJECT_STRING*) copy)->value = NULL;
+
+      if (object->value.ss != NULL)
+        copy->value.ss = sized_string_dup(object->value.ss);
+      else
+        copy->value.ss = NULL;
+
       break;
 
     case OBJECT_TYPE_FUNCTION:
 
-      func = (YR_OBJECT_FUNCTION*) object;
-      func_copy = (YR_OBJECT_FUNCTION*) copy;
-
       FAIL_ON_ERROR_WITH_CLEANUP(
-        yr_object_copy(func->return_obj, &func_copy->return_obj),
-        yr_object_destroy(copy));
+          yr_object_copy(
+              object_as_function(object)->return_obj,
+              &object_as_function(copy)->return_obj),
+          yr_object_destroy(copy));
 
       for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
-        func_copy->prototypes[i] = func->prototypes[i];
+        object_as_function(copy)->prototypes[i] = \
+            object_as_function(object)->prototypes[i];
 
       break;
 
     case OBJECT_TYPE_STRUCTURE:
 
-      structure_member = ((YR_OBJECT_STRUCTURE*) object)->members;
+      structure_member = object_as_structure(object)->members;
 
       while (structure_member != NULL)
       {
@@ -616,21 +621,21 @@ int yr_object_copy(
 
     case OBJECT_TYPE_ARRAY:
 
-      yr_object_copy(
-        ((YR_OBJECT_ARRAY *) object)->prototype_item,
-        &o);
+      FAIL_ON_ERROR_WITH_CLEANUP(
+          yr_object_copy(object_as_array(object)->prototype_item, &o),
+          yr_object_destroy(copy));
 
-      ((YR_OBJECT_ARRAY *)copy)->prototype_item = o;
+      object_as_array(copy)->prototype_item = o;
 
       break;
 
     case OBJECT_TYPE_DICTIONARY:
 
-      yr_object_copy(
-        ((YR_OBJECT_DICTIONARY *) object)->prototype_item,
-        &o);
+      FAIL_ON_ERROR_WITH_CLEANUP(
+          yr_object_copy(object_as_dictionary(object)->prototype_item, &o),
+          yr_object_destroy(copy));
 
-      ((YR_OBJECT_DICTIONARY *)copy)->prototype_item = o;
+      object_as_dictionary(copy)->prototype_item = o;
 
       break;
 
@@ -665,9 +670,9 @@ int yr_object_structure_set_member(
 
   member->parent = object;
   sm->object = member;
-  sm->next = ((YR_OBJECT_STRUCTURE*) object)->members;
+  sm->next = object_as_structure(object)->members;
 
-  ((YR_OBJECT_STRUCTURE*) object)->members = sm;
+  object_as_structure(object)->members = sm;
 
   return ERROR_SUCCESS;
 }
@@ -686,7 +691,7 @@ YR_OBJECT* yr_object_array_get_item(
   if (index < 0)
     return NULL;
 
-  array = (YR_OBJECT_ARRAY*) object;
+  array = object_as_array(object);
 
   if (array->items != NULL && array->items->count > index)
       result = array->items->objects[index];
@@ -716,7 +721,7 @@ int yr_object_array_set_item(
   assert(index >= 0);
   assert(object->type == OBJECT_TYPE_ARRAY);
 
-  array = ((YR_OBJECT_ARRAY*) object);
+  array = object_as_array(object);
 
   if (array->items == NULL)
   {
@@ -767,7 +772,7 @@ YR_OBJECT* yr_object_dict_get_item(
 
   assert(object->type == OBJECT_TYPE_DICTIONARY);
 
-  dict = (YR_OBJECT_DICTIONARY*) object;
+  dict = object_as_dictionary(object);
 
   if (dict->items != NULL)
   {
@@ -802,7 +807,7 @@ int yr_object_dict_set_item(
 
   assert(object->type == OBJECT_TYPE_DICTIONARY);
 
-  dict = ((YR_OBJECT_DICTIONARY*) object);
+  dict = object_as_dictionary(object);
 
   if (dict->items == NULL)
   {
@@ -873,11 +878,11 @@ int yr_object_has_undefined_value(
   switch(field_obj->type)
   {
     case OBJECT_TYPE_FLOAT:
-      return isnan(((YR_OBJECT_DOUBLE*) field_obj)->value);
+      return isnan(field_obj->value.d);
     case OBJECT_TYPE_STRING:
-      return ((YR_OBJECT_STRING*) field_obj)->value == NULL;
+      return field_obj->value.ss == NULL;
     case OBJECT_TYPE_INTEGER:
-      return ((YR_OBJECT_INTEGER*) field_obj)->value == UNDEFINED;
+      return field_obj->value.i == UNDEFINED;
   }
 
   return FALSE;
@@ -907,7 +912,7 @@ int64_t yr_object_get_integer(
   assertf(integer_obj->type == OBJECT_TYPE_INTEGER,
           "type of \"%s\" is not integer\n", field);
 
-  return ((YR_OBJECT_INTEGER*) integer_obj)->value;
+  return integer_obj->value.i;
 }
 
 
@@ -934,7 +939,7 @@ double yr_object_get_float(
   assertf(double_obj->type == OBJECT_TYPE_FLOAT,
           "type of \"%s\" is not double\n", field);
 
-  return ((YR_OBJECT_DOUBLE*) double_obj)->value;
+  return double_obj->value.d;
 }
 
 
@@ -961,7 +966,7 @@ SIZED_STRING* yr_object_get_string(
   assertf(string_obj->type == OBJECT_TYPE_STRING,
           "type of \"%s\" is not string\n", field);
 
-  return ((YR_OBJECT_STRING*) string_obj)->value;
+  return string_obj->value.ss;
 }
 
 
@@ -977,8 +982,7 @@ int yr_object_set_integer(
   va_start(args, field);
 
   if (field != NULL)
-    integer_obj = _yr_object_lookup(
-        object, OBJECT_CREATE, field, args);
+    integer_obj = _yr_object_lookup(object, OBJECT_CREATE, field, args);
   else
     integer_obj = object;
 
@@ -987,7 +991,7 @@ int yr_object_set_integer(
   assert(integer_obj != NULL);
   assert(integer_obj->type == OBJECT_TYPE_INTEGER);
 
-  ((YR_OBJECT_INTEGER*) integer_obj)->value = value;
+  integer_obj->value.i = value;
 
   return ERROR_SUCCESS;
 }
@@ -1005,8 +1009,7 @@ int yr_object_set_float(
   va_start(args, field);
 
   if (field != NULL)
-    double_obj = _yr_object_lookup(
-        object, OBJECT_CREATE, field, args);
+    double_obj = _yr_object_lookup(object, OBJECT_CREATE, field, args);
   else
     double_obj = object;
 
@@ -1015,7 +1018,7 @@ int yr_object_set_float(
   assert(double_obj != NULL);
   assert(double_obj->type == OBJECT_TYPE_FLOAT);
 
-  ((YR_OBJECT_DOUBLE*) double_obj)->value = value;
+  double_obj->value.d = value;
 
   return ERROR_SUCCESS;
 }
@@ -1028,41 +1031,41 @@ int yr_object_set_string(
     const char* field,
     ...)
 {
-  YR_OBJECT_STRING* string_obj;
+  YR_OBJECT* string_obj;
 
   va_list args;
   va_start(args, field);
 
   if (field != NULL)
-    string_obj = (YR_OBJECT_STRING*) _yr_object_lookup(
-        object, OBJECT_CREATE, field, args);
+    string_obj = _yr_object_lookup(object, OBJECT_CREATE, field, args);
   else
-    string_obj = (YR_OBJECT_STRING*) object;
+    string_obj = object;
 
   va_end(args);
 
   assert(string_obj != NULL);
   assert(string_obj->type == OBJECT_TYPE_STRING);
 
-  if (string_obj->value != NULL)
-    yr_free(string_obj->value);
+  if (string_obj->value.ss != NULL)
+    yr_free(string_obj->value.ss);
 
   if (value != NULL)
   {
-    string_obj->value = (SIZED_STRING*) yr_malloc(len + sizeof(SIZED_STRING));
+    string_obj->value.ss = (SIZED_STRING*) yr_malloc(
+        len + sizeof(SIZED_STRING));
 
-    if (string_obj->value == NULL)
+    if (string_obj->value.ss == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
-    string_obj->value->length = (uint32_t) len;
-    string_obj->value->flags = 0;
+    string_obj->value.ss->length = (uint32_t) len;
+    string_obj->value.ss->flags = 0;
 
-    memcpy(string_obj->value->c_string, value, len);
-    string_obj->value->c_string[len] = '\0';
+    memcpy(string_obj->value.ss->c_string, value, len);
+    string_obj->value.ss->c_string[len] = '\0';
   }
   else
   {
-    string_obj->value = NULL;
+    string_obj->value.ss = NULL;
   }
 
   return ERROR_SUCCESS;
@@ -1103,21 +1106,24 @@ YR_API void yr_object_print_data(
   switch(object->type)
   {
     case OBJECT_TYPE_INTEGER:
-      if (((YR_OBJECT_INTEGER*) object)->value != UNDEFINED)
-        printf(" = %" PRIu64, ((YR_OBJECT_INTEGER*) object)->value);
+
+      if (object->value.i != UNDEFINED)
+        printf(" = %" PRIu64, object->value.i);
       else
         printf(" = UNDEFINED");
+
       break;
 
     case OBJECT_TYPE_STRING:
-      if (((YR_OBJECT_STRING*) object)->value != NULL)
+
+      if (object->value.ss != NULL)
       {
         size_t l;
         printf(" = \"");
 
-        for (l = 0; l < ((YR_OBJECT_STRING*) object)->value->length; l++)
+        for (l = 0; l < object->value.ss->length; l++)
         {
-          char c = ((YR_OBJECT_STRING*) object)->value->c_string[l];
+          char c = object->value.ss->c_string[l];
 
           if (isprint((unsigned char) c))
             printf("%c", c);
@@ -1136,7 +1142,7 @@ YR_API void yr_object_print_data(
 
     case OBJECT_TYPE_STRUCTURE:
 
-      member = ((YR_OBJECT_STRUCTURE*) object)->members;
+      member = object_as_structure(object)->members;
 
       while (member != NULL)
       {
@@ -1151,7 +1157,8 @@ YR_API void yr_object_print_data(
       break;
 
     case OBJECT_TYPE_ARRAY:
-      array_items = ((YR_OBJECT_ARRAY*) object)->items;
+
+      array_items = object_as_array(object)->items;
 
       if (array_items != NULL)
       {
@@ -1169,7 +1176,7 @@ YR_API void yr_object_print_data(
 
     case OBJECT_TYPE_DICTIONARY:
 
-      dict_items = ((YR_OBJECT_DICTIONARY*) object)->items;
+      dict_items = object_as_dictionary(object)->items;
 
       if (dict_items != NULL)
       {

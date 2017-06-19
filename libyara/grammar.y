@@ -507,7 +507,7 @@ string_declarations
 string_declaration
     : _STRING_IDENTIFIER_ '='
       {
-        compiler->error_line = yyget_lineno(yyscanner);
+        compiler->current_line = yyget_lineno(yyscanner);
       }
       _TEXT_STRING_ string_modifiers
       {
@@ -518,11 +518,11 @@ string_declaration
         yr_free($4);
 
         ERROR_IF($$ == NULL);
-        compiler->error_line = 0;
+        compiler->current_line = 0;
       }
     | _STRING_IDENTIFIER_ '='
       {
-        compiler->error_line = yyget_lineno(yyscanner);
+        compiler->current_line = yyget_lineno(yyscanner);
       }
       _REGEXP_ string_modifiers
       {
@@ -534,7 +534,7 @@ string_declaration
 
         ERROR_IF($$ == NULL);
 
-        compiler->error_line = 0;
+        compiler->current_line = 0;
       }
     | _STRING_IDENTIFIER_ '=' _HEX_STRING_
       {
@@ -715,7 +715,7 @@ identifier
           compiler->last_result = yr_parser_emit(
               yyscanner, OP_INDEX_ARRAY, NULL);
 
-          array = (YR_OBJECT_ARRAY*) $1.value.object;
+          array = object_as_array($1.value.object);
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = array->prototype_item;
@@ -736,7 +736,7 @@ identifier
           compiler->last_result = yr_parser_emit(
               yyscanner, OP_LOOKUP_DICT, NULL);
 
-          dict = (YR_OBJECT_DICTIONARY*) $1.value.object;
+          dict = object_as_dictionary($1.value.object);
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = dict->prototype_item;
@@ -762,7 +762,7 @@ identifier
             $1.value.object->type == OBJECT_TYPE_FUNCTION)
         {
           compiler->last_result = yr_parser_check_types(
-              compiler, (YR_OBJECT_FUNCTION*) $1.value.object, $3);
+              compiler, object_as_function($1.value.object), $3);
 
           if (compiler->last_result == ERROR_SUCCESS)
             compiler->last_result = yr_arena_write_string(
@@ -776,7 +776,7 @@ identifier
                 NULL,
                 NULL);
 
-          function = (YR_OBJECT_FUNCTION*) $1.value.object;
+          function = object_as_function($1.value.object);
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = function->return_obj;
@@ -1289,34 +1289,25 @@ expression
       boolean_expression
       {
         YR_FIXUP* fixup;
-        uint8_t* and_addr;
+        uint8_t* nop_addr;
 
-        // Ensure that we have at least two consecutive bytes in the arena's
-        // current page, one for the AND opcode and one for opcode following the
-        // AND. This is necessary because we need to compute the address for the
-        // opcode following the AND, and we don't want the AND in one page and
-        // the following opcode in another page.
-
-        compiler->last_result = yr_arena_reserve_memory(
-            compiler->code_arena, 2);
+        compiler->last_result = yr_parser_emit(yyscanner, OP_AND, NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        compiler->last_result = yr_parser_emit(yyscanner, OP_AND, &and_addr);
+        // Generate a do-nothing instruction (NOP) in order to get its address
+        // and use it as the destination for the OP_JFALSE. We can not simply
+        // use the address of the OP_AND instruction +1 because we can't be
+        // sure that the instruction following the OP_AND is going to be in
+        // the same arena page. As we don't have a reliable way of getting the
+        // address of the next instruction we generate the OP_NOP.
+
+        compiler->last_result = yr_parser_emit(yyscanner, OP_NOP, &nop_addr);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-
-        // Now we know the jump destination, which is the address of the
-        // instruction following the AND. Let's fixup the jump address.
 
         fixup = compiler->fixup_stack_head;
-
-        // We know that the AND opcode and the following one are within the same
-        // page, so we can compute the address for the opcode following the AND
-        // by simply adding one to its address.
-
-        *(void**)(fixup->address) = (void*)(and_addr + 1);
-
+        *(void**)(fixup->address) = (void*) nop_addr;
         compiler->fixup_stack_head = fixup->next;
         yr_free(fixup);
 
@@ -1350,34 +1341,25 @@ expression
       boolean_expression
       {
         YR_FIXUP* fixup;
-        uint8_t* or_addr;
+        uint8_t* nop_addr;
 
-        // Ensure that we have at least two consecutive bytes in the arena's
-        // current page, one for the OR opcode and one for opcode following the
-        // OR. This is necessary because we need to compute the address for the
-        // opcode following the OR, and we don't want the OR in one page and
-        // the following opcode in another page.
-
-        compiler->last_result = yr_arena_reserve_memory(
-            compiler->code_arena, 2);
+        compiler->last_result = yr_parser_emit(yyscanner, OP_OR, NULL);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
 
-        compiler->last_result = yr_parser_emit(yyscanner, OP_OR, &or_addr);
+        // Generate a do-nothing instruction (NOP) in order to get its address
+        // and use it as the destination for the OP_JFALSE. We can not simply
+        // use the address of the OP_AND instruction +1 because we can't be
+        // sure that the instruction following the OP_AND is going to be in
+        // the same arena page. As we don't have a reliable way of getting the
+        // address of the next instruction we generate the OP_NOP.
+
+        compiler->last_result = yr_parser_emit(yyscanner, OP_NOP, &nop_addr);
 
         ERROR_IF(compiler->last_result != ERROR_SUCCESS);
-
-        // Now we know the jump destination, which is the address of the
-        // instruction following the OP_OR. Let's fixup the jump address.
 
         fixup = compiler->fixup_stack_head;
-
-        // We know that the OR opcode and the following one are within the same
-        // page, so we can compute the address for the opcode following the OR
-        // by simply adding one to its address.
-
-        *(void**)(fixup->address) = (void*)(or_addr + 1);
-
+        *(void**)(fixup->address) = (void*)(nop_addr);
         compiler->fixup_stack_head = fixup->next;
         yr_free(fixup);
 
