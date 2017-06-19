@@ -1803,10 +1803,7 @@ int _yr_re_fiber_sync(
         break;
 
       default:
-        if (_yr_re_fiber_exists(fiber_list, fiber, prev))
-          fiber = _yr_re_fiber_kill(fiber_list, fiber_pool, fiber);
-        else
-          fiber = fiber->next;
+        fiber = fiber->next;
     }
   }
 
@@ -1940,12 +1937,24 @@ int yr_re_exec(
   {
     fiber = fibers.head;
 
-    while(fiber != NULL)
+    while (fiber != NULL)
+    {
+      next_fiber = fiber->next;
+
+      if (_yr_re_fiber_exists(&fibers, fiber, fiber->prev))
+        _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
+
+      fiber = next_fiber;
+    }
+
+    fiber = fibers.head;
+
+    while (fiber != NULL)
     {
       ip = fiber->ip;
       action = ACTION_NONE;
 
-      switch(*ip)
+      switch (*ip)
       {
         case RE_OPCODE_ANY:
           prolog;
