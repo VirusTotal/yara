@@ -299,9 +299,9 @@ void macho_handle_segments_sections_##bits##_##bo(                             \
   {                                                                            \
     section_##bits##_t* sec = ((section_##bits##_t*)(sg + 1)) + j;             \
                                                                                \
-	set_sized_string(sec->segname, strnlen(sec->segname, 16),                  \
+    set_sized_string(sec->segname, strnlen(sec->segname, 16),                  \
                      object, "segments[%i].sections[%i].segname", i, j);       \
-	set_sized_string(sec->sectname, strnlen(sec->sectname, 16),                \
+    set_sized_string(sec->sectname, strnlen(sec->sectname, 16),                \
                      object, "segments[%i].sections[%i].sectname", i, j);      \
                                                                                \
     set_integer(yr_##bo##bits##toh(sec->addr),                                 \
