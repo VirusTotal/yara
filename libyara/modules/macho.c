@@ -62,7 +62,7 @@ void macho_init_fat_data_storage(
 
 // Check if file is for 32-bit architecture.
 
-int macho_is_32(uint8_t* magic)
+int macho_is_32(const uint8_t* magic)
 {
   // Magic must be [CE]FAEDFE or FEEDFA[CE].
   return magic[0] == 0xce || magic[3] == 0xce;
@@ -71,7 +71,7 @@ int macho_is_32(uint8_t* magic)
 
 // Check if file is for big-endian architecture.
 
-int macho_is_big(uint8_t* magic)
+int macho_is_big(const uint8_t* magic)
 {
   // Magic must be [FE]EDFACE or [FE]EDFACF.
   return magic[0] == 0xfe;
@@ -80,7 +80,7 @@ int macho_is_big(uint8_t* magic)
 
 // Check for Mach-O fat binary signature.
 
-int macho_is_fat_file_block(uint32_t* magic)
+int macho_is_fat_file_block(const uint32_t* magic)
 {
   return *magic == FAT_MAGIC || *magic == FAT_CIGAM;
 }
@@ -88,7 +88,7 @@ int macho_is_fat_file_block(uint32_t* magic)
 
 // Check for Mach-O binary signatures.
 
-int macho_is_file_block(uint32_t* magic)
+int macho_is_file_block(const uint32_t* magic)
 {
   return *magic == MH_MAGIC || *magic == MH_MAGIC_64 ||
       *magic == MH_CIGAM || *magic == MH_CIGAM_64;
@@ -342,10 +342,14 @@ MACHO_HANDLE_SEGMENTS_SECTIONS(64,be)
 #define MACHO_PARSE_FILE(bits,bo)                                              \
 void macho_parse_file_##bits##_##bo(                                           \
     void* data,                                                                \
+    uint64_t size,                                                             \
     YR_OBJECT* object,                                                         \
     YR_SCAN_CONTEXT* context)                                                  \
 {                                                                              \
   mach_header_##bits##_t* header = (mach_header_##bits##_t*)data;              \
+                                                                               \
+  if (size < sizeof(mach_header_##bits##_t))                                   \
+    return;                                                                    \
                                                                                \
   set_integer(yr_##bo##32toh(header->magic), object, "magic");                 \
   set_integer(yr_##bo##32toh(header->cputype), object, "cputype");             \
@@ -401,19 +405,23 @@ MACHO_PARSE_FILE(64,be)
 
 void macho_parse_file(
     void* data,
+    uint64_t size,
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
-  uint8_t* magic = (uint8_t*)data;
+  if (size < 4u)
+    return;
+
+  const uint8_t* magic = (uint8_t*)data;
   if (macho_is_32(magic))
   {
-    macho_is_big(magic) ? macho_parse_file_32_be(data, object, context)
-                        : macho_parse_file_32_le(data, object, context);
+    macho_is_big(magic) ? macho_parse_file_32_be(data, size, object, context)
+                        : macho_parse_file_32_le(data, size, object, context);
   }
   else
   {
-    macho_is_big(magic) ? macho_parse_file_64_be(data, object, context)
-                        : macho_parse_file_64_le(data, object, context);
+    macho_is_big(magic) ? macho_parse_file_64_be(data, size, object, context)
+                        : macho_parse_file_64_le(data, size, object, context);
   }
 }
 
@@ -430,7 +438,7 @@ void macho_parse_fat_file(
 
   // All data in Mach-O fat binary header(s) is in big-endian byte order.
 
-  fat_header_t* header = (fat_header_t*)data;
+  const fat_header_t* header = (fat_header_t*)data;
   set_integer(yr_be32toh(header->magic), object, "fat_magic");
   set_integer(yr_be32toh(header->nfat_arch), object, "nfat_arch");
 
@@ -463,7 +471,8 @@ void macho_parse_fat_file(
 
     // Get specific Mach-O file data.
     void* file_data = (uint8_t*)data + offset;
-    macho_parse_file(file_data, get_object(object, "file[%i]", i), context);
+    macho_parse_file(file_data, size, get_object(object, "file[%i]", i),
+                     context);
 
     // Increase file count.
     st->file_count++;
@@ -1117,7 +1126,7 @@ int module_load(
     // Parse classic Mach-O file.
     if (macho_is_file_block(magic))
     {
-      macho_parse_file(block_data, module_object, context);
+      macho_parse_file(block_data, block->size, module_object, context);
 
       // In case of classic Mach-O files, everything will be in the first block
       // so program does not have to check rest of the blocks.
@@ -1150,7 +1159,7 @@ int module_load(
         void* file_data = (uint8_t*)block_data + offset;
         YR_OBJECT* object = get_object(module_object, "file[%i]",
                                        st->file_count);
-        macho_parse_file(file_data, object, context);
+        macho_parse_file(file_data, block->size, object, context);
         st->file_count++;
       }
     }
