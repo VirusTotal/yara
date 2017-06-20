@@ -91,6 +91,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Thug](https://github.com/buffer/thug)
 * [Trend Micro](http://www.trendmicro.com)
 * [VirusTotal Intelligence](https://www.virustotal.com/intelligence/)
+* [VMRay](https://www.vmray.com/)
 * [We Watch Your Website](http://www.wewatchyourwebsite.com/)
 * [Websense](http://www.websense.com)
 * [x64dbg](http://x64dbg.com)
