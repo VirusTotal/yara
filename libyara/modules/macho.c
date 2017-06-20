@@ -1100,6 +1100,10 @@ int module_load(
 
   // Prepare storage.
   FAT_DATA* st = (FAT_DATA*)yr_malloc(sizeof(FAT_DATA));
+
+  if (!st)
+    return ERROR_INSUFFICIENT_MEMORY;
+
   module_object->data = st;
   macho_init_fat_data_storage(st);
 
