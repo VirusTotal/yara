@@ -436,14 +436,21 @@ void macho_parse_fat_file(
 {
   FAT_DATA* st = (FAT_DATA*)object->data;
 
+  if (size < sizeof(fat_header_t))
+    return;
+
   // All data in Mach-O fat binary header(s) is in big-endian byte order.
 
   const fat_header_t* header = (fat_header_t*)data;
+  uint32_t count = yr_be32toh(header->nfat_arch);
   set_integer(yr_be32toh(header->magic), object, "fat_magic");
-  set_integer(yr_be32toh(header->nfat_arch), object, "nfat_arch");
+  set_integer(count, object, "nfat_arch");
+
+  if (size < sizeof(fat_arch_t) * count + sizeof(fat_header_t))
+    return;
 
   fat_arch_t* archs = (fat_arch_t*)(header + 1);
-  for (size_t i = 0; i < yr_be32toh(header->nfat_arch); i++)
+  for (size_t i = 0; i < count; i++)
   {
     set_integer(yr_be32toh(archs[i].cputype),
                 object, "fat_arch[%i].cputype", i);
