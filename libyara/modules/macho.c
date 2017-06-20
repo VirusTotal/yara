@@ -95,17 +95,6 @@ int macho_is_file_block(uint32_t* magic)
 }
 
 
-// Get length of string with limit (some strings are terminated by size limit).
-
-size_t macho_limited_strlen(char* string, size_t limit)
-{
-  size_t length = 0;
-  for(length = 0; string[length] && length < limit; length++);
-
-  return length;
-}
-
-
 // Convert virtual address to file offset. Segments have to be already loaded.
 
 int macho_rva_to_offset(
@@ -286,7 +275,7 @@ void macho_handle_segments_sections_##bits##_##bo(                             \
 {                                                                              \
   segment_command_##bits##_t* sg = (segment_command_##bits##_t*)command;       \
                                                                                \
-  set_sized_string(sg->segname, macho_limited_strlen(sg->segname, 16),         \
+  set_sized_string(sg->segname, strnlen(sg->segname, 16),                      \
                    object, "segments[%i].segname", i);                         \
                                                                                \
   set_integer(yr_##bo##bits##toh(sg->vmaddr),                                  \
@@ -310,9 +299,9 @@ void macho_handle_segments_sections_##bits##_##bo(                             \
   {                                                                            \
     section_##bits##_t* sec = ((section_##bits##_t*)(sg + 1)) + j;             \
                                                                                \
-    set_sized_string(sec->segname, macho_limited_strlen(sec->segname, 16),     \
+	set_sized_string(sec->segname, strnlen(sec->segname, 16),                  \
                      object, "segments[%i].sections[%i].segname", i, j);       \
-    set_sized_string(sec->sectname, macho_limited_strlen(sec->sectname, 16),   \
+	set_sized_string(sec->sectname, strnlen(sec->sectname, 16),                \
                      object, "segments[%i].sections[%i].sectname", i, j);      \
                                                                                \
     set_integer(yr_##bo##bits##toh(sec->addr),                                 \
