@@ -49,6 +49,10 @@ uint64_t xtoi(
     const char* hexstr);
 
 
+uint64_t otoi(
+    const char* octstr);
+
+
 #if !HAVE_STRLCPY && !defined(strlcpy)
 size_t strlcpy(
     char *dst,
