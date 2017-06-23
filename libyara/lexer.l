@@ -125,6 +125,7 @@ with noyywrap then we can remove this pragma.
 digit         [0-9]
 letter        [a-zA-Z]
 hexdigit      [a-fA-F0-9]
+octdigit      [0-7]
 
 %%
 
@@ -472,8 +473,12 @@ u?int(8|16|32)(be)? {
 }
 
 0x{hexdigit}+  {
-
   yylval->integer = xtoi(yytext + 2);
+  return _NUMBER_;
+}
+
+0o{octdigit}+  {
+  yylval->integer = otoi(yytext + 2);
   return _NUMBER_;
 }
 
