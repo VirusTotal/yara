@@ -601,7 +601,7 @@ int yr_parse_re_string(
   RE_LEX_ENVIRONMENT lex_env;
 
   lex_env.last_error_code = ERROR_SUCCESS;
-  lex_env.last_error_message = '\0';
+  lex_env.last_error_message[0] = '\0';
 
   yr_thread_storage_set_value(&yr_recovery_state_key, &recovery_state);
 
