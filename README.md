@@ -18,7 +18,7 @@ rule silent_banker : banker
 {
     meta:
         description = "This is just an example"
-        thread_level = 3
+        threat_level = 3
         in_the_wild = true
 
     strings:
