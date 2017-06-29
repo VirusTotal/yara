@@ -299,7 +299,7 @@ int module_load(
   json = json_loadb(
       (const char*) module_data,
       module_data_size,
-      0,
+      JSON_ALLOW_NUL,
       &json_error);
 
   if (json == NULL)
