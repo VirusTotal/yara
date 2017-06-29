@@ -299,7 +299,11 @@ int module_load(
   json = json_loadb(
       (const char*) module_data,
       module_data_size,
+      #if JANSSON_VERSION_HEX >= 0x020600
       JSON_ALLOW_NUL,
+      #else
+      0,
+      #endif
       &json_error);
 
   if (json == NULL)
