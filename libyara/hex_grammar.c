@@ -96,7 +96,7 @@
 #define incr_ast_levels() \
     if (((RE_AST*) yyget_extra(yyscanner))->levels++ > RE_MAX_AST_LEVELS) \
     { \
-      lex_env->last_error_code = ERROR_INVALID_HEX_STRING; \
+      yyerror(yyscanner, lex_env, "string too long"); \
       YYABORT; \
     }
 
@@ -484,8 +484,8 @@ static const yytype_uint8 yytranslate[] =
 static const yytype_uint16 yyrline[] =
 {
        0,   112,   112,   121,   125,   136,   200,   204,   219,   223,
-     232,   246,   245,   258,   281,   313,   335,   355,   359,   374,
-     382
+     232,   237,   236,   249,   272,   304,   326,   346,   350,   365,
+     373
 };
 #endif
 
@@ -1466,39 +1466,30 @@ yyreduce:
   case 10:
 #line 233 "hex_grammar.y" /* yacc.c:1661  */
     {
-        lex_env->token_count++;
-
-        if (lex_env->token_count > MAX_HEX_STRING_TOKENS)
-        {
-          yr_re_node_destroy((yyvsp[0].re_node));
-          yyerror(yyscanner, lex_env, "string too long");
-          YYABORT;
-        }
-
         (yyval.re_node) = (yyvsp[0].re_node);
       }
-#line 1481 "hex_grammar.c" /* yacc.c:1661  */
+#line 1472 "hex_grammar.c" /* yacc.c:1661  */
     break;
 
   case 11:
-#line 246 "hex_grammar.y" /* yacc.c:1661  */
+#line 237 "hex_grammar.y" /* yacc.c:1661  */
     {
         lex_env->inside_or++;
       }
-#line 1489 "hex_grammar.c" /* yacc.c:1661  */
+#line 1480 "hex_grammar.c" /* yacc.c:1661  */
     break;
 
   case 12:
-#line 250 "hex_grammar.y" /* yacc.c:1661  */
+#line 241 "hex_grammar.y" /* yacc.c:1661  */
     {
         (yyval.re_node) = (yyvsp[-1].re_node);
         lex_env->inside_or--;
       }
-#line 1498 "hex_grammar.c" /* yacc.c:1661  */
+#line 1489 "hex_grammar.c" /* yacc.c:1661  */
     break;
 
   case 13:
-#line 259 "hex_grammar.y" /* yacc.c:1661  */
+#line 250 "hex_grammar.y" /* yacc.c:1661  */
     {
         if ((yyvsp[-1].integer) <= 0)
         {
@@ -1521,11 +1512,11 @@ yyreduce:
         (yyval.re_node)->start = (int) (yyvsp[-1].integer);
         (yyval.re_node)->end = (int) (yyvsp[-1].integer);
       }
-#line 1525 "hex_grammar.c" /* yacc.c:1661  */
+#line 1516 "hex_grammar.c" /* yacc.c:1661  */
     break;
 
   case 14:
-#line 282 "hex_grammar.y" /* yacc.c:1661  */
+#line 273 "hex_grammar.y" /* yacc.c:1661  */
     {
         if (lex_env->inside_or &&
             ((yyvsp[-3].integer) > STRING_CHAINING_THRESHOLD ||
@@ -1557,11 +1548,11 @@ yyreduce:
         (yyval.re_node)->start = (int) (yyvsp[-3].integer);
         (yyval.re_node)->end = (int) (yyvsp[-1].integer);
       }
-#line 1561 "hex_grammar.c" /* yacc.c:1661  */
+#line 1552 "hex_grammar.c" /* yacc.c:1661  */
     break;
 
   case 15:
-#line 314 "hex_grammar.y" /* yacc.c:1661  */
+#line 305 "hex_grammar.y" /* yacc.c:1661  */
     {
         if (lex_env->inside_or)
         {
@@ -1583,11 +1574,11 @@ yyreduce:
         (yyval.re_node)->start = (int) (yyvsp[-2].integer);
         (yyval.re_node)->end = INT_MAX;
       }
-#line 1587 "hex_grammar.c" /* yacc.c:1661  */
+#line 1578 "hex_grammar.c" /* yacc.c:1661  */
     break;
 
   case 16:
-#line 336 "hex_grammar.y" /* yacc.c:1661  */
+#line 327 "hex_grammar.y" /* yacc.c:1661  */
     {
         if (lex_env->inside_or)
         {
@@ -1603,19 +1594,19 @@ yyreduce:
         (yyval.re_node)->start = 0;
         (yyval.re_node)->end = INT_MAX;
       }
-#line 1607 "hex_grammar.c" /* yacc.c:1661  */
+#line 1598 "hex_grammar.c" /* yacc.c:1661  */
     break;
 
   case 17:
-#line 356 "hex_grammar.y" /* yacc.c:1661  */
+#line 347 "hex_grammar.y" /* yacc.c:1661  */
     {
           (yyval.re_node) = (yyvsp[0].re_node);
       }
-#line 1615 "hex_grammar.c" /* yacc.c:1661  */
+#line 1606 "hex_grammar.c" /* yacc.c:1661  */
     break;
 
   case 18:
-#line 360 "hex_grammar.y" /* yacc.c:1661  */
+#line 351 "hex_grammar.y" /* yacc.c:1661  */
     {
         mark_as_not_fast_regexp();
         incr_ast_levels();
@@ -1627,11 +1618,11 @@ yyreduce:
 
         ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
-#line 1631 "hex_grammar.c" /* yacc.c:1661  */
+#line 1622 "hex_grammar.c" /* yacc.c:1661  */
     break;
 
   case 19:
-#line 375 "hex_grammar.y" /* yacc.c:1661  */
+#line 366 "hex_grammar.y" /* yacc.c:1661  */
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
@@ -1639,11 +1630,11 @@ yyreduce:
 
         (yyval.re_node)->value = (int) (yyvsp[0].integer);
       }
-#line 1643 "hex_grammar.c" /* yacc.c:1661  */
+#line 1634 "hex_grammar.c" /* yacc.c:1661  */
     break;
 
   case 20:
-#line 383 "hex_grammar.y" /* yacc.c:1661  */
+#line 374 "hex_grammar.y" /* yacc.c:1661  */
     {
         uint8_t mask = (uint8_t) ((yyvsp[0].integer) >> 8);
 
@@ -1663,11 +1654,11 @@ yyreduce:
           (yyval.re_node)->mask = mask;
         }
       }
-#line 1667 "hex_grammar.c" /* yacc.c:1661  */
+#line 1658 "hex_grammar.c" /* yacc.c:1661  */
     break;
 
 
-#line 1671 "hex_grammar.c" /* yacc.c:1661  */
+#line 1662 "hex_grammar.c" /* yacc.c:1661  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1895,5 +1886,5 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 404 "hex_grammar.y" /* yacc.c:1906  */
+#line 395 "hex_grammar.y" /* yacc.c:1906  */
 

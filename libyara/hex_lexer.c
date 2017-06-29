@@ -2177,7 +2177,6 @@ int yr_parse_hex_string(
 
   lex_env.last_error_code = ERROR_SUCCESS;
   lex_env.inside_or = 0;
-  lex_env.token_count = 0;
 
   yr_thread_storage_set_value(&yr_recovery_state_key, &recovery_state);
 
