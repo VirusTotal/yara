@@ -78,14 +78,14 @@ extern int re_yydebug;
 
 union YYSTYPE
 {
-#line 81 "re_grammar.y" /* yacc.c:1909  */
+#line 81 "re_grammar.y" /* yacc.c:1915  */
 
   int integer;
   uint32_t range;
   RE_NODE* re_node;
   uint8_t* class_vector;
 
-#line 89 "re_grammar.h" /* yacc.c:1909  */
+#line 89 "re_grammar.h" /* yacc.c:1915  */
 };
 
 typedef union YYSTYPE YYSTYPE;
