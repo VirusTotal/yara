@@ -53,6 +53,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Bayshore Networks, Inc.](http://www.bayshorenetworks.com)
 * [Blue Coat](http://www.bluecoat.com/products/malware-analysis-appliance)
 * [Blueliv](http://www.blueliv.com)
+* [Conix](http://www.conix.fr)
 * [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
 * [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
 * [ESET](https://www.eset.com)
