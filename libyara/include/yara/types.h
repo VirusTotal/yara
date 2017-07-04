@@ -425,6 +425,7 @@ typedef int (*YR_CALLBACK_FUNC)(
 typedef struct _YR_SCAN_CONTEXT
 {
   uint64_t  file_size;
+  SIZED_STRING* file_name;
   uint64_t  entry_point;
 
   int flags;

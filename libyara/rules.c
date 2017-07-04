@@ -334,12 +334,14 @@ YR_API int yr_rules_scan_mem_blocks(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int timeout)
+    int timeout,
+    const char* filename)
 {
   YR_EXTERNAL_VARIABLE* external;
   YR_RULE* rule;
   YR_SCAN_CONTEXT context;
   YR_MEMORY_BLOCK* block;
+  SIZED_STRING* filename_value = NULL;
 
   time_t start_time;
 
@@ -378,6 +380,14 @@ YR_API int yr_rules_scan_mem_blocks(
   context.objects_table = NULL;
   context.matches_arena = NULL;
   context.matching_strings_arena = NULL;
+  
+  if (filename != NULL) {
+    size_t length = strlen(filename);
+    filename_value = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + length);
+    filename_value->length = length;
+    memcpy(filename_value->c_string, filename, length);
+  }
+  context.file_name = filename_value;
 
   yr_set_tidx(tidx);
 
@@ -516,6 +526,9 @@ YR_API int yr_rules_scan_mem_blocks(
   callback(CALLBACK_MSG_SCAN_FINISHED, NULL, user_data);
 
 _exit:
+  if (context.file_name != NULL) {
+    yr_free(context.file_name);
+  }
 
   _yr_rules_clean_matches(rules, &context);
 
@@ -569,7 +582,8 @@ YR_API int yr_rules_scan_mem(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int timeout)
+    int timeout,
+    const char* filename)
 {
   YR_MEMORY_BLOCK block;
   YR_MEMORY_BLOCK_ITERATOR iterator;
@@ -589,7 +603,8 @@ YR_API int yr_rules_scan_mem(
       flags,
       callback,
       user_data,
-      timeout);
+      timeout,
+      filename);
 }
 
 
@@ -614,7 +629,8 @@ YR_API int yr_rules_scan_file(
         flags,
         callback,
         user_data,
-        timeout);
+        timeout,
+        filename);
 
     yr_filemap_unmap(&mfile);
   }
@@ -644,7 +660,8 @@ YR_API int yr_rules_scan_fd(
         flags,
         callback,
         user_data,
-        timeout);
+        timeout,
+        NULL);
 
     yr_filemap_unmap_fd(&mfile);
   }
@@ -675,7 +692,8 @@ YR_API int yr_rules_scan_proc(
         flags | SCAN_FLAGS_PROCESS_MEMORY,
         callback,
         user_data,
-        timeout);
+        timeout,
+        NULL);
 
     yr_process_close_iterator(&iterator);
   }

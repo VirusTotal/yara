@@ -92,6 +92,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       yyerror(yyscanner, compiler, NULL); \
       YYERROR; \
     }
+
+static SIZED_STRING undefined_string;
 %}
 
 
@@ -134,6 +136,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _FULLWORD_
 %token _AT_
 %token _FILESIZE_
+%token _FILENAME_
 %token _ENTRYPOINT_
 %token _ALL_
 %token _ANY_
@@ -1553,6 +1556,16 @@ primary_expression
 
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = UNDEFINED;
+      }
+    | _FILENAME_
+      {
+        compiler->last_result = yr_parser_emit(
+            yyscanner, OP_FILENAME, NULL);
+
+        ERROR_IF(compiler->last_result != ERROR_SUCCESS);
+
+        $$.type = EXPRESSION_TYPE_STRING;
+        $$.value.sized_string = &undefined_string;
       }
     | _ENTRYPOINT_
       {
