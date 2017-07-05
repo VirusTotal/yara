@@ -1002,7 +1002,7 @@ void dotnet_parse_tilde_2(
 
           if (name != NULL)
           {
-            set_string(name, pe->object, "modulerefs[%i]", i);
+            set_string(name, pe->object, "modulerefs[%i]", counter);
             counter++;
           }
 
@@ -1276,17 +1276,17 @@ void dotnet_parse_tilde_2(
 
           // Add 4 to skip the size.
           set_integer(resource_base + resource_offset + 4,
-              pe->object, "resources[%i].offset", i);
+              pe->object, "resources[%i].offset", counter);
 
           set_integer(resource_size,
-              pe->object, "resources[%i].length", i);
+              pe->object, "resources[%i].length", counter);
 
           name = pe_get_dotnet_string(pe,
               string_offset,
               DOTNET_STRING_INDEX(manifestresource_table->Name));
 
           if (name != NULL)
-            set_string(name, pe->object, "resources[%i].name", i);
+            set_string(name, pe->object, "resources[%i].name", counter);
 
           row_ptr += row_size;
           counter++;
