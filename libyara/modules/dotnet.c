@@ -38,6 +38,7 @@ char* pe_get_dotnet_string(
     DWORD string_index)
 {
   size_t remaining;
+
   char* start;
   char* eos;
 
@@ -270,10 +271,12 @@ STREAMS dotnet_parse_stream_headers(
       break;
 
     start = (char*) stream_header->Name;
+
     if (!fits_in_pe(pe, start, DOTNET_STREAM_NAME_SIZE))
       break;
 
     eos = (char*) memmem((void*) start, DOTNET_STREAM_NAME_SIZE, "\0", 1);
+
     if (eos == NULL)
       break;
 
@@ -1380,10 +1383,13 @@ void dotnet_parse_tilde(
   // Default index sizes are 2. Will be bumped to 4 if necessary.
   memset(&index_sizes, 2, sizeof(index_sizes));
 
-  tilde_header = (PTILDE_HEADER) (pe->data + metadata_root + streams->tilde->Offset);
+  tilde_header = (PTILDE_HEADER) (
+      pe->data +
+      metadata_root +
+      streams->tilde->Offset);
 
   if (!struct_fits_in_pe(pe, tilde_header, TILDE_HEADER))
-      return;
+    return;
 
   // Set index sizes for various heaps.
   if (tilde_header->HeapSizes & 0x01)
