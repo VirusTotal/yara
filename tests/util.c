@@ -120,7 +120,7 @@ int matches_blob(
 
   int matches = 0;
   int scan_result = yr_rules_scan_mem(
-      rules, blob, len, 0, count_matches, &matches, 0);
+      rules, blob, len, 0, count_matches, &matches, 0, NULL);
 
   if (scan_result != ERROR_SUCCESS)
   {
@@ -204,7 +204,7 @@ int capture_string(
   f.expected = expected_string;
 
   if (yr_rules_scan_mem(rules, (uint8_t*)string, strlen(string), 0,
-                        capture_matches, &f, 0) != ERROR_SUCCESS)
+                        capture_matches, &f, 0, NULL) != ERROR_SUCCESS)
   {
     fprintf(stderr, "yr_rules_scan_mem: error\n");
     exit(EXIT_FAILURE);
