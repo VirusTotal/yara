@@ -725,7 +725,10 @@ int yr_object_array_set_item(
 
   if (array->items == NULL)
   {
-    count = yr_max(64, (index + 1) * 2);
+    count = 64;
+
+    while (count <= index)
+      count *= 2;
 
     array->items = (YR_ARRAY_ITEMS*) yr_malloc(
         sizeof(YR_ARRAY_ITEMS) + count * sizeof(YR_OBJECT*));
@@ -740,6 +743,10 @@ int yr_object_array_set_item(
   else if (index >= array->items->count)
   {
     count = array->items->count * 2;
+
+    while (count <= index)
+      count *= 2;
+
     array->items = (YR_ARRAY_ITEMS*) yr_realloc(
         array->items,
         sizeof(YR_ARRAY_ITEMS) + count * sizeof(YR_OBJECT*));
