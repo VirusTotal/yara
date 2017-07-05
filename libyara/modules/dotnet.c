@@ -1409,7 +1409,8 @@ void dotnet_parse_tilde(
       continue;
 
 #define ROW_CHECK(name) \
-    rows.name = *(row_offset + matched_bits);
+    if (fits_in_pe(pe, row_offset, (matched_bits + 1) * sizeof(uint32_t))) \
+      rows.name = *(row_offset + matched_bits);
 
 #define ROW_CHECK_WITH_INDEX(name) \
     ROW_CHECK(name); \
