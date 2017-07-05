@@ -442,7 +442,7 @@ YR_OBJECT* _yr_object_lookup(
   {
     i = 0;
 
-    while(*p != '\0' && *p != '.' && *p != '[' && i < sizeof(str) - 1)
+    while (*p != '\0' && *p != '.' && *p != '[' && i < sizeof(str) - 1)
     {
       str[i++] = *p++;
     }
@@ -487,7 +487,7 @@ YR_OBJECT* _yr_object_lookup(
         i = 0;
         p++;              // skip the opening quotation mark
 
-        while (*p != '"' && *p != '\0' && i < sizeof(str))
+        while (*p != '"' && *p != '\0' && i < sizeof(str) - 1)
           str[i++] = *p++;
 
         str[i] = '\0';
