@@ -200,7 +200,7 @@ static bool is_dex_corrupt(PDEX_HEADER dex_header);
 // static char *get_prototype_string(uint16_t proto_idx, uint8_t *data, size_t data_size, YR_OBJECT *module);
 // static void print_hex_arr(uint8_t *buf, int len);
 
-static int errno;
+static int error_num;
 
 
 int module_initialize(
@@ -261,11 +261,11 @@ int module_load(
       }
 
       if (load_header(dex_header, module_object)) {
-        return errno;
+        return error_num;
       }
 
       if (load_string_ids(dex_header, block_data, block->size, module_object)) {
-        return errno;
+        return error_num;
       }
 
       load_type_ids(dex_header, block_data, block->size, module_object);
@@ -315,7 +315,7 @@ static int load_header(PDEX_HEADER dex_header, YR_OBJECT *module) {
   unsigned long magic_size = member_size(DEX_HEADER, magic);
   char *magic = yr_malloc(magic_size + 1);
   if (magic == NULL) {
-    errno = ERROR_INSUFICIENT_MEMORY;
+    error_num = ERROR_INSUFICIENT_MEMORY;
     return -1;
   }
   memcpy(magic, dex_header->magic, magic_size);
@@ -327,7 +327,7 @@ static int load_header(PDEX_HEADER dex_header, YR_OBJECT *module) {
   unsigned long signature_size = member_size(DEX_HEADER, signature);
   char *signature = yr_malloc(signature_size + 1);
   if (signature == NULL) {
-    errno = ERROR_INSUFICIENT_MEMORY;
+    error_num = ERROR_INSUFICIENT_MEMORY;
     return -1;
   }
   memcpy(signature, dex_header->signature, signature_size);
@@ -369,7 +369,7 @@ static int load_string_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_si
 
   STRING_ID_ITEM *string_ids = yr_malloc(string_ids_size);
   if (string_ids == NULL) {
-    errno = ERROR_INSUFICIENT_MEMORY;
+    error_num = ERROR_INSUFICIENT_MEMORY;
     return -1;
   }
   memcpy(string_ids, data + offset, string_ids_size);
@@ -390,7 +390,7 @@ static int load_string_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_si
     size_t string_size = strlen((char *)string_data);
     char *string = yr_malloc(string_size + 1);
     if (string == NULL) {
-      errno = ERROR_INSUFICIENT_MEMORY;
+      error_num = ERROR_INSUFICIENT_MEMORY;
       return -1;
     }
     memcpy(string, string_data, string_size);
@@ -426,7 +426,7 @@ static int load_type_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_size
 
   TYPE_ID_ITEM *type_ids = yr_malloc(type_ids_size);
   if (type_ids == NULL) {
-    errno = ERROR_INSUFICIENT_MEMORY;
+    error_num = ERROR_INSUFICIENT_MEMORY;
     return -1;
   }
   memcpy(type_ids, data + offset, type_ids_size);
@@ -454,7 +454,7 @@ static int load_class_defs(PDEX_HEADER dex_header, uint8_t *data, size_t data_si
 
   CLASS_DEF_ITEM *class_defs = yr_malloc(class_defs_size);
   if (class_defs == NULL) {
-    errno = ERROR_INSUFICIENT_MEMORY;
+    error_num = ERROR_INSUFICIENT_MEMORY;
     return -1;
   }
   memcpy(class_defs, data + offset, class_defs_size);
@@ -497,7 +497,7 @@ static int load_proto_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_siz
 
   PROTO_ID_ITEM *proto_ids = yr_malloc(proto_ids_size);
   if (proto_ids == NULL) {
-    errno = ERROR_INSUFICIENT_MEMORY;
+    error_num = ERROR_INSUFICIENT_MEMORY;
     return -1;
   }
   memcpy(proto_ids, data + offset, proto_ids_size);
@@ -532,7 +532,7 @@ static int load_field_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_siz
 
   FIELD_ID_ITEM *field_ids = yr_malloc(field_ids_size);
   if (field_ids == NULL) {
-    errno = ERROR_INSUFICIENT_MEMORY;
+    error_num = ERROR_INSUFICIENT_MEMORY;
     return -1;
   }
   memcpy(field_ids, data + offset, field_ids_size);
@@ -572,7 +572,7 @@ static int load_method_ids(PDEX_HEADER dex_header, uint8_t *data, size_t data_si
 
   METHOD_ID_ITEM *method_ids = yr_malloc(method_ids_size);
   if (method_ids == NULL) {
-    errno = ERROR_INSUFICIENT_MEMORY;
+    error_num = ERROR_INSUFICIENT_MEMORY;
     return -1;
   }
   memcpy(method_ids, data + offset, method_ids_size);
@@ -616,7 +616,7 @@ static int load_map_list(PDEX_HEADER dex_header, uint8_t *data, size_t data_size
 
   MAP_LIST *map_list = yr_malloc(map_data_size);
   if (map_list == NULL) {
-    errno = ERROR_INSUFICIENT_MEMORY;
+    error_num = ERROR_INSUFICIENT_MEMORY;
     return -1;
   }
   memcpy(map_list, pmap_list, map_data_size);
@@ -673,7 +673,7 @@ static uint64_t read_uleb128(uint8_t **buf, unsigned *uleb_size, uint32_t max_st
 //   SIZED_STRING *sized_string = get_string(module, "string_ids[%i].value", index);
 //   char *string = yr_malloc(sized_string->length + 1);
 //   if (string == NULL) {
-//     errno = ERROR_INSUFICIENT_MEMORY;
+//     error_num = ERROR_INSUFICIENT_MEMORY;
 //     return NULL;
 //   }
 //   strcpy(string, sized_string->c_string);
@@ -700,7 +700,7 @@ static uint64_t read_uleb128(uint8_t **buf, unsigned *uleb_size, uint32_t max_st
 
 //   TYPE_LIST *type_list = yr_malloc(size);
 //   if (type_list == NULL) {
-//     errno = ERROR_INSUFICIENT_MEMORY;
+//     error_num = ERROR_INSUFICIENT_MEMORY;
 //     return NULL;
 //   }
 //   memcpy(type_list, ptype_list, size);
