@@ -110,6 +110,8 @@ void locking_function(
 YR_API int yr_initialize(void)
 {
   uint32_t def_stack_size = DEFAULT_STACK_SIZE;
+  uint32_t def_max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
+
   int i;
 
   init_count++;
@@ -150,7 +152,10 @@ YR_API int yr_initialize(void)
   FAIL_ON_ERROR(yr_modules_initialize());
 
   // Initialize default configuration options
-  FAIL_ON_ERROR(yr_set_configuration(YR_CONFIG_STACK_SIZE, &def_stack_size));
+  FAIL_ON_ERROR(yr_set_configuration(
+      YR_CONFIG_STACK_SIZE, &def_stack_size));
+  FAIL_ON_ERROR(yr_set_configuration(
+      YR_CONFIG_MAX_STRINGS_PER_RULE, &def_max_strings_per_rule));
 
   return ERROR_SUCCESS;
 }
@@ -256,6 +261,7 @@ YR_API int yr_set_configuration(
   switch (cfgname)
   { // lump all the cases using same types together in one cascade
     case YR_CONFIG_STACK_SIZE:
+    case YR_CONFIG_MAX_STRINGS_PER_RULE:
       yr_cfgs[cfgname].ui32 = *(uint32_t*) src;
       break;
 
@@ -277,6 +283,7 @@ YR_API int yr_get_configuration(
   switch (cfgname)
   { // lump all the cases using same types together in one cascade
     case YR_CONFIG_STACK_SIZE:
+    case YR_CONFIG_MAX_STRINGS_PER_RULE:
       *(uint32_t*) dest = yr_cfgs[cfgname].ui32;
       break;
 

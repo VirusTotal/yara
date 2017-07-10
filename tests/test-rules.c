@@ -1665,6 +1665,48 @@ void test_file_descriptor()
   return;
 }
 
+void test_max_string_per_rules()
+{
+  uint32_t new_max_strings_per_rule = 1;
+  uint32_t old_max_strings_per_rule;
+
+  yr_get_configuration(
+      YR_CONFIG_MAX_STRINGS_PER_RULE,
+      (void*) &old_max_strings_per_rule);
+
+  yr_set_configuration(
+      YR_CONFIG_MAX_STRINGS_PER_RULE,
+      (void*) &new_max_strings_per_rule);
+
+  assert_error(
+      "rule test { \
+         strings: \
+           $ = \"uno\" \
+           $ = \"dos\" \
+         condition: \
+           all of them }",
+      ERROR_TOO_MANY_STRINGS);
+
+  new_max_strings_per_rule = 2;
+
+  yr_set_configuration(
+      YR_CONFIG_MAX_STRINGS_PER_RULE,
+      (void*) &new_max_strings_per_rule);
+
+  assert_error(
+      "rule test { \
+         strings: \
+           $ = \"uno\" \
+           $ = \"dos\" \
+         condition: \
+           all of them }",
+      ERROR_SUCCESS);
+
+  yr_set_configuration(
+      YR_CONFIG_MAX_STRINGS_PER_RULE,
+      (void*) &old_max_strings_per_rule);
+}
+
 
 int main(int argc, char** argv)
 {
@@ -1707,6 +1749,8 @@ int main(int argc, char** argv)
   #endif
 
   test_file_descriptor();
+
+  test_max_string_per_rules();
 
   yr_finalize();
 
