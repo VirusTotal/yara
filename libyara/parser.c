@@ -781,13 +781,20 @@ int yr_parser_reduce_rule_declaration_phase_2(
     yyscan_t yyscanner,
     YR_RULE* rule)
 {
+  uint32_t max_strings_per_rule;
+  uint32_t strings_in_rule = 0;
+
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   // Check for unreferenced (unused) strings.
 
   YR_STRING* string = rule->strings;
 
-  while(!STRING_IS_NULL(string))
+  yr_get_configuration(
+      YR_CONFIG_MAX_STRINGS_PER_RULE,
+      (void*) &max_strings_per_rule);
+
+  while (!STRING_IS_NULL(string))
   {
     // Only the heading fragment in a chain of strings (the one with
     // chained_to == NULL) must be referenced. All other fragments
@@ -798,6 +805,14 @@ int yr_parser_reduce_rule_declaration_phase_2(
     {
       yr_compiler_set_error_extra_info(compiler, string->identifier);
       compiler->last_result = ERROR_UNREFERENCED_STRING;
+      return compiler->last_result;
+    }
+
+    strings_in_rule++;
+
+    if (strings_in_rule > max_strings_per_rule) {
+      yr_compiler_set_error_extra_info(compiler, rule->identifier);
+      compiler->last_result = ERROR_TOO_MANY_STRINGS;
       return compiler->last_result;
     }
 
