@@ -35,7 +35,7 @@ The above rule is telling YARA that any file containing one of the three strings
 must be reported as *silent_banker*. This is just a simple example, more
 complex and powerful rules can be created by using wild-cards, case-insensitive
 strings, regular expressions, special operators and many other features that
-you'll find explained in [YARA's documentation](http://yara.readthedocs.org/).
+you'll find explained in [YARA's documentation](https://yara.readthedocs.org/).
 
 YARA is multi-platform, running on Windows, Linux and Mac OS X, and can be used
 through its command-line interface or from your own Python scripts with the
