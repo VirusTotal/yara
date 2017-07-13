@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stddef.h>
 
 #include <yara/utils.h>
+#include <yara/integers.h>
 
 typedef struct _YR_HASH_TABLE_ENTRY
 {
