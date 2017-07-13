@@ -1708,6 +1708,54 @@ void test_max_string_per_rules()
 }
 
 
+void test_save_load_rules()
+{
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_add_string(compiler, "rule test {condition: true}", NULL) != 0)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_add_string");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_add_fd");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_compiler_destroy(compiler);
+
+  if (yr_rules_save(rules, "rules.test.saved") != ERROR_SUCCESS)
+  {
+    yr_rules_destroy(rules);
+    perror("yr_rules_save");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_rules_destroy(rules);
+
+  if (yr_rules_load("rules.test.saved", &rules) != ERROR_SUCCESS)
+  {
+    perror("yr_rules_load");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_rules_destroy(rules);
+  return;
+}
+
+
 int main(int argc, char** argv)
 {
   yr_initialize();
@@ -1751,6 +1799,7 @@ int main(int argc, char** argv)
   test_file_descriptor();
 
   test_max_string_per_rules();
+  test_save_load_rules();
 
   yr_finalize();
 
