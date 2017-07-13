@@ -1736,7 +1736,7 @@ void test_save_load_rules()
 
   yr_compiler_destroy(compiler);
 
-  if (yr_rules_save(rules, "rules.test.saved") != ERROR_SUCCESS)
+  if (yr_rules_save(rules, "test-rules.yarc") != ERROR_SUCCESS)
   {
     yr_rules_destroy(rules);
     perror("yr_rules_save");
@@ -1745,7 +1745,7 @@ void test_save_load_rules()
 
   yr_rules_destroy(rules);
 
-  if (yr_rules_load("rules.test.saved", &rules) != ERROR_SUCCESS)
+  if (yr_rules_load("test-rules.yarc", &rules) != ERROR_SUCCESS)
   {
     perror("yr_rules_load");
     exit(EXIT_FAILURE);
