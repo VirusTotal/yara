@@ -58,6 +58,12 @@ typedef struct _YR_HASH_TABLE
 typedef int (*YR_HASH_TABLE_FREE_VALUE_FUNC)(void* value);
 
 
+uint32_t yr_hash(
+    uint32_t seed,
+    const void* buffer,
+    size_t len);
+
+
 YR_API int yr_hash_table_create(
     int size,
     YR_HASH_TABLE** table);
