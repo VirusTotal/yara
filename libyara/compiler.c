@@ -433,14 +433,14 @@ int _yr_compiler_compile_rules(
   YR_EXTERNAL_VARIABLE null_external;
   YR_AC_TABLES tables;
 
-  int8_t halt = OP_HALT;
+  uint8_t halt = OP_HALT;
   int result;
 
   // Write halt instruction at the end of code.
   yr_arena_write_data(
       compiler->code_arena,
       &halt,
-      sizeof(int8_t),
+      sizeof(uint8_t),
       NULL);
 
   // Write a null rule indicating the end.
