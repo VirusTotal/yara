@@ -3,10 +3,10 @@ MODULES =  modules/tests.c
 MODULES += modules/pe.c
 MODULES += modules/elf.c
 MODULES += modules/math.c
-MODULES += modules/json.c
 
 if CUCKOO_MODULE
 MODULES += modules/cuckoo.c
+MODULES += modules/json.c
 endif
 
 if MAGIC_MODULE

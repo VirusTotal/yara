@@ -2,7 +2,6 @@ MODULE(tests)
 MODULE(pe)
 MODULE(elf)
 MODULE(math)
-MODULE(json)
 
 #ifdef DOTNET_MODULE
 MODULE(dotnet)
@@ -10,6 +9,7 @@ MODULE(dotnet)
 
 #ifdef CUCKOO_MODULE
 MODULE(cuckoo)
+MODULE(json)
 #endif
 
 #ifdef MAGIC_MODULE
