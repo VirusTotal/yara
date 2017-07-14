@@ -1363,7 +1363,7 @@ void pe_parse_header(
       pe->object, "subsystem");
 
   set_integer(
-      OptionalHeader(DllCharacteristics),
+      OptionalHeader(pe, DllCharacteristics),
       pe->object, "dll_characteristics");
 
   pe_iterate_resources(
@@ -2387,44 +2387,44 @@ int module_load(
       "SUBSYSTEM_WINDOWS_CE_GUI");
   set_integer(
       IMAGE_SUBSYSTEM_EFI_APPLICATION, module_object,
-	  "SUBSYSTEM_EFI_APPLICATION");
+      "SUBSYSTEM_EFI_APPLICATION");
   set_integer(
       IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER, module_object,
-	  "SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER");
+      "SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER");
   set_integer(
       IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER, module_object,
-	  "SUBSYSTEM_EFI_RUNTIME_DRIVER");
+      "SUBSYSTEM_EFI_RUNTIME_DRIVER");
   set_integer(
       IMAGE_SUBSYSTEM_XBOX, module_object,
-	  "SUBSYSTEM_XBOX");
+      "SUBSYSTEM_XBOX");
   set_integer(
       IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION, module_object,
-	  "SUBSYSTEM_WINDOWS_BOOT_APPLICATION");
+      "SUBSYSTEM_WINDOWS_BOOT_APPLICATION");
 
   set_integer(
       IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE, module_object,
-	  "DYNAMIC_BASE");
+      "DYNAMIC_BASE");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY, module_object,
-	  "FORCE_INTEGRITY");
+      "FORCE_INTEGRITY");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_NX_COMPAT, module_object,
-	  "_NX_COMPAT");
+      "NX_COMPAT");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_NO_ISOLATION, module_object,
-	  "NO_ISOLATION");
+      "NO_ISOLATION");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_NO_SEH, module_object,
-	  "NO_SEH");
+      "NO_SEH");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_NO_BIND, module_object,
-	  "NO_BIND");
+      "NO_BIND");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, module_object,
-	  "WDM_DRIVER");
+      "WDM_DRIVER");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE, module_object,
-	  "TERMINAL_SERVER_AWARE");
+      "TERMINAL_SERVER_AWARE");
 
   set_integer(
       IMAGE_FILE_RELOCS_STRIPPED, module_object,
