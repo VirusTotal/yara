@@ -970,6 +970,10 @@ int yr_arena_load_stream(
     yr_arena_destroy(new_arena);
     return ERROR_CORRUPT_FILE;
   }
+  if (reloc_offset) {
+    yr_arena_destroy(new_arena);
+    return ERROR_CORRUPT_FILE;
+  }
 
   while (reloc_offset != 0xFFFFFFFF)
   {
