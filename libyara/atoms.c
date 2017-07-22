@@ -553,7 +553,7 @@ int _yr_atoms_case_insensitive(
       for (i = 0; i < atom_length; i++)
         new_atom->atom[i] = atoms_cursor[i];
 
-      new_atom->atom_length = atom_length;
+      new_atom->atom_length = (uint8_t) atom_length;
       new_atom->forward_code = atom->forward_code;
       new_atom->backward_code = atom->backward_code;
       new_atom->backtrack = atom->backtrack;
@@ -672,7 +672,8 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
 
       if (current_leaf->atom_length < MAX_ATOM_LENGTH)
       {
-        current_leaf->atom[current_leaf->atom_length] = re_node->value;
+        current_leaf->atom[current_leaf->atom_length] =
+            (uint8_t) re_node->value;
         current_leaf->recent_nodes[current_leaf->atom_length] = re_node;
         current_leaf->atom_length++;
       }
@@ -684,7 +685,7 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
         current_leaf->recent_nodes[MAX_ATOM_LENGTH - 1] = re_node;
 
         for (i = 0; i < MAX_ATOM_LENGTH; i++)
-          new_atom[i] = current_leaf->recent_nodes[i]->value;
+          new_atom[i] = (uint8_t) current_leaf->recent_nodes[i]->value;
 
         quality = _yr_atoms_quality(
             current_leaf->atom,
@@ -873,8 +874,8 @@ int yr_atoms_extract_triplets(
     RE_NODE* left_child;
     RE_NODE* left_grand_child;
 
-	int i;
-	int shift;
+    int i;
+    int shift;
 
     *atoms = NULL;
 
@@ -902,9 +903,9 @@ int yr_atoms_extract_triplets(
         if (atom == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
 
-        atom->atom[0] = left_child->left->value;
-        atom->atom[1] = i;
-        atom->atom[2] = re_node->right->value;
+        atom->atom[0] = (uint8_t) left_child->left->value;
+        atom->atom[1] = (uint8_t) i;
+        atom->atom[2] = (uint8_t) re_node->right->value;
 
         atom->atom_length = 3;
         atom->forward_code = left_child->left->forward_code;
@@ -934,9 +935,9 @@ int yr_atoms_extract_triplets(
         else
           shift = 4;
 
-        atom->atom[0] = left_child->left->value;
-        atom->atom[1] = left_child->right->value | (i << shift);
-        atom->atom[2] = re_node->right->value;
+        atom->atom[0] = (uint8_t) left_child->left->value;
+        atom->atom[1] = (uint8_t)(left_child->right->value | (i << shift));
+        atom->atom[2] = (uint8_t) re_node->right->value;
 
         atom->atom_length = 3;
         atom->forward_code = left_child->left->forward_code;
@@ -962,9 +963,9 @@ int yr_atoms_extract_triplets(
         if (atom == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
 
-        atom->atom[0] = left_grand_child->right->value;
-        atom->atom[1] = i;
-        atom->atom[2] = re_node->right->value;
+        atom->atom[0] = (uint8_t) left_grand_child->right->value;
+        atom->atom[1] = (uint8_t) i;
+        atom->atom[2] = (uint8_t) re_node->right->value;
 
         atom->atom_length = 3;
         atom->forward_code = left_grand_child->right->forward_code;
@@ -995,9 +996,9 @@ int yr_atoms_extract_triplets(
         else
           shift = 4;
 
-        atom->atom[0] = left_grand_child->right->value;
-        atom->atom[1] = left_child->right->value | (i << shift);
-        atom->atom[2] = re_node->right->value;
+        atom->atom[0] = (uint8_t) left_grand_child->right->value;
+        atom->atom[1] = (uint8_t)(left_child->right->value | (i << shift));
+        atom->atom[2] = (uint8_t) re_node->right->value;
 
         atom->atom_length = 3;
         atom->forward_code = left_grand_child->right->forward_code;
