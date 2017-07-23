@@ -65,7 +65,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     } \
 
 
-#define pop(x)  x = stack[--sp]
+#define pop(x)  \
+    if (sp > 0) \
+    { \
+       x = stack[--sp]; \
+    } \
+    else \
+    { \
+      result = ERROR_EXEC_STACK_OVERFLOW; \
+      stop = TRUE; \
+      break; \
+    } \
 
 #define is_undef(x) IS_UNDEFINED((x).i)
 
