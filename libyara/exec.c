@@ -65,7 +65,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     } \
 
 
-#define pop(x)  x = stack[--sp]
+#define pop(x) { assert(sp > 0); x = stack[--sp]; }
 
 #define is_undef(x) IS_UNDEFINED((x).i)
 
