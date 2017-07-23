@@ -996,7 +996,11 @@ int yr_arena_load_stream(
     }
   }
 
-  yr_stream_read(&file_hash, sizeof(file_hash), 1, stream);
+  if (yr_stream_read(&file_hash, sizeof(file_hash), 1, stream) != 1)
+  {
+    yr_arena_destroy(new_arena);
+    return ERROR_CORRUPT_FILE;
+  }
 
   if (file_hash != real_hash)
   {
