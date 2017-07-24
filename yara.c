@@ -82,10 +82,19 @@ typedef struct _MODULE_DATA
 } MODULE_DATA;
 
 
+typedef struct _CALLBACK_ARGS
+{
+  char* file_path;
+  int current_count;
+
+} CALLBACK_ARGS;
+
+
 typedef struct _THREAD_ARGS
 {
   YR_RULES* rules;
   time_t start_time;
+  int current_count;
 
 } THREAD_ARGS;
 
@@ -127,7 +136,8 @@ static int show_help = FALSE;
 static int ignore_warnings = FALSE;
 static int fast_scan = FALSE;
 static int negate = FALSE;
-static int count = 0;
+static int print_count_only = FALSE;
+static int total_count = 0;
 static int limit = 0;
 static int timeout = 1000000;
 static int stack_size = DEFAULT_STACK_SIZE;
@@ -147,6 +157,9 @@ args_option_t options[] =
 
   OPT_STRING_MULTI('i', "identifier", &identifiers, MAX_ARGS_IDENTIFIER,
       "print only rules named IDENTIFIER", "IDENTIFIER"),
+
+  OPT_BOOLEAN('c', "count", &print_count_only,
+      "print only number of matches"),
 
   OPT_BOOLEAN('n', "negate", &negate,
       "print only not satisfied rules (negate)", NULL),
@@ -600,7 +613,7 @@ int handle_message(
 
   show = show && ((!negate && is_matching) || (negate && !is_matching));
 
-  if (show)
+  if (show && !print_count_only)
   {
     mutex_lock(&output_mutex);
 
@@ -657,7 +670,7 @@ int handle_message(
       printf("] ");
     }
 
-    printf("%s\n", (char*) data);
+    printf("%s\n", ((CALLBACK_ARGS*) data)->file_path);
 
     // Show matched strings.
 
@@ -702,9 +715,12 @@ int handle_message(
   }
 
   if (is_matching)
-    count++;
+  {
+    ((CALLBACK_ARGS*) data)->current_count++;
+    total_count++;
+  }
 
-  if (limit != 0 && count >= limit)
+  if (limit != 0 && total_count >= limit)
     return CALLBACK_ABORT;
 
   return CALLBACK_CONTINUE;
@@ -783,6 +799,8 @@ void* scanning_thread(void* param)
 
   while (file_path != NULL)
   {
+    CALLBACK_ARGS user_data = { file_path, 0 };
+
     int elapsed_time = (int) difftime(time(NULL), args->start_time);
 
     if (elapsed_time < timeout)
@@ -792,8 +810,14 @@ void* scanning_thread(void* param)
           file_path,
           flags,
           callback,
-          file_path,
+          &user_data,
           timeout - elapsed_time);
+
+      if (print_count_only) {
+        mutex_lock(&output_mutex);
+        printf("%s: %d\n", file_path, user_data.current_count);
+        mutex_unlock(&output_mutex);
+      }
 
       if (result != ERROR_SUCCESS)
       {
@@ -1155,6 +1179,8 @@ int main(
 
   mutex_init(&output_mutex);
 
+  CALLBACK_ARGS user_data = { (char*) argv[1], 0 };
+
   if (is_integer(argv[1]))
   {
     int pid = atoi(argv[1]);
@@ -1168,7 +1194,7 @@ int main(
         pid,
         flags,
         callback,
-        (void*) argv[1],
+        &user_data,
         timeout);
 
     if (result != ERROR_SUCCESS)
@@ -1176,6 +1202,9 @@ int main(
       print_scanner_error(result);
       exit_with_code(EXIT_FAILURE);
     }
+
+    if (print_count_only)
+      printf("%d\n", user_data.current_count);
   }
   else if (is_directory(argv[1]))
   {
@@ -1192,6 +1221,7 @@ int main(
 
     thread_args.rules = rules;
     thread_args.start_time = start_time;
+    thread_args.current_count = 0;
 
     for (i = 0; i < threads; i++)
     {
@@ -1229,7 +1259,7 @@ int main(
         argv[1],
         flags,
         callback,
-        (void*) argv[1],
+        &user_data,
         timeout);
 
     if (result != ERROR_SUCCESS)
@@ -1238,6 +1268,9 @@ int main(
       print_scanner_error(result);
       exit_with_code(EXIT_FAILURE);
     }
+
+    if (print_count_only)
+      printf("%d\n", user_data.current_count);
   }
 
   #ifdef PROFILING_ENABLED
