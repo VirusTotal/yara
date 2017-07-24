@@ -71,12 +71,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STRING_GFLAGS_FIXED_OFFSET      0x8000
 #define STRING_GFLAGS_GREEDY_REGEXP     0x10000
 #define STRING_GFLAGS_DOT_ALL           0x20000
+#define STRING_GFLAGS_LEET              0x40000
 
 #define STRING_IS_HEX(x) \
     (((x)->g_flags) & STRING_GFLAGS_HEXADECIMAL)
 
 #define STRING_IS_NO_CASE(x) \
     (((x)->g_flags) & STRING_GFLAGS_NO_CASE)
+
+#define STRING_IS_LEET(x) \
+    (((x)->g_flags) & STRING_GFLAGS_LEET)
 
 #define STRING_IS_DOT_ALL(x) \
     (((x)->g_flags) & STRING_GFLAGS_DOT_ALL)
