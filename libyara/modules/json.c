@@ -40,10 +40,7 @@ void dump_json(json_t* json, YR_OBJECT* module_object, const char* root) {
 	const char* key;
 	json_t* value;
 
-	json_object_foreach(json, key, value) {
-		char* json_val = json_dumps(value, JSON_ENCODE_ANY);
-		char* to_free = json_val;
-		
+	json_object_foreach(json, key, value) {		
 		char* new_root;
 		if (root) {
 			new_root = (char*)malloc(strlen(root) + strlen(key) + 2);
@@ -52,6 +49,9 @@ void dump_json(json_t* json, YR_OBJECT* module_object, const char* root) {
 		else {
 			new_root = (char*)key;
 		}
+
+		char* json_val = json_dumps(value, JSON_ENCODE_ANY);
+		char* to_free = json_val;
 
 		// remove leading and trailing " from string
 		int len = strlen(json_val);
@@ -62,16 +62,20 @@ void dump_json(json_t* json, YR_OBJECT* module_object, const char* root) {
 
 		set_string(json_val, module_object, "keys[%s]", new_root);
 		free(to_free);
-		if (root != NULL)
-			free(new_root);
 
 		if (json_is_object(value))
 			dump_json(value, module_object, new_root);
+
+		if (root != NULL)
+			free(new_root);
 	}
 }
 
 
 int module_load(YR_SCAN_CONTEXT* context, YR_OBJECT* module_object, void* module_data, size_t module_data_size) {
+  if (module_object->data)
+	  return ERROR_SUCCESS;
+
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   uint8_t* block_data = block->fetch_data(block);
 
@@ -87,8 +91,10 @@ int module_load(YR_SCAN_CONTEXT* context, YR_OBJECT* module_object, void* module
 
 
 int module_unload(YR_OBJECT* module_object) {
-  if (module_object->data)
-    json_decref((json_t*)module_object->data);
+	if (module_object->data) {
+		json_decref((json_t*)module_object->data);
+		module_object->data = NULL;
+	}
   
-  return ERROR_SUCCESS;
+	return ERROR_SUCCESS;
 }
