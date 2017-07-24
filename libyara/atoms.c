@@ -87,6 +87,7 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 #include <yara/mem.h>
 #include <yara/error.h>
 #include <yara/types.h>
+#include <yara/globals.h>
 
 
 #define YR_MAX_ATOM_QUALITY   100000
@@ -570,6 +571,130 @@ int _yr_atoms_case_insensitive(
   }
 
   return ERROR_SUCCESS;
+}
+
+//
+// _yr_atoms_leet_combinations
+//
+// Returns all combinations of leet replacements for a given atom. For
+// atom "mit" the output would be "m17" "mi7" "m1t". Resulting
+// atoms are written into the output buffer in this format:
+//
+//  [size 1] [backtrack 1] [atom 1]  ... [size N] [backtrack N] [atom N] [0]
+//
+// Notice the zero at the end to indicate where the output ends.
+//
+// The caller is responsible of providing a buffer large enough to hold the
+// returned atoms.
+//
+
+uint8_t* _yr_atoms_leet_combinations(
+	uint8_t* atom,
+	int atom_length,
+	int atom_offset,
+	uint8_t* output_buffer)
+{
+	uint8_t c;
+	uint8_t* new_atom;
+
+	if (atom_offset + 1 < atom_length)
+		output_buffer = _yr_atoms_leet_combinations(
+			atom,
+			atom_length,
+			atom_offset + 1,
+			output_buffer);
+
+	c = atom[atom_offset];
+
+	if (strchr("aAeEgGiIoOsStT", c) != NULL)
+	{
+		// Write atom length.
+		*((int*)output_buffer) = atom_length;
+		output_buffer += sizeof(int);
+
+		memcpy(output_buffer, atom, atom_length);
+
+		new_atom = output_buffer;
+		output_buffer += atom_length;
+
+		// Swap characters for leet
+		new_atom[atom_offset] = yr_leetcase[c];
+
+		if (atom_offset + 1 < atom_length)
+			output_buffer = _yr_atoms_leet_combinations(
+				new_atom,
+				atom_length,
+				atom_offset + 1,
+				output_buffer);
+	}
+
+	if (atom_offset == 0)
+		*((int*)output_buffer) = 0;
+
+	return output_buffer;
+}
+
+//
+// _yr_atoms_leet
+//
+// For a given list of atoms returns another list of atoms
+// with every leet combination.
+//
+
+int _yr_atoms_leet(
+	YR_ATOM_LIST_ITEM* atoms,
+	YR_ATOM_LIST_ITEM** leet_atoms)
+{
+	YR_ATOM_LIST_ITEM* atom;
+	YR_ATOM_LIST_ITEM* new_atom;
+
+	uint8_t buffer[CASE_COMBINATIONS_BUFFER_SIZE];
+	uint8_t* atoms_cursor;
+
+	int i, atom_length;
+
+	*leet_atoms = NULL;
+	atom = atoms;
+
+	while (atom != NULL)
+	{
+		_yr_atoms_leet_combinations(
+			atom->atom,
+			atom->atom_length,
+			0,
+			buffer);
+
+		atoms_cursor = buffer;
+		atom_length = *((int*)atoms_cursor);
+		atoms_cursor += sizeof(int);
+
+		while (atom_length != 0)
+		{
+			new_atom = (YR_ATOM_LIST_ITEM*)yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
+
+			if (new_atom == NULL)
+				return ERROR_INSUFFICIENT_MEMORY;
+
+			for (i = 0; i < atom_length; i++)
+				new_atom->atom[i] = atoms_cursor[i];
+
+			new_atom->atom_length = atom_length;
+			new_atom->forward_code = atom->forward_code;
+			new_atom->backward_code = atom->backward_code;
+			new_atom->backtrack = atom->backtrack;
+			new_atom->next = *leet_atoms;
+
+			*leet_atoms = new_atom;
+
+			atoms_cursor += atom_length;
+			atom_length = *((int*)atoms_cursor);
+			atoms_cursor += sizeof(int);
+		}
+
+		atom = atom->next;
+	}
+
+	return ERROR_SUCCESS;
 }
 
 
@@ -1175,6 +1300,7 @@ int yr_atoms_extract_from_string(
   YR_ATOM_LIST_ITEM* item;
   YR_ATOM_LIST_ITEM* case_insensitive_atoms;
   YR_ATOM_LIST_ITEM* wide_atoms;
+  YR_ATOM_LIST_ITEM* leet_atoms;
 
   int max_quality;
   int i, j, length;
@@ -1247,6 +1373,19 @@ int yr_atoms_extract_from_string(
         });
 
     *atoms = _yr_atoms_list_concat(*atoms, case_insensitive_atoms);
+  }
+
+  if (flags & STRING_GFLAGS_LEET)
+  {
+	  FAIL_ON_ERROR_WITH_CLEANUP(
+		  _yr_atoms_leet(*atoms, &leet_atoms),
+		  {
+			  yr_atoms_list_destroy(*atoms);
+	  yr_atoms_list_destroy(leet_atoms);
+	  *atoms = NULL;
+		  });
+
+	  *atoms = _yr_atoms_list_concat(*atoms, leet_atoms);
   }
 
   return ERROR_SUCCESS;

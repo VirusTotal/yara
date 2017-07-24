@@ -69,6 +69,7 @@ static struct yr_config_var
 
 char yr_lowercase[256];
 char yr_altercase[256];
+char yr_leetcase[256];
 
 
 #if defined(HAVE_LIBCRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000L
@@ -101,6 +102,40 @@ void locking_function(
 #endif
 
 //
+// toleet
+//
+// Replaces letters with leet replacements
+//
+
+char toleet(char c) {
+	switch (c) {
+	case 'a':
+	case 'A':
+		return '4';
+	case 'e':
+	case 'E':
+		return '3';
+	case 'g':
+	case 'G':
+		return '6';
+	case 'i':
+	case 'I':
+		return '1';
+	case 'o':
+	case 'O':
+		return '0';
+	case 's':
+	case 'S':
+		return '5';
+	case 't':
+	case 'T':
+		return '7';
+	default:
+		return c;
+	}
+}
+
+//
 // yr_initialize
 //
 // Should be called by main thread before using any other
@@ -129,6 +164,7 @@ YR_API int yr_initialize(void)
       yr_altercase[i] = i;
 
     yr_lowercase[i] = tolower(i);
+	yr_leetcase[i] = toleet(i);
   }
 
   FAIL_ON_ERROR(yr_heap_alloc());

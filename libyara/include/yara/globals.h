@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern char yr_lowercase[256];
 extern char yr_altercase[256];
+extern char yr_leetcase[256];
 
 extern YR_THREAD_STORAGE_KEY yr_tidx_key;
 extern YR_THREAD_STORAGE_KEY yr_recovery_state_key;

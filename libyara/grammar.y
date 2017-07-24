@@ -561,6 +561,7 @@ string_modifier
     | _ASCII_       { $$ = STRING_GFLAGS_ASCII; }
     | _NOCASE_      { $$ = STRING_GFLAGS_NO_CASE; }
     | _FULLWORD_    { $$ = STRING_GFLAGS_FULL_WORD; }
+    | _LEET_        { $$ = STRING_GFLAGS_LEET; }
     ;
 
 
