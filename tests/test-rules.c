@@ -192,6 +192,15 @@ static void test_arithmetic_operators()
   assert_true_rule(
       "rule test { condition: -0x01 == -1}", NULL);
 
+  assert_true_rule(
+      "rule test { condition: 0o10 == 8 }", NULL);
+
+  assert_true_rule(
+      "rule test { condition: 0o100 == 64 }", NULL);
+
+  assert_true_rule(
+      "rule test { condition: 0o755 == 493 }", NULL);
+
 }
 
 
@@ -1389,6 +1398,13 @@ static void test_modules()
   assert_true_rule(
       "import \"tests\" \
        rule test { \
+        condition: tests.integer_array[256] == 256 \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+       rule test { \
         condition: tests.string_array[0] == \"foo\" \
       }",
       NULL);
@@ -1649,6 +1665,96 @@ void test_file_descriptor()
   return;
 }
 
+void test_max_string_per_rules()
+{
+  uint32_t new_max_strings_per_rule = 1;
+  uint32_t old_max_strings_per_rule;
+
+  yr_get_configuration(
+      YR_CONFIG_MAX_STRINGS_PER_RULE,
+      (void*) &old_max_strings_per_rule);
+
+  yr_set_configuration(
+      YR_CONFIG_MAX_STRINGS_PER_RULE,
+      (void*) &new_max_strings_per_rule);
+
+  assert_error(
+      "rule test { \
+         strings: \
+           $ = \"uno\" \
+           $ = \"dos\" \
+         condition: \
+           all of them }",
+      ERROR_TOO_MANY_STRINGS);
+
+  new_max_strings_per_rule = 2;
+
+  yr_set_configuration(
+      YR_CONFIG_MAX_STRINGS_PER_RULE,
+      (void*) &new_max_strings_per_rule);
+
+  assert_error(
+      "rule test { \
+         strings: \
+           $ = \"uno\" \
+           $ = \"dos\" \
+         condition: \
+           all of them }",
+      ERROR_SUCCESS);
+
+  yr_set_configuration(
+      YR_CONFIG_MAX_STRINGS_PER_RULE,
+      (void*) &old_max_strings_per_rule);
+}
+
+
+void test_save_load_rules()
+{
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_add_string(compiler, "rule test {condition: true}", NULL) != 0)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_add_string");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_add_fd");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_compiler_destroy(compiler);
+
+  if (yr_rules_save(rules, "test-rules.yarc") != ERROR_SUCCESS)
+  {
+    yr_rules_destroy(rules);
+    perror("yr_rules_save");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_rules_destroy(rules);
+
+  if (yr_rules_load("test-rules.yarc", &rules) != ERROR_SUCCESS)
+  {
+    perror("yr_rules_load");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_rules_destroy(rules);
+  return;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -1691,6 +1797,9 @@ int main(int argc, char** argv)
   #endif
 
   test_file_descriptor();
+
+  test_max_string_per_rules();
+  test_save_load_rules();
 
   yr_finalize();
 

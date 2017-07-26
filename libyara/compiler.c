@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <string.h>
 
+#include <yara/libyara.h>
 #include <yara/utils.h>
 #include <yara/compiler.h>
 #include <yara/exec.h>
@@ -432,14 +433,14 @@ int _yr_compiler_compile_rules(
   YR_EXTERNAL_VARIABLE null_external;
   YR_AC_TABLES tables;
 
-  int8_t halt = OP_HALT;
+  uint8_t halt = OP_HALT;
   int result;
 
   // Write halt instruction at the end of code.
   yr_arena_write_data(
       compiler->code_arena,
       &halt,
-      sizeof(int8_t),
+      sizeof(uint8_t),
       NULL);
 
   // Write a null rule indicating the end.
@@ -815,6 +816,8 @@ YR_API char* yr_compiler_get_error_message(
     char* buffer,
     int buffer_size)
 {
+  uint32_t max_strings_per_rule;
+
   switch(compiler->last_error)
   {
     case ERROR_INSUFFICIENT_MEMORY:
@@ -1002,7 +1005,18 @@ YR_API char* yr_compiler_get_error_message(
           buffer,
           buffer_size,
           "regular expression is too complex");
-
+      break;
+    case ERROR_TOO_MANY_STRINGS:
+       yr_get_configuration(
+          YR_CONFIG_MAX_STRINGS_PER_RULE,
+          &max_strings_per_rule);
+       snprintf(
+          buffer,
+          buffer_size,
+          "too many strings in rule \"%s\" (limit: %d)",
+          compiler->last_error_extra_info,
+          max_strings_per_rule);
+      break;
   }
 
   return buffer;

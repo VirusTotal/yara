@@ -38,6 +38,7 @@ char* pe_get_dotnet_string(
     DWORD string_index)
 {
   size_t remaining;
+
   char* start;
   char* eos;
 
@@ -270,10 +271,12 @@ STREAMS dotnet_parse_stream_headers(
       break;
 
     start = (char*) stream_header->Name;
+
     if (!fits_in_pe(pe, start, DOTNET_STREAM_NAME_SIZE))
       break;
 
     eos = (char*) memmem((void*) start, DOTNET_STREAM_NAME_SIZE, "\0", 1);
+
     if (eos == NULL)
       break;
 
@@ -1002,7 +1005,7 @@ void dotnet_parse_tilde_2(
 
           if (name != NULL)
           {
-            set_string(name, pe->object, "modulerefs[%i]", i);
+            set_string(name, pe->object, "modulerefs[%i]", counter);
             counter++;
           }
 
@@ -1276,17 +1279,17 @@ void dotnet_parse_tilde_2(
 
           // Add 4 to skip the size.
           set_integer(resource_base + resource_offset + 4,
-              pe->object, "resources[%i].offset", i);
+              pe->object, "resources[%i].offset", counter);
 
           set_integer(resource_size,
-              pe->object, "resources[%i].length", i);
+              pe->object, "resources[%i].length", counter);
 
           name = pe_get_dotnet_string(pe,
               string_offset,
               DOTNET_STRING_INDEX(manifestresource_table->Name));
 
           if (name != NULL)
-            set_string(name, pe->object, "resources[%i].name", i);
+            set_string(name, pe->object, "resources[%i].name", counter);
 
           row_ptr += row_size;
           counter++;
@@ -1380,10 +1383,13 @@ void dotnet_parse_tilde(
   // Default index sizes are 2. Will be bumped to 4 if necessary.
   memset(&index_sizes, 2, sizeof(index_sizes));
 
-  tilde_header = (PTILDE_HEADER) (pe->data + metadata_root + streams->tilde->Offset);
+  tilde_header = (PTILDE_HEADER) (
+      pe->data +
+      metadata_root +
+      streams->tilde->Offset);
 
   if (!struct_fits_in_pe(pe, tilde_header, TILDE_HEADER))
-      return;
+    return;
 
   // Set index sizes for various heaps.
   if (tilde_header->HeapSizes & 0x01)
@@ -1409,7 +1415,8 @@ void dotnet_parse_tilde(
       continue;
 
 #define ROW_CHECK(name) \
-    rows.name = *(row_offset + matched_bits);
+    if (fits_in_pe(pe, row_offset, (matched_bits + 1) * sizeof(uint32_t))) \
+      rows.name = *(row_offset + matched_bits);
 
 #define ROW_CHECK_WITH_INDEX(name) \
     ROW_CHECK(name); \

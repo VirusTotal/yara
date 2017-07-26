@@ -85,6 +85,14 @@ lib_LTLIBRARIES = libyara.la
 
 libyara_la_LDFLAGS = -version-number 3:6:0
 
+BUILT_SOURCES = \
+  lexer.c \
+  hex_lexer.c \
+  re_lexer.c \
+  grammar.c \
+  hex_grammar.c \
+  re_grammar.c
+
 libyara_la_SOURCES = \
   $(MODULES) \
   grammar.y \
@@ -101,9 +109,7 @@ libyara_la_SOURCES = \
   hash.c \
   hash.h \
   hex_grammar.y \
-  hex_lexer.h \
   hex_lexer.l \
-  lexer.h \
   lexer.l \
   libyara.c \
   mem.c \
@@ -120,7 +126,6 @@ libyara_la_SOURCES = \
   re.c \
   re.h \
   re_grammar.y \
-  re_lexer.h \
   re_lexer.l \
   rules.c \
   scan.c \

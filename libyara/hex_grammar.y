@@ -54,7 +54,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define incr_ast_levels() \
     if (((RE_AST*) yyget_extra(yyscanner))->levels++ > RE_MAX_AST_LEVELS) \
     { \
-      lex_env->last_error_code = ERROR_INVALID_HEX_STRING; \
+      yyerror(yyscanner, lex_env, "string too long"); \
       YYABORT; \
     }
 
@@ -231,15 +231,6 @@ token_or_range
 token
     : byte
       {
-        lex_env->token_count++;
-
-        if (lex_env->token_count > MAX_HEX_STRING_TOKENS)
-        {
-          yr_re_node_destroy($1);
-          yyerror(yyscanner, lex_env, "string too long");
-          YYABORT;
-        }
-
         $$ = $1;
       }
     | '('

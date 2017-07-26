@@ -176,6 +176,7 @@ int module_load(
   set_integer(0, module_object, "integer_array[%i]", 0);
   set_integer(1, module_object, "integer_array[%i]", 1);
   set_integer(2, module_object, "integer_array[%i]", 2);
+  set_integer(256, module_object, "integer_array[%i]", 256);
 
   set_string("foo", module_object, "string_array[%i]", 0);
   set_string("bar", module_object, "string_array[%i]", 1);

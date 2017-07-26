@@ -69,6 +69,7 @@ static int ignore_warnings = FALSE;
 static int show_version = FALSE;
 static int show_help = FALSE;
 static int fail_on_warnings = FALSE;
+static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 
 #define USAGE_STRING \
@@ -84,6 +85,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN(0, "fail-on-warnings", &fail_on_warnings,
       "fail on warnings"),
+
+  OPT_INTEGER(0, "max-strings-per-rule", &max_strings_per_rule,
+      "set maximum number of strings per rule (default=10000)", "NUMBER"),
 
   OPT_BOOLEAN('v', "version", &show_version,
       "show version information"),
@@ -234,6 +238,7 @@ int main(
   cr.errors = 0;
   cr.warnings = 0;
 
+  yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
   yr_compiler_set_callback(compiler, report_error, &cr);
 
   for (int i = 0; i < argc - 1; i++)

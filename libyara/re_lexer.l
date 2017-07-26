@@ -69,8 +69,9 @@ static uint8_t word_chars[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 
-uint8_t escaped_char_value(
-    char* text);
+int escaped_char_value(
+    char* text,
+    uint8_t* value);
 
 int read_escaped_char(
     yyscan_t yyscanner,
@@ -312,7 +313,11 @@ hex_digit     [0-9a-fA-F]
 
   if (start == '\\')
   {
-    start = escaped_char_value(yytext);
+    if (!escaped_char_value(yytext, &start))
+    {
+      yyerror(yyscanner, lex_env, "illegal escape sequence");
+      yyterminate();
+    }
 
     if (yytext[1] == 'x')
       end = yytext[5];
@@ -475,48 +480,52 @@ hex_digit     [0-9a-fA-F]
 
 %%
 
-uint8_t escaped_char_value(
-    char* text)
+int escaped_char_value(
+    char* text,
+    uint8_t* value)
 {
+  unsigned int hex_value;
   char hex[3];
-  int result;
 
   assert(text[0] == '\\');
 
   switch(text[1])
   {
   case 'x':
+    if (!isxdigit(text[2]) || !isxdigit(text[3]))
+      return 0;
     hex[0] = text[2];
     hex[1] = text[3];
     hex[2] = '\0';
-    sscanf(hex, "%x", &result);
+    sscanf(hex, "%x", &hex_value);
+    *value = (uint8_t) hex_value;
     break;
 
   case 'n':
-    result = '\n';
+    *value = '\n';
     break;
 
   case 't':
-    result = '\t';
+    *value = '\t';
     break;
 
   case 'r':
-    result = '\r';
+    *value = '\r';
     break;
 
   case 'f':
-    result = '\f';
+    *value = '\f';
     break;
 
   case 'a':
-    result = '\a';
+    *value = '\a';
     break;
 
   default:
-    result = text[1];
+    *value = text[1];
   }
 
-  return result;
+  return 1;
 }
 
 
@@ -543,18 +552,16 @@ int read_escaped_char(
   {
     text[2] = RE_YY_INPUT(yyscanner);
 
-    if (!isxdigit(text[2]))
+    if (text[2] == EOF || text[2] == 0)
       return 0;
 
     text[3] = RE_YY_INPUT(yyscanner);
 
-    if (!isxdigit(text[3]))
+    if (text[3] == EOF || text[3] == 0)
       return 0;
   }
 
-  *escaped_char = escaped_char_value(text);
-
-  return 1;
+  return escaped_char_value(text, escaped_char);
 }
 
 
@@ -601,6 +608,7 @@ int yr_parse_re_string(
   RE_LEX_ENVIRONMENT lex_env;
 
   lex_env.last_error_code = ERROR_SUCCESS;
+  lex_env.last_error_message[0] = '\0';
 
   yr_thread_storage_set_value(&yr_recovery_state_key, &recovery_state);
 

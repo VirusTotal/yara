@@ -5,7 +5,7 @@ libdir=@libdir@
 
 Name: yara
 Description: YARA library
-URL: http://plusvic.github.io/yara/
+URL: https://virustotal.github.io/yara/
 Version: @PACKAGE_VERSION@
 Cflags: -I${includedir}
 Libs: -L${libdir} -lyara

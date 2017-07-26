@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stddef.h>
 
 #include <yara/utils.h>
+#include <yara/integers.h>
 
 typedef struct _YR_HASH_TABLE_ENTRY
 {
@@ -56,6 +57,12 @@ typedef struct _YR_HASH_TABLE
 
 
 typedef int (*YR_HASH_TABLE_FREE_VALUE_FUNC)(void* value);
+
+
+uint32_t yr_hash(
+    uint32_t seed,
+    const void* buffer,
+    size_t len);
 
 
 YR_API int yr_hash_table_create(

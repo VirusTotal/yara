@@ -133,6 +133,7 @@ static int timeout = 1000000;
 static int stack_size = DEFAULT_STACK_SIZE;
 static int threads = MAX_THREADS;
 static int fail_on_warnings = FALSE;
+static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 
 #define USAGE_STRING \
@@ -185,6 +186,9 @@ args_option_t options[] =
 
   OPT_INTEGER('k', "stack-size", &stack_size,
       "set maximum stack size (default=16384)", "SLOTS"),
+
+  OPT_INTEGER(0, "max-strings-per-rule", &max_strings_per_rule,
+      "set maximum number of strings per rule (default=10000)", "NUMBER"),
 
   OPT_BOOLEAN('r', "recursive", &recursive_search,
       "recursively search directories"),
@@ -1035,7 +1039,7 @@ int main(
       "Mandatory arguments to long options are mandatory for "
       "short options too.\n\n", YR_VERSION, USAGE_STRING);
 
-    args_print_usage(options, 35);
+    args_print_usage(options, 40);
     printf("\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n");
 
     return EXIT_SUCCESS;
@@ -1071,13 +1075,8 @@ int main(
     exit_with_code(EXIT_FAILURE);
   }
 
-  if (stack_size != DEFAULT_STACK_SIZE)
-  {
-    // If the user chose a different stack size than default,
-    // modify the yara config here.
-
-    yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
-  }
+  yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
+  yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
 
   // Try to load the rules file as a binary file containing
   // compiled rules first

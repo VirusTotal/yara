@@ -57,7 +57,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_FUNCTION_ARGS               128
 #define MAX_FAST_RE_STACK               300
 #define MAX_OVERLOADED_FUNCTIONS        10
-#define MAX_HEX_STRING_TOKENS           10000
 #define MAX_MATCH_DATA                  4096
 
 #define LOOP_LOCAL_VARS                 4
@@ -83,6 +82,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_MAX_FIBERS                   1024
 
 // Maximum number of levels in regexp's AST
-#define RE_MAX_AST_LEVELS               3000
+#define RE_MAX_AST_LEVELS               6000
 
 #endif
