@@ -41,8 +41,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Mach-O universal binary magic constants
 
-#define FAT_MAGIC    0xcafebabe
-#define FAT_CIGAM    0xbebafeca
+#define FAT_MAGIC     0xcafebabe
+#define FAT_CIGAM     0xbebafeca
+#define FAT_MAGIC_64  0xcafebabf
+#define FAT_CIGAM_64  0xbfbafeca
 
 // Mach-O 64-bit masks
 
@@ -566,6 +568,15 @@ typedef struct {
   uint32_t size;
   uint32_t align;
 } fat_arch_t;
+
+
+typedef struct {
+  uint32_t cputype;
+  uint32_t cpusubtype;
+  uint64_t offset;
+  uint64_t size;
+  uint32_t align;
+} fat_arch_64_t;
 
 #pragma pack(pop)
 
