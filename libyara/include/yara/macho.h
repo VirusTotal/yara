@@ -576,6 +576,7 @@ typedef struct {
   uint64_t offset;
   uint64_t size;
   uint32_t align;
+  uint32_t reserved;
 } fat_arch_64_t;
 
 #pragma pack(pop)
