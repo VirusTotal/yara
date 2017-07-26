@@ -505,6 +505,8 @@ void macho_set_definitions(
 
   set_integer(FAT_MAGIC, object, "FAT_MAGIC");
   set_integer(FAT_CIGAM, object, "FAT_CIGAM");
+  set_integer(FAT_MAGIC_64, object, "FAT_MAGIC_64");
+  set_integer(FAT_CIGAM_64, object, "FAT_CIGAM_64");
 
   // 64-bit masks
 
@@ -805,6 +807,8 @@ begin_declarations;
 
   declare_integer("FAT_MAGIC");
   declare_integer("FAT_CIGAM");
+  declare_integer("FAT_MAGIC_64");
+  declare_integer("FAT_CIGAM_64");
 
   // 64-bit masks
 
