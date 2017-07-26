@@ -567,7 +567,7 @@ typedef struct {
   uint32_t offset;
   uint32_t size;
   uint32_t align;
-} fat_arch_t;
+} fat_arch_32_t;
 
 
 typedef struct {
