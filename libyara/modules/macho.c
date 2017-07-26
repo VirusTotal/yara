@@ -62,7 +62,8 @@ void macho_init_fat_data_storage(
 
 // Check if file is for 32-bit architecture.
 
-int macho_is_32(const uint8_t* magic)
+int macho_is_32(
+    const uint8_t* magic)
 {
   // Magic must be [CE]FAEDFE or FEEDFA[CE].
   return magic[0] == 0xce || magic[3] == 0xce;
@@ -71,7 +72,8 @@ int macho_is_32(const uint8_t* magic)
 
 // Check if file is for big-endian architecture.
 
-int macho_is_big(const uint8_t* magic)
+int macho_is_big(
+    const uint8_t* magic)
 {
   // Magic must be [FE]EDFACE or [FE]EDFACF.
   return magic[0] == 0xfe;
@@ -80,7 +82,8 @@ int macho_is_big(const uint8_t* magic)
 
 // Check for Mach-O fat binary signature.
 
-int macho_is_fat_file_block(const uint32_t* magic)
+int macho_is_fat_file_block(
+    const uint32_t* magic)
 {
   return *magic == FAT_MAGIC || *magic == FAT_MAGIC_64 ||
       *magic == FAT_CIGAM || *magic == FAT_CIGAM_64;
@@ -101,8 +104,7 @@ int macho_is_file_block(const uint32_t* magic)
 int macho_rva_to_offset(
     uint64_t address,
     uint64_t* result,
-    YR_OBJECT* object
-    )
+    YR_OBJECT* object)
 {
   uint64_t segment_count = get_integer(object, "number_of_segments");
   for (uint64_t i = 0; i < segment_count; i++)
@@ -126,8 +128,7 @@ int macho_rva_to_offset(
 int macho_offset_to_rva(
     uint64_t offset,
     uint64_t* result,
-    YR_OBJECT* object
-    )
+    YR_OBJECT* object)
 {
   uint64_t segment_count = get_integer(object, "number_of_segments");
   for (uint64_t i = 0; i < segment_count; i++)
