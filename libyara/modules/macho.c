@@ -82,7 +82,8 @@ int macho_is_big(const uint8_t* magic)
 
 int macho_is_fat_file_block(const uint32_t* magic)
 {
-  return *magic == FAT_MAGIC || *magic == FAT_CIGAM;
+  return *magic == FAT_MAGIC || *magic == FAT_MAGIC_64 ||
+      *magic == FAT_CIGAM || *magic == FAT_CIGAM_64;
 }
 
 
