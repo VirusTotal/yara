@@ -432,12 +432,16 @@ typedef struct _YR_SCAN_CONTEXT
 
   void* user_data;
 
+  YR_RULES* rules;
   YR_MEMORY_BLOCK_ITERATOR*  iterator;
   YR_HASH_TABLE*  objects_table;
   YR_CALLBACK_FUNC  callback;
 
   YR_ARENA* matches_arena;
   YR_ARENA* matching_strings_arena;
+
+  int status;
+  YR_STRING* failing_string;
 
 } YR_SCAN_CONTEXT;
 

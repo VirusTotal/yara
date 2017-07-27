@@ -255,7 +255,7 @@ int _yr_rules_scan_mem_block(
   YR_AC_MATCH* match;
   YR_AC_TRANSITION transition;
 
-  size_t i = 0;
+  size_t i = 0; int result;
   uint32_t state = YR_AC_ROOT_STATE;
   uint16_t index;
 
@@ -273,13 +273,17 @@ int _yr_rules_scan_mem_block(
 
       if (match->backtrack <= i)
       {
-        FAIL_ON_ERROR(yr_scan_verify_match(
+        result = yr_scan_verify_match(
             context,
             match,
             block_data,
             block->size,
             block->base,
-            i - match->backtrack));
+            i - match->backtrack);
+        if (result != ERROR_SUCCESS) {
+          context->failing_string = match->string;
+          return result;
+        }
       }
 
       match = match->next;
@@ -312,13 +316,17 @@ int _yr_rules_scan_mem_block(
   {
     if (match->backtrack <= i)
     {
-      FAIL_ON_ERROR(yr_scan_verify_match(
+      result = yr_scan_verify_match(
           context,
           match,
           block_data,
           block->size,
           block->base,
-          i - match->backtrack));
+          i - match->backtrack);
+      if (result != ERROR_SUCCESS) {
+        context->failing_string = match->string;
+        return result;
+      }
     }
 
     match = match->next;
@@ -373,11 +381,14 @@ YR_API int yr_rules_scan_mem_blocks(
   context.callback = callback;
   context.user_data = user_data;
   context.file_size = block->size;
+  context.rules = rules;
   context.iterator = iterator;
   context.entry_point = UNDEFINED;
   context.objects_table = NULL;
   context.matches_arena = NULL;
   context.matching_strings_arena = NULL;
+  context.status = ERROR_SUCCESS;
+  context.failing_string = NULL;
 
   yr_set_tidx(tidx);
 
@@ -516,6 +527,11 @@ YR_API int yr_rules_scan_mem_blocks(
   callback(CALLBACK_MSG_SCAN_FINISHED, NULL, user_data);
 
 _exit:
+
+  if (result != ERROR_SUCCESS) {
+    context.status = result;
+    callback(CALLBACK_MSG_SCAN_ERROR, &context, user_data);
+  }
 
   _yr_rules_clean_matches(rules, &context);
 
