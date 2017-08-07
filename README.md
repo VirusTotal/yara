@@ -49,6 +49,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 
 * [ActiveCanopy](https://activecanopy.com/)
 * [Adlice](http://www.adlice.com/)
+* [AlienVault] (https://otx.alienvault.com/)
 * [BAE Systems](http://www.baesystems.com/home?r=ai)
 * [Bayshore Networks, Inc.](http://www.bayshorenetworks.com)
 * [BinaryAlert](https://github.com/airbnb/binaryalert)
