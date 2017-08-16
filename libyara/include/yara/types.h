@@ -309,6 +309,15 @@ typedef struct _YARA_RULES_FILE_HEADER
 
 } YARA_RULES_FILE_HEADER;
 
+
+typedef struct _YR_INIT_RULE_ARGS
+{
+  DECLARE_REFERENCE(YR_RULE*, rule);
+  DECLARE_REFERENCE(uint8_t*, jmp_addr);
+
+} YR_INIT_RULE_ARGS;
+
+
 #pragma pack(pop)
 
 
@@ -464,14 +473,6 @@ typedef union _YR_VALUE
   RE* re;
 
 } YR_VALUE;
-
-
-typedef struct _YR_INIT_RULE_ARGS
-{
-  YR_RULE* rule;
-  uint8_t* jmp_addr;
-
-} YR_INIT_RULE_ARGS;
 
 
 #define OBJECT_COMMON_FIELDS \
