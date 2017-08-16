@@ -170,6 +170,8 @@ int yr_execute_code(
   YR_RULE* current_rule = NULL;
   #endif
 
+  YR_INIT_RULE_ARGS init_rule_args;
+
   YR_RULE* rule;
   YR_MATCH* match;
   YR_OBJECT_FUNCTION* function;
@@ -419,15 +421,23 @@ int yr_execute_code(
       case OP_PUSH_RULE:
         rule = *(YR_RULE**)(ip);
         ip += sizeof(uint64_t);
-        r1.i = rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0;
+        if (RULE_IS_DISABLED(rule))
+          r1.i = UNDEFINED;
+        else
+          r1.i = rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0;
         push(r1);
         break;
 
       case OP_INIT_RULE:
+        memcpy(&init_rule_args, ip, sizeof(init_rule_args));
         #ifdef PROFILING_ENABLED
-        current_rule = *(YR_RULE**)(ip);
+
+        current_rule = init_rule_args.rule
         #endif
-        ip += sizeof(uint64_t);
+        if (RULE_IS_DISABLED(init_rule_args.rule))
+          ip = init_rule_args.jmp_addr;
+        else
+          ip += sizeof(init_rule_args);
         break;
 
       case OP_MATCH_RULE:

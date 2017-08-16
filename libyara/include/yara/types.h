@@ -71,6 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STRING_GFLAGS_FIXED_OFFSET      0x8000
 #define STRING_GFLAGS_GREEDY_REGEXP     0x10000
 #define STRING_GFLAGS_DOT_ALL           0x20000
+#define STRING_GFLAGS_DISABLED          0x40000
 
 #define STRING_IS_HEX(x) \
     (((x)->g_flags) & STRING_GFLAGS_HEXADECIMAL)
@@ -126,6 +127,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STRING_FITS_IN_ATOM(x) \
     (((x)->g_flags) & STRING_GFLAGS_FITS_IN_ATOM)
 
+#define STRING_IS_DISABLED(x) \
+    (((x)->g_flags) & STRING_GFLAGS_DISABLED)
+
 #define STRING_FOUND(x) \
     ((x)->matches[yr_get_tidx()].tail != NULL)
 
@@ -140,6 +144,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RULE_GFLAGS_REQUIRE_EXECUTABLE   0x04
 #define RULE_GFLAGS_REQUIRE_FILE         0x08
 #define RULE_GFLAGS_NULL                 0x1000
+#define RULE_GFLAGS_DISABLED             0x2000
 
 #define RULE_IS_PRIVATE(x) \
     (((x)->g_flags) & RULE_GFLAGS_PRIVATE)
@@ -149,6 +154,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define RULE_IS_NULL(x) \
     (((x)->g_flags) & RULE_GFLAGS_NULL)
+
+#define RULE_IS_DISABLED(x) \
+    (((x)->g_flags) & RULE_GFLAGS_DISABLED)
 
 #define RULE_MATCHES(x) \
     ((x)->t_flags[yr_get_tidx()] & RULE_TFLAGS_MATCH)
@@ -456,6 +464,14 @@ typedef union _YR_VALUE
   RE* re;
 
 } YR_VALUE;
+
+
+typedef struct _YR_INIT_RULE_ARGS
+{
+  YR_RULE* rule;
+  uint8_t* jmp_addr;
+
+} YR_INIT_RULE_ARGS;
 
 
 #define OBJECT_COMMON_FIELDS \
