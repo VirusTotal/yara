@@ -51,6 +51,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Adlice](http://www.adlice.com/)
 * [BAE Systems](http://www.baesystems.com/home?r=ai)
 * [Bayshore Networks, Inc.](http://www.bayshorenetworks.com)
+* [BinaryAlert](https://github.com/airbnb/binaryalert)
 * [Blue Coat](http://www.bluecoat.com/products/malware-analysis-appliance)
 * [Blueliv](http://www.blueliv.com)
 * [Conix](http://www.conix.fr)
