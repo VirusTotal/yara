@@ -183,10 +183,15 @@ int yr_modules_load(
     }
   }
 
-  return context->callback(
+  result = context->callback(
       CALLBACK_MSG_MODULE_IMPORTED,
       module_structure,
       context->user_data);
+
+  if (result == CALLBACK_ERROR)
+    return ERROR_CALLBACK_ERROR;
+
+  return ERROR_SUCCESS;
 }
 
 
