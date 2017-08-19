@@ -651,6 +651,23 @@ Functions
       ..do something with rule
     }
 
+.. c:function:: yr_rule_disable(rule)
+
+  .. versionadded:: 3.7.0
+
+  Disable the specified rule. Disabled rules are completely ignored during
+  the scanning process and they won't match. If the disabled rule is used in
+  the condition of some other rule the value for the disabled rule is neither
+  true nor false but undefined. For more information about undefined values
+  see :ref:`undefined-values`.
+
+.. c:function:: yr_rule_enable(rule)
+
+  .. versionadded:: 3.7.0
+
+  Enables the specified rule. After being disabled with :c:func:`yr_rule_disable`
+  a rule can be enabled again by using this function.
+
 Error codes
 -----------
 

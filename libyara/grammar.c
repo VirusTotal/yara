@@ -2963,7 +2963,7 @@ yyreduce:
 
         // Generate a do-nothing instruction (NOP) in order to get its address
         // and use it as the destination for the OP_JFALSE. We can not simply
-        // use the address of the OP_AND instruction +1 because we can't be
+        // use the address of the OP_OR instruction +1 because we can't be
         // sure that the instruction following the OP_AND is going to be in
         // the same arena page. As we don't have a reliable way of getting the
         // address of the next instruction we generate the OP_NOP.

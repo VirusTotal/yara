@@ -1034,6 +1034,11 @@ module. For example::
     pe.entry_point == 0x1000
     cuckoo.http_request(/someregexp/)
 
+.. _undefined-values:
+
+Undefined values
+================
+
 Modules often leave variables in an undefined state, for example when the
 variable doesn't make sense in the current context (think of ``pe.entry_point``
 while scanning a non-PE file). YARA handles undefined values in way that allows

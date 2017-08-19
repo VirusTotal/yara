@@ -724,11 +724,10 @@ int yr_scan_verify_match(
 {
   YR_STRING* string = ac_match->string;
 
-  #ifdef PROFILING_ENABLED
-  clock_t start = clock();
-  #endif
-
   if (data_size - offset <= 0)
+    return ERROR_SUCCESS;
+
+  if (STRING_IS_DISABLED(string))
     return ERROR_SUCCESS;
 
   if (context->flags & SCAN_FLAGS_FAST_MODE &&
@@ -739,6 +738,10 @@ int yr_scan_verify_match(
   if (STRING_IS_FIXED_OFFSET(string) &&
       string->fixed_offset != data_base + offset)
     return ERROR_SUCCESS;
+
+  #ifdef PROFILING_ENABLED
+  clock_t start = clock();
+  #endif
 
   if (STRING_IS_LITERAL(string))
   {
