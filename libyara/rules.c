@@ -796,3 +796,30 @@ YR_API int yr_rules_destroy(
 
   return ERROR_SUCCESS;
 }
+
+YR_API void yr_rule_disable(
+    YR_RULE* rule)
+{
+  YR_STRING* string;
+
+  rule->g_flags |= RULE_GFLAGS_DISABLED;
+
+  yr_rule_strings_foreach(rule, string)
+  {
+    string->g_flags |= STRING_GFLAGS_DISABLED;
+  }
+}
+
+
+YR_API void yr_rule_enable(
+  YR_RULE* rule)
+{
+  YR_STRING* string;
+
+  rule->g_flags &= ~RULE_GFLAGS_DISABLED;
+
+  yr_rule_strings_foreach(rule, string)
+  {
+    string->g_flags &= ~STRING_GFLAGS_DISABLED;
+  }
+}
