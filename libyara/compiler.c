@@ -56,6 +56,7 @@ YR_API int yr_compiler_create(
 
   new_compiler->errors = 0;
   new_compiler->callback = NULL;
+  new_compiler->include_callback = NULL;
   new_compiler->last_error = ERROR_SUCCESS;
   new_compiler->last_error_line = 0;
   new_compiler->current_line = 0;
@@ -179,6 +180,28 @@ YR_API void yr_compiler_set_callback(
 {
   compiler->callback = callback;
   compiler->user_data = user_data;
+}
+
+
+YR_API void yr_compiler_set_include_callback(
+    YR_COMPILER* compiler,
+    YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback,
+    void* user_data)
+{
+  printf("DEBUG setting C callback\n");
+  compiler->include_callback = include_callback;
+  if(compiler->include_callback == NULL)
+    printf("DEBUG C callback FAILED\n");
+  else
+    printf("DEBUG C callback set\n");
+
+  printf("DEBUG setting python callback\n");
+  compiler->user_data = user_data;
+  if(compiler->user_data == NULL)
+    printf("DEBUG python callback FAILED\n");
+  else
+    printf("DEBUG python callback set\n");
+
 }
 
 

@@ -196,8 +196,8 @@ include[ \t]+\"         {
   char            *f;
   FILE*           fh;
 
-  if (compiler->allow_includes)
-  {
+  if (compiler->allow_includes)//EDHOEDT
+  {//EDHOEDT
     *yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
 
     // move path of current source file into buffer
@@ -211,81 +211,108 @@ include[ \t]+\"         {
     {
       buffer[0] = '\0';
     }
-
-    // make included file path relative to current source file
-    s = strrchr(buffer, '/');
-
-    #ifdef _WIN32
-    b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
-    #endif
-
-    #ifdef _WIN32
-    if (s != NULL || b != NULL)
-    #else
-    if (s != NULL)
-    #endif
+    if (compiler->include_callback == NULL)
     {
+      // make included file path relative to current source file
+      s = strrchr(buffer, '/');
+
       #ifdef _WIN32
-      f = (b > s)? (b + 1): (s + 1);
-      #else
-      f = s + 1;
+      b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
       #endif
 
-      strlcpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
+      #ifdef _WIN32
+      if (s != NULL || b != NULL)
+      #else
+      if (s != NULL)
+      #endif
+      {
+        #ifdef _WIN32
+        f = (b > s)? (b + 1): (s + 1);
+        #else
+        f = s + 1;
+        #endif
 
-      f = buffer;
+        strlcpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
 
-      // SECURITY: Potential for directory traversal here.
-      fh = fopen(buffer, "r");
+        f = buffer;
 
-      // if include file was not found relative to current source file,
-      // try to open it with path as specified by user (maybe user wrote
-      // a full path)
+        // SECURITY: Potential for directory traversal here.
+        fh = fopen(buffer, "r");
 
-      if (fh == NULL)
+        // if include file was not found relative to current source file,
+        // try to open it with path as specified by user (maybe user wrote
+        // a full path)
+
+        if (fh == NULL)
+        {
+          f = yyextra->lex_buf;
+
+          // SECURITY: Potential for directory traversal here.
+          fh = fopen(yyextra->lex_buf, "r");
+        }
+      }
+      else
       {
         f = yyextra->lex_buf;
 
         // SECURITY: Potential for directory traversal here.
         fh = fopen(yyextra->lex_buf, "r");
       }
-    }
-    else
-    {
-      f = yyextra->lex_buf;
 
-      // SECURITY: Potential for directory traversal here.
-      fh = fopen(yyextra->lex_buf, "r");
-    }
-
-    if (fh != NULL)
-    {
-      int error_code = _yr_compiler_push_file_name(compiler, f);
-
-      if (error_code != ERROR_SUCCESS)
+      if (fh != NULL)
       {
-        if (error_code == ERROR_INCLUDES_CIRCULAR_REFERENCE)
+        int error_code = _yr_compiler_push_file_name(compiler, f);
+
+        if (error_code != ERROR_SUCCESS)
         {
-          yyerror(yyscanner, compiler, "includes circular reference");
-        }
-        else if (error_code == ERROR_INCLUDE_DEPTH_EXCEEDED)
-        {
-          yyerror(yyscanner, compiler, "includes depth exceeded");
+          if (error_code == ERROR_INCLUDES_CIRCULAR_REFERENCE)
+          {
+            yyerror(yyscanner, compiler, "includes circular reference");
+          }
+          else if (error_code == ERROR_INCLUDE_DEPTH_EXCEEDED)
+          {
+            yyerror(yyscanner, compiler, "includes depth exceeded");
+          }
+
+          yyterminate();
         }
 
-        yyterminate();
+        _yr_compiler_push_file(compiler, fh);
+        yypush_buffer_state(
+            yy_create_buffer(fh, YY_BUF_SIZE, yyscanner), yyscanner);
       }
-
-      _yr_compiler_push_file(compiler, fh);
-      yypush_buffer_state(
-          yy_create_buffer(fh, YY_BUF_SIZE, yyscanner), yyscanner);
-    }
+      else
+      {
+        snprintf(buffer, sizeof(buffer),
+                 "can't open include file: %s", yyextra->lex_buf);
+        yyerror(yyscanner, compiler, buffer);
+      }
+    }//EDHOEDT
+    //EDHOEDT vvvvvvvvvvvvvvv
     else
     {
-      snprintf(buffer, sizeof(buffer),
-               "can't open include file: %s", yyextra->lex_buf);
-      yyerror(yyscanner, compiler, buffer);
+      printf("YARA SO WAS CALLED\n");
+      const char* res = compiler->include_callback(yyextra->lex_buf, current_file_name, compiler->current_namespace->name, compiler->user_data);
+      printf("Yara.SO callback result:     %s\n", res);
+
+      /*--------
+      f = yyextra->lex_buf;
+      fh = fopen(yyextra->lex_buf, "r");
+      if (fh != NULL){
+        int error_code = _yr_compiler_push_file_name(compiler, f);
+        if (error_code != ERROR_SUCCESS){
+          if (error_code == ERROR_INCLUDES_CIRCULAR_REFERENCE){yyerror(yyscanner, compiler, "includes circular reference");}
+          else if (error_code == ERROR_INCLUDE_DEPTH_EXCEEDED){yyerror(yyscanner, compiler, "includes depth exceeded");}
+          yyterminate();}
+        _yr_compiler_push_file(compiler, fh);
+        yara_yypush_buffer_state(yara_yy_create_buffer(fh,YY_BUF_SIZE,yyscanner),yyscanner);
+      }else{
+        snprintf(buffer, sizeof(buffer), "can't open include file: %s", yyextra->lex_buf);
+        yyerror(yyscanner, compiler, buffer);
+      }
+      ---------*/
     }
+    //EDHOEDT ^^^^^^^^^^^^^^^
   }
   else // not allowing includes
   {

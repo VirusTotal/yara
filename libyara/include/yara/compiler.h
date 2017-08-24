@@ -52,6 +52,13 @@ typedef void (*YR_COMPILER_CALLBACK_FUNC)(
     void* user_data);
 
 
+typedef const char* (*YR_COMPILER_INCLUDE_CALLBACK_FUNC)(
+    const char* include_name,
+    const char* calling_rule_filename,
+    const char* calling_rule_namespace,
+    void* user_data);
+
+
 typedef struct _YR_FIXUP
 {
   void* address;
@@ -116,6 +123,7 @@ typedef struct _YR_COMPILER
   void*             user_data;
 
   YR_COMPILER_CALLBACK_FUNC  callback;
+  YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback;
 
 } YR_COMPILER;
 
@@ -163,6 +171,12 @@ YR_API void yr_compiler_destroy(
 YR_API void yr_compiler_set_callback(
     YR_COMPILER* compiler,
     YR_COMPILER_CALLBACK_FUNC callback,
+    void* user_data);
+
+
+YR_API void yr_compiler_set_include_callback(
+    YR_COMPILER* compiler,
+    YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback,
     void* user_data);
 
 
