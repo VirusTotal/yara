@@ -1363,8 +1363,8 @@ YY_RULE_SETUP
   char            *f;
   FILE*           fh;
 
-  if (compiler->allow_includes)//EDHOEDT
-  {//EDHOEDT
+  if (compiler->allow_includes)
+  {
     *yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
 
     // move path of current source file into buffer
@@ -1378,8 +1378,9 @@ YY_RULE_SETUP
     {
       buffer[0] = '\0';
     }
-    if (compiler->include_callback == NULL)
-    {
+
+    if (compiler->include_callback == NULL)//EDHOEDT
+    {//EDHOEDT
       // make included file path relative to current source file
       s = strrchr(buffer, '/');
 
@@ -1453,32 +1454,43 @@ YY_RULE_SETUP
                  "can't open include file: %s", yyextra->lex_buf);
         yyerror(yyscanner, compiler, buffer);
       }
+
     }//EDHOEDT
-    //EDHOEDT vvvvvvvvvvvvvvv
+    //EDHOEDT vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     else
     {
-      printf("YARA SO WAS CALLED\n");
       const char* res = compiler->include_callback(yyextra->lex_buf, current_file_name, compiler->current_namespace->name, compiler->user_data);
-      printf("Yara.SO callback result:     %s\n", res);
+      if (res != NULL)
+      {
+        int error_code = _yr_compiler_push_file_name(compiler, yyextra->lex_buf);
 
-      /*--------
-      f = yyextra->lex_buf;
-      fh = fopen(yyextra->lex_buf, "r");
-      if (fh != NULL){
-        int error_code = _yr_compiler_push_file_name(compiler, f);
-        if (error_code != ERROR_SUCCESS){
-          if (error_code == ERROR_INCLUDES_CIRCULAR_REFERENCE){yyerror(yyscanner, compiler, "includes circular reference");}
-          else if (error_code == ERROR_INCLUDE_DEPTH_EXCEEDED){yyerror(yyscanner, compiler, "includes depth exceeded");}
-          yyterminate();}
-        _yr_compiler_push_file(compiler, fh);
-        yara_yypush_buffer_state(yara_yy_create_buffer(fh,YY_BUF_SIZE,yyscanner),yyscanner);
-      }else{
-        snprintf(buffer, sizeof(buffer), "can't open include file: %s", yyextra->lex_buf);
+        if (error_code != ERROR_SUCCESS)
+        {
+          if (error_code == ERROR_INCLUDES_CIRCULAR_REFERENCE)
+          {
+            yyerror(yyscanner, compiler, "includes circular reference");
+          }
+          else if (error_code == ERROR_INCLUDE_DEPTH_EXCEEDED)
+          {
+            yyerror(yyscanner, compiler, "includes depth exceeded");
+          }
+
+          yyterminate();
+        }
+        // Workaround for flex issue: https://github.com/westes/flex/issues/58
+        yara_yypush_buffer_state(YY_CURRENT_BUFFER,yyscanner);
+        yara_yy_scan_string(res,yyscanner);
+      }
+      else
+      {
+        snprintf(buffer, sizeof(buffer),
+                 "'include_callback' failed to return rules contained in '%s'", yyextra->lex_buf);
         yyerror(yyscanner, compiler, buffer);
       }
-      ---------*/
+
     }
-    //EDHOEDT ^^^^^^^^^^^^^^^
+
+    //EDHOEDT ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   }
   else // not allowing includes
   {
@@ -1494,29 +1506,43 @@ case YY_STATE_EOF(str):
 case YY_STATE_EOF(regexp):
 case YY_STATE_EOF(include):
 case YY_STATE_EOF(comment):
-#line 327 "lexer.l"
+#line 339 "lexer.l"
 {
 
   YR_COMPILER* compiler = yara_yyget_extra(yyscanner);
-  FILE* file = _yr_compiler_pop_file(compiler);
 
-  if (file != NULL)
+  if (compiler->include_callback == NULL)//EDHOEDT
+  {//EDHOEDT
+    FILE* file = _yr_compiler_pop_file(compiler);
+
+    if (file != NULL)
+    {
+      fclose(file);
+    }
+
+    _yr_compiler_pop_file_name(compiler);
+    yara_yypop_buffer_state(yyscanner);
+
+    if (!YY_CURRENT_BUFFER)
+    {
+      yyterminate();
+    }
+  }//EDHOEDT
+  else//EDHOEDT
   {
-    fclose(file);
-  }
+    _yr_compiler_pop_file_name(compiler);
+    yara_yypop_buffer_state(yyscanner);
 
-  _yr_compiler_pop_file_name(compiler);
-  yara_yypop_buffer_state(yyscanner);
-
-  if (!YY_CURRENT_BUFFER)
-  {
-    yyterminate();
+    if (!YY_CURRENT_BUFFER)
+    {
+      yyterminate();
+    }
   }
 }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 347 "lexer.l"
+#line 373 "lexer.l"
 {
 
   yylval->c_string = yr_strdup(yytext);
@@ -1532,7 +1558,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 361 "lexer.l"
+#line 387 "lexer.l"
 {
 
   yylval->c_string = yr_strdup(yytext);
@@ -1548,7 +1574,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 375 "lexer.l"
+#line 401 "lexer.l"
 {
 
   yylval->c_string = yr_strdup(yytext);
@@ -1565,7 +1591,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 390 "lexer.l"
+#line 416 "lexer.l"
 {
 
   yylval->c_string = yr_strdup(yytext);
@@ -1582,7 +1608,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 405 "lexer.l"
+#line 431 "lexer.l"
 {
 
   yylval->c_string = yr_strdup(yytext);
@@ -1599,7 +1625,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 420 "lexer.l"
+#line 446 "lexer.l"
 {
 
   char* text = yytext;
@@ -1640,7 +1666,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 459 "lexer.l"
+#line 485 "lexer.l"
 {
 
   if (strlen(yytext) > 128)
@@ -1661,7 +1687,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 478 "lexer.l"
+#line 504 "lexer.l"
 {
 
   #ifdef _MSC_VER
@@ -1683,7 +1709,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 497 "lexer.l"
+#line 523 "lexer.l"
 {
   yylval->double_ = atof(yytext);
   return _DOUBLE_;
@@ -1691,7 +1717,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 502 "lexer.l"
+#line 528 "lexer.l"
 {
   yylval->integer = xtoi(yytext + 2);
   return _NUMBER_;
@@ -1699,7 +1725,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 507 "lexer.l"
+#line 533 "lexer.l"
 {
   yylval->integer = otoi(yytext + 2);
   return _NUMBER_;
@@ -1707,7 +1733,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 513 "lexer.l"
+#line 539 "lexer.l"
 {     /* saw closing quote - all done */
 
   ALLOC_SIZED_STRING(s, yyextra->lex_buf_len);
@@ -1723,7 +1749,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 527 "lexer.l"
+#line 553 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\t", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1733,7 +1759,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 535 "lexer.l"
+#line 561 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\n", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1743,7 +1769,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 543 "lexer.l"
+#line 569 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\"", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1753,7 +1779,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 551 "lexer.l"
+#line 577 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\\", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1763,7 +1789,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 559 "lexer.l"
+#line 585 "lexer.l"
 {
 
    int result;
@@ -1776,13 +1802,13 @@ YY_RULE_SETUP
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 570 "lexer.l"
+#line 596 "lexer.l"
 { YYTEXT_TO_BUFFER; }
 	YY_BREAK
 case 62:
 /* rule 62 can match eol */
 YY_RULE_SETUP
-#line 573 "lexer.l"
+#line 599 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "unterminated string");
@@ -1792,7 +1818,7 @@ YY_RULE_SETUP
 case 63:
 /* rule 63 can match eol */
 YY_RULE_SETUP
-#line 579 "lexer.l"
+#line 605 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "illegal escape sequence");
@@ -1801,7 +1827,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 586 "lexer.l"
+#line 612 "lexer.l"
 {
 
   if (yyextra->lex_buf_len > 0)
@@ -1830,7 +1856,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 613 "lexer.l"
+#line 639 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("/", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1840,7 +1866,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 621 "lexer.l"
+#line 647 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1858,13 +1884,13 @@ YY_RULE_SETUP
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 637 "lexer.l"
+#line 663 "lexer.l"
 { YYTEXT_TO_BUFFER; }
 	YY_BREAK
 case 68:
 /* rule 68 can match eol */
 YY_RULE_SETUP
-#line 640 "lexer.l"
+#line 666 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "unterminated regular expression");
@@ -1873,7 +1899,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 647 "lexer.l"
+#line 673 "lexer.l"
 {
 
   yyextra->lex_buf_ptr = yyextra->lex_buf;
@@ -1883,7 +1909,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 655 "lexer.l"
+#line 681 "lexer.l"
 {
 
   yyextra->lex_buf_ptr = yyextra->lex_buf;
@@ -1894,7 +1920,7 @@ YY_RULE_SETUP
 case 71:
 /* rule 71 can match eol */
 YY_RULE_SETUP
-#line 663 "lexer.l"
+#line 689 "lexer.l"
 {
   // Match hex-digits with whitespace or comments. The latter are stripped
   // out by hex_lexer.l
@@ -1910,12 +1936,12 @@ YY_RULE_SETUP
 case 72:
 /* rule 72 can match eol */
 YY_RULE_SETUP
-#line 676 "lexer.l"
+#line 702 "lexer.l"
 /* skip whitespace */
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 678 "lexer.l"
+#line 704 "lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1931,10 +1957,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 691 "lexer.l"
+#line 717 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1938 "lexer.c"
+#line 1964 "lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3083,7 +3109,7 @@ void yara_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 691 "lexer.l"
+#line 717 "lexer.l"
 
 
 

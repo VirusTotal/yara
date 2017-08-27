@@ -196,8 +196,8 @@ include[ \t]+\"         {
   char            *f;
   FILE*           fh;
 
-  if (compiler->allow_includes)//EDHOEDT
-  {//EDHOEDT
+  if (compiler->allow_includes)
+  {
     *yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
 
     // move path of current source file into buffer
@@ -211,8 +211,9 @@ include[ \t]+\"         {
     {
       buffer[0] = '\0';
     }
-    if (compiler->include_callback == NULL)
-    {
+
+    if (compiler->include_callback == NULL)//EDHOEDT
+    {//EDHOEDT
       // make included file path relative to current source file
       s = strrchr(buffer, '/');
 
@@ -287,32 +288,43 @@ include[ \t]+\"         {
                  "can't open include file: %s", yyextra->lex_buf);
         yyerror(yyscanner, compiler, buffer);
       }
+
     }//EDHOEDT
-    //EDHOEDT vvvvvvvvvvvvvvv
+    //EDHOEDT vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     else
     {
-      printf("YARA SO WAS CALLED\n");
       const char* res = compiler->include_callback(yyextra->lex_buf, current_file_name, compiler->current_namespace->name, compiler->user_data);
-      printf("Yara.SO callback result:     %s\n", res);
+      if (res != NULL)
+      {
+        int error_code = _yr_compiler_push_file_name(compiler, yyextra->lex_buf);
 
-      /*--------
-      f = yyextra->lex_buf;
-      fh = fopen(yyextra->lex_buf, "r");
-      if (fh != NULL){
-        int error_code = _yr_compiler_push_file_name(compiler, f);
-        if (error_code != ERROR_SUCCESS){
-          if (error_code == ERROR_INCLUDES_CIRCULAR_REFERENCE){yyerror(yyscanner, compiler, "includes circular reference");}
-          else if (error_code == ERROR_INCLUDE_DEPTH_EXCEEDED){yyerror(yyscanner, compiler, "includes depth exceeded");}
-          yyterminate();}
-        _yr_compiler_push_file(compiler, fh);
-        yara_yypush_buffer_state(yara_yy_create_buffer(fh,YY_BUF_SIZE,yyscanner),yyscanner);
-      }else{
-        snprintf(buffer, sizeof(buffer), "can't open include file: %s", yyextra->lex_buf);
+        if (error_code != ERROR_SUCCESS)
+        {
+          if (error_code == ERROR_INCLUDES_CIRCULAR_REFERENCE)
+          {
+            yyerror(yyscanner, compiler, "includes circular reference");
+          }
+          else if (error_code == ERROR_INCLUDE_DEPTH_EXCEEDED)
+          {
+            yyerror(yyscanner, compiler, "includes depth exceeded");
+          }
+
+          yyterminate();
+        }
+        // Workaround for flex issue: https://github.com/westes/flex/issues/58
+        yypush_buffer_state(YY_CURRENT_BUFFER, yyscanner);
+        yy_scan_string(res, yyscanner);
+      }
+      else
+      {
+        snprintf(buffer, sizeof(buffer),
+                 "'include_callback' failed to return rules contained in '%s'", yyextra->lex_buf);
         yyerror(yyscanner, compiler, buffer);
       }
-      ---------*/
+
     }
-    //EDHOEDT ^^^^^^^^^^^^^^^
+
+    //EDHOEDT ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   }
   else // not allowing includes
   {
@@ -327,19 +339,33 @@ include[ \t]+\"         {
 <<EOF>> {
 
   YR_COMPILER* compiler = yyget_extra(yyscanner);
-  FILE* file = _yr_compiler_pop_file(compiler);
 
-  if (file != NULL)
+  if (compiler->include_callback == NULL)//EDHOEDT
+  {//EDHOEDT
+    FILE* file = _yr_compiler_pop_file(compiler);
+
+    if (file != NULL)
+    {
+      fclose(file);
+    }
+
+    _yr_compiler_pop_file_name(compiler);
+    yypop_buffer_state(yyscanner);
+
+    if (!YY_CURRENT_BUFFER)
+    {
+      yyterminate();
+    }
+  }//EDHOEDT
+  else//EDHOEDT
   {
-    fclose(file);
-  }
+    _yr_compiler_pop_file_name(compiler);
+    yypop_buffer_state(yyscanner);
 
-  _yr_compiler_pop_file_name(compiler);
-  yypop_buffer_state(yyscanner);
-
-  if (!YY_CURRENT_BUFFER)
-  {
-    yyterminate();
+    if (!YY_CURRENT_BUFFER)
+    {
+      yyterminate();
+    }
   }
 }
 

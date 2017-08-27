@@ -188,20 +188,8 @@ YR_API void yr_compiler_set_include_callback(
     YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback,
     void* user_data)
 {
-  printf("DEBUG setting C callback\n");
   compiler->include_callback = include_callback;
-  if(compiler->include_callback == NULL)
-    printf("DEBUG C callback FAILED\n");
-  else
-    printf("DEBUG C callback set\n");
-
-  printf("DEBUG setting python callback\n");
   compiler->user_data = user_data;
-  if(compiler->user_data == NULL)
-    printf("DEBUG python callback FAILED\n");
-  else
-    printf("DEBUG python callback set\n");
-
 }
 
 
