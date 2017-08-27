@@ -156,4 +156,11 @@ YR_API int yr_rules_define_string_variable(
 YR_API void yr_rules_print_profiling_info(
     YR_RULES* rules);
 
+
+YR_API void yr_rule_disable(
+    YR_RULE* rule);
+
+YR_API void yr_rule_enable(
+    YR_RULE* rule);
+
 #endif
