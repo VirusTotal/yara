@@ -212,8 +212,8 @@ include[ \t]+\"         {
       buffer[0] = '\0';
     }
 
-    if (compiler->include_callback == NULL)//EDHOEDT
-    {//EDHOEDT
+    if (compiler->include_callback == NULL)
+    {
       // make included file path relative to current source file
       s = strrchr(buffer, '/');
 
@@ -289,8 +289,7 @@ include[ \t]+\"         {
         yyerror(yyscanner, compiler, buffer);
       }
 
-    }//EDHOEDT
-    //EDHOEDT vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    }
     else
     {
       const char* res = compiler->include_callback(yyextra->lex_buf, current_file_name, compiler->current_namespace->name, compiler->user_data);
@@ -323,8 +322,6 @@ include[ \t]+\"         {
       }
 
     }
-
-    //EDHOEDT ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   }
   else // not allowing includes
   {
@@ -340,8 +337,8 @@ include[ \t]+\"         {
 
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
-  if (compiler->include_callback == NULL)//EDHOEDT
-  {//EDHOEDT
+  if (compiler->include_callback == NULL)
+  {
     FILE* file = _yr_compiler_pop_file(compiler);
 
     if (file != NULL)
@@ -356,8 +353,8 @@ include[ \t]+\"         {
     {
       yyterminate();
     }
-  }//EDHOEDT
-  else//EDHOEDT
+  }
+  else
   {
     _yr_compiler_pop_file_name(compiler);
     yypop_buffer_state(yyscanner);
