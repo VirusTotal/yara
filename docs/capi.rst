@@ -423,7 +423,7 @@ Functions
   pointer is passed to the callback function.
 
 
-.. c:function:: const char* yr_compiler_set_include_callback(YR_COMPILER* compiler, YR_COMPILER_INCLUDE_CALLBACK_FUNC callback, void* user_data)
+.. c:function:: void yr_compiler_set_include_callback(YR_COMPILER* compiler, YR_COMPILER_INCLUDE_CALLBACK_FUNC callback, void* user_data)
 
   Set a callback to provide rules from a custom source when ``include`` directive
   is invoked. The *user_data* pointer is passed to the callback function.
