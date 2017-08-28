@@ -68,16 +68,17 @@ By default, for rules containing references to other files
 However, if you want to fetch the imported rules from another source (eg: from a
 database or remote service), a callback function can be set with
 :c:func:`yr_compiler_set_include_callback`.
-  The callback receives the following parameters:
-    ``include_name``: name of the requested file.
-    ``calling_rule_filename``: the requesting file name (NULL if not a file).
-    ``calling_rule_namespace``: namespace (NULL if undefined).
-  And should return the requested file as a string.
+The callback receives the following parameters:
+ *``include_name``: name of the requested file.
+ *``calling_rule_filename``: the requesting file name (NULL if not a file).
+ *``calling_rule_namespace``: namespace (NULL if undefined).
+And should return the requested file as a string.
+
 The callback function has the following prototype:
 
 .. code-block:: c
 
-  const char* callback_function(
+  const char* include_callback(
       const char* include_name,
       const char* calling_rule_filename,
       const char* calling_rule_namespace,
@@ -420,6 +421,12 @@ Functions
 
   Set a callback for receiving error and warning information. The *user_data*
   pointer is passed to the callback function.
+
+
+.. c:function:: const char* yr_compiler_set_include_callback(YR_COMPILER* compiler, YR_COMPILER_INCLUDE_CALLBACK_FUNC callback, void* user_data)
+
+  Set a callback to provide rules from a custom source when ``include`` directive
+  is invoked. The *user_data* pointer is passed to the callback function.
 
 
 .. c:function:: int yr_compiler_add_file(YR_COMPILER* compiler, FILE* file, const char* namespace, const char* file_name)
