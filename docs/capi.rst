@@ -63,6 +63,26 @@ contains the file name and line number where the error or warning occurs.
 you're using :c:func:`yr_compiler_add_string`. The ``user_data`` pointer is the
 same you passed to :c:func:`yr_compiler_set_callback`.
 
+By default, for rules containing references to other files
+(``include "filename.yara"``), yara will try to find those files on disk.
+However, if you want to fetch the imported rules from another source (eg: from a
+database or remote service), a callback function can be set with
+:c:func:`yr_compiler_set_include_callback`.
+  The callback receives the following parameters:
+    ``include_name``: name of the requested file.
+    ``calling_rule_filename``: the requesting file name (NULL if not a file).
+    ``calling_rule_namespace``: namespace (NULL if undefined).
+  And should return the requested file as a string.
+The callback function has the following prototype:
+
+.. code-block:: c
+
+  const char* callback_function(
+      const char* include_name,
+      const char* calling_rule_filename,
+      const char* calling_rule_namespace,
+      void* user_data);
+
 After you successfully added some sources you can get the compiled rules
 using the :c:func:`yr_compiler_get_rules()` function. You'll get a pointer to
 a :c:type:`YR_RULES` structure which can be used to scan your data as
