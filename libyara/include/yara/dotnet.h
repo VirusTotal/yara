@@ -1,6 +1,7 @@
 #ifndef YR_DOTNET_H
 #define YR_DOTNET_H
 
+#pragma pack(push, 1)
 
 //
 // CLI header.
@@ -331,4 +332,6 @@ typedef struct _INDEX_SIZES {
     uint8_t assemblyref;
     uint8_t genericparam;
 } INDEX_SIZES, *PINDEX_SIZES;
+
+#pragma pack(pop)
 #endif
