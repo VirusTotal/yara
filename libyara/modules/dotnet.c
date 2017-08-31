@@ -1520,6 +1520,7 @@ void dotnet_parse_com(
   PCLI_HEADER cli_header;
   PNET_METADATA metadata;
   int64_t metadata_root, offset;
+  char* end;
   STREAMS headers;
   WORD num_streams;
 
@@ -1552,7 +1553,15 @@ void dotnet_parse_com(
     return;
   }
 
-  set_sized_string(metadata->Version, metadata->Length, pe->object, "version");
+  // The length includes the NULL terminator and is rounded up to a multiple of
+  // 4. We need to exclude the terminator and the padding, so search for the
+  // first NULL byte.
+  end = (char*) memmem((void*) metadata->Version, metadata->Length, "\0", 1);
+  if (end != NULL)
+      set_sized_string(metadata->Version,
+          (end - metadata->Version),
+          pe->object,
+          "version");
 
   // The metadata structure has some variable length records after the version.
   // We must manually parse things from here on out.
