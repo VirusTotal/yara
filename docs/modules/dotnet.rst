@@ -62,7 +62,7 @@ Reference
 
         Stream size.
 
-    *Example: pe.streams[0].name == "#~"*
+    *Example: dotnet.streams[0].name == "#~"*
 
 .. c:type:: number_of_guids
 
@@ -73,7 +73,7 @@ Reference
     A zero-based array of strings, one for each GUID. Individual guids can be
     accessed by using the [] operator.
 
-    *Example: pe.guids[0].name == "99c08ffd-f378-a891-10ab-c02fe11be6ef"*
+    *Example: dotnet.guids[0] == "99c08ffd-f378-a891-10ab-c02fe11be6ef"*
 
 .. c:type:: number_of_resources
 
