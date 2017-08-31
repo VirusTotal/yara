@@ -69,10 +69,14 @@ However, if you want to fetch the imported rules from another source (eg: from a
 database or remote service), a callback function can be set with
 :c:func:`yr_compiler_set_include_callback`.
 The callback receives the following parameters:
- *``include_name``: name of the requested file.
- *``calling_rule_filename``: the requesting file name (NULL if not a file).
- *``calling_rule_namespace``: namespace (NULL if undefined).
-And should return the requested file as a string.
+ * ``include_name``: name of the requested file.
+ * ``calling_rule_filename``: the requesting file name (NULL if not a file).
+ * ``calling_rule_namespace``: namespace (NULL if undefined).
+ * ``user_data`` pointer is the same you passed to
+ :c:func:`yr_compiler_set_include_callback`.
+It should return the requested file's content as a string. The memory for this string
+should be allocated by the callback function (yr_malloc can be used) but will
+be automatically freed by the yara compiler.
 
 The callback function has the following prototype:
 
@@ -694,6 +698,31 @@ Functions
 
   Enables the specified rule. After being disabled with :c:func:`yr_rule_disable`
   a rule can be enabled again by using this function.
+
+.. c:function:: void* yr_calloc(size_t count, size_t size);
+
+  Cross-platform wrapper for HeapAlloc on Windows and calloc on other platforms.
+
+.. c:function:: void* yr_malloc(size_t size);
+
+  Cross-platform wrapper for HeapAlloc on Windows and malloc on other platforms.
+
+.. c:function:: void* yr_realloc(void* ptr, size_t size);
+
+  Cross-platform wrapper for HeapReAlloc on Windows and realloc on other platforms.
+
+.. c:function:: void yr_free(void* ptr);
+
+  Cross-platform wrapper for HeapFree on Windows and free on other platforms.
+
+.. c:function:: char* yr_strdup(const char *str);
+
+  Allocates a new buffer the same size as str and copies str to the new buffer.
+
+.. c:function:: char* yr_strdup(const char *str, size_t n);
+
+  Allocates a new buffer of size n and copies the n first character of str.
+
 
 Error codes
 -----------

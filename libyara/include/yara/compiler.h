@@ -121,6 +121,7 @@ typedef struct _YR_COMPILER
 
   char              include_base_dir[MAX_PATH];
   void*             user_data;
+  void*             incl_clbk_user_data;
 
   YR_COMPILER_CALLBACK_FUNC  callback;
   YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback;

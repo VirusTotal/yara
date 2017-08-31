@@ -189,7 +189,7 @@ YR_API void yr_compiler_set_include_callback(
     void* user_data)
 {
   compiler->include_callback = include_callback;
-  compiler->user_data = user_data;
+  compiler->incl_clbk_user_data = user_data;
 }
 
 

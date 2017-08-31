@@ -292,10 +292,20 @@ include[ \t]+\"         {
     }
     else
     {
-      const char* res = compiler->include_callback(yyextra->lex_buf, current_file_name, compiler->current_namespace->name, compiler->user_data);
+      const char* res = compiler->include_callback(
+                                              yyextra->lex_buf,
+                                              current_file_name,
+                                              compiler->current_namespace->name,
+                                              compiler->incl_clbk_user_data);
+
       if (res != NULL)
       {
-        int error_code = _yr_compiler_push_file_name(compiler, yyextra->lex_buf);
+        const char* res_dup = yr_strdup(res);
+        yr_free((void*) res);
+        res = NULL;
+
+        int error_code = _yr_compiler_push_file_name( compiler,
+                                                      yyextra->lex_buf);
 
         if (error_code != ERROR_SUCCESS)
         {
@@ -308,16 +318,24 @@ include[ \t]+\"         {
             yyerror(yyscanner, compiler, "includes depth exceeded");
           }
 
+          yr_free((void*) res_dup);
+          res_dup = NULL;
           yyterminate();
         }
+
         // Workaround for flex issue: https://github.com/westes/flex/issues/58
         yypush_buffer_state(YY_CURRENT_BUFFER, yyscanner);
-        yy_scan_string(res, yyscanner);
+        yy_scan_string(res_dup, yyscanner);
+
+        yr_free((void*) res_dup);
+        res_dup = NULL;
       }
       else
       {
-        snprintf(buffer, sizeof(buffer),
-                 "'include_callback' failed to return rules contained in '%s'", yyextra->lex_buf);
+        snprintf( buffer,
+                  sizeof(buffer),
+                  "'include_callback' failed to return rules contained in '%s'",
+                  yyextra->lex_buf);
         yyerror(yyscanner, compiler, buffer);
       }
 
