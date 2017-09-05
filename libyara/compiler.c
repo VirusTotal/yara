@@ -56,12 +56,12 @@ YR_API int yr_compiler_create(
 
   new_compiler->errors = 0;
   new_compiler->callback = NULL;
-  new_compiler->include_callback = NULL;
+  new_compiler->include_callback = _yr_compiler_default_include_callback;
+  new_compiler->include_free = _yr_compiler_default_include_free;
   new_compiler->last_error = ERROR_SUCCESS;
   new_compiler->last_error_line = 0;
   new_compiler->current_line = 0;
   new_compiler->last_result = ERROR_SUCCESS;
-  new_compiler->file_stack_ptr = 0;
   new_compiler->file_name_stack_ptr = 0;
   new_compiler->fixup_stack_head = NULL;
   new_compiler->allow_includes = 1;
@@ -183,47 +183,115 @@ YR_API void yr_compiler_set_callback(
 }
 
 
-YR_API void yr_compiler_set_include_callback(
-    YR_COMPILER* compiler,
-    YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback,
-    void* user_data)
+const char* _yr_compiler_default_include_callback(
+  const char* include_name,
+  const char* calling_rule_filename,
+  const char* calling_rule_namespace,
+  void* user_data)
 {
-  compiler->include_callback = include_callback;
-  compiler->incl_clbk_user_data = user_data;
-}
+  char* buffer;
+  //char  buffer[1024];
+  char* s = NULL;
+  #ifdef _WIN32
+  char* b = NULL;
+  #endif
+  char* f;
+  FILE* fh;
+  char* file_buffer;
+  size_t file_length;
 
-
-int _yr_compiler_push_file(
-    YR_COMPILER* compiler,
-    FILE* fh)
-{
-  if (compiler->file_stack_ptr < MAX_INCLUDE_DEPTH)
+  if(calling_rule_filename != NULL)
   {
-    compiler->file_stack[compiler->file_stack_ptr] = fh;
-    compiler->file_stack_ptr++;
-    return ERROR_SUCCESS;
+    buffer = (char*) calling_rule_filename;
+    //strlcpy(buffer, calling_rule_filename, sizeof(buffer));
   }
   else
   {
-    compiler->last_result = ERROR_INCLUDE_DEPTH_EXCEEDED;
-    return ERROR_INCLUDE_DEPTH_EXCEEDED;
+    buffer = "\0";
+    //buffer[0] = '\0';
   }
-}
+  // make included file path relative to current source file
+  s = strrchr(buffer, '/');
 
-
-FILE* _yr_compiler_pop_file(
-    YR_COMPILER* compiler)
-{
-  FILE* result = NULL;
-
-  if (compiler->file_stack_ptr > 0)
+  #ifdef _WIN32
+  b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
+  #endif
+  #ifdef _WIN32
+  if (s != NULL || b != NULL)
+  #else
+  if (s != NULL)
+  #endif
   {
-    compiler->file_stack_ptr--;
-    result = compiler->file_stack[compiler->file_stack_ptr];
+    #ifdef _WIN32
+    f = (b > s)? (b + 1): (s + 1);
+    #else
+    f = s + 1;
+    #endif
+    strlcpy(f, include_name, sizeof(buffer) - (f - buffer));
+    f = buffer;
+    // SECURITY: Potential for directory traversal here.
+    fh = fopen(buffer, "r");
+    // if include file was not found relative to current source file,
+    // try to open it with path as specified by user (maybe user wrote
+    // a full path)
+    if (fh == NULL)
+    {
+      f = (char*) include_name;
+      // SECURITY: Potential for directory traversal here.
+      fh = fopen(include_name, "r");
+    }
   }
+  else
+  {
+    f = (char*) include_name;
+    // SECURITY: Potential for directory traversal here.
+    fh = fopen(include_name, "r");
+  }
+  if (fh != NULL)
+  {
+    file_buffer = NULL;
+    file_length = 0;
 
-  return result;
+    fseek(fh, 0, SEEK_END);
+    file_length = ftell(fh);
+    fseek(fh, 0, SEEK_SET);
+    file_buffer = (char*) yr_malloc((file_length+1)*sizeof(char));
+    if(file_buffer)
+    {
+      if(file_length != fread(file_buffer, sizeof(char), file_length, fh))
+      {
+        return NULL;
+      }
+    }
+    fclose(fh);
+    return file_buffer;
+  }
+  else return NULL;
 }
+
+
+void _yr_compiler_default_include_free(
+  const char* callback_result_ptr,
+  void* user_data)
+{
+  if(callback_result_ptr != NULL)
+  {
+    yr_free((void*)callback_result_ptr);
+  }
+}
+
+
+YR_API void yr_compiler_set_include_callback(
+    YR_COMPILER* compiler,
+    YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback,
+    YR_COMPILER_INCLUDE_FREE_FUNC include_free,
+    void* user_data)
+{
+  compiler->include_callback = include_callback;
+  compiler->include_free = include_free;
+  compiler->incl_clbk_user_data = user_data;
+}
+
 
 int _yr_compiler_push_file_name(
     YR_COMPILER* compiler,

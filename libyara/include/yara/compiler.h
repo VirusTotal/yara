@@ -58,6 +58,10 @@ typedef const char* (*YR_COMPILER_INCLUDE_CALLBACK_FUNC)(
     const char* calling_rule_namespace,
     void* user_data);
 
+typedef void (*YR_COMPILER_INCLUDE_FREE_FUNC)(
+    const char* callback_result_ptr,
+    void* user_data );
+
 
 typedef struct _YR_FIXUP
 {
@@ -110,9 +114,6 @@ typedef struct _YR_COMPILER
   char*             file_name_stack[MAX_INCLUDE_DEPTH];
   int               file_name_stack_ptr;
 
-  FILE*             file_stack[MAX_INCLUDE_DEPTH];
-  int               file_stack_ptr;
-
   char              last_error_extra_info[MAX_COMPILER_ERROR_EXTRA_INFO];
 
   char              lex_buf[LEX_BUF_SIZE];
@@ -125,6 +126,8 @@ typedef struct _YR_COMPILER
 
   YR_COMPILER_CALLBACK_FUNC  callback;
   YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback;
+  YR_COMPILER_INCLUDE_FREE_FUNC include_free;
+
 
 } YR_COMPILER;
 
@@ -143,14 +146,6 @@ typedef struct _YR_COMPILER
         fmt, __VA_ARGS__);
 
 
-int _yr_compiler_push_file(
-    YR_COMPILER* compiler,
-    FILE* fh);
-
-
-FILE* _yr_compiler_pop_file(
-    YR_COMPILER* compiler);
-
 
 int _yr_compiler_push_file_name(
     YR_COMPILER* compiler,
@@ -160,6 +155,15 @@ int _yr_compiler_push_file_name(
 void _yr_compiler_pop_file_name(
     YR_COMPILER* compiler);
 
+const char* _yr_compiler_default_include_callback(
+    const char* include_name,
+    const char* calling_rule_filename,
+    const char* calling_rule_namespace,
+    void* user_data);
+
+void _yr_compiler_default_include_free(
+    const char* callback_result_ptr,
+    void* user_data);
 
 YR_API int yr_compiler_create(
     YR_COMPILER** compiler);
@@ -178,6 +182,7 @@ YR_API void yr_compiler_set_callback(
 YR_API void yr_compiler_set_include_callback(
     YR_COMPILER* compiler,
     YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback,
+    YR_COMPILER_INCLUDE_FREE_FUNC include_free,
     void* user_data);
 
 

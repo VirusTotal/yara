@@ -72,11 +72,12 @@ The callback receives the following parameters:
  * ``include_name``: name of the requested file.
  * ``calling_rule_filename``: the requesting file name (NULL if not a file).
  * ``calling_rule_namespace``: namespace (NULL if undefined).
- * ``user_data`` pointer is the same you passed to
- :c:func:`yr_compiler_set_include_callback`.
-It should return the requested file's content as a string. The memory for this string
-should be allocated by the callback function (yr_malloc can be used) but will
-be automatically freed by the yara compiler.
+ * ``user_data`` pointer is the same you passed to :c:func:`yr_compiler_set_include_callback`.
+It should return the requested file's content as a string. The memory for this
+string should be allocated by the callback function. Once it is safe to free the
+memory used to return the callback's result, the include_free function passed to
+:c:func:`yr_compiler_set_include_callback` will be called. If the memory does
+not need to be freed, NULL can be passed as include_free instead.
 
 The callback function has the following prototype:
 
@@ -86,6 +87,14 @@ The callback function has the following prototype:
       const char* include_name,
       const char* calling_rule_filename,
       const char* calling_rule_namespace,
+      void* user_data);
+
+The free function has the following prototype:
+
+.. code-block:: c
+
+  void include_free(
+      const char* callback_result_ptr,
       void* user_data);
 
 After you successfully added some sources you can get the compiled rules
@@ -427,10 +436,13 @@ Functions
   pointer is passed to the callback function.
 
 
-.. c:function:: void yr_compiler_set_include_callback(YR_COMPILER* compiler, YR_COMPILER_INCLUDE_CALLBACK_FUNC callback, void* user_data)
+.. c:function:: void yr_compiler_set_include_callback(YR_COMPILER* compiler, YR_COMPILER_INCLUDE_CALLBACK_FUNC callback, YR_COMPILER_INCLUDE_FREE_FUNC include_free, void* user_data)
 
-  Set a callback to provide rules from a custom source when ``include`` directive
-  is invoked. The *user_data* pointer is passed to the callback function.
+  Set a callback to provide rules from a custom source when ``include``
+  directive is invoked. The *user_data* pointer is untouched and passed back to
+  the callback function and to the free function. Once the callback's result
+  is no longer needed, the include_free function will be called. If the memory
+  does not need to be freed, include_free can be set to NULL.
 
 
 .. c:function:: int yr_compiler_add_file(YR_COMPILER* compiler, FILE* file, const char* namespace, const char* file_name)
@@ -698,30 +710,6 @@ Functions
 
   Enables the specified rule. After being disabled with :c:func:`yr_rule_disable`
   a rule can be enabled again by using this function.
-
-.. c:function:: void* yr_calloc(size_t count, size_t size);
-
-  Cross-platform wrapper for HeapAlloc on Windows and calloc on other platforms.
-
-.. c:function:: void* yr_malloc(size_t size);
-
-  Cross-platform wrapper for HeapAlloc on Windows and malloc on other platforms.
-
-.. c:function:: void* yr_realloc(void* ptr, size_t size);
-
-  Cross-platform wrapper for HeapReAlloc on Windows and realloc on other platforms.
-
-.. c:function:: void yr_free(void* ptr);
-
-  Cross-platform wrapper for HeapFree on Windows and free on other platforms.
-
-.. c:function:: char* yr_strdup(const char *str);
-
-  Allocates a new buffer the same size as str and copies str to the new buffer.
-
-.. c:function:: char* yr_strdup(const char *str, size_t n);
-
-  Allocates a new buffer of size n and copies the n first character of str.
 
 
 Error codes
