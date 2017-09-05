@@ -1411,7 +1411,7 @@ YY_RULE_SETUP
         base_err_msg = "callback failed to provide include resource: %s";
       }
       size_t err_buff_len = sizeof(base_err_msg) + sizeof(yyextra->lex_buf);
-      char* error_buffer = yr_malloc(err_buff_len);
+      char* error_buffer = (char*) yr_malloc(err_buff_len);
       snprintf( error_buffer,
                 err_buff_len,
                 base_err_msg,
