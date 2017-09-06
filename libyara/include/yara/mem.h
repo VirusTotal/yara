@@ -31,7 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MEM_H
 
 #include <stdio.h>
-#include <yara/utils.h>
 
 #ifdef DMALLOC
 
