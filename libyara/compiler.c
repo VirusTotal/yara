@@ -190,7 +190,6 @@ const char* _yr_compiler_default_include_callback(
   void* user_data)
 {
   char* buffer;
-  //char  buffer[1024];
   char* s = NULL;
   #ifdef _WIN32
   char* b = NULL;
@@ -203,14 +202,12 @@ const char* _yr_compiler_default_include_callback(
   if(calling_rule_filename != NULL)
   {
     buffer = (char*) calling_rule_filename;
-    //strlcpy(buffer, calling_rule_filename, sizeof(buffer));
   }
   else
   {
     buffer = "\0";
-    //buffer[0] = '\0';
   }
-  // make included file path relative to current source file
+
   s = strrchr(buffer, '/');
 
   #ifdef _WIN32
@@ -230,7 +227,7 @@ const char* _yr_compiler_default_include_callback(
     strlcpy(f, include_name, sizeof(buffer) - (f - buffer));
     f = buffer;
     // SECURITY: Potential for directory traversal here.
-    fh = fopen(buffer, "r");
+    fh = fopen(buffer, "rb");
     // if include file was not found relative to current source file,
     // try to open it with path as specified by user (maybe user wrote
     // a full path)
@@ -238,14 +235,14 @@ const char* _yr_compiler_default_include_callback(
     {
       f = (char*) include_name;
       // SECURITY: Potential for directory traversal here.
-      fh = fopen(include_name, "r");
+      fh = fopen(include_name, "rb");
     }
   }
   else
   {
     f = (char*) include_name;
     // SECURITY: Potential for directory traversal here.
-    fh = fopen(include_name, "r");
+    fh = fopen(include_name, "rb");
   }
   if (fh != NULL)
   {
@@ -255,18 +252,24 @@ const char* _yr_compiler_default_include_callback(
     fseek(fh, 0, SEEK_END);
     file_length = ftell(fh);
     fseek(fh, 0, SEEK_SET);
-    file_buffer = (char*) yr_malloc((file_length+1)*sizeof(char));
+    file_buffer = (char*) yr_malloc(file_length+1);
     if(file_buffer)
     {
-      if(file_length != fread(file_buffer, sizeof(char), file_length, fh))
+      if(file_length != fread(file_buffer, 1, file_length, fh))
       {
         return NULL;
+      }
+      else
+      {
+        file_buffer[file_length]='\0';
       }
     }
     fclose(fh);
     return file_buffer;
   }
-  else return NULL;
+  else{
+    return NULL;
+  }
 }
 
 
