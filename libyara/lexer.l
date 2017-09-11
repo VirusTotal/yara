@@ -227,6 +227,7 @@ include[ \t]+\"         {
       // Workaround for flex issue: https://github.com/westes/flex/issues/58
       yypush_buffer_state(YY_CURRENT_BUFFER, yyscanner);
       yy_scan_string(res, yyscanner);
+      yyset_lineno(1, yyscanner);
       if(compiler->include_free != NULL)
       {
         compiler->include_free(res, compiler->incl_clbk_user_data);
