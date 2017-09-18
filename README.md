@@ -65,6 +65,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [FSF](https://github.com/EmersonElectricCo/fsf)
 * [Guidance Software](http://www.guidancesoftware.com/endpointsecurity)
 * [Heroku](https://heroku.com)
+* [Hornetsecurity](https://www.hornetsecurity.com/en/)
 * [InQuest](http://www.inquest.net/)
 * [JASK](http://jask.io)
 * [jsunpack-n](http://jsunpack.jeek.org/)
