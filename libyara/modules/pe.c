@@ -1008,7 +1008,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
     offset = pe_rva_to_offset(pe, names[i]);
 
     if (offset < 0)
-      return head;
+      continue;
 
     remaining = pe->data_size - (size_t) offset;
     name = yr_strndup((char*) (pe->data + offset), remaining);
