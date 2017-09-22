@@ -205,6 +205,8 @@ YR_API int yr_finalize(void)
     yr_mutex_destroy(&openssl_locks[i]);
 
   OPENSSL_free(openssl_locks);
+  CRYPTO_set_id_callback(NULL);
+  CRYPTO_set_locking_callback(NULL);
 
   #endif
 
