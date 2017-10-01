@@ -32,7 +32,8 @@ case $host_os in
     darwin*) CFLAGS="$CFLAGS -I/opt/local/include"
              # Starting with Mac OS X 10.11 (El Capitan) the OpenSSL headers
              # are in /usr/local/opt/openssl/include
-             CFLAGS="$CFLAGS -I/usr/local/opt/openssl/include" ;;
+             CFLAGS="$CFLAGS -I/usr/local/opt/openssl/include"
+             LDFLAGS="$LDFLAGS -L/usr/local/opt/openssl/lib" ;;
 esac
 
 AC_C_BIGENDIAN
