@@ -39,10 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/threading.h>
 
 
-
-#ifdef PROFILING_ENABLED
 #include <time.h>
-#endif
 
 
 #define DECLARE_REFERENCE(type, name) \
