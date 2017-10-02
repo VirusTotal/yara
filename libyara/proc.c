@@ -97,7 +97,7 @@ int _yr_process_detach(
 }
 
 
-uint8_t* _yr_fetch_block_data(
+YR_API uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
@@ -135,7 +135,7 @@ uint8_t* _yr_fetch_block_data(
 }
 
 
-YR_MEMORY_BLOCK* _yr_get_next_block(
+YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
@@ -162,7 +162,7 @@ YR_MEMORY_BLOCK* _yr_get_next_block(
 }
 
 
-YR_MEMORY_BLOCK* _yr_get_first_block(
+YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
@@ -170,7 +170,7 @@ YR_MEMORY_BLOCK* _yr_get_first_block(
   context->current_block.base = (size_t) context->si.lpMinimumApplicationAddress;
   context->current_block.size = 0;
 
-  return _yr_get_next_block(iterator);
+  return yr_process_get_next_memory_block(iterator);
 }
 
 #else
@@ -239,7 +239,7 @@ int _yr_process_detach(
 }
 
 
-uint8_t* _yr_fetch_block_data(
+YR_API uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
@@ -277,7 +277,7 @@ uint8_t* _yr_fetch_block_data(
 }
 
 
-YR_MEMORY_BLOCK* _yr_get_next_block(
+YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
@@ -316,7 +316,7 @@ YR_MEMORY_BLOCK* _yr_get_next_block(
 }
 
 
-YR_MEMORY_BLOCK* _yr_get_first_block(
+YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
@@ -324,7 +324,7 @@ YR_MEMORY_BLOCK* _yr_get_first_block(
   context->current_block.base = 0;
   context->current_block.size = 0;
 
-  return _yr_get_next_block(iterator);
+  return yr_process_get_next_memory_block(iterator);
 }
 
 
@@ -418,7 +418,7 @@ int _yr_process_detach(
 }
 
 
-uint8_t* _yr_fetch_block_data(
+YR_API uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
@@ -453,7 +453,7 @@ uint8_t* _yr_fetch_block_data(
 }
 
 
-YR_MEMORY_BLOCK* _yr_get_next_block(
+YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
@@ -475,7 +475,7 @@ YR_MEMORY_BLOCK* _yr_get_next_block(
 }
 
 
-YR_MEMORY_BLOCK* _yr_get_first_block(
+YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
@@ -483,7 +483,7 @@ YR_MEMORY_BLOCK* _yr_get_first_block(
   if (fseek(context->maps, 0, SEEK_SET) != 0)
     return NULL;
 
-  return _yr_get_next_block(iterator);
+  return yr_process_get_next_memory_block(iterator);
 }
 
 
@@ -492,7 +492,7 @@ YR_MEMORY_BLOCK* _yr_get_first_block(
 
 
 
-int yr_process_open_iterator(
+YR_API int yr_process_open_iterator(
     int pid,
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
@@ -503,8 +503,8 @@ int yr_process_open_iterator(
     return ERROR_INSUFFICIENT_MEMORY;
 
   iterator->context = context;
-  iterator->first = _yr_get_first_block;
-  iterator->next = _yr_get_next_block;
+  iterator->first = yr_process_get_first_memory_block;
+  iterator->next = yr_process_get_next_memory_block;
 
   context->buffer = NULL;
   context->buffer_size = 0;
@@ -512,13 +512,13 @@ int yr_process_open_iterator(
   context->current_block.base = 0;
   context->current_block.size = 0;
   context->current_block.context = context;
-  context->current_block.fetch_data = _yr_fetch_block_data;
+  context->current_block.fetch_data = yr_process_fetch_memory_block_data;
 
   return _yr_process_attach(pid, context);
 }
 
 
-int yr_process_close_iterator(
+YR_API int yr_process_close_iterator(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
