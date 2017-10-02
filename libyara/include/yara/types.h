@@ -235,9 +235,8 @@ typedef struct _YR_STRING
   YR_MATCHES matches[MAX_THREADS];
   YR_MATCHES unconfirmed_matches[MAX_THREADS];
 
-  #ifdef PROFILING_ENABLED
+  // Used only when PROFILING_ENABLED is defined
   clock_t clock_ticks;
-  #endif
 
 } YR_STRING;
 
@@ -253,9 +252,8 @@ typedef struct _YR_RULE
   DECLARE_REFERENCE(YR_STRING*, strings);
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);
 
-  #ifdef PROFILING_ENABLED
+  // Used only when PROFILING_ENABLED is defined
   clock_t clock_ticks;
-  #endif
 
 } YR_RULE;
 
