@@ -58,27 +58,28 @@ include_HEADERS = include/yara.h
 yaraincludedir = $(includedir)/yara
 yarainclude_HEADERS = \
   include/yara/ahocorasick.h \
-  include/yara/atoms.h \
-  include/yara/limits.h \
-  include/yara/re.h \
   include/yara/arena.h \
-  include/yara/sizedstr.h \
-  include/yara/types.h \
-  include/yara/hash.h \
-  include/yara/exec.h \
-  include/yara/scan.h \
-  include/yara/rules.h \
-  include/yara/error.h \
-  include/yara/utils.h \
-  include/yara/filemap.h \
+  include/yara/atoms.h \
   include/yara/compiler.h \
+  include/yara/error.h \
+  include/yara/exec.h \
+  include/yara/filemap.h \
+  include/yara/hash.h \
+  include/yara/integers.h \
+  include/yara/libyara.h \
+  include/yara/limits.h \
   include/yara/modules.h \
   include/yara/object.h \
-  include/yara/strutils.h \
+  include/yara/proc.h \
+  include/yara/re.h \
+  include/yara/rules.h \
+  include/yara/scan.h \
+  include/yara/sizedstr.h \
   include/yara/stream.h \
+  include/yara/strutils.h \
   include/yara/threading.h \
-  include/yara/integers.h \
-  include/yara/libyara.h
+  include/yara/types.h \
+  include/yara/utils.h
 
 lib_LTLIBRARIES = libyara.la
 
