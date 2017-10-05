@@ -139,14 +139,30 @@ int yr_get_elf_type(
 
   elf_ident = (elf_ident_t*) buffer;
 
-  if (yr_le32toh(elf_ident->magic) == ELF_MAGIC)
-  {
-    return elf_ident->_class;
-  }
-  else
+  if (yr_le32toh(elf_ident->magic) != ELF_MAGIC)
   {
     return 0;
   }
+
+  switch (elf_ident->_class) {
+    case ELF_CLASS_32:
+      if (buffer_length < sizeof(elf32_header_t))
+      {
+        return 0;
+      }
+      break;
+    case ELF_CLASS_64:
+      if (buffer_length < sizeof(elf64_header_t))
+      {
+        return 0;
+      }
+      break;
+    default:
+      /* Unexpected class */
+      return 0;
+  }
+
+  return elf_ident->_class;
 }
 
 
