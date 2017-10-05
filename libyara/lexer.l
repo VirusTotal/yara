@@ -162,6 +162,7 @@ octdigit      [0-7]
 "any"                   { return _ANY_;         }
 "entrypoint"            { return _ENTRYPOINT_;  }
 "filesize"              { return _FILESIZE_;    }
+"filename"              { return _FILENAME_;    }
 "matches"               { return _MATCHES_;     }
 "contains"              { return _CONTAINS_;    }
 "import"                { return _IMPORT_;      }

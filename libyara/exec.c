@@ -760,6 +760,11 @@ int yr_execute_code(
         push(r1);
         break;
 
+      case OP_FILENAME:
+        r1.ss = context->file_name;
+        push(r1);
+        break;
+
       case OP_ENTRYPOINT:
         r1.i = context->entry_point;
         push(r1);

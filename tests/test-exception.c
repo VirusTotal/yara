@@ -140,7 +140,7 @@ int test_crash(int handle_exceptions)
   int flags = (handle_exceptions ? 0 : SCAN_FLAGS_NO_TRYCATCH);
 
   int rc = yr_rules_scan_mem(
-      rules_a, mapped_region, COUNT * sizeof(wbuf), flags, count_matches, &matches, 0);
+      rules_a, mapped_region, COUNT * sizeof(wbuf), flags, count_matches, &matches, 0, NULL);
 
   printf("err = %d, matches = %d\n", rc, matches);
 
@@ -168,7 +168,7 @@ int test_crash_other_thread()
   int matches = 0;
 
   int rc = yr_rules_scan_mem(
-      rules_a, mem, sizeof(mem), 0, delay_callback, &matches, 0);
+      rules_a, mem, sizeof(mem), 0, delay_callback, &matches, 0, NULL);
 
   printf("err = %d, matches = %d\n", rc, matches);
 
@@ -198,7 +198,7 @@ int test_blocked_signal() {
   int matches = 0;
 
   int rc = yr_rules_scan_mem(
-      rules_0, mapped_region, COUNT * sizeof(wbuf), 0, count_matches, &matches, 0);
+      rules_0, mapped_region, COUNT * sizeof(wbuf), 0, count_matches, &matches, 0, NULL);
 
   printf("err = %d, matches = %d\n", rc, matches);
 

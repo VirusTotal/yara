@@ -76,7 +76,8 @@ YR_API int yr_rules_scan_mem(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int timeout);
+    int timeout,
+    const char* filename);
 
 
 YR_API int yr_rules_scan_file(
