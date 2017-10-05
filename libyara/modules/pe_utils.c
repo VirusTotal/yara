@@ -29,10 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 
-#if defined(_WIN32)
-#define timegm _mkgmtime
-#endif
-
 #include <string.h>
 
 #include <yara/endian.h>
@@ -219,7 +215,10 @@ int64_t pe_rva_to_offset(
 }
 
 
-#if !HAVE_TIMEGM && !defined(WIN32)
+#if !HAVE_TIMEGM
+#if HAVE__MKGMTIME
+#define timegm _mkgmtime
+#else
 
 #include <time.h>
 
@@ -258,7 +257,8 @@ time_t timegm(
   return res;
 }
 
-#endif
+#endif // HAVE__MKGMTIME
+#endif // !HAVE_TIMEGM
 
 #if HAVE_LIBCRYPTO
 
