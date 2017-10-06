@@ -187,25 +187,22 @@ include[ \t]+\"         {
 
 <include>\"             {
 
-  if (compiler->allow_includes)
+  if (compiler->include_callback != NULL)
   {
     *yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
 
     // move path of current source file into buffer
-    char* current_file_name = yr_compiler_get_current_file_name(
-                                                          compiler);
+    char* current_file_name = yr_compiler_get_current_file_name(compiler);
 
-    const char* res = compiler->include_callback(
-                                  yyextra->lex_buf,
-                                  current_file_name,
-                                  compiler->current_namespace->name,
-                                  compiler->incl_clbk_user_data);
+    const char* included_rules = compiler->include_callback(
+        yyextra->lex_buf,
+        current_file_name,
+        compiler->current_namespace->name,
+        compiler->incl_clbk_user_data);
 
-    if (res != NULL)
+    if (included_rules != NULL)
     {
-
-      int error_code = _yr_compiler_push_file_name( compiler,
-                                                    yyextra->lex_buf);
+      int error_code = _yr_compiler_push_file_name(compiler, yyextra->lex_buf);
 
       if (error_code != ERROR_SUCCESS)
       {
@@ -217,26 +214,30 @@ include[ \t]+\"         {
         {
           yyerror(yyscanner, compiler, "includes depth exceeded");
         }
-        if(compiler->include_free != NULL)
+
+        if (compiler->include_free != NULL)
         {
-          compiler->include_free(res, compiler->incl_clbk_user_data);
+          compiler->include_free(included_rules, compiler->incl_clbk_user_data);
         }
+
         yyterminate();
       }
 
       // Workaround for flex issue: https://github.com/westes/flex/issues/58
       yypush_buffer_state(YY_CURRENT_BUFFER, yyscanner);
-      yy_scan_string(res, yyscanner);
+      yy_scan_string(included_rules, yyscanner);
       yyset_lineno(1, yyscanner);
-      if(compiler->include_free != NULL)
+
+      if (compiler->include_free != NULL)
       {
-        compiler->include_free(res, compiler->incl_clbk_user_data);
+        compiler->include_free(included_rules, compiler->incl_clbk_user_data);
       }
     }
     else
     {
       char* base_err_msg = NULL;
-      if(compiler->include_callback == _yr_compiler_default_include_callback)
+
+      if (compiler->include_callback == _yr_compiler_default_include_callback)
       {
         base_err_msg = "can't open include file: %s";
       }
@@ -244,12 +245,16 @@ include[ \t]+\"         {
       {
         base_err_msg = "callback failed to provide include resource: %s";
       }
-      size_t err_buff_len = sizeof(base_err_msg) + sizeof(yyextra->lex_buf);
+
+      size_t err_buff_len = strlen(base_err_msg) + strlen(yyextra->lex_buf);
       char* error_buffer = (char*) yr_malloc(err_buff_len);
-      snprintf( error_buffer,
-                err_buff_len,
-                base_err_msg,
-                yyextra->lex_buf);
+
+      snprintf(
+          error_buffer,
+          err_buff_len,
+          base_err_msg,
+          yyextra->lex_buf);
+
       yyerror(yyscanner, compiler, error_buffer);
     }
 
@@ -257,7 +262,6 @@ include[ \t]+\"         {
   else // not allowing includes
   {
     yyerror(yyscanner, compiler, "includes are disabled");
-    yyterminate();
   }
 
   BEGIN(INITIAL);

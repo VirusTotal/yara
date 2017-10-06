@@ -109,8 +109,6 @@ typedef struct _YR_COMPILER
   int               loop_depth;
   int               loop_for_of_mem_offset;
 
-  int               allow_includes;
-
   char*             file_name_stack[MAX_INCLUDE_DEPTH];
   int               file_name_stack_ptr;
 

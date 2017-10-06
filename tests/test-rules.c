@@ -1792,6 +1792,47 @@ void test_disabled_rules()
 }
 
 
+const char* _include_callback(
+    const char* include_name,
+    const char* calling_rule_filename,
+    const char* calling_rule_namespace,
+    void* user_data)
+{
+  if (strcmp(include_name, "ok") == 0)
+    return "rule test {condition: true}";
+  else
+    return NULL;
+}
+
+
+void test_include_callback()
+{
+  YR_COMPILER* compiler = NULL;
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_compiler_set_include_callback(compiler, _include_callback, NULL, NULL);
+
+  // This include produces no error.
+  if (yr_compiler_add_string(compiler, "include \"ok\"", NULL) != 0)
+  {
+    yr_compiler_destroy(compiler);
+    exit(EXIT_FAILURE);
+  }
+
+  // This include one error.
+  if (yr_compiler_add_string(compiler, "include \"fail\"", NULL) != 1)
+  {
+    yr_compiler_destroy(compiler);
+    exit(EXIT_FAILURE);
+  }
+}
+
+
 int main(int argc, char** argv)
 {
   yr_initialize();
@@ -1815,6 +1856,7 @@ int main(int argc, char** argv)
   test_for();
   test_re();
   test_filesize();
+  test_include_callback();
   // test_compile_file();
   // test_compile_files();
   // test_include_files();

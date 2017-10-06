@@ -64,7 +64,6 @@ YR_API int yr_compiler_create(
   new_compiler->last_result = ERROR_SUCCESS;
   new_compiler->file_name_stack_ptr = 0;
   new_compiler->fixup_stack_head = NULL;
-  new_compiler->allow_includes = 1;
   new_compiler->loop_depth = 0;
   new_compiler->loop_for_of_mem_offset = -1;
   new_compiler->compiled_rules_arena = NULL;
@@ -184,10 +183,10 @@ YR_API void yr_compiler_set_callback(
 
 
 const char* _yr_compiler_default_include_callback(
-  const char* include_name,
-  const char* calling_rule_filename,
-  const char* calling_rule_namespace,
-  void* user_data)
+    const char* include_name,
+    const char* calling_rule_filename,
+    const char* calling_rule_namespace,
+    void* user_data)
 {
   char* buffer;
   char* s = NULL;
@@ -199,7 +198,7 @@ const char* _yr_compiler_default_include_callback(
   char* file_buffer;
   size_t file_length;
 
-  if(calling_rule_filename != NULL)
+  if (calling_rule_filename != NULL)
   {
     buffer = (char*) calling_rule_filename;
   }
@@ -213,6 +212,7 @@ const char* _yr_compiler_default_include_callback(
   #ifdef _WIN32
   b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
   #endif
+
   #ifdef _WIN32
   if (s != NULL || b != NULL)
   #else
@@ -224,10 +224,13 @@ const char* _yr_compiler_default_include_callback(
     #else
     f = s + 1;
     #endif
+
     strlcpy(f, include_name, sizeof(buffer) - (f - buffer));
+
     f = buffer;
     // SECURITY: Potential for directory traversal here.
     fh = fopen(buffer, "rb");
+
     // if include file was not found relative to current source file,
     // try to open it with path as specified by user (maybe user wrote
     // a full path)
@@ -244,32 +247,35 @@ const char* _yr_compiler_default_include_callback(
     // SECURITY: Potential for directory traversal here.
     fh = fopen(include_name, "rb");
   }
-  if (fh != NULL)
-  {
-    file_buffer = NULL;
-    file_length = 0;
 
-    fseek(fh, 0, SEEK_END);
-    file_length = ftell(fh);
-    fseek(fh, 0, SEEK_SET);
-    file_buffer = (char*) yr_malloc(file_length+1);
-    if(file_buffer)
-    {
-      if(file_length != fread(file_buffer, 1, file_length, fh))
-      {
-        return NULL;
-      }
-      else
-      {
-        file_buffer[file_length]='\0';
-      }
-    }
+  if (fh == NULL)
+    return NULL;
+
+  fseek(fh, 0, SEEK_END);
+  file_length = ftell(fh);
+  fseek(fh, 0, SEEK_SET);
+
+  file_buffer = (char*) yr_malloc(file_length + 1);
+
+  if (file_buffer == NULL)
+  {
     fclose(fh);
-    return file_buffer;
-  }
-  else{
     return NULL;
   }
+
+  if (file_length != fread(file_buffer, 1, file_length, fh))
+  {
+    yr_free(file_buffer);
+    fclose(fh);
+    return NULL;
+  }
+  else
+  {
+    file_buffer[file_length]='\0';
+  }
+
+  fclose(fh);
+  return file_buffer;
 }
 
 
