@@ -235,27 +235,25 @@ include[ \t]+\"         {
     }
     else
     {
-      char* base_err_msg = NULL;
+      char* err_msg_fmt;
+      char err_msg[512];
 
       if (compiler->include_callback == _yr_compiler_default_include_callback)
       {
-        base_err_msg = "can't open include file: %s";
+        err_msg_fmt = "can't open include file: %s";
       }
       else
       {
-        base_err_msg = "callback failed to provide include resource: %s";
+        err_msg_fmt = "callback failed to provide include resource: %s";
       }
 
-      size_t err_buff_len = strlen(base_err_msg) + strlen(yyextra->lex_buf);
-      char* error_buffer = (char*) yr_malloc(err_buff_len);
-
       snprintf(
-          error_buffer,
-          err_buff_len,
-          base_err_msg,
+          err_msg,
+          sizeof(err_msg),
+          err_msg_fmt,
           yyextra->lex_buf);
 
-      yyerror(yyscanner, compiler, error_buffer);
+      yyerror(yyscanner, compiler, err_msg);
     }
 
   }
