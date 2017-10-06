@@ -60,6 +60,13 @@ int get_elf_class_data(
   }
 }
 
+static int is_valid_ptr(void* base, size_t size, void* ptr, size_t ptr_size) {
+  return ptr >= base && ((char*) ptr) + ptr_size <= ((char*) base) + size;
+}
+
+#define IS_VALID_PTR(base, size, ptr) \
+    is_valid_ptr(base, size, ptr, sizeof(*ptr))
+
 #define ELF_SIZE_OF_SECTION_TABLE(bits,bo,h)       \
   (sizeof(elf##bits##_section_header_t) * yr_##bo##16toh(h->sh_entry_count))
 
@@ -246,8 +253,8 @@ void parse_elf_header_##bits##_##bo(                                           \
           sym_strtab = ((elf##bits##_section_header_t*)((uint8_t*)             \
             elf + yr_##bo##bits##toh(elf->sh_offset))) +                       \
             yr_##bo##32toh(symtab->link);                                      \
-                                                                               \
-          if (yr_##bo##32toh(sym_strtab->type) != ELF_SHT_STRTAB ||            \
+          if (!IS_VALID_PTR(elf, elf_size, sym_strtab) ||                      \
+              yr_##bo##32toh(sym_strtab->type) != ELF_SHT_STRTAB ||            \
               (yr_##bo##bits##toh(symtab->offset) +                            \
                yr_##bo##bits##toh(symtab->size)) > elf_size ||                 \
               (yr_##bo##bits##toh(sym_strtab->offset) +                        \
