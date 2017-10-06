@@ -376,29 +376,23 @@ void parse_elf_header_##bits##_##bo(                                           \
                                                                                \
       if (yr_##bo##32toh(segment->type) == ELF_PT_DYNAMIC)                     \
       {                                                                        \
-        if ((yr_##bo##bits##toh(segment->offset) +                             \
-          sizeof(elf##bits##_dyn_t)) < elf_size)                               \
-        {                                                                      \
-          elf##bits##_dyn_t* dyn = (elf##bits##_dyn_t*)((char*)elf +           \
+        int j = 0;                                                             \
+        elf##bits##_dyn_t* dyn = (elf##bits##_dyn_t*)((char*)elf +             \
             yr_##bo##bits##toh(segment->offset));                              \
+        for ( ; IS_VALID_PTR(elf, elf_size, dyn); dyn++, j++)                  \
+        {                                                                      \
+          set_integer(                                                         \
+              yr_##bo##bits##toh(dyn->tag), elf_obj, "dynamic[%i].type", j);   \
+          set_integer(                                                         \
+              yr_##bo##bits##toh(dyn->val), elf_obj, "dynamic[%i].val", j);    \
                                                                                \
-          int j = 0;                                                           \
-          for ( ; (((char*)dyn) + sizeof(elf##bits##_dyn_t)) <                 \
-            ((char*)elf + elf_size); dyn++, j++)                               \
+          if (dyn->tag == ELF_DT_NULL)                                         \
           {                                                                    \
-            set_integer(                                                       \
-                yr_##bo##bits##toh(dyn->tag), elf_obj, "dynamic[%i].type", j); \
-            set_integer(                                                       \
-                yr_##bo##bits##toh(dyn->val), elf_obj, "dynamic[%i].val", j);  \
-                                                                               \
-            if (dyn->tag == ELF_DT_NULL)                                       \
-            {                                                                  \
-              j++;                                                             \
-              break;                                                           \
-            }                                                                  \
+            j++;                                                               \
+            break;                                                             \
           }                                                                    \
-          set_integer(j, elf_obj, "dynamic_section_entries");                  \
         }                                                                      \
+        set_integer(j, elf_obj, "dynamic_section_entries");                    \
       }                                                                        \
       segment++;                                                               \
     }                                                                          \
