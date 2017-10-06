@@ -196,7 +196,7 @@ const char* _yr_compiler_default_include_callback(
   char* f;
   FILE* fh;
   char* file_buffer;
-  size_t file_length;
+  long file_length;
 
   if (calling_rule_filename != NULL)
   {
@@ -254,6 +254,12 @@ const char* _yr_compiler_default_include_callback(
   fseek(fh, 0, SEEK_END);
   file_length = ftell(fh);
   fseek(fh, 0, SEEK_SET);
+
+  if (file_length == -1)
+  {
+    fclose(fh);
+    return NULL;
+  }
 
   file_buffer = (char*) yr_malloc(file_length + 1);
 
