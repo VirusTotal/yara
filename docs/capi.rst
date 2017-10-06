@@ -63,6 +63,40 @@ contains the file name and line number where the error or warning occurs.
 you're using :c:func:`yr_compiler_add_string`. The ``user_data`` pointer is the
 same you passed to :c:func:`yr_compiler_set_callback`.
 
+By default, for rules containing references to other files
+(``include "filename.yara"``), yara will try to find those files on disk.
+However, if you want to fetch the imported rules from another source (eg: from a
+database or remote service), a callback function can be set with
+:c:func:`yr_compiler_set_include_callback`.
+The callback receives the following parameters:
+ * ``include_name``: name of the requested file.
+ * ``calling_rule_filename``: the requesting file name (NULL if not a file).
+ * ``calling_rule_namespace``: namespace (NULL if undefined).
+ * ``user_data`` pointer is the same you passed to :c:func:`yr_compiler_set_include_callback`.
+It should return the requested file's content as a string. The memory for this
+string should be allocated by the callback function. Once it is safe to free the
+memory used to return the callback's result, the include_free function passed to
+:c:func:`yr_compiler_set_include_callback` will be called. If the memory does
+not need to be freed, NULL can be passed as include_free instead.
+
+The callback function has the following prototype:
+
+.. code-block:: c
+
+  const char* include_callback(
+      const char* include_name,
+      const char* calling_rule_filename,
+      const char* calling_rule_namespace,
+      void* user_data);
+
+The free function has the following prototype:
+
+.. code-block:: c
+
+  void include_free(
+      const char* callback_result_ptr,
+      void* user_data);
+
 After you successfully added some sources you can get the compiled rules
 using the :c:func:`yr_compiler_get_rules()` function. You'll get a pointer to
 a :c:type:`YR_RULES` structure which can be used to scan your data as
@@ -402,6 +436,15 @@ Functions
   pointer is passed to the callback function.
 
 
+.. c:function:: void yr_compiler_set_include_callback(YR_COMPILER* compiler, YR_COMPILER_INCLUDE_CALLBACK_FUNC callback, YR_COMPILER_INCLUDE_FREE_FUNC include_free, void* user_data)
+
+  Set a callback to provide rules from a custom source when ``include``
+  directive is invoked. The *user_data* pointer is untouched and passed back to
+  the callback function and to the free function. Once the callback's result
+  is no longer needed, the include_free function will be called. If the memory
+  does not need to be freed, include_free can be set to NULL.
+
+
 .. c:function:: int yr_compiler_add_file(YR_COMPILER* compiler, FILE* file, const char* namespace, const char* file_name)
 
   Compile rules from a *file*. Rules are put into the specified *namespace*,
@@ -667,6 +710,7 @@ Functions
 
   Enables the specified rule. After being disabled with :c:func:`yr_rule_disable`
   a rule can be enabled again by using this function.
+
 
 Error codes
 -----------
