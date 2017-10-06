@@ -27,7 +27,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define _GNU_SOURCE
+
 #include <limits.h>
+#include <string.h>
 
 #include <yara/elf.h>
 #include <yara/endian.h>
@@ -66,6 +69,36 @@ static int is_valid_ptr(void* base, size_t size, void* ptr, size_t ptr_size) {
 
 #define IS_VALID_PTR(base, size, ptr) \
     is_valid_ptr(base, size, ptr, sizeof(*ptr))
+
+/*
+ * Returns a string table entry for the index or NULL if the entry is out
+ * of bounds. A non-null return value will be a null-terminated C string.
+ */
+static const char* str_table_entry(const char* str_table_base,
+                                   const char* str_table_limit,
+                                   int index) {
+  size_t len;
+  const char* str_entry = str_table_base + index;
+
+  if (index < 0)
+  {
+    return NULL;
+  }
+
+  if (str_entry >= str_table_limit)
+  {
+    return NULL;
+  }
+
+  len = strnlen(str_entry, str_table_limit - str_entry);
+  if (str_entry + len == str_table_limit)
+  {
+    /* Entry is clamped by extent of string table, not null-terminated. */
+    return NULL;
+  }
+
+  return str_entry;
+}
 
 #define ELF_SIZE_OF_SECTION_TABLE(bits,bo,h)       \
   (sizeof(elf##bits##_section_header_t) * yr_##bo##16toh(h->sh_entry_count))
@@ -241,8 +274,12 @@ void parse_elf_header_##bits##_##bo(                                           \
           str_table + yr_##bo##32toh(section->name) <                          \
             (char*) elf + elf_size)                                            \
       {                                                                        \
-        set_string(str_table + yr_##bo##32toh(section->name), elf_obj,         \
-                   "sections[%i].name", i);                                    \
+        const char* str_entry = str_table_entry(str_table,                     \
+            ((const char*) elf) + elf_size, yr_##bo##32toh(section->name));    \
+        if (str_entry)                                                         \
+        {                                                                      \
+          set_string(str_entry, elf_obj, "sections[%i].name", i);              \
+        }                                                                      \
       }                                                                        \
                                                                                \
       if (yr_##bo##32toh(section->type) == ELF_SHT_SYMTAB)                     \
