@@ -27,7 +27,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define _GNU_SOURCE
+
 #include <limits.h>
+#include <string.h>
 
 #include <yara/elf.h>
 #include <yara/endian.h>
@@ -58,6 +61,43 @@ int get_elf_class_data(
   {
     return 0;
   }
+}
+
+static int is_valid_ptr(void* base, size_t size, void* ptr, size_t ptr_size) {
+  return ptr >= base && ((char*) ptr) + ptr_size <= ((char*) base) + size;
+}
+
+#define IS_VALID_PTR(base, size, ptr) \
+    is_valid_ptr(base, size, ptr, sizeof(*ptr))
+
+/*
+ * Returns a string table entry for the index or NULL if the entry is out
+ * of bounds. A non-null return value will be a null-terminated C string.
+ */
+static const char* str_table_entry(const char* str_table_base,
+                                   const char* str_table_limit,
+                                   int index) {
+  size_t len;
+  const char* str_entry = str_table_base + index;
+
+  if (index < 0)
+  {
+    return NULL;
+  }
+
+  if (str_entry >= str_table_limit)
+  {
+    return NULL;
+  }
+
+  len = strnlen(str_entry, str_table_limit - str_entry);
+  if (str_entry + len == str_table_limit)
+  {
+    /* Entry is clamped by extent of string table, not null-terminated. */
+    return NULL;
+  }
+
+  return str_entry;
 }
 
 #define ELF_SIZE_OF_SECTION_TABLE(bits,bo,h)       \
@@ -234,8 +274,12 @@ void parse_elf_header_##bits##_##bo(                                           \
           str_table + yr_##bo##32toh(section->name) <                          \
             (char*) elf + elf_size)                                            \
       {                                                                        \
-        set_string(str_table + yr_##bo##32toh(section->name), elf_obj,         \
-                   "sections[%i].name", i);                                    \
+        const char* str_entry = str_table_entry(str_table,                     \
+            ((const char*) elf) + elf_size, yr_##bo##32toh(section->name));    \
+        if (str_entry)                                                         \
+        {                                                                      \
+          set_string(str_entry, elf_obj, "sections[%i].name", i);              \
+        }                                                                      \
       }                                                                        \
                                                                                \
       if (yr_##bo##32toh(section->type) == ELF_SHT_SYMTAB)                     \
@@ -246,8 +290,8 @@ void parse_elf_header_##bits##_##bo(                                           \
           sym_strtab = ((elf##bits##_section_header_t*)((uint8_t*)             \
             elf + yr_##bo##bits##toh(elf->sh_offset))) +                       \
             yr_##bo##32toh(symtab->link);                                      \
-                                                                               \
-          if (yr_##bo##32toh(sym_strtab->type) != ELF_SHT_STRTAB ||            \
+          if (!IS_VALID_PTR(elf, elf_size, sym_strtab) ||                      \
+              yr_##bo##32toh(sym_strtab->type) != ELF_SHT_STRTAB ||            \
               (yr_##bo##bits##toh(symtab->offset) +                            \
                yr_##bo##bits##toh(symtab->size)) > elf_size ||                 \
               (yr_##bo##bits##toh(sym_strtab->offset) +                        \
@@ -332,29 +376,23 @@ void parse_elf_header_##bits##_##bo(                                           \
                                                                                \
       if (yr_##bo##32toh(segment->type) == ELF_PT_DYNAMIC)                     \
       {                                                                        \
-        if ((yr_##bo##bits##toh(segment->offset) +                             \
-          sizeof(elf##bits##_dyn_t)) < elf_size)                               \
-        {                                                                      \
-          elf##bits##_dyn_t* dyn = (elf##bits##_dyn_t*)((char*)elf +           \
+        int j = 0;                                                             \
+        elf##bits##_dyn_t* dyn = (elf##bits##_dyn_t*)((char*)elf +             \
             yr_##bo##bits##toh(segment->offset));                              \
+        for ( ; IS_VALID_PTR(elf, elf_size, dyn); dyn++, j++)                  \
+        {                                                                      \
+          set_integer(                                                         \
+              yr_##bo##bits##toh(dyn->tag), elf_obj, "dynamic[%i].type", j);   \
+          set_integer(                                                         \
+              yr_##bo##bits##toh(dyn->val), elf_obj, "dynamic[%i].val", j);    \
                                                                                \
-          int j = 0;                                                           \
-          for ( ; (((char*)dyn) + sizeof(elf##bits##_dyn_t)) <                 \
-            ((char*)elf + elf_size); dyn++, j++)                               \
+          if (dyn->tag == ELF_DT_NULL)                                         \
           {                                                                    \
-            set_integer(                                                       \
-                yr_##bo##bits##toh(dyn->tag), elf_obj, "dynamic[%i].type", j); \
-            set_integer(                                                       \
-                yr_##bo##bits##toh(dyn->val), elf_obj, "dynamic[%i].val", j);  \
-                                                                               \
-            if (dyn->tag == ELF_DT_NULL)                                       \
-            {                                                                  \
-              j++;                                                             \
-              break;                                                           \
-            }                                                                  \
+            j++;                                                               \
+            break;                                                             \
           }                                                                    \
-          set_integer(j, elf_obj, "dynamic_section_entries");                  \
         }                                                                      \
+        set_integer(j, elf_obj, "dynamic_section_entries");                    \
       }                                                                        \
       segment++;                                                               \
     }                                                                          \
