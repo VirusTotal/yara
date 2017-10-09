@@ -32,7 +32,6 @@ int compile_files(
     if (rule_file == NULL)
     {
       fprintf(stderr, "error: could not open file: %s\n", file_name);
-      fclose(rule_file);
       return 0;
     }
 
