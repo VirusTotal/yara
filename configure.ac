@@ -91,6 +91,7 @@ AC_ARG_ENABLE([cuckoo],
     AC_CHECK_LIB(jansson, json_loadb,,
       AC_MSG_ERROR([please install Jansson library]))
     CFLAGS="$CFLAGS -DCUCKOO_MODULE"
+    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE jansson"
   fi])
 
 AC_ARG_ENABLE([magic],
@@ -102,6 +103,7 @@ AC_ARG_ENABLE([magic],
     AC_CHECK_LIB(magic, magic_open,,
       AC_MSG_ERROR([please install libmagic library]))
     CFLAGS="$CFLAGS -DMAGIC_MODULE"
+    PC_LIBS_PRIVATE="$PC_LIBS_PRIVATE -lmagic"
   fi])
 
 AC_ARG_ENABLE([dotnet],
@@ -155,7 +157,7 @@ AS_IF([test "x$have_crypto" = "xno"],
   [
     build_hash_module=true
     CFLAGS="$CFLAGS -DHASH_MODULE"
-    PC_REQUIRES_PRIVATE=libcrypto
+    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libcrypto"
   ])
 
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
@@ -167,6 +169,7 @@ AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
 AM_CONDITIONAL([DOTNET_MODULE], [test x$build_dotnet_module = xtrue])
 AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
 AC_SUBST([PC_REQUIRES_PRIVATE])
+AC_SUBST([PC_LIBS_PRIVATE])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libyara/Makefile])
