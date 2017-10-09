@@ -22,10 +22,10 @@ ACLOCAL_AMFLAGS=-I m4
 
 bin_PROGRAMS = yara yarac
 
-yara_SOURCES = args.c args.h threading.c threading.h yara.c
+yara_SOURCES = args.c args.h common.h threading.c threading.h yara.c
 yara_LDADD = libyara/.libs/libyara.a
 
-yarac_SOURCES = args.c args.h yarac.c
+yarac_SOURCES = args.c args.h common.h yarac.c
 yarac_LDADD = libyara/.libs/libyara.a
 
 TESTS = $(check_PROGRAMS)
