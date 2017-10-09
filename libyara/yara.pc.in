@@ -7,5 +7,6 @@ Name: yara
 Description: YARA library
 URL: https://virustotal.github.io/yara/
 Version: @PACKAGE_VERSION@
+Requires.private: @PC_REQUIRES_PRIVATE@
 Cflags: -I${includedir}
 Libs: -L${libdir} -lyara

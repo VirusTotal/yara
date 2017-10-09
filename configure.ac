@@ -155,6 +155,7 @@ AS_IF([test "x$have_crypto" = "xno"],
   [
     build_hash_module=true
     CFLAGS="$CFLAGS -DHASH_MODULE"
+    PC_REQUIRES_PRIVATE=libcrypto
   ])
 
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
@@ -165,8 +166,10 @@ AM_CONDITIONAL([MAGIC_MODULE], [test x$build_magic_module = xtrue])
 AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
 AM_CONDITIONAL([DOTNET_MODULE], [test x$build_dotnet_module = xtrue])
 AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
+AC_SUBST([PC_REQUIRES_PRIVATE])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([libyara/Makefile])
+AC_CONFIG_FILES([libyara/yara.pc])
 
 AC_OUTPUT
