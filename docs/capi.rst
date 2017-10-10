@@ -39,7 +39,10 @@ in the *default* namespace.
 The :c:func:`yr_compiler_add_file`, :c:func:`yr_compiler_add_fd`, and
 :c:func:`yr_compiler_add_string` functions return
 the number of errors found in the source code. If the rules are correct they
-will return 0. For more detailed error information you must set a callback
+will return 0. If any of these functions return an error the compiler can't used
+anymore, neither for adding more rules nor getting the compiled rules.
+
+For obtaining detailed error information you must set a callback
 function by using :c:func:`yr_compiler_set_callback` before calling
 any of the compiling functions. The callback function has the following
 prototype:

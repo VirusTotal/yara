@@ -251,41 +251,6 @@ void test_save_load_rules()
 }
 
 
-void test_issue_755()
-{
-  YR_COMPILER* compiler = NULL;
-
-  yr_initialize();
-
-  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
-  {
-    perror("yr_compiler_create");
-    exit(EXIT_FAILURE);
-  }
-
-  char* fail_inside_for = "\
-    rule test_fail { strings: $ = \"foo\" condition: for all of ($*) : (fail) }";
-
-  if (yr_compiler_add_string(compiler, fail_inside_for, NULL) != 1)
-  {
-    yr_compiler_destroy(compiler);
-    exit(EXIT_FAILURE);
-  }
-
-  char* succeed_inside_for = "\
-    rule test_ok { strings: $ = \"foo\" condition: for all of ($*) : ($) }";
-
-  if (yr_compiler_add_string(compiler, succeed_inside_for, NULL) != 0)
-  {
-    yr_compiler_destroy(compiler);
-    exit(EXIT_FAILURE);
-  }
-
-  yr_compiler_destroy(compiler);
-  yr_finalize();
-}
-
-
 int main(int argc, char** argv)
 {
   test_disabled_rules();
@@ -293,5 +258,4 @@ int main(int argc, char** argv)
   test_max_string_per_rules();
   test_include_callback();
   test_save_load_rules();
-  test_issue_755();
 }
