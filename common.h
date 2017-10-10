@@ -13,6 +13,7 @@ int compile_files(
     const char* ns;
     const char* file_name;
     char* colon = (char*) strchr(argv[i], ':');
+    int errors;
 
     // Namespace delimiter must be a colon not followed by a slash or backslash
     if (colon && *(colon + 1) != '\\' && *(colon + 1) != '/')
@@ -32,13 +33,16 @@ int compile_files(
     if (rule_file == NULL)
     {
       fprintf(stderr, "error: could not open file: %s\n", file_name);
-      return 0;
+      return FALSE;
     }
 
-    yr_compiler_add_file(compiler, rule_file, ns, file_name);
+    errors = yr_compiler_add_file(compiler, rule_file, ns, file_name);
 
     fclose(rule_file);
+
+    if (errors > 0)
+      return FALSE;
   }
 
-  return 1;
+  return TRUE;
 }
