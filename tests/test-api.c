@@ -94,6 +94,7 @@ void test_include_callback()
     exit(EXIT_FAILURE);
   }
 
+  yr_compiler_destroy(compiler);
   yr_finalize();
 }
 
