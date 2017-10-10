@@ -285,15 +285,6 @@ const char* _yr_compiler_default_include_callback(
 }
 
 
-void _yr_compiler_reset(
-    YR_COMPILER* compiler)
-{
-  compiler->loop_depth = 0;
-  compiler->loop_for_of_mem_offset = -1;
-  compiler->current_rule = NULL;
-}
-
-
 void _yr_compiler_default_include_free(
   const char* callback_result_ptr,
   void* user_data)
@@ -449,7 +440,10 @@ YR_API int yr_compiler_add_file(
 
   assert(compiler->compiled_rules_arena == NULL);
 
-  _yr_compiler_reset(compiler);
+  // Don't allow calls to yr_compiler_add_file() if a previous call to
+  // yr_compiler_add_XXXX failed.
+
+  assert(compiler->errors == 0);
 
   if (file_name != NULL)
     _yr_compiler_push_file_name(compiler, file_name);
@@ -483,7 +477,10 @@ YR_API int yr_compiler_add_fd(
 
   assert(compiler->compiled_rules_arena == NULL);
 
-  _yr_compiler_reset(compiler);
+  // Don't allow calls to yr_compiler_add_fd() if a previous call to
+  // yr_compiler_add_XXXX failed.
+
+  assert(compiler->last_error == ERROR_SUCCESS);
 
   if (file_name != NULL)
     _yr_compiler_push_file_name(compiler, file_name);
@@ -510,12 +507,15 @@ YR_API int yr_compiler_add_string(
     const char* rules_string,
     const char* namespace_)
 {
-  // Don't allow yr_compiler_add_string() after
+  // Don't allow calls to yr_compiler_add_string() after
   // yr_compiler_get_rules() has been called.
 
   assert(compiler->compiled_rules_arena == NULL);
 
-  _yr_compiler_reset(compiler);
+  // Don't allow calls to yr_compiler_add_string() if a previous call to
+  // yr_compiler_add_XXXX failed.
+
+  assert(compiler->last_error == ERROR_SUCCESS);
 
   if (namespace_ != NULL)
     compiler->last_result = _yr_compiler_set_namespace(compiler, namespace_);
@@ -709,6 +709,11 @@ YR_API int yr_compiler_get_rules(
 {
   YR_RULES* yara_rules;
   YARA_RULES_FILE_HEADER* rules_file_header;
+
+  // Don't allow calls to yr_compiler_get_rules() if a previous call to
+  // yr_compiler_add_XXXX failed.
+
+  assert(compiler->last_error == ERROR_SUCCESS);
 
   *rules = NULL;
 
