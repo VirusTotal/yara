@@ -285,6 +285,15 @@ const char* _yr_compiler_default_include_callback(
 }
 
 
+void _yr_compiler_reset(
+    YR_COMPILER* compiler)
+{
+  compiler->loop_depth = 0;
+  compiler->loop_for_of_mem_offset = -1;
+  compiler->current_rule = NULL;
+}
+
+
 void _yr_compiler_default_include_free(
   const char* callback_result_ptr,
   void* user_data)
@@ -428,6 +437,7 @@ int _yr_compiler_set_namespace(
   return ERROR_SUCCESS;
 }
 
+
 YR_API int yr_compiler_add_file(
     YR_COMPILER* compiler,
     FILE* rules_file,
@@ -438,6 +448,8 @@ YR_API int yr_compiler_add_file(
   // yr_compiler_get_rules() has been called.
 
   assert(compiler->compiled_rules_arena == NULL);
+
+  _yr_compiler_reset(compiler);
 
   if (file_name != NULL)
     _yr_compiler_push_file_name(compiler, file_name);
@@ -471,6 +483,8 @@ YR_API int yr_compiler_add_fd(
 
   assert(compiler->compiled_rules_arena == NULL);
 
+  _yr_compiler_reset(compiler);
+
   if (file_name != NULL)
     _yr_compiler_push_file_name(compiler, file_name);
 
@@ -500,6 +514,8 @@ YR_API int yr_compiler_add_string(
   // yr_compiler_get_rules() has been called.
 
   assert(compiler->compiled_rules_arena == NULL);
+
+  _yr_compiler_reset(compiler);
 
   if (namespace_ != NULL)
     compiler->last_result = _yr_compiler_set_namespace(compiler, namespace_);
