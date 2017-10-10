@@ -40,6 +40,8 @@ void test_disabled_rules()
   yr_rules_scan_mem(
       rules, (uint8_t *) buf, strlen(buf), 0, count_matches, &matches, 0);
 
+  yr_rules_destroy(rules);
+
   // matches should be exactly one.
   if (matches != 1)
   {
@@ -142,13 +144,10 @@ void test_file_descriptor()
   }
 
   if (compiler)
-  {
     yr_compiler_destroy(compiler);
-  }
+
   if (rules)
-  {
     yr_rules_destroy(rules);
-  }
 
   yr_finalize();
 
@@ -281,6 +280,7 @@ void test_issue_755()
     exit(EXIT_FAILURE);
   }
 
+  yr_compiler_destroy(compiler);
   yr_finalize();
 }
 

@@ -145,6 +145,8 @@ int read_file(
 #define assert_error(rule, error) do {                                  \
     YR_RULES* rules;                                                    \
     int result = compile_rule(rule, &rules);                            \
+    if (result == ERROR_SUCCESS)                                        \
+      yr_rules_destroy(rules);                                          \
     if (result != error) {                                              \
       fprintf(stderr, "%s:%d: expecting error %d but returned %d\n",    \
               __FILE__, __LINE__, error, result);                       \
