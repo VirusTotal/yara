@@ -60,12 +60,12 @@ extern int hex_yydebug;
 
 union YYSTYPE
 {
-#line 85 "hex_grammar.y" /* yacc.c:1915  */
+#line 86 "hex_grammar.y" /* yacc.c:1909  */
 
   int64_t integer;
   RE_NODE *re_node;
 
-#line 69 "hex_grammar.h" /* yacc.c:1915  */
+#line 69 "hex_grammar.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
