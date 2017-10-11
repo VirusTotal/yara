@@ -101,14 +101,14 @@
       YYABORT; \
     }
 
-#define ERROR_IF(x, error) \
+#define fail_if(x, error) \
     if (x) \
     { \
       lex_env->last_error_code = error; \
       YYABORT; \
     } \
 
-#define DESTROY_NODE_IF(x, node) \
+#define destroy_node_if(x, node) \
     if (x) \
     { \
       yr_re_node_destroy(node); \
@@ -1355,10 +1355,10 @@ yyreduce:
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[-1].re_node), (yyvsp[0].re_node));
 
-        DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[-1].re_node));
-        DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[0].re_node));
+        destroy_node_if((yyval.re_node) == NULL, (yyvsp[-1].re_node));
+        destroy_node_if((yyval.re_node) == NULL, (yyvsp[0].re_node));
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
 #line 1364 "hex_grammar.c" /* yacc.c:1646  */
     break;
@@ -1422,11 +1422,11 @@ yyreduce:
           }
         }
 
-        DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[-2].re_node));
-        DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[-1].re_node));
-        DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[0].re_node));
+        destroy_node_if((yyval.re_node) == NULL, (yyvsp[-2].re_node));
+        destroy_node_if((yyval.re_node) == NULL, (yyvsp[-1].re_node));
+        destroy_node_if((yyval.re_node) == NULL, (yyvsp[0].re_node));
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
 #line 1432 "hex_grammar.c" /* yacc.c:1646  */
     break;
@@ -1449,10 +1449,10 @@ yyreduce:
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[-1].re_node), (yyvsp[0].re_node));
 
-        DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[-1].re_node));
-        DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[0].re_node));
+        destroy_node_if((yyval.re_node) == NULL, (yyvsp[-1].re_node));
+        destroy_node_if((yyval.re_node) == NULL, (yyvsp[0].re_node));
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
 #line 1458 "hex_grammar.c" /* yacc.c:1646  */
     break;
@@ -1518,7 +1518,7 @@ yyreduce:
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->start = (int) (yyvsp[-1].integer);
         (yyval.re_node)->end = (int) (yyvsp[-1].integer);
@@ -1554,7 +1554,7 @@ yyreduce:
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->start = (int) (yyvsp[-3].integer);
         (yyval.re_node)->end = (int) (yyvsp[-1].integer);
@@ -1580,7 +1580,7 @@ yyreduce:
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->start = (int) (yyvsp[-2].integer);
         (yyval.re_node)->end = INT_MAX;
@@ -1600,7 +1600,7 @@ yyreduce:
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->start = 0;
         (yyval.re_node)->end = INT_MAX;
@@ -1628,10 +1628,10 @@ yyreduce:
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_ALT, (yyvsp[-2].re_node), (yyvsp[0].re_node));
 
-        DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[-2].re_node));
-        DESTROY_NODE_IF((yyval.re_node) == NULL, (yyvsp[0].re_node));
+        destroy_node_if((yyval.re_node) == NULL, (yyvsp[-2].re_node));
+        destroy_node_if((yyval.re_node) == NULL, (yyvsp[0].re_node));
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
 #line 1637 "hex_grammar.c" /* yacc.c:1646  */
     break;
@@ -1641,7 +1641,7 @@ yyreduce:
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
-        ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->value = (int) (yyvsp[0].integer);
       }
@@ -1657,13 +1657,13 @@ yyreduce:
         {
           (yyval.re_node) = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
-          ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+          fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
         }
         else
         {
           (yyval.re_node) = yr_re_node_create(RE_NODE_MASKED_LITERAL, NULL, NULL);
 
-          ERROR_IF((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+          fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
           (yyval.re_node)->value = (yyvsp[0].integer) & 0xFF;
           (yyval.re_node)->mask = mask;
