@@ -93,7 +93,7 @@
 #define mark_as_not_fast_regexp() \
     ((RE_AST*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
 
-#define incr_ast_levels(cleanup_code) \
+#define fail_if_too_many_ast_levels(cleanup_code) \
     if (((RE_AST*) yyget_extra(yyscanner))->levels++ > RE_MAX_AST_LEVELS) \
     { \
       { cleanup_code } \
@@ -1348,7 +1348,7 @@ yyreduce:
   case 4:
 #line 127 "hex_grammar.y" /* yacc.c:1646  */
     {
-        incr_ast_levels({
+        fail_if_too_many_ast_levels({
           yr_re_node_destroy((yyvsp[-1].re_node));
           yr_re_node_destroy((yyvsp[0].re_node));
         });
@@ -1370,7 +1370,7 @@ yyreduce:
         RE_NODE* leftmost_concat = NULL;
         RE_NODE* leftmost_node = (yyvsp[-1].re_node);
 
-        incr_ast_levels({
+        fail_if_too_many_ast_levels({
           yr_re_node_destroy((yyvsp[-2].re_node));
           yr_re_node_destroy((yyvsp[-1].re_node));
           yr_re_node_destroy((yyvsp[0].re_node));
@@ -1442,7 +1442,7 @@ yyreduce:
   case 7:
 #line 213 "hex_grammar.y" /* yacc.c:1646  */
     {
-        incr_ast_levels({
+        fail_if_too_many_ast_levels({
           yr_re_node_destroy((yyvsp[-1].re_node));
           yr_re_node_destroy((yyvsp[0].re_node));
         });
@@ -1621,7 +1621,7 @@ yyreduce:
     {
         mark_as_not_fast_regexp();
 
-        incr_ast_levels({
+        fail_if_too_many_ast_levels({
           yr_re_node_destroy((yyvsp[-2].re_node));
           yr_re_node_destroy((yyvsp[0].re_node));
         });

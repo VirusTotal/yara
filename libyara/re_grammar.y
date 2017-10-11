@@ -46,13 +46,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define mark_as_not_fast_regexp() \
     ((RE_AST*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
 
-#define incr_ast_levels() \
+#define fail_if_too_many_ast_levels(cleanup_code) \
     if (((RE_AST*) yyget_extra(yyscanner))->levels++ > RE_MAX_AST_LEVELS) \
     { \
+      { cleanup_code } \
       yyerror(yyscanner, lex_env, "regexp too long"); \
       YYABORT; \
     }
-
 
 #define ERROR_IF(x, error) \
     if (x) \
@@ -125,7 +125,11 @@ alternative
     | alternative '|' concatenation
       {
         mark_as_not_fast_regexp();
-        incr_ast_levels();
+
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($1);
+          yr_re_node_destroy($3);
+        });
 
         $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
 
@@ -139,7 +143,10 @@ alternative
         RE_NODE* node;
 
         mark_as_not_fast_regexp();
-        incr_ast_levels();
+
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($1);
+        });
 
         node = yr_re_node_create(RE_NODE_EMPTY, NULL, NULL);
 
@@ -159,12 +166,16 @@ concatenation
       }
     | concatenation repeat
       {
-        incr_ast_levels();
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($1);
+          yr_re_node_destroy($2);
+        });
 
         $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
 
         DESTROY_NODE_IF($$ == NULL, $1);
         DESTROY_NODE_IF($$ == NULL, $2);
+
         ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
     ;
@@ -355,7 +366,9 @@ repeat
 single
     : '(' alternative ')'
       {
-        incr_ast_levels();
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($2);
+        });
 
         $$ = $2;
       }
