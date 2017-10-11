@@ -51,9 +51,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define mark_as_not_fast_regexp() \
     ((RE_AST*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
 
-#define incr_ast_levels() \
+#define fail_if_too_many_ast_levels(cleanup_code) \
     if (((RE_AST*) yyget_extra(yyscanner))->levels++ > RE_MAX_AST_LEVELS) \
     { \
+      { cleanup_code } \
       yyerror(yyscanner, lex_env, "string too long"); \
       YYABORT; \
     }
@@ -124,7 +125,10 @@ tokens
       }
     | token token
       {
-        incr_ast_levels();
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($1);
+          yr_re_node_destroy($2);
+        });
 
         $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
 
@@ -139,7 +143,11 @@ tokens
         RE_NODE* leftmost_concat = NULL;
         RE_NODE* leftmost_node = $2;
 
-        incr_ast_levels();
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($1);
+          yr_re_node_destroy($2);
+          yr_re_node_destroy($3);
+        });
 
         $$ = NULL;
 
@@ -203,7 +211,10 @@ token_sequence
       }
     | token_sequence token_or_range
       {
-        incr_ast_levels();
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($1);
+          yr_re_node_destroy($2);
+        });
 
         $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
 
@@ -350,7 +361,11 @@ alternatives
     | alternatives '|' tokens
       {
         mark_as_not_fast_regexp();
-        incr_ast_levels();
+
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($1);
+          yr_re_node_destroy($3);
+        });
 
         $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
 
