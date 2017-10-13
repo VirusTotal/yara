@@ -50,6 +50,10 @@ Available options are:
 
   Print rules named <identifier> and ignore the rest.
 
+.. option:: -c --count
+
+  Print only number of matches.
+
 .. option:: -n
 
   Print not satisfied rules only (negate).
