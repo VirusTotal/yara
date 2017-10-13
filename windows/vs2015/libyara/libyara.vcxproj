@@ -206,6 +206,7 @@
     <ClCompile Include="..\..\..\libyara\modules\pe.c" />
     <ClCompile Include="..\..\..\libyara\modules\pe_utils.c" />
     <ClCompile Include="..\..\..\libyara\modules\tests.c" />
+    <ClCompile Include="..\..\..\libyara\modules\time.c" />
     <ClCompile Include="..\..\..\libyara\object.c" />
     <ClCompile Include="..\..\..\libyara\parser.c" />
     <ClCompile Include="..\..\..\libyara\proc.c" />
