@@ -233,7 +233,7 @@ typedef struct _YR_STRING
   YR_MATCHES unconfirmed_matches[MAX_THREADS];
 
   // Used only when PROFILING_ENABLED is defined
-  clock_t clock_ticks;
+  uint64_t clock_ticks;
 
 } YR_STRING;
 

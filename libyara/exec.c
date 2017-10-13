@@ -45,6 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/strutils.h>
 #include <yara/utils.h>
 #include <yara/mem.h>
+#include <yara/stopwatch.h>
 
 #include <yara.h>
 
@@ -193,7 +194,8 @@ int yr_execute_code(
   uint8_t opcode;
 
   #ifdef PROFILING_ENABLED
-  clock_t start = clock();
+  YR_STOPWATCH stopwatch;
+  yr_stopwatch_start(&stopwatch);
   #endif
 
   yr_get_configuration(YR_CONFIG_STACK_SIZE, (void*) &stack_size);
@@ -450,8 +452,7 @@ int yr_execute_code(
           rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
 
         #ifdef PROFILING_ENABLED
-        rule->clock_ticks += clock() - start;
-        start = clock();
+        rule->clock_ticks = yr_stopwatch_elapsed_microseconds(&stopwatch);
         #endif
 
         assert(sp == 0); // at this point the stack should be empty.
@@ -1159,7 +1160,7 @@ int yr_execute_code(
         {
           #ifdef PROFILING_ENABLED
           assert(current_rule != NULL);
-          current_rule->clock_ticks += clock() - start;
+          current_rule->clock_ticks += yr_stopwatch_elapsed_microseconds(&stopwatch);
           #endif
           result = ERROR_SCAN_TIMEOUT;
           stop = TRUE;
