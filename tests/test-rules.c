@@ -1525,6 +1525,16 @@ static void test_modules()
       ERROR_INVALID_MODULE_NAME);
 }
 
+
+static void test_time_module()
+{
+    assert_true_rule(
+        "import \"time\" \
+        rule test { condition: time.now() > 0 }",
+        NULL);
+}
+
+
 #if defined(HASH_MODULE)
 static void test_hash_module()
 {
@@ -1644,6 +1654,8 @@ int main(int argc, char** argv)
   #if defined(HASH_MODULE)
   test_hash_module();
   #endif
+
+  test_time_module();
 
   yr_finalize();
 
