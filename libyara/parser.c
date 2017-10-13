@@ -707,6 +707,8 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
     int32_t flags,
     const char* identifier)
 {
+  YR_FIXUP *fixup;
+  YR_INIT_RULE_ARGS *init_rule_args;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   YR_RULE* rule = NULL;
 
@@ -756,19 +758,51 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
   if (compiler->last_result != ERROR_SUCCESS)
     return NULL;
 
-  compiler->last_result = yr_parser_emit_with_arg_reloc(
+  compiler->last_result = yr_parser_emit(
       yyscanner,
       OP_INIT_RULE,
-      rule,
-      NULL,
       NULL);
 
-  if (compiler->last_result == ERROR_SUCCESS)
-    compiler->last_result = yr_hash_table_add(
-        compiler->rules_table,
-        identifier,
-        compiler->current_namespace->name,
-        (void*) rule);
+  if (compiler->last_result != ERROR_SUCCESS)
+    return NULL;
+
+  compiler->last_result = yr_arena_allocate_struct(
+      compiler->code_arena,
+      sizeof(YR_INIT_RULE_ARGS),
+      (void**) &init_rule_args,
+      offsetof(YR_INIT_RULE_ARGS, rule),
+      offsetof(YR_INIT_RULE_ARGS, jmp_addr),
+      EOL);
+
+  if (compiler->last_result != ERROR_SUCCESS)
+    return NULL;
+
+  init_rule_args->rule = rule;
+
+  // jmp_addr holds the address to jump to when we want to skip the code for
+  // the rule. It is iniatialized as NULL at this point because we don't know
+  // the address until emmiting the code for the rule's condition. The address
+  // is set in yr_parser_reduce_rule_declaration_phase_2.
+  init_rule_args->jmp_addr = NULL;
+
+  // Create a fixup entry for the jump and push it in the stack
+  fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
+
+  if (fixup == NULL)
+  {
+    compiler->last_result = ERROR_INSUFFICIENT_MEMORY;
+    return NULL;
+  }
+
+  fixup->address = &(init_rule_args->jmp_addr);
+  fixup->next = compiler->fixup_stack_head;
+  compiler->fixup_stack_head = fixup;
+
+  compiler->last_result = yr_hash_table_add(
+      compiler->rules_table,
+      identifier,
+      compiler->current_namespace->name,
+      (void*) rule);
 
   // Clean strings_table as we are starting to parse a new rule.
   yr_hash_table_clean(compiler->strings_table, NULL);
@@ -783,7 +817,9 @@ int yr_parser_reduce_rule_declaration_phase_2(
 {
   uint32_t max_strings_per_rule;
   uint32_t strings_in_rule = 0;
+  uint8_t* nop_inst_addr = NULL;
 
+  YR_FIXUP *fixup;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   // Check for unreferenced (unused) strings.
@@ -828,6 +864,24 @@ int yr_parser_reduce_rule_declaration_phase_2(
       rule,
       NULL,
       NULL);
+
+  // Generate a do-nothing instruction (NOP) in order to get its address
+  // and use it as the destination for the OP_INIT_RULE skip jump. We can not
+  // simply use the address of the OP_MATCH_RULE instruction +1 because we
+  // can't be sure that the instruction following the OP_MATCH_RULE is going to
+  // be in the same arena page. As we don't have a reliable way of getting the
+  // address of the next instruction we generate the OP_NOP.
+
+  if (compiler->last_result == ERROR_SUCCESS)
+    compiler->last_result = yr_parser_emit(
+        yyscanner,
+        OP_NOP,
+        &nop_inst_addr);
+
+  fixup = compiler->fixup_stack_head;
+  *(void**)(fixup->address) = (void*) nop_inst_addr;
+  compiler->fixup_stack_head = fixup->next;
+  yr_free(fixup);
 
   return compiler->last_result;
 }

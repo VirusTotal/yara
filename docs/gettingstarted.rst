@@ -95,7 +95,7 @@ corresponding to the version of Python you're using.
 Installing on Mac OS X with Homebrew
 ------------------------------------
 
-To install YARA using `Homebrew <http://brew.sh>`_ simply type
+To install YARA using `Homebrew <https://brew.sh>`_, simply type
 ``brew install yara``.
 
 

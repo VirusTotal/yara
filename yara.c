@@ -52,6 +52,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara.h>
 
 #include "args.h"
+#include "common.h"
 #include "threading.h"
 
 
@@ -147,7 +148,7 @@ static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 
 #define USAGE_STRING \
-    "Usage: yara [OPTION]... RULES_FILE FILE | DIR | PID"
+    "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
 
 
 args_option_t options[] =
@@ -1034,8 +1035,6 @@ void unload_modules_data()
 }
 
 
-#define exit_with_code(code) { result = code; goto _exit; }
-
 int main(
     int argc,
     const char** argv)
@@ -1075,7 +1074,7 @@ int main(
     return EXIT_FAILURE;
   }
 
-  if (argc != 2)
+  if (argc < 2)
   {
     // After parsing the command-line options we expect two additional
     // arguments, the rules file and the target file, directory or pid to
@@ -1102,6 +1101,7 @@ int main(
   yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
   yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
 
+
   // Try to load the rules file as a binary file containing
   // compiled rules first
 
@@ -1112,6 +1112,7 @@ int main(
   // different from those exit with error.
 
   if (result != ERROR_SUCCESS &&
+      result != ERROR_COULD_NOT_OPEN_FILE &&
       result != ERROR_INVALID_FILE)
   {
     print_scanner_error(result);
@@ -1120,6 +1121,17 @@ int main(
 
   if (result == ERROR_SUCCESS)
   {
+    // When a binary file containing compiled rules is provided, yara accepts
+    // only two arguments, the compiled rules file and the target to be scanned.
+
+    if (argc != 2)
+    {
+      fprintf(stderr,
+        "error: can't accept multiple rules files if one of them is in "
+        "compiled form.\n");
+      exit_with_code(EXIT_FAILURE);
+    }
+
     result = define_external_variables(rules, NULL);
 
     if (result != ERROR_SUCCESS)
@@ -1149,17 +1161,8 @@ int main(
 
     yr_compiler_set_callback(compiler, print_compiler_error, &cr);
 
-    FILE* rule_file = fopen(argv[0], "r");
-
-    if (rule_file == NULL)
-    {
-      fprintf(stderr, "error: could not open file: %s\n", argv[0]);
+    if (!compile_files(compiler, argc, argv))
       exit_with_code(EXIT_FAILURE);
-    }
-
-    cr.errors = yr_compiler_add_file(compiler, rule_file, NULL, argv[0]);
-
-    fclose(rule_file);
 
     if (cr.errors > 0)
       exit_with_code(EXIT_FAILURE);
@@ -1174,16 +1177,19 @@ int main(
     compiler = NULL;
 
     if (result != ERROR_SUCCESS)
+    {
+      fprintf(stderr, "error: %d\n", result);
       exit_with_code(EXIT_FAILURE);
+    }
   }
 
   mutex_init(&output_mutex);
 
-  CALLBACK_ARGS user_data = { (char*) argv[1], 0 };
+  CALLBACK_ARGS user_data = { (char*) argv[argc - 1], 0 };
 
-  if (is_integer(argv[1]))
+  if (is_integer(argv[argc - 1]))
   {
-    int pid = atoi(argv[1]);
+    int pid = atoi(argv[argc - 1]);
     int flags = 0;
 
     if (fast_scan)
@@ -1206,7 +1212,7 @@ int main(
     if (print_count_only)
       printf("%d\n", user_data.current_count);
   }
-  else if (is_directory(argv[1]))
+  else if (is_directory(argv[argc - 1]))
   {
     if (file_queue_init() != 0)
     {
@@ -1233,7 +1239,7 @@ int main(
     }
 
     scan_dir(
-        argv[1],
+        argv[argc - 1],
         recursive_search,
         start_time,
         rules,
@@ -1256,7 +1262,7 @@ int main(
 
     result = yr_rules_scan_file(
         rules,
-        argv[1],
+        argv[argc - 1],
         flags,
         callback,
         &user_data,
@@ -1264,7 +1270,7 @@ int main(
 
     if (result != ERROR_SUCCESS)
     {
-      fprintf(stderr, "error scanning %s: ", argv[1]);
+      fprintf(stderr, "error scanning %s: ", argv[argc - 1]);
       print_scanner_error(result);
       exit_with_code(EXIT_FAILURE);
     }

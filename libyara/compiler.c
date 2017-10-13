@@ -56,14 +56,14 @@ YR_API int yr_compiler_create(
 
   new_compiler->errors = 0;
   new_compiler->callback = NULL;
+  new_compiler->include_callback = _yr_compiler_default_include_callback;
+  new_compiler->include_free = _yr_compiler_default_include_free;
   new_compiler->last_error = ERROR_SUCCESS;
   new_compiler->last_error_line = 0;
   new_compiler->current_line = 0;
   new_compiler->last_result = ERROR_SUCCESS;
-  new_compiler->file_stack_ptr = 0;
   new_compiler->file_name_stack_ptr = 0;
   new_compiler->fixup_stack_head = NULL;
-  new_compiler->allow_includes = 1;
   new_compiler->loop_depth = 0;
   new_compiler->loop_for_of_mem_offset = -1;
   new_compiler->compiled_rules_arena = NULL;
@@ -182,37 +182,131 @@ YR_API void yr_compiler_set_callback(
 }
 
 
-int _yr_compiler_push_file(
-    YR_COMPILER* compiler,
-    FILE* fh)
+const char* _yr_compiler_default_include_callback(
+    const char* include_name,
+    const char* calling_rule_filename,
+    const char* calling_rule_namespace,
+    void* user_data)
 {
-  if (compiler->file_stack_ptr < MAX_INCLUDE_DEPTH)
+  char* buffer;
+  char* s = NULL;
+  #ifdef _WIN32
+  char* b = NULL;
+  #endif
+  char* f;
+  FILE* fh;
+  char* file_buffer;
+  long file_length;
+
+  if (calling_rule_filename != NULL)
   {
-    compiler->file_stack[compiler->file_stack_ptr] = fh;
-    compiler->file_stack_ptr++;
-    return ERROR_SUCCESS;
+    buffer = (char*) calling_rule_filename;
   }
   else
   {
-    compiler->last_result = ERROR_INCLUDE_DEPTH_EXCEEDED;
-    return ERROR_INCLUDE_DEPTH_EXCEEDED;
+    buffer = "\0";
   }
-}
 
+  s = strrchr(buffer, '/');
 
-FILE* _yr_compiler_pop_file(
-    YR_COMPILER* compiler)
-{
-  FILE* result = NULL;
+  #ifdef _WIN32
+  b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
+  #endif
 
-  if (compiler->file_stack_ptr > 0)
+  #ifdef _WIN32
+  if (s != NULL || b != NULL)
+  #else
+  if (s != NULL)
+  #endif
   {
-    compiler->file_stack_ptr--;
-    result = compiler->file_stack[compiler->file_stack_ptr];
+    #ifdef _WIN32
+    f = (b > s)? (b + 1): (s + 1);
+    #else
+    f = s + 1;
+    #endif
+
+    strlcpy(f, include_name, sizeof(buffer) - (f - buffer));
+
+    f = buffer;
+    // SECURITY: Potential for directory traversal here.
+    fh = fopen(buffer, "rb");
+
+    // if include file was not found relative to current source file,
+    // try to open it with path as specified by user (maybe user wrote
+    // a full path)
+    if (fh == NULL)
+    {
+      f = (char*) include_name;
+      // SECURITY: Potential for directory traversal here.
+      fh = fopen(include_name, "rb");
+    }
+  }
+  else
+  {
+    f = (char*) include_name;
+    // SECURITY: Potential for directory traversal here.
+    fh = fopen(include_name, "rb");
   }
 
-  return result;
+  if (fh == NULL)
+    return NULL;
+
+  fseek(fh, 0, SEEK_END);
+  file_length = ftell(fh);
+  fseek(fh, 0, SEEK_SET);
+
+  if (file_length == -1)
+  {
+    fclose(fh);
+    return NULL;
+  }
+
+  file_buffer = (char*) yr_malloc(file_length + 1);
+
+  if (file_buffer == NULL)
+  {
+    fclose(fh);
+    return NULL;
+  }
+
+  if (file_length != fread(file_buffer, 1, file_length, fh))
+  {
+    yr_free(file_buffer);
+    fclose(fh);
+    return NULL;
+  }
+  else
+  {
+    file_buffer[file_length]='\0';
+  }
+
+  fclose(fh);
+  return file_buffer;
 }
+
+
+void _yr_compiler_default_include_free(
+  const char* callback_result_ptr,
+  void* user_data)
+{
+  if(callback_result_ptr != NULL)
+  {
+    yr_free((void*)callback_result_ptr);
+  }
+}
+
+
+YR_API void yr_compiler_set_include_callback(
+    YR_COMPILER* compiler,
+    YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback,
+    YR_COMPILER_INCLUDE_FREE_FUNC include_free,
+    void* user_data)
+{
+  compiler->include_callback = include_callback;
+  compiler->include_free = include_free;
+  compiler->incl_clbk_user_data = user_data;
+}
+
 
 int _yr_compiler_push_file_name(
     YR_COMPILER* compiler,
@@ -334,6 +428,7 @@ int _yr_compiler_set_namespace(
   return ERROR_SUCCESS;
 }
 
+
 YR_API int yr_compiler_add_file(
     YR_COMPILER* compiler,
     FILE* rules_file,
@@ -344,6 +439,11 @@ YR_API int yr_compiler_add_file(
   // yr_compiler_get_rules() has been called.
 
   assert(compiler->compiled_rules_arena == NULL);
+
+  // Don't allow calls to yr_compiler_add_file() if a previous call to
+  // yr_compiler_add_XXXX failed.
+
+  assert(compiler->errors == 0);
 
   if (file_name != NULL)
     _yr_compiler_push_file_name(compiler, file_name);
@@ -377,6 +477,11 @@ YR_API int yr_compiler_add_fd(
 
   assert(compiler->compiled_rules_arena == NULL);
 
+  // Don't allow calls to yr_compiler_add_fd() if a previous call to
+  // yr_compiler_add_XXXX failed.
+
+  assert(compiler->last_error == ERROR_SUCCESS);
+
   if (file_name != NULL)
     _yr_compiler_push_file_name(compiler, file_name);
 
@@ -402,10 +507,15 @@ YR_API int yr_compiler_add_string(
     const char* rules_string,
     const char* namespace_)
 {
-  // Don't allow yr_compiler_add_string() after
+  // Don't allow calls to yr_compiler_add_string() after
   // yr_compiler_get_rules() has been called.
 
   assert(compiler->compiled_rules_arena == NULL);
+
+  // Don't allow calls to yr_compiler_add_string() if a previous call to
+  // yr_compiler_add_XXXX failed.
+
+  assert(compiler->last_error == ERROR_SUCCESS);
 
   if (namespace_ != NULL)
     compiler->last_result = _yr_compiler_set_namespace(compiler, namespace_);
@@ -599,6 +709,11 @@ YR_API int yr_compiler_get_rules(
 {
   YR_RULES* yara_rules;
   YARA_RULES_FILE_HEADER* rules_file_header;
+
+  // Don't allow calls to yr_compiler_get_rules() if a previous call to
+  // yr_compiler_add_XXXX failed.
+
+  assert(compiler->last_error == ERROR_SUCCESS);
 
   *rules = NULL;
 

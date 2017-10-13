@@ -187,80 +187,22 @@ include[ \t]+\"         {
 
 <include>\"             {
 
-  char            buffer[1024];
-  char            *current_file_name;
-  char            *s = NULL;
-  #ifdef _WIN32
-  char            *b = NULL;
-  #endif
-  char            *f;
-  FILE*           fh;
-
-  if (compiler->allow_includes)
+  if (compiler->include_callback != NULL)
   {
     *yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
 
     // move path of current source file into buffer
-    current_file_name = yr_compiler_get_current_file_name(compiler);
+    char* current_file_name = yr_compiler_get_current_file_name(compiler);
 
-    if (current_file_name != NULL)
+    const char* included_rules = compiler->include_callback(
+        yyextra->lex_buf,
+        current_file_name,
+        compiler->current_namespace->name,
+        compiler->incl_clbk_user_data);
+
+    if (included_rules != NULL)
     {
-      strlcpy(buffer, current_file_name, sizeof(buffer));
-    }
-    else
-    {
-      buffer[0] = '\0';
-    }
-
-    // make included file path relative to current source file
-    s = strrchr(buffer, '/');
-
-    #ifdef _WIN32
-    b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
-    #endif
-
-    #ifdef _WIN32
-    if (s != NULL || b != NULL)
-    #else
-    if (s != NULL)
-    #endif
-    {
-      #ifdef _WIN32
-      f = (b > s)? (b + 1): (s + 1);
-      #else
-      f = s + 1;
-      #endif
-
-      strlcpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
-
-      f = buffer;
-
-      // SECURITY: Potential for directory traversal here.
-      fh = fopen(buffer, "r");
-
-      // if include file was not found relative to current source file,
-      // try to open it with path as specified by user (maybe user wrote
-      // a full path)
-
-      if (fh == NULL)
-      {
-        f = yyextra->lex_buf;
-
-        // SECURITY: Potential for directory traversal here.
-        fh = fopen(yyextra->lex_buf, "r");
-      }
-    }
-    else
-    {
-      f = yyextra->lex_buf;
-
-      // SECURITY: Potential for directory traversal here.
-      fh = fopen(yyextra->lex_buf, "r");
-    }
-
-    if (fh != NULL)
-    {
-      int error_code = _yr_compiler_push_file_name(compiler, f);
+      int error_code = _yr_compiler_push_file_name(compiler, yyextra->lex_buf);
 
       if (error_code != ERROR_SUCCESS)
       {
@@ -273,24 +215,51 @@ include[ \t]+\"         {
           yyerror(yyscanner, compiler, "includes depth exceeded");
         }
 
+        if (compiler->include_free != NULL)
+        {
+          compiler->include_free(included_rules, compiler->incl_clbk_user_data);
+        }
+
         yyterminate();
       }
 
-      _yr_compiler_push_file(compiler, fh);
-      yypush_buffer_state(
-          yy_create_buffer(fh, YY_BUF_SIZE, yyscanner), yyscanner);
+      // Workaround for flex issue: https://github.com/westes/flex/issues/58
+      yypush_buffer_state(YY_CURRENT_BUFFER, yyscanner);
+      yy_scan_string(included_rules, yyscanner);
+      yyset_lineno(1, yyscanner);
+
+      if (compiler->include_free != NULL)
+      {
+        compiler->include_free(included_rules, compiler->incl_clbk_user_data);
+      }
     }
     else
     {
-      snprintf(buffer, sizeof(buffer),
-               "can't open include file: %s", yyextra->lex_buf);
-      yyerror(yyscanner, compiler, buffer);
+      char* err_msg_fmt;
+      char err_msg[512];
+
+      if (compiler->include_callback == _yr_compiler_default_include_callback)
+      {
+        err_msg_fmt = "can't open include file: %s";
+      }
+      else
+      {
+        err_msg_fmt = "callback failed to provide include resource: %s";
+      }
+
+      snprintf(
+          err_msg,
+          sizeof(err_msg),
+          err_msg_fmt,
+          yyextra->lex_buf);
+
+      yyerror(yyscanner, compiler, err_msg);
     }
+
   }
   else // not allowing includes
   {
     yyerror(yyscanner, compiler, "includes are disabled");
-    yyterminate();
   }
 
   BEGIN(INITIAL);
@@ -300,12 +269,6 @@ include[ \t]+\"         {
 <<EOF>> {
 
   YR_COMPILER* compiler = yyget_extra(yyscanner);
-  FILE* file = _yr_compiler_pop_file(compiler);
-
-  if (file != NULL)
-  {
-    fclose(file);
-  }
 
   _yr_compiler_pop_file_name(compiler);
   yypop_buffer_state(yyscanner);
@@ -314,6 +277,7 @@ include[ \t]+\"         {
   {
     yyterminate();
   }
+
 }
 
 

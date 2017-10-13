@@ -58,27 +58,28 @@ include_HEADERS = include/yara.h
 yaraincludedir = $(includedir)/yara
 yarainclude_HEADERS = \
   include/yara/ahocorasick.h \
-  include/yara/atoms.h \
-  include/yara/limits.h \
-  include/yara/re.h \
   include/yara/arena.h \
-  include/yara/sizedstr.h \
-  include/yara/types.h \
-  include/yara/hash.h \
-  include/yara/exec.h \
-  include/yara/scan.h \
-  include/yara/rules.h \
-  include/yara/error.h \
-  include/yara/utils.h \
-  include/yara/filemap.h \
+  include/yara/atoms.h \
   include/yara/compiler.h \
+  include/yara/error.h \
+  include/yara/exec.h \
+  include/yara/filemap.h \
+  include/yara/hash.h \
+  include/yara/integers.h \
+  include/yara/libyara.h \
+  include/yara/limits.h \
   include/yara/modules.h \
   include/yara/object.h \
-  include/yara/strutils.h \
+  include/yara/proc.h \
+  include/yara/re.h \
+  include/yara/rules.h \
+  include/yara/scan.h \
+  include/yara/sizedstr.h \
   include/yara/stream.h \
+  include/yara/strutils.h \
   include/yara/threading.h \
-  include/yara/integers.h \
-  include/yara/libyara.h
+  include/yara/types.h \
+  include/yara/utils.h
 
 lib_LTLIBRARIES = libyara.la
 
@@ -140,11 +141,3 @@ libyara_la_SOURCES = \
 
 pkgconfigdir = $(libdir)/pkgconfig
 nodist_pkgconfig_DATA = yara.pc
-
-yara.pc: yara.pc.in
-		sed -e 's![@]prefix[@]!$(prefix)!g' \
-		    -e 's![@]exec_prefix[@]!$(exec_prefix)!g' \
-		    -e 's![@]includedir[@]!$(includedir)!g' \
-		    -e 's![@]libdir[@]!$(libdir)!g' \
-		    -e 's![@]PACKAGE_VERSION[@]!$(PACKAGE_VERSION)!g' \
-		    $(srcdir)/yara.pc.in > $@

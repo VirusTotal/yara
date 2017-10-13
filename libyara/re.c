@@ -1000,7 +1000,8 @@ int _yr_re_emit(
 
     *code_size += jmp_size;
 
-    assert(split_size + branch_size + jmp_size < INT16_MAX);
+    if (split_size + branch_size + jmp_size >= INT16_MAX)
+      return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
     // Update split offset.
     *split_offset_addr = (int16_t) (split_size + branch_size + jmp_size);
@@ -1051,7 +1052,8 @@ int _yr_re_emit(
 
     *code_size += jmp_size;
 
-    assert(split_size + branch_size + jmp_size < INT16_MAX);
+    if (split_size + branch_size + jmp_size >= INT16_MAX)
+      return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
     // Update split offset.
     *split_offset_addr = (int16_t) (split_size + branch_size + jmp_size);
@@ -1065,7 +1067,8 @@ int _yr_re_emit(
 
     *code_size += branch_size;
 
-    assert(branch_size + jmp_size < INT16_MAX);
+    if (branch_size + jmp_size >= INT16_MAX)
+      return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
     // Update offset for jmp instruction.
     *jmp_offset_addr = (int16_t) (branch_size + jmp_size);
@@ -1239,7 +1242,9 @@ int _yr_re_emit(
 
     if (emit_split)
     {
-      assert(split_size + branch_size  < INT16_MAX);
+      if (split_size + branch_size >= INT16_MAX)
+        return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
+
       *split_offset_addr = (int16_t) (split_size + branch_size);
     }
 
