@@ -132,6 +132,8 @@ libyara_la_SOURCES = \
   scan.c \
   sizedstr.c \
   sizedstr.h \
+  stopwatch.c \
+  stopwatch.h \
   strutils.c \
   strutils.h \
   stream.c \
