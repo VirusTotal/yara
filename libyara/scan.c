@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/error.h>
 #include <yara/libyara.h>
 #include <yara/scan.h>
+#include <yara/stopwatch.h>
 
 
 typedef struct _CALLBACK_ARGS
@@ -740,7 +741,8 @@ int yr_scan_verify_match(
     return ERROR_SUCCESS;
 
   #ifdef PROFILING_ENABLED
-  clock_t start = clock();
+  YR_STOPWATCH stopwatch;
+  yr_stopwatch_start(&stopwatch);
   #endif
 
   if (STRING_IS_LITERAL(string))
@@ -755,7 +757,7 @@ int yr_scan_verify_match(
   }
 
   #ifdef PROFILING_ENABLED
-  string->clock_ticks += clock() - start;
+  string->clock_ticks += yr_stopwatch_elapsed_microseconds(&stopwatch);
   #endif
 
   return ERROR_SUCCESS;
