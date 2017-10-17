@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/stopwatch.h>
 
+#ifdef PROFILING_ENABLED
 
 #define timespecsub(tsp, usp, vsp)                      \
 do {                                                    \
@@ -59,3 +60,5 @@ uint64_t yr_stopwatch_elapsed_microseconds(YR_STOPWATCH* stopwatch)
 
   return ts_elapsed.tv_sec + ts_elapsed.tv_nsec;
 }
+
+#endif

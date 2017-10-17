@@ -39,10 +39,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/error.h>
 #include <yara/libyara.h>
 #include <yara/scan.h>
-
-#ifdef PROFILING_ENABLED
 #include <yara/stopwatch.h>
-#endif
+
 
 
 typedef struct _CALLBACK_ARGS

@@ -27,7 +27,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef YR_STOPWATCH_H
+#define YR_STOPWATCH_H
 
+#ifdef PROFILING_ENABLED
 #include <yara/integers.h>
 
 typedef struct _YR_STOPWATCH
@@ -42,3 +45,6 @@ void yr_stopwatch_start(
 
 uint64_t yr_stopwatch_elapsed_microseconds(
     YR_STOPWATCH* stopwatch);
+
+#endif
+#endif
