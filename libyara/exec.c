@@ -45,10 +45,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/strutils.h>
 #include <yara/utils.h>
 #include <yara/mem.h>
-
-#ifdef PROFILING_ENABLED
 #include <yara/stopwatch.h>
-#endif
+
 
 #include <yara.h>
 
