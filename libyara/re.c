@@ -40,7 +40,6 @@ order to avoid confusion with operating system threads.
 
 #include <assert.h>
 #include <string.h>
-#include <limits.h>
 
 #include <yara/limits.h>
 #include <yara/globals.h>
@@ -56,6 +55,10 @@ order to avoid confusion with operating system threads.
 #define EMIT_BACKWARDS                  0x01
 #define EMIT_DONT_SET_FORWARDS_CODE     0x02
 #define EMIT_DONT_SET_BACKWARDS_CODE    0x04
+
+#ifndef INT16_MAX
+#define INT16_MAX              (32767)
+#endif
 
 
 typedef struct _RE_REPEAT_ARGS
