@@ -188,7 +188,7 @@ const char* _yr_compiler_default_include_callback(
     const char* calling_rule_namespace,
     void* user_data)
 {
-  char* buffer;
+  char buffer[1024];
   char* s = NULL;
   #ifdef _WIN32
   char* b = NULL;
@@ -200,11 +200,11 @@ const char* _yr_compiler_default_include_callback(
 
   if (calling_rule_filename != NULL)
   {
-    buffer = (char*) calling_rule_filename;
+    strlcpy(buffer, calling_rule_filename, sizeof(buffer));
   }
   else
   {
-    buffer = "\0";
+    buffer[0] = '\0';
   }
 
   s = strrchr(buffer, '/');
@@ -277,7 +277,7 @@ const char* _yr_compiler_default_include_callback(
   }
   else
   {
-    file_buffer[file_length]='\0';
+    file_buffer[file_length] = '\0';
   }
 
   fclose(fh);
