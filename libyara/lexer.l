@@ -189,12 +189,15 @@ include[ \t]+\"         {
 
   if (compiler->include_callback != NULL)
   {
+    const char* included_rules;
+    char* current_file_name;
+
     *yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
 
     // move path of current source file into buffer
-    char* current_file_name = yr_compiler_get_current_file_name(compiler);
+    current_file_name = yr_compiler_get_current_file_name(compiler);
 
-    const char* included_rules = compiler->include_callback(
+    included_rules = compiler->include_callback(
         yyextra->lex_buf,
         current_file_name,
         compiler->current_namespace->name,
