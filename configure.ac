@@ -138,6 +138,7 @@ AS_IF([test "x$with_crypto" != "xno"],
     have_crypto=no
   ])
 
+
 AS_IF([test "x$have_crypto" = "xno"],
   [
     AS_IF([test "x$with_crypto" = "xyes"],
@@ -147,18 +148,47 @@ AS_IF([test "x$have_crypto" = "xno"],
       [
         AC_MSG_WARN([
 *******************************************************************************
-  Could not find OpenSSL library. The "hash" module and some features in "pe"
-  module have been disabled. If you want to enable all features please install
-  it and run this script again.
+  Could not find OpenSSL library. Some features in "pe" module have been
+  disabled. If you want to enable all features please install it and run this
+  script again.
 *******************************************************************************
         ])
+	AC_MSG_CHECKING([for MS Crypto API])
+        AC_CHECK_HEADERS([wincrypt.h],
+          [
+	    AC_MSG_RESULT([The "hash" module functions will be provided through the MS Crypto API])
+            # FIXME: Add PC_LIBS_PRIVATE entries?
+            build_hash_module=true
+          ],
+          [],
+          [#include <windows.h>])
+	AC_MSG_CHECKING([for MacOSX Common Crypto API])
+        AC_CHECK_HEADERS([CommonCrypto/CommonCrypto.h],
+          [
+	    AC_MSG_RESULT([The "hash" module functions will be provided through the MacOSX Common Crypto API])
+            # FIXME: Add PC_LIBS_PRIVATE entries?
+            build_hash_module=true
+          ])
+        AS_IF([test x$build_hash_module = xtrue],
+          [
+            build_hash_module=true
+            CFLAGS="$CFLAGS -DHASH_MODULE"
+          ],
+          [
+            AC_MSG_WARN([
+*******************************************************************************
+  Could not find alternative APIs for hash functions. The "hash" module has
+  been disabled.
+*******************************************************************************
+            ])
+          ])
+        ])
+      ],
+      [
+        build_hash_module=true
+        CFLAGS="$CFLAGS -DHASH_MODULE"
+        PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libcrypto"
       ])
-  ],
-  [
-    build_hash_module=true
-    CFLAGS="$CFLAGS -DHASH_MODULE"
-    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libcrypto"
-  ])
 
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
 AM_CONDITIONAL([OPTIMIZATION], [test x$optimization = xtrue])

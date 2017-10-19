@@ -37,9 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/threading.h>
 
-#if defined(HAVE_LIBCRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000L
-#include <openssl/crypto.h>
-#endif
+#include "crypto.h"
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #if !defined(_MSC_VER) || (defined(_MSC_VER) && (_MSC_VER < 1900))
@@ -146,6 +144,16 @@ YR_API int yr_initialize(void)
   CRYPTO_set_id_callback(thread_id);
   CRYPTO_set_locking_callback(locking_function);
 
+  #elif defined(HAVE_WINCRYPT_H)
+
+  if (!CryptAcquireContext(&yr_cryptprov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
+    return ERROR_INTERNAL_FATAL_ERROR;
+  }
+
+  #elif defined(HAVE_COMMON_CRYPTO)
+
+  ...
+
   #endif
 
   FAIL_ON_ERROR(yr_re_initialize());
@@ -207,6 +215,10 @@ YR_API int yr_finalize(void)
   OPENSSL_free(openssl_locks);
   CRYPTO_set_id_callback(NULL);
   CRYPTO_set_locking_callback(NULL);
+
+  #elif defined(HAVE_WINCRYPT_H)
+
+  CryptReleaseContext(yr_cryptprov, 0);
 
   #endif
 
