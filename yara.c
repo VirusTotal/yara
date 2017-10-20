@@ -85,7 +85,7 @@ typedef struct _MODULE_DATA
 
 typedef struct _CALLBACK_ARGS
 {
-  char* file_path;
+  const char* file_path;
   int current_count;
 
 } CALLBACK_ARGS;
@@ -814,7 +814,8 @@ void* scanning_thread(void* param)
           &user_data,
           timeout - elapsed_time);
 
-      if (print_count_only) {
+      if (print_count_only)
+      {
         mutex_lock(&output_mutex);
         printf("%s: %d\n", file_path, user_data.current_count);
         mutex_unlock(&output_mutex);
@@ -1185,10 +1186,10 @@ int main(
 
   mutex_init(&output_mutex);
 
-  CALLBACK_ARGS user_data = { (char*) argv[argc - 1], 0 };
-
   if (is_integer(argv[argc - 1]))
   {
+    CALLBACK_ARGS user_data = { argv[argc - 1], 0 };
+
     int pid = atoi(argv[argc - 1]);
     int flags = 0;
 
@@ -1255,6 +1256,8 @@ int main(
   }
   else
   {
+    CALLBACK_ARGS user_data = { argv[argc - 1], 0 };
+
     int flags = 0;
 
     if (fast_scan)
