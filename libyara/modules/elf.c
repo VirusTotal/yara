@@ -213,11 +213,11 @@ void parse_elf_header_##bits##_##bo(                                           \
   const char* elf_raw = (const char*) elf;                                     \
   uint16_t str_table_index = yr_##bo##16toh(elf->sh_str_table_index);          \
                                                                                \
-  const char* sym_table;                                                       \
-  const char* sym_str_table;                                                   \
+  const char* sym_table = NULL;                                                \
+  const char* sym_str_table = NULL;                                            \
                                                                                \
-  uint##bits##_t sym_table_size;                                               \
-  uint##bits##_t sym_str_table_size;                                           \
+  uint##bits##_t sym_table_size = 0;                                           \
+  uint##bits##_t sym_str_table_size = 0;                                       \
                                                                                \
   elf##bits##_section_header_t* section_table;                                 \
   elf##bits##_section_header_t* section;                                       \
