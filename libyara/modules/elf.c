@@ -204,7 +204,10 @@ void parse_elf_header_##bits##_##bo(                                           \
   YR_OBJECT* elf_obj)                                                          \
 {                                                                              \
   int i;                                                                       \
+  const char* elf_raw = (const char*) elf;                                     \
+  uint16_t str_table_index = yr_##bo##16toh(elf->sh_str_table_index);          \
                                                                                \
+  elf##bits##_section_header_t* section_table;                                 \
   elf##bits##_section_header_t* section;                                       \
   elf##bits##_program_header_t* segment;                                       \
                                                                                \
@@ -234,26 +237,26 @@ void parse_elf_header_##bits##_##bo(                                           \
   }                                                                            \
                                                                                \
   if (yr_##bo##16toh(elf->sh_entry_count) < ELF_SHN_LORESERVE &&               \
-      yr_##bo##16toh(elf->sh_str_table_index) <                                \
-        yr_##bo##16toh(elf->sh_entry_count) &&                                 \
+      str_table_index < yr_##bo##16toh(elf->sh_entry_count) &&                 \
       yr_##bo##bits##toh(elf->sh_offset) < elf_size &&                         \
       yr_##bo##bits##toh(elf->sh_offset) +                                     \
         yr_##bo##16toh(elf->sh_entry_count) *                                  \
         sizeof(elf##bits##_section_header_t) <= elf_size)                      \
   {                                                                            \
-    char* str_table = NULL;                                                    \
+    const char* str_table = NULL;                                              \
                                                                                \
     elf##bits##_section_header_t* symtab = NULL;                               \
     elf##bits##_section_header_t* sym_strtab = NULL;                           \
                                                                                \
-    section = (elf##bits##_section_header_t*)                                  \
-      ((uint8_t*) elf + yr_##bo##bits##toh(elf->sh_offset));                   \
+    section_table = (elf##bits##_section_header_t*)                            \
+        (elf_raw + yr_##bo##bits##toh(elf->sh_offset));                        \
                                                                                \
-    if (yr_##bo##bits##toh(                                                    \
-      section[yr_##bo##16toh(elf->sh_str_table_index)].offset) < elf_size)     \
+    section = section_table;                                                   \
+                                                                               \
+    if (yr_##bo##bits##toh(section_table[str_table_index].offset) < elf_size)  \
     {                                                                          \
-      str_table = (char*) elf + yr_##bo##bits##toh(                            \
-          section[yr_##bo##16toh(elf->sh_str_table_index)].offset);            \
+      str_table = elf_raw + yr_##bo##bits##toh(                                \
+          section_table[str_table_index].offset);                              \
     }                                                                          \
                                                                                \
     for (i = 0; i < yr_##bo##16toh(elf->sh_entry_count); i++)                  \
@@ -270,16 +273,16 @@ void parse_elf_header_##bits##_##bo(                                           \
                   "sections[%i].offset", i);                                   \
                                                                                \
       if (yr_##bo##32toh(section->name) < elf_size &&                          \
-          str_table > (char*) elf &&                                           \
-          str_table + yr_##bo##32toh(section->name) <                          \
-            (char*) elf + elf_size)                                            \
+          str_table > elf_raw &&                                               \
+          str_table + yr_##bo##32toh(section->name) < elf_raw + elf_size)      \
       {                                                                        \
-        const char* str_entry = str_table_entry(str_table,                     \
-            ((const char*) elf) + elf_size, yr_##bo##32toh(section->name));    \
+        const char* str_entry = str_table_entry(                               \
+            str_table,                                                         \
+            elf_raw + elf_size,                                                \
+            yr_##bo##32toh(section->name));                                    \
+                                                                               \
         if (str_entry)                                                         \
-        {                                                                      \
           set_string(str_entry, elf_obj, "sections[%i].name", i);              \
-        }                                                                      \
       }                                                                        \
                                                                                \
       if (yr_##bo##32toh(section->type) == ELF_SHT_SYMTAB)                     \
@@ -287,9 +290,8 @@ void parse_elf_header_##bits##_##bo(                                           \
         symtab = section;                                                      \
         if (yr_##bo##32toh(symtab->link) < elf->sh_entry_count)                \
         {                                                                      \
-          sym_strtab = ((elf##bits##_section_header_t*)((uint8_t*)             \
-            elf + yr_##bo##bits##toh(elf->sh_offset))) +                       \
-            yr_##bo##32toh(symtab->link);                                      \
+          sym_strtab = section_table + yr_##bo##32toh(symtab->link);           \
+                                                                               \
           if (!IS_VALID_PTR(elf, elf_size, sym_strtab) ||                      \
               yr_##bo##32toh(sym_strtab->type) != ELF_SHT_STRTAB ||            \
               (yr_##bo##bits##toh(symtab->offset) +                            \
@@ -307,13 +309,15 @@ void parse_elf_header_##bits##_##bo(                                           \
                                                                                \
     if (symtab && sym_strtab)                                                  \
     {                                                                          \
-      char* str_ptr = ((char*)elf) + yr_##bo##bits##toh(sym_strtab->offset);   \
-      char* end_str_ptr = str_ptr + yr_##bo##bits##toh(sym_strtab->size);      \
+      const char* str_ptr = elf_raw + yr_##bo##bits##toh(sym_strtab->offset);  \
+      const char* end_str_ptr = str_ptr + yr_##bo##bits##toh(sym_strtab->size);\
                                                                                \
-      elf##bits##_sym_t* symbol = (elf##bits##_sym_t*)((char*) elf +           \
-        yr_##bo##bits##toh(symtab->offset));                                   \
-      char* end_symtab = (char*)elf + yr_##bo##bits##toh(symtab->offset) +     \
-        yr_##bo##bits##toh(symtab->size);                                      \
+      elf##bits##_sym_t* symbol = (elf##bits##_sym_t*)                         \
+          (elf_raw + yr_##bo##bits##toh(symtab->offset));                      \
+                                                                               \
+      const char* end_symtab = elf_raw +                                       \
+          yr_##bo##bits##toh(symtab->offset) +                                 \
+          yr_##bo##bits##toh(symtab->size);                                    \
                                                                                \
       int j = 0;                                                               \
       for ( ; ((char*)symbol + sizeof(elf##bits##_sym_t)) <= end_symtab;       \
@@ -347,7 +351,7 @@ void parse_elf_header_##bits##_##bo(                                           \
         sizeof(elf##bits##_program_header_t) <= elf_size)                      \
   {                                                                            \
     segment = (elf##bits##_program_header_t*)                                  \
-      ((uint8_t*) elf + yr_##bo##bits##toh(elf->ph_offset));                   \
+        (elf_raw + yr_##bo##bits##toh(elf->ph_offset));                        \
                                                                                \
     for (i = 0; i < yr_##bo##16toh(elf->ph_entry_count); i++)                  \
     {                                                                          \
