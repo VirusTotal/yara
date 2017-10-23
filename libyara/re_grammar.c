@@ -183,7 +183,7 @@ union YYSTYPE
   int integer;
   uint32_t range;
   RE_NODE* re_node;
-  uint8_t* class_vector;
+  RE_CLASS* re_class;
 
 #line 189 "re_grammar.c" /* yacc.c:355  */
 };
@@ -1048,7 +1048,7 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *yyscanner, R
     {
           case 6: /* _CLASS_  */
 #line 104 "re_grammar.y" /* yacc.c:1257  */
-      { yr_free(((*yyvaluep).class_vector)); }
+      { yr_free(((*yyvaluep).re_class)); }
 #line 1053 "re_grammar.c" /* yacc.c:1257  */
         break;
 
@@ -1757,7 +1757,7 @@ yyreduce:
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
-        (yyval.re_node)->class_vector = (yyvsp[0].class_vector);
+        (yyval.re_node)->re_class = (yyvsp[0].re_class);
       }
 #line 1763 "re_grammar.c" /* yacc.c:1646  */
     break;

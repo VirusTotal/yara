@@ -1207,6 +1207,38 @@ void test_re()
         strings: $a = /MZ.{300,}?t/ \
         condition: !a == 314 }",
       PE32_FILE);
+
+  assert_false_rule(
+      "rule test { strings: $a = /abc[^d]/ nocase condition: $a }",
+      "abcd");
+
+  assert_false_rule(
+      "rule test { strings: $a = /abc[^d]/ condition: $a }",
+      "abcd");
+
+  assert_false_rule(
+      "rule test { strings: $a = /abc[^D]/ nocase condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+      "rule test { strings: $a = /abc[^D]/ condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+      "rule test { strings: $a = /abc[^f]/ nocase condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+      "rule test { strings: $a = /abc[^f]/ condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+      "rule test { strings: $a = /abc[^F]/ nocase condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+       "rule test { strings: $a = /abc[^F]/ condition: $a }",
+       "abcd");
 }
 
 

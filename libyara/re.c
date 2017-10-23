@@ -127,7 +127,36 @@ YR_THREAD_STORAGE_KEY thread_storage_key = 0;
 
 
 #define CHAR_IN_CLASS(chr, cls)  \
-    ((cls)[(chr) / 8] & 1 << ((chr) % 8))
+  ((cls)[(chr) / 8] & 1 << ((chr) % 8))
+
+
+
+int _yr_re_is_char_in_class(
+    RE_CLASS* re_class,
+    uint8_t chr,
+    int case_insensitive)
+{
+  int result = (re_class->bitmap[(chr) / 8] & 1 << ((chr) % 8));
+
+  if (re_class->negated)
+    result = !result;
+
+  if (case_insensitive)
+  {
+    chr = yr_altercase[chr];
+
+    if (re_class->negated)
+    {
+      result &= !(re_class->bitmap[(chr) / 8] & 1 << ((chr) % 8));
+    }
+    else {
+      result |= (re_class->bitmap[(chr) / 8] & 1 << ((chr) % 8));
+    }
+
+  }
+
+  return result;
+}
 
 
 int _yr_re_is_word_char(
@@ -141,7 +170,6 @@ int _yr_re_is_word_char(
 
   return result;
 }
-
 
 
 //
@@ -239,7 +267,7 @@ void yr_re_node_destroy(
     yr_re_node_destroy(node->right);
 
   if (node->type == RE_NODE_CLASS)
-    yr_free(node->class_vector);
+    yr_free(node->re_class);
 
   yr_free(node);
 }
@@ -877,11 +905,11 @@ int _yr_re_emit(
 
     FAIL_ON_ERROR(yr_arena_write_data(
         emit_context->arena,
-        re_node->class_vector,
-        32,
+        re_node->re_class,
+        sizeof(*re_node->re_class),
         NULL));
 
-    *code_size += 32;
+    *code_size += sizeof(*re_node->re_class);
     break;
 
   case RE_NODE_ANCHOR_START:
@@ -2007,11 +2035,10 @@ int yr_re_exec(
 
         case RE_OPCODE_CLASS:
           prolog;
-          match = CHAR_IN_CLASS(*input, ip + 1);
-          if (!match && (flags & RE_FLAGS_NO_CASE))
-            match = CHAR_IN_CLASS(yr_altercase[*input], ip + 1);
+          match = _yr_re_is_char_in_class(
+              (RE_CLASS*) (ip + 1), *input, flags & RE_FLAGS_NO_CASE);
           action = match ? ACTION_NONE : ACTION_KILL;
-          fiber->ip += 33;
+          fiber->ip += (sizeof(RE_CLASS) + 1);
           break;
 
         case RE_OPCODE_WORD_CHAR:
@@ -2456,7 +2483,7 @@ void _yr_re_print_node(
   case RE_NODE_CLASS:
     printf("Class(");
     for (i = 0; i < 256; i++)
-      if (CHAR_IN_CLASS(i, re_node->class_vector))
+      if (_yr_re_is_char_in_class(re_node->re_class, i, FALSE))
         printf("%02X,", i);
     printf(")");
     break;
