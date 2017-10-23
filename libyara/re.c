@@ -126,9 +126,8 @@ typedef struct _RE_THREAD_STORAGE
 YR_THREAD_STORAGE_KEY thread_storage_key = 0;
 
 
-#define CHAR_IN_CLASS(chr, cls)  \
+#define CHAR_IN_CLASS(cls, chr)  \
   ((cls)[(chr) / 8] & 1 << ((chr) % 8))
-
 
 
 int _yr_re_is_char_in_class(
@@ -136,24 +135,13 @@ int _yr_re_is_char_in_class(
     uint8_t chr,
     int case_insensitive)
 {
-  int result = (re_class->bitmap[(chr) / 8] & 1 << ((chr) % 8));
+  int result = CHAR_IN_CLASS(re_class->bitmap, chr);
+
+  if (case_insensitive)
+    result |= CHAR_IN_CLASS(re_class->bitmap, yr_altercase[chr]);
 
   if (re_class->negated)
     result = !result;
-
-  if (case_insensitive)
-  {
-    chr = yr_altercase[chr];
-
-    if (re_class->negated)
-    {
-      result &= !(re_class->bitmap[(chr) / 8] & 1 << ((chr) % 8));
-    }
-    else {
-      result |= (re_class->bitmap[(chr) / 8] & 1 << ((chr) % 8));
-    }
-
-  }
 
   return result;
 }
