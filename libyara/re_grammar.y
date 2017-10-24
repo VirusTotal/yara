@@ -82,13 +82,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   int integer;
   uint32_t range;
   RE_NODE* re_node;
-  uint8_t* class_vector;
+  RE_CLASS* re_class;
 }
 
 
 %token <integer> _CHAR_ _ANY_
 %token <range> _RANGE_
-%token <class_vector> _CLASS_
+%token <re_class> _CLASS_
 
 %token _WORD_CHAR_
 %token _NON_WORD_CHAR_
@@ -428,7 +428,7 @@ single
 
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
-        $$->class_vector = $1;
+        $$->re_class = $1;
       }
     ;
 %%

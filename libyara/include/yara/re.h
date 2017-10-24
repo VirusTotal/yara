@@ -101,6 +101,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef struct RE RE;
 typedef struct RE_AST RE_AST;
 typedef struct RE_NODE RE_NODE;
+typedef struct RE_CLASS RE_CLASS;
 typedef struct RE_ERROR RE_ERROR;
 
 typedef uint8_t RE_SPLIT_ID_TYPE;
@@ -123,13 +124,20 @@ struct RE_NODE
 
   int greedy;
 
-  uint8_t* class_vector;
+  RE_CLASS* re_class;
 
   RE_NODE* left;
   RE_NODE* right;
 
   uint8_t* forward_code;
   uint8_t* backward_code;
+};
+
+
+struct RE_CLASS
+{
+  uint8_t negated;
+  uint8_t bitmap[32];
 };
 
 
