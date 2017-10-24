@@ -844,55 +844,6 @@ void* scanning_thread(void* param)
 }
 
 
-int is_integer(
-    const char *str)
-{
-  if (*str == '-')
-    str++;
-
-  while(*str)
-  {
-    if (!isdigit(*str))
-      return FALSE;
-    str++;
-  }
-
-  return TRUE;
-}
-
-
-int is_float(
-    const char *str)
-{
-  int has_dot = FALSE;
-
-  if (*str == '-')      // skip the minus sign if present
-    str++;
-
-  if (*str == '.')      // float can't start with a dot
-    return FALSE;
-
-  while(*str)
-  {
-    if (*str == '.')
-    {
-      if (has_dot)      // two dots, not a float
-        return FALSE;
-
-      has_dot = TRUE;
-    }
-    else if (!isdigit(*str))
-    {
-      return FALSE;
-    }
-
-    str++;
-  }
-
-  return has_dot; // to be float must contain a dot
-}
-
-
 int define_external_variables(
     YR_RULES* rules,
     YR_COMPILER* compiler)
