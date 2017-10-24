@@ -1572,7 +1572,9 @@ define_function(exports_ordinal)
   return_integer(0);
 }
 
-#if defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
+#if defined(HAVE_LIBCRYPTO) || \
+    defined(HAVE_WINCRYPT_H) || \
+    defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
 
 //
 // Generate an import hash:
@@ -2206,7 +2208,9 @@ begin_declarations;
     declare_function("toolid", "ii", "i", rich_toolid_version);
   end_struct("rich_signature");
 
-  #if defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
+  #if defined(HAVE_LIBCRYPTO) || \
+      defined(HAVE_WINCRYPT_H) || \
+      defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
   declare_function("imphash", "", "s", imphash);
   #endif
 
