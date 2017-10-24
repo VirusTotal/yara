@@ -1200,8 +1200,8 @@ YY_RULE_SETUP
   // Start of a negated character class. Example: [^abcd]
 
   BEGIN(char_class);
-  memset(LEX_ENV->class_vector, 0, 32);
-  LEX_ENV->negated_class = TRUE;
+  memset(LEX_ENV->re_class.bitmap, 0, 32);
+  LEX_ENV->re_class.negated = TRUE;
 }
 	YY_BREAK
 case 4:
@@ -1214,9 +1214,9 @@ YY_RULE_SETUP
   // not matching ], a, b, nor c
 
   BEGIN(char_class);
-  memset(LEX_ENV->class_vector, 0, 32);
-  LEX_ENV->negated_class = TRUE;
-  LEX_ENV->class_vector[']' / 8] |= 1 << ']' % 8;
+  memset(LEX_ENV->re_class.bitmap, 0, 32);
+  LEX_ENV->re_class.negated = TRUE;
+  LEX_ENV->re_class.bitmap[']' / 8] |= 1 << ']' % 8;
 }
 	YY_BREAK
 case 5:
@@ -1229,9 +1229,9 @@ YY_RULE_SETUP
   // matching ], a, b, or c.
 
   BEGIN(char_class);
-  memset(LEX_ENV->class_vector, 0, 32);
-  LEX_ENV->negated_class = FALSE;
-  LEX_ENV->class_vector[']' / 8] |= 1 << ']' % 8;
+  memset(LEX_ENV->re_class.bitmap, 0, 32);
+  LEX_ENV->re_class.negated = FALSE;
+  LEX_ENV->re_class.bitmap[']' / 8] |= 1 << ']' % 8;
 }
 	YY_BREAK
 case 6:
@@ -1242,8 +1242,8 @@ YY_RULE_SETUP
   // Start of character class. Example: [abcd]
 
   BEGIN(char_class);
-  memset(LEX_ENV->class_vector, 0, 32);
-  LEX_ENV->negated_class = FALSE;
+  memset(LEX_ENV->re_class.bitmap, 0, 32);
+  LEX_ENV->re_class.negated = FALSE;
 }
 	YY_BREAK
 case 7:
@@ -1348,17 +1348,10 @@ YY_RULE_SETUP
 {
 
   // End of character class.
+  yylval->re_class = (RE_CLASS*) yr_malloc(sizeof(RE_CLASS));
+  memcpy(yylval->re_class->bitmap, LEX_ENV->re_class.bitmap, 32);
 
-  int i;
-
-  yylval->class_vector = (uint8_t*) yr_malloc(32);
-  memcpy(yylval->class_vector, LEX_ENV->class_vector, 32);
-
-  if (LEX_ENV->negated_class)
-  {
-    for(i = 0; i < 32; i++)
-      yylval->class_vector[i] = ~yylval->class_vector[i];
-  }
+  yylval->re_class->negated = LEX_ENV->re_class.negated;
 
   BEGIN(INITIAL);
   return _CLASS_;
@@ -1367,7 +1360,7 @@ YY_RULE_SETUP
 case 19:
 /* rule 19 can match eol */
 YY_RULE_SETUP
-#line 304 "re_lexer.l"
+#line 297 "re_lexer.l"
 {
 
   // A range inside a character class.
@@ -1409,44 +1402,44 @@ YY_RULE_SETUP
 
   for (c = start; c <= end; c++)
   {
-    LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
+    LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
   }
 }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 350 "re_lexer.l"
+#line 343 "re_lexer.l"
 {
 
   int i;
 
   for (i = 0; i < 32; i++)
-    LEX_ENV->class_vector[i] |= word_chars[i];
+    LEX_ENV->re_class.bitmap[i] |= word_chars[i];
 }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 359 "re_lexer.l"
+#line 352 "re_lexer.l"
 {
 
   int i;
 
   for (i = 0; i < 32; i++)
-    LEX_ENV->class_vector[i] |= ~word_chars[i];
+    LEX_ENV->re_class.bitmap[i] |= ~word_chars[i];
 }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 368 "re_lexer.l"
+#line 361 "re_lexer.l"
 {
 
-  LEX_ENV->class_vector[' ' / 8] |= 1 << ' ' % 8;
-  LEX_ENV->class_vector['\t' / 8] |= 1 << '\t' % 8;
+  LEX_ENV->re_class.bitmap[' ' / 8] |= 1 << ' ' % 8;
+  LEX_ENV->re_class.bitmap['\t' / 8] |= 1 << '\t' % 8;
 }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 375 "re_lexer.l"
+#line 368 "re_lexer.l"
 {
 
   int i;
@@ -1454,28 +1447,28 @@ YY_RULE_SETUP
   for (i = 0; i < 32; i++)
   {
     if (i == ' ' / 8)
-      LEX_ENV->class_vector[i] |= ~(1 << ' ' % 8);
+      LEX_ENV->re_class.bitmap[i] |= ~(1 << ' ' % 8);
     else if (i == '\t' / 8)
-      LEX_ENV->class_vector[i] |= ~(1 << '\t' % 8);
+      LEX_ENV->re_class.bitmap[i] |= ~(1 << '\t' % 8);
     else
-      LEX_ENV->class_vector[i] = 0xFF;
+      LEX_ENV->re_class.bitmap[i] = 0xFF;
   }
 }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 391 "re_lexer.l"
+#line 384 "re_lexer.l"
 {
 
   char c;
 
   for (c = '0'; c <= '9'; c++)
-    LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
+    LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
 }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 400 "re_lexer.l"
+#line 393 "re_lexer.l"
 {
 
   int i;
@@ -1489,22 +1482,22 @@ YY_RULE_SETUP
     // digits 8 and 9 are the lowest two bits in the seventh byte of the
     // vector, let those bits alone.
     if (i == 7)
-      LEX_ENV->class_vector[i] |= 0xFC;
+      LEX_ENV->re_class.bitmap[i] |= 0xFC;
     else
-      LEX_ENV->class_vector[i] = 0xFF;
+      LEX_ENV->re_class.bitmap[i] = 0xFF;
   }
 }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 420 "re_lexer.l"
+#line 413 "re_lexer.l"
 {
 
   uint8_t c;
 
   if (read_escaped_char(yyscanner, &c))
   {
-    LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
+    LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
   }
   else
   {
@@ -1515,7 +1508,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 436 "re_lexer.l"
+#line 429 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1523,7 +1516,7 @@ YY_RULE_SETUP
     // A character class (i.e: [0-9a-f]) is represented by a 256-bits vector,
     // here we set to 1 the vector's bit corresponding to the input character.
 
-    LEX_ENV->class_vector[yytext[0] / 8] |= 1 << yytext[0] % 8;
+    LEX_ENV->re_class.bitmap[yytext[0] / 8] |= 1 << yytext[0] % 8;
   }
   else
   {
@@ -1533,7 +1526,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(char_class):
-#line 453 "re_lexer.l"
+#line 446 "re_lexer.l"
 {
 
   // End of regexp reached while scanning a character class.
@@ -1544,7 +1537,7 @@ case YY_STATE_EOF(char_class):
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 462 "re_lexer.l"
+#line 455 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1559,7 +1552,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 476 "re_lexer.l"
+#line 469 "re_lexer.l"
 {
 
   yyterminate();
@@ -1567,10 +1560,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 481 "re_lexer.l"
+#line 474 "re_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1573 "re_lexer.c"
+#line 1566 "re_lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2719,7 +2712,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 481 "re_lexer.l"
+#line 474 "re_lexer.l"
 
 
 int escaped_char_value(

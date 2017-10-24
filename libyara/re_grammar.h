@@ -83,7 +83,7 @@ union YYSTYPE
   int integer;
   uint32_t range;
   RE_NODE* re_node;
-  uint8_t* class_vector;
+  RE_CLASS* re_class;
 
 #line 89 "re_grammar.h" /* yacc.c:1909  */
 };
