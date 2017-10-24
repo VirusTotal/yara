@@ -33,9 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctype.h>
 #include <time.h>
 
+#include "../crypto.h"
 #if defined(HAVE_LIBCRYPTO)
-#include <openssl/md5.h>
-#include <openssl/sha.h>
 #include <openssl/safestack.h>
 #include <openssl/asn1.h>
 #include <openssl/bio.h>
@@ -1573,7 +1572,7 @@ define_function(exports_ordinal)
   return_integer(0);
 }
 
-#if defined(HAVE_LIBCRYPTO)
+#if defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
 
 //
 // Generate an import hash:
@@ -1587,10 +1586,10 @@ define_function(imphash)
   YR_OBJECT* module = module();
 
   IMPORTED_DLL* dll;
-  MD5_CTX ctx;
+  yr_md5_ctx ctx;
 
-  unsigned char digest[MD5_DIGEST_LENGTH];
-  char digest_ascii[MD5_DIGEST_LENGTH * 2 + 1];
+  unsigned char digest[YR_MD5_LEN];
+  char digest_ascii[YR_MD5_LEN * 2 + 1];
   int i, first = TRUE;
 
   PE* pe = (PE*) module->data;
@@ -1600,7 +1599,7 @@ define_function(imphash)
   if (!pe)
     return_string(UNDEFINED);
 
-  MD5_Init(&ctx);
+  yr_md5_init(&ctx);
 
   dll = pe->imported_dlls;
 
@@ -1657,7 +1656,7 @@ define_function(imphash)
       for (i = 0; i < final_name_len; i++)
         final_name[i] = tolower(final_name[i]);
 
-      MD5_Update(&ctx, final_name, final_name_len);
+      yr_md5_update(&ctx, final_name, final_name_len);
 
       yr_free(final_name);
 
@@ -1670,21 +1669,21 @@ define_function(imphash)
     dll = dll->next;
   }
 
-  MD5_Final(digest, &ctx);
+  yr_md5_final(digest, &ctx);
 
   // Transform the binary digest to ascii
 
-  for (i = 0; i < MD5_DIGEST_LENGTH; i++)
+  for (i = 0; i < YR_MD5_LEN; i++)
   {
     sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
   }
 
-  digest_ascii[MD5_DIGEST_LENGTH * 2] = '\0';
+  digest_ascii[YR_MD5_LEN * 2] = '\0';
 
   return_string(digest_ascii);
 }
 
-#endif  // defined(HAVE_LIBCRYPTO)
+#endif  // defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
 
 
 define_function(imports)
@@ -2207,7 +2206,7 @@ begin_declarations;
     declare_function("toolid", "ii", "i", rich_toolid_version);
   end_struct("rich_signature");
 
-  #if defined(HAVE_LIBCRYPTO)
+  #if defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
   declare_function("imphash", "", "s", imphash);
   #endif
 
