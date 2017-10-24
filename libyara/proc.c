@@ -144,8 +144,9 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   PVOID address = (PVOID) (context->current_block.base + \
                            context->current_block.size);
 
-  while (address < context->si.lpMaximumApplicationAddress &&
-    VirtualQueryEx(context->hProcess, address, &mbi, sizeof(mbi)) != 0)
+  while (address >= (PVOID) context->current_block.base &&
+    address < context->si.lpMaximumApplicationAddress &&
+    VirtualQueryEx(context->hProcess, address, &mbi, sizeof(mbi)) == sizeof(mbi))
   {
     if (GetLastError() != ERROR_SUCCESS)
       break;
@@ -158,7 +159,17 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
       return &context->current_block;
     }
 
-    address = (uint8_t*) address + mbi.RegionSize;
+    {
+      PVOID new_address = (uint8_t*) address + mbi.RegionSize;
+      if (new_address > address)
+      {
+        address = new_address;
+      }
+      else
+      {
+        break;
+      }
+    }
   }
 
   return NULL;
