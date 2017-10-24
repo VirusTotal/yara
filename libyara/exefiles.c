@@ -61,10 +61,10 @@ PIMAGE_NT_HEADERS32 yr_get_pe_header(
   if (yr_le16toh(mz_header->e_magic) != IMAGE_DOS_SIGNATURE)
     return NULL;
 
-  if ((int32_t)yr_le32toh(mz_header->e_lfanew) < 0)
+  if ((int32_t) yr_le32toh(mz_header->e_lfanew) < 0)
     return NULL;
 
-  headers_size = yr_le32toh(mz_header->e_lfanew) +  \
+  headers_size = yr_le32toh(mz_header->e_lfanew) + \
                  sizeof(pe_header->Signature) + \
                  sizeof(IMAGE_FILE_HEADER);
 
@@ -73,7 +73,7 @@ PIMAGE_NT_HEADERS32 yr_get_pe_header(
 
   pe_header = (PIMAGE_NT_HEADERS32) (buffer + yr_le32toh(mz_header->e_lfanew));
 
-  headers_size += yr_le16toh(pe_header->FileHeader.SizeOfOptionalHeader);
+  headers_size += sizeof(IMAGE_OPTIONAL_HEADER32);
 
   if (yr_le32toh(pe_header->Signature) == IMAGE_NT_SIGNATURE &&
       (yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_I386 ||
