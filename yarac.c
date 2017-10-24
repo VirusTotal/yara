@@ -100,6 +100,38 @@ args_option_t options[] =
 };
 
 
+int is_float(
+    const char *str)
+{
+  int has_dot = FALSE;
+
+  if (*str == '-')      // skip the minus sign if present
+    str++;
+
+  if (*str == '.')      // float can't start with a dot
+    return FALSE;
+
+  while(*str)
+  {
+    if (*str == '.')
+    {
+      if (has_dot)      // two dots, not a float
+        return FALSE;
+
+      has_dot = TRUE;
+    }
+    else if (!isdigit(*str))
+    {
+      return FALSE;
+    }
+
+    str++;
+  }
+
+  return has_dot; // to be float must contain a dot
+}
+
+
 int is_numeric(
     const char *str)
 {
@@ -157,7 +189,14 @@ int define_external_variables(
     char* identifier = ext_vars[i];
     char* value = equal_sign + 1;
 
-    if (is_numeric(value))
+    if (is_float(value))
+    {
+      yr_compiler_define_float_variable(
+          compiler,
+          identifier,
+          atof(value));
+    }
+    else if (is_numeric(value))
     {
       yr_compiler_define_integer_variable(
           compiler,
