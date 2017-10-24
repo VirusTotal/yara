@@ -147,25 +147,31 @@ AS_IF([test "x$have_crypto" = "xno"],
       ],
       [
         AC_MSG_WARN([
-*******************************************************************************
-  Could not find OpenSSL library. Some features in "pe" module have been
-  disabled. If you want to enable all features please install it and run this
-  script again.
-*******************************************************************************
-        ])
-	AC_MSG_CHECKING([for MS Crypto API])
+
+*****************************************************************
+  Could not find OpenSSL library. Some features in "pe" module
+  have been disabled. If you want to enable all features please
+  install OpenSSL and run this script again.
+*****************************************************************
+])
+	      AC_MSG_CHECKING([for Microsoft Crypto API])
         AC_CHECK_HEADERS([wincrypt.h],
           [
-	    AC_MSG_RESULT([The "hash" module functions will be provided through the MS Crypto API])
+	          AC_MSG_RESULT([The "hash" module functions will be provided through the Microsoft Crypto API])
             # FIXME: Add PC_LIBS_PRIVATE entries?
             build_hash_module=true
           ],
           [],
           [#include <windows.h>])
-	AC_MSG_CHECKING([for MacOSX Common Crypto API])
+	      AC_MSG_CHECKING([for MacOSX Common Crypto API])
         AC_CHECK_HEADERS([CommonCrypto/CommonCrypto.h],
           [
-	    AC_MSG_RESULT([The "hash" module functions will be provided through the MacOSX Common Crypto API])
+	          AC_MSG_RESULT([
+*****************************************************************
+  As an alternative to OpenSSL the "hash" module functions will
+  be provided through the MacOSX Common Crypto API.
+*****************************************************************
+])
             # FIXME: Add PC_LIBS_PRIVATE entries?
             build_hash_module=true
           ])
@@ -176,19 +182,20 @@ AS_IF([test "x$have_crypto" = "xno"],
           ],
           [
             AC_MSG_WARN([
-*******************************************************************************
-  Could not find alternative APIs for hash functions. The "hash" module has
-  been disabled.
-*******************************************************************************
+
+*****************************************************************
+  Could not find alternative APIs for hash functions. The "hash"
+  module has been disabled.
+*****************************************************************
             ])
           ])
-        ])
-      ],
-      [
-        build_hash_module=true
-        CFLAGS="$CFLAGS -DHASH_MODULE"
-        PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libcrypto"
       ])
+  ],
+  [
+    build_hash_module=true
+    CFLAGS="$CFLAGS -DHASH_MODULE"
+    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libcrypto"
+  ])
 
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
 AM_CONDITIONAL([OPTIMIZATION], [test x$optimization = xtrue])
@@ -198,6 +205,7 @@ AM_CONDITIONAL([MAGIC_MODULE], [test x$build_magic_module = xtrue])
 AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
 AM_CONDITIONAL([DOTNET_MODULE], [test x$build_dotnet_module = xtrue])
 AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
+
 AC_SUBST([PC_REQUIRES_PRIVATE])
 AC_SUBST([PC_LIBS_PRIVATE])
 
