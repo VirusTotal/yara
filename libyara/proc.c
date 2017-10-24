@@ -142,11 +142,14 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   MEMORY_BASIC_INFORMATION mbi;
   PVOID address = (PVOID) (context->current_block.base + \
-	                       context->current_block.size);
+                           context->current_block.size);
 
   while (address < context->si.lpMaximumApplicationAddress &&
     VirtualQueryEx(context->hProcess, address, &mbi, sizeof(mbi)) != 0)
   {
+    if (GetLastError() != ERROR_SUCCESS)
+      break;
+
     if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
     {
       context->current_block.base = (size_t) mbi.BaseAddress;
