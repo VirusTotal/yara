@@ -67,7 +67,7 @@ static int is_valid_ptr(
     const void* base,
     size_t size,
     const void* ptr,
-    size_t ptr_size)
+    uint64_t ptr_size)  // ptr_size can be 64bit even in 32bit systems.
 {
   return ptr >= base && ptr_size <= size &&
       ((char*) ptr) + ptr_size <= ((char*) base) + size;
@@ -401,7 +401,6 @@ ELF_RVA_TO_OFFSET(32,le);
 ELF_RVA_TO_OFFSET(64,le);
 ELF_RVA_TO_OFFSET(32,be);
 ELF_RVA_TO_OFFSET(64,be);
-
 
 PARSE_ELF_HEADER(32,le);
 PARSE_ELF_HEADER(64,le);
