@@ -1592,7 +1592,8 @@ define_function(imphash)
 
   unsigned char digest[YR_MD5_LEN];
   char digest_ascii[YR_MD5_LEN * 2 + 1];
-  int i, first = TRUE;
+  size_t i;
+  int first = TRUE;
 
   PE* pe = (PE*) module->data;
 
@@ -1984,8 +1985,7 @@ define_function(calculate_checksum)
 
   uint64_t csum = 0;
   size_t csum_offset;
-
-  int i, j;
+  size_t i, j;
 
   if (pe == NULL)
     return_integer(UNDEFINED);
