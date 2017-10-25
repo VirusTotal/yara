@@ -101,6 +101,13 @@ Available options are:
 
   .. versionadded:: 3.5.0
 
+.. option:: --max-strings-per-rule=<number>
+
+  Set maximum number of strings per rule (default=10000). If a rule has more
+  then the specified number of strings an error will occur.
+
+  .. versionadded:: 3.7.0
+
 .. option:: -d <identifier>=<value>
 
   Define external variable.
