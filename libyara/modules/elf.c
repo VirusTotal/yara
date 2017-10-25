@@ -209,7 +209,7 @@ void parse_elf_header_##bits##_##bo(                                           \
   int flags,                                                                   \
   YR_OBJECT* elf_obj)                                                          \
 {                                                                              \
-  int i, j;                                                                    \
+  unsigned int i, j;                                                           \
   const char* elf_raw = (const char*) elf;                                     \
   uint16_t str_table_index = yr_##bo##16toh(elf->sh_str_table_index);          \
                                                                                \

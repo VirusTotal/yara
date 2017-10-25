@@ -259,7 +259,7 @@ STREAMS dotnet_parse_stream_headers(
   char *start;
   char *eos;
   char stream_name[DOTNET_STREAM_NAME_SIZE + 1];
-  int i;
+  unsigned int i;
 
   memset(&headers, '\0', sizeof(STREAMS));
 
@@ -352,7 +352,8 @@ void dotnet_parse_tilde_2(
 
   char *name;
   char typelib[MAX_TYPELIB_SIZE + 1];
-  int i, bit_check;
+  unsigned int i;
+  int bit_check;
   int matched_bits = 0;
 
   int64_t resource_offset;
