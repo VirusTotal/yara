@@ -84,6 +84,9 @@ Disable warnings.
 Treat warnings as errors. Has no effect if used with
 .B --no-warnings.
 .TP
+.BI "    --max-strings-per-rule=" number
+Set maximum number of strings per rule (default=10000)
+.TP
 .B \-v " --version"
 Show version information.
 .SH EXAMPLES
