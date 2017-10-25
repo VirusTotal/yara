@@ -816,6 +816,7 @@ int yr_lex_parse_rules_fd(
   #endif
 
   yyset_extra(compiler, yyscanner);
+
   while (1)
   {
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -823,7 +824,7 @@ int yr_lex_parse_rules_fd(
     if (!ReadFile(rules_fd, buf, sizeof(buf), &len, NULL))
       break;
 #else
-    ssize_t len = read(rules_fd, buf, sizeof(buf));
+    int len = (int) read(rules_fd, buf, sizeof(buf));
     if (len < 0)
     {
       if (errno == EINTR)
