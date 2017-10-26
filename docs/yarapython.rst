@@ -204,7 +204,7 @@ seconds elapsed, a ``TimeoutError`` exception is raised.
 You can also specify a callback function when invoking the ``match`` method. By
 default, the provided function will be called for every rule, no matter if
 matching or not. You can choose when your callback function is called by setting
-the ``which_callback`` parameter to one of ``yara.CALLBACK_MATCHES``,
+the ``which_callbacks`` parameter to one of ``yara.CALLBACK_MATCHES``,
 ``yara.CALLBACK_NON_MATCHES`` or ``yara.CALLBACK_ALL``. The default is to use
 ``yara.CALLBACK_ALL``. Your callback function should expect a single parameter
 of dictionary type, and should return ``CALLBACK_CONTINUE`` to proceed to the
@@ -220,7 +220,7 @@ Here is an example:
     print data
     return yara.CALLBACK_CONTINUE
 
-  matches = rules.match('/foo/bar/my_file', callback=mycallback, which_callback=yara.CALLBACK_MATCHES)
+  matches = rules.match('/foo/bar/my_file', callback=mycallback, which_callbacks=yara.CALLBACK_MATCHES)
 
 The passed dictionary will be something like this:
 
