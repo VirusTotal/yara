@@ -45,7 +45,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
 YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator);
 
-YR_API uint8_t* yr_process_fetch_memory_block_data(
+YR_API const uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block);
 
 #endif

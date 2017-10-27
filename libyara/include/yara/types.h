@@ -398,7 +398,7 @@ struct _YR_MEMORY_BLOCK;
 struct _YR_MEMORY_BLOCK_ITERATOR;
 
 
-typedef uint8_t* (*YR_MEMORY_BLOCK_FETCH_DATA_FUNC)(
+typedef const uint8_t* (*YR_MEMORY_BLOCK_FETCH_DATA_FUNC)(
     struct _YR_MEMORY_BLOCK* self);
 
 

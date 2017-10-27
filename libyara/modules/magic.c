@@ -49,7 +49,7 @@ define_function(magic_mime_type)
   YR_MEMORY_BLOCK* block;
   YR_SCAN_CONTEXT* context = scan_context();
 
-  uint8_t* block_data;
+  const uint8_t* block_data;
 
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
     return_string(UNDEFINED);
@@ -82,7 +82,7 @@ define_function(magic_type)
   YR_MEMORY_BLOCK* block;
   YR_SCAN_CONTEXT* context = scan_context();
 
-  uint8_t* block_data;
+  const uint8_t* block_data;
 
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
     return_string(UNDEFINED);

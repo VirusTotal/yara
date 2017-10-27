@@ -79,7 +79,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   yr_rules_scan_mem(
       elf_rules,
-      (uint8_t*) data, // TODO: remove typecase after changing API
+      data,
       size,
       SCAN_FLAGS_NO_TRYCATCH,
       callback,

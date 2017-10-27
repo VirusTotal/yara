@@ -41,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int yr_scan_verify_match(
     YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size,
     size_t data_base,
     size_t offset);

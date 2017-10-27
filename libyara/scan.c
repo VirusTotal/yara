@@ -48,7 +48,7 @@ typedef struct _CALLBACK_ARGS
   YR_STRING* string;
   YR_SCAN_CONTEXT* context;
 
-  uint8_t* data;
+  const uint8_t* data;
   size_t data_size;
   size_t data_base;
 
@@ -59,13 +59,13 @@ typedef struct _CALLBACK_ARGS
 
 
 int _yr_scan_compare(
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size,
     uint8_t* string,
     size_t string_length)
 {
-  uint8_t* s1 = data;
-  uint8_t* s2 = string;
+  const uint8_t* s1 = data;
+  const uint8_t* s2 = string;
 
   size_t i = 0;
 
@@ -80,13 +80,13 @@ int _yr_scan_compare(
 
 
 int _yr_scan_icompare(
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size,
     uint8_t* string,
     size_t string_length)
 {
-  uint8_t* s1 = data;
-  uint8_t* s2 = string;
+  const uint8_t* s1 = data;
+  const uint8_t* s2 = string;
 
   size_t i = 0;
 
@@ -101,13 +101,13 @@ int _yr_scan_icompare(
 
 
 int _yr_scan_wcompare(
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size,
     uint8_t* string,
     size_t string_length)
 {
-  uint8_t* s1 = data;
-  uint8_t* s2 = string;
+  const uint8_t* s1 = data;
+  const uint8_t* s2 = string;
 
   size_t i = 0;
 
@@ -126,13 +126,13 @@ int _yr_scan_wcompare(
 
 
 int _yr_scan_wicompare(
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size,
     uint8_t* string,
     size_t string_length)
 {
-  uint8_t* s1 = data;
-  uint8_t* s2 = string;
+  const uint8_t* s1 = data;
+  const uint8_t* s2 = string;
 
   size_t i = 0;
 
@@ -263,7 +263,7 @@ void _yr_scan_remove_match_from_list(
 int _yr_scan_verify_chained_string_match(
     YR_STRING* matching_string,
     YR_SCAN_CONTEXT* context,
-    uint8_t* match_data,
+    const uint8_t* match_data,
     uint64_t match_base,
     uint64_t match_offset,
     int32_t match_length)
@@ -427,7 +427,7 @@ int _yr_scan_verify_chained_string_match(
 
 
 int _yr_scan_match_callback(
-    uint8_t* match_data,
+    const uint8_t* match_data,
     int32_t match_length,
     int flags,
     void* args)
@@ -532,7 +532,7 @@ int _yr_scan_match_callback(
 
 typedef int (*RE_EXEC_FUNC)(
     uint8_t* code,
-    uint8_t* input,
+    const uint8_t* input,
     size_t input_forwards_size,
     size_t input_backwards_size,
     int flags,
@@ -544,7 +544,7 @@ typedef int (*RE_EXEC_FUNC)(
 int _yr_scan_verify_re_match(
     YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size,
     size_t data_base,
     size_t offset)
@@ -636,7 +636,7 @@ int _yr_scan_verify_re_match(
 int _yr_scan_verify_literal_match(
     YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size,
     size_t data_base,
     size_t offset)
@@ -719,7 +719,7 @@ int _yr_scan_verify_literal_match(
 int yr_scan_verify_match(
     YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size,
     size_t data_base,
     size_t offset)

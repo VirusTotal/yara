@@ -106,7 +106,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             offset <= block->base + block->size - sizeof(type)) \
         { \
           type result; \
-          uint8_t* data = block->fetch_data(block); \
+          const uint8_t* data = block->fetch_data(block); \
           if (data == NULL) \
             return UNDEFINED; \
           result = *(type *)(data + offset - block->base); \

@@ -149,7 +149,7 @@ YR_API int yr_filemap_map_fd(
       return ERROR_COULD_NOT_MAP_FILE;
     }
 
-    pmapped_file->data = (uint8_t*) MapViewOfFile(
+    pmapped_file->data = (const uint8_t*) MapViewOfFile(
         pmapped_file->mapping,
         FILE_MAP_READ,
         offset >> 32,
@@ -205,7 +205,7 @@ YR_API int yr_filemap_map_fd(
 
   if (pmapped_file->size != 0)
   {
-    pmapped_file->data = (uint8_t*) mmap(
+    pmapped_file->data = (const uint8_t*) mmap(
         0,
         pmapped_file->size,
         PROT_READ,
@@ -222,7 +222,7 @@ YR_API int yr_filemap_map_fd(
       return ERROR_COULD_NOT_MAP_FILE;
     }
 
-    madvise(pmapped_file->data, pmapped_file->size, MADV_SEQUENTIAL);
+    madvise((void*) pmapped_file->data, pmapped_file->size, MADV_SEQUENTIAL);
   }
   else
   {
@@ -365,7 +365,7 @@ YR_API void yr_filemap_unmap_fd(
     YR_MAPPED_FILE* pmapped_file)
 {
   if (pmapped_file->data != NULL)
-    munmap(pmapped_file->data, pmapped_file->size);
+    munmap((void*) pmapped_file->data, pmapped_file->size);
 
   pmapped_file->data = NULL;
   pmapped_file->size = 0;

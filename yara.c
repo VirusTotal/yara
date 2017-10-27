@@ -752,7 +752,7 @@ int callback(
       {
         if (strcmp(module_data->module_name, mi->module_name) == 0)
         {
-          mi->module_data = module_data->mapped_file.data;
+          mi->module_data = (void*) module_data->mapped_file.data;
           mi->module_data_size = module_data->mapped_file.size;
           break;
         }
