@@ -88,9 +88,9 @@ typedef struct _RE_EMIT_CONTEXT {
 
 typedef struct _RE_FIBER
 {
-  uint8_t* ip;    // instruction pointer
-  int32_t  sp;    // stack pointer
-  int32_t  rc;    // repeat counter
+  const uint8_t* ip;    // instruction pointer
+  int32_t  sp;          // stack pointer
+  int32_t  rc;          // repeat counter
 
   uint16_t stack[RE_MAX_STACK];
 
@@ -1848,8 +1848,8 @@ int _yr_re_fiber_sync(
 //                              input
 //
 // Args:
-//   uint8_t* code                    - Regexp code be executed
-//   uint8_t* input                   - Pointer to input data
+//   const uint8_t* code              - Regexp code be executed
+//   const uint8_t* input             - Pointer to input data
 //   size_t input_forwards_size       - Number of accessible bytes starting at
 //                                      "input" and going forwards.
 //   size_t input_backwards_size      - Number of accessible bytes starting at
@@ -1871,7 +1871,7 @@ int _yr_re_fiber_sync(
 //    ERROR_SUCCESS or any other error code.
 
 int yr_re_exec(
-    uint8_t* code,
+    const uint8_t* code,
     const uint8_t* input_data,
     size_t input_forwards_size,
     size_t input_backwards_size,
@@ -1881,8 +1881,8 @@ int yr_re_exec(
     int* matches)
 {
   const uint8_t* input;
+  const uint8_t* ip;
 
-  uint8_t* ip;
   uint8_t mask;
   uint8_t value;
   uint8_t character_size;
@@ -2223,7 +2223,7 @@ int yr_re_exec(
 
 
 int yr_re_fast_exec(
-    uint8_t* code,
+    const uint8_t* code,
     const uint8_t* input_data,
     size_t input_forwards_size,
     size_t input_backwards_size,
@@ -2234,15 +2234,15 @@ int yr_re_fast_exec(
 {
   RE_REPEAT_ANY_ARGS* repeat_any_args;
 
-  uint8_t* code_stack[MAX_FAST_RE_STACK];
+  const uint8_t* code_stack[MAX_FAST_RE_STACK];
   const uint8_t* input_stack[MAX_FAST_RE_STACK];
   int matches_stack[MAX_FAST_RE_STACK];
 
   const uint8_t* input = input_data;
   const uint8_t* next_input;
+  const uint8_t* ip = code;
+  const uint8_t* next_opcode;
 
-  uint8_t* ip = code;
-  uint8_t* next_opcode;
   uint8_t mask;
   uint8_t value;
 

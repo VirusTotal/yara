@@ -133,15 +133,15 @@ function_read(int16_t, big_endian)
 function_read(int32_t, big_endian)
 
 
-static uint8_t* jmp_if(
+static const uint8_t* jmp_if(
     int condition,
-    uint8_t* ip)
+    const uint8_t* ip)
 {
-  uint8_t* result;
+  const uint8_t* result;
 
   if (condition)
   {
-    result = *(uint8_t**)(ip);
+    result = *(const uint8_t**)(ip);
   }
   else
   {
@@ -160,7 +160,8 @@ int yr_execute_code(
 {
   int64_t mem[MEM_SIZE];
   int32_t sp = 0;
-  uint8_t* ip = rules->code_start;
+
+  const uint8_t* ip = rules->code_start;
 
   YR_VALUE args[MAX_FUNCTION_ARGS];
   YR_VALUE *stack;

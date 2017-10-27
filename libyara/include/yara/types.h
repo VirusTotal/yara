@@ -275,8 +275,8 @@ typedef struct _YR_AC_MATCH
   uint16_t backtrack;
 
   DECLARE_REFERENCE(YR_STRING*, string);
-  DECLARE_REFERENCE(uint8_t*, forward_code);
-  DECLARE_REFERENCE(uint8_t*, backward_code);
+  DECLARE_REFERENCE(const uint8_t*, forward_code);
+  DECLARE_REFERENCE(const uint8_t*, backward_code);
   DECLARE_REFERENCE(struct _YR_AC_MATCH*, next);
 
 } YR_AC_MATCH;
@@ -298,7 +298,7 @@ typedef struct _YARA_RULES_FILE_HEADER
 {
   DECLARE_REFERENCE(YR_RULE*, rules_list_head);
   DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
-  DECLARE_REFERENCE(uint8_t*, code_start);
+  DECLARE_REFERENCE(const uint8_t*, code_start);
   DECLARE_REFERENCE(YR_AC_MATCH_TABLE, match_table);
   DECLARE_REFERENCE(YR_AC_TRANSITION_TABLE, transition_table);
 
@@ -308,7 +308,7 @@ typedef struct _YARA_RULES_FILE_HEADER
 typedef struct _YR_INIT_RULE_ARGS
 {
   DECLARE_REFERENCE(YR_RULE*, rule);
-  DECLARE_REFERENCE(uint8_t*, jmp_addr);
+  DECLARE_REFERENCE(const uint8_t*, jmp_addr);
 
 } YR_INIT_RULE_ARGS;
 
@@ -331,7 +331,7 @@ typedef struct _YR_MATCH
   // the buffer is data_length. data_length is always <= length and is limited
   // to MAX_MATCH_DATA bytes.
 
-  uint8_t* data;
+  const uint8_t* data;
 
   // If the match belongs to a chained string chain_length contains the
   // length of the chain. This field is used only in unconfirmed matches.
@@ -382,7 +382,7 @@ typedef struct _YR_AC_AUTOMATON
 typedef struct _YR_RULES {
 
   unsigned char tidx_mask[YR_BITARRAY_NCHARS(MAX_THREADS)];
-  uint8_t* code_start;
+  const uint8_t* code_start;
 
   YR_MUTEX mutex;
   YR_ARENA* arena;

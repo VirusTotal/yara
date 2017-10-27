@@ -531,7 +531,7 @@ int _yr_scan_match_callback(
 
 
 typedef int (*RE_EXEC_FUNC)(
-    uint8_t* code,
+    const uint8_t* code,
     const uint8_t* input,
     size_t input_forwards_size,
     size_t input_backwards_size,
