@@ -40,7 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef struct _YR_PROC_ITERATOR_CTX
 {
   HANDLE          hProcess;
-  uint8_t*        buffer;
+  const uint8_t*  buffer;
   size_t          buffer_size;
   SYSTEM_INFO     si;
   YR_MEMORY_BLOCK current_block;
