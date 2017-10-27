@@ -153,15 +153,13 @@ int _yr_compiler_push_file_name(
 void _yr_compiler_pop_file_name(
     YR_COMPILER* compiler);
 
+
 const char* _yr_compiler_default_include_callback(
     const char* include_name,
     const char* calling_rule_filename,
     const char* calling_rule_namespace,
     void* user_data);
 
-void _yr_compiler_default_include_free(
-    const char* callback_result_ptr,
-    void* user_data);
 
 YR_API int yr_compiler_create(
     YR_COMPILER** compiler);

@@ -130,7 +130,7 @@ YR_THREAD_STORAGE_KEY thread_storage_key = 0;
   ((cls)[(chr) / 8] & 1 << ((chr) % 8))
 
 
-int _yr_re_is_char_in_class(
+static int _yr_re_is_char_in_class(
     RE_CLASS* re_class,
     uint8_t chr,
     int case_insensitive)
@@ -147,7 +147,7 @@ int _yr_re_is_char_in_class(
 }
 
 
-int _yr_re_is_word_char(
+static int _yr_re_is_word_char(
     const uint8_t* input,
     uint8_t character_size)
 {
@@ -748,7 +748,7 @@ int _yr_emit_split(
 }
 
 
-int _yr_re_emit(
+static int _yr_re_emit(
     RE_EMIT_CONTEXT* emit_context,
     RE_NODE* re_node,
     int flags,
@@ -1334,7 +1334,7 @@ int yr_re_ast_emit_code(
 }
 
 
-int _yr_re_alloc_storage(
+static int _yr_re_alloc_storage(
     RE_THREAD_STORAGE** storage)
 {
   *storage = (RE_THREAD_STORAGE*) yr_thread_storage_get_value(
@@ -1359,7 +1359,7 @@ int _yr_re_alloc_storage(
 }
 
 
-int _yr_re_fiber_create(
+static int _yr_re_fiber_create(
     RE_FIBER_POOL* fiber_pool,
     RE_FIBER** new_fiber)
 {
@@ -1404,7 +1404,7 @@ int _yr_re_fiber_create(
 // Appends 'fiber' to 'fiber_list'
 //
 
-void _yr_re_fiber_append(
+static void _yr_re_fiber_append(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER* fiber)
 {
@@ -1435,7 +1435,7 @@ void _yr_re_fiber_append(
 // taken into account.
 //
 
-int _yr_re_fiber_exists(
+static int _yr_re_fiber_exists(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER* target_fiber,
     RE_FIBER* last_fiber)
@@ -1489,7 +1489,7 @@ int _yr_re_fiber_exists(
 //   f1 -> f2 -> cloned f2 -> f3 -> f4
 //
 
-int _yr_re_fiber_split(
+static int _yr_re_fiber_split(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool,
     RE_FIBER* fiber,
@@ -1531,7 +1531,7 @@ int _yr_re_fiber_split(
 // in the fiber pool.
 //
 
-RE_FIBER* _yr_re_fiber_kill(
+static RE_FIBER* _yr_re_fiber_kill(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool,
     RE_FIBER* fiber)
@@ -1570,7 +1570,7 @@ RE_FIBER* _yr_re_fiber_kill(
 // Kills all fibers from the given one up to the end of the fiber list.
 //
 
-void _yr_re_fiber_kill_tail(
+static void _yr_re_fiber_kill_tail(
   RE_FIBER_LIST* fiber_list,
   RE_FIBER_POOL* fiber_pool,
   RE_FIBER* fiber)
@@ -1602,7 +1602,7 @@ void _yr_re_fiber_kill_tail(
 // Kills all fibers in the fiber list.
 //
 
-void _yr_re_fiber_kill_all(
+static void _yr_re_fiber_kill_all(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool)
 {
@@ -1620,7 +1620,7 @@ void _yr_re_fiber_kill_all(
 // also synced.
 //
 
-int _yr_re_fiber_sync(
+static int _yr_re_fiber_sync(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool,
     RE_FIBER* fiber_to_sync)
@@ -2390,7 +2390,7 @@ int yr_re_fast_exec(
 }
 
 
-void _yr_re_print_node(
+static void _yr_re_print_node(
     RE_NODE* re_node)
 {
   int i;

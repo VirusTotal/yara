@@ -219,7 +219,7 @@ typedef struct _YR_PROC_ITERATOR_CTX {
 } YR_PROC_ITERATOR_CTX;
 
 
-int _yr_process_attach(
+static int _yr_process_attach(
     int pid,
     YR_PROC_ITERATOR_CTX* context)
 {
@@ -232,7 +232,7 @@ int _yr_process_attach(
 }
 
 
-int _yr_process_detach(
+static int _yr_process_detach(
     YR_PROC_ITERATOR_CTX* context)
 {
   if (context->task != MACH_PORT_NULL)
@@ -350,8 +350,7 @@ typedef struct _YR_PROC_ITERATOR_CTX {
 } YR_PROC_ITERATOR_CTX;
 
 
-
-int _yr_process_attach(
+static int _yr_process_attach(
     int pid,
     YR_PROC_ITERATOR_CTX* context)
 {
@@ -410,7 +409,7 @@ int _yr_process_attach(
 }
 
 
-int _yr_process_detach(
+static int _yr_process_detach(
     YR_PROC_ITERATOR_CTX* context)
 {
   fclose(context->maps);
@@ -492,7 +491,6 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
 
 #endif
 #endif
-
 
 
 YR_API int yr_process_open_iterator(

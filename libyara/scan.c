@@ -58,7 +58,7 @@ typedef struct _CALLBACK_ARGS
 } CALLBACK_ARGS;
 
 
-int _yr_scan_compare(
+static int _yr_scan_compare(
     const uint8_t* data,
     size_t data_size,
     uint8_t* string,
@@ -79,7 +79,7 @@ int _yr_scan_compare(
 }
 
 
-int _yr_scan_icompare(
+static int _yr_scan_icompare(
     const uint8_t* data,
     size_t data_size,
     uint8_t* string,
@@ -100,7 +100,7 @@ int _yr_scan_icompare(
 }
 
 
-int _yr_scan_wcompare(
+static int _yr_scan_wcompare(
     const uint8_t* data,
     size_t data_size,
     uint8_t* string,
@@ -125,7 +125,7 @@ int _yr_scan_wcompare(
 }
 
 
-int _yr_scan_wicompare(
+static int _yr_scan_wicompare(
     const uint8_t* data,
     size_t data_size,
     uint8_t* string,
@@ -150,7 +150,7 @@ int _yr_scan_wicompare(
 }
 
 
-void _yr_scan_update_match_chain_length(
+static void _yr_scan_update_match_chain_length(
     int tidx,
     YR_STRING* string,
     YR_MATCH* match_to_update,
@@ -184,7 +184,7 @@ void _yr_scan_update_match_chain_length(
 }
 
 
-int _yr_scan_add_match_to_list(
+static int _yr_scan_add_match_to_list(
     YR_MATCH* match,
     YR_MATCHES* matches_list,
     int replace_if_exists)
@@ -238,7 +238,7 @@ int _yr_scan_add_match_to_list(
 }
 
 
-void _yr_scan_remove_match_from_list(
+static void _yr_scan_remove_match_from_list(
     YR_MATCH* match,
     YR_MATCHES* matches_list)
 {
@@ -260,7 +260,7 @@ void _yr_scan_remove_match_from_list(
 }
 
 
-int _yr_scan_verify_chained_string_match(
+static int _yr_scan_verify_chained_string_match(
     YR_STRING* matching_string,
     YR_SCAN_CONTEXT* context,
     const uint8_t* match_data,
@@ -426,7 +426,7 @@ int _yr_scan_verify_chained_string_match(
 }
 
 
-int _yr_scan_match_callback(
+static int _yr_scan_match_callback(
     const uint8_t* match_data,
     int32_t match_length,
     int flags,
@@ -541,7 +541,7 @@ typedef int (*RE_EXEC_FUNC)(
     int* matches);
 
 
-int _yr_scan_verify_re_match(
+static int _yr_scan_verify_re_match(
     YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,
     const uint8_t* data,
@@ -633,7 +633,7 @@ int _yr_scan_verify_re_match(
 }
 
 
-int _yr_scan_verify_literal_match(
+static int _yr_scan_verify_literal_match(
     YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,
     const uint8_t* data,

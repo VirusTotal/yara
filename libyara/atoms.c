@@ -119,7 +119,7 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 //    An integer indicating the atom's quality
 //
 
-int _yr_atoms_quality(
+static int _yr_atoms_quality(
     uint8_t* atom,
     int atom_length)
 {
@@ -204,7 +204,7 @@ int yr_atoms_min_quality(
 // Creates a new node for an atoms tree.
 //
 
-ATOM_TREE_NODE* _yr_atoms_tree_node_create(
+static ATOM_TREE_NODE* _yr_atoms_tree_node_create(
     uint8_t type)
 {
   ATOM_TREE_NODE* new_node = (ATOM_TREE_NODE*) \
@@ -231,7 +231,7 @@ ATOM_TREE_NODE* _yr_atoms_tree_node_create(
 // Destroys a node from an atoms tree.
 //
 
-void _yr_atoms_tree_node_destroy(
+static void _yr_atoms_tree_node_destroy(
     ATOM_TREE_NODE* node)
 {
   ATOM_TREE_NODE* child;
@@ -262,7 +262,7 @@ void _yr_atoms_tree_node_destroy(
 // Appends a new child node to another atoms tree node.
 //
 
-void _yr_atoms_tree_node_append(
+static void _yr_atoms_tree_node_append(
     ATOM_TREE_NODE* dest,
     ATOM_TREE_NODE* node)
 {
@@ -282,7 +282,7 @@ void _yr_atoms_tree_node_append(
 // Destroys an atoms tree.
 //
 
-void _yr_atoms_tree_destroy(
+static void _yr_atoms_tree_destroy(
     ATOM_TREE* atom_tree)
 {
   _yr_atoms_tree_node_destroy(atom_tree->root_node);
@@ -317,7 +317,7 @@ void yr_atoms_list_destroy(
 // Concats two atoms lists.
 //
 
-YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
+static YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
     YR_ATOM_LIST_ITEM* list1,
     YR_ATOM_LIST_ITEM* list2)
 {
@@ -345,7 +345,7 @@ YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
 // Aho-Corasick automaton, and puts them in a list.
 //
 
-int _yr_atoms_choose(
+static int _yr_atoms_choose(
     ATOM_TREE_NODE* node,
     YR_ATOM_LIST_ITEM** chosen_atoms,
     int* atoms_quality)
@@ -454,7 +454,7 @@ int _yr_atoms_choose(
 // returned atoms.
 //
 
-uint8_t* _yr_atoms_case_combinations(
+static uint8_t* _yr_atoms_case_combinations(
     uint8_t* atom,
     int atom_length,
     int atom_offset,
@@ -516,7 +516,7 @@ uint8_t* _yr_atoms_case_combinations(
 // with every case combination.
 //
 
-int _yr_atoms_case_insensitive(
+static int _yr_atoms_case_insensitive(
     YR_ATOM_LIST_ITEM* atoms,
     YR_ATOM_LIST_ITEM** case_insensitive_atoms)
 {
@@ -581,7 +581,7 @@ int _yr_atoms_case_insensitive(
 // for example: 01 02 -> 01 00 02 00
 //
 
-int _yr_atoms_wide(
+static _yr_atoms_wide(
     YR_ATOM_LIST_ITEM* atoms,
     YR_ATOM_LIST_ITEM** wide_atoms)
 {
@@ -633,7 +633,7 @@ int _yr_atoms_wide(
 // _yr_atoms_extract_from_re for more details.
 //
 
-ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
+static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
   RE_NODE* re_node,
   ATOM_TREE* atom_tree,
   ATOM_TREE_NODE* current_node)

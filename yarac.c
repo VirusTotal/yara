@@ -100,7 +100,7 @@ args_option_t options[] =
 };
 
 
-void report_error(
+static void report_error(
     int error_level,
     const char* file_name,
     int line_number,
@@ -121,7 +121,7 @@ void report_error(
 }
 
 
-int define_external_variables(
+static int define_external_variables(
     YR_COMPILER* compiler)
 {
   for (int i = 0; ext_vars[i] != NULL; i++)
