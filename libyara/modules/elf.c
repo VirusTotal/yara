@@ -97,6 +97,7 @@ static const char* str_table_entry(const char* str_table_base,
   }
 
   len = strnlen(str_entry, str_table_limit - str_entry);
+
   if (str_entry + len == str_table_limit)
   {
     /* Entry is clamped by extent of string table, not null-terminated. */
@@ -318,20 +319,30 @@ void parse_elf_header_##bits##_##bo(                                           \
                                                                                \
       for (j = 0; j < sym_table_size / sizeof(elf##bits##_sym_t); j++, sym++)  \
       {                                                                        \
-        set_integer(sym->info >> 4, elf_obj, "symtab[%i].bind", j);            \
-        set_integer(sym->info & 0xf, elf_obj, "symtab[%i].type", j);           \
+        uint32_t sym_name_offset = yr_##bo##32toh(sym->name);                  \
+                                                                               \
+        if (sym_name_offset < sym_str_table_size)                              \
+        {                                                                      \
+          const char* sym_name = sym_str_table + sym_name_offset;              \
+                                                                               \
+          set_sized_string(                                                    \
+              sym_name,                                                        \
+              strnlen(sym_name, sym_table_size - sym_name_offset),             \
+              elf_obj,                                                         \
+              "symtab[%i].name",                                               \
+              j);                                                              \
+        }                                                                      \
+                                                                               \
+        set_integer(sym->info >> 4, elf_obj,                                   \
+            "symtab[%i].bind", j);                                             \
+        set_integer(sym->info & 0xf, elf_obj,                                  \
+            "symtab[%i].type", j);                                             \
         set_integer(yr_##bo##16toh(sym->shndx), elf_obj,                       \
            "symtab[%i].shndx", j);                                             \
         set_integer(yr_##bo##bits##toh(sym->value), elf_obj,                   \
            "symtab[%i].value", j);                                             \
         set_integer(yr_##bo##bits##toh(sym->size), elf_obj,                    \
            "symtab[%i].size", j);                                              \
-                                                                               \
-        if (yr_##bo##32toh(sym->name) < sym_str_table_size)                    \
-        {                                                                      \
-          set_string(sym_str_table + yr_##bo##32toh(sym->name), elf_obj,       \
-             "symtab[%i].name", j);                                            \
-        }                                                                      \
       }                                                                        \
                                                                                \
       set_integer(j, elf_obj, "symtab_entries");                               \
