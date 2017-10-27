@@ -1054,7 +1054,7 @@ void pe_parse_certificates(
 {
   int i, counter = 0;
 
-  uint8_t* eod;
+  const uint8_t* eod;
   uintptr_t end;
 
   PWIN_CERTIFICATE win_cert;

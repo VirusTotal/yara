@@ -34,7 +34,7 @@ limitations under the License.
 
 char* pe_get_dotnet_string(
     PE* pe,
-    uint8_t* string_offset,
+    const uint8_t* string_offset,
     DWORD string_index)
 {
   size_t remaining;
@@ -94,7 +94,7 @@ void dotnet_parse_guid(
   char guid[37];
   int i = 0;
 
-  uint8_t* guid_offset = pe->data + metadata_root + guid_header->Offset;
+  const uint8_t* guid_offset = pe->data + metadata_root + guid_header->Offset;
   DWORD guid_size = guid_header->Size;
 
   // Parse GUIDs if we have them.
@@ -130,7 +130,7 @@ void dotnet_parse_guid(
 // The offset is relative to the start of the PE file.
 BLOB_PARSE_RESULT dotnet_parse_blob_entry(
     PE* pe,
-    uint8_t* offset)
+    const uint8_t* offset)
 {
   BLOB_PARSE_RESULT result;
 
@@ -205,8 +205,8 @@ void dotnet_parse_us(
   BLOB_PARSE_RESULT blob_result;
   int i = 0;
 
-  uint8_t* offset = pe->data + metadata_root + us_header->Offset;
-  uint8_t* end_of_header = offset + us_header->Size;
+  const uint8_t* offset = pe->data + metadata_root + us_header->Offset;
+  const uint8_t* end_of_header = offset + us_header->Size;
 
   // Make sure end of header is not past end of PE, and the first entry MUST be
   // a single NULL byte.
@@ -358,8 +358,9 @@ void dotnet_parse_tilde_2(
 
   int64_t resource_offset;
   uint32_t row_size, row_count, counter;
-  uint8_t* string_offset;
-  uint8_t* blob_offset;
+
+  const uint8_t* string_offset;
+  const uint8_t* blob_offset;
 
   uint32_t num_rows = 0;
   uint32_t valid_rows = 0;
@@ -1674,7 +1675,7 @@ int module_load(
 {
   YR_MEMORY_BLOCK* block;
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
-  uint8_t* block_data = NULL;
+  const uint8_t* block_data = NULL;
 
   foreach_memory_block(iterator, block)
   {
