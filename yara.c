@@ -438,17 +438,15 @@ void scan_dir(
 #endif
 
 void print_string(
-    uint8_t* data,
+    const uint8_t* data,
     int length)
 {
-  char* str = (char*) (data);
-
   for (int i = 0; i < length; i++)
   {
-    if (str[i] >= 32 && str[i] <= 126)
-      printf("%c", str[i]);
+    if (data[i] >= 32 && data[i] <= 126)
+      printf("%c", data[i]);
     else
-      printf("\\x%02X", (uint8_t) str[i]);
+      printf("\\x%02X", data[i]);
   }
 
   printf("\n");
@@ -465,7 +463,7 @@ static char cescapes[] =
 
 
 void print_escaped(
-    uint8_t* data,
+    const uint8_t* data,
     size_t length)
 {
   size_t i;
@@ -495,11 +493,11 @@ void print_escaped(
 
 
 void print_hex_string(
-    uint8_t* data,
+    const uint8_t* data,
     int length)
 {
   for (int i = 0; i < min(32, length); i++)
-    printf("%s%02X", (i == 0 ? "" : " "), (uint8_t) data[i]);
+    printf("%s%02X", (i == 0 ? "" : " "), data[i]);
 
   puts(length > 32 ? " ..." : "");
 }

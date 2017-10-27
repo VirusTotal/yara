@@ -222,7 +222,7 @@ void yr_re_node_destroy(
 
 
 int yr_re_exec(
-    uint8_t* code,
+    const uint8_t* code,
     const uint8_t* input_data,
     size_t input_forwards_size,
     size_t input_backwards_size,
@@ -233,7 +233,7 @@ int yr_re_exec(
 
 
 int yr_re_fast_exec(
-    uint8_t* code,
+    const uint8_t* code,
     const uint8_t* input_data,
     size_t input_forwards_size,
     size_t input_backwards_size,
