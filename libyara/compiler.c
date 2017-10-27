@@ -43,6 +43,121 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/strutils.h>
 
 
+static void _yr_compiler_default_include_free(
+  const char* callback_result_ptr,
+  void* user_data)
+{
+  if(callback_result_ptr != NULL)
+  {
+    yr_free((void*)callback_result_ptr);
+  }
+
+}
+
+
+const char* _yr_compiler_default_include_callback(
+    const char* include_name,
+    const char* calling_rule_filename,
+    const char* calling_rule_namespace,
+    void* user_data)
+{
+  char buffer[1024];
+  char* s = NULL;
+  #ifdef _WIN32
+  char* b = NULL;
+  #endif
+  char* f;
+  FILE* fh;
+  char* file_buffer;
+  long file_length;
+
+  if (calling_rule_filename != NULL)
+  {
+    strlcpy(buffer, calling_rule_filename, sizeof(buffer));
+  }
+  else
+  {
+    buffer[0] = '\0';
+  }
+
+  s = strrchr(buffer, '/');
+
+  #ifdef _WIN32
+  b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
+  #endif
+
+  #ifdef _WIN32
+  if (s != NULL || b != NULL)
+  #else
+  if (s != NULL)
+  #endif
+  {
+    #ifdef _WIN32
+    f = (b > s)? (b + 1): (s + 1);
+    #else
+    f = s + 1;
+    #endif
+
+    strlcpy(f, include_name, sizeof(buffer) - (f - buffer));
+
+    f = buffer;
+    // SECURITY: Potential for directory traversal here.
+    fh = fopen(buffer, "rb");
+
+    // if include file was not found relative to current source file,
+    // try to open it with path as specified by user (maybe user wrote
+    // a full path)
+    if (fh == NULL)
+    {
+      f = (char*) include_name;
+      // SECURITY: Potential for directory traversal here.
+      fh = fopen(include_name, "rb");
+    }
+  }
+  else
+  {
+    f = (char*) include_name;
+    // SECURITY: Potential for directory traversal here.
+    fh = fopen(include_name, "rb");
+  }
+
+  if (fh == NULL)
+    return NULL;
+
+  fseek(fh, 0, SEEK_END);
+  file_length = ftell(fh);
+  fseek(fh, 0, SEEK_SET);
+
+  if (file_length == -1)
+  {
+    fclose(fh);
+    return NULL;
+  }
+
+  file_buffer = (char*) yr_malloc(file_length + 1);
+
+  if (file_buffer == NULL)
+  {
+    fclose(fh);
+    return NULL;
+  }
+
+  if (file_length != fread(file_buffer, 1, file_length, fh))
+  {
+    yr_free(file_buffer);
+    fclose(fh);
+    return NULL;
+  }
+  else
+  {
+    file_buffer[file_length] = '\0';
+  }
+
+  fclose(fh);
+  return file_buffer;
+}
+
+
 YR_API int yr_compiler_create(
     YR_COMPILER** compiler)
 {
@@ -182,120 +297,6 @@ YR_API void yr_compiler_set_callback(
 }
 
 
-const char* _yr_compiler_default_include_callback(
-    const char* include_name,
-    const char* calling_rule_filename,
-    const char* calling_rule_namespace,
-    void* user_data)
-{
-  char buffer[1024];
-  char* s = NULL;
-  #ifdef _WIN32
-  char* b = NULL;
-  #endif
-  char* f;
-  FILE* fh;
-  char* file_buffer;
-  long file_length;
-
-  if (calling_rule_filename != NULL)
-  {
-    strlcpy(buffer, calling_rule_filename, sizeof(buffer));
-  }
-  else
-  {
-    buffer[0] = '\0';
-  }
-
-  s = strrchr(buffer, '/');
-
-  #ifdef _WIN32
-  b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
-  #endif
-
-  #ifdef _WIN32
-  if (s != NULL || b != NULL)
-  #else
-  if (s != NULL)
-  #endif
-  {
-    #ifdef _WIN32
-    f = (b > s)? (b + 1): (s + 1);
-    #else
-    f = s + 1;
-    #endif
-
-    strlcpy(f, include_name, sizeof(buffer) - (f - buffer));
-
-    f = buffer;
-    // SECURITY: Potential for directory traversal here.
-    fh = fopen(buffer, "rb");
-
-    // if include file was not found relative to current source file,
-    // try to open it with path as specified by user (maybe user wrote
-    // a full path)
-    if (fh == NULL)
-    {
-      f = (char*) include_name;
-      // SECURITY: Potential for directory traversal here.
-      fh = fopen(include_name, "rb");
-    }
-  }
-  else
-  {
-    f = (char*) include_name;
-    // SECURITY: Potential for directory traversal here.
-    fh = fopen(include_name, "rb");
-  }
-
-  if (fh == NULL)
-    return NULL;
-
-  fseek(fh, 0, SEEK_END);
-  file_length = ftell(fh);
-  fseek(fh, 0, SEEK_SET);
-
-  if (file_length == -1)
-  {
-    fclose(fh);
-    return NULL;
-  }
-
-  file_buffer = (char*) yr_malloc(file_length + 1);
-
-  if (file_buffer == NULL)
-  {
-    fclose(fh);
-    return NULL;
-  }
-
-  if (file_length != fread(file_buffer, 1, file_length, fh))
-  {
-    yr_free(file_buffer);
-    fclose(fh);
-    return NULL;
-  }
-  else
-  {
-    file_buffer[file_length] = '\0';
-  }
-
-  fclose(fh);
-  return file_buffer;
-}
-
-
-void _yr_compiler_default_include_free(
-  const char* callback_result_ptr,
-  void* user_data)
-{
-  if(callback_result_ptr != NULL)
-  {
-    yr_free((void*)callback_result_ptr);
-  }
-}
-
-
 YR_API void yr_compiler_set_include_callback(
     YR_COMPILER* compiler,
     YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback,
@@ -370,7 +371,7 @@ YR_API char* yr_compiler_get_current_file_name(
 }
 
 
-int _yr_compiler_set_namespace(
+static int _yr_compiler_set_namespace(
     YR_COMPILER* compiler,
     const char* namespace_)
 {
@@ -534,7 +535,7 @@ YR_API int yr_compiler_add_string(
 }
 
 
-int _yr_compiler_compile_rules(
+static int _yr_compiler_compile_rules(
   YR_COMPILER* compiler)
 {
   YARA_RULES_FILE_HEADER* rules_file_header = NULL;

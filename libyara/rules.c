@@ -171,7 +171,7 @@ YR_API int yr_rules_define_string_variable(
 }
 
 
-void _yr_rules_clean_matches(
+static void _yr_rules_clean_matches(
     YR_RULES* rules,
     YR_SCAN_CONTEXT* context)
 {
@@ -241,7 +241,7 @@ void yr_rules_print_profiling_info(
 #endif
 
 
-int _yr_rules_scan_mem_block(
+static int _yr_rules_scan_mem_block(
     YR_RULES* rules,
     const uint8_t* block_data,
     YR_MEMORY_BLOCK* block,

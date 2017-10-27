@@ -80,7 +80,7 @@ typedef struct _ARENA_FILE_HEADER
 //    A pointer to the newly created YR_ARENA_PAGE structure
 //
 
-YR_ARENA_PAGE* _yr_arena_new_page(
+static YR_ARENA_PAGE* _yr_arena_new_page(
     size_t size)
 {
   YR_ARENA_PAGE* new_page;
@@ -123,7 +123,7 @@ YR_ARENA_PAGE* _yr_arena_new_page(
 //    resides.
 //
 
-YR_ARENA_PAGE* _yr_arena_page_for_address(
+static YR_ARENA_PAGE* _yr_arena_page_for_address(
     YR_ARENA* arena,
     void* address)
 {
@@ -169,7 +169,7 @@ YR_ARENA_PAGE* _yr_arena_page_for_address(
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
 //
 
-int _yr_arena_make_relocatable(
+static int _yr_arena_make_relocatable(
     YR_ARENA* arena,
     void* base,
     va_list offsets)

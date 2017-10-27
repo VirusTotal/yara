@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Constant-time left rotate that does not invoke undefined behavior.
 // http://blog.regehr.org/archives/1063
-uint32_t rotl32(uint32_t x, uint32_t shift) {
+static uint32_t rotl32(uint32_t x, uint32_t shift) {
   assert(shift < 32);
   return (x << shift) | (x >> (-shift & 31));
 }

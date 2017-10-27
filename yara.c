@@ -246,7 +246,7 @@ MUTEX output_mutex;
 MODULE_DATA* modules_data_list = NULL;
 
 
-int file_queue_init()
+static int file_queue_init()
 {
   int result;
 
@@ -267,7 +267,7 @@ int file_queue_init()
 }
 
 
-void file_queue_destroy()
+static void file_queue_destroy()
 {
   mutex_destroy(&queue_mutex);
   semaphore_destroy(&unused_slots);
@@ -275,7 +275,7 @@ void file_queue_destroy()
 }
 
 
-void file_queue_finish()
+static void file_queue_finish()
 {
   int i;
 
@@ -284,7 +284,7 @@ void file_queue_finish()
 }
 
 
-void file_queue_put(
+static void file_queue_put(
     const char* file_path)
 {
   semaphore_wait(&unused_slots);
@@ -298,7 +298,7 @@ void file_queue_put(
 }
 
 
-char* file_queue_get()
+static char* file_queue_get()
 {
   char* result;
 
@@ -324,7 +324,7 @@ char* file_queue_get()
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 
-int is_directory(
+static int is_directory(
     const char* path)
 {
   DWORD attributes = GetFileAttributes(path);
@@ -336,7 +336,7 @@ int is_directory(
     return FALSE;
 }
 
-void scan_dir(
+static void scan_dir(
     const char* dir,
     int recursive,
     time_t start_time,
@@ -378,7 +378,7 @@ void scan_dir(
 
 #else
 
-int is_directory(
+static int is_directory(
     const char* path)
 {
   struct stat st;
@@ -390,7 +390,7 @@ int is_directory(
 }
 
 
-void scan_dir(
+static void scan_dir(
     const char* dir,
     int recursive,
     time_t start_time,
@@ -437,7 +437,7 @@ void scan_dir(
 
 #endif
 
-void print_string(
+static void print_string(
     const uint8_t* data,
     int length)
 {
@@ -462,7 +462,7 @@ static char cescapes[] =
 };
 
 
-void print_escaped(
+static void print_escaped(
     const uint8_t* data,
     size_t length)
 {
@@ -492,7 +492,7 @@ void print_escaped(
 }
 
 
-void print_hex_string(
+static void print_hex_string(
     const uint8_t* data,
     int length)
 {
@@ -503,7 +503,7 @@ void print_hex_string(
 }
 
 
-void print_scanner_error(
+static void print_scanner_error(
     int error)
 {
   switch (error)
@@ -542,7 +542,7 @@ void print_scanner_error(
 }
 
 
-void print_compiler_error(
+static void print_compiler_error(
     int error_level,
     const char* file_name,
     int line_number,
@@ -563,7 +563,7 @@ void print_compiler_error(
 }
 
 
-int handle_message(
+static int handle_message(
     int message,
     YR_RULE* rule,
     void* data)
@@ -726,7 +726,7 @@ int handle_message(
 }
 
 
-int callback(
+static int callback(
     int message,
     void* message_data,
     void* user_data)
@@ -782,9 +782,9 @@ int callback(
 
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-DWORD WINAPI scanning_thread(LPVOID param)
+static DWORD WINAPI scanning_thread(LPVOID param)
 #else
-void* scanning_thread(void* param)
+static void* scanning_thread(void* param)
 #endif
 {
   int result = ERROR_SUCCESS;
@@ -842,7 +842,7 @@ void* scanning_thread(void* param)
 }
 
 
-int define_external_variables(
+static int define_external_variables(
     YR_RULES* rules,
     YR_COMPILER* compiler)
 {
@@ -929,7 +929,7 @@ int define_external_variables(
 }
 
 
-int load_modules_data()
+static int load_modules_data()
 {
   for (int i = 0; modules_data[i] != NULL; i++)
   {
@@ -967,7 +967,7 @@ int load_modules_data()
 }
 
 
-void unload_modules_data()
+static void unload_modules_data()
 {
   MODULE_DATA* module_data = modules_data_list;
 

@@ -291,7 +291,7 @@ int yr_parser_lookup_loop_variable(
 }
 
 
-int _yr_parser_write_string(
+static int _yr_parser_write_string(
     const char* identifier,
     int flags,
     YR_COMPILER* compiler,
@@ -1042,7 +1042,7 @@ YR_META* yr_parser_reduce_meta_declaration(
 }
 
 
-int _yr_parser_valid_module_name(
+static int _yr_parser_valid_module_name(
     SIZED_STRING* module_name)
 {
   if (module_name->length == 0)
@@ -1123,7 +1123,7 @@ int yr_parser_reduce_import(
 }
 
 
-int _yr_parser_operator_to_opcode(
+static int _yr_parser_operator_to_opcode(
     const char* op,
     int expression_type)
 {

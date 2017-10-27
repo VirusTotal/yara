@@ -422,7 +422,7 @@ YR_OBJECT* yr_object_lookup_field(
 }
 
 
-YR_OBJECT* _yr_object_lookup(
+static YR_OBJECT* _yr_object_lookup(
     YR_OBJECT* object,
     int flags,
     const char* pattern,
