@@ -32,6 +32,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara.h>
 
+const char* RULES = \
+  "import \"pe\""
+  "rule test {"
+  " condition:"
+  "   pe.rva_to_offset(pe.sections[0].virtual_address) == pe.sections[0].raw_data_offset"
+  "}";
 
 YR_RULES* rules = NULL;
 
@@ -49,7 +55,7 @@ extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
   if (result != ERROR_SUCCESS)
     return 0;
 
-  result = yr_compiler_add_string(compiler, "import \"elf\"", NULL);
+  result = yr_compiler_add_string(compiler, RULES, NULL);
 
   if (result != ERROR_SUCCESS)
     return 0;
