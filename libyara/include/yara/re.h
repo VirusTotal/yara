@@ -174,7 +174,7 @@ struct RE_ERROR
 
 
 typedef int RE_MATCH_CALLBACK_FUNC(
-    uint8_t* match,
+    const uint8_t* match,
     int match_length,
     int flags,
     void* args);
@@ -222,8 +222,8 @@ void yr_re_node_destroy(
 
 
 int yr_re_exec(
-    uint8_t* re_code,
-    uint8_t* input,
+    uint8_t* code,
+    const uint8_t* input_data,
     size_t input_forwards_size,
     size_t input_backwards_size,
     int flags,
@@ -234,7 +234,7 @@ int yr_re_exec(
 
 int yr_re_fast_exec(
     uint8_t* code,
-    uint8_t* input_data,
+    const uint8_t* input_data,
     size_t input_forwards_size,
     size_t input_backwards_size,
     int flags,

@@ -148,7 +148,7 @@ int _yr_re_is_char_in_class(
 
 
 int _yr_re_is_word_char(
-    uint8_t* input,
+    const uint8_t* input,
     uint8_t character_size)
 {
   int result = ((isalnum(*input) || (*input) == '_'));
@@ -1848,7 +1848,7 @@ int _yr_re_fiber_sync(
 //                              input
 //
 // Args:
-//   uint8_t* re_code                 - Regexp code be executed
+//   uint8_t* code                    - Regexp code be executed
 //   uint8_t* input                   - Pointer to input data
 //   size_t input_forwards_size       - Number of accessible bytes starting at
 //                                      "input" and going forwards.
@@ -1871,8 +1871,8 @@ int _yr_re_fiber_sync(
 //    ERROR_SUCCESS or any other error code.
 
 int yr_re_exec(
-    uint8_t* re_code,
-    uint8_t* input_data,
+    uint8_t* code,
+    const uint8_t* input_data,
     size_t input_forwards_size,
     size_t input_backwards_size,
     int flags,
@@ -1880,8 +1880,9 @@ int yr_re_exec(
     void* callback_args,
     int* matches)
 {
+  const uint8_t* input;
+
   uint8_t* ip;
-  uint8_t* input;
   uint8_t mask;
   uint8_t value;
   uint8_t character_size;
@@ -1946,7 +1947,7 @@ int yr_re_exec(
 
   FAIL_ON_ERROR(_yr_re_fiber_create(&storage->fiber_pool, &fiber));
 
-  fiber->ip = re_code;
+  fiber->ip = code;
   fibers.head = fiber;
   fibers.tail = fiber;
 
@@ -2208,7 +2209,7 @@ int yr_re_exec(
           _yr_re_fiber_create(&storage->fiber_pool, &fiber),
           _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
 
-      fiber->ip = re_code;
+      fiber->ip = code;
       _yr_re_fiber_append(&fibers, fiber);
 
       FAIL_ON_ERROR_WITH_CLEANUP(
@@ -2223,7 +2224,7 @@ int yr_re_exec(
 
 int yr_re_fast_exec(
     uint8_t* code,
-    uint8_t* input_data,
+    const uint8_t* input_data,
     size_t input_forwards_size,
     size_t input_backwards_size,
     int flags,
@@ -2234,12 +2235,13 @@ int yr_re_fast_exec(
   RE_REPEAT_ANY_ARGS* repeat_any_args;
 
   uint8_t* code_stack[MAX_FAST_RE_STACK];
-  uint8_t* input_stack[MAX_FAST_RE_STACK];
+  const uint8_t* input_stack[MAX_FAST_RE_STACK];
   int matches_stack[MAX_FAST_RE_STACK];
 
+  const uint8_t* input = input_data;
+  const uint8_t* next_input;
+
   uint8_t* ip = code;
-  uint8_t* input = input_data;
-  uint8_t* next_input;
   uint8_t* next_opcode;
   uint8_t mask;
   uint8_t value;

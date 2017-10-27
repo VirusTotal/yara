@@ -71,7 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
-    uint8_t* buffer,
+    const uint8_t* buffer,
     size_t buffer_size,
     int flags,
     YR_CALLBACK_FUNC callback,

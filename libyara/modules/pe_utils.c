@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 PIMAGE_NT_HEADERS32 pe_get_header(
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size)
 {
   PIMAGE_DOS_HEADER mz_header;

@@ -40,7 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef struct _YR_PROC_ITERATOR_CTX
 {
   HANDLE          hProcess;
-  uint8_t*        buffer;
+  const uint8_t*  buffer;
   size_t          buffer_size;
   SYSTEM_INFO     si;
   YR_MEMORY_BLOCK current_block;
@@ -97,7 +97,7 @@ int _yr_process_detach(
 }
 
 
-YR_API uint8_t* yr_process_fetch_memory_block_data(
+YR_API const uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
@@ -106,9 +106,9 @@ YR_API uint8_t* yr_process_fetch_memory_block_data(
   if (context->buffer_size < block->size)
   {
     if (context->buffer != NULL)
-      yr_free(context->buffer);
+      yr_free((void*) context->buffer);
 
-    context->buffer = (uint8_t*) yr_malloc(block->size);
+    context->buffer = (const uint8_t*) yr_malloc(block->size);
 
     if (context->buffer != NULL)
     {
@@ -124,7 +124,7 @@ YR_API uint8_t* yr_process_fetch_memory_block_data(
   if (ReadProcessMemory(
         context->hProcess,
         (LPCVOID) block->base,
-        context->buffer,
+        (LPVOID) context->buffer,
         (SIZE_T) block->size,
         &read) == FALSE)
     {
@@ -212,7 +212,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
 typedef struct _YR_PROC_ITERATOR_CTX {
 
   task_t            task;
-  uint8_t*          buffer;
+  const uint8_t*    buffer;
   size_t            buffer_size;
   YR_MEMORY_BLOCK   current_block;
 
@@ -242,7 +242,7 @@ int _yr_process_detach(
 }
 
 
-YR_API uint8_t* yr_process_fetch_memory_block_data(
+YR_API const uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
@@ -251,9 +251,9 @@ YR_API uint8_t* yr_process_fetch_memory_block_data(
   if (context->buffer_size < block->size)
   {
     if (context->buffer != NULL)
-      yr_free(context->buffer);
+      yr_free((void*) context->buffer);
 
-    context->buffer = yr_malloc(block->size);
+    context->buffer = (const uint8_t*) yr_malloc(block->size);
 
     if (context->buffer != NULL)
     {
@@ -343,7 +343,7 @@ typedef struct _YR_PROC_ITERATOR_CTX {
   int             pid;
   int             mem_fd;
   FILE*           maps;
-  uint8_t*        buffer;
+  const uint8_t*  buffer;
   size_t          buffer_size;
   YR_MEMORY_BLOCK current_block;
 
@@ -421,7 +421,7 @@ int _yr_process_detach(
 }
 
 
-YR_API uint8_t* yr_process_fetch_memory_block_data(
+YR_API const uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
@@ -429,9 +429,9 @@ YR_API uint8_t* yr_process_fetch_memory_block_data(
   if (context->buffer_size < block->size)
   {
     if (context->buffer != NULL)
-      yr_free(context->buffer);
+      yr_free((void*) context->buffer);
 
-    context->buffer = yr_malloc(block->size);
+    context->buffer = (const uint8_t*) yr_malloc(block->size);
 
     if (context->buffer != NULL)
     {
@@ -445,7 +445,7 @@ YR_API uint8_t* yr_process_fetch_memory_block_data(
   }
 
   if (pread(context->mem_fd,
-            context->buffer,
+            (void *) context->buffer,
             block->size,
             block->base) == -1)
   {
@@ -531,7 +531,7 @@ YR_API int yr_process_close_iterator(
     _yr_process_detach(context);
 
     if (context->buffer != NULL)
-      yr_free(context->buffer);
+      yr_free((void*) context->buffer);
 
     yr_free(context);
 

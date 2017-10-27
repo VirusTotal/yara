@@ -227,7 +227,7 @@ define_function(data_md5)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data != NULL)
       {
@@ -311,7 +311,7 @@ define_function(data_sha1)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data != NULL)
       {
@@ -395,7 +395,7 @@ define_function(data_sha256)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data != NULL)
       {
@@ -461,7 +461,7 @@ define_function(data_checksum32)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data != NULL)
       {

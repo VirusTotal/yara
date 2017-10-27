@@ -284,7 +284,7 @@ Data structures
 
     Length of the matching string
 
-  .. c:member:: uint8_t* data
+  .. c:member:: const uint8_t* data
 
     Pointer to a buffer containing a portion of the matching string.
 
@@ -556,7 +556,7 @@ Functions
 
     :c:macro:`ERROR_UNSUPPORTED_FILE_VERSION`
 
-.. c:function:: int yr_rules_scan_mem(YR_RULES* rules, uint8_t* buffer, size_t buffer_size, int flags, YR_CALLBACK_FUNC callback, void* user_data, int timeout)
+.. c:function:: int yr_rules_scan_mem(YR_RULES* rules, const uint8_t* buffer, size_t buffer_size, int flags, YR_CALLBACK_FUNC callback, void* user_data, int timeout)
 
     Scan a memory buffer. Returns one of the following error codes:
 
