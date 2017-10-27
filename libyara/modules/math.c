@@ -112,7 +112,7 @@ define_function(data_entropy)
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
-      uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
       {
@@ -199,7 +199,7 @@ define_function(data_deviation)
 
   size_t data_offset = 0;
   size_t data_len = 0;
-  uint8_t* block_data = NULL;
+  const uint8_t* block_data = NULL;
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
@@ -292,7 +292,7 @@ define_function(data_mean)
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
-      uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
         return_float(UNDEFINED);
@@ -360,7 +360,7 @@ define_function(data_serial_correlation)
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
-      uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
         return_float(UNDEFINED);
@@ -479,7 +479,7 @@ define_function(data_monte_carlo_pi)
       size_t data_len = (size_t) yr_min(
           length, (size_t) (block->size - data_offset));
 
-      uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
         return_float(UNDEFINED);

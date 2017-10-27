@@ -97,7 +97,7 @@ int _yr_process_detach(
 }
 
 
-YR_API uint8_t* yr_process_fetch_memory_block_data(
+YR_API const uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
@@ -108,7 +108,7 @@ YR_API uint8_t* yr_process_fetch_memory_block_data(
     if (context->buffer != NULL)
       yr_free(context->buffer);
 
-    context->buffer = (uint8_t*) yr_malloc(block->size);
+    context->buffer = (const uint8_t*) yr_malloc(block->size);
 
     if (context->buffer != NULL)
     {
@@ -124,7 +124,7 @@ YR_API uint8_t* yr_process_fetch_memory_block_data(
   if (ReadProcessMemory(
         context->hProcess,
         (LPCVOID) block->base,
-        context->buffer,
+        (LPVOID) context->buffer,
         (SIZE_T) block->size,
         &read) == FALSE)
     {
@@ -242,7 +242,7 @@ int _yr_process_detach(
 }
 
 
-YR_API uint8_t* yr_process_fetch_memory_block_data(
+YR_API const uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
@@ -421,7 +421,7 @@ int _yr_process_detach(
 }
 
 
-YR_API uint8_t* yr_process_fetch_memory_block_data(
+YR_API const uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
@@ -445,7 +445,7 @@ YR_API uint8_t* yr_process_fetch_memory_block_data(
   }
 
   if (pread(context->mem_fd,
-            context->buffer,
+            (void *) context->buffer,
             block->size,
             block->base) == -1)
   {

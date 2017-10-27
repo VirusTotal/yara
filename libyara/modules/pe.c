@@ -108,9 +108,9 @@ typedef int (*RESOURCE_CALLBACK_FUNC) ( \
      int rsrc_type, \
      int rsrc_id, \
      int rsrc_language, \
-     uint8_t* type_string, \
-     uint8_t* name_string, \
-     uint8_t* lang_string, \
+     const uint8_t* type_string, \
+     const uint8_t* name_string, \
+     const uint8_t* lang_string, \
      void* cb_data);
 
 
@@ -251,9 +251,9 @@ void pe_parse_rich_signature(
 // The callback function will parse this and call set_sized_string().
 // The pointer is guaranteed to have enough space to contain the entire string.
 
-uint8_t* parse_resource_name(
+const uint8_t* parse_resource_name(
     PE* pe,
-    uint8_t* rsrc_data,
+    const uint8_t* rsrc_data,
     PIMAGE_RESOURCE_DIRECTORY_ENTRY entry)
 {
 
@@ -264,7 +264,8 @@ uint8_t* parse_resource_name(
   {
     DWORD length;
 
-    uint8_t* rsrc_str_ptr = rsrc_data + (yr_le32toh(entry->Name) & 0x7FFFFFFF);
+    const uint8_t* rsrc_str_ptr = rsrc_data + \
+        (yr_le32toh(entry->Name) & 0x7FFFFFFF);
 
     // A resource directory string is 2 bytes for a string and then a variable
     // length Unicode string. Make sure we at least have two bytes.
@@ -288,14 +289,14 @@ uint8_t* parse_resource_name(
 int _pe_iterate_resources(
     PE* pe,
     PIMAGE_RESOURCE_DIRECTORY resource_dir,
-    uint8_t* rsrc_data,
+    const uint8_t* rsrc_data,
     int rsrc_tree_level,
     int* type,
     int* id,
     int* language,
-    uint8_t* type_string,
-    uint8_t* name_string,
-    uint8_t* lang_string,
+    const uint8_t* type_string,
+    const uint8_t* name_string,
+    const uint8_t* lang_string,
     RESOURCE_CALLBACK_FUNC callback,
     void* callback_data)
 {
@@ -2294,7 +2295,7 @@ int module_load(
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   PIMAGE_NT_HEADERS32 pe_header;
-  uint8_t* block_data = NULL;
+  const uint8_t* block_data = NULL;
   PE* pe = NULL;
 
   set_integer(
@@ -2581,7 +2582,7 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
-	block_data = block->fetch_data(block);
+	  block_data = block->fetch_data(block);
 
     if (block_data == NULL)
       continue;

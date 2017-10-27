@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CLASS_DATA(c,d) ((c << 8) | d)
 
 int get_elf_class_data(
-    uint8_t* buffer,
+    const uint8_t* buffer,
     size_t buffer_length)
 {
   elf_ident_t* elf_ident;
@@ -685,7 +685,7 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
-    uint8_t* block_data = block->fetch_data(block);
+    const uint8_t* block_data = block->fetch_data(block);
 
     if (block_data == NULL)
       continue;
