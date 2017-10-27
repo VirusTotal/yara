@@ -581,7 +581,7 @@ static int _yr_atoms_case_insensitive(
 // for example: 01 02 -> 01 00 02 00
 //
 
-static _yr_atoms_wide(
+static int _yr_atoms_wide(
     YR_ATOM_LIST_ITEM* atoms,
     YR_ATOM_LIST_ITEM** wide_atoms)
 {
