@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2013. The YARA Authors. All Rights Reserved.
+Copyright (c) 2007-2017. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -29,56 +29,34 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/error.h>
 #include <yara/proc.h>
-#include <yara/mem.h>
 
-int _yr_process_attach(int, YR_PROC_ITERATOR_CTX*);
-int _yr_process_detach(YR_PROC_ITERATOR_CTX*);
-
-YR_API int yr_process_open_iterator(
+int _yr_process_attach(
     int pid,
-    YR_MEMORY_BLOCK_ITERATOR* iterator)
+    YR_PROC_ITERATOR_CTX* context)
 {
-  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) \
-      yr_malloc(sizeof(YR_PROC_ITERATOR_CTX));
-
-  if (context == NULL)
-    return ERROR_INSUFFICIENT_MEMORY;
-
-  iterator->context = context;
-  iterator->first = yr_process_get_first_memory_block;
-  iterator->next = yr_process_get_next_memory_block;
-
-  context->buffer = NULL;
-  context->buffer_size = 0;
-  context->current_block.base = 0;
-  context->current_block.size = 0;
-  context->current_block.context = context;
-  context->current_block.fetch_data = yr_process_fetch_memory_block_data;
-  context->proc_info = NULL;
-
-  return _yr_process_attach(pid, context);
+  return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
 }
 
+int _yr_process_detach(
+    YR_PROC_ITERATOR_CTX* context)
+{
+  return ERROR_INVALID_ARGUMENT;
+}
 
-YR_API int yr_process_close_iterator(
+YR_API const uint8_t* yr_process_fetch_memory_block_data(
+    YR_MEMORY_BLOCK* block)
+{
+  return ERROR_INVALID_ARGUMENT;
+}
+
+YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+  return NULL;
+}
 
-  if (context != NULL)
-  {
-    _yr_process_detach(context);
-
-    if (context->buffer != NULL)
-      yr_free((void*) context->buffer);
-
-    if (context->proc_info != NULL)
-      yr_free(context->proc_info);
-
-    yr_free(context);
-
-    iterator->context = NULL;
-  }
-
-  return ERROR_SUCCESS;
+YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  return NULL;
 }

@@ -142,5 +142,18 @@ libyara_la_SOURCES = \
   threading.h \
   utils.h
 
+if USE_WINDOWS_PROC
+libyara_la_SOURCES += proc_windows.c
+endif
+if USE_LINUX_PROC
+libyara_la_SOURCES += proc_linux.c
+endif
+if USE_MACH_PROC
+libyara_la_SOURCES += proc_mach.c
+endif
+if USE_NO_PROC
+libyara_la_SOURCES += proc_none.c
+endif
+
 pkgconfigdir = $(libdir)/pkgconfig
 nodist_pkgconfig_DATA = yara.pc
