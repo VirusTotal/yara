@@ -327,7 +327,7 @@ void parse_elf_header_##bits##_##bo(                                           \
                                                                                \
           set_sized_string(                                                    \
               sym_name,                                                        \
-              strnlen(sym_name, sym_table_size - sym_name_offset),             \
+              strnlen(sym_name, sym_str_table_size - sym_name_offset),         \
               elf_obj,                                                         \
               "symtab[%i].name",                                               \
               j);                                                              \
