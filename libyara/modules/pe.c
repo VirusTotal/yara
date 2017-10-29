@@ -99,10 +99,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     ((entry)->OffsetToData & 0x7FFFFFFF)
 
 
-#define available_space(pe, pointer) \
-    (pe->data + pe->data_size - (uint8_t*)(pointer))
-
-
 typedef int (*RESOURCE_CALLBACK_FUNC) ( \
      PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, \
      int rsrc_type, \
@@ -112,6 +108,20 @@ typedef int (*RESOURCE_CALLBACK_FUNC) ( \
      const uint8_t* name_string, \
      const uint8_t* lang_string, \
      void* cb_data);
+
+
+static size_t available_space(
+    PE* pe,
+    void* pointer)
+{
+  if ((uint8_t*) pointer < pe->data)
+    return 0;
+
+  if ((uint8_t*) pointer >= pe->data + pe->data_size)
+    return 0;
+
+  return pe->data + pe->data_size - (uint8_t*) pointer;
+}
 
 
 int wide_string_fits_in_pe(
