@@ -55,15 +55,21 @@ extern "C" int LLVMFuzzerTestOneInput(const char *data, size_t size)
   buffer[size] = 0;
 
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    free(buffer);
     return 1;
+  }
 
   if (yr_compiler_add_string(compiler, (const char*) buffer, NULL) == 0)
   {
-    if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+    if (yr_compiler_get_rules(compiler, &rules) == ERROR_SUCCESS)
+      yr_rules_destroy(rules);
+    else
       return 1;
   }
 
   yr_compiler_destroy(compiler);
+  free(buffer);
 
   return 0;
 }
