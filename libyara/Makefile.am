@@ -64,13 +64,16 @@ yarainclude_HEADERS = \
   include/yara/compiler.h \
   include/yara/error.h \
   include/yara/exec.h \
+  include/yara/exefiles.h \
   include/yara/filemap.h \
   include/yara/hash.h \
   include/yara/integers.h \
   include/yara/libyara.h \
   include/yara/limits.h \
+  include/yara/mem.h \
   include/yara/modules.h \
   include/yara/object.h \
+  include/yara/parser.h \
   include/yara/proc.h \
   include/yara/re.h \
   include/yara/rules.h \
@@ -81,6 +84,22 @@ yarainclude_HEADERS = \
   include/yara/threading.h \
   include/yara/types.h \
   include/yara/utils.h
+
+noinst_HEADERS = \
+  crypto.h \
+  exception.h \
+  include/yara/dotnet.h \
+  include/yara/elf.h \
+  include/yara/endian.h \
+  include/yara/globals.h \
+  include/yara/hex_lexer.h \
+  include/yara/lexer.h \
+  include/yara/pe.h \
+  include/yara/pe_utils.h \
+  include/yara/re_lexer.h \
+  include/yara/stopwatch.h \
+  modules/module_list
+
 
 lib_LTLIBRARIES = libyara.la
 
@@ -104,43 +123,27 @@ libyara_la_SOURCES = \
   endian.c \
   exec.c \
   exefiles.c \
-  exefiles.h \
   filemap.c \
-  filemap.h \
   hash.c \
-  hash.h \
   hex_grammar.y \
   hex_lexer.l \
   lexer.l \
   libyara.c \
   mem.c \
-  mem.h \
   modules.c \
-  modules.h \
   object.c \
-  object.h \
   parser.c \
-  parser.h \
-  pe.h \
   proc.c \
-  proc.h \
   re.c \
-  re.h \
   re_grammar.y \
   re_lexer.l \
   rules.c \
   scan.c \
   sizedstr.c \
-  sizedstr.h \
   stopwatch.c \
-  stopwatch.h \
   strutils.c \
-  strutils.h \
   stream.c \
-  stream.h \
-  threading.c \
-  threading.h \
-  utils.h
+  threading.c
 
 if USE_WINDOWS_PROC
 libyara_la_SOURCES += proc/windows.c
