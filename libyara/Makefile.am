@@ -143,16 +143,16 @@ libyara_la_SOURCES = \
   utils.h
 
 if USE_WINDOWS_PROC
-libyara_la_SOURCES += proc_windows.c
+libyara_la_SOURCES += proc/windows.c
 endif
 if USE_LINUX_PROC
-libyara_la_SOURCES += proc_linux.c
+libyara_la_SOURCES += proc/linux.c
 endif
 if USE_MACH_PROC
-libyara_la_SOURCES += proc_mach.c
+libyara_la_SOURCES += proc/mach.c
 endif
 if USE_NO_PROC
-libyara_la_SOURCES += proc_none.c
+libyara_la_SOURCES += proc/none.c
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig
