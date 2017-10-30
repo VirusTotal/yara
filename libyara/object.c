@@ -989,20 +989,20 @@ int yr_object_set_integer(
   va_start(args, field);
 
   if (field != NULL)
-  {
     integer_obj = _yr_object_lookup(object, OBJECT_CREATE, field, args);
-
-    if (integer_obj == NULL)
-      return ERROR_INSUFFICIENT_MEMORY;
-  }
   else
-  {
     integer_obj = object;
-  }
 
   va_end(args);
 
-  assert(integer_obj != NULL);
+  if (integer_obj == NULL)
+  {
+    if (field != NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+    else
+      return ERROR_INVALID_ARGUMENT;
+  }
+
   assert(integer_obj->type == OBJECT_TYPE_INTEGER);
 
   integer_obj->value.i = value;
@@ -1023,20 +1023,20 @@ int yr_object_set_float(
   va_start(args, field);
 
   if (field != NULL)
-  {
     double_obj = _yr_object_lookup(object, OBJECT_CREATE, field, args);
-
-    if (double_obj == NULL)
-      return ERROR_INSUFFICIENT_MEMORY;
-  }
   else
-  {
     double_obj = object;
-  }
 
   va_end(args);
 
-  assert(double_obj != NULL);
+  if (double_obj == NULL)
+  {
+    if (field != NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+    else
+      return ERROR_INVALID_ARGUMENT;
+  }
+
   assert(double_obj->type == OBJECT_TYPE_FLOAT);
 
   double_obj->value.d = value;
@@ -1058,20 +1058,20 @@ int yr_object_set_string(
   va_start(args, field);
 
   if (field != NULL)
-  {
     string_obj = _yr_object_lookup(object, OBJECT_CREATE, field, args);
-
-    if (string_obj == NULL)
-      return ERROR_INSUFFICIENT_MEMORY;
-  }
   else
-  {
     string_obj = object;
-  }
 
   va_end(args);
 
-  assert(string_obj != NULL);
+  if (string_obj == NULL)
+  {
+    if (field != NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+    else
+      return ERROR_INVALID_ARGUMENT;
+  }
+
   assert(string_obj->type == OBJECT_TYPE_STRING);
 
   if (string_obj->value.ss != NULL)
