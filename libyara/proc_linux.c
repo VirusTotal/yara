@@ -63,7 +63,9 @@ int _yr_process_attach(
 {
   int status;
   char buffer[256];
-  YR_PROC_INFO* proc_info = (YR_PROC_INFO*)yr_malloc(sizeof(YR_PROC_INFO));
+
+  YR_PROC_INFO* proc_info = (YR_PROC_INFO*) yr_malloc(sizeof(YR_PROC_INFO));
+
   if (proc_info == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
@@ -109,6 +111,7 @@ int _yr_process_attach(
   }
 
   status = 0;
+
   if (waitpid(pid, &status, 0) == -1)
   {
     // this is a strange error state where we attached but the proc didn't
@@ -133,8 +136,8 @@ int _yr_process_attach(
 int _yr_process_detach(
     YR_PROC_ITERATOR_CTX* context)
 {
-  YR_PROC_INFO* proc_info = (YR_PROC_INFO*)context->proc_info;
-  
+  YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
+
   fclose(proc_info->maps);
   close(proc_info->mem_fd);
   ptrace(PTRACE_DETACH, proc_info->pid, NULL, 0);
@@ -147,7 +150,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
-  YR_PROC_INFO* proc_info = (YR_PROC_INFO*)context->proc_info;
+  YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   if (context->buffer_size < block->size)
   {
@@ -183,7 +186,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
-  YR_PROC_INFO* proc_info = (YR_PROC_INFO*)context->proc_info;
+  YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   char buffer[256];
   size_t begin, end;
@@ -206,7 +209,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
-  YR_PROC_INFO* proc_info = (YR_PROC_INFO*)context->proc_info;
+  YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   if (fseek(proc_info->maps, 0, SEEK_SET) != 0)
     return NULL;

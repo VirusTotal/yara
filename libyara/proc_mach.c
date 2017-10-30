@@ -46,7 +46,8 @@ int _yr_process_attach(
     int pid,
     YR_PROC_ITERATOR_CTX* context)
 {
-  YR_PROC_INFO* proc_info = (YR_PROC_INFO*)yr_malloc(sizeof(YR_PROC_INFO));
+  YR_PROC_INFO* proc_info = (YR_PROC_INFO*) yr_malloc(sizeof(YR_PROC_INFO));
+
   if (proc_info == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 

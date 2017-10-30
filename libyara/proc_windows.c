@@ -46,7 +46,9 @@ int _yr_process_attach(
   TOKEN_PRIVILEGES tokenPriv;
   LUID luidDebug;
   HANDLE hToken = NULL;
-  YR_PROC_INFO* proc_info = (YR_PROC_INFO*)yr_malloc(sizeof(YR_PROC_INFO));
+
+  YR_PROC_INFO* proc_info = (YR_PROC_INFO*) yr_malloc(sizeof(YR_PROC_INFO));
+
   if (proc_info == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
@@ -101,9 +103,10 @@ int _yr_process_detach(
 YR_API const uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block)
 {
-  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
-  YR_PROC_INFO* proc_info = (YR_PROC_INFO*)context->proc_info;
   SIZE_T read;
+
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
+  YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   if (context->buffer_size < block->size)
   {
@@ -141,7 +144,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
-  YR_PROC_INFO* proc_info = (YR_PROC_INFO*)context->proc_info;
+  YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   MEMORY_BASIC_INFORMATION mbi;
   PVOID address = (PVOID) (context->current_block.base + \
@@ -172,10 +175,11 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
-  YR_PROC_INFO* proc_info = (YR_PROC_INFO*)context->proc_info;
+  YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
-  context->current_block.base = (size_t) proc_info->si.lpMinimumApplicationAddress;
   context->current_block.size = 0;
+  context->current_block.base = \
+      (size_t) proc_info->si.lpMinimumApplicationAddress;
 
   return yr_process_get_next_memory_block(iterator);
 }
