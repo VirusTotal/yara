@@ -299,16 +299,16 @@ int yr_object_from_external_variable(
     {
       case EXTERNAL_VARIABLE_TYPE_INTEGER:
       case EXTERNAL_VARIABLE_TYPE_BOOLEAN:
-        yr_object_set_integer(external->value.i, obj, NULL);
+        result = yr_object_set_integer(external->value.i, obj, NULL);
         break;
 
       case EXTERNAL_VARIABLE_TYPE_FLOAT:
-        yr_object_set_float(external->value.f, obj, NULL);
+        result = yr_object_set_float(external->value.f, obj, NULL);
         break;
 
       case EXTERNAL_VARIABLE_TYPE_STRING:
       case EXTERNAL_VARIABLE_TYPE_MALLOC_STRING:
-        yr_object_set_string(
+        result = yr_object_set_string(
             external->value.s, strlen(external->value.s), obj, NULL);
         break;
     }
@@ -989,9 +989,16 @@ int yr_object_set_integer(
   va_start(args, field);
 
   if (field != NULL)
+  {
     integer_obj = _yr_object_lookup(object, OBJECT_CREATE, field, args);
+
+    if (integer_obj == NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+  }
   else
+  {
     integer_obj = object;
+  }
 
   va_end(args);
 
@@ -1016,9 +1023,16 @@ int yr_object_set_float(
   va_start(args, field);
 
   if (field != NULL)
+  {
     double_obj = _yr_object_lookup(object, OBJECT_CREATE, field, args);
+
+    if (double_obj == NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+  }
   else
+  {
     double_obj = object;
+  }
 
   va_end(args);
 
@@ -1044,9 +1058,16 @@ int yr_object_set_string(
   va_start(args, field);
 
   if (field != NULL)
+  {
     string_obj = _yr_object_lookup(object, OBJECT_CREATE, field, args);
+
+    if (string_obj == NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+  }
   else
+  {
     string_obj = object;
+  }
 
   va_end(args);
 
