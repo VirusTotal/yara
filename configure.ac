@@ -28,12 +28,16 @@ case $host_alias in
      i?86-*-mingw*) CFLAGS="$CFLAGS -D__MINGW_USE_VC2005_COMPAT" ;;
 esac
 
+proc_interface=none
 case $host_os in
     darwin*) CFLAGS="$CFLAGS -I/opt/local/include"
              # Starting with Mac OS X 10.11 (El Capitan) the OpenSSL headers
              # are in /usr/local/opt/openssl/include
              CFLAGS="$CFLAGS -I/usr/local/opt/openssl/include"
-             LDFLAGS="$LDFLAGS -L/usr/local/opt/openssl/lib" ;;
+             LDFLAGS="$LDFLAGS -L/usr/local/opt/openssl/lib"
+             proc_interface=mach ;;
+    mingw*) proc_interface=windows ;;
+    linux*|freebsd*|openbsd*) proc_interface=linux ;;
 esac
 
 AC_C_BIGENDIAN
@@ -205,6 +209,11 @@ AM_CONDITIONAL([MAGIC_MODULE], [test x$build_magic_module = xtrue])
 AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
 AM_CONDITIONAL([DOTNET_MODULE], [test x$build_dotnet_module = xtrue])
 AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
+
+AM_CONDITIONAL([USE_WINDOWS_PROC], [test x$proc_interface = xwindows ])
+AM_CONDITIONAL([USE_LINUX_PROC], [test x$proc_interface = xlinux ])
+AM_CONDITIONAL([USE_MACH_PROC], [test x$proc_interface = xmach ])
+AM_CONDITIONAL([USE_NO_PROC], [test x$proc_interface = xnone ])
 
 AC_SUBST([PC_REQUIRES_PRIVATE])
 AC_SUBST([PC_LIBS_PRIVATE])
