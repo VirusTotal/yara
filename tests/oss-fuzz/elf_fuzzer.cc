@@ -35,28 +35,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 YR_RULES* rules = NULL;
 
+
 extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
 {
   YR_COMPILER* compiler;
 
-  int result = yr_initialize();
-
-  if (result != ERROR_SUCCESS)
+  if (yr_initialize() != ERROR_SUCCESS)
     return 0;
 
-  result = yr_compiler_create(&compiler);
-
-  if (result != ERROR_SUCCESS)
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
     return 0;
 
-  result = yr_compiler_add_string(compiler, "import \"elf\"", NULL);
-
-  if (result != ERROR_SUCCESS)
+  if (yr_compiler_add_string(compiler, "import \"elf\"", NULL) != 0)
     return 0;
 
-  result = yr_compiler_get_rules(compiler, &rules);
-
-  if (result != ERROR_SUCCESS)
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
     return 0;
 
   yr_compiler_destroy(compiler);
