@@ -54,4 +54,4 @@ test_api_SOURCES = tests/test-api.c tests/util.c
 # man pages
 man1_MANS = yara.man yarac.man
 
-EXTRA_DIST = $(man1_MANS) README.md
+EXTRA_DIST = $(man1_MANS) README.md bootstrap.sh
