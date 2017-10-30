@@ -181,7 +181,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <integer> rule_modifier
 %type <integer> rule_modifiers
 
-
 %type <expression> primary_expression
 %type <expression> boolean_expression
 %type <expression> expression
@@ -200,6 +199,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %destructor { yr_free($$); } _TEXT_STRING_
 %destructor { yr_free($$); } _HEX_STRING_
 %destructor { yr_free($$); } _REGEXP_
+
+%destructor { yr_free($$); } arguments
+%destructor { yr_free($$); } arguments_list
 
 %union {
   EXPRESSION      expression;
