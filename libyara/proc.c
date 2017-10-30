@@ -72,9 +72,7 @@ YR_API int yr_process_close_iterator(
     if (context->buffer != NULL)
       yr_free((void*) context->buffer);
 
-    if (context->proc_info != NULL)
-      yr_free(context->proc_info);
-
+    yr_free(context->proc_info);
     yr_free(context);
 
     iterator->context = NULL;
