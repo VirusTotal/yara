@@ -1011,9 +1011,14 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
   for (i = 0; i < yr_le32toh(exports->NumberOfFunctions); i++)
   {
     IMPORT_EXPORT_FUNCTION* exported_func;
-
     uint16_t ordinal = 0;
     char* name;
+
+    if (available_space(pe, names + i) < sizeof(DWORD) ||
+        available_space(pe, ordinals + i) < sizeof(WORD))
+    {
+      break;
+    }
 
     offset = pe_rva_to_offset(pe, names[i]);
 
