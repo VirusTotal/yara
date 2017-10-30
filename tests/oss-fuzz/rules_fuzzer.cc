@@ -40,8 +40,9 @@ extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
 }
 
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
+extern "C" int LLVMFuzzerTestOneInput(const char *data, size_t size)
 {
+  YR_RULES* rules;
   YR_COMPILER* compiler;
 
   char* buffer = (char*) malloc(size + 1);
@@ -54,7 +55,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
     return 1;
 
-  if (yr_compiler_add_string(compiler, buffer, NULL) == 0)
+  if (yr_compiler_add_string(compiler, (const char*) buffer, NULL) == 0)
   {
     if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
       return 1;
