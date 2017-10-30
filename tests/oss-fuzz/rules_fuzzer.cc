@@ -51,7 +51,8 @@ extern "C" int LLVMFuzzerTestOneInput(const char *data, size_t size)
   if (!buffer)
     return 1;
 
-  strlcpy(buffer, data, size + 1);
+  strncpy(buffer, data, size);
+  buffer[size] = 0;
 
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
     return 1;
