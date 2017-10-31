@@ -1,5 +1,6 @@
-AC_INIT([yara], [3.6.0], [vmalvarez@virustotal.com])
+AC_INIT([yara], [3.7.0], [vmalvarez@virustotal.com])
 
+AM_SILENT_RULES([yes])
 AC_CONFIG_SRCDIR([yara.c])
 
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
