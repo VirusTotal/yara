@@ -66,7 +66,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     } \
 
 
-#define check_type(expression, expected_type, op) \
+#define check_type_with_cleanup(expression, expected_type, op, cleanup) \
     if (((expression.type) & (expected_type)) == 0) \
     { \
       switch(expression.type) \
@@ -88,10 +88,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
               compiler, "wrong type \"boolean\" for " op " operator"); \
           break; \
       } \
+      cleanup; \
       compiler->last_result = ERROR_WRONG_TYPE; \
       yyerror(yyscanner, compiler, NULL); \
       YYERROR; \
     }
+
+
+#define check_type(expression, expected_type, op) \
+    check_type_with_cleanup(expression, expected_type, op, )
+
 %}
 
 
@@ -995,7 +1001,7 @@ expression
       }
     | _STRING_IDENTIFIER_ _AT_ primary_expression
       {
-        check_type($3, EXPRESSION_TYPE_INTEGER, "at");
+        check_type_with_cleanup($3, EXPRESSION_TYPE_INTEGER, "at", yr_free($1));
 
         compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner, $1, OP_FOUND_AT, $3.value.integer);
