@@ -151,9 +151,11 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
                            context->current_block.size);
 
   while (address < proc_info->si.lpMaximumApplicationAddress &&
-    VirtualQueryEx(proc_info->hProcess, address, &mbi, sizeof(mbi)) != 0)
+         VirtualQueryEx(proc_info->hProcess, address, &mbi, sizeof(mbi)) != 0)
   {
-    if (GetLastError() != ERROR_SUCCESS)
+    // mbi.RegionSize can overflow address while scanning a 64-bit process
+    // with a 32-bit YARA.
+    if ((uint8_t*) address + mbi.RegionSize <= address)
       break;
 
     if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
