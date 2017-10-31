@@ -74,6 +74,7 @@ AC_ARG_ENABLE([address-sanitizer],
 AC_ARG_ENABLE([profiling],
   [AS_HELP_STRING([--enable-profiling], [enable profiling support])],
   [if test x$enableval = xyes; then
+    profiling_enabled=true
     CFLAGS="$CFLAGS -DPROFILING_ENABLED"
   fi])
 
@@ -202,6 +203,7 @@ AS_IF([test "x$have_crypto" = "xno"],
   ])
 
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
+AM_CONDITIONAL([PROFILING_ENABLED], [test x$profiling_enabled = xtrue])
 AM_CONDITIONAL([OPTIMIZATION], [test x$optimization = xtrue])
 AM_CONDITIONAL([ADDRESS_SANITIZER], [test x$address_sanitizer = xtrue])
 AM_CONDITIONAL([CUCKOO_MODULE], [test x$build_cuckoo_module = xtrue])

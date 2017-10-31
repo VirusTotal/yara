@@ -140,20 +140,26 @@ libyara_la_SOURCES = \
   rules.c \
   scan.c \
   sizedstr.c \
-  stopwatch.c \
   strutils.c \
   stream.c \
   threading.c
 
+if PROFILING_ENABLED
+libyara_la_SOURCES += stopwatch.c
+endif
+
 if USE_WINDOWS_PROC
 libyara_la_SOURCES += proc/windows.c
 endif
+
 if USE_LINUX_PROC
 libyara_la_SOURCES += proc/linux.c
 endif
+
 if USE_MACH_PROC
 libyara_la_SOURCES += proc/mach.c
 endif
+
 if USE_NO_PROC
 libyara_la_SOURCES += proc/none.c
 endif
