@@ -41,7 +41,7 @@ extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
 }
 
 
-extern "C" int LLVMFuzzerTestOneInput(const char *data, size_t size)
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
   YR_RULES* rules;
   YR_COMPILER* compiler;
@@ -51,7 +51,7 @@ extern "C" int LLVMFuzzerTestOneInput(const char *data, size_t size)
   if (!buffer)
     return 1;
 
-  strncpy(buffer, data, size);
+  strncpy(buffer, (const char *) data, size);
   buffer[size] = 0;
 
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
