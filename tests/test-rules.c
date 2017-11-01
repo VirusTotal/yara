@@ -195,6 +195,17 @@ static void test_arithmetic_operators()
   assert_true_rule(
       "rule test { condition: 0o755 == 493 }", NULL);
 
+  assert_error(  // integer too long
+      "rule test { condition: 9223372036854775808 > 0 }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(  // integer too long
+      "rule test { condition: 9007199254740992KB > 0 }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(  // integer too long
+     "rule test { condition: 8796093022208MB > 0 }",
+     ERROR_SYNTAX_ERROR);
 }
 
 
