@@ -417,20 +417,35 @@ u?int(8|16|32)(be)? {
 
 {digit}+(MB|KB){0,1}  {
 
-  #ifdef _MSC_VER
-  yylval->integer = _atoi64(yytext);
-  #else
-  yylval->integer = atoll(yytext);
-  #endif
+  char *endptr;
+
+  yylval->integer = strtoll(yytext, &endptr, 10);
+
+  if (yylval->integer == LLONG_MAX && errno == ERANGE)
+  {
+    yyerror(yyscanner, compiler, "integer too long");
+    yyterminate();
+  }
 
   if (strstr(yytext, "KB") != NULL)
   {
-     yylval->integer *= 1024;
+    if (yylval->integer > LLONG_MAX / 1024)
+    {
+      yyerror(yyscanner, compiler, "integer too long");
+      yyterminate();
+    }
+    yylval->integer *= 1024;
   }
   else if (strstr(yytext, "MB") != NULL)
   {
-     yylval->integer *= 1048576;
+    if (yylval->integer > LLONG_MAX / 1048576)
+    {
+      yyerror(yyscanner, compiler, "integer too long");
+      yyterminate();
+    }
+    yylval->integer *= 1048576;
   }
+
   return _NUMBER_;
 }
 
@@ -440,12 +455,30 @@ u?int(8|16|32)(be)? {
 }
 
 0x{hexdigit}+  {
-  yylval->integer = xtoi(yytext + 2);
+
+  char *endptr;
+  yylval->integer = strtoll(yytext, &endptr, 16);
+
+  if (yylval->integer == LLONG_MAX && errno == ERANGE)
+  {
+    yyerror(yyscanner, compiler, "integer too long");
+    yyterminate();
+  }
+
   return _NUMBER_;
 }
 
 0o{octdigit}+  {
-  yylval->integer = otoi(yytext + 2);
+
+  char *endptr;
+  yylval->integer = strtoll(yytext + 2, &endptr, 8);
+
+  if (yylval->integer == LLONG_MAX && errno == ERANGE)
+  {
+    yyerror(yyscanner, compiler, "integer too long");
+    yyterminate();
+  }
+
   return _NUMBER_;
 }
 
