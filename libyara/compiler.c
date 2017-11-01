@@ -43,15 +43,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/strutils.h>
 
 
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
+
 static void _yr_compiler_default_include_free(
-  const char* callback_result_ptr,
-  void* user_data)
+    const char* callback_result_ptr,
+    void* user_data)
 {
   if(callback_result_ptr != NULL)
   {
     yr_free((void*)callback_result_ptr);
   }
-
 }
 
 
@@ -61,24 +69,29 @@ const char* _yr_compiler_default_include_callback(
     const char* calling_rule_namespace,
     void* user_data)
 {
-  char buffer[1024];
-  char* s = NULL;
+  struct stat stbuf;
+
   #ifdef _WIN32
   char* b = NULL;
   #endif
+
+  char* s = NULL;
   char* f;
-  FILE* fh;
   char* file_buffer;
-  long file_length;
+  char buffer[1024];
+
+  #ifdef _WIN32
+  long file_size;
+  #else
+  off_t file_size;
+  #endif
+
+  int fd = -1;
 
   if (calling_rule_filename != NULL)
-  {
     strlcpy(buffer, calling_rule_filename, sizeof(buffer));
-  }
   else
-  {
     buffer[0] = '\0';
-  }
 
   s = strrchr(buffer, '/');
 
@@ -93,7 +106,7 @@ const char* _yr_compiler_default_include_callback(
   #endif
   {
     #ifdef _WIN32
-    f = (b > s)? (b + 1): (s + 1);
+    f = (b > s) ? (b + 1) : (s + 1);
     #else
     f = s + 1;
     #endif
@@ -101,59 +114,92 @@ const char* _yr_compiler_default_include_callback(
     strlcpy(f, include_name, sizeof(buffer) - (f - buffer));
 
     f = buffer;
+
     // SECURITY: Potential for directory traversal here.
-    fh = fopen(buffer, "rb");
+    #ifdef _WIN32
+    _sopen_s(&fd, f, _O_RDONLY, _SH_DENYRW, _S_IREAD);
+    #else
+    fd = open(f, O_RDONLY);
+    #endif
 
     // if include file was not found relative to current source file,
     // try to open it with path as specified by user (maybe user wrote
     // a full path)
-    if (fh == NULL)
+    if (fd == -1)
     {
       f = (char*) include_name;
-      // SECURITY: Potential for directory traversal here.
-      fh = fopen(include_name, "rb");
     }
   }
   else
   {
     f = (char*) include_name;
-    // SECURITY: Potential for directory traversal here.
-    fh = fopen(include_name, "rb");
   }
 
-  if (fh == NULL)
-    return NULL;
-
-  fseek(fh, 0, SEEK_END);
-  file_length = ftell(fh);
-  fseek(fh, 0, SEEK_SET);
-
-  if (file_length == -1)
+  if (fd == -1)
   {
-    fclose(fh);
-    return NULL;
+    // SECURITY: Potential for directory traversal here.
+    #ifdef _WIN32
+    _sopen_s(&fd, f, _O_RDONLY, _SH_DENYRW, _S_IREAD);
+    #else
+    fd = open(f, O_RDONLY);
+    #endif
   }
 
-  file_buffer = (char*) yr_malloc(file_length + 1);
+  if (fd == -1)
+    return NULL;
+
+  #ifdef _WIN32
+  file_size = _filelength(fd);
+  if (file_size == -1)
+  {
+    _close(fd);
+    return NULL;
+  }
+  #else
+  if ((fstat(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
+  {
+    close(fd);
+    return NULL;
+  }
+  file_size = stbuf.st_size;
+  #endif
+
+  file_buffer = (char*) yr_malloc(file_size + 1);
 
   if (file_buffer == NULL)
   {
-    fclose(fh);
+    #ifdef _WIN32
+    _close(fd);
+    #else
+    close(fd);
+    #endif
+
     return NULL;
   }
 
-  if (file_length != fread(file_buffer, 1, file_length, fh))
+  if (file_size != read(fd, file_buffer, file_size))
   {
     yr_free(file_buffer);
-    fclose(fh);
+
+    #ifdef _WIN32
+    _close(fd);
+    #else
+    close(fd);
+    #endif
+
     return NULL;
   }
   else
   {
-    file_buffer[file_length] = '\0';
+    file_buffer[file_size] = '\0';
   }
 
-  fclose(fh);
+  #ifdef _WIN32
+  _close(fd);
+  #else
+  close(fd);
+  #endif
+
   return file_buffer;
 }
 
