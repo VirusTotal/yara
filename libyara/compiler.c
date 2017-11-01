@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <sys/stat.h>
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #include <io.h>
 #else
 #include <unistd.h>
@@ -68,11 +68,11 @@ const char* _yr_compiler_default_include_callback(
     const char* calling_rule_namespace,
     void* user_data)
 {
-  #ifndef _WIN32
+  #ifndef _MSC_VER
   struct stat stbuf;
   #endif
 
-  #ifdef _WIN32
+  #ifdef _MSC_VER
   char* b = NULL;
   #endif
 
@@ -81,7 +81,7 @@ const char* _yr_compiler_default_include_callback(
   char* file_buffer;
   char buffer[1024];
 
-  #ifdef _WIN32
+  #ifdef _MSC_VER
   long file_size;
   #else
   off_t file_size;
@@ -96,17 +96,17 @@ const char* _yr_compiler_default_include_callback(
 
   s = strrchr(buffer, '/');
 
-  #ifdef _WIN32
+  #ifdef _MSC_VER
   b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
   #endif
 
-  #ifdef _WIN32
+  #ifdef _MSC_VER
   if (s != NULL || b != NULL)
   #else
   if (s != NULL)
   #endif
   {
-    #ifdef _WIN32
+    #ifdef _MSC_VER
     f = (b > s) ? (b + 1) : (s + 1);
     #else
     f = s + 1;
@@ -117,7 +117,7 @@ const char* _yr_compiler_default_include_callback(
     f = buffer;
 
     // SECURITY: Potential for directory traversal here.
-    #ifdef _WIN32
+    #ifdef _MSC_VER
     _sopen_s(&fd, f, _O_RDONLY, _SH_DENYRW, _S_IREAD);
     #else
     fd = open(f, O_RDONLY);
@@ -139,7 +139,7 @@ const char* _yr_compiler_default_include_callback(
   if (fd == -1)
   {
     // SECURITY: Potential for directory traversal here.
-    #ifdef _WIN32
+    #ifdef _MSC_VER
     _sopen_s(&fd, f, _O_RDONLY, _SH_DENYRW, _S_IREAD);
     #else
     fd = open(f, O_RDONLY);
@@ -149,7 +149,7 @@ const char* _yr_compiler_default_include_callback(
   if (fd == -1)
     return NULL;
 
-  #ifdef _WIN32
+  #ifdef _MSC_VER
   file_size = _filelength(fd);
   if (file_size == -1)
   {
@@ -169,7 +169,7 @@ const char* _yr_compiler_default_include_callback(
 
   if (file_buffer == NULL)
   {
-    #ifdef _WIN32
+    #ifdef _MSC_VER
     _close(fd);
     #else
     close(fd);
@@ -182,7 +182,7 @@ const char* _yr_compiler_default_include_callback(
   {
     yr_free(file_buffer);
 
-    #ifdef _WIN32
+    #ifdef _MSC_VER
     _close(fd);
     #else
     close(fd);
@@ -195,7 +195,7 @@ const char* _yr_compiler_default_include_callback(
     file_buffer[file_size] = '\0';
   }
 
-  #ifdef _WIN32
+  #ifdef _MSC_VER
   _close(fd);
   #else
   close(fd);
