@@ -1188,6 +1188,9 @@ void test_re()
   // Test case for issue #682
   assert_true_regexp("(a|\\b)[a]{1,}", "aaaa", "aaaa");
 
+  // Test for integer overflow in repeat interval
+  assert_regexp_syntax_error("a{2977952116}");
+
   assert_error(
       "rule test { strings: $a = /a\\/ condition: $a }",
       ERROR_SYNTAX_ERROR);
