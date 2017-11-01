@@ -28,9 +28,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
+#include <fcntl.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
 
 #include <yara/libyara.h>
 #include <yara/utils.h>
@@ -41,15 +49,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/object.h>
 #include <yara/lexer.h>
 #include <yara/strutils.h>
-
-
-#ifdef _WIN32
-#include <io.h>
-#else
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#endif
 
 
 static void _yr_compiler_default_include_free(
@@ -69,7 +68,9 @@ const char* _yr_compiler_default_include_callback(
     const char* calling_rule_namespace,
     void* user_data)
 {
+  #ifndef _WIN32
   struct stat stbuf;
+  #endif
 
   #ifdef _WIN32
   char* b = NULL;
