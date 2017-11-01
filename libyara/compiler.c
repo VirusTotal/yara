@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _MSC_VER
 #include <io.h>
+#include <share.h>
 #else
 #include <unistd.h>
 #endif
