@@ -145,7 +145,10 @@ hex_digit     [0-9a-fA-F]
 
   int value = atoi(yytext + 1);
 
-  if (value > INT16_MAX)
+  // atoi can return a negative value if the input string represents a number
+  // too large to fit in an integer.
+
+  if (value > INT16_MAX || value < 0)
   {
     yyerror(yyscanner, lex_env, "repeat interval too large");
     yyterminate();
