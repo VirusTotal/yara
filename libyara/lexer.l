@@ -47,11 +47,13 @@ with noyywrap then we can remove this pragma.
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <setjmp.h>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
+#define strtoll _strtoi64
 #else
 #include <unistd.h>
 #endif
