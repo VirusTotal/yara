@@ -1669,6 +1669,14 @@ void test_integer_functions()
 }
 
 
+void test_include_files()
+{
+  assert_true_rule(
+    "include \"tests/data/true.yar\" rule t { condition: test }",
+    NULL);
+}
+
+
 int main(int argc, char** argv)
 {
   yr_initialize();
@@ -1692,9 +1700,10 @@ int main(int argc, char** argv)
   test_for();
   test_re();
   test_filesize();
+  test_include_files();
   // test_compile_file();
   // test_compile_files();
-  // test_include_files();
+
   // test_externals();
   // test_callback();
   // test_compare();
