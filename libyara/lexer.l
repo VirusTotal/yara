@@ -455,12 +455,30 @@ u?int(8|16|32)(be)? {
 }
 
 0x{hexdigit}+  {
-  yylval->integer = xtoi(yytext + 2);
+
+  char *endptr;
+  yylval->integer = strtoll(yytext, &endptr, 16);
+
+  if (yylval->integer == LLONG_MAX && errno == ERANGE)
+  {
+    yyerror(yyscanner, compiler, "integer too long");
+    yyterminate();
+  }
+
   return _NUMBER_;
 }
 
 0o{octdigit}+  {
-  yylval->integer = otoi(yytext + 2);
+
+  char *endptr;
+  yylval->integer = strtoll(yytext + 2, &endptr, 8);
+
+  if (yylval->integer == LLONG_MAX && errno == ERANGE)
+  {
+    yyerror(yyscanner, compiler, "integer too long");
+    yyterminate();
+  }
+
   return _NUMBER_;
 }
 

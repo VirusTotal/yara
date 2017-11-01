@@ -206,6 +206,14 @@ static void test_arithmetic_operators()
   assert_error(  // integer too long
      "rule test { condition: 8796093022208MB > 0 }",
      ERROR_SYNTAX_ERROR);
+
+  assert_error(  // integer too long
+    "rule test { condition: 0x8000000000000000 > 0 }",
+    ERROR_SYNTAX_ERROR);
+
+  assert_error(  // integer too long
+    "rule test { condition: 0o1000000000000000000000 > 0 }",
+    ERROR_SYNTAX_ERROR);
 }
 
 

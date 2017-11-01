@@ -1860,21 +1860,39 @@ case 53:
 YY_RULE_SETUP
 #line 457 "lexer.l"
 {
-  yylval->integer = xtoi(yytext + 2);
+
+  char *endptr;
+  yylval->integer = strtoll(yytext, &endptr, 16);
+
+  if (yylval->integer == LLONG_MAX && errno == ERANGE)
+  {
+    yyerror(yyscanner, compiler, "integer too long");
+    yyterminate();
+  }
+
   return _NUMBER_;
 }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 462 "lexer.l"
+#line 471 "lexer.l"
 {
-  yylval->integer = otoi(yytext + 2);
+
+  char *endptr;
+  yylval->integer = strtoll(yytext + 2, &endptr, 8);
+
+  if (yylval->integer == LLONG_MAX && errno == ERANGE)
+  {
+    yyerror(yyscanner, compiler, "integer too long");
+    yyterminate();
+  }
+
   return _NUMBER_;
 }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 468 "lexer.l"
+#line 486 "lexer.l"
 {     /* saw closing quote - all done */
 
   ALLOC_SIZED_STRING(s, yyextra->lex_buf_len);
@@ -1890,7 +1908,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 482 "lexer.l"
+#line 500 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\t", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1900,7 +1918,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 490 "lexer.l"
+#line 508 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\n", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1910,7 +1928,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 498 "lexer.l"
+#line 516 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\"", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1920,7 +1938,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 506 "lexer.l"
+#line 524 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\\", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -1930,7 +1948,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 514 "lexer.l"
+#line 532 "lexer.l"
 {
 
    int result;
@@ -1943,13 +1961,13 @@ YY_RULE_SETUP
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 525 "lexer.l"
+#line 543 "lexer.l"
 { YYTEXT_TO_BUFFER; }
 	YY_BREAK
 case 62:
 /* rule 62 can match eol */
 YY_RULE_SETUP
-#line 528 "lexer.l"
+#line 546 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "unterminated string");
@@ -1959,7 +1977,7 @@ YY_RULE_SETUP
 case 63:
 /* rule 63 can match eol */
 YY_RULE_SETUP
-#line 534 "lexer.l"
+#line 552 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "illegal escape sequence");
@@ -1968,7 +1986,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 541 "lexer.l"
+#line 559 "lexer.l"
 {
 
   if (yyextra->lex_buf_len > 0)
@@ -1997,7 +2015,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 568 "lexer.l"
+#line 586 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("/", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -2007,7 +2025,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 576 "lexer.l"
+#line 594 "lexer.l"
 {
 
   LEX_CHECK_SPACE_OK("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
@@ -2025,13 +2043,13 @@ YY_RULE_SETUP
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 592 "lexer.l"
+#line 610 "lexer.l"
 { YYTEXT_TO_BUFFER; }
 	YY_BREAK
 case 68:
 /* rule 68 can match eol */
 YY_RULE_SETUP
-#line 595 "lexer.l"
+#line 613 "lexer.l"
 {
 
   yyerror(yyscanner, compiler, "unterminated regular expression");
@@ -2040,7 +2058,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 602 "lexer.l"
+#line 620 "lexer.l"
 {
 
   yyextra->lex_buf_ptr = yyextra->lex_buf;
@@ -2050,7 +2068,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 610 "lexer.l"
+#line 628 "lexer.l"
 {
 
   yyextra->lex_buf_ptr = yyextra->lex_buf;
@@ -2061,7 +2079,7 @@ YY_RULE_SETUP
 case 71:
 /* rule 71 can match eol */
 YY_RULE_SETUP
-#line 618 "lexer.l"
+#line 636 "lexer.l"
 {
   // Match hex-digits with whitespace or comments. The latter are stripped
   // out by hex_lexer.l
@@ -2077,12 +2095,12 @@ YY_RULE_SETUP
 case 72:
 /* rule 72 can match eol */
 YY_RULE_SETUP
-#line 631 "lexer.l"
+#line 649 "lexer.l"
 /* skip whitespace */
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 633 "lexer.l"
+#line 651 "lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -2098,10 +2116,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 646 "lexer.l"
+#line 664 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 2104 "lexer.c"
+#line 2122 "lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3250,7 +3268,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 646 "lexer.l"
+#line 664 "lexer.l"
 
 
 
