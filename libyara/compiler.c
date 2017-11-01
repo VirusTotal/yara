@@ -32,11 +32,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #ifdef _WIN32
 #include <io.h>
 #else
-#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
