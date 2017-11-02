@@ -299,16 +299,16 @@ int yr_object_from_external_variable(
     {
       case EXTERNAL_VARIABLE_TYPE_INTEGER:
       case EXTERNAL_VARIABLE_TYPE_BOOLEAN:
-        yr_object_set_integer(external->value.i, obj, NULL);
+        result = yr_object_set_integer(external->value.i, obj, NULL);
         break;
 
       case EXTERNAL_VARIABLE_TYPE_FLOAT:
-        yr_object_set_float(external->value.f, obj, NULL);
+        result = yr_object_set_float(external->value.f, obj, NULL);
         break;
 
       case EXTERNAL_VARIABLE_TYPE_STRING:
       case EXTERNAL_VARIABLE_TYPE_MALLOC_STRING:
-        yr_object_set_string(
+        result = yr_object_set_string(
             external->value.s, strlen(external->value.s), obj, NULL);
         break;
     }
@@ -422,7 +422,7 @@ YR_OBJECT* yr_object_lookup_field(
 }
 
 
-YR_OBJECT* _yr_object_lookup(
+static YR_OBJECT* _yr_object_lookup(
     YR_OBJECT* object,
     int flags,
     const char* pattern,
@@ -442,7 +442,7 @@ YR_OBJECT* _yr_object_lookup(
   {
     i = 0;
 
-    while(*p != '\0' && *p != '.' && *p != '[' && i < sizeof(str) - 1)
+    while (*p != '\0' && *p != '.' && *p != '[' && i < sizeof(str) - 1)
     {
       str[i++] = *p++;
     }
@@ -487,7 +487,7 @@ YR_OBJECT* _yr_object_lookup(
         i = 0;
         p++;              // skip the opening quotation mark
 
-        while (*p != '"' && *p != '\0' && i < sizeof(str))
+        while (*p != '"' && *p != '\0' && i < sizeof(str) - 1)
           str[i++] = *p++;
 
         str[i] = '\0';
@@ -725,7 +725,10 @@ int yr_object_array_set_item(
 
   if (array->items == NULL)
   {
-    count = yr_max(64, (index + 1) * 2);
+    count = 64;
+
+    while (count <= index)
+      count *= 2;
 
     array->items = (YR_ARRAY_ITEMS*) yr_malloc(
         sizeof(YR_ARRAY_ITEMS) + count * sizeof(YR_OBJECT*));
@@ -740,6 +743,10 @@ int yr_object_array_set_item(
   else if (index >= array->items->count)
   {
     count = array->items->count * 2;
+
+    while (count <= index)
+      count *= 2;
+
     array->items = (YR_ARRAY_ITEMS*) yr_realloc(
         array->items,
         sizeof(YR_ARRAY_ITEMS) + count * sizeof(YR_OBJECT*));
@@ -988,7 +995,14 @@ int yr_object_set_integer(
 
   va_end(args);
 
-  assert(integer_obj != NULL);
+  if (integer_obj == NULL)
+  {
+    if (field != NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+    else
+      return ERROR_INVALID_ARGUMENT;
+  }
+
   assert(integer_obj->type == OBJECT_TYPE_INTEGER);
 
   integer_obj->value.i = value;
@@ -1015,7 +1029,14 @@ int yr_object_set_float(
 
   va_end(args);
 
-  assert(double_obj != NULL);
+  if (double_obj == NULL)
+  {
+    if (field != NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+    else
+      return ERROR_INVALID_ARGUMENT;
+  }
+
   assert(double_obj->type == OBJECT_TYPE_FLOAT);
 
   double_obj->value.d = value;
@@ -1043,7 +1064,14 @@ int yr_object_set_string(
 
   va_end(args);
 
-  assert(string_obj != NULL);
+  if (string_obj == NULL)
+  {
+    if (field != NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+    else
+      return ERROR_INVALID_ARGUMENT;
+  }
+
   assert(string_obj->type == OBJECT_TYPE_STRING);
 
   if (string_obj->value.ss != NULL)

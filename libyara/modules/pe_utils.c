@@ -29,10 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 
-#if defined(_WIN32)
-#define timegm _mkgmtime
-#endif
-
 #include <string.h>
 
 #include <yara/endian.h>
@@ -48,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 PIMAGE_NT_HEADERS32 pe_get_header(
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size)
 {
   PIMAGE_DOS_HEADER mz_header;
@@ -67,7 +63,7 @@ PIMAGE_NT_HEADERS32 pe_get_header(
   if (yr_le32toh(mz_header->e_lfanew) < 0)
     return NULL;
 
-  headers_size = yr_le32toh(mz_header->e_lfanew) +      \
+  headers_size = yr_le32toh(mz_header->e_lfanew) + \
                  sizeof(pe_header->Signature) + \
                  sizeof(IMAGE_FILE_HEADER);
 
@@ -76,39 +72,47 @@ PIMAGE_NT_HEADERS32 pe_get_header(
 
   pe_header = (PIMAGE_NT_HEADERS32) (data + yr_le32toh(mz_header->e_lfanew));
 
-  headers_size += yr_le16toh(pe_header->FileHeader.SizeOfOptionalHeader);
+  if (yr_le32toh(pe_header->Signature) != IMAGE_NT_SIGNATURE)
+    return NULL;
 
-  if (yr_le32toh(pe_header->Signature) == IMAGE_NT_SIGNATURE &&
-      (yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_UNKNOWN ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_AM33 ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_AMD64 ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_ARM ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_ARMNT ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_ARM64 ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_EBC ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_I386 ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_IA64 ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_M32R ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_MIPS16 ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_MIPSFPU ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_MIPSFPU16 ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_POWERPC ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_POWERPCFP ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_R4000 ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_SH3 ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_SH3DSP ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_SH4 ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_SH5 ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_THUMB ||
-       yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_WCEMIPSV2) &&
-      data_size > headers_size)
-  {
-    return pe_header;
-  }
+  if (data_size < headers_size + sizeof(IMAGE_OPTIONAL_HEADER32))
+    return NULL;
+
+  if (pe_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    headers_size += sizeof(IMAGE_OPTIONAL_HEADER64);
   else
+    headers_size += sizeof(IMAGE_OPTIONAL_HEADER32);
+
+  if (data_size < headers_size)
+    return NULL;
+
+  if (yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_UNKNOWN &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_AM33 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_AMD64 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_ARM &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_ARMNT &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_ARM64 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_EBC &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_I386 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_IA64 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_M32R &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_MIPS16 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_MIPSFPU &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_MIPSFPU16 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_POWERPC &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_POWERPCFP &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_R4000 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_SH3 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_SH3DSP &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_SH4 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_SH5 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_THUMB &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_WCEMIPSV2)
   {
     return NULL;
   }
+
+  return pe_header;
 }
 
 
@@ -219,7 +223,10 @@ int64_t pe_rva_to_offset(
 }
 
 
-#if !HAVE_TIMEGM && !defined(WIN32)
+#if !HAVE_TIMEGM
+#if HAVE__MKGMTIME
+#define timegm _mkgmtime
+#else
 
 #include <time.h>
 
@@ -258,7 +265,8 @@ time_t timegm(
   return res;
 }
 
-#endif
+#endif // HAVE__MKGMTIME
+#endif // !HAVE_TIMEGM
 
 #if HAVE_LIBCRYPTO
 

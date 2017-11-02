@@ -34,10 +34,11 @@ limitations under the License.
 
 char* pe_get_dotnet_string(
     PE* pe,
-    uint8_t* string_offset,
+    const uint8_t* string_offset,
     DWORD string_index)
 {
   size_t remaining;
+
   char* start;
   char* eos;
 
@@ -93,7 +94,7 @@ void dotnet_parse_guid(
   char guid[37];
   int i = 0;
 
-  uint8_t* guid_offset = pe->data + metadata_root + guid_header->Offset;
+  const uint8_t* guid_offset = pe->data + metadata_root + guid_header->Offset;
   DWORD guid_size = guid_header->Size;
 
   // Parse GUIDs if we have them.
@@ -129,7 +130,7 @@ void dotnet_parse_guid(
 // The offset is relative to the start of the PE file.
 BLOB_PARSE_RESULT dotnet_parse_blob_entry(
     PE* pe,
-    uint8_t* offset)
+    const uint8_t* offset)
 {
   BLOB_PARSE_RESULT result;
 
@@ -204,8 +205,8 @@ void dotnet_parse_us(
   BLOB_PARSE_RESULT blob_result;
   int i = 0;
 
-  uint8_t* offset = pe->data + metadata_root + us_header->Offset;
-  uint8_t* end_of_header = offset + us_header->Size;
+  const uint8_t* offset = pe->data + metadata_root + us_header->Offset;
+  const uint8_t* end_of_header = offset + us_header->Size;
 
   // Make sure end of header is not past end of PE, and the first entry MUST be
   // a single NULL byte.
@@ -258,7 +259,7 @@ STREAMS dotnet_parse_stream_headers(
   char *start;
   char *eos;
   char stream_name[DOTNET_STREAM_NAME_SIZE + 1];
-  int i;
+  unsigned int i;
 
   memset(&headers, '\0', sizeof(STREAMS));
 
@@ -270,10 +271,12 @@ STREAMS dotnet_parse_stream_headers(
       break;
 
     start = (char*) stream_header->Name;
+
     if (!fits_in_pe(pe, start, DOTNET_STREAM_NAME_SIZE))
       break;
 
     eos = (char*) memmem((void*) start, DOTNET_STREAM_NAME_SIZE, "\0", 1);
+
     if (eos == NULL)
       break;
 
@@ -349,13 +352,15 @@ void dotnet_parse_tilde_2(
 
   char *name;
   char typelib[MAX_TYPELIB_SIZE + 1];
-  int i, bit_check;
+  unsigned int i;
+  int bit_check;
   int matched_bits = 0;
 
   int64_t resource_offset;
   uint32_t row_size, row_count, counter;
-  uint8_t* string_offset;
-  uint8_t* blob_offset;
+
+  const uint8_t* string_offset;
+  const uint8_t* blob_offset;
 
   uint32_t num_rows = 0;
   uint32_t valid_rows = 0;
@@ -1002,7 +1007,7 @@ void dotnet_parse_tilde_2(
 
           if (name != NULL)
           {
-            set_string(name, pe->object, "modulerefs[%i]", i);
+            set_string(name, pe->object, "modulerefs[%i]", counter);
             counter++;
           }
 
@@ -1276,17 +1281,17 @@ void dotnet_parse_tilde_2(
 
           // Add 4 to skip the size.
           set_integer(resource_base + resource_offset + 4,
-              pe->object, "resources[%i].offset", i);
+              pe->object, "resources[%i].offset", counter);
 
           set_integer(resource_size,
-              pe->object, "resources[%i].length", i);
+              pe->object, "resources[%i].length", counter);
 
           name = pe_get_dotnet_string(pe,
               string_offset,
               DOTNET_STRING_INDEX(manifestresource_table->Name));
 
           if (name != NULL)
-            set_string(name, pe->object, "resources[%i].name", i);
+            set_string(name, pe->object, "resources[%i].name", counter);
 
           row_ptr += row_size;
           counter++;
@@ -1380,10 +1385,13 @@ void dotnet_parse_tilde(
   // Default index sizes are 2. Will be bumped to 4 if necessary.
   memset(&index_sizes, 2, sizeof(index_sizes));
 
-  tilde_header = (PTILDE_HEADER) (pe->data + metadata_root + streams->tilde->Offset);
+  tilde_header = (PTILDE_HEADER) (
+      pe->data +
+      metadata_root +
+      streams->tilde->Offset);
 
   if (!struct_fits_in_pe(pe, tilde_header, TILDE_HEADER))
-      return;
+    return;
 
   // Set index sizes for various heaps.
   if (tilde_header->HeapSizes & 0x01)
@@ -1409,7 +1417,8 @@ void dotnet_parse_tilde(
       continue;
 
 #define ROW_CHECK(name) \
-    rows.name = *(row_offset + matched_bits);
+    if (fits_in_pe(pe, row_offset, (matched_bits + 1) * sizeof(uint32_t))) \
+      rows.name = *(row_offset + matched_bits);
 
 #define ROW_CHECK_WITH_INDEX(name) \
     ROW_CHECK(name); \
@@ -1513,6 +1522,7 @@ void dotnet_parse_com(
   PCLI_HEADER cli_header;
   PNET_METADATA metadata;
   int64_t metadata_root, offset;
+  char* end;
   STREAMS headers;
   WORD num_streams;
 
@@ -1545,7 +1555,15 @@ void dotnet_parse_com(
     return;
   }
 
-  set_sized_string(metadata->Version, metadata->Length, pe->object, "version");
+  // The length includes the NULL terminator and is rounded up to a multiple of
+  // 4. We need to exclude the terminator and the padding, so search for the
+  // first NULL byte.
+  end = (char*) memmem((void*) metadata->Version, metadata->Length, "\0", 1);
+  if (end != NULL)
+      set_sized_string(metadata->Version,
+          (end - metadata->Version),
+          pe->object,
+          "version");
 
   // The metadata structure has some variable length records after the version.
   // We must manually parse things from here on out.
@@ -1657,7 +1675,7 @@ int module_load(
 {
   YR_MEMORY_BLOCK* block;
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
-  uint8_t* block_data = NULL;
+  const uint8_t* block_data = NULL;
 
   foreach_memory_block(iterator, block)
   {

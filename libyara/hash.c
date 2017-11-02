@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Constant-time left rotate that does not invoke undefined behavior.
 // http://blog.regehr.org/archives/1063
-uint32_t rotl32(uint32_t x, uint32_t shift) {
+static uint32_t rotl32(uint32_t x, uint32_t shift) {
   assert(shift < 32);
   return (x << shift) | (x >> (-shift & 31));
 }
@@ -87,7 +87,7 @@ uint32_t byte_to_int32[]  =
 };
 
 
-uint32_t hash(
+uint32_t yr_hash(
     uint32_t seed,
     const void* buffer,
     size_t len)
@@ -189,10 +189,10 @@ YR_API void* yr_hash_table_lookup_raw_key(
   YR_HASH_TABLE_ENTRY* entry;
   uint32_t bucket_index;
 
-  bucket_index = hash(0, key, key_length);
+  bucket_index = yr_hash(0, key, key_length);
 
   if (ns != NULL)
-    bucket_index = hash(bucket_index, (uint8_t*) ns, strlen(ns));
+    bucket_index = yr_hash(bucket_index, (uint8_t*) ns, strlen(ns));
 
   bucket_index = bucket_index % table->size;
   entry = table->buckets[bucket_index];
@@ -262,10 +262,10 @@ YR_API int yr_hash_table_add_raw_key(
 
   memcpy(entry->key, key, key_length);
 
-  bucket_index = hash(0, key, key_length);
+  bucket_index = yr_hash(0, key, key_length);
 
   if (ns != NULL)
-    bucket_index = hash(bucket_index, (uint8_t*) ns, strlen(ns));
+    bucket_index = yr_hash(bucket_index, (uint8_t*) ns, strlen(ns));
 
   bucket_index = bucket_index % table->size;
 

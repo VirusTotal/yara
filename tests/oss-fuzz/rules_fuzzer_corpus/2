@@ -1,0 +1,128 @@
+rule r1 { condition: true or false }
+
+rule r2 { condition: 0x1 and 0x2}
+
+rule r3 { condition: 2 > 1 }
+
+rule r4 { condition: 1.5 >= 1.0}
+
+rule r5 { condition: 0.5 <= 1}
+
+rule r6 { condition: "abc" == "abc"}
+
+rule r7 { condition: "ab" < "abc"}
+
+rule r8 { condition: (1 + 1) * 2 == (9 - 1) \ 2 }
+
+rule r9 { condition: 1.5 + 1.5 == 3}
+
+rule r10 { condition: -2.0-3.0 == -5}
+
+rule r11 { condition: ~0xAA ^ 0x5A & 0xFF == (~0xAA) ^ (0x5A & 0xFF) }
+
+rule r12 { strings: $a = "abc" wide nocase fullword condition: $a }
+
+rule r13 {
+  strings:
+    $a = "abcdef"
+    $b = "cdef"
+    $c = "ef"
+  condition:
+    all of them
+}
+
+rule r14 {
+  strings:
+    $a = "abcdef"
+    $b = "cdef"
+    $c = "ef"
+  condition:
+    for all of ($*) : ($)
+}
+
+rule r15 {
+  strings:
+    $a = { 64 01 00 00 60 01 }
+  condition:
+    $a
+}
+
+rule r16 {
+  strings:
+    $a = { 64 01 [1-3] (60|61) 01 }
+  condition:
+    $a
+}
+
+rule r17 {
+  strings:
+    $a = { 4D 5A [-] 6A 2A [-] 58 C3 }
+  condition:
+    $a
+}
+
+rule r18 {
+  strings:
+    $a = { 4D 5A [300-] 6A 2A [-] 58 C3}
+  condition:
+    $a
+}
+
+rule r19 {
+  strings:
+    $a = { 2e 7? (65 | ?? ) 78 }
+  condition:
+    $a
+}
+
+rule r21 {
+  strings:
+    $a = /a.*efg/
+  condition:
+    $a
+}
+
+rule r22 {
+  strings:
+    $a = /abc[^D]/ nocase
+  condition:
+    $a
+}
+
+rule r23 {
+  strings:
+    $a = /a[-]?c/
+  condition:
+    $a
+}
+
+rule r24 {
+  strings:
+    $a = /[0-9a-f]+/
+  condition:
+    $a
+}
+
+rule r25 {
+  strings:
+    $a = /[\\da-fA-F]+/
+  condition:
+    $a
+}
+
+rule r26 {
+  strings:
+    $a = /(bc+d$|ef*g.|h?i(j|k))/
+  condition:
+    $a
+}
+
+rule r27 {
+  condition:
+    "xxFoOxx" matches /fOo/i
+}
+
+rule r28 {
+  condition:
+    uint32be(0) == 0xAABBCCDD
+}

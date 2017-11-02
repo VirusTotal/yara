@@ -45,6 +45,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/strutils.h>
 #include <yara/utils.h>
 #include <yara/mem.h>
+#include <yara/stopwatch.h>
+
 
 #include <yara.h>
 
@@ -65,7 +67,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     } \
 
 
-#define pop(x)  x = stack[--sp]
+#define pop(x) { assert(sp > 0); x = stack[--sp]; }
 
 #define is_undef(x) IS_UNDEFINED((x).i)
 
@@ -104,7 +106,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             offset <= block->base + block->size - sizeof(type)) \
         { \
           type result; \
-          uint8_t* data = block->fetch_data(block); \
+          const uint8_t* data = block->fetch_data(block); \
           if (data == NULL) \
             return UNDEFINED; \
           result = *(type *)(data + offset - block->base); \
@@ -131,20 +133,15 @@ function_read(int16_t, big_endian)
 function_read(int32_t, big_endian)
 
 
-static uint8_t* jmp_if(
+static const uint8_t* jmp_if(
     int condition,
-    uint8_t* ip)
+    const uint8_t* ip)
 {
-  uint8_t* result;
+  const uint8_t* result;
 
   if (condition)
   {
-    result = *(uint8_t**)(ip + 1);
-
-    // ip will be incremented at the end of the execution loop,
-    // decrement it here to compensate.
-
-    result--;
+    result = *(const uint8_t**)(ip);
   }
   else
   {
@@ -163,7 +160,8 @@ int yr_execute_code(
 {
   int64_t mem[MEM_SIZE];
   int32_t sp = 0;
-  uint8_t* ip = rules->code_start;
+
+  const uint8_t* ip = rules->code_start;
 
   YR_VALUE args[MAX_FUNCTION_ARGS];
   YR_VALUE *stack;
@@ -174,6 +172,8 @@ int yr_execute_code(
   #ifdef PROFILING_ENABLED
   YR_RULE* current_rule = NULL;
   #endif
+
+  YR_INIT_RULE_ARGS init_rule_args;
 
   YR_RULE* rule;
   YR_MATCH* match;
@@ -193,8 +193,11 @@ int yr_execute_code(
   int tidx = context->tidx;
   int stack_size;
 
+  uint8_t opcode;
+
   #ifdef PROFILING_ENABLED
-  clock_t start = clock();
+  YR_STOPWATCH stopwatch;
+  yr_stopwatch_start(&stopwatch);
   #endif
 
   yr_get_configuration(YR_CONFIG_STACK_SIZE, (void*) &stack_size);
@@ -210,7 +213,10 @@ int yr_execute_code(
 
   while(!stop)
   {
-    switch(*ip)
+    opcode = *ip;
+    ip++;
+
+    switch(opcode)
     {
       case OP_NOP:
         break;
@@ -221,7 +227,7 @@ int yr_execute_code(
         break;
 
       case OP_PUSH:
-        r1.i = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
         push(r1);
         break;
@@ -231,13 +237,13 @@ int yr_execute_code(
         break;
 
       case OP_CLEAR_M:
-        r1.i = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
         mem[r1.i] = 0;
         break;
 
       case OP_ADD_M:
-        r1.i = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
         pop(r2);
         if (!is_undef(r2))
@@ -245,27 +251,27 @@ int yr_execute_code(
         break;
 
       case OP_INCR_M:
-        r1.i = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
         mem[r1.i]++;
         break;
 
       case OP_PUSH_M:
-        r1.i = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
         r1.i = mem[r1.i];
         push(r1);
         break;
 
       case OP_POP_M:
-        r1.i = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
         pop(r2);
         mem[r1.i] = r2.i;
         break;
 
       case OP_SWAPUNDEF:
-        r1.i = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
         pop(r2);
 
@@ -417,22 +423,29 @@ int yr_execute_code(
         break;
 
       case OP_PUSH_RULE:
-        rule = *(YR_RULE**)(ip + 1);
+        rule = *(YR_RULE**)(ip);
         ip += sizeof(uint64_t);
-        r1.i = rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0;
+        if (RULE_IS_DISABLED(rule))
+          r1.i = UNDEFINED;
+        else
+          r1.i = rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0;
         push(r1);
         break;
 
       case OP_INIT_RULE:
+        memcpy(&init_rule_args, ip, sizeof(init_rule_args));
         #ifdef PROFILING_ENABLED
-        current_rule = *(YR_RULE**)(ip + 1);
+        current_rule = init_rule_args.rule;
         #endif
-        ip += sizeof(uint64_t);
+        if (RULE_IS_DISABLED(init_rule_args.rule))
+          ip = init_rule_args.jmp_addr;
+        else
+          ip += sizeof(init_rule_args);
         break;
 
       case OP_MATCH_RULE:
         pop(r1);
-        rule = *(YR_RULE**)(ip + 1);
+        rule = *(YR_RULE**)(ip);
         ip += sizeof(uint64_t);
 
         if (!is_undef(r1) && r1.i)
@@ -441,15 +454,14 @@ int yr_execute_code(
           rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
 
         #ifdef PROFILING_ENABLED
-        rule->clock_ticks += clock() - start;
-        start = clock();
+        rule->clock_ticks = yr_stopwatch_elapsed_microseconds(&stopwatch);
         #endif
 
         assert(sp == 0); // at this point the stack should be empty.
         break;
 
       case OP_OBJ_LOAD:
-        identifier = *(char**)(ip + 1);
+        identifier = *(char**)(ip);
         ip += sizeof(uint64_t);
 
         r1.o = (YR_OBJECT*) yr_hash_table_lookup(
@@ -462,7 +474,7 @@ int yr_execute_code(
         break;
 
       case OP_OBJ_FIELD:
-        identifier = *(char**)(ip + 1);
+        identifier = *(char**)(ip);
         ip += sizeof(uint64_t);
 
         pop(r1);
@@ -539,7 +551,7 @@ int yr_execute_code(
         break;
 
       case OP_CALL:
-        args_fmt = *(char**)(ip + 1);
+        args_fmt = *(char**)(ip);
         ip += sizeof(uint64_t);
 
         i = (int) strlen(args_fmt);
@@ -841,7 +853,7 @@ int yr_execute_code(
         break;
 
       case OP_IMPORT:
-        r1.i = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
 
         result = yr_modules_load((char*) r1.p, context);
@@ -884,7 +896,7 @@ int yr_execute_code(
         break;
 
       case OP_INT_TO_DBL:
-        r1.i = *(uint64_t*)(ip + 1);
+        r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
         r2 = stack[sp - r1.i];
         if (is_undef(r2))
@@ -1110,7 +1122,7 @@ int yr_execute_code(
         ensure_defined(r1);
         ensure_defined(r2);
 
-        switch(*ip)
+        switch(opcode)
         {
           case OP_STR_EQ:
             r1.i = (sized_string_cmp(r1.ss, r2.ss) == 0);
@@ -1150,7 +1162,7 @@ int yr_execute_code(
         {
           #ifdef PROFILING_ENABLED
           assert(current_rule != NULL);
-          current_rule->clock_ticks += clock() - start;
+          current_rule->clock_ticks += yr_stopwatch_elapsed_microseconds(&stopwatch);
           #endif
           result = ERROR_SCAN_TIMEOUT;
           stop = TRUE;
@@ -1159,8 +1171,6 @@ int yr_execute_code(
         cycle = 0;
       }
     }
-
-    ip++;
   }
 
   obj_ptr = (YR_OBJECT**) yr_arena_base_address(obj_arena);

@@ -51,14 +51,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define mark_as_not_fast_regexp() \
     ((RE_AST*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
 
-#define ERROR_IF(x, error) \
+#define fail_if_too_many_ast_levels(cleanup_code) \
+    if (((RE_AST*) yyget_extra(yyscanner))->levels++ > RE_MAX_AST_LEVELS) \
+    { \
+      { cleanup_code } \
+      yyerror(yyscanner, lex_env, "string too long"); \
+      YYABORT; \
+    }
+
+#define fail_if(x, error) \
     if (x) \
     { \
       lex_env->last_error_code = error; \
       YYABORT; \
     } \
 
-#define DESTROY_NODE_IF(x, node) \
+#define destroy_node_if(x, node) \
     if (x) \
     { \
       yr_re_node_destroy(node); \
@@ -117,18 +125,29 @@ tokens
       }
     | token token
       {
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($1);
+          yr_re_node_destroy($2);
+        });
+
         $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
 
-        DESTROY_NODE_IF($$ == NULL, $1);
-        DESTROY_NODE_IF($$ == NULL, $2);
+        destroy_node_if($$ == NULL, $1);
+        destroy_node_if($$ == NULL, $2);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
     | token token_sequence token
       {
         RE_NODE* new_concat;
         RE_NODE* leftmost_concat = NULL;
         RE_NODE* leftmost_node = $2;
+
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($1);
+          yr_re_node_destroy($2);
+          yr_re_node_destroy($3);
+        });
 
         $$ = NULL;
 
@@ -176,11 +195,11 @@ tokens
           }
         }
 
-        DESTROY_NODE_IF($$ == NULL, $1);
-        DESTROY_NODE_IF($$ == NULL, $2);
-        DESTROY_NODE_IF($$ == NULL, $3);
+        destroy_node_if($$ == NULL, $1);
+        destroy_node_if($$ == NULL, $2);
+        destroy_node_if($$ == NULL, $3);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
     ;
 
@@ -192,12 +211,17 @@ token_sequence
       }
     | token_sequence token_or_range
       {
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($1);
+          yr_re_node_destroy($2);
+        });
+
         $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
 
-        DESTROY_NODE_IF($$ == NULL, $1);
-        DESTROY_NODE_IF($$ == NULL, $2);
+        destroy_node_if($$ == NULL, $1);
+        destroy_node_if($$ == NULL, $2);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
     ;
 
@@ -218,15 +242,6 @@ token_or_range
 token
     : byte
       {
-        lex_env->token_count++;
-
-        if (lex_env->token_count > MAX_HEX_STRING_TOKENS)
-        {
-          yr_re_node_destroy($1);
-          yyerror(yyscanner, lex_env, "string too long");
-          YYABORT;
-        }
-
         $$ = $1;
       }
     | '('
@@ -260,7 +275,7 @@ range
 
         $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->start = (int) $2;
         $$->end = (int) $2;
@@ -292,7 +307,7 @@ range
 
         $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->start = (int) $2;
         $$->end = (int) $4;
@@ -314,7 +329,7 @@ range
 
         $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->start = (int) $2;
         $$->end = INT_MAX;
@@ -330,7 +345,7 @@ range
 
         $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->start = 0;
         $$->end = INT_MAX;
@@ -347,12 +362,17 @@ alternatives
       {
         mark_as_not_fast_regexp();
 
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($1);
+          yr_re_node_destroy($3);
+        });
+
         $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
 
-        DESTROY_NODE_IF($$ == NULL, $1);
-        DESTROY_NODE_IF($$ == NULL, $3);
+        destroy_node_if($$ == NULL, $1);
+        destroy_node_if($$ == NULL, $3);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
     ;
 
@@ -361,7 +381,7 @@ byte
       {
         $$ = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
-        ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->value = (int) $1;
       }
@@ -373,13 +393,13 @@ byte
         {
           $$ = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
-          ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+          fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
         }
         else
         {
           $$ = yr_re_node_create(RE_NODE_MASKED_LITERAL, NULL, NULL);
 
-          ERROR_IF($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+          fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
           $$->value = $1 & 0xFF;
           $$->mask = mask;

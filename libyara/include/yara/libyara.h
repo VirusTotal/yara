@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/utils.h>
 
 #define YR_MAJOR_VERSION   3
-#define YR_MINOR_VERSION   6
+#define YR_MINOR_VERSION   7
 #define YR_MICRO_VERSION   0
 
 #define version_str(s) _version_str(s)
@@ -54,12 +54,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef enum _YR_CONFIG_NAME
 {
   YR_CONFIG_STACK_SIZE,
+  YR_CONFIG_MAX_STRINGS_PER_RULE,
   YR_CONFIG_MAX
 
 } YR_CONFIG_NAME;
 
 
-#define DEFAULT_STACK_SIZE 16384
+#define DEFAULT_STACK_SIZE              16384
+#define DEFAULT_MAX_STRINGS_PER_RULE    10000
 
 
 YR_API int yr_initialize(void);
@@ -81,5 +83,6 @@ YR_API int yr_set_configuration(YR_CONFIG_NAME, void*);
 
 
 YR_API int yr_get_configuration(YR_CONFIG_NAME, void*);
+
 
 #endif

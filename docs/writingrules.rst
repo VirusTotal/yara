@@ -12,12 +12,12 @@ YARA, which does absolutely nothing::
            false
     }
 
-Each rule in YARA starts with the keyword rule followed by a rule identifier.
-Identifiers must follow the same lexical conventions of the C programming
-language, they can contain any alphanumeric character and the underscore
-character, but the first character can not be a digit. Rule identifiers are
-case sensitive and cannot exceed 128 characters. The following keywords are
-reserved and cannot be used as an identifier:
+Each rule in YARA starts with the keyword ``rule`` followed by a rule
+identifier. Identifiers must follow the same lexical conventions of the C
+programming language, they can contain any alphanumeric character and the
+underscore character, but the first character can not be a digit. Rule
+identifiers are case sensitive and cannot exceed 128 characters. The following
+keywords are reserved and cannot be used as an identifier:
 
 
 .. list-table:: YARA keywords
@@ -473,7 +473,7 @@ Conditions
 
 Conditions are nothing more than Boolean expressions as those that can be found
 in all programming languages, for example in an *if* statement. They can contain
-the typical Boolean operators and, or and not and relational operators
+the typical Boolean operators ``and``, ``or``, and ``not``, and relational operators
 >=, <=, <, >, == and !=. Also, the arithmetic operators (\+, \-, \*, \\, \%)
 and bitwise operators (\&, \|, <<, >>, \~, \^) can be used on numerical
 expressions.
@@ -606,9 +606,9 @@ postfix, when attached to a numerical constant, automatically multiplies the
 value of the constant by 1024. The ``MB`` postfix can be used to multiply the
 value by 2^20. Both postfixes can be used only with decimal constants.
 
-The use of ``filesize`` only makes sense when the rule is applied to a file, if
-the rule is applied to a running process it won’t ever match because ``filesize``
-doesn’t make sense in this context.
+The use of ``filesize`` only makes sense when the rule is applied to a file. If
+the rule is applied to a running process it won’t ever match because
+``filesize`` doesn’t make sense in this context.
 
 Executable entry point
 ----------------------
@@ -640,7 +640,7 @@ or simple file infectors. ::
     }
 
 The presence of the ``entrypoint`` variable in a rule implies that only PE or
-ELF files can satisfy that rule. If the file is not a PE or ELF any rule using
+ELF files can satisfy that rule. If the file is not a PE or ELF, any rule using
 this variable evaluates to false.
 
 .. warning:: The ``entrypoint`` variable is deprecated, you should use the
@@ -653,8 +653,8 @@ Accessing data at a given position
 ----------------------------------
 
 There are many situations in which you may want to write conditions that depend
-on data stored at a certain file offset or memory virtual address, depending if
-we are scanning a file or a running process. In those situations you can use
+on data stored at a certain file offset or virtual memory address, depending on
+if we are scanning a file or a running process. In those situations you can use
 one of the following functions to read data from the file at the given offset::
 
     int8(<offset or virtual address>)
@@ -697,7 +697,7 @@ Sets of strings
 There are circumstances in which it is necessary to express that the file should
 contain a certain number strings from a given set. None of the strings in the
 set are required to be present, but at least some of them should be. In these
-situations the operator ``of`` comes in to help. ::
+situations the ``of`` operator can be used. ::
 
     rule OfExample1
     {
@@ -710,10 +710,10 @@ situations the operator ``of`` comes in to help. ::
             2 of ($a,$b,$c)
     }
 
-What this rule says is that at least two of the strings in the set ($a,$b,$c)
-must be present in the file, no matter which. Of course, when using this
-operator, the number before the ``of`` keyword must be equal to or less than
-the number of strings in the set.
+This rule requires that at least two of the strings in the set ($a,$b,$c)
+must be present in the file, but it does not matter which two. Of course, when
+using this operator, the number before the ``of`` keyword must be less than or
+equal to the number of strings in the set.
 
 The elements of the set can be explicitly enumerated like in the previous
 example, or can be specified by using wild cards. For example::
@@ -742,8 +742,8 @@ example, or can be specified by using wild cards. For example::
             3 of ($foo*,$bar1,$bar2)
     }
 
-You can even use ($*) to refer to all the strings in your rule, or write the
-equivalent keyword ``them`` for more legibility. ::
+You can even use ``($*)`` to refer to all the strings in your rule, or write
+the equivalent keyword ``them`` for more legibility. ::
 
     rule OfExample4
     {
@@ -756,9 +756,9 @@ equivalent keyword ``them`` for more legibility. ::
             1 of them // equivalent to 1 of ($*)
     }
 
-In all the above examples the number of strings have been specified by a
+In all the examples above, the number of strings have been specified by a
 numeric constant, but any expression returning a numeric value can be used.
-The keywords any and all can be used as well. ::
+The keywords ``any`` and ``all`` can be used as well. ::
 
     all of them       // all strings in the rule
     any of them       // any string in the rule
@@ -846,7 +846,7 @@ they satisfy a given condition. For example::
             for all i in (1,2,3) : ( @a[i] + 10 == @b[i] )
     }
 
-The previous rule tells that the first three occurrences of $b should be 10
+The previous rule says that the first three occurrences of $b should be 10
 bytes away from the first three occurrences of $a.
 
 The same condition could be written also as::
@@ -909,15 +909,16 @@ define the rule being invoked before the one that will make the invocation.
 More about rules
 ================
 
-There are some aspects of YARA rules that have not been covered yet, but still
-are very important. They are: global rules, private rules, tags and metadata.
+There are some aspects of YARA rules that have not been covered yet, but are
+still very important. These are: global rules, private rules, tags and
+metadata.
 
 Global rules
 ------------
 
 Global rules give you the possibility of imposing restrictions in all your
 rules at once. For example, suppose that you want all your rules ignoring
-those files that exceed a certain size limit, you could go rule by rule doing
+those files that exceed a certain size limit, you could go rule by rule making
 the required modifications to their conditions, or just write a global rule
 like this one::
 
@@ -940,7 +941,7 @@ at all may seem sterile at first glance, but when mixed with the possibility
 offered by YARA of referencing one rule from another (see
 :ref:`referencing-rules`) they become useful. Private rules can serve as
 building blocks for other rules, and at the same time prevent cluttering
-YARA's output with irrelevant information. For declaring a rule as private
+YARA's output with irrelevant information. To delcare a rule as private
 just add the keyword ``private`` before the rule declaration. ::
 
     private rule PrivateRuleExample
@@ -974,7 +975,7 @@ Tags must follow the same lexical convention of rule identifiers, therefore
 only alphanumeric characters and underscores are allowed, and the tag cannot
 start with a digit. They are also case sensitive.
 
-When using YARA you can output only those rules that are tagged with the tag
+When using YARA you can output only those rules which are tagged with the tag
 or tags that you provide.
 
 
@@ -1002,7 +1003,7 @@ identifier/value pairs like in the following example::
     }
 
 As can be seen in the example, metadata identifiers are always followed by
-an equal sign and the value assigned to them. The assigned values can be
+an equals sign and the value assigned to them. The assigned values can be
 strings, integers, or one of the boolean values true or false. Note that
 identifier/value pairs defined in the metadata section can not be used in
 the condition section, their only purpose is to store additional information
@@ -1015,8 +1016,8 @@ Using modules
 
 Modules are extensions to YARA's core functionality. Some modules like
 the :ref:`PE module <pe-module>` and the :ref:`Cuckoo module <cuckoo-module>`
-are officially distributed with YARA and some of them can be created by
-third-parties or even by yourself as described in :ref:`writing-modules`.
+are officially distributed with YARA and additional ones can be created by
+third-parties or even yourself as described in :ref:`writing-modules`.
 
 The first step to using a module is importing it with the ``import`` statement.
 These statements must be placed outside any rule definition and followed by
@@ -1027,11 +1028,16 @@ the module name enclosed in double-quotes. Like this::
     import "cuckoo"
 
 After importing the module you can make use of its features, always using
-``<module name>.`` as a prefix to any variable, or function exported by the
+``<module name>.`` as a prefix to any variable or function exported by the
 module. For example::
 
     pe.entry_point == 0x1000
     cuckoo.http_request(/someregexp/)
+
+.. _undefined-values:
+
+Undefined values
+================
 
 Modules often leave variables in an undefined state, for example when the
 variable doesn't make sense in the current context (think of ``pe.entry_point``
@@ -1049,18 +1055,18 @@ the rule to keep its meaningfulness. Take a look at this rule::
           $a and pe.entry_point == 0x1000
     }
 
-If the scanned file is not a PE you wouldn't expect this rule matching the file,
-even if it contains the string, because **both** conditions (the presence of the
-string and the right value for the entry point) must be satisfied. However, if the
-condition is changed to::
+If the scanned file is not a PE you wouldn't expect this rule to match the file,
+even if it contains the string, because **both** conditions (the presence of
+the string and the right value for the entry point) must be satisfied. However,
+if the condition is changed to::
 
     $a or pe.entry_point == 0x1000
 
-You would expect the rule matching in this case if the file contains the string,
-even if it isn't a PE file. That's exactly how YARA behaves. The logic is simple:
-any arithmetic, comparison, or boolean operation will result in an undefined value
-if one of its operands is undefined, except for *OR* operations where an undefined
-operand is interpreted as a False.
+You would expect the rule to match in this case if the file contains the string,
+even if it isn't a PE file. That's exactly how YARA behaves. The logic is
+simple: any arithmetic, comparison, or boolean operation will result in an
+undefined value if one of its operands is undefined, except for *OR* operations
+where an undefined operand is interpreted as a False.
 
 
 External variables
@@ -1089,9 +1095,9 @@ For example::
            bool_ext_var or filesize < int_ext_var
     }
 
-External variables of type string can be used with operators ``contains`` and
-``matches``. The ``contains`` operator returns true if the string contains the
-specified substring. The operator ``matches`` returns true if the string
+External variables of type string can be used with the operators: ``contains``
+and ``matches``. The ``contains`` operator returns true if the string contains
+the specified substring. The ``matches`` operator returns true if the string
 matches the given regular expression. ::
 
 
@@ -1130,9 +1136,9 @@ providing the ``externals`` parameter to the appropriate method in
 Including files
 ===============
 
-In order to allow you a more flexible organization of your rules files,
+In order to allow for more flexible organization of your rules files,
 YARA provides the ``include`` directive. This directive works in a similar way
-to the *#include* pre-processor directive in your C programs, which inserts the
+to the *#include* pre-processor directive in C programs, which inserts the
 content of the specified source file into the current file during compilation.
 The following example will include the content of *other.yar* into the current
 file::
@@ -1140,19 +1146,19 @@ file::
     include "other.yar"
 
 The base path when searching for a file in an ``include`` directive will be the
-directory where the current file resides. For that reason, the file *other.yar*
+directory where the current file resides. For this reason, the file *other.yar*
 in the previous example should be located in the same directory of the current
-file. However you can also specify relative paths like these ones::
+file. However, you can also specify relative paths like these::
 
     include "./includes/other.yar"
     include "../includes/other.yar"
 
-And you can also use absolute paths::
+Or use absolute paths::
 
     include "/home/plusvic/yara/includes/other.yar"
 
-In Windows both slashes and backslashes are accepted, and don’t forget to write
-the drive letter::
+In Windows, both forward and back slashes are accepted, but don’t forget to
+write the drive letter::
 
     include "c:/yara/includes/other.yar"
     include "c:\\yara\\includes\\other.yar"

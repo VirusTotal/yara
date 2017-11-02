@@ -39,10 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/threading.h>
 
 
-
-#ifdef PROFILING_ENABLED
 #include <time.h>
-#endif
 
 
 #define DECLARE_REFERENCE(type, name) \
@@ -71,6 +68,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STRING_GFLAGS_FIXED_OFFSET      0x8000
 #define STRING_GFLAGS_GREEDY_REGEXP     0x10000
 #define STRING_GFLAGS_DOT_ALL           0x20000
+#define STRING_GFLAGS_DISABLED          0x40000
 
 #define STRING_IS_HEX(x) \
     (((x)->g_flags) & STRING_GFLAGS_HEXADECIMAL)
@@ -126,6 +124,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STRING_FITS_IN_ATOM(x) \
     (((x)->g_flags) & STRING_GFLAGS_FITS_IN_ATOM)
 
+#define STRING_IS_DISABLED(x) \
+    (((x)->g_flags) & STRING_GFLAGS_DISABLED)
+
 #define STRING_FOUND(x) \
     ((x)->matches[yr_get_tidx()].tail != NULL)
 
@@ -140,6 +141,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RULE_GFLAGS_REQUIRE_EXECUTABLE   0x04
 #define RULE_GFLAGS_REQUIRE_FILE         0x08
 #define RULE_GFLAGS_NULL                 0x1000
+#define RULE_GFLAGS_DISABLED             0x2000
 
 #define RULE_IS_PRIVATE(x) \
     (((x)->g_flags) & RULE_GFLAGS_PRIVATE)
@@ -149,6 +151,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define RULE_IS_NULL(x) \
     (((x)->g_flags) & RULE_GFLAGS_NULL)
+
+#define RULE_IS_DISABLED(x) \
+    (((x)->g_flags) & RULE_GFLAGS_DISABLED)
 
 #define RULE_MATCHES(x) \
     ((x)->t_flags[yr_get_tidx()] & RULE_TFLAGS_MATCH)
@@ -227,9 +232,8 @@ typedef struct _YR_STRING
   YR_MATCHES matches[MAX_THREADS];
   YR_MATCHES unconfirmed_matches[MAX_THREADS];
 
-  #ifdef PROFILING_ENABLED
-  clock_t clock_ticks;
-  #endif
+  // Used only when PROFILING_ENABLED is defined
+  uint64_t clock_ticks;
 
 } YR_STRING;
 
@@ -245,9 +249,8 @@ typedef struct _YR_RULE
   DECLARE_REFERENCE(YR_STRING*, strings);
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);
 
-  #ifdef PROFILING_ENABLED
+  // Used only when PROFILING_ENABLED is defined
   clock_t clock_ticks;
-  #endif
 
 } YR_RULE;
 
@@ -272,8 +275,8 @@ typedef struct _YR_AC_MATCH
   uint16_t backtrack;
 
   DECLARE_REFERENCE(YR_STRING*, string);
-  DECLARE_REFERENCE(uint8_t*, forward_code);
-  DECLARE_REFERENCE(uint8_t*, backward_code);
+  DECLARE_REFERENCE(const uint8_t*, forward_code);
+  DECLARE_REFERENCE(const uint8_t*, backward_code);
   DECLARE_REFERENCE(struct _YR_AC_MATCH*, next);
 
 } YR_AC_MATCH;
@@ -295,11 +298,20 @@ typedef struct _YARA_RULES_FILE_HEADER
 {
   DECLARE_REFERENCE(YR_RULE*, rules_list_head);
   DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
-  DECLARE_REFERENCE(uint8_t*, code_start);
+  DECLARE_REFERENCE(const uint8_t*, code_start);
   DECLARE_REFERENCE(YR_AC_MATCH_TABLE, match_table);
   DECLARE_REFERENCE(YR_AC_TRANSITION_TABLE, transition_table);
 
 } YARA_RULES_FILE_HEADER;
+
+
+typedef struct _YR_INIT_RULE_ARGS
+{
+  DECLARE_REFERENCE(YR_RULE*, rule);
+  DECLARE_REFERENCE(const uint8_t*, jmp_addr);
+
+} YR_INIT_RULE_ARGS;
+
 
 #pragma pack(pop)
 
@@ -319,7 +331,7 @@ typedef struct _YR_MATCH
   // the buffer is data_length. data_length is always <= length and is limited
   // to MAX_MATCH_DATA bytes.
 
-  uint8_t* data;
+  const uint8_t* data;
 
   // If the match belongs to a chained string chain_length contains the
   // length of the chain. This field is used only in unconfirmed matches.
@@ -370,7 +382,7 @@ typedef struct _YR_AC_AUTOMATON
 typedef struct _YR_RULES {
 
   unsigned char tidx_mask[YR_BITARRAY_NCHARS(MAX_THREADS)];
-  uint8_t* code_start;
+  const uint8_t* code_start;
 
   YR_MUTEX mutex;
   YR_ARENA* arena;
@@ -386,7 +398,7 @@ struct _YR_MEMORY_BLOCK;
 struct _YR_MEMORY_BLOCK_ITERATOR;
 
 
-typedef uint8_t* (*YR_MEMORY_BLOCK_FETCH_DATA_FUNC)(
+typedef const uint8_t* (*YR_MEMORY_BLOCK_FETCH_DATA_FUNC)(
     struct _YR_MEMORY_BLOCK* self);
 
 

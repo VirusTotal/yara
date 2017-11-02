@@ -40,7 +40,6 @@ order to avoid confusion with operating system threads.
 
 #include <assert.h>
 #include <string.h>
-#include <limits.h>
 
 #include <yara/limits.h>
 #include <yara/globals.h>
@@ -52,27 +51,14 @@ order to avoid confusion with operating system threads.
 #include <yara/re_lexer.h>
 #include <yara/hex_lexer.h>
 
-// Maximum allowed split ID, also limiting the number of split instructions
-// allowed in a regular expression. This number can't be increased
-// over 255 without changing RE_SPLIT_ID_TYPE.
-#define RE_MAX_SPLIT_ID     128
-
-// Maximum stack size for regexp evaluation
-#define RE_MAX_STACK      1024
-
-// Maximum code size for a compiled regexp
-#define RE_MAX_CODE_SIZE  32768
-
-// Maximum input size scanned by yr_re_exec
-#define RE_SCAN_LIMIT     4096
-
-// Maximum number of fibers
-#define RE_MAX_FIBERS     1024
-
 
 #define EMIT_BACKWARDS                  0x01
 #define EMIT_DONT_SET_FORWARDS_CODE     0x02
 #define EMIT_DONT_SET_BACKWARDS_CODE    0x04
+
+#ifndef INT16_MAX
+#define INT16_MAX              (32767)
+#endif
 
 
 typedef struct _RE_REPEAT_ARGS
@@ -102,9 +88,9 @@ typedef struct _RE_EMIT_CONTEXT {
 
 typedef struct _RE_FIBER
 {
-  uint8_t* ip;    // instruction pointer
-  int32_t  sp;    // stack pointer
-  int32_t  rc;    // repeat counter
+  const uint8_t* ip;    // instruction pointer
+  int32_t  sp;          // stack pointer
+  int32_t  rc;          // repeat counter
 
   uint16_t stack[RE_MAX_STACK];
 
@@ -140,12 +126,29 @@ typedef struct _RE_THREAD_STORAGE
 YR_THREAD_STORAGE_KEY thread_storage_key = 0;
 
 
-#define CHAR_IN_CLASS(chr, cls)  \
-    ((cls)[(chr) / 8] & 1 << ((chr) % 8))
+#define CHAR_IN_CLASS(cls, chr)  \
+  ((cls)[(chr) / 8] & 1 << ((chr) % 8))
 
 
-int _yr_re_is_word_char(
-    uint8_t* input,
+static int _yr_re_is_char_in_class(
+    RE_CLASS* re_class,
+    uint8_t chr,
+    int case_insensitive)
+{
+  int result = CHAR_IN_CLASS(re_class->bitmap, chr);
+
+  if (case_insensitive)
+    result |= CHAR_IN_CLASS(re_class->bitmap, yr_altercase[chr]);
+
+  if (re_class->negated)
+    result = !result;
+
+  return result;
+}
+
+
+static int _yr_re_is_word_char(
+    const uint8_t* input,
     uint8_t character_size)
 {
   int result = ((isalnum(*input) || (*input) == '_'));
@@ -155,7 +158,6 @@ int _yr_re_is_word_char(
 
   return result;
 }
-
 
 
 //
@@ -253,7 +255,7 @@ void yr_re_node_destroy(
     yr_re_node_destroy(node->right);
 
   if (node->type == RE_NODE_CLASS)
-    yr_free(node->class_vector);
+    yr_free(node->re_class);
 
   yr_free(node);
 }
@@ -268,6 +270,7 @@ int yr_re_ast_create(
     return ERROR_INSUFFICIENT_MEMORY;
 
   (*re_ast)->flags = 0;
+  (*re_ast)->levels = 0;
   (*re_ast)->root_node = NULL;
 
   return ERROR_SUCCESS;
@@ -745,7 +748,7 @@ int _yr_emit_split(
 }
 
 
-int _yr_re_emit(
+static int _yr_re_emit(
     RE_EMIT_CONTEXT* emit_context,
     RE_NODE* re_node,
     int flags,
@@ -890,11 +893,11 @@ int _yr_re_emit(
 
     FAIL_ON_ERROR(yr_arena_write_data(
         emit_context->arena,
-        re_node->class_vector,
-        32,
+        re_node->re_class,
+        sizeof(*re_node->re_class),
         NULL));
 
-    *code_size += 32;
+    *code_size += sizeof(*re_node->re_class);
     break;
 
   case RE_NODE_ANCHOR_START:
@@ -1016,7 +1019,8 @@ int _yr_re_emit(
 
     *code_size += jmp_size;
 
-    assert(split_size + branch_size + jmp_size < INT16_MAX);
+    if (split_size + branch_size + jmp_size >= INT16_MAX)
+      return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
     // Update split offset.
     *split_offset_addr = (int16_t) (split_size + branch_size + jmp_size);
@@ -1067,7 +1071,8 @@ int _yr_re_emit(
 
     *code_size += jmp_size;
 
-    assert(split_size + branch_size + jmp_size < INT16_MAX);
+    if (split_size + branch_size + jmp_size >= INT16_MAX)
+      return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
     // Update split offset.
     *split_offset_addr = (int16_t) (split_size + branch_size + jmp_size);
@@ -1081,7 +1086,8 @@ int _yr_re_emit(
 
     *code_size += branch_size;
 
-    assert(branch_size + jmp_size < INT16_MAX);
+    if (branch_size + jmp_size >= INT16_MAX)
+      return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
     // Update offset for jmp instruction.
     *jmp_offset_addr = (int16_t) (branch_size + jmp_size);
@@ -1255,7 +1261,9 @@ int _yr_re_emit(
 
     if (emit_split)
     {
-      assert(split_size + branch_size  < INT16_MAX);
+      if (split_size + branch_size >= INT16_MAX)
+        return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
+
       *split_offset_addr = (int16_t) (split_size + branch_size);
     }
 
@@ -1326,7 +1334,7 @@ int yr_re_ast_emit_code(
 }
 
 
-int _yr_re_alloc_storage(
+static int _yr_re_alloc_storage(
     RE_THREAD_STORAGE** storage)
 {
   *storage = (RE_THREAD_STORAGE*) yr_thread_storage_get_value(
@@ -1351,7 +1359,7 @@ int _yr_re_alloc_storage(
 }
 
 
-int _yr_re_fiber_create(
+static int _yr_re_fiber_create(
     RE_FIBER_POOL* fiber_pool,
     RE_FIBER** new_fiber)
 {
@@ -1396,7 +1404,7 @@ int _yr_re_fiber_create(
 // Appends 'fiber' to 'fiber_list'
 //
 
-void _yr_re_fiber_append(
+static void _yr_re_fiber_append(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER* fiber)
 {
@@ -1427,7 +1435,7 @@ void _yr_re_fiber_append(
 // taken into account.
 //
 
-int _yr_re_fiber_exists(
+static int _yr_re_fiber_exists(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER* target_fiber,
     RE_FIBER* last_fiber)
@@ -1436,7 +1444,6 @@ int _yr_re_fiber_exists(
 
   int equal_stacks;
   int i;
-
 
   if (last_fiber == NULL)
     return FALSE;
@@ -1482,7 +1489,7 @@ int _yr_re_fiber_exists(
 //   f1 -> f2 -> cloned f2 -> f3 -> f4
 //
 
-int _yr_re_fiber_split(
+static int _yr_re_fiber_split(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool,
     RE_FIBER* fiber,
@@ -1524,7 +1531,7 @@ int _yr_re_fiber_split(
 // in the fiber pool.
 //
 
-RE_FIBER* _yr_re_fiber_kill(
+static RE_FIBER* _yr_re_fiber_kill(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool,
     RE_FIBER* fiber)
@@ -1563,7 +1570,7 @@ RE_FIBER* _yr_re_fiber_kill(
 // Kills all fibers from the given one up to the end of the fiber list.
 //
 
-void _yr_re_fiber_kill_tail(
+static void _yr_re_fiber_kill_tail(
   RE_FIBER_LIST* fiber_list,
   RE_FIBER_POOL* fiber_pool,
   RE_FIBER* fiber)
@@ -1595,7 +1602,7 @@ void _yr_re_fiber_kill_tail(
 // Kills all fibers in the fiber list.
 //
 
-void _yr_re_fiber_kill_all(
+static void _yr_re_fiber_kill_all(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool)
 {
@@ -1613,7 +1620,7 @@ void _yr_re_fiber_kill_all(
 // also synced.
 //
 
-int _yr_re_fiber_sync(
+static int _yr_re_fiber_sync(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool,
     RE_FIBER* fiber_to_sync)
@@ -1634,20 +1641,18 @@ int _yr_re_fiber_sync(
 
   RE_FIBER* fiber;
   RE_FIBER* last;
-  RE_FIBER* prev;
   RE_FIBER* next;
   RE_FIBER* branch_a;
   RE_FIBER* branch_b;
 
   fiber = fiber_to_sync;
-  prev = fiber_to_sync->prev;
   last = fiber_to_sync->next;
 
-  while(fiber != last)
+  while (fiber != last)
   {
     uint8_t opcode = *fiber->ip;
 
-    switch(opcode)
+    switch (opcode)
     {
       case RE_OPCODE_SPLIT_A:
       case RE_OPCODE_SPLIT_B:
@@ -1819,10 +1824,7 @@ int _yr_re_fiber_sync(
         break;
 
       default:
-        if (_yr_re_fiber_exists(fiber_list, fiber, prev))
-          fiber = _yr_re_fiber_kill(fiber_list, fiber_pool, fiber);
-        else
-          fiber = fiber->next;
+        fiber = fiber->next;
     }
   }
 
@@ -1846,8 +1848,8 @@ int _yr_re_fiber_sync(
 //                              input
 //
 // Args:
-//   uint8_t* re_code                 - Regexp code be executed
-//   uint8_t* input                   - Pointer to input data
+//   const uint8_t* code              - Regexp code be executed
+//   const uint8_t* input             - Pointer to input data
 //   size_t input_forwards_size       - Number of accessible bytes starting at
 //                                      "input" and going forwards.
 //   size_t input_backwards_size      - Number of accessible bytes starting at
@@ -1869,8 +1871,8 @@ int _yr_re_fiber_sync(
 //    ERROR_SUCCESS or any other error code.
 
 int yr_re_exec(
-    uint8_t* re_code,
-    uint8_t* input_data,
+    const uint8_t* code,
+    const uint8_t* input_data,
     size_t input_forwards_size,
     size_t input_backwards_size,
     int flags,
@@ -1878,8 +1880,9 @@ int yr_re_exec(
     void* callback_args,
     int* matches)
 {
-  uint8_t* ip;
-  uint8_t* input;
+  const uint8_t* input;
+  const uint8_t* ip;
+
   uint8_t mask;
   uint8_t value;
   uint8_t character_size;
@@ -1944,7 +1947,7 @@ int yr_re_exec(
 
   FAIL_ON_ERROR(_yr_re_fiber_create(&storage->fiber_pool, &fiber));
 
-  fiber->ip = re_code;
+  fiber->ip = code;
   fibers.head = fiber;
   fibers.tail = fiber;
 
@@ -1956,12 +1959,24 @@ int yr_re_exec(
   {
     fiber = fibers.head;
 
-    while(fiber != NULL)
+    while (fiber != NULL)
+    {
+      next_fiber = fiber->next;
+
+      if (_yr_re_fiber_exists(&fibers, fiber, fiber->prev))
+        _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
+
+      fiber = next_fiber;
+    }
+
+    fiber = fibers.head;
+
+    while (fiber != NULL)
     {
       ip = fiber->ip;
       action = ACTION_NONE;
 
-      switch(*ip)
+      switch (*ip)
       {
         case RE_OPCODE_ANY:
           prolog;
@@ -2009,11 +2024,10 @@ int yr_re_exec(
 
         case RE_OPCODE_CLASS:
           prolog;
-          match = CHAR_IN_CLASS(*input, ip + 1);
-          if (!match && (flags & RE_FLAGS_NO_CASE))
-            match = CHAR_IN_CLASS(yr_altercase[*input], ip + 1);
+          match = _yr_re_is_char_in_class(
+              (RE_CLASS*) (ip + 1), *input, flags & RE_FLAGS_NO_CASE);
           action = match ? ACTION_NONE : ACTION_KILL;
-          fiber->ip += 33;
+          fiber->ip += (sizeof(RE_CLASS) + 1);
           break;
 
         case RE_OPCODE_WORD_CHAR:
@@ -2035,7 +2049,7 @@ int yr_re_exec(
 
           prolog;
 
-          switch(*input)
+          switch (*input)
           {
             case ' ':
             case '\t':
@@ -2160,7 +2174,7 @@ int yr_re_exec(
           assert(FALSE);
       }
 
-      switch(action)
+      switch (action)
       {
         case ACTION_KILL:
           fiber = _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
@@ -2195,7 +2209,7 @@ int yr_re_exec(
           _yr_re_fiber_create(&storage->fiber_pool, &fiber),
           _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
 
-      fiber->ip = re_code;
+      fiber->ip = code;
       _yr_re_fiber_append(&fibers, fiber);
 
       FAIL_ON_ERROR_WITH_CLEANUP(
@@ -2209,8 +2223,8 @@ int yr_re_exec(
 
 
 int yr_re_fast_exec(
-    uint8_t* code,
-    uint8_t* input_data,
+    const uint8_t* code,
+    const uint8_t* input_data,
     size_t input_forwards_size,
     size_t input_backwards_size,
     int flags,
@@ -2220,14 +2234,15 @@ int yr_re_fast_exec(
 {
   RE_REPEAT_ANY_ARGS* repeat_any_args;
 
-  uint8_t* code_stack[MAX_FAST_RE_STACK];
-  uint8_t* input_stack[MAX_FAST_RE_STACK];
+  const uint8_t* code_stack[MAX_FAST_RE_STACK];
+  const uint8_t* input_stack[MAX_FAST_RE_STACK];
   int matches_stack[MAX_FAST_RE_STACK];
 
-  uint8_t* ip = code;
-  uint8_t* input = input_data;
-  uint8_t* next_input;
-  uint8_t* next_opcode;
+  const uint8_t* input = input_data;
+  const uint8_t* next_input;
+  const uint8_t* ip = code;
+  const uint8_t* next_opcode;
+
   uint8_t mask;
   uint8_t value;
 
@@ -2260,7 +2275,7 @@ int yr_re_fast_exec(
     bytes_matched = matches_stack[sp];
     stop = FALSE;
 
-    while(!stop)
+    while (!stop)
     {
       if (*ip == RE_OPCODE_MATCH)
       {
@@ -2286,7 +2301,7 @@ int yr_re_fast_exec(
       if (bytes_matched >= max_bytes_matched)
         break;
 
-      switch(*ip)
+      switch (*ip)
       {
         case RE_OPCODE_LITERAL:
 
@@ -2336,10 +2351,10 @@ int yr_re_fast_exec(
 
           for (i = repeat_any_args->min + 1; i <= repeat_any_args->max; i++)
           {
-            next_input = input + i * input_incr;
-
             if (bytes_matched + i >= max_bytes_matched)
               break;
+
+            next_input = input + i * input_incr;
 
             if ( *(next_opcode) != RE_OPCODE_LITERAL ||
                 (*(next_opcode) == RE_OPCODE_LITERAL &&
@@ -2357,6 +2372,7 @@ int yr_re_fast_exec(
 
           input += input_incr * repeat_any_args->min;
           bytes_matched += repeat_any_args->min;
+          bytes_matched = yr_min(bytes_matched, max_bytes_matched);
           ip = next_opcode;
 
           break;
@@ -2374,7 +2390,7 @@ int yr_re_fast_exec(
 }
 
 
-void _yr_re_print_node(
+static void _yr_re_print_node(
     RE_NODE* re_node)
 {
   int i;
@@ -2382,7 +2398,7 @@ void _yr_re_print_node(
   if (re_node == NULL)
     return;
 
-  switch(re_node->type)
+  switch (re_node->type)
   {
   case RE_NODE_ALT:
     printf("Alt(");
@@ -2457,7 +2473,7 @@ void _yr_re_print_node(
   case RE_NODE_CLASS:
     printf("Class(");
     for (i = 0; i < 256; i++)
-      if (CHAR_IN_CLASS(i, re_node->class_vector))
+      if (_yr_re_is_char_in_class(re_node->re_class, i, FALSE))
         printf("%02X,", i);
     printf(")");
     break;

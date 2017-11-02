@@ -31,12 +31,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_EXEFILES_H
 
 uint64_t yr_get_entry_point_offset(
-    uint8_t* buffer,
+    const uint8_t* buffer,
     size_t buffer_length);
 
 
 uint64_t yr_get_entry_point_address(
-    uint8_t* buffer,
+    const uint8_t* buffer,
     size_t buffer_length,
     size_t base_address);
 

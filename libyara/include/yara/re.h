@@ -101,6 +101,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef struct RE RE;
 typedef struct RE_AST RE_AST;
 typedef struct RE_NODE RE_NODE;
+typedef struct RE_CLASS RE_CLASS;
 typedef struct RE_ERROR RE_ERROR;
 
 typedef uint8_t RE_SPLIT_ID_TYPE;
@@ -123,7 +124,7 @@ struct RE_NODE
 
   int greedy;
 
-  uint8_t* class_vector;
+  RE_CLASS* re_class;
 
   RE_NODE* left;
   RE_NODE* right;
@@ -133,9 +134,17 @@ struct RE_NODE
 };
 
 
+struct RE_CLASS
+{
+  uint8_t negated;
+  uint8_t bitmap[32];
+};
+
+
 struct RE_AST
 {
   uint32_t flags;
+  uint16_t levels;
   RE_NODE* root_node;
 };
 
@@ -165,7 +174,7 @@ struct RE_ERROR
 
 
 typedef int RE_MATCH_CALLBACK_FUNC(
-    uint8_t* match,
+    const uint8_t* match,
     int match_length,
     int flags,
     void* args);
@@ -213,8 +222,8 @@ void yr_re_node_destroy(
 
 
 int yr_re_exec(
-    uint8_t* re_code,
-    uint8_t* input,
+    const uint8_t* code,
+    const uint8_t* input_data,
     size_t input_forwards_size,
     size_t input_backwards_size,
     int flags,
@@ -224,8 +233,8 @@ int yr_re_exec(
 
 
 int yr_re_fast_exec(
-    uint8_t* code,
-    uint8_t* input_data,
+    const uint8_t* code,
+    const uint8_t* input_data,
     size_t input_forwards_size,
     size_t input_backwards_size,
     int flags,

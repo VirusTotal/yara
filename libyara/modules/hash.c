@@ -27,8 +27,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <openssl/md5.h>
-#include <openssl/sha.h>
+#include "../crypto.h"
 
 #if _WIN32 || __CYGWIN__
 
@@ -122,17 +121,17 @@ int add_to_cache(
 
 define_function(string_md5)
 {
-  unsigned char digest[MD5_DIGEST_LENGTH];
-  char digest_ascii[MD5_DIGEST_LENGTH * 2 + 1];
+  unsigned char digest[YR_MD5_LEN];
+  char digest_ascii[YR_MD5_LEN * 2 + 1];
 
-  MD5_CTX md5_context;
+  yr_md5_ctx md5_context;
   SIZED_STRING* s = sized_string_argument(1);
 
-  MD5_Init(&md5_context);
-  MD5_Update(&md5_context, s->c_string, s->length);
-  MD5_Final(digest, &md5_context);
+  yr_md5_init(&md5_context);
+  yr_md5_update(&md5_context, s->c_string, s->length);
+  yr_md5_final(digest, &md5_context);
 
-  digest_to_ascii(digest, digest_ascii, MD5_DIGEST_LENGTH);
+  digest_to_ascii(digest, digest_ascii, YR_MD5_LEN);
 
   return_string(digest_ascii);
 }
@@ -140,17 +139,17 @@ define_function(string_md5)
 
 define_function(string_sha256)
 {
-  unsigned char digest[SHA256_DIGEST_LENGTH];
-  char digest_ascii[SHA256_DIGEST_LENGTH * 2 + 1];
+  unsigned char digest[YR_SHA256_LEN];
+  char digest_ascii[YR_SHA256_LEN * 2 + 1];
 
-  SHA256_CTX sha256_context;
+  yr_sha256_ctx sha256_context;
   SIZED_STRING* s = sized_string_argument(1);
 
-  SHA256_Init(&sha256_context);
-  SHA256_Update(&sha256_context, s->c_string, s->length);
-  SHA256_Final(digest, &sha256_context);
+  yr_sha256_init(&sha256_context);
+  yr_sha256_update(&sha256_context, s->c_string, s->length);
+  yr_sha256_final(digest, &sha256_context);
 
-  digest_to_ascii(digest, digest_ascii, SHA256_DIGEST_LENGTH);
+  digest_to_ascii(digest, digest_ascii, YR_SHA256_LEN);
 
   return_string(digest_ascii);
 }
@@ -158,17 +157,17 @@ define_function(string_sha256)
 
 define_function(string_sha1)
 {
-  unsigned char digest[SHA_DIGEST_LENGTH];
-  char digest_ascii[SHA_DIGEST_LENGTH * 2 + 1];
+  unsigned char digest[YR_SHA1_LEN];
+  char digest_ascii[YR_SHA1_LEN * 2 + 1];
 
-  SHA_CTX sha_context;
+  yr_sha1_ctx sha_context;
   SIZED_STRING* s = sized_string_argument(1);
 
-  SHA1_Init(&sha_context);
-  SHA1_Update(&sha_context, s->c_string, s->length);
-  SHA1_Final(digest, &sha_context);
+  yr_sha1_init(&sha_context);
+  yr_sha1_update(&sha_context, s->c_string, s->length);
+  yr_sha1_final(digest, &sha_context);
 
-  digest_to_ascii(digest, digest_ascii, SHA_DIGEST_LENGTH);
+  digest_to_ascii(digest, digest_ascii, YR_SHA1_LEN);
 
   return_string(digest_ascii);
 }
@@ -190,10 +189,10 @@ define_function(string_checksum32)
 
 define_function(data_md5)
 {
-  MD5_CTX md5_context;
+  yr_md5_ctx md5_context;
 
-  unsigned char digest[MD5_DIGEST_LENGTH];
-  char digest_ascii[MD5_DIGEST_LENGTH * 2 + 1];
+  unsigned char digest[YR_MD5_LEN];
+  char digest_ascii[YR_MD5_LEN * 2 + 1];
   char* cached_ascii_digest;
 
   int past_first_block = FALSE;
@@ -208,7 +207,7 @@ define_function(data_md5)
   int64_t offset = arg_offset;
   int64_t length = arg_length;
 
-  MD5_Init(&md5_context);
+  yr_md5_init(&md5_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
   {
@@ -228,7 +227,7 @@ define_function(data_md5)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data != NULL)
       {
@@ -239,7 +238,7 @@ define_function(data_md5)
         offset += data_len;
         length -= data_len;
 
-        MD5_Update(&md5_context, block_data + data_offset, data_len);
+        yr_md5_update(&md5_context, block_data + data_offset, data_len);
       }
 
       past_first_block = TRUE;
@@ -262,9 +261,9 @@ define_function(data_md5)
   if (!past_first_block)
     return_string(UNDEFINED);
 
-  MD5_Final(digest, &md5_context);
+  yr_md5_final(digest, &md5_context);
 
-  digest_to_ascii(digest, digest_ascii, MD5_DIGEST_LENGTH);
+  digest_to_ascii(digest, digest_ascii, YR_MD5_LEN);
 
   FAIL_ON_ERROR(
       add_to_cache(module(), "md5", arg_offset, arg_length, digest_ascii));
@@ -275,10 +274,10 @@ define_function(data_md5)
 
 define_function(data_sha1)
 {
-  SHA_CTX sha_context;
+  yr_sha1_ctx sha_context;
 
-  unsigned char digest[SHA_DIGEST_LENGTH];
-  char digest_ascii[SHA_DIGEST_LENGTH * 2 + 1];
+  unsigned char digest[YR_SHA1_LEN];
+  char digest_ascii[YR_SHA1_LEN * 2 + 1];
   char* cached_ascii_digest;
 
   int past_first_block = FALSE;
@@ -293,7 +292,7 @@ define_function(data_sha1)
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
-  SHA1_Init(&sha_context);
+  yr_sha1_init(&sha_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
   {
@@ -312,7 +311,7 @@ define_function(data_sha1)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data != NULL)
       {
@@ -323,7 +322,7 @@ define_function(data_sha1)
         offset += data_len;
         length -= data_len;
 
-        SHA1_Update(&sha_context, block_data + data_offset, data_len);
+        yr_sha1_update(&sha_context, block_data + data_offset, data_len);
       }
 
       past_first_block = TRUE;
@@ -346,9 +345,9 @@ define_function(data_sha1)
   if (!past_first_block)
     return_string(UNDEFINED);
 
-  SHA1_Final(digest, &sha_context);
+  yr_sha1_final(digest, &sha_context);
 
-  digest_to_ascii(digest, digest_ascii, SHA_DIGEST_LENGTH);
+  digest_to_ascii(digest, digest_ascii, YR_SHA1_LEN);
 
   FAIL_ON_ERROR(
       add_to_cache(module(), "sha1", arg_offset, arg_length, digest_ascii));
@@ -359,10 +358,10 @@ define_function(data_sha1)
 
 define_function(data_sha256)
 {
-  SHA256_CTX sha256_context;
+  yr_sha256_ctx sha256_context;
 
-  unsigned char digest[SHA256_DIGEST_LENGTH];
-  char digest_ascii[SHA256_DIGEST_LENGTH * 2 + 1];
+  unsigned char digest[YR_SHA256_LEN];
+  char digest_ascii[YR_SHA256_LEN * 2 + 1];
   char* cached_ascii_digest;
 
   int past_first_block = FALSE;
@@ -377,7 +376,7 @@ define_function(data_sha256)
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
-  SHA256_Init(&sha256_context);
+  yr_sha256_init(&sha256_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
   {
@@ -396,7 +395,7 @@ define_function(data_sha256)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data != NULL)
       {
@@ -406,7 +405,7 @@ define_function(data_sha256)
         offset += data_len;
         length -= data_len;
 
-        SHA256_Update(&sha256_context, block_data + data_offset, data_len);
+        yr_sha256_update(&sha256_context, block_data + data_offset, data_len);
       }
 
       past_first_block = TRUE;
@@ -429,9 +428,9 @@ define_function(data_sha256)
   if (!past_first_block)
     return_string(UNDEFINED);
 
-  SHA256_Final(digest, &sha256_context);
+  yr_sha256_final(digest, &sha256_context);
 
-  digest_to_ascii(digest, digest_ascii, SHA256_DIGEST_LENGTH);
+  digest_to_ascii(digest, digest_ascii, YR_SHA256_LEN);
 
   FAIL_ON_ERROR(
       add_to_cache(module(), "sha256", arg_offset, arg_length, digest_ascii));
@@ -462,7 +461,7 @@ define_function(data_checksum32)
     if (offset >= block->base &&
         offset < block->base + block->size)
     {
-      uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data != NULL)
       {

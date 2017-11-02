@@ -37,9 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/threading.h>
 
-#if defined(HAVE_LIBCRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000L
-#include <openssl/crypto.h>
-#endif
+#include "crypto.h"
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #if !defined(_MSC_VER) || (defined(_MSC_VER) && (_MSC_VER < 1900))
@@ -80,13 +78,13 @@ char yr_altercase[256];
 static YR_MUTEX *openssl_locks;
 
 
-unsigned long thread_id(void)
+static unsigned long _thread_id(void)
 {
   return (unsigned long) yr_current_thread_id();
 }
 
 
-void locking_function(
+static void _locking_function(
     int mode,
     int n,
     const char *file,
@@ -110,6 +108,8 @@ void locking_function(
 YR_API int yr_initialize(void)
 {
   uint32_t def_stack_size = DEFAULT_STACK_SIZE;
+  uint32_t def_max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
+
   int i;
 
   init_count++;
@@ -141,8 +141,18 @@ YR_API int yr_initialize(void)
   for (i = 0; i < CRYPTO_num_locks(); i++)
     yr_mutex_create(&openssl_locks[i]);
 
-  CRYPTO_set_id_callback(thread_id);
-  CRYPTO_set_locking_callback(locking_function);
+  CRYPTO_set_id_callback(_thread_id);
+  CRYPTO_set_locking_callback(_locking_function);
+
+  #elif defined(HAVE_WINCRYPT_H)
+
+  if (!CryptAcquireContext(&yr_cryptprov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
+    return ERROR_INTERNAL_FATAL_ERROR;
+  }
+
+  #elif defined(HAVE_COMMON_CRYPTO)
+
+  ...
 
   #endif
 
@@ -150,7 +160,10 @@ YR_API int yr_initialize(void)
   FAIL_ON_ERROR(yr_modules_initialize());
 
   // Initialize default configuration options
-  FAIL_ON_ERROR(yr_set_configuration(YR_CONFIG_STACK_SIZE, &def_stack_size));
+  FAIL_ON_ERROR(yr_set_configuration(
+      YR_CONFIG_STACK_SIZE, &def_stack_size));
+  FAIL_ON_ERROR(yr_set_configuration(
+      YR_CONFIG_MAX_STRINGS_PER_RULE, &def_max_strings_per_rule));
 
   return ERROR_SUCCESS;
 }
@@ -200,6 +213,12 @@ YR_API int yr_finalize(void)
     yr_mutex_destroy(&openssl_locks[i]);
 
   OPENSSL_free(openssl_locks);
+  CRYPTO_set_id_callback(NULL);
+  CRYPTO_set_locking_callback(NULL);
+
+  #elif defined(HAVE_WINCRYPT_H)
+
+  CryptReleaseContext(yr_cryptprov, 0);
 
   #endif
 
@@ -256,6 +275,7 @@ YR_API int yr_set_configuration(
   switch (cfgname)
   { // lump all the cases using same types together in one cascade
     case YR_CONFIG_STACK_SIZE:
+    case YR_CONFIG_MAX_STRINGS_PER_RULE:
       yr_cfgs[cfgname].ui32 = *(uint32_t*) src;
       break;
 
@@ -277,6 +297,7 @@ YR_API int yr_get_configuration(
   switch (cfgname)
   { // lump all the cases using same types together in one cascade
     case YR_CONFIG_STACK_SIZE:
+    case YR_CONFIG_MAX_STRINGS_PER_RULE:
       *(uint32_t*) dest = yr_cfgs[cfgname].ui32;
       break;
 

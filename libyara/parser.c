@@ -118,8 +118,10 @@ int yr_parser_emit_with_arg_reloc(
   int64_t* ptr = NULL;
   int result;
 
-  DECLARE_REFERENCE(void*, argument) a;
-  a.argument = argument;
+  DECLARE_REFERENCE(void*, ptr) arg;
+
+  memset(&arg, 0, sizeof(arg));
+  arg.ptr = argument;
 
   result = yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
@@ -130,8 +132,8 @@ int yr_parser_emit_with_arg_reloc(
   if (result == ERROR_SUCCESS)
     result = yr_arena_write_data(
         yyget_extra(yyscanner)->code_arena,
-        &a,
-        sizeof(int64_t),
+        &arg,
+        sizeof(arg),
         (void**) &ptr);
 
   if (result == ERROR_SUCCESS)
@@ -142,7 +144,7 @@ int yr_parser_emit_with_arg_reloc(
         EOL);
 
   if (argument_address != NULL)
-    *argument_address = (void*)ptr;
+    *argument_address = (void*) ptr;
 
   return result;
 }
@@ -289,7 +291,7 @@ int yr_parser_lookup_loop_variable(
 }
 
 
-int _yr_parser_write_string(
+static int _yr_parser_write_string(
     const char* identifier,
     int flags,
     YR_COMPILER* compiler,
@@ -705,6 +707,8 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
     int32_t flags,
     const char* identifier)
 {
+  YR_FIXUP *fixup;
+  YR_INIT_RULE_ARGS *init_rule_args;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   YR_RULE* rule = NULL;
 
@@ -754,19 +758,51 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
   if (compiler->last_result != ERROR_SUCCESS)
     return NULL;
 
-  compiler->last_result = yr_parser_emit_with_arg_reloc(
+  compiler->last_result = yr_parser_emit(
       yyscanner,
       OP_INIT_RULE,
-      rule,
-      NULL,
       NULL);
 
-  if (compiler->last_result == ERROR_SUCCESS)
-    compiler->last_result = yr_hash_table_add(
-        compiler->rules_table,
-        identifier,
-        compiler->current_namespace->name,
-        (void*) rule);
+  if (compiler->last_result != ERROR_SUCCESS)
+    return NULL;
+
+  compiler->last_result = yr_arena_allocate_struct(
+      compiler->code_arena,
+      sizeof(YR_INIT_RULE_ARGS),
+      (void**) &init_rule_args,
+      offsetof(YR_INIT_RULE_ARGS, rule),
+      offsetof(YR_INIT_RULE_ARGS, jmp_addr),
+      EOL);
+
+  if (compiler->last_result != ERROR_SUCCESS)
+    return NULL;
+
+  init_rule_args->rule = rule;
+
+  // jmp_addr holds the address to jump to when we want to skip the code for
+  // the rule. It is iniatialized as NULL at this point because we don't know
+  // the address until emmiting the code for the rule's condition. The address
+  // is set in yr_parser_reduce_rule_declaration_phase_2.
+  init_rule_args->jmp_addr = NULL;
+
+  // Create a fixup entry for the jump and push it in the stack
+  fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
+
+  if (fixup == NULL)
+  {
+    compiler->last_result = ERROR_INSUFFICIENT_MEMORY;
+    return NULL;
+  }
+
+  fixup->address = &(init_rule_args->jmp_addr);
+  fixup->next = compiler->fixup_stack_head;
+  compiler->fixup_stack_head = fixup;
+
+  compiler->last_result = yr_hash_table_add(
+      compiler->rules_table,
+      identifier,
+      compiler->current_namespace->name,
+      (void*) rule);
 
   // Clean strings_table as we are starting to parse a new rule.
   yr_hash_table_clean(compiler->strings_table, NULL);
@@ -779,13 +815,22 @@ int yr_parser_reduce_rule_declaration_phase_2(
     yyscan_t yyscanner,
     YR_RULE* rule)
 {
+  uint32_t max_strings_per_rule;
+  uint32_t strings_in_rule = 0;
+  uint8_t* nop_inst_addr = NULL;
+
+  YR_FIXUP *fixup;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   // Check for unreferenced (unused) strings.
 
   YR_STRING* string = rule->strings;
 
-  while(!STRING_IS_NULL(string))
+  yr_get_configuration(
+      YR_CONFIG_MAX_STRINGS_PER_RULE,
+      (void*) &max_strings_per_rule);
+
+  while (!STRING_IS_NULL(string))
   {
     // Only the heading fragment in a chain of strings (the one with
     // chained_to == NULL) must be referenced. All other fragments
@@ -796,6 +841,14 @@ int yr_parser_reduce_rule_declaration_phase_2(
     {
       yr_compiler_set_error_extra_info(compiler, string->identifier);
       compiler->last_result = ERROR_UNREFERENCED_STRING;
+      return compiler->last_result;
+    }
+
+    strings_in_rule++;
+
+    if (strings_in_rule > max_strings_per_rule) {
+      yr_compiler_set_error_extra_info(compiler, rule->identifier);
+      compiler->last_result = ERROR_TOO_MANY_STRINGS;
       return compiler->last_result;
     }
 
@@ -811,6 +864,24 @@ int yr_parser_reduce_rule_declaration_phase_2(
       rule,
       NULL,
       NULL);
+
+  // Generate a do-nothing instruction (NOP) in order to get its address
+  // and use it as the destination for the OP_INIT_RULE skip jump. We can not
+  // simply use the address of the OP_MATCH_RULE instruction +1 because we
+  // can't be sure that the instruction following the OP_MATCH_RULE is going to
+  // be in the same arena page. As we don't have a reliable way of getting the
+  // address of the next instruction we generate the OP_NOP.
+
+  if (compiler->last_result == ERROR_SUCCESS)
+    compiler->last_result = yr_parser_emit(
+        yyscanner,
+        OP_NOP,
+        &nop_inst_addr);
+
+  fixup = compiler->fixup_stack_head;
+  *(void**)(fixup->address) = (void*) nop_inst_addr;
+  compiler->fixup_stack_head = fixup->next;
+  yr_free(fixup);
 
   return compiler->last_result;
 }
@@ -971,7 +1042,7 @@ YR_META* yr_parser_reduce_meta_declaration(
 }
 
 
-int _yr_parser_valid_module_name(
+static int _yr_parser_valid_module_name(
     SIZED_STRING* module_name)
 {
   if (module_name->length == 0)
@@ -1052,7 +1123,7 @@ int yr_parser_reduce_import(
 }
 
 
-int _yr_parser_operator_to_opcode(
+static int _yr_parser_operator_to_opcode(
     const char* op,
     int expression_type)
 {

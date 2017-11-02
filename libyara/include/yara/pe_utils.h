@@ -54,7 +54,7 @@ typedef struct _IMPORT_EXPORT_FUNCTION
 
 typedef struct _PE
 {
-  uint8_t* data;
+  const uint8_t* data;
   size_t data_size;
 
   union {
@@ -65,7 +65,7 @@ typedef struct _PE
   YR_OBJECT* object;
   IMPORTED_DLL* imported_dlls;
   IMPORT_EXPORT_FUNCTION* exported_functions;
-  
+
   uint32_t resources;
 
 } PE;
@@ -81,7 +81,7 @@ typedef struct _PE
 
 
 PIMAGE_NT_HEADERS32 pe_get_header(
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size);
 
 

@@ -31,12 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "blob.h"
 #include "util.h"
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-#include <fileapi.h>
-#else
-#include <unistd.h>
-#endif
-#include <fcntl.h>
 
 static void test_boolean_operators()
 {
@@ -192,6 +186,34 @@ static void test_arithmetic_operators()
   assert_true_rule(
       "rule test { condition: -0x01 == -1}", NULL);
 
+  assert_true_rule(
+      "rule test { condition: 0o10 == 8 }", NULL);
+
+  assert_true_rule(
+      "rule test { condition: 0o100 == 64 }", NULL);
+
+  assert_true_rule(
+      "rule test { condition: 0o755 == 493 }", NULL);
+
+  assert_error(  // integer too long
+      "rule test { condition: 9223372036854775808 > 0 }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(  // integer too long
+      "rule test { condition: 9007199254740992KB > 0 }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(  // integer too long
+     "rule test { condition: 8796093022208MB > 0 }",
+     ERROR_SYNTAX_ERROR);
+
+  assert_error(  // integer too long
+    "rule test { condition: 0x8000000000000000 > 0 }",
+    ERROR_SYNTAX_ERROR);
+
+  assert_error(  // integer too long
+    "rule test { condition: 0o1000000000000000000000 > 0 }",
+    ERROR_SYNTAX_ERROR);
 }
 
 
@@ -1182,6 +1204,12 @@ void test_re()
 
   assert_regexp_syntax_error("\\xxy");
 
+  // Test case for issue #682
+  assert_true_regexp("(a|\\b)[a]{1,}", "aaaa", "aaaa");
+
+  // Test for integer overflow in repeat interval
+  assert_regexp_syntax_error("a{2977952116}");
+
   assert_error(
       "rule test { strings: $a = /a\\/ condition: $a }",
       ERROR_SYNTAX_ERROR);
@@ -1201,6 +1229,38 @@ void test_re()
         strings: $a = /MZ.{300,}?t/ \
         condition: !a == 314 }",
       PE32_FILE);
+
+  assert_false_rule(
+      "rule test { strings: $a = /abc[^d]/ nocase condition: $a }",
+      "abcd");
+
+  assert_false_rule(
+      "rule test { strings: $a = /abc[^d]/ condition: $a }",
+      "abcd");
+
+  assert_false_rule(
+      "rule test { strings: $a = /abc[^D]/ nocase condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+      "rule test { strings: $a = /abc[^D]/ condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+      "rule test { strings: $a = /abc[^f]/ nocase condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+      "rule test { strings: $a = /abc[^f]/ condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+      "rule test { strings: $a = /abc[^F]/ nocase condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+       "rule test { strings: $a = /abc[^F]/ condition: $a }",
+       "abcd");
 }
 
 
@@ -1386,6 +1446,13 @@ static void test_modules()
   assert_true_rule(
       "import \"tests\" \
        rule test { \
+        condition: tests.integer_array[256] == 256 \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+       rule test { \
         condition: tests.string_array[0] == \"foo\" \
       }",
       NULL);
@@ -1512,6 +1579,16 @@ static void test_modules()
       ERROR_INVALID_MODULE_NAME);
 }
 
+
+static void test_time_module()
+{
+    assert_true_rule(
+        "import \"time\" \
+        rule test { condition: time.now() > 0 }",
+        NULL);
+}
+
+
 #if defined(HASH_MODULE)
 static void test_hash_module()
 {
@@ -1592,58 +1669,11 @@ void test_integer_functions()
 }
 
 
-void test_file_descriptor()
+void test_include_files()
 {
-  YR_COMPILER* compiler = NULL;
-  YR_RULES* rules = NULL;
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-  HANDLE fd = CreateFile("tests/data/true.yar", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
-  if (fd == INVALID_HANDLE_VALUE)
-  {
-    fputs("CreateFile failed", stderr);
-    exit(1);
-  }
-#else
-  int fd = open("tests/data/true.yar", O_RDONLY);
-  if (fd < 0)
-  {
-    perror("open");
-    exit(EXIT_FAILURE);
-  }
-#endif
-  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
-  {
-    perror("yr_compiler_create");
-    exit(EXIT_FAILURE);
-  }
-
-  if (yr_compiler_add_fd(compiler, fd, NULL, NULL) != 0) {
-    perror("yr_compiler_add_fd");
-    exit(EXIT_FAILURE);
-  }
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-  CloseHandle(fd);
-#else
-  close(fd);
-#endif
-
-  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS) {
-    perror("yr_compiler_add_fd");
-    exit(EXIT_FAILURE);
-  }
-
-  if (compiler)
-  {
-    yr_compiler_destroy(compiler);
-  }
-  if (rules)
-  {
-    yr_rules_destroy(rules);
-  }
-
-  return;
+  assert_true_rule(
+    "include \"tests/data/true.yar\" rule t { condition: test }",
+    NULL);
 }
 
 
@@ -1670,9 +1700,10 @@ int main(int argc, char** argv)
   test_for();
   test_re();
   test_filesize();
+  test_include_files();
   // test_compile_file();
   // test_compile_files();
-  // test_include_files();
+
   // test_externals();
   // test_callback();
   // test_compare();
@@ -1687,7 +1718,7 @@ int main(int argc, char** argv)
   test_hash_module();
   #endif
 
-  test_file_descriptor();
+  test_time_module();
 
   yr_finalize();
 

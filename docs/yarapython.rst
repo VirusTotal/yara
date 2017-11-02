@@ -74,6 +74,36 @@ should be accepted in the source files, for example:
 If the source file contains include directives the previous line would raise
 an exception.
 
+If includes are used, a python callback can be set to define a custom source for
+the imported files (by default they are read from disk). This callback function
+is set through the ``include_callback`` optional parameter.
+It receives the following parameters:
+ *``requested_filename``: file requested with 'include'
+ *``filename``: file containing the 'include' directive if applicable, else None
+ *``namespace``: namespace
+And returns the requested rules sources as a single string.
+
+.. code-block:: python
+  import yara
+  import sys
+  if sys.version_info >= (3, 0):
+      import urllib.request as urllib
+  else:
+      import urllib as urllib
+
+  def mycallback(requested_filename, filename, namespace):
+      if requested_filename == 'req.yara':
+          uf = urllib.urlopen('https://pastebin.com/raw/siZ2sMTM')
+          sources = uf.read()
+          if sys.version_info >= (3, 0):
+              sources = str(sources, 'utf-8')
+          return sources
+      else:
+          raise Exception(filename+": Can't fetch "+requested_filename)
+
+  rules = yara.compile(source='include "req.yara" rule r{ condition: true }',
+                      include_callback=mycallback)
+
 If you are using external variables in your rules you must define those
 external variables either while compiling the rules, or while applying the
 rules to some file. To define your variables at the moment of compilation you
@@ -171,11 +201,14 @@ find useful the ``timeout`` argument:
 If the ``match`` function does not finish before the specified number of
 seconds elapsed, a ``TimeoutError`` exception is raised.
 
-You can also specify a callback function when invoking the ``match`` method. The
-provided function will be called for every rule, no matter if matching or not.
-Your callback function should expect a single parameter of dictionary type,
-and should return ``CALLBACK_CONTINUE`` to proceed to the next rule or
-``CALLBACK_ABORT`` to stop applying rules to your data.
+You can also specify a callback function when invoking the ``match`` method. By
+default, the provided function will be called for every rule, no matter if
+matching or not. You can choose when your callback function is called by setting
+the ``which_callbacks`` parameter to one of ``yara.CALLBACK_MATCHES``,
+``yara.CALLBACK_NON_MATCHES`` or ``yara.CALLBACK_ALL``. The default is to use
+``yara.CALLBACK_ALL``. Your callback function should expect a single parameter
+of dictionary type, and should return ``CALLBACK_CONTINUE`` to proceed to the
+next rule or ``CALLBACK_ABORT`` to stop applying rules to your data.
 
 Here is an example:
 
@@ -187,7 +220,7 @@ Here is an example:
     print data
     return yara.CALLBACK_CONTINUE
 
-  matches = rules.match('/foo/bar/my_file', callback=mycallback)
+  matches = rules.match('/foo/bar/my_file', callback=mycallback, which_callbacks=yara.CALLBACK_MATCHES)
 
 The passed dictionary will be something like this:
 
