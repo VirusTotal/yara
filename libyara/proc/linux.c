@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include <fcntl.h>
+#include <inttypes.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
@@ -189,11 +190,11 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   char buffer[256];
-  size_t begin, end;
+  uint64_t begin, end;
 
   if (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
   {
-    sscanf(buffer, "%zx-%zx", &begin, &end);
+    sscanf(buffer, "%"SCNx64"-%"SCNx64, &begin, &end);
 
     context->current_block.base = begin;
     context->current_block.size = end - begin;
