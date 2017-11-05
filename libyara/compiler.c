@@ -1185,7 +1185,7 @@ YR_API char* yr_compiler_get_error_message(
       snprintf(
           buffer,
           buffer_size,
-          "integer overflow in expression \"%s\"",
+          "integer overflow in \"%s\"",
           compiler->last_error_extra_info);
   }
 

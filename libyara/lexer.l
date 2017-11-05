@@ -67,18 +67,30 @@ with noyywrap then we can remove this pragma.
 
 #include "grammar.h"
 
+#define error(error_code) \
+    { \
+      compiler->last_result = error_code; \
+      yyerror(yyscanner, compiler, NULL); \
+      yyterminate(); \
+    }
 
-#define LEX_CHECK_SPACE_OK(data, current_size, max_length) \
+#define syntax_error(error_msg) \
+    { \
+      yr_compiler_set_error_extra_info(compiler, error_msg); \
+      error(ERROR_SYNTAX_ERROR); \
+    }
+
+#define lex_check_space_ok(data, current_size, max_length) \
     if (strlen(data) + current_size >= max_length - 1) \
     { \
       yyerror(yyscanner, compiler, "out of space in lex_buf"); \
       yyterminate(); \
     }
 
-#define YYTEXT_TO_BUFFER \
+#define yytext_to_buffer \
     { \
       char *yptr = yytext; \
-      LEX_CHECK_SPACE_OK(yptr, yyextra->lex_buf_len, LEX_BUF_SIZE); \
+      lex_check_space_ok(yptr, yyextra->lex_buf_len, LEX_BUF_SIZE); \
       while(*yptr) \
       { \
         *yyextra->lex_buf_ptr++ = *yptr++; \
@@ -86,7 +98,7 @@ with noyywrap then we can remove this pragma.
       } \
     }
 
-#define ALLOC_SIZED_STRING(str, str_len) \
+#define alloc_sized_string(str, str_len) \
   SIZED_STRING* str = (SIZED_STRING*) yr_malloc( \
       str_len + sizeof(SIZED_STRING)); \
   if (str == NULL) \
@@ -184,7 +196,7 @@ include[ \t]+\"         {
                         }
 
 
-<include>[^\"]+         { YYTEXT_TO_BUFFER; }
+<include>[^\"]+         { yytext_to_buffer; }
 
 
 <include>\"             {
@@ -291,10 +303,7 @@ $({letter}|{digit}|_)*"*"  {
   yylval->c_string = yr_strdup(yytext);
 
   if (yylval->c_string == NULL)
-  {
-    yyerror(yyscanner, compiler, "not enough memory");
-    yyterminate();
-  }
+    error(ERROR_INSUFFICIENT_MEMORY);
 
   return _STRING_IDENTIFIER_WITH_WILDCARD_;
 }
@@ -305,10 +314,7 @@ $({letter}|{digit}|_)*  {
   yylval->c_string = yr_strdup(yytext);
 
   if (yylval->c_string == NULL)
-  {
-    yyerror(yyscanner, compiler, "not enough memory");
-    yyterminate();
-  }
+    error(ERROR_INSUFFICIENT_MEMORY);
 
   return _STRING_IDENTIFIER_;
 }
@@ -319,10 +325,7 @@ $({letter}|{digit}|_)*  {
   yylval->c_string = yr_strdup(yytext);
 
   if (yylval->c_string == NULL)
-  {
-    yyerror(yyscanner, compiler, "not enough memory");
-    yyterminate();
-  }
+    error(ERROR_INSUFFICIENT_MEMORY);
 
   yylval->c_string[0] = '$'; /* replace # by $*/
   return _STRING_COUNT_;
@@ -334,10 +337,7 @@ $({letter}|{digit}|_)*  {
   yylval->c_string = yr_strdup(yytext);
 
   if (yylval->c_string == NULL)
-  {
-    yyerror(yyscanner, compiler, "not enough memory");
-    yyterminate();
-  }
+    error(ERROR_INSUFFICIENT_MEMORY);
 
   yylval->c_string[0] = '$'; /* replace @ by $*/
   return _STRING_OFFSET_;
@@ -349,10 +349,7 @@ $({letter}|{digit}|_)*  {
   yylval->c_string = yr_strdup(yytext);
 
   if (yylval->c_string == NULL)
-  {
-    yyerror(yyscanner, compiler, "not enough memory");
-    yyterminate();
-  }
+    error(ERROR_INSUFFICIENT_MEMORY);
 
   yylval->c_string[0] = '$'; /* replace ! by $*/
   return _STRING_LENGTH_;
@@ -401,17 +398,12 @@ u?int(8|16|32)(be)? {
 ({letter}|_)({letter}|{digit}|_)*  {
 
   if (strlen(yytext) > 128)
-  {
-    yyerror(yyscanner, compiler, "identifier too long");
-  }
+    syntax_error("identifier too long");
 
   yylval->c_string = yr_strdup(yytext);
 
   if (yylval->c_string == NULL)
-  {
-    yyerror(yyscanner, compiler, "not enough memory");
-    yyterminate();
-  }
+    error(ERROR_INSUFFICIENT_MEMORY);
 
   return _IDENTIFIER_;
 }
@@ -426,16 +418,16 @@ u?int(8|16|32)(be)? {
 
   if (yylval->integer == LLONG_MAX && errno == ERANGE)
   {
-    yyerror(yyscanner, compiler, "integer too long");
-    yyterminate();
+    yr_compiler_set_error_extra_info(compiler, yytext);
+    error(ERROR_INTEGER_OVERFLOW);
   }
 
   if (strstr(yytext, "KB") != NULL)
   {
     if (yylval->integer > LLONG_MAX / 1024)
     {
-      yyerror(yyscanner, compiler, "integer too long");
-      yyterminate();
+      yr_compiler_set_error_extra_info(compiler, yytext);
+      error(ERROR_INTEGER_OVERFLOW);
     }
     yylval->integer *= 1024;
   }
@@ -443,8 +435,8 @@ u?int(8|16|32)(be)? {
   {
     if (yylval->integer > LLONG_MAX / 1048576)
     {
-      yyerror(yyscanner, compiler, "integer too long");
-      yyterminate();
+      yr_compiler_set_error_extra_info(compiler, yytext);
+      error(ERROR_INTEGER_OVERFLOW);
     }
     yylval->integer *= 1048576;
   }
@@ -466,8 +458,8 @@ u?int(8|16|32)(be)? {
 
   if (yylval->integer == LLONG_MAX && errno == ERANGE)
   {
-    yyerror(yyscanner, compiler, "integer too long");
-    yyterminate();
+    yr_compiler_set_error_extra_info(compiler, yytext);
+    error(ERROR_INTEGER_OVERFLOW);
   }
 
   return _NUMBER_;
@@ -482,8 +474,8 @@ u?int(8|16|32)(be)? {
 
   if (yylval->integer == LLONG_MAX && errno == ERANGE)
   {
-    yyerror(yyscanner, compiler, "integer too long");
-    yyterminate();
+    yr_compiler_set_error_extra_info(compiler, yytext);
+    error(ERROR_INTEGER_OVERFLOW);
   }
 
   return _NUMBER_;
@@ -492,7 +484,7 @@ u?int(8|16|32)(be)? {
 
 <str>\"   {     /* saw closing quote - all done */
 
-  ALLOC_SIZED_STRING(s, yyextra->lex_buf_len);
+  alloc_sized_string(s, yyextra->lex_buf_len);
 
   *yyextra->lex_buf_ptr = '\0';
   memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
@@ -506,7 +498,7 @@ u?int(8|16|32)(be)? {
 
 <str>\\t   {
 
-  LEX_CHECK_SPACE_OK("\t", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\t", yyextra->lex_buf_len, LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\t';
   yyextra->lex_buf_len++;
 }
@@ -514,7 +506,7 @@ u?int(8|16|32)(be)? {
 
 <str>\\n   {
 
-  LEX_CHECK_SPACE_OK("\n", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\n", yyextra->lex_buf_len, LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\n';
   yyextra->lex_buf_len++;
 }
@@ -522,7 +514,7 @@ u?int(8|16|32)(be)? {
 
 <str>\\\"   {
 
-  LEX_CHECK_SPACE_OK("\"", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\"", yyextra->lex_buf_len, LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\"';
   yyextra->lex_buf_len++;
 }
@@ -530,7 +522,7 @@ u?int(8|16|32)(be)? {
 
 <str>\\\\   {
 
-  LEX_CHECK_SPACE_OK("\\", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\\", yyextra->lex_buf_len, LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\\';
   yyextra->lex_buf_len++;
 }
@@ -541,25 +533,21 @@ u?int(8|16|32)(be)? {
    int result;
 
    sscanf( yytext + 2, "%x", &result );
-   LEX_CHECK_SPACE_OK("X", yyextra->lex_buf_len, LEX_BUF_SIZE);
+   lex_check_space_ok("X", yyextra->lex_buf_len, LEX_BUF_SIZE);
    *yyextra->lex_buf_ptr++ = result;
    yyextra->lex_buf_len++;
 }
 
 
-<str>[^\\\n\"]+   { YYTEXT_TO_BUFFER; }
+<str>[^\\\n\"]+   { yytext_to_buffer; }
 
 
 <str>\n  {
-
-  yyerror(yyscanner, compiler, "unterminated string");
-  yyterminate();
+  syntax_error("unterminated string");
 }
 
 <str>\\(.|\n) {
-
-  yyerror(yyscanner, compiler, "illegal escape sequence");
-  yyterminate();
+  syntax_error("illegal escape sequence");
 }
 
 
@@ -567,7 +555,7 @@ u?int(8|16|32)(be)? {
 
   if (yyextra->lex_buf_len > 0)
   {
-    ALLOC_SIZED_STRING(s, yyextra->lex_buf_len);
+    alloc_sized_string(s, yyextra->lex_buf_len);
 
     if (yytext[1] == 'i')
       s->flags |= SIZED_STRING_FLAGS_NO_CASE;
@@ -581,8 +569,7 @@ u?int(8|16|32)(be)? {
   }
   else
   {
-    yyerror(yyscanner, compiler, "empty regular expression");
-    yyterminate();
+    syntax_error("empty regular expression");
   }
 
   BEGIN(INITIAL);
@@ -592,7 +579,7 @@ u?int(8|16|32)(be)? {
 
 <regexp>\\\/  {
 
-  LEX_CHECK_SPACE_OK("/", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("/", yyextra->lex_buf_len, LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '/';
   yyextra->lex_buf_len++ ;
 }
@@ -600,13 +587,10 @@ u?int(8|16|32)(be)? {
 
 <regexp>\\. {
 
-  LEX_CHECK_SPACE_OK("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
 
   if (yytext[1] == 0)
-  {
-    yyerror(yyscanner, compiler, "malformed regular expression");
-    yyterminate();
-  }
+    syntax_error("malformed regular expression");
 
   *yyextra->lex_buf_ptr++ = yytext[0];
   *yyextra->lex_buf_ptr++ = yytext[1];
@@ -614,13 +598,11 @@ u?int(8|16|32)(be)? {
 }
 
 
-<regexp>[^/\n\\]+ { YYTEXT_TO_BUFFER; }
+<regexp>[^/\n\\]+ { yytext_to_buffer; }
 
 
 <regexp>\n  {
-
-  yyerror(yyscanner, compiler, "unterminated regular expression");
-  yyterminate();
+  syntax_error("unterminated regular expression");
 }
 
 
@@ -644,7 +626,7 @@ u?int(8|16|32)(be)? {
   // Match hex-digits with whitespace or comments. The latter are stripped
   // out by hex_lexer.l
 
-  ALLOC_SIZED_STRING(s, strlen(yytext));
+  alloc_sized_string(s, strlen(yytext));
 
   strlcpy(s->c_string, yytext, s->length + 1);
   yylval->sized_string = s;
@@ -663,8 +645,7 @@ u?int(8|16|32)(be)? {
   }
   else
   {
-    yyerror(yyscanner, compiler, "non-ascii character");
-    yyterminate();
+    syntax_error("non-ascii character");
   }
 }
 
