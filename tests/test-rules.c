@@ -214,6 +214,23 @@ static void test_arithmetic_operators()
   assert_error(  // integer too long
     "rule test { condition: 0o1000000000000000000000 > 0 }",
     ERROR_SYNTAX_ERROR);
+
+  assert_error(  // integer overflow
+    "rule test { condition: 0x7FFFFFFFFFFFFFFF + 1 > 0 }",
+    ERROR_INTEGER_OVERFLOW);
+
+  assert_error(  // integer overflow
+    "rule test { condition: 9223372036854775807 + 1 > 0 }",
+    ERROR_INTEGER_OVERFLOW);
+
+  assert_error(  // integer overflow
+    "rule test { condition: -9223372036854775807 - 2 > 0 }",
+    ERROR_INTEGER_OVERFLOW);
+
+  assert_error(  // integer overflow
+    "rule test { condition: 0x4000000000000000 * 2 }",
+    ERROR_INTEGER_OVERFLOW);
+
 }
 
 
