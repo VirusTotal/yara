@@ -794,7 +794,7 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
     return NULL;
   }
 
-  fixup->address = &(init_rule_args->jmp_addr);
+  fixup->address = (void*) &(init_rule_args->jmp_addr);
   fixup->next = compiler->fixup_stack_head;
   compiler->fixup_stack_head = fixup;
 
