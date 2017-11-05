@@ -421,6 +421,7 @@ u?int(8|16|32)(be)? {
 
   char *endptr;
 
+  errno = 0;
   yylval->integer = strtoll(yytext, &endptr, 10);
 
   if (yylval->integer == LLONG_MAX && errno == ERANGE)
@@ -459,6 +460,8 @@ u?int(8|16|32)(be)? {
 0x{hexdigit}+  {
 
   char *endptr;
+
+  errno = 0;
   yylval->integer = strtoll(yytext, &endptr, 16);
 
   if (yylval->integer == LLONG_MAX && errno == ERANGE)
@@ -473,6 +476,8 @@ u?int(8|16|32)(be)? {
 0o{octdigit}+  {
 
   char *endptr;
+
+  errno = 0;
   yylval->integer = strtoll(yytext + 2, &endptr, 8);
 
   if (yylval->integer == LLONG_MAX && errno == ERANGE)
