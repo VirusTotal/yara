@@ -801,7 +801,12 @@ static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
       if (re_node->start == 0)
         append_current_leaf_to_node(current_node);
 
-      for (i = 0; i < re_node->start; i++)
+      // In a regexp like /a{10,20}/ the optimal atom is 'aaaa' (assuming that
+      // MAX_ATOM_LENGTH = 4) because the 'a' character must appear at least
+      // 10 times in the matching string. Each call in the loop will append
+      // one 'a' to the atom, so MAX_ATOM_LENGTH iterations are enough.
+
+      for (i = 0; i < yr_min(re_node->start, MAX_ATOM_LENGTH); i++)
       {
         current_node = _yr_atoms_extract_from_re_node(
             re_node->left, atom_tree, current_node);
