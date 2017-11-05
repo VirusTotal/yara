@@ -1773,11 +1773,19 @@ primary_expression
         compiler->last_result = yr_parser_reduce_operation(
             yyscanner, "+", $1, $3);
 
-        fail_if(compiler->last_result != ERROR_SUCCESS);
-
         if ($1.type == EXPRESSION_TYPE_INTEGER &&
             $3.type == EXPRESSION_TYPE_INTEGER)
         {
+          if (!IS_UNDEFINED($1.value.integer) &&
+              !IS_UNDEFINED($3.value.integer) &&
+              $3.value.integer > 0 &&
+              $1.value.integer > INT64_MAX - $3.value.integer)
+          {
+            yr_compiler_set_error_extra_info_fmt(
+                compiler, "%lld + %lld", $1.value.integer, $3.value.integer);
+            compiler->last_result = ERROR_INTEGER_OVERFLOW;
+          }
+
           $$.value.integer = OPERATION(+, $1.value.integer, $3.value.integer);
           $$.type = EXPRESSION_TYPE_INTEGER;
         }
@@ -1785,17 +1793,28 @@ primary_expression
         {
           $$.type = EXPRESSION_TYPE_FLOAT;
         }
+
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
     | primary_expression '-' primary_expression
       {
         compiler->last_result = yr_parser_reduce_operation(
             yyscanner, "-", $1, $3);
 
-        fail_if(compiler->last_result != ERROR_SUCCESS);
-
         if ($1.type == EXPRESSION_TYPE_INTEGER &&
             $3.type == EXPRESSION_TYPE_INTEGER)
         {
+          if (!IS_UNDEFINED($1.value.integer) &&
+              !IS_UNDEFINED($3.value.integer) &&
+              $1.value.integer < 0 &&
+              $3.value.integer > 0 &&
+              $1.value.integer < INT64_MIN + $3.value.integer)
+          {
+            yr_compiler_set_error_extra_info_fmt(
+                compiler, "%lld - %lld", $1.value.integer, $3.value.integer);
+            compiler->last_result = ERROR_INTEGER_OVERFLOW;
+          }
+
           $$.value.integer = OPERATION(-, $1.value.integer, $3.value.integer);
           $$.type = EXPRESSION_TYPE_INTEGER;
         }
@@ -1803,17 +1822,27 @@ primary_expression
         {
           $$.type = EXPRESSION_TYPE_FLOAT;
         }
+
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
     | primary_expression '*' primary_expression
       {
         compiler->last_result = yr_parser_reduce_operation(
             yyscanner, "*", $1, $3);
 
-        fail_if(compiler->last_result != ERROR_SUCCESS);
-
         if ($1.type == EXPRESSION_TYPE_INTEGER &&
             $3.type == EXPRESSION_TYPE_INTEGER)
         {
+          if (!IS_UNDEFINED($1.value.integer) &&
+              !IS_UNDEFINED($3.value.integer) &&
+              $3.value.integer != 0 &&
+              $1.value.integer > INT64_MAX / $3.value.integer)
+          {
+            yr_compiler_set_error_extra_info_fmt(
+                compiler, "%lld * %lld", $1.value.integer, $3.value.integer);
+            compiler->last_result = ERROR_INTEGER_OVERFLOW;
+          }
+
           $$.value.integer = OPERATION(*, $1.value.integer, $3.value.integer);
           $$.type = EXPRESSION_TYPE_INTEGER;
         }
@@ -1821,13 +1850,13 @@ primary_expression
         {
           $$.type = EXPRESSION_TYPE_FLOAT;
         }
+
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
     | primary_expression '\\' primary_expression
       {
         compiler->last_result = yr_parser_reduce_operation(
             yyscanner, "\\", $1, $3);
-
-        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         if ($1.type == EXPRESSION_TYPE_INTEGER &&
             $3.type == EXPRESSION_TYPE_INTEGER)
@@ -1840,13 +1869,14 @@ primary_expression
           else
           {
             compiler->last_result = ERROR_DIVISION_BY_ZERO;
-            fail_if(compiler->last_result != ERROR_SUCCESS);
           }
         }
         else
         {
           $$.type = EXPRESSION_TYPE_FLOAT;
         }
+
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
     | primary_expression '%' primary_expression
       {

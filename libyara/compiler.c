@@ -1181,6 +1181,12 @@ YR_API char* yr_compiler_get_error_message(
           compiler->last_error_extra_info,
           max_strings_per_rule);
       break;
+    case ERROR_INTEGER_OVERFLOW:
+      snprintf(
+          buffer,
+          buffer_size,
+          "integer overflow in expression \"%s\"",
+          compiler->last_error_extra_info);
   }
 
   return buffer;
