@@ -1684,9 +1684,11 @@ void test_include_files()
 void test_process_scan()
 {
   int pid = fork();
-  int status;
+  int status = 0;
   int matches = 0;
   YR_RULES* rules;
+  int rc1, rc2;
+
   if (pid == 0)
   {
     /* The string should appear somewhere in the shell's process space. */
@@ -1705,12 +1707,35 @@ void test_process_scan()
       condition:\
         all of them\
     }", &rules) == ERROR_SUCCESS);
-  assert(yr_rules_scan_proc(rules, pid, 0,
-          count_matches, &matches, 0) == ERROR_SUCCESS);
-  assert(matches > 0);
+  rc1 = yr_rules_scan_proc(rules, pid, 0, count_matches, &matches, 0);
 
-  waitpid(pid, &status, 0);
-  assert(status == 0);
+  rc2 = waitpid(pid, &status, 0);
+  if (rc2 == -1)
+  {
+    perror("waitpid");
+    exit(EXIT_FAILURE);
+  }
+  if (status != 0)
+  {
+    fprintf(stderr, "Scanned process exited with status %d\n", status);
+    exit(EXIT_FAILURE);
+  }
+
+  switch (rc1) {
+  case ERROR_SUCCESS:
+    if (matches == 0)
+    {
+      fputs("Found no matches", stderr);
+      exit(EXIT_FAILURE);
+    }
+    break;
+  case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
+    fputs("Could not attach to process, ignoring this error", stderr);
+    break;
+  default:
+    fprintf(stderr, "yr_rules_scan_proc: Got unexpected error %d\n", rc1);
+    exit(EXIT_FAILURE);
+  }
 }
 
 
