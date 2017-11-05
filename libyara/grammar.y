@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <limits.h>
 #include <stddef.h>
+#include <inttypes.h>
 
 
 #include <yara/integers.h>
@@ -1782,7 +1783,11 @@ primary_expression
               $1.value.integer > INT64_MAX - $3.value.integer)
           {
             yr_compiler_set_error_extra_info_fmt(
-                compiler, "%lld + %lld", $1.value.integer, $3.value.integer);
+                compiler,
+                "%" PRId64 " + %" PRId64,
+                $1.value.integer,
+                $3.value.integer);
+
             compiler->last_result = ERROR_INTEGER_OVERFLOW;
           }
 
