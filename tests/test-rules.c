@@ -27,6 +27,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
 #include <yara.h>
 #include "blob.h"
 #include "util.h"
@@ -1694,6 +1698,39 @@ void test_include_files()
 }
 
 
+void test_process_scan()
+{
+  int pid = fork();
+  int status;
+  int matches = 0;
+  YR_RULES* rules;
+  if (pid == 0)
+  {
+    /* The string should appear somewhere in the shell's process space. */
+    if (execl("/bin/sh", "sh", "-c", "VAR='Hello, world!'; sleep 5", NULL) == -1)
+      exit(1);
+  }
+  assert(pid > 0);
+
+  /* Give child process time to initialize */
+  sleep(1);
+
+  assert( compile_rule("\
+    rule test {\
+      strings:\
+        $a = { 48 65 6c 6c 6f 2c 20 77 6f 72 6c 64 21 }\
+      condition:\
+        all of them\
+    }", &rules) == ERROR_SUCCESS);
+  assert(yr_rules_scan_proc(rules, pid, 0,
+          count_matches, &matches, 0) == ERROR_SUCCESS);
+  assert(matches > 0);
+
+  waitpid(pid, &status, 0);
+  assert(status == 0);
+}
+
+
 int main(int argc, char** argv)
 {
   yr_initialize();
@@ -1730,6 +1767,10 @@ int main(int argc, char** argv)
   // test_string_io();
   test_entrypoint();
   test_global_rules();
+
+  #if HAVE_SCAN_PROC_IMPL == 1
+  test_process_scan();
+  #endif
 
   #if defined(HASH_MODULE)
   test_hash_module();
