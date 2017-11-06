@@ -69,7 +69,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 %}
 
-%name-prefix="re_yy"
+%name-prefix "re_yy"
 %pure-parser
 
 %parse-param {void *yyscanner}
