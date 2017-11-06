@@ -74,7 +74,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 %}
 
-%name-prefix="hex_yy"
+%name-prefix "hex_yy"
 %pure-parser
 
 %parse-param {void *yyscanner}
