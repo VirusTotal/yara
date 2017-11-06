@@ -109,7 +109,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // %debug
 
-%name-prefix="yara_yy"
+%name-prefix "yara_yy"
 %pure-parser
 %parse-param {void *yyscanner}
 %parse-param {YR_COMPILER* compiler}
