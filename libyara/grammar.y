@@ -1790,9 +1790,11 @@ primary_expression
 
             compiler->last_result = ERROR_INTEGER_OVERFLOW;
           }
-
-          $$.value.integer = OPERATION(+, $1.value.integer, $3.value.integer);
-          $$.type = EXPRESSION_TYPE_INTEGER;
+          else
+          {
+            $$.value.integer = OPERATION(+, $1.value.integer, $3.value.integer);
+            $$.type = EXPRESSION_TYPE_INTEGER;
+          }
         }
         else
         {
@@ -1823,9 +1825,11 @@ primary_expression
 
             compiler->last_result = ERROR_INTEGER_OVERFLOW;
           }
-
-          $$.value.integer = OPERATION(-, $1.value.integer, $3.value.integer);
-          $$.type = EXPRESSION_TYPE_INTEGER;
+          else
+          {
+            $$.value.integer = OPERATION(-, $1.value.integer, $3.value.integer);
+            $$.type = EXPRESSION_TYPE_INTEGER;
+          }
         }
         else
         {
@@ -1855,9 +1859,11 @@ primary_expression
 
             compiler->last_result = ERROR_INTEGER_OVERFLOW;
           }
-
-          $$.value.integer = OPERATION(*, $1.value.integer, $3.value.integer);
-          $$.type = EXPRESSION_TYPE_INTEGER;
+          else
+          {
+            $$.value.integer = OPERATION(*, $1.value.integer, $3.value.integer);
+            $$.type = EXPRESSION_TYPE_INTEGER;
+          }
         }
         else
         {
