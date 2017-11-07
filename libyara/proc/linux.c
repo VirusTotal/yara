@@ -27,6 +27,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#if defined(USE_LINUX_PROC)
+
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 
@@ -217,3 +219,5 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
 
   return yr_process_get_next_memory_block(iterator);
 }
+
+#endif

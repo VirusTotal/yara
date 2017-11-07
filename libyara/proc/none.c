@@ -27,6 +27,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#if defined(USE_NO_PROC)
+
 #include <yara/error.h>
 #include <yara/proc.h>
 
@@ -60,3 +62,5 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
 {
   return NULL;
 }
+
+#endif
