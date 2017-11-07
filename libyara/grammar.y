@@ -35,7 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <limits.h>
 #include <stddef.h>
-#include <stdint.h>
 
 #include <yara/integers.h>
 #include <yara/utils.h>
