@@ -71,7 +71,6 @@ with noyywrap then we can remove this pragma.
     { \
       compiler->last_result = error_code; \
       yyerror(yyscanner, compiler, NULL); \
-      yyterminate(); \
     }
 
 #define syntax_error(error_msg) \
