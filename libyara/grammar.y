@@ -1775,10 +1775,14 @@ primary_expression
         if ($1.type == EXPRESSION_TYPE_INTEGER &&
             $3.type == EXPRESSION_TYPE_INTEGER)
         {
-          if (!IS_UNDEFINED($1.value.integer) &&
-              !IS_UNDEFINED($3.value.integer) &&
-              $3.value.integer > 0 &&
-              $1.value.integer > INT64_MAX - $3.value.integer)
+          int64_t i1 = $1.value.integer;
+          int64_t i2 = $3.value.integer;
+
+          if (!IS_UNDEFINED(i1) && !IS_UNDEFINED(i2) &&
+              (
+                (i2 > 0 && i1 > INT64_MAX - i2) ||
+                (i2 < 0 && i1 < INT64_MIN - i2)
+              ))
           {
             yr_compiler_set_error_extra_info_fmt(
                 compiler,
@@ -1809,11 +1813,14 @@ primary_expression
         if ($1.type == EXPRESSION_TYPE_INTEGER &&
             $3.type == EXPRESSION_TYPE_INTEGER)
         {
-          if (!IS_UNDEFINED($1.value.integer) &&
-              !IS_UNDEFINED($3.value.integer) &&
-              $1.value.integer < 0 &&
-              $3.value.integer > 0 &&
-              $1.value.integer < INT64_MIN + $3.value.integer)
+          int64_t i1 = $1.value.integer;
+          int64_t i2 = $3.value.integer;
+
+          if (!IS_UNDEFINED(i1) && !IS_UNDEFINED(i2) &&
+              (
+                (i2 < 0 && i1 > INT64_MAX + i2) ||
+                (i2 > 0 && i1 < INT64_MIN + i2)
+              ))
           {
             yr_compiler_set_error_extra_info_fmt(
                 compiler,
@@ -1844,10 +1851,13 @@ primary_expression
         if ($1.type == EXPRESSION_TYPE_INTEGER &&
             $3.type == EXPRESSION_TYPE_INTEGER)
         {
-          if (!IS_UNDEFINED($1.value.integer) &&
-              !IS_UNDEFINED($3.value.integer) &&
-              $3.value.integer != 0 &&
-              $1.value.integer > INT64_MAX / $3.value.integer)
+          int64_t i1 = $1.value.integer;
+          int64_t i2 = $3.value.integer;
+
+          if (!IS_UNDEFINED(i1) && !IS_UNDEFINED(i2) &&
+              (
+                llabs(i1) > INT64_MAX / llabs(i2)
+              ))
           {
             yr_compiler_set_error_extra_info_fmt(
                 compiler,

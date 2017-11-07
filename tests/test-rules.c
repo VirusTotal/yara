@@ -188,6 +188,15 @@ static void test_arithmetic_operators()
       "rule test { condition: 1--1 == 2}", NULL);
 
   assert_true_rule(
+      "rule test { condition: 2 * -2 == -4}", NULL);
+
+  assert_true_rule(
+      "rule test { condition: -4 * 2 == -8}", NULL);
+
+  assert_true_rule(
+      "rule test { condition: -4 * -4 == 16}", NULL);
+
+  assert_true_rule(
       "rule test { condition: -0x01 == -1}", NULL);
 
   assert_true_rule(
@@ -201,40 +210,63 @@ static void test_arithmetic_operators()
 
   assert_error(  // integer too long
       "rule test { condition: 9223372036854775808 > 0 }",
-      ERROR_SYNTAX_ERROR);
+      ERROR_INTEGER_OVERFLOW);
 
   assert_error(  // integer too long
       "rule test { condition: 9007199254740992KB > 0 }",
-      ERROR_SYNTAX_ERROR);
+      ERROR_INTEGER_OVERFLOW);
 
   assert_error(  // integer too long
-     "rule test { condition: 8796093022208MB > 0 }",
-     ERROR_SYNTAX_ERROR);
+      "rule test { condition: 8796093022208MB > 0 }",
+      ERROR_INTEGER_OVERFLOW);
 
   assert_error(  // integer too long
-    "rule test { condition: 0x8000000000000000 > 0 }",
-    ERROR_SYNTAX_ERROR);
+     "rule test { condition: 0x8000000000000000 > 0 }",
+     ERROR_INTEGER_OVERFLOW);
 
   assert_error(  // integer too long
-    "rule test { condition: 0o1000000000000000000000 > 0 }",
-    ERROR_SYNTAX_ERROR);
+     "rule test { condition: 0o1000000000000000000000 > 0 }",
+     ERROR_INTEGER_OVERFLOW);
 
   assert_error(  // integer overflow
-    "rule test { condition: 0x7FFFFFFFFFFFFFFF + 1 > 0 }",
-    ERROR_INTEGER_OVERFLOW);
+     "rule test { condition: 0x7FFFFFFFFFFFFFFF + 1 > 0 }",
+     ERROR_INTEGER_OVERFLOW);
 
   assert_error(  // integer overflow
-    "rule test { condition: 9223372036854775807 + 1 > 0 }",
-    ERROR_INTEGER_OVERFLOW);
+     "rule test { condition: 9223372036854775807 + 1 > 0 }",
+     ERROR_INTEGER_OVERFLOW);
 
   assert_error(  // integer overflow
-    "rule test { condition: -9223372036854775807 - 2 > 0 }",
-    ERROR_INTEGER_OVERFLOW);
+     "rule test { condition: -9223372036854775807 - 2 > 0 }",
+     ERROR_INTEGER_OVERFLOW);
 
   assert_error(  // integer overflow
-    "rule test { condition: 0x4000000000000000 * 2 }",
-    ERROR_INTEGER_OVERFLOW);
+     "rule test { condition: -2 + -9223372036854775807 > 0 }",
+     ERROR_INTEGER_OVERFLOW);
 
+  assert_error(  // integer overflow
+     "rule test { condition: 1 - -9223372036854775807 > 0 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(  // integer overflow
+     "rule test { condition: 0x4000000000000000 * 2 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(  // integer overflow
+     "rule test { condition: 4611686018427387904 * 2 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(  // integer overflow
+     "rule test { condition: 4611686018427387904 * -2 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(  // integer overflow
+     "rule test { condition: -4611686018427387904 * 2 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(  // integer overflow
+     "rule test { condition: -4611686018427387904 * -2 }",
+     ERROR_INTEGER_OVERFLOW);
 }
 
 
