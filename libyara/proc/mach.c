@@ -27,6 +27,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#if defined(USE_MACH_PROC)
+
 #include <mach/mach.h>
 #include <mach/mach_vm.h>
 #include <mach/vm_region.h>
@@ -166,3 +168,5 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
 
   return yr_process_get_next_memory_block(iterator);
 }
+
+#endif
