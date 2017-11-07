@@ -77,8 +77,6 @@
 #include <string.h>
 #include <limits.h>
 #include <stddef.h>
-#include <inttypes.h>
-
 
 #include <yara/integers.h>
 #include <yara/utils.h>
