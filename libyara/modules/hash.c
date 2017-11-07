@@ -29,21 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../crypto.h"
 
-#if _WIN32 || __CYGWIN__
-
-#ifndef PRIu64
-#define PRIu64 "%I64d"
-#endif
-
-#ifndef PRIx64
-#define PRIx64 "%I64x"
-#endif
-
-#else
-#include <inttypes.h>
-#endif
-
-
 #include <yara/mem.h>
 #include <yara/modules.h>
 
