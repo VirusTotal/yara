@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <stddef.h>
 
 #include <yara/integers.h>
@@ -48,6 +49,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/lexer.h>
 #include <yara/parser.h>
 
+#if defined(_MSC_VER)
+#define llabs _abs64
+#endif
 
 #define YYERROR_VERBOSE
 
