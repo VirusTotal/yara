@@ -99,13 +99,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <re_node> alternatives
 %type <re_node> range
 
-%destructor { yr_re_node_destroy($$); } tokens
-%destructor { yr_re_node_destroy($$); } token_sequence
-%destructor { yr_re_node_destroy($$); } token_or_range
-%destructor { yr_re_node_destroy($$); } token
-%destructor { yr_re_node_destroy($$); } byte
-%destructor { yr_re_node_destroy($$); } alternatives
-%destructor { yr_re_node_destroy($$); } range
+%destructor { yr_re_node_destroy($$); $$ = NULL; } tokens
+%destructor { yr_re_node_destroy($$); $$ = NULL; } token_sequence
+%destructor { yr_re_node_destroy($$); $$ = NULL; } token_or_range
+%destructor { yr_re_node_destroy($$); $$ = NULL; } token
+%destructor { yr_re_node_destroy($$); $$ = NULL; } byte
+%destructor { yr_re_node_destroy($$); $$ = NULL; } alternatives
+%destructor { yr_re_node_destroy($$); $$ = NULL; } range
 
 %%
 

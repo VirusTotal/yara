@@ -199,18 +199,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <c_string> arguments
 %type <c_string> arguments_list
 
-%destructor { yr_free($$); } _IDENTIFIER_
-%destructor { yr_free($$); } _STRING_COUNT_
-%destructor { yr_free($$); } _STRING_OFFSET_
-%destructor { yr_free($$); } _STRING_LENGTH_
-%destructor { yr_free($$); } _STRING_IDENTIFIER_
-%destructor { yr_free($$); } _STRING_IDENTIFIER_WITH_WILDCARD_
-%destructor { yr_free($$); } _TEXT_STRING_
-%destructor { yr_free($$); } _HEX_STRING_
-%destructor { yr_free($$); } _REGEXP_
+%destructor { yr_free($$); $$ = NULL; } _IDENTIFIER_
+%destructor { yr_free($$); $$ = NULL; } _STRING_COUNT_
+%destructor { yr_free($$); $$ = NULL; } _STRING_OFFSET_
+%destructor { yr_free($$); $$ = NULL; } _STRING_LENGTH_
+%destructor { yr_free($$); $$ = NULL; } _STRING_IDENTIFIER_
+%destructor { yr_free($$); $$ = NULL; } _STRING_IDENTIFIER_WITH_WILDCARD_
+%destructor { yr_free($$); $$ = NULL; } _TEXT_STRING_
+%destructor { yr_free($$); $$ = NULL; } _HEX_STRING_
+%destructor { yr_free($$); $$ = NULL; } _REGEXP_
 
-%destructor { yr_free($$); } arguments
-%destructor { yr_free($$); } arguments_list
+%destructor { yr_free($$); $$ = NULL; } arguments
+%destructor { yr_free($$); $$ = NULL; } arguments_list
 
 %union {
   EXPRESSION      expression;

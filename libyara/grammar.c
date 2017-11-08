@@ -1343,67 +1343,67 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *yyscanner, Y
     {
           case 10: /* _IDENTIFIER_  */
 #line 202 "grammar.y" /* yacc.c:1257  */
-      { yr_free(((*yyvaluep).c_string)); }
+      { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
 #line 1348 "grammar.c" /* yacc.c:1257  */
         break;
 
     case 11: /* _STRING_IDENTIFIER_  */
 #line 206 "grammar.y" /* yacc.c:1257  */
-      { yr_free(((*yyvaluep).c_string)); }
+      { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
 #line 1354 "grammar.c" /* yacc.c:1257  */
         break;
 
     case 12: /* _STRING_COUNT_  */
 #line 203 "grammar.y" /* yacc.c:1257  */
-      { yr_free(((*yyvaluep).c_string)); }
+      { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
 #line 1360 "grammar.c" /* yacc.c:1257  */
         break;
 
     case 13: /* _STRING_OFFSET_  */
 #line 204 "grammar.y" /* yacc.c:1257  */
-      { yr_free(((*yyvaluep).c_string)); }
+      { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
 #line 1366 "grammar.c" /* yacc.c:1257  */
         break;
 
     case 14: /* _STRING_LENGTH_  */
 #line 205 "grammar.y" /* yacc.c:1257  */
-      { yr_free(((*yyvaluep).c_string)); }
+      { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
 #line 1372 "grammar.c" /* yacc.c:1257  */
         break;
 
     case 15: /* _STRING_IDENTIFIER_WITH_WILDCARD_  */
 #line 207 "grammar.y" /* yacc.c:1257  */
-      { yr_free(((*yyvaluep).c_string)); }
+      { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
 #line 1378 "grammar.c" /* yacc.c:1257  */
         break;
 
     case 19: /* _TEXT_STRING_  */
 #line 208 "grammar.y" /* yacc.c:1257  */
-      { yr_free(((*yyvaluep).sized_string)); }
+      { yr_free(((*yyvaluep).sized_string)); ((*yyvaluep).sized_string) = NULL; }
 #line 1384 "grammar.c" /* yacc.c:1257  */
         break;
 
     case 20: /* _HEX_STRING_  */
 #line 209 "grammar.y" /* yacc.c:1257  */
-      { yr_free(((*yyvaluep).sized_string)); }
+      { yr_free(((*yyvaluep).sized_string)); ((*yyvaluep).sized_string) = NULL; }
 #line 1390 "grammar.c" /* yacc.c:1257  */
         break;
 
     case 21: /* _REGEXP_  */
 #line 210 "grammar.y" /* yacc.c:1257  */
-      { yr_free(((*yyvaluep).sized_string)); }
+      { yr_free(((*yyvaluep).sized_string)); ((*yyvaluep).sized_string) = NULL; }
 #line 1396 "grammar.c" /* yacc.c:1257  */
         break;
 
     case 94: /* arguments  */
 #line 212 "grammar.y" /* yacc.c:1257  */
-      { yr_free(((*yyvaluep).c_string)); }
+      { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
 #line 1402 "grammar.c" /* yacc.c:1257  */
         break;
 
     case 95: /* arguments_list  */
 #line 213 "grammar.y" /* yacc.c:1257  */
-      { yr_free(((*yyvaluep).c_string)); }
+      { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
 #line 1408 "grammar.c" /* yacc.c:1257  */
         break;
 

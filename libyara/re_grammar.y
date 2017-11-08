@@ -101,11 +101,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 %type <re_node>  alternative concatenation repeat single
 
-%destructor { yr_free($$); } _CLASS_
-%destructor { yr_re_node_destroy($$); } alternative
-%destructor { yr_re_node_destroy($$); } concatenation
-%destructor { yr_re_node_destroy($$); } repeat
-%destructor { yr_re_node_destroy($$); } single
+%destructor { yr_free($$); $$ = NULL; } _CLASS_
+%destructor { yr_re_node_destroy($$); $$ = NULL; } alternative
+%destructor { yr_re_node_destroy($$); $$ = NULL; } concatenation
+%destructor { yr_re_node_destroy($$); $$ = NULL; } repeat
+%destructor { yr_re_node_destroy($$); $$ = NULL; } single
 
 %%
 
