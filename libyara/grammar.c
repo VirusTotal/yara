@@ -3594,7 +3594,7 @@ yyreduce:
 
           if (!IS_UNDEFINED(i1) && !IS_UNDEFINED(i2) &&
               (
-                llabs(i1) > INT64_MAX / llabs(i2)
+                i2 != 0 && llabs(i1) > INT64_MAX / llabs(i2)
               ))
           {
             yr_compiler_set_error_extra_info_fmt(
