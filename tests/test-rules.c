@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <yara.h>
 #include "blob.h"
@@ -1744,7 +1745,7 @@ void test_process_scan()
   if (pid == 0)
   {
     /* The string should appear somewhere in the shell's process space. */
-    if (execl("/bin/sh", "sh", "-c", "VAR='Hello, world!'; sleep 5", NULL) == -1)
+    if (execl("/bin/sh", "/bin/sh", "-c", "VAR='Hello, world!'; sleep 5; true", NULL) == -1)
       exit(1);
   }
   assert(pid > 0);
@@ -1760,6 +1761,7 @@ void test_process_scan()
         all of them\
     }", &rules) == ERROR_SUCCESS);
   rc1 = yr_rules_scan_proc(rules, pid, 0, count_matches, &matches, 0);
+  kill(pid, SIGALRM);
 
   rc2 = waitpid(pid, &status, 0);
   if (rc2 == -1)
@@ -1767,9 +1769,9 @@ void test_process_scan()
     perror("waitpid");
     exit(EXIT_FAILURE);
   }
-  if (status != 0)
+  if (status != SIGALRM)
   {
-    fprintf(stderr, "Scanned process exited with status %d\n", status);
+    fprintf(stderr, "Scanned process exited with unexpected status %d\n", status);
     exit(EXIT_FAILURE);
   }
 
@@ -1777,7 +1779,7 @@ void test_process_scan()
   case ERROR_SUCCESS:
     if (matches == 0)
     {
-      fputs("Found no matches", stderr);
+      fputs("Found no matches\n", stderr);
       exit(EXIT_FAILURE);
     }
     break;
