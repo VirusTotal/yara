@@ -1026,43 +1026,43 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *yyscanner, H
     {
           case 16: /* tokens  */
 #line 102 "hex_grammar.y" /* yacc.c:1257  */
-      { yr_re_node_destroy(((*yyvaluep).re_node)); }
+      { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
 #line 1031 "hex_grammar.c" /* yacc.c:1257  */
         break;
 
     case 17: /* token_sequence  */
 #line 103 "hex_grammar.y" /* yacc.c:1257  */
-      { yr_re_node_destroy(((*yyvaluep).re_node)); }
+      { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
 #line 1037 "hex_grammar.c" /* yacc.c:1257  */
         break;
 
     case 18: /* token_or_range  */
 #line 104 "hex_grammar.y" /* yacc.c:1257  */
-      { yr_re_node_destroy(((*yyvaluep).re_node)); }
+      { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
 #line 1043 "hex_grammar.c" /* yacc.c:1257  */
         break;
 
     case 19: /* token  */
 #line 105 "hex_grammar.y" /* yacc.c:1257  */
-      { yr_re_node_destroy(((*yyvaluep).re_node)); }
+      { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
 #line 1049 "hex_grammar.c" /* yacc.c:1257  */
         break;
 
     case 21: /* range  */
 #line 108 "hex_grammar.y" /* yacc.c:1257  */
-      { yr_re_node_destroy(((*yyvaluep).re_node)); }
+      { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
 #line 1055 "hex_grammar.c" /* yacc.c:1257  */
         break;
 
     case 22: /* alternatives  */
 #line 107 "hex_grammar.y" /* yacc.c:1257  */
-      { yr_re_node_destroy(((*yyvaluep).re_node)); }
+      { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
 #line 1061 "hex_grammar.c" /* yacc.c:1257  */
         break;
 
     case 23: /* byte  */
 #line 106 "hex_grammar.y" /* yacc.c:1257  */
-      { yr_re_node_destroy(((*yyvaluep).re_node)); }
+      { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
 #line 1067 "hex_grammar.c" /* yacc.c:1257  */
         break;
 
