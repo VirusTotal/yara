@@ -420,15 +420,17 @@ u?int(8|16|32)(be)? {
     yr_compiler_set_error_extra_info(compiler, yytext);
     error(ERROR_INTEGER_OVERFLOW);
   }
-
-  if (strstr(yytext, "KB") != NULL)
+  else if (strstr(yytext, "KB") != NULL)
   {
     if (yylval->integer > LLONG_MAX / 1024)
     {
       yr_compiler_set_error_extra_info(compiler, yytext);
       error(ERROR_INTEGER_OVERFLOW);
     }
-    yylval->integer *= 1024;
+    else
+    {
+      yylval->integer *= 1024;
+    }
   }
   else if (strstr(yytext, "MB") != NULL)
   {
@@ -437,7 +439,10 @@ u?int(8|16|32)(be)? {
       yr_compiler_set_error_extra_info(compiler, yytext);
       error(ERROR_INTEGER_OVERFLOW);
     }
-    yylval->integer *= 1048576;
+    else
+    {
+      yylval->integer *= 1048576;
+    }
   }
 
   return _NUMBER_;
