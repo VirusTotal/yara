@@ -71,6 +71,7 @@ with noyywrap then we can remove this pragma.
     { \
       compiler->last_result = error_code; \
       yyerror(yyscanner, compiler, NULL); \
+      yyterminate(); \
     }
 
 #define syntax_error(error_msg) \
@@ -411,15 +412,12 @@ u?int(8|16|32)(be)? {
 ({letter}|_)({letter}|{digit}|_)*  {
 
   if (strlen(yytext) > 128)
-  {
     syntax_error("identifier too long");
-  }
-  else
-  {
-    yylval->c_string = yr_strdup(yytext);
-    if (yylval->c_string == NULL)
-      error(ERROR_INSUFFICIENT_MEMORY);
-  }
+
+  yylval->c_string = yr_strdup(yytext);
+
+  if (yylval->c_string == NULL)
+    error(ERROR_INSUFFICIENT_MEMORY);
 
   return _IDENTIFIER_;
 }
@@ -566,6 +564,7 @@ u?int(8|16|32)(be)? {
 <str>\n  {
   syntax_error("unterminated string");
 }
+
 
 <str>\\(.|\n) {
   syntax_error("illegal escape sequence");
