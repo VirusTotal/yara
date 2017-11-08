@@ -29,17 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(USE_LINUX_PROC)
 
-#include <sys/ptrace.h>
-#include <sys/wait.h>
-
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || \
-    defined(__OpenBSD__) || defined(__MACH__)
-#else
-#define PTRACE_ATTACH PT_ATTACH
-#define PTRACE_DETACH PT_DETACH
-#define _XOPEN_SOURCE 500
-#endif
-
 #include <fcntl.h>
 #include <inttypes.h>
 #include <unistd.h>
@@ -47,6 +36,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <errno.h>
+
+#if defined(__NetBSD__)
+#define PTRACE_ATTACH PT_ATTACH
+#define PTRACE_DETACH PT_DETACH
+#define _XOPEN_SOURCE 500
+#endif
 
 #include <yara/error.h>
 #include <yara/proc.h>

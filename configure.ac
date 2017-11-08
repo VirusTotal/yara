@@ -39,7 +39,7 @@ case $host_os in
              proc_interface=mach ;;
     mingw*) CFLAGS="$CFLAGS -DUSE_WINDOWS_PROC"
             proc_interface=windows ;;
-    linux*)
+    linux*|netbsd*)
             CFLAGS="$CFLAGS -DUSE_LINUX_PROC"
             proc_interface=linux ;;
     freebsd*)
