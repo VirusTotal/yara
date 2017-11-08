@@ -39,12 +39,15 @@ case $host_os in
              proc_interface=mach ;;
     mingw*) CFLAGS="$CFLAGS -DUSE_WINDOWS_PROC"
             proc_interface=windows ;;
-    linux*|openbsd*)
+    linux*)
             CFLAGS="$CFLAGS -DUSE_LINUX_PROC"
             proc_interface=linux ;;
     freebsd*)
             CFLAGS="$CFLAGS -DUSE_FREEBSD_PROC"
             proc_interface=freebsd ;;
+    openbsd*)
+            CFLAGS="$CFLAGS -DUSE_OPENBSD_PROC"
+            proc_interface=openbsd ;;
     *)      proc_interface=none ;;
 esac
 
@@ -223,6 +226,7 @@ AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
 AM_CONDITIONAL([USE_WINDOWS_PROC], [test x$proc_interface = xwindows ])
 AM_CONDITIONAL([USE_LINUX_PROC], [test x$proc_interface = xlinux ])
 AM_CONDITIONAL([USE_FREEBSD_PROC], [test x$proc_interface = xfreebsd ])
+AM_CONDITIONAL([USE_OPENBSD_PROC], [test x$proc_interface = xopenbsd ])
 AM_CONDITIONAL([USE_MACH_PROC], [test x$proc_interface = xmach ])
 AM_CONDITIONAL([USE_NO_PROC], [test x$proc_interface = xnone ])
 AS_IF(

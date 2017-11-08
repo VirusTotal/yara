@@ -160,6 +160,10 @@ if USE_FREEBSD_PROC
 libyara_la_SOURCES += proc/freebsd.c
 endif
 
+if USE_OPENBSD_PROC
+libyara_la_SOURCES += proc/openbsd.c
+endif
+
 if USE_MACH_PROC
 libyara_la_SOURCES += proc/mach.c
 endif
