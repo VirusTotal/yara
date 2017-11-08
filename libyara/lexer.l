@@ -293,7 +293,6 @@ include[ \t]+\"         {
   {
     yyterminate();
   }
-
 }
 
 
@@ -324,9 +323,14 @@ $({letter}|{digit}|_)*  {
   yylval->c_string = yr_strdup(yytext);
 
   if (yylval->c_string == NULL)
+  {
     error(ERROR_INSUFFICIENT_MEMORY);
+  }
+  else
+  {
+    yylval->c_string[0] = '$'; /* replace # by $*/
+  }
 
-  yylval->c_string[0] = '$'; /* replace # by $*/
   return _STRING_COUNT_;
 }
 
@@ -336,9 +340,14 @@ $({letter}|{digit}|_)*  {
   yylval->c_string = yr_strdup(yytext);
 
   if (yylval->c_string == NULL)
+  {
     error(ERROR_INSUFFICIENT_MEMORY);
+  }
+  else
+  {
+    yylval->c_string[0] = '$'; /* replace @ by $*/
+  }
 
-  yylval->c_string[0] = '$'; /* replace @ by $*/
   return _STRING_OFFSET_;
 }
 
@@ -348,9 +357,14 @@ $({letter}|{digit}|_)*  {
   yylval->c_string = yr_strdup(yytext);
 
   if (yylval->c_string == NULL)
+  {
     error(ERROR_INSUFFICIENT_MEMORY);
+  }
+  else
+  {
+    yylval->c_string[0] = '$'; /* replace ! by $*/
+  }
 
-  yylval->c_string[0] = '$'; /* replace ! by $*/
   return _STRING_LENGTH_;
 }
 
@@ -397,12 +411,15 @@ u?int(8|16|32)(be)? {
 ({letter}|_)({letter}|{digit}|_)*  {
 
   if (strlen(yytext) > 128)
+  {
     syntax_error("identifier too long");
-
-  yylval->c_string = yr_strdup(yytext);
-
-  if (yylval->c_string == NULL)
-    error(ERROR_INSUFFICIENT_MEMORY);
+  }
+  else
+  {
+    yylval->c_string = yr_strdup(yytext);
+    if (yylval->c_string == NULL)
+      error(ERROR_INSUFFICIENT_MEMORY);
+  }
 
   return _IDENTIFIER_;
 }
@@ -612,6 +629,7 @@ u?int(8|16|32)(be)? {
 
 \"  {
 
+  yylval->sized_string = NULL;
   yyextra->lex_buf_ptr = yyextra->lex_buf;
   yyextra->lex_buf_len = 0;
   BEGIN(str);
@@ -620,6 +638,7 @@ u?int(8|16|32)(be)? {
 
 "/"  {
 
+  yylval->sized_string = NULL;
   yyextra->lex_buf_ptr = yyextra->lex_buf;
   yyextra->lex_buf_len = 0;
   BEGIN(regexp);
