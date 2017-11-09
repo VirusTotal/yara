@@ -261,11 +261,12 @@ MACHO_HANDLE_MAIN(be)
 
 #define MACHO_HANDLE_SEGMENT(bits,bo)                                          \
 void macho_handle_segment_##bits##_##bo(                                       \
-    void* command,                                                             \
-    uint32_t i,                                                                \
+    const uint8_t* command,                                                    \
+    const uint32_t i,                                                          \
     YR_OBJECT* object)                                                         \
 {                                                                              \
   segment_command_##bits##_t* sg = (segment_command_##bits##_t*)command;       \
+  uint64_t command_size = yr_##bo##bits##toh(sg->cmdsize);                     \
                                                                                \
   set_sized_string(sg->segname, strnlen(sg->segname, 16),                      \
                    object, "segments[%i].segname", i);                         \
@@ -287,10 +288,14 @@ void macho_handle_segment_##bits##_##bo(                                       \
   set_integer(yr_##bo##32toh(sg->flags),                                       \
               object, "segments[%i].flags", i);                                \
                                                                                \
+  uint64_t parsed_size = sizeof(segment_command_##bits##_t);                   \
   for (unsigned j = 0; j < yr_##bo##32toh(sg->nsects); ++j)                    \
   {                                                                            \
-    section_##bits##_t* sec = ((section_##bits##_t*)(sg + 1)) + j;             \
+    parsed_size += sizeof(section_##bits##_t);                                 \
+    if (command_size < parsed_size)                                            \
+      break;                                                                   \
                                                                                \
+    section_##bits##_t* sec = ((section_##bits##_t*)(sg + 1)) + j;             \
     set_sized_string(sec->segname, strnlen(sec->segname, 16),                  \
                      object, "segments[%i].sections[%i].segname", i, j);       \
     set_sized_string(sec->sectname, strnlen(sec->sectname, 16),                \
