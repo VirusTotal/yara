@@ -716,7 +716,6 @@ void macho_set_definitions(
 define_function(file_index_type)
 {
   YR_OBJECT* module = module();
-
   int64_t type_arg = integer_argument(1);
 
   uint32_t nfat = get_integer(module, "nfat_arch");
@@ -740,7 +739,6 @@ define_function(file_index_type)
 define_function(file_index_subtype)
 {
   YR_OBJECT* module = module();
-
   int64_t type_arg = integer_argument(1);
   int64_t subtype_arg = integer_argument(2);
 
@@ -1112,8 +1110,8 @@ begin_declarations;
 
   // Mach-O fat binary helper functions
 
-  declare_function("file_index", "i", "i", file_index_type);
-  declare_function("file_index", "ii", "i", file_index_subtype);
+  declare_function("file_index_for_arch", "i", "i", file_index_type);
+  declare_function("file_index_for_arch", "ii", "i", file_index_subtype);
   declare_function("entry_point_for_arch", "i", "i", ep_for_arch_type);
   declare_function("entry_point_for_arch", "ii", "i", ep_for_arch_subtype);
 
