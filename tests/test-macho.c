@@ -6,7 +6,7 @@ int main(int argc, char** argv)
 {
   yr_initialize();
 
-  //  Header
+  //  Tests for executable files
 
   assert_true_rule_blob("import \"macho\" rule test { condition: \
     macho.cputype == macho.CPU_TYPE_X86 }", MACHO_X86_FILE);
@@ -15,7 +15,7 @@ int main(int argc, char** argv)
   assert_true_rule_blob("import \"macho\" rule test { condition: \
     macho.flags & macho.MH_PIE }", MACHO_X86_FILE);
 
-  // segments
+  // Segments
 
   assert_true_rule_blob("import \"macho\" rule test { condition: \
     macho.number_of_segments == 4 }", MACHO_X86_FILE);
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     macho.segments[2].nsects == 2 and \
     macho.segments[3].fsize == 0x118 }", MACHO_X86_FILE);
 
-  // sections
+  // Sections
 
   assert_true_rule_blob("import \"macho\" rule test { condition: \
     macho.segments[1].sections[0].addr == 0x1e90 and \
@@ -60,6 +60,8 @@ int main(int argc, char** argv)
   assert_true_rule_blob("import \"macho\" rule test { condition: \
     macho.filetype == macho.MH_OBJECT }", MACHO_X86_OBJECT_FILE);
 
+  // Segments and sections
+
   assert_true_rule_blob("import \"macho\" rule test { condition: \
     macho.number_of_segments == 1 and macho.segments[0].segname == \"\" and \
     macho.segments[0].sections[0].sectname == \"__text\" and \
@@ -73,7 +75,7 @@ int main(int argc, char** argv)
   assert_true_rule_blob("import \"macho\" rule test { condition: \
     macho.filetype == macho.MH_EXECUTE }", MACHO_PPC_FILE);
 
-  // segments
+  // Segments
 
   assert_true_rule_blob("import \"macho\" rule test { condition: \
     macho.number_of_segments == 4 and \
@@ -102,7 +104,7 @@ int main(int argc, char** argv)
     macho.flags & macho.MH_NO_REEXPORTED_DYLIBS and \
     macho.flags & macho.MH_TWOLEVEL }", MACHO_X86_64_DYLIB_FILE);
 
-  // sections and segments
+  // Segments and sections
 
   assert_true_rule_blob("import \"macho\" rule test { condition: \
     macho.number_of_segments == 2 }", MACHO_X86_64_DYLIB_FILE);

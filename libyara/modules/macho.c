@@ -361,7 +361,7 @@ void macho_parse_file_##bits##_##bo(                                           \
   }                                                                            \
                                                                                \
   uint64_t seg_count = 0;                                                      \
-  uint64_t size_parsed = sizeof(mach_header_##bits##_t);                       \
+  uint64_t parsed_size = sizeof(mach_header_##bits##_t);                       \
                                                                                \
   uint8_t *command = (uint8_t*)(header + 1);                                   \
   for (unsigned i = 0; i < yr_##bo##32toh(header->ncmds); i++)                 \
@@ -369,7 +369,7 @@ void macho_parse_file_##bits##_##bo(                                           \
     load_command_t* command_struct = (load_command_t*)command;                 \
     uint64_t command_size = yr_##bo##32toh(command_struct->cmdsize);           \
                                                                                \
-    if (size < size_parsed + command_size)                                     \
+    if (size < parsed_size + command_size)                                     \
       break;                                                                   \
                                                                                \
     switch(yr_##bo##32toh(command_struct->cmd))                                \
@@ -393,7 +393,7 @@ void macho_parse_file_##bits##_##bo(                                           \
     }                                                                          \
                                                                                \
     command += command_size;                                                   \
-    size_parsed += command_size;                                               \
+    parsed_size += command_size;                                               \
   }                                                                            \
                                                                                \
   set_integer(seg_count, object, "number_of_segments");                        \
