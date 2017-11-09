@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2017. The YARA Authors. All Rights Reserved.
+Copyright (c) 2017. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,21 +27,11 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#if defined(USE_LINUX_PROC)
-
-#include <fcntl.h>
-#include <inttypes.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
+#include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <errno.h>
-
-#if defined(__NetBSD__)
-#define PTRACE_ATTACH PT_ATTACH
-#define PTRACE_DETACH PT_DETACH
-#define _XOPEN_SOURCE 500
-#endif
 
 #include <yara/error.h>
 #include <yara/proc.h>
@@ -49,9 +39,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 typedef struct _YR_PROC_INFO {
-  int             pid;
-  int             mem_fd;
-  FILE*           maps;
+  int                  pid;
+  uint64_t             old_end;
+  struct kinfo_vmentry vm_entry;
 } YR_PROC_INFO;
 
 
@@ -60,72 +50,41 @@ int _yr_process_attach(
     YR_PROC_ITERATOR_CTX* context)
 {
   int status;
-  char buffer[256];
+  size_t len = sizeof(struct kinfo_vmentry);
 
+  int mib[] = { CTL_KERN, KERN_PROC_VMMAP, pid };
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) yr_malloc(sizeof(YR_PROC_INFO));
 
   if (proc_info == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  context->proc_info = proc_info;
-
   proc_info->pid = pid;
-  proc_info->maps = NULL;
-  proc_info->mem_fd = -1;
-
-  snprintf(buffer, sizeof(buffer), "/proc/%u/maps", pid);
-  proc_info->maps = fopen(buffer, "r");
-
-  if (proc_info->maps == NULL)
+  if (ptrace(PT_ATTACH, pid, NULL, 0) == -1)
   {
-    yr_free(proc_info);
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-  }
-
-  snprintf(buffer, sizeof(buffer), "/proc/%u/mem", pid);
-  proc_info->mem_fd = open(buffer, O_RDONLY);
-
-  if (proc_info->mem_fd == -1)
-  {
-    fclose(proc_info->maps);
-    proc_info->maps = NULL;
-
-    yr_free(proc_info);
-
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-  }
-
-  if (ptrace(PTRACE_ATTACH, pid, NULL, 0) == -1)
-  {
-    fclose(proc_info->maps);
-    proc_info->maps = NULL;
-
-    close(proc_info->mem_fd);
-    proc_info->mem_fd = -1;
-
     yr_free(proc_info);
 
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
   }
 
   status = 0;
-
   if (waitpid(pid, &status, 0) == -1)
   {
-    // this is a strange error state where we attached but the proc didn't
-    // stop. Try to detach and clean up.
-    ptrace(PTRACE_DETACH, proc_info->pid, NULL, 0);
-
-    fclose(proc_info->maps);
-    proc_info->maps = NULL;
-
-    close(proc_info->mem_fd);
-    proc_info->mem_fd = -1;
+    ptrace(PT_DETACH, proc_info->pid, NULL, 0);
 
     yr_free(proc_info);
 
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
   }
+
+  if (sysctl(mib, 3, &proc_info->vm_entry, &len, NULL, 0) < 0)
+  {
+    ptrace(PT_DETACH, proc_info->pid, NULL, 0);
+    yr_free(proc_info);
+
+    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+  }
+
+  context->proc_info = proc_info;
 
   return ERROR_SUCCESS;
 }
@@ -136,9 +95,7 @@ int _yr_process_detach(
 {
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
-  fclose(proc_info->maps);
-  close(proc_info->mem_fd);
-  ptrace(PTRACE_DETACH, proc_info->pid, NULL, 0);
+  ptrace(PT_DETACH, proc_info->pid, NULL, 0);
 
   return ERROR_SUCCESS;
 }
@@ -149,6 +106,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
+  struct ptrace_io_desc io_desc;
 
   if (context->buffer_size < block->size)
   {
@@ -168,13 +126,13 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
     }
   }
 
-  if (pread(proc_info->mem_fd,
-            (void *) context->buffer,
-            block->size,
-            block->base) == -1)
-  {
+  io_desc.piod_op = PIOD_READ_D;
+  io_desc.piod_offs = (void*)block->base;
+  io_desc.piod_addr = (void*)context->buffer;
+  io_desc.piod_len = block->size;
+
+  if (ptrace(PT_IO, proc_info->pid, (char*)&io_desc, 0) == -1)
     return NULL;
-  }
 
   return context->buffer;
 }
@@ -186,20 +144,24 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
-  char buffer[256];
-  uint64_t begin, end;
+  int mib[] = { CTL_KERN, KERN_PROC_VMMAP, proc_info->pid };
+  size_t len = sizeof(struct kinfo_vmentry);
 
-  if (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
-  {
-    sscanf(buffer, "%"SCNx64"-%"SCNx64, &begin, &end);
+  if (sysctl(mib, 3, &proc_info->vm_entry, &len, NULL, 0) < 0)
+    return NULL;
 
-    context->current_block.base = begin;
-    context->current_block.size = end - begin;
+  // no more blocks
+  if (proc_info->old_end == proc_info->vm_entry.kve_end)
+    return NULL;
 
-    return &context->current_block;
-  }
+  proc_info->old_end = proc_info->vm_entry.kve_end;
+  context->current_block.base = proc_info->vm_entry.kve_start;
+  context->current_block.size =
+    proc_info->vm_entry.kve_end - proc_info->vm_entry.kve_start;
 
-  return NULL;
+  proc_info->vm_entry.kve_start = proc_info->vm_entry.kve_start + 1;
+
+  return &context->current_block;
 }
 
 
@@ -209,10 +171,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
-  if (fseek(proc_info->maps, 0, SEEK_SET) != 0)
-    return NULL;
+  proc_info->vm_entry.kve_start = 0;
 
   return yr_process_get_next_memory_block(iterator);
 }
-
-#endif

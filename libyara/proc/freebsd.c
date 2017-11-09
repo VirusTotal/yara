@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2017. The YARA Authors. All Rights Reserved.
+Copyright (c) 2017. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,21 +27,15 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#if defined(USE_LINUX_PROC)
+#include <sys/ptrace.h>
+#include <sys/wait.h>
 
 #include <fcntl.h>
-#include <inttypes.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <errno.h>
-
-#if defined(__NetBSD__)
-#define PTRACE_ATTACH PT_ATTACH
-#define PTRACE_DETACH PT_DETACH
-#define _XOPEN_SOURCE 500
-#endif
 
 #include <yara/error.h>
 #include <yara/proc.h>
@@ -49,9 +43,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 typedef struct _YR_PROC_INFO {
-  int             pid;
-  int             mem_fd;
-  FILE*           maps;
+  int                    pid;
+  struct ptrace_vm_entry vm_entry;
 } YR_PROC_INFO;
 
 
@@ -60,7 +53,6 @@ int _yr_process_attach(
     YR_PROC_ITERATOR_CTX* context)
 {
   int status;
-  char buffer[256];
 
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) yr_malloc(sizeof(YR_PROC_INFO));
 
@@ -70,39 +62,8 @@ int _yr_process_attach(
   context->proc_info = proc_info;
 
   proc_info->pid = pid;
-  proc_info->maps = NULL;
-  proc_info->mem_fd = -1;
-
-  snprintf(buffer, sizeof(buffer), "/proc/%u/maps", pid);
-  proc_info->maps = fopen(buffer, "r");
-
-  if (proc_info->maps == NULL)
+  if (ptrace(PT_ATTACH, pid, NULL, 0) == -1)
   {
-    yr_free(proc_info);
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-  }
-
-  snprintf(buffer, sizeof(buffer), "/proc/%u/mem", pid);
-  proc_info->mem_fd = open(buffer, O_RDONLY);
-
-  if (proc_info->mem_fd == -1)
-  {
-    fclose(proc_info->maps);
-    proc_info->maps = NULL;
-
-    yr_free(proc_info);
-
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-  }
-
-  if (ptrace(PTRACE_ATTACH, pid, NULL, 0) == -1)
-  {
-    fclose(proc_info->maps);
-    proc_info->maps = NULL;
-
-    close(proc_info->mem_fd);
-    proc_info->mem_fd = -1;
-
     yr_free(proc_info);
 
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
@@ -112,15 +73,7 @@ int _yr_process_attach(
 
   if (waitpid(pid, &status, 0) == -1)
   {
-    // this is a strange error state where we attached but the proc didn't
-    // stop. Try to detach and clean up.
-    ptrace(PTRACE_DETACH, proc_info->pid, NULL, 0);
-
-    fclose(proc_info->maps);
-    proc_info->maps = NULL;
-
-    close(proc_info->mem_fd);
-    proc_info->mem_fd = -1;
+    ptrace(PT_DETACH, proc_info->pid, NULL, 0);
 
     yr_free(proc_info);
 
@@ -136,9 +89,8 @@ int _yr_process_detach(
 {
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
-  fclose(proc_info->maps);
-  close(proc_info->mem_fd);
-  ptrace(PTRACE_DETACH, proc_info->pid, NULL, 0);
+  ptrace(PT_DETACH, proc_info->pid, NULL, 0);
+  proc_info->vm_entry.pve_path = NULL;
 
   return ERROR_SUCCESS;
 }
@@ -149,6 +101,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
+  struct ptrace_io_desc io_desc;
 
   if (context->buffer_size < block->size)
   {
@@ -168,10 +121,12 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
     }
   }
 
-  if (pread(proc_info->mem_fd,
-            (void *) context->buffer,
-            block->size,
-            block->base) == -1)
+  io_desc.piod_op = PIOD_READ_D;
+  io_desc.piod_offs = (void*)block->base;
+  io_desc.piod_addr = (void*)context->buffer;
+  io_desc.piod_len = block->size;
+
+  if (ptrace(PT_IO, proc_info->pid, (char*)&io_desc, 0) == -1)
   {
     return NULL;
   }
@@ -185,21 +140,20 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
+  char buf[4096];
 
-  char buffer[256];
-  uint64_t begin, end;
+  proc_info->vm_entry.pve_path = buf;
+  proc_info->vm_entry.pve_pathlen = sizeof(buf);
 
-  if (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
-  {
-    sscanf(buffer, "%"SCNx64"-%"SCNx64, &begin, &end);
-
-    context->current_block.base = begin;
-    context->current_block.size = end - begin;
-
-    return &context->current_block;
+  if (ptrace(PT_VM_ENTRY, proc_info->pid, (char*)(&proc_info->vm_entry), 0) == -1) {
+    return NULL;
   }
 
-  return NULL;
+  context->current_block.base = proc_info->vm_entry.pve_start;
+  context->current_block.size =
+    proc_info->vm_entry.pve_end - proc_info->vm_entry.pve_start + 1;
+
+  return &context->current_block;
 }
 
 
@@ -209,10 +163,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
-  if (fseek(proc_info->maps, 0, SEEK_SET) != 0)
-    return NULL;
+  proc_info->vm_entry.pve_entry = 0;
 
   return yr_process_get_next_memory_block(iterator);
 }
-
-#endif

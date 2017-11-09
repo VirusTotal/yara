@@ -1784,7 +1784,7 @@ void test_process_scan()
     }
     break;
   case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
-    fputs("Could not attach to process, ignoring this error", stderr);
+    fputs("Could not attach to process, ignoring this error\n", stderr);
     break;
   default:
     fprintf(stderr, "yr_rules_scan_proc: Got unexpected error %d\n", rc1);
