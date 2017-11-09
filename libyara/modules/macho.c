@@ -395,8 +395,8 @@ MACHO_PARSE_FILE(64,be)
 // Parse Mach-O file.
 
 void macho_parse_file(
-    const void* data,
-    uint64_t size,
+    const uint8_t* data,
+    const uint64_t size,
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
@@ -429,8 +429,8 @@ void macho_parse_file(
 
 #define MACHO_PARSE_FAT_FILE(bits)                                             \
 void macho_parse_fat_file_##bits(                                              \
-    const void* data,                                                          \
-    uint64_t size,                                                             \
+    const uint8_t* data,                                                       \
+    const uint64_t size,                                                       \
     YR_OBJECT* object,                                                         \
     YR_SCAN_CONTEXT* context)                                                  \
 {                                                                              \
@@ -481,8 +481,8 @@ MACHO_PARSE_FAT_FILE(64)
 // Parse Mach-O fat file.
 
 void macho_parse_fat_file(
-    const void* data,
-    uint64_t size,
+    const uint8_t* data,
+    const uint64_t size,
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
@@ -1130,19 +1130,19 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
-    const void* block_data = block->fetch_data(block);
+    const uint8_t* block_data = block->fetch_data(block);
     if (block_data == NULL || block->size < 4)
       continue;
 
-    // Parse classic Mach-O file.
-    if (is_macho_file_block(block_data))
+    // Parse Mach-O binary.
+    if (is_macho_file_block((uint32_t*)block_data))
     {
       macho_parse_file(block_data, block->size, module_object, context);
       break;
     }
 
-    // Parse Mach-O fat binary.
-    if (is_fat_macho_file_block(block_data))
+    // Parse fat Mach-O binary.
+    if (is_fat_macho_file_block((uint32_t*)block_data))
     {
       macho_parse_fat_file(block_data, block->size, module_object, context);
       break;
