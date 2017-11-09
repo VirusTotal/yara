@@ -34,6 +34,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MODULE_NAME macho
 
+
+// Check for Mach-O binary magic constant.
+
+int is_macho_file_block(
+    const uint32_t* magic)
+{
+  return *magic == MH_MAGIC
+      || *magic == MH_CIGAM
+      || *magic == MH_MAGIC_64
+      || *magic == MH_CIGAM_64;
+}
+
+
 // Check if file is for 32-bit architecture.
 
 int macho_is_32(
@@ -41,16 +54,6 @@ int macho_is_32(
 {
   // Magic must be [CE]FAEDFE or FEEDFA[CE].
   return magic[0] == 0xce || magic[3] == 0xce;
-}
-
-
-// Check if file is 32-bit fat file.
-
-int macho_is_fat_32(
-    const uint8_t* magic)
-{
-  // Magic must be CAFEBA[BE].
-  return magic[3] == 0xbe;
 }
 
 
@@ -64,22 +67,24 @@ int macho_is_big(
 }
 
 
-// Check for Mach-O fat binary signature.
+// Check for Mach-O fat binary magic constant.
 
-int macho_is_fat_file_block(
+int is_fat_macho_file_block(
     const uint32_t* magic)
 {
-  return *magic == FAT_MAGIC || *magic == FAT_MAGIC_64 ||
-      *magic == FAT_CIGAM || *magic == FAT_CIGAM_64;
+  return *magic == FAT_MAGIC
+      || *magic == FAT_CIGAM
+      || *magic == FAT_MAGIC_64
+      || *magic == FAT_CIGAM_64;
 }
 
+// Check if file is 32-bit fat file.
 
-// Check for Mach-O binary signatures.
-
-int macho_is_file_block(const uint32_t* magic)
+int macho_fat_is_32(
+    const uint8_t* magic)
 {
-  return *magic == MH_MAGIC || *magic == MH_MAGIC_64 ||
-      *magic == MH_CIGAM || *magic == MH_CIGAM_64;
+  // Magic must be CAFEBA[BE].
+  return magic[3] == 0xbe;
 }
 
 
@@ -395,19 +400,27 @@ void macho_parse_file(
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
-  if (size < 4u)
-    return;
-
-  const uint8_t* magic = (uint8_t*)data;
-  if (macho_is_32(magic))
+  if (macho_is_32(data))
   {
-    macho_is_big(magic) ? macho_parse_file_32_be(data, size, object, context)
-                        : macho_parse_file_32_le(data, size, object, context);
+    if (macho_is_big(data)) {
+      // 32-bit big endian
+      macho_parse_file_32_be(data, size, object, context);
+    }
+    else {
+      // 32-bit little endian
+      macho_parse_file_32_le(data, size, object, context);
+    }
   }
   else
   {
-    macho_is_big(magic) ? macho_parse_file_64_be(data, size, object, context)
-                        : macho_parse_file_64_le(data, size, object, context);
+    if (macho_is_big(data)) {
+      // 64-bit big endian
+      macho_parse_file_64_be(data, size, object, context);
+    }
+    else {
+      // 64-bit little endian
+      macho_parse_file_64_le(data, size, object, context);
+    }
   }
 }
 
@@ -473,12 +486,14 @@ void macho_parse_fat_file(
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
-  if (size < 4u)
-    return;
-
-  const uint8_t* magic = (uint8_t*)data;
-  macho_is_fat_32(magic) ? macho_parse_fat_file_32(data, size, object, context)
-                         : macho_parse_fat_file_64(data, size, object, context);
+  if (macho_fat_is_32(data)) {
+    // 32-bit fat binary
+    macho_parse_fat_file_32(data, size, object, context);
+  }
+  else {
+    // 64-bit fat binary
+    macho_parse_fat_file_64(data, size, object, context);
+  }
 }
 
 
@@ -1115,20 +1130,19 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
-    void* block_data = block->fetch_data(block);
-    if (block_data == NULL)
+    const void* block_data = block->fetch_data(block);
+    if (block_data == NULL || block->size < 4)
       continue;
 
-    uint32_t* magic = (uint32_t*)block_data;
     // Parse classic Mach-O file.
-    if (macho_is_file_block(magic))
+    if (is_macho_file_block(block_data))
     {
       macho_parse_file(block_data, block->size, module_object, context);
       break;
     }
 
     // Parse Mach-O fat binary.
-    if (macho_is_fat_file_block(magic))
+    if (is_fat_macho_file_block(block_data))
     {
       macho_parse_fat_file(block_data, block->size, module_object, context);
       break;
