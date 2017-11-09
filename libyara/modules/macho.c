@@ -259,8 +259,8 @@ MACHO_HANDLE_MAIN(be)
 
 // Load segment and its sections.
 
-#define MACHO_HANDLE_SEGMENTS_SECTIONS(bits,bo)                                \
-void macho_handle_segments_sections_##bits##_##bo(                             \
+#define MACHO_HANDLE_SEGMENT(bits,bo)                                          \
+void macho_handle_segment_##bits##_##bo(                                       \
     void* command,                                                             \
     uint32_t i,                                                                \
     YR_OBJECT* object)                                                         \
@@ -323,10 +323,10 @@ void macho_handle_segments_sections_##bits##_##bo(                             \
   }                                                                            \
 }                                                                              \
 
-MACHO_HANDLE_SEGMENTS_SECTIONS(32,le)
-MACHO_HANDLE_SEGMENTS_SECTIONS(64,le)
-MACHO_HANDLE_SEGMENTS_SECTIONS(32,be)
-MACHO_HANDLE_SEGMENTS_SECTIONS(64,be)
+MACHO_HANDLE_SEGMENT(32,le)
+MACHO_HANDLE_SEGMENT(64,le)
+MACHO_HANDLE_SEGMENT(32,be)
+MACHO_HANDLE_SEGMENT(64,be)
 
 
 // Parse Mach-O file with specific bit-width and byte order.
@@ -338,11 +338,10 @@ void macho_parse_file_##bits##_##bo(                                           \
     YR_OBJECT* object,                                                         \
     YR_SCAN_CONTEXT* context)                                                  \
 {                                                                              \
-  mach_header_##bits##_t* header = (mach_header_##bits##_t*)data;              \
-                                                                               \
   if (size < sizeof(mach_header_##bits##_t))                                   \
     return;                                                                    \
                                                                                \
+  mach_header_##bits##_t* header = (mach_header_##bits##_t*)data;              \
   set_integer(yr_##bo##32toh(header->magic), object, "magic");                 \
   set_integer(yr_##bo##32toh(header->cputype), object, "cputype");             \
   set_integer(yr_##bo##32toh(header->cpusubtype), object, "cpusubtype");       \
@@ -356,18 +355,24 @@ void macho_parse_file_##bits##_##bo(                                           \
     set_integer(yr_##bo##32toh(header_64->reserved), object, "reserved");      \
   }                                                                            \
                                                                                \
-  uint64_t num_sg = 0;                                                         \
+  uint64_t seg_count = 0;                                                      \
+  uint64_t size_parsed = sizeof(mach_header_##bits##_t);                       \
+                                                                               \
   uint8_t *command = (uint8_t*)(header + 1);                                   \
   for (unsigned i = 0; i < yr_##bo##32toh(header->ncmds); i++)                 \
   {                                                                            \
     load_command_t* command_struct = (load_command_t*)command;                 \
+    uint64_t command_size = yr_##bo##32toh(command_struct->cmdsize);           \
+                                                                               \
+    if (size < size_parsed + command_size)                                     \
+      break;                                                                   \
+                                                                               \
     switch(yr_##bo##32toh(command_struct->cmd))                                \
     {                                                                          \
       case LC_SEGMENT:                                                         \
       case LC_SEGMENT_64:                                                      \
       {                                                                        \
-        macho_handle_segments_sections_##bits##_##bo(command, num_sg, object); \
-        num_sg++;                                                              \
+        macho_handle_segment_##bits##_##bo(command, seg_count++, object);      \
         break;                                                                 \
       }                                                                        \
       case LC_UNIXTHREAD:                                                      \
@@ -381,10 +386,12 @@ void macho_parse_file_##bits##_##bo(                                           \
         break;                                                                 \
       }                                                                        \
     }                                                                          \
-    command += yr_##bo##32toh(command_struct->cmdsize);                        \
+                                                                               \
+    command += command_size;                                                   \
+    size_parsed += command_size;                                               \
   }                                                                            \
                                                                                \
-  set_integer(num_sg, object, "number_of_segments");                           \
+  set_integer(seg_count, object, "number_of_segments");                        \
 }                                                                              \
 
 MACHO_PARSE_FILE(32,le)
@@ -472,7 +479,7 @@ void macho_parse_fat_file_##bits(                                              \
     set_integer(UNDEFINED, object, "file[%i].magic", i);                       \
                                                                                \
     /* Get specific Mach-O file data. */                                       \
-    macho_parse_file(data + offset, file_size + offset,                        \
+    macho_parse_file(data + offset, file_size,                                 \
                      get_object(object, "file[%i]", i), context);              \
   }                                                                            \
 }                                                                              \
