@@ -332,7 +332,7 @@ MACHO_HANDLE_SEGMENTS_SECTIONS(64,be)
 
 #define MACHO_PARSE_FILE(bits,bo)                                              \
 void macho_parse_file_##bits##_##bo(                                           \
-    void* data,                                                                \
+    const void* data,                                                          \
     uint64_t size,                                                             \
     YR_OBJECT* object,                                                         \
     YR_SCAN_CONTEXT* context)                                                  \
@@ -395,7 +395,7 @@ MACHO_PARSE_FILE(64,be)
 // Parse Mach-O file.
 
 void macho_parse_file(
-    void* data,
+    const void* data,
     uint64_t size,
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
@@ -429,7 +429,7 @@ void macho_parse_file(
 
 #define MACHO_PARSE_FAT_FILE(bits)                                             \
 void macho_parse_fat_file_##bits(                                              \
-    void* data,                                                                \
+    const void* data,                                                          \
     uint64_t size,                                                             \
     YR_OBJECT* object,                                                         \
     YR_SCAN_CONTEXT* context)                                                  \
@@ -481,7 +481,7 @@ MACHO_PARSE_FAT_FILE(64)
 // Parse Mach-O fat file.
 
 void macho_parse_fat_file(
-    void* data,
+    const void* data,
     uint64_t size,
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
