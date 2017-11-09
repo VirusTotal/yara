@@ -759,10 +759,9 @@ define_function(file_index_subtype)
 
 // Get real entry point offset for specific architecture in fat Mach-O.
 
-define_function(entry_point_for_arch_type)
+define_function(ep_for_arch_type)
 {
   YR_OBJECT* module = module();
-
   int64_t type_arg = integer_argument(1);
 
   uint32_t nfat = get_integer(module, "nfat_arch");
@@ -785,10 +784,9 @@ define_function(entry_point_for_arch_type)
 
 // Get real entry point offset for specific architecture in fat Mach-O.
 
-define_function(entry_point_for_arch_subtype)
+define_function(ep_for_arch_subtype)
 {
   YR_OBJECT* module = module();
-
   int64_t type_arg = integer_argument(1);
   int64_t subtype_arg = integer_argument(2);
 
@@ -800,7 +798,6 @@ define_function(entry_point_for_arch_subtype)
   {
     int64_t type = get_integer(module, "fat_arch[%i].cputype", i);
     int64_t subtype = get_integer(module, "fat_arch[%i].cpusubtype", i);
-
     if (type == type_arg && subtype == subtype_arg)
     {
       uint64_t file_offset = get_integer(module, "fat_arch[%i].offset", i);
@@ -1112,8 +1109,8 @@ begin_declarations;
 
   declare_function("file_index", "i", "i", file_index_type);
   declare_function("file_index", "ii", "i", file_index_subtype);
-  declare_function("ep_for_arch", "i", "i", entry_point_for_arch_type);
-  declare_function("ep_for_arch", "ii", "i", entry_point_for_arch_subtype);
+  declare_function("entry_point_for_arch", "i", "i", ep_for_arch_type);
+  declare_function("entry_point_for_arch", "ii", "i", ep_for_arch_subtype);
 
 end_declarations;
 
