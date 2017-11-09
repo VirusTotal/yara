@@ -27,6 +27,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#if defined(USE_OPENBSD_PROC)
+
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/sysctl.h>
@@ -70,7 +72,6 @@ int _yr_process_attach(
   if (waitpid(pid, &status, 0) == -1)
   {
     ptrace(PT_DETACH, proc_info->pid, NULL, 0);
-
     yr_free(proc_info);
 
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
@@ -106,6 +107,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
+
   struct ptrace_io_desc io_desc;
 
   if (context->buffer_size < block->size)
@@ -157,7 +159,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   proc_info->old_end = proc_info->vm_entry.kve_end;
   context->current_block.base = proc_info->vm_entry.kve_start;
   context->current_block.size =
-    proc_info->vm_entry.kve_end - proc_info->vm_entry.kve_start;
+      proc_info->vm_entry.kve_end - proc_info->vm_entry.kve_start;
 
   proc_info->vm_entry.kve_start = proc_info->vm_entry.kve_start + 1;
 
@@ -175,3 +177,5 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
 
   return yr_process_get_next_memory_block(iterator);
 }
+
+#endif

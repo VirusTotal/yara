@@ -27,6 +27,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#if defined(USE_FREEBSD_PROC)
+
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 
@@ -74,7 +76,6 @@ int _yr_process_attach(
   if (waitpid(pid, &status, 0) == -1)
   {
     ptrace(PT_DETACH, proc_info->pid, NULL, 0);
-
     yr_free(proc_info);
 
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
@@ -140,6 +141,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
+
   char buf[4096];
 
   proc_info->vm_entry.pve_path = buf;
@@ -167,3 +169,5 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
 
   return yr_process_get_next_memory_block(iterator);
 }
+
+#endif
