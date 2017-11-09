@@ -39,6 +39,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/error.h>
 #include <yara/libyara.h>
 #include <yara/scan.h>
+#include <yara/stopwatch.h>
+
 
 
 typedef struct _CALLBACK_ARGS
@@ -46,7 +48,7 @@ typedef struct _CALLBACK_ARGS
   YR_STRING* string;
   YR_SCAN_CONTEXT* context;
 
-  uint8_t* data;
+  const uint8_t* data;
   size_t data_size;
   size_t data_base;
 
@@ -56,14 +58,14 @@ typedef struct _CALLBACK_ARGS
 } CALLBACK_ARGS;
 
 
-int _yr_scan_compare(
-    uint8_t* data,
+static int _yr_scan_compare(
+    const uint8_t* data,
     size_t data_size,
     uint8_t* string,
     size_t string_length)
 {
-  uint8_t* s1 = data;
-  uint8_t* s2 = string;
+  const uint8_t* s1 = data;
+  const uint8_t* s2 = string;
 
   size_t i = 0;
 
@@ -77,14 +79,14 @@ int _yr_scan_compare(
 }
 
 
-int _yr_scan_icompare(
-    uint8_t* data,
+static int _yr_scan_icompare(
+    const uint8_t* data,
     size_t data_size,
     uint8_t* string,
     size_t string_length)
 {
-  uint8_t* s1 = data;
-  uint8_t* s2 = string;
+  const uint8_t* s1 = data;
+  const uint8_t* s2 = string;
 
   size_t i = 0;
 
@@ -98,14 +100,14 @@ int _yr_scan_icompare(
 }
 
 
-int _yr_scan_wcompare(
-    uint8_t* data,
+static int _yr_scan_wcompare(
+    const uint8_t* data,
     size_t data_size,
     uint8_t* string,
     size_t string_length)
 {
-  uint8_t* s1 = data;
-  uint8_t* s2 = string;
+  const uint8_t* s1 = data;
+  const uint8_t* s2 = string;
 
   size_t i = 0;
 
@@ -123,14 +125,14 @@ int _yr_scan_wcompare(
 }
 
 
-int _yr_scan_wicompare(
-    uint8_t* data,
+static int _yr_scan_wicompare(
+    const uint8_t* data,
     size_t data_size,
     uint8_t* string,
     size_t string_length)
 {
-  uint8_t* s1 = data;
-  uint8_t* s2 = string;
+  const uint8_t* s1 = data;
+  const uint8_t* s2 = string;
 
   size_t i = 0;
 
@@ -148,7 +150,7 @@ int _yr_scan_wicompare(
 }
 
 
-void _yr_scan_update_match_chain_length(
+static void _yr_scan_update_match_chain_length(
     int tidx,
     YR_STRING* string,
     YR_MATCH* match_to_update,
@@ -182,7 +184,7 @@ void _yr_scan_update_match_chain_length(
 }
 
 
-int _yr_scan_add_match_to_list(
+static int _yr_scan_add_match_to_list(
     YR_MATCH* match,
     YR_MATCHES* matches_list,
     int replace_if_exists)
@@ -236,7 +238,7 @@ int _yr_scan_add_match_to_list(
 }
 
 
-void _yr_scan_remove_match_from_list(
+static void _yr_scan_remove_match_from_list(
     YR_MATCH* match,
     YR_MATCHES* matches_list)
 {
@@ -258,10 +260,10 @@ void _yr_scan_remove_match_from_list(
 }
 
 
-int _yr_scan_verify_chained_string_match(
+static int _yr_scan_verify_chained_string_match(
     YR_STRING* matching_string,
     YR_SCAN_CONTEXT* context,
-    uint8_t* match_data,
+    const uint8_t* match_data,
     uint64_t match_base,
     uint64_t match_offset,
     int32_t match_length)
@@ -424,8 +426,8 @@ int _yr_scan_verify_chained_string_match(
 }
 
 
-int _yr_scan_match_callback(
-    uint8_t* match_data,
+static int _yr_scan_match_callback(
+    const uint8_t* match_data,
     int32_t match_length,
     int flags,
     void* args)
@@ -529,8 +531,8 @@ int _yr_scan_match_callback(
 
 
 typedef int (*RE_EXEC_FUNC)(
-    uint8_t* code,
-    uint8_t* input,
+    const uint8_t* code,
+    const uint8_t* input,
     size_t input_forwards_size,
     size_t input_backwards_size,
     int flags,
@@ -539,10 +541,10 @@ typedef int (*RE_EXEC_FUNC)(
     int* matches);
 
 
-int _yr_scan_verify_re_match(
+static int _yr_scan_verify_re_match(
     YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size,
     size_t data_base,
     size_t offset)
@@ -631,10 +633,10 @@ int _yr_scan_verify_re_match(
 }
 
 
-int _yr_scan_verify_literal_match(
+static int _yr_scan_verify_literal_match(
     YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size,
     size_t data_base,
     size_t offset)
@@ -717,18 +719,17 @@ int _yr_scan_verify_literal_match(
 int yr_scan_verify_match(
     YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size,
     size_t data_base,
     size_t offset)
 {
   YR_STRING* string = ac_match->string;
 
-  #ifdef PROFILING_ENABLED
-  clock_t start = clock();
-  #endif
-
   if (data_size - offset <= 0)
+    return ERROR_SUCCESS;
+
+  if (STRING_IS_DISABLED(string))
     return ERROR_SUCCESS;
 
   if (context->flags & SCAN_FLAGS_FAST_MODE &&
@@ -739,6 +740,11 @@ int yr_scan_verify_match(
   if (STRING_IS_FIXED_OFFSET(string) &&
       string->fixed_offset != data_base + offset)
     return ERROR_SUCCESS;
+
+  #ifdef PROFILING_ENABLED
+  YR_STOPWATCH stopwatch;
+  yr_stopwatch_start(&stopwatch);
+  #endif
 
   if (STRING_IS_LITERAL(string))
   {
@@ -752,7 +758,7 @@ int yr_scan_verify_match(
   }
 
   #ifdef PROFILING_ENABLED
-  string->clock_ticks += clock() - start;
+  string->clock_ticks += yr_stopwatch_elapsed_microseconds(&stopwatch);
   #endif
 
   return ERROR_SUCCESS;

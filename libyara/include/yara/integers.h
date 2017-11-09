@@ -30,17 +30,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_INTEGERS_H
 #define YR_INTEGERS_H
 
-/* Integer type definitions
- */
+
 #if ( defined( _MSC_VER ) && ( _MSC_VER < 1600 ) ) || ( defined( __BORLANDC__ ) && ( __BORLANDC__ <= 0x0560 ) )
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Microsoft Visual Studio C++ before Visual Studio 2010 or earlier versions of the Borland C++ Builder
- * do not support the (u)int#_t type definitions but have __int# definitions instead
- */
+// Microsoft Visual Studio C++ before Visual Studio 2010 or earlier versions of
+// the Borland C++ Builder do not support the (u)int#_t type definitions but
+// have __int# definitions instead
+
 typedef __int8 int8_t;
 typedef unsigned __int8 uint8_t;
 typedef __int16 int16_t;
@@ -54,11 +54,60 @@ typedef unsigned __int64 uint64_t;
 }
 #endif
 
+
+#ifndef INT8_MIN
+#define INT8_MIN         (-127i8 - 1)
+#endif
+
+#ifndef INT8_MIN
+#define INT16_MIN        (-32767i16 - 1)
+#endif
+
+#ifndef INT32_MIN
+#define INT32_MIN        (-2147483647i32 - 1)
+#endif
+
+#ifndef INT64_MIN
+#define INT64_MIN        (-9223372036854775807i64 - 1)
+#endif
+
+#ifndef INT8_MAX
+#define INT8_MAX         127i8
+#endif
+
+#ifndef INT16_MAX
+#define INT16_MAX        32767i16
+#endif
+
+#ifndef INT32_MAX
+#define INT32_MAX        2147483647i32
+#endif
+
+#ifndef INT64_MAX
+#define INT64_MAX        9223372036854775807i64
+#endif
+
+#ifndef UINT8_MAX
+#define UINT8_MAX        0xffui8
+#endif
+
+#ifndef UINT16_MAX
+#define UINT16_MAX       0xffffui16
+#endif
+
+#ifndef UINT32_MAX
+#define UINT32_MAX       0xffffffffui32
+#endif
+
+#ifndef UINT64_MAX
+#define UINT64_MAX       0xffffffffffffffffui64
+#endif
+
 #else
 
-/* Other "compilers" and later versions of Microsoft Visual Studio C++ and
- * Borland C/C++ define the types in <stdint.h>
- */
+// Other "compilers" and later versions of Microsoft Visual Studio C++ and
+// Borland C/C++ define the types in <stdint.h>
+
 #include <stdint.h>
 
 #endif

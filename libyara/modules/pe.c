@@ -33,9 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctype.h>
 #include <time.h>
 
+#include "../crypto.h"
 #if defined(HAVE_LIBCRYPTO)
-#include <openssl/md5.h>
-#include <openssl/sha.h>
 #include <openssl/safestack.h>
 #include <openssl/asn1.h>
 #include <openssl/bio.h>
@@ -100,19 +99,29 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     ((entry)->OffsetToData & 0x7FFFFFFF)
 
 
-#define available_space(pe, pointer) \
-    (pe->data + pe->data_size - (uint8_t*)(pointer))
-
-
 typedef int (*RESOURCE_CALLBACK_FUNC) ( \
      PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, \
      int rsrc_type, \
      int rsrc_id, \
      int rsrc_language, \
-     uint8_t* type_string, \
-     uint8_t* name_string, \
-     uint8_t* lang_string, \
+     const uint8_t* type_string, \
+     const uint8_t* name_string, \
+     const uint8_t* lang_string, \
      void* cb_data);
+
+
+static size_t available_space(
+    PE* pe,
+    void* pointer)
+{
+  if ((uint8_t*) pointer < pe->data)
+    return 0;
+
+  if ((uint8_t*) pointer >= pe->data + pe->data_size)
+    return 0;
+
+  return pe->data + pe->data_size - (uint8_t*) pointer;
+}
 
 
 int wide_string_fits_in_pe(
@@ -252,9 +261,9 @@ void pe_parse_rich_signature(
 // The callback function will parse this and call set_sized_string().
 // The pointer is guaranteed to have enough space to contain the entire string.
 
-uint8_t* parse_resource_name(
+const uint8_t* parse_resource_name(
     PE* pe,
-    uint8_t* rsrc_data,
+    const uint8_t* rsrc_data,
     PIMAGE_RESOURCE_DIRECTORY_ENTRY entry)
 {
 
@@ -265,7 +274,8 @@ uint8_t* parse_resource_name(
   {
     DWORD length;
 
-    uint8_t* rsrc_str_ptr = rsrc_data + (yr_le32toh(entry->Name) & 0x7FFFFFFF);
+    const uint8_t* rsrc_str_ptr = rsrc_data + \
+        (yr_le32toh(entry->Name) & 0x7FFFFFFF);
 
     // A resource directory string is 2 bytes for a string and then a variable
     // length Unicode string. Make sure we at least have two bytes.
@@ -289,14 +299,14 @@ uint8_t* parse_resource_name(
 int _pe_iterate_resources(
     PE* pe,
     PIMAGE_RESOURCE_DIRECTORY resource_dir,
-    uint8_t* rsrc_data,
+    const uint8_t* rsrc_data,
     int rsrc_tree_level,
     int* type,
     int* id,
     int* language,
-    uint8_t* type_string,
-    uint8_t* name_string,
-    uint8_t* lang_string,
+    const uint8_t* type_string,
+    const uint8_t* name_string,
+    const uint8_t* lang_string,
     RESOURCE_CALLBACK_FUNC callback,
     void* callback_data)
 {
@@ -1001,14 +1011,19 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
   for (i = 0; i < yr_le32toh(exports->NumberOfFunctions); i++)
   {
     IMPORT_EXPORT_FUNCTION* exported_func;
-
     uint16_t ordinal = 0;
     char* name;
+
+    if (available_space(pe, names + i) < sizeof(DWORD) ||
+        available_space(pe, ordinals + i) < sizeof(WORD))
+    {
+      break;
+    }
 
     offset = pe_rva_to_offset(pe, names[i]);
 
     if (offset < 0)
-      return head;
+      continue;
 
     remaining = pe->data_size - (size_t) offset;
     name = yr_strndup((char*) (pe->data + offset), remaining);
@@ -1054,7 +1069,7 @@ void pe_parse_certificates(
 {
   int i, counter = 0;
 
-  uint8_t* eod;
+  const uint8_t* eod;
   uintptr_t end;
 
   PWIN_CERTIFICATE win_cert;
@@ -1573,7 +1588,9 @@ define_function(exports_ordinal)
   return_integer(0);
 }
 
-#if defined(HAVE_LIBCRYPTO)
+#if defined(HAVE_LIBCRYPTO) || \
+    defined(HAVE_WINCRYPT_H) || \
+    defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
 
 //
 // Generate an import hash:
@@ -1587,11 +1604,12 @@ define_function(imphash)
   YR_OBJECT* module = module();
 
   IMPORTED_DLL* dll;
-  MD5_CTX ctx;
+  yr_md5_ctx ctx;
 
-  unsigned char digest[MD5_DIGEST_LENGTH];
-  char digest_ascii[MD5_DIGEST_LENGTH * 2 + 1];
-  int i, first = TRUE;
+  unsigned char digest[YR_MD5_LEN];
+  char digest_ascii[YR_MD5_LEN * 2 + 1];
+  size_t i;
+  int first = TRUE;
 
   PE* pe = (PE*) module->data;
 
@@ -1600,7 +1618,7 @@ define_function(imphash)
   if (!pe)
     return_string(UNDEFINED);
 
-  MD5_Init(&ctx);
+  yr_md5_init(&ctx);
 
   dll = pe->imported_dlls;
 
@@ -1657,7 +1675,7 @@ define_function(imphash)
       for (i = 0; i < final_name_len; i++)
         final_name[i] = tolower(final_name[i]);
 
-      MD5_Update(&ctx, final_name, final_name_len);
+      yr_md5_update(&ctx, final_name, final_name_len);
 
       yr_free(final_name);
 
@@ -1670,21 +1688,21 @@ define_function(imphash)
     dll = dll->next;
   }
 
-  MD5_Final(digest, &ctx);
+  yr_md5_final(digest, &ctx);
 
   // Transform the binary digest to ascii
 
-  for (i = 0; i < MD5_DIGEST_LENGTH; i++)
+  for (i = 0; i < YR_MD5_LEN; i++)
   {
     sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
   }
 
-  digest_ascii[MD5_DIGEST_LENGTH * 2] = '\0';
+  digest_ascii[YR_MD5_LEN * 2] = '\0';
 
   return_string(digest_ascii);
 }
 
-#endif  // defined(HAVE_LIBCRYPTO)
+#endif  // defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
 
 
 define_function(imports)
@@ -1983,8 +2001,7 @@ define_function(calculate_checksum)
 
   uint64_t csum = 0;
   size_t csum_offset;
-
-  int i, j;
+  size_t i, j;
 
   if (pe == NULL)
     return_integer(UNDEFINED);
@@ -2207,7 +2224,9 @@ begin_declarations;
     declare_function("toolid", "ii", "i", rich_toolid_version);
   end_struct("rich_signature");
 
-  #if defined(HAVE_LIBCRYPTO)
+  #if defined(HAVE_LIBCRYPTO) || \
+      defined(HAVE_WINCRYPT_H) || \
+      defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
   declare_function("imphash", "", "s", imphash);
   #endif
 
@@ -2291,7 +2310,7 @@ int module_load(
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   PIMAGE_NT_HEADERS32 pe_header;
-  uint8_t* block_data = NULL;
+  const uint8_t* block_data = NULL;
   PE* pe = NULL;
 
   set_integer(
@@ -2578,7 +2597,7 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
-	block_data = block->fetch_data(block);
+	  block_data = block->fetch_data(block);
 
     if (block_data == NULL)
       continue;

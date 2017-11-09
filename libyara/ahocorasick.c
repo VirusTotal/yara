@@ -70,7 +70,7 @@ typedef struct _QUEUE
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
 //
 
-int _yr_ac_queue_push(
+static int _yr_ac_queue_push(
     QUEUE* queue,
     YR_AC_STATE* value)
 {
@@ -108,7 +108,7 @@ int _yr_ac_queue_push(
 //    Pointer to the poped state.
 //
 
-YR_AC_STATE* _yr_ac_queue_pop(
+static YR_AC_STATE* _yr_ac_queue_pop(
     QUEUE* queue)
 {
   YR_AC_STATE* result;
@@ -144,7 +144,7 @@ YR_AC_STATE* _yr_ac_queue_pop(
 //    TRUE if queue is empty, FALSE otherwise.
 //
 
-int _yr_ac_queue_is_empty(
+static int _yr_ac_queue_is_empty(
     QUEUE* queue)
 {
   return queue->head == NULL;
@@ -165,7 +165,7 @@ int _yr_ac_queue_is_empty(
 //   Pointer to the next automaton state.
 //
 
-YR_AC_STATE* _yr_ac_next_state(
+static YR_AC_STATE* _yr_ac_next_state(
     YR_AC_STATE* state,
     uint8_t input)
 {
@@ -197,7 +197,7 @@ YR_AC_STATE* _yr_ac_next_state(
 //   YR_AC_STATE* pointer to the newly allocated state or NULL in case
 //   of error.
 
-YR_AC_STATE* _yr_ac_state_create(
+static YR_AC_STATE* _yr_ac_state_create(
     YR_AC_STATE* state,
     uint8_t input)
 {
@@ -223,7 +223,7 @@ YR_AC_STATE* _yr_ac_state_create(
 // _yr_ac_state_destroy
 //
 
-int _yr_ac_state_destroy(
+static int _yr_ac_state_destroy(
     YR_AC_STATE* state)
 {
   YR_AC_STATE* child_state = state->first_child;
@@ -248,7 +248,7 @@ int _yr_ac_state_destroy(
 // be called after all the strings have been added to the automaton.
 //
 
-int _yr_ac_create_failure_links(
+static int _yr_ac_create_failure_links(
     YR_AC_AUTOMATON* automaton)
 {
   YR_AC_STATE* current_state;
@@ -365,7 +365,7 @@ int _yr_ac_create_failure_links(
 // accepted in s1 too.
 //
 
-int _yr_ac_transitions_subset(
+static int _yr_ac_transitions_subset(
     YR_AC_STATE* s1,
     YR_AC_STATE* s2)
 {
@@ -401,7 +401,7 @@ int _yr_ac_transitions_subset(
 // Removes unnecessary failure links.
 //
 
-int _yr_ac_optimize_failure_links(
+static int _yr_ac_optimize_failure_links(
     YR_AC_AUTOMATON* automaton)
 {
   QUEUE queue = { NULL, NULL};
@@ -451,7 +451,7 @@ int _yr_ac_optimize_failure_links(
 // available too.
 //
 
-int _yr_ac_find_suitable_transition_table_slot(
+static int _yr_ac_find_suitable_transition_table_slot(
     YR_AC_AUTOMATON* automaton,
     YR_AC_STATE* state,
     uint32_t* slot)
@@ -581,7 +581,7 @@ int _yr_ac_find_suitable_transition_table_slot(
 // A more detailed description can be found in: http://goo.gl/lE6zG
 
 
-int _yr_ac_build_transition_table(
+static int _yr_ac_build_transition_table(
     YR_AC_AUTOMATON* automaton)
 {
   YR_AC_STATE* state;
@@ -677,7 +677,7 @@ int _yr_ac_build_transition_table(
 // yr_ac_print_automaton, is not intended to be used stand-alone.
 //
 
-void _yr_ac_print_automaton_state(
+static void _yr_ac_print_automaton_state(
   YR_AC_STATE* state)
 {
   int i;

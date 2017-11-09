@@ -71,7 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
-    uint8_t* buffer,
+    const uint8_t* buffer,
     size_t buffer_size,
     int flags,
     YR_CALLBACK_FUNC callback,
@@ -155,5 +155,12 @@ YR_API int yr_rules_define_string_variable(
 
 YR_API void yr_rules_print_profiling_info(
     YR_RULES* rules);
+
+
+YR_API void yr_rule_disable(
+    YR_RULE* rule);
+
+YR_API void yr_rule_enable(
+    YR_RULE* rule);
 
 #endif

@@ -53,7 +53,7 @@ typedef struct _YR_MAPPED_FILE
 {
   YR_FILE_DESCRIPTOR  file;
   size_t              size;
-  uint8_t*            data;
+  const uint8_t*      data;
   #if defined(_WIN32) || defined(__CYGWIN__)
   HANDLE              mapping;
   #endif

@@ -188,6 +188,9 @@ int yr_modules_load(
       module_structure,
       context->user_data);
 
+  if (result == CALLBACK_ERROR)
+    return ERROR_CALLBACK_ERROR;
+
   return ERROR_SUCCESS;
 }
 

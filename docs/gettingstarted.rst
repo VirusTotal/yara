@@ -12,8 +12,8 @@ Compiling and installing YARA
 
 Download the source tarball and get prepared for compiling it::
 
-    tar -zxf yara-3.6.0.tar.gz
-    cd yara-3.6.0
+    tar -zxf yara-3.7.0.tar.gz
+    cd yara-3.7.0
     ./bootstrap.sh
 
 Make sure you have ``automake``, ``libtool``, ``make``  and ``gcc`` installed
@@ -95,7 +95,7 @@ corresponding to the version of Python you're using.
 Installing on Mac OS X with Homebrew
 ------------------------------------
 
-To install YARA using `Homebrew <http://brew.sh>`_ simply type
+To install YARA using `Homebrew <https://brew.sh>`_, simply type
 ``brew install yara``.
 
 

@@ -145,7 +145,10 @@ hex_digit     [0-9a-fA-F]
 
   int value = atoi(yytext + 1);
 
-  if (value > INT16_MAX)
+  // atoi can return a negative value if the input string represents a number
+  // too large to fit in an integer.
+
+  if (value > INT16_MAX || value < 0)
   {
     yyerror(yyscanner, lex_env, "repeat interval too large");
     yyterminate();
@@ -168,8 +171,8 @@ hex_digit     [0-9a-fA-F]
   // Start of a negated character class. Example: [^abcd]
 
   BEGIN(char_class);
-  memset(LEX_ENV->class_vector, 0, 32);
-  LEX_ENV->negated_class = TRUE;
+  memset(LEX_ENV->re_class.bitmap, 0, 32);
+  LEX_ENV->re_class.negated = TRUE;
 }
 
 \[\^\] {
@@ -179,9 +182,9 @@ hex_digit     [0-9a-fA-F]
   // not matching ], a, b, nor c
 
   BEGIN(char_class);
-  memset(LEX_ENV->class_vector, 0, 32);
-  LEX_ENV->negated_class = TRUE;
-  LEX_ENV->class_vector[']' / 8] |= 1 << ']' % 8;
+  memset(LEX_ENV->re_class.bitmap, 0, 32);
+  LEX_ENV->re_class.negated = TRUE;
+  LEX_ENV->re_class.bitmap[']' / 8] |= 1 << ']' % 8;
 }
 
 
@@ -192,9 +195,9 @@ hex_digit     [0-9a-fA-F]
   // matching ], a, b, or c.
 
   BEGIN(char_class);
-  memset(LEX_ENV->class_vector, 0, 32);
-  LEX_ENV->negated_class = FALSE;
-  LEX_ENV->class_vector[']' / 8] |= 1 << ']' % 8;
+  memset(LEX_ENV->re_class.bitmap, 0, 32);
+  LEX_ENV->re_class.negated = FALSE;
+  LEX_ENV->re_class.bitmap[']' / 8] |= 1 << ']' % 8;
 }
 
 
@@ -203,8 +206,8 @@ hex_digit     [0-9a-fA-F]
   // Start of character class. Example: [abcd]
 
   BEGIN(char_class);
-  memset(LEX_ENV->class_vector, 0, 32);
-  LEX_ENV->negated_class = FALSE;
+  memset(LEX_ENV->re_class.bitmap, 0, 32);
+  LEX_ENV->re_class.negated = FALSE;
 }
 
 
@@ -283,17 +286,10 @@ hex_digit     [0-9a-fA-F]
 <char_class>\] {
 
   // End of character class.
+  yylval->re_class = (RE_CLASS*) yr_malloc(sizeof(RE_CLASS));
+  memcpy(yylval->re_class->bitmap, LEX_ENV->re_class.bitmap, 32);
 
-  int i;
-
-  yylval->class_vector = (uint8_t*) yr_malloc(32);
-  memcpy(yylval->class_vector, LEX_ENV->class_vector, 32);
-
-  if (LEX_ENV->negated_class)
-  {
-    for(i = 0; i < 32; i++)
-      yylval->class_vector[i] = ~yylval->class_vector[i];
-  }
+  yylval->re_class->negated = LEX_ENV->re_class.negated;
 
   BEGIN(INITIAL);
   return _CLASS_;
@@ -342,7 +338,7 @@ hex_digit     [0-9a-fA-F]
 
   for (c = start; c <= end; c++)
   {
-    LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
+    LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
   }
 }
 
@@ -352,7 +348,7 @@ hex_digit     [0-9a-fA-F]
   int i;
 
   for (i = 0; i < 32; i++)
-    LEX_ENV->class_vector[i] |= word_chars[i];
+    LEX_ENV->re_class.bitmap[i] |= word_chars[i];
 }
 
 
@@ -361,14 +357,14 @@ hex_digit     [0-9a-fA-F]
   int i;
 
   for (i = 0; i < 32; i++)
-    LEX_ENV->class_vector[i] |= ~word_chars[i];
+    LEX_ENV->re_class.bitmap[i] |= ~word_chars[i];
 }
 
 
 <char_class>\\s {
 
-  LEX_ENV->class_vector[' ' / 8] |= 1 << ' ' % 8;
-  LEX_ENV->class_vector['\t' / 8] |= 1 << '\t' % 8;
+  LEX_ENV->re_class.bitmap[' ' / 8] |= 1 << ' ' % 8;
+  LEX_ENV->re_class.bitmap['\t' / 8] |= 1 << '\t' % 8;
 }
 
 
@@ -379,11 +375,11 @@ hex_digit     [0-9a-fA-F]
   for (i = 0; i < 32; i++)
   {
     if (i == ' ' / 8)
-      LEX_ENV->class_vector[i] |= ~(1 << ' ' % 8);
+      LEX_ENV->re_class.bitmap[i] |= ~(1 << ' ' % 8);
     else if (i == '\t' / 8)
-      LEX_ENV->class_vector[i] |= ~(1 << '\t' % 8);
+      LEX_ENV->re_class.bitmap[i] |= ~(1 << '\t' % 8);
     else
-      LEX_ENV->class_vector[i] = 0xFF;
+      LEX_ENV->re_class.bitmap[i] = 0xFF;
   }
 }
 
@@ -393,7 +389,7 @@ hex_digit     [0-9a-fA-F]
   char c;
 
   for (c = '0'; c <= '9'; c++)
-    LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
+    LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
 }
 
 
@@ -410,9 +406,9 @@ hex_digit     [0-9a-fA-F]
     // digits 8 and 9 are the lowest two bits in the seventh byte of the
     // vector, let those bits alone.
     if (i == 7)
-      LEX_ENV->class_vector[i] |= 0xFC;
+      LEX_ENV->re_class.bitmap[i] |= 0xFC;
     else
-      LEX_ENV->class_vector[i] = 0xFF;
+      LEX_ENV->re_class.bitmap[i] = 0xFF;
   }
 }
 
@@ -423,7 +419,7 @@ hex_digit     [0-9a-fA-F]
 
   if (read_escaped_char(yyscanner, &c))
   {
-    LEX_ENV->class_vector[c / 8] |= 1 << c % 8;
+    LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
   }
   else
   {
@@ -440,7 +436,7 @@ hex_digit     [0-9a-fA-F]
     // A character class (i.e: [0-9a-f]) is represented by a 256-bits vector,
     // here we set to 1 the vector's bit corresponding to the input character.
 
-    LEX_ENV->class_vector[yytext[0] / 8] |= 1 << yytext[0] % 8;
+    LEX_ENV->re_class.bitmap[yytext[0] / 8] |= 1 << yytext[0] % 8;
   }
   else
   {

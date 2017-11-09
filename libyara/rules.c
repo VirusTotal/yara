@@ -171,7 +171,7 @@ YR_API int yr_rules_define_string_variable(
 }
 
 
-void _yr_rules_clean_matches(
+static void _yr_rules_clean_matches(
     YR_RULES* rules,
     YR_SCAN_CONTEXT* context)
 {
@@ -241,9 +241,9 @@ void yr_rules_print_profiling_info(
 #endif
 
 
-int _yr_rules_scan_mem_block(
+static int _yr_rules_scan_mem_block(
     YR_RULES* rules,
-    uint8_t* block_data,
+    const uint8_t* block_data,
     YR_MEMORY_BLOCK* block,
     YR_SCAN_CONTEXT* context,
     int timeout,
@@ -423,7 +423,7 @@ YR_API int yr_rules_scan_mem_blocks(
 
   while (block != NULL)
   {
-    uint8_t* data = block->fetch_data(block);
+    const uint8_t* data = block->fetch_data(block);
 
     // fetch may fail
     if (data == NULL)
@@ -555,16 +555,16 @@ static YR_MEMORY_BLOCK* _yr_get_next_block(
 }
 
 
-static uint8_t* _yr_fetch_block_data(
+static const uint8_t* _yr_fetch_block_data(
     YR_MEMORY_BLOCK* block)
 {
-  return (uint8_t*) block->context;
+  return (const uint8_t*) block->context;
 }
 
 
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
-    uint8_t* buffer,
+    const uint8_t* buffer,
     size_t buffer_size,
     int flags,
     YR_CALLBACK_FUNC callback,
@@ -577,7 +577,7 @@ YR_API int yr_rules_scan_mem(
   block.size = buffer_size;
   block.base = 0;
   block.fetch_data = _yr_fetch_block_data;
-  block.context = buffer;
+  block.context = (void*) buffer;
 
   iterator.context = &block;
   iterator.first = _yr_get_first_block;
@@ -795,4 +795,31 @@ YR_API int yr_rules_destroy(
   yr_free(rules);
 
   return ERROR_SUCCESS;
+}
+
+YR_API void yr_rule_disable(
+    YR_RULE* rule)
+{
+  YR_STRING* string;
+
+  rule->g_flags |= RULE_GFLAGS_DISABLED;
+
+  yr_rule_strings_foreach(rule, string)
+  {
+    string->g_flags |= STRING_GFLAGS_DISABLED;
+  }
+}
+
+
+YR_API void yr_rule_enable(
+  YR_RULE* rule)
+{
+  YR_STRING* string;
+
+  rule->g_flags &= ~RULE_GFLAGS_DISABLED;
+
+  yr_rule_strings_foreach(rule, string)
+  {
+    string->g_flags &= ~STRING_GFLAGS_DISABLED;
+  }
 }
