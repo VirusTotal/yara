@@ -375,7 +375,10 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r2);
         ensure_defined(r1);
-        r1.i = r1.i >> r2.i;
+        if (r2.i < 64)
+          r1.i = r1.i >> r2.i;
+        else
+          r1.i = 0;
         push(r1);
         break;
 
@@ -384,7 +387,10 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r2);
         ensure_defined(r1);
-        r1.i = r1.i << r2.i;
+        if (r2.i < 64)
+          r1.i = r1.i << r2.i;
+        else
+          r1.i = 0;
         push(r1);
         break;
 
