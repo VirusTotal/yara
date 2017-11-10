@@ -19,6 +19,7 @@ modules in the :ref:`writing-modules` section.
    Hash <modules/hash>
    Math <modules/math>
    Dotnet <modules/dotnet>
+   Time <modules/time>
 
 
 
