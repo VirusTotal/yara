@@ -1789,16 +1789,13 @@ primary_expression
               ))
           {
             yr_compiler_set_error_extra_info_fmt(
-                compiler,
-                "%" PRId64 " + %" PRId64,
-                $1.value.integer,
-                $3.value.integer);
+                compiler, "%" PRId64 " + %" PRId64, i1, i2);
 
             compiler->last_result = ERROR_INTEGER_OVERFLOW;
           }
           else
           {
-            $$.value.integer = OPERATION(+, $1.value.integer, $3.value.integer);
+            $$.value.integer = OPERATION(+, i1, i2);
             $$.type = EXPRESSION_TYPE_INTEGER;
           }
         }
@@ -1827,16 +1824,13 @@ primary_expression
               ))
           {
             yr_compiler_set_error_extra_info_fmt(
-                compiler,
-                "%" PRId64 " - %" PRId64,
-                $1.value.integer,
-                $3.value.integer);
+                compiler, "%" PRId64 " - %" PRId64, i1, i2);
 
             compiler->last_result = ERROR_INTEGER_OVERFLOW;
           }
           else
           {
-            $$.value.integer = OPERATION(-, $1.value.integer, $3.value.integer);
+            $$.value.integer = OPERATION(-, i1, i2);
             $$.type = EXPRESSION_TYPE_INTEGER;
           }
         }
@@ -1864,16 +1858,13 @@ primary_expression
               ))
           {
             yr_compiler_set_error_extra_info_fmt(
-                compiler,
-                "%" PRId64 " * %" PRId64,
-                $1.value.integer,
-                $3.value.integer);
+                compiler, "%" PRId64 " * %" PRId64, i1, i2);
 
             compiler->last_result = ERROR_INTEGER_OVERFLOW;
           }
           else
           {
-            $$.value.integer = OPERATION(*, $1.value.integer, $3.value.integer);
+            $$.value.integer = OPERATION(*, i1, i2);
             $$.type = EXPRESSION_TYPE_INTEGER;
           }
         }
@@ -1974,8 +1965,12 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_SHL, NULL);
 
+        if (!IS_UNDEFINED($3.value.integer) && $3.value.integer >= 64)
+          $$.value.integer = 0;
+        else
+          $$.value.integer = OPERATION(<<, $1.value.integer, $3.value.integer);
+
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = OPERATION(<<, $1.value.integer, $3.value.integer);
       }
     | primary_expression _SHIFT_RIGHT_ primary_expression
       {
@@ -1984,8 +1979,12 @@ primary_expression
 
         yr_parser_emit(yyscanner, OP_SHR, NULL);
 
+        if (!IS_UNDEFINED($3.value.integer) && $3.value.integer >= 64)
+          $$.value.integer = 0;
+        else
+          $$.value.integer = OPERATION(<<, $1.value.integer, $3.value.integer);
+
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = OPERATION(>>, $1.value.integer, $3.value.integer);
       }
     | regexp
       {
