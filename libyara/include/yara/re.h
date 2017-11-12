@@ -169,7 +169,7 @@ struct RE
 
 struct RE_ERROR
 {
-  char message[512];
+  char message[384];
 };
 
 
