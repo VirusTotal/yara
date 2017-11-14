@@ -1563,6 +1563,32 @@ define_function(exports)
 }
 
 
+define_function(exports_regexp)
+{
+  RE* regex = regexp_argument(1);
+
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  IMPORT_EXPORT_FUNCTION* exported_func;
+
+  if (!pe)
+    return_integer(UNDEFINED);
+
+  exported_func = pe->exported_functions;
+
+  while (exported_func != NULL)
+  {
+    if (yr_re_match(regex, exported_func->name) != -1)
+      return_integer(1);
+
+    exported_func = exported_func->next;
+  }
+
+  return_integer(0);
+}
+
+
 define_function(exports_ordinal)
 {
   uint64_t ordinal = integer_argument(1);
@@ -2233,6 +2259,7 @@ begin_declarations;
   declare_function("section_index", "s", "i", section_index_name);
   declare_function("section_index", "i", "i", section_index_addr);
   declare_function("exports", "s", "i", exports);
+  declare_function("exports", "r", "i", exports_regexp);
   declare_function("exports", "i", "i", exports_ordinal);
   declare_function("imports", "ss", "i", imports);
   declare_function("imports", "si", "i", imports_ordinal);
