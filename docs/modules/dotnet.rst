@@ -165,7 +165,6 @@ Reference
 
         String containing the public key or token which identifies the author of
         this assembly.
-        assembly.
 
 .. c:type:: number_of_user_strings
 
