@@ -201,7 +201,7 @@ In our case the resulting *module_list* is::
     MODULE(demo)
 
 The second step is modifying the *Makefile.am* to tell the *make* program that
-the source code for your module most be compiled and linked into YARA. At the
+the source code for your module must be compiled and linked into YARA. At the
 very beginning of *libyara/Makefile.am* you'll find this::
 
     MODULES =  modules/tests.c
