@@ -56,7 +56,7 @@ static void _yr_compiler_default_include_free(
     const char* callback_result_ptr,
     void* user_data)
 {
-  if(callback_result_ptr != NULL)
+  if (callback_result_ptr != NULL)
   {
     yr_free((void*)callback_result_ptr);
   }
@@ -73,14 +73,7 @@ const char* _yr_compiler_default_include_callback(
   struct stat stbuf;
   #endif
 
-  #ifdef _MSC_VER
-  char* b = NULL;
-  #endif
-
-  char* s = NULL;
-  char* f;
   char* file_buffer;
-  char buffer[1024];
 
   #ifdef _MSC_VER
   long file_size;
@@ -90,62 +83,11 @@ const char* _yr_compiler_default_include_callback(
 
   int fd = -1;
 
-  if (calling_rule_filename != NULL)
-    strlcpy(buffer, calling_rule_filename, sizeof(buffer));
-  else
-    buffer[0] = '\0';
-
-  s = strrchr(buffer, '/');
-
   #ifdef _MSC_VER
-  b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
-  #endif
-
-  #ifdef _MSC_VER
-  if (s != NULL || b != NULL)
+  _sopen_s(&fd, include_name, _O_RDONLY, _SH_DENYRW, _S_IREAD);
   #else
-  if (s != NULL)
+  fd = open(include_name, O_RDONLY);
   #endif
-  {
-    #ifdef _MSC_VER
-    f = (b > s) ? (b + 1) : (s + 1);
-    #else
-    f = s + 1;
-    #endif
-
-    strlcpy(f, include_name, sizeof(buffer) - (f - buffer));
-
-    f = buffer;
-
-    // SECURITY: Potential for directory traversal here.
-    #ifdef _MSC_VER
-    _sopen_s(&fd, f, _O_RDONLY, _SH_DENYRW, _S_IREAD);
-    #else
-    fd = open(f, O_RDONLY);
-    #endif
-
-    // if include file was not found relative to current source file,
-    // try to open it with path as specified by user (maybe user wrote
-    // a full path)
-    if (fd == -1)
-    {
-      f = (char*) include_name;
-    }
-  }
-  else
-  {
-    f = (char*) include_name;
-  }
-
-  if (fd == -1)
-  {
-    // SECURITY: Potential for directory traversal here.
-    #ifdef _MSC_VER
-    _sopen_s(&fd, f, _O_RDONLY, _SH_DENYRW, _S_IREAD);
-    #else
-    fd = open(f, O_RDONLY);
-    #endif
-  }
 
   if (fd == -1)
     return NULL;
@@ -220,6 +162,7 @@ YR_API int yr_compiler_create(
   new_compiler->errors = 0;
   new_compiler->callback = NULL;
   new_compiler->include_callback = _yr_compiler_default_include_callback;
+  new_compiler->incl_clbk_user_data = NULL;
   new_compiler->include_free = _yr_compiler_default_include_free;
   new_compiler->last_error = ERROR_SUCCESS;
   new_compiler->last_error_line = 0;

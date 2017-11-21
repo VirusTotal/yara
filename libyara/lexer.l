@@ -116,6 +116,20 @@ with noyywrap then we can remove this pragma.
 #define snprintf _snprintf
 #endif
 
+static int is_absolute_path(
+    char* path)
+{
+  if (path == NULL)
+    return FALSE;
+
+  #if defined(_WIN32) || defined(__CYGWIN__)
+  return strlen(path) > 2 &&
+      path[1] == ':' && (path[2] == '/' || path[2] == '\\');
+  #else
+  return strlen(path) > 0 && path[0] == '/';
+  #endif
+}
+
 %}
 
 %option reentrant bison-bridge
@@ -203,23 +217,66 @@ include[ \t]+\"         {
 
   if (compiler->include_callback != NULL)
   {
+    #ifdef _MSC_VER
+    char* b = NULL;
+    #endif
+    char* s = NULL;
+    char* f;
+
+    char buffer[1024];
     const char* included_rules;
     char* current_file_name;
+    char* include_path;
 
     *yyextra->lex_buf_ptr = '\0'; // null-terminate included file path
 
-    // move path of current source file into buffer
     current_file_name = yr_compiler_get_current_file_name(compiler);
 
+    if (current_file_name == NULL ||
+        compiler->include_callback != _yr_compiler_default_include_callback ||
+        is_absolute_path(yyextra->lex_buf))
+    {
+      include_path = yyextra->lex_buf;
+    }
+    else
+    {
+      strlcpy(buffer, current_file_name, sizeof(buffer));
+      s = strrchr(buffer, '/');
+
+      #ifdef _MSC_VER
+      b = strrchr(buffer, '\\'); // in Windows both path delimiters are accepted
+      #endif
+
+      #ifdef _MSC_VER
+      if (s != NULL || b != NULL)
+      #else
+      if (s != NULL)
+      #endif
+      {
+        #ifdef _MSC_VER
+        f = (b > s) ? (b + 1) : (s + 1);
+        #else
+        f = s + 1;
+        #endif
+
+        strlcpy(f, yyextra->lex_buf, sizeof(buffer) - (f - buffer));
+        include_path = buffer;
+      }
+      else
+      {
+        include_path = yyextra->lex_buf;
+      }
+    }
+
     included_rules = compiler->include_callback(
-        yyextra->lex_buf,
+        include_path,
         current_file_name,
         compiler->current_namespace->name,
         compiler->incl_clbk_user_data);
 
     if (included_rules != NULL)
     {
-      int error_code = _yr_compiler_push_file_name(compiler, yyextra->lex_buf);
+      int error_code = _yr_compiler_push_file_name(compiler, include_path);
 
       if (error_code != ERROR_SUCCESS)
       {
@@ -886,3 +943,4 @@ int yr_lex_parse_rules_fd(
 
   return compiler->errors;
 }
+
