@@ -1737,7 +1737,11 @@ void test_integer_functions()
 void test_include_files()
 {
   assert_true_rule(
-    "include \"tests/data/true.yar\" rule t { condition: test }",
+    "include \"tests/data/baz.yar\" rule t { condition: baz }",
+    NULL);
+
+  assert_true_rule(
+    "include \"tests/data/foo.yar\" rule t { condition: foo }",
     NULL);
 }
 
