@@ -1,6 +1,7 @@
 MODULE(tests)
 MODULE(pe)
 MODULE(elf)
+MODULE(macho)
 MODULE(math)
 MODULE(time)
 
