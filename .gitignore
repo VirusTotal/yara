@@ -64,6 +64,9 @@ test-suite.log
 test-pe
 test-pe.log
 test-pe.trs
+test-macho
+test-macho.log
+test-macho.trs
 
 # Visual Studio files
 Release/
