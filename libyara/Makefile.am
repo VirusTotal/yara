@@ -2,7 +2,6 @@
 MODULES =  modules/tests.c
 MODULES += modules/pe.c
 MODULES += modules/elf.c
-MODULES += modules/macho.c
 MODULES += modules/math.c
 MODULES += modules/time.c
 
@@ -20,6 +19,10 @@ endif
 
 if DOTNET_MODULE
 MODULES += modules/dotnet.c
+endif
+
+if MACHO_MODULE
+MODULES += modules/macho.c
 endif
 
 # This isn't really a module, but needs to be compiled with them.
