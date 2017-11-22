@@ -129,6 +129,13 @@ AC_ARG_ENABLE([dotnet],
     CFLAGS="$CFLAGS -DDOTNET_MODULE"
   fi])
 
+AC_ARG_ENABLE([macho],
+  [AS_HELP_STRING([--enable-macho], [enable macho module])],
+  [if test x$enableval = xyes; then
+    build_macho_module=true
+    CFLAGS="$CFLAGS -DMACHO_MODULE"
+  fi])
+
 AC_ARG_WITH([crypto],
   AS_HELP_STRING([--without-crypto],
     [ignore presence of OpenSSL and disable it]))
@@ -221,6 +228,7 @@ AM_CONDITIONAL([CUCKOO_MODULE], [test x$build_cuckoo_module = xtrue])
 AM_CONDITIONAL([MAGIC_MODULE], [test x$build_magic_module = xtrue])
 AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
 AM_CONDITIONAL([DOTNET_MODULE], [test x$build_dotnet_module = xtrue])
+AM_CONDITIONAL([MACHO_MODULE], [test x$build_macho_module = xtrue])
 AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
 
 AM_CONDITIONAL([USE_WINDOWS_PROC], [test x$proc_interface = xwindows ])
