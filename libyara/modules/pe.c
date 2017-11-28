@@ -2043,7 +2043,7 @@ define_function(calculate_checksum)
     if (4 * i == csum_offset)
       continue;
 
-    if (4 * i + 4 < pe->data_size)
+    if (4 * i + 4 <= pe->data_size)
     {
       csum += ((uint64_t) pe->data[4 * i] +
           ((uint64_t) pe->data[4 * i + 1] << 8)  +
