@@ -2624,7 +2624,7 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
-	  block_data = block->fetch_data(block);
+    block_data = block->fetch_data(block);
 
     if (block_data == NULL)
       continue;
