@@ -1134,14 +1134,14 @@ void pe_parse_certificates(
         yr_le16toh(win_cert->CertificateType) != WIN_CERT_TYPE_PKCS_SIGNED_DATA)
     {
       uintptr_t end = (uintptr_t)
-          ((uint8_t *) win_cert) + yr_le32toh(win_cert->Length);
+          ((uint8_t *) win_cert) + yr_le32toh(win_cert->Length) - WIN_CERTIFICATE_HEADER_SIZE;
 
       win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
       continue;
     }
 
     cert_bio = BIO_new_mem_buf(
-        win_cert->Certificate, yr_le32toh(win_cert->Length));
+        win_cert->Certificate, yr_le32toh(win_cert->Length) - WIN_CERTIFICATE_HEADER_SIZE);
 
     if (!cert_bio)
       break;
