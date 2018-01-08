@@ -193,7 +193,11 @@ int module_load(
   set_integer(1, module_object, "struct_dict[%s].i", "foo");
 
   if (module_data_size > 0 && module_data != NULL) {
-    set_sized_string(module_data, module_data_size, module_object, "module_data");
+    set_sized_string(
+        (const char*) module_data,
+        module_data_size,
+        module_object,
+        "module_data");
   }
 
   return ERROR_SUCCESS;
