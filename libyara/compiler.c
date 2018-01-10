@@ -83,8 +83,10 @@ const char* _yr_compiler_default_include_callback(
 
   int fd = -1;
 
-  #ifdef _MSC_VER
-  _sopen_s(&fd, include_name, _O_RDONLY, _SH_DENYRW, _S_IREAD);
+  #if defined(_MSC_VER)
+  _sopen_s(&fd, include_name, _O_RDONLY | _O_BINARY, _SH_DENYRW, _S_IREAD);
+  #elif defined(_WIN32) || defined(__CYGWIN__)
+  fd = open(include_name, O_RDONLY | O_BINARY);
   #else
   fd = open(include_name, O_RDONLY);
   #endif
