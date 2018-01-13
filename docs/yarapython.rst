@@ -281,8 +281,6 @@ Here are a few example calls:
 
 .. code-block:: python
 
-  import yara
-
   yara.set_config(stack_size=65536)
   yara.set_config(max_strings_per_rule=50000, stack_size=65536)
   yara.set_config(max_strings_per_rule=20000)
