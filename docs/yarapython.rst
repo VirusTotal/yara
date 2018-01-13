@@ -343,7 +343,7 @@ Reference
   :param int max_strings_per_rule: Maximum number of strings to allow per
     yara rule. Will be mapped to YR_CONFIG_MAX_STRINGS_PER_RULE.
   :return: None
-  :rtype: :py:None
+  :rtype: **NoneType**
   :raises: **YaraError**: If an error occurred.
 
 .. py:class:: Rules
