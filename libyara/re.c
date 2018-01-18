@@ -1150,7 +1150,11 @@ static int _yr_re_emit(
     //
     //        3,3     X       1,1         -      X
     //        3,4     X       2,2         X      X
-    //        3,M     X       2,M-1       X      X
+    //        3,M     X       2,M-2       X      X
+    //
+    //        4,4     X       2,2         -      X
+    //        4,5     X       3,3         X      X
+    //        4,M     X       3,M-2       X      X
     //
     // The code can't consists simply in the repeat section, the prolog and
     // epilog are required because we can't have atoms pointing to code inside
@@ -1187,9 +1191,14 @@ static int _yr_re_emit(
       }
 
       if (emit_split)
+      {
         repeat_args.max--;
+      }
       else
+      {
         repeat_args.min--;
+        repeat_args.max--;
+      }
 
       repeat_args.offset = 0;
 

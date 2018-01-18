@@ -1090,15 +1090,20 @@ void test_re()
   assert_true_regexp("aa{0,1}bc", "abc", "abc");
   assert_true_regexp("ab{1}c", "abc", "abc");
   assert_true_regexp("ab{1,2}c", "abbc", "abbc");
+  assert_false_regexp("ab{1,2}c", "abbbc");
   assert_true_regexp("ab{1,}c", "abbbc", "abbbc");
   assert_false_regexp("ab{1,}b", "ab");
   assert_false_regexp("ab{1}c", "abbc");
+  assert_false_regexp("ab{1}c", "ac");
   assert_true_regexp("ab{0,}c", "ac", "ac");
   assert_true_regexp("ab{1,1}c", "abc", "abc");
   assert_true_regexp("ab{0,}c", "abbbc", "abbbc");
   assert_true_regexp("ab{,3}c", "abbbc", "abbbc");
   assert_false_regexp("ab{,2}c", "abbbc");
   assert_false_regexp("ab{4,5}bc", "abbbbc");
+  assert_false_regexp("ab{3}c", "abbbbc");  // Issue #817
+  assert_false_regexp("ab{4}c", "abbbbbc");
+  assert_false_regexp("ab{5}c", "abbbbbbc");
   assert_true_regexp("ab{0,1}", "abbbbb", "ab");
   assert_true_regexp("ab{0,2}", "abbbbb", "abb");
   assert_true_regexp("ab{0,3}", "abbbbb", "abbb");
@@ -1108,6 +1113,13 @@ void test_re()
   assert_true_regexp("ab{1,3}", "abbbbb", "abbb");
   assert_true_regexp("ab{2,2}", "abbbbb", "abb");
   assert_true_regexp("ab{2,3}", "abbbbb", "abbb");
+  assert_true_regexp("ab{2,4}", "abbbbc", "abbbbc");
+  assert_true_regexp("ab{3,4}", "abbb", "abbb");
+  assert_true_regexp("ab{3,4}", "abbbbc", "abbbbc");
+  assert_true_regexp("ab{3,5}", "abbbbc", "abbbbc");
+  assert_false_regexp("ab{3,4}c", "abbbbbc");
+  assert_false_regexp("ab{3,4}c", "abbc");
+  assert_false_regexp("ab{3,5}c", "abbbbbbc");
   assert_true_regexp("ab{1,3}?", "abbbbb", "ab");
   assert_true_regexp("ab{0,1}?", "abbbbb", "a");
   assert_true_regexp("ab{0,2}?", "abbbbb", "a");
