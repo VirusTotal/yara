@@ -477,7 +477,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
     goto _exit;
   }
 
-  // Empty strings are now allowed
+  // Empty strings are not allowed
 
   if (str->length == 0)
   {
