@@ -44,19 +44,25 @@ do {                                                    \
 } while (0)
 
 
-void yr_stopwatch_start(YR_STOPWATCH* stopwatch)
+void yr_stopwatch_start(
+    YR_STOPWATCH* stopwatch)
 {
   clock_gettime(CLOCK_MONOTONIC, &stopwatch->ts_start);
 }
 
 
-uint64_t yr_stopwatch_elapsed_microseconds(YR_STOPWATCH* stopwatch)
+uint64_t yr_stopwatch_elapsed_microseconds(
+    YR_STOPWATCH* stopwatch,
+    int restart)
 {
   struct timespec ts_stop;
   struct timespec ts_elapsed;
 
   clock_gettime(CLOCK_MONOTONIC, &ts_stop);
   timespecsub(&ts_stop, &stopwatch->ts_start, &ts_elapsed);
+
+  if (restart)
+    stopwatch->ts_start = ts_stop;
 
   return ts_elapsed.tv_sec + ts_elapsed.tv_nsec;
 }

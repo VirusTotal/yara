@@ -758,7 +758,7 @@ int yr_scan_verify_match(
   }
 
   #ifdef PROFILING_ENABLED
-  string->clock_ticks += yr_stopwatch_elapsed_microseconds(&stopwatch);
+  string->clock_ticks += yr_stopwatch_elapsed_microseconds(&stopwatch, FALSE);
   #endif
 
   return ERROR_SUCCESS;

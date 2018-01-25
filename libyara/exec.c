@@ -170,6 +170,7 @@ int yr_execute_code(
   YR_VALUE r3;
 
   #ifdef PROFILING_ENABLED
+  YR_STOPWATCH stopwatch;
   YR_RULE* current_rule = NULL;
   #endif
 
@@ -195,11 +196,6 @@ int yr_execute_code(
 
   uint8_t opcode;
 
-  #ifdef PROFILING_ENABLED
-  YR_STOPWATCH stopwatch;
-  yr_stopwatch_start(&stopwatch);
-  #endif
-
   yr_get_configuration(YR_CONFIG_STACK_SIZE, (void*) &stack_size);
 
   stack = (YR_VALUE*) yr_malloc(stack_size * sizeof(YR_VALUE));
@@ -210,6 +206,10 @@ int yr_execute_code(
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_arena_create(1024, 0, &obj_arena),
       yr_free(stack));
+
+  #ifdef PROFILING_ENABLED
+  yr_stopwatch_start(&stopwatch);
+  #endif
 
   while(!stop)
   {
@@ -460,7 +460,8 @@ int yr_execute_code(
           rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
 
         #ifdef PROFILING_ENABLED
-        rule->clock_ticks = yr_stopwatch_elapsed_microseconds(&stopwatch);
+        rule->clock_ticks += yr_stopwatch_elapsed_microseconds(
+            &stopwatch, TRUE);
         #endif
 
         assert(sp == 0); // at this point the stack should be empty.
@@ -1168,7 +1169,8 @@ int yr_execute_code(
         {
           #ifdef PROFILING_ENABLED
           assert(current_rule != NULL);
-          current_rule->clock_ticks += yr_stopwatch_elapsed_microseconds(&stopwatch);
+          current_rule->clock_ticks += yr_stopwatch_elapsed_microseconds(
+              &stopwatch, FALSE);
           #endif
           result = ERROR_SCAN_TIMEOUT;
           stop = TRUE;
