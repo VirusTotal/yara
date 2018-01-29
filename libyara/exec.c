@@ -460,8 +460,7 @@ int yr_execute_code(
           rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
 
         #ifdef PROFILING_ENABLED
-        rule->clock_ticks += yr_stopwatch_elapsed_microseconds(
-            &stopwatch, TRUE);
+        rule->clock_ticks += yr_stopwatch_elapsed_ns(&stopwatch, TRUE);
         #endif
 
         assert(sp == 0); // at this point the stack should be empty.
@@ -1169,7 +1168,7 @@ int yr_execute_code(
         {
           #ifdef PROFILING_ENABLED
           assert(current_rule != NULL);
-          current_rule->clock_ticks += yr_stopwatch_elapsed_microseconds(
+          current_rule->clock_ticks += yr_stopwatch_elapsed_ns(
               &stopwatch, FALSE);
           #endif
           result = ERROR_SCAN_TIMEOUT;

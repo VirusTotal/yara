@@ -51,7 +51,7 @@ void yr_stopwatch_start(
 }
 
 
-uint64_t yr_stopwatch_elapsed_microseconds(
+uint64_t yr_stopwatch_elapsed_ns(
     YR_STOPWATCH* stopwatch,
     int restart)
 {
@@ -64,7 +64,7 @@ uint64_t yr_stopwatch_elapsed_microseconds(
   if (restart)
     stopwatch->ts_start = ts_stop;
 
-  return ts_elapsed.tv_sec + ts_elapsed.tv_nsec;
+  return ts_elapsed.tv_sec * 1000000000L + ts_elapsed.tv_nsec;
 }
 
 #endif

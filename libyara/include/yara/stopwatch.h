@@ -44,10 +44,10 @@ typedef struct _YR_STOPWATCH
 void yr_stopwatch_start(
     YR_STOPWATCH* stopwatch);
 
-// yr_stopwatch_elapsed_microseconds returns the time elapsed since the
-// last call to yr_stopwatch_start or since the last time that
-// yr_stopwatch_elapsed_microseconds was called with restart set to TRUE.
-uint64_t yr_stopwatch_elapsed_microseconds(
+// yr_stopwatch_elapsed_ns returns the number of nanoseconds elapsed
+// since the last call to yr_stopwatch_start or since the last time that
+// yr_stopwatch_elapsed_ns was called with restart set to TRUE.
+uint64_t yr_stopwatch_elapsed_ns(
     YR_STOPWATCH* stopwatch, int restart);
 
 #endif
