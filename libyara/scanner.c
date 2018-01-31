@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/exefiles.h>
 #include <yara/mem.h>
 #include <yara/object.h>
+#include <yara/proc.h>
 #include <yara/scanner.h>
 #include <yara/types.h>
 #include <yara/libyara.h>
@@ -44,7 +45,6 @@ static int _yr_scanner_scan_mem_block(
     YR_SCANNER* scanner,
     const uint8_t* block_data,
     YR_MEMORY_BLOCK* block,
-    int timeout,
     time_t start_time)
 {
   YR_RULES* rules = scanner->rules;
@@ -64,9 +64,9 @@ static int _yr_scanner_scan_mem_block(
 
     while (match != NULL)
     {
-      if (timeout > 0 && i % 4096 == 0)
+      if (scanner->timeout > 0 && i % 4096 == 0)
       {
-        if (difftime(time(NULL), start_time) > timeout)
+        if (difftime(time(NULL), start_time) > scanner->timeout)
           return ERROR_SCAN_TIMEOUT;
       }
 
@@ -224,6 +224,7 @@ YR_API void yr_scanner_destroy(
   yr_free(scanner);
 }
 
+
 YR_API void yr_scanner_set_callback(
     YR_SCANNER* scanner,
     YR_CALLBACK_FUNC callback,
@@ -234,9 +235,94 @@ YR_API void yr_scanner_set_callback(
 }
 
 
-YR_API int yr_scanner_scan_mem_blocks(
+YR_API void yr_scanner_set_timeout(
     YR_SCANNER* scanner,
     int timeout)
+{
+  scanner->timeout = timeout;
+}
+
+
+YR_API void yr_scanner_set_flags(
+    YR_SCANNER* scanner,
+    int flags)
+{
+  scanner->flags = flags;
+}
+
+
+YR_API int yr_scanner_define_integer_variable(
+    YR_SCANNER* scanner,
+    const char* identifier,
+    int64_t value)
+{
+  YR_OBJECT* obj = (YR_OBJECT*) yr_hash_table_lookup(
+      scanner->objects_table,
+      identifier,
+      NULL);
+
+  if (obj == NULL)
+    return ERROR_INVALID_ARGUMENT;
+
+  if (obj->type != OBJECT_TYPE_INTEGER)
+    return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
+  return yr_object_set_integer(value, obj, NULL);
+}
+
+
+YR_API int yr_scanner_define_boolean_variable(
+    YR_SCANNER* scanner,
+    const char* identifier,
+    int64_t value)
+{
+  return yr_scanner_define_integer_variable(scanner, identifier, value);
+}
+
+
+YR_API int yr_scanner_define_float_variable(
+    YR_SCANNER* scanner,
+    const char* identifier,
+    double value)
+{
+  YR_OBJECT* obj = (YR_OBJECT*) yr_hash_table_lookup(
+      scanner->objects_table,
+      identifier,
+      NULL);
+
+  if (obj == NULL)
+    return ERROR_INVALID_ARGUMENT;
+
+  if (obj->type != OBJECT_TYPE_FLOAT)
+    return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
+  return yr_object_set_float(value, obj, NULL);
+}
+
+
+YR_API int yr_scanner_define_string_variable(
+    YR_SCANNER* scanner,
+    const char* identifier,
+    const char* value)
+{
+  YR_OBJECT* obj = (YR_OBJECT*) yr_hash_table_lookup(
+      scanner->objects_table,
+      identifier,
+      NULL);
+
+  if (obj == NULL)
+    return ERROR_INVALID_ARGUMENT;
+
+  if (obj->type != OBJECT_TYPE_STRING)
+    return ERROR_INVALID_EXTERNAL_VARIABLE_TYPE;
+
+  return yr_object_set_string(value, strlen(value), obj, NULL);
+}
+
+
+YR_API int yr_scanner_scan_mem_blocks(
+    YR_SCANNER* scanner,
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_RULES* rules;
   YR_RULE* rule;
@@ -250,8 +336,9 @@ YR_API int yr_scanner_scan_mem_blocks(
   if (scanner->callback == NULL)
     return ERROR_CALLBACK_REQUIRED;
 
+  scanner->iterator = iterator;
   rules = scanner->rules;
-  block = scanner->iterator->first(scanner->iterator);
+  block = iterator->first(iterator);
 
   if (block == NULL)
     return ERROR_SUCCESS;
@@ -297,7 +384,7 @@ YR_API int yr_scanner_scan_mem_blocks(
     // fetch may fail
     if (data == NULL)
     {
-      block = scanner->iterator->next(scanner->iterator);
+      block = iterator->next(iterator);
       continue;
     }
 
@@ -325,7 +412,6 @@ YR_API int yr_scanner_scan_mem_blocks(
             scanner,
             data,
             block,
-            timeout,
             start_time);
       },{
         result = ERROR_COULD_NOT_MAP_FILE;
@@ -334,16 +420,13 @@ YR_API int yr_scanner_scan_mem_blocks(
     if (result != ERROR_SUCCESS)
       goto _exit;
 
-    block = scanner->iterator->next(scanner->iterator);
+    block = iterator->next(iterator);
   }
 
   YR_TRYCATCH(
     !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
     {
-      result = yr_execute_code(
-          scanner,
-          timeout,
-          start_time);
+      result = yr_execute_code(scanner, start_time);
     },{
       result = ERROR_COULD_NOT_MAP_FILE;
     });
@@ -432,8 +515,7 @@ static const uint8_t* _yr_fetch_block_data(
 YR_API int yr_scanner_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
-    size_t buffer_size,
-    int timeout)
+    size_t buffer_size)
 {
   YR_MEMORY_BLOCK block;
   YR_MEMORY_BLOCK_ITERATOR iterator;
@@ -447,7 +529,62 @@ YR_API int yr_scanner_scan_mem(
   iterator.first = _yr_get_first_block;
   iterator.next = _yr_get_next_block;
 
-  scanner->iterator = &iterator;
+  return yr_scanner_scan_mem_blocks(scanner, &iterator);
+}
 
-  return yr_scanner_scan_mem_blocks(scanner, timeout);
+
+YR_API int yr_scanner_scan_file(
+    YR_SCANNER* scanner,
+    const char* filename)
+{
+  YR_MAPPED_FILE mfile;
+
+  int result = yr_filemap_map(filename, &mfile);
+
+  if (result == ERROR_SUCCESS)
+  {
+    result = yr_scanner_scan_mem(scanner, mfile.data, mfile.size);
+    yr_filemap_unmap(&mfile);
+  }
+
+  return result;
+}
+
+
+YR_API int yr_scanner_scan_fd(
+    YR_SCANNER* scanner,
+    YR_FILE_DESCRIPTOR fd)
+{
+  YR_MAPPED_FILE mfile;
+
+  int result = yr_filemap_map_fd(fd, 0, 0, &mfile);
+
+  if (result == ERROR_SUCCESS)
+  {
+    result = yr_scanner_scan_mem(scanner, mfile.data, mfile.size);
+    yr_filemap_unmap_fd(&mfile);
+  }
+
+  return result;
+}
+
+
+YR_API int yr_scanner_scan_proc(
+    YR_SCANNER* scanner,
+    int pid)
+{
+  YR_MEMORY_BLOCK_ITERATOR iterator;
+
+  int result = yr_process_open_iterator(pid, &iterator);
+
+  if (result == ERROR_SUCCESS)
+  {
+    int prev_flags = scanner->flags;
+    scanner->flags |= SCAN_FLAGS_PROCESS_MEMORY;
+    result = yr_scanner_scan_mem_blocks(scanner, &iterator);
+    scanner->flags = prev_flags;
+    yr_process_close_iterator(&iterator);
+  }
+
+  return result;
 }

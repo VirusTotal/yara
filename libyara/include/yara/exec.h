@@ -169,7 +169,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int yr_execute_code(
     YR_SCAN_CONTEXT* context,
-    int timeout,
     time_t start_time);
 
 #endif

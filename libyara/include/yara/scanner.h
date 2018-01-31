@@ -52,15 +52,58 @@ YR_API void yr_scanner_set_callback(
     void* user_data);
 
 
-YR_API int yr_scanner_scan_mem_blocks(
+YR_API void yr_scanner_set_timeout(
     YR_SCANNER* scanner,
     int timeout);
+
+
+YR_API void yr_scanner_set_flags(
+    YR_SCANNER* scanner,
+    int flags);
+
+
+YR_API int yr_scanner_define_integer_variable(
+    YR_SCANNER* scanner,
+    const char* identifier,
+    int64_t value);
+
+
+YR_API int yr_scanner_define_boolean_variable(
+    YR_SCANNER* scanner,
+    const char* identifier,
+    int64_t value);
+
+
+YR_API int yr_scanner_define_float_variable(
+    YR_SCANNER* scanner,
+    const char* identifier,
+    double value);
+
+
+YR_API int yr_scanner_define_string_variable(
+    YR_SCANNER* scanner,
+    const char* identifier,
+    const char* value);
+
+
+YR_API int yr_scanner_scan_mem_blocks(
+    YR_SCANNER* scanner,
+    YR_MEMORY_BLOCK_ITERATOR* iterator);
 
 
 YR_API int yr_scanner_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
-    size_t buffer_size,
-    int timeout);
+    size_t buffer_size);
+
+
+YR_API int yr_scanner_scan_file(
+    YR_SCANNER* scanner,
+    const char* filename);
+
+
+YR_API int yr_scanner_scan_fd(
+    YR_SCANNER* scanner,
+    YR_FILE_DESCRIPTOR fd);
 
 #endif

@@ -436,18 +436,19 @@ typedef int (*YR_CALLBACK_FUNC)(
 
 typedef struct _YR_SCAN_CONTEXT
 {
-  uint64_t  file_size;
-  uint64_t  entry_point;
+  uint64_t file_size;
+  uint64_t entry_point;
 
   int flags;
   int tidx;
+  int timeout;
 
   void* user_data;
 
   YR_RULES* rules;
-  YR_MEMORY_BLOCK_ITERATOR*  iterator;
-  YR_HASH_TABLE*  objects_table;
-  YR_CALLBACK_FUNC  callback;
+  YR_MEMORY_BLOCK_ITERATOR* iterator;
+  YR_HASH_TABLE* objects_table;
+  YR_CALLBACK_FUNC callback;
 
   YR_ARENA* matches_arena;
   YR_ARENA* matching_strings_arena;

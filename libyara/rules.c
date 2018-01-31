@@ -208,12 +208,11 @@ YR_API int yr_rules_scan_mem_blocks(
 
   FAIL_ON_ERROR(yr_scanner_create(rules, &scanner));
 
-  scanner->iterator = iterator;
-  scanner->flags = flags;
-
   yr_scanner_set_callback(scanner, callback, user_data);
+  yr_scanner_set_timeout(scanner, timeout);
+  yr_scanner_set_flags(scanner, flags);
 
-  result = yr_scanner_scan_mem_blocks(scanner, timeout);
+  result = yr_scanner_scan_mem_blocks(scanner, iterator);
 
   yr_scanner_destroy(scanner);
 
