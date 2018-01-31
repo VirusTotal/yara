@@ -153,15 +153,13 @@ static const uint8_t* jmp_if(
 
 
 int yr_execute_code(
-    YR_RULES* rules,
     YR_SCAN_CONTEXT* context,
-    int timeout,
     time_t start_time)
 {
   int64_t mem[MEM_SIZE];
   int32_t sp = 0;
 
-  const uint8_t* ip = rules->code_start;
+  const uint8_t* ip = context->rules->code_start;
 
   YR_VALUE args[MAX_FUNCTION_ARGS];
   YR_VALUE *stack;
@@ -1158,13 +1156,13 @@ int yr_execute_code(
         assert(FALSE);
     }
 
-    if (timeout > 0)  // timeout == 0 means no timeout
+    if (context->timeout > 0)  // timeout == 0 means no timeout
     {
       // Check for timeout every 10 instruction cycles.
 
       if (++cycle == 10)
       {
-        if (difftime(time(NULL), start_time) > timeout)
+        if (difftime(time(NULL), start_time) > context->timeout)
         {
           #ifdef PROFILING_ENABLED
           assert(current_rule != NULL);

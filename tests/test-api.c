@@ -251,6 +251,121 @@ void test_save_load_rules()
 }
 
 
+void test_scanner()
+{
+  int matches = 0;
+  const char* buf = "dummy";
+  const char* rules_str = "\
+    rule test { \
+    condition: bool_var and int_var == 1 and str_var == \"foo\" }";
+
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+  YR_SCANNER* scanner1 = NULL;
+  YR_SCANNER* scanner2 = NULL;
+
+  int result;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  // Define a few variables
+  yr_compiler_define_integer_variable(compiler, "int_var", 0);
+  yr_compiler_define_boolean_variable(compiler, "bool_var", 0);
+  yr_compiler_define_string_variable(compiler, "str_var", "");
+
+  // Compile a rule that use the variables in the condition.
+  if (yr_compiler_add_string(compiler, rules_str, NULL) != 0)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_add_string");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_get_rules");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_compiler_destroy(compiler);
+
+  // Create an scanner
+  if (yr_scanner_create(rules, &scanner1)!= ERROR_SUCCESS)
+  {
+    yr_rules_destroy(rules);
+    perror("yr_scanner_create");
+    exit(EXIT_FAILURE);
+  }
+
+  // Create another scanner
+  if (yr_scanner_create(rules, &scanner2)!= ERROR_SUCCESS)
+  {
+    yr_scanner_destroy(scanner1);
+    yr_rules_destroy(rules);
+    perror("yr_scanner_create");
+    exit(EXIT_FAILURE);
+  }
+
+  // Let's check the yr_scanner_scan_mem returns the appropriate error when
+  // called without specifying a callback.
+  result = yr_scanner_scan_mem(scanner1, (uint8_t *) buf, strlen(buf));
+
+  if (result != ERROR_CALLBACK_REQUIRED)
+  {
+    yr_scanner_destroy(scanner1);
+    yr_scanner_destroy(scanner2);
+    yr_rules_destroy(rules);
+    printf("expecting ERROR_CALLBACK_REQUIRED (%d), got: %d\n",
+           ERROR_CALLBACK_REQUIRED, result);
+    exit(EXIT_FAILURE);
+  }
+
+  // Set the callback and a some the correct values for the rule to match.
+  yr_scanner_set_callback(scanner1, count_matches, &matches);
+  yr_scanner_define_integer_variable(scanner1, "int_var", 1);
+  yr_scanner_define_boolean_variable(scanner1, "bool_var", 1);
+  yr_scanner_define_string_variable(scanner1, "str_var", "foo");
+
+  // Set some other values for the second scanner to make sure it doesn't
+  // interfere with the first one.
+  yr_scanner_define_integer_variable(scanner2, "int_var", 2);
+  yr_scanner_define_boolean_variable(scanner2, "bool_var", 0);
+  yr_scanner_define_string_variable(scanner2, "str_var", "bar");
+
+  result = yr_scanner_scan_mem(scanner1, (uint8_t *) buf, strlen(buf));
+
+  if (result != ERROR_SUCCESS)
+  {
+    yr_scanner_destroy(scanner1);
+    yr_scanner_destroy(scanner2);
+    yr_rules_destroy(rules);
+    printf("expecting ERROR_SUCCESS (%d), got: %d\n",
+           ERROR_SUCCESS, result);
+    exit(EXIT_FAILURE);
+  }
+
+  if (matches != 1)
+  {
+    yr_scanner_destroy(scanner1);
+    yr_scanner_destroy(scanner2);
+    yr_rules_destroy(rules);
+    exit(EXIT_FAILURE);
+  }
+
+  yr_scanner_destroy(scanner1);
+  yr_scanner_destroy(scanner2);
+  yr_rules_destroy(rules);
+  yr_finalize();
+}
+
+
 int main(int argc, char** argv)
 {
   test_disabled_rules();
@@ -258,4 +373,5 @@ int main(int argc, char** argv)
   test_max_string_per_rules();
   test_include_callback();
   test_save_load_rules();
+  test_scanner();
 }

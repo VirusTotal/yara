@@ -105,6 +105,7 @@ YR_API int yr_rules_scan_proc(
     void* user_data,
     int timeout);
 
+
 YR_API int yr_rules_save(
     YR_RULES* rules,
     const char* filename);
@@ -159,6 +160,7 @@ YR_API void yr_rules_print_profiling_info(
 
 YR_API void yr_rule_disable(
     YR_RULE* rule);
+
 
 YR_API void yr_rule_enable(
     YR_RULE* rule);

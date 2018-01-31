@@ -217,6 +217,7 @@
     <ClCompile Include="..\..\..\libyara\re_lexer.c" />
     <ClCompile Include="..\..\..\libyara\rules.c" />
     <ClCompile Include="..\..\..\libyara\scan.c" />
+    <ClCompile Include="..\..\..\libyara\scanner.c" />
     <ClCompile Include="..\..\..\libyara\sizedstr.c" />
     <ClCompile Include="..\..\..\libyara\stream.c" />
     <ClCompile Include="..\..\..\libyara\strutils.c" />

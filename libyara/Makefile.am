@@ -82,6 +82,7 @@ yarainclude_HEADERS = \
   include/yara/re.h \
   include/yara/rules.h \
   include/yara/scan.h \
+  include/yara/scanner.h \
   include/yara/sizedstr.h \
   include/yara/stream.h \
   include/yara/strutils.h \
@@ -143,6 +144,7 @@ libyara_la_SOURCES = \
   re_lexer.l \
   rules.c \
   scan.c \
+  scanner.c \
   sizedstr.c \
   strutils.c \
   stream.c \
