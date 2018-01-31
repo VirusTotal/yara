@@ -43,7 +43,7 @@ int yr_scan_verify_match(
     YR_AC_MATCH* ac_match,
     const uint8_t* data,
     size_t data_size,
-    size_t data_base,
+    uint64_t data_base,
     size_t offset);
 
 #endif

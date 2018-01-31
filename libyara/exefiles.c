@@ -386,7 +386,7 @@ uint64_t yr_get_entry_point_offset(
 uint64_t yr_get_entry_point_address(
     const uint8_t* buffer,
     size_t buffer_length,
-    size_t base_address)
+    uint64_t base_address)
 {
   PIMAGE_NT_HEADERS32 pe_header;
 

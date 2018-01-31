@@ -50,7 +50,7 @@ typedef struct _CALLBACK_ARGS
 
   const uint8_t* data;
   size_t data_size;
-  size_t data_base;
+  uint64_t data_base;
 
   int forward_matches;
   int full_word;
@@ -546,7 +546,7 @@ static int _yr_scan_verify_re_match(
     YR_AC_MATCH* ac_match,
     const uint8_t* data,
     size_t data_size,
-    size_t data_base,
+    uint64_t data_base,
     size_t offset)
 {
   CALLBACK_ARGS callback_args;
@@ -638,7 +638,7 @@ static int _yr_scan_verify_literal_match(
     YR_AC_MATCH* ac_match,
     const uint8_t* data,
     size_t data_size,
-    size_t data_base,
+    uint64_t data_base,
     size_t offset)
 {
   int flags = 0;
@@ -721,7 +721,7 @@ int yr_scan_verify_match(
     YR_AC_MATCH* ac_match,
     const uint8_t* data,
     size_t data_size,
-    size_t data_base,
+    uint64_t data_base,
     size_t offset)
 {
   YR_STRING* string = ac_match->string;
