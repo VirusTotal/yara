@@ -37,6 +37,18 @@ YR_THREAD_ID yr_current_thread_id(void)
   return GetCurrentThreadId();
 }
 
+int yr_compare_thread_id(
+    YR_THREAD_ID  t1,
+    YR_THREAD_ID t2)
+{
+  // TODO can someone who knows cygwin/msc better confirm this is correct?
+  if (t1 == t2)
+  {
+    return 1;
+  }
+
+  return 0;
+}
 
 int yr_mutex_create(
     YR_MUTEX* mutex)
@@ -126,6 +138,13 @@ void* yr_thread_storage_get_value(
 YR_THREAD_ID yr_current_thread_id(void)
 {
   return pthread_self();
+}
+
+int yr_compare_thread_id(
+    YR_THREAD_ID t1,
+    YR_THREAD_ID t2)
+{
+  return pthread_equal(t1, t2);
 }
 
 

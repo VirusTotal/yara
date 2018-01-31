@@ -174,6 +174,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define EXTERNAL_VARIABLE_TYPE_BOOLEAN        3
 #define EXTERNAL_VARIABLE_TYPE_STRING         4
 #define EXTERNAL_VARIABLE_TYPE_MALLOC_STRING  5
+#define EXTERNAL_VARIABLE_TYPE_OPEN           6
 
 #define EXTERNAL_VARIABLE_IS_NULL(x) \
     ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : TRUE)
@@ -258,6 +259,7 @@ typedef struct _YR_RULE
 typedef struct _YR_EXTERNAL_VARIABLE
 {
   int32_t type;
+  YR_ALIGN(8) YR_THREAD_ID thread_id;
 
   YR_ALIGN(8) union {
     int64_t i;
@@ -388,6 +390,7 @@ typedef struct _YR_RULES {
   YR_ARENA* arena;
   YR_RULE* rules_list_head;
   YR_EXTERNAL_VARIABLE* externals_list_head;
+  YR_ARENA* external_overrides;
   YR_AC_TRANSITION_TABLE transition_table;
   YR_AC_MATCH_TABLE match_table;
 

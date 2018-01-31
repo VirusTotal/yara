@@ -153,6 +153,33 @@ YR_API int yr_rules_define_string_variable(
     const char* value);
 
 
+YR_API int yr_rules_define_local_integer_variable(
+    YR_RULES* rules,
+    const char* identifier,
+    int64_t value);
+
+
+YR_API int yr_rules_define_local_boolean_variable(
+    YR_RULES* rules,
+    const char* identifier,
+    int value);
+
+
+YR_API int yr_rules_define_local_float_variable(
+    YR_RULES* rules,
+    const char* identifier,
+    double value);
+
+
+YR_API int yr_rules_define_local_string_variable(
+    YR_RULES* rules,
+    const char* identifier,
+    const char* value);
+
+YR_API int yr_rules_undefine_local_variable(
+    YR_RULES* rules,
+    const char* identifier);
+
 YR_API void yr_rules_print_profiling_info(
     YR_RULES* rules);
 
