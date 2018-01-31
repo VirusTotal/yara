@@ -262,7 +262,7 @@ MACHO_HANDLE_MAIN(be)
 #define MACHO_HANDLE_SEGMENT(bits,bo)                                          \
 void macho_handle_segment_##bits##_##bo(                                       \
     const uint8_t* command,                                                    \
-    const uint32_t i,                                                          \
+    const uint64_t i,                                                          \
     YR_OBJECT* object)                                                         \
 {                                                                              \
   segment_command_##bits##_t* sg = (segment_command_##bits##_t*)command;       \
@@ -718,11 +718,11 @@ define_function(file_index_type)
   YR_OBJECT* module = module();
   int64_t type_arg = integer_argument(1);
 
-  uint32_t nfat = get_integer(module, "nfat_arch");
+  uint64_t nfat = get_integer(module, "nfat_arch");
   if (is_undefined(module, "nfat_arch"))
     return_integer(UNDEFINED);
 
-  for (uint32_t i = 0; i < nfat; i++)
+  for (uint64_t i = 0; i < nfat; i++)
   {
     int64_t type = get_integer(module, "file[%i].cputype", i);
     if (type == type_arg)
@@ -742,11 +742,11 @@ define_function(file_index_subtype)
   int64_t type_arg = integer_argument(1);
   int64_t subtype_arg = integer_argument(2);
 
-  uint32_t nfat = get_integer(module, "nfat_arch");
+  uint64_t nfat = get_integer(module, "nfat_arch");
   if (is_undefined(module, "nfat_arch"))
     return_integer(UNDEFINED);
 
-  for (uint32_t i = 0; i < nfat; i++)
+  for (uint64_t i = 0; i < nfat; i++)
   {
     int64_t type = get_integer(module, "file[%i].cputype", i);
     int64_t subtype = get_integer(module, "file[%i].cpusubtype", i);
@@ -767,11 +767,11 @@ define_function(ep_for_arch_type)
   YR_OBJECT* module = module();
   int64_t type_arg = integer_argument(1);
 
-  uint32_t nfat = get_integer(module, "nfat_arch");
+  uint64_t nfat = get_integer(module, "nfat_arch");
   if (is_undefined(module, "nfat_arch"))
     return_integer(UNDEFINED);
 
-  for (uint32_t i = 0; i < nfat; i++)
+  for (uint64_t i = 0; i < nfat; i++)
   {
     int64_t type = get_integer(module, "fat_arch[%i].cputype", i);
     if (type == type_arg)
@@ -793,11 +793,11 @@ define_function(ep_for_arch_subtype)
   int64_t type_arg = integer_argument(1);
   int64_t subtype_arg = integer_argument(2);
 
-  uint32_t nfat = get_integer(module, "nfat_arch");
+  uint64_t nfat = get_integer(module, "nfat_arch");
   if (is_undefined(module, "nfat_arch"))
     return_integer(UNDEFINED);
 
-  for (uint32_t i = 0; i < nfat; i++)
+  for (uint64_t i = 0; i < nfat; i++)
   {
     int64_t type = get_integer(module, "fat_arch[%i].cputype", i);
     int64_t subtype = get_integer(module, "fat_arch[%i].cpusubtype", i);

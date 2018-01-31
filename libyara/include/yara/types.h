@@ -408,7 +408,7 @@ typedef struct _YR_MEMORY_BLOCK* (*YR_MEMORY_BLOCK_ITERATOR_FUNC)(
 
 typedef struct _YR_MEMORY_BLOCK
 {
-  uint64_t size;
+  size_t size;
   uint64_t base;
 
   void* context;

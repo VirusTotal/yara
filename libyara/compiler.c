@@ -110,7 +110,7 @@ const char* _yr_compiler_default_include_callback(
   file_size = stbuf.st_size;
   #endif
 
-  file_buffer = (char*) yr_malloc(file_size + 1);
+  file_buffer = (char*) yr_malloc((size_t) file_size + 1);
 
   if (file_buffer == NULL)
   {
@@ -123,7 +123,7 @@ const char* _yr_compiler_default_include_callback(
     return NULL;
   }
 
-  if (file_size != read(fd, file_buffer, file_size))
+  if (file_size != read(fd, file_buffer, (size_t) file_size))
   {
     yr_free(file_buffer);
 

@@ -148,7 +148,7 @@ int wide_string_fits_in_pe(
 
 void pe_parse_rich_signature(
     PE* pe,
-    size_t base_address)
+    uint64_t base_address)
 {
   PIMAGE_DOS_HEADER mz_header;
   PIMAGE_NT_HEADERS32 pe_header;
@@ -1298,7 +1298,7 @@ void pe_parse_certificates(
 
 void pe_parse_header(
     PE* pe,
-    size_t base_address,
+    uint64_t base_address,
     int flags)
 {
   PIMAGE_SECTION_HEADER section;
