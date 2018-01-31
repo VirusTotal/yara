@@ -153,7 +153,6 @@ static const uint8_t* jmp_if(
 
 
 int yr_execute_code(
-    YR_RULES* rules,
     YR_SCAN_CONTEXT* context,
     int timeout,
     time_t start_time)
@@ -161,7 +160,7 @@ int yr_execute_code(
   int64_t mem[MEM_SIZE];
   int32_t sp = 0;
 
-  const uint8_t* ip = rules->code_start;
+  const uint8_t* ip = context->rules->code_start;
 
   YR_VALUE args[MAX_FUNCTION_ARGS];
   YR_VALUE *stack;

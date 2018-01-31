@@ -351,11 +351,11 @@ void _yr_compiler_pop_file_name(
 
 
 YR_API char* yr_compiler_get_current_file_name(
-    YR_COMPILER* context)
+    YR_COMPILER* compiler)
 {
-  if (context->file_name_stack_ptr > 0)
+  if (compiler->file_name_stack_ptr > 0)
   {
-    return context->file_name_stack[context->file_name_stack_ptr - 1];
+    return compiler->file_name_stack[compiler->file_name_stack_ptr - 1];
   }
   else
   {

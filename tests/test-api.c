@@ -251,6 +251,89 @@ void test_save_load_rules()
 }
 
 
+void test_scanner()
+{
+  int matches = 0;
+  const char* buf = "foo bar";
+  const char* rules_str = " \
+    rule test {\
+      strings: $a = \"foo\" \
+      condition: $a }";
+
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+  YR_SCANNER* scanner = NULL;
+
+  int result;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_add_string(compiler, rules_str, NULL) != 0)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_add_string");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_get_rules");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_compiler_destroy(compiler);
+
+  if (yr_scanner_create(rules, &scanner)!= ERROR_SUCCESS)
+  {
+    yr_rules_destroy(rules);
+    perror("yr_scanner_create");
+    exit(EXIT_FAILURE);
+  }
+
+  result = yr_scanner_scan_mem(scanner, (uint8_t *) buf, strlen(buf), 0);
+
+  if (result != ERROR_CALLBACK_REQUIRED)
+  {
+    yr_scanner_destroy(scanner);
+    yr_rules_destroy(rules);
+    printf("expecting ERROR_CALLBACK_REQUIRED (%d), got: %d\n",
+           ERROR_CALLBACK_REQUIRED, result);
+    exit(EXIT_FAILURE);
+  }
+
+  yr_scanner_set_callback(scanner, count_matches, &matches);
+
+  result = yr_scanner_scan_mem(scanner, (uint8_t *) buf, strlen(buf), 0);
+
+  if (result != ERROR_SUCCESS)
+  {
+    yr_scanner_destroy(scanner);
+    yr_rules_destroy(rules);
+    printf("expecting ERROR_SUCCESS (%d), got: %d\n",
+           ERROR_SUCCESS, result);
+    exit(EXIT_FAILURE);
+  }
+
+  if (matches != 1)
+  {
+    yr_scanner_destroy(scanner);
+    yr_rules_destroy(rules);
+    exit(EXIT_FAILURE);
+  }
+
+  yr_scanner_destroy(scanner);
+  yr_rules_destroy(rules);
+  yr_finalize();
+}
+
+
 int main(int argc, char** argv)
 {
   test_disabled_rules();
@@ -258,4 +341,5 @@ int main(int argc, char** argv)
   test_max_string_per_rules();
   test_include_callback();
   test_save_load_rules();
+  test_scanner();
 }

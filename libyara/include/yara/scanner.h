@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2013. The YARA Authors. All Rights Reserved.
+Copyright (c) 2018. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,18 +27,40 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YR_YARA_H
-#define YR_YARA_H
+#ifndef YR_SCANNER_H
+#define YR_SCANNER_H
 
-#include "yara/utils.h"
-#include "yara/filemap.h"
-#include "yara/compiler.h"
-#include "yara/modules.h"
-#include "yara/object.h"
-#include "yara/libyara.h"
-#include "yara/error.h"
-#include "yara/stream.h"
-#include "yara/hash.h"
-#include "yara/scanner.h"
+#include <yara/types.h>
+#include <yara/utils.h>
+
+
+typedef YR_SCAN_CONTEXT YR_SCANNER;
+
+
+YR_API int yr_scanner_create(
+    YR_RULES* rules,
+    YR_SCANNER** scanner);
+
+
+YR_API void yr_scanner_destroy(
+    YR_SCANNER* scanner);
+
+
+YR_API void yr_scanner_set_callback(
+    YR_SCANNER* scanner,
+    YR_CALLBACK_FUNC callback,
+    void* user_data);
+
+
+YR_API int yr_scanner_scan_mem_blocks(
+    YR_SCANNER* scanner,
+    int timeout);
+
+
+YR_API int yr_scanner_scan_mem(
+    YR_SCANNER* scanner,
+    const uint8_t* buffer,
+    size_t buffer_size,
+    int timeout);
 
 #endif
