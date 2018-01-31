@@ -209,7 +209,7 @@ YR_API char* yr_compiler_get_error_message(
 
 
 YR_API char* yr_compiler_get_current_file_name(
-    YR_COMPILER* context);
+    YR_COMPILER* compiler);
 
 
 YR_API int yr_compiler_define_integer_variable(
