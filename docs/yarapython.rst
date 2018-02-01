@@ -266,6 +266,26 @@ Here is an example:
 The passed dictionary will contain the information from the module.
 
 
+You may also find that the default sizes for the stack for the matching engine in
+yara or the default size for the maximum number of strings per rule is too low. In
+the C libyara API, you can modify these using the ``YR_CONFIG_STACK_SIZE`` and
+``YR_CONFIG_MAX_STRINGS_PER_RULE`` variables via the ``yr_set_configuration``
+function in libyara. The command-line tool exposes these as the ``--stack-size``
+(``-k``) and ``--max-strings-per-rule`` command-line arguments. In order to set
+these values via the Python API, you can use ``yara.set_config`` with either or
+both ``stack_size`` and ``max_strings_per_rule`` provided as kwargs. At the time
+of this writing, the default stack size was ``16384`` and the default maximum
+strings per rule was ``10000``.
+
+Here are a few example calls:
+
+.. code-block:: python
+
+  yara.set_config(stack_size=65536)
+  yara.set_config(max_strings_per_rule=50000, stack_size=65536)
+  yara.set_config(max_strings_per_rule=20000)
+
+
 Reference
 ---------
 
@@ -308,6 +328,23 @@ Reference
   :return: Compiled rules object.
   :rtype: :py:class:`yara.Rules`
   :raises: **YaraError**: If an error occurred while loading the file.
+
+.. py:function:: yara.set_config(...)
+
+  Set the configuration variables accessible through the yr_set_configuration
+  API.
+
+  Provide either *stack_size* or *max_strings_per_rule*. These kwargs take
+  unsigned integer values as input and will assign the provided value to the
+  yr_set_configuration(...) variables YR_CONFIG_STACK_SIZE and
+  YR_CONFIG_MAX_STRINGS_PER_RULE, respectively.
+
+  :param int stack_size: Stack size to use for YR_CONFIG_STACK_SIZE
+  :param int max_strings_per_rule: Maximum number of strings to allow per
+    yara rule. Will be mapped to YR_CONFIG_MAX_STRINGS_PER_RULE.
+  :return: None
+  :rtype: **NoneType**
+  :raises: **YaraError**: If an error occurred.
 
 .. py:class:: Rules
 
