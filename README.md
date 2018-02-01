@@ -68,6 +68,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Hornetsecurity](https://www.hornetsecurity.com/en/)
 * [InQuest](http://www.inquest.net/)
 * [JASK](http://jask.io)
+* [Joe Security](https://www.joesecurity.org)
 * [jsunpack-n](http://jsunpack.jeek.org/)
 * [Kaspersky Lab](http://www.kaspersky.com)
 * [Koodous](https://koodous.com/)
