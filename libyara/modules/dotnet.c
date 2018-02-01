@@ -294,13 +294,17 @@ STREAMS dotnet_parse_stream_headers(
     // Store necessary bits to parse these later. Not all tables will be
     // parsed, but are referenced from others. For example, the #Strings
     // stream is referenced from various tables in the #~ heap.
-    if (strncmp(stream_name, "#GUID", 5) == 0)
-      headers.guid = stream_header;
-    // #- is not documented but it represents unoptimized metadata stream. It may contain additional tables
-    // such as FieldPtr, ParamPtr, MethodPtr or PropertyPtr for indirect referencing. We already
-    // take into account these tables and they do not interfere with anything we parse in this module.
-    else if ((strncmp(stream_name, "#~", 2) == 0 || strncmp(stream_name, "#-", 2) == 0) && headers.tilde == NULL)
+    //
+    // #- is not documented but it represents unoptimized metadata stream. It
+    // may contain additional tables such as FieldPtr, ParamPtr, MethodPtr or
+    // PropertyPtr for indirect referencing. We already take into account these
+    // tables and they do not interfere with anything we parse in this module.
+
+    if ((strncmp(stream_name, "#~", 2) == 0 ||
+         strncmp(stream_name, "#-", 2) == 0) && headers.tilde == NULL)
       headers.tilde = stream_header;
+    else if (strncmp(stream_name, "#GUID", 5) == 0)
+      headers.guid = stream_header;
     else if (strncmp(stream_name, "#Strings", 8) == 0 && headers.string == NULL)
       headers.string = stream_header;
     else if (strncmp(stream_name, "#Blob", 5) == 0)
