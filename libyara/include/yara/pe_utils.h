@@ -90,11 +90,6 @@ PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
     int entry);
 
 
-PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
-    PE* pe,
-    int entry);
-
-
 int64_t pe_rva_to_offset(
     PE* pe,
     uint64_t rva);
