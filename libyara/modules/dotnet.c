@@ -1527,6 +1527,9 @@ void dotnet_parse_com(
   WORD num_streams;
 
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
+  if (directory == NULL)
+    return;
+
   offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
   if (offset < 0 || !struct_fits_in_pe(pe, pe->data + offset, CLI_HEADER))
