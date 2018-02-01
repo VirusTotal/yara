@@ -296,11 +296,10 @@ STREAMS dotnet_parse_stream_headers(
     // stream is referenced from various tables in the #~ heap.
     if (strncmp(stream_name, "#GUID", 5) == 0)
       headers.guid = stream_header;
-    // Believe it or not, I have seen at least one binary which has a #- stream
-    // instead of a #~ (215e1b54ae1aac153e55596e6f1a4350). This isn't in the
-    // documentation anywhere but the structure is the same. I'm chosing not
-    // to parse it for now.
-    else if (strncmp(stream_name, "#~", 2) == 0 && headers.tilde == NULL)
+    // #- is not documented but it represents unoptimized metadata stream. It may contain additional tables
+    // such as FieldPtr, ParamPtr, MethodPtr or PropertyPtr for indirect referencing. We already
+    // take into account these tables and they do not interfere with anything we parse in this module.
+    else if ((strncmp(stream_name, "#~", 2) == 0 || strncmp(stream_name, "#-", 2) == 0) && headers.tilde == NULL)
       headers.tilde = stream_header;
     else if (strncmp(stream_name, "#Strings", 8) == 0 && headers.string == NULL)
       headers.string = stream_header;
