@@ -57,6 +57,12 @@ test_macho_SOURCES = tests/test-macho.c tests/util.c
 test_macho_LDADD = libyara/.libs/libyara.a
 endif
 
+if ANDROID_MODULE
+check_PROGRAMS+=test-dex
+test_dex_SOURCES = tests/test-dex.c tests/util.c
+test_dex_LDADD = libyara/.libs/libyara.a
+endif
+
 # man pages
 man1_MANS = yara.man yarac.man
 

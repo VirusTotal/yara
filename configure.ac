@@ -140,6 +140,13 @@ AC_ARG_WITH([crypto],
   AS_HELP_STRING([--without-crypto],
     [ignore presence of OpenSSL and disable it]))
 
+AC_ARG_ENABLE([android],
+  [AS_HELP_STRING([--enable-android], [enable android module])],
+  [if test x$enableval = xyes; then
+    build_android_module=true
+    CFLAGS="$CFLAGS -DANDROID_MODULE"
+  fi])
+
 AS_IF([test "x$with_crypto" != "xno"],
   [
     AC_CHECK_HEADERS([openssl/md5.h],, [have_crypto=no])
@@ -230,6 +237,7 @@ AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
 AM_CONDITIONAL([DOTNET_MODULE], [test x$build_dotnet_module = xtrue])
 AM_CONDITIONAL([MACHO_MODULE], [test x$build_macho_module = xtrue])
 AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
+AM_CONDITIONAL([ANDROID_MODULE], [test x$build_android_module = xtrue])
 
 AM_CONDITIONAL([USE_WINDOWS_PROC], [test x$proc_interface = xwindows ])
 AM_CONDITIONAL([USE_LINUX_PROC], [test x$proc_interface = xlinux ])

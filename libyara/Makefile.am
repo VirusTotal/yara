@@ -28,6 +28,10 @@ endif
 # This isn't really a module, but needs to be compiled with them.
 MODULES += modules/pe_utils.c
 
+if ANDROID_MODULE
+MODULES += modules/dex.c
+endif
+
 #
 # Add your modules here:
 #
