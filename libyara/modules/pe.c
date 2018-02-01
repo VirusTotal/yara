@@ -1141,7 +1141,7 @@ void pe_parse_certificates(
     }
 
     cert_bio = BIO_new_mem_buf(
-        win_cert->Certificate, yr_le32toh(win_cert->Length));
+        win_cert->Certificate, yr_le32toh(win_cert->Length) - WIN_CERTIFICATE_HEADER_SIZE);
 
     if (!cert_bio)
       break;
