@@ -126,12 +126,12 @@ typedef struct _DEX
 
 
 #define fits_in_dex(dex, pointer, size) \
-    ((size_t) size <= dex->data_size && \
-     (uint8_t*) (pointer) >= dex->data && \
-     (uint8_t*) (pointer) <= dex->data + dex->data_size - size)
+  ((size_t) size <= dex->data_size && \
+   (uint8_t*) (pointer) >= dex->data && \
+   (uint8_t*) (pointer) <= dex->data + dex->data_size - size)
 
 #define struct_fits_in_dex(dex, pointer, struct_type) \
-    fits_in_dex(dex, pointer, sizeof(struct_type))
+  fits_in_dex(dex, pointer, sizeof(struct_type))
 
 #pragma pack(pop)
 

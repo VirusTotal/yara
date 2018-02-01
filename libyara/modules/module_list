@@ -24,6 +24,6 @@ MODULE(hash)
 MODULE(macho)
 #endif
 
-#ifdef ANDROID_MODULE
+#ifdef DEX_MODULE
 MODULE(dex)
 #endif

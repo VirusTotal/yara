@@ -143,7 +143,7 @@ begin_declarations;
     end_struct_array("map_item");
   end_struct("map_list");
 
-  declare_integer("number_of_field");
+  declare_integer("number_of_fields");
   begin_struct_array("field");
     declare_string("class_name");
     declare_string("name");
@@ -153,7 +153,7 @@ begin_declarations;
     declare_integer("access_flags");
   end_struct_array("field");
 
-  declare_integer("number_of_method");
+  declare_integer("number_of_methods");
   begin_struct_array("method");
     declare_string("class_name");
     declare_string("name");
@@ -183,7 +183,8 @@ begin_declarations;
 end_declarations;
 
 // https://android.googlesource.com/platform/dalvik/+/android-4.4.2_r2/libdex/Leb128.cpp
-int32_t read_uleb128(const uint8_t* pStream, uint32_t *size) {
+int32_t read_uleb128(const uint8_t* pStream, uint32_t *size)
+{
     const uint8_t* ptr = pStream;
     int32_t result = *(ptr++);
     *size = *size + 1;
@@ -238,7 +239,8 @@ dex_header_t* dex_get_header(
   return dex_header;
 }
 
-void dex_parse_header(dex_header_t*dex_header, YR_OBJECT* module_object) {
+void dex_parse_header(dex_header_t*dex_header, YR_OBJECT* module_object)
+{
   set_sized_string((char *)dex_header->magic, strnlen((char *)dex_header->magic,
                    8*sizeof(char)), module_object, "header.magic");
   set_integer(dex_header->checksum, module_object, "header.checksum");
@@ -293,7 +295,8 @@ uint32_t load_encoded_field(
     uint32_t *previous_field_idx,
     int index_encoded_field,
     int static_field,
-    int instance_field) {
+    int instance_field)
+{
 
   uint32_t current_size = 0;
 
@@ -357,7 +360,8 @@ uint32_t load_encoded_method(
     uint32_t *previous_method_idx,
     int index_encoded_method,
     int direct_method,
-    int virtual_method) {
+    int virtual_method)
+{
   uint32_t current_size = 0;
 
   encoded_method_t encoded_method;
@@ -682,8 +686,8 @@ void dex_parse(
     }
   }
 
-  set_integer(index_encoded_method, dex->object, "number_of_method");
-  set_integer(index_encoded_field, dex->object, "number_of_field");
+  set_integer(index_encoded_method, dex->object, "number_of_methods");
+  set_integer(index_encoded_field, dex->object, "number_of_fields");
 }
 
 int module_initialize(YR_MODULE* module)

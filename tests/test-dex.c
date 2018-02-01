@@ -57,7 +57,7 @@ int main(int argc, char** argv)
       DEX_FILE);
 
   assert_true_rule_blob(
-      "import \"dex\" rule test { condition: dex.number_of_field == 2 }",
+      "import \"dex\" rule test { condition: dex.number_of_fields == 2 }",
       DEX_FILE);
 
   assert_true_rule_blob(
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
       DEX_FILE);
 
   assert_true_rule_blob(
-      "import \"dex\" rule test { condition: dex.number_of_method == 2 }",
+      "import \"dex\" rule test { condition: dex.number_of_methods == 2 }",
       DEX_FILE);
 
   assert_true_rule_blob(
