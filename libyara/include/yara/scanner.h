@@ -71,7 +71,7 @@ YR_API int yr_scanner_define_integer_variable(
 YR_API int yr_scanner_define_boolean_variable(
     YR_SCANNER* scanner,
     const char* identifier,
-    int64_t value);
+    int value);
 
 
 YR_API int yr_scanner_define_float_variable(
