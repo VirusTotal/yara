@@ -411,7 +411,6 @@ SIZED_STRING* yr_re_ast_extract_literal(
   RE_NODE* node = re_ast->root_node;
 
   int i, length = 0;
-  char tmp;
 
   while (node != NULL)
   {
@@ -435,26 +434,20 @@ SIZED_STRING* yr_re_ast_extract_literal(
   if (string == NULL)
     return NULL;
 
-  string->length = 0;
-
+  string->length = length;
   node = re_ast->root_node;
 
-  while (node->type == RE_NODE_CONCAT)
+  // The root node is the end of the string. So let's fill it up backwards.
+  for (i = length - 1; i > 0; i--)
   {
-    string->c_string[string->length++] = node->right->value;
+    string->c_string[i] = node->right->value;
     node = node->left;
   }
 
-  string->c_string[string->length++] = node->value;
+  if (length > 0)
+    string->c_string[0] = node->value;
 
-  // The string ends up reversed. Reverse it back to its original value.
-
-  for (i = 0; i < length / 2; i++)
-  {
-    tmp = string->c_string[i];
-    string->c_string[i] = string->c_string[length - i - 1];
-    string->c_string[length - i - 1] = tmp;
-  }
+  assert(node == NULL || node->type == RE_NODE_LITERAL);
 
   return string;
 }
@@ -463,7 +456,8 @@ SIZED_STRING* yr_re_ast_extract_literal(
 int _yr_re_node_contains_dot_star(
     RE_NODE* re_node)
 {
-  if (re_node->type == RE_NODE_STAR && re_node->left->type == RE_NODE_ANY)
+  if ((re_node->type == RE_NODE_STAR || re_node->type == RE_NODE_PLUS) &&
+      re_node->left->type == RE_NODE_ANY)
     return TRUE;
 
   if (re_node->left != NULL && _yr_re_node_contains_dot_star(re_node->left))

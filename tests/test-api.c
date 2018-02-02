@@ -366,6 +366,61 @@ void test_scanner()
 }
 
 
+void ast_callback(
+    const YR_RULE* rule,
+    const char* string_identifier,
+    const RE_AST* re_ast,
+    void* user_data)
+{
+  if (strcmp(rule->identifier, "test") == 0 &&
+      strcmp(string_identifier, "$foo") == 0)
+  {
+    *((int*) user_data) = 1;
+  }
+}
+
+void test_ast_callback()
+{
+  const char* rules_str = "\
+      rule test { \
+      strings: $foo = /a.*b/ \
+      condition: $foo }";
+
+  YR_COMPILER* compiler = NULL;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  int ok = 0;
+
+  yr_compiler_set_re_ast_callback(
+      compiler,
+      ast_callback,
+      &ok);
+
+  // Compile a rule that use the variables in the condition.
+  if (yr_compiler_add_string(compiler, rules_str, NULL) != 0)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_add_string");
+    exit(EXIT_FAILURE);
+  }
+
+  if (!ok)
+  {
+    printf("ast callback failed\n");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_compiler_destroy(compiler);
+  yr_finalize();
+}
+
 int main(int argc, char** argv)
 {
   test_disabled_rules();
@@ -374,4 +429,5 @@ int main(int argc, char** argv)
   test_include_callback();
   test_save_load_rules();
   test_scanner();
+  test_ast_callback();
 }

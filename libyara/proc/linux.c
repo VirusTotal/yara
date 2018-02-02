@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/wait.h>
 #include <errno.h>
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__DragonFly__) || defined(__FreeBSD_kernel__)
 #define PTRACE_ATTACH PT_ATTACH
 #define PTRACE_DETACH PT_DETACH
 #define _XOPEN_SOURCE 500

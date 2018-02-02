@@ -574,8 +574,17 @@ YR_STRING* yr_parser_reduce_string_declaration(
     {
       yywarning(
           yyscanner,
-          "%s contains .*, consider using .{N} with a reasonable value for N",
+          "%s contains .* or .+, consider using .{N} or .{1-N} with a reasonable value for N",
           identifier);
+    }
+
+    if (compiler->re_ast_callback != NULL)
+    {
+      compiler->re_ast_callback(
+          compiler->current_rule,
+          identifier,
+          re_ast,
+          compiler->re_ast_clbk_user_data);
     }
 
     compiler->last_result = yr_re_ast_split_at_chaining_point(

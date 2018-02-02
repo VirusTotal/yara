@@ -58,9 +58,17 @@ typedef const char* (*YR_COMPILER_INCLUDE_CALLBACK_FUNC)(
     const char* calling_rule_namespace,
     void* user_data);
 
+
 typedef void (*YR_COMPILER_INCLUDE_FREE_FUNC)(
     const char* callback_result_ptr,
-    void* user_data );
+    void* user_data);
+
+
+typedef void (*YR_COMPILER_RE_AST_CALLBACK_FUNC)(
+    const YR_RULE* rule,
+    const char* string_identifier,
+    const RE_AST* re_ast,
+    void* user_data);
 
 
 typedef struct _YR_FIXUP
@@ -121,10 +129,12 @@ typedef struct _YR_COMPILER
   char              include_base_dir[MAX_PATH];
   void*             user_data;
   void*             incl_clbk_user_data;
+  void*             re_ast_clbk_user_data;
 
   YR_COMPILER_CALLBACK_FUNC  callback;
   YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback;
   YR_COMPILER_INCLUDE_FREE_FUNC include_free;
+  YR_COMPILER_RE_AST_CALLBACK_FUNC re_ast_callback;
 
 
 } YR_COMPILER;
@@ -179,6 +189,12 @@ YR_API void yr_compiler_set_include_callback(
     YR_COMPILER* compiler,
     YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback,
     YR_COMPILER_INCLUDE_FREE_FUNC include_free,
+    void* user_data);
+
+
+YR_API void yr_compiler_set_re_ast_callback(
+    YR_COMPILER* compiler,
+    YR_COMPILER_RE_AST_CALLBACK_FUNC re_ast_callback,
     void* user_data);
 
 

@@ -39,7 +39,7 @@ case $host_os in
              proc_interface=mach ;;
     mingw*) CFLAGS="$CFLAGS -DUSE_WINDOWS_PROC"
             proc_interface=windows ;;
-    linux*|netbsd*)
+    linux*|netbsd*|dragonfly*|kfreebsd*)
             CFLAGS="$CFLAGS -DUSE_LINUX_PROC"
             proc_interface=linux ;;
     freebsd*)
@@ -48,7 +48,9 @@ case $host_os in
     openbsd*)
             CFLAGS="$CFLAGS -DUSE_OPENBSD_PROC"
             proc_interface=openbsd ;;
-    *)      proc_interface=none ;;
+    *)
+            CFLAGS="$CFLAGS -DUSE_NO_PROC"
+            proc_interface=none ;;
 esac
 
 AC_C_BIGENDIAN

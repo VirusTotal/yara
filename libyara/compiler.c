@@ -166,6 +166,8 @@ YR_API int yr_compiler_create(
   new_compiler->include_callback = _yr_compiler_default_include_callback;
   new_compiler->incl_clbk_user_data = NULL;
   new_compiler->include_free = _yr_compiler_default_include_free;
+  new_compiler->re_ast_callback = NULL;
+  new_compiler->re_ast_clbk_user_data = NULL;
   new_compiler->last_error = ERROR_SUCCESS;
   new_compiler->last_error_line = 0;
   new_compiler->current_line = 0;
@@ -299,6 +301,16 @@ YR_API void yr_compiler_set_include_callback(
   compiler->include_callback = include_callback;
   compiler->include_free = include_free;
   compiler->incl_clbk_user_data = user_data;
+}
+
+
+YR_API void yr_compiler_set_re_ast_callback(
+    YR_COMPILER* compiler,
+    YR_COMPILER_RE_AST_CALLBACK_FUNC re_ast_callback,
+    void* user_data)
+{
+  compiler->re_ast_callback = re_ast_callback;
+  compiler->re_ast_clbk_user_data = user_data;
 }
 
 

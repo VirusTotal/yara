@@ -437,6 +437,9 @@ int pe_iterate_resources(
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_RESOURCE);
 
+  if (directory == NULL)
+     return 0;
+
   if (yr_le32toh(directory->VirtualAddress) != 0)
   {
     PIMAGE_RESOURCE_DIRECTORY rsrc_dir;
@@ -882,6 +885,9 @@ IMPORTED_DLL* pe_parse_imports(
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
 
+  if (directory == NULL)
+    return NULL;
+
   if (yr_le32toh(directory->VirtualAddress) == 0)
     return NULL;
 
@@ -973,6 +979,9 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
 
   directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_EXPORT);
+
+  if (directory == NULL)
+    return NULL;
 
   if (yr_le32toh(directory->VirtualAddress) == 0)
     return NULL;
@@ -1077,6 +1086,9 @@ void pe_parse_certificates(
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
 
+  if (directory == NULL)
+    return;
+
   // Default to 0 signatures until we know otherwise.
   set_integer(0, pe->object, "number_of_signatures");
 
@@ -1141,7 +1153,7 @@ void pe_parse_certificates(
     }
 
     cert_bio = BIO_new_mem_buf(
-        win_cert->Certificate, yr_le32toh(win_cert->Length));
+        win_cert->Certificate, yr_le32toh(win_cert->Length) - WIN_CERTIFICATE_HEADER_SIZE);
 
     if (!cert_bio)
       break;
@@ -1336,6 +1348,12 @@ void pe_parse_header(
       yr_le64toh(OptionalHeader(pe, ImageBase)) :
       yr_le32toh(OptionalHeader(pe, ImageBase)),
       pe->object, "image_base");
+
+  set_integer(
+      IS_64BITS_PE(pe) ?
+      yr_le64toh(OptionalHeader(pe, NumberOfRvaAndSizes)) :
+      yr_le32toh(OptionalHeader(pe, NumberOfRvaAndSizes)),
+      pe->object, "number_of_rva_and_sizes");
 
   set_integer(
       OptionalHeader(pe, MajorLinkerVersion),
@@ -2195,6 +2213,7 @@ begin_declarations;
 
   declare_integer("entry_point");
   declare_integer("image_base");
+  declare_integer("number_of_rva_and_sizes");
 
   declare_string_dictionary("version_info");
 
@@ -2624,7 +2643,7 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
-	  block_data = block->fetch_data(block);
+    block_data = block->fetch_data(block);
 
     if (block_data == NULL)
       continue;
