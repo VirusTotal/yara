@@ -125,25 +125,25 @@ static char* identifiers[MAX_ARGS_IDENTIFIER + 1];
 static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 static char* modules_data[MAX_ARGS_EXT_VAR + 1];
 
-static int recursive_search = FALSE;
-static int show_module_data = FALSE;
-static int show_tags = FALSE;
-static int show_strings = FALSE;
-static int show_string_length = FALSE;
-static int show_meta = FALSE;
-static int show_namespace = FALSE;
-static int show_version = FALSE;
-static int show_help = FALSE;
-static int ignore_warnings = FALSE;
-static int fast_scan = FALSE;
-static int negate = FALSE;
-static int print_count_only = FALSE;
+static bool recursive_search = false;
+static bool show_module_data = false;
+static bool show_tags = false;
+static bool show_strings = false;
+static bool show_string_length = false;
+static bool show_meta = false;
+static bool show_namespace = false;
+static bool show_version = false;
+static bool show_help = false;
+static bool ignore_warnings = false;
+static bool fast_scan = false;
+static bool negate = false;
+static bool print_count_only = false;
+static bool fail_on_warnings = false;
 static int total_count = 0;
 static int limit = 0;
 static int timeout = 1000000;
 static int stack_size = DEFAULT_STACK_SIZE;
 static int threads = MAX_THREADS;
-static int fail_on_warnings = FALSE;
 static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 
@@ -324,16 +324,16 @@ static char* file_queue_get()
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 
-static int is_directory(
+static bool is_directory(
     const char* path)
 {
   DWORD attributes = GetFileAttributes(path);
 
   if (attributes != INVALID_FILE_ATTRIBUTES &&
 	  attributes & FILE_ATTRIBUTE_DIRECTORY)
-    return TRUE;
+    return true;
   else
-    return FALSE;
+    return false;
 }
 
 static void scan_dir(
@@ -378,7 +378,7 @@ static void scan_dir(
 
 #else
 
-static int is_directory(
+static bool is_directory(
     const char* path)
 {
   struct stat st;
@@ -569,14 +569,14 @@ static int handle_message(
     void* data)
 {
   const char* tag;
-  int show = TRUE;
+  bool show = true;
 
   if (tags[0] != NULL)
   {
     // The user specified one or more -t <tag> arguments, let's show this rule
     // only if it's tagged with some of the specified tags.
 
-    show = FALSE;
+    show = false;
 
     for (int i = 0; !show && tags[i] != NULL; i++)
     {
@@ -584,7 +584,7 @@ static int handle_message(
       {
         if (strcmp(tag, tags[i]) == 0)
         {
-          show = TRUE;
+          show = true;
           break;
         }
       }
@@ -596,19 +596,19 @@ static int handle_message(
     // The user specified one or more -i <identifier> arguments, let's show
     // this rule only if it's identifier is among of the provided ones.
 
-    show = FALSE;
+    show = false;
 
     for (int i = 0; !show && identifiers[i] != NULL; i++)
     {
       if (strcmp(identifiers[i], rule->identifier) == 0)
       {
-        show = TRUE;
+        show = true;
         break;
       }
     }
   }
 
-  int is_matching = (message == CALLBACK_MSG_RULE_MATCHING);
+  bool is_matching = (message == CALLBACK_MSG_RULE_MATCHING);
 
   show = show && ((!negate && is_matching) || (negate && !is_matching));
 
@@ -938,7 +938,7 @@ static int load_modules_data()
     if (!equal_sign)
     {
       fprintf(stderr, "error: wrong syntax for `-x` option.\n");
-      return FALSE;
+      return false;
     }
 
     *equal_sign = '\0';
@@ -955,7 +955,7 @@ static int load_modules_data()
       {
         free(module_data);
         fprintf(stderr, "error: could not open file \"%s\".\n", equal_sign + 1);
-        return FALSE;
+        return false;
       }
 
       module_data->next = modules_data_list;
@@ -963,7 +963,7 @@ static int load_modules_data()
     }
   }
 
-  return TRUE;
+  return true;
 }
 
 

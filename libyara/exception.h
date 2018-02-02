@@ -115,7 +115,7 @@ static void exception_handler(int sig) {
     if (tidx != -1 && exc_jmp_buf[tidx] != NULL)
       siglongjmp(*exc_jmp_buf[tidx], 1);
 
-    assert(FALSE);  // We should not reach this point.
+    assert(false);  // We should not reach this point.
   }
 }
 

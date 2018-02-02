@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -141,7 +142,7 @@ static YR_AC_STATE* _yr_ac_queue_pop(
 //    QUEUE* queue     - The queue
 //
 // Returns:
-//    TRUE if queue is empty, FALSE otherwise.
+//    true if queue is empty, false otherwise.
 //
 
 static int _yr_ac_queue_is_empty(
@@ -365,7 +366,7 @@ static int _yr_ac_create_failure_links(
 // accepted in s1 too.
 //
 
-static int _yr_ac_transitions_subset(
+static bool _yr_ac_transitions_subset(
     YR_AC_STATE* s1,
     YR_AC_STATE* s2)
 {
@@ -386,12 +387,12 @@ static int _yr_ac_transitions_subset(
   while (state != NULL)
   {
     if (!(set[state->input / 8] & 1 << state->input % 8))
-      return FALSE;
+      return false;
 
     state = state->siblings;
   }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -460,8 +461,8 @@ static int _yr_ac_find_suitable_transition_table_slot(
 
   uint32_t i = automaton->t_table_unused_candidate;
 
-  int first_unused = TRUE;
-  int found = FALSE;
+  bool first_unused = true;
+  bool found = false;
 
   while (!found)
   {
@@ -498,7 +499,7 @@ static int _yr_ac_find_suitable_transition_table_slot(
       // candidate. Let's check if table slots for the transitions are
       // unused too.
 
-      found = TRUE;
+      found = true;
       child_state = state->first_child;
 
       while (child_state != NULL)
@@ -506,7 +507,7 @@ static int _yr_ac_find_suitable_transition_table_slot(
         if (YR_AC_USED_TRANSITION_SLOT(
             automaton->t_table[child_state->input + i + 1]))
         {
-          found = FALSE;
+          found = false;
           break;
         }
 
@@ -519,7 +520,7 @@ static int _yr_ac_find_suitable_transition_table_slot(
       if (first_unused)
       {
         automaton->t_table_unused_candidate = found ? i + 1 : i;
-        first_unused = FALSE;
+        first_unused = false;
       }
 
       if (found)

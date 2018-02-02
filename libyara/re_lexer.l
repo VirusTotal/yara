@@ -46,6 +46,7 @@ with noyywrap then we can remove this pragma.
 
 #include <assert.h>
 #include <setjmp.h>
+#include <stdbool.h>
 
 #include <yara/globals.h>
 #include <yara/utils.h>
@@ -172,7 +173,7 @@ hex_digit     [0-9a-fA-F]
 
   BEGIN(char_class);
   memset(LEX_ENV->re_class.bitmap, 0, 32);
-  LEX_ENV->re_class.negated = TRUE;
+  LEX_ENV->re_class.negated = true;
 }
 
 \[\^\] {
@@ -183,7 +184,7 @@ hex_digit     [0-9a-fA-F]
 
   BEGIN(char_class);
   memset(LEX_ENV->re_class.bitmap, 0, 32);
-  LEX_ENV->re_class.negated = TRUE;
+  LEX_ENV->re_class.negated = true;
   LEX_ENV->re_class.bitmap[']' / 8] |= 1 << ']' % 8;
 }
 
@@ -196,7 +197,7 @@ hex_digit     [0-9a-fA-F]
 
   BEGIN(char_class);
   memset(LEX_ENV->re_class.bitmap, 0, 32);
-  LEX_ENV->re_class.negated = FALSE;
+  LEX_ENV->re_class.negated = false;
   LEX_ENV->re_class.bitmap[']' / 8] |= 1 << ']' % 8;
 }
 
@@ -207,7 +208,7 @@ hex_digit     [0-9a-fA-F]
 
   BEGIN(char_class);
   memset(LEX_ENV->re_class.bitmap, 0, 32);
-  LEX_ENV->re_class.negated = FALSE;
+  LEX_ENV->re_class.negated = false;
 }
 
 

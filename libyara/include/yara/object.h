@@ -47,6 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #endif
 
+#include <stdbool.h>
 #include <yara/types.h>
 
 
@@ -103,7 +104,7 @@ YR_OBJECT* yr_object_lookup(
     ...);
 
 
-int yr_object_has_undefined_value(
+bool yr_object_has_undefined_value(
     YR_OBJECT* object,
     const char* field,
     ...);

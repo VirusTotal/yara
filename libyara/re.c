@@ -130,7 +130,7 @@ YR_THREAD_STORAGE_KEY thread_storage_key = 0;
   ((cls)[(chr) / 8] & 1 << ((chr) % 8))
 
 
-static int _yr_re_is_char_in_class(
+static bool _yr_re_is_char_in_class(
     RE_CLASS* re_class,
     uint8_t chr,
     int case_insensitive)
@@ -147,7 +147,7 @@ static int _yr_re_is_char_in_class(
 }
 
 
-static int _yr_re_is_word_char(
+static bool _yr_re_is_word_char(
     const uint8_t* input,
     uint8_t character_size)
 {
@@ -236,7 +236,7 @@ RE_NODE* yr_re_node_create(
     result->type = type;
     result->left = left;
     result->right = right;
-    result->greedy = TRUE;
+    result->greedy = true;
     result->forward_code = NULL;
     result->backward_code = NULL;
   }
@@ -351,7 +351,7 @@ int yr_re_compile(
       yr_re_ast_destroy(re_ast));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_re_ast_emit_code(re_ast, code_arena, FALSE),
+      yr_re_ast_emit_code(re_ast, code_arena, false),
       yr_re_ast_destroy(re_ast));
 
   yr_re_ast_destroy(re_ast);
@@ -465,15 +465,15 @@ int _yr_re_node_contains_dot_star(
 {
   if ((re_node->type == RE_NODE_STAR || re_node->type == RE_NODE_PLUS) &&
       re_node->left->type == RE_NODE_ANY)
-    return TRUE;
+    return true;
 
   if (re_node->left != NULL && _yr_re_node_contains_dot_star(re_node->left))
-    return TRUE;
+    return true;
 
   if (re_node->right != NULL && _yr_re_node_contains_dot_star(re_node->right))
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 
@@ -523,7 +523,7 @@ int yr_re_ast_split_at_chaining_point(
   {
     if (child->right != NULL &&
         child->right->type == RE_NODE_RANGE_ANY &&
-        child->right->greedy == FALSE &&
+        child->right->greedy == false &&
         (child->right->start > STRING_CHAINING_THRESHOLD ||
          child->right->end > STRING_CHAINING_THRESHOLD))
     {
@@ -1456,7 +1456,7 @@ static int _yr_re_fiber_exists(
   int i;
 
   if (last_fiber == NULL)
-    return FALSE;
+    return false;
 
   while (fiber != last_fiber->next)
   {
@@ -1464,25 +1464,25 @@ static int _yr_re_fiber_exists(
         fiber->sp == target_fiber->sp &&
         fiber->rc == target_fiber->rc)
     {
-      equal_stacks = TRUE;
+      equal_stacks = true;
 
       for (i = 0; i <= fiber->sp; i++)
       {
         if (fiber->stack[i] != target_fiber->stack[i])
         {
-          equal_stacks = FALSE;
+          equal_stacks = false;
           break;
         }
       }
 
       if (equal_stacks)
-        return TRUE;
+        return true;
     }
 
     fiber = fiber->next;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -1668,7 +1668,7 @@ static int _yr_re_fiber_sync(
       case RE_OPCODE_SPLIT_B:
 
         split_id = *(RE_SPLIT_ID_TYPE*)(fiber->ip + 1);
-        split_already_executed = FALSE;
+        split_already_executed = false;
 
         for (splits_executed_idx = 0;
              splits_executed_idx < splits_executed_count;
@@ -1676,7 +1676,7 @@ static int _yr_re_fiber_sync(
         {
           if (split_id == splits_executed[splits_executed_idx])
           {
-            split_already_executed = TRUE;
+            split_already_executed = true;
             break;
           }
         }
@@ -2067,10 +2067,10 @@ int yr_re_exec(
             case '\n':
             case '\v':
             case '\f':
-              match = TRUE;
+              match = true;
               break;
             default:
-              match = FALSE;
+              match = false;
           }
 
           if (*ip == RE_OPCODE_NON_SPACE)
@@ -2099,11 +2099,11 @@ int yr_re_exec(
 
           if (bytes_matched == 0 && input_backwards_size < character_size)
           {
-            match = TRUE;
+            match = true;
           }
           else if (bytes_matched >= max_bytes_matched)
           {
-            match = TRUE;
+            match = true;
           }
           else
           {
@@ -2181,7 +2181,7 @@ int yr_re_exec(
           break;
 
         default:
-          assert(FALSE);
+          assert(false);
       }
 
       switch (action)
@@ -2283,7 +2283,7 @@ int yr_re_fast_exec(
     ip = code_stack[sp];
     input = input_stack[sp];
     bytes_matched = matches_stack[sp];
-    stop = FALSE;
+    stop = false;
 
     while (!stop)
     {
@@ -2323,7 +2323,7 @@ int yr_re_fast_exec(
           }
           else
           {
-            stop = TRUE;
+            stop = true;
           }
 
           break;
@@ -2341,7 +2341,7 @@ int yr_re_fast_exec(
           }
           else
           {
-            stop = TRUE;
+            stop = true;
           }
 
           break;
@@ -2388,7 +2388,7 @@ int yr_re_fast_exec(
           break;
 
         default:
-          assert(FALSE);
+          assert(false);
       }
     }
   }
@@ -2483,7 +2483,7 @@ static void _yr_re_print_node(
   case RE_NODE_CLASS:
     printf("Class(");
     for (i = 0; i < 256; i++)
-      if (_yr_re_is_char_in_class(re_node->re_class, i, FALSE))
+      if (_yr_re_is_char_in_class(re_node->re_class, i, false))
         printf("%02X,", i);
     printf(")");
     break;

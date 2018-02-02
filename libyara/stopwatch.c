@@ -27,6 +27,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdbool.h>
 #include <time.h>
 
 #include <yara/stopwatch.h>
@@ -53,7 +54,7 @@ void yr_stopwatch_start(
 
 uint64_t yr_stopwatch_elapsed_ns(
     YR_STOPWATCH* stopwatch,
-    int restart)
+    bool restart)
 {
   struct timespec ts_stop;
   struct timespec ts_elapsed;

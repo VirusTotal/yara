@@ -84,7 +84,7 @@ int yr_object_create(
       object_size = sizeof(YR_OBJECT_FUNCTION);
       break;
     default:
-      assert(FALSE);
+      assert(false);
   }
 
   obj = (YR_OBJECT*) yr_malloc(object_size);
@@ -284,7 +284,7 @@ int yr_object_from_external_variable(
       break;
 
     default:
-      assert(FALSE);
+      assert(false);
   }
 
   result = yr_object_create(
@@ -640,7 +640,7 @@ int yr_object_copy(
       break;
 
     default:
-      assert(FALSE);
+      assert(false);
 
   }
 
@@ -862,7 +862,7 @@ int yr_object_dict_set_item(
 }
 
 
-int yr_object_has_undefined_value(
+bool yr_object_has_undefined_value(
     YR_OBJECT* object,
     const char* field,
     ...)
@@ -880,7 +880,7 @@ int yr_object_has_undefined_value(
   va_end(args);
 
   if (field_obj == NULL)
-    return TRUE;
+    return true;
 
   switch(field_obj->type)
   {
@@ -892,7 +892,7 @@ int yr_object_has_undefined_value(
       return field_obj->value.i == UNDEFINED;
   }
 
-  return FALSE;
+  return false;
 }
 
 

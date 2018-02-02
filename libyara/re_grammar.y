@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 %{
 
+#include <stdbool.h>
+
 #include <yara/integers.h>
 #include <yara/utils.h>
 #include <yara/error.h>
@@ -209,7 +211,7 @@ repeat
         destroy_node_if($$ == NULL, $1);
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
-        $$->greedy = FALSE;
+        $$->greedy = false;
       }
     | single '+'
       {
@@ -239,7 +241,7 @@ repeat
         destroy_node_if($$ == NULL, $1);
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
-        $$->greedy = FALSE;
+        $$->greedy = false;
       }
     | single '?'
       {
@@ -249,7 +251,7 @@ repeat
         if ($1->type == RE_NODE_ANY)
         {
           $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
-          destroy_node_if(TRUE, $1);
+          destroy_node_if(true, $1);
         }
         else
         {
@@ -272,7 +274,7 @@ repeat
         if ($1->type == RE_NODE_ANY)
         {
           $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
-          destroy_node_if(TRUE, $1);
+          destroy_node_if(true, $1);
         }
         else
         {
@@ -286,7 +288,7 @@ repeat
 
         $$->start = 0;
         $$->end = 1;
-        $$->greedy = FALSE;
+        $$->greedy = false;
       }
     | single _RANGE_
       {
@@ -296,7 +298,7 @@ repeat
         if ($1->type == RE_NODE_ANY)
         {
           $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
-          destroy_node_if(TRUE, $1);
+          destroy_node_if(true, $1);
         }
         else
         {
@@ -318,7 +320,7 @@ repeat
         if ($1->type == RE_NODE_ANY)
         {
           $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
-          destroy_node_if(TRUE, $1);
+          destroy_node_if(true, $1);
         }
         else
         {
@@ -331,7 +333,7 @@ repeat
 
         $$->start = $2 & 0xFFFF;;
         $$->end = $2 >> 16;;
-        $$->greedy = FALSE;
+        $$->greedy = false;
       }
     | single
       {

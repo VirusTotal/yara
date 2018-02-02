@@ -278,11 +278,11 @@ static int _yr_scan_verify_chained_string_match(
   int32_t full_chain_length;
 
   int tidx = context->tidx;
-  int add_match = FALSE;
+  bool add_match = false;
 
   if (matching_string->chained_to == NULL)
   {
-    add_match = TRUE;
+    add_match = true;
   }
   else
   {
@@ -308,7 +308,7 @@ static int _yr_scan_verify_chained_string_match(
         if (ending_offset + matching_string->chain_gap_max >= match_offset &&
             ending_offset + matching_string->chain_gap_min <= match_offset)
         {
-          add_match = TRUE;
+          add_match = true;
           break;
         }
       }
@@ -374,7 +374,7 @@ static int _yr_scan_verify_chained_string_match(
               (void**) &match->data));
 
           FAIL_ON_ERROR(_yr_scan_add_match_to_list(
-              match, &string->matches[tidx], FALSE));
+              match, &string->matches[tidx], false));
         }
 
         match = next_match;
@@ -418,7 +418,7 @@ static int _yr_scan_verify_chained_string_match(
       FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,
           &matching_string->unconfirmed_matches[tidx],
-          FALSE));
+          false));
     }
   }
 
@@ -758,7 +758,7 @@ int yr_scan_verify_match(
   }
 
   #ifdef PROFILING_ENABLED
-  string->clock_ticks += yr_stopwatch_elapsed_ns(&stopwatch, FALSE);
+  string->clock_ticks += yr_stopwatch_elapsed_ns(&stopwatch, false);
   #endif
 
   return ERROR_SUCCESS;

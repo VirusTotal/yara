@@ -76,6 +76,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stddef.h>
 
@@ -1968,7 +1969,7 @@ yyreduce:
             META_TYPE_BOOLEAN,
             (yyvsp[-2].c_string),
             NULL,
-            TRUE);
+            true);
 
         yr_free((yyvsp[-2].c_string));
 
@@ -1985,7 +1986,7 @@ yyreduce:
             META_TYPE_BOOLEAN,
             (yyvsp[-2].c_string),
             NULL,
-            FALSE);
+            false);
 
         yr_free((yyvsp[-2].c_string));
 
@@ -2383,7 +2384,7 @@ yyreduce:
             strlcpy((yyval.c_string), "r", MAX_FUNCTION_ARGS);
             break;
           default:
-            assert(FALSE);
+            assert(false);
         }
 
         fail_if((yyval.c_string) == NULL);
@@ -2418,7 +2419,7 @@ yyreduce:
               strlcat((yyvsp[-2].c_string), "r", MAX_FUNCTION_ARGS);
               break;
             default:
-              assert(FALSE);
+              assert(false);
           }
         }
 
@@ -2660,7 +2661,7 @@ yyreduce:
         uint8_t* addr;
 
         // Clear counter for number of expressions evaluating
-        // to TRUE.
+        // to true.
         yr_parser_emit_with_arg(
             yyscanner, OP_CLEAR_M, mem_offset + 1, NULL, NULL);
 
@@ -2761,7 +2762,7 @@ yyreduce:
             yyscanner, OP_SWAPUNDEF, mem_offset + 2, NULL, NULL);
 
         // Compare the loop quantifier with the number of
-        // expressions evaluating to TRUE.
+        // expressions evaluating to true.
         yr_parser_emit_with_arg(
             yyscanner, OP_PUSH_M, mem_offset + 1, NULL, NULL);
 
@@ -2850,7 +2851,7 @@ yyreduce:
             yyscanner, OP_SWAPUNDEF, mem_offset + 2, NULL, NULL);
 
         // Compare the loop quantifier with the number of
-        // expressions evaluating to TRUE.
+        // expressions evaluating to true.
         yr_parser_emit_with_arg(
             yyscanner, OP_PUSH_M, mem_offset + 1, NULL, NULL);
 
@@ -3465,7 +3466,7 @@ yyreduce:
         }
         else
         {
-          assert(FALSE);
+          assert(false);
         }
 
         fail_if(compiler->last_result != ERROR_SUCCESS);

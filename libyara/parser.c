@@ -27,6 +27,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -305,7 +306,7 @@ static int _yr_parser_write_string(
 
   int result;
   int max_string_len;
-  int free_literal = FALSE;
+  bool free_literal = false;
 
   *string = NULL;
 
@@ -337,7 +338,7 @@ static int _yr_parser_write_string(
     if (literal_string != NULL)
     {
       flags |= STRING_GFLAGS_LITERAL;
-      free_literal = TRUE;
+      free_literal = true;
     }
     else
     {
@@ -391,11 +392,11 @@ static int _yr_parser_write_string(
   else
   {
     // Emit forwards code
-    result = yr_re_ast_emit_code(re_ast, compiler->re_code_arena, FALSE);
+    result = yr_re_ast_emit_code(re_ast, compiler->re_code_arena, false);
 
     // Emit backwards code
     if (result == ERROR_SUCCESS)
-      result = yr_re_ast_emit_code(re_ast, compiler->re_code_arena, TRUE);
+      result = yr_re_ast_emit_code(re_ast, compiler->re_code_arena, true);
 
     if (result == ERROR_SUCCESS)
       result = yr_atoms_extract_from_re(re_ast, flags, &atom_list);
@@ -1046,12 +1047,12 @@ static int _yr_parser_valid_module_name(
     SIZED_STRING* module_name)
 {
   if (module_name->length == 0)
-    return FALSE;
+    return false;
 
   if (strlen(module_name->c_string) != module_name->length)
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 
@@ -1141,7 +1142,7 @@ static int _yr_parser_operator_to_opcode(
       opcode = OP_STR_BEGIN;
       break;
     default:
-      assert(FALSE);
+      assert(false);
   }
 
   if (op[0] == '<')

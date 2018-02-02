@@ -70,6 +70,7 @@
 /* Copy the first part of user declarations.  */
 #line 30 "re_grammar.y" /* yacc.c:339  */
 
+#include <stdbool.h>
 
 #include <yara/integers.h>
 #include <yara/utils.h>
@@ -1457,7 +1458,7 @@ yyreduce:
         destroy_node_if((yyval.re_node) == NULL, (yyvsp[-2].re_node));
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
-        (yyval.re_node)->greedy = FALSE;
+        (yyval.re_node)->greedy = false;
       }
 #line 1463 "re_grammar.c" /* yacc.c:1646  */
     break;
@@ -1495,7 +1496,7 @@ yyreduce:
         destroy_node_if((yyval.re_node) == NULL, (yyvsp[-2].re_node));
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
-        (yyval.re_node)->greedy = FALSE;
+        (yyval.re_node)->greedy = false;
       }
 #line 1501 "re_grammar.c" /* yacc.c:1646  */
     break;
@@ -1509,7 +1510,7 @@ yyreduce:
         if ((yyvsp[-1].re_node)->type == RE_NODE_ANY)
         {
           (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
-          destroy_node_if(TRUE, (yyvsp[-1].re_node));
+          destroy_node_if(true, (yyvsp[-1].re_node));
         }
         else
         {
@@ -1536,7 +1537,7 @@ yyreduce:
         if ((yyvsp[-2].re_node)->type == RE_NODE_ANY)
         {
           (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
-          destroy_node_if(TRUE, (yyvsp[-2].re_node));
+          destroy_node_if(true, (yyvsp[-2].re_node));
         }
         else
         {
@@ -1550,7 +1551,7 @@ yyreduce:
 
         (yyval.re_node)->start = 0;
         (yyval.re_node)->end = 1;
-        (yyval.re_node)->greedy = FALSE;
+        (yyval.re_node)->greedy = false;
       }
 #line 1556 "re_grammar.c" /* yacc.c:1646  */
     break;
@@ -1564,7 +1565,7 @@ yyreduce:
         if ((yyvsp[-1].re_node)->type == RE_NODE_ANY)
         {
           (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
-          destroy_node_if(TRUE, (yyvsp[-1].re_node));
+          destroy_node_if(true, (yyvsp[-1].re_node));
         }
         else
         {
@@ -1590,7 +1591,7 @@ yyreduce:
         if ((yyvsp[-2].re_node)->type == RE_NODE_ANY)
         {
           (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
-          destroy_node_if(TRUE, (yyvsp[-2].re_node));
+          destroy_node_if(true, (yyvsp[-2].re_node));
         }
         else
         {
@@ -1603,7 +1604,7 @@ yyreduce:
 
         (yyval.re_node)->start = (yyvsp[-1].range) & 0xFFFF;;
         (yyval.re_node)->end = (yyvsp[-1].range) >> 16;;
-        (yyval.re_node)->greedy = FALSE;
+        (yyval.re_node)->greedy = false;
       }
 #line 1609 "re_grammar.c" /* yacc.c:1646  */
     break;

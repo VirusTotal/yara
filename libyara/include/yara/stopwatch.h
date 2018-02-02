@@ -46,9 +46,9 @@ void yr_stopwatch_start(
 
 // yr_stopwatch_elapsed_ns returns the number of nanoseconds elapsed
 // since the last call to yr_stopwatch_start or since the last time that
-// yr_stopwatch_elapsed_ns was called with restart set to TRUE.
+// yr_stopwatch_elapsed_ns was called with restart set to true.
 uint64_t yr_stopwatch_elapsed_ns(
-    YR_STOPWATCH* stopwatch, int restart);
+    YR_STOPWATCH* stopwatch, bool restart);
 
 #endif
 #endif

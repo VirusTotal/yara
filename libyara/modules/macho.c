@@ -91,7 +91,7 @@ int macho_fat_is_32(
 
 // Convert virtual address to file offset. Segments have to be already loaded.
 
-int macho_rva_to_offset(
+bool macho_rva_to_offset(
     uint64_t address,
     uint64_t* result,
     YR_OBJECT* object)
@@ -106,10 +106,10 @@ int macho_rva_to_offset(
     {
       uint64_t fileoff = get_integer(object, "segments[%i].fileoff", i);
       *result = fileoff + (address - start);
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 
@@ -130,10 +130,10 @@ int macho_offset_to_rva(
     {
       uint64_t vmaddr = get_integer(object, "segments[%i].vmaddr", i);
       *result = vmaddr + (offset - start);
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 

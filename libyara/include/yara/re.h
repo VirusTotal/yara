@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_RE_H
 #define YR_RE_H
 
+#include <stdbool.h>
 #include <ctype.h>
 
 #include <yara/arena.h>
@@ -122,7 +123,7 @@ struct RE_NODE
     int end;
   };
 
-  int greedy;
+  bool greedy;
 
   RE_CLASS* re_class;
 
@@ -136,7 +137,7 @@ struct RE_NODE
 
 struct RE_CLASS
 {
-  uint8_t negated;
+  bool negated;
   uint8_t bitmap[32];
 };
 
