@@ -343,14 +343,6 @@ uint32_t load_encoded_field(
   set_sized_string(proto_name->c_string, proto_name->length, dex->object, 
                    "field[%i].proto", index_encoded_field);
 
-#ifdef DEBUG
-  printf("FIELD NAME (%d %d) %d %d %d %d %s %s %s\n",
-         static_field, instance_field, *previous_field_idx,
-         encoded_field.field_idx_diff, encoded_field.access_flags,
-         index_encoded_field,
-         class_name->c_string, field_name->c_string, proto_name->c_string);
-#endif
-
   return current_size;
 }
 
@@ -410,15 +402,6 @@ uint32_t load_encoded_method(
     dex->object, "string_ids[%i].value", shorty_idx);
   set_sized_string(proto_name->c_string, proto_name->length, dex->object,
                    "method[%i].proto", index_encoded_method);
-
-#ifdef DEBUG
-  printf("METHOD NAME (%d %d) %d %d %d %d %s %s %s\n",
-    direct_method, virtual_method,
-    *previous_method_idx,
-    encoded_method.method_idx_diff, encoded_method.access_flags, 
-    index_encoded_method,
-    class_name->c_string, method_name->c_string, proto_name->c_string);
-#endif
 
   if (encoded_method.code_off != 0) {
     code_item_t *code_item = (code_item_t *) (
@@ -483,13 +466,6 @@ void dex_parse(
                      dex->data + string_id_item->string_data_offset + 1)), 
                      value,
                      dex->object, "string_ids[%i].value", i);
-
-#ifdef DEBUG
-    printf("STRING %d %d %s\n",
-      i, 
-      value,
-      get_string(dex->object, "string_ids[%i].value", i)->c_string);
-#endif
   }
 
   if (!fits_in_dex(dex, dex->data + dex_header->type_ids_offset,
