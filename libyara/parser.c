@@ -578,6 +578,15 @@ YR_STRING* yr_parser_reduce_string_declaration(
           identifier);
     }
 
+    if (compiler->re_ast_callback != NULL)
+    {
+      compiler->re_ast_callback(
+          compiler->current_rule,
+          identifier,
+          re_ast,
+          compiler->re_ast_clbk_user_data);
+    }
+
     compiler->last_result = yr_re_ast_split_at_chaining_point(
         re_ast, &re_ast, &remainder_re_ast, &min_gap, &max_gap);
 
