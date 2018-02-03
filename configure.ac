@@ -100,6 +100,14 @@ AC_ARG_ENABLE([dmalloc],
     CFLAGS="$CFLAGS -DDMALLOC"
   fi])
 
+AC_ARG_ENABLE([jemalloc],
+  [AS_HELP_STRING([--enable-jemalloc],
+    [enable jemalloc to debug heap-related issues])],
+  [if test x$enableval = xyes; then
+    AC_CHECK_LIB(jemalloc, malloc_stats_print,,
+      AC_MSG_ERROR([please install jemalloc library]))
+  fi])
+
 AC_ARG_ENABLE([cuckoo],
   [AS_HELP_STRING([--enable-cuckoo], [enable cuckoo module])],
   [if test x$enableval = xyes; then
