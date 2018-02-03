@@ -199,6 +199,7 @@
     <ClCompile Include="..\..\..\libyara\mem.c" />
     <ClCompile Include="..\..\..\libyara\modules.c" />
     <ClCompile Include="..\..\..\libyara\modules\cuckoo.c" />
+    <ClCompile Include="..\..\..\libyara\modules\dex.c" />
     <ClCompile Include="..\..\..\libyara\modules\dotnet.c" />
     <ClCompile Include="..\..\..\libyara\modules\elf.c" />
     <ClCompile Include="..\..\..\libyara\modules\hash.c" />
