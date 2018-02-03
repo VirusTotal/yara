@@ -27,6 +27,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#if defined(JEMALLOC)
+#include <jemalloc/jemalloc.h>
+#endif
+
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -227,6 +231,11 @@ YR_API int yr_finalize(void)
   FAIL_ON_ERROR(yr_re_finalize());
   FAIL_ON_ERROR(yr_modules_finalize());
   FAIL_ON_ERROR(yr_heap_free());
+
+  #if defined(JEMALLOC)
+  malloc_stats_print(NULL, NULL, NULL);
+  mallctl("prof.dump", NULL, NULL, NULL, 0);
+  #endif
 
   return ERROR_SUCCESS;
 }

@@ -106,6 +106,7 @@ AC_ARG_ENABLE([jemalloc],
   [if test x$enableval = xyes; then
     AC_CHECK_LIB(jemalloc, malloc_stats_print,,
       AC_MSG_ERROR([please install jemalloc library]))
+    CFLAGS="$CFLAGS -DJEMALLOC"
   fi])
 
 AC_ARG_ENABLE([cuckoo],
