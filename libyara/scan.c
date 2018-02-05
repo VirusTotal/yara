@@ -531,6 +531,7 @@ static int _yr_scan_match_callback(
 
 
 typedef int (*RE_EXEC_FUNC)(
+    YR_SCAN_CONTEXT* context,
     const uint8_t* code,
     const uint8_t* input,
     size_t input_forwards_size,
@@ -573,6 +574,7 @@ static int _yr_scan_verify_re_match(
   if (STRING_IS_ASCII(ac_match->string))
   {
     FAIL_ON_ERROR(exec(
+        context,
         ac_match->forward_code,
         data + offset,
         data_size - offset,
@@ -587,6 +589,7 @@ static int _yr_scan_verify_re_match(
   {
     flags |= RE_FLAGS_WIDE;
     FAIL_ON_ERROR(exec(
+        context,
         ac_match->forward_code,
         data + offset,
         data_size - offset,
@@ -614,6 +617,7 @@ static int _yr_scan_verify_re_match(
   if (ac_match->backward_code != NULL)
   {
     FAIL_ON_ERROR(exec(
+        context,
         ac_match->backward_code,
         data + offset,
         data_size - offset,

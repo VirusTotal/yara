@@ -43,6 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 define_function(network_dns_lookup)
 {
+  YR_SCAN_CONTEXT* context = scan_context();
   YR_OBJECT* network_obj = parent();
 
   json_t* network_json = (json_t*) network_obj->data;
@@ -90,7 +91,7 @@ define_function(network_dns_lookup)
   {
     if (json_unpack(value, "{s:s, s:s}", "ip", &ip, field_name, &hostname) == 0)
     {
-      if (yr_re_match(regexp_argument(1), hostname) > 0)
+      if (yr_re_match(context, regexp_argument(1), hostname) > 0)
       {
         result = 1;
         break;
@@ -107,6 +108,7 @@ define_function(network_dns_lookup)
 
 
 uint64_t http_request(
+    YR_SCAN_CONTEXT* context,
     YR_OBJECT* network_obj,
     RE* uri_regexp,
     int methods)
@@ -127,7 +129,7 @@ uint64_t http_request(
     {
       if (((methods & METHOD_GET && strcasecmp(method, "get") == 0) ||
            (methods & METHOD_POST && strcasecmp(method, "post") == 0)) &&
-           yr_re_match(uri_regexp, uri) > 0)
+           yr_re_match(context, uri_regexp, uri) > 0)
       {
         result = 1;
         break;
@@ -143,6 +145,7 @@ define_function(network_http_request)
 {
   return_integer(
       http_request(
+          scan_context(),
           parent(),
           regexp_argument(1),
           METHOD_GET | METHOD_POST));
@@ -153,6 +156,7 @@ define_function(network_http_get)
 {
   return_integer(
       http_request(
+          scan_context(),
           parent(),
           regexp_argument(1),
           METHOD_GET));
@@ -163,6 +167,7 @@ define_function(network_http_post)
 {
   return_integer(
       http_request(
+          scan_context(),
           parent(),
           regexp_argument(1),
           METHOD_POST));
@@ -171,6 +176,7 @@ define_function(network_http_post)
 
 define_function(registry_key_access)
 {
+  YR_SCAN_CONTEXT* context = scan_context();
   YR_OBJECT* registry_obj = parent();
 
   json_t* keys_json = (json_t*) registry_obj->data;
@@ -181,7 +187,7 @@ define_function(registry_key_access)
 
   json_array_foreach(keys_json, index, value)
   {
-    if (yr_re_match(regexp_argument(1), json_string_value(value)) > 0)
+    if (yr_re_match(context, regexp_argument(1), json_string_value(value)) > 0)
     {
       result = 1;
       break;
@@ -194,6 +200,7 @@ define_function(registry_key_access)
 
 define_function(filesystem_file_access)
 {
+  YR_SCAN_CONTEXT* context = scan_context();
   YR_OBJECT* filesystem_obj = parent();
 
   json_t* files_json = (json_t*) filesystem_obj->data;
@@ -204,7 +211,7 @@ define_function(filesystem_file_access)
 
   json_array_foreach(files_json, index, value)
   {
-    if (yr_re_match(regexp_argument(1), json_string_value(value)) > 0)
+    if (yr_re_match(context, regexp_argument(1), json_string_value(value)) > 0)
     {
       result = 1;
       break;
@@ -218,6 +225,7 @@ define_function(filesystem_file_access)
 
 define_function(sync_mutex)
 {
+  YR_SCAN_CONTEXT* context = scan_context();
   YR_OBJECT* sync_obj = parent();
 
   json_t* mutexes_json = (json_t*) sync_obj->data;
@@ -228,7 +236,7 @@ define_function(sync_mutex)
 
   json_array_foreach(mutexes_json, index, value)
   {
-    if (yr_re_match(regexp_argument(1), json_string_value(value)) > 0)
+    if (yr_re_match(context, regexp_argument(1), json_string_value(value)) > 0)
     {
       result = 1;
       break;

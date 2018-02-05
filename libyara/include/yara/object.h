@@ -47,8 +47,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #endif
 
-#include <yara/types.h>
 
+#include <yara/types.h>
+#include <yara/sizedstr.h>
 
 #define OBJECT_CREATE           1
 

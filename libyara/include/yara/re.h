@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ctype.h>
 
+#include <yara/types.h>
 #include <yara/arena.h>
 #include <yara/sizedstr.h>
 
@@ -98,81 +99,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_FLAGS_UNGREEDY              0x800
 
 
-typedef struct RE RE;
-typedef struct RE_AST RE_AST;
-typedef struct RE_NODE RE_NODE;
-typedef struct RE_CLASS RE_CLASS;
-typedef struct RE_ERROR RE_ERROR;
-
-typedef uint8_t RE_SPLIT_ID_TYPE;
-
-
-struct RE_NODE
-{
-  int type;
-
-  union {
-    int value;
-    int count;
-    int start;
-  };
-
-  union {
-    int mask;
-    int end;
-  };
-
-  int greedy;
-
-  RE_CLASS* re_class;
-
-  RE_NODE* left;
-  RE_NODE* right;
-
-  uint8_t* forward_code;
-  uint8_t* backward_code;
-};
-
-
-struct RE_CLASS
-{
-  uint8_t negated;
-  uint8_t bitmap[32];
-};
-
-
-struct RE_AST
-{
-  uint32_t flags;
-  uint16_t levels;
-  RE_NODE* root_node;
-};
-
-
-// Disable warning due to zero length array in Microsoft's compiler
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4200)
-#endif
-
-struct RE
-{
-  uint32_t flags;
-  uint8_t code[0];
-};
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-
-struct RE_ERROR
-{
-  char message[384];
-};
-
-
 typedef int RE_MATCH_CALLBACK_FUNC(
     const uint8_t* match,
     int match_length,
@@ -222,6 +148,7 @@ void yr_re_node_destroy(
 
 
 int yr_re_exec(
+    YR_SCAN_CONTEXT* context,
     const uint8_t* code,
     const uint8_t* input_data,
     size_t input_forwards_size,
@@ -233,6 +160,7 @@ int yr_re_exec(
 
 
 int yr_re_fast_exec(
+    YR_SCAN_CONTEXT* context,
     const uint8_t* code,
     const uint8_t* input_data,
     size_t input_forwards_size,
@@ -264,16 +192,9 @@ int yr_re_compile(
 
 
 int yr_re_match(
+    YR_SCAN_CONTEXT* context,
     RE* re,
     const char* target);
 
-
-int yr_re_initialize(void);
-
-
-int yr_re_finalize(void);
-
-
-int yr_re_finalize_thread(void);
 
 #endif

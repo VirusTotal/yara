@@ -61,6 +61,9 @@ order to avoid confusion with operating system threads.
 #endif
 
 
+typedef uint8_t RE_SPLIT_ID_TYPE;
+
+
 typedef struct _RE_REPEAT_ARGS
 {
   uint16_t  min;
@@ -84,46 +87,6 @@ typedef struct _RE_EMIT_CONTEXT {
   RE_SPLIT_ID_TYPE  next_split_id;
 
 } RE_EMIT_CONTEXT;
-
-
-typedef struct _RE_FIBER
-{
-  const uint8_t* ip;    // instruction pointer
-  int32_t  sp;          // stack pointer
-  int32_t  rc;          // repeat counter
-
-  uint16_t stack[RE_MAX_STACK];
-
-  struct _RE_FIBER* prev;
-  struct _RE_FIBER* next;
-
-} RE_FIBER;
-
-
-typedef struct _RE_FIBER_LIST
-{
-  RE_FIBER* head;
-  RE_FIBER* tail;
-
-} RE_FIBER_LIST;
-
-
-typedef struct _RE_FIBER_POOL
-{
-  int fiber_count;
-  RE_FIBER_LIST fibers;
-
-} RE_FIBER_POOL;
-
-
-typedef struct _RE_THREAD_STORAGE
-{
-  RE_FIBER_POOL fiber_pool;
-
-} RE_THREAD_STORAGE;
-
-
-YR_THREAD_STORAGE_KEY thread_storage_key = 0;
 
 
 #define CHAR_IN_CLASS(cls, chr)  \
@@ -157,70 +120,6 @@ static int _yr_re_is_word_char(
     result = result && (*(input + 1) == 0);
 
   return result;
-}
-
-
-//
-// yr_re_initialize
-//
-// Should be called by main thread before any other
-// function from this module.
-//
-
-int yr_re_initialize(void)
-{
-  return yr_thread_storage_create(&thread_storage_key);
-}
-
-//
-// yr_re_finalize
-//
-// Should be called by main thread after every other thread
-// stopped using functions from this module.
-//
-
-int yr_re_finalize(void)
-{
-  yr_thread_storage_destroy(&thread_storage_key);
-
-  thread_storage_key = 0;
-  return ERROR_SUCCESS;
-}
-
-//
-// yr_re_finalize_thread
-//
-// Should be called by every thread using this module
-// before exiting.
-//
-
-int yr_re_finalize_thread(void)
-{
-  RE_FIBER* fiber;
-  RE_FIBER* next_fiber;
-  RE_THREAD_STORAGE* storage;
-
-  if (thread_storage_key != 0)
-    storage = (RE_THREAD_STORAGE*) yr_thread_storage_get_value(
-        &thread_storage_key);
-  else
-    return ERROR_SUCCESS;
-
-  if (storage != NULL)
-  {
-    fiber = storage->fiber_pool.fibers.head;
-
-    while (fiber != NULL)
-    {
-      next_fiber = fiber->next;
-      yr_free(fiber);
-      fiber = next_fiber;
-    }
-
-    yr_free(storage);
-  }
-
-  return yr_thread_storage_set_value(&thread_storage_key, NULL);
 }
 
 
@@ -366,20 +265,23 @@ int yr_re_compile(
 // Verifies if the target string matches the pattern
 //
 // Args:
-//    RE* re          -  A pointer to a compiled regexp
-//    char* target    -  Target string
+//    YR_SCAN_CONTEXT* context  - Scan context
+//    RE* re                    -  A pointer to a compiled regexp
+//    char* target              -  Target string
 //
 // Returns:
 //    See return codes for yr_re_exec
 
 
 int yr_re_match(
+    YR_SCAN_CONTEXT* context,
     RE* re,
     const char* target)
 {
   int result;
 
   yr_re_exec(
+      context,
       re->code,
       (uint8_t*) target,
       strlen(target),
@@ -1337,31 +1239,6 @@ int yr_re_ast_emit_code(
 }
 
 
-static int _yr_re_alloc_storage(
-    RE_THREAD_STORAGE** storage)
-{
-  *storage = (RE_THREAD_STORAGE*) yr_thread_storage_get_value(
-      &thread_storage_key);
-
-  if (*storage == NULL)
-  {
-    *storage = (RE_THREAD_STORAGE*) yr_malloc(sizeof(RE_THREAD_STORAGE));
-
-    if (*storage == NULL)
-      return ERROR_INSUFFICIENT_MEMORY;
-
-    (*storage)->fiber_pool.fiber_count = 0;
-    (*storage)->fiber_pool.fibers.head = NULL;
-    (*storage)->fiber_pool.fibers.tail = NULL;
-
-    FAIL_ON_ERROR(
-        yr_thread_storage_set_value(&thread_storage_key, *storage));
-  }
-
-  return ERROR_SUCCESS;
-}
-
-
 static int _yr_re_fiber_create(
     RE_FIBER_POOL* fiber_pool,
     RE_FIBER** new_fiber)
@@ -1851,6 +1728,7 @@ static int _yr_re_fiber_sync(
 //                              input
 //
 // Args:
+//   YR_SCAN_CONTEXT *context         - Scan context.
 //   const uint8_t* code              - Regexp code be executed
 //   const uint8_t* input             - Pointer to input data
 //   size_t input_forwards_size       - Number of accessible bytes starting at
@@ -1874,6 +1752,7 @@ static int _yr_re_fiber_sync(
 //    ERROR_SUCCESS or any other error code.
 
 int yr_re_exec(
+    YR_SCAN_CONTEXT* context,
     const uint8_t* code,
     const uint8_t* input_data,
     size_t input_forwards_size,
@@ -1891,7 +1770,6 @@ int yr_re_exec(
   uint8_t character_size;
 
   RE_FIBER_LIST fibers;
-  RE_THREAD_STORAGE* storage;
   RE_FIBER* fiber;
   RE_FIBER* next_fiber;
 
@@ -1919,9 +1797,6 @@ int yr_re_exec(
   if (matches != NULL)
     *matches = -1;
 
-  if (_yr_re_alloc_storage(&storage) != ERROR_SUCCESS)
-    return -2;
-
   if (flags & RE_FLAGS_WIDE)
     character_size = 2;
   else
@@ -1948,15 +1823,15 @@ int yr_re_exec(
   max_bytes_matched = max_bytes_matched - max_bytes_matched % character_size;
   bytes_matched = 0;
 
-  FAIL_ON_ERROR(_yr_re_fiber_create(&storage->fiber_pool, &fiber));
+  FAIL_ON_ERROR(_yr_re_fiber_create(&context->re_fiber_pool, &fiber));
 
   fiber->ip = code;
   fibers.head = fiber;
   fibers.tail = fiber;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber),
-      _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+      _yr_re_fiber_sync(&fibers, &context->re_fiber_pool, fiber),
+      _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
 
   while (fibers.head != NULL)
   {
@@ -1967,7 +1842,7 @@ int yr_re_exec(
       next_fiber = fiber->next;
 
       if (_yr_re_fiber_exists(&fibers, fiber, fiber->prev))
-        _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
+        _yr_re_fiber_kill(&fibers, &context->re_fiber_pool, fiber);
 
       fiber = next_fiber;
     }
@@ -2150,7 +2025,7 @@ int yr_re_exec(
                         bytes_matched,
                         flags,
                         callback_args),
-                    _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+                    _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
               }
               else
               {
@@ -2160,7 +2035,7 @@ int yr_re_exec(
                         bytes_matched,
                         flags,
                         callback_args),
-                    _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+                    _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
               }
             }
 
@@ -2180,25 +2055,25 @@ int yr_re_exec(
       switch (action)
       {
         case ACTION_KILL:
-          fiber = _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
+          fiber = _yr_re_fiber_kill(&fibers, &context->re_fiber_pool, fiber);
           break;
 
         case ACTION_KILL_TAIL:
-          _yr_re_fiber_kill_tail(&fibers, &storage->fiber_pool, fiber);
+          _yr_re_fiber_kill_tail(&fibers, &context->re_fiber_pool, fiber);
           fiber = NULL;
           break;
 
         case ACTION_CONTINUE:
           FAIL_ON_ERROR_WITH_CLEANUP(
-              _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber),
-              _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+              _yr_re_fiber_sync(&fibers, &context->re_fiber_pool, fiber),
+              _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
           break;
 
         default:
           next_fiber = fiber->next;
           FAIL_ON_ERROR_WITH_CLEANUP(
-              _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber),
-              _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+              _yr_re_fiber_sync(&fibers, &context->re_fiber_pool, fiber),
+              _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
           fiber = next_fiber;
       }
     }
@@ -2209,15 +2084,15 @@ int yr_re_exec(
     if (flags & RE_FLAGS_SCAN && bytes_matched < max_bytes_matched)
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
-          _yr_re_fiber_create(&storage->fiber_pool, &fiber),
-          _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+          _yr_re_fiber_create(&context->re_fiber_pool, &fiber),
+          _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
 
       fiber->ip = code;
       _yr_re_fiber_append(&fibers, fiber);
 
       FAIL_ON_ERROR_WITH_CLEANUP(
-          _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber),
-          _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+          _yr_re_fiber_sync(&fibers, &context->re_fiber_pool, fiber),
+          _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
     }
   }
 
@@ -2226,6 +2101,7 @@ int yr_re_exec(
 
 
 int yr_re_fast_exec(
+    YR_SCAN_CONTEXT* context,
     const uint8_t* code,
     const uint8_t* input_data,
     size_t input_forwards_size,
