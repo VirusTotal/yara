@@ -292,8 +292,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define parent()        (__function_obj->parent)
 #define scan_context()  (__context)
 
-#define re_match(...)   yr_re_match(__context, __VA_ARGS__)
-
 
 #define foreach_memory_block(iterator, block) \
   for (block = iterator->first(iterator); \
