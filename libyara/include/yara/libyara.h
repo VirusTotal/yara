@@ -70,7 +70,7 @@ YR_API int yr_initialize(void);
 YR_API int yr_finalize(void);
 
 
-YR_API void yr_finalize_thread(void);
+YR_DEPRECATED_API void yr_finalize_thread(void);
 
 
 YR_API int yr_get_tidx(void);

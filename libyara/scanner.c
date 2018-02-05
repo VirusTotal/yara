@@ -214,6 +214,18 @@ YR_API int yr_scanner_create(
 YR_API void yr_scanner_destroy(
     YR_SCANNER* scanner)
 {
+  RE_FIBER* fiber;
+  RE_FIBER* next_fiber;
+
+  fiber = scanner->re_fiber_pool.fibers.head;
+
+  while (fiber != NULL)
+  {
+    next_fiber = fiber->next;
+    yr_free(fiber);
+    fiber = next_fiber;
+  }
+
   if (scanner->objects_table != NULL)
   {
     yr_hash_table_destroy(

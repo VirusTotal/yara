@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/error.h>
 #include <yara/exec.h>
 #include <yara/types.h>
+#include <yara/re.h>
 #include <yara/object.h>
 #include <yara/libyara.h>
 

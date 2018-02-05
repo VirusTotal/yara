@@ -160,7 +160,6 @@ YR_API int yr_initialize(void)
 
   #endif
 
-  FAIL_ON_ERROR(yr_re_initialize());
   FAIL_ON_ERROR(yr_modules_initialize());
 
   // Initialize default configuration options
@@ -176,21 +175,19 @@ YR_API int yr_initialize(void)
 //
 // yr_finalize_thread
 //
-// Should be called by ALL threads using libyara before exiting.
-//
+// This function is deprecated, it's maintained only for backward compatibility
+// with programs that already use it. Calling yr_finalize_thread from each
+// thread using libyara is not required anymore.
 
-YR_API void yr_finalize_thread(void)
+YR_DEPRECATED_API void yr_finalize_thread(void)
 {
-  yr_re_finalize_thread();
 }
 
 
 //
 // yr_finalize
 //
-// Should be called by main thread before exiting. Main thread doesn't
-// need to explicitly call yr_finalize_thread because yr_finalize already
-// calls it.
+// Should be called by main thread before exiting.
 //
 
 YR_API int yr_finalize(void)
@@ -203,8 +200,6 @@ YR_API int yr_finalize(void)
 
   if (init_count == 0)
     return ERROR_INTERNAL_FATAL_ERROR;
-
-  yr_re_finalize_thread();
 
   init_count--;
 
@@ -228,7 +223,6 @@ YR_API int yr_finalize(void)
 
   FAIL_ON_ERROR(yr_thread_storage_destroy(&yr_tidx_key));
   FAIL_ON_ERROR(yr_thread_storage_destroy(&yr_recovery_state_key));
-  FAIL_ON_ERROR(yr_re_finalize());
   FAIL_ON_ERROR(yr_modules_finalize());
   FAIL_ON_ERROR(yr_heap_free());
 

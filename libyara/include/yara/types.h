@@ -32,10 +32,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <yara/arena.h>
-#include <yara/re.h>
 #include <yara/limits.h>
 #include <yara/hash.h>
 #include <yara/utils.h>
+#include <yara/sizedstr.h>
 #include <yara/threading.h>
 
 
@@ -320,6 +320,108 @@ typedef struct _YR_INIT_RULE_ARGS
 // Structs defined below are never stored in the compiled rules file
 //
 
+typedef struct RE RE;
+typedef struct RE_AST RE_AST;
+typedef struct RE_NODE RE_NODE;
+typedef struct RE_CLASS RE_CLASS;
+typedef struct RE_ERROR RE_ERROR;
+
+struct RE_NODE
+{
+  int type;
+
+  union {
+    int value;
+    int count;
+    int start;
+  };
+
+  union {
+    int mask;
+    int end;
+  };
+
+  int greedy;
+
+  RE_CLASS* re_class;
+
+  RE_NODE* left;
+  RE_NODE* right;
+
+  uint8_t* forward_code;
+  uint8_t* backward_code;
+};
+
+
+struct RE_CLASS
+{
+  uint8_t negated;
+  uint8_t bitmap[32];
+};
+
+
+struct RE_AST
+{
+  uint32_t flags;
+  uint16_t levels;
+  RE_NODE* root_node;
+};
+
+
+// Disable warning due to zero length array in Microsoft's compiler
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4200)
+#endif
+
+struct RE
+{
+  uint32_t flags;
+  uint8_t code[0];
+};
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
+
+struct RE_ERROR
+{
+  char message[384];
+};
+
+
+typedef struct _RE_FIBER
+{
+  const uint8_t* ip;    // instruction pointer
+  int32_t  sp;          // stack pointer
+  int32_t  rc;          // repeat counter
+
+  uint16_t stack[RE_MAX_STACK];
+
+  struct _RE_FIBER* prev;
+  struct _RE_FIBER* next;
+
+} RE_FIBER;
+
+
+typedef struct _RE_FIBER_LIST
+{
+  RE_FIBER* head;
+  RE_FIBER* tail;
+
+} RE_FIBER_LIST;
+
+
+typedef struct _RE_FIBER_POOL
+{
+  int fiber_count;
+  RE_FIBER_LIST fibers;
+
+} RE_FIBER_POOL;
+
+
 typedef struct _YR_MATCH
 {
   int64_t base;              // Base address for the match
@@ -453,11 +555,12 @@ typedef struct _YR_SCAN_CONTEXT
   YR_ARENA* matches_arena;
   YR_ARENA* matching_strings_arena;
 
+  RE_FIBER_POOL re_fiber_pool;
+
 } YR_SCAN_CONTEXT;
 
 
 struct _YR_OBJECT;
-
 
 typedef union _YR_VALUE
 {
