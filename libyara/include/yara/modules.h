@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/error.h>
 #include <yara/exec.h>
 #include <yara/types.h>
+#include <yara/re.h>
 #include <yara/object.h>
 #include <yara/libyara.h>
 
@@ -290,6 +291,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define module()        yr_object_get_root((YR_OBJECT*) __function_obj)
 #define parent()        (__function_obj->parent)
 #define scan_context()  (__context)
+
+#define re_match(...)   yr_re_match(__context, __VA_ARGS__)
 
 
 #define foreach_memory_block(iterator, block) \

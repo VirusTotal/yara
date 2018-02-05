@@ -836,8 +836,6 @@ static void* scanning_thread(void* param)
     }
   }
 
-  yr_finalize_thread();
-
   return 0;
 }
 

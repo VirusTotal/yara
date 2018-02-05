@@ -90,7 +90,7 @@ define_function(network_dns_lookup)
   {
     if (json_unpack(value, "{s:s, s:s}", "ip", &ip, field_name, &hostname) == 0)
     {
-      if (yr_re_match(regexp_argument(1), hostname) > 0)
+      if (re_match(regexp_argument(1), hostname) > 0)
       {
         result = 1;
         break;
@@ -127,7 +127,7 @@ uint64_t http_request(
     {
       if (((methods & METHOD_GET && strcasecmp(method, "get") == 0) ||
            (methods & METHOD_POST && strcasecmp(method, "post") == 0)) &&
-           yr_re_match(uri_regexp, uri) > 0)
+           re_match(uri_regexp, uri) > 0)
       {
         result = 1;
         break;
@@ -181,7 +181,7 @@ define_function(registry_key_access)
 
   json_array_foreach(keys_json, index, value)
   {
-    if (yr_re_match(regexp_argument(1), json_string_value(value)) > 0)
+    if (re_match(regexp_argument(1), json_string_value(value)) > 0)
     {
       result = 1;
       break;
@@ -204,7 +204,7 @@ define_function(filesystem_file_access)
 
   json_array_foreach(files_json, index, value)
   {
-    if (yr_re_match(regexp_argument(1), json_string_value(value)) > 0)
+    if (re_match(regexp_argument(1), json_string_value(value)) > 0)
     {
       result = 1;
       break;
@@ -228,7 +228,7 @@ define_function(sync_mutex)
 
   json_array_foreach(mutexes_json, index, value)
   {
-    if (yr_re_match(regexp_argument(1), json_string_value(value)) > 0)
+    if (re_match(regexp_argument(1), json_string_value(value)) > 0)
     {
       result = 1;
       break;

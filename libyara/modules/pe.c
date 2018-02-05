@@ -1597,7 +1597,7 @@ define_function(exports_regexp)
 
   while (exported_func != NULL)
   {
-    if (yr_re_match(regex, exported_func->name) != -1)
+    if (re_match(regex, exported_func->name) != -1)
       return_integer(1);
 
     exported_func = exported_func->next;
