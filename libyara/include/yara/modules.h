@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/error.h>
 #include <yara/exec.h>
 #include <yara/types.h>
+#include <yara/re.h>
 #include <yara/object.h>
 #include <yara/libyara.h>
 
@@ -342,11 +343,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       assertf( \
           __function_obj->return_obj->type == OBJECT_TYPE_INTEGER, \
           "return type differs from function declaration"); \
-      yr_object_set_integer( \
+      return yr_object_set_integer( \
           (integer), \
           __function_obj->return_obj, \
           NULL); \
-      return ERROR_SUCCESS; \
     }
 
 
@@ -355,11 +355,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       assertf( \
           __function_obj->return_obj->type == OBJECT_TYPE_FLOAT, \
           "return type differs from function declaration"); \
-      yr_object_set_float( \
+      return yr_object_set_float( \
           (d != (double) UNDEFINED) ? d : NAN, \
           __function_obj->return_obj, \
           NULL); \
-      return ERROR_SUCCESS; \
     }
 
 
@@ -368,12 +367,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       assertf( \
           __function_obj->return_obj->type == OBJECT_TYPE_STRING, \
           "return type differs from function declaration"); \
-      yr_object_set_string( \
+      return yr_object_set_string( \
           (s != (char*) UNDEFINED) ? s : NULL, \
           (s != (char*) UNDEFINED) ? strlen(s) : 0, \
           __function_obj->return_obj, \
           NULL); \
-      return ERROR_SUCCESS; \
     }
 
 

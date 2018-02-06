@@ -119,7 +119,7 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 //    An integer indicating the atom's quality
 //
 
-int _yr_atoms_quality(
+static int _yr_atoms_quality(
     uint8_t* atom,
     int atom_length)
 {
@@ -204,7 +204,7 @@ int yr_atoms_min_quality(
 // Creates a new node for an atoms tree.
 //
 
-ATOM_TREE_NODE* _yr_atoms_tree_node_create(
+static ATOM_TREE_NODE* _yr_atoms_tree_node_create(
     uint8_t type)
 {
   ATOM_TREE_NODE* new_node = (ATOM_TREE_NODE*) \
@@ -231,7 +231,7 @@ ATOM_TREE_NODE* _yr_atoms_tree_node_create(
 // Destroys a node from an atoms tree.
 //
 
-void _yr_atoms_tree_node_destroy(
+static void _yr_atoms_tree_node_destroy(
     ATOM_TREE_NODE* node)
 {
   ATOM_TREE_NODE* child;
@@ -262,7 +262,7 @@ void _yr_atoms_tree_node_destroy(
 // Appends a new child node to another atoms tree node.
 //
 
-void _yr_atoms_tree_node_append(
+static void _yr_atoms_tree_node_append(
     ATOM_TREE_NODE* dest,
     ATOM_TREE_NODE* node)
 {
@@ -282,7 +282,7 @@ void _yr_atoms_tree_node_append(
 // Destroys an atoms tree.
 //
 
-void _yr_atoms_tree_destroy(
+static void _yr_atoms_tree_destroy(
     ATOM_TREE* atom_tree)
 {
   _yr_atoms_tree_node_destroy(atom_tree->root_node);
@@ -317,7 +317,7 @@ void yr_atoms_list_destroy(
 // Concats two atoms lists.
 //
 
-YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
+static YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
     YR_ATOM_LIST_ITEM* list1,
     YR_ATOM_LIST_ITEM* list2)
 {
@@ -345,7 +345,7 @@ YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
 // Aho-Corasick automaton, and puts them in a list.
 //
 
-int _yr_atoms_choose(
+static int _yr_atoms_choose(
     ATOM_TREE_NODE* node,
     YR_ATOM_LIST_ITEM** chosen_atoms,
     int* atoms_quality)
@@ -454,7 +454,7 @@ int _yr_atoms_choose(
 // returned atoms.
 //
 
-uint8_t* _yr_atoms_case_combinations(
+static uint8_t* _yr_atoms_case_combinations(
     uint8_t* atom,
     int atom_length,
     int atom_offset,
@@ -516,7 +516,7 @@ uint8_t* _yr_atoms_case_combinations(
 // with every case combination.
 //
 
-int _yr_atoms_case_insensitive(
+static int _yr_atoms_case_insensitive(
     YR_ATOM_LIST_ITEM* atoms,
     YR_ATOM_LIST_ITEM** case_insensitive_atoms)
 {
@@ -553,7 +553,7 @@ int _yr_atoms_case_insensitive(
       for (i = 0; i < atom_length; i++)
         new_atom->atom[i] = atoms_cursor[i];
 
-      new_atom->atom_length = atom_length;
+      new_atom->atom_length = (uint8_t) atom_length;
       new_atom->forward_code = atom->forward_code;
       new_atom->backward_code = atom->backward_code;
       new_atom->backtrack = atom->backtrack;
@@ -581,7 +581,7 @@ int _yr_atoms_case_insensitive(
 // for example: 01 02 -> 01 00 02 00
 //
 
-int _yr_atoms_wide(
+static int _yr_atoms_wide(
     YR_ATOM_LIST_ITEM* atoms,
     YR_ATOM_LIST_ITEM** wide_atoms)
 {
@@ -633,7 +633,7 @@ int _yr_atoms_wide(
 // _yr_atoms_extract_from_re for more details.
 //
 
-ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
+static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
   RE_NODE* re_node,
   ATOM_TREE* atom_tree,
   ATOM_TREE_NODE* current_node)
@@ -672,7 +672,8 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
 
       if (current_leaf->atom_length < MAX_ATOM_LENGTH)
       {
-        current_leaf->atom[current_leaf->atom_length] = re_node->value;
+        current_leaf->atom[current_leaf->atom_length] =
+            (uint8_t) re_node->value;
         current_leaf->recent_nodes[current_leaf->atom_length] = re_node;
         current_leaf->atom_length++;
       }
@@ -684,7 +685,7 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
         current_leaf->recent_nodes[MAX_ATOM_LENGTH - 1] = re_node;
 
         for (i = 0; i < MAX_ATOM_LENGTH; i++)
-          new_atom[i] = current_leaf->recent_nodes[i]->value;
+          new_atom[i] = (uint8_t) current_leaf->recent_nodes[i]->value;
 
         quality = _yr_atoms_quality(
             current_leaf->atom,
@@ -800,7 +801,12 @@ ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
       if (re_node->start == 0)
         append_current_leaf_to_node(current_node);
 
-      for (i = 0; i < re_node->start; i++)
+      // In a regexp like /a{10,20}/ the optimal atom is 'aaaa' (assuming that
+      // MAX_ATOM_LENGTH = 4) because the 'a' character must appear at least
+      // 10 times in the matching string. Each call in the loop will append
+      // one 'a' to the atom, so MAX_ATOM_LENGTH iterations are enough.
+
+      for (i = 0; i < yr_min(re_node->start, MAX_ATOM_LENGTH); i++)
       {
         current_node = _yr_atoms_extract_from_re_node(
             re_node->left, atom_tree, current_node);
@@ -873,8 +879,8 @@ int yr_atoms_extract_triplets(
     RE_NODE* left_child;
     RE_NODE* left_grand_child;
 
-	int i;
-	int shift;
+    int i;
+    int shift;
 
     *atoms = NULL;
 
@@ -902,9 +908,9 @@ int yr_atoms_extract_triplets(
         if (atom == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
 
-        atom->atom[0] = left_child->left->value;
-        atom->atom[1] = i;
-        atom->atom[2] = re_node->right->value;
+        atom->atom[0] = (uint8_t) left_child->left->value;
+        atom->atom[1] = (uint8_t) i;
+        atom->atom[2] = (uint8_t) re_node->right->value;
 
         atom->atom_length = 3;
         atom->forward_code = left_child->left->forward_code;
@@ -934,9 +940,9 @@ int yr_atoms_extract_triplets(
         else
           shift = 4;
 
-        atom->atom[0] = left_child->left->value;
-        atom->atom[1] = left_child->right->value | (i << shift);
-        atom->atom[2] = re_node->right->value;
+        atom->atom[0] = (uint8_t) left_child->left->value;
+        atom->atom[1] = (uint8_t)(left_child->right->value | (i << shift));
+        atom->atom[2] = (uint8_t) re_node->right->value;
 
         atom->atom_length = 3;
         atom->forward_code = left_child->left->forward_code;
@@ -962,9 +968,9 @@ int yr_atoms_extract_triplets(
         if (atom == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
 
-        atom->atom[0] = left_grand_child->right->value;
-        atom->atom[1] = i;
-        atom->atom[2] = re_node->right->value;
+        atom->atom[0] = (uint8_t) left_grand_child->right->value;
+        atom->atom[1] = (uint8_t) i;
+        atom->atom[2] = (uint8_t) re_node->right->value;
 
         atom->atom_length = 3;
         atom->forward_code = left_grand_child->right->forward_code;
@@ -995,9 +1001,9 @@ int yr_atoms_extract_triplets(
         else
           shift = 4;
 
-        atom->atom[0] = left_grand_child->right->value;
-        atom->atom[1] = left_child->right->value | (i << shift);
-        atom->atom[2] = re_node->right->value;
+        atom->atom[0] = (uint8_t) left_grand_child->right->value;
+        atom->atom[1] = (uint8_t)(left_child->right->value | (i << shift));
+        atom->atom[2] = (uint8_t) re_node->right->value;
 
         atom->atom_length = 3;
         atom->forward_code = left_grand_child->right->forward_code;

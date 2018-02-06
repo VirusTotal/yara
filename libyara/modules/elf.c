@@ -27,7 +27,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define _GNU_SOURCE
+
 #include <limits.h>
+#include <string.h>
 
 #include <yara/elf.h>
 #include <yara/endian.h>
@@ -40,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CLASS_DATA(c,d) ((c << 8) | d)
 
 int get_elf_class_data(
-    uint8_t* buffer,
+    const uint8_t* buffer,
     size_t buffer_length)
 {
   elf_ident_t* elf_ident;
@@ -58,6 +61,50 @@ int get_elf_class_data(
   {
     return 0;
   }
+}
+
+static int is_valid_ptr(
+    const void* base,
+    size_t size,
+    const void* ptr,
+    uint64_t ptr_size)  // ptr_size can be 64bit even in 32bit systems.
+{
+  return ptr >= base && ptr_size <= size &&
+      ((char*) ptr) + ptr_size <= ((char*) base) + size;
+}
+
+#define IS_VALID_PTR(base, size, ptr) \
+    is_valid_ptr(base, size, ptr, sizeof(*ptr))
+
+/*
+ * Returns a string table entry for the index or NULL if the entry is out
+ * of bounds. A non-null return value will be a null-terminated C string.
+ */
+static const char* str_table_entry(const char* str_table_base,
+                                   const char* str_table_limit,
+                                   int index) {
+  size_t len;
+  const char* str_entry = str_table_base + index;
+
+  if (index < 0)
+  {
+    return NULL;
+  }
+
+  if (str_entry >= str_table_limit)
+  {
+    return NULL;
+  }
+
+  len = strnlen(str_entry, str_table_limit - str_entry);
+
+  if (str_entry + len == str_table_limit)
+  {
+    /* Entry is clamped by extent of string table, not null-terminated. */
+    return NULL;
+  }
+
+  return str_entry;
 }
 
 #define ELF_SIZE_OF_SECTION_TABLE(bits,bo,h)       \
@@ -158,13 +205,22 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
 #define PARSE_ELF_HEADER(bits,bo)                                              \
 void parse_elf_header_##bits##_##bo(                                           \
   elf##bits##_header_t* elf,                                                   \
-  size_t base_address,                                                         \
+  uint64_t base_address,                                                       \
   size_t elf_size,                                                             \
   int flags,                                                                   \
   YR_OBJECT* elf_obj)                                                          \
 {                                                                              \
-  int i;                                                                       \
+  unsigned int i, j;                                                           \
+  const char* elf_raw = (const char*) elf;                                     \
+  uint16_t str_table_index = yr_##bo##16toh(elf->sh_str_table_index);          \
                                                                                \
+  const char* sym_table = NULL;                                                \
+  const char* sym_str_table = NULL;                                            \
+                                                                               \
+  uint##bits##_t sym_table_size = 0;                                           \
+  uint##bits##_t sym_str_table_size = 0;                                       \
+                                                                               \
+  elf##bits##_section_header_t* section_table;                                 \
   elf##bits##_section_header_t* section;                                       \
   elf##bits##_program_header_t* segment;                                       \
                                                                                \
@@ -194,29 +250,26 @@ void parse_elf_header_##bits##_##bo(                                           \
   }                                                                            \
                                                                                \
   if (yr_##bo##16toh(elf->sh_entry_count) < ELF_SHN_LORESERVE &&               \
-      yr_##bo##16toh(elf->sh_str_table_index) <                                \
-        yr_##bo##16toh(elf->sh_entry_count) &&                                 \
+      str_table_index < yr_##bo##16toh(elf->sh_entry_count) &&                 \
       yr_##bo##bits##toh(elf->sh_offset) < elf_size &&                         \
       yr_##bo##bits##toh(elf->sh_offset) +                                     \
         yr_##bo##16toh(elf->sh_entry_count) *                                  \
         sizeof(elf##bits##_section_header_t) <= elf_size)                      \
   {                                                                            \
-    char* str_table = NULL;                                                    \
+    const char* str_table = NULL;                                              \
                                                                                \
-    elf##bits##_section_header_t* symtab = NULL;                               \
-    elf##bits##_section_header_t* sym_strtab = NULL;                           \
+    section_table = (elf##bits##_section_header_t*)                            \
+        (elf_raw + yr_##bo##bits##toh(elf->sh_offset));                        \
                                                                                \
-    section = (elf##bits##_section_header_t*)                                  \
-      ((uint8_t*) elf + yr_##bo##bits##toh(elf->sh_offset));                   \
-                                                                               \
-    if (yr_##bo##bits##toh(                                                    \
-      section[yr_##bo##16toh(elf->sh_str_table_index)].offset) < elf_size)     \
+    if (yr_##bo##bits##toh(section_table[str_table_index].offset) < elf_size)  \
     {                                                                          \
-      str_table = (char*) elf + yr_##bo##bits##toh(                            \
-          section[yr_##bo##16toh(elf->sh_str_table_index)].offset);            \
+      str_table = elf_raw + yr_##bo##bits##toh(                                \
+          section_table[str_table_index].offset);                              \
     }                                                                          \
                                                                                \
-    for (i = 0; i < yr_##bo##16toh(elf->sh_entry_count); i++)                  \
+    section = section_table;                                                   \
+                                                                               \
+    for (i = 0; i < yr_##bo##16toh(elf->sh_entry_count); i++, section++)       \
     {                                                                          \
       set_integer(yr_##bo##32toh(section->type), elf_obj,                      \
                   "sections[%i].type", i);                                     \
@@ -230,67 +283,69 @@ void parse_elf_header_##bits##_##bo(                                           \
                   "sections[%i].offset", i);                                   \
                                                                                \
       if (yr_##bo##32toh(section->name) < elf_size &&                          \
-          str_table > (char*) elf &&                                           \
-          str_table + yr_##bo##32toh(section->name) <                          \
-            (char*) elf + elf_size)                                            \
+          str_table > elf_raw &&                                               \
+          str_table + yr_##bo##32toh(section->name) < elf_raw + elf_size)      \
       {                                                                        \
-        set_string(str_table + yr_##bo##32toh(section->name), elf_obj,         \
-                   "sections[%i].name", i);                                    \
+        const char* str_entry = str_table_entry(                               \
+            str_table,                                                         \
+            elf_raw + elf_size,                                                \
+            yr_##bo##32toh(section->name));                                    \
+                                                                               \
+        if (str_entry)                                                         \
+          set_string(str_entry, elf_obj, "sections[%i].name", i);              \
       }                                                                        \
                                                                                \
-      if (yr_##bo##32toh(section->type) == ELF_SHT_SYMTAB)                     \
+      if (yr_##bo##32toh(section->type) == ELF_SHT_SYMTAB &&                   \
+          yr_##bo##32toh(section->link) < elf->sh_entry_count)                 \
       {                                                                        \
-        symtab = section;                                                      \
-        if (yr_##bo##32toh(symtab->link) < elf->sh_entry_count)                \
-        {                                                                      \
-          sym_strtab = ((elf##bits##_section_header_t*)((uint8_t*)             \
-            elf + yr_##bo##bits##toh(elf->sh_offset))) +                       \
-            yr_##bo##32toh(symtab->link);                                      \
+        elf##bits##_section_header_t* string_section =                         \
+            section_table + yr_##bo##32toh(section->link);                     \
                                                                                \
-          if (yr_##bo##32toh(sym_strtab->type) != ELF_SHT_STRTAB ||            \
-              (yr_##bo##bits##toh(symtab->offset) +                            \
-               yr_##bo##bits##toh(symtab->size)) > elf_size ||                 \
-              (yr_##bo##bits##toh(sym_strtab->offset) +                        \
-               yr_##bo##bits##toh(sym_strtab->size)) > elf_size)               \
-          {                                                                    \
-            symtab = NULL;                                                     \
-            sym_strtab = NULL;                                                 \
-          }                                                                    \
+        if (IS_VALID_PTR(elf, elf_size, string_section) &&                     \
+            yr_##bo##32toh(string_section->type) == ELF_SHT_STRTAB)            \
+        {                                                                      \
+          sym_table = elf_raw + yr_##bo##bits##toh(section->offset);           \
+          sym_str_table = elf_raw + yr_##bo##bits##toh(string_section->offset);\
+          sym_table_size = yr_##bo##bits##toh(section->size);                  \
+          sym_str_table_size = yr_##bo##bits##toh(string_section->size);       \
         }                                                                      \
       }                                                                        \
-      section++;                                                               \
     }                                                                          \
                                                                                \
-    if (symtab && sym_strtab)                                                  \
+    if (is_valid_ptr(elf, elf_size, sym_str_table, sym_str_table_size) &&      \
+        is_valid_ptr(elf, elf_size, sym_table, sym_table_size))                \
     {                                                                          \
-      char* str_ptr = ((char*)elf) + yr_##bo##bits##toh(sym_strtab->offset);   \
-      char* end_str_ptr = str_ptr + yr_##bo##bits##toh(sym_strtab->size);      \
+      elf##bits##_sym_t* sym = (elf##bits##_sym_t*) sym_table;                 \
                                                                                \
-      elf##bits##_sym_t* symbol = (elf##bits##_sym_t*)((char*) elf +           \
-        yr_##bo##bits##toh(symtab->offset));                                   \
-      char* end_symtab = (char*)elf + yr_##bo##bits##toh(symtab->offset) +     \
-        yr_##bo##bits##toh(symtab->size);                                      \
-                                                                               \
-      int j = 0;                                                               \
-      for ( ; ((char*)symbol + sizeof(elf##bits##_sym_t)) <= end_symtab;       \
-        symbol++, j++)                                                         \
+      for (j = 0; j < sym_table_size / sizeof(elf##bits##_sym_t); j++, sym++)  \
       {                                                                        \
-        set_integer(symbol->info >> 4, elf_obj, "symtab[%i].bind", j);         \
-        set_integer(symbol->info & 0xf, elf_obj, "symtab[%i].type", j);        \
-        set_integer(yr_##bo##16toh(symbol->shndx), elf_obj,                    \
-            "symtab[%i].shndx", j);                                            \
-        set_integer(yr_##bo##bits##toh(symbol->value), elf_obj,                \
-            "symtab[%i].value", j);                                            \
-        set_integer(yr_##bo##bits##toh(symbol->size), elf_obj,                 \
-            "symtab[%i].size", j);                                             \
-        if (yr_##bo##32toh(symbol->name) <                                     \
-            yr_##bo##bits##toh(sym_strtab->size) &&                            \
-            (str_ptr + yr_##bo##32toh(symbol->name)) < end_str_ptr)            \
+        uint32_t sym_name_offset = yr_##bo##32toh(sym->name);                  \
+                                                                               \
+        if (sym_name_offset < sym_str_table_size)                              \
         {                                                                      \
-          set_string(str_ptr + yr_##bo##32toh(symbol->name), elf_obj,          \
-            "symtab[%i].name", j);                                             \
+          const char* sym_name = sym_str_table + sym_name_offset;              \
+                                                                               \
+          set_sized_string(                                                    \
+              sym_name,                                                        \
+              strnlen(                                                         \
+                  sym_name, (size_t) (sym_str_table_size - sym_name_offset)),  \
+              elf_obj,                                                         \
+              "symtab[%i].name",                                               \
+              j);                                                              \
         }                                                                      \
+                                                                               \
+        set_integer(sym->info >> 4, elf_obj,                                   \
+            "symtab[%i].bind", j);                                             \
+        set_integer(sym->info & 0xf, elf_obj,                                  \
+            "symtab[%i].type", j);                                             \
+        set_integer(yr_##bo##16toh(sym->shndx), elf_obj,                       \
+           "symtab[%i].shndx", j);                                             \
+        set_integer(yr_##bo##bits##toh(sym->value), elf_obj,                   \
+           "symtab[%i].value", j);                                             \
+        set_integer(yr_##bo##bits##toh(sym->size), elf_obj,                    \
+           "symtab[%i].size", j);                                              \
       }                                                                        \
+                                                                               \
       set_integer(j, elf_obj, "symtab_entries");                               \
     }                                                                          \
   }                                                                            \
@@ -303,9 +358,9 @@ void parse_elf_header_##bits##_##bo(                                           \
         sizeof(elf##bits##_program_header_t) <= elf_size)                      \
   {                                                                            \
     segment = (elf##bits##_program_header_t*)                                  \
-      ((uint8_t*) elf + yr_##bo##bits##toh(elf->ph_offset));                   \
+        (elf_raw + yr_##bo##bits##toh(elf->ph_offset));                        \
                                                                                \
-    for (i = 0; i < yr_##bo##16toh(elf->ph_entry_count); i++)                  \
+    for (i = 0; i < yr_##bo##16toh(elf->ph_entry_count); i++, segment++)       \
     {                                                                          \
       set_integer(                                                             \
           yr_##bo##32toh(segment->type), elf_obj, "segments[%i].type", i);     \
@@ -332,41 +387,32 @@ void parse_elf_header_##bits##_##bo(                                           \
                                                                                \
       if (yr_##bo##32toh(segment->type) == ELF_PT_DYNAMIC)                     \
       {                                                                        \
-        if ((yr_##bo##bits##toh(segment->offset) +                             \
-          sizeof(elf##bits##_dyn_t)) < elf_size)                               \
+        elf##bits##_dyn_t* dyn = (elf##bits##_dyn_t*)                          \
+            (elf_raw + yr_##bo##bits##toh(segment->offset));                   \
+                                                                               \
+        for (j = 0; IS_VALID_PTR(elf, elf_size, dyn); dyn++, j++)              \
         {                                                                      \
-          elf##bits##_dyn_t* dyn = (elf##bits##_dyn_t*)((char*)elf +           \
-            yr_##bo##bits##toh(segment->offset));                              \
+          set_integer(                                                         \
+              yr_##bo##bits##toh(dyn->tag), elf_obj, "dynamic[%i].type", j);   \
+          set_integer(                                                         \
+              yr_##bo##bits##toh(dyn->val), elf_obj, "dynamic[%i].val", j);    \
                                                                                \
-          int j = 0;                                                           \
-          for ( ; (((char*)dyn) + sizeof(elf##bits##_dyn_t)) <                 \
-            ((char*)elf + elf_size); dyn++, j++)                               \
+          if (dyn->tag == ELF_DT_NULL)                                         \
           {                                                                    \
-            set_integer(                                                       \
-                yr_##bo##bits##toh(dyn->tag), elf_obj, "dynamic[%i].type", j); \
-            set_integer(                                                       \
-                yr_##bo##bits##toh(dyn->val), elf_obj, "dynamic[%i].val", j);  \
-                                                                               \
-            if (dyn->tag == ELF_DT_NULL)                                       \
-            {                                                                  \
-              j++;                                                             \
-              break;                                                           \
-            }                                                                  \
+            j++;                                                               \
+            break;                                                             \
           }                                                                    \
-          set_integer(j, elf_obj, "dynamic_section_entries");                  \
         }                                                                      \
+        set_integer(j, elf_obj, "dynamic_section_entries");                    \
       }                                                                        \
-      segment++;                                                               \
     }                                                                          \
   }                                                                            \
 }
-
 
 ELF_RVA_TO_OFFSET(32,le);
 ELF_RVA_TO_OFFSET(64,le);
 ELF_RVA_TO_OFFSET(32,be);
 ELF_RVA_TO_OFFSET(64,be);
-
 
 PARSE_ELF_HEADER(32,le);
 PARSE_ELF_HEADER(64,le);
@@ -651,7 +697,7 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
-    uint8_t* block_data = block->fetch_data(block);
+    const uint8_t* block_data = block->fetch_data(block);
 
     if (block_data == NULL)
       continue;

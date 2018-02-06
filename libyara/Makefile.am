@@ -3,6 +3,7 @@ MODULES =  modules/tests.c
 MODULES += modules/pe.c
 MODULES += modules/elf.c
 MODULES += modules/math.c
+MODULES += modules/time.c
 
 if CUCKOO_MODULE
 MODULES += modules/cuckoo.c
@@ -18,6 +19,10 @@ endif
 
 if DOTNET_MODULE
 MODULES += modules/dotnet.c
+endif
+
+if MACHO_MODULE
+MODULES += modules/macho.c
 endif
 
 # This isn't really a module, but needs to be compiled with them.
@@ -58,31 +63,52 @@ include_HEADERS = include/yara.h
 yaraincludedir = $(includedir)/yara
 yarainclude_HEADERS = \
   include/yara/ahocorasick.h \
-  include/yara/atoms.h \
-  include/yara/limits.h \
-  include/yara/re.h \
   include/yara/arena.h \
-  include/yara/sizedstr.h \
-  include/yara/types.h \
-  include/yara/hash.h \
-  include/yara/exec.h \
-  include/yara/scan.h \
-  include/yara/rules.h \
-  include/yara/error.h \
-  include/yara/utils.h \
-  include/yara/filemap.h \
+  include/yara/atoms.h \
   include/yara/compiler.h \
+  include/yara/error.h \
+  include/yara/exec.h \
+  include/yara/exefiles.h \
+  include/yara/filemap.h \
+  include/yara/hash.h \
+  include/yara/integers.h \
+  include/yara/libyara.h \
+  include/yara/limits.h \
+  include/yara/mem.h \
   include/yara/modules.h \
   include/yara/object.h \
-  include/yara/strutils.h \
+  include/yara/parser.h \
+  include/yara/proc.h \
+  include/yara/re.h \
+  include/yara/rules.h \
+  include/yara/scan.h \
+  include/yara/scanner.h \
+  include/yara/sizedstr.h \
   include/yara/stream.h \
+  include/yara/strutils.h \
   include/yara/threading.h \
-  include/yara/integers.h \
-  include/yara/libyara.h
+  include/yara/types.h \
+  include/yara/utils.h
+
+noinst_HEADERS = \
+  crypto.h \
+  exception.h \
+  include/yara/dotnet.h \
+  include/yara/elf.h \
+  include/yara/endian.h \
+  include/yara/globals.h \
+  include/yara/hex_lexer.h \
+  include/yara/lexer.h \
+  include/yara/pe.h \
+  include/yara/pe_utils.h \
+  include/yara/re_lexer.h \
+  include/yara/stopwatch.h \
+  modules/module_list
+
 
 lib_LTLIBRARIES = libyara.la
 
-libyara_la_LDFLAGS = -version-number 3:6:0
+libyara_la_LDFLAGS = -version-number 3:7:0
 
 BUILT_SOURCES = \
   lexer.c \
@@ -102,49 +128,55 @@ libyara_la_SOURCES = \
   endian.c \
   exec.c \
   exefiles.c \
-  exefiles.h \
   filemap.c \
-  filemap.h \
   hash.c \
-  hash.h \
   hex_grammar.y \
   hex_lexer.l \
   lexer.l \
   libyara.c \
   mem.c \
-  mem.h \
   modules.c \
-  modules.h \
   object.c \
-  object.h \
   parser.c \
-  parser.h \
-  pe.h \
   proc.c \
-  proc.h \
   re.c \
-  re.h \
   re_grammar.y \
   re_lexer.l \
   rules.c \
   scan.c \
+  scanner.c \
   sizedstr.c \
-  sizedstr.h \
   strutils.c \
-  strutils.h \
   stream.c \
-  stream.h \
-  threading.c \
-  threading.h \
-  utils.h
+  threading.c
+
+if PROFILING_ENABLED
+libyara_la_SOURCES += stopwatch.c
+endif
+
+if USE_WINDOWS_PROC
+libyara_la_SOURCES += proc/windows.c
+endif
+
+if USE_LINUX_PROC
+libyara_la_SOURCES += proc/linux.c
+endif
+
+if USE_FREEBSD_PROC
+libyara_la_SOURCES += proc/freebsd.c
+endif
+
+if USE_OPENBSD_PROC
+libyara_la_SOURCES += proc/openbsd.c
+endif
+
+if USE_MACH_PROC
+libyara_la_SOURCES += proc/mach.c
+endif
+
+if USE_NO_PROC
+libyara_la_SOURCES += proc/none.c
+endif
 
 pkgconfigdir = $(libdir)/pkgconfig
 nodist_pkgconfig_DATA = yara.pc
-
-yara.pc: yara.pc.in
-		sed -e 's![@]prefix[@]!$(prefix)!g' \
-		    -e 's![@]exec_prefix[@]!$(exec_prefix)!g' \
-		    -e 's![@]includedir[@]!$(includedir)!g' \
-		    -e 's![@]libdir[@]!$(libdir)!g' \
-		    -e 's![@]PACKAGE_VERSION[@]!$(PACKAGE_VERSION)!g' \
-		    $(srcdir)/yara.pc.in > $@

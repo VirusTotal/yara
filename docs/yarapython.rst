@@ -74,6 +74,36 @@ should be accepted in the source files, for example:
 If the source file contains include directives the previous line would raise
 an exception.
 
+If includes are used, a python callback can be set to define a custom source for
+the imported files (by default they are read from disk). This callback function
+is set through the ``include_callback`` optional parameter.
+It receives the following parameters:
+ *``requested_filename``: file requested with 'include'
+ *``filename``: file containing the 'include' directive if applicable, else None
+ *``namespace``: namespace
+And returns the requested rules sources as a single string.
+
+.. code-block:: python
+  import yara
+  import sys
+  if sys.version_info >= (3, 0):
+      import urllib.request as urllib
+  else:
+      import urllib as urllib
+
+  def mycallback(requested_filename, filename, namespace):
+      if requested_filename == 'req.yara':
+          uf = urllib.urlopen('https://pastebin.com/raw/siZ2sMTM')
+          sources = uf.read()
+          if sys.version_info >= (3, 0):
+              sources = str(sources, 'utf-8')
+          return sources
+      else:
+          raise Exception(filename+": Can't fetch "+requested_filename)
+
+  rules = yara.compile(source='include "req.yara" rule r{ condition: true }',
+                      include_callback=mycallback)
+
 If you are using external variables in your rules you must define those
 external variables either while compiling the rules, or while applying the
 rules to some file. To define your variables at the moment of compilation you
@@ -171,11 +201,14 @@ find useful the ``timeout`` argument:
 If the ``match`` function does not finish before the specified number of
 seconds elapsed, a ``TimeoutError`` exception is raised.
 
-You can also specify a callback function when invoking the ``match`` method. The
-provided function will be called for every rule, no matter if matching or not.
-Your callback function should expect a single parameter of dictionary type,
-and should return ``CALLBACK_CONTINUE`` to proceed to the next rule or
-``CALLBACK_ABORT`` to stop applying rules to your data.
+You can also specify a callback function when invoking the ``match`` method. By
+default, the provided function will be called for every rule, no matter if
+matching or not. You can choose when your callback function is called by setting
+the ``which_callbacks`` parameter to one of ``yara.CALLBACK_MATCHES``,
+``yara.CALLBACK_NON_MATCHES`` or ``yara.CALLBACK_ALL``. The default is to use
+``yara.CALLBACK_ALL``. Your callback function should expect a single parameter
+of dictionary type, and should return ``CALLBACK_CONTINUE`` to proceed to the
+next rule or ``CALLBACK_ABORT`` to stop applying rules to your data.
 
 Here is an example:
 
@@ -187,7 +220,7 @@ Here is an example:
     print data
     return yara.CALLBACK_CONTINUE
 
-  matches = rules.match('/foo/bar/my_file', callback=mycallback)
+  matches = rules.match('/foo/bar/my_file', callback=mycallback, which_callbacks=yara.CALLBACK_MATCHES)
 
 The passed dictionary will be something like this:
 
@@ -233,6 +266,26 @@ Here is an example:
 The passed dictionary will contain the information from the module.
 
 
+You may also find that the default sizes for the stack for the matching engine in
+yara or the default size for the maximum number of strings per rule is too low. In
+the C libyara API, you can modify these using the ``YR_CONFIG_STACK_SIZE`` and
+``YR_CONFIG_MAX_STRINGS_PER_RULE`` variables via the ``yr_set_configuration``
+function in libyara. The command-line tool exposes these as the ``--stack-size``
+(``-k``) and ``--max-strings-per-rule`` command-line arguments. In order to set
+these values via the Python API, you can use ``yara.set_config`` with either or
+both ``stack_size`` and ``max_strings_per_rule`` provided as kwargs. At the time
+of this writing, the default stack size was ``16384`` and the default maximum
+strings per rule was ``10000``.
+
+Here are a few example calls:
+
+.. code-block:: python
+
+  yara.set_config(stack_size=65536)
+  yara.set_config(max_strings_per_rule=50000, stack_size=65536)
+  yara.set_config(max_strings_per_rule=20000)
+
+
 Reference
 ---------
 
@@ -275,6 +328,23 @@ Reference
   :return: Compiled rules object.
   :rtype: :py:class:`yara.Rules`
   :raises: **YaraError**: If an error occurred while loading the file.
+
+.. py:function:: yara.set_config(...)
+
+  Set the configuration variables accessible through the yr_set_configuration
+  API.
+
+  Provide either *stack_size* or *max_strings_per_rule*. These kwargs take
+  unsigned integer values as input and will assign the provided value to the
+  yr_set_configuration(...) variables YR_CONFIG_STACK_SIZE and
+  YR_CONFIG_MAX_STRINGS_PER_RULE, respectively.
+
+  :param int stack_size: Stack size to use for YR_CONFIG_STACK_SIZE
+  :param int max_strings_per_rule: Maximum number of strings to allow per
+    yara rule. Will be mapped to YR_CONFIG_MAX_STRINGS_PER_RULE.
+  :return: None
+  :rtype: **NoneType**
+  :raises: **YaraError**: If an error occurred.
 
 .. py:class:: Rules
 

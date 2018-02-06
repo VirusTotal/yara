@@ -11,16 +11,32 @@ The target can be a file, a folder, or a process. ::
   yara [OPTIONS] RULES_FILE TARGET
 
 
-Rule files can be passed directly in source code form, or can be previously
+``RULES_FILE`` can be passed directly in source code form, or can be previously
 compiled with the ``yarac`` tool. You may prefer to use your rules in compiled
 form if you are going to invoke YARA multiple times with the same rules. This
 way you’ll save time, because for YARA it is faster to load compiled rules than
 compiling the same rules over and over again.
 
-The rules will be applied to the target specified as the last argument to YARA,
-if it’s a path to a directory all the files contained in it will be scanned.
-By default YARA does not attempt to scan directories recursively, but you can
-use the ``-r`` option for that.
+You can also pass multiple source files to `yara` like in the following example::
+
+  yara [OPTIONS] RULES_FILE_1 RULES_FILE_2 RULES_FILE_3 TARGET
+
+Notice however that this only works for rules in source form. When invoking YARA
+with compiled rules a single file is accepted.
+
+In the example above all rules share the same "default" namespace, which means
+that rule identifiers must be unique among all files. However you can specify a
+namespace for individual files. For example ::
+
+  yara [OPTIONS] namespace1:RULES_FILE_1 RULES_FILE_2 RULES_FILE_3 TARGET
+
+In this case ``RULE_FILE_1`` uses ``namespace1`` while ``RULES_FILE_2`` and
+``RULES_FILE_3`` share the default namespace.
+
+In all cases rules will be applied to the target specified as the last argument
+to YARA, if it’s a path to a directory all the files contained in it will be
+scanned. By default YARA does not attempt to scan directories recursively, but
+you can use the ``-r`` option for that.
 
 Available options are:
 
@@ -33,6 +49,10 @@ Available options are:
 .. option:: -i <identifier> --identifier=<identifier>
 
   Print rules named <identifier> and ignore the rest.
+
+.. option:: -c --count
+
+  Print only number of matches.
 
 .. option:: -n
 
@@ -80,6 +100,13 @@ Available options are:
   will allow you to use larger rules, albeit with more memory overhead.
 
   .. versionadded:: 3.5.0
+
+.. option:: --max-strings-per-rule=<number>
+
+  Set maximum number of strings per rule (default=10000). If a rule has more
+  then the specified number of strings an error will occur.
+
+  .. versionadded:: 3.7.0
 
 .. option:: -d <identifier>=<value>
 

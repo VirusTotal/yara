@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/utils.h>
 
 #define YR_MAJOR_VERSION   3
-#define YR_MINOR_VERSION   6
+#define YR_MINOR_VERSION   7
 #define YR_MICRO_VERSION   0
 
 #define version_str(s) _version_str(s)
@@ -70,7 +70,7 @@ YR_API int yr_initialize(void);
 YR_API int yr_finalize(void);
 
 
-YR_API void yr_finalize_thread(void);
+YR_DEPRECATED_API void yr_finalize_thread(void);
 
 
 YR_API int yr_get_tidx(void);

@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define ARENA_FLAGS_FIXED_SIZE   1
 #define ARENA_FLAGS_COALESCED    2
-#define ARENA_FILE_VERSION       ((14 << 16) | MAX_THREADS)
+#define ARENA_FILE_VERSION       ((16 << 16) | MAX_THREADS)
 
 #define EOL ((size_t) -1)
 
@@ -128,7 +128,7 @@ int yr_arena_make_relocatable(
 
 int yr_arena_write_data(
     YR_ARENA* arena,
-    void* data,
+    const void* data,
     size_t size,
     void** written_data);
 

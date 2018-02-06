@@ -28,9 +28,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
+#include <fcntl.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
+
+#ifdef _MSC_VER
+#include <io.h>
+#include <share.h>
+#else
+#include <unistd.h>
+#endif
 
 #include <yara/libyara.h>
 #include <yara/utils.h>
@@ -41,6 +50,104 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/object.h>
 #include <yara/lexer.h>
 #include <yara/strutils.h>
+
+
+static void _yr_compiler_default_include_free(
+    const char* callback_result_ptr,
+    void* user_data)
+{
+  if (callback_result_ptr != NULL)
+  {
+    yr_free((void*)callback_result_ptr);
+  }
+}
+
+
+const char* _yr_compiler_default_include_callback(
+    const char* include_name,
+    const char* calling_rule_filename,
+    const char* calling_rule_namespace,
+    void* user_data)
+{
+  #ifndef _MSC_VER
+  struct stat stbuf;
+  #endif
+
+  char* file_buffer;
+
+  #ifdef _MSC_VER
+  long file_size;
+  #else
+  off_t file_size;
+  #endif
+
+  int fd = -1;
+
+  #if defined(_MSC_VER)
+  _sopen_s(&fd, include_name, _O_RDONLY | _O_BINARY, _SH_DENYRW, _S_IREAD);
+  #elif defined(_WIN32) || defined(__CYGWIN__)
+  fd = open(include_name, O_RDONLY | O_BINARY);
+  #else
+  fd = open(include_name, O_RDONLY);
+  #endif
+
+  if (fd == -1)
+    return NULL;
+
+  #ifdef _MSC_VER
+  file_size = _filelength(fd);
+  if (file_size == -1)
+  {
+    _close(fd);
+    return NULL;
+  }
+  #else
+  if ((fstat(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
+  {
+    close(fd);
+    return NULL;
+  }
+  file_size = stbuf.st_size;
+  #endif
+
+  file_buffer = (char*) yr_malloc((size_t) file_size + 1);
+
+  if (file_buffer == NULL)
+  {
+    #ifdef _MSC_VER
+    _close(fd);
+    #else
+    close(fd);
+    #endif
+
+    return NULL;
+  }
+
+  if (file_size != read(fd, file_buffer, (size_t) file_size))
+  {
+    yr_free(file_buffer);
+
+    #ifdef _MSC_VER
+    _close(fd);
+    #else
+    close(fd);
+    #endif
+
+    return NULL;
+  }
+  else
+  {
+    file_buffer[file_size] = '\0';
+  }
+
+  #ifdef _MSC_VER
+  _close(fd);
+  #else
+  close(fd);
+  #endif
+
+  return file_buffer;
+}
 
 
 YR_API int yr_compiler_create(
@@ -56,14 +163,17 @@ YR_API int yr_compiler_create(
 
   new_compiler->errors = 0;
   new_compiler->callback = NULL;
+  new_compiler->include_callback = _yr_compiler_default_include_callback;
+  new_compiler->incl_clbk_user_data = NULL;
+  new_compiler->include_free = _yr_compiler_default_include_free;
+  new_compiler->re_ast_callback = NULL;
+  new_compiler->re_ast_clbk_user_data = NULL;
   new_compiler->last_error = ERROR_SUCCESS;
   new_compiler->last_error_line = 0;
   new_compiler->current_line = 0;
   new_compiler->last_result = ERROR_SUCCESS;
-  new_compiler->file_stack_ptr = 0;
   new_compiler->file_name_stack_ptr = 0;
   new_compiler->fixup_stack_head = NULL;
-  new_compiler->allow_includes = 1;
   new_compiler->loop_depth = 0;
   new_compiler->loop_for_of_mem_offset = -1;
   new_compiler->compiled_rules_arena = NULL;
@@ -182,37 +292,27 @@ YR_API void yr_compiler_set_callback(
 }
 
 
-int _yr_compiler_push_file(
+YR_API void yr_compiler_set_include_callback(
     YR_COMPILER* compiler,
-    FILE* fh)
+    YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback,
+    YR_COMPILER_INCLUDE_FREE_FUNC include_free,
+    void* user_data)
 {
-  if (compiler->file_stack_ptr < MAX_INCLUDE_DEPTH)
-  {
-    compiler->file_stack[compiler->file_stack_ptr] = fh;
-    compiler->file_stack_ptr++;
-    return ERROR_SUCCESS;
-  }
-  else
-  {
-    compiler->last_result = ERROR_INCLUDE_DEPTH_EXCEEDED;
-    return ERROR_INCLUDE_DEPTH_EXCEEDED;
-  }
+  compiler->include_callback = include_callback;
+  compiler->include_free = include_free;
+  compiler->incl_clbk_user_data = user_data;
 }
 
 
-FILE* _yr_compiler_pop_file(
-    YR_COMPILER* compiler)
+YR_API void yr_compiler_set_re_ast_callback(
+    YR_COMPILER* compiler,
+    YR_COMPILER_RE_AST_CALLBACK_FUNC re_ast_callback,
+    void* user_data)
 {
-  FILE* result = NULL;
-
-  if (compiler->file_stack_ptr > 0)
-  {
-    compiler->file_stack_ptr--;
-    result = compiler->file_stack[compiler->file_stack_ptr];
-  }
-
-  return result;
+  compiler->re_ast_callback = re_ast_callback;
+  compiler->re_ast_clbk_user_data = user_data;
 }
+
 
 int _yr_compiler_push_file_name(
     YR_COMPILER* compiler,
@@ -263,11 +363,11 @@ void _yr_compiler_pop_file_name(
 
 
 YR_API char* yr_compiler_get_current_file_name(
-    YR_COMPILER* context)
+    YR_COMPILER* compiler)
 {
-  if (context->file_name_stack_ptr > 0)
+  if (compiler->file_name_stack_ptr > 0)
   {
-    return context->file_name_stack[context->file_name_stack_ptr - 1];
+    return compiler->file_name_stack[compiler->file_name_stack_ptr - 1];
   }
   else
   {
@@ -276,7 +376,7 @@ YR_API char* yr_compiler_get_current_file_name(
 }
 
 
-int _yr_compiler_set_namespace(
+static int _yr_compiler_set_namespace(
     YR_COMPILER* compiler,
     const char* namespace_)
 {
@@ -334,6 +434,7 @@ int _yr_compiler_set_namespace(
   return ERROR_SUCCESS;
 }
 
+
 YR_API int yr_compiler_add_file(
     YR_COMPILER* compiler,
     FILE* rules_file,
@@ -344,6 +445,11 @@ YR_API int yr_compiler_add_file(
   // yr_compiler_get_rules() has been called.
 
   assert(compiler->compiled_rules_arena == NULL);
+
+  // Don't allow calls to yr_compiler_add_file() if a previous call to
+  // yr_compiler_add_XXXX failed.
+
+  assert(compiler->errors == 0);
 
   if (file_name != NULL)
     _yr_compiler_push_file_name(compiler, file_name);
@@ -377,6 +483,11 @@ YR_API int yr_compiler_add_fd(
 
   assert(compiler->compiled_rules_arena == NULL);
 
+  // Don't allow calls to yr_compiler_add_fd() if a previous call to
+  // yr_compiler_add_XXXX failed.
+
+  assert(compiler->last_error == ERROR_SUCCESS);
+
   if (file_name != NULL)
     _yr_compiler_push_file_name(compiler, file_name);
 
@@ -402,10 +513,15 @@ YR_API int yr_compiler_add_string(
     const char* rules_string,
     const char* namespace_)
 {
-  // Don't allow yr_compiler_add_string() after
+  // Don't allow calls to yr_compiler_add_string() after
   // yr_compiler_get_rules() has been called.
 
   assert(compiler->compiled_rules_arena == NULL);
+
+  // Don't allow calls to yr_compiler_add_string() if a previous call to
+  // yr_compiler_add_XXXX failed.
+
+  assert(compiler->last_error == ERROR_SUCCESS);
 
   if (namespace_ != NULL)
     compiler->last_result = _yr_compiler_set_namespace(compiler, namespace_);
@@ -424,7 +540,7 @@ YR_API int yr_compiler_add_string(
 }
 
 
-int _yr_compiler_compile_rules(
+static int _yr_compiler_compile_rules(
   YR_COMPILER* compiler)
 {
   YARA_RULES_FILE_HEADER* rules_file_header = NULL;
@@ -599,6 +715,11 @@ YR_API int yr_compiler_get_rules(
 {
   YR_RULES* yara_rules;
   YARA_RULES_FILE_HEADER* rules_file_header;
+
+  // Don't allow calls to yr_compiler_get_rules() if a previous call to
+  // yr_compiler_add_XXXX failed.
+
+  assert(compiler->last_error == ERROR_SUCCESS);
 
   *rules = NULL;
 
@@ -1017,6 +1138,12 @@ YR_API char* yr_compiler_get_error_message(
           compiler->last_error_extra_info,
           max_strings_per_rule);
       break;
+    case ERROR_INTEGER_OVERFLOW:
+      snprintf(
+          buffer,
+          buffer_size,
+          "integer overflow in \"%s\"",
+          compiler->last_error_extra_info);
   }
 
   return buffer;

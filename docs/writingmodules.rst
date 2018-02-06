@@ -201,7 +201,7 @@ In our case the resulting *module_list* is::
     MODULE(demo)
 
 The second step is modifying the *Makefile.am* to tell the *make* program that
-the source code for your module most be compiled and linked into YARA. At the
+the source code for your module must be compiled and linked into YARA. At the
 very beginning of *libyara/Makefile.am* you'll find this::
 
     MODULES =  modules/tests.c
@@ -651,7 +651,7 @@ checks in your code nevertheless). In those cases you can use the
         size_t module_data_size)
     {
         YR_MEMORY_BLOCK* block;
-        uint8_t* block_data;
+        const uint8_t* block_data;
 
         block = first_memory_block(context);
         block_data = block->fetch_data(block)
@@ -674,7 +674,7 @@ NULL pointer, your code must be prepared for that case.
 
 .. code-block:: c
 
-    uint8_t* block_data;
+    const uint8_t* block_data;
 
     foreach_memory_block(context, block)
     {

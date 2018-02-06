@@ -47,6 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara.h>
 
 #include "args.h"
+#include "common.h"
 
 
 #ifndef MAX_PATH
@@ -99,21 +100,7 @@ args_option_t options[] =
 };
 
 
-int is_numeric(
-    const char *str)
-{
-  while(*str)
-  {
-    if (!isdigit(*str))
-      return 0;
-    str++;
-  }
-
-  return 1;
-}
-
-
-void report_error(
+static void report_error(
     int error_level,
     const char* file_name,
     int line_number,
@@ -134,7 +121,7 @@ void report_error(
 }
 
 
-int define_external_variables(
+static int define_external_variables(
     YR_COMPILER* compiler)
 {
   for (int i = 0; ext_vars[i] != NULL; i++)
@@ -156,7 +143,14 @@ int define_external_variables(
     char* identifier = ext_vars[i];
     char* value = equal_sign + 1;
 
-    if (is_numeric(value))
+    if (is_float(value))
+    {
+      yr_compiler_define_float_variable(
+          compiler,
+          identifier,
+          atof(value));
+    }
+    else if (is_integer(value))
     {
       yr_compiler_define_integer_variable(
           compiler,
@@ -181,9 +175,6 @@ int define_external_variables(
 
   return TRUE;
 }
-
-
-#define exit_with_code(code) { result = code; goto _exit; }
 
 
 int main(
@@ -241,44 +232,14 @@ int main(
   yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
   yr_compiler_set_callback(compiler, report_error, &cr);
 
-  for (int i = 0; i < argc - 1; i++)
-  {
-    const char* ns;
-    const char* file_name;
-    char* colon = (char*) strchr(argv[i], ':');
+  if (!compile_files(compiler, argc, argv))
+    exit_with_code(EXIT_FAILURE);
 
-    if (colon)
-    {
-      file_name = colon + 1;
-      *colon = '\0';
-      ns = argv[i];
-    }
-    else
-    {
-      file_name = argv[i];
-      ns = NULL;
-    }
+  if (cr.errors > 0)
+    exit_with_code(EXIT_FAILURE);
 
-    FILE* rule_file = fopen(file_name, "r");
-
-    if (rule_file != NULL)
-    {
-      cr.errors = yr_compiler_add_file(
-          compiler, rule_file, ns, file_name);
-
-      fclose(rule_file);
-
-      if (cr.errors) // errors during compilation
-        exit_with_code(EXIT_FAILURE);
-
-      if (fail_on_warnings && cr.warnings > 0)
-        exit_with_code(EXIT_FAILURE);
-    }
-    else
-    {
-      fprintf(stderr, "error: could not open file: %s\n", file_name);
-    }
-  }
+  if (fail_on_warnings && cr.warnings > 0)
+    exit_with_code(EXIT_FAILURE);
 
   result = yr_compiler_get_rules(compiler, &rules);
 

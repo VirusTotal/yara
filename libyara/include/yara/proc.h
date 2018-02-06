@@ -32,11 +32,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/types.h>
 
-int yr_process_open_iterator(
+typedef struct _YR_PROC_ITERATOR_CTX {
+  const uint8_t*  buffer;
+  size_t          buffer_size;
+  YR_MEMORY_BLOCK current_block;
+  void*           proc_info;
+} YR_PROC_ITERATOR_CTX;
+
+YR_API int yr_process_open_iterator(
     int pid,
     YR_MEMORY_BLOCK_ITERATOR* iterator);
 
-int yr_process_close_iterator(
+YR_API int yr_process_close_iterator(
     YR_MEMORY_BLOCK_ITERATOR* iterator);
+
+YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator);
+
+YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator);
+
+YR_API const uint8_t* yr_process_fetch_memory_block_data(
+    YR_MEMORY_BLOCK* block);
 
 #endif

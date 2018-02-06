@@ -39,7 +39,10 @@ in the *default* namespace.
 The :c:func:`yr_compiler_add_file`, :c:func:`yr_compiler_add_fd`, and
 :c:func:`yr_compiler_add_string` functions return
 the number of errors found in the source code. If the rules are correct they
-will return 0. For more detailed error information you must set a callback
+will return 0. If any of these functions return an error the compiler can't used
+anymore, neither for adding more rules nor getting the compiled rules.
+
+For obtaining detailed error information you must set a callback
 function by using :c:func:`yr_compiler_set_callback` before calling
 any of the compiling functions. The callback function has the following
 prototype:
@@ -62,6 +65,42 @@ contains the file name and line number where the error or warning occurs.
 :c:func:`yr_compiler_add_fd`. It can be ``NULL`` if you passed ``NULL`` or if
 you're using :c:func:`yr_compiler_add_string`. The ``user_data`` pointer is the
 same you passed to :c:func:`yr_compiler_set_callback`.
+
+By default, for rules containing references to other files
+(``include "filename.yara"``), yara will try to find those files on disk.
+However, if you want to fetch the imported rules from another source (eg: from a
+database or remote service), a callback function can be set with
+:c:func:`yr_compiler_set_include_callback`.
+The callback receives the following parameters:
+ * ``include_name``: name of the requested file.
+ * ``calling_rule_filename``: the requesting file name (NULL if not a file).
+ * ``calling_rule_namespace``: namespace (NULL if undefined).
+ * ``user_data`` pointer is the same you passed to :c:func:`yr_compiler_set_include_callback`.
+It should return the requested file's content as a null-terminated string. The
+memory for this string should be allocated by the callback function. Once it is
+safe to free the memory used to return the callback's result, the include_free
+function passed to :c:func:`yr_compiler_set_include_callback` will be called.
+If the memory does not need to be freed, NULL can be passed as include_free
+instead. You can completely disable support for includes by setting a NULL
+callback function with :c:func:`yr_compiler_set_include_callback`.
+
+The callback function has the following prototype:
+
+.. code-block:: c
+
+  const char* include_callback(
+      const char* include_name,
+      const char* calling_rule_filename,
+      const char* calling_rule_namespace,
+      void* user_data);
+
+The free function has the following prototype:
+
+.. code-block:: c
+
+  void include_free(
+      const char* callback_result_ptr,
+      void* user_data);
 
 After you successfully added some sources you can get the compiled rules
 using the :c:func:`yr_compiler_get_rules()` function. You'll get a pointer to
@@ -245,7 +284,7 @@ Data structures
 
     Length of the matching string
 
-  .. c:member:: uint8_t* data
+  .. c:member:: const uint8_t* data
 
     Pointer to a buffer containing a portion of the matching string.
 
@@ -402,6 +441,18 @@ Functions
   pointer is passed to the callback function.
 
 
+.. c:function:: void yr_compiler_set_include_callback(YR_COMPILER* compiler, YR_COMPILER_INCLUDE_CALLBACK_FUNC callback, YR_COMPILER_INCLUDE_FREE_FUNC include_free, void* user_data)
+
+ .. versionadded:: 3.7.0
+
+  Set a callback to provide rules from a custom source when ``include``
+  directive is invoked. The *user_data* pointer is untouched and passed back to
+  the callback function and to the free function. Once the callback's result
+  is no longer needed, the include_free function will be called. If the memory
+  does not need to be freed, include_free can be set to NULL. If *callback* is
+  set to ``NULL`` support for include directives is disabled.
+
+
 .. c:function:: int yr_compiler_add_file(YR_COMPILER* compiler, FILE* file, const char* namespace, const char* file_name)
 
   Compile rules from a *file*. Rules are put into the specified *namespace*,
@@ -505,7 +556,7 @@ Functions
 
     :c:macro:`ERROR_UNSUPPORTED_FILE_VERSION`
 
-.. c:function:: int yr_rules_scan_mem(YR_RULES* rules, uint8_t* buffer, size_t buffer_size, int flags, YR_CALLBACK_FUNC callback, void* user_data, int timeout)
+.. c:function:: int yr_rules_scan_mem(YR_RULES* rules, const uint8_t* buffer, size_t buffer_size, int flags, YR_CALLBACK_FUNC callback, void* user_data, int timeout)
 
     Scan a memory buffer. Returns one of the following error codes:
 
@@ -650,6 +701,24 @@ Functions
     {
       ..do something with rule
     }
+
+.. c:function:: yr_rule_disable(rule)
+
+  .. versionadded:: 3.7.0
+
+  Disable the specified rule. Disabled rules are completely ignored during
+  the scanning process and they won't match. If the disabled rule is used in
+  the condition of some other rule the value for the disabled rule is neither
+  true nor false but undefined. For more information about undefined values
+  see :ref:`undefined-values`.
+
+.. c:function:: yr_rule_enable(rule)
+
+  .. versionadded:: 3.7.0
+
+  Enables the specified rule. After being disabled with :c:func:`yr_rule_disable`
+  a rule can be enabled again by using this function.
+
 
 Error codes
 -----------

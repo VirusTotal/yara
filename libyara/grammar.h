@@ -152,7 +152,7 @@ extern int yara_yydebug;
 
 union YYSTYPE
 {
-#line 204 "grammar.y" /* yacc.c:1915  */
+#line 215 "grammar.y" /* yacc.c:1915  */
 
   EXPRESSION      expression;
   SIZED_STRING*   sized_string;

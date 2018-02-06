@@ -27,16 +27,15 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <signal.h>
+
 #include <yara.h>
 #include "blob.h"
 #include "util.h"
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-#include <fileapi.h>
-#else
-#include <unistd.h>
-#endif
-#include <fcntl.h>
 
 static void test_boolean_operators()
 {
@@ -190,6 +189,15 @@ static void test_arithmetic_operators()
       "rule test { condition: 1--1 == 2}", NULL);
 
   assert_true_rule(
+      "rule test { condition: 2 * -2 == -4}", NULL);
+
+  assert_true_rule(
+      "rule test { condition: -4 * 2 == -8}", NULL);
+
+  assert_true_rule(
+      "rule test { condition: -4 * -4 == 16}", NULL);
+
+  assert_true_rule(
       "rule test { condition: -0x01 == -1}", NULL);
 
   assert_true_rule(
@@ -201,6 +209,68 @@ static void test_arithmetic_operators()
   assert_true_rule(
       "rule test { condition: 0o755 == 493 }", NULL);
 
+  // TODO: This should return ERROR_INTEGER_OVERFLOW, but right now it returns
+  // ERROR_SYNTAX_ERROR because after the lexer aborts with ERROR_INTEGER_OVERFLOW
+  // the parser finds an unexpected end fails with error: unexpected $end.
+  assert_error(
+      "rule test { condition: 9223372036854775808 > 0 }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(
+      "rule test { condition: 9007199254740992KB > 0 }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(  // integer too long
+      "rule test { condition: 8796093022208MB > 0 }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(  // integer too long
+     "rule test { condition: 0x8000000000000000 > 0 }",
+     ERROR_SYNTAX_ERROR);
+
+  assert_error(  // integer too long
+     "rule test { condition: 0o1000000000000000000000 > 0 }",
+     ERROR_SYNTAX_ERROR);
+
+  assert_error(
+     "rule test { condition: 0x7FFFFFFFFFFFFFFF + 1 > 0 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(
+     "rule test { condition: 9223372036854775807 + 1 > 0 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(
+     "rule test { condition: -9223372036854775807 - 2 > 0 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(
+     "rule test { condition: -2 + -9223372036854775807 > 0 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(
+     "rule test { condition: 1 - -9223372036854775807 > 0 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(
+     "rule test { condition: 0x4000000000000000 * 2 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(
+     "rule test { condition: 4611686018427387904 * 2 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(
+     "rule test { condition: 4611686018427387904 * -2 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(
+     "rule test { condition: -4611686018427387904 * 2 }",
+     ERROR_INTEGER_OVERFLOW);
+
+  assert_error(
+     "rule test { condition: -4611686018427387904 * -2 }",
+     ERROR_INTEGER_OVERFLOW);
 }
 
 
@@ -224,6 +294,14 @@ static void test_bitwise_operators()
 
   assert_true_rule(
       "rule test { condition: 1 << 3 == 8 }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: 1 << 64 == 0 }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: 1 >> 64 == 0 }",
       NULL);
 
   assert_true_rule(
@@ -1012,15 +1090,20 @@ void test_re()
   assert_true_regexp("aa{0,1}bc", "abc", "abc");
   assert_true_regexp("ab{1}c", "abc", "abc");
   assert_true_regexp("ab{1,2}c", "abbc", "abbc");
+  assert_false_regexp("ab{1,2}c", "abbbc");
   assert_true_regexp("ab{1,}c", "abbbc", "abbbc");
   assert_false_regexp("ab{1,}b", "ab");
   assert_false_regexp("ab{1}c", "abbc");
+  assert_false_regexp("ab{1}c", "ac");
   assert_true_regexp("ab{0,}c", "ac", "ac");
   assert_true_regexp("ab{1,1}c", "abc", "abc");
   assert_true_regexp("ab{0,}c", "abbbc", "abbbc");
   assert_true_regexp("ab{,3}c", "abbbc", "abbbc");
   assert_false_regexp("ab{,2}c", "abbbc");
   assert_false_regexp("ab{4,5}bc", "abbbbc");
+  assert_false_regexp("ab{3}c", "abbbbc");  // Issue #817
+  assert_false_regexp("ab{4}c", "abbbbbc");
+  assert_false_regexp("ab{5}c", "abbbbbbc");
   assert_true_regexp("ab{0,1}", "abbbbb", "ab");
   assert_true_regexp("ab{0,2}", "abbbbb", "abb");
   assert_true_regexp("ab{0,3}", "abbbbb", "abbb");
@@ -1030,6 +1113,13 @@ void test_re()
   assert_true_regexp("ab{1,3}", "abbbbb", "abbb");
   assert_true_regexp("ab{2,2}", "abbbbb", "abb");
   assert_true_regexp("ab{2,3}", "abbbbb", "abbb");
+  assert_true_regexp("ab{2,4}", "abbbbc", "abbbbc");
+  assert_true_regexp("ab{3,4}", "abbb", "abbb");
+  assert_true_regexp("ab{3,4}", "abbbbc", "abbbbc");
+  assert_true_regexp("ab{3,5}", "abbbbc", "abbbbc");
+  assert_false_regexp("ab{3,4}c", "abbbbbc");
+  assert_false_regexp("ab{3,4}c", "abbc");
+  assert_false_regexp("ab{3,5}c", "abbbbbbc");
   assert_true_regexp("ab{1,3}?", "abbbbb", "ab");
   assert_true_regexp("ab{0,1}?", "abbbbb", "a");
   assert_true_regexp("ab{0,2}?", "abbbbb", "a");
@@ -1194,6 +1284,9 @@ void test_re()
   // Test case for issue #682
   assert_true_regexp("(a|\\b)[a]{1,}", "aaaa", "aaaa");
 
+  // Test for integer overflow in repeat interval
+  assert_regexp_syntax_error("a{2977952116}");
+
   assert_error(
       "rule test { strings: $a = /a\\/ condition: $a }",
       ERROR_SYNTAX_ERROR);
@@ -1213,6 +1306,38 @@ void test_re()
         strings: $a = /MZ.{300,}?t/ \
         condition: !a == 314 }",
       PE32_FILE);
+
+  assert_false_rule(
+      "rule test { strings: $a = /abc[^d]/ nocase condition: $a }",
+      "abcd");
+
+  assert_false_rule(
+      "rule test { strings: $a = /abc[^d]/ condition: $a }",
+      "abcd");
+
+  assert_false_rule(
+      "rule test { strings: $a = /abc[^D]/ nocase condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+      "rule test { strings: $a = /abc[^D]/ condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+      "rule test { strings: $a = /abc[^f]/ nocase condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+      "rule test { strings: $a = /abc[^f]/ condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+      "rule test { strings: $a = /abc[^F]/ nocase condition: $a }",
+      "abcd");
+
+  assert_true_rule(
+       "rule test { strings: $a = /abc[^F]/ condition: $a }",
+       "abcd");
 }
 
 
@@ -1531,6 +1656,16 @@ static void test_modules()
       ERROR_INVALID_MODULE_NAME);
 }
 
+
+static void test_time_module()
+{
+    assert_true_rule(
+        "import \"time\" \
+        rule test { condition: time.now() > 0 }",
+        NULL);
+}
+
+
 #if defined(HASH_MODULE)
 static void test_hash_module()
 {
@@ -1611,148 +1746,74 @@ void test_integer_functions()
 }
 
 
-void test_file_descriptor()
+void test_include_files()
 {
-  YR_COMPILER* compiler = NULL;
-  YR_RULES* rules = NULL;
+  assert_true_rule(
+    "include \"tests/data/baz.yar\" rule t { condition: baz }",
+    NULL);
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-  HANDLE fd = CreateFile("tests/data/true.yar", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
-  if (fd == INVALID_HANDLE_VALUE)
-  {
-    fputs("CreateFile failed", stderr);
-    exit(1);
-  }
-#else
-  int fd = open("tests/data/true.yar", O_RDONLY);
-  if (fd < 0)
-  {
-    perror("open");
-    exit(EXIT_FAILURE);
-  }
-#endif
-  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
-  {
-    perror("yr_compiler_create");
-    exit(EXIT_FAILURE);
-  }
-
-  if (yr_compiler_add_fd(compiler, fd, NULL, NULL) != 0) {
-    perror("yr_compiler_add_fd");
-    exit(EXIT_FAILURE);
-  }
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-  CloseHandle(fd);
-#else
-  close(fd);
-#endif
-
-  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS) {
-    perror("yr_compiler_add_fd");
-    exit(EXIT_FAILURE);
-  }
-
-  if (compiler)
-  {
-    yr_compiler_destroy(compiler);
-  }
-  if (rules)
-  {
-    yr_rules_destroy(rules);
-  }
-
-  return;
-}
-
-void test_max_string_per_rules()
-{
-  uint32_t new_max_strings_per_rule = 1;
-  uint32_t old_max_strings_per_rule;
-
-  yr_get_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE,
-      (void*) &old_max_strings_per_rule);
-
-  yr_set_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE,
-      (void*) &new_max_strings_per_rule);
-
-  assert_error(
-      "rule test { \
-         strings: \
-           $ = \"uno\" \
-           $ = \"dos\" \
-         condition: \
-           all of them }",
-      ERROR_TOO_MANY_STRINGS);
-
-  new_max_strings_per_rule = 2;
-
-  yr_set_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE,
-      (void*) &new_max_strings_per_rule);
-
-  assert_error(
-      "rule test { \
-         strings: \
-           $ = \"uno\" \
-           $ = \"dos\" \
-         condition: \
-           all of them }",
-      ERROR_SUCCESS);
-
-  yr_set_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE,
-      (void*) &old_max_strings_per_rule);
+  assert_true_rule(
+    "include \"tests/data/foo.yar\" rule t { condition: foo }",
+    NULL);
 }
 
 
-void test_save_load_rules()
+void test_process_scan()
 {
-  YR_COMPILER* compiler = NULL;
-  YR_RULES* rules = NULL;
+  int pid = fork();
+  int status = 0;
+  int matches = 0;
+  YR_RULES* rules;
+  int rc1, rc2;
 
-
-  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  if (pid == 0)
   {
-    perror("yr_compiler_create");
+    /* The string should appear somewhere in the shell's process space. */
+    if (execl("/bin/sh", "/bin/sh", "-c", "VAR='Hello, world!'; sleep 5; true", NULL) == -1)
+      exit(1);
+  }
+  assert(pid > 0);
+
+  /* Give child process time to initialize */
+  sleep(1);
+
+  assert( compile_rule("\
+    rule test {\
+      strings:\
+        $a = { 48 65 6c 6c 6f 2c 20 77 6f 72 6c 64 21 }\
+      condition:\
+        all of them\
+    }", &rules) == ERROR_SUCCESS);
+  rc1 = yr_rules_scan_proc(rules, pid, 0, count_matches, &matches, 0);
+  kill(pid, SIGALRM);
+
+  rc2 = waitpid(pid, &status, 0);
+  if (rc2 == -1)
+  {
+    perror("waitpid");
+    exit(EXIT_FAILURE);
+  }
+  if (status != SIGALRM)
+  {
+    fprintf(stderr, "Scanned process exited with unexpected status %d\n", status);
     exit(EXIT_FAILURE);
   }
 
-  if (yr_compiler_add_string(compiler, "rule test {condition: true}", NULL) != 0)
-  {
-    yr_compiler_destroy(compiler);
-    perror("yr_compiler_add_string");
+  switch (rc1) {
+  case ERROR_SUCCESS:
+    if (matches == 0)
+    {
+      fputs("Found no matches\n", stderr);
+      exit(EXIT_FAILURE);
+    }
+    break;
+  case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
+    fputs("Could not attach to process, ignoring this error\n", stderr);
+    break;
+  default:
+    fprintf(stderr, "yr_rules_scan_proc: Got unexpected error %d\n", rc1);
     exit(EXIT_FAILURE);
   }
-
-  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
-  {
-    yr_compiler_destroy(compiler);
-    perror("yr_compiler_add_fd");
-    exit(EXIT_FAILURE);
-  }
-
-  yr_compiler_destroy(compiler);
-
-  if (yr_rules_save(rules, "test-rules.yarc") != ERROR_SUCCESS)
-  {
-    yr_rules_destroy(rules);
-    perror("yr_rules_save");
-    exit(EXIT_FAILURE);
-  }
-
-  yr_rules_destroy(rules);
-
-  if (yr_rules_load("test-rules.yarc", &rules) != ERROR_SUCCESS)
-  {
-    perror("yr_rules_load");
-    exit(EXIT_FAILURE);
-  }
-
-  yr_rules_destroy(rules);
-  return;
 }
 
 
@@ -1779,9 +1840,10 @@ int main(int argc, char** argv)
   test_for();
   test_re();
   test_filesize();
+  test_include_files();
   // test_compile_file();
   // test_compile_files();
-  // test_include_files();
+
   // test_externals();
   // test_callback();
   // test_compare();
@@ -1792,14 +1854,15 @@ int main(int argc, char** argv)
   test_entrypoint();
   test_global_rules();
 
+  #if HAVE_SCAN_PROC_IMPL == 1
+  test_process_scan();
+  #endif
+
   #if defined(HASH_MODULE)
   test_hash_module();
   #endif
 
-  test_file_descriptor();
-
-  test_max_string_per_rules();
-  test_save_load_rules();
+  test_time_module();
 
   yr_finalize();
 

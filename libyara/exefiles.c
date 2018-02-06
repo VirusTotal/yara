@@ -45,7 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 PIMAGE_NT_HEADERS32 yr_get_pe_header(
-    uint8_t* buffer,
+    const uint8_t* buffer,
     size_t buffer_length)
 {
   PIMAGE_DOS_HEADER mz_header;
@@ -61,10 +61,10 @@ PIMAGE_NT_HEADERS32 yr_get_pe_header(
   if (yr_le16toh(mz_header->e_magic) != IMAGE_DOS_SIGNATURE)
     return NULL;
 
-  if ((int32_t)yr_le32toh(mz_header->e_lfanew) < 0)
+  if ((int32_t) yr_le32toh(mz_header->e_lfanew) < 0)
     return NULL;
 
-  headers_size = yr_le32toh(mz_header->e_lfanew) +  \
+  headers_size = yr_le32toh(mz_header->e_lfanew) + \
                  sizeof(pe_header->Signature) + \
                  sizeof(IMAGE_FILE_HEADER);
 
@@ -73,7 +73,7 @@ PIMAGE_NT_HEADERS32 yr_get_pe_header(
 
   pe_header = (PIMAGE_NT_HEADERS32) (buffer + yr_le32toh(mz_header->e_lfanew));
 
-  headers_size += yr_le16toh(pe_header->FileHeader.SizeOfOptionalHeader);
+  headers_size += sizeof(IMAGE_OPTIONAL_HEADER32);
 
   if (yr_le32toh(pe_header->Signature) == IMAGE_NT_SIGNATURE &&
       (yr_le16toh(pe_header->FileHeader.Machine) == IMAGE_FILE_MACHINE_I386 ||
@@ -129,7 +129,7 @@ uint64_t yr_pe_rva_to_offset(
 
 
 int yr_get_elf_type(
-    uint8_t* buffer,
+    const uint8_t* buffer,
     size_t buffer_length)
 {
   elf_ident_t* elf_ident;
@@ -139,14 +139,30 @@ int yr_get_elf_type(
 
   elf_ident = (elf_ident_t*) buffer;
 
-  if (yr_le32toh(elf_ident->magic) == ELF_MAGIC)
-  {
-    return elf_ident->_class;
-  }
-  else
+  if (yr_le32toh(elf_ident->magic) != ELF_MAGIC)
   {
     return 0;
   }
+
+  switch (elf_ident->_class) {
+    case ELF_CLASS_32:
+      if (buffer_length < sizeof(elf32_header_t))
+      {
+        return 0;
+      }
+      break;
+    case ELF_CLASS_64:
+      if (buffer_length < sizeof(elf64_header_t))
+      {
+        return 0;
+      }
+      break;
+    default:
+      /* Unexpected class */
+      return 0;
+  }
+
+  return elf_ident->_class;
 }
 
 
@@ -329,7 +345,7 @@ static uint64_t yr_elf_rva_to_offset_64(
 
 
 uint64_t yr_get_entry_point_offset(
-    uint8_t* buffer,
+    const uint8_t* buffer,
     size_t buffer_length)
 {
   PIMAGE_NT_HEADERS32 pe_header;
@@ -368,9 +384,9 @@ uint64_t yr_get_entry_point_offset(
 
 
 uint64_t yr_get_entry_point_address(
-    uint8_t* buffer,
+    const uint8_t* buffer,
     size_t buffer_length,
-    size_t base_address)
+    uint64_t base_address)
 {
   PIMAGE_NT_HEADERS32 pe_header;
 

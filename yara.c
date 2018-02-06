@@ -52,6 +52,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara.h>
 
 #include "args.h"
+#include "common.h"
 #include "threading.h"
 
 
@@ -82,10 +83,19 @@ typedef struct _MODULE_DATA
 } MODULE_DATA;
 
 
+typedef struct _CALLBACK_ARGS
+{
+  const char* file_path;
+  int current_count;
+
+} CALLBACK_ARGS;
+
+
 typedef struct _THREAD_ARGS
 {
   YR_RULES* rules;
   time_t start_time;
+  int current_count;
 
 } THREAD_ARGS;
 
@@ -127,7 +137,8 @@ static int show_help = FALSE;
 static int ignore_warnings = FALSE;
 static int fast_scan = FALSE;
 static int negate = FALSE;
-static int count = 0;
+static int print_count_only = FALSE;
+static int total_count = 0;
 static int limit = 0;
 static int timeout = 1000000;
 static int stack_size = DEFAULT_STACK_SIZE;
@@ -137,7 +148,7 @@ static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 
 #define USAGE_STRING \
-    "Usage: yara [OPTION]... RULES_FILE FILE | DIR | PID"
+    "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
 
 
 args_option_t options[] =
@@ -147,6 +158,9 @@ args_option_t options[] =
 
   OPT_STRING_MULTI('i', "identifier", &identifiers, MAX_ARGS_IDENTIFIER,
       "print only rules named IDENTIFIER", "IDENTIFIER"),
+
+  OPT_BOOLEAN('c', "count", &print_count_only,
+      "print only number of matches"),
 
   OPT_BOOLEAN('n', "negate", &negate,
       "print only not satisfied rules (negate)", NULL),
@@ -232,7 +246,7 @@ MUTEX output_mutex;
 MODULE_DATA* modules_data_list = NULL;
 
 
-int file_queue_init()
+static int file_queue_init()
 {
   int result;
 
@@ -253,7 +267,7 @@ int file_queue_init()
 }
 
 
-void file_queue_destroy()
+static void file_queue_destroy()
 {
   mutex_destroy(&queue_mutex);
   semaphore_destroy(&unused_slots);
@@ -261,7 +275,7 @@ void file_queue_destroy()
 }
 
 
-void file_queue_finish()
+static void file_queue_finish()
 {
   int i;
 
@@ -270,7 +284,7 @@ void file_queue_finish()
 }
 
 
-void file_queue_put(
+static void file_queue_put(
     const char* file_path)
 {
   semaphore_wait(&unused_slots);
@@ -284,7 +298,7 @@ void file_queue_put(
 }
 
 
-char* file_queue_get()
+static char* file_queue_get()
 {
   char* result;
 
@@ -310,7 +324,7 @@ char* file_queue_get()
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 
-int is_directory(
+static int is_directory(
     const char* path)
 {
   DWORD attributes = GetFileAttributes(path);
@@ -322,7 +336,7 @@ int is_directory(
     return FALSE;
 }
 
-void scan_dir(
+static void scan_dir(
     const char* dir,
     int recursive,
     time_t start_time,
@@ -364,7 +378,7 @@ void scan_dir(
 
 #else
 
-int is_directory(
+static int is_directory(
     const char* path)
 {
   struct stat st;
@@ -376,7 +390,7 @@ int is_directory(
 }
 
 
-void scan_dir(
+static void scan_dir(
     const char* dir,
     int recursive,
     time_t start_time,
@@ -423,18 +437,16 @@ void scan_dir(
 
 #endif
 
-void print_string(
-    uint8_t* data,
+static void print_string(
+    const uint8_t* data,
     int length)
 {
-  char* str = (char*) (data);
-
   for (int i = 0; i < length; i++)
   {
-    if (str[i] >= 32 && str[i] <= 126)
-      printf("%c", str[i]);
+    if (data[i] >= 32 && data[i] <= 126)
+      printf("%c", data[i]);
     else
-      printf("\\x%02X", (uint8_t) str[i]);
+      printf("\\x%02X", data[i]);
   }
 
   printf("\n");
@@ -450,8 +462,8 @@ static char cescapes[] =
 };
 
 
-void print_escaped(
-    uint8_t* data,
+static void print_escaped(
+    const uint8_t* data,
     size_t length)
 {
   size_t i;
@@ -480,18 +492,18 @@ void print_escaped(
 }
 
 
-void print_hex_string(
-    uint8_t* data,
+static void print_hex_string(
+    const uint8_t* data,
     int length)
 {
   for (int i = 0; i < min(32, length); i++)
-    printf("%s%02X", (i == 0 ? "" : " "), (uint8_t) data[i]);
+    printf("%s%02X", (i == 0 ? "" : " "), data[i]);
 
   puts(length > 32 ? " ..." : "");
 }
 
 
-void print_scanner_error(
+static void print_scanner_error(
     int error)
 {
   switch (error)
@@ -530,7 +542,7 @@ void print_scanner_error(
 }
 
 
-void print_compiler_error(
+static void print_compiler_error(
     int error_level,
     const char* file_name,
     int line_number,
@@ -551,7 +563,7 @@ void print_compiler_error(
 }
 
 
-int handle_message(
+static int handle_message(
     int message,
     YR_RULE* rule,
     void* data)
@@ -600,7 +612,7 @@ int handle_message(
 
   show = show && ((!negate && is_matching) || (negate && !is_matching));
 
-  if (show)
+  if (show && !print_count_only)
   {
     mutex_lock(&output_mutex);
 
@@ -657,7 +669,7 @@ int handle_message(
       printf("] ");
     }
 
-    printf("%s\n", (char*) data);
+    printf("%s\n", ((CALLBACK_ARGS*) data)->file_path);
 
     // Show matched strings.
 
@@ -702,16 +714,19 @@ int handle_message(
   }
 
   if (is_matching)
-    count++;
+  {
+    ((CALLBACK_ARGS*) data)->current_count++;
+    total_count++;
+  }
 
-  if (limit != 0 && count >= limit)
+  if (limit != 0 && total_count >= limit)
     return CALLBACK_ABORT;
 
   return CALLBACK_CONTINUE;
 }
 
 
-int callback(
+static int callback(
     int message,
     void* message_data,
     void* user_data)
@@ -735,7 +750,7 @@ int callback(
       {
         if (strcmp(module_data->module_name, mi->module_name) == 0)
         {
-          mi->module_data = module_data->mapped_file.data;
+          mi->module_data = (void*) module_data->mapped_file.data;
           mi->module_data_size = module_data->mapped_file.size;
           break;
         }
@@ -767,9 +782,9 @@ int callback(
 
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-DWORD WINAPI scanning_thread(LPVOID param)
+static DWORD WINAPI scanning_thread(LPVOID param)
 #else
-void* scanning_thread(void* param)
+static void* scanning_thread(void* param)
 #endif
 {
   int result = ERROR_SUCCESS;
@@ -783,6 +798,8 @@ void* scanning_thread(void* param)
 
   while (file_path != NULL)
   {
+    CALLBACK_ARGS user_data = { file_path, 0 };
+
     int elapsed_time = (int) difftime(time(NULL), args->start_time);
 
     if (elapsed_time < timeout)
@@ -792,8 +809,15 @@ void* scanning_thread(void* param)
           file_path,
           flags,
           callback,
-          file_path,
+          &user_data,
           timeout - elapsed_time);
+
+      if (print_count_only)
+      {
+        mutex_lock(&output_mutex);
+        printf("%s: %d\n", file_path, user_data.current_count);
+        mutex_unlock(&output_mutex);
+      }
 
       if (result != ERROR_SUCCESS)
       {
@@ -812,62 +836,11 @@ void* scanning_thread(void* param)
     }
   }
 
-  yr_finalize_thread();
-
   return 0;
 }
 
 
-int is_integer(
-    const char *str)
-{
-  if (*str == '-')
-    str++;
-
-  while(*str)
-  {
-    if (!isdigit(*str))
-      return FALSE;
-    str++;
-  }
-
-  return TRUE;
-}
-
-
-int is_float(
-    const char *str)
-{
-  int has_dot = FALSE;
-
-  if (*str == '-')      // skip the minus sign if present
-    str++;
-
-  if (*str == '.')      // float can't start with a dot
-    return FALSE;
-
-  while(*str)
-  {
-    if (*str == '.')
-    {
-      if (has_dot)      // two dots, not a float
-        return FALSE;
-
-      has_dot = TRUE;
-    }
-    else if (!isdigit(*str))
-    {
-      return FALSE;
-    }
-
-    str++;
-  }
-
-  return has_dot; // to be float must contain a dot
-}
-
-
-int define_external_variables(
+static int define_external_variables(
     YR_RULES* rules,
     YR_COMPILER* compiler)
 {
@@ -954,7 +927,7 @@ int define_external_variables(
 }
 
 
-int load_modules_data()
+static int load_modules_data()
 {
   for (int i = 0; modules_data[i] != NULL; i++)
   {
@@ -992,7 +965,7 @@ int load_modules_data()
 }
 
 
-void unload_modules_data()
+static void unload_modules_data()
 {
   MODULE_DATA* module_data = modules_data_list;
 
@@ -1009,8 +982,6 @@ void unload_modules_data()
   modules_data_list = NULL;
 }
 
-
-#define exit_with_code(code) { result = code; goto _exit; }
 
 int main(
     int argc,
@@ -1051,7 +1022,7 @@ int main(
     return EXIT_FAILURE;
   }
 
-  if (argc != 2)
+  if (argc < 2)
   {
     // After parsing the command-line options we expect two additional
     // arguments, the rules file and the target file, directory or pid to
@@ -1078,6 +1049,7 @@ int main(
   yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
   yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
 
+
   // Try to load the rules file as a binary file containing
   // compiled rules first
 
@@ -1088,6 +1060,7 @@ int main(
   // different from those exit with error.
 
   if (result != ERROR_SUCCESS &&
+      result != ERROR_COULD_NOT_OPEN_FILE &&
       result != ERROR_INVALID_FILE)
   {
     print_scanner_error(result);
@@ -1096,6 +1069,17 @@ int main(
 
   if (result == ERROR_SUCCESS)
   {
+    // When a binary file containing compiled rules is provided, yara accepts
+    // only two arguments, the compiled rules file and the target to be scanned.
+
+    if (argc != 2)
+    {
+      fprintf(stderr,
+        "error: can't accept multiple rules files if one of them is in "
+        "compiled form.\n");
+      exit_with_code(EXIT_FAILURE);
+    }
+
     result = define_external_variables(rules, NULL);
 
     if (result != ERROR_SUCCESS)
@@ -1125,17 +1109,8 @@ int main(
 
     yr_compiler_set_callback(compiler, print_compiler_error, &cr);
 
-    FILE* rule_file = fopen(argv[0], "r");
-
-    if (rule_file == NULL)
-    {
-      fprintf(stderr, "error: could not open file: %s\n", argv[0]);
+    if (!compile_files(compiler, argc, argv))
       exit_with_code(EXIT_FAILURE);
-    }
-
-    cr.errors = yr_compiler_add_file(compiler, rule_file, NULL, argv[0]);
-
-    fclose(rule_file);
 
     if (cr.errors > 0)
       exit_with_code(EXIT_FAILURE);
@@ -1150,14 +1125,19 @@ int main(
     compiler = NULL;
 
     if (result != ERROR_SUCCESS)
+    {
+      fprintf(stderr, "error: %d\n", result);
       exit_with_code(EXIT_FAILURE);
+    }
   }
 
   mutex_init(&output_mutex);
 
-  if (is_integer(argv[1]))
+  if (is_integer(argv[argc - 1]))
   {
-    int pid = atoi(argv[1]);
+    CALLBACK_ARGS user_data = { argv[argc - 1], 0 };
+
+    int pid = atoi(argv[argc - 1]);
     int flags = 0;
 
     if (fast_scan)
@@ -1168,7 +1148,7 @@ int main(
         pid,
         flags,
         callback,
-        (void*) argv[1],
+        &user_data,
         timeout);
 
     if (result != ERROR_SUCCESS)
@@ -1176,8 +1156,11 @@ int main(
       print_scanner_error(result);
       exit_with_code(EXIT_FAILURE);
     }
+
+    if (print_count_only)
+      printf("%d\n", user_data.current_count);
   }
-  else if (is_directory(argv[1]))
+  else if (is_directory(argv[argc - 1]))
   {
     if (file_queue_init() != 0)
     {
@@ -1192,6 +1175,7 @@ int main(
 
     thread_args.rules = rules;
     thread_args.start_time = start_time;
+    thread_args.current_count = 0;
 
     for (i = 0; i < threads; i++)
     {
@@ -1203,7 +1187,7 @@ int main(
     }
 
     scan_dir(
-        argv[1],
+        argv[argc - 1],
         recursive_search,
         start_time,
         rules,
@@ -1219,6 +1203,8 @@ int main(
   }
   else
   {
+    CALLBACK_ARGS user_data = { argv[argc - 1], 0 };
+
     int flags = 0;
 
     if (fast_scan)
@@ -1226,18 +1212,21 @@ int main(
 
     result = yr_rules_scan_file(
         rules,
-        argv[1],
+        argv[argc - 1],
         flags,
         callback,
-        (void*) argv[1],
+        &user_data,
         timeout);
 
     if (result != ERROR_SUCCESS)
     {
-      fprintf(stderr, "error scanning %s: ", argv[1]);
+      fprintf(stderr, "error scanning %s: ", argv[argc - 1]);
       print_scanner_error(result);
       exit_with_code(EXIT_FAILURE);
     }
+
+    if (print_count_only)
+      printf("%d\n", user_data.current_count);
   }
 
   #ifdef PROFILING_ENABLED

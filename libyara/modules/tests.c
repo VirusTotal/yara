@@ -84,7 +84,11 @@ define_function(empty)
 
 define_function(match)
 {
-  return_integer(yr_re_match(regexp_argument(1), string_argument(2)));
+  return_integer(
+      yr_re_match(
+          scan_context(),
+          regexp_argument(1),
+          string_argument(2)));
 }
 
 
@@ -118,6 +122,8 @@ begin_declarations;
     declare_integer("i");
     declare_float("f");
   end_struct("undefined");
+
+  declare_string("module_data")
 
   declare_integer_array("integer_array");
   declare_string_array("string_array");
@@ -189,6 +195,14 @@ int module_load(
 
   set_string("foo", module_object, "struct_dict[%s].s", "foo");
   set_integer(1, module_object, "struct_dict[%s].i", "foo");
+
+  if (module_data_size > 0 && module_data != NULL) {
+    set_sized_string(
+        (const char*) module_data,
+        module_data_size,
+        module_object,
+        "module_data");
+  }
 
   return ERROR_SUCCESS;
 }

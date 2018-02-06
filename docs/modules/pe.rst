@@ -533,6 +533,15 @@ Reference
 
     *Example:  pe.exports(72)*
 
+.. c:function:: exports(/regular_expression/)
+
+    .. versionadded:: 3.7.1
+
+    Function returning true if the PE exports *regular_expression* or
+    false otherwise.
+
+    *Example:  pe.exports(/^AXS@@/)*
+
 .. c:type:: number_of_exports
 
     .. versionadded:: 3.6.0
