@@ -49,7 +49,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #define MAX_COMPILER_ERROR_EXTRA_INFO   256
-#define MAX_ATOM_LENGTH                 4
+#define MAX_ATOM_LENGTH                 4  // Max: 255
 #define MAX_LOOP_NESTING                4
 #define MAX_ARENA_PAGES                 32
 #define MAX_INCLUDE_DEPTH               16

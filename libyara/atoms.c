@@ -446,7 +446,7 @@ static int _yr_atoms_choose(
 // atom "abc" the output would be "abc" "abC" "aBC" and so on. Resulting
 // atoms are written into the output buffer in this format:
 //
-//  [size 1] [backtrack 1] [atom 1]  ... [size N] [backtrack N] [atom N] [0]
+//  [size of atom 1] [atom 1]  ... [size of atom N] [atom N] [0]
 //
 // Notice the zero at the end to indicate where the output ends.
 //
@@ -475,8 +475,8 @@ static uint8_t* _yr_atoms_case_combinations(
   if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
   {
     // Write atom length.
-    *((int*) output_buffer) = atom_length;
-    output_buffer += sizeof(int);
+    *output_buffer = atom_length;
+    output_buffer++;
 
     memcpy(output_buffer, atom, atom_length);
 
@@ -498,16 +498,20 @@ static uint8_t* _yr_atoms_case_combinations(
   }
 
   if (atom_offset == 0)
-    *((int*) output_buffer) = 0;
+    *output_buffer = 0;
 
   return output_buffer;
 }
 
+// Size of buffer used in _yr_atoms_case_insensitive for storing the all
+// the possible combinations for an atom. Each atom has up to MAX_ATOM_LENGTH
+// characters and each character has two possible values (upper and lower case).
+// That means 2 ^ MAX_ATOM_LENGTH combinations for an atom, where each atom
+// occupies MAX_ATOM_LENGTH + 1 bytes (the atom itself +1 byte for its length)
+// One extra bytes is allocated for the zero value indicating the end.
 
 #define CASE_COMBINATIONS_BUFFER_SIZE \
-    MAX_ATOM_LENGTH * MAX_ATOM_LENGTH * MAX_ATOM_LENGTH + \
-    MAX_ATOM_LENGTH * MAX_ATOM_LENGTH * sizeof(int) + \
-    sizeof(int)
+    (1 << MAX_ATOM_LENGTH) * (MAX_ATOM_LENGTH + 1) + 1
 
 //
 // _yr_atoms_case_insensitive
@@ -524,9 +528,10 @@ static int _yr_atoms_case_insensitive(
   YR_ATOM_LIST_ITEM* new_atom;
 
   uint8_t buffer[CASE_COMBINATIONS_BUFFER_SIZE];
+  uint8_t atom_length;
   uint8_t* atoms_cursor;
 
-  int i, atom_length;
+  int i;
 
   *case_insensitive_atoms = NULL;
   atom = atoms;
@@ -540,8 +545,8 @@ static int _yr_atoms_case_insensitive(
         buffer);
 
     atoms_cursor = buffer;
-    atom_length = *((int*) atoms_cursor);
-    atoms_cursor += sizeof(int);
+    atom_length = *atoms_cursor;
+    atoms_cursor++;
 
     while (atom_length != 0)
     {
@@ -553,7 +558,7 @@ static int _yr_atoms_case_insensitive(
       for (i = 0; i < atom_length; i++)
         new_atom->atom[i] = atoms_cursor[i];
 
-      new_atom->atom_length = (uint8_t) atom_length;
+      new_atom->atom_length = atom_length;
       new_atom->forward_code = atom->forward_code;
       new_atom->backward_code = atom->backward_code;
       new_atom->backtrack = atom->backtrack;
@@ -562,8 +567,8 @@ static int _yr_atoms_case_insensitive(
       *case_insensitive_atoms = new_atom;
 
       atoms_cursor += atom_length;
-      atom_length = *((int*) atoms_cursor);
-      atoms_cursor += sizeof(int);
+      atom_length = *atoms_cursor;
+      atoms_cursor++;
     }
 
     atom = atom->next;
