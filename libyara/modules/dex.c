@@ -706,13 +706,13 @@ void dex_parse(
           i * sizeof(map_item_t));
 
       set_integer(map_item->type, dex->object,
-                  "map_list.map_item[%d].type", i);
+                  "map_list.map_item[%i].type", i);
       set_integer(map_item->unused, dex->object,
-                  "map_list.map_item[%d].unused", i);
+                  "map_list.map_item[%i].unused", i);
       set_integer(map_item->size, dex->object,
-                  "map_list.map_item[%d].size", i);
+                  "map_list.map_item[%i].size", i);
       set_integer(map_item->offset, dex->object,
-                  "map_list.map_item[%d].offset", i);
+                  "map_list.map_item[%i].offset", i);
     }
   }
 
