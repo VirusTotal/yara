@@ -99,7 +99,7 @@ int main(int argc, char** argv)
 
   assert_true_rule_blob(
       "import \"dex\" rule test { condition: \
-          dex.map_list.map_item[1].type == dex.TYPE_HEADER_ITEM \
+          dex.map_list.map_item[0].type == dex.TYPE_HEADER_ITEM \
         }",
       DEX_FILE);
 
