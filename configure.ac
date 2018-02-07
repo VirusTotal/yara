@@ -151,6 +151,13 @@ AC_ARG_WITH([crypto],
   AS_HELP_STRING([--without-crypto],
     [ignore presence of OpenSSL and disable it]))
 
+AC_ARG_ENABLE([dex],
+  [AS_HELP_STRING([--enable-dex], [enable dex module])],
+  [if test x$enableval = xyes; then
+    build_dex_module=true
+    CFLAGS="$CFLAGS -DDEX_MODULE"
+  fi])
+
 AS_IF([test "x$with_crypto" != "xno"],
   [
     AC_CHECK_HEADERS([openssl/md5.h],, [have_crypto=no])
@@ -241,6 +248,7 @@ AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
 AM_CONDITIONAL([DOTNET_MODULE], [test x$build_dotnet_module = xtrue])
 AM_CONDITIONAL([MACHO_MODULE], [test x$build_macho_module = xtrue])
 AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
+AM_CONDITIONAL([DEX_MODULE], [test x$build_dex_module = xtrue])
 
 AM_CONDITIONAL([USE_WINDOWS_PROC], [test x$proc_interface = xwindows ])
 AM_CONDITIONAL([USE_LINUX_PROC], [test x$proc_interface = xlinux ])
