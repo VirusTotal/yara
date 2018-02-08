@@ -377,12 +377,12 @@ YR_API int yr_scanner_scan_mem_blocks(
 
   yr_set_tidx(tidx);
 
-  result = yr_arena_create(1024, 0, &scanner->matches_arena);
+  result = yr_arena_create(1048576, 0, &scanner->matches_arena);
 
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  result = yr_arena_create(8, 0, &scanner->matching_strings_arena);
+  result = yr_arena_create(4096, 0, &scanner->matching_strings_arena);
 
   if (result != ERROR_SUCCESS)
     goto _exit;
