@@ -71,4 +71,22 @@ int yr_heap_alloc(void);
 
 int yr_heap_free(void);
 
+#if defined(JEMALLOC)
+
+typedef struct _YR_MEM_STATS
+{
+  size_t allocated;
+  size_t active;
+  size_t resident;
+  size_t metadata;
+  size_t mapped;
+
+} YR_MEM_STATS;
+
+
+void yr_mem_stats(
+    YR_MEM_STATS* ms);
+
+#endif
+
 #endif

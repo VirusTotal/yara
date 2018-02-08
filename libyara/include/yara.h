@@ -40,5 +40,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "yara/stream.h"
 #include "yara/hash.h"
 #include "yara/scanner.h"
+#include "yara/mem.h"
 
 #endif
