@@ -121,7 +121,7 @@ int yr_arena_allocate_struct(
     ...);
 
 
-int yr_arena_make_relocatable(
+int yr_arena_make_ptr_relocatable(
     YR_ARENA* arena,
     void* base,
     ...);

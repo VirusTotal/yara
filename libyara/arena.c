@@ -156,7 +156,7 @@ static YR_ARENA_PAGE* _yr_arena_page_for_address(
 
 
 //
-// _yr_arena_make_relocatable
+// _yr_arena_make_ptr_relocatable
 //
 // Tells the arena that certain addresses contains a relocatable pointer.
 //
@@ -169,7 +169,7 @@ static YR_ARENA_PAGE* _yr_arena_page_for_address(
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
 //
 
-static int _yr_arena_make_relocatable(
+static int _yr_arena_make_ptr_relocatable(
     YR_ARENA* arena,
     void* base,
     va_list offsets)
@@ -655,7 +655,7 @@ int yr_arena_allocate_struct(
   result = yr_arena_allocate_memory(arena, size, allocated_memory);
 
   if (result == ERROR_SUCCESS && arena->flags & ARENA_FLAGS_RELOCATABLE)
-    result = _yr_arena_make_relocatable(arena, *allocated_memory, offsets);
+    result = _yr_arena_make_ptr_relocatable(arena, *allocated_memory, offsets);
 
   va_end(offsets);
 
@@ -667,7 +667,7 @@ int yr_arena_allocate_struct(
 
 
 //
-// yr_arena_make_relocatable
+// yr_arena_make_ptr_relocatable
 //
 // Tells the arena that certain addresses contains a relocatable pointer.
 //
@@ -681,7 +681,7 @@ int yr_arena_allocate_struct(
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
 //
 
-int yr_arena_make_relocatable(
+int yr_arena_make_ptr_relocatable(
     YR_ARENA* arena,
     void* base,
     ...)
@@ -691,7 +691,7 @@ int yr_arena_make_relocatable(
   va_list offsets;
   va_start(offsets, base);
 
-  result = _yr_arena_make_relocatable(arena, base, offsets);
+  result = _yr_arena_make_ptr_relocatable(arena, base, offsets);
 
   va_end(offsets);
 
@@ -984,7 +984,7 @@ int yr_arena_load_stream(
       return ERROR_CORRUPT_FILE;
     }
 
-    //yr_arena_make_relocatable(new_arena, page->address, reloc_offset, EOL);
+    //yr_arena_make_ptr_relocatable(new_arena, page->address, reloc_offset, EOL);
 
     reloc_address = (uint8_t**) (page->address + reloc_offset);
     reloc_target = *reloc_address;
