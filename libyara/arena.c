@@ -182,6 +182,9 @@ static int _yr_arena_make_relocatable(
 
   int result = ERROR_SUCCESS;
 
+  // If the arena must be relocatable.
+  assert(arena->flags & ARENA_FLAGS_RELOCATABLE);
+
   page = _yr_arena_page_for_address(arena, base);
 
   assert(page != NULL);
@@ -651,7 +654,7 @@ int yr_arena_allocate_struct(
 
   result = yr_arena_allocate_memory(arena, size, allocated_memory);
 
-  if (result == ERROR_SUCCESS)
+  if (result == ERROR_SUCCESS && arena->flags & ARENA_FLAGS_RELOCATABLE)
     result = _yr_arena_make_relocatable(arena, *allocated_memory, offsets);
 
   va_end(offsets);
@@ -842,8 +845,9 @@ int yr_arena_duplicate(
   uint8_t** reloc_address;
   uint8_t* reloc_target;
 
-  // Only coalesced arenas can be duplicated.
+  // Arena must be coalesced and relocatable in order to be duplicated.
   assert(arena->flags & ARENA_FLAGS_COALESCED);
+  assert(arena->flags & ARENA_FLAGS_RELOCATABLE);
 
   page = arena->page_list_head;
 
@@ -902,7 +906,8 @@ int yr_arena_duplicate(
 //
 // yr_arena_load_stream
 //
-// Loads an arena from a stream.
+// Loads an arena from a stream. The resulting arena is not relocatable, which
+// implies that the arena can't be duplicated with yr_arena_duplicate.
 //
 // Args:
 //    YR_STREAM* stream  - Pointer to stream object
@@ -948,7 +953,7 @@ int yr_arena_load_stream(
 
   real_hash = yr_hash(0, &header, sizeof(header));
 
-  result = yr_arena_create(header.size, 0, &new_arena);
+  result = yr_arena_create(header.size, ARENA_FLAGS_COALESCED, &new_arena);
 
   if (result != ERROR_SUCCESS)
     return result;
@@ -979,7 +984,7 @@ int yr_arena_load_stream(
       return ERROR_CORRUPT_FILE;
     }
 
-    yr_arena_make_relocatable(new_arena, page->address, reloc_offset, EOL);
+    //yr_arena_make_relocatable(new_arena, page->address, reloc_offset, EOL);
 
     reloc_address = (uint8_t**) (page->address + reloc_offset);
     reloc_target = *reloc_address;

@@ -35,8 +35,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/integers.h>
 #include <yara/stream.h>
 
-#define ARENA_FLAGS_FIXED_SIZE   1
-#define ARENA_FLAGS_COALESCED    2
+#define ARENA_FLAGS_FIXED_SIZE        1
+#define ARENA_FLAGS_COALESCED         2
+#define ARENA_FLAGS_RELOCATABLE       4
+
 #define ARENA_FILE_VERSION       ((16 << 16) | MAX_THREADS)
 
 #define EOL ((size_t) -1)
@@ -52,7 +54,6 @@ typedef struct _YR_RELOC
 
 typedef struct _YR_ARENA_PAGE
 {
-
   uint8_t* new_address;
   uint8_t* address;
 
