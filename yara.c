@@ -1247,14 +1247,5 @@ _exit:
 
   yr_finalize();
 
-  #if defined(JEMALLOC)
-  YR_MEM_STATS stats;
-  yr_mem_stats(&stats);
-  printf("allocated: %zu\n", stats.allocated);
-  printf("active: %zu\n", stats.active);
-  printf("resident: %zu\n", stats.resident);
-  printf("metadata: %zu\n", stats.metadata);
-  #endif
-
   return result;
 }
