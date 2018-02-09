@@ -5,6 +5,9 @@ MODULES += modules/elf.c
 MODULES += modules/math.c
 MODULES += modules/time.c
 
+# This isn't really a module, but needs to be compiled with them.
+MODULES += modules/pe_utils.c
+
 if CUCKOO_MODULE
 MODULES += modules/cuckoo.c
 endif
@@ -24,9 +27,6 @@ endif
 if MACHO_MODULE
 MODULES += modules/macho.c
 endif
-
-# This isn't really a module, but needs to be compiled with them.
-MODULES += modules/pe_utils.c
 
 if DEX_MODULE
 MODULES += modules/dex.c

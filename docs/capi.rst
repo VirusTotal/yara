@@ -10,7 +10,7 @@ Initializing and finalizing *libyara*
 =====================================
 
 The first thing your program must do when using *libyara* is initializing the
-library. This is done by calling the :c:func:`yr_initialize()` function. This
+library. This is done by calling the :c:func:`yr_initialize` function. This
 function allocates any resources needed by the library and initializes internal
 data structures. Its counterpart is :c:func:`yr_finalize`, which must be called
 when you are finished using the library.
@@ -103,11 +103,11 @@ The free function has the following prototype:
       void* user_data);
 
 After you successfully added some sources you can get the compiled rules
-using the :c:func:`yr_compiler_get_rules()` function. You'll get a pointer to
+using the :c:func:`yr_compiler_get_rules` function. You'll get a pointer to
 a :c:type:`YR_RULES` structure which can be used to scan your data as
-described in :ref:`scanning-data`. Once :c:func:`yr_compiler_get_rules()` is
+described in :ref:`scanning-data`. Once :c:func:`yr_compiler_get_rules` is
 invoked you can not add more sources to the compiler, but you can get multiple
-instances of the compiled rules by calling :c:func:`yr_compiler_get_rules()`
+instances of the compiled rules by calling :c:func:`yr_compiler_get_rules`
 multiple times.
 
 Each instance of :c:type:`YR_RULES` must be destroyed with
@@ -166,7 +166,7 @@ should put the read data, or where the ``write`` function will find the data
 that needs to be written to the stream. In both cases ``size`` is the size of
 each element being read or written and ``count`` the number of elements. The
 total size of the data being read or written is ``size`` * ``count``. Both
-functions must return the total size of the data read/written.
+functions must return the total number of elements read or written.
 
 The ``user_data`` pointer is the same you specified in the
 :c:type:`YR_STREAM` structure. You can use it to pass arbitrary data to your
@@ -508,8 +508,10 @@ Functions
 
 .. c:function:: int yr_rules_save(YR_RULES* rules, const char* filename)
 
-  Save compiled *rules* into the file specified by *filename*. Returns one of the
-  following error codes:
+  Save compiled *rules* into the file specified by *filename*. Only rules
+  obtained from :c:func:`yr_compiler_get_rules` can be saved. Those obtained
+  from :c:func:`yr_rules_load` or :c:func:`yr_rules_load_stream` can not be
+  saved. Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
 
@@ -519,7 +521,10 @@ Functions
 
   .. versionadded:: 3.4.0
 
-  Save compiled *rules* into *stream*. Returns one of the following error codes:
+  Save compiled *rules* into *stream*. Only rules obtained from
+  :c:func:`yr_compiler_get_rules` can be saved. Those obtained from
+  :c:func:`yr_rules_load` or :c:func:`yr_rules_load_stream` can not be saved.
+  Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
 
@@ -544,7 +549,9 @@ Functions
 
   .. versionadded:: 3.4.0
 
-  Load compiled rules from *stream*. Returns one of the following error codes:
+  Load compiled rules from *stream*. Rules loaded this way can not be saved
+  back using :c:func:`yr_rules_save_stream`. Returns one of the following error
+  codes:
 
     :c:macro:`ERROR_SUCCESS`
 

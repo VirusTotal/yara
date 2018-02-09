@@ -928,7 +928,7 @@ int yr_ac_compile(
       sizeof(YR_AC_MATCH_TABLE_ENTRY),
       (void**) &tables->matches));
 
-  FAIL_ON_ERROR(yr_arena_make_relocatable(
+  FAIL_ON_ERROR(yr_arena_make_ptr_relocatable(
       arena,
       tables->matches,
       offsetof(YR_AC_MATCH_TABLE_ENTRY, match),
@@ -944,7 +944,7 @@ int yr_ac_compile(
         sizeof(YR_AC_MATCH_TABLE_ENTRY),
         (void**) &ptr));
 
-    FAIL_ON_ERROR(yr_arena_make_relocatable(
+    FAIL_ON_ERROR(yr_arena_make_ptr_relocatable(
         arena,
         ptr,
         offsetof(YR_AC_MATCH_TABLE_ENTRY, match),
