@@ -36,52 +36,116 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils.h"
 
-// MAX_THREADS is the number of threads that can use a YR_RULES
-// object simultaneously.
-
-#ifndef MAX_THREADS
-#define MAX_THREADS 32
-#endif
-
-
 #ifndef MAX_PATH
 #define MAX_PATH 1024
 #endif
 
+// Maximum number of threads that can use a YR_RULES structure simultaneously.
+// Increasing this number also increase memory usage as each YR_STRING structure
+// has an array with MAX_THREADS entries for storing pointers to YR_MATCH
+// structures.
+#ifndef MAX_THREADS
+#define MAX_THREADS 32
+#endif
+
+// Capacity of the buffer used for storing compiler error messages. Messages
+// will be truncated at this size.
+#ifndef MAX_COMPILER_ERROR_EXTRA_INFO
 #define MAX_COMPILER_ERROR_EXTRA_INFO   256
-#define MAX_ATOM_LENGTH                 4  // Max: 255
+#endif
+
+// Maximum size for the substring (atoms) extracted from strings and regular
+// expressions and put into the Aho-Corasick automaton. The maximum allows size
+// for this constant is 255.
+#ifndef MAX_ATOM_LENGTH
+#define MAX_ATOM_LENGTH                 4
+#endif
+
+// Maximum number of nested "for" loops in rule. Rules ith nested loops
+// exceeding this number will be rejected by the compiler.
+#ifndef MAX_LOOP_NESTING
 #define MAX_LOOP_NESTING                4
+#endif
+
+#ifndef MAX_ARENA_PAGES
 #define MAX_ARENA_PAGES                 32
+#endif
+
+// Maximum number of nested included files.
+#ifndef MAX_INCLUDE_DEPTH
 #define MAX_INCLUDE_DEPTH               16
+#endif
+
+// Maximum number of matches allowed for a string. If more matches are found
+// the scan will fail with ERROR_TOO_MANY_MATCHES.
+#ifndef MAX_STRING_MATCHES
 #define MAX_STRING_MATCHES              1000000
+#endif
+
+// Maximum number of argument that a function in a YARA module can have.
+#ifndef MAX_FUNCTION_ARGS
 #define MAX_FUNCTION_ARGS               128
-#define MAX_FAST_RE_STACK               300
+#endif
+
+// How many overloaded functions can share the same name in a YARA module.
+#ifndef MAX_OVERLOADED_FUNCTIONS
 #define MAX_OVERLOADED_FUNCTIONS        10
+#endif
+
+// Size of the stack used by yr_re_fast_exec.
+#ifndef MAX_FAST_RE_STACK
+#define MAX_FAST_RE_STACK               300
+#endif
+
+// Maximum number of bytes that will be copied into YR_MATCH for a matching
+// string.
+#ifndef MAX_MATCH_DATA
 #define MAX_MATCH_DATA                  512
+#endif
 
-#define LOOP_LOCAL_VARS                 4
+// Regular expressions like /foo.{x,y}bar/ are split in two separate ones /foo/
+// and /bar/ if x is larger than STRING_CHAINING_THRESHOLD. This also applies to
+// hex strings like { 01 02 03 [x-y] 004 05 06 }.
+#ifndef STRING_CHAINING_THRESHOLD
 #define STRING_CHAINING_THRESHOLD       200
-#define LEX_BUF_SIZE                    8192
+#endif
 
+// Size of the buffer used by the lexer for storing strings like include file
+// paths and regular expressions.
+#ifndef LEX_BUF_SIZE
+#define LEX_BUF_SIZE                    8192
+#endif
 
 // Maximum allowed split ID, also limiting the number of split instructions
 // allowed in a regular expression. This number can't be increased
 // over 255 without changing RE_SPLIT_ID_TYPE.
+#ifndef RE_MAX_SPLIT_ID
 #define RE_MAX_SPLIT_ID                 128
+#endif
 
 // Maximum stack size for regexp evaluation
+#ifndef RE_MAX_STACK
 #define RE_MAX_STACK                    1024
+#endif
 
 // Maximum code size for a compiled regexp
+#ifndef RE_MAX_CODE_SIZE
 #define RE_MAX_CODE_SIZE                32768
+#endif
 
 // Maximum input size scanned by yr_re_exec
+#ifndef RE_SCAN_LIMIT
 #define RE_SCAN_LIMIT                   4096
+#endif
 
 // Maximum number of fibers
+#ifndef RE_MAX_FIBERS
 #define RE_MAX_FIBERS                   1024
+#endif
 
 // Maximum number of levels in regexp's AST
+#ifndef RE_MAX_AST_LEVELS
 #define RE_MAX_AST_LEVELS               5000
+#endif
 
 #endif
