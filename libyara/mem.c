@@ -27,14 +27,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#include <yara/mem.h>
+#include <yara/error.h>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 
 #include <windows.h>
 #include <string.h>
-
-#include <yara/error.h>
 
 static HANDLE hHeap;
 
@@ -119,8 +118,6 @@ char* yr_strndup(const char *str, size_t n)
 #include <string.h>
 #include <stdio.h>
 
-#include <yara/error.h>
-
 int yr_heap_alloc(void)
 {
   return ERROR_SUCCESS;
@@ -167,5 +164,26 @@ char* yr_strndup(const char *str, size_t n)
 {
   return strndup(str, n);
 }
+
+
+#if defined(JEMALLOC)
+#include <jemalloc/jemalloc.h>
+
+void yr_mem_stats(YR_MEM_STATS* ms)
+{
+  uint64_t epoch = 1;
+  size_t sz = sizeof(epoch);
+
+  mallctl("epoch", &epoch, &sz, &epoch, sz);
+
+  sz = sizeof(size_t);
+
+  mallctl("stats.allocated", &ms->allocated, &sz, NULL, 0);
+  mallctl("stats.active", &ms->active, &sz, NULL, 0);
+  mallctl("stats.resident", &ms->resident, &sz, NULL, 0);
+  mallctl("stats.mapped", &ms->mapped, &sz, NULL, 0);
+  mallctl("stats.metadata", &ms->metadata, &sz, NULL, 0);
+}
+#endif
 
 #endif

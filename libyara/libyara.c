@@ -227,7 +227,6 @@ YR_API int yr_finalize(void)
   FAIL_ON_ERROR(yr_heap_free());
 
   #if defined(JEMALLOC)
-  malloc_stats_print(NULL, NULL, NULL);
   mallctl("prof.dump", NULL, NULL, NULL, 0);
   #endif
 

@@ -36,6 +36,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/rules.h>
 
 
+#define LOOP_LOCAL_VARS      4
+
 #define UNDEFINED           0xFFFABADAFABADAFFLL
 #define IS_UNDEFINED(x)     ((size_t)(x) == (size_t) UNDEFINED)
 

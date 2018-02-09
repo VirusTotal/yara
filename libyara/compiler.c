@@ -189,34 +189,44 @@ YR_API int yr_compiler_create(
     result = yr_hash_table_create(101, &new_compiler->strings_table);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(65536, 0, &new_compiler->sz_arena);
+    result = yr_arena_create(
+        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->sz_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(65536, 0, &new_compiler->rules_arena);
+    result = yr_arena_create(
+        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->rules_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(65536, 0, &new_compiler->strings_arena);
+    result = yr_arena_create(
+        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->strings_arena);
 
   if (result == ERROR_SUCCESS)
-      result = yr_arena_create(65536, 0, &new_compiler->code_arena);
+      result = yr_arena_create(
+        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->code_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(65536, 0, &new_compiler->re_code_arena);
+    result = yr_arena_create(
+        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->re_code_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(65536, 0, &new_compiler->externals_arena);
+    result = yr_arena_create(
+        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->externals_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(65536, 0, &new_compiler->namespaces_arena);
+    result = yr_arena_create(
+        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->namespaces_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(65536, 0, &new_compiler->metas_arena);
+    result = yr_arena_create(
+        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->metas_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(65536, 0, &new_compiler->automaton_arena);
+    result = yr_arena_create(
+        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->automaton_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(65536, 0, &new_compiler->matches_arena);
+    result = yr_arena_create(
+        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->matches_arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_ac_automaton_create(&new_compiler->automaton);
@@ -586,7 +596,7 @@ static int _yr_compiler_compile_rules(
       &tables);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(1024, 0, &arena);
+    result = yr_arena_create(1024, ARENA_FLAGS_RELOCATABLE, &arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_allocate_struct(

@@ -36,21 +36,27 @@ case $host_os in
              # are in /usr/local/opt/openssl/include
              CFLAGS="$CFLAGS -DUSE_MACH_PROC -I/usr/local/opt/openssl/include"
              LDFLAGS="$LDFLAGS -L/usr/local/opt/openssl/lib"
-             proc_interface=mach ;;
+             proc_interface=mach
+             jemalloc_prefix=je_ ;;
     mingw*) CFLAGS="$CFLAGS -DUSE_WINDOWS_PROC"
-            proc_interface=windows ;;
+            proc_interface=windows
+            jemalloc_prefix= ;;
     linux*|netbsd*|dragonfly*|kfreebsd*)
             CFLAGS="$CFLAGS -DUSE_LINUX_PROC"
-            proc_interface=linux ;;
+            proc_interface=linux
+            jemalloc_prefix=  ;;
     freebsd*)
             CFLAGS="$CFLAGS -DUSE_FREEBSD_PROC"
-            proc_interface=freebsd ;;
+            proc_interface=freebsd
+            jemalloc_prefix= ;;
     openbsd*)
             CFLAGS="$CFLAGS -DUSE_OPENBSD_PROC"
-            proc_interface=openbsd ;;
+            proc_interface=openbsd
+            jemalloc_prefix= ;;
     *)
             CFLAGS="$CFLAGS -DUSE_NO_PROC"
-            proc_interface=none ;;
+            proc_interface=none
+            jemalloc_prefix= ;;
 esac
 
 AC_C_BIGENDIAN
@@ -104,9 +110,10 @@ AC_ARG_ENABLE([jemalloc],
   [AS_HELP_STRING([--enable-jemalloc],
     [enable jemalloc to debug heap-related issues])],
   [if test x$enableval = xyes; then
-    AC_CHECK_LIB(jemalloc, malloc_stats_print,,
-      AC_MSG_ERROR([please install jemalloc library]))
-    CFLAGS="$CFLAGS -DJEMALLOC"
+      mallctl=mallctl
+      AC_CHECK_LIB(jemalloc, $jemalloc_prefix$mallctl,,
+        AC_MSG_ERROR([please install jemalloc library]))
+    CFLAGS="$CFLAGS -DJEMALLOC -Dmallctl=$jemalloc_prefix$mallctl"
   fi])
 
 AC_ARG_ENABLE([cuckoo],
