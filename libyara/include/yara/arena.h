@@ -159,8 +159,8 @@ int yr_arena_load_stream(
 
 
 int yr_arena_save_stream(
-  YR_ARENA* arena,
-  YR_STREAM* stream);
+    YR_ARENA* arena,
+    YR_STREAM* stream);
 
 
 int yr_arena_duplicate(
