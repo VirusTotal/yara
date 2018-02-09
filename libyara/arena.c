@@ -907,7 +907,8 @@ int yr_arena_duplicate(
 // yr_arena_load_stream
 //
 // Loads an arena from a stream. The resulting arena is not relocatable, which
-// implies that the arena can't be duplicated with yr_arena_duplicate.
+// implies that the arena can't be duplicated with yr_arena_duplicate nor
+// saved with yr_arena_save_stream.
 //
 // Args:
 //    YR_STREAM* stream  - Pointer to stream object
@@ -1034,8 +1035,8 @@ int yr_arena_load_stream(
 //
 
 int yr_arena_save_stream(
-  YR_ARENA* arena,
-  YR_STREAM* stream)
+    YR_ARENA* arena,
+    YR_STREAM* stream)
 {
   YR_ARENA_PAGE* page;
   YR_RELOC* reloc;
@@ -1046,8 +1047,9 @@ int yr_arena_save_stream(
   uint8_t** reloc_address;
   uint8_t* reloc_target;
 
-  // Only coalesced arenas can be saved.
+  // Only coalesced and relocatable arenas can be saved.
   assert(arena->flags & ARENA_FLAGS_COALESCED);
+  assert(arena->flags & ARENA_FLAGS_RELOCATABLE);
 
   page = arena->page_list_head;
   reloc = page->reloc_list_head;
