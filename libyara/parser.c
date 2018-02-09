@@ -137,7 +137,7 @@ int yr_parser_emit_with_arg_reloc(
         (void**) &ptr);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_make_relocatable(
+    result = yr_arena_make_ptr_relocatable(
         yyget_extra(yyscanner)->code_arena,
         ptr,
         0,
