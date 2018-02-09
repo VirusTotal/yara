@@ -35,9 +35,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/integers.h>
 #include <yara/stream.h>
 
-#define ARENA_FLAGS_FIXED_SIZE        1
-#define ARENA_FLAGS_COALESCED         2
-#define ARENA_FLAGS_RELOCATABLE       4
+// Indicated that the arena is self-contained and stored in a single page. A
+// self-contained arenas is one that doesn't contains any pointers to outside
+// data. All pointers in a self-contained arena points at some address within
+// the arena.
+#define ARENA_FLAGS_COALESCED         1
+
+// Each pages of an arena marked with this flag maintain a list of YR_RELOC
+// structures for keeping track of pointers stored within the arena. When the
+// arena is relocated this allows to fix those pointers that pointed to some
+// address within the relocated arena.
+#define ARENA_FLAGS_RELOCATABLE       2
 
 #define ARENA_FILE_VERSION       ((16 << 16) | MAX_THREADS)
 

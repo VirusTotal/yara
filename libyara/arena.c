@@ -536,9 +536,6 @@ int yr_arena_reserve_memory(
 
   if (size > free_space(arena->current_page))
   {
-    if (arena->flags & ARENA_FLAGS_FIXED_SIZE)
-      return ERROR_INSUFFICIENT_MEMORY;
-
     // Requested space is bigger than current page's empty space,
     // lets calculate the size for a new page.
 
