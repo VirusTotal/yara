@@ -97,11 +97,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_FAST_RE_STACK               300
 #endif
 
-// Maximum number of bytes that will be copied into YR_MATCH for a matching
-// string.
-#ifndef MAX_MATCH_DATA
-#define MAX_MATCH_DATA                  512
-#endif
 
 // Regular expressions like /foo.{x,y}bar/ are split in two separate ones /foo/
 // and /bar/ if x is larger than STRING_CHAINING_THRESHOLD. This also applies to

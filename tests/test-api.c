@@ -202,6 +202,76 @@ void test_max_string_per_rules()
 }
 
 
+int test_max_match_data_callback(
+    int message,
+    void* message_data,
+    void* user_data)
+{
+  if (message == CALLBACK_MSG_RULE_MATCHING)
+  {
+    YR_RULE* r = (YR_RULE*) message_data;
+    YR_STRING* s;
+
+    yr_rule_strings_foreach(r, s)
+    {
+      YR_MATCH* m;
+
+      yr_string_matches_foreach(s, m)
+      {
+        if (m->data_length > 0)
+          return CALLBACK_ERROR;
+      }
+    }
+  }
+
+  return CALLBACK_CONTINUE;
+}
+
+void test_max_match_data()
+{
+  YR_RULES* rules;
+
+  uint32_t new_max_match_data = 0;
+  uint32_t old_max_match_data;
+
+  char* rules_str = " \
+    rule t { strings: $a = \"foobar\" condition: $a }";
+
+  yr_initialize();
+
+  yr_get_configuration(
+      YR_CONFIG_MAX_MATCH_DATA,
+      (void*) &old_max_match_data);
+
+  yr_set_configuration(
+      YR_CONFIG_MAX_MATCH_DATA,
+      (void*) &new_max_match_data);
+
+  if (compile_rule(rules_str, &rules) != ERROR_SUCCESS)
+  {
+    perror("compile_rule");
+    exit(EXIT_FAILURE);
+  }
+
+  int err = yr_rules_scan_mem(
+      rules,
+      (const uint8_t *) "foobar",
+      6,
+      0,
+      test_max_match_data_callback,
+      NULL,
+      0);
+
+  if (err != ERROR_SUCCESS)
+  {
+    fprintf(stderr, "test_max_match_data failed");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_finalize();
+}
+
+
 void test_save_load_rules()
 {
   YR_COMPILER* compiler = NULL;
@@ -426,6 +496,7 @@ int main(int argc, char** argv)
   test_disabled_rules();
   test_file_descriptor();
   test_max_string_per_rules();
+  test_max_match_data();
   test_include_callback();
   test_save_load_rules();
   test_scanner();
