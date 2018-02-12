@@ -319,6 +319,12 @@ static int _yr_scan_verify_chained_string_match(
 
   if (add_match)
   {
+    uint32_t max_match_data;
+
+    FAIL_ON_ERROR(yr_get_configuration(
+        YR_CONFIG_MAX_MATCH_DATA,
+        &max_match_data))
+
     if (STRING_IS_CHAIN_TAIL(matching_string))
     {
       // Chain tails must be chained to some other string
@@ -365,7 +371,7 @@ static int _yr_scan_verify_chained_string_match(
           match->match_length = (int32_t) \
               (match_offset - match->offset + match_length);
 
-          match->data_length = yr_min(match->match_length, MAX_MATCH_DATA);
+          match->data_length = yr_min(match->match_length, max_match_data);
 
           FAIL_ON_ERROR(yr_arena_write_data(
               context->matches_arena,
@@ -400,13 +406,20 @@ static int _yr_scan_verify_chained_string_match(
           sizeof(YR_MATCH),
           (void**) &new_match));
 
-      new_match->data_length = yr_min(match_length, MAX_MATCH_DATA);
+      new_match->data_length = yr_min(match_length, max_match_data);
 
-      FAIL_ON_ERROR(yr_arena_write_data(
-          context->matches_arena,
-          match_data,
-          new_match->data_length,
-          (void**) &new_match->data));
+      if (new_match->data_length > 0)
+      {
+        FAIL_ON_ERROR(yr_arena_write_data(
+            context->matches_arena,
+            match_data,
+            new_match->data_length,
+            (void**) &new_match->data));
+      }
+      else
+      {
+        new_match->data = NULL;
+      }
 
       new_match->base = match_base;
       new_match->offset = match_offset;
@@ -486,6 +499,12 @@ static int _yr_scan_match_callback(
   }
   else
   {
+    uint32_t max_match_data;
+
+    FAIL_ON_ERROR(yr_get_configuration(
+        YR_CONFIG_MAX_MATCH_DATA,
+        &max_match_data))
+
     if (string->matches[tidx].count == 0)
     {
       // If this is the first match for the string, put the string in the
@@ -503,13 +522,20 @@ static int _yr_scan_match_callback(
         sizeof(YR_MATCH),
         (void**) &new_match));
 
-    new_match->data_length = yr_min(match_length, MAX_MATCH_DATA);
+    new_match->data_length = yr_min(match_length, max_match_data);
 
-    FAIL_ON_ERROR(yr_arena_write_data(
-        callback_args->context->matches_arena,
-        match_data,
-        new_match->data_length,
-        (void**) &new_match->data));
+    if (new_match->data_length > 0)
+    {
+      FAIL_ON_ERROR(yr_arena_write_data(
+          callback_args->context->matches_arena,
+          match_data,
+          new_match->data_length,
+          (void**) &new_match->data));
+    }
+    else
+    {
+      new_match->data = NULL;
+    }
 
     if (result == ERROR_SUCCESS)
     {
