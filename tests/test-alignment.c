@@ -79,14 +79,15 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_MATCHES, 8,  head);
   CHECK_OFFSET(YR_MATCHES, 16, tail);
 
-  CHECK_SIZE(YR_STRING, 56 + 2 * 24 /* YR_MATCHES */ * MAX_THREADS);
+  CHECK_SIZE(YR_STRING, 64 + 2 * 24 /* YR_MATCHES */ * MAX_THREADS);
   CHECK_OFFSET(YR_STRING, 4,  length);
   CHECK_OFFSET(YR_STRING, 8,  identifier);
   CHECK_OFFSET(YR_STRING, 16, string);
   CHECK_OFFSET(YR_STRING, 24, chained_to);
-  CHECK_OFFSET(YR_STRING, 32, chain_gap_min);
-  CHECK_OFFSET(YR_STRING, 36, chain_gap_max);
-  CHECK_OFFSET(YR_STRING, 40, fixed_offset);
+  CHECK_OFFSET(YR_STRING, 32, rule);
+  CHECK_OFFSET(YR_STRING, 40, chain_gap_min);
+  CHECK_OFFSET(YR_STRING, 44, chain_gap_max);
+  CHECK_OFFSET(YR_STRING, 48, fixed_offset);
 
   CHECK_SIZE(YR_RULE, 16 + 4 * MAX_THREADS + 40);
   CHECK_OFFSET(YR_RULE, 4,                        t_flags);
