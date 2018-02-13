@@ -355,12 +355,11 @@ uint32_t load_encoded_field(
     int static_field,
     int instance_field)
 {
-#ifdef DEBUG_DEX_MODULE
+  #ifdef DEBUG_DEX_MODULE
   printf("[DEX] Parse encoded field start_offset:0x%zx\n", start_offset);
-#endif
+  #endif
 
-  if (!fits_in_dex(dex, dex->data + start_offset,
-                   sizeof(uint32_t) * 2))
+  if (!fits_in_dex(dex, dex->data + start_offset, sizeof(uint32_t) * 2))
     return 0;
 
   uint32_t current_size = 0;
@@ -399,30 +398,31 @@ uint32_t load_encoded_field(
       "field[%i].instance",
       index_encoded_field);
 
-#ifdef DEBUG_DEX_MODULE
+  #ifdef DEBUG_DEX_MODULE
   printf("[DEX]\tEncoded field field_idx:0x%x field_idx_diff:0x%x access_flags:0x%x\n",
-    *previous_field_idx,
-    encoded_field.field_idx_diff,
-    encoded_field.access_flags);
-#endif
+      *previous_field_idx,
+      encoded_field.field_idx_diff,
+      encoded_field.access_flags);
+  #endif
 
   uint32_t name_idx = get_integer(
       dex->object, "field_ids[%i].name_idx", *previous_field_idx);
 
-#ifdef DEBUG_DEX_MODULE
-    printf("[DEX]\tNAME_IDX 0x%x\n",
-      name_idx);
-#endif
+  #ifdef DEBUG_DEX_MODULE
+  printf("[DEX]\tNAME_IDX 0x%x\n", name_idx);
+  #endif
 
   SIZED_STRING* field_name = get_string(
       dex->object, "string_ids[%i].value", name_idx);
 
-  if (field_name != NULL) {
-#ifdef DEBUG_DEX_MODULE
+  if (field_name != NULL)
+  {
+    #ifdef DEBUG_DEX_MODULE
     printf("[DEX]\tFIELD_NAME %s NAME_IDX 0x%x\n",
-      field_name->c_string,
-      name_idx);
-#endif
+        field_name->c_string,
+        name_idx);
+    #endif
+
     set_sized_string(
         field_name->c_string,
         field_name->length,
@@ -440,13 +440,15 @@ uint32_t load_encoded_field(
   SIZED_STRING* class_name = get_string(
       dex->object, "string_ids[%i].value", descriptor_idx);
 
-  if (class_name != NULL) {
-#ifdef DEBUG_DEX_MODULE
+  if (class_name != NULL)
+  {
+    #ifdef DEBUG_DEX_MODULE
     printf("[DEX]\tCLASS_NAME %s CLASS_IDX 0x%x DESCRIPTOR_IDX 0x%x\n",
-      class_name->c_string,
-      class_idx,
-      descriptor_idx);
-#endif
+        class_name->c_string,
+        class_idx,
+        descriptor_idx);
+    #endif
+
     set_sized_string(
         class_name->c_string,
         class_name->length,
@@ -464,21 +466,22 @@ uint32_t load_encoded_field(
   SIZED_STRING* proto_name = get_string(dex->object,
       "string_ids[%i].value", shorty_idx);
 
-  if (proto_name != NULL) {
-#ifdef DEBUG_DEX_MODULE
+  if (proto_name != NULL)
+  {
+    #ifdef DEBUG_DEX_MODULE
     printf("[DEX]\tPROTO_NAME %s TYPE_IDX 0x%x SHORTY_IDX 0x%x\n",
-      proto_name->c_string,
-      type_idx,
-      shorty_idx);
-#endif
+        proto_name->c_string,
+        type_idx,
+        shorty_idx);
+    #endif
+
     set_sized_string(
         proto_name->c_string,
         proto_name->length,
         dex->object,
         "field[%i].proto",
-        index_encoded_field);    
+        index_encoded_field);
   }
-
 
   return current_size;
 }
@@ -491,12 +494,11 @@ uint32_t load_encoded_method(
     int direct_method,
     int virtual_method)
 {
-#ifdef DEBUG_DEX_MODULE
+  #ifdef DEBUG_DEX_MODULE
   printf("[DEX] Parse encoded method start_offset:0x%zx\n", start_offset);
-#endif
+  #endif
 
-  if (!fits_in_dex(dex, dex->data + start_offset,
-                   sizeof(uint32_t) * 3))
+  if (!fits_in_dex(dex, dex->data + start_offset, sizeof(uint32_t) * 3))
     return 0;
 
   uint32_t current_size = 0;
@@ -543,37 +545,39 @@ uint32_t load_encoded_method(
       "method[%i].virtual",
       index_encoded_method);
 
-#ifdef DEBUG_DEX_MODULE
+  #ifdef DEBUG_DEX_MODULE
   printf("[DEX]\tEncoded method method_idx:0x%x method_idx_diff:0x%x access_flags:0x%x code_off:0x%x\n",
-    *previous_method_idx,
-    encoded_method.method_idx_diff,
-    encoded_method.access_flags,
-    encoded_method.code_off);
-#endif
+      *previous_method_idx,
+      encoded_method.method_idx_diff,
+      encoded_method.access_flags,
+      encoded_method.code_off);
+  #endif
 
   uint32_t name_idx = get_integer(
       dex->object, "method_ids[%i].name_idx", *previous_method_idx);
 
-#ifdef DEBUG_DEX_MODULE
+  #ifdef DEBUG_DEX_MODULE
   printf("[DEX]\tNAME_IDX 0x%x\n", name_idx);
-#endif
+  #endif
 
-    SIZED_STRING* method_name = get_string(
-        dex->object,  "string_ids[%i].value", name_idx);
-    
-    if (method_name != NULL) {
-#ifdef DEBUG_DEX_MODULE
+  SIZED_STRING* method_name = get_string(
+      dex->object,  "string_ids[%i].value", name_idx);
+
+  if (method_name != NULL)
+  {
+    #ifdef DEBUG_DEX_MODULE
     printf("[DEX]\tMETHOD_NAME %s NAME_IDX 0x%x\n",
-      method_name->c_string,
-      name_idx);
-#endif
-      set_sized_string(
+        method_name->c_string,
+        name_idx);
+    #endif
+
+    set_sized_string(
         method_name->c_string,
         method_name->length,
         dex->object,
         "method[%i].name",
         index_encoded_method);
-    }
+  }
 
   uint32_t class_idx = get_integer(
       dex->object, "method_ids[%i].class_idx", *previous_method_idx);
@@ -584,13 +588,15 @@ uint32_t load_encoded_method(
   SIZED_STRING* class_name = get_string(
       dex->object, "string_ids[%i].value", descriptor_idx);
 
-  if (class_name != NULL) {
-#ifdef DEBUG_DEX_MODULE
+  if (class_name != NULL)
+  {
+    #ifdef DEBUG_DEX_MODULE
     printf("[DEX]\tCLASS_NAME %s CLASS_IDX 0x%x DESCRIPTOR_IDX:0x%x\n",
-      class_name->c_string,
-      class_idx,
-      descriptor_idx);
-#endif
+        class_name->c_string,
+        class_idx,
+        descriptor_idx);
+    #endif
+
     set_sized_string(
         class_name->c_string,
         class_name->length,
@@ -608,13 +614,15 @@ uint32_t load_encoded_method(
   SIZED_STRING* proto_name = get_string(
       dex->object, "string_ids[%i].value", shorty_idx);
 
-  if (proto_name != NULL) {
-#ifdef DEBUG_DEX_MODULE
+  if (proto_name != NULL)
+  {
+    #ifdef DEBUG_DEX_MODULE
     printf("[DEX]\tPROTO_NAME %s CLASS_IDX 0x%x DESCRIPTOR_IDX:0x%x\n",
-      proto_name->c_string,
-      class_idx,
-      descriptor_idx);
-#endif
+        proto_name->c_string,
+        class_idx,
+        descriptor_idx);
+    #endif
+
     set_sized_string(
         proto_name->c_string,
         proto_name->length, dex->object,
@@ -624,12 +632,12 @@ uint32_t load_encoded_method(
 
   if (encoded_method.code_off != 0)
   {
-#ifdef DEBUG_DEX_MODULE
+    #ifdef DEBUG_DEX_MODULE
     printf("[DEX]\t\tParse CODE item\n");
-#endif
+    #endif
 
     if (struct_fits_in_dex(
-      dex, dex->data + encoded_method.code_off, sizeof(code_item_t))) 
+      dex, dex->data + encoded_method.code_off, sizeof(code_item_t)))
     {
       code_item_t* code_item = (code_item_t*) (
           dex->data + encoded_method.code_off);
@@ -650,7 +658,7 @@ uint32_t load_encoded_method(
       if (fits_in_dex(
         dex,
         dex->data + encoded_method.code_off + sizeof(code_item_t),
-        code_item->insns_size * 2)) 
+        code_item->insns_size * 2))
       {
         set_sized_string(
           (const char *)(dex->data + encoded_method.code_off + sizeof(code_item_t)),
@@ -687,9 +695,9 @@ void dex_parse(
                    dex_header->string_ids_size * sizeof(string_id_item_t)))
     return;
 
-#ifdef DEBUG_DEX_MODULE
+  #ifdef DEBUG_DEX_MODULE
   printf("[DEX] Parse STRING ID section\n");
-#endif
+  #endif
 
   // Get information about the String ID section
   for (i = 0; i < dex_header->string_ids_size; i++)
@@ -699,10 +707,10 @@ void dex_parse(
         dex_header->string_ids_offset +
         i * sizeof(string_id_item_t));
 
-#ifdef DEBUG_DEX_MODULE
-    printf("[DEX] STRING ID item data_offset:0x%x\n", 
-      string_id_item->string_data_offset);
-#endif
+    #ifdef DEBUG_DEX_MODULE
+    printf("[DEX] STRING ID item data_offset:0x%x\n",
+        string_id_item->string_data_offset);
+    #endif
 
     if (!fits_in_dex(dex, dex->data + string_id_item->string_data_offset,
                      sizeof(uint32_t)))
@@ -711,9 +719,9 @@ void dex_parse(
     uint32_t value = (uint32_t)read_uleb128(
         (dex->data + string_id_item->string_data_offset), &uleb128_size);
 
-#ifdef DEBUG_DEX_MODULE
+    #ifdef DEBUG_DEX_MODULE
     printf("[DEX] STRING ID item size:0x%x\n", value);
-#endif
+    #endif
 
     if (!fits_in_dex(dex, dex->data + string_id_item->string_data_offset,
                      value))
@@ -738,9 +746,9 @@ void dex_parse(
                    dex_header->type_ids_size * sizeof(type_id_item_t)))
     return;
 
-#ifdef DEBUG_DEX_MODULE
+  #ifdef DEBUG_DEX_MODULE
   printf("[DEX] Parse TYPE ID section\n");
-#endif
+  #endif
 
   // Get information about the Type ID section
   for (i = 0; i < dex_header->type_ids_size; i++)
@@ -759,9 +767,9 @@ void dex_parse(
                    dex_header->proto_ids_size * sizeof(proto_id_item_t)))
     return;
 
-#ifdef DEBUG_DEX_MODULE
+  #ifdef DEBUG_DEX_MODULE
   printf("[DEX] Parse PROTO ID section\n");
-#endif
+  #endif
 
   // Get information about the Proto ID section
   for (i = 0; i < dex_header->proto_ids_size; i++)
@@ -781,9 +789,9 @@ void dex_parse(
                    dex_header->field_ids_size * sizeof(field_id_item_t)))
     return;
 
-#ifdef DEBUG_DEX_MODULE
+  #ifdef DEBUG_DEX_MODULE
   printf("[DEX] Parse FIELD ID section\n");
-#endif
+  #endif
 
   // Get information about the Field ID section
   for (i = 0; i < dex_header->field_ids_size; i++)
@@ -803,9 +811,9 @@ void dex_parse(
                    dex_header->method_ids_size * sizeof(method_id_item_t)))
     return;
 
-#ifdef DEBUG_DEX_MODULE
+  #ifdef DEBUG_DEX_MODULE
   printf("[DEX] Parse METHOD ID section\n");
-#endif
+  #endif
 
   // Get information about the Method ID section
   for (i = 0; i < dex_header->method_ids_size; i++)
@@ -823,9 +831,9 @@ void dex_parse(
                 "method_ids[%i].name_idx", i);
   }
 
-#ifdef DEBUG_DEX_MODULE
+  #ifdef DEBUG_DEX_MODULE
   printf("[DEX] Parse MAP List ID section\n");
-#endif
+  #endif
 
   // Get information about the Map List ID section
   if (dex_header->map_offset != 0 &&
@@ -862,9 +870,9 @@ void dex_parse(
                    dex_header->class_defs_size * sizeof(class_id_item_t)))
     return;
 
-#ifdef DEBUG_DEX_MODULE
+  #ifdef DEBUG_DEX_MODULE
   printf("[DEX] Parse CLASS ID section\n");
-#endif
+  #endif
 
   // Get information about the Class ID section
   for (i = 0; i < dex_header->class_defs_size; i++)
@@ -874,7 +882,7 @@ void dex_parse(
         dex_header->class_defs_offset +
         i * sizeof(class_id_item_t));
 
-#ifdef DEBUG_DEX_MODULE
+    #ifdef DEBUG_DEX_MODULE
     printf("[DEX] CLASS ID item class_idx:0x%x access_flags:0x%x " \
            "super_class_idx:0x%x interfaces_off:0x%x source_file_idx:0x%x "\
            "annotations_offset:0x%x class_data_offset:0x%x "\
@@ -887,7 +895,7 @@ void dex_parse(
            class_id_item->annotations_offset,
            class_id_item->class_data_offset,
            class_id_item->static_values_offset);
-#endif
+    #endif
 
     set_integer(class_id_item->class_idx, dex->object,
                 "class_defs[%i].class_idx", i);
@@ -948,9 +956,9 @@ void dex_parse(
         class_data_item.virtual_methods_size, dex->object,
         "class_data_item[%i].virtual_methods_size", index_class_data_item);
 
-#ifdef DEBUG_DEX_MODULE
+      #ifdef DEBUG_DEX_MODULE
       printf("[DEX] CLASS DATA item static fields\n");
-#endif
+      #endif
 
       uint32_t previous_field_idx = 0;
       for (j = 0; j < class_data_item.static_fields_size; j++)
@@ -965,9 +973,9 @@ void dex_parse(
         index_encoded_field += 1;
       }
 
-#ifdef DEBUG_DEX_MODULE
+      #ifdef DEBUG_DEX_MODULE
       printf("[DEX] CLASS DATA item instance fields\n");
-#endif
+      #endif
 
       previous_field_idx = 0;
       for (j = 0; j < class_data_item.instance_fields_size; j++)
@@ -982,9 +990,9 @@ void dex_parse(
         index_encoded_field += 1;
       }
 
-#ifdef DEBUG_DEX_MODULE
+      #ifdef DEBUG_DEX_MODULE
       printf("[DEX] CLASS DATA item direct methods\n");
-#endif
+      #endif
 
       uint32_t previous_method_idx = 0;
       for (j = 0; j < class_data_item.direct_methods_size; j++)
@@ -999,9 +1007,9 @@ void dex_parse(
         index_encoded_method += 1;
       }
 
-#ifdef DEBUG_DEX_MODULE
+      #ifdef DEBUG_DEX_MODULE
       printf("[DEX] CLASS DATA item virtual methods\n");
-#endif
+      #endif
 
       previous_method_idx = 0;
       for (j = 0; j < class_data_item.virtual_methods_size; j++)
