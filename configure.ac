@@ -11,6 +11,8 @@ AC_CONFIG_MACRO_DIR([m4])
 # an empty CFLAGS
 : ${CFLAGS=""}
 
+no_std_allocator="-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free"
+
 # automake 1.12 seems to require AM_PROG_AR, but automake 1.11 doesn't
 # recognize it
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
@@ -91,29 +93,10 @@ AC_ARG_ENABLE([address-sanitizer],
   fi])
 
 AC_ARG_ENABLE([profiling],
-  [AS_HELP_STRING([--enable-profiling], [enable profiling support])],
+  [AS_HELP_STRING([--enable-profiling], [enable rules profiling support])],
   [if test x$enableval = xyes; then
     profiling_enabled=true
     CFLAGS="$CFLAGS -DPROFILING_ENABLED"
-  fi])
-
-AC_ARG_ENABLE([dmalloc],
-  [AS_HELP_STRING([--enable-dmalloc],
-    [enable dmalloc to debug heap-related issues])],
-  [if test x$enableval = xyes; then
-    AC_CHECK_LIB(dmalloc, dmalloc_malloc,,
-      AC_MSG_ERROR([please install dmalloc library]))
-    CFLAGS="$CFLAGS -DDMALLOC"
-  fi])
-
-AC_ARG_ENABLE([jemalloc],
-  [AS_HELP_STRING([--enable-jemalloc],
-    [enable jemalloc to debug heap-related issues])],
-  [if test x$enableval = xyes; then
-      mallctl=mallctl
-      AC_CHECK_LIB(jemalloc, $jemalloc_prefix$mallctl,,
-        AC_MSG_ERROR([please install jemalloc library]))
-    CFLAGS="$CFLAGS -DJEMALLOC -Dmallctl=$jemalloc_prefix$mallctl"
   fi])
 
 AC_ARG_ENABLE([cuckoo],
@@ -154,10 +137,6 @@ AC_ARG_ENABLE([macho],
     CFLAGS="$CFLAGS -DMACHO_MODULE"
   fi])
 
-AC_ARG_WITH([crypto],
-  AS_HELP_STRING([--without-crypto],
-    [ignore presence of OpenSSL and disable it]))
-
 AC_ARG_ENABLE([dex],
   [AS_HELP_STRING([--enable-dex], [enable dex module])],
   [if test x$enableval = xyes; then
@@ -171,6 +150,41 @@ AC_ARG_ENABLE([debug-dex],
     debug_dex_module=true
     CFLAGS="$CFLAGS -DDEBUG_DEX_MODULE"
   fi])
+
+AC_ARG_WITH([jemalloc],
+  [AS_HELP_STRING([--with-jemalloc],
+    [use jemalloc to debug heap-related issues])],
+  [if test x$withval = xyes; then
+    mallctl=mallctl
+    malloc_stats_print=malloc_stats_print
+    AC_CHECK_LIB(jemalloc, $jemalloc_prefix$mallctl,,
+        AC_MSG_ERROR([please install jemalloc library]))
+    CFLAGS="$CFLAGS -DJEMALLOC -Dmallctl=$jemalloc_prefix$mallctl -Dmalloc_stats_print=$jemalloc_prefix$malloc_stats_print $no_std_allocator"
+  fi])
+
+AC_ARG_WITH([tcmalloc],
+  [AS_HELP_STRING([--with-tcmalloc],
+    [use tcmalloc as the default heap allocator])],
+  [if test x$withval = xyes; then
+    if test "x$with_jemalloc" = "xyes"; then
+      AC_MSG_ERROR([Cannot compile with both tcmalloc and jemalloc])
+    fi
+    AC_CHECK_LIB(tcmalloc, tc_cfree,,
+      AC_MSG_ERROR([please install https://github.com/gperftools/gperftools]))
+    CFLAGS="$CFLAGS -DTCMALLOC $no_std_allocator"
+  fi])
+
+AC_ARG_WITH([cpu-profiler],
+  [AS_HELP_STRING([--with-cpu-profiler],
+    [compile with CPU profiling support])],
+  [if test x$withval = xyes; then
+    AC_CHECK_LIB(profiler, ProfilerStart,,
+      AC_MSG_ERROR([please install https://github.com/gperftools/gperftools]))
+  fi])
+
+AC_ARG_WITH([crypto],
+  AS_HELP_STRING([--without-crypto],
+    [ignore presence of OpenSSL and disable it]))
 
 AS_IF([test "x$with_crypto" != "xno"],
   [
