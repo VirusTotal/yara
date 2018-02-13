@@ -93,9 +93,10 @@ typedef struct _CALLBACK_ARGS
 
 typedef struct _THREAD_ARGS
 {
-  YR_RULES* rules;
-  time_t start_time;
-  int current_count;
+  YR_SCANNER*       scanner;
+  CALLBACK_ARGS     callback_args;
+  time_t            start_time;
+  int               current_count;
 
 } THREAD_ARGS;
 
@@ -339,9 +340,7 @@ static int is_directory(
 static void scan_dir(
     const char* dir,
     int recursive,
-    time_t start_time,
-    YR_RULES* rules,
-    YR_CALLBACK_FUNC callback)
+    time_t start_time)
 {
   static char path_and_mask[MAX_PATH];
 
@@ -367,7 +366,7 @@ static void scan_dir(
                strcmp(FindFileData.cFileName, ".") != 0 &&
                strcmp(FindFileData.cFileName, "..") != 0)
       {
-        scan_dir(full_path, recursive, start_time, rules, callback);
+        scan_dir(full_path, recursive, start_time);
       }
 
     } while (FindNextFile(hFind, &FindFileData));
@@ -393,9 +392,7 @@ static int is_directory(
 static void scan_dir(
     const char* dir,
     int recursive,
-    time_t start_time,
-    YR_RULES* rules,
-    YR_CALLBACK_FUNC callback)
+    time_t start_time)
 {
   DIR* dp = opendir(dir);
 
@@ -424,7 +421,7 @@ static void scan_dir(
                 strcmp(de->d_name, ".") != 0 &&
                 strcmp(de->d_name, "..") != 0)
         {
-          scan_dir(full_path, recursive, start_time, rules, callback);
+          scan_dir(full_path, recursive, start_time);
         }
       }
 
@@ -503,7 +500,7 @@ static void print_hex_string(
 }
 
 
-static void print_scanner_error(
+static void print_error(
     int error)
 {
   switch (error)
@@ -523,22 +520,51 @@ static void print_scanner_error(
       fprintf(stderr, "could not open file\n");
       break;
     case ERROR_UNSUPPORTED_FILE_VERSION:
-      fprintf(stderr, "rules were compiled with a newer version of YARA.\n");
+      fprintf(stderr, "rules were compiled with a newer version of YARA\n");
       break;
     case ERROR_CORRUPT_FILE:
       fprintf(stderr, "corrupt compiled rules file.\n");
       break;
     case ERROR_EXEC_STACK_OVERFLOW:
       fprintf(stderr, "stack overflow while evaluating condition "
-                      "(see --stack-size argument).\n");
+                      "(see --stack-size argument) \n");
       break;
     case ERROR_INVALID_EXTERNAL_VARIABLE_TYPE:
-      fprintf(stderr, "invalid type for external variable.\n");
+      fprintf(stderr, "invalid type for external variable\n");
+      break;
+    case ERROR_TOO_MANY_MATCHES:
+      fprintf(stderr, "too many matches\n");
       break;
     default:
       fprintf(stderr, "internal error: %d\n", error);
       break;
   }
+}
+
+static void print_scanner_error(
+    YR_SCANNER* scanner,
+    int error)
+{
+  YR_RULE* rule = yr_scanner_last_error_rule(scanner);
+  YR_STRING* string = yr_scanner_last_error_string(scanner);
+
+  if (rule != NULL && string != NULL)
+  {
+    fprintf(
+        stderr,
+        "string \"%s\" in rule \"%s\" caused ",
+        string->identifier,
+        rule->identifier);
+  }
+  else if (rule != NULL)
+  {
+    fprintf(
+        stderr,
+        "rule \"%s\" caused ",
+        rule->identifier);
+  }
+
+  print_error(error);
 }
 
 
@@ -791,31 +817,23 @@ static void* scanning_thread(void* param)
   THREAD_ARGS* args = (THREAD_ARGS*) param;
   char* file_path = file_queue_get();
 
-  int flags = 0;
-
-  if (fast_scan)
-    flags |= SCAN_FLAGS_FAST_MODE;
-
   while (file_path != NULL)
   {
-    CALLBACK_ARGS user_data = { file_path, 0 };
+    args->callback_args.current_count = 0;
+    args->callback_args.file_path = file_path;
 
     int elapsed_time = (int) difftime(time(NULL), args->start_time);
 
     if (elapsed_time < timeout)
     {
-      result = yr_rules_scan_file(
-          args->rules,
-          file_path,
-          flags,
-          callback,
-          &user_data,
-          timeout - elapsed_time);
+      yr_scanner_set_timeout(args->scanner, timeout - elapsed_time);
+
+      result = yr_scanner_scan_file(args->scanner, file_path);
 
       if (print_count_only)
       {
         mutex_lock(&output_mutex);
-        printf("%s: %d\n", file_path, user_data.current_count);
+        printf("%s: %d\n", file_path, args->callback_args.current_count);
         mutex_unlock(&output_mutex);
       }
 
@@ -823,7 +841,7 @@ static void* scanning_thread(void* param)
       {
         mutex_lock(&output_mutex);
         fprintf(stderr, "error scanning %s: ", file_path);
-        print_scanner_error(result);
+        print_scanner_error(args->scanner, result);
         mutex_unlock(&output_mutex);
       }
 
@@ -991,7 +1009,9 @@ int main(
 
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
+  YR_SCANNER* scanner = NULL;
 
+  int flags = 0;
   int result, i;
 
   argc = args_parse(options, argc, argv);
@@ -1049,7 +1069,6 @@ int main(
   yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
   yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
 
-
   // Try to load the rules file as a binary file containing
   // compiled rules first
 
@@ -1063,7 +1082,7 @@ int main(
       result != ERROR_COULD_NOT_OPEN_FILE &&
       result != ERROR_INVALID_FILE)
   {
-    print_scanner_error(result);
+    print_error(result);
     exit_with_code(EXIT_FAILURE);
   }
 
@@ -1084,7 +1103,7 @@ int main(
 
     if (result != ERROR_SUCCESS)
     {
-      print_scanner_error(result);
+      print_error(result);
       exit_with_code(EXIT_FAILURE);
     }
   }
@@ -1100,7 +1119,7 @@ int main(
 
     if (result != ERROR_SUCCESS)
     {
-      print_scanner_error(result);
+      print_error(result);
       exit_with_code(EXIT_FAILURE);
     }
 
@@ -1133,65 +1152,50 @@ int main(
 
   mutex_init(&output_mutex);
 
-  if (is_integer(argv[argc - 1]))
-  {
-    CALLBACK_ARGS user_data = { argv[argc - 1], 0 };
+  if (fast_scan)
+    flags |= SCAN_FLAGS_FAST_MODE;
 
-    int pid = atoi(argv[argc - 1]);
-    int flags = 0;
-
-    if (fast_scan)
-      flags |= SCAN_FLAGS_FAST_MODE;
-
-    result = yr_rules_scan_proc(
-        rules,
-        pid,
-        flags,
-        callback,
-        &user_data,
-        timeout);
-
-    if (result != ERROR_SUCCESS)
-    {
-      print_scanner_error(result);
-      exit_with_code(EXIT_FAILURE);
-    }
-
-    if (print_count_only)
-      printf("%d\n", user_data.current_count);
-  }
-  else if (is_directory(argv[argc - 1]))
+  if (is_directory(argv[argc - 1]))
   {
     if (file_queue_init() != 0)
     {
-      print_scanner_error(ERROR_INTERNAL_FATAL_ERROR);
+      print_error(ERROR_INTERNAL_FATAL_ERROR);
       exit_with_code(EXIT_FAILURE);
     }
 
     THREAD thread[MAX_THREADS];
-    THREAD_ARGS thread_args;
+    THREAD_ARGS thread_args[MAX_THREADS];
 
     time_t start_time = time(NULL);
 
-    thread_args.rules = rules;
-    thread_args.start_time = start_time;
-    thread_args.current_count = 0;
-
     for (i = 0; i < threads; i++)
     {
-      if (create_thread(&thread[i], scanning_thread, (void*) &thread_args))
+      thread_args[i].start_time = start_time;
+      thread_args[i].current_count = 0;
+
+      result = yr_scanner_create(rules, &thread_args[i].scanner);
+
+      if (result != ERROR_SUCCESS)
       {
-        print_scanner_error(ERROR_COULD_NOT_CREATE_THREAD);
+        print_error(result);
+        exit_with_code(EXIT_FAILURE);
+      }
+
+      yr_scanner_set_callback(
+          thread_args[i].scanner,
+          callback,
+          &thread_args[i].callback_args);
+
+      yr_scanner_set_flags(thread_args[i].scanner, flags);
+
+      if (create_thread(&thread[i], scanning_thread, (void*) &thread_args[i]))
+      {
+        print_error(ERROR_COULD_NOT_CREATE_THREAD);
         exit_with_code(EXIT_FAILURE);
       }
     }
 
-    scan_dir(
-        argv[argc - 1],
-        recursive_search,
-        start_time,
-        rules,
-        callback);
+    scan_dir(argv[argc - 1], recursive_search, start_time);
 
     file_queue_finish();
 
@@ -1199,29 +1203,36 @@ int main(
     for (i = 0; i < threads; i++)
       thread_join(&thread[i]);
 
+    for (i = 0; i < threads; i++)
+      yr_scanner_destroy(thread_args[i].scanner);
+
     file_queue_destroy();
   }
   else
   {
     CALLBACK_ARGS user_data = { argv[argc - 1], 0 };
 
-    int flags = 0;
+    result = yr_scanner_create(rules, &scanner);
 
-    if (fast_scan)
-      flags |= SCAN_FLAGS_FAST_MODE;
+    if (result != ERROR_SUCCESS)
+    {
+      fprintf(stderr, "error: %d\n", result);
+      exit_with_code(EXIT_FAILURE);
+    }
 
-    result = yr_rules_scan_file(
-        rules,
-        argv[argc - 1],
-        flags,
-        callback,
-        &user_data,
-        timeout);
+    yr_scanner_set_callback(scanner, callback, &user_data);
+    yr_scanner_set_flags(scanner, flags);
+    yr_scanner_set_timeout(scanner, timeout);
+
+    if (is_integer(argv[argc - 1]))
+      result = yr_scanner_scan_proc(scanner, atoi(argv[argc - 1]));
+    else
+      result = yr_scanner_scan_file(scanner, argv[argc - 1]);
 
     if (result != ERROR_SUCCESS)
     {
       fprintf(stderr, "error scanning %s: ", argv[argc - 1]);
-      print_scanner_error(result);
+      print_scanner_error(scanner, result);
       exit_with_code(EXIT_FAILURE);
     }
 
@@ -1238,6 +1249,9 @@ int main(
 _exit:
 
   unload_modules_data();
+
+  if (scanner != NULL)
+    yr_scanner_destroy(scanner);
 
   if (compiler != NULL)
     yr_compiler_destroy(compiler);
