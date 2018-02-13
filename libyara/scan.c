@@ -756,6 +756,8 @@ int yr_scan_verify_match(
 {
   YR_STRING* string = ac_match->string;
 
+  int result;
+
   if (data_size - offset <= 0)
     return ERROR_SUCCESS;
 
@@ -778,18 +780,21 @@ int yr_scan_verify_match(
 
   if (STRING_IS_LITERAL(string))
   {
-    FAIL_ON_ERROR(_yr_scan_verify_literal_match(
-        context, ac_match, data, data_size, data_base, offset));
+    result = _yr_scan_verify_literal_match(
+        context, ac_match, data, data_size, data_base, offset);
   }
   else
   {
-    FAIL_ON_ERROR(_yr_scan_verify_re_match(
-        context, ac_match, data, data_size, data_base, offset));
+    result = _yr_scan_verify_re_match(
+        context, ac_match, data, data_size, data_base, offset);
   }
 
+  if (result != ERROR_SUCCESS)
+    context->last_error_string = string;
+ 
   #ifdef PROFILING_ENABLED
   string->clock_ticks += yr_stopwatch_elapsed_ns(&stopwatch, FALSE);
   #endif
 
-  return ERROR_SUCCESS;
+  return result;
 }

@@ -202,6 +202,7 @@ typedef struct _YR_META
 } YR_META;
 
 
+struct _YR_RULE;
 struct _YR_MATCH;
 
 
@@ -223,6 +224,7 @@ typedef struct _YR_STRING
   DECLARE_REFERENCE(char*, identifier);
   DECLARE_REFERENCE(uint8_t*, string);
   DECLARE_REFERENCE(struct _YR_STRING*, chained_to);
+  DECLARE_REFERENCE(struct _YR_RULE*, rule);
 
   int32_t chain_gap_min;
   int32_t chain_gap_max;
@@ -481,8 +483,8 @@ typedef struct _YR_AC_AUTOMATON
 } YR_AC_AUTOMATON;
 
 
-typedef struct _YR_RULES {
-
+typedef struct _YR_RULES
+{
   unsigned char tidx_mask[YR_BITARRAY_NCHARS(MAX_THREADS)];
   const uint8_t* code_start;
 
@@ -538,29 +540,59 @@ typedef int (*YR_CALLBACK_FUNC)(
 
 typedef struct _YR_SCAN_CONTEXT
 {
+  // File size of the file being scanned.
   uint64_t file_size;
+
+  // Entry point of the file being scanned, if the file is PE or ELF.
   uint64_t entry_point;
 
+  // Scanning flags.
   int flags;
+
+  // Thread index for the thread using this scan context. The number of threads
+  // that can use a YR_RULES object simultaneusly is limited by the MAX_THREADS
+  // constant. Each thread using a YR_RULES get assigned a unique thread index
+  // in the range [0, MAX_THREADS)
   int tidx;
+
+  // Scan timeout in seconds.
   int timeout;
 
+  // Pointer to user-provided data passed to the callback function.
   void* user_data;
 
-  YR_RULES* rules;
-  YR_MEMORY_BLOCK_ITERATOR* iterator;
-  YR_HASH_TABLE* objects_table;
+  // Pointer to the user-provided callback function that is called when an
+  // event occurs during the scan (a rule matching, a module being loaded, etc)
   YR_CALLBACK_FUNC callback;
 
+  // Pointer to the YR_RULES object associated to this scan context.
+  YR_RULES* rules;
+
+  // Pointer to the YR_STRING causing the most recent scan error.
+  YR_STRING* last_error_string;
+
+  // Pointer to the iterator used for scanning
+  YR_MEMORY_BLOCK_ITERATOR* iterator;
+
+  // Pointer to a table mapping identifiers to YR_OBJECT structures. This table
+  // contains entries for external variables and modules.
+  YR_HASH_TABLE* objects_table;
+
+  // Arena used for storing YR_MATCH structures asociated to the matches found.
   YR_ARENA* matches_arena;
+
+  // Arena used for storing pointers to the YR_STRING struct for each matching
+  // string. The pointers are used by _yr_scanner_clean_matches.
   YR_ARENA* matching_strings_arena;
 
+  // Fiber pool used by yr_re_exec.
   RE_FIBER_POOL re_fiber_pool;
 
 } YR_SCAN_CONTEXT;
 
 
 struct _YR_OBJECT;
+
 
 typedef union _YR_VALUE
 {

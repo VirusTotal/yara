@@ -316,6 +316,7 @@ static int _yr_parser_write_string(
       offsetof(YR_STRING, identifier),
       offsetof(YR_STRING, string),
       offsetof(YR_STRING, chained_to),
+      offsetof(YR_STRING, rule),
       EOL);
 
   if (result != ERROR_SUCCESS)
@@ -358,6 +359,7 @@ static int _yr_parser_write_string(
   (*string)->g_flags = flags;
   (*string)->chained_to = NULL;
   (*string)->fixed_offset = UNDEFINED;
+  (*string)->rule = compiler->current_rule;
 
   #ifdef PROFILING_ENABLED
   (*string)->clock_ticks = 0;

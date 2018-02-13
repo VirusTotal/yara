@@ -600,3 +600,20 @@ YR_API int yr_scanner_scan_proc(
 
   return result;
 }
+
+
+YR_API YR_STRING* yr_scanner_last_error_string(
+    YR_SCANNER* scanner)
+{
+  return scanner->last_error_string;
+}
+
+
+YR_API YR_RULE* yr_scanner_last_error_rule(
+    YR_SCANNER* scanner)
+{
+  if (scanner->last_error_string == NULL)
+    return NULL;
+
+  return scanner->last_error_string->rule;
+}

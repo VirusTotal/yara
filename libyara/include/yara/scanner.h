@@ -106,4 +106,17 @@ YR_API int yr_scanner_scan_fd(
     YR_SCANNER* scanner,
     YR_FILE_DESCRIPTOR fd);
 
+
+YR_API int yr_scanner_scan_proc(
+    YR_SCANNER* scanner,
+    int pid);
+
+
+YR_API YR_RULE* yr_scanner_last_error_rule(
+    YR_SCANNER* scanner);
+
+
+YR_API YR_STRING* yr_scanner_last_error_string(
+    YR_SCANNER* scanner);
+
 #endif
