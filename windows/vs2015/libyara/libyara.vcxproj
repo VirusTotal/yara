@@ -220,6 +220,7 @@
     <ClCompile Include="..\..\..\libyara\scan.c" />
     <ClCompile Include="..\..\..\libyara\scanner.c" />
     <ClCompile Include="..\..\..\libyara\sizedstr.c" />
+    <ClCompile Include="..\..\..\libyara\stopwatch.c" />
     <ClCompile Include="..\..\..\libyara\stream.c" />
     <ClCompile Include="..\..\..\libyara\strutils.c" />
     <ClCompile Include="..\..\..\libyara\threading.c" />
