@@ -168,20 +168,16 @@ void yr_rules_print_profiling_info(
 {
   YR_RULE* rule;
 
-  uint64_t time_cost;
-
   printf("\n===== PROFILING INFORMATION =====\n\n");
 
   yr_rules_foreach(rules, rule)
   {
-    time_cost = rule->time_cost;
-
     printf(
         "%s:%s: %" PRIu64 " (%0.3f%%)\n",
         rule->ns->name,
         rule->identifier,
-        time_cost,
-        (float) time_cost / rules->time_cost * 100);
+        rule->time_cost,
+        (float) rule->time_cost / rules->time_cost * 100);
   }
 
   printf("\n=================================\n");
