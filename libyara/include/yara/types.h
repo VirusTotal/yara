@@ -250,7 +250,7 @@ typedef struct _YR_RULE
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);
 
   // Used only when PROFILING_ENABLED is defined
-  clock_t time_cost;
+  uint64_t time_cost;
 
 } YR_RULE;
 
