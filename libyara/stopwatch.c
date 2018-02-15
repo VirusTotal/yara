@@ -31,7 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/stopwatch.h>
 
-#ifdef PROFILING_ENABLED
 
 #define timespecsub(tsp, usp, vsp)                      \
 do {                                                    \
@@ -52,8 +51,7 @@ void yr_stopwatch_start(
 
 
 uint64_t yr_stopwatch_elapsed_ns(
-    YR_STOPWATCH* stopwatch,
-    int restart)
+    YR_STOPWATCH* stopwatch)
 {
   struct timespec ts_stop;
   struct timespec ts_elapsed;
@@ -61,10 +59,5 @@ uint64_t yr_stopwatch_elapsed_ns(
   clock_gettime(CLOCK_MONOTONIC, &ts_stop);
   timespecsub(&ts_stop, &stopwatch->ts_start, &ts_elapsed);
 
-  if (restart)
-    stopwatch->ts_start = ts_stop;
-
   return ts_elapsed.tv_sec * 1000000000L + ts_elapsed.tv_nsec;
 }
-
-#endif

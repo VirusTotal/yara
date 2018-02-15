@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_STOPWATCH_H
 #define YR_STOPWATCH_H
 
-#ifdef PROFILING_ENABLED
+#include <time.h>
 #include <yara/integers.h>
 
 typedef struct _YR_STOPWATCH
@@ -48,7 +48,6 @@ void yr_stopwatch_start(
 // since the last call to yr_stopwatch_start or since the last time that
 // yr_stopwatch_elapsed_ns was called with restart set to TRUE.
 uint64_t yr_stopwatch_elapsed_ns(
-    YR_STOPWATCH* stopwatch, int restart);
+    YR_STOPWATCH* stopwatch);
 
-#endif
 #endif

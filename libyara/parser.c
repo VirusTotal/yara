@@ -362,7 +362,7 @@ static int _yr_parser_write_string(
   (*string)->rule = compiler->current_rule;
 
   #ifdef PROFILING_ENABLED
-  (*string)->clock_ticks = 0;
+  (*string)->time_cost = 0;
   #endif
 
   memset((*string)->matches, 0,
@@ -758,7 +758,7 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
   rule->ns = compiler->current_namespace;
 
   #ifdef PROFILING_ENABLED
-  rule->clock_ticks = 0;
+  rule->time_cost = 0;
   #endif
 
   compiler->last_result = yr_arena_write_string(

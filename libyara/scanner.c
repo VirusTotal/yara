@@ -44,8 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static int _yr_scanner_scan_mem_block(
     YR_SCANNER* scanner,
     const uint8_t* block_data,
-    YR_MEMORY_BLOCK* block,
-    time_t start_time)
+    YR_MEMORY_BLOCK* block)
 {
   YR_RULES* rules = scanner->rules;
   YR_AC_TRANSITION_TABLE transition_table = rules->transition_table;
@@ -66,7 +65,7 @@ static int _yr_scanner_scan_mem_block(
     {
       if (scanner->timeout > 0 && i % 4096 == 0)
       {
-        if (difftime(time(NULL), start_time) > scanner->timeout)
+        if (yr_stopwatch_elapsed_ns(&scanner->stopwatch) > scanner->timeout)
           return ERROR_SCAN_TIMEOUT;
       }
 
@@ -251,7 +250,7 @@ YR_API void yr_scanner_set_timeout(
     YR_SCANNER* scanner,
     int timeout)
 {
-  scanner->timeout = timeout;
+  scanner->timeout = timeout * 1000000000L;  // convert timeout to nanoseconds.
 }
 
 
@@ -340,8 +339,6 @@ YR_API int yr_scanner_scan_mem_blocks(
   YR_RULE* rule;
   YR_MEMORY_BLOCK* block;
 
-  time_t start_time;
-
   int tidx = 0;
   int result = ERROR_SUCCESS;
 
@@ -387,7 +384,7 @@ YR_API int yr_scanner_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  start_time = time(NULL);
+  yr_stopwatch_start(&scanner->stopwatch);
 
   while (block != NULL)
   {
@@ -423,8 +420,7 @@ YR_API int yr_scanner_scan_mem_blocks(
         result = _yr_scanner_scan_mem_block(
             scanner,
             data,
-            block,
-            start_time);
+            block);
       },{
         result = ERROR_COULD_NOT_MAP_FILE;
       });
@@ -438,7 +434,7 @@ YR_API int yr_scanner_scan_mem_blocks(
   YR_TRYCATCH(
     !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
     {
-      result = yr_execute_code(scanner, start_time);
+      result = yr_execute_code(scanner);
     },{
       result = ERROR_COULD_NOT_MAP_FILE;
     });
@@ -478,6 +474,8 @@ YR_API int yr_scanner_scan_mem_blocks(
   scanner->callback(CALLBACK_MSG_SCAN_FINISHED, NULL, scanner->user_data);
 
 _exit:
+
+  scanner->rules->time_cost += yr_stopwatch_elapsed_ns(&scanner->stopwatch);
 
   _yr_scanner_clean_matches(scanner);
 
