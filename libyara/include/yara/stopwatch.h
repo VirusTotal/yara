@@ -35,6 +35,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(_WIN32)
 
+#include <windows.h>
+
 typedef struct _YR_STOPWATCH
 {
   LARGE_INTEGER frequency;
