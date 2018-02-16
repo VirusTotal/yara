@@ -61,14 +61,14 @@ static int _yr_scanner_scan_mem_block(
   {
     match = match_table[state].match;
 
+    if (i % 4096 == 0 && scanner->timeout > 0)
+    {
+      if (yr_stopwatch_elapsed_us(&scanner->stopwatch) > scanner->timeout)
+        return ERROR_SCAN_TIMEOUT;
+    }
+
     while (match != NULL)
     {
-      if (scanner->timeout > 0 && i % 4096 == 0)
-      {
-        if (yr_stopwatch_elapsed_ns(&scanner->stopwatch) > scanner->timeout)
-          return ERROR_SCAN_TIMEOUT;
-      }
-
       if (match->backtrack <= i)
       {
         FAIL_ON_ERROR(yr_scan_verify_match(
@@ -250,7 +250,7 @@ YR_API void yr_scanner_set_timeout(
     YR_SCANNER* scanner,
     int timeout)
 {
-  scanner->timeout = timeout * 1000000000L;  // convert timeout to nanoseconds.
+  scanner->timeout = timeout * 1000000L;  // convert timeout to microseconds.
 }
 
 
@@ -475,7 +475,7 @@ YR_API int yr_scanner_scan_mem_blocks(
 
 _exit:
 
-  scanner->rules->time_cost += yr_stopwatch_elapsed_ns(&scanner->stopwatch);
+  scanner->rules->time_cost += yr_stopwatch_elapsed_us(&scanner->stopwatch);
 
   _yr_scanner_clean_matches(scanner);
 

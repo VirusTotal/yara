@@ -206,7 +206,7 @@ int yr_execute_code(
       yr_free(stack));
 
   #ifdef PROFILING_ENABLED
-  start_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
+  start_time = yr_stopwatch_elapsed_us(&context->stopwatch);
   #endif
 
   while(!stop)
@@ -458,7 +458,7 @@ int yr_execute_code(
           rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
 
         #ifdef PROFILING_ENABLED
-        elapsed_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
+        elapsed_time = yr_stopwatch_elapsed_us(&context->stopwatch);
         rule->time_cost += (elapsed_time - start_time);
         start_time = elapsed_time;
         #endif
@@ -1164,7 +1164,7 @@ int yr_execute_code(
 
     if (context->timeout > 0L && ++cycle == 10)
     {
-      elapsed_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
+      elapsed_time = yr_stopwatch_elapsed_us(&context->stopwatch);
 
       if (elapsed_time > context->timeout)
       {
