@@ -114,7 +114,7 @@ static int _yr_scan_wcompare(
   if (data_size < string_length * 2)
     return 0;
 
-  while (i < string_length && *s1 == *s2)
+  while (i < string_length && *s1 == *s2 && *(s1 + 1) == 0x00)
   {
     s1+=2;
     s2++;
@@ -791,7 +791,7 @@ int yr_scan_verify_match(
 
   if (result != ERROR_SUCCESS)
     context->last_error_string = string;
- 
+
   #ifdef PROFILING_ENABLED
   string->clock_ticks += yr_stopwatch_elapsed_ns(&stopwatch, FALSE);
   #endif
