@@ -497,7 +497,8 @@ YR_STRING* yr_parser_reduce_string_declaration(
   if (strcmp(identifier,"$") == 0)
     string_flags |= STRING_GFLAGS_ANONYMOUS;
 
-  if (!(string_flags & STRING_GFLAGS_WIDE))
+  if (!(string_flags & STRING_GFLAGS_WIDE) &&
+      !(string_flags & STRING_GFLAGS_XOR))
     string_flags |= STRING_GFLAGS_ASCII;
 
   // Hex strings are always handled as DOT_ALL regexps.

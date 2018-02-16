@@ -69,6 +69,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STRING_GFLAGS_GREEDY_REGEXP     0x10000
 #define STRING_GFLAGS_DOT_ALL           0x20000
 #define STRING_GFLAGS_DISABLED          0x40000
+#define STRING_GFLAGS_XOR               0x80000
 
 #define STRING_IS_HEX(x) \
     (((x)->g_flags) & STRING_GFLAGS_HEXADECIMAL)
@@ -126,6 +127,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define STRING_IS_DISABLED(x) \
     (((x)->g_flags) & STRING_GFLAGS_DISABLED)
+
+#define STRING_IS_XOR(x) \
+    (((x)->g_flags) & STRING_GFLAGS_XOR)
 
 #define STRING_FOUND(x) \
     ((x)->matches[yr_get_tidx()].tail != NULL)
