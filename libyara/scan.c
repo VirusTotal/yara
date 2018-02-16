@@ -104,10 +104,8 @@ static int _yr_scan_xor_wcompare(
   // every *s2 as we compare.
   k = *s1 ^ *s2;
 
-  while (i < string_length)
+  while (i < string_length && *s1 == ((*s2) ^ k) && ((*(s1 + 1)) ^ k) == 0x00)
   {
-    if (*s1 != ((*s2) ^ k) || ((*(s1 + 1)) ^ k) != 0x00)
-      break;
     s1+=2;
     s2++;
     i++;
