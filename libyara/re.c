@@ -2099,6 +2099,18 @@ int yr_re_exec(
   return ERROR_SUCCESS;
 }
 
+//
+// yr_re_fast_exec
+//
+// This function replaces yr_re_exec for regular expressions marked with flag
+// RE_FLAGS_FAST_REGEXP. These are regular expression whose code contain only
+// the following operations: RE_OPCODE_LITERAL, RE_OPCODE_MASKED_LITERAL,
+// RE_OPCODE_ANY, RE_OPCODE_REPEAT_ANY_UNGREEDY and RE_OPCODE_MATCH. Some
+// examples of regular expressions that can be executed with this function are:
+//
+//  /foobar/
+//  /foo.*?bar/
+//
 
 int yr_re_fast_exec(
     YR_SCAN_CONTEXT* context,
@@ -2240,7 +2252,7 @@ int yr_re_fast_exec(
                  *(next_opcode + 1) == *next_input))
             {
               if (sp >= MAX_FAST_RE_STACK)
-                return -4;
+                return ERROR_TOO_MANY_RE_FIBERS;
 
               code_stack[sp] = next_opcode;
               input_stack[sp] = next_input;
