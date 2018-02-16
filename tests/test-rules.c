@@ -432,6 +432,14 @@ static void test_strings()
       "rule test { strings: $a = \"abc\" fullword condition: $a }",
       "abcx");
 
+  assert_false_rule_blob(
+      "rule test { strings: $a = \"abc\" wide condition: $a }",
+      "a\1b\0c\0d\0e\0f\0");
+
+  assert_false_rule_blob(
+      "rule test { strings: $a = \"abcdef\" wide condition: $a }",
+      "a\0b\0c\0d\0e\0f\1");
+
   assert_false_rule(
       "rule test { strings: $a = \"abc\" ascii wide fullword condition: $a }",
       "abcx");
