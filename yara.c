@@ -1240,13 +1240,14 @@ int main(
       printf("%d\n", user_data.current_count);
   }
 
-  #ifdef PROFILING_ENABLED
-  yr_rules_print_profiling_info(rules);
-  #endif
-
   result = EXIT_SUCCESS;
 
 _exit:
+
+  #ifdef PROFILING_ENABLED
+  if (rules != NULL)
+    yr_rules_print_profiling_info(rules);
+  #endif
 
   unload_modules_data();
 

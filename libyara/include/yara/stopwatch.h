@@ -30,8 +30,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_STOPWATCH_H
 #define YR_STOPWATCH_H
 
-#ifdef PROFILING_ENABLED
+#include <time.h>
 #include <yara/integers.h>
+
+#if defined(_WIN32)
+
+#include <windows.h>
+
+typedef struct _YR_STOPWATCH
+{
+  LARGE_INTEGER frequency;
+  LARGE_INTEGER start;
+
+} YR_STOPWATCH;
+
+#else
 
 typedef struct _YR_STOPWATCH
 {
@@ -39,16 +52,17 @@ typedef struct _YR_STOPWATCH
 
 } YR_STOPWATCH;
 
+#endif
+
 
 // yr_stopwatch_start starts measuring time.
 void yr_stopwatch_start(
     YR_STOPWATCH* stopwatch);
 
-// yr_stopwatch_elapsed_ns returns the number of nanoseconds elapsed
+// yr_stopwatch_elapsed_us returns the number of microseconds elapsed
 // since the last call to yr_stopwatch_start or since the last time that
-// yr_stopwatch_elapsed_ns was called with restart set to TRUE.
-uint64_t yr_stopwatch_elapsed_ns(
-    YR_STOPWATCH* stopwatch, int restart);
+// yr_stopwatch_elapsed_us was called with restart set to TRUE.
+uint64_t yr_stopwatch_elapsed_us(
+    YR_STOPWATCH* stopwatch);
 
-#endif
 #endif

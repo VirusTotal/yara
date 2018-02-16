@@ -88,6 +88,7 @@ yarainclude_HEADERS = \
   include/yara/scan.h \
   include/yara/scanner.h \
   include/yara/sizedstr.h \
+  include/yara/stopwatch.h \
   include/yara/stream.h \
   include/yara/strutils.h \
   include/yara/threading.h \
@@ -106,7 +107,6 @@ noinst_HEADERS = \
   include/yara/pe.h \
   include/yara/pe_utils.h \
   include/yara/re_lexer.h \
-  include/yara/stopwatch.h \
   modules/module_list
 
 
@@ -150,13 +150,11 @@ libyara_la_SOURCES = \
   scan.c \
   scanner.c \
   sizedstr.c \
+  stopwatch.c \
   strutils.c \
   stream.c \
   threading.c
 
-if PROFILING_ENABLED
-libyara_la_SOURCES += stopwatch.c
-endif
 
 if USE_WINDOWS_PROC
 libyara_la_SOURCES += proc/windows.c
