@@ -36,10 +36,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/hash.h>
 #include <yara/utils.h>
 #include <yara/sizedstr.h>
+#include <yara/stopwatch.h>
 #include <yara/threading.h>
-
-
-#include <time.h>
 
 
 #define DECLARE_REFERENCE(type, name) \
@@ -235,7 +233,7 @@ typedef struct _YR_STRING
   YR_MATCHES unconfirmed_matches[MAX_THREADS];
 
   // Used only when PROFILING_ENABLED is defined
-  uint64_t clock_ticks;
+  uint64_t time_cost;
 
 } YR_STRING;
 
@@ -252,7 +250,7 @@ typedef struct _YR_RULE
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);
 
   // Used only when PROFILING_ENABLED is defined
-  clock_t clock_ticks;
+  uint64_t time_cost;
 
 } YR_RULE;
 
@@ -495,6 +493,9 @@ typedef struct _YR_RULES
   YR_AC_TRANSITION_TABLE transition_table;
   YR_AC_MATCH_TABLE match_table;
 
+  // Used only when PROFILING_ENABLED is defined
+  uint64_t time_cost;
+
 } YR_RULES;
 
 
@@ -555,8 +556,8 @@ typedef struct _YR_SCAN_CONTEXT
   // in the range [0, MAX_THREADS)
   int tidx;
 
-  // Scan timeout in seconds.
-  int timeout;
+  // Scan timeout in nanoseconds.
+  uint64_t timeout;
 
   // Pointer to user-provided data passed to the callback function.
   void* user_data;
@@ -584,6 +585,9 @@ typedef struct _YR_SCAN_CONTEXT
   // Arena used for storing pointers to the YR_STRING struct for each matching
   // string. The pointers are used by _yr_scanner_clean_matches.
   YR_ARENA* matching_strings_arena;
+
+  // Stopwatch used for measuring the time elapsed during the scan.
+  YR_STOPWATCH stopwatch;
 
   // Fiber pool used by yr_re_exec.
   RE_FIBER_POOL re_fiber_pool;

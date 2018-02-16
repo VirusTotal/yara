@@ -753,6 +753,8 @@ YR_API int yr_compiler_get_rules(
   yara_rules->match_table = rules_file_header->match_table;
   yara_rules->transition_table = rules_file_header->transition_table;
   yara_rules->code_start = rules_file_header->code_start;
+  yara_rules->time_cost = 0;
+
   memset(yara_rules->tidx_mask, 0, sizeof(yara_rules->tidx_mask));
 
   FAIL_ON_ERROR_WITH_CLEANUP(

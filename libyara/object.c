@@ -36,11 +36,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <math.h>
 
-#if _WIN32 || __CYGWIN__
-#define PRIu64 "I64d"
-#else
-#include <inttypes.h>
-#endif
 
 #include <yara/mem.h>
 #include <yara/error.h>

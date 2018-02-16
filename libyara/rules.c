@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <assert.h>
 #include <string.h>
-#include <time.h>
 #include <ctype.h>
 
 #include <yara/error.h>
@@ -168,29 +167,20 @@ void yr_rules_print_profiling_info(
     YR_RULES* rules)
 {
   YR_RULE* rule;
-  YR_STRING* string;
 
-  clock_t clock_ticks;
-
-  printf("===== PROFILING INFORMATION =====\n");
+  printf("\n===== PROFILING INFORMATION =====\n\n");
 
   yr_rules_foreach(rules, rule)
   {
-    clock_ticks = rule->clock_ticks;
-
-    yr_rule_strings_foreach(rule, string)
-    {
-      clock_ticks += string->clock_ticks;
-    }
-
     printf(
-        "%s:%s: %li\n",
+        "%s:%s: %" PRIu64 " (%0.3f%%)\n",
         rule->ns->name,
         rule->identifier,
-        clock_ticks);
+        rule->time_cost,
+        (float) rule->time_cost / rules->time_cost * 100);
   }
 
-  printf("================================\n");
+  printf("\n=================================\n");
 }
 #endif
 

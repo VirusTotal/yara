@@ -41,7 +41,6 @@ from files.
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <time.h>
 
 
 #include <yara/arena.h>
