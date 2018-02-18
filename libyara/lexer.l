@@ -173,6 +173,7 @@ octdigit      [0-7]
 "strings"               { return _STRINGS_;     }
 "ascii"                 { return _ASCII_;       }
 "wide"                  { return _WIDE_;        }
+"xor"                   { return _XOR_;         }
 "fullword"              { return _FULLWORD_;    }
 "nocase"                { return _NOCASE_;      }
 "condition"             { return _CONDITION_;   }
@@ -943,4 +944,3 @@ int yr_lex_parse_rules_fd(
 
   return compiler->errors;
 }
-

@@ -477,6 +477,38 @@ static void test_strings()
          condition:\n\
              all of them\n\
        }", "abcdef");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor\n\
+      condition:\n\
+        #a == 255\n\
+    }", "tests/data/xor.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor ascii\n\
+      condition:\n\
+        #a == 256\n\
+    }", "tests/data/xor.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor wide\n\
+      condition:\n\
+        #a == 256\n\
+    }", "tests/data/xorwide.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" xor nocase\n\
+      condition:\n\
+        #a == 1084\n\
+    }", "tests/data/xornocase.out");
 }
 
 

@@ -579,6 +579,48 @@ static int _yr_atoms_case_insensitive(
 
 
 //
+// _yr_atoms_xor
+//
+// For a given list of atoms returns another list after a single byte xor
+// has been applied to it.
+//
+static int _yr_atoms_xor(
+    YR_ATOM_LIST_ITEM* atoms,
+    YR_ATOM_LIST_ITEM** xor_atoms)
+{
+  YR_ATOM_LIST_ITEM* atom;
+  YR_ATOM_LIST_ITEM* new_atom;
+
+  int i, j;
+  *xor_atoms = NULL;
+  atom = atoms;
+
+  while (atom != NULL)
+  {
+    for (j = 1; j <= 255; j++)
+    {
+      new_atom = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
+
+      if (new_atom == NULL)
+        return ERROR_INSUFFICIENT_MEMORY;
+
+      for (i = 0; i < atom->atom_length; i++)
+        new_atom->atom[i] = atom->atom[i] ^ j;
+
+      new_atom->atom_length = yr_min(atom->atom_length, MAX_ATOM_LENGTH);
+      new_atom->forward_code = atom->forward_code;
+      new_atom->backward_code = atom->backward_code;
+      new_atom->backtrack = atom->backtrack;
+      new_atom->next = *xor_atoms;
+
+      *xor_atoms = new_atom;
+    }
+
+    atom = atom->next;
+  }
+  return ERROR_SUCCESS;
+}
+//
 // _yr_atoms_wide
 //
 // For a given list of atoms returns another list with the corresponding
@@ -1185,6 +1227,7 @@ int yr_atoms_extract_from_string(
 {
   YR_ATOM_LIST_ITEM* item;
   YR_ATOM_LIST_ITEM* case_insensitive_atoms;
+  YR_ATOM_LIST_ITEM* xor_atoms;
   YR_ATOM_LIST_ITEM* wide_atoms;
 
   int max_quality;
@@ -1258,6 +1301,30 @@ int yr_atoms_extract_from_string(
         });
 
     *atoms = _yr_atoms_list_concat(*atoms, case_insensitive_atoms);
+  }
+
+  if (flags & STRING_GFLAGS_XOR)
+  {
+    FAIL_ON_ERROR_WITH_CLEANUP(
+      _yr_atoms_xor(*atoms, &xor_atoms),
+      {
+        yr_atoms_list_destroy(*atoms);
+        yr_atoms_list_destroy(xor_atoms);
+        *atoms = NULL;
+      });
+
+    if (flags & STRING_GFLAGS_ASCII ||
+        flags & STRING_GFLAGS_WIDE ||
+        flags & STRING_GFLAGS_NO_CASE)
+    {
+      *atoms = _yr_atoms_list_concat(*atoms, xor_atoms);
+    }
+    else
+    {
+      yr_atoms_list_destroy(*atoms);
+      *atoms = xor_atoms;
+    }
+
   }
 
   return ERROR_SUCCESS;
