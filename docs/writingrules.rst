@@ -63,7 +63,7 @@ keywords are reserved and cannot be used as an identifier:
      - uint16be
      - uint32be
      - wide
-     -
+     - xor
      -
 
 Rules are generally composed of two sections: strings definition and condition.
@@ -323,6 +323,51 @@ with ``wide`` , no matter the order in which they appear. ::
 The ``ascii`` modifier can appear alone, without an accompanying ``wide``
 modifier, but it's not necessary to write it because in absence of ``wide`` the
 string is assumed to be ASCII by default.
+
+XOR strings
+^^^^^^^^^^^
+
+The ``xor`` modifier can be used to search for strings with a single byte xor
+applied to them.
+
+The following rule will search for every single byte xor applied to the string
+"This program cannot"::
+
+    rule XorExample1
+    {
+        strings:
+            $xor_string = "This program cannot" xor
+
+        condition:
+           $xor_string
+    }
+
+The above rule is logically equal to::
+
+    rule XorExample2
+    {
+        strings:
+            $xor_string_00 = "This program cannot"
+            $xor_string_01 = "Uihr!qsnfs`l!b`oonu"
+            $xor_string_02 = "Vjkq"rpmepco"acllmv"
+            // Repeat for every single byte xor
+        condition:
+            any of them
+    }
+
+You can also combine the ``xor`` modifier with ``wide``, ``ascii`` and
+``nocase`` modifiers. For example, to search for the ``wide`` and ``ascii``
+versions of a string after every single byte xor has been applied you would
+use::
+
+    rule XorExample3
+    {
+        strings:
+            $xor_string = "This program cannot" xor wide ascii
+        condition:
+            $xor_string
+    }
+
 
 Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
