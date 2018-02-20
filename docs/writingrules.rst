@@ -342,14 +342,14 @@ The following rule will search for every single byte xor applied to the string
            $xor_string
     }
 
-The above rule is logically equal to::
+The above rule is logically equivalent to::
 
     rule XorExample2
     {
         strings:
             $xor_string_00 = "This program cannot"
             $xor_string_01 = "Uihr!qsnfs`l!b`oonu"
-            $xor_string_02 = "Vjkq"rpmepco"acllmv"
+            $xor_string_02 = "Vjkq\"rpmepco\"acllmv"
             // Repeat for every single byte xor
         condition:
             any of them
@@ -368,6 +368,29 @@ use::
             $xor_string
     }
 
+The ``xor`` modifier is applied after every other modifier. This means that
+using the ``xor`` and ``wide`` together results in the xor applying to the
+interleaved zero bytes. For example, the following two rules are logically
+equivalent::
+
+    rule XorExample3
+    {
+        strings:
+            $xor_string = "This program cannot" xor wide
+        condition:
+            $xor_string
+    }
+
+    rule XorExample4
+    {
+        strings:
+            $xor_string_00 = "T\x00h\x00i\x00s\x00 \x00p\x00r\x00o\x00g\x00r\x00a\x00m\x00 \x00c\x00a\x00n\x00n\x00o\x00t\x00"
+            $xor_string_01 = "U\x01i\x01h\x01r\x01!\x01q\x01s\x01n\x01f\x01s\x01`\x01l\x01!\x01b\x01`\x01o\x01o\x01n\x01u\x01"
+            $xor_string_02 = "V\x02j\x02k\x02q\x02\"\x02r\x02p\x02m\x02e\x02p\x02c\x02o\x02\"\x02a\x02c\x02l\x02l\x02m\x02v\x02"
+            // Repeat for every single byte xor operation.
+        condition:
+            any of them
+    }
 
 Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
