@@ -373,7 +373,9 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r2);
         ensure_defined(r1);
-        if (r2.i < 64)
+        if (r2.i < 0)
+          r1.i = UNDEFINED;
+        else if (r2.i < 64)
           r1.i = r1.i >> r2.i;
         else
           r1.i = 0;
@@ -385,7 +387,9 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r2);
         ensure_defined(r1);
-        if (r2.i < 64)
+        if (r2.i < 0)
+          r1.i = UNDEFINED;
+        else if (r2.i < 64)
           r1.i = r1.i << r2.i;
         else
           r1.i = 0;
