@@ -195,9 +195,7 @@ define_function(data_md5)
   yr_md5_init(&md5_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
-  {
-    return ERROR_WRONG_ARGUMENTS;
-  }
+    return_string(UNDEFINED);
 
   cached_ascii_digest = get_from_cache(
       module(), "md5", arg_offset, arg_length);
@@ -280,9 +278,7 @@ define_function(data_sha1)
   yr_sha1_init(&sha_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
-  {
-    return ERROR_WRONG_ARGUMENTS;
-  }
+    return_string(UNDEFINED);
 
   cached_ascii_digest = get_from_cache(
       module(), "sha1", arg_offset, arg_length);
@@ -364,9 +360,7 @@ define_function(data_sha256)
   yr_sha256_init(&sha256_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
-  {
-    return ERROR_WRONG_ARGUMENTS;
-  }
+    return_string(UNDEFINED);
 
   cached_ascii_digest = get_from_cache(
       module(), "sha256", arg_offset, arg_length);
@@ -437,9 +431,7 @@ define_function(data_checksum32)
   int past_first_block = FALSE;
 
   if (offset < 0 || length < 0 || offset < block->base)
-  {
-    return ERROR_WRONG_ARGUMENTS;
-  }
+    return_integer(UNDEFINED);
 
   foreach_memory_block(iterator, block)
   {
