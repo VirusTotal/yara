@@ -63,7 +63,7 @@ keywords are reserved and cannot be used as an identifier:
      - uint16be
      - uint32be
      - wide
-     -
+     - xor
      -
 
 Rules are generally composed of two sections: strings definition and condition.
@@ -323,6 +323,74 @@ with ``wide`` , no matter the order in which they appear. ::
 The ``ascii`` modifier can appear alone, without an accompanying ``wide``
 modifier, but it's not necessary to write it because in absence of ``wide`` the
 string is assumed to be ASCII by default.
+
+XOR strings
+^^^^^^^^^^^
+
+The ``xor`` modifier can be used to search for strings with a single byte xor
+applied to them.
+
+The following rule will search for every single byte xor applied to the string
+"This program cannot"::
+
+    rule XorExample1
+    {
+        strings:
+            $xor_string = "This program cannot" xor
+
+        condition:
+           $xor_string
+    }
+
+The above rule is logically equivalent to::
+
+    rule XorExample2
+    {
+        strings:
+            $xor_string_00 = "This program cannot"
+            $xor_string_01 = "Uihr!qsnfs`l!b`oonu"
+            $xor_string_02 = "Vjkq\"rpmepco\"acllmv"
+            // Repeat for every single byte xor
+        condition:
+            any of them
+    }
+
+You can also combine the ``xor`` modifier with ``wide``, ``ascii`` and
+``nocase`` modifiers. For example, to search for the ``wide`` and ``ascii``
+versions of a string after every single byte xor has been applied you would
+use::
+
+    rule XorExample3
+    {
+        strings:
+            $xor_string = "This program cannot" xor wide ascii
+        condition:
+            $xor_string
+    }
+
+The ``xor`` modifier is applied after every other modifier. This means that
+using the ``xor`` and ``wide`` together results in the xor applying to the
+interleaved zero bytes. For example, the following two rules are logically
+equivalent::
+
+    rule XorExample3
+    {
+        strings:
+            $xor_string = "This program cannot" xor wide
+        condition:
+            $xor_string
+    }
+
+    rule XorExample4
+    {
+        strings:
+            $xor_string_00 = "T\x00h\x00i\x00s\x00 \x00p\x00r\x00o\x00g\x00r\x00a\x00m\x00 \x00c\x00a\x00n\x00n\x00o\x00t\x00"
+            $xor_string_01 = "U\x01i\x01h\x01r\x01!\x01q\x01s\x01n\x01f\x01s\x01`\x01l\x01!\x01b\x01`\x01o\x01o\x01n\x01u\x01"
+            $xor_string_02 = "V\x02j\x02k\x02q\x02\"\x02r\x02p\x02m\x02e\x02p\x02c\x02o\x02\"\x02a\x02c\x02l\x02l\x02m\x02v\x02"
+            // Repeat for every single byte xor operation.
+        condition:
+            any of them
+    }
 
 Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
