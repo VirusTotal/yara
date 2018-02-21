@@ -98,6 +98,14 @@ int count_matches(
   return CALLBACK_CONTINUE;
 }
 
+int do_nothing(
+    int message,
+    void* message_data,
+    void* user_data)
+{
+  return CALLBACK_CONTINUE;
+}
+
 
 int matches_blob(
     char* rule,

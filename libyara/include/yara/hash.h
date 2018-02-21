@@ -86,6 +86,12 @@ YR_API void* yr_hash_table_lookup(
     const char* ns);
 
 
+YR_API void* yr_hash_table_remove(
+    YR_HASH_TABLE* table,
+    const char* key,
+    const char* ns);
+
+
 YR_API int yr_hash_table_add(
     YR_HASH_TABLE* table,
     const char* key,
@@ -94,6 +100,13 @@ YR_API int yr_hash_table_add(
 
 
 YR_API void* yr_hash_table_lookup_raw_key(
+    YR_HASH_TABLE* table,
+    const void* key,
+    size_t key_length,
+    const char* ns);
+
+
+YR_API void* yr_hash_table_remove_raw_key(
     YR_HASH_TABLE* table,
     const void* key,
     size_t key_length,

@@ -109,6 +109,71 @@ uint32_t yr_hash(
   return result;
 }
 
+// _yr_hash_table_lookup
+//
+// Return the value associated to a given key and optionally remove it from
+// the hash table. Key can be any byte sequence, namespace is a null-terminated
+// string, and remove is a boolean.
+
+static void* _yr_hash_table_lookup(
+    YR_HASH_TABLE* table,
+    const void* key,
+    size_t key_length,
+    const char* ns,
+    int remove)
+{
+  YR_HASH_TABLE_ENTRY* entry;
+  YR_HASH_TABLE_ENTRY* prev_entry;
+
+  void* result;
+
+  uint32_t bucket_index = yr_hash(0, key, key_length);
+
+  if (ns != NULL)
+    bucket_index = yr_hash(bucket_index, (uint8_t*) ns, strlen(ns));
+
+  bucket_index = bucket_index % table->size;
+  prev_entry = NULL;
+  entry = table->buckets[bucket_index];
+
+  while (entry != NULL)
+  {
+    int key_match = (
+        (entry->key_length == key_length) &&
+        (memcmp(entry->key, key, key_length) == 0));
+
+    int ns_match = (
+        (entry->ns == ns) ||
+        (entry->ns != NULL && ns != NULL && strcmp(entry->ns, ns) == 0));
+
+    if (key_match && ns_match)
+    {
+      result = entry->value;
+
+      if (remove)
+      {
+        if (prev_entry == NULL)
+          table->buckets[bucket_index] = entry->next;
+        else
+          prev_entry->next = entry->next;
+
+        if (entry->ns != NULL)
+          yr_free(entry->ns);
+
+        yr_free(entry->key);
+        yr_free(entry);
+      }
+
+      return result;
+    }
+
+    prev_entry = entry;
+    entry = entry->next;
+  }
+
+  return NULL;
+}
+
 
 YR_API int yr_hash_table_create(
     int size,
@@ -186,34 +251,17 @@ YR_API void* yr_hash_table_lookup_raw_key(
     size_t key_length,
     const char* ns)
 {
-  YR_HASH_TABLE_ENTRY* entry;
-  uint32_t bucket_index;
+  return _yr_hash_table_lookup(table, key, key_length, ns, FALSE);
+}
 
-  bucket_index = yr_hash(0, key, key_length);
 
-  if (ns != NULL)
-    bucket_index = yr_hash(bucket_index, (uint8_t*) ns, strlen(ns));
-
-  bucket_index = bucket_index % table->size;
-  entry = table->buckets[bucket_index];
-
-  while (entry != NULL)
-  {
-    int key_match = (
-        (entry->key_length == key_length) &&
-        (memcmp(entry->key, key, key_length) == 0));
-
-    int ns_match = (
-        (entry->ns == ns) ||
-        (entry->ns != NULL && ns != NULL && strcmp(entry->ns, ns) == 0));
-
-    if (key_match && ns_match)
-      return entry->value;
-
-    entry = entry->next;
-  }
-
-  return NULL;
+YR_API void* yr_hash_table_remove_raw_key(
+    YR_HASH_TABLE* table,
+    const void* key,
+    size_t key_length,
+    const char* ns)
+{
+  return _yr_hash_table_lookup(table, key, key_length, ns, TRUE);
 }
 
 
@@ -282,6 +330,19 @@ YR_API void* yr_hash_table_lookup(
     const char* ns)
 {
   return yr_hash_table_lookup_raw_key(
+      table,
+      (void*) key,
+      strlen(key),
+      ns);
+}
+
+
+YR_API void* yr_hash_table_remove(
+    YR_HASH_TABLE* table,
+    const char* key,
+    const char* ns)
+{
+  return yr_hash_table_remove_raw_key(
       table,
       (void*) key,
       strlen(key),
