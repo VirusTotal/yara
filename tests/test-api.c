@@ -435,6 +435,61 @@ void test_scanner()
   yr_finalize();
 }
 
+// Test case for https://github.com/VirusTotal/yara/issues/834. Use the same
+// scanner for scanning multiple files with a rule that imports the "tests"
+// module. If the unload_module function is called twice an assertion is
+// triggered by the module.
+void test_issue_834()
+{
+  const char* buf = "dummy";
+  const char* rules_str = "import \"tests\" rule test { condition: true }";
+
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+  YR_SCANNER* scanner = NULL;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_add_string(compiler, rules_str, NULL) != 0)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_add_string");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_get_rules");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_compiler_destroy(compiler);
+
+  if (yr_scanner_create(rules, &scanner)!= ERROR_SUCCESS)
+  {
+    yr_rules_destroy(rules);
+    perror("yr_scanner_create");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_scanner_set_callback(scanner, do_nothing, NULL);
+
+  // Call yr_scanner_scan_mem twice.
+  yr_scanner_scan_mem(scanner, (uint8_t *) buf, strlen(buf));
+  yr_scanner_scan_mem(scanner, (uint8_t *) buf, strlen(buf));
+
+  yr_scanner_destroy(scanner);
+  yr_rules_destroy(rules);
+  yr_finalize();
+}
+
 
 void ast_callback(
     const YR_RULE* rule,
@@ -501,4 +556,5 @@ int main(int argc, char** argv)
   test_save_load_rules();
   test_scanner();
   test_ast_callback();
+  test_issue_834();
 }

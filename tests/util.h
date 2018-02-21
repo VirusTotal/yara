@@ -43,6 +43,12 @@ int count_matches(
     void* user_data);
 
 
+int do_nothing(
+    int message,
+    void* message_data,
+    void* user_data);
+
+
 int matches_blob(
     char* rule,
     uint8_t* blob,
