@@ -304,6 +304,14 @@ static void test_bitwise_operators()
       "rule test { condition: 1 >> 64 == 0 }",
       NULL);
 
+  assert_error(
+      "rule test { condition: 1 << -1 == 0 }",
+      ERROR_INVALID_OPERAND);
+
+  assert_error(
+      "rule test { condition: 1 >> -1 == 0 }",
+      ERROR_INVALID_OPERAND);
+
   assert_true_rule(
       "rule test { condition: 1 | 3 ^ 3 == 1 | (3 ^ 3) }",
       NULL);

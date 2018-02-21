@@ -96,6 +96,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ERROR_TOO_MANY_STRINGS                  51
 #define ERROR_INTEGER_OVERFLOW                  52
 #define ERROR_CALLBACK_REQUIRED                 53
+#define ERROR_INVALID_OPERAND                   54
 
 
 #define FAIL_ON_ERROR(x) { \
