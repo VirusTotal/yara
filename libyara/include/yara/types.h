@@ -181,52 +181,89 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : TRUE)
 
 
+typedef struct RE RE;
+typedef struct RE_AST RE_AST;
+typedef struct RE_NODE RE_NODE;
+typedef struct RE_CLASS RE_CLASS;
+typedef struct RE_ERROR RE_ERROR;
+typedef struct RE_FIBER RE_FIBER;
+typedef struct RE_FIBER_LIST RE_FIBER_LIST;
+typedef struct RE_FIBER_POOL RE_FIBER_POOL;
+
+typedef struct YR_AC_MATCH YR_AC_MATCH;
+typedef struct YR_AC_STATE YR_AC_STATE;
+typedef struct YR_AC_AUTOMATON YR_AC_AUTOMATON;
+typedef struct YR_AC_MATCH_TABLE_ENTRY YR_AC_MATCH_TABLE_ENTRY;
+typedef struct YR_AC_TABLES YR_AC_TABLES;
+
+typedef struct YR_NAMESPACE YR_NAMESPACE;
+typedef struct YR_META YR_META;
+typedef struct YR_MATCHES YR_MATCHES;
+typedef struct YR_STRING YR_STRING;
+typedef struct YR_RULE YR_RULE;
+typedef struct YR_RULES YR_RULES;
+typedef struct YR_EXTERNAL_VARIABLE YR_EXTERNAL_VARIABLE;
+typedef struct YR_MATCH YR_MATCH;
+typedef struct YR_SCAN_CONTEXT YR_SCAN_CONTEXT;
+
+typedef union YR_VALUE YR_VALUE;
+
+typedef struct YR_OBJECT YR_OBJECT;
+typedef struct YR_OBJECT_STRUCTURE YR_OBJECT_STRUCTURE;
+typedef struct YR_OBJECT_ARRAY YR_OBJECT_ARRAY;
+typedef struct YR_OBJECT_DICTIONARY YR_OBJECT_DICTIONARY;
+typedef struct YR_OBJECT_FUNCTION YR_OBJECT_FUNCTION;
+
+typedef struct YR_STRUCTURE_MEMBER YR_STRUCTURE_MEMBER;
+typedef struct YR_ARRAY_ITEMS YR_ARRAY_ITEMS;
+typedef struct YR_DICTIONARY_ITEMS YR_DICTIONARY_ITEMS;
+
+typedef struct YR_MODULE YR_MODULE;
+typedef struct YR_MODULE_IMPORT YR_MODULE_IMPORT;
+
+typedef struct YR_MEMORY_BLOCK YR_MEMORY_BLOCK;
+typedef struct YR_MEMORY_BLOCK_ITERATOR YR_MEMORY_BLOCK_ITERATOR;
+
+
 #pragma pack(push)
 #pragma pack(8)
 
 
-typedef struct _YR_NAMESPACE
+struct YR_NAMESPACE
 {
   int32_t t_flags[MAX_THREADS];     // Thread-specific flags
   DECLARE_REFERENCE(char*, name);
+};
 
-} YR_NAMESPACE;
 
-
-typedef struct _YR_META
+struct YR_META
 {
   int32_t type;
   YR_ALIGN(8) int64_t integer;
 
   DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(char*, string);
-
-} YR_META;
-
-
-struct _YR_RULE;
-struct _YR_MATCH;
+};
 
 
-typedef struct _YR_MATCHES
+struct YR_MATCHES
 {
   int32_t count;
 
-  DECLARE_REFERENCE(struct _YR_MATCH*, head);
-  DECLARE_REFERENCE(struct _YR_MATCH*, tail);
+  DECLARE_REFERENCE(YR_MATCH*, head);
+  DECLARE_REFERENCE(YR_MATCH*, tail);
+};
 
-} YR_MATCHES;
 
-
-typedef struct _YR_STRING
+struct YR_STRING
 {
   int32_t g_flags;
   int32_t length;
 
   DECLARE_REFERENCE(char*, identifier);
   DECLARE_REFERENCE(uint8_t*, string);
-  DECLARE_REFERENCE(struct _YR_STRING*, chained_to);
-  DECLARE_REFERENCE(struct _YR_RULE*, rule);
+  DECLARE_REFERENCE(YR_STRING*, chained_to);
+  DECLARE_REFERENCE(YR_RULE*, rule);
 
   int32_t chain_gap_min;
   int32_t chain_gap_max;
@@ -238,11 +275,10 @@ typedef struct _YR_STRING
 
   // Used only when PROFILING_ENABLED is defined
   uint64_t time_cost;
+};
 
-} YR_STRING;
 
-
-typedef struct _YR_RULE
+struct YR_RULE
 {
   int32_t g_flags;               // Global flags
   int32_t t_flags[MAX_THREADS];  // Thread-specific flags
@@ -255,11 +291,10 @@ typedef struct _YR_RULE
 
   // Used only when PROFILING_ENABLED is defined
   uint64_t time_cost;
+};
 
-} YR_RULE;
 
-
-typedef struct _YR_EXTERNAL_VARIABLE
+struct YR_EXTERNAL_VARIABLE
 {
   int32_t type;
 
@@ -270,27 +305,24 @@ typedef struct _YR_EXTERNAL_VARIABLE
   } value;
 
   DECLARE_REFERENCE(char*, identifier);
+};
 
-} YR_EXTERNAL_VARIABLE;
 
-
-typedef struct _YR_AC_MATCH
+struct YR_AC_MATCH
 {
   uint16_t backtrack;
 
   DECLARE_REFERENCE(YR_STRING*, string);
   DECLARE_REFERENCE(const uint8_t*, forward_code);
   DECLARE_REFERENCE(const uint8_t*, backward_code);
-  DECLARE_REFERENCE(struct _YR_AC_MATCH*, next);
+  DECLARE_REFERENCE(YR_AC_MATCH*, next);
+};
 
-} YR_AC_MATCH;
 
-
-typedef struct _YR_AC_MATCH_TABLE_ENTRY
+struct YR_AC_MATCH_TABLE_ENTRY
 {
   DECLARE_REFERENCE(YR_AC_MATCH*, match);
-
-} YR_AC_MATCH_TABLE_ENTRY;
+};
 
 
 typedef uint64_t                  YR_AC_TRANSITION;
@@ -298,7 +330,14 @@ typedef YR_AC_TRANSITION*         YR_AC_TRANSITION_TABLE;
 typedef YR_AC_MATCH_TABLE_ENTRY*  YR_AC_MATCH_TABLE;
 
 
-typedef struct _YARA_RULES_FILE_HEADER
+struct YR_AC_TABLES
+{
+  YR_AC_TRANSITION* transitions;
+  YR_AC_MATCH_TABLE_ENTRY* matches;
+};
+
+
+typedef struct YARA_RULES_FILE_HEADER
 {
   DECLARE_REFERENCE(YR_RULE*, rules_list_head);
   DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
@@ -323,12 +362,6 @@ typedef struct _YR_INIT_RULE_ARGS
 //
 // Structs defined below are never stored in the compiled rules file
 //
-
-typedef struct RE RE;
-typedef struct RE_AST RE_AST;
-typedef struct RE_NODE RE_NODE;
-typedef struct RE_CLASS RE_CLASS;
-typedef struct RE_ERROR RE_ERROR;
 
 struct RE_NODE
 {
@@ -396,7 +429,7 @@ struct RE_ERROR
 };
 
 
-typedef struct _RE_FIBER
+struct RE_FIBER
 {
   const uint8_t* ip;    // instruction pointer
   int32_t  sp;          // stack pointer
@@ -404,29 +437,26 @@ typedef struct _RE_FIBER
 
   uint16_t stack[RE_MAX_STACK];
 
-  struct _RE_FIBER* prev;
-  struct _RE_FIBER* next;
+  RE_FIBER* prev;
+  RE_FIBER* next;
+};
 
-} RE_FIBER;
 
-
-typedef struct _RE_FIBER_LIST
+struct RE_FIBER_LIST
 {
   RE_FIBER* head;
   RE_FIBER* tail;
+};
 
-} RE_FIBER_LIST;
 
-
-typedef struct _RE_FIBER_POOL
+struct RE_FIBER_POOL
 {
   int fiber_count;
   RE_FIBER_LIST fibers;
+};
 
-} RE_FIBER_POOL;
 
-
-typedef struct _YR_MATCH
+struct YR_MATCH
 {
   int64_t base;              // Base address for the match
   int64_t offset;            // Offset relative to base for the match
@@ -444,32 +474,26 @@ typedef struct _YR_MATCH
 
   int32_t chain_length;
 
-  struct _YR_MATCH* prev;
-  struct _YR_MATCH* next;
-
-} YR_MATCH;
-
-
-struct _YR_AC_STATE;
+  YR_MATCH* prev;
+  YR_MATCH* next;
+};
 
 
-typedef struct _YR_AC_STATE
+struct YR_AC_STATE
 {
   uint8_t depth;
   uint8_t input;
 
   uint32_t t_table_slot;
 
-  struct _YR_AC_STATE* failure;
-  struct _YR_AC_STATE* first_child;
-  struct _YR_AC_STATE* siblings;
-
+  YR_AC_STATE* failure;
+  YR_AC_STATE* first_child;
+  YR_AC_STATE* siblings;
   YR_AC_MATCH* matches;
+};
 
-} YR_AC_STATE;
 
-
-typedef struct _YR_AC_AUTOMATON
+struct YR_AC_AUTOMATON
 {
   // Both m_table and t_table have the same number of elements, which is
   // stored in tables_size.
@@ -479,13 +503,11 @@ typedef struct _YR_AC_AUTOMATON
 
   YR_AC_TRANSITION_TABLE t_table;
   YR_AC_MATCH_TABLE m_table;
-
   YR_AC_STATE* root;
+};
 
-} YR_AC_AUTOMATON;
 
-
-typedef struct _YR_RULES
+struct YR_RULES
 {
   unsigned char tidx_mask[YR_BITARRAY_NCHARS(MAX_THREADS)];
   const uint8_t* code_start;
@@ -499,23 +521,18 @@ typedef struct _YR_RULES
 
   // Used only when PROFILING_ENABLED is defined
   uint64_t time_cost;
-
-} YR_RULES;
-
-
-struct _YR_MEMORY_BLOCK;
-struct _YR_MEMORY_BLOCK_ITERATOR;
+};
 
 
 typedef const uint8_t* (*YR_MEMORY_BLOCK_FETCH_DATA_FUNC)(
-    struct _YR_MEMORY_BLOCK* self);
+    YR_MEMORY_BLOCK* self);
 
 
-typedef struct _YR_MEMORY_BLOCK* (*YR_MEMORY_BLOCK_ITERATOR_FUNC)(
-    struct _YR_MEMORY_BLOCK_ITERATOR* self);
+typedef YR_MEMORY_BLOCK* (*YR_MEMORY_BLOCK_ITERATOR_FUNC)(
+    YR_MEMORY_BLOCK_ITERATOR* self);
 
 
-typedef struct _YR_MEMORY_BLOCK
+struct YR_MEMORY_BLOCK
 {
   size_t size;
   uint64_t base;
@@ -523,18 +540,16 @@ typedef struct _YR_MEMORY_BLOCK
   void* context;
 
   YR_MEMORY_BLOCK_FETCH_DATA_FUNC fetch_data;
+};
 
-} YR_MEMORY_BLOCK;
 
-
-typedef struct _YR_MEMORY_BLOCK_ITERATOR
+struct YR_MEMORY_BLOCK_ITERATOR
 {
   void* context;
 
   YR_MEMORY_BLOCK_ITERATOR_FUNC  first;
   YR_MEMORY_BLOCK_ITERATOR_FUNC  next;
-
-} YR_MEMORY_BLOCK_ITERATOR;
+};
 
 
 typedef int (*YR_CALLBACK_FUNC)(
@@ -543,7 +558,7 @@ typedef int (*YR_CALLBACK_FUNC)(
     void* user_data);
 
 
-typedef struct _YR_SCAN_CONTEXT
+struct YR_SCAN_CONTEXT
 {
   // File size of the file being scanned.
   uint64_t file_size;
@@ -596,76 +611,69 @@ typedef struct _YR_SCAN_CONTEXT
   // Fiber pool used by yr_re_exec.
   RE_FIBER_POOL re_fiber_pool;
 
-} YR_SCAN_CONTEXT;
+  struct {
+    YR_MODULE* module;
+    uint64_t time_cost;
+  } module_costs[10];
+};
 
 
-struct _YR_OBJECT;
-
-
-typedef union _YR_VALUE
+union YR_VALUE
 {
   int64_t i;
   double d;
   void* p;
-  struct _YR_OBJECT* o;
+  YR_OBJECT* o;
   YR_STRING* s;
   SIZED_STRING* ss;
   RE* re;
-
-} YR_VALUE;
+};
 
 
 #define OBJECT_COMMON_FIELDS \
     int8_t type; \
     const char* identifier; \
-    struct _YR_OBJECT* parent; \
+    YR_OBJECT* parent; \
     void* data;
 
 
-typedef struct _YR_OBJECT
+struct YR_OBJECT
 {
   OBJECT_COMMON_FIELDS
   YR_VALUE value;
+};
 
-} YR_OBJECT;
 
-
-typedef struct _YR_OBJECT_STRUCTURE
+struct YR_OBJECT_STRUCTURE
 {
   OBJECT_COMMON_FIELDS
-  struct _YR_STRUCTURE_MEMBER* members;
-
-} YR_OBJECT_STRUCTURE;
-
-
-typedef struct _YR_OBJECT_ARRAY
-{
-  OBJECT_COMMON_FIELDS
-  YR_OBJECT* prototype_item;
-  struct _YR_ARRAY_ITEMS* items;
-
-} YR_OBJECT_ARRAY;
+  YR_STRUCTURE_MEMBER* members;
+};
 
 
-typedef struct _YR_OBJECT_DICTIONARY
+struct YR_OBJECT_ARRAY
 {
   OBJECT_COMMON_FIELDS
   YR_OBJECT* prototype_item;
-  struct _YR_DICTIONARY_ITEMS* items;
+  YR_ARRAY_ITEMS* items;
+};
 
-} YR_OBJECT_DICTIONARY;
 
-
-struct _YR_OBJECT_FUNCTION;
+struct YR_OBJECT_DICTIONARY
+{
+  OBJECT_COMMON_FIELDS
+  YR_OBJECT* prototype_item;
+  YR_DICTIONARY_ITEMS* items;
+};
 
 
 typedef int (*YR_MODULE_FUNC)(
     YR_VALUE* args,
     YR_SCAN_CONTEXT* context,
-    struct _YR_OBJECT_FUNCTION* function_obj);
+    YR_OBJECT_FUNCTION* function_obj);
 
 
-typedef struct _YR_OBJECT_FUNCTION
+struct YR_OBJECT_FUNCTION
 {
   OBJECT_COMMON_FIELDS
   YR_OBJECT* return_obj;
@@ -674,10 +682,8 @@ typedef struct _YR_OBJECT_FUNCTION
   {
     const char* arguments_fmt;
     YR_MODULE_FUNC code;
-
   } prototypes[MAX_OVERLOADED_FUNCTIONS];
-
-} YR_OBJECT_FUNCTION;
+};
 
 
 #define object_as_structure(obj)  ((YR_OBJECT_STRUCTURE*) (obj))
@@ -686,23 +692,21 @@ typedef struct _YR_OBJECT_FUNCTION
 #define object_as_function(obj)   ((YR_OBJECT_FUNCTION*) (obj))
 
 
-typedef struct _YR_STRUCTURE_MEMBER
+struct YR_STRUCTURE_MEMBER
 {
   YR_OBJECT* object;
-  struct _YR_STRUCTURE_MEMBER* next;
+  YR_STRUCTURE_MEMBER* next;
+};
 
-} YR_STRUCTURE_MEMBER;
 
-
-typedef struct _YR_ARRAY_ITEMS
+struct YR_ARRAY_ITEMS
 {
   int count;
   YR_OBJECT* objects[1];
+};
 
-} YR_ARRAY_ITEMS;
 
-
-typedef struct _YR_DICTIONARY_ITEMS
+struct YR_DICTIONARY_ITEMS
 {
   int used;
   int free;
@@ -713,8 +717,7 @@ typedef struct _YR_DICTIONARY_ITEMS
     YR_OBJECT* obj;
 
   } objects[1];
-
-} YR_DICTIONARY_ITEMS;
+};
 
 
 #endif
