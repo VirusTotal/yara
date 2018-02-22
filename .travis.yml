@@ -20,6 +20,7 @@ matrix:
       install: |
         sudo dpkg --add-architecture i386 && sudo rm -rf /etc/apt/sources.list.d/
         sudo apt-get update
+        sudo apt-get upgrade -y gcc
         sudo apt-get install -y gcc-multilib autoconf automake libtool libjansson-dev:i386 libmagic-dev:i386 libssl-dev:i386
     - os: linux
       dist: trusty
