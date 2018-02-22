@@ -3457,8 +3457,8 @@ void yyerror(
 
 
 int yr_lex_parse_rules_string(
-  const char* rules_string,
-  YR_COMPILER* compiler)
+    const char* rules_string,
+    YR_COMPILER* compiler)
 {
   yyscan_t yyscanner;
 
@@ -3484,8 +3484,8 @@ int yr_lex_parse_rules_string(
 
 
 int yr_lex_parse_rules_file(
-  FILE* rules_file,
-  YR_COMPILER* compiler)
+    FILE* rules_file,
+    YR_COMPILER* compiler)
 {
   yyscan_t yyscanner;
 
@@ -3510,8 +3510,8 @@ int yr_lex_parse_rules_file(
 
 
 int yr_lex_parse_rules_fd(
-  YR_FILE_DESCRIPTOR rules_fd,
-  YR_COMPILER* compiler)
+    YR_FILE_DESCRIPTOR rules_fd,
+    YR_COMPILER* compiler)
 {
   yyscan_t yyscanner;
   char buf[1024];
