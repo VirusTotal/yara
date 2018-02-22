@@ -375,15 +375,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     }
 
 
-struct _YR_MODULE;
-
-
 typedef int (*YR_EXT_INITIALIZE_FUNC)(
-    struct _YR_MODULE* module);
+    YR_MODULE* module);
 
 
 typedef int (*YR_EXT_FINALIZE_FUNC)(
-    struct _YR_MODULE* module);
+    YR_MODULE* module);
 
 
 typedef int (*YR_EXT_DECLARATIONS_FUNC)(
@@ -401,7 +398,7 @@ typedef int (*YR_EXT_UNLOAD_FUNC)(
     YR_OBJECT* module_object);
 
 
-typedef struct _YR_MODULE
+struct YR_MODULE
 {
   char* name;
 
@@ -410,17 +407,15 @@ typedef struct _YR_MODULE
   YR_EXT_UNLOAD_FUNC unload;
   YR_EXT_INITIALIZE_FUNC initialize;
   YR_EXT_FINALIZE_FUNC finalize;
+};
 
-} YR_MODULE;
 
-
-typedef struct _YR_MODULE_IMPORT
+struct YR_MODULE_IMPORT
 {
   const char* module_name;
   void* module_data;
   size_t module_data_size;
-
-} YR_MODULE_IMPORT;
+};
 
 
 int yr_modules_initialize(void);

@@ -48,14 +48,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_AC_UNUSED_TRANSITION_SLOT(x) (!YR_AC_USED_TRANSITION_SLOT(x))
 
 
-typedef struct _YR_AC_TABLES
-{
-  YR_AC_TRANSITION* transitions;
-  YR_AC_MATCH_TABLE_ENTRY* matches;
-
-} YR_AC_TABLES;
-
-
 int yr_ac_automaton_create(
     YR_AC_AUTOMATON** automaton);
 
