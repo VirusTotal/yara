@@ -610,11 +610,6 @@ struct YR_SCAN_CONTEXT
 
   // Fiber pool used by yr_re_exec.
   RE_FIBER_POOL re_fiber_pool;
-
-  struct {
-    YR_MODULE* module;
-    uint64_t time_cost;
-  } module_costs[10];
 };
 
 
