@@ -25,6 +25,7 @@ stamp-h1
 /aclocal.m4
 /ar-lib
 /autom4te.cache/
+/build-aux
 /compile
 /config.guess
 /config.h
