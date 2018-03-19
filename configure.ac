@@ -40,6 +40,7 @@ case $host_os in
              # are in /usr/local/opt/openssl/include
              CFLAGS="$CFLAGS -DUSE_MACH_PROC -I/usr/local/opt/openssl/include"
              LDFLAGS="$LDFLAGS -L/usr/local/opt/openssl/lib"
+             mach=yes
              proc_interface=mach
              jemalloc_prefix=je_ ;;
     mingw*) CFLAGS="$CFLAGS -DUSE_WINDOWS_PROC"
@@ -268,8 +269,11 @@ AS_IF([test "x$have_crypto" = "xno"],
     PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libcrypto"
   ])
 
-AC_CHECK_FUNCS([clock_gettime],,
-  AC_MSG_ERROR([clock_gettime not supported in your OS.]))
+AS_IF([test "x$mach" != "xyes"],
+  [
+    AC_CHECK_FUNCS([clock_gettime],,
+      AC_MSG_ERROR([clock_gettime not supported in your OS.]))
+  ],)
 
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
 AM_CONDITIONAL([PROFILING_ENABLED], [test x$profiling_enabled = xtrue])
