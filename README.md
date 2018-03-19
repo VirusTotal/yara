@@ -59,6 +59,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Conix](http://www.conix.fr)
 * [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
 * [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
+* [Cyber Triage](http://www.cybertriage.com)
 * [ESET](https://www.eset.com)
 * [ESTsecurity](https://www.estsecurity.com)
 * [Fidelis XPS](http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
