@@ -51,6 +51,27 @@ uint64_t yr_stopwatch_elapsed_us(
   return (li.QuadPart - sw->start.QuadPart) * 1000000L / sw->frequency.QuadPart;
 }
 
+
+#elif defined(__MACH__)
+
+void yr_stopwatch_start(
+    YR_STOPWATCH* sw)
+{
+  mach_timebase_info(&sw->timebase);
+  sw->start = mach_absolute_time();
+}
+
+
+uint64_t yr_stopwatch_elapsed_us(
+    YR_STOPWATCH* sw)
+{
+  uint64_t now;
+
+  now = mach_absolute_time();
+  return (now - sw->start) * 1000ULL * sw->timebase.numer / sw->timebase.denom;
+}
+
+
 #else
 
 #define timespecsub(tsp, usp, vsp)                      \

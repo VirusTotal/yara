@@ -44,6 +44,17 @@ typedef struct _YR_STOPWATCH
 
 } YR_STOPWATCH;
 
+#elif defined(__MACH__)
+
+#include <mach/mach_time.h>
+
+typedef struct _YR_STOPWATCH
+{
+  mach_timebase_info_data_t timebase;
+  uint64_t start;
+
+} YR_STOPWATCH;
+
 #else
 
 typedef struct _YR_STOPWATCH
