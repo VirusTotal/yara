@@ -68,7 +68,8 @@ uint64_t yr_stopwatch_elapsed_us(
   uint64_t now;
 
   now = mach_absolute_time();
-  return (now - sw->start) * 1000ULL * sw->timebase.numer / sw->timebase.denom;
+  return (now - sw->start) * sw->timebase.numer /
+         (sw->timebase.denom * 1000ULL);
 }
 
 
