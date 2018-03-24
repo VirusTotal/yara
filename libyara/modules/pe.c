@@ -1017,12 +1017,12 @@ EXPORT_FUNCTIONS* pe_parse_exports(
     ordinals = (WORD*)(pe->data + offset);
   }
 
-  EXPORT_FUNCTIONS* exported_functions = yr_malloc(sizeof(EXPORT_FUNCTIONS));
+  EXPORT_FUNCTIONS* exported_functions = (EXPORT_FUNCTIONS*) yr_malloc(sizeof(EXPORT_FUNCTIONS));
   if (!exported_functions)
     return NULL;
 
   exported_functions->number_of_exports = yr_le32toh(exports->NumberOfFunctions);
-  exported_functions->functions = yr_malloc(exported_functions->number_of_exports * sizeof(EXPORT_FUNCTION));
+  exported_functions->functions = (EXPORT_FUNCTION*) yr_malloc(exported_functions->number_of_exports * sizeof(EXPORT_FUNCTION));
   if (!exported_functions->functions)
     return NULL;
 
