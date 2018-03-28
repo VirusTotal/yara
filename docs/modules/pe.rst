@@ -8,7 +8,9 @@ PE module
 The PE module allows you to create more fine-grained rules for PE files by
 using attributes and features of the PE file format. This module exposes most of
 the fields present in a PE header and provides functions which can be used to
-write more expressive and targeted rules. Let's see some examples::
+write more expressive and targeted rules. Let's see some examples:
+
+.. code-block:: yara
 
     import "pe"
 

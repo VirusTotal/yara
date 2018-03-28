@@ -9,7 +9,9 @@ ELF module
 
 The ELF module is very similar to the :ref:`pe-module`, but for ELF files. This
 module exposes most of the fields present in an ELF header. Let's see some
-examples::
+examples:
+
+.. code-block:: yara
 
     import "elf"
 
