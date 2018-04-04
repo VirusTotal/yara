@@ -680,12 +680,11 @@ int pe_collect_resources(
 IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
     PE* pe,
     PIMAGE_IMPORT_DESCRIPTOR import_descriptor,
-    char* dll_name)
+    char* dll_name,
+    int* num_function_imports)
 {
   IMPORT_EXPORT_FUNCTION* head = NULL;
   IMPORT_EXPORT_FUNCTION* tail = NULL;
-
-  int num_functions = 0;
 
   int64_t offset = pe_rva_to_offset(
       pe, yr_le32toh(import_descriptor->OriginalFirstThunk));
@@ -705,7 +704,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
 
     while (struct_fits_in_pe(pe, thunks64, IMAGE_THUNK_DATA64) &&
            yr_le64toh(thunks64->u1.Ordinal) != 0 &&
-           num_functions < MAX_PE_IMPORTS)
+           *num_function_imports < MAX_PE_IMPORTS)
     {
       char* name = NULL;
       uint16_t ordinal = 0;
@@ -763,7 +762,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
         tail = imported_func;
       }
 
-      num_functions++;
+      (*num_function_imports)++;
       thunks64++;
     }
   }
@@ -772,7 +771,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
     PIMAGE_THUNK_DATA32 thunks32 = (PIMAGE_THUNK_DATA32)(pe->data + offset);
 
     while (struct_fits_in_pe(pe, thunks32, IMAGE_THUNK_DATA32) &&
-           yr_le32toh(thunks32->u1.Ordinal) != 0 && num_functions < MAX_PE_IMPORTS)
+           yr_le32toh(thunks32->u1.Ordinal) != 0 && *num_function_imports < MAX_PE_IMPORTS)
     {
       char* name = NULL;
       uint16_t ordinal = 0;
@@ -830,7 +829,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
         tail = imported_func;
       }
 
-      num_functions++;
+      (*num_function_imports)++;
       thunks32++;
     }
   }
@@ -875,7 +874,8 @@ IMPORTED_DLL* pe_parse_imports(
     PE* pe)
 {
   int64_t offset;
-  int num_imports = 0;
+  int num_imports = 0;           // Number of imported DLLs
+  int num_function_imports = 0;  // Total number of functions imported
 
   IMPORTED_DLL* head = NULL;
   IMPORTED_DLL* tail = NULL;
@@ -918,7 +918,7 @@ IMPORTED_DLL* pe_parse_imports(
       if (imported_dll != NULL)
       {
         IMPORT_EXPORT_FUNCTION* functions = pe_parse_import_descriptor(
-            pe, imports, dll_name);
+            pe, imports, dll_name, &num_function_imports);
 
         if (functions != NULL)
         {
