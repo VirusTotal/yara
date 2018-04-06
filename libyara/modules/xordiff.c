@@ -52,9 +52,9 @@ define_function(xordiff_match)
   if (period >= pattern->length)
     return_integer(UNDEFINED);
   int64_t diff_length = pattern->length - period;
-  uint8_t *diff = yr_malloc(diff_length);
+  uint8_t *diff = (uint8_t *)yr_malloc(diff_length);
   int64_t rembuf_length = diff_length + period;
-  uint8_t *rembuf = yr_malloc(rembuf_length);
+  uint8_t *rembuf = (uint8_t *)yr_malloc(rembuf_length);
   if (!diff)
     return ERROR_INSUFFICIENT_MEMORY;
   for (int64_t i = 0; i < diff_length; i++) {
