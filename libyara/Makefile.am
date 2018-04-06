@@ -4,6 +4,7 @@ MODULES += modules/pe.c
 MODULES += modules/elf.c
 MODULES += modules/math.c
 MODULES += modules/time.c
+MODULES += modules/xordiff.c
 
 # This isn't really a module, but needs to be compiled with them.
 MODULES += modules/pe_utils.c
