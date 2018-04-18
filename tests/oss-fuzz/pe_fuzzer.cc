@@ -72,7 +72,7 @@ int callback(int message, void* message_data, void* user_data)
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
   if (rules == NULL)
-    return 1;
+    return 0;
 
   yr_rules_scan_mem(
       rules,
