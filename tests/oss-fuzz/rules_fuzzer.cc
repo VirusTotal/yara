@@ -49,7 +49,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   char* buffer = (char*) malloc(size + 1);
 
   if (!buffer)
-    return 1;
+    return 0;
 
   strncpy(buffer, (const char *) data, size);
   buffer[size] = 0;
@@ -57,7 +57,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
   {
     free(buffer);
-    return 1;
+    return 0;
   }
 
   if (yr_compiler_add_string(compiler, (const char*) buffer, NULL) == 0)
@@ -65,7 +65,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     if (yr_compiler_get_rules(compiler, &rules) == ERROR_SUCCESS)
       yr_rules_destroy(rules);
     else
-      return 1;
+      return 0;
   }
 
   yr_compiler_destroy(compiler);
