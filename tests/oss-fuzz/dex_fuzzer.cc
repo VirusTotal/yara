@@ -17,11 +17,8 @@ extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
     return 0;
 
-  if (yr_compiler_add_string(compiler, "import \"dex\"", NULL) != 0)
-    return 0;
-
-  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
-    return 0;
+  if (yr_compiler_add_string(compiler, "import \"dex\"", NULL) == 0)
+    yr_compiler_get_rules(compiler, &rules);
 
   yr_compiler_destroy(compiler);
 
