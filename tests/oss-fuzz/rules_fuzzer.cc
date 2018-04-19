@@ -64,8 +64,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   {
     if (yr_compiler_get_rules(compiler, &rules) == ERROR_SUCCESS)
       yr_rules_destroy(rules);
-    else
-      return 0;
   }
 
   yr_compiler_destroy(compiler);
