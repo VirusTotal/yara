@@ -23,10 +23,10 @@ ACLOCAL_AMFLAGS=-I m4
 bin_PROGRAMS = yara yarac
 
 yara_SOURCES = args.c args.h common.h threading.c threading.h yara.c
-yara_LDADD = libyara/.libs/libyara.a
+yara_LDADD = -Llibyara/.libs -lyara
 
 yarac_SOURCES = args.c args.h common.h yarac.c
-yarac_LDADD = libyara/.libs/libyara.a
+yarac_LDADD = -Llibyara/.libs -lyara
 
 TESTS = $(check_PROGRAMS)
 check_PROGRAMS = test-alignment test-api test-rules test-pe test-elf test-version
@@ -40,27 +40,27 @@ endif
 
 test_alignment_SOURCES = tests/test-alignment.c
 test_rules_SOURCES = tests/test-rules.c tests/util.c
-test_rules_LDADD = libyara/.libs/libyara.a
+test_rules_LDADD = -Llibyara/.libs -lyara
 test_pe_SOURCES = tests/test-pe.c tests/util.c
-test_pe_LDADD = libyara/.libs/libyara.a
+test_pe_LDADD = -Llibyara/.libs -lyara
 test_elf_SOURCES = tests/test-elf.c tests/util.c
-test_elf_LDADD = libyara/.libs/libyara.a
+test_elf_LDADD = -Llibyara/.libs -lyara
 test_exception_SOURCES = tests/test-exception.c tests/util.c
-test_exception_LDADD = libyara/.libs/libyara.a
+test_exception_LDADD = -Llibyara/.libs -lyara
 test_version_SOURCES = tests/test-version.c
-test_api_LDADD = libyara/.libs/libyara.a
+test_api_LDADD = -Llibyara/.libs -lyara
 test_api_SOURCES = tests/test-api.c tests/util.c
 
 if MACHO_MODULE
 check_PROGRAMS+=test-macho
 test_macho_SOURCES = tests/test-macho.c tests/util.c
-test_macho_LDADD = libyara/.libs/libyara.a
+test_macho_LDADD = -Llibyara/.libs -lyara
 endif
 
 if DEX_MODULE
 check_PROGRAMS+=test-dex
 test_dex_SOURCES = tests/test-dex.c tests/util.c
-test_dex_LDADD = libyara/.libs/libyara.a
+test_dex_LDADD = -Llibyara/.libs -lyara
 endif
 
 # man pages
