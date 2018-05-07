@@ -342,8 +342,12 @@ typedef struct YARA_RULES_FILE_HEADER
   DECLARE_REFERENCE(YR_RULE*, rules_list_head);
   DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
   DECLARE_REFERENCE(const uint8_t*, code_start);
-  DECLARE_REFERENCE(YR_AC_MATCH_TABLE, match_table);
-  DECLARE_REFERENCE(YR_AC_TRANSITION_TABLE, transition_table);
+  DECLARE_REFERENCE(YR_AC_MATCH_TABLE, ac_match_table);
+  DECLARE_REFERENCE(YR_AC_TRANSITION_TABLE, ac_transition_table);
+
+  // Size of ac_match_table and ac_transition_table in number of items (both 
+  // tables have the same number of items)
+  uint32_t ac_tables_size;
 
 } YARA_RULES_FILE_HEADER;
 
@@ -516,8 +520,12 @@ struct YR_RULES
   YR_ARENA* arena;
   YR_RULE* rules_list_head;
   YR_EXTERNAL_VARIABLE* externals_list_head;
-  YR_AC_TRANSITION_TABLE transition_table;
-  YR_AC_MATCH_TABLE match_table;
+  YR_AC_TRANSITION_TABLE ac_transition_table;
+  YR_AC_MATCH_TABLE ac_match_table;
+
+  // Size of ac_match_table and ac_transition_table in number of items (both
+  // tables have the same numbe of items)
+  uint32_t ac_tables_size;
 
   // Used only when PROFILING_ENABLED is defined
   uint64_t time_cost;

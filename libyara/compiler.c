@@ -606,8 +606,8 @@ static int _yr_compiler_compile_rules(
         offsetof(YARA_RULES_FILE_HEADER, rules_list_head),
         offsetof(YARA_RULES_FILE_HEADER, externals_list_head),
         offsetof(YARA_RULES_FILE_HEADER, code_start),
-        offsetof(YARA_RULES_FILE_HEADER, match_table),
-        offsetof(YARA_RULES_FILE_HEADER, transition_table),
+        offsetof(YARA_RULES_FILE_HEADER, ac_match_table),
+        offsetof(YARA_RULES_FILE_HEADER, ac_transition_table),
         EOL);
 
   if (result == ERROR_SUCCESS)
@@ -621,8 +621,9 @@ static int _yr_compiler_compile_rules(
     rules_file_header->code_start = (uint8_t*) yr_arena_base_address(
         compiler->code_arena);
 
-    rules_file_header->match_table = tables.matches;
-    rules_file_header->transition_table = tables.transitions;
+    rules_file_header->ac_match_table = tables.matches;
+    rules_file_header->ac_transition_table = tables.transitions;
+    rules_file_header->ac_tables_size = compiler->automaton->tables_size;
   }
 
   if (result == ERROR_SUCCESS)
@@ -750,8 +751,9 @@ YR_API int yr_compiler_get_rules(
 
   yara_rules->externals_list_head = rules_file_header->externals_list_head;
   yara_rules->rules_list_head = rules_file_header->rules_list_head;
-  yara_rules->match_table = rules_file_header->match_table;
-  yara_rules->transition_table = rules_file_header->transition_table;
+  yara_rules->ac_match_table = rules_file_header->ac_match_table;
+  yara_rules->ac_transition_table = rules_file_header->ac_transition_table;
+  yara_rules->ac_tables_size = rules_file_header->ac_tables_size;
   yara_rules->code_start = rules_file_header->code_start;
   yara_rules->time_cost = 0;
 

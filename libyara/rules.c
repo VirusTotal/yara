@@ -374,8 +374,10 @@ YR_API int yr_rules_load_stream(
   new_rules->code_start = header->code_start;
   new_rules->externals_list_head = header->externals_list_head;
   new_rules->rules_list_head = header->rules_list_head;
-  new_rules->match_table = header->match_table;
-  new_rules->transition_table = header->transition_table;
+  new_rules->ac_match_table = header->ac_match_table;
+  new_rules->ac_transition_table = header->ac_transition_table;
+  new_rules->ac_tables_size = header->ac_tables_size;
+  
   memset(new_rules->tidx_mask, 0, sizeof(new_rules->tidx_mask));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
@@ -481,7 +483,7 @@ YR_API void yr_rule_disable(
 
 
 YR_API void yr_rule_enable(
-  YR_RULE* rule)
+    YR_RULE* rule)
 {
   YR_STRING* string;
 

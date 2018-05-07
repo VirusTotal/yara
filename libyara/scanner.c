@@ -47,8 +47,8 @@ static int _yr_scanner_scan_mem_block(
     YR_MEMORY_BLOCK* block)
 {
   YR_RULES* rules = scanner->rules;
-  YR_AC_TRANSITION_TABLE transition_table = rules->transition_table;
-  YR_AC_MATCH_TABLE match_table = rules->match_table;
+  YR_AC_TRANSITION_TABLE transition_table = rules->ac_transition_table;
+  YR_AC_MATCH_TABLE match_table = rules->ac_match_table;
 
   YR_AC_MATCH* match;
   YR_AC_TRANSITION transition;
