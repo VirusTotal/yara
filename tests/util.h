@@ -70,6 +70,16 @@ int read_file(
     char* filename, char** buf);
 
 
+#define assert_true_expr(expr)                                          \
+  do {                                                                  \
+    if (!(expr)) {                                                      \
+      fprintf(stderr, "%s:%d: expression is not true\n",                \
+              __FILE__, __LINE__ );                                     \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+  } while (0);
+
+
 #define assert_true_rule(rule, string)                                  \
   do {                                                                  \
     if (!matches_string(rule, string)) {                                \
