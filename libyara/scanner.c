@@ -101,7 +101,6 @@ static int _yr_scanner_scan_mem_block(
     }
 
     state = transition >> 32;
-
   }
 
   match = match_table[state].match;

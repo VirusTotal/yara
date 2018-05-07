@@ -202,6 +202,7 @@ typedef struct YR_MATCHES YR_MATCHES;
 typedef struct YR_STRING YR_STRING;
 typedef struct YR_RULE YR_RULE;
 typedef struct YR_RULES YR_RULES;
+typedef struct YR_RULES_STATS YR_RULES_STATS;
 typedef struct YR_EXTERNAL_VARIABLE YR_EXTERNAL_VARIABLE;
 typedef struct YR_MATCH YR_MATCH;
 typedef struct YR_SCAN_CONTEXT YR_SCAN_CONTEXT;
@@ -524,11 +525,40 @@ struct YR_RULES
   YR_AC_MATCH_TABLE ac_match_table;
 
   // Size of ac_match_table and ac_transition_table in number of items (both
-  // tables have the same numbe of items)
+  // tables have the same numbe of items).
   uint32_t ac_tables_size;
 
-  // Used only when PROFILING_ENABLED is defined
+  // Used only when PROFILING_ENABLED is defined.
   uint64_t time_cost;
+};
+
+
+struct YR_RULES_STATS 
+{
+  // Total number of rules
+  uint32_t rules;
+
+  // Total number of strings across all rules.
+  uint32_t strings;
+
+  // Total number of Aho-Corasick matches. Each node in the  Aho-Corasick
+  // automaton has a list of YR_AC_MATCH structures (match list )pointing to 
+  // strings that are potential matches. This field holds the total number of
+  // those structures across all nodes in the automaton.
+  uint32_t ac_matches;
+
+  // Length of the match list for the root node in the Aho-Corasick automaton.
+  uint32_t ac_root_match_list_length;
+
+  // Length of the shortest match list.
+  uint32_t ac_match_list_min_length;
+
+  // Length of the longest match list.
+  uint32_t ac_match_list_max_length;
+
+  // Percentiles of match lists' lengths. If the i-th value in the array is N
+  // then i percent of the match lists have N or less items.
+  uint8_t  ac_match_list_length_pctls[101];
 };
 
 

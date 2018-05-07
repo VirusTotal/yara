@@ -546,6 +546,119 @@ void test_ast_callback()
   yr_finalize();
 }
 
+
+void stats_for_rules(
+    const char* rules_str, 
+    YR_RULES_STATS* stats)
+{
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_add_string(compiler, rules_str, NULL) != 0)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_add_string");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_get_rules");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_rules_get_stats(rules, stats);
+
+  yr_compiler_destroy(compiler);
+  yr_rules_destroy(rules);
+  yr_finalize();
+}
+
+
+void test_rules_stats()
+{
+  YR_RULES_STATS stats;
+
+  stats_for_rules("\
+      rule test { \
+      strings: $ = /.*/ \
+      condition: all of them }",
+      &stats);
+
+  assert_true_expr(stats.rules == 1);
+  assert_true_expr(stats.strings == 1);
+  assert_true_expr(stats.ac_root_match_list_length == 1);
+
+  stats_for_rules("\
+      rule test { \
+      strings: $ = \"abc\" \
+      condition: all of them }",
+      &stats);
+
+  assert_true_expr(stats.rules == 1);
+  assert_true_expr(stats.strings == 1);
+  assert_true_expr(stats.ac_matches == 1);
+  assert_true_expr(stats.ac_root_match_list_length == 0);
+  assert_true_expr(stats.ac_match_list_min_length == 1);
+  assert_true_expr(stats.ac_match_list_max_length == 1);
+  assert_true_expr(stats.ac_match_list_length_pctls[1] == 1);
+  assert_true_expr(stats.ac_match_list_length_pctls[100] == 1);
+
+  stats_for_rules("\
+      rule test { \
+      strings: \
+        $ = \"abcd0\" \
+        $ = \"abcd1\" \
+        $ = \"abcd2\" \
+        $ = \"efgh0\" \
+        $ = \"efgh1\" \
+        $ = \"efgh2\" \
+      condition: all of them }",
+      &stats);
+
+  assert_true_expr(stats.rules == 1);
+  assert_true_expr(stats.strings == 6);
+  assert_true_expr(stats.ac_matches == 6);
+  assert_true_expr(stats.ac_root_match_list_length == 0);
+  assert_true_expr(stats.ac_match_list_min_length == 3);
+  assert_true_expr(stats.ac_match_list_max_length == 3);
+  assert_true_expr(stats.ac_match_list_length_pctls[1] == 3);
+  assert_true_expr(stats.ac_match_list_length_pctls[100] == 3);
+
+  stats_for_rules("\
+      rule test { \
+      strings: \
+        $ = \"abcd0\" \
+        $ = \"abcd1\" \
+        $ = \"abcd2\" \
+        $ = \"efgh0\" \
+        $ = \"ijkl0\" \
+        $ = \"mnop0\" \
+        $ = \"mnop1\" \
+        $ = \"qrst0\" \
+      condition: all of them }",
+      &stats);
+
+  assert_true_expr(stats.rules == 1);
+  assert_true_expr(stats.strings == 8);
+  assert_true_expr(stats.ac_matches == 8);
+  assert_true_expr(stats.ac_root_match_list_length == 0);
+  assert_true_expr(stats.ac_match_list_min_length == 1);
+  assert_true_expr(stats.ac_match_list_max_length == 3);
+  assert_true_expr(stats.ac_match_list_length_pctls[1] == 1);
+  assert_true_expr(stats.ac_match_list_length_pctls[100] == 3);
+}
+
+
 int main(int argc, char** argv)
 {
   test_disabled_rules();
@@ -557,4 +670,5 @@ int main(int argc, char** argv)
   test_scanner();
   test_ast_callback();
   test_issue_834();
+  test_rules_stats();
 }

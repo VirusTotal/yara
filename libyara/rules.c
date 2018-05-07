@@ -448,6 +448,86 @@ YR_API int yr_rules_save(
 }
 
 
+static int _uint32_cmp (
+    const void * a, 
+    const void * b) 
+{
+   return (*(uint32_t*) a - *(uint32_t*) b);
+}
+
+YR_API int yr_rules_get_stats(
+    YR_RULES* rules,
+    YR_RULES_STATS *stats)
+{
+  YR_RULE* rule;
+  YR_STRING* string;
+
+  uint32_t* match_list_lengths = (uint32_t*) yr_malloc(
+      sizeof(uint32_t) * rules->ac_tables_size);
+
+  int c = 0;
+
+  if (match_list_lengths == NULL)
+    return ERROR_INSUFFICIENT_MEMORY;
+
+  stats->rules = 0;
+  stats->strings = 0;
+  stats->ac_matches = 0;
+  stats->ac_match_list_min_length = UINT32_MAX;
+  stats->ac_match_list_max_length = 0;
+
+  for (int i = 0; i < rules->ac_tables_size; i++)
+  {
+    YR_AC_MATCH* match = rules->ac_match_table[i].match;
+    
+    int match_list_length = 0;
+
+    while (match != NULL)
+    {
+      match_list_length++;  
+      stats->ac_matches++;
+      match = match->next;
+    }
+
+    if (i == 0) 
+      stats->ac_root_match_list_length = match_list_length;
+
+    if (match_list_length > 0)
+    {
+      if (match_list_length > stats->ac_match_list_max_length)
+        stats->ac_match_list_max_length = match_list_length;
+
+      if (match_list_length < stats->ac_match_list_min_length)
+        stats->ac_match_list_min_length = match_list_length;
+
+      match_list_lengths[c] = match_list_length;
+      c++;
+    } 
+  }
+
+  // sort match_list_lengths in increasing order for computing percentiles.
+  qsort(match_list_lengths, c, sizeof(match_list_lengths[0]), _uint32_cmp);
+
+  stats->ac_match_list_length_pctls[0] = stats->ac_match_list_min_length - 1;
+  stats->ac_match_list_length_pctls[100] = stats->ac_match_list_max_length;
+
+  for (int i = 1; i < 100; i++) 
+    stats->ac_match_list_length_pctls[i] = match_list_lengths[(c * i) / 100];
+
+  yr_free(match_list_lengths);
+
+  yr_rules_foreach(rules, rule)
+  {
+    stats->rules++;
+    yr_rule_strings_foreach(rule, string)
+      stats->strings++;
+  }
+
+
+  return ERROR_SUCCESS;
+}
+
+
 YR_API int yr_rules_destroy(
     YR_RULES* rules)
 {
