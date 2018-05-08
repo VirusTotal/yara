@@ -49,6 +49,8 @@ stamp-h1
 /yara
 /yarac
 /libyara/modules/.dirstamp
+libyara/proc/.dirstamp
+libyara/yara.pc
 
 # Linux and Mac files
 *.swp
