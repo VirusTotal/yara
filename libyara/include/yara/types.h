@@ -556,6 +556,9 @@ struct YR_RULES_STATS
   // Percentiles of match lists' lengths. If the i-th value in the array is N
   // then i percent of the match lists have N or less items.
   uint32_t ac_match_list_length_pctls[101];
+
+  // Size of Aho-Corasick transition & match tables.
+  uint32_t ac_tables_size;
 };
 
 

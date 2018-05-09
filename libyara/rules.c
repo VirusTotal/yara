@@ -470,9 +470,10 @@ YR_API int yr_rules_get_stats(
   if (match_list_lengths == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
+  stats->ac_tables_size = rules->ac_tables_size;
+  stats->ac_matches = 0;
   stats->rules = 0;
   stats->strings = 0;
-  stats->ac_matches = 0;
 
   for (int i = 0; i < rules->ac_tables_size; i++)
   {
