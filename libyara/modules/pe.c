@@ -1350,8 +1350,6 @@ void pe_parse_header(
       pe->object, "image_base");
 
   set_integer(
-      IS_64BITS_PE(pe) ?
-      yr_le64toh(OptionalHeader(pe, NumberOfRvaAndSizes)) :
       yr_le32toh(OptionalHeader(pe, NumberOfRvaAndSizes)),
       pe->object, "number_of_rva_and_sizes");
 
