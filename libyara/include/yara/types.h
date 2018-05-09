@@ -550,15 +550,12 @@ struct YR_RULES_STATS
   // Length of the match list for the root node in the Aho-Corasick automaton.
   uint32_t ac_root_match_list_length;
 
-  // Length of the shortest match list.
-  uint32_t ac_match_list_min_length;
-
-  // Length of the longest match list.
-  uint32_t ac_match_list_max_length;
+  // Top 10 longest match lists.
+  uint32_t top_ac_match_list_lengths[100];
 
   // Percentiles of match lists' lengths. If the i-th value in the array is N
   // then i percent of the match lists have N or less items.
-  uint8_t  ac_match_list_length_pctls[101];
+  uint32_t ac_match_list_length_pctls[101];
 };
 
 

@@ -135,6 +135,7 @@ static int show_meta = FALSE;
 static int show_namespace = FALSE;
 static int show_version = FALSE;
 static int show_help = FALSE;
+static int show_stats = FALSE;
 static int ignore_warnings = FALSE;
 static int fast_scan = FALSE;
 static int negate = FALSE;
@@ -168,6 +169,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN('D', "print-module-data", &show_module_data,
       "print module data"),
+
+  OPT_BOOLEAN('S', "print-stats", &show_stats,
+      "print rules' statistics"),
 
   OPT_BOOLEAN('g', "print-tags", &show_tags,
       "print tags"),
@@ -586,6 +590,39 @@ static void print_compiler_error(
 
     fprintf(stderr, "%s(%d): warning: %s\n", file_name, line_number, message);
   }
+}
+
+
+static void print_rules_stats(
+    YR_RULES* rules) 
+{
+  YR_RULES_STATS stats;
+
+  int t = sizeof(stats.top_ac_match_list_lengths) / 
+          sizeof(stats.top_ac_match_list_lengths[0]);
+  
+  int result = yr_rules_get_stats(rules, &stats);
+  
+  if (result != ERROR_SUCCESS)
+  {
+     print_error(result);
+     return;
+  }
+  
+  printf("# of rules                   : %d\n", stats.rules);
+  printf("# of strings                 : %d\n", stats.strings);
+  printf("# of AC matches              : %d\n", stats.ac_matches);
+  printf("# of AC matches in root node : %d\n", stats.ac_root_match_list_length);
+
+  printf("# of AC matches in top %d longest lists\n", t);
+
+  for (int i = 0; i < t; i++)
+    printf(" %3d: %d\n", i + 1, stats.top_ac_match_list_lengths[i]);
+
+  printf("match list length percentiles\n");
+
+  for (int i = 0; i <= 100; i++)
+    printf(" %3d: %d\n", i, stats.ac_match_list_length_pctls[i]);
 }
 
 
@@ -1149,6 +1186,9 @@ int main(
       exit_with_code(EXIT_FAILURE);
     }
   }
+
+  if (show_stats)
+    print_rules_stats(rules);
 
   mutex_init(&output_mutex);
 
