@@ -609,6 +609,7 @@ static void print_rules_stats(
      return;
   }
   
+  printf("size of AC transition table  : %d\n", stats.ac_tables_size);
   printf("# of rules                   : %d\n", stats.rules);
   printf("# of strings                 : %d\n", stats.strings);
   printf("# of AC matches              : %d\n", stats.ac_matches);
