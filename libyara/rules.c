@@ -473,8 +473,6 @@ YR_API int yr_rules_get_stats(
   stats->rules = 0;
   stats->strings = 0;
   stats->ac_matches = 0;
-  stats->ac_match_list_min_length = UINT32_MAX;
-  stats->ac_match_list_max_length = 0;
 
   for (int i = 0; i < rules->ac_tables_size; i++)
   {
@@ -494,12 +492,6 @@ YR_API int yr_rules_get_stats(
 
     if (match_list_length > 0)
     {
-      if (match_list_length > stats->ac_match_list_max_length)
-        stats->ac_match_list_max_length = match_list_length;
-
-      if (match_list_length < stats->ac_match_list_min_length)
-        stats->ac_match_list_min_length = match_list_length;
-
       match_list_lengths[c] = match_list_length;
       c++;
     } 
@@ -508,8 +500,16 @@ YR_API int yr_rules_get_stats(
   // sort match_list_lengths in increasing order for computing percentiles.
   qsort(match_list_lengths, c, sizeof(match_list_lengths[0]), _uint32_cmp);
 
-  stats->ac_match_list_length_pctls[0] = stats->ac_match_list_min_length - 1;
-  stats->ac_match_list_length_pctls[100] = stats->ac_match_list_max_length;
+  for (int i = 0; i < 100; i++)
+  {
+    if (i < c)
+      stats->top_ac_match_list_lengths[i] = match_list_lengths[c-i-1];
+    else
+      stats->top_ac_match_list_lengths[i] = 0;
+  }
+
+  stats->ac_match_list_length_pctls[0] = match_list_lengths[0];
+  stats->ac_match_list_length_pctls[100] = match_list_lengths[c-1];
 
   for (int i = 1; i < 100; i++) 
     stats->ac_match_list_length_pctls[i] = match_list_lengths[(c * i) / 100];
@@ -522,7 +522,6 @@ YR_API int yr_rules_get_stats(
     yr_rule_strings_foreach(rule, string)
       stats->strings++;
   }
-
 
   return ERROR_SUCCESS;
 }
