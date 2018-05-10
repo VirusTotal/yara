@@ -128,6 +128,7 @@ libyara_la_SOURCES = \
   ahocorasick.c \
   arena.c \
   atoms.c \
+  bitmask.c \
   compiler.c \
   endian.c \
   exec.c \
