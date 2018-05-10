@@ -641,7 +641,8 @@ static int _yr_ac_build_transition_table(
         state,
         &slot));
 
-    automaton->t_table[state->t_table_slot] |= ((uint64_t) slot << 32);
+    automaton->t_table[state->t_table_slot] |= (
+        ((YR_AC_TRANSITION) slot) << YR_AC_STATE_SHIFT);
 
     state->t_table_slot = slot;
 
