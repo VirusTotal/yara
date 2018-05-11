@@ -155,8 +155,123 @@ void test_collide()
 }
 
 
+void test_find_non_colliding_offsets()
+{
+  uint64_t o;
+
+  YR_BITMASK a[18];
+  YR_BITMASK b[13];
+
+  yr_bitmask_clear_all(a);
+  yr_bitmask_clear_all(b);
+
+  // Set even bits in A and odd bits in B.
+  for (int i = 0; i < 13; i++)
+  {
+    if (i % 2 == 0)
+      yr_bitmask_set(a, i);
+    else
+      yr_bitmask_set(b, i);
+  }
+
+  // A and B don't collide at offset 0.
+  if (!yr_bitmask_find_non_colliding_offset(a, b, 18, 13, &o) || o != 0)
+    exit(EXIT_FAILURE);
+
+  // Set even bits and clear odd bits in B.
+  for (int i = 0; i < 13; i++)
+  {
+    if (i % 2 == 0)
+      yr_bitmask_set(b, i);
+    else
+      yr_bitmask_clear(b, i);
+  }
+
+  // A and B don't collide at offset 1.
+  if (!yr_bitmask_find_non_colliding_offset(a, b, 18, 13, &o) || o != 1)
+    exit(EXIT_FAILURE);
+
+  yr_bitmask_clear_all(a);
+  yr_bitmask_clear_all(b);
+
+  // Set the following pattern in A:
+  // 1 0 1 0   0 0 0 1   0 0 0 0   0 0 1 1   0 0
+  yr_bitmask_set(a, 0);
+  yr_bitmask_set(a, 2);
+  yr_bitmask_set(a, 7);
+  yr_bitmask_set(a, 14);
+  yr_bitmask_set(a, 15);
+
+  // Set B to:
+  // 0 1 0 0   0 0 0 1   0 1 0 0  1
+  yr_bitmask_set(b, 1);
+  yr_bitmask_set(b, 7);
+  yr_bitmask_set(b, 9);
+  yr_bitmask_set(b, 12);
+
+  // A and B don't collide at offset 4.
+  if (!yr_bitmask_find_non_colliding_offset(a, b, 18, 13, &o) || o != 4)
+    exit(EXIT_FAILURE);
+
+  // Set the A to:
+  // 1 0 1 0   0 0 0 1   0 0 0 0   0 0 1 1   1 0
+  yr_bitmask_set(a, 16);
+
+  // A can't accommodate B without colliding.
+  if (yr_bitmask_find_non_colliding_offset(a, b, 18, 13, NULL))
+    exit(EXIT_FAILURE);
+
+  yr_bitmask_clear_all(a);
+  yr_bitmask_clear_all(b);
+
+  yr_bitmask_set(a, 0);
+  yr_bitmask_set(a, 2);
+  yr_bitmask_set(a, 3);
+
+  yr_bitmask_set(b, 1);
+  yr_bitmask_set(b, 3);
+
+  // 1011 can't accommodate 0101.
+  if (yr_bitmask_find_non_colliding_offset(a, b, 4, 4,  NULL))
+    exit(EXIT_FAILURE);
+
+  yr_bitmask_clear(a, 3);
+
+  // 1010 can accommodate 0101 at offset 0.
+  if (!yr_bitmask_find_non_colliding_offset(a, b, 4, 4, &o) || o != 0)
+    exit(EXIT_FAILURE);
+
+  // 1010 can accommodate 010 match at 0.
+  if (!yr_bitmask_find_non_colliding_offset(a, b, 4, 3, &o) || o != 0)
+    exit(EXIT_FAILURE);
+
+  // A bitmask can not accommodate itself.
+  if (yr_bitmask_find_non_colliding_offset(a, a, 4, 4, NULL))
+    exit(EXIT_FAILURE);
+
+  if (yr_bitmask_find_non_colliding_offset(a, a, 64, 64, NULL))
+    exit(EXIT_FAILURE);
+
+  if (yr_bitmask_find_non_colliding_offset(a, a, 200, 200, NULL))
+    exit(EXIT_FAILURE);
+
+  // A bitmask with an extra 0 at the end can accommodate the original one at
+  // offset 1.
+  if (!yr_bitmask_find_non_colliding_offset(a, a, 5, 4, &o) || o != 1)
+    exit(EXIT_FAILURE);
+
+  if (!yr_bitmask_find_non_colliding_offset(a, a, 65, 64, &o) || o != 1)
+    exit(EXIT_FAILURE);
+
+  if (!yr_bitmask_find_non_colliding_offset(a, a, 201, 200, &o) || o != 1)
+    exit(EXIT_FAILURE);
+
+}
+
+
 int main(int argc, char** argv)
 {
   test_set_clear();
   test_collide();
+  test_find_non_colliding_offsets();
 }

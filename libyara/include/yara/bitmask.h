@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_BITMASK unsigned long
 
 #define YR_BITMASK_SLOT_BITS      (sizeof(YR_BITMASK) * 8)
-#define YR_BITMASK_SIZE(n)        (((n) / (sizeof(YR_BITMASK) * 8)) + 1)
+#define YR_BITMASK_SIZE(n)        (((n) / (YR_BITMASK_SLOT_BITS)) + 1)
 
 
 #define yr_bitmask_set(bm, i) \
@@ -70,7 +70,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int yr_bitmask_collide(
     YR_BITMASK* a,
     YR_BITMASK* b,
-    uint32_t len_a,
-    uint32_t len_b);
+    uint64_t len_a,
+    uint64_t len_b);
+
+
+int yr_bitmask_find_non_colliding_offset(
+    YR_BITMASK* a,
+    YR_BITMASK* b,
+    uint64_t len_a,
+    uint64_t len_b,
+    uint64_t* offset);
 
 #endif
