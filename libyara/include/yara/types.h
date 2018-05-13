@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <yara/arena.h>
+#include <yara/bitmask.h>
 #include <yara/limits.h>
 #include <yara/hash.h>
 #include <yara/utils.h>
@@ -326,7 +327,7 @@ struct YR_AC_MATCH_TABLE_ENTRY
 };
 
 
-typedef uint64_t                  YR_AC_TRANSITION;
+typedef uint32_t                  YR_AC_TRANSITION;
 typedef YR_AC_TRANSITION*         YR_AC_TRANSITION_TABLE;
 typedef YR_AC_MATCH_TABLE_ENTRY*  YR_AC_MATCH_TABLE;
 
@@ -502,9 +503,13 @@ struct YR_AC_AUTOMATON
 {
   // Both m_table and t_table have the same number of elements, which is
   // stored in tables_size.
-
   uint32_t tables_size;
+
   uint32_t t_table_unused_candidate;
+
+  // Bitmask where each bit indicates if the corresponding slot in m_table
+  // and t_table is already in use.
+  YR_BITMASK* bitmask;
 
   YR_AC_TRANSITION_TABLE t_table;
   YR_AC_MATCH_TABLE m_table;

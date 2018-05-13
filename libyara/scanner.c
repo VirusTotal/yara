@@ -90,7 +90,7 @@ static int _yr_scanner_scan_mem_block(
     {
       if (state != YR_AC_ROOT_STATE)
       {
-        state = transition_table[state] >> 32;
+        state = YR_AC_NEXT_STATE(transition_table[state]);
         transition = transition_table[state + index];
       }
       else
@@ -100,7 +100,7 @@ static int _yr_scanner_scan_mem_block(
       }
     }
 
-    state = transition >> 32;
+    state = YR_AC_NEXT_STATE(transition);
   }
 
   match = match_table[state].match;
