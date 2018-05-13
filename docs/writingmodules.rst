@@ -230,7 +230,9 @@ included. Just go to the source tree root directory and type as always::
     sudo make install
 
 
-Now you should be able to create a rule like this::
+Now you should be able to create a rule like this:
+
+.. code-block:: yara
 
     import "demo"
 

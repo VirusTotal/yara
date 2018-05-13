@@ -13,7 +13,7 @@ malware families (or whatever you want to describe) based on textual or binary
 patterns. Each description, a.k.a rule, consists of a set of strings and a
 boolean expression which determine its logic. Let's see an example:
 
-```
+```yara
 rule silent_banker : banker
 {
     meta:
