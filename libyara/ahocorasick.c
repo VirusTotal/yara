@@ -907,19 +907,7 @@ int yr_ac_compile(
 
   FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_optimize_failure_links(automaton));
-
-  YR_STOPWATCH sw;
-
-
-  printf("building transition table\n");
-  yr_stopwatch_start(&sw);
-
   FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton));
-
-  uint64_t elapsed = yr_stopwatch_elapsed_us(&sw);
-
-  printf("elapsed: %llu\n", elapsed);
-
 
   FAIL_ON_ERROR(yr_arena_reserve_memory(
       arena,
