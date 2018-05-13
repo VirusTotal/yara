@@ -84,3 +84,6 @@ x64/
 
 # NuGet
 windows/*/packages/
+*.trs
+*.log
+test-*
