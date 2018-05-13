@@ -1,4 +1,4 @@
-/*
+    /*
 Copyright (c) 2018. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -31,56 +31,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/bitmask.h>
 
 //
-// yr_bitmask_collide
-//
-// Returns FALSE if the result from ANDing bitmask A and B is zero, or TRUE
-// if otherwise. Example:
-//
-//    A       :  0 0 0 1 0 0 0 0 1 0
-//    B       :  0 0 1 0 0 1 0 1 0 1
-//    A and B :  0 0 0 0 0 0 0 0 0 0   yr_bitmask_collide returns FALSE
-//
-//    A       :  0 0 0 1 0 0 0 0 1 0
-//    B       :  0 0 1 1 0 1 0 1 0 1
-//    A and B :  0 0 0 1 0 0 0 0 0 0   yr_bitmask_collide returns TRUE.
-//
-// If one bitmask longer the other, the shorter one is padded with zeroes.
-//
-// len_a and len_b are the lengths of bitmask A and B, in bits, *not* in bytes.
-//
-
-int yr_bitmask_collide(
-    YR_BITMASK* a,
-    YR_BITMASK* b,
-    uint64_t len_a,
-    uint64_t len_b)
-{
-  uint64_t max_len = yr_max(len_a, len_b);
-  uint64_t i = 0;
-
-  // The array containing the bitmask must have enough space to accommodate
-  // all the bits. As the array size is multiple of sizeof(<array item type>)
-  // the array usually has more bits than the bitmask. Those extra bits must be
-  // set to zero. Notice that even if the bitmask's length is multiple of
-  // sizeof(<array item type>) the array always have an extra item, so it's
-  // safe to iterate up to max_len / YR_BITMASK_SLOT_BITS inclusive.
-
-  for (i = 0; i <= max_len / YR_BITMASK_SLOT_BITS; i++)
-  {
-    if ((a[i] & b[i]) != 0)
-      return TRUE;
-  }
-
-  return FALSE;
-}
-
-
-//
 // yr_bitmask_find_non_colliding_offset
 // 
 // Finds the smaller offset within bitmask A where bitmask B can be accommodated 
 // without bit collisions. A collision occurs when bots bitmasks have a bit set
-// to one at the same offset.
+// to one at the same offset. Bitmask B must have at least one bit set to one. 
 //
 // Args:
 //    YR_BITMASK* a      - Bitmask A
@@ -93,21 +48,27 @@ int yr_bitmask_collide(
 //    TRUE if some non-colliding offset was found, FALSE if otherwise.
 //
 
-int yr_bitmask_find_non_colliding_offset(
+uint32_t yr_bitmask_find_non_colliding_offset(
     YR_BITMASK* a,
     YR_BITMASK* b,
-    uint64_t len_a,
-    uint64_t len_b,
-    uint64_t* offset)
+    uint32_t len_a,
+    uint32_t len_b,
+    uint32_t* off_a)
 {
-  uint64_t i, j, k;
+  uint32_t i, j, k;
 
-  if (len_b > len_a)
-    return -1;
+  for (i = *off_a / YR_BITMASK_SLOT_BITS; 
+       i <= len_a / YR_BITMASK_SLOT_BITS && a[i] == 0xFFFFFFFFFFFFFFFFL; 
+       i++);
 
-  for (i = 0; i <= (len_a - len_b) / YR_BITMASK_SLOT_BITS; i++)
+  *off_a = i;
+    
+  for (; i <= len_a / YR_BITMASK_SLOT_BITS; i++)
   {
-    for (j = 0; j <= yr_min(len_a - len_b, YR_BITMASK_SLOT_BITS - 1); j++)
+    if (a[i] == 0xFFFFFFFFFFFFFFFFL)
+      continue;
+  
+    for (j = 0; j <= yr_min(len_a, YR_BITMASK_SLOT_BITS - 1); j++)
     {
       int found = TRUE;
 
@@ -118,7 +79,7 @@ int yr_bitmask_find_non_colliding_offset(
         if (j > 0 && k > 0)
           m |= b[k - 1] >> (YR_BITMASK_SLOT_BITS - j);
   
-        if ((m & a[i + k]) != 0)
+        if ((i + k <= len_a / YR_BITMASK_SLOT_BITS) && (m & a[i + k]) != 0)
         {
           found = FALSE;
           break ;
@@ -126,14 +87,9 @@ int yr_bitmask_find_non_colliding_offset(
       }
 
       if (found)
-      {
-        if (offset != NULL)
-          *offset = i * YR_BITMASK_SLOT_BITS + j;
-
-        return TRUE;
-      }
+        return i * YR_BITMASK_SLOT_BITS + j;
     }
   }
 
-  return FALSE;
+  return len_a;
 }

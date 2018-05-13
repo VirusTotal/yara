@@ -34,22 +34,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/atoms.h>
 #include <yara/types.h>
 
+// Number of bits dedicated to store the offset of the slot relative to its
+// own state.
+#define YR_AC_SLOT_OFFSET_BITS              9
 
-#define YR_AC_CODE_BITS     16
-#define YR_AC_FLAGS_BITS    16
-#define YR_AC_STATE_SHIFT   (YR_AC_CODE_BITS + YR_AC_FLAGS_BITS)
+// Max number of slots in the transition table. This is the maximum number of
+// slots that can be addressed with 23-bit indexes.
+#define YR_AC_MAX_TRANSITION_TABLE_SIZE     0x800000
 
-#define YR_AC_ROOT_STATE                0
-#define YR_AC_NEXT_STATE(t)             (t >> YR_AC_STATE_SHIFT)
-#define YR_AC_INVALID_TRANSITION(t, c)  (((t) & 0xFFFF) != c)
+#define YR_AC_ROOT_STATE                    0
+#define YR_AC_NEXT_STATE(t)                 (t >> YR_AC_SLOT_OFFSET_BITS)
+#define YR_AC_INVALID_TRANSITION(t, c)      (((t) & 0x1FF) != c)
 
-#define YR_AC_MAKE_TRANSITION(state, code, flags) \
-  ((uint64_t)((((uint64_t) state & 0xFFFF) << YR_AC_STATE_SHIFT) | ((flags) << YR_AC_CODE_BITS) | (code)))
-
-#define YR_AC_USED_FLAG    0x1
-
-#define YR_AC_USED_TRANSITION_SLOT(x)   ((x) & (YR_AC_USED_FLAG << YR_AC_CODE_BITS))
-#define YR_AC_UNUSED_TRANSITION_SLOT(x) (!YR_AC_USED_TRANSITION_SLOT(x))
+#define YR_AC_MAKE_TRANSITION(state, code) \
+  ((YR_AC_TRANSITION) \
+    ((((YR_AC_TRANSITION) state) << YR_AC_SLOT_OFFSET_BITS) | (code)))
 
 
 int yr_ac_automaton_create(
