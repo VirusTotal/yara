@@ -27,6 +27,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <assert.h>
+
 #include <yara/utils.h>
 #include <yara/bitmask.h>
 
@@ -35,17 +37,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 // Finds the smaller offset within bitmask A where bitmask B can be accommodated 
 // without bit collisions. A collision occurs when bots bitmasks have a bit set
-// to one at the same offset. Bitmask B must have at least one bit set to one. 
-//
+// to 1 at the same offset. This function assumes that the first bit in B is 1
+// and do optmizations that rely on that.
+// 
+// The function also receives a pointer to an uint64_t where the function stores
+// a value that is used for speeding-up subsequent searches over the same
+// bitmask A. When called for the first time with some bitmask A, the pointer
+// must point to zero-initialized uint64_t. In the next call the function uses
+// the previously stored value for skiping over a portion of the A bitmask and
+// updates the value.
+// 
 // Args:
 //    YR_BITMASK* a      - Bitmask A
 //    YR_BITMASK* b      - Bitmask B
 //    uint64_t len_a     - Length of bitmask A in bits
 //    uint64_t len_b     - Length of bitmask B in bits
-//    uint64_t* offset   - Address of an uint64_t where to put the offset if
-//                         found.
+//    uint64_t* hint     - Address of an uint64_t where the function writes a
+//                         value that can be used as a hint.
 // Returns:
-//    TRUE if some non-colliding offset was found, FALSE if otherwise.
+//    The smaller offset within bitmask A where bitmask B can be put.
 //
 
 uint32_t yr_bitmask_find_non_colliding_offset(
@@ -56,6 +66,8 @@ uint32_t yr_bitmask_find_non_colliding_offset(
     uint32_t* off_a)
 {
   uint32_t i, j, k;
+
+  assert(yr_bitmask_isset(b, 0));
 
   for (i = *off_a / YR_BITMASK_SLOT_BITS; 
        i <= len_a / YR_BITMASK_SLOT_BITS && a[i] == 0xFFFFFFFFFFFFFFFFL; 

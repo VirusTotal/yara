@@ -122,30 +122,17 @@ void test_find_non_colliding_offsets_1()
   yr_bitmask_clear_all(a);
   yr_bitmask_clear_all(b);
 
-  // Set even bits in A and odd bits in B.
+  // Set odd bits in B and odd bits in A.
   for (int i = 0; i < 13; i++)
   {
     if (i % 2 == 0)
-      yr_bitmask_set(a, i);
-    else
       yr_bitmask_set(b, i);
+    else
+      yr_bitmask_set(a, i);
   }
 
   // Bitmask A can accommodate B at offset 0.
   if (yr_bitmask_find_non_colliding_offset(a, b, 18, 13, &o) != 0)
-    exit(EXIT_FAILURE);
-
-  // Set even bits and clear odd bits in B.
-  for (int i = 0; i < 13; i++)
-  {
-    if (i % 2 == 0)
-      yr_bitmask_set(b, i);
-    else
-      yr_bitmask_clear(b, i);
-  }
-
-  // Bitmask A can accommodate B at offset 1.
-  if (yr_bitmask_find_non_colliding_offset(a, b, 18, 13, &o) != 1)
     exit(EXIT_FAILURE);
 
   yr_bitmask_clear_all(a);
@@ -160,7 +147,8 @@ void test_find_non_colliding_offsets_1()
   yr_bitmask_set(a, 15);
 
   // Set B to:
-  // 0 1 0 0   0 0 0 1   0 1 0 0  1
+  // 1 1 0 0   0 0 0 1   0 1 0 0  1
+  yr_bitmask_set(b, 0);
   yr_bitmask_set(b, 1);
   yr_bitmask_set(b, 7);
   yr_bitmask_set(b, 9);
@@ -184,32 +172,24 @@ void test_find_non_colliding_offsets_1()
   yr_bitmask_clear_all(b);
 
   yr_bitmask_set(a, 0);
-  yr_bitmask_set(a, 2);
   yr_bitmask_set(a, 3);
 
+  yr_bitmask_set(b, 0);
   yr_bitmask_set(b, 1);
   yr_bitmask_set(b, 3);
 
-  // Bitmask 1011 can accommodate 0101 at offset 3.
-  if (yr_bitmask_find_non_colliding_offset(a, b, 4, 4, &o) != 3)
+  // Bitmask 1001 can accommodate 1101 at offset 2.
+  if (yr_bitmask_find_non_colliding_offset(a, b, 4, 4, &o) != 1)
     exit(EXIT_FAILURE);
 
-  // Bitmask 1011 can accommodate 1011 at offset 3.
-  if (yr_bitmask_find_non_colliding_offset(a, a, 4, 4, &o) != 4)
-    exit(EXIT_FAILURE);
-
-  yr_bitmask_clear(a, 3);
-
-  // Bitmask 1010 can accommodate 0101 at offset 0.
-  if (yr_bitmask_find_non_colliding_offset(a, b, 4, 4, &o) != 0)
-    exit(EXIT_FAILURE);
-
-  // Bitmask 1010 can accommodate 010 match at 0.
-  if (yr_bitmask_find_non_colliding_offset(a, b, 4, 3, &o) != 0)
-    exit(EXIT_FAILURE);
-
-  // Bitmask 1010 can accommodate 1010 at offset 1.
+  // Bitmask 1001 can accommodate 1001 at offset 1.
   if (yr_bitmask_find_non_colliding_offset(a, a, 4, 4, &o) != 1)
+    exit(EXIT_FAILURE);
+
+  yr_bitmask_clear(a, 0);
+
+  // Bitmask 0001 can accommodate 1101 at offset 0.
+  if (yr_bitmask_find_non_colliding_offset(a, b, 4, 4, &o) != 1)
     exit(EXIT_FAILURE);
 }
 
@@ -224,35 +204,29 @@ void test_find_non_colliding_offsets_2()
   yr_bitmask_clear_all(a);
   yr_bitmask_clear_all(b);
 
-  // Set even bits in A and odd bits in B.
+  // Set odds bits in A and even bits in B.
   for (int i = 0; i < 13; i++)
   {
     if (i % 2 == 0)
-      yr_bitmask_set(a, i);
-    else
       yr_bitmask_set(b, i);
+    else
+      yr_bitmask_set(a, i);
   }
 
   // Bitmask A can accommodate B at offset 0.
-  if (yr_bitmask_find_non_colliding_offset(a, b, 18, 13, &o) != 0)
+  if (yr_bitmask_find_non_colliding_offset(a, b, 200, 140, &o) != 0)
     exit(EXIT_FAILURE);
-
-
-  // Set even bits and clear odd bits in B.
-  for (int i = 0; i < 13; i++)
-  {
-    if (i % 2 == 0)
-      yr_bitmask_set(b, i);
-    else
-      yr_bitmask_clear(b, i);
-  }
-
-  // Bitmask A can accommodate B at offset 1.
-  if (yr_bitmask_find_non_colliding_offset(a, b, 18, 13, &o) != 1)
-    exit(EXIT_FAILURE);
-
+    
   yr_bitmask_clear_all(a);
   yr_bitmask_clear_all(b);
+    
+  yr_bitmask_set(a, 130);
+
+  yr_bitmask_set(b, 0);
+  yr_bitmask_set(b, 130);
+    
+  if (yr_bitmask_find_non_colliding_offset(a, b, 200, 140, &o) != 1)
+    exit(EXIT_FAILURE);
 }
 
 
