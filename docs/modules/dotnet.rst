@@ -8,7 +8,9 @@ dotnet module
 .. versionadded:: 3.6.0
 
 The dotnet module allows you to create more fine-grained rules for .NET files by
-using attributes and features of the .NET file format. Let's see some examples::
+using attributes and features of the .NET file format. Let's see some examples:
+
+.. code-block:: yara
 
     import "dotnet"
 
