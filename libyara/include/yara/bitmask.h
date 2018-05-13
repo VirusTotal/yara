@@ -67,13 +67,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   }
 
 
-int yr_bitmask_collide(
-    YR_BITMASK* a,
-    YR_BITMASK* b,
-    uint32_t len_a,
-    uint32_t len_b);
-
-
 uint32_t yr_bitmask_find_non_colliding_offset(
     YR_BITMASK* a,
     YR_BITMASK* b,
