@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stddef.h>
 
@@ -488,7 +489,7 @@ meta_declaration
             META_TYPE_BOOLEAN,
             $1,
             NULL,
-            TRUE);
+            true);
 
         yr_free($1);
 
@@ -1074,7 +1075,7 @@ expression
         uint8_t* addr;
 
         // Clear counter for number of expressions evaluating
-        // to TRUE.
+        // to true.
         yr_parser_emit_with_arg(
             yyscanner, OP_CLEAR_M, mem_offset + 1, NULL, NULL);
 
@@ -1171,7 +1172,7 @@ expression
             yyscanner, OP_SWAPUNDEF, mem_offset + 2, NULL, NULL);
 
         // Compare the loop quantifier with the number of
-        // expressions evaluating to TRUE.
+        // expressions evaluating to true.
         yr_parser_emit_with_arg(
             yyscanner, OP_PUSH_M, mem_offset + 1, NULL, NULL);
 
@@ -1252,7 +1253,7 @@ expression
             yyscanner, OP_SWAPUNDEF, mem_offset + 2, NULL, NULL);
 
         // Compare the loop quantifier with the number of
-        // expressions evaluating to TRUE.
+        // expressions evaluating to true.
         yr_parser_emit_with_arg(
             yyscanner, OP_PUSH_M, mem_offset + 1, NULL, NULL);
 

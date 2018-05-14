@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define _GNU_SOURCE
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <time.h>
@@ -856,7 +857,7 @@ int pe_valid_dll_name(
     }
     else
     {
-      return FALSE;
+      return false;
     }
   }
 
@@ -1653,7 +1654,7 @@ define_function(imphash)
   unsigned char digest[YR_MD5_LEN];
   char digest_ascii[YR_MD5_LEN * 2 + 1];
   size_t i;
-  int first = TRUE;
+  bool first = true;
 
   PE* pe = (PE*) module->data;
 
@@ -1724,7 +1725,7 @@ define_function(imphash)
       yr_free(final_name);
 
       func = func->next;
-      first = FALSE;
+      first = false;
     }
 
     yr_free(dll_name);
@@ -1970,7 +1971,7 @@ static uint64_t rich_internal(
       return UNDEFINED;
 
   if (version == UNDEFINED && toolid == UNDEFINED)
-      return FALSE;
+      return false;
 
   clear_rich_signature = (PRICH_SIGNATURE) rich_string->c_string;
 
@@ -1990,23 +1991,23 @@ static uint64_t rich_internal(
     {
       // check version and toolid
       if (match_version && match_toolid)
-        return TRUE;
+        return true;
     }
     else if (version != UNDEFINED)
     {
       // check only version
       if (match_version)
-        return TRUE;
+        return true;
     }
     else if (toolid != UNDEFINED)
     {
       // check only toolid
       if (match_toolid)
-        return TRUE;
+        return true;
     }
   }
 
-  return FALSE;
+  return false;
 }
 
 

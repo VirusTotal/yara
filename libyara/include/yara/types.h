@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_TYPES_H
 #define YR_TYPES_H
 
+#include <stdbool.h>
 
 #include <yara/arena.h>
 #include <yara/bitmask.h>
@@ -168,7 +169,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define META_TYPE_BOOLEAN   3
 
 #define META_IS_NULL(x) \
-    ((x) != NULL ? (x)->type == META_TYPE_NULL : TRUE)
+    ((x) != NULL ? (x)->type == META_TYPE_NULL : true)
 
 
 #define EXTERNAL_VARIABLE_TYPE_NULL           0
@@ -179,7 +180,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define EXTERNAL_VARIABLE_TYPE_MALLOC_STRING  5
 
 #define EXTERNAL_VARIABLE_IS_NULL(x) \
-    ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : TRUE)
+    ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : true)
 
 
 typedef struct RE RE;

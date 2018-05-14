@@ -66,10 +66,10 @@ typedef struct COMPILER_RESULTS
 
 
 static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
-static int ignore_warnings = FALSE;
-static int show_version = FALSE;
-static int show_help = FALSE;
-static int fail_on_warnings = FALSE;
+static bool ignore_warnings = false;
+static bool show_version = false;
+static bool show_help = false;
+static bool fail_on_warnings = false;
 static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 
@@ -121,7 +121,7 @@ static void report_error(
 }
 
 
-static int define_external_variables(
+static bool define_external_variables(
     YR_COMPILER* compiler)
 {
   for (int i = 0; ext_vars[i] != NULL; i++)
@@ -131,7 +131,7 @@ static int define_external_variables(
     if (!equal_sign)
     {
       fprintf(stderr, "error: wrong syntax for `-d` option.\n");
-      return FALSE;
+      return false;
     }
 
     // Replace the equal sign with null character to split the external
@@ -173,7 +173,7 @@ static int define_external_variables(
     }
   }
 
-  return TRUE;
+  return true;
 }
 
 

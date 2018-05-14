@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define _GNU_SOURCE
 
+#include <stdbool.h>
 #include <limits.h>
 #include <string.h>
 
@@ -63,7 +64,7 @@ int get_elf_class_data(
   }
 }
 
-static int is_valid_ptr(
+static bool is_valid_ptr(
     const void* base,
     size_t size,
     const void* ptr,

@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define _GNU_SOURCE
 
+#include <stdbool.h>
 #include <string.h>
 #include <assert.h>
 #include <math.h>
@@ -61,7 +62,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     else \
     { \
       result = ERROR_EXEC_STACK_OVERFLOW; \
-      stop = TRUE; \
+      stop = true; \
       break; \
     } \
 
@@ -187,10 +188,11 @@ int yr_execute_code(
   int found;
   int count;
   int result = ERROR_SUCCESS;
-  int stop = FALSE;
   int cycle = 0;
   int tidx = context->tidx;
   int stack_size;
+
+  bool stop = false;
 
   uint8_t opcode;
 
@@ -221,7 +223,7 @@ int yr_execute_code(
 
       case OP_HALT:
         assert(sp == 0); // When HALT is reached the stack should be empty.
-        stop = TRUE;
+        stop = true;
         break;
 
       case OP_PUSH:
@@ -521,7 +523,7 @@ int yr_execute_code(
             break;
 
           default:
-            assert(FALSE);
+            assert(false);
         }
 
         push(r1);
@@ -648,13 +650,13 @@ int yr_execute_code(
         }
 
         match = r2.s->matches[tidx].head;
-        r3.i = FALSE;
+        r3.i = false;
 
         while (match != NULL)
         {
           if (r1.i == match->base + match->offset)
           {
-            r3.i = TRUE;
+            r3.i = true;
             break;
           }
 
@@ -676,14 +678,14 @@ int yr_execute_code(
         ensure_defined(r2);
 
         match = r3.s->matches[tidx].head;
-        r3.i = FALSE;
+        r3.i = false;
 
         while (match != NULL && !r3.i)
         {
           if (match->base + match->offset >= r1.i &&
               match->base + match->offset <= r2.i)
           {
-            r3.i = TRUE;
+            r3.i = true;
           }
 
           if (match->base + match->offset > r2.i)
@@ -869,7 +871,7 @@ int yr_execute_code(
         result = yr_modules_load((char*) r1.p, context);
 
         if (result != ERROR_SUCCESS)
-          stop = TRUE;
+          stop = true;
 
         break;
 
@@ -883,7 +885,7 @@ int yr_execute_code(
 
         if (r1.ss->length == 0)
         {
-          r1.i = FALSE;
+          r1.i = false;
           push(r1);
           break;
         }
@@ -900,7 +902,7 @@ int yr_execute_code(
           &found);
 
         if (result != ERROR_SUCCESS)
-          stop = TRUE;
+          stop = true;
 
         r1.i = found >= 0;
         push(r1);
@@ -1160,7 +1162,7 @@ int yr_execute_code(
 
       default:
         // Unknown instruction, this shouldn't happen.
-        assert(FALSE);
+        assert(false);
     }
 
     // Check for timeout every 10 instruction cycles. If timeout == 0 it means
@@ -1177,7 +1179,7 @@ int yr_execute_code(
         current_rule->time_cost += elapsed_time - start_time;
         #endif
         result = ERROR_SCAN_TIMEOUT;
-        stop = TRUE;
+        stop = true;
       }
 
       cycle = 0;
