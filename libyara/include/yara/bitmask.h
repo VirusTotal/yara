@@ -41,13 +41,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define yr_bitmask_set(bm, i) \
   do { \
-    (bm)[(i) / YR_BITMASK_SLOT_BITS] |= 1L << ((i) % YR_BITMASK_SLOT_BITS); \
+    (bm)[(i) / YR_BITMASK_SLOT_BITS] |= 1UL << ((i) % YR_BITMASK_SLOT_BITS); \
   } while(0)
 
 
 #define yr_bitmask_clear(bm, i) \
   do { \
-    (bm)[(i) / YR_BITMASK_SLOT_BITS] &= ~(1L << ((i) % YR_BITMASK_SLOT_BITS)); \
+    (bm)[(i) / YR_BITMASK_SLOT_BITS] &= ~(1UL << ((i) % YR_BITMASK_SLOT_BITS)); \
   } while(0)
 
 
@@ -57,7 +57,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define yr_bitmask_isset(bm, i) \
   ( \
-    (bm)[(i) / YR_BITMASK_SLOT_BITS] & (1L << ((i) % YR_BITMASK_SLOT_BITS)) \
+    (bm)[(i) / YR_BITMASK_SLOT_BITS] & (1UL << ((i) % YR_BITMASK_SLOT_BITS)) \
   )
 
 
