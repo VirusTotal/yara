@@ -1014,7 +1014,7 @@ static int is_absolute_path(
     char* path)
 {
   if (path == NULL)
-    return FALSE;
+    return false;
 
   #if defined(_WIN32) || defined(__CYGWIN__)
   return strlen(path) > 2 &&
