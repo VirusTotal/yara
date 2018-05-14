@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string.h>
 #include <limits.h>
+#include <stdbool.h>
 
 #include <yara/integers.h>
 #include <yara/utils.h>
@@ -234,7 +235,7 @@ token_or_range
     |  range
       {
         $$ = $1;
-        $$->greedy = FALSE;
+        $$->greedy = false;
       }
     ;
 

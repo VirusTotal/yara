@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_RE_H
 #define YR_RE_H
 
+#include <stdbool.h>
 #include <ctype.h>
 
 #include <yara/types.h>

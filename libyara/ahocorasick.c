@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -141,7 +142,7 @@ static YR_AC_STATE* _yr_ac_queue_pop(
 //    QUEUE* queue     - The queue
 //
 // Returns:
-//    TRUE if queue is empty, FALSE otherwise.
+//    true if queue is empty, false otherwise.
 //
 
 static int _yr_ac_queue_is_empty(
@@ -364,7 +365,7 @@ static int _yr_ac_create_failure_links(
 // accepted in s1 too.
 //
 
-static int _yr_ac_transitions_subset(
+static bool _yr_ac_transitions_subset(
     YR_AC_STATE* s1,
     YR_AC_STATE* s2)
 {
@@ -385,12 +386,12 @@ static int _yr_ac_transitions_subset(
   while (state != NULL)
   {
     if (!(set[state->input / 8] & 1 << state->input % 8))
-      return FALSE;
+      return false;
 
     state = state->siblings;
   }
 
-  return TRUE;
+  return true;
 }
 
 

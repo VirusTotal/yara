@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include <yara/integers.h>
@@ -251,7 +252,7 @@ YR_API void* yr_hash_table_lookup_raw_key(
     size_t key_length,
     const char* ns)
 {
-  return _yr_hash_table_lookup(table, key, key_length, ns, FALSE);
+  return _yr_hash_table_lookup(table, key, key_length, ns, false);
 }
 
 
@@ -261,7 +262,7 @@ YR_API void* yr_hash_table_remove_raw_key(
     size_t key_length,
     const char* ns)
 {
-  return _yr_hash_table_lookup(table, key, key_length, ns, TRUE);
+  return _yr_hash_table_lookup(table, key, key_length, ns, true);
 }
 
 

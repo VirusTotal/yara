@@ -46,6 +46,7 @@ with noyywrap then we can remove this pragma.
 
 #include <math.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -116,11 +117,11 @@ with noyywrap then we can remove this pragma.
 #define snprintf _snprintf
 #endif
 
-static int is_absolute_path(
+static bool is_absolute_path(
     char* path)
 {
   if (path == NULL)
-    return FALSE;
+    return false;
 
   #if defined(_WIN32) || defined(__CYGWIN__)
   return strlen(path) > 2 &&
