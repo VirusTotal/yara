@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
+#include <stdbool.h>
 
 #include <yara/utils.h>
 #include <yara/bitmask.h>
@@ -82,7 +83,7 @@ uint32_t yr_bitmask_find_non_colliding_offset(
   
     for (j = 0; j <= yr_min(len_a, YR_BITMASK_SLOT_BITS - 1); j++)
     {
-      int found = TRUE;
+      bool found = true;
 
       for (k = 0; k <= len_b / YR_BITMASK_SLOT_BITS; k++)
       {
@@ -93,7 +94,7 @@ uint32_t yr_bitmask_find_non_colliding_offset(
   
         if ((i + k <= len_a / YR_BITMASK_SLOT_BITS) && (m & a[i + k]) != 0)
         {
-          found = FALSE;
+          found = false;
           break ;
         }
       }

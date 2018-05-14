@@ -73,6 +73,7 @@
 
 #include <string.h>
 #include <limits.h>
+#include <stdbool.h>
 
 #include <yara/integers.h>
 #include <yara/utils.h>
@@ -1469,7 +1470,7 @@ yyreduce:
 #line 235 "hex_grammar.y" /* yacc.c:1661  */
     {
         (yyval.re_node) = (yyvsp[0].re_node);
-        (yyval.re_node)->greedy = FALSE;
+        (yyval.re_node)->greedy = false;
       }
 #line 1475 "hex_grammar.c" /* yacc.c:1661  */
     break;

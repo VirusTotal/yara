@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <assert.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -395,16 +396,16 @@ static int _yr_compiler_set_namespace(
   char* ns_name;
   int result;
   int i;
-  int found;
+  bool found;
 
   ns = (YR_NAMESPACE*) yr_arena_base_address(compiler->namespaces_arena);
-  found = FALSE;
+  found = false;
 
   for (i = 0; i < compiler->namespaces_count; i++)
   {
     if (strcmp(ns->name, namespace_) == 0)
     {
-      found = TRUE;
+      found = true;
       break;
     }
 

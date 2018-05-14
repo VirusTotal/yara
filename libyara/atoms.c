@@ -79,6 +79,7 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 */
 
 #include <assert.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include <yara/utils.h>
@@ -125,8 +126,8 @@ static int _yr_atoms_quality(
 {
   int penalty = 0;
   int unique_bytes = 0;
-  int is_unique;
   int i, j;
+  bool is_unique;
 
   for (i = 0; i < atom_length; i++)
   {
@@ -149,12 +150,12 @@ static int _yr_atoms_quality(
       }
     }
 
-    is_unique = TRUE;
+    is_unique = true;
 
     for (j = i + 1; j < atom_length; j++)
       if (atom[i] == atom[j])
       {
-        is_unique = FALSE;
+        is_unique = false;
         break;
       }
 
@@ -899,7 +900,7 @@ static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
       return current_node;
 
     default:
-      assert(FALSE);
+      assert(false);
   }
 
   return NULL;
