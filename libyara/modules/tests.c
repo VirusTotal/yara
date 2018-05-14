@@ -213,7 +213,7 @@ int module_unload(
 {
   // Fail if module_unload is called twice with the same module_object
   if (module_object->data == (void*) 0xFABADA)
-    assert(FALSE);
+    assert(false);
 
   module_object->data = (void*) 0xFABADA;
   return ERROR_SUCCESS;
