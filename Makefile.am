@@ -35,7 +35,8 @@ check_PROGRAMS = test-alignment \
   test-pe \
   test-elf \
   test-version \
-  test-bitmask
+  test-bitmask \
+  test-math
 
 # The -fsanitize=address option makes test-exception fail. Include the test
 # only if the option is not enabled.
@@ -58,6 +59,8 @@ test_api_LDADD = libyara/.libs/libyara.a
 test_api_SOURCES = tests/test-api.c tests/util.c
 test_bitmask_SOURCES = tests/test-bitmask.c
 test_bitmask_LDADD = libyara/.libs/libyara.a
+test_math_SOURCES = tests/test-math.c tests/util.c
+test_math_LDADD = libyara/.libs/libyara.a
 
 
 if MACHO_MODULE

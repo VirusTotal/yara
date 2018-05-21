@@ -592,6 +592,22 @@ define_function(in_range)
 }
 
 
+define_function(min)
+{
+  int i = integer_argument(1);
+  int j = integer_argument(2);
+  return_integer(i < j ? i : j);
+}
+
+
+define_function(max)
+{
+  int i = integer_argument(1);
+  int j = integer_argument(2);
+  return_integer(i > j ? i : j);
+}
+
+
 begin_declarations;
 
   declare_float("MEAN_BYTES");
@@ -606,6 +622,8 @@ begin_declarations;
   declare_function("monte_carlo_pi", "s", "f", string_monte_carlo_pi);
   declare_function("entropy", "ii", "f", data_entropy);
   declare_function("entropy", "s", "f", string_entropy);
+  declare_function("min", "ii", "i", min);
+  declare_function("max", "ii", "i", max);
 
 end_declarations;
 
