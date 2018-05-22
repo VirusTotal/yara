@@ -871,9 +871,13 @@ int yr_scan_verify_match(
     context->last_error_string = string;
 
   #ifdef PROFILING_ENABLED
+<<<<<<< HEAD
   uint64_t finish_time = yr_stopwatch_elapsed_us(&context->stopwatch);
   string->time_cost += (finish_time - start_time);
   string->rule->time_cost += (finish_time - start_time);
+=======
+  string->clock_ticks += yr_stopwatch_elapsed_ns(&stopwatch, false);
+>>>>>>> stdbool
   #endif
 
   return result;
