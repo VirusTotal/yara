@@ -592,10 +592,16 @@ define_function(in_range)
 }
 
 
+// Undefine existing "min" and "max" macros in order to avoid conflicts with
+// function names.
+#undef min
+#undef max
+
 define_function(min)
 {
   int i = integer_argument(1);
   int j = integer_argument(2);
+
   return_integer(i < j ? i : j);
 }
 
@@ -604,6 +610,7 @@ define_function(max)
 {
   int i = integer_argument(1);
   int j = integer_argument(2);
+
   return_integer(i > j ? i : j);
 }
 
