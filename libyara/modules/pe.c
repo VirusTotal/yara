@@ -1320,6 +1320,7 @@ void pe_parse_header(
   int i, scount;
   uint64_t highest_sec_siz = 0;
   uint64_t highest_sec_ofs = 0;
+  uint64_t section_end;
   uint64_t last_section_end;
 
   set_integer(
@@ -1443,10 +1444,14 @@ void pe_parse_header(
         pe->object, "sections[%i].virtual_size", i);
 
     // This will catch the section with the highest raw offset to help checking
-    // if overlay data is present
-    // ladislav_zezula: Fix for files that have multiple sections - same raw offset, different size
-    // Sample: cf62bf1815a93e68e6c5189f689286b66c4088b9507cf3ecf835e4ac3f9ededa
-    if ((yr_le32toh(section->PointerToRawData) + yr_le32toh(section->SizeOfRawData)) > (highest_sec_ofs + highest_sec_siz))
+    // if overlay data is present. If two sections have the same raw pointer
+    // but different raw sizes the largest one is used. An example of this case
+    // is file: cf62bf1815a93e68e6c5189f689286b66c4088b9507cf3ecf835e4ac3f9ededa
+
+    section_end = yr_le32toh(section->PointerToRawData) + 
+                  yr_le32toh(section->SizeOfRawData);
+
+    if (section_end > highest_sec_ofs + highest_sec_siz)
     {
       highest_sec_ofs = yr_le32toh(section->PointerToRawData);
       highest_sec_siz = yr_le32toh(section->SizeOfRawData);
