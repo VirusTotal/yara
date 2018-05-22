@@ -51,6 +51,7 @@ stamp-h1
 /libyara/modules/.dirstamp
 libyara/proc/.dirstamp
 libyara/yara.pc
+/tests/.dirstamp
 
 # Linux and Mac files
 *.swp
@@ -70,6 +71,9 @@ test-pe.trs
 test-macho
 test-macho.log
 test-macho.trs
+test-math
+test-math.log
+test-math.trs
 
 # Visual Studio files
 Release/
