@@ -1444,7 +1444,9 @@ void pe_parse_header(
 
     // This will catch the section with the highest raw offset to help checking
     // if overlay data is present
-    if (yr_le32toh(section->PointerToRawData) > highest_sec_ofs)
+    // ladislav_zezula: Fix for files that have multiple sections - same raw offset, different size
+    // Sample: cf62bf1815a93e68e6c5189f689286b66c4088b9507cf3ecf835e4ac3f9ededa
+    if ((yr_le32toh(section->PointerToRawData) + yr_le32toh(section->SizeOfRawData)) > (highest_sec_ofs + highest_sec_siz))
     {
       highest_sec_ofs = yr_le32toh(section->PointerToRawData);
       highest_sec_siz = yr_le32toh(section->SizeOfRawData);
