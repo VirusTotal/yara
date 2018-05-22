@@ -502,7 +502,7 @@ meta_declaration
             META_TYPE_BOOLEAN,
             $1,
             NULL,
-            FALSE);
+            false);
 
         yr_free($1);
 
