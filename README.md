@@ -60,6 +60,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
 * [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
 * [Cyber Triage](http://www.cybertriage.com)
+* [Digita Security](https://digitasecurity.com/product/uxprotect)
 * [ESET](https://www.eset.com)
 * [ESTsecurity](https://www.estsecurity.com)
 * [Fidelis XPS](http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
