@@ -962,14 +962,13 @@ EXPORT_FUNCTIONS* pe_parse_exports(
   PIMAGE_EXPORT_DIRECTORY exports;
   EXPORT_FUNCTIONS* exported_functions;
 
-  DWORD* names;
-  WORD* ordinals;
-
-  int64_t offset;
   uint32_t i;
+  uint16_t ordinal;
+  int64_t offset;
   size_t remaining;
 
-  uint16_t ordinal;
+  DWORD* names = NULL;
+  WORD* ordinals = NULL;
 
   // If not a PE file, return UNDEFINED
 
@@ -1033,16 +1032,16 @@ EXPORT_FUNCTIONS* pe_parse_exports(
   if (!exported_functions->functions)
     return NULL;
 
-  // At first, iterate through Functions array and create representation for each exported function
-  // Ordinal is just array index that starts from 1
+  // At first, iterate through Functions array and create representation for
+  // each exported function. Ordinal is just array index that starts from 1
   for (i = 0; i < exported_functions->number_of_exports; i++)
   {
     exported_functions->functions[i].name = NULL;
     exported_functions->functions[i].ordinal = i + 1;
   }
 
-  // Now, we can iterate through Names and NameOrdinals arrays to obtain function names
-  // Not all functions have names
+  // Now, we can iterate through Names and NameOrdinals arrays to obtain
+  // function names. Not all functions have names.
   uint32_t number_of_names = yr_min(
       yr_le32toh(exports->NumberOfNames),
       exported_functions->number_of_exports);
