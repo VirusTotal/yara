@@ -1030,7 +1030,10 @@ EXPORT_FUNCTIONS* pe_parse_exports(
       exported_functions->number_of_exports * sizeof(EXPORT_FUNCTION));
 
   if (!exported_functions->functions)
+  {
+    yr_free(exported_functions);
     return NULL;
+  }
 
   // At first, iterate through Functions array and create representation for
   // each exported function. Ordinal is just array index that starts from 1
