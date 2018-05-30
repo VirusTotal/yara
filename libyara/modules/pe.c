@@ -960,6 +960,7 @@ EXPORT_FUNCTIONS* pe_parse_exports(
 {
   PIMAGE_DATA_DIRECTORY directory;
   PIMAGE_EXPORT_DIRECTORY exports;
+  EXPORT_FUNCTIONS* exported_functions;
 
   DWORD* names;
   WORD* ordinals;
@@ -1018,12 +1019,17 @@ EXPORT_FUNCTIONS* pe_parse_exports(
     ordinals = (WORD*)(pe->data + offset);
   }
 
-  EXPORT_FUNCTIONS* exported_functions = (EXPORT_FUNCTIONS*) yr_malloc(sizeof(EXPORT_FUNCTIONS));
+  exported_functions = (EXPORT_FUNCTIONS*) yr_malloc(sizeof(EXPORT_FUNCTIONS));
+
   if (!exported_functions)
     return NULL;
 
-  exported_functions->number_of_exports = yr_le32toh(exports->NumberOfFunctions);
-  exported_functions->functions = (EXPORT_FUNCTION*) yr_malloc(exported_functions->number_of_exports * sizeof(EXPORT_FUNCTION));
+  exported_functions->number_of_exports = yr_le32toh(
+      exports->NumberOfFunctions);
+
+  exported_functions->functions = (EXPORT_FUNCTION*) yr_malloc(
+      exported_functions->number_of_exports * sizeof(EXPORT_FUNCTION));
+
   if (!exported_functions->functions)
     return NULL;
 
@@ -1037,7 +1043,10 @@ EXPORT_FUNCTIONS* pe_parse_exports(
 
   // Now, we can iterate through Names and NameOrdinals arrays to obtain function names
   // Not all functions have names
-  uint32_t number_of_names = yr_min(yr_le32toh(exports->NumberOfNames), exported_functions->number_of_exports);
+  uint32_t number_of_names = yr_min(
+      yr_le32toh(exports->NumberOfNames),
+      exported_functions->number_of_exports);
+
   for (i = 0; i < number_of_names; i++)
   {
     if (available_space(pe, names + i) < sizeof(DWORD) ||
@@ -1047,20 +1056,26 @@ EXPORT_FUNCTIONS* pe_parse_exports(
     }
 
     offset = pe_rva_to_offset(pe, names[i]);
+
     if (offset < 0)
       continue;
 
     // Even though it is called ordinal, it is just index to Functions array
     // If it was ordinal it would start from 1 but it starts from 0
     ordinal = yr_le16toh(ordinals[i]);
+
     if (ordinal >= exported_functions->number_of_exports)
       continue;
 
     remaining = pe->data_size - (size_t) offset;
-    exported_functions->functions[ordinal].name = yr_strndup((char*) (pe->data + offset), remaining);
+
+    exported_functions->functions[ordinal].name = yr_strndup(
+        (char*) (pe->data + offset), remaining);
   }
 
-  set_integer(exported_functions->number_of_exports, pe->object, "number_of_exports");
+  set_integer(
+      exported_functions->number_of_exports,
+      pe->object, "number_of_exports");
 
   return exported_functions;
 }
@@ -1442,7 +1457,7 @@ void pe_parse_header(
     // but different raw sizes the largest one is used. An example of this case
     // is file: cf62bf1815a93e68e6c5189f689286b66c4088b9507cf3ecf835e4ac3f9ededa
 
-    section_end = yr_le32toh(section->PointerToRawData) + 
+    section_end = yr_le32toh(section->PointerToRawData) +
                   yr_le32toh(section->SizeOfRawData);
 
     if (section_end > highest_sec_ofs + highest_sec_siz)
