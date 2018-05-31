@@ -1902,7 +1902,7 @@ int main(int argc, char** argv)
   test_entrypoint();
   test_global_rules();
 
-  #if HAVE_SCAN_PROC_IMPL == 1
+  #if !defined(USE_WINDOWS_PROC) && !defined(USE_NO_PROC)
   test_process_scan();
   #endif
 
