@@ -40,22 +40,26 @@ case $host_os in
              # are in /usr/local/opt/openssl/include
              CFLAGS="$CFLAGS -DUSE_MACH_PROC -I/usr/local/opt/openssl/include"
              LDFLAGS="$LDFLAGS -L/usr/local/opt/openssl/lib"
-             mach=yes
+             mach=true
+             posix=true
              proc_interface=mach
              jemalloc_prefix=je_ ;;
-    mingw*) CFLAGS="$CFLAGS -DUSE_WINDOWS_PROC"
+    mingw*|cygwin*) CFLAGS="$CFLAGS -DUSE_WINDOWS_PROC"
             proc_interface=windows
             jemalloc_prefix= ;;
     linux*|netbsd*|dragonfly*|kfreebsd*)
             CFLAGS="$CFLAGS -DUSE_LINUX_PROC"
+            posix=true
             proc_interface=linux
-            jemalloc_prefix=  ;;
+            jemalloc_prefix= ;;
     freebsd*)
             CFLAGS="$CFLAGS -DUSE_FREEBSD_PROC"
+            posix=true
             proc_interface=freebsd
             jemalloc_prefix= ;;
     openbsd*)
             CFLAGS="$CFLAGS -DUSE_OPENBSD_PROC"
+            posix=true
             proc_interface=openbsd
             jemalloc_prefix= ;;
     *)
@@ -269,13 +273,14 @@ AS_IF([test "x$have_crypto" = "xno"],
     PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libcrypto"
   ])
 
-AS_IF([test "x$mach" != "xyes"],
+AS_IF([test "x$mach" != "xtrue"],
   [
     AC_CHECK_FUNCS([clock_gettime],,
       AC_MSG_ERROR([clock_gettime not supported in your OS.]))
   ],)
 
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
+AM_CONDITIONAL([POSIX], [test x$posix = xtrue])
 AM_CONDITIONAL([PROFILING_ENABLED], [test x$profiling_enabled = xtrue])
 AM_CONDITIONAL([OPTIMIZATION], [test x$optimization = xtrue])
 AM_CONDITIONAL([ADDRESS_SANITIZER], [test x$address_sanitizer = xtrue])
