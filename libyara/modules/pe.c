@@ -1020,7 +1020,7 @@ EXPORT_FUNCTIONS* pe_parse_exports(
 
   exported_functions = (EXPORT_FUNCTIONS*) yr_malloc(sizeof(EXPORT_FUNCTIONS));
 
-  if (!exported_functions)
+  if (exported_functions == NULL)
     return NULL;
 
   exported_functions->number_of_exports = yr_le32toh(
@@ -1029,7 +1029,7 @@ EXPORT_FUNCTIONS* pe_parse_exports(
   exported_functions->functions = (EXPORT_FUNCTION*) yr_malloc(
       exported_functions->number_of_exports * sizeof(EXPORT_FUNCTION));
 
-  if (!exported_functions->functions)
+  if (exported_functions->functions == NULL)
   {
     yr_free(exported_functions);
     return NULL;
@@ -1071,8 +1071,11 @@ EXPORT_FUNCTIONS* pe_parse_exports(
 
     remaining = pe->data_size - (size_t) offset;
 
-    exported_functions->functions[ordinal].name = yr_strndup(
-        (char*) (pe->data + offset), remaining);
+    if (exported_functions->functions[ordinal].name == NULL)
+    {
+      exported_functions->functions[ordinal].name = yr_strndup(
+          (char*) (pe->data + offset), remaining);
+    }
   }
 
   set_integer(
