@@ -32,16 +32,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_UTILS_H
 
 #include <limits.h>
+#include <yara/strutils.h>
 
 #ifndef NULL
 #define NULL 0
 #endif
 
-#if _WIN32 || __CYGWIN__
-#define PRIu64 "I64d"
-#else
-#include <inttypes.h>
-#endif
 
 #ifdef __cplusplus
 #define EXTERNC extern "C"

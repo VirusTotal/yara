@@ -54,9 +54,12 @@ with noyywrap then we can remove this pragma.
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
-#define strtoll _strtoi64
 #else
 #include <unistd.h>
+#endif
+
+#if defined(_WIN32)
+#define strtoll _strtoi64
 #endif
 
 #include <yara/integers.h>
