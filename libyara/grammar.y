@@ -839,7 +839,7 @@ arguments_list
             strlcpy($$, "r", MAX_FUNCTION_ARGS);
             break;
           default:
-            assert(FALSE);
+            assert(false);
         }
 
         fail_if($$ == NULL);
@@ -870,7 +870,7 @@ arguments_list
               strlcat($1, "r", MAX_FUNCTION_ARGS);
               break;
             default:
-              assert(FALSE);
+              assert(false);
           }
         }
 
@@ -1750,7 +1750,7 @@ primary_expression
         }
         else
         {
-          assert(FALSE);
+          assert(false);
         }
 
         fail_if(compiler->last_result != ERROR_SUCCESS);
@@ -1994,7 +1994,7 @@ primary_expression
           $$.value.integer = OPERATION(<<, $1.value.integer, $3.value.integer);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        
+
         fail_if(compiler->last_result != ERROR_SUCCESS);
       }
     | regexp

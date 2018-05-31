@@ -2394,7 +2394,7 @@ yyreduce:
             strlcpy((yyval.c_string), "r", MAX_FUNCTION_ARGS);
             break;
           default:
-            assert(FALSE);
+            assert(false);
         }
 
         fail_if((yyval.c_string) == NULL);
@@ -2429,7 +2429,7 @@ yyreduce:
               strlcat((yyvsp[-2].c_string), "r", MAX_FUNCTION_ARGS);
               break;
             default:
-              assert(FALSE);
+              assert(false);
           }
         }
 
@@ -3476,7 +3476,7 @@ yyreduce:
         }
         else
         {
-          assert(FALSE);
+          assert(false);
         }
 
         fail_if(compiler->last_result != ERROR_SUCCESS);
@@ -3768,7 +3768,7 @@ yyreduce:
           (yyval.expression).value.integer = OPERATION(<<, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
-        
+
         fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3775 "grammar.c" /* yacc.c:1663  */
