@@ -23,20 +23,25 @@ for:
 -
   matrix:
     only:
-      - TARGET: cygwin
+    - TARGET: cygwin
 
   build_script:
-      - echo Build on cygwin
+  - echo Build on cygwin
+-
+  matrix:
+    only:
+      - TARGET: vs2015
 
-before_build:
-- ps: nuget restore windows/vs2015/yara.sln
+  before_build:
+  - ps: nuget restore windows/vs2015/yara.sln
 
-build:
-  project: windows/vs2015/yara.sln
-  verbosity: minimal
+  build:
+    project: windows/vs2015/yara.sln
+    verbosity: minimal
 
-artifacts:
+  artifacts:
   - path: windows\**\*.exe
+
 
 test: off
 
