@@ -7,16 +7,16 @@ pull_requests:
 
 environment:
   matrix:
-  - TARGET: vs2015
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    VisualStudioVersion: 14.0
-    platform: x86
-    configuration: Release
-  - TARGET: vs2015
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    VisualStudioVersion: 14.0
-    platform: x64
-    configuration: Release
+#  - TARGET: vs2015
+#    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+#    VisualStudioVersion: 14.0
+#    configuration: Release
+#    platform: x86
+#  - TARGET: vs2015
+#    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+#    VisualStudioVersion: 14.0
+#    platform: x64
+#    configuration: Release
   - TARGET: cygwin
 
 for:
@@ -33,8 +33,8 @@ for:
 
   # Uncomment the lines below for enabling Remote Desktop in the Appveyor. This
   # allows connecting to the remote machine and debug issues.
-  # on_finish:
-  # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+  on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 -
   matrix:
