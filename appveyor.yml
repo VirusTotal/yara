@@ -11,8 +11,6 @@ platform:
 - x64
 - x86
 
-init:
-  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 before_build:
 - ps: nuget restore windows/vs2015/yara.sln
@@ -25,3 +23,6 @@ artifacts:
   - path: windows\**\*.exe
 
 test: off
+
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
