@@ -27,6 +27,12 @@ for:
 
   build_script:
   - cmd: C:\cygwin64\bin\bash -e -l -c "cd c:/projects/yara && ./build.sh"
+
+  # Uncomment the lines below for enabling Remote Desktop in the Appveyor. This
+  # allows connecting to the remote machine and debug issues.
+  on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
 -
   matrix:
     only:
@@ -43,8 +49,3 @@ for:
   - path: windows\**\*.exe
 
 test: off
-
-# Uncomment the lines below for enabling Remote Desktop in the Appveyor. This
-# allows connecting to the remote machine and debug issues.
-on_finish:
-- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
