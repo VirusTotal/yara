@@ -151,7 +151,7 @@ YR_API int yr_initialize(void)
 
   #elif defined(HAVE_WINCRYPT_H)
 
-  if (!CryptAcquireContext(&yr_cryptprov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
+  if (!CryptAcquireContext(&yr_cryptprov, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
     return ERROR_INTERNAL_FATAL_ERROR;
   }
 
