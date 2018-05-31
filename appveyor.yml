@@ -11,6 +11,8 @@ platform:
 - x64
 - x86
 
+environment:
+  APPVEYOR_RDP_PASSWORD: abreteappveyorsesamo
 
 before_build:
 - ps: nuget restore windows/vs2015/yara.sln
