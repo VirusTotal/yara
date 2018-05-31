@@ -48,7 +48,7 @@ int _yr_process_detach(
 YR_API const uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block)
 {
-  return ERROR_INVALID_ARGUMENT;
+  return NULL;
 }
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(

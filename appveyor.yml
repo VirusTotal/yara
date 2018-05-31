@@ -26,7 +26,7 @@ for:
     - TARGET: cygwin
 
   build_script:
-  - cmd: C:\cygwin\bin\bash -e -l -c "cd c:/projects/yara && ./build.sh"
+  - cmd: C:\cygwin64\bin\bash -e -l -c "cd c:/projects/yara && ./build.sh"
 -
   matrix:
     only:
