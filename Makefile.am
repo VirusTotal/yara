@@ -28,6 +28,21 @@ yara_LDADD = -Llibyara/.libs -lyara
 yarac_SOURCES = args.c args.h common.h yarac.c
 yarac_LDADD = -Llibyara/.libs -lyara
 
+test_alignment_SOURCES = tests/test-alignment.c
+test_rules_SOURCES = tests/test-rules.c tests/util.c
+test_rules_LDADD = -Llibyara/.libs -lyara
+test_pe_SOURCES = tests/test-pe.c tests/util.c
+test_pe_LDADD = -Llibyara/.libs -lyara
+test_elf_SOURCES = tests/test-elf.c tests/util.c
+test_elf_LDADD = -Llibyara/.libs -lyara
+test_version_SOURCES = tests/test-version.c
+test_api_LDADD = -Llibyara/.libs -lyara
+test_api_SOURCES = tests/test-api.c tests/util.c
+test_bitmask_SOURCES = tests/test-bitmask.c
+test_bitmask_LDADD = libyara/.libs/libyara.a
+test_math_SOURCES = tests/test-math.c tests/util.c
+test_math_LDADD = libyara/.libs/libyara.a
+
 TESTS = $(check_PROGRAMS)
 check_PROGRAMS = test-alignment \
   test-api \
@@ -38,30 +53,15 @@ check_PROGRAMS = test-alignment \
   test-bitmask \
   test-math
 
+if POSIX
 # The -fsanitize=address option makes test-exception fail. Include the test
 # only if the option is not enabled.
-
 if !ADDRESS_SANITIZER
 check_PROGRAMS+=test-exception
-endif
-
-test_alignment_SOURCES = tests/test-alignment.c
-test_rules_SOURCES = tests/test-rules.c tests/util.c
-test_rules_LDADD = -Llibyara/.libs -lyara
-test_pe_SOURCES = tests/test-pe.c tests/util.c
-test_pe_LDADD = -Llibyara/.libs -lyara
-test_elf_SOURCES = tests/test-elf.c tests/util.c
-test_elf_LDADD = -Llibyara/.libs -lyara
 test_exception_SOURCES = tests/test-exception.c tests/util.c
 test_exception_LDADD = -Llibyara/.libs -lyara
-test_version_SOURCES = tests/test-version.c
-test_api_LDADD = -Llibyara/.libs -lyara
-test_api_SOURCES = tests/test-api.c tests/util.c
-test_bitmask_SOURCES = tests/test-bitmask.c
-test_bitmask_LDADD = libyara/.libs/libyara.a
-test_math_SOURCES = tests/test-math.c tests/util.c
-test_math_LDADD = libyara/.libs/libyara.a
-
+endif
+endif
 
 if MACHO_MODULE
 check_PROGRAMS+=test-macho
