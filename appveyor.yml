@@ -10,7 +10,7 @@ environment:
   - TARGET: vs2015
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     VisualStudioVersion: 14.0
-    platform: Win32
+    platform: x86
     configuration: Release
   - TARGET: vs2015
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
@@ -18,6 +18,15 @@ environment:
     platform: x64
     configuration: Release
   - TARGET: cygwin
+
+for:
+-
+  matrix:
+    only:
+      - TARGET: cygwin
+
+  build_script:
+      - echo Build on cygwin
 
 before_build:
 - ps: nuget restore windows/vs2015/yara.sln
