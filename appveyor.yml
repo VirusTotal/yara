@@ -12,11 +12,11 @@ environment:
 #    VisualStudioVersion: 14.0
 #    configuration: Release
 #    platform: x86
-#  - TARGET: vs2015
-#    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-#    VisualStudioVersion: 14.0
-#    platform: x64
-#    configuration: Release
+  - TARGET: vs2015
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    VisualStudioVersion: 14.0
+    platform: x64
+    configuration: Release
   - TARGET: cygwin
 
 for:
