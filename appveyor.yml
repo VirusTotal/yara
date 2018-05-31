@@ -28,6 +28,9 @@ for:
   build_script:
   - cmd: C:\cygwin64\bin\bash -e -l -c "cd c:/projects/yara && ./build.sh"
 
+  test_script:
+  - make check
+
   # Uncomment the lines below for enabling Remote Desktop in the Appveyor. This
   # allows connecting to the remote machine and debug issues.
   on_finish:
@@ -48,4 +51,4 @@ for:
   artifacts:
   - path: windows\**\*.exe
 
-test: off
+  test: off
