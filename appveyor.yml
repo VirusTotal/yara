@@ -7,11 +7,11 @@ pull_requests:
 
 environment:
   matrix:
-#  - TARGET: vs2015
-#    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-#    VisualStudioVersion: 14.0
-#    configuration: Release
-#    platform: x86
+  - TARGET: vs2015
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    VisualStudioVersion: 14.0
+    configuration: Release
+    platform: x86
   - TARGET: vs2015
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     VisualStudioVersion: 14.0
@@ -31,11 +31,6 @@ for:
   test_script:
   - cmd: C:\cygwin64\bin\bash -e -l -c "cd c:/projects/yara && make check"
 
-  # Uncomment the lines below for enabling Remote Desktop in the Appveyor. This
-  # allows connecting to the remote machine and debug issues.
-  on_finish:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-
 -
   matrix:
     only:
@@ -52,3 +47,8 @@ for:
   - path: windows\**\*.exe
 
   test: off
+
+# Uncomment the lines below for enabling Remote Desktop in the Appveyor. This
+# allows connecting to the remote machine and debug issues.
+# on_finish:
+# - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
