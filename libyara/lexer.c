@@ -3321,7 +3321,7 @@ int yr_lex_parse_rules_fd(
   #endif
 
   yara_yyset_extra(compiler,yyscanner);
-  yara_yy_scan_bytes(buffer,file_size,yyscanner);
+  yara_yy_scan_bytes((const char*) buffer,file_size,yyscanner);
   yyparse(yyscanner, compiler);
   yara_yylex_destroy(yyscanner);
 
