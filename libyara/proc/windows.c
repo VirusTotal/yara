@@ -157,7 +157,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   {
     // mbi.RegionSize can overflow address while scanning a 64-bit process
     // with a 32-bit YARA.
-    if ((uint8_t*) address + mbi.RegionSize <= address)
+    if ((uint8_t*) address + mbi.RegionSize <= (uint8_t*) address)
       break;
 
     if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
