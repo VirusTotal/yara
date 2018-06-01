@@ -2,6 +2,6 @@
 set -ev
 unset CC # A pre-set CC overrides --host settings.
 ./bootstrap.sh
-./configure
+./configure $CONFIGFLAGS
 make
 make check

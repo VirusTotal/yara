@@ -1,5 +1,5 @@
 #!/bin/bash
 set -ev
-./configure $CONFIGFLAGS
+./configure
 make
 make check
