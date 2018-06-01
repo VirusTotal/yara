@@ -103,10 +103,10 @@ file and create signatures based on those results.
 
     .. versionadded:: 3.8.0
 
-    Returns the maximum of two integer values.
+    Returns the maximum of two unsigned integer values.
 
 .. c:function:: min(int, int)
 
     .. versionadded:: 3.8.0
 
-    Returns the minimum of two integer values.
+    Returns the minimum of two unsigned integer values.
