@@ -52,10 +52,7 @@ script: |
   unset CC # A pre-set CC overrides --host settings.
   ./configure $CONFIGFLAGS
   make clean && make
-  case "$CONFIGFLAGS" in
-    *--host=*mingw*) ;;
-    *) make check ;;
-  esac
+  make check
   set +e
 
 after_failure: if [ -e test-suite.log ]; then cat test-suite.log; fi
