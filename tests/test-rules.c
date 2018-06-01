@@ -27,11 +27,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <signal.h>
-
 #include <yara.h>
 #include "blob.h"
 #include "util.h"
@@ -1806,6 +1801,13 @@ void test_include_files()
 }
 
 
+#if !defined(USE_WINDOWS_PROC) && !defined(USE_NO_PROC)
+
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <signal.h>
+
 void test_process_scan()
 {
   int pid = fork();
@@ -1863,6 +1865,7 @@ void test_process_scan()
     exit(EXIT_FAILURE);
   }
 }
+#endif
 
 
 int main(int argc, char** argv)
