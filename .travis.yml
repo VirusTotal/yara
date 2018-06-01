@@ -25,14 +25,14 @@ matrix:
         sudo apt-get install -y gcc-multilib autoconf automake libtool libjansson-dev:i386 libmagic-dev:i386 libssl-dev:i386
     - os: linux
       dist: trusty
-      sudo: required
+      sudo: false
       env: CONFIGFLAGS=--host=x86_64-w64-mingw32
       install: |
         sudo apt-get update
         sudo apt-get install -y gcc-mingw-w64 autoconf automake libtool
     - os: linux
       dist: trusty
-      sudo: required
+      sudo: false
       env: CONFIGFLAGS=--host=i686-w64-mingw32
       install: |
         sudo apt-get update
