@@ -599,8 +599,8 @@ define_function(in_range)
 
 define_function(min)
 {
-  int i = integer_argument(1);
-  int j = integer_argument(2);
+  uint64_t i = integer_argument(1);
+  uint64_t j = integer_argument(2);
 
   return_integer(i < j ? i : j);
 }
@@ -608,8 +608,8 @@ define_function(min)
 
 define_function(max)
 {
-  int i = integer_argument(1);
-  int j = integer_argument(2);
+  uint64_t i = integer_argument(1);
+  uint64_t j = integer_argument(2);
 
   return_integer(i > j ? i : j);
 }
