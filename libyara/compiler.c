@@ -1159,6 +1159,13 @@ YR_API char* yr_compiler_get_error_message(
           buffer_size,
           "integer overflow in \"%s\"",
           compiler->last_error_extra_info);
+      break;
+    case ERROR_COULD_NOT_READ_FILE:
+      snprintf(
+          buffer,
+          buffer_size,
+          "could not read file");
+      break;
   }
 
   return buffer;
