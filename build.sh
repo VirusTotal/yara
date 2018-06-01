@@ -2,3 +2,4 @@
 ./bootstrap.sh
 ./configure
 make
+make check

@@ -44,15 +44,7 @@ matrix:
     - os: osx
       osx_image: xcode9.2
 
-before_script: ./bootstrap.sh
-
-script: |
-  set -e
-  unset CC # A pre-set CC overrides --host settings.
-  ./configure $CONFIGFLAGS
-  make clean && make
-  make check
-  set +e
+script: ./build.sh
 
 after_failure: if [ -e test-suite.log ]; then cat test-suite.log; fi
 
