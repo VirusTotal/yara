@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ev
-./configure $CONFIGFLAGS
+./bootstrap.sh
+./configure
 make
 make check

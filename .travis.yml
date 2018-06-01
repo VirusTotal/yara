@@ -44,7 +44,9 @@ matrix:
     - os: osx
       osx_image: xcode9.2
 
-script: ./build.sh
+before_script: ./bootstrap.sh
+
+script: ./build_travis.sh
 
 after_failure: if [ -e test-suite.log ]; then cat test-suite.log; fi
 
