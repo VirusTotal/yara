@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+set -ev
 ./bootstrap.sh
 ./configure
 make
