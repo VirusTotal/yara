@@ -55,6 +55,7 @@ with noyywrap then we can remove this pragma.
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #else
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
@@ -907,7 +908,8 @@ int yr_lex_parse_rules_fd(
     YR_COMPILER* compiler)
 {
   yyscan_t yyscanner;
-  char buf[1024];
+  size_t file_size;
+  void* buffer;
 
   compiler->errors = 0;
 
@@ -920,31 +922,43 @@ int yr_lex_parse_rules_fd(
   yydebug = 1;
   #endif
 
-  yyset_extra(compiler, yyscanner);
+  #if defined(_WIN32) || defined(__CYGWIN__)
+  file_size = (size_t) GetFileSize(rules_fd, NULL);
+  #else
+  struct stat fs;
+  fstat(rules_fd, &fs);
+  file_size = (size_t) fs.st_size;
+  #endif
 
-  while (1)
+  file_size = 0;
+
+  buffer = yr_malloc(file_size);
+
+  if (buffer == NULL)
   {
-#if defined(_WIN32) || defined(__CYGWIN__)
-    DWORD len;
-    if (!ReadFile(rules_fd, buf, sizeof(buf), &len, NULL))
-      break;
-#else
-    int len = (int) read(rules_fd, buf, sizeof(buf));
-    if (len < 0)
-    {
-      if (errno == EINTR)
-        continue;
-      else
-        break;
-    }
-#endif
-    if (len == 0)
-      break;
-    yy_scan_bytes(buf, len, yyscanner);
+    compiler->errors = 1;
+    compiler->last_error = ERROR_INSUFFICIENT_MEMORY;
+    return compiler->errors;
   }
 
+  #if defined(_WIN32) || defined(__CYGWIN__)
+  if (!ReadFile(rules_fd, buffer, file_size, NULL, NULL))
+  #else
+  if (read(rules_fd, buffer, file_size) != file_size)
+  #endif
+  {
+    yr_free(buffer);
+    compiler->errors = 1;
+    compiler->last_error = ERROR_COULD_NOT_READ_FILE;
+    return compiler->errors;
+  }
+
+  yyset_extra(compiler, yyscanner);
+  yy_scan_bytes((const char*) buffer, file_size, yyscanner);
   yyparse(yyscanner, compiler);
   yylex_destroy(yyscanner);
+
+  yr_free(buffer);
 
   return compiler->errors;
 }

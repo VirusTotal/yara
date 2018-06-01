@@ -97,6 +97,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ERROR_INTEGER_OVERFLOW                  52
 #define ERROR_CALLBACK_REQUIRED                 53
 #define ERROR_INVALID_OPERAND                   54
+#define ERROR_COULD_NOT_READ_FILE               55
 
 
 #define FAIL_ON_ERROR(x) { \

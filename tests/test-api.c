@@ -548,7 +548,7 @@ void test_ast_callback()
 
 
 void stats_for_rules(
-    const char* rules_str, 
+    const char* rules_str,
     YR_RULES_STATS* stats)
 {
   YR_COMPILER* compiler = NULL;
