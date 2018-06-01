@@ -3281,21 +3281,18 @@ int yr_lex_parse_rules_fd(
   if (setjmp(compiler->error_recovery) != 0)
     return compiler->errors;
 
-  yara_yylex_init(&yyscanner);
-
-  #if YYDEBUG
-  yydebug = 1;
-  #endif
-
   #if defined(_WIN32) || defined(__CYGWIN__)
   file_size = (size_t) GetFileSize(rules_fd, NULL);
   #else
   struct stat fs;
-  fstat(rules_fd, &fs);
+  if (fstat(rules_fd, &fs) != 0)
+  {
+    compiler->errors = 1;
+    compiler->last_error = ERROR_COULD_NOT_READ_FILE;
+    return compiler->errors;
+  }
   file_size = (size_t) fs.st_size;
   #endif
-
-  file_size = 0;
 
   buffer = yr_malloc(file_size);
 
@@ -3317,6 +3314,12 @@ int yr_lex_parse_rules_fd(
     compiler->last_error = ERROR_COULD_NOT_READ_FILE;
     return compiler->errors;
   }
+
+  yara_yylex_init(&yyscanner);
+
+  #if YYDEBUG
+  yydebug = 1;
+  #endif
 
   yara_yyset_extra(compiler,yyscanner);
   yara_yy_scan_bytes((const char*) buffer,file_size,yyscanner);
