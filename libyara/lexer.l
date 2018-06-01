@@ -949,6 +949,7 @@ int yr_lex_parse_rules_fd(
   {
     yr_free(buffer);
     compiler->errors = 1;
+    compiler->last_error = ERROR_COULD_NOT_READ_FILE;
     return compiler->errors;
   }
 
