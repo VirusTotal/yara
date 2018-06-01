@@ -3308,17 +3308,14 @@ int yr_lex_parse_rules_fd(
 
   #if defined(_WIN32) || defined(__CYGWIN__)
   if (!ReadFile(rules_fd, buffer, file_size, NULL, NULL))
-  {
-    compiler->errors = 1;
-    return compiler->errors;
-  }
   #else
   if (read(rules_fd, buffer, file_size) != file_size)
+  #endif
   {
+    yr_free(buffer);
     compiler->errors = 1;
     return compiler->errors;
   }
-  #endif
 
   yara_yyset_extra(compiler,yyscanner);
   yara_yy_scan_bytes((const char*) buffer,file_size,yyscanner);
