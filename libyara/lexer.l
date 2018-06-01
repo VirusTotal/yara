@@ -923,7 +923,7 @@ int yr_lex_parse_rules_fd(
   #endif
 
   #if defined(_WIN32) || defined(__CYGWIN__)
-  file_size = (size_t) GetFileSize(rules_fd);
+  file_size = (size_t) GetFileSize(rules_fd, NULL);
   #else
   struct stat fs;
   fstat(rules_fd, &fs);
