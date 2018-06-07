@@ -2350,6 +2350,7 @@ begin_declarations;
   declare_integer("timestamp");
   declare_integer("pointer_to_symbol_table");
   declare_integer("number_of_symbols");
+  declare_integer("size_of_optional_header");
   declare_integer("characteristics");
 
   declare_integer("entry_point");
