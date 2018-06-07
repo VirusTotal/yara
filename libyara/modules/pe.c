@@ -2289,6 +2289,22 @@ begin_declarations;
   declare_integer("UP_SYSTEM_ONLY");
   declare_integer("BYTES_REVERSED_HI");
 
+  declare_integer("IMAGE_DIRECTORY_ENTRY_EXPORT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_IMPORT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_RESOURCE");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_EXCEPTION");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_SECURITY");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_BASERELOC");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_DEBUG");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_ARCHITECTURE");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_GLOBALPTR");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_TLS");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_IAT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR");
+
   declare_integer("SECTION_CNT_CODE");
   declare_integer("SECTION_CNT_INITIALIZED_DATA");
   declare_integer("SECTION_CNT_UNINITIALIZED_DATA");
@@ -2684,6 +2700,52 @@ int module_load(
   set_integer(
       IMAGE_FILE_BYTES_REVERSED_HI, module_object,
       "BYTES_REVERSED_HI");
+
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_EXPORT, module_object,
+      "IMAGE_DIRECTORY_ENTRY_EXPORT");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_IMPORT, module_object,
+      "IMAGE_DIRECTORY_ENTRY_IMPORT");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_RESOURCE, module_object,
+	  "IMAGE_DIRECTORY_ENTRY_RESOURCE");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_EXCEPTION, module_object,
+	  "IMAGE_DIRECTORY_ENTRY_EXCEPTION");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_SECURITY, module_object,
+	  "IMAGE_DIRECTORY_ENTRY_SECURITY");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_BASERELOC, module_object,
+	  "IMAGE_DIRECTORY_ENTRY_BASERELOC");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_DEBUG, module_object,
+	  "IMAGE_DIRECTORY_ENTRY_DEBUG");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_ARCHITECTURE, module_object,
+	  "IMAGE_DIRECTORY_ENTRY_ARCHITECTURE");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_GLOBALPTR, module_object,
+	  "IMAGE_DIRECTORY_ENTRY_GLOBALPTR");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_TLS, module_object,
+	  "IMAGE_DIRECTORY_ENTRY_TLS");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, module_object,
+	  "IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT, module_object,
+	  "IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_IAT, module_object,
+	  "IMAGE_DIRECTORY_ENTRY_IAT");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT, module_object,
+	  "IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT");
+  set_integer(
+	  IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, module_object,
+	  "IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR");
 
   set_integer(
       IMAGE_SCN_CNT_CODE, module_object,
