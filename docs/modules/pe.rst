@@ -422,7 +422,7 @@ Reference
 
         Data directory for .NET headers.
 
-    *Example:  pe.data_directories[pe.IMAGE_DIRECTORY_ENTRY_EXPORT].virtual_address != 0
+    *Example:  pe.data_directories[pe.IMAGE_DIRECTORY_ENTRY_EXPORT].virtual_address != 0*
 
 .. c:type:: number_of_sections
 
