@@ -108,11 +108,24 @@ Reference
 
     Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has COFF debug info.
 
+.. c:type:: pointer_to_symbol_table
+
+    .. versionadded:: 3.7.2
+
+    Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has COFF debug info.
+
 .. c:type:: number_of_symbols
 
     .. versionadded:: 3.7.2
 
     Value of IMAGE_FILE_HEADER::NumberOfSymbols. Used when the PE image has COFF debug info.
+
+.. c:type:: size_of_optional_header
+
+    .. versionadded:: 3.7.2
+
+    Value of IMAGE_FILE_HEADER::SizeOfOptionalHeader. This is real size of the optional header
+	and reflects differences between 32-bit and 64-bit optional header and number of data directories.
 
 .. c:type:: opthdr_magic
 
@@ -188,13 +201,9 @@ Reference
 
     .. versionadded:: 3.7.2
 
-    Value of IMAGE_OPTIONAL_HEADER::SizeOfHeaders. This is the total virtual size of header and all sections.
-
-.. c:type:: size_of_headers
-
-    .. versionadded:: 3.7.2
-
-    Value of IMAGE_OPTIONAL_HEADER::SizeOfHeaders. This is the total virtual size of header and all sections.
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfHeaders. This is the raw data size of the PE headers
+	including DOS header, file header, optional header and all section headers.
+	When PE is mapped to memory, this value is subject to aligning up to SectionAlignment.
 
 .. c:type:: characteristics
 
@@ -341,9 +350,9 @@ Reference
 
     .. versionadded:: 3.7.2
 
-    A zero-based array of data directories. Each data directory contains virtual address and length
-    of the appropriate data directory. Each data directory has the following entries
-    object has the following attributes:
+    A zero-based array of data directories. Each data directory contains virtual address
+	and length of the appropriate data directory. Each data directory has the following
+	entries:
 
     .. c:member:: virtual_address
 
@@ -355,7 +364,7 @@ Reference
 
         Size of the PE data directory, in bytes.
 
-	The index for the dara directory entry can be one of the following values:
+	The index for the data directory entry can be one of the following values:
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_EXPORT
 
@@ -371,11 +380,11 @@ Reference
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_EXCEPTION
 
-	Data directory for exception information directory.
+	Data directory for exception information.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_SECURITY
 
-	This is the file offset and length of the image digital signature.
+	This is the raw file offset and length of the image digital signature.
 	If the image has no embedded digital signature, this directory will contain zeros.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_BASERELOC

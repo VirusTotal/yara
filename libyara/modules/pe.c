@@ -1343,6 +1343,10 @@ void pe_parse_header(
       pe->object, "number_of_symbols");
 
   set_integer(
+      yr_le32toh(pe->header->FileHeader.SizeOfOptionalHeader),
+      pe->object, "size_of_optional_header");
+
+  set_integer(
       yr_le16toh(pe->header->FileHeader.Characteristics),
       pe->object, "characteristics");
 
