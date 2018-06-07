@@ -125,7 +125,7 @@ Reference
     .. versionadded:: 3.7.2
 
     Value of IMAGE_FILE_HEADER::SizeOfOptionalHeader. This is real size of the optional header
-	and reflects differences between 32-bit and 64-bit optional header and number of data directories.
+    and reflects differences between 32-bit and 64-bit optional header and number of data directories.
 
 .. c:type:: opthdr_magic
 
@@ -176,14 +176,14 @@ Reference
     .. versionadded:: 3.7.2
 
     Value of IMAGE_OPTIONAL_HEADER::SectionAlignment. When Windows maps a PE image to memory,
-	all raw sizes (including size of header) are aligned up to this value.
+    all raw sizes (including size of header) are aligned up to this value.
 
 .. c:type:: file_alignment
 
     .. versionadded:: 3.7.2
 
     Value of IMAGE_OPTIONAL_HEADER::FileAlignment. All raw data sizes of sections in the PE image
-	are aligned to this value.
+    are aligned to this value.
 
 .. c:type:: win32_version_value
 
@@ -202,8 +202,8 @@ Reference
     .. versionadded:: 3.7.2
 
     Value of IMAGE_OPTIONAL_HEADER::SizeOfHeaders. This is the raw data size of the PE headers
-	including DOS header, file header, optional header and all section headers.
-	When PE is mapped to memory, this value is subject to aligning up to SectionAlignment.
+    including DOS header, file header, optional header and all section headers.
+    When PE is mapped to memory, this value is subject to aligning up to SectionAlignment.
 
 .. c:type:: characteristics
 
@@ -351,76 +351,76 @@ Reference
     .. versionadded:: 3.7.2
 
     A zero-based array of data directories. Each data directory contains virtual address
-	and length of the appropriate data directory. Each data directory has the following
-	entries:
+    and length of the appropriate data directory. Each data directory has the following
+    entries:
 
     .. c:member:: virtual_address
 
         Relative virtual address (RVA) of the PE data directory. If this is zero,
-		then the data directory is missing.
-		Note that for digital signature, this is the file offset, not RVA.
+        then the data directory is missing.
+        Note that for digital signature, this is the file offset, not RVA.
 
     .. c:member:: size
 
         Size of the PE data directory, in bytes.
 
-	The index for the data directory entry can be one of the following values:
+        The index for the data directory entry can be one of the following values:
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_EXPORT
 
-	Data directory for exported functions.
+        Data directory for exported functions.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_IMPORT
 
-	Data directory for import directory.
+        Data directory for import directory.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_RESOURCE
 
-	Data directory for resource section.
+        Data directory for resource section.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_EXCEPTION
 
-	Data directory for exception information.
+        Data directory for exception information.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_SECURITY
 
-	This is the raw file offset and length of the image digital signature.
-	If the image has no embedded digital signature, this directory will contain zeros.
+        This is the raw file offset and length of the image digital signature.
+        If the image has no embedded digital signature, this directory will contain zeros.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_BASERELOC
 
-	Data directory for image relocation table.
+        Data directory for image relocation table.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_DEBUG
 
-	Data directory for debug information.
+        Data directory for debug information.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_TLS
 
-	Data directory for image thread local storage.
+        Data directory for image thread local storage.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG
 
-	Data directory for image load configuration.
+        Data directory for image load configuration.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT
 
-	Data directory for image bound import table.
+        Data directory for image bound import table.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_IAT
 
-	Data directory for image Import Address Table.
+        Data directory for image Import Address Table.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT
 
-	Data directory for Delayed Import Table. Structure of the delayed import table
-	is linker-dependent. Microsoft version of delayed imports is described
-	in the souces "delayimp.h" and "delayimp.cpp", which can be found
-	in MS Visual Studio 2008 CRT sources.
+        Data directory for Delayed Import Table. Structure of the delayed import table
+        is linker-dependent. Microsoft version of delayed imports is described
+        in the souces "delayimp.h" and "delayimp.cpp", which can be found
+        in MS Visual Studio 2008 CRT sources.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR
 
-	Data directory for .NET headers.
+        Data directory for .NET headers.
 
     *Example:  pe.data_directories[pe.IMAGE_DIRECTORY_ENTRY_EXPORT].virtual_address != 0
 
@@ -462,27 +462,27 @@ Reference
 
     .. c:member:: pointer_to_relocations
 
-		.. versionadded:: 3.7.2
+        .. versionadded:: 3.7.2
 
-		Value of IMAGE_SECTION_HEADER::PointerToRelocations.
+        Value of IMAGE_SECTION_HEADER::PointerToRelocations.
 
     .. c:member:: pointer_to_line_numbers
 
-		.. versionadded:: 3.7.2
+        .. versionadded:: 3.7.2
 
-		Value of IMAGE_SECTION_HEADER::PointerToLinenumbers.
+        Value of IMAGE_SECTION_HEADER::PointerToLinenumbers.
 
     .. c:member:: number_of_relocations
 
-		.. versionadded:: 3.7.2
+        .. versionadded:: 3.7.2
 
-		Value of IMAGE_SECTION_HEADER::NumberOfRelocations.
+        Value of IMAGE_SECTION_HEADER::NumberOfRelocations.
 
     .. c:member:: number_of_line_numbers
 
-		.. versionadded:: 3.7.2
+        .. versionadded:: 3.7.2
 
-		Value of IMAGE_SECTION_HEADER::NumberOfLineNumbers.
+        Value of IMAGE_SECTION_HEADER::NumberOfLineNumbers.
 
     *Example:  pe.sections[0].name == ".text"*
 
