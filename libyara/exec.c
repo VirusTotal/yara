@@ -583,6 +583,13 @@ int yr_execute_code(
         i = (int) strlen(args_fmt);
         count = 0;
 
+        if (i > MAX_FUNCTION_ARGS)
+        {
+          stop = true;
+          result = ERROR_INTERNAL_FATAL_ERROR;
+          break;
+        }
+
         // pop arguments from stack and copy them to args array
 
         while (i > 0)
@@ -923,9 +930,19 @@ int yr_execute_code(
         break;
 
       case OP_INT_TO_DBL:
+
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
+
+        if (r1.i > sp || sp - r1.i >= stack_size)
+        {
+          stop = true;
+          result = ERROR_INTERNAL_FATAL_ERROR;
+          break;
+        }
+
         r2 = stack[sp - r1.i];
+
         if (is_undef(r2))
           stack[sp - r1.i].i = UNDEFINED;
         else
