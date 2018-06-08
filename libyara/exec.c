@@ -79,6 +79,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       break; \
     }
 
+#define ensure_within_mem(x) \
+    if (x < 0 || x >= MEM_SIZE) \
+    { \
+      stop = true; \
+      result = ERROR_INTERNAL_FATAL_ERROR; \
+      break; \
+    }
+
 
 #define little_endian_uint8_t(x)     (x)
 #define little_endian_int8_t(x)      (x)
@@ -239,12 +247,14 @@ int yr_execute_code(
       case OP_CLEAR_M:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
+        ensure_within_mem(r1.i);
         mem[r1.i] = 0;
         break;
 
       case OP_ADD_M:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
+        ensure_within_mem(r1.i);
         pop(r2);
         if (!is_undef(r2))
           mem[r1.i] += r2.i;
@@ -253,12 +263,14 @@ int yr_execute_code(
       case OP_INCR_M:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
+        ensure_within_mem(r1.i);
         mem[r1.i]++;
         break;
 
       case OP_PUSH_M:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
+        ensure_within_mem(r1.i);
         r1.i = mem[r1.i];
         push(r1);
         break;
@@ -266,6 +278,7 @@ int yr_execute_code(
       case OP_POP_M:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
+        ensure_within_mem(r1.i);
         pop(r2);
         mem[r1.i] = r2.i;
         break;
@@ -273,6 +286,7 @@ int yr_execute_code(
       case OP_SWAPUNDEF:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
+        ensure_within_mem(r1.i);
         pop(r2);
 
         if (is_undef(r2))
