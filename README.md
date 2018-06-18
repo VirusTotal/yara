@@ -41,9 +41,14 @@ YARA is multi-platform, running on Windows, Linux and Mac OS X, and can be used
 through its command-line interface or from your own Python scripts with the
 yara-python extension.
 
+## Additional resources
+
 If you plan to use YARA to scan compressed files (.zip, .tar, etc) you should
 take a look at [yextend](https://github.com/BayshoreNetworks/yextend), a very
 helpful extension to YARA developed and open-sourced by Bayshore Networks.
+
+Additionally, they guys from [InQuest](https://inquest.net/) have curated an
+aweseome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 
 ## Who's using YARA
 
