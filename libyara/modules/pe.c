@@ -911,8 +911,10 @@ IMPORTED_DLL* pe_parse_imports(
 
       char* dll_name = (char *) (pe->data + offset);
 
-      if (!pe_valid_dll_name(dll_name, pe->data_size - (size_t) offset))
-        break;
+      if (!pe_valid_dll_name(dll_name, pe->data_size - (size_t) offset)){
+          imports++;
+          continue;
+      }
 
       imported_dll = (IMPORTED_DLL*) yr_calloc(1, sizeof(IMPORTED_DLL));
 
