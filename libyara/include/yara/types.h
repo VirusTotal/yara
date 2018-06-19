@@ -348,7 +348,7 @@ typedef struct YARA_RULES_FILE_HEADER
   DECLARE_REFERENCE(YR_AC_MATCH_TABLE, ac_match_table);
   DECLARE_REFERENCE(YR_AC_TRANSITION_TABLE, ac_transition_table);
 
-  // Size of ac_match_table and ac_transition_table in number of items (both 
+  // Size of ac_match_table and ac_transition_table in number of items (both
   // tables have the same number of items)
   uint32_t ac_tables_size;
 
@@ -539,7 +539,7 @@ struct YR_RULES
 };
 
 
-struct YR_RULES_STATS 
+struct YR_RULES_STATS
 {
   // Total number of rules
   uint32_t rules;
@@ -548,7 +548,7 @@ struct YR_RULES_STATS
   uint32_t strings;
 
   // Total number of Aho-Corasick matches. Each node in the  Aho-Corasick
-  // automaton has a list of YR_AC_MATCH structures (match list )pointing to 
+  // automaton has a list of YR_AC_MATCH structures (match list )pointing to
   // strings that are potential matches. This field holds the total number of
   // those structures across all nodes in the automaton.
   uint32_t ac_matches;
@@ -670,6 +670,7 @@ union YR_VALUE
 
 
 #define OBJECT_COMMON_FIELDS \
+    int canary; \
     int8_t type; \
     const char* identifier; \
     YR_OBJECT* parent; \
