@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assert.h>
 #include <math.h>
 
+#include <yara/globals.h>
 #include <yara/arena.h>
 #include <yara/endian.h>
 #include <yara/exec.h>
@@ -106,6 +107,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       break; \
     }
 
+#define check_object_canary(o) \
+    if (o->canary != yr_canary) \
+    { \
+      stop = true; \
+      result = ERROR_INTERNAL_FATAL_ERROR; \
+      break; \
+    }
 
 #define little_endian_uint8_t(x)     (x)
 #define little_endian_int8_t(x)      (x)
@@ -547,6 +555,10 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r1);
 
+        #if PARANOID_EXEC
+        check_object_canary(r1.o);
+        #endif
+
         switch(r1.o->type)
         {
           case OBJECT_TYPE_INTEGER:
@@ -580,7 +592,12 @@ int yr_execute_code(
 
         ensure_defined(r1);
         ensure_defined(r2);
+
         assert(r2.o->type == OBJECT_TYPE_ARRAY);
+
+        #if PARANOID_EXEC
+        check_object_canary(r2.o);
+        #endif
 
         r1.o = yr_object_array_get_item(r2.o, 0, (int) r1.i);
 
@@ -596,7 +613,12 @@ int yr_execute_code(
 
         ensure_defined(r1);
         ensure_defined(r2);
+
         assert(r2.o->type == OBJECT_TYPE_DICTIONARY);
+
+        #if PARANOID_EXEC
+        check_object_canary(r2.o);
+        #endif
 
         r1.o = yr_object_dict_get_item(
             r2.o, 0, r1.ss->c_string);
@@ -638,6 +660,10 @@ int yr_execute_code(
 
         pop(r2);
         ensure_defined(r2);
+
+        #if PARANOID_EXEC
+        check_object_canary(r2.o);
+        #endif
 
         if (count > 0)
         {
