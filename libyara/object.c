@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <math.h>
 
-
+#include <yara/globals.h>
 #include <yara/mem.h>
 #include <yara/error.h>
 #include <yara/object.h>
@@ -88,6 +88,7 @@ int yr_object_create(
   if (obj == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
+  obj->canary = yr_canary;
   obj->type = type;
   obj->identifier = yr_strdup(identifier);
   obj->parent = parent;
