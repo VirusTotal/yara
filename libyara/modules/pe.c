@@ -1189,10 +1189,25 @@ void pe_parse_certificates(
       const char* sig_alg;
       char buffer[256];
       int bytes;
+      const EVP_MD* sha1_digest = EVP_sha1();
+      unsigned char thumbprint[YR_SHA1_LEN];
+      char thumbprint_ascii[YR_SHA1_LEN * 2];
 
       ASN1_INTEGER* serial;
 
       X509* cert = sk_X509_value(certs, i);
+
+      X509_digest(cert, sha1_digest, thumbprint, NULL);
+      for (i = 0; i < YR_SHA1_LEN; i++)
+      {
+        sprintf(thumbprint_ascii + (i * 2), "%02x", thumbprint[i]);
+      }
+      set_sized_string(
+          (char*) thumbprint_ascii,
+          sizeof(thumbprint_ascii),
+          pe->object,
+          "signatures[%i].thumbprint",
+          counter);
 
       X509_NAME_oneline(
           X509_get_issuer_name(cert), buffer, sizeof(buffer));
@@ -2329,6 +2344,7 @@ begin_declarations;
 
   #if defined(HAVE_LIBCRYPTO)
   begin_struct_array("signatures");
+    declare_string("thumbprint");
     declare_string("issuer");
     declare_string("subject");
     declare_integer("version");

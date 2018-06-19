@@ -116,8 +116,8 @@ Reference
 
 .. c:type:: characteristics
 
-    Bitmap with PE FileHeader characteristics. Individual characteristics 
-    can be inspected by performing a bitwise AND operation with the 
+    Bitmap with PE FileHeader characteristics. Individual characteristics
+    can be inspected by performing a bitwise AND operation with the
     following constants:
 
     .. c:type:: RELOCS_STRIPPED
@@ -193,8 +193,8 @@ Reference
 .. c:type:: dll_characteristics
 
     Bitmap with PE OptionalHeader DllCharacteristics.  Do not confuse these
-    flags with the PE FileHeader Characteristics. Individual 
-    characteristics can be inspected by performing a bitwise AND 
+    flags with the PE FileHeader Characteristics. Individual
+    characteristics can be inspected by performing a bitwise AND
     operation with the following constants:
 
     .. c:type:: DYNAMIC_BASE
@@ -209,7 +209,7 @@ Reference
     .. c:type:: NO_ISOLATION
     .. c:type:: NO_SEH
 
-        The file does not contain structured exception handlers, this must be 
+        The file does not contain structured exception handlers, this must be
         set to use SafeSEH
 
     .. c:type:: NO_BIND
@@ -420,6 +420,12 @@ Reference
 
     A zero-based array of signature objects, one for each authenticode
     signature in the PE file. Usually PE files have a single signature.
+
+    .. c:member:: thumbprint
+
+        A string containing the thumbprint of the signature.
+
+    .. versionadded:: 3.8.0
 
     .. c:member:: issuer
 
