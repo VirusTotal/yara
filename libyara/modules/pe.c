@@ -883,6 +883,9 @@ IMPORTED_DLL* pe_parse_imports(
 
   PIMAGE_IMPORT_DESCRIPTOR imports;
 
+  /* default to 0 imports until we know there are any */
+  set_integer(0, pe->object, "number_of_imports");
+
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
 
@@ -977,6 +980,9 @@ EXPORT_FUNCTIONS* pe_parse_exports(
 
   if (pe == NULL)
     return NULL;
+
+  /* default to 0 exports until we know there are any */
+  set_integer(0, pe->object, "number_of_exports");
 
   directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_EXPORT);
@@ -1340,9 +1346,8 @@ void pe_parse_header(
   uint64_t section_end;
   uint64_t last_section_end;
 
-  PIMAGE_DATA_DIRECTORY directory;
 
-  set_integer(1, pe->object, "ispe");
+  set_integer(1, pe->object, "is_pe");
 
   set_integer(
       yr_le16toh(pe->header->FileHeader.Machine),
@@ -1419,10 +1424,6 @@ void pe_parse_header(
   set_integer(
       OptionalHeader(pe, DllCharacteristics),
       pe->object, "dll_characteristics");
-
-  directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_EXPORT);
-  set_integer((directory && directory->VirtualAddress != 0) ? 1 : 0,
-     pe->object, "has_exports");
 
   pe_iterate_resources(
       pe,
@@ -1864,7 +1865,14 @@ define_function(imports_regex)
   {
     if (yr_re_match(scan_context(), regexp_argument(1), imported_dll->name) > 0)
     {
-       return_integer(1);
+      IMPORT_FUNCTION* imported_func = imported_dll->functions;
+
+      while (imported_func != NULL)
+      {
+        if (yr_re_match(scan_context(), regexp_argument(2), imported_func->name) > 0)
+          return_integer(1);
+        imported_func = imported_func->next;
+      }
     }
 
     imported_dll = imported_dll->next;
@@ -2258,7 +2266,7 @@ begin_declarations;
   declare_integer("RESOURCE_TYPE_MANIFEST");
 
 
-  declare_integer("ispe");
+  declare_integer("is_pe");
   declare_integer("machine");
   declare_integer("number_of_sections");
   declare_integer("timestamp");
@@ -2295,7 +2303,6 @@ begin_declarations;
   declare_integer("subsystem");
 
   declare_integer("dll_characteristics");
-  declare_integer("has_exports");
 
   begin_struct_array("sections");
     declare_string("name");
@@ -2337,7 +2344,7 @@ begin_declarations;
   declare_function("imports", "ss", "i", imports);
   declare_function("imports", "si", "i", imports_ordinal);
   declare_function("imports", "s", "i", imports_dll);
-  declare_function("imports_regex", "r", "i", imports_regex);
+  declare_function("imports", "rr", "i", imports_regex);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
   declare_function("is_dll", "", "i", is_dll);
@@ -2695,7 +2702,7 @@ int module_load(
   set_integer(
       RESOURCE_TYPE_MANIFEST, module_object,
       "RESOURCE_TYPE_MANIFEST");
-  set_integer(0, module_object, "ispe");
+  set_integer(0, module_object, "is_pe");
 
   foreach_memory_block(iterator, block)
   {
