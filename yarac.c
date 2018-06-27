@@ -200,7 +200,7 @@ int main(
   {
     printf("%s\n\n", USAGE_STRING);
 
-    args_print_usage(options, 35);
+    args_print_usage(options, 40);
     printf("\nSend bug reports and suggestions to: vmalvarez@virustotal.com\n");
 
     return EXIT_SUCCESS;
