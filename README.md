@@ -47,7 +47,7 @@ If you plan to use YARA to scan compressed files (.zip, .tar, etc) you should
 take a look at [yextend](https://github.com/BayshoreNetworks/yextend), a very
 helpful extension to YARA developed and open-sourced by Bayshore Networks.
 
-Additionally, they guys from [InQuest](https://inquest.net/) have curated an
+Additionally, the guys from [InQuest](https://inquest.net/) have curated an
 awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 
 ## Who's using YARA
