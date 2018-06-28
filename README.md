@@ -48,7 +48,7 @@ take a look at [yextend](https://github.com/BayshoreNetworks/yextend), a very
 helpful extension to YARA developed and open-sourced by Bayshore Networks.
 
 Additionally, they guys from [InQuest](https://inquest.net/) have curated an
-aweseome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
+awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 
 ## Who's using YARA
 
