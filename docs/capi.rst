@@ -165,7 +165,7 @@ The ``ptr`` argument is a pointer to the buffer where the ``read`` function
 should put the read data, or where the ``write`` function will find the data
 that needs to be written to the stream. In both cases ``size`` is the size of
 each element being read or written and ``count`` the number of elements. The
-total size of the data being read or written is ``size`` * ``count``. The 
+total size of the data being read or written is ``size`` * ``count``. The
 ``read`` function must return the number of elements read, the ``write`` function
 must return the total size of the data written.
 
@@ -766,7 +766,7 @@ Error codes
 .. c:macro:: ERROR_TOO_MANY_SCAN_THREADS
 
   Too many threads trying to use the same :c:type:`YR_RULES` object
-  simultaneously. The limit is defined by ``MAX_THREADS`` in
+  simultaneously. The limit is defined by ``YR_MAX_THREADS`` in
   *./include/yara/limits.h*
 
 .. c:macro:: ERROR_SCAN_TIMEOUT
@@ -781,5 +781,5 @@ Error codes
 
   Too many matches for some string in your rules. This usually happens when
   your rules contains very short or very common strings like ``01 02`` or
-  ``FF FF FF FF``. The limit is defined by ``MAX_STRING_MATCHES`` in
+  ``FF FF FF FF``. The limit is defined by ``YR_MAX_STRING_MATCHES`` in
   *./include/yara/limits.h*

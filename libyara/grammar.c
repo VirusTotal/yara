@@ -2374,24 +2374,24 @@ yyreduce:
   case 52:
 #line 821 "grammar.y" /* yacc.c:1663  */
     {
-        (yyval.c_string) = (char*) yr_malloc(MAX_FUNCTION_ARGS + 1);
+        (yyval.c_string) = (char*) yr_malloc(YR_MAX_FUNCTION_ARGS + 1);
 
         switch((yyvsp[0].expression).type)
         {
           case EXPRESSION_TYPE_INTEGER:
-            strlcpy((yyval.c_string), "i", MAX_FUNCTION_ARGS);
+            strlcpy((yyval.c_string), "i", YR_MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_FLOAT:
-            strlcpy((yyval.c_string), "f", MAX_FUNCTION_ARGS);
+            strlcpy((yyval.c_string), "f", YR_MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_BOOLEAN:
-            strlcpy((yyval.c_string), "b", MAX_FUNCTION_ARGS);
+            strlcpy((yyval.c_string), "b", YR_MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_STRING:
-            strlcpy((yyval.c_string), "s", MAX_FUNCTION_ARGS);
+            strlcpy((yyval.c_string), "s", YR_MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_REGEXP:
-            strlcpy((yyval.c_string), "r", MAX_FUNCTION_ARGS);
+            strlcpy((yyval.c_string), "r", YR_MAX_FUNCTION_ARGS);
             break;
           default:
             assert(false);
@@ -2405,7 +2405,7 @@ yyreduce:
   case 53:
 #line 848 "grammar.y" /* yacc.c:1663  */
     {
-        if (strlen((yyvsp[-2].c_string)) == MAX_FUNCTION_ARGS)
+        if (strlen((yyvsp[-2].c_string)) == YR_MAX_FUNCTION_ARGS)
         {
           compiler->last_result = ERROR_TOO_MANY_ARGUMENTS;
         }
@@ -2414,19 +2414,19 @@ yyreduce:
           switch((yyvsp[0].expression).type)
           {
             case EXPRESSION_TYPE_INTEGER:
-              strlcat((yyvsp[-2].c_string), "i", MAX_FUNCTION_ARGS);
+              strlcat((yyvsp[-2].c_string), "i", YR_MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_FLOAT:
-              strlcat((yyvsp[-2].c_string), "f", MAX_FUNCTION_ARGS);
+              strlcat((yyvsp[-2].c_string), "f", YR_MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_BOOLEAN:
-              strlcat((yyvsp[-2].c_string), "b", MAX_FUNCTION_ARGS);
+              strlcat((yyvsp[-2].c_string), "b", YR_MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_STRING:
-              strlcat((yyvsp[-2].c_string), "s", MAX_FUNCTION_ARGS);
+              strlcat((yyvsp[-2].c_string), "s", YR_MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_REGEXP:
-              strlcat((yyvsp[-2].c_string), "r", MAX_FUNCTION_ARGS);
+              strlcat((yyvsp[-2].c_string), "r", YR_MAX_FUNCTION_ARGS);
               break;
             default:
               assert(false);
@@ -2635,7 +2635,7 @@ yyreduce:
     {
         int var_index;
 
-        if (compiler->loop_depth == MAX_LOOP_NESTING)
+        if (compiler->loop_depth == YR_MAX_LOOP_NESTING)
           compiler->last_result = \
               ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 
@@ -2792,7 +2792,7 @@ yyreduce:
         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         uint8_t* addr;
 
-        if (compiler->loop_depth == MAX_LOOP_NESTING)
+        if (compiler->loop_depth == YR_MAX_LOOP_NESTING)
           compiler->last_result = \
             ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 

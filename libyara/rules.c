@@ -377,7 +377,7 @@ YR_API int yr_rules_load_stream(
   new_rules->ac_match_table = header->ac_match_table;
   new_rules->ac_transition_table = header->ac_transition_table;
   new_rules->ac_tables_size = header->ac_tables_size;
-  
+
   memset(new_rules->tidx_mask, 0, sizeof(new_rules->tidx_mask));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
@@ -419,7 +419,7 @@ YR_API int yr_rules_save_stream(
 {
   int i;
 
-  for (i = 0; i < YR_BITARRAY_NCHARS(MAX_THREADS); ++i)
+  for (i = 0; i < YR_BITARRAY_NCHARS(YR_MAX_THREADS); ++i)
     assert(rules->tidx_mask[i] == 0);
 
   return yr_arena_save_stream(rules->arena, stream);
@@ -449,8 +449,8 @@ YR_API int yr_rules_save(
 
 
 static int _uint32_cmp (
-    const void * a, 
-    const void * b) 
+    const void * a,
+    const void * b)
 {
    return (*(uint32_t*) a - *(uint32_t*) b);
 }
@@ -478,24 +478,24 @@ YR_API int yr_rules_get_stats(
   for (int i = 0; i < rules->ac_tables_size; i++)
   {
     YR_AC_MATCH* match = rules->ac_match_table[i].match;
-    
+
     int match_list_length = 0;
 
     while (match != NULL)
     {
-      match_list_length++;  
+      match_list_length++;
       stats->ac_matches++;
       match = match->next;
     }
 
-    if (i == 0) 
+    if (i == 0)
       stats->ac_root_match_list_length = match_list_length;
 
     if (match_list_length > 0)
     {
       match_list_lengths[c] = match_list_length;
       c++;
-    } 
+    }
   }
 
   // sort match_list_lengths in increasing order for computing percentiles.
@@ -512,7 +512,7 @@ YR_API int yr_rules_get_stats(
   stats->ac_match_list_length_pctls[0] = match_list_lengths[0];
   stats->ac_match_list_length_pctls[100] = match_list_lengths[c-1];
 
-  for (int i = 1; i < 100; i++) 
+  for (int i = 1; i < 100; i++)
     stats->ac_match_list_length_pctls[i] = match_list_lengths[(c * i) / 100];
 
   yr_free(match_list_lengths);

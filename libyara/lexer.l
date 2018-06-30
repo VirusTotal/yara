@@ -95,7 +95,7 @@ with noyywrap then we can remove this pragma.
 #define yytext_to_buffer \
     { \
       char *yptr = yytext; \
-      lex_check_space_ok(yptr, yyextra->lex_buf_len, LEX_BUF_SIZE); \
+      lex_check_space_ok(yptr, yyextra->lex_buf_len, YR_LEX_BUF_SIZE); \
       while(*yptr) \
       { \
         *yyextra->lex_buf_ptr++ = *yptr++; \
@@ -580,7 +580,7 @@ u?int(8|16|32)(be)? {
 
 <str>\\t   {
 
-  lex_check_space_ok("\t", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\t", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\t';
   yyextra->lex_buf_len++;
 }
@@ -588,7 +588,7 @@ u?int(8|16|32)(be)? {
 
 <str>\\n   {
 
-  lex_check_space_ok("\n", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\n", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\n';
   yyextra->lex_buf_len++;
 }
@@ -596,7 +596,7 @@ u?int(8|16|32)(be)? {
 
 <str>\\\"   {
 
-  lex_check_space_ok("\"", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\"", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\"';
   yyextra->lex_buf_len++;
 }
@@ -604,7 +604,7 @@ u?int(8|16|32)(be)? {
 
 <str>\\\\   {
 
-  lex_check_space_ok("\\", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\\", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\\';
   yyextra->lex_buf_len++;
 }
@@ -615,7 +615,7 @@ u?int(8|16|32)(be)? {
    int result;
 
    sscanf( yytext + 2, "%x", &result );
-   lex_check_space_ok("X", yyextra->lex_buf_len, LEX_BUF_SIZE);
+   lex_check_space_ok("X", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
    *yyextra->lex_buf_ptr++ = result;
    yyextra->lex_buf_len++;
 }
@@ -662,7 +662,7 @@ u?int(8|16|32)(be)? {
 
 <regexp>\\\/  {
 
-  lex_check_space_ok("/", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("/", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '/';
   yyextra->lex_buf_len++ ;
 }
@@ -670,7 +670,7 @@ u?int(8|16|32)(be)? {
 
 <regexp>\\. {
 
-  lex_check_space_ok("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\\.", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
 
   if (yytext[1] == 0)
     syntax_error("malformed regular expression");

@@ -112,17 +112,17 @@ typedef struct _YR_COMPILER
 
   int               namespaces_count;
 
-  uint8_t*          loop_address[MAX_LOOP_NESTING];
-  char*             loop_identifier[MAX_LOOP_NESTING];
+  uint8_t*          loop_address[YR_MAX_LOOP_NESTING];
+  char*             loop_identifier[YR_MAX_LOOP_NESTING];
   int               loop_depth;
   int               loop_for_of_mem_offset;
 
-  char*             file_name_stack[MAX_INCLUDE_DEPTH];
+  char*             file_name_stack[YR_MAX_INCLUDE_DEPTH];
   int               file_name_stack_ptr;
 
-  char              last_error_extra_info[MAX_COMPILER_ERROR_EXTRA_INFO];
+  char              last_error_extra_info[YR_MAX_COMPILER_ERROR_EXTRA_INFO];
 
-  char              lex_buf[LEX_BUF_SIZE];
+  char              lex_buf[YR_LEX_BUF_SIZE];
   char*             lex_buf_ptr;
   unsigned short    lex_buf_len;
 

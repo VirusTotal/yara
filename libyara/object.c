@@ -118,7 +118,7 @@ int yr_object_create(
       break;
     case OBJECT_TYPE_FUNCTION:
       object_as_function(obj)->return_obj = NULL;
-      for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+      for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
       {
         object_as_function(obj)->prototypes[i].arguments_fmt = NULL;
         object_as_function(obj)->prototypes[i].code = NULL;
@@ -238,7 +238,7 @@ int yr_object_function_create(
     f = object_as_function(o);
   }
 
-  for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+  for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
   {
     if (f->prototypes[i].arguments_fmt == NULL)
     {
@@ -590,7 +590,7 @@ int yr_object_copy(
               &object_as_function(copy)->return_obj),
           yr_object_destroy(copy));
 
-      for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+      for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
         object_as_function(copy)->prototypes[i] = \
             object_as_function(object)->prototypes[i];
 

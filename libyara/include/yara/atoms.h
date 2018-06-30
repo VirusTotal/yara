@@ -42,12 +42,12 @@ typedef struct _ATOM_TREE_NODE
 {
   uint8_t type;
   uint8_t atom_length;
-  uint8_t atom[MAX_ATOM_LENGTH];
+  uint8_t atom[YR_MAX_ATOM_LENGTH];
 
   uint8_t* forward_code;
   uint8_t* backward_code;
 
-  RE_NODE* recent_nodes[MAX_ATOM_LENGTH];
+  RE_NODE* recent_nodes[YR_MAX_ATOM_LENGTH];
 
   struct _ATOM_TREE_NODE* children_head;
   struct _ATOM_TREE_NODE* children_tail;
@@ -67,7 +67,7 @@ typedef struct _ATOM_TREE
 typedef struct _YR_ATOM_LIST_ITEM
 {
   uint8_t atom_length;
-  uint8_t atom[MAX_ATOM_LENGTH];
+  uint8_t atom[YR_MAX_ATOM_LENGTH];
 
   uint16_t backtrack;
 

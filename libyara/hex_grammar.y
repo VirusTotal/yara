@@ -266,10 +266,10 @@ range
           YYABORT;
         }
 
-        if (lex_env->inside_or && $2 > STRING_CHAINING_THRESHOLD)
+        if (lex_env->inside_or && $2 > YR_STRING_CHAINING_THRESHOLD)
         {
           yyerror(yyscanner, lex_env, "jumps over "
-              STR(STRING_CHAINING_THRESHOLD)
+              STR(YR_STRING_CHAINING_THRESHOLD)
               " now allowed inside alternation (|)");
           YYABORT;
         }
@@ -284,11 +284,11 @@ range
     | '[' _NUMBER_ '-' _NUMBER_ ']'
       {
         if (lex_env->inside_or &&
-            ($2 > STRING_CHAINING_THRESHOLD ||
-             $4 > STRING_CHAINING_THRESHOLD) )
+            ($2 > YR_STRING_CHAINING_THRESHOLD ||
+             $4 > YR_STRING_CHAINING_THRESHOLD) )
         {
           yyerror(yyscanner, lex_env, "jumps over "
-              STR(STRING_CHAINING_THRESHOLD)
+              STR(YR_STRING_CHAINING_THRESHOLD)
               " now allowed inside alternation (|)");
 
           YYABORT;

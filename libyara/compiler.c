@@ -341,7 +341,7 @@ int _yr_compiler_push_file_name(
     }
   }
 
-  if (compiler->file_name_stack_ptr < MAX_INCLUDE_DEPTH)
+  if (compiler->file_name_stack_ptr < YR_MAX_INCLUDE_DEPTH)
   {
     str = yr_strdup(file_name);
 
@@ -435,7 +435,7 @@ static int _yr_compiler_set_namespace(
 
     ns->name = ns_name;
 
-    for (i = 0; i < MAX_THREADS; i++)
+    for (i = 0; i < YR_MAX_THREADS; i++)
       ns->t_flags[i] = 0;
 
     compiler->namespaces_count++;

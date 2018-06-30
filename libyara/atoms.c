@@ -90,10 +90,6 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 #include <yara/types.h>
 
 
-#define YR_MAX_ATOM_QUALITY   100000
-#define YR_MIN_ATOM_QUALITY  -100000
-
-
 #define append_current_leaf_to_node(node) \
     if (atom_tree->current_leaf != NULL) \
     { \
@@ -505,14 +501,14 @@ static uint8_t* _yr_atoms_case_combinations(
 }
 
 // Size of buffer used in _yr_atoms_case_insensitive for storing the all
-// the possible combinations for an atom. Each atom has up to MAX_ATOM_LENGTH
+// the possible combinations for an atom. Each atom has up to YR_MAX_ATOM_LENGTH
 // characters and each character has two possible values (upper and lower case).
-// That means 2 ^ MAX_ATOM_LENGTH combinations for an atom, where each atom
-// occupies MAX_ATOM_LENGTH + 1 bytes (the atom itself +1 byte for its length)
+// That means 2 ^ YR_MAX_ATOM_LENGTH combinations for an atom, where each atom
+// occupies YR_MAX_ATOM_LENGTH + 1 bytes (the atom itself +1 byte for its length)
 // One extra bytes is allocated for the zero value indicating the end.
 
 #define CASE_COMBINATIONS_BUFFER_SIZE \
-    (1 << MAX_ATOM_LENGTH) * (MAX_ATOM_LENGTH + 1) + 1
+    (1 << YR_MAX_ATOM_LENGTH) * (YR_MAX_ATOM_LENGTH + 1) + 1
 
 //
 // _yr_atoms_case_insensitive
@@ -608,7 +604,7 @@ static int _yr_atoms_xor(
       for (i = 0; i < atom->atom_length; i++)
         new_atom->atom[i] = atom->atom[i] ^ j;
 
-      new_atom->atom_length = yr_min(atom->atom_length, MAX_ATOM_LENGTH);
+      new_atom->atom_length = yr_min(atom->atom_length, YR_MAX_ATOM_LENGTH);
       new_atom->forward_code = atom->forward_code;
       new_atom->backward_code = atom->backward_code;
       new_atom->backtrack = atom->backtrack;
@@ -648,18 +644,18 @@ static int _yr_atoms_wide(
     if (new_atom == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
-    for (i = 0; i < MAX_ATOM_LENGTH; i++)
+    for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
       new_atom->atom[i] = 0;
 
     for (i = 0; i < atom->atom_length; i++)
     {
-      if (i * 2 < MAX_ATOM_LENGTH)
+      if (i * 2 < YR_MAX_ATOM_LENGTH)
         new_atom->atom[i * 2] = atom->atom[i];
       else
         break;
     }
 
-    new_atom->atom_length = yr_min(atom->atom_length * 2, MAX_ATOM_LENGTH);
+    new_atom->atom_length = yr_min(atom->atom_length * 2, YR_MAX_ATOM_LENGTH);
     new_atom->forward_code = atom->forward_code;
     new_atom->backward_code = atom->backward_code;
     new_atom->backtrack = atom->backtrack * 2;
@@ -696,7 +692,7 @@ static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
   int new_quality;
   int i;
 
-  uint8_t new_atom[MAX_ATOM_LENGTH];
+  uint8_t new_atom[YR_MAX_ATOM_LENGTH];
 
   switch(re_node->type)
   {
@@ -718,7 +714,7 @@ static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
 
       current_leaf = atom_tree->current_leaf;
 
-      if (current_leaf->atom_length < MAX_ATOM_LENGTH)
+      if (current_leaf->atom_length < YR_MAX_ATOM_LENGTH)
       {
         current_leaf->atom[current_leaf->atom_length] =
             (uint8_t) re_node->value;
@@ -727,25 +723,25 @@ static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
       }
       else
       {
-        for (i = 1; i < MAX_ATOM_LENGTH; i++)
+        for (i = 1; i < YR_MAX_ATOM_LENGTH; i++)
           current_leaf->recent_nodes[i - 1] = current_leaf->recent_nodes[i];
 
-        current_leaf->recent_nodes[MAX_ATOM_LENGTH - 1] = re_node;
+        current_leaf->recent_nodes[YR_MAX_ATOM_LENGTH - 1] = re_node;
 
-        for (i = 0; i < MAX_ATOM_LENGTH; i++)
+        for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
           new_atom[i] = (uint8_t) current_leaf->recent_nodes[i]->value;
 
         quality = _yr_atoms_quality(
             current_leaf->atom,
-            MAX_ATOM_LENGTH);
+            YR_MAX_ATOM_LENGTH);
 
         new_quality = _yr_atoms_quality(
             new_atom,
-            MAX_ATOM_LENGTH);
+            YR_MAX_ATOM_LENGTH);
 
         if (new_quality > quality)
         {
-          for (i = 0; i < MAX_ATOM_LENGTH; i++)
+          for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
             current_leaf->atom[i] = new_atom[i];
 
           current_leaf->forward_code = \
@@ -850,11 +846,11 @@ static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
         append_current_leaf_to_node(current_node);
 
       // In a regexp like /a{10,20}/ the optimal atom is 'aaaa' (assuming that
-      // MAX_ATOM_LENGTH = 4) because the 'a' character must appear at least
+      // YR_MAX_ATOM_LENGTH = 4) because the 'a' character must appear at least
       // 10 times in the matching string. Each call in the loop will append
-      // one 'a' to the atom, so MAX_ATOM_LENGTH iterations are enough.
+      // one 'a' to the atom, so YR_MAX_ATOM_LENGTH iterations are enough.
 
-      for (i = 0; i < yr_min(re_node->start, MAX_ATOM_LENGTH); i++)
+      for (i = 0; i < yr_min(re_node->start, YR_MAX_ATOM_LENGTH); i++)
       {
         current_node = _yr_atoms_extract_from_re_node(
             re_node->left, atom_tree, current_node);
@@ -1244,7 +1240,7 @@ int yr_atoms_extract_from_string(
   item->next = NULL;
   item->backtrack = 0;
 
-  length = yr_min(string_length, MAX_ATOM_LENGTH);
+  length = yr_min(string_length, YR_MAX_ATOM_LENGTH);
 
   for (i = 0; i < length; i++)
     item->atom[i] = string[i];
@@ -1253,17 +1249,17 @@ int yr_atoms_extract_from_string(
 
   max_quality = _yr_atoms_quality(string, length);
 
-  for (i = MAX_ATOM_LENGTH; i < string_length; i++)
+  for (i = YR_MAX_ATOM_LENGTH; i < string_length; i++)
   {
     int quality = _yr_atoms_quality(
-        string + i - MAX_ATOM_LENGTH + 1, MAX_ATOM_LENGTH);
+        string + i - YR_MAX_ATOM_LENGTH + 1, YR_MAX_ATOM_LENGTH);
 
     if (quality > max_quality)
     {
-      for (j = 0; j < MAX_ATOM_LENGTH; j++)
-        item->atom[j] = string[i + j - MAX_ATOM_LENGTH + 1];
+      for (j = 0; j < YR_MAX_ATOM_LENGTH; j++)
+        item->atom[j] = string[i + j - YR_MAX_ATOM_LENGTH + 1];
 
-      item->backtrack = i - MAX_ATOM_LENGTH + 1;
+      item->backtrack = i - YR_MAX_ATOM_LENGTH + 1;
       max_quality = quality;
     }
   }

@@ -71,7 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
-#define MEM_SIZE   MAX_LOOP_NESTING * LOOP_LOCAL_VARS
+#define MEM_SIZE   YR_MAX_LOOP_NESTING * LOOP_LOCAL_VARS
 
 
 #define push(x)  \
@@ -195,7 +195,7 @@ int yr_execute_code(
 
   const uint8_t* ip = context->rules->code_start;
 
-  YR_VALUE args[MAX_FUNCTION_ARGS];
+  YR_VALUE args[YR_MAX_FUNCTION_ARGS];
   YR_VALUE *stack;
   YR_VALUE r1;
   YR_VALUE r2;
@@ -637,7 +637,7 @@ int yr_execute_code(
         count = 0;
 
         #if PARANOID_EXEC
-        if (i > MAX_FUNCTION_ARGS)
+        if (i > YR_MAX_FUNCTION_ARGS)
         {
           stop = true;
           result = ERROR_INTERNAL_FATAL_ERROR;
@@ -678,7 +678,7 @@ int yr_execute_code(
         function = object_as_function(r2.o);
         result = ERROR_INTERNAL_FATAL_ERROR;
 
-        for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+        for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
         {
           if (function->prototypes[i].arguments_fmt == NULL)
             break;
@@ -690,10 +690,10 @@ int yr_execute_code(
           }
         }
 
-        // if i == MAX_OVERLOADED_FUNCTIONS at this point no matching
+        // if i == YR_MAX_OVERLOADED_FUNCTIONS at this point no matching
         // prototype was found, but this shouldn't happen.
 
-        assert(i < MAX_OVERLOADED_FUNCTIONS);
+        assert(i < YR_MAX_OVERLOADED_FUNCTIONS);
 
         // make a copy of the returned object and push the copy into the stack
         // function->return_obj can't be pushed because it can change in

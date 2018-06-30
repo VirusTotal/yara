@@ -145,7 +145,7 @@ static int total_count = 0;
 static int limit = 0;
 static int timeout = 1000000;
 static int stack_size = DEFAULT_STACK_SIZE;
-static int threads = MAX_THREADS;
+static int threads = YR_MAX_THREADS;
 static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 
@@ -284,7 +284,7 @@ static void file_queue_finish()
 {
   int i;
 
-  for (i = 0; i < MAX_THREADS; i++)
+  for (i = 0; i < YR_MAX_THREADS; i++)
     semaphore_release(&used_slots);
 }
 
@@ -594,21 +594,21 @@ static void print_compiler_error(
 
 
 static void print_rules_stats(
-    YR_RULES* rules) 
+    YR_RULES* rules)
 {
   YR_RULES_STATS stats;
 
-  int t = sizeof(stats.top_ac_match_list_lengths) / 
+  int t = sizeof(stats.top_ac_match_list_lengths) /
           sizeof(stats.top_ac_match_list_lengths[0]);
-  
+
   int result = yr_rules_get_stats(rules, &stats);
-  
+
   if (result != ERROR_SUCCESS)
   {
      print_error(result);
      return;
   }
-  
+
   printf("size of AC transition table  : %d\n", stats.ac_tables_size);
   printf("# of rules                   : %d\n", stats.rules);
   printf("# of strings                 : %d\n", stats.strings);
@@ -1074,9 +1074,9 @@ int main(
     return EXIT_SUCCESS;
   }
 
-  if (threads > MAX_THREADS)
+  if (threads > YR_MAX_THREADS)
   {
-    fprintf(stderr, "maximum number of threads is %d\n", MAX_THREADS);
+    fprintf(stderr, "maximum number of threads is %d\n", YR_MAX_THREADS);
     return EXIT_FAILURE;
   }
 
@@ -1204,8 +1204,8 @@ int main(
       exit_with_code(EXIT_FAILURE);
     }
 
-    THREAD thread[MAX_THREADS];
-    THREAD_ARGS thread_args[MAX_THREADS];
+    THREAD thread[YR_MAX_THREADS];
+    THREAD_ARGS thread_args[YR_MAX_THREADS];
 
     time_t start_time = time(NULL);
 

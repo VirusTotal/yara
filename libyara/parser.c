@@ -220,7 +220,7 @@ int yr_parser_check_types(
 {
   int i;
 
-  for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+  for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
   {
     if (function->prototypes[i].arguments_fmt == NULL)
       break;
@@ -423,7 +423,7 @@ static int _yr_parser_write_string(
     else
       max_string_len = (*string)->length;
 
-    if (max_string_len <= MAX_ATOM_LENGTH)
+    if (max_string_len <= YR_MAX_ATOM_LENGTH)
       (*string)->g_flags |= STRING_GFLAGS_FITS_IN_ATOM;
   }
 
