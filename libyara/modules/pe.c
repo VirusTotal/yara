@@ -1586,9 +1586,12 @@ define_function(exports)
   int i;
 
   // If not a PE, return UNDEFINED.
-
   if (pe == NULL)
     return_integer(UNDEFINED);
+
+  // If PE, but not exported functions, return false.
+  if (pe->exported_functions == NULL)
+    return_integer(0);
 
   for (i = 0; i < pe->exported_functions->number_of_exports; i++)
   {
@@ -1613,9 +1616,12 @@ define_function(exports_regexp)
   int i;
 
   // If not a PE, return UNDEFINED.
-
   if (pe == NULL)
     return_integer(UNDEFINED);
+
+  // If PE, but not exported functions, return false.
+  if (pe->exported_functions == NULL)
+    return_integer(0);
 
   for (i = 0; i < pe->exported_functions->number_of_exports; i++)
   {
