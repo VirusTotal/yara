@@ -1643,8 +1643,13 @@ define_function(exports_ordinal)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
-  if (!pe)
+  // If not a PE, return UNDEFINED.
+  if (pe == NULL)
     return_integer(UNDEFINED);
+
+  // If PE, but not exported functions, return false.
+  if (pe->exported_functions == NULL)
+    return_integer(0);
 
   if (ordinal == 0 || ordinal > pe->exported_functions->number_of_exports)
     return_integer(0);
