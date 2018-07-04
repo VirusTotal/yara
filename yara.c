@@ -121,6 +121,7 @@ typedef struct COMPILER_RESULTS
 #define MAX_ARGS_EXT_VAR        32
 #define MAX_ARGS_MODULE_DATA    32
 
+static char* atom_prevalence_table;
 static char* tags[MAX_ARGS_TAG + 1];
 static char* identifiers[MAX_ARGS_IDENTIFIER + 1];
 static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
@@ -155,6 +156,9 @@ static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 args_option_t options[] =
 {
+  OPT_STRING(0, "atom-prevalence-table", &atom_prevalence_table,
+      "path to a file with the atom prevalence table", "FILE"),
+
   OPT_STRING_MULTI('t', "tag", &tags, MAX_ARGS_TAG,
       "print only rules tagged as TAG", "TAG"),
 
@@ -609,13 +613,31 @@ static void print_rules_stats(
      return;
   }
 
-  printf("size of AC transition table  : %d\n", stats.ac_tables_size);
-  printf("# of rules                   : %d\n", stats.rules);
-  printf("# of strings                 : %d\n", stats.strings);
-  printf("# of AC matches              : %d\n", stats.ac_matches);
-  printf("# of AC matches in root node : %d\n", stats.ac_root_match_list_length);
+  printf(
+      "size of AC transition table        : %d\n",
+      stats.ac_tables_size);
 
-  printf("# of AC matches in top %d longest lists\n", t);
+  printf(
+      "average length of AC matches lists : %f\n",
+      stats.ac_average_match_list_length);
+
+  printf(
+      "number of rules                    : %d\n",
+      stats.rules);
+
+  printf(
+      "number of strings                  : %d\n",
+      stats.strings);
+
+  printf(
+      "number of AC matches               : %d\n",
+      stats.ac_matches);
+
+  printf(
+      "number of AC matches in root node  : %d\n",
+      stats.ac_root_match_list_length);
+
+  printf("number of AC matches in top %d longest lists\n", t);
 
   for (int i = 0; i < t; i++)
     printf(" %3d: %d\n", i + 1, stats.top_ac_match_list_lengths[i]);
@@ -1159,6 +1181,19 @@ int main(
     {
       print_error(result);
       exit_with_code(EXIT_FAILURE);
+    }
+
+    if (atom_prevalence_table != NULL)
+    {
+      result = yr_compiler_load_atom_prevalence_table(
+          compiler, atom_prevalence_table);
+
+      if (result != ERROR_SUCCESS)
+      {
+        fprintf(stderr, "error loading atom prevalence table: ");
+        print_error(result);
+        exit_with_code(EXIT_FAILURE);
+      }
     }
 
     cr.errors = 0;

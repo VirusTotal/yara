@@ -465,6 +465,7 @@ YR_API int yr_rules_get_stats(
   uint32_t* match_list_lengths = (uint32_t*) yr_malloc(
       sizeof(uint32_t) * rules->ac_tables_size);
 
+  float match_list_length_sum = 0;
   int c = 0;
 
   if (match_list_lengths == NULL)
@@ -491,6 +492,8 @@ YR_API int yr_rules_get_stats(
     if (i == 0)
       stats->ac_root_match_list_length = match_list_length;
 
+    match_list_length_sum += match_list_length;
+
     if (match_list_length > 0)
     {
       match_list_lengths[c] = match_list_length;
@@ -509,6 +512,7 @@ YR_API int yr_rules_get_stats(
       stats->top_ac_match_list_lengths[i] = 0;
   }
 
+  stats->ac_average_match_list_length = match_list_length_sum / c;
   stats->ac_match_list_length_pctls[0] = match_list_lengths[0];
   stats->ac_match_list_length_pctls[100] = match_list_lengths[c-1];
 

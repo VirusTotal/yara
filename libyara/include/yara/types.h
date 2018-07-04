@@ -548,13 +548,16 @@ struct YR_RULES_STATS
   uint32_t strings;
 
   // Total number of Aho-Corasick matches. Each node in the  Aho-Corasick
-  // automaton has a list of YR_AC_MATCH structures (match list )pointing to
+  // automaton has a list of YR_AC_MATCH structures (match list) pointing to
   // strings that are potential matches. This field holds the total number of
   // those structures across all nodes in the automaton.
   uint32_t ac_matches;
 
   // Length of the match list for the root node in the Aho-Corasick automaton.
   uint32_t ac_root_match_list_length;
+
+  // Average number of matches per match list.
+  float ac_average_match_list_length;
 
   // Top 10 longest match lists.
   uint32_t top_ac_match_list_lengths[100];

@@ -180,6 +180,7 @@ YR_API int yr_compiler_create(
   new_compiler->compiled_rules_arena = NULL;
   new_compiler->namespaces_count = 0;
   new_compiler->current_rule = NULL;
+  new_compiler->atoms_config.get_atom_quality = yr_atoms_heuristic_quality;
 
   result = yr_hash_table_create(10007, &new_compiler->rules_table);
 
@@ -277,6 +278,9 @@ YR_API void yr_compiler_destroy(
       compiler->objects_table,
       (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
+  if (compiler->  atoms_config.free_prevalence_table)
+    yr_free(compiler->atoms_config.prevalence_table);
+
   for (i = 0; i < compiler->file_name_stack_ptr; i++)
     yr_free(compiler->file_name_stack[i]);
 
@@ -322,6 +326,58 @@ YR_API void yr_compiler_set_re_ast_callback(
 {
   compiler->re_ast_callback = re_ast_callback;
   compiler->re_ast_clbk_user_data = user_data;
+}
+
+
+YR_API void yr_compiler_set_atom_prevalence_table(
+    YR_COMPILER* compiler,
+    void* table,
+    int entries)
+{
+  compiler->atoms_config.free_prevalence_table = false;
+  compiler->atoms_config.get_atom_quality = yr_atoms_prevalence_quality;
+  compiler->atoms_config.prevalence_table_entries = entries;
+  compiler->atoms_config.prevalence_table = \
+      (YR_ATOM_PREVALENCE_TABLE_ENTRY*) table;
+}
+
+
+YR_API int yr_compiler_load_atom_prevalence_table(
+    YR_COMPILER* compiler,
+    const char* filename)
+{
+  FILE* fh = fopen(filename, "rb");
+
+  if (fh == NULL)
+    return ERROR_COULD_NOT_OPEN_FILE;
+
+  fseek(fh, 0L, SEEK_END);
+  long file_size = ftell(fh);
+  fseek(fh, 0L, SEEK_SET);
+
+  void* table = yr_malloc(file_size);
+
+  if (table == NULL)
+  {
+    fclose(fh);
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
+  int entries = file_size / sizeof(YR_ATOM_PREVALENCE_TABLE_ENTRY);
+
+  if (fread(table, sizeof(YR_ATOM_PREVALENCE_TABLE_ENTRY), entries, fh) != entries)
+  {
+    fclose(fh);
+    yr_free(table);
+    return ERROR_COULD_NOT_READ_FILE;
+  }
+
+  fclose(fh);
+
+  yr_compiler_set_atom_prevalence_table(compiler, table, entries);
+  compiler->atoms_config.free_prevalence_table = true;
+
+  return ERROR_SUCCESS;
 }
 
 

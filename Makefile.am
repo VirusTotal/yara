@@ -29,14 +29,16 @@ yarac_SOURCES = args.c args.h common.h yarac.c
 yarac_LDADD = -Llibyara/.libs -lyara
 
 test_alignment_SOURCES = tests/test-alignment.c
+test_atoms_SOURCES = tests/test-atoms.c tests/util.c libyara/atoms.c
+test_atoms_LDADD = libyara/.libs/libyara.a
 test_rules_SOURCES = tests/test-rules.c tests/util.c
-test_rules_LDADD = -Llibyara/.libs -lyara
+test_rules_LDADD = libyara/.libs/libyara.a
 test_pe_SOURCES = tests/test-pe.c tests/util.c
-test_pe_LDADD = -Llibyara/.libs -lyara
+test_pe_LDADD = libyara/.libs/libyara.a
 test_elf_SOURCES = tests/test-elf.c tests/util.c
-test_elf_LDADD = -Llibyara/.libs -lyara
+test_elf_LDADD = libyara/.libs/libyara.a
 test_version_SOURCES = tests/test-version.c
-test_api_LDADD = -Llibyara/.libs -lyara
+test_api_LDADD = libyara/.libs/libyara.a
 test_api_SOURCES = tests/test-api.c tests/util.c
 test_bitmask_SOURCES = tests/test-bitmask.c
 test_bitmask_LDADD = libyara/.libs/libyara.a
@@ -45,6 +47,7 @@ test_math_LDADD = libyara/.libs/libyara.a
 
 TESTS = $(check_PROGRAMS)
 check_PROGRAMS = test-alignment \
+  test-atoms \
   test-api \
   test-rules \
   test-pe \

@@ -65,6 +65,7 @@ typedef struct COMPILER_RESULTS
 } COMPILER_RESULTS;
 
 
+static char* atom_prevalence_table;
 static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 static bool ignore_warnings = false;
 static bool show_version = false;
@@ -78,6 +79,9 @@ static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 args_option_t options[] =
 {
+  OPT_STRING(0, "atom-prevalence-table", &atom_prevalence_table,
+      "path to a file with the atom prevalence table", "FILE"),
+
   OPT_STRING_MULTI('d', NULL, &ext_vars, MAX_ARGS_EXT_VAR,
       "define external variable", "VAR=VALUE"),
 
@@ -225,6 +229,18 @@ int main(
 
   if (!define_external_variables(compiler))
     exit_with_code(EXIT_FAILURE);
+
+  if (atom_prevalence_table != NULL)
+  {
+    result = yr_compiler_load_atom_prevalence_table(
+        compiler, atom_prevalence_table);
+
+    if (result != ERROR_SUCCESS)
+    {
+      fprintf(stderr, "error loading atom prevalence table\n");
+      exit_with_code(EXIT_FAILURE);
+    }
+  }
 
   cr.errors = 0;
   cr.warnings = 0;

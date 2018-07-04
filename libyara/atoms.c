@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013. The YARA Authors. All Rights Reserved.
+Copyright (c) 2013-2018. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -99,7 +99,7 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 
 
 //
-// _yr_atoms_quality
+// yr_atoms_heuristic_quality
 //
 // Returns a numeric value indicating the quality of an atom. The quality
 // depends on some characteristics of the atom, including its length, number
@@ -109,14 +109,16 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 // because the same byte is repeated. Atom 01 02 03 04 is an optimal one.
 //
 // Args:
-//    uint8_t* atom   - Pointer to the atom's bytes.
-//    int atom_length - Atom's length.
+//    YR_ATOMS_CONFIG* config   - Pointer to YR_ATOMS_CONFIG struct.
+//    uint8_t* atom             - Pointer to the atom's bytes.
+//    int atom_length           - Atom's length.
 //
 // Returns:
 //    An integer indicating the atom's quality
 //
 
-static int _yr_atoms_quality(
+int yr_atoms_heuristic_quality(
+    YR_ATOMS_CONFIG* config,
     uint8_t* atom,
     int atom_length)
 {
@@ -159,8 +161,88 @@ static int _yr_atoms_quality(
       unique_bytes += 1;
   }
 
-  return atom_length + unique_bytes - penalty;
+  // If the atom's length is YR_MAX_ATOM_LENGTH, all its bytes are different
+  // it doesn't contain penalized bytes, the result is YR_MAX_ATOM_QUALITY.
+  return (YR_MAX_ATOM_QUALITY - 2 * YR_MAX_ATOM_LENGTH +
+         atom_length + unique_bytes - penalty) >> (YR_MAX_ATOM_LENGTH - atom_length);
 }
+
+
+//
+// yr_atoms_prevalence_quality
+//
+// Returns a numeric value indicating the quality of an atom. The quality is
+// based in the atom prevalence table passed in "config". Very common atoms
+// (i.e: those with greater prevalence) have lower quality than those that are
+// uncommon.
+//
+// Args:
+//    YR_ATOMS_CONFIG* config   - Pointer to YR_ATOMS_CONFIG struct.
+//    uint8_t* atom             - Pointer to the atom's bytes.
+//    int atom_length           - Atom's length.
+//
+// Returns:
+//    An integer indicating the atom's quality
+//
+
+int yr_atoms_prevalence_quality(
+    YR_ATOMS_CONFIG* config,
+    uint8_t* atom,
+    int atom_length)
+{
+  YR_ATOM_PREVALENCE_TABLE_ENTRY* prevalences = config->prevalence_table;
+
+  int begin = 0;
+  int end = config->prevalence_table_entries;
+
+  while (end > begin)
+  {
+    int middle = begin + (end - begin) / 2;
+    int c = memcmp(prevalences[middle].atom, atom, atom_length);
+
+    if (c < 0)
+    {
+      begin = middle + 1;
+    }
+    else if (c > 0)
+    {
+      end = middle;
+    }
+    else
+    {
+      if (atom_length == YR_MAX_ATOM_LENGTH)
+        return YR_MAX_ATOM_QUALITY - prevalences[middle].prevalence;
+
+      int i = middle + 1;
+      int prevalence = prevalences[middle].prevalence;
+      int max_prevalence = prevalence;
+
+      while (i < end && memcmp(prevalences[i].atom, atom, atom_length) == 0)
+      {
+        if (max_prevalence < prevalences[i].prevalence)
+          max_prevalence = prevalences[i].prevalence;
+
+        i++;
+      }
+
+      i = middle - 1;
+
+      while (i >= begin && memcmp(prevalences[i].atom, atom, atom_length) == 0)
+      {
+        if (max_prevalence < prevalences[i].prevalence)
+          max_prevalence = prevalences[i].prevalence;
+
+        i--;
+      }
+
+      return (YR_MAX_ATOM_QUALITY - max_prevalence) >>
+             (YR_MAX_ATOM_LENGTH - atom_length);
+    }
+  }
+
+  return YR_MAX_ATOM_QUALITY;
+}
+
 
 //
 // yr_atoms_min_quality
@@ -169,6 +251,7 @@ static int _yr_atoms_quality(
 //
 
 int yr_atoms_min_quality(
+    YR_ATOMS_CONFIG* config,
     YR_ATOM_LIST_ITEM* atom_list)
 {
   YR_ATOM_LIST_ITEM* atom;
@@ -183,7 +266,7 @@ int yr_atoms_min_quality(
 
   while (atom != NULL)
   {
-    quality = _yr_atoms_quality(atom->atom, atom->atom_length);
+    quality = config->get_atom_quality(config, atom->atom, atom->atom_length);
 
     if (quality < min_quality)
       min_quality = quality;
@@ -343,6 +426,7 @@ static YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
 //
 
 static int _yr_atoms_choose(
+    YR_ATOMS_CONFIG* config,
     ATOM_TREE_NODE* node,
     YR_ATOM_LIST_ITEM** chosen_atoms,
     int* atoms_quality)
@@ -376,7 +460,8 @@ static int _yr_atoms_choose(
     item->next = NULL;
 
     *chosen_atoms = item;
-    *atoms_quality = _yr_atoms_quality(node->atom, node->atom_length);
+    *atoms_quality = config->get_atom_quality(
+        config, node->atom, node->atom_length);
     break;
 
   case ATOM_TREE_OR:
@@ -385,7 +470,7 @@ static int _yr_atoms_choose(
 
     while (child != NULL)
     {
-      FAIL_ON_ERROR(_yr_atoms_choose(child, &item, &quality));
+      FAIL_ON_ERROR(_yr_atoms_choose(config, child, &item, &quality));
 
       if (quality > max_quality)
       {
@@ -397,6 +482,9 @@ static int _yr_atoms_choose(
       {
         yr_atoms_list_destroy(item);
       }
+
+      if (max_quality == YR_MAX_ATOM_QUALITY)
+        break;
 
       child = child->next_sibling;
     }
@@ -410,7 +498,7 @@ static int _yr_atoms_choose(
 
     while (child != NULL)
     {
-      FAIL_ON_ERROR(_yr_atoms_choose(child, &item, &quality));
+      FAIL_ON_ERROR(_yr_atoms_choose(config, child, &item, &quality));
 
       if (quality < min_quality)
         min_quality = quality;
@@ -678,9 +766,10 @@ static int _yr_atoms_wide(
 //
 
 static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
-  RE_NODE* re_node,
-  ATOM_TREE* atom_tree,
-  ATOM_TREE_NODE* current_node)
+    YR_ATOMS_CONFIG* config,
+    RE_NODE* re_node,
+    ATOM_TREE* atom_tree,
+    ATOM_TREE_NODE* current_node)
 {
   ATOM_TREE_NODE* left_node;
   ATOM_TREE_NODE* right_node;
@@ -723,35 +812,36 @@ static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
       }
       else
       {
-        for (i = 1; i < YR_MAX_ATOM_LENGTH; i++)
-          current_leaf->recent_nodes[i - 1] = current_leaf->recent_nodes[i];
+        quality = config->get_atom_quality(
+            config, current_leaf->atom, YR_MAX_ATOM_LENGTH);
 
-        current_leaf->recent_nodes[YR_MAX_ATOM_LENGTH - 1] = re_node;
-
-        for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
-          new_atom[i] = (uint8_t) current_leaf->recent_nodes[i]->value;
-
-        quality = _yr_atoms_quality(
-            current_leaf->atom,
-            YR_MAX_ATOM_LENGTH);
-
-        new_quality = _yr_atoms_quality(
-            new_atom,
-            YR_MAX_ATOM_LENGTH);
-
-        if (new_quality > quality)
+        if (quality < YR_MAX_ATOM_QUALITY)
         {
+          for (i = 1; i < YR_MAX_ATOM_LENGTH; i++)
+            current_leaf->recent_nodes[i - 1] = current_leaf->recent_nodes[i];
+
+          current_leaf->recent_nodes[YR_MAX_ATOM_LENGTH - 1] = re_node;
+
           for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
-            current_leaf->atom[i] = new_atom[i];
+            new_atom[i] = (uint8_t) current_leaf->recent_nodes[i]->value;
 
-          current_leaf->forward_code = \
-              current_leaf->recent_nodes[0]->forward_code;
+          new_quality = config->get_atom_quality(
+              config, new_atom, YR_MAX_ATOM_LENGTH);
 
-          current_leaf->backward_code = \
-              current_leaf->recent_nodes[0]->backward_code;
+          if (new_quality > quality)
+          {
+            for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
+              current_leaf->atom[i] = new_atom[i];
 
-          assert(current_leaf->forward_code != NULL);
-          assert(current_leaf->backward_code != NULL);
+            current_leaf->forward_code = \
+                current_leaf->recent_nodes[0]->forward_code;
+
+            current_leaf->backward_code = \
+                current_leaf->recent_nodes[0]->backward_code;
+
+            assert(current_leaf->forward_code != NULL);
+            assert(current_leaf->backward_code != NULL);
+          }
         }
       }
 
@@ -760,13 +850,13 @@ static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
     case RE_NODE_CONCAT:
 
       current_node = _yr_atoms_extract_from_re_node(
-          re_node->left, atom_tree, current_node);
+          config, re_node->left, atom_tree, current_node);
 
       if (current_node == NULL)
         return NULL;
 
       current_node = _yr_atoms_extract_from_re_node(
-          re_node->right, atom_tree, current_node);
+          config, re_node->right, atom_tree, current_node);
 
       return current_node;
 
@@ -780,7 +870,7 @@ static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
         return NULL;
 
       left_node = _yr_atoms_extract_from_re_node(
-          re_node->left, atom_tree, left_node);
+          config, re_node->left, atom_tree, left_node);
 
       if (left_node == NULL)
         return NULL;
@@ -806,7 +896,7 @@ static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
         return NULL;
 
       right_node = _yr_atoms_extract_from_re_node(
-          re_node->right, atom_tree, right_node);
+          config, re_node->right, atom_tree, right_node);
 
       if (right_node == NULL)
         return NULL;
@@ -853,7 +943,7 @@ static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
       for (i = 0; i < yr_min(re_node->start, YR_MAX_ATOM_LENGTH); i++)
       {
         current_node = _yr_atoms_extract_from_re_node(
-            re_node->left, atom_tree, current_node);
+            config, re_node->left, atom_tree, current_node);
 
         if (current_node == NULL)
           return NULL;
@@ -867,7 +957,7 @@ static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
     case RE_NODE_PLUS:
 
       current_node = _yr_atoms_extract_from_re_node(
-          re_node->left, atom_tree, current_node);
+          config, re_node->left, atom_tree, current_node);
 
       if (current_node == NULL)
         return NULL;
@@ -1071,6 +1161,7 @@ int yr_atoms_extract_triplets(
 //
 
 int yr_atoms_extract_from_re(
+    YR_ATOMS_CONFIG* config,
     RE_AST* re_ast,
     int flags,
     YR_ATOM_LIST_ITEM** atoms)
@@ -1097,7 +1188,7 @@ int yr_atoms_extract_from_re(
   atom_tree->current_leaf = NULL;
 
   atom_tree->root_node = _yr_atoms_extract_from_re_node(
-      re_ast->root_node, atom_tree, atom_tree->root_node);
+      config, re_ast->root_node, atom_tree, atom_tree->root_node);
 
   if (atom_tree->root_node == NULL)
   {
@@ -1126,34 +1217,29 @@ int yr_atoms_extract_from_re(
   {
     // Choose the atoms that will be used.
     FAIL_ON_ERROR_WITH_CLEANUP(
-        _yr_atoms_choose(atom_tree->root_node, atoms, &min_atom_quality),
+        _yr_atoms_choose(
+            config, atom_tree->root_node, atoms, &min_atom_quality),
         _yr_atoms_tree_destroy(atom_tree));
   }
 
   _yr_atoms_tree_destroy(atom_tree);
 
-  if (min_atom_quality <= 2)
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_atoms_extract_triplets(re_ast->root_node, &triplet_atoms),
+      {
+        yr_atoms_list_destroy(*atoms);
+        yr_atoms_list_destroy(triplet_atoms);
+        *atoms = NULL;
+      });
+
+  if (min_atom_quality < (yr_atoms_min_quality(config, triplet_atoms) >> 1))
   {
-    // Chosen atoms contain low quality ones, let's try infering some higher
-    // quality atoms.
-
-    FAIL_ON_ERROR_WITH_CLEANUP(
-        yr_atoms_extract_triplets(re_ast->root_node, &triplet_atoms),
-        {
-          yr_atoms_list_destroy(*atoms);
-          yr_atoms_list_destroy(triplet_atoms);
-          *atoms = NULL;
-        });
-
-    if (min_atom_quality < yr_atoms_min_quality(triplet_atoms))
-    {
-      yr_atoms_list_destroy(*atoms);
-      *atoms = triplet_atoms;
-    }
-    else
-    {
-      yr_atoms_list_destroy(triplet_atoms);
-    }
+    yr_atoms_list_destroy(*atoms);
+    *atoms = triplet_atoms;
+  }
+  else
+  {
+    yr_atoms_list_destroy(triplet_atoms);
   }
 
   if (flags & STRING_GFLAGS_WIDE)
@@ -1217,6 +1303,7 @@ int yr_atoms_extract_from_re(
 //
 
 int yr_atoms_extract_from_string(
+    YR_ATOMS_CONFIG* config,
     uint8_t* string,
     int32_t string_length,
     int flags,
@@ -1247,12 +1334,14 @@ int yr_atoms_extract_from_string(
 
   item->atom_length = i;
 
-  max_quality = _yr_atoms_quality(string, length);
+  max_quality = config->get_atom_quality(config, string, length);
 
   for (i = YR_MAX_ATOM_LENGTH; i < string_length; i++)
   {
-    int quality = _yr_atoms_quality(
-        string + i - YR_MAX_ATOM_LENGTH + 1, YR_MAX_ATOM_LENGTH);
+    int quality = config->get_atom_quality(
+        config,
+        string + i - YR_MAX_ATOM_LENGTH + 1,
+        YR_MAX_ATOM_LENGTH);
 
     if (quality > max_quality)
     {
@@ -1262,6 +1351,9 @@ int yr_atoms_extract_from_string(
       item->backtrack = i - YR_MAX_ATOM_LENGTH + 1;
       max_quality = quality;
     }
+
+    if (quality == YR_MAX_ATOM_QUALITY)
+      break;
   }
 
   *atoms = item;

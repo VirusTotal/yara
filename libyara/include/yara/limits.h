@@ -64,11 +64,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #ifndef YR_MAX_ATOM_QUALITY
-#define YR_MAX_ATOM_QUALITY 100000
+#define YR_MAX_ATOM_QUALITY 255
 #endif
 
 #ifndef YR_MIN_ATOM_QUALITY
-#define YR_MIN_ATOM_QUALITY -100000
+#define YR_MIN_ATOM_QUALITY 0
 #endif
 
 // Maximum number of nested "for" loops in rule. Rules ith nested loops
