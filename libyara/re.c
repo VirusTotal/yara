@@ -656,10 +656,10 @@ static int _yr_re_emit(
   size_t inst_size;
   size_t jmp_size;
 
-  int emit_split;
-  int emit_repeat;
-  int emit_prolog;
-  int emit_epilog;
+  bool emit_split;
+  bool emit_repeat;
+  bool emit_prolog;
+  bool emit_epilog;
 
   RE_REPEAT_ARGS repeat_args;
   RE_REPEAT_ARGS* repeat_start_args_addr;
