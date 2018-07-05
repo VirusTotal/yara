@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013. The YARA Authors. All Rights Reserved.
+Copyright (c) 2013-2018. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -329,6 +329,33 @@ YR_API void yr_compiler_set_re_ast_callback(
 }
 
 
+//
+// yr_compiler_set_atom_prevalence_table
+//
+// This function allows to specify an atom prevalence table to be used by the
+// compiler for choosing the best atoms from regular expressions and strings.
+// When a prevalence table is set, the ompiler uses yr_atoms_prevalence_quality
+// instead of yr_atoms_heuristic_quality for computing atom quality. The table
+// has an arbitary number of entries, each composed of YR_MAX_ATOM_LENGTH + 1
+// bytes. The first YR_MAX_ATOM_LENGTH bytes from each entry are the atom's
+// ones, and the remaining byte is a value in the range 0-255 determining the
+// atom's prevalence or popularity (the highest the number, the more popular
+// the atom is, and the lower its quality). Entries must be lexicografically
+// sorted by atom in ascending order.
+//
+//  [ atom (YR_MAX_ATOM_LENGTH bytes) ] [ prevalence (1 byte) ]
+//
+//  [ 00 00 .. 00 00 ] [ F4 ]
+//  [ 00 00 .. 00 01 ] [ 26 ]
+//  [ 00 00 .. 00 02 ] [ 13 ]
+//  ...
+//  [ FF FF .. FF FF ] [ F0 ]
+//
+// The "table" argument must point to a buffer containing the prevalence in
+// the format explained above, and "entries" must contain the number of entries
+// in the table. The table can not be freed while the compiler is in use, the
+// caller is responsible for freeing the table.
+
 YR_API void yr_compiler_set_atom_prevalence_table(
     YR_COMPILER* compiler,
     void* table,
@@ -341,6 +368,12 @@ YR_API void yr_compiler_set_atom_prevalence_table(
       (YR_ATOM_PREVALENCE_TABLE_ENTRY*) table;
 }
 
+//
+// yr_compiler_set_atom_prevalence_table
+//
+// Load an atom prevalence table from a file. The file's content must have the
+// format explained in the decription for yr_compiler_set_atom_prevalence_table.
+//
 
 YR_API int yr_compiler_load_atom_prevalence_table(
     YR_COMPILER* compiler,

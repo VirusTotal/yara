@@ -174,7 +174,8 @@ int yr_atoms_heuristic_quality(
 // Returns a numeric value indicating the quality of an atom. The quality is
 // based in the atom prevalence table passed in "config". Very common atoms
 // (i.e: those with greater prevalence) have lower quality than those that are
-// uncommon.
+// uncommon. See the comment for yr_compiler_set_atom_prevalence_table for
+// details about the prevalence table's format.
 //
 // Args:
 //    YR_ATOMS_CONFIG* config   - Pointer to YR_ATOMS_CONFIG struct.
