@@ -1,4 +1,4 @@
-    /*
+/*
 Copyright (c) 2018. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -35,19 +35,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //
 // yr_bitmask_find_non_colliding_offset
-// 
-// Finds the smaller offset within bitmask A where bitmask B can be accommodated 
+//
+// Finds the smaller offset within bitmask A where bitmask B can be accommodated
 // without bit collisions. A collision occurs when bots bitmasks have a bit set
 // to 1 at the same offset. This function assumes that the first bit in B is 1
-// and do optmizations that rely on that.
-// 
+// and do optimizations that rely on that.
+//
 // The function also receives a pointer to an uint64_t where the function stores
 // a value that is used for speeding-up subsequent searches over the same
 // bitmask A. When called for the first time with some bitmask A, the pointer
 // must point to zero-initialized uint64_t. In the next call the function uses
 // the previously stored value for skiping over a portion of the A bitmask and
 // updates the value.
-// 
+//
 // Args:
 //    YR_BITMASK* a      - Bitmask A
 //    YR_BITMASK* b      - Bitmask B
@@ -68,19 +68,25 @@ uint32_t yr_bitmask_find_non_colliding_offset(
 {
   uint32_t i, j, k;
 
+  // Ensure that the first bit of bitmask B is set, as this function does some
+  // optimizations that rely on that.
   assert(yr_bitmask_isset(b, 0));
 
-  for (i = *off_a / YR_BITMASK_SLOT_BITS; 
-       i <= len_a / YR_BITMASK_SLOT_BITS && a[i] == 0xFFFFFFFFFFFFFFFFL; 
+  // Skip all slots that are filled with 1s. It's safe to do that because the
+  // first bit of B is 1, so we won't be able to accommodate B at any offset
+  // within such slots.
+  for (i = *off_a / YR_BITMASK_SLOT_BITS;
+       i <= len_a / YR_BITMASK_SLOT_BITS && a[i] == 0xFFFFFFFFFFFFFFFFL;
        i++);
 
   *off_a = i;
-    
+
   for (; i <= len_a / YR_BITMASK_SLOT_BITS; i++)
   {
+    // The slot is filled with 1s, we can safely skip it.
     if (a[i] == 0xFFFFFFFFFFFFFFFFL)
       continue;
-  
+
     for (j = 0; j <= yr_min(len_a, YR_BITMASK_SLOT_BITS - 1); j++)
     {
       bool found = true;
@@ -88,10 +94,10 @@ uint32_t yr_bitmask_find_non_colliding_offset(
       for (k = 0; k <= len_b / YR_BITMASK_SLOT_BITS; k++)
       {
         YR_BITMASK m = b[k] << j;
-  
+
         if (j > 0 && k > 0)
           m |= b[k - 1] >> (YR_BITMASK_SLOT_BITS - j);
-  
+
         if ((i + k <= len_a / YR_BITMASK_SLOT_BITS) && (m & a[i + k]) != 0)
         {
           found = false;
