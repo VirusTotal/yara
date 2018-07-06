@@ -1337,7 +1337,9 @@ int yr_atoms_extract_from_string(
 
   max_quality = config->get_atom_quality(config, string, length);
 
-  for (i = YR_MAX_ATOM_LENGTH; i < string_length; i++)
+  for (i = YR_MAX_ATOM_LENGTH;
+       i < string_length && max_quality < YR_MAX_ATOM_QUALITY;
+       i++)
   {
     int quality = config->get_atom_quality(
         config,
@@ -1352,9 +1354,6 @@ int yr_atoms_extract_from_string(
       item->backtrack = i - YR_MAX_ATOM_LENGTH + 1;
       max_quality = quality;
     }
-
-    if (quality == YR_MAX_ATOM_QUALITY)
-      break;
   }
 
   *atoms = item;
