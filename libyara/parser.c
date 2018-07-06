@@ -220,7 +220,7 @@ int yr_parser_check_types(
 {
   int i;
 
-  for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+  for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
   {
     if (function->prototypes[i].arguments_fmt == NULL)
       break;
@@ -385,6 +385,7 @@ static int _yr_parser_write_string(
     if (result == ERROR_SUCCESS)
     {
       result = yr_atoms_extract_from_string(
+          &compiler->atoms_config,
           (uint8_t*) literal_string->c_string,
           (int32_t) literal_string->length,
           flags,
@@ -401,7 +402,8 @@ static int _yr_parser_write_string(
       result = yr_re_ast_emit_code(re_ast, compiler->re_code_arena, true);
 
     if (result == ERROR_SUCCESS)
-      result = yr_atoms_extract_from_re(re_ast, flags, &atom_list);
+      result = yr_atoms_extract_from_re(
+          &compiler->atoms_config, re_ast, flags, &atom_list);
   }
 
   if (result == ERROR_SUCCESS)
@@ -414,7 +416,8 @@ static int _yr_parser_write_string(
         compiler->matches_arena);
   }
 
-  *min_atom_quality = yr_atoms_min_quality(atom_list);
+  *min_atom_quality = yr_atoms_min_quality(
+      &compiler->atoms_config, atom_list);
 
   if (flags & STRING_GFLAGS_LITERAL)
   {
@@ -423,7 +426,7 @@ static int _yr_parser_write_string(
     else
       max_string_len = (*string)->length;
 
-    if (max_string_len <= MAX_ATOM_LENGTH)
+    if (max_string_len <= YR_MAX_ATOM_LENGTH)
       (*string)->g_flags |= STRING_GFLAGS_FITS_IN_ATOM;
   }
 

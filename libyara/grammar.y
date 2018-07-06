@@ -819,24 +819,24 @@ arguments
 arguments_list
     : expression
       {
-        $$ = (char*) yr_malloc(MAX_FUNCTION_ARGS + 1);
+        $$ = (char*) yr_malloc(YR_MAX_FUNCTION_ARGS + 1);
 
         switch($1.type)
         {
           case EXPRESSION_TYPE_INTEGER:
-            strlcpy($$, "i", MAX_FUNCTION_ARGS);
+            strlcpy($$, "i", YR_MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_FLOAT:
-            strlcpy($$, "f", MAX_FUNCTION_ARGS);
+            strlcpy($$, "f", YR_MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_BOOLEAN:
-            strlcpy($$, "b", MAX_FUNCTION_ARGS);
+            strlcpy($$, "b", YR_MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_STRING:
-            strlcpy($$, "s", MAX_FUNCTION_ARGS);
+            strlcpy($$, "s", YR_MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_REGEXP:
-            strlcpy($$, "r", MAX_FUNCTION_ARGS);
+            strlcpy($$, "r", YR_MAX_FUNCTION_ARGS);
             break;
           default:
             assert(false);
@@ -846,7 +846,7 @@ arguments_list
       }
     | arguments_list ',' expression
       {
-        if (strlen($1) == MAX_FUNCTION_ARGS)
+        if (strlen($1) == YR_MAX_FUNCTION_ARGS)
         {
           compiler->last_result = ERROR_TOO_MANY_ARGUMENTS;
         }
@@ -855,19 +855,19 @@ arguments_list
           switch($3.type)
           {
             case EXPRESSION_TYPE_INTEGER:
-              strlcat($1, "i", MAX_FUNCTION_ARGS);
+              strlcat($1, "i", YR_MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_FLOAT:
-              strlcat($1, "f", MAX_FUNCTION_ARGS);
+              strlcat($1, "f", YR_MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_BOOLEAN:
-              strlcat($1, "b", MAX_FUNCTION_ARGS);
+              strlcat($1, "b", YR_MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_STRING:
-              strlcat($1, "s", MAX_FUNCTION_ARGS);
+              strlcat($1, "s", YR_MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_REGEXP:
-              strlcat($1, "r", MAX_FUNCTION_ARGS);
+              strlcat($1, "r", YR_MAX_FUNCTION_ARGS);
               break;
             default:
               assert(false);
@@ -1043,7 +1043,7 @@ expression
       {
         int var_index;
 
-        if (compiler->loop_depth == MAX_LOOP_NESTING)
+        if (compiler->loop_depth == YR_MAX_LOOP_NESTING)
           compiler->last_result = \
               ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 
@@ -1188,7 +1188,7 @@ expression
         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         uint8_t* addr;
 
-        if (compiler->loop_depth == MAX_LOOP_NESTING)
+        if (compiler->loop_depth == YR_MAX_LOOP_NESTING)
           compiler->last_result = \
             ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 

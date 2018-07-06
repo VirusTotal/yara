@@ -353,12 +353,12 @@ YR_API int yr_scanner_scan_mem_blocks(
 
   yr_mutex_lock(&rules->mutex);
 
-  while (tidx < MAX_THREADS && YR_BITARRAY_TEST(rules->tidx_mask, tidx))
+  while (tidx < YR_MAX_THREADS && YR_BITARRAY_TEST(rules->tidx_mask, tidx))
   {
     tidx++;
   }
 
-  if (tidx < MAX_THREADS)
+  if (tidx < YR_MAX_THREADS)
     YR_BITARRAY_SET(rules->tidx_mask, tidx);
   else
     result = ERROR_TOO_MANY_SCAN_THREADS;

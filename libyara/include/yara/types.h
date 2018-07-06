@@ -234,7 +234,7 @@ typedef struct YR_MEMORY_BLOCK_ITERATOR YR_MEMORY_BLOCK_ITERATOR;
 
 struct YR_NAMESPACE
 {
-  int32_t t_flags[MAX_THREADS];     // Thread-specific flags
+  int32_t t_flags[YR_MAX_THREADS];     // Thread-specific flags
   DECLARE_REFERENCE(char*, name);
 };
 
@@ -273,8 +273,8 @@ struct YR_STRING
 
   int64_t fixed_offset;
 
-  YR_MATCHES matches[MAX_THREADS];
-  YR_MATCHES unconfirmed_matches[MAX_THREADS];
+  YR_MATCHES matches[YR_MAX_THREADS];
+  YR_MATCHES unconfirmed_matches[YR_MAX_THREADS];
 
   // Used only when PROFILING_ENABLED is defined
   uint64_t time_cost;
@@ -284,7 +284,7 @@ struct YR_STRING
 struct YR_RULE
 {
   int32_t g_flags;               // Global flags
-  int32_t t_flags[MAX_THREADS];  // Thread-specific flags
+  int32_t t_flags[YR_MAX_THREADS];  // Thread-specific flags
 
   DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(const char*, tags);
@@ -520,7 +520,7 @@ struct YR_AC_AUTOMATON
 
 struct YR_RULES
 {
-  unsigned char tidx_mask[YR_BITARRAY_NCHARS(MAX_THREADS)];
+  unsigned char tidx_mask[YR_BITARRAY_NCHARS(YR_MAX_THREADS)];
   const uint8_t* code_start;
 
   YR_MUTEX mutex;
@@ -548,13 +548,16 @@ struct YR_RULES_STATS
   uint32_t strings;
 
   // Total number of Aho-Corasick matches. Each node in the  Aho-Corasick
-  // automaton has a list of YR_AC_MATCH structures (match list )pointing to
+  // automaton has a list of YR_AC_MATCH structures (match list) pointing to
   // strings that are potential matches. This field holds the total number of
   // those structures across all nodes in the automaton.
   uint32_t ac_matches;
 
   // Length of the match list for the root node in the Aho-Corasick automaton.
   uint32_t ac_root_match_list_length;
+
+  // Average number of matches per match list.
+  float ac_average_match_list_length;
 
   // Top 10 longest match lists.
   uint32_t top_ac_match_list_lengths[100];
@@ -614,9 +617,9 @@ struct YR_SCAN_CONTEXT
   int flags;
 
   // Thread index for the thread using this scan context. The number of threads
-  // that can use a YR_RULES object simultaneusly is limited by the MAX_THREADS
+  // that can use a YR_RULES object simultaneusly is limited by the YR_MAX_THREADS
   // constant. Each thread using a YR_RULES get assigned a unique thread index
-  // in the range [0, MAX_THREADS)
+  // in the range [0, YR_MAX_THREADS)
   int tidx;
 
   // Scan timeout in nanoseconds.
@@ -722,7 +725,7 @@ struct YR_OBJECT_FUNCTION
   {
     const char* arguments_fmt;
     YR_MODULE_FUNC code;
-  } prototypes[MAX_OVERLOADED_FUNCTIONS];
+  } prototypes[YR_MAX_OVERLOADED_FUNCTIONS];
 };
 
 

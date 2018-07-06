@@ -112,17 +112,17 @@ typedef struct _YR_COMPILER
 
   int               namespaces_count;
 
-  uint8_t*          loop_address[MAX_LOOP_NESTING];
-  char*             loop_identifier[MAX_LOOP_NESTING];
+  uint8_t*          loop_address[YR_MAX_LOOP_NESTING];
+  char*             loop_identifier[YR_MAX_LOOP_NESTING];
   int               loop_depth;
   int               loop_for_of_mem_offset;
 
-  char*             file_name_stack[MAX_INCLUDE_DEPTH];
+  char*             file_name_stack[YR_MAX_INCLUDE_DEPTH];
   int               file_name_stack_ptr;
 
-  char              last_error_extra_info[MAX_COMPILER_ERROR_EXTRA_INFO];
+  char              last_error_extra_info[YR_MAX_COMPILER_ERROR_EXTRA_INFO];
 
-  char              lex_buf[LEX_BUF_SIZE];
+  char              lex_buf[YR_LEX_BUF_SIZE];
   char*             lex_buf_ptr;
   unsigned short    lex_buf_len;
 
@@ -131,11 +131,11 @@ typedef struct _YR_COMPILER
   void*             incl_clbk_user_data;
   void*             re_ast_clbk_user_data;
 
-  YR_COMPILER_CALLBACK_FUNC  callback;
-  YR_COMPILER_INCLUDE_CALLBACK_FUNC include_callback;
-  YR_COMPILER_INCLUDE_FREE_FUNC include_free;
-  YR_COMPILER_RE_AST_CALLBACK_FUNC re_ast_callback;
-
+  YR_COMPILER_CALLBACK_FUNC            callback;
+  YR_COMPILER_INCLUDE_CALLBACK_FUNC    include_callback;
+  YR_COMPILER_INCLUDE_FREE_FUNC        include_free;
+  YR_COMPILER_RE_AST_CALLBACK_FUNC     re_ast_callback;
+  YR_ATOMS_CONFIG                      atoms_config;
 
 } YR_COMPILER;
 
@@ -196,6 +196,17 @@ YR_API void yr_compiler_set_re_ast_callback(
     YR_COMPILER* compiler,
     YR_COMPILER_RE_AST_CALLBACK_FUNC re_ast_callback,
     void* user_data);
+
+
+YR_API void yr_compiler_set_prevalence_table(
+    YR_COMPILER* compiler,
+    void* table,
+    int entries);
+
+
+YR_API int yr_compiler_load_atom_prevalence_table(
+    YR_COMPILER* compiler,
+    const char* filename);
 
 
 YR_API int yr_compiler_add_file(

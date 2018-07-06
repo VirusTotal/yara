@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013. The YARA Authors. All Rights Reserved.
+Copyright (c) 2013-2018. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -180,6 +180,7 @@ YR_API int yr_compiler_create(
   new_compiler->compiled_rules_arena = NULL;
   new_compiler->namespaces_count = 0;
   new_compiler->current_rule = NULL;
+  new_compiler->atoms_config.get_atom_quality = yr_atoms_heuristic_quality;
 
   result = yr_hash_table_create(10007, &new_compiler->rules_table);
 
@@ -277,6 +278,9 @@ YR_API void yr_compiler_destroy(
       compiler->objects_table,
       (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
+  if (compiler->  atoms_config.free_prevalence_table)
+    yr_free(compiler->atoms_config.prevalence_table);
+
   for (i = 0; i < compiler->file_name_stack_ptr; i++)
     yr_free(compiler->file_name_stack[i]);
 
@@ -325,6 +329,91 @@ YR_API void yr_compiler_set_re_ast_callback(
 }
 
 
+//
+// yr_compiler_set_atom_prevalence_table
+//
+// This function allows to specify an atom prevalence table to be used by the
+// compiler for choosing the best atoms from regular expressions and strings.
+// When a prevalence table is set, the ompiler uses yr_atoms_prevalence_quality
+// instead of yr_atoms_heuristic_quality for computing atom quality. The table
+// has an arbitary number of entries, each composed of YR_MAX_ATOM_LENGTH + 1
+// bytes. The first YR_MAX_ATOM_LENGTH bytes from each entry are the atom's
+// ones, and the remaining byte is a value in the range 0-255 determining the
+// atom's prevalence or popularity (the highest the number, the more popular
+// the atom is, and the lower its quality). Entries must be lexicografically
+// sorted by atom in ascending order.
+//
+//  [ atom (YR_MAX_ATOM_LENGTH bytes) ] [ prevalence (1 byte) ]
+//
+//  [ 00 00 .. 00 00 ] [ F4 ]
+//  [ 00 00 .. 00 01 ] [ 26 ]
+//  [ 00 00 .. 00 02 ] [ 13 ]
+//  ...
+//  [ FF FF .. FF FF ] [ F0 ]
+//
+// The "table" argument must point to a buffer containing the prevalence in
+// the format explained above, and "entries" must contain the number of entries
+// in the table. The table can not be freed while the compiler is in use, the
+// caller is responsible for freeing the table.
+
+YR_API void yr_compiler_set_atom_prevalence_table(
+    YR_COMPILER* compiler,
+    void* table,
+    int entries)
+{
+  compiler->atoms_config.free_prevalence_table = false;
+  compiler->atoms_config.get_atom_quality = yr_atoms_prevalence_quality;
+  compiler->atoms_config.prevalence_table_entries = entries;
+  compiler->atoms_config.prevalence_table = \
+      (YR_ATOM_PREVALENCE_TABLE_ENTRY*) table;
+}
+
+//
+// yr_compiler_set_atom_prevalence_table
+//
+// Load an atom prevalence table from a file. The file's content must have the
+// format explained in the decription for yr_compiler_set_atom_prevalence_table.
+//
+
+YR_API int yr_compiler_load_atom_prevalence_table(
+    YR_COMPILER* compiler,
+    const char* filename)
+{
+  FILE* fh = fopen(filename, "rb");
+
+  if (fh == NULL)
+    return ERROR_COULD_NOT_OPEN_FILE;
+
+  fseek(fh, 0L, SEEK_END);
+  long file_size = ftell(fh);
+  fseek(fh, 0L, SEEK_SET);
+
+  void* table = yr_malloc(file_size);
+
+  if (table == NULL)
+  {
+    fclose(fh);
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
+  int entries = file_size / sizeof(YR_ATOM_PREVALENCE_TABLE_ENTRY);
+
+  if (fread(table, sizeof(YR_ATOM_PREVALENCE_TABLE_ENTRY), entries, fh) != entries)
+  {
+    fclose(fh);
+    yr_free(table);
+    return ERROR_COULD_NOT_READ_FILE;
+  }
+
+  fclose(fh);
+
+  yr_compiler_set_atom_prevalence_table(compiler, table, entries);
+  compiler->atoms_config.free_prevalence_table = true;
+
+  return ERROR_SUCCESS;
+}
+
+
 int _yr_compiler_push_file_name(
     YR_COMPILER* compiler,
     const char* file_name)
@@ -341,7 +430,7 @@ int _yr_compiler_push_file_name(
     }
   }
 
-  if (compiler->file_name_stack_ptr < MAX_INCLUDE_DEPTH)
+  if (compiler->file_name_stack_ptr < YR_MAX_INCLUDE_DEPTH)
   {
     str = yr_strdup(file_name);
 
@@ -435,7 +524,7 @@ static int _yr_compiler_set_namespace(
 
     ns->name = ns_name;
 
-    for (i = 0; i < MAX_THREADS; i++)
+    for (i = 0; i < YR_MAX_THREADS; i++)
       ns->t_flags[i] = 0;
 
     compiler->namespaces_count++;
