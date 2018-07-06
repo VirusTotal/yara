@@ -61,6 +61,21 @@ libyara/yara.pc
 test-alignment
 test-alignment.log
 test-alignment.trs
+test-api
+test-api.log
+test-api.trs
+test-atoms
+test-atoms.log
+test-atoms.trs
+test-bitmask
+test-bitmask.log
+test-bitmask.trs
+test-elf
+test-elf.log
+test-elf.trs
+test-exception
+test-exception.log
+test-exception.trs
 test-rules
 test-rules.log
 test-rules.trs
@@ -74,6 +89,9 @@ test-macho.trs
 test-math
 test-math.log
 test-math.trs
+test-version
+test-version.log
+test-version.trs
 
 # Visual Studio files
 Release/
@@ -90,4 +108,3 @@ x64/
 windows/*/packages/
 *.trs
 *.log
-test-*

@@ -419,8 +419,8 @@ int yr_re_ast_split_at_chaining_point(
     if (child->right != NULL &&
         child->right->type == RE_NODE_RANGE_ANY &&
         child->right->greedy == false &&
-        (child->right->start > STRING_CHAINING_THRESHOLD ||
-         child->right->end > STRING_CHAINING_THRESHOLD))
+        (child->right->start > YR_STRING_CHAINING_THRESHOLD ||
+         child->right->end > YR_STRING_CHAINING_THRESHOLD))
     {
       result = yr_re_ast_create(remainder_re_ast);
 
@@ -2125,9 +2125,9 @@ int yr_re_fast_exec(
 {
   RE_REPEAT_ANY_ARGS* repeat_any_args;
 
-  const uint8_t* code_stack[MAX_FAST_RE_STACK];
-  const uint8_t* input_stack[MAX_FAST_RE_STACK];
-  int matches_stack[MAX_FAST_RE_STACK];
+  const uint8_t* code_stack[YR_MAX_FAST_RE_STACK];
+  const uint8_t* input_stack[YR_MAX_FAST_RE_STACK];
+  int matches_stack[YR_MAX_FAST_RE_STACK];
 
   const uint8_t* input = input_data;
   const uint8_t* next_input;
@@ -2251,7 +2251,7 @@ int yr_re_fast_exec(
                 (*(next_opcode) == RE_OPCODE_LITERAL &&
                  *(next_opcode + 1) == *next_input))
             {
-              if (sp >= MAX_FAST_RE_STACK)
+              if (sp >= YR_MAX_FAST_RE_STACK)
                 return ERROR_TOO_MANY_RE_FIBERS;
 
               code_stack[sp] = next_opcode;

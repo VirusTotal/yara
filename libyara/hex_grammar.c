@@ -1509,10 +1509,10 @@ yyreduce:
           YYABORT;
         }
 
-        if (lex_env->inside_or && (yyvsp[-1].integer) > STRING_CHAINING_THRESHOLD)
+        if (lex_env->inside_or && (yyvsp[-1].integer) > YR_STRING_CHAINING_THRESHOLD)
         {
           yyerror(yyscanner, lex_env, "jumps over "
-              STR(STRING_CHAINING_THRESHOLD)
+              STR(YR_STRING_CHAINING_THRESHOLD)
               " now allowed inside alternation (|)");
           YYABORT;
         }
@@ -1531,11 +1531,11 @@ yyreduce:
 #line 284 "hex_grammar.y" /* yacc.c:1661  */
     {
         if (lex_env->inside_or &&
-            ((yyvsp[-3].integer) > STRING_CHAINING_THRESHOLD ||
-             (yyvsp[-1].integer) > STRING_CHAINING_THRESHOLD) )
+            ((yyvsp[-3].integer) > YR_STRING_CHAINING_THRESHOLD ||
+             (yyvsp[-1].integer) > YR_STRING_CHAINING_THRESHOLD) )
         {
           yyerror(yyscanner, lex_env, "jumps over "
-              STR(STRING_CHAINING_THRESHOLD)
+              STR(YR_STRING_CHAINING_THRESHOLD)
               " now allowed inside alternation (|)");
 
           YYABORT;

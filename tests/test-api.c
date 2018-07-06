@@ -128,7 +128,8 @@ void test_file_descriptor()
     exit(EXIT_FAILURE);
   }
 
-  if (yr_compiler_add_fd(compiler, fd, NULL, NULL) != 0) {
+  if (yr_compiler_add_fd(compiler, fd, NULL, NULL) != 0)
+  {
     perror("yr_compiler_add_fd");
     exit(EXIT_FAILURE);
   }
@@ -139,7 +140,8 @@ void test_file_descriptor()
   close(fd);
 #endif
 
-  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS) {
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+  {
     perror("yr_compiler_add_fd");
     exit(EXIT_FAILURE);
   }
