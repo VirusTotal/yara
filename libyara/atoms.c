@@ -137,13 +137,11 @@ int yr_atoms_heuristic_quality(
       switch(i)
       {
         case 0:
-          penalty += 3;
-          break;
         case 1:
-          penalty += 2;
+          penalty += 64;
           break;
         default:
-          penalty += 1;
+          penalty += 32;
           break;
       }
     }
@@ -163,8 +161,9 @@ int yr_atoms_heuristic_quality(
 
   // If the atom's length is YR_MAX_ATOM_LENGTH, all its bytes are different
   // it doesn't contain penalized bytes, the result is YR_MAX_ATOM_QUALITY.
-  return (YR_MAX_ATOM_QUALITY - 2 * YR_MAX_ATOM_LENGTH +
-         atom_length + unique_bytes - penalty) >> (YR_MAX_ATOM_LENGTH - atom_length);
+  return (
+      YR_MAX_ATOM_QUALITY - 32 * (YR_MAX_ATOM_LENGTH - unique_bytes) - penalty)
+      >> (YR_MAX_ATOM_LENGTH - atom_length);
 }
 
 

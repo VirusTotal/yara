@@ -107,6 +107,8 @@ struct YR_ATOMS_CONFIG
 {
   YR_ATOMS_QUALITY_FUNC get_atom_quality;
   YR_ATOM_PREVALENCE_TABLE_ENTRY* prevalence_table;
+
+  int quality_warning_threshold;
   int prevalence_table_entries;
   bool free_prevalence_table;
 };
