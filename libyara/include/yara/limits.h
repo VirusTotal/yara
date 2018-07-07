@@ -71,6 +71,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MIN_ATOM_QUALITY 0
 #endif
 
+// If the minimum atom quality for a string or regexp is below this constant,
+// a warning like "<string> is slowing down the scan" is shown. If it's below
+// the half of this constant, the warning is critical.
+#ifndef YR_ATOM_QUALITY_WARNING_THRESHOLD
+#define YR_ATOM_QUALITY_WARNING_THRESHOLD 64
+#endif
+
+
 // Maximum number of nested "for" loops in rule. Rules ith nested loops
 // exceeding this number will be rejected by the compiler.
 #ifndef YR_MAX_LOOP_NESTING

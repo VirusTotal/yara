@@ -181,6 +181,8 @@ YR_API int yr_compiler_create(
   new_compiler->namespaces_count = 0;
   new_compiler->current_rule = NULL;
   new_compiler->atoms_config.get_atom_quality = yr_atoms_heuristic_quality;
+  new_compiler->atoms_config.quality_warning_threshold = \
+      YR_ATOM_QUALITY_WARNING_THRESHOLD;
 
   result = yr_hash_table_create(10007, &new_compiler->rules_table);
 

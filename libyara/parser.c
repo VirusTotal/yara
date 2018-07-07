@@ -694,13 +694,14 @@ YR_STRING* yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
-  if (min_atom_quality < 3 && compiler->callback != NULL)
+  if (min_atom_quality < compiler->atoms_config.quality_warning_threshold)
   {
     yywarning(
         yyscanner,
         "%s is slowing down scanning%s",
         string->identifier,
-        min_atom_quality < 2 ? " (critical!)" : "");
+        min_atom_quality < compiler->atoms_config.quality_warning_threshold / 2 ?
+        " (critical!)" : "");
   }
 
 _exit:
