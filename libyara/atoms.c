@@ -213,16 +213,16 @@ int yr_atoms_table_quality(
     else
     {
       if (atom_length == YR_MAX_ATOM_LENGTH)
-        return YR_MAX_ATOM_QUALITY - table[middle].quality;
+        return table[middle].quality;
 
       int i = middle + 1;
       int quality = table[middle].quality;
-      int max_quality = quality;
+      int min_quality = quality;
 
       while (i < end && memcmp(table[i].atom, atom, atom_length) == 0)
       {
-        if (max_quality < table[i].quality)
-          max_quality = table[i].quality;
+        if (min_quality > table[i].quality)
+          min_quality = table[i].quality;
 
         i++;
       }
@@ -231,14 +231,13 @@ int yr_atoms_table_quality(
 
       while (i >= begin && memcmp(table[i].atom, atom, atom_length) == 0)
       {
-        if (max_quality < table[i].quality)
-          max_quality = table[i].quality;
+        if (min_quality > table[i].quality)
+          min_quality = table[i].quality;
 
         i--;
       }
 
-      return (YR_MAX_ATOM_QUALITY - max_quality) >>
-             (YR_MAX_ATOM_LENGTH - atom_length);
+      return min_quality >> (YR_MAX_ATOM_LENGTH - atom_length);
     }
   }
 
