@@ -1865,6 +1865,80 @@ void test_process_scan()
 }
 
 
+void test_performance_warnings()
+{
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 ?? } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 00 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 ?? ?? } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 ?? ?? 02 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 00 00 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 00 00 00 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 00 00 00 00 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 00 00 00 01 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 00 00 01 02 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { FF FF FF FF } \
+        condition: $a }")
+
+  assert_no_warning(
+       "rule test { \
+        strings: $a = { 01 02 03 04 } \
+        condition: $a }")
+
+  assert_no_warning(
+       "rule test { \
+        strings: $a = { 01 02 03 } \
+        condition: $a }")
+
+  assert_no_warning(
+       "rule test { \
+        strings: $a = { 01 02 } \
+        condition: $a }")
+}
+
+
 int main(int argc, char** argv)
 {
   yr_initialize();
@@ -1911,6 +1985,7 @@ int main(int argc, char** argv)
   #endif
 
   test_time_module();
+  test_performance_warnings();
 
   yr_finalize();
 

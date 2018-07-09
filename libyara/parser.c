@@ -698,10 +698,8 @@ YR_STRING* yr_parser_reduce_string_declaration(
   {
     yywarning(
         yyscanner,
-        "%s is slowing down scanning%s",
-        string->identifier,
-        min_atom_quality < compiler->atoms_config.quality_warning_threshold / 2 ?
-        " (critical!)" : "");
+        "%s is slowing down scanning",
+        string->identifier);
   }
 
 _exit:

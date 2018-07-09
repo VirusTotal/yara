@@ -43,7 +43,7 @@ typedef struct ATOM_TREE ATOM_TREE;
 
 typedef struct YR_ATOM_LIST_ITEM YR_ATOM_LIST_ITEM;
 
-typedef struct YR_ATOM_PREVALENCE_TABLE_ENTRY YR_ATOM_PREVALENCE_TABLE_ENTRY;
+typedef struct YR_ATOM_QUALITY_TABLE_ENTRY YR_ATOM_QUALITY_TABLE_ENTRY;
 typedef struct YR_ATOMS_CONFIG YR_ATOMS_CONFIG;
 
 
@@ -88,10 +88,10 @@ struct YR_ATOM_LIST_ITEM
 #pragma pack(push)
 #pragma pack(1)
 
-struct YR_ATOM_PREVALENCE_TABLE_ENTRY
+struct YR_ATOM_QUALITY_TABLE_ENTRY
 {
   const uint8_t  atom[YR_MAX_ATOM_LENGTH];
-  const uint8_t prevalence;
+  const uint8_t quality;
 };
 
 #pragma pack(pop)
@@ -106,11 +106,11 @@ typedef int (*YR_ATOMS_QUALITY_FUNC)(
 struct YR_ATOMS_CONFIG
 {
   YR_ATOMS_QUALITY_FUNC get_atom_quality;
-  YR_ATOM_PREVALENCE_TABLE_ENTRY* prevalence_table;
+  YR_ATOM_QUALITY_TABLE_ENTRY* quality_table;
 
   int quality_warning_threshold;
-  int prevalence_table_entries;
-  bool free_prevalence_table;
+  int quality_table_entries;
+  bool free_quality_table;
 };
 
 
@@ -140,7 +140,7 @@ int yr_atoms_heuristic_quality(
     int atom_length);
 
 
-int yr_atoms_prevalence_quality(
+int yr_atoms_table_quality(
     YR_ATOMS_CONFIG* config,
     uint8_t* atom,
     int atom_length);
