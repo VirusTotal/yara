@@ -260,7 +260,6 @@ repeat
           destroy_node_if($$ == NULL, $1);
         }
 
-        destroy_node_if($$ == NULL, $1);
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->start = 0;
@@ -283,7 +282,6 @@ repeat
           destroy_node_if($$ == NULL, $1);
         }
 
-        destroy_node_if($$ == NULL, $1);
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->start = 0;
