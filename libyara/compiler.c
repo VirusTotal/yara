@@ -280,8 +280,8 @@ YR_API void yr_compiler_destroy(
       compiler->objects_table,
       (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
-  if (compiler->  atoms_config.free_prevalence_table)
-    yr_free(compiler->atoms_config.prevalence_table);
+  if (compiler->  atoms_config.free_quality_table)
+    yr_free(compiler->atoms_config.quality_table);
 
   for (i = 0; i < compiler->file_name_stack_ptr; i++)
     yr_free(compiler->file_name_stack[i]);
@@ -332,52 +332,52 @@ YR_API void yr_compiler_set_re_ast_callback(
 
 
 //
-// yr_compiler_set_atom_prevalence_table
+// yr_compiler_set_atom_quality_table
 //
-// This function allows to specify an atom prevalence table to be used by the
+// This function allows to specify an atom quality table to be used by the
 // compiler for choosing the best atoms from regular expressions and strings.
-// When a prevalence table is set, the ompiler uses yr_atoms_prevalence_quality
+// When a quality table is set, the compiler uses yr_atoms_table_quality
 // instead of yr_atoms_heuristic_quality for computing atom quality. The table
 // has an arbitary number of entries, each composed of YR_MAX_ATOM_LENGTH + 1
 // bytes. The first YR_MAX_ATOM_LENGTH bytes from each entry are the atom's
 // ones, and the remaining byte is a value in the range 0-255 determining the
-// atom's prevalence or popularity (the highest the number, the more popular
-// the atom is, and the lower its quality). Entries must be lexicografically
-// sorted by atom in ascending order.
+// atom's quality. Entries must be lexicografically sorted by atom in ascending
+// order.
 //
-//  [ atom (YR_MAX_ATOM_LENGTH bytes) ] [ prevalence (1 byte) ]
+//  [ atom (YR_MAX_ATOM_LENGTH bytes) ] [ quality (1 byte) ]
 //
-//  [ 00 00 .. 00 00 ] [ F4 ]
-//  [ 00 00 .. 00 01 ] [ 26 ]
+//  [ 00 00 .. 00 00 ] [ 00 ]
+//  [ 00 00 .. 00 01 ] [ 45 ]
 //  [ 00 00 .. 00 02 ] [ 13 ]
 //  ...
-//  [ FF FF .. FF FF ] [ F0 ]
+//  [ FF FF .. FF FF ] [ 03 ]
 //
-// The "table" argument must point to a buffer containing the prevalence in
+// The "table" argument must point to a buffer containing the quality in
 // the format explained above, and "entries" must contain the number of entries
 // in the table. The table can not be freed while the compiler is in use, the
 // caller is responsible for freeing the table.
 
-YR_API void yr_compiler_set_atom_prevalence_table(
+YR_API void yr_compiler_set_atom_quality_table(
     YR_COMPILER* compiler,
     void* table,
     int entries)
 {
-  compiler->atoms_config.free_prevalence_table = false;
-  compiler->atoms_config.get_atom_quality = yr_atoms_prevalence_quality;
-  compiler->atoms_config.prevalence_table_entries = entries;
-  compiler->atoms_config.prevalence_table = \
-      (YR_ATOM_PREVALENCE_TABLE_ENTRY*) table;
+  compiler->atoms_config.free_quality_table = false;
+  compiler->atoms_config.quality_warning_threshold = 0;
+  compiler->atoms_config.get_atom_quality = yr_atoms_table_quality;
+  compiler->atoms_config.quality_table_entries = entries;
+  compiler->atoms_config.quality_table = \
+      (YR_ATOM_QUALITY_TABLE_ENTRY*) table;
 }
 
 //
-// yr_compiler_set_atom_prevalence_table
+// yr_compiler_set_atom_quality_table
 //
-// Load an atom prevalence table from a file. The file's content must have the
-// format explained in the decription for yr_compiler_set_atom_prevalence_table.
+// Load an atom quality table from a file. The file's content must have the
+// format explained in the decription for yr_compiler_set_atom_quality_table.
 //
 
-YR_API int yr_compiler_load_atom_prevalence_table(
+YR_API int yr_compiler_load_atom_quality_table(
     YR_COMPILER* compiler,
     const char* filename)
 {
@@ -398,9 +398,9 @@ YR_API int yr_compiler_load_atom_prevalence_table(
     return ERROR_INSUFFICIENT_MEMORY;
   }
 
-  int entries = file_size / sizeof(YR_ATOM_PREVALENCE_TABLE_ENTRY);
+  int entries = file_size / sizeof(YR_ATOM_QUALITY_TABLE_ENTRY);
 
-  if (fread(table, sizeof(YR_ATOM_PREVALENCE_TABLE_ENTRY), entries, fh) != entries)
+  if (fread(table, sizeof(YR_ATOM_QUALITY_TABLE_ENTRY), entries, fh) != entries)
   {
     fclose(fh);
     yr_free(table);
@@ -409,8 +409,8 @@ YR_API int yr_compiler_load_atom_prevalence_table(
 
   fclose(fh);
 
-  yr_compiler_set_atom_prevalence_table(compiler, table, entries);
-  compiler->atoms_config.free_prevalence_table = true;
+  yr_compiler_set_atom_quality_table(compiler, table, entries);
+  compiler->atoms_config.free_quality_table = true;
 
   return ERROR_SUCCESS;
 }

@@ -137,11 +137,13 @@ int yr_atoms_heuristic_quality(
       switch(i)
       {
         case 0:
+          penalty += 3;
+          break;
         case 1:
-          penalty += 64;
+          penalty += 2;
           break;
         default:
-          penalty += 32;
+          penalty += 1;
           break;
       }
     }
@@ -159,22 +161,22 @@ int yr_atoms_heuristic_quality(
       unique_bytes += 1;
   }
 
-  // If the atom's length is YR_MAX_ATOM_LENGTH, all its bytes are different
-  // it doesn't contain penalized bytes, the result is YR_MAX_ATOM_QUALITY.
-  return (
-      YR_MAX_ATOM_QUALITY - 32 * (YR_MAX_ATOM_LENGTH - unique_bytes) - penalty)
-      >> (YR_MAX_ATOM_LENGTH - atom_length);
+  // (atom_length + unique_bytes - penalty + 2) is within the range
+  // [0 - 2 * YR_MAX_ATOM_LENGTH], which means that the function returns a value
+  // in [YR_MAX_ATOM_QUALITY - 2 * YR_MAX_ATOM_LENGTH, YR_MAX_ATOM_QUALITY]
+
+  return YR_MAX_ATOM_QUALITY - 2 * YR_MAX_ATOM_LENGTH +
+          (atom_length + unique_bytes - penalty + 2);
 }
 
-
 //
-// yr_atoms_prevalence_quality
+// yr_atoms_table_quality
 //
 // Returns a numeric value indicating the quality of an atom. The quality is
-// based in the atom prevalence table passed in "config". Very common atoms
-// (i.e: those with greater prevalence) have lower quality than those that are
-// uncommon. See the comment for yr_compiler_set_atom_prevalence_table for
-// details about the prevalence table's format.
+// based in the atom quality table passed in "config". Very common atoms
+// (i.e: those with greater quality) have lower quality than those that are
+// uncommon. See the comment for yr_compiler_set_atom_quality_table for
+// details about the quality table's format.
 //
 // Args:
 //    YR_ATOMS_CONFIG* config   - Pointer to YR_ATOMS_CONFIG struct.
@@ -185,20 +187,20 @@ int yr_atoms_heuristic_quality(
 //    An integer indicating the atom's quality
 //
 
-int yr_atoms_prevalence_quality(
+int yr_atoms_table_quality(
     YR_ATOMS_CONFIG* config,
     uint8_t* atom,
     int atom_length)
 {
-  YR_ATOM_PREVALENCE_TABLE_ENTRY* prevalences = config->prevalence_table;
+  YR_ATOM_QUALITY_TABLE_ENTRY* table = config->quality_table;
 
   int begin = 0;
-  int end = config->prevalence_table_entries;
+  int end = config->quality_table_entries;
 
   while (end > begin)
   {
     int middle = begin + (end - begin) / 2;
-    int c = memcmp(prevalences[middle].atom, atom, atom_length);
+    int c = memcmp(table[middle].atom, atom, atom_length);
 
     if (c < 0)
     {
@@ -211,31 +213,31 @@ int yr_atoms_prevalence_quality(
     else
     {
       if (atom_length == YR_MAX_ATOM_LENGTH)
-        return YR_MAX_ATOM_QUALITY - prevalences[middle].prevalence;
+        return YR_MAX_ATOM_QUALITY - table[middle].quality;
 
       int i = middle + 1;
-      int prevalence = prevalences[middle].prevalence;
-      int max_prevalence = prevalence;
+      int quality = table[middle].quality;
+      int max_quality = quality;
 
-      while (i < end && memcmp(prevalences[i].atom, atom, atom_length) == 0)
+      while (i < end && memcmp(table[i].atom, atom, atom_length) == 0)
       {
-        if (max_prevalence < prevalences[i].prevalence)
-          max_prevalence = prevalences[i].prevalence;
+        if (max_quality < table[i].quality)
+          max_quality = table[i].quality;
 
         i++;
       }
 
       i = middle - 1;
 
-      while (i >= begin && memcmp(prevalences[i].atom, atom, atom_length) == 0)
+      while (i >= begin && memcmp(table[i].atom, atom, atom_length) == 0)
       {
-        if (max_prevalence < prevalences[i].prevalence)
-          max_prevalence = prevalences[i].prevalence;
+        if (max_quality < table[i].quality)
+          max_quality = table[i].quality;
 
         i--;
       }
 
-      return (YR_MAX_ATOM_QUALITY - max_prevalence) >>
+      return (YR_MAX_ATOM_QUALITY - max_quality) >>
              (YR_MAX_ATOM_LENGTH - atom_length);
     }
   }

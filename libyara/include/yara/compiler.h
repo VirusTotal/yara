@@ -198,13 +198,13 @@ YR_API void yr_compiler_set_re_ast_callback(
     void* user_data);
 
 
-YR_API void yr_compiler_set_prevalence_table(
+YR_API void yr_compiler_set_quality_table(
     YR_COMPILER* compiler,
     void* table,
     int entries);
 
 
-YR_API int yr_compiler_load_atom_prevalence_table(
+YR_API int yr_compiler_load_atom_quality_table(
     YR_COMPILER* compiler,
     const char* filename);
 

@@ -33,15 +33,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define PREV2QUALITY(p) (YR_MAX_ATOM_QUALITY - p)
 
-void test_prevalence_quality()
+void test_quality_quality()
 {
-  YR_ATOM_PREVALENCE_TABLE_ENTRY l1[] = {
+  YR_ATOM_QUALITY_TABLE_ENTRY l1[] = {
     {{0x00, 0x00, 0x00, 0x00}, 1},
     {{0x00, 0x00, 0x00, 0x01}, 2},
     {{0x00, 0x00, 0x00, 0x02}, 3},
   };
 
-  YR_ATOM_PREVALENCE_TABLE_ENTRY l2[] = {
+  YR_ATOM_QUALITY_TABLE_ENTRY l2[] = {
     {{0x00, 0x00, 0x00, 0x00}, 1},
     {{0x00, 0x00, 0x00, 0x01}, 2},
     {{0x00, 0x00, 0x00, 0x02}, 3},
@@ -55,40 +55,40 @@ void test_prevalence_quality()
 
   YR_ATOMS_CONFIG c;
 
-  c.get_atom_quality = yr_atoms_prevalence_quality;
-  c.prevalence_table = l1;
-  c.prevalence_table_entries = 3;
+  c.get_atom_quality = yr_atoms_table_quality;
+  c.quality_table = l1;
+  c.quality_table_entries = 3;
 
   assert_true_expr(
-      yr_atoms_prevalence_quality(&c, a0, sizeof(a0)) == PREV2QUALITY(1));
+      yr_atoms_table_quality(&c, a0, sizeof(a0)) == PREV2QUALITY(1));
 
   assert_true_expr(
-      yr_atoms_prevalence_quality(&c, a1, sizeof(a1)) == PREV2QUALITY(2));
+      yr_atoms_table_quality(&c, a1, sizeof(a1)) == PREV2QUALITY(2));
 
   assert_true_expr(
-      yr_atoms_prevalence_quality(&c, a2, sizeof(a2)) == PREV2QUALITY(3));
+      yr_atoms_table_quality(&c, a2, sizeof(a2)) == PREV2QUALITY(3));
 
   assert_true_expr(
-      yr_atoms_prevalence_quality(&c, a3, sizeof(3)) == YR_MAX_ATOM_QUALITY);
+      yr_atoms_table_quality(&c, a3, sizeof(3)) == YR_MAX_ATOM_QUALITY);
 
-  c.prevalence_table = l2;
-  c.prevalence_table_entries = 4;
-
-  assert_true_expr(
-      yr_atoms_prevalence_quality(&c, a0, sizeof(a0)) == PREV2QUALITY(1));
+  c.quality_table = l2;
+  c.quality_table_entries = 4;
 
   assert_true_expr(
-      yr_atoms_prevalence_quality(&c, a1, sizeof(a1)) == PREV2QUALITY(2));
+      yr_atoms_table_quality(&c, a0, sizeof(a0)) == PREV2QUALITY(1));
 
   assert_true_expr(
-      yr_atoms_prevalence_quality(&c, a2, sizeof(a2)) == PREV2QUALITY(3));
+      yr_atoms_table_quality(&c, a1, sizeof(a1)) == PREV2QUALITY(2));
 
   assert_true_expr(
-      yr_atoms_prevalence_quality(&c, a3, sizeof(a3)) == PREV2QUALITY(4));
+      yr_atoms_table_quality(&c, a2, sizeof(a2)) == PREV2QUALITY(3));
+
+  assert_true_expr(
+      yr_atoms_table_quality(&c, a3, sizeof(a3)) == PREV2QUALITY(4));
 }
 
 
 int main(int argc, char** argv)
 {
-  test_prevalence_quality();
+  test_quality_quality();
 }

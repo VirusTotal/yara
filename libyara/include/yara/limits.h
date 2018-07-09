@@ -72,10 +72,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 // If the minimum atom quality for a string or regexp is below this constant,
-// a warning like "<string> is slowing down the scan" is shown. If it's below
-// the half of this constant, the warning is critical.
+// a warning like "<string> is slowing down the scan" is shown. This used only
+// with heuristic atom quality, when using an atom quality table the user must
+// specify the threshold when calling yr_compiler_set_atom_quality_table
 #ifndef YR_ATOM_QUALITY_WARNING_THRESHOLD
-#define YR_ATOM_QUALITY_WARNING_THRESHOLD 64
+#define YR_ATOM_QUALITY_WARNING_THRESHOLD \
+    (YR_MAX_ATOM_QUALITY -  2 * YR_MAX_ATOM_LENGTH + 5)
 #endif
 
 
