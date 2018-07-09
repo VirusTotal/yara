@@ -233,7 +233,7 @@ int main(
   if (atom_quality_table != NULL)
   {
     result = yr_compiler_load_atom_quality_table(
-        compiler, atom_quality_table);
+        compiler, atom_quality_table, 0);
 
     if (result != ERROR_SUCCESS)
     {

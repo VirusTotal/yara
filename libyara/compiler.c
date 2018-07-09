@@ -356,14 +356,19 @@ YR_API void yr_compiler_set_re_ast_callback(
 // the format explained above, and "entries" must contain the number of entries
 // in the table. The table can not be freed while the compiler is in use, the
 // caller is responsible for freeing the table.
+//
+// The "warning_threshold" argument must be a number between 0 and 255, if some
+// atom choosen for a string have a quality below the specified threshold a
+// warning like "<string> is slowing down scanning" is shown.
 
 YR_API void yr_compiler_set_atom_quality_table(
     YR_COMPILER* compiler,
-    void* table,
-    int entries)
+    const void* table,
+    int entries,
+    unsigned char warning_threshold)
 {
   compiler->atoms_config.free_quality_table = false;
-  compiler->atoms_config.quality_warning_threshold = 0;
+  compiler->atoms_config.quality_warning_threshold = warning_threshold;
   compiler->atoms_config.get_atom_quality = yr_atoms_table_quality;
   compiler->atoms_config.quality_table_entries = entries;
   compiler->atoms_config.quality_table = \
@@ -379,7 +384,8 @@ YR_API void yr_compiler_set_atom_quality_table(
 
 YR_API int yr_compiler_load_atom_quality_table(
     YR_COMPILER* compiler,
-    const char* filename)
+    const char* filename,
+    unsigned char warning_threshold)
 {
   FILE* fh = fopen(filename, "rb");
 
@@ -409,7 +415,9 @@ YR_API int yr_compiler_load_atom_quality_table(
 
   fclose(fh);
 
-  yr_compiler_set_atom_quality_table(compiler, table, entries);
+  yr_compiler_set_atom_quality_table(
+      compiler, table, entries, warning_threshold);
+
   compiler->atoms_config.free_quality_table = true;
 
   return ERROR_SUCCESS;
