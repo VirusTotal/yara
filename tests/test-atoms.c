@@ -31,8 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "util.h"
 
 
-#define PREV2QUALITY(p) (YR_MAX_ATOM_QUALITY - p)
-
 void test_quality_quality()
 {
   YR_ATOM_QUALITY_TABLE_ENTRY l1[] = {
@@ -60,13 +58,13 @@ void test_quality_quality()
   c.quality_table_entries = 3;
 
   assert_true_expr(
-      yr_atoms_table_quality(&c, a0, sizeof(a0)) == PREV2QUALITY(1));
+      yr_atoms_table_quality(&c, a0, sizeof(a0)) == 1);
 
   assert_true_expr(
-      yr_atoms_table_quality(&c, a1, sizeof(a1)) == PREV2QUALITY(2));
+      yr_atoms_table_quality(&c, a1, sizeof(a1)) == 2);
 
   assert_true_expr(
-      yr_atoms_table_quality(&c, a2, sizeof(a2)) == PREV2QUALITY(3));
+      yr_atoms_table_quality(&c, a2, sizeof(a2)) == 3);
 
   assert_true_expr(
       yr_atoms_table_quality(&c, a3, sizeof(3)) == YR_MAX_ATOM_QUALITY);
@@ -75,16 +73,16 @@ void test_quality_quality()
   c.quality_table_entries = 4;
 
   assert_true_expr(
-      yr_atoms_table_quality(&c, a0, sizeof(a0)) == PREV2QUALITY(1));
+      yr_atoms_table_quality(&c, a0, sizeof(a0)) == 1);
 
   assert_true_expr(
-      yr_atoms_table_quality(&c, a1, sizeof(a1)) == PREV2QUALITY(2));
+      yr_atoms_table_quality(&c, a1, sizeof(a1)) == 2);
 
   assert_true_expr(
-      yr_atoms_table_quality(&c, a2, sizeof(a2)) == PREV2QUALITY(3));
+      yr_atoms_table_quality(&c, a2, sizeof(a2)) == 3);
 
   assert_true_expr(
-      yr_atoms_table_quality(&c, a3, sizeof(a3)) == PREV2QUALITY(4));
+      yr_atoms_table_quality(&c, a3, sizeof(a3)) == 4);
 }
 
 
