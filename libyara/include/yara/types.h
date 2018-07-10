@@ -307,7 +307,7 @@ struct YR_EXTERNAL_VARIABLE
     char* s;
   } value;
 
-  DECLARE_REFERENCE(char*, identifier);
+  DECLARE_REFERENCE(const char*, identifier);
 };
 
 

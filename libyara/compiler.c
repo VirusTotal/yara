@@ -870,34 +870,54 @@ YR_API int yr_compiler_get_rules(
   return ERROR_SUCCESS;
 }
 
-
-YR_API int yr_compiler_define_integer_variable(
+int _yr_compiler_define_variable(
     YR_COMPILER* compiler,
-    const char* identifier,
-    int64_t value)
+    YR_EXTERNAL_VARIABLE* external)
 {
-  YR_EXTERNAL_VARIABLE* external;
+  YR_EXTERNAL_VARIABLE* ext;
   YR_OBJECT* object;
 
   char* id;
 
   compiler->last_result = ERROR_SUCCESS;
 
+  object = (YR_OBJECT*) yr_hash_table_lookup(
+      compiler->objects_table,
+      external->identifier,
+      NULL);
+
+  if (object != NULL)
+  {
+    compiler->last_result = ERROR_DUPLICATED_EXTERNAL_VARIABLE;
+    return compiler->last_result;
+  }
+
   FAIL_ON_COMPILER_ERROR(yr_arena_write_string(
       compiler->sz_arena,
-      identifier,
+      external->identifier,
       &id));
 
   FAIL_ON_COMPILER_ERROR(yr_arena_allocate_struct(
       compiler->externals_arena,
       sizeof(YR_EXTERNAL_VARIABLE),
-      (void**) &external,
+      (void**) &ext,
       offsetof(YR_EXTERNAL_VARIABLE, identifier),
       EOL));
 
-  external->type = EXTERNAL_VARIABLE_TYPE_INTEGER;
-  external->identifier = id;
-  external->value.i = value;
+  ext->type = external->type;
+  ext->identifier = id;
+
+  if (external->type == EXTERNAL_VARIABLE_TYPE_STRING)
+  {
+    char* val;
+
+    FAIL_ON_COMPILER_ERROR(yr_arena_write_string(
+        compiler->sz_arena,
+        external->value.s,
+        &val));
+
+    ext->value.s = val;
+  }
 
   FAIL_ON_COMPILER_ERROR(yr_object_from_external_variable(
       external,
@@ -910,6 +930,24 @@ YR_API int yr_compiler_define_integer_variable(
       (void*) object));
 
   return ERROR_SUCCESS;
+}
+
+
+YR_API int yr_compiler_define_integer_variable(
+    YR_COMPILER* compiler,
+    const char* identifier,
+    int64_t value)
+{
+  YR_EXTERNAL_VARIABLE external;
+
+  external.type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
+  external.identifier = identifier;
+  external.value.i = value;
+
+  FAIL_ON_COMPILER_ERROR(_yr_compiler_define_variable(
+      compiler, &external));
+
+  return compiler->last_result;
 }
 
 
@@ -918,40 +956,16 @@ YR_API int yr_compiler_define_boolean_variable(
     const char* identifier,
     int value)
 {
-  YR_EXTERNAL_VARIABLE* external;
-  YR_OBJECT* object;
+  YR_EXTERNAL_VARIABLE external;
 
-  char* id;
+  external.type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
+  external.identifier = identifier;
+  external.value.i = value;
 
-  compiler->last_result = ERROR_SUCCESS;
+  FAIL_ON_COMPILER_ERROR(_yr_compiler_define_variable(
+      compiler, &external));
 
-  FAIL_ON_COMPILER_ERROR(yr_arena_write_string(
-      compiler->sz_arena,
-      identifier,
-      &id));
-
-  FAIL_ON_COMPILER_ERROR(yr_arena_allocate_struct(
-      compiler->externals_arena,
-      sizeof(YR_EXTERNAL_VARIABLE),
-      (void**) &external,
-      offsetof(YR_EXTERNAL_VARIABLE, identifier),
-      EOL));
-
-  external->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
-  external->identifier = id;
-  external->value.i = value;
-
-  FAIL_ON_COMPILER_ERROR(yr_object_from_external_variable(
-      external,
-      &object));
-
-  FAIL_ON_COMPILER_ERROR(yr_hash_table_add(
-      compiler->objects_table,
-      external->identifier,
-      NULL,
-      (void*) object));
-
-  return ERROR_SUCCESS;
+  return compiler->last_result;
 }
 
 
@@ -960,40 +974,16 @@ YR_API int yr_compiler_define_float_variable(
     const char* identifier,
     double value)
 {
-  YR_EXTERNAL_VARIABLE* external;
-  YR_OBJECT* object;
+  YR_EXTERNAL_VARIABLE external;
 
-  char* id;
+  external.type = EXTERNAL_VARIABLE_TYPE_FLOAT;
+  external.identifier = identifier;
+  external.value.f = value;
 
-  compiler->last_result = ERROR_SUCCESS;
+  FAIL_ON_COMPILER_ERROR(_yr_compiler_define_variable(
+      compiler, &external));
 
-  FAIL_ON_COMPILER_ERROR(yr_arena_write_string(
-      compiler->sz_arena,
-      identifier,
-      &id));
-
-  FAIL_ON_COMPILER_ERROR(yr_arena_allocate_struct(
-      compiler->externals_arena,
-      sizeof(YR_EXTERNAL_VARIABLE),
-      (void**) &external,
-      offsetof(YR_EXTERNAL_VARIABLE, identifier),
-      EOL));
-
-  external->type = EXTERNAL_VARIABLE_TYPE_FLOAT;
-  external->identifier = id;
-  external->value.f = value;
-
-  FAIL_ON_COMPILER_ERROR(yr_object_from_external_variable(
-      external,
-      &object));
-
-  FAIL_ON_COMPILER_ERROR(yr_hash_table_add(
-      compiler->objects_table,
-      external->identifier,
-      NULL,
-      (void*) object));
-
-  return ERROR_SUCCESS;
+  return compiler->last_result;
 }
 
 
@@ -1002,45 +992,14 @@ YR_API int yr_compiler_define_string_variable(
     const char* identifier,
     const char* value)
 {
-  YR_OBJECT* object;
-  YR_EXTERNAL_VARIABLE* external;
+  YR_EXTERNAL_VARIABLE external;
 
-  char* id = NULL;
-  char* val = NULL;
+  external.type = EXTERNAL_VARIABLE_TYPE_STRING;
+  external.identifier = identifier;
+  external.value.s = (char*) value;
 
-  compiler->last_result = ERROR_SUCCESS;
-
-  FAIL_ON_COMPILER_ERROR(yr_arena_write_string(
-      compiler->sz_arena,
-      identifier,
-      &id));
-
-  FAIL_ON_COMPILER_ERROR(yr_arena_write_string(
-      compiler->sz_arena,
-      value,
-      &val));
-
-  FAIL_ON_COMPILER_ERROR(yr_arena_allocate_struct(
-      compiler->externals_arena,
-      sizeof(YR_EXTERNAL_VARIABLE),
-      (void**) &external,
-      offsetof(YR_EXTERNAL_VARIABLE, identifier),
-      offsetof(YR_EXTERNAL_VARIABLE, value.s),
-      EOL));
-
-  external->type = EXTERNAL_VARIABLE_TYPE_STRING;
-  external->identifier = id;
-  external->value.s = val;
-
-  FAIL_ON_COMPILER_ERROR(yr_object_from_external_variable(
-      external,
-      &object));
-
-  FAIL_ON_COMPILER_ERROR(yr_hash_table_add(
-      compiler->objects_table,
-      external->identifier,
-      NULL,
-      (void*) object));
+  FAIL_ON_COMPILER_ERROR(_yr_compiler_define_variable(
+      compiler, &external));
 
   return compiler->last_result;
 }
