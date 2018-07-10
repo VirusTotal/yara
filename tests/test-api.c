@@ -351,6 +351,15 @@ void test_scanner()
   yr_compiler_define_boolean_variable(compiler, "bool_var", 0);
   yr_compiler_define_string_variable(compiler, "str_var", "");
 
+
+  if (yr_compiler_define_string_variable(
+      compiler, "str_var", "") != ERROR_DUPLICATED_EXTERNAL_VARIABLE)
+  {
+    yr_compiler_destroy(compiler);
+    perror("expecting ERROR_DUPLICATED_EXTERNAL_VARIABLE");
+    exit(EXIT_FAILURE);
+  }
+
   // Compile a rule that use the variables in the condition.
   if (yr_compiler_add_string(compiler, rules_str, NULL) != 0)
   {
