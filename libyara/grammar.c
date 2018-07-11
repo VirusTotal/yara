@@ -2912,7 +2912,7 @@ yyreduce:
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
-          compiler->last_error = ERROR_INSUFFICIENT_MEMORY;
+          compiler->last_result = ERROR_INSUFFICIENT_MEMORY;
 
         fail_if(compiler->last_result != ERROR_SUCCESS);
 
@@ -2972,7 +2972,7 @@ yyreduce:
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
-          compiler->last_error = ERROR_INSUFFICIENT_MEMORY;
+          compiler->last_result = ERROR_INSUFFICIENT_MEMORY;
 
         fail_if(compiler->last_result != ERROR_SUCCESS);
 
