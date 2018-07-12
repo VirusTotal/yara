@@ -236,8 +236,7 @@ void test_max_match_data()
   uint32_t new_max_match_data = 0;
   uint32_t old_max_match_data;
 
-  char* rules_str = " \
-    rule t { strings: $a = \"foobar\" condition: $a }";
+  char* rules_str = "rule t { strings: $a = \"foobar\" condition: $a }";
 
   yr_initialize();
 
@@ -270,6 +269,7 @@ void test_max_match_data()
     exit(EXIT_FAILURE);
   }
 
+  yr_rules_destroy(rules);
   yr_finalize();
 }
 
@@ -279,6 +279,9 @@ void test_save_load_rules()
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
 
+  int matches = 0;
+  char* rules_str = "rule t {condition: bool_var and str_var == \"foobar\"}";
+
   yr_initialize();
 
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
@@ -287,7 +290,10 @@ void test_save_load_rules()
     exit(EXIT_FAILURE);
   }
 
-  if (yr_compiler_add_string(compiler, "rule test {condition: true}", NULL) != 0)
+  yr_compiler_define_boolean_variable(compiler, "bool_var", 1);
+  yr_compiler_define_string_variable(compiler, "str_var", "foobar");
+
+  if (yr_compiler_add_string(compiler, rules_str, NULL) != 0)
   {
     yr_compiler_destroy(compiler);
     perror("yr_compiler_add_string");
@@ -315,6 +321,27 @@ void test_save_load_rules()
   if (yr_rules_load("test-rules.yarc", &rules) != ERROR_SUCCESS)
   {
     perror("yr_rules_load");
+    exit(EXIT_FAILURE);
+  }
+
+  int err = yr_rules_scan_mem(
+      rules,
+      (uint8_t *) "",
+       0,
+       0,
+       count_matches,
+       &matches,
+       0);
+
+  if (err != ERROR_SUCCESS)
+  {
+    fprintf(stderr, "test_save_load_rules: error: %d\n", err);
+    exit(EXIT_FAILURE);
+  }
+
+  if (matches != 1)
+  {
+    fprintf(stderr, "test_save_load_rules: expecting 1 match, got: %d\n", matches);
     exit(EXIT_FAILURE);
   }
 
