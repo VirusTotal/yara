@@ -65,7 +65,7 @@ typedef void* yyscan_t;
 typedef struct _RE_LEX_ENVIRONMENT
 {
   RE_CLASS re_class;
-  int last_error_code;
+  int last_error;
   char last_error_message[256];
 
 } RE_LEX_ENVIRONMENT;
