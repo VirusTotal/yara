@@ -903,8 +903,9 @@ int _yr_compiler_define_variable(
       offsetof(YR_EXTERNAL_VARIABLE, identifier),
       EOL));
 
-  ext->type = external->type;
   ext->identifier = id;
+  ext->type = external->type;
+  ext->value = external->value;
 
   if (external->type == EXTERNAL_VARIABLE_TYPE_STRING)
   {
@@ -916,6 +917,12 @@ int _yr_compiler_define_variable(
         &val));
 
     ext->value.s = val;
+
+    FAIL_ON_COMPILER_ERROR(yr_arena_make_ptr_relocatable(
+        compiler->externals_arena,
+        ext,
+        offsetof(YR_EXTERNAL_VARIABLE, value.s),
+        EOL));
   }
 
   FAIL_ON_COMPILER_ERROR(yr_object_from_external_variable(
