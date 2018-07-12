@@ -63,7 +63,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define fail_if(x, error) \
     if (x) \
     { \
-      lex_env->last_error_code = error; \
+      lex_env->last_error = error; \
       YYABORT; \
     } \
 
