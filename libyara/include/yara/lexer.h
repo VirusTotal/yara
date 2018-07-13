@@ -127,7 +127,7 @@ void yyerror(
 void yywarning(
     yyscan_t yyscanner,
     const char *message_fmt,
-    ...);
+    ...) YR_PRINTF_LIKE(2, 3);
 
 void yyfatal(
     yyscan_t yyscanner,
