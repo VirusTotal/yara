@@ -116,9 +116,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }
 
 #define FAIL_ON_COMPILER_ERROR(x) { \
-  compiler->last_result = (x); \
-  if (compiler->last_result != ERROR_SUCCESS) \
-    return compiler->last_result; \
+  compiler->last_error = (x); \
+  if (compiler->last_error != ERROR_SUCCESS) \
+    return compiler->last_error; \
 }
 
 
