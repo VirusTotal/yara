@@ -578,14 +578,14 @@ void yyerror(
     RE_LEX_ENVIRONMENT* lex_env,
     const char *error_message)
 {
-  // if lex_env->last_error was set to some error code before
+  // if lex_env->last_error_code was set to some error code before
   // don't overwrite it, we are interested in the first error, not in
   // subsequent errors like "syntax error, unexpected $end" caused by
   // early parser termination.
 
-  if (lex_env->last_error == ERROR_SUCCESS)
+  if (lex_env->last_error_code == ERROR_SUCCESS)
   {
-    lex_env->last_error = ERROR_INVALID_REGULAR_EXPRESSION;
+    lex_env->last_error_code = ERROR_INVALID_REGULAR_EXPRESSION;
 
     strlcpy(
         lex_env->last_error_message,
@@ -604,7 +604,7 @@ int yr_parse_re_string(
   jmp_buf recovery_state;
   RE_LEX_ENVIRONMENT lex_env;
 
-  lex_env.last_error = ERROR_SUCCESS;
+  lex_env.last_error_code = ERROR_SUCCESS;
   lex_env.last_error_message[0] = '\0';
 
   yr_thread_storage_set_value(&yr_recovery_state_key, &recovery_state);
@@ -620,7 +620,7 @@ int yr_parse_re_string(
   yyparse(yyscanner, &lex_env);
   yylex_destroy(yyscanner);
 
-  if (lex_env.last_error != ERROR_SUCCESS)
+  if (lex_env.last_error_code != ERROR_SUCCESS)
   {
     yr_re_ast_destroy(*re_ast);
     *re_ast = NULL;
@@ -630,7 +630,7 @@ int yr_parse_re_string(
         lex_env.last_error_message,
         sizeof(error->message));
 
-    return lex_env.last_error;
+    return lex_env.last_error_code;
   }
 
   return ERROR_SUCCESS;

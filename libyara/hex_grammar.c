@@ -105,7 +105,7 @@
 #define fail_if(x, error) \
     if (x) \
     { \
-      lex_env->last_error = error; \
+      lex_env->last_error_code = error; \
       YYABORT; \
     } \
 
