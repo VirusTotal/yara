@@ -69,6 +69,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_ALIGN(n)
 #endif
 
+#if defined(__GNUC__)
+#define YR_PRINTF_LIKE(x, y) __attribute__((format(printf, x, y)))
+#else
+#define YR_PRINTF_LIKE(x, y)
+#endif
+
 #define yr_min(x, y) ((x < y) ? (x) : (y))
 #define yr_max(x, y) ((x > y) ? (x) : (y))
 
