@@ -135,7 +135,7 @@
           break; \
       } \
       cleanup; \
-      compiler->last_error = ERROR_WRONG_TYPE; \
+      compiler->last_result = ERROR_WRONG_TYPE; \
       yyerror(yyscanner, compiler, NULL); \
       YYERROR; \
     }
@@ -1716,12 +1716,12 @@ yyreduce:
     {
         YR_RULE* rule = (yyvsp[-7].rule); // rule created in phase 1
 
-        compiler->last_error = yr_parser_reduce_rule_declaration_phase_2(
+        compiler->last_result = yr_parser_reduce_rule_declaration_phase_2(
             yyscanner, rule);
 
         yr_free((yyvsp[-8].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 1727 "grammar.c" /* yacc.c:1663  */
     break;
@@ -1748,7 +1748,7 @@ yyreduce:
         memset(&null_meta, 0xFF, sizeof(YR_META));
         null_meta.type = META_TYPE_NULL;
 
-        compiler->last_error = yr_arena_write_data(
+        compiler->last_result = yr_arena_write_data(
             compiler->metas_arena,
             &null_meta,
             sizeof(YR_META),
@@ -1756,7 +1756,7 @@ yyreduce:
 
         (yyval.meta) = (yyvsp[0].meta);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 1762 "grammar.c" /* yacc.c:1663  */
     break;
@@ -1783,13 +1783,13 @@ yyreduce:
         memset(&null_string, 0xFF, sizeof(YR_STRING));
         null_string.g_flags = STRING_GFLAGS_NULL;
 
-        compiler->last_error = yr_arena_write_data(
+        compiler->last_result = yr_arena_write_data(
             compiler->strings_arena,
             &null_string,
             sizeof(YR_STRING),
             NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.string) = (yyvsp[0].string);
       }
@@ -1836,10 +1836,10 @@ yyreduce:
         // additional null character. Here we write the ending null
         //character. Example: tag1\0tag2\0tag3\0\0
 
-        compiler->last_error = yr_arena_write_string(
+        compiler->last_result = yr_arena_write_string(
             yyget_extra(yyscanner)->sz_arena, "", NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.c_string) = (yyvsp[0].c_string);
       }
@@ -1851,12 +1851,12 @@ yyreduce:
     {
         char* identifier;
 
-        compiler->last_error = yr_arena_write_string(
+        compiler->last_result = yr_arena_write_string(
             yyget_extra(yyscanner)->sz_arena, (yyvsp[0].c_string), &identifier);
 
         yr_free((yyvsp[0].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.c_string) = identifier;
       }
@@ -1874,7 +1874,7 @@ yyreduce:
           if (strcmp(tag_name, (yyvsp[0].c_string)) == 0)
           {
             yr_compiler_set_error_extra_info(compiler, tag_name);
-            compiler->last_error = ERROR_DUPLICATED_TAG_IDENTIFIER;
+            compiler->last_result = ERROR_DUPLICATED_TAG_IDENTIFIER;
             break;
           }
 
@@ -1886,13 +1886,13 @@ yyreduce:
           tag_length = tag_name != NULL ? strlen(tag_name) : 0;
         }
 
-        if (compiler->last_error == ERROR_SUCCESS)
-          compiler->last_error = yr_arena_write_string(
+        if (compiler->last_result == ERROR_SUCCESS)
+          compiler->last_result = yr_arena_write_string(
               yyget_extra(yyscanner)->sz_arena, (yyvsp[0].c_string), NULL);
 
         yr_free((yyvsp[0].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.c_string) = (yyvsp[-1].c_string);
       }
@@ -2121,7 +2121,7 @@ yyreduce:
 
         if (var_index >= 0)
         {
-          compiler->last_error = yr_parser_emit_with_arg(
+          compiler->last_result = yr_parser_emit_with_arg(
               yyscanner,
               OP_PUSH_M,
               LOOP_LOCAL_VARS * var_index,
@@ -2153,11 +2153,11 @@ yyreduce:
           {
             char* id;
 
-            compiler->last_error = yr_arena_write_string(
+            compiler->last_result = yr_arena_write_string(
                 compiler->sz_arena, (yyvsp[0].c_string), &id);
 
-            if (compiler->last_error == ERROR_SUCCESS)
-              compiler->last_error = yr_parser_emit_with_arg_reloc(
+            if (compiler->last_result == ERROR_SUCCESS)
+              compiler->last_result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_OBJ_LOAD,
                   id,
@@ -2177,7 +2177,7 @@ yyreduce:
 
             if (rule != NULL)
             {
-              compiler->last_error = yr_parser_emit_with_arg_reloc(
+              compiler->last_result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_PUSH_RULE,
                   rule,
@@ -2191,14 +2191,14 @@ yyreduce:
             else
             {
               yr_compiler_set_error_extra_info(compiler, (yyvsp[0].c_string));
-              compiler->last_error = ERROR_UNDEFINED_IDENTIFIER;
+              compiler->last_result = ERROR_UNDEFINED_IDENTIFIER;
             }
           }
         }
 
         yr_free((yyvsp[0].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 2204 "grammar.c" /* yacc.c:1663  */
     break;
@@ -2217,11 +2217,11 @@ yyreduce:
           {
             char* ident;
 
-            compiler->last_error = yr_arena_write_string(
+            compiler->last_result = yr_arena_write_string(
               compiler->sz_arena, (yyvsp[0].c_string), &ident);
 
-            if (compiler->last_error == ERROR_SUCCESS)
-              compiler->last_error = yr_parser_emit_with_arg_reloc(
+            if (compiler->last_result == ERROR_SUCCESS)
+              compiler->last_result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_OBJ_FIELD,
                   ident,
@@ -2235,7 +2235,7 @@ yyreduce:
           else
           {
             yr_compiler_set_error_extra_info(compiler, (yyvsp[0].c_string));
-            compiler->last_error = ERROR_INVALID_FIELD_NAME;
+            compiler->last_result = ERROR_INVALID_FIELD_NAME;
           }
         }
         else
@@ -2243,12 +2243,12 @@ yyreduce:
           yr_compiler_set_error_extra_info(
               compiler, (yyvsp[-2].expression).identifier);
 
-          compiler->last_error = ERROR_NOT_A_STRUCTURE;
+          compiler->last_result = ERROR_NOT_A_STRUCTURE;
         }
 
         yr_free((yyvsp[0].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 2254 "grammar.c" /* yacc.c:1663  */
     break;
@@ -2266,12 +2266,12 @@ yyreduce:
           {
             yr_compiler_set_error_extra_info(
                 compiler, "array indexes must be of integer type");
-            compiler->last_error = ERROR_WRONG_TYPE;
+            compiler->last_result = ERROR_WRONG_TYPE;
           }
 
-          fail_if(compiler->last_error != ERROR_SUCCESS);
+          fail_if(compiler->last_result != ERROR_SUCCESS);
 
-          compiler->last_error = yr_parser_emit(
+          compiler->last_result = yr_parser_emit(
               yyscanner, OP_INDEX_ARRAY, NULL);
 
           array = object_as_array((yyvsp[-3].expression).value.object);
@@ -2287,12 +2287,12 @@ yyreduce:
           {
             yr_compiler_set_error_extra_info(
                 compiler, "dictionary keys must be of string type");
-            compiler->last_error = ERROR_WRONG_TYPE;
+            compiler->last_result = ERROR_WRONG_TYPE;
           }
 
-          fail_if(compiler->last_error != ERROR_SUCCESS);
+          fail_if(compiler->last_result != ERROR_SUCCESS);
 
-          compiler->last_error = yr_parser_emit(
+          compiler->last_result = yr_parser_emit(
               yyscanner, OP_LOOKUP_DICT, NULL);
 
           dict = object_as_dictionary((yyvsp[-3].expression).value.object);
@@ -2306,10 +2306,10 @@ yyreduce:
           yr_compiler_set_error_extra_info(
               compiler, (yyvsp[-3].expression).identifier);
 
-          compiler->last_error = ERROR_NOT_INDEXABLE;
+          compiler->last_result = ERROR_NOT_INDEXABLE;
         }
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 2315 "grammar.c" /* yacc.c:1663  */
     break;
@@ -2323,15 +2323,15 @@ yyreduce:
         if ((yyvsp[-3].expression).type == EXPRESSION_TYPE_OBJECT &&
             (yyvsp[-3].expression).value.object->type == OBJECT_TYPE_FUNCTION)
         {
-          compiler->last_error = yr_parser_check_types(
+          compiler->last_result = yr_parser_check_types(
               compiler, object_as_function((yyvsp[-3].expression).value.object), (yyvsp[-1].c_string));
 
-          if (compiler->last_error == ERROR_SUCCESS)
-            compiler->last_error = yr_arena_write_string(
+          if (compiler->last_result == ERROR_SUCCESS)
+            compiler->last_result = yr_arena_write_string(
               compiler->sz_arena, (yyvsp[-1].c_string), &args_fmt);
 
-          if (compiler->last_error == ERROR_SUCCESS)
-            compiler->last_error = yr_parser_emit_with_arg_reloc(
+          if (compiler->last_result == ERROR_SUCCESS)
+            compiler->last_result = yr_parser_emit_with_arg_reloc(
                 yyscanner,
                 OP_CALL,
                 args_fmt,
@@ -2349,12 +2349,12 @@ yyreduce:
           yr_compiler_set_error_extra_info(
               compiler, (yyvsp[-3].expression).identifier);
 
-          compiler->last_error = ERROR_NOT_A_FUNCTION;
+          compiler->last_result = ERROR_NOT_A_FUNCTION;
         }
 
         yr_free((yyvsp[-1].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 2360 "grammar.c" /* yacc.c:1663  */
     break;
@@ -2407,7 +2407,7 @@ yyreduce:
     {
         if (strlen((yyvsp[-2].c_string)) == YR_MAX_FUNCTION_ARGS)
         {
-          compiler->last_error = ERROR_TOO_MANY_ARGUMENTS;
+          compiler->last_result = ERROR_TOO_MANY_ARGUMENTS;
         }
         else
         {
@@ -2433,7 +2433,7 @@ yyreduce:
           }
         }
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.c_string) = (yyvsp[-2].c_string);
       }
@@ -2455,7 +2455,7 @@ yyreduce:
         if (sized_string->flags & SIZED_STRING_FLAGS_DOT_ALL)
           re_flags |= RE_FLAGS_DOT_ALL;
 
-        compiler->last_error = yr_re_compile(
+        compiler->last_result = yr_re_compile(
             sized_string->c_string,
             re_flags,
             compiler->re_code_arena,
@@ -2464,18 +2464,18 @@ yyreduce:
 
         yr_free((yyvsp[0].sized_string));
 
-        if (compiler->last_error == ERROR_INVALID_REGULAR_EXPRESSION)
+        if (compiler->last_result == ERROR_INVALID_REGULAR_EXPRESSION)
           yr_compiler_set_error_extra_info(compiler, error.message);
 
-        if (compiler->last_error == ERROR_SUCCESS)
-          compiler->last_error = yr_parser_emit_with_arg_reloc(
+        if (compiler->last_result == ERROR_SUCCESS)
+          compiler->last_result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
               re,
               NULL,
               NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_REGEXP;
       }
@@ -2494,10 +2494,10 @@ yyreduce:
               (yyvsp[0].expression).value.sized_string->c_string);
           }
 
-          compiler->last_error = yr_parser_emit(
+          compiler->last_result = yr_parser_emit(
               yyscanner, OP_STR_TO_BOOL, NULL);
 
-          fail_if(compiler->last_error != ERROR_SUCCESS);
+          fail_if(compiler->last_result != ERROR_SUCCESS);
         }
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
@@ -2508,10 +2508,10 @@ yyreduce:
   case 56:
 #line 950 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_emit_with_arg(
+        compiler->last_result = yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, 1, NULL, NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -2521,10 +2521,10 @@ yyreduce:
   case 57:
 #line 959 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_emit_with_arg(
+        compiler->last_result = yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, 0, NULL, NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -2537,13 +2537,13 @@ yyreduce:
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_STRING, "matches");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_REGEXP, "matches");
 
-        if (compiler->last_error == ERROR_SUCCESS)
-          compiler->last_error = yr_parser_emit(
+        if (compiler->last_result == ERROR_SUCCESS)
+          compiler->last_result = yr_parser_emit(
               yyscanner,
               OP_MATCHES,
               NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -2556,10 +2556,10 @@ yyreduce:
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_STRING, "contains");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_STRING, "contains");
 
-        compiler->last_error = yr_parser_emit(
+        compiler->last_result = yr_parser_emit(
             yyscanner, OP_CONTAINS, NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -2589,12 +2589,12 @@ yyreduce:
     {
         check_type_with_cleanup((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "at", yr_free((yyvsp[-2].c_string)));
 
-        compiler->last_error = yr_parser_reduce_string_identifier(
+        compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[-2].c_string), OP_FOUND_AT, (yyvsp[0].expression).value.integer);
 
         yr_free((yyvsp[-2].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -2604,12 +2604,12 @@ yyreduce:
   case 62:
 #line 1022 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_string_identifier(
+        compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[-2].c_string), OP_FOUND_IN, UNDEFINED);
 
         yr_free((yyvsp[-2].c_string));
 
-        fail_if(compiler->last_error!= ERROR_SUCCESS);
+        fail_if(compiler->last_result!= ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -2636,10 +2636,10 @@ yyreduce:
         int var_index;
 
         if (compiler->loop_depth == YR_MAX_LOOP_NESTING)
-          compiler->last_error = \
+          compiler->last_result = \
               ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         var_index = yr_parser_lookup_loop_variable(
             yyscanner, (yyvsp[-1].c_string));
@@ -2649,17 +2649,17 @@ yyreduce:
           yr_compiler_set_error_extra_info(
               compiler, (yyvsp[-1].c_string));
 
-          compiler->last_error = \
+          compiler->last_result = \
               ERROR_DUPLICATED_LOOP_IDENTIFIER;
         }
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         // Push end-of-list marker
-        compiler->last_error = yr_parser_emit_with_arg(
+        compiler->last_result = yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, UNDEFINED, NULL, NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 2665 "grammar.c" /* yacc.c:1663  */
     break;
@@ -2793,14 +2793,14 @@ yyreduce:
         uint8_t* addr;
 
         if (compiler->loop_depth == YR_MAX_LOOP_NESTING)
-          compiler->last_error = \
+          compiler->last_result = \
             ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 
         if (compiler->loop_for_of_mem_offset != -1)
-          compiler->last_error = \
+          compiler->last_result = \
             ERROR_NESTED_FOR_OF_LOOP;
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         yr_parser_emit_with_arg(
             yyscanner, OP_CLEAR_M, mem_offset + 1, NULL, NULL);
@@ -2899,22 +2899,22 @@ yyreduce:
         YR_FIXUP* fixup;
         void* jmp_destination_addr;
 
-        compiler->last_error = yr_parser_emit_with_arg_reloc(
+        compiler->last_result = yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JFALSE,
             0,          // still don't know the jump destination
             NULL,
             &jmp_destination_addr);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         // create a fixup entry for the jump and push it in the stack
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
-          compiler->last_error = ERROR_INSUFFICIENT_MEMORY;
+          compiler->last_result = ERROR_INSUFFICIENT_MEMORY;
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         fixup->address = jmp_destination_addr;
         fixup->next = compiler->fixup_stack_head;
@@ -2929,9 +2929,9 @@ yyreduce:
         YR_FIXUP* fixup;
         uint8_t* nop_addr;
 
-        compiler->last_error = yr_parser_emit(yyscanner, OP_AND, NULL);
+        compiler->last_result = yr_parser_emit(yyscanner, OP_AND, NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         // Generate a do-nothing instruction (NOP) in order to get its address
         // and use it as the destination for the OP_JFALSE. We can not simply
@@ -2940,9 +2940,9 @@ yyreduce:
         // the same arena page. As we don't have a reliable way of getting the
         // address of the next instruction we generate the OP_NOP.
 
-        compiler->last_error = yr_parser_emit(yyscanner, OP_NOP, &nop_addr);
+        compiler->last_result = yr_parser_emit(yyscanner, OP_NOP, &nop_addr);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         fixup = compiler->fixup_stack_head;
         *(void**)(fixup->address) = (void*) nop_addr;
@@ -2960,21 +2960,21 @@ yyreduce:
         YR_FIXUP* fixup;
         void* jmp_destination_addr;
 
-        compiler->last_error = yr_parser_emit_with_arg_reloc(
+        compiler->last_result = yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JTRUE,
             0,         // still don't know the jump destination
             NULL,
             &jmp_destination_addr);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
-          compiler->last_error = ERROR_INSUFFICIENT_MEMORY;
+          compiler->last_result = ERROR_INSUFFICIENT_MEMORY;
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         fixup->address = jmp_destination_addr;
         fixup->next = compiler->fixup_stack_head;
@@ -2989,9 +2989,9 @@ yyreduce:
         YR_FIXUP* fixup;
         uint8_t* nop_addr;
 
-        compiler->last_error = yr_parser_emit(yyscanner, OP_OR, NULL);
+        compiler->last_result = yr_parser_emit(yyscanner, OP_OR, NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         // Generate a do-nothing instruction (NOP) in order to get its address
         // and use it as the destination for the OP_JFALSE. We can not simply
@@ -3000,9 +3000,9 @@ yyreduce:
         // the same arena page. As we don't have a reliable way of getting the
         // address of the next instruction we generate the OP_NOP.
 
-        compiler->last_error = yr_parser_emit(yyscanner, OP_NOP, &nop_addr);
+        compiler->last_result = yr_parser_emit(yyscanner, OP_NOP, &nop_addr);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         fixup = compiler->fixup_stack_head;
         *(void**)(fixup->address) = (void*)(nop_addr);
@@ -3017,10 +3017,10 @@ yyreduce:
   case 75:
 #line 1383 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_operation(
+        compiler->last_result = yr_parser_reduce_operation(
             yyscanner, "<", (yyvsp[-2].expression), (yyvsp[0].expression));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -3030,10 +3030,10 @@ yyreduce:
   case 76:
 #line 1392 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_operation(
+        compiler->last_result = yr_parser_reduce_operation(
             yyscanner, ">", (yyvsp[-2].expression), (yyvsp[0].expression));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -3043,10 +3043,10 @@ yyreduce:
   case 77:
 #line 1401 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_operation(
+        compiler->last_result = yr_parser_reduce_operation(
             yyscanner, "<=", (yyvsp[-2].expression), (yyvsp[0].expression));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -3056,10 +3056,10 @@ yyreduce:
   case 78:
 #line 1410 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_operation(
+        compiler->last_result = yr_parser_reduce_operation(
             yyscanner, ">=", (yyvsp[-2].expression), (yyvsp[0].expression));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -3069,10 +3069,10 @@ yyreduce:
   case 79:
 #line 1419 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_operation(
+        compiler->last_result = yr_parser_reduce_operation(
             yyscanner, "==", (yyvsp[-2].expression), (yyvsp[0].expression));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -3082,10 +3082,10 @@ yyreduce:
   case 80:
 #line 1428 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_operation(
+        compiler->last_result = yr_parser_reduce_operation(
             yyscanner, "!=", (yyvsp[-2].expression), (yyvsp[0].expression));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -3127,17 +3127,17 @@ yyreduce:
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for range's lower bound");
-          compiler->last_error = ERROR_WRONG_TYPE;
+          compiler->last_result = ERROR_WRONG_TYPE;
         }
 
         if ((yyvsp[-1].expression).type != EXPRESSION_TYPE_INTEGER)
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for range's upper bound");
-          compiler->last_error = ERROR_WRONG_TYPE;
+          compiler->last_result = ERROR_WRONG_TYPE;
         }
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3143 "grammar.c" /* yacc.c:1663  */
     break;
@@ -3149,11 +3149,11 @@ yyreduce:
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for enumeration item");
-          compiler->last_error = ERROR_WRONG_TYPE;
+          compiler->last_result = ERROR_WRONG_TYPE;
 
         }
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3159 "grammar.c" /* yacc.c:1663  */
     break;
@@ -3165,10 +3165,10 @@ yyreduce:
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for enumeration item");
-          compiler->last_error = ERROR_WRONG_TYPE;
+          compiler->last_result = ERROR_WRONG_TYPE;
         }
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3174 "grammar.c" /* yacc.c:1663  */
     break;
@@ -3188,7 +3188,7 @@ yyreduce:
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL, NULL);
         yr_parser_emit_pushes_for_strings(yyscanner, "$*");
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3194 "grammar.c" /* yacc.c:1663  */
     break;
@@ -3199,7 +3199,7 @@ yyreduce:
         yr_parser_emit_pushes_for_strings(yyscanner, (yyvsp[0].c_string));
         yr_free((yyvsp[0].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3205 "grammar.c" /* yacc.c:1663  */
     break;
@@ -3210,7 +3210,7 @@ yyreduce:
         yr_parser_emit_pushes_for_strings(yyscanner, (yyvsp[0].c_string));
         yr_free((yyvsp[0].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3216 "grammar.c" /* yacc.c:1663  */
     break;
@@ -3242,10 +3242,10 @@ yyreduce:
   case 99:
 #line 1562 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_emit(
+        compiler->last_result = yr_parser_emit(
             yyscanner, OP_FILESIZE, NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = UNDEFINED;
@@ -3260,10 +3260,10 @@ yyreduce:
             "Using deprecated \"entrypoint\" keyword. Use the \"entry_point\" "
             "function from PE module instead.");
 
-        compiler->last_error = yr_parser_emit(
+        compiler->last_result = yr_parser_emit(
             yyscanner, OP_ENTRYPOINT, NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = UNDEFINED;
@@ -3280,10 +3280,10 @@ yyreduce:
         // uint32, etc. $1 contains an index that added to OP_READ_INT results
         // in the proper OP_INTXX opcode.
 
-        compiler->last_error = yr_parser_emit(
+        compiler->last_result = yr_parser_emit(
             yyscanner, (uint8_t) (OP_READ_INT + (yyvsp[-3].integer)), NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = UNDEFINED;
@@ -3294,10 +3294,10 @@ yyreduce:
   case 102:
 #line 1602 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_emit_with_arg(
+        compiler->last_result = yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, (yyvsp[0].integer), NULL, NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = (yyvsp[0].integer);
@@ -3308,10 +3308,10 @@ yyreduce:
   case 103:
 #line 1612 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_emit_with_arg_double(
+        compiler->last_result = yr_parser_emit_with_arg_double(
             yyscanner, OP_PUSH, (yyvsp[0].double_), NULL, NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
       }
@@ -3323,7 +3323,7 @@ yyreduce:
     {
         SIZED_STRING* sized_string;
 
-        compiler->last_error = yr_arena_write_data(
+        compiler->last_result = yr_arena_write_data(
             compiler->sz_arena,
             (yyvsp[0].sized_string),
             (yyvsp[0].sized_string)->length + sizeof(SIZED_STRING),
@@ -3331,15 +3331,15 @@ yyreduce:
 
         yr_free((yyvsp[0].sized_string));
 
-        if (compiler->last_error == ERROR_SUCCESS)
-          compiler->last_error = yr_parser_emit_with_arg_reloc(
+        if (compiler->last_result == ERROR_SUCCESS)
+          compiler->last_result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
               sized_string,
               NULL,
               NULL);
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_STRING;
         (yyval.expression).value.sized_string = sized_string;
@@ -3350,12 +3350,12 @@ yyreduce:
   case 105:
 #line 1646 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_string_identifier(
+        compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[0].c_string), OP_COUNT, UNDEFINED);
 
         yr_free((yyvsp[0].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = UNDEFINED;
@@ -3366,12 +3366,12 @@ yyreduce:
   case 106:
 #line 1658 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_string_identifier(
+        compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[-3].c_string), OP_OFFSET, UNDEFINED);
 
         yr_free((yyvsp[-3].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = UNDEFINED;
@@ -3382,16 +3382,16 @@ yyreduce:
   case 107:
 #line 1670 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_emit_with_arg(
+        compiler->last_result = yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, 1, NULL, NULL);
 
-        if (compiler->last_error == ERROR_SUCCESS)
-          compiler->last_error = yr_parser_reduce_string_identifier(
+        if (compiler->last_result == ERROR_SUCCESS)
+          compiler->last_result = yr_parser_reduce_string_identifier(
               yyscanner, (yyvsp[0].c_string), OP_OFFSET, UNDEFINED);
 
         yr_free((yyvsp[0].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = UNDEFINED;
@@ -3402,12 +3402,12 @@ yyreduce:
   case 108:
 #line 1686 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_string_identifier(
+        compiler->last_result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[-3].c_string), OP_LENGTH, UNDEFINED);
 
         yr_free((yyvsp[-3].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = UNDEFINED;
@@ -3418,16 +3418,16 @@ yyreduce:
   case 109:
 #line 1698 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_emit_with_arg(
+        compiler->last_result = yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, 1, NULL, NULL);
 
-        if (compiler->last_error == ERROR_SUCCESS)
-          compiler->last_error = yr_parser_reduce_string_identifier(
+        if (compiler->last_result == ERROR_SUCCESS)
+          compiler->last_result = yr_parser_reduce_string_identifier(
               yyscanner, (yyvsp[0].c_string), OP_LENGTH, UNDEFINED);
 
         yr_free((yyvsp[0].c_string));
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = UNDEFINED;
@@ -3450,7 +3450,7 @@ yyreduce:
         }
         else if ((yyvsp[0].expression).type == EXPRESSION_TYPE_OBJECT)
         {
-          compiler->last_error = yr_parser_emit(
+          compiler->last_result = yr_parser_emit(
               yyscanner, OP_OBJ_VALUE, NULL);
 
           switch((yyvsp[0].expression).value.object->type)
@@ -3471,7 +3471,7 @@ yyreduce:
                   compiler,
                   "wrong usage of identifier \"%s\"",
                   (yyvsp[0].expression).identifier);
-              compiler->last_error = ERROR_WRONG_TYPE;
+              compiler->last_result = ERROR_WRONG_TYPE;
           }
         }
         else
@@ -3479,7 +3479,7 @@ yyreduce:
           assert(false);
         }
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3485 "grammar.c" /* yacc.c:1663  */
     break;
@@ -3494,15 +3494,15 @@ yyreduce:
           (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
           (yyval.expression).value.integer = ((yyvsp[0].expression).value.integer == UNDEFINED) ?
               UNDEFINED : -((yyvsp[0].expression).value.integer);
-          compiler->last_error = yr_parser_emit(yyscanner, OP_INT_MINUS, NULL);
+          compiler->last_result = yr_parser_emit(yyscanner, OP_INT_MINUS, NULL);
         }
         else if ((yyvsp[0].expression).type == EXPRESSION_TYPE_FLOAT)
         {
           (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
-          compiler->last_error = yr_parser_emit(yyscanner, OP_DBL_MINUS, NULL);
+          compiler->last_result = yr_parser_emit(yyscanner, OP_DBL_MINUS, NULL);
         }
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3508 "grammar.c" /* yacc.c:1663  */
     break;
@@ -3510,7 +3510,7 @@ yyreduce:
   case 112:
 #line 1778 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_operation(
+        compiler->last_result = yr_parser_reduce_operation(
             yyscanner, "+", (yyvsp[-2].expression), (yyvsp[0].expression));
 
         if ((yyvsp[-2].expression).type == EXPRESSION_TYPE_INTEGER &&
@@ -3528,7 +3528,7 @@ yyreduce:
             yr_compiler_set_error_extra_info_fmt(
                 compiler, "%" PRId64 " + %" PRId64, i1, i2);
 
-            compiler->last_error = ERROR_INTEGER_OVERFLOW;
+            compiler->last_result = ERROR_INTEGER_OVERFLOW;
           }
           else
           {
@@ -3541,7 +3541,7 @@ yyreduce:
           (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
         }
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3547 "grammar.c" /* yacc.c:1663  */
     break;
@@ -3549,7 +3549,7 @@ yyreduce:
   case 113:
 #line 1813 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_operation(
+        compiler->last_result = yr_parser_reduce_operation(
             yyscanner, "-", (yyvsp[-2].expression), (yyvsp[0].expression));
 
         if ((yyvsp[-2].expression).type == EXPRESSION_TYPE_INTEGER &&
@@ -3567,7 +3567,7 @@ yyreduce:
             yr_compiler_set_error_extra_info_fmt(
                 compiler, "%" PRId64 " - %" PRId64, i1, i2);
 
-            compiler->last_error = ERROR_INTEGER_OVERFLOW;
+            compiler->last_result = ERROR_INTEGER_OVERFLOW;
           }
           else
           {
@@ -3580,7 +3580,7 @@ yyreduce:
           (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
         }
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3586 "grammar.c" /* yacc.c:1663  */
     break;
@@ -3588,7 +3588,7 @@ yyreduce:
   case 114:
 #line 1848 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_operation(
+        compiler->last_result = yr_parser_reduce_operation(
             yyscanner, "*", (yyvsp[-2].expression), (yyvsp[0].expression));
 
         if ((yyvsp[-2].expression).type == EXPRESSION_TYPE_INTEGER &&
@@ -3605,7 +3605,7 @@ yyreduce:
             yr_compiler_set_error_extra_info_fmt(
                 compiler, "%" PRId64 " * %" PRId64, i1, i2);
 
-            compiler->last_error = ERROR_INTEGER_OVERFLOW;
+            compiler->last_result = ERROR_INTEGER_OVERFLOW;
           }
           else
           {
@@ -3618,7 +3618,7 @@ yyreduce:
           (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
         }
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3624 "grammar.c" /* yacc.c:1663  */
     break;
@@ -3626,7 +3626,7 @@ yyreduce:
   case 115:
 #line 1882 "grammar.y" /* yacc.c:1663  */
     {
-        compiler->last_error = yr_parser_reduce_operation(
+        compiler->last_result = yr_parser_reduce_operation(
             yyscanner, "\\", (yyvsp[-2].expression), (yyvsp[0].expression));
 
         if ((yyvsp[-2].expression).type == EXPRESSION_TYPE_INTEGER &&
@@ -3639,7 +3639,7 @@ yyreduce:
           }
           else
           {
-            compiler->last_error = ERROR_DIVISION_BY_ZERO;
+            compiler->last_result = ERROR_DIVISION_BY_ZERO;
           }
         }
         else
@@ -3647,7 +3647,7 @@ yyreduce:
           (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
         }
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3653 "grammar.c" /* yacc.c:1663  */
     break;
@@ -3667,8 +3667,8 @@ yyreduce:
         }
         else
         {
-          compiler->last_error = ERROR_DIVISION_BY_ZERO;
-          fail_if(compiler->last_error != ERROR_SUCCESS);
+          compiler->last_result = ERROR_DIVISION_BY_ZERO;
+          fail_if(compiler->last_result != ERROR_SUCCESS);
         }
       }
 #line 3675 "grammar.c" /* yacc.c:1663  */
@@ -3739,7 +3739,7 @@ yyreduce:
         yr_parser_emit(yyscanner, OP_SHL, NULL);
 
         if (!IS_UNDEFINED((yyvsp[0].expression).value.integer) && (yyvsp[0].expression).value.integer < 0)
-          compiler->last_error = ERROR_INVALID_OPERAND;
+          compiler->last_result = ERROR_INVALID_OPERAND;
         else if (!IS_UNDEFINED((yyvsp[0].expression).value.integer) && (yyvsp[0].expression).value.integer >= 64)
           (yyval.expression).value.integer = 0;
         else
@@ -3747,7 +3747,7 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3753 "grammar.c" /* yacc.c:1663  */
     break;
@@ -3761,7 +3761,7 @@ yyreduce:
         yr_parser_emit(yyscanner, OP_SHR, NULL);
 
         if (!IS_UNDEFINED((yyvsp[0].expression).value.integer) && (yyvsp[0].expression).value.integer < 0)
-          compiler->last_error = ERROR_INVALID_OPERAND;
+          compiler->last_result = ERROR_INVALID_OPERAND;
         else if (!IS_UNDEFINED((yyvsp[0].expression).value.integer) && (yyvsp[0].expression).value.integer >= 64)
           (yyval.expression).value.integer = 0;
         else
@@ -3769,7 +3769,7 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
 
-        fail_if(compiler->last_error != ERROR_SUCCESS);
+        fail_if(compiler->last_result != ERROR_SUCCESS);
       }
 #line 3775 "grammar.c" /* yacc.c:1663  */
     break;

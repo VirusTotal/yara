@@ -206,10 +206,10 @@ int yr_parser_emit_pushes_for_strings(
   if (matching == 0)
   {
     yr_compiler_set_error_extra_info(compiler, identifier);
-    compiler->last_error = ERROR_UNDEFINED_STRING;
+    compiler->last_result = ERROR_UNDEFINED_STRING;
   }
 
-  return compiler->last_error;
+  return compiler->last_result;
 }
 
 
@@ -227,15 +227,15 @@ int yr_parser_check_types(
 
     if (strcmp(function->prototypes[i].arguments_fmt, actual_args_fmt) == 0)
     {
-      compiler->last_error = ERROR_SUCCESS;
-      return compiler->last_error;
+      compiler->last_result = ERROR_SUCCESS;
+      return compiler->last_result;
     }
   }
 
   yr_compiler_set_error_extra_info(compiler, function->identifier);
-  compiler->last_error = ERROR_WRONG_ARGUMENTS;
+  compiler->last_result = ERROR_WRONG_ARGUMENTS;
 
-  return compiler->last_error;
+  return compiler->last_result;
 }
 
 
@@ -268,7 +268,7 @@ YR_STRING* yr_parser_lookup_string(
   }
 
   yr_compiler_set_error_extra_info(compiler, identifier);
-  compiler->last_error = ERROR_UNDEFINED_STRING;
+  compiler->last_result = ERROR_UNDEFINED_STRING;
 
   return NULL;
 }
@@ -478,7 +478,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
   if (string != NULL)
   {
-    compiler->last_error = ERROR_DUPLICATED_STRING_IDENTIFIER;
+    compiler->last_result = ERROR_DUPLICATED_STRING_IDENTIFIER;
     yr_compiler_set_error_extra_info(compiler, identifier);
     goto _exit;
   }
@@ -487,7 +487,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
   if (str->length == 0)
   {
-    compiler->last_error = ERROR_EMPTY_STRING;
+    compiler->last_result = ERROR_EMPTY_STRING;
     yr_compiler_set_error_extra_info(compiler, identifier);
     goto _exit;
   }
@@ -530,13 +530,13 @@ YR_STRING* yr_parser_reduce_string_declaration(
       string_flags & STRING_GFLAGS_REGEXP)
   {
     if (string_flags & STRING_GFLAGS_HEXADECIMAL)
-      compiler->last_error = yr_re_parse_hex(
+      compiler->last_result = yr_re_parse_hex(
           str->c_string, &re_ast, &re_error);
     else
-      compiler->last_error = yr_re_parse(
+      compiler->last_result = yr_re_parse(
           str->c_string, &re_ast, &re_error);
 
-    if (compiler->last_error != ERROR_SUCCESS)
+    if (compiler->last_result != ERROR_SUCCESS)
     {
       snprintf(
           message,
@@ -565,7 +565,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
     if ((re_ast->flags & RE_FLAGS_GREEDY) &&
         (re_ast->flags & RE_FLAGS_UNGREEDY))
     {
-      compiler->last_error = ERROR_INVALID_REGULAR_EXPRESSION;
+      compiler->last_result = ERROR_INVALID_REGULAR_EXPRESSION;
 
       yr_compiler_set_error_extra_info(compiler,
           "greedy and ungreedy quantifiers can't be mixed in a regular "
@@ -594,13 +594,13 @@ YR_STRING* yr_parser_reduce_string_declaration(
           compiler->re_ast_clbk_user_data);
     }
 
-    compiler->last_error = yr_re_ast_split_at_chaining_point(
+    compiler->last_result = yr_re_ast_split_at_chaining_point(
         re_ast, &re_ast, &remainder_re_ast, &min_gap, &max_gap);
 
-    if (compiler->last_error != ERROR_SUCCESS)
+    if (compiler->last_result != ERROR_SUCCESS)
       goto _exit;
 
-    compiler->last_error = _yr_parser_write_string(
+    compiler->last_result = _yr_parser_write_string(
         identifier,
         string_flags,
         compiler,
@@ -609,7 +609,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
         &string,
         &min_atom_quality);
 
-    if (compiler->last_error != ERROR_SUCCESS)
+    if (compiler->last_result != ERROR_SUCCESS)
       goto _exit;
 
     if (remainder_re_ast != NULL)
@@ -631,15 +631,15 @@ YR_STRING* yr_parser_reduce_string_declaration(
 
       yr_re_ast_destroy(re_ast);
 
-      compiler->last_error = yr_re_ast_split_at_chaining_point(
+      compiler->last_result = yr_re_ast_split_at_chaining_point(
           remainder_re_ast, &re_ast, &remainder_re_ast, &min_gap, &max_gap);
 
-      if (compiler->last_error != ERROR_SUCCESS)
+      if (compiler->last_result != ERROR_SUCCESS)
         goto _exit;
 
       prev_string = aux_string;
 
-      compiler->last_error = _yr_parser_write_string(
+      compiler->last_result = _yr_parser_write_string(
           identifier,
           string_flags,
           compiler,
@@ -648,7 +648,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
           &aux_string,
           &min_atom_quality_aux);
 
-      if (compiler->last_error != ERROR_SUCCESS)
+      if (compiler->last_result != ERROR_SUCCESS)
         goto _exit;
 
       if (min_atom_quality_aux < min_atom_quality)
@@ -669,7 +669,7 @@ YR_STRING* yr_parser_reduce_string_declaration(
   }
   else
   {
-    compiler->last_error = _yr_parser_write_string(
+    compiler->last_result = _yr_parser_write_string(
         identifier,
         string_flags,
         compiler,
@@ -678,19 +678,19 @@ YR_STRING* yr_parser_reduce_string_declaration(
         &string,
         &min_atom_quality);
 
-    if (compiler->last_error != ERROR_SUCCESS)
+    if (compiler->last_result != ERROR_SUCCESS)
       goto _exit;
   }
 
   if (!STRING_IS_ANONYMOUS(string))
   {
-    compiler->last_error = yr_hash_table_add(
+    compiler->last_result = yr_hash_table_add(
       compiler->strings_table,
       identifier,
       NULL,
       string);
 
-    if (compiler->last_error != ERROR_SUCCESS)
+    if (compiler->last_result != ERROR_SUCCESS)
       goto _exit;
   }
 
@@ -710,7 +710,7 @@ _exit:
   if (remainder_re_ast != NULL)
     yr_re_ast_destroy(remainder_re_ast);
 
-  if (compiler->last_error != ERROR_SUCCESS)
+  if (compiler->last_result != ERROR_SUCCESS)
     return NULL;
 
   return string;
@@ -740,11 +740,11 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
     // appropriate error.
 
     yr_compiler_set_error_extra_info(compiler, identifier);
-    compiler->last_error = ERROR_DUPLICATED_IDENTIFIER;
+    compiler->last_result = ERROR_DUPLICATED_IDENTIFIER;
     return NULL;
   }
 
-  compiler->last_error = yr_arena_allocate_struct(
+  compiler->last_result = yr_arena_allocate_struct(
       compiler->rules_arena,
       sizeof(YR_RULE),
       (void**) &rule,
@@ -755,7 +755,7 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
       offsetof(YR_RULE, ns),
       EOL);
 
-  if (compiler->last_error != ERROR_SUCCESS)
+  if (compiler->last_result != ERROR_SUCCESS)
     return NULL;
 
   rule->g_flags = flags;
@@ -765,23 +765,23 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
   rule->time_cost = 0;
   #endif
 
-  compiler->last_error = yr_arena_write_string(
+  compiler->last_result = yr_arena_write_string(
       compiler->sz_arena,
       identifier,
       (char**) &rule->identifier);
 
-  if (compiler->last_error != ERROR_SUCCESS)
+  if (compiler->last_result != ERROR_SUCCESS)
     return NULL;
 
-  compiler->last_error = yr_parser_emit(
+  compiler->last_result = yr_parser_emit(
       yyscanner,
       OP_INIT_RULE,
       NULL);
 
-  if (compiler->last_error != ERROR_SUCCESS)
+  if (compiler->last_result != ERROR_SUCCESS)
     return NULL;
 
-  compiler->last_error = yr_arena_allocate_struct(
+  compiler->last_result = yr_arena_allocate_struct(
       compiler->code_arena,
       sizeof(YR_INIT_RULE_ARGS),
       (void**) &init_rule_args,
@@ -789,7 +789,7 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
       offsetof(YR_INIT_RULE_ARGS, jmp_addr),
       EOL);
 
-  if (compiler->last_error != ERROR_SUCCESS)
+  if (compiler->last_result != ERROR_SUCCESS)
     return NULL;
 
   init_rule_args->rule = rule;
@@ -805,7 +805,7 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
 
   if (fixup == NULL)
   {
-    compiler->last_error = ERROR_INSUFFICIENT_MEMORY;
+    compiler->last_result = ERROR_INSUFFICIENT_MEMORY;
     return NULL;
   }
 
@@ -813,7 +813,7 @@ YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
   fixup->next = compiler->fixup_stack_head;
   compiler->fixup_stack_head = fixup;
 
-  compiler->last_error = yr_hash_table_add(
+  compiler->last_result = yr_hash_table_add(
       compiler->rules_table,
       identifier,
       compiler->current_namespace->name,
@@ -855,16 +855,16 @@ int yr_parser_reduce_rule_declaration_phase_2(
         string->chained_to == NULL)
     {
       yr_compiler_set_error_extra_info(compiler, string->identifier);
-      compiler->last_error = ERROR_UNREFERENCED_STRING;
-      return compiler->last_error;
+      compiler->last_result = ERROR_UNREFERENCED_STRING;
+      return compiler->last_result;
     }
 
     strings_in_rule++;
 
     if (strings_in_rule > max_strings_per_rule) {
       yr_compiler_set_error_extra_info(compiler, rule->identifier);
-      compiler->last_error = ERROR_TOO_MANY_STRINGS;
-      return compiler->last_error;
+      compiler->last_result = ERROR_TOO_MANY_STRINGS;
+      return compiler->last_result;
     }
 
     string = (YR_STRING*) yr_arena_next_address(
@@ -873,7 +873,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
         sizeof(YR_STRING));
   }
 
-  compiler->last_error = yr_parser_emit_with_arg_reloc(
+  compiler->last_result = yr_parser_emit_with_arg_reloc(
       yyscanner,
       OP_MATCH_RULE,
       rule,
@@ -887,8 +887,8 @@ int yr_parser_reduce_rule_declaration_phase_2(
   // be in the same arena page. As we don't have a reliable way of getting the
   // address of the next instruction we generate the OP_NOP.
 
-  if (compiler->last_error == ERROR_SUCCESS)
-    compiler->last_error = yr_parser_emit(
+  if (compiler->last_result == ERROR_SUCCESS)
+    compiler->last_result = yr_parser_emit(
         yyscanner,
         OP_NOP,
         &nop_inst_addr);
@@ -898,7 +898,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
   compiler->fixup_stack_head = fixup->next;
   yr_free(fixup);
 
-  return compiler->last_error;
+  return compiler->last_result;
 }
 
 
@@ -959,7 +959,7 @@ int yr_parser_reduce_string_identifier(
     else
     {
       // Anonymous strings not allowed outside of a loop
-      compiler->last_error = ERROR_MISPLACED_ANONYMOUS_STRING;
+      compiler->last_result = ERROR_MISPLACED_ANONYMOUS_STRING;
     }
   }
   else
@@ -1006,7 +1006,7 @@ int yr_parser_reduce_string_identifier(
     }
   }
 
-  return compiler->last_error;
+  return compiler->last_result;
 }
 
 
@@ -1020,7 +1020,7 @@ YR_META* yr_parser_reduce_meta_declaration(
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   YR_META* meta;
 
-  compiler->last_error = yr_arena_allocate_struct(
+  compiler->last_result = yr_arena_allocate_struct(
       compiler->metas_arena,
       sizeof(YR_META),
       (void**) &meta,
@@ -1028,26 +1028,26 @@ YR_META* yr_parser_reduce_meta_declaration(
       offsetof(YR_META, string),
       EOL);
 
-  if (compiler->last_error != ERROR_SUCCESS)
+  if (compiler->last_result != ERROR_SUCCESS)
     return NULL;
 
-  compiler->last_error = yr_arena_write_string(
+  compiler->last_result = yr_arena_write_string(
       compiler->sz_arena,
       identifier,
       (char**) &meta->identifier);
 
-  if (compiler->last_error != ERROR_SUCCESS)
+  if (compiler->last_result != ERROR_SUCCESS)
     return NULL;
 
   if (string != NULL)
-    compiler->last_error = yr_arena_write_string(
+    compiler->last_result = yr_arena_write_string(
         compiler->sz_arena,
         string,
         &meta->string);
   else
     meta->string = NULL;
 
-  if (compiler->last_error != ERROR_SUCCESS)
+  if (compiler->last_result != ERROR_SUCCESS)
     return NULL;
 
   meta->integer = integer;
@@ -1081,7 +1081,7 @@ int yr_parser_reduce_import(
 
   if (!_yr_parser_valid_module_name(module_name))
   {
-    compiler->last_error = ERROR_INVALID_MODULE_NAME;
+    compiler->last_result = ERROR_INVALID_MODULE_NAME;
     yr_compiler_set_error_extra_info(compiler, module_name->c_string);
 
     return ERROR_INVALID_MODULE_NAME;
@@ -1097,44 +1097,44 @@ int yr_parser_reduce_import(
   if (module_structure != NULL)
     return ERROR_SUCCESS;
 
-  compiler->last_error = yr_object_create(
+  compiler->last_result = yr_object_create(
       OBJECT_TYPE_STRUCTURE,
       module_name->c_string,
       NULL,
       &module_structure);
 
-  if (compiler->last_error == ERROR_SUCCESS)
-    compiler->last_error = yr_hash_table_add(
+  if (compiler->last_result == ERROR_SUCCESS)
+    compiler->last_result = yr_hash_table_add(
         compiler->objects_table,
         module_name->c_string,
         compiler->current_namespace->name,
         module_structure);
 
-  if (compiler->last_error == ERROR_SUCCESS)
+  if (compiler->last_result == ERROR_SUCCESS)
   {
-    compiler->last_error = yr_modules_do_declarations(
+    compiler->last_result = yr_modules_do_declarations(
         module_name->c_string,
         module_structure);
 
-    if (compiler->last_error == ERROR_UNKNOWN_MODULE)
+    if (compiler->last_result == ERROR_UNKNOWN_MODULE)
       yr_compiler_set_error_extra_info(compiler, module_name->c_string);
   }
 
-  if (compiler->last_error == ERROR_SUCCESS)
-    compiler->last_error = yr_arena_write_string(
+  if (compiler->last_result == ERROR_SUCCESS)
+    compiler->last_result = yr_arena_write_string(
         compiler->sz_arena,
         module_name->c_string,
         &name);
 
-  if (compiler->last_error == ERROR_SUCCESS)
-    compiler->last_error = yr_parser_emit_with_arg_reloc(
+  if (compiler->last_result == ERROR_SUCCESS)
+    compiler->last_result = yr_parser_emit_with_arg_reloc(
         yyscanner,
         OP_IMPORT,
         name,
         NULL,
         NULL);
 
-  return compiler->last_error;
+  return compiler->last_result;
 }
 
 
@@ -1224,7 +1224,7 @@ int yr_parser_reduce_operation(
       // One operand is double and the other is integer,
       // cast the integer to double
 
-      compiler->last_error = yr_parser_emit_with_arg(
+      compiler->last_result = yr_parser_emit_with_arg(
           yyscanner,
           OP_INT_TO_DBL,
           (left_operand.type == EXPRESSION_TYPE_INTEGER) ? 2 : 1,
@@ -1232,7 +1232,7 @@ int yr_parser_reduce_operation(
           NULL);
     }
 
-    if (compiler->last_error == ERROR_SUCCESS)
+    if (compiler->last_result == ERROR_SUCCESS)
     {
       int expression_type = EXPRESSION_TYPE_FLOAT;
 
@@ -1242,7 +1242,7 @@ int yr_parser_reduce_operation(
         expression_type = EXPRESSION_TYPE_INTEGER;
       }
 
-      compiler->last_error = yr_parser_emit(
+      compiler->last_result = yr_parser_emit(
           yyscanner,
           _yr_parser_operator_to_opcode(op, expression_type),
           NULL);
@@ -1256,7 +1256,7 @@ int yr_parser_reduce_operation(
 
     if (opcode != OP_ERROR)
     {
-      compiler->last_error = yr_parser_emit(
+      compiler->last_result = yr_parser_emit(
           yyscanner,
           opcode,
           NULL);
@@ -1266,14 +1266,14 @@ int yr_parser_reduce_operation(
       yr_compiler_set_error_extra_info_fmt(
           compiler, "strings don't support \"%s\" operation", op);
 
-      compiler->last_error = ERROR_WRONG_TYPE;
+      compiler->last_result = ERROR_WRONG_TYPE;
     }
   }
   else
   {
     yr_compiler_set_error_extra_info(compiler, "type mismatch");
-    compiler->last_error = ERROR_WRONG_TYPE;
+    compiler->last_result = ERROR_WRONG_TYPE;
   }
 
-  return compiler->last_error;
+  return compiler->last_result;
 }
