@@ -326,13 +326,11 @@ strings
         memset(&null_string, 0xFF, sizeof(YR_STRING));
         null_string.g_flags = STRING_GFLAGS_NULL;
 
-        int result = yr_arena_write_data(
+        fail_if_error(yr_arena_write_data(
             compiler->strings_arena,
             &null_string,
             sizeof(YR_STRING),
-            NULL);
-
-        fail_if_error(result);
+            NULL));
 
         $$ = $3;
       }
@@ -932,8 +930,6 @@ regexp
 boolean_expression
     : expression
       {
-        int result = ERROR_SUCCESS;
-
         if ($1.type == EXPRESSION_TYPE_STRING)
         {
           if ($1.value.sized_string != NULL)
@@ -943,10 +939,8 @@ boolean_expression
               $1.value.sized_string->c_string);
           }
 
-          result = yr_parser_emit(
-              yyscanner, OP_STR_TO_BOOL, NULL);
-
-          fail_if_error(result);
+          fail_if_error(yr_parser_emit(
+              yyscanner, OP_STR_TO_BOOL, NULL));
         }
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
@@ -1276,22 +1270,18 @@ expression
         YR_FIXUP* fixup;
         void* jmp_destination_addr;
 
-        int result = yr_parser_emit_with_arg_reloc(
+        fail_if_error(yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JFALSE,
             0,          // still don't know the jump destination
             NULL,
-            &jmp_destination_addr);
-
-        fail_if_error(result);
+            &jmp_destination_addr));
 
         // create a fixup entry for the jump and push it in the stack
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
-          result = ERROR_INSUFFICIENT_MEMORY;
-
-        fail_if_error(result);
+          fail_if_error(ERROR_INSUFFICIENT_MEMORY);
 
         fixup->address = jmp_destination_addr;
         fixup->next = compiler->fixup_stack_head;
@@ -1302,9 +1292,7 @@ expression
         YR_FIXUP* fixup;
         uint8_t* nop_addr;
 
-        int result = yr_parser_emit(yyscanner, OP_AND, NULL);
-
-        fail_if_error(result);
+        fail_if_error(yr_parser_emit(yyscanner, OP_AND, NULL));
 
         // Generate a do-nothing instruction (NOP) in order to get its address
         // and use it as the destination for the OP_JFALSE. We can not simply
@@ -1313,9 +1301,7 @@ expression
         // the same arena page. As we don't have a reliable way of getting the
         // address of the next instruction we generate the OP_NOP.
 
-        result = yr_parser_emit(yyscanner, OP_NOP, &nop_addr);
-
-        fail_if_error(result);
+        fail_if_error(yr_parser_emit(yyscanner, OP_NOP, &nop_addr));
 
         fixup = compiler->fixup_stack_head;
         *(void**)(fixup->address) = (void*) nop_addr;
@@ -1329,21 +1315,17 @@ expression
         YR_FIXUP* fixup;
         void* jmp_destination_addr;
 
-        int result = yr_parser_emit_with_arg_reloc(
+        fail_if_error(yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JTRUE,
             0,         // still don't know the jump destination
             NULL,
-            &jmp_destination_addr);
-
-        fail_if_error(result);
+            &jmp_destination_addr));
 
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
-          result = ERROR_INSUFFICIENT_MEMORY;
-
-        fail_if_error(result);
+          fail_if_error(ERROR_INSUFFICIENT_MEMORY);
 
         fixup->address = jmp_destination_addr;
         fixup->next = compiler->fixup_stack_head;
