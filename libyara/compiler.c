@@ -172,7 +172,6 @@ YR_API int yr_compiler_create(
   new_compiler->last_error = ERROR_SUCCESS;
   new_compiler->last_error_line = 0;
   new_compiler->current_line = 0;
-  new_compiler->last_result = ERROR_SUCCESS;
   new_compiler->file_name_stack_ptr = 0;
   new_compiler->fixup_stack_head = NULL;
   new_compiler->loop_depth = 0;
@@ -434,29 +433,21 @@ int _yr_compiler_push_file_name(
   for (i = 0; i < compiler->file_name_stack_ptr; i++)
   {
     if (strcmp(file_name, compiler->file_name_stack[i]) == 0)
-    {
-      compiler->last_result = ERROR_INCLUDES_CIRCULAR_REFERENCE;
       return ERROR_INCLUDES_CIRCULAR_REFERENCE;
-    }
   }
 
-  if (compiler->file_name_stack_ptr < YR_MAX_INCLUDE_DEPTH)
-  {
-    str = yr_strdup(file_name);
-
-    if (str == NULL)
-      return ERROR_INSUFFICIENT_MEMORY;
-
-    compiler->file_name_stack[compiler->file_name_stack_ptr] = str;
-    compiler->file_name_stack_ptr++;
-
-    return ERROR_SUCCESS;
-  }
-  else
-  {
-    compiler->last_result = ERROR_INCLUDE_DEPTH_EXCEEDED;
+  if (compiler->file_name_stack_ptr == YR_MAX_INCLUDE_DEPTH)
     return ERROR_INCLUDE_DEPTH_EXCEEDED;
-  }
+
+  str = yr_strdup(file_name);
+
+  if (str == NULL)
+    return ERROR_INSUFFICIENT_MEMORY;
+
+  compiler->file_name_stack[compiler->file_name_stack_ptr] = str;
+  compiler->file_name_stack_ptr++;
+
+  return ERROR_SUCCESS;
 }
 
 
@@ -565,20 +556,17 @@ YR_API int yr_compiler_add_file(
     _yr_compiler_push_file_name(compiler, file_name);
 
   if (namespace_ != NULL)
-    compiler->last_result = _yr_compiler_set_namespace(compiler, namespace_);
+    compiler->last_error = _yr_compiler_set_namespace(compiler, namespace_);
   else
-    compiler->last_result = _yr_compiler_set_namespace(compiler, "default");
+    compiler->last_error = _yr_compiler_set_namespace(compiler, "default");
 
-  if (compiler->last_result == ERROR_SUCCESS)
-  {
-    return yr_lex_parse_rules_file(rules_file, compiler);
-  }
-  else
+  if (compiler->last_error != ERROR_SUCCESS)
   {
     compiler->errors++;
     return compiler->errors;
   }
 
+  return yr_lex_parse_rules_file(rules_file, compiler);
 }
 
 
@@ -596,25 +584,23 @@ YR_API int yr_compiler_add_fd(
   // Don't allow calls to yr_compiler_add_fd() if a previous call to
   // yr_compiler_add_XXXX failed.
 
-  assert(compiler->last_error == ERROR_SUCCESS);
+  assert(compiler->errors == 0);
 
   if (file_name != NULL)
     _yr_compiler_push_file_name(compiler, file_name);
 
   if (namespace_ != NULL)
-    compiler->last_result = _yr_compiler_set_namespace(compiler, namespace_);
+    compiler->last_error = _yr_compiler_set_namespace(compiler, namespace_);
   else
-    compiler->last_result = _yr_compiler_set_namespace(compiler, "default");
+    compiler->last_error = _yr_compiler_set_namespace(compiler, "default");
 
-  if (compiler->last_result == ERROR_SUCCESS)
-  {
-    return yr_lex_parse_rules_fd(rules_fd, compiler);
-  }
-  else
+  if (compiler->last_error != ERROR_SUCCESS)
   {
     compiler->errors++;
     return compiler->errors;
   }
+
+  return yr_lex_parse_rules_fd(rules_fd, compiler);
 }
 
 
@@ -631,27 +617,25 @@ YR_API int yr_compiler_add_string(
   // Don't allow calls to yr_compiler_add_string() if a previous call to
   // yr_compiler_add_XXXX failed.
 
-  assert(compiler->last_error == ERROR_SUCCESS);
+  assert(compiler->errors == 0);
 
   if (namespace_ != NULL)
-    compiler->last_result = _yr_compiler_set_namespace(compiler, namespace_);
+    compiler->last_error = _yr_compiler_set_namespace(compiler, namespace_);
   else
-    compiler->last_result = _yr_compiler_set_namespace(compiler, "default");
+    compiler->last_error = _yr_compiler_set_namespace(compiler, "default");
 
-  if (compiler->last_result == ERROR_SUCCESS)
-  {
-    return yr_lex_parse_rules_string(rules_string, compiler);
-  }
-  else
+  if (compiler->last_error != ERROR_SUCCESS)
   {
     compiler->errors++;
     return compiler->errors;
   }
+
+  return yr_lex_parse_rules_string(rules_string, compiler);
 }
 
 
 static int _yr_compiler_compile_rules(
-  YR_COMPILER* compiler)
+    YR_COMPILER* compiler)
 {
   YARA_RULES_FILE_HEADER* rules_file_header = NULL;
   YR_ARENA* arena = NULL;
@@ -830,7 +814,7 @@ YR_API int yr_compiler_get_rules(
   // Don't allow calls to yr_compiler_get_rules() if a previous call to
   // yr_compiler_add_XXXX failed.
 
-  assert(compiler->last_error == ERROR_SUCCESS);
+  assert(compiler->errors == 0);
 
   *rules = NULL;
 
@@ -879,25 +863,20 @@ int _yr_compiler_define_variable(
 
   char* id;
 
-  compiler->last_result = ERROR_SUCCESS;
-
   object = (YR_OBJECT*) yr_hash_table_lookup(
       compiler->objects_table,
       external->identifier,
       NULL);
 
   if (object != NULL)
-  {
-    compiler->last_result = ERROR_DUPLICATED_EXTERNAL_VARIABLE;
-    return compiler->last_result;
-  }
+    return ERROR_DUPLICATED_EXTERNAL_VARIABLE;
 
-  FAIL_ON_COMPILER_ERROR(yr_arena_write_string(
+  FAIL_ON_ERROR(yr_arena_write_string(
       compiler->sz_arena,
       external->identifier,
       &id));
 
-  FAIL_ON_COMPILER_ERROR(yr_arena_allocate_struct(
+  FAIL_ON_ERROR(yr_arena_allocate_struct(
       compiler->externals_arena,
       sizeof(YR_EXTERNAL_VARIABLE),
       (void**) &ext,
@@ -912,25 +891,25 @@ int _yr_compiler_define_variable(
   {
     char* val;
 
-    FAIL_ON_COMPILER_ERROR(yr_arena_write_string(
+    FAIL_ON_ERROR(yr_arena_write_string(
         compiler->sz_arena,
         external->value.s,
         &val));
 
     ext->value.s = val;
 
-    FAIL_ON_COMPILER_ERROR(yr_arena_make_ptr_relocatable(
+    FAIL_ON_ERROR(yr_arena_make_ptr_relocatable(
         compiler->externals_arena,
         ext,
         offsetof(YR_EXTERNAL_VARIABLE, value.s),
         EOL));
   }
 
-  FAIL_ON_COMPILER_ERROR(yr_object_from_external_variable(
+  FAIL_ON_ERROR(yr_object_from_external_variable(
       external,
       &object));
 
-  FAIL_ON_COMPILER_ERROR(yr_hash_table_add(
+  FAIL_ON_ERROR(yr_hash_table_add(
       compiler->objects_table,
       external->identifier,
       NULL,
@@ -951,10 +930,10 @@ YR_API int yr_compiler_define_integer_variable(
   external.identifier = identifier;
   external.value.i = value;
 
-  FAIL_ON_COMPILER_ERROR(_yr_compiler_define_variable(
+  FAIL_ON_ERROR(_yr_compiler_define_variable(
       compiler, &external));
 
-  return compiler->last_result;
+  return ERROR_SUCCESS;
 }
 
 
@@ -969,10 +948,10 @@ YR_API int yr_compiler_define_boolean_variable(
   external.identifier = identifier;
   external.value.i = value;
 
-  FAIL_ON_COMPILER_ERROR(_yr_compiler_define_variable(
+  FAIL_ON_ERROR(_yr_compiler_define_variable(
       compiler, &external));
 
-  return compiler->last_result;
+  return ERROR_SUCCESS;
 }
 
 
@@ -987,10 +966,10 @@ YR_API int yr_compiler_define_float_variable(
   external.identifier = identifier;
   external.value.f = value;
 
-  FAIL_ON_COMPILER_ERROR(_yr_compiler_define_variable(
+  FAIL_ON_ERROR(_yr_compiler_define_variable(
       compiler, &external));
 
-  return compiler->last_result;
+  return ERROR_SUCCESS;
 }
 
 
@@ -1005,10 +984,10 @@ YR_API int yr_compiler_define_string_variable(
   external.identifier = identifier;
   external.value.s = (char*) value;
 
-  FAIL_ON_COMPILER_ERROR(_yr_compiler_define_variable(
+  FAIL_ON_ERROR(_yr_compiler_define_variable(
       compiler, &external));
 
-  return compiler->last_result;
+  return ERROR_SUCCESS;
 }
 
 

@@ -74,7 +74,7 @@ with noyywrap then we can remove this pragma.
 
 #define error(error_code) \
     { \
-      compiler->last_result = error_code; \
+      compiler->last_error = error_code; \
       yyerror(yyscanner, compiler, NULL); \
       yyterminate(); \
     }
@@ -793,7 +793,7 @@ void yyerror(
   /*
     if error_message != NULL the error comes from yyparse internal code
     else the error comes from my code and the error code is set in
-    compiler->last_result
+    compiler->last_error
   */
 
   compiler->errors++;
@@ -829,24 +829,17 @@ void yyerror(
           compiler->user_data);
     }
   }
-  else
+  else if (compiler->callback != NULL)
   {
-    compiler->last_error = compiler->last_result;
+    yr_compiler_get_error_message(compiler, message, sizeof(message));
 
-    if (compiler->callback != NULL)
-    {
-      yr_compiler_get_error_message(compiler, message, sizeof(message));
-
-      compiler->callback(
-        YARA_ERROR_LEVEL_ERROR,
-        file_name,
-        compiler->last_error_line,
-        message,
-        compiler->user_data);
-    }
+    compiler->callback(
+      YARA_ERROR_LEVEL_ERROR,
+      file_name,
+      compiler->last_error_line,
+      message,
+      compiler->user_data);
   }
-
-  compiler->last_result = ERROR_SUCCESS;
 }
 
 

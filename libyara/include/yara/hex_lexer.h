@@ -66,7 +66,7 @@ typedef void* yyscan_t;
 typedef struct _HEX_LEX_ENVIRONMENT
 {
   int inside_or;
-  int last_error_code;
+  int last_error;
   char last_error_message[256];
 
 } HEX_LEX_ENVIRONMENT;
