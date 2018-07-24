@@ -85,7 +85,6 @@ typedef struct _YR_COMPILER
   int               current_line;
   int               last_error;
   int               last_error_line;
-  int               last_result;
 
   jmp_buf           error_recovery;
 
