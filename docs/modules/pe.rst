@@ -106,44 +106,49 @@ Reference
 
 .. c:type:: pointer_to_symbol_table
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has COFF debug info.
+    Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has
+    COFF debug info.
 
 .. c:type:: pointer_to_symbol_table
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has COFF debug info.
+    Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has
+    COFF debug info.
 
 .. c:type:: number_of_symbols
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_FILE_HEADER::NumberOfSymbols. Used when the PE image has COFF debug info.
+    Value of IMAGE_FILE_HEADER::NumberOfSymbols. Used when the PE image has COFF
+    debug info.
 
 .. c:type:: size_of_optional_header
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_FILE_HEADER::SizeOfOptionalHeader. This is real size of the optional header
-    and reflects differences between 32-bit and 64-bit optional header and number of data directories.
+    Value of IMAGE_FILE_HEADER::SizeOfOptionalHeader. This is real size of the
+    optional header and reflects differences between 32-bit and 64-bit optional
+    header and number of data directories.
 
 .. c:type:: opthdr_magic
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
     Value of IMAGE_OPTIONAL_HEADER::Magic.
 
 .. c:type:: size_of_code
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_OPTIONAL_HEADER::SizeOfCode. This is the sum of raw data sizes in code sections.
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfCode. This is the sum of raw data
+    sizes in code sections.
 
 .. c:type:: size_of_initialized_data
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
     Value of IMAGE_OPTIONAL_HEADER::SizeOfInitializedData.
 
@@ -159,15 +164,16 @@ Reference
 
 .. c:type:: base_of_code
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
     Value of IMAGE_OPTIONAL_HEADER::BaseOfCode.
 
 .. c:type:: base_of_data
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_OPTIONAL_HEADER::BaseOfData. This field only exists in 32-bit PE files.
+    Value of IMAGE_OPTIONAL_HEADER::BaseOfData. This field only exists in 32-bit
+    PE files.
 
 .. c:type:: image_base
 
@@ -175,37 +181,40 @@ Reference
 
 .. c:type:: section_alignment
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_OPTIONAL_HEADER::SectionAlignment. When Windows maps a PE image to memory,
-    all raw sizes (including size of header) are aligned up to this value.
+    Value of IMAGE_OPTIONAL_HEADER::SectionAlignment. When Windows maps a PE
+    image to memory, all raw sizes (including size of header) are aligned up to
+    this value.
 
 .. c:type:: file_alignment
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_OPTIONAL_HEADER::FileAlignment. All raw data sizes of sections in the PE image
-    are aligned to this value.
+    Value of IMAGE_OPTIONAL_HEADER::FileAlignment. All raw data sizes of sections
+    in the PE image are aligned to this value.
 
 .. c:type:: win32_version_value
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
     Value of IMAGE_OPTIONAL_HEADER::Win32VersionValue.
 
 .. c:type:: size_of_image
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_OPTIONAL_HEADER::SizeOfImage. This is the total virtual size of header and all sections.
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfImage. This is the total virtual size
+    of header and all sections.
 
 .. c:type:: size_of_headers
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_OPTIONAL_HEADER::SizeOfHeaders. This is the raw data size of the PE headers
-    including DOS header, file header, optional header and all section headers.
-    When PE is mapped to memory, this value is subject to aligning up to SectionAlignment.
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfHeaders. This is the raw data size of
+    the PE headers including DOS header, file header, optional header and all
+    section headers. When PE is mapped to memory, this value is subject to
+    aligning up to SectionAlignment.
 
 .. c:type:: characteristics
 
@@ -316,45 +325,50 @@ Reference
 
 .. c:type:: size_of_stack_reserve
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_OPTIONAL_HEADER::SizeOfStackReserve. This is the default amount of virtual memory that will be reserved for stack.
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfStackReserve. This is the default
+    amount of virtual memory that will be reserved for stack.
 
 .. c:type:: size_of_stack_commit
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_OPTIONAL_HEADER::SizeOfStackCommit. This is the default amount of virtual memory that will be allocated for stack.
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfStackCommit. This is the default
+    amount of virtual memory that will be allocated for stack.
 
 .. c:type:: size_of_heap_reserve
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_OPTIONAL_HEADER::SizeOfHeapReserve. This is the default amount of virtual memory that will be reserved for main process heap.
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfHeapReserve. This is the default
+    amount of virtual memory that will be reserved for main process heap.
 
 .. c:type:: size_of_heap_commit
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    Value of IMAGE_OPTIONAL_HEADER::SizeOfHeapCommit. This is the default amount of virtual memory that will be allocated for main process heap.
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfHeapCommit. This is the default
+    amount of virtual memory that will be allocated for main process heap.
 
 .. c:type:: loader_flags
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
     Value of IMAGE_OPTIONAL_HEADER::LoaderFlags.
 
 .. c:type:: number_of_rva_and_sizes
 
-    Value of IMAGE_OPTIONAL_HEADER::NumberOfRvaAndSizes. This is the number of items in the IMAGE_OPTIONAL_HEADER::DataDirectory array.
+    Value of IMAGE_OPTIONAL_HEADER::NumberOfRvaAndSizes. This is the number of
+    items in the IMAGE_OPTIONAL_HEADER::DataDirectory array.
 
 .. c:type:: data_directories
 
-    .. versionadded:: 3.7.2
+    .. versionadded:: 3.8.0
 
-    A zero-based array of data directories. Each data directory contains virtual address
-    and length of the appropriate data directory. Each data directory has the following
-    entries:
+    A zero-based array of data directories. Each data directory contains virtual
+    address and length of the appropriate data directory. Each data directory
+    has the following entries:
 
     .. c:member:: virtual_address
 
@@ -464,25 +478,25 @@ Reference
 
     .. c:member:: pointer_to_relocations
 
-        .. versionadded:: 3.7.2
+        .. versionadded:: 3.8.0
 
         Value of IMAGE_SECTION_HEADER::PointerToRelocations.
 
     .. c:member:: pointer_to_line_numbers
 
-        .. versionadded:: 3.7.2
+        .. versionadded:: 3.8.0
 
         Value of IMAGE_SECTION_HEADER::PointerToLinenumbers.
 
     .. c:member:: number_of_relocations
 
-        .. versionadded:: 3.7.2
+        .. versionadded:: 3.8.0
 
         Value of IMAGE_SECTION_HEADER::NumberOfRelocations.
 
     .. c:member:: number_of_line_numbers
 
-        .. versionadded:: 3.7.2
+        .. versionadded:: 3.8.0
 
         Value of IMAGE_SECTION_HEADER::NumberOfLineNumbers.
 
@@ -844,8 +858,8 @@ Reference
 
     Function returning the import hash or imphash for the PE. The imphash is
     a MD5 hash of the PE's import table after some normalization. The imphash
-    for a PE can be also computed with `pefile <http://code.google.com/p/pefile/>`_ and you can find more information in
-    `Mandiant's blog <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_.
+    for a PE can be also computed with `pefile <http://code.google.com/p/pefile/>`_
+    and you can find more information in `Mandiant's blog <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_.
 
     *Example: pe.imphash() == "b8bb385806b89680e13fc0cf24f4431e"*
 
