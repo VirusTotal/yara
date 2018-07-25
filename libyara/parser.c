@@ -730,7 +730,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
       yr_hash_table_lookup(
         compiler->objects_table,
         identifier,
-        compiler->current_namespace->name) != NULL)
+        NULL) != NULL)
   {
     // A rule or variable with the same identifier already exists, return the
     // appropriate error.

@@ -694,6 +694,42 @@ void test_rules_stats()
 }
 
 
+void test_issue_920()
+{
+  const char* rules_str = "\
+      rule test { \
+        condition: true \
+      }";
+
+  YR_COMPILER* compiler = NULL;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  // Define a variable named "test"
+  yr_compiler_define_boolean_variable(compiler, "test", 1);
+
+  // The compilation should not succeed, as the rule is named "test" and a
+  // a variable with the same name already exists.
+  yr_compiler_add_string(compiler, rules_str, NULL);
+
+  if (compiler->last_error != ERROR_DUPLICATED_IDENTIFIER)
+  {
+    yr_compiler_destroy(compiler);
+    printf("expecting ERROR_CALLBACK_REQUIRED (%d), got: %d\n",
+           ERROR_DUPLICATED_IDENTIFIER, compiler->last_error);
+    exit(EXIT_FAILURE);
+  }
+
+  yr_compiler_destroy(compiler);
+  yr_finalize();
+}
+
 int main(int argc, char** argv)
 {
   test_disabled_rules();
@@ -704,6 +740,8 @@ int main(int argc, char** argv)
   test_save_load_rules();
   test_scanner();
   test_ast_callback();
-  test_issue_834();
   test_rules_stats();
+
+  test_issue_834();
+  test_issue_920();
 }
