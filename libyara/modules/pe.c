@@ -1347,9 +1347,10 @@ void pe_parse_header(
     int flags)
 {
   PIMAGE_SECTION_HEADER section;
+  PIMAGE_DATA_DIRECTORY data_dir;
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
-  int i, scount;
+  int i, scount, ddcount;
   uint64_t highest_sec_siz = 0;
   uint64_t highest_sec_ofs = 0;
   uint64_t section_end;
@@ -1366,6 +1367,18 @@ void pe_parse_header(
   set_integer(
       yr_le32toh(pe->header->FileHeader.TimeDateStamp),
       pe->object, "timestamp");
+
+  set_integer(
+      yr_le32toh(pe->header->FileHeader.PointerToSymbolTable),
+      pe->object, "pointer_to_symbol_table");
+
+  set_integer(
+      yr_le32toh(pe->header->FileHeader.NumberOfSymbols),
+      pe->object, "number_of_symbols");
+
+  set_integer(
+      yr_le32toh(pe->header->FileHeader.SizeOfOptionalHeader),
+      pe->object, "size_of_optional_header");
 
   set_integer(
       yr_le16toh(pe->header->FileHeader.Characteristics),
@@ -1388,12 +1401,47 @@ void pe_parse_header(
       pe->object, "number_of_rva_and_sizes");
 
   set_integer(
+      yr_le32toh(OptionalHeader(pe, Magic)),
+      pe->object, "opthdr_magic");
+
+  set_integer(
       OptionalHeader(pe, MajorLinkerVersion),
       pe->object, "linker_version.major");
 
   set_integer(
       OptionalHeader(pe, MinorLinkerVersion),
       pe->object, "linker_version.minor");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, SizeOfCode)),
+      pe->object, "size_of_code");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, SizeOfInitializedData)),
+      pe->object, "size_of_initialized_data");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, SizeOfUninitializedData)),
+      pe->object, "size_of_uninitialized_data");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, BaseOfCode)),
+      pe->object, "base_of_code");
+
+  if (!IS_64BITS_PE(pe))
+  {
+      set_integer(
+        yr_le32toh(pe->header->OptionalHeader.BaseOfData),
+        pe->object, "base_of_data");
+  }
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, SectionAlignment)),
+      pe->object, "section_alignment");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, FileAlignment)),
+      pe->object, "file_alignment");
 
   set_integer(
       yr_le16toh(OptionalHeader(pe, MajorOperatingSystemVersion)),
@@ -1420,6 +1468,18 @@ void pe_parse_header(
       pe->object, "subsystem_version.minor");
 
   set_integer(
+      yr_le32toh(OptionalHeader(pe, Win32VersionValue)),
+      pe->object, "win32_version_value");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, SizeOfImage)),
+      pe->object, "size_of_image");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, SizeOfHeaders)),
+      pe->object, "size_of_headers");
+
+  set_integer(
       yr_le32toh(OptionalHeader(pe, CheckSum)),
       pe->object, "checksum");
 
@@ -1430,6 +1490,53 @@ void pe_parse_header(
   set_integer(
       OptionalHeader(pe, DllCharacteristics),
       pe->object, "dll_characteristics");
+
+  set_integer(
+      IS_64BITS_PE(pe) ?
+      yr_le64toh(OptionalHeader(pe, SizeOfStackReserve)) :
+      yr_le32toh(OptionalHeader(pe, SizeOfStackReserve)),
+      pe->object, "size_of_stack_reserve");
+
+  set_integer(
+      IS_64BITS_PE(pe) ?
+      yr_le64toh(OptionalHeader(pe, SizeOfStackCommit)) :
+      yr_le32toh(OptionalHeader(pe, SizeOfStackCommit)),
+      pe->object, "size_of_stack_commit");
+
+  set_integer(
+      IS_64BITS_PE(pe) ?
+      yr_le64toh(OptionalHeader(pe, SizeOfHeapReserve)) :
+      yr_le32toh(OptionalHeader(pe, SizeOfHeapReserve)),
+      pe->object, "size_of_heap_reserve");
+
+  set_integer(
+      IS_64BITS_PE(pe) ?
+      yr_le64toh(OptionalHeader(pe, SizeOfHeapCommit)) :
+      yr_le32toh(OptionalHeader(pe, SizeOfHeapCommit)),
+      pe->object, "size_of_heap_commit");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, LoaderFlags)),
+      pe->object, "loader_flags");
+
+  data_dir = IS_64BITS_PE(pe) ? pe->header64->OptionalHeader.DataDirectory : pe->header->OptionalHeader.DataDirectory;
+  ddcount = yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes));
+  ddcount = yr_min(ddcount, IMAGE_NUMBEROF_DIRECTORY_ENTRIES);
+  for (i = 0; i < ddcount; i++)
+  {
+    if (!struct_fits_in_pe(pe, data_dir, IMAGE_DATA_DIRECTORY))
+      break;
+
+    set_integer(
+      yr_le32toh(data_dir->VirtualAddress),
+      pe->object, "data_directories[%i].virtual_address", i);
+
+    set_integer(
+      yr_le32toh(data_dir->Size),
+      pe->object, "data_directories[%i].size", i);
+
+    data_dir++;
+  }
 
   pe_iterate_resources(
       pe,
@@ -1474,6 +1581,22 @@ void pe_parse_header(
     set_integer(
         yr_le32toh(section->Misc.VirtualSize),
         pe->object, "sections[%i].virtual_size", i);
+
+    set_integer(
+      yr_le32toh(section->PointerToRelocations),
+      pe->object, "sections[%i].pointer_to_relocations", i);
+
+    set_integer(
+      yr_le32toh(section->PointerToLinenumbers),
+      pe->object, "sections[%i].pointer_to_line_numbers", i);
+
+    set_integer(
+      yr_le32toh(section->NumberOfRelocations),
+      pe->object, "sections[%i].number_of_relocations", i);
+
+    set_integer(
+      yr_le32toh(section->NumberOfLinenumbers),
+      pe->object, "sections[%i].number_of_line_numbers", i);
 
     // This will catch the section with the highest raw offset to help checking
     // if overlay data is present. If two sections have the same raw pointer
@@ -2214,6 +2337,22 @@ begin_declarations;
   declare_integer("UP_SYSTEM_ONLY");
   declare_integer("BYTES_REVERSED_HI");
 
+  declare_integer("IMAGE_DIRECTORY_ENTRY_EXPORT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_IMPORT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_RESOURCE");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_EXCEPTION");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_SECURITY");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_BASERELOC");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_DEBUG");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_ARCHITECTURE");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_GLOBALPTR");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_TLS");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_IAT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR");
+
   declare_integer("SECTION_CNT_CODE");
   declare_integer("SECTION_CNT_INITIALIZED_DATA");
   declare_integer("SECTION_CNT_UNINITIALIZED_DATA");
@@ -2253,6 +2392,9 @@ begin_declarations;
   declare_integer("machine");
   declare_integer("number_of_sections");
   declare_integer("timestamp");
+  declare_integer("pointer_to_symbol_table");
+  declare_integer("number_of_symbols");
+  declare_integer("size_of_optional_header");
   declare_integer("characteristics");
 
   declare_integer("entry_point");
@@ -2260,6 +2402,15 @@ begin_declarations;
   declare_integer("number_of_rva_and_sizes");
 
   declare_string_dictionary("version_info");
+
+  declare_integer("opthdr_magic");
+  declare_integer("size_of_code");
+  declare_integer("size_of_initialized_data");
+  declare_integer("size_of_uninitialized_data");
+  declare_integer("base_of_code");
+  declare_integer("base_of_data");
+  declare_integer("section_alignment");
+  declare_integer("file_alignment");
 
   begin_struct("linker_version");
     declare_integer("major");
@@ -2281,11 +2432,25 @@ begin_declarations;
     declare_integer("minor");
   end_struct("subsystem_version");
 
+  declare_integer("win32_version_value");
+  declare_integer("size_of_image");
+  declare_integer("size_of_headers");
+
   declare_integer("checksum");
   declare_function("calculate_checksum", "", "i", calculate_checksum);
   declare_integer("subsystem");
 
   declare_integer("dll_characteristics");
+  declare_integer("size_of_stack_reserve");
+  declare_integer("size_of_stack_commit");
+  declare_integer("size_of_heap_reserve");
+  declare_integer("size_of_heap_commit");
+  declare_integer("loader_flags");
+
+  begin_struct_array("data_directories");
+    declare_integer("virtual_address");
+    declare_integer("size");
+  end_struct_array("data_directories");
 
   begin_struct_array("sections");
     declare_string("name");
@@ -2294,6 +2459,10 @@ begin_declarations;
     declare_integer("virtual_size");
     declare_integer("raw_data_offset");
     declare_integer("raw_data_size");
+    declare_integer("pointer_to_relocations");
+    declare_integer("pointer_to_line_numbers");
+    declare_integer("number_of_relocations");
+    declare_integer("number_of_line_numbers");
   end_struct_array("sections");
 
   begin_struct("overlay");
@@ -2581,6 +2750,52 @@ int module_load(
   set_integer(
       IMAGE_FILE_BYTES_REVERSED_HI, module_object,
       "BYTES_REVERSED_HI");
+
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_EXPORT, module_object,
+      "IMAGE_DIRECTORY_ENTRY_EXPORT");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_IMPORT, module_object,
+      "IMAGE_DIRECTORY_ENTRY_IMPORT");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_RESOURCE, module_object,
+      "IMAGE_DIRECTORY_ENTRY_RESOURCE");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_EXCEPTION, module_object,
+      "IMAGE_DIRECTORY_ENTRY_EXCEPTION");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_SECURITY, module_object,
+      "IMAGE_DIRECTORY_ENTRY_SECURITY");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_BASERELOC, module_object,
+      "IMAGE_DIRECTORY_ENTRY_BASERELOC");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_DEBUG, module_object,
+      "IMAGE_DIRECTORY_ENTRY_DEBUG");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_ARCHITECTURE, module_object,
+      "IMAGE_DIRECTORY_ENTRY_ARCHITECTURE");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_GLOBALPTR, module_object,
+      "IMAGE_DIRECTORY_ENTRY_GLOBALPTR");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_TLS, module_object,
+      "IMAGE_DIRECTORY_ENTRY_TLS");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, module_object,
+      "IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT, module_object,
+      "IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_IAT, module_object,
+      "IMAGE_DIRECTORY_ENTRY_IAT");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT, module_object,
+      "IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, module_object,
+      "IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR");
 
   set_integer(
       IMAGE_SCN_CNT_CODE, module_object,
