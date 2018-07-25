@@ -926,7 +926,7 @@ YR_API int yr_compiler_define_integer_variable(
 {
   YR_EXTERNAL_VARIABLE external;
 
-  external.type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
+  external.type = EXTERNAL_VARIABLE_TYPE_INTEGER;
   external.identifier = identifier;
   external.value.i = value;
 
