@@ -32,18 +32,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_UTILS_H
 
 #include <limits.h>
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
+#include <yara/strutils.h>
 
 #ifndef NULL
 #define NULL 0
 #endif
+
 
 #ifdef __cplusplus
 #define EXTERNC extern "C"
@@ -60,6 +54,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #if defined(__GNUC__)
+#define YR_DEPRECATED_API EXTERNC __attribute__((deprecated))
+#elif defined(_MSC_VER)
+#define YR_DEPRECATED_API EXTERNC __declspec(deprecated)
+#else
+#define YR_DEPRECATED_API EXTERNC
+#endif
+
+#if defined(__GNUC__)
 #define YR_ALIGN(n) __attribute__((aligned(n)))
 #elif defined(_MSC_VER)
 #define YR_ALIGN(n) __declspec(align(n))
@@ -67,8 +69,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_ALIGN(n)
 #endif
 
-#define yr_min(x, y) ((x < y) ? (x) : (y))
-#define yr_max(x, y) ((x > y) ? (x) : (y))
+#if defined(__GNUC__)
+#define YR_PRINTF_LIKE(x, y) __attribute__((format(printf, x, y)))
+#else
+#define YR_PRINTF_LIKE(x, y)
+#endif
+
+#define yr_min(x, y) (((x) < (y)) ? (x) : (y))
+#define yr_max(x, y) (((x) > (y)) ? (x) : (y))
 
 #define yr_swap(x, y, T) do { T temp = x; x = y; y = temp; } while (0)
 

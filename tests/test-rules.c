@@ -304,6 +304,14 @@ static void test_bitwise_operators()
       "rule test { condition: 1 >> 64 == 0 }",
       NULL);
 
+  assert_error(
+      "rule test { condition: 1 << -1 == 0 }",
+      ERROR_INVALID_OPERAND);
+
+  assert_error(
+      "rule test { condition: 1 >> -1 == 0 }",
+      ERROR_INVALID_OPERAND);
+
   assert_true_rule(
       "rule test { condition: 1 | 3 ^ 3 == 1 | (3 ^ 3) }",
       NULL);
@@ -432,6 +440,14 @@ static void test_strings()
       "rule test { strings: $a = \"abc\" fullword condition: $a }",
       "abcx");
 
+  assert_false_rule_blob(
+      "rule test { strings: $a = \"abc\" wide condition: $a }",
+      "a\1b\0c\0d\0e\0f\0");
+
+  assert_false_rule_blob(
+      "rule test { strings: $a = \"abcdef\" wide condition: $a }",
+      "a\0b\0c\0d\0e\0f\1");
+
   assert_false_rule(
       "rule test { strings: $a = \"abc\" ascii wide fullword condition: $a }",
       "abcx");
@@ -469,6 +485,38 @@ static void test_strings()
          condition:\n\
              all of them\n\
        }", "abcdef");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor\n\
+      condition:\n\
+        #a == 255\n\
+    }", "tests/data/xor.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor ascii\n\
+      condition:\n\
+        #a == 256\n\
+    }", "tests/data/xor.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor wide\n\
+      condition:\n\
+        #a == 256\n\
+    }", "tests/data/xorwide.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" xor nocase\n\
+      condition:\n\
+        #a == 1084\n\
+    }", "tests/data/xornocase.out");
 }
 
 
@@ -1090,15 +1138,20 @@ void test_re()
   assert_true_regexp("aa{0,1}bc", "abc", "abc");
   assert_true_regexp("ab{1}c", "abc", "abc");
   assert_true_regexp("ab{1,2}c", "abbc", "abbc");
+  assert_false_regexp("ab{1,2}c", "abbbc");
   assert_true_regexp("ab{1,}c", "abbbc", "abbbc");
   assert_false_regexp("ab{1,}b", "ab");
   assert_false_regexp("ab{1}c", "abbc");
+  assert_false_regexp("ab{1}c", "ac");
   assert_true_regexp("ab{0,}c", "ac", "ac");
   assert_true_regexp("ab{1,1}c", "abc", "abc");
   assert_true_regexp("ab{0,}c", "abbbc", "abbbc");
   assert_true_regexp("ab{,3}c", "abbbc", "abbbc");
   assert_false_regexp("ab{,2}c", "abbbc");
   assert_false_regexp("ab{4,5}bc", "abbbbc");
+  assert_false_regexp("ab{3}c", "abbbbc");  // Issue #817
+  assert_false_regexp("ab{4}c", "abbbbbc");
+  assert_false_regexp("ab{5}c", "abbbbbbc");
   assert_true_regexp("ab{0,1}", "abbbbb", "ab");
   assert_true_regexp("ab{0,2}", "abbbbb", "abb");
   assert_true_regexp("ab{0,3}", "abbbbb", "abbb");
@@ -1108,6 +1161,12 @@ void test_re()
   assert_true_regexp("ab{1,3}", "abbbbb", "abbb");
   assert_true_regexp("ab{2,2}", "abbbbb", "abb");
   assert_true_regexp("ab{2,3}", "abbbbb", "abbb");
+  assert_true_regexp("ab{2,4}", "abbbbc", "abbbb");
+  assert_true_regexp("ab{3,4}", "abbb", "abbb");
+  assert_true_regexp("ab{3,5}", "abbbbb", "abbbbb");
+  assert_false_regexp("ab{3,4}c", "abbbbbc");
+  assert_false_regexp("ab{3,4}c", "abbc");
+  assert_false_regexp("ab{3,5}c", "abbbbbbc");
   assert_true_regexp("ab{1,3}?", "abbbbb", "ab");
   assert_true_regexp("ab{0,1}?", "abbbbb", "a");
   assert_true_regexp("ab{0,2}?", "abbbbb", "a");
@@ -1805,6 +1864,80 @@ void test_process_scan()
 }
 
 
+void test_performance_warnings()
+{
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 ?? } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 00 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 ?? ?? } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 ?? ?? 02 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 00 00 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 00 00 00 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 00 00 00 00 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 00 00 00 01 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 00 00 01 02 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { FF FF FF FF } \
+        condition: $a }")
+
+  assert_no_warning(
+       "rule test { \
+        strings: $a = { 01 02 03 04 } \
+        condition: $a }")
+
+  assert_no_warning(
+       "rule test { \
+        strings: $a = { 01 02 03 } \
+        condition: $a }")
+
+  assert_no_warning(
+       "rule test { \
+        strings: $a = { 01 02 } \
+        condition: $a }")
+}
+
+
 int main(int argc, char** argv)
 {
   yr_initialize();
@@ -1842,7 +1975,7 @@ int main(int argc, char** argv)
   test_entrypoint();
   test_global_rules();
 
-  #if HAVE_SCAN_PROC_IMPL == 1
+  #if !defined(USE_WINDOWS_PROC) && !defined(USE_NO_PROC)
   test_process_scan();
   #endif
 
@@ -1851,6 +1984,7 @@ int main(int argc, char** argv)
   #endif
 
   test_time_module();
+  test_performance_warnings();
 
   yr_finalize();
 

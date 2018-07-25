@@ -27,11 +27,54 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdbool.h>
 #include <time.h>
 
 #include <yara/stopwatch.h>
 
-#ifdef PROFILING_ENABLED
+#if defined(_WIN32)
+
+void yr_stopwatch_start(
+    YR_STOPWATCH* sw)
+{
+  QueryPerformanceFrequency(&sw->frequency);
+  QueryPerformanceCounter(&sw->start);
+}
+
+
+uint64_t yr_stopwatch_elapsed_us(
+    YR_STOPWATCH* sw)
+{
+  LARGE_INTEGER li;
+
+  QueryPerformanceCounter(&li);
+
+  return (li.QuadPart - sw->start.QuadPart) * 1000000L / sw->frequency.QuadPart;
+}
+
+
+#elif defined(__MACH__)
+
+void yr_stopwatch_start(
+    YR_STOPWATCH* sw)
+{
+  mach_timebase_info(&sw->timebase);
+  sw->start = mach_absolute_time();
+}
+
+
+uint64_t yr_stopwatch_elapsed_us(
+    YR_STOPWATCH* sw)
+{
+  uint64_t now;
+
+  now = mach_absolute_time();
+  return (now - sw->start) * sw->timebase.numer /
+         (sw->timebase.denom * 1000ULL);
+}
+
+
+#else
 
 #define timespecsub(tsp, usp, vsp)                      \
 do {                                                    \
@@ -44,21 +87,29 @@ do {                                                    \
 } while (0)
 
 
-void yr_stopwatch_start(YR_STOPWATCH* stopwatch)
+void yr_stopwatch_start(
+    YR_STOPWATCH* stopwatch)
 {
+  #if defined(HAVE_CLOCK_GETTIME)
   clock_gettime(CLOCK_MONOTONIC, &stopwatch->ts_start);
+  #else
+  #endif
 }
 
 
-uint64_t yr_stopwatch_elapsed_microseconds(YR_STOPWATCH* stopwatch)
+uint64_t yr_stopwatch_elapsed_us(
+    YR_STOPWATCH* stopwatch)
 {
   struct timespec ts_stop;
   struct timespec ts_elapsed;
 
+  #if defined(HAVE_CLOCK_GETTIME)
   clock_gettime(CLOCK_MONOTONIC, &ts_stop);
   timespecsub(&ts_stop, &stopwatch->ts_start, &ts_elapsed);
+  #else
+  #endif
 
-  return ts_elapsed.tv_sec + ts_elapsed.tv_nsec;
+  return ts_elapsed.tv_sec * 1000000L + ts_elapsed.tv_nsec / 1000;
 }
 
 #endif

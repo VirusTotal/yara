@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.5.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -66,34 +66,35 @@ extern int yara_yydebug;
     _REGEXP_ = 276,
     _ASCII_ = 277,
     _WIDE_ = 278,
-    _NOCASE_ = 279,
-    _FULLWORD_ = 280,
-    _AT_ = 281,
-    _FILESIZE_ = 282,
-    _ENTRYPOINT_ = 283,
-    _ALL_ = 284,
-    _ANY_ = 285,
-    _IN_ = 286,
-    _OF_ = 287,
-    _FOR_ = 288,
-    _THEM_ = 289,
-    _MATCHES_ = 290,
-    _CONTAINS_ = 291,
-    _IMPORT_ = 292,
-    _TRUE_ = 293,
-    _FALSE_ = 294,
-    _OR_ = 295,
-    _AND_ = 296,
-    _EQ_ = 297,
-    _NEQ_ = 298,
-    _LT_ = 299,
-    _LE_ = 300,
-    _GT_ = 301,
-    _GE_ = 302,
-    _SHIFT_LEFT_ = 303,
-    _SHIFT_RIGHT_ = 304,
-    _NOT_ = 305,
-    UNARY_MINUS = 306
+    _XOR_ = 279,
+    _NOCASE_ = 280,
+    _FULLWORD_ = 281,
+    _AT_ = 282,
+    _FILESIZE_ = 283,
+    _ENTRYPOINT_ = 284,
+    _ALL_ = 285,
+    _ANY_ = 286,
+    _IN_ = 287,
+    _OF_ = 288,
+    _FOR_ = 289,
+    _THEM_ = 290,
+    _MATCHES_ = 291,
+    _CONTAINS_ = 292,
+    _IMPORT_ = 293,
+    _TRUE_ = 294,
+    _FALSE_ = 295,
+    _OR_ = 296,
+    _AND_ = 297,
+    _EQ_ = 298,
+    _NEQ_ = 299,
+    _LT_ = 300,
+    _LE_ = 301,
+    _GT_ = 302,
+    _GE_ = 303,
+    _SHIFT_LEFT_ = 304,
+    _SHIFT_RIGHT_ = 305,
+    _NOT_ = 306,
+    UNARY_MINUS = 307
   };
 #endif
 /* Tokens.  */
@@ -118,41 +119,42 @@ extern int yara_yydebug;
 #define _REGEXP_ 276
 #define _ASCII_ 277
 #define _WIDE_ 278
-#define _NOCASE_ 279
-#define _FULLWORD_ 280
-#define _AT_ 281
-#define _FILESIZE_ 282
-#define _ENTRYPOINT_ 283
-#define _ALL_ 284
-#define _ANY_ 285
-#define _IN_ 286
-#define _OF_ 287
-#define _FOR_ 288
-#define _THEM_ 289
-#define _MATCHES_ 290
-#define _CONTAINS_ 291
-#define _IMPORT_ 292
-#define _TRUE_ 293
-#define _FALSE_ 294
-#define _OR_ 295
-#define _AND_ 296
-#define _EQ_ 297
-#define _NEQ_ 298
-#define _LT_ 299
-#define _LE_ 300
-#define _GT_ 301
-#define _GE_ 302
-#define _SHIFT_LEFT_ 303
-#define _SHIFT_RIGHT_ 304
-#define _NOT_ 305
-#define UNARY_MINUS 306
+#define _XOR_ 279
+#define _NOCASE_ 280
+#define _FULLWORD_ 281
+#define _AT_ 282
+#define _FILESIZE_ 283
+#define _ENTRYPOINT_ 284
+#define _ALL_ 285
+#define _ANY_ 286
+#define _IN_ 287
+#define _OF_ 288
+#define _FOR_ 289
+#define _THEM_ 290
+#define _MATCHES_ 291
+#define _CONTAINS_ 292
+#define _IMPORT_ 293
+#define _TRUE_ 294
+#define _FALSE_ 295
+#define _OR_ 296
+#define _AND_ 297
+#define _EQ_ 298
+#define _NEQ_ 299
+#define _LT_ 300
+#define _LE_ 301
+#define _GT_ 302
+#define _GE_ 303
+#define _SHIFT_LEFT_ 304
+#define _SHIFT_RIGHT_ 305
+#define _NOT_ 306
+#define UNARY_MINUS 307
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 
 union YYSTYPE
 {
-#line 215 "grammar.y" /* yacc.c:1915  */
+#line 218 "grammar.y" /* yacc.c:1916  */
 
   EXPRESSION      expression;
   SIZED_STRING*   sized_string;
@@ -163,7 +165,7 @@ union YYSTYPE
   YR_META*        meta;
   YR_RULE*        rule;
 
-#line 167 "grammar.h" /* yacc.c:1915  */
+#line 169 "grammar.h" /* yacc.c:1916  */
 };
 
 typedef union YYSTYPE YYSTYPE;

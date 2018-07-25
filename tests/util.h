@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _UTIL_H
 
 extern char compile_error[1024];
+extern int warnings;
 
 int compile_rule(
     char* string,
@@ -38,6 +39,12 @@ int compile_rule(
 
 
 int count_matches(
+    int message,
+    void* message_data,
+    void* user_data);
+
+
+int do_nothing(
     int message,
     void* message_data,
     void* user_data);
@@ -62,6 +69,16 @@ int capture_string(
 
 int read_file(
     char* filename, char** buf);
+
+
+#define assert_true_expr(expr)                                          \
+  do {                                                                  \
+    if (!(expr)) {                                                      \
+      fprintf(stderr, "%s:%d: expression is not true\n",                \
+              __FILE__, __LINE__ );                                     \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+  } while (0);
 
 
 #define assert_true_rule(rule, string)                                  \
@@ -153,6 +170,30 @@ int read_file(
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
   } while (0);
+
+
+#define assert_warnings(rule, w) do {                                   \
+    YR_RULES* rules;                                                    \
+    int result = compile_rule(rule, &rules);                            \
+    if (result == ERROR_SUCCESS) {                                      \
+      yr_rules_destroy(rules);                                          \
+      if (warnings < w) {                                              \
+        fprintf(stderr, "%s:%d: expecting warning\n",                   \
+                __FILE__, __LINE__);                                    \
+        exit(EXIT_FAILURE);                                             \
+      }                                                                 \
+    }                                                                   \
+    else {                                                              \
+      fprintf(stderr, "%s:%d: failed to compile << %s >>: %s\n",        \
+              __FILE__, __LINE__, rule, compile_error);                 \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+  } while (0);
+
+
+#define assert_warning(rule) assert_warnings(rule, 1)
+#define assert_no_warning(rule) assert_warnings(rule, 0)
+
 
 #define assert_true_regexp(regexp,string,expected) do {                 \
     if (!capture_string("rule test { strings: $a = /" regexp            \

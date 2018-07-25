@@ -106,7 +106,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
 
   if (vm_read_overwrite(
       proc_info->task,
-      block->base,
+      (vm_address_t) block->base,
       block->size,
       (vm_address_t) context->buffer,
       &size) != KERN_SUCCESS)
@@ -129,8 +129,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   mach_port_t object;
   vm_region_basic_info_data_64_t info;
   vm_size_t size = 0;
-  vm_address_t address = context->current_block.base \
-                       + context->current_block.size;
+  vm_address_t address = (vm_address_t) \
+      context->current_block.base + context->current_block.size;
   do
   {
     info_count = VM_REGION_BASIC_INFO_COUNT_64;

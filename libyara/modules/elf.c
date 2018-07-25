@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define _GNU_SOURCE
 
+#include <stdbool.h>
 #include <limits.h>
 #include <string.h>
 
@@ -63,7 +64,7 @@ int get_elf_class_data(
   }
 }
 
-static int is_valid_ptr(
+static bool is_valid_ptr(
     const void* base,
     size_t size,
     const void* ptr,
@@ -205,7 +206,7 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
 #define PARSE_ELF_HEADER(bits,bo)                                              \
 void parse_elf_header_##bits##_##bo(                                           \
   elf##bits##_header_t* elf,                                                   \
-  size_t base_address,                                                         \
+  uint64_t base_address,                                                       \
   size_t elf_size,                                                             \
   int flags,                                                                   \
   YR_OBJECT* elf_obj)                                                          \

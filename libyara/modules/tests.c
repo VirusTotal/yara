@@ -84,7 +84,11 @@ define_function(empty)
 
 define_function(match)
 {
-  return_integer(yr_re_match(regexp_argument(1), string_argument(2)));
+  return_integer(
+      yr_re_match(
+          scan_context(),
+          regexp_argument(1),
+          string_argument(2)));
 }
 
 
@@ -207,5 +211,10 @@ int module_load(
 int module_unload(
     YR_OBJECT* module_object)
 {
+  // Fail if module_unload is called twice with the same module_object
+  if (module_object->data == (void*) 0xFABADA)
+    assert(false);
+
+  module_object->data = (void*) 0xFABADA;
   return ERROR_SUCCESS;
 }

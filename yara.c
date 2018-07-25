@@ -93,9 +93,10 @@ typedef struct _CALLBACK_ARGS
 
 typedef struct _THREAD_ARGS
 {
-  YR_RULES* rules;
-  time_t start_time;
-  int current_count;
+  YR_SCANNER*       scanner;
+  CALLBACK_ARGS     callback_args;
+  time_t            start_time;
+  int               current_count;
 
 } THREAD_ARGS;
 
@@ -120,30 +121,32 @@ typedef struct COMPILER_RESULTS
 #define MAX_ARGS_EXT_VAR        32
 #define MAX_ARGS_MODULE_DATA    32
 
+static char* atom_quality_table;
 static char* tags[MAX_ARGS_TAG + 1];
 static char* identifiers[MAX_ARGS_IDENTIFIER + 1];
 static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 static char* modules_data[MAX_ARGS_EXT_VAR + 1];
 
-static int recursive_search = FALSE;
-static int show_module_data = FALSE;
-static int show_tags = FALSE;
-static int show_strings = FALSE;
-static int show_string_length = FALSE;
-static int show_meta = FALSE;
-static int show_namespace = FALSE;
-static int show_version = FALSE;
-static int show_help = FALSE;
-static int ignore_warnings = FALSE;
-static int fast_scan = FALSE;
-static int negate = FALSE;
-static int print_count_only = FALSE;
+static bool recursive_search = false;
+static bool show_module_data = false;
+static bool show_tags = false;
+static bool show_stats = false;
+static bool show_strings = false;
+static bool show_string_length = false;
+static bool show_meta = false;
+static bool show_namespace = false;
+static bool show_version = false;
+static bool show_help = false;
+static bool ignore_warnings = false;
+static bool fast_scan = false;
+static bool negate = false;
+static bool print_count_only = false;
+static bool fail_on_warnings = false;
 static int total_count = 0;
 static int limit = 0;
 static int timeout = 1000000;
 static int stack_size = DEFAULT_STACK_SIZE;
-static int threads = MAX_THREADS;
-static int fail_on_warnings = FALSE;
+static int threads = YR_MAX_THREADS;
 static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 
@@ -153,6 +156,9 @@ static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 args_option_t options[] =
 {
+  OPT_STRING(0, "atom-quality-table", &atom_quality_table,
+      "path to a file with the atom quality table", "FILE"),
+
   OPT_STRING_MULTI('t', "tag", &tags, MAX_ARGS_TAG,
       "print only rules tagged as TAG", "TAG"),
 
@@ -167,6 +173,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN('D', "print-module-data", &show_module_data,
       "print module data"),
+
+  OPT_BOOLEAN('S', "print-stats", &show_stats,
+      "print rules' statistics"),
 
   OPT_BOOLEAN('g', "print-tags", &show_tags,
       "print tags"),
@@ -279,7 +288,7 @@ static void file_queue_finish()
 {
   int i;
 
-  for (i = 0; i < MAX_THREADS; i++)
+  for (i = 0; i < YR_MAX_THREADS; i++)
     semaphore_release(&used_slots);
 }
 
@@ -324,24 +333,22 @@ static char* file_queue_get()
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 
-static int is_directory(
+static bool is_directory(
     const char* path)
 {
   DWORD attributes = GetFileAttributes(path);
 
   if (attributes != INVALID_FILE_ATTRIBUTES &&
 	  attributes & FILE_ATTRIBUTE_DIRECTORY)
-    return TRUE;
+    return true;
   else
-    return FALSE;
+    return false;
 }
 
 static void scan_dir(
     const char* dir,
     int recursive,
-    time_t start_time,
-    YR_RULES* rules,
-    YR_CALLBACK_FUNC callback)
+    time_t start_time)
 {
   static char path_and_mask[MAX_PATH];
 
@@ -367,7 +374,7 @@ static void scan_dir(
                strcmp(FindFileData.cFileName, ".") != 0 &&
                strcmp(FindFileData.cFileName, "..") != 0)
       {
-        scan_dir(full_path, recursive, start_time, rules, callback);
+        scan_dir(full_path, recursive, start_time);
       }
 
     } while (FindNextFile(hFind, &FindFileData));
@@ -378,7 +385,7 @@ static void scan_dir(
 
 #else
 
-static int is_directory(
+static bool is_directory(
     const char* path)
 {
   struct stat st;
@@ -393,9 +400,7 @@ static int is_directory(
 static void scan_dir(
     const char* dir,
     int recursive,
-    time_t start_time,
-    YR_RULES* rules,
-    YR_CALLBACK_FUNC callback)
+    time_t start_time)
 {
   DIR* dp = opendir(dir);
 
@@ -424,7 +429,7 @@ static void scan_dir(
                 strcmp(de->d_name, ".") != 0 &&
                 strcmp(de->d_name, "..") != 0)
         {
-          scan_dir(full_path, recursive, start_time, rules, callback);
+          scan_dir(full_path, recursive, start_time);
         }
       }
 
@@ -503,7 +508,7 @@ static void print_hex_string(
 }
 
 
-static void print_scanner_error(
+static void print_error(
     int error)
 {
   switch (error)
@@ -523,22 +528,51 @@ static void print_scanner_error(
       fprintf(stderr, "could not open file\n");
       break;
     case ERROR_UNSUPPORTED_FILE_VERSION:
-      fprintf(stderr, "rules were compiled with a newer version of YARA.\n");
+      fprintf(stderr, "rules were compiled with a newer version of YARA\n");
       break;
     case ERROR_CORRUPT_FILE:
       fprintf(stderr, "corrupt compiled rules file.\n");
       break;
     case ERROR_EXEC_STACK_OVERFLOW:
       fprintf(stderr, "stack overflow while evaluating condition "
-                      "(see --stack-size argument).\n");
+                      "(see --stack-size argument) \n");
       break;
     case ERROR_INVALID_EXTERNAL_VARIABLE_TYPE:
-      fprintf(stderr, "invalid type for external variable.\n");
+      fprintf(stderr, "invalid type for external variable\n");
+      break;
+    case ERROR_TOO_MANY_MATCHES:
+      fprintf(stderr, "too many matches\n");
       break;
     default:
       fprintf(stderr, "internal error: %d\n", error);
       break;
   }
+}
+
+static void print_scanner_error(
+    YR_SCANNER* scanner,
+    int error)
+{
+  YR_RULE* rule = yr_scanner_last_error_rule(scanner);
+  YR_STRING* string = yr_scanner_last_error_string(scanner);
+
+  if (rule != NULL && string != NULL)
+  {
+    fprintf(
+        stderr,
+        "string \"%s\" in rule \"%s\" caused ",
+        string->identifier,
+        rule->identifier);
+  }
+  else if (rule != NULL)
+  {
+    fprintf(
+        stderr,
+        "rule \"%s\" caused ",
+        rule->identifier);
+  }
+
+  print_error(error);
 }
 
 
@@ -563,20 +597,72 @@ static void print_compiler_error(
 }
 
 
+static void print_rules_stats(
+    YR_RULES* rules)
+{
+  YR_RULES_STATS stats;
+
+  int t = sizeof(stats.top_ac_match_list_lengths) /
+          sizeof(stats.top_ac_match_list_lengths[0]);
+
+  int result = yr_rules_get_stats(rules, &stats);
+
+  if (result != ERROR_SUCCESS)
+  {
+     print_error(result);
+     return;
+  }
+
+  printf(
+      "size of AC transition table        : %d\n",
+      stats.ac_tables_size);
+
+  printf(
+      "average length of AC matches lists : %f\n",
+      stats.ac_average_match_list_length);
+
+  printf(
+      "number of rules                    : %d\n",
+      stats.rules);
+
+  printf(
+      "number of strings                  : %d\n",
+      stats.strings);
+
+  printf(
+      "number of AC matches               : %d\n",
+      stats.ac_matches);
+
+  printf(
+      "number of AC matches in root node  : %d\n",
+      stats.ac_root_match_list_length);
+
+  printf("number of AC matches in top %d longest lists\n", t);
+
+  for (int i = 0; i < t; i++)
+    printf(" %3d: %d\n", i + 1, stats.top_ac_match_list_lengths[i]);
+
+  printf("match list length percentiles\n");
+
+  for (int i = 0; i <= 100; i++)
+    printf(" %3d: %d\n", i, stats.ac_match_list_length_pctls[i]);
+}
+
+
 static int handle_message(
     int message,
     YR_RULE* rule,
     void* data)
 {
   const char* tag;
-  int show = TRUE;
+  bool show = true;
 
   if (tags[0] != NULL)
   {
     // The user specified one or more -t <tag> arguments, let's show this rule
     // only if it's tagged with some of the specified tags.
 
-    show = FALSE;
+    show = false;
 
     for (int i = 0; !show && tags[i] != NULL; i++)
     {
@@ -584,7 +670,7 @@ static int handle_message(
       {
         if (strcmp(tag, tags[i]) == 0)
         {
-          show = TRUE;
+          show = true;
           break;
         }
       }
@@ -596,19 +682,19 @@ static int handle_message(
     // The user specified one or more -i <identifier> arguments, let's show
     // this rule only if it's identifier is among of the provided ones.
 
-    show = FALSE;
+    show = false;
 
     for (int i = 0; !show && identifiers[i] != NULL; i++)
     {
       if (strcmp(identifiers[i], rule->identifier) == 0)
       {
-        show = TRUE;
+        show = true;
         break;
       }
     }
   }
 
-  int is_matching = (message == CALLBACK_MSG_RULE_MATCHING);
+  bool is_matching = (message == CALLBACK_MSG_RULE_MATCHING);
 
   show = show && ((!negate && is_matching) || (negate && !is_matching));
 
@@ -791,31 +877,23 @@ static void* scanning_thread(void* param)
   THREAD_ARGS* args = (THREAD_ARGS*) param;
   char* file_path = file_queue_get();
 
-  int flags = 0;
-
-  if (fast_scan)
-    flags |= SCAN_FLAGS_FAST_MODE;
-
   while (file_path != NULL)
   {
-    CALLBACK_ARGS user_data = { file_path, 0 };
+    args->callback_args.current_count = 0;
+    args->callback_args.file_path = file_path;
 
     int elapsed_time = (int) difftime(time(NULL), args->start_time);
 
     if (elapsed_time < timeout)
     {
-      result = yr_rules_scan_file(
-          args->rules,
-          file_path,
-          flags,
-          callback,
-          &user_data,
-          timeout - elapsed_time);
+      yr_scanner_set_timeout(args->scanner, timeout - elapsed_time);
+
+      result = yr_scanner_scan_file(args->scanner, file_path);
 
       if (print_count_only)
       {
         mutex_lock(&output_mutex);
-        printf("%s: %d\n", file_path, user_data.current_count);
+        printf("%s: %d\n", file_path, args->callback_args.current_count);
         mutex_unlock(&output_mutex);
       }
 
@@ -823,7 +901,7 @@ static void* scanning_thread(void* param)
       {
         mutex_lock(&output_mutex);
         fprintf(stderr, "error scanning %s: ", file_path);
-        print_scanner_error(result);
+        print_scanner_error(args->scanner, result);
         mutex_unlock(&output_mutex);
       }
 
@@ -835,8 +913,6 @@ static void* scanning_thread(void* param)
       file_path = NULL;
     }
   }
-
-  yr_finalize_thread();
 
   return 0;
 }
@@ -938,7 +1014,7 @@ static int load_modules_data()
     if (!equal_sign)
     {
       fprintf(stderr, "error: wrong syntax for `-x` option.\n");
-      return FALSE;
+      return false;
     }
 
     *equal_sign = '\0';
@@ -955,7 +1031,7 @@ static int load_modules_data()
       {
         free(module_data);
         fprintf(stderr, "error: could not open file \"%s\".\n", equal_sign + 1);
-        return FALSE;
+        return false;
       }
 
       module_data->next = modules_data_list;
@@ -963,7 +1039,7 @@ static int load_modules_data()
     }
   }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -993,7 +1069,9 @@ int main(
 
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
+  YR_SCANNER* scanner = NULL;
 
+  int flags = 0;
   int result, i;
 
   argc = args_parse(options, argc, argv);
@@ -1018,9 +1096,9 @@ int main(
     return EXIT_SUCCESS;
   }
 
-  if (threads > MAX_THREADS)
+  if (threads > YR_MAX_THREADS)
   {
-    fprintf(stderr, "maximum number of threads is %d\n", MAX_THREADS);
+    fprintf(stderr, "maximum number of threads is %d\n", YR_MAX_THREADS);
     return EXIT_FAILURE;
   }
 
@@ -1051,7 +1129,6 @@ int main(
   yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
   yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
 
-
   // Try to load the rules file as a binary file containing
   // compiled rules first
 
@@ -1065,7 +1142,7 @@ int main(
       result != ERROR_COULD_NOT_OPEN_FILE &&
       result != ERROR_INVALID_FILE)
   {
-    print_scanner_error(result);
+    print_error(result);
     exit_with_code(EXIT_FAILURE);
   }
 
@@ -1086,7 +1163,7 @@ int main(
 
     if (result != ERROR_SUCCESS)
     {
-      print_scanner_error(result);
+      print_error(result);
       exit_with_code(EXIT_FAILURE);
     }
   }
@@ -1102,8 +1179,21 @@ int main(
 
     if (result != ERROR_SUCCESS)
     {
-      print_scanner_error(result);
+      print_error(result);
       exit_with_code(EXIT_FAILURE);
+    }
+
+    if (atom_quality_table != NULL)
+    {
+      result = yr_compiler_load_atom_quality_table(
+          compiler, atom_quality_table, 0);
+
+      if (result != ERROR_SUCCESS)
+      {
+        fprintf(stderr, "error loading atom quality table: ");
+        print_error(result);
+        exit_with_code(EXIT_FAILURE);
+      }
     }
 
     cr.errors = 0;
@@ -1133,67 +1223,55 @@ int main(
     }
   }
 
+  if (show_stats)
+    print_rules_stats(rules);
+
   mutex_init(&output_mutex);
 
-  if (is_integer(argv[argc - 1]))
-  {
-    CALLBACK_ARGS user_data = { argv[argc - 1], 0 };
+  if (fast_scan)
+    flags |= SCAN_FLAGS_FAST_MODE;
 
-    int pid = atoi(argv[argc - 1]);
-    int flags = 0;
-
-    if (fast_scan)
-      flags |= SCAN_FLAGS_FAST_MODE;
-
-    result = yr_rules_scan_proc(
-        rules,
-        pid,
-        flags,
-        callback,
-        &user_data,
-        timeout);
-
-    if (result != ERROR_SUCCESS)
-    {
-      print_scanner_error(result);
-      exit_with_code(EXIT_FAILURE);
-    }
-
-    if (print_count_only)
-      printf("%d\n", user_data.current_count);
-  }
-  else if (is_directory(argv[argc - 1]))
+  if (is_directory(argv[argc - 1]))
   {
     if (file_queue_init() != 0)
     {
-      print_scanner_error(ERROR_INTERNAL_FATAL_ERROR);
+      print_error(ERROR_INTERNAL_FATAL_ERROR);
       exit_with_code(EXIT_FAILURE);
     }
 
-    THREAD thread[MAX_THREADS];
-    THREAD_ARGS thread_args;
+    THREAD thread[YR_MAX_THREADS];
+    THREAD_ARGS thread_args[YR_MAX_THREADS];
 
     time_t start_time = time(NULL);
 
-    thread_args.rules = rules;
-    thread_args.start_time = start_time;
-    thread_args.current_count = 0;
-
     for (i = 0; i < threads; i++)
     {
-      if (create_thread(&thread[i], scanning_thread, (void*) &thread_args))
+      thread_args[i].start_time = start_time;
+      thread_args[i].current_count = 0;
+
+      result = yr_scanner_create(rules, &thread_args[i].scanner);
+
+      if (result != ERROR_SUCCESS)
       {
-        print_scanner_error(ERROR_COULD_NOT_CREATE_THREAD);
+        print_error(result);
+        exit_with_code(EXIT_FAILURE);
+      }
+
+      yr_scanner_set_callback(
+          thread_args[i].scanner,
+          callback,
+          &thread_args[i].callback_args);
+
+      yr_scanner_set_flags(thread_args[i].scanner, flags);
+
+      if (create_thread(&thread[i], scanning_thread, (void*) &thread_args[i]))
+      {
+        print_error(ERROR_COULD_NOT_CREATE_THREAD);
         exit_with_code(EXIT_FAILURE);
       }
     }
 
-    scan_dir(
-        argv[argc - 1],
-        recursive_search,
-        start_time,
-        rules,
-        callback);
+    scan_dir(argv[argc - 1], recursive_search, start_time);
 
     file_queue_finish();
 
@@ -1201,29 +1279,36 @@ int main(
     for (i = 0; i < threads; i++)
       thread_join(&thread[i]);
 
+    for (i = 0; i < threads; i++)
+      yr_scanner_destroy(thread_args[i].scanner);
+
     file_queue_destroy();
   }
   else
   {
     CALLBACK_ARGS user_data = { argv[argc - 1], 0 };
 
-    int flags = 0;
+    result = yr_scanner_create(rules, &scanner);
 
-    if (fast_scan)
-      flags |= SCAN_FLAGS_FAST_MODE;
+    if (result != ERROR_SUCCESS)
+    {
+      fprintf(stderr, "error: %d\n", result);
+      exit_with_code(EXIT_FAILURE);
+    }
 
-    result = yr_rules_scan_file(
-        rules,
-        argv[argc - 1],
-        flags,
-        callback,
-        &user_data,
-        timeout);
+    yr_scanner_set_callback(scanner, callback, &user_data);
+    yr_scanner_set_flags(scanner, flags);
+    yr_scanner_set_timeout(scanner, timeout);
+
+    if (is_integer(argv[argc - 1]))
+      result = yr_scanner_scan_proc(scanner, atoi(argv[argc - 1]));
+    else
+      result = yr_scanner_scan_file(scanner, argv[argc - 1]);
 
     if (result != ERROR_SUCCESS)
     {
       fprintf(stderr, "error scanning %s: ", argv[argc - 1]);
-      print_scanner_error(result);
+      print_scanner_error(scanner, result);
       exit_with_code(EXIT_FAILURE);
     }
 
@@ -1231,15 +1316,19 @@ int main(
       printf("%d\n", user_data.current_count);
   }
 
-  #ifdef PROFILING_ENABLED
-  yr_rules_print_profiling_info(rules);
-  #endif
-
   result = EXIT_SUCCESS;
 
 _exit:
 
+  #ifdef PROFILING_ENABLED
+  if (rules != NULL)
+    yr_rules_print_profiling_info(rules);
+  #endif
+
   unload_modules_data();
+
+  if (scanner != NULL)
+    yr_scanner_destroy(scanner);
 
   if (compiler != NULL)
     yr_compiler_destroy(compiler);

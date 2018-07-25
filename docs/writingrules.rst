@@ -4,7 +4,9 @@ Writing YARA rules
 
 YARA rules are easy to write and understand, and they have a syntax that
 resembles the C language. Here is the simplest rule that you can write for
-YARA, which does absolutely nothing::
+YARA, which does absolutely nothing:
+
+.. code-block:: yara
 
     rule dummy
     {
@@ -63,7 +65,7 @@ keywords are reserved and cannot be used as an identifier:
      - uint16be
      - uint32be
      - wide
-     -
+     - xor
      -
 
 Rules are generally composed of two sections: strings definition and condition.
@@ -73,7 +75,9 @@ section is where the strings that will be part of the rule are defined. Each
 string has an identifier consisting of a $ character followed by a sequence of
 alphanumeric characters and underscores, these identifiers can be used in the
 condition section to refer to the corresponding string. Strings can be defined
-in text or hexadecimal form, as shown in the following example::
+in text or hexadecimal form, as shown in the following example:
+
+.. code-block:: yara
 
     rule ExampleRule
     {
@@ -101,7 +105,9 @@ Comments
 ========
 
 You can add comments to your YARA rules just as if it was a C source file, both
-single-line and multi-line C-style comments are supported. ::
+single-line and multi-line C-style comments are supported.
+
+.. code-block:: yara
 
     /*
         This is a multi-line comment ...
@@ -130,7 +136,9 @@ Hexadecimal strings allow three special constructions that make them more
 flexible: wild-cards, jumps, and alternatives. Wild-cards are just placeholders
 that you can put into the string indicating that some bytes are unknown and they
 should match anything. The placeholder character is the question mark (?). Here
-you have an example of a hexadecimal string with wild-cards::
+you have an example of a hexadecimal string with wild-cards:
+
+.. code-block:: yara
 
     rule WildcardExample
     {
@@ -147,7 +155,9 @@ define just one nibble of the byte and leave the other unknown.
 Wild-cards are useful when defining strings whose content can vary but you know
 the length of the variable chunks, however, this is not always the case. In some
 circumstances you may need to define strings with chunks of variable content and
-length. In those situations you can use jumps instead of wild-cards::
+length. In those situations you can use jumps instead of wild-cards:
+
+.. code-block:: yara
 
     rule JumpExample
     {
@@ -200,7 +210,9 @@ The first one means ``[10-infinite]``, the second one means ``[0-infinite]``.
 
 There are also situations in which you may want to provide different
 alternatives for a given fragment of your hex string. In those situations you
-can use a syntax which resembles a regular expression::
+can use a syntax which resembles a regular expression:
+
+.. code-block:: yara
 
     rule AlternativesExample1
     {
@@ -215,7 +227,9 @@ This rule will match any file containing ``F42362B445`` or ``F4235645``.
 
 But more than two alternatives can be also expressed. In fact, there are no
 limits to the amount of alternative sequences you can provide, and neither to
-their lengths. ::
+their lengths.
+
+.. code-block:: yara
 
     rule AlternativesExample2
     {
@@ -232,7 +246,9 @@ allowed as part of alternative sequences.
 Text strings
 ------------
 
-As shown in previous sections, text strings are generally defined like this::
+As shown in previous sections, text strings are generally defined like this:
+
+.. code-block:: yara
 
     rule TextExample
     {
@@ -270,7 +286,9 @@ Case-insensitive strings
 
 Text strings in YARA are case-sensitive by default, however you can turn your
 string into case-insensitive mode by appending the modifier nocase at the end
-of the string definition, in the same line::
+of the string definition, in the same line:
+
+.. code-block:: yara
 
     rule CaseInsensitiveTextExample
     {
@@ -294,7 +312,9 @@ per character, something typical in many executable binaries.
 
 
 In the above figure, the string "Borland" appears encoded as two bytes per
-character, therefore the following rule will match::
+character, therefore the following rule will match:
+
+.. code-block:: yara
 
     rule WideCharTextExample1
     {
@@ -309,7 +329,9 @@ However, keep in mind that this modifier just interleaves the ASCII codes of
 the characters in the string with zeroes, it does not support truly UTF-16
 strings containing non-English characters. If you want to search for strings
 in both ASCII and wide form, you can use the ``ascii`` modifier in conjunction
-with ``wide`` , no matter the order in which they appear. ::
+with ``wide`` , no matter the order in which they appear.
+
+.. code-block:: yara
 
     rule WideCharTextExample2
     {
@@ -323,6 +345,82 @@ with ``wide`` , no matter the order in which they appear. ::
 The ``ascii`` modifier can appear alone, without an accompanying ``wide``
 modifier, but it's not necessary to write it because in absence of ``wide`` the
 string is assumed to be ASCII by default.
+
+XOR strings
+^^^^^^^^^^^
+
+The ``xor`` modifier can be used to search for strings with a single byte xor
+applied to them.
+
+The following rule will search for every single byte xor applied to the string
+"This program cannot":
+
+.. code-block:: yara
+
+    rule XorExample1
+    {
+        strings:
+            $xor_string = "This program cannot" xor
+
+        condition:
+           $xor_string
+    }
+
+The above rule is logically equivalent to:
+
+.. code-block:: yara
+
+    rule XorExample2
+    {
+        strings:
+            $xor_string_00 = "This program cannot"
+            $xor_string_01 = "Uihr!qsnfs`l!b`oonu"
+            $xor_string_02 = "Vjkq\"rpmepco\"acllmv"
+            // Repeat for every single byte xor
+        condition:
+            any of them
+    }
+
+You can also combine the ``xor`` modifier with ``wide``, ``ascii`` and
+``nocase`` modifiers. For example, to search for the ``wide`` and ``ascii``
+versions of a string after every single byte xor has been applied you would
+use:
+
+.. code-block:: yara
+
+    rule XorExample3
+    {
+        strings:
+            $xor_string = "This program cannot" xor wide ascii
+        condition:
+            $xor_string
+    }
+
+The ``xor`` modifier is applied after every other modifier. This means that
+using the ``xor`` and ``wide`` together results in the xor applying to the
+interleaved zero bytes. For example, the following two rules are logically
+equivalent:
+
+.. code-block:: yara
+
+    rule XorExample3
+    {
+        strings:
+            $xor_string = "This program cannot" xor wide
+        condition:
+            $xor_string
+    }
+
+    rule XorExample4
+    {
+        strings:
+            $xor_string_00 = "T\x00h\x00i\x00s\x00 \x00p\x00r\x00o\x00g\x00r\x00a\x00m\x00 \x00c\x00a\x00n\x00n\x00o\x00t\x00"
+            $xor_string_01 = "U\x01i\x01h\x01r\x01!\x01q\x01s\x01n\x01f\x01s\x01`\x01l\x01!\x01b\x01`\x01o\x01o\x01n\x01u\x01"
+            $xor_string_02 = "V\x02j\x02k\x02q\x02\"\x02r\x02p\x02m\x02e\x02p\x02c\x02o\x02\"\x02a\x02c\x02l\x02l\x02m\x02v\x02"
+            // Repeat for every single byte xor operation.
+        condition:
+            any of them
+    }
 
 Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -338,7 +436,9 @@ Regular expressions
 
 Regular expressions are one of the most powerful features of YARA. They are
 defined in the same way as text strings, but enclosed in forward slashes instead
-of double-quotes, like in the Perl programming language. ::
+of double-quotes, like in the Perl programming language.
+
+.. code-block:: yara
 
     rule RegExpExample1
     {
@@ -480,7 +580,9 @@ expressions.
 
 String identifiers can be also used within a condition, acting as Boolean
 variables whose value depends on the presence or not of the associated string
-in the file. ::
+in the file.
+
+.. code-block:: yara
 
     rule Example
     {
@@ -501,7 +603,9 @@ Sometimes we need to know not only if a certain string is present or not,
 but how many times the string appears in the file or process memory. The number
 of occurrences of each string is represented by a variable whose name is the
 string identifier but with a # character in place of the $ character.
-For example::
+For example:
+
+.. code-block:: yara
 
     rule CountExample
     {
@@ -527,7 +631,9 @@ are willing to know if the associated string is anywhere within the file or
 process memory, but sometimes we need to know if the string is at some specific
 offset on the file or at some virtual address within the process address space.
 In such situations the operator ``at`` is what we need. This operator is used as
-shown in the following example::
+shown in the following example:
+
+.. code-block:: yara
 
     rule AtExample
     {
@@ -549,7 +655,9 @@ operator ``at`` over the ``and``.
 
 While the ``at`` operator allows to search for a string at some fixed offset in
 the file or virtual address in a process memory space, the ``in`` operator
-allows to search for the string within a range of offsets or addresses. ::
+allows to search for the string within a range of offsets or addresses.
+
+.. code-block:: yara
 
     rule InExample
     {
@@ -593,7 +701,9 @@ String identifiers are not the only variables that can appear in a condition
 (in fact, rules can be defined without any string definition as will be shown
 below), there are other special variables that can be used as well. One of
 these special variables is ``filesize``, which holds, as its name indicates,
-the size of the file being scanned. The size is expressed in bytes. ::
+the size of the file being scanned. The size is expressed in bytes.
+
+.. code-block:: yara
 
     rule FileSizeExample
     {
@@ -619,7 +729,9 @@ this variable holds the raw offset of the executable’s entry point in case we
 are scanning a file. If we are scanning a running process, the entrypoint will
 hold the virtual address of the main executable’s entry point. A typical use of
 this variable is to look for some pattern at the entry point to detect packers
-or simple file infectors. ::
+or simple file infectors.
+
+.. code-block:: yara
 
     rule EntryPointExample1
     {
@@ -679,7 +791,9 @@ Both 16 and 32 bit integers are considered to be little-endian. If you
 want to read a big-endian integer use the corresponding function ending
 in ``be``. The <offset or virtual address> parameter can be any expression returning
 an unsigned integer, including the return value of one the ``uintXX`` functions
-itself. As an example let's see a rule to distinguish PE files::
+itself. As an example let's see a rule to distinguish PE files:
+
+.. code-block:: yara
 
     rule IsPE
     {
@@ -697,7 +811,9 @@ Sets of strings
 There are circumstances in which it is necessary to express that the file should
 contain a certain number strings from a given set. None of the strings in the
 set are required to be present, but at least some of them should be. In these
-situations the ``of`` operator can be used. ::
+situations the ``of`` operator can be used.
+
+.. code-block:: yara
 
     rule OfExample1
     {
@@ -716,7 +832,9 @@ using this operator, the number before the ``of`` keyword must be less than or
 equal to the number of strings in the set.
 
 The elements of the set can be explicitly enumerated like in the previous
-example, or can be specified by using wild cards. For example::
+example, or can be specified by using wild cards. For example:
+
+.. code-block:: yara
 
     rule OfExample2
     {
@@ -743,7 +861,9 @@ example, or can be specified by using wild cards. For example::
     }
 
 You can even use ``($*)`` to refer to all the strings in your rule, or write
-the equivalent keyword ``them`` for more legibility. ::
+the equivalent keyword ``them`` for more legibility.
+
+.. code-block:: yara
 
     rule OfExample4
     {
@@ -758,7 +878,9 @@ the equivalent keyword ``them`` for more legibility. ::
 
 In all the examples above, the number of strings have been specified by a
 numeric constant, but any expression returning a numeric value can be used.
-The keywords ``any`` and ``all`` can be used as well. ::
+The keywords ``any`` and ``all`` can be used as well.
+
+.. code-block:: yara
 
     all of them       // all strings in the rule
     any of them       // any string in the rule
@@ -770,7 +892,9 @@ Applying the same condition to many strings
 -------------------------------------------
 
 There is another operator very similar to ``of`` but even more powerful, the
-``for..of`` operator. The syntax is::
+``for..of`` operator. The syntax is:
+
+.. code-block:: yara
 
     for expression of string_set : ( boolean_expression )
 
@@ -784,7 +908,9 @@ True.
 Of course, ``boolean_expression`` can be any boolean expression accepted in
 the condition section of a rule, except for one important detail: here you
 can (and should) use a dollar sign ($) as a place-holder for the string being
-evaluated. Take a look at the following expression::
+evaluated. Take a look at the following expression:
+
+.. code-block:: yara
 
     for any of ($a,$b,$c) : ( $ at entrypoint  )
 
@@ -793,13 +919,17 @@ it will be $a, and then $b, and then $c in the three successive evaluations
 of the expression.
 
 Maybe you already realised that the ``of`` operator is an special case of
-``for..of``. The following expressions are the same::
+``for..of``. The following expressions are the same:
+
+.. code-block:: yara
 
     any of ($a,$b,$c)
     for any of ($a,$b,$c) : ( $ )
 
 You can also employ the symbols # and @ to make reference to the number of
-occurrences and the first offset of each string respectively. ::
+occurrences and the first offset of each string respectively.
+
+.. code-block:: yara
 
     for all of them : ( # > 3 )
     for all of ($a*) : ( @ > @b )
@@ -812,7 +942,9 @@ identifier assigned to each string of the rule is usually superfluous. As
 we are not referencing any string individually we do not need to provide
 a unique identifier for each of them. In those situations you can declare
 anonymous strings with identifiers consisting only of the $ character, as in
-the following example::
+the following example:
+
+.. code-block:: yara
 
     rule AnonymousStrings
     {
@@ -834,7 +966,9 @@ using the syntax: @a[i], where i is an index indicating which occurrence
 of the string $a you are referring to. (@a[1], @a[2],...).
 
 Sometimes you will need to iterate over some of these offsets and guarantee
-they satisfy a given condition. For example::
+they satisfy a given condition. For example:
+
+.. code-block:: yara
 
     rule Occurrences
     {
@@ -849,13 +983,17 @@ they satisfy a given condition. For example::
 The previous rule says that the first three occurrences of $b should be 10
 bytes away from the first three occurrences of $a.
 
-The same condition could be written also as::
+The same condition could be written also as:
+
+.. code-block:: yara
 
     for all i in (1..3) : ( @a[i] + 10 == @b[i] )
 
 Notice that we’re using a range (1..3) instead of enumerating the index
 values (1,2,3). Of course, we’re not forced to use constants to specify range
-boundaries, we can use expressions as well like in the following example::
+boundaries, we can use expressions as well like in the following example:
+
+.. code-block:: yara
 
     for all i in (1..#a) : ( @a[i] < 100 )
 
@@ -865,12 +1003,16 @@ occurrence of $a should be within the first 100 bytes of the file.
 
 In case you want to express that only some occurrences of the string
 should satisfy your condition, the same logic seen in the ``for..of`` operator
-applies here::
+applies here:
+
+.. code-block:: yara
 
     for any i in (1..#a) : ( @a[i] < 100 )
     for 2 i in (1..#a) : ( @a[i] < 100 )
 
-In summary, the syntax of this operator is::
+In summary, the syntax of this operator is:
+
+.. code-block:: yara
 
     for expression identifier in indexes : ( boolean_expression )
 
@@ -882,7 +1024,9 @@ Referencing other rules
 When writing the condition for a rule you can also make reference to a
 previously defined rule in a manner that resembles a function invocation of
 traditional programming languages. In this way you can create rules that
-depend on others. Let's see an example::
+depend on others. Let's see an example:
+
+.. code-block:: yara
 
     rule Rule1
     {
@@ -920,7 +1064,9 @@ Global rules give you the possibility of imposing restrictions in all your
 rules at once. For example, suppose that you want all your rules ignoring
 those files that exceed a certain size limit, you could go rule by rule making
 the required modifications to their conditions, or just write a global rule
-like this one::
+like this one:
+
+.. code-block:: yara
 
     global rule SizeLimit
     {
@@ -942,7 +1088,9 @@ offered by YARA of referencing one rule from another (see
 :ref:`referencing-rules`) they become useful. Private rules can serve as
 building blocks for other rules, and at the same time prevent cluttering
 YARA's output with irrelevant information. To delcare a rule as private
-just add the keyword ``private`` before the rule declaration. ::
+just add the keyword ``private`` before the rule declaration.
+
+.. code-block:: yara
 
     private rule PrivateRuleExample
     {
@@ -958,7 +1106,9 @@ Rule tags
 Another useful feature of YARA is the possibility of adding tags to rules.
 Those tags can be used later to filter YARA's output and show only the rules
 that you are interested in. You can add as many tags as you want to a rule,
-they are declared after the rule identifier as shown below::
+they are declared after the rule identifier as shown below:
+
+.. code-block:: yara
 
     rule TagsExample1 : Foo Bar Baz
     {
@@ -985,7 +1135,9 @@ Metadata
 Besides the string definition and condition sections, rules can also have a
 metadata section where you can put additional information about your rule.
 The metadata section is defined with the keyword ``meta`` and contains
-identifier/value pairs like in the following example::
+identifier/value pairs like in the following example:
+
+.. code-block:: yara
 
     rule MetadataExample
     {
@@ -1021,15 +1173,18 @@ third-parties or even yourself as described in :ref:`writing-modules`.
 
 The first step to using a module is importing it with the ``import`` statement.
 These statements must be placed outside any rule definition and followed by
-the module name enclosed in double-quotes. Like this::
+the module name enclosed in double-quotes. Like this:
 
+.. code-block:: yara
 
     import "pe"
     import "cuckoo"
 
 After importing the module you can make use of its features, always using
 ``<module name>.`` as a prefix to any variable or function exported by the
-module. For example::
+module. For example:
+
+.. code-block:: yara
 
     pe.entry_point == 0x1000
     cuckoo.http_request(/someregexp/)
@@ -1042,7 +1197,9 @@ Undefined values
 Modules often leave variables in an undefined state, for example when the
 variable doesn't make sense in the current context (think of ``pe.entry_point``
 while scanning a non-PE file). YARA handles undefined values in way that allows
-the rule to keep its meaningfulness. Take a look at this rule::
+the rule to keep its meaningfulness. Take a look at this rule:
+
+.. code-block:: yara
 
     import "pe"
 
@@ -1058,7 +1215,9 @@ the rule to keep its meaningfulness. Take a look at this rule::
 If the scanned file is not a PE you wouldn't expect this rule to match the file,
 even if it contains the string, because **both** conditions (the presence of
 the string and the right value for the entry point) must be satisfied. However,
-if the condition is changed to::
+if the condition is changed to:
+
+.. code-block:: yara
 
     $a or pe.entry_point == 0x1000
 
@@ -1073,7 +1232,9 @@ External variables
 ==================
 
 External variables allow you to define rules which depends on values provided
-from the outside. For example you can write the following rule::
+from the outside. For example you can write the following rule:
+
+.. code-block:: yara
 
     rule ExternalVariableExample1
     {
@@ -1087,7 +1248,9 @@ run-time (see ``-d`` option of command-line tool, and ``externals`` parameter of
 of types: integer, string or boolean; their type depends on the value assigned
 to them. An integer variable can substitute any integer constant in the
 condition and boolean variables can occupy the place of boolean expressions.
-For example::
+For example:
+
+.. code-block:: yara
 
     rule ExternalVariableExample2
     {
@@ -1098,8 +1261,9 @@ For example::
 External variables of type string can be used with the operators: ``contains``
 and ``matches``. The ``contains`` operator returns true if the string contains
 the specified substring. The ``matches`` operator returns true if the string
-matches the given regular expression. ::
+matches the given regular expression.
 
+.. code-block:: yara
 
     rule ExternalVariableExample3
     {
@@ -1119,7 +1283,9 @@ to be case insensitive you can use ``/[a-z]+/i``. Notice the ``i`` following the
 regular expression in a Perl-like manner. You can also use the ``s`` modifier
 for single-line mode, in this mode the dot matches all characters including
 line breaks. Of course both modifiers can be used simultaneously, like in the
-following example::
+following example:
+
+.. code-block:: yara
 
     rule ExternalVariableExample5
     {
@@ -1141,24 +1307,32 @@ YARA provides the ``include`` directive. This directive works in a similar way
 to the *#include* pre-processor directive in C programs, which inserts the
 content of the specified source file into the current file during compilation.
 The following example will include the content of *other.yar* into the current
-file::
+file:
+
+.. code-block:: yara
 
     include "other.yar"
 
 The base path when searching for a file in an ``include`` directive will be the
 directory where the current file resides. For this reason, the file *other.yar*
 in the previous example should be located in the same directory of the current
-file. However, you can also specify relative paths like these::
+file. However, you can also specify relative paths like these:
+
+.. code-block:: yara
 
     include "./includes/other.yar"
     include "../includes/other.yar"
 
-Or use absolute paths::
+Or use absolute paths:
+
+.. code-block:: yara
 
     include "/home/plusvic/yara/includes/other.yar"
 
 In Windows, both forward and back slashes are accepted, but don’t forget to
-write the drive letter::
+write the drive letter:
+
+.. code-block:: yara
 
     include "c:/yara/includes/other.yar"
     include "c:\\yara\\includes\\other.yar"

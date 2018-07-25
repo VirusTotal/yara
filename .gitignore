@@ -25,6 +25,7 @@ stamp-h1
 /aclocal.m4
 /ar-lib
 /autom4te.cache/
+/build-aux
 /compile
 /config.guess
 /config.h
@@ -48,6 +49,9 @@ stamp-h1
 /yara
 /yarac
 /libyara/modules/.dirstamp
+libyara/proc/.dirstamp
+libyara/yara.pc
+/tests/.dirstamp
 
 # Linux and Mac files
 *.swp
@@ -57,6 +61,21 @@ stamp-h1
 test-alignment
 test-alignment.log
 test-alignment.trs
+test-api
+test-api.log
+test-api.trs
+test-atoms
+test-atoms.log
+test-atoms.trs
+test-bitmask
+test-bitmask.log
+test-bitmask.trs
+test-elf
+test-elf.log
+test-elf.trs
+test-exception
+test-exception.log
+test-exception.trs
 test-rules
 test-rules.log
 test-rules.trs
@@ -67,6 +86,12 @@ test-pe.trs
 test-macho
 test-macho.log
 test-macho.trs
+test-math
+test-math.log
+test-math.trs
+test-version
+test-version.log
+test-version.trs
 
 # Visual Studio files
 Release/
@@ -81,3 +106,5 @@ x64/
 
 # NuGet
 windows/*/packages/
+*.trs
+*.log

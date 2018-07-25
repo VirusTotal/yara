@@ -46,11 +46,8 @@ extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
     return 0;
 
-  if (yr_compiler_add_string(compiler, "import \"elf\"", NULL) != 0)
-    return 0;
-
-  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
-    return 0;
+  if (yr_compiler_add_string(compiler, "import \"elf\"", NULL) == 0)
+    yr_compiler_get_rules(compiler, &rules);
 
   yr_compiler_destroy(compiler);
 
@@ -67,7 +64,7 @@ int callback(int message, void* message_data, void* user_data)
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
   if (rules == NULL)
-    return 1;
+    return 0;
 
   yr_rules_scan_mem(
       rules,

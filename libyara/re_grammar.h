@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.5.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -78,14 +78,14 @@ extern int re_yydebug;
 
 union YYSTYPE
 {
-#line 81 "re_grammar.y" /* yacc.c:1909  */
+#line 83 "re_grammar.y" /* yacc.c:1916  */
 
   int integer;
   uint32_t range;
   RE_NODE* re_node;
   RE_CLASS* re_class;
 
-#line 89 "re_grammar.h" /* yacc.c:1909  */
+#line 89 "re_grammar.h" /* yacc.c:1916  */
 };
 
 typedef union YYSTYPE YYSTYPE;

@@ -8,7 +8,9 @@ PE module
 The PE module allows you to create more fine-grained rules for PE files by
 using attributes and features of the PE file format. This module exposes most of
 the fields present in a PE header and provides functions which can be used to
-write more expressive and targeted rules. Let's see some examples::
+write more expressive and targeted rules. Let's see some examples:
+
+.. code-block:: yara
 
     import "pe"
 
@@ -102,20 +104,122 @@ Reference
 
     PE timestamp.
 
+.. c:type:: pointer_to_symbol_table
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has
+    COFF debug info.
+
+.. c:type:: pointer_to_symbol_table
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has
+    COFF debug info.
+
+.. c:type:: number_of_symbols
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_FILE_HEADER::NumberOfSymbols. Used when the PE image has COFF
+    debug info.
+
+.. c:type:: size_of_optional_header
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_FILE_HEADER::SizeOfOptionalHeader. This is real size of the
+    optional header and reflects differences between 32-bit and 64-bit optional
+    header and number of data directories.
+
+.. c:type:: opthdr_magic
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::Magic.
+
+.. c:type:: size_of_code
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfCode. This is the sum of raw data
+    sizes in code sections.
+
+.. c:type:: size_of_initialized_data
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfInitializedData.
+
+.. c:type:: size_of_uninitialized_data
+
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfUninitializedData.
+
 .. c:type:: entry_point
 
     Entry point raw offset or virtual address depending on whether YARA is
     scanning a file or process memory respectively. This is equivalent to the
     deprecated ``entrypoint`` keyword.
 
+.. c:type:: base_of_code
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::BaseOfCode.
+
+.. c:type:: base_of_data
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::BaseOfData. This field only exists in 32-bit
+    PE files.
+
 .. c:type:: image_base
 
     Image base relative virtual address.
 
+.. c:type:: section_alignment
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::SectionAlignment. When Windows maps a PE
+    image to memory, all raw sizes (including size of header) are aligned up to
+    this value.
+
+.. c:type:: file_alignment
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::FileAlignment. All raw data sizes of sections
+    in the PE image are aligned to this value.
+
+.. c:type:: win32_version_value
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::Win32VersionValue.
+
+.. c:type:: size_of_image
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfImage. This is the total virtual size
+    of header and all sections.
+
+.. c:type:: size_of_headers
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfHeaders. This is the raw data size of
+    the PE headers including DOS header, file header, optional header and all
+    section headers. When PE is mapped to memory, this value is subject to
+    aligning up to SectionAlignment.
+
 .. c:type:: characteristics
 
-    Bitmap with PE FileHeader characteristics. Individual characteristics 
-    can be inspected by performing a bitwise AND operation with the 
+    Bitmap with PE FileHeader characteristics. Individual characteristics
+    can be inspected by performing a bitwise AND operation with the
     following constants:
 
     .. c:type:: RELOCS_STRIPPED
@@ -191,8 +295,8 @@ Reference
 .. c:type:: dll_characteristics
 
     Bitmap with PE OptionalHeader DllCharacteristics.  Do not confuse these
-    flags with the PE FileHeader Characteristics. Individual 
-    characteristics can be inspected by performing a bitwise AND 
+    flags with the PE FileHeader Characteristics. Individual
+    characteristics can be inspected by performing a bitwise AND
     operation with the following constants:
 
     .. c:type:: DYNAMIC_BASE
@@ -207,7 +311,7 @@ Reference
     .. c:type:: NO_ISOLATION
     .. c:type:: NO_SEH
 
-        The file does not contain structured exception handlers, this must be 
+        The file does not contain structured exception handlers, this must be
         set to use SafeSEH
 
     .. c:type:: NO_BIND
@@ -218,6 +322,123 @@ Reference
     .. c:type:: TERMINAL_SERVER_AWARE
 
         Marks the file as terminal server compatible
+
+.. c:type:: size_of_stack_reserve
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfStackReserve. This is the default
+    amount of virtual memory that will be reserved for stack.
+
+.. c:type:: size_of_stack_commit
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfStackCommit. This is the default
+    amount of virtual memory that will be allocated for stack.
+
+.. c:type:: size_of_heap_reserve
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfHeapReserve. This is the default
+    amount of virtual memory that will be reserved for main process heap.
+
+.. c:type:: size_of_heap_commit
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::SizeOfHeapCommit. This is the default
+    amount of virtual memory that will be allocated for main process heap.
+
+.. c:type:: loader_flags
+
+    .. versionadded:: 3.8.0
+
+    Value of IMAGE_OPTIONAL_HEADER::LoaderFlags.
+
+.. c:type:: number_of_rva_and_sizes
+
+    Value of IMAGE_OPTIONAL_HEADER::NumberOfRvaAndSizes. This is the number of
+    items in the IMAGE_OPTIONAL_HEADER::DataDirectory array.
+
+.. c:type:: data_directories
+
+    .. versionadded:: 3.8.0
+
+    A zero-based array of data directories. Each data directory contains virtual
+    address and length of the appropriate data directory. Each data directory
+    has the following entries:
+
+    .. c:member:: virtual_address
+
+        Relative virtual address (RVA) of the PE data directory. If this is zero,
+        then the data directory is missing.
+        Note that for digital signature, this is the file offset, not RVA.
+
+    .. c:member:: size
+
+        Size of the PE data directory, in bytes.
+
+        The index for the data directory entry can be one of the following values:
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_EXPORT
+
+        Data directory for exported functions.
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_IMPORT
+
+        Data directory for import directory.
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_RESOURCE
+
+        Data directory for resource section.
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_EXCEPTION
+
+        Data directory for exception information.
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_SECURITY
+
+        This is the raw file offset and length of the image digital signature.
+        If the image has no embedded digital signature, this directory will contain zeros.
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_BASERELOC
+
+        Data directory for image relocation table.
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_DEBUG
+
+        Data directory for debug information.
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_TLS
+
+        Data directory for image thread local storage.
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG
+
+        Data directory for image load configuration.
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT
+
+        Data directory for image bound import table.
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_IAT
+
+        Data directory for image Import Address Table.
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT
+
+        Data directory for Delayed Import Table. Structure of the delayed import table
+        is linker-dependent. Microsoft version of delayed imports is described
+        in the souces "delayimp.h" and "delayimp.cpp", which can be found
+        in MS Visual Studio 2008 CRT sources.
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR
+
+        Data directory for .NET headers.
+
+    *Example:  pe.data_directories[pe.IMAGE_DIRECTORY_ENTRY_EXPORT].virtual_address != 0*
 
 .. c:type:: number_of_sections
 
@@ -254,6 +475,30 @@ Reference
     .. c:member:: raw_data_size
 
         Section raw size.
+
+    .. c:member:: pointer_to_relocations
+
+        .. versionadded:: 3.8.0
+
+        Value of IMAGE_SECTION_HEADER::PointerToRelocations.
+
+    .. c:member:: pointer_to_line_numbers
+
+        .. versionadded:: 3.8.0
+
+        Value of IMAGE_SECTION_HEADER::PointerToLinenumbers.
+
+    .. c:member:: number_of_relocations
+
+        .. versionadded:: 3.8.0
+
+        Value of IMAGE_SECTION_HEADER::NumberOfRelocations.
+
+    .. c:member:: number_of_line_numbers
+
+        .. versionadded:: 3.8.0
+
+        Value of IMAGE_SECTION_HEADER::NumberOfLineNumbers.
 
     *Example:  pe.sections[0].name == ".text"*
 
@@ -418,6 +663,12 @@ Reference
 
     A zero-based array of signature objects, one for each authenticode
     signature in the PE file. Usually PE files have a single signature.
+
+    .. c:member:: thumbprint
+
+        A string containing the thumbprint of the signature.
+
+    .. versionadded:: 3.8.0
 
     .. c:member:: issuer
 
@@ -607,8 +858,8 @@ Reference
 
     Function returning the import hash or imphash for the PE. The imphash is
     a MD5 hash of the PE's import table after some normalization. The imphash
-    for a PE can be also computed with `pefile <http://code.google.com/p/pefile/>`_ and you can find more information in
-    `Mandiant's blog <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_.
+    for a PE can be also computed with `pefile <http://code.google.com/p/pefile/>`_
+    and you can find more information in `Mandiant's blog <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_.
 
     *Example: pe.imphash() == "b8bb385806b89680e13fc0cf24f4431e"*
 

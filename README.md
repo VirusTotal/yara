@@ -13,7 +13,7 @@ malware families (or whatever you want to describe) based on textual or binary
 patterns. Each description, a.k.a rule, consists of a set of strings and a
 boolean expression which determine its logic. Let's see an example:
 
-```
+```yara
 rule silent_banker : banker
 {
     meta:
@@ -41,15 +41,21 @@ YARA is multi-platform, running on Windows, Linux and Mac OS X, and can be used
 through its command-line interface or from your own Python scripts with the
 yara-python extension.
 
+## Additional resources
+
 If you plan to use YARA to scan compressed files (.zip, .tar, etc) you should
 take a look at [yextend](https://github.com/BayshoreNetworks/yextend), a very
 helpful extension to YARA developed and open-sourced by Bayshore Networks.
+
+Additionally, the guys from [InQuest](https://inquest.net/) have curated an
+awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 
 ## Who's using YARA
 
 * [ActiveCanopy](https://activecanopy.com/)
 * [Adlice](http://www.adlice.com/)
 * [AlienVault](https://otx.alienvault.com/)
+* [Avast](https://www.avast.com/)
 * [BAE Systems](http://www.baesystems.com/home?r=ai)
 * [Bayshore Networks, Inc.](http://www.bayshorenetworks.com)
 * [BinaryAlert](https://github.com/airbnb/binaryalert)
@@ -58,7 +64,10 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Conix](http://www.conix.fr)
 * [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
 * [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
+* [Cyber Triage](http://www.cybertriage.com)
+* [Digita Security](https://digitasecurity.com/product/uxprotect)
 * [ESET](https://www.eset.com)
+* [ESTsecurity](https://www.estsecurity.com)
 * [Fidelis XPS](http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
 * [FireEye, Inc.](http://www.fireeye.com)
 * [Fox-IT](https://www.fox-it.com)
@@ -68,11 +77,13 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Hornetsecurity](https://www.hornetsecurity.com/en/)
 * [InQuest](http://www.inquest.net/)
 * [JASK](http://jask.io)
+* [Joe Security](https://www.joesecurity.org)
 * [jsunpack-n](http://jsunpack.jeek.org/)
 * [Kaspersky Lab](http://www.kaspersky.com)
 * [Koodous](https://koodous.com/)
 * [Laika BOSS](https://github.com/lmco/laikaboss)
 * [Lastline, Inc.](http://www.lastline.com)
+* [LimaCharlie](https://limacharlie.io/)
 * [McAfee Advanced Threat Defense](http://mcafee.com/atd)
 * [Metaflows](http://www.metaflows.com)
 * [NBS System](https://www.nbs-system.com/)
@@ -83,6 +94,7 @@ helpful extension to YARA developed and open-sourced by Bayshore Networks.
 * [Picus Security](http://www.picussecurity.com/)
 * [Radare2](http://rada.re)
 * [Raytheon Cyber Products, Inc.](http://www.raytheoncyber.com/capabilities/products/sureview-threatprotection/)
+* [RedSocks Security](https://redsocks.eu/)
 * [ReversingLabs](http://reversinglabs.com)
 * [root9B](https://www.root9b.com)
 * [RSA ECAT](http://www.emc.com/security/rsa-ecat.htm)

@@ -27,6 +27,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include <string.h>
@@ -120,14 +121,47 @@ PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
     PE* pe,
     int entry)
 {
-  PIMAGE_DATA_DIRECTORY result;
+  PIMAGE_DATA_DIRECTORY directory_start;
+  uint8_t* optional_header_start;
+  uint16_t optional_header_size;
+
+  // We are specifically NOT checking NumberOfRvaAndSizes here because it can
+  // lie. 7ff1bf680c80fd73c0b35084904848b3705480ddeb6d0eff62180bd14cd18570 has
+  // NumberOfRvaAndSizes set to 11 when in fact there is a valid
+  // IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR entry (which is more than 11). If we
+  // are overly strict here and only parse entries which are less than
+  // NumberOfRvaAndSizes we run the risk of missing otherwise perfectly valid
+  // files. Instead of being strict we check to make sure the entry is within
+  // the OptionalHeader, since SizeOfOptionalHeader includes the DataDirectory
+  // array.
+
+  // In case someone requests an entry which is, by definition, invalid.
+  if (entry >= IMAGE_NUMBEROF_DIRECTORY_ENTRIES)
+    return NULL;
 
   if (IS_64BITS_PE(pe))
-    result = &pe->header64->OptionalHeader.DataDirectory[entry];
+  {
+    optional_header_start = (uint8_t*) &pe->header64->OptionalHeader;
+    optional_header_size = pe->header64->FileHeader.SizeOfOptionalHeader;
+    directory_start = pe->header64->OptionalHeader.DataDirectory;
+  }
   else
-    result = &pe->header->OptionalHeader.DataDirectory[entry];
+  {
+    optional_header_start = (uint8_t*) &pe->header->OptionalHeader;
+    optional_header_size = pe->header->FileHeader.SizeOfOptionalHeader;
+    directory_start = pe->header->OptionalHeader.DataDirectory;
+  }
 
-  return result;
+  // Make sure the entry doesn't point outside of the OptionalHeader.
+  if ((uint8_t*) (directory_start + entry) <= optional_header_start + optional_header_size)
+  {
+    if (IS_64BITS_PE(pe))
+      return &pe->header64->OptionalHeader.DataDirectory[entry];
+    else
+      return &pe->header->OptionalHeader.DataDirectory[entry];
+  }
+
+  return NULL;
 }
 
 
@@ -230,7 +264,7 @@ int64_t pe_rva_to_offset(
 
 #include <time.h>
 
-static int is_leap(
+static bool is_leap(
     unsigned int year)
 {
   year += 1900;

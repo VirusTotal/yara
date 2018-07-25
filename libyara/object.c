@@ -29,18 +29,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
-#if _WIN32 || __CYGWIN__
-#define PRIu64 "I64d"
-#else
-#include <inttypes.h>
-#endif
-
+#include <yara/globals.h>
 #include <yara/mem.h>
 #include <yara/error.h>
 #include <yara/object.h>
@@ -84,7 +80,7 @@ int yr_object_create(
       object_size = sizeof(YR_OBJECT_FUNCTION);
       break;
     default:
-      assert(FALSE);
+      assert(false);
   }
 
   obj = (YR_OBJECT*) yr_malloc(object_size);
@@ -92,6 +88,7 @@ int yr_object_create(
   if (obj == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
+  obj->canary = yr_canary;
   obj->type = type;
   obj->identifier = yr_strdup(identifier);
   obj->parent = parent;
@@ -121,7 +118,7 @@ int yr_object_create(
       break;
     case OBJECT_TYPE_FUNCTION:
       object_as_function(obj)->return_obj = NULL;
-      for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+      for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
       {
         object_as_function(obj)->prototypes[i].arguments_fmt = NULL;
         object_as_function(obj)->prototypes[i].code = NULL;
@@ -241,7 +238,7 @@ int yr_object_function_create(
     f = object_as_function(o);
   }
 
-  for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+  for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
   {
     if (f->prototypes[i].arguments_fmt == NULL)
     {
@@ -284,7 +281,7 @@ int yr_object_from_external_variable(
       break;
 
     default:
-      assert(FALSE);
+      assert(false);
   }
 
   result = yr_object_create(
@@ -593,7 +590,7 @@ int yr_object_copy(
               &object_as_function(copy)->return_obj),
           yr_object_destroy(copy));
 
-      for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+      for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
         object_as_function(copy)->prototypes[i] = \
             object_as_function(object)->prototypes[i];
 
@@ -640,7 +637,7 @@ int yr_object_copy(
       break;
 
     default:
-      assert(FALSE);
+      assert(false);
 
   }
 
@@ -862,7 +859,7 @@ int yr_object_dict_set_item(
 }
 
 
-int yr_object_has_undefined_value(
+bool yr_object_has_undefined_value(
     YR_OBJECT* object,
     const char* field,
     ...)
@@ -880,7 +877,7 @@ int yr_object_has_undefined_value(
   va_end(args);
 
   if (field_obj == NULL)
-    return TRUE;
+    return true;
 
   switch(field_obj->type)
   {
@@ -892,7 +889,7 @@ int yr_object_has_undefined_value(
       return field_obj->value.i == UNDEFINED;
   }
 
-  return FALSE;
+  return false;
 }
 
 

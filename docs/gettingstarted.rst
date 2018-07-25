@@ -111,7 +111,9 @@ Running YARA for the first time
 ===============================
 
 Now that you have installed YARA you can write a very simple rule and use the
-command-line tool to scan some file::
+command-line tool to scan some file:
+
+.. code-block:: sh
 
     echo "rule dummy { condition: true }" > my_first_rule
     yara my_first_rule my_first_rule
