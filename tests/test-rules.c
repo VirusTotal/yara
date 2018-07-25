@@ -1161,10 +1161,9 @@ void test_re()
   assert_true_regexp("ab{1,3}", "abbbbb", "abbb");
   assert_true_regexp("ab{2,2}", "abbbbb", "abb");
   assert_true_regexp("ab{2,3}", "abbbbb", "abbb");
-  assert_true_regexp("ab{2,4}", "abbbbc", "abbbbc");
+  assert_true_regexp("ab{2,4}", "abbbbc", "abbbb");
   assert_true_regexp("ab{3,4}", "abbb", "abbb");
-  assert_true_regexp("ab{3,4}", "abbbbc", "abbbbc");
-  assert_true_regexp("ab{3,5}", "abbbbc", "abbbbc");
+  assert_true_regexp("ab{3,5}", "abbbbb", "abbbbb");
   assert_false_regexp("ab{3,4}c", "abbbbbc");
   assert_false_regexp("ab{3,4}c", "abbc");
   assert_false_regexp("ab{3,5}c", "abbbbbbc");
