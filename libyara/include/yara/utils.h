@@ -75,8 +75,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_PRINTF_LIKE(x, y)
 #endif
 
-#define yr_min(x, y) ((x < y) ? (x) : (y))
-#define yr_max(x, y) ((x > y) ? (x) : (y))
+#define yr_min(x, y) (((x) < (y)) ? (x) : (y))
+#define yr_max(x, y) (((x) > (y)) ? (x) : (y))
 
 #define yr_swap(x, y, T) do { T temp = x; x = y; y = temp; } while (0)
 
