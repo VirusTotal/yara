@@ -403,7 +403,7 @@ YR_API int yr_compiler_load_atom_quality_table(
     return ERROR_INSUFFICIENT_MEMORY;
   }
 
-  int entries = file_size / sizeof(YR_ATOM_QUALITY_TABLE_ENTRY);
+  int entries = (int) file_size / sizeof(YR_ATOM_QUALITY_TABLE_ENTRY);
 
   if (fread(table, sizeof(YR_ATOM_QUALITY_TABLE_ENTRY), entries, fh) != entries)
   {
