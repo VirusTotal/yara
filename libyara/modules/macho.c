@@ -145,62 +145,62 @@ void macho_handle_unixthread_##bo(                                             \
     YR_OBJECT* object,                                                         \
     YR_SCAN_CONTEXT* context)                                                  \
 {                                                                              \
-  command = (void*)((uint8_t*)command + sizeof(thread_command_t));             \
+  command = (void*)((uint8_t*)command + sizeof(yr_thread_command_t));          \
   uint64_t address = 0;                                                        \
                                                                                \
   switch (get_integer(object, "cputype"))                                      \
   {                                                                            \
     case CPU_TYPE_MC680X0:                                                     \
     {                                                                          \
-      m68k_thread_state_t* m68k_state = (m68k_thread_state_t*)command;         \
+      yr_m68k_thread_state_t* m68k_state = (yr_m68k_thread_state_t*)command;   \
       address = yr_##bo##32toh(m68k_state->pc);                                \
       break;                                                                   \
     }                                                                          \
     case CPU_TYPE_MC88000:                                                     \
     {                                                                          \
-      m88k_thread_state_t* m88k_state = (m88k_thread_state_t*)command;         \
+      yr_m88k_thread_state_t* m88k_state = (yr_m88k_thread_state_t*)command;   \
       address = yr_##bo##32toh(m88k_state->xip);                               \
       break;                                                                   \
     }                                                                          \
     case CPU_TYPE_SPARC:                                                       \
     {                                                                          \
-      sparc_thread_state_t* sparc_state = (sparc_thread_state_t*)command;      \
+      yr_sparc_thread_state_t* sparc_state = (yr_sparc_thread_state_t*)command;\
       address = yr_##bo##32toh(sparc_state->pc);                               \
       break;                                                                   \
     }                                                                          \
     case CPU_TYPE_POWERPC:                                                     \
     {                                                                          \
-      ppc_thread_state_t* ppc_state = (ppc_thread_state_t*)command;            \
+      yr_ppc_thread_state_t* ppc_state = (yr_ppc_thread_state_t*)command;      \
       address = yr_##bo##32toh(ppc_state->srr0);                               \
       break;                                                                   \
     }                                                                          \
     case CPU_TYPE_X86:                                                         \
     {                                                                          \
-      x86_thread_state_t* x86_state = (x86_thread_state_t*)command;            \
+      yr_x86_thread_state_t* x86_state = (yr_x86_thread_state_t*)command;      \
       address = yr_##bo##32toh(x86_state->eip);                                \
       break;                                                                   \
     }                                                                          \
     case CPU_TYPE_ARM:                                                         \
     {                                                                          \
-      arm_thread_state_t* arm_state = (arm_thread_state_t*)command;            \
+      yr_arm_thread_state_t* arm_state = (yr_arm_thread_state_t*)command;      \
       address = yr_##bo##32toh(arm_state->pc);                                 \
       break;                                                                   \
     }                                                                          \
     case CPU_TYPE_X86_64:                                                      \
     {                                                                          \
-      x86_thread_state64_t* x64_state = (x86_thread_state64_t*)command;        \
+      yr_x86_thread_state64_t* x64_state = (yr_x86_thread_state64_t*)command;  \
       address = yr_##bo##64toh(x64_state->rip);                                \
       break;                                                                   \
     }                                                                          \
     case CPU_TYPE_ARM64:                                                       \
     {                                                                          \
-      arm_thread_state64_t* arm64_state = (arm_thread_state64_t*)command;      \
+      yr_arm_thread_state64_t* arm64_state = (yr_arm_thread_state64_t*)command;\
       address = yr_##bo##64toh(arm64_state->pc);                               \
       break;                                                                   \
     }                                                                          \
     case CPU_TYPE_POWERPC64:                                                   \
     {                                                                          \
-      ppc_thread_state64_t* ppc64_state = (ppc_thread_state64_t*)command;      \
+      yr_ppc_thread_state64_t* ppc64_state = (yr_ppc_thread_state64_t*)command;\
       address = yr_##bo##64toh(ppc64_state->srr0);                             \
       break;                                                                   \
     }                                                                          \
@@ -235,7 +235,7 @@ void macho_handle_main_##bo(                                                   \
     YR_OBJECT* object,                                                         \
     YR_SCAN_CONTEXT* context)                                                  \
 {                                                                              \
-  entry_point_command_t* ep_command = (entry_point_command_t*)command;         \
+  yr_entry_point_command_t* ep_command = (yr_entry_point_command_t*)command;   \
                                                                                \
   uint64_t offset = yr_##bo##64toh(ep_command->entryoff);                      \
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)                              \
@@ -265,7 +265,7 @@ void macho_handle_segment_##bits##_##bo(                                       \
     const uint64_t i,                                                          \
     YR_OBJECT* object)                                                         \
 {                                                                              \
-  segment_command_##bits##_t* sg = (segment_command_##bits##_t*)command;       \
+  yr_segment_command_##bits##_t* sg = (yr_segment_command_##bits##_t*)command; \
   uint64_t command_size = yr_##bo##bits##toh(sg->cmdsize);                     \
                                                                                \
   set_sized_string(sg->segname, strnlen(sg->segname, 16),                      \
@@ -288,14 +288,14 @@ void macho_handle_segment_##bits##_##bo(                                       \
   set_integer(yr_##bo##32toh(sg->flags),                                       \
               object, "segments[%i].flags", i);                                \
                                                                                \
-  uint64_t parsed_size = sizeof(segment_command_##bits##_t);                   \
+  uint64_t parsed_size = sizeof(yr_segment_command_##bits##_t);                \
   for (unsigned j = 0; j < yr_##bo##32toh(sg->nsects); ++j)                    \
   {                                                                            \
-    parsed_size += sizeof(section_##bits##_t);                                 \
+    parsed_size += sizeof(yr_section_##bits##_t);                              \
     if (command_size < parsed_size)                                            \
       break;                                                                   \
                                                                                \
-    section_##bits##_t* sec = ((section_##bits##_t*)(sg + 1)) + j;             \
+    yr_section_##bits##_t* sec = ((yr_section_##bits##_t*)(sg + 1)) + j;       \
     set_sized_string(sec->segname, strnlen(sec->segname, 16),                  \
                      object, "segments[%i].sections[%i].segname", i, j);       \
     set_sized_string(sec->sectname, strnlen(sec->sectname, 16),                \
@@ -321,7 +321,7 @@ void macho_handle_segment_##bits##_##bo(                                       \
                 object, "segments[%i].sections[%i].reserved2", i, j);          \
     if (bits == 64)                                                            \
     {                                                                          \
-      section_64_t* sec_64 = (section_64_t*)sec;                               \
+      yr_section_64_t* sec_64 = (yr_section_64_t*)sec;                         \
       set_integer(yr_##bo##32toh(sec_64->reserved3),                           \
                   object, "segments[%i].sections[%i].reserved3", i, j);        \
     }                                                                          \
@@ -343,10 +343,10 @@ void macho_parse_file_##bits##_##bo(                                           \
     YR_OBJECT* object,                                                         \
     YR_SCAN_CONTEXT* context)                                                  \
 {                                                                              \
-  if (size < sizeof(mach_header_##bits##_t))                                   \
+  if (size < sizeof(yr_mach_header_##bits##_t))                                \
     return;                                                                    \
                                                                                \
-  mach_header_##bits##_t* header = (mach_header_##bits##_t*)data;              \
+  yr_mach_header_##bits##_t* header = (yr_mach_header_##bits##_t*)data;        \
   set_integer(yr_##bo##32toh(header->magic), object, "magic");                 \
   set_integer(yr_##bo##32toh(header->cputype), object, "cputype");             \
   set_integer(yr_##bo##32toh(header->cpusubtype), object, "cpusubtype");       \
@@ -356,17 +356,17 @@ void macho_parse_file_##bits##_##bo(                                           \
   set_integer(yr_##bo##32toh(header->flags), object, "flags");                 \
   if (bits == 64)                                                              \
   {                                                                            \
-    mach_header_64_t* header_64 = (mach_header_64_t*)data;                     \
+    yr_mach_header_64_t* header_64 = (yr_mach_header_64_t*)data;               \
     set_integer(yr_##bo##32toh(header_64->reserved), object, "reserved");      \
   }                                                                            \
                                                                                \
   uint64_t seg_count = 0;                                                      \
-  uint64_t parsed_size = sizeof(mach_header_##bits##_t);                       \
+  uint64_t parsed_size = sizeof(yr_mach_header_##bits##_t);                    \
                                                                                \
   uint8_t *command = (uint8_t*)(header + 1);                                   \
   for (unsigned i = 0; i < yr_##bo##32toh(header->ncmds); i++)                 \
   {                                                                            \
-    load_command_t* command_struct = (load_command_t*)command;                 \
+    yr_load_command_t* command_struct = (yr_load_command_t*)command;           \
     uint64_t command_size = yr_##bo##32toh(command_struct->cmdsize);           \
                                                                                \
     if (size < parsed_size + command_size)                                     \
@@ -447,21 +447,21 @@ void macho_parse_fat_file_##bits(                                              \
     YR_OBJECT* object,                                                         \
     YR_SCAN_CONTEXT* context)                                                  \
 {                                                                              \
-  if (size < sizeof(fat_header_t))                                             \
+  if (size < sizeof(yr_fat_header_t))                                          \
     return;                                                                    \
                                                                                \
   /* All data in Mach-O fat binary headers are in big-endian byte order. */    \
                                                                                \
-  const fat_header_t* header = (fat_header_t*)data;                            \
+  const yr_fat_header_t* header = (yr_fat_header_t*)data;                      \
   set_integer(yr_be32toh(header->magic), object, "fat_magic");                 \
                                                                                \
   uint32_t count = yr_be32toh(header->nfat_arch);                              \
   set_integer(count, object, "nfat_arch");                                     \
                                                                                \
-  if (size < sizeof(fat_header_t) + count * sizeof(fat_arch_##bits##_t))       \
+  if (size < sizeof(yr_fat_header_t) + count * sizeof(yr_fat_arch_##bits##_t)) \
     return;                                                                    \
                                                                                \
-  fat_arch_##bits##_t* archs = (fat_arch_##bits##_t*)(header + 1);             \
+  yr_fat_arch_##bits##_t* archs = (yr_fat_arch_##bits##_t*)(header + 1);       \
   for (uint32_t i = 0; i < count; i++)                                         \
   {                                                                            \
     set_integer(yr_be32toh(archs[i].cputype),                                  \
