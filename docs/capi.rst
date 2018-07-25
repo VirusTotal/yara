@@ -118,17 +118,17 @@ Defining external variables
 ===========================
 
 If your rules make use of external variables (like in the example below), you
-must define those variables by using any of the `yr_compiler_define_XXXX_variable`
+must define those variables by using any of the ``yr_compiler_define_XXXX_variable``
 functions. Variables must be defined before rules are compiled with
-`yr_compiler_add_XXXX` and they must be defined with a type that matches the
+``yr_compiler_add_XXXX`` and they must be defined with a type that matches the
 context in which the variable is used in the rule, a variable that is used like
 `my_var == 5` can't be defined as a string variable.
 
-While defining external variables with `yr_compiler_define_XXXX_variable` you
+While defining external variables with ``yr_compiler_define_XXXX_variable`` you
 must provide a value for each variable. That value is embedded in the compiled
 rules and used whenever the variable appears in a rule. However, you can change
 the value associated to an external variable after the rules has been compiled
-by using any of the `yr_rules_define_XXXX_variable` functions.
+by using any of the ``yr_rules_define_XXXX_variable`` functions.
 
 
 Saving and retrieving compiled rules
@@ -197,7 +197,7 @@ Scanning data
 =============
 
 Once you have an instance of :c:type:`YR_RULES` you can use it directly with one
-of the `yr_rules_scan_XXXX` functions described below, or create a scanner with
+of the ``yr_rules_scan_XXXX`` functions described below, or create a scanner with
 :c:func:`yr_scanner_create`. Let's start by discussing the first approach.
 
 The :c:type:`YR_RULES` you got from the compiler can be used with
@@ -281,7 +281,7 @@ in :ref:`command-line`.
 Using a scanner
 ---------------
 
-The `yr_rules_scan_XXXX` functions are enough in most cases, but sometimes you
+The ``yr_rules_scan_XXXX`` functions are enough in most cases, but sometimes you
 may need a fine-grained control over the scanning. In those cases you can create
 a scanner with :c:func:`yr_scanner_create`. A scanner is simply a wrapper around
 a :c:type:`YR_RULES` structure that holds additional configuration like external
@@ -290,10 +290,10 @@ variables without affecting other users of the :c:type:`YR_RULES` structure.
 A scanner is particularly useful when you want to use the same :c:type:`YR_RULES`
 with multiple workers (it could be a separate thread, a coroutine, etc) and each
 worker needs to set different set of values for external variables. In that
-case you can't use `yr_rules_define_XXXX_variable` for setting the values of your
+case you can't use ``yr_rules_define_XXXX_variable`` for setting the values of your
 external variables, as every worker using the :c:type:`YR_RULES` will be affected
 by such changes. However each worker can have its own scanner, where the scanners
-share the same :c:type:`YR_RULES`, and use `yr_scanner_define_XXXX_variable` for
+share the same :c:type:`YR_RULES`, and use ``yr_scanner_define_XXXX_variable`` for
 setting external variables without affecting the rest of the workers.
 
 This is a better solution than having a separate :c:type:`YR_RULES` for each
