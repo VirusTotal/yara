@@ -76,7 +76,7 @@ uint32_t yr_bitmask_find_non_colliding_offset(
   // first bit of B is 1, so we won't be able to accommodate B at any offset
   // within such slots.
   for (i = *off_a / YR_BITMASK_SLOT_BITS;
-       i <= len_a / YR_BITMASK_SLOT_BITS && a[i] == 0xFFFFFFFFFFFFFFFFL;
+       i <= len_a / YR_BITMASK_SLOT_BITS && a[i] == -1L;
        i++);
 
   *off_a = i;
@@ -84,7 +84,7 @@ uint32_t yr_bitmask_find_non_colliding_offset(
   for (; i <= len_a / YR_BITMASK_SLOT_BITS; i++)
   {
     // The slot is filled with 1s, we can safely skip it.
-    if (a[i] == 0xFFFFFFFFFFFFFFFFL)
+    if (a[i] == -1L)
       continue;
 
     for (j = 0; j <= yr_min(len_a, YR_BITMASK_SLOT_BITS - 1); j++)
