@@ -883,6 +883,9 @@ IMPORTED_DLL* pe_parse_imports(
 
   PIMAGE_IMPORT_DESCRIPTOR imports;
 
+  /* default to 0 imports until we know there are any */
+  set_integer(0, pe->object, "number_of_imports");
+
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
 
@@ -977,6 +980,9 @@ EXPORT_FUNCTIONS* pe_parse_exports(
 
   if (pe == NULL)
     return NULL;
+
+  /* default to 0 exports until we know there are any */
+  set_integer(0, pe->object, "number_of_exports");
 
   directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_EXPORT);
@@ -1355,6 +1361,9 @@ void pe_parse_header(
   uint64_t highest_sec_ofs = 0;
   uint64_t section_end;
   uint64_t last_section_end;
+
+
+  set_integer(1, pe->object, "is_pe");
 
   set_integer(
       yr_le16toh(pe->header->FileHeader.Machine),
@@ -1989,6 +1998,38 @@ define_function(imports_ordinal)
   return_integer(0);
 }
 
+define_function(imports_regex)
+{
+  YR_OBJECT* module = module();
+  PE* pe = (PE*)module->data;
+
+  IMPORTED_DLL* imported_dll;
+
+  if (!pe)
+    return_integer(UNDEFINED);
+
+  imported_dll = pe->imported_dlls;
+
+  while (imported_dll != NULL)
+  {
+    if (yr_re_match(scan_context(), regexp_argument(1), imported_dll->name) > 0)
+    {
+      IMPORT_FUNCTION* imported_func = imported_dll->functions;
+
+      while (imported_func != NULL)
+      {
+        if (yr_re_match(scan_context(), regexp_argument(2), imported_func->name) > 0)
+          return_integer(1);
+        imported_func = imported_func->next;
+      }
+    }
+
+    imported_dll = imported_dll->next;
+  }
+
+  return_integer(0);
+}
+
 define_function(imports_dll)
 {
   char* dll_name = string_argument(1);
@@ -2389,6 +2430,8 @@ begin_declarations;
   declare_integer("RESOURCE_TYPE_HTML");
   declare_integer("RESOURCE_TYPE_MANIFEST");
 
+
+  declare_integer("is_pe");
   declare_integer("machine");
   declare_integer("number_of_sections");
   declare_integer("timestamp");
@@ -2496,6 +2539,7 @@ begin_declarations;
   declare_function("imports", "ss", "i", imports);
   declare_function("imports", "si", "i", imports_ordinal);
   declare_function("imports", "s", "i", imports_dll);
+  declare_function("imports", "rr", "i", imports_regex);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
   declare_function("is_dll", "", "i", is_dll);
@@ -2900,6 +2944,7 @@ int module_load(
   set_integer(
       RESOURCE_TYPE_MANIFEST, module_object,
       "RESOURCE_TYPE_MANIFEST");
+  set_integer(0, module_object, "is_pe");
 
   foreach_memory_block(iterator, block)
   {
