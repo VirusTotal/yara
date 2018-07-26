@@ -89,6 +89,10 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny");
 
+  #endif
+
+  #if defined(HAVE_LIBCRYPTO)
+
   assert_true_rule_file(
       "import \"pe\" \
       rule test { \
