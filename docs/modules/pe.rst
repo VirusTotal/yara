@@ -830,6 +830,17 @@ Reference
 
     *Example:  pe.imports("WS2_32.DLL", 3)*
 
+.. c:function:: imports(dll_regexp, function_regexp)
+
+    .. versionadded:: 3.8.0
+
+    Function returning true if the PE imports a function name matching
+    *function_regexp* from a DLL matching *dll_regexp*. *dll_regexp* is case
+    sensitive unless you use the "/i" modifier in the regexp, as shown in the
+    example below.
+
+    *Example:  pe.imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/)*
+
 .. c:function:: locale(locale_identifier)
 
     .. versionadded:: 3.2.0
