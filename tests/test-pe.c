@@ -34,6 +34,38 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
+          pe.imports(/.*/, /.*CriticalSection/) \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(/kernel32\\.dll/i, /.*/) \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(/.*/, /.*/) \
+      }",
+      "tests/data/tiny-idata-5200");
+
+  assert_false_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(/.*/, /.*CriticalSection/) \
+      }",
+      "tests/data/tiny-idata-5200");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
           pe.number_of_imports == 2 \
       }",
       "tests/data/tiny");
