@@ -698,7 +698,7 @@ void dex_parse(
   #endif
 
   // Get information about the String ID section
-  for (i = 0; i < dex_header->string_ids_size; i++)
+  for (int i = 0; i < dex_header->string_ids_size; i++)
   {
     string_id_item_t* string_id_item = (string_id_item_t*) (
         dex->data +
