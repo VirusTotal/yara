@@ -64,7 +64,7 @@ char* pe_get_dotnet_string(
 uint32_t max_rows(int count, ...)
 {
   va_list ap;
-  int i;
+
   uint32_t biggest;
   uint32_t x;
 
@@ -74,7 +74,7 @@ uint32_t max_rows(int count, ...)
   va_start(ap, count);
   biggest = va_arg(ap, uint32_t);
 
-  for (i = 1; i < count; i++)
+  for (int i = 1; i < count; i++)
   {
     x = va_arg(ap, uint32_t);
     biggest = (x > biggest) ? x : biggest;

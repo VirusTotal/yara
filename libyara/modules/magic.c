@@ -120,9 +120,7 @@ end_declarations;
 int module_initialize(
     YR_MODULE* module)
 {
-  int i;
-
-  for (i = 0; i < YR_MAX_THREADS; i++)
+  for (int i = 0; i < YR_MAX_THREADS; i++)
     magic_cookie[i] = NULL;
 
   return ERROR_SUCCESS;
@@ -132,9 +130,7 @@ int module_initialize(
 int module_finalize(
     YR_MODULE* module)
 {
-  int i;
-
-  for (i = 0; i < YR_MAX_THREADS; i++)
+  for (int i = 0; i < YR_MAX_THREADS; i++)
     if (magic_cookie[i] != NULL)
       magic_close(magic_cookie[i]);
 

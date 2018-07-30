@@ -175,7 +175,6 @@ static uint64_t yr_elf_rva_to_offset_32(
   // the offset
   if (yr_le16toh(elf_header->type) == ELF_ET_EXEC)
   {
-    int i;
     elf32_program_header_t* program;
     if (yr_le32toh(elf_header->ph_offset) == 0 ||
         yr_le16toh(elf_header->ph_entry_count == 0))
@@ -200,7 +199,7 @@ static uint64_t yr_elf_rva_to_offset_32(
     program = (elf32_program_header_t*)
       ((uint8_t*) elf_header + yr_le32toh(elf_header->ph_offset));
 
-    for (i = 0; i < yr_le16toh(elf_header->ph_entry_count); i++)
+    for (int i = 0; i < yr_le16toh(elf_header->ph_entry_count); i++)
     {
       if (rva >= yr_le32toh(program->virt_addr) &&
           rva <  yr_le32toh(program->virt_addr) + yr_le32toh(program->mem_size))
@@ -213,7 +212,6 @@ static uint64_t yr_elf_rva_to_offset_32(
   }
   else
   {
-    int i;
     elf32_section_header_t* section;
 
     if (yr_le32toh(elf_header->sh_offset) == 0 ||
@@ -240,7 +238,7 @@ static uint64_t yr_elf_rva_to_offset_32(
     section = (elf32_section_header_t*)
       ((unsigned char*) elf_header + yr_le32toh(elf_header->sh_offset));
 
-    for (i = 0; i < yr_le16toh(elf_header->sh_entry_count); i++)
+    for (int i = 0; i < yr_le16toh(elf_header->sh_entry_count); i++)
     {
       if (yr_le32toh(section->type) != ELF_SHT_NULL &&
           yr_le32toh(section->type) != ELF_SHT_NOBITS &&
@@ -273,7 +271,6 @@ static uint64_t yr_elf_rva_to_offset_64(
   // the offset
   if (yr_le16toh(elf_header->type) == ELF_ET_EXEC)
   {
-    int i;
     elf64_program_header_t* program;
     if (yr_le64toh(elf_header->ph_offset) == 0 ||
         yr_le16toh(elf_header->ph_entry_count == 0))
@@ -293,7 +290,7 @@ static uint64_t yr_elf_rva_to_offset_64(
     program = (elf64_program_header_t*)
       ((uint8_t*) elf_header + yr_le64toh(elf_header->ph_offset));
 
-    for (i = 0; i < yr_le16toh(elf_header->ph_entry_count); i++)
+    for (int i = 0; i < yr_le16toh(elf_header->ph_entry_count); i++)
     {
       if (rva >= yr_le64toh(program->virt_addr) &&
           rva <  yr_le64toh(program->virt_addr) + yr_le64toh(program->mem_size))
@@ -306,7 +303,6 @@ static uint64_t yr_elf_rva_to_offset_64(
   }
   else
   {
-    int i;
     elf64_section_header_t* section;
 
     if (yr_le64toh(elf_header->sh_offset) == 0 ||
@@ -326,7 +322,7 @@ static uint64_t yr_elf_rva_to_offset_64(
     section = (elf64_section_header_t*)
       ((uint8_t*) elf_header + yr_le64toh(elf_header->sh_offset));
 
-    for (i = 0; i < yr_le16toh(elf_header->sh_entry_count); i++)
+    for (int i = 0; i < yr_le16toh(elf_header->sh_entry_count); i++)
     {
       if (yr_le32toh(section->type) != ELF_SHT_NULL &&
           yr_le32toh(section->type) != ELF_SHT_NOBITS &&

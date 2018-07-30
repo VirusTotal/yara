@@ -286,9 +286,7 @@ static void file_queue_destroy()
 
 static void file_queue_finish()
 {
-  int i;
-
-  for (i = 0; i < YR_MAX_THREADS; i++)
+  for (int i = 0; i < YR_MAX_THREADS; i++)
     semaphore_release(&used_slots);
 }
 

@@ -1323,7 +1323,6 @@ static int _yr_re_fiber_exists(
   RE_FIBER* fiber = fiber_list->head;
 
   int equal_stacks;
-  int i;
 
   if (last_fiber == NULL)
     return false;
@@ -1336,7 +1335,7 @@ static int _yr_re_fiber_exists(
     {
       equal_stacks = true;
 
-      for (i = 0; i <= fiber->sp; i++)
+      for (int i = 0; i <= fiber->sp; i++)
       {
         if (fiber->stack[i] != target_fiber->stack[i])
         {
@@ -2284,8 +2283,6 @@ int yr_re_fast_exec(
 static void _yr_re_print_node(
     RE_NODE* re_node)
 {
-  int i;
-
   if (re_node == NULL)
     return;
 
@@ -2363,7 +2360,7 @@ static void _yr_re_print_node(
 
   case RE_NODE_CLASS:
     printf("Class(");
-    for (i = 0; i < 256; i++)
+    for (int i = 0; i < 256; i++)
       if (_yr_re_is_char_in_class(re_node->re_class, i, false))
         printf("%02X,", i);
     printf(")");

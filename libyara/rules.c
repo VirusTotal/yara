@@ -417,9 +417,7 @@ YR_API int yr_rules_save_stream(
     YR_RULES* rules,
     YR_STREAM* stream)
 {
-  int i;
-
-  for (i = 0; i < YR_BITARRAY_NCHARS(YR_MAX_THREADS); ++i)
+  for (int i = 0; i < YR_BITARRAY_NCHARS(YR_MAX_THREADS); ++i)
     assert(rules->tidx_mask[i] == 0);
 
   return yr_arena_save_stream(rules->arena, stream);
