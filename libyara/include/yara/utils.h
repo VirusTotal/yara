@@ -38,6 +38,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NULL 0
 #endif
 
+#if defined(HAVE_STDBOOL_H)
+#include <stdbool.h>
+#else
+
+#ifndef __cplusplus
+#define bool	_Bool
+#define true	1
+#define false	0
+#else /* __cplusplus */
+#define _Bool	bool
+#if __cplusplus < 201103L
+#define bool	bool
+#define false	false
+#define true	true
+#endif
+#endif /* __cplusplus */
+#endif
 
 #ifdef __cplusplus
 #define EXTERNC extern "C"

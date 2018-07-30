@@ -79,7 +79,6 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 */
 
 #include <assert.h>
-#include <stdbool.h>
 #include <string.h>
 
 #include <yara/utils.h>

@@ -272,6 +272,8 @@ AS_IF([test "x$have_crypto" = "xno"],
     PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libcrypto"
   ])
 
+AC_CHECK_HEADERS([stdbool.h])
+
 AC_CHECK_FUNCS([clock_gettime],,)
 
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])

@@ -723,7 +723,6 @@ with noyywrap then we can remove this pragma.
 
 #include <math.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -745,6 +744,7 @@ with noyywrap then we can remove this pragma.
 #include <yara/sizedstr.h>
 #include <yara/error.h>
 #include <yara/mem.h>
+#include <yara/utils.h>
 #include <yara/strutils.h>
 
 #include "grammar.h"
