@@ -883,11 +883,12 @@ IMPORTED_DLL* pe_parse_imports(
   IMPORTED_DLL* tail = NULL;
 
   PIMAGE_IMPORT_DESCRIPTOR imports;
+  PIMAGE_DATA_DIRECTORY directory;
 
   /* default to 0 imports until we know there are any */
   set_integer(0, pe->object, "number_of_imports");
 
-  PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
+  directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
 
   if (directory == NULL)
@@ -1357,6 +1358,7 @@ void pe_parse_header(
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
   int i, scount, ddcount;
+
   uint64_t highest_sec_siz = 0;
   uint64_t highest_sec_ofs = 0;
   uint64_t section_end;
@@ -1531,6 +1533,7 @@ void pe_parse_header(
   data_dir = IS_64BITS_PE(pe) ? pe->header64->OptionalHeader.DataDirectory : pe->header->OptionalHeader.DataDirectory;
   ddcount = yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes));
   ddcount = yr_min(ddcount, IMAGE_NUMBEROF_DIRECTORY_ENTRIES);
+
   for (i = 0; i < ddcount; i++)
   {
     if (!struct_fits_in_pe(pe, data_dir, IMAGE_DATA_DIRECTORY))
