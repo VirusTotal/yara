@@ -99,7 +99,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ERROR_INVALID_OPERAND                   54
 #define ERROR_COULD_NOT_READ_FILE               55
 #define ERROR_DUPLICATED_EXTERNAL_VARIABLE      56
-
+#define ERROR_INVALID_MODULE_DATA               57
 
 #define FAIL_ON_ERROR(x) { \
   int result = (x); \
