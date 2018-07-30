@@ -971,6 +971,7 @@ EXPORT_FUNCTIONS* pe_parse_exports(
   EXPORT_FUNCTIONS* exported_functions;
 
   uint32_t i;
+  uint32_t number_of_names;
   uint16_t ordinal;
   int64_t offset;
   size_t remaining;
@@ -1056,7 +1057,7 @@ EXPORT_FUNCTIONS* pe_parse_exports(
 
   // Now, we can iterate through Names and NameOrdinals arrays to obtain
   // function names. Not all functions have names.
-  uint32_t number_of_names = yr_min(
+  number_of_names = yr_min(
       yr_le32toh(exports->NumberOfNames),
       exported_functions->number_of_exports);
 
