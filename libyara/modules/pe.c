@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define _GNU_SOURCE
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <time.h>
@@ -51,6 +50,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/modules.h>
 #include <yara/mem.h>
 #include <yara/strutils.h>
+#include <yara/utils.h>
+
 
 #include <yara/pe_utils.h>
 

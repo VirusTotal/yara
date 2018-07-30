@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
-#include <stdbool.h>
 
 #include <yara/utils.h>
 #include <yara/bitmask.h>

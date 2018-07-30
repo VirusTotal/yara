@@ -29,8 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 %{
 
-#include <stdbool.h>
-
 #include <yara/integers.h>
 #include <yara/utils.h>
 #include <yara/error.h>

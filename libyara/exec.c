@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define _GNU_SOURCE
 
-#include <stdbool.h>
 #include <string.h>
 #include <assert.h>
 #include <math.h>
