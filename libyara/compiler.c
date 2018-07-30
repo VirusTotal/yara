@@ -385,16 +385,20 @@ YR_API int yr_compiler_load_atom_quality_table(
     const char* filename,
     unsigned char warning_threshold)
 {
+  long file_size;
+  int entries;
+  void* table;
+
   FILE* fh = fopen(filename, "rb");
 
   if (fh == NULL)
     return ERROR_COULD_NOT_OPEN_FILE;
 
   fseek(fh, 0L, SEEK_END);
-  long file_size = ftell(fh);
+  file_size = ftell(fh);
   fseek(fh, 0L, SEEK_SET);
 
-  void* table = yr_malloc(file_size);
+  table = yr_malloc(file_size);
 
   if (table == NULL)
   {
@@ -402,7 +406,7 @@ YR_API int yr_compiler_load_atom_quality_table(
     return ERROR_INSUFFICIENT_MEMORY;
   }
 
-  int entries = (int) file_size / sizeof(YR_ATOM_QUALITY_TABLE_ENTRY);
+  entries = (int) file_size / sizeof(YR_ATOM_QUALITY_TABLE_ENTRY);
 
   if (fread(table, sizeof(YR_ATOM_QUALITY_TABLE_ENTRY), entries, fh) != entries)
   {
