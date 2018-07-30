@@ -41,18 +41,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(HAVE_STDBOOL_H)
 #include <stdbool.h>
 #else
-
 #ifndef __cplusplus
+typedef	int	_Bool;
 #define bool	_Bool
 #define true	1
 #define false	0
-#else /* __cplusplus */
-#define _Bool	bool
-#if __cplusplus < 201103L
-#define bool	bool
-#define false	false
-#define true	true
-#endif
 #endif /* __cplusplus */
 #endif
 
