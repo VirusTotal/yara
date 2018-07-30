@@ -1045,6 +1045,8 @@ int yr_parser_reduce_import(
     yyscan_t yyscanner,
     SIZED_STRING* module_name)
 {
+  int result;
+
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   YR_OBJECT* module_structure;
 
@@ -1078,7 +1080,7 @@ int yr_parser_reduce_import(
       compiler->current_namespace->name,
       module_structure));
 
-  int result = yr_modules_do_declarations(
+  result = yr_modules_do_declarations(
       module_name->c_string,
       module_structure);
 
