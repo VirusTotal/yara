@@ -74,7 +74,7 @@ uint64_t yr_stopwatch_elapsed_us(
 }
 
 
-#else
+#elif defined(HAVE_CLOCK_GETTIME)
 
 #define timespecsub(tsp, usp, vsp)                      \
 do {                                                    \
@@ -90,10 +90,7 @@ do {                                                    \
 void yr_stopwatch_start(
     YR_STOPWATCH* stopwatch)
 {
-  #if defined(HAVE_CLOCK_GETTIME)
   clock_gettime(CLOCK_MONOTONIC, &stopwatch->ts_start);
-  #else
-  #endif
 }
 
 
@@ -103,13 +100,46 @@ uint64_t yr_stopwatch_elapsed_us(
   struct timespec ts_stop;
   struct timespec ts_elapsed;
 
-  #if defined(HAVE_CLOCK_GETTIME)
   clock_gettime(CLOCK_MONOTONIC, &ts_stop);
   timespecsub(&ts_stop, &stopwatch->ts_start, &ts_elapsed);
-  #else
-  #endif
-
   return ts_elapsed.tv_sec * 1000000L + ts_elapsed.tv_nsec / 1000;
 }
+
+
+#else
+
+#include <sys/time.h>
+
+#define timevalsub(tvp, uvp, vvp)                       \
+do {                                                    \
+  (vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;        \
+  (vvp)->tv_usec = (tvp)->tv_usec - (uvp)->tv_usec;     \
+  if ((vvp)->tv_usec < 0) {                             \
+    (vvp)->tv_sec--;                                    \
+    (vvp)->tv_usec += 1000000L;                         \
+  }                                                     \
+} while (0)
+
+
+void yr_stopwatch_start(
+    YR_STOPWATCH* stopwatch)
+{
+  gettimeofday(&stopwatch->tv_start, NULL);
+}
+
+
+uint64_t yr_stopwatch_elapsed_us(
+    YR_STOPWATCH* stopwatch)
+{
+  struct timeval tv_stop;
+  struct timeval tv_elapsed;
+
+  gettimeofday(&tv_stop, NULL);
+  timevalsub(&tv_stop, &stopwatch->tv_start, &tv_elapsed);
+  return tv_elapsed.tv_sec * 1000000L + tv_elapsed.tv_usec;
+}
+
+
+
 
 #endif
