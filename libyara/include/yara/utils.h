@@ -42,8 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdbool.h>
 #else
 #ifndef __cplusplus
-typedef	int	_Bool;
-#define bool	_Bool
+#define bool	int
 #define true	1
 #define false	0
 #endif /* __cplusplus */
