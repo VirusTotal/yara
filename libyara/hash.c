@@ -181,6 +181,7 @@ YR_API int yr_hash_table_create(
     YR_HASH_TABLE** table)
 {
   YR_HASH_TABLE* new_table;
+  int i;
 
   new_table = (YR_HASH_TABLE*) yr_malloc(
       sizeof(YR_HASH_TABLE) + size * sizeof(YR_HASH_TABLE_ENTRY*));
@@ -190,7 +191,7 @@ YR_API int yr_hash_table_create(
 
   new_table->size = size;
 
-  for (int i = 0; i < size; i++)
+  for (i = 0; i < size; i++)
     new_table->buckets[i] = NULL;
 
   *table = new_table;
@@ -206,10 +207,12 @@ YR_API void yr_hash_table_clean(
   YR_HASH_TABLE_ENTRY* entry;
   YR_HASH_TABLE_ENTRY* next_entry;
 
+  int i;
+
   if (table == NULL)
     return;
 
-  for (int i = 0; i < table->size; i++)
+  for (i = 0; i < table->size; i++)
   {
     entry = table->buckets[i];
 

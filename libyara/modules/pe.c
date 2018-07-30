@@ -312,7 +312,7 @@ int _pe_iterate_resources(
     RESOURCE_CALLBACK_FUNC callback,
     void* callback_data)
 {
-  int result = RESOURCE_ITERATOR_FINISHED;
+  int i, result = RESOURCE_ITERATOR_FINISHED;
   int total_entries;
 
   PIMAGE_RESOURCE_DIRECTORY_ENTRY entry;
@@ -335,7 +335,7 @@ int _pe_iterate_resources(
 
   entry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY) (resource_dir + 1);
 
-  for (int i = 0; i < total_entries; i++)
+  for (i = 0; i < total_entries; i++)
   {
     if (!struct_fits_in_pe(pe, entry, IMAGE_RESOURCE_DIRECTORY_ENTRY))
     {
@@ -1101,7 +1101,7 @@ EXPORT_FUNCTIONS* pe_parse_exports(
 void pe_parse_certificates(
     PE* pe)
 {
-  int counter = 0;
+  int i, counter = 0;
 
   const uint8_t* eod;
   uintptr_t end;
@@ -1193,7 +1193,7 @@ void pe_parse_certificates(
       break;
     }
 
-    for (int i = 0; i < sk_X509_num(certs); i++)
+    for (i = 0; i < sk_X509_num(certs); i++)
     {
       time_t date_time;
       const char* sig_alg;
@@ -1356,8 +1356,7 @@ void pe_parse_header(
   PIMAGE_DATA_DIRECTORY data_dir;
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
-  int scount, ddcount;
-
+  int i, scount, ddcount;
   uint64_t highest_sec_siz = 0;
   uint64_t highest_sec_ofs = 0;
   uint64_t section_end;
@@ -1532,7 +1531,7 @@ void pe_parse_header(
   data_dir = IS_64BITS_PE(pe) ? pe->header64->OptionalHeader.DataDirectory : pe->header->OptionalHeader.DataDirectory;
   ddcount = yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes));
   ddcount = yr_min(ddcount, IMAGE_NUMBEROF_DIRECTORY_ENTRIES);
-  for (int i = 0; i < ddcount; i++)
+  for (i = 0; i < ddcount; i++)
   {
     if (!struct_fits_in_pe(pe, data_dir, IMAGE_DATA_DIRECTORY))
       break;
@@ -1560,7 +1559,7 @@ void pe_parse_header(
   scount = yr_min(
       yr_le16toh(pe->header->FileHeader.NumberOfSections), MAX_PE_SECTIONS);
 
-  for (int i = 0; i < scount; i++)
+  for (i = 0; i < scount; i++)
   {
     if (!struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
       break;
@@ -1731,6 +1730,8 @@ define_function(exports)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
+  int i;
+
   // If not a PE, return UNDEFINED.
   if (pe == NULL)
     return_integer(UNDEFINED);
@@ -1739,7 +1740,7 @@ define_function(exports)
   if (pe->exported_functions == NULL)
     return_integer(0);
 
-  for (int i = 0; i < pe->exported_functions->number_of_exports; i++)
+  for (i = 0; i < pe->exported_functions->number_of_exports; i++)
   {
     if (pe->exported_functions->functions[i].name &&
         strcasecmp(pe->exported_functions->functions[i].name, function_name->c_string) == 0)
@@ -1759,6 +1760,8 @@ define_function(exports_regexp)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
+  int i;
+
   // If not a PE, return UNDEFINED.
   if (pe == NULL)
     return_integer(UNDEFINED);
@@ -1767,7 +1770,7 @@ define_function(exports_regexp)
   if (pe->exported_functions == NULL)
     return_integer(0);
 
-  for (int i = 0; i < pe->exported_functions->number_of_exports; i++)
+  for (i = 0; i < pe->exported_functions->number_of_exports; i++)
   {
     if (pe->exported_functions->functions[i].name &&
         yr_re_match(scan_context(), regex, pe->exported_functions->functions[i].name) != -1)
@@ -2998,6 +3001,7 @@ int module_unload(
   IMPORTED_DLL* next_dll = NULL;
   IMPORT_FUNCTION* func = NULL;
   IMPORT_FUNCTION* next_func = NULL;
+  int i = 0;
 
   PE* pe = (PE *) module_object->data;
 
@@ -3030,7 +3034,7 @@ int module_unload(
 
   if (pe->exported_functions)
   {
-    for (int i = 0; i < pe->exported_functions->number_of_exports; i++)
+    for (i = 0; i < pe->exported_functions->number_of_exports; i++)
     {
       if (pe->exported_functions->functions[i].name)
         yr_free(pe->exported_functions->functions[i].name);

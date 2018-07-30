@@ -503,7 +503,7 @@ static int _yr_ac_find_suitable_transition_table_slot(
 
       automaton->bitmask = (YR_BITMASK*) yr_realloc(
           automaton->bitmask, b_bytes_size * 2);
-
+      
       if (automaton->t_table == NULL ||
           automaton->m_table == NULL ||
           automaton->bitmask == NULL)
@@ -602,7 +602,7 @@ static int _yr_ac_build_transition_table(
   automaton->bitmask = (YR_BITMASK*) yr_calloc(
       YR_BITMASK_SIZE(automaton->tables_size), sizeof(YR_BITMASK));
 
-  if (automaton->t_table == NULL ||
+  if (automaton->t_table == NULL || 
       automaton->m_table == NULL ||
       automaton->bitmask == NULL)
   {
@@ -685,12 +685,13 @@ static int _yr_ac_build_transition_table(
 static void _yr_ac_print_automaton_state(
     YR_AC_STATE* state)
 {
+  int i;
   int child_count;
 
   YR_AC_MATCH* match;
   YR_AC_STATE* child_state;
 
-  for (int i = 0; i < state->depth; i++)
+  for (i = 0; i < state->depth; i++)
     printf(" ");
 
   child_state = state->first_child;
@@ -711,7 +712,7 @@ static void _yr_ac_print_automaton_state(
   {
     printf("\n");
 
-    for (int i = 0; i < state->depth + 1; i++)
+    for (i = 0; i < state->depth + 1; i++)
       printf(" ");
 
     printf("%s = ", match->string->identifier);
@@ -720,7 +721,7 @@ static void _yr_ac_print_automaton_state(
     {
       printf("{ ");
 
-      for (int i = 0; i < yr_min(match->string->length, 10); i++)
+      for (i = 0; i < yr_min(match->string->length, 10); i++)
         printf("%02x ", match->string->string[i]);
 
       printf("}");
@@ -729,7 +730,7 @@ static void _yr_ac_print_automaton_state(
     {
       printf("/");
 
-      for (int i = 0; i < yr_min(match->string->length, 10); i++)
+      for (i = 0; i < yr_min(match->string->length, 10); i++)
         printf("%c", match->string->string[i]);
 
       printf("/");
@@ -738,7 +739,7 @@ static void _yr_ac_print_automaton_state(
     {
       printf("\"");
 
-      for (int i = 0; i < yr_min(match->string->length, 10); i++)
+      for (i = 0; i < yr_min(match->string->length, 10); i++)
         printf("%c", match->string->string[i]);
 
       printf("\"");
@@ -835,6 +836,7 @@ int yr_ac_add_string(
     YR_ARENA* matches_arena)
 {
   int result = ERROR_SUCCESS;
+  int i;
 
   YR_AC_STATE* state;
   YR_AC_STATE* next_state;
@@ -846,7 +848,7 @@ int yr_ac_add_string(
   {
     state = automaton->root;
 
-    for (int i = 0; i < atom->atom_length; i++)
+    for (i = 0; i < atom->atom_length; i++)
     {
       next_state = _yr_ac_next_state(state, atom->atom[i]);
 
@@ -901,6 +903,8 @@ int yr_ac_compile(
     YR_ARENA* arena,
     YR_AC_TABLES* tables)
 {
+  uint32_t i;
+
   FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_optimize_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton));
@@ -916,7 +920,7 @@ int yr_ac_compile(
       sizeof(YR_AC_TRANSITION),
       (void**) &tables->transitions));
 
-  for (uint32_t i = 1; i < automaton->tables_size; i++)
+  for (i = 1; i < automaton->tables_size; i++)
   {
     FAIL_ON_ERROR(yr_arena_write_data(
         arena,
@@ -937,7 +941,7 @@ int yr_ac_compile(
       offsetof(YR_AC_MATCH_TABLE_ENTRY, match),
       EOL));
 
-  for (uint32_t i = 1; i < automaton->tables_size; i++)
+  for (i = 1; i < automaton->tables_size; i++)
   {
     void* ptr;
 

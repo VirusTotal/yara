@@ -216,15 +216,15 @@ void test_find_non_colliding_offsets_2()
   // Bitmask A can accommodate B at offset 0.
   if (yr_bitmask_find_non_colliding_offset(a, b, 200, 140, &o) != 0)
     exit(EXIT_FAILURE);
-    
+
   yr_bitmask_clear_all(a);
   yr_bitmask_clear_all(b);
-    
+
   yr_bitmask_set(a, 130);
 
   yr_bitmask_set(b, 0);
   yr_bitmask_set(b, 130);
-    
+
   if (yr_bitmask_find_non_colliding_offset(a, b, 200, 140, &o) != 1)
     exit(EXIT_FAILURE);
 }

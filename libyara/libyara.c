@@ -120,6 +120,8 @@ YR_API int yr_initialize(void)
   uint32_t def_max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
   uint32_t def_max_match_data = DEFAULT_MAX_MATCH_DATA;
 
+  int i;
+
   init_count++;
 
   if (init_count > 1)
@@ -129,7 +131,7 @@ YR_API int yr_initialize(void)
 
   yr_canary = rand();
 
-  for (int i = 0; i < 256; i++)
+  for (i = 0; i < 256; i++)
   {
     if (i >= 'a' && i <= 'z')
       yr_altercase[i] = i - 32;
@@ -150,7 +152,7 @@ YR_API int yr_initialize(void)
   openssl_locks = (YR_MUTEX*) OPENSSL_malloc(
       CRYPTO_num_locks() * sizeof(YR_MUTEX));
 
-  for (int i = 0; i < CRYPTO_num_locks(); i++)
+  for (i = 0; i < CRYPTO_num_locks(); i++)
     yr_mutex_create(&openssl_locks[i]);
 
   CRYPTO_set_id_callback(_thread_id);
@@ -204,6 +206,10 @@ YR_DEPRECATED_API void yr_finalize_thread(void)
 
 YR_API int yr_finalize(void)
 {
+  #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
+  int i;
+  #endif
+
   // yr_finalize shouldn't be called without calling yr_initialize first
 
   if (init_count == 0)
@@ -216,7 +222,7 @@ YR_API int yr_finalize(void)
 
   #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
 
-  for (int i = 0; i < CRYPTO_num_locks(); i ++)
+  for (i = 0; i < CRYPTO_num_locks(); i ++)
     yr_mutex_destroy(&openssl_locks[i]);
 
   OPENSSL_free(openssl_locks);

@@ -1183,22 +1183,26 @@ YY_RULE_SETUP
 #line 346 "re_lexer.l"
 {
 
-  for (int i = 0; i < 32; i++)
+  int i;
+
+  for (i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= word_chars[i];
 }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 353 "re_lexer.l"
+#line 355 "re_lexer.l"
 {
 
-  for (int i = 0; i < 32; i++)
+  int i;
+
+  for (i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= ~word_chars[i];
 }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 360 "re_lexer.l"
+#line 364 "re_lexer.l"
 {
 
   LEX_ENV->re_class.bitmap[' ' / 8] |= 1 << ' ' % 8;
@@ -1207,10 +1211,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 367 "re_lexer.l"
+#line 371 "re_lexer.l"
 {
 
-  for (int i = 0; i < 32; i++)
+  int i;
+
+  for (i = 0; i < 32; i++)
   {
     if (i == ' ' / 8)
       LEX_ENV->re_class.bitmap[i] |= ~(1 << ' ' % 8);
@@ -1223,19 +1229,23 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 381 "re_lexer.l"
+#line 387 "re_lexer.l"
 {
 
-  for (char c = '0'; c <= '9'; c++)
+  char c;
+
+  for (c = '0'; c <= '9'; c++)
     LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
 }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 388 "re_lexer.l"
+#line 396 "re_lexer.l"
 {
 
-  for (int i = 0; i < 32; i++)
+  int i;
+
+  for (i = 0; i < 32; i++)
   {
     // digits 0-7 are in the sixth byte of the vector, let that byte alone
     if (i == 6)
@@ -1252,7 +1262,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 406 "re_lexer.l"
+#line 416 "re_lexer.l"
 {
 
   uint8_t c;
@@ -1270,7 +1280,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 422 "re_lexer.l"
+#line 432 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1288,7 +1298,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(char_class):
-#line 439 "re_lexer.l"
+#line 449 "re_lexer.l"
 {
 
   // End of regexp reached while scanning a character class.
@@ -1299,7 +1309,7 @@ case YY_STATE_EOF(char_class):
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 448 "re_lexer.l"
+#line 458 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1314,7 +1324,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 462 "re_lexer.l"
+#line 472 "re_lexer.l"
 {
 
   yyterminate();
@@ -1322,10 +1332,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 467 "re_lexer.l"
+#line 477 "re_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1329 "re_lexer.c"
+#line 1339 "re_lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2455,7 +2465,7 @@ void re_yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 467 "re_lexer.l"
+#line 477 "re_lexer.l"
 
 
 

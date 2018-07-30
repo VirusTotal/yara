@@ -122,6 +122,8 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
 {                                                                              \
   if (yr_##bo##16toh(elf_header->type) == ELF_ET_EXEC)                         \
   {                                                                            \
+    int i;                                                                     \
+                                                                               \
     elf##bits##_program_header_t* program;                                     \
                                                                                \
     /* check that ph_offset doesn't wrap when added to SIZE_OF_PROGRAM_TABLE */\
@@ -144,7 +146,7 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
     program = (elf##bits##_program_header_t*)                                  \
         ((uint8_t*) elf_header + yr_##bo##bits##toh(elf_header->ph_offset));   \
                                                                                \
-    for (int i = 0; i < yr_##bo##16toh(elf_header->ph_entry_count); i++)       \
+    for (i = 0; i < yr_##bo##16toh(elf_header->ph_entry_count); i++)           \
     {                                                                          \
       if (rva >= yr_##bo##bits##toh(program->virt_addr) &&                     \
           rva < yr_##bo##bits##toh(program->virt_addr) +                       \
@@ -159,6 +161,8 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
   }                                                                            \
   else                                                                         \
   {                                                                            \
+    int i;                                                                     \
+                                                                               \
     elf##bits##_section_header_t* section;                                     \
                                                                                \
     /* check that sh_offset doesn't wrap when added to SIZE_OF_SECTION_TABLE */\
@@ -181,7 +185,7 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
     section = (elf##bits##_section_header_t*)                                  \
         ((uint8_t*) elf_header + yr_##bo##bits##toh(elf_header->sh_offset));   \
                                                                                \
-    for (int i = 0; i < yr_##bo##16toh(elf_header->sh_entry_count); i++)       \
+    for (i = 0; i < yr_##bo##16toh(elf_header->sh_entry_count); i++)           \
     {                                                                          \
       if (yr_##bo##32toh(section->type) != ELF_SHT_NULL &&                     \
           yr_##bo##32toh(section->type) != ELF_SHT_NOBITS &&                   \

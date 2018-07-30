@@ -279,11 +279,12 @@ time_t timegm(
       {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}};
 
   time_t res = 0;
+  int i;
 
-  for (int i = 70; i < tm->tm_year; ++i)
+  for (i = 70; i < tm->tm_year; ++i)
     res += is_leap(i) ? 366 : 365;
 
-  for (int i = 0; i < tm->tm_mon; ++i)
+  for (i = 0; i < tm->tm_mon; ++i)
     res += ndays[is_leap(tm->tm_year)][i];
 
   res += tm->tm_mday - 1;
