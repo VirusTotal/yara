@@ -1180,6 +1180,8 @@ int yr_parser_reduce_operation(
     EXPRESSION left_operand,
     EXPRESSION right_operand)
 {
+  int expression_type;
+
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   if ((left_operand.type == EXPRESSION_TYPE_INTEGER ||
@@ -1200,7 +1202,7 @@ int yr_parser_reduce_operation(
           NULL));
     }
 
-    int expression_type = EXPRESSION_TYPE_FLOAT;
+    expression_type = EXPRESSION_TYPE_FLOAT;
 
     if (left_operand.type == EXPRESSION_TYPE_INTEGER &&
         right_operand.type == EXPRESSION_TYPE_INTEGER)
