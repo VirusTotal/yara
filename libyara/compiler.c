@@ -250,6 +250,7 @@ YR_API void yr_compiler_destroy(
     YR_COMPILER* compiler)
 {
   YR_FIXUP* fixup;
+  int i;
 
   yr_arena_destroy(compiler->compiled_rules_arena);
   yr_arena_destroy(compiler->sz_arena);
@@ -280,7 +281,7 @@ YR_API void yr_compiler_destroy(
   if (compiler->  atoms_config.free_quality_table)
     yr_free(compiler->atoms_config.quality_table);
 
-  for (int i = 0; i < compiler->file_name_stack_ptr; i++)
+  for (i = 0; i < compiler->file_name_stack_ptr; i++)
     yr_free(compiler->file_name_stack[i]);
 
   fixup = compiler->fixup_stack_head;
@@ -426,8 +427,9 @@ int _yr_compiler_push_file_name(
     const char* file_name)
 {
   char* str;
+  int i;
 
-  for (int i = 0; i < compiler->file_name_stack_ptr; i++)
+  for (i = 0; i < compiler->file_name_stack_ptr; i++)
   {
     if (strcmp(file_name, compiler->file_name_stack[i]) == 0)
       return ERROR_INCLUDES_CIRCULAR_REFERENCE;
@@ -482,12 +484,13 @@ static int _yr_compiler_set_namespace(
 
   char* ns_name;
   int result;
+  int i;
   bool found;
 
   ns = (YR_NAMESPACE*) yr_arena_base_address(compiler->namespaces_arena);
   found = false;
 
-  for (int i = 0; i < compiler->namespaces_count; i++)
+  for (i = 0; i < compiler->namespaces_count; i++)
   {
     if (strcmp(ns->name, namespace_) == 0)
     {
@@ -521,7 +524,7 @@ static int _yr_compiler_set_namespace(
 
     ns->name = ns_name;
 
-    for (int i = 0; i < YR_MAX_THREADS; i++)
+    for (i = 0; i < YR_MAX_THREADS; i++)
       ns->t_flags[i] = 0;
 
     compiler->namespaces_count++;

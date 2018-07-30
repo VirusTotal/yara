@@ -345,14 +345,18 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\w {
 
-  for (int i = 0; i < 32; i++)
+  int i;
+
+  for (i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= word_chars[i];
 }
 
 
 <char_class>\\W {
 
-  for (int i = 0; i < 32; i++)
+  int i;
+
+  for (i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= ~word_chars[i];
 }
 
@@ -366,7 +370,9 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\S {
 
-  for (int i = 0; i < 32; i++)
+  int i;
+
+  for (i = 0; i < 32; i++)
   {
     if (i == ' ' / 8)
       LEX_ENV->re_class.bitmap[i] |= ~(1 << ' ' % 8);
@@ -380,14 +386,18 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\d {
 
-  for (char c = '0'; c <= '9'; c++)
+  char c;
+
+  for (c = '0'; c <= '9'; c++)
     LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
 }
 
 
 <char_class>\\D {
 
-  for (int i = 0; i < 32; i++)
+  int i;
+
+  for (i = 0; i < 32; i++)
   {
     // digits 0-7 are in the sixth byte of the vector, let that byte alone
     if (i == 6)

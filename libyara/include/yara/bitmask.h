@@ -62,8 +62,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define yr_bitmask_print(bm) \
-  for (int i = 0; i < sizeof(bm) / sizeof(bm[0]); i++) { \
-    printf("%016lX\n", bm[i]); \
+  { \
+    int i; \
+    for (i = 0; i < sizeof(bm) / sizeof(bm[0]); i++) { \
+      printf("%016lX\n", bm[i]); \
+    } \
   }
 
 
