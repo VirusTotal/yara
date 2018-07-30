@@ -1200,20 +1200,19 @@ void pe_parse_certificates(
       int bytes;
       const EVP_MD* sha1_digest = EVP_sha1();
       unsigned char thumbprint[YR_SHA1_LEN];
-      char thumbprint_ascii[YR_SHA1_LEN * 2];
+      char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
 
       ASN1_INTEGER* serial;
 
       X509* cert = sk_X509_value(certs, i);
 
       X509_digest(cert, sha1_digest, thumbprint, NULL);
+
       for (i = 0; i < YR_SHA1_LEN; i++)
-      {
         sprintf(thumbprint_ascii + (i * 2), "%02x", thumbprint[i]);
-      }
-      set_sized_string(
+
+      set_string(
           (char*) thumbprint_ascii,
-          sizeof(thumbprint_ascii),
           pe->object,
           "signatures[%i].thumbprint",
           counter);
