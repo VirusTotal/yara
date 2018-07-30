@@ -283,6 +283,8 @@ meta
       }
     | _META_ ':' meta_declarations
       {
+        int result;
+
         // Each rule have a list of meta-data info, consisting in a
         // sequence of YR_META structures. The last YR_META structure does
         // not represent a real meta-data, it's just a end-of-list marker
@@ -294,7 +296,7 @@ meta
         memset(&null_meta, 0xFF, sizeof(YR_META));
         null_meta.type = META_TYPE_NULL;
 
-        int result = yr_arena_write_data(
+        result = yr_arena_write_data(
             compiler->metas_arena,
             &null_meta,
             sizeof(YR_META),
@@ -999,9 +1001,11 @@ expression
       }
     | _STRING_IDENTIFIER_ _AT_ primary_expression
       {
+        int result;
+
         check_type_with_cleanup($3, EXPRESSION_TYPE_INTEGER, "at", yr_free($1));
 
-        int result = yr_parser_reduce_string_identifier(
+        result = yr_parser_reduce_string_identifier(
             yyscanner, $1, OP_FOUND_AT, $3.value.integer);
 
         yr_free($1);
@@ -1924,10 +1928,12 @@ primary_expression
       }
     | primary_expression _SHIFT_LEFT_ primary_expression
       {
+        int result;
+
         check_type($1, EXPRESSION_TYPE_INTEGER, "<<");
         check_type($3, EXPRESSION_TYPE_INTEGER, "<<");
 
-        int result = yr_parser_emit(yyscanner, OP_SHL, NULL);
+        result = yr_parser_emit(yyscanner, OP_SHL, NULL);
 
         if (!IS_UNDEFINED($3.value.integer) && $3.value.integer < 0)
           result = ERROR_INVALID_OPERAND;
@@ -1942,10 +1948,12 @@ primary_expression
       }
     | primary_expression _SHIFT_RIGHT_ primary_expression
       {
+        int result;
+
         check_type($1, EXPRESSION_TYPE_INTEGER, ">>");
         check_type($3, EXPRESSION_TYPE_INTEGER, ">>");
 
-        int result = yr_parser_emit(yyscanner, OP_SHR, NULL);
+        result = yr_parser_emit(yyscanner, OP_SHR, NULL);
 
         if (!IS_UNDEFINED($3.value.integer) && $3.value.integer < 0)
           result = ERROR_INVALID_OPERAND;
