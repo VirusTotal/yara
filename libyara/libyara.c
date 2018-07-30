@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <ctype.h>
 
+#include <yara/globals.h>
 #include <yara/error.h>
 #include <yara/re.h>
 #include <yara/modules.h>
@@ -68,6 +69,10 @@ static struct yr_config_var
 
 } yr_cfgs[YR_CONFIG_LAST];
 
+
+// Global variables. See globals.h for their descriptions.
+
+int yr_canary;
 
 char yr_lowercase[256];
 char yr_altercase[256];
@@ -122,6 +127,10 @@ YR_API int yr_initialize(void)
   if (init_count > 1)
     return ERROR_SUCCESS;
 
+  srand((unsigned) time(NULL));
+
+  yr_canary = rand();
+
   for (i = 0; i < 256; i++)
   {
     if (i >= 'a' && i <= 'z')
@@ -151,7 +160,7 @@ YR_API int yr_initialize(void)
 
   #elif defined(HAVE_WINCRYPT_H)
 
-  if (!CryptAcquireContext(&yr_cryptprov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
+  if (!CryptAcquireContext(&yr_cryptprov, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
     return ERROR_INTERNAL_FATAL_ERROR;
   }
 

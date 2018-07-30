@@ -27,6 +27,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include <string.h>
@@ -263,7 +264,7 @@ int64_t pe_rva_to_offset(
 
 #include <time.h>
 
-static int is_leap(
+static bool is_leap(
     unsigned int year)
 {
   year += 1900;

@@ -928,6 +928,7 @@ int yr_arena_load_stream(
   uint32_t reloc_offset;
   uint8_t** reloc_address;
   uint8_t* reloc_target;
+  uint32_t max_reloc_offset;
 
   int result;
 
@@ -973,9 +974,11 @@ int yr_arena_load_stream(
     return ERROR_CORRUPT_FILE;
   }
 
+  max_reloc_offset = header.size - sizeof(uint8_t*);
+
   while (reloc_offset != 0xFFFFFFFF)
   {
-    if (reloc_offset > header.size - sizeof(uint8_t*))
+    if (reloc_offset > max_reloc_offset)
     {
       yr_arena_destroy(new_arena);
       return ERROR_CORRUPT_FILE;
@@ -986,10 +989,19 @@ int yr_arena_load_stream(
     reloc_address = (uint8_t**) (page->address + reloc_offset);
     reloc_target = *reloc_address;
 
-    if (reloc_target != (uint8_t*) (size_t) 0xFFFABADA)
-      *reloc_address += (size_t) page->address;
-    else
+    if (reloc_target == (uint8_t*) (size_t) 0xFFFABADA)
+    {
       *reloc_address = 0;
+    }
+    else if (reloc_target < (uint8_t*) (size_t) max_reloc_offset)
+    {
+      *reloc_address += (size_t) page->address;
+    }
+    else
+    {
+      yr_arena_destroy(new_arena);
+      return ERROR_CORRUPT_FILE;
+    }
 
     if (yr_stream_read(&reloc_offset, sizeof(reloc_offset), 1, stream) != 1)
     {

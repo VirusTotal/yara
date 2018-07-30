@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara.h>
 
 char compile_error[1024];
+int warnings;
 
 static void callback_function(
     int error_level,
@@ -45,6 +46,9 @@ static void callback_function(
     const char* message,
     void* user_data)
 {
+  if (error_level == YARA_ERROR_LEVEL_WARNING)
+    (*((int*) user_data))++;
+
   snprintf(
       compile_error,
       sizeof(compile_error),
@@ -62,6 +66,7 @@ int compile_rule(
   int result = ERROR_SUCCESS;
 
   compile_error[0] = '\0';
+  warnings = 0;
 
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
   {
@@ -69,7 +74,7 @@ int compile_rule(
     goto _exit;
   }
 
-  yr_compiler_set_callback(compiler, callback_function, NULL);
+  yr_compiler_set_callback(compiler, callback_function, &warnings);
 
   if (yr_compiler_add_string(compiler, string, NULL) != 0)
   {
@@ -180,11 +185,11 @@ static int capture_matches(
 
       yr_string_matches_foreach(string, match)
       {
-        int r = strncmp(
-            f->expected, (char*) (match->data), match->data_length);
-
-        if (r == 0)
+        if (strlen(f->expected) == match->data_length &&
+            strncmp(f->expected, (char*)(match->data), match->data_length) == 0)
+        {
           f->found++;
+        }
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2018. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,25 +27,51 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YR_GLOBALS_H
-#define YR_GLOBALS_H
+#ifndef YR_BITMASK_H
+#define YR_BITMASK_H
 
-#include <yara/threading.h>
+#include <yara/integers.h>
 
-// Pre-computed tables for quickly converting a character to lowercase or to
-// its alternative case (uppercase if it is a lowercase and vice versa). This
-// tables are initialized by yr_initialize.
-extern char yr_lowercase[256];
-extern char yr_altercase[256];
 
-// Canary value used for preventing hand-crafted objects from being embedded
-// in compiled rules and used to exploit YARA. The canary value is initialized
-// to a random value by yr_initialize and is subsequently set to all objects
-// created by yr_object_create. The canary is verified when objects are used
-// by yr_execute_code.
-extern int yr_canary;
+#define YR_BITMASK unsigned long
 
-extern YR_THREAD_STORAGE_KEY yr_tidx_key;
-extern YR_THREAD_STORAGE_KEY yr_recovery_state_key;
+#define YR_BITMASK_SLOT_BITS      (sizeof(YR_BITMASK) * 8)
+#define YR_BITMASK_SIZE(n)        (((n) / (YR_BITMASK_SLOT_BITS)) + 1)
+
+
+#define yr_bitmask_set(bm, i) \
+  do { \
+    (bm)[(i) / YR_BITMASK_SLOT_BITS] |= 1UL << ((i) % YR_BITMASK_SLOT_BITS); \
+  } while(0)
+
+
+#define yr_bitmask_clear(bm, i) \
+  do { \
+    (bm)[(i) / YR_BITMASK_SLOT_BITS] &= ~(1UL << ((i) % YR_BITMASK_SLOT_BITS)); \
+  } while(0)
+
+
+#define yr_bitmask_clear_all(bm) \
+  memset(bm, 0, sizeof(bm))
+
+
+#define yr_bitmask_isset(bm, i) \
+  ( \
+    (bm)[(i) / YR_BITMASK_SLOT_BITS] & (1UL << ((i) % YR_BITMASK_SLOT_BITS)) \
+  )
+
+
+#define yr_bitmask_print(bm) \
+  for (int i = 0; i < sizeof(bm) / sizeof(bm[0]); i++) { \
+    printf("%016lX\n", bm[i]); \
+  }
+
+
+uint32_t yr_bitmask_find_non_colliding_offset(
+    YR_BITMASK* a,
+    YR_BITMASK* b,
+    uint32_t len_a,
+    uint32_t len_b,
+    uint32_t* off_a);
 
 #endif

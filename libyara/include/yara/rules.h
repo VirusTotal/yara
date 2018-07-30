@@ -158,6 +158,11 @@ YR_API void yr_rules_print_profiling_info(
     YR_RULES* rules);
 
 
+YR_API int yr_rules_get_stats(
+    YR_RULES* rules,
+    YR_RULES_STATS *stats);
+
+
 YR_API void yr_rule_disable(
     YR_RULE* rule);
 

@@ -121,30 +121,32 @@ typedef struct COMPILER_RESULTS
 #define MAX_ARGS_EXT_VAR        32
 #define MAX_ARGS_MODULE_DATA    32
 
+static char* atom_quality_table;
 static char* tags[MAX_ARGS_TAG + 1];
 static char* identifiers[MAX_ARGS_IDENTIFIER + 1];
 static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 static char* modules_data[MAX_ARGS_EXT_VAR + 1];
 
-static int recursive_search = FALSE;
-static int show_module_data = FALSE;
-static int show_tags = FALSE;
-static int show_strings = FALSE;
-static int show_string_length = FALSE;
-static int show_meta = FALSE;
-static int show_namespace = FALSE;
-static int show_version = FALSE;
-static int show_help = FALSE;
-static int ignore_warnings = FALSE;
-static int fast_scan = FALSE;
-static int negate = FALSE;
-static int print_count_only = FALSE;
+static bool recursive_search = false;
+static bool show_module_data = false;
+static bool show_tags = false;
+static bool show_stats = false;
+static bool show_strings = false;
+static bool show_string_length = false;
+static bool show_meta = false;
+static bool show_namespace = false;
+static bool show_version = false;
+static bool show_help = false;
+static bool ignore_warnings = false;
+static bool fast_scan = false;
+static bool negate = false;
+static bool print_count_only = false;
+static bool fail_on_warnings = false;
 static int total_count = 0;
 static int limit = 0;
 static int timeout = 1000000;
 static int stack_size = DEFAULT_STACK_SIZE;
-static int threads = MAX_THREADS;
-static int fail_on_warnings = FALSE;
+static int threads = YR_MAX_THREADS;
 static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 
@@ -154,6 +156,9 @@ static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 args_option_t options[] =
 {
+  OPT_STRING(0, "atom-quality-table", &atom_quality_table,
+      "path to a file with the atom quality table", "FILE"),
+
   OPT_STRING_MULTI('t', "tag", &tags, MAX_ARGS_TAG,
       "print only rules tagged as TAG", "TAG"),
 
@@ -168,6 +173,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN('D', "print-module-data", &show_module_data,
       "print module data"),
+
+  OPT_BOOLEAN('S', "print-stats", &show_stats,
+      "print rules' statistics"),
 
   OPT_BOOLEAN('g', "print-tags", &show_tags,
       "print tags"),
@@ -280,7 +288,7 @@ static void file_queue_finish()
 {
   int i;
 
-  for (i = 0; i < MAX_THREADS; i++)
+  for (i = 0; i < YR_MAX_THREADS; i++)
     semaphore_release(&used_slots);
 }
 
@@ -325,16 +333,16 @@ static char* file_queue_get()
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 
-static int is_directory(
+static bool is_directory(
     const char* path)
 {
   DWORD attributes = GetFileAttributes(path);
 
   if (attributes != INVALID_FILE_ATTRIBUTES &&
 	  attributes & FILE_ATTRIBUTE_DIRECTORY)
-    return TRUE;
+    return true;
   else
-    return FALSE;
+    return false;
 }
 
 static void scan_dir(
@@ -377,7 +385,7 @@ static void scan_dir(
 
 #else
 
-static int is_directory(
+static bool is_directory(
     const char* path)
 {
   struct stat st;
@@ -589,20 +597,72 @@ static void print_compiler_error(
 }
 
 
+static void print_rules_stats(
+    YR_RULES* rules)
+{
+  YR_RULES_STATS stats;
+
+  int t = sizeof(stats.top_ac_match_list_lengths) /
+          sizeof(stats.top_ac_match_list_lengths[0]);
+
+  int result = yr_rules_get_stats(rules, &stats);
+
+  if (result != ERROR_SUCCESS)
+  {
+     print_error(result);
+     return;
+  }
+
+  printf(
+      "size of AC transition table        : %d\n",
+      stats.ac_tables_size);
+
+  printf(
+      "average length of AC matches lists : %f\n",
+      stats.ac_average_match_list_length);
+
+  printf(
+      "number of rules                    : %d\n",
+      stats.rules);
+
+  printf(
+      "number of strings                  : %d\n",
+      stats.strings);
+
+  printf(
+      "number of AC matches               : %d\n",
+      stats.ac_matches);
+
+  printf(
+      "number of AC matches in root node  : %d\n",
+      stats.ac_root_match_list_length);
+
+  printf("number of AC matches in top %d longest lists\n", t);
+
+  for (int i = 0; i < t; i++)
+    printf(" %3d: %d\n", i + 1, stats.top_ac_match_list_lengths[i]);
+
+  printf("match list length percentiles\n");
+
+  for (int i = 0; i <= 100; i++)
+    printf(" %3d: %d\n", i, stats.ac_match_list_length_pctls[i]);
+}
+
+
 static int handle_message(
     int message,
     YR_RULE* rule,
     void* data)
 {
   const char* tag;
-  int show = TRUE;
+  bool show = true;
 
   if (tags[0] != NULL)
   {
     // The user specified one or more -t <tag> arguments, let's show this rule
     // only if it's tagged with some of the specified tags.
 
-    show = FALSE;
+    show = false;
 
     for (int i = 0; !show && tags[i] != NULL; i++)
     {
@@ -610,7 +670,7 @@ static int handle_message(
       {
         if (strcmp(tag, tags[i]) == 0)
         {
-          show = TRUE;
+          show = true;
           break;
         }
       }
@@ -622,19 +682,19 @@ static int handle_message(
     // The user specified one or more -i <identifier> arguments, let's show
     // this rule only if it's identifier is among of the provided ones.
 
-    show = FALSE;
+    show = false;
 
     for (int i = 0; !show && identifiers[i] != NULL; i++)
     {
       if (strcmp(identifiers[i], rule->identifier) == 0)
       {
-        show = TRUE;
+        show = true;
         break;
       }
     }
   }
 
-  int is_matching = (message == CALLBACK_MSG_RULE_MATCHING);
+  bool is_matching = (message == CALLBACK_MSG_RULE_MATCHING);
 
   show = show && ((!negate && is_matching) || (negate && !is_matching));
 
@@ -954,7 +1014,7 @@ static int load_modules_data()
     if (!equal_sign)
     {
       fprintf(stderr, "error: wrong syntax for `-x` option.\n");
-      return FALSE;
+      return false;
     }
 
     *equal_sign = '\0';
@@ -971,7 +1031,7 @@ static int load_modules_data()
       {
         free(module_data);
         fprintf(stderr, "error: could not open file \"%s\".\n", equal_sign + 1);
-        return FALSE;
+        return false;
       }
 
       module_data->next = modules_data_list;
@@ -979,7 +1039,7 @@ static int load_modules_data()
     }
   }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -1036,9 +1096,9 @@ int main(
     return EXIT_SUCCESS;
   }
 
-  if (threads > MAX_THREADS)
+  if (threads > YR_MAX_THREADS)
   {
-    fprintf(stderr, "maximum number of threads is %d\n", MAX_THREADS);
+    fprintf(stderr, "maximum number of threads is %d\n", YR_MAX_THREADS);
     return EXIT_FAILURE;
   }
 
@@ -1123,6 +1183,19 @@ int main(
       exit_with_code(EXIT_FAILURE);
     }
 
+    if (atom_quality_table != NULL)
+    {
+      result = yr_compiler_load_atom_quality_table(
+          compiler, atom_quality_table, 0);
+
+      if (result != ERROR_SUCCESS)
+      {
+        fprintf(stderr, "error loading atom quality table: ");
+        print_error(result);
+        exit_with_code(EXIT_FAILURE);
+      }
+    }
+
     cr.errors = 0;
     cr.warnings = 0;
 
@@ -1150,6 +1223,9 @@ int main(
     }
   }
 
+  if (show_stats)
+    print_rules_stats(rules);
+
   mutex_init(&output_mutex);
 
   if (fast_scan)
@@ -1163,8 +1239,8 @@ int main(
       exit_with_code(EXIT_FAILURE);
     }
 
-    THREAD thread[MAX_THREADS];
-    THREAD_ARGS thread_args[MAX_THREADS];
+    THREAD thread[YR_MAX_THREADS];
+    THREAD_ARGS thread_args[YR_MAX_THREADS];
 
     time_t start_time = time(NULL);
 

@@ -30,8 +30,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_TYPES_H
 #define YR_TYPES_H
 
+#include <stdbool.h>
 
 #include <yara/arena.h>
+#include <yara/bitmask.h>
 #include <yara/limits.h>
 #include <yara/hash.h>
 #include <yara/utils.h>
@@ -167,7 +169,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define META_TYPE_BOOLEAN   3
 
 #define META_IS_NULL(x) \
-    ((x) != NULL ? (x)->type == META_TYPE_NULL : TRUE)
+    ((x) != NULL ? (x)->type == META_TYPE_NULL : true)
 
 
 #define EXTERNAL_VARIABLE_TYPE_NULL           0
@@ -178,7 +180,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define EXTERNAL_VARIABLE_TYPE_MALLOC_STRING  5
 
 #define EXTERNAL_VARIABLE_IS_NULL(x) \
-    ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : TRUE)
+    ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : true)
 
 
 typedef struct RE RE;
@@ -202,6 +204,7 @@ typedef struct YR_MATCHES YR_MATCHES;
 typedef struct YR_STRING YR_STRING;
 typedef struct YR_RULE YR_RULE;
 typedef struct YR_RULES YR_RULES;
+typedef struct YR_RULES_STATS YR_RULES_STATS;
 typedef struct YR_EXTERNAL_VARIABLE YR_EXTERNAL_VARIABLE;
 typedef struct YR_MATCH YR_MATCH;
 typedef struct YR_SCAN_CONTEXT YR_SCAN_CONTEXT;
@@ -231,7 +234,7 @@ typedef struct YR_MEMORY_BLOCK_ITERATOR YR_MEMORY_BLOCK_ITERATOR;
 
 struct YR_NAMESPACE
 {
-  int32_t t_flags[MAX_THREADS];     // Thread-specific flags
+  int32_t t_flags[YR_MAX_THREADS];     // Thread-specific flags
   DECLARE_REFERENCE(char*, name);
 };
 
@@ -270,8 +273,8 @@ struct YR_STRING
 
   int64_t fixed_offset;
 
-  YR_MATCHES matches[MAX_THREADS];
-  YR_MATCHES unconfirmed_matches[MAX_THREADS];
+  YR_MATCHES matches[YR_MAX_THREADS];
+  YR_MATCHES unconfirmed_matches[YR_MAX_THREADS];
 
   // Used only when PROFILING_ENABLED is defined
   uint64_t time_cost;
@@ -281,7 +284,7 @@ struct YR_STRING
 struct YR_RULE
 {
   int32_t g_flags;               // Global flags
-  int32_t t_flags[MAX_THREADS];  // Thread-specific flags
+  int32_t t_flags[YR_MAX_THREADS];  // Thread-specific flags
 
   DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(const char*, tags);
@@ -304,7 +307,7 @@ struct YR_EXTERNAL_VARIABLE
     char* s;
   } value;
 
-  DECLARE_REFERENCE(char*, identifier);
+  DECLARE_REFERENCE(const char*, identifier);
 };
 
 
@@ -325,7 +328,7 @@ struct YR_AC_MATCH_TABLE_ENTRY
 };
 
 
-typedef uint64_t                  YR_AC_TRANSITION;
+typedef uint32_t                  YR_AC_TRANSITION;
 typedef YR_AC_TRANSITION*         YR_AC_TRANSITION_TABLE;
 typedef YR_AC_MATCH_TABLE_ENTRY*  YR_AC_MATCH_TABLE;
 
@@ -342,8 +345,12 @@ typedef struct YARA_RULES_FILE_HEADER
   DECLARE_REFERENCE(YR_RULE*, rules_list_head);
   DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
   DECLARE_REFERENCE(const uint8_t*, code_start);
-  DECLARE_REFERENCE(YR_AC_MATCH_TABLE, match_table);
-  DECLARE_REFERENCE(YR_AC_TRANSITION_TABLE, transition_table);
+  DECLARE_REFERENCE(YR_AC_MATCH_TABLE, ac_match_table);
+  DECLARE_REFERENCE(YR_AC_TRANSITION_TABLE, ac_transition_table);
+
+  // Size of ac_match_table and ac_transition_table in number of items (both
+  // tables have the same number of items)
+  uint32_t ac_tables_size;
 
 } YARA_RULES_FILE_HEADER;
 
@@ -497,9 +504,13 @@ struct YR_AC_AUTOMATON
 {
   // Both m_table and t_table have the same number of elements, which is
   // stored in tables_size.
-
   uint32_t tables_size;
+
   uint32_t t_table_unused_candidate;
+
+  // Bitmask where each bit indicates if the corresponding slot in m_table
+  // and t_table is already in use.
+  YR_BITMASK* bitmask;
 
   YR_AC_TRANSITION_TABLE t_table;
   YR_AC_MATCH_TABLE m_table;
@@ -509,18 +520,54 @@ struct YR_AC_AUTOMATON
 
 struct YR_RULES
 {
-  unsigned char tidx_mask[YR_BITARRAY_NCHARS(MAX_THREADS)];
+  unsigned char tidx_mask[YR_BITARRAY_NCHARS(YR_MAX_THREADS)];
   const uint8_t* code_start;
 
   YR_MUTEX mutex;
   YR_ARENA* arena;
   YR_RULE* rules_list_head;
   YR_EXTERNAL_VARIABLE* externals_list_head;
-  YR_AC_TRANSITION_TABLE transition_table;
-  YR_AC_MATCH_TABLE match_table;
+  YR_AC_TRANSITION_TABLE ac_transition_table;
+  YR_AC_MATCH_TABLE ac_match_table;
 
-  // Used only when PROFILING_ENABLED is defined
+  // Size of ac_match_table and ac_transition_table in number of items (both
+  // tables have the same numbe of items).
+  uint32_t ac_tables_size;
+
+  // Used only when PROFILING_ENABLED is defined.
   uint64_t time_cost;
+};
+
+
+struct YR_RULES_STATS
+{
+  // Total number of rules
+  uint32_t rules;
+
+  // Total number of strings across all rules.
+  uint32_t strings;
+
+  // Total number of Aho-Corasick matches. Each node in the  Aho-Corasick
+  // automaton has a list of YR_AC_MATCH structures (match list) pointing to
+  // strings that are potential matches. This field holds the total number of
+  // those structures across all nodes in the automaton.
+  uint32_t ac_matches;
+
+  // Length of the match list for the root node in the Aho-Corasick automaton.
+  uint32_t ac_root_match_list_length;
+
+  // Average number of matches per match list.
+  float ac_average_match_list_length;
+
+  // Top 10 longest match lists.
+  uint32_t top_ac_match_list_lengths[100];
+
+  // Percentiles of match lists' lengths. If the i-th value in the array is N
+  // then i percent of the match lists have N or less items.
+  uint32_t ac_match_list_length_pctls[101];
+
+  // Size of Aho-Corasick transition & match tables.
+  uint32_t ac_tables_size;
 };
 
 
@@ -570,9 +617,9 @@ struct YR_SCAN_CONTEXT
   int flags;
 
   // Thread index for the thread using this scan context. The number of threads
-  // that can use a YR_RULES object simultaneusly is limited by the MAX_THREADS
+  // that can use a YR_RULES object simultaneusly is limited by the YR_MAX_THREADS
   // constant. Each thread using a YR_RULES get assigned a unique thread index
-  // in the range [0, MAX_THREADS)
+  // in the range [0, YR_MAX_THREADS)
   int tidx;
 
   // Scan timeout in nanoseconds.
@@ -626,6 +673,7 @@ union YR_VALUE
 
 
 #define OBJECT_COMMON_FIELDS \
+    int canary; \
     int8_t type; \
     const char* identifier; \
     YR_OBJECT* parent; \
@@ -677,7 +725,7 @@ struct YR_OBJECT_FUNCTION
   {
     const char* arguments_fmt;
     YR_MODULE_FUNC code;
-  } prototypes[MAX_OVERLOADED_FUNCTIONS];
+  } prototypes[YR_MAX_OVERLOADED_FUNCTIONS];
 };
 
 

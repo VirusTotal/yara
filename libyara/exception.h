@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <setjmp.h>
 
-jmp_buf *exc_jmp_buf[MAX_THREADS];
+jmp_buf *exc_jmp_buf[YR_MAX_THREADS];
 
 static LONG CALLBACK exception_handler(
     PEXCEPTION_POINTERS ExceptionInfo)
@@ -105,7 +105,7 @@ static LONG CALLBACK exception_handler(
 #include <setjmp.h>
 #include <signal.h>
 
-sigjmp_buf *exc_jmp_buf[MAX_THREADS];
+sigjmp_buf *exc_jmp_buf[YR_MAX_THREADS];
 
 static void exception_handler(int sig) {
   if (sig == SIGBUS || sig == SIGSEGV)
@@ -113,9 +113,7 @@ static void exception_handler(int sig) {
     int tidx = yr_get_tidx();
 
     if (tidx != -1 && exc_jmp_buf[tidx] != NULL)
-      siglongjmp(*exc_jmp_buf[tidx], 1);
-
-    assert(FALSE);  // We should not reach this point.
+      siglongjmp(*exc_jmp_buf[tidx], 1); 
   }
 }
 

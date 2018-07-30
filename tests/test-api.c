@@ -128,7 +128,8 @@ void test_file_descriptor()
     exit(EXIT_FAILURE);
   }
 
-  if (yr_compiler_add_fd(compiler, fd, NULL, NULL) != 0) {
+  if (yr_compiler_add_fd(compiler, fd, NULL, NULL) != 0)
+  {
     perror("yr_compiler_add_fd");
     exit(EXIT_FAILURE);
   }
@@ -139,7 +140,8 @@ void test_file_descriptor()
   close(fd);
 #endif
 
-  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS) {
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+  {
     perror("yr_compiler_add_fd");
     exit(EXIT_FAILURE);
   }
@@ -234,8 +236,7 @@ void test_max_match_data()
   uint32_t new_max_match_data = 0;
   uint32_t old_max_match_data;
 
-  char* rules_str = " \
-    rule t { strings: $a = \"foobar\" condition: $a }";
+  char* rules_str = "rule t { strings: $a = \"foobar\" condition: $a }";
 
   yr_initialize();
 
@@ -268,6 +269,7 @@ void test_max_match_data()
     exit(EXIT_FAILURE);
   }
 
+  yr_rules_destroy(rules);
   yr_finalize();
 }
 
@@ -277,6 +279,9 @@ void test_save_load_rules()
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
 
+  int matches = 0;
+  char* rules_str = "rule t {condition: bool_var and str_var == \"foobar\"}";
+
   yr_initialize();
 
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
@@ -285,7 +290,10 @@ void test_save_load_rules()
     exit(EXIT_FAILURE);
   }
 
-  if (yr_compiler_add_string(compiler, "rule test {condition: true}", NULL) != 0)
+  yr_compiler_define_boolean_variable(compiler, "bool_var", 1);
+  yr_compiler_define_string_variable(compiler, "str_var", "foobar");
+
+  if (yr_compiler_add_string(compiler, rules_str, NULL) != 0)
   {
     yr_compiler_destroy(compiler);
     perror("yr_compiler_add_string");
@@ -313,6 +321,27 @@ void test_save_load_rules()
   if (yr_rules_load("test-rules.yarc", &rules) != ERROR_SUCCESS)
   {
     perror("yr_rules_load");
+    exit(EXIT_FAILURE);
+  }
+
+  int err = yr_rules_scan_mem(
+      rules,
+      (uint8_t *) "",
+       0,
+       0,
+       count_matches,
+       &matches,
+       0);
+
+  if (err != ERROR_SUCCESS)
+  {
+    fprintf(stderr, "test_save_load_rules: error: %d\n", err);
+    exit(EXIT_FAILURE);
+  }
+
+  if (matches != 1)
+  {
+    fprintf(stderr, "test_save_load_rules: expecting 1 match, got: %d\n", matches);
     exit(EXIT_FAILURE);
   }
 
@@ -348,6 +377,15 @@ void test_scanner()
   yr_compiler_define_integer_variable(compiler, "int_var", 0);
   yr_compiler_define_boolean_variable(compiler, "bool_var", 0);
   yr_compiler_define_string_variable(compiler, "str_var", "");
+
+
+  if (yr_compiler_define_string_variable(
+      compiler, "str_var", "") != ERROR_DUPLICATED_EXTERNAL_VARIABLE)
+  {
+    yr_compiler_destroy(compiler);
+    perror("expecting ERROR_DUPLICATED_EXTERNAL_VARIABLE");
+    exit(EXIT_FAILURE);
+  }
 
   // Compile a rule that use the variables in the condition.
   if (yr_compiler_add_string(compiler, rules_str, NULL) != 0)
@@ -546,6 +584,152 @@ void test_ast_callback()
   yr_finalize();
 }
 
+
+void stats_for_rules(
+    const char* rules_str,
+    YR_RULES_STATS* stats)
+{
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_add_string(compiler, rules_str, NULL) != 0)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_add_string");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_get_rules");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_rules_get_stats(rules, stats);
+
+  yr_compiler_destroy(compiler);
+  yr_rules_destroy(rules);
+  yr_finalize();
+}
+
+
+void test_rules_stats()
+{
+  YR_RULES_STATS stats;
+
+  stats_for_rules("\
+      rule test { \
+      strings: $ = /.*/ \
+      condition: all of them }",
+      &stats);
+
+  assert_true_expr(stats.rules == 1);
+  assert_true_expr(stats.strings == 1);
+  assert_true_expr(stats.ac_root_match_list_length == 1);
+
+  stats_for_rules("\
+      rule test { \
+      strings: $ = \"abc\" \
+      condition: all of them }",
+      &stats);
+
+  assert_true_expr(stats.rules == 1);
+  assert_true_expr(stats.strings == 1);
+  assert_true_expr(stats.ac_matches == 1);
+  assert_true_expr(stats.ac_root_match_list_length == 0);
+  assert_true_expr(stats.top_ac_match_list_lengths[0] == 1);
+  assert_true_expr(stats.ac_match_list_length_pctls[1] == 1);
+  assert_true_expr(stats.ac_match_list_length_pctls[100] == 1);
+
+  stats_for_rules("\
+      rule test { \
+      strings: \
+        $ = \"abcd0\" \
+        $ = \"abcd1\" \
+        $ = \"abcd2\" \
+        $ = \"efgh0\" \
+        $ = \"efgh1\" \
+        $ = \"efgh2\" \
+      condition: all of them }",
+      &stats);
+
+  assert_true_expr(stats.rules == 1);
+  assert_true_expr(stats.strings == 6);
+  assert_true_expr(stats.ac_matches == 6);
+  assert_true_expr(stats.ac_root_match_list_length == 0);
+  assert_true_expr(stats.top_ac_match_list_lengths[0] == 3);
+  assert_true_expr(stats.ac_match_list_length_pctls[1] == 3);
+  assert_true_expr(stats.ac_match_list_length_pctls[100] == 3);
+
+  stats_for_rules("\
+      rule test { \
+      strings: \
+        $ = \"abcd0\" \
+        $ = \"abcd1\" \
+        $ = \"abcd2\" \
+        $ = \"efgh0\" \
+        $ = \"ijkl0\" \
+        $ = \"mnop0\" \
+        $ = \"mnop1\" \
+        $ = \"qrst0\" \
+      condition: all of them }",
+      &stats);
+
+  assert_true_expr(stats.rules == 1);
+  assert_true_expr(stats.strings == 8);
+  assert_true_expr(stats.ac_matches == 8);
+  assert_true_expr(stats.ac_root_match_list_length == 0);
+  assert_true_expr(stats.top_ac_match_list_lengths[0] == 3);
+  assert_true_expr(stats.ac_match_list_length_pctls[1] == 1);
+  assert_true_expr(stats.ac_match_list_length_pctls[100] == 3);
+}
+
+
+void test_issue_920()
+{
+  const char* rules_str = "\
+      rule test { \
+        condition: true \
+      }";
+
+  YR_COMPILER* compiler = NULL;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  // Define a variable named "test"
+  yr_compiler_define_boolean_variable(compiler, "test", 1);
+
+  // The compilation should not succeed, as the rule is named "test" and a
+  // a variable with the same name already exists.
+  yr_compiler_add_string(compiler, rules_str, NULL);
+
+  if (compiler->last_error != ERROR_DUPLICATED_IDENTIFIER)
+  {
+    yr_compiler_destroy(compiler);
+    printf("expecting ERROR_CALLBACK_REQUIRED (%d), got: %d\n",
+           ERROR_DUPLICATED_IDENTIFIER, compiler->last_error);
+    exit(EXIT_FAILURE);
+  }
+
+  yr_compiler_destroy(compiler);
+  yr_finalize();
+}
+
 int main(int argc, char** argv)
 {
   test_disabled_rules();
@@ -556,5 +740,8 @@ int main(int argc, char** argv)
   test_save_load_rules();
   test_scanner();
   test_ast_callback();
+  test_rules_stats();
+
   test_issue_834();
+  test_issue_920();
 }

@@ -34,6 +34,38 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
+          pe.imports(/.*/, /.*CriticalSection/) \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(/kernel32\\.dll/i, /.*/) \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(/.*/, /.*/) \
+      }",
+      "tests/data/tiny-idata-5200");
+
+  assert_false_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(/.*/, /.*CriticalSection/) \
+      }",
+      "tests/data/tiny-idata-5200");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
           pe.number_of_imports == 2 \
       }",
       "tests/data/tiny");
@@ -88,6 +120,20 @@ int main(int argc, char** argv)
           pe.imphash() == \"1720bf764274b7a4052bbef0a71adc0d\" \
       }",
       "tests/data/tiny");
+
+  #endif
+
+  #if defined(HAVE_LIBCRYPTO)
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.number_of_signatures == 1 and \
+          pe.signatures[0].thumbprint == \"c1bf1b8f751bf97626ed77f755f0a393106f2454\" and \
+          pe.signatures[0].subject == \"/C=US/ST=California/L=Menlo Park/O=Quicken, Inc./OU=Operations/CN=Quicken, Inc.\" \
+      }",
+      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
   #endif
 

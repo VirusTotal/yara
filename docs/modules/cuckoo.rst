@@ -17,7 +17,9 @@ it *contains*, but also on what it *does*.
 
 Suppose that you're interested in executable files sending a HTTP request to
 http://someone.doingevil.com. In previous versions of YARA you had to settle
-with::
+with:
+
+.. code-block:: yara
 
     rule evil_doer
     {
@@ -37,7 +39,9 @@ would be completely useless.
 
 But now with the ``cuckoo`` module you can take the behavior report generated
 for the executable file by your Cuckoo sandbox, pass it alongside the
-executable file to YARA, and write a rule like this::
+executable file to YARA, and write a rule like this:
+
+.. code-block:: yara
 
     import "cuckoo"
 
@@ -48,7 +52,9 @@ executable file to YARA, and write a rule like this::
     }
 
 Of course you can mix your behavior-related conditions with good old
-string-based conditions::
+string-based conditions:
+
+.. code-block:: yara
 
     import "cuckoo"
 

@@ -65,11 +65,12 @@ typedef struct COMPILER_RESULTS
 } COMPILER_RESULTS;
 
 
+static char* atom_quality_table;
 static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
-static int ignore_warnings = FALSE;
-static int show_version = FALSE;
-static int show_help = FALSE;
-static int fail_on_warnings = FALSE;
+static bool ignore_warnings = false;
+static bool show_version = false;
+static bool show_help = false;
+static bool fail_on_warnings = false;
 static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 
@@ -78,6 +79,9 @@ static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 args_option_t options[] =
 {
+  OPT_STRING(0, "atom-quality-table", &atom_quality_table,
+      "path to a file with the atom quality table", "FILE"),
+
   OPT_STRING_MULTI('d', NULL, &ext_vars, MAX_ARGS_EXT_VAR,
       "define external variable", "VAR=VALUE"),
 
@@ -121,7 +125,7 @@ static void report_error(
 }
 
 
-static int define_external_variables(
+static bool define_external_variables(
     YR_COMPILER* compiler)
 {
   for (int i = 0; ext_vars[i] != NULL; i++)
@@ -131,7 +135,7 @@ static int define_external_variables(
     if (!equal_sign)
     {
       fprintf(stderr, "error: wrong syntax for `-d` option.\n");
-      return FALSE;
+      return false;
     }
 
     // Replace the equal sign with null character to split the external
@@ -173,7 +177,7 @@ static int define_external_variables(
     }
   }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -200,7 +204,7 @@ int main(
   {
     printf("%s\n\n", USAGE_STRING);
 
-    args_print_usage(options, 35);
+    args_print_usage(options, 40);
     printf("\nSend bug reports and suggestions to: vmalvarez@virustotal.com\n");
 
     return EXIT_SUCCESS;
@@ -225,6 +229,18 @@ int main(
 
   if (!define_external_variables(compiler))
     exit_with_code(EXIT_FAILURE);
+
+  if (atom_quality_table != NULL)
+  {
+    result = yr_compiler_load_atom_quality_table(
+        compiler, atom_quality_table, 0);
+
+    if (result != ERROR_SUCCESS)
+    {
+      fprintf(stderr, "error loading atom quality table\n");
+      exit_with_code(EXIT_FAILURE);
+    }
+  }
 
   cr.errors = 0;
   cr.warnings = 0;

@@ -69,6 +69,7 @@ yarainclude_HEADERS = \
   include/yara/ahocorasick.h \
   include/yara/arena.h \
   include/yara/atoms.h \
+  include/yara/bitmask.h \
   include/yara/compiler.h \
   include/yara/error.h \
   include/yara/exec.h \
@@ -128,6 +129,7 @@ libyara_la_SOURCES = \
   ahocorasick.c \
   arena.c \
   atoms.c \
+  bitmask.c \
   compiler.c \
   endian.c \
   exec.c \
