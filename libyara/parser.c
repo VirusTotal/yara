@@ -218,9 +218,7 @@ int yr_parser_check_types(
     YR_OBJECT_FUNCTION* function,
     const char* actual_args_fmt)
 {
-  int i;
-
-  for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
+  for (int i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
   {
     if (function->prototypes[i].arguments_fmt == NULL)
       break;
@@ -276,9 +274,8 @@ int yr_parser_lookup_loop_variable(
     const char* identifier)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
-  int i;
 
-  for (i = 0; i < compiler->loop_depth; i++)
+  for (int i = 0; i < compiler->loop_depth; i++)
   {
     if (compiler->loop_identifier[i] != NULL &&
         strcmp(identifier, compiler->loop_identifier[i]) == 0)

@@ -58,7 +58,6 @@ void setup_mmap()
 {
   char* filename = strdup("yara-testblob.XXXXXX");
   fd = mkstemp(filename);
-  int i;
 
   if (fd <= 0)
   {
@@ -70,7 +69,7 @@ void setup_mmap()
 
   memset(wbuf, 'a', sizeof(wbuf));
 
-  for (i = 0; i < COUNT; i++)
+  for (int i = 0; i < COUNT; i++)
   {
     if (write(fd, wbuf, sizeof(wbuf)) != sizeof(wbuf))
       exit(EXIT_FAILURE);

@@ -677,8 +677,6 @@ void dex_parse(
 {
   dex_header_t* dex_header;
 
-  int i, j;
-
   uint32_t uleb128_size = 0;
   uint32_t index_class_data_item = 0;
   uint32_t index_encoded_method = 0;
@@ -751,7 +749,7 @@ void dex_parse(
   #endif
 
   // Get information about the Type ID section
-  for (i = 0; i < dex_header->type_ids_size; i++)
+  for (int i = 0; i < dex_header->type_ids_size; i++)
   {
     type_id_item_t* type_id_item = (type_id_item_t*) (
         dex->data + dex_header->type_ids_offset + i * sizeof(type_id_item_t));
@@ -772,7 +770,7 @@ void dex_parse(
   #endif
 
   // Get information about the Proto ID section
-  for (i = 0; i < dex_header->proto_ids_size; i++)
+  for (int i = 0; i < dex_header->proto_ids_size; i++)
   {
     proto_id_item_t* proto_id_item = (proto_id_item_t*) (
         dex->data + dex_header->proto_ids_offset + i * sizeof(proto_id_item_t));
@@ -794,7 +792,7 @@ void dex_parse(
   #endif
 
   // Get information about the Field ID section
-  for (i = 0; i < dex_header->field_ids_size; i++)
+  for (int i = 0; i < dex_header->field_ids_size; i++)
   {
     field_id_item_t* field_id_item = (field_id_item_t*) (
         dex->data + dex_header->field_ids_offset + i * sizeof(field_id_item_t));
@@ -816,7 +814,7 @@ void dex_parse(
   #endif
 
   // Get information about the Method ID section
-  for (i = 0; i < dex_header->method_ids_size; i++)
+  for (int i = 0; i < dex_header->method_ids_size; i++)
   {
     method_id_item_t* method_id_item = (method_id_item_t*) (
         dex->data +
@@ -847,7 +845,7 @@ void dex_parse(
                      sizeof(uint32_t) + *map_list_size * sizeof(map_item_t)))
       return;
 
-    for (i = 0; i < *map_list_size; i++)
+    for (int i = 0; i < *map_list_size; i++)
     {
       map_item_t* map_item = (map_item_t*) (
           dex->data +
@@ -875,7 +873,7 @@ void dex_parse(
   #endif
 
   // Get information about the Class ID section
-  for (i = 0; i < dex_header->class_defs_size; i++)
+  for (int i = 0; i < dex_header->class_defs_size; i++)
   {
     class_id_item_t* class_id_item = (class_id_item_t*) (
         dex->data +
@@ -961,7 +959,7 @@ void dex_parse(
       #endif
 
       uint32_t previous_field_idx = 0;
-      for (j = 0; j < class_data_item.static_fields_size; j++)
+      for (int j = 0; j < class_data_item.static_fields_size; j++)
       {
         uleb128_size += load_encoded_field(
             dex,
@@ -978,7 +976,7 @@ void dex_parse(
       #endif
 
       previous_field_idx = 0;
-      for (j = 0; j < class_data_item.instance_fields_size; j++)
+      for (int j = 0; j < class_data_item.instance_fields_size; j++)
       {
         uleb128_size += load_encoded_field(
             dex,
@@ -995,7 +993,7 @@ void dex_parse(
       #endif
 
       uint32_t previous_method_idx = 0;
-      for (j = 0; j < class_data_item.direct_methods_size; j++)
+      for (int j = 0; j < class_data_item.direct_methods_size; j++)
       {
         uleb128_size += load_encoded_method(
             dex,
@@ -1012,7 +1010,7 @@ void dex_parse(
       #endif
 
       previous_method_idx = 0;
-      for (j = 0; j < class_data_item.virtual_methods_size; j++)
+      for (int j = 0; j < class_data_item.virtual_methods_size; j++)
       {
         uleb128_size += load_encoded_method(
             dex,
