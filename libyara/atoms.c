@@ -211,12 +211,12 @@ int yr_atoms_table_quality(
     }
     else
     {
-      if (atom_length == YR_MAX_ATOM_LENGTH)
-        return table[middle].quality;
-
       int i = middle + 1;
       int quality = table[middle].quality;
       int min_quality = quality;
+
+      if (atom_length == YR_MAX_ATOM_LENGTH)
+        return table[middle].quality;
 
       while (i < end && memcmp(table[i].atom, atom, atom_length) == 0)
       {
