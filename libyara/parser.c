@@ -753,7 +753,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
   (*rule)->ns = compiler->current_namespace;
 
   #ifdef PROFILING_ENABLED
-  rule->time_cost = 0;
+  (*rule)->time_cost = 0;
   #endif
 
   FAIL_ON_ERROR(yr_arena_write_string(
