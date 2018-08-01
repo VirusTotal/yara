@@ -240,10 +240,9 @@ The *matches* field indicates if the rule matches the data or not. The
 
   (<offset>, <string identifier>, <string data>)
 
-The ``match`` method returns a list of instances of the class ``Match``.
+The ``match`` method returns a list of instances of the class :py:class:`yara.Match`.
 Instances of this class have the same attributes as the dictionary passed to the
 callback function.
-
 
 You can also specify a module callback function when invoking the ``match``
 method.  The provided function will be called for every imported module that
@@ -348,8 +347,8 @@ Reference
 
 .. py:class:: Rules
 
-  Instances of this class are returned by :py:func:`yara.compile`  and
-  represents a set of compiled rules.
+  Instances of this class are returned by :py:func:`yara.compile` and represents
+  a set of compiled rules.
 
   .. py:method:: match(filepath, pid, data, externals=None, callback=None, fast=False, timeout=None, modules_data=None, modules_callback=None)
 
@@ -383,3 +382,19 @@ Reference
     :param str filepath: Path to the file.
     :param file-object file: A file object supporting the ``write`` method.
     :raises: **YaraError**: If an error occurred while saving the file.
+
+.. py:class:: Match
+
+  Objects returned by :py:func:`yara.match`, representing a match.
+
+  .. py:field:: rule
+    Name of the matching rule.
+  .. py:field:: namespace
+    Namespace associated to the matching rule.
+  .. py:field:: tags
+    Array of strings containig the tags associated to the matching rule.
+  .. py:field:: meta
+    Dictionary containing metadata associated to the matching rule.
+  .. py:field:: strings
+    List of tuples containing information about the matching strings. Each
+    tuple has the form: (<offset>, <string identifier>, <string data>)
