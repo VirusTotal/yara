@@ -574,8 +574,8 @@ Conditions
 Conditions are nothing more than Boolean expressions as those that can be found
 in all programming languages, for example in an *if* statement. They can contain
 the typical Boolean operators ``and``, ``or``, and ``not``, and relational operators
->=, <=, <, >, == and !=. Also, the arithmetic operators (\+, \-, \*, \\, \%)
-and bitwise operators (\&, \|, <<, >>, \~, \^) can be used on numerical
+``>=``, ``<=``, ``<``, ``>``, ``==`` and ``!=``. Also, the arithmetic operators (``+``, ``-``, ``*``, ``\``, ``%``)
+and bitwise operators (``&``, ``|``, ``<<``, ``>>``, ``~``, ``^``) can be used on numerical
 expressions.
 
 String identifiers can be also used within a condition, acting as Boolean
