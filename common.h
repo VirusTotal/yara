@@ -43,6 +43,7 @@ bool compile_files(
 {
   for (int i = 0; i < argc - 1; i++)
   {
+    FILE* rule_file;
     const char* ns;
     const char* file_name;
     char* colon = (char*) strchr(argv[i], ':');
@@ -61,7 +62,10 @@ bool compile_files(
       ns = NULL;
     }
 
-    FILE* rule_file = fopen(file_name, "r");
+    if (strcmp(file_name, "-") == 0)
+      rule_file = stdin;
+    else
+      rule_file = fopen(file_name, "r");
 
     if (rule_file == NULL)
     {
