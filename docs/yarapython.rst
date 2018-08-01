@@ -387,14 +387,14 @@ Reference
 
   Objects returned by :py:func:`yara.match`, representing a match.
 
-  .. py:field:: rule
+  .. py:attribute:: rule
     Name of the matching rule.
-  .. py:field:: namespace
+  .. py:attribute:: namespace
     Namespace associated to the matching rule.
-  .. py:field:: tags
+  .. py:attribute:: tags
     Array of strings containig the tags associated to the matching rule.
-  .. py:field:: meta
+  .. py:attribute:: meta
     Dictionary containing metadata associated to the matching rule.
-  .. py:field:: strings
+  .. py:attribute:: strings
     List of tuples containing information about the matching strings. Each
     tuple has the form: (<offset>, <string identifier>, <string data>)
