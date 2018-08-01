@@ -82,23 +82,23 @@ args_option_t options[] =
   OPT_STRING(0, "atom-quality-table", &atom_quality_table,
       "path to a file with the atom quality table", "FILE"),
 
-  OPT_STRING_MULTI('d', NULL, &ext_vars, MAX_ARGS_EXT_VAR,
+  OPT_STRING_MULTI('d', "define", &ext_vars, MAX_ARGS_EXT_VAR,
       "define external variable", "VAR=VALUE"),
-
-  OPT_BOOLEAN('w', "no-warnings", &ignore_warnings,
-      "disable warnings"),
 
   OPT_BOOLEAN(0, "fail-on-warnings", &fail_on_warnings,
       "fail on warnings"),
 
+  OPT_BOOLEAN('h', "help", &show_help,
+      "show this help and exit"),
+
   OPT_INTEGER(0, "max-strings-per-rule", &max_strings_per_rule,
       "set maximum number of strings per rule (default=10000)", "NUMBER"),
 
+  OPT_BOOLEAN('w', "no-warnings", &ignore_warnings,
+      "disable warnings"),
+
   OPT_BOOLEAN('v', "version", &show_version,
       "show version information"),
-
-  OPT_BOOLEAN('h', "help", &show_help,
-      "show this help and exit"),
 
   OPT_END()
 };

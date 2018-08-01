@@ -159,29 +159,50 @@ args_option_t options[] =
   OPT_STRING(0, "atom-quality-table", &atom_quality_table,
       "path to a file with the atom quality table", "FILE"),
 
-  OPT_STRING_MULTI('t', "tag", &tags, MAX_ARGS_TAG,
-      "print only rules tagged as TAG", "TAG"),
+  OPT_BOOLEAN('c', "count", &print_count_only,
+      "print only number of matches"),
+
+  OPT_STRING_MULTI('d', "define", &ext_vars, MAX_ARGS_EXT_VAR,
+      "define external variable", "VAR=VALUE"),
+
+  OPT_BOOLEAN(0, "fail-on-warnings", &fail_on_warnings,
+      "fail on warnings"),
+
+  OPT_BOOLEAN('f', "fast-scan", &fast_scan,
+      "fast matching mode"),
+
+  OPT_BOOLEAN('h', "help", &show_help,
+      "show this help and exit"),
 
   OPT_STRING_MULTI('i', "identifier", &identifiers, MAX_ARGS_IDENTIFIER,
       "print only rules named IDENTIFIER", "IDENTIFIER"),
 
-  OPT_BOOLEAN('c', "count", &print_count_only,
-      "print only number of matches"),
+  OPT_INTEGER('l', "max-rules", &limit,
+      "abort scanning after matching a NUMBER of rules", "NUMBER"),
+
+  OPT_INTEGER(0, "max-strings-per-rule", &max_strings_per_rule,
+      "set maximum number of strings per rule (default=10000)", "NUMBER"),
+
+  OPT_STRING_MULTI('x', "module-data", &modules_data, MAX_ARGS_MODULE_DATA,
+      "pass FILE's content as extra data to MODULE", "MODULE=FILE"),
 
   OPT_BOOLEAN('n', "negate", &negate,
       "print only not satisfied rules (negate)", NULL),
 
+  OPT_BOOLEAN('w', "no-warnings", &ignore_warnings,
+      "disable warnings"),
+
   OPT_BOOLEAN('D', "print-module-data", &show_module_data,
       "print module data"),
 
-  OPT_BOOLEAN('S', "print-stats", &show_stats,
-      "print rules' statistics"),
-
-  OPT_BOOLEAN('g', "print-tags", &show_tags,
-      "print tags"),
-
   OPT_BOOLEAN('m', "print-meta", &show_meta,
       "print metadata"),
+
+  OPT_BOOLEAN('e', "print-namespace", &show_namespace,
+      "print rules' namespace"),
+
+  OPT_BOOLEAN('S', "print-stats", &show_stats,
+      "print rules' statistics"),
 
   OPT_BOOLEAN('s', "print-strings", &show_strings,
       "print matching strings"),
@@ -189,47 +210,26 @@ args_option_t options[] =
   OPT_BOOLEAN('L', "print-string-length", &show_string_length,
       "print length of matched strings"),
 
-  OPT_BOOLEAN('e', "print-namespace", &show_namespace,
-      "print rules' namespace"),
-
-  OPT_INTEGER('p', "threads", &threads,
-      "use the specified NUMBER of threads to scan a directory", "NUMBER"),
-
-  OPT_INTEGER('l', "max-rules", &limit,
-      "abort scanning after matching a NUMBER of rules", "NUMBER"),
-
-  OPT_STRING_MULTI('d', NULL, &ext_vars, MAX_ARGS_EXT_VAR,
-      "define external variable", "VAR=VALUE"),
-
-  OPT_STRING_MULTI('x', NULL, &modules_data, MAX_ARGS_MODULE_DATA,
-      "pass FILE's content as extra data to MODULE", "MODULE=FILE"),
-
-  OPT_INTEGER('a', "timeout", &timeout,
-      "abort scanning after the given number of SECONDS", "SECONDS"),
-
-  OPT_INTEGER('k', "stack-size", &stack_size,
-      "set maximum stack size (default=16384)", "SLOTS"),
-
-  OPT_INTEGER(0, "max-strings-per-rule", &max_strings_per_rule,
-      "set maximum number of strings per rule (default=10000)", "NUMBER"),
+  OPT_BOOLEAN('g', "print-tags", &show_tags,
+      "print tags"),
 
   OPT_BOOLEAN('r', "recursive", &recursive_search,
       "recursively search directories"),
 
-  OPT_BOOLEAN('f', "fast-scan", &fast_scan,
-      "fast matching mode"),
+  OPT_INTEGER('k', "stack-size", &stack_size,
+      "set maximum stack size (default=16384)", "SLOTS"),
 
-  OPT_BOOLEAN('w', "no-warnings", &ignore_warnings,
-      "disable warnings"),
+  OPT_STRING_MULTI('t', "tag", &tags, MAX_ARGS_TAG,
+      "print only rules tagged as TAG", "TAG"),
 
-  OPT_BOOLEAN(0, "fail-on-warnings", &fail_on_warnings,
-      "fail on warnings"),
+  OPT_INTEGER('p', "threads", &threads,
+      "use the specified NUMBER of threads to scan a directory", "NUMBER"),
+
+  OPT_INTEGER('a', "timeout", &timeout,
+      "abort scanning after the given number of SECONDS", "SECONDS"),
 
   OPT_BOOLEAN('v', "version", &show_version,
       "show version information"),
-
-  OPT_BOOLEAN('h', "help", &show_help,
-      "show this help and exit"),
 
   OPT_END()
 };
