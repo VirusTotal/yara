@@ -710,9 +710,9 @@ Reference
 
     .. c:member:: thumbprint
 
-        A string containing the thumbprint of the signature.
+        .. versionadded:: 3.8.0
 
-    .. versionadded:: 3.8.0
+        A string containing the thumbprint of the signature.
 
     .. c:member:: issuer
 
@@ -790,7 +790,7 @@ Reference
 
     .. c:function:: version(version, [toolid])
 
-    .. versionadded:: 3.5.0
+        .. versionadded:: 3.5.0
 
         Function returning true if the PE has the specified *version* in the PE's rich
         signature. Provide the optional *toolid* argument to only match when both match
@@ -802,7 +802,7 @@ Reference
 
     .. c:function:: toolid(toolid, [version])
 
-    .. versionadded:: 3.5.0
+        .. versionadded:: 3.5.0
 
         Function returning true if the PE has the specified *id* in the PE's rich
         signature. Provide the optional *version* argument to only match when both
@@ -920,19 +920,19 @@ Reference
 
 .. c:function:: section_index(name)
 
-  Function returning the index into the sections array for the section that has
-  *name*. *name* is case sensitive.
+    Function returning the index into the sections array for the section that has
+    *name*. *name* is case sensitive.
 
-  *Example: pe.section_index(".TEXT")*
+    *Example: pe.section_index(".TEXT")*
 
 .. c:function:: section_index(addr)
 
- .. versionadded:: 3.3.0
+    .. versionadded:: 3.3.0
 
-  Function returning the index into the sections array for the section that has
-  *addr*. *addr* can be an offset into the file or a memory address.
+    Function returning the index into the sections array for the section that has
+    *addr*. *addr* can be an offset into the file or a memory address.
 
-  *Example: pe.section_index(pe.entry_point)*
+    *Example: pe.section_index(pe.entry_point)*
 
 .. c:function:: is_dll()
 
@@ -960,8 +960,8 @@ Reference
 
 .. c:function:: rva_to_offset(addr)
 
- .. versionadded:: 3.6.0
+    .. versionadded:: 3.6.0
 
-  Function returning the file offset for RVA *addr*.
+    Function returning the file offset for RVA *addr*.
 
-  *Example: pe.rva_to_offset(pe.entry_point)*
+    *Example: pe.rva_to_offset(pe.entry_point)*
