@@ -335,12 +335,12 @@ Reference
 
   Provide either *stack_size* or *max_strings_per_rule*. These kwargs take
   unsigned integer values as input and will assign the provided value to the
-  yr_set_configuration(...) variables YR_CONFIG_STACK_SIZE and
-  YR_CONFIG_MAX_STRINGS_PER_RULE, respectively.
+  yr_set_configuration(...) variables ``YR_CONFIG_STACK_SIZE`` and
+  ``YR_CONFIG_MAX_STRINGS_PER_RULE``, respectively.
 
-  :param int stack_size: Stack size to use for YR_CONFIG_STACK_SIZE
+  :param int stack_size: Stack size to use for ``YR_CONFIG_STACK_SIZE``
   :param int max_strings_per_rule: Maximum number of strings to allow per
-    yara rule. Will be mapped to YR_CONFIG_MAX_STRINGS_PER_RULE.
+    yara rule. Will be mapped to ``YR_CONFIG_MAX_STRINGS_PER_RULE``.
   :return: None
   :rtype: **NoneType**
   :raises: **YaraError**: If an error occurred.
@@ -371,8 +371,8 @@ Reference
       data.
     :param function modules_callback: Callback function invoked for each module.
     :param int which_callbacks: An integer that indicates in which cases the
-      callback function must be called. Possible values are `yara.CALLBACK_ALL`,
-      `yara.CALLBACK_MATCHES` and `yara.CALLBACK_NON_MATCHES`.
+      callback function must be called. Possible values are ``yara.CALLBACK_ALL``,
+      ``yara.CALLBACK_MATCHES`` and ``yara.CALLBACK_NON_MATCHES``.
     :raises YaraTimeoutError: If the timeout was reached.
     :raises YaraError: If an error occurred during the scan.
 
@@ -409,4 +409,4 @@ Reference
   .. py:attribute:: strings
 
     List of tuples containing information about the matching strings. Each
-    tuple has the form: (<offset>, <string identifier>, <string data>)
+    tuple has the form: `(<offset>, <string identifier>, <string data>)`.
