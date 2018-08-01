@@ -192,11 +192,11 @@ args_option_t options[] =
   OPT_BOOLEAN('w', "no-warnings", &ignore_warnings,
       "disable warnings"),
 
-  OPT_BOOLEAN('D', "print-module-data", &show_module_data,
-      "print module data"),
-
   OPT_BOOLEAN('m', "print-meta", &show_meta,
       "print metadata"),
+
+  OPT_BOOLEAN('D', "print-module-data", &show_module_data,
+      "print module data"),
 
   OPT_BOOLEAN('e', "print-namespace", &show_namespace,
       "print rules' namespace"),
