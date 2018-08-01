@@ -223,20 +223,64 @@ Reference
     following constants:
 
     .. c:type:: RELOCS_STRIPPED
+    
+        Relocation info stripped from file.
+    
     .. c:type:: EXECUTABLE_IMAGE
+    
+        File is executable  (i.e. no unresolved external references).
+    
     .. c:type:: LINE_NUMS_STRIPPED
+    
+        Line numbers stripped from file.
+    
     .. c:type:: LOCAL_SYMS_STRIPPED
+    
+        Local symbols stripped from file.
+    
     .. c:type:: AGGRESIVE_WS_TRIM
+    
+        Aggressively trim working set
+    
     .. c:type:: LARGE_ADDRESS_AWARE
+    
+        App can handle >2gb addresses
+    
     .. c:type:: BYTES_REVERSED_LO
+    
+        Bytes of machine word are reversed.
+    
     .. c:type:: MACHINE_32BIT
+    
+        32 bit word machine.
+    
     .. c:type:: DEBUG_STRIPPED
+    
+        Debugging info stripped from file in .DBG file
+    
     .. c:type:: REMOVABLE_RUN_FROM_SWAP
+    
+        If Image is on removable media, copy and run from the swap file.
+    
     .. c:type:: NET_RUN_FROM_SWAP
+    
+        If Image is on Net, copy and run from the swap file.
+    
     .. c:type:: SYSTEM
+    
+        System File.
+    
     .. c:type:: DLL
+    
+        File is a DLL.
+    
     .. c:type:: UP_SYSTEM_ONLY
+    
+        File should only be run on a UP machine
+    
     .. c:type:: BYTES_REVERSED_HI
+    
+        Bytes of machine word are reversed.
 
     *Example:  pe.characteristics & pe.DLL*
 
