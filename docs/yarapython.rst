@@ -78,9 +78,11 @@ If includes are used, a python callback can be set to define a custom source for
 the imported files (by default they are read from disk). This callback function
 is set through the ``include_callback`` optional parameter.
 It receives the following parameters:
- *``requested_filename``: file requested with 'include'
- *``filename``: file containing the 'include' directive if applicable, else None
- *``namespace``: namespace
+
+ * ``requested_filename``: file requested with 'include'
+ * ``filename``: file containing the 'include' directive if applicable, else None
+ * ``namespace``: namespace
+
 And returns the requested rules sources as a single string.
 
 .. code-block:: python
