@@ -528,7 +528,7 @@ static void print_error(
       fprintf(stderr, "could not open file\n");
       break;
     case ERROR_UNSUPPORTED_FILE_VERSION:
-      fprintf(stderr, "rules were compiled with a newer version of YARA\n");
+      fprintf(stderr, "rules were compiled with a different version of YARA\n");
       break;
     case ERROR_CORRUPT_FILE:
       fprintf(stderr, "corrupt compiled rules file.\n");
