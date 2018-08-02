@@ -89,6 +89,27 @@ static void test_comparison_operators()
       "rule test { condition: 1.5 >= 1.0}", NULL);
 
   assert_true_rule(
+      "rule test { condition: 1.0 != 1.000000000000001 }", NULL);
+
+  assert_true_rule(
+      "rule test { condition: 1.0 < 1.000000000000001 }", NULL);
+
+  assert_false_rule(
+      "rule test { condition: 1.0 >= 1.000000000000001 }", NULL);
+
+  assert_true_rule(
+      "rule test { condition: 1.000000000000001 > 1 }", NULL);
+
+  assert_false_rule(
+      "rule test { condition: 1.000000000000001 <= 1 }", NULL);
+
+  assert_true_rule(
+      "rule test { condition: 1.0 == 1.0000000000000001 }", NULL);
+
+  assert_true_rule(
+      "rule test { condition: 1.0 >= 1.0000000000000001 }", NULL);
+
+  assert_true_rule(
       "rule test { condition: 1.5 >= 1}", NULL);
 
   assert_true_rule(

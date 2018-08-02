@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+#include <float.h>
 
 #include <yara/globals.h>
 #include <yara/arena.h>
@@ -1157,7 +1158,7 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r2);
         ensure_defined(r1);
-        r1.i = r1.d == r2.d;
+        r1.i = fabs(r1.d - r2.d) < DBL_EPSILON;
         push(r1);
         break;
 
@@ -1166,7 +1167,7 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r2);
         ensure_defined(r1);
-        r1.i = r1.d != r2.d;
+        r1.i = fabs(r1.d - r2.d) >= DBL_EPSILON;
         push(r1);
         break;
 
