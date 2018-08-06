@@ -105,7 +105,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PRO;YR_BUILDING_STATIC_LIBC;PROFILING_ENABLED</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIBC;PROFILING_ENABLED</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsCpp</CompileAs>
