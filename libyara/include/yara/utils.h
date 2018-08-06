@@ -79,7 +79,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else
   #if __GNUC__ >= 4
     #define YR_API EXTERNC __attribute__((visibility ("default")))
-    #define YR_DEPRECATED_API EXTERNC __attribute__((deprecated))
+    #define YR_DEPRECATED_API YR_API __attribute__((deprecated))
   #else
     #define YR_API EXTERNC
     #define YR_DEPRECATED_API EXTERNC
