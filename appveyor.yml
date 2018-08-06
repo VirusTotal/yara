@@ -1,6 +1,6 @@
 # AppVeyor CI for Windows
 
-version: 3.7.{build}
+version: 3.8.{build}
 
 pull_requests:
   do_not_increment_build_number: true
