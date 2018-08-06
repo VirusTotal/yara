@@ -275,13 +275,13 @@ struct YR_STRING
   YR_MATCHES unconfirmed_matches[YR_MAX_THREADS];
 
   // Used only when PROFILING_ENABLED is defined
-  uint64_t time_cost;
+  volatile uint64_t time_cost;
 };
 
 
 struct YR_RULE
 {
-  int32_t g_flags;               // Global flags
+  int32_t g_flags;                  // Global flags
   int32_t t_flags[YR_MAX_THREADS];  // Thread-specific flags
 
   DECLARE_REFERENCE(const char*, identifier);
@@ -291,7 +291,7 @@ struct YR_RULE
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);
 
   // Used only when PROFILING_ENABLED is defined
-  uint64_t time_cost;
+  volatile uint64_t time_cost;
 };
 
 
