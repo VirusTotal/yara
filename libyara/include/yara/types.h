@@ -275,7 +275,7 @@ struct YR_STRING
   YR_MATCHES unconfirmed_matches[YR_MAX_THREADS];
 
   // Used only when PROFILING_ENABLED is defined
-  volatile uint64_t time_cost;
+  volatile int64_t time_cost;
 };
 
 
@@ -291,7 +291,7 @@ struct YR_RULE
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);
 
   // Used only when PROFILING_ENABLED is defined
-  volatile uint64_t time_cost;
+  volatile int64_t time_cost;
 };
 
 
