@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -1961,6 +1963,10 @@ void test_performance_warnings()
 
 int main(int argc, char** argv)
 {
+  char *top_srcdir = getenv("TOP_SRCDIR");
+  if (top_srcdir)
+    chdir(top_srcdir);
+
   yr_initialize();
 
   test_boolean_operators();

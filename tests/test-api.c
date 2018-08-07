@@ -1,5 +1,6 @@
-
 #include <yara.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "util.h"
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -732,6 +733,10 @@ void test_issue_920()
 
 int main(int argc, char** argv)
 {
+  char *top_srcdir = getenv("TOP_SRCDIR");
+  if (top_srcdir)
+    chdir(top_srcdir);
+
   test_disabled_rules();
   test_file_descriptor();
   test_max_string_per_rules();
