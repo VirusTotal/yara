@@ -119,7 +119,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %lex-param {yyscan_t yyscanner}
 %lex-param {YR_COMPILER* compiler}
 
-%token _EOF_ 0                                         "end of file"
+// Token that marks the end of the original file.
+%token _END_OF_FILE_  0                                "end of file"
+
+// Token that marks the end of included files, we can't use  _END_OF_FILE_
+// because bison stops parsing when it sees _END_OF_FILE_, we want to be
+// be able to identify the point where an included file ends, but continuing
+// parsing any content that follows.
+%token _END_OF_INCLUDED_FILE_                          "end of included file"
 
 %token _DOT_DOT_                                       ".."
 %token _RULE_                                          "<rule>"
@@ -248,6 +255,10 @@ rules
     | rules error rule      /* on error skip until next rule..*/
     | rules error import    /* .. or import statement */
     | rules error "include" /* .. or include statement */
+    | rules _END_OF_INCLUDED_FILE_
+      {
+        _yr_compiler_pop_file_name(compiler);
+      }
     ;
 
 
