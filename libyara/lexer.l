@@ -348,15 +348,12 @@ include[ \t]+\"         {
 
 <<EOF>> {
 
-  YR_COMPILER* compiler = yyget_extra(yyscanner);
-
-  _yr_compiler_pop_file_name(compiler);
   yypop_buffer_state(yyscanner);
 
   if (!YY_CURRENT_BUFFER)
-  {
     yyterminate();
-  }
+
+  return _END_OF_INCLUDED_FILE_;
 }
 
 
