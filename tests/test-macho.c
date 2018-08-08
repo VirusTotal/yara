@@ -1,9 +1,15 @@
 #include <yara.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "util.h"
 #include "blob.h"
 
 int main(int argc, char** argv)
 {
+  char *top_srcdir = getenv("TOP_SRCDIR");
+  if (top_srcdir)
+    chdir(top_srcdir);
+
   yr_initialize();
 
   //  Tests for executable files
