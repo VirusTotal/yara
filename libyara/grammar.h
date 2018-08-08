@@ -85,15 +85,15 @@ extern int yara_yydebug;
     _FALSE_ = 295,
     _OR_ = 296,
     _AND_ = 297,
-    _EQ_ = 298,
-    _NEQ_ = 299,
-    _LT_ = 300,
-    _LE_ = 301,
-    _GT_ = 302,
-    _GE_ = 303,
-    _SHIFT_LEFT_ = 304,
-    _SHIFT_RIGHT_ = 305,
-    _NOT_ = 306,
+    _NOT_ = 298,
+    _EQ_ = 299,
+    _NEQ_ = 300,
+    _LT_ = 301,
+    _LE_ = 302,
+    _GT_ = 303,
+    _GE_ = 304,
+    _SHIFT_LEFT_ = 305,
+    _SHIFT_RIGHT_ = 306,
     UNARY_MINUS = 307
   };
 #endif
@@ -138,15 +138,15 @@ extern int yara_yydebug;
 #define _FALSE_ 295
 #define _OR_ 296
 #define _AND_ 297
-#define _EQ_ 298
-#define _NEQ_ 299
-#define _LT_ 300
-#define _LE_ 301
-#define _GT_ 302
-#define _GE_ 303
-#define _SHIFT_LEFT_ 304
-#define _SHIFT_RIGHT_ 305
-#define _NOT_ 306
+#define _NOT_ 298
+#define _EQ_ 299
+#define _NEQ_ 300
+#define _LT_ 301
+#define _LE_ 302
+#define _GT_ 303
+#define _GE_ 304
+#define _SHIFT_LEFT_ 305
+#define _SHIFT_RIGHT_ 306
 #define UNARY_MINUS 307
 
 /* Value type.  */
@@ -154,7 +154,7 @@ extern int yara_yydebug;
 
 union YYSTYPE
 {
-#line 217 "grammar.y" /* yacc.c:1916  */
+#line 228 "grammar.y" /* yacc.c:1916  */
 
   EXPRESSION      expression;
   SIZED_STRING*   sized_string;
