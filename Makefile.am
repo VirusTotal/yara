@@ -46,6 +46,8 @@ test_math_SOURCES = tests/test-math.c tests/util.c
 test_math_LDADD = libyara/.libs/libyara.a
 
 TESTS = $(check_PROGRAMS)
+TESTS_ENVIRONMENT = TOP_SRCDIR=$(top_srcdir)
+
 check_PROGRAMS = test-alignment \
   test-atoms \
   test-api \
