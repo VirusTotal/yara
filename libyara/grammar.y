@@ -119,6 +119,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %lex-param {yyscan_t yyscanner}
 %lex-param {YR_COMPILER* compiler}
 
+%token _EOF_ 0                                         "end of file"
+
 %token _DOT_DOT_                                       ".."
 %token _RULE_                                          "<rule>"
 %token _PRIVATE_                                       "<private>"
