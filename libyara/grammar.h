@@ -45,6 +45,7 @@ extern int yara_yydebug;
 # define YYTOKENTYPE
   enum yytokentype
   {
+    _EOF_ = 0,
     _DOT_DOT_ = 258,
     _RULE_ = 259,
     _PRIVATE_ = 260,
@@ -98,6 +99,7 @@ extern int yara_yydebug;
   };
 #endif
 /* Tokens.  */
+#define _EOF_ 0
 #define _DOT_DOT_ 258
 #define _RULE_ 259
 #define _PRIVATE_ 260
@@ -154,7 +156,7 @@ extern int yara_yydebug;
 
 union YYSTYPE
 {
-#line 228 "grammar.y" /* yacc.c:1916  */
+#line 230 "grammar.y" /* yacc.c:1916  */
 
   EXPRESSION      expression;
   SIZED_STRING*   sized_string;
@@ -165,7 +167,7 @@ union YYSTYPE
   YR_META*        meta;
   YR_RULE*        rule;
 
-#line 169 "grammar.h" /* yacc.c:1916  */
+#line 171 "grammar.h" /* yacc.c:1916  */
 };
 
 typedef union YYSTYPE YYSTYPE;
