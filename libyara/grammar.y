@@ -119,45 +119,56 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %lex-param {yyscan_t yyscanner}
 %lex-param {YR_COMPILER* compiler}
 
-%token _DOT_DOT_
-%token _RULE_
-%token _PRIVATE_
-%token _GLOBAL_
-%token _META_
-%token <string> _STRINGS_
-%token _CONDITION_
-%token <c_string> _IDENTIFIER_
-%token <c_string> _STRING_IDENTIFIER_
-%token <c_string> _STRING_COUNT_
-%token <c_string> _STRING_OFFSET_
-%token <c_string> _STRING_LENGTH_
+%token _DOT_DOT_                                       ".."
+%token _RULE_                                          "<rule>"
+%token _PRIVATE_                                       "<private>"
+%token _GLOBAL_                                        "<global>"
+%token _META_                                          "<meta>"
+%token <string> _STRINGS_                              "<strings>"
+%token _CONDITION_                                     "<condition>"
+%token <c_string> _IDENTIFIER_                         "identifier"
+%token <c_string> _STRING_IDENTIFIER_                  "string identifier"
+%token <c_string> _STRING_COUNT_                       "string count"
+%token <c_string> _STRING_OFFSET_                      "string offset"
+%token <c_string> _STRING_LENGTH_                      "string length"
 %token <c_string> _STRING_IDENTIFIER_WITH_WILDCARD_
-%token <integer> _NUMBER_
-%token <double_> _DOUBLE_
-%token <integer> _INTEGER_FUNCTION_
-%token <sized_string> _TEXT_STRING_
-%token <sized_string> _HEX_STRING_
-%token <sized_string> _REGEXP_
-%token _ASCII_
-%token _WIDE_
-%token _XOR_
-%token _NOCASE_
-%token _FULLWORD_
-%token _AT_
-%token _FILESIZE_
-%token _ENTRYPOINT_
-%token _ALL_
-%token _ANY_
-%token _IN_
-%token _OF_
-%token _FOR_
-%token _THEM_
-%token _MATCHES_
-%token _CONTAINS_
-%token _IMPORT_
-
-%token _TRUE_
-%token _FALSE_
+    "string identifier with wildcard"
+%token <integer> _NUMBER_                              "integer number"
+%token <double_> _DOUBLE_                              "floating point number"
+%token <integer> _INTEGER_FUNCTION_                    "integer function"
+%token <sized_string> _TEXT_STRING_                    "text string"
+%token <sized_string> _HEX_STRING_                     "hex string"
+%token <sized_string> _REGEXP_                         "regular expression"
+%token _ASCII_                                         "<ascii>"
+%token _WIDE_                                          "<wide>"
+%token _XOR_                                           "<xor>"
+%token _NOCASE_                                        "<nocase>"
+%token _FULLWORD_                                      "<fullword>"
+%token _AT_                                            "<at>"
+%token _FILESIZE_                                      "<filesize>"
+%token _ENTRYPOINT_                                    "<entrypoint>"
+%token _ALL_                                           "<all>"
+%token _ANY_                                           "<any>"
+%token _IN_                                            "<in>"
+%token _OF_                                            "<of>"
+%token _FOR_                                           "<for>"
+%token _THEM_                                          "<them>"
+%token _MATCHES_                                       "<matches>"
+%token _CONTAINS_                                      "<contains>"
+%token _IMPORT_                                        "<import>"
+%token _TRUE_                                          "<true>"
+%token _FALSE_                                         "<false"
+%token _OR_                                            "<or>"
+%token _AND_                                           "<and>"
+%token _NOT_                                           "<not>"
+%token _EQ_                                            "=="
+%token _NEQ_                                           "!="
+%token _LT_                                            "<"
+%token _LE_                                            "<="
+%token _GT_                                            ">"
+%token _GE_                                            ">="
+%token _SHIFT_LEFT_                                    "<<"
+%token _SHIFT_RIGHT_                                   ">>"
 
 %left _OR_
 %left _AND_
