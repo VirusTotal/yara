@@ -1142,6 +1142,7 @@ void test_re()
   assert_true_regexp("(a+|b)*", "ab", "ab");
   assert_true_regexp("a|b|c|d|e", "e", "e");
   assert_true_regexp("(a|b|c|d|e)f", "ef", "ef");
+  assert_true_regexp("a|b", "a", "a");
   assert_true_regexp(".b{2}", "abb", "abb");
   assert_true_regexp(".b{2,3}", "abbb", "abbb");
   assert_true_regexp(".b{2,3}?", "abbb", "abb");
