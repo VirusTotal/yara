@@ -66,7 +66,6 @@ struct ATOM_TREE_NODE
 
 struct ATOM_TREE
 {
-  ATOM_TREE_NODE* current_leaf;
   ATOM_TREE_NODE* root_node;
 };
 

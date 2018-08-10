@@ -87,14 +87,7 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 #include <yara/mem.h>
 #include <yara/error.h>
 #include <yara/types.h>
-
-
-#define append_current_leaf_to_node(node) \
-    if (atom_tree->current_leaf != NULL) \
-    { \
-      _yr_atoms_tree_node_append(node, atom_tree->current_leaf); \
-      atom_tree->current_leaf = NULL; \
-    } \
+#include <yara/stack.h>
 
 
 //
@@ -758,239 +751,301 @@ static int _yr_atoms_wide(
 }
 
 
-//
-// _yr_atoms_extract_from_re_node
-//
-// Extract atoms from a regular expression node. See description for
-// _yr_atoms_extract_from_re for more details.
-//
-
-static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
-    YR_ATOMS_CONFIG* config,
-    RE_NODE* re_node,
-    ATOM_TREE* atom_tree,
-    ATOM_TREE_NODE* current_node)
+struct STACK_ITEM
 {
-  ATOM_TREE_NODE* left_node;
-  ATOM_TREE_NODE* right_node;
-  ATOM_TREE_NODE* and_node;
-  ATOM_TREE_NODE* current_leaf;
-  ATOM_TREE_NODE* temp;
+  RE_NODE*          re_node;
+  ATOM_TREE_NODE*   new_appending_node;
+};
 
-  int quality;
-  int new_quality;
-  int i;
+
+static int _yr_atoms_extract_from_re_node(
+    YR_ATOMS_CONFIG* config,
+    RE_NODE* re_root_node,
+    ATOM_TREE* atom_tree)
+{
+  YR_STACK* stack;
+  RE_NODE* re_node;
 
   uint8_t new_atom[YR_MAX_ATOM_LENGTH];
+  struct STACK_ITEM si;
 
-  switch(re_node->type)
+  int i;
+  int leaf_atom_quality;
+  int new_quality;
+
+  ATOM_TREE_NODE* and_node;
+  ATOM_TREE_NODE* left_node;
+  ATOM_TREE_NODE* right_node;
+
+  // This holds the ATOM_TREE_OR node where leaves (ATOM_TREE_LEAF) are
+  // currently being appended.
+  ATOM_TREE_NODE* current_appending_node;
+
+  // This holds the ATOM_TREE_LEAF node currently whose atom is being updated.
+  ATOM_TREE_NODE* leaf = NULL;
+
+  FAIL_ON_ERROR(yr_stack_create(1024, sizeof(si), &stack));
+
+  // Start processing the root node.
+  si.re_node = re_root_node;
+
+  // Leaf nodes are initially appended to the atom tree's root node, which is
+  // an ATOM_TREE_OR node that is empty at this point.
+  si.new_appending_node = atom_tree->root_node;
+
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_stack_push(stack, (void*) &si),
+      yr_stack_destroy(stack));
+
+  while (yr_stack_pop(stack, (void*) &si))
   {
-    case RE_NODE_LITERAL:
-
-      if (atom_tree->current_leaf == NULL)
+    // Change the appending node if the item poped from the stack says so.
+    if (si.new_appending_node != NULL)
+    {
+      // Before changing the appending node let's append any pending leaf to
+      // the current appending node.
+      if (leaf != NULL)
       {
-        atom_tree->current_leaf = _yr_atoms_tree_node_create(ATOM_TREE_LEAF);
-
-        if (atom_tree->current_leaf == NULL)
-          return NULL;
-
-        atom_tree->current_leaf->forward_code = re_node->forward_code;
-        atom_tree->current_leaf->backward_code = re_node->backward_code;
-
-        assert(atom_tree->current_leaf->forward_code != NULL);
-        assert(atom_tree->current_leaf->backward_code != NULL);
+        _yr_atoms_tree_node_append(current_appending_node, leaf);
+        leaf = NULL;
       }
 
-      current_leaf = atom_tree->current_leaf;
+      current_appending_node = si.new_appending_node;
+    }
 
-      if (current_leaf->atom_length < YR_MAX_ATOM_LENGTH)
+    if (si.re_node != NULL)
+    {
+      switch(si.re_node->type)
       {
-        current_leaf->atom[current_leaf->atom_length] =
-            (uint8_t) re_node->value;
-        current_leaf->recent_nodes[current_leaf->atom_length] = re_node;
-        current_leaf->atom_length++;
-      }
-      else
-      {
-        quality = config->get_atom_quality(
-            config, current_leaf->atom, YR_MAX_ATOM_LENGTH);
+        case RE_NODE_LITERAL:
 
-        if (quality < YR_MAX_ATOM_QUALITY)
-        {
-          for (i = 1; i < YR_MAX_ATOM_LENGTH; i++)
-            current_leaf->recent_nodes[i - 1] = current_leaf->recent_nodes[i];
-
-          current_leaf->recent_nodes[YR_MAX_ATOM_LENGTH - 1] = re_node;
-
-          for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
-            new_atom[i] = (uint8_t) current_leaf->recent_nodes[i]->value;
-
-          new_quality = config->get_atom_quality(
-              config, new_atom, YR_MAX_ATOM_LENGTH);
-
-          if (new_quality > quality)
+          if (leaf == NULL)
           {
-            for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
-              current_leaf->atom[i] = new_atom[i];
+            leaf = _yr_atoms_tree_node_create(ATOM_TREE_LEAF);
 
-            current_leaf->forward_code = \
-                current_leaf->recent_nodes[0]->forward_code;
+            if (leaf == NULL)
+            {
+              yr_stack_destroy(stack);
+              return ERROR_INSUFFICIENT_MEMORY;
+            }
 
-            current_leaf->backward_code = \
-                current_leaf->recent_nodes[0]->backward_code;
+            // -1 indicates that the quality hasn't beeing calculated yet.
+            leaf_atom_quality = -1;
 
-            assert(current_leaf->forward_code != NULL);
-            assert(current_leaf->backward_code != NULL);
+            leaf->forward_code = si.re_node->forward_code;
+            leaf->backward_code = si.re_node->backward_code;
+
+            assert(leaf->forward_code != NULL);
+            assert(leaf->backward_code != NULL);
           }
-        }
+
+          if (leaf->atom_length < YR_MAX_ATOM_LENGTH)
+          {
+            // The leaf hasn't reached the maximum atom length yet, we can add
+            // the literal to the atom.
+
+            leaf->atom[leaf->atom_length] = (uint8_t) si.re_node->value;
+            leaf->recent_nodes[leaf->atom_length] = si.re_node;
+            leaf->atom_length++;
+          }
+          else
+          {
+            // The leaf has reached the maximum atom length, we must decide
+            // between keeping the current one (let's say its "abcd") or
+            // replacing it with a new atom consisting in shifting the current
+            // atom one byte to the left and appending the current literal
+            // ("bcdx" where "x" is the current literal).
+
+            if (leaf_atom_quality == -1)
+              // The quality hasn't being calculated before, do it now.
+              leaf_atom_quality = config->get_atom_quality(
+                  config, leaf->atom, YR_MAX_ATOM_LENGTH);
+
+            if (leaf_atom_quality < YR_MAX_ATOM_QUALITY)
+            {
+              for (i = 1; i < YR_MAX_ATOM_LENGTH; i++)
+                leaf->recent_nodes[i - 1] = leaf->recent_nodes[i];
+
+              leaf->recent_nodes[YR_MAX_ATOM_LENGTH - 1] = si.re_node;
+
+              for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
+                new_atom[i] = (uint8_t) leaf->recent_nodes[i]->value;
+
+              new_quality = config->get_atom_quality(
+                  config, new_atom, YR_MAX_ATOM_LENGTH);
+
+              if (new_quality > leaf_atom_quality)
+              {
+                for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
+                  leaf->atom[i] = new_atom[i];
+
+                leaf->forward_code = leaf->recent_nodes[0]->forward_code;
+                leaf->backward_code = leaf->recent_nodes[0]->backward_code;
+
+                assert(leaf->forward_code != NULL);
+                assert(leaf->backward_code != NULL);
+
+                leaf_atom_quality = new_quality;
+              }
+            }
+          }
+
+          break;
+
+        case RE_NODE_CONCAT:
+
+          re_node = si.re_node;
+          si.new_appending_node = NULL;
+          si.re_node = re_node->right;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          si.re_node = re_node->left;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          break;
+
+        case RE_NODE_ALT:
+
+          // Create ATOM_TREE_AND node with two ATOM_TREE_OR children nodes.
+          and_node = _yr_atoms_tree_node_create(ATOM_TREE_AND);
+          left_node = _yr_atoms_tree_node_create(ATOM_TREE_OR);
+          right_node = _yr_atoms_tree_node_create(ATOM_TREE_OR);
+
+          if (and_node == NULL || left_node == NULL || right_node == NULL)
+          {
+            _yr_atoms_tree_node_destroy(and_node);
+            _yr_atoms_tree_node_destroy(left_node);
+            _yr_atoms_tree_node_destroy(right_node);
+
+            yr_stack_destroy(stack);
+
+            return ERROR_INSUFFICIENT_MEMORY;
+          }
+
+          and_node->children_head = left_node;
+          and_node->children_tail = right_node;
+          left_node->next_sibling = right_node;
+
+          // Add the ATOM_TREE_AND as children of the current node.
+          _yr_atoms_tree_node_append(current_appending_node, and_node);
+
+          re_node = si.re_node;
+
+          si.new_appending_node = current_appending_node;
+          si.re_node = NULL;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          si.new_appending_node = right_node;
+          si.re_node = re_node->right;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          si.new_appending_node = left_node;
+          si.re_node = re_node->left;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          break;
+
+        case RE_NODE_PLUS:
+
+          re_node = si.re_node;
+
+          si.new_appending_node = current_appending_node;
+          si.re_node = NULL;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          si.new_appending_node = NULL;
+          si.re_node = re_node->left;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          break;
+
+        case RE_NODE_RANGE:
+
+          re_node = si.re_node;
+
+          si.new_appending_node = current_appending_node;
+          si.re_node = NULL;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          si.new_appending_node = NULL;
+          si.re_node = re_node->left;
+
+          // In a regexp like /a{10,20}/ the optimal atom is 'aaaa' (assuming that
+          // YR_MAX_ATOM_LENGTH = 4) because the 'a' character must appear at least
+          // 10 times in the matching string. Each call in the loop will append
+          // one 'a' to the atom, so YR_MAX_ATOM_LENGTH iterations are enough.
+
+          for (i = 0; i < yr_min(re_node->start, YR_MAX_ATOM_LENGTH); i++)
+          {
+            FAIL_ON_ERROR_WITH_CLEANUP(
+                yr_stack_push(stack, &si),
+                yr_stack_destroy(stack));
+          }
+
+          break;
+
+        case RE_NODE_ANY:
+        case RE_NODE_RANGE_ANY:
+        case RE_NODE_STAR:
+        case RE_NODE_CLASS:
+        case RE_NODE_MASKED_LITERAL:
+        case RE_NODE_WORD_CHAR:
+        case RE_NODE_NON_WORD_CHAR:
+        case RE_NODE_SPACE:
+        case RE_NODE_NON_SPACE:
+        case RE_NODE_DIGIT:
+        case RE_NODE_NON_DIGIT:
+        case RE_NODE_EMPTY:
+        case RE_NODE_ANCHOR_START:
+        case RE_NODE_ANCHOR_END:
+        case RE_NODE_WORD_BOUNDARY:
+        case RE_NODE_NON_WORD_BOUNDARY:
+
+          si.new_appending_node = current_appending_node;
+          si.re_node = NULL;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          break;
+
+        default:
+          assert(false);
       }
-
-      return current_node;
-
-    case RE_NODE_CONCAT:
-
-      current_node = _yr_atoms_extract_from_re_node(
-          config, re_node->left, atom_tree, current_node);
-
-      if (current_node == NULL)
-        return NULL;
-
-      current_node = _yr_atoms_extract_from_re_node(
-          config, re_node->right, atom_tree, current_node);
-
-      return current_node;
-
-    case RE_NODE_ALT:
-
-      append_current_leaf_to_node(current_node);
-
-      left_node = _yr_atoms_tree_node_create(ATOM_TREE_OR);
-
-      if (left_node == NULL)
-        return NULL;
-
-      left_node = _yr_atoms_extract_from_re_node(
-          config, re_node->left, atom_tree, left_node);
-
-      if (left_node == NULL)
-        return NULL;
-
-      append_current_leaf_to_node(left_node);
-
-      if (left_node->children_head == NULL)
-      {
-        _yr_atoms_tree_node_destroy(left_node);
-        return current_node;
-      }
-
-      if (left_node->children_head == left_node->children_tail)
-      {
-        temp = left_node;
-        left_node = left_node->children_head;
-        yr_free(temp);
-      }
-
-      right_node = _yr_atoms_tree_node_create(ATOM_TREE_OR);
-
-      if (right_node == NULL)
-        return NULL;
-
-      right_node = _yr_atoms_extract_from_re_node(
-          config, re_node->right, atom_tree, right_node);
-
-      if (right_node == NULL)
-        return NULL;
-
-      append_current_leaf_to_node(right_node);
-
-      if (right_node->children_head == NULL)
-      {
-        _yr_atoms_tree_node_destroy(left_node);
-        _yr_atoms_tree_node_destroy(right_node);
-        return current_node;
-      }
-
-      if (right_node->children_head == right_node->children_tail)
-      {
-        temp = right_node;
-        right_node = right_node->children_head;
-        yr_free(temp);
-      }
-
-      and_node = _yr_atoms_tree_node_create(ATOM_TREE_AND);
-
-      if (and_node == NULL)
-        return NULL;
-
-      and_node->children_head = left_node;
-      and_node->children_tail = right_node;
-      left_node->next_sibling = right_node;
-
-      _yr_atoms_tree_node_append(current_node, and_node);
-
-      return current_node;
-
-    case RE_NODE_RANGE:
-
-      if (re_node->start == 0)
-        append_current_leaf_to_node(current_node);
-
-      // In a regexp like /a{10,20}/ the optimal atom is 'aaaa' (assuming that
-      // YR_MAX_ATOM_LENGTH = 4) because the 'a' character must appear at least
-      // 10 times in the matching string. Each call in the loop will append
-      // one 'a' to the atom, so YR_MAX_ATOM_LENGTH iterations are enough.
-
-      for (i = 0; i < yr_min(re_node->start, YR_MAX_ATOM_LENGTH); i++)
-      {
-        current_node = _yr_atoms_extract_from_re_node(
-            config, re_node->left, atom_tree, current_node);
-
-        if (current_node == NULL)
-          return NULL;
-      }
-
-      if (re_node->start != re_node->end)
-        append_current_leaf_to_node(current_node);
-
-      return current_node;
-
-    case RE_NODE_PLUS:
-
-      current_node = _yr_atoms_extract_from_re_node(
-          config, re_node->left, atom_tree, current_node);
-
-      if (current_node == NULL)
-        return NULL;
-
-      append_current_leaf_to_node(current_node);
-      return current_node;
-
-    case RE_NODE_ANY:
-    case RE_NODE_RANGE_ANY:
-    case RE_NODE_STAR:
-    case RE_NODE_CLASS:
-    case RE_NODE_MASKED_LITERAL:
-    case RE_NODE_WORD_CHAR:
-    case RE_NODE_NON_WORD_CHAR:
-    case RE_NODE_SPACE:
-    case RE_NODE_NON_SPACE:
-    case RE_NODE_DIGIT:
-    case RE_NODE_NON_DIGIT:
-    case RE_NODE_EMPTY:
-    case RE_NODE_ANCHOR_START:
-    case RE_NODE_ANCHOR_END:
-    case RE_NODE_WORD_BOUNDARY:
-    case RE_NODE_NON_WORD_BOUNDARY:
-
-      append_current_leaf_to_node(current_node);
-      return current_node;
-
-    default:
-      assert(false);
+    }
   }
 
-  return NULL;
+  if (leaf != NULL)
+    _yr_atoms_tree_node_append(current_appending_node, leaf);
+
+  return ERROR_SUCCESS;
 }
+
 
 //
 // yr_atoms_extract_triplets
@@ -1167,7 +1222,7 @@ int yr_atoms_extract_from_re(
     YR_ATOM_LIST_ITEM** atoms)
 {
   ATOM_TREE* atom_tree = (ATOM_TREE*) yr_malloc(sizeof(ATOM_TREE));
-  ATOM_TREE_NODE* temp;
+
   YR_ATOM_LIST_ITEM* wide_atoms;
   YR_ATOM_LIST_ITEM* case_insensitive_atoms;
   YR_ATOM_LIST_ITEM* triplet_atoms;
@@ -1185,30 +1240,10 @@ int yr_atoms_extract_from_re(
     return ERROR_INSUFFICIENT_MEMORY;
   }
 
-  atom_tree->current_leaf = NULL;
-
-  atom_tree->root_node = _yr_atoms_extract_from_re_node(
-      config, re_ast->root_node, atom_tree, atom_tree->root_node);
-
-  if (atom_tree->root_node == NULL)
-  {
-    _yr_atoms_tree_destroy(atom_tree);
-    return ERROR_INSUFFICIENT_MEMORY;
-  }
-
-  if (atom_tree->current_leaf != NULL)
-    _yr_atoms_tree_node_append(atom_tree->root_node, atom_tree->current_leaf);
-
-  if (atom_tree->root_node->children_head ==
-      atom_tree->root_node->children_tail)
-  {
-    // The root OR node has a single child, there's no need for the OR node so
-    // we proceed to destroy it and use its child as root.
-
-    temp = atom_tree->root_node;
-    atom_tree->root_node = atom_tree->root_node->children_head;
-    yr_free(temp);
-  }
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      _yr_atoms_extract_from_re_node(
+          config, re_ast->root_node, atom_tree),
+      _yr_atoms_tree_destroy(atom_tree));
 
   // Initialize atom list
   *atoms = NULL;
