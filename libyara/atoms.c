@@ -160,12 +160,12 @@ int yr_atoms_heuristic_quality(
       unique_bytes += 1;
   }
 
-  // (atom_length + unique_bytes - penalty + 2) is within the range
+  // yr_max(atom_length + unique_bytes - penalty, 0) is within the range
   // [0 - 2 * YR_MAX_ATOM_LENGTH], which means that the function returns a value
   // in [YR_MAX_ATOM_QUALITY - 2 * YR_MAX_ATOM_LENGTH, YR_MAX_ATOM_QUALITY]
 
   return YR_MAX_ATOM_QUALITY - 2 * YR_MAX_ATOM_LENGTH +
-          (atom_length + unique_bytes - penalty + 2);
+         yr_max(atom_length + unique_bytes - penalty, 0);
 }
 
 //
