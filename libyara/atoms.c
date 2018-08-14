@@ -474,7 +474,7 @@ int _yr_atoms_trim(
 
   // Shift bytes and mask trim_left positions to the left.
 
-  for (i = 0; i < atom->length; i++)
+  for (i = 0; i < YR_MAX_ATOM_LENGTH - trim_left; i++)
   {
     atom->bytes[i] = atom->bytes[trim_left + i];
     atom->mask[i] = atom->mask[trim_left + i];
@@ -877,8 +877,8 @@ static int _yr_atoms_extract_from_re(
   struct STACK_ITEM si;
 
   int i, shift;
-  int leaf_atom_quality;
   int new_quality;
+  int leaf_atom_quality = -1;
 
   YR_ATOM_TREE_NODE* and_node;
   YR_ATOM_TREE_NODE* left_node;
@@ -888,7 +888,7 @@ static int _yr_atoms_extract_from_re(
 
   // This holds the ATOM_TREE_OR node where leaves (ATOM_TREE_LEAF) are
   // currently being appended.
-  YR_ATOM_TREE_NODE* current_appending_node;
+  YR_ATOM_TREE_NODE* current_appending_node = NULL;
 
   // This holds the ATOM_TREE_LEAF node whose atom is currently being updated.
   YR_ATOM_TREE_NODE* leaf = NULL;
