@@ -67,20 +67,20 @@ if POSIX
 if !ADDRESS_SANITIZER
 check_PROGRAMS+=test-exception
 test_exception_SOURCES = tests/test-exception.c tests/util.c
-test_exception_LDADD = -Llibyara/.libs -lyara
+test_exception_LDADD = libyara/.libs/libyara.a
 endif
 endif
 
 if MACHO_MODULE
 check_PROGRAMS+=test-macho
 test_macho_SOURCES = tests/test-macho.c tests/util.c
-test_macho_LDADD = -Llibyara/.libs -lyara
+test_macho_LDADD = libyara/.libs/libyara.a
 endif
 
 if DEX_MODULE
 check_PROGRAMS+=test-dex
 test_dex_SOURCES = tests/test-dex.c tests/util.c
-test_dex_LDADD = -Llibyara/.libs -lyara
+test_dex_LDADD = libyara/.libs/libyara.a
 endif
 
 # man pages
