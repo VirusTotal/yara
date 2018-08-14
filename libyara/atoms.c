@@ -117,6 +117,8 @@ int yr_atoms_heuristic_quality(
   int i, j;
   bool is_unique;
 
+  assert(atom->length <= YR_MAX_ATOM_LENGTH);
+
   for (i = 0; i < atom->length; i++)
   {
     switch (atom->mask[i])
@@ -189,6 +191,8 @@ int yr_atoms_table_quality(
 
   int begin = 0;
   int end = config->quality_table_entries;
+
+  assert(atom->length <= YR_MAX_ATOM_LENGTH);
 
   while (end > begin)
   {
