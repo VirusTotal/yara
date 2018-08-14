@@ -37,9 +37,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ATOM_TREE_AND   2
 #define ATOM_TREE_OR    3
 
-
-typedef struct ATOM_TREE_NODE ATOM_TREE_NODE;
-typedef struct ATOM_TREE ATOM_TREE;
+typedef struct YR_ATOM YR_ATOM;
+typedef struct YR_ATOM_TREE_NODE YR_ATOM_TREE_NODE;
+typedef struct YR_ATOM_TREE YR_ATOM_TREE;
 
 typedef struct YR_ATOM_LIST_ITEM YR_ATOM_LIST_ITEM;
 
@@ -47,33 +47,37 @@ typedef struct YR_ATOM_QUALITY_TABLE_ENTRY YR_ATOM_QUALITY_TABLE_ENTRY;
 typedef struct YR_ATOMS_CONFIG YR_ATOMS_CONFIG;
 
 
-struct ATOM_TREE_NODE
+struct YR_ATOM
+{
+  uint8_t length;
+  uint8_t bytes[YR_MAX_ATOM_LENGTH];
+  uint8_t mask[YR_MAX_ATOM_LENGTH];
+};
+
+struct YR_ATOM_TREE_NODE
 {
   uint8_t type;
-  uint8_t atom_length;
-  uint8_t atom[YR_MAX_ATOM_LENGTH];
 
-  uint8_t* forward_code;
-  uint8_t* backward_code;
+  YR_ATOM atom;
 
-  RE_NODE* recent_nodes[YR_MAX_ATOM_LENGTH];
+  // RE nodes that correspond to each byte in the atom.
+  RE_NODE* re_nodes[YR_MAX_ATOM_LENGTH];
 
-  ATOM_TREE_NODE* children_head;
-  ATOM_TREE_NODE* children_tail;
-  ATOM_TREE_NODE* next_sibling;
+  YR_ATOM_TREE_NODE* children_head;
+  YR_ATOM_TREE_NODE* children_tail;
+  YR_ATOM_TREE_NODE* next_sibling;
 };
 
 
-struct ATOM_TREE
+struct YR_ATOM_TREE
 {
-  ATOM_TREE_NODE* root_node;
+  YR_ATOM_TREE_NODE* root_node;
 };
 
 
 struct YR_ATOM_LIST_ITEM
 {
-  uint8_t atom_length;
-  uint8_t atom[YR_MAX_ATOM_LENGTH];
+  YR_ATOM atom;
 
   uint16_t backtrack;
 
@@ -89,7 +93,7 @@ struct YR_ATOM_LIST_ITEM
 
 struct YR_ATOM_QUALITY_TABLE_ENTRY
 {
-  const uint8_t  atom[YR_MAX_ATOM_LENGTH];
+  const uint8_t atom[YR_MAX_ATOM_LENGTH];
   const uint8_t quality;
 };
 
@@ -98,8 +102,7 @@ struct YR_ATOM_QUALITY_TABLE_ENTRY
 
 typedef int (*YR_ATOMS_QUALITY_FUNC)(
     YR_ATOMS_CONFIG* config,
-    uint8_t* atom,
-    int atom_length);
+    YR_ATOM* atom);
 
 
 struct YR_ATOMS_CONFIG
@@ -135,14 +138,12 @@ int yr_atoms_extract_triplets(
 
 int yr_atoms_heuristic_quality(
     YR_ATOMS_CONFIG* config,
-    uint8_t* atom,
-    int atom_length);
+    YR_ATOM* atom);
 
 
 int yr_atoms_table_quality(
     YR_ATOMS_CONFIG* config,
-    uint8_t* atom,
-    int atom_length);
+    YR_ATOM* atom);
 
 
 int yr_atoms_min_quality(

@@ -71,6 +71,22 @@ int read_file(
     char* filename, char** buf);
 
 
+typedef struct atom atom;
+
+struct atom
+{
+  uint8_t length;
+  uint8_t data[YR_MAX_ATOM_LENGTH];
+};
+
+
+void assert_re_atoms(
+    char* re,
+    int expected_atom_count,
+    atom* expected_atoms);
+
+
+
 #define assert_true_expr(expr)                                          \
   do {                                                                  \
     if (!(expr)) {                                                      \
