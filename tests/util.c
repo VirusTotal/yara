@@ -35,9 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 
 #include <yara.h>
-#include <yara/atoms.h>
-#include <yara/re.h>
-
 #include "util.h"
 
 char compile_error[1024];
