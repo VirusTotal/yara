@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#include <yara/integers.h>
 #include <yara/stack.h>
 #include <yara/mem.h>
 #include <yara/error.h>
@@ -96,7 +97,7 @@ int yr_stack_push(
 {
   if (stack->top == stack->capacity)
   {
-    void** items = yr_realloc(
+    void* items = yr_realloc(
         stack->items, 2 * stack->capacity * stack->item_size);
 
     if (items == NULL)
@@ -106,7 +107,11 @@ int yr_stack_push(
     stack->capacity *= 2;
   }
 
-  memcpy(stack->items + stack->top * stack->item_size, item, stack->item_size);
+  memcpy(
+      (uint8_t*) stack->items + stack->top * stack->item_size,
+      item,
+      stack->item_size);
+
   stack->top++;
 
   return ERROR_SUCCESS;
@@ -147,7 +152,11 @@ int yr_stack_pop(
     return 0;
 
   stack->top--;
-  memcpy(item, stack->items + stack->top * stack->item_size, stack->item_size);
+
+  memcpy(
+      item,
+      (uint8_t*) stack->items + stack->top * stack->item_size,
+      stack->item_size);
 
   return 1;
 }
