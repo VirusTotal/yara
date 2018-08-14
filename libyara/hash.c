@@ -98,7 +98,8 @@ uint32_t yr_hash(
   uint32_t result = seed;
   size_t i;
 
-  assert(len > 0);
+  if (len == 0)
+    return result;
 
   for (i = len - 1; i > 0; i--)
   {
