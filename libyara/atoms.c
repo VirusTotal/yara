@@ -166,6 +166,48 @@ int yr_atoms_heuristic_quality(
          yr_max(4 * (atom->length + unique_bytes) - penalty, 0);
 }
 
+
+//
+// _yr_atoms_cmp
+//
+// Compares the byte sequence in a1 with the YR_ATOM in a2, taking atom's mask
+// into account.
+//
+// Returns:
+//   < 0 if the first byte that does not match has a lower value in a1 than
+//       in a2.
+//   > 0 if the first byte that does not match has a greater value in a1 than
+//       in a2.
+//   = 0 if a1 is equal or matches a2.
+//
+
+static int _yr_atoms_cmp(
+    const uint8_t* a1,
+    YR_ATOM* a2)
+{
+  int result = 0;
+  int i =  0;
+
+  while (result == 0 && i < a2->length)
+  {
+    switch (a2->mask[i])
+    {
+      case 0xFF:
+      case 0x0F:
+      case 0xF0:
+      case 0x00:
+        result = (a1[i] & a2->mask[i]) - a2->bytes[i];
+        break;
+      default:
+        assert(false);
+    }
+
+    i++;
+  }
+
+  return result;
+}
+
 //
 // yr_atoms_table_quality
 //
@@ -197,7 +239,7 @@ int yr_atoms_table_quality(
   while (end > begin)
   {
     int middle = begin + (end - begin) / 2;
-    int c = memcmp(table[middle].atom, atom->bytes, atom->length);
+    int c = _yr_atoms_cmp(table[middle].atom, atom);
 
     if (c < 0)
     {
@@ -213,10 +255,7 @@ int yr_atoms_table_quality(
       int quality = table[middle].quality;
       int min_quality = quality;
 
-      if (atom->length == YR_MAX_ATOM_LENGTH)
-        return table[middle].quality;
-
-      while (i < end && memcmp(table[i].atom, atom->bytes, atom->length) == 0)
+      while (i < end && _yr_atoms_cmp(table[i].atom, atom) == 0)
       {
         if (min_quality > table[i].quality)
           min_quality = table[i].quality;
@@ -226,7 +265,7 @@ int yr_atoms_table_quality(
 
       i = middle - 1;
 
-      while (i >= begin && memcmp(table[i].atom, atom, atom->length) == 0)
+      while (i >= begin && _yr_atoms_cmp(table[i].atom, atom) == 0)
       {
         if (min_quality > table[i].quality)
           min_quality = table[i].quality;

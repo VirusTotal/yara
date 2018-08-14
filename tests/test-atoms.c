@@ -54,6 +54,7 @@ void test_table_quality()
   YR_ATOM a1 = {4, {0x00, 0x00, 0x00, 0x01}, {0xFF, 0xFF, 0xFF, 0xFF}};
   YR_ATOM a2 = {4, {0x00, 0x00, 0x00, 0x02}, {0xFF, 0xFF, 0xFF, 0xFF}};
   YR_ATOM a3 = {4, {0x00, 0x00, 0x00, 0x03}, {0xFF, 0xFF, 0xFF, 0xFF}};
+  YR_ATOM a4 = {4, {0x00, 0x00, 0x00, 0x00}, {0xFF, 0xFF, 0xFF, 0x00}};
 
   YR_ATOMS_CONFIG c;
 
@@ -73,6 +74,7 @@ void test_table_quality()
   assert_true_expr(yr_atoms_table_quality(&c, &a1) == 2);
   assert_true_expr(yr_atoms_table_quality(&c, &a2) == 3);
   assert_true_expr(yr_atoms_table_quality(&c, &a3) == 4);
+  assert_true_expr(yr_atoms_table_quality(&c, &a4) == 1);
 }
 
 
