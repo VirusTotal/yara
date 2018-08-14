@@ -501,8 +501,8 @@ static const yytype_uint16 yyrline[] =
 {
        0,   112,   112,   117,   121,   125,   141,   163,   167,   184,
      198,   214,   228,   244,   266,   289,   311,   334,   338,   344,
-     350,   356,   365,   373,   379,   387,   393,   399,   405,   411,
-     417,   423
+     350,   356,   365,   373,   382,   391,   397,   403,   409,   415,
+     421,   427
 };
 #endif
 
@@ -1672,85 +1672,89 @@ yyreduce:
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
+        (yyval.re_node)->value = 0x00;
+        (yyval.re_node)->mask = 0x00;
+
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
-#line 1678 "re_grammar.c" /* yacc.c:1663  */
+#line 1681 "re_grammar.c" /* yacc.c:1663  */
     break;
 
   case 24:
-#line 380 "re_grammar.y" /* yacc.c:1663  */
+#line 383 "re_grammar.y" /* yacc.c:1663  */
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->value = (yyvsp[0].integer);
+        (yyval.re_node)->mask = 0xFF;
       }
-#line 1690 "re_grammar.c" /* yacc.c:1663  */
+#line 1694 "re_grammar.c" /* yacc.c:1663  */
     break;
 
   case 25:
-#line 388 "re_grammar.y" /* yacc.c:1663  */
+#line 392 "re_grammar.y" /* yacc.c:1663  */
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_WORD_CHAR, NULL, NULL);
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
-#line 1700 "re_grammar.c" /* yacc.c:1663  */
+#line 1704 "re_grammar.c" /* yacc.c:1663  */
     break;
 
   case 26:
-#line 394 "re_grammar.y" /* yacc.c:1663  */
+#line 398 "re_grammar.y" /* yacc.c:1663  */
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_NON_WORD_CHAR, NULL, NULL);
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
-#line 1710 "re_grammar.c" /* yacc.c:1663  */
+#line 1714 "re_grammar.c" /* yacc.c:1663  */
     break;
 
   case 27:
-#line 400 "re_grammar.y" /* yacc.c:1663  */
+#line 404 "re_grammar.y" /* yacc.c:1663  */
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_SPACE, NULL, NULL);
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
-#line 1720 "re_grammar.c" /* yacc.c:1663  */
+#line 1724 "re_grammar.c" /* yacc.c:1663  */
     break;
 
   case 28:
-#line 406 "re_grammar.y" /* yacc.c:1663  */
+#line 410 "re_grammar.y" /* yacc.c:1663  */
     {
          (yyval.re_node) = yr_re_node_create(RE_NODE_NON_SPACE, NULL, NULL);
 
          fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
-#line 1730 "re_grammar.c" /* yacc.c:1663  */
+#line 1734 "re_grammar.c" /* yacc.c:1663  */
     break;
 
   case 29:
-#line 412 "re_grammar.y" /* yacc.c:1663  */
+#line 416 "re_grammar.y" /* yacc.c:1663  */
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_DIGIT, NULL, NULL);
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
-#line 1740 "re_grammar.c" /* yacc.c:1663  */
+#line 1744 "re_grammar.c" /* yacc.c:1663  */
     break;
 
   case 30:
-#line 418 "re_grammar.y" /* yacc.c:1663  */
+#line 422 "re_grammar.y" /* yacc.c:1663  */
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_NON_DIGIT, NULL, NULL);
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
-#line 1750 "re_grammar.c" /* yacc.c:1663  */
+#line 1754 "re_grammar.c" /* yacc.c:1663  */
     break;
 
   case 31:
-#line 424 "re_grammar.y" /* yacc.c:1663  */
+#line 428 "re_grammar.y" /* yacc.c:1663  */
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_CLASS, NULL, NULL);
 
@@ -1758,11 +1762,11 @@ yyreduce:
 
         (yyval.re_node)->re_class = (yyvsp[0].re_class);
       }
-#line 1762 "re_grammar.c" /* yacc.c:1663  */
+#line 1766 "re_grammar.c" /* yacc.c:1663  */
     break;
 
 
-#line 1766 "re_grammar.c" /* yacc.c:1663  */
+#line 1770 "re_grammar.c" /* yacc.c:1663  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1990,5 +1994,5 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 432 "re_grammar.y" /* yacc.c:1907  */
+#line 436 "re_grammar.y" /* yacc.c:1907  */
 
