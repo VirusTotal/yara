@@ -80,7 +80,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // must specify the threshold when calling yr_compiler_set_atom_quality_table.
 #ifndef YR_ATOM_QUALITY_WARNING_THRESHOLD
 #define YR_ATOM_QUALITY_WARNING_THRESHOLD \
-    (YR_MIN_ATOM_HEURISTIC_QUALITY + 24)
+    (YR_MIN_ATOM_HEURISTIC_QUALITY + 16)
 #endif
 
 

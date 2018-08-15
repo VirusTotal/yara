@@ -141,19 +141,19 @@ void test_heuristic_quality()
 
   assert_true_expr(
       yr_atoms_heuristic_quality(&c, &a00000000)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 13);
+      == YR_MIN_ATOM_HEURISTIC_QUALITY + 10);
 
   assert_true_expr(
       yr_atoms_heuristic_quality(&c, &a00000001)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 18);
+      == YR_MIN_ATOM_HEURISTIC_QUALITY + 15);
 
   assert_true_expr(
       yr_atoms_heuristic_quality(&c, &a00000102)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 23);
+      == YR_MIN_ATOM_HEURISTIC_QUALITY + 21);
 
   assert_true_expr(
       yr_atoms_heuristic_quality(&c, &a00010203)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 29);
+      == YR_MIN_ATOM_HEURISTIC_QUALITY + 28);
 
   assert_true_expr(
       yr_atoms_heuristic_quality(&c, &a01020304)
@@ -165,15 +165,15 @@ void test_heuristic_quality()
 
   assert_true_expr(
       yr_atoms_heuristic_quality(&c, &a0001)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 13);
+      == YR_MIN_ATOM_HEURISTIC_QUALITY + 12);
 
   assert_true_expr(
       yr_atoms_heuristic_quality(&c, &a000001)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 15);
+      == YR_MIN_ATOM_HEURISTIC_QUALITY + 13);
 
   assert_true_expr(
       yr_atoms_heuristic_quality(&c, &a000102)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 21);
+      == YR_MIN_ATOM_HEURISTIC_QUALITY + 20);
 
   assert_true_expr(
       yr_atoms_heuristic_quality(&c, &a010203)
