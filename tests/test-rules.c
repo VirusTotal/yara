@@ -1916,6 +1916,16 @@ void test_performance_warnings()
 
   assert_warning(
       "rule test { \
+        strings: $a = { 00 01 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 00 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
         strings: $a = { 00 00 } \
         condition: $a }")
 
@@ -1944,17 +1954,22 @@ void test_performance_warnings()
         strings: $a = { FF FF FF FF } \
         condition: $a }")
 
-  assert_no_warning(
+  assert_no_warnings(
+       "rule test { \
+        strings: $a = { 00 01 02 03 } \
+        condition: $a }")
+
+  assert_no_warnings(
        "rule test { \
         strings: $a = { 01 02 03 04 } \
         condition: $a }")
 
-  assert_no_warning(
+  assert_no_warnings(
        "rule test { \
         strings: $a = { 01 02 03 } \
         condition: $a }")
 
-  assert_no_warning(
+  assert_no_warnings(
        "rule test { \
         strings: $a = { 01 02 } \
         condition: $a }")
