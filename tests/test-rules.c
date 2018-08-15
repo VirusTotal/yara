@@ -1952,12 +1952,12 @@ void test_performance_warnings()
 
   assert_warning(
       "rule test { \
-        strings: $a = { 00 00 01 02 } \
+        strings: $a = { FF FF FF FF } \
         condition: $a }")
 
-  assert_warning(
+  assert_no_warnings(
       "rule test { \
-        strings: $a = { FF FF FF FF } \
+        strings: $a = { 00 00 01 02 } \
         condition: $a }")
 
   assert_no_warnings(

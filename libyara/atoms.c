@@ -141,7 +141,7 @@ int yr_atoms_heuristic_quality(
             atom->bytes[i] == 0x0A ||
             atom->bytes[i] == 0x0D )
         {
-          penalty += yr_max(3-i, 1);
+          penalty += yr_max(4-i, 1);
         }
     }
 
