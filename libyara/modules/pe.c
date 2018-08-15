@@ -1672,7 +1672,7 @@ define_function(section_index_addr)
   YR_OBJECT* module = module();
   YR_SCAN_CONTEXT* context = scan_context();
 
-  int64_t i;
+  int i;
   int64_t offset;
   int64_t size;
 
@@ -1710,7 +1710,7 @@ define_function(section_index_name)
   char* name = string_argument(1);
 
   int64_t n = get_integer(module, "number_of_sections");
-  int64_t i;
+  int i;
 
   if (is_undefined(module, "number_of_sections"))
     return_integer(UNDEFINED);
@@ -2067,7 +2067,7 @@ define_function(locale)
   PE* pe = (PE*) module->data;
 
   uint64_t locale = integer_argument(1);
-  int64_t n, i;
+  int n, i;
 
   if (is_undefined(module, "number_of_resources"))
     return_integer(UNDEFINED);
@@ -2097,7 +2097,7 @@ define_function(language)
   PE* pe = (PE*) module->data;
 
   uint64_t language = integer_argument(1);
-  int64_t n, i;
+  int n, i;
 
   if (is_undefined(module, "number_of_resources"))
     return_integer(UNDEFINED);
@@ -2165,7 +2165,7 @@ static uint64_t rich_internal(
 {
   int64_t rich_length;
   int64_t rich_count;
-  int64_t i;
+  int i;
 
   PRICH_SIGNATURE clear_rich_signature;
   SIZED_STRING* rich_string;
