@@ -77,7 +77,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // specify the threshold when calling yr_compiler_set_atom_quality_table
 #ifndef YR_ATOM_QUALITY_WARNING_THRESHOLD
 #define YR_ATOM_QUALITY_WARNING_THRESHOLD \
-    (YR_MAX_ATOM_QUALITY -  2 * YR_MAX_ATOM_LENGTH + 5)
+    (YR_MAX_ATOM_QUALITY -  2 * YR_MAX_ATOM_LENGTH + 4)
 #endif
 
 
