@@ -405,7 +405,7 @@ uint32_t load_encoded_field(
       encoded_field.access_flags);
   #endif
 
-  uint64_t name_idx = get_integer(
+  int name_idx = (int)get_integer(
       dex->object, "field_ids[%i].name_idx", *previous_field_idx);
 
   #ifdef DEBUG_DEX_MODULE
@@ -431,10 +431,10 @@ uint32_t load_encoded_field(
         index_encoded_field);
   }
 
-  uint64_t class_idx = get_integer(
+  int class_idx = (int)get_integer(
       dex->object, "field_ids[%i].class_idx", *previous_field_idx);
 
-  uint64_t descriptor_idx = get_integer(
+  int descriptor_idx = (int)get_integer(
       dex->object, "type_ids[%i].descriptor_idx", class_idx);
 
   SIZED_STRING* class_name = get_string(
@@ -457,10 +457,10 @@ uint32_t load_encoded_field(
         index_encoded_field);
   }
 
-  uint64_t type_idx = get_integer(dex->object,
+  int type_idx = (int)get_integer(dex->object,
       "field_ids[%i].type_idx", *previous_field_idx);
 
-  uint64_t shorty_idx = get_integer(dex->object,
+  int shorty_idx = (int)get_integer(dex->object,
       "type_ids[%i].descriptor_idx", type_idx);
 
   SIZED_STRING* proto_name = get_string(dex->object,
@@ -553,7 +553,7 @@ uint32_t load_encoded_method(
       encoded_method.code_off);
   #endif
 
-  uint64_t name_idx = get_integer(
+  int name_idx = (int)get_integer(
       dex->object, "method_ids[%i].name_idx", *previous_method_idx);
 
   #ifdef DEBUG_DEX_MODULE
@@ -579,10 +579,10 @@ uint32_t load_encoded_method(
         index_encoded_method);
   }
 
-  uint64_t class_idx = get_integer(
+  int class_idx = (int)get_integer(
       dex->object, "method_ids[%i].class_idx", *previous_method_idx);
 
-  uint64_t descriptor_idx = get_integer(
+  int descriptor_idx = (int)get_integer(
       dex->object, "type_ids[%i].descriptor_idx", class_idx);
 
   SIZED_STRING* class_name = get_string(
@@ -605,10 +605,10 @@ uint32_t load_encoded_method(
         index_encoded_method);
   }
 
-  uint64_t proto_idx = get_integer(
+  int proto_idx = (int)get_integer(
       dex->object, "method_ids[%i].proto_idx", *previous_method_idx);
 
-  uint64_t shorty_idx = get_integer(
+  int shorty_idx = (int)get_integer(
       dex->object, "proto_ids[%i].shorty_idx", proto_idx);
 
   SIZED_STRING* proto_name = get_string(
