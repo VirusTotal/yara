@@ -405,7 +405,7 @@ uint32_t load_encoded_field(
       encoded_field.access_flags);
   #endif
 
-  int name_idx = (int)get_integer(
+  int name_idx = (int) get_integer(
       dex->object, "field_ids[%i].name_idx", *previous_field_idx);
 
   #ifdef DEBUG_DEX_MODULE
@@ -431,10 +431,10 @@ uint32_t load_encoded_field(
         index_encoded_field);
   }
 
-  int class_idx = (int)get_integer(
+  int class_idx = (int) get_integer(
       dex->object, "field_ids[%i].class_idx", *previous_field_idx);
 
-  int descriptor_idx = (int)get_integer(
+  int descriptor_idx = (int) get_integer(
       dex->object, "type_ids[%i].descriptor_idx", class_idx);
 
   SIZED_STRING* class_name = get_string(
@@ -457,10 +457,10 @@ uint32_t load_encoded_field(
         index_encoded_field);
   }
 
-  int type_idx = (int)get_integer(dex->object,
+  int type_idx = (int) get_integer(dex->object,
       "field_ids[%i].type_idx", *previous_field_idx);
 
-  int shorty_idx = (int)get_integer(dex->object,
+  int shorty_idx = (int) get_integer(dex->object,
       "type_ids[%i].descriptor_idx", type_idx);
 
   SIZED_STRING* proto_name = get_string(dex->object,
@@ -553,7 +553,7 @@ uint32_t load_encoded_method(
       encoded_method.code_off);
   #endif
 
-  int name_idx = (int)get_integer(
+  int name_idx = (int) get_integer(
       dex->object, "method_ids[%i].name_idx", *previous_method_idx);
 
   #ifdef DEBUG_DEX_MODULE
@@ -579,10 +579,10 @@ uint32_t load_encoded_method(
         index_encoded_method);
   }
 
-  int class_idx = (int)get_integer(
+  int class_idx = (int) get_integer(
       dex->object, "method_ids[%i].class_idx", *previous_method_idx);
 
-  int descriptor_idx = (int)get_integer(
+  int descriptor_idx = (int) get_integer(
       dex->object, "type_ids[%i].descriptor_idx", class_idx);
 
   SIZED_STRING* class_name = get_string(
@@ -605,10 +605,10 @@ uint32_t load_encoded_method(
         index_encoded_method);
   }
 
-  int proto_idx = (int)get_integer(
+  int proto_idx = (int) get_integer(
       dex->object, "method_ids[%i].proto_idx", *previous_method_idx);
 
-  int shorty_idx = (int)get_integer(
+  int shorty_idx = (int) get_integer(
       dex->object, "proto_ids[%i].shorty_idx", proto_idx);
 
   SIZED_STRING* proto_name = get_string(
@@ -691,8 +691,9 @@ void dex_parse(
 
   dex_header = dex->header;
 
-  if (!fits_in_dex(dex, dex->data + yr_le32toh(dex_header->string_ids_offset),
-                   yr_le32toh(dex_header->string_ids_size) * sizeof(string_id_item_t)))
+  if (!fits_in_dex(
+        dex, dex->data + yr_le32toh(dex_header->string_ids_offset),
+        yr_le32toh(dex_header->string_ids_size) * sizeof(string_id_item_t)))
     return;
 
   #ifdef DEBUG_DEX_MODULE
@@ -712,19 +713,22 @@ void dex_parse(
         yr_le32toh(string_id_item->string_data_offset));
     #endif
 
-    if (!fits_in_dex(dex, dex->data + yr_le32toh(string_id_item->string_data_offset),
-                     sizeof(uint32_t)))
+    if (!fits_in_dex(
+          dex, dex->data + yr_le32toh(string_id_item->string_data_offset),
+          sizeof(uint32_t)))
       continue;
 
-    uint32_t value = (uint32_t)read_uleb128(
-        (dex->data + yr_le32toh(string_id_item->string_data_offset)), &uleb128_size);
+    uint32_t value = (uint32_t) read_uleb128(
+        (dex->data + yr_le32toh(string_id_item->string_data_offset)),
+        &uleb128_size);
 
     #ifdef DEBUG_DEX_MODULE
     printf("[DEX] STRING ID item size:0x%x\n", value);
     #endif
 
-    if (!fits_in_dex(dex, dex->data + yr_le32toh(string_id_item->string_data_offset),
-                     value))
+    if (!fits_in_dex(
+          dex, dex->data + yr_le32toh(string_id_item->string_data_offset),
+          value))
       continue;
 
     set_integer(
@@ -735,15 +739,16 @@ void dex_parse(
                 "string_ids[%i].size", value);
 
     set_sized_string(
-        (const char*)((dex->data + yr_le32toh(string_id_item->string_data_offset) + 1)),
+        (const char*) ((dex->data + yr_le32toh(string_id_item->string_data_offset) + 1)),
         value,
         dex->object,
         "string_ids[%i].value",
         i);
   }
 
-  if (!fits_in_dex(dex, dex->data + yr_le32toh(dex_header->type_ids_offset),
-                   yr_le32toh(dex_header->type_ids_size) * sizeof(type_id_item_t)))
+  if (!fits_in_dex(
+        dex, dex->data + yr_le32toh(dex_header->type_ids_offset),
+        yr_le32toh(dex_header->type_ids_size) * sizeof(type_id_item_t)))
     return;
 
   #ifdef DEBUG_DEX_MODULE
@@ -754,7 +759,9 @@ void dex_parse(
   for (i = 0; i < yr_le32toh(dex_header->type_ids_size); i++)
   {
     type_id_item_t* type_id_item = (type_id_item_t*) (
-        dex->data + yr_le32toh(dex_header->type_ids_offset) + i * sizeof(type_id_item_t));
+        dex->data +
+        yr_le32toh(dex_header->type_ids_offset) +
+        i * sizeof(type_id_item_t));
 
     set_integer(
         yr_le32toh(type_id_item->descriptor_idx),
@@ -763,8 +770,9 @@ void dex_parse(
         i);
   }
 
-  if (!fits_in_dex(dex, dex->data + yr_le32toh(dex_header->proto_ids_offset),
-                   yr_le32toh(dex_header->proto_ids_size) * sizeof(proto_id_item_t)))
+  if (!fits_in_dex(
+        dex, dex->data + yr_le32toh(dex_header->proto_ids_offset),
+        yr_le32toh(dex_header->proto_ids_size) * sizeof(proto_id_item_t)))
     return;
 
   #ifdef DEBUG_DEX_MODULE
@@ -775,7 +783,9 @@ void dex_parse(
   for (i = 0; i < yr_le32toh(dex_header->proto_ids_size); i++)
   {
     proto_id_item_t* proto_id_item = (proto_id_item_t*) (
-        dex->data + yr_le32toh(dex_header->proto_ids_offset) + i * sizeof(proto_id_item_t));
+        dex->data +
+        yr_le32toh(dex_header->proto_ids_offset) +
+        i * sizeof(proto_id_item_t));
 
     set_integer(yr_le32toh(proto_id_item->shorty_idx), dex->object,
                 "proto_ids[%i].shorty_idx", i);
@@ -785,8 +795,9 @@ void dex_parse(
                 "proto_ids[%i].parameters_offset", i);
   }
 
-  if (!fits_in_dex(dex, dex->data + yr_le32toh(dex_header->field_ids_offset),
-                   yr_le32toh(dex_header->field_ids_size) * sizeof(field_id_item_t)))
+  if (!fits_in_dex(
+        dex, dex->data + yr_le32toh(dex_header->field_ids_offset),
+        yr_le32toh(dex_header->field_ids_size) * sizeof(field_id_item_t)))
     return;
 
   #ifdef DEBUG_DEX_MODULE
@@ -797,7 +808,9 @@ void dex_parse(
   for (i = 0; i < yr_le32toh(dex_header->field_ids_size); i++)
   {
     field_id_item_t* field_id_item = (field_id_item_t*) (
-        dex->data + yr_le32toh(dex_header->field_ids_offset) + i * sizeof(field_id_item_t));
+        dex->data +
+        yr_le32toh(dex_header->field_ids_offset) +
+        i * sizeof(field_id_item_t));
 
     set_integer(yr_le16toh(field_id_item->class_idx), dex->object,
                 "field_ids[%i].class_idx", i);
@@ -807,8 +820,9 @@ void dex_parse(
                 "field_ids[%i].name_idx", i);
   }
 
-  if (!fits_in_dex(dex, dex->data + yr_le32toh(dex_header->method_ids_offset),
-                   yr_le32toh(dex_header->method_ids_size) * sizeof(method_id_item_t)))
+  if (!fits_in_dex(
+        dex, dex->data + yr_le32toh(dex_header->method_ids_offset),
+        yr_le32toh(dex_header->method_ids_size) * sizeof(method_id_item_t)))
     return;
 
   #ifdef DEBUG_DEX_MODULE
@@ -839,12 +853,14 @@ void dex_parse(
   if (yr_le32toh(dex_header->map_offset) != 0 &&
       fits_in_dex(dex, dex->data + yr_le32toh(dex_header->map_offset), sizeof(uint32_t)))
   {
-    uint32_t* map_list_size = (uint32_t *) (dex->data + yr_le32toh(dex_header->map_offset));
+    uint32_t* map_list_size = (uint32_t *) (
+        dex->data + yr_le32toh(dex_header->map_offset));
 
     set_integer(yr_le32toh(*map_list_size), dex->object, "map_list.size");
 
-    if (!fits_in_dex(dex, dex->data + yr_le32toh(dex_header->map_offset),
-                     sizeof(uint32_t) + yr_le32toh(*map_list_size) * sizeof(map_item_t)))
+    if (!fits_in_dex(
+          dex, dex->data + yr_le32toh(dex_header->map_offset),
+          sizeof(uint32_t) + yr_le32toh(*map_list_size) * sizeof(map_item_t)))
       return;
 
     for (i = 0; i < yr_le32toh(*map_list_size); i++)
@@ -866,8 +882,9 @@ void dex_parse(
     }
   }
 
-  if (!fits_in_dex(dex, dex->data + yr_le32toh(dex_header->class_defs_offset),
-                   yr_le32toh(dex_header->class_defs_size) * sizeof(class_id_item_t)))
+  if (!fits_in_dex(
+        dex, dex->data + yr_le32toh(dex_header->class_defs_offset),
+        yr_le32toh(dex_header->class_defs_size) * sizeof(class_id_item_t)))
     return;
 
   #ifdef DEBUG_DEX_MODULE
@@ -918,8 +935,9 @@ void dex_parse(
     {
       class_data_item_t class_data_item;
 
-      if (!fits_in_dex(dex, dex->data + yr_le32toh(class_id_item->class_data_offset),
-                       4 * sizeof(uint32_t)))
+      if (!fits_in_dex(
+            dex, dex->data + yr_le32toh(class_id_item->class_data_offset),
+            4 * sizeof(uint32_t)))
         return;
 
       uleb128_size = 0;
@@ -978,6 +996,7 @@ void dex_parse(
       #endif
 
       previous_field_idx = 0;
+
       for (j = 0; j < class_data_item.instance_fields_size; j++)
       {
         uleb128_size += load_encoded_field(
@@ -995,6 +1014,7 @@ void dex_parse(
       #endif
 
       uint32_t previous_method_idx = 0;
+
       for (j = 0; j < class_data_item.direct_methods_size; j++)
       {
         uleb128_size += load_encoded_method(
@@ -1012,6 +1032,7 @@ void dex_parse(
       #endif
 
       previous_method_idx = 0;
+
       for (j = 0; j < class_data_item.virtual_methods_size; j++)
       {
         uleb128_size += load_encoded_method(
