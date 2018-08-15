@@ -193,7 +193,7 @@ void assert_re_atoms(
     int result = compile_rule(rule, &rules);                            \
     if (result == ERROR_SUCCESS) {                                      \
       yr_rules_destroy(rules);                                          \
-      if (warnings < w) {                                              \
+      if (warnings < w) {                                               \
         fprintf(stderr, "%s:%d: expecting warning\n",                   \
                 __FILE__, __LINE__);                                    \
         exit(EXIT_FAILURE);                                             \
@@ -207,8 +207,26 @@ void assert_re_atoms(
   } while (0);
 
 
+#define assert_no_warnings(rule) do {                                   \
+    YR_RULES* rules;                                                    \
+    int result = compile_rule(rule, &rules);                            \
+    if (result == ERROR_SUCCESS) {                                      \
+      yr_rules_destroy(rules);                                          \
+      if (warnings > 0) {                                               \
+        fprintf(stderr, "%s:%d: unexpected warning\n",                  \
+                __FILE__, __LINE__);                                    \
+        exit(EXIT_FAILURE);                                             \
+      }                                                                 \
+    }                                                                   \
+    else {                                                              \
+      fprintf(stderr, "%s:%d: failed to compile << %s >>: %s\n",        \
+              __FILE__, __LINE__, rule, compile_error);                 \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+  } while (0);
+
+
 #define assert_warning(rule) assert_warnings(rule, 1)
-#define assert_no_warning(rule) assert_warnings(rule, 0)
 
 
 #define assert_true_regexp(regexp,string,expected) do {                 \
