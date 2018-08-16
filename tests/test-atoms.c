@@ -556,6 +556,8 @@ void test_atom_choose()
 
 int main(int argc, char** argv)
 {
+  yr_initialize();
+
   test_table_quality();
   test_heuristic_quality();
   test_atom_choose();

@@ -39,7 +39,7 @@ int main(int argc, char** argv)
 
   int item;
 
-
+  yr_initialize();
   yr_stack_create(1, sizeof(item),  &stack);
 
   item = 1;
