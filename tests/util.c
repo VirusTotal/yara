@@ -263,20 +263,17 @@ _exit:
 }
 
 
-void assert_re_atoms(
-    char* re,
+void _assert_atoms(
+    RE_AST* re_ast,
     int expected_atom_count,
     atom* expected_atoms)
 {
   YR_ATOMS_CONFIG c;
   YR_ATOM_LIST_ITEM* atoms;
   YR_ATOM_LIST_ITEM* atom;
-  RE_AST* re_ast;
-  RE_ERROR re_error;
 
   c.get_atom_quality = yr_atoms_heuristic_quality;
 
-  yr_re_parse(re, &re_ast, &re_error);
   yr_atoms_extract_from_re(&c, re_ast, 0, &atoms);
 
   atom = atoms;
@@ -296,4 +293,30 @@ void assert_re_atoms(
     expected_atom_count--;
     atom = atom->next;
   }
+}
+
+
+void assert_re_atoms(
+    char* re,
+    int expected_atom_count,
+    atom* expected_atoms)
+{
+  RE_AST* re_ast;
+  RE_ERROR re_error;
+
+  yr_re_parse(re, &re_ast, &re_error);
+  _assert_atoms(re_ast, expected_atom_count, expected_atoms);
+}
+
+
+void assert_hex_atoms(
+    char* hex,
+    int expected_atom_count,
+    atom* expected_atoms)
+{
+  RE_AST* re_ast;
+  RE_ERROR re_error;
+
+  yr_re_parse_hex(hex, &re_ast, &re_error);
+  _assert_atoms(re_ast, expected_atom_count, expected_atoms);
 }
