@@ -130,7 +130,7 @@ int yr_stack_top(
   if (stack->top == 0)  // Return 0 if stack is empty.
     return 0;
 
-  *item = stack->items + (stack->top - 1) * stack->item_size;
+  *item = (uint8_t*) stack->items + (stack->top - 1) * stack->item_size;
   return 1;
 }
 
