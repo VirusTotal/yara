@@ -86,6 +86,11 @@ void assert_re_atoms(
     atom* expected_atoms);
 
 
+void assert_hex_atoms(
+    char* hex,
+    int expected_atom_count,
+    atom* expected_atoms);
+
 
 #define assert_true_expr(expr)                                          \
   do {                                                                  \
