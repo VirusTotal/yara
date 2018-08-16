@@ -65,10 +65,6 @@ int yr_stack_push(
     void* item);
 
 
-int yr_stack_top(
-    YR_STACK* stack,
-    void** item);
-
 int yr_stack_pop(
     YR_STACK* stack,
     void* item);
