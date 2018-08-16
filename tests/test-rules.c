@@ -1977,6 +1977,11 @@ void test_performance_warnings()
 
   assert_no_warnings(
        "rule test { \
+        strings: $a = { 20 01 02 } \
+        condition: $a }")
+
+  assert_no_warnings(
+       "rule test { \
         strings: $a = { 01 02 } \
         condition: $a }")
 }
