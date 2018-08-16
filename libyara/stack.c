@@ -117,23 +117,6 @@ int yr_stack_push(
   return ERROR_SUCCESS;
 }
 
-//
-// yr_stack_top
-//
-// Retreieves the item in top of the stack.
-//
-
-int yr_stack_top(
-    YR_STACK* stack,
-    void** item)
-{
-  if (stack->top == 0)  // Return 0 if stack is empty.
-    return 0;
-
-  *item = (uint8_t*) stack->items + (stack->top - 1) * stack->item_size;
-  return 1;
-}
-
 
 //
 // yr_stack_pop
