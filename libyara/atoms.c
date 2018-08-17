@@ -759,7 +759,10 @@ static int _yr_atoms_case_insensitive(
         return ERROR_INSUFFICIENT_MEMORY;
 
       for (i = 0; i < atom_length; i++)
+      {
         new_atom->atom.bytes[i] = atoms_cursor[i];
+        new_atom->atom.mask[i] = 0xFF;
+      }
 
       new_atom->atom.length = atom_length;
       new_atom->forward_code = atom->forward_code;
@@ -808,7 +811,10 @@ static int _yr_atoms_xor(
         return ERROR_INSUFFICIENT_MEMORY;
 
       for (i = 0; i < atom->atom.length; i++)
+      {
         new_atom->atom.bytes[i] = atom->atom.bytes[i] ^ j;
+        new_atom->atom.mask[i] = 0xFF;
+      }
 
       new_atom->atom.length = yr_min(atom->atom.length, YR_MAX_ATOM_LENGTH);
       new_atom->forward_code = atom->forward_code;
@@ -853,7 +859,10 @@ static int _yr_atoms_wide(
       return ERROR_INSUFFICIENT_MEMORY;
 
     for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
+    {
       new_atom->atom.bytes[i] = 0;
+      new_atom->atom.mask[i] = 0xFF;
+    }
 
     for (i = 0; i < atom->atom.length; i++)
     {
@@ -897,7 +906,7 @@ static void _yr_atom_shift_left_re_nodes(
 
 struct STACK_ITEM
 {
-  RE_NODE*          re_node;
+  RE_NODE*             re_node;
   YR_ATOM_TREE_NODE*   new_appending_node;
 };
 
