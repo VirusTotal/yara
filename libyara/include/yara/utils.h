@@ -38,7 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NULL 0
 #endif
 
-#if defined(HAVE_STDBOOL_H)
+#if defined(HAVE_STDBOOL_H) || (defined(_MSC_VER) && _MSC_VER >= 1800)
 #include <stdbool.h>
 #else
 #ifndef __cplusplus
