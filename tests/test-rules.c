@@ -1984,6 +1984,11 @@ void test_performance_warnings()
        "rule test { \
         strings: $a = { 01 02 } \
         condition: $a }")
+
+  assert_no_warnings(
+       "rule test { \
+        strings: $a = \"foo\" wide \
+        condition: $a }")
 }
 
 
