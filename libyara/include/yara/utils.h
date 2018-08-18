@@ -58,7 +58,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(_WIN32) || defined(__CYGWIN__)
   #ifdef YR_BUILDING_DLL
     #ifdef __GNUC__
-      #define YR_API EXTERNC __attribute_((dllexport))
+      #define YR_API EXTERNC __attribute__((dllexport))
       #define YR_DEPRECATED_API EXTERNC __attribute__((deprecated))
     #else
       #define YR_API EXTERNC __declspec(dllexport)
