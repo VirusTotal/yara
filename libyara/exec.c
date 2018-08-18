@@ -1273,9 +1273,9 @@ int yr_execute_code(
         #ifdef PROFILING_ENABLED
         assert(current_rule != NULL);
         #ifdef _WIN32
-        InterlockedAdd64(&rule->time_cost,  elapsed_time - start_time);
+        InterlockedAdd64(&current_rule->time_cost, elapsed_time - start_time);
         #else
-        __sync_fetch_and_add(&rule->time_cost, elapsed_time - start_time);
+        __sync_fetch_and_add(&current_rule->time_cost, elapsed_time - start_time);
         #endif
         #endif
         result = ERROR_SCAN_TIMEOUT;
