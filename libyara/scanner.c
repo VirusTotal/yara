@@ -338,10 +338,6 @@ YR_API int yr_scanner_scan_mem_blocks(
   YR_RULE* rule;
   YR_MEMORY_BLOCK* block;
 
-  #ifdef PROFILING_ENABLED
-  int64_t time_cost = 0;
-  #endif
-
   int tidx = 0;
   int result = ERROR_SUCCESS;
 
@@ -483,14 +479,14 @@ _exit:
   #ifdef PROFILING_ENABLED
   yr_rules_foreach(rules, rule)
   {
-    time_cost += rule->time_cost_per_thread[tidx];
+    #ifdef _WIN32
+    InterlockedAdd64(&rule->time_cost, rule->time_cost_per_thread[tidx]);
+    #else
+    __sync_fetch_and_add(&rule->time_cost, rule->time_cost_per_thread[tidx]);
+    #endif
+
     rule->time_cost_per_thread[tidx] = 0;
   }
-  #ifdef _WIN32
-  InterlockedAdd64(&rule->time_cost,  time_cost);
-  #else
-  __sync_fetch_and_add(&rule->time_cost, time_cost);
-  #endif
   #endif
 
   _yr_scanner_clean_matches(scanner);
