@@ -518,11 +518,7 @@ int yr_execute_code(
 
         #ifdef PROFILING_ENABLED
         elapsed_time = yr_stopwatch_elapsed_us(&context->stopwatch);
-        #ifdef _WIN32
-        InterlockedAdd64(&rule->time_cost,  elapsed_time - start_time);
-        #else
-        __sync_fetch_and_add(&rule->time_cost, elapsed_time - start_time);
-        #endif
+        rule->time_cost_per_thread[tidx] += (elapsed_time - start_time);
         start_time = elapsed_time;
         #endif
 
@@ -1272,11 +1268,7 @@ int yr_execute_code(
       {
         #ifdef PROFILING_ENABLED
         assert(current_rule != NULL);
-        #ifdef _WIN32
-        InterlockedAdd64(&rule->time_cost,  elapsed_time - start_time);
-        #else
-        __sync_fetch_and_add(&rule->time_cost, elapsed_time - start_time);
-        #endif
+        current_rule->time_cost_per_thread[tidx] += elapsed_time - start_time;
         #endif
         result = ERROR_SCAN_TIMEOUT;
         stop = true;

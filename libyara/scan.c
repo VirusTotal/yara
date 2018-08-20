@@ -872,13 +872,9 @@ int yr_scan_verify_match(
 
   #ifdef PROFILING_ENABLED
   uint64_t finish_time = yr_stopwatch_elapsed_us(&context->stopwatch);
-  #ifdef _WIN32
-  InterlockedAdd64(&string->time_cost,  finish_time - start_time);
-  InterlockedAdd64(&string->rule->time_cost,  finish_time - start_time);
-  #else
-  __sync_fetch_and_add(&string->time_cost, finish_time - start_time);
-  __sync_fetch_and_add(&string->rule->time_cost, finish_time - start_time);
-  #endif
+
+  string->rule->time_cost_per_thread[context->tidx] += (
+      finish_time - start_time);
   #endif
 
   return result;
