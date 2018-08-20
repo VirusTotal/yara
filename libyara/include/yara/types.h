@@ -273,9 +273,6 @@ struct YR_STRING
 
   YR_MATCHES matches[YR_MAX_THREADS];
   YR_MATCHES unconfirmed_matches[YR_MAX_THREADS];
-
-  // Used only when PROFILING_ENABLED is defined
-  volatile int64_t time_cost;
 };
 
 
@@ -290,8 +287,16 @@ struct YR_RULE
   DECLARE_REFERENCE(YR_STRING*, strings);
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);
 
-  // Used only when PROFILING_ENABLED is defined
+  // Used only when PROFILING_ENABLED is defined. This is the sum of all values
+  // in time_cost_per_thread. This is updated once on each call to
+  // yr_scanner_scan_xxx.
   volatile int64_t time_cost;
+
+  // Used only when PROFILING_ENABLED is defined. This array holds the time
+  // cost for each thread using this structure concurrenlty. This is necessary
+  // because a global variable causes too much contention while trying to
+  // increment in a synchronized way from multiple threads.
+  int64_t time_cost_per_thread[YR_MAX_THREADS];
 };
 
 
