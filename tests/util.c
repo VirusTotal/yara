@@ -272,9 +272,11 @@ void _assert_atoms(
   YR_ATOM_LIST_ITEM* atoms;
   YR_ATOM_LIST_ITEM* atom;
 
+  int min_atom_quality;
+
   c.get_atom_quality = yr_atoms_heuristic_quality;
 
-  yr_atoms_extract_from_re(&c, re_ast, 0, &atoms);
+  yr_atoms_extract_from_re(&c, re_ast, 0, &atoms, &min_atom_quality);
 
   atom = atoms;
 

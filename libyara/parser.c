@@ -381,7 +381,8 @@ static int _yr_parser_write_string(
           (uint8_t*) literal_string->c_string,
           (int32_t) literal_string->length,
           flags,
-          &atom_list);
+          &atom_list,
+          min_atom_quality);
     }
   }
   else
@@ -395,7 +396,11 @@ static int _yr_parser_write_string(
 
     if (result == ERROR_SUCCESS)
       result = yr_atoms_extract_from_re(
-          &compiler->atoms_config, re_ast, flags, &atom_list);
+          &compiler->atoms_config,
+          re_ast,
+          flags,
+          &atom_list,
+          min_atom_quality);
   }
 
   if (result == ERROR_SUCCESS)
@@ -408,8 +413,8 @@ static int _yr_parser_write_string(
         compiler->matches_arena);
   }
 
-  *min_atom_quality = yr_atoms_min_quality(
-      &compiler->atoms_config, atom_list);
+  //*min_atom_quality = yr_atoms_min_quality(
+  //    &compiler->atoms_config, atom_list);
 
   if (flags & STRING_GFLAGS_LITERAL)
   {
@@ -443,8 +448,8 @@ int yr_parser_reduce_string_declaration(
     SIZED_STRING* str,
     YR_STRING** string)
 {
-  int min_atom_quality;
-  int min_atom_quality_aux;
+  int min_atom_quality = YR_MIN_ATOM_QUALITY;
+  int min_atom_quality_aux = YR_MIN_ATOM_QUALITY;
 
   int32_t min_gap;
   int32_t max_gap;

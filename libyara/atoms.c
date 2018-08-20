@@ -113,6 +113,7 @@ int yr_atoms_heuristic_quality(
     YR_ATOM* atom)
 {
   int penalty = 0;
+  int wildcarded_nibbles = 0;
   int unique_bytes = 0;
   int i, j;
   bool is_unique;
@@ -124,13 +125,13 @@ int yr_atoms_heuristic_quality(
     switch (atom->mask[i])
     {
       case 0x0F:
-        penalty += 3;
+        wildcarded_nibbles += 1;
         break;
       case 0xF0:
-        penalty += 3;
+        wildcarded_nibbles += 1;
         break;
       case 0x00:
-        penalty += 6;
+        wildcarded_nibbles += 2;
         break;
       default:
         // Penalize common bytes, specially if they are in the first two
@@ -141,7 +142,7 @@ int yr_atoms_heuristic_quality(
             atom->bytes[i] == 0x0A ||
             atom->bytes[i] == 0x0D )
         {
-          penalty += yr_max(4-i, 1);
+          penalty += yr_max(8-i, 6);
         }
     }
 
@@ -158,12 +159,18 @@ int yr_atoms_heuristic_quality(
       unique_bytes += 1;
   }
 
-  // yr_max(atom_length + unique_bytes - penalty, 0) is within the range
-  // [0 - 4 * YR_MAX_ATOM_LENGTH], which means that the function returns a value
-  // in [YR_MAX_ATOM_QUALITY - 4 * YR_MAX_ATOM_LENGTH, YR_MAX_ATOM_QUALITY]
+  // Penalize according to the number of wilcarded nibbles.
+  penalty += 4 * wildcarded_nibbles;
 
-  return YR_MAX_ATOM_QUALITY - 8 * YR_MAX_ATOM_LENGTH +
-         yr_max(4 * (atom->length + unique_bytes) - penalty, 0);
+  if (wildcarded_nibbles > 2)
+    penalty += 14;
+
+  // yr_max(atom_length + unique_bytes - penalty, 0) is within the range
+  // [0 - 16 * YR_MAX_ATOM_LENGTH], which means that the function returns a value
+  // in [YR_MAX_ATOM_QUALITY - 16 * YR_MAX_ATOM_LENGTH, YR_MAX_ATOM_QUALITY]
+
+  return YR_MAX_ATOM_QUALITY - 16 * YR_MAX_ATOM_LENGTH +
+         yr_max(8 * (atom->length + unique_bytes) - penalty, 0);
 }
 
 
@@ -1333,14 +1340,13 @@ int yr_atoms_extract_from_re(
     YR_ATOMS_CONFIG* config,
     RE_AST* re_ast,
     int flags,
-    YR_ATOM_LIST_ITEM** atoms)
+    YR_ATOM_LIST_ITEM** atoms,
+    int* min_atom_quality)
 {
   YR_ATOM_TREE* atom_tree = (YR_ATOM_TREE*) yr_malloc(sizeof(YR_ATOM_TREE));
 
   YR_ATOM_LIST_ITEM* wide_atoms;
   YR_ATOM_LIST_ITEM* case_insensitive_atoms;
-
-  int min_atom_quality = YR_MIN_ATOM_QUALITY;
 
   if (atom_tree == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
@@ -1362,7 +1368,7 @@ int yr_atoms_extract_from_re(
 
   // Choose the atoms that will be used.
   FAIL_ON_ERROR_WITH_CLEANUP(
-      _yr_atoms_choose(config, atom_tree->root_node, atoms, &min_atom_quality),
+      _yr_atoms_choose(config, atom_tree->root_node, atoms, min_atom_quality),
       _yr_atoms_tree_destroy(atom_tree));
 
   _yr_atoms_tree_destroy(atom_tree);
@@ -1439,7 +1445,8 @@ int yr_atoms_extract_from_string(
     uint8_t* string,
     int32_t string_length,
     int flags,
-    YR_ATOM_LIST_ITEM** atoms)
+    YR_ATOM_LIST_ITEM** atoms,
+    int* min_atom_quality)
 {
   YR_ATOM_LIST_ITEM* item;
   YR_ATOM_LIST_ITEM* case_insensitive_atoms;
@@ -1492,6 +1499,7 @@ int yr_atoms_extract_from_string(
   }
 
   *atoms = item;
+  *min_atom_quality = max_quality;
 
   if (flags & STRING_GFLAGS_WIDE)
   {
