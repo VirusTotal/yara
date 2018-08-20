@@ -358,10 +358,6 @@ static int _yr_parser_write_string(
   (*string)->fixed_offset = UNDEFINED;
   (*string)->rule = compiler->current_rule;
 
-  #ifdef PROFILING_ENABLED
-  (*string)->time_cost = 0;
-  #endif
-
   memset((*string)->matches, 0,
          sizeof((*string)->matches));
 
@@ -754,6 +750,9 @@ int yr_parser_reduce_rule_declaration_phase_1(
 
   #ifdef PROFILING_ENABLED
   (*rule)->time_cost = 0;
+
+  memset(
+      (*rule)->time_cost_per_thread, 0, sizeof((*rule)->time_cost_per_thread));
   #endif
 
   FAIL_ON_ERROR(yr_arena_write_string(

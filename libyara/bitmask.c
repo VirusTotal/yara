@@ -40,20 +40,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // to 1 at the same offset. This function assumes that the first bit in B is 1
 // and do optimizations that rely on that.
 //
-// The function also receives a pointer to an uint64_t where the function stores
+// The function also receives a pointer to an uint32_t where the function stores
 // a value that is used for speeding-up subsequent searches over the same
 // bitmask A. When called for the first time with some bitmask A, the pointer
-// must point to zero-initialized uint64_t. In the next call the function uses
+// must point to a zero-initialized uint32_t. In the next call the function uses
 // the previously stored value for skiping over a portion of the A bitmask and
 // updates the value.
 //
 // Args:
 //    YR_BITMASK* a      - Bitmask A
 //    YR_BITMASK* b      - Bitmask B
-//    uint64_t len_a     - Length of bitmask A in bits
-//    uint64_t len_b     - Length of bitmask B in bits
-//    uint64_t* hint     - Address of an uint64_t where the function writes a
-//                         value that can be used as a hint.
+//    uint32_t len_a     - Length of bitmask A in bits
+//    uint32_t len_b     - Length of bitmask B in bits
+//    uint32_t* off_a    - Address of an uint32_t indicating the offset within
+//                         bitmask A where to start searching. In the first call
+//                         to it must point to a 0 value. This function updates
+//                         the value to use it in subsequent calls.
 // Returns:
 //    The smaller offset within bitmask A where bitmask B can be put.
 //
