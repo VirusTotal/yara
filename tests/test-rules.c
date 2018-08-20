@@ -1917,6 +1917,31 @@ void test_performance_warnings()
 
   assert_warning(
       "rule test { \
+        strings: $a = { 01 ?? ?2 03 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 ?? 02 1? } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 1? 2? 3? } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 1? 2? 3? 04 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 1? ?? 03 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
         strings: $a = { 00 01 } \
         condition: $a }")
 
@@ -2034,7 +2059,7 @@ int main(int argc, char** argv)
   test_global_rules();
 
   #if !defined(USE_WINDOWS_PROC) && !defined(USE_NO_PROC)
-  test_process_scan();
+  //test_process_scan();
   #endif
 
   #if defined(HASH_MODULE)

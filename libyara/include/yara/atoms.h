@@ -120,7 +120,8 @@ int yr_atoms_extract_from_re(
     YR_ATOMS_CONFIG* config,
     RE_AST* re_ast,
     int flags,
-    YR_ATOM_LIST_ITEM** atoms);
+    YR_ATOM_LIST_ITEM** atoms,
+    int* min_atom_quality);
 
 
 int yr_atoms_extract_from_string(
@@ -128,7 +129,8 @@ int yr_atoms_extract_from_string(
     uint8_t* string,
     int string_length,
     int flags,
-    YR_ATOM_LIST_ITEM** atoms);
+    YR_ATOM_LIST_ITEM** atoms,
+    int* min_atom_quality);
 
 
 int yr_atoms_extract_triplets(

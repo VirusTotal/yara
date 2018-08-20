@@ -139,61 +139,48 @@ void test_heuristic_quality()
 
   c.get_atom_quality = yr_atoms_heuristic_quality;
 
-  assert_true_expr(
-      yr_atoms_heuristic_quality(&c, &a00000000)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 10);
-
-  assert_true_expr(
-      yr_atoms_heuristic_quality(&c, &a00000001)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 15);
-
-  assert_true_expr(
-      yr_atoms_heuristic_quality(&c, &a00000102)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 21);
-
-  assert_true_expr(
-      yr_atoms_heuristic_quality(&c, &a00010203)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 28);
-
-  assert_true_expr(
-      yr_atoms_heuristic_quality(&c, &a01020304)
-      == YR_MAX_ATOM_QUALITY);
-
-  assert_true_expr(
-      yr_atoms_heuristic_quality(&c, &a01)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 8);
-
-  assert_true_expr(
-      yr_atoms_heuristic_quality(&c, &a0001)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 12);
-
-  assert_true_expr(
-      yr_atoms_heuristic_quality(&c, &a000001)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 13);
-
-  assert_true_expr(
-      yr_atoms_heuristic_quality(&c, &a000102)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 20);
-
-  assert_true_expr(
-      yr_atoms_heuristic_quality(&c, &a010203)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 24);
-
-  assert_true_expr(
-      yr_atoms_heuristic_quality(&c, &a0102)
-    == YR_MIN_ATOM_HEURISTIC_QUALITY + 16);
+  int q00000000 = yr_atoms_heuristic_quality(&c, &a00000000);
+  int q00000001 = yr_atoms_heuristic_quality(&c, &a00000001);
+  int q00000102 = yr_atoms_heuristic_quality(&c, &a00000102);
+  int q00010203 = yr_atoms_heuristic_quality(&c, &a00010203);
+  int q01020304 = yr_atoms_heuristic_quality(&c, &a01020304);
+  int q010203   = yr_atoms_heuristic_quality(&c, &a010203);
+  int q0102     = yr_atoms_heuristic_quality(&c, &a0102);
+  int q01       = yr_atoms_heuristic_quality(&c, &a01);
 
   a010203.mask[1] = 0x00;
 
-  assert_true_expr(
-      yr_atoms_heuristic_quality(&c, &a010203)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 14);
+  int q01XX03   = yr_atoms_heuristic_quality(&c, &a010203);
 
-  a010203.mask[1] = 0xF0;
+  a010203.mask[1] = 0x0F;
 
-  assert_true_expr(
-      yr_atoms_heuristic_quality(&c, &a010203)
-      == YR_MIN_ATOM_HEURISTIC_QUALITY + 17);
+  int q01X203   = yr_atoms_heuristic_quality(&c, &a010203);
+
+  a010203.mask[1] = 0x0F;
+
+  int q010X03   = yr_atoms_heuristic_quality(&c, &a010203);
+
+  a010203.mask[2] = 0x0F;
+
+  int q010X0X   = yr_atoms_heuristic_quality(&c, &a010203);
+
+  assert_true_expr(q00000001 > q00000000);
+  assert_true_expr(q00000102 > q00000001);
+  assert_true_expr(q00010203 > q00000102);
+  assert_true_expr(q01020304 > q00010203);
+  assert_true_expr(q00010203 > q010203);
+  assert_true_expr(q010203   > q0102);
+  assert_true_expr(q0102     > q01);
+  assert_true_expr(q01X203   > q0102);
+  assert_true_expr(q01X203   < q010203);
+  assert_true_expr(q01X203   == q010X03);
+  assert_true_expr(q01XX03   <= q0102);
+  assert_true_expr(q01XX03   < q010X03);
+  assert_true_expr(q01XX03   < q010203);
+  assert_true_expr(q010X0X   > q01);
+  assert_true_expr(q010X0X   < q010203);
+
+  assert_true_expr(q01020304 == YR_MAX_ATOM_QUALITY);
 }
 
 
