@@ -476,6 +476,19 @@ _exit:
 
   scanner->rules->time_cost += yr_stopwatch_elapsed_us(&scanner->stopwatch);
 
+  #ifdef PROFILING_ENABLED
+  yr_rules_foreach(rules, rule)
+  {
+    #ifdef _WIN32
+    InterlockedAdd64(&rule->time_cost, rule->time_cost_per_thread[tidx]);
+    #else
+    __sync_fetch_and_add(&rule->time_cost, rule->time_cost_per_thread[tidx]);
+    #endif
+
+    rule->time_cost_per_thread[tidx] = 0;
+  }
+  #endif
+
   _yr_scanner_clean_matches(scanner);
 
   if (scanner->matches_arena != NULL)
