@@ -413,9 +413,6 @@ static int _yr_parser_write_string(
         compiler->matches_arena);
   }
 
-  //*min_atom_quality = yr_atoms_min_quality(
-  //    &compiler->atoms_config, atom_list);
-
   if (flags & STRING_GFLAGS_LITERAL)
   {
     if (flags & STRING_GFLAGS_WIDE)
