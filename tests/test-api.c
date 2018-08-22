@@ -654,12 +654,12 @@ void test_rules_stats()
   stats_for_rules("\
       rule test { \
       strings: \
-        $ = \"abcd0\" \
-        $ = \"abcd1\" \
-        $ = \"abcd2\" \
-        $ = \"efgh0\" \
-        $ = \"efgh1\" \
-        $ = \"efgh2\" \
+        $ = \"00000\" \
+        $ = \"00001\" \
+        $ = \"00002\" \
+        $ = \"11110\" \
+        $ = \"11111\" \
+        $ = \"11112\" \
       condition: all of them }",
       &stats);
 
@@ -674,14 +674,14 @@ void test_rules_stats()
   stats_for_rules("\
       rule test { \
       strings: \
-        $ = \"abcd0\" \
-        $ = \"abcd1\" \
-        $ = \"abcd2\" \
-        $ = \"efgh0\" \
-        $ = \"ijkl0\" \
-        $ = \"mnop0\" \
-        $ = \"mnop1\" \
-        $ = \"qrst0\" \
+        $ = \"00000\" \
+        $ = \"00001\" \
+        $ = \"00002\" \
+        $ = \"11110\" \
+        $ = \"22220\" \
+        $ = \"33330\" \
+        $ = \"33331\" \
+        $ = \"44440\" \
       condition: all of them }",
       &stats);
 

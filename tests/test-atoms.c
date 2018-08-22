@@ -510,6 +510,10 @@ void test_atom_choose()
       {4, {0x61, 0x62, 0x63, 0x64}},
     });
 
+    assert_re_atoms("abcd1234", 1, (struct atom[]) {
+      {4, {0x31, 0x32, 0x33, 0x34}},
+    });
+
     assert_re_atoms("a..d", 1, (struct atom[]) {
       {1, {0x61}},
     });
