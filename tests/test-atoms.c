@@ -137,6 +137,16 @@ void test_heuristic_quality()
     .bytes = {0x01, 0x02},
     .mask = {0xFF, 0xFF}};
 
+  YR_ATOM a01020000 = {
+    .length = 4,
+    .bytes = {0x01, 0x02, 0x00, 0x00},
+    .mask = {0xFF, 0xFF, 0xFF, 0xFF}};
+
+  YR_ATOM a0102XX04 = {
+    .length = 4,
+    .bytes = {0x01, 0x02, 0x03, 0x04},
+    .mask = {0xFF, 0xFF, 0x00, 0xFF}};
+
   c.get_atom_quality = yr_atoms_heuristic_quality;
 
   int q00000000 = yr_atoms_heuristic_quality(&c, &a00000000);
@@ -147,6 +157,12 @@ void test_heuristic_quality()
   int q010203   = yr_atoms_heuristic_quality(&c, &a010203);
   int q0102     = yr_atoms_heuristic_quality(&c, &a0102);
   int q01       = yr_atoms_heuristic_quality(&c, &a01);
+  int q0001     = yr_atoms_heuristic_quality(&c, &a0001);
+  int q000001   = yr_atoms_heuristic_quality(&c, &a000001);
+  int q000102   = yr_atoms_heuristic_quality(&c, &a000102);
+  int q01020000 = yr_atoms_heuristic_quality(&c, &a01020000);
+  int q0102XX04 = yr_atoms_heuristic_quality(&c, &a0102XX04);
+
 
   a010203.mask[1] = 0x00;
 
@@ -165,13 +181,17 @@ void test_heuristic_quality()
   int q010X0X   = yr_atoms_heuristic_quality(&c, &a010203);
 
   assert_true_expr(q00000001 > q00000000);
+  assert_true_expr(q00000001 > q000001);
+  assert_true_expr(q000001   > q0001);
   assert_true_expr(q00000102 > q00000001);
   assert_true_expr(q00010203 > q00000102);
   assert_true_expr(q01020304 > q00010203);
+  assert_true_expr(q000102   > q000001);
   assert_true_expr(q00010203 > q010203);
   assert_true_expr(q010203   > q0102);
   assert_true_expr(q0102     > q01);
   assert_true_expr(q01X203   > q0102);
+  assert_true_expr(q01X203   > q0001);
   assert_true_expr(q01X203   < q010203);
   assert_true_expr(q01X203   == q010X03);
   assert_true_expr(q01XX03   <= q0102);
@@ -179,6 +199,7 @@ void test_heuristic_quality()
   assert_true_expr(q01XX03   < q010203);
   assert_true_expr(q010X0X   > q01);
   assert_true_expr(q010X0X   < q010203);
+  assert_true_expr(q01020000 > q0102XX04);
 
   assert_true_expr(q01020304 == YR_MAX_ATOM_QUALITY);
 }
@@ -538,6 +559,10 @@ void test_atom_choose()
     });
 
     assert_hex_atoms("{61 62 0? 64}", 16, atoms_61_62_0X_64);
+
+    assert_hex_atoms("{11 ?? 11 ?? 22 33 44 55 66 }", 1, (struct atom[]) {
+      {4, {0x22, 0x33, 0x44, 0x55}},
+    });
 }
 
 

@@ -112,65 +112,69 @@ int yr_atoms_heuristic_quality(
     YR_ATOMS_CONFIG* config,
     YR_ATOM* atom)
 {
-  int penalty = 0;
-  int wildcarded_nibbles = 0;
+  YR_BITMASK seen_bytes[YR_BITMASK_SIZE(256)];
+
+  int quality = 0;
   int unique_bytes = 0;
-  int i, j;
-  bool is_unique;
+  int masked_nibbles = 0;
+  int i;
 
   assert(atom->length <= YR_MAX_ATOM_LENGTH);
+
+  yr_bitmask_clear_all(seen_bytes);
 
   for (i = 0; i < atom->length; i++)
   {
     switch (atom->mask[i])
     {
+      case 0x00:
+        masked_nibbles += 2;
+        break;
       case 0x0F:
-        wildcarded_nibbles += 1;
+        masked_nibbles += 1;
+        quality += 4;
         break;
       case 0xF0:
-        wildcarded_nibbles += 1;
+        masked_nibbles += 1;
+        quality += 4;
         break;
-      case 0x00:
-        wildcarded_nibbles += 2;
-        break;
-      default:
-        // Penalize common bytes, specially if they are in the first two
-        // positions.
-        if (atom->bytes[i] == 0x00 ||
-            atom->bytes[i] == 0xFF ||
-            atom->bytes[i] == 0x20 ||
-            atom->bytes[i] == 0x0A ||
-            atom->bytes[i] == 0x0D )
+      case 0xFF:
+        // Common bytes contribute less to the quality than the rest.
+        switch (atom->bytes[i])
         {
-          penalty += yr_max(8-i, 6);
+          case 0x00:
+          case 0x20:
+          case 0xCC:
+          case 0xFF:
+            quality += 15;
+            break;
+          default:
+            quality += 20;
+        };
+        if (!yr_bitmask_isset(seen_bytes, atom->bytes[i]))
+        {
+          yr_bitmask_set(seen_bytes, atom->bytes[i]);
+          unique_bytes++;
         }
     }
-
-    is_unique = true;
-
-    for (j = i + 1; j < atom->length; j++)
-      if (atom->mask[i] != 0xFF || atom->bytes[i] == atom->bytes[j])
-      {
-        is_unique = false;
-        break;
-      }
-
-    if (is_unique)
-      unique_bytes += 1;
   }
 
-  // Penalize according to the number of wilcarded nibbles.
-  penalty += 4 * wildcarded_nibbles;
+  // If all the bytes in the atom are equal and very common, let's penalize
+  // it heavily.
 
-  if (wildcarded_nibbles > 2)
-    penalty += 14;
+  if (unique_bytes == 1 &&
+      (yr_bitmask_isset(seen_bytes, 0x00) ||
+       yr_bitmask_isset(seen_bytes, 0x20) ||
+       yr_bitmask_isset(seen_bytes, 0xCC) ||
+       yr_bitmask_isset(seen_bytes, 0xFF)))
+  {
+    quality -= 10 * atom->length;
+  }
 
-  // yr_max(atom_length + unique_bytes - penalty, 0) is within the range
-  // [0 - 16 * YR_MAX_ATOM_LENGTH], which means that the function returns a value
-  // in [YR_MAX_ATOM_QUALITY - 16 * YR_MAX_ATOM_LENGTH, YR_MAX_ATOM_QUALITY]
+  if (masked_nibbles > 2)
+    quality -= 10;
 
-  return YR_MAX_ATOM_QUALITY - 16 * YR_MAX_ATOM_LENGTH +
-         yr_max(8 * (atom->length + unique_bytes) - penalty, 0);
+  return YR_MAX_ATOM_QUALITY - 20 * YR_MAX_ATOM_LENGTH + quality;
 }
 
 
@@ -894,28 +898,22 @@ static int _yr_atoms_wide(
 }
 
 
-//
-// _yr_atom_shift_left_re_nodes
-//
-
-static void _yr_atom_shift_left_re_nodes(
-    YR_ATOM_TREE_NODE* node,
-    int shift)
-{
-  int i;
-
-  assert(node->atom.length + shift <= YR_MAX_ATOM_LENGTH);
-
-  for (i = 0; i < node->atom.length; i++)
-    node->re_nodes[i] = node->re_nodes[i + shift];
-}
-
-
 struct STACK_ITEM
 {
   RE_NODE*             re_node;
   YR_ATOM_TREE_NODE*   new_appending_node;
 };
+
+
+#define make_atom_from_re_nodes(atom, nodes_length, nodes) \
+    { \
+      atom.length = nodes_length; \
+      for (i = 0; i < atom.length; i++) \
+      { \
+        atom.bytes[i] = (uint8_t) (recent_re_nodes)[i]->value; \
+        atom.mask[i] = (uint8_t) (recent_re_nodes)[i]->mask; \
+      } \
+    }
 
 
 //
@@ -931,19 +929,23 @@ static int _yr_atoms_extract_from_re(
 {
   YR_STACK* stack;
   RE_NODE* re_node;
+
   YR_ATOM atom;
+  YR_ATOM best_atom;
 
   struct STACK_ITEM si;
 
   int i, shift;
-  int new_quality;
-  int leaf_atom_quality = -1;
+  int quality;
+  int best_quality = -1;
+  int n = 0;
 
   YR_ATOM_TREE_NODE* and_node;
   YR_ATOM_TREE_NODE* left_node;
   YR_ATOM_TREE_NODE* right_node;
 
   RE_NODE* recent_re_nodes[YR_MAX_ATOM_LENGTH];
+  RE_NODE* best_atom_re_nodes[YR_MAX_ATOM_LENGTH];
 
   // This holds the ATOM_TREE_OR node where leaves (ATOM_TREE_LEAF) are
   // currently being appended.
@@ -972,10 +974,16 @@ static int _yr_atoms_extract_from_re(
     {
       // Before changing the appending node let's append any pending leaf to
       // the current appending node.
-      if (leaf != NULL)
+      if (n > 0)
       {
+        FAIL_ON_NULL_WITH_CLEANUP(
+            leaf = _yr_atoms_tree_node_create(ATOM_TREE_LEAF),
+            yr_stack_destroy(stack));
+
+        memcpy(&leaf->atom, &best_atom, sizeof(best_atom));
+        memcpy(&leaf->re_nodes, &best_atom_re_nodes, sizeof(best_atom_re_nodes));
         _yr_atoms_tree_node_append(current_appending_node, leaf);
-        leaf = NULL;
+        n = 0;
       }
 
       current_appending_node = si.new_appending_node;
@@ -989,73 +997,36 @@ static int _yr_atoms_extract_from_re(
         case RE_NODE_MASKED_LITERAL:
         case RE_NODE_ANY:
 
-          if (leaf == NULL)
+          if (n < YR_MAX_ATOM_LENGTH)
           {
-            leaf = _yr_atoms_tree_node_create(ATOM_TREE_LEAF);
-
-            if (leaf == NULL)
-            {
-              yr_stack_destroy(stack);
-              return ERROR_INSUFFICIENT_MEMORY;
-            }
-
-            // -1 indicates that the quality hasn't beeing calculated yet.
-            leaf_atom_quality = -1;
+            recent_re_nodes[n] = si.re_node;
+            best_atom_re_nodes[n] = si.re_node;
+            best_atom.bytes[n] = (uint8_t) si.re_node->value;
+            best_atom.mask[n] = (uint8_t) si.re_node->mask;
+            best_atom.length = ++n;
           }
-
-          if (leaf->atom.length < YR_MAX_ATOM_LENGTH)
+          else if (best_quality < YR_MAX_ATOM_QUALITY)
           {
-            // The leaf hasn't reached the maximum atom length yet, we can add
-            // the literal to the atom.
-            recent_re_nodes[leaf->atom.length] = si.re_node;
-            leaf->re_nodes[leaf->atom.length] = si.re_node;
-            leaf->atom.bytes[leaf->atom.length] = (uint8_t) si.re_node->value;
-            leaf->atom.mask[leaf->atom.length] = (uint8_t) si.re_node->mask;
-            leaf->atom.length++;
-          }
-          else
-          {
-            // The leaf has reached the maximum atom length, we must decide
-            // between keeping the current one (let's say its "abcd") or
-            // replacing it with a new atom consisting in shifting the current
-            // atom one byte to the left and appending the current literal
-            // ("bcdx" where "x" is the current literal).
+            make_atom_from_re_nodes(atom, n, recent_re_nodes);
+            shift = _yr_atoms_trim(&atom);
+            quality = config->get_atom_quality(config, &atom);
 
-            if (leaf_atom_quality == -1)
+            if (quality > best_quality)
             {
-              shift = _yr_atoms_trim(&leaf->atom);
-              _yr_atom_shift_left_re_nodes(leaf, shift);
-
-              leaf_atom_quality = config->get_atom_quality(config, &leaf->atom);
-            }
-
-            if (leaf_atom_quality < YR_MAX_ATOM_QUALITY)
-            {
-              for (i = 1; i < YR_MAX_ATOM_LENGTH; i++)
-                recent_re_nodes[i - 1] = recent_re_nodes[i];
-
-              recent_re_nodes[YR_MAX_ATOM_LENGTH - 1] = si.re_node;
-              atom.length = YR_MAX_ATOM_LENGTH;
-
               for (i = 0; i < atom.length; i++)
               {
-                atom.bytes[i] = (uint8_t) recent_re_nodes[i]->value;
-                atom.mask[i] = (uint8_t) recent_re_nodes[i]->mask;
+                best_atom.bytes[i] = atom.bytes[i];
+                best_atom.mask[i] = atom.mask[i];
+                best_atom_re_nodes[i] = recent_re_nodes[i + shift];
               }
 
-              shift = _yr_atoms_trim(&atom);
-              new_quality = config->get_atom_quality(config, &atom);
-
-              if (new_quality > leaf_atom_quality)
-              {
-                memcpy(&leaf->atom, &atom, sizeof(atom));
-                memcpy(leaf->re_nodes, recent_re_nodes, sizeof(leaf->re_nodes));
-
-                _yr_atom_shift_left_re_nodes(leaf, shift);
-
-                leaf_atom_quality = new_quality;
-              }
+              best_quality = quality;
             }
+
+            for (i = 1; i < YR_MAX_ATOM_LENGTH; i++)
+              recent_re_nodes[i - 1] = recent_re_nodes[i];
+
+            recent_re_nodes[YR_MAX_ATOM_LENGTH - 1] = si.re_node;
           }
 
           break;
@@ -1207,8 +1178,34 @@ static int _yr_atoms_extract_from_re(
     }
   }
 
-  if (leaf != NULL)
+  if (n > 0)
+  {
+    make_atom_from_re_nodes(atom, n, recent_re_nodes);
+    shift = _yr_atoms_trim(&atom);
+    quality = config->get_atom_quality(config, &atom);
+
+    FAIL_ON_NULL_WITH_CLEANUP(
+        leaf = _yr_atoms_tree_node_create(ATOM_TREE_LEAF),
+        yr_stack_destroy(stack));
+
+    if (quality > best_quality)
+    {
+      memcpy(&leaf->atom, &atom, sizeof(atom));
+      memcpy(
+          &leaf->re_nodes,
+          &recent_re_nodes[shift],
+          sizeof(recent_re_nodes) - shift * sizeof(recent_re_nodes[0]));
+    }
+    else
+    {
+      memcpy(&leaf->atom, &best_atom, sizeof(best_atom));
+      memcpy(&leaf->re_nodes, &best_atom_re_nodes, sizeof(best_atom_re_nodes));
+    }
+
     _yr_atoms_tree_node_append(current_appending_node, leaf);
+  }
+
+  yr_stack_destroy(stack);
 
   return ERROR_SUCCESS;
 }
