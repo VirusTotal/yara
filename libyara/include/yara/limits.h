@@ -71,16 +71,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MIN_ATOM_QUALITY 0
 #endif
 
-#define YR_MIN_ATOM_HEURISTIC_QUALITY \
-    (YR_MAX_ATOM_QUALITY - 16 * YR_MAX_ATOM_LENGTH)
-
 // If the minimum atom quality for a string or regexp is below this constant,
 // a warning like "<string> is slowing down the scan" is shown. This is used
 // only with heuristic atom quality, when using an atom quality table the user
 // must specify the threshold when calling yr_compiler_set_atom_quality_table.
 #ifndef YR_ATOM_QUALITY_WARNING_THRESHOLD
 #define YR_ATOM_QUALITY_WARNING_THRESHOLD \
-    (YR_MIN_ATOM_HEURISTIC_QUALITY + 32)
+    YR_MAX_ATOM_QUALITY - 10 * YR_MAX_ATOM_LENGTH
 #endif
 
 
