@@ -2009,6 +2009,11 @@ void test_performance_warnings()
        "rule test { \
         strings: $a = \"foo\" wide \
         condition: $a }")
+
+  assert_no_warnings(
+       "rule test { \
+        strings: $a = \"MZ\" \
+        condition: $a }")
 }
 
 

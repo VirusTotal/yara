@@ -81,6 +81,7 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 #include <assert.h>
 #include <string.h>
 
+#include <yara/globals.h>
 #include <yara/utils.h>
 #include <yara/atoms.h>
 #include <yara/limits.h>
@@ -149,7 +150,11 @@ int yr_atoms_heuristic_quality(
             quality += 15;
             break;
           default:
-            quality += 20;
+            if ( yr_lowercase[atom->bytes[i]] >= 'a' &&
+                 yr_lowercase[atom->bytes[i]] <= 'z')
+              quality += 19;
+            else
+              quality += 20;
         };
         if (!yr_bitmask_isset(seen_bytes, atom->bytes[i]))
         {
