@@ -176,8 +176,7 @@ int yr_atoms_heuristic_quality(
     quality -= 10 * atom->length;
   }
 
-  if (masked_nibbles > 2)
-    quality -= 10;
+  quality -= masked_nibbles * 3;
 
   return YR_MAX_ATOM_QUALITY - 20 * YR_MAX_ATOM_LENGTH + quality;
 }
@@ -981,12 +980,28 @@ static int _yr_atoms_extract_from_re(
       // the current appending node.
       if (n > 0)
       {
+        make_atom_from_re_nodes(atom, n, recent_re_nodes);
+        shift = _yr_atoms_trim(&atom);
+        quality = config->get_atom_quality(config, &atom);
+
         FAIL_ON_NULL_WITH_CLEANUP(
             leaf = _yr_atoms_tree_node_create(ATOM_TREE_LEAF),
             yr_stack_destroy(stack));
 
-        memcpy(&leaf->atom, &best_atom, sizeof(best_atom));
-        memcpy(&leaf->re_nodes, &best_atom_re_nodes, sizeof(best_atom_re_nodes));
+        if (quality > best_quality)
+        {
+          memcpy(&leaf->atom, &atom, sizeof(atom));
+          memcpy(
+              &leaf->re_nodes,
+              &recent_re_nodes[shift],
+              sizeof(recent_re_nodes) - shift * sizeof(recent_re_nodes[0]));
+        }
+        else
+        {
+          memcpy(&leaf->atom, &best_atom, sizeof(best_atom));
+          memcpy(&leaf->re_nodes, &best_atom_re_nodes, sizeof(best_atom_re_nodes));
+        }
+
         _yr_atoms_tree_node_append(current_appending_node, leaf);
         n = 0;
       }
