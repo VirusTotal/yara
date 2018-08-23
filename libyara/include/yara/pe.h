@@ -481,6 +481,8 @@ typedef struct _WIN_CERTIFICATE {
     BYTE  Certificate[0];
 } WIN_CERTIFICATE, *PWIN_CERTIFICATE;
 
+#define SPC_NESTED_SIGNATURE_OBJID  "1.3.6.1.4.1.311.2.4.1"
+
 
 //
 // Rich signature.
