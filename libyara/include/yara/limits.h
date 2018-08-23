@@ -80,6 +80,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     YR_MAX_ATOM_QUALITY - 20 * YR_MAX_ATOM_LENGTH + 38
 #endif
 
+// If a rule generates more than this number of atoms a warning is shown.
+#ifndef YR_ATOMS_PER_RULE_WARNING_THRESHOLD
+#define YR_ATOMS_PER_RULE_WARNING_THRESHOLD  30000
+#endif
 
 // Maximum number of nested "for" loops in rule. Rules ith nested loops
 // exceeding this number will be rejected by the compiler.
