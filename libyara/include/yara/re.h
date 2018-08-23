@@ -61,7 +61,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define RE_OPCODE_ANY                   0xA0
-#define RE_OPCODE_ANY_EXCEPT_NEW_LINE   0xA1
 #define RE_OPCODE_LITERAL               0xA2
 #define RE_OPCODE_MASKED_LITERAL        0xA4
 #define RE_OPCODE_CLASS                 0xA5
