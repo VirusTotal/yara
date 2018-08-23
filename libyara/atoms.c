@@ -140,16 +140,20 @@ int yr_atoms_heuristic_quality(
         quality += 4;
         break;
       case 0xFF:
-        // Common bytes contribute less to the quality than the rest.
         switch (atom->bytes[i])
         {
           case 0x00:
           case 0x20:
           case 0xCC:
           case 0xFF:
+            // Common bytes contribute less to the quality than the rest.
             quality += 15;
             break;
           default:
+            // Bytes in the a-z and A-Z ranges have a slightly lower quality
+            // than the rest. We want to favor atoms that contain bytes outside
+            // those ranges because they generate less additional atoms during
+            // calls to _yr_atoms_case_combinations.
             if ( yr_lowercase[atom->bytes[i]] >= 'a' &&
                  yr_lowercase[atom->bytes[i]] <= 'z')
               quality += 19;
@@ -805,6 +809,7 @@ static int _yr_atoms_case_insensitive(
 // For a given list of atoms returns another list after a single byte xor
 // has been applied to it.
 //
+
 static int _yr_atoms_xor(
     YR_ATOM_LIST_ITEM* atoms,
     YR_ATOM_LIST_ITEM** xor_atoms)
@@ -923,7 +928,11 @@ struct STACK_ITEM
 //
 // _yr_atoms_extract_from_re
 //
-//
+// Extract atoms from a regular expression. This is a helper function used by
+// yr_atoms_extract_from_re that receives the abstract syntax tree for a regexp
+// (or hex pattern) and builds an atom tree. The appending_node argument is a
+// pointer to the ATOM_TREE_OR node at the root of the atom tree. This function
+// creates the tree by appending new nodes to it.
 //
 
 static int _yr_atoms_extract_from_re(
@@ -948,7 +957,13 @@ static int _yr_atoms_extract_from_re(
   YR_ATOM_TREE_NODE* left_node;
   YR_ATOM_TREE_NODE* right_node;
 
+  // The RE_NODEs most recently visited that can conform an atom (ie:
+  // RE_NODE_LITERAL, RE_NODE_MASKED_LITERAL and RE_NODE_ANY). The number of
+  // items in this array is n.
   RE_NODE* recent_re_nodes[YR_MAX_ATOM_LENGTH];
+
+  // The RE_NODEs corresponding to the best atom found so far for the current
+  // appending node.
   RE_NODE* best_atom_re_nodes[YR_MAX_ATOM_LENGTH];
 
   // This holds the ATOM_TREE_OR node where leaves (ATOM_TREE_LEAF) are
@@ -959,6 +974,15 @@ static int _yr_atoms_extract_from_re(
   YR_ATOM_TREE_NODE* leaf = NULL;
 
   FAIL_ON_ERROR(yr_stack_create(1024, sizeof(si), &stack));
+
+  // This first item pushed in the stack is the last one to be poped out, its
+  // sole purpose is forcing that any pending
+  si.re_node = NULL;
+  si.new_appending_node = appending_node;
+
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_stack_push(stack, (void*) &si),
+      yr_stack_destroy(stack));
 
   // Start processing the root node.
   si.re_node = re_ast->root_node;
@@ -999,7 +1023,10 @@ static int _yr_atoms_extract_from_re(
         else
         {
           memcpy(&leaf->atom, &best_atom, sizeof(best_atom));
-          memcpy(&leaf->re_nodes, &best_atom_re_nodes, sizeof(best_atom_re_nodes));
+          memcpy(
+              &leaf->re_nodes,
+              &best_atom_re_nodes,
+              sizeof(best_atom_re_nodes));
         }
 
         _yr_atoms_tree_node_append(current_appending_node, leaf);
@@ -1198,33 +1225,6 @@ static int _yr_atoms_extract_from_re(
     }
   }
 
-  if (n > 0)
-  {
-    make_atom_from_re_nodes(atom, n, recent_re_nodes);
-    shift = _yr_atoms_trim(&atom);
-    quality = config->get_atom_quality(config, &atom);
-
-    FAIL_ON_NULL_WITH_CLEANUP(
-        leaf = _yr_atoms_tree_node_create(ATOM_TREE_LEAF),
-        yr_stack_destroy(stack));
-
-    if (quality > best_quality)
-    {
-      memcpy(&leaf->atom, &atom, sizeof(atom));
-      memcpy(
-          &leaf->re_nodes,
-          &recent_re_nodes[shift],
-          sizeof(recent_re_nodes) - shift * sizeof(recent_re_nodes[0]));
-    }
-    else
-    {
-      memcpy(&leaf->atom, &best_atom, sizeof(best_atom));
-      memcpy(&leaf->re_nodes, &best_atom_re_nodes, sizeof(best_atom_re_nodes));
-    }
-
-    _yr_atoms_tree_node_append(current_appending_node, leaf);
-  }
-
   yr_stack_destroy(stack);
 
   return ERROR_SUCCESS;
@@ -1346,7 +1346,7 @@ static int _yr_atoms_expand_wildcards(
 
 
 //
-// _yr_atoms_extract_from_re
+// yr_atoms_extract_from_re
 //
 // Extract atoms from a regular expression. This function receives the abstract
 // syntax tree for a regexp (or hex pattern) and returns a list of atoms that
