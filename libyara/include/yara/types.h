@@ -287,6 +287,9 @@ struct YR_RULE
   DECLARE_REFERENCE(YR_STRING*, strings);
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);
 
+  // Number of atoms generated for this rule.
+  int32_t num_atoms;
+
   // Used only when PROFILING_ENABLED is defined. This is the sum of all values
   // in time_cost_per_thread. This is updated once on each call to
   // yr_scanner_scan_xxx.
