@@ -1091,10 +1091,10 @@ int yr_arena_save_stream(
   header.size = (int32_t) page->size;
   header.version = ARENA_FILE_VERSION;
 
-  if (yr_stream_write(&header, sizeof(header), 1, stream) != 1)
+  if (yr_stream_write(&header, sizeof(header), 1, stream) != sizeof(header))
     return ERROR_WRITING_FILE;
 
-  if (yr_stream_write(page->address, header.size, 1, stream) != 1)
+  if (yr_stream_write(page->address, header.size, 1, stream) != header.size)
     return ERROR_WRITING_FILE;
 
   file_hash = yr_hash(0, &header, sizeof(header));
@@ -1105,7 +1105,8 @@ int yr_arena_save_stream(
   // Convert offsets back to pointers.
   while (reloc != NULL)
   {
-    if (yr_stream_write(&reloc->offset, sizeof(reloc->offset), 1, stream) != 1)
+    if (yr_stream_write(&reloc->offset, sizeof(reloc->offset), 1, stream) !=
+        sizeof(reloc->offset))
       return ERROR_WRITING_FILE;
 
     reloc_address = (uint8_t**) (page->address + reloc->offset);
@@ -1119,10 +1120,12 @@ int yr_arena_save_stream(
     reloc = reloc->next;
   }
 
-  if (yr_stream_write(&end_marker, sizeof(end_marker), 1, stream) != 1)
+  if (yr_stream_write(&end_marker, sizeof(end_marker), 1, stream) !=
+      sizeof(end_marker))
     return ERROR_WRITING_FILE;
 
-  if (yr_stream_write(&file_hash, sizeof(file_hash), 1, stream) != 1)
+  if (yr_stream_write(&file_hash, sizeof(file_hash), 1, stream) !=
+      sizeof(file_hash))
     return ERROR_WRITING_FILE;
 
   return ERROR_SUCCESS;
