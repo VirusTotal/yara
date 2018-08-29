@@ -90,6 +90,9 @@ bool is_integer(const char *str)
   if (*str == '-')
     str++;
 
+  if (*str == '\0')
+    return false;
+
   while(*str)
   {
     if (!isdigit(*str))
