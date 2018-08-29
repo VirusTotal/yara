@@ -184,7 +184,7 @@ that needs to be written to the stream. In both cases ``size`` is the size of
 each element being read or written and ``count`` the number of elements. The
 total size of the data being read or written is ``size`` * ``count``. The
 ``read`` function must return the number of elements read, the ``write`` function
-must return the total size of the data written.
+must return the total number of elements written.
 
 The ``user_data`` pointer is the same you specified in the
 :c:type:`YR_STREAM` structure. You can use it to pass arbitrary data to your
