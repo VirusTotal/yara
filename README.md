@@ -66,6 +66,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
 * [Cyber Triage](http://www.cybertriage.com)
 * [Digita Security](https://digitasecurity.com/product/uxprotect)
+* [Dtex Systems](https://dtexsystems.com)
 * [ESET](https://www.eset.com)
 * [ESTsecurity](https://www.estsecurity.com)
 * [Fidelis XPS](http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
