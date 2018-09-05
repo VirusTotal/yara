@@ -33,8 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/utils.h>
 
 #define YR_MAJOR_VERSION   3
-#define YR_MINOR_VERSION   7
-#define YR_MICRO_VERSION   0
+#define YR_MINOR_VERSION   8
+#define YR_MICRO_VERSION   1
 
 #define version_str(s) _version_str(s)
 #define _version_str(s) #s
@@ -55,13 +55,16 @@ typedef enum _YR_CONFIG_NAME
 {
   YR_CONFIG_STACK_SIZE,
   YR_CONFIG_MAX_STRINGS_PER_RULE,
-  YR_CONFIG_MAX
+  YR_CONFIG_MAX_MATCH_DATA,
+
+  YR_CONFIG_LAST  // End-of-enum marker, not a configuration
 
 } YR_CONFIG_NAME;
 
 
 #define DEFAULT_STACK_SIZE              16384
 #define DEFAULT_MAX_STRINGS_PER_RULE    10000
+#define DEFAULT_MAX_MATCH_DATA          512
 
 
 YR_API int yr_initialize(void);

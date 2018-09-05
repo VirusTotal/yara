@@ -202,13 +202,16 @@ int yr_modules_unload_all(
 
   for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
-    YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_lookup(
+    YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_remove(
         context->objects_table,
         yr_modules_table[i].name,
         NULL);
 
     if (module_structure != NULL)
+    {
       yr_modules_table[i].unload(module_structure);
+      yr_object_destroy(module_structure);
+    }
   }
 
   return ERROR_SUCCESS;

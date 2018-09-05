@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <assert.h>
 #include <string.h>
-#include <time.h>
 #include <ctype.h>
 
 #include <yara/error.h>
@@ -168,29 +167,20 @@ void yr_rules_print_profiling_info(
     YR_RULES* rules)
 {
   YR_RULE* rule;
-  YR_STRING* string;
 
-  clock_t clock_ticks;
-
-  printf("===== PROFILING INFORMATION =====\n");
+  printf("\n===== PROFILING INFORMATION =====\n\n");
 
   yr_rules_foreach(rules, rule)
   {
-    clock_ticks = rule->clock_ticks;
-
-    yr_rule_strings_foreach(rule, string)
-    {
-      clock_ticks += string->clock_ticks;
-    }
-
     printf(
-        "%s:%s: %li\n",
+        "%s:%s: %" PRIu64 " (%0.3f%%)\n",
         rule->ns->name,
         rule->identifier,
-        clock_ticks);
+        rule->time_cost,
+        (float) rule->time_cost / rules->time_cost * 100);
   }
 
-  printf("================================\n");
+  printf("\n=================================\n");
 }
 #endif
 
@@ -384,8 +374,10 @@ YR_API int yr_rules_load_stream(
   new_rules->code_start = header->code_start;
   new_rules->externals_list_head = header->externals_list_head;
   new_rules->rules_list_head = header->rules_list_head;
-  new_rules->match_table = header->match_table;
-  new_rules->transition_table = header->transition_table;
+  new_rules->ac_match_table = header->ac_match_table;
+  new_rules->ac_transition_table = header->ac_transition_table;
+  new_rules->ac_tables_size = header->ac_tables_size;
+
   memset(new_rules->tidx_mask, 0, sizeof(new_rules->tidx_mask));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
@@ -427,7 +419,7 @@ YR_API int yr_rules_save_stream(
 {
   int i;
 
-  for (i = 0; i < YR_BITARRAY_NCHARS(MAX_THREADS); ++i)
+  for (i = 0; i < YR_BITARRAY_NCHARS(YR_MAX_THREADS); ++i)
     assert(rules->tidx_mask[i] == 0);
 
   return yr_arena_save_stream(rules->arena, stream);
@@ -453,6 +445,90 @@ YR_API int yr_rules_save(
 
   fclose(fh);
   return result;
+}
+
+
+static int _uint32_cmp (
+    const void * a,
+    const void * b)
+{
+   return (*(uint32_t*) a - *(uint32_t*) b);
+}
+
+YR_API int yr_rules_get_stats(
+    YR_RULES* rules,
+    YR_RULES_STATS *stats)
+{
+  YR_RULE* rule;
+  YR_STRING* string;
+
+  uint32_t* match_list_lengths = (uint32_t*) yr_malloc(
+      sizeof(uint32_t) * rules->ac_tables_size);
+
+  float match_list_length_sum = 0;
+  int i, c = 0;
+
+  if (match_list_lengths == NULL)
+    return ERROR_INSUFFICIENT_MEMORY;
+
+  stats->ac_tables_size = rules->ac_tables_size;
+  stats->ac_matches = 0;
+  stats->rules = 0;
+  stats->strings = 0;
+
+  for (i = 0; i < rules->ac_tables_size; i++)
+  {
+    YR_AC_MATCH* match = rules->ac_match_table[i].match;
+
+    int match_list_length = 0;
+
+    while (match != NULL)
+    {
+      match_list_length++;
+      stats->ac_matches++;
+      match = match->next;
+    }
+
+    if (i == 0)
+      stats->ac_root_match_list_length = match_list_length;
+
+    match_list_length_sum += match_list_length;
+
+    if (match_list_length > 0)
+    {
+      match_list_lengths[c] = match_list_length;
+      c++;
+    }
+  }
+
+  // sort match_list_lengths in increasing order for computing percentiles.
+  qsort(match_list_lengths, c, sizeof(match_list_lengths[0]), _uint32_cmp);
+
+  for (i = 0; i < 100; i++)
+  {
+    if (i < c)
+      stats->top_ac_match_list_lengths[i] = match_list_lengths[c-i-1];
+    else
+      stats->top_ac_match_list_lengths[i] = 0;
+  }
+
+  stats->ac_average_match_list_length = match_list_length_sum / c;
+  stats->ac_match_list_length_pctls[0] = match_list_lengths[0];
+  stats->ac_match_list_length_pctls[100] = match_list_lengths[c-1];
+
+  for (i = 1; i < 100; i++)
+    stats->ac_match_list_length_pctls[i] = match_list_lengths[(c * i) / 100];
+
+  yr_free(match_list_lengths);
+
+  yr_rules_foreach(rules, rule)
+  {
+    stats->rules++;
+    yr_rule_strings_foreach(rule, string)
+      stats->strings++;
+  }
+
+  return ERROR_SUCCESS;
 }
 
 
@@ -491,7 +567,7 @@ YR_API void yr_rule_disable(
 
 
 YR_API void yr_rule_enable(
-  YR_RULE* rule)
+    YR_RULE* rule)
 {
   YR_STRING* string;
 

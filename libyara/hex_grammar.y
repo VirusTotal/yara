@@ -62,7 +62,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define fail_if(x, error) \
     if (x) \
     { \
-      lex_env->last_error_code = error; \
+      lex_env->last_error = error; \
       YYABORT; \
     } \
 
@@ -234,7 +234,7 @@ token_or_range
     |  range
       {
         $$ = $1;
-        $$->greedy = FALSE;
+        $$->greedy = false;
       }
     ;
 
@@ -265,10 +265,10 @@ range
           YYABORT;
         }
 
-        if (lex_env->inside_or && $2 > STRING_CHAINING_THRESHOLD)
+        if (lex_env->inside_or && $2 > YR_STRING_CHAINING_THRESHOLD)
         {
           yyerror(yyscanner, lex_env, "jumps over "
-              STR(STRING_CHAINING_THRESHOLD)
+              STR(YR_STRING_CHAINING_THRESHOLD)
               " now allowed inside alternation (|)");
           YYABORT;
         }
@@ -283,11 +283,11 @@ range
     | '[' _NUMBER_ '-' _NUMBER_ ']'
       {
         if (lex_env->inside_or &&
-            ($2 > STRING_CHAINING_THRESHOLD ||
-             $4 > STRING_CHAINING_THRESHOLD) )
+            ($2 > YR_STRING_CHAINING_THRESHOLD ||
+             $4 > YR_STRING_CHAINING_THRESHOLD) )
         {
           yyerror(yyscanner, lex_env, "jumps over "
-              STR(STRING_CHAINING_THRESHOLD)
+              STR(YR_STRING_CHAINING_THRESHOLD)
               " now allowed inside alternation (|)");
 
           YYABORT;

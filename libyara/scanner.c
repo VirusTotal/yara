@@ -44,12 +44,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static int _yr_scanner_scan_mem_block(
     YR_SCANNER* scanner,
     const uint8_t* block_data,
-    YR_MEMORY_BLOCK* block,
-    time_t start_time)
+    YR_MEMORY_BLOCK* block)
 {
   YR_RULES* rules = scanner->rules;
-  YR_AC_TRANSITION_TABLE transition_table = rules->transition_table;
-  YR_AC_MATCH_TABLE match_table = rules->match_table;
+  YR_AC_TRANSITION_TABLE transition_table = rules->ac_transition_table;
+  YR_AC_MATCH_TABLE match_table = rules->ac_match_table;
 
   YR_AC_MATCH* match;
   YR_AC_TRANSITION transition;
@@ -62,14 +61,14 @@ static int _yr_scanner_scan_mem_block(
   {
     match = match_table[state].match;
 
+    if (i % 4096 == 0 && scanner->timeout > 0)
+    {
+      if (yr_stopwatch_elapsed_us(&scanner->stopwatch) > scanner->timeout)
+        return ERROR_SCAN_TIMEOUT;
+    }
+
     while (match != NULL)
     {
-      if (scanner->timeout > 0 && i % 4096 == 0)
-      {
-        if (difftime(time(NULL), start_time) > scanner->timeout)
-          return ERROR_SCAN_TIMEOUT;
-      }
-
       if (match->backtrack <= i)
       {
         FAIL_ON_ERROR(yr_scan_verify_match(
@@ -91,7 +90,7 @@ static int _yr_scanner_scan_mem_block(
     {
       if (state != YR_AC_ROOT_STATE)
       {
-        state = transition_table[state] >> 32;
+        state = YR_AC_NEXT_STATE(transition_table[state]);
         transition = transition_table[state + index];
       }
       else
@@ -101,8 +100,7 @@ static int _yr_scanner_scan_mem_block(
       }
     }
 
-    state = transition >> 32;
-
+    state = YR_AC_NEXT_STATE(transition);
   }
 
   match = match_table[state].match;
@@ -251,7 +249,7 @@ YR_API void yr_scanner_set_timeout(
     YR_SCANNER* scanner,
     int timeout)
 {
-  scanner->timeout = timeout;
+  scanner->timeout = timeout * 1000000L;  // convert timeout to microseconds.
 }
 
 
@@ -340,10 +338,10 @@ YR_API int yr_scanner_scan_mem_blocks(
   YR_RULE* rule;
   YR_MEMORY_BLOCK* block;
 
-  time_t start_time;
-
   int tidx = 0;
   int result = ERROR_SUCCESS;
+
+  uint64_t elapsed_time;
 
   if (scanner->callback == NULL)
     return ERROR_CALLBACK_REQUIRED;
@@ -357,12 +355,12 @@ YR_API int yr_scanner_scan_mem_blocks(
 
   yr_mutex_lock(&rules->mutex);
 
-  while (tidx < MAX_THREADS && YR_BITARRAY_TEST(rules->tidx_mask, tidx))
+  while (tidx < YR_MAX_THREADS && YR_BITARRAY_TEST(rules->tidx_mask, tidx))
   {
     tidx++;
   }
 
-  if (tidx < MAX_THREADS)
+  if (tidx < YR_MAX_THREADS)
     YR_BITARRAY_SET(rules->tidx_mask, tidx);
   else
     result = ERROR_TOO_MANY_SCAN_THREADS;
@@ -377,17 +375,17 @@ YR_API int yr_scanner_scan_mem_blocks(
 
   yr_set_tidx(tidx);
 
-  result = yr_arena_create(1024, 0, &scanner->matches_arena);
+  result = yr_arena_create(1048576, 0, &scanner->matches_arena);
 
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  result = yr_arena_create(8, 0, &scanner->matching_strings_arena);
+  result = yr_arena_create(4096, 0, &scanner->matching_strings_arena);
 
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  start_time = time(NULL);
+  yr_stopwatch_start(&scanner->stopwatch);
 
   while (block != NULL)
   {
@@ -423,8 +421,7 @@ YR_API int yr_scanner_scan_mem_blocks(
         result = _yr_scanner_scan_mem_block(
             scanner,
             data,
-            block,
-            start_time);
+            block);
       },{
         result = ERROR_COULD_NOT_MAP_FILE;
       });
@@ -438,7 +435,7 @@ YR_API int yr_scanner_scan_mem_blocks(
   YR_TRYCATCH(
     !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
     {
-      result = yr_execute_code(scanner, start_time);
+      result = yr_execute_code(scanner);
     },{
       result = ERROR_COULD_NOT_MAP_FILE;
     });
@@ -479,6 +476,21 @@ YR_API int yr_scanner_scan_mem_blocks(
 
 _exit:
 
+  elapsed_time = yr_stopwatch_elapsed_us(&scanner->stopwatch);
+
+  #ifdef PROFILING_ENABLED
+  yr_rules_foreach(rules, rule)
+  {
+    #ifdef _WIN32
+    InterlockedAdd64(&rule->time_cost, rule->time_cost_per_thread[tidx]);
+    #else
+    __sync_fetch_and_add(&rule->time_cost, rule->time_cost_per_thread[tidx]);
+    #endif
+
+    rule->time_cost_per_thread[tidx] = 0;
+  }
+  #endif
+
   _yr_scanner_clean_matches(scanner);
 
   if (scanner->matches_arena != NULL)
@@ -495,6 +507,7 @@ _exit:
 
   yr_mutex_lock(&rules->mutex);
   YR_BITARRAY_UNSET(rules->tidx_mask, tidx);
+  rules->time_cost += elapsed_time;
   yr_mutex_unlock(&rules->mutex);
 
   yr_set_tidx(-1);
@@ -599,4 +612,21 @@ YR_API int yr_scanner_scan_proc(
   }
 
   return result;
+}
+
+
+YR_API YR_STRING* yr_scanner_last_error_string(
+    YR_SCANNER* scanner)
+{
+  return scanner->last_error_string;
+}
+
+
+YR_API YR_RULE* yr_scanner_last_error_rule(
+    YR_SCANNER* scanner)
+{
+  if (scanner->last_error_string == NULL)
+    return NULL;
+
+  return scanner->last_error_string->rule;
 }

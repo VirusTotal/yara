@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <ctype.h>
 
+#include <yara/globals.h>
 #include <yara/error.h>
 #include <yara/re.h>
 #include <yara/modules.h>
@@ -66,8 +67,12 @@ static struct yr_config_var
     char*    str;
   };
 
-} yr_cfgs[YR_CONFIG_MAX];
+} yr_cfgs[YR_CONFIG_LAST];
 
+
+// Global variables. See globals.h for their descriptions.
+
+int yr_canary;
 
 char yr_lowercase[256];
 char yr_altercase[256];
@@ -113,6 +118,7 @@ YR_API int yr_initialize(void)
 {
   uint32_t def_stack_size = DEFAULT_STACK_SIZE;
   uint32_t def_max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
+  uint32_t def_max_match_data = DEFAULT_MAX_MATCH_DATA;
 
   int i;
 
@@ -120,6 +126,10 @@ YR_API int yr_initialize(void)
 
   if (init_count > 1)
     return ERROR_SUCCESS;
+
+  srand((unsigned) time(NULL));
+
+  yr_canary = rand();
 
   for (i = 0; i < 256; i++)
   {
@@ -150,7 +160,7 @@ YR_API int yr_initialize(void)
 
   #elif defined(HAVE_WINCRYPT_H)
 
-  if (!CryptAcquireContext(&yr_cryptprov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
+  if (!CryptAcquireContext(&yr_cryptprov, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
     return ERROR_INTERNAL_FATAL_ERROR;
   }
 
@@ -165,8 +175,12 @@ YR_API int yr_initialize(void)
   // Initialize default configuration options
   FAIL_ON_ERROR(yr_set_configuration(
       YR_CONFIG_STACK_SIZE, &def_stack_size));
+
   FAIL_ON_ERROR(yr_set_configuration(
       YR_CONFIG_MAX_STRINGS_PER_RULE, &def_max_strings_per_rule));
+
+  FAIL_ON_ERROR(yr_set_configuration(
+      YR_CONFIG_MAX_MATCH_DATA, &def_max_match_data));
 
   return ERROR_SUCCESS;
 }
@@ -268,18 +282,39 @@ YR_API int yr_get_tidx(void)
 }
 
 
+//
+// yr_set_configuration
+//
+// Sets a configuration option. This function receives a configuration name,
+// as defined by the YR_CONFIG_NAME enum, and a pointer to the value being
+// set. The type of the value depends on the configuration name.
+//
+// Args:
+//    YR_CONFIG_NAME  name   - Any of the values defined by the YR_CONFIG_NAME
+//                             enum. Posible values are:
+//
+//       YR_CONFIG_STACK_SIZE             data type: uint32_t
+//       YR_CONFIG_MAX_STRINGS_PER_RULE   data type: uint32_t
+//       YR_CONFIG_MAX_MATCH_DATA         data type: uint32_t
+//
+//    void *src              - Pointer to the value being set for the option.
+//
+// Returns:
+//    An error code.
+
 YR_API int yr_set_configuration(
-    YR_CONFIG_NAME cfgname,
+    YR_CONFIG_NAME name,
     void *src)
 {
   if (src == NULL)
     return ERROR_INTERNAL_FATAL_ERROR;
 
-  switch (cfgname)
+  switch (name)
   { // lump all the cases using same types together in one cascade
     case YR_CONFIG_STACK_SIZE:
     case YR_CONFIG_MAX_STRINGS_PER_RULE:
-      yr_cfgs[cfgname].ui32 = *(uint32_t*) src;
+    case YR_CONFIG_MAX_MATCH_DATA:
+      yr_cfgs[name].ui32 = *(uint32_t*) src;
       break;
 
     default:
@@ -291,17 +326,18 @@ YR_API int yr_set_configuration(
 
 
 YR_API int yr_get_configuration(
-    YR_CONFIG_NAME cfgname,
+    YR_CONFIG_NAME name,
     void *dest)
 {
   if (dest == NULL)
     return ERROR_INTERNAL_FATAL_ERROR;
 
-  switch (cfgname)
+  switch (name)
   { // lump all the cases using same types together in one cascade
     case YR_CONFIG_STACK_SIZE:
     case YR_CONFIG_MAX_STRINGS_PER_RULE:
-      *(uint32_t*) dest = yr_cfgs[cfgname].ui32;
+    case YR_CONFIG_MAX_MATCH_DATA:
+      *(uint32_t*) dest = yr_cfgs[name].ui32;
       break;
 
     default:

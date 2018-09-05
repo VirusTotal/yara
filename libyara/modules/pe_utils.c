@@ -263,7 +263,7 @@ int64_t pe_rva_to_offset(
 
 #include <time.h>
 
-static int is_leap(
+static bool is_leap(
     unsigned int year)
 {
   year += 1900;

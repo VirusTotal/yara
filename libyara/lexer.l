@@ -53,9 +53,13 @@ with noyywrap then we can remove this pragma.
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
-#define strtoll _strtoi64
 #else
+#include <sys/stat.h>
 #include <unistd.h>
+#endif
+
+#if defined(_WIN32)
+#define strtoll _strtoi64
 #endif
 
 #include <yara/integers.h>
@@ -63,13 +67,14 @@ with noyywrap then we can remove this pragma.
 #include <yara/sizedstr.h>
 #include <yara/error.h>
 #include <yara/mem.h>
+#include <yara/utils.h>
 #include <yara/strutils.h>
 
 #include "grammar.h"
 
 #define error(error_code) \
     { \
-      compiler->last_result = error_code; \
+      compiler->last_error = error_code; \
       yyerror(yyscanner, compiler, NULL); \
       yyterminate(); \
     }
@@ -90,7 +95,7 @@ with noyywrap then we can remove this pragma.
 #define yytext_to_buffer \
     { \
       char *yptr = yytext; \
-      lex_check_space_ok(yptr, yyextra->lex_buf_len, LEX_BUF_SIZE); \
+      lex_check_space_ok(yptr, yyextra->lex_buf_len, YR_LEX_BUF_SIZE); \
       while(*yptr) \
       { \
         *yyextra->lex_buf_ptr++ = *yptr++; \
@@ -116,11 +121,11 @@ with noyywrap then we can remove this pragma.
 #define snprintf _snprintf
 #endif
 
-static int is_absolute_path(
+static bool is_absolute_path(
     char* path)
 {
   if (path == NULL)
-    return FALSE;
+    return false;
 
   #if defined(_WIN32) || defined(__CYGWIN__)
   return strlen(path) > 2 &&
@@ -173,6 +178,7 @@ octdigit      [0-7]
 "strings"               { return _STRINGS_;     }
 "ascii"                 { return _ASCII_;       }
 "wide"                  { return _WIDE_;        }
+"xor"                   { return _XOR_;         }
 "fullword"              { return _FULLWORD_;    }
 "nocase"                { return _NOCASE_;      }
 "condition"             { return _CONDITION_;   }
@@ -342,15 +348,12 @@ include[ \t]+\"         {
 
 <<EOF>> {
 
-  YR_COMPILER* compiler = yyget_extra(yyscanner);
-
-  _yr_compiler_pop_file_name(compiler);
   yypop_buffer_state(yyscanner);
 
   if (!YY_CURRENT_BUFFER)
-  {
     yyterminate();
-  }
+
+  return _END_OF_INCLUDED_FILE_;
 }
 
 
@@ -574,7 +577,7 @@ u?int(8|16|32)(be)? {
 
 <str>\\t   {
 
-  lex_check_space_ok("\t", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\t", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\t';
   yyextra->lex_buf_len++;
 }
@@ -582,7 +585,7 @@ u?int(8|16|32)(be)? {
 
 <str>\\n   {
 
-  lex_check_space_ok("\n", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\n", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\n';
   yyextra->lex_buf_len++;
 }
@@ -590,7 +593,7 @@ u?int(8|16|32)(be)? {
 
 <str>\\\"   {
 
-  lex_check_space_ok("\"", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\"", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\"';
   yyextra->lex_buf_len++;
 }
@@ -598,7 +601,7 @@ u?int(8|16|32)(be)? {
 
 <str>\\\\   {
 
-  lex_check_space_ok("\\", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\\", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\\';
   yyextra->lex_buf_len++;
 }
@@ -609,7 +612,7 @@ u?int(8|16|32)(be)? {
    int result;
 
    sscanf( yytext + 2, "%x", &result );
-   lex_check_space_ok("X", yyextra->lex_buf_len, LEX_BUF_SIZE);
+   lex_check_space_ok("X", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
    *yyextra->lex_buf_ptr++ = result;
    yyextra->lex_buf_len++;
 }
@@ -656,7 +659,7 @@ u?int(8|16|32)(be)? {
 
 <regexp>\\\/  {
 
-  lex_check_space_ok("/", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("/", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '/';
   yyextra->lex_buf_len++ ;
 }
@@ -664,7 +667,7 @@ u?int(8|16|32)(be)? {
 
 <regexp>\\. {
 
-  lex_check_space_ok("\\.", yyextra->lex_buf_len, LEX_BUF_SIZE);
+  lex_check_space_ok("\\.", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
 
   if (yytext[1] == 0)
     syntax_error("malformed regular expression");
@@ -787,7 +790,7 @@ void yyerror(
   /*
     if error_message != NULL the error comes from yyparse internal code
     else the error comes from my code and the error code is set in
-    compiler->last_result
+    compiler->last_error
   */
 
   compiler->errors++;
@@ -823,30 +826,23 @@ void yyerror(
           compiler->user_data);
     }
   }
-  else
+  else if (compiler->callback != NULL)
   {
-    compiler->last_error = compiler->last_result;
+    yr_compiler_get_error_message(compiler, message, sizeof(message));
 
-    if (compiler->callback != NULL)
-    {
-      yr_compiler_get_error_message(compiler, message, sizeof(message));
-
-      compiler->callback(
-        YARA_ERROR_LEVEL_ERROR,
-        file_name,
-        compiler->last_error_line,
-        message,
-        compiler->user_data);
-    }
+    compiler->callback(
+      YARA_ERROR_LEVEL_ERROR,
+      file_name,
+      compiler->last_error_line,
+      message,
+      compiler->user_data);
   }
-
-  compiler->last_result = ERROR_SUCCESS;
 }
 
 
 int yr_lex_parse_rules_string(
-  const char* rules_string,
-  YR_COMPILER* compiler)
+    const char* rules_string,
+    YR_COMPILER* compiler)
 {
   yyscan_t yyscanner;
 
@@ -872,8 +868,8 @@ int yr_lex_parse_rules_string(
 
 
 int yr_lex_parse_rules_file(
-  FILE* rules_file,
-  YR_COMPILER* compiler)
+    FILE* rules_file,
+    YR_COMPILER* compiler)
 {
   yyscan_t yyscanner;
 
@@ -898,16 +894,51 @@ int yr_lex_parse_rules_file(
 
 
 int yr_lex_parse_rules_fd(
-  YR_FILE_DESCRIPTOR rules_fd,
-  YR_COMPILER* compiler)
+    YR_FILE_DESCRIPTOR rules_fd,
+    YR_COMPILER* compiler)
 {
   yyscan_t yyscanner;
-  char buf[1024];
+  size_t file_size;
+  void* buffer;
 
   compiler->errors = 0;
 
   if (setjmp(compiler->error_recovery) != 0)
     return compiler->errors;
+
+  #if defined(_WIN32) || defined(__CYGWIN__)
+  file_size = (size_t) GetFileSize(rules_fd, NULL);
+  #else
+  struct stat fs;
+  if (fstat(rules_fd, &fs) != 0)
+  {
+    compiler->errors = 1;
+    compiler->last_error = ERROR_COULD_NOT_READ_FILE;
+    return compiler->errors;
+  }
+  file_size = (size_t) fs.st_size;
+  #endif
+
+  buffer = yr_malloc(file_size);
+
+  if (buffer == NULL)
+  {
+    compiler->errors = 1;
+    compiler->last_error = ERROR_INSUFFICIENT_MEMORY;
+    return compiler->errors;
+  }
+
+  #if defined(_WIN32) || defined(__CYGWIN__)
+  if (!ReadFile(rules_fd, buffer, file_size, NULL, NULL))
+  #else
+  if (read(rules_fd, buffer, file_size) != file_size)
+  #endif
+  {
+    yr_free(buffer);
+    compiler->errors = 1;
+    compiler->last_error = ERROR_COULD_NOT_READ_FILE;
+    return compiler->errors;
+  }
 
   yylex_init(&yyscanner);
 
@@ -916,31 +947,11 @@ int yr_lex_parse_rules_fd(
   #endif
 
   yyset_extra(compiler, yyscanner);
-
-  while (1)
-  {
-#if defined(_WIN32) || defined(__CYGWIN__)
-    DWORD len;
-    if (!ReadFile(rules_fd, buf, sizeof(buf), &len, NULL))
-      break;
-#else
-    int len = (int) read(rules_fd, buf, sizeof(buf));
-    if (len < 0)
-    {
-      if (errno == EINTR)
-        continue;
-      else
-        break;
-    }
-#endif
-    if (len == 0)
-      break;
-    yy_scan_bytes(buf, len, yyscanner);
-  }
-
+  yy_scan_bytes((const char*) buffer, file_size, yyscanner);
   yyparse(yyscanner, compiler);
   yylex_destroy(yyscanner);
 
+  yr_free(buffer);
+
   return compiler->errors;
 }
-

@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/endian.h>
 #include <yara/modules.h>
 #include <yara/mem.h>
+#include <yara/utils.h>
 
 
 #define MODULE_NAME elf
@@ -63,7 +64,7 @@ int get_elf_class_data(
   }
 }
 
-static int is_valid_ptr(
+static bool is_valid_ptr(
     const void* base,
     size_t size,
     const void* ptr,

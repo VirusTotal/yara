@@ -31,16 +31,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <stdbool.h>
+
 #define exit_with_code(code) { result = code; goto _exit; }
 
 
-int compile_files(
+bool compile_files(
     YR_COMPILER* compiler,
     int argc,
     const char** argv)
 {
   for (int i = 0; i < argc - 1; i++)
   {
+    FILE* rule_file;
     const char* ns;
     const char* file_name;
     char* colon = (char*) strchr(argv[i], ':');
@@ -59,12 +62,15 @@ int compile_files(
       ns = NULL;
     }
 
-    FILE* rule_file = fopen(file_name, "r");
+    if (strcmp(file_name, "-") == 0)
+      rule_file = stdin;
+    else
+      rule_file = fopen(file_name, "r");
 
     if (rule_file == NULL)
     {
       fprintf(stderr, "error: could not open file: %s\n", file_name);
-      return FALSE;
+      return false;
     }
 
     errors = yr_compiler_add_file(compiler, rule_file, ns, file_name);
@@ -72,51 +78,54 @@ int compile_files(
     fclose(rule_file);
 
     if (errors > 0)
-      return FALSE;
+      return false;
   }
 
-  return TRUE;
+  return true;
 }
 
 
-int is_integer(const char *str)
+bool is_integer(const char *str)
 {
   if (*str == '-')
     str++;
 
+  if (*str == '\0')
+    return false;
+
   while(*str)
   {
     if (!isdigit(*str))
-      return FALSE;
+      return false;
     str++;
   }
 
-  return TRUE;
+  return true;
 }
 
 
-int is_float(const char *str)
+bool is_float(const char *str)
 {
-  int has_dot = FALSE;
+  bool has_dot = false;
 
   if (*str == '-')      // skip the minus sign if present
     str++;
 
   if (*str == '.')      // float can't start with a dot
-    return FALSE;
+    return false;
 
   while(*str)
   {
     if (*str == '.')
     {
       if (has_dot)      // two dots, not a float
-        return FALSE;
+        return false;
 
-      has_dot = TRUE;
+      has_dot = true;
     }
     else if (!isdigit(*str))
     {
-      return FALSE;
+      return false;
     }
 
     str++;

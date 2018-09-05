@@ -290,7 +290,7 @@ typedef struct {
   uint32_t ncmds;
   uint32_t sizeofcmds;
   uint32_t flags;
-} mach_header_32_t;
+} yr_mach_header_32_t;
 
 
 typedef struct {
@@ -302,13 +302,13 @@ typedef struct {
   uint32_t sizeofcmds;
   uint32_t flags;
   uint32_t reserved;
-} mach_header_64_t;
+} yr_mach_header_64_t;
 
 
 typedef struct {
   uint32_t cmd;
   uint32_t cmdsize;
-} load_command_t;
+} yr_load_command_t;
 
 
 typedef struct {
@@ -323,7 +323,7 @@ typedef struct {
   uint32_t initprot;
   uint32_t nsects;
   uint32_t flags;
-} segment_command_32_t;
+} yr_segment_command_32_t;
 
 
 typedef struct {
@@ -338,7 +338,7 @@ typedef struct {
   uint32_t initprot;
   uint32_t nsects;
   uint32_t flags;
-} segment_command_64_t;
+} yr_segment_command_64_t;
 
 
 typedef struct {
@@ -353,7 +353,7 @@ typedef struct {
   uint32_t flags;
   uint32_t reserved1;
   uint32_t reserved2;
-} section_32_t;
+} yr_section_32_t;
 
 
 typedef struct {
@@ -369,14 +369,14 @@ typedef struct {
   uint32_t reserved1;
   uint32_t reserved2;
   uint32_t reserved3;
-} section_64_t;
+} yr_section_64_t;
 
 
 typedef struct {
   uint32_t cmd;
   uint32_t cmdsize;
   uint8_t uuid[16];
-} uuid_command_t;
+} yr_uuid_command_t;
 
 
 typedef struct {
@@ -384,7 +384,7 @@ typedef struct {
   uint32_t cmdsize;
   uint64_t entryoff;
   uint64_t stacksize;
-} entry_point_command_t;
+} yr_entry_point_command_t;
 
 
 typedef struct {
@@ -393,7 +393,7 @@ typedef struct {
   uint32_t flavor;
   uint32_t count;
   // cpu_thread_state
-} thread_command_t;
+} yr_thread_command_t;
 
 
 typedef struct {
@@ -413,7 +413,7 @@ typedef struct {
   uint32_t es;
   uint32_t fs;
   uint32_t gs;
-} x86_thread_state_t;
+} yr_x86_thread_state_t;
 
 
 typedef struct {
@@ -422,7 +422,7 @@ typedef struct {
   uint32_t lr;
   uint32_t pc;
   uint32_t cpsr;
-} arm_thread_state_t;
+} yr_arm_thread_state_t;
 
 
 typedef struct {
@@ -435,7 +435,7 @@ typedef struct {
   uint32_t ctr;
   uint32_t mq;
   uint32_t vrsavead;
-} ppc_thread_state_t;
+} yr_ppc_thread_state_t;
 
 
 typedef struct {
@@ -458,7 +458,7 @@ typedef struct {
   uint32_t o5;
   uint32_t o6;
   uint32_t o7;
-} sparc_thread_state_t;
+} yr_sparc_thread_state_t;
 
 
 typedef struct {
@@ -467,7 +467,7 @@ typedef struct {
   uint16_t pad;
   uint16_t sr;
   uint32_t pc;
-} m68k_thread_state_t;
+} yr_m68k_thread_state_t;
 
 
 typedef struct {
@@ -505,7 +505,7 @@ typedef struct {
   uint32_t xip;
   uint32_t xip_in_bd;
   uint32_t nip;
-} m88k_thread_state_t;
+} yr_m88k_thread_state_t;
 
 
 typedef struct {
@@ -530,7 +530,7 @@ typedef struct {
   uint64_t cs;
   uint64_t fs;
   uint64_t gs;
-} x86_thread_state64_t;
+} yr_x86_thread_state64_t;
 
 
 typedef struct {
@@ -540,7 +540,7 @@ typedef struct {
   uint64_t sp;
   uint64_t pc;
   uint64_t cpsr;
-} arm_thread_state64_t;
+} yr_arm_thread_state64_t;
 
 
 typedef struct {
@@ -552,13 +552,13 @@ typedef struct {
   uint64_t lr;
   uint64_t ctr;
   uint32_t vrsave;
-} ppc_thread_state64_t;
+} yr_ppc_thread_state64_t;
 
 
 typedef struct {
   uint32_t magic;
   uint32_t nfat_arch;
-} fat_header_t;
+} yr_fat_header_t;
 
 
 typedef struct {
@@ -567,7 +567,7 @@ typedef struct {
   uint32_t offset;
   uint32_t size;
   uint32_t align;
-} fat_arch_32_t;
+} yr_fat_arch_32_t;
 
 
 typedef struct {
@@ -577,7 +577,7 @@ typedef struct {
   uint64_t size;
   uint32_t align;
   uint32_t reserved;
-} fat_arch_64_t;
+} yr_fat_arch_64_t;
 
 #pragma pack(pop)
 

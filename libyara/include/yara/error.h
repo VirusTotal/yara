@@ -96,7 +96,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ERROR_TOO_MANY_STRINGS                  51
 #define ERROR_INTEGER_OVERFLOW                  52
 #define ERROR_CALLBACK_REQUIRED                 53
-
+#define ERROR_INVALID_OPERAND                   54
+#define ERROR_COULD_NOT_READ_FILE               55
+#define ERROR_DUPLICATED_EXTERNAL_VARIABLE      56
+#define ERROR_INVALID_MODULE_DATA               57
+#define ERROR_WRITING_FILE                      58
 
 #define FAIL_ON_ERROR(x) { \
   int result = (x); \
@@ -113,9 +117,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }
 
 #define FAIL_ON_COMPILER_ERROR(x) { \
-  compiler->last_result = (x); \
-  if (compiler->last_result != ERROR_SUCCESS) \
-    return compiler->last_result; \
+  compiler->last_error = (x); \
+  if (compiler->last_error != ERROR_SUCCESS) \
+    return compiler->last_error; \
 }
 
 

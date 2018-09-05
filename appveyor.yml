@@ -1,24 +1,64 @@
 # AppVeyor CI for Windows
 
-version: 3.7.{build}
+version: 3.8.1-{build}
 
 pull_requests:
   do_not_increment_build_number: true
 
-configuration: Release
+environment:
+  matrix:
+  - TARGET: vs2015
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    VisualStudioVersion: 14.0
+    configuration: Release
+    platform: x86
+  - TARGET: vs2015
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    VisualStudioVersion: 14.0
+    configuration: Debug
+    platform: x86
+  - TARGET: vs2015
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    VisualStudioVersion: 14.0
+    platform: x64
+    configuration: Release
+  - TARGET: vs2015
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    VisualStudioVersion: 14.0
+    platform: x64
+    configuration: Debug
+  - TARGET: cygwin
 
-platform:
-- x64
-- x86
+for:
+-
+  matrix:
+    only:
+    - TARGET: cygwin
 
-before_build:
-- ps: nuget restore windows/vs2015/yara.sln
+  build_script:
+  - cmd: C:\cygwin64\bin\bash -e -l -c "cd c:/projects/yara && ./build.sh"
 
-build:
-  project: windows/vs2015/yara.sln
-  verbosity: minimal
+  test_script:
+  - cmd: C:\cygwin64\bin\bash -e -l -c "cd c:/projects/yara && make check"
 
-artifacts:
+-
+  matrix:
+    only:
+      - TARGET: vs2015
+
+  before_build:
+  - ps: nuget restore windows/vs2015/yara.sln
+
+  build:
+    project: windows/vs2015/yara.sln
+    verbosity: minimal
+
+  artifacts:
   - path: windows\**\*.exe
 
-test: off
+  test: off
+
+# Uncomment the lines below for enabling Remote Desktop in the Appveyor. This
+# allows connecting to the remote machine and debug issues.
+# on_finish:
+# - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

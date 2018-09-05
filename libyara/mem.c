@@ -27,14 +27,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#include <yara/mem.h>
+#include <yara/error.h>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 
 #include <windows.h>
 #include <string.h>
-
-#include <yara/error.h>
 
 static HANDLE hHeap;
 
@@ -118,8 +117,6 @@ char* yr_strndup(const char *str, size_t n)
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
-#include <yara/error.h>
 
 int yr_heap_alloc(void)
 {
