@@ -1348,6 +1348,161 @@ void pe_parse_certificates(
 
 #endif  // defined(HAVE_LIBCRYPTO)
 
+//
+// Collect icons and add them to the PE structure
+//
+
+typedef struct icon_callback_t {
+  PE *pe;
+  int number_icon_ordinals;
+  int64_t icon_entry_offset;
+  int64_t *data_offset_list;
+} icon_callback_t;
+
+int pe_collect_icon_data(
+    PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
+    int rsrc_type,
+    int rsrc_id,
+    int rsrc_language,
+    uint8_t* type_string,
+    uint8_t* name_string,
+    uint8_t* lang_string,
+    struct icon_callback_t *callback)
+{
+  PE *pe = callback->pe;
+  PE_GROUP_ICON_DIRECTORY_ENTRY* icon_entry;
+  int i;
+  int64_t icon_data_offset;
+
+  if (rsrc_type != RESOURCE_TYPE_ICON)
+    return RESOURCE_CALLBACK_CONTINUE;
+
+  int64_t icon_entry_offset = callback->icon_entry_offset;
+  for (i = 0; i < callback->number_icon_ordinals; i++) {
+    icon_entry = (PE_GROUP_ICON_DIRECTORY_ENTRY*) (pe->data + icon_entry_offset);
+
+    icon_entry_offset += sizeof(PE_GROUP_ICON_DIRECTORY_ENTRY);
+    icon_data_offset = pe_rva_to_offset(pe, yr_le32toh(rsrc_data->OffsetToData));
+
+    if (icon_entry->nId == rsrc_id && icon_entry->dwBytesInRes == rsrc_data->Size
+        && fits_in_pe(pe, (void*) (pe->data + icon_data_offset), rsrc_data->Size)) {
+      callback->data_offset_list[i] = icon_data_offset;
+      break;
+    }
+  }
+
+  return RESOURCE_CALLBACK_CONTINUE;
+}
+
+
+int pe_collect_icon_ordinals(
+    PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
+    int rsrc_type,
+    int rsrc_id,
+    int rsrc_language,
+    uint8_t* type_string,
+    uint8_t* name_string,
+    uint8_t* lang_string,
+    struct icon_callback_t* callback)
+{
+  PE *pe = callback->pe;
+  PE_GROUP_ICON_DIRECTORY* group_icon;
+  PE_GROUP_ICON_DIRECTORY_ENTRY* icon_entry;
+
+  if (rsrc_type != RESOURCE_TYPE_GROUP_ICON) {
+    return RESOURCE_CALLBACK_CONTINUE;
+  }
+
+  int64_t group_icon_offset = pe_rva_to_offset(
+      pe, yr_le32toh(rsrc_data->OffsetToData));
+
+  if (group_icon_offset < 0)
+    return RESOURCE_CALLBACK_ABORT;
+
+  group_icon = (PE_GROUP_ICON_DIRECTORY*) (pe->data + group_icon_offset);
+
+  if (!struct_fits_in_pe(pe, group_icon, PE_GROUP_ICON_DIRECTORY))
+    return RESOURCE_CALLBACK_ABORT;
+
+  // iterate through the list and get the icon ordinals
+  int64_t icon_entry_offset = group_icon_offset + sizeof(PE_GROUP_ICON_DIRECTORY);
+  icon_entry = (PE_GROUP_ICON_DIRECTORY_ENTRY*) (pe->data + icon_entry_offset);
+
+  if (!fits_in_pe(pe, icon_entry, sizeof(PE_GROUP_ICON_DIRECTORY_ENTRY)*group_icon->idCount))
+    return RESOURCE_CALLBACK_ABORT;
+
+  callback->number_icon_ordinals = group_icon->idCount;
+  callback->icon_entry_offset = icon_entry_offset;
+
+  return RESOURCE_CALLBACK_ABORT;
+}
+
+void pe_parse_icons(PE* pe) {
+  icon_callback_t icon_callback;
+  PE_GROUP_ICON_DIRECTORY_ENTRY* icon_entry;
+
+  icon_callback.pe = pe;
+  icon_callback.number_icon_ordinals = 0;
+  icon_callback.icon_entry_offset = 0;
+  icon_callback.data_offset_list = NULL;
+
+  set_integer(0, pe->object, "number_of_icons");
+
+  // start by iterating the resources to identify the *first* RT_GROUP_ICON resource entry. This
+  // structure contains the metadata about each icon and an ordinal which allows us to later
+  // retrieve the actual image data for the icon.
+
+  // For more information, see Raymond Chen's blog at
+  // https://blogs.msdn.microsoft.com/oldnewthing/20120720-00/?p=7083
+
+  pe_iterate_resources(
+      pe,
+      (RESOURCE_CALLBACK_FUNC) pe_collect_icon_ordinals,
+      (void*) &icon_callback);
+
+  if (icon_callback.number_icon_ordinals == 0)
+    return;
+
+  icon_callback.data_offset_list = yr_malloc(sizeof(int64_t) * icon_callback.number_icon_ordinals);
+  if (icon_callback.data_offset_list == NULL) {
+    return;
+  }
+
+  // now that we have populated the icon_entry_offset with the location of the RT_GROUP_ICON[] array,
+  // iterate over all RT_ICON resource entries to pull out the image data for each
+  // ordinal referenced in the RT_GROUP_ICON[] array.
+
+  // The result of this iterator is a list of offsets in the data_offset_list pointing to the
+  // image data for each icon ordinal referenced in the RT_GROUP_ICON resource entry.
+
+  pe_iterate_resources(pe, (RESOURCE_CALLBACK_FUNC) pe_collect_icon_data, (void*) &icon_callback);
+
+  int64_t icon_entry_offset = icon_callback.icon_entry_offset;
+
+  icon_entry_offset = icon_callback.icon_entry_offset;
+  for (int i = 0; i < icon_callback.number_icon_ordinals; i++) {
+    icon_entry = (PE_GROUP_ICON_DIRECTORY_ENTRY*) (pe->data + icon_entry_offset);
+
+    if (icon_callback.data_offset_list[i] != 0) {
+      const unsigned char *raw_data = pe->data + icon_callback.data_offset_list[i];
+
+      // note that the height, width, bitcount, and color planes are required to rebuild the BMP
+      // header for icons in bitmap format. Icons in PNG format are stored in their entirety.
+      set_integer(icon_entry->bWidth ? icon_entry->bWidth : 256, pe->object, "icons[%i].width", i);
+      set_integer(icon_entry->bHeight ? icon_entry->bHeight : 256, pe->object, "icons[%i].height", i);
+      set_integer(icon_entry->wBitCount, pe->object, "icons[%i].color_bit_count", i);
+      set_integer(icon_entry->wPlanes, pe->object, "icons[%i].color_planes", i);
+      set_integer(icon_entry->nId, pe->object, "icons[%i].ordinal", i);
+      set_sized_string((char*) raw_data, icon_entry->dwBytesInRes, pe->object, "icons[%i].data", i);
+    }
+    icon_entry_offset += sizeof(PE_GROUP_ICON_DIRECTORY_ENTRY);
+  }
+
+  set_integer(icon_callback.number_icon_ordinals, pe->object, "number_of_icons");
+
+  yr_free(icon_callback.data_offset_list);
+}
+
 
 void pe_parse_header(
     PE* pe,
@@ -1640,6 +1795,10 @@ void pe_parse_header(
   // overlay and UNDEFINED for malformed PE files or non-PE files.
   if (last_section_end && (pe->data_size >= last_section_end))
     set_integer(pe->data_size - last_section_end, pe->object, "overlay.size");
+
+
+  // collect icons
+  pe_parse_icons(pe);
 }
 
 //
@@ -2089,7 +2248,6 @@ define_function(locale)
 
   return_integer(0);
 }
-
 
 define_function(language)
 {
@@ -2588,6 +2746,17 @@ begin_declarations;
 
   declare_integer("number_of_signatures");
   #endif
+
+  begin_struct_array("icons");
+    declare_string("data");
+    declare_integer("height");
+    declare_integer("width");
+    declare_integer("color_bit_count");
+    declare_integer("color_planes");
+    declare_integer("ordinal");
+  end_struct_array("icons");
+
+  declare_integer("number_of_icons");
 
   declare_function("rva_to_offset", "i", "i", rva_to_offset);
 

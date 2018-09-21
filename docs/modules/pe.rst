@@ -484,6 +484,49 @@ Reference
 
     *Example:  pe.data_directories[pe.IMAGE_DIRECTORY_ENTRY_EXPORT].virtual_address != 0*
 
+.. c:type:: number_of_icons
+
+    Number of "displayable" icons in the PE. This only counts icons that are considered
+    by Windows Explorer when viewing the directory containing the PE file or displaying 
+    file properties on the PE file.
+
+.. c:type:: icons
+
+    A zero-based array of icon objects, one for each "displayable" icon in the PE.
+    Individual icons can be accessed by using the [] operator. Each icon object has
+    the following attributes:
+
+    .. c:member:: width
+
+        Width of the icon image in pixels (1-256).
+
+    .. c:member:: height
+
+        Height of the icon image in pixels (1-256).
+
+    .. c:member:: color_bit_count
+
+        Number of bits in the color channel for this icon image (for example,
+        8 bit == 256 colors)
+
+    .. c:member:: color_planes
+
+        Number of color planes in the icon image.
+
+    .. c:member:: ordinal
+
+        The icon ordinal where the image can be found in the PE file.
+
+    .. c:member:: data
+
+        The icon image data as a string. Note that BMP formatted images do not
+        include the BITMAPINFOHEADER structure, and this structure has to be
+        recreated using the above metadata before the image can be displayed
+        properly. See the `description of the icon file format
+        <https://en.wikipedia.org/wiki/ICO_(file_format)>`_ for more information.
+        PNG formatted images are included in their entirety.
+
+
 .. c:type:: number_of_sections
 
     Number of sections in the PE.

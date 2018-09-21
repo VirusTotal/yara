@@ -506,6 +506,28 @@ typedef struct _RICH_SIGNATURE {
 #define RICH_DANS 0x536e6144 // "DanS"
 #define RICH_RICH 0x68636952 // "Rich"
 
+//
+// Group Icon directory
+// https://blogs.msdn.microsoft.com/oldnewthing/20120720-00/?p=7083
+//
+
+typedef struct _PE_GROUP_ICON_DIRECTORY_ENTRY {
+    BYTE bWidth;          // this will be \x00 for 256 byte wide icons
+    BYTE bHeight;         // this will be \x00 for 256 byte high icons
+    BYTE bColorCount;
+    BYTE bReserved;
+    WORD wPlanes;
+    WORD wBitCount;
+    DWORD dwBytesInRes;
+    WORD nId;
+} PE_GROUP_ICON_DIRECTORY_ENTRY, *PPE_GROUP_ICON_DIRECTORY_ENTRY;
+
+typedef struct _PE_GROUP_ICON_DIRECTORY {
+    WORD idReserved;
+    WORD idType;
+    WORD idCount;
+    PE_GROUP_ICON_DIRECTORY_ENTRY idEntries[0];
+} PE_GROUP_ICON_DIRECTORY, *PPE_GROUP_ICON_DIRECTORY;
 
 #pragma pack(pop)
 #endif
