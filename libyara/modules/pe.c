@@ -1463,7 +1463,7 @@ void pe_parse_icons(PE* pe) {
   if (icon_callback.number_icon_ordinals == 0)
     return;
 
-  icon_callback.data_offset_list = yr_malloc(sizeof(int64_t) * icon_callback.number_icon_ordinals);
+  icon_callback.data_offset_list = (int64_t*) yr_malloc(sizeof(int64_t) * icon_callback.number_icon_ordinals);
   if (icon_callback.data_offset_list == NULL) {
     return;
   }
