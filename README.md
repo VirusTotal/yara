@@ -61,6 +61,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [BinaryAlert](https://github.com/airbnb/binaryalert)
 * [Blue Coat](http://www.bluecoat.com/products/malware-analysis-appliance)
 * [Blueliv](http://www.blueliv.com)
+* [Carbon Black](https://www.carbonblack.com)
 * [Conix](http://www.conix.fr)
 * [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
 * [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
