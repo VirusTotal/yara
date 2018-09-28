@@ -965,3 +965,7 @@ Reference
     Function returning the file offset for RVA *addr*.
 
     *Example: pe.rva_to_offset(pe.entry_point)*
+
+    Passing `pe.entry_point` here only makes sense when scanning a process. This
+    is because `pe.entry_point` will be an RVA when scanning a process and a
+    file offset when scanning a file.
