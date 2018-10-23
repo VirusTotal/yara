@@ -2094,10 +2094,10 @@ define_function(locale)
 define_function(language)
 {
   YR_OBJECT* module = module();
-  PE* pe = (PE *)module->data;
+  PE* pe = (PE*)module->data;
 
   uint64_t language = integer_argument(1);
-  int n, i;
+  int64_t n, i;
 
   if (is_undefined(module, "number_of_resources"))
     return_integer(UNDEFINED);
