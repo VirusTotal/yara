@@ -138,5 +138,5 @@ located in ``/usr/local/lib``. In some Linux flavors the loader doesn't look for
 libraries in this path by default, we must instruct it to do so by adding
 ``/usr/local/lib`` to the loader configuration file ``/etc/ld.so.conf``::
 
-    sudo echo "/usr/local/lib" >> /etc/ld.so.conf
+    sudo sh -c 'echo "/usr/local/lib" >> /etc/ld.so.conf'
     sudo ldconfig
