@@ -1133,7 +1133,7 @@ YR_API void yr_object_print_data(
     case OBJECT_TYPE_INTEGER:
 
       if (object->value.i != UNDEFINED)
-        printf(" = %" PRIu64, object->value.i);
+        printf(" = %" PRId64, object->value.i);
       else
         printf(" = UNDEFINED");
 
