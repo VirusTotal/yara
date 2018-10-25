@@ -16,8 +16,8 @@ data structures. Its counterpart is :c:func:`yr_finalize`, which must be called
 when you are finished using the library.
 
 In a multi-threaded program only the main thread must call
-:c:func:`yr_initialize` and :c:func:`yr_finalize`, but any additional thread
-using the library must call :c:func:`yr_finalize_thread` before exiting.
+:c:func:`yr_initialize` and :c:func:`yr_finalize`.
+No additional work is required from other threads using the library.
 
 
 Compiling rules
