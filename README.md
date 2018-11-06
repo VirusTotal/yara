@@ -65,6 +65,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
 * [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
 * [Cyber Triage](http://www.cybertriage.com)
+* [Cybereason](https://www.cybereason.com)
 * [Digita Security](https://digitasecurity.com/product/uxprotect)
 * [Dtex Systems](https://dtexsystems.com)
 * [ESET](https://www.eset.com)
