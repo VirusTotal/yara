@@ -87,9 +87,9 @@ char yr_altercase[256];
 static YR_MUTEX *openssl_locks;
 
 
-static unsigned long _thread_id(void)
+static void _thread_id(CRYPTO_THREADID *id)
 {
-  return (unsigned long) yr_current_thread_id();
+  CRYPTO_THREADID_set_numeric(id, (unsigned long) yr_current_thread_id());
 }
 
 
@@ -155,7 +155,7 @@ YR_API int yr_initialize(void)
   for (i = 0; i < CRYPTO_num_locks(); i++)
     yr_mutex_create(&openssl_locks[i]);
 
-  CRYPTO_set_id_callback(_thread_id);
+  CRYPTO_THREADID_set_callback(_thread_id);
   CRYPTO_set_locking_callback(_locking_function);
 
   #elif defined(HAVE_WINCRYPT_H)
@@ -226,7 +226,7 @@ YR_API int yr_finalize(void)
     yr_mutex_destroy(&openssl_locks[i]);
 
   OPENSSL_free(openssl_locks);
-  CRYPTO_set_id_callback(NULL);
+  CRYPTO_THREADID_set_callback(NULL);
   CRYPTO_set_locking_callback(NULL);
 
   #elif defined(HAVE_WINCRYPT_H)
