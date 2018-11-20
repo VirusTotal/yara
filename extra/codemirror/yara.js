@@ -94,7 +94,7 @@ CodeMirror.defineMode("yara", function(config) {
 
       electricChars: "{}"
     };
-  });
+});
 
-  CodeMirror.defineMIME("text/yara", "yara");
-  CodeMirror.defineMIME("text/x-yara", "yara");
+CodeMirror.defineMIME("text/yara", "yara");
+CodeMirror.defineMIME("text/x-yara", "yara");
