@@ -97,3 +97,4 @@ CodeMirror.defineMode("yara", function(config) {
   });
 
   CodeMirror.defineMIME("text/yara", "yara");
+  CodeMirror.defineMIME("text/x-yara", "yara");
