@@ -8,12 +8,12 @@ CodeMirror.defineMode("yara", function(config) {
       for (var i = 0; i < words.length; ++i) obj[words[i]] = true;
       return obj;
     }
-    var keywords = words("all and any ascii at condition contains entrypoint false filesize for " +
+    var keywords = words("all and any ascii at condition contains entrypoint filesize for " +
                          "fullword global import in include int16 int32 int8 matches meta " +
-                         "nocase not of or private rule strings them true uint16 uint32 " +
+                         "nocase not of or private rule strings them uint16 uint32 " +
                          "uint8 wide");
 
-    var atoms = {"null": true};
+    var atoms = {"true": true, "false": true};
 
     var isOperatorChar = /[+\-*&%=<>!?|\/]/;
 
