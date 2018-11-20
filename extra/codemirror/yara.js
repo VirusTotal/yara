@@ -11,7 +11,7 @@ CodeMirror.defineMode("yara", function(config) {
     var keywords = words("all and any ascii at condition contains entrypoint filesize for " +
                          "fullword global import in include int16 int32 int8 matches meta " +
                          "nocase not of or private rule strings them uint16 uint32 " +
-                         "uint8 wide");
+                         "uint8 wide xor");
 
     var atoms = {"true": true, "false": true};
 
