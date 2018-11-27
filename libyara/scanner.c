@@ -83,7 +83,14 @@ static int _yr_scanner_scan_mem_block(
       match = match->next;
     }
 
-    index = block_data[i++] + 1;
+    __try
+	{
+		index = block_data[i++] + 1;
+	}
+	__except (GetExceptionCode() == EXCEPTION_IN_PAGE_ERROR ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+	{
+		return ERROR_READ_FAULT;
+	}
     transition = transition_table[state + index];
 
     while (YR_AC_INVALID_TRANSITION(transition, index))
