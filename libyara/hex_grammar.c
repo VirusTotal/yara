@@ -486,7 +486,7 @@ static const yytype_uint16 yyrline[] =
 {
        0,   113,   113,   122,   126,   140,   208,   212,   230,   234,
      243,   248,   247,   260,   283,   315,   337,   357,   361,   380,
-     388
+     389
 };
 #endif
 
@@ -1645,12 +1645,13 @@ yyreduce:
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->value = (int) (yyvsp[0].integer);
+        (yyval.re_node)->mask = 0xFF;
       }
-#line 1650 "hex_grammar.c" /* yacc.c:1663  */
+#line 1651 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 20:
-#line 389 "hex_grammar.y" /* yacc.c:1663  */
+#line 390 "hex_grammar.y" /* yacc.c:1663  */
     {
         uint8_t mask = (uint8_t) ((yyvsp[0].integer) >> 8);
 
@@ -1659,6 +1660,9 @@ yyreduce:
           (yyval.re_node) = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
           fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+          (yyval.re_node)->value = 0x00;
+          (yyval.re_node)->mask = 0x00;
         }
         else
         {
@@ -1670,11 +1674,11 @@ yyreduce:
           (yyval.re_node)->mask = mask;
         }
       }
-#line 1674 "hex_grammar.c" /* yacc.c:1663  */
+#line 1678 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
 
-#line 1678 "hex_grammar.c" /* yacc.c:1663  */
+#line 1682 "hex_grammar.c" /* yacc.c:1663  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1902,4 +1906,4 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 410 "hex_grammar.y" /* yacc.c:1907  */
+#line 414 "hex_grammar.y" /* yacc.c:1907  */

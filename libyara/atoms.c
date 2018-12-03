@@ -81,20 +81,14 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 #include <assert.h>
 #include <string.h>
 
+#include <yara/globals.h>
 #include <yara/utils.h>
 #include <yara/atoms.h>
 #include <yara/limits.h>
 #include <yara/mem.h>
 #include <yara/error.h>
 #include <yara/types.h>
-
-
-#define append_current_leaf_to_node(node) \
-    if (atom_tree->current_leaf != NULL) \
-    { \
-      _yr_atoms_tree_node_append(node, atom_tree->current_leaf); \
-      atom_tree->current_leaf = NULL; \
-    } \
+#include <yara/stack.h>
 
 
 //
@@ -109,8 +103,7 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 //
 // Args:
 //    YR_ATOMS_CONFIG* config   - Pointer to YR_ATOMS_CONFIG struct.
-//    uint8_t* atom             - Pointer to the atom's bytes.
-//    int atom_length           - Atom's length.
+//    YR_ATOM* atom             - Pointer to YR_ATOM struct.
 //
 // Returns:
 //    An integer indicating the atom's quality
@@ -118,54 +111,120 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 
 int yr_atoms_heuristic_quality(
     YR_ATOMS_CONFIG* config,
-    uint8_t* atom,
-    int atom_length)
+    YR_ATOM* atom)
 {
-  int penalty = 0;
+  YR_BITMASK seen_bytes[YR_BITMASK_SIZE(256)];
+
+  int quality = 0;
   int unique_bytes = 0;
-  int i, j;
-  bool is_unique;
+  int masked_nibbles = 0;
+  int i;
 
-  for (i = 0; i < atom_length; i++)
+  assert(atom->length <= YR_MAX_ATOM_LENGTH);
+
+  yr_bitmask_clear_all(seen_bytes);
+
+  for (i = 0; i < atom->length; i++)
   {
-    if (atom[i] == 0x00 || atom[i] == 0xFF || atom[i] == 0x20 ||
-        atom[i] == 0x0A || atom[i] == 0x0D)
+    switch (atom->mask[i])
     {
-      // Penalize common bytes, specially if they are in the first two positions.
-
-      switch(i)
-      {
-        case 0:
-          penalty += 3;
-          break;
-        case 1:
-          penalty += 2;
-          break;
-        default:
-          penalty += 1;
-          break;
-      }
-    }
-
-    is_unique = true;
-
-    for (j = i + 1; j < atom_length; j++)
-      if (atom[i] == atom[j])
-      {
-        is_unique = false;
+      case 0x00:
+        masked_nibbles += 2;
         break;
-      }
-
-    if (is_unique)
-      unique_bytes += 1;
+      case 0x0F:
+        masked_nibbles += 1;
+        quality += 4;
+        break;
+      case 0xF0:
+        masked_nibbles += 1;
+        quality += 4;
+        break;
+      case 0xFF:
+        switch (atom->bytes[i])
+        {
+          case 0x00:
+          case 0x20:
+          case 0xCC:
+          case 0xFF:
+            // Common bytes contribute less to the quality than the rest.
+            quality += 15;
+            break;
+          default:
+            // Bytes in the a-z and A-Z ranges have a slightly lower quality
+            // than the rest. We want to favor atoms that contain bytes outside
+            // those ranges because they generate less additional atoms during
+            // calls to _yr_atoms_case_combinations.
+            if ( yr_lowercase[atom->bytes[i]] >= 'a' &&
+                 yr_lowercase[atom->bytes[i]] <= 'z')
+              quality += 19;
+            else
+              quality += 20;
+        };
+        if (!yr_bitmask_isset(seen_bytes, atom->bytes[i]))
+        {
+          yr_bitmask_set(seen_bytes, atom->bytes[i]);
+          unique_bytes++;
+        }
+    }
   }
 
-  // yr_max(atom_length + unique_bytes - penalty, 0) is within the range
-  // [0 - 2 * YR_MAX_ATOM_LENGTH], which means that the function returns a value
-  // in [YR_MAX_ATOM_QUALITY - 2 * YR_MAX_ATOM_LENGTH, YR_MAX_ATOM_QUALITY]
+  // If all the bytes in the atom are equal and very common, let's penalize
+  // it heavily.
 
-  return YR_MAX_ATOM_QUALITY - 2 * YR_MAX_ATOM_LENGTH +
-         yr_max(atom_length + unique_bytes - penalty, 0);
+  if (unique_bytes == 1 &&
+      (yr_bitmask_isset(seen_bytes, 0x00) ||
+       yr_bitmask_isset(seen_bytes, 0x20) ||
+       yr_bitmask_isset(seen_bytes, 0xCC) ||
+       yr_bitmask_isset(seen_bytes, 0xFF)))
+  {
+    quality -= 10 * atom->length;
+  }
+
+  quality -= masked_nibbles * 3;
+
+  return YR_MAX_ATOM_QUALITY - 20 * YR_MAX_ATOM_LENGTH + quality;
+}
+
+
+//
+// _yr_atoms_cmp
+//
+// Compares the byte sequence in a1 with the YR_ATOM in a2, taking atom's mask
+// into account.
+//
+// Returns:
+//   < 0 if the first byte that does not match has a lower value in a1 than
+//       in a2.
+//   > 0 if the first byte that does not match has a greater value in a1 than
+//       in a2.
+//   = 0 if a1 is equal or matches a2.
+//
+
+static int _yr_atoms_cmp(
+    const uint8_t* a1,
+    YR_ATOM* a2)
+{
+  int result = 0;
+  int i =  0;
+
+  while (result == 0 && i < a2->length)
+  {
+    switch (a2->mask[i])
+    {
+      case 0xFF:
+      case 0x0F:
+      case 0xF0:
+      case 0x00:
+        result = (a1[i] & a2->mask[i]) - a2->bytes[i];
+        break;
+      default:
+        assert(false);
+    }
+
+    i++;
+  }
+
+  return result;
 }
 
 //
@@ -179,8 +238,7 @@ int yr_atoms_heuristic_quality(
 //
 // Args:
 //    YR_ATOMS_CONFIG* config   - Pointer to YR_ATOMS_CONFIG struct.
-//    uint8_t* atom             - Pointer to the atom's bytes.
-//    int atom_length           - Atom's length.
+//    YR_ATOM* atom             - Pointer to YR_ATOM struct.
 //
 // Returns:
 //    An integer indicating the atom's quality
@@ -188,18 +246,19 @@ int yr_atoms_heuristic_quality(
 
 int yr_atoms_table_quality(
     YR_ATOMS_CONFIG* config,
-    uint8_t* atom,
-    int atom_length)
+    YR_ATOM* atom)
 {
   YR_ATOM_QUALITY_TABLE_ENTRY* table = config->quality_table;
 
   int begin = 0;
   int end = config->quality_table_entries;
 
+  assert(atom->length <= YR_MAX_ATOM_LENGTH);
+
   while (end > begin)
   {
     int middle = begin + (end - begin) / 2;
-    int c = memcmp(table[middle].atom, atom, atom_length);
+    int c = _yr_atoms_cmp(table[middle].atom, atom);
 
     if (c < 0)
     {
@@ -215,10 +274,7 @@ int yr_atoms_table_quality(
       int quality = table[middle].quality;
       int min_quality = quality;
 
-      if (atom_length == YR_MAX_ATOM_LENGTH)
-        return table[middle].quality;
-
-      while (i < end && memcmp(table[i].atom, atom, atom_length) == 0)
+      while (i < end && _yr_atoms_cmp(table[i].atom, atom) == 0)
       {
         if (min_quality > table[i].quality)
           min_quality = table[i].quality;
@@ -228,7 +284,7 @@ int yr_atoms_table_quality(
 
       i = middle - 1;
 
-      while (i >= begin && memcmp(table[i].atom, atom, atom_length) == 0)
+      while (i >= begin && _yr_atoms_cmp(table[i].atom, atom) == 0)
       {
         if (min_quality > table[i].quality)
           min_quality = table[i].quality;
@@ -236,7 +292,7 @@ int yr_atoms_table_quality(
         i--;
       }
 
-      return min_quality >> (YR_MAX_ATOM_LENGTH - atom_length);
+      return min_quality >> (YR_MAX_ATOM_LENGTH - atom->length);
     }
   }
 
@@ -266,7 +322,7 @@ int yr_atoms_min_quality(
 
   while (atom != NULL)
   {
-    quality = config->get_atom_quality(config, atom->atom, atom->atom_length);
+    quality = config->get_atom_quality(config, &atom->atom);
 
     if (quality < min_quality)
       min_quality = quality;
@@ -284,21 +340,19 @@ int yr_atoms_min_quality(
 // Creates a new node for an atoms tree.
 //
 
-static ATOM_TREE_NODE* _yr_atoms_tree_node_create(
+static YR_ATOM_TREE_NODE* _yr_atoms_tree_node_create(
     uint8_t type)
 {
-  ATOM_TREE_NODE* new_node = (ATOM_TREE_NODE*) \
-      yr_malloc(sizeof(ATOM_TREE_NODE));
+  YR_ATOM_TREE_NODE* new_node = (YR_ATOM_TREE_NODE*) \
+      yr_malloc(sizeof(YR_ATOM_TREE_NODE));
 
   if (new_node != NULL)
   {
     new_node->type = type;
-    new_node->atom_length = 0;
+    new_node->atom.length = 0;
     new_node->next_sibling = NULL;
     new_node->children_head = NULL;
     new_node->children_tail = NULL;
-    new_node->forward_code = NULL;
-    new_node->backward_code = NULL;
   }
 
   return new_node;
@@ -312,10 +366,10 @@ static ATOM_TREE_NODE* _yr_atoms_tree_node_create(
 //
 
 static void _yr_atoms_tree_node_destroy(
-    ATOM_TREE_NODE* node)
+    YR_ATOM_TREE_NODE* node)
 {
-  ATOM_TREE_NODE* child;
-  ATOM_TREE_NODE* next_child;
+  YR_ATOM_TREE_NODE* child;
+  YR_ATOM_TREE_NODE* next_child;
 
   if (node == NULL)
     return;
@@ -343,8 +397,8 @@ static void _yr_atoms_tree_node_destroy(
 //
 
 static void _yr_atoms_tree_node_append(
-    ATOM_TREE_NODE* dest,
-    ATOM_TREE_NODE* node)
+    YR_ATOM_TREE_NODE* dest,
+    YR_ATOM_TREE_NODE* node)
 {
   if (dest->children_head == NULL)
     dest->children_head = node;
@@ -363,7 +417,7 @@ static void _yr_atoms_tree_node_append(
 //
 
 static void _yr_atoms_tree_destroy(
-    ATOM_TREE* atom_tree)
+    YR_ATOM_TREE* atom_tree)
 {
   _yr_atoms_tree_node_destroy(atom_tree->root_node);
   yr_free(atom_tree);
@@ -419,27 +473,103 @@ static YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
 
 
 //
+// _yr_atoms_trim
+//
+// If the atom starts or ends with an unknown byte (mask == 0x00), trim
+// those bytes out of the atom. We don't want to expand an atom like
+// { ?? 01 02 } into { 00 01 02 }, { 01 01 02}, { 02 01 02} .. { FF 01 02}
+// in those cases it's better to simply have a shorter atom { 01 02 }.
+//
+// Args:
+//   atom     - Pointer to the YR_ATOM to be trimmed.
+//
+// Returns:
+//   The number of bytes that were trimmed from the beginning of the atom.
+//
+
+int _yr_atoms_trim(
+    YR_ATOM* atom)
+{
+  int mask_00 = 0;
+  int mask_ff = 0;
+
+  int i, trim_left = 0;
+
+  while (trim_left < atom->length && atom->mask[trim_left] == 0)
+    trim_left++;
+
+  while (atom->length > trim_left && atom->mask[atom->length - 1] == 0)
+    atom->length--;
+
+  atom->length -= trim_left;
+
+  if (atom->length == 0)
+    return 0;
+
+  // At this point the actual atom goes from i to i + atom->length and the
+  // first and last byte in the atom are known (mask == 0xFF). Now count the
+  // number of known and unknown bytes in the atom (mask == 0xFF and
+  // mask == 0x00 respectively).
+
+  for (i = 0; i < atom->length; i++)
+  {
+    if (atom->mask[trim_left + i] == 0xFF)
+      mask_ff++;
+    else if (atom->mask[trim_left + i] == 0x00)
+      mask_00++;
+  }
+
+  // If the number of unknown bytes is >= than the number of known bytes
+  // it doesn't make sense the to use this atom, so we use the a single byte
+  // atom with the first known byte. If YR_MAX_ATOM_LENGTH == 4 this happens
+  // only when the atom is like { XX ?? ?? YY }, so using the first known
+  // atom is good enough. For larger values of YR_MAX_ATOM_LENGTH this is not
+  // the most efficient solution, as better atoms could be choosen. For
+  // example, in { XX ?? ?? ?? YY ZZ } the best atom is { YY ZZ } not { XX }.
+  // But let's keep it like this for simplicity.
+
+  if (mask_00 >= mask_ff)
+    atom->length = 1;
+
+  if (trim_left == 0)
+    return 0;
+
+  // Shift bytes and mask trim_left positions to the left.
+
+  for (i = 0; i < YR_MAX_ATOM_LENGTH - trim_left; i++)
+  {
+    atom->bytes[i] = atom->bytes[trim_left + i];
+    atom->mask[i] = atom->mask[trim_left + i];
+  }
+
+  return trim_left;
+}
+
+
+//
 // _yr_atoms_choose
 //
-// Chooses which atoms from an atoms tree will be used to feed the
-// Aho-Corasick automaton, and puts them in a list.
+// This function receives an atom tree and returns a list of atoms to be added
+// to the Aho-Corasick automaton.
 //
 
 static int _yr_atoms_choose(
     YR_ATOMS_CONFIG* config,
-    ATOM_TREE_NODE* node,
+    YR_ATOM_TREE_NODE* node,
     YR_ATOM_LIST_ITEM** chosen_atoms,
     int* atoms_quality)
 {
-  ATOM_TREE_NODE* child;
+  YR_ATOM_TREE_NODE* child;
   YR_ATOM_LIST_ITEM* item;
   YR_ATOM_LIST_ITEM* tail;
 
-  int i, quality;
+  int shift, quality;
+
   int max_quality = YR_MIN_ATOM_QUALITY;
   int min_quality = YR_MAX_ATOM_QUALITY;
 
   *chosen_atoms = NULL;
+  *atoms_quality = YR_MIN_ATOM_QUALITY;
 
   switch (node->type)
   {
@@ -450,21 +580,25 @@ static int _yr_atoms_choose(
     if (item == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
-    for (i = 0; i < node->atom_length; i++)
-      item->atom[i] = node->atom[i];
+    memcpy(&item->atom, &node->atom, sizeof(YR_ATOM));
 
-    item->atom_length = node->atom_length;
-    item->forward_code = node->forward_code;
-    item->backward_code = node->backward_code;
+    shift = _yr_atoms_trim(&item->atom);
+
+    if (item->atom.length == 0)
+      break;
+
+    item->forward_code = node->re_nodes[shift]->forward_code;
+    item->backward_code = node->re_nodes[shift]->backward_code;
     item->backtrack = 0;
     item->next = NULL;
 
     *chosen_atoms = item;
-    *atoms_quality = config->get_atom_quality(
-        config, node->atom, node->atom_length);
+    *atoms_quality = config->get_atom_quality(config, &item->atom);
     break;
 
   case ATOM_TREE_OR:
+
+    // The choosen nodes are those coming from the highest quality child.
 
     child = node->children_head;
 
@@ -493,6 +627,9 @@ static int _yr_atoms_choose(
     break;
 
   case ATOM_TREE_AND:
+
+    // The choosen nodes are the concatenation of the the nodes choosen from
+    // all the children.
 
     child = node->children_head;
 
@@ -624,8 +761,8 @@ static int _yr_atoms_case_insensitive(
   while (atom != NULL)
   {
     _yr_atoms_case_combinations(
-        atom->atom,
-        atom->atom_length,
+        atom->atom.bytes,
+        atom->atom.length,
         0,
         buffer);
 
@@ -641,9 +778,12 @@ static int _yr_atoms_case_insensitive(
         return ERROR_INSUFFICIENT_MEMORY;
 
       for (i = 0; i < atom_length; i++)
-        new_atom->atom[i] = atoms_cursor[i];
+      {
+        new_atom->atom.bytes[i] = atoms_cursor[i];
+        new_atom->atom.mask[i] = 0xFF;
+      }
 
-      new_atom->atom_length = atom_length;
+      new_atom->atom.length = atom_length;
       new_atom->forward_code = atom->forward_code;
       new_atom->backward_code = atom->backward_code;
       new_atom->backtrack = atom->backtrack;
@@ -669,6 +809,7 @@ static int _yr_atoms_case_insensitive(
 // For a given list of atoms returns another list after a single byte xor
 // has been applied to it.
 //
+
 static int _yr_atoms_xor(
     YR_ATOM_LIST_ITEM* atoms,
     YR_ATOM_LIST_ITEM** xor_atoms)
@@ -689,10 +830,13 @@ static int _yr_atoms_xor(
       if (new_atom == NULL)
         return ERROR_INSUFFICIENT_MEMORY;
 
-      for (i = 0; i < atom->atom_length; i++)
-        new_atom->atom[i] = atom->atom[i] ^ j;
+      for (i = 0; i < atom->atom.length; i++)
+      {
+        new_atom->atom.bytes[i] = atom->atom.bytes[i] ^ j;
+        new_atom->atom.mask[i] = 0xFF;
+      }
 
-      new_atom->atom_length = yr_min(atom->atom_length, YR_MAX_ATOM_LENGTH);
+      new_atom->atom.length = yr_min(atom->atom.length, YR_MAX_ATOM_LENGTH);
       new_atom->forward_code = atom->forward_code;
       new_atom->backward_code = atom->backward_code;
       new_atom->backtrack = atom->backtrack;
@@ -705,6 +849,8 @@ static int _yr_atoms_xor(
   }
   return ERROR_SUCCESS;
 }
+
+
 //
 // _yr_atoms_wide
 //
@@ -733,17 +879,20 @@ static int _yr_atoms_wide(
       return ERROR_INSUFFICIENT_MEMORY;
 
     for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
-      new_atom->atom[i] = 0;
+    {
+      new_atom->atom.bytes[i] = 0;
+      new_atom->atom.mask[i] = 0xFF;
+    }
 
-    for (i = 0; i < atom->atom_length; i++)
+    for (i = 0; i < atom->atom.length; i++)
     {
       if (i * 2 < YR_MAX_ATOM_LENGTH)
-        new_atom->atom[i * 2] = atom->atom[i];
+        new_atom->atom.bytes[i * 2] = atom->atom.bytes[i];
       else
         break;
     }
 
-    new_atom->atom_length = yr_min(atom->atom_length * 2, YR_MAX_ATOM_LENGTH);
+    new_atom->atom.length = yr_min(atom->atom.length * 2, YR_MAX_ATOM_LENGTH);
     new_atom->forward_code = atom->forward_code;
     new_atom->backward_code = atom->backward_code;
     new_atom->backtrack = atom->backtrack * 2;
@@ -758,421 +907,463 @@ static int _yr_atoms_wide(
 }
 
 
-//
-// _yr_atoms_extract_from_re_node
-//
-// Extract atoms from a regular expression node. See description for
-// _yr_atoms_extract_from_re for more details.
-//
-
-static ATOM_TREE_NODE* _yr_atoms_extract_from_re_node(
-    YR_ATOMS_CONFIG* config,
-    RE_NODE* re_node,
-    ATOM_TREE* atom_tree,
-    ATOM_TREE_NODE* current_node)
+struct STACK_ITEM
 {
-  ATOM_TREE_NODE* left_node;
-  ATOM_TREE_NODE* right_node;
-  ATOM_TREE_NODE* and_node;
-  ATOM_TREE_NODE* current_leaf;
-  ATOM_TREE_NODE* temp;
-
-  int quality;
-  int new_quality;
-  int i;
-
-  uint8_t new_atom[YR_MAX_ATOM_LENGTH];
-
-  switch(re_node->type)
-  {
-    case RE_NODE_LITERAL:
-
-      if (atom_tree->current_leaf == NULL)
-      {
-        atom_tree->current_leaf = _yr_atoms_tree_node_create(ATOM_TREE_LEAF);
-
-        if (atom_tree->current_leaf == NULL)
-          return NULL;
-
-        atom_tree->current_leaf->forward_code = re_node->forward_code;
-        atom_tree->current_leaf->backward_code = re_node->backward_code;
-
-        assert(atom_tree->current_leaf->forward_code != NULL);
-        assert(atom_tree->current_leaf->backward_code != NULL);
-      }
-
-      current_leaf = atom_tree->current_leaf;
-
-      if (current_leaf->atom_length < YR_MAX_ATOM_LENGTH)
-      {
-        current_leaf->atom[current_leaf->atom_length] =
-            (uint8_t) re_node->value;
-        current_leaf->recent_nodes[current_leaf->atom_length] = re_node;
-        current_leaf->atom_length++;
-      }
-      else
-      {
-        quality = config->get_atom_quality(
-            config, current_leaf->atom, YR_MAX_ATOM_LENGTH);
-
-        if (quality < YR_MAX_ATOM_QUALITY)
-        {
-          for (i = 1; i < YR_MAX_ATOM_LENGTH; i++)
-            current_leaf->recent_nodes[i - 1] = current_leaf->recent_nodes[i];
-
-          current_leaf->recent_nodes[YR_MAX_ATOM_LENGTH - 1] = re_node;
-
-          for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
-            new_atom[i] = (uint8_t) current_leaf->recent_nodes[i]->value;
-
-          new_quality = config->get_atom_quality(
-              config, new_atom, YR_MAX_ATOM_LENGTH);
-
-          if (new_quality > quality)
-          {
-            for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
-              current_leaf->atom[i] = new_atom[i];
-
-            current_leaf->forward_code = \
-                current_leaf->recent_nodes[0]->forward_code;
-
-            current_leaf->backward_code = \
-                current_leaf->recent_nodes[0]->backward_code;
-
-            assert(current_leaf->forward_code != NULL);
-            assert(current_leaf->backward_code != NULL);
-          }
-        }
-      }
-
-      return current_node;
-
-    case RE_NODE_CONCAT:
-
-      current_node = _yr_atoms_extract_from_re_node(
-          config, re_node->left, atom_tree, current_node);
-
-      if (current_node == NULL)
-        return NULL;
-
-      current_node = _yr_atoms_extract_from_re_node(
-          config, re_node->right, atom_tree, current_node);
-
-      return current_node;
-
-    case RE_NODE_ALT:
-
-      append_current_leaf_to_node(current_node);
-
-      left_node = _yr_atoms_tree_node_create(ATOM_TREE_OR);
-
-      if (left_node == NULL)
-        return NULL;
-
-      left_node = _yr_atoms_extract_from_re_node(
-          config, re_node->left, atom_tree, left_node);
-
-      if (left_node == NULL)
-        return NULL;
-
-      append_current_leaf_to_node(left_node);
-
-      if (left_node->children_head == NULL)
-      {
-        _yr_atoms_tree_node_destroy(left_node);
-        return current_node;
-      }
-
-      if (left_node->children_head == left_node->children_tail)
-      {
-        temp = left_node;
-        left_node = left_node->children_head;
-        yr_free(temp);
-      }
-
-      right_node = _yr_atoms_tree_node_create(ATOM_TREE_OR);
-
-      if (right_node == NULL)
-        return NULL;
-
-      right_node = _yr_atoms_extract_from_re_node(
-          config, re_node->right, atom_tree, right_node);
-
-      if (right_node == NULL)
-        return NULL;
-
-      append_current_leaf_to_node(right_node);
-
-      if (right_node->children_head == NULL)
-      {
-        _yr_atoms_tree_node_destroy(left_node);
-        _yr_atoms_tree_node_destroy(right_node);
-        return current_node;
-      }
-
-      if (right_node->children_head == right_node->children_tail)
-      {
-        temp = right_node;
-        right_node = right_node->children_head;
-        yr_free(temp);
-      }
-
-      and_node = _yr_atoms_tree_node_create(ATOM_TREE_AND);
-
-      if (and_node == NULL)
-        return NULL;
-
-      and_node->children_head = left_node;
-      and_node->children_tail = right_node;
-      left_node->next_sibling = right_node;
-
-      _yr_atoms_tree_node_append(current_node, and_node);
-
-      return current_node;
-
-    case RE_NODE_RANGE:
-
-      if (re_node->start == 0)
-        append_current_leaf_to_node(current_node);
-
-      // In a regexp like /a{10,20}/ the optimal atom is 'aaaa' (assuming that
-      // YR_MAX_ATOM_LENGTH = 4) because the 'a' character must appear at least
-      // 10 times in the matching string. Each call in the loop will append
-      // one 'a' to the atom, so YR_MAX_ATOM_LENGTH iterations are enough.
-
-      for (i = 0; i < yr_min(re_node->start, YR_MAX_ATOM_LENGTH); i++)
-      {
-        current_node = _yr_atoms_extract_from_re_node(
-            config, re_node->left, atom_tree, current_node);
-
-        if (current_node == NULL)
-          return NULL;
-      }
-
-      if (re_node->start != re_node->end)
-        append_current_leaf_to_node(current_node);
-
-      return current_node;
-
-    case RE_NODE_PLUS:
-
-      current_node = _yr_atoms_extract_from_re_node(
-          config, re_node->left, atom_tree, current_node);
-
-      if (current_node == NULL)
-        return NULL;
-
-      append_current_leaf_to_node(current_node);
-      return current_node;
-
-    case RE_NODE_ANY:
-    case RE_NODE_RANGE_ANY:
-    case RE_NODE_STAR:
-    case RE_NODE_CLASS:
-    case RE_NODE_MASKED_LITERAL:
-    case RE_NODE_WORD_CHAR:
-    case RE_NODE_NON_WORD_CHAR:
-    case RE_NODE_SPACE:
-    case RE_NODE_NON_SPACE:
-    case RE_NODE_DIGIT:
-    case RE_NODE_NON_DIGIT:
-    case RE_NODE_EMPTY:
-    case RE_NODE_ANCHOR_START:
-    case RE_NODE_ANCHOR_END:
-    case RE_NODE_WORD_BOUNDARY:
-    case RE_NODE_NON_WORD_BOUNDARY:
-
-      append_current_leaf_to_node(current_node);
-      return current_node;
-
-    default:
-      assert(false);
-  }
-
-  return NULL;
-}
-
-//
-// yr_atoms_extract_triplets
-//
-// On certain cases YARA can not extract long enough atoms from a regexp, but
-// can infer them. For example, in the hex string { 01 ?? 02 } the only explicit
-// atoms are 01 and 02, and both of them are too short to be efficiently used.
-// However YARA can use simultaneously atoms 01 00 02, 01 01 02, 01 02 02,
-// 01 03 02, and so on up to 01 FF 02. Searching for 256 three-bytes atoms is
-// faster than searching for a single one-byte atom.
-//
-// This function extracts these three-bytes atoms from a regexp node if
-// possible.
-//
-
-int yr_atoms_extract_triplets(
-    RE_NODE* re_node,
-    YR_ATOM_LIST_ITEM** atoms)
- {
-    RE_NODE* left_child;
-    RE_NODE* left_grand_child;
-
-    int i;
-    int shift;
-
-    *atoms = NULL;
-
-    if (re_node->type == RE_NODE_CONCAT)
-      left_child = re_node->left;
-    else
-      return ERROR_SUCCESS;
-
-    if (left_child->type == RE_NODE_CONCAT)
-      left_grand_child = left_child->left;
-    else
-      return ERROR_SUCCESS;
-
-    if (re_node->right->type != RE_NODE_LITERAL)
-      return yr_atoms_extract_triplets(left_child, atoms);
-
-    if (left_child->left->type == RE_NODE_LITERAL &&
-        (left_child->right->type == RE_NODE_ANY))
-    {
-      for (i = 0; i < 256; i++)
-      {
-        YR_ATOM_LIST_ITEM* atom = (YR_ATOM_LIST_ITEM*)
-            yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
-
-        if (atom == NULL)
-          return ERROR_INSUFFICIENT_MEMORY;
-
-        atom->atom[0] = (uint8_t) left_child->left->value;
-        atom->atom[1] = (uint8_t) i;
-        atom->atom[2] = (uint8_t) re_node->right->value;
-
-        atom->atom_length = 3;
-        atom->forward_code = left_child->left->forward_code;
-        atom->backward_code = left_child->left->backward_code;
-        atom->backtrack = 0;
-        atom->next = *atoms;
-
-        *atoms = atom;
-      }
-
-      return ERROR_SUCCESS;
+  RE_NODE*             re_node;
+  YR_ATOM_TREE_NODE*   new_appending_node;
+};
+
+
+#define make_atom_from_re_nodes(atom, nodes_length, nodes) \
+    { \
+      atom.length = nodes_length; \
+      for (i = 0; i < atom.length; i++) \
+      { \
+        atom.bytes[i] = (uint8_t) (recent_re_nodes)[i]->value; \
+        atom.mask[i] = (uint8_t) (recent_re_nodes)[i]->mask; \
+      } \
     }
 
-    if (left_child->left->type == RE_NODE_LITERAL &&
-        (left_child->right->type == RE_NODE_MASKED_LITERAL))
-    {
-      for (i = 0; i < 16; i++)
-      {
-        YR_ATOM_LIST_ITEM* atom = (YR_ATOM_LIST_ITEM*)
-            yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
-
-        if (atom == NULL)
-          return ERROR_INSUFFICIENT_MEMORY;
-
-        if (left_child->right->mask == 0xF0)
-          shift = 0;
-        else
-          shift = 4;
-
-        atom->atom[0] = (uint8_t) left_child->left->value;
-        atom->atom[1] = (uint8_t)(left_child->right->value | (i << shift));
-        atom->atom[2] = (uint8_t) re_node->right->value;
-
-        atom->atom_length = 3;
-        atom->forward_code = left_child->left->forward_code;
-        atom->backward_code = left_child->left->backward_code;
-        atom->backtrack = 0;
-        atom->next = *atoms;
-
-        *atoms = atom;
-      }
-
-      return ERROR_SUCCESS;
-    }
-
-    if (left_grand_child->type == RE_NODE_CONCAT &&
-        left_grand_child->right->type == RE_NODE_LITERAL &&
-        (left_child->right->type == RE_NODE_ANY))
-    {
-      for (i = 0; i < 256; i++)
-      {
-        YR_ATOM_LIST_ITEM* atom = (YR_ATOM_LIST_ITEM*)
-            yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
-
-        if (atom == NULL)
-          return ERROR_INSUFFICIENT_MEMORY;
-
-        atom->atom[0] = (uint8_t) left_grand_child->right->value;
-        atom->atom[1] = (uint8_t) i;
-        atom->atom[2] = (uint8_t) re_node->right->value;
-
-        atom->atom_length = 3;
-        atom->forward_code = left_grand_child->right->forward_code;
-        atom->backward_code = left_grand_child->right->backward_code;
-        atom->backtrack = 0;
-        atom->next = *atoms;
-
-        *atoms = atom;
-      }
-
-      return ERROR_SUCCESS;
-    }
-
-    if (left_grand_child->type == RE_NODE_CONCAT &&
-        left_grand_child->right->type == RE_NODE_LITERAL &&
-        (left_child->right->type == RE_NODE_MASKED_LITERAL))
-    {
-      for (i = 0; i < 16; i++)
-      {
-        YR_ATOM_LIST_ITEM* atom = (YR_ATOM_LIST_ITEM*)
-            yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
-
-        if (atom == NULL)
-          return ERROR_INSUFFICIENT_MEMORY;
-
-        if (left_child->right->mask == 0xF0)
-          shift = 0;
-        else
-          shift = 4;
-
-        atom->atom[0] = (uint8_t) left_grand_child->right->value;
-        atom->atom[1] = (uint8_t)(left_child->right->value | (i << shift));
-        atom->atom[2] = (uint8_t) re_node->right->value;
-
-        atom->atom_length = 3;
-        atom->forward_code = left_grand_child->right->forward_code;
-        atom->backward_code = left_grand_child->right->backward_code;
-        atom->backtrack = 0;
-        atom->next = *atoms;
-
-        *atoms = atom;
-      }
-
-      return ERROR_SUCCESS;
-    }
-
-    return yr_atoms_extract_triplets(left_child, atoms);;
- }
 
 //
 // _yr_atoms_extract_from_re
 //
-// Extract atoms from a regular expression.
+// Extract atoms from a regular expression. This is a helper function used by
+// yr_atoms_extract_from_re that receives the abstract syntax tree for a regexp
+// (or hex pattern) and builds an atom tree. The appending_node argument is a
+// pointer to the ATOM_TREE_OR node at the root of the atom tree. This function
+// creates the tree by appending new nodes to it.
+//
+
+static int _yr_atoms_extract_from_re(
+    YR_ATOMS_CONFIG* config,
+    RE_AST* re_ast,
+    YR_ATOM_TREE_NODE* appending_node)
+{
+  YR_STACK* stack;
+  RE_NODE* re_node;
+
+  YR_ATOM atom;
+  YR_ATOM best_atom;
+
+  struct STACK_ITEM si;
+
+  int i, shift;
+  int quality;
+  int best_quality = -1;
+  int n = 0;
+
+  YR_ATOM_TREE_NODE* and_node;
+  YR_ATOM_TREE_NODE* left_node;
+  YR_ATOM_TREE_NODE* right_node;
+
+  // The RE_NODEs most recently visited that can conform an atom (ie:
+  // RE_NODE_LITERAL, RE_NODE_MASKED_LITERAL and RE_NODE_ANY). The number of
+  // items in this array is n.
+  RE_NODE* recent_re_nodes[YR_MAX_ATOM_LENGTH];
+
+  // The RE_NODEs corresponding to the best atom found so far for the current
+  // appending node.
+  RE_NODE* best_atom_re_nodes[YR_MAX_ATOM_LENGTH];
+
+  // This holds the ATOM_TREE_OR node where leaves (ATOM_TREE_LEAF) are
+  // currently being appended.
+  YR_ATOM_TREE_NODE* current_appending_node = NULL;
+
+  // This holds the ATOM_TREE_LEAF node whose atom is currently being updated.
+  YR_ATOM_TREE_NODE* leaf = NULL;
+
+  FAIL_ON_ERROR(yr_stack_create(1024, sizeof(si), &stack));
+
+  // This first item pushed in the stack is the last one to be poped out, its
+  // sole purpose is forcing that any pending
+  si.re_node = NULL;
+  si.new_appending_node = appending_node;
+
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_stack_push(stack, (void*) &si),
+      yr_stack_destroy(stack));
+
+  // Start processing the root node.
+  si.re_node = re_ast->root_node;
+
+  // Leaf nodes are initially appended to the node passed in the appending_node,
+  // argument which is the root ATOM_TREE_OR node that is empty at this point.
+  si.new_appending_node = appending_node;
+
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_stack_push(stack, (void*) &si),
+      yr_stack_destroy(stack));
+
+  while (yr_stack_pop(stack, (void*) &si))
+  {
+    // Change the appending node if the item poped from the stack says so.
+    if (si.new_appending_node != NULL)
+    {
+      // Before changing the appending node let's append any pending leaf to
+      // the current appending node.
+      if (n > 0)
+      {
+        make_atom_from_re_nodes(atom, n, recent_re_nodes);
+        shift = _yr_atoms_trim(&atom);
+        quality = config->get_atom_quality(config, &atom);
+
+        FAIL_ON_NULL_WITH_CLEANUP(
+            leaf = _yr_atoms_tree_node_create(ATOM_TREE_LEAF),
+            yr_stack_destroy(stack));
+
+        if (quality > best_quality)
+        {
+          memcpy(&leaf->atom, &atom, sizeof(atom));
+          memcpy(
+              &leaf->re_nodes,
+              &recent_re_nodes[shift],
+              sizeof(recent_re_nodes) - shift * sizeof(recent_re_nodes[0]));
+        }
+        else
+        {
+          memcpy(&leaf->atom, &best_atom, sizeof(best_atom));
+          memcpy(
+              &leaf->re_nodes,
+              &best_atom_re_nodes,
+              sizeof(best_atom_re_nodes));
+        }
+
+        _yr_atoms_tree_node_append(current_appending_node, leaf);
+        n = 0;
+      }
+
+      current_appending_node = si.new_appending_node;
+    }
+
+    if (si.re_node != NULL)
+    {
+      switch(si.re_node->type)
+      {
+        case RE_NODE_LITERAL:
+        case RE_NODE_MASKED_LITERAL:
+        case RE_NODE_ANY:
+
+          if (n < YR_MAX_ATOM_LENGTH)
+          {
+            recent_re_nodes[n] = si.re_node;
+            best_atom_re_nodes[n] = si.re_node;
+            best_atom.bytes[n] = (uint8_t) si.re_node->value;
+            best_atom.mask[n] = (uint8_t) si.re_node->mask;
+            best_atom.length = ++n;
+          }
+          else if (best_quality < YR_MAX_ATOM_QUALITY)
+          {
+            make_atom_from_re_nodes(atom, n, recent_re_nodes);
+            shift = _yr_atoms_trim(&atom);
+            quality = config->get_atom_quality(config, &atom);
+
+            if (quality > best_quality)
+            {
+              for (i = 0; i < atom.length; i++)
+              {
+                best_atom.bytes[i] = atom.bytes[i];
+                best_atom.mask[i] = atom.mask[i];
+                best_atom_re_nodes[i] = recent_re_nodes[i + shift];
+              }
+
+              best_quality = quality;
+            }
+
+            for (i = 1; i < YR_MAX_ATOM_LENGTH; i++)
+              recent_re_nodes[i - 1] = recent_re_nodes[i];
+
+            recent_re_nodes[YR_MAX_ATOM_LENGTH - 1] = si.re_node;
+          }
+
+          break;
+
+        case RE_NODE_CONCAT:
+
+          re_node = si.re_node;
+          si.new_appending_node = NULL;
+          si.re_node = re_node->right;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          si.re_node = re_node->left;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          break;
+
+        case RE_NODE_ALT:
+
+          // Create ATOM_TREE_AND node with two ATOM_TREE_OR children nodes.
+          and_node = _yr_atoms_tree_node_create(ATOM_TREE_AND);
+          left_node = _yr_atoms_tree_node_create(ATOM_TREE_OR);
+          right_node = _yr_atoms_tree_node_create(ATOM_TREE_OR);
+
+          if (and_node == NULL || left_node == NULL || right_node == NULL)
+          {
+            _yr_atoms_tree_node_destroy(and_node);
+            _yr_atoms_tree_node_destroy(left_node);
+            _yr_atoms_tree_node_destroy(right_node);
+
+            yr_stack_destroy(stack);
+
+            return ERROR_INSUFFICIENT_MEMORY;
+          }
+
+          and_node->children_head = left_node;
+          and_node->children_tail = right_node;
+          left_node->next_sibling = right_node;
+
+          // Add the ATOM_TREE_AND as children of the current node.
+          _yr_atoms_tree_node_append(current_appending_node, and_node);
+
+          re_node = si.re_node;
+
+          si.new_appending_node = current_appending_node;
+          si.re_node = NULL;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          si.new_appending_node = right_node;
+          si.re_node = re_node->right;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          si.new_appending_node = left_node;
+          si.re_node = re_node->left;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          break;
+
+        case RE_NODE_PLUS:
+
+          re_node = si.re_node;
+
+          si.new_appending_node = current_appending_node;
+          si.re_node = NULL;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          si.new_appending_node = NULL;
+          si.re_node = re_node->left;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          break;
+
+        case RE_NODE_RANGE:
+
+          re_node = si.re_node;
+
+          si.new_appending_node = current_appending_node;
+          si.re_node = NULL;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          si.new_appending_node = NULL;
+          si.re_node = re_node->left;
+
+          // In a regexp like /a{10,20}/ the optimal atom is 'aaaa' (assuming
+          // that YR_MAX_ATOM_LENGTH = 4) because the 'a' character must appear
+          // at least 10 times in the matching string. Each call in the loop
+          // will append one 'a' to the atom, so YR_MAX_ATOM_LENGTH iterations
+          // are enough.
+
+          for (i = 0; i < yr_min(re_node->start, YR_MAX_ATOM_LENGTH); i++)
+          {
+            FAIL_ON_ERROR_WITH_CLEANUP(
+                yr_stack_push(stack, &si),
+                yr_stack_destroy(stack));
+          }
+
+          break;
+
+        case RE_NODE_RANGE_ANY:
+        case RE_NODE_STAR:
+        case RE_NODE_CLASS:
+        case RE_NODE_WORD_CHAR:
+        case RE_NODE_NON_WORD_CHAR:
+        case RE_NODE_SPACE:
+        case RE_NODE_NON_SPACE:
+        case RE_NODE_DIGIT:
+        case RE_NODE_NON_DIGIT:
+        case RE_NODE_EMPTY:
+        case RE_NODE_ANCHOR_START:
+        case RE_NODE_ANCHOR_END:
+        case RE_NODE_WORD_BOUNDARY:
+        case RE_NODE_NON_WORD_BOUNDARY:
+
+          si.new_appending_node = current_appending_node;
+          si.re_node = NULL;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_stack_push(stack, &si),
+              yr_stack_destroy(stack));
+
+          break;
+
+        default:
+          assert(false);
+      }
+    }
+  }
+
+  yr_stack_destroy(stack);
+
+  return ERROR_SUCCESS;
+}
+
+
+
+//
+// _yr_atoms_clone_list_item
+//
+// Makes an exact copy of an YR_ATOM_LIST_ITEM.
+//
+
+static YR_ATOM_LIST_ITEM* _yr_atoms_clone_list_item(
+    YR_ATOM_LIST_ITEM* item)
+{
+  YR_ATOM_LIST_ITEM* clone = (YR_ATOM_LIST_ITEM*) yr_malloc(
+      sizeof(YR_ATOM_LIST_ITEM));
+
+  if (clone == NULL)
+    return NULL;
+
+  memcpy(clone, item, sizeof(YR_ATOM_LIST_ITEM));
+
+  return clone;
+}
+
+
+//
+// _yr_atoms_expand_wildcards
+//
+// Given list of atoms that may contain wildcards, replace those wildcarded
+// atoms with a list of non-wildcarded atoms covering all the combinations
+// allowed by the wilcarded atom. For example, the atom {01 ?2 03} will be
+// replaced by {01 02 03}, {01 12 03}, {01 22 03} .. {01 F2 03}. The list
+// is modified in-place.
+//
+// Args:
+//   YR_ATOM_LIST_ITEM* atoms   -  Pointer to first element of the list.
+//
+// Returns:
+//   ERROR_SUCCESS or ERROR_INSUFFICIENT_MEMORY.
+//
+
+static int _yr_atoms_expand_wildcards(
+    YR_ATOM_LIST_ITEM* atoms)
+{
+  int i;
+
+  YR_ATOM_LIST_ITEM* atom = atoms;
+  YR_ATOM_LIST_ITEM* new_atom;
+  YR_ATOM_LIST_ITEM* prev_atom;
+  YR_ATOM_LIST_ITEM* next_atom;
+
+  while (atom != NULL)
+  {
+    bool expanded = false;
+
+    for (i = 0; i < atom->atom.length; i++)
+    {
+      uint16_t a, s, e, incr = 1;
+
+      switch(atom->atom.mask[i])
+      {
+        case 0x00:
+          expanded = true;
+          s = 0x00;
+          e = 0xFF;
+          break;
+
+        case 0x0F:
+          expanded = true;
+          s = atom->atom.bytes[i];
+          e = atom->atom.bytes[i] | 0xF0;
+          incr = 0x10;
+          break;
+
+        case 0xF0:
+          expanded = true;
+          s = atom->atom.bytes[i];
+          e = atom->atom.bytes[i] | 0x0F;
+          break;
+
+        default:
+          s = 0;
+          e = 0;
+      }
+
+      if (s != e)
+      {
+        atom->atom.bytes[i] = (uint8_t) s;
+        atom->atom.mask[i] = 0xFF;
+      }
+
+      prev_atom = atom;
+      next_atom = atom->next;
+
+      for (a = s + incr; a <= e; a += incr)
+      {
+        new_atom = _yr_atoms_clone_list_item(atom);
+
+        if (new_atom == NULL)
+          return ERROR_INSUFFICIENT_MEMORY;
+
+        new_atom->atom.bytes[i] = (uint8_t) a;
+        new_atom->atom.mask[i] = 0xFF;
+        new_atom->next = next_atom;
+        prev_atom->next = new_atom;
+        prev_atom = new_atom;
+      }
+    }
+
+    if (!expanded)
+      atom = atom->next;
+  }
+
+  return ERROR_SUCCESS;
+}
+
+
+//
+// yr_atoms_extract_from_re
+//
+// Extract atoms from a regular expression. This function receives the abstract
+// syntax tree for a regexp (or hex pattern) and returns a list of atoms that
+// should be added to the Aho-Corasick automaton.
 //
 
 int yr_atoms_extract_from_re(
     YR_ATOMS_CONFIG* config,
     RE_AST* re_ast,
     int flags,
-    YR_ATOM_LIST_ITEM** atoms)
+    YR_ATOM_LIST_ITEM** atoms,
+    int* min_atom_quality)
 {
-  ATOM_TREE* atom_tree = (ATOM_TREE*) yr_malloc(sizeof(ATOM_TREE));
-  ATOM_TREE_NODE* temp;
+  YR_ATOM_TREE* atom_tree = (YR_ATOM_TREE*) yr_malloc(sizeof(YR_ATOM_TREE));
+
   YR_ATOM_LIST_ITEM* wide_atoms;
   YR_ATOM_LIST_ITEM* case_insensitive_atoms;
-  YR_ATOM_LIST_ITEM* triplet_atoms;
-
-  int min_atom_quality = YR_MIN_ATOM_QUALITY;
 
   if (atom_tree == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
@@ -1185,62 +1376,26 @@ int yr_atoms_extract_from_re(
     return ERROR_INSUFFICIENT_MEMORY;
   }
 
-  atom_tree->current_leaf = NULL;
-
-  atom_tree->root_node = _yr_atoms_extract_from_re_node(
-      config, re_ast->root_node, atom_tree, atom_tree->root_node);
-
-  if (atom_tree->root_node == NULL)
-  {
-    _yr_atoms_tree_destroy(atom_tree);
-    return ERROR_INSUFFICIENT_MEMORY;
-  }
-
-  if (atom_tree->current_leaf != NULL)
-    _yr_atoms_tree_node_append(atom_tree->root_node, atom_tree->current_leaf);
-
-  if (atom_tree->root_node->children_head ==
-      atom_tree->root_node->children_tail)
-  {
-    // The root OR node has a single child, there's no need for the OR node so
-    // we proceed to destroy it and use its child as root.
-
-    temp = atom_tree->root_node;
-    atom_tree->root_node = atom_tree->root_node->children_head;
-    yr_free(temp);
-  }
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      _yr_atoms_extract_from_re(config, re_ast, atom_tree->root_node),
+      _yr_atoms_tree_destroy(atom_tree));
 
   // Initialize atom list
   *atoms = NULL;
 
-  if (atom_tree->root_node != NULL)
-  {
-    // Choose the atoms that will be used.
-    FAIL_ON_ERROR_WITH_CLEANUP(
-        _yr_atoms_choose(
-            config, atom_tree->root_node, atoms, &min_atom_quality),
-        _yr_atoms_tree_destroy(atom_tree));
-  }
+  // Choose the atoms that will be used.
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      _yr_atoms_choose(config, atom_tree->root_node, atoms, min_atom_quality),
+      _yr_atoms_tree_destroy(atom_tree));
 
   _yr_atoms_tree_destroy(atom_tree);
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_atoms_extract_triplets(re_ast->root_node, &triplet_atoms),
+      _yr_atoms_expand_wildcards(*atoms),
       {
         yr_atoms_list_destroy(*atoms);
-        yr_atoms_list_destroy(triplet_atoms);
         *atoms = NULL;
       });
-
-  if (min_atom_quality < (yr_atoms_min_quality(config, triplet_atoms) >> 1))
-  {
-    yr_atoms_list_destroy(*atoms);
-    *atoms = triplet_atoms;
-  }
-  else
-  {
-    yr_atoms_list_destroy(triplet_atoms);
-  }
 
   if (flags & STRING_GFLAGS_WIDE)
   {
@@ -1285,7 +1440,7 @@ int yr_atoms_extract_from_re(
     if (*atoms == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
-    (*atoms)->atom_length = 0;
+    (*atoms)->atom.length = 0;
     (*atoms)->backtrack = 0;
     (*atoms)->forward_code = re_ast->root_node->forward_code;
     (*atoms)->backward_code = NULL;
@@ -1307,15 +1462,18 @@ int yr_atoms_extract_from_string(
     uint8_t* string,
     int32_t string_length,
     int flags,
-    YR_ATOM_LIST_ITEM** atoms)
+    YR_ATOM_LIST_ITEM** atoms,
+    int* min_atom_quality)
 {
   YR_ATOM_LIST_ITEM* item;
   YR_ATOM_LIST_ITEM* case_insensitive_atoms;
   YR_ATOM_LIST_ITEM* xor_atoms;
   YR_ATOM_LIST_ITEM* wide_atoms;
 
-  int max_quality;
-  int i, j, length;
+  YR_ATOM atom;
+
+  int quality, max_quality;
+  int i;
 
   item = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
@@ -1327,35 +1485,38 @@ int yr_atoms_extract_from_string(
   item->next = NULL;
   item->backtrack = 0;
 
-  length = yr_min(string_length, YR_MAX_ATOM_LENGTH);
+  item->atom.length = yr_min(string_length, YR_MAX_ATOM_LENGTH);
 
-  for (i = 0; i < length; i++)
-    item->atom[i] = string[i];
+  for (i = 0; i < item->atom.length; i++)
+  {
+    item->atom.bytes[i] = string[i];
+    item->atom.mask[i] = 0xFF;
+  }
 
-  item->atom_length = i;
+  max_quality = config->get_atom_quality(config, &item->atom);
 
-  max_quality = config->get_atom_quality(config, string, length);
+  atom.length = YR_MAX_ATOM_LENGTH;
+  memset(atom.mask, 0xFF, atom.length);
 
   for (i = YR_MAX_ATOM_LENGTH;
        i < string_length && max_quality < YR_MAX_ATOM_QUALITY;
        i++)
   {
-    int quality = config->get_atom_quality(
-        config,
-        string + i - YR_MAX_ATOM_LENGTH + 1,
-        YR_MAX_ATOM_LENGTH);
+    atom.length = YR_MAX_ATOM_LENGTH;
+    memcpy(atom.bytes, string + i - YR_MAX_ATOM_LENGTH + 1, atom.length);
+
+    quality = config->get_atom_quality(config, &atom);
 
     if (quality > max_quality)
     {
-      for (j = 0; j < YR_MAX_ATOM_LENGTH; j++)
-        item->atom[j] = string[i + j - YR_MAX_ATOM_LENGTH + 1];
-
+      memcpy(&item->atom, &atom, sizeof(atom));
       item->backtrack = i - YR_MAX_ATOM_LENGTH + 1;
       max_quality = quality;
     }
   }
 
   *atoms = item;
+  *min_atom_quality = max_quality;
 
   if (flags & STRING_GFLAGS_WIDE)
   {
@@ -1426,9 +1587,9 @@ int yr_atoms_extract_from_string(
 //
 
 void yr_atoms_tree_node_print(
-    ATOM_TREE_NODE* node)
+    YR_ATOM_TREE_NODE* node)
 {
-  ATOM_TREE_NODE* child;
+  YR_ATOM_TREE_NODE* child;
   int i;
 
   if (node == NULL)
@@ -1440,8 +1601,8 @@ void yr_atoms_tree_node_print(
   switch(node->type)
   {
   case ATOM_TREE_LEAF:
-    for (i = 0; i < node->atom_length; i++)
-      printf("%02X", node->atom[i]);
+    for (i = 0; i < node->atom.length; i++)
+      printf("%02X", node->atom.bytes[i]);
     break;
 
   case ATOM_TREE_AND:

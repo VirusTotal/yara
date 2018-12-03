@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 
 #include <yara.h>
+#include "util.h"
 
 char compile_error[1024];
 int warnings;
@@ -259,4 +260,65 @@ int read_file(
 _exit:
   close(fd);
   return rc;
+}
+
+
+void _assert_atoms(
+    RE_AST* re_ast,
+    int expected_atom_count,
+    atom* expected_atoms)
+{
+  YR_ATOMS_CONFIG c;
+  YR_ATOM_LIST_ITEM* atoms;
+  YR_ATOM_LIST_ITEM* atom;
+
+  int min_atom_quality;
+
+  c.get_atom_quality = yr_atoms_heuristic_quality;
+
+  yr_atoms_extract_from_re(&c, re_ast, 0, &atoms, &min_atom_quality);
+
+  atom = atoms;
+
+  while (atom != NULL)
+  {
+    if (expected_atom_count == 0)
+      exit(EXIT_FAILURE);
+
+    if (atom->atom.length != expected_atoms->length ||
+       memcmp(atom->atom.bytes, expected_atoms->data, atom->atom.length) != 0)
+    {
+      exit(EXIT_FAILURE);
+    }
+
+    expected_atoms++;
+    expected_atom_count--;
+    atom = atom->next;
+  }
+}
+
+
+void assert_re_atoms(
+    char* re,
+    int expected_atom_count,
+    atom* expected_atoms)
+{
+  RE_AST* re_ast;
+  RE_ERROR re_error;
+
+  yr_re_parse(re, &re_ast, &re_error);
+  _assert_atoms(re_ast, expected_atom_count, expected_atoms);
+}
+
+
+void assert_hex_atoms(
+    char* hex,
+    int expected_atom_count,
+    atom* expected_atoms)
+{
+  RE_AST* re_ast;
+  RE_ERROR re_error;
+
+  yr_re_parse_hex(hex, &re_ast, &re_error);
+  _assert_atoms(re_ast, expected_atom_count, expected_atoms);
 }

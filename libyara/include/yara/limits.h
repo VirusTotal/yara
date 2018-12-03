@@ -72,14 +72,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 // If the minimum atom quality for a string or regexp is below this constant,
-// a warning like "<string> is slowing down the scan" is shown. This used only
-// with heuristic atom quality, when using an atom quality table the user must
-// specify the threshold when calling yr_compiler_set_atom_quality_table
+// a warning like "<string> is slowing down the scan" is shown. This is used
+// only with heuristic atom quality, when using an atom quality table the user
+// must specify the threshold when calling yr_compiler_set_atom_quality_table.
 #ifndef YR_ATOM_QUALITY_WARNING_THRESHOLD
 #define YR_ATOM_QUALITY_WARNING_THRESHOLD \
-    (YR_MAX_ATOM_QUALITY - 2 * YR_MAX_ATOM_LENGTH + 3)
+    YR_MAX_ATOM_QUALITY - 20 * YR_MAX_ATOM_LENGTH + 38
 #endif
 
+// If a rule generates more than this number of atoms a warning is shown.
+#ifndef YR_ATOMS_PER_RULE_WARNING_THRESHOLD
+#define YR_ATOMS_PER_RULE_WARNING_THRESHOLD  10000
+#endif
 
 // Maximum number of nested "for" loops in rule. Rules ith nested loops
 // exceeding this number will be rejected by the compiler.

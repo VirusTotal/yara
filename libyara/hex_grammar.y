@@ -384,6 +384,7 @@ byte
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->value = (int) $1;
+        $$->mask = 0xFF;
       }
     | _MASKED_BYTE_
       {
@@ -394,6 +395,9 @@ byte
           $$ = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
 
           fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+          $$->value = 0x00;
+          $$->mask = 0x00;
         }
         else
         {
