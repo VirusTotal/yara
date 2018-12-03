@@ -44,6 +44,8 @@ test_bitmask_SOURCES = tests/test-bitmask.c
 test_bitmask_LDADD = libyara/.libs/libyara.a
 test_math_SOURCES = tests/test-math.c tests/util.c
 test_math_LDADD = libyara/.libs/libyara.a
+test_stack_SOURCES = tests/test-stack.c
+test_stack_LDADD = libyara/.libs/libyara.a
 
 TESTS = $(check_PROGRAMS)
 TESTS_ENVIRONMENT = TOP_SRCDIR=$(top_srcdir)
@@ -56,7 +58,8 @@ check_PROGRAMS = test-alignment \
   test-elf \
   test-version \
   test-bitmask \
-  test-math
+  test-math \
+  test-stack
 
 if POSIX
 # The -fsanitize=address option makes test-exception fail. Include the test
@@ -64,20 +67,20 @@ if POSIX
 if !ADDRESS_SANITIZER
 check_PROGRAMS+=test-exception
 test_exception_SOURCES = tests/test-exception.c tests/util.c
-test_exception_LDADD = -Llibyara/.libs -lyara
+test_exception_LDADD = libyara/.libs/libyara.a
 endif
 endif
 
 if MACHO_MODULE
 check_PROGRAMS+=test-macho
 test_macho_SOURCES = tests/test-macho.c tests/util.c
-test_macho_LDADD = -Llibyara/.libs -lyara
+test_macho_LDADD = libyara/.libs/libyara.a
 endif
 
 if DEX_MODULE
 check_PROGRAMS+=test-dex
 test_dex_SOURCES = tests/test-dex.c tests/util.c
-test_dex_LDADD = -Llibyara/.libs -lyara
+test_dex_LDADD = libyara/.libs/libyara.a
 endif
 
 # man pages

@@ -1142,6 +1142,7 @@ void test_re()
   assert_true_regexp("(a+|b)*", "ab", "ab");
   assert_true_regexp("a|b|c|d|e", "e", "e");
   assert_true_regexp("(a|b|c|d|e)f", "ef", "ef");
+  assert_true_regexp("a|b", "a", "a");
   assert_true_regexp(".b{2}", "abb", "abb");
   assert_true_regexp(".b{2,3}", "abbb", "abbb");
   assert_true_regexp(".b{2,3}?", "abbb", "abb");
@@ -1901,17 +1902,37 @@ void test_performance_warnings()
 
   assert_warning(
       "rule test { \
-        strings: $a = { 01 00 } \
-        condition: $a }")
-
-  assert_warning(
-      "rule test { \
         strings: $a = { 01 ?? ?? } \
         condition: $a }")
 
   assert_warning(
       "rule test { \
         strings: $a = { 01 ?? ?? 02 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 ?? ?2 03 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 ?? 02 1? } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 1? 2? 3? } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 1? 2? 3? 04 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 1? ?? 03 } \
         condition: $a }")
 
   assert_warning(
@@ -1934,24 +1955,29 @@ void test_performance_warnings()
         strings: $a = { 00 00 00 } \
         condition: $a }")
 
+  assert_no_warnings(
+      "rule test { \
+        strings: $a = { 00 00 01 } \
+        condition: $a }")
+
   assert_warning(
       "rule test { \
         strings: $a = { 00 00 00 00 } \
         condition: $a }")
 
-  assert_warning(
+  assert_no_warnings(
       "rule test { \
         strings: $a = { 00 00 00 01 } \
         condition: $a }")
 
   assert_warning(
       "rule test { \
-        strings: $a = { 00 00 01 02 } \
+        strings: $a = { FF FF FF FF } \
         condition: $a }")
 
-  assert_warning(
+  assert_no_warnings(
       "rule test { \
-        strings: $a = { FF FF FF FF } \
+        strings: $a = { 00 00 01 02 } \
         condition: $a }")
 
   assert_no_warnings(
@@ -1977,6 +2003,16 @@ void test_performance_warnings()
   assert_no_warnings(
        "rule test { \
         strings: $a = { 01 02 } \
+        condition: $a }")
+
+  assert_no_warnings(
+       "rule test { \
+        strings: $a = \"foo\" wide \
+        condition: $a }")
+
+  assert_no_warnings(
+       "rule test { \
+        strings: $a = \"MZ\" \
         condition: $a }")
 }
 
@@ -2023,7 +2059,7 @@ int main(int argc, char** argv)
   test_global_rules();
 
   #if !defined(USE_WINDOWS_PROC) && !defined(USE_NO_PROC)
-  test_process_scan();
+  //test_process_scan();
   #endif
 
   #if defined(HASH_MODULE)
