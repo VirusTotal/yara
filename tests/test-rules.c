@@ -2059,7 +2059,7 @@ int main(int argc, char** argv)
   test_global_rules();
 
   #if !defined(USE_WINDOWS_PROC) && !defined(USE_NO_PROC)
-  //test_process_scan();
+  test_process_scan();
   #endif
 
   #if defined(HASH_MODULE)
