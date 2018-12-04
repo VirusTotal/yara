@@ -148,11 +148,13 @@ void yr_re_node_destroy(
     RE_NODE* node)
 {
   RE_NODE* child = node->children_head;
+  RE_NODE* next_child;
 
   while (child != NULL)
   {
+    next_child = child->next_sibling;
     yr_re_node_destroy(child);
-    child = child->next_sibling;
+    child = next_child;
   }
 
   if (node->type == RE_NODE_CLASS)
