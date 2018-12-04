@@ -60,7 +60,7 @@ extern int hex_yydebug;
 
 union YYSTYPE
 {
-#line 86 "hex_grammar.y" /* yacc.c:1916  */
+#line 78 "hex_grammar.y" /* yacc.c:1916  */
 
   int64_t integer;
   RE_NODE *re_node;

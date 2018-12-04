@@ -584,16 +584,21 @@ static int _yr_atoms_choose(
 
     shift = _yr_atoms_trim(&item->atom);
 
-    if (item->atom.length == 0)
-      break;
+    if (item->atom.length > 0)
+    {
+      item->forward_code = node->re_nodes[shift]->forward_code;
+      item->backward_code = node->re_nodes[shift]->backward_code;
+      item->backtrack = 0;
+      item->next = NULL;
 
-    item->forward_code = node->re_nodes[shift]->forward_code;
-    item->backward_code = node->re_nodes[shift]->backward_code;
-    item->backtrack = 0;
-    item->next = NULL;
+      *chosen_atoms = item;
+      *atoms_quality = config->get_atom_quality(config, &item->atom);
+    }
+    else
+    {
+      yr_free(item);
+    }
 
-    *chosen_atoms = item;
-    *atoms_quality = config->get_atom_quality(config, &item->atom);
     break;
 
   case ATOM_TREE_OR:
@@ -1080,19 +1085,20 @@ static int _yr_atoms_extract_from_re(
 
         case RE_NODE_CONCAT:
 
-          re_node = si.re_node;
-          si.new_appending_node = NULL;
-          si.re_node = re_node->right;
+          re_node = si.re_node->children_tail;
 
-          FAIL_ON_ERROR_WITH_CLEANUP(
-              yr_stack_push(stack, &si),
-              yr_stack_destroy(stack));
+          // Push children right to left, they are poped left to right.
+          while (re_node != NULL)
+          {
+            si.new_appending_node = NULL;
+            si.re_node = re_node;
 
-          si.re_node = re_node->left;
+            FAIL_ON_ERROR_WITH_CLEANUP(
+                yr_stack_push(stack, &si),
+                yr_stack_destroy(stack));
 
-          FAIL_ON_ERROR_WITH_CLEANUP(
-              yr_stack_push(stack, &si),
-              yr_stack_destroy(stack));
+            re_node = re_node->prev_sibling;
+          }
 
           break;
 
@@ -1130,15 +1136,17 @@ static int _yr_atoms_extract_from_re(
               yr_stack_push(stack, &si),
               yr_stack_destroy(stack));
 
+          // RE_NODE_ALT nodes has only two children, so children_head is the
+          // left one, and children_tail is right one.
           si.new_appending_node = right_node;
-          si.re_node = re_node->right;
+          si.re_node = re_node->children_tail;
 
           FAIL_ON_ERROR_WITH_CLEANUP(
               yr_stack_push(stack, &si),
               yr_stack_destroy(stack));
 
           si.new_appending_node = left_node;
-          si.re_node = re_node->left;
+          si.re_node = re_node->children_head;
 
           FAIL_ON_ERROR_WITH_CLEANUP(
               yr_stack_push(stack, &si),
@@ -1158,7 +1166,8 @@ static int _yr_atoms_extract_from_re(
               yr_stack_destroy(stack));
 
           si.new_appending_node = NULL;
-          si.re_node = re_node->left;
+          // RE_NODE_PLUS nodes has a single child, which is children_head.
+          si.re_node = re_node->children_head;
 
           FAIL_ON_ERROR_WITH_CLEANUP(
               yr_stack_push(stack, &si),
@@ -1178,7 +1187,8 @@ static int _yr_atoms_extract_from_re(
               yr_stack_destroy(stack));
 
           si.new_appending_node = NULL;
-          si.re_node = re_node->left;
+          // RE_NODE_RANGE nodes has a single child, which is children_head.
+          si.re_node = re_node->children_head;
 
           // In a regexp like /a{10,20}/ the optimal atom is 'aaaa' (assuming
           // that YR_MAX_ATOM_LENGTH = 4) because the 'a' character must appear

@@ -51,14 +51,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define mark_as_not_fast_regexp() \
     ((RE_AST*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
 
-#define fail_if_too_many_ast_levels(cleanup_code) \
-    if (((RE_AST*) yyget_extra(yyscanner))->levels++ > RE_MAX_AST_LEVELS) \
-    { \
-      { cleanup_code } \
-      yyerror(yyscanner, lex_env, "string too long"); \
-      YYABORT; \
-    }
-
 #define fail_if(x, error) \
     if (x) \
     { \
@@ -125,81 +117,22 @@ tokens
       }
     | token token
       {
-        fail_if_too_many_ast_levels({
-          yr_re_node_destroy($1);
-          yr_re_node_destroy($2);
-        });
-
-        $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
+        $$ = yr_re_node_create(RE_NODE_CONCAT);
 
         destroy_node_if($$ == NULL, $1);
         destroy_node_if($$ == NULL, $2);
 
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+        yr_re_node_append_child($$, $1);
+        yr_re_node_append_child($$, $2);
       }
     | token token_sequence token
       {
-        RE_NODE* new_concat;
-        RE_NODE* leftmost_concat = NULL;
-        RE_NODE* leftmost_node = $2;
+        yr_re_node_append_child($2, $3);
+        yr_re_node_prepend_child($2, $1);
 
-        fail_if_too_many_ast_levels({
-          yr_re_node_destroy($1);
-          yr_re_node_destroy($2);
-          yr_re_node_destroy($3);
-        });
-
-        $$ = NULL;
-
-        /*
-        Some portions of the code (i.e: yr_re_split_at_chaining_point)
-        expect a left-unbalanced tree where the right child of a concat node
-        can't be another concat node. A concat node must be always the left
-        child of its parent if the parent is also a concat. For this reason
-        the can't simply create two new concat nodes arranged like this:
-
-                concat
-                 /   \
-                /     \
-            token's    \
-            subtree  concat
-                     /    \
-                    /      \
-                   /        \
-           token_sequence's  token's
-               subtree       subtree
-
-        Instead we must insert the subtree for the first token as the
-        leftmost node of the token_sequence subtree.
-        */
-
-        while (leftmost_node->type == RE_NODE_CONCAT)
-        {
-          leftmost_concat = leftmost_node;
-          leftmost_node = leftmost_node->left;
-        }
-
-        new_concat = yr_re_node_create(
-            RE_NODE_CONCAT, $1, leftmost_node);
-
-        if (new_concat != NULL)
-        {
-          if (leftmost_concat != NULL)
-          {
-            leftmost_concat->left = new_concat;
-            $$ = yr_re_node_create(RE_NODE_CONCAT, $2, $3);
-          }
-          else
-          {
-            $$ = yr_re_node_create(RE_NODE_CONCAT, new_concat, $3);
-          }
-        }
-
-        destroy_node_if($$ == NULL, $1);
-        destroy_node_if($$ == NULL, $2);
-        destroy_node_if($$ == NULL, $3);
-
-        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+        $$ = $2;
       }
     ;
 
@@ -207,21 +140,17 @@ tokens
 token_sequence
     : token_or_range
       {
-        $$ = $1;
+        $$ = yr_re_node_create(RE_NODE_CONCAT);
+
+        destroy_node_if($$ == NULL, $1);
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+        yr_re_node_append_child($$, $1);
       }
     | token_sequence token_or_range
       {
-        fail_if_too_many_ast_levels({
-          yr_re_node_destroy($1);
-          yr_re_node_destroy($2);
-        });
-
-        $$ = yr_re_node_create(RE_NODE_CONCAT, $1, $2);
-
-        destroy_node_if($$ == NULL, $1);
-        destroy_node_if($$ == NULL, $2);
-
-        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+        yr_re_node_append_child($1, $2);
+        $$ = $1;
       }
     ;
 
@@ -273,7 +202,7 @@ range
           YYABORT;
         }
 
-        $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
+        $$ = yr_re_node_create(RE_NODE_RANGE_ANY);
 
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
@@ -305,7 +234,7 @@ range
           YYABORT;
         }
 
-        $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
+        $$ = yr_re_node_create(RE_NODE_RANGE_ANY);
 
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
@@ -327,7 +256,7 @@ range
           YYABORT;
         }
 
-        $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
+        $$ = yr_re_node_create(RE_NODE_RANGE_ANY);
 
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
@@ -343,7 +272,7 @@ range
           YYABORT;
         }
 
-        $$ = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
+        $$ = yr_re_node_create(RE_NODE_RANGE_ANY);
 
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
@@ -362,24 +291,22 @@ alternatives
       {
         mark_as_not_fast_regexp();
 
-        fail_if_too_many_ast_levels({
-          yr_re_node_destroy($1);
-          yr_re_node_destroy($3);
-        });
-
-        $$ = yr_re_node_create(RE_NODE_ALT, $1, $3);
+        $$ = yr_re_node_create(RE_NODE_ALT);
 
         destroy_node_if($$ == NULL, $1);
         destroy_node_if($$ == NULL, $3);
 
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+        yr_re_node_append_child($$, $1);
+        yr_re_node_append_child($$, $3);
       }
     ;
 
 byte
     : _BYTE_
       {
-        $$ = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
+        $$ = yr_re_node_create(RE_NODE_LITERAL);
 
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
@@ -392,7 +319,7 @@ byte
 
         if (mask == 0x00)
         {
-          $$ = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
+          $$ = yr_re_node_create(RE_NODE_ANY);
 
           fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
@@ -401,7 +328,7 @@ byte
         }
         else
         {
-          $$ = yr_re_node_create(RE_NODE_MASKED_LITERAL, NULL, NULL);
+          $$ = yr_re_node_create(RE_NODE_MASKED_LITERAL);
 
           fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
