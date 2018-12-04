@@ -138,13 +138,21 @@ int yr_re_ast_emit_code(
 
 
 RE_NODE* yr_re_node_create(
-    int type,
-    RE_NODE* left,
-    RE_NODE* right);
+    int type);
 
 
 void yr_re_node_destroy(
     RE_NODE* node);
+
+
+void yr_re_node_append_child(
+    RE_NODE* node,
+    RE_NODE* child);
+
+
+void yr_re_node_prepend_child(
+    RE_NODE* node,
+    RE_NODE* child);
 
 
 int yr_re_exec(
