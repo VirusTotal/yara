@@ -584,16 +584,21 @@ static int _yr_atoms_choose(
 
     shift = _yr_atoms_trim(&item->atom);
 
-    if (item->atom.length == 0)
-      break;
+    if (item->atom.length > 0)
+    {
+      item->forward_code = node->re_nodes[shift]->forward_code;
+      item->backward_code = node->re_nodes[shift]->backward_code;
+      item->backtrack = 0;
+      item->next = NULL;
 
-    item->forward_code = node->re_nodes[shift]->forward_code;
-    item->backward_code = node->re_nodes[shift]->backward_code;
-    item->backtrack = 0;
-    item->next = NULL;
+      *chosen_atoms = item;
+      *atoms_quality = config->get_atom_quality(config, &item->atom);
+    }
+    else
+    {
+      yr_free(item);
+    }
 
-    *chosen_atoms = item;
-    *atoms_quality = config->get_atom_quality(config, &item->atom);
     break;
 
   case ATOM_TREE_OR:
