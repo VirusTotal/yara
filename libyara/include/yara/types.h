@@ -395,8 +395,10 @@ struct RE_NODE
 
   RE_CLASS* re_class;
 
-  RE_NODE* left;
-  RE_NODE* right;
+  RE_NODE* children_head;
+  RE_NODE* children_tail;
+  RE_NODE* prev_sibling;
+  RE_NODE* next_sibling;
 
   uint8_t* forward_code;
   uint8_t* backward_code;
@@ -413,7 +415,6 @@ struct RE_CLASS
 struct RE_AST
 {
   uint32_t flags;
-  uint16_t levels;
   RE_NODE* root_node;
 };
 
