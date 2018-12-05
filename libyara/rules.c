@@ -49,6 +49,9 @@ YR_API int yr_rules_define_integer_variable(
 {
   YR_EXTERNAL_VARIABLE* external;
 
+  if (identifier == NULL)
+    return ERROR_INVALID_ARGUMENT;
+
   external = rules->externals_list_head;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
@@ -75,6 +78,9 @@ YR_API int yr_rules_define_boolean_variable(
     int value)
 {
   YR_EXTERNAL_VARIABLE* external;
+
+  if (identifier == NULL)
+    return ERROR_INVALID_ARGUMENT;
 
   external = rules->externals_list_head;
 
@@ -103,6 +109,9 @@ YR_API int yr_rules_define_float_variable(
 {
   YR_EXTERNAL_VARIABLE* external;
 
+  if (identifier == NULL)
+    return ERROR_INVALID_ARGUMENT;
+
   external = rules->externals_list_head;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
@@ -129,6 +138,9 @@ YR_API int yr_rules_define_string_variable(
     const char* value)
 {
   YR_EXTERNAL_VARIABLE* external;
+
+  if (identifier == NULL || value == NULL)
+    return ERROR_INVALID_ARGUMENT;
 
   external = rules->externals_list_head;
 
