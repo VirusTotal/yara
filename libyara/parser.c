@@ -836,6 +836,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
   int result;
 
   YR_FIXUP *fixup;
+  YR_STRING* string;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   yr_get_configuration(
@@ -856,8 +857,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
   }
 
   // Check for unreferenced (unused) strings.
-
-  YR_STRING* string = rule->strings;
+  string = rule->strings;
 
   while (!STRING_IS_NULL(string))
   {
