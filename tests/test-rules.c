@@ -1343,7 +1343,7 @@ void test_re()
   // Test case for issue #324
   assert_true_regexp("whatever|   x.   x", "   xy   x", "   xy   x");
 
-  // test case for issue #503, \x without two following hex-digits
+  // Test case for issue #503, \x without two following hex-digits
   assert_regexp_syntax_error("\\x0");
   assert_regexp_syntax_error("\\x");
 
@@ -1364,6 +1364,11 @@ void test_re()
 
   assert_error(
       "rule test { strings: $a = /[a\\/ condition: $a }",
+      ERROR_SYNTAX_ERROR);
+
+  // Test case for issue #996
+  assert_error(
+      "rule test {strings:$=/.{,}? /",
       ERROR_SYNTAX_ERROR);
 
   assert_true_rule_blob(

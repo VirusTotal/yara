@@ -479,6 +479,8 @@ int yr_re_ast_split_at_chaining_point(
   {
     if (!child->greedy &&
          child->type == RE_NODE_RANGE_ANY &&
+         child->prev_sibling != NULL &&
+         child->next_sibling != NULL &&
         (child->start > YR_STRING_CHAINING_THRESHOLD ||
          child->end > YR_STRING_CHAINING_THRESHOLD))
     {
@@ -497,11 +499,8 @@ int yr_re_ast_split_at_chaining_point(
 
       re_ast->root_node->children_head = child->next_sibling;
 
-      if (child->prev_sibling != NULL)
-        child->prev_sibling->next_sibling = NULL;
-
-      if (child->next_sibling != NULL)
-        child->next_sibling->prev_sibling = NULL;
+      child->prev_sibling->next_sibling = NULL;
+      child->next_sibling->prev_sibling = NULL;
 
       *min_gap = child->start;
       *max_gap = child->end;
