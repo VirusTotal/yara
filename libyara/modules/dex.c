@@ -374,6 +374,16 @@ uint32_t load_encoded_field(
 
   *previous_field_idx = encoded_field.field_idx_diff + *previous_field_idx;
 
+  int name_idx = (int) get_integer(
+      dex->object, "field_ids[%i].name_idx", *previous_field_idx);
+
+  if (name_idx == (int)(UNDEFINED & 0xFFFFFFFF))
+    return 0;
+
+  #ifdef DEBUG_DEX_MODULE
+  printf("[DEX]\tNAME_IDX 0x%x\n", name_idx);
+  #endif
+
   set_integer(
       encoded_field.field_idx_diff,
       dex->object,
@@ -403,13 +413,6 @@ uint32_t load_encoded_field(
       *previous_field_idx,
       encoded_field.field_idx_diff,
       encoded_field.access_flags);
-  #endif
-
-  int name_idx = (int) get_integer(
-      dex->object, "field_ids[%i].name_idx", *previous_field_idx);
-
-  #ifdef DEBUG_DEX_MODULE
-  printf("[DEX]\tNAME_IDX 0x%x\n", name_idx);
   #endif
 
   SIZED_STRING* field_name = get_string(
@@ -515,6 +518,16 @@ uint32_t load_encoded_method(
 
   *previous_method_idx = encoded_method.method_idx_diff + *previous_method_idx;
 
+  int name_idx = (int) get_integer(
+      dex->object, "method_ids[%i].name_idx", *previous_method_idx);
+
+  if (name_idx == (int)(UNDEFINED & 0xFFFFFFFF))
+    return 0;
+
+  #ifdef DEBUG_DEX_MODULE
+  printf("[DEX]\tNAME_IDX 0x%x\n", name_idx);
+  #endif
+
   set_integer(
       encoded_method.method_idx_diff,
       dex->object,
@@ -551,13 +564,6 @@ uint32_t load_encoded_method(
       encoded_method.method_idx_diff,
       encoded_method.access_flags,
       encoded_method.code_off);
-  #endif
-
-  int name_idx = (int) get_integer(
-      dex->object, "method_ids[%i].name_idx", *previous_method_idx);
-
-  #ifdef DEBUG_DEX_MODULE
-  printf("[DEX]\tNAME_IDX 0x%x\n", name_idx);
   #endif
 
   SIZED_STRING* method_name = get_string(
@@ -680,6 +686,7 @@ void dex_parse(
   int i, j;
 
   uint32_t uleb128_size = 0;
+  uint32_t new_size = 0;
   uint32_t index_class_data_item = 0;
   uint32_t index_encoded_method = 0;
   uint32_t index_encoded_field = 0;
@@ -981,13 +988,19 @@ void dex_parse(
       uint32_t previous_field_idx = 0;
       for (j = 0; j < class_data_item.static_fields_size; j++)
       {
-        uleb128_size += load_encoded_field(
+        new_size = load_encoded_field(
             dex,
             yr_le32toh(class_id_item->class_data_offset) + uleb128_size,
             &previous_field_idx,
             index_encoded_field,
             1,0);
 
+        // If the current field isn't parsed the other fields aren't likely to
+        // parse.
+        if (new_size == 0)
+          break;
+
+        uleb128_size += new_size;
         index_encoded_field += 1;
       }
 
@@ -999,13 +1012,19 @@ void dex_parse(
 
       for (j = 0; j < class_data_item.instance_fields_size; j++)
       {
-        uleb128_size += load_encoded_field(
+        new_size = load_encoded_field(
             dex,
             yr_le32toh(class_id_item->class_data_offset) + uleb128_size,
             &previous_field_idx,
             index_encoded_field,
             0, 1);
 
+        // If the current field isn't parsed the other fields aren't likely to
+        // parse.
+        if (new_size == 0)
+          break;
+
+        uleb128_size += new_size;
         index_encoded_field += 1;
       }
 
@@ -1017,13 +1036,19 @@ void dex_parse(
 
       for (j = 0; j < class_data_item.direct_methods_size; j++)
       {
-        uleb128_size += load_encoded_method(
+        new_size = load_encoded_method(
             dex,
             yr_le32toh(class_id_item->class_data_offset) + uleb128_size,
             &previous_method_idx,
             index_encoded_method,
             1, 0);
 
+        // If the current field isn't parsed the other fields aren't likely to
+        // parse.
+        if (new_size == 0)
+          break;
+
+        uleb128_size += new_size;
         index_encoded_method += 1;
       }
 
@@ -1035,13 +1060,19 @@ void dex_parse(
 
       for (j = 0; j < class_data_item.virtual_methods_size; j++)
       {
-        uleb128_size += load_encoded_method(
+        new_size = load_encoded_method(
             dex,
             yr_le32toh(class_id_item->class_data_offset) + uleb128_size,
             &previous_method_idx,
             index_encoded_method,
             0, 1);
 
+        // If the current field isn't parsed the other fields aren't likely to
+        // parse.
+        if (new_size == 0)
+          break;
+
+        uleb128_size += new_size;
         index_encoded_method += 1;
       }
 
