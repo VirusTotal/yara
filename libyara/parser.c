@@ -295,12 +295,14 @@ static int _yr_parser_write_string(
     SIZED_STRING* str,
     RE_AST* re_ast,
     YR_STRING** string,
-    int* min_atom_quality)
+    int* min_atom_quality,
+    int* num_atom)
 {
   SIZED_STRING* literal_string;
+  YR_ATOM_LIST_ITEM* atom;
   YR_ATOM_LIST_ITEM* atom_list = NULL;
 
-  int result;
+  int c, result;
   int max_string_len;
   bool free_literal = false;
 
@@ -381,7 +383,8 @@ static int _yr_parser_write_string(
           (uint8_t*) literal_string->c_string,
           (int32_t) literal_string->length,
           flags,
-          &atom_list);
+          &atom_list,
+          min_atom_quality);
     }
   }
   else
@@ -395,7 +398,11 @@ static int _yr_parser_write_string(
 
     if (result == ERROR_SUCCESS)
       result = yr_atoms_extract_from_re(
-          &compiler->atoms_config, re_ast, flags, &atom_list);
+          &compiler->atoms_config,
+          re_ast,
+          flags,
+          &atom_list,
+          min_atom_quality);
   }
 
   if (result == ERROR_SUCCESS)
@@ -408,9 +415,6 @@ static int _yr_parser_write_string(
         compiler->matches_arena);
   }
 
-  *min_atom_quality = yr_atoms_min_quality(
-      &compiler->atoms_config, atom_list);
-
   if (flags & STRING_GFLAGS_LITERAL)
   {
     if (flags & STRING_GFLAGS_WIDE)
@@ -421,6 +425,17 @@ static int _yr_parser_write_string(
     if (max_string_len <= YR_MAX_ATOM_LENGTH)
       (*string)->g_flags |= STRING_GFLAGS_FITS_IN_ATOM;
   }
+
+  atom = atom_list;
+  c = 0;
+
+  while (atom != NULL)
+  {
+    atom = atom->next;
+    c++;
+  }
+
+  (*num_atom) += c;
 
   if (free_literal)
     yr_free(literal_string);
@@ -443,8 +458,8 @@ int yr_parser_reduce_string_declaration(
     SIZED_STRING* str,
     YR_STRING** string)
 {
-  int min_atom_quality;
-  int min_atom_quality_aux;
+  int min_atom_quality = YR_MIN_ATOM_QUALITY;
+  int min_atom_quality_aux = YR_MIN_ATOM_QUALITY;
 
   int32_t min_gap;
   int32_t max_gap;
@@ -599,7 +614,8 @@ int yr_parser_reduce_string_declaration(
         NULL,
         re_ast,
         string,
-        &min_atom_quality);
+        &min_atom_quality,
+        &compiler->current_rule->num_atoms);
 
     if (result != ERROR_SUCCESS)
       goto _exit;
@@ -638,7 +654,8 @@ int yr_parser_reduce_string_declaration(
           NULL,
           re_ast,
           &aux_string,
-          &min_atom_quality_aux);
+          &min_atom_quality_aux,
+          &compiler->current_rule->num_atoms);
 
       if (result != ERROR_SUCCESS)
         goto _exit;
@@ -668,7 +685,8 @@ int yr_parser_reduce_string_declaration(
         str,
         NULL,
         string,
-        &min_atom_quality);
+        &min_atom_quality,
+        &compiler->current_rule->num_atoms);
 
     if (result != ERROR_SUCCESS)
       goto _exit;
@@ -690,8 +708,9 @@ int yr_parser_reduce_string_declaration(
   {
     yywarning(
         yyscanner,
-        "%s is slowing down scanning",
-        (*string)->identifier);
+        "%s in rule %s is slowing down scanning",
+        (*string)->identifier,
+        compiler->current_rule->identifier);
   }
 
 _exit:
@@ -747,6 +766,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
 
   (*rule)->g_flags = flags;
   (*rule)->ns = compiler->current_namespace;
+  (*rule)->num_atoms = 0;
 
   #ifdef PROFILING_ENABLED
   (*rule)->time_cost = 0;
@@ -816,15 +836,28 @@ int yr_parser_reduce_rule_declaration_phase_2(
   int result;
 
   YR_FIXUP *fixup;
+  YR_STRING* string;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
-
-  // Check for unreferenced (unused) strings.
-
-  YR_STRING* string = rule->strings;
 
   yr_get_configuration(
       YR_CONFIG_MAX_STRINGS_PER_RULE,
       (void*) &max_strings_per_rule);
+
+  // Show warning if the rule is generating too many atoms. The warning is
+  // shown if the number of atoms is greater than 20 times the maximum number
+  // of strings allowed for a rule, as 20 is minimum number of atoms generated
+  // for a string using *nocase*, *ascii* and *wide* modifiers simultaneosly.
+
+  if (rule->num_atoms > YR_ATOMS_PER_RULE_WARNING_THRESHOLD)
+  {
+    yywarning(
+        yyscanner,
+        "rule %s is slowing down scanning",
+        rule->identifier);
+  }
+
+  // Check for unreferenced (unused) strings.
+  string = rule->strings;
 
   while (!STRING_IS_NULL(string))
   {

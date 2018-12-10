@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2018. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,90 +27,55 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YR_STRUTILS_H
-#define YR_STRUTILS_H
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <yara/integers.h>
+#include <yara/stack.h>
+#include <yara.h>
+#include "util.h"
 
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+int main(int argc, char** argv)
+{
+  YR_STACK* stack;
 
-#if !defined(PRIu64)
-#define PRIu64 "I64u"
-#endif
+  int item;
 
-#if !defined(PRIx64)
-#define PRIx64 "I64x"
-#endif
+  yr_initialize();
+  yr_stack_create(1, sizeof(item),  &stack);
 
-#if !defined(PRId64)
-#define PRId64 "I64d"
-#endif
+  item = 1;
 
-#else
-#include <inttypes.h>
-#endif
+  if (yr_stack_push(stack, &item) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
 
+  item = 2;
 
-// Cygwin already has these functions.
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#if defined(_MSC_VER) && _MSC_VER < 1900
+  if (yr_stack_push(stack, &item) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
 
-#if !defined(snprintf)
-#define snprintf _snprintf
-#endif
+  item = 3;
 
-#endif
-#define strcasecmp _stricmp
-#define strncasecmp _strnicmp
-#endif
+  if (yr_stack_push(stack, &item) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
 
+  item = 4;
 
-uint64_t xtoi(
-    const char* hexstr);
+  if (yr_stack_push(stack, &item) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
 
+  if (!yr_stack_pop(stack, &item) || item != 4)
+    exit(EXIT_FAILURE);
 
-#if !HAVE_STRLCPY && !defined(strlcpy)
-size_t strlcpy(
-    char *dst,
-    const char *src,
-    size_t size);
-#endif
+  if (!yr_stack_pop(stack, &item) || item != 3)
+    exit(EXIT_FAILURE);
 
+  if (!yr_stack_pop(stack, &item) || item != 2)
+    exit(EXIT_FAILURE);
 
-#if !HAVE_STRLCAT && !defined(strlcat)
-size_t strlcat(
-    char *dst,
-    const char *src,
-    size_t size);
-#endif
+  if (!yr_stack_pop(stack, &item) || item != 1)
+    exit(EXIT_FAILURE);
 
+  if (yr_stack_pop(stack, &item) || item != 1)
+    exit(EXIT_FAILURE);
 
-#if !HAVE_MEMMEM && !defined(memmem)
-void* memmem(
-    const void *haystack,
-    size_t haystack_size,
-    const void *needle,
-    size_t needle_size);
-#endif
-
-
-int strnlen_w(
-    const char* w_str);
-
-
-int strcmp_w(
-    const char* w_str,
-    const char* str);
-
-
-size_t strlcpy_w(
-    char* dst,
-    const char* w_src,
-    size_t n);
-
-#endif
+  yr_stack_destroy(stack);
+}

@@ -871,6 +871,9 @@ int _yr_compiler_define_variable(
 
   char* id;
 
+  if (external->identifier == NULL)
+    return ERROR_INVALID_ARGUMENT;
+
   object = (YR_OBJECT*) yr_hash_table_lookup(
       compiler->objects_table,
       external->identifier,
@@ -898,6 +901,9 @@ int _yr_compiler_define_variable(
   if (external->type == EXTERNAL_VARIABLE_TYPE_STRING)
   {
     char* val;
+
+    if (external->value.s == NULL)
+      return ERROR_INVALID_ARGUMENT;
 
     FAIL_ON_ERROR(yr_arena_write_string(
         compiler->sz_arena,

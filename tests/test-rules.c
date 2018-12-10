@@ -1142,6 +1142,7 @@ void test_re()
   assert_true_regexp("(a+|b)*", "ab", "ab");
   assert_true_regexp("a|b|c|d|e", "e", "e");
   assert_true_regexp("(a|b|c|d|e)f", "ef", "ef");
+  assert_true_regexp("a|b", "a", "a");
   assert_true_regexp(".b{2}", "abb", "abb");
   assert_true_regexp(".b{2,3}", "abbb", "abbb");
   assert_true_regexp(".b{2,3}?", "abbb", "abb");
@@ -1342,7 +1343,7 @@ void test_re()
   // Test case for issue #324
   assert_true_regexp("whatever|   x.   x", "   xy   x", "   xy   x");
 
-  // test case for issue #503, \x without two following hex-digits
+  // Test case for issue #503, \x without two following hex-digits
   assert_regexp_syntax_error("\\x0");
   assert_regexp_syntax_error("\\x");
 
@@ -1363,6 +1364,11 @@ void test_re()
 
   assert_error(
       "rule test { strings: $a = /[a\\/ condition: $a }",
+      ERROR_SYNTAX_ERROR);
+
+  // Test case for issue #996
+  assert_error(
+      "rule test {strings:$=/.{,}? /",
       ERROR_SYNTAX_ERROR);
 
   assert_true_rule_blob(
@@ -1901,17 +1907,37 @@ void test_performance_warnings()
 
   assert_warning(
       "rule test { \
-        strings: $a = { 01 00 } \
-        condition: $a }")
-
-  assert_warning(
-      "rule test { \
         strings: $a = { 01 ?? ?? } \
         condition: $a }")
 
   assert_warning(
       "rule test { \
         strings: $a = { 01 ?? ?? 02 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 ?? ?2 03 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 01 ?? 02 1? } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 1? 2? 3? } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 1? 2? 3? 04 } \
+        condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = { 1? ?? 03 } \
         condition: $a }")
 
   assert_warning(
@@ -1934,24 +1960,29 @@ void test_performance_warnings()
         strings: $a = { 00 00 00 } \
         condition: $a }")
 
+  assert_no_warnings(
+      "rule test { \
+        strings: $a = { 00 00 01 } \
+        condition: $a }")
+
   assert_warning(
       "rule test { \
         strings: $a = { 00 00 00 00 } \
         condition: $a }")
 
-  assert_warning(
+  assert_no_warnings(
       "rule test { \
         strings: $a = { 00 00 00 01 } \
         condition: $a }")
 
   assert_warning(
       "rule test { \
-        strings: $a = { 00 00 01 02 } \
+        strings: $a = { FF FF FF FF } \
         condition: $a }")
 
-  assert_warning(
+  assert_no_warnings(
       "rule test { \
-        strings: $a = { FF FF FF FF } \
+        strings: $a = { 00 00 01 02 } \
         condition: $a }")
 
   assert_no_warnings(
@@ -1977,6 +2008,16 @@ void test_performance_warnings()
   assert_no_warnings(
        "rule test { \
         strings: $a = { 01 02 } \
+        condition: $a }")
+
+  assert_no_warnings(
+       "rule test { \
+        strings: $a = \"foo\" wide \
+        condition: $a }")
+
+  assert_no_warnings(
+       "rule test { \
+        strings: $a = \"MZ\" \
         condition: $a }")
 }
 

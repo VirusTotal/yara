@@ -93,14 +93,6 @@
 #define mark_as_not_fast_regexp() \
     ((RE_AST*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
 
-#define fail_if_too_many_ast_levels(cleanup_code) \
-    if (((RE_AST*) yyget_extra(yyscanner))->levels++ > RE_MAX_AST_LEVELS) \
-    { \
-      { cleanup_code } \
-      yyerror(yyscanner, lex_env, "string too long"); \
-      YYABORT; \
-    }
-
 #define fail_if(x, error) \
     if (x) \
     { \
@@ -115,7 +107,7 @@
     } \
 
 
-#line 119 "hex_grammar.c" /* yacc.c:339  */
+#line 111 "hex_grammar.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -165,12 +157,12 @@ extern int hex_yydebug;
 
 union YYSTYPE
 {
-#line 86 "hex_grammar.y" /* yacc.c:355  */
+#line 78 "hex_grammar.y" /* yacc.c:355  */
 
   int64_t integer;
   RE_NODE *re_node;
 
-#line 174 "hex_grammar.c" /* yacc.c:355  */
+#line 166 "hex_grammar.c" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -186,7 +178,7 @@ int hex_yyparse (void *yyscanner, HEX_LEX_ENVIRONMENT *lex_env);
 
 /* Copy the second part of user declarations.  */
 
-#line 190 "hex_grammar.c" /* yacc.c:358  */
+#line 182 "hex_grammar.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -484,9 +476,9 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   113,   113,   122,   126,   140,   208,   212,   230,   234,
-     243,   248,   247,   260,   283,   315,   337,   357,   361,   380,
-     388
+       0,   105,   105,   114,   118,   130,   141,   150,   159,   163,
+     172,   177,   176,   189,   212,   244,   266,   286,   290,   307,
+     316
 };
 #endif
 
@@ -1026,45 +1018,45 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, void *yyscanner, H
   switch (yytype)
     {
           case 16: /* tokens  */
-#line 102 "hex_grammar.y" /* yacc.c:1258  */
+#line 94 "hex_grammar.y" /* yacc.c:1258  */
       { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
-#line 1032 "hex_grammar.c" /* yacc.c:1258  */
+#line 1024 "hex_grammar.c" /* yacc.c:1258  */
         break;
 
     case 17: /* token_sequence  */
-#line 103 "hex_grammar.y" /* yacc.c:1258  */
+#line 95 "hex_grammar.y" /* yacc.c:1258  */
       { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
-#line 1038 "hex_grammar.c" /* yacc.c:1258  */
+#line 1030 "hex_grammar.c" /* yacc.c:1258  */
         break;
 
     case 18: /* token_or_range  */
-#line 104 "hex_grammar.y" /* yacc.c:1258  */
+#line 96 "hex_grammar.y" /* yacc.c:1258  */
       { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
-#line 1044 "hex_grammar.c" /* yacc.c:1258  */
+#line 1036 "hex_grammar.c" /* yacc.c:1258  */
         break;
 
     case 19: /* token  */
-#line 105 "hex_grammar.y" /* yacc.c:1258  */
+#line 97 "hex_grammar.y" /* yacc.c:1258  */
       { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
-#line 1050 "hex_grammar.c" /* yacc.c:1258  */
+#line 1042 "hex_grammar.c" /* yacc.c:1258  */
         break;
 
     case 21: /* range  */
-#line 108 "hex_grammar.y" /* yacc.c:1258  */
+#line 100 "hex_grammar.y" /* yacc.c:1258  */
       { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
-#line 1056 "hex_grammar.c" /* yacc.c:1258  */
+#line 1048 "hex_grammar.c" /* yacc.c:1258  */
         break;
 
     case 22: /* alternatives  */
-#line 107 "hex_grammar.y" /* yacc.c:1258  */
+#line 99 "hex_grammar.y" /* yacc.c:1258  */
       { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
-#line 1062 "hex_grammar.c" /* yacc.c:1258  */
+#line 1054 "hex_grammar.c" /* yacc.c:1258  */
         break;
 
     case 23: /* byte  */
-#line 106 "hex_grammar.y" /* yacc.c:1258  */
+#line 98 "hex_grammar.y" /* yacc.c:1258  */
       { yr_re_node_destroy(((*yyvaluep).re_node)); ((*yyvaluep).re_node) = NULL; }
-#line 1068 "hex_grammar.c" /* yacc.c:1258  */
+#line 1060 "hex_grammar.c" /* yacc.c:1258  */
         break;
 
 
@@ -1330,178 +1322,115 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 114 "hex_grammar.y" /* yacc.c:1663  */
+#line 106 "hex_grammar.y" /* yacc.c:1663  */
     {
         RE_AST* re_ast = yyget_extra(yyscanner);
         re_ast->root_node = (yyvsp[-1].re_node);
       }
-#line 1339 "hex_grammar.c" /* yacc.c:1663  */
+#line 1331 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 3:
-#line 123 "hex_grammar.y" /* yacc.c:1663  */
+#line 115 "hex_grammar.y" /* yacc.c:1663  */
     {
         (yyval.re_node) = (yyvsp[0].re_node);
       }
-#line 1347 "hex_grammar.c" /* yacc.c:1663  */
+#line 1339 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 4:
-#line 127 "hex_grammar.y" /* yacc.c:1663  */
+#line 119 "hex_grammar.y" /* yacc.c:1663  */
     {
-        fail_if_too_many_ast_levels({
-          yr_re_node_destroy((yyvsp[-1].re_node));
-          yr_re_node_destroy((yyvsp[0].re_node));
-        });
-
-        (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[-1].re_node), (yyvsp[0].re_node));
+        (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT);
 
         destroy_node_if((yyval.re_node) == NULL, (yyvsp[-1].re_node));
         destroy_node_if((yyval.re_node) == NULL, (yyvsp[0].re_node));
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+        yr_re_node_append_child((yyval.re_node), (yyvsp[-1].re_node));
+        yr_re_node_append_child((yyval.re_node), (yyvsp[0].re_node));
       }
-#line 1365 "hex_grammar.c" /* yacc.c:1663  */
+#line 1355 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 5:
-#line 141 "hex_grammar.y" /* yacc.c:1663  */
+#line 131 "hex_grammar.y" /* yacc.c:1663  */
     {
-        RE_NODE* new_concat;
-        RE_NODE* leftmost_concat = NULL;
-        RE_NODE* leftmost_node = (yyvsp[-1].re_node);
+        yr_re_node_append_child((yyvsp[-1].re_node), (yyvsp[0].re_node));
+        yr_re_node_prepend_child((yyvsp[-1].re_node), (yyvsp[-2].re_node));
 
-        fail_if_too_many_ast_levels({
-          yr_re_node_destroy((yyvsp[-2].re_node));
-          yr_re_node_destroy((yyvsp[-1].re_node));
-          yr_re_node_destroy((yyvsp[0].re_node));
-        });
-
-        (yyval.re_node) = NULL;
-
-        /*
-        Some portions of the code (i.e: yr_re_split_at_chaining_point)
-        expect a left-unbalanced tree where the right child of a concat node
-        can't be another concat node. A concat node must be always the left
-        child of its parent if the parent is also a concat. For this reason
-        the can't simply create two new concat nodes arranged like this:
-
-                concat
-                 /   \
-                /     \
-            token's    \
-            subtree  concat
-                     /    \
-                    /      \
-                   /        \
-           token_sequence's  token's
-               subtree       subtree
-
-        Instead we must insert the subtree for the first token as the
-        leftmost node of the token_sequence subtree.
-        */
-
-        while (leftmost_node->type == RE_NODE_CONCAT)
-        {
-          leftmost_concat = leftmost_node;
-          leftmost_node = leftmost_node->left;
-        }
-
-        new_concat = yr_re_node_create(
-            RE_NODE_CONCAT, (yyvsp[-2].re_node), leftmost_node);
-
-        if (new_concat != NULL)
-        {
-          if (leftmost_concat != NULL)
-          {
-            leftmost_concat->left = new_concat;
-            (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[-1].re_node), (yyvsp[0].re_node));
-          }
-          else
-          {
-            (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, new_concat, (yyvsp[0].re_node));
-          }
-        }
-
-        destroy_node_if((yyval.re_node) == NULL, (yyvsp[-2].re_node));
-        destroy_node_if((yyval.re_node) == NULL, (yyvsp[-1].re_node));
-        destroy_node_if((yyval.re_node) == NULL, (yyvsp[0].re_node));
-
-        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+        (yyval.re_node) = (yyvsp[-1].re_node);
       }
-#line 1433 "hex_grammar.c" /* yacc.c:1663  */
+#line 1366 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 6:
-#line 209 "hex_grammar.y" /* yacc.c:1663  */
+#line 142 "hex_grammar.y" /* yacc.c:1663  */
     {
-        (yyval.re_node) = (yyvsp[0].re_node);
+        (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT);
+
+        destroy_node_if((yyval.re_node) == NULL, (yyvsp[0].re_node));
+        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+        yr_re_node_append_child((yyval.re_node), (yyvsp[0].re_node));
       }
-#line 1441 "hex_grammar.c" /* yacc.c:1663  */
+#line 1379 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 7:
-#line 213 "hex_grammar.y" /* yacc.c:1663  */
+#line 151 "hex_grammar.y" /* yacc.c:1663  */
     {
-        fail_if_too_many_ast_levels({
-          yr_re_node_destroy((yyvsp[-1].re_node));
-          yr_re_node_destroy((yyvsp[0].re_node));
-        });
-
-        (yyval.re_node) = yr_re_node_create(RE_NODE_CONCAT, (yyvsp[-1].re_node), (yyvsp[0].re_node));
-
-        destroy_node_if((yyval.re_node) == NULL, (yyvsp[-1].re_node));
-        destroy_node_if((yyval.re_node) == NULL, (yyvsp[0].re_node));
-
-        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+        yr_re_node_append_child((yyvsp[-1].re_node), (yyvsp[0].re_node));
+        (yyval.re_node) = (yyvsp[-1].re_node);
       }
-#line 1459 "hex_grammar.c" /* yacc.c:1663  */
+#line 1388 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 8:
-#line 231 "hex_grammar.y" /* yacc.c:1663  */
+#line 160 "hex_grammar.y" /* yacc.c:1663  */
     {
         (yyval.re_node) = (yyvsp[0].re_node);
       }
-#line 1467 "hex_grammar.c" /* yacc.c:1663  */
+#line 1396 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 9:
-#line 235 "hex_grammar.y" /* yacc.c:1663  */
+#line 164 "hex_grammar.y" /* yacc.c:1663  */
     {
         (yyval.re_node) = (yyvsp[0].re_node);
         (yyval.re_node)->greedy = false;
       }
-#line 1476 "hex_grammar.c" /* yacc.c:1663  */
+#line 1405 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 10:
-#line 244 "hex_grammar.y" /* yacc.c:1663  */
+#line 173 "hex_grammar.y" /* yacc.c:1663  */
     {
         (yyval.re_node) = (yyvsp[0].re_node);
       }
-#line 1484 "hex_grammar.c" /* yacc.c:1663  */
+#line 1413 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 11:
-#line 248 "hex_grammar.y" /* yacc.c:1663  */
+#line 177 "hex_grammar.y" /* yacc.c:1663  */
     {
         lex_env->inside_or++;
       }
-#line 1492 "hex_grammar.c" /* yacc.c:1663  */
+#line 1421 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 12:
-#line 252 "hex_grammar.y" /* yacc.c:1663  */
+#line 181 "hex_grammar.y" /* yacc.c:1663  */
     {
         (yyval.re_node) = (yyvsp[-1].re_node);
         lex_env->inside_or--;
       }
-#line 1501 "hex_grammar.c" /* yacc.c:1663  */
+#line 1430 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 13:
-#line 261 "hex_grammar.y" /* yacc.c:1663  */
+#line 190 "hex_grammar.y" /* yacc.c:1663  */
     {
         if ((yyvsp[-1].integer) <= 0)
         {
@@ -1517,18 +1446,18 @@ yyreduce:
           YYABORT;
         }
 
-        (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
+        (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY);
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->start = (int) (yyvsp[-1].integer);
         (yyval.re_node)->end = (int) (yyvsp[-1].integer);
       }
-#line 1528 "hex_grammar.c" /* yacc.c:1663  */
+#line 1457 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 14:
-#line 284 "hex_grammar.y" /* yacc.c:1663  */
+#line 213 "hex_grammar.y" /* yacc.c:1663  */
     {
         if (lex_env->inside_or &&
             ((yyvsp[-3].integer) > YR_STRING_CHAINING_THRESHOLD ||
@@ -1553,18 +1482,18 @@ yyreduce:
           YYABORT;
         }
 
-        (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
+        (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY);
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->start = (int) (yyvsp[-3].integer);
         (yyval.re_node)->end = (int) (yyvsp[-1].integer);
       }
-#line 1564 "hex_grammar.c" /* yacc.c:1663  */
+#line 1493 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 15:
-#line 316 "hex_grammar.y" /* yacc.c:1663  */
+#line 245 "hex_grammar.y" /* yacc.c:1663  */
     {
         if (lex_env->inside_or)
         {
@@ -1579,18 +1508,18 @@ yyreduce:
           YYABORT;
         }
 
-        (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
+        (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY);
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->start = (int) (yyvsp[-2].integer);
         (yyval.re_node)->end = INT_MAX;
       }
-#line 1590 "hex_grammar.c" /* yacc.c:1663  */
+#line 1519 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 16:
-#line 338 "hex_grammar.y" /* yacc.c:1663  */
+#line 267 "hex_grammar.y" /* yacc.c:1663  */
     {
         if (lex_env->inside_or)
         {
@@ -1599,70 +1528,72 @@ yyreduce:
           YYABORT;
         }
 
-        (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY, NULL, NULL);
+        (yyval.re_node) = yr_re_node_create(RE_NODE_RANGE_ANY);
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->start = 0;
         (yyval.re_node)->end = INT_MAX;
       }
-#line 1610 "hex_grammar.c" /* yacc.c:1663  */
+#line 1539 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 17:
-#line 358 "hex_grammar.y" /* yacc.c:1663  */
+#line 287 "hex_grammar.y" /* yacc.c:1663  */
     {
           (yyval.re_node) = (yyvsp[0].re_node);
       }
-#line 1618 "hex_grammar.c" /* yacc.c:1663  */
+#line 1547 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 18:
-#line 362 "hex_grammar.y" /* yacc.c:1663  */
+#line 291 "hex_grammar.y" /* yacc.c:1663  */
     {
         mark_as_not_fast_regexp();
 
-        fail_if_too_many_ast_levels({
-          yr_re_node_destroy((yyvsp[-2].re_node));
-          yr_re_node_destroy((yyvsp[0].re_node));
-        });
-
-        (yyval.re_node) = yr_re_node_create(RE_NODE_ALT, (yyvsp[-2].re_node), (yyvsp[0].re_node));
+        (yyval.re_node) = yr_re_node_create(RE_NODE_ALT);
 
         destroy_node_if((yyval.re_node) == NULL, (yyvsp[-2].re_node));
         destroy_node_if((yyval.re_node) == NULL, (yyvsp[0].re_node));
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+        yr_re_node_append_child((yyval.re_node), (yyvsp[-2].re_node));
+        yr_re_node_append_child((yyval.re_node), (yyvsp[0].re_node));
       }
-#line 1638 "hex_grammar.c" /* yacc.c:1663  */
+#line 1565 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 19:
-#line 381 "hex_grammar.y" /* yacc.c:1663  */
+#line 308 "hex_grammar.y" /* yacc.c:1663  */
     {
-        (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL, NULL, NULL);
+        (yyval.re_node) = yr_re_node_create(RE_NODE_LITERAL);
 
         fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         (yyval.re_node)->value = (int) (yyvsp[0].integer);
+        (yyval.re_node)->mask = 0xFF;
       }
-#line 1650 "hex_grammar.c" /* yacc.c:1663  */
+#line 1578 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
   case 20:
-#line 389 "hex_grammar.y" /* yacc.c:1663  */
+#line 317 "hex_grammar.y" /* yacc.c:1663  */
     {
         uint8_t mask = (uint8_t) ((yyvsp[0].integer) >> 8);
 
         if (mask == 0x00)
         {
-          (yyval.re_node) = yr_re_node_create(RE_NODE_ANY, NULL, NULL);
+          (yyval.re_node) = yr_re_node_create(RE_NODE_ANY);
 
           fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+          (yyval.re_node)->value = 0x00;
+          (yyval.re_node)->mask = 0x00;
         }
         else
         {
-          (yyval.re_node) = yr_re_node_create(RE_NODE_MASKED_LITERAL, NULL, NULL);
+          (yyval.re_node) = yr_re_node_create(RE_NODE_MASKED_LITERAL);
 
           fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
 
@@ -1670,11 +1601,11 @@ yyreduce:
           (yyval.re_node)->mask = mask;
         }
       }
-#line 1674 "hex_grammar.c" /* yacc.c:1663  */
+#line 1605 "hex_grammar.c" /* yacc.c:1663  */
     break;
 
 
-#line 1678 "hex_grammar.c" /* yacc.c:1663  */
+#line 1609 "hex_grammar.c" /* yacc.c:1663  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1902,4 +1833,4 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 410 "hex_grammar.y" /* yacc.c:1907  */
+#line 341 "hex_grammar.y" /* yacc.c:1907  */

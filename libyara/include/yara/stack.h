@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2018. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,90 +27,46 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YR_STRUTILS_H
-#define YR_STRUTILS_H
+#ifndef YR_STACK_H
+#define YR_STACK_H
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
+typedef struct YR_STACK YR_STACK;
 
-#include <yara/integers.h>
+struct YR_STACK
+{
+    // Pointer to a heap-allocated array containing the void* values put in
+    // in the stack. This array starts with a fixed size and it's grown as
+    // required when new items are pushed into the stack.
+    void* items;
 
+    // Current capacity (i.e: the number of items that fit into the array)
+    int capacity;
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+    // Size of each individual item in the stack.
+    int item_size;
 
-#if !defined(PRIu64)
-#define PRIu64 "I64u"
-#endif
-
-#if !defined(PRIx64)
-#define PRIx64 "I64x"
-#endif
-
-#if !defined(PRId64)
-#define PRId64 "I64d"
-#endif
-
-#else
-#include <inttypes.h>
-#endif
+    // Index of the stack's top in the items array.
+    int top;
+};
 
 
-// Cygwin already has these functions.
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#if defined(_MSC_VER) && _MSC_VER < 1900
-
-#if !defined(snprintf)
-#define snprintf _snprintf
-#endif
-
-#endif
-#define strcasecmp _stricmp
-#define strncasecmp _strnicmp
-#endif
+int yr_stack_create(
+    int initial_capacity,
+    int item_size,
+    YR_STACK** stack);
 
 
-uint64_t xtoi(
-    const char* hexstr);
+void yr_stack_destroy(
+    YR_STACK* stack);
 
 
-#if !HAVE_STRLCPY && !defined(strlcpy)
-size_t strlcpy(
-    char *dst,
-    const char *src,
-    size_t size);
-#endif
+int yr_stack_push(
+    YR_STACK* stack,
+    void* item);
 
 
-#if !HAVE_STRLCAT && !defined(strlcat)
-size_t strlcat(
-    char *dst,
-    const char *src,
-    size_t size);
-#endif
-
-
-#if !HAVE_MEMMEM && !defined(memmem)
-void* memmem(
-    const void *haystack,
-    size_t haystack_size,
-    const void *needle,
-    size_t needle_size);
-#endif
-
-
-int strnlen_w(
-    const char* w_str);
-
-
-int strcmp_w(
-    const char* w_str,
-    const char* str);
-
-
-size_t strlcpy_w(
-    char* dst,
-    const char* w_src,
-    size_t n);
+int yr_stack_pop(
+    YR_STACK* stack,
+    void* item);
 
 #endif

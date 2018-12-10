@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2017. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,90 +27,58 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YR_STRUTILS_H
-#define YR_STRUTILS_H
+#include <stdint.h>
+#include <stddef.h>
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
+#include <yara.h>
 
-#include <yara/integers.h>
+const char* RULES = \
+  "import \"dotnet\""
+  "rule test {"
+  " condition:"
+  "   dotnet.module_name == \"foo.exe\""
+  "}";
 
+YR_RULES* rules = NULL;
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
+{
+  YR_COMPILER* compiler;
 
-#if !defined(PRIu64)
-#define PRIu64 "I64u"
-#endif
+  if (yr_initialize() != ERROR_SUCCESS)
+    return 0;
 
-#if !defined(PRIx64)
-#define PRIx64 "I64x"
-#endif
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+    return 0;
 
-#if !defined(PRId64)
-#define PRId64 "I64d"
-#endif
+  if (yr_compiler_add_string(compiler, RULES, NULL) == 0)
+    yr_compiler_get_rules(compiler, &rules);
 
-#else
-#include <inttypes.h>
-#endif
+  yr_compiler_destroy(compiler);
 
-
-// Cygwin already has these functions.
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#if defined(_MSC_VER) && _MSC_VER < 1900
-
-#if !defined(snprintf)
-#define snprintf _snprintf
-#endif
-
-#endif
-#define strcasecmp _stricmp
-#define strncasecmp _strnicmp
-#endif
+  return 0;
+}
 
 
-uint64_t xtoi(
-    const char* hexstr);
+int callback(int message, void* message_data, void* user_data)
+{
+  return CALLBACK_CONTINUE;
+}
 
 
-#if !HAVE_STRLCPY && !defined(strlcpy)
-size_t strlcpy(
-    char *dst,
-    const char *src,
-    size_t size);
-#endif
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
+{
+  if (rules == NULL)
+    return 0;
 
+  yr_rules_scan_mem(
+      rules,
+      data,
+      size,
+      SCAN_FLAGS_NO_TRYCATCH,
+      callback,
+      NULL,
+      0);
 
-#if !HAVE_STRLCAT && !defined(strlcat)
-size_t strlcat(
-    char *dst,
-    const char *src,
-    size_t size);
-#endif
-
-
-#if !HAVE_MEMMEM && !defined(memmem)
-void* memmem(
-    const void *haystack,
-    size_t haystack_size,
-    const void *needle,
-    size_t needle_size);
-#endif
-
-
-int strnlen_w(
-    const char* w_str);
-
-
-int strcmp_w(
-    const char* w_str,
-    const char* str);
-
-
-size_t strlcpy_w(
-    char* dst,
-    const char* w_src,
-    size_t n);
-
-#endif
+  return 0;
+}
