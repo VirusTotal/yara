@@ -101,6 +101,11 @@ void* yr_arena_base_address(
     YR_ARENA* arena);
 
 
+YR_ARENA_PAGE* yr_arena_page_for_address(
+    YR_ARENA* arena,
+    void* address);
+
+
 void* yr_arena_next_address(
     YR_ARENA* arena,
     void* address,
