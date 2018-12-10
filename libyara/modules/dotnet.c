@@ -748,6 +748,8 @@ void dotnet_parse_tilde_2(
 
             // Now follow the Type index into the MemberRef table.
             memberref_row = memberref_ptr + (memberref_row_size * type_index);
+            if (!fits_in_pe(pe, memberref_row, memberref_row_size))
+              break;
 
             if (index_sizes.memberref == 4)
             {
