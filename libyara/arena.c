@@ -109,7 +109,7 @@ static YR_ARENA_PAGE* _yr_arena_new_page(
 
 
 //
-// _yr_arena_page_for_address
+// yr_arena_page_for_address
 //
 // Returns the page within the arena where an address reside.
 //
@@ -122,7 +122,7 @@ static YR_ARENA_PAGE* _yr_arena_new_page(
 //    resides.
 //
 
-static YR_ARENA_PAGE* _yr_arena_page_for_address(
+YR_ARENA_PAGE* yr_arena_page_for_address(
     YR_ARENA* arena,
     void* address)
 {
@@ -184,7 +184,7 @@ static int _yr_arena_make_ptr_relocatable(
   // If the arena must be relocatable.
   assert(arena->flags & ARENA_FLAGS_RELOCATABLE);
 
-  page = _yr_arena_page_for_address(arena, base);
+  page = yr_arena_page_for_address(arena, base);
 
   assert(page != NULL);
 
@@ -361,7 +361,7 @@ void* yr_arena_next_address(
 {
   YR_ARENA_PAGE* page;
 
-  page = _yr_arena_page_for_address(arena, address);
+  page = yr_arena_page_for_address(arena, address);
 
   assert(page != NULL);
 
@@ -482,7 +482,7 @@ int yr_arena_coalesce(
 
     if (reloc_target != NULL)
     {
-      page = _yr_arena_page_for_address(arena, reloc_target);
+      page = yr_arena_page_for_address(arena, reloc_target);
       assert(page != NULL);
       *reloc_address = page->new_address + (reloc_target - page->address);
     }

@@ -246,6 +246,10 @@ int yr_execute_code(
   start_time = yr_stopwatch_elapsed_us(&context->stopwatch);
   #endif
 
+  #if PARANOID_EXEC
+  memset(mem, 0, MEM_SIZE * sizeof(mem[0]));
+  #endif
+
   while(!stop)
   {
     opcode = *ip;
@@ -779,6 +783,13 @@ int yr_execute_code(
 
       case OP_COUNT:
         pop(r1);
+
+        #if PARANOID_EXEC
+        // Make sure that the string pointer is within the rules arena.
+        if (yr_arena_page_for_address(context->rules->arena, r1.p) == NULL)
+          return ERROR_INTERNAL_FATAL_ERROR;
+        #endif
+
         r1.i = r1.s->matches[tidx].count;
         push(r1);
         break;
