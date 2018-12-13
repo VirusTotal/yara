@@ -246,6 +246,10 @@ int yr_execute_code(
   start_time = yr_stopwatch_elapsed_us(&context->stopwatch);
   #endif
 
+  #if PARANOID_EXEC
+  memset(mem, 0, MEM_SIZE * sizeof(mem[0]));
+  #endif
+
   while(!stop)
   {
     opcode = *ip;
