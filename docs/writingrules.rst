@@ -1087,7 +1087,7 @@ at all may seem sterile at first glance, but when mixed with the possibility
 offered by YARA of referencing one rule from another (see
 :ref:`referencing-rules`) they become useful. Private rules can serve as
 building blocks for other rules, and at the same time prevent cluttering
-YARA's output with irrelevant information. To delcare a rule as private
+YARA's output with irrelevant information. To declare a rule as private
 just add the keyword ``private`` before the rule declaration.
 
 .. code-block:: yara
