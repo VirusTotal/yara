@@ -89,6 +89,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [McAfee Advanced Threat Defense](http://mcafee.com/atd)
 * [Metaflows](http://www.metaflows.com)
 * [NBS System](https://www.nbs-system.com/)
+* [Nextron Systems](https://www.nextron-systems.com)
 * [Nozomi Networks](http://www.nozominetworks.com)
 * [osquery](http://www.osquery.io)
 * [Payload Security](https://www.payload-security.com)
