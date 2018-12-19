@@ -96,6 +96,7 @@ test-version.trs
 # Visual Studio files
 Release/
 Debug/
+windows/*/.vs
 x64/
 *.obj
 *.suo
