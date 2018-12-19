@@ -692,6 +692,16 @@ void test_rules_stats()
   assert_true_expr(stats.top_ac_match_list_lengths[0] == 3);
   assert_true_expr(stats.ac_match_list_length_pctls[1] == 1);
   assert_true_expr(stats.ac_match_list_length_pctls[100] == 3);
+
+  stats_for_rules("\
+      rule test { \
+      condition: true }",
+      &stats);
+
+  assert_true_expr(stats.rules == 1);
+  assert_true_expr(stats.strings == 0);
+  assert_true_expr(stats.ac_matches == 0);
+  assert_true_expr(stats.ac_root_match_list_length == 0);
 }
 
 
