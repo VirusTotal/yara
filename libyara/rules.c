@@ -483,10 +483,16 @@ YR_API int yr_rules_get_stats(
   if (match_list_lengths == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
+  memset(stats, 0, sizeof(YR_RULES_STATS));
+
+  yr_rules_foreach(rules, rule)
+  {
+    stats->rules++;
+    yr_rule_strings_foreach(rule, string)
+      stats->strings++;
+  }
+
   stats->ac_tables_size = rules->ac_tables_size;
-  stats->ac_matches = 0;
-  stats->rules = 0;
-  stats->strings = 0;
 
   for (i = 0; i < rules->ac_tables_size; i++)
   {
@@ -513,6 +519,9 @@ YR_API int yr_rules_get_stats(
     }
   }
 
+  if (c == 0)
+    return ERROR_SUCCESS;
+
   // sort match_list_lengths in increasing order for computing percentiles.
   qsort(match_list_lengths, c, sizeof(match_list_lengths[0]), _uint32_cmp);
 
@@ -532,13 +541,6 @@ YR_API int yr_rules_get_stats(
     stats->ac_match_list_length_pctls[i] = match_list_lengths[(c * i) / 100];
 
   yr_free(match_list_lengths);
-
-  yr_rules_foreach(rules, rule)
-  {
-    stats->rules++;
-    yr_rule_strings_foreach(rule, string)
-      stats->strings++;
-  }
 
   return ERROR_SUCCESS;
 }
