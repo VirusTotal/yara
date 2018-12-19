@@ -35,6 +35,44 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if _WIN32 || __CYGWIN__
 
 #include <windows.h>
+
+// If compiling with Microsoft's compiler use structered exception handling.
+
+#ifdef _MSC_VER
+
+#include <excpt.h>
+
+static LONG CALLBACK exception_handler(
+    PEXCEPTION_POINTERS ExceptionInfo)
+{
+  switch(ExceptionInfo->ExceptionRecord->ExceptionCode)
+  {
+    case EXCEPTION_IN_PAGE_ERROR:
+    case EXCEPTION_ACCESS_VIOLATION:
+      return EXCEPTION_EXECUTE_HANDLER;
+  }
+
+  return EXCEPTION_CONTINUE_SEARCH;
+}
+
+#define YR_TRYCATCH(_do_,_try_clause_,_catch_clause_)           \
+  do                                                            \
+  {                                                             \
+    if (_do_)                                                   \
+    {                                                           \
+      __try                                                     \
+      { _try_clause_ }                                          \
+      __except(exception_handler(GetExceptionInformation()))    \
+      { _catch_clause_ }                                        \
+    }                                                           \
+    else                                                        \
+    { _try_clause_ }                                            \
+  } while(0)
+
+#else
+
+// If not compiling with Microsoft's compiler use vectored exception handling.
+
 #include <setjmp.h>
 
 jmp_buf *exc_jmp_buf[YR_MAX_THREADS];
@@ -54,26 +92,6 @@ static LONG CALLBACK exception_handler(
 
   return EXCEPTION_CONTINUE_SEARCH;
 }
-
-#ifdef _MSC_VER
-
-#include <excpt.h>
-
-#define YR_TRYCATCH(_do_,_try_clause_,_catch_clause_)           \
-  do                                                            \
-  {                                                             \
-    if (_do_)                                                   \
-    {                                                           \
-      __try                                                     \
-      { _try_clause_ }                                          \
-      __except(exception_handler(GetExceptionInformation()))    \
-      { _catch_clause_ }                                        \
-    }                                                           \
-    else                                                        \
-    { _try_clause_ }                                            \
-  } while(0)
-
-#else
 
 #define YR_TRYCATCH(_do_,_try_clause_,_catch_clause_)                   \
   do                                                                    \
@@ -113,7 +131,7 @@ static void exception_handler(int sig) {
     int tidx = yr_get_tidx();
 
     if (tidx != -1 && exc_jmp_buf[tidx] != NULL)
-      siglongjmp(*exc_jmp_buf[tidx], 1); 
+      siglongjmp(*exc_jmp_buf[tidx], 1);
   }
 }
 
