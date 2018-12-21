@@ -1109,14 +1109,16 @@ void _parse_pkcs7(
     PKCS7* pkcs7,
     int* counter)
 {
-  int i;
+  int i, j;
   STACK_OF(X509)* certs;
+
+  if (*counter >= MAX_PE_CERTS)
+    return;
+
   certs = PKCS7_get0_signers(pkcs7, NULL, 0);
 
   if (!certs)
-  {
     return;
-  }
 
   for (i = 0; i < sk_X509_num(certs); i++)
   {
@@ -1129,18 +1131,18 @@ void _parse_pkcs7(
     unsigned char thumbprint[YR_SHA1_LEN];
     char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
 
-    PKCS7_SIGNER_INFO* signer_info;
-    ASN1_INTEGER* serial;
-    ASN1_TYPE* nested;
-    ASN1_STRING* value;
-    PKCS7* nested_pkcs7;
+    PKCS7_SIGNER_INFO* signer_info = NULL;
+    PKCS7* nested_pkcs7 = NULL;
+    ASN1_INTEGER* serial = NULL;
+    ASN1_TYPE* nested = NULL;
+    ASN1_STRING* value = NULL;
 
     X509* cert = sk_X509_value(certs, i);
 
     X509_digest(cert, sha1_digest, thumbprint, NULL);
 
-    for (i = 0; i < YR_SHA1_LEN; i++)
-      sprintf(thumbprint_ascii + (i * 2), "%02x", thumbprint[i]);
+    for (j = 0; j < YR_SHA1_LEN; j++)
+      sprintf(thumbprint_ascii + (j * 2), "%02x", thumbprint[j]);
 
     set_string(
         (char*) thumbprint_ascii,
@@ -1227,8 +1229,6 @@ void _parse_pkcs7(
 
           if (serial_ascii)
           {
-            int j;
-
             for (j = 0; j < bytes; j++)
             {
               // Don't put the colon on the last one.
@@ -1292,6 +1292,7 @@ void pe_parse_certificates(
   int counter = 0;
 
   const uint8_t* eod;
+  const unsigned char* cert_p;
   uintptr_t end;
 
   PWIN_CERTIFICATE win_cert;
@@ -1339,7 +1340,6 @@ void pe_parse_certificates(
          (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) < eod &&
          (uint8_t*) win_cert + yr_le32toh(win_cert->Length) <= eod)
   {
-    BIO* cert_bio;
     PKCS7* pkcs7;
 
     // Some sanity checks
@@ -1357,30 +1357,24 @@ void pe_parse_certificates(
     if (yr_le16toh(win_cert->Revision) != WIN_CERT_REVISION_2_0 ||
         yr_le16toh(win_cert->CertificateType) != WIN_CERT_TYPE_PKCS_SIGNED_DATA)
     {
-      uintptr_t end = (uintptr_t)
-          ((uint8_t *) win_cert) + yr_le32toh(win_cert->Length);
+      end = (uintptr_t)((uint8_t*) win_cert) + yr_le32toh(win_cert->Length);
 
       win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
       continue;
     }
 
-    cert_bio = BIO_new_mem_buf(
-        win_cert->Certificate, yr_le32toh(win_cert->Length) - WIN_CERTIFICATE_HEADER_SIZE);
-
-    if (!cert_bio)
-      break;
-
-    pkcs7 = d2i_PKCS7_bio(cert_bio, NULL);
-    if (pkcs7 != NULL)
+    cert_p = win_cert->Certificate;
+    end = (uintptr_t)((uint8_t*) win_cert) + yr_le32toh(win_cert->Length);
+    while ((uintptr_t) cert_p < end && counter < MAX_PE_CERTS)
     {
+      pkcs7 = d2i_PKCS7(NULL, &cert_p, (win_cert->Length));
+      if (pkcs7 == NULL)
+        break;
       _parse_pkcs7(pe, pkcs7, &counter);
       PKCS7_free(pkcs7);
     }
 
-    end = (uintptr_t)((uint8_t *) win_cert) + yr_le32toh(win_cert->Length);
-    win_cert = (PWIN_CERTIFICATE)(end + (end % 8));
-
-    BIO_free(cert_bio);
+    win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
   }
 
   set_integer(counter, pe->object, "number_of_signatures");
