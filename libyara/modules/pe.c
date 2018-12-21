@@ -1126,11 +1126,14 @@ void _parse_pkcs7(
     const char* sig_alg;
     char buffer[256];
     int bytes;
+    int idx;
     const EVP_MD* sha1_digest = EVP_sha1();
     const unsigned char* p;
     unsigned char thumbprint[YR_SHA1_LEN];
     char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
 
+    X509_ATTRIBUTE *xa = NULL;
+    STACK_OF(X509_ATTRIBUTE)* attrs = NULL;
     PKCS7_SIGNER_INFO* signer_info = NULL;
     PKCS7* nested_pkcs7 = NULL;
     ASN1_INTEGER* serial = NULL;
@@ -1267,12 +1270,10 @@ void _parse_pkcs7(
     signer_info = sk_PKCS7_SIGNER_INFO_value(pkcs7->d.sign->signer_info, 0);
     if (signer_info == NULL)
       continue;
-    STACK_OF(X509_ATTRIBUTE)* attrs = PKCS7_get_attributes(signer_info);
+
+    attrs = PKCS7_get_attributes(signer_info);
     for (j = 0; j <= sk_num((struct stack_st*) attrs); j++)
     {
-      X509_ATTRIBUTE *xa;
-      int idx;
-
       idx = X509at_get_attr_by_NID(
           attrs, OBJ_txt2nid(SPC_NESTED_SIGNATURE_OBJID), -1);
       xa = X509at_get_attr(attrs, idx);
