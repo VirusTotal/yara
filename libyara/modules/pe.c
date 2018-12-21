@@ -1110,7 +1110,25 @@ void _parse_pkcs7(
     int* counter)
 {
   int i, j;
-  STACK_OF(X509)* certs;
+  time_t date_time;
+  const char* sig_alg;
+  char buffer[256];
+  int bytes;
+  int idx;
+  const EVP_MD* sha1_digest = EVP_sha1();
+  const unsigned char* p;
+  unsigned char thumbprint[YR_SHA1_LEN];
+  char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
+
+  PKCS7_SIGNER_INFO* signer_info = NULL;
+  PKCS7* nested_pkcs7 = NULL;
+  ASN1_INTEGER* serial = NULL;
+  ASN1_TYPE* nested = NULL;
+  ASN1_STRING* value = NULL;
+  X509* cert = NULL;
+  STACK_OF(X509)* certs = NULL;
+  X509_ATTRIBUTE *xa = NULL;
+  STACK_OF(X509_ATTRIBUTE)* attrs = NULL;
 
   if (*counter >= MAX_PE_CERTS)
     return;
@@ -1122,25 +1140,7 @@ void _parse_pkcs7(
 
   for (i = 0; i < sk_X509_num(certs); i++)
   {
-    time_t date_time;
-    const char* sig_alg;
-    char buffer[256];
-    int bytes;
-    int idx;
-    const EVP_MD* sha1_digest = EVP_sha1();
-    const unsigned char* p;
-    unsigned char thumbprint[YR_SHA1_LEN];
-    char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
-
-    X509_ATTRIBUTE *xa = NULL;
-    STACK_OF(X509_ATTRIBUTE)* attrs = NULL;
-    PKCS7_SIGNER_INFO* signer_info = NULL;
-    PKCS7* nested_pkcs7 = NULL;
-    ASN1_INTEGER* serial = NULL;
-    ASN1_TYPE* nested = NULL;
-    ASN1_STRING* value = NULL;
-
-    X509* cert = sk_X509_value(certs, i);
+    cert = sk_X509_value(certs, i);
 
     X509_digest(cert, sha1_digest, thumbprint, NULL);
 
@@ -1264,20 +1264,19 @@ void _parse_pkcs7(
     set_integer(date_time, pe->object, "signatures[%i].not_after", *counter);
 
     (*counter)++;
+  }
 
-    // See if there is a nested signature, which is apparently an authenticode
-    // specific feature. See https://github.com/VirusTotal/yara/issues/515.
-    signer_info = sk_PKCS7_SIGNER_INFO_value(pkcs7->d.sign->signer_info, 0);
-    if (signer_info == NULL)
-      continue;
-
+  // See if there is a nested signature, which is apparently an authenticode
+  // specific feature. See https://github.com/VirusTotal/yara/issues/515.
+  signer_info = sk_PKCS7_SIGNER_INFO_value(pkcs7->d.sign->signer_info, 0);
+  if (signer_info != NULL)
+  {
     attrs = PKCS7_get_attributes(signer_info);
-    for (j = 0; j <= sk_num((struct stack_st*) attrs); j++)
+    idx = X509at_get_attr_by_NID(
+        attrs, OBJ_txt2nid(SPC_NESTED_SIGNATURE_OBJID), -1);
+    xa = X509at_get_attr(attrs, idx);
+    for (j = 0; j <= MAX_PE_CERTS; j++)
     {
-      idx = X509at_get_attr_by_NID(
-          attrs, OBJ_txt2nid(SPC_NESTED_SIGNATURE_OBJID), -1);
-      xa = X509at_get_attr(attrs, idx);
-
       nested = X509_ATTRIBUTE_get0_type(xa, j);
       if (nested != NULL)
       {
