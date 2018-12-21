@@ -1267,17 +1267,27 @@ void _parse_pkcs7(
     signer_info = sk_PKCS7_SIGNER_INFO_value(pkcs7->d.sign->signer_info, 0);
     if (signer_info == NULL)
       continue;
-    nested = PKCS7_get_attribute(
-        signer_info, OBJ_txt2nid(SPC_NESTED_SIGNATURE_OBJID));
-    if (nested != NULL)
+    STACK_OF(X509_ATTRIBUTE)* attrs = PKCS7_get_attributes(signer_info);
+    for (j = 0; j <= sk_num((struct stack_st*) attrs); j++)
     {
-      value = nested->value.sequence;
-      p = value->data;
-      nested_pkcs7 = d2i_PKCS7(NULL, &p, value->length);
-      if (nested_pkcs7 != NULL)
+      X509_ATTRIBUTE *xa;
+      int idx;
+
+      idx = X509at_get_attr_by_NID(
+          attrs, OBJ_txt2nid(SPC_NESTED_SIGNATURE_OBJID), -1);
+      xa = X509at_get_attr(attrs, idx);
+
+      nested = X509_ATTRIBUTE_get0_type(xa, j);
+      if (nested != NULL)
       {
-        _parse_pkcs7(pe, nested_pkcs7, counter);
-        PKCS7_free(nested_pkcs7);
+        value = nested->value.sequence;
+        p = value->data;
+        nested_pkcs7 = d2i_PKCS7(NULL, &p, value->length);
+        if (nested_pkcs7 != NULL)
+        {
+          _parse_pkcs7(pe, nested_pkcs7, counter);
+          PKCS7_free(nested_pkcs7);
+        }
       }
     }
   }
