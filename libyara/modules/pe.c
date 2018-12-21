@@ -1138,7 +1138,7 @@ void _parse_pkcs7(
   if (!certs)
     return;
 
-  for (i = 0; i < sk_X509_num(certs); i++)
+  for (i = 0; i < sk_X509_num(certs) && *counter < MAX_PE_CERTS; i++)
   {
     cert = sk_X509_value(certs, i);
 
@@ -1275,19 +1275,18 @@ void _parse_pkcs7(
     idx = X509at_get_attr_by_NID(
         attrs, OBJ_txt2nid(SPC_NESTED_SIGNATURE_OBJID), -1);
     xa = X509at_get_attr(attrs, idx);
-    for (j = 0; j <= MAX_PE_CERTS; j++)
+    for (j = 0; j < MAX_PE_CERTS; j++)
     {
       nested = X509_ATTRIBUTE_get0_type(xa, j);
-      if (nested != NULL)
+      if (nested == NULL)
+        break;
+      value = nested->value.sequence;
+      p = value->data;
+      nested_pkcs7 = d2i_PKCS7(NULL, &p, value->length);
+      if (nested_pkcs7 != NULL)
       {
-        value = nested->value.sequence;
-        p = value->data;
-        nested_pkcs7 = d2i_PKCS7(NULL, &p, value->length);
-        if (nested_pkcs7 != NULL)
-        {
-          _parse_pkcs7(pe, nested_pkcs7, counter);
-          PKCS7_free(nested_pkcs7);
-        }
+        _parse_pkcs7(pe, nested_pkcs7, counter);
+        PKCS7_free(nested_pkcs7);
       }
     }
   }
