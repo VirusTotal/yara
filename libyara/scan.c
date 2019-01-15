@@ -196,7 +196,9 @@ static int _yr_scan_wicompare(
   if (data_size < string_length * 2)
     return 0;
 
-  while (i < string_length && yr_lowercase[*s1] == yr_lowercase[*s2])
+  while (i < string_length &&
+         yr_lowercase[*s1] == yr_lowercase[*s2] &&
+         *(s1 + 1) == 0x00)
   {
     s1+=2;
     s2++;
