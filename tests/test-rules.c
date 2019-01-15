@@ -1414,6 +1414,11 @@ void test_re()
   assert_true_rule(
        "rule test { strings: $a = /abc[^F]/ condition: $a }",
        "abcd");
+
+  // Test case for issue #1006
+  assert_false_rule_blob(
+       "rule test { strings: $a = \" cmd.exe \" nocase wide condition: $a }",
+       ISSUE_1006);
 }
 
 
