@@ -124,28 +124,28 @@ static void test_comparison_operators()
       "rule test { condition: 0.5 <= 1}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: 1.0 <= 1}", NULL);
+      "rule test { condition: 1.0 <= 1}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"abc\" == \"abc\"}", NULL);
+      "rule test { condition: \"abc\" == \"abc\"}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"abc\" <= \"abc\"}", NULL);
+      "rule test { condition: \"abc\" <= \"abc\"}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"abc\" >= \"abc\"}", NULL);
+      "rule test { condition: \"abc\" >= \"abc\"}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"ab\" < \"abc\"}", NULL);
+      "rule test { condition: \"ab\" < \"abc\"}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"abc\" > \"ab\"}", NULL);
+      "rule test { condition: \"abc\" > \"ab\"}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"abc\" < \"abd\"}", NULL);
+      "rule test { condition: \"abc\" < \"abd\"}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"abd\" > \"abc\"}", NULL);
+      "rule test { condition: \"abd\" > \"abc\"}", NULL);
 
   assert_false_rule(
       "rule test { condition: 1 != 1}", NULL);
