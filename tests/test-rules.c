@@ -1481,7 +1481,7 @@ static void test_comments()
   assert_true_rule(
       "rule test { \
         strings: $a = { 31 /* A */ 32 /*B*/ 33 34  35 36 /* C */} \
-        condition: $a }",
+        condition: @a == 6 }",
       "1234567890");
 }
 
