@@ -59,10 +59,10 @@ Print metadata associated to the rule.
 .B \-D " --print-module-data"
 Print module data.
 .TP
-.B \-g " --print-namespace"
+.B \-e " --print-namespace"
 Print namespace associated to the rule.
 .TP
-.B \-D " --print-stats"
+.B \-S " --print-stats"
 Print rules' statistics.
 .TP
 .B \-s " --print-strings"
