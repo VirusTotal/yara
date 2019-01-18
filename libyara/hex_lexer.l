@@ -127,11 +127,22 @@ hexdigit      [a-fA-F0-9]
   return yytext[0];
 }
 
-"/*"(.|\n)*"*/"    // skip comments
+"/*" {
+
+  BEGIN(comment);
+}
+
+<comment>"*/" {
+
+  BEGIN(INITIAL);
+}
+
+<comment>.|\n      // skip comments
 
 "//".*             // skip single-line comments
 
 <range>\- {
+
   return yytext[0];
 }
 
