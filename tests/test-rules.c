@@ -1473,6 +1473,13 @@ static void test_comments()
 
   assert_true_rule(
       "rule test { \
+        strings: $a = { 31 32 /* Inline comment */ [-] 38 39 } \
+                 $b = { 31 32 /* Inline comment */ [-] 35 36 } \
+        condition: (!a == 9) and (!b == 6) }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
         strings: $a = { 31 32 /* Inline comment with *asterisks* */ [-] 38 39 } \
         condition: !a == 9}",
       "1234567890");
