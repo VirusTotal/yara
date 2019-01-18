@@ -1462,26 +1462,32 @@ static void test_comments()
       "rule test { \
         strings: $a = { 31 32 [-] // Inline comment\n\r \
           38 39 } \
-        condition: $a }",
+        condition: !a == 9 }",
       "1234567890");
 
   assert_true_rule(
       "rule test { \
         strings: $a = { 31 32 /* Inline comment */ [-] 38 39 } \
-        condition: $a }",
+        condition: !a == 9 }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 /* Inline comment with *asterisks* */ [-] 38 39 } \
+        condition: !a == 9}",
       "1234567890");
 
   assert_true_rule(
       "rule test { \
         strings: $a = { 31 32 /* Inline multi-line\n\r \
                                  comment */ [-] 38 39 } \
-        condition: $a }",
+        condition: !a == 9 }",
       "1234567890");
 
   assert_true_rule(
       "rule test { \
-        strings: $a = { 31 /* A */ 32 /*B*/ 33 34  35 36 /* C */} \
-        condition: @a == 6 }",
+        strings: $a = { /*Some*/ 31 /*interleaved*/ [-] /*comments*/ 38 39 } \
+        condition: !a == 9 }",
       "1234567890");
 }
 
