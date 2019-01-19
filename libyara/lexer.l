@@ -707,6 +707,10 @@ u?int(8|16|32)(be)? {
 \{(({hexdigit}|[ \-|\?\[\]\(\)\n\r\t]|\/\*[^*]*\*+([^*/][^*]*\*+)*\/)+|\/\/.*)+\}  {
   // Match hex-digits with whitespace or comments. The latter are stripped
   // out by hex_lexer.l
+  // TODO(vmalvarez): Integrate the hex string lexer and parser into this one,
+  // by having a single lexer/parser instead of two different ones we can avoid
+  // complex regular expressions like the one above, which is actually trying to
+  // do some parsing in the lexer.
 
   alloc_sized_string(s, strlen(yytext));
 
