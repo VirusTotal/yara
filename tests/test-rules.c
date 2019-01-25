@@ -1181,6 +1181,10 @@ void test_re()
   assert_true_regexp("ab{1,3}?", "abbbbb", "ab");
   assert_true_regexp("ab{2,2}?", "abbbbb", "abb");
   assert_true_regexp("ab{2,3}?", "abbbbb", "abb");
+  assert_true_regexp("(a{2,3}b){2,3}", "aabaaabaab", "aabaaabaab");
+  assert_true_regexp("(a{2,3}?b){2,3}?", "aabaaabaab", "aabaaab");
+  assert_false_regexp("(a{4,5}b){4,5}", "aaaabaaaabaaaaab");
+  assert_true_regexp("(a{4,5}b){4,5}", "aaaabaaaabaaaaabaaaaab", "aaaabaaaabaaaaabaaaaab");
   assert_true_regexp(".(abc){0,1}", "xabcabcabcabc", "xabc");
   assert_true_regexp(".(abc){0,2}", "xabcabcabcabc", "xabcabc");
   assert_true_regexp("x{1,2}abcd", "xxxxabcd", "xxabcd");
@@ -1334,6 +1338,13 @@ void test_re()
 
   // Test case for issue #682
   assert_true_regexp("(a|\\b)[a]{1,}", "aaaa", "aaaa");
+
+  // Test cases for issue #1018
+  assert_true_regexp("(ba{4}){4,10}", "baaaabaaaabaaaabaaaabaaaa", "baaaabaaaabaaaabaaaabaaaa");
+  assert_true_regexp("(ba{2}a{2}){5,10}", "baaaabaaaabaaaabaaaabaaaa", "baaaabaaaabaaaabaaaabaaaa");
+  assert_true_regexp("(ba{3}){4,10}", "baaabaaabaaabaaabaaa", "baaabaaabaaabaaabaaa");
+  assert_true_regexp("(ba{4}){5,10}", "baaaabaaaabaaaabaaaabaaaa", "baaaabaaaabaaaabaaaabaaaa");
+  assert_false_regexp("(ba{4}){4,10}", "baaaabaaaabaaaa");
 
   // Test for integer overflow in repeat interval
   assert_regexp_syntax_error("a{2977952116}");
