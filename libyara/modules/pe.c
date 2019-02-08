@@ -279,8 +279,8 @@ const uint8_t* parse_resource_name(
     const uint8_t* rsrc_str_ptr = rsrc_data + \
         (yr_le32toh(entry->Name) & 0x7FFFFFFF);
 
-    // A resource directory string is 2 bytes for a string and then a variable
-    // length Unicode string. Make sure we at least have two bytes.
+    // A resource directory string is 2 bytes for the length and then a variable
+    // length Unicode string. Make sure we have at least 2 bytes.
 
     if (!fits_in_pe(pe, rsrc_str_ptr, 2))
       return NULL;
@@ -885,7 +885,7 @@ IMPORTED_DLL* pe_parse_imports(
   PIMAGE_IMPORT_DESCRIPTOR imports;
   PIMAGE_DATA_DIRECTORY directory;
 
-  /* default to 0 imports until we know there are any */
+  // Default to 0 imports until we know there are any
   set_integer(0, pe->object, "number_of_imports");
 
   directory = pe_get_directory_entry(
@@ -984,7 +984,7 @@ EXPORT_FUNCTIONS* pe_parse_exports(
   if (pe == NULL)
     return NULL;
 
-  /* default to 0 exports until we know there are any */
+  // Default to 0 exports until we know there are any
   set_integer(0, pe->object, "number_of_exports");
 
   directory = pe_get_directory_entry(
@@ -1531,7 +1531,10 @@ void pe_parse_header(
       yr_le32toh(OptionalHeader(pe, LoaderFlags)),
       pe->object, "loader_flags");
 
-  data_dir = IS_64BITS_PE(pe) ? pe->header64->OptionalHeader.DataDirectory : pe->header->OptionalHeader.DataDirectory;
+  data_dir = IS_64BITS_PE(pe) ?
+      pe->header64->OptionalHeader.DataDirectory:
+      pe->header->OptionalHeader.DataDirectory;
+
   ddcount = yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes));
   ddcount = yr_min(ddcount, IMAGE_NUMBEROF_DIRECTORY_ENTRIES);
 
