@@ -90,7 +90,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define MAX_PE_IMPORTS               16384
-#define MAX_PE_EXPORTS               65535
+#define MAX_PE_EXPORTS               8192
+#define MAX_EXPORT_NAME_LENGTH       512
 
 
 #define IS_RESOURCE_SUBDIRECTORY(entry) \
@@ -971,6 +972,7 @@ EXPORT_FUNCTIONS* pe_parse_exports(
   EXPORT_FUNCTIONS* exported_functions;
 
   uint32_t i;
+  uint32_t number_of_exports;
   uint32_t number_of_names;
   uint16_t ordinal;
   int64_t offset;
@@ -1006,8 +1008,11 @@ EXPORT_FUNCTIONS* pe_parse_exports(
   if (!struct_fits_in_pe(pe, exports, IMAGE_EXPORT_DIRECTORY))
     return NULL;
 
-  if (yr_le32toh(exports->NumberOfFunctions) > MAX_PE_EXPORTS ||
-      yr_le32toh(exports->NumberOfFunctions) * sizeof(DWORD) > pe->data_size - offset)
+  number_of_exports = yr_min(
+      yr_le32toh(exports->NumberOfFunctions),
+      MAX_PE_EXPORTS);
+
+  if (number_of_exports * sizeof(DWORD) > pe->data_size - offset)
     return NULL;
 
   if (yr_le32toh(exports->NumberOfNames) > 0)
@@ -1035,11 +1040,9 @@ EXPORT_FUNCTIONS* pe_parse_exports(
   if (exported_functions == NULL)
     return NULL;
 
-  exported_functions->number_of_exports = yr_le32toh(
-      exports->NumberOfFunctions);
-
+  exported_functions->number_of_exports = number_of_exports;
   exported_functions->functions = (EXPORT_FUNCTION*) yr_malloc(
-      exported_functions->number_of_exports * sizeof(EXPORT_FUNCTION));
+      number_of_exports * sizeof(EXPORT_FUNCTION));
 
   if (exported_functions->functions == NULL)
   {
@@ -1086,7 +1089,8 @@ EXPORT_FUNCTIONS* pe_parse_exports(
     if (exported_functions->functions[ordinal].name == NULL)
     {
       exported_functions->functions[ordinal].name = yr_strndup(
-          (char*) (pe->data + offset), remaining);
+          (char*) (pe->data + offset),
+          yr_min(remaining, MAX_EXPORT_NAME_LENGTH));
     }
   }
 
@@ -1130,11 +1134,11 @@ void pe_parse_certificates(
 
   // Store the end of directory, making comparisons easier.
   eod = pe->data + \
-        yr_le32toh(directory->VirtualAddress) + \
-        yr_le32toh(directory->Size);
+      yr_le32toh(directory->VirtualAddress) + \
+      yr_le32toh(directory->Size);
 
   win_cert = (PWIN_CERTIFICATE) \
-    (pe->data + yr_le32toh(directory->VirtualAddress));
+      (pe->data + yr_le32toh(directory->VirtualAddress));
 
   //
   // Walk the directory, pulling out certificates.
