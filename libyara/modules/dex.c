@@ -215,7 +215,7 @@ end_declarations;
 
 // https://android.googlesource.com/platform/dalvik/+/android-4.4.2_r2/libdex/Leb128.cpp
 
-int32_t read_uleb128(
+static int32_t read_uleb128(
     const uint8_t* pStream,
     uint32_t *size)
 {
@@ -261,6 +261,38 @@ int32_t read_uleb128(
 }
 
 
+static int64_t dex_get_integer(
+     YR_OBJECT* object,
+     const char* pattern,
+     int64_t index)
+{
+  if (index == UNDEFINED)
+    return UNDEFINED;
+
+  // Impose a reasonably large limit to table indexes.
+  if (index > 0x80000)
+    return UNDEFINED;
+
+  return get_integer(object, pattern, (int) index);
+}
+
+
+static SIZED_STRING* dex_get_string(
+     YR_OBJECT* object,
+     const char* pattern,
+     int64_t index)
+{
+  if (index == UNDEFINED)
+    return NULL;
+
+  // Impose a reasonably large limit to table indexes.
+  if (index > 0x80000)
+    return NULL;
+
+  return get_string(object, pattern, (int) index);
+}
+
+
 dex_header_t* dex_get_header(
     const uint8_t* data,
     size_t data_size)
@@ -283,6 +315,7 @@ dex_header_t* dex_get_header(
 
   return dex_header;
 }
+
 
 void dex_parse_header(
     dex_header_t* dex_header,
@@ -347,6 +380,7 @@ void dex_parse_header(
               "header.data_offset");
 }
 
+
 uint32_t load_encoded_field(
     DEX* dex,
     size_t start_offset,
@@ -372,18 +406,6 @@ uint32_t load_encoded_field(
   encoded_field.access_flags = (uint32_t) read_uleb128(
       (dex->data + start_offset + current_size), &current_size);
 
-  *previous_field_idx = encoded_field.field_idx_diff + *previous_field_idx;
-
-  int name_idx = (int) get_integer(
-      dex->object, "field_ids[%i].name_idx", *previous_field_idx);
-
-  if (name_idx == (int)(UNDEFINED & 0xFFFFFFFF))
-    return 0;
-
-  #ifdef DEBUG_DEX_MODULE
-  printf("[DEX]\tNAME_IDX 0x%x\n", name_idx);
-  #endif
-
   set_integer(
       encoded_field.field_idx_diff,
       dex->object,
@@ -408,6 +430,8 @@ uint32_t load_encoded_field(
       "field[%i].instance",
       index_encoded_field);
 
+  *previous_field_idx = encoded_field.field_idx_diff + *previous_field_idx;
+
   #ifdef DEBUG_DEX_MODULE
   printf("[DEX]\tEncoded field field_idx:0x%x field_idx_diff:0x%x access_flags:0x%x\n",
       *previous_field_idx,
@@ -415,7 +439,10 @@ uint32_t load_encoded_field(
       encoded_field.access_flags);
   #endif
 
-  SIZED_STRING* field_name = get_string(
+  int64_t name_idx = dex_get_integer(
+      dex->object, "field_ids[%i].name_idx", *previous_field_idx);
+
+  SIZED_STRING* field_name = dex_get_string(
       dex->object, "string_ids[%i].value", name_idx);
 
   if (field_name != NULL)
@@ -434,13 +461,13 @@ uint32_t load_encoded_field(
         index_encoded_field);
   }
 
-  int class_idx = (int) get_integer(
+  int64_t class_idx = dex_get_integer(
       dex->object, "field_ids[%i].class_idx", *previous_field_idx);
 
-  int descriptor_idx = (int) get_integer(
+  int64_t descriptor_idx = dex_get_integer(
       dex->object, "type_ids[%i].descriptor_idx", class_idx);
 
-  SIZED_STRING* class_name = get_string(
+  SIZED_STRING* class_name = dex_get_string(
       dex->object, "string_ids[%i].value", descriptor_idx);
 
   if (class_name != NULL)
@@ -460,13 +487,13 @@ uint32_t load_encoded_field(
         index_encoded_field);
   }
 
-  int type_idx = (int) get_integer(dex->object,
+  int type_idx = dex_get_integer(dex->object,
       "field_ids[%i].type_idx", *previous_field_idx);
 
-  int shorty_idx = (int) get_integer(dex->object,
+  int shorty_idx = dex_get_integer(dex->object,
       "type_ids[%i].descriptor_idx", type_idx);
 
-  SIZED_STRING* proto_name = get_string(dex->object,
+  SIZED_STRING* proto_name = dex_get_string(dex->object,
       "string_ids[%i].value", shorty_idx);
 
   if (proto_name != NULL)
@@ -488,6 +515,7 @@ uint32_t load_encoded_field(
 
   return current_size;
 }
+
 
 uint32_t load_encoded_method(
     DEX* dex,
@@ -515,18 +543,6 @@ uint32_t load_encoded_method(
 
   encoded_method.code_off = (uint32_t) read_uleb128(
       (dex->data + start_offset + current_size), &current_size);
-
-  *previous_method_idx = encoded_method.method_idx_diff + *previous_method_idx;
-
-  int name_idx = (int) get_integer(
-      dex->object, "method_ids[%i].name_idx", *previous_method_idx);
-
-  if (name_idx == (int)(UNDEFINED & 0xFFFFFFFF))
-    return 0;
-
-  #ifdef DEBUG_DEX_MODULE
-  printf("[DEX]\tNAME_IDX 0x%x\n", name_idx);
-  #endif
 
   set_integer(
       encoded_method.method_idx_diff,
@@ -558,6 +574,15 @@ uint32_t load_encoded_method(
       "method[%i].virtual",
       index_encoded_method);
 
+  *previous_method_idx = encoded_method.method_idx_diff + *previous_method_idx;
+
+  int64_t name_idx = dex_get_integer(
+      dex->object, "method_ids[%i].name_idx", *previous_method_idx);
+
+  #ifdef DEBUG_DEX_MODULE
+  printf("[DEX]\tNAME_IDX 0x%x\n", name_idx);
+  #endif
+
   #ifdef DEBUG_DEX_MODULE
   printf("[DEX]\tEncoded method method_idx:0x%x method_idx_diff:0x%x access_flags:0x%x code_off:0x%x\n",
       *previous_method_idx,
@@ -566,7 +591,7 @@ uint32_t load_encoded_method(
       encoded_method.code_off);
   #endif
 
-  SIZED_STRING* method_name = get_string(
+  SIZED_STRING* method_name = dex_get_string(
       dex->object,  "string_ids[%i].value", name_idx);
 
   if (method_name != NULL)
@@ -585,13 +610,13 @@ uint32_t load_encoded_method(
         index_encoded_method);
   }
 
-  int class_idx = (int) get_integer(
+  int64_t class_idx = dex_get_integer(
       dex->object, "method_ids[%i].class_idx", *previous_method_idx);
 
-  int descriptor_idx = (int) get_integer(
+  int64_t descriptor_idx = dex_get_integer(
       dex->object, "type_ids[%i].descriptor_idx", class_idx);
 
-  SIZED_STRING* class_name = get_string(
+  SIZED_STRING* class_name = dex_get_string(
       dex->object, "string_ids[%i].value", descriptor_idx);
 
   if (class_name != NULL)
@@ -611,13 +636,13 @@ uint32_t load_encoded_method(
         index_encoded_method);
   }
 
-  int proto_idx = (int) get_integer(
+  int64_t proto_idx = dex_get_integer(
       dex->object, "method_ids[%i].proto_idx", *previous_method_idx);
 
-  int shorty_idx = (int) get_integer(
+  int64_t shorty_idx = dex_get_integer(
       dex->object, "proto_ids[%i].shorty_idx", proto_idx);
 
-  SIZED_STRING* proto_name = get_string(
+  SIZED_STRING* proto_name = dex_get_string(
       dex->object, "string_ids[%i].value", shorty_idx);
 
   if (proto_name != NULL)
@@ -676,6 +701,7 @@ uint32_t load_encoded_method(
 
   return current_size;
 }
+
 
 void dex_parse(
     DEX* dex,
@@ -742,8 +768,9 @@ void dex_parse(
         yr_le32toh(string_id_item->string_data_offset), dex->object,
         "string_ids[%i].offset", i);
 
-    set_integer(yr_le32toh(string_id_item->string_data_offset), dex->object,
-                "string_ids[%i].size", value);
+    set_integer(
+        yr_le32toh(string_id_item->string_data_offset), dex->object,
+        "string_ids[%i].size", value);
 
     set_sized_string(
         (const char*) ((dex->data + yr_le32toh(string_id_item->string_data_offset) + 1)),
@@ -1084,15 +1111,18 @@ void dex_parse(
   set_integer(index_encoded_field, dex->object, "number_of_fields");
 }
 
+
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
+
 int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
+
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -1185,6 +1215,7 @@ int module_load(
 
   return ERROR_SUCCESS;
 }
+
 
 int module_unload(YR_OBJECT* module_object)
 {
