@@ -142,6 +142,7 @@ static bool fast_scan = false;
 static bool negate = false;
 static bool print_count_only = false;
 static bool fail_on_warnings = false;
+static bool rules_are_compiled = false;
 static int total_count = 0;
 static int limit = 0;
 static int timeout = 1000000;
@@ -158,6 +159,9 @@ args_option_t options[] =
 {
   OPT_STRING(0, "atom-quality-table", &atom_quality_table,
       "path to a file with the atom quality table", "FILE"),
+
+  OPT_BOOLEAN('C', "compiled-rules", &rules_are_compiled,
+      "load compiled rules"),
 
   OPT_BOOLEAN('c', "count", &print_count_only,
       "print only number of matches"),
@@ -530,6 +534,9 @@ static void print_error(
     case ERROR_UNSUPPORTED_FILE_VERSION:
       fprintf(stderr, "rules were compiled with a different version of YARA\n");
       break;
+    case ERROR_INVALID_FILE:
+      fprintf(stderr, "invalid compiled rules file.\n");
+      break;
     case ERROR_CORRUPT_FILE:
       fprintf(stderr, "corrupt compiled rules file.\n");
       break;
@@ -544,7 +551,7 @@ static void print_error(
       fprintf(stderr, "too many matches\n");
       break;
     default:
-      fprintf(stderr, "internal error: %d\n", error);
+      fprintf(stderr, "error: %d\n", error);
       break;
   }
 }
@@ -1132,21 +1139,7 @@ int main(
   // Try to load the rules file as a binary file containing
   // compiled rules first
 
-  result = yr_rules_load(argv[0], &rules);
-
-  // Accepted result are ERROR_SUCCESS or ERROR_INVALID_FILE
-  // if we are passing the rules in source form, if result is
-  // different from those exit with error.
-
-  if (result != ERROR_SUCCESS &&
-      result != ERROR_COULD_NOT_OPEN_FILE &&
-      result != ERROR_INVALID_FILE)
-  {
-    print_error(result);
-    exit_with_code(EXIT_FAILURE);
-  }
-
-  if (result == ERROR_SUCCESS)
+  if (rules_are_compiled)
   {
     // When a binary file containing compiled rules is provided, yara accepts
     // only two arguments, the compiled rules file and the target to be scanned.
@@ -1159,13 +1152,10 @@ int main(
       exit_with_code(EXIT_FAILURE);
     }
 
-    result = define_external_variables(rules, NULL);
+    result = yr_rules_load(argv[0], &rules);
 
-    if (result != ERROR_SUCCESS)
-    {
-      print_error(result);
-      exit_with_code(EXIT_FAILURE);
-    }
+    if (result == ERROR_SUCCESS)
+      result = define_external_variables(rules, NULL);
   }
   else
   {
@@ -1215,12 +1205,12 @@ int main(
     yr_compiler_destroy(compiler);
 
     compiler = NULL;
+  }
 
-    if (result != ERROR_SUCCESS)
-    {
-      fprintf(stderr, "error: %d\n", result);
-      exit_with_code(EXIT_FAILURE);
-    }
+  if (result != ERROR_SUCCESS)
+  {
+    print_error(result);
+    exit_with_code(EXIT_FAILURE);
   }
 
   if (show_stats)
