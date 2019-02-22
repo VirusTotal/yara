@@ -442,6 +442,9 @@ uint32_t load_encoded_field(
   int64_t name_idx = dex_get_integer(
       dex->object, "field_ids[%i].name_idx", *previous_field_idx);
 
+  if (name_idx == UNDEFINED)
+    return 0;
+
   SIZED_STRING* field_name = dex_get_string(
       dex->object, "string_ids[%i].value", name_idx);
 
@@ -578,6 +581,9 @@ uint32_t load_encoded_method(
 
   int64_t name_idx = dex_get_integer(
       dex->object, "method_ids[%i].name_idx", *previous_method_idx);
+
+  if (name_idx == UNDEFINED)
+    return 0;
 
   #ifdef DEBUG_DEX_MODULE
   printf("[DEX]\tNAME_IDX 0x%x\n", name_idx);
