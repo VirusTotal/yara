@@ -17,6 +17,9 @@ are:
 .B "    --atom-quality-table"
 Path to a file with the atom quality table.
 .TP
+.B \-C " --compiled-rules"
+RULES_FILE contains rules already compiled with yarac.
+.TP
 .B \-c " --count"
 Print number of matches only.
 .TP
