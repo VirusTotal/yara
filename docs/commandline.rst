@@ -57,7 +57,7 @@ Available options are:
 
   Print rules named <identifier> and ignore the rest.
 
-.. option:: -c --count
+.. option:: -C --compiled-rules
 
   RULES_FILE contains rules already compiled with yarac.
 
