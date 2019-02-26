@@ -410,7 +410,7 @@ int yr_execute_code(
         if (is_undef(r1))
           r1.i = UNDEFINED;
         else
-          r1.i= !r1.i;
+          r1.i = !r1.i;
 
         push(r1);
         break;

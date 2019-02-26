@@ -61,6 +61,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INTEGER_SET_ENUMERATION   1
 #define INTEGER_SET_RANGE         2
 
+#define FOR_EXPRESSION_ALL 1
+#define FOR_EXPRESSION_ANY 2
+
 #define fail_if_error(e) \
     if (e != ERROR_SUCCESS) \
     { \
@@ -208,6 +211,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <integer> string_modifiers
 
 %type <integer> integer_set
+
+%type <integer> for_expression
 
 %type <integer> rule_modifier
 %type <integer> rule_modifiers
@@ -1126,6 +1131,9 @@ expression
       '(' boolean_expression ')'
       {
         int mem_offset;
+        YR_FIXUP* fixup;
+        void* jmp_destination_addr;
+        uint8_t* nop_addr;
 
         compiler->loop_depth--;
         mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
@@ -1136,6 +1144,16 @@ expression
         // keeping the number of expressions evaluating to true.
         // If the value is UNDEFINED instruction OP_ADD_M
         // does nothing.
+
+        if ($2 == FOR_EXPRESSION_ALL)
+        {
+          // Store the last result for checking after we have incremented the
+          // counters. We want to keep the value on the stack though.
+          yr_parser_emit_with_arg(
+              yyscanner, OP_POP_M, mem_offset + 4, NULL, NULL);
+          yr_parser_emit_with_arg(
+              yyscanner, OP_PUSH_M, mem_offset + 4, NULL, NULL);
+        }
 
         yr_parser_emit_with_arg(
             yyscanner, OP_ADD_M, mem_offset + 1, NULL, NULL);
@@ -1159,6 +1177,63 @@ expression
           yr_parser_emit_with_arg(
               yyscanner, OP_INCR_M, mem_offset, NULL, NULL);
 
+          // Push loop quantifier
+          yr_parser_emit_with_arg(
+              yyscanner, OP_PUSH_M, mem_offset + 4, NULL, NULL);
+
+          if ($2 == FOR_EXPRESSION_ALL)
+          {
+            fail_if_error(yr_parser_emit_with_arg_reloc(
+                yyscanner,
+                OP_JFALSE,
+                0, // Don't know the jump destination yet
+                NULL,
+                &jmp_destination_addr));
+
+            // create a fixup entry for the jump and push it in the stack
+            fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
+
+            if (fixup == NULL)
+              fail_if_error(ERROR_INSUFFICIENT_MEMORY);
+
+            fixup->address = jmp_destination_addr;
+            fixup->next = compiler->fixup_stack_head;
+            compiler->fixup_stack_head = fixup;
+
+            // If we don't take the jump we need to clean up the value we just
+            // pushed on the stack.
+            yr_parser_emit(yyscanner, OP_POP, NULL);
+          }
+          else if ($2 == FOR_EXPRESSION_ANY)
+          {
+            // Push the number of expressions evaluating to true
+            yr_parser_emit_with_arg(
+                yyscanner, OP_PUSH_M, mem_offset + 1, NULL, NULL);
+
+            // Compare the loop quantifier to number of expressions that evaluate
+            // to true, in order to eliminate extraneous loop iterations.
+            fail_if_error(yr_parser_emit_with_arg_reloc(
+                yyscanner,
+                OP_JLE,
+                0, // Don't know the jump destination yet
+                NULL,
+                &jmp_destination_addr));
+
+            fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
+
+            if (fixup == NULL)
+              fail_if_error(ERROR_INSUFFICIENT_MEMORY);
+
+            fixup->address = jmp_destination_addr;
+            fixup->next = compiler->fixup_stack_head;
+            compiler->fixup_stack_head = fixup;
+
+            // If we don't take the jump we need to clean up the two values we
+            // just pushed on the stack.
+            yr_parser_emit(yyscanner, OP_POP, NULL);
+            yr_parser_emit(yyscanner, OP_POP, NULL);
+          }
+
           // Push lower bound of integer set
           yr_parser_emit_with_arg(
               yyscanner, OP_PUSH_M, mem_offset, NULL, NULL);
@@ -1176,7 +1251,35 @@ expression
               NULL,
               NULL);
 
+          if ($2 == FOR_EXPRESSION_ANY)
+          {
+            // Generate a do-nothing instruction (NOP) in order to get its address
+            // and use it as the destination for the OP_JLE if we are exiting the
+            // loop early.
+            fail_if_error(yr_parser_emit(yyscanner, OP_NOP, &nop_addr));
+
+            fixup = compiler->fixup_stack_head;
+            *(void**)(fixup->address) = (void*)(nop_addr);
+            compiler->fixup_stack_head = fixup->next;
+            yr_free(fixup);
+          }
+
+          // If we don't take the jump, clean up the stack.
           yr_parser_emit(yyscanner, OP_POP, NULL);
+
+          if ($2 == FOR_EXPRESSION_ALL)
+          {
+            // Generate a do-nothing instruction (NOP) in order to get its address
+            // and use it as the destination for the OP_JLE if we are exiting the
+            // loop early.
+            fail_if_error(yr_parser_emit(yyscanner, OP_NOP, &nop_addr));
+
+            fixup = compiler->fixup_stack_head;
+            *(void**)(fixup->address) = (void*)(nop_addr);
+            compiler->fixup_stack_head = fixup->next;
+            yr_free(fixup);
+          }
+
           yr_parser_emit(yyscanner, OP_POP, NULL);
         }
 
@@ -1538,13 +1641,26 @@ string_enumeration_item
 
 for_expression
     : primary_expression
+      {
+        int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
+        yr_parser_emit_with_arg(yyscanner, OP_CLEAR_M, mem_offset + 4, NULL, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_ADD_M, mem_offset + 4, NULL, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_PUSH_M, mem_offset + 4, NULL, NULL);
+        $$ = FOR_EXPRESSION_ANY;
+      }
     | _ALL_
       {
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL, NULL);
+        $$ = FOR_EXPRESSION_ALL;
       }
     | _ANY_
       {
+        int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, 1, NULL, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_CLEAR_M, mem_offset + 4, NULL, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_ADD_M, mem_offset + 4, NULL, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_PUSH_M, mem_offset + 4, NULL, NULL);
+        $$ = FOR_EXPRESSION_ANY;
       }
     ;
 
