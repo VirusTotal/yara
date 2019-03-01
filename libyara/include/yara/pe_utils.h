@@ -76,6 +76,7 @@ typedef struct _PE
     PIMAGE_NT_HEADERS64 header64;
   };
 
+  YR_HASH_TABLE* hash_table;
   YR_OBJECT* object;
   IMPORTED_DLL* imported_dlls;
   EXPORT_FUNCTIONS* exported_functions;
