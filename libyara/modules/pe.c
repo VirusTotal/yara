@@ -1852,7 +1852,7 @@ define_function(imphash)
     return_string(UNDEFINED);
 
   // Lookup in cache first.
-  char* digest_ascii = (char*) yr_hash_table_lookup(
+  digest_ascii = (char*) yr_hash_table_lookup(
       pe->hash_table,
       "imphash",
       NULL);
