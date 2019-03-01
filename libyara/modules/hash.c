@@ -43,7 +43,7 @@ typedef struct _CACHE_KEY
 } CACHE_KEY;
 
 
-void digest_to_ascii(
+static void digest_to_ascii(
     unsigned char* digest,
     char* digest_ascii,
     size_t digest_length)
@@ -57,7 +57,7 @@ void digest_to_ascii(
 }
 
 
-char* get_from_cache(
+static char* get_from_cache(
     YR_OBJECT* module_object,
     const char* ns,
     int64_t offset,
@@ -77,7 +77,7 @@ char* get_from_cache(
 }
 
 
-int add_to_cache(
+static int add_to_cache(
     YR_OBJECT* module_object,
     const char* ns,
     int64_t offset,
