@@ -48,6 +48,7 @@ uint64_t yr_stopwatch_elapsed_us(
 
   QueryPerformanceCounter(&li);
 
+  if (sw->frequency.QuadPart <= 0) return 0;
   return (li.QuadPart - sw->start.QuadPart) * 1000000L / sw->frequency.QuadPart;
 }
 
