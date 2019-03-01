@@ -811,6 +811,7 @@ int yr_ac_automaton_create(
 int yr_ac_automaton_destroy(
     YR_AC_AUTOMATON* automaton)
 {
+  if (automaton == NULL) return ERROR_INVALID_ARGUMENT;
   _yr_ac_state_destroy(automaton->root);
 
   yr_free(automaton->t_table);
