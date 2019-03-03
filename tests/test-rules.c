@@ -1896,6 +1896,7 @@ void test_process_scan()
         all of them\
     }", &rules) == ERROR_SUCCESS);
   rc1 = yr_rules_scan_proc(rules, pid, 0, count_matches, &matches, 0);
+  yr_rules_destroy(rules);
   kill(pid, SIGALRM);
 
   rc2 = waitpid(pid, &status, 0);
