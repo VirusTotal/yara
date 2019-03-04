@@ -90,6 +90,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OP_LOOKUP_DICT    43
 #define OP_JFALSE         44
 #define OP_JTRUE          45
+#define OP_SET_M          46
 
 
 #define _OP_EQ            0

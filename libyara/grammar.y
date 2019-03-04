@@ -1066,6 +1066,7 @@ expression
       }
     | _FOR_ for_expression _IDENTIFIER_ _IN_
       {
+        int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         int result = ERROR_SUCCESS;
         int var_index;
 
@@ -1086,6 +1087,14 @@ expression
         }
 
         fail_if_error(result);
+
+        // "any" loops require us to store the primary expression for
+        // later evaluation, but "all" loops do not. The OP_SWAPUNDEF after the
+        // loop ensures we evaluate the proper values.
+        if ($2 == FOR_EXPRESSION_ANY) {
+          yr_parser_emit_with_arg(
+            yyscanner, OP_SET_M, mem_offset + 4, NULL, NULL);
+        }
 
         // Push end-of-list marker
         result = yr_parser_emit_with_arg(
@@ -1150,9 +1159,7 @@ expression
           // Store the last result for checking after we have incremented the
           // counters. We want to keep the value on the stack though.
           yr_parser_emit_with_arg(
-              yyscanner, OP_POP_M, mem_offset + 4, NULL, NULL);
-          yr_parser_emit_with_arg(
-              yyscanner, OP_PUSH_M, mem_offset + 4, NULL, NULL);
+              yyscanner, OP_SET_M, mem_offset + 4, NULL, NULL);
         }
 
         yr_parser_emit_with_arg(
@@ -1642,10 +1649,6 @@ string_enumeration_item
 for_expression
     : primary_expression
       {
-        int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
-        yr_parser_emit_with_arg(yyscanner, OP_CLEAR_M, mem_offset + 4, NULL, NULL);
-        yr_parser_emit_with_arg(yyscanner, OP_ADD_M, mem_offset + 4, NULL, NULL);
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH_M, mem_offset + 4, NULL, NULL);
         $$ = FOR_EXPRESSION_ANY;
       }
     | _ALL_
@@ -1655,11 +1658,7 @@ for_expression
       }
     | _ANY_
       {
-        int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, 1, NULL, NULL);
-        yr_parser_emit_with_arg(yyscanner, OP_CLEAR_M, mem_offset + 4, NULL, NULL);
-        yr_parser_emit_with_arg(yyscanner, OP_ADD_M, mem_offset + 4, NULL, NULL);
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH_M, mem_offset + 4, NULL, NULL);
         $$ = FOR_EXPRESSION_ANY;
       }
     ;

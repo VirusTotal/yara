@@ -324,6 +324,17 @@ int yr_execute_code(
         mem[r1.i] = r2.i;
         break;
 
+      case OP_SET_M:
+        r1.i = *(uint64_t*)(ip);
+        ip += sizeof(uint64_t);
+        #if PARANOID_EXEC
+        ensure_within_mem(r1.i);
+        #endif
+        pop(r2);
+        push(r2);
+        mem[r1.i] = r2.i;
+        break;
+
       case OP_SWAPUNDEF:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
