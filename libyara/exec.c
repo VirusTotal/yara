@@ -332,7 +332,8 @@ int yr_execute_code(
         #endif
         pop(r2);
         push(r2);
-        mem[r1.i] = r2.i;
+        if (!is_undef(r2))
+          mem[r1.i] = r2.i;
         break;
 
       case OP_SWAPUNDEF:
