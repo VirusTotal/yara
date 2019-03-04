@@ -1091,7 +1091,8 @@ expression
         // "any" loops require us to store the primary expression for
         // later evaluation, but "all" loops do not. The OP_SWAPUNDEF after the
         // loop ensures we evaluate the proper values.
-        if ($2 == FOR_EXPRESSION_ANY) {
+        if ($2 == FOR_EXPRESSION_ANY)
+        {
           yr_parser_emit_with_arg(
             yyscanner, OP_SET_M, mem_offset + 4, NULL, NULL);
         }
@@ -1142,7 +1143,7 @@ expression
         int mem_offset;
         YR_FIXUP* fixup;
         void* jmp_destination_addr;
-        uint8_t* nop_addr;
+        uint8_t* pop_addr;
 
         compiler->loop_depth--;
         mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
@@ -1258,36 +1259,26 @@ expression
               NULL,
               NULL);
 
+          // If we don't take the jump, clean up the stack.
+          yr_parser_emit(yyscanner, OP_POP, &pop_addr);
+
           if ($2 == FOR_EXPRESSION_ANY)
           {
-            // Generate a do-nothing instruction (NOP) in order to get its address
-            // and use it as the destination for the OP_JLE if we are exiting the
-            // loop early.
-            fail_if_error(yr_parser_emit(yyscanner, OP_NOP, &nop_addr));
-
             fixup = compiler->fixup_stack_head;
-            *(void**)(fixup->address) = (void*)(nop_addr);
+            *(void**)(fixup->address) = (void*)(pop_addr);
             compiler->fixup_stack_head = fixup->next;
             yr_free(fixup);
           }
 
-          // If we don't take the jump, clean up the stack.
-          yr_parser_emit(yyscanner, OP_POP, NULL);
+          yr_parser_emit(yyscanner, OP_POP, &pop_addr);
 
           if ($2 == FOR_EXPRESSION_ALL)
           {
-            // Generate a do-nothing instruction (NOP) in order to get its address
-            // and use it as the destination for the OP_JLE if we are exiting the
-            // loop early.
-            fail_if_error(yr_parser_emit(yyscanner, OP_NOP, &nop_addr));
-
             fixup = compiler->fixup_stack_head;
-            *(void**)(fixup->address) = (void*)(nop_addr);
+            *(void**)(fixup->address) = (void*)(pop_addr);
             compiler->fixup_stack_head = fixup->next;
             yr_free(fixup);
           }
-
-          yr_parser_emit(yyscanner, OP_POP, NULL);
         }
 
         // Pop end-of-list marker.
