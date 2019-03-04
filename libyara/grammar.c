@@ -2676,7 +2676,7 @@ yyreduce:
         // 24      INT_LE      ; compare boolean_expression accumulator to loop
         //                     ; iteration counter
 
-        // for all X in (N..M) : (<expr>)
+        // for any X in (N..M) : (<expr>)
         //
         // 2       PUSH X      ;
         // 3       SET_M 4     ; store primary_expression in m4 while
