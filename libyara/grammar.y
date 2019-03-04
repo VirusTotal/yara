@@ -1066,6 +1066,73 @@ expression
       }
     | _FOR_ for_expression _IDENTIFIER_ _IN_
       {
+        // for all i in (N..M) : (<expr>)
+        //
+        // 1       PUSH UNDEF  ; "all"
+        // 2       PUSH UNDEF  ; "end of list"
+        // 3       PUSH N      ; integer range lower bound
+        // 4       PUSH M      ; integer range upper bound
+        // 5       CLEAR_M 1   ; clear <expr> result accumulator
+        // 6       CLEAR_M 2   ; clear loop iteration counter
+        // 7    .->POP_M 3     ; store range upper bound
+        // 8    |  POP_M 0     ; store range lower bound
+        //      |  <expr>      ; here goes the code for <expr>, its result will
+        //      |                be at the top of the stack
+        // 9    |  SET_M 4     ; store boolean expression result in memory 4
+        // 10   |  ADD_M 1     ; add boolean_expression result to accumulator
+        // 11   |  INCR_M 2    ; increment loop iteration counter
+        // 12   |  INCR_M 0    ; increment range lower bound (more like current bound)
+        // 13   |  PUSH_M 4    ; boolean expression result
+        // 14 .-+--JFALSE      ; jump out of loop if last result is false
+        // 15 | |  POP         ; clean up <expr>'s result if we don't take jump
+        // 16 | |  PUSH_M 0    ; lower (current) bound
+        // 17 | |  PUSH_M 3    ; upper bound
+        // 18 | `--JLE         ; jump to start of loop if we haven't iterated
+        //    |                  enough
+        // 19 |    POP         ; clean up the upper bound left on the stack
+        // 20 `--->POP         ; if we took the early exit this will clean up
+        //                       <expr>'s result
+        // 21      POP         ; pop end of list
+        // 22      SWAPUNDEF 2 ; swap the UNDEF ("all") with loop iteration
+        //                       counter (memory 2)
+        // 23      PUSH_M 1    ; push the boolean_expression accumulator
+        // 24      INT_LE      ; compare boolean_expression accumulator to loop
+        //                     ; iteration counter
+
+        // for all X in (N..M) : (<expr>)
+        //
+        // 2       PUSH X      ;
+        // 3       SET_M 4     ; store primary_expression in m4 while
+        // 6       PUSH UNDEF  ; "end of list"
+        // 7       PUSH 0      ; integer range lower bound
+        // 8       PUSH 5      ; integer range upper bound
+        // 9       CLEAR_M 1   ; clear loop local variables
+        // 10      CLEAR_M 2   ; clear loop local variables
+        // 11   .->POP_M 3     ; store upper bound
+        // 12   |  POP_M 0     ; store lower bound
+        //      |  <expr>      ; here goes the code for <expr>, its result will
+        //      |              ; be at the  top of the stack
+        // 13   |  ADD_M 1     ; add boolean_expression result to accumulator
+        // 14   |  INCR_M 2    ; increment loop iteration counter
+        // 15   |  INCR_M 0    ; increment lower bound (more like current bound)
+        // 16   |  PUSH_M 4    ; primary expression minimum
+        // 17   |  PUSH_M 1    ; boolean_expression accumulator
+        // 18 .-+--JLE         ; jump out of loop if (minimum <= accumulator)
+        // 19 | |  POP         ; clean up stack if we don't take jump
+        // 20 | |  POP         ; clean up stack if we don't take jump
+        // 21 | |  PUSH_M 0    ; lower (current) bound
+        // 22 | |  PUSH_M 3    ; upper bound
+        // 23 | `--JLE         ; jump to start of loop if we haven't iterated enough
+        // 24 `--->POP         ; if we took the early exit this will clean up
+        //                       those two pushes
+        // 25      POP         ; if we didn't take the second jump this cleans
+        //                     ; up those two pushes
+        // 26      POP         ; pop end of list
+        // 27      SWAPUNDEF 2 ; at this point only our "any" is on the stack,
+        //                       this is effectively a NOP
+        // 28      PUSH_M 1    ; push the boolean_expression accumulator
+        // 29      INT_LE      ; compare boolean_expression accumulator to X
+
         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         int result = ERROR_SUCCESS;
         int var_index;
