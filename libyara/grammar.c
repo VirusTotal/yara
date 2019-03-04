@@ -2678,37 +2678,37 @@ yyreduce:
 
         // for any X in (N..M) : (<expr>)
         //
-        // 2       PUSH X      ;
-        // 3       SET_M 4     ; store primary_expression in m4 while
-        // 6       PUSH UNDEF  ; "end of list"
-        // 7       PUSH 0      ; integer range lower bound
-        // 8       PUSH 5      ; integer range upper bound
-        // 9       CLEAR_M 1   ; clear loop local variables
-        // 10      CLEAR_M 2   ; clear loop local variables
-        // 11   .->POP_M 3     ; store upper bound
-        // 12   |  POP_M 0     ; store lower bound
-        //      |  <expr>      ; here goes the code for <expr>, its result will
+        // 1       PUSH X      ;
+        // 2       SET_M 4     ; store primary_expression in m4
+        // 3       PUSH UNDEF  ; "end of list"
+        // 4       PUSH 0      ; integer range lower bound
+        // 5       PUSH 5      ; integer range upper bound
+        // 6       CLEAR_M 1   ; clear loop local variables
+        // 7       CLEAR_M 2   ; clear loop local variables
+        // 8    .->POP_M 3     ; store upper bound
+        // 9    |  POP_M 0     ; store lower bound
+        // 10   |  <expr>      ; here goes the code for <expr>, its result will
         //      |              ; be at the  top of the stack
-        // 13   |  ADD_M 1     ; add boolean_expression result to accumulator
-        // 14   |  INCR_M 2    ; increment loop iteration counter
-        // 15   |  INCR_M 0    ; increment lower bound (more like current bound)
-        // 16   |  PUSH_M 4    ; primary expression minimum
-        // 17   |  PUSH_M 1    ; boolean_expression accumulator
-        // 18 .-+--JLE         ; jump out of loop if (minimum <= accumulator)
-        // 19 | |  POP         ; clean up stack if we don't take jump
-        // 20 | |  POP         ; clean up stack if we don't take jump
-        // 21 | |  PUSH_M 0    ; lower (current) bound
-        // 22 | |  PUSH_M 3    ; upper bound
-        // 23 | `--JLE         ; jump to start of loop if we haven't iterated enough
-        // 24 `--->POP         ; if we took the early exit this will clean up
+        // 11   |  ADD_M 1     ; add boolean_expression result to accumulator
+        // 12   |  INCR_M 2    ; increment loop iteration counter
+        // 13   |  INCR_M 0    ; increment lower bound (more like current bound)
+        // 14   |  PUSH_M 4    ; primary expression minimum
+        // 15   |  PUSH_M 1    ; boolean_expression accumulator
+        // 16 .-+--JLE         ; jump out of loop if (minimum <= accumulator)
+        // 17 | |  POP         ; clean up stack if we don't take jump
+        // 18 | |  POP         ; clean up stack if we don't take jump
+        // 19 | |  PUSH_M 0    ; lower (current) bound
+        // 20 | |  PUSH_M 3    ; upper bound
+        // 21 | `--JLE         ; jump to start of loop if we haven't iterated enough
+        // 22 `--->POP         ; if we took the early exit this will clean up
         //                       those two pushes
-        // 25      POP         ; if we didn't take the second jump this cleans
+        // 23      POP         ; if we didn't take the second jump this cleans
         //                     ; up those two pushes
-        // 26      POP         ; pop end of list
-        // 27      SWAPUNDEF 2 ; at this point only our "any" is on the stack,
+        // 24      POP         ; pop end of list
+        // 25      SWAPUNDEF 2 ; at this point only our "any" is on the stack,
         //                       this is effectively a NOP
-        // 28      PUSH_M 1    ; push the boolean_expression accumulator
-        // 29      INT_LE      ; compare boolean_expression accumulator to X
+        // 26      PUSH_M 1    ; push the boolean_expression accumulator
+        // 27      INT_LE      ; compare boolean_expression accumulator to X
 
         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         int result = ERROR_SUCCESS;
