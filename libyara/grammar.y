@@ -1072,32 +1072,28 @@ expression
         // 2       PUSH UNDEF  ; "end of list"
         // 3       PUSH N      ; integer range lower bound
         // 4       PUSH M      ; integer range upper bound
-        // 5       CLEAR_M 1   ; clear <expr> result accumulator
-        // 6       CLEAR_M 2   ; clear loop iteration counter
-        // 7    .->POP_M 3     ; store range upper bound
-        // 8    |  POP_M 0     ; store range lower bound
+        // 5       POP_M 3     ; store range upper bound
+        // 6       POP_M 0     ; store range lower bound
+        // 7       CLEAR_M 1   ; clear <expr> result accumulator
+        // 8       CLEAR_M 2   ; clear loop iteration counter
+        // 9    .->INCR_M 2    ; increment loop iteration counter
         //      |  <expr>      ; here goes the code for <expr>, its result will
         //      |                be at the top of the stack
-        // 9    |  SET_M 4     ; store boolean expression result in memory 4
-        // 10   |  ADD_M 1     ; add boolean_expression result to accumulator
-        // 11   |  INCR_M 2    ; increment loop iteration counter
-        // 12   |  INCR_M 0    ; increment range lower bound (more like current bound)
-        // 13   |  PUSH_M 4    ; boolean expression result
-        // 14 .-+--JFALSE      ; jump out of loop if last result is false
-        // 15 | |  POP         ; clean up <expr>'s result if we don't take jump
+        // 10   |  SET_M 4     ; store boolean expression result in memory 4
+        // 11   |  ADD_M 1     ; add boolean_expression result to accumulator
+        // 12   |  INCR_M 2    ; increment loop iteration counter
+        // 13   |  INCR_M 0    ; increment range lower bound (more like current bound)
+        // 14   |  PUSH_M 4    ; boolean expression result
+        // 15 .-+--JFALSE_P    ; jump out of loop if last result is false
         // 16 | |  PUSH_M 0    ; lower (current) bound
         // 17 | |  PUSH_M 3    ; upper bound
-        // 18 | `--JLE         ; jump to start of loop if we haven't iterated
-        //    |                  enough
-        // 19 |    POP         ; clean up the upper bound left on the stack
-        // 20 `--->POP         ; if we took the early exit this will clean up
-        //                       <expr>'s result
-        // 21      POP         ; pop end of list
-        // 22      SWAPUNDEF 2 ; swap the UNDEF ("all") with loop iteration
+        // 18 | `--JLE_P       ; jump to start of loop if we haven't iterated enough
+        // 19 `--->POP         ; pop end of list
+        // 20      SWAPUNDEF 2 ; swap the UNDEF ("all") with loop iteration
         //                       counter (memory 2)
-        // 23      PUSH_M 1    ; push the boolean_expression accumulator
-        // 24      INT_LE      ; compare boolean_expression accumulator to loop
-        //                     ; iteration counter
+        // 21      PUSH_M 1    ; push the boolean_expression accumulator
+        // 22      INT_LE      ; compare boolean_expression accumulator to loop
+        //                       iteration counter
 
         // for any X in (N..M) : (<expr>)
         //
@@ -1106,32 +1102,26 @@ expression
         // 3       PUSH UNDEF  ; "end of list"
         // 4       PUSH 0      ; integer range lower bound
         // 5       PUSH 5      ; integer range upper bound
-        // 6       CLEAR_M 1   ; clear loop local variables
-        // 7       CLEAR_M 2   ; clear loop local variables
-        // 8    .->POP_M 3     ; store upper bound
-        // 9    |  POP_M 0     ; store lower bound
-        // 10   |  <expr>      ; here goes the code for <expr>, its result will
+        // 6       POP_M 3     ; store upper bound
+        // 7       POP_M 0     ; store lower bound
+        // 8       CLEAR_M 1   ; clear <expr> result accumulator
+        // 9       CLEAR_M 2   ; clear loop iteration counter
+        // 10   .->INCR_M 2    ; increment loop iteration counter
+        // 11   |  <expr>      ; here goes the code for <expr>, its result will
         //      |              ; be at the  top of the stack
-        // 11   |  ADD_M 1     ; add boolean_expression result to accumulator
-        // 12   |  INCR_M 2    ; increment loop iteration counter
+        // 12   |  ADD_M 1     ; add boolean_expression result to accumulator
         // 13   |  INCR_M 0    ; increment lower bound (more like current bound)
         // 14   |  PUSH_M 4    ; primary expression minimum
         // 15   |  PUSH_M 1    ; boolean_expression accumulator
-        // 16 .-+--JLE         ; jump out of loop if (minimum <= accumulator)
-        // 17 | |  POP         ; clean up stack if we don't take jump
-        // 18 | |  POP         ; clean up stack if we don't take jump
-        // 19 | |  PUSH_M 0    ; lower (current) bound
-        // 20 | |  PUSH_M 3    ; upper bound
-        // 21 | `--JLE         ; jump to start of loop if we haven't iterated enough
-        // 22 `--->POP         ; if we took the early exit this will clean up
-        //                       those two pushes
-        // 23      POP         ; if we didn't take the second jump this cleans
-        //                     ; up those two pushes
-        // 24      POP         ; pop end of list
-        // 25      SWAPUNDEF 2 ; at this point only our "any" is on the stack,
+        // 16 .-+--JLE_P       ; jump out of loop if (minimum <= accumulator)
+        // 17 | |  PUSH_M 0    ; lower (current) bound
+        // 18 | |  PUSH_M 3    ; upper bound
+        // 19 | `--JLE_P         ; jump to start of loop if we haven't iterated enough
+        // 20 `--->POP         ; pop end of list
+        // 21      SWAPUNDEF 2 ; at this point only our "any" is on the stack,
         //                       this is effectively a NOP
-        // 26      PUSH_M 1    ; push the boolean_expression accumulator
-        // 27      INT_LE      ; compare boolean_expression accumulator to X
+        // 22      PUSH_M 1    ; push the boolean_expression accumulator
+        // 23      INT_LE      ; compare boolean_expression accumulator to X
 
         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         int result = ERROR_SUCCESS;
@@ -1175,6 +1165,23 @@ expression
         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         uint8_t* addr;
 
+        if ($6 == INTEGER_SET_ENUMERATION)
+        {
+          // Pop the first integer
+          yr_parser_emit_with_arg(
+              yyscanner, OP_POP_M, mem_offset, NULL, NULL);
+        }
+        else // INTEGER_SET_RANGE
+        {
+          // Pop higher bound of set range
+          yr_parser_emit_with_arg(
+              yyscanner, OP_POP_M, mem_offset + 3, NULL, NULL);
+
+          // Pop lower bound of set range
+          yr_parser_emit_with_arg(
+              yyscanner, OP_POP_M, mem_offset, NULL, NULL);
+        }
+
         // Clear counter for number of expressions evaluating
         // to true.
         yr_parser_emit_with_arg(
@@ -1184,22 +1191,9 @@ expression
         yr_parser_emit_with_arg(
             yyscanner, OP_CLEAR_M, mem_offset + 2, NULL, NULL);
 
-        if ($6 == INTEGER_SET_ENUMERATION)
-        {
-          // Pop the first integer
-          yr_parser_emit_with_arg(
-              yyscanner, OP_POP_M, mem_offset, &addr, NULL);
-        }
-        else // INTEGER_SET_RANGE
-        {
-          // Pop higher bound of set range
-          yr_parser_emit_with_arg(
-              yyscanner, OP_POP_M, mem_offset + 3, &addr, NULL);
-
-          // Pop lower bound of set range
-          yr_parser_emit_with_arg(
-              yyscanner, OP_POP_M, mem_offset, NULL, NULL);
-        }
+        // Increment iterations counter
+        yr_parser_emit_with_arg(
+            yyscanner, OP_INCR_M, mem_offset + 2, &addr, NULL);
 
         compiler->loop_address[compiler->loop_depth] = addr;
         compiler->loop_identifier[compiler->loop_depth] = $3;
@@ -1233,10 +1227,6 @@ expression
         yr_parser_emit_with_arg(
             yyscanner, OP_ADD_M, mem_offset + 1, NULL, NULL);
 
-        // Increment iterations counter
-        yr_parser_emit_with_arg(
-            yyscanner, OP_INCR_M, mem_offset + 2, NULL, NULL);
-
         if ($6 == INTEGER_SET_ENUMERATION)
         {
           yr_parser_emit_with_arg_reloc(
@@ -1263,7 +1253,7 @@ expression
           {
             fail_if_error(yr_parser_emit_with_arg_reloc(
                 yyscanner,
-                OP_JFALSE,
+                OP_JFALSE_P,
                 0, // Don't know the jump destination yet
                 NULL,
                 &jmp_destination_addr));
@@ -1277,10 +1267,6 @@ expression
             fixup->address = jmp_destination_addr;
             fixup->next = compiler->fixup_stack_head;
             compiler->fixup_stack_head = fixup;
-
-            // If we don't take the jump we need to clean up the value we just
-            // pushed on the stack.
-            yr_parser_emit(yyscanner, OP_POP, NULL);
           }
           else if ($2 == FOR_EXPRESSION_ANY)
           {
@@ -1292,7 +1278,7 @@ expression
             // to true, in order to eliminate extraneous loop iterations.
             fail_if_error(yr_parser_emit_with_arg_reloc(
                 yyscanner,
-                OP_JLE,
+                OP_JLE_P,
                 0, // Don't know the jump destination yet
                 NULL,
                 &jmp_destination_addr));
@@ -1305,11 +1291,6 @@ expression
             fixup->address = jmp_destination_addr;
             fixup->next = compiler->fixup_stack_head;
             compiler->fixup_stack_head = fixup;
-
-            // If we don't take the jump we need to clean up the two values we
-            // just pushed on the stack.
-            yr_parser_emit(yyscanner, OP_POP, NULL);
-            yr_parser_emit(yyscanner, OP_POP, NULL);
           }
 
           // Push lower bound of integer set
@@ -1324,34 +1305,18 @@ expression
           // if lower bound is still lower or equal than higher bound
           yr_parser_emit_with_arg_reloc(
               yyscanner,
-              OP_JLE,
+              OP_JLE_P,
               compiler->loop_address[compiler->loop_depth],
               NULL,
               NULL);
 
-          // If we don't take the jump, clean up the stack.
-          yr_parser_emit(yyscanner, OP_POP, &pop_addr);
-
-          if ($2 == FOR_EXPRESSION_ANY)
-          {
-            fixup = compiler->fixup_stack_head;
-            *(void**)(fixup->address) = (void*)(pop_addr);
-            compiler->fixup_stack_head = fixup->next;
-            yr_free(fixup);
-          }
-
-          yr_parser_emit(yyscanner, OP_POP, &pop_addr);
-
-          if ($2 == FOR_EXPRESSION_ALL)
-          {
-            fixup = compiler->fixup_stack_head;
-            *(void**)(fixup->address) = (void*)(pop_addr);
-            compiler->fixup_stack_head = fixup->next;
-            yr_free(fixup);
-          }
-
           // Pop end-of-list marker.
-          yr_parser_emit(yyscanner, OP_POP, NULL);
+          yr_parser_emit(yyscanner, OP_POP, &pop_addr);
+
+          fixup = compiler->fixup_stack_head;
+          *(void**)(fixup->address) = (void*)(pop_addr);
+          compiler->fixup_stack_head = fixup->next;
+          yr_free(fixup);
         }
 
         // At this point the loop quantifier (any, all, 1, 2,..)
