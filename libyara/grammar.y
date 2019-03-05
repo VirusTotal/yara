@@ -1245,6 +1245,9 @@ expression
               compiler->loop_address[compiler->loop_depth],
               NULL,
               NULL);
+
+          // Pop end-of-list marker.
+          yr_parser_emit(yyscanner, OP_POP, NULL);
         }
         else // INTEGER_SET_RANGE
         {
@@ -1346,10 +1349,10 @@ expression
             compiler->fixup_stack_head = fixup->next;
             yr_free(fixup);
           }
-        }
 
-        // Pop end-of-list marker.
-        yr_parser_emit(yyscanner, OP_POP, NULL);
+          // Pop end-of-list marker.
+          yr_parser_emit(yyscanner, OP_POP, NULL);
+        }
 
         // At this point the loop quantifier (any, all, 1, 2,..)
         // is at the top of the stack. Check if the quantifier

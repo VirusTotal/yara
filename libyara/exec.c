@@ -324,6 +324,18 @@ int yr_execute_code(
         mem[r1.i] = r2.i;
         break;
 
+      case OP_TOP_M:
+        r1.i = *(uint64_t*)(ip);
+        ip += sizeof(uint64_t);
+        #if PARANOID_EXEC
+        ensure_within_mem(r1.i);
+        #endif
+        pop(r2);
+        push(r2);
+        if (!is_undef(r2))
+          mem[r1.i] = r2.i;
+        break;
+
       case OP_SET_M:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
@@ -371,6 +383,13 @@ int yr_execute_code(
         ip = jmp_if(r1.i <= r2.i, ip);
         break;
 
+      case OP_JLE_S:
+        pop(r2);
+        pop(r1);
+
+        ip = jmp_if(r1.i <= r2.i, ip);
+        break;
+
       case OP_JTRUE:
         pop(r1);
         push(r1);
@@ -381,6 +400,12 @@ int yr_execute_code(
       case OP_JFALSE:
         pop(r1);
         push(r1);
+
+        ip = jmp_if(is_undef(r1) || !r1.i, ip);
+        break;
+
+      case OP_JFALSE_S:
+        pop(r1);
 
         ip = jmp_if(is_undef(r1) || !r1.i, ip);
         break;

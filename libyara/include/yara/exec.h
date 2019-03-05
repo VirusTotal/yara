@@ -91,6 +91,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OP_JFALSE         44
 #define OP_JTRUE          45
 #define OP_SET_M          46
+#define OP_TOP_M          47
+#define OP_JLE_S          48
+#define OP_JFALSE_S       49
 
 
 #define _OP_EQ            0
