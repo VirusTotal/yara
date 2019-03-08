@@ -47,7 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // address within the relocated arena.
 #define ARENA_FLAGS_RELOCATABLE       2
 
-#define ARENA_FILE_VERSION       ((21 << 16) | YR_MAX_THREADS)
+#define ARENA_FILE_VERSION       ((22 << 16) | YR_MAX_THREADS)
 
 #define EOL ((size_t) -1)
 
