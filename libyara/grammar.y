@@ -1081,18 +1081,17 @@ expression
         //      |                be at the top of the stack
         // 10   |  SET_M 4     ; store boolean expression result in memory 4
         // 11   |  ADD_M 1     ; add boolean_expression result to accumulator
-        // 12   |  INCR_M 2    ; increment loop iteration counter
-        // 13   |  INCR_M 0    ; increment range lower bound (more like current bound)
-        // 14   |  PUSH_M 4    ; boolean expression result
-        // 15 .-+--JFALSE_P    ; jump out of loop if last result is false
-        // 16 | |  PUSH_M 0    ; lower (current) bound
-        // 17 | |  PUSH_M 3    ; upper bound
-        // 18 | `--JLE_P       ; jump to start of loop if we haven't iterated enough
-        // 19 `--->POP         ; pop end of list
-        // 20      SWAPUNDEF 2 ; swap the UNDEF ("all") with loop iteration
+        // 12   |  INCR_M 0    ; increment range lower bound (more like current bound)
+        // 13   |  PUSH_M 4    ; boolean expression result
+        // 14 .-+--JFALSE_P    ; jump out of loop if last result is false
+        // 15 | |  PUSH_M 0    ; lower (current) bound
+        // 16 | |  PUSH_M 3    ; upper bound
+        // 17 | `--JLE_P       ; jump to start of loop if we haven't iterated enough
+        // 18 `--->POP         ; pop end of list
+        // 19      SWAPUNDEF 2 ; swap the UNDEF ("all") with loop iteration
         //                       counter (memory 2)
-        // 21      PUSH_M 1    ; push the boolean_expression accumulator
-        // 22      INT_LE      ; compare boolean_expression accumulator to loop
+        // 20      PUSH_M 1    ; push the boolean_expression accumulator
+        // 21      INT_LE      ; compare boolean_expression accumulator to loop
         //                       iteration counter
 
         // for any X in (N..M) : (<expr>)
