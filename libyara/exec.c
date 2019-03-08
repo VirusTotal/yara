@@ -358,30 +358,29 @@ int yr_execute_code(
       case OP_JNUNDEF:
         pop(r1);
         push(r1);
-
         ip = jmp_if(!is_undef(r1), ip);
         break;
 
-      case OP_JLE:
+      case OP_JLE_P:
         pop(r2);
         pop(r1);
-        push(r1);
-        push(r2);
-
         ip = jmp_if(r1.i <= r2.i, ip);
         break;
 
       case OP_JTRUE:
         pop(r1);
         push(r1);
-
         ip = jmp_if(!is_undef(r1) && r1.i, ip);
         break;
 
       case OP_JFALSE:
         pop(r1);
         push(r1);
+        ip = jmp_if(is_undef(r1) || !r1.i, ip);
+        break;
 
+      case OP_JFALSE_P:
+        pop(r1);
         ip = jmp_if(is_undef(r1) || !r1.i, ip);
         break;
 
