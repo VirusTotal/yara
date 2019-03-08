@@ -2692,7 +2692,7 @@ yyreduce:
         // 16 .-+--JLE_P       ; jump out of loop if (minimum <= accumulator)
         // 17 | |  PUSH_M 0    ; lower (current) bound
         // 18 | |  PUSH_M 3    ; upper bound
-        // 19 | `--JLE_P         ; jump to start of loop if we haven't iterated enough
+        // 19 | `--JLE_P       ; jump to start of loop if we haven't iterated enough
         // 20 `--->POP         ; pop end of list
         // 21      SWAPUNDEF 2 ; at this point only our "any" is on the stack,
         //                       this is effectively a NOP
