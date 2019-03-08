@@ -1072,10 +1072,10 @@ expression
         // 2       PUSH UNDEF  ; "end of list"
         // 3       PUSH N      ; integer range lower bound
         // 4       PUSH M      ; integer range upper bound
-        // 5       POP_M 3     ; store range upper bound
-        // 6       POP_M 0     ; store range lower bound
         // 7       CLEAR_M 1   ; clear <expr> result accumulator
         // 8       CLEAR_M 2   ; clear loop iteration counter
+        // 5       POP_M 3     ; store range upper bound
+        // 6       POP_M 0     ; store range lower bound
         // 9    .->INCR_M 2    ; increment loop iteration counter
         //      |  <expr>      ; here goes the code for <expr>, its result will
         //      |                be at the top of the stack
@@ -1094,17 +1094,17 @@ expression
         // 21      INT_LE      ; compare boolean_expression accumulator to loop
         //                       iteration counter
 
-        // for any X in (N..M) : (<expr>)
+        // for X i in (N..M) : (<expr>)
         //
         // 1       PUSH X      ;
         // 2       SET_M 4     ; store primary_expression in m4
         // 3       PUSH UNDEF  ; "end of list"
         // 4       PUSH 0      ; integer range lower bound
         // 5       PUSH 5      ; integer range upper bound
-        // 6       POP_M 3     ; store upper bound
-        // 7       POP_M 0     ; store lower bound
         // 8       CLEAR_M 1   ; clear <expr> result accumulator
         // 9       CLEAR_M 2   ; clear loop iteration counter
+        // 6       POP_M 3     ; store upper bound
+        // 7       POP_M 0     ; store lower bound
         // 10   .->INCR_M 2    ; increment loop iteration counter
         // 11   |  <expr>      ; here goes the code for <expr>, its result will
         //      |              ; be at the  top of the stack
@@ -1121,6 +1121,28 @@ expression
         //                       this is effectively a NOP
         // 22      PUSH_M 1    ; push the boolean_expression accumulator
         // 23      INT_LE      ; compare boolean_expression accumulator to X
+
+        // for any X in (A, B, C) : (<expr>)
+        //
+        // 1       PUSH X      ;
+        // 2       SET_M 4     ; store primary_expression in m4
+        // 3       PUSH UNDEF  ; "end of list"
+        // 4       PUSH A
+        // 5       PUSH B
+        // 6       PUSH C
+        // 7       CLEAR_M 1   ; clear <expr> result accumulator
+        // 8       CLEAR_M 2   ; clear loop iteration counter
+        // 9    .->INCR_M 2    ; increment loop iteration counter
+        // 10   |  POP_M 0     ; store current item in M[0]
+        // 11   |  <expr>      ; here goes the code for <expr>, its result will
+        //      |              ; be at the  top of the stack
+        // 12   |  ADD_M 1     ; add boolean_expression result to accumulator
+        // 13   `--JNUNDEF     ; if "end of list" was not reached, repeat.
+        // 14      POP         ; pop end of list
+        // 15      SWAPUNDEF 2 ; swap the UNDEF with loop iteration counter M[2]
+        // 16      PUSH_M 1    ; push boolean_expression result accumulator
+        // 17      INT_LE      ; compare boolean_expression accumulator to X
+
 
         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         int result = ERROR_SUCCESS;
@@ -1164,8 +1186,21 @@ expression
         int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
         uint8_t* addr;
 
+        // Clear counter for number of expressions evaluating
+        // to true.
+        yr_parser_emit_with_arg(
+            yyscanner, OP_CLEAR_M, mem_offset + 1, NULL, NULL);
+
+        // Clear iterations counter
+        yr_parser_emit_with_arg(
+            yyscanner, OP_CLEAR_M, mem_offset + 2, NULL, NULL);
+
         if ($6 == INTEGER_SET_ENUMERATION)
         {
+          // Increment iterations counter
+          yr_parser_emit_with_arg(
+              yyscanner, OP_INCR_M, mem_offset + 2, &addr, NULL);
+
           // Pop the first integer
           yr_parser_emit_with_arg(
               yyscanner, OP_POP_M, mem_offset, NULL, NULL);
@@ -1179,20 +1214,11 @@ expression
           // Pop lower bound of set range
           yr_parser_emit_with_arg(
               yyscanner, OP_POP_M, mem_offset, NULL, NULL);
+
+          // Increment iterations counter
+          yr_parser_emit_with_arg(
+              yyscanner, OP_INCR_M, mem_offset + 2, &addr, NULL);
         }
-
-        // Clear counter for number of expressions evaluating
-        // to true.
-        yr_parser_emit_with_arg(
-            yyscanner, OP_CLEAR_M, mem_offset + 1, NULL, NULL);
-
-        // Clear iterations counter
-        yr_parser_emit_with_arg(
-            yyscanner, OP_CLEAR_M, mem_offset + 2, NULL, NULL);
-
-        // Increment iterations counter
-        yr_parser_emit_with_arg(
-            yyscanner, OP_INCR_M, mem_offset + 2, &addr, NULL);
 
         compiler->loop_address[compiler->loop_depth] = addr;
         compiler->loop_identifier[compiler->loop_depth] = $3;

@@ -962,6 +962,27 @@ void test_for()
           for all i in (1..#a) : (@a[i] == 5) \
       }",
       "mississippi");
+
+  assert_true_rule(
+      "rule test { \
+        condition: \
+          for any i in (1, 2, 3) : (i <= 1) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { \
+        condition: \
+          for all i in (1, 2, 3) : (i >= 1) \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { \
+        condition: \
+          for all i in (1, 0) : (i != 1) \
+      }",
+      NULL);
 }
 
 
