@@ -1122,7 +1122,7 @@ expression
         // 22      PUSH_M 1    ; push the boolean_expression accumulator
         // 23      INT_LE      ; compare boolean_expression accumulator to X
 
-        // for any X in (A, B, C) : (<expr>)
+        // for X i in (A, B, C) : (<expr>)
         //
         // 1       PUSH X      ;
         // 2       SET_M 4     ; store primary_expression in m4
