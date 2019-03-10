@@ -1072,6 +1072,7 @@ static int _yr_atoms_extract_from_re(
                 best_atom_re_nodes[i] = recent_re_nodes[i + shift];
               }
 
+              best_atom.length = atom.length;
               best_quality = quality;
             }
 
