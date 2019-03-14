@@ -438,62 +438,37 @@ void macho_parse_file(
 }
 
 
-// Parse Mach-O fat file with specific bit-width.
-
-#define MACHO_PARSE_FAT_FILE(bits)                                             \
-void macho_parse_fat_file_##bits(                                              \
-    const uint8_t* data,                                                       \
-    const uint64_t size,                                                       \
-    YR_OBJECT* object,                                                         \
-    YR_SCAN_CONTEXT* context)                                                  \
-{                                                                              \
-  if (size < sizeof(yr_fat_header_t))                                          \
-    return;                                                                    \
-                                                                               \
-  /* All data in Mach-O fat binary headers are in big-endian byte order. */    \
-                                                                               \
-  const yr_fat_header_t* header = (yr_fat_header_t*)data;                      \
-  set_integer(yr_be32toh(header->magic), object, "fat_magic");                 \
-                                                                               \
-  uint32_t count = yr_be32toh(header->nfat_arch);                              \
-  set_integer(count, object, "nfat_arch");                                     \
-                                                                               \
-  if (size < sizeof(yr_fat_header_t) + count * sizeof(yr_fat_arch_##bits##_t)) \
-    return;                                                                    \
-                                                                               \
-  yr_fat_arch_##bits##_t* archs = (yr_fat_arch_##bits##_t*)(header + 1);       \
-  for (uint32_t i = 0; i < count; i++)                                         \
-  {                                                                            \
-    set_integer(yr_be32toh(archs[i].cputype),                                  \
-                object, "fat_arch[%i].cputype", i);                            \
-    set_integer(yr_be32toh(archs[i].cpusubtype),                               \
-                object, "fat_arch[%i].cpusubtype", i);                         \
-                                                                               \
-    uint64_t offset = yr_be##bits##toh(archs[i].offset);                       \
-    set_integer(offset, object, "fat_arch[%i].offset", i);                     \
-    uint64_t file_size = yr_be##bits##toh(archs[i].size);                      \
-    set_integer(file_size, object, "fat_arch[%i].size", i);                    \
-                                                                               \
-    set_integer(yr_be32toh(archs[i].align),                                    \
-                object, "fat_arch[%i].align", i);                              \
-                                                                               \
-    if (size < offset + file_size)                                             \
-        continue;                                                              \
-                                                                               \
-    /* Force 'file' array entry creation. */                                   \
-    set_integer(YR_UNDEFINED, object, "file[%i].magic", i);                       \
-                                                                               \
-    /* Get specific Mach-O file data. */                                       \
-    macho_parse_file(data + offset, file_size,                                 \
-                     get_object(object, "file[%i]", i), context);              \
-  }                                                                            \
-}                                                                              \
-
-MACHO_PARSE_FAT_FILE(32)
-MACHO_PARSE_FAT_FILE(64)
-
-
 // Parse Mach-O fat file.
+
+void macho_load_fat_arch_header(
+    const uint8_t* data,
+    const uint64_t size,
+    uint32_t num,
+    yr_fat_arch_64_t* arch)
+{
+  if (macho_fat_is_32(data)) {
+    yr_fat_arch_32_t* arch32 = 
+        (yr_fat_arch_32_t*)(data + sizeof(yr_fat_header_t) + 
+        (num * sizeof(yr_fat_arch_32_t)));
+    arch->cputype = yr_be32toh(arch32->cputype);
+    arch->cpusubtype = yr_be32toh(arch32->cpusubtype);
+    arch->offset = yr_be32toh(arch32->offset);
+    arch->size = yr_be32toh(arch32->size);
+    arch->align = yr_be32toh(arch32->align);
+    arch->reserved = 0;
+  }
+  else {
+    yr_fat_arch_64_t* arch64 = 
+        (yr_fat_arch_64_t*)(data + sizeof(yr_fat_header_t) + 
+        (num * sizeof(yr_fat_arch_64_t)));
+    arch->cputype = yr_be32toh(arch64->cputype);
+    arch->cpusubtype = yr_be32toh(arch64->cpusubtype);
+    arch->offset = yr_be64toh(arch64->offset);
+    arch->size = yr_be64toh(arch64->size);
+    arch->align = yr_be32toh(arch64->align);
+    arch->reserved = yr_be32toh(arch64->reserved);
+  }
+}
 
 void macho_parse_fat_file(
     const uint8_t* data,
@@ -501,13 +476,46 @@ void macho_parse_fat_file(
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
-  if (macho_fat_is_32(data)) {
-    // 32-bit fat binary
-    macho_parse_fat_file_32(data, size, object, context);
-  }
-  else {
-    // 64-bit fat binary
-    macho_parse_fat_file_64(data, size, object, context);
+  size_t fat_arch_sz = sizeof(yr_fat_arch_64_t);
+
+  if (macho_fat_is_32(data))
+    fat_arch_sz = sizeof(yr_fat_arch_32_t);
+
+  if (size < sizeof(yr_fat_header_t))
+    return;
+
+  /* All data in Mach-O fat binary headers are in big-endian byte order. */
+
+  const yr_fat_header_t* header = (yr_fat_header_t*)data;
+  set_integer(yr_be32toh(header->magic), object, "fat_magic");
+
+  uint32_t count = yr_be32toh(header->nfat_arch);
+  set_integer(count, object, "nfat_arch");
+
+  if (size < sizeof(yr_fat_header_t) + count * fat_arch_sz)
+    return;
+
+  yr_fat_arch_64_t arch;
+  for (uint32_t i = 0; i < count; i++)
+  {
+    macho_load_fat_arch_header(data, size, i, &arch);
+
+    set_integer(arch.cputype, object, "fat_arch[%i].cputype", i);
+    set_integer(arch.cpusubtype, object, "fat_arch[%i].cpusubtype", i);
+    set_integer(arch.offset, object, "fat_arch[%i].offset", i);
+    set_integer(arch.size, object, "fat_arch[%i].size", i);
+    set_integer(arch.align, object, "fat_arch[%i].align", i);
+    set_integer(arch.reserved, object, "fat_arch[%i].reserved", i);
+
+    if (size < arch.offset + arch.size)
+        continue;
+
+    /* Force 'file' array entry creation. */
+    set_integer(YR_UNDEFINED, object, "file[%i].magic", i);
+
+    /* Get specific Mach-O file data. */
+    macho_parse_file(data + arch.offset, arch.size,
+                     get_object(object, "file[%i]", i), context);
   }
 }
 
