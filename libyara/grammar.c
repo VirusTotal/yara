@@ -2649,10 +2649,10 @@ yyreduce:
         // 2       PUSH UNDEF  ; "end of list"
         // 3       PUSH N      ; integer range lower bound
         // 4       PUSH M      ; integer range upper bound
-        // 7       CLEAR_M 1   ; clear <expr> result accumulator
-        // 8       CLEAR_M 2   ; clear loop iteration counter
-        // 5       POP_M 3     ; store range upper bound
-        // 6       POP_M 0     ; store range lower bound
+        // 5       CLEAR_M 1   ; clear <expr> result accumulator
+        // 6       CLEAR_M 2   ; clear loop iteration counter
+        // 7       POP_M 3     ; store range upper bound
+        // 8       POP_M 0     ; store range lower bound
         // 9    .->INCR_M 2    ; increment loop iteration counter
         //      |  <expr>      ; here goes the code for <expr>, its result will
         //      |                be at the top of the stack
@@ -2678,10 +2678,10 @@ yyreduce:
         // 3       PUSH UNDEF  ; "end of list"
         // 4       PUSH 0      ; integer range lower bound
         // 5       PUSH 5      ; integer range upper bound
-        // 8       CLEAR_M 1   ; clear <expr> result accumulator
-        // 9       CLEAR_M 2   ; clear loop iteration counter
-        // 6       POP_M 3     ; store upper bound
-        // 7       POP_M 0     ; store lower bound
+        // 6       CLEAR_M 1   ; clear <expr> result accumulator
+        // 7       CLEAR_M 2   ; clear loop iteration counter
+        // 8       POP_M 3     ; store upper bound
+        // 9       POP_M 0     ; store lower bound
         // 10   .->INCR_M 2    ; increment loop iteration counter
         // 11   |  <expr>      ; here goes the code for <expr>, its result will
         //      |              ; be at the  top of the stack
