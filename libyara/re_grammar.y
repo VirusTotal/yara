@@ -136,10 +136,13 @@ alternative
 
         node = yr_re_node_create(RE_NODE_EMPTY);
 
-        destroy_node_if($$ == NULL, $1);
+        destroy_node_if(node == NULL, $1);
         fail_if(node == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$ = yr_re_node_create(RE_NODE_ALT);
+
+        destroy_node_if($$ == NULL, node);
+        destroy_node_if($$ == NULL, $1);
 
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
