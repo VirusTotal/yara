@@ -399,6 +399,12 @@ YR_API int yr_compiler_load_atom_quality_table(
   file_size = ftell(fh);
   fseek(fh, 0L, SEEK_SET);
 
+  if (file_size == -1L)
+  {
+    fclose(fh);
+    return ERROR_COULD_NOT_READ_FILE;
+  }
+
   table = yr_malloc(file_size);
 
   if (table == NULL)
