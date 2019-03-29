@@ -81,11 +81,16 @@ static bool is_valid_ptr(
 // Returns a string table entry for the index or NULL if the entry is out
 // of bounds. A non-null return value will be a null-terminated C string.
 //
-static const char* str_table_entry(const char* str_table_base,
-                                   const char* str_table_limit,
-                                   int index) {
+static const char* str_table_entry(
+    const char* str_table_base,
+    const char* str_table_limit,
+    int index)
+{
   size_t len;
-  const char* str_entry = str_table_base + index;
+  const char* str_entry;
+
+  if (str_table_base >= str_table_limit)
+    return NULL;
 
   // The first entry in the string table must be a null character, if not the
   // string table is probably corrupted.
@@ -94,6 +99,8 @@ static const char* str_table_entry(const char* str_table_base,
 
   if (index < 0)
     return NULL;
+
+  str_entry = str_table_base + index;
 
   if (str_entry >= str_table_limit)
     return NULL;
