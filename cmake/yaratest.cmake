@@ -104,7 +104,7 @@ add_test(
 	WORKING_DIRECTORY "${yara_SRC_PATH}"
 )
 
-if(NOT UNIX OR NOT yara_ADDRESS_SANITIZER)
+if(UNIX AND NOT yara_ADDRESS_SANITIZER)
 	add_executable(exception ${yara_SRC_PATH}/tests/test-exception.c ${TEST_COMMON})
 	target_link_libraries(exception libyara)
 	set_target_properties(exception PROPERTIES FOLDER Tests)

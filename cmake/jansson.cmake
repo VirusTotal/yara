@@ -8,7 +8,7 @@ ExternalProject_Add(
   GIT_REPOSITORY "https://github.com/akheron/jansson.git"
   GIT_TAG "v2.12"
   INSTALL_COMMAND ""	# do not install janson
-  CMAKE_ARGS -DJANSSON_BUILD_DOCS=OFF
+  CMAKE_ARGS -DJANSSON_BUILD_DOCS=OFF -DJANSSON_WITHOUT_TESTS=ON -DJANSSON_EXAMPLES=OFF -DCMAKE_DEBUG_POSTFIX=o -DCMAKE_RELEASE_POSTFIX=o
 )
 
 add_library(libjansson STATIC IMPORTED GLOBAL)
@@ -18,17 +18,10 @@ set(LIBJANSSON_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/jansson-prefix/src/jansso
 file(MAKE_DIRECTORY ${LIBJANSSON_INCLUDE_DIR})
 set_target_properties(libjansson PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${LIBJANSSON_INCLUDE_DIR})
 
+
 if(MSVC)
-	set(LIBJANSSON_LIB_DEBUG ${CMAKE_CURRENT_BINARY_DIR}/jansson-prefix/src/jansson-build/lib/${CMAKE_CFG_INTDIR}/jansson_d.lib)
-	set(LIBJANSSON_LIB_RELEASE ${CMAKE_CURRENT_BINARY_DIR}/jansson-prefix/src/jansson-build/lib/${CMAKE_CFG_INTDIR}/jansson.lib)
-
-
-	if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/jansson-prefix/src/jansson-build/lib/Debug/jansson_d.lib")
-		set_target_properties(libjansson PROPERTIES IMPORTED_LOCATION ${LIBJANSSON_LIB_DEBUG})
-	else()
-		set_target_properties(libjansson PROPERTIES IMPORTED_LOCATION ${LIBJANSSON_LIB_RELEASE})
-	endif()
+	set(LIBJANSSON_LIB ${CMAKE_CURRENT_BINARY_DIR}/jansson-prefix/src/jansson-build/lib/${CMAKE_CFG_INTDIR}/janssono.lib)
 else(UNIX)
 	set(LIBJANSSON_LIB ${CMAKE_CURRENT_BINARY_DIR}/jansson-prefix/src/jansson-build/lib/libjansson.a)
-	set_target_properties(libjansson PROPERTIES IMPORTED_LOCATION ${LIBJANSSON_LIB})
 endif()
+set_target_properties(libjansson PROPERTIES IMPORTED_LOCATION ${LIBJANSSON_LIB})

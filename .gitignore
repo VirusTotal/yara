@@ -112,3 +112,6 @@ x64/
 windows/*/packages/
 *.trs
 *.log
+
+# Test files
+test-rules.yarc
