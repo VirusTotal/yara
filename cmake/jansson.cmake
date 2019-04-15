@@ -1,0 +1,30 @@
+# Minimum CMake required
+cmake_minimum_required(VERSION 3.11)
+
+include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
+
+ExternalProject_Add(
+  jansson
+  GIT_REPOSITORY "https://github.com/akheron/jansson.git"
+  GIT_TAG "v2.12"
+  INSTALL_COMMAND ""	# do not install janson
+)
+
+add_library(libjansson STATIC IMPORTED GLOBAL)
+add_dependencies(libjansson jansson)
+
+set(LIBJANSSON_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/jansson-prefix/src/jansson-build/include)
+file(MAKE_DIRECTORY ${LIBJANSSON_INCLUDE_DIR})
+target_include_directories(libjansson INTERFACE ${LIBJANSSON_INCLUDE_DIR})
+
+if(MSVC)
+	set(LIBJANSSON_LIB_DEBUG ${CMAKE_CURRENT_BINARY_DIR}/jansson-prefix/src/jansson-build/lib/${CMAKE_CFG_INTDIR}/jansson_d.lib)
+	set(LIBJANSSON_LIB_RELEASE ${CMAKE_CURRENT_BINARY_DIR}/jansson-prefix/src/jansson-build/lib/${CMAKE_CFG_INTDIR}/jansson.lib)
+
+
+	if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/jansson-prefix/src/jansson-build/lib/Debug/jansson_d.lib")
+		set_target_properties(libjansson PROPERTIES IMPORTED_LOCATION ${LIBJANSSON_LIB_DEBUG})
+	else()
+		set_target_properties(libjansson PROPERTIES IMPORTED_LOCATION ${LIBJANSSON_LIB_RELEASE})
+	endif()
+endif()
