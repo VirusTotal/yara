@@ -1,10 +1,10 @@
 #include <yara.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include "util.h"
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <fileapi.h>
+#include <io.h>
 #else
 #include <unistd.h>
 #endif

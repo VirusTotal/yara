@@ -129,6 +129,12 @@ target_include_directories(
 	PRIVATE ${yara_LIBYARA_SRC_PATH}
 )
 
+if(yara_CUCKOO_MODULE)
+	# link with jansson lib
+	include(jansson.cmake)
+	target_link_libraries(libyara libjansson)
+endif()
+
 if(WIN32)
 	add_definitions(-DUSE_WINDOWS_PROC)
 	add_definitions(-DHAVE_WINCRYPT_H)			# not using openssl
@@ -143,7 +149,6 @@ if(WIN32)
 		/wd4267
 		/wd4996
 	)
-	
 elseif(UNIX)
 	add_definitions(-DUSE_LINUX_PROC)
 elseif(APPLE)

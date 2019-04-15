@@ -7,13 +7,13 @@ project(yara LANGUAGES C)
 # Config
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
-SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
-SET(ARCHIVE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 # Build options
 option(yara_BUILD_YARA "Build yara executable" ON)
 option(yara_BUILD_YARAC "Build yarac (compiler) executable" ON)
+option(yara_BUILD_TESTS "Build tests" ON)
 
 # Module options
 option(yara_CUCKOO_MODULE "Build cuckoo module for libyara" OFF)
@@ -32,6 +32,11 @@ endif()
 
 if(yara_BUILD_YARAC)
 	include(yarac.cmake)
+endif()
+
+if(yara_BUILD_TESTS)
+	enable_testing()
+	include(yaratest.cmake)
 endif()
 
 # Summary
