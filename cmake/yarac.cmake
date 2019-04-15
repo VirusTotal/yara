@@ -1,5 +1,5 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.10)
 set(yara_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
 set(yara_YARAC_INC

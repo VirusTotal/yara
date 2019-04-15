@@ -1,5 +1,5 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.10)
 set(yara_LIBYARA_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../libyara")
 
 set(yara_LIBYARA_INC
@@ -151,6 +151,12 @@ if(WIN32)
 	)
 elseif(UNIX)
 	add_definitions(-DUSE_LINUX_PROC)
+	target_link_libraries(libyara pthread m)
+	if(yara_HASH_MODULE)
+		find_package(OpenSSL REQUIRED)
+		add_definitions(-DHAVE_LIBCRYPTO)
+		target_link_libraries(libyara ${OPENSSL_LIBRARIES})
+	endif()
 elseif(APPLE)
 	add_definitions(-DUSE_MACH_PROC)
 endif()

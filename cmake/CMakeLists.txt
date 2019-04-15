@@ -1,5 +1,5 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.10)
 
 # Project
 project(yara LANGUAGES C)
@@ -22,6 +22,12 @@ option(yara_HASH_MODULE "Build hash module for libyara" OFF)
 option(yara_DOTNET_MODULE "Build dotnet module for libyara" OFF)
 option(yara_MACHO_MODULE "Build macho module for libyara" OFF)
 option(yara_DEX_MODULE "Build dex module for libyara" OFF)
+if(UNIX)
+	option(yara_ADDRESS_SANITIZER "Enable address sanitizer" OFF)
+	if(yara_ADDRESS_SANITIZER)
+		SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fsanitize=address")
+	endif()
+endif()
 
 # Build of yara
 include(libyara.cmake)
