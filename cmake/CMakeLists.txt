@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # Project
-project(yara LANGUAGES C)
+project(yara LANGUAGES C VERSION 3.9.0)
 
 # Config
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

@@ -164,3 +164,9 @@ endif()
 install(TARGETS libyara LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(DIRECTORY ${yara_LIBYARA_SRC_PATH}/include DESTINATION include FILES_MATCHING PATTERN "*.h*")
 
+include(GNUInstallDirs)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/yara.pc.in
+               ${CMAKE_CURRENT_BINARY_DIR}/yara.pc @ONLY)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/yara.pc DESTINATION lib/pkgconfig)
+
