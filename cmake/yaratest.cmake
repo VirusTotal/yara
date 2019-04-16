@@ -14,15 +14,14 @@ add_test(
 	COMMAND alignment
 )
 
-#if(NOT WIN32)
-#	add_executable(version ${yara_SRC_PATH}/tests/test-version.c)
-#	set_target_properties(version PROPERTIES FOLDER Tests)
-#	target_link_libraries(version libyara)
-#	add_test(
-#		NAME test_version
-#		COMMAND version
-#	)
-#endif()
+add_executable(version ${yara_SRC_PATH}/tests/test-version.c)
+set_target_properties(version PROPERTIES FOLDER Tests)
+target_compile_definitions(version PUBLIC PACKAGE_VERSION="${PROJECT_VERSION}")
+target_link_libraries(version libyara)
+add_test(
+	NAME test_version
+	COMMAND version
+)
 
 set(TEST_ATOMS_SRC
 	${yara_SRC_PATH}/tests/test-atoms.c 
