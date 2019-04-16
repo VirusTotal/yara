@@ -104,6 +104,61 @@ void swap_entry_point_command(yr_entry_point_command_t* ep_command)
   ep_command->stacksize = yr_bswap64(ep_command->stacksize);
 }
 
+void swap_segment_command(yr_segment_command_32_t *sg)
+{
+	sg->cmd = yr_bswap32(sg->cmd);
+	sg->cmdsize = yr_bswap32(sg->cmdsize);
+	sg->vmaddr = yr_bswap32(sg->vmaddr);
+	sg->vmsize = yr_bswap32(sg->vmsize);
+	sg->fileoff = yr_bswap32(sg->fileoff);
+	sg->filesize = yr_bswap32(sg->filesize);
+	sg->maxprot = yr_bswap32(sg->maxprot);
+	sg->initprot = yr_bswap32(sg->initprot);
+	sg->nsects = yr_bswap32(sg->nsects);
+	sg->flags = yr_bswap32(sg->flags);
+}
+
+void swap_segment_command_64(yr_segment_command_64_t *sg)
+{
+	sg->cmd = yr_bswap32(sg->cmd);
+	sg->cmdsize = yr_bswap32(sg->cmdsize);
+	sg->vmaddr = yr_bswap64(sg->vmaddr);
+	sg->vmsize = yr_bswap64(sg->vmsize);
+	sg->fileoff = yr_bswap64(sg->fileoff);
+	sg->filesize = yr_bswap64(sg->filesize);
+	sg->maxprot = yr_bswap32(sg->maxprot);
+	sg->initprot = yr_bswap32(sg->initprot);
+	sg->nsects = yr_bswap32(sg->nsects);
+	sg->flags = yr_bswap32(sg->flags);
+}
+
+void swap_section(yr_section_32_t *sec)
+{
+  sec->addr = yr_bswap32(sec->addr);
+  sec->size = yr_bswap32(sec->size);
+  sec->offset = yr_bswap32(sec->offset);
+  sec->align = yr_bswap32(sec->align);
+  sec->reloff = yr_bswap32(sec->reloff);
+  sec->nreloc = yr_bswap32(sec->nreloc);
+  sec->flags = yr_bswap32(sec->flags);
+  sec->reserved1 = yr_bswap32(sec->reserved1);
+  sec->reserved2 = yr_bswap32(sec->reserved2);
+}
+
+void swap_section_64(yr_section_64_t *sec)
+{
+  sec->addr = yr_bswap64(sec->addr);
+  sec->size = yr_bswap64(sec->size);
+  sec->offset = yr_bswap32(sec->offset);
+  sec->align = yr_bswap32(sec->align);
+  sec->reloff = yr_bswap32(sec->reloff);
+  sec->nreloc = yr_bswap32(sec->nreloc);
+  sec->flags = yr_bswap32(sec->flags);
+  sec->reserved1 = yr_bswap32(sec->reserved1);
+  sec->reserved2 = yr_bswap32(sec->reserved2);
+  sec->reserved3 = yr_bswap32(sec->reserved3);
+}
+
 // Convert virtual address to file offset. Segments have to be already loaded.
 
 bool macho_rva_to_offset(
@@ -281,79 +336,116 @@ void macho_handle_main(
 
 // Load segment and its sections.
 
-#define MACHO_HANDLE_SEGMENT(bits,bo)                                          \
-void macho_handle_segment_##bits##_##bo(                                       \
-    const uint8_t* command,                                                    \
-    const unsigned i,                                                          \
-    YR_OBJECT* object)                                                         \
-{                                                                              \
-  yr_segment_command_##bits##_t* sg = (yr_segment_command_##bits##_t*)command; \
-  uint64_t command_size = yr_##bo##bits##toh(sg->cmdsize);                     \
-                                                                               \
-  set_sized_string(sg->segname, strnlen(sg->segname, 16),                      \
-                   object, "segments[%i].segname", i);                         \
-                                                                               \
-  set_integer(yr_##bo##bits##toh(sg->vmaddr),                                  \
-              object, "segments[%i].vmaddr", i);                               \
-  set_integer(yr_##bo##bits##toh(sg->vmsize),                                  \
-              object, "segments[%i].vmsize", i);                               \
-  set_integer(yr_##bo##bits##toh(sg->fileoff),                                 \
-              object, "segments[%i].fileoff", i);                              \
-  set_integer(yr_##bo##bits##toh(sg->filesize),                                \
-              object, "segments[%i].fsize", i);                                \
-  set_integer(yr_##bo##32toh(sg->maxprot),                                     \
-              object, "segments[%i].maxprot", i);                              \
-  set_integer(yr_##bo##32toh(sg->initprot),                                    \
-              object, "segments[%i].initprot", i);                             \
-  set_integer(yr_##bo##32toh(sg->nsects),                                      \
-              object, "segments[%i].nsects", i);                               \
-  set_integer(yr_##bo##32toh(sg->flags),                                       \
-              object, "segments[%i].flags", i);                                \
-                                                                               \
-  uint64_t parsed_size = sizeof(yr_segment_command_##bits##_t);                \
-  for (unsigned j = 0; j < yr_##bo##32toh(sg->nsects); ++j)                    \
-  {                                                                            \
-    parsed_size += sizeof(yr_section_##bits##_t);                              \
-    if (command_size < parsed_size)                                            \
-      break;                                                                   \
-                                                                               \
-    yr_section_##bits##_t* sec = ((yr_section_##bits##_t*)(sg + 1)) + j;       \
-    set_sized_string(sec->segname, strnlen(sec->segname, 16),                  \
-                     object, "segments[%i].sections[%i].segname", i, j);       \
-    set_sized_string(sec->sectname, strnlen(sec->sectname, 16),                \
-                     object, "segments[%i].sections[%i].sectname", i, j);      \
-                                                                               \
-    set_integer(yr_##bo##bits##toh(sec->addr),                                 \
-                object, "segments[%i].sections[%i].addr", i, j);               \
-    set_integer(yr_##bo##bits##toh(sec->size),                                 \
-                object, "segments[%i].sections[%i].size", i, j);               \
-    set_integer(yr_##bo##32toh(sec->offset),                                   \
-                object, "segments[%i].sections[%i].offset", i, j);             \
-    set_integer(yr_##bo##32toh(sec->align),                                    \
-                object, "segments[%i].sections[%i].align", i, j);              \
-    set_integer(yr_##bo##32toh(sec->reloff),                                   \
-                object, "segments[%i].sections[%i].reloff", i, j);             \
-    set_integer(yr_##bo##32toh(sec->nreloc),                                   \
-                object, "segments[%i].sections[%i].nreloc", i, j);             \
-    set_integer(yr_##bo##32toh(sec->flags),                                    \
-                object, "segments[%i].sections[%i].flags", i, j);              \
-    set_integer(yr_##bo##32toh(sec->reserved1),                                \
-                object, "segments[%i].sections[%i].reserved1", i, j);          \
-    set_integer(yr_##bo##32toh(sec->reserved2),                                \
-                object, "segments[%i].sections[%i].reserved2", i, j);          \
-    if (bits == 64)                                                            \
-    {                                                                          \
-      yr_section_64_t* sec_64 = (yr_section_64_t*)sec;                         \
-      set_integer(yr_##bo##32toh(sec_64->reserved3),                           \
-                  object, "segments[%i].sections[%i].reserved3", i, j);        \
-    }                                                                          \
-  }                                                                            \
-}                                                                              \
+void macho_handle_segment(
+    const uint8_t *command,
+    const unsigned i,
+    YR_OBJECT* object)
+{
+  int should_swap = should_swap_bytes(get_integer(object, "magic"));
 
-MACHO_HANDLE_SEGMENT(32,le)
-MACHO_HANDLE_SEGMENT(64,le)
-MACHO_HANDLE_SEGMENT(32,be)
-MACHO_HANDLE_SEGMENT(64,be)
+  yr_segment_command_32_t sg;
+  memcpy(&sg, command, sizeof(yr_segment_command_32_t));
+  if (should_swap)
+    swap_segment_command(&sg);
+
+  set_sized_string(sg.segname, strnlen(sg.segname, 16),
+                   object, "segments[%i].segname", i);
+
+  set_integer(sg.vmaddr, object, "segments[%i].vmaddr", i);
+  set_integer(sg.vmsize, object, "segments[%i].vmsize", i);
+  set_integer(sg.fileoff, object, "segments[%i].fileoff", i);
+  set_integer(sg.filesize, object, "segments[%i].fsize", i);
+  set_integer(sg.maxprot, object, "segments[%i].maxprot", i);
+  set_integer(sg.initprot, object, "segments[%i].initprot", i);
+  set_integer(sg.nsects, object, "segments[%i].nsects", i);
+  set_integer(sg.flags, object, "segments[%i].flags", i);
+
+  uint64_t parsed_size = sizeof(yr_segment_command_32_t);
+  yr_section_32_t sec;
+  for (unsigned j = 0; j < sg.nsects; ++j)
+  {
+    parsed_size += sizeof(yr_section_32_t);
+    if (sg.cmdsize < parsed_size)
+      break;
+
+    memcpy(&sec, 
+           command + sizeof(yr_segment_command_32_t) + (j * sizeof(yr_section_32_t)),
+           sizeof(yr_section_32_t));
+    if (should_swap)
+      swap_section(&sec);
+
+    set_sized_string(sec.segname, strnlen(sec.segname, 16),
+                     object, "segments[%i].sections[%i].segname", i, j);
+    set_sized_string(sec.sectname, strnlen(sec.sectname, 16),
+                     object, "segments[%i].sections[%i].sectname", i, j);
+
+    set_integer(sec.addr, object, "segments[%i].sections[%i].addr", i, j);
+    set_integer(sec.size, object, "segments[%i].sections[%i].size", i, j);
+    set_integer(sec.offset, object, "segments[%i].sections[%i].offset", i, j);
+    set_integer(sec.align, object, "segments[%i].sections[%i].align", i, j);
+    set_integer(sec.reloff, object, "segments[%i].sections[%i].reloff", i, j);
+    set_integer(sec.nreloc, object, "segments[%i].sections[%i].nreloc", i, j);
+    set_integer(sec.flags, object, "segments[%i].sections[%i].flags", i, j);
+    set_integer(sec.reserved1, object, "segments[%i].sections[%i].reserved1", i, j);
+    set_integer(sec.reserved2, object, "segments[%i].sections[%i].reserved2", i, j);
+  }
+}
+
+void macho_handle_segment_64(
+    const uint8_t *command,
+    const unsigned i,
+    YR_OBJECT* object)
+{
+  int should_swap = should_swap_bytes(get_integer(object, "magic"));
+
+  yr_segment_command_64_t sg;
+  memcpy(&sg, command, sizeof(yr_segment_command_64_t));
+  if (should_swap)
+    swap_segment_command_64(&sg);
+
+  set_sized_string(sg.segname, strnlen(sg.segname, 16),
+                   object, "segments[%i].segname", i);
+
+  set_integer(sg.vmaddr, object, "segments[%i].vmaddr", i);
+  set_integer(sg.vmsize, object, "segments[%i].vmsize", i);
+  set_integer(sg.fileoff, object, "segments[%i].fileoff", i);
+  set_integer(sg.filesize, object, "segments[%i].fsize", i);
+  set_integer(sg.maxprot, object, "segments[%i].maxprot", i);
+  set_integer(sg.initprot, object, "segments[%i].initprot", i);
+  set_integer(sg.nsects, object, "segments[%i].nsects", i);
+  set_integer(sg.flags, object, "segments[%i].flags", i);
+
+  uint64_t parsed_size = sizeof(yr_segment_command_64_t);
+  yr_section_64_t sec;
+  for (unsigned j = 0; j < sg.nsects; ++j)
+  {
+    parsed_size += sizeof(yr_section_64_t);
+    if (sg.cmdsize < parsed_size)
+      break;
+
+    memcpy(&sec, 
+           command + sizeof(yr_segment_command_64_t) + (j * sizeof(yr_section_64_t)),
+           sizeof(yr_section_64_t));
+    if (should_swap)
+      swap_section_64(&sec);
+
+    set_sized_string(sec.segname, strnlen(sec.segname, 16),
+                     object, "segments[%i].sections[%i].segname", i, j);
+    set_sized_string(sec.sectname, strnlen(sec.sectname, 16),
+                     object, "segments[%i].sections[%i].sectname", i, j);
+
+    set_integer(sec.addr, object, "segments[%i].sections[%i].addr", i, j);
+    set_integer(sec.size, object, "segments[%i].sections[%i].size", i, j);
+    set_integer(sec.offset, object, "segments[%i].sections[%i].offset", i, j);
+    set_integer(sec.align, object, "segments[%i].sections[%i].align", i, j);
+    set_integer(sec.reloff, object, "segments[%i].sections[%i].reloff", i, j);
+    set_integer(sec.nreloc, object, "segments[%i].sections[%i].nreloc", i, j);
+    set_integer(sec.flags, object, "segments[%i].sections[%i].flags", i, j);
+    set_integer(sec.reserved1, object, "segments[%i].sections[%i].reserved1", i, j);
+    set_integer(sec.reserved2, object, "segments[%i].sections[%i].reserved2", i, j);
+    set_integer(sec.reserved3, object, "segments[%i].sections[%i].reserved3", i, j);
+  }
+}
 
 
 // Parse Mach-O file with specific bit-width and byte order.
@@ -397,9 +489,13 @@ void macho_parse_file_##bits##_##bo(                                           \
     switch(yr_##bo##32toh(command_struct->cmd))                                \
     {                                                                          \
       case LC_SEGMENT:                                                         \
+      {                                                                        \
+        macho_handle_segment(command, seg_count++, object);                    \
+        break;                                                                 \
+      }                                                                        \
       case LC_SEGMENT_64:                                                      \
       {                                                                        \
-        macho_handle_segment_##bits##_##bo(command, seg_count++, object);      \
+        macho_handle_segment_64(command, seg_count++, object);                 \
         break;                                                                 \
       }                                                                        \
       case LC_UNIXTHREAD:                                                      \
