@@ -14,3 +14,5 @@ set(yara_YARA_SRC
 
 add_executable(yara ${yara_YARA_SRC} ${yara_YARA_INC})
 target_link_libraries(yara libyara)
+
+install(TARGETS yara RUNTIME DESTINATION bin)

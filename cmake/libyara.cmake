@@ -137,7 +137,7 @@ endif()
 
 if(WIN32)
 	add_definitions(-DUSE_WINDOWS_PROC)
-	add_definitions(-DHAVE_WINCRYPT_H)			# not using openssl
+	add_definitions(-DHAVE_WINCRYPT_H)		# not using openssl
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS) 	# maybe need to correct them
 	# need to clean warnings
 	add_definitions(
@@ -149,7 +149,7 @@ if(WIN32)
 		/wd4267
 		/wd4996
 	)
-elseif(UNIX)
+elseif(UNIX AND NOT APPLE)
 	add_definitions(-DUSE_LINUX_PROC)
 	target_link_libraries(libyara pthread m)
 	if(yara_HASH_MODULE)
@@ -160,3 +160,7 @@ elseif(UNIX)
 elseif(APPLE)
 	add_definitions(-DUSE_MACH_PROC)
 endif()
+
+install(TARGETS libyara LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+install(DIRECTORY ${yara_LIBYARA_SRC_PATH}/include DESTINATION include FILES_MATCHING PATTERN "*.h*")
+

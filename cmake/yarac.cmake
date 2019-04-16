@@ -16,3 +16,5 @@ set(yara_YARAC_SRC
 
 add_executable(yarac ${yara_YARAC_SRC} ${yara_YARAC_INC})
 target_link_libraries(yarac libyara)
+
+install(TARGETS yarac RUNTIME DESTINATION bin)
