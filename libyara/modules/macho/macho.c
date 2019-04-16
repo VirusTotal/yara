@@ -154,92 +154,101 @@ int macho_offset_to_rva(
 
 // Get entry point address from LC_UNIXTHREAD load command.
 
-#define MACHO_HANDLE_UNIXTHREAD(bo)                                            \
-void macho_handle_unixthread_##bo(                                             \
-    void* command,                                                             \
-    YR_OBJECT* object,                                                         \
-    YR_SCAN_CONTEXT* context)                                                  \
-{                                                                              \
-  command = (void*)((uint8_t*)command + sizeof(yr_thread_command_t));          \
-  uint64_t address = 0;                                                        \
-                                                                               \
-  switch (get_integer(object, "cputype"))                                      \
-  {                                                                            \
-    case CPU_TYPE_MC680X0:                                                     \
-    {                                                                          \
-      yr_m68k_thread_state_t* m68k_state = (yr_m68k_thread_state_t*)command;   \
-      address = yr_##bo##32toh(m68k_state->pc);                                \
-      break;                                                                   \
-    }                                                                          \
-    case CPU_TYPE_MC88000:                                                     \
-    {                                                                          \
-      yr_m88k_thread_state_t* m88k_state = (yr_m88k_thread_state_t*)command;   \
-      address = yr_##bo##32toh(m88k_state->xip);                               \
-      break;                                                                   \
-    }                                                                          \
-    case CPU_TYPE_SPARC:                                                       \
-    {                                                                          \
-      yr_sparc_thread_state_t* sparc_state = (yr_sparc_thread_state_t*)command;\
-      address = yr_##bo##32toh(sparc_state->pc);                               \
-      break;                                                                   \
-    }                                                                          \
-    case CPU_TYPE_POWERPC:                                                     \
-    {                                                                          \
-      yr_ppc_thread_state_t* ppc_state = (yr_ppc_thread_state_t*)command;      \
-      address = yr_##bo##32toh(ppc_state->srr0);                               \
-      break;                                                                   \
-    }                                                                          \
-    case CPU_TYPE_X86:                                                         \
-    {                                                                          \
-      yr_x86_thread_state_t* x86_state = (yr_x86_thread_state_t*)command;      \
-      address = yr_##bo##32toh(x86_state->eip);                                \
-      break;                                                                   \
-    }                                                                          \
-    case CPU_TYPE_ARM:                                                         \
-    {                                                                          \
-      yr_arm_thread_state_t* arm_state = (yr_arm_thread_state_t*)command;      \
-      address = yr_##bo##32toh(arm_state->pc);                                 \
-      break;                                                                   \
-    }                                                                          \
-    case CPU_TYPE_X86_64:                                                      \
-    {                                                                          \
-      yr_x86_thread_state64_t* x64_state = (yr_x86_thread_state64_t*)command;  \
-      address = yr_##bo##64toh(x64_state->rip);                                \
-      break;                                                                   \
-    }                                                                          \
-    case CPU_TYPE_ARM64:                                                       \
-    {                                                                          \
-      yr_arm_thread_state64_t* arm64_state = (yr_arm_thread_state64_t*)command;\
-      address = yr_##bo##64toh(arm64_state->pc);                               \
-      break;                                                                   \
-    }                                                                          \
-    case CPU_TYPE_POWERPC64:                                                   \
-    {                                                                          \
-      yr_ppc_thread_state64_t* ppc64_state = (yr_ppc_thread_state64_t*)command;\
-      address = yr_##bo##64toh(ppc64_state->srr0);                             \
-      break;                                                                   \
-    }                                                                          \
-                                                                               \
-    default:                                                                   \
-      return;                                                                  \
-  }                                                                            \
-                                                                               \
-  if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)                              \
-  {                                                                            \
-    set_integer(address, object, "entry_point");                               \
-  }                                                                            \
-  else                                                                         \
-  {                                                                            \
-    uint64_t offset = 0;                                                       \
-    if (macho_rva_to_offset(address, &offset, object))                         \
-    {                                                                          \
-      set_integer(offset, object, "entry_point");                              \
-    }                                                                          \
-  }                                                                            \
-}                                                                              \
+void macho_handle_unixthread(
+    void* command,
+    YR_OBJECT* object,
+    YR_SCAN_CONTEXT* context)
+{
+  int should_swap = should_swap_bytes(get_integer(object, "magic"));
+  bool is64 = false;
+  command = (void*)((uint8_t*)command + sizeof(yr_thread_command_t));
+  uint64_t address = 0;
 
-MACHO_HANDLE_UNIXTHREAD(le)
-MACHO_HANDLE_UNIXTHREAD(be)
+  switch (get_integer(object, "cputype"))
+  {
+    case CPU_TYPE_MC680X0:
+    {
+      yr_m68k_thread_state_t* m68k_state = (yr_m68k_thread_state_t*)command;
+      address = m68k_state->pc;
+      break;
+    }
+    case CPU_TYPE_MC88000:
+    {
+      yr_m88k_thread_state_t* m88k_state = (yr_m88k_thread_state_t*)command;
+      address = m88k_state->xip;
+      break;
+    }
+    case CPU_TYPE_SPARC:
+    {
+      yr_sparc_thread_state_t* sparc_state = (yr_sparc_thread_state_t*)command;
+      address = sparc_state->pc;
+      break;
+    }
+    case CPU_TYPE_POWERPC:
+    {
+      yr_ppc_thread_state_t* ppc_state = (yr_ppc_thread_state_t*)command;
+      address = ppc_state->srr0;
+      break;
+    }
+    case CPU_TYPE_X86:
+    {
+      yr_x86_thread_state_t* x86_state = (yr_x86_thread_state_t*)command;
+      address = x86_state->eip;
+      break;
+    }
+    case CPU_TYPE_ARM:
+    {
+      yr_arm_thread_state_t* arm_state = (yr_arm_thread_state_t*)command;
+      address = arm_state->pc;
+      break;
+    }
+    case CPU_TYPE_X86_64:
+    {
+      yr_x86_thread_state64_t* x64_state = (yr_x86_thread_state64_t*)command;
+      address = x64_state->rip;
+      is64 = true;
+      break;
+    }
+    case CPU_TYPE_ARM64:
+    {
+      yr_arm_thread_state64_t* arm64_state = (yr_arm_thread_state64_t*)command;
+      address = arm64_state->pc;
+      is64 = true;
+      break;
+    }
+    case CPU_TYPE_POWERPC64:
+    {
+      yr_ppc_thread_state64_t* ppc64_state = (yr_ppc_thread_state64_t*)command;
+      address = ppc64_state->srr0;
+      is64 = true;
+      break;
+    }
+
+    default:
+      return;
+  }
+
+  if (should_swap)
+  {
+    if (is64)
+      address = yr_bswap64(address);
+    else
+      address = yr_bswap32(address);
+  }
+
+  if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
+  {
+    set_integer(address, object, "entry_point");
+  }
+  else
+  {
+    uint64_t offset = 0;
+    if (macho_rva_to_offset(address, &offset, object))
+    {
+      set_integer(offset, object, "entry_point");
+    }
+  }
+}
 
 
 // Get entry point offset and stack-size from LC_MAIN load command.
@@ -360,7 +369,7 @@ void macho_parse_file_##bits##_##bo(                                           \
     return;                                                                    \
                                                                                \
   yr_mach_header_##bits##_t* header = (yr_mach_header_##bits##_t*)data;        \
-  set_integer(yr_##bo##32toh(header->magic), object, "magic");                 \
+  set_integer(header->magic, object, "magic");                                 \
   set_integer(yr_##bo##32toh(header->cputype), object, "cputype");             \
   set_integer(yr_##bo##32toh(header->cpusubtype), object, "cpusubtype");       \
   set_integer(yr_##bo##32toh(header->filetype), object, "filetype");           \
@@ -395,7 +404,7 @@ void macho_parse_file_##bits##_##bo(                                           \
       }                                                                        \
       case LC_UNIXTHREAD:                                                      \
       {                                                                        \
-        macho_handle_unixthread_##bo(command, object, context);                \
+        macho_handle_unixthread(command, object, context);                     \
         break;                                                                 \
       }                                                                        \
       case LC_MAIN:                                                            \
