@@ -88,6 +88,21 @@ int macho_fat_is_32(
   return magic[3] == 0xbe;
 }
 
+int should_swap_bytes(const uint32_t magic)
+{
+  return magic == MH_CIGAM
+      || magic == MH_CIGAM_64
+      || magic == FAT_CIGAM
+      || magic == FAT_CIGAM_64;
+}
+
+void swap_entry_point_command(yr_entry_point_command_t* ep_command)
+{
+  ep_command->cmd = yr_bswap32(ep_command->cmd);
+  ep_command->cmdsize = yr_bswap32(ep_command->cmdsize);
+  ep_command->entryoff = yr_bswap64(ep_command->entryoff);
+  ep_command->stacksize = yr_bswap64(ep_command->stacksize);
+}
 
 // Convert virtual address to file offset. Segments have to be already loaded.
 
@@ -229,32 +244,30 @@ MACHO_HANDLE_UNIXTHREAD(be)
 
 // Get entry point offset and stack-size from LC_MAIN load command.
 
-#define MACHO_HANDLE_MAIN(bo)                                                  \
-void macho_handle_main_##bo(                                                   \
-    void* command,                                                             \
-    YR_OBJECT* object,                                                         \
-    YR_SCAN_CONTEXT* context)                                                  \
-{                                                                              \
-  yr_entry_point_command_t* ep_command = (yr_entry_point_command_t*)command;   \
-                                                                               \
-  uint64_t offset = yr_##bo##64toh(ep_command->entryoff);                      \
-  if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)                              \
-  {                                                                            \
-    uint64_t address = 0;                                                      \
-    if (macho_offset_to_rva(offset, &address, object))                         \
-    {                                                                          \
-      set_integer(address, object, "entry_point");                             \
-    }                                                                          \
-  }                                                                            \
-  else                                                                         \
-  {                                                                            \
-    set_integer(offset, object, "entry_point");                                \
-  }                                                                            \
-  set_integer(yr_##bo##64toh(ep_command->stacksize), object, "stack_size");    \
-}                                                                              \
+void macho_handle_main(
+    void* command,
+    YR_OBJECT* object,
+    YR_SCAN_CONTEXT* context)
+{
+  yr_entry_point_command_t ep_command;
+  memcpy(&ep_command, command, sizeof(yr_entry_point_command_t));
+  if (should_swap_bytes(get_integer(object, "magic")))
+    swap_entry_point_command(&ep_command);
 
-MACHO_HANDLE_MAIN(le)
-MACHO_HANDLE_MAIN(be)
+  if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
+  {
+    uint64_t address = 0;
+    if (macho_offset_to_rva(ep_command.entryoff, &address, object))
+    {
+      set_integer(address, object, "entry_point");
+    }
+  }
+  else
+  {
+    set_integer(ep_command.entryoff, object, "entry_point");
+  }
+  set_integer(ep_command.stacksize, object, "stack_size");
+}
 
 
 // Load segment and its sections.
@@ -387,7 +400,7 @@ void macho_parse_file_##bits##_##bo(                                           \
       }                                                                        \
       case LC_MAIN:                                                            \
       {                                                                        \
-        macho_handle_main_##bo(command, object, context);                      \
+        macho_handle_main(command, object, context);                           \
         break;                                                                 \
       }                                                                        \
     }                                                                          \
