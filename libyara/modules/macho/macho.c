@@ -88,7 +88,7 @@ int macho_fat_is_32(
   return magic[3] == 0xbe;
 }
 
-int should_swap_bytes(const uint32_t magic)
+static int should_swap_bytes(const uint32_t magic)
 {
   return magic == MH_CIGAM
       || magic == MH_CIGAM_64
@@ -96,52 +96,52 @@ int should_swap_bytes(const uint32_t magic)
       || magic == FAT_CIGAM_64;
 }
 
-void swap_mach_header(yr_mach_header_32_t *mh)
+static void swap_mach_header(yr_mach_header_32_t *mh)
 {
   // Don't swap the magic number so we can tell if swapping is needed
-	mh->cputype = yr_bswap32(mh->cputype);
-	mh->cpusubtype = yr_bswap32(mh->cpusubtype);
-	mh->filetype = yr_bswap32(mh->filetype);
-	mh->ncmds = yr_bswap32(mh->ncmds);
-	mh->sizeofcmds = yr_bswap32(mh->sizeofcmds);
-	mh->flags = yr_bswap32(mh->flags);
+  mh->cputype = yr_bswap32(mh->cputype);
+  mh->cpusubtype = yr_bswap32(mh->cpusubtype);
+  mh->filetype = yr_bswap32(mh->filetype);
+  mh->ncmds = yr_bswap32(mh->ncmds);
+  mh->sizeofcmds = yr_bswap32(mh->sizeofcmds);
+  mh->flags = yr_bswap32(mh->flags);
 }
 
-void swap_load_command(yr_load_command_t *lc)
+static void swap_load_command(yr_load_command_t *lc)
 {
   lc->cmd = yr_bswap32(lc->cmd);
   lc->cmdsize = yr_bswap32(lc->cmdsize);
 }
 
-void swap_segment_command(yr_segment_command_32_t *sg)
+static void swap_segment_command(yr_segment_command_32_t *sg)
 {
-	sg->cmd = yr_bswap32(sg->cmd);
-	sg->cmdsize = yr_bswap32(sg->cmdsize);
-	sg->vmaddr = yr_bswap32(sg->vmaddr);
-	sg->vmsize = yr_bswap32(sg->vmsize);
-	sg->fileoff = yr_bswap32(sg->fileoff);
-	sg->filesize = yr_bswap32(sg->filesize);
-	sg->maxprot = yr_bswap32(sg->maxprot);
-	sg->initprot = yr_bswap32(sg->initprot);
-	sg->nsects = yr_bswap32(sg->nsects);
-	sg->flags = yr_bswap32(sg->flags);
+  sg->cmd = yr_bswap32(sg->cmd);
+  sg->cmdsize = yr_bswap32(sg->cmdsize);
+  sg->vmaddr = yr_bswap32(sg->vmaddr);
+  sg->vmsize = yr_bswap32(sg->vmsize);
+  sg->fileoff = yr_bswap32(sg->fileoff);
+  sg->filesize = yr_bswap32(sg->filesize);
+  sg->maxprot = yr_bswap32(sg->maxprot);
+  sg->initprot = yr_bswap32(sg->initprot);
+  sg->nsects = yr_bswap32(sg->nsects);
+  sg->flags = yr_bswap32(sg->flags);
 }
 
-void swap_segment_command_64(yr_segment_command_64_t *sg)
+static void swap_segment_command_64(yr_segment_command_64_t *sg)
 {
-	sg->cmd = yr_bswap32(sg->cmd);
-	sg->cmdsize = yr_bswap32(sg->cmdsize);
-	sg->vmaddr = yr_bswap64(sg->vmaddr);
-	sg->vmsize = yr_bswap64(sg->vmsize);
-	sg->fileoff = yr_bswap64(sg->fileoff);
-	sg->filesize = yr_bswap64(sg->filesize);
-	sg->maxprot = yr_bswap32(sg->maxprot);
-	sg->initprot = yr_bswap32(sg->initprot);
-	sg->nsects = yr_bswap32(sg->nsects);
-	sg->flags = yr_bswap32(sg->flags);
+  sg->cmd = yr_bswap32(sg->cmd);
+  sg->cmdsize = yr_bswap32(sg->cmdsize);
+  sg->vmaddr = yr_bswap64(sg->vmaddr);
+  sg->vmsize = yr_bswap64(sg->vmsize);
+  sg->fileoff = yr_bswap64(sg->fileoff);
+  sg->filesize = yr_bswap64(sg->filesize);
+  sg->maxprot = yr_bswap32(sg->maxprot);
+  sg->initprot = yr_bswap32(sg->initprot);
+  sg->nsects = yr_bswap32(sg->nsects);
+  sg->flags = yr_bswap32(sg->flags);
 }
 
-void swap_section(yr_section_32_t *sec)
+static void swap_section(yr_section_32_t *sec)
 {
   sec->addr = yr_bswap32(sec->addr);
   sec->size = yr_bswap32(sec->size);
@@ -154,7 +154,7 @@ void swap_section(yr_section_32_t *sec)
   sec->reserved2 = yr_bswap32(sec->reserved2);
 }
 
-void swap_section_64(yr_section_64_t *sec)
+static void swap_section_64(yr_section_64_t *sec)
 {
   sec->addr = yr_bswap64(sec->addr);
   sec->size = yr_bswap64(sec->size);
@@ -168,7 +168,7 @@ void swap_section_64(yr_section_64_t *sec)
   sec->reserved3 = yr_bswap32(sec->reserved3);
 }
 
-void swap_entry_point_command(yr_entry_point_command_t* ep_command)
+static void swap_entry_point_command(yr_entry_point_command_t* ep_command)
 {
   ep_command->cmd = yr_bswap32(ep_command->cmd);
   ep_command->cmdsize = yr_bswap32(ep_command->cmdsize);
