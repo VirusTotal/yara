@@ -524,6 +524,13 @@ int yr_execute_code(
       case OP_MATCH_RULE:
         pop(r1);
         rule = *(YR_RULE**)(ip);
+
+        #if PARANOID_EXEC
+        // Make sure that the string pointer is within the rules arena.
+        if (yr_arena_page_for_address(context->rules->arena, rule) == NULL)
+          return ERROR_INTERNAL_FATAL_ERROR;
+        #endif
+
         ip += sizeof(uint64_t);
 
         if (!is_undef(r1) && r1.i)
@@ -744,6 +751,12 @@ int yr_execute_code(
           break;
         }
 
+        #if PARANOID_EXEC
+        // Make sure that the string pointer is within the rules arena.
+        if (yr_arena_page_for_address(context->rules->arena, r2.p) == NULL)
+          return ERROR_INTERNAL_FATAL_ERROR;
+        #endif
+
         match = r2.s->matches[tidx].head;
         r3.i = false;
 
@@ -771,6 +784,12 @@ int yr_execute_code(
 
         ensure_defined(r1);
         ensure_defined(r2);
+
+        #if PARANOID_EXEC
+        // Make sure that the string pointer is within the rules arena.
+        if (yr_arena_page_for_address(context->rules->arena, r3.p) == NULL)
+          return ERROR_INTERNAL_FATAL_ERROR;
+        #endif
 
         match = r3.s->matches[tidx].head;
         r3.i = false;
@@ -811,6 +830,12 @@ int yr_execute_code(
 
         ensure_defined(r1);
 
+        #if PARANOID_EXEC
+        // Make sure that the string pointer is within the rules arena.
+        if (yr_arena_page_for_address(context->rules->arena, r2.p) == NULL)
+          return ERROR_INTERNAL_FATAL_ERROR;
+        #endif
+
         match = r2.s->matches[tidx].head;
         i = 1;
         r3.i = UNDEFINED;
@@ -832,6 +857,12 @@ int yr_execute_code(
         pop(r1);
 
         ensure_defined(r1);
+
+        #if PARANOID_EXEC
+        // Make sure that the string pointer is within the rules arena.
+        if (yr_arena_page_for_address(context->rules->arena, r2.p) == NULL)
+          return ERROR_INTERNAL_FATAL_ERROR;
+        #endif
 
         match = r2.s->matches[tidx].head;
         i = 1;
