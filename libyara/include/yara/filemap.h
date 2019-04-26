@@ -30,11 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_FILEMAP_H
 #define YR_FILEMAP_H
 
-#ifdef _MSC_VER
-#define off_t              int64_t
-#else
 #include <sys/types.h>
-#endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
