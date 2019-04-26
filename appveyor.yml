@@ -69,7 +69,7 @@ for:
     provider: GitHub
     auth_token:
       secure: d3qqX7bmrBiKJI38yFPc5vHrGGfS3LxLC7FaG6ewI2ghPPE22Pk6QtyrEFFb73PL
-    artifact: $(name).zip
+    artifact: $(name)
     draft: true
 
   test: off
