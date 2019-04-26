@@ -86,37 +86,6 @@ set(yara_LIBYARA_MODULES
 	${yara_LIBYARA_SRC_PATH}/modules/pe_utils.c
 )
 
-# Handle module options build
-if(yara_CUCKOO_MODULE)
-	add_definitions(-DCUCKOO_MODULE)
-	set(yara_LIBYARA_MODULES ${yara_LIBYARA_MODULES} ${yara_LIBYARA_SRC_PATH}/modules/cuckoo.c)
-endif()
-
-if(yara_MAGIC_MODULE AND NOT WIN32)
-	add_definitions(-DMAGIC_MODULE)
-	set(yara_LIBYARA_MODULES ${yara_LIBYARA_MODULES} ${yara_LIBYARA_SRC_PATH}/modules/magic.c)
-endif()
-
-if(yara_HASH_MODULE)
-	add_definitions(-DHASH_MODULE)
-	set(yara_LIBYARA_MODULES ${yara_LIBYARA_MODULES} ${yara_LIBYARA_SRC_PATH}/modules/hash.c)
-endif()
-
-if(yara_DOTNET_MODULE)
-	add_definitions(-DDOTNET_MODULE)
-	set(yara_LIBYARA_MODULES ${yara_LIBYARA_MODULES} ${yara_LIBYARA_SRC_PATH}/modules/dotnet.c)
-endif()
-
-if(yara_MACHO_MODULE)
-	add_definitions(-DMACHO_MODULE)
-	set(yara_LIBYARA_MODULES ${yara_LIBYARA_MODULES} ${yara_LIBYARA_SRC_PATH}/modules/macho.c)
-endif()
-
-if(yara_DEX_MODULE)
-	add_definitions(-DDEX_MODULE)
-	set(yara_LIBYARA_MODULES ${yara_LIBYARA_MODULES} ${yara_LIBYARA_SRC_PATH}/modules/dex.c)
-endif()
-
 # Handle proc
 # Actually cmake build system support windows linux and mac
 set(yara_LIBYARA_PROC
@@ -135,18 +104,47 @@ target_include_directories(
 	PRIVATE ${yara_LIBYARA_SRC_PATH}
 )
 
+# Handle module options build
 if(yara_CUCKOO_MODULE)
+	target_compile_definitions(libyara PUBLIC CUCKOO_MODULE)
+	target_sources(libyara PRIVATE ${yara_LIBYARA_SRC_PATH}/modules/cuckoo.c)
 	# link with jansson lib
 	include(jansson.cmake)
 	target_link_libraries(libyara libjansson)
 endif()
 
+if(yara_MAGIC_MODULE AND NOT WIN32)
+	target_compile_definitions(libyara PUBLIC MAGIC_MODULE)
+	target_sources(libyara PRIVATE ${yara_LIBYARA_SRC_PATH}/modules/magic.c)
+	target_link_libraries(libyara libmagic)
+endif()
+
+if(yara_HASH_MODULE)
+	target_compile_definitions(libyara PUBLIC HASH_MODULE)
+	target_sources(libyara PRIVATE ${yara_LIBYARA_SRC_PATH}/modules/hash.c)
+endif()
+
+if(yara_DOTNET_MODULE)
+	target_compile_definitions(libyara PUBLIC DOTNET_MODULE)
+	target_sources(libyara PRIVATE ${yara_LIBYARA_SRC_PATH}/modules/dotnet.c)
+endif()
+
+if(yara_MACHO_MODULE)
+	target_compile_definitions(libyara PUBLIC MACHO_MODULE)
+	target_sources(libyara PRIVATE ${yara_LIBYARA_SRC_PATH}/modules/macho.c)
+endif()
+
+if(yara_DEX_MODULE)
+	target_compile_definitions(libyara PUBLIC DEX_MODULE)
+	target_sources(libyara PRIVATE ${yara_LIBYARA_SRC_PATH}/modules/dex.c)
+endif()
+
 if(WIN32)
-	add_definitions(-DUSE_WINDOWS_PROC)
-	add_definitions(-DHAVE_WINCRYPT_H)		# not using openssl
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS) 	# maybe need to correct them
+	target_compile_definitions(libyara PUBLIC USE_WINDOWS_PROC)
+	target_compile_definitions(libyara PUBLIC HAVE_WINCRYPT_H)				# not using openssl
+	target_compile_definitions(libyara PUBLIC _CRT_SECURE_NO_WARNINGS) 	# maybe need to correct them
 	# need to clean warnings
-	add_definitions(
+	target_compile_definitions(libyara PUBLIC
 		/wd4005
 		/wd4018
 		/wd4090
@@ -156,18 +154,19 @@ if(WIN32)
 		/wd4996
 	)
 elseif(UNIX AND NOT APPLE)
-	add_definitions(-DUSE_LINUX_PROC)
-	target_link_libraries(libyara pthread m)
+	target_compile_definitions(libyara PUBLIC USE_LINUX_PROC)
+	find_package(Threads REQUIRED)
+	target_link_libraries(libyara Threads::Threads m)
 	if(yara_HASH_MODULE)
 		find_package(OpenSSL REQUIRED)
-		add_definitions(-DHAVE_LIBCRYPTO)
-		target_link_libraries(libyara ${OPENSSL_LIBRARIES})
+		target_compile_definitions(libyara PUBLIC HAVE_LIBCRYPTO)
+		target_link_libraries(libyara OpenSSL::Crypto OpenSSL::SSL)
 	endif()
 elseif(APPLE)
-	add_definitions(-DUSE_MACH_PROC)
+	target_compile_definitions(libyara PUBLIC USE_MACH_PROC)
 endif()
 
-install(TARGETS libyara LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+install(TARGETS libyara EXPORT yara LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(DIRECTORY ${yara_LIBYARA_SRC_PATH}/include DESTINATION include FILES_MATCHING PATTERN "*.h*")
 
 include(GNUInstallDirs)
@@ -175,4 +174,4 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/yara.pc.in
                ${CMAKE_CURRENT_BINARY_DIR}/yara.pc @ONLY)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/yara.pc DESTINATION lib/pkgconfig)
-
+install(EXPORT yara DESTINATION cmake)
