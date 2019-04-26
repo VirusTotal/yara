@@ -100,7 +100,7 @@ add_library(libyara STATIC ${yara_LIBYARA_SRC} ${yara_LIBYARA_INC} ${yara_LIBYAR
 # Include directories management
 target_include_directories(
 	libyara 
-	PUBLIC ${yara_LIBYARA_SRC_PATH}/include 
+	PUBLIC $<BUILD_INTERFACE:${yara_LIBYARA_SRC_PATH}/include> $<INSTALL_INTERFACE:include>
 	PRIVATE ${yara_LIBYARA_SRC_PATH}
 )
 
@@ -116,7 +116,7 @@ endif()
 if(yara_MAGIC_MODULE AND NOT WIN32)
 	target_compile_definitions(libyara PUBLIC MAGIC_MODULE)
 	target_sources(libyara PRIVATE ${yara_LIBYARA_SRC_PATH}/modules/magic.c)
-	target_link_libraries(libyara libmagic)
+	target_link_libraries(libyara magic)
 endif()
 
 if(yara_HASH_MODULE)
