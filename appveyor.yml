@@ -1,6 +1,6 @@
 # AppVeyor CI for Windows
 
-version: 3.9.0-{build}
+version: '{branch}-{build}'
 
 pull_requests:
   do_not_increment_build_number: true
@@ -10,18 +10,20 @@ environment:
   - TARGET: vs2015
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     VisualStudioVersion: 14.0
-    configuration: Release
     platform: x86
+    configuration: Release
+    artifact_postfix: win32
   - TARGET: vs2015
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     VisualStudioVersion: 14.0
-    configuration: Debug
     platform: x86
+    configuration: Debug
   - TARGET: vs2015
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     VisualStudioVersion: 14.0
     platform: x64
     configuration: Release
+    artifact_postfix: win64
   - TARGET: vs2015
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     VisualStudioVersion: 14.0
@@ -45,6 +47,7 @@ for:
   matrix:
     only:
       - TARGET: vs2015
+      - configuration: Release
 
   before_build:
   - ps: nuget restore windows/vs2015/yara.sln
@@ -53,8 +56,39 @@ for:
     project: windows/vs2015/yara.sln
     verbosity: minimal
 
+  after_build:
+  - cmd: 7z a yara-%APPVEYOR_BUILD_VERSION%-%ARTIFACT_POSTFIX%.zip %APPVEYOR_BUILD_FOLDER%\windows\%TARGET%\%CONFIGURATION%\*.exe
+
   artifacts:
-  - path: windows\**\*.exe
+  - path: yara-$(APPVEYOR_BUILD_VERSION)-$(ARTIFACT_POSTFIX).zip
+    name: yara-$(APPVEYOR_BUILD_VERSION)-$(ARTIFACT_POSTFIX)
+    type: zip
+
+  deploy:
+    tag: $(APPVEYOR_REPO_TAG_NAME)
+    release: YARA $(APPVEYOR_REPO_TAG_NAME)
+    provider: GitHub
+    auth_token:
+      secure: d3qqX7bmrBiKJI38yFPc5vHrGGfS3LxLC7FaG6ewI2ghPPE22Pk6QtyrEFFb73PL
+    artifact: yara-$(APPVEYOR_BUILD_VERSION)-$(ARTIFACT_POSTFIX)
+    draft: true
+    on:
+      APPVEYOR_REPO_TAG: true        # deploy on tag push only
+
+  test: off
+
+-
+  matrix:
+    only:
+      - TARGET: vs2015
+      - configuration: Debug
+
+  before_build:
+  - ps: nuget restore windows/vs2015/yara.sln
+
+  build:
+    project: windows/vs2015/yara.sln
+    verbosity: minimal
 
   test: off
 
