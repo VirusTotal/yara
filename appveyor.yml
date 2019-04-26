@@ -60,16 +60,16 @@ for:
   - cmd: 7z a yara-%APPVEYOR_BUILD_VERSION%-%ARTIFACT_POSTFIX%.zip %APPVEYOR_BUILD_FOLDER%\windows\%TARGET%\%CONFIGURATION%\*.exe
 
   artifacts:
-  - path: yara-$(appveyor_build_version)-$(artifact_postfix).zip
-    name: yara-$(appveyor_build_version)-$(artifact_postfix)
+  - path: yara-$(APPVEYOR_BUILD_VERSION)-$(ARTIFACT_POSTFIX).zip
+    name: yara-$(APPVEYOR_BUILD_VERSION)-$(ARTIFACT_POSTFIX)
     type: zip
 
   deploy:
-    release: YARA $(appveyor_build_version)
+    release: YARA $(APPVEYOR_REPO_TAG_NAME)
     provider: GitHub
     auth_token:
       secure: d3qqX7bmrBiKJI38yFPc5vHrGGfS3LxLC7FaG6ewI2ghPPE22Pk6QtyrEFFb73PL
-    artifact: yara-$(appveyor_build_version)-$(artifact_postfix)
+    artifact: yara-$(APPVEYOR_BUILD_VERSION)-$(ARTIFACT_POSTFIX)
     draft: true
     on:
       APPVEYOR_REPO_TAG: true        # deploy on tag push only
