@@ -65,7 +65,8 @@ for:
     type: zip
 
   deploy:
-    tag: YARA $(APPVEYOR_REPO_TAG_NAME)
+    tag: $(APPVEYOR_REPO_TAG_NAME)
+    release: YARA $(APPVEYOR_REPO_TAG_NAME)
     provider: GitHub
     auth_token:
       secure: d3qqX7bmrBiKJI38yFPc5vHrGGfS3LxLC7FaG6ewI2ghPPE22Pk6QtyrEFFb73PL
