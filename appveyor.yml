@@ -53,8 +53,11 @@ for:
     project: windows/vs2015/yara.sln
     verbosity: minimal
 
+  after_build:
+  - cmd: 7z a yara-%PLATFORM%.zip %APPVEYOR_BUILD_FOLDER%\windows\vs2015\Release\*.exe
+
   artifacts:
-  - path: windows\**\*.exe
+  - path: yara-$(platform).zip
     name: yara-$(platform)
     type: zip
 
