@@ -72,7 +72,6 @@ for:
     artifact: yara-$(appveyor_build_version)-$(artifact_postfix)
     draft: true
     on:
-      branch: appveyor                 # release from master branch only
       APPVEYOR_REPO_TAG: true        # deploy on tag push only
 
   test: off
