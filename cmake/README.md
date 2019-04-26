@@ -74,4 +74,3 @@ Then you can install the release config with:
 cmake --build . --config release --target install
 ```
 
-
