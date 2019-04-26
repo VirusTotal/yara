@@ -71,6 +71,9 @@ for:
       secure: d3qqX7bmrBiKJI38yFPc5vHrGGfS3LxLC7FaG6ewI2ghPPE22Pk6QtyrEFFb73PL
     artifact: yara-$(appveyor_build_version)-$(artifact_postfix)
     draft: true
+    on:
+      branch: appveyor                 # release from master branch only
+      APPVEYOR_REPO_TAG: true        # deploy on tag push only
 
   test: off
 
