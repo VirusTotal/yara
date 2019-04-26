@@ -54,11 +54,11 @@ for:
     verbosity: minimal
 
   after_build:
-  - cmd: 7z a yara-%PLATFORM%.zip %APPVEYOR_BUILD_FOLDER%\windows\vs2015\Release\*.exe
+  - cmd: 7z a yara-%CONFIGURATION%-%PLATFORM%.zip %APPVEYOR_BUILD_FOLDER%\windows\%TARGET%\%CONFIGURATION%\*.exe
 
   artifacts:
-  - path: yara-$(platform).zip
-    name: yara-$(platform)
+  - path: yara-$(configuration)-$(platform).zip
+    name: yara-$(configuration)-$(platform)
     type: zip
 
   test: off
