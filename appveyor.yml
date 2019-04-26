@@ -64,6 +64,14 @@ for:
     name: $(name)
     type: zip
 
+  deploy:
+    release: YARA $(appveyor_build_version)
+    provider: GitHub
+    auth_token:
+      secure: d3qqX7bmrBiKJI38yFPc5vHrGGfS3LxLC7FaG6ewI2ghPPE22Pk6QtyrEFFb73PL
+    artifact: $(name).zip
+    draft: true
+
   test: off
 
 -
