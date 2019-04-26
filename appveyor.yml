@@ -12,7 +12,7 @@ environment:
     VisualStudioVersion: 14.0
     platform: x86
     configuration: Release
-    name: yara-win32
+    artifactpostfix: win32
   - TARGET: vs2015
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     VisualStudioVersion: 14.0
@@ -23,7 +23,7 @@ environment:
     VisualStudioVersion: 14.0
     platform: x64
     configuration: Release
-    name: yara-win64
+    artifactpostfix: win64
   - TARGET: vs2015
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     VisualStudioVersion: 14.0
@@ -60,16 +60,16 @@ for:
   - cmd: 7z a %NAME%.zip %APPVEYOR_BUILD_FOLDER%\windows\%TARGET%\%CONFIGURATION%\*.exe
 
   artifacts:
-  - path: $(name).zip
-    name: $(name)
+  - path: yara-'{version}'-$(artifactpostfix).zip
+    name: yara-'{version}'-$(artifactpostfix)
     type: zip
 
   deploy:
-    release: YARA $(appveyor_build_version)
+    release: YARA '{version}'
     provider: GitHub
     auth_token:
       secure: d3qqX7bmrBiKJI38yFPc5vHrGGfS3LxLC7FaG6ewI2ghPPE22Pk6QtyrEFFb73PL
-    artifact: $(name)
+    artifact: yara-'{version}'-$(artifactpostfix)
     draft: true
 
   test: off
