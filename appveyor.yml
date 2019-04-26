@@ -63,17 +63,6 @@ for:
 
   test: off
 
-  deploy:
-    release: YARA $(APPVEYOR_REPO_TAG_NAME)
-    provider: GitHub
-    auth_token:
-      secure: 6e5a58e1c5bc2e93b871bb6fe4dac90475e1772f
-    artifact: /yara-.*/
-    draft: true
-    on:
-      branch: appveyor                 # release from master branch only
-      APPVEYOR_REPO_TAG: true        # deploy on tag push only
-
 # Uncomment the lines below for enabling Remote Desktop in the Appveyor. This
 # allows connecting to the remote machine and debug issues.
 # on_finish:
