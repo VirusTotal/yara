@@ -1573,18 +1573,7 @@ int yr_atoms_extract_from_string(
         *atoms = NULL;
       });
 
-    if (flags & STRING_GFLAGS_ASCII ||
-        flags & STRING_GFLAGS_WIDE ||
-        flags & STRING_GFLAGS_NO_CASE)
-    {
-      *atoms = _yr_atoms_list_concat(*atoms, xor_atoms);
-    }
-    else
-    {
-      yr_atoms_list_destroy(*atoms);
-      *atoms = xor_atoms;
-    }
-
+    *atoms = _yr_atoms_list_concat(*atoms, xor_atoms);
   }
 
   return ERROR_SUCCESS;
