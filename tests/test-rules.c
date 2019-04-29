@@ -514,7 +514,7 @@ static void test_strings()
       strings:\n\
         $a = \"This program cannot\" xor\n\
       condition:\n\
-        #a == 255\n\
+        #a == 256\n\
     }", "tests/data/xor.out");
 
   assert_true_rule_file(
@@ -528,7 +528,39 @@ static void test_strings()
   assert_true_rule_file(
     "rule test {\n\
       strings:\n\
+        $a = \"This program cannot\" xor ascii wide\n\
+      condition:\n\
+        #a == 256\n\
+    }", "tests/data/xor.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
         $a = \"This program cannot\" xor wide\n\
+      condition:\n\
+        #a == 0\n\
+    }", "tests/data/xor.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor wide\n\
+      condition:\n\
+        #a == 256\n\
+    }", "tests/data/xorwide.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor ascii\n\
+      condition:\n\
+        #a == 0\n\
+    }", "tests/data/xorwide.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor wide ascii\n\
       condition:\n\
         #a == 256\n\
     }", "tests/data/xorwide.out");
