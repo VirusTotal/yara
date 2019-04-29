@@ -1293,6 +1293,8 @@ void test_re()
   assert_false_regexp("a\\Sb", "a\nb");
   assert_false_regexp("a\\Sb", "a\vb");
   assert_false_regexp("a\\Sb", "a\fb");
+  assert_true_regexp("foo([^\\s]*)", "foobar\n", "foobar");
+  assert_true_regexp("foo([^\\s]*)", "foobar\r\n", "foobar");
   assert_true_regexp("\\n\\r\\t\\f\\a", "\n\r\t\f\a", "\n\r\t\f\a");
   assert_true_regexp("[\\n][\\r][\\t][\\f][\\a]", "\n\r\t\f\a", "\n\r\t\f\a");
   assert_true_regexp("\\x01\\x02\\x03", "\x01\x02\x03", "\x01\x02\x03");

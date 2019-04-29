@@ -365,6 +365,10 @@ hex_digit     [0-9a-fA-F]
 
   LEX_ENV->re_class.bitmap[' ' / 8] |= 1 << ' ' % 8;
   LEX_ENV->re_class.bitmap['\t' / 8] |= 1 << '\t' % 8;
+  LEX_ENV->re_class.bitmap['\r' / 8] |= 1 << '\r' % 8;
+  LEX_ENV->re_class.bitmap['\n' / 8] |= 1 << '\n' % 8;
+  LEX_ENV->re_class.bitmap['\v' / 8] |= 1 << '\v' % 8;
+  LEX_ENV->re_class.bitmap['\f' / 8] |= 1 << '\f' % 8;
 }
 
 
@@ -378,6 +382,14 @@ hex_digit     [0-9a-fA-F]
       LEX_ENV->re_class.bitmap[i] |= ~(1 << ' ' % 8);
     else if (i == '\t' / 8)
       LEX_ENV->re_class.bitmap[i] |= ~(1 << '\t' % 8);
+    else if (i == '\r' / 8)
+      LEX_ENV->re_class.bitmap[i] |= ~(1 << '\r' % 8);
+    else if (i == '\n' / 8)
+      LEX_ENV->re_class.bitmap[i] |= ~(1 << '\n' % 8);
+    else if (i == '\v' / 8)
+      LEX_ENV->re_class.bitmap[i] |= ~(1 << '\v' % 8);
+    else if (i == '\f' / 8)
+      LEX_ENV->re_class.bitmap[i] |= ~(1 << '\f' % 8);
     else
       LEX_ENV->re_class.bitmap[i] = 0xFF;
   }
