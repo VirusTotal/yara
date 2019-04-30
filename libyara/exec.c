@@ -108,7 +108,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     }
 
 #define check_object_canary(o) \
-    if (o->canary != yr_canary) \
+    if (o->canary != context->canary) \
     { \
       stop = true; \
       result = ERROR_INTERNAL_FATAL_ERROR; \
