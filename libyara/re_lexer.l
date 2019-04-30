@@ -68,6 +68,11 @@ static uint8_t word_chars[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
+static uint8_t space_chars[] = {
+    0x00, 0x3E, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 int escaped_char_value(
     char* text,
@@ -363,12 +368,10 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\s {
 
-  LEX_ENV->re_class.bitmap[' ' / 8] |= 1 << ' ' % 8;
-  LEX_ENV->re_class.bitmap['\t' / 8] |= 1 << '\t' % 8;
-  LEX_ENV->re_class.bitmap['\r' / 8] |= 1 << '\r' % 8;
-  LEX_ENV->re_class.bitmap['\n' / 8] |= 1 << '\n' % 8;
-  LEX_ENV->re_class.bitmap['\v' / 8] |= 1 << '\v' % 8;
-  LEX_ENV->re_class.bitmap['\f' / 8] |= 1 << '\f' % 8;
+  int i;
+
+  for (i = 0; i < 32; i++)
+    LEX_ENV->re_class.bitmap[i] |= space_chars[i];
 }
 
 
@@ -377,22 +380,7 @@ hex_digit     [0-9a-fA-F]
   int i;
 
   for (i = 0; i < 32; i++)
-  {
-    if (i == ' ' / 8)
-      LEX_ENV->re_class.bitmap[i] |= ~(1 << ' ' % 8);
-    else if (i == '\t' / 8)
-      LEX_ENV->re_class.bitmap[i] |= ~(1 << '\t' % 8);
-    else if (i == '\r' / 8)
-      LEX_ENV->re_class.bitmap[i] |= ~(1 << '\r' % 8);
-    else if (i == '\n' / 8)
-      LEX_ENV->re_class.bitmap[i] |= ~(1 << '\n' % 8);
-    else if (i == '\v' / 8)
-      LEX_ENV->re_class.bitmap[i] |= ~(1 << '\v' % 8);
-    else if (i == '\f' / 8)
-      LEX_ENV->re_class.bitmap[i] |= ~(1 << '\f' % 8);
-    else
-      LEX_ENV->re_class.bitmap[i] = 0xFF;
-  }
+    LEX_ENV->re_class.bitmap[i] |= ~space_chars[i];
 }
 
 

@@ -1287,6 +1287,8 @@ void test_re()
   assert_true_regexp("a\\sb", "a\nb", "a\nb");
   assert_true_regexp("a\\sb", "a\vb", "a\vb");
   assert_true_regexp("a\\sb", "a\fb", "a\fb");
+  assert_true_regexp("a[\\s]*b", "a \t\r\n\v\fb", "a \t\r\n\v\fb");
+  assert_true_regexp("a[^\\S]*b", "a \t\r\n\v\fb", "a \t\r\n\v\fb");
   assert_false_regexp("a\\Sb", "a b");
   assert_false_regexp("a\\Sb", "a\tb");
   assert_false_regexp("a\\Sb", "a\rb");
