@@ -38,13 +38,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern char yr_lowercase[256];
 extern char yr_altercase[256];
 
-// Canary value used for preventing hand-crafted objects from being embedded
-// in compiled rules and used to exploit YARA. The canary value is initialized
-// to a random value by yr_initialize and is subsequently set to all objects
-// created by yr_object_create. The canary is verified when objects are used
-// by yr_execute_code.
-extern int yr_canary;
-
 extern YR_THREAD_STORAGE_KEY yr_tidx_key;
 extern YR_THREAD_STORAGE_KEY yr_recovery_state_key;
 

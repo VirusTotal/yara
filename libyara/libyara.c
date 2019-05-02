@@ -72,8 +72,6 @@ static struct yr_config_var
 
 // Global variables. See globals.h for their descriptions.
 
-int yr_canary;
-
 char yr_lowercase[256];
 char yr_altercase[256];
 
@@ -127,9 +125,9 @@ YR_API int yr_initialize(void)
   if (init_count > 1)
     return ERROR_SUCCESS;
 
+  // Initialize random number generator, as it is used for generating object
+  // canaries.
   srand((unsigned) time(NULL));
-
-  yr_canary = rand();
 
   for (i = 0; i < 256; i++)
   {
