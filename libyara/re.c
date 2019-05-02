@@ -1700,10 +1700,10 @@ static int _yr_re_fiber_sync(
           if (opcode == RE_OPCODE_REPEAT_END_GREEDY)
             yr_swap(branch_a, branch_b, RE_FIBER*);
 
-          branch_a->sp--;
           branch_b->ip += repeat_args->offset;
         }
 
+        branch_a->sp--;
         branch_a->ip += (1 + sizeof(RE_REPEAT_ARGS));
         break;
 

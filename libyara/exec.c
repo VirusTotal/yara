@@ -108,7 +108,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     }
 
 #define check_object_canary(o) \
-    if (o->canary != yr_canary) \
+    if (o->canary != context->canary) \
     { \
       stop = true; \
       result = ERROR_INTERNAL_FATAL_ERROR; \
@@ -324,6 +324,18 @@ int yr_execute_code(
         mem[r1.i] = r2.i;
         break;
 
+      case OP_SET_M:
+        r1.i = *(uint64_t*)(ip);
+        ip += sizeof(uint64_t);
+        #if PARANOID_EXEC
+        ensure_within_mem(r1.i);
+        #endif
+        pop(r2);
+        push(r2);
+        if (!is_undef(r2))
+          mem[r1.i] = r2.i;
+        break;
+
       case OP_SWAPUNDEF:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
@@ -346,30 +358,29 @@ int yr_execute_code(
       case OP_JNUNDEF:
         pop(r1);
         push(r1);
-
         ip = jmp_if(!is_undef(r1), ip);
         break;
 
-      case OP_JLE:
+      case OP_JLE_P:
         pop(r2);
         pop(r1);
-        push(r1);
-        push(r2);
-
         ip = jmp_if(r1.i <= r2.i, ip);
         break;
 
       case OP_JTRUE:
         pop(r1);
         push(r1);
-
         ip = jmp_if(!is_undef(r1) && r1.i, ip);
         break;
 
       case OP_JFALSE:
         pop(r1);
         push(r1);
+        ip = jmp_if(is_undef(r1) || !r1.i, ip);
+        break;
 
+      case OP_JFALSE_P:
+        pop(r1);
         ip = jmp_if(is_undef(r1) || !r1.i, ip);
         break;
 
@@ -410,7 +421,7 @@ int yr_execute_code(
         if (is_undef(r1))
           r1.i = UNDEFINED;
         else
-          r1.i= !r1.i;
+          r1.i = !r1.i;
 
         push(r1);
         break;
@@ -513,6 +524,13 @@ int yr_execute_code(
       case OP_MATCH_RULE:
         pop(r1);
         rule = *(YR_RULE**)(ip);
+
+        #if PARANOID_EXEC
+        // Make sure that the string pointer is within the rules arena.
+        if (yr_arena_page_for_address(context->rules->arena, rule) == NULL)
+          return ERROR_INTERNAL_FATAL_ERROR;
+        #endif
+
         ip += sizeof(uint64_t);
 
         if (!is_undef(r1) && r1.i)
@@ -733,6 +751,12 @@ int yr_execute_code(
           break;
         }
 
+        #if PARANOID_EXEC
+        // Make sure that the string pointer is within the rules arena.
+        if (yr_arena_page_for_address(context->rules->arena, r2.p) == NULL)
+          return ERROR_INTERNAL_FATAL_ERROR;
+        #endif
+
         match = r2.s->matches[tidx].head;
         r3.i = false;
 
@@ -760,6 +784,12 @@ int yr_execute_code(
 
         ensure_defined(r1);
         ensure_defined(r2);
+
+        #if PARANOID_EXEC
+        // Make sure that the string pointer is within the rules arena.
+        if (yr_arena_page_for_address(context->rules->arena, r3.p) == NULL)
+          return ERROR_INTERNAL_FATAL_ERROR;
+        #endif
 
         match = r3.s->matches[tidx].head;
         r3.i = false;
@@ -800,6 +830,12 @@ int yr_execute_code(
 
         ensure_defined(r1);
 
+        #if PARANOID_EXEC
+        // Make sure that the string pointer is within the rules arena.
+        if (yr_arena_page_for_address(context->rules->arena, r2.p) == NULL)
+          return ERROR_INTERNAL_FATAL_ERROR;
+        #endif
+
         match = r2.s->matches[tidx].head;
         i = 1;
         r3.i = UNDEFINED;
@@ -821,6 +857,12 @@ int yr_execute_code(
         pop(r1);
 
         ensure_defined(r1);
+
+        #if PARANOID_EXEC
+        // Make sure that the string pointer is within the rules arena.
+        if (yr_arena_page_for_address(context->rules->arena, r2.p) == NULL)
+          return ERROR_INTERNAL_FATAL_ERROR;
+        #endif
 
         match = r2.s->matches[tidx].head;
         i = 1;

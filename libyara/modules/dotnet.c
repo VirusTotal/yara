@@ -753,6 +753,9 @@ void dotnet_parse_tilde_2(
             // Now follow the Type index into the MemberRef table.
             memberref_row = memberref_ptr + (memberref_row_size * type_index);
 
+            if (!fits_in_pe(pe, memberref_row, memberref_row_size))
+              break;
+
             if (index_sizes.memberref == 4)
             {
               // Low 3 bits tell us what this is an index into. Remaining bits
@@ -1142,7 +1145,7 @@ void dotnet_parse_tilde_2(
 
         for (i = 0; i < num_rows; i++)
         {
-          if (!fits_in_pe(pe, table_offset, row_size))
+          if (!fits_in_pe(pe, row_ptr, row_size))
             break;
 
           assemblyref_table = (PASSEMBLYREF_TABLE) row_ptr;

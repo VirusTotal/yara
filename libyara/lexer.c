@@ -1,6 +1,6 @@
-#line 2 "lexer.c"
+#line 1 "lexer.c"
 
-#line 4 "lexer.c"
+#line 3 "lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -8,10 +8,232 @@
 
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
-#define YY_FLEX_MINOR_VERSION 5
-#define YY_FLEX_SUBMINOR_VERSION 35
+#define YY_FLEX_MINOR_VERSION 6
+#define YY_FLEX_SUBMINOR_VERSION 4
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
+#endif
+
+#ifdef yy_create_buffer
+#define yara_yy_create_buffer_ALREADY_DEFINED
+#else
+#define yy_create_buffer yara_yy_create_buffer
+#endif
+
+#ifdef yy_delete_buffer
+#define yara_yy_delete_buffer_ALREADY_DEFINED
+#else
+#define yy_delete_buffer yara_yy_delete_buffer
+#endif
+
+#ifdef yy_scan_buffer
+#define yara_yy_scan_buffer_ALREADY_DEFINED
+#else
+#define yy_scan_buffer yara_yy_scan_buffer
+#endif
+
+#ifdef yy_scan_string
+#define yara_yy_scan_string_ALREADY_DEFINED
+#else
+#define yy_scan_string yara_yy_scan_string
+#endif
+
+#ifdef yy_scan_bytes
+#define yara_yy_scan_bytes_ALREADY_DEFINED
+#else
+#define yy_scan_bytes yara_yy_scan_bytes
+#endif
+
+#ifdef yy_init_buffer
+#define yara_yy_init_buffer_ALREADY_DEFINED
+#else
+#define yy_init_buffer yara_yy_init_buffer
+#endif
+
+#ifdef yy_flush_buffer
+#define yara_yy_flush_buffer_ALREADY_DEFINED
+#else
+#define yy_flush_buffer yara_yy_flush_buffer
+#endif
+
+#ifdef yy_load_buffer_state
+#define yara_yy_load_buffer_state_ALREADY_DEFINED
+#else
+#define yy_load_buffer_state yara_yy_load_buffer_state
+#endif
+
+#ifdef yy_switch_to_buffer
+#define yara_yy_switch_to_buffer_ALREADY_DEFINED
+#else
+#define yy_switch_to_buffer yara_yy_switch_to_buffer
+#endif
+
+#ifdef yypush_buffer_state
+#define yara_yypush_buffer_state_ALREADY_DEFINED
+#else
+#define yypush_buffer_state yara_yypush_buffer_state
+#endif
+
+#ifdef yypop_buffer_state
+#define yara_yypop_buffer_state_ALREADY_DEFINED
+#else
+#define yypop_buffer_state yara_yypop_buffer_state
+#endif
+
+#ifdef yyensure_buffer_stack
+#define yara_yyensure_buffer_stack_ALREADY_DEFINED
+#else
+#define yyensure_buffer_stack yara_yyensure_buffer_stack
+#endif
+
+#ifdef yylex
+#define yara_yylex_ALREADY_DEFINED
+#else
+#define yylex yara_yylex
+#endif
+
+#ifdef yyrestart
+#define yara_yyrestart_ALREADY_DEFINED
+#else
+#define yyrestart yara_yyrestart
+#endif
+
+#ifdef yylex_init
+#define yara_yylex_init_ALREADY_DEFINED
+#else
+#define yylex_init yara_yylex_init
+#endif
+
+#ifdef yylex_init_extra
+#define yara_yylex_init_extra_ALREADY_DEFINED
+#else
+#define yylex_init_extra yara_yylex_init_extra
+#endif
+
+#ifdef yylex_destroy
+#define yara_yylex_destroy_ALREADY_DEFINED
+#else
+#define yylex_destroy yara_yylex_destroy
+#endif
+
+#ifdef yyget_debug
+#define yara_yyget_debug_ALREADY_DEFINED
+#else
+#define yyget_debug yara_yyget_debug
+#endif
+
+#ifdef yyset_debug
+#define yara_yyset_debug_ALREADY_DEFINED
+#else
+#define yyset_debug yara_yyset_debug
+#endif
+
+#ifdef yyget_extra
+#define yara_yyget_extra_ALREADY_DEFINED
+#else
+#define yyget_extra yara_yyget_extra
+#endif
+
+#ifdef yyset_extra
+#define yara_yyset_extra_ALREADY_DEFINED
+#else
+#define yyset_extra yara_yyset_extra
+#endif
+
+#ifdef yyget_in
+#define yara_yyget_in_ALREADY_DEFINED
+#else
+#define yyget_in yara_yyget_in
+#endif
+
+#ifdef yyset_in
+#define yara_yyset_in_ALREADY_DEFINED
+#else
+#define yyset_in yara_yyset_in
+#endif
+
+#ifdef yyget_out
+#define yara_yyget_out_ALREADY_DEFINED
+#else
+#define yyget_out yara_yyget_out
+#endif
+
+#ifdef yyset_out
+#define yara_yyset_out_ALREADY_DEFINED
+#else
+#define yyset_out yara_yyset_out
+#endif
+
+#ifdef yyget_leng
+#define yara_yyget_leng_ALREADY_DEFINED
+#else
+#define yyget_leng yara_yyget_leng
+#endif
+
+#ifdef yyget_text
+#define yara_yyget_text_ALREADY_DEFINED
+#else
+#define yyget_text yara_yyget_text
+#endif
+
+#ifdef yyget_lineno
+#define yara_yyget_lineno_ALREADY_DEFINED
+#else
+#define yyget_lineno yara_yyget_lineno
+#endif
+
+#ifdef yyset_lineno
+#define yara_yyset_lineno_ALREADY_DEFINED
+#else
+#define yyset_lineno yara_yyset_lineno
+#endif
+
+#ifdef yyget_column
+#define yara_yyget_column_ALREADY_DEFINED
+#else
+#define yyget_column yara_yyget_column
+#endif
+
+#ifdef yyset_column
+#define yara_yyset_column_ALREADY_DEFINED
+#else
+#define yyset_column yara_yyset_column
+#endif
+
+#ifdef yywrap
+#define yara_yywrap_ALREADY_DEFINED
+#else
+#define yywrap yara_yywrap
+#endif
+
+#ifdef yyget_lval
+#define yara_yyget_lval_ALREADY_DEFINED
+#else
+#define yyget_lval yara_yyget_lval
+#endif
+
+#ifdef yyset_lval
+#define yara_yyset_lval_ALREADY_DEFINED
+#else
+#define yyset_lval yara_yyset_lval
+#endif
+
+#ifdef yyalloc
+#define yara_yyalloc_ALREADY_DEFINED
+#else
+#define yyalloc yara_yyalloc
+#endif
+
+#ifdef yyrealloc
+#define yara_yyrealloc_ALREADY_DEFINED
+#else
+#define yyrealloc yara_yyrealloc
+#endif
+
+#ifdef yyfree
+#define yara_yyfree_ALREADY_DEFINED
+#else
+#define yyfree yara_yyfree
 #endif
 
 /* First, we deal with  platform-specific or compiler-specific issues. */
@@ -47,7 +269,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -55,7 +276,6 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
-#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -86,38 +306,32 @@ typedef unsigned int flex_uint32_t;
 #define UINT32_MAX             (4294967295U)
 #endif
 
+#ifndef SIZE_MAX
+#define SIZE_MAX               (~(size_t)0)
+#endif
+
+#endif /* ! C99 */
+
 #endif /* ! FLEXINT_H */
 
-#ifdef __cplusplus
+/* begin standard C++ headers. */
 
-/* The "const" storage-class-modifier is valid. */
-#define YY_USE_CONST
-
-#else	/* ! __cplusplus */
-
-/* C99 requires __STDC__ to be defined as 1. */
-#if defined (__STDC__)
-
-#define YY_USE_CONST
-
-#endif	/* defined (__STDC__) */
-#endif	/* ! __cplusplus */
-
-#ifdef YY_USE_CONST
+/* TODO: this is always defined, so inline it */
 #define yyconst const
+
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define yynoreturn __attribute__((__noreturn__))
 #else
-#define yyconst
+#define yynoreturn
 #endif
 
 /* Returned upon end-of-file. */
 #define YY_NULL 0
 
-/* Promotes a possibly negative, possibly signed char to an unsigned
- * integer for use as an array index.  If the signed char is negative,
- * we want to instead treat it as an 8-bit unsigned char, hence the
- * double cast.
+/* Promotes a possibly negative, possibly signed char to an
+ *   integer in range [0..255] for use as an array index.
  */
-#define YY_SC_TO_UI(c) ((unsigned int) (unsigned char) c)
+#define YY_SC_TO_UI(c) ((YY_CHAR) (c))
 
 /* An opaque pointer. */
 #ifndef YY_TYPEDEF_YY_SCANNER_T
@@ -141,25 +355,29 @@ typedef void* yyscan_t;
  * definition of BEGIN.
  */
 #define BEGIN yyg->yy_start = 1 + 2 *
-
 /* Translate the current start state into a value that can be later handed
  * to BEGIN to return to the state.  The YYSTATE alias is for lex
  * compatibility.
  */
 #define YY_START ((yyg->yy_start - 1) / 2)
 #define YYSTATE YY_START
-
 /* Action number for EOF rule of a given start state. */
 #define YY_STATE_EOF(state) (YY_END_OF_BUFFER + state + 1)
-
 /* Special action meaning "start processing a new file". */
-#define YY_NEW_FILE yara_yyrestart(yyin ,yyscanner )
-
+#define YY_NEW_FILE yyrestart( yyin , yyscanner )
 #define YY_END_OF_BUFFER_CHAR 0
 
 /* Size of default input buffer. */
 #ifndef YY_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k.
+ * Moreover, YY_BUF_SIZE is 2*YY_READ_BUF_SIZE in the general case.
+ * Ditto for the __ia64__ case accordingly.
+ */
+#define YY_BUF_SIZE 32768
+#else
 #define YY_BUF_SIZE 16384
+#endif /* __ia64__ */
 #endif
 
 /* The state buf must be large enough to hold one state per character in the main buffer.
@@ -179,19 +397,26 @@ typedef size_t yy_size_t;
 #define EOB_ACT_CONTINUE_SCAN 0
 #define EOB_ACT_END_OF_FILE 1
 #define EOB_ACT_LAST_MATCH 2
-
+    
     /* Note: We specifically omit the test for yy_rule_can_match_eol because it requires
      *       access to the local variable yy_act. Since yyless() is a macro, it would break
-     *       existing scanners that call yyless() from OUTSIDE yara_yylex. 
+     *       existing scanners that call yyless() from OUTSIDE yylex.
      *       One obvious solution it to make yy_act a global. I tried that, and saw
      *       a 5% performance hit in a non-yylineno scanner, because yy_act is
      *       normally declared as a register variable-- so it is not worth it.
      */
     #define  YY_LESS_LINENO(n) \
             do { \
-                yy_size_t yyl;\
+                int yyl;\
                 for ( yyl = n; yyl < yyleng; ++yyl )\
                     if ( yytext[yyl] == '\n' )\
+                        --yylineno;\
+            }while(0)
+    #define YY_LINENO_REWIND_TO(dst) \
+            do {\
+                const char *p;\
+                for ( p = yy_cp-1; p >= (dst); --p)\
+                    if ( *p == '\n' )\
                         --yylineno;\
             }while(0)
     
@@ -208,7 +433,6 @@ typedef size_t yy_size_t;
 		YY_DO_BEFORE_ACTION; /* set up yytext again */ \
 		} \
 	while ( 0 )
-
 #define unput(c) yyunput( c, yyg->yytext_ptr , yyscanner )
 
 #ifndef YY_STRUCT_YY_BUFFER_STATE
@@ -223,12 +447,12 @@ struct yy_buffer_state
 	/* Size of input buffer in bytes, not including room for EOB
 	 * characters.
 	 */
-	yy_size_t yy_buf_size;
+	int yy_buf_size;
 
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	yy_size_t yy_n_chars;
+	int yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -251,7 +475,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-    
+
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
 	 */
@@ -268,7 +492,7 @@ struct yy_buffer_state
 	 * possible backing-up.
 	 *
 	 * When we actually see the EOF, we change the status to "new"
-	 * (via yara_yyrestart()), so that the user can continue scanning by
+	 * (via yyrestart()), so that the user can continue scanning by
 	 * just pointing yyin at a new input file.
 	 */
 #define YY_BUFFER_EOF_PENDING 2
@@ -285,84 +509,77 @@ struct yy_buffer_state
 #define YY_CURRENT_BUFFER ( yyg->yy_buffer_stack \
                           ? yyg->yy_buffer_stack[yyg->yy_buffer_stack_top] \
                           : NULL)
-
 /* Same as previous macro, but useful when we know that the buffer stack is not
  * NULL or when we need an lvalue. For internal use only.
  */
 #define YY_CURRENT_BUFFER_LVALUE yyg->yy_buffer_stack[yyg->yy_buffer_stack_top]
 
-void yara_yyrestart (FILE *input_file ,yyscan_t yyscanner );
-void yara_yy_switch_to_buffer (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-YY_BUFFER_STATE yara_yy_create_buffer (FILE *file,int size ,yyscan_t yyscanner );
-void yara_yy_delete_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void yara_yy_flush_buffer (YY_BUFFER_STATE b ,yyscan_t yyscanner );
-void yara_yypush_buffer_state (YY_BUFFER_STATE new_buffer ,yyscan_t yyscanner );
-void yara_yypop_buffer_state (yyscan_t yyscanner );
+void yyrestart ( FILE *input_file , yyscan_t yyscanner );
+void yy_switch_to_buffer ( YY_BUFFER_STATE new_buffer , yyscan_t yyscanner );
+YY_BUFFER_STATE yy_create_buffer ( FILE *file, int size , yyscan_t yyscanner );
+void yy_delete_buffer ( YY_BUFFER_STATE b , yyscan_t yyscanner );
+void yy_flush_buffer ( YY_BUFFER_STATE b , yyscan_t yyscanner );
+void yypush_buffer_state ( YY_BUFFER_STATE new_buffer , yyscan_t yyscanner );
+void yypop_buffer_state ( yyscan_t yyscanner );
 
-static void yara_yyensure_buffer_stack (yyscan_t yyscanner );
-static void yara_yy_load_buffer_state (yyscan_t yyscanner );
-static void yara_yy_init_buffer (YY_BUFFER_STATE b,FILE *file ,yyscan_t yyscanner );
+static void yyensure_buffer_stack ( yyscan_t yyscanner );
+static void yy_load_buffer_state ( yyscan_t yyscanner );
+static void yy_init_buffer ( YY_BUFFER_STATE b, FILE *file , yyscan_t yyscanner );
+#define YY_FLUSH_BUFFER yy_flush_buffer( YY_CURRENT_BUFFER , yyscanner)
 
-#define YY_FLUSH_BUFFER yara_yy_flush_buffer(YY_CURRENT_BUFFER ,yyscanner)
+YY_BUFFER_STATE yy_scan_buffer ( char *base, yy_size_t size , yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_string ( const char *yy_str , yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_bytes ( const char *bytes, int len , yyscan_t yyscanner );
 
-YY_BUFFER_STATE yara_yy_scan_buffer (char *base,yy_size_t size ,yyscan_t yyscanner );
-YY_BUFFER_STATE yara_yy_scan_string (yyconst char *yy_str ,yyscan_t yyscanner );
-YY_BUFFER_STATE yara_yy_scan_bytes (yyconst char *bytes,yy_size_t len ,yyscan_t yyscanner );
+void *yyalloc ( yy_size_t , yyscan_t yyscanner );
+void *yyrealloc ( void *, yy_size_t , yyscan_t yyscanner );
+void yyfree ( void * , yyscan_t yyscanner );
 
-void *yara_yyalloc (yy_size_t ,yyscan_t yyscanner );
-void *yara_yyrealloc (void *,yy_size_t ,yyscan_t yyscanner );
-void yara_yyfree (void * ,yyscan_t yyscanner );
-
-#define yy_new_buffer yara_yy_create_buffer
-
+#define yy_new_buffer yy_create_buffer
 #define yy_set_interactive(is_interactive) \
 	{ \
 	if ( ! YY_CURRENT_BUFFER ){ \
-        yara_yyensure_buffer_stack (yyscanner); \
+        yyensure_buffer_stack (yyscanner); \
 		YY_CURRENT_BUFFER_LVALUE =    \
-            yara_yy_create_buffer(yyin,YY_BUF_SIZE ,yyscanner); \
+            yy_create_buffer( yyin, YY_BUF_SIZE , yyscanner); \
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_is_interactive = is_interactive; \
 	}
-
 #define yy_set_bol(at_bol) \
 	{ \
 	if ( ! YY_CURRENT_BUFFER ){\
-        yara_yyensure_buffer_stack (yyscanner); \
+        yyensure_buffer_stack (yyscanner); \
 		YY_CURRENT_BUFFER_LVALUE =    \
-            yara_yy_create_buffer(yyin,YY_BUF_SIZE ,yyscanner); \
+            yy_create_buffer( yyin, YY_BUF_SIZE , yyscanner); \
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_at_bol = at_bol; \
 	}
-
 #define YY_AT_BOL() (YY_CURRENT_BUFFER_LVALUE->yy_at_bol)
 
 /* Begin user sect3 */
 
-#define yara_yywrap(n) 1
+#define yara_yywrap(yyscanner) (/*CONSTCOND*/1)
 #define YY_SKIP_YYWRAP
-
-typedef unsigned char YY_CHAR;
+typedef flex_uint8_t YY_CHAR;
 
 typedef int yy_state_type;
 
 #define yytext_ptr yytext_r
 
-static yy_state_type yy_get_previous_state (yyscan_t yyscanner );
-static yy_state_type yy_try_NUL_trans (yy_state_type current_state  ,yyscan_t yyscanner);
-static int yy_get_next_buffer (yyscan_t yyscanner );
-static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
+static yy_state_type yy_get_previous_state ( yyscan_t yyscanner );
+static yy_state_type yy_try_NUL_trans ( yy_state_type current_state  , yyscan_t yyscanner);
+static int yy_get_next_buffer ( yyscan_t yyscanner );
+static void yynoreturn yy_fatal_error ( const char* msg , yyscan_t yyscanner );
 
 /* Done after the current pattern has been matched and before the
  * corresponding action - sets up yytext.
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	yyleng = (int) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
-
 #define YY_NUM_RULES 75
 #define YY_END_OF_BUFFER 76
 /* This struct is not used in this scanner,
@@ -372,7 +589,7 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[248] =
+static const flex_int16_t yy_accept[286] =
     {   0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
        76,   74,   73,   73,   49,   70,   47,   46,   74,   71,
@@ -396,14 +613,18 @@ static yyconst flex_int16_t yy_accept[248] =
         0,   72,   61,   15,   51,   51,   51,   22,   51,   51,
        51,   51,   51,   51,   51,   51,   51,   51,    0,    0,
 
-       51,   51,   51,   51,   51,   11,   37,   51,   50,   51,
-       19,   51,   51,    0,    0,    0,    0,    0,   72,   51,
-       51,   51,   51,   51,   51,   35,   10,   14,    0,   72,
-        0,    0,    0,   51,   36,   51,   34,   18,    0,    0,
-        0,    0,   20,   51,   42,   33,    0
+        0,   51,   51,   51,   51,   51,   11,   37,   51,   50,
+       51,   19,   51,   51,    0,    0,    0,    0,    0,    0,
+        0,   72,   51,   51,   51,   51,   51,   51,   35,   10,
+       14,    0,   72,    0,    0,    0,    0,   72,    0,    0,
+       51,   36,   51,   34,   18,    0,    0,    0,    0,    0,
+        0,    0,    0,   72,    0,   72,    0,    0,    0,    0,
+       72,   20,   51,   42,    0,    0,    0,    0,    0,    0,
+        0,    0,    0,    0,   72,    0,    0,    0,   72,   33,
+        0,    0,    0,    0,    0
     } ;
 
-static yyconst flex_int32_t yy_ec[256] =
+static const YY_CHAR yy_ec[256] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    2,    3,
         1,    1,    4,    1,    1,    1,    1,    1,    1,    1,
@@ -435,7 +656,7 @@ static yyconst flex_int32_t yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static yyconst flex_int32_t yy_meta[57] =
+static const YY_CHAR yy_meta[57] =
     {   0,
         1,    2,    3,    2,    1,    4,    1,    1,    2,    5,
         6,    7,    8,    8,    8,    8,    8,    8,    8,    8,
@@ -445,73 +666,83 @@ static yyconst flex_int32_t yy_meta[57] =
        11,   12,   11,   11,    1,    1
     } ;
 
-static yyconst flex_int16_t yy_base[270] =
+static const flex_int16_t yy_base[311] =
     {   0,
-        0,    0,   54,   55,   56,   59,  587,  586,  581,  579,
-      560,  594,  594,  594,  535,  594,    0,  535,  522,   53,
-       53,   59,   45,  497,   50,    0,    0,   51,  467,  464,
-       51,  442,   32,   44,  438,   32,  432,  426,  426,   62,
-      433,  427,  418,  447,    0,  594,  594,   84,    0,  594,
-       62,  446,    0,  594,  594,  445,  433,  594,    0,  594,
-      440,  594,  594,    0,  102,    0,  422,  421,  124,    0,
-      594,  594,  594,  594,  594,    0,    0,  401,   71,  348,
-        0,  338,  332,  338,  337,  331,  335,  331,  329,   45,
-      325,  324,   62,    0,    0,  331,  329,  323,  332,  318,
+        0,    0,   54,   55,   56,   59,  754,  753,  748,  747,
+      756, 1020, 1020, 1020,  733, 1020,    0,  738,  736,   53,
+       53,   59,   45,  724,   50,    0,    0,   51,  701,  701,
+       51,  700,   32,   44,  696,   32,  693,  689,  680,   62,
+      687,  685,  680,  711,    0, 1020, 1020,   84,    0, 1020,
+       62,  710,    0, 1020, 1020,  537,  526, 1020,    0, 1020,
+      537, 1020, 1020,    0,  102,    0,  520,  519,  124,    0,
+     1020, 1020, 1020, 1020, 1020,    0,    0,  503,   71,  509,
+        0,  499,  493,  499,  498,  492,  496,  492,  490,   45,
+      486,  485,   62,    0,    0,  492,  484,  478,  487,  473,
 
-      323,  330,  312,   92,  113,    0,  594,  594,  594,  594,
-      594,    0,    0,  310,  594,  594,  594,    0,  594,    0,
-      136,  594,  144,    0,    0,    0,    0,  316,   78,  309,
-      307,  315,    0,  309,  316,  304,  297,  114,  301,  302,
-      301,    0,  282,  235,  230,  227,  232,  219,  230,    0,
-      594,  255,  161,    0,  224,  223,  230,  208,  224,  212,
-      207,  225,  210,  206,  236,  232,  213,  206,    0,  197,
-      211,    0,  197,    0,    0,    0,  229,  226,  216,    0,
-      119,    0,  594,    0,  189,  187,  181,    0,  184,  179,
-      181,  173,  181,  179,  178,  177,  164,  173,  272,  133,
+      478,  483,  471,   92,  113,    0, 1020, 1020, 1020, 1020,
+     1020,    0,    0,  469, 1020, 1020, 1020,    0, 1020,    0,
+      136, 1020,  144,    0,    0,    0,    0,  475,   78,  459,
+      455,  465,    0,  459,  466,  338,  340,  114,  346,  347,
+      346,    0,  327,  340,  335,  332,  337,  324,  335,    0,
+     1020,  360,  161,    0,  329,  328,  335,  313,  329,  311,
+      306,  324,  309,  305,  333,  335,  316,  309,    0,  291,
+      303,    0,  291,    0,    0,    0,  323,  119,  216,    0,
+      133,    0, 1020,    0,  284,  231,  225,    0,  229,  224,
+      226,  218,  230,  228,  227,  226,  213,  222,  249,  272,
 
-      170,  166,  164,  153,  160,    0,    0,  169,    0,  157,
-        0,  167,  155,    0,    0,  327,  188,  134,    0,  148,
-      144,  143,  136,  136,  145,    0,    0,    0,  156,  125,
-      157,  122,  172,   69,    0,   64,    0,    0,  183,  178,
-        0,  189,    0,   29,  594,    0,  594,  383,  396,  409,
-      422,  428,  433,  441,  448,  453,  458,  469,  479,  491,
-      504,  516,  529,  542,  548,  551,  561,  574,  580
+      134,  218,  214,  212,  201,  208,    0,    0,  211,    0,
+      199,    0,  209,  197,  233,  156,    0,    0,  327,  383,
+      157,    0,  196,  191,  187,  190,  181,  199,    0,    0,
+        0,  172,  182,  439,    0,  494,  173,    0,  550,  178,
+      129,    0,  128,    0,    0,  197,  179,    0,    0,    0,
+        0,  137,  190,    0,  194,  125,  606,    0,  662,  195,
+        0,    0,   86, 1020,  717,  102,  198,  199,    0,    0,
+        0,    0,   97,  202,    0,    0,  203,  211,    0,    0,
+       67,  212,  227,    0, 1020,  773,  786,  799,  812,  818,
+      823,  831,  838,  843,  848,  859,  869,  881,  894,  906,
+
+      919,  932,  938,  941,  951,  964,  970,  980,  993, 1006
     } ;
 
-static yyconst flex_int16_t yy_def[270] =
+static const flex_int16_t yy_def[311] =
     {   0,
-      247,    1,  248,  248,  249,  249,  250,  250,  251,  251,
-      247,  247,  247,  247,  252,  247,  253,  254,  247,  247,
-      255,  255,  247,  247,  247,  256,  257,  257,  257,  257,
-      257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
-      257,  257,  257,  258,  259,  247,  247,  260,  261,  247,
-      247,  262,  263,  247,  247,  247,  252,  247,  253,  247,
-      254,  247,  247,  264,  247,   22,  247,  247,  247,  265,
-      247,  247,  247,  247,  247,  256,  257,  257,  257,  257,
-      257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
-      257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
+      285,    1,  286,  286,  287,  287,  288,  288,  289,  289,
+      285,  285,  285,  285,  290,  285,  291,  292,  285,  285,
+      293,  293,  285,  285,  285,  294,  295,  295,  295,  295,
+      295,  295,  295,  295,  295,  295,  295,  295,  295,  295,
+      295,  295,  295,  296,  297,  285,  285,  298,  299,  285,
+      285,  300,  301,  285,  285,  285,  290,  285,  291,  285,
+      292,  285,  285,  302,  285,   22,  285,  285,  285,  303,
+      285,  285,  285,  285,  285,  294,  295,  295,  295,  295,
+      295,  295,  295,  295,  295,  295,  295,  295,  295,  295,
+      295,  295,  295,  295,  295,  295,  295,  295,  295,  295,
 
-      257,  257,  257,  258,  247,  259,  247,  247,  247,  247,
-      247,  266,  261,  247,  247,  247,  247,  263,  247,  264,
-      247,  247,  247,  265,  257,  257,  257,  257,  257,  257,
-      257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
-      257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
-      247,  267,  268,  269,  257,  257,  257,  257,  257,  257,
-      257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
-      257,  257,  257,  257,  257,  257,  267,  247,  268,  179,
-      179,  179,  247,  257,  257,  257,  257,  257,  257,  257,
-      257,  257,  257,  257,  257,  257,  257,  257,  247,  179,
+      295,  295,  295,  296,  285,  297,  285,  285,  285,  285,
+      285,  304,  299,  285,  285,  285,  285,  301,  285,  302,
+      285,  285,  285,  303,  295,  295,  295,  295,  295,  295,
+      295,  295,  295,  295,  295,  295,  295,  295,  295,  295,
+      295,  295,  295,  295,  295,  295,  295,  295,  295,  295,
+      285,  305,  306,  307,  295,  295,  295,  295,  295,  295,
+      295,  295,  295,  295,  295,  295,  295,  295,  295,  295,
+      295,  295,  295,  295,  295,  295,  305,  308,  306,  179,
+      179,  179,  285,  295,  295,  295,  295,  295,  295,  295,
+      295,  295,  295,  295,  295,  295,  295,  295,  309,  285,
 
-      257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
-      257,  257,  257,  199,  199,  267,  179,  199,  199,  257,
-      257,  257,  257,  257,  257,  257,  257,  257,  267,  267,
-      179,  199,  199,  257,  257,  257,  257,  257,  247,  267,
-      199,  199,  257,  257,  247,  257,    0,  247,  247,  247,
-      247,  247,  247,  247,  247,  247,  247,  247,  247,  247,
-      247,  247,  247,  247,  247,  247,  247,  247,  247
+      179,  295,  295,  295,  295,  295,  295,  295,  295,  295,
+      295,  295,  295,  295,  309,  308,  200,  200,  305,  285,
+      200,  200,  295,  295,  295,  295,  295,  295,  295,  295,
+      295,  305,  305,  285,  234,  309,  179,  234,  285,  200,
+      295,  295,  295,  295,  295,  285,  310,  200,  234,  234,
+      236,  220,  234,  234,  309,  309,  285,  257,  285,  200,
+      257,  295,  295,  285,  259,  239,  234,  310,  234,  257,
+      257,  259,  220,  257,  257,  265,  308,  265,  265,  295,
+      239,  257,  310,  257,    0,  285,  285,  285,  285,  285,
+      285,  285,  285,  285,  285,  285,  285,  285,  285,  285,
+
+      285,  285,  285,  285,  285,  285,  285,  285,  285,  285
     } ;
 
-static yyconst flex_int16_t yy_nxt[651] =
+static const flex_int16_t yy_nxt[1077] =
     {   0,
        12,   13,   14,   13,   15,   16,   17,   18,   12,   12,
        19,   20,   21,   22,   22,   22,   22,   22,   22,   22,
@@ -520,73 +751,120 @@ static yyconst flex_int16_t yy_nxt[651] =
        27,   34,   35,   36,   37,   38,   39,   40,   41,   27,
        42,   43,   27,   27,   44,   12,   46,   46,   50,   47,
        47,   50,   63,   65,   64,   71,   72,   51,   94,   65,
-       51,   74,   75,   89,   90,   91,  246,   95,  137,   92,
+       51,   74,   75,   89,   90,   91,  273,   95,  137,   92,
        67,   68,   84,   48,   48,   52,   67,   68,   52,  108,
        85,   78,  138,   79,   86,  141,   69,   80,   81,   87,
 
-       99,  114,  247,  105,   70,  126,  244,  100,  115,  142,
-      247,  243,  156,  109,  121,  121,  121,  121,  121,  121,
-      121,  121,  152,  127,  153,  157,  110,  165,  199,  166,
-      200,  111,  167,  242,  178,  112,  123,  123,  123,  123,
-      123,  123,  199,  232,  200,  233,  239,  151,  121,  121,
+       99,  114,  285,  105,   70,  126,  273,  100,  115,  142,
+      285,  273,  156,  109,  121,  121,  121,  121,  121,  121,
+      121,  121,  152,  127,  153,  157,  110,  165,  178,  166,
+      104,  111,  167,  280,  216,  112,  123,  123,  123,  123,
+      123,  123,  200,  200,  201,  201,  252,  151,  121,  121,
       121,  121,  121,  121,  121,  121,  123,  123,  123,  123,
-      123,  123,  180,  104,  180,  240,  199,  241,  200,  180,
-      238,  237,  181,  180,  180,  180,  180,  180,  180,  180,
-      180,  232,  236,  233,  239,  180,  180,  178,  245,  216,
-      235,  234,  180,  180,  180,  180,  180,  180,  232,  231,
+      123,  123,  180,  104,  180,  216,  239,  104,  240,  180,
+      263,  262,  181,  180,  180,  180,  180,  180,  180,  180,
+      180,  247,  200,  248,  201,  180,  180,  239,  178,  240,
+      219,  178,  180,  180,  180,  180,  180,  180,  246,  266,
 
-      233,  228,  227,  226,  225,  224,  223,  222,  221,  220,
-      213,  212,  211,  210,  209,  208,  182,  180,  104,  180,
-      207,  206,  205,  204,  180,  203,  202,  181,  180,  180,
-      180,  180,  180,  180,  180,  180,  201,  104,  178,  198,
-      180,  180,  197,  196,  195,  194,  167,  180,  180,  180,
-      180,  180,  180,  167,  193,  192,  191,  190,  189,  188,
-      187,  186,  185,  184,  178,  176,  138,  175,  174,  173,
-      172,  182,  214,  215,  216,  215,  214,  214,  214,  214,
-      215,  217,  214,  218,  215,  215,  215,  215,  215,  215,
-      215,  215,  214,  214,  214,  214,  215,  215,  214,  214,
+      246,  267,  264,  268,  239,  269,  240,  266,  277,  267,
+      219,  281,  277,  282,  104,  245,  182,  180,  104,  180,
+      283,  281,  284,  282,  180,  244,  243,  181,  180,  180,
+      180,  180,  180,  180,  180,  180,  277,  242,  219,  241,
+      180,  180,  216,  231,  230,  229,  228,  180,  180,  180,
+      180,  180,  180,  227,  226,  225,  224,  223,  216,  214,
+      213,  212,  211,  210,  209,  208,  207,  206,  205,  204,
+      203,  182,  217,  218,  219,  218,  217,  217,  217,  217,
+      218,  220,  217,  221,  218,  218,  218,  218,  218,  218,
+      218,  218,  217,  217,  217,  217,  218,  218,  217,  217,
 
-      214,  214,  214,  215,  215,  215,  215,  215,  215,  214,
-      214,  214,  214,  214,  214,  214,  214,  214,  214,  214,
-      214,  214,  214,  214,  214,  214,  214,  219,  216,  216,
-      216,  171,  170,  169,  168,  216,  178,  164,  229,  216,
-      216,  216,  216,  216,  216,  216,  216,  163,  162,  161,
-      160,  216,  216,  159,  158,  155,  115,  150,  216,  216,
-      216,  216,  216,  216,  149,  148,  147,  146,  145,  144,
-      143,  140,  139,  136,  135,  134,  133,  132,  131,  130,
-      129,  128,  230,   45,   45,   45,   45,   45,   45,   45,
+      217,  217,  217,  218,  218,  218,  218,  218,  218,  217,
+      217,  217,  217,  217,  217,  217,  217,  217,  217,  217,
+      217,  217,  217,  217,  217,  217,  217,  222,  219,  219,
+      219,  202,  178,  198,  197,  219,  178,  196,  232,  219,
+      219,  219,  219,  219,  219,  219,  219,  195,  194,  167,
+      167,  219,  219,  193,  192,  191,  190,  189,  219,  219,
+      219,  219,  219,  219,  188,  187,  186,  185,  184,  178,
+      176,  138,  175,  174,  173,  172,  171,  170,  169,  168,
+      164,  163,  233,  234,  235,  236,  235,  234,  234,  234,
+      234,  235,  220,  234,  237,  235,  235,  235,  235,  235,
+
+      235,  235,  235,  234,  234,  234,  234,  235,  235,  234,
+      234,  234,  234,  234,  235,  235,  235,  235,  235,  235,
+      234,  234,  234,  234,  234,  234,  234,  234,  234,  234,
+      234,  234,  234,  234,  234,  234,  234,  234,  238,  249,
+      250,  251,  250,  249,  249,  249,  249,  250,  252,  249,
+      253,  250,  250,  250,  250,  250,  250,  250,  250,  249,
+      249,  249,  249,  250,  250,  249,  249,  249,  249,  249,
+      250,  250,  250,  250,  250,  250,  249,  249,  249,  249,
+      249,  249,  249,  249,  249,  249,  249,  249,  249,  249,
+      249,  249,  249,  249,  254,  251,  251,  251,  162,  161,
+
+      160,  159,  251,  216,  158,  255,  251,  251,  251,  251,
+      251,  251,  251,  251,  155,  115,  150,  149,  251,  251,
+      148,  147,  146,  145,  144,  251,  251,  251,  251,  251,
+      251,  143,  140,  139,  136,  135,  134,  133,  132,  131,
+      130,  129,  128,  125,  122,  122,   60,  285,  119,  256,
+      257,  258,  259,  258,  257,  257,  257,  257,  258,  220,
+      257,  260,  258,  258,  258,  258,  258,  258,  258,  258,
+      257,  257,  257,  257,  258,  258,  257,  257,  257,  257,
+      257,  258,  258,  258,  258,  258,  258,  257,  257,  257,
+      257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
+
+      257,  257,  257,  257,  257,  261,  270,  271,  272,  271,
+      270,  270,  270,  270,  271,  273,  270,  274,  271,  271,
+      271,  271,  271,  271,  271,  271,  270,  270,  270,  270,
+      271,  271,  270,  270,  270,  270,  270,  271,  271,  271,
+      271,  271,  271,  270,  270,  270,  270,  270,  270,  270,
+      270,  270,  270,  270,  270,  270,  270,  270,  270,  270,
+      270,  275,  276,  272,  272,  272,  276,  276,  276,  276,
+      272,  277,  276,  278,  272,  272,  272,  272,  272,  272,
+      272,  272,  276,  276,  276,  276,  272,  272,  276,  276,
+      276,  276,  276,  272,  272,  272,  272,  272,  272,  276,
+
+      276,  276,  276,  276,  276,  276,  276,  276,  276,  276,
+      276,  276,  276,  276,  276,  276,  276,  279,  276,  276,
+      276,  117,  105,  103,  102,  276,  101,   98,  276,  276,
+      276,  276,  276,  276,  276,  276,  276,   97,   96,   93,
+       88,  276,  276,   83,   82,   73,   62,   60,  276,  276,
+      276,  276,  276,  276,   58,  285,   56,   56,   54,   54,
+      285,  285,  285,  285,  285,  285,  285,  285,  285,  285,
+      285,  285,  276,   45,   45,   45,   45,   45,   45,   45,
        45,   45,   45,   45,   45,   45,   49,   49,   49,   49,
-
        49,   49,   49,   49,   49,   49,   49,   49,   49,   53,
+
        53,   53,   53,   53,   53,   53,   53,   53,   53,   53,
        53,   53,   55,   55,   55,   55,   55,   55,   55,   55,
        55,   55,   55,   55,   55,   57,   57,   57,   57,   57,
-       59,  125,   59,   59,   59,   61,  122,  122,   61,   60,
-       61,   61,   61,   66,  247,   66,  119,  117,  105,   66,
-       76,  103,   76,   76,   76,   77,  102,   77,   77,   77,
-      104,  104,  101,   98,   97,  104,  104,   96,  104,  106,
-      106,   93,   88,  106,  106,  106,  106,  106,  106,  106,
+       59,  285,   59,   59,   59,   61,  285,  285,   61,  285,
+       61,   61,   61,   66,  285,   66,  285,  285,  285,   66,
+       76,  285,   76,   76,   76,   77,  285,   77,   77,   77,
+      104,  104,  285,  285,  285,  104,  104,  285,  104,  106,
+      106,  285,  285,  106,  106,  106,  106,  106,  106,  106,
       106,  107,  107,  107,  107,  107,  107,  107,  107,  107,
+      107,  107,  107,  107,  113,  113,  285,  113,  113,  113,
 
-      107,  107,  107,  107,  113,  113,   83,  113,  113,  113,
-       82,  113,  113,  113,  113,  113,  116,  116,   73,  116,
+      285,  113,  113,  113,  113,  113,  116,  116,  285,  116,
       116,  116,  116,  116,  116,  116,  116,  116,  116,  118,
-      118,  118,   62,  118,  118,  118,  118,  118,  118,  118,
-      118,  118,  120,  120,   60,  120,  120,  120,  120,  120,
-      120,  120,  120,  120,  120,  124,   58,  124,  154,  247,
+      118,  118,  285,  118,  118,  118,  118,  118,  118,  118,
+      118,  118,  120,  120,  285,  120,  120,  120,  120,  120,
+      120,  120,  120,  120,  120,  124,  285,  124,  154,  285,
       154,  177,  177,  177,  177,  177,  177,  177,  177,  177,
       177,  177,  177,  177,  179,  179,  179,  179,  179,  179,
-      179,  179,  179,  179,  179,  179,  179,  183,   56,  183,
-       56,   54,   54,   11,  247,  247,  247,  247,  247,  247,
+      179,  179,  179,  179,  179,  179,  179,  183,  285,  183,
+      199,  199,  199,  199,  199,  199,  199,  199,  199,  199,
+      199,  199,  199,  215,  215,  215,  215,  215,  215,  215,
 
-      247,  247,  247,  247,  247,  247,  247,  247,  247,  247,
-      247,  247,  247,  247,  247,  247,  247,  247,  247,  247,
-      247,  247,  247,  247,  247,  247,  247,  247,  247,  247,
-      247,  247,  247,  247,  247,  247,  247,  247,  247,  247,
-      247,  247,  247,  247,  247,  247,  247,  247,  247,  247
+      215,  215,  215,  215,  215,  215,  265,  265,  265,  265,
+      265,  265,  265,  265,  265,  265,  265,  265,  265,   11,
+      285,  285,  285,  285,  285,  285,  285,  285,  285,  285,
+      285,  285,  285,  285,  285,  285,  285,  285,  285,  285,
+      285,  285,  285,  285,  285,  285,  285,  285,  285,  285,
+      285,  285,  285,  285,  285,  285,  285,  285,  285,  285,
+      285,  285,  285,  285,  285,  285,  285,  285,  285,  285,
+      285,  285,  285,  285,  285,  285
     } ;
 
-static yyconst flex_int16_t yy_chk[651] =
+static const flex_int16_t yy_chk[1077] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -595,74 +873,121 @@ static yyconst flex_int16_t yy_chk[651] =
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    3,    4,    5,    3,
         4,    6,   20,   21,   20,   23,   23,    5,   36,   22,
-        6,   25,   25,   33,   33,   34,  244,   36,   90,   34,
+        6,   25,   25,   33,   33,   34,  281,   36,   90,   34,
        21,   21,   31,    3,    4,    5,   22,   22,    6,   48,
        31,   28,   90,   28,   31,   93,   21,   28,   28,   31,
 
-       40,   51,   22,  104,   21,   79,  236,   40,   51,   93,
-       22,  234,  129,   48,   65,   65,   65,   65,   65,   65,
-       65,   65,  105,   79,  105,  129,   48,  138,  181,  138,
-      181,   48,  138,  232,  230,   48,   69,   69,   69,   69,
-       69,   69,  200,  218,  200,  218,  225,  104,  121,  121,
+       40,   51,   22,  104,   21,   79,  273,   40,   51,   93,
+       22,  266,  129,   48,   65,   65,   65,   65,   65,   65,
+       65,   65,  105,   79,  105,  129,   48,  138,  178,  138,
+      178,   48,  138,  263,  256,   48,   69,   69,   69,   69,
+       69,   69,  181,  201,  181,  201,  252,  104,  121,  121,
       121,  121,  121,  121,  121,  121,  123,  123,  123,  123,
-      123,  123,  153,  153,  153,  229,  231,  229,  231,  153,
-      224,  223,  153,  153,  153,  153,  153,  153,  153,  153,
-      153,  233,  222,  233,  239,  153,  153,  240,  239,  240,
-      221,  220,  153,  153,  153,  153,  153,  153,  242,  217,
+      123,  123,  153,  153,  153,  216,  221,  216,  221,  153,
+      243,  241,  153,  153,  153,  153,  153,  153,  153,  153,
+      153,  232,  237,  232,  237,  153,  153,  240,  247,  240,
+      247,  233,  153,  153,  153,  153,  153,  153,  246,  253,
 
-      242,  213,  212,  210,  208,  205,  204,  203,  202,  201,
-      198,  197,  196,  195,  194,  193,  153,  179,  179,  179,
-      192,  191,  190,  189,  179,  187,  186,  179,  179,  179,
-      179,  179,  179,  179,  179,  179,  185,  178,  177,  173,
-      179,  179,  171,  170,  168,  167,  166,  179,  179,  179,
-      179,  179,  179,  165,  164,  163,  162,  161,  160,  159,
-      158,  157,  156,  155,  152,  149,  148,  147,  146,  145,
-      144,  179,  199,  199,  199,  199,  199,  199,  199,  199,
-      199,  199,  199,  199,  199,  199,  199,  199,  199,  199,
-      199,  199,  199,  199,  199,  199,  199,  199,  199,  199,
+      228,  253,  246,  255,  260,  255,  260,  267,  268,  267,
+      268,  274,  277,  274,  277,  227,  153,  179,  179,  179,
+      278,  282,  278,  282,  179,  226,  225,  179,  179,  179,
+      179,  179,  179,  179,  179,  179,  283,  224,  283,  223,
+      179,  179,  215,  214,  213,  211,  209,  179,  179,  179,
+      179,  179,  179,  206,  205,  204,  203,  202,  199,  198,
+      197,  196,  195,  194,  193,  192,  191,  190,  189,  187,
+      186,  179,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
 
-      199,  199,  199,  199,  199,  199,  199,  199,  199,  199,
-      199,  199,  199,  199,  199,  199,  199,  199,  199,  199,
-      199,  199,  199,  199,  199,  199,  199,  199,  216,  216,
-      216,  143,  141,  140,  139,  216,  216,  137,  216,  216,
-      216,  216,  216,  216,  216,  216,  216,  136,  135,  134,
-      132,  216,  216,  131,  130,  128,  114,  103,  216,  216,
-      216,  216,  216,  216,  102,  101,  100,   99,   98,   97,
-       96,   92,   91,   89,   88,   87,   86,   85,   84,   83,
-       82,   80,  216,  248,  248,  248,  248,  248,  248,  248,
-      248,  248,  248,  248,  248,  248,  249,  249,  249,  249,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  200,  200,
+      200,  200,  200,  200,  200,  200,  200,  200,  219,  219,
+      219,  185,  177,  173,  171,  219,  219,  170,  219,  219,
+      219,  219,  219,  219,  219,  219,  219,  168,  167,  166,
+      165,  219,  219,  164,  163,  162,  161,  160,  219,  219,
+      219,  219,  219,  219,  159,  158,  157,  156,  155,  152,
+      149,  148,  147,  146,  145,  144,  143,  141,  140,  139,
+      137,  136,  219,  220,  220,  220,  220,  220,  220,  220,
+      220,  220,  220,  220,  220,  220,  220,  220,  220,  220,
 
-      249,  249,  249,  249,  249,  249,  249,  249,  249,  250,
-      250,  250,  250,  250,  250,  250,  250,  250,  250,  250,
-      250,  250,  251,  251,  251,  251,  251,  251,  251,  251,
-      251,  251,  251,  251,  251,  252,  252,  252,  252,  252,
-      253,   78,  253,  253,  253,  254,   68,   67,  254,   61,
-      254,  254,  254,  255,   57,  255,   56,   52,   44,  255,
-      256,   43,  256,  256,  256,  257,   42,  257,  257,  257,
-      258,  258,   41,   39,   38,  258,  258,   37,  258,  259,
-      259,   35,   32,  259,  259,  259,  259,  259,  259,  259,
-      259,  260,  260,  260,  260,  260,  260,  260,  260,  260,
+      220,  220,  220,  220,  220,  220,  220,  220,  220,  220,
+      220,  220,  220,  220,  220,  220,  220,  220,  220,  220,
+      220,  220,  220,  220,  220,  220,  220,  220,  220,  220,
+      220,  220,  220,  220,  220,  220,  220,  220,  220,  234,
+      234,  234,  234,  234,  234,  234,  234,  234,  234,  234,
+      234,  234,  234,  234,  234,  234,  234,  234,  234,  234,
+      234,  234,  234,  234,  234,  234,  234,  234,  234,  234,
+      234,  234,  234,  234,  234,  234,  234,  234,  234,  234,
+      234,  234,  234,  234,  234,  234,  234,  234,  234,  234,
+      234,  234,  234,  234,  234,  236,  236,  236,  135,  134,
 
-      260,  260,  260,  260,  261,  261,   30,  261,  261,  261,
-       29,  261,  261,  261,  261,  261,  262,  262,   24,  262,
-      262,  262,  262,  262,  262,  262,  262,  262,  262,  263,
-      263,  263,   19,  263,  263,  263,  263,  263,  263,  263,
-      263,  263,  264,  264,   18,  264,  264,  264,  264,  264,
-      264,  264,  264,  264,  264,  265,   15,  265,  266,   11,
-      266,  267,  267,  267,  267,  267,  267,  267,  267,  267,
-      267,  267,  267,  267,  268,  268,  268,  268,  268,  268,
-      268,  268,  268,  268,  268,  268,  268,  269,   10,  269,
-        9,    8,    7,  247,  247,  247,  247,  247,  247,  247,
+      132,  131,  236,  236,  130,  236,  236,  236,  236,  236,
+      236,  236,  236,  236,  128,  114,  103,  102,  236,  236,
+      101,  100,   99,   98,   97,  236,  236,  236,  236,  236,
+      236,   96,   92,   91,   89,   88,   87,   86,   85,   84,
+       83,   82,   80,   78,   68,   67,   61,   57,   56,  236,
+      239,  239,  239,  239,  239,  239,  239,  239,  239,  239,
+      239,  239,  239,  239,  239,  239,  239,  239,  239,  239,
+      239,  239,  239,  239,  239,  239,  239,  239,  239,  239,
+      239,  239,  239,  239,  239,  239,  239,  239,  239,  239,
+      239,  239,  239,  239,  239,  239,  239,  239,  239,  239,
 
-      247,  247,  247,  247,  247,  247,  247,  247,  247,  247,
-      247,  247,  247,  247,  247,  247,  247,  247,  247,  247,
-      247,  247,  247,  247,  247,  247,  247,  247,  247,  247,
-      247,  247,  247,  247,  247,  247,  247,  247,  247,  247,
-      247,  247,  247,  247,  247,  247,  247,  247,  247,  247
+      239,  239,  239,  239,  239,  239,  257,  257,  257,  257,
+      257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
+      257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
+      257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
+      257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
+      257,  257,  257,  257,  257,  257,  257,  257,  257,  257,
+      257,  257,  259,  259,  259,  259,  259,  259,  259,  259,
+      259,  259,  259,  259,  259,  259,  259,  259,  259,  259,
+      259,  259,  259,  259,  259,  259,  259,  259,  259,  259,
+      259,  259,  259,  259,  259,  259,  259,  259,  259,  259,
+
+      259,  259,  259,  259,  259,  259,  259,  259,  259,  259,
+      259,  259,  259,  259,  259,  259,  259,  259,  265,  265,
+      265,   52,   44,   43,   42,  265,   41,   39,  265,  265,
+      265,  265,  265,  265,  265,  265,  265,   38,   37,   35,
+       32,  265,  265,   30,   29,   24,   19,   18,  265,  265,
+      265,  265,  265,  265,   15,   11,   10,    9,    8,    7,
+        0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+        0,    0,  265,  286,  286,  286,  286,  286,  286,  286,
+      286,  286,  286,  286,  286,  286,  287,  287,  287,  287,
+      287,  287,  287,  287,  287,  287,  287,  287,  287,  288,
+
+      288,  288,  288,  288,  288,  288,  288,  288,  288,  288,
+      288,  288,  289,  289,  289,  289,  289,  289,  289,  289,
+      289,  289,  289,  289,  289,  290,  290,  290,  290,  290,
+      291,    0,  291,  291,  291,  292,    0,    0,  292,    0,
+      292,  292,  292,  293,    0,  293,    0,    0,    0,  293,
+      294,    0,  294,  294,  294,  295,    0,  295,  295,  295,
+      296,  296,    0,    0,    0,  296,  296,    0,  296,  297,
+      297,    0,    0,  297,  297,  297,  297,  297,  297,  297,
+      297,  298,  298,  298,  298,  298,  298,  298,  298,  298,
+      298,  298,  298,  298,  299,  299,    0,  299,  299,  299,
+
+        0,  299,  299,  299,  299,  299,  300,  300,    0,  300,
+      300,  300,  300,  300,  300,  300,  300,  300,  300,  301,
+      301,  301,    0,  301,  301,  301,  301,  301,  301,  301,
+      301,  301,  302,  302,    0,  302,  302,  302,  302,  302,
+      302,  302,  302,  302,  302,  303,    0,  303,  304,    0,
+      304,  305,  305,  305,  305,  305,  305,  305,  305,  305,
+      305,  305,  305,  305,  306,  306,  306,  306,  306,  306,
+      306,  306,  306,  306,  306,  306,  306,  307,    0,  307,
+      308,  308,  308,  308,  308,  308,  308,  308,  308,  308,
+      308,  308,  308,  309,  309,  309,  309,  309,  309,  309,
+
+      309,  309,  309,  309,  309,  309,  310,  310,  310,  310,
+      310,  310,  310,  310,  310,  310,  310,  310,  310,  285,
+      285,  285,  285,  285,  285,  285,  285,  285,  285,  285,
+      285,  285,  285,  285,  285,  285,  285,  285,  285,  285,
+      285,  285,  285,  285,  285,  285,  285,  285,  285,  285,
+      285,  285,  285,  285,  285,  285,  285,  285,  285,  285,
+      285,  285,  285,  285,  285,  285,  285,  285,  285,  285,
+      285,  285,  285,  285,  285,  285
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static yyconst flex_int32_t yy_rule_can_match_eol[76] =
+static const flex_int32_t yy_rule_can_match_eol[76] =
     {   0,
 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
@@ -812,13 +1137,11 @@ static bool is_absolute_path(
   #endif
 }
 
+#line 1140 "lexer.c"
 #define YY_NO_UNISTD_H 1
 #define YY_NO_INPUT 1
 
-
-
-
-#line 822 "lexer.c"
+#line 1144 "lexer.c"
 
 #define INITIAL 0
 #define str 1
@@ -851,8 +1174,8 @@ struct yyguts_t
     size_t yy_buffer_stack_max; /**< capacity of stack. */
     YY_BUFFER_STATE * yy_buffer_stack; /**< Stack as an array. */
     char yy_hold_char;
-    yy_size_t yy_n_chars;
-    yy_size_t yyleng_r;
+    int yy_n_chars;
+    int yyleng_r;
     char *yy_c_buf_p;
     int yy_init;
     int yy_start;
@@ -874,48 +1197,52 @@ struct yyguts_t
 
     }; /* end struct yyguts_t */
 
-static int yy_init_globals (yyscan_t yyscanner );
+static int yy_init_globals ( yyscan_t yyscanner );
 
     /* This must go here because YYSTYPE and YYLTYPE are included
      * from bison output in section 1.*/
     #    define yylval yyg->yylval_r
     
-int yara_yylex_init (yyscan_t* scanner);
+int yylex_init (yyscan_t* scanner);
 
-int yara_yylex_init_extra (YY_EXTRA_TYPE user_defined,yyscan_t* scanner);
+int yylex_init_extra ( YY_EXTRA_TYPE user_defined, yyscan_t* scanner);
 
 /* Accessor methods to globals.
    These are made visible to non-reentrant scanners for convenience. */
 
-int yara_yylex_destroy (yyscan_t yyscanner );
+int yylex_destroy ( yyscan_t yyscanner );
 
-int yara_yyget_debug (yyscan_t yyscanner );
+int yyget_debug ( yyscan_t yyscanner );
 
-void yara_yyset_debug (int debug_flag ,yyscan_t yyscanner );
+void yyset_debug ( int debug_flag , yyscan_t yyscanner );
 
-YY_EXTRA_TYPE yara_yyget_extra (yyscan_t yyscanner );
+YY_EXTRA_TYPE yyget_extra ( yyscan_t yyscanner );
 
-void yara_yyset_extra (YY_EXTRA_TYPE user_defined ,yyscan_t yyscanner );
+void yyset_extra ( YY_EXTRA_TYPE user_defined , yyscan_t yyscanner );
 
-FILE *yara_yyget_in (yyscan_t yyscanner );
+FILE *yyget_in ( yyscan_t yyscanner );
 
-void yara_yyset_in  (FILE * in_str ,yyscan_t yyscanner );
+void yyset_in  ( FILE * _in_str , yyscan_t yyscanner );
 
-FILE *yara_yyget_out (yyscan_t yyscanner );
+FILE *yyget_out ( yyscan_t yyscanner );
 
-void yara_yyset_out  (FILE * out_str ,yyscan_t yyscanner );
+void yyset_out  ( FILE * _out_str , yyscan_t yyscanner );
 
-yy_size_t yara_yyget_leng (yyscan_t yyscanner );
+			int yyget_leng ( yyscan_t yyscanner );
 
-char *yara_yyget_text (yyscan_t yyscanner );
+char *yyget_text ( yyscan_t yyscanner );
 
-int yara_yyget_lineno (yyscan_t yyscanner );
+int yyget_lineno ( yyscan_t yyscanner );
 
-void yara_yyset_lineno (int line_number ,yyscan_t yyscanner );
+void yyset_lineno ( int _line_number , yyscan_t yyscanner );
 
-YYSTYPE * yara_yyget_lval (yyscan_t yyscanner );
+int yyget_column  ( yyscan_t yyscanner );
 
-void yara_yyset_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
+void yyset_column ( int _column_no , yyscan_t yyscanner );
+
+YYSTYPE * yyget_lval ( yyscan_t yyscanner );
+
+void yyset_lval ( YYSTYPE * yylval_param , yyscan_t yyscanner );
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -923,33 +1250,41 @@ void yara_yyset_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
 
 #ifndef YY_SKIP_YYWRAP
 #ifdef __cplusplus
-extern "C" int yara_yywrap (yyscan_t yyscanner );
+extern "C" int yywrap ( yyscan_t yyscanner );
 #else
-extern int yara_yywrap (yyscan_t yyscanner );
+extern int yywrap ( yyscan_t yyscanner );
 #endif
+#endif
+
+#ifndef YY_NO_UNPUT
+    
 #endif
 
 #ifndef yytext_ptr
-static void yy_flex_strncpy (char *,yyconst char *,int ,yyscan_t yyscanner);
+static void yy_flex_strncpy ( char *, const char *, int , yyscan_t yyscanner);
 #endif
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen (yyconst char * ,yyscan_t yyscanner);
+static int yy_flex_strlen ( const char * , yyscan_t yyscanner);
 #endif
 
 #ifndef YY_NO_INPUT
-
 #ifdef __cplusplus
-static int yyinput (yyscan_t yyscanner );
+static int yyinput ( yyscan_t yyscanner );
 #else
-static int input (yyscan_t yyscanner );
+static int input ( yyscan_t yyscanner );
 #endif
 
 #endif
 
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k */
+#define YY_READ_BUF_SIZE 16384
+#else
 #define YY_READ_BUF_SIZE 8192
+#endif /* __ia64__ */
 #endif
 
 /* Copy whatever the last rule matched to the standard output. */
@@ -957,7 +1292,7 @@ static int input (yyscan_t yyscanner );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( yytext, yyleng, 1, yyout )
+#define ECHO do { if (fwrite( yytext, (size_t) yyleng, 1, yyout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -968,7 +1303,7 @@ static int input (yyscan_t yyscanner );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		yy_size_t n; \
+		int n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -981,7 +1316,7 @@ static int input (yyscan_t yyscanner );
 	else \
 		{ \
 		errno=0; \
-		while ( (result = fread(buf, 1, max_size, yyin))==0 && ferror(yyin)) \
+		while ( (result = (int) fread(buf, 1, (yy_size_t) max_size, yyin)) == 0 && ferror(yyin)) \
 			{ \
 			if( errno != EINTR) \
 				{ \
@@ -1022,10 +1357,10 @@ static int input (yyscan_t yyscanner );
 #ifndef YY_DECL
 #define YY_DECL_IS_OURS 1
 
-extern int yara_yylex \
-               (YYSTYPE * yylval_param ,yyscan_t yyscanner);
+extern int yylex \
+               (YYSTYPE * yylval_param , yyscan_t yyscanner);
 
-#define YY_DECL int yara_yylex \
+#define YY_DECL int yylex \
                (YYSTYPE * yylval_param , yyscan_t yyscanner)
 #endif /* !YY_DECL */
 
@@ -1038,7 +1373,7 @@ extern int yara_yylex \
 
 /* Code executed at the end of each rule. */
 #ifndef YY_BREAK
-#define YY_BREAK break;
+#define YY_BREAK /*LINTED*/break;
 #endif
 
 #define YY_RULE_SETUP \
@@ -1048,15 +1383,10 @@ extern int yara_yylex \
  */
 YY_DECL
 {
-	register yy_state_type yy_current_state;
-	register char *yy_cp, *yy_bp;
-	register int yy_act;
+	yy_state_type yy_current_state;
+	char *yy_cp, *yy_bp;
+	int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-
-#line 163 "lexer.l"
-
-
-#line 1060 "lexer.c"
 
     yylval = yylval_param;
 
@@ -1078,15 +1408,21 @@ YY_DECL
 			yyout = stdout;
 
 		if ( ! YY_CURRENT_BUFFER ) {
-			yara_yyensure_buffer_stack (yyscanner);
+			yyensure_buffer_stack (yyscanner);
 			YY_CURRENT_BUFFER_LVALUE =
-				yara_yy_create_buffer(yyin,YY_BUF_SIZE ,yyscanner);
+				yy_create_buffer( yyin, YY_BUF_SIZE , yyscanner);
 		}
 
-		yara_yy_load_buffer_state(yyscanner );
+		yy_load_buffer_state( yyscanner );
 		}
 
-	while ( 1 )		/* loops until end-of-file is reached */
+	{
+#line 163 "lexer.l"
+
+
+#line 1423 "lexer.c"
+
+	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
 		yy_cp = yyg->yy_c_buf_p;
 
@@ -1102,7 +1438,7 @@ YY_DECL
 yy_match:
 		do
 			{
-			register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
+			YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)] ;
 			if ( yy_accept[yy_current_state] )
 				{
 				yyg->yy_last_accepting_state = yy_current_state;
@@ -1111,13 +1447,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 248 )
-					yy_c = yy_meta[(unsigned int) yy_c];
+				if ( yy_current_state >= 286 )
+					yy_c = yy_meta[yy_c];
 				}
-			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
+			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
-		while ( yy_current_state != 247 );
+		while ( yy_current_state != 285 );
 		yy_cp = yyg->yy_last_accepting_cpos;
 		yy_current_state = yyg->yy_last_accepting_state;
 
@@ -1128,10 +1464,10 @@ yy_find_action:
 
 		if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )
 			{
-			yy_size_t yyl;
+			int yyl;
 			for ( yyl = 0; yyl < yyleng; ++yyl )
 				if ( yytext[yyl] == '\n' )
-					   
+					
     do{ yylineno++;
         yycolumn=0;
     }while(0)
@@ -1458,9 +1794,9 @@ YY_RULE_SETUP
       }
 
       // Workaround for flex issue: https://github.com/westes/flex/issues/58
-      yara_yypush_buffer_state(YY_CURRENT_BUFFER,yyscanner);
-      yara_yy_scan_string(included_rules,yyscanner);
-      yara_yyset_lineno(1,yyscanner);
+      yypush_buffer_state(YY_CURRENT_BUFFER, yyscanner);
+      yy_scan_string(included_rules, yyscanner);
+      yyset_lineno(1, yyscanner);
 
       if (compiler->include_free != NULL)
       {
@@ -1507,7 +1843,7 @@ case YY_STATE_EOF(comment):
 #line 349 "lexer.l"
 {
 
-  yara_yypop_buffer_state(yyscanner);
+  yypop_buffer_state(yyscanner);
 
   if (!YY_CURRENT_BUFFER)
     yyterminate();
@@ -1929,6 +2265,10 @@ YY_RULE_SETUP
 {
   // Match hex-digits with whitespace or comments. The latter are stripped
   // out by hex_lexer.l
+  // TODO(vmalvarez): Integrate the hex string lexer and parser into this one,
+  // by having a single lexer/parser instead of two different ones we can avoid
+  // complex regular expressions like the one above, which is actually trying to
+  // do some parsing in the lexer.
 
   alloc_sized_string(s, strlen(yytext));
 
@@ -1941,12 +2281,12 @@ YY_RULE_SETUP
 case 73:
 /* rule 73 can match eol */
 YY_RULE_SETUP
-#line 720 "lexer.l"
+#line 724 "lexer.l"
 /* skip whitespace */
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 722 "lexer.l"
+#line 726 "lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1961,10 +2301,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 734 "lexer.l"
+#line 738 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1968 "lexer.c"
+#line 2307 "lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1980,7 +2320,7 @@ ECHO;
 			/* We're scanning a new file or input source.  It's
 			 * possible that this happened because the user
 			 * just pointed yyin at a new source and called
-			 * yara_yylex().  If so, then we have to assure
+			 * yylex().  If so, then we have to assure
 			 * consistency between YY_CURRENT_BUFFER and our
 			 * globals.  Here is the right place to do so, because
 			 * this is the first action (other than possibly a
@@ -2041,7 +2381,7 @@ ECHO;
 				{
 				yyg->yy_did_buffer_switch_on_eof = 0;
 
-				if ( yara_yywrap(yyscanner ) )
+				if ( yywrap( yyscanner ) )
 					{
 					/* Note: because we've taken care in
 					 * yy_get_next_buffer() to have set up
@@ -2094,7 +2434,8 @@ ECHO;
 			"fatal flex scanner internal error--no action found" );
 	} /* end of action switch */
 		} /* end of scanning one token */
-} /* end of yara_yylex */
+	} /* end of user's declarations */
+} /* end of yylex */
 
 /* yy_get_next_buffer - try to read in a new buffer
  *
@@ -2106,9 +2447,9 @@ ECHO;
 static int yy_get_next_buffer (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-	register char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
-	register char *source = yyg->yytext_ptr;
-	register int number_to_move, i;
+	char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
+	char *source = yyg->yytext_ptr;
+	int number_to_move, i;
 	int ret_val;
 
 	if ( yyg->yy_c_buf_p > &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars + 1] )
@@ -2137,7 +2478,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	/* Try to read more data. */
 
 	/* First move last chars to start of buffer. */
-	number_to_move = (int) (yyg->yy_c_buf_p - yyg->yytext_ptr) - 1;
+	number_to_move = (int) (yyg->yy_c_buf_p - yyg->yytext_ptr - 1);
 
 	for ( i = 0; i < number_to_move; ++i )
 		*(dest++) = *(source++);
@@ -2150,21 +2491,21 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 	else
 		{
-			yy_size_t num_to_read =
+			int num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
 			{ /* Not enough room in the buffer - grow it. */
 
 			/* just a shorter name for the current buffer */
-			YY_BUFFER_STATE b = YY_CURRENT_BUFFER;
+			YY_BUFFER_STATE b = YY_CURRENT_BUFFER_LVALUE;
 
 			int yy_c_buf_p_offset =
 				(int) (yyg->yy_c_buf_p - b->yy_ch_buf);
 
 			if ( b->yy_is_our_buffer )
 				{
-				yy_size_t new_size = b->yy_buf_size * 2;
+				int new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -2173,11 +2514,12 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 				b->yy_ch_buf = (char *)
 					/* Include room in for 2 EOB chars. */
-					yara_yyrealloc((void *) b->yy_ch_buf,b->yy_buf_size + 2 ,yyscanner );
+					yyrealloc( (void *) b->yy_ch_buf,
+							 (yy_size_t) (b->yy_buf_size + 2) , yyscanner );
 				}
 			else
 				/* Can't grow it, we don't own it. */
-				b->yy_ch_buf = 0;
+				b->yy_ch_buf = NULL;
 
 			if ( ! b->yy_ch_buf )
 				YY_FATAL_ERROR(
@@ -2205,7 +2547,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		if ( number_to_move == YY_MORE_ADJ )
 			{
 			ret_val = EOB_ACT_END_OF_FILE;
-			yara_yyrestart(yyin  ,yyscanner);
+			yyrestart( yyin  , yyscanner);
 			}
 
 		else
@@ -2219,12 +2561,15 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	else
 		ret_val = EOB_ACT_CONTINUE_SCAN;
 
-	if ((yy_size_t) (yyg->yy_n_chars + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+	if ((yyg->yy_n_chars + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
-		yy_size_t new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
-		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yara_yyrealloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,new_size ,yyscanner );
+		int new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
+		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yyrealloc(
+			(void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf, (yy_size_t) new_size , yyscanner );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
 			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
+		/* "- 2" to take care of EOB's */
+		YY_CURRENT_BUFFER_LVALUE->yy_buf_size = (int) (new_size - 2);
 	}
 
 	yyg->yy_n_chars += number_to_move;
@@ -2240,15 +2585,15 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
     static yy_state_type yy_get_previous_state (yyscan_t yyscanner)
 {
-	register yy_state_type yy_current_state;
-	register char *yy_cp;
+	yy_state_type yy_current_state;
+	char *yy_cp;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 	yy_current_state = yyg->yy_start;
 
 	for ( yy_cp = yyg->yytext_ptr + YY_MORE_ADJ; yy_cp < yyg->yy_c_buf_p; ++yy_cp )
 		{
-		register YY_CHAR yy_c = (*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : 1);
+		YY_CHAR yy_c = (*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : 1);
 		if ( yy_accept[yy_current_state] )
 			{
 			yyg->yy_last_accepting_state = yy_current_state;
@@ -2257,10 +2602,10 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 248 )
-				yy_c = yy_meta[(unsigned int) yy_c];
+			if ( yy_current_state >= 286 )
+				yy_c = yy_meta[yy_c];
 			}
-		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
+		yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 		}
 
 	return yy_current_state;
@@ -2273,11 +2618,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
  */
     static yy_state_type yy_try_NUL_trans  (yy_state_type yy_current_state , yyscan_t yyscanner)
 {
-	register int yy_is_jam;
+	int yy_is_jam;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner; /* This var may be unused depending upon options. */
-	register char *yy_cp = yyg->yy_c_buf_p;
+	char *yy_cp = yyg->yy_c_buf_p;
 
-	register YY_CHAR yy_c = 1;
+	YY_CHAR yy_c = 1;
 	if ( yy_accept[yy_current_state] )
 		{
 		yyg->yy_last_accepting_state = yy_current_state;
@@ -2286,14 +2631,19 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 248 )
-			yy_c = yy_meta[(unsigned int) yy_c];
+		if ( yy_current_state >= 286 )
+			yy_c = yy_meta[yy_c];
 		}
-	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-	yy_is_jam = (yy_current_state == 247);
+	yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
+	yy_is_jam = (yy_current_state == 285);
 
+	(void)yyg;
 	return yy_is_jam ? 0 : yy_current_state;
 }
+
+#ifndef YY_NO_UNPUT
+
+#endif
 
 #ifndef YY_NO_INPUT
 #ifdef __cplusplus
@@ -2320,7 +2670,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 		else
 			{ /* need more input */
-			yy_size_t offset = yyg->yy_c_buf_p - yyg->yytext_ptr;
+			int offset = (int) (yyg->yy_c_buf_p - yyg->yytext_ptr);
 			++yyg->yy_c_buf_p;
 
 			switch ( yy_get_next_buffer( yyscanner ) )
@@ -2337,13 +2687,13 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 					 */
 
 					/* Reset buffer status. */
-					yara_yyrestart(yyin ,yyscanner);
+					yyrestart( yyin , yyscanner);
 
 					/*FALLTHROUGH*/
 
 				case EOB_ACT_END_OF_FILE:
 					{
-					if ( yara_yywrap(yyscanner ) )
+					if ( yywrap( yyscanner ) )
 						return 0;
 
 					if ( ! yyg->yy_did_buffer_switch_on_eof )
@@ -2367,7 +2717,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	yyg->yy_hold_char = *++yyg->yy_c_buf_p;
 
 	if ( c == '\n' )
-		   
+		
     do{ yylineno++;
         yycolumn=0;
     }while(0)
@@ -2382,34 +2732,34 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
  * @param yyscanner The scanner object.
  * @note This function does not reset the start condition to @c INITIAL .
  */
-    void yara_yyrestart  (FILE * input_file , yyscan_t yyscanner)
+    void yyrestart  (FILE * input_file , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 	if ( ! YY_CURRENT_BUFFER ){
-        yara_yyensure_buffer_stack (yyscanner);
+        yyensure_buffer_stack (yyscanner);
 		YY_CURRENT_BUFFER_LVALUE =
-            yara_yy_create_buffer(yyin,YY_BUF_SIZE ,yyscanner);
+            yy_create_buffer( yyin, YY_BUF_SIZE , yyscanner);
 	}
 
-	yara_yy_init_buffer(YY_CURRENT_BUFFER,input_file ,yyscanner);
-	yara_yy_load_buffer_state(yyscanner );
+	yy_init_buffer( YY_CURRENT_BUFFER, input_file , yyscanner);
+	yy_load_buffer_state( yyscanner );
 }
 
 /** Switch to a different input buffer.
  * @param new_buffer The new input buffer.
  * @param yyscanner The scanner object.
  */
-    void yara_yy_switch_to_buffer  (YY_BUFFER_STATE  new_buffer , yyscan_t yyscanner)
+    void yy_switch_to_buffer  (YY_BUFFER_STATE  new_buffer , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 	/* TODO. We should be able to replace this entire function body
 	 * with
-	 *		yara_yypop_buffer_state();
-	 *		yara_yypush_buffer_state(new_buffer);
+	 *		yypop_buffer_state();
+	 *		yypush_buffer_state(new_buffer);
      */
-	yara_yyensure_buffer_stack (yyscanner);
+	yyensure_buffer_stack (yyscanner);
 	if ( YY_CURRENT_BUFFER == new_buffer )
 		return;
 
@@ -2422,17 +2772,17 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		}
 
 	YY_CURRENT_BUFFER_LVALUE = new_buffer;
-	yara_yy_load_buffer_state(yyscanner );
+	yy_load_buffer_state( yyscanner );
 
 	/* We don't actually know whether we did this switch during
-	 * EOF (yara_yywrap()) processing, but the only time this flag
-	 * is looked at is after yara_yywrap() is called, so it's safe
+	 * EOF (yywrap()) processing, but the only time this flag
+	 * is looked at is after yywrap() is called, so it's safe
 	 * to go ahead and always set it.
 	 */
 	yyg->yy_did_buffer_switch_on_eof = 1;
 }
 
-static void yara_yy_load_buffer_state  (yyscan_t yyscanner)
+static void yy_load_buffer_state  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	yyg->yy_n_chars = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
@@ -2447,35 +2797,35 @@ static void yara_yy_load_buffer_state  (yyscan_t yyscanner)
  * @param yyscanner The scanner object.
  * @return the allocated buffer state.
  */
-    YY_BUFFER_STATE yara_yy_create_buffer  (FILE * file, int  size , yyscan_t yyscanner)
+    YY_BUFFER_STATE yy_create_buffer  (FILE * file, int  size , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
     
-	b = (YY_BUFFER_STATE) yara_yyalloc(sizeof( struct yy_buffer_state ) ,yyscanner );
+	b = (YY_BUFFER_STATE) yyalloc( sizeof( struct yy_buffer_state ) , yyscanner );
 	if ( ! b )
-		YY_FATAL_ERROR( "out of dynamic memory in yara_yy_create_buffer()" );
+		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
 
 	b->yy_buf_size = size;
 
 	/* yy_ch_buf has to be 2 characters longer than the size given because
 	 * we need to put in 2 end-of-buffer characters.
 	 */
-	b->yy_ch_buf = (char *) yara_yyalloc(b->yy_buf_size + 2 ,yyscanner );
+	b->yy_ch_buf = (char *) yyalloc( (yy_size_t) (b->yy_buf_size + 2) , yyscanner );
 	if ( ! b->yy_ch_buf )
-		YY_FATAL_ERROR( "out of dynamic memory in yara_yy_create_buffer()" );
+		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
 
 	b->yy_is_our_buffer = 1;
 
-	yara_yy_init_buffer(b,file ,yyscanner);
+	yy_init_buffer( b, file , yyscanner);
 
 	return b;
 }
 
 /** Destroy the buffer.
- * @param b a buffer created with yara_yy_create_buffer()
+ * @param b a buffer created with yy_create_buffer()
  * @param yyscanner The scanner object.
  */
-    void yara_yy_delete_buffer (YY_BUFFER_STATE  b , yyscan_t yyscanner)
+    void yy_delete_buffer (YY_BUFFER_STATE  b , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
@@ -2486,28 +2836,28 @@ static void yara_yy_load_buffer_state  (yyscan_t yyscanner)
 		YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) 0;
 
 	if ( b->yy_is_our_buffer )
-		yara_yyfree((void *) b->yy_ch_buf ,yyscanner );
+		yyfree( (void *) b->yy_ch_buf , yyscanner );
 
-	yara_yyfree((void *) b ,yyscanner );
+	yyfree( (void *) b , yyscanner );
 }
 
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
- * such as during a yara_yyrestart() or at EOF.
+ * such as during a yyrestart() or at EOF.
  */
-    static void yara_yy_init_buffer  (YY_BUFFER_STATE  b, FILE * file , yyscan_t yyscanner)
+    static void yy_init_buffer  (YY_BUFFER_STATE  b, FILE * file , yyscan_t yyscanner)
 
 {
 	int oerrno = errno;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-	yara_yy_flush_buffer(b ,yyscanner);
+	yy_flush_buffer( b , yyscanner);
 
 	b->yy_input_file = file;
 	b->yy_fill_buffer = 1;
 
-    /* If b is the current buffer, then yara_yy_init_buffer was _probably_
-     * called from yara_yyrestart() or through yy_get_next_buffer.
+    /* If b is the current buffer, then yy_init_buffer was _probably_
+     * called from yyrestart() or through yy_get_next_buffer.
      * In that case, we don't want to reset the lineno or column.
      */
     if (b != YY_CURRENT_BUFFER){
@@ -2524,7 +2874,7 @@ static void yara_yy_load_buffer_state  (yyscan_t yyscanner)
  * @param b the buffer state to be flushed, usually @c YY_CURRENT_BUFFER.
  * @param yyscanner The scanner object.
  */
-    void yara_yy_flush_buffer (YY_BUFFER_STATE  b , yyscan_t yyscanner)
+    void yy_flush_buffer (YY_BUFFER_STATE  b , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	if ( ! b )
@@ -2545,7 +2895,7 @@ static void yara_yy_load_buffer_state  (yyscan_t yyscanner)
 	b->yy_buffer_status = YY_BUFFER_NEW;
 
 	if ( b == YY_CURRENT_BUFFER )
-		yara_yy_load_buffer_state(yyscanner );
+		yy_load_buffer_state( yyscanner );
 }
 
 /** Pushes the new state onto the stack. The new state becomes
@@ -2554,15 +2904,15 @@ static void yara_yy_load_buffer_state  (yyscan_t yyscanner)
  *  @param new_buffer The new state.
  *  @param yyscanner The scanner object.
  */
-void yara_yypush_buffer_state (YY_BUFFER_STATE new_buffer , yyscan_t yyscanner)
+void yypush_buffer_state (YY_BUFFER_STATE new_buffer , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	if (new_buffer == NULL)
 		return;
 
-	yara_yyensure_buffer_stack(yyscanner);
+	yyensure_buffer_stack(yyscanner);
 
-	/* This block is copied from yara_yy_switch_to_buffer. */
+	/* This block is copied from yy_switch_to_buffer. */
 	if ( YY_CURRENT_BUFFER )
 		{
 		/* Flush out information for old buffer. */
@@ -2576,8 +2926,8 @@ void yara_yypush_buffer_state (YY_BUFFER_STATE new_buffer , yyscan_t yyscanner)
 		yyg->yy_buffer_stack_top++;
 	YY_CURRENT_BUFFER_LVALUE = new_buffer;
 
-	/* copied from yara_yy_switch_to_buffer. */
-	yara_yy_load_buffer_state(yyscanner );
+	/* copied from yy_switch_to_buffer. */
+	yy_load_buffer_state( yyscanner );
 	yyg->yy_did_buffer_switch_on_eof = 1;
 }
 
@@ -2585,19 +2935,19 @@ void yara_yypush_buffer_state (YY_BUFFER_STATE new_buffer , yyscan_t yyscanner)
  *  The next element becomes the new top.
  *  @param yyscanner The scanner object.
  */
-void yara_yypop_buffer_state (yyscan_t yyscanner)
+void yypop_buffer_state (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	if (!YY_CURRENT_BUFFER)
 		return;
 
-	yara_yy_delete_buffer(YY_CURRENT_BUFFER ,yyscanner);
+	yy_delete_buffer(YY_CURRENT_BUFFER , yyscanner);
 	YY_CURRENT_BUFFER_LVALUE = NULL;
 	if (yyg->yy_buffer_stack_top > 0)
 		--yyg->yy_buffer_stack_top;
 
 	if (YY_CURRENT_BUFFER) {
-		yara_yy_load_buffer_state(yyscanner );
+		yy_load_buffer_state( yyscanner );
 		yyg->yy_did_buffer_switch_on_eof = 1;
 	}
 }
@@ -2605,7 +2955,7 @@ void yara_yypop_buffer_state (yyscan_t yyscanner)
 /* Allocates the stack if it does not exist.
  *  Guarantees space for at least one push.
  */
-static void yara_yyensure_buffer_stack (yyscan_t yyscanner)
+static void yyensure_buffer_stack (yyscan_t yyscanner)
 {
 	yy_size_t num_to_alloc;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
@@ -2616,15 +2966,15 @@ static void yara_yyensure_buffer_stack (yyscan_t yyscanner)
 		 * scanner will even need a stack. We use 2 instead of 1 to avoid an
 		 * immediate realloc on the next call.
          */
-		num_to_alloc = 1;
-		yyg->yy_buffer_stack = (struct yy_buffer_state**)yara_yyalloc
+      num_to_alloc = 1; /* After all that talk, this was set to 1 anyways... */
+		yyg->yy_buffer_stack = (struct yy_buffer_state**)yyalloc
 								(num_to_alloc * sizeof(struct yy_buffer_state*)
 								, yyscanner);
 		if ( ! yyg->yy_buffer_stack )
-			YY_FATAL_ERROR( "out of dynamic memory in yara_yyensure_buffer_stack()" );
-								  
+			YY_FATAL_ERROR( "out of dynamic memory in yyensure_buffer_stack()" );
+
 		memset(yyg->yy_buffer_stack, 0, num_to_alloc * sizeof(struct yy_buffer_state*));
-				
+
 		yyg->yy_buffer_stack_max = num_to_alloc;
 		yyg->yy_buffer_stack_top = 0;
 		return;
@@ -2633,15 +2983,15 @@ static void yara_yyensure_buffer_stack (yyscan_t yyscanner)
 	if (yyg->yy_buffer_stack_top >= (yyg->yy_buffer_stack_max) - 1){
 
 		/* Increase the buffer to prepare for a possible push. */
-		int grow_size = 8 /* arbitrary grow size */;
+		yy_size_t grow_size = 8 /* arbitrary grow size */;
 
 		num_to_alloc = yyg->yy_buffer_stack_max + grow_size;
-		yyg->yy_buffer_stack = (struct yy_buffer_state**)yara_yyrealloc
+		yyg->yy_buffer_stack = (struct yy_buffer_state**)yyrealloc
 								(yyg->yy_buffer_stack,
 								num_to_alloc * sizeof(struct yy_buffer_state*)
 								, yyscanner);
 		if ( ! yyg->yy_buffer_stack )
-			YY_FATAL_ERROR( "out of dynamic memory in yara_yyensure_buffer_stack()" );
+			YY_FATAL_ERROR( "out of dynamic memory in yyensure_buffer_stack()" );
 
 		/* zero only the new slots.*/
 		memset(yyg->yy_buffer_stack + yyg->yy_buffer_stack_max, 0, grow_size * sizeof(struct yy_buffer_state*));
@@ -2653,9 +3003,9 @@ static void yara_yyensure_buffer_stack (yyscan_t yyscanner)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * @param yyscanner The scanner object.
- * @return the newly allocated buffer state object. 
+ * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yara_yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscanner)
+YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
     
@@ -2663,68 +3013,69 @@ YY_BUFFER_STATE yara_yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yy
 	     base[size-2] != YY_END_OF_BUFFER_CHAR ||
 	     base[size-1] != YY_END_OF_BUFFER_CHAR )
 		/* They forgot to leave room for the EOB's. */
-		return 0;
+		return NULL;
 
-	b = (YY_BUFFER_STATE) yara_yyalloc(sizeof( struct yy_buffer_state ) ,yyscanner );
+	b = (YY_BUFFER_STATE) yyalloc( sizeof( struct yy_buffer_state ) , yyscanner );
 	if ( ! b )
-		YY_FATAL_ERROR( "out of dynamic memory in yara_yy_scan_buffer()" );
+		YY_FATAL_ERROR( "out of dynamic memory in yy_scan_buffer()" );
 
-	b->yy_buf_size = size - 2;	/* "- 2" to take care of EOB's */
+	b->yy_buf_size = (int) (size - 2);	/* "- 2" to take care of EOB's */
 	b->yy_buf_pos = b->yy_ch_buf = base;
 	b->yy_is_our_buffer = 0;
-	b->yy_input_file = 0;
+	b->yy_input_file = NULL;
 	b->yy_n_chars = b->yy_buf_size;
 	b->yy_is_interactive = 0;
 	b->yy_at_bol = 1;
 	b->yy_fill_buffer = 0;
 	b->yy_buffer_status = YY_BUFFER_NEW;
 
-	yara_yy_switch_to_buffer(b ,yyscanner );
+	yy_switch_to_buffer( b , yyscanner );
 
 	return b;
 }
 
-/** Setup the input buffer state to scan a string. The next call to yara_yylex() will
+/** Setup the input buffer state to scan a string. The next call to yylex() will
  * scan from a @e copy of @a str.
  * @param yystr a NUL-terminated string to scan
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  * @note If you want to scan bytes that may contain NUL values, then use
- *       yara_yy_scan_bytes() instead.
+ *       yy_scan_bytes() instead.
  */
-YY_BUFFER_STATE yara_yy_scan_string (yyconst char * yystr , yyscan_t yyscanner)
+YY_BUFFER_STATE yy_scan_string (const char * yystr , yyscan_t yyscanner)
 {
     
-	return yara_yy_scan_bytes(yystr,strlen(yystr) ,yyscanner);
+	return yy_scan_bytes( yystr, (int) strlen(yystr) , yyscanner);
 }
 
-/** Setup the input buffer state to scan the given bytes. The next call to yara_yylex() will
+/** Setup the input buffer state to scan the given bytes. The next call to yylex() will
  * scan from a @e copy of @a bytes.
- * @param bytes the byte buffer to scan
- * @param len the number of bytes in the buffer pointed to by @a bytes.
+ * @param yybytes the byte buffer to scan
+ * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yara_yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len , yyscan_t yyscanner)
+YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t n, i;
+	yy_size_t n;
+	int i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
-	n = _yybytes_len + 2;
-	buf = (char *) yara_yyalloc(n ,yyscanner );
+	n = (yy_size_t) (_yybytes_len + 2);
+	buf = (char *) yyalloc( n , yyscanner );
 	if ( ! buf )
-		YY_FATAL_ERROR( "out of dynamic memory in yara_yy_scan_bytes()" );
+		YY_FATAL_ERROR( "out of dynamic memory in yy_scan_bytes()" );
 
 	for ( i = 0; i < _yybytes_len; ++i )
 		buf[i] = yybytes[i];
 
 	buf[_yybytes_len] = buf[_yybytes_len+1] = YY_END_OF_BUFFER_CHAR;
 
-	b = yara_yy_scan_buffer(buf,n ,yyscanner);
+	b = yy_scan_buffer( buf, n , yyscanner);
 	if ( ! b )
-		YY_FATAL_ERROR( "bad buffer in yara_yy_scan_bytes()" );
+		YY_FATAL_ERROR( "bad buffer in yy_scan_bytes()" );
 
 	/* It's okay to grow etc. this buffer, and we should throw it
 	 * away when we're done.
@@ -2738,9 +3089,11 @@ YY_BUFFER_STATE yara_yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes
 #define YY_EXIT_FAILURE 2
 #endif
 
-static void yy_fatal_error (yyconst char* msg , yyscan_t yyscanner)
+static void yynoreturn yy_fatal_error (const char* msg , yyscan_t yyscanner)
 {
-    	(void) fprintf( stderr, "%s\n", msg );
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	(void)yyg;
+	fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
 }
 
@@ -2766,7 +3119,7 @@ static void yy_fatal_error (yyconst char* msg , yyscan_t yyscanner)
 /** Get the user-defined data for this scanner.
  * @param yyscanner The scanner object.
  */
-YY_EXTRA_TYPE yara_yyget_extra  (yyscan_t yyscanner)
+YY_EXTRA_TYPE yyget_extra  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yyextra;
@@ -2775,10 +3128,10 @@ YY_EXTRA_TYPE yara_yyget_extra  (yyscan_t yyscanner)
 /** Get the current line number.
  * @param yyscanner The scanner object.
  */
-int yara_yyget_lineno  (yyscan_t yyscanner)
+int yyget_lineno  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-    
+
         if (! YY_CURRENT_BUFFER)
             return 0;
     
@@ -2788,10 +3141,10 @@ int yara_yyget_lineno  (yyscan_t yyscanner)
 /** Get the current column number.
  * @param yyscanner The scanner object.
  */
-int yara_yyget_column  (yyscan_t yyscanner)
+int yyget_column  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-    
+
         if (! YY_CURRENT_BUFFER)
             return 0;
     
@@ -2801,7 +3154,7 @@ int yara_yyget_column  (yyscan_t yyscanner)
 /** Get the input stream.
  * @param yyscanner The scanner object.
  */
-FILE *yara_yyget_in  (yyscan_t yyscanner)
+FILE *yyget_in  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yyin;
@@ -2810,7 +3163,7 @@ FILE *yara_yyget_in  (yyscan_t yyscanner)
 /** Get the output stream.
  * @param yyscanner The scanner object.
  */
-FILE *yara_yyget_out  (yyscan_t yyscanner)
+FILE *yyget_out  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yyout;
@@ -2819,7 +3172,7 @@ FILE *yara_yyget_out  (yyscan_t yyscanner)
 /** Get the length of the current token.
  * @param yyscanner The scanner object.
  */
-yy_size_t yara_yyget_leng  (yyscan_t yyscanner)
+int yyget_leng  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yyleng;
@@ -2829,7 +3182,7 @@ yy_size_t yara_yyget_leng  (yyscan_t yyscanner)
  * @param yyscanner The scanner object.
  */
 
-char *yara_yyget_text  (yyscan_t yyscanner)
+char *yyget_text  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yytext;
@@ -2839,81 +3192,81 @@ char *yara_yyget_text  (yyscan_t yyscanner)
  * @param user_defined The data to be associated with this scanner.
  * @param yyscanner The scanner object.
  */
-void yara_yyset_extra (YY_EXTRA_TYPE  user_defined , yyscan_t yyscanner)
+void yyset_extra (YY_EXTRA_TYPE  user_defined , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     yyextra = user_defined ;
 }
 
 /** Set the current line number.
- * @param line_number
+ * @param _line_number line number
  * @param yyscanner The scanner object.
  */
-void yara_yyset_lineno (int  line_number , yyscan_t yyscanner)
+void yyset_lineno (int  _line_number , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
         /* lineno is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "yara_yyset_lineno called with no buffer" , yyscanner); 
+           YY_FATAL_ERROR( "yyset_lineno called with no buffer" );
     
-    yylineno = line_number;
+    yylineno = _line_number;
 }
 
 /** Set the current column.
- * @param line_number
+ * @param _column_no column number
  * @param yyscanner The scanner object.
  */
-void yara_yyset_column (int  column_no , yyscan_t yyscanner)
+void yyset_column (int  _column_no , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
         /* column is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
-           yy_fatal_error( "yara_yyset_column called with no buffer" , yyscanner); 
+           YY_FATAL_ERROR( "yyset_column called with no buffer" );
     
-    yycolumn = column_no;
+    yycolumn = _column_no;
 }
 
 /** Set the input stream. This does not discard the current
  * input buffer.
- * @param in_str A readable stream.
+ * @param _in_str A readable stream.
  * @param yyscanner The scanner object.
- * @see yara_yy_switch_to_buffer
+ * @see yy_switch_to_buffer
  */
-void yara_yyset_in (FILE *  in_str , yyscan_t yyscanner)
+void yyset_in (FILE *  _in_str , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-    yyin = in_str ;
+    yyin = _in_str ;
 }
 
-void yara_yyset_out (FILE *  out_str , yyscan_t yyscanner)
+void yyset_out (FILE *  _out_str , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-    yyout = out_str ;
+    yyout = _out_str ;
 }
 
-int yara_yyget_debug  (yyscan_t yyscanner)
+int yyget_debug  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yy_flex_debug;
 }
 
-void yara_yyset_debug (int  bdebug , yyscan_t yyscanner)
+void yyset_debug (int  _bdebug , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-    yy_flex_debug = bdebug ;
+    yy_flex_debug = _bdebug ;
 }
 
 /* Accessor methods for yylval and yylloc */
 
-YYSTYPE * yara_yyget_lval  (yyscan_t yyscanner)
+YYSTYPE * yyget_lval  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yylval;
 }
 
-void yara_yyset_lval (YYSTYPE *  yylval_param , yyscan_t yyscanner)
+void yyset_lval (YYSTYPE *  yylval_param , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     yylval = yylval_param;
@@ -2921,20 +3274,18 @@ void yara_yyset_lval (YYSTYPE *  yylval_param , yyscan_t yyscanner)
 
 /* User-visible API */
 
-/* yara_yylex_init is special because it creates the scanner itself, so it is
+/* yylex_init is special because it creates the scanner itself, so it is
  * the ONLY reentrant function that doesn't take the scanner as the last argument.
  * That's why we explicitly handle the declaration, instead of using our macros.
  */
-
-int yara_yylex_init(yyscan_t* ptr_yy_globals)
-
+int yylex_init(yyscan_t* ptr_yy_globals)
 {
     if (ptr_yy_globals == NULL){
         errno = EINVAL;
         return 1;
     }
 
-    *ptr_yy_globals = (yyscan_t) yara_yyalloc ( sizeof( struct yyguts_t ), NULL );
+    *ptr_yy_globals = (yyscan_t) yyalloc ( sizeof( struct yyguts_t ), NULL );
 
     if (*ptr_yy_globals == NULL){
         errno = ENOMEM;
@@ -2947,39 +3298,37 @@ int yara_yylex_init(yyscan_t* ptr_yy_globals)
     return yy_init_globals ( *ptr_yy_globals );
 }
 
-/* yara_yylex_init_extra has the same functionality as yara_yylex_init, but follows the
+/* yylex_init_extra has the same functionality as yylex_init, but follows the
  * convention of taking the scanner as the last argument. Note however, that
  * this is a *pointer* to a scanner, as it will be allocated by this call (and
  * is the reason, too, why this function also must handle its own declaration).
- * The user defined value in the first argument will be available to yara_yyalloc in
+ * The user defined value in the first argument will be available to yyalloc in
  * the yyextra field.
  */
-
-int yara_yylex_init_extra(YY_EXTRA_TYPE yy_user_defined,yyscan_t* ptr_yy_globals )
-
+int yylex_init_extra( YY_EXTRA_TYPE yy_user_defined, yyscan_t* ptr_yy_globals )
 {
     struct yyguts_t dummy_yyguts;
 
-    yara_yyset_extra (yy_user_defined, &dummy_yyguts);
+    yyset_extra (yy_user_defined, &dummy_yyguts);
 
     if (ptr_yy_globals == NULL){
         errno = EINVAL;
         return 1;
     }
-	
-    *ptr_yy_globals = (yyscan_t) yara_yyalloc ( sizeof( struct yyguts_t ), &dummy_yyguts );
-	
+
+    *ptr_yy_globals = (yyscan_t) yyalloc ( sizeof( struct yyguts_t ), &dummy_yyguts );
+
     if (*ptr_yy_globals == NULL){
         errno = ENOMEM;
         return 1;
     }
-    
+
     /* By setting to 0xAA, we expose bugs in
     yy_init_globals. Leave at 0x00 for releases. */
     memset(*ptr_yy_globals,0x00,sizeof(struct yyguts_t));
-    
-    yara_yyset_extra (yy_user_defined, *ptr_yy_globals);
-    
+
+    yyset_extra (yy_user_defined, *ptr_yy_globals);
+
     return yy_init_globals ( *ptr_yy_globals );
 }
 
@@ -2987,13 +3336,13 @@ static int yy_init_globals (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     /* Initialization is the same as for the non-reentrant scanner.
-     * This function is called from yara_yylex_destroy(), so don't allocate here.
+     * This function is called from yylex_destroy(), so don't allocate here.
      */
 
-    yyg->yy_buffer_stack = 0;
+    yyg->yy_buffer_stack = NULL;
     yyg->yy_buffer_stack_top = 0;
     yyg->yy_buffer_stack_max = 0;
-    yyg->yy_c_buf_p = (char *) 0;
+    yyg->yy_c_buf_p = NULL;
     yyg->yy_init = 0;
     yyg->yy_start = 0;
 
@@ -3006,42 +3355,42 @@ static int yy_init_globals (yyscan_t yyscanner)
     yyin = stdin;
     yyout = stdout;
 #else
-    yyin = (FILE *) 0;
-    yyout = (FILE *) 0;
+    yyin = NULL;
+    yyout = NULL;
 #endif
 
     /* For future reference: Set errno on error, since we are called by
-     * yara_yylex_init()
+     * yylex_init()
      */
     return 0;
 }
 
-/* yara_yylex_destroy is for both reentrant and non-reentrant scanners. */
-int yara_yylex_destroy  (yyscan_t yyscanner)
+/* yylex_destroy is for both reentrant and non-reentrant scanners. */
+int yylex_destroy  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
     /* Pop the buffer stack, destroying each element. */
 	while(YY_CURRENT_BUFFER){
-		yara_yy_delete_buffer(YY_CURRENT_BUFFER ,yyscanner );
+		yy_delete_buffer( YY_CURRENT_BUFFER , yyscanner );
 		YY_CURRENT_BUFFER_LVALUE = NULL;
-		yara_yypop_buffer_state(yyscanner);
+		yypop_buffer_state(yyscanner);
 	}
 
 	/* Destroy the stack itself. */
-	yara_yyfree(yyg->yy_buffer_stack ,yyscanner);
+	yyfree(yyg->yy_buffer_stack , yyscanner);
 	yyg->yy_buffer_stack = NULL;
 
     /* Destroy the start condition stack. */
-        yara_yyfree(yyg->yy_start_stack ,yyscanner );
+        yyfree( yyg->yy_start_stack , yyscanner );
         yyg->yy_start_stack = NULL;
 
     /* Reset the globals. This is important in a non-reentrant scanner so the next time
-     * yara_yylex() is called, initialization will occur. */
+     * yylex() is called, initialization will occur. */
     yy_init_globals( yyscanner);
 
     /* Destroy the main struct (reentrant only). */
-    yara_yyfree ( yyscanner , yyscanner );
+    yyfree ( yyscanner , yyscanner );
     yyscanner = NULL;
     return 0;
 }
@@ -3051,18 +3400,21 @@ int yara_yylex_destroy  (yyscan_t yyscanner)
  */
 
 #ifndef yytext_ptr
-static void yy_flex_strncpy (char* s1, yyconst char * s2, int n , yyscan_t yyscanner)
+static void yy_flex_strncpy (char* s1, const char * s2, int n , yyscan_t yyscanner)
 {
-	register int i;
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	(void)yyg;
+
+	int i;
 	for ( i = 0; i < n; ++i )
 		s1[i] = s2[i];
 }
 #endif
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
+static int yy_flex_strlen (const char * s , yyscan_t yyscanner)
 {
-	register int n;
+	int n;
 	for ( n = 0; s[n]; ++n )
 		;
 
@@ -3070,13 +3422,18 @@ static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 }
 #endif
 
-void *yara_yyalloc (yy_size_t  size , yyscan_t yyscanner)
+void *yyalloc (yy_size_t  size , yyscan_t yyscanner)
 {
-	return (void *) malloc( size );
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	(void)yyg;
+	return malloc(size);
 }
 
-void *yara_yyrealloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
+void *yyrealloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
 {
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	(void)yyg;
+
 	/* The cast to (char *) in the following accommodates both
 	 * implementations that use char* generic pointers, and those
 	 * that use void* generic pointers.  It works with the latter
@@ -3084,18 +3441,19 @@ void *yara_yyrealloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
 	 * any pointer type to void*, and deal with argument conversions
 	 * as though doing an assignment.
 	 */
-	return (void *) realloc( (char *) ptr, size );
+	return realloc(ptr, size);
 }
 
-void yara_yyfree (void * ptr , yyscan_t yyscanner)
+void yyfree (void * ptr , yyscan_t yyscanner)
 {
-	free( (char *) ptr );	/* see yara_yyrealloc() for (char *) cast */
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	(void)yyg;
+	free( (char *) ptr );	/* see yyrealloc() for (char *) cast */
 }
 
 #define YYTABLES_NAME "yytables"
 
-#line 734 "lexer.l"
-
+#line 738 "lexer.l"
 
 
 
@@ -3104,7 +3462,7 @@ void yywarning(
     const char *message_fmt,
     ...)
 {
-  YR_COMPILER* compiler = yara_yyget_extra(yyscanner);
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   char* file_name;
   char message[512];
@@ -3125,7 +3483,7 @@ void yywarning(
   compiler->callback(
       YARA_ERROR_LEVEL_WARNING,
       file_name,
-      compiler->current_line ? compiler->current_line : yara_yyget_lineno(yyscanner),
+      compiler->current_line ? compiler->current_line : yyget_lineno(yyscanner),
       message,
       compiler->user_data);
 
@@ -3137,7 +3495,7 @@ void yyfatal(
     yyscan_t yyscanner,
     const char *error_message)
 {
-  YR_COMPILER* compiler = yara_yyget_extra(yyscanner);
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   yyerror(yyscanner, compiler, error_message);
   longjmp(compiler->error_recovery, 1);
@@ -3163,7 +3521,7 @@ void yyerror(
   if (compiler->current_line != 0)
     compiler->last_error_line = compiler->current_line;
   else
-    compiler->last_error_line = yara_yyget_lineno(yyscanner);
+    compiler->last_error_line = yyget_lineno(yyscanner);
 
   compiler->current_line = 0;
 
@@ -3216,17 +3574,17 @@ int yr_lex_parse_rules_string(
   if (setjmp(compiler->error_recovery) != 0)
     return compiler->errors;
 
-  yara_yylex_init(&yyscanner);
+  yylex_init(&yyscanner);
 
   #if YYDEBUG
   yydebug = 1;
   #endif
 
-  yara_yyset_extra(compiler,yyscanner);
-  yara_yy_scan_string(rules_string,yyscanner);
-  yara_yyset_lineno(1,yyscanner);
+  yyset_extra(compiler, yyscanner);
+  yy_scan_string(rules_string, yyscanner);
+  yyset_lineno(1, yyscanner);
   yyparse(yyscanner, compiler);
-  yara_yylex_destroy(yyscanner);
+  yylex_destroy(yyscanner);
 
   return compiler->errors;
 }
@@ -3243,16 +3601,16 @@ int yr_lex_parse_rules_file(
   if (setjmp(compiler->error_recovery) != 0)
     return compiler->errors;
 
-  yara_yylex_init(&yyscanner);
+  yylex_init(&yyscanner);
 
   #if YYDEBUG
   yydebug = 1;
   #endif
 
-  yara_yyset_in(rules_file,yyscanner);
-  yara_yyset_extra(compiler,yyscanner);
+  yyset_in(rules_file, yyscanner);
+  yyset_extra(compiler, yyscanner);
   yyparse(yyscanner, compiler);
-  yara_yylex_destroy(yyscanner);
+  yylex_destroy(yyscanner);
 
   return compiler->errors;
 }
@@ -3305,16 +3663,16 @@ int yr_lex_parse_rules_fd(
     return compiler->errors;
   }
 
-  yara_yylex_init(&yyscanner);
+  yylex_init(&yyscanner);
 
   #if YYDEBUG
   yydebug = 1;
   #endif
 
-  yara_yyset_extra(compiler,yyscanner);
-  yara_yy_scan_bytes((const char*) buffer,file_size,yyscanner);
+  yyset_extra(compiler, yyscanner);
+  yy_scan_bytes((const char*) buffer, (int) file_size, yyscanner);
   yyparse(yyscanner, compiler);
-  yara_yylex_destroy(yyscanner);
+  yylex_destroy(yyscanner);
 
   yr_free(buffer);
 

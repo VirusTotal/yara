@@ -310,9 +310,8 @@ per character, something typical in many executable binaries.
 
 
 
-
-In the above figure, the string "Borland" appears encoded as two bytes per
-character, therefore the following rule will match:
+For example, if the string "Borland" appears encoded as two bytes per
+character (i.e. ``B\x00o\x00r\x00l\x00a\x00n\x00d\x00``), then the following rule will match:
 
 .. code-block:: yara
 

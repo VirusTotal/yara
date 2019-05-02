@@ -69,6 +69,11 @@ int yr_object_create(
     YR_OBJECT** object);
 
 
+void yr_object_set_canary(
+    YR_OBJECT* object,
+    int canary);
+
+
 int yr_object_function_create(
     const char* identifier,
     const char* arguments_fmt,

@@ -1072,6 +1072,7 @@ static int _yr_atoms_extract_from_re(
                 best_atom_re_nodes[i] = recent_re_nodes[i + shift];
               }
 
+              best_atom.length = atom.length;
               best_quality = quality;
             }
 
@@ -1268,7 +1269,7 @@ static YR_ATOM_LIST_ITEM* _yr_atoms_clone_list_item(
 //
 // Given list of atoms that may contain wildcards, replace those wildcarded
 // atoms with a list of non-wildcarded atoms covering all the combinations
-// allowed by the wilcarded atom. For example, the atom {01 ?2 03} will be
+// allowed by the wildcarded atom. For example, the atom {01 ?2 03} will be
 // replaced by {01 02 03}, {01 12 03}, {01 22 03} .. {01 F2 03}. The list
 // is modified in-place.
 //
@@ -1572,18 +1573,7 @@ int yr_atoms_extract_from_string(
         *atoms = NULL;
       });
 
-    if (flags & STRING_GFLAGS_ASCII ||
-        flags & STRING_GFLAGS_WIDE ||
-        flags & STRING_GFLAGS_NO_CASE)
-    {
-      *atoms = _yr_atoms_list_concat(*atoms, xor_atoms);
-    }
-    else
-    {
-      yr_atoms_list_destroy(*atoms);
-      *atoms = xor_atoms;
-    }
-
+    *atoms = _yr_atoms_list_concat(*atoms, xor_atoms);
   }
 
   return ERROR_SUCCESS;

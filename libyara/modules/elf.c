@@ -77,33 +77,39 @@ static bool is_valid_ptr(
 #define IS_VALID_PTR(base, size, ptr) \
     is_valid_ptr(base, size, ptr, sizeof(*ptr))
 
-/*
- * Returns a string table entry for the index or NULL if the entry is out
- * of bounds. A non-null return value will be a null-terminated C string.
- */
-static const char* str_table_entry(const char* str_table_base,
-                                   const char* str_table_limit,
-                                   int index) {
+//
+// Returns a string table entry for the index or NULL if the entry is out
+// of bounds. A non-null return value will be a null-terminated C string.
+//
+static const char* str_table_entry(
+    const char* str_table_base,
+    const char* str_table_limit,
+    int index)
+{
   size_t len;
-  const char* str_entry = str_table_base + index;
+  const char* str_entry;
+
+  if (str_table_base >= str_table_limit)
+    return NULL;
+
+  // The first entry in the string table must be a null character, if not the
+  // string table is probably corrupted.
+  if (*str_table_base != '\0')
+    return NULL;
 
   if (index < 0)
-  {
     return NULL;
-  }
+
+  str_entry = str_table_base + index;
 
   if (str_entry >= str_table_limit)
-  {
     return NULL;
-  }
 
   len = strnlen(str_entry, str_table_limit - str_entry);
 
+  // Entry is clamped by extent of string table, not null-terminated.
   if (str_entry + len == str_table_limit)
-  {
-    /* Entry is clamped by extent of string table, not null-terminated. */
     return NULL;
-  }
 
   return str_entry;
 }
@@ -283,17 +289,15 @@ void parse_elf_header_##bits##_##bo(                                           \
       set_integer(yr_##bo##bits##toh(section->offset), elf_obj,                \
                   "sections[%i].offset", i);                                   \
                                                                                \
-      if (yr_##bo##32toh(section->name) < elf_size &&                          \
-          str_table > elf_raw &&                                               \
-          str_table + yr_##bo##32toh(section->name) < elf_raw + elf_size)      \
+      if (yr_##bo##32toh(section->name) < elf_size && str_table > elf_raw)     \
       {                                                                        \
-        const char* str_entry = str_table_entry(                               \
+        const char* section_name = str_table_entry(                            \
             str_table,                                                         \
             elf_raw + elf_size,                                                \
             yr_##bo##32toh(section->name));                                    \
                                                                                \
-        if (str_entry)                                                         \
-          set_string(str_entry, elf_obj, "sections[%i].name", i);              \
+        if (section_name)                                                      \
+          set_string(section_name, elf_obj, "sections[%i].name", i);           \
       }                                                                        \
                                                                                \
       if (yr_##bo##32toh(section->type) == ELF_SHT_SYMTAB &&                   \
@@ -320,20 +324,13 @@ void parse_elf_header_##bits##_##bo(                                           \
                                                                                \
       for (j = 0; j < sym_table_size / sizeof(elf##bits##_sym_t); j++, sym++)  \
       {                                                                        \
-        uint32_t sym_name_offset = yr_##bo##32toh(sym->name);                  \
+        const char* sym_name = str_table_entry(                                \
+            sym_str_table,                                                     \
+            sym_str_table + sym_str_table_size,                                \
+            yr_##bo##32toh(sym->name));                                        \
                                                                                \
-        if (sym_name_offset < sym_str_table_size)                              \
-        {                                                                      \
-          const char* sym_name = sym_str_table + sym_name_offset;              \
-                                                                               \
-          set_sized_string(                                                    \
-              sym_name,                                                        \
-              strnlen(                                                         \
-                  sym_name, (size_t) (sym_str_table_size - sym_name_offset)),  \
-              elf_obj,                                                         \
-              "symtab[%i].name",                                               \
-              j);                                                              \
-        }                                                                      \
+        if (sym_name)                                                          \
+          set_string(sym_name, elf_obj, "symtab[%i].name", j);                 \
                                                                                \
         set_integer(sym->info >> 4, elf_obj,                                   \
             "symtab[%i].bind", j);                                             \
