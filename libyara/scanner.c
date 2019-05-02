@@ -27,6 +27,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdlib.h>
+
 #include <yara/ahocorasick.h>
 #include <yara/error.h>
 #include <yara/exec.h>
@@ -178,6 +180,11 @@ YR_API int yr_scanner_create(
       yr_hash_table_create(64, &new_scanner->objects_table),
       yr_scanner_destroy(new_scanner));
 
+  new_scanner->rules = rules;
+  new_scanner->tidx = -1;
+  new_scanner->entry_point = UNDEFINED;
+  new_scanner->canary = rand();
+
   external = rules->externals_list_head;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
@@ -196,12 +203,9 @@ YR_API int yr_scanner_create(
             (void*) object),
         yr_scanner_destroy(new_scanner));
 
+    yr_object_set_canary(object, new_scanner->canary);
     external++;
   }
-
-  new_scanner->rules = rules;
-  new_scanner->tidx = -1;
-  new_scanner->entry_point = UNDEFINED;
 
   *scanner = new_scanner;
 

@@ -629,6 +629,13 @@ struct YR_SCAN_CONTEXT
   // in the range [0, YR_MAX_THREADS)
   int tidx;
 
+  // Canary value used for preventing hand-crafted objects from being embedded
+  // in compiled rules and used to exploit YARA. The canary value is initialized
+  // to a random value and is subsequently set to all objects created by
+  // yr_object_create. The canary is verified when objects are used by
+  // yr_execute_code.
+  int canary;
+
   // Scan timeout in nanoseconds.
   uint64_t timeout;
 

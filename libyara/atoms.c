@@ -1269,7 +1269,7 @@ static YR_ATOM_LIST_ITEM* _yr_atoms_clone_list_item(
 //
 // Given list of atoms that may contain wildcards, replace those wildcarded
 // atoms with a list of non-wildcarded atoms covering all the combinations
-// allowed by the wilcarded atom. For example, the atom {01 ?2 03} will be
+// allowed by the wildcarded atom. For example, the atom {01 ?2 03} will be
 // replaced by {01 02 03}, {01 12 03}, {01 22 03} .. {01 F2 03}. The list
 // is modified in-place.
 //
