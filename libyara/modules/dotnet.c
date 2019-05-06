@@ -223,17 +223,14 @@ void dotnet_parse_us(
   {
     blob_result = dotnet_parse_blob_entry(pe, offset);
 
-    if (blob_result.size == 0 || !fits_in_pe(pe, offset, blob_result.length))
-    {
-      set_integer(i, pe->object, "number_of_user_strings");
-      return;
-    }
+    if (blob_result.size == 0)
+      break;
 
     offset += blob_result.size;
     // Avoid empty strings, which usually happen as padding at the end of the
     // stream.
 
-    if (blob_result.length > 0)
+    if (blob_result.length > 0 && fits_in_pe(pe, offset, blob_result.length))
     {
       set_sized_string(
          (char*) offset,
