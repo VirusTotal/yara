@@ -42,6 +42,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <openssl/x509.h>
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 #define X509_get_signature_nid(o) OBJ_obj2nid((o)->sig_alg->algorithm)
+#define X509_getm_notBefore X509_get_notBefore
+#define X509_getm_notAfter X509_get_notAfter
 #endif
 #endif
 
@@ -1331,10 +1333,10 @@ static void pe_parse_certificates(
         }
       }
 
-      date_time = ASN1_get_time_t(X509_get_notBefore(cert));
+      date_time = ASN1_get_time_t(X509_getm_notBefore(cert));
       set_integer(date_time, pe->object, "signatures[%i].not_before", counter);
 
-      date_time = ASN1_get_time_t(X509_get_notAfter(cert));
+      date_time = ASN1_get_time_t(X509_getm_notAfter(cert));
       set_integer(date_time, pe->object, "signatures[%i].not_after", counter);
 
       counter++;
