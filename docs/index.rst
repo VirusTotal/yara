@@ -16,7 +16,7 @@ boolean expression which determine its logic. Let's see an example:
     {
         meta:
             description = "This is just an example"
-            thread_level = 3
+            threat_level = 3
             in_the_wild = true
         strings:
             $a = {6A 40 68 00 30 00 00 6A 14 8D 91}
