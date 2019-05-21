@@ -32,6 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/threading.h>
 
+// Pre-computed tables for quickly converting a character to lowercase or to
+// its alternative case (uppercase if it is a lowercase and vice versa). This
+// tables are initialized by yr_initialize.
 extern char yr_lowercase[256];
 extern char yr_altercase[256];
 

@@ -127,11 +127,22 @@ hexdigit      [a-fA-F0-9]
   return yytext[0];
 }
 
-"/*"(.|\n)*"*/"    // skip comments
+"/*" {
+
+  BEGIN(comment);
+}
+
+<comment>"*/" {
+
+  BEGIN(INITIAL);
+}
+
+<comment>.|\n      // skip comments
 
 "//".*             // skip single-line comments
 
 <range>\- {
+
   return yytext[0];
 }
 
@@ -185,14 +196,14 @@ void yyerror(
     HEX_LEX_ENVIRONMENT* lex_env,
     const char *error_message)
 {
-  // if lex_env->last_error_code was set to some error code before
+  // if lex_env->last_error was set to some error code before
   // don't overwrite it, we are interested in the first error, not in
   // subsequent errors like "syntax error, unexpected $end" caused by
   // early parser termination.
 
-  if (lex_env->last_error_code == ERROR_SUCCESS)
+  if (lex_env->last_error == ERROR_SUCCESS)
   {
-    lex_env->last_error_code = ERROR_INVALID_HEX_STRING;
+    lex_env->last_error = ERROR_INVALID_HEX_STRING;
 
     strlcpy(
         lex_env->last_error_message,
@@ -211,7 +222,7 @@ int yr_parse_hex_string(
   jmp_buf recovery_state;
   HEX_LEX_ENVIRONMENT lex_env;
 
-  lex_env.last_error_code = ERROR_SUCCESS;
+  lex_env.last_error = ERROR_SUCCESS;
   lex_env.inside_or = 0;
 
   yr_thread_storage_set_value(&yr_recovery_state_key, &recovery_state);
@@ -242,10 +253,10 @@ int yr_parse_hex_string(
   yyparse(yyscanner, &lex_env);
   yylex_destroy(yyscanner);
 
-  if (lex_env.last_error_code != ERROR_SUCCESS)
+  if (lex_env.last_error != ERROR_SUCCESS)
   {
     strlcpy(error->message, lex_env.last_error_message, sizeof(error->message));
-    return lex_env.last_error_code;
+    return lex_env.last_error;
   }
 
   return ERROR_SUCCESS;

@@ -36,6 +36,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/rules.h>
 
 
+#define LOOP_LOCAL_VARS      5
+
 #define UNDEFINED           0xFFFABADAFABADAFFLL
 #define IS_UNDEFINED(x)     ((size_t)(x) == (size_t) UNDEFINED)
 
@@ -77,17 +79,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OP_ADD_M          32
 #define OP_POP_M          33
 #define OP_PUSH_M         34
-#define OP_SWAPUNDEF      35
-#define OP_JNUNDEF        36
-#define OP_JLE            37
-#define OP_FILESIZE       38
-#define OP_ENTRYPOINT     39
-#define OP_CONTAINS       40
-#define OP_MATCHES        41
-#define OP_IMPORT         42
-#define OP_LOOKUP_DICT    43
+#define OP_SET_M          35
+#define OP_SWAPUNDEF      36
+#define OP_FILESIZE       37
+#define OP_ENTRYPOINT     38
+#define OP_CONTAINS       39
+#define OP_MATCHES        40
+#define OP_IMPORT         41
+#define OP_LOOKUP_DICT    42
+#define OP_JNUNDEF        43
 #define OP_JFALSE         44
 #define OP_JTRUE          45
+#define OP_JLE_P          46
+#define OP_JFALSE_P       47
 
 
 #define _OP_EQ            0
@@ -168,9 +172,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 int yr_execute_code(
-    YR_RULES* rules,
-    YR_SCAN_CONTEXT* context,
-    int timeout,
-    time_t start_time);
+    YR_SCAN_CONTEXT* context);
 
 #endif

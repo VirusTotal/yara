@@ -31,6 +31,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if !defined(_WIN32) && !defined(__CYGWIN__)
 #include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+#endif
+
+#if defined(__FreeBSD__)
+#include <stdlib.h>
 #endif
 
 #include "threading.h"
@@ -88,18 +94,29 @@ int semaphore_init(
   *semaphore = CreateSemaphore(NULL, value, 65535, NULL);
   if (*semaphore == NULL)
     return GetLastError();
+  #elif defined(__FreeBSD__)
+  *semaphore = malloc(sizeof(sem_t));
+  if (*semaphore == NULL)
+    return errno;
+  return sem_init(*semaphore, 0, value);
   #else
   // Mac OS X doesn't support unnamed semaphores via sem_init, that's why
   // we use sem_open instead sem_init and immediately unlink the semaphore
   // from the name. More info at:
   //
   // http://stackoverflow.com/questions/1413785/sem-init-on-os-x
-  *semaphore = sem_open("/semaphore", O_CREAT, S_IRUSR, value);
+  //
+  // Also create name for semaphore from PID because running multiple instances
+  // of YARA at the same time can cause that sem_open() was called in two processes
+  // simultaneously while neither of them had chance to call sem_unlink() yet.
+  char name[20];
+  snprintf(name, sizeof(name), "/yara.sem.%i", (int)getpid());
+  *semaphore = sem_open(name, O_CREAT, S_IRUSR, value);
 
   if (*semaphore == SEM_FAILED)
     return errno;
 
-  if (sem_unlink("/semaphore") != 0)
+  if (sem_unlink(name) != 0)
     return errno;
   #endif
 
@@ -112,6 +129,9 @@ void semaphore_destroy(
 {
   #if defined(_WIN32) || defined(__CYGWIN__)
   CloseHandle(*semaphore);
+  #elif defined(__FreeBSD__)
+  sem_close(*semaphore);
+  free(*semaphore);
   #else
   sem_close(*semaphore);
   #endif

@@ -70,9 +70,10 @@ int yr_parser_check_types(
     const char* actual_args_fmt);
 
 
-YR_STRING* yr_parser_lookup_string(
-  yyscan_t yyscanner,
-  const char* identifier);
+int yr_parser_lookup_string(
+    yyscan_t yyscanner,
+    const char* identifier,
+    YR_STRING** string);
 
 
 int yr_parser_lookup_loop_variable(
@@ -80,10 +81,11 @@ int yr_parser_lookup_loop_variable(
     const char* identifier);
 
 
-YR_RULE* yr_parser_reduce_rule_declaration_phase_1(
+int yr_parser_reduce_rule_declaration_phase_1(
     yyscan_t yyscanner,
     int32_t flags,
-    const char* identifier);
+    const char* identifier,
+    YR_RULE** rule);
 
 
 int yr_parser_reduce_rule_declaration_phase_2(
@@ -91,19 +93,21 @@ int yr_parser_reduce_rule_declaration_phase_2(
     YR_RULE* rule);
 
 
-YR_STRING* yr_parser_reduce_string_declaration(
+int yr_parser_reduce_string_declaration(
     yyscan_t yyscanner,
     int32_t flags,
     const char* identifier,
-    SIZED_STRING* str);
+    SIZED_STRING* str,
+    YR_STRING** string);
 
 
-YR_META* yr_parser_reduce_meta_declaration(
+int yr_parser_reduce_meta_declaration(
     yyscan_t yyscanner,
     int32_t type,
     const char* identifier,
     const char* string,
-    int64_t integer);
+    int64_t integer,
+    YR_META** meta);
 
 
 int yr_parser_reduce_string_identifier(

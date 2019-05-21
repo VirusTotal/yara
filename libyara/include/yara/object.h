@@ -47,8 +47,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #endif
 
+#include <yara/utils.h>
 #include <yara/types.h>
-
+#include <yara/sizedstr.h>
 
 #define OBJECT_CREATE           1
 
@@ -66,6 +67,11 @@ int yr_object_create(
     const char* identifier,
     YR_OBJECT* parent,
     YR_OBJECT** object);
+
+
+void yr_object_set_canary(
+    YR_OBJECT* object,
+    int canary);
 
 
 int yr_object_function_create(
@@ -100,38 +106,38 @@ YR_OBJECT* yr_object_lookup(
     YR_OBJECT* root,
     int flags,
     const char* pattern,
-    ...);
+    ...) YR_PRINTF_LIKE(3, 4);
 
 
-int yr_object_has_undefined_value(
+bool yr_object_has_undefined_value(
     YR_OBJECT* object,
     const char* field,
-    ...);
+    ...) YR_PRINTF_LIKE(2, 3);
 
 int64_t yr_object_get_integer(
     YR_OBJECT* object,
     const char* field,
-    ...);
+    ...) YR_PRINTF_LIKE(2, 3);
 
 
 SIZED_STRING* yr_object_get_string(
     YR_OBJECT* object,
     const char* field,
-    ...);
+    ...) YR_PRINTF_LIKE(2, 3);
 
 
 int yr_object_set_integer(
     int64_t value,
     YR_OBJECT* object,
     const char* field,
-    ...);
+    ...) YR_PRINTF_LIKE(3, 4);
 
 
 int yr_object_set_float(
     double value,
     YR_OBJECT* object,
     const char* field,
-    ...);
+    ...) YR_PRINTF_LIKE(3, 4);
 
 
 int yr_object_set_string(
@@ -139,7 +145,7 @@ int yr_object_set_string(
     size_t len,
     YR_OBJECT* object,
     const char* field,
-    ...);
+    ...) YR_PRINTF_LIKE(4, 5);
 
 
 YR_OBJECT* yr_object_array_get_item(

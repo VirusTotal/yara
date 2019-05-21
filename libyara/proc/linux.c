@@ -33,15 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <inttypes.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <errno.h>
-
-#if defined(__NetBSD__)
-#define PTRACE_ATTACH PT_ATTACH
-#define PTRACE_DETACH PT_DETACH
-#define _XOPEN_SOURCE 500
-#endif
 
 #include <yara/error.h>
 #include <yara/proc.h>
@@ -59,7 +52,6 @@ int _yr_process_attach(
     int pid,
     YR_PROC_ITERATOR_CTX* context)
 {
-  int status;
   char buffer[256];
 
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) yr_malloc(sizeof(YR_PROC_INFO));
@@ -95,38 +87,6 @@ int _yr_process_attach(
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
   }
 
-  if (ptrace(PTRACE_ATTACH, pid, NULL, 0) == -1)
-  {
-    fclose(proc_info->maps);
-    proc_info->maps = NULL;
-
-    close(proc_info->mem_fd);
-    proc_info->mem_fd = -1;
-
-    yr_free(proc_info);
-
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-  }
-
-  status = 0;
-
-  if (waitpid(pid, &status, 0) == -1)
-  {
-    // this is a strange error state where we attached but the proc didn't
-    // stop. Try to detach and clean up.
-    ptrace(PTRACE_DETACH, proc_info->pid, NULL, 0);
-
-    fclose(proc_info->maps);
-    proc_info->maps = NULL;
-
-    close(proc_info->mem_fd);
-    proc_info->mem_fd = -1;
-
-    yr_free(proc_info);
-
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-  }
-
   return ERROR_SUCCESS;
 }
 
@@ -138,7 +98,6 @@ int _yr_process_detach(
 
   fclose(proc_info->maps);
   close(proc_info->mem_fd);
-  ptrace(PTRACE_DETACH, proc_info->pid, NULL, 0);
 
   return ERROR_SUCCESS;
 }

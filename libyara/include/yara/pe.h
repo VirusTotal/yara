@@ -472,6 +472,8 @@ typedef struct _VERSION_INFO {
 #define WIN_CERT_TYPE_RESERVED_1       0x0003
 #define WIN_CERT_TYPE_TS_STACK_SIGNED  0x0004
 
+#define WIN_CERTIFICATE_HEADER_SIZE    8
+
 typedef struct _WIN_CERTIFICATE {
     DWORD Length;
     WORD  Revision;

@@ -35,9 +35,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/integers.h>
 #include <yara/stream.h>
 
-#define ARENA_FLAGS_FIXED_SIZE   1
-#define ARENA_FLAGS_COALESCED    2
-#define ARENA_FILE_VERSION       ((16 << 16) | MAX_THREADS)
+// Indicated that the arena is self-contained and stored in a single page. A
+// self-contained arenas is one that doesn't contains any pointers to outside
+// data. All pointers in a self-contained arena points at some address within
+// the arena.
+#define ARENA_FLAGS_COALESCED         1
+
+// Each pages of an arena marked with this flag maintain a list of YR_RELOC
+// structures for keeping track of pointers stored within the arena. When the
+// arena is relocated this allows to fix those pointers that pointed to some
+// address within the relocated arena.
+#define ARENA_FLAGS_RELOCATABLE       2
+
+#define ARENA_FILE_VERSION       ((22 << 16) | YR_MAX_THREADS)
 
 #define EOL ((size_t) -1)
 
@@ -52,7 +62,6 @@ typedef struct _YR_RELOC
 
 typedef struct _YR_ARENA_PAGE
 {
-
   uint8_t* new_address;
   uint8_t* address;
 
@@ -92,6 +101,11 @@ void* yr_arena_base_address(
     YR_ARENA* arena);
 
 
+YR_ARENA_PAGE* yr_arena_page_for_address(
+    YR_ARENA* arena,
+    void* address);
+
+
 void* yr_arena_next_address(
     YR_ARENA* arena,
     void* address,
@@ -120,7 +134,7 @@ int yr_arena_allocate_struct(
     ...);
 
 
-int yr_arena_make_relocatable(
+int yr_arena_make_ptr_relocatable(
     YR_ARENA* arena,
     void* base,
     ...);
@@ -150,8 +164,8 @@ int yr_arena_load_stream(
 
 
 int yr_arena_save_stream(
-  YR_ARENA* arena,
-  YR_STREAM* stream);
+    YR_ARENA* arena,
+    YR_STREAM* stream);
 
 
 int yr_arena_duplicate(

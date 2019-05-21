@@ -98,3 +98,15 @@ file and create signatures based on those results.
     comparisons are inclusive.
 
     *Example: math.in_range(math.deviation(0, filesize, math.MEAN_BYTES), 63.9, 64,1)*
+
+.. c:function:: max(int, int)
+
+    .. versionadded:: 3.8.0
+
+    Returns the maximum of two unsigned integer values.
+
+.. c:function:: min(int, int)
+
+    .. versionadded:: 3.8.0
+
+    Returns the minimum of two unsigned integer values.

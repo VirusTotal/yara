@@ -27,7 +27,7 @@ typedef struct _IMPORTED_DLL
 {
   char *name;
 
-  struct _IMPORT_EXPORT_FUNCTION *functions;
+  struct _IMPORT_FUNCTION *functions;
   struct _IMPORTED_DLL *next;
 
 } IMPORTED_DLL, *PIMPORTED_DLL;
@@ -41,15 +41,29 @@ typedef struct _IMPORTED_DLL
 // exports.
 //
 
-typedef struct _IMPORT_EXPORT_FUNCTION
+typedef struct _IMPORT_FUNCTION
 {
   char *name;
   uint8_t has_ordinal;
   uint16_t ordinal;
 
-  struct _IMPORT_EXPORT_FUNCTION *next;
+  struct _IMPORT_FUNCTION *next;
 
-} IMPORT_EXPORT_FUNCTION, *PIMPORT_EXPORT_FUNCTION;
+} IMPORT_FUNCTION, *PIMPORT_FUNCTION;
+
+
+typedef struct _EXPORT_FUNCTION
+{
+  char *name;
+  uint16_t ordinal;
+} EXPORT_FUNCTION, *PEXPORT_FUNCTION;
+
+
+typedef struct _EXPORT_FUNCTIONS
+{
+  uint32_t number_of_exports;
+  EXPORT_FUNCTION* functions;
+} EXPORT_FUNCTIONS, *PEXPORT_FUNCTIONS;
 
 
 typedef struct _PE
@@ -62,9 +76,10 @@ typedef struct _PE
     PIMAGE_NT_HEADERS64 header64;
   };
 
+  YR_HASH_TABLE* hash_table;
   YR_OBJECT* object;
   IMPORTED_DLL* imported_dlls;
-  IMPORT_EXPORT_FUNCTION* exported_functions;
+  EXPORT_FUNCTIONS* exported_functions;
 
   uint32_t resources;
 
@@ -83,11 +98,6 @@ typedef struct _PE
 PIMAGE_NT_HEADERS32 pe_get_header(
     const uint8_t* data,
     size_t data_size);
-
-
-PIMAGE_DATA_DIRECTORY pe_get_directory_entry(
-    PE* pe,
-    int entry);
 
 
 PIMAGE_DATA_DIRECTORY pe_get_directory_entry(

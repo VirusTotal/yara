@@ -208,9 +208,13 @@ void dotnet_parse_us(
   const uint8_t* offset = pe->data + metadata_root + us_header->Offset;
   const uint8_t* end_of_header = offset + us_header->Size;
 
-  // Make sure end of header is not past end of PE, and the first entry MUST be
-  // a single NULL byte.
-  if (!fits_in_pe(pe, offset, us_header->Size) || *offset != 0x00)
+  // Make sure the header size is larger than 0 and its end is not past the
+  // end of PE.
+  if (us_header->Size == 0 || !fits_in_pe(pe, offset, us_header->Size))
+    return;
+
+  // The first entry MUST be single NULL byte.
+  if (*offset != 0x00)
     return;
 
   offset++;
@@ -219,17 +223,14 @@ void dotnet_parse_us(
   {
     blob_result = dotnet_parse_blob_entry(pe, offset);
 
-    if (blob_result.size == 0 || !fits_in_pe(pe, offset, blob_result.length))
-    {
-      set_integer(i, pe->object, "number_of_user_strings");
-      return;
-    }
+    if (blob_result.size == 0)
+      break;
 
     offset += blob_result.size;
     // Avoid empty strings, which usually happen as padding at the end of the
     // stream.
 
-    if (blob_result.length > 0)
+    if (blob_result.length > 0 && fits_in_pe(pe, offset, blob_result.length))
     {
       set_sized_string(
          (char*) offset,
@@ -294,14 +295,17 @@ STREAMS dotnet_parse_stream_headers(
     // Store necessary bits to parse these later. Not all tables will be
     // parsed, but are referenced from others. For example, the #Strings
     // stream is referenced from various tables in the #~ heap.
-    if (strncmp(stream_name, "#GUID", 5) == 0)
-      headers.guid = stream_header;
-    // Believe it or not, I have seen at least one binary which has a #- stream
-    // instead of a #~ (215e1b54ae1aac153e55596e6f1a4350). This isn't in the
-    // documentation anywhere but the structure is the same. I'm chosing not
-    // to parse it for now.
-    else if (strncmp(stream_name, "#~", 2) == 0 && headers.tilde == NULL)
+    //
+    // #- is not documented but it represents unoptimized metadata stream. It
+    // may contain additional tables such as FieldPtr, ParamPtr, MethodPtr or
+    // PropertyPtr for indirect referencing. We already take into account these
+    // tables and they do not interfere with anything we parse in this module.
+
+    if ((strncmp(stream_name, "#~", 2) == 0 ||
+         strncmp(stream_name, "#-", 2) == 0) && headers.tilde == NULL)
       headers.tilde = stream_header;
+    else if (strncmp(stream_name, "#GUID", 5) == 0)
+      headers.guid = stream_header;
     else if (strncmp(stream_name, "#Strings", 8) == 0 && headers.string == NULL)
       headers.string = stream_header;
     else if (strncmp(stream_name, "#Blob", 5) == 0)
@@ -746,6 +750,9 @@ void dotnet_parse_tilde_2(
             // Now follow the Type index into the MemberRef table.
             memberref_row = memberref_ptr + (memberref_row_size * type_index);
 
+            if (!fits_in_pe(pe, memberref_row, memberref_row_size))
+              break;
+
             if (index_sizes.memberref == 4)
             {
               // Low 3 bits tell us what this is an index into. Remaining bits
@@ -1135,7 +1142,7 @@ void dotnet_parse_tilde_2(
 
         for (i = 0; i < num_rows; i++)
         {
-          if (!fits_in_pe(pe, table_offset, row_size))
+          if (!fits_in_pe(pe, row_ptr, row_size))
             break;
 
           assemblyref_table = (PASSEMBLYREF_TABLE) row_ptr;
@@ -1527,6 +1534,9 @@ void dotnet_parse_com(
   WORD num_streams;
 
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
+  if (directory == NULL)
+    return;
+
   offset = pe_rva_to_offset(pe, directory->VirtualAddress);
 
   if (offset < 0 || !struct_fits_in_pe(pe, pe->data + offset, CLI_HEADER))

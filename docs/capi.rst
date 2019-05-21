@@ -10,14 +10,14 @@ Initializing and finalizing *libyara*
 =====================================
 
 The first thing your program must do when using *libyara* is initializing the
-library. This is done by calling the :c:func:`yr_initialize()` function. This
+library. This is done by calling the :c:func:`yr_initialize` function. This
 function allocates any resources needed by the library and initializes internal
 data structures. Its counterpart is :c:func:`yr_finalize`, which must be called
 when you are finished using the library.
 
 In a multi-threaded program only the main thread must call
-:c:func:`yr_initialize` and :c:func:`yr_finalize`, but any additional thread
-using the library must call :c:func:`yr_finalize_thread` before exiting.
+:c:func:`yr_initialize` and :c:func:`yr_finalize`.
+No additional work is required from other threads using the library.
 
 
 Compiling rules
@@ -37,15 +37,14 @@ sharing a namespace. If the namespace argument is ``NULL`` the rules are put
 in the *default* namespace.
 
 The :c:func:`yr_compiler_add_file`, :c:func:`yr_compiler_add_fd`, and
-:c:func:`yr_compiler_add_string` functions return
-the number of errors found in the source code. If the rules are correct they
-will return 0. If any of these functions return an error the compiler can't used
-anymore, neither for adding more rules nor getting the compiled rules.
+:c:func:`yr_compiler_add_string` functions return the number of errors found in
+the source code. If the rules are correct they will return 0. If any of these
+functions return an error the compiler can't used anymore, neither for adding
+more rules nor getting the compiled rules.
 
-For obtaining detailed error information you must set a callback
-function by using :c:func:`yr_compiler_set_callback` before calling
-any of the compiling functions. The callback function has the following
-prototype:
+For obtaining detailed error information you must set a callback function by
+using :c:func:`yr_compiler_set_callback` before calling any of the compiling
+functions. The callback function has the following prototype:
 
 .. code-block:: c
 
@@ -67,15 +66,17 @@ you're using :c:func:`yr_compiler_add_string`. The ``user_data`` pointer is the
 same you passed to :c:func:`yr_compiler_set_callback`.
 
 By default, for rules containing references to other files
-(``include "filename.yara"``), yara will try to find those files on disk.
+(``include "filename.yara"``), YARA will try to find those files on disk.
 However, if you want to fetch the imported rules from another source (eg: from a
 database or remote service), a callback function can be set with
 :c:func:`yr_compiler_set_include_callback`.
+
 The callback receives the following parameters:
  * ``include_name``: name of the requested file.
  * ``calling_rule_filename``: the requesting file name (NULL if not a file).
  * ``calling_rule_namespace``: namespace (NULL if undefined).
  * ``user_data`` pointer is the same you passed to :c:func:`yr_compiler_set_include_callback`.
+
 It should return the requested file's content as a null-terminated string. The
 memory for this string should be allocated by the callback function. Once it is
 safe to free the memory used to return the callback's result, the include_free
@@ -103,15 +104,31 @@ The free function has the following prototype:
       void* user_data);
 
 After you successfully added some sources you can get the compiled rules
-using the :c:func:`yr_compiler_get_rules()` function. You'll get a pointer to
+using the :c:func:`yr_compiler_get_rules` function. You'll get a pointer to
 a :c:type:`YR_RULES` structure which can be used to scan your data as
-described in :ref:`scanning-data`. Once :c:func:`yr_compiler_get_rules()` is
+described in :ref:`scanning-data`. Once :c:func:`yr_compiler_get_rules` is
 invoked you can not add more sources to the compiler, but you can get multiple
-instances of the compiled rules by calling :c:func:`yr_compiler_get_rules()`
+instances of the compiled rules by calling :c:func:`yr_compiler_get_rules`
 multiple times.
 
 Each instance of :c:type:`YR_RULES` must be destroyed with
 :c:func:`yr_rules_destroy`.
+
+Defining external variables
+===========================
+
+If your rules make use of external variables (like in the example below), you
+must define those variables by using any of the ``yr_compiler_define_XXXX_variable``
+functions. Variables must be defined before rules are compiled with
+``yr_compiler_add_XXXX`` and they must be defined with a type that matches the
+context in which the variable is used in the rule, a variable that is used like
+`my_var == 5` can't be defined as a string variable.
+
+While defining external variables with ``yr_compiler_define_XXXX_variable`` you
+must provide a value for each variable. That value is embedded in the compiled
+rules and used whenever the variable appears in a rule. However, you can change
+the value associated to an external variable after the rules has been compiled
+by using any of the ``yr_rules_define_XXXX_variable`` functions.
 
 
 Saving and retrieving compiled rules
@@ -165,8 +182,9 @@ The ``ptr`` argument is a pointer to the buffer where the ``read`` function
 should put the read data, or where the ``write`` function will find the data
 that needs to be written to the stream. In both cases ``size`` is the size of
 each element being read or written and ``count`` the number of elements. The
-total size of the data being read or written is ``size`` * ``count``. Both
-functions must return the total size of the data read/written.
+total size of the data being read or written is ``size`` * ``count``. The
+``read`` function must return the number of elements read, the ``write`` function
+must return the total number of elements written.
 
 The ``user_data`` pointer is the same you specified in the
 :c:type:`YR_STREAM` structure. You can use it to pass arbitrary data to your
@@ -178,10 +196,15 @@ The ``user_data`` pointer is the same you specified in the
 Scanning data
 =============
 
-Once you have an instance of :c:type:`YR_RULES` you can use it with either
+Once you have an instance of :c:type:`YR_RULES` you can use it directly with one
+of the ``yr_rules_scan_XXXX`` functions described below, or create a scanner with
+:c:func:`yr_scanner_create`. Let's start by discussing the first approach.
+
+The :c:type:`YR_RULES` you got from the compiler can be used with
 :c:func:`yr_rules_scan_file`, :c:func:`yr_rules_scan_fd` or
-:c:func:`yr_rules_scan_mem`. The results from the scan are returned to your
-program via a callback function. The callback has the following prototype:
+:c:func:`yr_rules_scan_mem` for scanning a file, a file descriptor and a in-memory
+buffer respectively. The results from the scan are returned to your program via
+a callback function. The callback has the following prototype:
 
 .. code-block:: c
 
@@ -254,6 +277,31 @@ found in the file it's subsequently ignored, implying that you'll have a
 single match for the string, even if it appears multiple times in the scanned
 data. This flag has the same effect of the ``-f`` command-line option described
 in :ref:`command-line`.
+
+Notice that you shouldn't call any of the ``yr_rules_scan_XXXX`` functions from
+within the callback as those functions are not re-entrant.
+
+Using a scanner
+---------------
+
+The ``yr_rules_scan_XXXX`` functions are enough in most cases, but sometimes you
+may need a fine-grained control over the scanning. In those cases you can create
+a scanner with :c:func:`yr_scanner_create`. A scanner is simply a wrapper around
+a :c:type:`YR_RULES` structure that holds additional configuration like external
+variables without affecting other users of the :c:type:`YR_RULES` structure.
+
+A scanner is particularly useful when you want to use the same :c:type:`YR_RULES`
+with multiple workers (it could be a separate thread, a coroutine, etc) and each
+worker needs to set different set of values for external variables. In that
+case you can't use ``yr_rules_define_XXXX_variable`` for setting the values of your
+external variables, as every worker using the :c:type:`YR_RULES` will be affected
+by such changes. However each worker can have its own scanner, where the scanners
+share the same :c:type:`YR_RULES`, and use ``yr_scanner_define_XXXX_variable`` for
+setting external variables without affecting the rest of the workers.
+
+This is a better solution than having a separate :c:type:`YR_RULES` for each
+worker, as :c:type:`YR_RULES` structures have large memory footprint (specially
+if you have a lot of rules) while scanners are very lightweight.
 
 
 API reference
@@ -416,8 +464,11 @@ Functions
 
 .. c:function:: void yr_finalize_thread(void)
 
+  .. deprecated:: 3.8.0
+
   Any thread using the library, except the main thread, must call this
-  function when it finishes using the library.
+  function when it finishes using the library. Since version 3.8.0 this calling
+  this function is not required anymore, and it's deprecated.
 
 .. c:function:: int yr_compiler_create(YR_COMPILER** compiler)
 
@@ -488,19 +539,35 @@ Functions
 
 .. c:function:: int yr_compiler_define_integer_variable(YR_COMPILER* compiler, const char* identifier, int64_t value)
 
-  Defines an integer external variable.
+  Define an integer external variable.
 
 .. c:function:: int yr_compiler_define_float_variable(YR_COMPILER* compiler, const char* identifier, double value)
 
-  Defines a float external variable.
+  Define a float external variable.
 
 .. c:function:: int yr_compiler_define_boolean_variable(YR_COMPILER* compiler, const char* identifier, int value)
 
-  Defines a boolean external variable.
+  Define a boolean external variable.
 
 .. c:function:: int yr_compiler_define_string_variable(YR_COMPILER* compiler, const char* identifier, const char* value)
 
-  Defines a string external variable.
+  Define a string external variable.
+
+.. c:function:: int yr_rules_define_integer_variable(YR_RULES* rules, const char* identifier, int64_t value)
+
+  Define an integer external variable.
+
+.. c:function:: int yr_rules_define_boolean_variable(YR_RULES* rules, const char* identifier, int value)
+
+  Define a boolean external variable.
+
+.. c:function:: int yr_rules_define_float_variable(YR_RULES* rules, const char* identifier, double value)
+
+  Define a float external variable.
+
+.. c:function:: int yr_rules_define_string_variable(YR_RULES* rules, const char* identifier, const char* value)
+
+  Define a string external variable.
 
 .. c:function:: void yr_rules_destroy(YR_RULES* rules)
 
@@ -508,8 +575,10 @@ Functions
 
 .. c:function:: int yr_rules_save(YR_RULES* rules, const char* filename)
 
-  Save compiled *rules* into the file specified by *filename*. Returns one of the
-  following error codes:
+  Save compiled *rules* into the file specified by *filename*. Only rules
+  obtained from :c:func:`yr_compiler_get_rules` can be saved. Those obtained
+  from :c:func:`yr_rules_load` or :c:func:`yr_rules_load_stream` can not be
+  saved. Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
 
@@ -519,7 +588,10 @@ Functions
 
   .. versionadded:: 3.4.0
 
-  Save compiled *rules* into *stream*. Returns one of the following error codes:
+  Save compiled *rules* into *stream*. Only rules obtained from
+  :c:func:`yr_compiler_get_rules` can be saved. Those obtained from
+  :c:func:`yr_rules_load` or :c:func:`yr_rules_load_stream` can not be saved.
+  Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
 
@@ -544,7 +616,9 @@ Functions
 
   .. versionadded:: 3.4.0
 
-  Load compiled rules from *stream*. Returns one of the following error codes:
+  Load compiled rules from *stream*. Rules loaded this way can not be saved
+  back using :c:func:`yr_rules_save_stream`. Returns one of the following error
+  codes:
 
     :c:macro:`ERROR_SUCCESS`
 
@@ -583,8 +657,6 @@ Functions
 
     :c:macro:`ERROR_COULD_NOT_MAP_FILE`
 
-    :c:macro:`ERROR_ZERO_LENGTH_FILE`
-
     :c:macro:`ERROR_TOO_MANY_SCAN_THREADS`
 
     :c:macro:`ERROR_SCAN_TIMEOUT`
@@ -599,7 +671,6 @@ Functions
   as returned by the `open()` function. In Windows ``YR_FILE_DESCRIPTOR`` is a
   ``HANDLE`` as returned by `CreateFile()`.
 
-
   Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
@@ -607,8 +678,6 @@ Functions
     :c:macro:`ERROR_INSUFFICIENT_MEMORY`
 
     :c:macro:`ERROR_COULD_NOT_MAP_FILE`
-
-    :c:macro:`ERROR_ZERO_LENGTH_FILE`
 
     :c:macro:`ERROR_TOO_MANY_SCAN_THREADS`
 
@@ -702,7 +771,7 @@ Functions
       ..do something with rule
     }
 
-.. c:function:: yr_rule_disable(rule)
+.. c:function:: void yr_rule_disable(YR_RULE* rule)
 
   .. versionadded:: 3.7.0
 
@@ -712,13 +781,133 @@ Functions
   true nor false but undefined. For more information about undefined values
   see :ref:`undefined-values`.
 
-.. c:function:: yr_rule_enable(rule)
+.. c:function:: void yr_rule_enable(YR_RULE* rule)
 
   .. versionadded:: 3.7.0
 
   Enables the specified rule. After being disabled with :c:func:`yr_rule_disable`
   a rule can be enabled again by using this function.
 
+
+.. c:function:: int yr_scanner_create(YR_RULES* rules, YR_SCANNER **scanner)
+
+  .. versionadded:: 3.8.0
+
+  Creates a new scanner that can be used for scanning data with the provided
+  provided rules. `scanner` must be a pointer to a :c:type:`YR_SCANNER`, the
+  function will set the pointer to the newly allocated scanner. Returns one of
+  the following error codes:
+
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
+
+.. c:function:: void yr_scanner_destroy(YR_SCANNER *scanner)
+
+  .. versionadded:: 3.8.0
+
+  Destroy a scanner. After using a scanner it must be destroyed with this
+  function.
+
+.. c:function:: void yr_scanner_set_callback(YR_SCANNER *scanner, YR_CALLBACK_FUNC callback, void* user_data)
+
+  .. versionadded:: 3.8.0
+
+  Set a callback function that will be called for reporting any matches found by
+  the scanner.
+
+.. c:function:: void yr_scanner_set_timeout(YR_SCANNER* scanner, int timeout)
+
+  .. versionadded:: 3.8.0
+
+  Set the maximum number of seconds that the scanner will spend in any call to
+  `yr_scanner_scan_xxx`.
+
+.. c:function:: void yr_scanner_set_flags(YR_SCANNER* scanner, int flags)
+
+  .. versionadded:: 3.8.0
+
+  Set the flags that will be used by any call to `yr_scanner_scan_xxx`.
+
+.. c:function:: int yr_scanner_define_integer_variable(YR_SCANNER* scanner, const char* identifier, int64_t value)
+
+  .. versionadded:: 3.8.0
+
+  Define an integer external variable.
+
+.. c:function:: int yr_scanner_define_boolean_variable(YR_SCANNER* scanner, const char* identifier, int value)
+
+  .. versionadded:: 3.8.0
+
+  Define a boolean external variable.
+
+.. c:function:: int yr_scanner_define_float_variable(YR_SCANNER* scanner, const char* identifier, double value)
+
+  .. versionadded:: 3.8.0
+
+  Define a float external variable.
+
+.. c:function:: int yr_scanner_define_string_variable(YR_SCANNER* scanner, const char* identifier, const char* value)
+
+  .. versionadded:: 3.8.0
+
+  Define a string external variable.
+
+.. c:function:: int yr_scanner_scan_mem(YR_SCANNER* scanner, const uint8_t* buffer, size_t buffer_size)
+
+  .. versionadded:: 3.8.0
+
+  Scan a memory buffer. Returns one of the following error codes:
+
+    :c:macro:`ERROR_SUCCESS`
+
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
+
+    :c:macro:`ERROR_TOO_MANY_SCAN_THREADS`
+
+    :c:macro:`ERROR_SCAN_TIMEOUT`
+
+    :c:macro:`ERROR_CALLBACK_ERROR`
+
+    :c:macro:`ERROR_TOO_MANY_MATCHES`
+
+.. c:function:: int yr_scanner_scan_file(YR_SCANNER* scanner, const char* filename)
+
+  .. versionadded:: 3.8.0
+
+  Scan a file. Returns one of the following error codes:
+
+    :c:macro:`ERROR_SUCCESS`
+
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
+
+    :c:macro:`ERROR_TOO_MANY_SCAN_THREADS`
+
+    :c:macro:`ERROR_SCAN_TIMEOUT`
+
+    :c:macro:`ERROR_CALLBACK_ERROR`
+
+    :c:macro:`ERROR_TOO_MANY_MATCHES`
+
+.. c:function:: int yr_scanner_scan_fd(YR_SCANNER* scanner, YR_FILE_DESCRIPTOR fd)
+
+  .. versionadded:: 3.8.0
+
+  Scan a file descriptor. In POSIX systems ``YR_FILE_DESCRIPTOR`` is an ``int``,
+  as returned by the `open()` function. In Windows ``YR_FILE_DESCRIPTOR`` is a
+  ``HANDLE`` as returned by `CreateFile()`.
+
+  Returns one of the following error codes:
+
+    :c:macro:`ERROR_SUCCESS`
+
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
+
+    :c:macro:`ERROR_TOO_MANY_SCAN_THREADS`
+
+    :c:macro:`ERROR_SCAN_TIMEOUT`
+
+    :c:macro:`ERROR_CALLBACK_ERROR`
+
+    :c:macro:`ERROR_TOO_MANY_MATCHES`
 
 Error codes
 -----------
@@ -739,10 +928,6 @@ Error codes
 
   File could not be mapped into memory.
 
-.. c:macro:: ERROR_ZERO_LENGTH_FILE
-
-  File length is zero.
-
 .. c:macro:: ERROR_INVALID_FILE
 
   File is not a valid rules file.
@@ -758,7 +943,7 @@ Error codes
 .. c:macro:: ERROR_TOO_MANY_SCAN_THREADS
 
   Too many threads trying to use the same :c:type:`YR_RULES` object
-  simultaneously. The limit is defined by ``MAX_THREADS`` in
+  simultaneously. The limit is defined by ``YR_MAX_THREADS`` in
   *./include/yara/limits.h*
 
 .. c:macro:: ERROR_SCAN_TIMEOUT
@@ -773,5 +958,5 @@ Error codes
 
   Too many matches for some string in your rules. This usually happens when
   your rules contains very short or very common strings like ``01 02`` or
-  ``FF FF FF FF``. The limit is defined by ``MAX_STRING_MATCHES`` in
+  ``FF FF FF FF``. The limit is defined by ``YR_MAX_STRING_MATCHES`` in
   *./include/yara/limits.h*

@@ -4,40 +4,69 @@ yara \- find files matching patterns and rules written in a special-purpose
 language.
 .SH SYNOPSIS
 .B yara
-[OPTION]... RULES_FILE FILE | DIR | PID
+[OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID
 .SH DESCRIPTION
 yara scans the given FILE, all files contained in directory DIR, or the process
 identified by PID looking for matches of patterns and rules provided in a
-special purpose-language. The rules are read from RULES_FILE.
+special purpose-language. The rules are read from one or more RULES_FILE.
 .PP
 The options to
 .IR yara (1)
 are:
 .TP
-.BI \-t " tag" " --tag=" tag
-Print rules tagged as
-.I tag
-and ignore the rest. This option can be used multiple times.
+.B "    --atom-quality-table"
+Path to a file with the atom quality table.
+.TP
+.B \-C " --compiled-rules"
+RULES_FILE contains rules already compiled with yarac.
+.TP
+.B \-c " --count"
+Print number of matches only.
+.TP
+.BI "\-d  --define"=identifier=value
+Define an external variable. This option can be used multiple times.
+.TP
+.B "    --fail-on-warnings"
+Treat warnings as errors. Has no effect if used with
+.B --no-warnings.
+.TP
+.B \-f " --fast-scan"
+Speeds up scanning by searching only for the first occurrence of each pattern.
 .TP
 .BI \-i " identifier" " --identifier=" identifier
 Print rules named
 .I identifier
 and ignore the rest. This option can be used multiple times.
 .TP
-.B \-c " --count"
-Print number of matches only.
+.BI \-l " number" " --max-rules=" number
+Abort scanning after a
+.I number
+of rules matched.
+.TP
+.BI "    --max-strings-per-rule=" number
+Set maximum number of strings per rule (default=10000)
+.TP
+.BI "\-x  --module-data"=module=file
+Pass file's content as extra data to module. This option can be used multiple
+times.
 .TP
 .B \-n " --negate"
 Print rules that doesn't apply (negate).
 .TP
-.B \-D " --print-module-data"
-Print module data.
-.TP
-.B \-g " --print-tags"
-Print the tags associated to the rule.
+.B \-w " --no-warnings"
+Disable warnings.
 .TP
 .B \-m " --print-meta"
 Print metadata associated to the rule.
+.TP
+.B \-D " --print-module-data"
+Print module data.
+.TP
+.B \-e " --print-namespace"
+Print namespace associated to the rule.
+.TP
+.B \-S " --print-stats"
+Print rules' statistics.
 .TP
 .B \-s " --print-strings"
 Print strings found in the file.
@@ -45,47 +74,30 @@ Print strings found in the file.
 .B \-L " --print-string-length"
 Print length of strings found in the file.
 .TP
-.BI \-p " number" " --threads=" number
-Use the specified
-.I number
-of threads to scan a directory.
+.B \-g " --print-tags"
+Print the tags associated to the rule.
 .TP
-.BI \-l " number" " --max-rules=" number
-Abort scanning after a
-.I number
-of rules matched.
-.TP
-.BI \-a " seconds" " --timeout=" seconds
-Abort scanning after a number of
-.I seconds
-has elapsed.
+.B \-r " --recursive"
+Scan files in directories recursively.
 .TP
 .BI \-k " slots" " --stack-size=" slots
 Set maximum stack size to the specified number of
 .I slots.
 .TP
-.BI \-d " identifier"=value
-Define an external variable. This option can be used multiple times.
+.BI \-t " tag" " --tag=" tag
+Print rules tagged as
+.I tag
+and ignore the rest. This option can be used multiple times.
 .TP
-.BI \-x " module"=file
-Pass file's content as extra data to module. This option can be used multiple
-times.
+.BI \-p " number" " --threads=" number
+Use the specified
+.I number
+of threads to scan a directory.
 .TP
-.B \-r " --recursive"
-Scan files in directories recursively.
-.TP
-.B \-f " --fast-scan"
-Speeds up scanning by searching only for the first occurrence of each pattern.
-.TP
-.B \-w " --no-warnings"
-Disable warnings.
-.TP
-.B "    --fail-on-warnings"
-Treat warnings as errors. Has no effect if used with
-.B --no-warnings.
-.TP
-.BI "    --max-strings-per-rule=" number
-Set maximum number of strings per rule (default=10000)
+.BI \-a " seconds" " --timeout=" seconds
+Abort scanning after a number of
+.I seconds
+has elapsed.
 .TP
 .B \-v " --version"
 Show version information.

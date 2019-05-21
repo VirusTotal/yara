@@ -29,18 +29,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
-#if _WIN32 || __CYGWIN__
-#define PRIu64 "I64d"
-#else
-#include <inttypes.h>
-#endif
-
+#include <yara/globals.h>
 #include <yara/mem.h>
 #include <yara/error.h>
 #include <yara/object.h>
@@ -84,7 +80,7 @@ int yr_object_create(
       object_size = sizeof(YR_OBJECT_FUNCTION);
       break;
     default:
-      assert(FALSE);
+      assert(false);
   }
 
   obj = (YR_OBJECT*) yr_malloc(object_size);
@@ -121,7 +117,7 @@ int yr_object_create(
       break;
     case OBJECT_TYPE_FUNCTION:
       object_as_function(obj)->return_obj = NULL;
-      for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+      for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
       {
         object_as_function(obj)->prototypes[i].arguments_fmt = NULL;
         object_as_function(obj)->prototypes[i].code = NULL;
@@ -141,6 +137,9 @@ int yr_object_create(
            parent->type == OBJECT_TYPE_ARRAY ||
            parent->type == OBJECT_TYPE_DICTIONARY ||
            parent->type == OBJECT_TYPE_FUNCTION);
+
+    // Objects with a parent take the canary from it.
+    obj->canary = parent->canary;
 
     switch(parent->type)
     {
@@ -174,6 +173,14 @@ int yr_object_create(
 }
 
 
+void yr_object_set_canary(
+    YR_OBJECT* object,
+    int canary)
+{
+  object->canary = canary;
+}
+
+
 int yr_object_function_create(
     const char* identifier,
     const char* arguments_fmt,
@@ -188,6 +195,9 @@ int yr_object_function_create(
 
   int8_t return_type;
   int i;
+
+  // The parent of a function must be a structure.
+  assert(parent != NULL && parent->type == OBJECT_TYPE_STRUCTURE);
 
   switch (*return_fmt)
   {
@@ -204,22 +214,13 @@ int yr_object_function_create(
       return ERROR_INVALID_FORMAT;
   }
 
-  if (parent != NULL)
-  {
-    // The parent of a function must be a structure.
+  // Try to find if the structure already has a function
+  // with that name. In that case this is a function overload.
+  f = object_as_function(yr_object_lookup_field(parent, identifier));
 
-    assert(parent->type == OBJECT_TYPE_STRUCTURE);
-
-    // Try to find if the structure already has a function
-    // with that name. In that case this is a function overload.
-
-    f = object_as_function(yr_object_lookup_field(parent, identifier));
-
-    // Overloaded functions must have the same return type.
-
-    if (f != NULL && return_type != f->return_obj->type)
-      return ERROR_WRONG_RETURN_TYPE;
-  }
+  // Overloaded functions must have the same return type.
+  if (f != NULL && return_type != f->return_obj->type)
+    return ERROR_WRONG_RETURN_TYPE;
 
   if (f == NULL) // Function doesn't exist yet
   {
@@ -241,7 +242,7 @@ int yr_object_function_create(
     f = object_as_function(o);
   }
 
-  for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+  for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
   {
     if (f->prototypes[i].arguments_fmt == NULL)
     {
@@ -284,7 +285,7 @@ int yr_object_from_external_variable(
       break;
 
     default:
-      assert(FALSE);
+      assert(false);
   }
 
   result = yr_object_create(
@@ -566,6 +567,8 @@ int yr_object_copy(
       NULL,
       &copy));
 
+  copy->canary = object->canary;
+
   switch(object->type)
   {
     case OBJECT_TYPE_INTEGER:
@@ -593,7 +596,7 @@ int yr_object_copy(
               &object_as_function(copy)->return_obj),
           yr_object_destroy(copy));
 
-      for (i = 0; i < MAX_OVERLOADED_FUNCTIONS; i++)
+      for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
         object_as_function(copy)->prototypes[i] = \
             object_as_function(object)->prototypes[i];
 
@@ -640,7 +643,7 @@ int yr_object_copy(
       break;
 
     default:
-      assert(FALSE);
+      assert(false);
 
   }
 
@@ -862,7 +865,7 @@ int yr_object_dict_set_item(
 }
 
 
-int yr_object_has_undefined_value(
+bool yr_object_has_undefined_value(
     YR_OBJECT* object,
     const char* field,
     ...)
@@ -880,7 +883,7 @@ int yr_object_has_undefined_value(
   va_end(args);
 
   if (field_obj == NULL)
-    return TRUE;
+    return true;
 
   switch(field_obj->type)
   {
@@ -892,7 +895,7 @@ int yr_object_has_undefined_value(
       return field_obj->value.i == UNDEFINED;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -1136,7 +1139,7 @@ YR_API void yr_object_print_data(
     case OBJECT_TYPE_INTEGER:
 
       if (object->value.i != UNDEFINED)
-        printf(" = %" PRIu64, object->value.i);
+        printf(" = %" PRId64, object->value.i);
       else
         printf(" = UNDEFINED");
 

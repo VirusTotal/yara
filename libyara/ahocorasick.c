@@ -141,7 +141,7 @@ static YR_AC_STATE* _yr_ac_queue_pop(
 //    QUEUE* queue     - The queue
 //
 // Returns:
-//    TRUE if queue is empty, FALSE otherwise.
+//    true if queue is empty, false otherwise.
 //
 
 static int _yr_ac_queue_is_empty(
@@ -270,7 +270,6 @@ static int _yr_ac_create_failure_links(
   root_state->failure = root_state;
 
   // Push root's children and set their failure link to root.
-
   state = root_state->first_child;
 
   while (state != NULL)
@@ -365,7 +364,7 @@ static int _yr_ac_create_failure_links(
 // accepted in s1 too.
 //
 
-static int _yr_ac_transitions_subset(
+static bool _yr_ac_transitions_subset(
     YR_AC_STATE* s1,
     YR_AC_STATE* s2)
 {
@@ -386,12 +385,12 @@ static int _yr_ac_transitions_subset(
   while (state != NULL)
   {
     if (!(set[state->input / 8] & 1 << state->input % 8))
-      return FALSE;
+      return false;
 
     state = state->siblings;
   }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -407,7 +406,6 @@ static int _yr_ac_optimize_failure_links(
   QUEUE queue = { NULL, NULL};
 
   // Push root's children.
-
   YR_AC_STATE* root_state = automaton->root;
   YR_AC_STATE* state = root_state->first_child;
 
@@ -444,11 +442,10 @@ static int _yr_ac_optimize_failure_links(
 //
 // _yr_ac_find_suitable_transition_table_slot
 //
-// Find a place within the transition table where the transitions for the given
-// state can be put. The function first searches for an unused slot to put the
-// failure link, then it checks if the slots corresponding to the state
-// transitions (wich are at offsets 1 to 256 relative to the failure link ) are
-// available too.
+// Find a place within the automaton's transition table where the transitions
+// for the given state can be put. The function first create a bitmask for the
+// state's transition table, then searches for an offset within the automaton's
+// bitmask where the state's bitmask can be put without bit collisions.
 //
 
 static int _yr_ac_find_suitable_transition_table_slot(
@@ -456,26 +453,47 @@ static int _yr_ac_find_suitable_transition_table_slot(
     YR_AC_STATE* state,
     uint32_t* slot)
 {
-  YR_AC_STATE* child_state;
+  // The state's transition table has 257 entries, 1 for the failure link and
+  // 256 for each possible input byte, so the state's bitmask has 257 bits.
+  YR_BITMASK state_bitmask[YR_BITMASK_SIZE(257)];
 
-  uint32_t i = automaton->t_table_unused_candidate;
+  YR_AC_STATE* child_state = state->first_child;
 
-  int first_unused = TRUE;
-  int found = FALSE;
+  // Start with all bits set to zero.
+  yr_bitmask_clear_all(state_bitmask);
 
-  while (!found)
+  // The first slot in the transition table is for the state's failure link,
+  // so the first bit in the bitmask must be set to one.
+  yr_bitmask_set(state_bitmask, 0);
+
+  while (child_state != NULL)
   {
-    // Check if there is enough room in the table to hold 257 items
-    // (1 failure link + 256 transitions) starting at offset i. If there's
-    // no room double the table size.
+    yr_bitmask_set(state_bitmask, child_state->input + 1);
+    child_state = child_state->siblings;
+  }
 
-    if (automaton->tables_size - i < 257)
-    {
+  *slot = yr_bitmask_find_non_colliding_offset(
+      automaton->bitmask,
+      state_bitmask,
+      automaton->tables_size,
+      257,
+      &automaton->t_table_unused_candidate);
+
+  // Make sure that we are not going beyond the maximum size of the transition
+  // table, starting at the slot found there must be at least 257 other slots
+  // for accommodating the state's transition table.
+  assert(*slot + 257 < YR_AC_MAX_TRANSITION_TABLE_SIZE);
+
+  if (*slot > automaton->tables_size - 257)
+  {
       size_t t_bytes_size = automaton->tables_size *
           sizeof(YR_AC_TRANSITION);
 
       size_t m_bytes_size = automaton->tables_size *
           sizeof(YR_AC_MATCH_TABLE_ENTRY);
+
+      size_t b_bytes_size = YR_BITMASK_SIZE(automaton->tables_size) *
+           sizeof(YR_BITMASK);
 
       automaton->t_table = (YR_AC_TRANSITION_TABLE) yr_realloc(
           automaton->t_table, t_bytes_size * 2);
@@ -483,50 +501,21 @@ static int _yr_ac_find_suitable_transition_table_slot(
       automaton->m_table = (YR_AC_MATCH_TABLE) yr_realloc(
           automaton->m_table, m_bytes_size * 2);
 
-      if (automaton->t_table == NULL || automaton->m_table == NULL)
+      automaton->bitmask = (YR_BITMASK*) yr_realloc(
+          automaton->bitmask, b_bytes_size * 2);
+
+      if (automaton->t_table == NULL ||
+          automaton->m_table == NULL ||
+          automaton->bitmask == NULL)
+      {
         return ERROR_INSUFFICIENT_MEMORY;
+      }
 
       memset((uint8_t*) automaton->t_table + t_bytes_size, 0, t_bytes_size);
       memset((uint8_t*) automaton->m_table + m_bytes_size, 0, m_bytes_size);
+      memset((uint8_t*) automaton->bitmask + b_bytes_size, 0, b_bytes_size);
 
       automaton->tables_size *= 2;
-    }
-
-    if (YR_AC_UNUSED_TRANSITION_SLOT(automaton->t_table[i]))
-    {
-      // A unused slot in the table has been found and could be a potential
-      // candidate. Let's check if table slots for the transitions are
-      // unused too.
-
-      found = TRUE;
-      child_state = state->first_child;
-
-      while (child_state != NULL)
-      {
-        if (YR_AC_USED_TRANSITION_SLOT(
-            automaton->t_table[child_state->input + i + 1]))
-        {
-          found = FALSE;
-          break;
-        }
-
-        child_state = child_state->siblings;
-      }
-
-      // If this is the first unused entry we found, use it as the first
-      // candidate in the next call to this function.
-
-      if (first_unused)
-      {
-        automaton->t_table_unused_candidate = found ? i + 1 : i;
-        first_unused = FALSE;
-      }
-
-      if (found)
-        *slot = i;
-    }
-
-    i++;
   }
 
   return ERROR_SUCCESS;
@@ -536,15 +525,15 @@ static int _yr_ac_find_suitable_transition_table_slot(
 // _yr_ac_build_transition_table
 //
 // Builds the transition table for the automaton. The transition table (T) is a
-// large array of 64-bits integers. Each state in the automaton is represented
-// by an offset S within the array. The integer stored in T[S] is the failure
-// link for state S, it contains the offset for the next state when no valid
+// large array of 32-bits integers. Each state in the automaton is represented
+// by an index S within the array. The integer stored in T[S] is the failure
+// link for state S, it contains the index of the next state when no valid
 // transition exists for the next input byte.
 //
 // At position T[S+1+B] (where B is a byte) we can find the transition (if any)
 // that must be followed from state S if the next input is B. The value in
-// T[S+1+B] contains the offset for next state or 0. The 0 means that no
-// valid transition exists from state S when next input is B, and the failure
+// T[S+1+B] contains the index for next state or zero. A zero value means that
+// no valid transition exists from state S when next input is B, and the failure
 // link must be used instead.
 //
 // The transition table for state S starts at T[S] and spans the next 257
@@ -554,7 +543,7 @@ static int _yr_ac_find_suitable_transition_table_slot(
 // collide. For example, instead of having this transition table with state S1
 // and S2 separated by a large number of slots:
 //
-// S1                                           S2
+// S1                                             S2
 // +------+------+------+------+--   ~   --+------+------+------+--   ~   --+
 // | FLS1 |   X  |   -  |   -  |     -     |  Y   | FLS2 |   Z  |     -     |
 // +------+------+------+------+--   ~   --+------+------+------+--   ~   --+
@@ -569,7 +558,7 @@ static int _yr_ac_find_suitable_transition_table_slot(
 //
 // And how do we know that transition Z belongs to state S2 and not S1? Or that
 // transition Y belongs to S1 and not S2? Because each slot of the array not
-// only contains the offset for the state where the transition points to, it
+// only contains the index for the state where the transition points to, it
 // also contains the offset of the transition relative to its owner state. So,
 // the value for the owner offset would be 1 for transitions X, because X
 // belongs to state S1 and it's located 1 position away from S1. The same occurs
@@ -577,6 +566,16 @@ static int _yr_ac_find_suitable_transition_table_slot(
 // owner offset is 1. If we are in S1 and next byte is 2, we are going to read
 // the transition at T[S1+1+2] which is Z. But we know that transition Z is not
 // a valid transition for state S1 because the owner offset for Z is 1 not 3.
+//
+// Each 32-bit slot in the transition table has 23 bits for storing the index
+// of the target state and 9 bits for storing the offset of the slot relative
+// to its own state. The offset can be any value from 0 to 256, both inclusive,
+// hence 9 bits are required for it. The layout for the slot goes like:
+//
+// 32                      23        0
+// +-----------------------+---------+
+// | Target state's index  |  Offset |
+// +-----------------------+---------+
 //
 // A more detailed description can be found in: http://goo.gl/lE6zG
 
@@ -594,28 +593,30 @@ static int _yr_ac_build_transition_table(
 
   automaton->tables_size = 1024;
 
-  automaton->t_table = (YR_AC_TRANSITION_TABLE) yr_malloc(
-      automaton->tables_size * sizeof(YR_AC_TRANSITION));
+  automaton->t_table = (YR_AC_TRANSITION_TABLE) yr_calloc(
+      automaton->tables_size, sizeof(YR_AC_TRANSITION));
 
-  automaton->m_table = (YR_AC_MATCH_TABLE) yr_malloc(
-      automaton->tables_size * sizeof(YR_AC_MATCH_TABLE_ENTRY));
+  automaton->m_table = (YR_AC_MATCH_TABLE) yr_calloc(
+      automaton->tables_size, sizeof(YR_AC_MATCH_TABLE_ENTRY));
 
-  if (automaton->t_table == NULL || automaton->m_table == NULL)
+  automaton->bitmask = (YR_BITMASK*) yr_calloc(
+      YR_BITMASK_SIZE(automaton->tables_size), sizeof(YR_BITMASK));
+
+  if (automaton->t_table == NULL ||
+      automaton->m_table == NULL ||
+      automaton->bitmask == NULL)
   {
     yr_free(automaton->t_table);
     yr_free(automaton->m_table);
+    yr_free(automaton->bitmask);
 
     return ERROR_INSUFFICIENT_MEMORY;
   }
 
-  memset(automaton->t_table, 0,
-      automaton->tables_size * sizeof(YR_AC_TRANSITION));
-
-  memset(automaton->m_table, 0,
-      automaton->tables_size * sizeof(YR_AC_MATCH_TABLE_ENTRY));
-
-  automaton->t_table[0] = YR_AC_MAKE_TRANSITION(0, 0, YR_AC_USED_FLAG);
+  automaton->t_table[0] = YR_AC_MAKE_TRANSITION(0, 0);
   automaton->m_table[0].match = root_state->matches;
+
+  yr_bitmask_set(automaton->bitmask, 0);
 
   // Index 0 is for root node. Unused indexes start at 1.
   automaton->t_table_unused_candidate = 1;
@@ -626,7 +627,9 @@ static int _yr_ac_build_transition_table(
   {
     child_state->t_table_slot = child_state->input + 1;
     automaton->t_table[child_state->input + 1] = YR_AC_MAKE_TRANSITION(
-        0, child_state->input + 1, YR_AC_USED_FLAG);
+        0, child_state->input + 1);
+
+    yr_bitmask_set(automaton->bitmask, child_state->input + 1);
 
     FAIL_ON_ERROR(_yr_ac_queue_push(&queue, child_state));
     child_state = child_state->siblings;
@@ -637,16 +640,16 @@ static int _yr_ac_build_transition_table(
     state = _yr_ac_queue_pop(&queue);
 
     FAIL_ON_ERROR(_yr_ac_find_suitable_transition_table_slot(
-        automaton,
-        state,
-        &slot));
+        automaton, state, &slot));
 
-    automaton->t_table[state->t_table_slot] |= ((uint64_t) slot << 32);
+    automaton->t_table[state->t_table_slot] |= (slot << YR_AC_SLOT_OFFSET_BITS);
 
     state->t_table_slot = slot;
 
     automaton->t_table[slot] = YR_AC_MAKE_TRANSITION(
-        state->failure->t_table_slot, 0, YR_AC_USED_FLAG);
+        state->failure->t_table_slot, 0);
+
+    yr_bitmask_set(automaton->bitmask, slot);
 
     automaton->m_table[slot].match = state->matches;
 
@@ -658,7 +661,9 @@ static int _yr_ac_build_transition_table(
     {
       child_state->t_table_slot = slot + child_state->input + 1;
       automaton->t_table[child_state->t_table_slot] = YR_AC_MAKE_TRANSITION(
-          0, child_state->input + 1, YR_AC_USED_FLAG);
+          0, child_state->input + 1);
+
+      yr_bitmask_set(automaton->bitmask, child_state->t_table_slot);
 
       FAIL_ON_ERROR(_yr_ac_queue_push(&queue, child_state));
 
@@ -678,7 +683,7 @@ static int _yr_ac_build_transition_table(
 //
 
 static void _yr_ac_print_automaton_state(
-  YR_AC_STATE* state)
+    YR_AC_STATE* state)
 {
   int i;
   int child_count;
@@ -788,6 +793,7 @@ int yr_ac_automaton_create(
   new_automaton->root = root_state;
   new_automaton->m_table = NULL;
   new_automaton->t_table = NULL;
+  new_automaton->bitmask = NULL;
   new_automaton->tables_size = 0;
 
   *automaton = new_automaton;
@@ -809,6 +815,7 @@ int yr_ac_automaton_destroy(
 
   yr_free(automaton->t_table);
   yr_free(automaton->m_table);
+  yr_free(automaton->bitmask);
   yr_free(automaton);
 
   return ERROR_SUCCESS;
@@ -841,13 +848,13 @@ int yr_ac_add_string(
   {
     state = automaton->root;
 
-    for (i = 0; i < atom->atom_length; i++)
+    for (i = 0; i < atom->atom.length; i++)
     {
-      next_state = _yr_ac_next_state(state, atom->atom[i]);
+      next_state = _yr_ac_next_state(state, atom->atom.bytes[i]);
 
       if (next_state == NULL)
       {
-        next_state = _yr_ac_state_create(state, atom->atom[i]);
+        next_state = _yr_ac_state_create(state, atom->atom.bytes[i]);
 
         if (next_state == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
@@ -928,7 +935,7 @@ int yr_ac_compile(
       sizeof(YR_AC_MATCH_TABLE_ENTRY),
       (void**) &tables->matches));
 
-  FAIL_ON_ERROR(yr_arena_make_relocatable(
+  FAIL_ON_ERROR(yr_arena_make_ptr_relocatable(
       arena,
       tables->matches,
       offsetof(YR_AC_MATCH_TABLE_ENTRY, match),
@@ -944,7 +951,7 @@ int yr_ac_compile(
         sizeof(YR_AC_MATCH_TABLE_ENTRY),
         (void**) &ptr));
 
-    FAIL_ON_ERROR(yr_arena_make_relocatable(
+    FAIL_ON_ERROR(yr_arena_make_ptr_relocatable(
         arena,
         ptr,
         offsetof(YR_AC_MATCH_TABLE_ENTRY, match),

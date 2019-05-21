@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.5.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -60,12 +60,12 @@ extern int hex_yydebug;
 
 union YYSTYPE
 {
-#line 86 "hex_grammar.y" /* yacc.c:1915  */
+#line 78 "hex_grammar.y" /* yacc.c:1916  */
 
   int64_t integer;
   RE_NODE *re_node;
 
-#line 69 "hex_grammar.h" /* yacc.c:1915  */
+#line 69 "hex_grammar.h" /* yacc.c:1916  */
 };
 
 typedef union YYSTYPE YYSTYPE;

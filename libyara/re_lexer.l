@@ -62,12 +62,23 @@ with noyywrap then we can remove this pragma.
 #define snprintf _snprintf
 #endif
 
+// Bitmap with 1 bit for each of the 256 characters in the ASCII table. The bit
+// is set to 1 if the corresponding character is alphanumeric or 0 if otherwise.
 static uint8_t word_chars[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
     0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
+// Bitmap with 1 bit for each of the 256 characters in the ASCII table. The bit
+// is set to 1 if the corresponding character is considered a space. Space
+// characters include horizontal and vertical tabs, carriage return, new line
+// and form feed (\t, \v, \r, \n, \f).
+static uint8_t space_chars[] = {
+    0x00, 0x3E, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 int escaped_char_value(
     char* text,
@@ -172,7 +183,7 @@ hex_digit     [0-9a-fA-F]
 
   BEGIN(char_class);
   memset(LEX_ENV->re_class.bitmap, 0, 32);
-  LEX_ENV->re_class.negated = TRUE;
+  LEX_ENV->re_class.negated = true;
 }
 
 \[\^\] {
@@ -183,7 +194,7 @@ hex_digit     [0-9a-fA-F]
 
   BEGIN(char_class);
   memset(LEX_ENV->re_class.bitmap, 0, 32);
-  LEX_ENV->re_class.negated = TRUE;
+  LEX_ENV->re_class.negated = true;
   LEX_ENV->re_class.bitmap[']' / 8] |= 1 << ']' % 8;
 }
 
@@ -196,7 +207,7 @@ hex_digit     [0-9a-fA-F]
 
   BEGIN(char_class);
   memset(LEX_ENV->re_class.bitmap, 0, 32);
-  LEX_ENV->re_class.negated = FALSE;
+  LEX_ENV->re_class.negated = false;
   LEX_ENV->re_class.bitmap[']' / 8] |= 1 << ']' % 8;
 }
 
@@ -207,7 +218,7 @@ hex_digit     [0-9a-fA-F]
 
   BEGIN(char_class);
   memset(LEX_ENV->re_class.bitmap, 0, 32);
-  LEX_ENV->re_class.negated = FALSE;
+  LEX_ENV->re_class.negated = false;
 }
 
 
@@ -363,8 +374,10 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\s {
 
-  LEX_ENV->re_class.bitmap[' ' / 8] |= 1 << ' ' % 8;
-  LEX_ENV->re_class.bitmap['\t' / 8] |= 1 << '\t' % 8;
+  int i;
+
+  for (i = 0; i < 32; i++)
+    LEX_ENV->re_class.bitmap[i] |= space_chars[i];
 }
 
 
@@ -373,14 +386,7 @@ hex_digit     [0-9a-fA-F]
   int i;
 
   for (i = 0; i < 32; i++)
-  {
-    if (i == ' ' / 8)
-      LEX_ENV->re_class.bitmap[i] |= ~(1 << ' ' % 8);
-    else if (i == '\t' / 8)
-      LEX_ENV->re_class.bitmap[i] |= ~(1 << '\t' % 8);
-    else
-      LEX_ENV->re_class.bitmap[i] = 0xFF;
-  }
+    LEX_ENV->re_class.bitmap[i] |= ~space_chars[i];
 }
 
 
@@ -577,14 +583,14 @@ void yyerror(
     RE_LEX_ENVIRONMENT* lex_env,
     const char *error_message)
 {
-  // if lex_env->last_error_code was set to some error code before
+  // if lex_env->last_error was set to some error code before
   // don't overwrite it, we are interested in the first error, not in
   // subsequent errors like "syntax error, unexpected $end" caused by
   // early parser termination.
 
-  if (lex_env->last_error_code == ERROR_SUCCESS)
+  if (lex_env->last_error == ERROR_SUCCESS)
   {
-    lex_env->last_error_code = ERROR_INVALID_REGULAR_EXPRESSION;
+    lex_env->last_error = ERROR_INVALID_REGULAR_EXPRESSION;
 
     strlcpy(
         lex_env->last_error_message,
@@ -603,7 +609,7 @@ int yr_parse_re_string(
   jmp_buf recovery_state;
   RE_LEX_ENVIRONMENT lex_env;
 
-  lex_env.last_error_code = ERROR_SUCCESS;
+  lex_env.last_error = ERROR_SUCCESS;
   lex_env.last_error_message[0] = '\0';
 
   yr_thread_storage_set_value(&yr_recovery_state_key, &recovery_state);
@@ -619,7 +625,7 @@ int yr_parse_re_string(
   yyparse(yyscanner, &lex_env);
   yylex_destroy(yyscanner);
 
-  if (lex_env.last_error_code != ERROR_SUCCESS)
+  if (lex_env.last_error != ERROR_SUCCESS)
   {
     yr_re_ast_destroy(*re_ast);
     *re_ast = NULL;
@@ -629,7 +635,7 @@ int yr_parse_re_string(
         lex_env.last_error_message,
         sizeof(error->message));
 
-    return lex_env.last_error_code;
+    return lex_env.last_error;
   }
 
   return ERROR_SUCCESS;

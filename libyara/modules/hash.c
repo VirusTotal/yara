@@ -43,7 +43,7 @@ typedef struct _CACHE_KEY
 } CACHE_KEY;
 
 
-void digest_to_ascii(
+static void digest_to_ascii(
     unsigned char* digest,
     char* digest_ascii,
     size_t digest_length)
@@ -57,7 +57,7 @@ void digest_to_ascii(
 }
 
 
-char* get_from_cache(
+static char* get_from_cache(
     YR_OBJECT* module_object,
     const char* ns,
     int64_t offset,
@@ -77,7 +77,7 @@ char* get_from_cache(
 }
 
 
-int add_to_cache(
+static int add_to_cache(
     YR_OBJECT* module_object,
     const char* ns,
     int64_t offset,
@@ -180,7 +180,7 @@ define_function(data_md5)
   char digest_ascii[YR_MD5_LEN * 2 + 1];
   char* cached_ascii_digest;
 
-  int past_first_block = FALSE;
+  bool past_first_block = false;
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
@@ -195,9 +195,7 @@ define_function(data_md5)
   yr_md5_init(&md5_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
-  {
-    return ERROR_WRONG_ARGUMENTS;
-  }
+    return_string(UNDEFINED);
 
   cached_ascii_digest = get_from_cache(
       module(), "md5", arg_offset, arg_length);
@@ -226,7 +224,7 @@ define_function(data_md5)
         yr_md5_update(&md5_context, block_data + data_offset, data_len);
       }
 
-      past_first_block = TRUE;
+      past_first_block = true;
     }
     else if (past_first_block)
     {
@@ -265,7 +263,7 @@ define_function(data_sha1)
   char digest_ascii[YR_SHA1_LEN * 2 + 1];
   char* cached_ascii_digest;
 
-  int past_first_block = FALSE;
+  int past_first_block = false;
 
   int64_t arg_offset = integer_argument(1);   // offset where to start
   int64_t arg_length = integer_argument(2);   // length of bytes we want hash on
@@ -280,9 +278,7 @@ define_function(data_sha1)
   yr_sha1_init(&sha_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
-  {
-    return ERROR_WRONG_ARGUMENTS;
-  }
+    return_string(UNDEFINED);
 
   cached_ascii_digest = get_from_cache(
       module(), "sha1", arg_offset, arg_length);
@@ -310,7 +306,7 @@ define_function(data_sha1)
         yr_sha1_update(&sha_context, block_data + data_offset, data_len);
       }
 
-      past_first_block = TRUE;
+      past_first_block = true;
     }
     else if (past_first_block)
     {
@@ -349,7 +345,7 @@ define_function(data_sha256)
   char digest_ascii[YR_SHA256_LEN * 2 + 1];
   char* cached_ascii_digest;
 
-  int past_first_block = FALSE;
+  int past_first_block = false;
 
   int64_t arg_offset = integer_argument(1);   // offset where to start
   int64_t arg_length = integer_argument(2);   // length of bytes we want hash on
@@ -364,9 +360,7 @@ define_function(data_sha256)
   yr_sha256_init(&sha256_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
-  {
-    return ERROR_WRONG_ARGUMENTS;
-  }
+    return_string(UNDEFINED);
 
   cached_ascii_digest = get_from_cache(
       module(), "sha256", arg_offset, arg_length);
@@ -393,7 +387,7 @@ define_function(data_sha256)
         yr_sha256_update(&sha256_context, block_data + data_offset, data_len);
       }
 
-      past_first_block = TRUE;
+      past_first_block = true;
     }
     else if (past_first_block)
     {
@@ -434,12 +428,10 @@ define_function(data_checksum32)
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   uint32_t checksum = 0;
-  int past_first_block = FALSE;
+  int past_first_block = false;
 
   if (offset < 0 || length < 0 || offset < block->base)
-  {
-    return ERROR_WRONG_ARGUMENTS;
-  }
+    return_integer(UNDEFINED);
 
   foreach_memory_block(iterator, block)
   {
@@ -462,7 +454,7 @@ define_function(data_checksum32)
           checksum += *(block_data + data_offset + i);
       }
 
-      past_first_block = TRUE;
+      past_first_block = true;
     }
     else if (past_first_block)
     {

@@ -5,6 +5,9 @@ MODULES += modules/elf.c
 MODULES += modules/math.c
 MODULES += modules/time.c
 
+# This isn't really a module, but needs to be compiled with them.
+MODULES += modules/pe_utils.c
+
 if CUCKOO_MODULE
 MODULES += modules/cuckoo.c
 endif
@@ -25,8 +28,9 @@ if MACHO_MODULE
 MODULES += modules/macho.c
 endif
 
-# This isn't really a module, but needs to be compiled with them.
-MODULES += modules/pe_utils.c
+if DEX_MODULE
+MODULES += modules/dex.c
+endif
 
 #
 # Add your modules here:
@@ -65,6 +69,7 @@ yarainclude_HEADERS = \
   include/yara/ahocorasick.h \
   include/yara/arena.h \
   include/yara/atoms.h \
+  include/yara/bitmask.h \
   include/yara/compiler.h \
   include/yara/error.h \
   include/yara/exec.h \
@@ -82,7 +87,10 @@ yarainclude_HEADERS = \
   include/yara/re.h \
   include/yara/rules.h \
   include/yara/scan.h \
+  include/yara/scanner.h \
   include/yara/sizedstr.h \
+  include/yara/stack.h \
+  include/yara/stopwatch.h \
   include/yara/stream.h \
   include/yara/strutils.h \
   include/yara/threading.h \
@@ -101,13 +109,12 @@ noinst_HEADERS = \
   include/yara/pe.h \
   include/yara/pe_utils.h \
   include/yara/re_lexer.h \
-  include/yara/stopwatch.h \
   modules/module_list
 
 
 lib_LTLIBRARIES = libyara.la
 
-libyara_la_LDFLAGS = -version-number 3:7:0
+libyara_la_LDFLAGS = -version-number 3:9:0
 
 BUILT_SOURCES = \
   lexer.c \
@@ -123,6 +130,7 @@ libyara_la_SOURCES = \
   ahocorasick.c \
   arena.c \
   atoms.c \
+  bitmask.c \
   compiler.c \
   endian.c \
   exec.c \
@@ -143,14 +151,14 @@ libyara_la_SOURCES = \
   re_lexer.l \
   rules.c \
   scan.c \
+  scanner.c \
   sizedstr.c \
+  stack.c \
+  stopwatch.c \
   strutils.c \
   stream.c \
   threading.c
 
-if PROFILING_ENABLED
-libyara_la_SOURCES += stopwatch.c
-endif
 
 if USE_WINDOWS_PROC
 libyara_la_SOURCES += proc/windows.c

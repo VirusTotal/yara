@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <yara/integers.h>
 
@@ -58,7 +59,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Cygwin already has these functions.
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #if defined(_MSC_VER) && _MSC_VER < 1900
+
+#if !defined(snprintf)
 #define snprintf _snprintf
+#endif
+
 #endif
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp

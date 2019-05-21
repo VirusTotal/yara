@@ -61,6 +61,9 @@ order to avoid confusion with operating system threads.
 #endif
 
 
+typedef uint8_t RE_SPLIT_ID_TYPE;
+
+
 typedef struct _RE_REPEAT_ARGS
 {
   uint16_t  min;
@@ -86,51 +89,11 @@ typedef struct _RE_EMIT_CONTEXT {
 } RE_EMIT_CONTEXT;
 
 
-typedef struct _RE_FIBER
-{
-  const uint8_t* ip;    // instruction pointer
-  int32_t  sp;          // stack pointer
-  int32_t  rc;          // repeat counter
-
-  uint16_t stack[RE_MAX_STACK];
-
-  struct _RE_FIBER* prev;
-  struct _RE_FIBER* next;
-
-} RE_FIBER;
-
-
-typedef struct _RE_FIBER_LIST
-{
-  RE_FIBER* head;
-  RE_FIBER* tail;
-
-} RE_FIBER_LIST;
-
-
-typedef struct _RE_FIBER_POOL
-{
-  int fiber_count;
-  RE_FIBER_LIST fibers;
-
-} RE_FIBER_POOL;
-
-
-typedef struct _RE_THREAD_STORAGE
-{
-  RE_FIBER_POOL fiber_pool;
-
-} RE_THREAD_STORAGE;
-
-
-YR_THREAD_STORAGE_KEY thread_storage_key = 0;
-
-
 #define CHAR_IN_CLASS(cls, chr)  \
   ((cls)[(chr) / 8] & 1 << ((chr) % 8))
 
 
-static int _yr_re_is_char_in_class(
+static bool _yr_re_is_char_in_class(
     RE_CLASS* re_class,
     uint8_t chr,
     int case_insensitive)
@@ -147,7 +110,7 @@ static int _yr_re_is_char_in_class(
 }
 
 
-static int _yr_re_is_word_char(
+static bool _yr_re_is_word_char(
     const uint8_t* input,
     uint8_t character_size)
 {
@@ -160,83 +123,19 @@ static int _yr_re_is_word_char(
 }
 
 
-//
-// yr_re_initialize
-//
-// Should be called by main thread before any other
-// function from this module.
-//
-
-int yr_re_initialize(void)
-{
-  return yr_thread_storage_create(&thread_storage_key);
-}
-
-//
-// yr_re_finalize
-//
-// Should be called by main thread after every other thread
-// stopped using functions from this module.
-//
-
-int yr_re_finalize(void)
-{
-  yr_thread_storage_destroy(&thread_storage_key);
-
-  thread_storage_key = 0;
-  return ERROR_SUCCESS;
-}
-
-//
-// yr_re_finalize_thread
-//
-// Should be called by every thread using this module
-// before exiting.
-//
-
-int yr_re_finalize_thread(void)
-{
-  RE_FIBER* fiber;
-  RE_FIBER* next_fiber;
-  RE_THREAD_STORAGE* storage;
-
-  if (thread_storage_key != 0)
-    storage = (RE_THREAD_STORAGE*) yr_thread_storage_get_value(
-        &thread_storage_key);
-  else
-    return ERROR_SUCCESS;
-
-  if (storage != NULL)
-  {
-    fiber = storage->fiber_pool.fibers.head;
-
-    while (fiber != NULL)
-    {
-      next_fiber = fiber->next;
-      yr_free(fiber);
-      fiber = next_fiber;
-    }
-
-    yr_free(storage);
-  }
-
-  return yr_thread_storage_set_value(&thread_storage_key, NULL);
-}
-
-
 RE_NODE* yr_re_node_create(
-    int type,
-    RE_NODE* left,
-    RE_NODE* right)
+    int type)
 {
   RE_NODE* result = (RE_NODE*) yr_malloc(sizeof(RE_NODE));
 
   if (result != NULL)
   {
     result->type = type;
-    result->left = left;
-    result->right = right;
-    result->greedy = TRUE;
+    result->children_head = NULL;
+    result->children_tail = NULL;
+    result->prev_sibling = NULL;
+    result->next_sibling = NULL;
+    result->greedy = true;
     result->forward_code = NULL;
     result->backward_code = NULL;
   }
@@ -248,16 +147,61 @@ RE_NODE* yr_re_node_create(
 void yr_re_node_destroy(
     RE_NODE* node)
 {
-  if (node->left != NULL)
-    yr_re_node_destroy(node->left);
+  RE_NODE* child = node->children_head;
+  RE_NODE* next_child;
 
-  if (node->right != NULL)
-    yr_re_node_destroy(node->right);
+  while (child != NULL)
+  {
+    next_child = child->next_sibling;
+    yr_re_node_destroy(child);
+    child = next_child;
+  }
 
   if (node->type == RE_NODE_CLASS)
     yr_free(node->re_class);
 
   yr_free(node);
+}
+
+
+//
+// yr_re_node_append_child
+//
+// Appends a node to the end of the children list.
+//
+void yr_re_node_append_child(
+    RE_NODE* node,
+    RE_NODE* child)
+{
+  if (node->children_head == NULL)
+    node->children_head = child;
+
+  if (node->children_tail != NULL)
+    node->children_tail->next_sibling = child;
+
+  child->prev_sibling = node->children_tail;
+  node->children_tail = child;
+}
+
+
+//
+// yr_re_node_prepend_child
+//
+// Appends a node to the beginning of the children list.
+//
+void yr_re_node_prepend_child(
+    RE_NODE* node,
+    RE_NODE* child)
+{
+  child->next_sibling = node->children_head;
+
+  if (node->children_head != NULL)
+    node->children_head->prev_sibling = child;
+
+  node->children_head = child;
+
+  if (node->children_tail == NULL)
+    node->children_tail = child;
 }
 
 
@@ -270,7 +214,6 @@ int yr_re_ast_create(
     return ERROR_INSUFFICIENT_MEMORY;
 
   (*re_ast)->flags = 0;
-  (*re_ast)->levels = 0;
   (*re_ast)->root_node = NULL;
 
   return ERROR_SUCCESS;
@@ -351,7 +294,7 @@ int yr_re_compile(
       yr_re_ast_destroy(re_ast));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_re_ast_emit_code(re_ast, code_arena, FALSE),
+      yr_re_ast_emit_code(re_ast, code_arena, false),
       yr_re_ast_destroy(re_ast));
 
   yr_re_ast_destroy(re_ast);
@@ -366,20 +309,23 @@ int yr_re_compile(
 // Verifies if the target string matches the pattern
 //
 // Args:
-//    RE* re          -  A pointer to a compiled regexp
-//    char* target    -  Target string
+//    YR_SCAN_CONTEXT* context  - Scan context
+//    RE* re                    -  A pointer to a compiled regexp
+//    char* target              -  Target string
 //
 // Returns:
 //    See return codes for yr_re_exec
 
 
 int yr_re_match(
+    YR_SCAN_CONTEXT* context,
     RE* re,
     const char* target)
 {
   int result;
 
   yr_re_exec(
+      context,
       re->code,
       (uint8_t*) target,
       strlen(target),
@@ -408,26 +354,30 @@ SIZED_STRING* yr_re_ast_extract_literal(
     RE_AST* re_ast)
 {
   SIZED_STRING* string;
-  RE_NODE* node = re_ast->root_node;
+  RE_NODE* child;
 
-  int i, length = 0;
-  char tmp;
+  int length = 0;
 
-  while (node != NULL)
+  if (re_ast->root_node->type == RE_NODE_LITERAL)
   {
-    length++;
+    length = 1;
+  }
+  else if (re_ast->root_node->type == RE_NODE_CONCAT)
+  {
+    child = re_ast->root_node->children_tail;
 
-    if (node->type == RE_NODE_LITERAL)
-      break;
+    while (child != NULL && child->type == RE_NODE_LITERAL)
+    {
+      length++;
+      child = child->prev_sibling;
+    }
 
-    if (node->type != RE_NODE_CONCAT)
+    if (child != NULL)
       return NULL;
-
-    if (node->right == NULL ||
-        node->right->type != RE_NODE_LITERAL)
-      return NULL;
-
-    node = node->left;
+  }
+  else
+  {
+    return NULL;
   }
 
   string = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + length);
@@ -435,25 +385,20 @@ SIZED_STRING* yr_re_ast_extract_literal(
   if (string == NULL)
     return NULL;
 
-  string->length = 0;
+  string->length = length;
 
-  node = re_ast->root_node;
-
-  while (node->type == RE_NODE_CONCAT)
+  if (re_ast->root_node->type == RE_NODE_LITERAL)
   {
-    string->c_string[string->length++] = node->right->value;
-    node = node->left;
+    string->c_string[0] = re_ast->root_node->value;
   }
-
-  string->c_string[string->length++] = node->value;
-
-  // The string ends up reversed. Reverse it back to its original value.
-
-  for (i = 0; i < length / 2; i++)
+  else
   {
-    tmp = string->c_string[i];
-    string->c_string[i] = string->c_string[length - i - 1];
-    string->c_string[length - i - 1] = tmp;
+    child = re_ast->root_node->children_tail;
+    while (child != NULL)
+    {
+      string->c_string[--length] = child->value;
+      child = child->prev_sibling;
+    }
   }
 
   return string;
@@ -463,16 +408,26 @@ SIZED_STRING* yr_re_ast_extract_literal(
 int _yr_re_node_contains_dot_star(
     RE_NODE* re_node)
 {
-  if (re_node->type == RE_NODE_STAR && re_node->left->type == RE_NODE_ANY)
-    return TRUE;
+  RE_NODE* child;
 
-  if (re_node->left != NULL && _yr_re_node_contains_dot_star(re_node->left))
-    return TRUE;
+  if ((re_node->type == RE_NODE_STAR || re_node->type == RE_NODE_PLUS) &&
+      re_node->children_head->type == RE_NODE_ANY)
+    return true;
 
-  if (re_node->right != NULL && _yr_re_node_contains_dot_star(re_node->right))
-    return TRUE;
+  if (re_node->type == RE_NODE_CONCAT)
+  {
+    child = re_node->children_tail;
 
-  return FALSE;
+    while (child != NULL)
+    {
+      if (_yr_re_node_contains_dot_star(child))
+        return true;
+
+      child = child->prev_sibling;
+    }
+  }
+
+  return false;
 }
 
 
@@ -495,9 +450,7 @@ int yr_re_ast_contains_dot_star(
 // complies with the {0,1000} restriction.
 
 // This function traverses the regexp's tree looking for nodes where the regxp
-// should be split. It expects a left-unbalanced tree where the right child of
-// a RE_NODE_CONCAT can't be another RE_NODE_CONCAT. A RE_NODE_CONCAT must be
-// always the left child of its parent if the parent is also a RE_NODE_CONCAT.
+// should be split.
 //
 
 int yr_re_ast_split_at_chaining_point(
@@ -507,9 +460,8 @@ int yr_re_ast_split_at_chaining_point(
     int32_t* min_gap,
     int32_t* max_gap)
 {
-  RE_NODE* node = re_ast->root_node;
-  RE_NODE* child = re_ast->root_node->left;
-  RE_NODE* parent = NULL;
+  RE_NODE* child;
+  RE_NODE* concat;
 
   int result;
 
@@ -518,42 +470,52 @@ int yr_re_ast_split_at_chaining_point(
   *min_gap = 0;
   *max_gap = 0;
 
-  while (child != NULL && child->type == RE_NODE_CONCAT)
+  if (re_ast->root_node->type != RE_NODE_CONCAT)
+    return ERROR_SUCCESS;
+
+  child = re_ast->root_node->children_head;
+
+  while (child != NULL)
   {
-    if (child->right != NULL &&
-        child->right->type == RE_NODE_RANGE_ANY &&
-        child->right->greedy == FALSE &&
-        (child->right->start > STRING_CHAINING_THRESHOLD ||
-         child->right->end > STRING_CHAINING_THRESHOLD))
+    if (!child->greedy &&
+         child->type == RE_NODE_RANGE_ANY &&
+         child->prev_sibling != NULL &&
+         child->next_sibling != NULL &&
+        (child->start > YR_STRING_CHAINING_THRESHOLD ||
+         child->end > YR_STRING_CHAINING_THRESHOLD))
     {
       result = yr_re_ast_create(remainder_re_ast);
 
       if (result != ERROR_SUCCESS)
         return result;
 
-      (*remainder_re_ast)->root_node = child->left;
+      concat = yr_re_node_create(RE_NODE_CONCAT);
+
+      if (concat == NULL)
+        return ERROR_INSUFFICIENT_MEMORY;
+
+      concat->children_head = re_ast->root_node->children_head;
+      concat->children_tail = child->prev_sibling;
+
+      re_ast->root_node->children_head = child->next_sibling;
+
+      child->prev_sibling->next_sibling = NULL;
+      child->next_sibling->prev_sibling = NULL;
+
+      *min_gap = child->start;
+      *max_gap = child->end;
+
+      (*result_re_ast)->root_node = re_ast->root_node;
+      (*result_re_ast)->flags = re_ast->flags;
+      (*remainder_re_ast)->root_node = concat;
       (*remainder_re_ast)->flags = re_ast->flags;
 
-      child->left = NULL;
-
-      if (parent != NULL)
-        parent->left = node->right;
-      else
-        (*result_re_ast)->root_node = node->right;
-
-      node->right = NULL;
-
-      *min_gap = child->right->start;
-      *max_gap = child->right->end;
-
-      yr_re_node_destroy(node);
+      yr_re_node_destroy(child);
 
       return ERROR_SUCCESS;
     }
 
-    parent = node;
-    node = child;
-    child = child->left;
+    child = child->next_sibling;
   }
 
   return ERROR_SUCCESS;
@@ -760,17 +722,16 @@ static int _yr_re_emit(
   size_t inst_size;
   size_t jmp_size;
 
-  int emit_split;
-  int emit_repeat;
-  int emit_prolog;
-  int emit_epilog;
+  bool emit_split;
+  bool emit_repeat;
+  bool emit_prolog;
+  bool emit_epilog;
 
   RE_REPEAT_ARGS repeat_args;
   RE_REPEAT_ARGS* repeat_start_args_addr;
   RE_REPEAT_ANY_ARGS repeat_any_args;
 
-  RE_NODE* left;
-  RE_NODE* right;
+  RE_NODE* child;
 
   int16_t* split_offset_addr = NULL;
   int16_t* jmp_offset_addr = NULL;
@@ -920,34 +881,37 @@ static int _yr_re_emit(
 
   case RE_NODE_CONCAT:
 
-    if (flags & EMIT_BACKWARDS)
-    {
-      left = re_node->right;
-      right = re_node->left;
-    }
-    else
-    {
-      left = re_node->left;
-      right = re_node->right;
-    }
-
     FAIL_ON_ERROR(_yr_re_emit(
         emit_context,
-        left,
+        (flags & EMIT_BACKWARDS)?
+            re_node->children_tail:
+            re_node->children_head,
         flags,
         &instruction_addr,
         &branch_size));
 
     *code_size += branch_size;
 
-    FAIL_ON_ERROR(_yr_re_emit(
-        emit_context,
-        right,
-        flags,
-        NULL,
-        &branch_size));
+    if (flags & EMIT_BACKWARDS)
+      child = re_node->children_tail->prev_sibling;
+    else
+      child = re_node->children_head->next_sibling;
 
-    *code_size += branch_size;
+    while (child != NULL)
+    {
+      FAIL_ON_ERROR(_yr_re_emit(
+          emit_context,
+          child,
+          flags,
+          NULL,
+          &branch_size));
+
+      *code_size += branch_size;
+
+      child = (flags & EMIT_BACKWARDS) ?
+          child->prev_sibling:
+          child->next_sibling;
+    }
 
     break;
 
@@ -961,7 +925,7 @@ static int _yr_re_emit(
 
     FAIL_ON_ERROR(_yr_re_emit(
         emit_context,
-        re_node->left,
+        re_node->children_head,
         flags,
         &instruction_addr,
         &branch_size));
@@ -1000,7 +964,7 @@ static int _yr_re_emit(
 
     FAIL_ON_ERROR(_yr_re_emit(
         emit_context,
-        re_node->left,
+        re_node->children_head,
         flags,
         NULL,
         &branch_size));
@@ -1052,7 +1016,7 @@ static int _yr_re_emit(
 
     FAIL_ON_ERROR(_yr_re_emit(
         emit_context,
-        re_node->left,
+        re_node->children_head,
         flags,
         NULL,
         &branch_size));
@@ -1079,7 +1043,7 @@ static int _yr_re_emit(
 
     FAIL_ON_ERROR(_yr_re_emit(
         emit_context,
-        re_node->right,
+        re_node->children_tail,
         flags,
         NULL,
         &branch_size));
@@ -1150,7 +1114,11 @@ static int _yr_re_emit(
     //
     //        3,3     X       1,1         -      X
     //        3,4     X       2,2         X      X
-    //        3,M     X       2,M-1       X      X
+    //        3,M     X       2,M-2       X      X
+    //
+    //        4,4     X       2,2         -      X
+    //        4,5     X       3,3         X      X
+    //        4,M     X       3,M-2       X      X
     //
     // The code can't consists simply in the repeat section, the prolog and
     // epilog are required because we can't have atoms pointing to code inside
@@ -1167,7 +1135,7 @@ static int _yr_re_emit(
     {
       FAIL_ON_ERROR(_yr_re_emit(
           emit_context,
-          re_node->left,
+          re_node->children_head,
           flags,
           &instruction_addr,
           &branch_size));
@@ -1187,9 +1155,14 @@ static int _yr_re_emit(
       }
 
       if (emit_split)
+      {
         repeat_args.max--;
+      }
       else
+      {
         repeat_args.min--;
+        repeat_args.max--;
+      }
 
       repeat_args.offset = 0;
 
@@ -1208,7 +1181,7 @@ static int _yr_re_emit(
 
       FAIL_ON_ERROR(_yr_re_emit(
           emit_context,
-          re_node->left,
+          re_node->children_head,
           flags | EMIT_DONT_SET_FORWARDS_CODE | EMIT_DONT_SET_BACKWARDS_CODE,
           NULL,
           &branch_size));
@@ -1251,7 +1224,7 @@ static int _yr_re_emit(
     {
       FAIL_ON_ERROR(_yr_re_emit(
           emit_context,
-          re_node->left,
+          re_node->children_head,
           emit_prolog ? flags | EMIT_DONT_SET_FORWARDS_CODE : flags,
           emit_prolog || emit_repeat ? NULL : &instruction_addr,
           &branch_size));
@@ -1329,31 +1302,6 @@ int yr_re_ast_emit_code(
 
   if (total_size > RE_MAX_CODE_SIZE)
     return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
-
-  return ERROR_SUCCESS;
-}
-
-
-static int _yr_re_alloc_storage(
-    RE_THREAD_STORAGE** storage)
-{
-  *storage = (RE_THREAD_STORAGE*) yr_thread_storage_get_value(
-      &thread_storage_key);
-
-  if (*storage == NULL)
-  {
-    *storage = (RE_THREAD_STORAGE*) yr_malloc(sizeof(RE_THREAD_STORAGE));
-
-    if (*storage == NULL)
-      return ERROR_INSUFFICIENT_MEMORY;
-
-    (*storage)->fiber_pool.fiber_count = 0;
-    (*storage)->fiber_pool.fibers.head = NULL;
-    (*storage)->fiber_pool.fibers.tail = NULL;
-
-    FAIL_ON_ERROR(
-        yr_thread_storage_set_value(&thread_storage_key, *storage));
-  }
 
   return ERROR_SUCCESS;
 }
@@ -1446,7 +1394,7 @@ static int _yr_re_fiber_exists(
   int i;
 
   if (last_fiber == NULL)
-    return FALSE;
+    return false;
 
   while (fiber != last_fiber->next)
   {
@@ -1454,25 +1402,25 @@ static int _yr_re_fiber_exists(
         fiber->sp == target_fiber->sp &&
         fiber->rc == target_fiber->rc)
     {
-      equal_stacks = TRUE;
+      equal_stacks = true;
 
       for (i = 0; i <= fiber->sp; i++)
       {
         if (fiber->stack[i] != target_fiber->stack[i])
         {
-          equal_stacks = FALSE;
+          equal_stacks = false;
           break;
         }
       }
 
       if (equal_stacks)
-        return TRUE;
+        return true;
     }
 
     fiber = fiber->next;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -1658,7 +1606,7 @@ static int _yr_re_fiber_sync(
       case RE_OPCODE_SPLIT_B:
 
         split_id = *(RE_SPLIT_ID_TYPE*)(fiber->ip + 1);
-        split_already_executed = FALSE;
+        split_already_executed = false;
 
         for (splits_executed_idx = 0;
              splits_executed_idx < splits_executed_count;
@@ -1666,7 +1614,7 @@ static int _yr_re_fiber_sync(
         {
           if (split_id == splits_executed[splits_executed_idx])
           {
-            split_already_executed = TRUE;
+            split_already_executed = true;
             break;
           }
         }
@@ -1752,10 +1700,10 @@ static int _yr_re_fiber_sync(
           if (opcode == RE_OPCODE_REPEAT_END_GREEDY)
             yr_swap(branch_a, branch_b, RE_FIBER*);
 
-          branch_a->sp--;
           branch_b->ip += repeat_args->offset;
         }
 
+        branch_a->sp--;
         branch_a->ip += (1 + sizeof(RE_REPEAT_ARGS));
         break;
 
@@ -1848,6 +1796,7 @@ static int _yr_re_fiber_sync(
 //                              input
 //
 // Args:
+//   YR_SCAN_CONTEXT *context         - Scan context.
 //   const uint8_t* code              - Regexp code be executed
 //   const uint8_t* input             - Pointer to input data
 //   size_t input_forwards_size       - Number of accessible bytes starting at
@@ -1871,6 +1820,7 @@ static int _yr_re_fiber_sync(
 //    ERROR_SUCCESS or any other error code.
 
 int yr_re_exec(
+    YR_SCAN_CONTEXT* context,
     const uint8_t* code,
     const uint8_t* input_data,
     size_t input_forwards_size,
@@ -1888,7 +1838,6 @@ int yr_re_exec(
   uint8_t character_size;
 
   RE_FIBER_LIST fibers;
-  RE_THREAD_STORAGE* storage;
   RE_FIBER* fiber;
   RE_FIBER* next_fiber;
 
@@ -1916,9 +1865,6 @@ int yr_re_exec(
   if (matches != NULL)
     *matches = -1;
 
-  if (_yr_re_alloc_storage(&storage) != ERROR_SUCCESS)
-    return -2;
-
   if (flags & RE_FLAGS_WIDE)
     character_size = 2;
   else
@@ -1945,15 +1891,15 @@ int yr_re_exec(
   max_bytes_matched = max_bytes_matched - max_bytes_matched % character_size;
   bytes_matched = 0;
 
-  FAIL_ON_ERROR(_yr_re_fiber_create(&storage->fiber_pool, &fiber));
+  FAIL_ON_ERROR(_yr_re_fiber_create(&context->re_fiber_pool, &fiber));
 
   fiber->ip = code;
   fibers.head = fiber;
   fibers.tail = fiber;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber),
-      _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+      _yr_re_fiber_sync(&fibers, &context->re_fiber_pool, fiber),
+      _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
 
   while (fibers.head != NULL)
   {
@@ -1964,7 +1910,7 @@ int yr_re_exec(
       next_fiber = fiber->next;
 
       if (_yr_re_fiber_exists(&fibers, fiber, fiber->prev))
-        _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
+        _yr_re_fiber_kill(&fibers, &context->re_fiber_pool, fiber);
 
       fiber = next_fiber;
     }
@@ -2057,10 +2003,10 @@ int yr_re_exec(
             case '\n':
             case '\v':
             case '\f':
-              match = TRUE;
+              match = true;
               break;
             default:
-              match = FALSE;
+              match = false;
           }
 
           if (*ip == RE_OPCODE_NON_SPACE)
@@ -2089,11 +2035,11 @@ int yr_re_exec(
 
           if (bytes_matched == 0 && input_backwards_size < character_size)
           {
-            match = TRUE;
+            match = true;
           }
           else if (bytes_matched >= max_bytes_matched)
           {
-            match = TRUE;
+            match = true;
           }
           else
           {
@@ -2147,7 +2093,7 @@ int yr_re_exec(
                         bytes_matched,
                         flags,
                         callback_args),
-                    _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+                    _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
               }
               else
               {
@@ -2157,7 +2103,7 @@ int yr_re_exec(
                         bytes_matched,
                         flags,
                         callback_args),
-                    _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+                    _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
               }
             }
 
@@ -2171,31 +2117,31 @@ int yr_re_exec(
           break;
 
         default:
-          assert(FALSE);
+          assert(false);
       }
 
       switch (action)
       {
         case ACTION_KILL:
-          fiber = _yr_re_fiber_kill(&fibers, &storage->fiber_pool, fiber);
+          fiber = _yr_re_fiber_kill(&fibers, &context->re_fiber_pool, fiber);
           break;
 
         case ACTION_KILL_TAIL:
-          _yr_re_fiber_kill_tail(&fibers, &storage->fiber_pool, fiber);
+          _yr_re_fiber_kill_tail(&fibers, &context->re_fiber_pool, fiber);
           fiber = NULL;
           break;
 
         case ACTION_CONTINUE:
           FAIL_ON_ERROR_WITH_CLEANUP(
-              _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber),
-              _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+              _yr_re_fiber_sync(&fibers, &context->re_fiber_pool, fiber),
+              _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
           break;
 
         default:
           next_fiber = fiber->next;
           FAIL_ON_ERROR_WITH_CLEANUP(
-              _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber),
-              _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+              _yr_re_fiber_sync(&fibers, &context->re_fiber_pool, fiber),
+              _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
           fiber = next_fiber;
       }
     }
@@ -2206,23 +2152,36 @@ int yr_re_exec(
     if (flags & RE_FLAGS_SCAN && bytes_matched < max_bytes_matched)
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
-          _yr_re_fiber_create(&storage->fiber_pool, &fiber),
-          _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+          _yr_re_fiber_create(&context->re_fiber_pool, &fiber),
+          _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
 
       fiber->ip = code;
       _yr_re_fiber_append(&fibers, fiber);
 
       FAIL_ON_ERROR_WITH_CLEANUP(
-          _yr_re_fiber_sync(&fibers, &storage->fiber_pool, fiber),
-          _yr_re_fiber_kill_all(&fibers, &storage->fiber_pool));
+          _yr_re_fiber_sync(&fibers, &context->re_fiber_pool, fiber),
+          _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
     }
   }
 
   return ERROR_SUCCESS;
 }
 
+//
+// yr_re_fast_exec
+//
+// This function replaces yr_re_exec for regular expressions marked with flag
+// RE_FLAGS_FAST_REGEXP. These are regular expression whose code contain only
+// the following operations: RE_OPCODE_LITERAL, RE_OPCODE_MASKED_LITERAL,
+// RE_OPCODE_ANY, RE_OPCODE_REPEAT_ANY_UNGREEDY and RE_OPCODE_MATCH. Some
+// examples of regular expressions that can be executed with this function are:
+//
+//  /foobar/
+//  /foo.*?bar/
+//
 
 int yr_re_fast_exec(
+    YR_SCAN_CONTEXT* context,
     const uint8_t* code,
     const uint8_t* input_data,
     size_t input_forwards_size,
@@ -2234,9 +2193,9 @@ int yr_re_fast_exec(
 {
   RE_REPEAT_ANY_ARGS* repeat_any_args;
 
-  const uint8_t* code_stack[MAX_FAST_RE_STACK];
-  const uint8_t* input_stack[MAX_FAST_RE_STACK];
-  int matches_stack[MAX_FAST_RE_STACK];
+  const uint8_t* code_stack[YR_MAX_FAST_RE_STACK];
+  const uint8_t* input_stack[YR_MAX_FAST_RE_STACK];
+  int matches_stack[YR_MAX_FAST_RE_STACK];
 
   const uint8_t* input = input_data;
   const uint8_t* next_input;
@@ -2273,7 +2232,7 @@ int yr_re_fast_exec(
     ip = code_stack[sp];
     input = input_stack[sp];
     bytes_matched = matches_stack[sp];
-    stop = FALSE;
+    stop = false;
 
     while (!stop)
     {
@@ -2313,7 +2272,7 @@ int yr_re_fast_exec(
           }
           else
           {
-            stop = TRUE;
+            stop = true;
           }
 
           break;
@@ -2331,7 +2290,7 @@ int yr_re_fast_exec(
           }
           else
           {
-            stop = TRUE;
+            stop = true;
           }
 
           break;
@@ -2360,8 +2319,8 @@ int yr_re_fast_exec(
                 (*(next_opcode) == RE_OPCODE_LITERAL &&
                  *(next_opcode + 1) == *next_input))
             {
-              if (sp >= MAX_FAST_RE_STACK)
-                return -4;
+              if (sp >= YR_MAX_FAST_RE_STACK)
+                return ERROR_TOO_MANY_RE_FIBERS;
 
               code_stack[sp] = next_opcode;
               input_stack[sp] = next_input;
@@ -2378,7 +2337,7 @@ int yr_re_fast_exec(
           break;
 
         default:
-          assert(FALSE);
+          assert(false);
       }
     }
   }
@@ -2393,6 +2352,7 @@ int yr_re_fast_exec(
 static void _yr_re_print_node(
     RE_NODE* re_node)
 {
+  RE_NODE* child;
   int i;
 
   if (re_node == NULL)
@@ -2402,29 +2362,33 @@ static void _yr_re_print_node(
   {
   case RE_NODE_ALT:
     printf("Alt(");
-    _yr_re_print_node(re_node->left);
+    _yr_re_print_node(re_node->children_head);
     printf(", ");
-    _yr_re_print_node(re_node->right);
+    _yr_re_print_node(re_node->children_tail);
     printf(")");
     break;
 
   case RE_NODE_CONCAT:
     printf("Cat(");
-    _yr_re_print_node(re_node->left);
-    printf(", ");
-    _yr_re_print_node(re_node->right);
+    child = re_node->children_head;
+    while (child != NULL)
+    {
+      _yr_re_print_node(child);
+      printf(", ");
+      child = child->next_sibling;
+    }
     printf(")");
     break;
 
   case RE_NODE_STAR:
     printf("Star(");
-    _yr_re_print_node(re_node->left);
+    _yr_re_print_node(re_node->children_head);
     printf(")");
     break;
 
   case RE_NODE_PLUS:
     printf("Plus(");
-    _yr_re_print_node(re_node->left);
+    _yr_re_print_node(re_node->children_head);
     printf(")");
     break;
 
@@ -2466,14 +2430,14 @@ static void _yr_re_print_node(
 
   case RE_NODE_RANGE:
     printf("Range(%d-%d, ", re_node->start, re_node->end);
-    _yr_re_print_node(re_node->left);
+    _yr_re_print_node(re_node->children_head);
     printf(")");
     break;
 
   case RE_NODE_CLASS:
     printf("Class(");
     for (i = 0; i < 256; i++)
-      if (_yr_re_is_char_in_class(re_node->re_class, i, FALSE))
+      if (_yr_re_is_char_in_class(re_node->re_class, i, false))
         printf("%02X,", i);
     printf(")");
     break;

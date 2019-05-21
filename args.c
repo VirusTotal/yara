@@ -31,6 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <stdlib.h>
 
+#include <yara.h>
+
 #include "args.h"
 
 #define args_is_long_arg(arg)  \
@@ -99,7 +101,7 @@ args_error_type_t args_parse_option(
   switch (opt->type)
   {
     case ARGS_OPT_BOOLEAN:
-      *(int*) opt->value = 1;
+      *(bool*) opt->value = true;
       break;
 
     case ARGS_OPT_INTEGER:

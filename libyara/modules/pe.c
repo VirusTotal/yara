@@ -42,6 +42,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <openssl/x509.h>
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 #define X509_get_signature_nid(o) OBJ_obj2nid((o)->sig_alg->algorithm)
+#define X509_getm_notBefore X509_get_notBefore
+#define X509_getm_notAfter X509_get_notAfter
 #endif
 #endif
 
@@ -50,6 +52,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/modules.h>
 #include <yara/mem.h>
 #include <yara/strutils.h>
+#include <yara/utils.h>
+
 
 #include <yara/pe_utils.h>
 
@@ -88,7 +92,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define MAX_PE_IMPORTS               16384
-#define MAX_PE_EXPORTS               65535
+#define MAX_PE_EXPORTS               8192
+#define MAX_EXPORT_NAME_LENGTH       512
 
 
 #define IS_RESOURCE_SUBDIRECTORY(entry) \
@@ -124,7 +129,7 @@ static size_t available_space(
 }
 
 
-int wide_string_fits_in_pe(
+static int wide_string_fits_in_pe(
     PE* pe,
     char* data)
 {
@@ -146,9 +151,9 @@ int wide_string_fits_in_pe(
 // Parse the rich signature.
 // http://www.ntcore.com/files/richsign.htm
 
-void pe_parse_rich_signature(
+static void pe_parse_rich_signature(
     PE* pe,
-    size_t base_address)
+    uint64_t base_address)
 {
   PIMAGE_DOS_HEADER mz_header;
   PIMAGE_NT_HEADERS32 pe_header;
@@ -261,7 +266,7 @@ void pe_parse_rich_signature(
 // The callback function will parse this and call set_sized_string().
 // The pointer is guaranteed to have enough space to contain the entire string.
 
-const uint8_t* parse_resource_name(
+static const uint8_t* parse_resource_name(
     PE* pe,
     const uint8_t* rsrc_data,
     PIMAGE_RESOURCE_DIRECTORY_ENTRY entry)
@@ -277,8 +282,8 @@ const uint8_t* parse_resource_name(
     const uint8_t* rsrc_str_ptr = rsrc_data + \
         (yr_le32toh(entry->Name) & 0x7FFFFFFF);
 
-    // A resource directory string is 2 bytes for a string and then a variable
-    // length Unicode string. Make sure we at least have two bytes.
+    // A resource directory string is 2 bytes for the length and then a variable
+    // length Unicode string. Make sure we have at least 2 bytes.
 
     if (!fits_in_pe(pe, rsrc_str_ptr, 2))
       return NULL;
@@ -296,7 +301,7 @@ const uint8_t* parse_resource_name(
 }
 
 
-int _pe_iterate_resources(
+static int _pe_iterate_resources(
     PE* pe,
     PIMAGE_RESOURCE_DIRECTORY resource_dir,
     const uint8_t* rsrc_data,
@@ -419,7 +424,7 @@ int _pe_iterate_resources(
 }
 
 
-int pe_iterate_resources(
+static int pe_iterate_resources(
     PE* pe,
     RESOURCE_CALLBACK_FUNC callback,
     void* callback_data)
@@ -436,6 +441,9 @@ int pe_iterate_resources(
 
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_RESOURCE);
+
+  if (directory == NULL)
+     return 0;
 
   if (yr_le32toh(directory->VirtualAddress) != 0)
   {
@@ -489,7 +497,7 @@ int pe_iterate_resources(
     (PVERSION_INFO) ((uint8_t*) (ptr) + ((offset + 3) & ~3))
 
 
-void pe_parse_version_info(
+static void pe_parse_version_info(
     PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
     PE* pe)
 {
@@ -578,7 +586,7 @@ void pe_parse_version_info(
 }
 
 
-int pe_collect_resources(
+static int pe_collect_resources(
     PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
     int rsrc_type,
     int rsrc_id,
@@ -674,15 +682,14 @@ int pe_collect_resources(
 }
 
 
-IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
+static IMPORT_FUNCTION* pe_parse_import_descriptor(
     PE* pe,
     PIMAGE_IMPORT_DESCRIPTOR import_descriptor,
-    char* dll_name)
+    char* dll_name,
+    int* num_function_imports)
 {
-  IMPORT_EXPORT_FUNCTION* head = NULL;
-  IMPORT_EXPORT_FUNCTION* tail = NULL;
-
-  int num_functions = 0;
+  IMPORT_FUNCTION* head = NULL;
+  IMPORT_FUNCTION* tail = NULL;
 
   int64_t offset = pe_rva_to_offset(
       pe, yr_le32toh(import_descriptor->OriginalFirstThunk));
@@ -702,7 +709,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
 
     while (struct_fits_in_pe(pe, thunks64, IMAGE_THUNK_DATA64) &&
            yr_le64toh(thunks64->u1.Ordinal) != 0 &&
-           num_functions < MAX_PE_IMPORTS)
+           *num_function_imports < MAX_PE_IMPORTS)
     {
       char* name = NULL;
       uint16_t ordinal = 0;
@@ -737,8 +744,8 @@ IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
 
       if (name != NULL || has_ordinal == 1)
       {
-        IMPORT_EXPORT_FUNCTION* imported_func = (IMPORT_EXPORT_FUNCTION*)
-            yr_calloc(1, sizeof(IMPORT_EXPORT_FUNCTION));
+        IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*)
+            yr_calloc(1, sizeof(IMPORT_FUNCTION));
 
         if (imported_func == NULL)
         {
@@ -760,7 +767,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
         tail = imported_func;
       }
 
-      num_functions++;
+      (*num_function_imports)++;
       thunks64++;
     }
   }
@@ -769,7 +776,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
     PIMAGE_THUNK_DATA32 thunks32 = (PIMAGE_THUNK_DATA32)(pe->data + offset);
 
     while (struct_fits_in_pe(pe, thunks32, IMAGE_THUNK_DATA32) &&
-           yr_le32toh(thunks32->u1.Ordinal) != 0 && num_functions < MAX_PE_IMPORTS)
+           yr_le32toh(thunks32->u1.Ordinal) != 0 && *num_function_imports < MAX_PE_IMPORTS)
     {
       char* name = NULL;
       uint16_t ordinal = 0;
@@ -804,8 +811,8 @@ IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
 
       if (name != NULL || has_ordinal == 1)
       {
-        IMPORT_EXPORT_FUNCTION* imported_func = (IMPORT_EXPORT_FUNCTION*)
-            yr_calloc(1, sizeof(IMPORT_EXPORT_FUNCTION));
+        IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*)
+            yr_calloc(1, sizeof(IMPORT_FUNCTION));
 
         if (imported_func == NULL)
         {
@@ -827,7 +834,7 @@ IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
         tail = imported_func;
       }
 
-      num_functions++;
+      (*num_function_imports)++;
       thunks32++;
     }
   }
@@ -836,8 +843,9 @@ IMPORT_EXPORT_FUNCTION* pe_parse_import_descriptor(
 }
 
 
-int pe_valid_dll_name(
-    const char* dll_name, size_t n)
+static int pe_valid_dll_name(
+    const char* dll_name,
+    size_t n)
 {
   const char* c = dll_name;
   size_t l = 0;
@@ -854,7 +862,7 @@ int pe_valid_dll_name(
     }
     else
     {
-      return FALSE;
+      return false;
     }
   }
 
@@ -868,19 +876,27 @@ int pe_valid_dll_name(
 // calculation.
 //
 
-IMPORTED_DLL* pe_parse_imports(
+static IMPORTED_DLL* pe_parse_imports(
     PE* pe)
 {
   int64_t offset;
-  int num_imports = 0;
+  int num_imports = 0;           // Number of imported DLLs
+  int num_function_imports = 0;  // Total number of functions imported
 
   IMPORTED_DLL* head = NULL;
   IMPORTED_DLL* tail = NULL;
 
   PIMAGE_IMPORT_DESCRIPTOR imports;
+  PIMAGE_DATA_DIRECTORY directory;
 
-  PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
+  // Default to 0 imports until we know there are any
+  set_integer(0, pe->object, "number_of_imports");
+
+  directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
+
+  if (directory == NULL)
+    return NULL;
 
   if (yr_le32toh(directory->VirtualAddress) == 0)
     return NULL;
@@ -905,14 +921,17 @@ IMPORTED_DLL* pe_parse_imports(
       char* dll_name = (char *) (pe->data + offset);
 
       if (!pe_valid_dll_name(dll_name, pe->data_size - (size_t) offset))
-        break;
+      {
+          imports++;
+          continue;
+      }
 
       imported_dll = (IMPORTED_DLL*) yr_calloc(1, sizeof(IMPORTED_DLL));
 
       if (imported_dll != NULL)
       {
-        IMPORT_EXPORT_FUNCTION* functions = pe_parse_import_descriptor(
-            pe, imports, dll_name);
+        IMPORT_FUNCTION* functions = pe_parse_import_descriptor(
+            pe, imports, dll_name, &num_function_imports);
 
         if (functions != NULL)
         {
@@ -948,31 +967,36 @@ IMPORTED_DLL* pe_parse_imports(
 // "exports" function for comparison.
 //
 
-IMPORT_EXPORT_FUNCTION* pe_parse_exports(
+static EXPORT_FUNCTIONS* pe_parse_exports(
     PE* pe)
 {
-  IMPORT_EXPORT_FUNCTION* head = NULL;
-  IMPORT_EXPORT_FUNCTION* tail = NULL;
-
   PIMAGE_DATA_DIRECTORY directory;
   PIMAGE_EXPORT_DIRECTORY exports;
+  EXPORT_FUNCTIONS* exported_functions;
 
-  DWORD* names;
-  WORD* ordinals;
-
-  int64_t offset;
   uint32_t i;
+  uint32_t number_of_exports;
+  uint32_t number_of_names;
+  uint16_t ordinal;
+  int64_t offset;
   size_t remaining;
 
-  int num_exports = 0;
+  DWORD* names = NULL;
+  WORD* ordinals = NULL;
 
   // If not a PE file, return UNDEFINED
 
   if (pe == NULL)
     return NULL;
 
+  // Default to 0 exports until we know there are any
+  set_integer(0, pe->object, "number_of_exports");
+
   directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_EXPORT);
+
+  if (directory == NULL)
+    return NULL;
 
   if (yr_le32toh(directory->VirtualAddress) == 0)
     return NULL;
@@ -987,33 +1011,64 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
   if (!struct_fits_in_pe(pe, exports, IMAGE_EXPORT_DIRECTORY))
     return NULL;
 
-  offset = pe_rva_to_offset(pe, yr_le32toh(exports->AddressOfNames));
+  number_of_exports = yr_min(
+      yr_le32toh(exports->NumberOfFunctions),
+      MAX_PE_EXPORTS);
 
-  if (offset < 0)
+  if (number_of_exports * sizeof(DWORD) > pe->data_size - offset)
     return NULL;
 
-  if (yr_le32toh(exports->NumberOfFunctions) > MAX_PE_EXPORTS ||
-      yr_le32toh(exports->NumberOfFunctions) * sizeof(DWORD) > pe->data_size - offset)
-    return NULL;
-
-  names = (DWORD*)(pe->data + offset);
-
-  offset = pe_rva_to_offset(pe, yr_le32toh(exports->AddressOfNameOrdinals));
-
-  if (offset < 0)
-    return NULL;
-
-  ordinals = (WORD*)(pe->data + offset);
-
-  // Walk the number of functions, not the number of names as each exported
-  // symbol has an ordinal value, but names are optional.
-
-  for (i = 0; i < yr_le32toh(exports->NumberOfFunctions); i++)
+  if (yr_le32toh(exports->NumberOfNames) > 0)
   {
-    IMPORT_EXPORT_FUNCTION* exported_func;
-    uint16_t ordinal = 0;
-    char* name;
+    offset = pe_rva_to_offset(pe, yr_le32toh(exports->AddressOfNames));
 
+    if (offset < 0)
+      return NULL;
+
+    if (yr_le32toh(exports->NumberOfNames) * sizeof(DWORD) > pe->data_size - offset)
+      return NULL;
+
+    names = (DWORD*)(pe->data + offset);
+
+    offset = pe_rva_to_offset(pe, yr_le32toh(exports->AddressOfNameOrdinals));
+
+    if (offset < 0)
+      return NULL;
+
+    ordinals = (WORD*)(pe->data + offset);
+  }
+
+  exported_functions = (EXPORT_FUNCTIONS*) yr_malloc(sizeof(EXPORT_FUNCTIONS));
+
+  if (exported_functions == NULL)
+    return NULL;
+
+  exported_functions->number_of_exports = number_of_exports;
+  exported_functions->functions = (EXPORT_FUNCTION*) yr_malloc(
+      number_of_exports * sizeof(EXPORT_FUNCTION));
+
+  if (exported_functions->functions == NULL)
+  {
+    yr_free(exported_functions);
+    return NULL;
+  }
+
+  // At first, iterate through Functions array and create representation for
+  // each exported function. Ordinal is just array index that starts from 1
+  for (i = 0; i < exported_functions->number_of_exports; i++)
+  {
+    exported_functions->functions[i].name = NULL;
+    exported_functions->functions[i].ordinal = i + 1;
+  }
+
+  // Now, we can iterate through Names and NameOrdinals arrays to obtain
+  // function names. Not all functions have names.
+  number_of_names = yr_min(
+      yr_le32toh(exports->NumberOfNames),
+      exported_functions->number_of_exports);
+
+  for (i = 0; i < number_of_names; i++)
+  {
     if (available_space(pe, names + i) < sizeof(DWORD) ||
         available_space(pe, ordinals + i) < sizeof(WORD))
     {
@@ -1025,46 +1080,34 @@ IMPORT_EXPORT_FUNCTION* pe_parse_exports(
     if (offset < 0)
       continue;
 
-    remaining = pe->data_size - (size_t) offset;
-    name = yr_strndup((char*) (pe->data + offset), remaining);
-
-    // Get the corresponding ordinal. Note that we are not subtracting the
-    // ordinal base here as we don't intend to index into the export address
-    // table.
+    // Even though it is called ordinal, it is just index to Functions array
+    // If it was ordinal it would start from 1 but it starts from 0
     ordinal = yr_le16toh(ordinals[i]);
 
-    // Now add it to the list...
-    exported_func = (IMPORT_EXPORT_FUNCTION*)
-        yr_calloc(1, sizeof(IMPORT_EXPORT_FUNCTION));
-
-    if (exported_func == NULL)
-    {
-      yr_free(name);
+    if (ordinal >= exported_functions->number_of_exports)
       continue;
+
+    remaining = pe->data_size - (size_t) offset;
+
+    if (exported_functions->functions[ordinal].name == NULL)
+    {
+      exported_functions->functions[ordinal].name = yr_strndup(
+          (char*) (pe->data + offset),
+          yr_min(remaining, MAX_EXPORT_NAME_LENGTH));
     }
-
-    exported_func->name = name;
-    exported_func->ordinal = ordinal;
-    exported_func->next = NULL;
-
-    if (head == NULL)
-      head = exported_func;
-
-    if (tail != NULL)
-      tail->next = exported_func;
-
-    tail = exported_func;
-    num_exports++;
   }
 
-  set_integer(num_exports, pe->object, "number_of_exports");
-  return head;
+  set_integer(
+      exported_functions->number_of_exports,
+      pe->object, "number_of_exports");
+
+  return exported_functions;
 }
 
 
 #if defined(HAVE_LIBCRYPTO)
 
-void pe_parse_certificates(
+static void pe_parse_certificates(
     PE* pe)
 {
   int i, counter = 0;
@@ -1076,6 +1119,9 @@ void pe_parse_certificates(
 
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
+
+  if (directory == NULL)
+    return;
 
   // Default to 0 signatures until we know otherwise.
   set_integer(0, pe->object, "number_of_signatures");
@@ -1091,11 +1137,11 @@ void pe_parse_certificates(
 
   // Store the end of directory, making comparisons easier.
   eod = pe->data + \
-        yr_le32toh(directory->VirtualAddress) + \
-        yr_le32toh(directory->Size);
+      yr_le32toh(directory->VirtualAddress) + \
+      yr_le32toh(directory->Size);
 
   win_cert = (PWIN_CERTIFICATE) \
-    (pe->data + yr_le32toh(directory->VirtualAddress));
+      (pe->data + yr_le32toh(directory->VirtualAddress));
 
   //
   // Walk the directory, pulling out certificates.
@@ -1141,7 +1187,7 @@ void pe_parse_certificates(
     }
 
     cert_bio = BIO_new_mem_buf(
-        win_cert->Certificate, yr_le32toh(win_cert->Length));
+        win_cert->Certificate, yr_le32toh(win_cert->Length) - WIN_CERTIFICATE_HEADER_SIZE);
 
     if (!cert_bio)
       break;
@@ -1162,10 +1208,24 @@ void pe_parse_certificates(
       const char* sig_alg;
       char buffer[256];
       int bytes;
+      const EVP_MD* sha1_digest = EVP_sha1();
+      unsigned char thumbprint[YR_SHA1_LEN];
+      char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
 
       ASN1_INTEGER* serial;
 
       X509* cert = sk_X509_value(certs, i);
+
+      X509_digest(cert, sha1_digest, thumbprint, NULL);
+
+      for (i = 0; i < YR_SHA1_LEN; i++)
+        sprintf(thumbprint_ascii + (i * 2), "%02x", thumbprint[i]);
+
+      set_string(
+          (char*) thumbprint_ascii,
+          pe->object,
+          "signatures[%i].thumbprint",
+          counter);
 
       X509_NAME_oneline(
           X509_get_issuer_name(cert), buffer, sizeof(buffer));
@@ -1273,10 +1333,10 @@ void pe_parse_certificates(
         }
       }
 
-      date_time = ASN1_get_time_t(X509_get_notBefore(cert));
+      date_time = ASN1_get_time_t(X509_getm_notBefore(cert));
       set_integer(date_time, pe->object, "signatures[%i].not_before", counter);
 
-      date_time = ASN1_get_time_t(X509_get_notAfter(cert));
+      date_time = ASN1_get_time_t(X509_getm_notAfter(cert));
       set_integer(date_time, pe->object, "signatures[%i].not_after", counter);
 
       counter++;
@@ -1296,18 +1356,24 @@ void pe_parse_certificates(
 #endif  // defined(HAVE_LIBCRYPTO)
 
 
-void pe_parse_header(
+static void pe_parse_header(
     PE* pe,
-    size_t base_address,
+    uint64_t base_address,
     int flags)
 {
   PIMAGE_SECTION_HEADER section;
+  PIMAGE_DATA_DIRECTORY data_dir;
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
-  int i, scount;
+  int i, scount, ddcount;
+
   uint64_t highest_sec_siz = 0;
   uint64_t highest_sec_ofs = 0;
+  uint64_t section_end;
   uint64_t last_section_end;
+
+
+  set_integer(1, pe->object, "is_pe");
 
   set_integer(
       yr_le16toh(pe->header->FileHeader.Machine),
@@ -1320,6 +1386,18 @@ void pe_parse_header(
   set_integer(
       yr_le32toh(pe->header->FileHeader.TimeDateStamp),
       pe->object, "timestamp");
+
+  set_integer(
+      yr_le32toh(pe->header->FileHeader.PointerToSymbolTable),
+      pe->object, "pointer_to_symbol_table");
+
+  set_integer(
+      yr_le32toh(pe->header->FileHeader.NumberOfSymbols),
+      pe->object, "number_of_symbols");
+
+  set_integer(
+      yr_le32toh(pe->header->FileHeader.SizeOfOptionalHeader),
+      pe->object, "size_of_optional_header");
 
   set_integer(
       yr_le16toh(pe->header->FileHeader.Characteristics),
@@ -1338,12 +1416,51 @@ void pe_parse_header(
       pe->object, "image_base");
 
   set_integer(
+      yr_le32toh(OptionalHeader(pe, NumberOfRvaAndSizes)),
+      pe->object, "number_of_rva_and_sizes");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, Magic)),
+      pe->object, "opthdr_magic");
+
+  set_integer(
       OptionalHeader(pe, MajorLinkerVersion),
       pe->object, "linker_version.major");
 
   set_integer(
       OptionalHeader(pe, MinorLinkerVersion),
       pe->object, "linker_version.minor");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, SizeOfCode)),
+      pe->object, "size_of_code");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, SizeOfInitializedData)),
+      pe->object, "size_of_initialized_data");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, SizeOfUninitializedData)),
+      pe->object, "size_of_uninitialized_data");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, BaseOfCode)),
+      pe->object, "base_of_code");
+
+  if (!IS_64BITS_PE(pe))
+  {
+      set_integer(
+        yr_le32toh(pe->header->OptionalHeader.BaseOfData),
+        pe->object, "base_of_data");
+  }
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, SectionAlignment)),
+      pe->object, "section_alignment");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, FileAlignment)),
+      pe->object, "file_alignment");
 
   set_integer(
       yr_le16toh(OptionalHeader(pe, MajorOperatingSystemVersion)),
@@ -1370,6 +1487,18 @@ void pe_parse_header(
       pe->object, "subsystem_version.minor");
 
   set_integer(
+      yr_le32toh(OptionalHeader(pe, Win32VersionValue)),
+      pe->object, "win32_version_value");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, SizeOfImage)),
+      pe->object, "size_of_image");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, SizeOfHeaders)),
+      pe->object, "size_of_headers");
+
+  set_integer(
       yr_le32toh(OptionalHeader(pe, CheckSum)),
       pe->object, "checksum");
 
@@ -1380,6 +1509,57 @@ void pe_parse_header(
   set_integer(
       OptionalHeader(pe, DllCharacteristics),
       pe->object, "dll_characteristics");
+
+  set_integer(
+      IS_64BITS_PE(pe) ?
+      yr_le64toh(OptionalHeader(pe, SizeOfStackReserve)) :
+      yr_le32toh(OptionalHeader(pe, SizeOfStackReserve)),
+      pe->object, "size_of_stack_reserve");
+
+  set_integer(
+      IS_64BITS_PE(pe) ?
+      yr_le64toh(OptionalHeader(pe, SizeOfStackCommit)) :
+      yr_le32toh(OptionalHeader(pe, SizeOfStackCommit)),
+      pe->object, "size_of_stack_commit");
+
+  set_integer(
+      IS_64BITS_PE(pe) ?
+      yr_le64toh(OptionalHeader(pe, SizeOfHeapReserve)) :
+      yr_le32toh(OptionalHeader(pe, SizeOfHeapReserve)),
+      pe->object, "size_of_heap_reserve");
+
+  set_integer(
+      IS_64BITS_PE(pe) ?
+      yr_le64toh(OptionalHeader(pe, SizeOfHeapCommit)) :
+      yr_le32toh(OptionalHeader(pe, SizeOfHeapCommit)),
+      pe->object, "size_of_heap_commit");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, LoaderFlags)),
+      pe->object, "loader_flags");
+
+  data_dir = IS_64BITS_PE(pe) ?
+      pe->header64->OptionalHeader.DataDirectory:
+      pe->header->OptionalHeader.DataDirectory;
+
+  ddcount = yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes));
+  ddcount = yr_min(ddcount, IMAGE_NUMBEROF_DIRECTORY_ENTRIES);
+
+  for (i = 0; i < ddcount; i++)
+  {
+    if (!struct_fits_in_pe(pe, data_dir, IMAGE_DATA_DIRECTORY))
+      break;
+
+    set_integer(
+      yr_le32toh(data_dir->VirtualAddress),
+      pe->object, "data_directories[%i].virtual_address", i);
+
+    set_integer(
+      yr_le32toh(data_dir->Size),
+      pe->object, "data_directories[%i].size", i);
+
+    data_dir++;
+  }
 
   pe_iterate_resources(
       pe,
@@ -1425,9 +1605,31 @@ void pe_parse_header(
         yr_le32toh(section->Misc.VirtualSize),
         pe->object, "sections[%i].virtual_size", i);
 
+    set_integer(
+      yr_le32toh(section->PointerToRelocations),
+      pe->object, "sections[%i].pointer_to_relocations", i);
+
+    set_integer(
+      yr_le32toh(section->PointerToLinenumbers),
+      pe->object, "sections[%i].pointer_to_line_numbers", i);
+
+    set_integer(
+      yr_le32toh(section->NumberOfRelocations),
+      pe->object, "sections[%i].number_of_relocations", i);
+
+    set_integer(
+      yr_le32toh(section->NumberOfLinenumbers),
+      pe->object, "sections[%i].number_of_line_numbers", i);
+
     // This will catch the section with the highest raw offset to help checking
-    // if overlay data is present
-    if (yr_le32toh(section->PointerToRawData) > highest_sec_ofs)
+    // if overlay data is present. If two sections have the same raw pointer
+    // but different raw sizes the largest one is used. An example of this case
+    // is file: cf62bf1815a93e68e6c5189f689286b66c4088b9507cf3ecf835e4ac3f9ededa
+
+    section_end = yr_le32toh(section->PointerToRawData) +
+                  yr_le32toh(section->SizeOfRawData);
+
+    if (section_end > highest_sec_ofs + highest_sec_siz)
     {
       highest_sec_ofs = yr_le32toh(section->PointerToRawData);
       highest_sec_siz = yr_le32toh(section->SizeOfRawData);
@@ -1480,7 +1682,7 @@ define_function(section_index_addr)
   YR_OBJECT* module = module();
   YR_SCAN_CONTEXT* context = scan_context();
 
-  int64_t i;
+  int i;
   int64_t offset;
   int64_t size;
 
@@ -1518,7 +1720,7 @@ define_function(section_index_name)
   char* name = string_argument(1);
 
   int64_t n = get_integer(module, "number_of_sections");
-  int64_t i;
+  int i;
 
   if (is_undefined(module, "number_of_sections"))
     return_integer(UNDEFINED);
@@ -1542,21 +1744,23 @@ define_function(exports)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
-  IMPORT_EXPORT_FUNCTION* exported_func;
+  int i;
 
   // If not a PE, return UNDEFINED.
-
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  exported_func = pe->exported_functions;
+  // If PE, but not exported functions, return false.
+  if (pe->exported_functions == NULL)
+    return_integer(0);
 
-  while (exported_func != NULL)
+  for (i = 0; i < pe->exported_functions->number_of_exports; i++)
   {
-    if (strcasecmp(exported_func->name, function_name->c_string) == 0)
+    if (pe->exported_functions->functions[i].name &&
+        strcasecmp(pe->exported_functions->functions[i].name, function_name->c_string) == 0)
+    {
       return_integer(1);
-
-    exported_func = exported_func->next;
+    }
   }
 
   return_integer(0);
@@ -1570,19 +1774,23 @@ define_function(exports_regexp)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
-  IMPORT_EXPORT_FUNCTION* exported_func;
+  int i;
 
-  if (!pe)
+  // If not a PE, return UNDEFINED.
+  if (pe == NULL)
     return_integer(UNDEFINED);
 
-  exported_func = pe->exported_functions;
+  // If PE, but not exported functions, return false.
+  if (pe->exported_functions == NULL)
+    return_integer(0);
 
-  while (exported_func != NULL)
+  for (i = 0; i < pe->exported_functions->number_of_exports; i++)
   {
-    if (yr_re_match(regex, exported_func->name) != -1)
+    if (pe->exported_functions->functions[i].name &&
+        yr_re_match(scan_context(), regex, pe->exported_functions->functions[i].name) != -1)
+    {
       return_integer(1);
-
-    exported_func = exported_func->next;
+    }
   }
 
   return_integer(0);
@@ -1596,20 +1804,20 @@ define_function(exports_ordinal)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
-  IMPORT_EXPORT_FUNCTION* exported_func;
-
-  if (!pe)
+  // If not a PE, return UNDEFINED.
+  if (pe == NULL)
     return_integer(UNDEFINED);
 
-  exported_func = pe->exported_functions;
+  // If PE, but not exported functions, return false.
+  if (pe->exported_functions == NULL)
+    return_integer(0);
 
-  while (exported_func != NULL)
-  {
-    if (exported_func->ordinal == ordinal)
-      return_integer(1);
+  if (ordinal == 0 || ordinal > pe->exported_functions->number_of_exports)
+    return_integer(0);
 
-    exported_func = exported_func->next;
-  }
+  // Just in case, this should always be true
+  if (pe->exported_functions->functions[ordinal - 1].ordinal == ordinal)
+    return_integer(1);
 
   return_integer(0);
 }
@@ -1633,9 +1841,10 @@ define_function(imphash)
   yr_md5_ctx ctx;
 
   unsigned char digest[YR_MD5_LEN];
-  char digest_ascii[YR_MD5_LEN * 2 + 1];
+  char* digest_ascii;
+
   size_t i;
-  int first = TRUE;
+  bool first = true;
 
   PE* pe = (PE*) module->data;
 
@@ -1644,13 +1853,22 @@ define_function(imphash)
   if (!pe)
     return_string(UNDEFINED);
 
+  // Lookup in cache first.
+  digest_ascii = (char*) yr_hash_table_lookup(
+      pe->hash_table,
+      "imphash",
+      NULL);
+
+  if (digest_ascii != NULL)
+    return_string(digest_ascii);
+
   yr_md5_init(&ctx);
 
   dll = pe->imported_dlls;
 
   while (dll)
   {
-    IMPORT_EXPORT_FUNCTION* func;
+    IMPORT_FUNCTION* func;
 
     size_t dll_name_len;
     char* dll_name;
@@ -1706,7 +1924,7 @@ define_function(imphash)
       yr_free(final_name);
 
       func = func->next;
-      first = FALSE;
+      first = false;
     }
 
     yr_free(dll_name);
@@ -1716,6 +1934,11 @@ define_function(imphash)
 
   yr_md5_final(digest, &ctx);
 
+  digest_ascii = (char*) yr_malloc(YR_MD5_LEN * 2 + 1);
+
+  if (digest_ascii == NULL)
+    return ERROR_INSUFFICIENT_MEMORY;
+
   // Transform the binary digest to ascii
 
   for (i = 0; i < YR_MD5_LEN; i++)
@@ -1724,6 +1947,8 @@ define_function(imphash)
   }
 
   digest_ascii[YR_MD5_LEN * 2] = '\0';
+
+  yr_hash_table_add(pe->hash_table, "imphash", NULL, digest_ascii);
 
   return_string(digest_ascii);
 }
@@ -1750,7 +1975,7 @@ define_function(imports)
   {
     if (strcasecmp(imported_dll->name, dll_name) == 0)
     {
-      IMPORT_EXPORT_FUNCTION* imported_func = imported_dll->functions;
+      IMPORT_FUNCTION* imported_func = imported_dll->functions;
 
       while (imported_func != NULL)
       {
@@ -1787,13 +2012,45 @@ define_function(imports_ordinal)
   {
     if (strcasecmp(imported_dll->name, dll_name) == 0)
     {
-      IMPORT_EXPORT_FUNCTION* imported_func = imported_dll->functions;
+      IMPORT_FUNCTION* imported_func = imported_dll->functions;
 
       while (imported_func != NULL)
       {
         if (imported_func->has_ordinal && imported_func->ordinal == ordinal)
           return_integer(1);
 
+        imported_func = imported_func->next;
+      }
+    }
+
+    imported_dll = imported_dll->next;
+  }
+
+  return_integer(0);
+}
+
+define_function(imports_regex)
+{
+  YR_OBJECT* module = module();
+  PE* pe = (PE*)module->data;
+
+  IMPORTED_DLL* imported_dll;
+
+  if (!pe)
+    return_integer(UNDEFINED);
+
+  imported_dll = pe->imported_dlls;
+
+  while (imported_dll != NULL)
+  {
+    if (yr_re_match(scan_context(), regexp_argument(1), imported_dll->name) > 0)
+    {
+      IMPORT_FUNCTION* imported_func = imported_dll->functions;
+
+      while (imported_func != NULL)
+      {
+        if (yr_re_match(scan_context(), regexp_argument(2), imported_func->name) > 0)
+          return_integer(1);
         imported_func = imported_func->next;
       }
     }
@@ -1837,7 +2094,7 @@ define_function(locale)
   PE* pe = (PE*) module->data;
 
   uint64_t locale = integer_argument(1);
-  int64_t n, i;
+  int n, i;
 
   if (is_undefined(module, "number_of_resources"))
     return_integer(UNDEFINED);
@@ -1867,7 +2124,7 @@ define_function(language)
   PE* pe = (PE*) module->data;
 
   uint64_t language = integer_argument(1);
-  int64_t n, i;
+  int n, i;
 
   if (is_undefined(module, "number_of_resources"))
     return_integer(UNDEFINED);
@@ -1935,7 +2192,7 @@ static uint64_t rich_internal(
 {
   int64_t rich_length;
   int64_t rich_count;
-  int64_t i;
+  int i;
 
   PRICH_SIGNATURE clear_rich_signature;
   SIZED_STRING* rich_string;
@@ -1952,7 +2209,7 @@ static uint64_t rich_internal(
       return UNDEFINED;
 
   if (version == UNDEFINED && toolid == UNDEFINED)
-      return FALSE;
+      return false;
 
   clear_rich_signature = (PRICH_SIGNATURE) rich_string->c_string;
 
@@ -1972,23 +2229,23 @@ static uint64_t rich_internal(
     {
       // check version and toolid
       if (match_version && match_toolid)
-        return TRUE;
+        return true;
     }
     else if (version != UNDEFINED)
     {
       // check only version
       if (match_version)
-        return TRUE;
+        return true;
     }
     else if (toolid != UNDEFINED)
     {
       // check only toolid
       if (match_toolid)
-        return TRUE;
+        return true;
     }
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -2008,8 +2265,8 @@ define_function(rich_version_toolid)
 
 define_function(rich_toolid)
 {
-    return_integer(
-       rich_internal(module(), UNDEFINED, integer_argument(1)));
+  return_integer(
+      rich_internal(module(), UNDEFINED, integer_argument(1)));
 }
 
 
@@ -2152,6 +2409,22 @@ begin_declarations;
   declare_integer("UP_SYSTEM_ONLY");
   declare_integer("BYTES_REVERSED_HI");
 
+  declare_integer("IMAGE_DIRECTORY_ENTRY_EXPORT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_IMPORT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_RESOURCE");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_EXCEPTION");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_SECURITY");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_BASERELOC");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_DEBUG");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_ARCHITECTURE");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_GLOBALPTR");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_TLS");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_IAT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR");
+
   declare_integer("SECTION_CNT_CODE");
   declare_integer("SECTION_CNT_INITIALIZED_DATA");
   declare_integer("SECTION_CNT_UNINITIALIZED_DATA");
@@ -2188,15 +2461,30 @@ begin_declarations;
   declare_integer("RESOURCE_TYPE_HTML");
   declare_integer("RESOURCE_TYPE_MANIFEST");
 
+
+  declare_integer("is_pe");
   declare_integer("machine");
   declare_integer("number_of_sections");
   declare_integer("timestamp");
+  declare_integer("pointer_to_symbol_table");
+  declare_integer("number_of_symbols");
+  declare_integer("size_of_optional_header");
   declare_integer("characteristics");
 
   declare_integer("entry_point");
   declare_integer("image_base");
+  declare_integer("number_of_rva_and_sizes");
 
   declare_string_dictionary("version_info");
+
+  declare_integer("opthdr_magic");
+  declare_integer("size_of_code");
+  declare_integer("size_of_initialized_data");
+  declare_integer("size_of_uninitialized_data");
+  declare_integer("base_of_code");
+  declare_integer("base_of_data");
+  declare_integer("section_alignment");
+  declare_integer("file_alignment");
 
   begin_struct("linker_version");
     declare_integer("major");
@@ -2218,11 +2506,25 @@ begin_declarations;
     declare_integer("minor");
   end_struct("subsystem_version");
 
+  declare_integer("win32_version_value");
+  declare_integer("size_of_image");
+  declare_integer("size_of_headers");
+
   declare_integer("checksum");
   declare_function("calculate_checksum", "", "i", calculate_checksum);
   declare_integer("subsystem");
 
   declare_integer("dll_characteristics");
+  declare_integer("size_of_stack_reserve");
+  declare_integer("size_of_stack_commit");
+  declare_integer("size_of_heap_reserve");
+  declare_integer("size_of_heap_commit");
+  declare_integer("loader_flags");
+
+  begin_struct_array("data_directories");
+    declare_integer("virtual_address");
+    declare_integer("size");
+  end_struct_array("data_directories");
 
   begin_struct_array("sections");
     declare_string("name");
@@ -2231,6 +2533,10 @@ begin_declarations;
     declare_integer("virtual_size");
     declare_integer("raw_data_offset");
     declare_integer("raw_data_size");
+    declare_integer("pointer_to_relocations");
+    declare_integer("pointer_to_line_numbers");
+    declare_integer("number_of_relocations");
+    declare_integer("number_of_line_numbers");
   end_struct_array("sections");
 
   begin_struct("overlay");
@@ -2264,6 +2570,7 @@ begin_declarations;
   declare_function("imports", "ss", "i", imports);
   declare_function("imports", "si", "i", imports_ordinal);
   declare_function("imports", "s", "i", imports_dll);
+  declare_function("imports", "rr", "i", imports_regex);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
   declare_function("is_dll", "", "i", is_dll);
@@ -2295,6 +2602,7 @@ begin_declarations;
 
   #if defined(HAVE_LIBCRYPTO)
   begin_struct_array("signatures");
+    declare_string("thumbprint");
     declare_string("issuer");
     declare_string("subject");
     declare_integer("version");
@@ -2519,6 +2827,52 @@ int module_load(
       "BYTES_REVERSED_HI");
 
   set_integer(
+      IMAGE_DIRECTORY_ENTRY_EXPORT, module_object,
+      "IMAGE_DIRECTORY_ENTRY_EXPORT");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_IMPORT, module_object,
+      "IMAGE_DIRECTORY_ENTRY_IMPORT");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_RESOURCE, module_object,
+      "IMAGE_DIRECTORY_ENTRY_RESOURCE");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_EXCEPTION, module_object,
+      "IMAGE_DIRECTORY_ENTRY_EXCEPTION");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_SECURITY, module_object,
+      "IMAGE_DIRECTORY_ENTRY_SECURITY");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_BASERELOC, module_object,
+      "IMAGE_DIRECTORY_ENTRY_BASERELOC");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_DEBUG, module_object,
+      "IMAGE_DIRECTORY_ENTRY_DEBUG");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_ARCHITECTURE, module_object,
+      "IMAGE_DIRECTORY_ENTRY_ARCHITECTURE");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_GLOBALPTR, module_object,
+      "IMAGE_DIRECTORY_ENTRY_GLOBALPTR");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_TLS, module_object,
+      "IMAGE_DIRECTORY_ENTRY_TLS");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, module_object,
+      "IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT, module_object,
+      "IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_IAT, module_object,
+      "IMAGE_DIRECTORY_ENTRY_IAT");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT, module_object,
+      "IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT");
+  set_integer(
+      IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, module_object,
+      "IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR");
+
+  set_integer(
       IMAGE_SCN_CNT_CODE, module_object,
       "SECTION_CNT_CODE");
   set_integer(
@@ -2621,10 +2975,11 @@ int module_load(
   set_integer(
       RESOURCE_TYPE_MANIFEST, module_object,
       "RESOURCE_TYPE_MANIFEST");
+  set_integer(0, module_object, "is_pe");
 
   foreach_memory_block(iterator, block)
   {
-	  block_data = block->fetch_data(block);
+    block_data = block->fetch_data(block);
 
     if (block_data == NULL)
       continue;
@@ -2642,6 +2997,10 @@ int module_load(
 
         if (pe == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
+
+        FAIL_ON_ERROR_WITH_CLEANUP(
+            yr_hash_table_create(17, &pe->hash_table),
+            yr_free(pe));
 
         pe->data = block_data;
         pe->data_size = block->size;
@@ -2675,13 +3034,19 @@ int module_unload(
 {
   IMPORTED_DLL* dll = NULL;
   IMPORTED_DLL* next_dll = NULL;
-  IMPORT_EXPORT_FUNCTION* func = NULL;
-  IMPORT_EXPORT_FUNCTION* next_func = NULL;
+  IMPORT_FUNCTION* func = NULL;
+  IMPORT_FUNCTION* next_func = NULL;
+  int i = 0;
 
   PE* pe = (PE *) module_object->data;
 
   if (pe == NULL)
     return ERROR_SUCCESS;
+
+  if (pe->hash_table != NULL)
+    yr_hash_table_destroy(
+        pe->hash_table,
+        (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_free);
 
   dll = pe->imported_dlls;
 
@@ -2707,14 +3072,16 @@ int module_unload(
     dll = next_dll;
   }
 
-  func = pe->exported_functions;
-
-  while (func)
+  if (pe->exported_functions)
   {
-    yr_free(func->name);
-    next_func = func->next;
-    yr_free(func);
-    func = next_func;
+    for (i = 0; i < pe->exported_functions->number_of_exports; i++)
+    {
+      if (pe->exported_functions->functions[i].name)
+        yr_free(pe->exported_functions->functions[i].name);
+    }
+
+    yr_free(pe->exported_functions->functions);
+    yr_free(pe->exported_functions);
   }
 
   yr_free(pe);

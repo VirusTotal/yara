@@ -8,13 +8,15 @@ Welcome to YARA's documentation!
 
 YARA is a tool aimed at (but not limited to) helping malware researchers to
 identify and classify malware samples. With YARA you can create descriptions of malware families (or whatever you want to describe) based on textual or binary patterns. Each description, a.k.a rule, consists of a set of strings and a
-boolean expression which determine its logic. Let's see an example::
+boolean expression which determine its logic. Let's see an example:
+
+.. code-block:: yara
 
     rule silent_banker : banker
     {
         meta:
             description = "This is just an example"
-            thread_level = 3
+            threat_level = 3
             in_the_wild = true
         strings:
             $a = {6A 40 68 00 30 00 00 6A 14 8D 91}

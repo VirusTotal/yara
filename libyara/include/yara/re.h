@@ -32,6 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ctype.h>
 
+#include <yara/utils.h>
+#include <yara/types.h>
 #include <yara/arena.h>
 #include <yara/sizedstr.h>
 
@@ -59,7 +61,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define RE_OPCODE_ANY                   0xA0
-#define RE_OPCODE_ANY_EXCEPT_NEW_LINE   0xA1
 #define RE_OPCODE_LITERAL               0xA2
 #define RE_OPCODE_MASKED_LITERAL        0xA4
 #define RE_OPCODE_CLASS                 0xA5
@@ -96,81 +97,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_FLAGS_DOT_ALL                0x80
 #define RE_FLAGS_GREEDY                0x400
 #define RE_FLAGS_UNGREEDY              0x800
-
-
-typedef struct RE RE;
-typedef struct RE_AST RE_AST;
-typedef struct RE_NODE RE_NODE;
-typedef struct RE_CLASS RE_CLASS;
-typedef struct RE_ERROR RE_ERROR;
-
-typedef uint8_t RE_SPLIT_ID_TYPE;
-
-
-struct RE_NODE
-{
-  int type;
-
-  union {
-    int value;
-    int count;
-    int start;
-  };
-
-  union {
-    int mask;
-    int end;
-  };
-
-  int greedy;
-
-  RE_CLASS* re_class;
-
-  RE_NODE* left;
-  RE_NODE* right;
-
-  uint8_t* forward_code;
-  uint8_t* backward_code;
-};
-
-
-struct RE_CLASS
-{
-  uint8_t negated;
-  uint8_t bitmap[32];
-};
-
-
-struct RE_AST
-{
-  uint32_t flags;
-  uint16_t levels;
-  RE_NODE* root_node;
-};
-
-
-// Disable warning due to zero length array in Microsoft's compiler
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4200)
-#endif
-
-struct RE
-{
-  uint32_t flags;
-  uint8_t code[0];
-};
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-
-struct RE_ERROR
-{
-  char message[384];
-};
 
 
 typedef int RE_MATCH_CALLBACK_FUNC(
@@ -212,16 +138,25 @@ int yr_re_ast_emit_code(
 
 
 RE_NODE* yr_re_node_create(
-    int type,
-    RE_NODE* left,
-    RE_NODE* right);
+    int type);
 
 
 void yr_re_node_destroy(
     RE_NODE* node);
 
 
+void yr_re_node_append_child(
+    RE_NODE* node,
+    RE_NODE* child);
+
+
+void yr_re_node_prepend_child(
+    RE_NODE* node,
+    RE_NODE* child);
+
+
 int yr_re_exec(
+    YR_SCAN_CONTEXT* context,
     const uint8_t* code,
     const uint8_t* input_data,
     size_t input_forwards_size,
@@ -233,6 +168,7 @@ int yr_re_exec(
 
 
 int yr_re_fast_exec(
+    YR_SCAN_CONTEXT* context,
     const uint8_t* code,
     const uint8_t* input_data,
     size_t input_forwards_size,
@@ -264,16 +200,9 @@ int yr_re_compile(
 
 
 int yr_re_match(
+    YR_SCAN_CONTEXT* context,
     RE* re,
     const char* target);
 
-
-int yr_re_initialize(void);
-
-
-int yr_re_finalize(void);
-
-
-int yr_re_finalize_thread(void);
 
 #endif

@@ -78,9 +78,11 @@ If includes are used, a python callback can be set to define a custom source for
 the imported files (by default they are read from disk). This callback function
 is set through the ``include_callback`` optional parameter.
 It receives the following parameters:
- *``requested_filename``: file requested with 'include'
- *``filename``: file containing the 'include' directive if applicable, else None
- *``namespace``: namespace
+
+ * ``requested_filename``: file requested with 'include'
+ * ``filename``: file containing the 'include' directive if applicable, else None
+ * ``namespace``: namespace
+
 And returns the requested rules sources as a single string.
 
 .. code-block:: python
@@ -240,10 +242,9 @@ The *matches* field indicates if the rule matches the data or not. The
 
   (<offset>, <string identifier>, <string data>)
 
-The ``match`` method returns a list of instances of the class ``Match``.
+The ``match`` method returns a list of instances of the class :py:class:`yara.Match`.
 Instances of this class have the same attributes as the dictionary passed to the
 callback function.
-
 
 You can also specify a module callback function when invoking the ``match``
 method.  The provided function will be called for every imported module that
@@ -264,6 +265,26 @@ Here is an example:
   matches = rules.match('/foo/bar/my_file', modules_callback=modules_callback)
 
 The passed dictionary will contain the information from the module.
+
+
+You may also find that the default sizes for the stack for the matching engine in
+yara or the default size for the maximum number of strings per rule is too low. In
+the C libyara API, you can modify these using the ``YR_CONFIG_STACK_SIZE`` and
+``YR_CONFIG_MAX_STRINGS_PER_RULE`` variables via the ``yr_set_configuration``
+function in libyara. The command-line tool exposes these as the ``--stack-size``
+(``-k``) and ``--max-strings-per-rule`` command-line arguments. In order to set
+these values via the Python API, you can use ``yara.set_config`` with either or
+both ``stack_size`` and ``max_strings_per_rule`` provided as kwargs. At the time
+of this writing, the default stack size was ``16384`` and the default maximum
+strings per rule was ``10000``.
+
+Here are a few example calls:
+
+.. code-block:: python
+
+  yara.set_config(stack_size=65536)
+  yara.set_config(max_strings_per_rule=50000, stack_size=65536)
+  yara.set_config(max_strings_per_rule=20000)
 
 
 Reference
@@ -309,12 +330,29 @@ Reference
   :rtype: :py:class:`yara.Rules`
   :raises: **YaraError**: If an error occurred while loading the file.
 
+.. py:function:: yara.set_config(...)
+
+  Set the configuration variables accessible through the yr_set_configuration
+  API.
+
+  Provide either *stack_size* or *max_strings_per_rule*. These kwargs take
+  unsigned integer values as input and will assign the provided value to the
+  yr_set_configuration(...) variables ``YR_CONFIG_STACK_SIZE`` and
+  ``YR_CONFIG_MAX_STRINGS_PER_RULE``, respectively.
+
+  :param int stack_size: Stack size to use for ``YR_CONFIG_STACK_SIZE``
+  :param int max_strings_per_rule: Maximum number of strings to allow per
+    yara rule. Will be mapped to ``YR_CONFIG_MAX_STRINGS_PER_RULE``.
+  :return: None
+  :rtype: **NoneType**
+  :raises: **YaraError**: If an error occurred.
+
 .. py:class:: Rules
 
-  Instances of this class are returned by :py:func:`yara.compile`  and
-  represents a set of compiled rules.
+  Instances of this class are returned by :py:func:`yara.compile` and represents
+  a set of compiled rules.
 
-  .. py:method:: match(filepath, pid, data, externals=None, callback=None, fast=False, timeout=None, modules_data=None, modules_callback=None)
+  .. py:method:: match(filepath, pid, data, externals=None, callback=None, fast=False, timeout=None, modules_data=None, modules_callback=None, which_callbacks=CALLBACK_ALL)
 
     Scan a file, process memory or data string.
 
@@ -334,6 +372,9 @@ Reference
       are module names and values are *bytes* objects containing the additional
       data.
     :param function modules_callback: Callback function invoked for each module.
+    :param int which_callbacks: An integer that indicates in which cases the
+      callback function must be called. Possible values are ``yara.CALLBACK_ALL``,
+      ``yara.CALLBACK_MATCHES`` and ``yara.CALLBACK_NON_MATCHES``.
     :raises YaraTimeoutError: If the timeout was reached.
     :raises YaraError: If an error occurred during the scan.
 
@@ -346,3 +387,28 @@ Reference
     :param str filepath: Path to the file.
     :param file-object file: A file object supporting the ``write`` method.
     :raises: **YaraError**: If an error occurred while saving the file.
+
+.. py:class:: Match
+
+  Objects returned by :py:func:`yara.match`, representing a match.
+
+  .. py:attribute:: rule
+
+    Name of the matching rule.
+
+  .. py:attribute:: namespace
+
+    Namespace associated to the matching rule.
+
+  .. py:attribute:: tags
+
+    Array of strings containig the tags associated to the matching rule.
+
+  .. py:attribute:: meta
+
+    Dictionary containing metadata associated to the matching rule.
+
+  .. py:attribute:: strings
+
+    List of tuples containing information about the matching strings. Each
+    tuple has the form: `(<offset>, <string identifier>, <string data>)`.
