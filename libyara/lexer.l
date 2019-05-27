@@ -905,6 +905,10 @@ int yr_lex_parse_rules_fd(
   size_t file_size;
   void* buffer;
 
+  #if defined(_WIN32) || defined(__CYGWIN__)
+  DWORD bytes_read;
+  #endif
+
   compiler->errors = 0;
 
   if (setjmp(compiler->error_recovery) != 0)
@@ -933,7 +937,7 @@ int yr_lex_parse_rules_fd(
   }
 
   #if defined(_WIN32) || defined(__CYGWIN__)
-  if (!ReadFile(rules_fd, buffer, file_size, NULL, NULL))
+  if (!ReadFile(rules_fd, buffer, file_size, &bytes_read, NULL))
   #else
   if (read(rules_fd, buffer, file_size) != file_size)
   #endif
