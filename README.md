@@ -67,6 +67,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Cyber Triage](http://www.cybertriage.com)
 * [Cybereason](https://www.cybereason.com)
 * [Digita Security](https://digitasecurity.com/product/uxprotect)
+* [Dragos Platform](https://dragos.com/platform/)
 * [Dtex Systems](https://dtexsystems.com)
 * [ESET](https://www.eset.com)
 * [ESTsecurity](https://www.estsecurity.com)
