@@ -1104,8 +1104,11 @@ static EXPORT_FUNCTIONS* pe_parse_exports(
   return exported_functions;
 }
 
-
-#if defined(HAVE_LIBCRYPTO)
+// BoringSSL (https://boringssl.googlesource.com/boringssl/) doesn't support
+// some features used in pe_parse_certificates, if you are using BoringSSL
+// instead of OpenSSL you should define BORINGSSL for YARA to compile properly,
+// but you won't have signature-related features in the PE module.
+#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
 
 static void pe_parse_certificates(
     PE* pe)
@@ -1187,7 +1190,8 @@ static void pe_parse_certificates(
     }
 
     cert_bio = BIO_new_mem_buf(
-        win_cert->Certificate, yr_le32toh(win_cert->Length) - WIN_CERTIFICATE_HEADER_SIZE);
+        win_cert->Certificate,
+        yr_le32toh(win_cert->Length) - WIN_CERTIFICATE_HEADER_SIZE);
 
     if (!cert_bio)
       break;
@@ -2600,7 +2604,7 @@ begin_declarations;
 
   declare_integer("number_of_resources");
 
-  #if defined(HAVE_LIBCRYPTO)
+  #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
   begin_struct_array("signatures");
     declare_string("thumbprint");
     declare_string("issuer");
@@ -3013,7 +3017,7 @@ int module_load(
         pe_parse_header(pe, block->base, context->flags);
         pe_parse_rich_signature(pe, block->base);
 
-        #if defined(HAVE_LIBCRYPTO)
+        #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
         pe_parse_certificates(pe);
         #endif
 
