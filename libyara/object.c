@@ -1156,7 +1156,11 @@ YR_API void yr_object_print_data(
         {
           char c = object->value.ss->c_string[l];
 
-          if (isprint((unsigned char) c))
+          if ((unsigned char) c == '\\')
+            printf("\\\\");
+          else if ((unsigned char) c == '\"')
+            printf("\\\"");
+          else if (isprint((unsigned char) c))
             printf("%c", c);
           else
             printf("\\x%02x", (unsigned char) c);
