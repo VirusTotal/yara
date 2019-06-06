@@ -56,7 +56,11 @@ YR_API int yr_process_open_iterator(
   context->current_block.fetch_data = yr_process_fetch_memory_block_data;
   context->proc_info = NULL;
 
-  return _yr_process_attach(pid, context);
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      _yr_process_attach(pid, context),
+      yr_free(context));
+
+  return ERROR_SUCCESS;
 }
 
 
