@@ -1,0 +1,165 @@
+# Copyright (c) 2019. The YARA Authors. All Rights Reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+# list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation and/or
+# other materials provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its contributors
+# may be used to endorse or promote products derived from this software without
+# specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+cc_library(
+    name = "blob",
+    hdrs = ["blob.h"],
+)
+
+cc_library(
+    name = "util",
+    srcs = ["util.c"],
+    textual_hdrs = ["util.h"],
+    deps = ["@//:libyara"],
+)
+
+cc_test(
+    name = "test_alignment",
+    srcs = ["test-alignment.c"],
+    deps = ["@//:libyara"],
+)
+
+cc_test(
+    name = "test_atoms",
+    srcs = ["test-atoms.c"],
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
+    name = "test_rules",
+    srcs = ["test-rules.c"],
+    data = [
+        "data/baz.yar",
+        "data/foo.yar",
+        "data/include/bar.yar",
+        "data/xor.out",
+        "data/xornocase.out",
+        "data/xorwide.out",
+    ],
+    deps = [
+        ":blob",
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
+    name = "test_pe",
+    srcs = ["test-pe.c"],
+    data = [
+        "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885",
+        "data/tiny",
+        "data/tiny-idata-51ff",
+        "data/tiny-idata-5200",
+        "data/tiny-overlay",
+    ],
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
+    name = "test_elf",
+    srcs = ["test-elf.c"],
+    deps = [
+        ":blob",
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
+    name = "test_api",
+    srcs = ["test-api.c"],
+    data = ["data/baz.yar"],
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
+    name = "test_bitmask",
+    srcs = ["test-bitmask.c"],
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
+    name = "test_math",
+    srcs = ["test-math.c"],
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
+    name = "test_stack",
+    srcs = ["test-stack.c"],
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+# This test fails when running under ASAN
+cc_test(
+    name = "test_exception",
+    srcs = ["test-exception.c"],
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
+    name = "test_macho",
+    srcs = ["test-macho.c"],
+    data = ["data/tiny-universal"],
+    deps = [
+        ":blob",
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
+    name = "test_dex",
+    srcs = ["test-dex.c"],
+    deps = [
+        ":blob",
+        ":util",
+        "@//:libyara",
+    ],
+)
