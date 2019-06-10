@@ -64,3 +64,11 @@ of your file and create signatures based on those hashes.
     Returns a 32-bit checksum for the given string. The checksum is just the
     sum of all the bytes in the string (unsigned).
 
+.. c:function:: crc32(offset, size)
+
+    Returns a crc32 checksum for the *size* bytes starting at *offset*.
+
+.. c:function:: crc32(string)
+
+    Returns a crc32 checksum for the given string.
+
