@@ -775,8 +775,8 @@ void dex_parse(
         "string_ids[%i].offset", i);
 
     set_integer(
-        yr_le32toh(string_id_item->string_data_offset), dex->object,
-        "string_ids[%i].size", value);
+        value, dex->object,
+        "string_ids[%i].size", i);
 
     set_sized_string(
         (const char*) ((dex->data + yr_le32toh(string_id_item->string_data_offset) + 1)),
