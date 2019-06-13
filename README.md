@@ -61,6 +61,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [BinaryAlert](https://github.com/airbnb/binaryalert)
 * [Blue Coat](http://www.bluecoat.com/products/malware-analysis-appliance)
 * [Blueliv](http://www.blueliv.com)
+* [Cofense](https://cofense.com)
 * [Conix](http://www.conix.fr)
 * [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
 * [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
@@ -102,6 +103,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [ReversingLabs](http://reversinglabs.com)
 * [root9B](https://www.root9b.com)
 * [RSA ECAT](http://www.emc.com/security/rsa-ecat.htm)
+* [Scanii](https://scanii.com)
 * [SpamStopsHere](https://www.spamstopshere.com)
 * [stoQ](http://stoq.punchcyber.com)
 * [Symantec](http://www.symantec.com)
@@ -118,6 +120,5 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Websense](http://www.websense.com)
 * [x64dbg](http://x64dbg.com)
 * [YALIH](https://github.com/Masood-M/YALIH)
-* [Scanii](https://scanii.com)
 
 Are you using it? Want to see your site listed here?
