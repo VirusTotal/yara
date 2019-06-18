@@ -1860,6 +1860,10 @@ static void test_hash_module()
             and \
           hash.sha256(1, filesize) == \
             \"aaaaf2863e043b9df604158ad5c16ff1adaf3fd7e9fcea5dcb322b6762b3b59a\" \
+            and \
+          hash.crc32(0, filesize) == 0x8587d865 \
+            and \
+          hash.crc32(\"TEST STRING\") == 0x51f9be31 \
       }",
       blob);
 
