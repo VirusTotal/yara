@@ -93,6 +93,9 @@ test-version
 test-version.log
 test-version.trs
 
+# Bazel
+bazel-*
+
 # Visual Studio files
 Release/
 Debug/

@@ -520,7 +520,10 @@ YR_API int yr_rules_get_stats(
   }
 
   if (c == 0)
+  {
+    yr_free(match_list_lengths);
     return ERROR_SUCCESS;
+  }
 
   // sort match_list_lengths in increasing order for computing percentiles.
   qsort(match_list_lengths, c, sizeof(match_list_lengths[0]), _uint32_cmp);

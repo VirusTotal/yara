@@ -264,7 +264,8 @@ YR_API void yr_compiler_destroy(
   yr_arena_destroy(compiler->automaton_arena);
   yr_arena_destroy(compiler->matches_arena);
 
-  yr_ac_automaton_destroy(compiler->automaton);
+  if (compiler->automaton != NULL)
+    yr_ac_automaton_destroy(compiler->automaton);
 
   yr_hash_table_destroy(
       compiler->rules_table,
@@ -397,6 +398,12 @@ YR_API int yr_compiler_load_atom_quality_table(
   fseek(fh, 0L, SEEK_END);
   file_size = ftell(fh);
   fseek(fh, 0L, SEEK_SET);
+
+  if (file_size == -1L)
+  {
+    fclose(fh);
+    return ERROR_COULD_NOT_READ_FILE;
+  }
 
   table = yr_malloc(file_size);
 

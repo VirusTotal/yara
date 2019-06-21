@@ -124,28 +124,28 @@ static void test_comparison_operators()
       "rule test { condition: 0.5 <= 1}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: 1.0 <= 1}", NULL);
+      "rule test { condition: 1.0 <= 1}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"abc\" == \"abc\"}", NULL);
+      "rule test { condition: \"abc\" == \"abc\"}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"abc\" <= \"abc\"}", NULL);
+      "rule test { condition: \"abc\" <= \"abc\"}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"abc\" >= \"abc\"}", NULL);
+      "rule test { condition: \"abc\" >= \"abc\"}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"ab\" < \"abc\"}", NULL);
+      "rule test { condition: \"ab\" < \"abc\"}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"abc\" > \"ab\"}", NULL);
+      "rule test { condition: \"abc\" > \"ab\"}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"abc\" < \"abd\"}", NULL);
+      "rule test { condition: \"abc\" < \"abd\"}", NULL);
 
   assert_true_rule(
-      "rule rest { condition: \"abd\" > \"abc\"}", NULL);
+      "rule test { condition: \"abd\" > \"abc\"}", NULL);
 
   assert_false_rule(
       "rule test { condition: 1 != 1}", NULL);
@@ -514,7 +514,7 @@ static void test_strings()
       strings:\n\
         $a = \"This program cannot\" xor\n\
       condition:\n\
-        #a == 255\n\
+        #a == 256\n\
     }", "tests/data/xor.out");
 
   assert_true_rule_file(
@@ -528,7 +528,39 @@ static void test_strings()
   assert_true_rule_file(
     "rule test {\n\
       strings:\n\
+        $a = \"This program cannot\" xor ascii wide\n\
+      condition:\n\
+        #a == 256\n\
+    }", "tests/data/xor.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
         $a = \"This program cannot\" xor wide\n\
+      condition:\n\
+        #a == 0\n\
+    }", "tests/data/xor.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor wide\n\
+      condition:\n\
+        #a == 256\n\
+    }", "tests/data/xorwide.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor ascii\n\
+      condition:\n\
+        #a == 0\n\
+    }", "tests/data/xorwide.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor wide ascii\n\
       condition:\n\
         #a == 256\n\
     }", "tests/data/xorwide.out");
@@ -623,26 +655,6 @@ static void test_hex_strings()
   assert_true_rule(
       "rule test { \
         strings: $a = { 31 32 [-] 38 39 } \
-        condition: $a }",
-      "1234567890");
-
-  assert_true_rule(
-      "rule test { \
-        strings: $a = { 31 32 [-] // Inline comment\n\r \
-          38 39 } \
-        condition: $a }",
-      "1234567890");
-
-  assert_true_rule(
-      "rule test { \
-        strings: $a = { 31 32 /* Inline comment */ [-] 38 39 } \
-        condition: $a }",
-      "1234567890");
-
-  assert_true_rule(
-      "rule test { \
-        strings: $a = { 31 32 /* Inline multi-line\n\r \
-                                 comment */ [-] 38 39 } \
         condition: $a }",
       "1234567890");
 
@@ -982,6 +994,27 @@ void test_for()
           for all i in (1..#a) : (@a[i] == 5) \
       }",
       "mississippi");
+
+  assert_true_rule(
+      "rule test { \
+        condition: \
+          for any i in (1, 2, 3) : (i <= 1) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { \
+        condition: \
+          for all i in (1, 2, 3) : (i >= 1) \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { \
+        condition: \
+          for all i in (1, 0) : (i != 1) \
+      }",
+      NULL);
 }
 
 
@@ -1201,6 +1234,10 @@ void test_re()
   assert_true_regexp("ab{1,3}?", "abbbbb", "ab");
   assert_true_regexp("ab{2,2}?", "abbbbb", "abb");
   assert_true_regexp("ab{2,3}?", "abbbbb", "abb");
+  assert_true_regexp("(a{2,3}b){2,3}", "aabaaabaab", "aabaaabaab");
+  assert_true_regexp("(a{2,3}?b){2,3}?", "aabaaabaab", "aabaaab");
+  assert_false_regexp("(a{4,5}b){4,5}", "aaaabaaaabaaaaab");
+  assert_true_regexp("(a{4,5}b){4,5}", "aaaabaaaabaaaaabaaaaab", "aaaabaaaabaaaaabaaaaab");
   assert_true_regexp(".(abc){0,1}", "xabcabcabcabc", "xabc");
   assert_true_regexp(".(abc){0,2}", "xabcabcabcabc", "xabcabc");
   assert_true_regexp("x{1,2}abcd", "xxxxabcd", "xxabcd");
@@ -1250,12 +1287,16 @@ void test_re()
   assert_true_regexp("a\\sb", "a\nb", "a\nb");
   assert_true_regexp("a\\sb", "a\vb", "a\vb");
   assert_true_regexp("a\\sb", "a\fb", "a\fb");
+  assert_true_regexp("a[\\s]*b", "a \t\r\n\v\fb", "a \t\r\n\v\fb");
+  assert_true_regexp("a[^\\S]*b", "a \t\r\n\v\fb", "a \t\r\n\v\fb");
   assert_false_regexp("a\\Sb", "a b");
   assert_false_regexp("a\\Sb", "a\tb");
   assert_false_regexp("a\\Sb", "a\rb");
   assert_false_regexp("a\\Sb", "a\nb");
   assert_false_regexp("a\\Sb", "a\vb");
   assert_false_regexp("a\\Sb", "a\fb");
+  assert_true_regexp("foo([^\\s]*)", "foobar\n", "foobar");
+  assert_true_regexp("foo([^\\s]*)", "foobar\r\n", "foobar");
   assert_true_regexp("\\n\\r\\t\\f\\a", "\n\r\t\f\a", "\n\r\t\f\a");
   assert_true_regexp("[\\n][\\r][\\t][\\f][\\a]", "\n\r\t\f\a", "\n\r\t\f\a");
   assert_true_regexp("\\x01\\x02\\x03", "\x01\x02\x03", "\x01\x02\x03");
@@ -1355,6 +1396,13 @@ void test_re()
   // Test case for issue #682
   assert_true_regexp("(a|\\b)[a]{1,}", "aaaa", "aaaa");
 
+  // Test cases for issue #1018
+  assert_true_regexp("(ba{4}){4,10}", "baaaabaaaabaaaabaaaabaaaa", "baaaabaaaabaaaabaaaabaaaa");
+  assert_true_regexp("(ba{2}a{2}){5,10}", "baaaabaaaabaaaabaaaabaaaa", "baaaabaaaabaaaabaaaabaaaa");
+  assert_true_regexp("(ba{3}){4,10}", "baaabaaabaaabaaabaaa", "baaabaaabaaabaaabaaa");
+  assert_true_regexp("(ba{4}){5,10}", "baaaabaaaabaaaabaaaabaaaa", "baaaabaaaabaaaabaaaabaaaa");
+  assert_false_regexp("(ba{4}){4,10}", "baaaabaaaabaaaa");
+
   // Test for integer overflow in repeat interval
   assert_regexp_syntax_error("a{2977952116}");
 
@@ -1414,6 +1462,11 @@ void test_re()
   assert_true_rule(
        "rule test { strings: $a = /abc[^F]/ condition: $a }",
        "abcd");
+
+  // Test case for issue #1006
+  assert_false_rule_blob(
+       "rule test { strings: $a = \" cmd.exe \" nocase wide condition: $a }",
+       ISSUE_1006);
 }
 
 
@@ -1472,6 +1525,45 @@ static void test_comments()
              true\n\
       }",
       NULL);
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [-] // Inline comment\n\r \
+          38 39 } \
+        condition: !a == 9 }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 /* Inline comment */ [-] 38 39 } \
+        condition: !a == 9 }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 /* Inline comment */ [-] 38 39 } \
+                 $b = { 31 32 /* Inline comment */ [-] 35 36 } \
+        condition: (!a == 9) and (!b == 6) }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 /* Inline comment with *asterisks* */ [-] 38 39 } \
+        condition: !a == 9}",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 /* Inline multi-line\n\r \
+                                 comment */ [-] 38 39 } \
+        condition: !a == 9 }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { /*Some*/ 31 /*interleaved*/ [-] /*comments*/ 38 39 } \
+        condition: !a == 9 }",
+      "1234567890");
 }
 
 static void test_matches_operator()
@@ -1768,6 +1860,10 @@ static void test_hash_module()
             and \
           hash.sha256(1, filesize) == \
             \"aaaaf2863e043b9df604158ad5c16ff1adaf3fd7e9fcea5dcb322b6762b3b59a\" \
+            and \
+          hash.crc32(0, filesize) == 0x8587d865 \
+            and \
+          hash.crc32(\"TEST STRING\") == 0x51f9be31 \
       }",
       blob);
 
@@ -1861,6 +1957,7 @@ void test_process_scan()
         all of them\
     }", &rules) == ERROR_SUCCESS);
   rc1 = yr_rules_scan_proc(rules, pid, 0, count_matches, &matches, 0);
+  yr_rules_destroy(rules);
   kill(pid, SIGALRM);
 
   rc2 = waitpid(pid, &status, 0);

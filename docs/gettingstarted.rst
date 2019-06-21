@@ -12,8 +12,8 @@ Compiling and installing YARA
 
 Download the source tarball and get prepared for compiling it::
 
-    tar -zxf yara-3.8.1.tar.gz
-    cd yara-3.8.1
+    tar -zxf yara-3.10.0.tar.gz
+    cd yara-3.10.0
     ./bootstrap.sh
 
 Make sure you have ``automake``, ``libtool``, ``make``  and ``gcc`` installed
@@ -115,7 +115,7 @@ command-line tool to scan some file:
 
 .. code-block:: sh
 
-    echo "rule dummy { condition: true }" > my_first_rule
+    echo rule dummy { condition: true } > my_first_rule
     yara my_first_rule my_first_rule
 
 Don't get confused by the repeated ``my_first_rule`` in the arguments to

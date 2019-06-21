@@ -588,7 +588,7 @@ int yr_parser_reduce_string_declaration(
     {
       yywarning(
           yyscanner,
-          "%s contains .* or .+, consider using .{N} or .{1,N} with a reasonable value for N",
+          "%s contains .* or .+, consider using .{,N} or .{1,N} with a reasonable value for N",
           identifier);
     }
 

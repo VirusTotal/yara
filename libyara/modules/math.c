@@ -39,8 +39,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // log2 is not defined by math.h in VC++
 
-#ifdef _MSC_VER
-double log2(double n)
+#if defined(_MSC_VER) && _MSC_VER < 1800
+static double log2(double n)
 {
   return log(n) / log(2.0);
 }

@@ -704,9 +704,13 @@ u?int(8|16|32)(be)? {
 }
 
 
-\{(({hexdigit}|[ \-|\?\[\]\(\)\n\r\t]|\/\*[^*]*\*\/)+|\/\/.*)+\}  {
+\{(({hexdigit}|[ \-|\?\[\]\(\)\n\r\t]|\/\*[^*]*\*+([^*/][^*]*\*+)*\/)+|\/\/.*)+\}  {
   // Match hex-digits with whitespace or comments. The latter are stripped
   // out by hex_lexer.l
+  // TODO(vmalvarez): Integrate the hex string lexer and parser into this one,
+  // by having a single lexer/parser instead of two different ones we can avoid
+  // complex regular expressions like the one above, which is actually trying to
+  // do some parsing in the lexer.
 
   alloc_sized_string(s, strlen(yytext));
 
@@ -901,6 +905,10 @@ int yr_lex_parse_rules_fd(
   size_t file_size;
   void* buffer;
 
+  #if defined(_WIN32) || defined(__CYGWIN__)
+  DWORD bytes_read;
+  #endif
+
   compiler->errors = 0;
 
   if (setjmp(compiler->error_recovery) != 0)
@@ -929,7 +937,7 @@ int yr_lex_parse_rules_fd(
   }
 
   #if defined(_WIN32) || defined(__CYGWIN__)
-  if (!ReadFile(rules_fd, buffer, file_size, NULL, NULL))
+  if (!ReadFile(rules_fd, buffer, file_size, &bytes_read, NULL))
   #else
   if (read(rules_fd, buffer, file_size) != file_size)
   #endif
@@ -947,7 +955,7 @@ int yr_lex_parse_rules_fd(
   #endif
 
   yyset_extra(compiler, yyscanner);
-  yy_scan_bytes((const char*) buffer, file_size, yyscanner);
+  yy_scan_bytes((const char*) buffer, (int) file_size, yyscanner);
   yyparse(yyscanner, compiler);
   yylex_destroy(yyscanner);
 

@@ -88,7 +88,6 @@ int yr_object_create(
   if (obj == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  obj->canary = yr_canary;
   obj->type = type;
   obj->identifier = yr_strdup(identifier);
   obj->parent = parent;
@@ -139,6 +138,9 @@ int yr_object_create(
            parent->type == OBJECT_TYPE_DICTIONARY ||
            parent->type == OBJECT_TYPE_FUNCTION);
 
+    // Objects with a parent take the canary from it.
+    obj->canary = parent->canary;
+
     switch(parent->type)
     {
       case OBJECT_TYPE_STRUCTURE:
@@ -171,6 +173,14 @@ int yr_object_create(
 }
 
 
+void yr_object_set_canary(
+    YR_OBJECT* object,
+    int canary)
+{
+  object->canary = canary;
+}
+
+
 int yr_object_function_create(
     const char* identifier,
     const char* arguments_fmt,
@@ -185,6 +195,9 @@ int yr_object_function_create(
 
   int8_t return_type;
   int i;
+
+  // The parent of a function must be a structure.
+  assert(parent != NULL && parent->type == OBJECT_TYPE_STRUCTURE);
 
   switch (*return_fmt)
   {
@@ -201,22 +214,13 @@ int yr_object_function_create(
       return ERROR_INVALID_FORMAT;
   }
 
-  if (parent != NULL)
-  {
-    // The parent of a function must be a structure.
+  // Try to find if the structure already has a function
+  // with that name. In that case this is a function overload.
+  f = object_as_function(yr_object_lookup_field(parent, identifier));
 
-    assert(parent->type == OBJECT_TYPE_STRUCTURE);
-
-    // Try to find if the structure already has a function
-    // with that name. In that case this is a function overload.
-
-    f = object_as_function(yr_object_lookup_field(parent, identifier));
-
-    // Overloaded functions must have the same return type.
-
-    if (f != NULL && return_type != f->return_obj->type)
-      return ERROR_WRONG_RETURN_TYPE;
-  }
+  // Overloaded functions must have the same return type.
+  if (f != NULL && return_type != f->return_obj->type)
+    return ERROR_WRONG_RETURN_TYPE;
 
   if (f == NULL) // Function doesn't exist yet
   {
@@ -562,6 +566,8 @@ int yr_object_copy(
       object->identifier,
       NULL,
       &copy));
+
+  copy->canary = object->canary;
 
   switch(object->type)
   {

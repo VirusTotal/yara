@@ -62,12 +62,23 @@ with noyywrap then we can remove this pragma.
 #define snprintf _snprintf
 #endif
 
+// Bitmap with 1 bit for each of the 256 characters in the ASCII table. The bit
+// is set to 1 if the corresponding character is alphanumeric or 0 if otherwise.
 static uint8_t word_chars[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x03,
     0xFE, 0xFF, 0xFF, 0x87, 0xFE, 0xFF, 0xFF, 0x07,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
+// Bitmap with 1 bit for each of the 256 characters in the ASCII table. The bit
+// is set to 1 if the corresponding character is considered a space. Space
+// characters include horizontal and vertical tabs, carriage return, new line
+// and form feed (\t, \v, \r, \n, \f).
+static uint8_t space_chars[] = {
+    0x00, 0x3E, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 int escaped_char_value(
     char* text,
@@ -363,8 +374,10 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\s {
 
-  LEX_ENV->re_class.bitmap[' ' / 8] |= 1 << ' ' % 8;
-  LEX_ENV->re_class.bitmap['\t' / 8] |= 1 << '\t' % 8;
+  int i;
+
+  for (i = 0; i < 32; i++)
+    LEX_ENV->re_class.bitmap[i] |= space_chars[i];
 }
 
 
@@ -373,14 +386,7 @@ hex_digit     [0-9a-fA-F]
   int i;
 
   for (i = 0; i < 32; i++)
-  {
-    if (i == ' ' / 8)
-      LEX_ENV->re_class.bitmap[i] |= ~(1 << ' ' % 8);
-    else if (i == '\t' / 8)
-      LEX_ENV->re_class.bitmap[i] |= ~(1 << '\t' % 8);
-    else
-      LEX_ENV->re_class.bitmap[i] = 0xFF;
-  }
+    LEX_ENV->re_class.bitmap[i] |= ~space_chars[i];
 }
 
 

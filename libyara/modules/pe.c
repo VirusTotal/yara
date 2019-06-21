@@ -42,6 +42,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <openssl/x509.h>
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 #define X509_get_signature_nid(o) OBJ_obj2nid((o)->sig_alg->algorithm)
+#define X509_getm_notBefore X509_get_notBefore
+#define X509_getm_notAfter X509_get_notAfter
 #endif
 #endif
 
@@ -90,7 +92,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define MAX_PE_IMPORTS               16384
-#define MAX_PE_EXPORTS               65535
+#define MAX_PE_EXPORTS               8192
+#define MAX_EXPORT_NAME_LENGTH       512
 
 
 #define IS_RESOURCE_SUBDIRECTORY(entry) \
@@ -126,7 +129,7 @@ static size_t available_space(
 }
 
 
-int wide_string_fits_in_pe(
+static int wide_string_fits_in_pe(
     PE* pe,
     char* data)
 {
@@ -148,7 +151,7 @@ int wide_string_fits_in_pe(
 // Parse the rich signature.
 // http://www.ntcore.com/files/richsign.htm
 
-void pe_parse_rich_signature(
+static void pe_parse_rich_signature(
     PE* pe,
     uint64_t base_address)
 {
@@ -263,7 +266,7 @@ void pe_parse_rich_signature(
 // The callback function will parse this and call set_sized_string().
 // The pointer is guaranteed to have enough space to contain the entire string.
 
-const uint8_t* parse_resource_name(
+static const uint8_t* parse_resource_name(
     PE* pe,
     const uint8_t* rsrc_data,
     PIMAGE_RESOURCE_DIRECTORY_ENTRY entry)
@@ -279,8 +282,8 @@ const uint8_t* parse_resource_name(
     const uint8_t* rsrc_str_ptr = rsrc_data + \
         (yr_le32toh(entry->Name) & 0x7FFFFFFF);
 
-    // A resource directory string is 2 bytes for a string and then a variable
-    // length Unicode string. Make sure we at least have two bytes.
+    // A resource directory string is 2 bytes for the length and then a variable
+    // length Unicode string. Make sure we have at least 2 bytes.
 
     if (!fits_in_pe(pe, rsrc_str_ptr, 2))
       return NULL;
@@ -298,7 +301,7 @@ const uint8_t* parse_resource_name(
 }
 
 
-int _pe_iterate_resources(
+static int _pe_iterate_resources(
     PE* pe,
     PIMAGE_RESOURCE_DIRECTORY resource_dir,
     const uint8_t* rsrc_data,
@@ -421,7 +424,7 @@ int _pe_iterate_resources(
 }
 
 
-int pe_iterate_resources(
+static int pe_iterate_resources(
     PE* pe,
     RESOURCE_CALLBACK_FUNC callback,
     void* callback_data)
@@ -494,7 +497,7 @@ int pe_iterate_resources(
     (PVERSION_INFO) ((uint8_t*) (ptr) + ((offset + 3) & ~3))
 
 
-void pe_parse_version_info(
+static void pe_parse_version_info(
     PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
     PE* pe)
 {
@@ -583,7 +586,7 @@ void pe_parse_version_info(
 }
 
 
-int pe_collect_resources(
+static int pe_collect_resources(
     PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
     int rsrc_type,
     int rsrc_id,
@@ -679,7 +682,7 @@ int pe_collect_resources(
 }
 
 
-IMPORT_FUNCTION* pe_parse_import_descriptor(
+static IMPORT_FUNCTION* pe_parse_import_descriptor(
     PE* pe,
     PIMAGE_IMPORT_DESCRIPTOR import_descriptor,
     char* dll_name,
@@ -840,8 +843,9 @@ IMPORT_FUNCTION* pe_parse_import_descriptor(
 }
 
 
-int pe_valid_dll_name(
-    const char* dll_name, size_t n)
+static int pe_valid_dll_name(
+    const char* dll_name,
+    size_t n)
 {
   const char* c = dll_name;
   size_t l = 0;
@@ -872,7 +876,7 @@ int pe_valid_dll_name(
 // calculation.
 //
 
-IMPORTED_DLL* pe_parse_imports(
+static IMPORTED_DLL* pe_parse_imports(
     PE* pe)
 {
   int64_t offset;
@@ -885,7 +889,7 @@ IMPORTED_DLL* pe_parse_imports(
   PIMAGE_IMPORT_DESCRIPTOR imports;
   PIMAGE_DATA_DIRECTORY directory;
 
-  /* default to 0 imports until we know there are any */
+  // Default to 0 imports until we know there are any
   set_integer(0, pe->object, "number_of_imports");
 
   directory = pe_get_directory_entry(
@@ -963,7 +967,7 @@ IMPORTED_DLL* pe_parse_imports(
 // "exports" function for comparison.
 //
 
-EXPORT_FUNCTIONS* pe_parse_exports(
+static EXPORT_FUNCTIONS* pe_parse_exports(
     PE* pe)
 {
   PIMAGE_DATA_DIRECTORY directory;
@@ -971,6 +975,7 @@ EXPORT_FUNCTIONS* pe_parse_exports(
   EXPORT_FUNCTIONS* exported_functions;
 
   uint32_t i;
+  uint32_t number_of_exports;
   uint32_t number_of_names;
   uint16_t ordinal;
   int64_t offset;
@@ -984,7 +989,7 @@ EXPORT_FUNCTIONS* pe_parse_exports(
   if (pe == NULL)
     return NULL;
 
-  /* default to 0 exports until we know there are any */
+  // Default to 0 exports until we know there are any
   set_integer(0, pe->object, "number_of_exports");
 
   directory = pe_get_directory_entry(
@@ -1006,8 +1011,11 @@ EXPORT_FUNCTIONS* pe_parse_exports(
   if (!struct_fits_in_pe(pe, exports, IMAGE_EXPORT_DIRECTORY))
     return NULL;
 
-  if (yr_le32toh(exports->NumberOfFunctions) > MAX_PE_EXPORTS ||
-      yr_le32toh(exports->NumberOfFunctions) * sizeof(DWORD) > pe->data_size - offset)
+  number_of_exports = yr_min(
+      yr_le32toh(exports->NumberOfFunctions),
+      MAX_PE_EXPORTS);
+
+  if (number_of_exports * sizeof(DWORD) > pe->data_size - offset)
     return NULL;
 
   if (yr_le32toh(exports->NumberOfNames) > 0)
@@ -1035,11 +1043,9 @@ EXPORT_FUNCTIONS* pe_parse_exports(
   if (exported_functions == NULL)
     return NULL;
 
-  exported_functions->number_of_exports = yr_le32toh(
-      exports->NumberOfFunctions);
-
+  exported_functions->number_of_exports = number_of_exports;
   exported_functions->functions = (EXPORT_FUNCTION*) yr_malloc(
-      exported_functions->number_of_exports * sizeof(EXPORT_FUNCTION));
+      number_of_exports * sizeof(EXPORT_FUNCTION));
 
   if (exported_functions->functions == NULL)
   {
@@ -1086,7 +1092,8 @@ EXPORT_FUNCTIONS* pe_parse_exports(
     if (exported_functions->functions[ordinal].name == NULL)
     {
       exported_functions->functions[ordinal].name = yr_strndup(
-          (char*) (pe->data + offset), remaining);
+          (char*) (pe->data + offset),
+          yr_min(remaining, MAX_EXPORT_NAME_LENGTH));
     }
   }
 
@@ -1097,10 +1104,13 @@ EXPORT_FUNCTIONS* pe_parse_exports(
   return exported_functions;
 }
 
+// BoringSSL (https://boringssl.googlesource.com/boringssl/) doesn't support
+// some features used in pe_parse_certificates, if you are using BoringSSL
+// instead of OpenSSL you should define BORINGSSL for YARA to compile properly,
+// but you won't have signature-related features in the PE module.
+#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
 
-#if defined(HAVE_LIBCRYPTO)
-
-void pe_parse_certificates(
+static void pe_parse_certificates(
     PE* pe)
 {
   int i, counter = 0;
@@ -1130,11 +1140,11 @@ void pe_parse_certificates(
 
   // Store the end of directory, making comparisons easier.
   eod = pe->data + \
-        yr_le32toh(directory->VirtualAddress) + \
-        yr_le32toh(directory->Size);
+      yr_le32toh(directory->VirtualAddress) + \
+      yr_le32toh(directory->Size);
 
   win_cert = (PWIN_CERTIFICATE) \
-    (pe->data + yr_le32toh(directory->VirtualAddress));
+      (pe->data + yr_le32toh(directory->VirtualAddress));
 
   //
   // Walk the directory, pulling out certificates.
@@ -1180,7 +1190,8 @@ void pe_parse_certificates(
     }
 
     cert_bio = BIO_new_mem_buf(
-        win_cert->Certificate, yr_le32toh(win_cert->Length) - WIN_CERTIFICATE_HEADER_SIZE);
+        win_cert->Certificate,
+        yr_le32toh(win_cert->Length) - WIN_CERTIFICATE_HEADER_SIZE);
 
     if (!cert_bio)
       break;
@@ -1326,10 +1337,10 @@ void pe_parse_certificates(
         }
       }
 
-      date_time = ASN1_get_time_t(X509_get_notBefore(cert));
+      date_time = ASN1_get_time_t(X509_getm_notBefore(cert));
       set_integer(date_time, pe->object, "signatures[%i].not_before", counter);
 
-      date_time = ASN1_get_time_t(X509_get_notAfter(cert));
+      date_time = ASN1_get_time_t(X509_getm_notAfter(cert));
       set_integer(date_time, pe->object, "signatures[%i].not_after", counter);
 
       counter++;
@@ -1349,7 +1360,7 @@ void pe_parse_certificates(
 #endif  // defined(HAVE_LIBCRYPTO)
 
 
-void pe_parse_header(
+static void pe_parse_header(
     PE* pe,
     uint64_t base_address,
     int flags)
@@ -1531,7 +1542,10 @@ void pe_parse_header(
       yr_le32toh(OptionalHeader(pe, LoaderFlags)),
       pe->object, "loader_flags");
 
-  data_dir = IS_64BITS_PE(pe) ? pe->header64->OptionalHeader.DataDirectory : pe->header->OptionalHeader.DataDirectory;
+  data_dir = IS_64BITS_PE(pe) ?
+      pe->header64->OptionalHeader.DataDirectory:
+      pe->header->OptionalHeader.DataDirectory;
+
   ddcount = yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes));
   ddcount = yr_min(ddcount, IMAGE_NUMBEROF_DIRECTORY_ENTRIES);
 
@@ -1831,7 +1845,8 @@ define_function(imphash)
   yr_md5_ctx ctx;
 
   unsigned char digest[YR_MD5_LEN];
-  char digest_ascii[YR_MD5_LEN * 2 + 1];
+  char* digest_ascii;
+
   size_t i;
   bool first = true;
 
@@ -1841,6 +1856,15 @@ define_function(imphash)
 
   if (!pe)
     return_string(UNDEFINED);
+
+  // Lookup in cache first.
+  digest_ascii = (char*) yr_hash_table_lookup(
+      pe->hash_table,
+      "imphash",
+      NULL);
+
+  if (digest_ascii != NULL)
+    return_string(digest_ascii);
 
   yr_md5_init(&ctx);
 
@@ -1914,6 +1938,11 @@ define_function(imphash)
 
   yr_md5_final(digest, &ctx);
 
+  digest_ascii = (char*) yr_malloc(YR_MD5_LEN * 2 + 1);
+
+  if (digest_ascii == NULL)
+    return ERROR_INSUFFICIENT_MEMORY;
+
   // Transform the binary digest to ascii
 
   for (i = 0; i < YR_MD5_LEN; i++)
@@ -1922,6 +1951,8 @@ define_function(imphash)
   }
 
   digest_ascii[YR_MD5_LEN * 2] = '\0';
+
+  yr_hash_table_add(pe->hash_table, "imphash", NULL, digest_ascii);
 
   return_string(digest_ascii);
 }
@@ -2238,8 +2269,8 @@ define_function(rich_version_toolid)
 
 define_function(rich_toolid)
 {
-    return_integer(
-       rich_internal(module(), UNDEFINED, integer_argument(1)));
+  return_integer(
+      rich_internal(module(), UNDEFINED, integer_argument(1)));
 }
 
 
@@ -2573,7 +2604,7 @@ begin_declarations;
 
   declare_integer("number_of_resources");
 
-  #if defined(HAVE_LIBCRYPTO)
+  #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
   begin_struct_array("signatures");
     declare_string("thumbprint");
     declare_string("issuer");
@@ -2971,6 +3002,10 @@ int module_load(
         if (pe == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
 
+        FAIL_ON_ERROR_WITH_CLEANUP(
+            yr_hash_table_create(17, &pe->hash_table),
+            yr_free(pe));
+
         pe->data = block_data;
         pe->data_size = block->size;
         pe->header = pe_header;
@@ -2982,7 +3017,7 @@ int module_load(
         pe_parse_header(pe, block->base, context->flags);
         pe_parse_rich_signature(pe, block->base);
 
-        #if defined(HAVE_LIBCRYPTO)
+        #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
         pe_parse_certificates(pe);
         #endif
 
@@ -3011,6 +3046,11 @@ int module_unload(
 
   if (pe == NULL)
     return ERROR_SUCCESS;
+
+  if (pe->hash_table != NULL)
+    yr_hash_table_destroy(
+        pe->hash_table,
+        (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_free);
 
   dll = pe->imported_dlls;
 

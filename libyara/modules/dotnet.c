@@ -223,17 +223,14 @@ void dotnet_parse_us(
   {
     blob_result = dotnet_parse_blob_entry(pe, offset);
 
-    if (blob_result.size == 0 || !fits_in_pe(pe, offset, blob_result.length))
-    {
-      set_integer(i, pe->object, "number_of_user_strings");
-      return;
-    }
+    if (blob_result.size == 0)
+      break;
 
     offset += blob_result.size;
     // Avoid empty strings, which usually happen as padding at the end of the
     // stream.
 
-    if (blob_result.length > 0)
+    if (blob_result.length > 0 && fits_in_pe(pe, offset, blob_result.length))
     {
       set_sized_string(
          (char*) offset,
@@ -753,6 +750,9 @@ void dotnet_parse_tilde_2(
             // Now follow the Type index into the MemberRef table.
             memberref_row = memberref_ptr + (memberref_row_size * type_index);
 
+            if (!fits_in_pe(pe, memberref_row, memberref_row_size))
+              break;
+
             if (index_sizes.memberref == 4)
             {
               // Low 3 bits tell us what this is an index into. Remaining bits
@@ -1142,7 +1142,7 @@ void dotnet_parse_tilde_2(
 
         for (i = 0; i < num_rows; i++)
         {
-          if (!fits_in_pe(pe, table_offset, row_size))
+          if (!fits_in_pe(pe, row_ptr, row_size))
             break;
 
           assemblyref_table = (PASSEMBLYREF_TABLE) row_ptr;
