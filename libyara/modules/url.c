@@ -42,6 +42,7 @@ char *EMPTY_STR_PTR = EMPTY_STR;
 
 typedef struct
 {
+  char *url;
   char *scheme;
   char *user;
   char *password;
@@ -64,6 +65,12 @@ int yr_re_match_curlupart(char *url_part, YR_SCAN_CONTEXT *context, RE *regexp)
   }
 
   return result;
+}
+
+define_function(url) {
+  URLParts *url_parts_ptr = module()->data;
+  int result = yr_re_match_curlupart(url_parts_ptr->url, scan_context(), regexp_argument(1));
+  return_integer(result);
 }
 
 define_function(scheme) {
@@ -129,6 +136,7 @@ define_function(zoneid) {
 
 begin_declarations;
 
+  declare_string("url");
   declare_string("scheme");
   declare_string("user");
   declare_string("password");
@@ -142,6 +150,7 @@ begin_declarations;
 
   begin_struct("match");
 
+    declare_function("url", "r", "i", url);
     declare_function("scheme", "r", "i", scheme);
     declare_function("user", "r", "i", user);
     declare_function("password", "r", "i", password);
@@ -194,6 +203,9 @@ int module_load(YR_SCAN_CONTEXT *context, YR_OBJECT *module_object, void *module
     curl_url_cleanup(url);
     return ERROR_INVALID_MODULE_DATA;
   }
+
+  url_parts_ptr->url = module_data;
+  set_string(module_data, module_object, "url");
 
   curl_get_yara_set_string(url, CURLUPART_SCHEME, &url_parts_ptr->scheme, module_object, "scheme");
   curl_get_yara_set_string(url, CURLUPART_USER, &url_parts_ptr->user, module_object, "user");
