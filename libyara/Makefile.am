@@ -32,6 +32,10 @@ if DEX_MODULE
 MODULES += modules/dex.c
 endif
 
+if URL_MODULE
+MODULES += modules/url.c
+endif
+
 #
 # Add your modules here:
 #

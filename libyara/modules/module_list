@@ -27,3 +27,7 @@ MODULE(macho)
 #ifdef DEX_MODULE
 MODULE(dex)
 #endif
+
+#ifdef URL_MODULE
+MODULE(url)
+#endif
