@@ -194,6 +194,9 @@ int module_load(YR_SCAN_CONTEXT *context, YR_OBJECT *module_object, void *module
   memset(url_parts_ptr, 0, sizeof(URLParts));
   module_object->data = url_parts_ptr;
 
+  if (module_data == NULL)
+    return ERROR_SUCCESS;
+
   url = curl_url();
   if (!url)
     return ERROR_INTERNAL_FATAL_ERROR;
