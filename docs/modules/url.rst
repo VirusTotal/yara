@@ -65,6 +65,10 @@ Reference
 
 All values default to an empty string unless otherwise specified.
 
+.. type:: url
+
+    Full URL provided to the module
+
 .. type:: scheme
 
     Scheme extracted from the URL. (ex: ftp, http, gopher, etc)
@@ -112,6 +116,10 @@ All values default to an empty string unless otherwise specified.
     Zoneid extracted from the URL.
 
 .. type:: match
+
+    .. function:: url(regexp)
+
+        Test if url matches `regexp`
 
     .. function:: scheme(regexp)
 
