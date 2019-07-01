@@ -54,10 +54,6 @@ The URL should be passed in as `modules_data`:
     rules.match(data='...', modules_data={'url': 'https://example.com/'})
 
 
-.. important::
-
-
-
 Reference
 ---------
 
