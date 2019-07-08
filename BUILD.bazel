@@ -213,7 +213,11 @@ cc_library(
         "libyara/include/yara/rules.h",
     ],
     copts = YARA_COPTS,
-    includes = ["libyara/include"],
+    includes = [
+        "libyara/modules",
+        "libyara/include",
+        "libyara",
+    ],
     textual_hdrs = [
         "libyara/grammar.h",
         "libyara/hex_grammar.y",
