@@ -355,6 +355,26 @@ static void test_syntax()
   assert_error(
       "rule test { strings: $a = \"a\" $a = \"a\" condition: all of them }",
       ERROR_DUPLICATED_STRING_IDENTIFIER);
+
+  assert_error(
+      "rule test { strings: $a = /a.c/ xor condition: $a }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(
+      "rule test { strings: $a = /abc/ xor condition: $a }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(
+      "rule test { strings: $a = {01 02 ?? 03 04} xor condition: $a }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(
+      "rule test { strings: $a = {01 02 0? 03 04} xor condition: $a }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(
+      "rule test { strings: $a = {01 02 03 04} xor condition: $a }",
+      ERROR_SYNTAX_ERROR);
 }
 
 
