@@ -210,6 +210,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <integer> string_modifier
 %type <integer> string_modifiers
 
+%type <integer> regexp_modifier
+%type <integer> regexp_modifiers
+
 %type <integer> integer_set
 
 %type <integer> for_expression
@@ -563,7 +566,7 @@ string_declaration
       {
         compiler->current_line = yyget_lineno(yyscanner);
       }
-      _REGEXP_ string_modifiers
+      _REGEXP_ regexp_modifiers
       {
         int result = yr_parser_reduce_string_declaration(
             yyscanner, (int32_t) $5 | STRING_GFLAGS_REGEXP, $1, $4, &$$);
@@ -600,6 +603,18 @@ string_modifier
     | _NOCASE_      { $$ = STRING_GFLAGS_NO_CASE; }
     | _FULLWORD_    { $$ = STRING_GFLAGS_FULL_WORD; }
     | _XOR_         { $$ = STRING_GFLAGS_XOR; }
+    ;
+
+regexp_modifiers
+    : /* empty */                         { $$ = 0; }
+    | regexp_modifiers regexp_modifier    { $$ = $1 | $2; }
+    ;
+
+regexp_modifier
+    : _WIDE_        { $$ = STRING_GFLAGS_WIDE; }
+    | _ASCII_       { $$ = STRING_GFLAGS_ASCII; }
+    | _NOCASE_      { $$ = STRING_GFLAGS_NO_CASE; }
+    | _FULLWORD_    { $$ = STRING_GFLAGS_FULL_WORD; }
     ;
 
 
