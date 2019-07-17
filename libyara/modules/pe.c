@@ -1894,6 +1894,109 @@ define_function(exports_ordinal)
   return_integer(0);
 }
 
+
+define_function(exports_index_name)
+{
+  SIZED_STRING* search_name = sized_string_argument(1);
+
+  SIZED_STRING* function_name = NULL;
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  int i, n;
+
+  // If not a PE, return UNDEFINED.
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  // If PE, but no exported functions, return false.
+  n = get_integer(module, "number_of_exports");
+  if (n == 0)
+    return_integer(UNDEFINED);
+
+  for (i = 0; i < n; i++)
+  {
+    function_name = get_string(module, "export_details[%i].name", i);
+    if (function_name == NULL)
+      continue;
+
+    if (sized_string_cmp_nocase(function_name, search_name) == 0)
+    {
+      return_integer(i);
+    }
+  }
+
+  return_integer(UNDEFINED);
+}
+
+
+define_function(exports_index_ordinal)
+{
+  uint64_t ordinal = integer_argument(1);
+
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+  int i, n, exported_ordinal;
+
+  // If not a PE, return UNDEFINED.
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  // If PE, but no exported functions, return false.
+  n = get_integer(module, "number_of_exports");
+  if (n == 0)
+    return_integer(UNDEFINED);
+
+  if (ordinal == 0 || ordinal > n)
+    return_integer(UNDEFINED);
+
+  for (i = 0; i < n; i++)
+  {
+    exported_ordinal = yr_object_get_integer(
+        module, "export_details[%i].ordinal", i);
+    if (exported_ordinal == ordinal)
+      return_integer(i);
+  }
+
+  return_integer(UNDEFINED);
+}
+
+
+define_function(exports_index_regex)
+{
+  RE* regex = regexp_argument(1);
+
+  SIZED_STRING* function_name = NULL;
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  int i, n;
+
+  // If not a PE, return UNDEFINED.
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  // If PE, but no exported functions, return false.
+  n = get_integer(module, "number_of_exports");
+  if (n == 0)
+    return_integer(UNDEFINED);
+
+  for (i = 0; i < n; i++)
+  {
+    function_name = get_string(module, "export_details[%i].name", i);
+    if (function_name == NULL)
+      continue;
+
+    if (yr_re_match(scan_context(), regex, function_name->c_string) != -1)
+    {
+      return_integer(1);
+    }
+  }
+
+  return_integer(UNDEFINED);
+}
+
+
 #if defined(HAVE_LIBCRYPTO) || \
     defined(HAVE_WINCRYPT_H) || \
     defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
@@ -2639,6 +2742,9 @@ begin_declarations;
   declare_function("exports", "s", "i", exports);
   declare_function("exports", "r", "i", exports_regexp);
   declare_function("exports", "i", "i", exports_ordinal);
+  declare_function("exports_index", "s", "i", exports_index_name);
+  declare_function("exports_index", "i", "i", exports_index_ordinal);
+  declare_function("exports_index", "r", "i", exports_index_regex);
   declare_function("imports", "ss", "i", imports);
   declare_function("imports", "si", "i", imports_ordinal);
   declare_function("imports", "s", "i", imports_dll);
