@@ -363,6 +363,9 @@ static int _yr_parser_write_string(
   memset((*string)->matches, 0,
          sizeof((*string)->matches));
 
+  memset((*string)->private_matches, 0,
+         sizeof((*string)->private_matches));
+
   memset((*string)->unconfirmed_matches, 0,
          sizeof((*string)->unconfirmed_matches));
 

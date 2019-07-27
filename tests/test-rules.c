@@ -592,6 +592,34 @@ static void test_strings()
       condition:\n\
         #a == 1084\n\
     }", "tests/data/xornocase.out");
+
+  assert_true_rule(
+      "rule test { \
+        strings:\
+          $a = \"AXS\" private\
+      condition:\
+        all of them\
+      }",
+      "AXS");
+
+  assert_true_rule(
+      "rule test { \
+        strings:\
+          $a = { 45 52 53 } private\
+      condition:\
+        all of them\
+      }",
+      "ERS");
+
+  assert_true_rule(
+      "rule test { \
+        strings:\
+          $a = /AXS[0-9]{4}ERS[0-9]{4}/ private\
+      condition:\
+        all of them\
+      }",
+      "AXS1111ERS2222");
+
 }
 
 

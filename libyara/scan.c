@@ -606,7 +606,7 @@ static int _yr_scan_match_callback(
 
       FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,
-          &string->matches[tidx],
+          !STRING_IS_PRIVATE(string) ? &string->matches[tidx] : &string->private_matches[tidx],
           STRING_IS_GREEDY_REGEXP(string)));
     }
   }
