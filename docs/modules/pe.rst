@@ -837,6 +837,33 @@ Reference
 
     *Example:  pe.exports(/^AXS@@/)*
 
+.. c:function:: exports_index(function_name)
+
+    .. versionadded:: 3.11.0
+
+    Function returning the index into the export_details array where the named
+    function is, undefined otherwise.
+
+    *Example:  pe.exports_index("CPlApplet")*
+
+.. c:function:: exports_index(ordinal)
+
+    .. versionadded:: 3.11.0
+
+    Function returning the index into the export_details array where the
+    exported ordinal is, undefined otherwise.
+
+    *Example:  pe.exports_index(72)*
+
+.. c:function:: exports_index(/regular_expression/)
+
+    .. versionadded:: 3.7.1
+
+    Function returning the index into the export_details array where the regular
+    expression matches the exported name, undefined otherwise.
+
+    *Example:  pe.exports_index(/^ERS@@/)*
+
 .. c:type:: number_of_exports
 
     .. versionadded:: 3.6.0
