@@ -737,9 +737,12 @@ int yr_execute_code(
 
       case OP_FOUND:
         pop(r1);
-        r2.i = r1.s->matches[tidx].tail != NULL ? 1 : 0;
-        if (r2.i == 0)
+
+        if (STRING_IS_PRIVATE(r1.s))
           r2.i = r1.s->private_matches[tidx].tail != NULL ? 1 : 0;
+        else
+          r2.i = r1.s->matches[tidx].tail != NULL ? 1 : 0;
+
         push(r2);
         break;
 
@@ -760,7 +763,11 @@ int yr_execute_code(
           return ERROR_INTERNAL_FATAL_ERROR;
         #endif
 
-        match = r2.s->matches[tidx].head;
+        if (STRING_IS_PRIVATE(r2.s))
+          match = r2.s->private_matches[tidx].head;
+        else
+          match = r2.s->matches[tidx].head;
+
         r3.i = false;
 
         while (match != NULL)
@@ -775,26 +782,6 @@ int yr_execute_code(
             break;
 
           match = match->next;
-        }
-
-        // Now check private matches
-        if (r3.i == false)
-        {
-          match = r2.s->private_matches[tidx].head;
-
-          while (match != NULL)
-          {
-            if (r1.i == match->base + match->offset)
-            {
-              r3.i = true;
-              break;
-            }
-
-            if (r1.i < match->base + match->offset)
-              break;
-
-            match = match->next;
-          }
         }
 
         push(r3);
@@ -814,7 +801,11 @@ int yr_execute_code(
           return ERROR_INTERNAL_FATAL_ERROR;
         #endif
 
-        match = r3.s->matches[tidx].head;
+        if (STRING_IS_PRIVATE(r3.s))
+          match = r3.s->private_matches[tidx].head;
+        else
+          match = r3.s->matches[tidx].head;
+
         r4.i = false;
 
         while (match != NULL && !r4.i)
@@ -831,26 +822,6 @@ int yr_execute_code(
           match = match->next;
         }
 
-        // Now check private matches
-        if (r4.i == false)
-        {
-          match = r3.s->private_matches[tidx].head;
-
-          while (match != NULL && !r4.i)
-          {
-            if (match->base + match->offset >= r1.i &&
-                match->base + match->offset <= r2.i)
-            {
-              r4.i = true;
-            }
-
-            if (match->base + match->offset > r2.i)
-              break;
-
-            match = match->next;
-          }
-        }
-
         push(r4);
         break;
 
@@ -863,9 +834,11 @@ int yr_execute_code(
           return ERROR_INTERNAL_FATAL_ERROR;
         #endif
 
-        r2.i = r1.s->matches[tidx].count;
-        if (r2.i == 0)
+        if (STRING_IS_PRIVATE(r1.s))
           r2.i = r1.s->private_matches[tidx].count;
+        else
+          r2.i = r1.s->matches[tidx].count;
+
         push(r2);
         break;
 
@@ -881,7 +854,11 @@ int yr_execute_code(
           return ERROR_INTERNAL_FATAL_ERROR;
         #endif
 
-        match = r2.s->matches[tidx].head;
+        if (STRING_IS_PRIVATE(r2.s))
+          match = r2.s->private_matches[tidx].head;
+        else
+          match = r2.s->matches[tidx].head;
+
         i = 1;
         r3.i = UNDEFINED;
 
@@ -892,21 +869,6 @@ int yr_execute_code(
 
           i++;
           match = match->next;
-        }
-
-        // Now check private matches
-        if (r3.i == UNDEFINED)
-        {
-          match = r2.s->private_matches[tidx].head;
-
-          while (match != NULL && r3.i == UNDEFINED)
-          {
-            if (r1.i == i)
-              r3.i = match->base + match->offset;
-
-            i++;
-            match = match->next;
-          }
         }
 
         push(r3);
@@ -924,7 +886,11 @@ int yr_execute_code(
           return ERROR_INTERNAL_FATAL_ERROR;
         #endif
 
-        match = r2.s->matches[tidx].head;
+        if (STRING_IS_PRIVATE(r2.s))
+          match = r2.s->private_matches[tidx].head;
+        else
+          match = r2.s->matches[tidx].head;
+
         i = 1;
         r3.i = UNDEFINED;
 
@@ -935,21 +901,6 @@ int yr_execute_code(
 
           i++;
           match = match->next;
-        }
-
-        // Now check private matches
-        if (r3.i == UNDEFINED)
-        {
-          match = r2.s->private_matches[tidx].head;
-
-          while (match != NULL && r3.i == UNDEFINED)
-          {
-            if (r1.i == i)
-              r3.i = match->match_length;
-
-            i++;
-            match = match->next;
-          }
         }
 
         push(r3);
