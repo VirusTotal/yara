@@ -281,25 +281,6 @@ available in the C language:
    * - ``\xdd``
      - Any byte in hexadecimal notation
 
-Private strings
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Text strings in YARA can be marked as ``private`` which means they will never be
-included in the output of YARA. They are treated as normal strings everywhere
-else, so you can still use them as you wish in the condition, but they will
-never be shown with the ``-s`` flag.
-
-.. code-block:: yara
-
-    rule PrivateStringExample
-    {
-        strings:
-            $text_string = "foobar" private
-
-        condition:
-            $text_string
-    }
-
 Case-insensitive strings
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -584,6 +565,26 @@ Starting with version 3.3.0 these zero-width assertions are also recognized:
      - Match a word boundary
    * - ``\B``
      - Match except at a word boundary
+
+Private strings
+---------------
+
+All strings in YARA can be marked as ``private`` which means they will never be
+included in the output of YARA. They are treated as normal strings everywhere
+else, so you can still use them as you wish in the condition, but they will
+never be shown with the ``-s`` flag or seen in the YARA callback if you're using
+the C API.
+
+.. code-block:: yara
+
+    rule PrivateStringExample
+    {
+        strings:
+            $text_string = "foobar" private
+
+        condition:
+            $text_string
+    }
 
 
 Conditions
