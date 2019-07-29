@@ -792,25 +792,33 @@ Reference
 
         .. versionadded:: 3.5.0
 
-        Function returning true if the PE has the specified *version* in the PE's rich
-        signature. Provide the optional *toolid* argument to only match when both match
-        for one entry. More information can be found here:
+        Function returning a sum of count values of all matching *version*
+        records. Provide the optional *toolid* argument to only match when both
+        match for one entry. More information can be found here:
 
         http://www.ntcore.com/files/richsign.htm
 
-        *Example: pe.rich_signature.version(21005)*
+        Note: Prior to version *3.11.0*, this function returns only a boolean
+        value (0 or 1) if the given *version* and optional *toolid* is present
+        in an entry.
+
+        *Example: pe.rich_signature.version(24215, 261) == 61*
 
     .. c:function:: toolid(toolid, [version])
 
         .. versionadded:: 3.5.0
 
-        Function returning true if the PE has the specified *id* in the PE's rich
-        signature. Provide the optional *version* argument to only match when both
-        match for one entry. More information can be found here:
+        Function returning a sum of count values of all matching *toolid*
+        records. Provide the optional *version* argument to only match when
+        both match for one entry. More information can be found here:
 
         http://www.ntcore.com/files/richsign.htm
 
-        *Example: pe.rich_signature.toolid(222)*
+        Note: Prior to version *3.11.0*, this function returns only a boolean
+        value (0 or 1) if the given *toolid* and optional *version* is present
+        in an entry.
+
+        *Example: pe.rich_signature.toolid(170, 40219) >= 99 and pe.rich_signature.toolid(170, 40219) <= 143*
 
 .. c:function:: exports(function_name)
 
