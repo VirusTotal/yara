@@ -207,6 +207,17 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny-idata-51ff");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.rich_signature.toolid(157, 40219) == 1 and \
+          pe.rich_signature.toolid(1, 0) > 40 and pe.rich_signature.toolid(1, 0) < 45 and \
+          pe.rich_signature.version(30319) and \
+          pe.rich_signature.version(40219, 170) == 11 \
+      }",
+      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
   yr_finalize();
   return 0;
 }
