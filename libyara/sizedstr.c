@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ctype.h>
 #include <string.h>
+#include <yara/globals.h>
 #include <yara/mem.h>
 #include <yara/sizedstr.h>
 
@@ -41,7 +42,7 @@ int sized_string_cmp_nocase(
 
   while (s1->length > i &&
          s2->length > i &&
-         tolower(s1->c_string[i]) == tolower(s2->c_string[i]))
+         yr_lowercase[(uint8_t) s1->c_string[i]] == yr_lowercase[(uint8_t) s2->c_string[i]])
   {
     i++;
   }
