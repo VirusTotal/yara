@@ -1989,7 +1989,7 @@ define_function(exports_index_regex)
 
     if (yr_re_match(scan_context(), regex, function_name->c_string) != -1)
     {
-      return_integer(1);
+      return_integer(i);
     }
   }
 
