@@ -141,6 +141,7 @@ static bool ignore_warnings = false;
 static bool fast_scan = false;
 static bool negate = false;
 static bool print_count_only = false;
+static bool print_unmatched_only = false;
 static bool fail_on_warnings = false;
 static bool rules_are_compiled = false;
 static int total_count = 0;
@@ -174,6 +175,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN('f', "fast-scan", &fast_scan,
       "fast matching mode"),
+
+  OPT_BOOLEAN('u',"unmatched", &print_unmatched_only,
+      "print unmatched files only"),
 
   OPT_BOOLEAN('h', "help", &show_help,
       "show this help and exit"),
@@ -705,7 +709,7 @@ static int handle_message(
 
   show = show && ((!negate && is_matching) || (negate && !is_matching));
 
-  if (show && !print_count_only)
+  if (show && !print_count_only && !print_unmatched_only)
   {
     mutex_lock(&output_mutex);
 
@@ -901,6 +905,12 @@ static void* scanning_thread(void* param)
       {
         mutex_lock(&output_mutex);
         printf("%s: %d\n", file_path, args->callback_args.current_count);
+        mutex_unlock(&output_mutex);
+      }
+      else if (print_unmatched_only && args->callback_args.current_count == 0)
+      {
+        mutex_lock(&output_mutex);
+        printf("%s\n",file_path);
         mutex_unlock(&output_mutex);
       }
 
