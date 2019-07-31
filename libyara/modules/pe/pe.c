@@ -878,7 +878,7 @@ static IMPORTED_DLL* pe_parse_imports(
     PE* pe)
 {
   int64_t offset;
-  int num_imports = 0;           // Number of imported DLLs
+  int num_library_imports = 0;   // Number of imported DLLs
   int num_function_imports = 0;  // Total number of functions imported
 
   IMPORTED_DLL* head = NULL;
@@ -889,6 +889,8 @@ static IMPORTED_DLL* pe_parse_imports(
 
   // Default to 0 imports until we know there are any
   set_integer(0, pe->object, "number_of_imports");
+  set_integer(0, pe->object, "number_of_imported_libraries");
+  set_integer(0, pe->object, "number_of_imported_functions");
 
   directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
@@ -908,7 +910,7 @@ static IMPORTED_DLL* pe_parse_imports(
       (pe->data + offset);
 
   while (struct_fits_in_pe(pe, imports, IMAGE_IMPORT_DESCRIPTOR) &&
-         yr_le32toh(imports->Name) != 0 && num_imports < MAX_PE_IMPORTS)
+         yr_le32toh(imports->Name) != 0 && num_library_imports < MAX_PE_IMPORTS)
   {
     int64_t offset = pe_rva_to_offset(pe, yr_le32toh(imports->Name));
 
@@ -952,11 +954,13 @@ static IMPORTED_DLL* pe_parse_imports(
       }
     }
 
-    num_imports++;
+    num_library_imports++;
     imports++;
   }
 
-  set_integer(num_imports, pe->object, "number_of_imports");
+  set_integer(num_library_imports, pe->object, "number_of_imports");
+  set_integer(num_library_imports, pe->object, "number_of_imported_libraries");
+  set_integer(num_function_imports, pe->object, "number_of_imported_functions");
   return head;
 }
 
@@ -2577,6 +2581,8 @@ begin_declarations;
   declare_function("is_64bit", "", "i", is_64bit);
 
   declare_integer("number_of_imports");
+  declare_integer("number_of_imported_libraries");
+  declare_integer("number_of_imported_functions");
   declare_integer("number_of_exports");
 
   declare_integer("resource_timestamp");

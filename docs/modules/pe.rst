@@ -855,7 +855,19 @@ Reference
 
     .. versionadded:: 3.6.0
 
-    Number of imports in the PE.
+    Alias for *number_of_imported_libraries*.
+
+.. c:type:: number_of_imported_libraries
+
+    .. versionadded:: 3.12.0
+
+    Number of imported libraries in the PE import directory.
+
+.. c:type:: number_of_imported_functions
+
+    .. versionadded:: 3.12.0
+
+    Number of imported functions in the PE import directory.
 
 .. c:function:: imports(dll_name, function_name)
 

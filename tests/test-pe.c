@@ -72,7 +72,15 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
-          pe.number_of_imports == 2 \
+          pe.number_of_imported_libraries == 2 \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.number_of_imported_functions == 48 \
       }",
       "tests/data/tiny");
 
