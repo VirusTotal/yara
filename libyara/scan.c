@@ -439,7 +439,9 @@ static int _yr_scan_verify_chained_string_match(
               (void**) &match->data));
 
           FAIL_ON_ERROR(_yr_scan_add_match_to_list(
-              match, &string->matches[tidx], false));
+              match,
+              !STRING_IS_PRIVATE(string) ? &string->matches[tidx] : &string->private_matches[tidx],
+              false));
         }
 
         match = next_match;
