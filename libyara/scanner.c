@@ -151,6 +151,9 @@ static void _yr_scanner_clean_matches(
       (*string)->matches[tidx].count = 0;
       (*string)->matches[tidx].head = NULL;
       (*string)->matches[tidx].tail = NULL;
+      (*string)->private_matches[tidx].count = 0;
+      (*string)->private_matches[tidx].head = NULL;
+      (*string)->private_matches[tidx].tail = NULL;
       (*string)->unconfirmed_matches[tidx].count = 0;
       (*string)->unconfirmed_matches[tidx].head = NULL;
       (*string)->unconfirmed_matches[tidx].tail = NULL;

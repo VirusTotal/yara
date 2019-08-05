@@ -200,6 +200,7 @@ int yr_execute_code(
   YR_VALUE r1;
   YR_VALUE r2;
   YR_VALUE r3;
+  YR_VALUE r4;
 
   uint64_t elapsed_time;
 
@@ -736,8 +737,13 @@ int yr_execute_code(
 
       case OP_FOUND:
         pop(r1);
-        r1.i = r1.s->matches[tidx].tail != NULL ? 1 : 0;
-        push(r1);
+
+        if (STRING_IS_PRIVATE(r1.s))
+          r2.i = r1.s->private_matches[tidx].tail != NULL ? 1 : 0;
+        else
+          r2.i = r1.s->matches[tidx].tail != NULL ? 1 : 0;
+
+        push(r2);
         break;
 
       case OP_FOUND_AT:
@@ -757,7 +763,11 @@ int yr_execute_code(
           return ERROR_INTERNAL_FATAL_ERROR;
         #endif
 
-        match = r2.s->matches[tidx].head;
+        if (STRING_IS_PRIVATE(r2.s))
+          match = r2.s->private_matches[tidx].head;
+        else
+          match = r2.s->matches[tidx].head;
+
         r3.i = false;
 
         while (match != NULL)
@@ -791,15 +801,19 @@ int yr_execute_code(
           return ERROR_INTERNAL_FATAL_ERROR;
         #endif
 
-        match = r3.s->matches[tidx].head;
-        r3.i = false;
+        if (STRING_IS_PRIVATE(r3.s))
+          match = r3.s->private_matches[tidx].head;
+        else
+          match = r3.s->matches[tidx].head;
 
-        while (match != NULL && !r3.i)
+        r4.i = false;
+
+        while (match != NULL && !r4.i)
         {
           if (match->base + match->offset >= r1.i &&
               match->base + match->offset <= r2.i)
           {
-            r3.i = true;
+            r4.i = true;
           }
 
           if (match->base + match->offset > r2.i)
@@ -808,7 +822,7 @@ int yr_execute_code(
           match = match->next;
         }
 
-        push(r3);
+        push(r4);
         break;
 
       case OP_COUNT:
@@ -820,8 +834,12 @@ int yr_execute_code(
           return ERROR_INTERNAL_FATAL_ERROR;
         #endif
 
-        r1.i = r1.s->matches[tidx].count;
-        push(r1);
+        if (STRING_IS_PRIVATE(r1.s))
+          r2.i = r1.s->private_matches[tidx].count;
+        else
+          r2.i = r1.s->matches[tidx].count;
+
+        push(r2);
         break;
 
       case OP_OFFSET:
@@ -836,7 +854,11 @@ int yr_execute_code(
           return ERROR_INTERNAL_FATAL_ERROR;
         #endif
 
-        match = r2.s->matches[tidx].head;
+        if (STRING_IS_PRIVATE(r2.s))
+          match = r2.s->private_matches[tidx].head;
+        else
+          match = r2.s->matches[tidx].head;
+
         i = 1;
         r3.i = UNDEFINED;
 
@@ -864,7 +886,11 @@ int yr_execute_code(
           return ERROR_INTERNAL_FATAL_ERROR;
         #endif
 
-        match = r2.s->matches[tidx].head;
+        if (STRING_IS_PRIVATE(r2.s))
+          match = r2.s->private_matches[tidx].head;
+        else
+          match = r2.s->matches[tidx].head;
+
         i = 1;
         r3.i = UNDEFINED;
 
@@ -887,7 +913,7 @@ int yr_execute_code(
 
         while (!is_undef(r1))
         {
-          if (r1.s->matches[tidx].tail != NULL)
+          if (r1.s->matches[tidx].tail != NULL || r1.s->private_matches[tidx].tail != NULL)
             found++;
           count++;
           pop(r1);

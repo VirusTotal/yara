@@ -592,6 +592,34 @@ static void test_strings()
       condition:\n\
         #a == 1084\n\
     }", "tests/data/xornocase.out");
+
+  assert_true_rule(
+      "rule test { \
+        strings:\
+          $a = \"AXS\" private\
+      condition:\
+        all of them\
+      }",
+      "AXS");
+
+  assert_true_rule(
+      "rule test { \
+        strings:\
+          $a = { 45 52 53 } private\
+      condition:\
+        all of them\
+      }",
+      "ERS");
+
+  assert_true_rule(
+      "rule test { \
+        strings:\
+          $a = /AXS[0-9]{4}ERS[0-9]{4}/ private\
+      condition:\
+        all of them\
+      }",
+      "AXS1111ERS2222");
+
 }
 
 
@@ -689,6 +717,13 @@ static void test_hex_strings()
         strings: $a = { 31 32 [-] 33 34 [-] 38 39 } \
         condition: $a }",
       "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [-] 33 34 [-] 38 39 } private \
+        condition: $a }",
+      "1234567890");
+
 
   assert_true_rule(
       "rule test { \
@@ -836,6 +871,10 @@ static void test_count()
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" condition: #a == 2 }",
       "mississippi");
+
+  assert_true_rule(
+      "rule test { strings: $a = \"ssi\" private condition: #a == 2 }",
+      "mississippi");
 }
 
 
@@ -844,6 +883,12 @@ static void test_at()
   assert_true_rule(
       "rule test { \
         strings: $a = \"ssi\" \
+        condition: $a at 2 and $a at 5 }",
+      "mississippi");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = \"ssi\" private \
         condition: $a at 2 and $a at 5 }",
       "mississippi");
 
@@ -868,6 +913,12 @@ static void test_in()
         strings: $a = { 6a 2a 58 c3 } \
         condition: $a in (entrypoint .. entrypoint + 1) }",
       PE32_FILE);
+
+  assert_true_rule_blob(
+      "rule test { \
+        strings: $a = { 6a 2a 58 c3 } private \
+        condition: $a in (entrypoint .. entrypoint + 1) }",
+      PE32_FILE);
 }
 
 
@@ -875,6 +926,10 @@ static void test_offset()
 {
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" condition: @a == 2 }",
+      "mississippi");
+
+  assert_true_rule(
+      "rule test { strings: $a = \"ssi\" private condition: @a == 2 }",
       "mississippi");
 
   assert_true_rule(
@@ -891,6 +946,10 @@ static void test_length()
 {
   assert_true_rule(
       "rule test { strings: $a = /m.*?ssi/ condition: !a == 5 }",
+      "mississippi");
+
+  assert_true_rule(
+      "rule test { strings: $a = /m.*?ssi/ private condition: !a == 5 }",
       "mississippi");
 
   assert_true_rule(
@@ -939,7 +998,7 @@ static void test_of()
       "mississippi");
 
   assert_true_rule(
-      "rule test { strings: $a = \"ssi\" $b = \"mis\" $c = \"oops\" "
+      "rule test { strings: $a = \"ssi\" $b = \"mis\" private $c = \"oops\" "
       "condition: 1 of them }",
       "mississippi");
 
