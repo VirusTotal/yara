@@ -213,6 +213,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <integer> regexp_modifier
 %type <integer> regexp_modifiers
 
+%type <integer> hex_modifier
+%type <integer> hex_modifiers
+
 %type <integer> integer_set
 
 %type <integer> for_expression
@@ -578,15 +581,21 @@ string_declaration
 
         compiler->current_line = 0;
       }
-    | _STRING_IDENTIFIER_ '=' _HEX_STRING_
+    | _STRING_IDENTIFIER_ '='
+      {
+        compiler->current_line = yyget_lineno(yyscanner);
+      }
+      _HEX_STRING_ hex_modifiers
       {
         int result = yr_parser_reduce_string_declaration(
-            yyscanner, STRING_GFLAGS_HEXADECIMAL, $1, $3, &$$);
+            yyscanner, (int32_t) $5 | STRING_GFLAGS_HEXADECIMAL, $1, $4, &$$);
 
         yr_free($1);
-        yr_free($3);
+        yr_free($4);
 
         fail_if_error(result);
+
+        compiler->current_line = 0;
       }
     ;
 
@@ -603,6 +612,7 @@ string_modifier
     | _NOCASE_      { $$ = STRING_GFLAGS_NO_CASE; }
     | _FULLWORD_    { $$ = STRING_GFLAGS_FULL_WORD; }
     | _XOR_         { $$ = STRING_GFLAGS_XOR; }
+    | _PRIVATE_     { $$ = STRING_GFLAGS_PRIVATE; }
     ;
 
 regexp_modifiers
@@ -615,8 +625,17 @@ regexp_modifier
     | _ASCII_       { $$ = STRING_GFLAGS_ASCII; }
     | _NOCASE_      { $$ = STRING_GFLAGS_NO_CASE; }
     | _FULLWORD_    { $$ = STRING_GFLAGS_FULL_WORD; }
+    | _PRIVATE_     { $$ = STRING_GFLAGS_PRIVATE; }
     ;
 
+hex_modifiers
+    : /* empty */                         { $$ = 0; }
+    | hex_modifiers hex_modifier          { $$ = $1 | $2; }
+    ;
+
+hex_modifier
+    : _PRIVATE_     { $$ = STRING_GFLAGS_PRIVATE; }
+    ;
 
 identifier
     : _IDENTIFIER_
