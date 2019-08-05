@@ -198,7 +198,7 @@ range
         {
           yyerror(yyscanner, lex_env, "jumps over "
               STR(YR_STRING_CHAINING_THRESHOLD)
-              " now allowed inside alternation (|)");
+              " not allowed inside alternation (|)");
           YYABORT;
         }
 
@@ -217,7 +217,7 @@ range
         {
           yyerror(yyscanner, lex_env, "jumps over "
               STR(YR_STRING_CHAINING_THRESHOLD)
-              " now allowed inside alternation (|)");
+              " not allowed inside alternation (|)");
 
           YYABORT;
         }
