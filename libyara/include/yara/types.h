@@ -68,6 +68,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STRING_GFLAGS_DOT_ALL           0x20000
 #define STRING_GFLAGS_DISABLED          0x40000
 #define STRING_GFLAGS_XOR               0x80000
+#define STRING_GFLAGS_PRIVATE           0x100000
 
 #define STRING_IS_HEX(x) \
     (((x)->g_flags) & STRING_GFLAGS_HEXADECIMAL)
@@ -128,6 +129,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define STRING_IS_XOR(x) \
     (((x)->g_flags) & STRING_GFLAGS_XOR)
+
+#define STRING_IS_PRIVATE(x) \
+    (((x)->g_flags) & STRING_GFLAGS_PRIVATE)
 
 #define STRING_FOUND(x) \
     ((x)->matches[yr_get_tidx()].tail != NULL)
@@ -272,6 +276,7 @@ struct YR_STRING
   int64_t fixed_offset;
 
   YR_MATCHES matches[YR_MAX_THREADS];
+  YR_MATCHES private_matches[YR_MAX_THREADS];
   YR_MATCHES unconfirmed_matches[YR_MAX_THREADS];
 };
 
