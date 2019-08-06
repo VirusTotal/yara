@@ -202,12 +202,25 @@ range
           YYABORT;
         }
 
-        $$ = yr_re_node_create(RE_NODE_RANGE_ANY);
+        // A jump of one is equivalent to ??
+        if ($2 == 1)
+        {
+          $$ = yr_re_node_create(RE_NODE_MASKED_LITERAL);
 
-        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+          fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
-        $$->start = (int) $2;
-        $$->end = (int) $2;
+          $$->value = 0x00;
+          $$->mask = 0x00;
+        }
+        else
+        {
+          $$ = yr_re_node_create(RE_NODE_RANGE_ANY);
+
+          fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+          $$->start = (int) $2;
+          $$->end = (int) $2;
+        }
       }
     | '[' _NUMBER_ '-' _NUMBER_ ']'
       {
