@@ -33,6 +33,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdbool.h>
 
+#ifdef _WIN32
+   #include <io.h> 
+   #define access    _access_s
+#else
+   #include <unistd.h>
+#endif
+
 #define exit_with_code(code) { result = code; goto _exit; }
 
 
@@ -48,10 +55,14 @@ bool compile_files(
     const char* file_name;
     char* colon = (char*) strchr(argv[i], ':');
     int errors;
-
+	
+	if(access(argv[1], 0) == 0) {
+	  colon = 0;
+	}
     // Namespace delimiter must be a colon not followed by a slash or backslash
     if (colon && *(colon + 1) != '\\' && *(colon + 1) != '/')
     {
+
       file_name = colon + 1;
       *colon = '\0';
       ns = argv[i];
