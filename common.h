@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdbool.h>
 
 #ifdef _WIN32
-   #include <io.h> 
+   #include <io.h>
    #define access    _access_s
 #else
    #include <unistd.h>
@@ -53,13 +53,20 @@ bool compile_files(
     FILE* rule_file;
     const char* ns;
     const char* file_name;
-    char* colon = (char*) strchr(argv[i], ':');
+    char* colon = NULL;
     int errors;
-	
-	if(access(argv[1], 0) == 0) {
-	  colon = 0;
-	}
-    // Namespace delimiter must be a colon not followed by a slash or backslash
+
+    if (access(argv[1], 0) != 0)
+    {
+      // A file with the name specified by the command-line argument wasn't
+      // found, it may be because the name is prefixed with a namespace, so
+      // lets try to find the colon that separates the namespace from the
+      /// actual file name.
+      colon = (char*) strchr(argv[i], ':');
+    }
+
+    // The namespace delimiter must be a colon not followed by a slash or
+    // backslash.
     if (colon && *(colon + 1) != '\\' && *(colon + 1) != '/')
     {
 
