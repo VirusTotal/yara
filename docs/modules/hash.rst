@@ -18,6 +18,11 @@ of your file and create signatures based on those hashes.
     Good news for Windows users: this module is already included in the official
     Windows binaries.
 
+.. warning::
+    Matching on hashes ``hash.md5(0, filesize) == "feba6c919e3797e7778e8f2e85fa033d"``
+    requires the hash string to be given in lowercase, otherwise the match condition 
+    will not work. (see https://github.com/VirusTotal/yara/issues/1004)
+
 .. c:function:: md5(offset, size)
 
     Returns the MD5 hash for *size* bytes starting at *offset*. When scanning a
