@@ -332,7 +332,7 @@ static int _yr_scan_verify_chained_string_match(
   YR_MATCH* next_match;
   YR_MATCH* new_match;
 
-  uint64_t lower_offset;
+  uint64_t lowest_offset;
   uint64_t ending_offset;
   int32_t full_chain_length;
 
@@ -341,35 +341,55 @@ static int _yr_scan_verify_chained_string_match(
 
   if (matching_string->chained_to == NULL)
   {
+    // The matching string is the head of the chain, this match should be
+    // added to the list of unconfirmed matches. The match will remain
+    // unconfirmed until all the strings in the chain are found with the
+    // correct distances bewteen them.
     add_match = true;
   }
   else
   {
+    // If some unconfirmed match exists, the lowest possible offset where the
+    // string can match is the offset of the first string in the list of
+    // unconfirmed matches. Unconfirmed matches are sorted in ascending offset
+    // order. If no unconfirmed match exists, the lowest possible offset is
+    // the offset of the current match.
     if (matching_string->unconfirmed_matches[tidx].head != NULL)
-      lower_offset = matching_string->unconfirmed_matches[tidx].head->offset;
+      lowest_offset = matching_string->unconfirmed_matches[tidx].head->offset;
     else
-      lower_offset = match_offset;
+      lowest_offset = match_offset;
 
+    // Iterate over the list of unconfirmed matches for the string that
+    // preceeds the currently matching string. If we have a string chain like:
+    // S1 <- S2 <- S3, and we just found a match for S2, we are iterating the
+    // list of unconfirmed matches of S1.
     match = matching_string->chained_to->unconfirmed_matches[tidx].head;
 
     while (match != NULL)
     {
       next_match = match->next;
+
+      // The unconfirmed match starts at match->offset and finishes at
+      // ending_offset.
       ending_offset = match->offset + match->match_length;
 
-      if (ending_offset + matching_string->chain_gap_max < lower_offset)
+      if (ending_offset + matching_string->chain_gap_max < lowest_offset)
       {
+        // If the current match is too far away from the unconfirmed match,
+        // remove the unconfirmed match from the list because it has been
+        // negatively confirmed (i.e: we can be sure that this unconfirmed
+        // match can't be an actual match)
         _yr_scan_remove_match_from_list(
             match, &matching_string->chained_to->unconfirmed_matches[tidx]);
       }
-      else
+      else if (ending_offset + matching_string->chain_gap_max >= match_offset &&
+               ending_offset + matching_string->chain_gap_min <= match_offset)
       {
-        if (ending_offset + matching_string->chain_gap_max >= match_offset &&
-            ending_offset + matching_string->chain_gap_min <= match_offset)
-        {
-          add_match = true;
-          break;
-        }
+        // If the distance between the end of the unconfirmed match and the
+        // start of the current match is within the range specified in the
+        // regexp or hex string, this could be an actual match.
+        add_match = true;
+        break;
       }
 
       match = next_match;
@@ -440,21 +460,22 @@ static int _yr_scan_verify_chained_string_match(
 
           FAIL_ON_ERROR(_yr_scan_add_match_to_list(
               match,
-              !STRING_IS_PRIVATE(string) ? &string->matches[tidx] : &string->private_matches[tidx],
+              !STRING_IS_PRIVATE(string) ?
+                  &string->matches[tidx] :
+                  &string->private_matches[tidx],
               false));
         }
 
         match = next_match;
       }
     }
-    else
+    else // it's a part of a chain, but not the tail.
     {
       if (matching_string->matches[tidx].count == 0 &&
           matching_string->unconfirmed_matches[tidx].count == 0)
       {
         // If this is the first match for the string, put the string in the
         // list of strings whose flags needs to be cleared after the scan.
-
         FAIL_ON_ERROR(yr_arena_write_data(
             context->matching_strings_arena,
             &matching_string,
@@ -787,19 +808,19 @@ static int _yr_scan_verify_literal_match(
       if (STRING_IS_WIDE(string))
       {
         forward_matches = _yr_scan_xor_wcompare(
-          data + offset,
-          data_size - offset,
-          string->string,
-          string->length);
+            data + offset,
+            data_size - offset,
+            string->string,
+            string->length);
       }
 
       if (forward_matches == 0)
       {
         forward_matches = _yr_scan_xor_compare(
-          data + offset,
-          data_size - offset,
-          string->string,
-          string->length);
+            data + offset,
+            data_size - offset,
+            string->string,
+            string->length);
       }
     }
 

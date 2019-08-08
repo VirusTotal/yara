@@ -461,17 +461,18 @@ int yr_parser_reduce_string_declaration(
     SIZED_STRING* str,
     YR_STRING** string)
 {
-  int min_atom_quality = YR_MIN_ATOM_QUALITY;
-  int min_atom_quality_aux = YR_MIN_ATOM_QUALITY;
+  int min_atom_quality = YR_MAX_ATOM_QUALITY;
+  int atom_quality;
 
-  int32_t min_gap;
-  int32_t max_gap;
+  int32_t min_gap = 0;
+  int32_t max_gap = 0;
+  int32_t prev_min_gap;
+  int32_t prev_max_gap;
 
   char message[512];
 
   YR_COMPILER* compiler = yyget_extra(yyscanner);
-  YR_STRING* aux_string;
-  YR_STRING* prev_string;
+  YR_STRING* prev_string = NULL;
 
   RE_AST* re_ast = NULL;
   RE_AST* remainder_re_ast = NULL;
@@ -483,12 +484,12 @@ int yr_parser_reduce_string_declaration(
   // Determine if a string with the same identifier was already defined
   // by searching for the identifier in string_table.
 
-  *string = (YR_STRING*) yr_hash_table_lookup(
+  YR_STRING* new_string= (YR_STRING*) yr_hash_table_lookup(
       compiler->strings_table,
       identifier,
       NULL);
 
-  if (*string != NULL)
+  if (new_string != NULL)
   {
     result = ERROR_DUPLICATED_STRING_IDENTIFIER;
     yr_compiler_set_error_extra_info(compiler, identifier);
@@ -604,51 +605,17 @@ int yr_parser_reduce_string_declaration(
           compiler->re_ast_clbk_user_data);
     }
 
-    result = yr_re_ast_split_at_chaining_point(
-        re_ast, &re_ast, &remainder_re_ast, &min_gap, &max_gap);
-
-    if (result != ERROR_SUCCESS)
-      goto _exit;
-
-    result = _yr_parser_write_string(
-        identifier,
-        string_flags,
-        compiler,
-        NULL,
-        re_ast,
-        string,
-        &min_atom_quality,
-        &compiler->current_rule->num_atoms);
-
-    if (result != ERROR_SUCCESS)
-      goto _exit;
-
-    if (remainder_re_ast != NULL)
+    while (re_ast != NULL)
     {
-      (*string)->g_flags |= STRING_GFLAGS_CHAIN_TAIL | STRING_GFLAGS_CHAIN_PART;
-      (*string)->chain_gap_min = min_gap;
-      (*string)->chain_gap_max = max_gap;
-    }
-
-    // Use "aux_string" from now on, we want to keep the value of "string"
-    // because it will returned.
-
-    aux_string = *string;
-
-    while (remainder_re_ast != NULL)
-    {
-      // Destroy regexp pointed by 're_ast' before yr_re_split_at_chaining_point
-      // overwrites 're_ast' with another value.
-
-      yr_re_ast_destroy(re_ast);
+      prev_string = new_string;
+      prev_min_gap = min_gap;
+      prev_max_gap = max_gap;
 
       result = yr_re_ast_split_at_chaining_point(
-          remainder_re_ast, &re_ast, &remainder_re_ast, &min_gap, &max_gap);
+          re_ast, &remainder_re_ast, &min_gap, &max_gap);
 
       if (result != ERROR_SUCCESS)
         goto _exit;
-
-      prev_string = aux_string;
 
       result = _yr_parser_write_string(
           identifier,
@@ -656,30 +623,49 @@ int yr_parser_reduce_string_declaration(
           compiler,
           NULL,
           re_ast,
-          &aux_string,
-          &min_atom_quality_aux,
+          &new_string,
+          &atom_quality,
           &compiler->current_rule->num_atoms);
 
       if (result != ERROR_SUCCESS)
         goto _exit;
 
-      if (min_atom_quality_aux < min_atom_quality)
-        min_atom_quality = min_atom_quality_aux;
+      if (atom_quality < min_atom_quality)
+        min_atom_quality = atom_quality;
 
-      aux_string->g_flags |= STRING_GFLAGS_CHAIN_PART;
-      aux_string->chain_gap_min = min_gap;
-      aux_string->chain_gap_max = max_gap;
+      if (prev_string != NULL)
+      {
+        new_string->chained_to = prev_string;
+        new_string->chain_gap_min = prev_min_gap;
+        new_string->chain_gap_max = prev_max_gap;
 
-      prev_string->chained_to = aux_string;
+        // A string chained to another one can't have a fixed offset, only the
+        // head of the string chain can have a fixed offset.
+        new_string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
 
-      // prev_string is now chained to aux_string, an string chained
-      // to another one can't have a fixed offset, only the head of the
-      // string chain can have a fixed offset.
+        // There is a previous string, but that string wasn't marked as part of
+        // a chain because we can't do that until knowing there will be another
+        // string, let's flag it now the we know.
+        prev_string->g_flags |= STRING_GFLAGS_CHAIN_PART;
 
-      prev_string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+        // There is a previous string, so this string is part of a chain, but
+        // there will be no more strings because there are no more AST to split,
+        // which means that this is the chain's tail.
+        if (remainder_re_ast == NULL)
+          new_string->g_flags |= STRING_GFLAGS_CHAIN_PART |
+                                 STRING_GFLAGS_CHAIN_TAIL;
+      }
+
+      yr_re_ast_destroy(re_ast);
+      re_ast = remainder_re_ast;
     }
+
+    // Walk the chain of strings from the tail to the head, we want to return
+    // the string at the head of the chain.
+    while (new_string->chained_to != NULL)
+      new_string = new_string->chained_to;
   }
-  else
+  else  // not a STRING_GFLAGS_HEXADECIMAL or STRING_GFLAGS_REGEXP
   {
     result = _yr_parser_write_string(
         identifier,
@@ -687,7 +673,7 @@ int yr_parser_reduce_string_declaration(
         compiler,
         str,
         NULL,
-        string,
+        &new_string,
         &min_atom_quality,
         &compiler->current_rule->num_atoms);
 
@@ -695,13 +681,13 @@ int yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
-  if (!STRING_IS_ANONYMOUS(*string))
+  if (!STRING_IS_ANONYMOUS(new_string))
   {
     result = yr_hash_table_add(
       compiler->strings_table,
       identifier,
       NULL,
-      *string);
+      new_string);
 
     if (result != ERROR_SUCCESS)
       goto _exit;
@@ -712,7 +698,7 @@ int yr_parser_reduce_string_declaration(
     yywarning(
         yyscanner,
         "%s in rule %s is slowing down scanning",
-        (*string)->identifier,
+        new_string->identifier,
         compiler->current_rule->identifier);
   }
 
@@ -723,6 +709,8 @@ _exit:
 
   if (remainder_re_ast != NULL)
     yr_re_ast_destroy(remainder_re_ast);
+
+  *string = new_string;
 
   return result;
 }

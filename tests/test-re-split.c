@@ -47,30 +47,35 @@ int main(int argc, char** argv)
       "{ 01 02 03 04 [0-300] 05 06 07 08 [1-400] 09 0A 0B 0C }",
       &re_ast, &re_error);
 
-  if (re_ast == NULL)
-    exit(EXIT_FAILURE);
+  assert(re_ast != NULL);
 
   yr_re_ast_split_at_chaining_point(
-      re_ast, &re_ast, &re_ast_remain, &min_gap, &max_gap);
+      re_ast, &re_ast_remain, &min_gap, &max_gap);
 
-  if (re_ast == NULL || re_ast_remain == NULL)
-    exit(EXIT_FAILURE);
+  assert(re_ast != NULL);
+  assert(re_ast_remain != NULL);
+  assert(min_gap == 0);
+  assert(max_gap == 300);
 
   yr_re_ast_destroy(re_ast);
   re_ast = re_ast_remain;
 
-  assert(min_gap == 0);
-  assert(max_gap == 300);
-
   yr_re_ast_split_at_chaining_point(
-    re_ast, &re_ast, &re_ast_remain, &min_gap, &max_gap);
+      re_ast, &re_ast_remain, &min_gap, &max_gap);
 
-  if (re_ast == NULL || re_ast_remain == NULL)
-    exit(EXIT_FAILURE);
-
+  assert(re_ast != NULL);
+  assert(re_ast_remain != NULL);
   assert(min_gap == 1);
   assert(max_gap == 400);
 
   yr_re_ast_destroy(re_ast);
-  yr_re_ast_destroy(re_ast_remain);
+  re_ast = re_ast_remain;
+
+  yr_re_ast_split_at_chaining_point(
+      re_ast, &re_ast_remain, &min_gap, &max_gap);
+
+  assert(re_ast != NULL);
+  assert(re_ast_remain == NULL);
+
+  yr_re_ast_destroy(re_ast);
 }

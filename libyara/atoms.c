@@ -506,7 +506,7 @@ int _yr_atoms_trim(
   if (atom->length == 0)
     return 0;
 
-  // At this point the actual atom goes from i to i + atom->length and the
+  // The trimmed atom goes from trim_left to trim_left + atom->length and the
   // first and last byte in the atom are known (mask == 0xFF). Now count the
   // number of known and unknown bytes in the atom (mask == 0xFF and
   // mask == 0x00 respectively).
@@ -520,10 +520,10 @@ int _yr_atoms_trim(
   }
 
   // If the number of unknown bytes is >= than the number of known bytes
-  // it doesn't make sense the to use this atom, so we use the a single byte
-  // atom with the first known byte. If YR_MAX_ATOM_LENGTH == 4 this happens
+  // it doesn't make sense the to use this atom, so we use a single byte atpm
+  // containing the first known byte. If YR_MAX_ATOM_LENGTH == 4 this happens
   // only when the atom is like { XX ?? ?? YY }, so using the first known
-  // atom is good enough. For larger values of YR_MAX_ATOM_LENGTH this is not
+  // byte is good enough. For larger values of YR_MAX_ATOM_LENGTH this is not
   // the most efficient solution, as better atoms could be choosen. For
   // example, in { XX ?? ?? ?? YY ZZ } the best atom is { YY ZZ } not { XX }.
   // But let's keep it like this for simplicity.
@@ -980,8 +980,9 @@ static int _yr_atoms_extract_from_re(
 
   FAIL_ON_ERROR(yr_stack_create(1024, sizeof(si), &stack));
 
-  // This first item pushed in the stack is the last one to be poped out, its
-  // sole purpose is forcing that any pending
+  // This first item pushed in the stack is the last one to be poped out, the
+  // sole purpose of this item is forcing that any pending leaf is appended to
+  // current_appending_node during the last iteration of the loop.
   si.re_node = NULL;
   si.new_appending_node = appending_node;
 
