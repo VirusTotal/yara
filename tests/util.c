@@ -328,10 +328,10 @@ void assert_re_atoms(
   yr_re_parse(re, &re_ast, &re_error);
   exit_code = _assert_atoms(re_ast, expected_atom_count, expected_atoms);
 
-  if(re_ast != NULL)
+  if (re_ast != NULL)
     yr_re_ast_destroy(re_ast);
 
-  if(exit_code != EXIT_SUCCESS)
+  if (exit_code != EXIT_SUCCESS)
     exit(exit_code);
 }
 
@@ -349,9 +349,9 @@ void assert_hex_atoms(
   yr_re_parse_hex(hex, &re_ast, &re_error);
   exit_code = _assert_atoms(re_ast, expected_atom_count, expected_atoms);
 
-  if(re_ast != NULL)
+  if (re_ast != NULL)
     yr_re_ast_destroy(re_ast);
 
-  if(exit_code != EXIT_SUCCESS)
+  if (exit_code != EXIT_SUCCESS)
     exit(exit_code);
 }
