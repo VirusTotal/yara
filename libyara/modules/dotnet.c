@@ -1137,7 +1137,10 @@ void dotnet_parse_tilde_2(
         break;
 
       case BIT_ASSEMBLYREF:
-        row_size = (2 + 2 + 2 + 2 + 4 + (index_sizes.blob * 2) + (index_sizes.string * 2));
+        row_size = (2 + 2 + 2 + 2 + 4 +
+            (index_sizes.blob * 2) +
+            (index_sizes.string * 2));
+
         row_ptr = table_offset;
 
         for (i = 0; i < num_rows; i++)
@@ -1166,6 +1169,7 @@ void dotnet_parse_tilde_2(
                 assemblyref_table->PublicKeyOrToken.PublicKeyOrToken_Short;
 
           blob_result = dotnet_parse_blob_entry(pe, blob_offset);
+          blob_offset += blob_result.size;
 
           if (blob_result.size == 0 ||
               !fits_in_pe(pe, blob_offset, blob_result.length))
@@ -1177,7 +1181,6 @@ void dotnet_parse_tilde_2(
           // Avoid empty strings.
           if (blob_result.length > 0)
           {
-            blob_offset += blob_result.size;
             set_sized_string((char*) blob_offset,
                 blob_result.length, pe->object,
                 "assembly_refs[%i].public_key_or_token", i);
