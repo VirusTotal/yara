@@ -469,9 +469,10 @@ static int _yr_scan_verify_chained_string_match(
         match = next_match;
       }
     }
-    else // it's a part of a chain, but not the tail.
+    else // It's a part of a chain, but not the tail.
     {
       if (matching_string->matches[tidx].count == 0 &&
+          matching_string->private_matches[tidx].count == 0 &&
           matching_string->unconfirmed_matches[tidx].count == 0)
       {
         // If this is the first match for the string, put the string in the
