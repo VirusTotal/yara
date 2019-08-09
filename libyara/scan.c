@@ -318,6 +318,20 @@ static void _yr_scan_remove_match_from_list(
   match->prev = NULL;
 }
 
+//
+// _yr_scan_verify_chained_string_match
+//
+// Given a string that is part of a string chain and is matching at some
+// point in the scanned data, this function determines if the whole string
+// chain is also matching. For example, if the string S was splitted and
+// converted in a chain S1 <- S2 <- S3 (see yr_re_ast_split_at_chaining_point),
+// and a match for S3 was found, this functions finds out if there are matches
+// for S1 and S2 that together with the match found for S3 conform a match for
+// the whole S.
+//
+// Notice that this function operates in a non-greedy fashion. Matches found
+// for S will be the shortest possible ones.
+//
 
 static int _yr_scan_verify_chained_string_match(
     YR_STRING* matching_string,
@@ -350,10 +364,10 @@ static int _yr_scan_verify_chained_string_match(
   else
   {
     // If some unconfirmed match exists, the lowest possible offset where the
-    // string can match is the offset of the first string in the list of
-    // unconfirmed matches. Unconfirmed matches are sorted in ascending offset
-    // order. If no unconfirmed match exists, the lowest possible offset is
-    // the offset of the current match.
+    // whole string chain can match is the offset of the first string in the
+    // list of unconfirmed matches. Unconfirmed matches are sorted in ascending
+    // offset order. If no unconfirmed match exists, the lowest possible offset
+    // is the offset of the current match.
     if (matching_string->unconfirmed_matches[tidx].head != NULL)
       lowest_offset = matching_string->unconfirmed_matches[tidx].head->offset;
     else
