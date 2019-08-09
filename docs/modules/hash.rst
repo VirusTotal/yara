@@ -19,7 +19,8 @@ of your file and create signatures based on those hashes.
     Windows binaries.
 
 .. warning::
-    Matching on hashes ``hash.md5(0, filesize) == "feba6c919e3797e7778e8f2e85fa033d"``
+    The returned hash string is always in lowercase. This means that rule condition matching on hashes 
+    ``hash.md5(0, filesize) == "feba6c919e3797e7778e8f2e85fa033d"`` 
     requires the hash string to be given in lowercase, otherwise the match condition 
     will not work. (see https://github.com/VirusTotal/yara/issues/1004)
 
