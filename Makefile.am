@@ -83,6 +83,12 @@ test_dex_SOURCES = tests/test-dex.c tests/util.c
 test_dex_LDADD = libyara/.libs/libyara.a
 endif
 
+if DOTNET_MODULE
+check_PROGRAMS+=test-dotnet
+test_dotnet_SOURCES = tests/test-dotnet.c tests/util.c
+test_dotnet_LDADD = libyara/.libs/libyara.a
+endif
+
 # man pages
 man1_MANS = yara.man yarac.man
 
