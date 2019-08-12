@@ -138,7 +138,4 @@ uint64_t yr_stopwatch_elapsed_us(
   return tv_elapsed.tv_sec * 1000000L + tv_elapsed.tv_usec;
 }
 
-
-
-
 #endif
