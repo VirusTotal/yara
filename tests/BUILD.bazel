@@ -163,3 +163,12 @@ cc_test(
         "@//:libyara",
     ],
 )
+
+cc_test(
+    name = "test_re_split",
+    srcs = ["test-re-split.c"],
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+)

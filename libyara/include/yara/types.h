@@ -267,16 +267,55 @@ struct YR_STRING
 
   DECLARE_REFERENCE(char*, identifier);
   DECLARE_REFERENCE(uint8_t*, string);
+
+  // Strings are splited in two or more parts when they contain a "gap" that
+  // is larger than YR_STRING_CHAINING_THRESHOLD. This happens in strings like
+  // { 01 02 03 04 [X-Y] 05 06 07 08 } if Y >= X + YR_STRING_CHAINING_THRESHOLD
+  // and also in { 01 02 03 04 [-] 05 06 07 08 }. In both cases the strings are
+  // split in { 01 02 03 04 } and { 05 06 07 08 }, and the two smaller strings
+  // are searched for independently. If some string S is splited in S1 and S2,
+  // S2 is chained to S1. In the example above { 05 06 07 08 } is chained to
+  // { 01 02 03 04 }. The same applies when the string is splitted in more than
+  // two parts, if S is split in S1, S2, and S3. S3 is chained to S2 and S2 is
+  // chained to S1 (it can represented as: S1 <- S2 <- S3).
   DECLARE_REFERENCE(YR_STRING*, chained_to);
+
+  // Pointer to the rule that contains this string.
   DECLARE_REFERENCE(YR_RULE*, rule);
 
+  // When this string is chained to some other string, chain_gap_min and
+  // chain_gap_max contain the minimum and maximum distance between the two
+  // strings. For example in { 01 02 03 04 [X-Y] 05 06 07 08 }, the string
+  // { 05 06 07 08 } is chained to { 01 02 03 04 } and chain_gap_min is X
+  // and chain_gap_max is Y. These fields are ignored for strings that are not
+  // part of a string chain.
   int32_t chain_gap_min;
   int32_t chain_gap_max;
 
+  // If the string can only match at a specific offset (for example if the
+  // condition is "$a at 0" the string $a can only match at offset 0), the
+  // fixed_offset field contains the offset, it have the UNDEFINED value for
+  // strings that can match anywhere.
   int64_t fixed_offset;
 
+  // Each item in the "matches" array represents a list of matches, there's one
+  // list of matches for each thread currently using the compiled rules. Up to
+  // YR_MAX_THREADS can use the compiled rules simultaneosly, that's why the
+  // array has YR_MAX_THREADS slots. The lists contain the matches that have
+  // been found so far.
   YR_MATCHES matches[YR_MAX_THREADS];
+
+  // "private_matches" is similar to "matches" but it holds the matches for
+  // strings that are flagged as private. The matches for such strings are not
+  // put in the "matches" arrays.
   YR_MATCHES private_matches[YR_MAX_THREADS];
+
+  // "unconfirmed_matches" is used for strings that are part of a chain. Let's
+  // suppose that the string S is split in two chained strings S1 <- S2. When
+  // a match is found for S1, we can't be sure that S matches until a match for
+  // S2 is found (within the range defined by chain_gap_min and chain_gap_max),
+  // so the matches for S1 are put in "unconfirmed_matches" until they can be
+  // confirmed or discarded.
   YR_MATCHES unconfirmed_matches[YR_MAX_THREADS];
 };
 
@@ -485,12 +524,10 @@ struct YR_MATCH
   // Pointer to a buffer containing a portion of the matched data. The size of
   // the buffer is data_length. data_length is always <= length and is limited
   // to MAX_MATCH_DATA bytes.
-
   const uint8_t* data;
 
   // If the match belongs to a chained string chain_length contains the
   // length of the chain. This field is used only in unconfirmed matches.
-
   int32_t chain_length;
 
   YR_MATCH* prev;
