@@ -120,14 +120,12 @@ AC_ARG_ENABLE([magic],
   [AS_HELP_STRING([--enable-magic], [enable magic module])],
   [if test x$enableval = xyes; then
     build_magic_module=true
-    AC_CHECK_LIB(z, zlibVersion,,
-      AC_MSG_ERROR([please install zlib library]))
     AC_CHECK_HEADERS([magic.h],,
       AC_MSG_ERROR([please install libmagic library]))
     AC_CHECK_LIB(magic, magic_open,,
       AC_MSG_ERROR([please install libmagic library]))
     CFLAGS="$CFLAGS -DMAGIC_MODULE"
-    PC_LIBS_PRIVATE="$PC_LIBS_PRIVATE -lmagic -lz"
+    PC_LIBS_PRIVATE="$PC_LIBS_PRIVATE -lmagic"
   fi])
 
 AC_ARG_ENABLE([dotnet],
