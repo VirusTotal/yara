@@ -266,7 +266,8 @@ static void pe_parse_debug_directory(
 {
   PIMAGE_DATA_DIRECTORY data_dir;
   PIMAGE_DEBUG_DIRECTORY debug_dir;
-  int64_t offset;
+  int64_t debug_dir_offset;
+  int64_t pcv_hdr_offset;
   int i, dcount;
   size_t pdb_str_len;
   
@@ -285,9 +286,9 @@ static void pe_parse_debug_directory(
   if (yr_le32toh(data_dir->VirtualAddress) == 0)
     return;
 
-  offset = pe_rva_to_offset(pe, yr_le32toh(data_dir->VirtualAddress));
+  debug_dir_offset = pe_rva_to_offset(pe, yr_le32toh(data_dir->VirtualAddress));
 
-  if (offset < 0)
+  if (debug_dir_offset < 0)
     return;
 
   dcount = yr_le32toh(data_dir->Size) / sizeof(IMAGE_DEBUG_DIRECTORY);
@@ -295,7 +296,7 @@ static void pe_parse_debug_directory(
   for (i = 0; i < dcount; i++)
   {
     debug_dir = (PIMAGE_DEBUG_DIRECTORY) \
-        (pe->data + offset + i * sizeof(IMAGE_DEBUG_DIRECTORY));
+        (pe->data + debug_dir_offset + i * sizeof(IMAGE_DEBUG_DIRECTORY));
     
     if (!struct_fits_in_pe(pe, debug_dir, IMAGE_DEBUG_DIRECTORY))
       break;
@@ -306,9 +307,12 @@ static void pe_parse_debug_directory(
     if (yr_le32toh(debug_dir->AddressOfRawData) == 0)
       continue;
     
-    PCV_HEADER cv_hdr = (PCV_HEADER) \
-        (pe->data + pe_rva_to_offset(pe, yr_le32toh(debug_dir->AddressOfRawData)));
-    
+    pcv_hdr_offset = pe_rva_to_offset(pe, yr_le32toh(debug_dir->AddressOfRawData));
+
+    if (pcv_hdr_offset < 0)
+      continue;
+
+    PCV_HEADER cv_hdr = (PCV_HEADER) (pe->data + pcv_hdr_offset);
 
     if (yr_le32toh(cv_hdr->dwSignature) == CVINFO_PDB20_CVSIGNATURE)
     {
@@ -317,7 +321,7 @@ static void pe_parse_debug_directory(
       if (!struct_fits_in_pe(pe, pdb20, CV_INFO_PDB20))
         break;
       
-      pdb_str_len = strlen((char *)(pdb20->PdbFileName));
+      pdb_str_len = strnlen((char *)(pdb20->PdbFileName), MAX_PATH * sizeof(char));
       
       if (pdb_str_len && pdb_str_len < MAX_PATH)
       {
@@ -333,7 +337,7 @@ static void pe_parse_debug_directory(
       if (!struct_fits_in_pe(pe, pdb70, CV_INFO_PDB70))
         break;
       
-      pdb_str_len = strlen((char *)(pdb70->PdbFileName));
+      pdb_str_len = strnlen((char *)(pdb70->PdbFileName), MAX_PATH * sizeof(char));
       
       if (pdb_str_len && pdb_str_len < MAX_PATH)
       {
