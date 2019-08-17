@@ -348,6 +348,7 @@ void dotnet_parse_tilde_2(
   PMODULE_TABLE module_table;
   PASSEMBLY_TABLE assembly_table;
   PASSEMBLYREF_TABLE assemblyref_table;
+  PFIELDRVA_TABLE fieldrva_table;
   PMANIFESTRESOURCE_TABLE manifestresource_table;
   PMODULEREF_TABLE moduleref_table;
   PCUSTOMATTRIBUTE_TABLE customattribute_table;
@@ -360,7 +361,7 @@ void dotnet_parse_tilde_2(
   int bit_check;
   int matched_bits = 0;
 
-  int64_t resource_offset;
+  int64_t resource_offset, field_offset;
   uint32_t row_size, row_count, counter;
 
   const uint8_t* string_offset;
@@ -1046,7 +1047,30 @@ void dotnet_parse_tilde_2(
         break;
 
       case BIT_FIELDRVA:
-        table_offset += (4 + index_sizes.field) * num_rows;
+        row_size = 4 + index_sizes.field;
+        row_ptr = table_offset;
+
+        // Can't use 'i' here because we only set the field offset if it is
+        // valid. Instead use 'counter'.
+        counter = 0;
+
+        for (i = 0; i < num_rows; i++)
+        {
+          fieldrva_table = (PFIELDRVA_TABLE) row_ptr;
+
+          field_offset = pe_rva_to_offset(pe, fieldrva_table->RVA);
+          if (field_offset >= 0)
+          {
+            set_integer(field_offset, pe->object, "field_offset[%i]", counter);
+            counter++;
+          }
+
+          row_ptr += row_size;
+        }
+
+        set_integer(counter, pe->object, "number_of_field_offsets");
+
+        table_offset += row_size * num_rows;
         break;
 
       case BIT_ENCLOG:
@@ -1662,6 +1686,9 @@ begin_declarations;
   declare_string("typelib");
   declare_string_array("constants");
   declare_integer("number_of_constants");
+
+  declare_integer_array("field_offset");
+  declare_integer("number_of_field_offsets");
 
 end_declarations;
 
