@@ -597,13 +597,13 @@ static void test_strings()
         #a == 2\n\
     }", "tests/data/xorwideandascii.out");
 
-  assert_true_rule_file(
+  assert_error(
     "rule test {\n\
       strings:\n\
         $a = \"ab\" xor nocase\n\
       condition:\n\
-        #a == 1084\n\
-    }", "tests/data/xornocase.out");
+        true\n\
+    }", ERROR_INVALID_MODIFIER);
 
   assert_true_rule(
       "rule test { \

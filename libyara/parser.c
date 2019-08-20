@@ -508,6 +508,15 @@ int yr_parser_reduce_string_declaration(
   if (str->flags & SIZED_STRING_FLAGS_NO_CASE)
     string_flags |= STRING_GFLAGS_NO_CASE;
 
+  // xor and nocase together is not implemented.
+
+  if (string_flags & STRING_GFLAGS_XOR && string_flags & STRING_GFLAGS_NO_CASE)
+  {
+      result = ERROR_INVALID_MODIFIER;
+      yr_compiler_set_error_extra_info(compiler, "xor nocase");
+      goto _exit;
+  }
+
   if (str->flags & SIZED_STRING_FLAGS_DOT_ALL)
     string_flags |= STRING_GFLAGS_DOT_ALL;
 

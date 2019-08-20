@@ -1580,7 +1580,6 @@ int yr_atoms_extract_from_string(
     // are set then we need to concatenate our list of xor atoms with the other
     // list to ensure we keep our plaintext atoms.
     if (flags & STRING_GFLAGS_WIDE ||
-        flags & STRING_GFLAGS_NO_CASE ||
         flags & STRING_GFLAGS_ASCII ||
         flags & STRING_GFLAGS_FULL_WORD)
     {
