@@ -30,7 +30,7 @@ load(
     "sapi_library",
 )
 
-# Proto message  that stores YARA matches. Used to communicate matches from
+# Proto message that stores YARA matches. Used to communicate matches from
 # the sandboxee to the host code.
 proto_library(
     name = "yara_matches",

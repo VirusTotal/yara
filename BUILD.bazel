@@ -95,7 +95,7 @@ YARA_COPTS = YARA_MODULE_OPTS + select({
     "-Ilibyara/modules",
 ] + YARA_CONFIG_OPTS
 
-# Just Yara's error codes. This is useful for sandboxing as it avoids pulling
+# Just YARA's error codes. This is useful for sandboxing as it avoids pulling
 # in the whole library.
 cc_library(
     name = "yara_errors",
@@ -104,7 +104,7 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
-# Yara library to be linked against.
+# YARA library to be linked against.
 cc_library(
     name = "libyara",
     srcs = [
@@ -247,7 +247,7 @@ cc_library(
     deps = [":libyara"],
 )
 
-# Yara command-line tool
+# YARA command-line tool
 cc_binary(
     name = "yara",
     srcs = ["yara.c"],
@@ -259,7 +259,7 @@ cc_binary(
     ],
 )
 
-# The Yara compiler
+# The YARA compiler
 cc_binary(
     name = "yarac",
     srcs = ["yarac.c"],

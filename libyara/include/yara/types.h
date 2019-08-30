@@ -385,8 +385,8 @@ typedef YR_AC_MATCH_TABLE_ENTRY*  YR_AC_MATCH_TABLE;
 
 struct YR_AC_TABLES
 {
-  YR_AC_TRANSITION* transitions;
-  YR_AC_MATCH_TABLE_ENTRY* matches;
+  YR_AC_TRANSITION_TABLE transitions;
+  YR_AC_MATCH_TABLE matches;
 };
 
 
