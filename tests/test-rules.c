@@ -1546,6 +1546,11 @@ void test_re()
   assert_false_rule_blob(
        "rule test { strings: $a = \" cmd.exe \" nocase wide condition: $a }",
        ISSUE_1006);
+
+  // Test case for issue #1117
+  assert_true_rule_blob(
+       "rule test { strings: $a =/abc([^\"\\\\])*\"/ nocase condition: $a }",
+       "abc\xE0\x22");
 }
 
 

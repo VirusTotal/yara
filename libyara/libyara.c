@@ -72,8 +72,8 @@ static struct yr_config_var
 
 // Global variables. See globals.h for their descriptions.
 
-char yr_lowercase[256];
-char yr_altercase[256];
+uint8_t yr_lowercase[256];
+uint8_t yr_altercase[256];
 
 
 #if defined(HAVE_LIBCRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000L
