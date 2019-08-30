@@ -30,13 +30,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_GLOBALS_H
 #define YR_GLOBALS_H
 
+#include <inttypes.h>
 #include <yara/threading.h>
 
 // Pre-computed tables for quickly converting a character to lowercase or to
 // its alternative case (uppercase if it is a lowercase and vice versa). This
 // tables are initialized by yr_initialize.
-extern char yr_lowercase[256];
-extern char yr_altercase[256];
+extern uint8_t yr_lowercase[256];
+extern uint8_t yr_altercase[256];
 
 extern YR_THREAD_STORAGE_KEY yr_tidx_key;
 extern YR_THREAD_STORAGE_KEY yr_recovery_state_key;
