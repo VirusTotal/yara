@@ -125,7 +125,7 @@ static char* atom_quality_table;
 static char* tags[MAX_ARGS_TAG + 1];
 static char* identifiers[MAX_ARGS_IDENTIFIER + 1];
 static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
-static char* modules_data[MAX_ARGS_EXT_VAR + 1];
+static char* modules_data[MAX_ARGS_MODULE_DATA + 1];
 
 static bool recursive_search = false;
 static bool show_module_data = false;
