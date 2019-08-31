@@ -114,6 +114,11 @@ bool yr_object_has_undefined_value(
     const char* field,
     ...) YR_PRINTF_LIKE(2, 3);
 
+double yr_object_get_float(
+    YR_OBJECT* object,
+    const char* field,
+    ...) YR_PRINTF_LIKE(2, 3);
+
 int64_t yr_object_get_integer(
     YR_OBJECT* object,
     const char* field,
