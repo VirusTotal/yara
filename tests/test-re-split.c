@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2019. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,19 +27,55 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YR_GLOBALS_H
-#define YR_GLOBALS_H
+#include <yara.h>
+#include <stdio.h>
+#include "util.h"
 
-#include <inttypes.h>
-#include <yara/threading.h>
 
-// Pre-computed tables for quickly converting a character to lowercase or to
-// its alternative case (uppercase if it is a lowercase and vice versa). This
-// tables are initialized by yr_initialize.
-extern uint8_t yr_lowercase[256];
-extern uint8_t yr_altercase[256];
+int main(int argc, char** argv)
+{
+  RE_AST* re_ast;
+  RE_AST* re_ast_remain;
 
-extern YR_THREAD_STORAGE_KEY yr_tidx_key;
-extern YR_THREAD_STORAGE_KEY yr_recovery_state_key;
+  RE_ERROR re_error;
 
-#endif
+  int32_t min_gap;
+  int32_t max_gap;
+
+  yr_initialize();
+  yr_re_parse_hex(
+      "{ 01 02 03 04 [0-300] 05 06 07 08 [1-400] 09 0A 0B 0C }",
+      &re_ast, &re_error);
+
+  assert(re_ast != NULL);
+
+  yr_re_ast_split_at_chaining_point(
+      re_ast, &re_ast_remain, &min_gap, &max_gap);
+
+  assert(re_ast != NULL);
+  assert(re_ast_remain != NULL);
+  assert(min_gap == 0);
+  assert(max_gap == 300);
+
+  yr_re_ast_destroy(re_ast);
+  re_ast = re_ast_remain;
+
+  yr_re_ast_split_at_chaining_point(
+      re_ast, &re_ast_remain, &min_gap, &max_gap);
+
+  assert(re_ast != NULL);
+  assert(re_ast_remain != NULL);
+  assert(min_gap == 1);
+  assert(max_gap == 400);
+
+  yr_re_ast_destroy(re_ast);
+  re_ast = re_ast_remain;
+
+  yr_re_ast_split_at_chaining_point(
+      re_ast, &re_ast_remain, &min_gap, &max_gap);
+
+  assert(re_ast != NULL);
+  assert(re_ast_remain == NULL);
+
+  yr_re_ast_destroy(re_ast);
+}

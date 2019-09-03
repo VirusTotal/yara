@@ -563,7 +563,7 @@ Reference
     .. c:type:: SECTION_MEM_READ
     .. c:type:: SECTION_MEM_WRITE
 
-    *Example: pe.sections[1].characteristics & SECTION_CNT_CODE*
+    *Example: pe.sections[1].characteristics & pe.SECTION_CNT_CODE*
 
 .. c:type:: overlay
 

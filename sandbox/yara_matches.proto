@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2019. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,19 +27,37 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YR_GLOBALS_H
-#define YR_GLOBALS_H
+syntax = "proto3";
 
-#include <inttypes.h>
-#include <yara/threading.h>
+package yara;
 
-// Pre-computed tables for quickly converting a character to lowercase or to
-// its alternative case (uppercase if it is a lowercase and vice versa). This
-// tables are initialized by yr_initialize.
-extern uint8_t yr_lowercase[256];
-extern uint8_t yr_altercase[256];
+// Identifies a single rule inside a namespace
+message YaraRuleId {
+  string rule_namespace = 1;  // Currently unused by yara_entrypoints.cc
+  string rule_name = 2;
+}
 
-extern YR_THREAD_STORAGE_KEY yr_tidx_key;
-extern YR_THREAD_STORAGE_KEY yr_recovery_state_key;
+// Holds N mappings for the matches.
+message YaraMatches {
+  // Holds one mapping from (namespace, name) --> N key-value entries.
+  message Match {
+    message Meta {
+      string identifier = 1;
+      oneof value {
+        bytes bytes_value = 2;
+        int64 int_value = 3;
+      }
+    }
 
-#endif
+    YaraRuleId id = 1;
+    repeated Meta meta = 2;
+  }
+
+  repeated Match match = 1;
+}
+
+message YaraStatus {
+  int64 code = 1;
+  int64 line_number = 2;
+  string message = 3;
+}
