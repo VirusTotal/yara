@@ -125,7 +125,6 @@ int yr_re_ast_contains_dot_star(
 
 int yr_re_ast_split_at_chaining_point(
     RE_AST* re_ast,
-    RE_AST** result_re_ast,
     RE_AST** remainder_re_ast,
     int32_t* min_gap,
     int32_t* max_gap);

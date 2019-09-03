@@ -60,7 +60,6 @@ cc_test(
         "data/foo.yar",
         "data/include/bar.yar",
         "data/xor.out",
-        "data/xornocase.out",
         "data/xorwide.out",
     ],
     deps = [
@@ -159,6 +158,15 @@ cc_test(
     srcs = ["test-dex.c"],
     deps = [
         ":blob",
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
+    name = "test_re_split",
+    srcs = ["test-re-split.c"],
+    deps = [
         ":util",
         "@//:libyara",
     ],
