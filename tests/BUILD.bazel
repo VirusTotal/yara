@@ -60,7 +60,6 @@ cc_test(
         "data/foo.yar",
         "data/include/bar.yar",
         "data/xor.out",
-        "data/xornocase.out",
         "data/xorwide.out",
     ],
     deps = [
