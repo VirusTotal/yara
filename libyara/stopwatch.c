@@ -27,7 +27,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <time.h>
 
 #include <yara/stopwatch.h>
 
@@ -74,6 +73,9 @@ uint64_t yr_stopwatch_elapsed_us(
 
 
 #elif defined(HAVE_CLOCK_GETTIME)
+
+#define _GNU_SOURCE
+#include <time.h>
 
 #define timespecsub(tsp, usp, vsp)                      \
 do {                                                    \
