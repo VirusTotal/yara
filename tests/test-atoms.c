@@ -582,4 +582,7 @@ int main(int argc, char** argv)
   test_table_quality();
   test_heuristic_quality();
   test_atom_choose();
+
+  yr_finalize();
+  return 0;
 }

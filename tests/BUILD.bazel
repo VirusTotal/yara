@@ -27,6 +27,9 @@
 
 
 COPTS = [
+    # Some functions like clock_gettime won't appear in include files unless the
+    # _GNU_SOURCE macro is defined.
+    "-D_GNU_SOURCE",
     # Tell the compiler we want the C99 standard.
     "-std=c99",
 ]

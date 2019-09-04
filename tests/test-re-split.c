@@ -78,4 +78,6 @@ int main(int argc, char** argv)
   assert(re_ast_remain == NULL);
 
   yr_re_ast_destroy(re_ast);
+  yr_finalize();
+  return 0;
 }
