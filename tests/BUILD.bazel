@@ -27,6 +27,7 @@
 
 
 COPTS = [
+    "-D_GNU_SOURCE",
     # Tell the compiler we want the C99 standard.
     "-std=c99",
 ]
