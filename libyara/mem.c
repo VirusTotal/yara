@@ -27,6 +27,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define _GNU_SOURCE
+
 #include <yara/mem.h>
 #include <yara/error.h>
 
@@ -111,8 +113,6 @@ char* yr_strndup(const char *str, size_t n)
 }
 
 #else
-
-#define _GNU_SOURCE
 
 #include <stdlib.h>
 #include <string.h>

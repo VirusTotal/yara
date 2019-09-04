@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_STOPWATCH_H
 #define YR_STOPWATCH_H
 
+#define _GNU_SOURCE
+
 #include <time.h>
 #include <yara/integers.h>
 
