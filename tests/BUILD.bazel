@@ -25,6 +25,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
+COPTS = [
+    # Tell the compiler we want the C99 standard.
+    "-std=c99",
+]
+
 cc_library(
     name = "blob",
     hdrs = ["blob.h"],
@@ -40,12 +46,14 @@ cc_library(
 cc_test(
     name = "test_alignment",
     srcs = ["test-alignment.c"],
+    copts = COPTS,
     deps = ["@//:libyara"],
 )
 
 cc_test(
     name = "test_atoms",
     srcs = ["test-atoms.c"],
+    copts = COPTS,
     deps = [
         ":util",
         "@//:libyara",
@@ -55,6 +63,7 @@ cc_test(
 cc_test(
     name = "test_rules",
     srcs = ["test-rules.c"],
+    copts = COPTS,
     data = [
         "data/baz.yar",
         "data/foo.yar",
@@ -73,6 +82,7 @@ cc_test(
 cc_test(
     name = "test_pe",
     srcs = ["test-pe.c"],
+    copts = COPTS,
     data = [
         "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885",
         "data/tiny",
@@ -89,6 +99,7 @@ cc_test(
 cc_test(
     name = "test_elf",
     srcs = ["test-elf.c"],
+    copts = COPTS,
     deps = [
         ":blob",
         ":util",
@@ -100,6 +111,7 @@ cc_test(
     name = "test_api",
     srcs = ["test-api.c"],
     data = ["data/baz.yar"],
+    copts = COPTS,
     deps = [
         ":util",
         "@//:libyara",
@@ -109,6 +121,7 @@ cc_test(
 cc_test(
     name = "test_bitmask",
     srcs = ["test-bitmask.c"],
+    copts = COPTS,
     deps = [
         ":util",
         "@//:libyara",
@@ -118,6 +131,7 @@ cc_test(
 cc_test(
     name = "test_math",
     srcs = ["test-math.c"],
+    copts = COPTS,
     deps = [
         ":util",
         "@//:libyara",
@@ -127,6 +141,7 @@ cc_test(
 cc_test(
     name = "test_stack",
     srcs = ["test-stack.c"],
+    copts = COPTS,
     deps = [
         ":util",
         "@//:libyara",
@@ -137,6 +152,7 @@ cc_test(
 cc_test(
     name = "test_exception",
     srcs = ["test-exception.c"],
+    copts = COPTS,
     deps = [
         ":util",
         "@//:libyara",
@@ -147,6 +163,7 @@ cc_test(
     name = "test_macho",
     srcs = ["test-macho.c"],
     data = ["data/tiny-universal"],
+    copts = COPTS,
     deps = [
         ":blob",
         ":util",
@@ -157,6 +174,7 @@ cc_test(
 cc_test(
     name = "test_dex",
     srcs = ["test-dex.c"],
+    copts = COPTS,
     deps = [
         ":blob",
         ":util",
@@ -167,6 +185,7 @@ cc_test(
 cc_test(
     name = "test_re_split",
     srcs = ["test-re-split.c"],
+    copts = COPTS,
     deps = [
         ":util",
         "@//:libyara",
