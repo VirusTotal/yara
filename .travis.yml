@@ -37,6 +37,13 @@ matrix:
       install: |
         sudo apt-get update
         sudo apt-get install -y gcc-mingw-w64 autoconf automake libtool
+    - os: linux
+      dist: trusty
+      install: |
+         wget https://github.com/bazelbuild/bazel/releases/download/0.29.0/bazel_0.29.0-linux-x86_64.deb
+         sudo dpkg -i bazel_0.29.0-linux-x86_64.deb
+      before_script: bazel info
+      script: bazel test //tests/...
     - os: osx
       osx_image: xcode7.3
     - os: osx
@@ -73,5 +80,5 @@ addons:
       description: "Build submitted via Travis CI"
     notification_email: plusvic@gmail.com
     build_command_prepend: "./configure; make clean"
-    build_command:   "make -j 4"
+    build_command: "make -j 4"
     branch_pattern: master

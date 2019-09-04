@@ -2268,6 +2268,5 @@ int main(int argc, char** argv)
   test_performance_warnings();
 
   yr_finalize();
-
   return 0;
 }
