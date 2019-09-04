@@ -73,8 +73,6 @@ uint64_t yr_stopwatch_elapsed_us(
 
 #elif defined(HAVE_CLOCK_GETTIME)
 
-#include <time.h>
-
 #define timespecsub(tsp, usp, vsp)                      \
 do {                                                    \
   (vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;        \
