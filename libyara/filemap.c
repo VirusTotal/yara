@@ -32,7 +32,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #else
-#define _GNU_SOURCE
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <unistd.h>
