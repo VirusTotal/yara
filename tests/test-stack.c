@@ -78,4 +78,6 @@ int main(int argc, char** argv)
     exit(EXIT_FAILURE);
 
   yr_stack_destroy(stack);
+  yr_finalize();
+  return 0;
 }

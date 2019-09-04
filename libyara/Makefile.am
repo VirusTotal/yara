@@ -40,7 +40,10 @@ endif
 
 AM_YFLAGS=-d
 
-AM_CFLAGS=-Wall -Wno-deprecated-declarations -std=gnu99 -I$(srcdir)/include
+AM_CFLAGS=-Wall -Wno-deprecated-declarations \
+  -std=gnu99 \
+  -D_GNU_SOURCE \
+  -I$(srcdir)/include
 
 if DEBUG
 AM_CFLAGS+=-g
