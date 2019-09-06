@@ -14,7 +14,7 @@ matrix:
       before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
       install: |
         sudo apt-get update
-        sudo apt-get install -y autoconf automake libtool libjansson-dev libmagic-dev libssl-de
+        sudo apt-get install -y autoconf automake libtool libjansson-dev libmagic-dev libssl-dev
 
     # Build for 64-bit Linux with profiling enabled
     - os: linux
