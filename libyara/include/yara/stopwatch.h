@@ -55,7 +55,7 @@ typedef struct _YR_STOPWATCH
 
 } YR_STOPWATCH;
 
-#elif
+#else
 
 #include <sys/time.h>
 
