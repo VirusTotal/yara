@@ -2,6 +2,8 @@ language: c
 
 matrix:
   include:
+
+    # Build for 64-bit Linux with profiling enabled
     - os: linux
       dist: trusty
       sudo: required
@@ -12,7 +14,18 @@ matrix:
       before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
       install: |
         sudo apt-get update
+        sudo apt-get install -y autoconf automake libtool libjansson-dev libmagic-dev libssl-de
+
+    # Build for 64-bit Linux with profiling enabled
+    - os: linux
+      dist: trusty
+      sudo: required
+      env: CONFIGFLAGS="CFLAGS=-m64 --enable-cuckoo --enable-magic --enable-address-sanitizer --enable-profiling"
+      install: |
+        sudo apt-get update
         sudo apt-get install -y autoconf automake libtool libjansson-dev libmagic-dev libssl-dev
+
+    # Build for 32-bit Linux
     - os: linux
       dist: trusty
       sudo: required
@@ -23,6 +36,8 @@ matrix:
         sudo apt-get remove postgresql-9.3
         sudo apt-get upgrade -y gcc
         sudo apt-get install -y gcc-multilib autoconf automake libtool libjansson-dev:i386 libmagic-dev:i386 libssl-dev:i386
+
+    # Build for 64-bit Window using MinGW cross-compiler
     - os: linux
       dist: trusty
       sudo: required
@@ -30,6 +45,8 @@ matrix:
       install: |
         sudo apt-get update
         sudo apt-get install -y gcc-mingw-w64 autoconf automake libtool
+
+    # Build for 64-bit Window using MinGW cross-compiler
     - os: linux
       dist: trusty
       sudo: required
@@ -37,6 +54,8 @@ matrix:
       install: |
         sudo apt-get update
         sudo apt-get install -y gcc-mingw-w64 autoconf automake libtool
+
+    # Build for 64-bit Linux using Bazel instead of make.
     - os: linux
       dist: trusty
       install: |
@@ -44,6 +63,8 @@ matrix:
          sudo dpkg -i bazel_0.29.0-linux-x86_64.deb
       before_script: bazel info
       script: bazel test //tests/...
+
+    # Build for OS X
     - os: osx
       osx_image: xcode7.3
     - os: osx
