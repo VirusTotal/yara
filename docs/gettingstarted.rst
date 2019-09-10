@@ -10,6 +10,11 @@ find the latest release at https://github.com/VirusTotal/yara/releases.
 Compiling and installing YARA
 =============================
 
+If you are using the [vcpkg](https://github.com/Microsoft/vcpkg/) dependency manager you can download and install YARA with a single command:
+```
+vcpkg install yara
+```
+
 Download the source tarball and get prepared for compiling it::
 
     tar -zxf yara-3.10.0.tar.gz
