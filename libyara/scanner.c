@@ -381,6 +381,7 @@ YR_API int yr_scanner_scan_mem_blocks(
   scanner->file_size = block->size;
 
   yr_set_tidx(tidx);
+  yr_stopwatch_start(&scanner->stopwatch);
 
   result = yr_arena_create(1048576, 0, &scanner->matches_arena);
 
@@ -391,8 +392,6 @@ YR_API int yr_scanner_scan_mem_blocks(
 
   if (result != ERROR_SUCCESS)
     goto _exit;
-
-  yr_stopwatch_start(&scanner->stopwatch);
 
   while (block != NULL)
   {
