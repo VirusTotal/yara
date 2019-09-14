@@ -613,8 +613,11 @@ string_modifiers
     | string_modifiers string_modifier
       {
         $$.flags = $1.flags | $2.flags;
-        $$.xor_min = $2.xor_min;
-        $$.xor_max = $2.xor_max;
+        if ($2.flags & STRING_GFLAGS_XOR)
+        {
+          $$.xor_min = $2.xor_min;
+          $$.xor_max = $2.xor_max;
+        }
       }
     ;
 

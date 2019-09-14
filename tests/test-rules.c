@@ -573,6 +573,14 @@ static void test_strings()
         #a == 256\n\
     }", "tests/data/xorwide.out");
 
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor(1-16) wide\n\
+      condition:\n\
+        #a == 17\n\
+    }", "tests/data/xorwide.out");
+
   // We should have no matches here because we are not generating the wide
   // string, just the ascii one, and the test data contains no ascii strings.
   assert_true_rule_file(
