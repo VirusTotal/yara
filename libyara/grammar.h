@@ -168,8 +168,9 @@ union YYSTYPE
   YR_STRING*      string;
   YR_META*        meta;
   YR_RULE*        rule;
+  YR_MODIFIER     modifier;
 
-#line 173 "grammar.h" /* yacc.c:1916  */
+#line 174 "grammar.h" /* yacc.c:1916  */
 };
 
 typedef union YYSTYPE YYSTYPE;

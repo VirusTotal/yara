@@ -207,14 +207,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <c_string> tags
 %type <c_string> tag_list
 
-%type <integer> string_modifier
-%type <integer> string_modifiers
+%type <modifier> string_modifier
+%type <modifier> string_modifiers
 
-%type <integer> regexp_modifier
-%type <integer> regexp_modifiers
+%type <modifier> regexp_modifier
+%type <modifier> regexp_modifiers
 
-%type <integer> hex_modifier
-%type <integer> hex_modifiers
+%type <modifier> hex_modifier
+%type <modifier> hex_modifiers
 
 %type <integer> integer_set
 
@@ -254,6 +254,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   YR_STRING*      string;
   YR_META*        meta;
   YR_RULE*        rule;
+  YR_MODIFIER     modifier;
 }
 
 
@@ -557,7 +558,7 @@ string_declaration
       _TEXT_STRING_ string_modifiers
       {
         int result = yr_parser_reduce_string_declaration(
-            yyscanner, (int32_t) $5, $1, $4, &$$);
+            yyscanner, $5, $1, $4, &$$);
 
         yr_free($1);
         yr_free($4);
@@ -571,8 +572,9 @@ string_declaration
       }
       _REGEXP_ regexp_modifiers
       {
+        $5.flags |= STRING_GFLAGS_REGEXP;
         int result = yr_parser_reduce_string_declaration(
-            yyscanner, (int32_t) $5 | STRING_GFLAGS_REGEXP, $1, $4, &$$);
+            yyscanner, $5, $1, $4, &$$);
 
         yr_free($1);
         yr_free($4);
@@ -587,8 +589,9 @@ string_declaration
       }
       _HEX_STRING_ hex_modifiers
       {
+        $5.flags |= STRING_GFLAGS_HEXADECIMAL;
         int result = yr_parser_reduce_string_declaration(
-            yyscanner, (int32_t) $5 | STRING_GFLAGS_HEXADECIMAL, $1, $4, &$$);
+            yyscanner, $5, $1, $4, &$$);
 
         yr_free($1);
         yr_free($4);
@@ -601,40 +604,86 @@ string_declaration
 
 
 string_modifiers
-    : /* empty */                         { $$ = 0; }
-    | string_modifiers string_modifier    { $$ = $1 | $2; }
+    : /* empty */
+      {
+        $$.flags = 0;
+        $$.xor_min = 0;
+        $$.xor_max = 0;
+      }
+    | string_modifiers string_modifier
+      {
+        $$.flags = $1.flags | $2.flags;
+        $$.xor_min = $2.xor_min;
+        $$.xor_max = $2.xor_max;
+      }
     ;
 
 
 string_modifier
-    : _WIDE_        { $$ = STRING_GFLAGS_WIDE; }
-    | _ASCII_       { $$ = STRING_GFLAGS_ASCII; }
-    | _NOCASE_      { $$ = STRING_GFLAGS_NO_CASE; }
-    | _FULLWORD_    { $$ = STRING_GFLAGS_FULL_WORD; }
-    | _XOR_         { $$ = STRING_GFLAGS_XOR; }
-    | _PRIVATE_     { $$ = STRING_GFLAGS_PRIVATE; }
+    : _WIDE_        { $$.flags = STRING_GFLAGS_WIDE; }
+    | _ASCII_       { $$.flags = STRING_GFLAGS_ASCII; }
+    | _NOCASE_      { $$.flags = STRING_GFLAGS_NO_CASE; }
+    | _FULLWORD_    { $$.flags = STRING_GFLAGS_FULL_WORD; }
+    | _PRIVATE_     { $$.flags = STRING_GFLAGS_PRIVATE; }
+    | _XOR_         { $$.flags = STRING_GFLAGS_XOR; }
+    /*
+     * Would love to use range here for consistency in the language but that
+     * uses a primary expression which pushes a value on the VM stack we don't
+     * account for.
+     */
+    | _XOR_ '(' _NUMBER_ '-' _NUMBER_ ')'
+      {
+        int result = ERROR_SUCCESS;
+
+        if ($3 < 0)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "lower bound for xor range exceeded (min: 0)");
+          result = ERROR_WRONG_TYPE;
+        }
+
+        if ($5 > 255)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "upper bound for xor range exceeded (max: 255)");
+          result = ERROR_WRONG_TYPE;
+        }
+
+        if ($3 > $5)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "xor lower bound exceeds upper bound");
+          result = ERROR_WRONG_TYPE;
+        }
+
+        fail_if_error(result);
+
+        $$.flags = STRING_GFLAGS_XOR;
+        $$.xor_min = $3;
+        $$.xor_max = $5;
+      }
     ;
 
 regexp_modifiers
-    : /* empty */                         { $$ = 0; }
-    | regexp_modifiers regexp_modifier    { $$ = $1 | $2; }
+    : /* empty */                         { $$.flags = 0; }
+    | regexp_modifiers regexp_modifier    { $$.flags = $1.flags | $2.flags; }
     ;
 
 regexp_modifier
-    : _WIDE_        { $$ = STRING_GFLAGS_WIDE; }
-    | _ASCII_       { $$ = STRING_GFLAGS_ASCII; }
-    | _NOCASE_      { $$ = STRING_GFLAGS_NO_CASE; }
-    | _FULLWORD_    { $$ = STRING_GFLAGS_FULL_WORD; }
-    | _PRIVATE_     { $$ = STRING_GFLAGS_PRIVATE; }
+    : _WIDE_        { $$.flags = STRING_GFLAGS_WIDE; }
+    | _ASCII_       { $$.flags = STRING_GFLAGS_ASCII; }
+    | _NOCASE_      { $$.flags = STRING_GFLAGS_NO_CASE; }
+    | _FULLWORD_    { $$.flags = STRING_GFLAGS_FULL_WORD; }
+    | _PRIVATE_     { $$.flags = STRING_GFLAGS_PRIVATE; }
     ;
 
 hex_modifiers
-    : /* empty */                         { $$ = 0; }
-    | hex_modifiers hex_modifier          { $$ = $1 | $2; }
+    : /* empty */                         { $$.flags = 0; }
+    | hex_modifiers hex_modifier          { $$.flags = $1.flags | $2.flags; }
     ;
 
 hex_modifier
-    : _PRIVATE_     { $$ = STRING_GFLAGS_PRIVATE; }
+    : _PRIVATE_     { $$.flags = STRING_GFLAGS_PRIVATE; }
     ;
 
 identifier

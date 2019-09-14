@@ -529,22 +529,30 @@ static void test_strings()
              all of them\n\
        }", "abcdef");
 
-  // Check the location of the first match just to be extra careful we aren't
-  // matching the plaintext version at offset 4.
+  // xor by itself will match the plaintext version of the string too.
   assert_true_rule_file(
     "rule test {\n\
       strings:\n\
         $a = \"This program cannot\" xor\n\
       condition:\n\
-        #a == 255 and @a != 4\n\
+        #a == 256\n\
     }", "tests/data/xor.out");
 
+  // Make sure the combination of xor and ascii behaves the same as just xor.
   assert_true_rule_file(
     "rule test {\n\
       strings:\n\
         $a = \"This program cannot\" xor ascii\n\
       condition:\n\
         #a == 256\n\
+    }", "tests/data/xor.out");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor(1-0x10)\n\
+      condition:\n\
+        #a == 16\n\
     }", "tests/data/xor.out");
 
   // We should have no matches here because we are not generating the ascii
@@ -560,19 +568,13 @@ static void test_strings()
   assert_true_rule_file(
     "rule test {\n\
       strings:\n\
-        $a = \"This program cannot\" wide\n\
-      condition:\n\
-        #a == 1 and @a == 4\n\
-    }", "tests/data/xorwide.out");
-
-  assert_true_rule_file(
-    "rule test {\n\
-      strings:\n\
         $a = \"This program cannot\" xor wide\n\
       condition:\n\
         #a == 256\n\
     }", "tests/data/xorwide.out");
 
+  // We should have no matches here because we are not generating the wide
+  // string, just the ascii one, and the test data contains no ascii strings.
   assert_true_rule_file(
     "rule test {\n\
       strings:\n\
