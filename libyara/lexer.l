@@ -178,6 +178,7 @@ octdigit      [0-7]
 "strings"               { return _STRINGS_;     }
 "ascii"                 { return _ASCII_;       }
 "wide"                  { return _WIDE_;        }
+"xor"                   { return _XOR_;         }
 "fullword"              { return _FULLWORD_;    }
 "nocase"                { return _NOCASE_;      }
 "condition"             { return _CONDITION_;   }
@@ -198,14 +199,6 @@ octdigit      [0-7]
 "matches"               { return _MATCHES_;     }
 "contains"              { return _CONTAINS_;    }
 "import"                { return _IMPORT_;      }
-
-
-"xor" {
-  yylval->modifier.flags = 0;
-  yylval->modifier.xor_min = 0;
-  yylval->modifier.xor_max = 255;
-  return _XOR_;
-}
 
 
 "/*"                    { BEGIN(comment);       }

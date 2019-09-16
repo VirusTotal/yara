@@ -581,6 +581,30 @@ static void test_strings()
         #a == 17\n\
     }", "tests/data/xorwide.out");
 
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = {00 11 22 33} xor\n\
+      condition:\n\
+        $a\n\
+    }", ERROR_SYNTAX_ERROR);
+
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = /foo(bar|baz)/ xor\n\
+      condition:\n\
+        $a\n\
+    }", ERROR_SYNTAX_ERROR);
+
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" xor xor\n\
+      condition:\n\
+        $a\n\
+    }", ERROR_DUPLICATED_MODIFIER);
+
   // We should have no matches here because we are not generating the wide
   // string, just the ascii one, and the test data contains no ascii strings.
   assert_true_rule_file(

@@ -73,6 +73,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     } \
 
 
+#define set_flag_or_error(flags, new_flag) \
+    if (flags & new_flag) \
+    { \
+      compiler->last_error = ERROR_DUPLICATED_MODIFIER; \
+      yyerror(yyscanner, compiler, NULL); \
+      YYERROR; \
+    } \
+    else \
+    { \
+      flags |= new_flag; \
+    }
+
+
 #define check_type_with_cleanup(expression, expected_type, op, cleanup) \
     if (((expression.type) & (expected_type)) == 0) \
     { \
@@ -612,7 +625,11 @@ string_modifiers
       }
     | string_modifiers string_modifier
       {
-        $$.flags = $1.flags | $2.flags;
+        set_flag_or_error($$.flags, $2.flags);
+        // Only set the xor minimum and maximum if we are dealing with the
+        // xor modifier. If we don't check for this then we can end up with
+        // "xor wide" resulting in whatever is on the stack for "wide"
+        // overwriting the values for xor.
         if ($2.flags & STRING_GFLAGS_XOR)
         {
           $$.xor_min = $2.xor_min;
@@ -628,7 +645,12 @@ string_modifier
     | _NOCASE_      { $$.flags = STRING_GFLAGS_NO_CASE; }
     | _FULLWORD_    { $$.flags = STRING_GFLAGS_FULL_WORD; }
     | _PRIVATE_     { $$.flags = STRING_GFLAGS_PRIVATE; }
-    | _XOR_         { $$.flags = STRING_GFLAGS_XOR; }
+    | _XOR_
+      {
+        $$.flags = STRING_GFLAGS_XOR;
+        $$.xor_min = 0;
+        $$.xor_max = 255;
+      }
     /*
      * Would love to use range here for consistency in the language but that
      * uses a primary expression which pushes a value on the VM stack we don't
@@ -669,7 +691,7 @@ string_modifier
 
 regexp_modifiers
     : /* empty */                         { $$.flags = 0; }
-    | regexp_modifiers regexp_modifier    { $$.flags = $1.flags | $2.flags; }
+    | regexp_modifiers regexp_modifier    { set_flag_or_error($$.flags, $2.flags); }
     ;
 
 regexp_modifier
@@ -682,7 +704,7 @@ regexp_modifier
 
 hex_modifiers
     : /* empty */                         { $$.flags = 0; }
-    | hex_modifiers hex_modifier          { $$.flags = $1.flags | $2.flags; }
+    | hex_modifiers hex_modifier          { set_flag_or_error($$.flags, $2.flags); }
     ;
 
 hex_modifier
