@@ -625,7 +625,10 @@ string_modifiers
       }
     | string_modifiers string_modifier
       {
+        $$ = $1;
+
         set_flag_or_error($$.flags, $2.flags);
+
         // Only set the xor minimum and maximum if we are dealing with the
         // xor modifier. If we don't check for this then we can end up with
         // "xor wide" resulting in whatever is on the stack for "wide"
