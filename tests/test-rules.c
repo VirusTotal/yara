@@ -565,6 +565,7 @@ static void test_strings()
         #a == 0\n\
     }", "tests/data/xor.out");
 
+  // xor by itself is equivalent to xor(0-255).
   assert_true_rule_file(
     "rule test {\n\
       strings:\n\
@@ -573,12 +574,13 @@ static void test_strings()
         #a == 256\n\
     }", "tests/data/xorwide.out");
 
+  // This DOES NOT look for the plaintext wide version by itself.
   assert_true_rule_file(
     "rule test {\n\
       strings:\n\
         $a = \"This program cannot\" xor(1-16) wide\n\
       condition:\n\
-        #a == 17\n\
+        #a == 16\n\
     }", "tests/data/xorwide.out");
 
   assert_error(
@@ -615,6 +617,8 @@ static void test_strings()
         #a == 0\n\
     }", "tests/data/xorwide.out");
 
+  // This should match 512 times because we are looking for the wide and ascii
+  // versions in plaintext and doing xor(0-255) (implicitly)
   assert_true_rule_file(
     "rule test {\n\
       strings:\n\

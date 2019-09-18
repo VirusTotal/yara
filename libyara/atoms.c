@@ -1576,22 +1576,8 @@ int yr_atoms_extract_from_string(
         *atoms = NULL;
       });
 
-    // The xor modifier by itself does not include the plaintext version of the
-    // string. If any of the ascii, wide or nocase modifiers are not set then we
-    // do not need to concatenate our new xor atoms with the old ones. If any
-    // are set then we need to concatenate our list of xor atoms with the other
-    // list to ensure we keep our plaintext atoms.
-    if (modifier.flags & STRING_GFLAGS_WIDE ||
-        modifier.flags & STRING_GFLAGS_ASCII ||
-        modifier.flags & STRING_GFLAGS_FULL_WORD)
-    {
-      *atoms = _yr_atoms_list_concat(*atoms, xor_atoms);
-    }
-    else
-    {
       yr_atoms_list_destroy(*atoms);
       *atoms = xor_atoms;
-    }
   }
 
   return ERROR_SUCCESS;
