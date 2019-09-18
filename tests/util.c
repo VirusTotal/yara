@@ -275,10 +275,12 @@ int _assert_atoms(
 
   int min_atom_quality;
   int exit_code;
+  YR_MODIFIER modifier;
+  modifier.flags = 0;
 
   c.get_atom_quality = yr_atoms_heuristic_quality;
 
-  yr_atoms_extract_from_re(&c, re_ast, 0, &atoms, &min_atom_quality);
+  yr_atoms_extract_from_re(&c, re_ast, modifier, &atoms, &min_atom_quality);
 
   atom = atoms;
 

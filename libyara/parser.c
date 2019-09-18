@@ -290,7 +290,7 @@ int yr_parser_lookup_loop_variable(
 
 static int _yr_parser_write_string(
     const char* identifier,
-    int flags,
+    YR_MODIFIER modifier,
     YR_COMPILER* compiler,
     SIZED_STRING* str,
     RE_AST* re_ast,
@@ -329,14 +329,14 @@ static int _yr_parser_write_string(
   if (result != ERROR_SUCCESS)
     return result;
 
-  if (flags & STRING_GFLAGS_HEXADECIMAL ||
-      flags & STRING_GFLAGS_REGEXP)
+  if (modifier.flags & STRING_GFLAGS_HEXADECIMAL ||
+      modifier.flags & STRING_GFLAGS_REGEXP)
   {
     literal_string = yr_re_ast_extract_literal(re_ast);
 
     if (literal_string != NULL)
     {
-      flags |= STRING_GFLAGS_LITERAL;
+      modifier.flags |= STRING_GFLAGS_LITERAL;
       free_literal = true;
     }
     else
@@ -346,16 +346,16 @@ static int _yr_parser_write_string(
       // the string should start, as the non-literal strings can contain
       // variable-length portions.
 
-      flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+      modifier.flags &= ~STRING_GFLAGS_FIXED_OFFSET;
     }
   }
   else
   {
     literal_string = str;
-    flags |= STRING_GFLAGS_LITERAL;
+    modifier.flags |= STRING_GFLAGS_LITERAL;
   }
 
-  (*string)->g_flags = flags;
+  (*string)->g_flags = modifier.flags;
   (*string)->chained_to = NULL;
   (*string)->fixed_offset = UNDEFINED;
   (*string)->rule = compiler->current_rule;
@@ -369,7 +369,7 @@ static int _yr_parser_write_string(
   memset((*string)->unconfirmed_matches, 0,
          sizeof((*string)->unconfirmed_matches));
 
-  if (flags & STRING_GFLAGS_LITERAL)
+  if (modifier.flags & STRING_GFLAGS_LITERAL)
   {
     (*string)->length = (uint32_t) literal_string->length;
 
@@ -385,7 +385,7 @@ static int _yr_parser_write_string(
           &compiler->atoms_config,
           (uint8_t*) literal_string->c_string,
           (int32_t) literal_string->length,
-          flags,
+          modifier,
           &atom_list,
           min_atom_quality);
     }
@@ -403,7 +403,7 @@ static int _yr_parser_write_string(
       result = yr_atoms_extract_from_re(
           &compiler->atoms_config,
           re_ast,
-          flags,
+          modifier,
           &atom_list,
           min_atom_quality);
   }
@@ -418,9 +418,9 @@ static int _yr_parser_write_string(
         compiler->matches_arena);
   }
 
-  if (flags & STRING_GFLAGS_LITERAL)
+  if (modifier.flags & STRING_GFLAGS_LITERAL)
   {
-    if (flags & STRING_GFLAGS_WIDE)
+    if (modifier.flags & STRING_GFLAGS_WIDE)
       max_string_len = (*string)->length * 2;
     else
       max_string_len = (*string)->length;
@@ -456,7 +456,7 @@ static int _yr_parser_write_string(
 
 int yr_parser_reduce_string_declaration(
     yyscan_t yyscanner,
-    int32_t string_flags,
+    YR_MODIFIER modifier,
     const char* identifier,
     SIZED_STRING* str,
     YR_STRING** string)
@@ -506,11 +506,11 @@ int yr_parser_reduce_string_declaration(
   }
 
   if (str->flags & SIZED_STRING_FLAGS_NO_CASE)
-    string_flags |= STRING_GFLAGS_NO_CASE;
+    modifier.flags |= STRING_GFLAGS_NO_CASE;
 
   // xor and nocase together is not implemented.
 
-  if (string_flags & STRING_GFLAGS_XOR && string_flags & STRING_GFLAGS_NO_CASE)
+  if (modifier.flags & STRING_GFLAGS_XOR && modifier.flags & STRING_GFLAGS_NO_CASE)
   {
       result = ERROR_INVALID_MODIFIER;
       yr_compiler_set_error_extra_info(compiler, "xor nocase");
@@ -518,19 +518,19 @@ int yr_parser_reduce_string_declaration(
   }
 
   if (str->flags & SIZED_STRING_FLAGS_DOT_ALL)
-    string_flags |= STRING_GFLAGS_DOT_ALL;
+    modifier.flags |= STRING_GFLAGS_DOT_ALL;
 
   if (strcmp(identifier,"$") == 0)
-    string_flags |= STRING_GFLAGS_ANONYMOUS;
+    modifier.flags |= STRING_GFLAGS_ANONYMOUS;
 
-  if (!(string_flags & STRING_GFLAGS_WIDE) &&
-      !(string_flags & STRING_GFLAGS_XOR))
-    string_flags |= STRING_GFLAGS_ASCII;
+  if (!(modifier.flags & STRING_GFLAGS_WIDE) &&
+      !(modifier.flags & STRING_GFLAGS_XOR))
+    modifier.flags |= STRING_GFLAGS_ASCII;
 
   // Hex strings are always handled as DOT_ALL regexps.
 
-  if (string_flags & STRING_GFLAGS_HEXADECIMAL)
-    string_flags |= STRING_GFLAGS_DOT_ALL;
+  if (modifier.flags & STRING_GFLAGS_HEXADECIMAL)
+    modifier.flags |= STRING_GFLAGS_DOT_ALL;
 
   // The STRING_GFLAGS_SINGLE_MATCH flag indicates that finding
   // a single match for the string is enough. This is true in
@@ -538,7 +538,7 @@ int yr_parser_reduce_string_declaration(
   // operators are used. All strings are marked STRING_FLAGS_SINGLE_MATCH
   // initially, and unmarked later if required.
 
-  string_flags |= STRING_GFLAGS_SINGLE_MATCH;
+  modifier.flags |= STRING_GFLAGS_SINGLE_MATCH;
 
   // The STRING_GFLAGS_FIXED_OFFSET indicates that the string doesn't
   // need to be searched all over the file because the user is using the
@@ -546,12 +546,12 @@ int yr_parser_reduce_string_declaration(
   // file. All strings are marked STRING_GFLAGS_FIXED_OFFSET initially,
   // and unmarked later if required.
 
-  string_flags |= STRING_GFLAGS_FIXED_OFFSET;
+  modifier.flags |= STRING_GFLAGS_FIXED_OFFSET;
 
-  if (string_flags & STRING_GFLAGS_HEXADECIMAL ||
-      string_flags & STRING_GFLAGS_REGEXP)
+  if (modifier.flags & STRING_GFLAGS_HEXADECIMAL ||
+      modifier.flags & STRING_GFLAGS_REGEXP)
   {
-    if (string_flags & STRING_GFLAGS_HEXADECIMAL)
+    if (modifier.flags & STRING_GFLAGS_HEXADECIMAL)
       result = yr_re_parse_hex(str->c_string, &re_ast, &re_error);
     else
       result = yr_re_parse(str->c_string, &re_ast, &re_error);
@@ -562,7 +562,7 @@ int yr_parser_reduce_string_declaration(
           message,
           sizeof(message),
           "invalid %s \"%s\": %s",
-          (string_flags & STRING_GFLAGS_HEXADECIMAL) ?
+          (modifier.flags & STRING_GFLAGS_HEXADECIMAL) ?
               "hex string" : "regular expression",
           identifier,
           re_error.message);
@@ -574,7 +574,7 @@ int yr_parser_reduce_string_declaration(
     }
 
     if (re_ast->flags & RE_FLAGS_FAST_REGEXP)
-      string_flags |= STRING_GFLAGS_FAST_REGEXP;
+      modifier.flags |= STRING_GFLAGS_FAST_REGEXP;
 
     // Regular expressions in the strings section can't mix greedy and ungreedy
     // quantifiers like .* and .*?. That's because these regular expressions can
@@ -595,7 +595,7 @@ int yr_parser_reduce_string_declaration(
     }
 
     if (re_ast->flags & RE_FLAGS_GREEDY)
-      string_flags |= STRING_GFLAGS_GREEDY_REGEXP;
+      modifier.flags |= STRING_GFLAGS_GREEDY_REGEXP;
 
     if (yr_re_ast_contains_dot_star(re_ast))
     {
@@ -628,7 +628,7 @@ int yr_parser_reduce_string_declaration(
 
       result = _yr_parser_write_string(
           identifier,
-          string_flags,
+          modifier,
           compiler,
           NULL,
           re_ast,
@@ -678,7 +678,7 @@ int yr_parser_reduce_string_declaration(
   {
     result = _yr_parser_write_string(
         identifier,
-        string_flags,
+        modifier,
         compiler,
         str,
         NULL,
