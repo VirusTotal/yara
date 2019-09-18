@@ -583,6 +583,31 @@ static void test_strings()
         #a == 16\n\
     }", "tests/data/xorwide.out");
 
+  // Check the location of the match to make sure we match on the correct one.
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor(1) wide\n\
+      condition:\n\
+        #a == 1 and @a == 0x2f\n\
+    }", "tests/data/xorwide.out");
+
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor(300)\n\
+      condition:\n\
+        $a\n\
+    }", ERROR_INVALID_MODIFIER);
+
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"This program cannot\" xor(200-10)\n\
+      condition:\n\
+        $a\n\
+    }", ERROR_INVALID_MODIFIER);
+
   assert_error(
     "rule test {\n\
       strings:\n\

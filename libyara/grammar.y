@@ -654,6 +654,22 @@ string_modifier
         $$.xor_min = 0;
         $$.xor_max = 255;
       }
+    | _XOR_ '(' _NUMBER_ ')'
+      {
+        int result = ERROR_SUCCESS;
+
+        if ($3 < 0 || $3 > 255)
+        {
+          yr_compiler_set_error_extra_info(compiler, "invalid xor range");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        fail_if_error(result);
+
+        $$.flags = STRING_GFLAGS_XOR;
+        $$.xor_min = $3;
+        $$.xor_max = $3;
+      }
     /*
      * Would love to use range here for consistency in the language but that
      * uses a primary expression which pushes a value on the VM stack we don't
@@ -667,21 +683,21 @@ string_modifier
         {
           yr_compiler_set_error_extra_info(
               compiler, "lower bound for xor range exceeded (min: 0)");
-          result = ERROR_WRONG_TYPE;
+          result = ERROR_INVALID_MODIFIER;
         }
 
         if ($5 > 255)
         {
           yr_compiler_set_error_extra_info(
               compiler, "upper bound for xor range exceeded (max: 255)");
-          result = ERROR_WRONG_TYPE;
+          result = ERROR_INVALID_MODIFIER;
         }
 
         if ($3 > $5)
         {
           yr_compiler_set_error_extra_info(
               compiler, "xor lower bound exceeds upper bound");
-          result = ERROR_WRONG_TYPE;
+          result = ERROR_INVALID_MODIFIER;
         }
 
         fail_if_error(result);
