@@ -119,7 +119,7 @@ struct YR_ATOMS_CONFIG
 int yr_atoms_extract_from_re(
     YR_ATOMS_CONFIG* config,
     RE_AST* re_ast,
-    int flags,
+    YR_MODIFIER modifier,
     YR_ATOM_LIST_ITEM** atoms,
     int* min_atom_quality);
 
@@ -128,7 +128,7 @@ int yr_atoms_extract_from_string(
     YR_ATOMS_CONFIG* config,
     uint8_t* string,
     int string_length,
-    int flags,
+    YR_MODIFIER modifier,
     YR_ATOM_LIST_ITEM** atoms,
     int* min_atom_quality);
 
