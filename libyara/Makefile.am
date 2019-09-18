@@ -117,7 +117,7 @@ noinst_HEADERS = \
 
 lib_LTLIBRARIES = libyara.la
 
-libyara_la_LDFLAGS = -version-number 3:9:0
+libyara_la_LDFLAGS = -version-number 3:10:0
 
 BUILT_SOURCES = \
   lexer.c \
