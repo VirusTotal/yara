@@ -506,7 +506,7 @@ int _yr_atoms_trim(
   if (atom->length == 0)
     return 0;
 
-  // At this point the actual atom goes from i to i + atom->length and the
+  // The trimmed atom goes from trim_left to trim_left + atom->length and the
   // first and last byte in the atom are known (mask == 0xFF). Now count the
   // number of known and unknown bytes in the atom (mask == 0xFF and
   // mask == 0x00 respectively).
@@ -520,10 +520,10 @@ int _yr_atoms_trim(
   }
 
   // If the number of unknown bytes is >= than the number of known bytes
-  // it doesn't make sense the to use this atom, so we use the a single byte
-  // atom with the first known byte. If YR_MAX_ATOM_LENGTH == 4 this happens
+  // it doesn't make sense the to use this atom, so we use a single byte atpm
+  // containing the first known byte. If YR_MAX_ATOM_LENGTH == 4 this happens
   // only when the atom is like { XX ?? ?? YY }, so using the first known
-  // atom is good enough. For larger values of YR_MAX_ATOM_LENGTH this is not
+  // byte is good enough. For larger values of YR_MAX_ATOM_LENGTH this is not
   // the most efficient solution, as better atoms could be choosen. For
   // example, in { XX ?? ?? ?? YY ZZ } the best atom is { YY ZZ } not { XX }.
   // But let's keep it like this for simplicity.
@@ -812,11 +812,13 @@ static int _yr_atoms_case_insensitive(
 // _yr_atoms_xor
 //
 // For a given list of atoms returns another list after a single byte xor
-// has been applied to it.
+// has been applied to it (0x01 - 0xff).
 //
 
 static int _yr_atoms_xor(
     YR_ATOM_LIST_ITEM* atoms,
+    uint8_t min,
+    uint8_t max,
     YR_ATOM_LIST_ITEM** xor_atoms)
 {
   YR_ATOM_LIST_ITEM* atom;
@@ -828,7 +830,7 @@ static int _yr_atoms_xor(
 
   while (atom != NULL)
   {
-    for (j = 1; j <= 255; j++)
+    for (j = min; j <= max; j++)
     {
       new_atom = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
@@ -980,8 +982,9 @@ static int _yr_atoms_extract_from_re(
 
   FAIL_ON_ERROR(yr_stack_create(1024, sizeof(si), &stack));
 
-  // This first item pushed in the stack is the last one to be poped out, its
-  // sole purpose is forcing that any pending
+  // This first item pushed in the stack is the last one to be poped out, the
+  // sole purpose of this item is forcing that any pending leaf is appended to
+  // current_appending_node during the last iteration of the loop.
   si.re_node = NULL;
   si.new_appending_node = appending_node;
 
@@ -1367,7 +1370,7 @@ static int _yr_atoms_expand_wildcards(
 int yr_atoms_extract_from_re(
     YR_ATOMS_CONFIG* config,
     RE_AST* re_ast,
-    int flags,
+    YR_MODIFIER modifier,
     YR_ATOM_LIST_ITEM** atoms,
     int* min_atom_quality)
 {
@@ -1408,7 +1411,7 @@ int yr_atoms_extract_from_re(
         *atoms = NULL;
       });
 
-  if (flags & STRING_GFLAGS_WIDE)
+  if (modifier.flags & STRING_GFLAGS_WIDE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_wide(*atoms, &wide_atoms),
@@ -1418,7 +1421,7 @@ int yr_atoms_extract_from_re(
           *atoms = NULL;
         });
 
-    if (flags & STRING_GFLAGS_ASCII)
+    if (modifier.flags & STRING_GFLAGS_ASCII)
     {
       *atoms = _yr_atoms_list_concat(*atoms, wide_atoms);
     }
@@ -1429,7 +1432,7 @@ int yr_atoms_extract_from_re(
     }
   }
 
-  if (flags & STRING_GFLAGS_NO_CASE)
+  if (modifier.flags & STRING_GFLAGS_NO_CASE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_case_insensitive(*atoms, &case_insensitive_atoms),
@@ -1472,7 +1475,7 @@ int yr_atoms_extract_from_string(
     YR_ATOMS_CONFIG* config,
     uint8_t* string,
     int32_t string_length,
-    int flags,
+    YR_MODIFIER modifier,
     YR_ATOM_LIST_ITEM** atoms,
     int* min_atom_quality)
 {
@@ -1529,7 +1532,7 @@ int yr_atoms_extract_from_string(
   *atoms = item;
   *min_atom_quality = max_quality;
 
-  if (flags & STRING_GFLAGS_WIDE)
+  if (modifier.flags & STRING_GFLAGS_WIDE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_wide(*atoms, &wide_atoms),
@@ -1539,7 +1542,7 @@ int yr_atoms_extract_from_string(
           *atoms = NULL;
         });
 
-    if (flags & STRING_GFLAGS_ASCII)
+    if (modifier.flags & STRING_GFLAGS_ASCII)
     {
       *atoms = _yr_atoms_list_concat(*atoms, wide_atoms);
     }
@@ -1550,7 +1553,7 @@ int yr_atoms_extract_from_string(
     }
   }
 
-  if (flags & STRING_GFLAGS_NO_CASE)
+  if (modifier.flags & STRING_GFLAGS_NO_CASE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_case_insensitive(*atoms, &case_insensitive_atoms),
@@ -1563,17 +1566,18 @@ int yr_atoms_extract_from_string(
     *atoms = _yr_atoms_list_concat(*atoms, case_insensitive_atoms);
   }
 
-  if (flags & STRING_GFLAGS_XOR)
+  if (modifier.flags & STRING_GFLAGS_XOR)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
-      _yr_atoms_xor(*atoms, &xor_atoms),
+      _yr_atoms_xor(*atoms, modifier.xor_min, modifier.xor_max, &xor_atoms),
       {
         yr_atoms_list_destroy(*atoms);
         yr_atoms_list_destroy(xor_atoms);
         *atoms = NULL;
       });
 
-    *atoms = _yr_atoms_list_concat(*atoms, xor_atoms);
+      yr_atoms_list_destroy(*atoms);
+      *atoms = xor_atoms;
   }
 
   return ERROR_SUCCESS;

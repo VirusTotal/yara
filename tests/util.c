@@ -275,10 +275,12 @@ int _assert_atoms(
 
   int min_atom_quality;
   int exit_code;
+  YR_MODIFIER modifier;
+  modifier.flags = 0;
 
   c.get_atom_quality = yr_atoms_heuristic_quality;
 
-  yr_atoms_extract_from_re(&c, re_ast, 0, &atoms, &min_atom_quality);
+  yr_atoms_extract_from_re(&c, re_ast, modifier, &atoms, &min_atom_quality);
 
   atom = atoms;
 
@@ -328,10 +330,10 @@ void assert_re_atoms(
   yr_re_parse(re, &re_ast, &re_error);
   exit_code = _assert_atoms(re_ast, expected_atom_count, expected_atoms);
 
-  if(re_ast != NULL)
+  if (re_ast != NULL)
     yr_re_ast_destroy(re_ast);
 
-  if(exit_code != EXIT_SUCCESS)
+  if (exit_code != EXIT_SUCCESS)
     exit(exit_code);
 }
 
@@ -349,9 +351,9 @@ void assert_hex_atoms(
   yr_re_parse_hex(hex, &re_ast, &re_error);
   exit_code = _assert_atoms(re_ast, expected_atom_count, expected_atoms);
 
-  if(re_ast != NULL)
+  if (re_ast != NULL)
     yr_re_ast_destroy(re_ast);
 
-  if(exit_code != EXIT_SUCCESS)
+  if (exit_code != EXIT_SUCCESS)
     exit(exit_code);
 }

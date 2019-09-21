@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2019. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,19 +27,42 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YR_GLOBALS_H
-#define YR_GLOBALS_H
+#include "sandbox/collect_matches.h"
 
-#include <inttypes.h>
-#include <yara/threading.h>
+#include "libyara/include/yara.h"
+#include "sandbox/yara_matches.pb.h"
 
-// Pre-computed tables for quickly converting a character to lowercase or to
-// its alternative case (uppercase if it is a lowercase and vice versa). This
-// tables are initialized by yr_initialize.
-extern uint8_t yr_lowercase[256];
-extern uint8_t yr_altercase[256];
+namespace yara {
 
-extern YR_THREAD_STORAGE_KEY yr_tidx_key;
-extern YR_THREAD_STORAGE_KEY yr_recovery_state_key;
+int CollectMatches(int message, void* message_data, void* user_data) {
+  if (message != CALLBACK_MSG_RULE_MATCHING) {
+    return ERROR_SUCCESS;  // There are no matching rules, simply return
+  }
 
-#endif
+  auto* rule = static_cast<YR_RULE*>(message_data);
+  YR_META* rule_meta = rule->metas;
+
+  auto* match = reinterpret_cast<YaraMatches*>(user_data)->add_match();
+  if (rule->ns != nullptr && rule->ns->name != nullptr) {
+    match->mutable_id()->set_rule_namespace(rule->ns->name);
+  }
+  match->mutable_id()->set_rule_name(rule->identifier);
+  while (!META_IS_NULL(rule_meta)) {
+    auto* meta = match->add_meta();
+    meta->set_identifier(rule_meta->identifier);
+    switch (rule_meta->type) {
+      case META_TYPE_BOOLEAN:
+      case META_TYPE_INTEGER:
+        meta->set_int_value(rule_meta->integer);
+        break;
+      case META_TYPE_STRING:
+        meta->set_bytes_value(rule_meta->string);
+        break;
+    }
+    ++rule_meta;
+  }
+
+  return ERROR_SUCCESS;
+}
+
+}  // namespace yara

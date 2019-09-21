@@ -352,7 +352,7 @@ The ``xor`` modifier can be used to search for strings with a single byte xor
 applied to them.
 
 The following rule will search for every single byte xor applied to the string
-"This program cannot":
+"This program cannot" (including the plaintext string):
 
 .. code-block:: yara
 
@@ -380,10 +380,9 @@ The above rule is logically equivalent to:
             any of them
     }
 
-You can also combine the ``xor`` modifier with ``wide``, ``ascii`` and
-``nocase`` modifiers. For example, to search for the ``wide`` and ``ascii``
-versions of a string after every single byte xor has been applied you would
-use:
+You can also combine the ``xor`` modifier with ``wide`` and ``ascii``
+modifiers. For example, to search for the ``wide`` and ``ascii`` versions of a
+string after every single byte xor has been applied you would use:
 
 .. code-block:: yara
 
@@ -402,7 +401,7 @@ equivalent:
 
 .. code-block:: yara
 
-    rule XorExample3
+    rule XorExample4
     {
         strings:
             $xor_string = "This program cannot" xor wide
@@ -420,6 +419,21 @@ equivalent:
         condition:
             any of them
     }
+
+If you want more control over the range of bytes used with the xor modifier use:
+
+.. code-block:: yara
+
+    rule XorExample5
+    {
+        strings:
+            $xor_string = "This program cannot" xor(0x01-0xff)
+        condition:
+            $xor_string
+    }
+
+The above example will apply the bytes from 0x01 to 0xff, inclusively, to the
+string when searching. The general syntax is ``xor(minimum-maximum)``.
 
 Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -565,6 +579,26 @@ Starting with version 3.3.0 these zero-width assertions are also recognized:
      - Match a word boundary
    * - ``\B``
      - Match except at a word boundary
+
+Private strings
+---------------
+
+All strings in YARA can be marked as ``private`` which means they will never be
+included in the output of YARA. They are treated as normal strings everywhere
+else, so you can still use them as you wish in the condition, but they will
+never be shown with the ``-s`` flag or seen in the YARA callback if you're using
+the C API.
+
+.. code-block:: yara
+
+    rule PrivateStringExample
+    {
+        strings:
+            $text_string = "foobar" private
+
+        condition:
+            $text_string
+    }
 
 
 Conditions
