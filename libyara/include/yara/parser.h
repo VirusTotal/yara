@@ -95,7 +95,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
 
 int yr_parser_reduce_string_declaration(
     yyscan_t yyscanner,
-    int32_t flags,
+    YR_MODIFIER modifier,
     const char* identifier,
     SIZED_STRING* str,
     YR_STRING** string);

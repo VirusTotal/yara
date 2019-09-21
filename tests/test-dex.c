@@ -104,4 +104,5 @@ int main(int argc, char** argv)
       DEX_FILE);
 
   yr_finalize();
+  return 0;
 }

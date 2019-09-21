@@ -759,4 +759,6 @@ int main(int argc, char** argv)
 
   test_issue_834();
   test_issue_920();
+
+  return 0;
 }

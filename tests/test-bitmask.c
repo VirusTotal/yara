@@ -235,4 +235,6 @@ int main(int argc, char** argv)
   test_set_clear();
   test_find_non_colliding_offsets_1();
   test_find_non_colliding_offsets_2();
+
+  return 0;
 }
