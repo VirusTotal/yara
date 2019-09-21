@@ -194,4 +194,5 @@ int main(int argc, char** argv)
     "tests/data/tiny-universal");
 
   yr_finalize();
+  return 0;
 }

@@ -229,10 +229,18 @@ typedef struct YR_MODULE_IMPORT YR_MODULE_IMPORT;
 typedef struct YR_MEMORY_BLOCK YR_MEMORY_BLOCK;
 typedef struct YR_MEMORY_BLOCK_ITERATOR YR_MEMORY_BLOCK_ITERATOR;
 
+typedef struct YR_MODIFIER YR_MODIFIER;
 
 #pragma pack(push)
 #pragma pack(8)
 
+
+struct YR_MODIFIER
+{
+  int32_t flags;
+  uint8_t xor_min;
+  uint8_t xor_max;
+};
 
 struct YR_NAMESPACE
 {
