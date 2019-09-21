@@ -73,6 +73,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     } \
 
 
+#define set_flag_or_error(flags, new_flag) \
+    if (flags & new_flag) \
+    { \
+      compiler->last_error = ERROR_DUPLICATED_MODIFIER; \
+      yyerror(yyscanner, compiler, NULL); \
+      YYERROR; \
+    } \
+    else \
+    { \
+      flags |= new_flag; \
+    }
+
+
 #define check_type_with_cleanup(expression, expected_type, op, cleanup) \
     if (((expression.type) & (expected_type)) == 0) \
     { \
@@ -207,8 +220,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <c_string> tags
 %type <c_string> tag_list
 
-%type <integer> string_modifier
-%type <integer> string_modifiers
+%type <modifier> string_modifier
+%type <modifier> string_modifiers
+
+%type <modifier> regexp_modifier
+%type <modifier> regexp_modifiers
+
+%type <modifier> hex_modifier
+%type <modifier> hex_modifiers
 
 %type <integer> integer_set
 
@@ -248,6 +267,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   YR_STRING*      string;
   YR_META*        meta;
   YR_RULE*        rule;
+  YR_MODIFIER     modifier;
 }
 
 
@@ -551,7 +571,7 @@ string_declaration
       _TEXT_STRING_ string_modifiers
       {
         int result = yr_parser_reduce_string_declaration(
-            yyscanner, (int32_t) $5, $1, $4, &$$);
+            yyscanner, $5, $1, $4, &$$);
 
         yr_free($1);
         yr_free($4);
@@ -563,10 +583,11 @@ string_declaration
       {
         compiler->current_line = yyget_lineno(yyscanner);
       }
-      _REGEXP_ string_modifiers
+      _REGEXP_ regexp_modifiers
       {
+        $5.flags |= STRING_GFLAGS_REGEXP;
         int result = yr_parser_reduce_string_declaration(
-            yyscanner, (int32_t) $5 | STRING_GFLAGS_REGEXP, $1, $4, &$$);
+            yyscanner, $5, $1, $4, &$$);
 
         yr_free($1);
         yr_free($4);
@@ -575,33 +596,139 @@ string_declaration
 
         compiler->current_line = 0;
       }
-    | _STRING_IDENTIFIER_ '=' _HEX_STRING_
+    | _STRING_IDENTIFIER_ '='
       {
+        compiler->current_line = yyget_lineno(yyscanner);
+      }
+      _HEX_STRING_ hex_modifiers
+      {
+        $5.flags |= STRING_GFLAGS_HEXADECIMAL;
         int result = yr_parser_reduce_string_declaration(
-            yyscanner, STRING_GFLAGS_HEXADECIMAL, $1, $3, &$$);
+            yyscanner, $5, $1, $4, &$$);
 
         yr_free($1);
-        yr_free($3);
+        yr_free($4);
 
         fail_if_error(result);
+
+        compiler->current_line = 0;
       }
     ;
 
 
 string_modifiers
-    : /* empty */                         { $$ = 0; }
-    | string_modifiers string_modifier    { $$ = $1 | $2; }
+    : /* empty */
+      {
+        $$.flags = 0;
+        $$.xor_min = 0;
+        $$.xor_max = 0;
+      }
+    | string_modifiers string_modifier
+      {
+        $$ = $1;
+
+        set_flag_or_error($$.flags, $2.flags);
+
+        // Only set the xor minimum and maximum if we are dealing with the
+        // xor modifier. If we don't check for this then we can end up with
+        // "xor wide" resulting in whatever is on the stack for "wide"
+        // overwriting the values for xor.
+        if ($2.flags & STRING_GFLAGS_XOR)
+        {
+          $$.xor_min = $2.xor_min;
+          $$.xor_max = $2.xor_max;
+        }
+      }
     ;
 
 
 string_modifier
-    : _WIDE_        { $$ = STRING_GFLAGS_WIDE; }
-    | _ASCII_       { $$ = STRING_GFLAGS_ASCII; }
-    | _NOCASE_      { $$ = STRING_GFLAGS_NO_CASE; }
-    | _FULLWORD_    { $$ = STRING_GFLAGS_FULL_WORD; }
-    | _XOR_         { $$ = STRING_GFLAGS_XOR; }
+    : _WIDE_        { $$.flags = STRING_GFLAGS_WIDE; }
+    | _ASCII_       { $$.flags = STRING_GFLAGS_ASCII; }
+    | _NOCASE_      { $$.flags = STRING_GFLAGS_NO_CASE; }
+    | _FULLWORD_    { $$.flags = STRING_GFLAGS_FULL_WORD; }
+    | _PRIVATE_     { $$.flags = STRING_GFLAGS_PRIVATE; }
+    | _XOR_
+      {
+        $$.flags = STRING_GFLAGS_XOR;
+        $$.xor_min = 0;
+        $$.xor_max = 255;
+      }
+    | _XOR_ '(' _NUMBER_ ')'
+      {
+        int result = ERROR_SUCCESS;
+
+        if ($3 < 0 || $3 > 255)
+        {
+          yr_compiler_set_error_extra_info(compiler, "invalid xor range");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        fail_if_error(result);
+
+        $$.flags = STRING_GFLAGS_XOR;
+        $$.xor_min = $3;
+        $$.xor_max = $3;
+      }
+    /*
+     * Would love to use range here for consistency in the language but that
+     * uses a primary expression which pushes a value on the VM stack we don't
+     * account for.
+     */
+    | _XOR_ '(' _NUMBER_ '-' _NUMBER_ ')'
+      {
+        int result = ERROR_SUCCESS;
+
+        if ($3 < 0)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "lower bound for xor range exceeded (min: 0)");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        if ($5 > 255)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "upper bound for xor range exceeded (max: 255)");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        if ($3 > $5)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "xor lower bound exceeds upper bound");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        fail_if_error(result);
+
+        $$.flags = STRING_GFLAGS_XOR;
+        $$.xor_min = $3;
+        $$.xor_max = $5;
+      }
     ;
 
+regexp_modifiers
+    : /* empty */                         { $$.flags = 0; }
+    | regexp_modifiers regexp_modifier    { set_flag_or_error($$.flags, $2.flags); }
+    ;
+
+regexp_modifier
+    : _WIDE_        { $$.flags = STRING_GFLAGS_WIDE; }
+    | _ASCII_       { $$.flags = STRING_GFLAGS_ASCII; }
+    | _NOCASE_      { $$.flags = STRING_GFLAGS_NO_CASE; }
+    | _FULLWORD_    { $$.flags = STRING_GFLAGS_FULL_WORD; }
+    | _PRIVATE_     { $$.flags = STRING_GFLAGS_PRIVATE; }
+    ;
+
+hex_modifiers
+    : /* empty */                         { $$.flags = 0; }
+    | hex_modifiers hex_modifier          { set_flag_or_error($$.flags, $2.flags); }
+    ;
+
+hex_modifier
+    : _PRIVATE_     { $$.flags = STRING_GFLAGS_PRIVATE; }
+    ;
 
 identifier
     : _IDENTIFIER_

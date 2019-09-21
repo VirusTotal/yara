@@ -27,8 +27,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <time.h>
-
 #include <yara/stopwatch.h>
 
 #if defined(_WIN32)
@@ -137,8 +135,5 @@ uint64_t yr_stopwatch_elapsed_us(
   timevalsub(&tv_stop, &stopwatch->tv_start, &tv_elapsed);
   return tv_elapsed.tv_sec * 1000000L + tv_elapsed.tv_usec;
 }
-
-
-
 
 #endif

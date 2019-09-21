@@ -89,13 +89,26 @@ YARA_COPTS = YARA_MODULE_OPTS + select({
         "-DHAVE_SCAN_PROC_IMPL=1",
     ],
     "//conditions:default": ["-DUSE_NO_PROC"],
+}) + select({
+    ":yara_profiling_enabled": ["-DPROFILING_ENABLED"],
+    "//conditions:default": [],
 }) + [
-    # Additional include paths
+    "-D_GNU_SOURCE",
+    # Tell the compiler we want the C99 standard.
+    "-std=c99",
+    # Additional include paths.
     "-Ilibyara",
     "-Ilibyara/modules",
 ] + YARA_CONFIG_OPTS
 
-# Just Yara's error codes. This is useful for sandboxing as it avoids pulling
+# Configuration setting for enabling profiling. Usage:
+#   bazel build ... --define yara_profiling=enabled
+config_setting(
+    name = "yara_profiling_enabled",
+    values = {"define": "yara_profiling=enabled"},
+)
+
+# Just YARA's error codes. This is useful for sandboxing as it avoids pulling
 # in the whole library.
 cc_library(
     name = "yara_errors",
@@ -104,7 +117,7 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
-# Yara library to be linked against.
+# YARA library to be linked against.
 cc_library(
     name = "libyara",
     srcs = [
@@ -213,7 +226,11 @@ cc_library(
         "libyara/include/yara/rules.h",
     ],
     copts = YARA_COPTS,
-    includes = ["libyara/include"],
+    includes = [
+        "libyara/modules",
+        "libyara/include",
+        "libyara",
+    ],
     textual_hdrs = [
         "libyara/grammar.h",
         "libyara/hex_grammar.y",
@@ -243,7 +260,7 @@ cc_library(
     deps = [":libyara"],
 )
 
-# Yara command-line tool
+# YARA command-line tool
 cc_binary(
     name = "yara",
     srcs = ["yara.c"],
@@ -255,7 +272,7 @@ cc_binary(
     ],
 )
 
-# The Yara compiler
+# The YARA compiler
 cc_binary(
     name = "yarac",
     srcs = ["yarac.c"],

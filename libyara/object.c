@@ -1136,6 +1136,14 @@ YR_API void yr_object_print_data(
 
   switch(object->type)
   {
+    case OBJECT_TYPE_FLOAT:
+      if (object->value.d != UNDEFINED)
+        printf(" = %f", object->value.d);
+      else
+        printf(" = UNDEFINED");
+
+      break;
+
     case OBJECT_TYPE_INTEGER:
 
       if (object->value.i != UNDEFINED)

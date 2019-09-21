@@ -290,7 +290,7 @@ int yr_parser_lookup_loop_variable(
 
 static int _yr_parser_write_string(
     const char* identifier,
-    int flags,
+    YR_MODIFIER modifier,
     YR_COMPILER* compiler,
     SIZED_STRING* str,
     RE_AST* re_ast,
@@ -329,14 +329,14 @@ static int _yr_parser_write_string(
   if (result != ERROR_SUCCESS)
     return result;
 
-  if (flags & STRING_GFLAGS_HEXADECIMAL ||
-      flags & STRING_GFLAGS_REGEXP)
+  if (modifier.flags & STRING_GFLAGS_HEXADECIMAL ||
+      modifier.flags & STRING_GFLAGS_REGEXP)
   {
     literal_string = yr_re_ast_extract_literal(re_ast);
 
     if (literal_string != NULL)
     {
-      flags |= STRING_GFLAGS_LITERAL;
+      modifier.flags |= STRING_GFLAGS_LITERAL;
       free_literal = true;
     }
     else
@@ -346,16 +346,16 @@ static int _yr_parser_write_string(
       // the string should start, as the non-literal strings can contain
       // variable-length portions.
 
-      flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+      modifier.flags &= ~STRING_GFLAGS_FIXED_OFFSET;
     }
   }
   else
   {
     literal_string = str;
-    flags |= STRING_GFLAGS_LITERAL;
+    modifier.flags |= STRING_GFLAGS_LITERAL;
   }
 
-  (*string)->g_flags = flags;
+  (*string)->g_flags = modifier.flags;
   (*string)->chained_to = NULL;
   (*string)->fixed_offset = UNDEFINED;
   (*string)->rule = compiler->current_rule;
@@ -363,10 +363,13 @@ static int _yr_parser_write_string(
   memset((*string)->matches, 0,
          sizeof((*string)->matches));
 
+  memset((*string)->private_matches, 0,
+         sizeof((*string)->private_matches));
+
   memset((*string)->unconfirmed_matches, 0,
          sizeof((*string)->unconfirmed_matches));
 
-  if (flags & STRING_GFLAGS_LITERAL)
+  if (modifier.flags & STRING_GFLAGS_LITERAL)
   {
     (*string)->length = (uint32_t) literal_string->length;
 
@@ -382,7 +385,7 @@ static int _yr_parser_write_string(
           &compiler->atoms_config,
           (uint8_t*) literal_string->c_string,
           (int32_t) literal_string->length,
-          flags,
+          modifier,
           &atom_list,
           min_atom_quality);
     }
@@ -400,7 +403,7 @@ static int _yr_parser_write_string(
       result = yr_atoms_extract_from_re(
           &compiler->atoms_config,
           re_ast,
-          flags,
+          modifier,
           &atom_list,
           min_atom_quality);
   }
@@ -415,9 +418,9 @@ static int _yr_parser_write_string(
         compiler->matches_arena);
   }
 
-  if (flags & STRING_GFLAGS_LITERAL)
+  if (modifier.flags & STRING_GFLAGS_LITERAL)
   {
-    if (flags & STRING_GFLAGS_WIDE)
+    if (modifier.flags & STRING_GFLAGS_WIDE)
       max_string_len = (*string)->length * 2;
     else
       max_string_len = (*string)->length;
@@ -453,22 +456,23 @@ static int _yr_parser_write_string(
 
 int yr_parser_reduce_string_declaration(
     yyscan_t yyscanner,
-    int32_t string_flags,
+    YR_MODIFIER modifier,
     const char* identifier,
     SIZED_STRING* str,
     YR_STRING** string)
 {
-  int min_atom_quality = YR_MIN_ATOM_QUALITY;
-  int min_atom_quality_aux = YR_MIN_ATOM_QUALITY;
+  int min_atom_quality = YR_MAX_ATOM_QUALITY;
+  int atom_quality;
 
-  int32_t min_gap;
-  int32_t max_gap;
+  int32_t min_gap = 0;
+  int32_t max_gap = 0;
+  int32_t prev_min_gap;
+  int32_t prev_max_gap;
 
   char message[512];
 
   YR_COMPILER* compiler = yyget_extra(yyscanner);
-  YR_STRING* aux_string;
-  YR_STRING* prev_string;
+  YR_STRING* prev_string = NULL;
 
   RE_AST* re_ast = NULL;
   RE_AST* remainder_re_ast = NULL;
@@ -480,12 +484,12 @@ int yr_parser_reduce_string_declaration(
   // Determine if a string with the same identifier was already defined
   // by searching for the identifier in string_table.
 
-  *string = (YR_STRING*) yr_hash_table_lookup(
+  YR_STRING* new_string = (YR_STRING*) yr_hash_table_lookup(
       compiler->strings_table,
       identifier,
       NULL);
 
-  if (*string != NULL)
+  if (new_string != NULL)
   {
     result = ERROR_DUPLICATED_STRING_IDENTIFIER;
     yr_compiler_set_error_extra_info(compiler, identifier);
@@ -502,22 +506,31 @@ int yr_parser_reduce_string_declaration(
   }
 
   if (str->flags & SIZED_STRING_FLAGS_NO_CASE)
-    string_flags |= STRING_GFLAGS_NO_CASE;
+    modifier.flags |= STRING_GFLAGS_NO_CASE;
+
+  // xor and nocase together is not implemented.
+
+  if (modifier.flags & STRING_GFLAGS_XOR && modifier.flags & STRING_GFLAGS_NO_CASE)
+  {
+      result = ERROR_INVALID_MODIFIER;
+      yr_compiler_set_error_extra_info(compiler, "xor nocase");
+      goto _exit;
+  }
 
   if (str->flags & SIZED_STRING_FLAGS_DOT_ALL)
-    string_flags |= STRING_GFLAGS_DOT_ALL;
+    modifier.flags |= STRING_GFLAGS_DOT_ALL;
 
   if (strcmp(identifier,"$") == 0)
-    string_flags |= STRING_GFLAGS_ANONYMOUS;
+    modifier.flags |= STRING_GFLAGS_ANONYMOUS;
 
-  if (!(string_flags & STRING_GFLAGS_WIDE) &&
-      !(string_flags & STRING_GFLAGS_XOR))
-    string_flags |= STRING_GFLAGS_ASCII;
+  if (!(modifier.flags & STRING_GFLAGS_WIDE) &&
+      !(modifier.flags & STRING_GFLAGS_XOR))
+    modifier.flags |= STRING_GFLAGS_ASCII;
 
   // Hex strings are always handled as DOT_ALL regexps.
 
-  if (string_flags & STRING_GFLAGS_HEXADECIMAL)
-    string_flags |= STRING_GFLAGS_DOT_ALL;
+  if (modifier.flags & STRING_GFLAGS_HEXADECIMAL)
+    modifier.flags |= STRING_GFLAGS_DOT_ALL;
 
   // The STRING_GFLAGS_SINGLE_MATCH flag indicates that finding
   // a single match for the string is enough. This is true in
@@ -525,7 +538,7 @@ int yr_parser_reduce_string_declaration(
   // operators are used. All strings are marked STRING_FLAGS_SINGLE_MATCH
   // initially, and unmarked later if required.
 
-  string_flags |= STRING_GFLAGS_SINGLE_MATCH;
+  modifier.flags |= STRING_GFLAGS_SINGLE_MATCH;
 
   // The STRING_GFLAGS_FIXED_OFFSET indicates that the string doesn't
   // need to be searched all over the file because the user is using the
@@ -533,12 +546,12 @@ int yr_parser_reduce_string_declaration(
   // file. All strings are marked STRING_GFLAGS_FIXED_OFFSET initially,
   // and unmarked later if required.
 
-  string_flags |= STRING_GFLAGS_FIXED_OFFSET;
+  modifier.flags |= STRING_GFLAGS_FIXED_OFFSET;
 
-  if (string_flags & STRING_GFLAGS_HEXADECIMAL ||
-      string_flags & STRING_GFLAGS_REGEXP)
+  if (modifier.flags & STRING_GFLAGS_HEXADECIMAL ||
+      modifier.flags & STRING_GFLAGS_REGEXP)
   {
-    if (string_flags & STRING_GFLAGS_HEXADECIMAL)
+    if (modifier.flags & STRING_GFLAGS_HEXADECIMAL)
       result = yr_re_parse_hex(str->c_string, &re_ast, &re_error);
     else
       result = yr_re_parse(str->c_string, &re_ast, &re_error);
@@ -549,7 +562,7 @@ int yr_parser_reduce_string_declaration(
           message,
           sizeof(message),
           "invalid %s \"%s\": %s",
-          (string_flags & STRING_GFLAGS_HEXADECIMAL) ?
+          (modifier.flags & STRING_GFLAGS_HEXADECIMAL) ?
               "hex string" : "regular expression",
           identifier,
           re_error.message);
@@ -561,7 +574,7 @@ int yr_parser_reduce_string_declaration(
     }
 
     if (re_ast->flags & RE_FLAGS_FAST_REGEXP)
-      string_flags |= STRING_GFLAGS_FAST_REGEXP;
+      modifier.flags |= STRING_GFLAGS_FAST_REGEXP;
 
     // Regular expressions in the strings section can't mix greedy and ungreedy
     // quantifiers like .* and .*?. That's because these regular expressions can
@@ -582,7 +595,7 @@ int yr_parser_reduce_string_declaration(
     }
 
     if (re_ast->flags & RE_FLAGS_GREEDY)
-      string_flags |= STRING_GFLAGS_GREEDY_REGEXP;
+      modifier.flags |= STRING_GFLAGS_GREEDY_REGEXP;
 
     if (yr_re_ast_contains_dot_star(re_ast))
     {
@@ -601,90 +614,75 @@ int yr_parser_reduce_string_declaration(
           compiler->re_ast_clbk_user_data);
     }
 
-    result = yr_re_ast_split_at_chaining_point(
-        re_ast, &re_ast, &remainder_re_ast, &min_gap, &max_gap);
-
-    if (result != ERROR_SUCCESS)
-      goto _exit;
-
-    result = _yr_parser_write_string(
-        identifier,
-        string_flags,
-        compiler,
-        NULL,
-        re_ast,
-        string,
-        &min_atom_quality,
-        &compiler->current_rule->num_atoms);
-
-    if (result != ERROR_SUCCESS)
-      goto _exit;
-
-    if (remainder_re_ast != NULL)
+    while (re_ast != NULL)
     {
-      (*string)->g_flags |= STRING_GFLAGS_CHAIN_TAIL | STRING_GFLAGS_CHAIN_PART;
-      (*string)->chain_gap_min = min_gap;
-      (*string)->chain_gap_max = max_gap;
-    }
-
-    // Use "aux_string" from now on, we want to keep the value of "string"
-    // because it will returned.
-
-    aux_string = *string;
-
-    while (remainder_re_ast != NULL)
-    {
-      // Destroy regexp pointed by 're_ast' before yr_re_split_at_chaining_point
-      // overwrites 're_ast' with another value.
-
-      yr_re_ast_destroy(re_ast);
+      prev_string = new_string;
+      prev_min_gap = min_gap;
+      prev_max_gap = max_gap;
 
       result = yr_re_ast_split_at_chaining_point(
-          remainder_re_ast, &re_ast, &remainder_re_ast, &min_gap, &max_gap);
+          re_ast, &remainder_re_ast, &min_gap, &max_gap);
 
       if (result != ERROR_SUCCESS)
         goto _exit;
 
-      prev_string = aux_string;
-
       result = _yr_parser_write_string(
           identifier,
-          string_flags,
+          modifier,
           compiler,
           NULL,
           re_ast,
-          &aux_string,
-          &min_atom_quality_aux,
+          &new_string,
+          &atom_quality,
           &compiler->current_rule->num_atoms);
 
       if (result != ERROR_SUCCESS)
         goto _exit;
 
-      if (min_atom_quality_aux < min_atom_quality)
-        min_atom_quality = min_atom_quality_aux;
+      if (atom_quality < min_atom_quality)
+        min_atom_quality = atom_quality;
 
-      aux_string->g_flags |= STRING_GFLAGS_CHAIN_PART;
-      aux_string->chain_gap_min = min_gap;
-      aux_string->chain_gap_max = max_gap;
+      if (prev_string != NULL)
+      {
+        new_string->chained_to = prev_string;
+        new_string->chain_gap_min = prev_min_gap;
+        new_string->chain_gap_max = prev_max_gap;
 
-      prev_string->chained_to = aux_string;
+        // A string chained to another one can't have a fixed offset, only the
+        // head of the string chain can have a fixed offset.
+        new_string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
 
-      // prev_string is now chained to aux_string, an string chained
-      // to another one can't have a fixed offset, only the head of the
-      // string chain can have a fixed offset.
+        // There is a previous string, but that string wasn't marked as part of
+        // a chain because we can't do that until knowing there will be another
+        // string, let's flag it now the we know.
+        prev_string->g_flags |= STRING_GFLAGS_CHAIN_PART;
 
-      prev_string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+        // There is a previous string, so this string is part of a chain, but
+        // there will be no more strings because there are no more AST to split,
+        // which means that this is the chain's tail.
+        if (remainder_re_ast == NULL)
+          new_string->g_flags |= STRING_GFLAGS_CHAIN_PART |
+                                 STRING_GFLAGS_CHAIN_TAIL;
+      }
+
+      yr_re_ast_destroy(re_ast);
+      re_ast = remainder_re_ast;
     }
+
+    // Walk the chain of strings from the tail to the head, we want to return
+    // the string at the head of the chain.
+    while (new_string->chained_to != NULL)
+      new_string = new_string->chained_to;
   }
-  else
+  else  // not a STRING_GFLAGS_HEXADECIMAL or STRING_GFLAGS_REGEXP
   {
     result = _yr_parser_write_string(
         identifier,
-        string_flags,
+        modifier,
         compiler,
         str,
         NULL,
-        string,
+        &new_string,
         &min_atom_quality,
         &compiler->current_rule->num_atoms);
 
@@ -692,13 +690,13 @@ int yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
-  if (!STRING_IS_ANONYMOUS(*string))
+  if (!STRING_IS_ANONYMOUS(new_string))
   {
     result = yr_hash_table_add(
       compiler->strings_table,
       identifier,
       NULL,
-      *string);
+      new_string);
 
     if (result != ERROR_SUCCESS)
       goto _exit;
@@ -709,7 +707,7 @@ int yr_parser_reduce_string_declaration(
     yywarning(
         yyscanner,
         "%s in rule %s is slowing down scanning",
-        (*string)->identifier,
+        new_string->identifier,
         compiler->current_rule->identifier);
   }
 
@@ -720,6 +718,8 @@ _exit:
 
   if (remainder_re_ast != NULL)
     yr_re_ast_destroy(remainder_re_ast);
+
+  *string = new_string;
 
   return result;
 }

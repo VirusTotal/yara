@@ -56,6 +56,7 @@ case $host_os in
             jemalloc_prefix= ;;
     openbsd*)
             CFLAGS="$CFLAGS -DUSE_OPENBSD_PROC"
+            CFLAGS="$CFLAGS -I/usr/local/include -L/usr/local/lib"
             posix=true
             proc_interface=openbsd
             jemalloc_prefix= ;;
