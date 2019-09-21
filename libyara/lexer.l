@@ -956,6 +956,7 @@ int yr_lex_parse_rules_fd(
 
   yyset_extra(compiler, yyscanner);
   yy_scan_bytes((const char*) buffer, (int) file_size, yyscanner);
+  yyset_lineno(1, yyscanner);
   yyparse(yyscanner, compiler);
   yylex_destroy(yyscanner);
 

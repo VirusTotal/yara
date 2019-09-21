@@ -697,13 +697,15 @@ Setting variable's values
 The ``module_load`` function is where you assign values to the variables
 declared in the declarations section, once you've parsed or analyzed the scanned
 data and/or any additional module's data. This is done by using the
-``set_integer`` and ``set_string`` functions:
+``set_float``, ``set_integer``, and ``set_string`` functions:
+
+.. c:function:: void set_float(double value, YR_OBJECT* object, const char* field, ...)
 
 .. c:function:: void set_integer(int64_t value, YR_OBJECT* object, const char* field, ...)
 
 .. c:function:: void set_string(const char* value, YR_OBJECT* object, const char* field, ...)
 
-Both functions receive a value to be assigned to the variable, a pointer to a
+These functions receive a value to be assigned to the variable, a pointer to a
 ``YR_OBJECT`` representing the variable itself or some ancestor of
 that variable, a field descriptor, and additional arguments as defined by the
 field descriptor.
@@ -809,16 +811,17 @@ safely leave all your variables undefined instead of assigning them bogus
 values that don't make sense. YARA will handle undefined values in rule
 conditions as described in :ref:`using-modules`.
 
-In addition to ``set_integer`` and ``set_string`` functions you have their
-``get_integer`` and ``get_string`` counterparts. As the names suggest they
-are used for getting the value of a variable, which can be useful in the
-implementation of your functions to retrieve values previously stored by
-``module_load``.
+In addition to the ``set_float``, ``set_integer``, and ``set_string`` functions,
+you have their ``get_float``, ``get_integer``, and ``get_string`` counterparts.
+As the names suggest, they are used for getting the value of a variable, which
+can be useful in the implementation of your functions to retrieve values
+previously stored by ``module_load``.
 
+.. c:function:: double get_float(YR_OBJECT* object, const char* field, ...)
 
 .. c:function:: int64_t get_integer(YR_OBJECT* object, const char* field, ...)
 
-.. c:function:: char* get_string(YR_OBJECT* object, const char* field, ...)
+.. c:function:: SIZED_STRING* get_string(YR_OBJECT* object, const char* field, ...)
 
 There's also a function to get any ``YR_OBJECT`` in the objects tree:
 

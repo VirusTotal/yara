@@ -812,11 +812,13 @@ static int _yr_atoms_case_insensitive(
 // _yr_atoms_xor
 //
 // For a given list of atoms returns another list after a single byte xor
-// has been applied to it.
+// has been applied to it (0x01 - 0xff).
 //
 
 static int _yr_atoms_xor(
     YR_ATOM_LIST_ITEM* atoms,
+    uint8_t min,
+    uint8_t max,
     YR_ATOM_LIST_ITEM** xor_atoms)
 {
   YR_ATOM_LIST_ITEM* atom;
@@ -828,7 +830,7 @@ static int _yr_atoms_xor(
 
   while (atom != NULL)
   {
-    for (j = 1; j <= 255; j++)
+    for (j = min; j <= max; j++)
     {
       new_atom = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
@@ -1368,7 +1370,7 @@ static int _yr_atoms_expand_wildcards(
 int yr_atoms_extract_from_re(
     YR_ATOMS_CONFIG* config,
     RE_AST* re_ast,
-    int flags,
+    YR_MODIFIER modifier,
     YR_ATOM_LIST_ITEM** atoms,
     int* min_atom_quality)
 {
@@ -1409,7 +1411,7 @@ int yr_atoms_extract_from_re(
         *atoms = NULL;
       });
 
-  if (flags & STRING_GFLAGS_WIDE)
+  if (modifier.flags & STRING_GFLAGS_WIDE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_wide(*atoms, &wide_atoms),
@@ -1419,7 +1421,7 @@ int yr_atoms_extract_from_re(
           *atoms = NULL;
         });
 
-    if (flags & STRING_GFLAGS_ASCII)
+    if (modifier.flags & STRING_GFLAGS_ASCII)
     {
       *atoms = _yr_atoms_list_concat(*atoms, wide_atoms);
     }
@@ -1430,7 +1432,7 @@ int yr_atoms_extract_from_re(
     }
   }
 
-  if (flags & STRING_GFLAGS_NO_CASE)
+  if (modifier.flags & STRING_GFLAGS_NO_CASE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_case_insensitive(*atoms, &case_insensitive_atoms),
@@ -1473,7 +1475,7 @@ int yr_atoms_extract_from_string(
     YR_ATOMS_CONFIG* config,
     uint8_t* string,
     int32_t string_length,
-    int flags,
+    YR_MODIFIER modifier,
     YR_ATOM_LIST_ITEM** atoms,
     int* min_atom_quality)
 {
@@ -1530,7 +1532,7 @@ int yr_atoms_extract_from_string(
   *atoms = item;
   *min_atom_quality = max_quality;
 
-  if (flags & STRING_GFLAGS_WIDE)
+  if (modifier.flags & STRING_GFLAGS_WIDE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_wide(*atoms, &wide_atoms),
@@ -1540,7 +1542,7 @@ int yr_atoms_extract_from_string(
           *atoms = NULL;
         });
 
-    if (flags & STRING_GFLAGS_ASCII)
+    if (modifier.flags & STRING_GFLAGS_ASCII)
     {
       *atoms = _yr_atoms_list_concat(*atoms, wide_atoms);
     }
@@ -1551,7 +1553,7 @@ int yr_atoms_extract_from_string(
     }
   }
 
-  if (flags & STRING_GFLAGS_NO_CASE)
+  if (modifier.flags & STRING_GFLAGS_NO_CASE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_case_insensitive(*atoms, &case_insensitive_atoms),
@@ -1564,17 +1566,18 @@ int yr_atoms_extract_from_string(
     *atoms = _yr_atoms_list_concat(*atoms, case_insensitive_atoms);
   }
 
-  if (flags & STRING_GFLAGS_XOR)
+  if (modifier.flags & STRING_GFLAGS_XOR)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
-      _yr_atoms_xor(*atoms, &xor_atoms),
+      _yr_atoms_xor(*atoms, modifier.xor_min, modifier.xor_max, &xor_atoms),
       {
         yr_atoms_list_destroy(*atoms);
         yr_atoms_list_destroy(xor_atoms);
         *atoms = NULL;
       });
 
-    *atoms = _yr_atoms_list_concat(*atoms, xor_atoms);
+      yr_atoms_list_destroy(*atoms);
+      *atoms = xor_atoms;
   }
 
   return ERROR_SUCCESS;
