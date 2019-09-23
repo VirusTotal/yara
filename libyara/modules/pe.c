@@ -2220,6 +2220,8 @@ static uint64_t rich_internal(
   rich_count = \
       (rich_length - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
 
+
+  uint64_t count_sum = 0;
   for (i = 0; i < rich_count; i++)
   {
     DWORD id_version = yr_le32toh(clear_rich_signature->versions[i].id_version);
@@ -2227,27 +2229,14 @@ static uint64_t rich_internal(
     int match_version = (version == RICH_VERSION_VERSION(id_version));
     int match_toolid = (toolid == RICH_VERSION_ID(id_version));
 
-    if (version != UNDEFINED && toolid != UNDEFINED)
+    if ((version == UNDEFINED || match_version) &&
+        (toolid == UNDEFINED || match_toolid))
     {
-      // check version and toolid
-      if (match_version && match_toolid)
-        return true;
-    }
-    else if (version != UNDEFINED)
-    {
-      // check only version
-      if (match_version)
-        return true;
-    }
-    else if (toolid != UNDEFINED)
-    {
-      // check only toolid
-      if (match_toolid)
-        return true;
+      count_sum += yr_le32toh(clear_rich_signature->versions[i].times);
     }
   }
 
-  return false;
+  return count_sum;
 }
 
 
