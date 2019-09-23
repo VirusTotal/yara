@@ -2187,17 +2187,25 @@ define_function(is_64bit)
 }
 
 
-static uint64_t rich_internal(
+// _rich_version
+//
+// Returns the number of rich signatures that match the specified version and
+// toolid numbers.
+//
+static uint64_t _rich_version(
     YR_OBJECT* module,
     uint64_t version,
     uint64_t toolid)
 {
   int64_t rich_length;
   int64_t rich_count;
+
   int i;
 
   PRICH_SIGNATURE clear_rich_signature;
   SIZED_STRING* rich_string;
+
+  uint64_t result = 0;
 
   // Check if the required fields are set
   if (is_undefined(module, "rich_signature.length"))
@@ -2220,8 +2228,6 @@ static uint64_t rich_internal(
   rich_count = \
       (rich_length - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
 
-
-  uint64_t count_sum = 0;
   for (i = 0; i < rich_count; i++)
   {
     DWORD id_version = yr_le32toh(clear_rich_signature->versions[i].id_version);
@@ -2232,39 +2238,39 @@ static uint64_t rich_internal(
     if ((version == UNDEFINED || match_version) &&
         (toolid == UNDEFINED || match_toolid))
     {
-      count_sum += yr_le32toh(clear_rich_signature->versions[i].times);
+      result += yr_le32toh(clear_rich_signature->versions[i].times);
     }
   }
 
-  return count_sum;
+  return result;
 }
 
 
 define_function(rich_version)
 {
   return_integer(
-      rich_internal(module(), integer_argument(1), UNDEFINED));
+      _rich_version(module(), integer_argument(1), UNDEFINED));
 }
 
 
 define_function(rich_version_toolid)
 {
   return_integer(
-      rich_internal(module(), integer_argument(1), integer_argument(2)));
+      _rich_version(module(), integer_argument(1), integer_argument(2)));
 }
 
 
 define_function(rich_toolid)
 {
   return_integer(
-      rich_internal(module(), UNDEFINED, integer_argument(1)));
+      _rich_version(module(), UNDEFINED, integer_argument(1)));
 }
 
 
 define_function(rich_toolid_version)
 {
   return_integer(
-      rich_internal(module(), integer_argument(2), integer_argument(1)));
+      _rich_version(module(), integer_argument(2), integer_argument(1)));
 }
 
 
