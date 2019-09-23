@@ -1059,7 +1059,7 @@ void dotnet_parse_tilde_2(
           field_offset = pe_rva_to_offset(pe, fieldrva_table->RVA);
           if (field_offset >= 0)
           {
-            set_integer(field_offset, pe->object, "field_offset[%i]", counter);
+            set_integer(field_offset, pe->object, "field_offsets[%i]", counter);
             counter++;
           }
 
@@ -1685,7 +1685,7 @@ begin_declarations;
   declare_string_array("constants");
   declare_integer("number_of_constants");
 
-  declare_integer_array("field_offset");
+  declare_integer_array("field_offsets");
   declare_integer("number_of_field_offsets");
 
 end_declarations;
