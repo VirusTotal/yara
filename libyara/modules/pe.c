@@ -2096,7 +2096,7 @@ define_function(locale)
   PE* pe = (PE*) module->data;
 
   uint64_t locale = integer_argument(1);
-  int n, i;
+  int64_t n, i;
 
   if (is_undefined(module, "number_of_resources"))
     return_integer(UNDEFINED);
@@ -2110,7 +2110,8 @@ define_function(locale)
 
   for (i = 0; i < n; i++)
   {
-    uint64_t rsrc_language = get_integer(module, "resources[%i].language", i);
+    uint64_t rsrc_language = get_integer(
+        module, "resources[%" PRId64 "].language", i);
 
     if ((rsrc_language & 0xFFFF) == locale)
       return_integer(1);
@@ -2126,7 +2127,7 @@ define_function(language)
   PE* pe = (PE*) module->data;
 
   uint64_t language = integer_argument(1);
-  int n, i;
+  int64_t n, i;
 
   if (is_undefined(module, "number_of_resources"))
     return_integer(UNDEFINED);
@@ -2140,7 +2141,8 @@ define_function(language)
 
   for (i = 0; i < n; i++)
   {
-    uint64_t rsrc_language = get_integer(module, "resources[%i].language", i);
+    uint64_t rsrc_language = get_integer(
+        module, "resources[%" PRId64 "].language", i);
 
     if ((rsrc_language & 0xFF) == language)
       return_integer(1);
