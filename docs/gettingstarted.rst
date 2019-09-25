@@ -150,3 +150,6 @@ libraries in this path by default, we must instruct it to do so by adding
 
     sudo sh -c 'echo "/usr/local/lib" >> /etc/ld.so.conf'
     sudo ldconfig
+
+.. warning:: The maximum file size that YARA can process is 64MB. Any file
+   greater than that will not produce results since YARA cannot process it.
