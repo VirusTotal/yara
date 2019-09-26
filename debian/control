@@ -2,12 +2,7 @@ Source: yara
 Section: utils
 Priority: optional
 Maintainer: Aurora Lane <auroraofearth@ya.ru>
-Build-Depends: debhelper (>= 12~),
-               python3-sphinx,
-               flex, bison,
-               libjansson-dev,
-               libmagic-dev,
-               libssl-dev,
+Build-Depends: debhelper (>= 12~), python3-sphinx, flex, bison, libjansson-dev, libmagic-dev, libssl-dev
 Standards-Version: 4.3.0
 Homepage: https://virustotal.github.io/yara
 Vcs-Git: https://github.com/VirusTotal/yara.git
