@@ -1,0 +1,2 @@
+# Don't store changes on file
+extend-diff-ignore = "^REVISION$"

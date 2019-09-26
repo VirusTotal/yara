@@ -1,0 +1,4 @@
+usr/include
+usr/lib/*/libyara.a
+usr/lib/*/libyara.so
+usr/lib/*/pkgconfig/*.pc

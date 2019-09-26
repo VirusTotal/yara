@@ -1,0 +1,88 @@
+Source: yara
+Section: utils
+Priority: optional
+Maintainer: Aurora Lane <auroraofearth@ya.ru>
+Build-Depends: debhelper (>= 12~),
+               python3-sphinx,
+               flex, bison,
+               libjansson-dev,
+               libmagic-dev,
+               libssl-dev,
+Standards-Version: 4.3.0
+Homepage: https://virustotal.github.io/yara
+Vcs-Git: https://github.com/VirusTotal/yara.git
+Vcs-Browser: https://github.com/VirusTotal/yara
+
+Package: yara
+Architecture: any
+Multi-Arch: allowed
+Depends: ${shlibs:Depends}, ${misc:Depends},
+Description: Pattern matching swiss knife for malware researchers
+ YARA is a tool aimed at helping malware researchers to identify and
+ classify malware samples. With YARA, it is possible to create
+ descriptions of malware families based on textual or binary patterns
+ contained in samples of those families. Each description consists of
+ a set of strings and a Boolean expression which determines its logic.
+ .
+ Complex and powerful rules can be created by using binary strings with
+ wild-cards, case-insensitive text strings, special operators, regular
+ expressions and many other features.
+
+Package: libyara3
+Architecture: any
+Multi-Arch: same
+Section: libs
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: YARA shared library
+ YARA is a tool aimed at helping malware researchers to identify and
+ classify malware samples. With YARA, it is possible to create
+ descriptions of malware families based on textual or binary patterns
+ contained in samples of those families. Each description consists of
+ a set of strings and a Boolean expression which determines its logic.
+ .
+ Complex and powerful rules can be created by using binary strings with
+ wild-cards, case-insensitive text strings, special operators, regular
+ expressions and many other features.
+ .
+ This package provides a shared library.
+
+Package: libyara-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends}, libyara3 (= ${binary:Version}),
+         libjansson-dev,
+         libmagic-dev,
+         libssl-dev,
+Description: YARA development libraries and headers
+ YARA is a tool aimed at helping malware researchers to identify and
+ classify malware samples. With YARA, it is possible to create
+ descriptions of malware families based on textual or binary patterns
+ contained in samples of those families. Each description consists of
+ a set of strings and a Boolean expression which determines its logic.
+ .
+ Complex and powerful rules can be created by using binary strings with
+ wild-cards, case-insensitive text strings, special operators, regular
+ expressions and many other features.
+ .
+ This package provides development libraries and headers.
+
+Package: yara-doc
+Section: doc
+Architecture: all
+Multi-Arch: foreign
+Depends: ${sphinxdoc:Depends}, ${misc:Depends}
+Built-Using: ${sphinxdoc:Built-Using}
+Description: HTML documentation for YARA
+ YARA is a tool aimed at helping malware researchers to identify and
+ classify malware samples. With YARA, it is possible to create
+ descriptions of malware families based on textual or binary patterns
+ contained in samples of those families. Each description consists of
+ a set of strings and a Boolean expression which determines its logic.
+ .
+ Complex and powerful rules can be created by using binary strings with
+ wild-cards, case-insensitive text strings, special operators, regular
+ expressions and many other features.
+ .
+ This package contains the documentation in HTML format.

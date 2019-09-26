@@ -1,0 +1,26 @@
+From: "Victor M. Alvarez" <vmalvarez@virustotal.com>
+Date: Wed, 5 Jun 2019 23:07:09 +0200
+Subject: Fix memory leak when _yr_process_attach fails.
+
+Closes #1070.
+---
+ libyara/proc.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/libyara/proc.c b/libyara/proc.c
+index 23b4468..10518d0 100644
+--- a/libyara/proc.c
++++ b/libyara/proc.c
+@@ -56,7 +56,11 @@ YR_API int yr_process_open_iterator(
+   context->current_block.fetch_data = yr_process_fetch_memory_block_data;
+   context->proc_info = NULL;
+ 
+-  return _yr_process_attach(pid, context);
++  FAIL_ON_ERROR_WITH_CLEANUP(
++      _yr_process_attach(pid, context),
++      yr_free(context));
++
++  return ERROR_SUCCESS;
+ }
+ 
+ 
