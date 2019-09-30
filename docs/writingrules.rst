@@ -629,6 +629,54 @@ in the file.
             ($a or $b) and ($c or $d)
     }
 
+
+The following table lists the precedence and associativity of all operators. The
+table is sorted in descending precedence order, which means that operators listed
+on a higher row in the list are grouped prior operators listed in rows further
+below it. Operators within the same row have the same precedence, if they appear
+together in a expression the associativity determines how they are grouped.
+
+==========  ========  =========================================  =============
+Precedence  Operator  Description                                Associativity
+==========  ========  =========================================  =============
+1           []        Array subscripting                         Left-to-right
+            .         Structure member access
+----------  --------  -----------------------------------------  -------------
+2           -         Unary minus                                Right-to-left
+            ~         Bitwise not
+----------  --------  -----------------------------------------  -------------
+3           *         Multiplication                             Left-to-right
+            \         Division
+            %         Remainder
+----------  --------  -----------------------------------------  -------------
+4           +         Addition                                   Left-to-right
+            -         Substraction
+----------  --------  -----------------------------------------  -------------
+5           <<        Bitwise left shift                         Left-to-right
+            >>        Bitwise right shift
+----------  --------  -----------------------------------------  -------------
+6           &         Bitwise and                                Left-to-right
+----------  --------  -----------------------------------------  -------------
+7           ^         Bitwise xor                                Left-to-right
+----------  --------  -----------------------------------------  -------------
+8           |         Bitwise or                                 Left-to-right
+----------  --------  -----------------------------------------  -------------
+9           <         Less than                                  Left-to-right
+            <=        Less than or equal to
+            >         Greater than
+            >=        Greater than or equal to
+----------  --------  -----------------------------------------  -------------
+10          ==        Equal to                                   Left-to-right
+            !=        Not equal to
+----------  --------  -----------------------------------------  -------------
+11          not       Logical not                                Right-to-left
+----------  --------  -----------------------------------------  -------------
+12          and       Logical and                                Left-to-right
+----------  --------  -----------------------------------------  -------------
+13          or        Logical or                                 Left-to-right
+==========  ========  =========================================  =============
+
+
 Counting strings
 ----------------
 
