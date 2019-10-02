@@ -44,6 +44,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YARA_ERROR_LEVEL_WARNING 1
 
 
+// Expression type constants are powers of two because they are used as flags.
+
+#define EXPRESSION_TYPE_UNKNOWN   0
+#define EXPRESSION_TYPE_BOOLEAN   1
+#define EXPRESSION_TYPE_INTEGER   2
+#define EXPRESSION_TYPE_STRING    4
+#define EXPRESSION_TYPE_REGEXP    8
+#define EXPRESSION_TYPE_OBJECT    16
+#define EXPRESSION_TYPE_FLOAT     32
+
+typedef struct _YR_EXPRESSION
+{
+  int type;
+
+  union {
+    int64_t integer;
+    YR_OBJECT* object;
+    SIZED_STRING* sized_string;
+  } value;
+
+  const char* identifier;
+
+} YR_EXPRESSION;
+
+
 typedef void (*YR_COMPILER_CALLBACK_FUNC)(
     int error_level,
     const char* file_name,
@@ -79,6 +104,19 @@ typedef struct _YR_FIXUP
 } YR_FIXUP;
 
 
+// Each "for" loop in the condition has an associated context which holds
+// information about loop, like the expression corresponding to the loop
+// variable and the target address for the jump instruction that goes back to
+// the beginning of the loop.
+
+typedef struct _YR_LOOP_CONTEXT
+{
+  YR_EXPRESSION var;
+  uint8_t* addr;
+
+} YR_LOOP_CONTEXT;
+
+
 typedef struct _YR_COMPILER
 {
   int               errors;
@@ -111,8 +149,7 @@ typedef struct _YR_COMPILER
 
   int               namespaces_count;
 
-  uint8_t*          loop_address[YR_MAX_LOOP_NESTING];
-  char*             loop_identifier[YR_MAX_LOOP_NESTING];
+  YR_LOOP_CONTEXT   loop[YR_MAX_LOOP_NESTING];
   int               loop_depth;
   int               loop_for_of_mem_offset;
 

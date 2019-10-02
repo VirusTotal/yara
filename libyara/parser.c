@@ -279,8 +279,8 @@ int yr_parser_lookup_loop_variable(
 
   for (i = 0; i < compiler->loop_depth; i++)
   {
-    if (compiler->loop_identifier[i] != NULL &&
-        strcmp(identifier, compiler->loop_identifier[i]) == 0)
+    if (compiler->loop[i].var.identifier != NULL &&
+        strcmp(identifier, compiler->loop[i].var.identifier) == 0)
       return i;
   }
 
@@ -1209,8 +1209,8 @@ static int _yr_parser_operator_to_opcode(
 int yr_parser_reduce_operation(
     yyscan_t yyscanner,
     const char* op,
-    EXPRESSION left_operand,
-    EXPRESSION right_operand)
+    YR_EXPRESSION left_operand,
+    YR_EXPRESSION right_operand)
 {
   int expression_type;
 

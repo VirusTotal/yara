@@ -114,7 +114,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       YYERROR; \
     }
 
-
+// check_type(expression, EXPRESSION_TYPE_INTEGER | EXPRESSION_TYPE_FLOAT) is
+// used to ensure that the type of "expression" is either integer or float.
 #define check_type(expression, expected_type, op) \
     check_type_with_cleanup(expression, expected_type, op, )
 
@@ -259,7 +260,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %destructor { yr_free($$); $$ = NULL; } arguments_list
 
 %union {
-  EXPRESSION      expression;
+  YR_EXPRESSION   expression;
   SIZED_STRING*   sized_string;
   char*           c_string;
   int64_t         integer;
@@ -738,6 +739,7 @@ identifier
 
         if (var_index >= 0)
         {
+          // The identifier corresponds to a loop variable.
           result = yr_parser_emit_with_arg(
               yyscanner,
               OP_PUSH_M,
@@ -745,9 +747,9 @@ identifier
               NULL,
               NULL);
 
-          $$.type = EXPRESSION_TYPE_INTEGER;
-          $$.value.integer = UNDEFINED;
-          $$.identifier = compiler->loop_identifier[var_index];
+          // The expression associated to this identifier is the same one
+          // associated to the loop variable.
+          $$ = compiler->loop[var_index].var;
         }
         else
         {
@@ -1186,7 +1188,6 @@ expression
         if (compiler->loop_depth > 0)
         {
           compiler->loop_depth--;
-          compiler->loop_identifier[compiler->loop_depth] = NULL;
         }
 
         YYERROR;
@@ -1226,8 +1227,8 @@ expression
         // 1       PUSH X      ;
         // 2       SET_M 4     ; store primary_expression in m4
         // 3       PUSH UNDEF  ; "end of list"
-        // 4       PUSH 0      ; integer range lower bound
-        // 5       PUSH 5      ; integer range upper bound
+        // 4       PUSH N      ; integer range lower bound
+        // 5       PUSH M      ; integer range upper bound
         // 6       CLEAR_M 1   ; clear <expr> result accumulator
         // 7       CLEAR_M 2   ; clear loop iteration counter
         // 8       POP_M 3     ; store upper bound
@@ -1347,8 +1348,9 @@ expression
               yyscanner, OP_INCR_M, mem_offset + 2, &addr, NULL);
         }
 
-        compiler->loop_address[compiler->loop_depth] = addr;
-        compiler->loop_identifier[compiler->loop_depth] = $3;
+        compiler->loop[compiler->loop_depth].addr = addr;
+        compiler->loop[compiler->loop_depth].var.identifier = $3;
+        compiler->loop[compiler->loop_depth].var.type = EXPRESSION_TYPE_INTEGER;
         compiler->loop_depth++;
       }
       '(' boolean_expression ')'
@@ -1384,7 +1386,7 @@ expression
           yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_JNUNDEF,
-              compiler->loop_address[compiler->loop_depth],
+              compiler->loop[compiler->loop_depth].addr,
               NULL,
               NULL);
 
@@ -1458,7 +1460,7 @@ expression
           yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_JLE_P,
-              compiler->loop_address[compiler->loop_depth],
+              compiler->loop[compiler->loop_depth].addr,
               NULL,
               NULL);
 
@@ -1484,8 +1486,6 @@ expression
             yyscanner, OP_PUSH_M, mem_offset + 1, NULL, NULL);
 
         yr_parser_emit(yyscanner, OP_INT_LE, NULL);
-
-        compiler->loop_identifier[compiler->loop_depth] = NULL;
         yr_free($3);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
@@ -1515,8 +1515,13 @@ expression
             yyscanner, OP_POP_M, mem_offset, &addr, NULL);
 
         compiler->loop_for_of_mem_offset = mem_offset;
-        compiler->loop_address[compiler->loop_depth] = addr;
-        compiler->loop_identifier[compiler->loop_depth] = NULL;
+
+        // In this type of loop we don't have a loop variable, so the loop
+        // identifer and type are initalized with blank values. Only the loop
+        // address is used.
+        compiler->loop[compiler->loop_depth].addr = addr;
+        compiler->loop[compiler->loop_depth].var.identifier = NULL;
+        compiler->loop[compiler->loop_depth].var.type = EXPRESSION_TYPE_UNKNOWN;
         compiler->loop_depth++;
       }
       '(' boolean_expression ')'
@@ -1544,7 +1549,7 @@ expression
         yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JNUNDEF,
-            compiler->loop_address[compiler->loop_depth],
+            compiler->loop[compiler->loop_depth].addr,
             NULL,
             NULL);
 
@@ -1566,7 +1571,6 @@ expression
         yr_parser_emit(yyscanner, OP_INT_LE, NULL);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
-
       }
     | for_expression _OF_ string_set
       {
@@ -2022,6 +2026,11 @@ primary_expression
               $$.value.sized_string = NULL;
               break;
             default:
+              // In a primary expression any identifier that corresponds to an
+              // object must be of type integer, float or string. If "foobar" is
+              // either a function, structure, dictionary or array you can not
+              // use it as:
+              //   condition: foobar
               yr_compiler_set_error_extra_info_fmt(
                   compiler,
                   "wrong usage of identifier \"%s\"",
