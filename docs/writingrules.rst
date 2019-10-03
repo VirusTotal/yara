@@ -640,33 +640,43 @@ together in a expression the associativity determines how they are grouped.
 Precedence  Operator  Description                                Associativity
 ==========  ========  =========================================  =============
 1           []        Array subscripting                         Left-to-right
+
             .         Structure member access
 ----------  --------  -----------------------------------------  -------------
-2           -         Unary minus                                Right-to-left
-            ~         Bitwise not
+2           `-`       Unary minus                                Right-to-left
+
+            `~`       Bitwise not
 ----------  --------  -----------------------------------------  -------------
-3           *         Multiplication                             Left-to-right
-            \         Division
+3           `*`       Multiplication                             Left-to-right
+
+            \\        Division
+
             %         Remainder
 ----------  --------  -----------------------------------------  -------------
-4           +         Addition                                   Left-to-right
-            -         Substraction
+4           `+`       Addition                                   Left-to-right
+
+            `-`       Substraction
 ----------  --------  -----------------------------------------  -------------
-5           <<        Bitwise left shift                         Left-to-right
-            >>        Bitwise right shift
+5           `<<`      Bitwise left shift                         Left-to-right
+
+            `>>`      Bitwise right shift
 ----------  --------  -----------------------------------------  -------------
 6           &         Bitwise and                                Left-to-right
 ----------  --------  -----------------------------------------  -------------
 7           ^         Bitwise xor                                Left-to-right
 ----------  --------  -----------------------------------------  -------------
-8           |         Bitwise or                                 Left-to-right
+8           `|`       Bitwise or                                 Left-to-right
 ----------  --------  -----------------------------------------  -------------
 9           <         Less than                                  Left-to-right
+
             <=        Less than or equal to
+
             >         Greater than
+
             >=        Greater than or equal to
 ----------  --------  -----------------------------------------  -------------
 10          ==        Equal to                                   Left-to-right
+
             !=        Not equal to
 ----------  --------  -----------------------------------------  -------------
 11          not       Logical not                                Right-to-left
