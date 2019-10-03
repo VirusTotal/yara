@@ -112,7 +112,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       stop = true; \
       result = ERROR_INTERNAL_FATAL_ERROR; \
       break; \
-    } 
+    }
 
 #define check_object_canary(o) \
     if (o->canary != context->canary) \
@@ -197,11 +197,11 @@ static const uint8_t* jmp_if(
 int yr_execute_code(
     YR_SCAN_CONTEXT* context)
 {
-  int64_t mem[MEM_SIZE];
   int32_t sp = 0;
 
   const uint8_t* ip = context->rules->code_start;
 
+  YR_VALUE mem[MEM_SIZE];
   YR_VALUE args[YR_MAX_FUNCTION_ARGS];
   YR_VALUE *stack;
   YR_VALUE r1;
@@ -289,7 +289,7 @@ int yr_execute_code(
         #if PARANOID_EXEC
         ensure_within_mem(r1.i);
         #endif
-        mem[r1.i] = 0;
+        mem[r1.i].i = 0;
         break;
 
       case OP_ADD_M:
@@ -300,7 +300,7 @@ int yr_execute_code(
         #endif
         pop(r2);
         if (!is_undef(r2))
-          mem[r1.i] += r2.i;
+          mem[r1.i].i += r2.i;
         break;
 
       case OP_INCR_M:
@@ -309,7 +309,7 @@ int yr_execute_code(
         #if PARANOID_EXEC
         ensure_within_mem(r1.i);
         #endif
-        mem[r1.i]++;
+        mem[r1.i].i++;
         break;
 
       case OP_PUSH_M:
@@ -318,7 +318,7 @@ int yr_execute_code(
         #if PARANOID_EXEC
         ensure_within_mem(r1.i);
         #endif
-        r1.i = mem[r1.i];
+        r1 = mem[r1.i];
         push(r1);
         break;
 
@@ -329,7 +329,7 @@ int yr_execute_code(
         ensure_within_mem(r1.i);
         #endif
         pop(r2);
-        mem[r1.i] = r2.i;
+        mem[r1.i] = r2;
         break;
 
       case OP_SET_M:
@@ -341,7 +341,7 @@ int yr_execute_code(
         pop(r2);
         push(r2);
         if (!is_undef(r2))
-          mem[r1.i] = r2.i;
+          mem[r1.i] = r2;
         break;
 
       case OP_SWAPUNDEF:
@@ -354,7 +354,7 @@ int yr_execute_code(
 
         if (is_undef(r2))
         {
-          r1.i = mem[r1.i];
+          r1 = mem[r1.i];
           push(r1);
         }
         else
