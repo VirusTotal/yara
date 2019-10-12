@@ -321,7 +321,8 @@ static void pe_parse_debug_directory(
       if (!struct_fits_in_pe(pe, pdb20, CV_INFO_PDB20))
         break;
       
-      pdb_str_len = strnlen((char *)(pdb20->PdbFileName), MAX_PATH * sizeof(char));
+      pdb_str_len = strnlen((char *)(pdb20->PdbFileName),
+                  yr_min(available_space(pe, pdb20->PdbFileName), MAX_PATH * sizeof(char)));
       
       if (pdb_str_len && pdb_str_len < MAX_PATH)
       {
@@ -337,7 +338,8 @@ static void pe_parse_debug_directory(
       if (!struct_fits_in_pe(pe, pdb70, CV_INFO_PDB70))
         break;
       
-      pdb_str_len = strnlen((char *)(pdb70->PdbFileName), MAX_PATH * sizeof(char));
+      pdb_str_len = strnlen((char *)(pdb70->PdbFileName),
+                  yr_min(available_space(pe, pdb70->PdbFileName), MAX_PATH * sizeof(char)));
       
       if (pdb_str_len && pdb_str_len < MAX_PATH)
       {
