@@ -232,6 +232,17 @@ typedef struct _MODULEREF_TABLE {
   } Name;
 } MODULEREF_TABLE, *PMODULEREF_TABLE;
 
+//
+// FieldRVA Table
+// ECMA-335 Section II.22.18
+//
+typedef struct _FIELDRVA_TABLE {
+    DWORD RVA;
+    union {
+        WORD Field_Short;
+        DWORD Field_LONG;
+    } Field;
+} FIELDRVA_TABLE, *PFIELDRVA_TABLE;
 
 //
 // CustomAttribute Table

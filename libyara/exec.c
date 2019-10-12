@@ -105,6 +105,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       break; \
     }
 
+// Make sure that the string pointer is within the rules arena.
+#define ensure_within_rules_arena(x) \
+    if (yr_arena_page_for_address(context->rules->arena, x) == NULL) \
+    { \
+      stop = true; \
+      result = ERROR_INTERNAL_FATAL_ERROR; \
+      break; \
+    } 
+
 #define check_object_canary(o) \
     if (o->canary != context->canary) \
     { \
@@ -525,9 +534,7 @@ int yr_execute_code(
         rule = *(YR_RULE**)(ip);
 
         #if PARANOID_EXEC
-        // Make sure that the string pointer is within the rules arena.
-        if (yr_arena_page_for_address(context->rules->arena, rule) == NULL)
-          return ERROR_INTERNAL_FATAL_ERROR;
+        ensure_within_rules_arena(rule);
         #endif
 
         ip += sizeof(uint64_t);
@@ -756,9 +763,7 @@ int yr_execute_code(
         }
 
         #if PARANOID_EXEC
-        // Make sure that the string pointer is within the rules arena.
-        if (yr_arena_page_for_address(context->rules->arena, r2.p) == NULL)
-          return ERROR_INTERNAL_FATAL_ERROR;
+        ensure_within_rules_arena(r2.p);
         #endif
 
         if (STRING_IS_PRIVATE(r2.s))
@@ -794,9 +799,7 @@ int yr_execute_code(
         ensure_defined(r2);
 
         #if PARANOID_EXEC
-        // Make sure that the string pointer is within the rules arena.
-        if (yr_arena_page_for_address(context->rules->arena, r3.p) == NULL)
-          return ERROR_INTERNAL_FATAL_ERROR;
+        ensure_within_rules_arena(r3.p);
         #endif
 
         if (STRING_IS_PRIVATE(r3.s))
@@ -827,9 +830,7 @@ int yr_execute_code(
         pop(r1);
 
         #if PARANOID_EXEC
-        // Make sure that the string pointer is within the rules arena.
-        if (yr_arena_page_for_address(context->rules->arena, r1.p) == NULL)
-          return ERROR_INTERNAL_FATAL_ERROR;
+        ensure_within_rules_arena(r1.p);
         #endif
 
         if (STRING_IS_PRIVATE(r1.s))
@@ -847,9 +848,7 @@ int yr_execute_code(
         ensure_defined(r1);
 
         #if PARANOID_EXEC
-        // Make sure that the string pointer is within the rules arena.
-        if (yr_arena_page_for_address(context->rules->arena, r2.p) == NULL)
-          return ERROR_INTERNAL_FATAL_ERROR;
+        ensure_within_rules_arena(r2.p);
         #endif
 
         if (STRING_IS_PRIVATE(r2.s))
@@ -879,9 +878,7 @@ int yr_execute_code(
         ensure_defined(r1);
 
         #if PARANOID_EXEC
-        // Make sure that the string pointer is within the rules arena.
-        if (yr_arena_page_for_address(context->rules->arena, r2.p) == NULL)
-          return ERROR_INTERNAL_FATAL_ERROR;
+        ensure_within_rules_arena(r2.p);
         #endif
 
         if (STRING_IS_PRIVATE(r2.s))

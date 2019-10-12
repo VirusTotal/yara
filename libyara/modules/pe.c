@@ -2138,7 +2138,7 @@ define_function(locale)
   PE* pe = (PE*) module->data;
 
   uint64_t locale = integer_argument(1);
-  int n, i;
+  int64_t n, i;
 
   if (is_undefined(module, "number_of_resources"))
     return_integer(UNDEFINED);
@@ -2152,7 +2152,8 @@ define_function(locale)
 
   for (i = 0; i < n; i++)
   {
-    uint64_t rsrc_language = get_integer(module, "resources[%i].language", i);
+    uint64_t rsrc_language = get_integer(
+        module, "resources[%" PRId64 "].language", i);
 
     if ((rsrc_language & 0xFFFF) == locale)
       return_integer(1);
@@ -2168,7 +2169,7 @@ define_function(language)
   PE* pe = (PE*) module->data;
 
   uint64_t language = integer_argument(1);
-  int n, i;
+  int64_t n, i;
 
   if (is_undefined(module, "number_of_resources"))
     return_integer(UNDEFINED);
@@ -2182,7 +2183,8 @@ define_function(language)
 
   for (i = 0; i < n; i++)
   {
-    uint64_t rsrc_language = get_integer(module, "resources[%i].language", i);
+    uint64_t rsrc_language = get_integer(
+        module, "resources[%" PRId64 "].language", i);
 
     if ((rsrc_language & 0xFF) == language)
       return_integer(1);
@@ -2229,17 +2231,25 @@ define_function(is_64bit)
 }
 
 
-static uint64_t rich_internal(
+// _rich_version
+//
+// Returns the number of rich signatures that match the specified version and
+// toolid numbers.
+//
+static uint64_t _rich_version(
     YR_OBJECT* module,
     uint64_t version,
     uint64_t toolid)
 {
   int64_t rich_length;
   int64_t rich_count;
+
   int i;
 
   PRICH_SIGNATURE clear_rich_signature;
   SIZED_STRING* rich_string;
+
+  uint64_t result = 0;
 
   // Check if the required fields are set
   if (is_undefined(module, "rich_signature.length"))
@@ -2269,55 +2279,42 @@ static uint64_t rich_internal(
     int match_version = (version == RICH_VERSION_VERSION(id_version));
     int match_toolid = (toolid == RICH_VERSION_ID(id_version));
 
-    if (version != UNDEFINED && toolid != UNDEFINED)
+    if ((version == UNDEFINED || match_version) &&
+        (toolid == UNDEFINED || match_toolid))
     {
-      // check version and toolid
-      if (match_version && match_toolid)
-        return true;
-    }
-    else if (version != UNDEFINED)
-    {
-      // check only version
-      if (match_version)
-        return true;
-    }
-    else if (toolid != UNDEFINED)
-    {
-      // check only toolid
-      if (match_toolid)
-        return true;
+      result += yr_le32toh(clear_rich_signature->versions[i].times);
     }
   }
 
-  return false;
+  return result;
 }
 
 
 define_function(rich_version)
 {
   return_integer(
-      rich_internal(module(), integer_argument(1), UNDEFINED));
+      _rich_version(module(), integer_argument(1), UNDEFINED));
 }
 
 
 define_function(rich_version_toolid)
 {
   return_integer(
-      rich_internal(module(), integer_argument(1), integer_argument(2)));
+      _rich_version(module(), integer_argument(1), integer_argument(2)));
 }
 
 
 define_function(rich_toolid)
 {
   return_integer(
-      rich_internal(module(), UNDEFINED, integer_argument(1)));
+      _rich_version(module(), UNDEFINED, integer_argument(1)));
 }
 
 
 define_function(rich_toolid_version)
 {
   return_integer(
-      rich_internal(module(), integer_argument(2), integer_argument(1)));
+      _rich_version(module(), integer_argument(2), integer_argument(1)));
 }
 
 

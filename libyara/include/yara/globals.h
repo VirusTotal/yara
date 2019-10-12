@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_GLOBALS_H
 #define YR_GLOBALS_H
 
-#include <inttypes.h>
+#include <yara/integers.h>
 #include <yara/threading.h>
 
 // Pre-computed tables for quickly converting a character to lowercase or to
