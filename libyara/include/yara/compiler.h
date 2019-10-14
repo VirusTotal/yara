@@ -105,14 +105,15 @@ typedef struct _YR_FIXUP
 
 
 // Each "for" loop in the condition has an associated context which holds
-// information about loop, like the expression corresponding to the loop
-// variable and the target address for the jump instruction that goes back to
-// the beginning of the loop.
+// information about loop, like the target address for the jump instruction
+// that goes back to the beginning of the loop and the local variables used
+// by the loop.
 
 typedef struct _YR_LOOP_CONTEXT
 {
-  YR_EXPRESSION var;
-  uint8_t* addr;
+  uint8_t*          addr;
+  int               vars_count;
+  YR_EXPRESSION     vars[YR_MAX_LOOP_VARS];
 
 } YR_LOOP_CONTEXT;
 
@@ -151,7 +152,7 @@ typedef struct _YR_COMPILER
 
   YR_LOOP_CONTEXT   loop[YR_MAX_LOOP_NESTING];
   int               loop_depth;
-  int               loop_for_of_mem_offset;
+  int               loop_for_of_var_index;
 
   char*             file_name_stack[YR_MAX_INCLUDE_DEPTH];
   int               file_name_stack_ptr;
@@ -197,6 +198,10 @@ int _yr_compiler_push_file_name(
 
 
 void _yr_compiler_pop_file_name(
+    YR_COMPILER* compiler);
+
+
+int _yr_compiler_get_var_frame(
     YR_COMPILER* compiler);
 
 

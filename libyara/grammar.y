@@ -736,8 +736,10 @@ hex_modifier
 identifier
     : _IDENTIFIER_
       {
+        YR_EXPRESSION expr;
+
         int result = ERROR_SUCCESS;
-        int var_index = yr_parser_lookup_loop_variable(yyscanner, $1);
+        int var_index = yr_parser_lookup_loop_variable(yyscanner, $1, &expr);
 
         if (var_index >= 0)
         {
@@ -745,13 +747,13 @@ identifier
           result = yr_parser_emit_with_arg(
               yyscanner,
               OP_PUSH_M,
-              LOOP_LOCAL_VARS * var_index,
+              var_index,
               NULL,
               NULL);
 
           // The expression associated to this identifier is the same one
           // associated to the loop variable.
-          $$ = compiler->loop[var_index].var;
+          $$ = expr;
         }
         else
         {
@@ -1248,14 +1250,21 @@ expression
       //
       {
         int result = ERROR_SUCCESS;
-        int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
+
+        // var_frame is used for accessing local variables used in this loop.
+        // All local variables are accessed using var_frame as a reference,
+        // like var_frame + 0, var_frame + 1, etc. Here we initialize var_frame
+        // with the correct value, which depends on the number of variables
+        // defined by any outer loops.
+
+        int var_frame = _yr_compiler_get_var_frame(compiler);
 
         if (compiler->loop_depth == YR_MAX_LOOP_NESTING)
           result = ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 
         fail_if_error(result);
 
-        if (yr_parser_lookup_loop_variable(yyscanner, $3) >= 0)
+        if (yr_parser_lookup_loop_variable(yyscanner, $3, NULL) >= 0)
         {
           yr_compiler_set_error_extra_info(compiler, $3);
           result = ERROR_DUPLICATED_LOOP_IDENTIFIER;
@@ -1264,28 +1273,29 @@ expression
         fail_if_error(result);
 
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_CLEAR_M, mem_offset + 1, NULL, NULL));
+            yyscanner, OP_CLEAR_M, var_frame + 1, NULL, NULL));
 
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_CLEAR_M, mem_offset + 2, NULL, NULL));
+            yyscanner, OP_CLEAR_M, var_frame + 2, NULL, NULL));
 
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_POP_M, mem_offset + 3, NULL, NULL));
+            yyscanner, OP_POP_M, var_frame + 3, NULL, NULL));
       }
       iterator ':'
       {
         YR_FIXUP* fixup;
+        YR_EXPRESSION loop_var;
 
         uint8_t* loop_start_addr;
         void* jmp_arg_addr;
 
-        int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
+        int var_frame = _yr_compiler_get_var_frame(compiler);
 
         fail_if_error(yr_parser_emit(
             yyscanner, OP_ITER_NEXT, &loop_start_addr));
 
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_POP_M, mem_offset, NULL, NULL));
+            yyscanner, OP_POP_M, var_frame, NULL, NULL));
 
         fail_if_error(yr_parser_emit_with_arg_reloc(
             yyscanner,
@@ -1306,29 +1316,42 @@ expression
         fixup->next = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup;
 
+        loop_var.identifier = $3;
+        loop_var.type = $6.type;
+        loop_var.value = $6.value;
+
+        compiler->loop[compiler->loop_depth].vars[0] = loop_var;
+
+        loop_var.identifier = NULL;
+        loop_var.type = EXPRESSION_TYPE_UNKNOWN;
+        loop_var.value.integer = UNDEFINED;
+
+        compiler->loop[compiler->loop_depth].vars[1] = loop_var;
+        compiler->loop[compiler->loop_depth].vars[2] = loop_var;
+        compiler->loop[compiler->loop_depth].vars[3] = loop_var;
+
+        compiler->loop[compiler->loop_depth].vars_count = 4;
         compiler->loop[compiler->loop_depth].addr = loop_start_addr;
-        compiler->loop[compiler->loop_depth].var.identifier = $3;
-        compiler->loop[compiler->loop_depth].var.type = $6.type;
-        compiler->loop[compiler->loop_depth].var.value = $6.value;
         compiler->loop_depth++;
       }
       '(' boolean_expression ')'
       {
         YR_FIXUP* fixup;
-        int mem_offset;
         uint8_t* pop_addr;
+        int var_frame;
 
         compiler->loop_depth--;
-        mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
+
+        var_frame = _yr_compiler_get_var_frame(compiler);
 
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_ADD_M, mem_offset + 1, NULL, NULL));
+            yyscanner, OP_ADD_M, var_frame + 1, NULL, NULL));
 
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_INCR_M, mem_offset + 2, NULL, NULL));
+            yyscanner, OP_INCR_M, var_frame + 2, NULL, NULL));
 
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH_M, mem_offset + 3, NULL, NULL));
+            yyscanner, OP_PUSH_M, var_frame + 3, NULL, NULL));
 
         fail_if_error(yr_parser_emit_with_arg_reloc(
             yyscanner,
@@ -1338,10 +1361,10 @@ expression
             NULL));
 
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH_M, mem_offset + 1, NULL, NULL));
+            yyscanner, OP_PUSH_M, var_frame + 1, NULL, NULL));
 
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH_M, mem_offset + 3, NULL, NULL));
+            yyscanner, OP_PUSH_M, var_frame + 3, NULL, NULL));
 
         fail_if_error(yr_parser_emit_with_arg_reloc(
             yyscanner,
@@ -1365,13 +1388,13 @@ expression
         yr_free(fixup);
 
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH_M, mem_offset + 1, NULL, NULL));
+            yyscanner, OP_PUSH_M, var_frame + 1, NULL, NULL));
 
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH_M, mem_offset + 3, NULL, NULL));
+            yyscanner, OP_PUSH_M, var_frame + 3, NULL, NULL));
 
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_SWAPUNDEF, mem_offset + 2, NULL, NULL));
+            yyscanner, OP_SWAPUNDEF, var_frame + 2, NULL, NULL));
 
         fail_if_error(yr_parser_emit(
             yyscanner, OP_INT_GE, NULL));
@@ -1379,56 +1402,59 @@ expression
     | _FOR_ for_expression _OF_ string_set ':'
       {
         int result = ERROR_SUCCESS;
-        int mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
+        int var_frame = _yr_compiler_get_var_frame(compiler);;
         uint8_t* addr;
 
         if (compiler->loop_depth == YR_MAX_LOOP_NESTING)
           result = ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 
-        if (compiler->loop_for_of_mem_offset != -1)
+        if (compiler->loop_for_of_var_index != -1)
           result = ERROR_NESTED_FOR_OF_LOOP;
 
         fail_if_error(result);
 
         yr_parser_emit_with_arg(
-            yyscanner, OP_CLEAR_M, mem_offset + 1, NULL, NULL);
+            yyscanner, OP_CLEAR_M, var_frame + 1, NULL, NULL);
 
         yr_parser_emit_with_arg(
-            yyscanner, OP_CLEAR_M, mem_offset + 2, NULL, NULL);
+            yyscanner, OP_CLEAR_M, var_frame + 2, NULL, NULL);
 
         // Pop the first string.
         yr_parser_emit_with_arg(
-            yyscanner, OP_POP_M, mem_offset, &addr, NULL);
+            yyscanner, OP_POP_M, var_frame, &addr, NULL);
 
-        compiler->loop_for_of_mem_offset = mem_offset;
+        compiler->loop_for_of_var_index = var_frame;
 
-        // In this type of loop we don't have a loop variable, so the loop
-        // identifer and type are initalized with blank values. Only the loop
-        // address is used.
+        for (int i = 0; i < 3; i++)
+        {
+          compiler->loop[compiler->loop_depth].vars[i].identifier = NULL;
+          compiler->loop[compiler->loop_depth].vars[i].type = EXPRESSION_TYPE_UNKNOWN;
+          compiler->loop[compiler->loop_depth].vars[i].value.integer = UNDEFINED;
+        }
+
+        compiler->loop[compiler->loop_depth].vars_count = 3;
         compiler->loop[compiler->loop_depth].addr = addr;
-        compiler->loop[compiler->loop_depth].var.identifier = NULL;
-        compiler->loop[compiler->loop_depth].var.type = EXPRESSION_TYPE_UNKNOWN;
         compiler->loop_depth++;
       }
       '(' boolean_expression ')'
       {
-        int mem_offset;
+        int var_frame = 0;
 
         compiler->loop_depth--;
-        compiler->loop_for_of_mem_offset = -1;
+        compiler->loop_for_of_var_index = -1;
 
-        mem_offset = LOOP_LOCAL_VARS * compiler->loop_depth;
+        var_frame = _yr_compiler_get_var_frame(compiler);
 
         // Increment counter by the value returned by the
         // boolean expression (0 or 1). If the boolean expression
         // returned UNDEFINED the OP_ADD_M won't do anything.
 
         yr_parser_emit_with_arg(
-            yyscanner, OP_ADD_M, mem_offset + 1, NULL, NULL);
+            yyscanner, OP_ADD_M, var_frame + 1, NULL, NULL);
 
         // Increment iterations counter.
         yr_parser_emit_with_arg(
-            yyscanner, OP_INCR_M, mem_offset + 2, NULL, NULL);
+            yyscanner, OP_INCR_M, var_frame + 2, NULL, NULL);
 
         // If next string is not undefined, go back to the
         // beginning of the loop.
@@ -1447,12 +1473,12 @@ expression
         // undefined (meaning "all") and replace it with the
         // iterations counter in that case.
         yr_parser_emit_with_arg(
-            yyscanner, OP_SWAPUNDEF, mem_offset + 2, NULL, NULL);
+            yyscanner, OP_SWAPUNDEF, var_frame + 2, NULL, NULL);
 
         // Compare the loop quantifier with the number of
         // expressions evaluating to true.
         yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH_M, mem_offset + 1, NULL, NULL);
+            yyscanner, OP_PUSH_M, var_frame + 1, NULL, NULL);
 
         yr_parser_emit(yyscanner, OP_INT_LE, NULL);
 

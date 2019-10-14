@@ -78,7 +78,8 @@ int yr_parser_lookup_string(
 
 int yr_parser_lookup_loop_variable(
     yyscan_t yyscanner,
-    const char* identifier);
+    const char* identifier,
+    YR_EXPRESSION*);
 
 
 int yr_parser_reduce_rule_declaration_phase_1(
