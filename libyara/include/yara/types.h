@@ -881,8 +881,8 @@ struct YR_DICTIONARY_ITEMS
 // of the iterator, because it's legitimate for an iterator to return UNDEFINED
 // items in the middle of the iteration.
 //
-// The "next" function should return ERROR_SUCCESS if every went fine or an
-// error code in case of error.
+// The "next" function should return ERROR_SUCCESS if everything went fine or
+// an error code in case of error.
 
 typedef int (*YR_ITERATOR_NEXT_FUNC)(
     YR_ITERATOR* self,
