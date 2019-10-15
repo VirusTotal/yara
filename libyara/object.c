@@ -807,7 +807,7 @@ YR_OBJECT* yr_object_dict_get_item(
   {
     for (i = 0; i < dict->items->used; i++)
     {
-      if (strcmp(dict->items->objects[i].key, key) == 0)
+      if (strcmp(dict->items->objects[i].key->c_string, key) == 0)
         result = dict->items->objects[i].obj;
     }
   }
@@ -874,7 +874,7 @@ int yr_object_dict_set_item(
 
   item->parent = object;
 
-  dict->items->objects[dict->items->used].key = yr_strdup(key);
+  dict->items->objects[dict->items->used].key = sized_string_new(key);
   dict->items->objects[dict->items->used].obj = item;
 
   dict->items->used++;
@@ -1234,7 +1234,11 @@ YR_API void yr_object_print_data(
       {
         for (i = 0; i < dict_items->used; i++)
         {
-          printf("\n%s\t%s", indent_spaces, dict_items->objects[i].key);
+          printf(
+              "\n%s\t%s",
+              indent_spaces,
+              dict_items->objects[i].key->c_string);
+
           yr_object_print_data(dict_items->objects[i].obj, indent + 1, 0);
         }
       }

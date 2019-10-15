@@ -233,6 +233,49 @@ static int iter_array_next(
 }
 
 
+static int iter_dict_next(
+    YR_ITERATOR* self,
+    YR_VALUE_STACK* stack)
+{
+  YR_DICTIONARY_ITEMS* items = object_as_dictionary(self->dict_it.dict)->items;
+
+  // Check that there's three available slots in the stack, two for the next
+  // item returned by the iterator and its key, and another one for the boolean
+  // that indicates if there are more items.
+  if (stack->sp + 2 >= stack->capacity)
+    return ERROR_EXEC_STACK_OVERFLOW;
+
+  if (self->dict_it.index < items->used)
+  {
+    // Push the false value that indicates that the iterator is not exhausted.
+    stack->items[stack->sp++].i = 0;
+
+    if (items->objects[self->dict_it.index].obj != NULL)
+    {
+      stack->items[stack->sp++].o = items->objects[self->dict_it.index].obj;
+      stack->items[stack->sp++].p = items->objects[self->dict_it.index].key;
+    }
+    else
+    {
+      stack->items[stack->sp++].i = UNDEFINED;
+      stack->items[stack->sp++].i = UNDEFINED;
+    }
+
+    self->dict_it.index++;
+  }
+  else
+  {
+    // Push true for indicating the iterator has been exhausted.
+    stack->items[stack->sp++].i = 1;
+    // Push UNDEFINED as a placeholder for the next key and value.
+    stack->items[stack->sp++].i = UNDEFINED;
+    stack->items[stack->sp++].i = UNDEFINED;
+  }
+
+  return ERROR_SUCCESS;
+}
+
+
 static int iter_int_range_next(
     YR_ITERATOR* self,
     YR_VALUE_STACK* stack)
@@ -385,6 +428,22 @@ int yr_execute_code(
           r2.it->array_it.array = r1.o;
           r2.it->array_it.index = 0;
           r2.it->next = iter_array_next;
+          push(r2);
+        }
+
+        stop = (result != ERROR_SUCCESS);
+        break;
+
+      case OP_ITER_START_DICT:
+        result = yr_arena_allocate_struct(
+            it_arena, sizeof(YR_ITERATOR), &r2.p);
+
+        if (result == ERROR_SUCCESS)
+        {
+          pop(r1);
+          r2.it->dict_it.dict = r1.o;
+          r2.it->dict_it.index = 0;
+          r2.it->next = iter_dict_next;
           push(r2);
         }
 

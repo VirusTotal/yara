@@ -294,10 +294,12 @@ int yr_parser_lookup_loop_variable(
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   int i, j;
-  int var_index = 0;
+  int var_offset = 0;
 
   for (i = 0; i < compiler->loop_depth; i++)
   {
+    var_offset += compiler->loop[i].vars_internal_count;
+
     for (j = 0; j < compiler->loop[i].vars_count; j++)
     {
         if (compiler->loop[i].vars[j].identifier != NULL &&
@@ -306,11 +308,11 @@ int yr_parser_lookup_loop_variable(
           if (expr != NULL)
             *expr = compiler->loop[i].vars[j];
 
-          return var_index + j;
+          return var_offset + j;
         }
     }
 
-    var_index += compiler->loop[i].vars_count;
+    var_offset += compiler->loop[i].vars_count;
   }
 
   return -1;

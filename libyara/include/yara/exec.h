@@ -97,8 +97,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OP_JLE_P                   52
 #define OP_ITER_NEXT               53
 #define OP_ITER_START_ARRAY        54
-#define OP_ITER_START_INT_RANGE    55
-#define OP_ITER_START_INT_ENUM     56
+#define OP_ITER_START_DICT         55
+#define OP_ITER_START_INT_RANGE    56
+#define OP_ITER_START_INT_ENUM     57
 
 
 #define _OP_EQ            0

@@ -479,7 +479,8 @@ int _yr_compiler_get_var_frame(
   int i, result = 0;
 
   for (i = 0; i < compiler->loop_depth; i++)
-     result += compiler->loop[i].vars_count;
+     result += compiler->loop[i].vars_count +
+               compiler->loop[i].vars_internal_count;
 
   return result;
 }

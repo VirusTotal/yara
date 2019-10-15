@@ -1237,6 +1237,31 @@ void test_for()
       }",
       NULL);
 
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any k,v in tests.struct_dict : ( \
+            k == \"foo\" and v.s == \"foo\" and v.i == 1 \
+          ) \
+      }",
+      NULL);
+
+  assert_error(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any k,v in tests.integer_array : ( false ) \
+      }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any a,b,c in tests.struct_dict : ( false ) \
+      }",
+      ERROR_SYNTAX_ERROR);
 }
 
 

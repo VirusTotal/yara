@@ -112,9 +112,17 @@ typedef struct _YR_FIXUP
 typedef struct _YR_LOOP_CONTEXT
 {
   uint8_t*          addr;
+
+  // vars_count is the number of local variables defined by the loop, and vars
+  // is an array of expressions with the identifier and type for each of those
+  // local variables.
   int               vars_count;
   YR_EXPRESSION     vars[YR_MAX_LOOP_VARS];
 
+  // vars_internal_count is the number of variables used by the loop which are
+  // not defined by the rule itself but that are necessary for keeping the
+  // loop's state. One example is the iteration counter.
+  int               vars_internal_count;
 } YR_LOOP_CONTEXT;
 
 
@@ -189,7 +197,6 @@ typedef struct _YR_COMPILER
         compiler->last_error_extra_info, \
         sizeof(compiler->last_error_extra_info), \
         fmt, __VA_ARGS__);
-
 
 
 int _yr_compiler_push_file_name(

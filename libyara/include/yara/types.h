@@ -837,10 +837,8 @@ struct YR_DICTIONARY_ITEMS
   int free;
 
   struct {
-
-    char* key;
+    SIZED_STRING* key;
     YR_OBJECT* obj;
-
   } objects[1];
 };
 
@@ -896,6 +894,13 @@ struct YR_ARRAY_ITERATOR
 };
 
 
+struct YR_DICT_ITERATOR
+{
+  YR_OBJECT* dict;
+  int index;
+};
+
+
 struct YR_INT_RANGE_ITERATOR
 {
   int64_t next;
@@ -917,6 +922,7 @@ struct YR_ITERATOR
 
   union {
     struct YR_ARRAY_ITERATOR array_it;
+    struct YR_DICT_ITERATOR dict_it;
     struct YR_INT_RANGE_ITERATOR int_range_it;
     struct YR_INT_ENUM_ITERATOR int_enum_it;
   };

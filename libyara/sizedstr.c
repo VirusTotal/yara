@@ -74,3 +74,23 @@ SIZED_STRING* sized_string_dup(
 
   return result;
 }
+
+
+SIZED_STRING* sized_string_new(
+    const char* s)
+{
+  SIZED_STRING* result;
+
+  int length = strlen(s);
+
+  result = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + length);
+
+  result->length = length;
+  result->flags = 0;
+
+  strncpy(result->c_string, s, length);
+
+  result->c_string[length] = '\0';
+
+  return result;
+}
