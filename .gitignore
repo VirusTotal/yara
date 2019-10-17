@@ -112,3 +112,4 @@ x64/
 windows/*/packages/
 *.trs
 *.log
+.dirstamp

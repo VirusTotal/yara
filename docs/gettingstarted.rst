@@ -22,8 +22,8 @@ The YARA port in vcpkg is kept up to date by Microsoft team members and communit
 
 Download the source tarball and get prepared for compiling it::
 
-    tar -zxf yara-3.10.0.tar.gz
-    cd yara-3.10.0
+    tar -zxf yara-3.11.0.tar.gz
+    cd yara-3.11.0
     ./bootstrap.sh
 
 Make sure you have ``automake``, ``libtool``, ``make``  and ``gcc`` installed
