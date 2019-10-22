@@ -40,7 +40,7 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
-          pe.imports(/.*/, /.*CriticalSection/) \
+          pe.imports(/.*/, /.*CriticalSection/) == 4 \
       }",
       "tests/data/tiny");
 
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
-          pe.imports(/kernel32\\.dll/i, /.*/) \
+          pe.imports(/kernel32\\.dll/i, /.*/) == 21 \
       }",
       "tests/data/tiny");
 
