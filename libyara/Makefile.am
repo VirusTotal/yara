@@ -1,35 +1,36 @@
+MODULES =  modules/tests/tests.c
 
-MODULES =  modules/tests.c
-MODULES += modules/pe.c
-MODULES += modules/elf.c
-MODULES += modules/math.c
-MODULES += modules/time.c
+MODULES += modules/elf/elf.c
 
-# This isn't really a module, but needs to be compiled with them.
-MODULES += modules/pe_utils.c
+MODULES += modules/math/math.c
+
+MODULES += modules/time/time.c
+
+MODULES += modules/pe/pe.c
+MODULES += modules/pe/pe_utils.c
 
 if CUCKOO_MODULE
-MODULES += modules/cuckoo.c
+MODULES += modules/cuckoo/cuckoo.c
 endif
 
 if MAGIC_MODULE
-MODULES += modules/magic.c
+MODULES += modules/magic/magic.c
 endif
 
 if HASH_MODULE
-MODULES += modules/hash.c
+MODULES += modules/hash/hash.c
 endif
 
 if DOTNET_MODULE
-MODULES += modules/dotnet.c
+MODULES += modules/dotnet/dotnet.c
 endif
 
 if MACHO_MODULE
-MODULES += modules/macho.c
+MODULES += modules/macho/macho.c
 endif
 
 if DEX_MODULE
-MODULES += modules/dex.c
+MODULES += modules/dex/dex.c
 endif
 
 #
