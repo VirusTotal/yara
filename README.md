@@ -104,6 +104,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [root9B](https://www.root9b.com)
 * [RSA ECAT](http://www.emc.com/security/rsa-ecat.htm)
 * [Scanii](https://scanii.com)
+* [SecondWrite](https://www.secondwrite.com)
 * [SpamStopsHere](https://www.spamstopshere.com)
 * [stoQ](http://stoq.punchcyber.com)
 * [Symantec](http://www.symantec.com)

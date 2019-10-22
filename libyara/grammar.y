@@ -585,8 +585,11 @@ string_declaration
       }
       _REGEXP_ regexp_modifiers
       {
+        int result;
+
         $5.flags |= STRING_GFLAGS_REGEXP;
-        int result = yr_parser_reduce_string_declaration(
+
+        result = yr_parser_reduce_string_declaration(
             yyscanner, $5, $1, $4, &$$);
 
         yr_free($1);
@@ -602,8 +605,11 @@ string_declaration
       }
       _HEX_STRING_ hex_modifiers
       {
+        int result;
+
         $5.flags |= STRING_GFLAGS_HEXADECIMAL;
-        int result = yr_parser_reduce_string_declaration(
+
+        result = yr_parser_reduce_string_declaration(
             yyscanner, $5, $1, $4, &$$);
 
         yr_free($1);
