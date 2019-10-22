@@ -183,19 +183,19 @@ cc_library(
         "libyara/libyara.c",
         "libyara/mem.c",
         "libyara/modules.c",
-        #"libyara/modules/cuckoo.c",  # TODO(cblichmann): Add Jansson JSON depenency
-        "libyara/modules/dex.c",
-        #"libyara/modules/demo.c",    # Disabled
-        "libyara/modules/dotnet.c",
-        "libyara/modules/elf.c",
-        "libyara/modules/hash.c",
-        "libyara/modules/macho.c",
-        #"libyara/modules/magic.c",   # TODO(cblichmann): Add libmagic dependency
-        "libyara/modules/math.c",
-        "libyara/modules/pe.c",
-        "libyara/modules/pe_utils.c",
-        "libyara/modules/tests.c",
-        "libyara/modules/time.c",
+        #"libyara/modules/cuckoo/cuckoo.c",  # TODO(cblichmann): Add Jansson JSON depenency
+        "libyara/modules/dex/dex.c",
+        #"libyara/modules/demo/demo.c",    # Disabled
+        "libyara/modules/dotnet/dotnet.c",
+        "libyara/modules/elf/elf.c",
+        "libyara/modules/hash/hash.c",
+        "libyara/modules/macho/macho.c",
+        #"libyara/modules/magic/magic.c",   # TODO(cblichmann): Add libmagic dependency
+        "libyara/modules/math/math.c",
+        "libyara/modules/pe/pe.c",
+        "libyara/modules/pe/pe_utils.c",
+        "libyara/modules/tests/tests.c",
+        "libyara/modules/time/time.c",
         "libyara/object.c",
         "libyara/parser.c",
         "libyara/proc.c",
@@ -234,10 +234,7 @@ cc_library(
     textual_hdrs = [
         "libyara/grammar.h",
         "libyara/hex_grammar.y",
-        "libyara/include/yara/exefiles.h",
-        "libyara/include/yara/re_lexer.h",
         "libyara/modules/module_list",
-        "libyara/modules/pe_utils.c",  # Included .c file
         "libyara/re_grammar.y",
     ],
     visibility = ["//visibility:public"],
