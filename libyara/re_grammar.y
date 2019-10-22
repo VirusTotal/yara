@@ -369,10 +369,10 @@ single
       {
         $$ = yr_re_node_create(RE_NODE_ANY);
 
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+
         $$->value = 0x00;
         $$->mask = 0x00;
-
-        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
     | _CHAR_
       {
