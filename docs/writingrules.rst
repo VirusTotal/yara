@@ -1141,6 +1141,33 @@ As can be seen in the example, a file will satisfy Rule2 only if it contains
 the string "dummy2" and satisfies Rule1. Note that it is strictly necessary to
 define the rule being invoked before the one that will make the invocation.
 
+Using Bitwise Not Operator
+-----------------------
+
+When using the bitwise NOT operator (`~`), be sure to include an additional
+bitwise AND operator along with `0xFF` times the length of the bytes of the
+operand of the bitwise NOT.
+
+.. code-block:: yara
+
+    rule Rule1
+    {
+        condition:
+            ~0xA1 & 0xFF == 0x5E
+    }
+
+    rule Rule2
+    {
+        condition:
+            ~uint8(0) & 0xFF == 0x5E
+    }
+    
+    rule Rule3
+    {
+        condition:
+            ~uint16(0) & 0xFFFF == 0x5E5E
+    }
+
 More about rules
 ================
 
