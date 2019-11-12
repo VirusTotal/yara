@@ -1663,6 +1663,8 @@ for_variables
         if (yr_parser_lookup_loop_variable(yyscanner, $1, NULL) >= 0)
         {
           yr_compiler_set_error_extra_info(compiler, $1);
+          yr_free($1);
+
           result = ERROR_DUPLICATED_LOOP_IDENTIFIER;
         }
 
@@ -1681,11 +1683,15 @@ for_variables
         if (loop_ctx->vars_count == YR_MAX_LOOP_VARS)
         {
           yr_compiler_set_error_extra_info(compiler, "too many loop variables");
+          yr_free($3);
+
           result = ERROR_SYNTAX_ERROR;
         }
         else if (yr_parser_lookup_loop_variable(yyscanner, $3, NULL) >= 0)
         {
           yr_compiler_set_error_extra_info(compiler, $3);
+          yr_free($3);
+
           result = ERROR_DUPLICATED_LOOP_IDENTIFIER;
         }
 
