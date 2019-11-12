@@ -1203,8 +1203,8 @@ expression
       {
         if (compiler->loop_depth > 0)
         {
-          free_loop_identifiers();
           compiler->loop_depth--;
+          free_loop_identifiers();
         }
 
         YYERROR;
@@ -1344,8 +1344,8 @@ expression
         uint8_t* pop_addr;
         int var_frame;
 
-        free_loop_identifiers();
         compiler->loop_depth--;
+        free_loop_identifiers();
 
         var_frame = _yr_compiler_get_var_frame(compiler);
 
@@ -1438,9 +1438,9 @@ expression
       {
         int var_frame = 0;
 
-        free_loop_identifiers();
         compiler->loop_depth--;
         compiler->loop_for_of_var_index = -1;
+        free_loop_identifiers();
 
         var_frame = _yr_compiler_get_var_frame(compiler);
 
