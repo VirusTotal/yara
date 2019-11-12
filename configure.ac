@@ -177,7 +177,8 @@ AC_ARG_ENABLE([pb-tests],
     # AS_IF([test "x${PROTOC_GEN_YARA}" == "x"],
     #    [AC_MSG_ERROR([please install https://github.com/VirusTotal/protoc-gen-yara])])
     PKG_CHECK_MODULES(PROTOBUF_C, libprotobuf-c >= 1.0.0)
-    AC_CHECK_LIB(protobuf-c, protobuf_c_empty_string)
+    AC_CHECK_LIB(protobuf-c, protobuf_c_message_unpack,,
+      AC_MSG_ERROR([please install libprotobuf-c library]))
     CFLAGS="$CFLAGS -DPB_TESTS_MODULE"
     PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libprotobuf-c"
   fi])
@@ -189,7 +190,7 @@ AC_ARG_WITH([jemalloc],
     mallctl=mallctl
     malloc_stats_print=malloc_stats_print
     AC_CHECK_LIB(jemalloc, $jemalloc_prefix$mallctl,,
-        AC_MSG_ERROR([please install jemalloc library]))
+      AC_MSG_ERROR([please install jemalloc library]))
     CFLAGS="$CFLAGS -DJEMALLOC -Dmallctl=$jemalloc_prefix$mallctl -Dmalloc_stats_print=$jemalloc_prefix$malloc_stats_print $no_std_allocator"
   fi])
 
