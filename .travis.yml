@@ -103,7 +103,8 @@ script: |
     *) make check ;;
   esac
 
-after_failure: if [ -e test-suite.log ]; then cat test-suite.log; fi
+after_failure: cat test-suite.log
+after_success: cat test-suite.log
 
 env:
   global:
