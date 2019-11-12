@@ -6,13 +6,13 @@ SUFFIXES = .proto .pb-c.c .pb-c.h .c
 # by protoc-gen-yara and the other two by protoc-gen-c.
 
 .proto.pb-c.c:
-		$(PROTOC) --c_out=$(builddir) --yara_out=$(builddir) $^ -Ipb/ -I=$(srcdir)
+		$(PROTOC) --c_out=$(builddir) $^ -Ipb/ -I=$(srcdir)
 
 .proto.pb-c.h:
-		$(PROTOC) --c_out=$(builddir) --yara_out=$(builddir) $^ -Ipb/ -I=$(srcdir)
+		$(PROTOC) --c_out=$(builddir) $^ -Ipb/ -I=$(srcdir)
 
 .proto.c:
-		$(PROTOC) --c_out=$(builddir) --yara_out=$(builddir) $^ -Ipb/ -I=$(srcdir)
+		$(PROTOC) --c_out=$(builddir) $^ -Ipb/ -I=$(srcdir)
 
 
 MODULES =  modules/tests/tests.c
