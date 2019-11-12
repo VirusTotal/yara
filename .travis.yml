@@ -3,9 +3,9 @@ language: c
 matrix:
   include:
 
-    # Build for 64-bit Linux with profiling enabled
+    # Build for 64-bit Linux without profiling enabled
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       env: CONFIGFLAGS="CFLAGS=-m64 --enable-cuckoo --enable-magic --enable-address-sanitizer"
       # The certificate for scan.coverity.com is too new and is not recognized by
@@ -18,7 +18,7 @@ matrix:
 
     # Build for 64-bit Linux with profiling enabled
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       env: CONFIGFLAGS="CFLAGS=-m64 --enable-cuckoo --enable-magic --enable-address-sanitizer --enable-profiling"
       install: |
@@ -27,7 +27,7 @@ matrix:
 
     # Build for 32-bit Linux
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       env: CONFIGFLAGS="CFLAGS=-m32 --enable-cuckoo --enable-magic"
       install: |
@@ -39,7 +39,7 @@ matrix:
 
     # Build for 64-bit Window using MinGW cross-compiler
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       env: CONFIGFLAGS=--host=x86_64-w64-mingw32
       install: |
@@ -48,7 +48,7 @@ matrix:
 
     # Build for 64-bit Window using MinGW cross-compiler
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       env: CONFIGFLAGS=--host=i686-w64-mingw32
       install: |
@@ -57,7 +57,7 @@ matrix:
 
     # Build for 64-bit Linux using Bazel instead of make.
     - os: linux
-      dist: trusty
+      dist: xenial
       install: |
          wget https://github.com/bazelbuild/bazel/releases/download/0.29.0/bazel_0.29.0-linux-x86_64.deb
          sudo dpkg -i bazel_0.29.0-linux-x86_64.deb
