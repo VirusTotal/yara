@@ -170,10 +170,6 @@ AC_ARG_ENABLE([pb-tests],
   [AS_HELP_STRING([--enable-pb-tests], [enable protobuf test module])],
   [if test x$enableval = xyes; then
     build_pb_tests_module=true
-    PKG_CHECK_MODULES(PROTOBUF, protobuf >= 2.4.0)
-    AC_SUBST(PROTOBUF_LIBS)
-    AC_SUBST(PROTOBUF_CFLAGS)
-    AC_SUBST(PROTOBUF_VERSION)
     AC_CHECK_PROG(PROTOC, protoc, protoc)
     AS_IF([test "x${PROTOC}" == "x"],
         [AC_MSG_ERROR([protobuf compiler "protoc" not found])])
