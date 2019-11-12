@@ -125,7 +125,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     {  \
       YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_depth]; \
       for (int i = 0; i < loop_ctx->vars_count; i++) \
+      { \
         yr_free((void*) loop_ctx->vars[i].identifier); \
+        loop_ctx->vars[i].identifier = NULL; \
+      } \
+      loop_ctx->vars_count = 0; \
     } \
 
 %}
@@ -1201,11 +1205,23 @@ expression
       }
     | _FOR_ for_expression error
       {
+        // If the error occurs in "for_variables" or "iterator", loop_depth
+        // is not incremented yet at this point. So we want to free the loop
+        // identifiers before decrementing loop_depth. But if the error occurs
+        // in "boolean_expression", then loop_depth has already been incremented,
+        // and we want to decrement it before freeing the identifiers. As we
+        // don't know where the error ocurred the identifiers are freed both
+        // before and after decrementing loop_depth. In case of nested loops
+        // the inner loop may be freeing the identifiers of the outer loop,
+        // but that's not a problem, the error is going to be propagated to
+        // the outer loop anyways.
+
+        free_loop_identifiers();
+
         if (compiler->loop_depth > 0)
-        {
           compiler->loop_depth--;
-          free_loop_identifiers();
-        }
+
+        free_loop_identifiers();
 
         YYERROR;
       }
@@ -1274,6 +1290,14 @@ expression
         if (compiler->loop_depth == YR_MAX_LOOP_NESTING)
           result = ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 
+        // This loop uses 3 internal variables besides the ones explicitly
+        // defined by the user.
+        compiler->loop[compiler->loop_depth].vars_internal_count = 3;
+
+        // Initialize the number of variables, this number will be incremented
+        // as variable declaration are processed by for_variables.
+        compiler->loop[compiler->loop_depth].vars_count = 0;
+
         fail_if_error(result);
 
         fail_if_error(yr_parser_emit_with_arg(
@@ -1284,14 +1308,6 @@ expression
 
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_POP_M, var_frame + 2, NULL, NULL));
-
-        // This loop uses 3 internal variables besides the ones explicitly
-        // defined by the user.
-        compiler->loop[compiler->loop_depth].vars_internal_count = 3;
-
-        // Initialize the number of variables, this number will be incremented
-        // as variable declaration are processed by for_variables.
-        compiler->loop[compiler->loop_depth].vars_count = 0;
       }
       for_variables _IN_ iterator ':'
       {
