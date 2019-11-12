@@ -1262,6 +1262,30 @@ void test_for()
           for any a,b,c in tests.struct_dict : ( false ) \
       }",
       ERROR_SYNTAX_ERROR);
+
+  assert_error(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any i in tests.struct_dict : ( false ) \
+      }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any i in tests.integer_array : ( undefined_ident ) \
+      }",
+      ERROR_UNDEFINED_IDENTIFIER);
+
+  assert_error(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any i in tests.integer_array : ( i == \"foo\" ) \
+      }",
+      ERROR_WRONG_TYPE);
 }
 
 
