@@ -119,6 +119,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define check_type(expression, expected_type, op) \
     check_type_with_cleanup(expression, expected_type, op, )
 
+
+
+#define free_loop_identifiers() \
+    {  \
+      YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_depth]; \
+      for (int i = 0; i < loop_ctx->vars_count; i++) \
+        yr_free((void*) loop_ctx->vars[i].identifier); \
+    } \
+
 %}
 
 
@@ -1194,6 +1203,7 @@ expression
       {
         if (compiler->loop_depth > 0)
         {
+          free_loop_identifiers();
           compiler->loop_depth--;
         }
 
@@ -1334,6 +1344,7 @@ expression
         uint8_t* pop_addr;
         int var_frame;
 
+        free_loop_identifiers();
         compiler->loop_depth--;
 
         var_frame = _yr_compiler_get_var_frame(compiler);
@@ -1427,6 +1438,7 @@ expression
       {
         int var_frame = 0;
 
+        free_loop_identifiers();
         compiler->loop_depth--;
         compiler->loop_for_of_var_index = -1;
 
