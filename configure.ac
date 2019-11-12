@@ -10,19 +10,30 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 
 # AC_PROG_CC sets CFLAGS to "-g -O2" if it wasn't previously set. Let's set
-# an empty CFLAGS
+# an empty CFLAGS.
 : ${CFLAGS=""}
 
 no_std_allocator="-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free"
 
 # automake 1.12 seems to require AM_PROG_AR, but automake 1.11 doesn't
-# recognize it
+# recognize it.
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 AC_PROG_CC
+AC_PROG_CC_C99
 AM_PROG_CC_C_O
 AM_PROG_LEX
 AC_PROG_YACC
+
+# If the C compiler supports the keyword inline, do nothing. Otherwise define
+# inline to __inline__ or __inline if it accepts one of those, otherwise define
+# inline to be empty.
+AC_C_INLINE
+
+# Defines WORDS_BIGENDIAN if building in a big-endian host.
+AC_C_BIGENDIAN
+
+# Arrange for 64-bit file offsets.
 AC_SYS_LARGEFILE
 
 LT_INIT
@@ -66,8 +77,6 @@ case $host_os in
             jemalloc_prefix= ;;
 esac
 
-AC_C_BIGENDIAN
-
 ACX_PTHREAD(
     [LIBS="$PTHREAD_LIBS $LIBS"
      CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
@@ -76,7 +85,8 @@ ACX_PTHREAD(
 
 AC_CHECK_LIB(m, isnan)
 AC_CHECK_LIB(m, log2)
-AC_CHECK_FUNCS([strlcpy strlcat memmem timegm _mkgmtime])
+AC_CHECK_FUNCS([strlcpy strlcat memmem timegm _mkgmtime clock_gettime])
+AC_CHECK_HEADERS([stdbool.h])
 
 AC_ARG_ENABLE([debug],
   [AS_HELP_STRING([--enable-debug], [compiles with -g option])],
@@ -271,10 +281,9 @@ AS_IF([test "x$have_crypto" = "xno"],
     PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libcrypto"
   ])
 
-AC_CHECK_HEADERS([stdbool.h])
 
-AC_CHECK_FUNCS([clock_gettime],,)
 
+AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
 AM_CONDITIONAL([POSIX], [test x$posix = xtrue])
 AM_CONDITIONAL([PROFILING_ENABLED], [test x$profiling_enabled = xtrue])
@@ -285,7 +294,6 @@ AM_CONDITIONAL([MAGIC_MODULE], [test x$build_magic_module = xtrue])
 AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
 AM_CONDITIONAL([DOTNET_MODULE], [test x$build_dotnet_module = xtrue])
 AM_CONDITIONAL([MACHO_MODULE], [test x$build_macho_module = xtrue])
-AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
 AM_CONDITIONAL([DEX_MODULE], [test x$build_dex_module = xtrue])
 AM_CONDITIONAL([DEBUG_DEX_MODULE], [test x$debug_dex_module = xtrue])
 

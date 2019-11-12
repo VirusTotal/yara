@@ -33,8 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 int sized_string_cmp(
-  SIZED_STRING* s1,
-  SIZED_STRING* s2)
+    SIZED_STRING* s1,
+    SIZED_STRING* s2)
 {
   size_t i = 0;
 

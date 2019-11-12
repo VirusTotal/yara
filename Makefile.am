@@ -1,4 +1,4 @@
-AM_CFLAGS=-std=gnu99 -Wall -I$(srcdir)/libyara/include
+AM_CFLAGS=-Wall -I$(srcdir)/libyara/include
 
 if DEBUG
 AM_CFLAGS+=-g
