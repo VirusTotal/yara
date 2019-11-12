@@ -270,18 +270,49 @@ int yr_parser_lookup_string(
 }
 
 
+//
+// yr_parser_lookup_loop_variable
+//
+// Searches for a variable with the given identifier in the scope of the current
+// "for" loop. In case of nested "for" loops the identifier is searched starting
+// at the top-level loop and going down thorough the nested loops until the
+// current one. This is ok because inner loops can not re-define an identifier
+// already defined by an outer loop.
+//
+// If the variable is found, the return value is the position that the variable
+// occuppies among all the currently defined variables. If the variable doesn't
+// exist the return value is -1.
+//
+// The function can receive a pointer to a YR_EXPRESSION that will populated
+// with information about the variable if found. This pointer can be NULL if
+// the caller is not interested in getting that information.
+//
 int yr_parser_lookup_loop_variable(
     yyscan_t yyscanner,
-    const char* identifier)
+    const char* identifier,
+    YR_EXPRESSION* expr)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
-  int i;
+  int i, j;
+  int var_offset = 0;
 
   for (i = 0; i < compiler->loop_depth; i++)
   {
-    if (compiler->loop_identifier[i] != NULL &&
-        strcmp(identifier, compiler->loop_identifier[i]) == 0)
-      return i;
+    var_offset += compiler->loop[i].vars_internal_count;
+
+    for (j = 0; j < compiler->loop[i].vars_count; j++)
+    {
+        if (compiler->loop[i].vars[j].identifier != NULL &&
+            strcmp(identifier, compiler->loop[i].vars[j].identifier ) == 0)
+        {
+          if (expr != NULL)
+            *expr = compiler->loop[i].vars[j];
+
+          return var_offset + j;
+        }
+    }
+
+    var_offset += compiler->loop[i].vars_count;
   }
 
   return -1;
@@ -923,12 +954,12 @@ int yr_parser_reduce_string_identifier(
 
   if (strcmp(identifier, "$") == 0) // is an anonymous string ?
   {
-    if (compiler->loop_for_of_mem_offset >= 0) // inside a loop ?
+    if (compiler->loop_for_of_var_index >= 0) // inside a loop ?
     {
       yr_parser_emit_with_arg(
           yyscanner,
           OP_PUSH_M,
-          compiler->loop_for_of_mem_offset,
+          compiler->loop_for_of_var_index,
           NULL,
           NULL);
 
@@ -1209,8 +1240,8 @@ static int _yr_parser_operator_to_opcode(
 int yr_parser_reduce_operation(
     yyscan_t yyscanner,
     const char* op,
-    EXPRESSION left_operand,
-    EXPRESSION right_operand)
+    YR_EXPRESSION left_operand,
+    YR_EXPRESSION right_operand)
 {
   int expression_type;
 

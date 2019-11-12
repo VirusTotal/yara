@@ -1608,20 +1608,20 @@ static void pe_parse_header(
         pe->object, "sections[%i].virtual_size", i);
 
     set_integer(
-      yr_le32toh(section->PointerToRelocations),
-      pe->object, "sections[%i].pointer_to_relocations", i);
+        yr_le32toh(section->PointerToRelocations),
+        pe->object, "sections[%i].pointer_to_relocations", i);
 
     set_integer(
-      yr_le32toh(section->PointerToLinenumbers),
-      pe->object, "sections[%i].pointer_to_line_numbers", i);
+        yr_le32toh(section->PointerToLinenumbers),
+        pe->object, "sections[%i].pointer_to_line_numbers", i);
 
     set_integer(
-      yr_le32toh(section->NumberOfRelocations),
-      pe->object, "sections[%i].number_of_relocations", i);
+        yr_le32toh(section->NumberOfRelocations),
+        pe->object, "sections[%i].number_of_relocations", i);
 
     set_integer(
-      yr_le32toh(section->NumberOfLinenumbers),
-      pe->object, "sections[%i].number_of_line_numbers", i);
+        yr_le32toh(section->NumberOfLinenumbers),
+        pe->object, "sections[%i].number_of_line_numbers", i);
 
     // This will catch the section with the highest raw offset to help checking
     // if overlay data is present. If two sections have the same raw pointer
@@ -1759,7 +1759,9 @@ define_function(exports)
   for (i = 0; i < pe->exported_functions->number_of_exports; i++)
   {
     if (pe->exported_functions->functions[i].name &&
-        strcasecmp(pe->exported_functions->functions[i].name, function_name->c_string) == 0)
+        strcasecmp(
+            pe->exported_functions->functions[i].name,
+            function_name->c_string) == 0)
     {
       return_integer(1);
     }
@@ -1789,7 +1791,10 @@ define_function(exports_regexp)
   for (i = 0; i < pe->exported_functions->number_of_exports; i++)
   {
     if (pe->exported_functions->functions[i].name &&
-        yr_re_match(scan_context(), regex, pe->exported_functions->functions[i].name) != -1)
+        yr_re_match(
+            scan_context(),
+            regex,
+            pe->exported_functions->functions[i].name) != -1)
     {
       return_integer(1);
     }

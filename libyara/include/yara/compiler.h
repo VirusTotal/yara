@@ -44,6 +44,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YARA_ERROR_LEVEL_WARNING 1
 
 
+// Expression type constants are powers of two because they are used as flags.
+
+#define EXPRESSION_TYPE_UNKNOWN   0
+#define EXPRESSION_TYPE_BOOLEAN   1
+#define EXPRESSION_TYPE_INTEGER   2
+#define EXPRESSION_TYPE_STRING    4
+#define EXPRESSION_TYPE_REGEXP    8
+#define EXPRESSION_TYPE_OBJECT    16
+#define EXPRESSION_TYPE_FLOAT     32
+
+typedef struct _YR_EXPRESSION
+{
+  int type;
+
+  union {
+    int64_t integer;
+    YR_OBJECT* object;
+    SIZED_STRING* sized_string;
+  } value;
+
+  const char* identifier;
+
+} YR_EXPRESSION;
+
+
 typedef void (*YR_COMPILER_CALLBACK_FUNC)(
     int error_level,
     const char* file_name,
@@ -79,6 +104,28 @@ typedef struct _YR_FIXUP
 } YR_FIXUP;
 
 
+// Each "for" loop in the condition has an associated context which holds
+// information about loop, like the target address for the jump instruction
+// that goes back to the beginning of the loop and the local variables used
+// by the loop.
+
+typedef struct _YR_LOOP_CONTEXT
+{
+  uint8_t*          addr;
+
+  // vars_count is the number of local variables defined by the loop, and vars
+  // is an array of expressions with the identifier and type for each of those
+  // local variables.
+  int               vars_count;
+  YR_EXPRESSION     vars[YR_MAX_LOOP_VARS];
+
+  // vars_internal_count is the number of variables used by the loop which are
+  // not defined by the rule itself but that are necessary for keeping the
+  // loop's state. One example is the iteration counter.
+  int               vars_internal_count;
+} YR_LOOP_CONTEXT;
+
+
 typedef struct _YR_COMPILER
 {
   int               errors;
@@ -111,10 +158,9 @@ typedef struct _YR_COMPILER
 
   int               namespaces_count;
 
-  uint8_t*          loop_address[YR_MAX_LOOP_NESTING];
-  char*             loop_identifier[YR_MAX_LOOP_NESTING];
+  YR_LOOP_CONTEXT   loop[YR_MAX_LOOP_NESTING];
   int               loop_depth;
-  int               loop_for_of_mem_offset;
+  int               loop_for_of_var_index;
 
   char*             file_name_stack[YR_MAX_INCLUDE_DEPTH];
   int               file_name_stack_ptr;
@@ -153,13 +199,16 @@ typedef struct _YR_COMPILER
         fmt, __VA_ARGS__);
 
 
-
 int _yr_compiler_push_file_name(
     YR_COMPILER* compiler,
     const char* file_name);
 
 
 void _yr_compiler_pop_file_name(
+    YR_COMPILER* compiler);
+
+
+int _yr_compiler_get_var_frame(
     YR_COMPILER* compiler);
 
 

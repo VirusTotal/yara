@@ -91,6 +91,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MAX_LOOP_NESTING 4
 #endif
 
+// Maximum number of local variables in a "for" loop. This includes the
+// variables defined explicitly defined by the user, not the internal variables
+// required for maintaining the loop's state.
+#ifndef YR_MAX_LOOP_VARS
+#define YR_MAX_LOOP_VARS 2
+#endif
+
 #ifndef YR_MAX_ARENA_PAGES
 #define YR_MAX_ARENA_PAGES 32
 #endif
