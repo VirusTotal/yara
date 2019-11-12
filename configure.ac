@@ -1,6 +1,6 @@
 AC_INIT([yara], [3.11.0], [vmalvarez@virustotal.com])
 
-AM_SILENT_RULES([yes])
+# AM_SILENT_RULES([yes])
 AC_CONFIG_SRCDIR([yara.c])
 
 AC_CONFIG_AUX_DIR([build-aux])
@@ -179,7 +179,7 @@ AC_ARG_ENABLE([pb-tests],
     PKG_CHECK_MODULES(PROTOBUF_C, libprotobuf-c >= 1.0.0)
     AC_CHECK_LIB(protobuf-c, protobuf_c_empty_string)
     CFLAGS="$CFLAGS -DPB_TESTS_MODULE"
-    PC_LIBS_PRIVATE="$PC_LIBS_PRIVATE -lprotobuf-c"
+    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libprotobuf-c"
   fi])
 
 AC_ARG_WITH([jemalloc],
