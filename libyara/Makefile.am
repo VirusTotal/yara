@@ -1,10 +1,11 @@
-
-SUFFIXES = .proto .pb-c.c .pb-c.h .c
-
 # Rules for generating YARA modules from .proto files. For each .proto file
-# three files are generated: .c, .pb-c.c, and .pb-ch. The .c file is generated
-# by protoc-gen-yara and the other two by protoc-gen-c.
-
+# three files are generated: .c, .pb-c.c, and .pb-c.h. The .c file is generated
+# by protoc-gen-yara and the other two by protoc-gen-c. This is done only if
+# protoc is found, if not, files already in the repository are used instead
+# of generating fresh ones from the .proto file.
+#
+if PROTOC
+SUFFIXES = .proto .pb-c.c .pb-c.h .c
 .proto.pb-c.c:
 		$(PROTOC) --c_out=$(builddir) $^ -Ipb/ -I=$(srcdir)
 
@@ -13,7 +14,7 @@ SUFFIXES = .proto .pb-c.c .pb-c.h .c
 
 .proto.c:
 		$(PROTOC) --c_out=$(builddir) $^ -Ipb/ -I=$(srcdir)
-
+endif
 
 MODULES =  modules/tests/tests.c
 

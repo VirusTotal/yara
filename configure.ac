@@ -301,6 +301,7 @@ AS_IF([test "x$have_crypto" = "xno"],
 
 
 AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
+AM_CONDITIONAL([PROTOC], [test "x${PROTOC}" != "x"])
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
 AM_CONDITIONAL([POSIX], [test x$posix = xtrue])
 AM_CONDITIONAL([PROFILING_ENABLED], [test x$profiling_enabled = xtrue])
