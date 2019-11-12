@@ -27,7 +27,7 @@ matrix:
 
     # Build for 32-bit Linux
     - os: linux
-      dist: xenial
+      dist: trusty
       sudo: required
       env: CONFIGFLAGS="CFLAGS=-m32 --enable-cuckoo --enable-magic"
       install: |
@@ -98,11 +98,11 @@ addons:
   apt:
     packages:
       - ca-certificates
-#  coverity_scan:
-#    project:
-#      name: "plusvic/yara"
-#      description: "Build submitted via Travis CI"
-#    notification_email: plusvic@gmail.com
-#    build_command_prepend: "./configure; make clean"
-#    build_command: "make -j 4"
-#    branch_pattern: master
+  coverity_scan:
+    project:
+      name: "plusvic/yara"
+      description: "Build submitted via Travis CI"
+    notification_email: plusvic@gmail.com
+    build_command_prepend: "./configure; make clean"
+    build_command: "make -j 4"
+    branch_pattern: master
