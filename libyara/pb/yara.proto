@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package yara;
+
+import "google/protobuf/descriptor.proto";
+
+message ModuleOptions {
+  string name = 1;
+  string root_message = 2;
+}
+
+message FieldOptions {
+  string name = 1;
+  bool ignore = 2;
+}
+
+message MessageOptions {
+  string name = 1;
+}
+
+message EnumOptions {
+  string name = 1;
+}
+
+extend google.protobuf.FileOptions {
+  ModuleOptions module_options = 51503;
+}
+
+extend google.protobuf.FieldOptions {
+  FieldOptions field_options = 51504;
+}
+
+extend google.protobuf.MessageOptions {
+  MessageOptions message_options = 51505;
+}
+
+extend google.protobuf.EnumOptions {
+  EnumOptions enum_options = 51506;
+}

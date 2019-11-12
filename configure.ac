@@ -166,6 +166,26 @@ AC_ARG_ENABLE([debug-dex],
     CFLAGS="$CFLAGS -DDEBUG_DEX_MODULE"
   fi])
 
+AC_ARG_ENABLE([pb-tests],
+  [AS_HELP_STRING([--enable-pb-tests], [enable protobuf test module])],
+  [if test x$enableval = xyes; then
+    build_pb_tests_module=true
+    PKG_CHECK_MODULES(PROTOBUF, protobuf >= 2.4.0)
+    AC_SUBST(PROTOBUF_LIBS)
+    AC_SUBST(PROTOBUF_CFLAGS)
+    AC_SUBST(PROTOBUF_VERSION)
+    AC_CHECK_PROG(PROTOC, protoc, protoc)
+    AS_IF([test "x${PROTOC}" == "x"],
+        [AC_MSG_ERROR([protobuf compiler "protoc" not found])])
+    AC_CHECK_PROG(PROTOC_GEN_YARA, protoc-gen-yara, protoc-gen-yara)
+    AS_IF([test "x${PROTOC_GEN_YARA}" == "x"],
+        [AC_MSG_ERROR([please install https://github.com/VirusTotal/protoc-gen-yara])])
+    PKG_CHECK_MODULES(PROTOBUF_C, libprotobuf-c >= 1.0.0)
+    AC_CHECK_LIB(protobuf-c, protobuf_c_empty_string)
+    CFLAGS="$CFLAGS -DPB_TESTS_MODULE"
+    PC_LIBS_PRIVATE="$PC_LIBS_PRIVATE -lprotobuf-c"
+  fi])
+
 AC_ARG_WITH([jemalloc],
   [AS_HELP_STRING([--with-jemalloc],
     [use jemalloc to debug heap-related issues])],
@@ -294,6 +314,7 @@ AM_CONDITIONAL([MAGIC_MODULE], [test x$build_magic_module = xtrue])
 AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
 AM_CONDITIONAL([DOTNET_MODULE], [test x$build_dotnet_module = xtrue])
 AM_CONDITIONAL([MACHO_MODULE], [test x$build_macho_module = xtrue])
+AM_CONDITIONAL([PB_TESTS_MODULE], [test x$build_pb_tests_module = xtrue])
 AM_CONDITIONAL([DEX_MODULE], [test x$build_dex_module = xtrue])
 AM_CONDITIONAL([DEBUG_DEX_MODULE], [test x$debug_dex_module = xtrue])
 
