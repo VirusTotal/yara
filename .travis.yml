@@ -5,7 +5,7 @@ matrix:
 
     # Build for 64-bit Linux without profiling enabled
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       env: CONFIGFLAGS="CFLAGS=-m64 --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
       # The certificate for scan.coverity.com is too new and is not recognized by
@@ -27,7 +27,7 @@ matrix:
 
     # Build for 64-bit Linux with profiling enabled
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       env: CONFIGFLAGS="CFLAGS=-m64 --enable-cuckoo --enable-magic --enable-pb-tests -enable-address-sanitizer --enable-profiling"
       install: |
