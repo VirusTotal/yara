@@ -92,6 +92,12 @@ test_dotnet_SOURCES = tests/test-dotnet.c tests/util.c
 test_dotnet_LDADD = libyara/.libs/libyara.a
 endif
 
+if PB_TESTS_MODULE
+check_PROGRAMS+=test-pb
+test_pb_SOURCES = tests/test-pb.c tests/util.c
+test_pb_LDADD = libyara/.libs/libyara.a
+endif
+
 # man pages
 man1_MANS = yara.man yarac.man
 
