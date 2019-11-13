@@ -121,9 +121,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#define free_loop_identifiers() \
+#define loop_vars_cleanup(loop_depth) \
     {  \
-      YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_depth]; \
+      YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[loop_depth]; \
       for (int i = 0; i < loop_ctx->vars_count; i++) \
       { \
         yr_free((void*) loop_ctx->vars[i].identifier); \
@@ -1213,15 +1213,10 @@ expression
 
         for (int i = 0; i <= compiler->loop_depth; i++)
         {
-          YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[i];
-
-          for (int j = 0; j < loop_ctx->vars_count; j++)
-            yr_free((void*) loop_ctx->vars[j].identifier);
+          loop_vars_cleanup(i);
         }
 
-        memset(compiler->loop, 0, sizeof(compiler->loop));
         compiler->loop_depth = 0;
-
         YYERROR;
       }
     | _FOR_ for_expression
@@ -1360,7 +1355,8 @@ expression
         int var_frame;
 
         compiler->loop_depth--;
-        free_loop_identifiers();
+
+        loop_vars_cleanup(compiler->loop_depth);
 
         var_frame = _yr_compiler_get_var_frame(compiler);
 
@@ -1455,7 +1451,8 @@ expression
 
         compiler->loop_depth--;
         compiler->loop_for_of_var_index = -1;
-        free_loop_identifiers();
+
+        loop_vars_cleanup(compiler->loop_depth);
 
         var_frame = _yr_compiler_get_var_frame(compiler);
 
