@@ -166,6 +166,23 @@ AC_ARG_ENABLE([debug-dex],
     CFLAGS="$CFLAGS -DDEBUG_DEX_MODULE"
   fi])
 
+AC_ARG_ENABLE([pb-tests],
+  [AS_HELP_STRING([--enable-pb-tests], [enable protobuf test module])],
+  [if test x$enableval = xyes; then
+    build_pb_tests_module=true
+    AC_CHECK_PROG(PROTOC, protoc, protoc)
+    AS_IF([test "x${PROTOC}" == "x"],
+        [AC_MSG_ERROR([protobuf compiler "protoc" not found])])
+    # AC_CHECK_PROG(PROTOC_GEN_YARA, protoc-gen-yara, protoc-gen-yara)
+    # AS_IF([test "x${PROTOC_GEN_YARA}" == "x"],
+    #    [AC_MSG_ERROR([please install https://github.com/VirusTotal/protoc-gen-yara])])
+    PKG_CHECK_MODULES(PROTOBUF_C, libprotobuf-c >= 1.0.0)
+    AC_CHECK_LIB(protobuf-c, protobuf_c_message_unpack,,
+      AC_MSG_ERROR([please install libprotobuf-c library]))
+    CFLAGS="$CFLAGS -DPB_TESTS_MODULE"
+    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libprotobuf-c"
+  fi])
+
 AC_ARG_WITH([jemalloc],
   [AS_HELP_STRING([--with-jemalloc],
     [use jemalloc to debug heap-related issues])],
@@ -173,7 +190,7 @@ AC_ARG_WITH([jemalloc],
     mallctl=mallctl
     malloc_stats_print=malloc_stats_print
     AC_CHECK_LIB(jemalloc, $jemalloc_prefix$mallctl,,
-        AC_MSG_ERROR([please install jemalloc library]))
+      AC_MSG_ERROR([please install jemalloc library]))
     CFLAGS="$CFLAGS -DJEMALLOC -Dmallctl=$jemalloc_prefix$mallctl -Dmalloc_stats_print=$jemalloc_prefix$malloc_stats_print $no_std_allocator"
   fi])
 
@@ -284,6 +301,7 @@ AS_IF([test "x$have_crypto" = "xno"],
 
 
 AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
+AM_CONDITIONAL([PROTOC], [test "x${PROTOC}" != "x"])
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
 AM_CONDITIONAL([POSIX], [test x$posix = xtrue])
 AM_CONDITIONAL([PROFILING_ENABLED], [test x$profiling_enabled = xtrue])
@@ -294,6 +312,7 @@ AM_CONDITIONAL([MAGIC_MODULE], [test x$build_magic_module = xtrue])
 AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
 AM_CONDITIONAL([DOTNET_MODULE], [test x$build_dotnet_module = xtrue])
 AM_CONDITIONAL([MACHO_MODULE], [test x$build_macho_module = xtrue])
+AM_CONDITIONAL([PB_TESTS_MODULE], [test x$build_pb_tests_module = xtrue])
 AM_CONDITIONAL([DEX_MODULE], [test x$build_dex_module = xtrue])
 AM_CONDITIONAL([DEBUG_DEX_MODULE], [test x$debug_dex_module = xtrue])
 
