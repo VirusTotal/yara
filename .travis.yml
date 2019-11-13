@@ -27,7 +27,7 @@ matrix:
 
     # Build for 32-bit Linux
     - os: linux
-      dist: xenial
+      dist: trusty
       sudo: required
       env: CONFIGFLAGS="CFLAGS=-m32 --enable-cuckoo --enable-magic"
       install: |

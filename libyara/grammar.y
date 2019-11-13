@@ -121,11 +121,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#define free_loop_identifiers() \
+#define loop_vars_cleanup(loop_depth) \
     {  \
-      YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_depth]; \
+      YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[loop_depth]; \
       for (int i = 0; i < loop_ctx->vars_count; i++) \
+      { \
         yr_free((void*) loop_ctx->vars[i].identifier); \
+        loop_ctx->vars[i].identifier = NULL; \
+      } \
+      loop_ctx->vars_count = 0; \
     } \
 
 %}
@@ -1201,12 +1205,18 @@ expression
       }
     | _FOR_ for_expression error
       {
-        if (compiler->loop_depth > 0)
+        // Free all the loop variable identifiers and set loop_depth to 0. This
+        // is ok even if we have nested loops. If an error occurs while parsing
+        // the inner loop, it will be propagated to the outer loop anyways, so
+        // it's safe to do this cleanup while processing the error for the
+        // inner loop.
+
+        for (int i = 0; i <= compiler->loop_depth; i++)
         {
-          free_loop_identifiers();
-          compiler->loop_depth--;
+          loop_vars_cleanup(i);
         }
 
+        compiler->loop_depth = 0;
         YYERROR;
       }
     | _FOR_ for_expression
@@ -1274,6 +1284,14 @@ expression
         if (compiler->loop_depth == YR_MAX_LOOP_NESTING)
           result = ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 
+        // This loop uses 3 internal variables besides the ones explicitly
+        // defined by the user.
+        compiler->loop[compiler->loop_depth].vars_internal_count = 3;
+
+        // Initialize the number of variables, this number will be incremented
+        // as variable declaration are processed by for_variables.
+        compiler->loop[compiler->loop_depth].vars_count = 0;
+
         fail_if_error(result);
 
         fail_if_error(yr_parser_emit_with_arg(
@@ -1284,14 +1302,6 @@ expression
 
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_POP_M, var_frame + 2, NULL, NULL));
-
-        // This loop uses 3 internal variables besides the ones explicitly
-        // defined by the user.
-        compiler->loop[compiler->loop_depth].vars_internal_count = 3;
-
-        // Initialize the number of variables, this number will be incremented
-        // as variable declaration are processed by for_variables.
-        compiler->loop[compiler->loop_depth].vars_count = 0;
       }
       for_variables _IN_ iterator ':'
       {
@@ -1344,8 +1354,9 @@ expression
         uint8_t* pop_addr;
         int var_frame;
 
-        free_loop_identifiers();
         compiler->loop_depth--;
+
+        loop_vars_cleanup(compiler->loop_depth);
 
         var_frame = _yr_compiler_get_var_frame(compiler);
 
@@ -1438,9 +1449,10 @@ expression
       {
         int var_frame = 0;
 
-        free_loop_identifiers();
         compiler->loop_depth--;
         compiler->loop_for_of_var_index = -1;
+
+        loop_vars_cleanup(compiler->loop_depth);
 
         var_frame = _yr_compiler_get_var_frame(compiler);
 
@@ -1647,6 +1659,8 @@ for_variables
         if (yr_parser_lookup_loop_variable(yyscanner, $1, NULL) >= 0)
         {
           yr_compiler_set_error_extra_info(compiler, $1);
+          yr_free($1);
+
           result = ERROR_DUPLICATED_LOOP_IDENTIFIER;
         }
 
@@ -1665,11 +1679,15 @@ for_variables
         if (loop_ctx->vars_count == YR_MAX_LOOP_VARS)
         {
           yr_compiler_set_error_extra_info(compiler, "too many loop variables");
+          yr_free($3);
+
           result = ERROR_SYNTAX_ERROR;
         }
         else if (yr_parser_lookup_loop_variable(yyscanner, $3, NULL) >= 0)
         {
           yr_compiler_set_error_extra_info(compiler, $3);
+          yr_free($3);
+
           result = ERROR_DUPLICATED_LOOP_IDENTIFIER;
         }
 
