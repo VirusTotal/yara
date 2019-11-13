@@ -2843,7 +2843,7 @@ yyreduce:
 
         for (int i = 0; i <= compiler->loop_depth; i++)
         {
-          YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_depth];
+          YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[i];
 
           for (int j = 0; j < loop_ctx->vars_count; j++)
             yr_free((void*) loop_ctx->vars[j].identifier);
