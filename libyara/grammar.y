@@ -1205,23 +1205,22 @@ expression
       }
     | _FOR_ for_expression error
       {
-        // If the error occurs in "for_variables" or "iterator", loop_depth
-        // is not incremented yet at this point. So we want to free the loop
-        // identifiers before decrementing loop_depth. But if the error occurs
-        // in "boolean_expression", then loop_depth has already been incremented,
-        // and we want to decrement it before freeing the identifiers. As we
-        // don't know where the error ocurred the identifiers are freed both
-        // before and after decrementing loop_depth. In case of nested loops
-        // the inner loop may be freeing the identifiers of the outer loop,
-        // but that's not a problem, the error is going to be propagated to
-        // the outer loop anyways.
+        // Free all the loop variable identifiers and set loop_depth to 0. This
+        // is ok even if we have nested loops. If an error occurs while parsing
+        // the inner loop, it will be propagated to the outer loop anyways, so
+        // it's safe to do this cleanup while processing the error for the
+        // inner loop.
 
-        free_loop_identifiers();
+        for (int i = 0; i <= compiler->loop_depth; i++)
+        {
+          YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_depth];
 
-        if (compiler->loop_depth > 0)
-          compiler->loop_depth--;
+          for (int j = 0; j < loop_ctx->vars_count; j++)
+            yr_free((void*) loop_ctx->vars[j].identifier);
+        }
 
-        free_loop_identifiers();
+        memset(compiler->loop, 0, sizeof(compiler->loop));
+        compiler->loop_depth = 0;
 
         YYERROR;
       }
