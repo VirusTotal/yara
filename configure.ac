@@ -173,10 +173,6 @@ AC_ARG_ENABLE([pb-tests],
     AC_CHECK_PROG(PROTOC, protoc, protoc)
     AS_IF([test "x${PROTOC}" == "x"],
         [AC_MSG_ERROR([protobuf compiler "protoc" not found])])
-    # AC_CHECK_PROG(PROTOC_GEN_YARA, protoc-gen-yara, protoc-gen-yara)
-    # AS_IF([test "x${PROTOC_GEN_YARA}" == "x"],
-    #    [AC_MSG_ERROR([please install https://github.com/VirusTotal/protoc-gen-yara])])
-    PKG_CHECK_MODULES(PROTOBUF_C, libprotobuf-c >= 1.0.0)
     AC_CHECK_LIB(protobuf-c, protobuf_c_message_unpack,,
       AC_MSG_ERROR([please install libprotobuf-c library]))
     CFLAGS="$CFLAGS -DPB_TESTS_MODULE"
