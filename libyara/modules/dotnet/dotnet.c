@@ -118,6 +118,7 @@ void dotnet_parse_guid(
 
     i++;
     guid_size -= 16;
+    guid_offset += 16;
   }
 
   set_integer(i, pe->object, "number_of_guids");
@@ -1363,7 +1364,7 @@ void dotnet_parse_tilde_2(
 
       case BIT_METHODSPEC:
         row_count = max_rows(2,
-            yr_le32toh(rows.methoddef), 
+            yr_le32toh(rows.methoddef),
             yr_le32toh(rows.memberref));
 
         if (row_count > (0xFFFF >> 0x01))
