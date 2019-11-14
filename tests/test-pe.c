@@ -218,6 +218,17 @@ int main(int argc, char** argv)
       }",
       "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
+  // This is the first 840 bytes (just enough to make sure the rich header is
+  // parsed) of 3593d3d08761d8ddc269dde945c0cb07e5cef5dd46ad9eefc22d17901f542093.
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.rich_signature.offset == 0x200 and \
+          pe.rich_signature.length == 64 \
+      }",
+      "tests/data/weird_rich");
+
   yr_finalize();
   return 0;
 }
