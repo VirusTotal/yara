@@ -1209,9 +1209,17 @@ expression
         // is ok even if we have nested loops. If an error occurs while parsing
         // the inner loop, it will be propagated to the outer loop anyways, so
         // it's safe to do this cleanup while processing the error for the
-        // inner loop.
+        // inner loop. If the error is ERROR_LOOP_NESTING_LIMIT_EXCEEDED the
+        // value of loop_depth at this point is YR_MAX_LOOP_NESTING, for that
+        // reason we use min(loop_depth, YR_MAX_LOOP_NESTING - 1) as the upper
+        // bound for i. Using i < loop_depth as the condition (instead of <=)
+        // is not an option because when loop_depth < YR_MAX_LOOP_NESTING we
+        // want to clean up all loops including the current one, represented
+        // by the current value of loop_depth.
 
-        for (int i = 0; i <= compiler->loop_depth; i++)
+        for (int i = 0;
+             i <= yr_min(compiler->loop_depth,YR_MAX_LOOP_NESTING - 1);
+             i++)
         {
           loop_vars_cleanup(i);
         }
@@ -1284,6 +1292,8 @@ expression
         if (compiler->loop_depth == YR_MAX_LOOP_NESTING)
           result = ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 
+        fail_if_error(result);
+
         // This loop uses 3 internal variables besides the ones explicitly
         // defined by the user.
         compiler->loop[compiler->loop_depth].vars_internal_count = 3;
@@ -1291,8 +1301,6 @@ expression
         // Initialize the number of variables, this number will be incremented
         // as variable declaration are processed by for_variables.
         compiler->loop[compiler->loop_depth].vars_count = 0;
-
-        fail_if_error(result);
 
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_CLEAR_M, var_frame + 0, NULL, NULL));
