@@ -154,13 +154,14 @@ static void pe_parse_rich_signature(
     uint64_t base_address)
 {
   PIMAGE_DOS_HEADER mz_header;
-  PIMAGE_NT_HEADERS32 pe_header;
-  PRICH_SIGNATURE rich_signature;
-  DWORD* rich_ptr;
+  PRICH_SIGNATURE rich_signature = NULL;
 
+  DWORD* rich_ptr = NULL;
   BYTE* raw_data = NULL;
   BYTE* clear_data = NULL;
-  size_t headers_size = 0;
+  DWORD* p = NULL;
+  uint32_t nthdr_offset = 0;
+  uint32_t key = 0;
   size_t rich_len = 0;
 
   if (pe->data_size < sizeof(IMAGE_DOS_HEADER))
@@ -171,23 +172,56 @@ static void pe_parse_rich_signature(
   if (yr_le16toh(mz_header->e_magic) != IMAGE_DOS_SIGNATURE)
     return;
 
-  if (yr_le32toh(mz_header->e_lfanew) < 0)
+  // To find the Rich marker we start at the NT header and work backwards, so
+  // make sure we have at least enough data to get to the NT header.
+  nthdr_offset = yr_le32toh(mz_header->e_lfanew);
+  if (nthdr_offset > pe->data_size + sizeof(uint32_t) || nthdr_offset < 4)
     return;
 
-  headers_size = yr_le32toh(mz_header->e_lfanew) + \
-                 sizeof(pe_header->Signature) + \
-                 sizeof(IMAGE_FILE_HEADER);
+  // Most files have the Rich header at offset 0x80, but that is not always
+  // true. 582ce3eea9c97d5e89f7d83953a6d518b16770e635a19a456c0225449c6967a4 is
+  // one sample which has a Rich header starting at offset 0x200. To properly
+  // find the Rich header we need to start at the NT header and work backwards.
+  p = (DWORD*)(pe->data + nthdr_offset - 4);
+  while (p > (DWORD*)(pe->data + sizeof(IMAGE_DOS_HEADER)))
+  {
+    if (*p == RICH_RICH)
+    {
+      // The XOR key is the dword following the Rich value. We  use this to find
+      // DanS header only.
+      key = *(p + 1);
+      rich_ptr = p;
+      --p;
+      break;
+    }
 
-  if (pe->data_size < headers_size)
+    // The NT header is 8 byte aligned so we can move back in 4 byte increments.
+    --p;
+  }
+
+  // If we haven't found a key we can skip processing the rest.
+  if (key == 0)
     return;
 
-  // From offset 0x80 until the start of the PE header should be the Rich
-  // signature. The three key values must all be equal and the first dword
+  // If we have found the key we need to now find the start (DanS).
+  while (p > (DWORD*)(pe->data + sizeof(IMAGE_DOS_HEADER)))
+  {
+    if ((*(p) ^ key) == RICH_DANS)
+    {
+      rich_signature = (PRICH_SIGNATURE) p;
+      break;
+    }
+
+    --p;
+  }
+
+  if (rich_signature == NULL)
+    return;
+
+  // The three key values must all be equal and the first dword
   // XORs to "DanS". Then walk the buffer looking for "Rich" which marks the
   // end. Technically the XOR key should be right after "Rich" but it's not
   // important.
-
-  rich_signature = (PRICH_SIGNATURE) (pe->data + 0x80);
 
   if (yr_le32toh(rich_signature->key1) != yr_le32toh(rich_signature->key2) ||
       yr_le32toh(rich_signature->key2) != yr_le32toh(rich_signature->key3) ||
@@ -196,66 +230,48 @@ static void pe_parse_rich_signature(
     return;
   }
 
-  for (rich_ptr = (DWORD*) rich_signature;
-       rich_ptr <= (DWORD*) (pe->data + headers_size);
-       rich_ptr++)
+  // Multiple by 4 because we are counting in DWORDs.
+  rich_len = (rich_ptr - (DWORD*) rich_signature) * 4;
+  raw_data = (BYTE*) yr_malloc(rich_len);
+
+  if (!raw_data)
+    return;
+
+  memcpy(raw_data, rich_signature, rich_len);
+
+  set_integer(
+      base_address + ((uint8_t*) rich_signature - pe->data), pe->object, "rich_signature.offset");
+
+  set_integer(rich_len, pe->object, "rich_signature.length");
+
+  set_integer(rich_signature->key1, pe->object, "rich_signature.key");
+
+  clear_data = (BYTE*) yr_malloc(rich_len);
+
+  if (!clear_data)
   {
-    if (yr_le32toh(*rich_ptr) == RICH_RICH)
-    {
-      // Multiple by 4 because we are counting in DWORDs.
-      rich_len = (rich_ptr - (DWORD*) rich_signature) * 4;
-      raw_data = (BYTE*) yr_malloc(rich_len);
-
-      if (!raw_data)
-        return;
-
-      memcpy(raw_data, rich_signature, rich_len);
-
-      set_integer(
-          base_address + 0x80, pe->object, "rich_signature.offset");
-
-      set_integer(
-          rich_len, pe->object, "rich_signature.length");
-
-      set_integer(
-          rich_signature->key1, pe->object, "rich_signature.key");
-
-      break;
-    }
-  }
-
-  // Walk the entire block and apply the XOR key.
-  if (raw_data)
-  {
-    clear_data = (BYTE*) yr_malloc(rich_len);
-
-    if (!clear_data)
-    {
-      yr_free(raw_data);
-      return;
-    }
-
-    // Copy the entire block here to be XORed.
-    memcpy(clear_data, raw_data, rich_len);
-
-    for (rich_ptr = (DWORD*) clear_data;
-         rich_ptr < (DWORD*) (clear_data + rich_len);
-         rich_ptr++)
-    {
-      *rich_ptr ^= rich_signature->key1;
-    }
-
-    set_sized_string(
-        (char*) raw_data, rich_len, pe->object, "rich_signature.raw_data");
-
-    set_sized_string(
-        (char*) clear_data, rich_len, pe->object, "rich_signature.clear_data");
-
     yr_free(raw_data);
-    yr_free(clear_data);
     return;
   }
 
+  // Copy the entire block here to be XORed.
+  memcpy(clear_data, raw_data, rich_len);
+
+  for (rich_ptr = (DWORD*) clear_data;
+       rich_ptr < (DWORD*) (clear_data + rich_len);
+       rich_ptr++)
+  {
+    *rich_ptr ^= rich_signature->key1;
+  }
+
+  set_sized_string(
+      (char*) raw_data, rich_len, pe->object, "rich_signature.raw_data");
+
+  set_sized_string(
+      (char*) clear_data, rich_len, pe->object, "rich_signature.clear_data");
+
+  yr_free(raw_data);
+  yr_free(clear_data);
   return;
 }
 
