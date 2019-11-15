@@ -1021,7 +1021,8 @@ arguments_list
             strlcpy($$, "r", YR_MAX_FUNCTION_ARGS);
             break;
           default:
-            assert(false);
+            // An unknown expression type is OK iff an error ocurred.
+            assert(compiler->last_error != ERROR_SUCCESS);
         }
       }
     | arguments_list ',' expression
@@ -1052,7 +1053,8 @@ arguments_list
               strlcat($1, "r", YR_MAX_FUNCTION_ARGS);
               break;
             default:
-              assert(false);
+              // An unknown expression type is OK iff an error ocurred.
+              assert(compiler->last_error != ERROR_SUCCESS);
           }
         }
 
