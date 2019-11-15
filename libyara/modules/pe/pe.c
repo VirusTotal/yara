@@ -240,7 +240,8 @@ static void pe_parse_rich_signature(
   memcpy(raw_data, rich_signature, rich_len);
 
   set_integer(
-      base_address + ((uint8_t*) rich_signature - pe->data), pe->object, "rich_signature.offset");
+      base_address + ((uint8_t*) rich_signature - pe->data),
+      pe->object, "rich_signature.offset");
 
   set_integer(rich_len, pe->object, "rich_signature.length");
 
