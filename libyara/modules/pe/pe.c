@@ -185,26 +185,33 @@ static void pe_parse_rich_signature(
   p = (DWORD*)(pe->data + nthdr_offset - 4);
   while (p > (DWORD*)(pe->data + sizeof(IMAGE_DOS_HEADER)))
   {
-    if (*p == RICH_RICH && key == 0)
+    if (*p == RICH_RICH)
     {
       // The XOR key is the dword following the Rich value. We  use this to find
       // DanS header only.
       key = *(p + 1);
       rich_ptr = p;
       --p;
-      continue;
-    }
-
-    // If we have found the key we need to now find the start (DanS).
-    if (key != 0) {
-      if ((*(p) ^ key) == RICH_DANS)
-      {
-        rich_signature = (PRICH_SIGNATURE) p;
-        break;
-      }
+      break;
     }
 
     // The NT header is 8 byte aligned so we can move back in 4 byte increments.
+    --p;
+  }
+
+  // If we haven't found a key we can skip processing the rest.
+  if (key == 0)
+    return;
+
+  // If we have found the key we need to now find the start (DanS).
+  while (p > (DWORD*)(pe->data + sizeof(IMAGE_DOS_HEADER)))
+  {
+    if ((*(p) ^ key) == RICH_DANS)
+    {
+      rich_signature = (PRICH_SIGNATURE) p;
+      break;
+    }
+
     --p;
   }
 
