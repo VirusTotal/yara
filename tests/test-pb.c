@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2019. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,70 +27,35 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <string.h>
-#include <yara/mem.h>
-#include <yara/sizedstr.h>
+#include <yara.h>
+#include "util.h"
 
 
-int sized_string_cmp(
-    SIZED_STRING* s1,
-    SIZED_STRING* s2)
+int main(int argc, char** argv)
 {
-  size_t i = 0;
+  yr_initialize();
 
-  while (s1->length > i &&
-         s2->length > i &&
-         s1->c_string[i] == s2->c_string[i])
-  {
-    i++;
-  }
+  assert_true_rule_module_data_file(
+      "import \"pb_tests\" \
+      rule test { \
+        condition: \
+          pb_tests.f_int32 == 1111 and \
+          pb_tests.f_int64 == 2222 and \
+          pb_tests.f_string == \"foo\" and \
+          pb_tests.f_struct_array[0].f_enum == pb_tests.struct.enum.SECOND \
+      }",
+      "tests/data/test-pb.data.bin");
 
-  if (i == s1->length && i == s2->length)
-    return 0;
-  else if (i == s1->length)
-    return -1;
-  else if (i == s2->length)
-    return 1;
-  else if (s1->c_string[i] < s2->c_string[i])
-    return -1;
-  else
-    return 1;
-}
+  assert_true_rule_module_data_file(
+      "import \"pb_tests\" \
+      rule test { \
+        condition: \
+          for any s in pb_tests.f_struct_array : ( \
+            s.f_nested_struct.f_int32 == 3333 \
+          ) \
+      }",
+      "tests/data/test-pb.data.bin");
 
-
-SIZED_STRING* sized_string_dup(
-    SIZED_STRING* s)
-{
-  SIZED_STRING* result = (SIZED_STRING*) yr_malloc(
-      sizeof(SIZED_STRING) + s->length);
-
-  if (result == NULL)
-    return NULL;
-
-  result->length = s->length;
-  result->flags = s->flags;
-
-  strncpy(result->c_string, s->c_string, s->length + 1);
-
-  return result;
-}
-
-
-SIZED_STRING* sized_string_new(
-    const char* s)
-{
-  SIZED_STRING* result;
-
-  int length = strlen(s);
-
-  result = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + length);
-
-  result->length = length;
-  result->flags = 0;
-
-  strncpy(result->c_string, s, length);
-
-  result->c_string[length] = '\0';
-
-  return result;
+  yr_finalize();
+  return 0;
 }
