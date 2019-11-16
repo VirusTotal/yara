@@ -336,7 +336,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define set_string(value, object, ...) \
-    set_sized_string(value, strlen(value), object, __VA_ARGS__)
+    set_sized_string(value, (value == NULL) ? 0 : strlen(value), object, __VA_ARGS__)
 
 
 #define return_integer(integer) { \

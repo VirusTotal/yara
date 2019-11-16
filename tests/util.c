@@ -37,10 +37,48 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara.h>
 #include "util.h"
 
+//
+// Global variables used in test cases.
+//
+
+// Message for the latest compiler error
 char compile_error[1024];
+
+// Number of warnings produced by the last call to compile_rule
 int warnings;
 
-static void callback_function(
+
+//
+// A YR_CALLBACK_FUNC that counts the number of matches during the scan. The
+// user_data argument must be a pointer to an int.
+//
+int count_matches(
+    int message,
+    void* message_data,
+    void* user_data)
+{
+  if (message == CALLBACK_MSG_RULE_MATCHING)
+  {
+    (*(int*) user_data)++;
+  }
+
+  return CALLBACK_CONTINUE;
+}
+
+
+//
+// A YR_CALLBACK_FUNC that does nothing.
+//
+int do_nothing(
+    int message,
+    void* message_data,
+    void* user_data)
+{
+  return CALLBACK_CONTINUE;
+}
+
+
+static void _compiler_callback(
     int error_level,
     const char* file_name,
     int line_number,
@@ -75,7 +113,7 @@ int compile_rule(
     goto _exit;
   }
 
-  yr_compiler_set_callback(compiler, callback_function, &warnings);
+  yr_compiler_set_callback(compiler, _compiler_callback, &warnings);
 
   if (yr_compiler_add_string(compiler, string, NULL) != 0)
   {
@@ -91,24 +129,34 @@ _exit:
 }
 
 
-int count_matches(
+typedef struct SCAN_CALLBACK_CTX SCAN_CALLBACK_CTX;
+
+struct SCAN_CALLBACK_CTX {
+  int matches;
+  void* module_data;
+  size_t module_data_size;
+};
+
+static int _scan_callback(
     int message,
     void* message_data,
     void* user_data)
 {
-  if (message == CALLBACK_MSG_RULE_MATCHING)
+  SCAN_CALLBACK_CTX* ctx =  (SCAN_CALLBACK_CTX*) user_data;
+  YR_MODULE_IMPORT* mi;
+
+  switch (message)
   {
-    (*(int*) user_data)++;
+  case CALLBACK_MSG_RULE_MATCHING:
+    ctx->matches++;
+    break;
+  case CALLBACK_MSG_IMPORT_MODULE:
+    mi = (YR_MODULE_IMPORT*) message_data;
+    mi->module_data = ctx->module_data;
+    mi->module_data_size = ctx->module_data_size;
+    break;
   }
 
-  return CALLBACK_CONTINUE;
-}
-
-int do_nothing(
-    int message,
-    void* message_data,
-    void* user_data)
-{
   return CALLBACK_CONTINUE;
 }
 
@@ -116,14 +164,16 @@ int do_nothing(
 int matches_blob(
     char* rule,
     uint8_t* blob,
-    size_t len)
+    size_t blob_size,
+    uint8_t* module_data,
+    size_t module_data_size)
 {
   YR_RULES* rules;
 
   if (blob == NULL)
   {
     blob = (uint8_t*) "dummy";
-    len = 5;
+    blob_size = 5;
   }
 
   if (compile_rule(rule, &rules) != ERROR_SUCCESS)
@@ -132,19 +182,24 @@ int matches_blob(
     exit(EXIT_FAILURE);
   }
 
-  int matches = 0;
+  SCAN_CALLBACK_CTX ctx = {
+    .matches = 0,
+    .module_data = module_data,
+    .module_data_size = module_data_size,
+  };
+
   int scan_result = yr_rules_scan_mem(
-      rules, blob, len, 0, count_matches, &matches, 0);
+      rules, blob, blob_size, 0, _scan_callback, &ctx, 0);
 
   if (scan_result != ERROR_SUCCESS)
   {
-    fprintf(stderr, "yr_rules_scan_mem: error\n");
+    fprintf(stderr, "yr_rules_scan_mem: error: %d\n", scan_result);
     exit(EXIT_FAILURE);
   }
 
   yr_rules_destroy(rules);
 
-  return matches;
+  return ctx.matches;
 }
 
 
@@ -157,7 +212,7 @@ int matches_string(
   if (string != NULL)
     len = strlen(string);
 
-  return matches_blob(rule, (uint8_t*)string, len);
+  return matches_blob(rule, (uint8_t*) string, len, NULL, 0);
 }
 
 typedef struct

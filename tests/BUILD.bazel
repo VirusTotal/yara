@@ -90,6 +90,7 @@ cc_test(
         "data/tiny-idata-51ff",
         "data/tiny-idata-5200",
         "data/tiny-overlay",
+        "data/weird_rich",
     ],
     deps = [
         ":util",

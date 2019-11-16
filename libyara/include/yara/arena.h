@@ -41,13 +41,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // the arena.
 #define ARENA_FLAGS_COALESCED         1
 
-// Each pages of an arena marked with this flag maintain a list of YR_RELOC
-// structures for keeping track of pointers stored within the arena. When the
-// arena is relocated this allows to fix those pointers that pointed to some
-// address within the relocated arena.
+// If an arena is created with this flag is keeps a list of YR_RELOC structures
+// tracking the pointers stored within the arena. When the arena is relocated
+// this allows to fix those pointers that pointed to some address within the
+// relocated arena.
 #define ARENA_FLAGS_RELOCATABLE       2
 
-#define ARENA_FILE_VERSION       ((22 << 16) | YR_MAX_THREADS)
+// YARA can read an arena file (which contain compiled rules) created by a
+// a different version of YARA as long as the arena file version remains the
+// same. When changes in the structure of arena files are introduced, this
+// version is bumped up.
+//
+// The arena file version is defined as ((version << 16) | YR_MAX_THREADS) so
+// that the lowest 16 bits contain the value for YR_MAX_THREADS. Arena files
+// generated with a YARA compiled with a certain value for YR_MAX_THREADS will
+// be rejected by another YARA compiled with a different value, even if the
+// "version" number is the same.
+#define ARENA_FILE_VERSION       ((23 << 16) | YR_MAX_THREADS)
 
 #define EOL ((size_t) -1)
 

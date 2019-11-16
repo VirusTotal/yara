@@ -1,4 +1,4 @@
-AM_CFLAGS=-std=gnu99 -Wall -I$(srcdir)/libyara/include
+AM_CFLAGS=-Wall -I$(srcdir)/libyara/include
 
 if DEBUG
 AM_CFLAGS+=-g
@@ -23,7 +23,7 @@ ACLOCAL_AMFLAGS=-I m4
 bin_PROGRAMS = yara yarac
 
 yara_SOURCES = args.c args.h common.h threading.c threading.h yara.c
-yara_LDADD = libyara/.libs/libyara.a #-Llibyara/.libs -lyara
+yara_LDADD = -Llibyara/.libs -lyara
 
 yarac_SOURCES = args.c args.h common.h yarac.c
 yarac_LDADD = -Llibyara/.libs -lyara
@@ -90,6 +90,12 @@ if DOTNET_MODULE
 check_PROGRAMS+=test-dotnet
 test_dotnet_SOURCES = tests/test-dotnet.c tests/util.c
 test_dotnet_LDADD = libyara/.libs/libyara.a
+endif
+
+if PB_TESTS_MODULE
+check_PROGRAMS+=test-pb
+test_pb_SOURCES = tests/test-pb.c tests/util.c
+test_pb_LDADD = libyara/.libs/libyara.a
 endif
 
 # man pages
