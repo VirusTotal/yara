@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2019. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,53 +27,35 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _SIZEDSTR_H
-#define _SIZEDSTR_H
-
-#include <stddef.h>
-
-#include <yara/integers.h>
-
-//
-// This struct is used to support strings containing null chars. The length of
-// the string is stored along the string data. However the string data is also
-// terminated with a null char.
-//
-
-#define SIZED_STRING_FLAGS_NO_CASE  1
-#define SIZED_STRING_FLAGS_DOT_ALL  2
-
-#pragma pack(push)
-#pragma pack(8)
+#include <yara.h>
+#include "util.h"
 
 
-typedef struct _SIZED_STRING
+int main(int argc, char** argv)
 {
-  uint32_t length;
-  uint32_t flags;
+  yr_initialize();
 
-  char c_string[1];
+  assert_true_rule_module_data_file(
+      "import \"pb_tests\" \
+      rule test { \
+        condition: \
+          pb_tests.f_int32 == 1111 and \
+          pb_tests.f_int64 == 2222 and \
+          pb_tests.f_string == \"foo\" and \
+          pb_tests.f_struct_array[0].f_enum == pb_tests.struct.enum.SECOND \
+      }",
+      "tests/data/test-pb.data.bin");
 
-} SIZED_STRING;
+  assert_true_rule_module_data_file(
+      "import \"pb_tests\" \
+      rule test { \
+        condition: \
+          for any s in pb_tests.f_struct_array : ( \
+            s.f_nested_struct.f_int32 == 3333 \
+          ) \
+      }",
+      "tests/data/test-pb.data.bin");
 
-#pragma pack(pop)
-
-
-int sized_string_cmp_nocase(
-  SIZED_STRING* s1,
-  SIZED_STRING* s2);
-
-
-int sized_string_cmp(
-    SIZED_STRING* s1,
-    SIZED_STRING* s2);
-
-
-SIZED_STRING* sized_string_dup(
-    SIZED_STRING* s);
-
-
-SIZED_STRING* sized_string_new(
-    const char* s);
-
-#endif
+  yr_finalize();
+  return 0;
+}

@@ -69,13 +69,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
-#define MEM_SIZE   YR_MAX_LOOP_NESTING * LOOP_LOCAL_VARS
+#define MEM_SIZE   YR_MAX_LOOP_NESTING * YR_MAX_LOOP_VARS
 
 
 #define push(x)  \
-    if (sp < stack_size) \
+    if (stack.sp < stack.capacity) \
     { \
-      stack[sp++] = (x); \
+      stack.items[stack.sp++] = (x); \
     } \
     else \
     { \
@@ -85,7 +85,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     } \
 
 
-#define pop(x) { assert(sp > 0); x = stack[--sp]; }
+#define pop(x) { assert(stack.sp > 0); x = stack.items[--stack.sp]; }
 
 #define is_undef(x) IS_UNDEFINED((x).i)
 
@@ -112,7 +112,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       stop = true; \
       result = ERROR_INTERNAL_FATAL_ERROR; \
       break; \
-    } 
+    }
 
 #define check_object_canary(o) \
     if (o->canary != context->canary) \
@@ -194,20 +194,159 @@ static const uint8_t* jmp_if(
 }
 
 
+static int iter_array_next(
+    YR_ITERATOR* self,
+    YR_VALUE_STACK* stack)
+{
+  YR_OBJECT* obj;
+
+  // Check that there's two available slots in the stack, one for the next
+  // item returned by the iterator and another one for the boolean that
+  // indicates if there are more items.
+  if (stack->sp + 1 >= stack->capacity)
+    return ERROR_EXEC_STACK_OVERFLOW;
+
+  if (self->array_it.index < yr_object_array_length(self->array_it.array))
+  {
+    // Push the false value that indicates that the iterator is not exhausted.
+    stack->items[stack->sp++].i = 0;
+
+    obj = yr_object_array_get_item(
+        self->array_it.array, 0, self->array_it.index);
+
+    if (obj != NULL)
+      stack->items[stack->sp++].o = obj;
+    else
+      stack->items[stack->sp++].i = UNDEFINED;
+
+    self->array_it.index++;
+  }
+  else
+  {
+    // Push true for indicating the iterator has been exhausted.
+    stack->items[stack->sp++].i = 1;
+    // Push UNDEFINED as a placeholder for the next item.
+    stack->items[stack->sp++].i = UNDEFINED;
+  }
+
+  return ERROR_SUCCESS;
+}
+
+
+static int iter_dict_next(
+    YR_ITERATOR* self,
+    YR_VALUE_STACK* stack)
+{
+  YR_DICTIONARY_ITEMS* items = object_as_dictionary(self->dict_it.dict)->items;
+
+  // Check that there's three available slots in the stack, two for the next
+  // item returned by the iterator and its key, and another one for the boolean
+  // that indicates if there are more items.
+  if (stack->sp + 2 >= stack->capacity)
+    return ERROR_EXEC_STACK_OVERFLOW;
+
+  if (self->dict_it.index < items->used)
+  {
+    // Push the false value that indicates that the iterator is not exhausted.
+    stack->items[stack->sp++].i = 0;
+
+    if (items->objects[self->dict_it.index].obj != NULL)
+    {
+      stack->items[stack->sp++].o = items->objects[self->dict_it.index].obj;
+      stack->items[stack->sp++].p = items->objects[self->dict_it.index].key;
+    }
+    else
+    {
+      stack->items[stack->sp++].i = UNDEFINED;
+      stack->items[stack->sp++].i = UNDEFINED;
+    }
+
+    self->dict_it.index++;
+  }
+  else
+  {
+    // Push true for indicating the iterator has been exhausted.
+    stack->items[stack->sp++].i = 1;
+    // Push UNDEFINED as a placeholder for the next key and value.
+    stack->items[stack->sp++].i = UNDEFINED;
+    stack->items[stack->sp++].i = UNDEFINED;
+  }
+
+  return ERROR_SUCCESS;
+}
+
+
+static int iter_int_range_next(
+    YR_ITERATOR* self,
+    YR_VALUE_STACK* stack)
+{
+  // Check that there's two available slots in the stack, one for the next
+  // item returned by the iterator and another one for the boolean that
+  // indicates if there are more items.
+  if (stack->sp + 1 >= stack->capacity)
+    return ERROR_EXEC_STACK_OVERFLOW;
+
+  if (self->int_range_it.next <= self->int_range_it.last)
+  {
+    // Push the false value that indicates that the iterator is not exhausted.
+    stack->items[stack->sp++].i = 0;
+    stack->items[stack->sp++].i = self->int_range_it.next;
+    self->int_range_it.next++;
+  }
+  else
+  {
+    // Push true for indicating the iterator has been exhausted.
+    stack->items[stack->sp++].i = 1;
+    // Push UNDEFINED as a placeholder for the next item.
+    stack->items[stack->sp++].i = UNDEFINED;
+  }
+
+  return ERROR_SUCCESS;
+}
+
+
+static int iter_int_enum_next(
+    YR_ITERATOR* self,
+    YR_VALUE_STACK* stack)
+{
+  // Check that there's two available slots in the stack, one for the next
+  // item returned by the iterator and another one for the boolean that
+  // indicates if there are more items.
+  if (stack->sp + 1 >= stack->capacity)
+    return ERROR_EXEC_STACK_OVERFLOW;
+
+  if (self->int_enum_it.next < self->int_enum_it.count)
+  {
+    // Push the false value that indicates that the iterator is not exhausted.
+    stack->items[stack->sp++].i = 0;
+    stack->items[stack->sp++].i = self->int_enum_it.items[self->int_enum_it.next];
+    self->int_enum_it.next++;
+  }
+  else
+  {
+    // Push true for indicating the iterator has been exhausted.
+    stack->items[stack->sp++].i = 1;
+    // Push UNDEFINED as a placeholder for the next item.
+    stack->items[stack->sp++].i = UNDEFINED;
+  }
+
+  return ERROR_SUCCESS;
+}
+
+
 int yr_execute_code(
     YR_SCAN_CONTEXT* context)
 {
-  int64_t mem[MEM_SIZE];
-  int32_t sp = 0;
-
   const uint8_t* ip = context->rules->code_start;
 
+  YR_VALUE mem[MEM_SIZE];
   YR_VALUE args[YR_MAX_FUNCTION_ARGS];
-  YR_VALUE *stack;
   YR_VALUE r1;
   YR_VALUE r2;
   YR_VALUE r3;
   YR_VALUE r4;
+
+  YR_VALUE_STACK stack;
 
   uint64_t elapsed_time;
 
@@ -223,6 +362,7 @@ int yr_execute_code(
   YR_OBJECT_FUNCTION* function;
   YR_OBJECT** obj_ptr;
   YR_ARENA* obj_arena;
+  YR_ARENA* it_arena;
 
   char* identifier;
   char* args_fmt;
@@ -233,22 +373,27 @@ int yr_execute_code(
   int result = ERROR_SUCCESS;
   int cycle = 0;
   int tidx = context->tidx;
-  int stack_size;
 
   bool stop = false;
 
   uint8_t opcode;
 
-  yr_get_configuration(YR_CONFIG_STACK_SIZE, (void*) &stack_size);
+  yr_get_configuration(YR_CONFIG_STACK_SIZE, (void*) &stack.capacity);
 
-  stack = (YR_VALUE*) yr_malloc(stack_size * sizeof(YR_VALUE));
+  stack.sp = 0;
+  stack.items = (YR_VALUE*) yr_malloc(stack.capacity * sizeof(YR_VALUE));
 
-  if (stack == NULL)
+  if (stack.items == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_arena_create(1024, 0, &obj_arena),
-      yr_free(stack));
+      yr_free(stack.items));
+
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_arena_create(64 * sizeof(YR_ITERATOR), 0, &it_arena),
+      yr_arena_destroy(obj_arena);
+      yr_free(stack.items));
 
   #ifdef PROFILING_ENABLED
   start_time = yr_stopwatch_elapsed_us(&context->stopwatch);
@@ -269,8 +414,98 @@ int yr_execute_code(
         break;
 
       case OP_HALT:
-        assert(sp == 0); // When HALT is reached the stack should be empty.
+        assert(stack.sp == 0); // When HALT is reached the stack should be empty.
         stop = true;
+        break;
+
+      case OP_ITER_START_ARRAY:
+        result = yr_arena_allocate_struct(
+            it_arena, sizeof(YR_ITERATOR), &r2.p);
+
+        if (result == ERROR_SUCCESS)
+        {
+          pop(r1);
+          r2.it->array_it.array = r1.o;
+          r2.it->array_it.index = 0;
+          r2.it->next = iter_array_next;
+          push(r2);
+        }
+
+        stop = (result != ERROR_SUCCESS);
+        break;
+
+      case OP_ITER_START_DICT:
+        result = yr_arena_allocate_struct(
+            it_arena, sizeof(YR_ITERATOR), &r2.p);
+
+        if (result == ERROR_SUCCESS)
+        {
+          pop(r1);
+          r2.it->dict_it.dict = r1.o;
+          r2.it->dict_it.index = 0;
+          r2.it->next = iter_dict_next;
+          push(r2);
+        }
+
+        stop = (result != ERROR_SUCCESS);
+        break;
+
+      case OP_ITER_START_INT_RANGE:
+        // Creates an iterator for an integer range. The higher bound of the
+        // range is at the top of the stack followed by the lower bound.
+        result = yr_arena_allocate_struct(
+            it_arena, sizeof(YR_ITERATOR), &r3.p);
+
+        if (result == ERROR_SUCCESS)
+        {
+          pop(r2);
+          pop(r1);
+          r3.it->int_range_it.next = r1.i;
+          r3.it->int_range_it.last = r2.i;
+          r3.it->next = iter_int_range_next;
+          push(r3);
+        }
+
+        stop = (result != ERROR_SUCCESS);
+        break;
+
+      case OP_ITER_START_INT_ENUM:
+        // Creates an iterator for an integer enumeration. The number of items
+        // in the enumeration is at the top of the stack, followed by the
+        // items in reverse order.
+        pop(r1);
+
+        result = yr_arena_allocate_struct(
+            it_arena, sizeof(YR_ITERATOR) + sizeof(uint64_t) * r1.i, &r3.p);
+
+        if (result == ERROR_SUCCESS)
+        {
+          r3.it->int_enum_it.count = r1.i;
+          r3.it->int_enum_it.next = 0;
+          r3.it->next = iter_int_enum_next;
+
+          for (i = r1.i; i > 0; i--)
+          {
+             pop(r2);
+             r3.it->int_enum_it.items[i - 1] = r2.i;
+          }
+
+          push(r3);
+        }
+
+        stop = (result != ERROR_SUCCESS);
+        break;
+
+      case OP_ITER_NEXT:
+        // Loads the iterator in r1, but leaves the iterator in the stack.
+        pop(r1);
+        push(r1);
+        // The iterator's next function is responsible for pushing the next
+        // item in the stack, and a boolean indicating if there are more items
+        // to retrieve. The boolean will be at the top of the stack after
+        // calling "next".
+        result = r1.it->next(r1.it, &stack);
+        stop = (result != ERROR_SUCCESS);
         break;
 
       case OP_PUSH:
@@ -289,7 +524,7 @@ int yr_execute_code(
         #if PARANOID_EXEC
         ensure_within_mem(r1.i);
         #endif
-        mem[r1.i] = 0;
+        mem[r1.i].i = 0;
         break;
 
       case OP_ADD_M:
@@ -300,7 +535,7 @@ int yr_execute_code(
         #endif
         pop(r2);
         if (!is_undef(r2))
-          mem[r1.i] += r2.i;
+          mem[r1.i].i += r2.i;
         break;
 
       case OP_INCR_M:
@@ -309,7 +544,7 @@ int yr_execute_code(
         #if PARANOID_EXEC
         ensure_within_mem(r1.i);
         #endif
-        mem[r1.i]++;
+        mem[r1.i].i++;
         break;
 
       case OP_PUSH_M:
@@ -318,7 +553,7 @@ int yr_execute_code(
         #if PARANOID_EXEC
         ensure_within_mem(r1.i);
         #endif
-        r1.i = mem[r1.i];
+        r1 = mem[r1.i];
         push(r1);
         break;
 
@@ -329,7 +564,7 @@ int yr_execute_code(
         ensure_within_mem(r1.i);
         #endif
         pop(r2);
-        mem[r1.i] = r2.i;
+        mem[r1.i] = r2;
         break;
 
       case OP_SET_M:
@@ -341,7 +576,7 @@ int yr_execute_code(
         pop(r2);
         push(r2);
         if (!is_undef(r2))
-          mem[r1.i] = r2.i;
+          mem[r1.i] = r2;
         break;
 
       case OP_SWAPUNDEF:
@@ -354,7 +589,7 @@ int yr_execute_code(
 
         if (is_undef(r2))
         {
-          r1.i = mem[r1.i];
+          r1 = mem[r1.i];
           push(r1);
         }
         else
@@ -369,6 +604,17 @@ int yr_execute_code(
         ip = jmp_if(!is_undef(r1), ip);
         break;
 
+      case OP_JUNDEF_P:
+        pop(r1);
+        ip = jmp_if(is_undef(r1), ip);
+        break;
+
+      case OP_JL_P:
+        pop(r2);
+        pop(r1);
+        ip = jmp_if(r1.i < r2.i, ip);
+        break;
+
       case OP_JLE_P:
         pop(r2);
         pop(r1);
@@ -378,6 +624,11 @@ int yr_execute_code(
       case OP_JTRUE:
         pop(r1);
         push(r1);
+        ip = jmp_if(!is_undef(r1) && r1.i, ip);
+        break;
+
+      case OP_JTRUE_P:
+        pop(r1);
         ip = jmp_if(!is_undef(r1) && r1.i, ip);
         break;
 
@@ -550,7 +801,7 @@ int yr_execute_code(
         start_time = elapsed_time;
         #endif
 
-        assert(sp == 0); // at this point the stack should be empty.
+        assert(stack.sp == 0); // at this point the stack should be empty.
         break;
 
       case OP_OBJ_LOAD:
@@ -723,7 +974,7 @@ int yr_execute_code(
 
         assert(i < YR_MAX_OVERLOADED_FUNCTIONS);
 
-        // make a copy of the returned object and push the copy into the stack
+        // make a copy of the returned object and push the copy into the stack,
         // function->return_obj can't be pushed because it can change in
         // subsequent calls to the same function.
 
@@ -1068,7 +1319,7 @@ int yr_execute_code(
         ip += sizeof(uint64_t);
 
         #if PARANOID_EXEC
-        if (r1.i > sp || sp - r1.i >= stack_size)
+        if (r1.i > stack.sp || stack.sp - r1.i >= stack.capacity)
         {
           stop = true;
           result = ERROR_INTERNAL_FATAL_ERROR;
@@ -1076,12 +1327,12 @@ int yr_execute_code(
         }
         #endif
 
-        r2 = stack[sp - r1.i];
+        r2 = stack.items[stack.sp - r1.i];
 
         if (is_undef(r2))
-          stack[sp - r1.i].i = UNDEFINED;
+          stack.items[stack.sp - r1.i].i = UNDEFINED;
         else
-          stack[sp - r1.i].d = (double) r2.i;
+          stack.items[stack.sp - r1.i].d = (double) r2.i;
         break;
 
       case OP_STR_TO_BOOL:
@@ -1363,8 +1614,9 @@ int yr_execute_code(
   }
 
   yr_arena_destroy(obj_arena);
+  yr_arena_destroy(it_arena);
   yr_modules_unload_all(context);
-  yr_free(stack);
+  yr_free(stack.items);
 
   return result;
 }

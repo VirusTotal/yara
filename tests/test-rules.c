@@ -1169,6 +1169,123 @@ void test_for()
           for all i in (1, 0) : (i != 1) \
       }",
       NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any item in tests.struct_array : ( \
+            item.i == 1 \
+          ) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for 0 item in tests.struct_array : ( \
+            item.i == 100 \
+          ) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any item in tests.integer_array : ( \
+            item == 2 \
+          ) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any item in tests.string_array : ( \
+            item == \"bar\" \
+          ) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { \
+        condition: \
+          for all i in (3,5,4) : ( \
+            i >= 3 and i <= 5 \
+          ) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { \
+        condition: \
+          for all i in (3..5) : ( \
+            i >= 3 and i <= 5 \
+          ) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { \
+        condition: \
+          for 2 i in (5..10) : ( \
+            i == 6 or i == 7 \
+          ) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any k,v in tests.struct_dict : ( \
+            k == \"foo\" and v.s == \"foo\" and v.i == 1 \
+          ) \
+      }",
+      NULL);
+
+  assert_error(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any k,v in tests.integer_array : ( false ) \
+      }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any a,b,c in tests.struct_dict : ( false ) \
+      }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any i in tests.struct_dict : ( false ) \
+      }",
+      ERROR_SYNTAX_ERROR);
+
+  assert_error(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any i in tests.integer_array : ( undefined_ident ) \
+      }",
+      ERROR_UNDEFINED_IDENTIFIER);
+
+  assert_error(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any i in tests.integer_array : ( i == \"foo\" ) \
+      }",
+      ERROR_WRONG_TYPE);
 }
 
 

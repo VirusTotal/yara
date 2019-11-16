@@ -212,6 +212,7 @@ typedef struct YR_MATCH YR_MATCH;
 typedef struct YR_SCAN_CONTEXT YR_SCAN_CONTEXT;
 
 typedef union YR_VALUE YR_VALUE;
+typedef struct YR_VALUE_STACK YR_VALUE_STACK;
 
 typedef struct YR_OBJECT YR_OBJECT;
 typedef struct YR_OBJECT_STRUCTURE YR_OBJECT_STRUCTURE;
@@ -230,6 +231,9 @@ typedef struct YR_MEMORY_BLOCK YR_MEMORY_BLOCK;
 typedef struct YR_MEMORY_BLOCK_ITERATOR YR_MEMORY_BLOCK_ITERATOR;
 
 typedef struct YR_MODIFIER YR_MODIFIER;
+
+typedef struct YR_ITERATOR YR_ITERATOR;
+
 
 #pragma pack(push)
 #pragma pack(8)
@@ -731,8 +735,16 @@ union YR_VALUE
   void* p;
   YR_OBJECT* o;
   YR_STRING* s;
+  YR_ITERATOR* it;
   SIZED_STRING* ss;
   RE* re;
+};
+
+struct YR_VALUE_STACK
+{
+  int32_t   sp;
+  int32_t   capacity;
+  YR_VALUE* items;
 };
 
 
@@ -808,7 +820,13 @@ struct YR_STRUCTURE_MEMBER
 
 struct YR_ARRAY_ITEMS
 {
-  int count;
+  // Capacity is the size of the objects array.
+  int capacity;
+
+  // Length is determined by the last element in the array. If the index of the
+  // last element is N, then length is N+1 because indexes start at 0.
+  int length;
+
   YR_OBJECT* objects[1];
 };
 
@@ -819,11 +837,95 @@ struct YR_DICTIONARY_ITEMS
   int free;
 
   struct {
-
-    char* key;
+    SIZED_STRING* key;
     YR_OBJECT* obj;
-
   } objects[1];
+};
+
+
+
+// Iterators are used in loops of the form:
+//
+// for <any|all|number> <identifier> in <iterator> : ( <expression> )
+//
+// The YR_ITERATOR struct abstracts the many different types of objects that
+// can be iterated. Each type of iterator must provide a "next" function which
+// is called multiple times for retrieving elements from the iterator. This
+// function is responsible for pushing the next item in the stack and a boolean
+// indicating if the end of the iterator has been reached. The boolean must be
+// pushed first, so that the next item is in the top of the stack when the
+// function returns.
+//
+//  +------------+
+//  | next item  |  <- top of the stack
+//  +------------+
+//  | false      |  <- false indicates that there are more items
+//  +------------+
+//  |   . . .    |
+//
+// The boolean shouldn't be true if the next item was pushed in the stack, it
+// can be true only when all the items have been returned in previous calls,
+// in which case the value for the next item should be UNDEFINED. The stack
+// should look like this after the last call to "next":
+//
+//  +------------+
+//  | undefined  |  <- next item is undefined.
+//  +------------+
+//  | true       |  <- true indicates that are no more items.
+//  +------------+
+//  |   . . .    |
+//
+// We can't use the UNDEFINED value in the stack as an indicator of the end
+// of the iterator, because it's legitimate for an iterator to return UNDEFINED
+// items in the middle of the iteration.
+//
+// The "next" function should return ERROR_SUCCESS if everything went fine or
+// an error code in case of error.
+
+typedef int (*YR_ITERATOR_NEXT_FUNC)(
+    YR_ITERATOR* self,
+    YR_VALUE_STACK* stack);
+
+
+struct YR_ARRAY_ITERATOR
+{
+  YR_OBJECT* array;
+  int index;
+};
+
+
+struct YR_DICT_ITERATOR
+{
+  YR_OBJECT* dict;
+  int index;
+};
+
+
+struct YR_INT_RANGE_ITERATOR
+{
+  int64_t next;
+  int64_t last;
+};
+
+
+struct YR_INT_ENUM_ITERATOR
+{
+  int next;
+  int count;
+  int64_t items[1];
+};
+
+
+struct YR_ITERATOR
+{
+  YR_ITERATOR_NEXT_FUNC next;
+
+  union {
+    struct YR_ARRAY_ITERATOR array_it;
+    struct YR_DICT_ITERATOR dict_it;
+    struct YR_INT_RANGE_ITERATOR int_range_it;
+    struct YR_INT_ENUM_ITERATOR int_enum_it;
+  };
 };
 
 

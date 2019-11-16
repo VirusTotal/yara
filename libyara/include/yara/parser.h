@@ -78,7 +78,8 @@ int yr_parser_lookup_string(
 
 int yr_parser_lookup_loop_variable(
     yyscan_t yyscanner,
-    const char* identifier);
+    const char* identifier,
+    YR_EXPRESSION*);
 
 
 int yr_parser_reduce_rule_declaration_phase_1(
@@ -136,7 +137,7 @@ int yr_parser_reduce_import(
 int yr_parser_reduce_operation(
     yyscan_t yyscanner,
     const char* operation,
-    EXPRESSION left_operand,
-    EXPRESSION right_operand);
+    YR_EXPRESSION left_operand,
+    YR_EXPRESSION right_operand);
 
 #endif
