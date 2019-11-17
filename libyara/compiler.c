@@ -173,7 +173,7 @@ YR_API int yr_compiler_create(
   new_compiler->current_line = 0;
   new_compiler->file_name_stack_ptr = 0;
   new_compiler->fixup_stack_head = NULL;
-  new_compiler->loop_depth = 0;
+  new_compiler->loop_index = -1;
   new_compiler->loop_for_of_var_index = -1;
   new_compiler->compiled_rules_arena = NULL;
   new_compiler->namespaces_count = 0;
@@ -478,7 +478,7 @@ int _yr_compiler_get_var_frame(
 {
   int i, result = 0;
 
-  for (i = 0; i < compiler->loop_depth; i++)
+  for (i = 0; i < compiler->loop_index; i++)
      result += compiler->loop[i].vars_count +
                compiler->loop[i].vars_internal_count;
 
