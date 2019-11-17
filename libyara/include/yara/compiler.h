@@ -159,7 +159,7 @@ typedef struct _YR_COMPILER
   int               namespaces_count;
 
   YR_LOOP_CONTEXT   loop[YR_MAX_LOOP_NESTING];
-  int               loop_depth;
+  int               loop_index;
   int               loop_for_of_var_index;
 
   char*             file_name_stack[YR_MAX_INCLUDE_DEPTH];
