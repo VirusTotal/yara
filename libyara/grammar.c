@@ -2619,7 +2619,7 @@ yyreduce:
             break;
           case EXPRESSION_TYPE_UNKNOWN:
             yr_compiler_set_error_extra_info(
-                compiler, "unknown type for argument 1");
+                compiler, "unknown type for argument 1 in function call");
             fail_if_error(ERROR_WRONG_TYPE);
             break;
           default:
@@ -3416,7 +3416,7 @@ yyreduce:
                     (yyvsp[0].expression).identifier,
                     loop_ctx->vars_count);
 
-                result =  ERROR_SYNTAX_ERROR;
+                result = ERROR_SYNTAX_ERROR;
               }
               break;
 
@@ -3441,7 +3441,7 @@ yyreduce:
                     "iterator for \"%s\" yields a key,value pair item on each iteration",
                     (yyvsp[0].expression).identifier);
 
-                result =  ERROR_SYNTAX_ERROR;
+                result = ERROR_SYNTAX_ERROR;
               }
               break;
           }
@@ -3480,7 +3480,7 @@ yyreduce:
               ", but the loop expects %d",
               loop_ctx->vars_count);
 
-          result =  ERROR_SYNTAX_ERROR;
+          result = ERROR_SYNTAX_ERROR;
         }
 
         fail_if_error(result);
