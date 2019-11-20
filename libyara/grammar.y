@@ -1020,6 +1020,11 @@ arguments_list
           case EXPRESSION_TYPE_REGEXP:
             strlcpy($$, "r", YR_MAX_FUNCTION_ARGS);
             break;
+          case EXPRESSION_TYPE_UNKNOWN:
+            yr_compiler_set_error_extra_info(
+                compiler, "unknown type for argument 1 in function call");
+            fail_if_error(ERROR_WRONG_TYPE);
+            break;
           default:
             // An unknown expression type is OK iff an error ocurred.
             assert(compiler->last_error != ERROR_SUCCESS);
@@ -1051,6 +1056,15 @@ arguments_list
               break;
             case EXPRESSION_TYPE_REGEXP:
               strlcat($1, "r", YR_MAX_FUNCTION_ARGS);
+              break;
+            case EXPRESSION_TYPE_UNKNOWN:
+              yr_compiler_set_error_extra_info_fmt(
+                  compiler, "unknown type for argument %lu in function call",
+                  // As we add one character per argument, the length of $1 is
+                  // the number of arguments parsed so far, and the argument
+                  // represented by <expression> is length of $1 plus one.
+                  strlen($1) + 1);
+              fail_if_error(ERROR_WRONG_TYPE);
               break;
             default:
               // An unknown expression type is OK iff an error ocurred.
@@ -1742,7 +1756,7 @@ iterator
                     $1.identifier,
                     loop_ctx->vars_count);
 
-                result =  ERROR_SYNTAX_ERROR;
+                result = ERROR_SYNTAX_ERROR;
               }
               break;
 
@@ -1767,7 +1781,7 @@ iterator
                     "iterator for \"%s\" yields a key,value pair item on each iteration",
                     $1.identifier);
 
-                result =  ERROR_SYNTAX_ERROR;
+                result = ERROR_SYNTAX_ERROR;
               }
               break;
           }
@@ -1802,7 +1816,7 @@ iterator
               ", but the loop expects %d",
               loop_ctx->vars_count);
 
-          result =  ERROR_SYNTAX_ERROR;
+          result = ERROR_SYNTAX_ERROR;
         }
 
         fail_if_error(result);
