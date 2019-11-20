@@ -1069,7 +1069,7 @@ void dotnet_parse_tilde_2(
         {
           fieldrva_table = (PFIELDRVA_TABLE) row_ptr;
 
-          if (!struct_fits_in_pe(pe, moduleref_table, FIELDRVA_TABLE))
+          if (!struct_fits_in_pe(pe, fieldrva_table, FIELDRVA_TABLE))
             break;
 
           field_offset = pe_rva_to_offset(pe, fieldrva_table->RVA);
