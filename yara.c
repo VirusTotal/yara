@@ -423,13 +423,12 @@ static void scan_dir(
 
       if (err == 0)
       {
-        if(S_ISREG(st.st_mode))
+        if(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode))
         {
           file_queue_put(full_path);
         }
         else if(recursive &&
                 S_ISDIR(st.st_mode) &&
-                !S_ISLNK(st.st_mode) &&
                 strcmp(de->d_name, ".") != 0 &&
                 strcmp(de->d_name, "..") != 0)
         {
