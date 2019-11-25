@@ -218,7 +218,7 @@ args_option_t options[] =
       "print tags"),
 
   OPT_BOOLEAN('r', "recursive", &recursive_search,
-      "recursively search directories"),
+      "recursively search directories (follows symlinks)"),
 
   OPT_INTEGER('k', "stack-size", &stack_size,
       "set maximum stack size (default=16384)", "SLOTS"),
