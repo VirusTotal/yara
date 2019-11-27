@@ -209,13 +209,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _SHIFT_LEFT_                                    "<<"
 %token _SHIFT_RIGHT_                                   ">>"
 
+// Operator precedence and associativity. Higher precedence operators are lower
+// in the list. Operators that appear in the same line have the same precedence.
 %left _OR_
 %left _AND_
+%left _EQ_ _NEQ_
+%left _LT_ _LE_ _GT_ _GE_
 %left '|'
 %left '^'
 %left '&'
-%left _EQ_ _NEQ_
-%left _LT_ _LE_ _GT_ _GE_
 %left _SHIFT_LEFT_ _SHIFT_RIGHT_
 %left '+' '-'
 %left '*' '\\' '%'
