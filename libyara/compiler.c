@@ -943,11 +943,13 @@ static int _yr_compiler_define_variable(
       external,
       &object));
 
-  FAIL_ON_ERROR(yr_hash_table_add(
+  FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_add(
       compiler->objects_table,
       external->identifier,
       NULL,
-      (void*) object));
+      (void*) object),
+      // cleanup
+      yr_object_destroy(object));
 
   return ERROR_SUCCESS;
 }

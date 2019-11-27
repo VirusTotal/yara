@@ -196,6 +196,7 @@ YR_API int yr_scanner_create(
 
     FAIL_ON_ERROR_WITH_CLEANUP(
         yr_object_from_external_variable(external, &object),
+        // cleanup
         yr_scanner_destroy(new_scanner));
 
     FAIL_ON_ERROR_WITH_CLEANUP(
@@ -204,6 +205,8 @@ YR_API int yr_scanner_create(
             external->identifier,
             NULL,
             (void*) object),
+        // cleanup
+        yr_object_destroy(object);
         yr_scanner_destroy(new_scanner));
 
     yr_object_set_canary(object, new_scanner->canary);
