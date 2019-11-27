@@ -16,7 +16,7 @@ Download the source tarball and get prepared for compiling it::
     cd yara-3.11.0
     ./bootstrap.sh
 
-Make sure you have ``automake``, ``libtool``, ``make``  and ``gcc`` and ``pkg-config` installed in your system. Ubuntu and Debian users can use::
+Make sure you have ``automake``, ``libtool``, ``make``  and ``gcc`` and ``pkg-config`` installed in your system. Ubuntu and Debian users can use::
 
     sudo apt-get install automake libtool make gcc pkg-config
 
