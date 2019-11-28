@@ -314,7 +314,14 @@ int yr_object_from_external_variable(
         break;
     }
 
-    *object = obj;
+    if (result == ERROR_SUCCESS)
+    {
+      *object = obj;
+    }
+    else
+    {
+      yr_object_destroy(obj);
+    }
   }
 
   return result;
