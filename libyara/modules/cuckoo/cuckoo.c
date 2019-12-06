@@ -31,7 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <jansson.h>
 
-
 #include <yara/re.h>
 #include <yara/modules.h>
 
@@ -275,6 +274,39 @@ define_function(network_udp)
 }
 
 
+// loops through http array in network JSON
+// checks for regex match on user-agent
+define_function(network_http_user_agent)
+{
+  
+  YR_SCAN_CONTEXT* context = scan_context();
+  YR_OBJECT* network_obj = parent();
+
+  json_t* network_json = (json_t*) network_obj->data;
+  json_t* http_json = json_object_get(network_json, "http");
+  json_t* value;
+
+  uint64_t result = 0;
+  size_t index;
+
+  char* user_agent;
+
+  json_array_foreach(http_json, index, value)
+  {
+    if (json_unpack(value, "{s:s}", "user-agent", &user_agent) == 0)
+    {
+      if (yr_re_match(context, regexp_argument(1), user_agent) > 0)
+      {
+        result = 1;
+        break;
+      }
+    }
+  }
+
+  return_integer(result);
+}
+
+
 define_function(registry_key_access)
 {
   YR_SCAN_CONTEXT* context = scan_context();
@@ -355,6 +387,7 @@ begin_declarations;
     declare_function("http_get", "r", "i", network_http_get);
     declare_function("http_post", "r", "i", network_http_post);
     declare_function("http_request", "r", "i", network_http_request);
+    declare_function("http_user_agent", "r", "i", network_http_user_agent);
     declare_function("host", "r", "i", network_host);
     declare_function("tcp", "ri", "i", network_tcp);
     declare_function("udp", "ri", "i", network_udp);
