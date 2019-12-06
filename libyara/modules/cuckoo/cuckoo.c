@@ -27,12 +27,14 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #include <string.h>
 #include <jansson.h>
 
 
 #include <yara/re.h>
 #include <yara/modules.h>
+
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #define strcasecmp _stricmp
@@ -174,6 +176,105 @@ define_function(network_http_post)
 }
 
 
+// checks the host array in network JSON
+// loops through array and checks value for argument
+define_function(network_host)
+{
+  YR_SCAN_CONTEXT* context = scan_context();
+  YR_OBJECT* network_obj = parent();
+
+  json_t* network_json = (json_t*) network_obj->data;
+  json_t* value;
+
+  uint64_t result = 0;
+  size_t index;
+
+  json_t* hosts_info_json = json_object_get(network_json, "hosts");
+
+  json_array_foreach(hosts_info_json, index, value)
+  {
+    if (yr_re_match(context, regexp_argument(1), json_string_value(value)) > 0)
+    {
+      result = 1;
+      break;
+    }
+  }
+
+  return_integer(result);
+}
+
+// loops through TCP array in network JSON
+// checks for dest IP regex and dest port integer match
+define_function(network_tcp)
+{
+  YR_SCAN_CONTEXT* context = scan_context();
+  YR_OBJECT* network_obj = parent();
+
+  json_t* network_json = (json_t*) network_obj->data;
+  json_t* value;
+
+  uint64_t result = 0;
+  size_t index;
+
+  int dport;
+  char* dst;
+
+  json_t* tcp_info_json = json_object_get(network_json, "tcp");
+
+  json_array_foreach(tcp_info_json, index, value)
+  {
+    if (json_unpack(value, "{s:i, s:s}", "dport", &dport, "dst", &dst) == 0)
+    {
+      if (yr_re_match(context, regexp_argument(1), dst) > 0)
+      {
+        if ((int64_t)dport == integer_argument(2)) {
+          result = 1;
+          break;
+        }
+      }
+    }
+  }
+
+  return_integer(result);
+}
+
+
+// loops through UDP array in network JSON
+// checks for dest IP regex and dest port integer match
+define_function(network_udp)
+{
+  YR_SCAN_CONTEXT* context = scan_context();
+  YR_OBJECT* network_obj = parent();
+
+  json_t* network_json = (json_t*) network_obj->data;
+  json_t* value;
+
+  uint64_t result = 0;
+  size_t index;
+
+  int dport;
+  char* dst;
+
+  json_t* udp_info_json = json_object_get(network_json, "udp");
+
+  json_array_foreach(udp_info_json, index, value)
+  {
+    if (json_unpack(value, "{s:i, s:s}", "dport", &dport, "dst", &dst) == 0)
+    {
+      if (yr_re_match(context, regexp_argument(1), dst) > 0)
+      {
+        if ((int64_t)dport == integer_argument(2)) {
+          result = 1;
+          break;
+        }
+      }
+    }
+  }
+
+  return_integer(result);
+}
+
+
 define_function(registry_key_access)
 {
   YR_SCAN_CONTEXT* context = scan_context();
@@ -254,6 +355,9 @@ begin_declarations;
     declare_function("http_get", "r", "i", network_http_get);
     declare_function("http_post", "r", "i", network_http_post);
     declare_function("http_request", "r", "i", network_http_request);
+    declare_function("host", "r", "i", network_host);
+    declare_function("tcp", "ri", "i", network_tcp);
+    declare_function("udp", "ri", "i", network_udp);
   end_struct("network");
 
   begin_struct("registry");
