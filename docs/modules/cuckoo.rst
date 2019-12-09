@@ -120,6 +120,36 @@ Reference
         request for a domain matching the provided regular expression.
 
         *Example: cuckoo.network.dns_lookup(/evil\\.com/)*
+        
+    .. function:: host(regexp)
+
+        Function returning true if the program contacted an IP address
+        matching the provided regular expression.
+
+        *Example: cuckoo.network.host(/192\\.168\\.1\\.1/)*  
+
+      .. function:: tcp(regexp, port)
+
+        Function returning true if the program contacted an IP address
+        matching the provided regular expression, over TCP on the provided
+        port number.
+
+        *Example: cuckoo.network.tcp(/evil\\.com/, 443)*  
+
+      .. function:: udp(regexp, port)
+
+        Function returning true if the program contacted an IP address
+        matching the provided regular expression, over UDP on the provided
+        port number.
+
+        *Example: cuckoo.network.udp(/evil\\.com/, 53)*  
+
+      .. function:: user_agent(regexp)
+
+        Function returning true if the program sent a HTTP request with a
+        user agent matching the provided regular expression.
+
+        *Example: cuckoo.network.user_agent(/MSIE 6\\.0/)*   
 
 .. type:: registry
 
