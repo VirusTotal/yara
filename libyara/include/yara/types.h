@@ -69,6 +69,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STRING_GFLAGS_DISABLED          0x40000
 #define STRING_GFLAGS_XOR               0x80000
 #define STRING_GFLAGS_PRIVATE           0x100000
+#define STRING_GFLAGS_BASE64            0x200000
+#define STRING_GFLAGS_BASE64_WIDE       0x400000
 
 #define STRING_IS_HEX(x) \
     (((x)->g_flags) & STRING_GFLAGS_HEXADECIMAL)
@@ -129,6 +131,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define STRING_IS_XOR(x) \
     (((x)->g_flags) & STRING_GFLAGS_XOR)
+
+#define STRING_IS_BASE64(x) \
+    (((x)->g_flags) & STRING_GFLAGS_BASE64)
+
+#define STRING_IS_BASE64_WIDE(x) \
+    (((x)->g_flags) & STRING_GFLAGS_BASE64_WIDE)
 
 #define STRING_IS_PRIVATE(x) \
     (((x)->g_flags) & STRING_GFLAGS_PRIVATE)
@@ -238,12 +246,15 @@ typedef struct YR_ITERATOR YR_ITERATOR;
 #pragma pack(push)
 #pragma pack(8)
 
+#define MODIFIER_IS_ANY_BASE64(x) \
+    (((x).flags & STRING_GFLAGS_BASE64) || ((x).flags & STRING_GFLAGS_BASE64_WIDE))
 
 struct YR_MODIFIER
 {
   int32_t flags;
   uint8_t xor_min;
   uint8_t xor_max;
+  SIZED_STRING *alphabet;
 };
 
 struct YR_NAMESPACE

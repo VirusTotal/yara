@@ -812,7 +812,7 @@ static int _yr_atoms_case_insensitive(
 // _yr_atoms_xor
 //
 // For a given list of atoms returns another list after a single byte xor
-// has been applied to it (0x01 - 0xff).
+// has been applied to it.
 //
 
 static int _yr_atoms_xor(
@@ -1411,7 +1411,10 @@ int yr_atoms_extract_from_re(
         *atoms = NULL;
       });
 
-  if (modifier.flags & STRING_GFLAGS_WIDE)
+  // Don't do convert atoms to wide here if either base64 modifier is used.
+  // This is to avoid the situation where we have "base64 wide" because
+  // the wide has already been applied BEFORE the base64 encoding.
+  if (modifier.flags & STRING_GFLAGS_WIDE && !(MODIFIER_IS_ANY_BASE64(modifier)))
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_wide(*atoms, &wide_atoms),

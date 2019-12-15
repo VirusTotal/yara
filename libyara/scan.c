@@ -711,7 +711,7 @@ static int _yr_scan_verify_re_match(
   else
     exec = yr_re_exec;
 
-  if (STRING_IS_ASCII(ac_match->string))
+  if (STRING_IS_ASCII(ac_match->string) || STRING_IS_BASE64(ac_match->string) || STRING_IS_BASE64_WIDE(ac_match->string))
   {
     FAIL_ON_ERROR(exec(
         context,
@@ -725,7 +725,8 @@ static int _yr_scan_verify_re_match(
         &forward_matches));
   }
 
-  if (STRING_IS_WIDE(ac_match->string) && forward_matches == -1)
+  if ((forward_matches == -1) &&
+      (STRING_IS_WIDE(ac_match->string) && !(STRING_IS_BASE64_WIDE(ac_match->string) || STRING_IS_BASE64_WIDE(ac_match->string))))
   {
     flags |= RE_FLAGS_WIDE;
     FAIL_ON_ERROR(exec(

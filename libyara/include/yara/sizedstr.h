@@ -71,4 +71,7 @@ SIZED_STRING* sized_string_dup(
 SIZED_STRING* sized_string_new(
     const char* s);
 
+SIZED_STRING* sized_string_convert_to_wide(
+    SIZED_STRING* s);
+
 #endif

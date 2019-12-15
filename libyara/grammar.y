@@ -132,8 +132,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       loop_ctx->vars_count = 0; \
     } \
 
-%}
+#define DEFAULT_BASE64_ALPHABET "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
+%}
 
 %expect 1   // expect 1 shift/reduce conflicts
 
@@ -181,6 +182,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _ASCII_                                         "<ascii>"
 %token _WIDE_                                          "<wide>"
 %token _XOR_                                           "<xor>"
+%token _BASE64_                                        "<base64>"
+%token _BASE64_WIDE_                                   "<base64wide>"
 %token _NOCASE_                                        "<nocase>"
 %token _FULLWORD_                                      "<fullword>"
 %token _AT_                                            "<at>"
@@ -641,6 +644,7 @@ string_modifiers
         $$.flags = 0;
         $$.xor_min = 0;
         $$.xor_max = 0;
+        $$.alphabet = NULL;
       }
     | string_modifiers string_modifier
       {
@@ -656,6 +660,16 @@ string_modifiers
         {
           $$.xor_min = $2.xor_min;
           $$.xor_max = $2.xor_max;
+        }
+
+        // Only set the base64 alphabet if we are dealing with the base64
+        // modifier. If we don't check for this then we can end up with
+        // "base64 ascii" resulting in whatever is on the stack for "ascii"
+        // overwriting the values for base64.
+        if (($2.flags & STRING_GFLAGS_BASE64) ||
+            ($2.flags & STRING_GFLAGS_BASE64_WIDE))
+        {
+          $$.alphabet = $2.alphabet;
         }
       }
     ;
@@ -724,6 +738,49 @@ string_modifier
         $$.flags = STRING_GFLAGS_XOR;
         $$.xor_min = $3;
         $$.xor_max = $5;
+      }
+    | _BASE64_
+      {
+        $$.flags = STRING_GFLAGS_BASE64;
+        // XXX: Pretty sure we are leaking modifiers and now alphabets...
+        $$.alphabet = sized_string_new(DEFAULT_BASE64_ALPHABET);
+      }
+    | _BASE64_ '(' _TEXT_STRING_ ')'
+      {
+        int result = ERROR_SUCCESS;
+
+        if ($3->length != 64)
+        {
+          result = yr_compiler_set_error_extra_info(
+              compiler, "length of base64 alphabet must be 64");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        fail_if_error(result);
+
+        $$.flags = STRING_GFLAGS_BASE64;
+        $$.alphabet = $3;
+      }
+    | _BASE64_WIDE_
+      {
+        $$.flags = STRING_GFLAGS_BASE64_WIDE;
+        $$.alphabet = sized_string_new(DEFAULT_BASE64_ALPHABET);
+      }
+    | _BASE64_WIDE_ '(' _TEXT_STRING_ ')'
+      {
+        int result = ERROR_SUCCESS;
+
+        if ($3->length != 64)
+        {
+          result = yr_compiler_set_error_extra_info(
+              compiler, "length of base64 alphabet must be 64");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        fail_if_error(result);
+
+        $$.flags = STRING_GFLAGS_BASE64_WIDE;
+        $$.alphabet = $3;
       }
     ;
 
