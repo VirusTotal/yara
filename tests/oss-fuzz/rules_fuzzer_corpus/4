@@ -1,0 +1,1 @@
+rule r{condition:for 1e in(1):(for 6f in(3):(for all c in(6):(for c cc in(6):(for c c
