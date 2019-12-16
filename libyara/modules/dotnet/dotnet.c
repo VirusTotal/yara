@@ -795,6 +795,9 @@ void dotnet_parse_tilde_2(
 
             // Now follow the Class index into the TypeRef table.
             typeref_row = typeref_ptr + (typeref_row_size * class_index);
+              
+            if (!fits_in_pe(pe, typeref_row, typeref_row_size))
+              break;
 
             // Skip over the ResolutionScope and check the Name field,
             // which is an index into the Strings heap.
