@@ -10,26 +10,15 @@ find the latest release at https://github.com/VirusTotal/yara/releases.
 Compiling and installing YARA
 =============================
 
-You can download and install YARA using the `vcpkg <https://github.com/Microsoft/vcpkg/>`_ dependency manager::
-
-    git clone https://github.com/microsoft/vcpkg.git
-    cd vcpkg
-    ./bootstrap-vcpkg.sh
-    ./vcpkg integrate install
-    vcpkg install yara
-
-The YARA port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please `create an issue or pull request <https://github.com/Microsoft/vcpkg/>`_ on the vcpkg repository.
-
 Download the source tarball and get prepared for compiling it::
 
     tar -zxf yara-3.11.0.tar.gz
     cd yara-3.11.0
     ./bootstrap.sh
 
-Make sure you have ``automake``, ``libtool``, ``make``  and ``gcc`` installed
-in your system. Ubuntu and Debian users can use::
+Make sure you have ``automake``, ``libtool``, ``make``  and ``gcc`` and ``pkg-config`` installed in your system. Ubuntu and Debian users can use::
 
-    sudo apt-get install automake libtool make gcc
+    sudo apt-get install automake libtool make gcc pkg-config
 
 If you plan to modify YARA's source code you may also need ``flex`` and
 ``bison`` for generating lexers and parsers::
@@ -87,6 +76,19 @@ choose to install you'll need the following libraries:
         Ubuntu, Debian and CentOS include a package
         ``libmagic-dev``. The source code can be found
         `here <ftp://ftp.astron.com/pub/file/>`_.
+
+Installing with vcpkg
+---------------------
+
+You can also download and install YARA using the `vcpkg <https://github.com/Microsoft/vcpkg/>`_ dependency manager::
+
+    git clone https://github.com/microsoft/vcpkg.git
+    cd vcpkg
+    ./bootstrap-vcpkg.sh
+    ./vcpkg integrate install
+    vcpkg install yara
+
+The YARA port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please `create an issue or pull request <https://github.com/Microsoft/vcpkg/>`_ on the vcpkg repository.
 
 
 Installing on Windows
