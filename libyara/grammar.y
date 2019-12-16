@@ -121,9 +121,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#define loop_vars_cleanup(loop_depth) \
+#define loop_vars_cleanup(loop_index) \
     {  \
-      YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[loop_depth]; \
+      YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[loop_index]; \
       for (int i = 0; i < loop_ctx->vars_count; i++) \
       { \
         yr_free((void*) loop_ctx->vars[i].identifier); \
@@ -209,13 +209,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _SHIFT_LEFT_                                    "<<"
 %token _SHIFT_RIGHT_                                   ">>"
 
+// Operator precedence and associativity. Higher precedence operators are lower
+// in the list. Operators that appear in the same line have the same precedence.
 %left _OR_
 %left _AND_
+%left _EQ_ _NEQ_
+%left _LT_ _LE_ _GT_ _GE_
 %left '|'
 %left '^'
 %left '&'
-%left _EQ_ _NEQ_
-%left _LT_ _LE_ _GT_ _GE_
 %left _SHIFT_LEFT_ _SHIFT_RIGHT_
 %left '+' '-'
 %left '*' '\\' '%'
@@ -1020,6 +1022,12 @@ arguments_list
           case EXPRESSION_TYPE_REGEXP:
             strlcpy($$, "r", YR_MAX_FUNCTION_ARGS);
             break;
+          case EXPRESSION_TYPE_UNKNOWN:
+            yr_free($$);
+            yr_compiler_set_error_extra_info(
+                compiler, "unknown type for argument 1 in function call");
+            fail_if_error(ERROR_WRONG_TYPE);
+            break;
           default:
             // An unknown expression type is OK iff an error ocurred.
             assert(compiler->last_error != ERROR_SUCCESS);
@@ -1052,11 +1060,23 @@ arguments_list
             case EXPRESSION_TYPE_REGEXP:
               strlcat($1, "r", YR_MAX_FUNCTION_ARGS);
               break;
+            case EXPRESSION_TYPE_UNKNOWN:
+              result = ERROR_WRONG_TYPE;
+              yr_compiler_set_error_extra_info_fmt(
+                  compiler, "unknown type for argument %lu in function call",
+                  // As we add one character per argument, the length of $1 is
+                  // the number of arguments parsed so far, and the argument
+                  // represented by <expression> is length of $1 plus one.
+                  strlen($1) + 1);
+              break;
             default:
               // An unknown expression type is OK iff an error ocurred.
               assert(compiler->last_error != ERROR_SUCCESS);
           }
         }
+
+        if (result != ERROR_SUCCESS)
+          yr_free($1);
 
         fail_if_error(result);
 
@@ -1207,26 +1227,19 @@ expression
       }
     | _FOR_ for_expression error
       {
-        // Free all the loop variable identifiers and set loop_depth to 0. This
-        // is ok even if we have nested loops. If an error occurs while parsing
-        // the inner loop, it will be propagated to the outer loop anyways, so
-        // it's safe to do this cleanup while processing the error for the
-        // inner loop. If the error is ERROR_LOOP_NESTING_LIMIT_EXCEEDED the
-        // value of loop_depth at this point is YR_MAX_LOOP_NESTING, for that
-        // reason we use min(loop_depth, YR_MAX_LOOP_NESTING - 1) as the upper
-        // bound for i. Using i < loop_depth as the condition (instead of <=)
-        // is not an option because when loop_depth < YR_MAX_LOOP_NESTING we
-        // want to clean up all loops including the current one, represented
-        // by the current value of loop_depth.
+        // Free all the loop variable identifiers, including the variables for
+        // the current loop (represented by loop_index), and set loop_index to
+        // -1. This is OK even if we have nested loops. If an error occurs while
+        // parsing the inner loop, it will be propagated to the outer loop
+        // anyways, so it's safe to do this cleanup while processing the error
+        // for the inner loop.
 
-        for (int i = 0;
-             i <= yr_min(compiler->loop_depth,YR_MAX_LOOP_NESTING - 1);
-             i++)
+        for (int i = 0; i <= compiler->loop_index; i++)
         {
           loop_vars_cleanup(i);
         }
 
-        compiler->loop_depth = 0;
+        compiler->loop_index = -1;
         YYERROR;
       }
     | _FOR_ for_expression
@@ -1288,21 +1301,25 @@ expression
         // with the correct value, which depends on the number of variables
         // defined by any outer loops.
 
-        int var_frame = _yr_compiler_get_var_frame(compiler);
+        int var_frame;
         int result = ERROR_SUCCESS;
 
-        if (compiler->loop_depth == YR_MAX_LOOP_NESTING)
+        if (compiler->loop_index + 1 == YR_MAX_LOOP_NESTING)
           result = ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 
         fail_if_error(result);
 
+        compiler->loop_index++;
+
         // This loop uses 3 internal variables besides the ones explicitly
         // defined by the user.
-        compiler->loop[compiler->loop_depth].vars_internal_count = 3;
+        compiler->loop[compiler->loop_index].vars_internal_count = 3;
 
         // Initialize the number of variables, this number will be incremented
         // as variable declaration are processed by for_variables.
-        compiler->loop[compiler->loop_depth].vars_count = 0;
+        compiler->loop[compiler->loop_index].vars_count = 0;
+
+        var_frame = _yr_compiler_get_var_frame(compiler);
 
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_CLEAR_M, var_frame + 0, NULL, NULL));
@@ -1315,7 +1332,7 @@ expression
       }
       for_variables _IN_ iterator ':'
       {
-        YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_depth];
+        YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_index];
         YR_FIXUP* fixup;
 
         uint8_t* loop_start_addr;
@@ -1356,19 +1373,13 @@ expression
         compiler->fixup_stack_head = fixup;
 
         loop_ctx->addr = loop_start_addr;
-        compiler->loop_depth++;
       }
       '(' boolean_expression ')'
       {
         YR_FIXUP* fixup;
         uint8_t* pop_addr;
-        int var_frame;
 
-        compiler->loop_depth--;
-
-        loop_vars_cleanup(compiler->loop_depth);
-
-        var_frame = _yr_compiler_get_var_frame(compiler);
+        int var_frame = _yr_compiler_get_var_frame(compiler);
 
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_ADD_M, var_frame + 0, NULL, NULL));
@@ -1382,7 +1393,7 @@ expression
         fail_if_error(yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JUNDEF_P,
-            compiler->loop[compiler->loop_depth].addr,
+            compiler->loop[compiler->loop_index].addr,
             NULL,
             NULL));
 
@@ -1395,7 +1406,7 @@ expression
         fail_if_error(yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JL_P,
-            compiler->loop[compiler->loop_depth].addr,
+            compiler->loop[compiler->loop_index].addr,
             NULL,
             NULL));
 
@@ -1424,20 +1435,30 @@ expression
 
         fail_if_error(yr_parser_emit(
             yyscanner, OP_INT_GE, NULL));
+
+        loop_vars_cleanup(compiler->loop_index);
+
+        compiler->loop_index--;
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | _FOR_ for_expression _OF_ string_set ':'
       {
         int result = ERROR_SUCCESS;
-        int var_frame = _yr_compiler_get_var_frame(compiler);;
+        int var_frame;
         uint8_t* addr;
 
-        if (compiler->loop_depth == YR_MAX_LOOP_NESTING)
+        if (compiler->loop_index + 1 == YR_MAX_LOOP_NESTING)
           result = ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
 
         if (compiler->loop_for_of_var_index != -1)
           result = ERROR_NESTED_FOR_OF_LOOP;
 
         fail_if_error(result);
+
+        compiler->loop_index++;
+
+        var_frame = _yr_compiler_get_var_frame(compiler);
 
         yr_parser_emit_with_arg(
             yyscanner, OP_CLEAR_M, var_frame + 1, NULL, NULL);
@@ -1450,19 +1471,15 @@ expression
             yyscanner, OP_POP_M, var_frame, &addr, NULL);
 
         compiler->loop_for_of_var_index = var_frame;
-        compiler->loop[compiler->loop_depth].vars_internal_count = 3;
-        compiler->loop[compiler->loop_depth].vars_count = 0;
-        compiler->loop[compiler->loop_depth].addr = addr;
-        compiler->loop_depth++;
+        compiler->loop[compiler->loop_index].vars_internal_count = 3;
+        compiler->loop[compiler->loop_index].vars_count = 0;
+        compiler->loop[compiler->loop_index].addr = addr;
       }
       '(' boolean_expression ')'
       {
         int var_frame = 0;
 
-        compiler->loop_depth--;
         compiler->loop_for_of_var_index = -1;
-
-        loop_vars_cleanup(compiler->loop_depth);
 
         var_frame = _yr_compiler_get_var_frame(compiler);
 
@@ -1482,7 +1499,7 @@ expression
         yr_parser_emit_with_arg_reloc(
             yyscanner,
             OP_JNUNDEF,
-            compiler->loop[compiler->loop_depth].addr,
+            compiler->loop[compiler->loop_index].addr,
             NULL,
             NULL);
 
@@ -1502,6 +1519,10 @@ expression
             yyscanner, OP_PUSH_M, var_frame + 1, NULL, NULL);
 
         yr_parser_emit(yyscanner, OP_INT_LE, NULL);
+
+        loop_vars_cleanup(compiler->loop_index);
+
+        compiler->loop_index--;
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -1664,7 +1685,7 @@ for_variables
       {
         int result = ERROR_SUCCESS;
 
-        YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_depth];
+        YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_index];
 
         if (yr_parser_lookup_loop_variable(yyscanner, $1, NULL) >= 0)
         {
@@ -1684,7 +1705,7 @@ for_variables
       {
         int result = ERROR_SUCCESS;
 
-        YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_depth];
+        YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_index];
 
         if (loop_ctx->vars_count == YR_MAX_LOOP_VARS)
         {
@@ -1710,7 +1731,7 @@ for_variables
 iterator
     : identifier
       {
-        YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_depth];
+        YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_index];
 
         // Initially we assume that the identifier is from a non-iterable type,
         // this will change later if it's iterable.
@@ -1741,7 +1762,7 @@ iterator
                     $1.identifier,
                     loop_ctx->vars_count);
 
-                result =  ERROR_SYNTAX_ERROR;
+                result = ERROR_SYNTAX_ERROR;
               }
               break;
 
@@ -1766,7 +1787,7 @@ iterator
                     "iterator for \"%s\" yields a key,value pair item on each iteration",
                     $1.identifier);
 
-                result =  ERROR_SYNTAX_ERROR;
+                result = ERROR_SYNTAX_ERROR;
               }
               break;
           }
@@ -1786,7 +1807,7 @@ iterator
       {
         int result = ERROR_SUCCESS;
 
-        YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_depth];
+        YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_index];
 
         if (loop_ctx->vars_count == 1)
         {
@@ -1801,7 +1822,7 @@ iterator
               ", but the loop expects %d",
               loop_ctx->vars_count);
 
-          result =  ERROR_SYNTAX_ERROR;
+          result = ERROR_SYNTAX_ERROR;
         }
 
         fail_if_error(result);
