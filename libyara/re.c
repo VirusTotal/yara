@@ -1025,9 +1025,6 @@ int yr_re_ast_split_at_chaining_point(
       *min_gap = child->start;
       *max_gap = child->end;
 
-      re_ast->root_node = re_ast->root_node;
-      re_ast->flags = re_ast->flags;
-
       (*remainder_re_ast)->root_node = concat;
       (*remainder_re_ast)->flags = re_ast->flags;
 

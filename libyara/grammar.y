@@ -212,13 +212,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _SHIFT_LEFT_                                    "<<"
 %token _SHIFT_RIGHT_                                   ">>"
 
+// Operator precedence and associativity. Higher precedence operators are lower
+// in the list. Operators that appear in the same line have the same precedence.
 %left _OR_
 %left _AND_
+%left _EQ_ _NEQ_
+%left _LT_ _LE_ _GT_ _GE_
 %left '|'
 %left '^'
 %left '&'
-%left _EQ_ _NEQ_
-%left _LT_ _LE_ _GT_ _GE_
 %left _SHIFT_LEFT_ _SHIFT_RIGHT_
 %left '+' '-'
 %left '*' '\\' '%'
@@ -1078,6 +1080,7 @@ arguments_list
             strlcpy($$, "r", YR_MAX_FUNCTION_ARGS);
             break;
           case EXPRESSION_TYPE_UNKNOWN:
+            yr_free($$);
             yr_compiler_set_error_extra_info(
                 compiler, "unknown type for argument 1 in function call");
             fail_if_error(ERROR_WRONG_TYPE);
@@ -1115,19 +1118,22 @@ arguments_list
               strlcat($1, "r", YR_MAX_FUNCTION_ARGS);
               break;
             case EXPRESSION_TYPE_UNKNOWN:
+              result = ERROR_WRONG_TYPE;
               yr_compiler_set_error_extra_info_fmt(
                   compiler, "unknown type for argument %lu in function call",
                   // As we add one character per argument, the length of $1 is
                   // the number of arguments parsed so far, and the argument
                   // represented by <expression> is length of $1 plus one.
                   strlen($1) + 1);
-              fail_if_error(ERROR_WRONG_TYPE);
               break;
             default:
               // An unknown expression type is OK iff an error ocurred.
               assert(compiler->last_error != ERROR_SUCCESS);
           }
         }
+
+        if (result != ERROR_SUCCESS)
+          yr_free($1);
 
         fail_if_error(result);
 
