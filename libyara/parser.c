@@ -296,7 +296,7 @@ int yr_parser_lookup_loop_variable(
   int i, j;
   int var_offset = 0;
 
-  for (i = 0; i < compiler->loop_depth; i++)
+  for (i = 0; i <= compiler->loop_index; i++)
   {
     var_offset += compiler->loop[i].vars_internal_count;
 

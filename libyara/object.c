@@ -314,7 +314,14 @@ int yr_object_from_external_variable(
         break;
     }
 
-    *object = obj;
+    if (result == ERROR_SUCCESS)
+    {
+      *object = obj;
+    }
+    else
+    {
+      yr_object_destroy(obj);
+    }
   }
 
   return result;
@@ -594,6 +601,7 @@ int yr_object_copy(
           yr_object_copy(
               object_as_function(object)->return_obj,
               &object_as_function(copy)->return_obj),
+          // cleanup
           yr_object_destroy(copy));
 
       for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
@@ -614,6 +622,7 @@ int yr_object_copy(
 
         FAIL_ON_ERROR_WITH_CLEANUP(
             yr_object_structure_set_member(copy, o),
+            // cleanup
             yr_free(o);
             yr_object_destroy(copy));
 

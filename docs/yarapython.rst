@@ -219,7 +219,7 @@ Here is an example:
   import yara
 
   def mycallback(data):
-    print data
+    print(data)
     return yara.CALLBACK_CONTINUE
 
   matches = rules.match('/foo/bar/my_file', callback=mycallback, which_callbacks=yara.CALLBACK_MATCHES)
@@ -259,7 +259,7 @@ Here is an example:
   import yara
 
   def modules_callback(data):
-    print data
+    print(data)
     return yara.CALLBACK_CONTINUE
 
   matches = rules.match('/foo/bar/my_file', modules_callback=modules_callback)

@@ -1017,6 +1017,9 @@ void dotnet_parse_tilde_2(
         {
           moduleref_table = (PMODULEREF_TABLE) row_ptr;
 
+          if (!struct_fits_in_pe(pe, moduleref_table, MODULEREF_TABLE))
+            break;
+
           name = pe_get_dotnet_string(pe,
               string_offset,
               DOTNET_STRING_INDEX(moduleref_table->Name));
@@ -1066,7 +1069,11 @@ void dotnet_parse_tilde_2(
         {
           fieldrva_table = (PFIELDRVA_TABLE) row_ptr;
 
+          if (!struct_fits_in_pe(pe, fieldrva_table, FIELDRVA_TABLE))
+            break;
+
           field_offset = pe_rva_to_offset(pe, fieldrva_table->RVA);
+
           if (field_offset >= 0)
           {
             set_integer(field_offset, pe->object, "field_offsets[%i]", counter);
@@ -1283,6 +1290,7 @@ void dotnet_parse_tilde_2(
         // it would give an inaccurate count in that case.
         counter = 0;
         row_ptr = table_offset;
+
         // First DWORD is the offset.
         for (i = 0; i < num_rows; i++)
         {
