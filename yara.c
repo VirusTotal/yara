@@ -419,11 +419,11 @@ static void scan_dir(
 
       snprintf(full_path, sizeof(full_path), "%s/%s", dir, de->d_name);
 
-      int err = lstat(full_path, &st);
+      int err = stat(full_path, &st);
 
       if (err == 0)
       {
-        if(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode))
+        if(S_ISREG(st.st_mode))
         {
           file_queue_put(full_path);
         }
