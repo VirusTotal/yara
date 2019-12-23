@@ -594,6 +594,8 @@ string_declaration
         yr_free($1);
         yr_free($4);
 
+        yr_free($5.alphabet);
+
         fail_if_error(result);
         compiler->current_line = 0;
       }
@@ -744,7 +746,6 @@ string_modifier
     | _BASE64_
       {
         $$.flags = STRING_GFLAGS_BASE64;
-        // XXX: Pretty sure we are leaking modifiers and now alphabets...
         $$.alphabet = sized_string_new(DEFAULT_BASE64_ALPHABET);
       }
     | _BASE64_ '(' _TEXT_STRING_ ')'
