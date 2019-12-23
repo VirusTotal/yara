@@ -63,6 +63,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Blueliv](http://www.blueliv.com)
 * [Cofense](https://cofense.com)
 * [Conix](http://www.conix.fr)
+* [CounterCraft](https://www.countercraft.eu)
 * [CrowdStrike FMS](https://github.com/CrowdStrike/CrowdFMS)
 * [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
 * [Cyber Triage](http://www.cybertriage.com)
