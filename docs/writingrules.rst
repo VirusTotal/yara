@@ -491,6 +491,11 @@ example:
 
 The alphabet must be 64 bytes long.
 
+The ``base64`` and ``widebase64`` modifiers are only supported with text
+strings. Using these modifiers with a hexadecmial string or a regular expression
+will cause a compiler error. Also, the ``xor`` and ``nocase`` modifiers used in
+combination with ``base64`` or ``widebase64`` will cause a compiler error.
+
 Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
