@@ -45,6 +45,7 @@ begin_declarations;
   declare_string("DEX_FILE_MAGIC_036");
   declare_string("DEX_FILE_MAGIC_037");
   declare_string("DEX_FILE_MAGIC_038");
+  declare_string("DEX_FILE_MAGIC_039");
 
   declare_integer("ENDIAN_CONSTANT");
   declare_integer("REVERSE_ENDIAN_CONSTANT");
@@ -306,7 +307,8 @@ dex_header_t* dex_get_header(
   if (memcmp(dex_header->magic, DEX_FILE_MAGIC_035, 8) != 0 &&
       memcmp(dex_header->magic, DEX_FILE_MAGIC_036, 8) != 0 &&
       memcmp(dex_header->magic, DEX_FILE_MAGIC_037, 8) != 0 &&
-      memcmp(dex_header->magic, DEX_FILE_MAGIC_038, 8) != 0)
+      memcmp(dex_header->magic, DEX_FILE_MAGIC_038, 8) != 0 &&
+      memcmp(dex_header->magic, DEX_FILE_MAGIC_039, 8) != 0)
   {
     return NULL;
   }
