@@ -1145,6 +1145,7 @@ int module_load(
   set_string(DEX_FILE_MAGIC_036, module_object, "DEX_FILE_MAGIC_036");
   set_string(DEX_FILE_MAGIC_037, module_object, "DEX_FILE_MAGIC_037");
   set_string(DEX_FILE_MAGIC_038, module_object, "DEX_FILE_MAGIC_038");
+  set_string(DEX_FILE_MAGIC_039, module_object, "DEX_FILE_MAGIC_039");
 
   set_integer(0x12345678, module_object, "ENDIAN_CONSTANT");
   set_integer(0x78563412, module_object, "REVERSE_ENDIAN_CONSTANT");
