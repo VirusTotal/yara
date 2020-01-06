@@ -147,7 +147,7 @@ begin_declarations;
   begin_struct_array("class_defs");
     declare_integer("class_idx");
     declare_integer("access_flags");
-    declare_integer("superclass_idx");
+    declare_integer("super_class_idx");
     declare_integer("interfaces_offset");
     declare_integer("source_file_idx");
     declare_integer("annotations_offset");
