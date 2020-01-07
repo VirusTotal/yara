@@ -113,6 +113,13 @@ Reference
 
         Similar to :func:`http_request`, but only takes into account POST
         requests.
+       
+    .. function:: http_user_agent(regexp)
+
+        Function returning true if the program sent a HTTP request with a
+        user agent matching the provided regular expression.
+
+        *Example: cuckoo.network.http_user_agent(/MSIE 6\\.0/)*   
 
     .. function:: dns_lookup(regexp)
 
@@ -143,13 +150,6 @@ Reference
         port number.
 
         *Example: cuckoo.network.udp(/evil\\.com/, 53)*  
-
-      .. function:: user_agent(regexp)
-
-        Function returning true if the program sent a HTTP request with a
-        user agent matching the provided regular expression.
-
-        *Example: cuckoo.network.user_agent(/MSIE 6\\.0/)*   
 
 .. type:: registry
 
