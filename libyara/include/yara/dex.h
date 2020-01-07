@@ -10,6 +10,7 @@
 #define DEX_FILE_MAGIC_036 "dex\n036\x00"
 #define DEX_FILE_MAGIC_037 "dex\n037\x00"
 #define DEX_FILE_MAGIC_038 "dex\n038\x00"
+#define DEX_FILE_MAGIC_039 "dex\n039\x00"
 
 #pragma pack(push,1)
 
