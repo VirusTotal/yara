@@ -76,7 +76,7 @@ typedef struct {
 	uint32_t class_idx;
 	uint32_t access_flags;
 	uint32_t super_class_idx;
-	uint32_t interfaces_off;
+	uint32_t interfaces_offset;
 	uint32_t source_file_idx;
 	uint32_t annotations_offset;
 	uint32_t class_data_offset;
