@@ -67,7 +67,7 @@ keywords are reserved and cannot be used as an identifier:
      - wide
      - xor
      - base64
-     - widebase64
+     - base64wide
      -
 
 Rules are generally composed of two sections: strings definition and condition.
@@ -465,12 +465,12 @@ VGhpcyBwcm9ncmFtIGNhbm5vd
 RoaXMgcHJvZ3JhbSBjYW5ub3
 UaGlzIHByb2dyYW0gY2Fubm90
 
-The ``widebase64`` modifier works just like the base64 modifier but the results
+The ``base64wide`` modifier works just like the base64 modifier but the results
 of the base64 modifier are converted to wide.
 
-The interaction between ``base64`` (or ``widebase64``) and ``wide`` and
+The interaction between ``base64`` (or ``base64wide``) and ``wide`` and
 ``ascii`` is as you might expect. ``wide`` and ``ascii`` are applied to the
-string first, and then the ``base64`` and ``widebase64`` modifiers are applied.
+string first, and then the ``base64`` and ``base64wide`` modifiers are applied.
 At no point is the plaintext of the ``ascii`` or ``wide`` versions of the
 strings included in the search. If you want to also include those you can put
 them in a secondary string.
@@ -491,10 +491,10 @@ example:
 
 The alphabet must be 64 bytes long.
 
-The ``base64`` and ``widebase64`` modifiers are only supported with text
+The ``base64`` and ``base64wide`` modifiers are only supported with text
 strings. Using these modifiers with a hexadecmial string or a regular expression
 will cause a compiler error. Also, the ``xor`` and ``nocase`` modifiers used in
-combination with ``base64`` or ``widebase64`` will cause a compiler error.
+combination with ``base64`` or ``base64wide`` will cause a compiler error.
 
 Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^

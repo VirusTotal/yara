@@ -527,7 +527,7 @@ int yr_re_ast_from_base64(
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_re_create_base64_nodes(wide_str, modifier.alphabet, 1, &head, &tail),
           {
-            strcpy(error->message, "Failure encoding widebase64 wide string");
+            strcpy(error->message, "Failure encoding base64wide wide string");
             yr_free(wide_str);
             _yr_re_destroy_base64_nodes(head);
           });
@@ -553,7 +553,7 @@ int yr_re_ast_from_base64(
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_re_create_base64_nodes(in_str, modifier.alphabet, 1, &head, &tail),
           {
-            strcpy(error->message, "Failure encoding widebase64 ascii string");
+            strcpy(error->message, "Failure encoding base64wide ascii string");
             _yr_re_destroy_base64_nodes(head);
           });
     }
@@ -577,7 +577,7 @@ int yr_re_ast_from_base64(
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_re_create_base64_nodes(in_str, modifier.alphabet, 1, &head, &tail),
           {
-            strcpy(error->message, "Failure encoding widebase64 string");
+            strcpy(error->message, "Failure encoding base64wide string");
             _yr_re_destroy_base64_nodes(head);
           });
     }

@@ -722,7 +722,7 @@ static void test_strings()
   assert_error(
     "rule test {\n\
       strings:\n\
-        $a = \"ab\" widebase64(\"ERS\")\n\
+        $a = \"ab\" base64wide(\"ERS\")\n\
       condition:\n\
         true\n\
     }", ERROR_INVALID_MODIFIER);
@@ -809,7 +809,7 @@ static void test_strings()
   assert_true_rule_file(
       "rule test {\n\
         strings:\n\
-          $a = \"This program cannot\" widebase64\n\
+          $a = \"This program cannot\" base64wide\n\
         condition:\n\
           #a == 3 and\n\
           @a[1] == 0x379 and\n\
@@ -825,7 +825,7 @@ static void test_strings()
   assert_true_rule_file(
       "rule test {\n\
         strings:\n\
-          $a = \"This program cannot\" widebase64 ascii\n\
+          $a = \"This program cannot\" base64wide ascii\n\
         condition:\n\
           #a == 3 and\n\
           @a[1] == 0x379 and\n\
@@ -836,11 +836,11 @@ static void test_strings()
           !a[3] == 50\n\
       }", "tests/data/base64");
 
-  // Make sure the wide string is widebase64 encoded.
+  // Make sure the wide string is base64wide encoded.
   assert_true_rule_file(
       "rule test {\n\
         strings:\n\
-          $a = \"This program cannot\" widebase64 wide\n\
+          $a = \"This program cannot\" base64wide wide\n\
         condition:\n\
           #a == 3 and\n\
           @a[1] == 0x458 and\n\
@@ -851,11 +851,11 @@ static void test_strings()
           !a[3] == 100\n\
       }", "tests/data/base64");
 
-  // Make sure both ascii and wide strings are widebase64 encoded properly.
+  // Make sure both ascii and wide strings are base64wide encoded properly.
   assert_true_rule_file(
       "rule test {\n\
         strings:\n\
-          $a = \"This program cannot\" widebase64 wide ascii\n\
+          $a = \"This program cannot\" base64wide wide ascii\n\
         condition:\n\
           #a == 6 and\n\
           @a[1] == 0x379 and\n\
@@ -872,11 +872,11 @@ static void test_strings()
           !a[6] == 100\n\
       }", "tests/data/base64");
 
-  // Make sure base64 and widebase64 together work.
+  // Make sure base64 and base64wide together work.
   assert_true_rule_file(
       "rule test {\n\
         strings:\n\
-          $a = \"This program cannot\" base64 widebase64\n\
+          $a = \"This program cannot\" base64 base64wide\n\
         condition:\n\
           #a == 9 and\n\
           @a[1] == 0x53 and\n\
@@ -904,7 +904,7 @@ static void test_strings()
   assert_true_rule_file(
       "rule test {\n\
         strings:\n\
-          $a = \"This program cannot\" base64 widebase64 ascii\n\
+          $a = \"This program cannot\" base64 base64wide ascii\n\
         condition:\n\
           #a == 9\n\
       }", "tests/data/base64");
@@ -913,7 +913,7 @@ static void test_strings()
   assert_true_rule_file(
       "rule test {\n\
         strings:\n\
-          $a = \"This program cannot\" base64 widebase64 wide\n\
+          $a = \"This program cannot\" base64 base64wide wide\n\
         condition:\n\
           #a == 9\n\
       }", "tests/data/base64");

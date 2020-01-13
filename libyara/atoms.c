@@ -1414,7 +1414,8 @@ int yr_atoms_extract_from_re(
   // Don't do convert atoms to wide here if either base64 modifier is used.
   // This is to avoid the situation where we have "base64 wide" because
   // the wide has already been applied BEFORE the base64 encoding.
-  if (modifier.flags & STRING_GFLAGS_WIDE && !(MODIFIER_IS_ANY_BASE64(modifier)))
+  if (modifier.flags & STRING_GFLAGS_WIDE &&
+      !(modifier.flags & STRING_GFLAGS_BASE64 || modifier.flags & STRING_GFLAGS_BASE64_WIDE))
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_wide(*atoms, &wide_atoms),

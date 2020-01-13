@@ -246,9 +246,6 @@ typedef struct YR_ITERATOR YR_ITERATOR;
 #pragma pack(push)
 #pragma pack(8)
 
-#define MODIFIER_IS_ANY_BASE64(x) \
-    (((x).flags & STRING_GFLAGS_BASE64) || ((x).flags & STRING_GFLAGS_BASE64_WIDE))
-
 struct YR_MODIFIER
 {
   int32_t flags;

@@ -180,7 +180,7 @@ octdigit      [0-7]
 "wide"                  { return _WIDE_;        }
 "xor"                   { return _XOR_;         }
 "base64"                { return _BASE64_;      }
-"widebase64"            { return _BASE64_WIDE_; }
+"base64wide"            { return _BASE64_WIDE_; }
 "fullword"              { return _FULLWORD_;    }
 "nocase"                { return _NOCASE_;      }
 "condition"             { return _CONDITION_;   }
