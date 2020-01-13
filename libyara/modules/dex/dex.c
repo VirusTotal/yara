@@ -45,6 +45,7 @@ begin_declarations;
   declare_string("DEX_FILE_MAGIC_036");
   declare_string("DEX_FILE_MAGIC_037");
   declare_string("DEX_FILE_MAGIC_038");
+  declare_string("DEX_FILE_MAGIC_039");
 
   declare_integer("ENDIAN_CONSTANT");
   declare_integer("REVERSE_ENDIAN_CONSTANT");
@@ -147,7 +148,7 @@ begin_declarations;
   begin_struct_array("class_defs");
     declare_integer("class_idx");
     declare_integer("access_flags");
-    declare_integer("superclass_idx");
+    declare_integer("super_class_idx");
     declare_integer("interfaces_offset");
     declare_integer("source_file_idx");
     declare_integer("annotations_offset");
@@ -306,7 +307,8 @@ dex_header_t* dex_get_header(
   if (memcmp(dex_header->magic, DEX_FILE_MAGIC_035, 8) != 0 &&
       memcmp(dex_header->magic, DEX_FILE_MAGIC_036, 8) != 0 &&
       memcmp(dex_header->magic, DEX_FILE_MAGIC_037, 8) != 0 &&
-      memcmp(dex_header->magic, DEX_FILE_MAGIC_038, 8) != 0)
+      memcmp(dex_header->magic, DEX_FILE_MAGIC_038, 8) != 0 &&
+      memcmp(dex_header->magic, DEX_FILE_MAGIC_039, 8) != 0)
   {
     return NULL;
   }
@@ -939,13 +941,13 @@ void dex_parse(
 
     #ifdef DEBUG_DEX_MODULE
     printf("[DEX] CLASS ID item class_idx:0x%x access_flags:0x%x " \
-           "super_class_idx:0x%x interfaces_off:0x%x source_file_idx:0x%x "\
+           "super_class_idx:0x%x interfaces_offset:0x%x source_file_idx:0x%x "\
            "annotations_offset:0x%x class_data_offset:0x%x "\
            "static_values_offset:0x%x\n",
            yr_le32toh(class_id_item->class_idx),
            yr_le32toh(class_id_item->access_flags),
            yr_le32toh(class_id_item->super_class_idx),
-           yr_le32toh(class_id_item->interfaces_off),
+           yr_le32toh(class_id_item->interfaces_offset),
            yr_le32toh(class_id_item->source_file_idx),
            yr_le32toh(class_id_item->annotations_offset),
            yr_le32toh(class_id_item->class_data_offset),
@@ -958,14 +960,14 @@ void dex_parse(
                 "class_defs[%i].access_flags", i);
     set_integer(yr_le32toh(class_id_item->super_class_idx), dex->object,
                 "class_defs[%i].super_class_idx", i);
-    set_integer(yr_le32toh(class_id_item->interfaces_off), dex->object,
-                "class_defs[%i].interfaces_off", i);
+    set_integer(yr_le32toh(class_id_item->interfaces_offset), dex->object,
+                "class_defs[%i].interfaces_offset", i);
     set_integer(yr_le32toh(class_id_item->source_file_idx), dex->object,
                 "class_defs[%i].source_file_idx", i);
     set_integer(yr_le32toh(class_id_item->annotations_offset), dex->object,
                 "class_defs[%i].annotations_offset", i);
     set_integer(yr_le32toh(class_id_item->class_data_offset), dex->object,
-                "class_defs[%i].class_data_off", i);
+                "class_defs[%i].class_data_offset", i);
     set_integer(yr_le32toh(class_id_item->static_values_offset), dex->object,
                 "class_defs[%i].static_values_offset", i);
 
@@ -1143,6 +1145,7 @@ int module_load(
   set_string(DEX_FILE_MAGIC_036, module_object, "DEX_FILE_MAGIC_036");
   set_string(DEX_FILE_MAGIC_037, module_object, "DEX_FILE_MAGIC_037");
   set_string(DEX_FILE_MAGIC_038, module_object, "DEX_FILE_MAGIC_038");
+  set_string(DEX_FILE_MAGIC_039, module_object, "DEX_FILE_MAGIC_039");
 
   set_integer(0x12345678, module_object, "ENDIAN_CONSTANT");
   set_integer(0x78563412, module_object, "REVERSE_ENDIAN_CONSTANT");

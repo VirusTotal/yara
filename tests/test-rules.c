@@ -2628,6 +2628,18 @@ void test_performance_warnings()
        "rule test { \
         strings: $a = \"MZ\" \
         condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = \"                    \" xor(0x20) \
+        condition: $a }")
+
+  // This will eventually xor with 0x41 and should cause a warning.
+  assert_warning(
+      "rule test { \
+        strings: $a = \"AAAAAAAAAAAAAAAAAAAA\" xor \
+        condition: $a }")
+
 }
 
 

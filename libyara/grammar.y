@@ -124,7 +124,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define loop_vars_cleanup(loop_index) \
     {  \
       YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[loop_index]; \
-      for (int i = 0; i < loop_ctx->vars_count; i++) \
+      int i; \
+      for (i = 0; i < loop_ctx->vars_count; i++) \
       { \
         yr_free((void*) loop_ctx->vars[i].identifier); \
         loop_ctx->vars[i].identifier = NULL; \
@@ -1285,6 +1286,8 @@ expression
       }
     | _FOR_ for_expression error
       {
+        int i;
+
         // Free all the loop variable identifiers, including the variables for
         // the current loop (represented by loop_index), and set loop_index to
         // -1. This is OK even if we have nested loops. If an error occurs while
@@ -1292,7 +1295,7 @@ expression
         // anyways, so it's safe to do this cleanup while processing the error
         // for the inner loop.
 
-        for (int i = 0; i <= compiler->loop_index; i++)
+        for (i = 0; i <= compiler->loop_index; i++)
         {
           loop_vars_cleanup(i);
         }
@@ -1397,6 +1400,7 @@ expression
         void* jmp_arg_addr;
 
         int var_frame = _yr_compiler_get_var_frame(compiler);
+        int i;
 
         fail_if_error(yr_parser_emit(
             yyscanner, OP_ITER_NEXT, &loop_start_addr));
@@ -1405,7 +1409,7 @@ expression
         // the stack and store it into one memory slot starting at var_frame + 3
         // because the first 3 slots in the frame are for the internal variables.
 
-        for (int i = 0; i < loop_ctx->vars_count; i++)
+        for (i = 0; i < loop_ctx->vars_count; i++)
         {
           fail_if_error(yr_parser_emit_with_arg(
               yyscanner, OP_POP_M, var_frame + 3 + i, NULL, NULL));
