@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/ahocorasick.h>
 #include <yara/arena.h>
+#include <yara/base64.h>
 #include <yara/re.h>
 #include <yara/error.h>
 #include <yara/exec.h>
@@ -616,7 +617,7 @@ int yr_parser_reduce_string_declaration(
     else if (modifier.flags & STRING_GFLAGS_REGEXP)
       result = yr_re_parse(str->c_string, &re_ast, &re_error);
     else
-      result = yr_re_ast_from_base64(str, modifier, &re_ast, &re_error);
+      result = yr_base64_ast_from_string(str, modifier, &re_ast, &re_error);
 
     if (result != ERROR_SUCCESS)
     {
