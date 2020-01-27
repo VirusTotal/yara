@@ -111,13 +111,6 @@ Reference
     Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has
     COFF debug info.
 
-.. c:type:: pointer_to_symbol_table
-
-    .. versionadded:: 3.8.0
-
-    Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has
-    COFF debug info.
-
 .. c:type:: number_of_symbols
 
     .. versionadded:: 3.8.0
