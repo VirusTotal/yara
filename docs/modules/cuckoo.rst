@@ -141,7 +141,7 @@ Reference
         matching the provided regular expression, over TCP on the provided
         port number.
 
-        *Example: cuckoo.network.tcp(/evil\\.com/, 443)*  
+        *Example: cuckoo.network.tcp(/192\\.168\\.1\\.1/, 443)*  
 
       .. function:: udp(regexp, port)
 
@@ -149,7 +149,7 @@ Reference
         matching the provided regular expression, over UDP on the provided
         port number.
 
-        *Example: cuckoo.network.udp(/evil\\.com/, 53)*  
+        *Example: cuckoo.network.udp(/192\\.168\\.1\\.1/, 53)*  
 
 .. type:: registry
 
