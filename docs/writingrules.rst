@@ -611,24 +611,10 @@ the typical Boolean operators ``and``, ``or``, and ``not``, and relational opera
 and bitwise operators (``&``, ``|``, ``<<``, ``>>``, ``~``, ``^``) can be used on numerical
 expressions.
 
-String identifiers can be also used within a condition, acting as Boolean
-variables whose value depends on the presence or not of the associated string
-in the file.
-
-.. code-block:: yara
-
-    rule Example
-    {
-        strings:
-            $a = "text1"
-            $b = "text2"
-            $c = "text3"
-            $d = "text4"
-
-        condition:
-            ($a or $b) and ($c or $d)
-    }
-
+Integers are always 64-bits longs, even the results of functions like `uint8`,
+`uint16` and `uint32` are promoted to 64-bits. This is something you must take
+into account, specially while using bitwise operators (for example, ~0x01 is not
+0xFE but 0xFFFFFFFFFFFFFFFE). Floating points numbers are not supported.
 
 The following table lists the precedence and associativity of all operators. The
 table is sorted in descending precedence order, which means that operators listed
@@ -685,6 +671,26 @@ Precedence  Operator  Description                                Associativity
 ----------  --------  -----------------------------------------  -------------
 13          or        Logical or                                 Left-to-right
 ==========  ========  =========================================  =============
+
+
+String identifiers can be also used within a condition, acting as Boolean
+variables whose value depends on the presence or not of the associated string
+in the file.
+
+.. code-block:: yara
+
+    rule Example
+    {
+        strings:
+            $a = "text1"
+            $b = "text2"
+            $c = "text3"
+            $d = "text4"
+
+        condition:
+            ($a or $b) and ($c or $d)
+    }
+
 
 
 Counting strings
