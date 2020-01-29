@@ -861,10 +861,13 @@ Reference
 
     .. versionadded:: 3.5.0
 
-    Function returning true if the PE imports anything from *dll_name*,
-    or false otherwise. *dll_name* is case insensitive.
+    Function returning the number of functions from the *dll_name*, in the PE
+    imports. *dll_name* is case insensitive.
 
-    *Example:  pe.imports("kernel32.dll")*
+    Note: Prior to version 3.12.0, this function returns only a boolean value
+    (0 or 1) if the given DLL name is found in the PE imports.
+
+    *Example:  pe.imports("kernel32.dll") == 10*
 
 .. c:function:: imports(dll_name, ordinal)
 
@@ -879,12 +882,16 @@ Reference
 
     .. versionadded:: 3.8.0
 
-    Function returning true if the PE imports a function name matching
-    *function_regexp* from a DLL matching *dll_regexp*. *dll_regexp* is case
-    sensitive unless you use the "/i" modifier in the regexp, as shown in the
-    example below.
+    Function returning the number of functions from the PE imports where a
+    function name matches *function_regexp* and a DLL name matches
+    *dll_regexp*. Both *dll_regexp* and *function_regexp* are case sensitive
+    unless you use the "/i" modifier in the regexp, as shown in the example
+    below.
 
-    *Example:  pe.imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/)*
+    Note: Prior to version 3.12.0, this function returns only a boolean value
+    (0 or 1) if the given regexp matches any library and function.
+
+    *Example:  pe.imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
 
 .. c:function:: locale(locale_identifier)
 
