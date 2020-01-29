@@ -122,5 +122,6 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Websense](http://www.websense.com)
 * [x64dbg](http://x64dbg.com)
 * [YALIH](https://github.com/Masood-M/YALIH)
+* [SonicWall](https://www.sonicwall.com/)
 
 Are you using it? Want to see your site listed here?
