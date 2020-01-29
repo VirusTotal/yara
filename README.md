@@ -106,6 +106,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [RSA ECAT](http://www.emc.com/security/rsa-ecat.htm)
 * [Scanii](https://scanii.com)
 * [SecondWrite](https://www.secondwrite.com)
+* [SonicWall](https://www.sonicwall.com/)
 * [SpamStopsHere](https://www.spamstopshere.com)
 * [stoQ](http://stoq.punchcyber.com)
 * [Symantec](http://www.symantec.com)
@@ -122,6 +123,5 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Websense](http://www.websense.com)
 * [x64dbg](http://x64dbg.com)
 * [YALIH](https://github.com/Masood-M/YALIH)
-* [SonicWall](https://www.sonicwall.com/)
 
 Are you using it? Want to see your site listed here?
