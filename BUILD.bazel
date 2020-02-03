@@ -26,7 +26,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 YARA_CONFIG_OPTS = [
-    "-DBORINGSSL",
+    # "-DBORINGSSL",
     "-DHAVE_CLOCK_GETTIME=1",
     #"-DHAVE_COMMONCRYPTO_COMMONCRYPTO_H",
     "-DHAVE_DLFCN_H=1",
@@ -238,7 +238,8 @@ cc_library(
         "libyara/re_grammar.y",
     ],
     visibility = ["//visibility:public"],
-    deps = ["@boringssl//:crypto"],
+    deps = ["@openssl//:crypto"],
+    # deps = ["@boringssl//:crypto"],
 )
 
 # Code shared by the command-line tools.
