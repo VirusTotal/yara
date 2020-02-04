@@ -1,0 +1,20 @@
+name: CIFuzz
+
+on: [pull_request]
+
+jobs:
+  fuzz:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Building and running fuzzers
+      uses: google/oss-fuzz/infra/cifuzz/actions@master
+      with:
+        project-name: 'yara'
+        fuzz-time: 600
+        dry-run: True
+    - uses: actions/upload-artifact@v1
+      with:
+        name: fuzzer_testcase
+        path: ./out/testcase
