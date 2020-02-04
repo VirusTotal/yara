@@ -56,7 +56,7 @@ bool compile_files(
     char* colon = NULL;
     int errors;
 
-    if (access(argv[1], 0) != 0)
+    if (access(argv[i], 0) != 0)
     {
       // A file with the name specified by the command-line argument wasn't
       // found, it may be because the name is prefixed with a namespace, so

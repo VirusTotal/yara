@@ -196,6 +196,12 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(
     result.size = 0;
   }
 
+  // There is an additional terminal byte which is 0x01 under certain
+  // conditions. The exact conditions are not relevant to our parsing but are
+  // documented in ECMA-335 II.24.2.4.
+  if (result.length > 0)
+    result.length--;
+
   return result;
 }
 
