@@ -218,7 +218,7 @@ args_option_t options[] =
       "print tags"),
 
   OPT_BOOLEAN('r', "recursive", &recursive_search,
-      "recursively search directories"),
+      "recursively search directories (follows symlinks)"),
 
   OPT_INTEGER('k', "stack-size", &stack_size,
       "set maximum stack size (default=16384)", "SLOTS"),
@@ -419,7 +419,7 @@ static void scan_dir(
 
       snprintf(full_path, sizeof(full_path), "%s/%s", dir, de->d_name);
 
-      int err = lstat(full_path, &st);
+      int err = stat(full_path, &st);
 
       if (err == 0)
       {
@@ -429,7 +429,6 @@ static void scan_dir(
         }
         else if(recursive &&
                 S_ISDIR(st.st_mode) &&
-                !S_ISLNK(st.st_mode) &&
                 strcmp(de->d_name, ".") != 0 &&
                 strcmp(de->d_name, "..") != 0)
         {
