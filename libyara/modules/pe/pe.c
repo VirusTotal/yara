@@ -2225,6 +2225,7 @@ define_function(imports_regex)
   PE* pe = (PE*)module->data;
 
   IMPORTED_DLL* imported_dll;
+  uint64_t imported_func_count = 0;
 
   if (!pe)
     return_integer(UNDEFINED);
@@ -2240,7 +2241,7 @@ define_function(imports_regex)
       while (imported_func != NULL)
       {
         if (yr_re_match(scan_context(), regexp_argument(2), imported_func->name) > 0)
-          return_integer(1);
+          imported_func_count++;
         imported_func = imported_func->next;
       }
     }
@@ -2248,7 +2249,7 @@ define_function(imports_regex)
     imported_dll = imported_dll->next;
   }
 
-  return_integer(0);
+  return_integer(imported_func_count);
 }
 
 define_function(imports_dll)
@@ -2259,6 +2260,7 @@ define_function(imports_dll)
   PE* pe = (PE*) module->data;
 
   IMPORTED_DLL* imported_dll;
+  uint64_t imported_func_count = 0;
 
   if (!pe)
     return_integer(UNDEFINED);
@@ -2269,13 +2271,19 @@ define_function(imports_dll)
   {
     if (strcasecmp(imported_dll->name, dll_name) == 0)
     {
-      return_integer(1);
+      IMPORT_FUNCTION* imported_func = imported_dll->functions;
+
+      while (imported_func != NULL)
+      {
+        imported_func_count++;
+        imported_func = imported_func->next;
+      }
     }
 
     imported_dll = imported_dll->next;
   }
 
-  return_integer(0);
+  return_integer(imported_func_count);
 }
 
 define_function(locale)

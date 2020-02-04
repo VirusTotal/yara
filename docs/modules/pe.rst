@@ -111,13 +111,6 @@ Reference
     Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has
     COFF debug info.
 
-.. c:type:: pointer_to_symbol_table
-
-    .. versionadded:: 3.8.0
-
-    Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has
-    COFF debug info.
-
 .. c:type:: number_of_symbols
 
     .. versionadded:: 3.8.0
@@ -223,63 +216,63 @@ Reference
     following constants:
 
     .. c:type:: RELOCS_STRIPPED
-    
+
         Relocation info stripped from file.
-    
+
     .. c:type:: EXECUTABLE_IMAGE
-    
+
         File is executable  (i.e. no unresolved external references).
-    
+
     .. c:type:: LINE_NUMS_STRIPPED
-    
+
         Line numbers stripped from file.
-    
+
     .. c:type:: LOCAL_SYMS_STRIPPED
-    
+
         Local symbols stripped from file.
-    
+
     .. c:type:: AGGRESIVE_WS_TRIM
-    
+
         Aggressively trim working set
-    
+
     .. c:type:: LARGE_ADDRESS_AWARE
-    
+
         App can handle >2gb addresses
-    
+
     .. c:type:: BYTES_REVERSED_LO
-    
+
         Bytes of machine word are reversed.
-    
+
     .. c:type:: MACHINE_32BIT
-    
+
         32 bit word machine.
-    
+
     .. c:type:: DEBUG_STRIPPED
-    
+
         Debugging info stripped from file in .DBG file
-    
+
     .. c:type:: REMOVABLE_RUN_FROM_SWAP
-    
+
         If Image is on removable media, copy and run from the swap file.
-    
+
     .. c:type:: NET_RUN_FROM_SWAP
-    
+
         If Image is on Net, copy and run from the swap file.
-    
+
     .. c:type:: SYSTEM
-    
+
         System File.
-    
+
     .. c:type:: DLL
-    
+
         File is a DLL.
-    
+
     .. c:type:: UP_SYSTEM_ONLY
-    
+
         File should only be run on a UP machine
-    
+
     .. c:type:: BYTES_REVERSED_HI
-    
+
         Bytes of machine word are reversed.
 
     *Example:  pe.characteristics & pe.DLL*
@@ -818,7 +811,7 @@ Reference
         value (0 or 1) if the given *toolid* and optional *version* is present
         in an entry.
 
-        *Example: pe.rich_signature.toolid(170, 40219) >= 99 and pe.rich_signature.toolid(170, 40219) <= 143*
+        *Example: pe.rich_signature.toolid(170, 40219) >= 99*
 
 .. c:function:: exports(function_name)
 
@@ -931,11 +924,17 @@ Reference
 .. c:function:: imports(dll_name)
 
     .. versionadded:: 3.5.0
+    .. versionchanged:: 3.12.0
 
-    Function returning true if the PE imports anything from *dll_name*,
-    or false otherwise. *dll_name* is case insensitive.
+    Function returning the number of functions from the *dll_name*, in the PE
+    imports. *dll_name* is case insensitive.
 
-    *Example:  pe.imports("kernel32.dll")*
+    Note: Prior to version 3.12.0, this function returned only a boolean value
+    indicating if the given DLL name was found in the PE imports. This change
+    is backward compatible, as any number larger than 0 also evaluates as
+    true.
+
+    *Examples:  pe.imports("kernel32.dll"), pe.imports("kernel32.dll") == 10*
 
 .. c:function:: imports(dll_name, ordinal)
 
@@ -949,13 +948,19 @@ Reference
 .. c:function:: imports(dll_regexp, function_regexp)
 
     .. versionadded:: 3.8.0
+    .. versionchanged:: 3.12.0
 
-    Function returning true if the PE imports a function name matching
-    *function_regexp* from a DLL matching *dll_regexp*. *dll_regexp* is case
-    sensitive unless you use the "/i" modifier in the regexp, as shown in the
-    example below.
+    Function returning the number of functions from the PE imports where a
+    function name matches *function_regexp* and a DLL name matches
+    *dll_regexp*. Both *dll_regexp* and *function_regexp* are case sensitive
+    unless you use the "/i" modifier in the regexp, as shown in the example
+    below.
 
-    *Example:  pe.imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/)*
+    Note: Prior to version 3.12.0, this function returned only a boolean value
+    indicating if matching import was found or not. This change is backward
+    compatible, as any number larger than 0 also evaluates as true.
+
+    *Example:  pe.imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
 
 .. c:function:: locale(locale_identifier)
 
