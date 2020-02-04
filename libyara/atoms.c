@@ -1576,8 +1576,18 @@ int yr_atoms_extract_from_string(
         *atoms = NULL;
       });
 
-      yr_atoms_list_destroy(*atoms);
-      *atoms = xor_atoms;
+    yr_atoms_list_destroy(*atoms);
+    *atoms = xor_atoms;
+
+  }
+
+  // Recheck the atom quality, in case we have just generated some poor atoms.
+  // https://github.com/VirusTotal/yara/issues/1172
+  for (item = *atoms; item != NULL; item = item->next)
+  {
+    quality = config->get_atom_quality(config, &item->atom);
+    if (quality < *min_atom_quality)
+      *min_atom_quality = quality;
   }
 
   return ERROR_SUCCESS;
