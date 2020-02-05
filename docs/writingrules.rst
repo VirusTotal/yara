@@ -611,10 +611,10 @@ the typical Boolean operators ``and``, ``or``, and ``not``, and relational opera
 and bitwise operators (``&``, ``|``, ``<<``, ``>>``, ``~``, ``^``) can be used on numerical
 expressions.
 
-Integers are always 64-bits longs, even the results of functions like `uint8`,
+Integers are always 64-bits long, even the results of functions like `uint8`,
 `uint16` and `uint32` are promoted to 64-bits. This is something you must take
 into account, specially while using bitwise operators (for example, ~0x01 is not
-0xFE but 0xFFFFFFFFFFFFFFFE). Floating points numbers are not supported.
+0xFE but 0xFFFFFFFFFFFFFFFE).
 
 The following table lists the precedence and associativity of all operators. The
 table is sorted in descending precedence order, which means that operators listed
