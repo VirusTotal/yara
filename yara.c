@@ -146,6 +146,7 @@ static bool rules_are_compiled = false;
 static int total_count = 0;
 static int limit = 0;
 static int timeout = 1000000;
+static int size_limit = 0;
 static int stack_size = DEFAULT_STACK_SIZE;
 static int threads = YR_MAX_THREADS;
 static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
@@ -231,6 +232,9 @@ args_option_t options[] =
 
   OPT_INTEGER('a', "timeout", &timeout,
       "abort scanning after the given number of SECONDS", "SECONDS"),
+
+  OPT_INTEGER('z', "size-limit", &size_limit,
+      "skip files larger than the given limit (in bytes, 0 means no limit)", "NUMBER"),
 
   OPT_BOOLEAN('v', "version", &show_version,
       "show version information"),
@@ -425,7 +429,13 @@ static void scan_dir(
       {
         if(S_ISREG(st.st_mode))
         {
-          file_queue_put(full_path);
+           if(size_limit > st.st_size || size_limit  <= 0)
+	        {
+                file_queue_put(full_path);
+            }
+            else  {
+               fprintf(stdout, "skipping %s (%d bytes) because it's larger than %ld bytes.\n", full_path, size_limit, st.st_size);
+            }
         }
         else if(recursive &&
                 S_ISDIR(st.st_mode) &&
@@ -1279,30 +1289,42 @@ int main(
 
     result = yr_scanner_create(rules, &scanner);
 
-    if (result != ERROR_SUCCESS)
+    struct stat st;
+    int err = stat(argv[argc - 1], &st);
+
+    if (err == 0)
     {
-      fprintf(stderr, "error: %d\n", result);
-      exit_with_code(EXIT_FAILURE);
+        if(size_limit > st.st_size || size_limit  <= 0)
+        {
+            if (result != ERROR_SUCCESS)
+            {
+              fprintf(stderr, "error: %d\n", result);
+              exit_with_code(EXIT_FAILURE);
+            }
+
+            yr_scanner_set_callback(scanner, callback, &user_data);
+            yr_scanner_set_flags(scanner, flags);
+            yr_scanner_set_timeout(scanner, timeout);
+
+            if (is_integer(argv[argc - 1]))
+              result = yr_scanner_scan_proc(scanner, atoi(argv[argc - 1]));
+            else
+              result = yr_scanner_scan_file(scanner, argv[argc - 1]);
+
+            if (result != ERROR_SUCCESS)
+            {
+              fprintf(stderr, "error scanning %s: ", argv[argc - 1]);
+              print_scanner_error(scanner, result);
+              exit_with_code(EXIT_FAILURE);
+            }
+
+            if (print_count_only)
+              printf("%d\n", user_data.current_count);
+        }
+        else  {
+            fprintf(stdout, "skipping %s (%d bytes) because it's larger than %ld bytes.",  argv[argc - 1], size_limit, st.st_size);
+        }
     }
-
-    yr_scanner_set_callback(scanner, callback, &user_data);
-    yr_scanner_set_flags(scanner, flags);
-    yr_scanner_set_timeout(scanner, timeout);
-
-    if (is_integer(argv[argc - 1]))
-      result = yr_scanner_scan_proc(scanner, atoi(argv[argc - 1]));
-    else
-      result = yr_scanner_scan_file(scanner, argv[argc - 1]);
-
-    if (result != ERROR_SUCCESS)
-    {
-      fprintf(stderr, "error scanning %s: ", argv[argc - 1]);
-      print_scanner_error(scanner, result);
-      exit_with_code(EXIT_FAILURE);
-    }
-
-    if (print_count_only)
-      printf("%d\n", user_data.current_count);
   }
 
   result = EXIT_SUCCESS;

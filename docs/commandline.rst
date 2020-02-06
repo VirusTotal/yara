@@ -105,6 +105,10 @@ Available options are:
 
   Abort scanning after a number of seconds has elapsed.
 
+.. option:: -z <bytes> --size-limit=<bytes>
+
+  Skip files larger than the given limit (in bytes, 0 means no limit)
+
 .. option:: -k <slots> --stack-size=<slots>
 
   Allocate a stack size of "slots" number of slots. Default: 16384. This
@@ -129,7 +133,7 @@ Available options are:
 
 .. option:: -r --recursive
 
-  Recursively search for directories. It follows symlinks.
+  Recursively search for directories.
 
 .. option:: -f --fast-scan
 
