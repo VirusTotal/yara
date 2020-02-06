@@ -133,7 +133,7 @@ Available options are:
 
 .. option:: -r --recursive
 
-  Recursively search for directories.
+  Recursively search for directories. It follows symlinks.
 
 .. option:: -f --fast-scan
 
