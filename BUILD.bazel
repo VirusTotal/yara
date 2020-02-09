@@ -35,13 +35,6 @@ YARA_CONFIG_OPTS = [
     "-DHAVE_STDBOOL_H=1",
     # "-DHAVE__MKGMTIME=1",
     "-DHAVE_TIMEGM=1",
-    "-DHAVE_STDINT_H=1",
-    "-DHAVE_STDLIB_H=1",
-    "-DHAVE_STRING_H=1",
-    "-DHAVE_STRINGS_H=1",
-    "-DHAVE_SYS_STAT_H=1",
-    "-DHAVE_SYS_TIME_H=1",
-    "-DHAVE_SYS_TYPES_H=1",
 ]
 
 YARA_MODULE_OPTS = [
@@ -52,6 +45,7 @@ YARA_MODULE_OPTS = [
 ]
 
 YARA_COPTS = YARA_CONFIG_OPTS + YARA_MODULE_OPTS + [
+    "-D_GNU_SOURCE",
     # Tell the compiler we want the C99 standard.
     "-std=c99",
     # Additional include paths.
