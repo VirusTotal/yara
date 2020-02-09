@@ -55,3 +55,28 @@ def yara_deps():
             strip_prefix = "jansson-2.12",
             build_file = "@com_github_virustotal_yara//:bazel/jansson.BUILD",
         )
+    if not native.existing_rule("com_google_sandboxed_api"):
+        git_repository(
+            name = "com_google_sandboxed_api",
+            commit = "2301e05097818734f59b881d7fbe1624c17fc840",  # 2019-07-08
+            remote = "https://github.com/google/sandboxed-api.git",
+            shallow_since = "1562590596 -0700",
+        )
+    if not native.existing_rule("rules_proto"):
+        http_archive(
+            name = "rules_proto",
+            sha256 = "602e7161d9195e50246177e7c55b2f39950a9cf7366f74ed5f22fd45750cd208",
+            strip_prefix = "rules_proto-97d8af4dc474595af3900dd85cb3a29ad28cc313",
+            urls = [
+                "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
+                "https://github.com/bazelbuild/rules_proto/archive/97d8af4dc474595af3900dd85cb3a29ad28cc313.tar.gz",
+            ],
+        )
+    if not native.existing_rule("com_google_googletest"):
+        # GoogleTest/GoogleMock for testing the sandbox
+        http_archive(
+            name = "com_google_googletest",
+            sha256 = "baed63b97595c32667694de0a434f8f23da59609c4a44f3360ba94b0abd5c583",
+            strip_prefix = "googletest-8ffb7e5c88b20a297a2e786c480556467496463b",
+            urls = ["https://github.com/google/googletest/archive/8ffb7e5c88b20a297a2e786c480556467496463b.zip"],  # 2019-05-30
+        )
