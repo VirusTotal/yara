@@ -54,6 +54,7 @@ cc_library(
     # These defines are usually in jansson_config.h but we define them here,
     # as jansson_config.h is just an empty file.
     defines = [
+        "HAVE_STDINT_H=1",
         "JSON_INLINE=inline",
         "JSON_PARSER_MAX_DEPTH=2048",
     ],
