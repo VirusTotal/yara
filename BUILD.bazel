@@ -25,35 +25,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# Bazel (http://bazel.io/) WORKSPACE file for YARA.
+
 YARA_CONFIG_OPTS = [
-    # "-DBORINGSSL",
     "-DHAVE_CLOCK_GETTIME=1",
     #"-DHAVE_COMMONCRYPTO_COMMONCRYPTO_H",
-    "-DHAVE_DLFCN_H=1",
-    "-DHAVE_INTTYPES_H=1",
     "-DHAVE_LIBCRYPTO=1",
-    "-DHAVE_LIBM=1",
     "-DHAVE_MEMMEM=1",
-    "-DHAVE_MEMORY_H=1",
-    #"-DHAVE__MKGMTIME",
-    "-DHAVE_OPENSSL_ASN1_H=1",
-    "-DHAVE_OPENSSL_BIO_H=1",
-    "-DHAVE_OPENSSL_CRYPTO_H=1",
-    "-DHAVE_OPENSSL_MD5_H=1",
-    "-DHAVE_OPENSSL_PKCS7_H=1",
-    "-DHAVE_OPENSSL_SAFESTACK_H=1",
-    "-DHAVE_OPENSSL_SHA_H=1",
-    "-DHAVE_OPENSSL_X509_H=1",
-    #"-DHAVE_PTHREAD",
     "-DHAVE_STDBOOL_H=1",
-    "-DHAVE_STDINT_H=1",
-    "-DHAVE_STDLIB_H=1",
-    "-DHAVE_STRING_H=1",
-    "-DHAVE_STRINGS_H=1",
-    "-DHAVE_SYS_STAT_H=1",
-    "-DHAVE_SYS_TYPES_H=1",
+    # "-DHAVE__MKGMTIME=1",
     "-DHAVE_TIMEGM=1",
-    "-DHAVE_UNISTD_H=1",
 ]
 
 YARA_MODULE_OPTS = [
@@ -63,7 +44,19 @@ YARA_MODULE_OPTS = [
     "-DMACHO_MODULE",
 ]
 
-YARA_COPTS = YARA_MODULE_OPTS + select({
+YARA_COPTS = YARA_CONFIG_OPTS + YARA_MODULE_OPTS + [
+    # Tell the compiler we want the C99 standard.
+    "-std=c99",
+    # Additional include paths.
+    "-Ilibyara",
+    "-Ilibyara/modules",
+] + select({
+    ":crypto_library_boringssl": ["-DBORINGSSL"],
+     "//conditions:default": [],
+}) + select({
+    ":yara_profiling_enabled": ["-DPROFILING_ENABLED"],
+    "//conditions:default": [],
+}) + select({
     "@bazel_tools//src/conditions:darwin": [
         "-DUSE_MACH_PROC",
         "-DHAVE_SCAN_PROC_IMPL=1",
@@ -89,23 +82,22 @@ YARA_COPTS = YARA_MODULE_OPTS + select({
         "-DHAVE_SCAN_PROC_IMPL=1",
     ],
     "//conditions:default": ["-DUSE_NO_PROC"],
-}) + select({
-    ":yara_profiling_enabled": ["-DPROFILING_ENABLED"],
-    "//conditions:default": [],
-}) + [
-    "-D_GNU_SOURCE",
-    # Tell the compiler we want the C99 standard.
-    "-std=c99",
-    # Additional include paths.
-    "-Ilibyara",
-    "-Ilibyara/modules",
-] + YARA_CONFIG_OPTS
+})
 
 # Configuration setting for enabling profiling. Usage:
 #   bazel build ... --define yara_profiling=enabled
 config_setting(
     name = "yara_profiling_enabled",
     values = {"define": "yara_profiling=enabled"},
+)
+
+# Configuration setting for using BoringSSL instead of OpenSSL. Notice that
+# some features related to PE signatures in the "pe" module will be disabled
+# because of missing functionality in BoringSSL. Usage:
+#   bazel build ... --define crypto_library=boringssl
+config_setting(
+    name = "crypto_library_boringssl",
+    values = {"define": "crypto_library=boringssl"},
 )
 
 # Just YARA's error codes. This is useful for sandboxing as it avoids pulling
@@ -183,7 +175,7 @@ cc_library(
         "libyara/libyara.c",
         "libyara/mem.c",
         "libyara/modules.c",
-        #"libyara/modules/cuckoo/cuckoo.c",  # TODO(cblichmann): Add Jansson JSON depenency
+        "libyara/modules/cuckoo/cuckoo.c",
         "libyara/modules/dex/dex.c",
         #"libyara/modules/demo/demo.c",    # Disabled
         "libyara/modules/dotnet/dotnet.c",
@@ -237,9 +229,13 @@ cc_library(
         "libyara/modules/module_list",
         "libyara/re_grammar.y",
     ],
+    deps = select({
+        ":crypto_library_boringssl": ["@boringssl//:crypto"],
+        "//conditions:default": ["@openssl//:crypto"],
+    }) + [
+        "@jansson//:jansson",
+    ],
     visibility = ["//visibility:public"],
-    deps = ["@openssl//:crypto"],
-    # deps = ["@boringssl//:crypto"],
 )
 
 # Code shared by the command-line tools.
@@ -270,7 +266,7 @@ cc_binary(
     ],
 )
 
-# The YARA compiler
+# YARA compiler
 cc_binary(
     name = "yarac",
     srcs = ["yarac.c"],

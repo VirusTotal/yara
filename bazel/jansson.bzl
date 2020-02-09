@@ -1,4 +1,4 @@
-# Copyright (c) 2019. The YARA Authors. All Rights Reserved.
+# Copyright (c) 2020. The YARA Authors. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -25,7 +25,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-workspace(name = "com_github_virustotal_yara")
-
-load("//:bazel/yara_deps.bzl", "yara_deps")
-yara_deps()
+def jansson_api_test(name, visibility=None):
+  native.cc_test(
+    name = name,
+    srcs = [
+        "test/suites/api/util.h",
+        "test/suites/api/" + name + ".c",
+    ],
+    deps = [":jansson"]
+  )

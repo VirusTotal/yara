@@ -1,4 +1,4 @@
-# Copyright (c) 2020. The YARA Authors. All Rights Reserved.
+# Copyright (c) 2019. The YARA Authors. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -25,53 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Bazel (http://bazel.io/) BUILD file for openssl library which is a dependency
-# for YARA.
+# Bazel (http://bazel.io/) WORKSPACE file for YARA.
 
-config_setting(
-    name = "darwin",
-    values = {
-        "cpu": "darwin_x86_64",
-    },
-)
+workspace(name = "com_github_virustotal_yara")
 
-cc_library(
-    name = "crypto",
-    hdrs = glob(["include/openssl/*.h"]) + ["include/openssl/opensslconf.h"],
-    srcs = ["libcrypto.a"],
-    includes = ["include"],
-    linkopts = select({
-        ":darwin": [],
-        "//conditions:default": ["-lpthread", "-ldl"],
-    }),
-    visibility = ["//visibility:public"],
-)
-
-cc_library(
-    name = "ssl",
-    deps = [":crypto"],
-    hdrs = glob(["include/openssl/*.h"]) + ["include/openssl/opensslconf.h"],
-    srcs = ["libssl.a"],
-    includes = ["include"],
-    visibility = ["//visibility:public"],
-)
-
-genrule(
-    name = "openssl-build",
-    srcs = glob(["**/*"], exclude=["bazel-*"]),
-    outs = [
-        "libcrypto.a",
-        "libssl.a",
-        "include/openssl/opensslconf.h",
-    ],
-    cmd = """
-        OPENSSL_ROOT=$$(dirname $(location config))
-        pushd $$OPENSSL_ROOT
-            ./config
-            make -j 4
-        popd
-        cp $$OPENSSL_ROOT/libcrypto.a $(location libcrypto.a)
-        cp $$OPENSSL_ROOT/libssl.a $(location libssl.a)
-        cp $$OPENSSL_ROOT/include/openssl/opensslconf.h $(location include/openssl/opensslconf.h)
-    """,
-)
+load("//:bazel/yara_deps.bzl", "yara_deps")
+yara_deps()
