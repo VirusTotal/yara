@@ -63,7 +63,7 @@ cc_library(
 )
 
 
-load("@//:bazel/jansson.bzl", "jansson_api_test")
+load("@com_github_virustotal_yara//:bazel/jansson.bzl", "jansson_api_test")
 
 jansson_api_test("test_array")
 jansson_api_test("test_chaos")
