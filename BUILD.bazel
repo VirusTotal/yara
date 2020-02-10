@@ -27,7 +27,7 @@
 
 # Bazel (http://bazel.io/) WORKSPACE file for YARA.
 
-load("@//:bazel/yara.bzl", "yara_library")
+load("@com_github_virustotal_yara//:bazel/yara.bzl", "yara_library")
 
 # Just YARA's error codes. This is useful for sandboxing as it avoids pulling
 # in the whole library.
