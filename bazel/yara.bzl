@@ -60,7 +60,7 @@ module_list = rule(
 
 
 def yara_library(name, defines=[], modules=[], modules_srcs=[],
-                 crypto_libs=["@openssl//:crypto"]):
+                 deps=[], crypto_libs=["@openssl//:crypto"]):
   """Macro for generating the YARA library with a specific list of modules.
 
   This macro allows to cherry-pick the modules that you want to build into the
@@ -197,7 +197,7 @@ def yara_library(name, defines=[], modules=[], modules_srcs=[],
         "libyara/hex_grammar.y",
         "libyara/re_grammar.y",
     ],
-    deps = crypto_libs + [
+    deps = deps + crypto_libs + [
         "@jansson//:jansson",
     ],
     visibility = ["//visibility:public"],
