@@ -17,9 +17,6 @@ YARA_COPTS = YARA_CONFIG_OPTS + [
     "-Ilibyara",
     "-Ilibyara/modules",
 ] + select({
-    ":crypto_library_boringssl": ["-DBORINGSSL"],
-     "//conditions:default": [],
-}) + select({
     "@bazel_tools//src/conditions:darwin": [
         "-DUSE_MACH_PROC",
         "-DHAVE_SCAN_PROC_IMPL=1",

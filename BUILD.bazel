@@ -59,6 +59,9 @@ yara_library(
     defines = select({
         ":profiling_enabled": ["PROFILING_ENABLED"],
         "//conditions:default": [],
+    }) + select({
+        ":crypto_library_boringssl": ["BORINGSSL"],
+        "//conditions:default": [],
     }),
     modules = [
         "cuckoo",
