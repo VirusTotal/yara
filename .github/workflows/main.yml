@@ -20,5 +20,5 @@ jobs:
       uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: fuzzer_testcase
-        path: ./out/testcase
+        name: bug_report
+        path: ./out/bug_report
