@@ -37,10 +37,45 @@ genrule(
     """,
 )
 
+MAGIC_COPTS = [
+    "-DVERSION=\\\"5.38\\\"",
+    ] + select({
+    "@bazel_tools//src/conditions:darwin": [
+        "-DHAVE_FORK=1",
+        "-DHAVE_INTTYPES_H=1",
+        "-DHAVE_STDINT_H=1",
+        "-DHAVE_STRLCAT=1",
+        "-DHAVE_STRLCPY=1",
+        "-DHAVE_UNISTD_H=1",
+    ],
+    "@bazel_tools//src/conditions:freebsd": [
+        "-DHAVE_FORK=1",
+        "-DHAVE_INTTYPES_H=1",
+        "-DHAVE_STDINT_H=1",
+        "-DHAVE_STRLCAT=1",
+        "-DHAVE_STRLCPY=1",
+        "-DHAVE_UNISTD_H=1",
+    ],
+    "@bazel_tools//src/conditions:linux_aarch64": [
+        "-DHAVE_FORK=1",
+        "-DHAVE_INTTYPES_H=1",
+        "-DHAVE_STDINT_H=1",
+        "-DHAVE_UNISTD_H=1",
+    ],
+    "@bazel_tools//src/conditions:linux_x86_64": [
+        "-DHAVE_FORK=1",
+        "-DHAVE_INTTYPES_H=1",
+        "-DHAVE_STDINT_H=1",
+        "-DHAVE_UNISTD_H=1",
+    ],
+    "@bazel_tools//src/conditions:windows": [
+    ],
+})
+
 cc_library(
     name = "magic",
-    hdrs = glob(["src/*.h"]) + ["src/magic.h"],
-    srcs = [
+    hdrs = ["src/magic.h"],
+    srcs = glob(["src/*.h"]) + [
         "src/apprentice.c",
         "src/apptype.c",
         "src/ascmagic.c",
@@ -54,7 +89,6 @@ cc_library(
         "src/der.c",
         "src/dprintf.c",
         "src/encoding.c",
-        #"src/file.c",
         "src/fmtcheck.c",
         "src/fsmagic.c",
         "src/funcs.c",
@@ -73,21 +107,26 @@ cc_library(
         "src/seccomp.c",
         "src/softmagic.c",
         "src/strcasestr.c",
-        #"src/strlcat.c",
-        #"src/strlcpy.c",
         "src/teststrchr.c",
         "src/vasprintf.c",
+    ] + select({
+    "@bazel_tools//src/conditions:darwin": [
     ],
+    "@bazel_tools//src/conditions:freebsd": [
+    ],
+    "@bazel_tools//src/conditions:linux_aarch64": [
+        "src/strlcat.c",
+        "src/strlcpy.c",
+    ],
+    "@bazel_tools//src/conditions:linux_x86_64": [
+        "src/strlcat.c",
+        "src/strlcpy.c",
+    ],
+    "@bazel_tools//src/conditions:windows": [
+        "src/strlcat.c",
+        "src/strlcpy.c",
+    ]}),
     includes = [".", "src"],
-    defines = [
-        "VERSION=\\\"5.38\\\"",
-        "HAVE_FORK=1",
-        "HAVE_STDINT_H=1",
-        "HAVE_STRLCPY=1",
-        "HAVE_STRLCAT=1",
-        "HAVE_INTTYPES_H=1",
-        "HAVE_UNISTD_H=1",
-    ],
-    copts = [],
+    copts = MAGIC_COPTS,
     visibility = ["//visibility:public"],
 )
