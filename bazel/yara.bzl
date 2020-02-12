@@ -197,8 +197,6 @@ def yara_library(name, defines=[], modules=[], modules_srcs=[],
         "libyara/hex_grammar.y",
         "libyara/re_grammar.y",
     ],
-    deps = deps + crypto_libs + [
-        "@jansson//:jansson",
-    ],
+    deps = deps + crypto_libs,
     visibility = ["//visibility:public"],
   )

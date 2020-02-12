@@ -55,6 +55,14 @@ def yara_deps():
             strip_prefix = "jansson-2.12",
             build_file = "@com_github_virustotal_yara//:bazel/jansson.BUILD",
         )
+    if not native.existing_rule("magic"):
+        http_archive(
+            name = "magic",
+            url = "https://github.com/file/file/archive/FILE5_38.tar.gz",
+            sha256 = "338ebe8cb536a3f86750b4df62be2d382f6da66afdb0087b36a1a3e14ea4baf8",
+            strip_prefix = "file-FILE5_38",
+            build_file = "@com_github_virustotal_yara//:bazel/magic.BUILD",
+        )
     if not native.existing_rule("com_google_sandboxed_api"):
         git_repository(
             name = "com_google_sandboxed_api",
