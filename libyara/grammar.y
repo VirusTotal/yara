@@ -653,6 +653,8 @@ string_modifiers
       }
     | string_modifiers string_modifier
       {
+        int result = ERROR_SUCCESS;
+
         $$ = $1;
 
         set_flag_or_error($$.flags, $2.flags);
@@ -674,7 +676,23 @@ string_modifiers
         if (($2.flags & STRING_GFLAGS_BASE64) ||
             ($2.flags & STRING_GFLAGS_BASE64_WIDE))
         {
-          $$.alphabet = $2.alphabet;
+          if ($$.alphabet != NULL)
+          {
+            if (sized_string_cmp($$.alphabet, $2.alphabet) != 0)
+            {
+              yr_compiler_set_error_extra_info(
+                  compiler, "can not specify multiple alphabets");
+              result = ERROR_INVALID_MODIFIER;
+              yr_free($$.alphabet);
+            }
+            yr_free($2.alphabet);
+          }
+          else
+          {
+            $$.alphabet = $2.alphabet;
+          }
+
+          fail_if_error(result);
         }
       }
     ;
@@ -755,6 +773,7 @@ string_modifier
 
         if ($3->length != 64)
         {
+          yr_free($3);
           result = yr_compiler_set_error_extra_info(
               compiler, "length of base64 alphabet must be 64");
           result = ERROR_INVALID_MODIFIER;
@@ -776,6 +795,7 @@ string_modifier
 
         if ($3->length != 64)
         {
+          yr_free($3);
           result = yr_compiler_set_error_extra_info(
               compiler, "length of base64 alphabet must be 64");
           result = ERROR_INVALID_MODIFIER;

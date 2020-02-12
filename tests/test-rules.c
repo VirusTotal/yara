@@ -727,6 +727,15 @@ static void test_strings()
         true\n\
     }", ERROR_INVALID_MODIFIER);
 
+  // Specifying different alphabets is an error.
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" base64 base64wide(\"abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ,.\")\n\
+      condition:\n\
+        true\n\
+    }", ERROR_INVALID_MODIFIER);
+
   // Be specific about the offsets in these tests to make sure we are matching
   // the correct strings. Also be specific about the length because we want to
   // make sure the match is not the entire base64 string, but just the

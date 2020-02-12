@@ -236,6 +236,8 @@ static int _yr_base64_create_nodes(
         yr_free(node);
       });
 
+    yr_free(encoded_str);
+
     node->str = final_str;
     node->escaped = _yr_base64_count_escaped(node->str);
     node->next = NULL;
@@ -484,6 +486,8 @@ int yr_base64_ast_from_string(
   FAIL_ON_ERROR_WITH_CLEANUP(
       _yr_base64_create_regexp(head, re_ast, error),
       _yr_base64_destroy_nodes(head));
+
+  _yr_base64_destroy_nodes(head);
 
   return ERROR_SUCCESS;
 }
