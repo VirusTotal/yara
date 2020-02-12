@@ -60,7 +60,7 @@ static SIZED_STRING* _yr_modified_base64_encode(
   uint8_t* p;
   uint8_t* end;
   char* alphabet_str = alphabet->c_string;
-  uint8_t tmp[len + i]; // This is valid c99!
+  uint8_t* tmp;
   int j;
 
   *pad = ((i + len) % 3) ? 3 - ((i + len) % 3) : 0;
@@ -70,6 +70,13 @@ static SIZED_STRING* _yr_modified_base64_encode(
       sizeof(SIZED_STRING) + i + ((len * 4 + 3) / 3) + *pad);
   if (out == NULL)
     return NULL;
+
+  tmp = (uint8_t*) yr_malloc(sizeof(char) * (len + i));
+  if (tmp == NULL)
+  {
+    yr_free(out);
+    return NULL;
+  }
 
   // Prepend appropriate number of bytes and copy remaining input bytes into
   // temporary buffer.
@@ -107,6 +114,7 @@ static SIZED_STRING* _yr_modified_base64_encode(
     *p++ = '=';
   }
 
+  yr_free(tmp);
   out->length = p - (uint8_t*) out->c_string;
   return out;
 }
@@ -491,5 +499,3 @@ int yr_base64_ast_from_string(
 
   return ERROR_SUCCESS;
 }
-
-
