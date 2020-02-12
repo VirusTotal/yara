@@ -71,7 +71,7 @@ static SIZED_STRING* _yr_modified_base64_encode(
   if (out == NULL)
     return NULL;
 
-  tmp = (uint8_t*) yr_malloc(sizeof(char) * (len + i));
+  tmp = (uint8_t*) yr_malloc(sizeof(uint8_t) * (len + i));
   if (tmp == NULL)
   {
     yr_free(out);
