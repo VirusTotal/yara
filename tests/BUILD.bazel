@@ -49,6 +49,7 @@ cc_test(
     srcs = ["test-alignment.c"],
     copts = COPTS,
     deps = ["@//:libyara"],
+    linkstatic=True,
 )
 
 cc_test(
@@ -59,6 +60,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -78,6 +80,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -96,6 +99,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -107,6 +111,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -118,6 +123,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -128,6 +134,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -138,6 +145,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -159,6 +167,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -171,6 +180,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -182,6 +192,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -192,4 +203,5 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
