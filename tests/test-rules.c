@@ -1237,6 +1237,16 @@ void test_for()
       }",
       NULL);
 
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any k,v in tests.empty_struct_dict : ( \
+            true \
+          ) \
+      }",
+    NULL);
+
   assert_true_rule(
       "import \"tests\" \
       rule test { \
