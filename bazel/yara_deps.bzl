@@ -56,6 +56,8 @@ def yara_deps():
             build_file = "@com_github_virustotal_yara//:bazel/jansson.BUILD",
         )
     if not native.existing_rule("magic"):
+        # When updating this dependency to a more recent version, the version
+        # in the bazel/magic.BUILD must be updated acordingly.
         http_archive(
             name = "magic",
             url = "https://github.com/file/file/archive/FILE5_38.tar.gz",

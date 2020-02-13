@@ -28,6 +28,11 @@
 
 # Bazel (http://bazel.io/) BUILD file for the libmagic library.
 
+# Rule for creating magic.h from magic.h.in. The two files are identical, except
+# for magic.h.in not having the actual version number. Instead it has a X.YY
+# placeholder that is replaced with the version number (i.e: 538) during build
+# time. When this library is updated the version number in this rule must be
+# updated accordingly.
 genrule(
     name = "magic_h",
     srcs = ["src/magic.h.in"],
@@ -38,7 +43,9 @@ genrule(
 )
 
 MAGIC_COPTS = [
-    "-DVERSION=\\\"5.38\\\"",
+    # The VERSION macro usually contains the actual version (e.g: "5.38") but
+    # any arbitrary string will work. We simply use "BUILT_BY_YARA".
+    "-DVERSION=\\\"BUILT_BY_YARA\\\"",
     ] + select({
     "@bazel_tools//src/conditions:darwin": [
         "-DHAVE_FORK=1",
@@ -69,7 +76,7 @@ MAGIC_COPTS = [
         "-DHAVE_UNISTD_H=1",
     ],
     "@bazel_tools//src/conditions:windows": [
-    ],
+    ]
 })
 
 cc_library(
