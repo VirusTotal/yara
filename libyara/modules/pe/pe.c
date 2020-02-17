@@ -1125,12 +1125,208 @@ static EXPORT_FUNCTIONS* pe_parse_exports(
 // but you won't have signature-related features in the PE module.
 #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
 
+//
+// Parse a PKCS7 blob, looking for certs and nested PKCS7 blobs.
+//
+
+void _parse_pkcs7(
+    PE* pe,
+    PKCS7* pkcs7,
+    int* counter)
+{
+  int i, j;
+  time_t date_time;
+  const char* sig_alg;
+  char buffer[256];
+  int bytes;
+  int idx;
+  const EVP_MD* sha1_digest = EVP_sha1();
+  const unsigned char* p;
+  unsigned char thumbprint[YR_SHA1_LEN];
+  char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
+
+  PKCS7_SIGNER_INFO* signer_info = NULL;
+  PKCS7* nested_pkcs7 = NULL;
+  ASN1_INTEGER* serial = NULL;
+  ASN1_TYPE* nested = NULL;
+  ASN1_STRING* value = NULL;
+  X509* cert = NULL;
+  STACK_OF(X509)* certs = NULL;
+  X509_ATTRIBUTE *xa = NULL;
+  STACK_OF(X509_ATTRIBUTE)* attrs = NULL;
+
+  if (*counter >= MAX_PE_CERTS)
+    return;
+
+  certs = PKCS7_get0_signers(pkcs7, NULL, 0);
+
+  if (!certs)
+    return;
+
+  for (i = 0; i < sk_X509_num(certs) && *counter < MAX_PE_CERTS; i++)
+  {
+    cert = sk_X509_value(certs, i);
+
+    X509_digest(cert, sha1_digest, thumbprint, NULL);
+
+    for (j = 0; j < YR_SHA1_LEN; j++)
+      sprintf(thumbprint_ascii + (j * 2), "%02x", thumbprint[j]);
+
+    set_string(
+        (char*) thumbprint_ascii,
+        pe->object,
+        "signatures[%i].thumbprint",
+        *counter);
+
+    X509_NAME_oneline(
+        X509_get_issuer_name(cert), buffer, sizeof(buffer));
+
+    set_string(buffer, pe->object, "signatures[%i].issuer", *counter);
+
+    X509_NAME_oneline(
+        X509_get_subject_name(cert), buffer, sizeof(buffer));
+
+    set_string(buffer, pe->object, "signatures[%i].subject", *counter);
+
+    set_integer(
+        X509_get_version(cert) + 1, // Versions are zero based, so add one.
+        pe->object,
+        "signatures[%i].version", *counter);
+
+    sig_alg = OBJ_nid2ln(X509_get_signature_nid(cert));
+
+    set_string(sig_alg, pe->object, "signatures[%i].algorithm", *counter);
+
+    serial = X509_get_serialNumber(cert);
+
+    if (serial)
+    {
+      // ASN1_INTEGER can be negative (serial->type & V_ASN1_NEG_INTEGER),
+      // in which case the serial number will be stored in 2's complement.
+      //
+      // Handle negative serial numbers, which are technically not allowed
+      // by RFC5280, but do exist. An example binary which has a negative
+      // serial number is: 4bfe05f182aa273e113db6ed7dae4bb8.
+      //
+      // Negative serial numbers are handled by calling i2d_ASN1_INTEGER()
+      // with a NULL second parameter. This will return the size of the
+      // buffer necessary to store the proper serial number.
+      //
+      // Do this even for positive serial numbers because it makes the code
+      // cleaner and easier to read.
+
+      bytes = i2d_ASN1_INTEGER(serial, NULL);
+
+      // According to X.509 specification the maximum length for the
+      // serial number is 20 octets. Add two bytes to account for
+      // DER type and length information.
+
+      if (bytes > 2 && bytes <= 22)
+      {
+        // Now that we know the size of the serial number allocate enough
+        // space to hold it, and use i2d_ASN1_INTEGER() one last time to
+        // hold it in the allocated buffer.
+
+        unsigned char* serial_der = (unsigned char*) yr_malloc(bytes);
+
+        if (serial_der != NULL)
+        {
+          unsigned char* serial_bytes;
+          char *serial_ascii;
+
+          bytes = i2d_ASN1_INTEGER(serial, &serial_der);
+
+          // i2d_ASN1_INTEGER() moves the pointer as it writes into
+          // serial_bytes. Move it back.
+
+          serial_der -= bytes;
+
+          // Skip over DER type, length information
+          serial_bytes = serial_der + 2;
+          bytes -= 2;
+
+          // Also allocate space to hold the "common" string format:
+          // 00:01:02:03:04...
+          //
+          // For each byte in the serial to convert to hexlified format we
+          // need three bytes, two for the byte itself and one for colon.
+          // The last one doesn't have the colon, but the extra byte is used
+          // for the NULL terminator.
+
+          serial_ascii = (char*) yr_malloc(bytes * 3);
+
+          if (serial_ascii)
+          {
+            for (j = 0; j < bytes; j++)
+            {
+              // Don't put the colon on the last one.
+              if (j < bytes - 1)
+                snprintf(
+                  serial_ascii + 3 * j, 4, "%02x:", serial_bytes[j]);
+              else
+                snprintf(
+                  serial_ascii + 3 * j, 3, "%02x", serial_bytes[j]);
+            }
+
+            set_string(
+                serial_ascii,
+                pe->object,
+                "signatures[%i].serial",
+                *counter);
+
+            yr_free(serial_ascii);
+          }
+
+          yr_free(serial_der);
+        }
+      }
+    }
+
+    date_time = ASN1_get_time_t(X509_get_notBefore(cert));
+    set_integer(date_time, pe->object, "signatures[%i].not_before", *counter);
+
+    date_time = ASN1_get_time_t(X509_get_notAfter(cert));
+    set_integer(date_time, pe->object, "signatures[%i].not_after", *counter);
+
+    (*counter)++;
+  }
+
+  // See if there is a nested signature, which is apparently an authenticode
+  // specific feature. See https://github.com/VirusTotal/yara/issues/515.
+  signer_info = sk_PKCS7_SIGNER_INFO_value(pkcs7->d.sign->signer_info, 0);
+  if (signer_info != NULL)
+  {
+    attrs = PKCS7_get_attributes(signer_info);
+    idx = X509at_get_attr_by_NID(
+        attrs, OBJ_txt2nid(SPC_NESTED_SIGNATURE_OBJID), -1);
+    xa = X509at_get_attr(attrs, idx);
+    for (j = 0; j < MAX_PE_CERTS; j++)
+    {
+      nested = X509_ATTRIBUTE_get0_type(xa, j);
+      if (nested == NULL)
+        break;
+      value = nested->value.sequence;
+      p = value->data;
+      nested_pkcs7 = d2i_PKCS7(NULL, &p, value->length);
+      if (nested_pkcs7 != NULL)
+      {
+        _parse_pkcs7(pe, nested_pkcs7, counter);
+        PKCS7_free(nested_pkcs7);
+      }
+    }
+  }
+
+  sk_X509_free(certs);
+}
+
+
 static void pe_parse_certificates(
     PE* pe)
 {
-  int i, counter = 0;
+  int counter = 0;
 
   const uint8_t* eod;
+  const unsigned char* cert_p;
   uintptr_t end;
 
   PWIN_CERTIFICATE win_cert;
@@ -1178,9 +1374,7 @@ static void pe_parse_certificates(
          (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) < eod &&
          (uint8_t*) win_cert + yr_le32toh(win_cert->Length) <= eod)
   {
-    BIO* cert_bio;
     PKCS7* pkcs7;
-    STACK_OF(X509)* certs;
 
     // Some sanity checks
 
@@ -1197,176 +1391,24 @@ static void pe_parse_certificates(
     if (yr_le16toh(win_cert->Revision) != WIN_CERT_REVISION_2_0 ||
         yr_le16toh(win_cert->CertificateType) != WIN_CERT_TYPE_PKCS_SIGNED_DATA)
     {
-      uintptr_t end = (uintptr_t)
-          ((uint8_t *) win_cert) + yr_le32toh(win_cert->Length);
+      end = (uintptr_t)((uint8_t*) win_cert) + yr_le32toh(win_cert->Length);
 
       win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
       continue;
     }
 
-    cert_bio = BIO_new_mem_buf(
-        win_cert->Certificate,
-        yr_le32toh(win_cert->Length) - WIN_CERTIFICATE_HEADER_SIZE);
-
-    if (!cert_bio)
-      break;
-
-    pkcs7 = d2i_PKCS7_bio(cert_bio, NULL);
-    certs = PKCS7_get0_signers(pkcs7, NULL, 0);
-
-    if (!certs)
+    cert_p = win_cert->Certificate;
+    end = (uintptr_t)((uint8_t*) win_cert) + yr_le32toh(win_cert->Length);
+    while ((uintptr_t) cert_p < end && counter < MAX_PE_CERTS)
     {
-      BIO_free(cert_bio);
+      pkcs7 = d2i_PKCS7(NULL, &cert_p, (win_cert->Length));
+      if (pkcs7 == NULL)
+        break;
+      _parse_pkcs7(pe, pkcs7, &counter);
       PKCS7_free(pkcs7);
-      break;
     }
 
-    for (i = 0; i < sk_X509_num(certs); i++)
-    {
-      time_t date_time;
-      const char* sig_alg;
-      char buffer[256];
-      int bytes;
-      const EVP_MD* sha1_digest = EVP_sha1();
-      unsigned char thumbprint[YR_SHA1_LEN];
-      char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
-
-      ASN1_INTEGER* serial;
-
-      X509* cert = sk_X509_value(certs, i);
-
-      X509_digest(cert, sha1_digest, thumbprint, NULL);
-
-      for (i = 0; i < YR_SHA1_LEN; i++)
-        sprintf(thumbprint_ascii + (i * 2), "%02x", thumbprint[i]);
-
-      set_string(
-          (char*) thumbprint_ascii,
-          pe->object,
-          "signatures[%i].thumbprint",
-          counter);
-
-      X509_NAME_oneline(
-          X509_get_issuer_name(cert), buffer, sizeof(buffer));
-
-      set_string(buffer, pe->object, "signatures[%i].issuer", counter);
-
-      X509_NAME_oneline(
-          X509_get_subject_name(cert), buffer, sizeof(buffer));
-
-      set_string(buffer, pe->object, "signatures[%i].subject", counter);
-
-      set_integer(
-          X509_get_version(cert) + 1, // Versions are zero based, so add one.
-          pe->object,
-          "signatures[%i].version", counter);
-
-      sig_alg = OBJ_nid2ln(X509_get_signature_nid(cert));
-
-      set_string(sig_alg, pe->object, "signatures[%i].algorithm", counter);
-
-      serial = X509_get_serialNumber(cert);
-
-      if (serial)
-      {
-        // ASN1_INTEGER can be negative (serial->type & V_ASN1_NEG_INTEGER),
-        // in which case the serial number will be stored in 2's complement.
-        //
-        // Handle negative serial numbers, which are technically not allowed
-        // by RFC5280, but do exist. An example binary which has a negative
-        // serial number is: 4bfe05f182aa273e113db6ed7dae4bb8.
-        //
-        // Negative serial numbers are handled by calling i2d_ASN1_INTEGER()
-        // with a NULL second parameter. This will return the size of the
-        // buffer necessary to store the proper serial number.
-        //
-        // Do this even for positive serial numbers because it makes the code
-        // cleaner and easier to read.
-
-        bytes = i2d_ASN1_INTEGER(serial, NULL);
-
-        // According to X.509 specification the maximum length for the
-        // serial number is 20 octets. Add two bytes to account for
-        // DER type and length information.
-
-        if (bytes > 2 && bytes <= 22)
-        {
-          // Now that we know the size of the serial number allocate enough
-          // space to hold it, and use i2d_ASN1_INTEGER() one last time to
-          // hold it in the allocated buffer.
-
-          unsigned char* serial_der = (unsigned char*) yr_malloc(bytes);
-
-          if (serial_der != NULL)
-          {
-            unsigned char* serial_bytes;
-            char *serial_ascii;
-
-            bytes = i2d_ASN1_INTEGER(serial, &serial_der);
-
-            // i2d_ASN1_INTEGER() moves the pointer as it writes into
-            // serial_bytes. Move it back.
-
-            serial_der -= bytes;
-
-            // Skip over DER type, length information
-            serial_bytes = serial_der + 2;
-            bytes -= 2;
-
-            // Also allocate space to hold the "common" string format:
-            // 00:01:02:03:04...
-            //
-            // For each byte in the serial to convert to hexlified format we
-            // need three bytes, two for the byte itself and one for colon.
-            // The last one doesn't have the colon, but the extra byte is used
-            // for the NULL terminator.
-
-            serial_ascii = (char*) yr_malloc(bytes * 3);
-
-            if (serial_ascii)
-            {
-              int j;
-
-              for (j = 0; j < bytes; j++)
-              {
-                // Don't put the colon on the last one.
-                if (j < bytes - 1)
-                  snprintf(
-                    serial_ascii + 3 * j, 4, "%02x:", serial_bytes[j]);
-                else
-                  snprintf(
-                    serial_ascii + 3 * j, 3, "%02x", serial_bytes[j]);
-              }
-
-              set_string(
-                  serial_ascii,
-                  pe->object,
-                  "signatures[%i].serial",
-                  counter);
-
-              yr_free(serial_ascii);
-            }
-
-            yr_free(serial_der);
-          }
-        }
-      }
-
-      date_time = ASN1_get_time_t(X509_getm_notBefore(cert));
-      set_integer(date_time, pe->object, "signatures[%i].not_before", counter);
-
-      date_time = ASN1_get_time_t(X509_getm_notAfter(cert));
-      set_integer(date_time, pe->object, "signatures[%i].not_after", counter);
-
-      counter++;
-    }
-
-    end = (uintptr_t)((uint8_t *) win_cert) + yr_le32toh(win_cert->Length);
-    win_cert = (PWIN_CERTIFICATE)(end + (end % 8));
-
-    BIO_free(cert_bio);
-    PKCS7_free(pkcs7);
-    sk_X509_free(certs);
+    win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
   }
 
   set_integer(counter, pe->object, "number_of_signatures");
@@ -2653,6 +2695,11 @@ end_declarations;
 int module_initialize(
     YR_MODULE* module)
 {
+#if defined(HAVE_LIBCRYPTO)
+  // Not checking return value here because if it fails we will not parse the
+  // nested signature silently.
+  OBJ_create(SPC_NESTED_SIGNATURE_OBJID, NULL, NULL);
+#endif
   return ERROR_SUCCESS;
 }
 

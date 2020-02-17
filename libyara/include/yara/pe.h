@@ -464,6 +464,8 @@ typedef struct _VERSION_INFO {
 } VERSION_INFO, *PVERSION_INFO;
 
 
+#define MAX_PE_CERTS 16
+
 #define WIN_CERT_REVISION_1_0 0x0100
 #define WIN_CERT_REVISION_2_0 0x0200
 
@@ -480,6 +482,8 @@ typedef struct _WIN_CERTIFICATE {
     WORD  CertificateType;
     BYTE  Certificate[0];
 } WIN_CERTIFICATE, *PWIN_CERTIFICATE;
+
+#define SPC_NESTED_SIGNATURE_OBJID  "1.3.6.1.4.1.311.2.4.1"
 
 
 //
