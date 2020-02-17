@@ -141,6 +141,10 @@ begin_declarations;
     declare_string("s");
   end_struct_dictionary("struct_dict");
 
+  begin_struct_dictionary("empty_struct_dict");
+    declare_integer("unused");
+  end_struct_dictionary("empty_struct_dict");
+
   declare_function("match", "rs", "i", match);
   declare_function("isum", "ii", "i", isum_2);
   declare_function("isum", "iii", "i", isum_3);
