@@ -222,6 +222,7 @@
     <ClCompile Include="..\..\..\libyara\ahocorasick.c" />
     <ClCompile Include="..\..\..\libyara\arena.c" />
     <ClCompile Include="..\..\..\libyara\atoms.c" />
+    <ClCompile Include="..\..\..\libyara\base64.c" />
     <ClCompile Include="..\..\..\libyara\bitmask.c" />
     <ClCompile Include="..\..\..\libyara\compiler.c" />
     <ClCompile Include="..\..\..\libyara\exec.c" />
