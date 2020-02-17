@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2020. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,51 +27,26 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _SIZEDSTR_H
-#define _SIZEDSTR_H
+#ifndef YR_BASE64_H
+#define YR_BASE64_H
 
-#include <stddef.h>
+#include <yara/types.h>
+#include <yara/re.h>
+#include <yara/sizedstr.h>
 
-#include <yara/integers.h>
+typedef struct BASE64_NODE BASE64_NODE;
 
-//
-// This struct is used to support strings containing null chars. The length of
-// the string is stored along the string data. However the string data is also
-// terminated with a null char.
-//
+struct BASE64_NODE {
 
-#define SIZED_STRING_FLAGS_NO_CASE  1
-#define SIZED_STRING_FLAGS_DOT_ALL  2
+  SIZED_STRING* str;
+  int escaped;
+  BASE64_NODE* next;
 
-#pragma pack(push)
-#pragma pack(8)
+};
 
-
-typedef struct _SIZED_STRING
-{
-  uint32_t length;
-  uint32_t flags;
-
-  char c_string[1];
-
-} SIZED_STRING;
-
-#pragma pack(pop)
-
-
-int sized_string_cmp(
-    SIZED_STRING* s1,
-    SIZED_STRING* s2);
-
-
-SIZED_STRING* sized_string_dup(
-    SIZED_STRING* s);
-
-
-SIZED_STRING* sized_string_new(
-    const char* s);
-
-SIZED_STRING* sized_string_convert_to_wide(
-    SIZED_STRING* s);
-
+int yr_base64_ast_from_string(
+    SIZED_STRING* in_str,
+    YR_MODIFIER modifier,
+    RE_AST** re_ast,
+    RE_ERROR* error);
 #endif

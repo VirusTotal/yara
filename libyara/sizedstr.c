@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <yara/mem.h>
 #include <yara/sizedstr.h>
+#include <yara/types.h>
 
 
 int sized_string_cmp(
@@ -93,4 +94,30 @@ SIZED_STRING* sized_string_new(
   result->c_string[length] = '\0';
 
   return result;
+}
+
+//
+// Convert a SIZED_STRING to a wide version. It is up to the caller to free
+// the returned string.
+//
+
+SIZED_STRING* sized_string_convert_to_wide(
+  SIZED_STRING* s)
+{
+  size_t i;
+  size_t j = 0;
+  SIZED_STRING* wide = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + s->length * 2);
+  if (wide == NULL)
+    return NULL;
+
+  for (i = 0; i <= s->length; i++)
+  {
+    wide->c_string[j++] = s->c_string[i];
+    wide->c_string[j++] = '\x00';
+  }
+
+  wide->length = s->length * 2;
+  wide->flags = s->flags | STRING_GFLAGS_WIDE;
+
+  return wide;
 }
