@@ -38,6 +38,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 
+// PKCS7_SIGNER_INFO is defined by wincrypt.h, but it conflicts with a type
+// defined in openssl/pkcs7.h which is used in pe.c. Let's undefine the macro.
+#undef PKCS7_SIGNER_INFO
+
 // These definitions are not present in older Windows headers.
 
 #ifndef IMAGE_FILE_MACHINE_ARMNT
@@ -47,6 +51,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef IMAGE_FILE_MACHINE_ARM64
 #define IMAGE_FILE_MACHINE_ARM64             0xaa64
 #endif
+
+
 
 #else
 
