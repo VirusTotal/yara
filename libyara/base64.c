@@ -147,7 +147,8 @@ static SIZED_STRING* _yr_base64_get_base64_substring(
 
   length = encoded_str->length - (leading + trailing);
 
-  new_str = yr_malloc(sizeof(SIZED_STRING) + length);
+  new_str = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + length);
+
   if (new_str == NULL)
     return NULL;
 
@@ -162,7 +163,9 @@ static SIZED_STRING* _yr_base64_get_base64_substring(
     yr_free(new_str);
   }
   else
+  {
     final_str = new_str;
+  }
 
   return final_str;
 }
@@ -254,7 +257,9 @@ static int _yr_base64_create_nodes(
       *head = node;
 
     if (*tail == NULL)
+    {
       *tail = node;
+    }
     else
     {
       (*tail)->next = node;
