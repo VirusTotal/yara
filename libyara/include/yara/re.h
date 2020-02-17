@@ -105,7 +105,6 @@ typedef int RE_MATCH_CALLBACK_FUNC(
     int flags,
     void* args);
 
-
 int yr_re_ast_create(
     RE_AST** re_ast);
 
@@ -202,6 +201,5 @@ int yr_re_match(
     YR_SCAN_CONTEXT* context,
     RE* re,
     const char* target);
-
 
 #endif
