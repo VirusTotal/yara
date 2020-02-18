@@ -1174,6 +1174,49 @@ In summary, the syntax of this operator is:
 
     for expression identifier in indexes : ( boolean_expression )
 
+
+Iterators
+---------
+
+In YARA 3.12 the ``for..of`` operator was improved and now it can be used to
+iterate not only over integer enumerations and ranges (e.g: 1,2,3,4 and 1..4),
+but also over any kind of iterable data type, like arrays and dictionaries
+defined by YARA modules. For example, the following expression is valid in
+YARA 3.12:
+
+.. code-block:: yara
+
+    for any section in pe.sections : ( section.name == ".text" )
+
+This is equivalent to:
+
+.. code-block:: yara
+
+    for any i in (0..pe.number_of_sections-1) : ( pe.sections[i].name == ".text" )
+
+The new syntax is more natural and easy to understand, and is the recommended
+way of expressing this type of conditions in newer versions of YARA.
+
+For while iterating dictionaries you must provide to variable names that will
+hold the key and value of each entry in the dictionary, for example:
+
+.. code-block:: yara
+
+    for any k,v in some_dict : ( k == "foo" and v == "bar" )
+
+In general the ``for..of`` operator has the form:
+
+.. code-block:: yara
+
+    for <quantifier> <variables> in <iterable> : ( <some condition using the loop variables> )
+
+Where `<quantifier>` is either `any`, `all` or an expression that evaluates to
+the number of items in the iterator that must satisfy the condition, `<variables>`
+is a comma-separated list of variable names that holds the values for the
+current item (the number of variables depend on the type of `<iterable>`) and
+`<iterable>` is something that can be iterated.
+
+
 .. _referencing-rules:
 
 Referencing other rules
