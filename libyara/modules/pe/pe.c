@@ -302,7 +302,8 @@ static void pe_parse_debug_directory(
   if (yr_le32toh(data_dir->VirtualAddress) == 0)
     return;
 
-  debug_dir_offset = pe_rva_to_offset(pe, yr_le32toh(data_dir->VirtualAddress));
+  debug_dir_offset = pe_rva_to_offset(
+      pe, yr_le32toh(data_dir->VirtualAddress));
 
   if (debug_dir_offset < 0)
     return;
@@ -323,7 +324,8 @@ static void pe_parse_debug_directory(
     if (yr_le32toh(debug_dir->AddressOfRawData) == 0)
       continue;
     
-    pcv_hdr_offset = pe_rva_to_offset(pe, yr_le32toh(debug_dir->AddressOfRawData));
+    pcv_hdr_offset = pe_rva_to_offset(
+        pe, yr_le32toh(debug_dir->AddressOfRawData));
 
     if (pcv_hdr_offset < 0)
       continue;
