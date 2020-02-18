@@ -68,6 +68,7 @@ cc_test(
     srcs = ["test-rules.c"],
     copts = COPTS,
     data = [
+        "data/base64",
         "data/baz.yar",
         "data/foo.yar",
         "data/include/bar.yar",
@@ -156,6 +157,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 # This test fails when running under ASAN
