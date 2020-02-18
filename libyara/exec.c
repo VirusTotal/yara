@@ -245,7 +245,17 @@ static int iter_dict_next(
   if (stack->sp + 2 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
-  if (self->dict_it.index < items->used)
+  // If the dictionary has no items or the iterator reached the last item, abort
+  // the iteration, if not push the next key and value.
+  if (items == NULL || self->dict_it.index == items->used)
+  {
+    // Push true for indicating the iterator has been exhausted.
+    stack->items[stack->sp++].i = 1;
+    // Push UNDEFINED as a placeholder for the next key and value.
+    stack->items[stack->sp++].i = UNDEFINED;
+    stack->items[stack->sp++].i = UNDEFINED;
+  }
+  else
   {
     // Push the false value that indicates that the iterator is not exhausted.
     stack->items[stack->sp++].i = 0;
@@ -262,14 +272,6 @@ static int iter_dict_next(
     }
 
     self->dict_it.index++;
-  }
-  else
-  {
-    // Push true for indicating the iterator has been exhausted.
-    stack->items[stack->sp++].i = 1;
-    // Push UNDEFINED as a placeholder for the next key and value.
-    stack->items[stack->sp++].i = UNDEFINED;
-    stack->items[stack->sp++].i = UNDEFINED;
   }
 
   return ERROR_SUCCESS;
