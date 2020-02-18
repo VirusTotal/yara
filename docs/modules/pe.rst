@@ -813,6 +813,14 @@ Reference
 
         *Example: pe.rich_signature.toolid(170, 40219) >= 99*
 
+.. c:type:: pdb_path
+
+    .. versionadded:: 3.13.0
+
+    Path of the PDB file for this PE if present.
+
+    * Example: pe.pdb_path == "D:\\workspace\\2018_R9_RelBld\\target\\checkout\\custprof\\Release\\custprof.pdb"
+
 .. c:function:: exports(function_name)
 
     Function returning true if the PE exports *function_name* or
