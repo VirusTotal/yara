@@ -89,10 +89,9 @@ SIZED_STRING* sized_string_new(
   result->length = length;
   result->flags = 0;
 
-  strncpy(result->c_string, s, length);
-
-  result->c_string[length] = '\0';
-
+  // Copy the string and the null terminator.
+  strcpy(result->c_string, s);
+  
   return result;
 }
 
