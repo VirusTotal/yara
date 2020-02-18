@@ -475,7 +475,7 @@ At no point is the plaintext of the ``ascii`` or ``wide`` versions of the
 strings included in the search. If you want to also include those you can put
 them in a secondary string.
 
-The ``base64`` and ``widebas64`` modifiers also support a custom alphabet. For
+The ``base64`` and ``base64wide`` modifiers also support a custom alphabet. For
 example:
 
 .. code-block:: yara
@@ -492,7 +492,7 @@ example:
 The alphabet must be 64 bytes long.
 
 The ``base64`` and ``base64wide`` modifiers are only supported with text
-strings. Using these modifiers with a hexadecmial string or a regular expression
+strings. Using these modifiers with a hexadecimal string or a regular expression
 will cause a compiler error. Also, the ``xor`` and ``nocase`` modifiers used in
 combination with ``base64`` or ``base64wide`` will cause a compiler error.
 
