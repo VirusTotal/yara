@@ -458,9 +458,51 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY {
     WORD  NumberOfIdEntries;
 } IMAGE_RESOURCE_DIRECTORY, *PIMAGE_RESOURCE_DIRECTORY;
 
+#define IMAGE_DEBUG_TYPE_UNKNOWN                         0
+#define IMAGE_DEBUG_TYPE_COFF                            1
+#define IMAGE_DEBUG_TYPE_CODEVIEW                        2
+#define IMAGE_DEBUG_TYPE_FPO                             3
+#define IMAGE_DEBUG_TYPE_MISC                            4
+#define IMAGE_DEBUG_TYPE_EXCEPTION                       5
+#define IMAGE_DEBUG_TYPE_FIXUP                           6
+#define IMAGE_DEBUG_TYPE_BORLAND                         9
+
+typedef struct _IMAGE_DEBUG_DIRECTORY {
+    DWORD Characteristics;
+    DWORD TimeDateStamp;
+    WORD  MajorVersion;
+    WORD  MinorVersion;
+    DWORD Type;
+    DWORD SizeOfData;
+    DWORD AddressOfRawData;
+    DWORD PointerToRawData;
+} IMAGE_DEBUG_DIRECTORY, *PIMAGE_DEBUG_DIRECTORY;
+
 #pragma pack(pop)
 
 #endif  // _WIN32
+
+#define CVINFO_PDB70_CVSIGNATURE                0x53445352 // "RSDS"
+#define CVINFO_PDB20_CVSIGNATURE                0x3031424e // "NB10"
+
+typedef struct _CV_HEADER {
+    DWORD dwSignature;
+    DWORD dwOffset;
+} CV_HEADER, *PCV_HEADER;
+
+typedef struct _CV_INFO_PDB20 {
+    CV_HEADER CvHeader;
+    DWORD dwSignature;
+    DWORD dwAge;
+    BYTE PdbFileName[1];
+} CV_INFO_PDB20, *PCV_INFO_PDB20;
+
+typedef struct _CV_INFO_PDB70 {
+    DWORD CvSignature;
+    DWORD Signature[4];
+    DWORD Age;
+    BYTE  PdbFileName[1];
+} CV_INFO_PDB70, *PCV_INFO_PDB70;
 
 typedef struct _VERSION_INFO {
     WORD   Length;
