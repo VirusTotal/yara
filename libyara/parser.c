@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/ahocorasick.h>
 #include <yara/arena.h>
+#include <yara/base64.h>
 #include <yara/re.h>
 #include <yara/error.h>
 #include <yara/exec.h>
@@ -361,7 +362,9 @@ static int _yr_parser_write_string(
     return result;
 
   if (modifier.flags & STRING_GFLAGS_HEXADECIMAL ||
-      modifier.flags & STRING_GFLAGS_REGEXP)
+      modifier.flags & STRING_GFLAGS_REGEXP ||
+      modifier.flags & STRING_GFLAGS_BASE64 ||
+      modifier.flags & STRING_GFLAGS_BASE64_WIDE)
   {
     literal_string = yr_re_ast_extract_literal(re_ast);
 
@@ -548,14 +551,39 @@ int yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
+  // base64 and nocase together is not implemented.
+
+  if (modifier.flags & STRING_GFLAGS_NO_CASE &&
+      (modifier.flags & STRING_GFLAGS_BASE64 ||
+       modifier.flags & STRING_GFLAGS_BASE64_WIDE))
+  {
+      result = ERROR_INVALID_MODIFIER;
+      yr_compiler_set_error_extra_info(
+          compiler, modifier.flags & STRING_GFLAGS_BASE64 ? "base64 nocase" : "base64wide nocase");
+      goto _exit;
+  }
+
+  // base64 and xor together is not implemented.
+
+  if (modifier.flags & STRING_GFLAGS_XOR &&
+      (modifier.flags & STRING_GFLAGS_BASE64 ||
+       modifier.flags & STRING_GFLAGS_BASE64_WIDE))
+  {
+      result = ERROR_INVALID_MODIFIER;
+      yr_compiler_set_error_extra_info(
+          compiler, modifier.flags & STRING_GFLAGS_BASE64 ? "base64 xor" : "base64wide xor");
+      goto _exit;
+  }
+
   if (str->flags & SIZED_STRING_FLAGS_DOT_ALL)
     modifier.flags |= STRING_GFLAGS_DOT_ALL;
 
-  if (strcmp(identifier,"$") == 0)
+  if (strcmp(identifier, "$") == 0)
     modifier.flags |= STRING_GFLAGS_ANONYMOUS;
 
   if (!(modifier.flags & STRING_GFLAGS_WIDE) &&
-      !(modifier.flags & STRING_GFLAGS_XOR))
+      !(modifier.flags & STRING_GFLAGS_XOR) &&
+      !(modifier.flags & STRING_GFLAGS_BASE64 || modifier.flags & STRING_GFLAGS_BASE64_WIDE))
     modifier.flags |= STRING_GFLAGS_ASCII;
 
   // Hex strings are always handled as DOT_ALL regexps.
@@ -580,12 +608,16 @@ int yr_parser_reduce_string_declaration(
   modifier.flags |= STRING_GFLAGS_FIXED_OFFSET;
 
   if (modifier.flags & STRING_GFLAGS_HEXADECIMAL ||
-      modifier.flags & STRING_GFLAGS_REGEXP)
+      modifier.flags & STRING_GFLAGS_REGEXP ||
+      modifier.flags & STRING_GFLAGS_BASE64 ||
+      modifier.flags & STRING_GFLAGS_BASE64_WIDE)
   {
     if (modifier.flags & STRING_GFLAGS_HEXADECIMAL)
       result = yr_re_parse_hex(str->c_string, &re_ast, &re_error);
-    else
+    else if (modifier.flags & STRING_GFLAGS_REGEXP)
       result = yr_re_parse(str->c_string, &re_ast, &re_error);
+    else
+      result = yr_base64_ast_from_string(str, modifier, &re_ast, &re_error);
 
     if (result != ERROR_SUCCESS)
     {
@@ -602,6 +634,25 @@ int yr_parser_reduce_string_declaration(
           compiler, message);
 
       goto _exit;
+    }
+
+    if (modifier.flags & STRING_GFLAGS_BASE64 ||
+        modifier.flags & STRING_GFLAGS_BASE64_WIDE)
+    {
+      RE re;
+
+      FAIL_ON_ERROR(yr_arena_reserve_memory(
+          compiler->code_arena, sizeof(int64_t) + RE_MAX_CODE_SIZE));
+
+      re.flags = 0;
+
+      FAIL_ON_ERROR_WITH_CLEANUP(
+          yr_arena_write_data(
+              compiler->re_code_arena,
+              &re,
+              sizeof(re),
+              NULL),
+          yr_re_ast_destroy(re_ast));
     }
 
     if (re_ast->flags & RE_FLAGS_FAST_REGEXP)
@@ -705,7 +756,7 @@ int yr_parser_reduce_string_declaration(
     while (new_string->chained_to != NULL)
       new_string = new_string->chained_to;
   }
-  else  // not a STRING_GFLAGS_HEXADECIMAL or STRING_GFLAGS_REGEXP
+  else  // not a STRING_GFLAGS_HEXADECIMAL or STRING_GFLAGS_REGEXP or STRING_GFLAGS_BASE64 or STRING_GFLAGS_BASE64_WIDE
   {
     result = _yr_parser_write_string(
         identifier,

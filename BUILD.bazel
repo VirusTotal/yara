@@ -25,221 +25,81 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-YARA_CONFIG_OPTS = [
-    "-DBORINGSSL",
-    "-DHAVE_CLOCK_GETTIME=1",
-    #"-DHAVE_COMMONCRYPTO_COMMONCRYPTO_H",
-    "-DHAVE_DLFCN_H=1",
-    "-DHAVE_INTTYPES_H=1",
-    "-DHAVE_LIBCRYPTO=1",
-    "-DHAVE_LIBM=1",
-    "-DHAVE_MEMMEM=1",
-    "-DHAVE_MEMORY_H=1",
-    #"-DHAVE__MKGMTIME",
-    "-DHAVE_OPENSSL_ASN1_H=1",
-    "-DHAVE_OPENSSL_BIO_H=1",
-    "-DHAVE_OPENSSL_CRYPTO_H=1",
-    "-DHAVE_OPENSSL_MD5_H=1",
-    "-DHAVE_OPENSSL_PKCS7_H=1",
-    "-DHAVE_OPENSSL_SAFESTACK_H=1",
-    "-DHAVE_OPENSSL_SHA_H=1",
-    "-DHAVE_OPENSSL_X509_H=1",
-    #"-DHAVE_PTHREAD",
-    "-DHAVE_STDBOOL_H=1",
-    "-DHAVE_STDINT_H=1",
-    "-DHAVE_STDLIB_H=1",
-    "-DHAVE_STRING_H=1",
-    "-DHAVE_STRINGS_H=1",
-    "-DHAVE_SYS_STAT_H=1",
-    "-DHAVE_SYS_TYPES_H=1",
-    "-DHAVE_TIMEGM=1",
-    "-DHAVE_UNISTD_H=1",
-]
+# Bazel (http://bazel.io/) WORKSPACE file for YARA.
 
-YARA_MODULE_OPTS = [
-    "-DDEX_MODULE",
-    "-DDOTNET_MODULE",
-    "-DHASH_MODULE",
-    "-DMACHO_MODULE",
-]
-
-YARA_COPTS = YARA_MODULE_OPTS + select({
-    "@bazel_tools//src/conditions:darwin": [
-        "-DUSE_MACH_PROC",
-        "-DHAVE_SCAN_PROC_IMPL=1",
-        "-DHAVE_STRLCAT=1",
-        "-DHAVE_STRLCPY=1",
-    ],
-    "@bazel_tools//src/conditions:freebsd": [
-        "-DUSE_FREEBSD_PROC",
-        "-DHAVE_SCAN_PROC_IMPL=1",
-        "-DHAVE_STRLCAT=1",
-        "-DHAVE_STRLCPY=1",
-    ],
-    "@bazel_tools//src/conditions:linux_aarch64": [
-        "-DUSE_LINUX_PROC",
-        "-DHAVE_SCAN_PROC_IMPL=1",
-    ],
-    "@bazel_tools//src/conditions:linux_x86_64": [
-        "-DUSE_LINUX_PROC",
-        "-DHAVE_SCAN_PROC_IMPL=1",
-    ],
-    "@bazel_tools//src/conditions:windows": [
-        "-DUSE_WINDOWS_PROC",
-        "-DHAVE_SCAN_PROC_IMPL=1",
-    ],
-    "//conditions:default": ["-DUSE_NO_PROC"],
-}) + select({
-    ":yara_profiling_enabled": ["-DPROFILING_ENABLED"],
-    "//conditions:default": [],
-}) + [
-    "-D_GNU_SOURCE",
-    # Tell the compiler we want the C99 standard.
-    "-std=c99",
-    # Additional include paths.
-    "-Ilibyara",
-    "-Ilibyara/modules",
-] + YARA_CONFIG_OPTS
-
-# Configuration setting for enabling profiling. Usage:
-#   bazel build ... --define yara_profiling=enabled
-config_setting(
-    name = "yara_profiling_enabled",
-    values = {"define": "yara_profiling=enabled"},
-)
+load("@com_github_virustotal_yara//:bazel/yara.bzl", "yara_library")
 
 # Just YARA's error codes. This is useful for sandboxing as it avoids pulling
 # in the whole library.
 cc_library(
     name = "yara_errors",
     hdrs = ["libyara/include/yara/error.h"],
-    copts = YARA_COPTS,
     visibility = ["//visibility:public"],
 )
 
-# YARA library to be linked against.
-cc_library(
+# Configuration setting for enabling profiling. Usage:
+#   bazel build ... --define yara_profiling=enabled
+config_setting(
+    name = "profiling_enabled",
+    values = {"define": "yara_profiling=enabled"},
+)
+
+# Configuration setting for using BoringSSL instead of OpenSSL. Notice that
+# some features related to PE signatures in the "pe" module will be disabled
+# because of missing functionality in BoringSSL. Usage:
+#   bazel build ... --define yara_crypto_library=boringssl
+config_setting(
+    name = "crypto_library_boringssl",
+    values = {"define": "yara_crypto_library=boringssl"},
+)
+
+
+yara_library(
     name = "libyara",
-    srcs = [
-        "libyara/ahocorasick.c",
-        "libyara/arena.c",
-        "libyara/atoms.c",
-        "libyara/bitmask.c",
-        "libyara/compiler.c",
-        "libyara/crypto.h",
-        "libyara/endian.c",
-        "libyara/exception.h",
-        "libyara/exec.c",
-        "libyara/exefiles.c",
-        "libyara/filemap.c",
-        "libyara/grammar.c",
-        "libyara/hash.c",
-        "libyara/hex_grammar.c",
-        "libyara/hex_grammar.h",
-        "libyara/hex_lexer.c",
-        "libyara/include/yara.h",
-        "libyara/include/yara/ahocorasick.h",
-        "libyara/include/yara/arena.h",
-        "libyara/include/yara/atoms.h",
-        "libyara/include/yara/bitmask.h",
-        "libyara/include/yara/compiler.h",
-        "libyara/include/yara/dex.h",
-        "libyara/include/yara/dotnet.h",
-        "libyara/include/yara/elf.h",
-        "libyara/include/yara/endian.h",
-        "libyara/include/yara/error.h",
-        "libyara/include/yara/exec.h",
-        "libyara/include/yara/exefiles.h",
-        "libyara/include/yara/filemap.h",
-        "libyara/include/yara/globals.h",
-        "libyara/include/yara/hash.h",
-        "libyara/include/yara/hex_lexer.h",
-        "libyara/include/yara/integers.h",
-        "libyara/include/yara/lexer.h",
-        "libyara/include/yara/libyara.h",
-        "libyara/include/yara/limits.h",
-        "libyara/include/yara/macho.h",
-        "libyara/include/yara/mem.h",
-        "libyara/include/yara/modules.h",
-        "libyara/include/yara/object.h",
-        "libyara/include/yara/parser.h",
-        "libyara/include/yara/pe.h",
-        "libyara/include/yara/pe_utils.h",
-        "libyara/include/yara/proc.h",
-        "libyara/include/yara/re.h",
-        "libyara/include/yara/re_lexer.h",
-        "libyara/include/yara/rules.h",
-        "libyara/include/yara/scan.h",
-        "libyara/include/yara/scanner.h",
-        "libyara/include/yara/sizedstr.h",
-        "libyara/include/yara/stack.h",
-        "libyara/include/yara/stopwatch.h",
-        "libyara/include/yara/stream.h",
-        "libyara/include/yara/strutils.h",
-        "libyara/include/yara/threading.h",
-        "libyara/include/yara/types.h",
-        "libyara/include/yara/utils.h",
-        "libyara/lexer.c",
-        "libyara/libyara.c",
-        "libyara/mem.c",
-        "libyara/modules.c",
-        #"libyara/modules/cuckoo/cuckoo.c",  # TODO(cblichmann): Add Jansson JSON depenency
+    defines = select({
+        ":profiling_enabled": ["PROFILING_ENABLED"],
+        "//conditions:default": [],
+    }) + select({
+        ":crypto_library_boringssl": ["BORINGSSL"],
+        "//conditions:default": [],
+    }),
+    modules = [
+        "cuckoo",
+        "dex",
+        "dotnet",
+        "elf",
+        "hash",
+        "macho",
+        "magic",
+        "math",
+        "pe",
+        "tests",
+        "time",
+    ],
+    modules_srcs = [
+        "libyara/modules/cuckoo/cuckoo.c",
         "libyara/modules/dex/dex.c",
-        #"libyara/modules/demo/demo.c",    # Disabled
         "libyara/modules/dotnet/dotnet.c",
         "libyara/modules/elf/elf.c",
         "libyara/modules/hash/hash.c",
+        "libyara/modules/magic/magic.c",
         "libyara/modules/macho/macho.c",
-        #"libyara/modules/magic/magic.c",   # TODO(cblichmann): Add libmagic dependency
         "libyara/modules/math/math.c",
         "libyara/modules/pe/pe.c",
         "libyara/modules/pe/pe_utils.c",
         "libyara/modules/tests/tests.c",
         "libyara/modules/time/time.c",
-        "libyara/object.c",
-        "libyara/parser.c",
-        "libyara/proc.c",
-        "libyara/proc/freebsd.c",
-        "libyara/proc/linux.c",
-        "libyara/proc/mach.c",
-        "libyara/proc/none.c",
-        "libyara/proc/openbsd.c",
-        "libyara/proc/windows.c",
-        "libyara/re.c",
-        "libyara/re_grammar.c",
-        "libyara/re_grammar.h",
-        "libyara/re_lexer.c",
-        "libyara/rules.c",
-        "libyara/scan.c",
-        "libyara/scanner.c",
-        "libyara/sizedstr.c",
-        "libyara/stack.c",
-        "libyara/stopwatch.c",
-        "libyara/stream.c",
-        "libyara/strutils.c",
-        "libyara/threading.c",
     ],
-    hdrs = [
-        "libyara/include/yara.h",
-        "libyara/include/yara/pe.h",
-        "libyara/include/yara/proc.h",
-        "libyara/include/yara/rules.h",
-    ],
-    copts = YARA_COPTS,
-    includes = [
-        "libyara/modules",
-        "libyara/include",
-        "libyara",
-    ],
-    textual_hdrs = [
-        "libyara/grammar.h",
-        "libyara/hex_grammar.y",
-        "libyara/modules/module_list",
-        "libyara/re_grammar.y",
-    ],
-    visibility = ["//visibility:public"],
-    deps = ["@boringssl//:crypto"],
+    crypto_libs = select({
+        ":crypto_library_boringssl": ["@boringssl//:crypto"],
+        "//conditions:default": ["@openssl//:crypto"],
+    }),
+    deps = [
+        "@jansson//:jansson",
+        "@magic//:magic",
+    ]
 )
+
 
 # Code shared by the command-line tools.
 cc_library(
@@ -253,7 +113,6 @@ cc_library(
         "common.h",
         "threading.h",
     ],
-    copts = YARA_COPTS,
     deps = [":libyara"],
 )
 
@@ -261,7 +120,6 @@ cc_library(
 cc_binary(
     name = "yara",
     srcs = ["yara.c"],
-    copts = YARA_COPTS,
     visibility = ["//visibility:public"],
     deps = [
         ":cli_shared",
@@ -269,11 +127,10 @@ cc_binary(
     ],
 )
 
-# The YARA compiler
+# YARA compiler
 cc_binary(
     name = "yarac",
     srcs = ["yarac.c"],
-    copts = YARA_COPTS,
     visibility = ["//visibility:public"],
     deps = [
         ":cli_shared",

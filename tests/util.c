@@ -189,7 +189,7 @@ int matches_blob(
   };
 
   int scan_result = yr_rules_scan_mem(
-      rules, blob, blob_size, 0, _scan_callback, &ctx, 0);
+      rules, blob, blob_size, SCAN_FLAGS_NO_TRYCATCH, _scan_callback, &ctx, 0);
 
   if (scan_result != ERROR_SUCCESS)
   {

@@ -234,7 +234,7 @@ void yr_re_ast_destroy(
 // yr_re_parse
 //
 // Parses a regexp but don't emit its code. A further call to
-// yr_re_emit_code is required to get the code.
+// yr_re_ast_emit_code is required to get the code.
 //
 
 int yr_re_parse(
@@ -250,7 +250,7 @@ int yr_re_parse(
 // yr_re_parse_hex
 //
 // Parses a hex string but don't emit its code. A further call to
-// yr_re_emit_code is required to get the code.
+// yr_re_ast_emit_code is required to get the code.
 //
 
 int yr_re_parse_hex(
@@ -2392,7 +2392,8 @@ int yr_re_fast_exec(
 
 
 static void _yr_re_print_node(
-    RE_NODE* re_node)
+    RE_NODE* re_node,
+    uint32_t indent)
 {
   RE_NODE* child;
   int i;
@@ -2400,14 +2401,16 @@ static void _yr_re_print_node(
   if (re_node == NULL)
     return;
 
+  if (indent > 0)
+    printf("\n%*s", indent, " ");
   switch (re_node->type)
   {
   case RE_NODE_ALT:
     printf("Alt(");
-    _yr_re_print_node(re_node->children_head);
-    printf(", ");
-    _yr_re_print_node(re_node->children_tail);
-    printf(")");
+    _yr_re_print_node(re_node->children_head, indent + 4);
+    printf(",");
+    _yr_re_print_node(re_node->children_tail, indent + 4);
+    printf("\n%*s%s", indent, " " , ")");
     break;
 
   case RE_NODE_CONCAT:
@@ -2415,27 +2418,27 @@ static void _yr_re_print_node(
     child = re_node->children_head;
     while (child != NULL)
     {
-      _yr_re_print_node(child);
-      printf(", ");
+      _yr_re_print_node(child, indent + 4);
+      printf(",");
       child = child->next_sibling;
     }
-    printf(")");
+    printf("\n%*s%s", indent, " ", ")");
     break;
 
   case RE_NODE_STAR:
     printf("Star(");
-    _yr_re_print_node(re_node->children_head);
+    _yr_re_print_node(re_node->children_head, indent + 4);
     printf(")");
     break;
 
   case RE_NODE_PLUS:
     printf("Plus(");
-    _yr_re_print_node(re_node->children_head);
+    _yr_re_print_node(re_node->children_head, indent + 4);
     printf(")");
     break;
 
   case RE_NODE_LITERAL:
-    printf("Lit(%02X)", re_node->value);
+    printf("Lit(%c)", re_node->value);
     break;
 
   case RE_NODE_MASKED_LITERAL:
@@ -2472,8 +2475,8 @@ static void _yr_re_print_node(
 
   case RE_NODE_RANGE:
     printf("Range(%d-%d, ", re_node->start, re_node->end);
-    _yr_re_print_node(re_node->children_head);
-    printf(")");
+    _yr_re_print_node(re_node->children_head, indent + 4);
+    printf("\n%*s%s", indent, " ", ")");
     break;
 
   case RE_NODE_CLASS:
@@ -2493,5 +2496,5 @@ static void _yr_re_print_node(
 void yr_re_print(
     RE_AST* re_ast)
 {
-  _yr_re_print_node(re_ast->root_node);
+  _yr_re_print_node(re_ast->root_node, 0);
 }
