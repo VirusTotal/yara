@@ -284,8 +284,8 @@ static void pe_parse_debug_directory(
   int64_t debug_dir_offset;
   int64_t pcv_hdr_offset;
   int i, dcount;
-  size_t pdb_str_len;
-  char* pdb_str = NULL;
+  size_t pdb_path_len;
+  char* pdb_path = NULL;
   
   data_dir = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_DEBUG);
@@ -337,24 +337,24 @@ static void pe_parse_debug_directory(
       PCV_INFO_PDB20 pdb20 = (PCV_INFO_PDB20) cv_hdr;
       
       if (struct_fits_in_pe(pe, pdb20, CV_INFO_PDB20))
-        pdb_str = (char*) (pdb20->PdbFileName);
+        pdb_path = (char*) (pdb20->PdbFileName);
     }
     else if (yr_le32toh(cv_hdr->dwSignature) == CVINFO_PDB70_CVSIGNATURE)
     {
       PCV_INFO_PDB70 pdb70 = (PCV_INFO_PDB70) cv_hdr;
       
       if (struct_fits_in_pe(pe, pdb70, CV_INFO_PDB70))
-        pdb_str = (char*) (pdb70->PdbFileName);
+        pdb_path = (char*) (pdb70->PdbFileName);
     }
 
-    if (pdb_str != NULL)
+    if (pdb_path != NULL)
     {
-      pdb_str_len = strnlen(
-          pdb_str, yr_min(available_space(pe, pdb_str), MAX_PATH));
+      pdb_path_len = strnlen(
+        pdb_path, yr_min(available_space(pe, pdb_path), MAX_PATH));
 
-      if (pdb_str_len > 0 && pdb_str_len < MAX_PATH)
+      if (pdb_path_len > 0 && pdb_path_len < MAX_PATH)
       {
-        set_sized_string(pdb_str, pdb_str_len, pe->object, "pdb");
+        set_sized_string(pdb_path, pdb_path_len, pe->object, "pdb_path");
         break;
       }
     }
@@ -2756,7 +2756,7 @@ begin_declarations;
   end_struct_array("resources");
 
   declare_integer("number_of_resources");
-  declare_string("pdb");
+  declare_string("pdb_path");
 
   #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
   begin_struct_array("signatures");
