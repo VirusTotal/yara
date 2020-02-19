@@ -465,7 +465,13 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY {
 #define IMAGE_DEBUG_TYPE_MISC                            4
 #define IMAGE_DEBUG_TYPE_EXCEPTION                       5
 #define IMAGE_DEBUG_TYPE_FIXUP                           6
+#define IMAGE_DEBUG_TYPE_OMAP_TO_SRC                     7
+#define IMAGE_DEBUG_TYPE_OMAP_FROM_SRC                   8
 #define IMAGE_DEBUG_TYPE_BORLAND                         9
+#define IMAGE_DEBUG_TYPE_RESERVED10                     10
+#define IMAGE_DEBUG_TYPE_CLSID                          11
+#define IMAGE_DEBUG_TYPE_REPRO                          16
+#define IMAGE_DEBUG_TYPE_EX_DLLCHARACTERISTICS          20
 
 typedef struct _IMAGE_DEBUG_DIRECTORY {
     DWORD Characteristics;

@@ -820,6 +820,13 @@ Reference
     Path of the PDB file for this PE if present.
 
     * Example: pe.pdb_path == "D:\\workspace\\2018_R9_RelBld\\target\\checkout\\custprof\\Release\\custprof.pdb"
+    
+.. c:type:: is_reproducible_build
+
+    .. versionadded:: 3.13.0
+    
+    Value that indicates if the PE is build using compiler settings to achieve reproducibility.
+    
 
 .. c:function:: exports(function_name)
 

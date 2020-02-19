@@ -291,6 +291,8 @@ static void pe_parse_debug_directory(
   size_t pdb_path_len;
   char* pdb_path = NULL;
   
+  set_integer(0, pe->object, "is_reproducible_build");
+  
   data_dir = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_DEBUG);
 
@@ -321,6 +323,12 @@ static void pe_parse_debug_directory(
     
     if (!struct_fits_in_pe(pe, debug_dir, IMAGE_DEBUG_DIRECTORY))
       break;
+
+    if (yr_le32toh(debug_dir->Type) == IMAGE_DEBUG_TYPE_REPRO)
+    {
+      set_integer(1, pe->object, "is_reproducible_build");
+      continue;
+    }
   
     if (yr_le32toh(debug_dir->Type) != IMAGE_DEBUG_TYPE_CODEVIEW)
       continue;
@@ -359,7 +367,6 @@ static void pe_parse_debug_directory(
       if (pdb_path_len > 0 && pdb_path_len < MAX_PATH)
       {
         set_sized_string(pdb_path, pdb_path_len, pe->object, "pdb_path");
-        break;
       }
     }
   }
@@ -2631,7 +2638,8 @@ begin_declarations;
   declare_integer("number_of_symbols");
   declare_integer("size_of_optional_header");
   declare_integer("characteristics");
-
+  declare_integer("is_reproducible_build");
+  
   declare_integer("entry_point");
   declare_integer("image_base");
   declare_integer("number_of_rva_and_sizes");
