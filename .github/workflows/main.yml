@@ -9,11 +9,12 @@ jobs:
     - name: Build Fuzzers
       uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
       with:
-        project-name: 'yara'
+        oss-fuzz-project-name: 'yara'
         dry-run: true
     - name: Run Fuzzers
       uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master
       with:
+        oss-fuzz-project-name: 'yara'
         fuzz-time: 600
         dry-run: true
     - name: Upload Crash
