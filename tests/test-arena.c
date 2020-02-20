@@ -65,8 +65,8 @@ static void basic_tests()
 typedef struct TEST_STRUCT TEST_STRUCT;
 
 struct TEST_STRUCT {
-  char* str1;
-  char* str2;
+  DECLARE_REFERENCE(char*, str1);
+  DECLARE_REFERENCE(char*, str2);
 };
 
 
