@@ -2452,12 +2452,28 @@ void test_integer_functions()
 void test_include_files()
 {
   assert_true_rule(
-    "include \"tests/data/baz.yar\" rule t { condition: baz }",
-    NULL);
+      "include \"tests/data/baz.yar\" rule t { condition: baz }",
+      NULL);
 
   assert_true_rule(
-    "include \"tests/data/foo.yar\" rule t { condition: foo }",
-    NULL);
+      "include \"tests/data/foo.yar\" rule t { condition: foo }",
+      NULL);
+}
+
+
+void test_tags()
+{
+  assert_true_rule(
+      "rule test : tag1 { condition: true}",
+      NULL);
+
+  assert_true_rule(
+      "rule test : tag1 tag2 { condition: true}",
+      NULL);
+
+  assert_error(
+      "rule test : tag1 tag1 { condition: true}",
+      ERROR_DUPLICATED_TAG_IDENTIFIER);
 }
 
 
@@ -2702,6 +2718,7 @@ int main(int argc, char** argv)
   // test_string_io();
   test_entrypoint();
   test_global_rules();
+  test_tags();
 
   #if !defined(USE_WINDOWS_PROC) && !defined(USE_NO_PROC)
   test_process_scan();

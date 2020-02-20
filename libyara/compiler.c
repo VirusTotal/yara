@@ -162,6 +162,7 @@ YR_API int yr_compiler_create(
     return ERROR_INSUFFICIENT_MEMORY;
 
   new_compiler->errors = 0;
+  new_compiler->current_rule_index = 0;
   new_compiler->callback = NULL;
   new_compiler->include_callback = _yr_compiler_default_include_callback;
   new_compiler->incl_clbk_user_data = NULL;
@@ -189,6 +190,10 @@ YR_API int yr_compiler_create(
 
   if (result == ERROR_SUCCESS)
     result = yr_hash_table_create(101, &new_compiler->strings_table);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_arena2_create(
+        YR_LAST_BUFFER + 1, 1048576, &new_compiler->arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(
@@ -251,6 +256,8 @@ YR_API void yr_compiler_destroy(
 {
   YR_FIXUP* fixup;
   int i;
+
+  yr_arena2_destroy(compiler->arena);
 
   yr_arena_destroy(compiler->compiled_rules_arena);
   yr_arena_destroy(compiler->sz_arena);
@@ -337,10 +344,10 @@ YR_API void yr_compiler_set_re_ast_callback(
 // compiler for choosing the best atoms from regular expressions and strings.
 // When a quality table is set, the compiler uses yr_atoms_table_quality
 // instead of yr_atoms_heuristic_quality for computing atom quality. The table
-// has an arbitary number of entries, each composed of YR_MAX_ATOM_LENGTH + 1
+// has an arbitrary number of entries, each composed of YR_MAX_ATOM_LENGTH + 1
 // bytes. The first YR_MAX_ATOM_LENGTH bytes from each entry are the atom's
 // ones, and the remaining byte is a value in the range 0-255 determining the
-// atom's quality. Entries must be lexicografically sorted by atom in ascending
+// atom's quality. Entries must be lexicographically sorted by atom in ascending
 // order.
 //
 //  [ atom (YR_MAX_ATOM_LENGTH bytes) ] [ quality (1 byte) ]
@@ -357,7 +364,7 @@ YR_API void yr_compiler_set_re_ast_callback(
 // caller is responsible for freeing the table.
 //
 // The "warning_threshold" argument must be a number between 0 and 255, if some
-// atom choosen for a string have a quality below the specified threshold a
+// atom chosen for a string have a quality below the specified threshold a
 // warning like "<string> is slowing down scanning" is shown.
 
 YR_API void yr_compiler_set_atom_quality_table(
@@ -378,7 +385,7 @@ YR_API void yr_compiler_set_atom_quality_table(
 // yr_compiler_set_atom_quality_table
 //
 // Load an atom quality table from a file. The file's content must have the
-// format explained in the decription for yr_compiler_set_atom_quality_table.
+// format explained in the description for yr_compiler_set_atom_quality_table.
 //
 
 YR_API int yr_compiler_load_atom_quality_table(

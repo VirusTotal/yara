@@ -94,6 +94,7 @@ yaraincludedir = $(includedir)/yara
 yarainclude_HEADERS = \
 	include/yara/ahocorasick.h \
 	include/yara/arena.h \
+	include/yara/arena2.h \
 	include/yara/atoms.h \
 	include/yara/base64.h \
 	include/yara/bitmask.h \
@@ -158,6 +159,7 @@ libyara_la_SOURCES = \
 	grammar.y \
 	ahocorasick.c \
 	arena.c \
+	arena2.c \
 	atoms.c \
 	base64.c \
 	bitmask.c \
