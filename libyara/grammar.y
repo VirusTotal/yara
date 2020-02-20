@@ -294,6 +294,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   struct {
     YR_RULE* ptr;
     yr_arena_off_t offset;
+    YR_ARENA2_REFERENCE ref;
   } rule;
 
   struct {
@@ -359,8 +360,8 @@ rule
         rule->metas = (YR_META*) yr_arena2_get_address(
             compiler->arena, YR_METAS_BUFFER, $7.offset);
 
-        rule->strings = (YR_STRING*) yr_arena2_get_address(
-            compiler->arena, YR_STRINGS_BUFFER, $8.offset);
+        // rule->strings = (YR_STRING*) yr_arena2_get_address(
+        //    compiler->arena, YR_STRINGS_BUFFER, $8.offset);
       }
       condition '}'
       {

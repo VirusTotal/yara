@@ -179,6 +179,7 @@ union YYSTYPE
   struct {
     YR_RULE* ptr;
     yr_arena_off_t offset;
+    YR_ARENA2_REFERENCE ref;
   } rule;
 
   struct {
@@ -191,7 +192,7 @@ union YYSTYPE
     yr_arena_off_t offset;
   } string;
 
-#line 195 "grammar.h" /* yacc.c:1916  */
+#line 196 "grammar.h" /* yacc.c:1916  */
 };
 
 typedef union YYSTYPE YYSTYPE;
