@@ -41,6 +41,7 @@ order to avoid confusion with operating system threads.
 #include <assert.h>
 #include <string.h>
 
+#include <yara/compiler.h>
 #include <yara/limits.h>
 #include <yara/globals.h>
 #include <yara/utils.h>
@@ -84,6 +85,7 @@ typedef struct _RE_REPEAT_ANY_ARGS
 typedef struct _RE_EMIT_CONTEXT {
 
   YR_ARENA*         arena;
+  YR_ARENA2*        arena2;
   RE_SPLIT_ID_TYPE  next_split_id;
 
 } RE_EMIT_CONTEXT;
@@ -272,6 +274,7 @@ int yr_re_compile(
     const char* re_string,
     int flags,
     YR_ARENA* code_arena,
+    YR_ARENA2* arena2,
     RE** re,
     RE_ERROR* error)
 {
@@ -286,6 +289,15 @@ int yr_re_compile(
   _re.flags = flags;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_arena2_write_data(
+          arena2,
+          YR_RE_CODE_BUFFER,
+          &_re,
+          sizeof(_re),
+          NULL),
+      yr_re_ast_destroy(re_ast));
+
+  FAIL_ON_ERROR_WITH_CLEANUP(
       yr_arena_write_data(
           code_arena,
           &_re,
@@ -294,7 +306,7 @@ int yr_re_compile(
       yr_re_ast_destroy(re_ast));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_re_ast_emit_code(re_ast, code_arena, false),
+      yr_re_ast_emit_code(re_ast, code_arena, arena2, false),
       yr_re_ast_destroy(re_ast));
 
   yr_re_ast_destroy(re_ast);
@@ -570,6 +582,13 @@ int _yr_emit_inst(
     uint8_t** instruction_addr,
     size_t* code_size)
 {
+  FAIL_ON_ERROR(yr_arena2_write_data(
+      emit_context->arena2,
+      YR_RE_CODE_BUFFER,
+      &opcode,
+      sizeof(uint8_t),
+      NULL));
+
   FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       &opcode,
@@ -1306,6 +1325,7 @@ static int _yr_re_emit(
 int yr_re_ast_emit_code(
     RE_AST* re_ast,
     YR_ARENA* arena,
+    YR_ARENA2* arena2,
     int backwards_code)
 {
   RE_EMIT_CONTEXT emit_context;
@@ -1323,6 +1343,7 @@ int yr_re_ast_emit_code(
 
   total_size = 0;
   emit_context.arena = arena;
+  emit_context.arena2 = arena2;
   emit_context.next_split_id = 0;
 
   FAIL_ON_ERROR(_yr_re_emit(

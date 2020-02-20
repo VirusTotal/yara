@@ -53,10 +53,17 @@ int yr_parser_emit(
     uint8_t instruction,
     uint8_t** instruction_address)
 {
+  yr_arena2_write_data(
+      yyget_extra(yyscanner)->arena,
+      YR_CODE_BUFFER,
+      &instruction,
+      sizeof(uint8_t),
+      NULL);
+
   return yr_arena_write_data(
       yyget_extra(yyscanner)->code_arena,
       &instruction,
-      sizeof(int8_t),
+      sizeof(uint8_t),
       (void**) instruction_address);
 }
 
@@ -68,11 +75,27 @@ int yr_parser_emit_with_arg_double(
     uint8_t** instruction_address,
     double** argument_address)
 {
-  int result = yr_arena_write_data(
-      yyget_extra(yyscanner)->code_arena,
+  int result = yr_arena2_write_data(
+      yyget_extra(yyscanner)->arena,
+      YR_CODE_BUFFER,
       &instruction,
       sizeof(uint8_t),
-      (void**) instruction_address);
+      NULL);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_arena2_write_data(
+        yyget_extra(yyscanner)->arena,
+        YR_CODE_BUFFER,
+        &argument,
+        sizeof(double),
+        NULL);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_arena_write_data(
+        yyget_extra(yyscanner)->code_arena,
+        &instruction,
+        sizeof(uint8_t),
+        (void**) instruction_address);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_write_data(
@@ -92,11 +115,27 @@ int yr_parser_emit_with_arg(
     uint8_t** instruction_address,
     int64_t** argument_address)
 {
-  int result = yr_arena_write_data(
-      yyget_extra(yyscanner)->code_arena,
+  int result = yr_arena2_write_data(
+      yyget_extra(yyscanner)->arena,
+      YR_CODE_BUFFER,
       &instruction,
       sizeof(uint8_t),
-      (void**) instruction_address);
+      NULL);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_arena2_write_data(
+        yyget_extra(yyscanner)->arena,
+        YR_CODE_BUFFER,
+        &argument,
+        sizeof(int64_t),
+        NULL);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_arena_write_data(
+        yyget_extra(yyscanner)->code_arena,
+        &instruction,
+        sizeof(uint8_t),
+        (void**) instruction_address);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_write_data(
@@ -117,18 +156,42 @@ int yr_parser_emit_with_arg_reloc(
     void** argument_address)
 {
   int64_t* ptr = NULL;
-  int result;
 
   DECLARE_REFERENCE(void*, ptr) arg;
 
   memset(&arg, 0, sizeof(arg));
   arg.ptr = argument;
 
-  result = yr_arena_write_data(
-      yyget_extra(yyscanner)->code_arena,
+  int result = yr_arena2_write_data(
+      yyget_extra(yyscanner)->arena,
+      YR_CODE_BUFFER,
       &instruction,
       sizeof(uint8_t),
-      (void**) instruction_address);
+      NULL);
+
+  yr_arena_off_t arg_offset;
+
+  if (result == ERROR_SUCCESS)
+    result = yr_arena2_write_data(
+        yyget_extra(yyscanner)->arena,
+        YR_CODE_BUFFER,
+        &arg,
+        sizeof(arg),
+        &arg_offset);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_arena2_make_ptr_relocatable(
+        yyget_extra(yyscanner)->arena,
+        YR_CODE_BUFFER,
+        arg_offset,
+        EOL2);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_arena_write_data(
+        yyget_extra(yyscanner)->code_arena,
+        &instruction,
+        sizeof(uint8_t),
+        (void**) instruction_address);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_write_data(
@@ -205,7 +268,7 @@ int yr_parser_emit_pushes_for_strings(
 
   if (matching == 0)
   {
-    yr_compiler_set_error_extra_info(compiler, identifier);
+    yr_compiler_set_error_extra_info(compiler, identifier)
     return ERROR_UNDEFINED_STRING;
   }
 
@@ -229,7 +292,7 @@ int yr_parser_check_types(
       return ERROR_SUCCESS;
   }
 
-  yr_compiler_set_error_extra_info(compiler, function->identifier);
+  yr_compiler_set_error_extra_info(compiler, function->identifier)
 
   return ERROR_WRONG_ARGUMENTS;
 }
@@ -263,7 +326,7 @@ int yr_parser_lookup_string(
         sizeof(YR_STRING));
   }
 
-  yr_compiler_set_error_extra_info(compiler, identifier);
+  yr_compiler_set_error_extra_info(compiler, identifier)
 
   *string = NULL;
 
@@ -281,7 +344,7 @@ int yr_parser_lookup_string(
 // already defined by an outer loop.
 //
 // If the variable is found, the return value is the position that the variable
-// occuppies among all the currently defined variables. If the variable doesn't
+// occupies among all the currently defined variables. If the variable doesn't
 // exist the return value is -1.
 //
 // The function can receive a pointer to a YR_EXPRESSION that will populated
@@ -339,6 +402,26 @@ static int _yr_parser_write_string(
   bool free_literal = false;
 
   *string = NULL;
+
+  yr_arena_off_t string_offset;
+  yr_arena_off_t identifier_offset;
+
+  FAIL_ON_ERROR(yr_arena2_allocate_struct(
+      compiler->arena,
+      YR_STRINGS_BUFFER,
+      sizeof(YR_STRING),
+      &string_offset,
+      offsetof(YR_STRING, identifier),
+      offsetof(YR_STRING, string),
+      offsetof(YR_STRING, chained_to),
+      offsetof(YR_STRING, rule),
+      EOL2))
+
+  FAIL_ON_ERROR(yr_arena2_write_string(
+      compiler->arena,
+      YR_SZ_BUFFER,
+      identifier,
+      &identifier_offset))
 
   result = yr_arena_allocate_struct(
       compiler->strings_arena,
@@ -407,6 +490,13 @@ static int _yr_parser_write_string(
   {
     (*string)->length = (uint32_t) literal_string->length;
 
+    result = yr_arena2_write_data(
+        compiler->arena,
+        YR_SZ_BUFFER,
+        literal_string->c_string,
+        literal_string->length + 1,   // +1 to include terminating NULL
+        NULL);
+
     result = yr_arena_write_data(
         compiler->sz_arena,
         literal_string->c_string,
@@ -427,11 +517,13 @@ static int _yr_parser_write_string(
   else
   {
     // Emit forwards code
-    result = yr_re_ast_emit_code(re_ast, compiler->re_code_arena, false);
+    result = yr_re_ast_emit_code(
+        re_ast, compiler->re_code_arena, compiler->arena, false);
 
     // Emit backwards code
     if (result == ERROR_SUCCESS)
-      result = yr_re_ast_emit_code(re_ast, compiler->re_code_arena, true);
+      result = yr_re_ast_emit_code(
+          re_ast, compiler->re_code_arena, compiler->arena, true);
 
     if (result == ERROR_SUCCESS)
       result = yr_atoms_extract_from_re(
@@ -493,7 +585,8 @@ int yr_parser_reduce_string_declaration(
     YR_MODIFIER modifier,
     const char* identifier,
     SIZED_STRING* str,
-    YR_STRING** string)
+    YR_STRING** string,
+    yr_arena_off_t* string_offset)
 {
   int min_atom_quality = YR_MAX_ATOM_QUALITY;
   int atom_quality;
@@ -526,7 +619,7 @@ int yr_parser_reduce_string_declaration(
   if (new_string != NULL)
   {
     result = ERROR_DUPLICATED_STRING_IDENTIFIER;
-    yr_compiler_set_error_extra_info(compiler, identifier);
+    yr_compiler_set_error_extra_info(compiler, identifier)
     goto _exit;
   }
 
@@ -535,7 +628,7 @@ int yr_parser_reduce_string_declaration(
   if (str->length == 0)
   {
     result = ERROR_EMPTY_STRING;
-    yr_compiler_set_error_extra_info(compiler, identifier);
+    yr_compiler_set_error_extra_info(compiler, identifier)
     goto _exit;
   }
 
@@ -544,10 +637,11 @@ int yr_parser_reduce_string_declaration(
 
   // xor and nocase together is not implemented.
 
-  if (modifier.flags & STRING_GFLAGS_XOR && modifier.flags & STRING_GFLAGS_NO_CASE)
+  if (modifier.flags & STRING_GFLAGS_XOR &&
+      modifier.flags & STRING_GFLAGS_NO_CASE)
   {
       result = ERROR_INVALID_MODIFIER;
-      yr_compiler_set_error_extra_info(compiler, "xor nocase");
+      yr_compiler_set_error_extra_info(compiler, "xor nocase")
       goto _exit;
   }
 
@@ -559,7 +653,10 @@ int yr_parser_reduce_string_declaration(
   {
       result = ERROR_INVALID_MODIFIER;
       yr_compiler_set_error_extra_info(
-          compiler, modifier.flags & STRING_GFLAGS_BASE64 ? "base64 nocase" : "base64wide nocase");
+          compiler,
+          modifier.flags & STRING_GFLAGS_BASE64 ?
+             "base64 nocase" :
+             "base64wide nocase")
       goto _exit;
   }
 
@@ -571,7 +668,10 @@ int yr_parser_reduce_string_declaration(
   {
       result = ERROR_INVALID_MODIFIER;
       yr_compiler_set_error_extra_info(
-          compiler, modifier.flags & STRING_GFLAGS_BASE64 ? "base64 xor" : "base64wide xor");
+          compiler,
+          modifier.flags & STRING_GFLAGS_BASE64 ?
+             "base64 xor" :
+             "base64wide xor")
       goto _exit;
   }
 
@@ -583,8 +683,11 @@ int yr_parser_reduce_string_declaration(
 
   if (!(modifier.flags & STRING_GFLAGS_WIDE) &&
       !(modifier.flags & STRING_GFLAGS_XOR) &&
-      !(modifier.flags & STRING_GFLAGS_BASE64 || modifier.flags & STRING_GFLAGS_BASE64_WIDE))
+      !(modifier.flags & STRING_GFLAGS_BASE64 ||
+        modifier.flags & STRING_GFLAGS_BASE64_WIDE))
+  {
     modifier.flags |= STRING_GFLAGS_ASCII;
+  }
 
   // Hex strings are always handled as DOT_ALL regexps.
 
@@ -631,7 +734,7 @@ int yr_parser_reduce_string_declaration(
           re_error.message);
 
       yr_compiler_set_error_extra_info(
-          compiler, message);
+          compiler, message)
 
       goto _exit;
     }
@@ -642,7 +745,7 @@ int yr_parser_reduce_string_declaration(
       RE re;
 
       FAIL_ON_ERROR(yr_arena_reserve_memory(
-          compiler->code_arena, sizeof(int64_t) + RE_MAX_CODE_SIZE));
+          compiler->code_arena, sizeof(int64_t) + RE_MAX_CODE_SIZE))
 
       re.flags = 0;
 
@@ -652,7 +755,7 @@ int yr_parser_reduce_string_declaration(
               &re,
               sizeof(re),
               NULL),
-          yr_re_ast_destroy(re_ast));
+          yr_re_ast_destroy(re_ast))
     }
 
     if (re_ast->flags & RE_FLAGS_FAST_REGEXP)
@@ -671,7 +774,7 @@ int yr_parser_reduce_string_declaration(
 
       yr_compiler_set_error_extra_info(compiler,
           "greedy and ungreedy quantifiers can't be mixed in a regular "
-          "expression");
+          "expression")
 
       goto _exit;
     }
@@ -756,7 +859,8 @@ int yr_parser_reduce_string_declaration(
     while (new_string->chained_to != NULL)
       new_string = new_string->chained_to;
   }
-  else  // not a STRING_GFLAGS_HEXADECIMAL or STRING_GFLAGS_REGEXP or STRING_GFLAGS_BASE64 or STRING_GFLAGS_BASE64_WIDE
+  else  // not a STRING_GFLAGS_HEXADECIMAL or STRING_GFLAGS_REGEXP or
+        // STRING_GFLAGS_BASE64 or STRING_GFLAGS_BASE64_WIDE
   {
     result = _yr_parser_write_string(
         identifier,
@@ -775,10 +879,10 @@ int yr_parser_reduce_string_declaration(
   if (!STRING_IS_ANONYMOUS(new_string))
   {
     result = yr_hash_table_add(
-      compiler->strings_table,
-      identifier,
-      NULL,
-      new_string);
+        compiler->strings_table,
+        identifier,
+        NULL,
+        new_string);
 
     if (result != ERROR_SUCCESS)
       goto _exit;
@@ -811,7 +915,8 @@ int yr_parser_reduce_rule_declaration_phase_1(
     yyscan_t yyscanner,
     int32_t flags,
     const char* identifier,
-    YR_RULE** rule)
+    YR_RULE** rule,
+    yr_arena_off_t* rule_offset)
 {
   YR_FIXUP *fixup;
   YR_INIT_RULE_ARGS *init_rule_args;
@@ -831,9 +936,47 @@ int yr_parser_reduce_rule_declaration_phase_1(
     // A rule or variable with the same identifier already exists, return the
     // appropriate error.
 
-    yr_compiler_set_error_extra_info(compiler, identifier);
+    yr_compiler_set_error_extra_info(compiler, identifier)
     return ERROR_DUPLICATED_IDENTIFIER;
   }
+
+  FAIL_ON_ERROR(yr_arena2_allocate_struct(
+      compiler->arena,
+      YR_RULES_BUFFER,
+      sizeof(YR_RULE),
+      rule_offset,
+      offsetof(YR_RULE, identifier),
+      offsetof(YR_RULE, tags),
+      offsetof(YR_RULE, strings),
+      offsetof(YR_RULE, metas),
+      offsetof(YR_RULE, ns),
+      EOL2))
+
+  yr_arena_off_t identifier_offset;
+
+  FAIL_ON_ERROR(yr_arena2_write_string(
+      compiler->arena,
+      YR_SZ_BUFFER,
+      identifier,
+      &identifier_offset))
+
+  YR_RULE* r = yr_arena2_get_address(
+      compiler->arena, YR_RULES_BUFFER, *rule_offset);
+
+  r->identifier = (const char *) yr_arena2_get_address(
+      compiler->arena, YR_SZ_BUFFER, identifier_offset);
+
+  r->g_flags = flags;
+  r->ns = compiler->current_namespace;
+  r->num_atoms = 0;
+
+  #ifdef PROFILING_ENABLED
+  r->time_cost = 0;
+  memset(r->time_cost_per_thread, 0, sizeof(r->time_cost_per_thread));
+  #endif
+
+
+
 
   FAIL_ON_ERROR(yr_arena_allocate_struct(
       compiler->rules_arena,
@@ -860,12 +1003,12 @@ int yr_parser_reduce_rule_declaration_phase_1(
   FAIL_ON_ERROR(yr_arena_write_string(
       compiler->sz_arena,
       identifier,
-      (char**) &(*rule)->identifier));
+      (char**) &(*rule)->identifier))
 
   FAIL_ON_ERROR(yr_parser_emit(
       yyscanner,
       OP_INIT_RULE,
-      NULL));
+      NULL))
 
   FAIL_ON_ERROR(yr_arena_allocate_struct(
       compiler->code_arena,
@@ -873,13 +1016,13 @@ int yr_parser_reduce_rule_declaration_phase_1(
       (void**) &init_rule_args,
       offsetof(YR_INIT_RULE_ARGS, rule),
       offsetof(YR_INIT_RULE_ARGS, jmp_addr),
-      EOL));
+      EOL))
 
   init_rule_args->rule = *rule;
 
   // jmp_addr holds the address to jump to when we want to skip the code for
-  // the rule. It is iniatialized as NULL at this point because we don't know
-  // the address until emmiting the code for the rule's condition. The address
+  // the rule. It is initialized as NULL at this point because we don't know
+  // the address until emitting the code for the rule's condition. The address
   // is set in yr_parser_reduce_rule_declaration_phase_2.
   init_rule_args->jmp_addr = NULL;
 
@@ -900,7 +1043,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
       compiler->rules_table,
       identifier,
       compiler->current_namespace->name,
-      (void*) *rule));
+      (void*) *rule))
 
   compiler->current_rule = *rule;
 
@@ -928,7 +1071,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
   // Show warning if the rule is generating too many atoms. The warning is
   // shown if the number of atoms is greater than 20 times the maximum number
   // of strings allowed for a rule, as 20 is minimum number of atoms generated
-  // for a string using *nocase*, *ascii* and *wide* modifiers simultaneosly.
+  // for a string using *nocase*, *ascii* and *wide* modifiers simultaneously.
 
   if (rule->num_atoms > YR_ATOMS_PER_RULE_WARNING_THRESHOLD)
   {
@@ -950,7 +1093,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
     if (!STRING_IS_REFERENCED(string) &&
         string->chained_to == NULL)
     {
-      yr_compiler_set_error_extra_info(compiler, string->identifier);
+      yr_compiler_set_error_extra_info(compiler, string->identifier)
       return ERROR_UNREFERENCED_STRING;
     }
 
@@ -958,7 +1101,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
 
     if (strings_in_rule > max_strings_per_rule)
     {
-      yr_compiler_set_error_extra_info(compiler, rule->identifier);
+      yr_compiler_set_error_extra_info(compiler, rule->identifier)
       return ERROR_TOO_MANY_STRINGS;
     }
 
@@ -1057,14 +1200,14 @@ int yr_parser_reduce_string_identifier(
   else
   {
     FAIL_ON_ERROR(yr_parser_lookup_string(
-        yyscanner, identifier, &string));
+        yyscanner, identifier, &string))
 
     FAIL_ON_ERROR(yr_parser_emit_with_arg_reloc(
         yyscanner,
         OP_PUSH,
         string,
         NULL,
-        NULL));
+        NULL))
 
     if (instruction != OP_FOUND)
       string->g_flags &= ~STRING_GFLAGS_SINGLE_MATCH;
@@ -1091,7 +1234,7 @@ int yr_parser_reduce_string_identifier(
       string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
     }
 
-    FAIL_ON_ERROR(yr_parser_emit(yyscanner, instruction, NULL));
+    FAIL_ON_ERROR(yr_parser_emit(yyscanner, instruction, NULL))
 
     string->g_flags |= STRING_GFLAGS_REFERENCED;
   }
@@ -1106,9 +1249,54 @@ int yr_parser_reduce_meta_declaration(
     const char* identifier,
     const char* string,
     int64_t integer,
-    YR_META** meta)
+    YR_META** meta,
+    yr_arena_off_t* meta_offset)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
+
+  FAIL_ON_ERROR(yr_arena2_allocate_struct(
+      compiler->arena,
+      YR_METAS_BUFFER,
+      sizeof(YR_META),
+      meta_offset,
+      offsetof(YR_META, identifier),
+      offsetof(YR_META, string),
+      EOL2))
+
+  yr_arena_off_t identifier_offset;
+
+  FAIL_ON_ERROR(yr_arena2_write_string(
+      compiler->arena,
+      YR_SZ_BUFFER,
+      identifier,
+      &identifier_offset))
+
+  YR_META* m = (YR_META*) yr_arena2_get_address(
+      compiler->arena, YR_METAS_BUFFER, *meta_offset);
+
+  m->identifier = (const char*) yr_arena2_get_address(
+      compiler->arena, YR_SZ_BUFFER, identifier_offset);
+
+  if (string != NULL)
+  {
+    yr_arena_off_t string_offset;
+
+    FAIL_ON_ERROR(yr_arena2_write_string(
+        compiler->arena,
+        YR_SZ_BUFFER,
+        string,
+        &string_offset))
+
+    m->string = (const char*) yr_arena2_get_address(
+        compiler->arena, YR_SZ_BUFFER, string_offset);
+  }
+  else
+  {
+    m->string = NULL;
+  }
+
+  m->type = type;
+  m->integer = integer;
 
   FAIL_ON_ERROR(yr_arena_allocate_struct(
       compiler->metas_arena,
@@ -1116,19 +1304,19 @@ int yr_parser_reduce_meta_declaration(
       (void**) meta,
       offsetof(YR_META, identifier),
       offsetof(YR_META, string),
-      EOL));
+      EOL))
 
   FAIL_ON_ERROR(yr_arena_write_string(
       compiler->sz_arena,
       identifier,
-      (char**) &(*meta)->identifier));
+      (char**) &(*meta)->identifier))
 
   if (string != NULL)
   {
     FAIL_ON_ERROR(yr_arena_write_string(
         compiler->sz_arena,
         string,
-        &(*meta)->string));
+        (char**) &(*meta)->string))
   }
   else
   {
@@ -1168,7 +1356,7 @@ int yr_parser_reduce_import(
 
   if (!_yr_parser_valid_module_name(module_name))
   {
-    yr_compiler_set_error_extra_info(compiler, module_name->c_string);
+    yr_compiler_set_error_extra_info(compiler, module_name->c_string)
     return ERROR_INVALID_MODULE_NAME;
   }
 
@@ -1186,35 +1374,41 @@ int yr_parser_reduce_import(
       OBJECT_TYPE_STRUCTURE,
       module_name->c_string,
       NULL,
-      &module_structure));
+      &module_structure))
 
   FAIL_ON_ERROR(yr_hash_table_add(
       compiler->objects_table,
       module_name->c_string,
       compiler->current_namespace->name,
-      module_structure));
+      module_structure))
 
   result = yr_modules_do_declarations(
       module_name->c_string,
       module_structure);
 
   if (result == ERROR_UNKNOWN_MODULE)
-    yr_compiler_set_error_extra_info(compiler, module_name->c_string);
+    yr_compiler_set_error_extra_info(compiler, module_name->c_string)
 
   if (result != ERROR_SUCCESS)
     return result;
 
+  FAIL_ON_ERROR(yr_arena2_write_string(
+      compiler->arena,
+      YR_SZ_BUFFER,
+      module_name->c_string,
+      NULL))
+
   FAIL_ON_ERROR(yr_arena_write_string(
       compiler->sz_arena,
       module_name->c_string,
-      &name));
+      &name))
 
   FAIL_ON_ERROR(yr_parser_emit_with_arg_reloc(
-        yyscanner,
-        OP_IMPORT,
-        name,
-        NULL,
-        NULL));
+      yyscanner,
+      OP_IMPORT,
+      name,
+      NULL,
+      NULL))
 
   return ERROR_SUCCESS;
 }
@@ -1313,7 +1507,7 @@ int yr_parser_reduce_operation(
           OP_INT_TO_DBL,
           (left_operand.type == EXPRESSION_TYPE_INTEGER) ? 2 : 1,
           NULL,
-          NULL));
+          NULL))
     }
 
     expression_type = EXPRESSION_TYPE_FLOAT;
@@ -1327,7 +1521,7 @@ int yr_parser_reduce_operation(
     FAIL_ON_ERROR(yr_parser_emit(
         yyscanner,
         _yr_parser_operator_to_opcode(op, expression_type),
-        NULL));
+        NULL))
   }
   else if (left_operand.type == EXPRESSION_TYPE_STRING &&
            right_operand.type == EXPRESSION_TYPE_STRING)
@@ -1339,19 +1533,19 @@ int yr_parser_reduce_operation(
       FAIL_ON_ERROR(yr_parser_emit(
           yyscanner,
           opcode,
-          NULL));
+          NULL))
     }
     else
     {
       yr_compiler_set_error_extra_info_fmt(
-          compiler, "strings don't support \"%s\" operation", op);
+          compiler, "strings don't support \"%s\" operation", op)
 
       return ERROR_WRONG_TYPE;
     }
   }
   else
   {
-    yr_compiler_set_error_extra_info(compiler, "type mismatch");
+    yr_compiler_set_error_extra_info(compiler, "type mismatch")
 
     return ERROR_WRONG_TYPE;
   }

@@ -358,7 +358,7 @@ static int _yr_scan_verify_chained_string_match(
     // The matching string is the head of the chain, this match should be
     // added to the list of unconfirmed matches. The match will remain
     // unconfirmed until all the strings in the chain are found with the
-    // correct distances bewteen them.
+    // correct distances between them.
     add_match = true;
   }
   else
@@ -374,7 +374,7 @@ static int _yr_scan_verify_chained_string_match(
       lowest_offset = match_offset;
 
     // Iterate over the list of unconfirmed matches for the string that
-    // preceeds the currently matching string. If we have a string chain like:
+    // precedes the currently matching string. If we have a string chain like:
     // S1 <- S2 <- S3, and we just found a match for S2, we are iterating the
     // list of unconfirmed matches of S1.
     match = matching_string->chained_to->unconfirmed_matches[tidx].head;
@@ -427,7 +427,7 @@ static int _yr_scan_verify_chained_string_match(
       // chained to some other string.
       assert(matching_string->chained_to != NULL);
 
-      // Iterate over the list of unconfirmed matches of the preceeding string
+      // Iterate over the list of unconfirmed matches of the preceding string
       // in the chain and update the chain_length field for each of them. This
       // is a recursive operation that will update the chain_length field for
       // every unconfirmed match in all the strings in the chain up to the head
@@ -711,7 +711,9 @@ static int _yr_scan_verify_re_match(
   else
     exec = yr_re_exec;
 
-  if (STRING_IS_ASCII(ac_match->string) || STRING_IS_BASE64(ac_match->string) || STRING_IS_BASE64_WIDE(ac_match->string))
+  if (STRING_IS_ASCII(ac_match->string) ||
+      STRING_IS_BASE64(ac_match->string) ||
+      STRING_IS_BASE64_WIDE(ac_match->string))
   {
     FAIL_ON_ERROR(exec(
         context,
@@ -726,7 +728,8 @@ static int _yr_scan_verify_re_match(
   }
 
   if ((forward_matches == -1) &&
-      (STRING_IS_WIDE(ac_match->string) && !(STRING_IS_BASE64_WIDE(ac_match->string) || STRING_IS_BASE64_WIDE(ac_match->string))))
+      (STRING_IS_WIDE(ac_match->string) &&
+      !(STRING_IS_BASE64_WIDE(ac_match->string) || STRING_IS_BASE64_WIDE(ac_match->string))))
   {
     flags |= RE_FLAGS_WIDE;
     FAIL_ON_ERROR(exec(

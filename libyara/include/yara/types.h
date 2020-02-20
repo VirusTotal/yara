@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_TYPES_H
 
 #include <yara/arena.h>
+#include <yara/arena2.h>
 #include <yara/bitmask.h>
 #include <yara/limits.h>
 #include <yara/hash.h>
@@ -41,8 +42,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define DECLARE_REFERENCE(type, name) \
-    union { type name; int64_t name##_; } YR_ALIGN(8)
-
+    union { \
+      type name; \
+      YR_ARENA2_REFERENCE name##_; \
+    } YR_ALIGN(8)
 
 
 #define NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL      0x01
@@ -267,7 +270,7 @@ struct YR_META
   YR_ALIGN(8) int64_t integer;
 
   DECLARE_REFERENCE(const char*, identifier);
-  DECLARE_REFERENCE(char*, string);
+  DECLARE_REFERENCE(const char*, string);
 };
 
 
@@ -288,12 +291,12 @@ struct YR_STRING
   DECLARE_REFERENCE(char*, identifier);
   DECLARE_REFERENCE(uint8_t*, string);
 
-  // Strings are splited in two or more parts when they contain a "gap" that
+  // Strings are splitted in two or more parts when they contain a "gap" that
   // is larger than YR_STRING_CHAINING_THRESHOLD. This happens in strings like
   // { 01 02 03 04 [X-Y] 05 06 07 08 } if Y >= X + YR_STRING_CHAINING_THRESHOLD
   // and also in { 01 02 03 04 [-] 05 06 07 08 }. In both cases the strings are
   // split in { 01 02 03 04 } and { 05 06 07 08 }, and the two smaller strings
-  // are searched for independently. If some string S is splited in S1 and S2,
+  // are searched for independently. If some string S is splitted in S1 and S2,
   // S2 is chained to S1. In the example above { 05 06 07 08 } is chained to
   // { 01 02 03 04 }. The same applies when the string is splitted in more than
   // two parts, if S is split in S1, S2, and S3. S3 is chained to S2 and S2 is
@@ -320,7 +323,7 @@ struct YR_STRING
 
   // Each item in the "matches" array represents a list of matches, there's one
   // list of matches for each thread currently using the compiled rules. Up to
-  // YR_MAX_THREADS can use the compiled rules simultaneosly, that's why the
+  // YR_MAX_THREADS can use the compiled rules simultaneously, that's why the
   // array has YR_MAX_THREADS slots. The lists contain the matches that have
   // been found so far.
   YR_MATCHES matches[YR_MAX_THREADS];
@@ -360,7 +363,7 @@ struct YR_RULE
   volatile int64_t time_cost;
 
   // Used only when PROFILING_ENABLED is defined. This array holds the time
-  // cost for each thread using this structure concurrenlty. This is necessary
+  // cost for each thread using this structure concurrently. This is necessary
   // because a global variable causes too much contention while trying to
   // increment in a synchronized way from multiple threads.
   int64_t time_cost_per_thread[YR_MAX_THREADS];
@@ -600,7 +603,7 @@ struct YR_RULES
   YR_AC_MATCH_TABLE ac_match_table;
 
   // Size of ac_match_table and ac_transition_table in number of items (both
-  // tables have the same numbe of items).
+  // tables have the same number of items).
   uint32_t ac_tables_size;
 
   // Used only when PROFILING_ENABLED is defined.
@@ -686,7 +689,7 @@ struct YR_SCAN_CONTEXT
   int flags;
 
   // Thread index for the thread using this scan context. The number of threads
-  // that can use a YR_RULES object simultaneusly is limited by the YR_MAX_THREADS
+  // that can use a YR_RULES object simultaneously is limited by the YR_MAX_THREADS
   // constant. Each thread using a YR_RULES get assigned a unique thread index
   // in the range [0, YR_MAX_THREADS)
   int tidx;
@@ -721,7 +724,7 @@ struct YR_SCAN_CONTEXT
   // contains entries for external variables and modules.
   YR_HASH_TABLE* objects_table;
 
-  // Arena used for storing YR_MATCH structures asociated to the matches found.
+  // Arena used for storing YR_MATCH structures associated to the matches found.
   YR_ARENA* matches_arena;
 
   // Arena used for storing pointers to the YR_STRING struct for each matching

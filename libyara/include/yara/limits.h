@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils.h"
 
-// Maximum lenght of file paths. This is the only limit that doesn't have the
+// Maximum length of file paths. This is the only limit that doesn't have the
 // YR_ prefix. The intention is using the default MAX_PATH if defined.
 #ifndef MAX_PATH
 #define MAX_PATH 1024
@@ -48,6 +48,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // structures.
 #ifndef YR_MAX_THREADS
 #define YR_MAX_THREADS 32
+#endif
+
+// Maximum number of buffers that an arena can have.
+#ifndef YR_MAX_ARENA_BUFFERS
+#define YR_MAX_ARENA_BUFFERS 16
 #endif
 
 // Capacity of the buffer used for storing compiler error messages. Messages

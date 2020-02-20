@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <stddef.h>
 
+#include <yara/arena2.h>
 #include <yara/integers.h>
 #include <yara/utils.h>
 #include <yara/strutils.h>
@@ -237,8 +238,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <meta> meta_declaration
 %type <meta> meta_declarations
 
-%type <c_string> tags
-%type <c_string> tag_list
+%type <c_string_with_offset> tags
+%type <c_string_with_offset> tag_list
 
 %type <modifier> string_modifier
 %type <modifier> string_modifiers
@@ -283,10 +284,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   char*           c_string;
   int64_t         integer;
   double          double_;
-  YR_STRING*      string;
-  YR_META*        meta;
-  YR_RULE*        rule;
   YR_MODIFIER     modifier;
+
+  struct {
+    char* ptr;
+    yr_arena_off_t offset;
+  } c_string_with_offset;
+
+  struct {
+    YR_RULE* ptr;
+    yr_arena_off_t offset;
+  } rule;
+
+  struct {
+    YR_META* ptr;
+    yr_arena_off_t offset;
+  } meta;
+
+  struct {
+    YR_STRING* ptr;
+    yr_arena_off_t offset;
+  } string;
 }
 
 
@@ -322,20 +340,32 @@ rule
     : rule_modifiers _RULE_ _IDENTIFIER_
       {
         fail_if_error(yr_parser_reduce_rule_declaration_phase_1(
-            yyscanner, (int32_t) $1, $3, &$<rule>$));
+            yyscanner, (int32_t) $1, $3, &$<rule.ptr>$, &$<rule.offset>$));
       }
       tags '{' meta strings
       {
-        YR_RULE* rule = $<rule>4; // rule created in phase 1
+        YR_RULE* rule = $<rule.ptr>4; // rule created in phase 1
 
-        rule->tags = $5;
-        rule->metas = $7;
-        rule->strings = $8;
+        rule->tags = $5.ptr;
+        rule->metas = $7.ptr;
+        rule->strings = $8.ptr;
+
+        rule = (YR_RULE*) yr_arena2_get_address(
+            compiler->arena, YR_RULES_BUFFER, $<rule.offset>4);
+
+        rule->tags = (char*) yr_arena2_get_address(
+            compiler->arena, YR_SZ_BUFFER, $5.offset);
+
+        rule->metas = (YR_META*) yr_arena2_get_address(
+            compiler->arena, YR_METAS_BUFFER, $7.offset);
+
+        rule->strings = (YR_STRING*) yr_arena2_get_address(
+            compiler->arena, YR_STRINGS_BUFFER, $8.offset);
       }
       condition '}'
       {
         int result = yr_parser_reduce_rule_declaration_phase_2(
-            yyscanner, $<rule>4); // rule created in phase 1
+            yyscanner, $<rule.ptr>4); // rule created in phase 1
 
         yr_free($3);
 
@@ -347,12 +377,11 @@ rule
 meta
     : /* empty */
       {
-        $$ = NULL;
+        $$.ptr = NULL;
+        $$.offset = YR_ARENA_NULL_OFFSET;
       }
     | _META_ ':' meta_declarations
       {
-        int result;
-
         // Each rule have a list of meta-data info, consisting in a
         // sequence of YR_META structures. The last YR_META structure does
         // not represent a real meta-data, it's just a end-of-list marker
@@ -364,15 +393,20 @@ meta
         memset(&null_meta, 0xFF, sizeof(YR_META));
         null_meta.type = META_TYPE_NULL;
 
-        result = yr_arena_write_data(
+        fail_if_error(yr_arena2_write_data(
+            compiler->arena,
+            YR_METAS_BUFFER,
+            &null_meta,
+            sizeof(YR_META),
+            NULL));
+
+        fail_if_error(yr_arena_write_data(
             compiler->metas_arena,
             &null_meta,
             sizeof(YR_META),
-            NULL);
+            NULL));
 
         $$ = $3;
-
-        fail_if_error(result);
       }
     ;
 
@@ -380,7 +414,8 @@ meta
 strings
     : /* empty */
       {
-        $$ = NULL;
+        $$.ptr = NULL;
+        $$.offset = YR_ARENA_NULL_OFFSET;
       }
     | _STRINGS_ ':' string_declarations
       {
@@ -394,6 +429,13 @@ strings
 
         memset(&null_string, 0xFF, sizeof(YR_STRING));
         null_string.g_flags = STRING_GFLAGS_NULL;
+
+        fail_if_error(yr_arena2_write_data(
+            compiler->arena,
+            YR_STRINGS_BUFFER,
+            &null_string,
+            sizeof(YR_STRING),
+            NULL));
 
         fail_if_error(yr_arena_write_data(
             compiler->strings_arena,
@@ -426,7 +468,8 @@ rule_modifier
 tags
     : /* empty */
       {
-        $$ = NULL;
+        $$.ptr = NULL;
+        $$.offset = YR_ARENA_NULL_OFFSET;
       }
     | ':' tag_list
       {
@@ -435,10 +478,11 @@ tags
         // additional null character. Here we write the ending null
         //character. Example: tag1\0tag2\0tag3\0\0
 
-        int result = yr_arena_write_string(
-            yyget_extra(yyscanner)->sz_arena, "", NULL);
+        fail_if_error(yr_arena2_write_string(
+            yyget_extra(yyscanner)->arena, YR_SZ_BUFFER, "", NULL));
 
-        fail_if_error(result);
+        fail_if_error(yr_arena_write_string(
+            yyget_extra(yyscanner)->sz_arena, "", NULL));
 
         $$ = $2;
       }
@@ -448,8 +492,12 @@ tags
 tag_list
     : _IDENTIFIER_
       {
-        int result = yr_arena_write_string(
-            yyget_extra(yyscanner)->sz_arena, $1, &$$);
+        int result = yr_arena2_write_string(
+            yyget_extra(yyscanner)->arena, YR_SZ_BUFFER, $1, &$<c_string_with_offset.offset>$);
+
+        if (result == ERROR_SUCCESS)
+          result = yr_arena_write_string(
+              yyget_extra(yyscanner)->sz_arena, $1, &$<c_string_with_offset.ptr>$);
 
         yr_free($1);
 
@@ -459,10 +507,10 @@ tag_list
       {
         int result = ERROR_SUCCESS;
 
-        char* tag_name = $1;
-        size_t tag_length = tag_name != NULL ? strlen(tag_name) : 0;
+        char* tag_name = (char*) yr_arena2_get_address(
+            compiler->arena, YR_SZ_BUFFER, $<c_string_with_offset.offset>$);
 
-        while (tag_length > 0)
+        while (*tag_name != '\0')
         {
           if (strcmp(tag_name, $2) == 0)
           {
@@ -471,13 +519,12 @@ tag_list
             break;
           }
 
-          tag_name = (char*) yr_arena_next_address(
-              yyget_extra(yyscanner)->sz_arena,
-              tag_name,
-              tag_length + 1);
-
-          tag_length = tag_name != NULL ? strlen(tag_name) : 0;
+          tag_name += strlen(tag_name) + 1;
         }
+
+        if (result == ERROR_SUCCESS)
+          result = yr_arena2_write_string(
+              yyget_extra(yyscanner)->arena, YR_SZ_BUFFER, $2, NULL);
 
         if (result == ERROR_SUCCESS)
           result = yr_arena_write_string(
@@ -510,7 +557,8 @@ meta_declaration
             $1,
             sized_string->c_string,
             0,
-            &$$);
+            &$<meta.ptr>$,
+            &$<meta.offset>$);
 
         yr_free($1);
         yr_free($3);
@@ -525,7 +573,8 @@ meta_declaration
             $1,
             NULL,
             $3,
-            &$$);
+            &$<meta.ptr>$,
+            &$<meta.offset>$);
 
         yr_free($1);
 
@@ -539,7 +588,8 @@ meta_declaration
             $1,
             NULL,
             -$4,
-            &$$);
+            &$<meta.ptr>$,
+            &$<meta.offset>$);
 
         yr_free($1);
 
@@ -553,7 +603,8 @@ meta_declaration
             $1,
             NULL,
             true,
-            &$$);
+            &$<meta.ptr>$,
+            &$<meta.offset>$);
 
         yr_free($1);
 
@@ -567,7 +618,8 @@ meta_declaration
             $1,
             NULL,
             false,
-            &$$);
+            &$<meta.ptr>$,
+            &$<meta.offset>$);
 
         yr_free($1);
 
@@ -590,7 +642,7 @@ string_declaration
       _TEXT_STRING_ string_modifiers
       {
         int result = yr_parser_reduce_string_declaration(
-            yyscanner, $5, $1, $4, &$$);
+            yyscanner, $5, $1, $4, &$<string.ptr>$, &$<string.offset>$);
 
         yr_free($1);
         yr_free($4);
@@ -611,7 +663,7 @@ string_declaration
         $5.flags |= STRING_GFLAGS_REGEXP;
 
         result = yr_parser_reduce_string_declaration(
-            yyscanner, $5, $1, $4, &$$);
+            yyscanner, $5, $1, $4, &$<string.ptr>$, &$<string.offset>$);
 
         yr_free($1);
         yr_free($4);
@@ -631,7 +683,7 @@ string_declaration
         $5.flags |= STRING_GFLAGS_HEXADECIMAL;
 
         result = yr_parser_reduce_string_declaration(
-            yyscanner, $5, $1, $4, &$$);
+            yyscanner, $5, $1, $4, &$<string.ptr>$, &$<string.offset>$);
 
         yr_free($1);
         yr_free($4);
@@ -1184,6 +1236,7 @@ regexp
             sized_string->c_string,
             re_flags,
             compiler->re_code_arena,
+            compiler->arena,
             &re,
             &error);
 
