@@ -32,13 +32,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stddef.h>
 #include <yara/limits.h>
+#include <yara/integers.h>
 #include <yara/stream.h>
 
 #define EOL2 ((uint32_t) -1)
 
 #define YR_ARENA_FILE_VERSION  17
 
-#define YR_ARENA_NULL_OFFSET  ((uint32_t) -1)
+#define YR_ARENA_NULL_REF  \
+    (YR_ARENA2_REFERENCE){.buffer_id=UINT8_MAX, .offset=UINT32_MAX}
 
 typedef uint32_t yr_arena_off_t;
 
@@ -152,33 +154,40 @@ struct YR_ARENA2
 
 
 int yr_arena2_create(
-  int number_of_buffers,
-  size_t initial_buffer_size,
-  YR_ARENA2** arena);
+    int number_of_buffers,
+    size_t initial_buffer_size,
+    YR_ARENA2** arena);
 
 
 int yr_arena2_destroy(
     YR_ARENA2* arena);
 
 
+void* yr_arena2_ref_to_ptr(
+    YR_ARENA2* arena,
+    YR_ARENA2_REFERENCE* ref);
+
+
 int yr_arena2_allocate_memory(
-  YR_ARENA2* arena,
-  int buffer_id,
-  size_t size,
-  yr_arena_off_t* offset);
+    YR_ARENA2* arena,
+    int buffer_id,
+    size_t size,
+    YR_ARENA2_REFERENCE* ref);
+
 
 int yr_arena2_allocate_struct(
-  YR_ARENA2* arena,
-  int buffer_id,
-  size_t size,
-  yr_arena_off_t* offset,
-  ...);
+    YR_ARENA2* arena,
+    int buffer_id,
+    size_t size,
+    YR_ARENA2_REFERENCE* ref,
+    ...);
 
+/*
 void* yr_arena2_get_address(
-  YR_ARENA2* arena,
-  int buffer_id,
-  yr_arena_off_t offset);
-
+    YR_ARENA2* arena,
+    int buffer_id,
+    yr_arena_off_t offset);
+*/
 
 int yr_arena2_make_ptr_relocatable(
     YR_ARENA2* arena,
@@ -187,18 +196,18 @@ int yr_arena2_make_ptr_relocatable(
 
 
 int yr_arena2_write_data(
-  YR_ARENA2* arena,
-  int buffer_id,
-  const void* data,
-  size_t size,
-  yr_arena_off_t* offset);
+    YR_ARENA2* arena,
+    int buffer_id,
+    const void* data,
+    size_t size,
+    YR_ARENA2_REFERENCE* ref);
 
 
 int yr_arena2_write_string(
-  YR_ARENA2* arena,
-  int buffer_id,
-  const char* string,
-  yr_arena_off_t* offset);
+    YR_ARENA2* arena,
+    int buffer_id,
+    const char* string,
+    YR_ARENA2_REFERENCE* ref);
 
 
 int yr_arena2_load_stream(

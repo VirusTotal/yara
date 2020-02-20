@@ -169,7 +169,7 @@ int yr_parser_emit_with_arg_reloc(
       sizeof(uint8_t),
       NULL);
 
-  yr_arena_off_t arg_offset;
+  YR_ARENA2_REFERENCE ref;
 
   if (result == ERROR_SUCCESS)
     result = yr_arena2_write_data(
@@ -177,13 +177,13 @@ int yr_parser_emit_with_arg_reloc(
         YR_CODE_BUFFER,
         &arg,
         sizeof(arg),
-        &arg_offset);
+        &ref);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena2_make_ptr_relocatable(
         yyget_extra(yyscanner)->arena,
         YR_CODE_BUFFER,
-        arg_offset,
+        ref.offset,
         EOL2);
 
   if (result == ERROR_SUCCESS)
@@ -403,14 +403,14 @@ static int _yr_parser_write_string(
 
   *string = NULL;
 
-  yr_arena_off_t string_offset;
-  yr_arena_off_t identifier_offset;
+  YR_ARENA2_REFERENCE string_ref;
+  YR_ARENA2_REFERENCE identifier_ref;
 
   FAIL_ON_ERROR(yr_arena2_allocate_struct(
       compiler->arena,
       YR_STRINGS_BUFFER,
       sizeof(YR_STRING),
-      &string_offset,
+      &string_ref,
       offsetof(YR_STRING, identifier),
       offsetof(YR_STRING, string),
       offsetof(YR_STRING, chained_to),
@@ -421,7 +421,7 @@ static int _yr_parser_write_string(
       compiler->arena,
       YR_SZ_BUFFER,
       identifier,
-      &identifier_offset))
+      &identifier_ref))
 
   result = yr_arena_allocate_struct(
       compiler->strings_arena,
@@ -586,7 +586,7 @@ int yr_parser_reduce_string_declaration(
     const char* identifier,
     SIZED_STRING* str,
     YR_STRING** string,
-    yr_arena_off_t* string_offset)
+    YR_ARENA2_REFERENCE* string_ref)
 {
   int min_atom_quality = YR_MAX_ATOM_QUALITY;
   int atom_quality;
@@ -897,7 +897,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
     int32_t flags,
     const char* identifier,
     YR_RULE** rule,
-    yr_arena_off_t* rule_offset)
+    YR_ARENA2_REFERENCE* rule_ref)
 {
   YR_FIXUP *fixup;
   YR_INIT_RULE_ARGS *init_rule_args;
@@ -925,7 +925,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
       compiler->arena,
       YR_RULES_BUFFER,
       sizeof(YR_RULE),
-      rule_offset,
+      rule_ref,
       offsetof(YR_RULE, identifier),
       offsetof(YR_RULE, tags),
       offsetof(YR_RULE, strings),
@@ -933,20 +933,17 @@ int yr_parser_reduce_rule_declaration_phase_1(
       offsetof(YR_RULE, ns),
       EOL2))
 
-  yr_arena_off_t identifier_offset;
+  YR_RULE* r = (YR_RULE*) yr_arena2_ref_to_ptr(compiler->arena, rule_ref);
+
+  YR_ARENA2_REFERENCE ref;
 
   FAIL_ON_ERROR(yr_arena2_write_string(
       compiler->arena,
       YR_SZ_BUFFER,
       identifier,
-      &identifier_offset))
+      &ref));
 
-  YR_RULE* r = yr_arena2_get_address(
-      compiler->arena, YR_RULES_BUFFER, *rule_offset);
-
-  r->identifier = (const char *) yr_arena2_get_address(
-      compiler->arena, YR_SZ_BUFFER, identifier_offset);
-
+  r->identifier = yr_arena2_ref_to_ptr(compiler->arena, &ref);
   r->g_flags = flags;
   r->ns = compiler->current_namespace;
   r->num_atoms = 0;
@@ -955,8 +952,6 @@ int yr_parser_reduce_rule_declaration_phase_1(
   r->time_cost = 0;
   memset(r->time_cost_per_thread, 0, sizeof(r->time_cost_per_thread));
   #endif
-
-
 
 
   FAIL_ON_ERROR(yr_arena_allocate_struct(
@@ -1231,53 +1226,49 @@ int yr_parser_reduce_meta_declaration(
     const char* string,
     int64_t integer,
     YR_META** meta,
-    yr_arena_off_t* meta_offset)
+    YR_ARENA2_REFERENCE* meta_ref)
 {
+  YR_ARENA2_REFERENCE ref;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   FAIL_ON_ERROR(yr_arena2_allocate_struct(
       compiler->arena,
       YR_METAS_BUFFER,
       sizeof(YR_META),
-      meta_offset,
+      meta_ref,
       offsetof(YR_META, identifier),
       offsetof(YR_META, string),
       EOL2))
 
-  yr_arena_off_t identifier_offset;
+  YR_META* m = (YR_META*) yr_arena2_ref_to_ptr(compiler->arena, meta_ref);
+
+  m->type = type;
+  m->integer = integer;
 
   FAIL_ON_ERROR(yr_arena2_write_string(
       compiler->arena,
       YR_SZ_BUFFER,
       identifier,
-      &identifier_offset))
+      &ref));
 
-  YR_META* m = (YR_META*) yr_arena2_get_address(
-      compiler->arena, YR_METAS_BUFFER, *meta_offset);
-
-  m->identifier = (const char*) yr_arena2_get_address(
-      compiler->arena, YR_SZ_BUFFER, identifier_offset);
+  m->identifier = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
 
   if (string != NULL)
   {
-    yr_arena_off_t string_offset;
-
     FAIL_ON_ERROR(yr_arena2_write_string(
         compiler->arena,
         YR_SZ_BUFFER,
         string,
-        &string_offset))
+        &ref))
 
-    m->string = (const char*) yr_arena2_get_address(
-        compiler->arena, YR_SZ_BUFFER, string_offset);
+    m->string = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
   }
   else
   {
     m->string = NULL;
   }
 
-  m->type = type;
-  m->integer = integer;
+
 
   FAIL_ON_ERROR(yr_arena_allocate_struct(
       compiler->metas_arena,
