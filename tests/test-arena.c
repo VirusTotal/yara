@@ -157,7 +157,7 @@ static void reloc_tests()
 
 int main(int argc, char** argv)
 {
-  //basic_tests();
+  basic_tests();
   reloc_tests();
 
   return 0;
