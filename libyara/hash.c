@@ -365,3 +365,31 @@ YR_API int yr_hash_table_add(
       ns,
       value);
 }
+
+
+YR_API uint32_t yr_hash_table_add_uint32(
+    YR_HASH_TABLE* table,
+    const char* key,
+    const char* ns,
+    uint32_t value)
+{
+  if (value == UINT32_MAX)
+    return ERROR_INVALID_ARGUMENT;
+
+  return yr_hash_table_add(
+      table, key, ns, (void*) (size_t) value);
+}
+
+
+YR_API uint32_t yr_hash_table_lookup_uint32(
+    YR_HASH_TABLE* table,
+    const char* key,
+    const char* ns)
+{
+  void* ptr = yr_hash_table_lookup(table, key, ns);
+
+  if (ptr == NULL)
+    return UINT32_MAX;
+
+  return (uint32_t) ptr;
+}

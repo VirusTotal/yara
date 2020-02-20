@@ -168,6 +168,12 @@ void* yr_arena2_ref_to_ptr(
     YR_ARENA2_REFERENCE* ref);
 
 
+int yr_arena2_ptr_to_ref(
+    YR_ARENA2* arena,
+    void* address,
+    YR_ARENA2_REFERENCE* ref);
+
+
 int yr_arena2_allocate_memory(
     YR_ARENA2* arena,
     int buffer_id,
