@@ -87,7 +87,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
     int32_t flags,
     const char* identifier,
     YR_RULE** rule,
-    yr_arena_off_t* rule_offset);
+    YR_ARENA2_REFERENCE* rule_ref);
 
 
 int yr_parser_reduce_rule_declaration_phase_2(
@@ -101,7 +101,7 @@ int yr_parser_reduce_string_declaration(
     const char* identifier,
     SIZED_STRING* str,
     YR_STRING** string,
-    yr_arena_off_t* string_offset);
+    YR_ARENA2_REFERENCE* string_ref);
 
 
 int yr_parser_reduce_meta_declaration(
@@ -111,7 +111,7 @@ int yr_parser_reduce_meta_declaration(
     const char* string,
     int64_t integer,
     YR_META** meta,
-    yr_arena_off_t* meta_offset);
+    YR_ARENA2_REFERENCE* meta_ref);
 
 
 int yr_parser_reduce_string_identifier(

@@ -288,23 +288,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
   struct {
     char* ptr;
-    yr_arena_off_t offset;
+    YR_ARENA2_REFERENCE ref;
   } c_string_with_offset;
 
   struct {
     YR_RULE* ptr;
-    yr_arena_off_t offset;
     YR_ARENA2_REFERENCE ref;
   } rule;
 
   struct {
     YR_META* ptr;
-    yr_arena_off_t offset;
+    YR_ARENA2_REFERENCE ref;
   } meta;
 
   struct {
     YR_STRING* ptr;
-    yr_arena_off_t offset;
+    YR_ARENA2_REFERENCE ref;
   } string;
 }
 
@@ -341,7 +340,7 @@ rule
     : rule_modifiers _RULE_ _IDENTIFIER_
       {
         fail_if_error(yr_parser_reduce_rule_declaration_phase_1(
-            yyscanner, (int32_t) $1, $3, &$<rule.ptr>$, &$<rule.offset>$));
+            yyscanner, (int32_t) $1, $3, &$<rule.ptr>$, &$<rule.ref>$));
       }
       tags '{' meta strings
       {
@@ -351,17 +350,16 @@ rule
         rule->metas = $7.ptr;
         rule->strings = $8.ptr;
 
-        rule = (YR_RULE*) yr_arena2_get_address(
-            compiler->arena, YR_RULES_BUFFER, $<rule.offset>4);
+        rule = (YR_RULE*) yr_arena2_ref_to_ptr(
+            compiler->arena, &$<rule.ref>4);
 
-        rule->tags = (char*) yr_arena2_get_address(
-            compiler->arena, YR_SZ_BUFFER, $5.offset);
+        rule->tags = (const char*) yr_arena2_ref_to_ptr(
+            compiler->arena, &$5.ref);
 
-        rule->metas = (YR_META*) yr_arena2_get_address(
-            compiler->arena, YR_METAS_BUFFER, $7.offset);
+        rule->metas = (YR_META*) yr_arena2_ref_to_ptr(
+            compiler->arena, &$7.ref);
 
-        // rule->strings = (YR_STRING*) yr_arena2_get_address(
-        //    compiler->arena, YR_STRINGS_BUFFER, $8.offset);
+        // rule->strings_ref = $8.ref;
       }
       condition '}'
       {
@@ -379,7 +377,7 @@ meta
     : /* empty */
       {
         $$.ptr = NULL;
-        $$.offset = YR_ARENA_NULL_OFFSET;
+        $$.ref = YR_ARENA_NULL_REF;
       }
     | _META_ ':' meta_declarations
       {
@@ -416,7 +414,7 @@ strings
     : /* empty */
       {
         $$.ptr = NULL;
-        $$.offset = YR_ARENA_NULL_OFFSET;
+        $$.ref = YR_ARENA_NULL_REF;
       }
     | _STRINGS_ ':' string_declarations
       {
@@ -470,7 +468,7 @@ tags
     : /* empty */
       {
         $$.ptr = NULL;
-        $$.offset = YR_ARENA_NULL_OFFSET;
+        $$.ref = YR_ARENA_NULL_REF;
       }
     | ':' tag_list
       {
@@ -494,7 +492,7 @@ tag_list
     : _IDENTIFIER_
       {
         int result = yr_arena2_write_string(
-            yyget_extra(yyscanner)->arena, YR_SZ_BUFFER, $1, &$<c_string_with_offset.offset>$);
+            yyget_extra(yyscanner)->arena, YR_SZ_BUFFER, $1, &$<c_string_with_offset.ref>$);
 
         if (result == ERROR_SUCCESS)
           result = yr_arena_write_string(
@@ -508,8 +506,8 @@ tag_list
       {
         int result = ERROR_SUCCESS;
 
-        char* tag_name = (char*) yr_arena2_get_address(
-            compiler->arena, YR_SZ_BUFFER, $<c_string_with_offset.offset>$);
+        char* tag_name = (char*) yr_arena2_ref_to_ptr(
+            compiler->arena, &$<c_string_with_offset.ref>$);
 
         while (*tag_name != '\0')
         {
@@ -559,7 +557,7 @@ meta_declaration
             sized_string->c_string,
             0,
             &$<meta.ptr>$,
-            &$<meta.offset>$);
+            &$<meta.ref>$);
 
         yr_free($1);
         yr_free($3);
@@ -575,7 +573,7 @@ meta_declaration
             NULL,
             $3,
             &$<meta.ptr>$,
-            &$<meta.offset>$);
+            &$<meta.ref>$);
 
         yr_free($1);
 
@@ -590,7 +588,7 @@ meta_declaration
             NULL,
             -$4,
             &$<meta.ptr>$,
-            &$<meta.offset>$);
+            &$<meta.ref>$);
 
         yr_free($1);
 
@@ -605,7 +603,7 @@ meta_declaration
             NULL,
             true,
             &$<meta.ptr>$,
-            &$<meta.offset>$);
+            &$<meta.ref>$);
 
         yr_free($1);
 
@@ -620,7 +618,7 @@ meta_declaration
             NULL,
             false,
             &$<meta.ptr>$,
-            &$<meta.offset>$);
+            &$<meta.ref>$);
 
         yr_free($1);
 
@@ -643,11 +641,10 @@ string_declaration
       _TEXT_STRING_ string_modifiers
       {
         int result = yr_parser_reduce_string_declaration(
-            yyscanner, $5, $1, $4, &$<string.ptr>$, &$<string.offset>$);
+            yyscanner, $5, $1, $4, &$<string.ptr>$, &$<string.ref>$);
 
         yr_free($1);
         yr_free($4);
-
         yr_free($5.alphabet);
 
         fail_if_error(result);
@@ -664,7 +661,7 @@ string_declaration
         $5.flags |= STRING_GFLAGS_REGEXP;
 
         result = yr_parser_reduce_string_declaration(
-            yyscanner, $5, $1, $4, &$<string.ptr>$, &$<string.offset>$);
+            yyscanner, $5, $1, $4, &$<string.ptr>$, &$<string.ref>$);
 
         yr_free($1);
         yr_free($4);
@@ -684,7 +681,7 @@ string_declaration
         $5.flags |= STRING_GFLAGS_HEXADECIMAL;
 
         result = yr_parser_reduce_string_declaration(
-            yyscanner, $5, $1, $4, &$<string.ptr>$, &$<string.offset>$);
+            yyscanner, $5, $1, $4, &$<string.ptr>$, &$<string.ref>$);
 
         yr_free($1);
         yr_free($4);

@@ -38,25 +38,25 @@ static void basic_tests()
   // Create arena with 1 buffer of 10 bytes of initial size.
   assert(yr_arena2_create(1, 10, &arena) == ERROR_SUCCESS);
 
-  yr_arena_off_t offset;
+  YR_ARENA2_REFERENCE ref;
 
   // Allocate 5 bytes.
-  assert(yr_arena2_allocate_memory(arena, 0, 5, &offset) == ERROR_SUCCESS);
+  assert(yr_arena2_allocate_memory(arena, 0, 5, &ref) == ERROR_SUCCESS);
 
   // Offset should be 0 as this is the first write.
-  assert(offset == 0);
+  assert(ref.offset == 0);
 
   // Write 4 bytes, "foo" + null terminator.
-  assert(yr_arena2_write_string(arena, 0, "foo", &offset) == ERROR_SUCCESS);
+  assert(yr_arena2_write_string(arena, 0, "foo", &ref) == ERROR_SUCCESS);
 
   // Offset should be 5 as this was written after the first 5-bytes write.
-  assert(offset == 5);
+  assert(ref.offset == 5);
 
   // Write 4 bytes, "bar" + null terminator. This makes forces a reallocation.
-  assert(yr_arena2_write_string(arena, 0, "bar", &offset) == ERROR_SUCCESS);
+  assert(yr_arena2_write_string(arena, 0, "bar", &ref) == ERROR_SUCCESS);
 
   // Offset should be 9.
-  assert(offset == 9);
+  assert(ref.offset == 9);
 
   yr_arena2_destroy(arena);
 }
@@ -78,7 +78,7 @@ static void reloc_tests()
   int result = yr_arena2_create(2, 10, &arena);
   assert(result == ERROR_SUCCESS);
 
-  yr_arena_off_t offset;
+  YR_ARENA2_REFERENCE ref;
 
   // Allocate a struct in buffer 0 indicating that the field "str" is a
   // relocatable pointer.
@@ -86,7 +86,7 @@ static void reloc_tests()
       arena,
       0,
       sizeof(TEST_STRUCT),
-      &offset,
+      &ref,
       offsetof(TEST_STRUCT, str1),
       offsetof(TEST_STRUCT, str2),
       EOL2);
@@ -95,19 +95,19 @@ static void reloc_tests()
 
   // Get the struct address, this pointer is valid as longs as we don't call
   // any other function that allocates memory in buffer 0.
-  TEST_STRUCT* s = (TEST_STRUCT*) yr_arena2_get_address(arena, 0, offset);
+  TEST_STRUCT* s = (TEST_STRUCT*) yr_arena2_ref_to_ptr(arena, &ref);
 
   // Write a string in buffer 1.
-  yr_arena2_write_string(arena, 1, "foo", &offset);
+  yr_arena2_write_string(arena, 1, "foo", &ref);
 
   // Get the string's address and store it in the struct's "str" field.
-  s->str1 = (char *) yr_arena2_get_address(arena, 1, offset);
+  s->str1 = (char *) yr_arena2_ref_to_ptr(arena, &ref);
 
   // Write another string in buffer 1.
-  yr_arena2_write_string(arena, 1, "bar", &offset);
+  yr_arena2_write_string(arena, 1, "bar", &ref);
 
   // Get the string's address and store it in the struct's "str" field.
-  s->str2 = (char *) yr_arena2_get_address(arena, 1, offset);
+  s->str2 = (char *) yr_arena2_ref_to_ptr(arena, &ref);
 
   // The arena should have two reloc entries for the "str1" and "str2" fields.
   assert(arena->reloc_list_head != NULL);
@@ -118,7 +118,7 @@ static void reloc_tests()
   assert(arena->reloc_list_tail->offset == offsetof(TEST_STRUCT, str2));
 
   // Write another string in buffer 1 that causes a buffer reallocation.
-  yr_arena2_write_string(arena, 1, "aaaaaaaaaaa", &offset);
+  yr_arena2_write_string(arena, 1, "aaaaaaaaaaa", NULL);
 
   assert(strcmp(s->str1, "foo") == 0);
   assert(strcmp(s->str2, "bar") == 0);
@@ -146,7 +146,10 @@ static void reloc_tests()
   result = yr_arena2_load_stream(&stream, &arena);
   assert(result == ERROR_SUCCESS);
 
-  s = (TEST_STRUCT*) yr_arena2_get_address(arena, 0, 0);
+  ref.buffer_id = 0;
+  ref.offset = 0;
+
+  s = (TEST_STRUCT*) yr_arena2_ref_to_ptr(arena, &ref);
 
   assert(strcmp(s->str1, "foo") == 0);
   assert(strcmp(s->str2, "bar") == 0);

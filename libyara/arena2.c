@@ -195,7 +195,7 @@ int yr_arena2_allocate_memory(
     YR_ARENA2* arena,
     int buffer_id,
     size_t size,
-    yr_arena_off_t* offset)
+    YR_ARENA2_REFERENCE* ref)
 {
   if (buffer_id > arena->num_buffers)
     return ERROR_INVALID_ARGUMENT;
@@ -244,8 +244,11 @@ int yr_arena2_allocate_memory(
     b->data = new_data;
   }
 
-  if (offset != NULL)
-    *offset = b->used;
+  if (ref != NULL)
+  {
+    ref->buffer_id = buffer_id;
+    ref->offset = b->used;
+  }
 
   b->used += size;
 
@@ -291,40 +294,40 @@ int yr_arena2_allocate_struct(
     YR_ARENA2* arena,
     int buffer_id,
     size_t size,
-    yr_arena_off_t* struct_offset,
+    YR_ARENA2_REFERENCE* ref,
     ...)
 {
-  yr_arena_off_t offset;
+  YR_ARENA2_REFERENCE r;
   int result;
 
   va_list field_offsets;
-  va_start(field_offsets, struct_offset);
+  va_start(field_offsets, ref);
 
-  result = yr_arena2_allocate_memory(arena, buffer_id, size, &offset);
+  result = yr_arena2_allocate_memory(arena, buffer_id, size, &r);
 
   va_end(field_offsets);
 
   if (result == ERROR_SUCCESS)
   {
     result = _yr_arena2_make_ptr_relocatable(
-        arena, buffer_id, offset, field_offsets);
+        arena, buffer_id, r.offset, field_offsets);
   }
 
-  if (struct_offset != NULL)
-    *struct_offset = offset;
+  if (ref != NULL)
+  {
+    ref->buffer_id = r.buffer_id;
+    ref->offset = r.offset;
+  }
 
   return result;
 }
 
 
-inline void* yr_arena2_get_address(
+static inline void* _yr_arena2_get_address(
     YR_ARENA2* arena,
     int buffer_id,
     yr_arena_off_t offset)
 {
-  if (offset == YR_ARENA_NULL_OFFSET)
-    return NULL;
-
   assert(buffer_id < arena->num_buffers);
   assert(offset < arena->buffers[buffer_id].used);
 
@@ -332,13 +335,12 @@ inline void* yr_arena2_get_address(
 }
 
 
-int yr_arena2_address_to_reference(
+int yr_arena2_ptr_to_ref(
     YR_ARENA2* arena,
     void* address,
     YR_ARENA2_REFERENCE* ref)
 {
-  ref->buffer_id = 0;
-  ref->offset =  YR_ARENA_NULL_OFFSET;
+  *ref = YR_ARENA_NULL_REF;
 
   if (address == NULL)
     return 1;
@@ -357,11 +359,17 @@ int yr_arena2_address_to_reference(
   return 0;
 }
 
-void* yr_arena2_reference_to_address(
+void* yr_arena2_ref_to_ptr(
     YR_ARENA2* arena,
     YR_ARENA2_REFERENCE* ref)
 {
-  return yr_arena2_get_address(arena, ref->buffer_id, ref->offset);
+  if (ref->buffer_id == YR_ARENA_NULL_REF.buffer_id &&
+      ref->offset == YR_ARENA_NULL_REF.offset)
+  {
+    return NULL;
+  }
+
+  return _yr_arena2_get_address(arena, ref->buffer_id, ref->offset);
 }
 
 
@@ -405,18 +413,21 @@ int yr_arena2_write_data(
     int buffer_id,
     const void* data,
     size_t size,
-    yr_arena_off_t* data_offset)
+    YR_ARENA2_REFERENCE* ref)
 {
-  yr_arena_off_t offset;
+  YR_ARENA2_REFERENCE r;
 
   // Allocate space in the buffer.
-  FAIL_ON_ERROR(yr_arena2_allocate_memory(arena, buffer_id, size, &offset));
+  FAIL_ON_ERROR(yr_arena2_allocate_memory(arena, buffer_id, size, &r));
 
   // Copy the data into the allocated space.
-  memcpy(arena->buffers[buffer_id].data + offset, data, size);
+  memcpy(arena->buffers[buffer_id].data + r.offset, data, size);
 
-  if (data_offset != NULL)
-    *data_offset = offset;
+  if (ref != NULL)
+  {
+    ref->buffer_id = r.buffer_id;
+    ref->offset = r.offset;
+  }
 
   return ERROR_SUCCESS;
 }
@@ -426,10 +437,10 @@ int yr_arena2_write_string(
     YR_ARENA2* arena,
     int buffer_id,
     const char* string,
-    yr_arena_off_t* string_offset)
+    YR_ARENA2_REFERENCE* ref)
 {
   return yr_arena2_write_data(
-      arena, buffer_id, string,strlen(string) + 1, string_offset);
+      arena, buffer_id, string,strlen(string) + 1, ref);
 }
 
 
@@ -470,14 +481,14 @@ int yr_arena2_load_stream(
 
   for (int i = 0; i < hdr.num_buffers; ++i)
   {
-    yr_arena_off_t offset;
+    YR_ARENA2_REFERENCE ref;
 
     FAIL_ON_ERROR_WITH_CLEANUP(
         yr_arena2_allocate_memory(
-            new_arena, i, buffers[i].size, &offset),
+            new_arena, i, buffers[i].size, &ref),
         yr_arena2_destroy(new_arena))
 
-    void* ptr = yr_arena2_get_address(new_arena, i, offset);
+    void* ptr = _yr_arena2_get_address(new_arena, i, ref.offset);
 
     if (yr_stream_read(ptr, buffers[i].size, 1, stream) != 1)
     {
@@ -501,8 +512,7 @@ int yr_arena2_load_stream(
 
     void** reloc_ptr = b->data + ref.offset;
 
-    *reloc_ptr = yr_arena2_reference_to_address(
-        new_arena, (YR_ARENA2_REFERENCE*) reloc_ptr);
+    *reloc_ptr = yr_arena2_ref_to_ptr(new_arena, (YR_ARENA2_REFERENCE *) reloc_ptr);
 
     FAIL_ON_ERROR_WITH_CLEANUP(
         yr_arena2_make_ptr_relocatable(
@@ -573,11 +583,10 @@ int yr_arena2_save_stream(
     // we don't want random bytes in the padding.
     memset(&ref, 0, sizeof(ref));
 
-    int found = yr_arena2_address_to_reference(
-        arena, *reloc_ptr, &ref);
+    int found = yr_arena2_ptr_to_ref(arena, *reloc_ptr, &ref);
 
-    // yr_arena2_address_to_reference returns 0 if the relocatable pointer is
-    // pointing outside the arena, this should not happen.
+    // yr_arena2_ptr_to_ref returns 0 if the relocatable pointer is pointing
+    // outside the arena, this should not happen.
     assert(found);
 
     // Replace the relocatable pointer with a reference that holds information
