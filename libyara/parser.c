@@ -739,25 +739,6 @@ int yr_parser_reduce_string_declaration(
       goto _exit;
     }
 
-    if (modifier.flags & STRING_GFLAGS_BASE64 ||
-        modifier.flags & STRING_GFLAGS_BASE64_WIDE)
-    {
-      RE re;
-
-      FAIL_ON_ERROR(yr_arena_reserve_memory(
-          compiler->code_arena, sizeof(int64_t) + RE_MAX_CODE_SIZE))
-
-      re.flags = 0;
-
-      FAIL_ON_ERROR_WITH_CLEANUP(
-          yr_arena_write_data(
-              compiler->re_code_arena,
-              &re,
-              sizeof(re),
-              NULL),
-          yr_re_ast_destroy(re_ast))
-    }
-
     if (re_ast->flags & RE_FLAGS_FAST_REGEXP)
       modifier.flags |= STRING_GFLAGS_FAST_REGEXP;
 
