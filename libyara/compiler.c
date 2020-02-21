@@ -231,10 +231,6 @@ YR_API int yr_compiler_create(
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(
-        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->externals_arena);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_create(
         65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->metas_arena);
 
   if (result == ERROR_SUCCESS)
@@ -274,7 +270,6 @@ YR_API void yr_compiler_destroy(
   yr_arena_destroy(compiler->strings_arena);
   yr_arena_destroy(compiler->code_arena);
   yr_arena_destroy(compiler->re_code_arena);
-  yr_arena_destroy(compiler->externals_arena);
   yr_arena_destroy(compiler->metas_arena);
   yr_arena_destroy(compiler->automaton_arena);
   yr_arena_destroy(compiler->matches_arena);
@@ -702,8 +697,9 @@ static int _yr_compiler_compile_rules(
   memset(&null_external, 0xFA, sizeof(YR_EXTERNAL_VARIABLE));
   null_external.type = EXTERNAL_VARIABLE_TYPE_NULL;
 
-  yr_arena_write_data(
-      compiler->externals_arena,
+  yr_arena2_write_data(
+      compiler->arena,
+      YR_EXTERNAL_VARIABLES_TABLE,
       &null_external,
       sizeof(YR_EXTERNAL_VARIABLE),
       NULL);
@@ -731,11 +727,11 @@ static int _yr_compiler_compile_rules(
 
   if (result == ERROR_SUCCESS)
   {
-    rules_file_header->rules_list_head = (YR_RULE*) yr_arena2_get_ptr(
-      compiler->arena, YR_RULES_TABLE, 0);
+    rules_file_header->rules_list_head = (YR_RULE*) \
+        yr_arena2_get_ptr(compiler->arena, YR_RULES_TABLE, 0);
 
-    rules_file_header->externals_list_head = (YR_EXTERNAL_VARIABLE*)
-		yr_arena_base_address(compiler->externals_arena);
+    rules_file_header->externals_list_head = (YR_EXTERNAL_VARIABLE*) \
+        yr_arena2_get_ptr(compiler->arena, YR_EXTERNAL_VARIABLES_TABLE, 0);
 
     rules_file_header->code_start = (uint8_t*) yr_arena_base_address(
         compiler->code_arena);
@@ -771,14 +767,6 @@ static int _yr_compiler_compile_rules(
   if (result == ERROR_SUCCESS)
   {
     compiler->strings_arena = NULL;
-    result = yr_arena_append(
-        arena,
-        compiler->externals_arena);
-  }
-
-  if (result == ERROR_SUCCESS)
-  {
-    compiler->externals_arena = NULL;
     result = yr_arena_append(
         arena,
         compiler->metas_arena);
@@ -821,6 +809,11 @@ static int _yr_compiler_compile_rules(
       arena, compiler->arena, YR_RULES_TABLE);
   }
 
+  if (result == ERROR_SUCCESS)
+  {
+    result = yr_arena_append_arena2_buffer(
+        arena, compiler->arena, YR_EXTERNAL_VARIABLES_TABLE);
+  }
 
   if (result == ERROR_SUCCESS)
   {
@@ -911,12 +904,18 @@ static int _yr_compiler_define_variable(
       external->identifier,
       &id));
 
-  FAIL_ON_ERROR(yr_arena_allocate_struct(
-      compiler->externals_arena,
+  YR_ARENA2_REFERENCE ref;
+
+  FAIL_ON_ERROR(yr_arena2_allocate_struct(
+      compiler->arena,
+      YR_EXTERNAL_VARIABLES_TABLE,
       sizeof(YR_EXTERNAL_VARIABLE),
-      (void**) &ext,
+      &ref,
       offsetof(YR_EXTERNAL_VARIABLE, identifier),
-      EOL));
+      EOL2));
+
+  ext = (YR_EXTERNAL_VARIABLE*) yr_arena2_ref_to_ptr(
+      compiler->arena, &ref);
 
   ext->identifier = id;
   ext->type = external->type;
@@ -936,11 +935,11 @@ static int _yr_compiler_define_variable(
 
     ext->value.s = val;
 
-    FAIL_ON_ERROR(yr_arena_make_ptr_relocatable(
-        compiler->externals_arena,
-        ext,
-        offsetof(YR_EXTERNAL_VARIABLE, value.s),
-        EOL));
+    FAIL_ON_ERROR(yr_arena2_make_ptr_relocatable(
+        compiler->arena,
+        YR_EXTERNAL_VARIABLES_TABLE,
+        ref.offset + offsetof(YR_EXTERNAL_VARIABLE, value.s),
+        EOL2));
   }
 
   FAIL_ON_ERROR(yr_object_from_external_variable(
