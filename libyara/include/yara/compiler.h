@@ -58,17 +58,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // The compiler uses an arena to store the data it generates during the
 // compilation. Each buffer in the arena is used for storing a different type
 // of data. The following identifiers indicate the purpose of each buffer.
-#define YR_NAMESPACES_TABLE    0
-#define YR_RULES_TABLE         1
-#define YR_METAS_TABLE         2
-#define YR_STRINGS_TABLE       3
-#define YR_SZ_POOL             4
-#define YR_CODE_SECTION        5
-#define YR_RE_CODE_SECTION     6
+#define YR_NAMESPACES_TABLE           0
+#define YR_RULES_TABLE                1
+#define YR_METAS_TABLE                2
+#define YR_STRINGS_TABLE              3
+#define YR_EXTERNAL_VARIABLES_TABLE   4
+#define YR_SZ_POOL                    5
+#define YR_CODE_SECTION               6
+#define YR_RE_CODE_SECTION            7
 
 // This is the number of buffers used by the compiler, should match the number
 // of items in the list above.
-#define YR_NUM_SECTIONS        7
+#define YR_NUM_SECTIONS               8
 
 
 typedef struct _YR_EXPRESSION
@@ -192,7 +193,7 @@ typedef struct _YR_COMPILER
   YR_ARENA*         code_arena;
   YR_ARENA*         re_code_arena;
   YR_ARENA*         compiled_rules_arena;
-  YR_ARENA*         externals_arena;
+  //YR_ARENA*         externals_arena;
   //YR_ARENA*         namespaces_arena;
   YR_ARENA*         metas_arena;
   YR_ARENA*         matches_arena;
