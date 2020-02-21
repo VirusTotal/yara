@@ -930,10 +930,10 @@ int yr_scan_verify_match(
 
   if (result != ERROR_SUCCESS)
     context->last_error_string = string;
-  
+
   #ifdef PROFILING_ENABLED
   uint64_t finish_time = yr_stopwatch_elapsed_us(&context->stopwatch);
-  YR_RULE* rule = context->rules->rules_list_head[string->rule_idx];
+  YR_RULE* rule = &context->rules->rules_list_head[string->rule_idx];
   rule->time_cost_per_thread[context->tidx] += (finish_time - start_time);
   #endif
 
