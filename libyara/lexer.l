@@ -276,10 +276,15 @@ include[ \t]+\"         {
       }
     }
 
+    YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena2_get_ptr(
+        compiler->arena,
+        YR_NAMESPACES_BUFFER,
+        compiler->current_namespace * sizeof(struct YR_NAMESPACE));
+
     included_rules = compiler->include_callback(
         include_path,
         current_file_name,
-        compiler->current_namespace->name,
+        ns->name,
         compiler->incl_clbk_user_data);
 
     if (included_rules != NULL)

@@ -174,6 +174,13 @@ int yr_arena2_ptr_to_ref(
     YR_ARENA2_REFERENCE* ref);
 
 
+void* yr_arena2_get_ptr(
+    YR_ARENA2* arena,
+    int buffer_id,
+    yr_arena_off_t offset);
+
+
+
 int yr_arena2_allocate_memory(
     YR_ARENA2* arena,
     int buffer_id,
@@ -188,12 +195,6 @@ int yr_arena2_allocate_struct(
     YR_ARENA2_REFERENCE* ref,
     ...);
 
-/*
-void* yr_arena2_get_address(
-    YR_ARENA2* arena,
-    int buffer_id,
-    yr_arena_off_t offset);
-*/
 
 int yr_arena2_make_ptr_relocatable(
     YR_ARENA2* arena,

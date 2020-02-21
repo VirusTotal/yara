@@ -161,8 +161,10 @@ YR_API int yr_compiler_create(
   if (new_compiler == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
+  new_compiler->current_namespace = 0;
+  new_compiler->namespaces_count = 0;
+
   new_compiler->errors = 0;
-  new_compiler->current_rule_index = 0;
   new_compiler->callback = NULL;
   new_compiler->include_callback = _yr_compiler_default_include_callback;
   new_compiler->incl_clbk_user_data = NULL;
@@ -177,7 +179,7 @@ YR_API int yr_compiler_create(
   new_compiler->loop_index = -1;
   new_compiler->loop_for_of_var_index = -1;
   new_compiler->compiled_rules_arena = NULL;
-  new_compiler->namespaces_count = 0;
+
   new_compiler->current_rule = NULL;
   new_compiler->atoms_config.get_atom_quality = yr_atoms_heuristic_quality;
   new_compiler->atoms_config.quality_warning_threshold = \
@@ -218,10 +220,6 @@ YR_API int yr_compiler_create(
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(
         65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->externals_arena);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_create(
-        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->namespaces_arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(
@@ -266,7 +264,6 @@ YR_API void yr_compiler_destroy(
   yr_arena_destroy(compiler->code_arena);
   yr_arena_destroy(compiler->re_code_arena);
   yr_arena_destroy(compiler->externals_arena);
-  yr_arena_destroy(compiler->namespaces_arena);
   yr_arena_destroy(compiler->metas_arena);
   yr_arena_destroy(compiler->automaton_arena);
   yr_arena_destroy(compiler->matches_arena);
@@ -511,57 +508,49 @@ static int _yr_compiler_set_namespace(
     YR_COMPILER* compiler,
     const char* namespace_)
 {
-  YR_NAMESPACE* ns;
+  YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena2_get_ptr(
+      compiler->arena, YR_NAMESPACES_BUFFER, 0);
 
-  char* ns_name;
-  int result;
-  int i;
-  bool found;
+  bool found = false;
 
-  ns = (YR_NAMESPACE*) yr_arena_base_address(compiler->namespaces_arena);
-  found = false;
-
-  for (i = 0; i < compiler->namespaces_count; i++)
+  for (int i = 0; i < compiler->namespaces_count; i++, ns++)
   {
     if (strcmp(ns->name, namespace_) == 0)
     {
       found = true;
+      compiler->current_namespace = i;
       break;
     }
-
-    ns = (YR_NAMESPACE*) yr_arena_next_address(
-        compiler->namespaces_arena,
-        ns,
-        sizeof(YR_NAMESPACE));
   }
 
   if (!found)
   {
-    result = yr_arena_write_string(
+    YR_ARENA2_REFERENCE ref;
+    char* ns_name;
+
+    FAIL_ON_ERROR(yr_arena_write_string(
         compiler->sz_arena,
         namespace_,
-        &ns_name);
+        &ns_name));
 
-    if (result == ERROR_SUCCESS)
-      result = yr_arena_allocate_struct(
-          compiler->namespaces_arena,
-          sizeof(YR_NAMESPACE),
-          (void**) &ns,
-          offsetof(YR_NAMESPACE, name),
-          EOL);
+    FAIL_ON_ERROR(yr_arena2_allocate_struct(
+        compiler->arena,
+        YR_NAMESPACES_BUFFER,
+        sizeof(YR_NAMESPACE),
+        &ref,
+        offsetof(YR_NAMESPACE, name),
+        EOL));
 
-    if (result != ERROR_SUCCESS)
-      return result;
-
+    ns = (YR_NAMESPACE*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
     ns->name = ns_name;
 
-    for (i = 0; i < YR_MAX_THREADS; i++)
+    for (int i = 0; i < YR_MAX_THREADS; i++)
       ns->t_flags[i] = 0;
 
     compiler->namespaces_count++;
+    compiler->current_namespace = compiler->namespaces_count - 1;
   }
 
-  compiler->current_namespace = ns;
   return ERROR_SUCCESS;
 }
 
@@ -789,14 +778,6 @@ static int _yr_compiler_compile_rules(
     compiler->externals_arena = NULL;
     result = yr_arena_append(
         arena,
-        compiler->namespaces_arena);
-  }
-
-  if (result == ERROR_SUCCESS)
-  {
-    compiler->namespaces_arena = NULL;
-    result = yr_arena_append(
-        arena,
         compiler->metas_arena);
   }
 
@@ -827,6 +808,13 @@ static int _yr_compiler_compile_rules(
   if (result == ERROR_SUCCESS)
   {
     compiler->matches_arena = NULL;
+    result = yr_arena_append_arena2_buffer(
+        arena, compiler->arena, YR_NAMESPACES_BUFFER);
+  }
+
+
+  if (result == ERROR_SUCCESS)
+  {
     compiler->compiled_rules_arena = arena;
     result = yr_arena_coalesce(arena);
   }
