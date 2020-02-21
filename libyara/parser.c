@@ -55,7 +55,7 @@ int yr_parser_emit(
 {
   yr_arena2_write_data(
       yyget_extra(yyscanner)->arena,
-      YR_CODE_BUFFER,
+      YR_CODE_SECTION,
       &instruction,
       sizeof(uint8_t),
       NULL);
@@ -77,7 +77,7 @@ int yr_parser_emit_with_arg_double(
 {
   int result = yr_arena2_write_data(
       yyget_extra(yyscanner)->arena,
-      YR_CODE_BUFFER,
+      YR_CODE_SECTION,
       &instruction,
       sizeof(uint8_t),
       NULL);
@@ -85,7 +85,7 @@ int yr_parser_emit_with_arg_double(
   if (result == ERROR_SUCCESS)
     result = yr_arena2_write_data(
         yyget_extra(yyscanner)->arena,
-        YR_CODE_BUFFER,
+        YR_CODE_SECTION,
         &argument,
         sizeof(double),
         NULL);
@@ -117,7 +117,7 @@ int yr_parser_emit_with_arg(
 {
   int result = yr_arena2_write_data(
       yyget_extra(yyscanner)->arena,
-      YR_CODE_BUFFER,
+      YR_CODE_SECTION,
       &instruction,
       sizeof(uint8_t),
       NULL);
@@ -125,7 +125,7 @@ int yr_parser_emit_with_arg(
   if (result == ERROR_SUCCESS)
     result = yr_arena2_write_data(
         yyget_extra(yyscanner)->arena,
-        YR_CODE_BUFFER,
+        YR_CODE_SECTION,
         &argument,
         sizeof(int64_t),
         NULL);
@@ -164,7 +164,7 @@ int yr_parser_emit_with_arg_reloc(
 
   int result = yr_arena2_write_data(
       yyget_extra(yyscanner)->arena,
-      YR_CODE_BUFFER,
+      YR_CODE_SECTION,
       &instruction,
       sizeof(uint8_t),
       NULL);
@@ -174,7 +174,7 @@ int yr_parser_emit_with_arg_reloc(
   if (result == ERROR_SUCCESS)
     result = yr_arena2_write_data(
         yyget_extra(yyscanner)->arena,
-        YR_CODE_BUFFER,
+        YR_CODE_SECTION,
         &arg,
         sizeof(arg),
         &ref);
@@ -182,7 +182,7 @@ int yr_parser_emit_with_arg_reloc(
   if (result == ERROR_SUCCESS)
     result = yr_arena2_make_ptr_relocatable(
         yyget_extra(yyscanner)->arena,
-        YR_CODE_BUFFER,
+        YR_CODE_SECTION,
         ref.offset,
         EOL2);
 
@@ -219,7 +219,11 @@ int yr_parser_emit_pushes_for_strings(
     const char* identifier)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
-  YR_STRING* string = compiler->current_rule->strings;
+
+  YR_RULE* current_rule = _yr_compiler_get_rule_by_idx(
+      compiler, compiler->current_rule_idx);
+
+  YR_STRING* string = current_rule->strings;
 
   const char* string_identifier;
   const char* target_identifier;
@@ -305,7 +309,10 @@ int yr_parser_lookup_string(
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
-  *string = compiler->current_rule->strings;
+  YR_RULE* current_rule = _yr_compiler_get_rule_by_idx(
+      compiler, compiler->current_rule_idx);
+
+  *string = current_rule->strings;
 
   while(!STRING_IS_NULL(*string))
   {
@@ -408,20 +415,19 @@ static int _yr_parser_write_string(
 
   FAIL_ON_ERROR(yr_arena2_allocate_struct(
       compiler->arena,
-      YR_STRINGS_BUFFER,
+      YR_STRINGS_TABLE,
       sizeof(YR_STRING),
       &string_ref,
       offsetof(YR_STRING, identifier),
       offsetof(YR_STRING, string),
       offsetof(YR_STRING, chained_to),
-      offsetof(YR_STRING, rule),
-      EOL2))
+      EOL2));
 
   FAIL_ON_ERROR(yr_arena2_write_string(
       compiler->arena,
-      YR_SZ_BUFFER,
+      YR_SZ_POOL,
       identifier,
-      &identifier_ref))
+      &identifier_ref));
 
   result = yr_arena_allocate_struct(
       compiler->strings_arena,
@@ -430,7 +436,6 @@ static int _yr_parser_write_string(
       offsetof(YR_STRING, identifier),
       offsetof(YR_STRING, string),
       offsetof(YR_STRING, chained_to),
-      offsetof(YR_STRING, rule),
       EOL);
 
   if (result != ERROR_SUCCESS)
@@ -475,7 +480,7 @@ static int _yr_parser_write_string(
   (*string)->g_flags = modifier.flags;
   (*string)->chained_to = NULL;
   (*string)->fixed_offset = UNDEFINED;
-  (*string)->rule = compiler->current_rule;
+  (*string)->rule_idx = compiler->current_rule_idx;
 
   memset((*string)->matches, 0,
          sizeof((*string)->matches));
@@ -492,7 +497,7 @@ static int _yr_parser_write_string(
 
     result = yr_arena2_write_data(
         compiler->arena,
-        YR_SZ_BUFFER,
+        YR_SZ_POOL,
         literal_string->c_string,
         literal_string->length + 1,   // +1 to include terminating NULL
         NULL);
@@ -588,25 +593,26 @@ int yr_parser_reduce_string_declaration(
     YR_STRING** string,
     YR_ARENA2_REFERENCE* string_ref)
 {
+  int result = ERROR_SUCCESS;
   int min_atom_quality = YR_MAX_ATOM_QUALITY;
   int atom_quality;
+
+  char message[512];
 
   int32_t min_gap = 0;
   int32_t max_gap = 0;
   int32_t prev_min_gap;
   int32_t prev_max_gap;
 
-  char message[512];
-
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   YR_STRING* prev_string = NULL;
 
   RE_AST* re_ast = NULL;
   RE_AST* remainder_re_ast = NULL;
-
   RE_ERROR re_error;
 
-  int result = ERROR_SUCCESS;
+  YR_RULE* current_rule = _yr_compiler_get_rule_by_idx(
+      compiler, compiler->current_rule_idx);
 
   // Determine if a string with the same identifier was already defined
   // by searching for the identifier in string_table.
@@ -774,7 +780,7 @@ int yr_parser_reduce_string_declaration(
     if (compiler->re_ast_callback != NULL)
     {
       compiler->re_ast_callback(
-          compiler->current_rule,
+          current_rule,
           identifier,
           re_ast,
           compiler->re_ast_clbk_user_data);
@@ -800,7 +806,7 @@ int yr_parser_reduce_string_declaration(
           re_ast,
           &new_string,
           &atom_quality,
-          &compiler->current_rule->num_atoms);
+          &current_rule->num_atoms);
 
       if (result != ERROR_SUCCESS)
         goto _exit;
@@ -851,7 +857,7 @@ int yr_parser_reduce_string_declaration(
         NULL,
         &new_string,
         &min_atom_quality,
-        &compiler->current_rule->num_atoms);
+        &current_rule->num_atoms);
 
     if (result != ERROR_SUCCESS)
       goto _exit;
@@ -875,7 +881,7 @@ int yr_parser_reduce_string_declaration(
         yyscanner,
         "%s in rule %s is slowing down scanning",
         new_string->identifier,
-        compiler->current_rule->identifier);
+        current_rule->identifier);
   }
 
 _exit:
@@ -896,28 +902,25 @@ int yr_parser_reduce_rule_declaration_phase_1(
     yyscan_t yyscanner,
     int32_t flags,
     const char* identifier,
-    YR_RULE** rule,
     YR_ARENA2_REFERENCE* rule_ref)
 {
   YR_FIXUP *fixup;
   YR_INIT_RULE_ARGS *init_rule_args;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
-  *rule = NULL;
-
   YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena2_get_ptr(
       compiler->arena,
-      YR_NAMESPACES_BUFFER,
-      compiler->current_namespace * sizeof(struct YR_NAMESPACE));
+      YR_NAMESPACES_TABLE,
+      compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
 
-  if (yr_hash_table_lookup(
-        compiler->rules_table,
-        identifier,
-        ns->name) != NULL ||
+  if (yr_hash_table_lookup_uint32(
+          compiler->rules_table,
+          identifier,
+          ns->name) != UINT32_MAX ||
       yr_hash_table_lookup(
-        compiler->objects_table,
-        identifier,
-        NULL) != NULL)
+          compiler->objects_table,
+          identifier,
+          NULL) != NULL)
   {
     // A rule or variable with the same identifier already exists, return the
     // appropriate error.
@@ -928,7 +931,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
 
   FAIL_ON_ERROR(yr_arena2_allocate_struct(
       compiler->arena,
-      YR_RULES_BUFFER,
+      YR_RULES_TABLE,
       sizeof(YR_RULE),
       rule_ref,
       offsetof(YR_RULE, identifier),
@@ -938,53 +941,34 @@ int yr_parser_reduce_rule_declaration_phase_1(
       offsetof(YR_RULE, ns),
       EOL2))
 
-  YR_RULE* r = (YR_RULE*) yr_arena2_ref_to_ptr(compiler->arena, rule_ref);
+  YR_RULE* rule = (YR_RULE*) yr_arena2_ref_to_ptr(compiler->arena, rule_ref);
 
   YR_ARENA2_REFERENCE ref;
 
   FAIL_ON_ERROR(yr_arena2_write_string(
       compiler->arena,
-      YR_SZ_BUFFER,
+      YR_SZ_POOL,
       identifier,
       &ref));
 
-  r->identifier = yr_arena2_ref_to_ptr(compiler->arena, &ref);
-  r->g_flags = flags;
-  r->ns = ns;
-  r->num_atoms = 0;
-
-  #ifdef PROFILING_ENABLED
-  r->time_cost = 0;
-  memset(r->time_cost_per_thread, 0, sizeof(r->time_cost_per_thread));
-  #endif
-
-
-  FAIL_ON_ERROR(yr_arena_allocate_struct(
-      compiler->rules_arena,
-      sizeof(YR_RULE),
-      (void**) rule,
-      offsetof(YR_RULE, identifier),
-      offsetof(YR_RULE, tags),
-      offsetof(YR_RULE, strings),
-      offsetof(YR_RULE, metas),
-      offsetof(YR_RULE, ns),
-      EOL))
-
-  (*rule)->g_flags = flags;
-  (*rule)->ns = ns;
-  (*rule)->num_atoms = 0;
-
-  #ifdef PROFILING_ENABLED
-  (*rule)->time_cost = 0;
-
-  memset(
-      (*rule)->time_cost_per_thread, 0, sizeof((*rule)->time_cost_per_thread));
-  #endif
-
+  // TODO(vmalvarez): remove
+  char* ident;
   FAIL_ON_ERROR(yr_arena_write_string(
       compiler->sz_arena,
       identifier,
-      (char**) &(*rule)->identifier))
+      &ident));
+
+  rule->identifier = ident; //yr_arena2_ref_to_ptr(compiler->arena, &ref);
+  rule->g_flags = flags;
+  rule->ns = ns;
+  rule->num_atoms = 0;
+
+  memset(rule->t_flags, 0, sizeof(rule->t_flags));
+
+  #ifdef PROFILING_ENABLED
+  rule->time_cost = 0;
+  memset(rule->time_cost_per_thread, 0, sizeof(rule->time_cost_per_thread));
+  #endif
 
   FAIL_ON_ERROR(yr_parser_emit(
       yyscanner,
@@ -995,11 +979,10 @@ int yr_parser_reduce_rule_declaration_phase_1(
       compiler->code_arena,
       sizeof(YR_INIT_RULE_ARGS),
       (void**) &init_rule_args,
-      offsetof(YR_INIT_RULE_ARGS, rule),
       offsetof(YR_INIT_RULE_ARGS, jmp_addr),
       EOL))
 
-  init_rule_args->rule = *rule;
+  init_rule_args->rule_idx = compiler->current_rule_idx;
 
   // jmp_addr holds the address to jump to when we want to skip the code for
   // the rule. It is initialized as NULL at this point because we don't know
@@ -1020,20 +1003,18 @@ int yr_parser_reduce_rule_declaration_phase_1(
   // Clean strings_table as we are starting to parse a new rule.
   yr_hash_table_clean(compiler->strings_table, NULL);
 
-  FAIL_ON_ERROR(yr_hash_table_add(
+  FAIL_ON_ERROR(yr_hash_table_add_uint32(
       compiler->rules_table,
       identifier,
       ns->name,
-      (void*) *rule))
-
-  compiler->current_rule = *rule;
+      compiler->current_rule_idx));
 
   return ERROR_SUCCESS;
 }
 
 int yr_parser_reduce_rule_declaration_phase_2(
     yyscan_t yyscanner,
-    YR_RULE* rule)
+    YR_ARENA2_REFERENCE* rule_ref)
 {
   uint32_t max_strings_per_rule;
   uint32_t strings_in_rule = 0;
@@ -1048,6 +1029,8 @@ int yr_parser_reduce_rule_declaration_phase_2(
   yr_get_configuration(
       YR_CONFIG_MAX_STRINGS_PER_RULE,
       (void*) &max_strings_per_rule);
+
+  YR_RULE* rule = yr_arena2_ref_to_ptr(compiler->arena, rule_ref);
 
   // Show warning if the rule is generating too many atoms. The warning is
   // shown if the number of atoms is greater than 20 times the maximum number
@@ -1092,10 +1075,10 @@ int yr_parser_reduce_rule_declaration_phase_2(
         sizeof(YR_STRING));
   }
 
-  result = yr_parser_emit_with_arg_reloc(
+  result = yr_parser_emit_with_arg(
       yyscanner,
       OP_MATCH_RULE,
-      rule,
+      compiler->current_rule_idx,
       NULL,
       NULL);
 
@@ -1113,6 +1096,10 @@ int yr_parser_reduce_rule_declaration_phase_2(
   *(void**)(fixup->address) = (void*) nop_inst_addr;
   compiler->fixup_stack_head = fixup->next;
   yr_free(fixup);
+
+  // We have finished parsing the current rule and are about to start parsing
+  // a new one.
+  compiler->current_rule_idx++;
 
   return result;
 }
@@ -1140,7 +1127,10 @@ int yr_parser_reduce_string_identifier(
 
       yr_parser_emit(yyscanner, instruction, NULL);
 
-      string = compiler->current_rule->strings;
+      YR_RULE* current_rule = _yr_compiler_get_rule_by_idx(
+          compiler, compiler->current_rule_idx);
+
+      string = current_rule->strings;
 
       while(!STRING_IS_NULL(string))
       {
@@ -1238,12 +1228,12 @@ int yr_parser_reduce_meta_declaration(
 
   FAIL_ON_ERROR(yr_arena2_allocate_struct(
       compiler->arena,
-      YR_METAS_BUFFER,
+      YR_METAS_TABLE,
       sizeof(YR_META),
       meta_ref,
       offsetof(YR_META, identifier),
       offsetof(YR_META, string),
-      EOL2))
+      EOL2));
 
   YR_META* m = (YR_META*) yr_arena2_ref_to_ptr(compiler->arena, meta_ref);
 
@@ -1252,7 +1242,7 @@ int yr_parser_reduce_meta_declaration(
 
   FAIL_ON_ERROR(yr_arena2_write_string(
       compiler->arena,
-      YR_SZ_BUFFER,
+      YR_SZ_POOL,
       identifier,
       &ref));
 
@@ -1262,9 +1252,9 @@ int yr_parser_reduce_meta_declaration(
   {
     FAIL_ON_ERROR(yr_arena2_write_string(
         compiler->arena,
-        YR_SZ_BUFFER,
+        YR_SZ_POOL,
         string,
-        &ref))
+        &ref));
 
     m->string = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
   }
@@ -1273,27 +1263,25 @@ int yr_parser_reduce_meta_declaration(
     m->string = NULL;
   }
 
-
-
   FAIL_ON_ERROR(yr_arena_allocate_struct(
       compiler->metas_arena,
       sizeof(YR_META),
       (void**) meta,
       offsetof(YR_META, identifier),
       offsetof(YR_META, string),
-      EOL))
+      EOL));
 
   FAIL_ON_ERROR(yr_arena_write_string(
       compiler->sz_arena,
       identifier,
-      (char**) &(*meta)->identifier))
+      (char**) &(*meta)->identifier));
 
   if (string != NULL)
   {
     FAIL_ON_ERROR(yr_arena_write_string(
         compiler->sz_arena,
         string,
-        (char**) &(*meta)->string))
+        (char**) &(*meta)->string));
   }
   else
   {
@@ -1339,8 +1327,8 @@ int yr_parser_reduce_import(
 
   YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena2_get_ptr(
       compiler->arena,
-      YR_NAMESPACES_BUFFER,
-      compiler->current_namespace * sizeof(struct YR_NAMESPACE));
+      YR_NAMESPACES_TABLE,
+      compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
 
   module_structure = (YR_OBJECT*) yr_hash_table_lookup(
       compiler->objects_table,
@@ -1376,7 +1364,7 @@ int yr_parser_reduce_import(
 
   FAIL_ON_ERROR(yr_arena2_write_string(
       compiler->arena,
-      YR_SZ_BUFFER,
+      YR_SZ_POOL,
       module_name->c_string,
       NULL))
 

@@ -95,9 +95,11 @@ static int _yr_arena2_make_ptr_relocatable(
     if (reloc == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
-    if (buffer_id == 6) {
-      printf("making address relocatable in buffer %d: %p\n", buffer_id,
-             arena->buffers[buffer_id].data + base_offset + offset);
+    //TODO(vmalvarez): Remove.
+    if (1) {
+      printf("making address relocatable in buffer %d: %p (off: %d)\n", buffer_id,
+             arena->buffers[buffer_id].data + base_offset + offset,
+             base_offset + offset);
     }
 
     reloc->buffer_id = buffer_id;
@@ -223,6 +225,9 @@ int yr_arena2_allocate_memory(
     if (new_data == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
+    // TODO(vmalvarez): remove
+    //assert(new_size == arena->initial_buffer_size || new_data == b->data);
+
     YR_RELOC2* reloc = arena->reloc_list_head;
 
     while (reloc != NULL)
@@ -333,7 +338,6 @@ void* yr_arena2_get_ptr(
     int buffer_id,
     yr_arena_off_t offset)
 {
-  printf("buffer: %d\n", buffer_id);
   assert(buffer_id < arena->num_buffers);
   assert(offset <= arena->buffers[buffer_id].used);
 

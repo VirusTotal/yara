@@ -278,8 +278,8 @@ include[ \t]+\"         {
 
     YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena2_get_ptr(
         compiler->arena,
-        YR_NAMESPACES_BUFFER,
-        compiler->current_namespace * sizeof(struct YR_NAMESPACE));
+        YR_NAMESPACES_TABLE,
+        compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
 
     included_rules = compiler->include_callback(
         include_path,

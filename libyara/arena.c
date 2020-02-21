@@ -485,7 +485,7 @@ int yr_arena_coalesce(
     {
       page = yr_arena_page_for_address(arena, reloc_target);
       if (page == NULL)
-        printf("reloc target not found: %p\n", reloc_target);
+        printf("reloc target not found: %p (off: %d)\n", reloc_target, reloc->offset);
       assert(page != NULL);
       *reloc_address = page->new_address + (reloc_target - page->address);
     }

@@ -354,11 +354,11 @@ int yr_execute_code(
 
   #ifdef PROFILING_ENABLED
   uint64_t start_time;
-  YR_RULE* current_rule = NULL;
   #endif
 
   YR_INIT_RULE_ARGS init_rule_args;
 
+  YR_RULE* current_rule = NULL;
   YR_RULE* rule;
   YR_MATCH* match;
   YR_OBJECT_FUNCTION* function;
@@ -762,21 +762,25 @@ int yr_execute_code(
         break;
 
       case OP_PUSH_RULE:
-        rule = *(YR_RULE**)(ip);
+        r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
+
+        rule = &context->rules->rules_list_head[r1.i];
+
         if (RULE_IS_DISABLED(rule))
-          r1.i = UNDEFINED;
+          r2.i = UNDEFINED;
         else
-          r1.i = rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0;
-        push(r1);
+          r2.i = rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0;
+
+        push(r2);
         break;
 
       case OP_INIT_RULE:
         memcpy(&init_rule_args, ip, sizeof(init_rule_args));
-        #ifdef PROFILING_ENABLED
-        current_rule = init_rule_args.rule;
-        #endif
-        if (RULE_IS_DISABLED(init_rule_args.rule))
+
+        current_rule = &context->rules->rules_list_head[init_rule_args.rule_idx];
+
+        if (RULE_IS_DISABLED(current_rule))
           ip = init_rule_args.jmp_addr;
         else
           ip += sizeof(init_rule_args);
@@ -784,13 +788,15 @@ int yr_execute_code(
 
       case OP_MATCH_RULE:
         pop(r1);
-        rule = *(YR_RULE**)(ip);
+
+        r2.i = *(uint64_t*)(ip);
+        ip += sizeof(uint64_t);
+
+        rule = &context->rules->rules_list_head[r2.i];
 
         #if PARANOID_EXEC
         ensure_within_rules_arena(rule);
         #endif
-
-        ip += sizeof(uint64_t);
 
         if (!is_undef(r1) && r1.i)
           rule->t_flags[tidx] |= RULE_TFLAGS_MATCH;

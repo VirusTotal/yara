@@ -84,7 +84,6 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_STRING, 8,  identifier);
   CHECK_OFFSET(YR_STRING, 16, string);
   CHECK_OFFSET(YR_STRING, 24, chained_to);
-  CHECK_OFFSET(YR_STRING, 32, rule);
   CHECK_OFFSET(YR_STRING, 40, chain_gap_min);
   CHECK_OFFSET(YR_STRING, 44, chain_gap_max);
   CHECK_OFFSET(YR_STRING, 48, fixed_offset);
