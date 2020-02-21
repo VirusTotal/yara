@@ -303,8 +303,8 @@ struct YR_STRING
   // chained to S1 (it can represented as: S1 <- S2 <- S3).
   DECLARE_REFERENCE(YR_STRING*, chained_to);
 
-  // Pointer to the rule that contains this string.
-  DECLARE_REFERENCE(YR_RULE*, rule);
+  // Index in the rules table for the rule that contains this string.
+  int32_t rule_idx;
 
   // When this string is chained to some other string, chain_gap_min and
   // chain_gap_max contain the minimum and maximum distance between the two
@@ -430,9 +430,11 @@ typedef struct YARA_RULES_FILE_HEADER
 
 typedef struct _YR_INIT_RULE_ARGS
 {
-  DECLARE_REFERENCE(YR_RULE*, rule);
+  // Index of the rule in the rules table.
+  uint32_t rule_idx;
+  // Address of the first instruction belonging to the next rule. This is
+  // used when a rule is disabled and we want to skip its code.
   DECLARE_REFERENCE(const uint8_t*, jmp_addr);
-
 } YR_INIT_RULE_ARGS;
 
 

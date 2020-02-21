@@ -637,5 +637,5 @@ YR_API YR_RULE* yr_scanner_last_error_rule(
   if (scanner->last_error_string == NULL)
     return NULL;
 
-  return scanner->last_error_string->rule;
+  return &scanner->rules->rules_list_head[scanner->last_error_string->rule_idx];
 }

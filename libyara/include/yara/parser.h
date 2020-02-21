@@ -86,13 +86,12 @@ int yr_parser_reduce_rule_declaration_phase_1(
     yyscan_t yyscanner,
     int32_t flags,
     const char* identifier,
-    YR_RULE** rule,
     YR_ARENA2_REFERENCE* rule_ref);
 
 
 int yr_parser_reduce_rule_declaration_phase_2(
     yyscan_t yyscanner,
-    YR_RULE* rule);
+    YR_ARENA2_REFERENCE* rule_ref);
 
 
 int yr_parser_reduce_string_declaration(

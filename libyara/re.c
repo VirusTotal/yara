@@ -291,7 +291,7 @@ int yr_re_compile(
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_arena2_write_data(
           arena2,
-          YR_RE_CODE_BUFFER,
+          YR_RE_CODE_SECTION,
           &_re,
           sizeof(_re),
           NULL),
@@ -584,7 +584,7 @@ int _yr_emit_inst(
 {
   FAIL_ON_ERROR(yr_arena2_write_data(
       emit_context->arena2,
-      YR_RE_CODE_BUFFER,
+      YR_RE_CODE_SECTION,
       &opcode,
       sizeof(uint8_t),
       NULL));

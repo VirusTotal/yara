@@ -340,31 +340,21 @@ rule
     : rule_modifiers _RULE_ _IDENTIFIER_
       {
         fail_if_error(yr_parser_reduce_rule_declaration_phase_1(
-            yyscanner, (int32_t) $1, $3, &$<rule.ptr>$, &$<rule.ref>$));
+            yyscanner, (int32_t) $1, $3, &$<rule.ref>$));
       }
       tags '{' meta strings
       {
-        YR_RULE* rule = $<rule.ptr>4; // rule created in phase 1
+        YR_RULE* rule = (YR_RULE*) yr_arena2_ref_to_ptr(
+            compiler->arena, &$<rule.ref>4);
 
         rule->tags = $5.ptr;
         rule->metas = $7.ptr;
         rule->strings = $8.ptr;
-
-        rule = (YR_RULE*) yr_arena2_ref_to_ptr(
-            compiler->arena, &$<rule.ref>4);
-
-        rule->tags = (const char*) yr_arena2_ref_to_ptr(
-            compiler->arena, &$5.ref);
-
-        rule->metas = (YR_META*) yr_arena2_ref_to_ptr(
-            compiler->arena, &$7.ref);
-
-        // rule->strings_ref = $8.ref;
       }
       condition '}'
       {
         int result = yr_parser_reduce_rule_declaration_phase_2(
-            yyscanner, $<rule.ptr>4); // rule created in phase 1
+            yyscanner, &$<rule.ref>4); // rule created in phase 1
 
         yr_free($3);
 
@@ -394,7 +384,7 @@ meta
 
         fail_if_error(yr_arena2_write_data(
             compiler->arena,
-            YR_METAS_BUFFER,
+            YR_METAS_TABLE,
             &null_meta,
             sizeof(YR_META),
             NULL));
@@ -431,7 +421,7 @@ strings
 
         fail_if_error(yr_arena2_write_data(
             compiler->arena,
-            YR_STRINGS_BUFFER,
+            YR_STRINGS_TABLE,
             &null_string,
             sizeof(YR_STRING),
             NULL));
@@ -478,7 +468,7 @@ tags
         //character. Example: tag1\0tag2\0tag3\0\0
 
         fail_if_error(yr_arena2_write_string(
-            yyget_extra(yyscanner)->arena, YR_SZ_BUFFER, "", NULL));
+            yyget_extra(yyscanner)->arena, YR_SZ_POOL, "", NULL));
 
         fail_if_error(yr_arena_write_string(
             yyget_extra(yyscanner)->sz_arena, "", NULL));
@@ -492,7 +482,7 @@ tag_list
     : _IDENTIFIER_
       {
         int result = yr_arena2_write_string(
-            yyget_extra(yyscanner)->arena, YR_SZ_BUFFER, $1, &$<c_string_with_offset.ref>$);
+            yyget_extra(yyscanner)->arena, YR_SZ_POOL, $1, &$<c_string_with_offset.ref>$);
 
         if (result == ERROR_SUCCESS)
           result = yr_arena_write_string(
@@ -523,7 +513,7 @@ tag_list
 
         if (result == ERROR_SUCCESS)
           result = yr_arena2_write_string(
-              yyget_extra(yyscanner)->arena, YR_SZ_BUFFER, $2, NULL);
+              yyget_extra(yyscanner)->arena, YR_SZ_POOL, $2, NULL);
 
         if (result == ERROR_SUCCESS)
           result = yr_arena_write_string(
@@ -912,8 +902,8 @@ identifier
 
           YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena2_get_ptr(
               compiler->arena,
-              YR_NAMESPACES_BUFFER,
-              compiler->current_namespace * sizeof(struct YR_NAMESPACE));
+              YR_NAMESPACES_TABLE,
+              compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
 
           if (object == NULL)
           {
@@ -943,17 +933,21 @@ identifier
           }
           else
           {
-            YR_RULE* rule = (YR_RULE*) yr_hash_table_lookup(
+            uint32_t rule_idx = yr_hash_table_lookup_uint32(
                 compiler->rules_table, $1, ns->name);
 
-            if (rule != NULL)
+            if (rule_idx != UINT32_MAX)
             {
-              result = yr_parser_emit_with_arg_reloc(
+              result = yr_parser_emit_with_arg(
                   yyscanner,
                   OP_PUSH_RULE,
-                  rule,
+                  rule_idx,
                   NULL,
                   NULL);
+
+              //TODO(vmalvarez): The identifier field should be an offset, not a pointer
+
+              YR_RULE* rule = _yr_compiler_get_rule_by_idx(compiler, rule_idx);
 
               $$.type = EXPRESSION_TYPE_BOOLEAN;
               $$.value.integer = UNDEFINED;

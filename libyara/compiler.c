@@ -150,6 +150,22 @@ const char* _yr_compiler_default_include_callback(
 }
 
 
+//
+// _yr_compiler_get_rule_by_idx returns a rule given its index in the rules
+// table. The returned pointer is valid as long as no other rule is written
+// to the table. This is because the write operation may cause the table to
+// be moved to a different location in memory. Use the pointer only in a
+// limited scope where you can be sure that no other rule is being written
+// during the pointer's lifetime.
+//
+YR_RULE* _yr_compiler_get_rule_by_idx(
+    YR_COMPILER* compiler, uint32_t rule_idx)
+{
+  return (YR_RULE*) yr_arena2_get_ptr(
+      compiler->arena, YR_RULES_TABLE, rule_idx * sizeof(YR_RULE));
+}
+
+
 YR_API int yr_compiler_create(
     YR_COMPILER** compiler)
 {
@@ -161,7 +177,7 @@ YR_API int yr_compiler_create(
   if (new_compiler == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  new_compiler->current_namespace = 0;
+  new_compiler->current_namespace_idx = 0;
   new_compiler->namespaces_count = 0;
 
   new_compiler->errors = 0;
@@ -180,7 +196,7 @@ YR_API int yr_compiler_create(
   new_compiler->loop_for_of_var_index = -1;
   new_compiler->compiled_rules_arena = NULL;
 
-  new_compiler->current_rule = NULL;
+  new_compiler->current_rule_idx = 0;
   new_compiler->atoms_config.get_atom_quality = yr_atoms_heuristic_quality;
   new_compiler->atoms_config.quality_warning_threshold = \
       YR_ATOM_QUALITY_WARNING_THRESHOLD;
@@ -195,15 +211,11 @@ YR_API int yr_compiler_create(
 
   if (result == ERROR_SUCCESS)
     result = yr_arena2_create(
-        YR_LAST_BUFFER + 1, 1048576, &new_compiler->arena);
+        YR_NUM_SECTIONS, 50*1048576, &new_compiler->arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(
         65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->sz_arena);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_create(
-        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->rules_arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(
@@ -259,7 +271,6 @@ YR_API void yr_compiler_destroy(
 
   yr_arena_destroy(compiler->compiled_rules_arena);
   yr_arena_destroy(compiler->sz_arena);
-  yr_arena_destroy(compiler->rules_arena);
   yr_arena_destroy(compiler->strings_arena);
   yr_arena_destroy(compiler->code_arena);
   yr_arena_destroy(compiler->re_code_arena);
@@ -509,7 +520,7 @@ static int _yr_compiler_set_namespace(
     const char* namespace_)
 {
   YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena2_get_ptr(
-      compiler->arena, YR_NAMESPACES_BUFFER, 0);
+    compiler->arena, YR_NAMESPACES_TABLE, 0);
 
   bool found = false;
 
@@ -518,7 +529,7 @@ static int _yr_compiler_set_namespace(
     if (strcmp(ns->name, namespace_) == 0)
     {
       found = true;
-      compiler->current_namespace = i;
+      compiler->current_namespace_idx = i;
       break;
     }
   }
@@ -534,21 +545,20 @@ static int _yr_compiler_set_namespace(
         &ns_name));
 
     FAIL_ON_ERROR(yr_arena2_allocate_struct(
-        compiler->arena,
-        YR_NAMESPACES_BUFFER,
-        sizeof(YR_NAMESPACE),
-        &ref,
-        offsetof(YR_NAMESPACE, name),
-        EOL));
+      compiler->arena,
+      YR_NAMESPACES_TABLE,
+      sizeof(YR_NAMESPACE),
+      &ref,
+      offsetof(YR_NAMESPACE, name),
+      EOL));
 
     ns = (YR_NAMESPACE*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
     ns->name = ns_name;
 
-    for (int i = 0; i < YR_MAX_THREADS; i++)
-      ns->t_flags[i] = 0;
+    memset(ns->t_flags, 0, sizeof(ns->t_flags));
 
     compiler->namespaces_count++;
-    compiler->current_namespace = compiler->namespaces_count - 1;
+    compiler->current_namespace_idx = compiler->namespaces_count - 1;
   }
 
   return ERROR_SUCCESS;
@@ -681,13 +691,14 @@ static int _yr_compiler_compile_rules(
   memset(&null_rule, 0xFA, sizeof(YR_RULE));
   null_rule.g_flags = RULE_GFLAGS_NULL;
 
-  yr_arena_write_data(
-      compiler->rules_arena,
-      &null_rule,
-      sizeof(YR_RULE),
-      NULL);
+  yr_arena2_write_data(
+    compiler->arena,
+    YR_RULES_TABLE,
+    &null_rule,
+    sizeof(YR_RULE),
+    NULL);
 
-  // Write a null external the end.
+  // Write a null external indicating the end.
   memset(&null_external, 0xFA, sizeof(YR_EXTERNAL_VARIABLE));
   null_external.type = EXTERNAL_VARIABLE_TYPE_NULL;
 
@@ -720,8 +731,8 @@ static int _yr_compiler_compile_rules(
 
   if (result == ERROR_SUCCESS)
   {
-    rules_file_header->rules_list_head = (YR_RULE*) yr_arena_base_address(
-        compiler->rules_arena);
+    rules_file_header->rules_list_head = (YR_RULE*) yr_arena2_get_ptr(
+      compiler->arena, YR_RULES_TABLE, 0);
 
     rules_file_header->externals_list_head = (YR_EXTERNAL_VARIABLE*)
 		yr_arena_base_address(compiler->externals_arena);
@@ -752,14 +763,6 @@ static int _yr_compiler_compile_rules(
   if (result == ERROR_SUCCESS)
   {
     compiler->re_code_arena = NULL;
-    result = yr_arena_append(
-        arena,
-        compiler->rules_arena);
-  }
-
-  if (result == ERROR_SUCCESS)
-  {
-    compiler->rules_arena = NULL;
     result = yr_arena_append(
         arena,
         compiler->strings_arena);
@@ -809,7 +812,13 @@ static int _yr_compiler_compile_rules(
   {
     compiler->matches_arena = NULL;
     result = yr_arena_append_arena2_buffer(
-        arena, compiler->arena, YR_NAMESPACES_BUFFER);
+      arena, compiler->arena, YR_NAMESPACES_TABLE);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    result = yr_arena_append_arena2_buffer(
+      arena, compiler->arena, YR_RULES_TABLE);
   }
 
 
