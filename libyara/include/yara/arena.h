@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stddef.h>
 
+#include <yara/arena2.h>
 #include <yara/integers.h>
 #include <yara/stream.h>
 
@@ -185,5 +186,11 @@ int yr_arena_duplicate(
 
 void yr_arena_print(
     YR_ARENA* arena);
+
+
+int yr_arena_append_arena2_buffer(
+    YR_ARENA* arena,
+    YR_ARENA2* arena2,
+    int buffer_id);
 
 #endif

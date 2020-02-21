@@ -905,10 +905,15 @@ int yr_parser_reduce_rule_declaration_phase_1(
 
   *rule = NULL;
 
+  YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena2_get_ptr(
+      compiler->arena,
+      YR_NAMESPACES_BUFFER,
+      compiler->current_namespace * sizeof(struct YR_NAMESPACE));
+
   if (yr_hash_table_lookup(
         compiler->rules_table,
         identifier,
-        compiler->current_namespace->name) != NULL ||
+        ns->name) != NULL ||
       yr_hash_table_lookup(
         compiler->objects_table,
         identifier,
@@ -945,7 +950,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
 
   r->identifier = yr_arena2_ref_to_ptr(compiler->arena, &ref);
   r->g_flags = flags;
-  r->ns = compiler->current_namespace;
+  r->ns = ns;
   r->num_atoms = 0;
 
   #ifdef PROFILING_ENABLED
@@ -966,7 +971,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
       EOL))
 
   (*rule)->g_flags = flags;
-  (*rule)->ns = compiler->current_namespace;
+  (*rule)->ns = ns;
   (*rule)->num_atoms = 0;
 
   #ifdef PROFILING_ENABLED
@@ -1018,7 +1023,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
   FAIL_ON_ERROR(yr_hash_table_add(
       compiler->rules_table,
       identifier,
-      compiler->current_namespace->name,
+      ns->name,
       (void*) *rule))
 
   compiler->current_rule = *rule;
@@ -1332,10 +1337,15 @@ int yr_parser_reduce_import(
     return ERROR_INVALID_MODULE_NAME;
   }
 
+  YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena2_get_ptr(
+      compiler->arena,
+      YR_NAMESPACES_BUFFER,
+      compiler->current_namespace * sizeof(struct YR_NAMESPACE));
+
   module_structure = (YR_OBJECT*) yr_hash_table_lookup(
       compiler->objects_table,
       module_name->c_string,
-      compiler->current_namespace->name);
+      ns->name);
 
   // if module already imported, do nothing
 
@@ -1351,7 +1361,7 @@ int yr_parser_reduce_import(
   FAIL_ON_ERROR(yr_hash_table_add(
       compiler->objects_table,
       module_name->c_string,
-      compiler->current_namespace->name,
+      ns->name,
       module_structure))
 
   result = yr_modules_do_declarations(

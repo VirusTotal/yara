@@ -95,6 +95,11 @@ static int _yr_arena2_make_ptr_relocatable(
     if (reloc == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
+    if (buffer_id == 6) {
+      printf("making address relocatable in buffer %d: %p\n", buffer_id,
+             arena->buffers[buffer_id].data + base_offset + offset);
+    }
+
     reloc->buffer_id = buffer_id;
     reloc->offset = base_offset + offset;
     reloc->next = NULL;
@@ -323,13 +328,14 @@ int yr_arena2_allocate_struct(
 }
 
 
-static inline void* _yr_arena2_get_address(
+void* yr_arena2_get_ptr(
     YR_ARENA2* arena,
     int buffer_id,
     yr_arena_off_t offset)
 {
+  printf("buffer: %d\n", buffer_id);
   assert(buffer_id < arena->num_buffers);
-  assert(offset < arena->buffers[buffer_id].used);
+  assert(offset <= arena->buffers[buffer_id].used);
 
   return arena->buffers[buffer_id].data + offset;
 }
@@ -369,7 +375,7 @@ void* yr_arena2_ref_to_ptr(
     return NULL;
   }
 
-  return _yr_arena2_get_address(arena, ref->buffer_id, ref->offset);
+  return yr_arena2_get_ptr(arena, ref->buffer_id, ref->offset);
 }
 
 
@@ -488,7 +494,7 @@ int yr_arena2_load_stream(
             new_arena, i, buffers[i].size, &ref),
         yr_arena2_destroy(new_arena))
 
-    void* ptr = _yr_arena2_get_address(new_arena, i, ref.offset);
+    void* ptr = yr_arena2_get_ptr(new_arena, i, ref.offset);
 
     if (yr_stream_read(ptr, buffers[i].size, 1, stream) != 1)
     {

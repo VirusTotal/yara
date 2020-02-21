@@ -910,13 +910,16 @@ identifier
           YR_OBJECT* object = (YR_OBJECT*) yr_hash_table_lookup(
               compiler->objects_table, $1, NULL);
 
+          YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena2_get_ptr(
+              compiler->arena,
+              YR_NAMESPACES_BUFFER,
+              compiler->current_namespace * sizeof(struct YR_NAMESPACE));
+
           if (object == NULL)
           {
             // If not found, search within the current namespace.
-            char* ns = compiler->current_namespace->name;
-
             object = (YR_OBJECT*) yr_hash_table_lookup(
-                compiler->objects_table, $1, ns);
+                compiler->objects_table, $1, ns->name);
           }
 
           if (object != NULL)
@@ -941,9 +944,7 @@ identifier
           else
           {
             YR_RULE* rule = (YR_RULE*) yr_hash_table_lookup(
-                compiler->rules_table,
-                $1,
-                compiler->current_namespace->name);
+                compiler->rules_table, $1, ns->name);
 
             if (rule != NULL)
             {

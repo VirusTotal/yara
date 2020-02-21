@@ -61,8 +61,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_CODE_BUFFER         3
 #define YR_RE_CODE_BUFFER      4
 #define YR_METAS_BUFFER        5
+#define YR_NAMESPACES_BUFFER   6
 
-#define YR_LAST_BUFFER         5
+#define YR_LAST_BUFFER         6
 
 typedef struct _YR_EXPRESSION
 {
@@ -148,6 +149,8 @@ typedef struct _YR_COMPILER
   //      An array of YR_STRING structures, one per each string.
   //   YR_METAS_BUFFER:
   //      An array of YR_META structures, one per each meta definition.
+  //   YR_NAMESPACES_BUFFER:
+  //      An array of YR_NAMESPACE structures, one per each namespace.
   //   YR_SZ_BUFFER:
   //      A collection of null-terminated strings. This buffer contains
   //      identifiers, literal strings, and in general any null-terminated
@@ -164,7 +167,11 @@ typedef struct _YR_COMPILER
 
   // Index of the rule being compiled in the array of YR_RULE structures
   // stored in the YR_RULES_BUFFER.
-  uint32_t current_rule_index;
+  // uint32_t current_rule;
+
+  // Index of the current namespace in the array of YR_NAMESPACE structures
+  // stored in the YR_NAMESPACES_BUFFER.
+  uint32_t current_namespace;
 
   int               errors;
   int               current_line;
@@ -180,7 +187,7 @@ typedef struct _YR_COMPILER
   YR_ARENA*         re_code_arena;
   YR_ARENA*         compiled_rules_arena;
   YR_ARENA*         externals_arena;
-  YR_ARENA*         namespaces_arena;
+  //YR_ARENA*         namespaces_arena;
   YR_ARENA*         metas_arena;
   YR_ARENA*         matches_arena;
   YR_ARENA*         automaton_arena;
@@ -189,7 +196,7 @@ typedef struct _YR_COMPILER
   YR_HASH_TABLE*    rules_table;
   YR_HASH_TABLE*    objects_table;
   YR_HASH_TABLE*    strings_table;
-  YR_NAMESPACE*     current_namespace;
+  //YR_NAMESPACE*     current_namespace;
   YR_RULE*          current_rule;
 
   YR_FIXUP*         fixup_stack_head;
