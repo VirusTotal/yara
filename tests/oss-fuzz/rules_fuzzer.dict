@@ -44,7 +44,7 @@
 "xor"
 
 # pe module
-"\"pe\""
+"pe"
 "pe.machine"
 "pe.checksum"
 "pe.calculate_checksum"
@@ -104,7 +104,7 @@
 "pe.rva_to_offset"
 
 # elf module
-"\"elf\"
+"elf"
 "elf.type"
 "elf.machine"
 "elf.entry_point"
@@ -118,20 +118,20 @@
 "elf.symtab"
 
 # cuckoo module
-"\"cuckoo\""
+"cuckoo"
 "cuckoo.network"
 "cuckoo.registry"
 "cuckoo.filesystem"
 "cuckoo.sync"
 
 # magic module
-"\"magic\""
+"magic"
 "magic.type()"
 "magic.mime_type()"
 
 
 # hash module
-"\"hash\""
+"hash"
 "hash.md5"
 "hash.sha1"
 "hash.sha256"
@@ -139,7 +139,7 @@
 "hash.crc32"
 
 # math module
-"\"math\""
+"math"
 "math.entropuy"
 "math.monte_carlo_pi"
 "math.serial_correlation"
@@ -150,7 +150,7 @@
 "max.min"
 
 # dotnet module
-"\"dotnet\""
+"dotnet"
 "dotnet.version"
 "dotnet.module_name"
 "dotnet.number_of_streams"
@@ -170,7 +170,7 @@
 "dotnet.field_offsets"
 
 # time module
-"\"time\""
+"time"
 "time.now()"
 
 
