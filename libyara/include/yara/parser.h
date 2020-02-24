@@ -99,7 +99,6 @@ int yr_parser_reduce_string_declaration(
     YR_MODIFIER modifier,
     const char* identifier,
     SIZED_STRING* str,
-    YR_STRING** string,
     YR_ARENA2_REFERENCE* string_ref);
 
 
@@ -109,7 +108,6 @@ int yr_parser_reduce_meta_declaration(
     const char* identifier,
     const char* string,
     int64_t integer,
-    YR_META** meta,
     YR_ARENA2_REFERENCE* meta_ref);
 
 

@@ -29,9 +29,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stddef.h>
 #include <string.h>
+#include <limits.h>
 
 #include <yara/ahocorasick.h>
 #include <yara/arena.h>
+#include <yara/arena2.h>
 #include <yara/base64.h>
 #include <yara/re.h>
 #include <yara/error.h>
@@ -42,6 +44,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/modules.h>
 #include <yara/parser.h>
 #include <yara/mem.h>
+#include <yara/integers.h>
+
 
 #define todigit(x)  ((x) >='A'&& (x) <='F')? \
                     ((uint8_t) (x - 'A' + 10)) : \
@@ -264,10 +268,7 @@ int yr_parser_emit_pushes_for_strings(
       }
     }
 
-    string = (YR_STRING*) yr_arena_next_address(
-        compiler->strings_arena,
-        string,
-        sizeof(YR_STRING));
+    string++;
   }
 
   if (matching == 0)
@@ -327,10 +328,7 @@ int yr_parser_lookup_string(
       return ERROR_SUCCESS;
     }
 
-    *string = (YR_STRING*) yr_arena_next_address(
-        compiler->strings_arena,
-        *string,
-        sizeof(YR_STRING));
+    (*string)++;
   }
 
   yr_compiler_set_error_extra_info(compiler, identifier)
@@ -396,7 +394,7 @@ static int _yr_parser_write_string(
     YR_COMPILER* compiler,
     SIZED_STRING* str,
     RE_AST* re_ast,
-    YR_STRING** string,
+    YR_ARENA2_REFERENCE* string_ref,
     int* min_atom_quality,
     int* num_atom)
 {
@@ -408,43 +406,23 @@ static int _yr_parser_write_string(
   int max_string_len;
   bool free_literal = false;
 
-  *string = NULL;
-
-  YR_ARENA2_REFERENCE string_ref;
-  YR_ARENA2_REFERENCE identifier_ref;
-
   FAIL_ON_ERROR(yr_arena2_allocate_struct(
       compiler->arena,
       YR_STRINGS_TABLE,
       sizeof(YR_STRING),
-      &string_ref,
+      string_ref,
       offsetof(YR_STRING, identifier),
       offsetof(YR_STRING, string),
       offsetof(YR_STRING, chained_to),
-      EOL2));
+      EOL2))
 
-  FAIL_ON_ERROR(yr_arena2_write_string(
-      compiler->arena,
-      YR_SZ_POOL,
-      identifier,
-      &identifier_ref));
-
-  result = yr_arena_allocate_struct(
-      compiler->strings_arena,
-      sizeof(YR_STRING),
-      (void**) string,
-      offsetof(YR_STRING, identifier),
-      offsetof(YR_STRING, string),
-      offsetof(YR_STRING, chained_to),
-      EOL);
-
-  if (result != ERROR_SUCCESS)
-    return result;
+  YR_STRING* string = (YR_STRING*) yr_arena2_ref_to_ptr(
+      compiler->arena, string_ref);
 
   result = yr_arena_write_string(
       compiler->sz_arena,
       identifier,
-      &(*string)->identifier);
+      &string->identifier);
 
   if (result != ERROR_SUCCESS)
     return result;
@@ -477,36 +455,36 @@ static int _yr_parser_write_string(
     modifier.flags |= STRING_GFLAGS_LITERAL;
   }
 
-  (*string)->g_flags = modifier.flags;
-  (*string)->chained_to = NULL;
-  (*string)->fixed_offset = UNDEFINED;
-  (*string)->rule_idx = compiler->current_rule_idx;
+  string->g_flags = modifier.flags;
+  string->chained_to = NULL;
+  string->fixed_offset = UNDEFINED;
+  string->rule_idx = compiler->current_rule_idx;
 
-  memset((*string)->matches, 0,
-         sizeof((*string)->matches));
+  memset(string->matches, 0,
+         sizeof(string->matches));
 
-  memset((*string)->private_matches, 0,
-         sizeof((*string)->private_matches));
+  memset(string->private_matches, 0,
+         sizeof(string->private_matches));
 
-  memset((*string)->unconfirmed_matches, 0,
-         sizeof((*string)->unconfirmed_matches));
+  memset(string->unconfirmed_matches, 0,
+         sizeof(string->unconfirmed_matches));
 
   if (modifier.flags & STRING_GFLAGS_LITERAL)
   {
-    (*string)->length = (uint32_t) literal_string->length;
+    string->length = (uint32_t) literal_string->length;
 
-    result = yr_arena2_write_data(
+    /*result = yr_arena2_write_data(
         compiler->arena,
         YR_SZ_POOL,
         literal_string->c_string,
         literal_string->length + 1,   // +1 to include terminating NULL
-        NULL);
+        NULL);*/
 
     result = yr_arena_write_data(
         compiler->sz_arena,
         literal_string->c_string,
         literal_string->length + 1,   // +1 to include terminating NULL
-        (void**) &(*string)->string);
+        (void**) &string->string);
 
     if (result == ERROR_SUCCESS)
     {
@@ -544,7 +522,7 @@ static int _yr_parser_write_string(
     // Add the string to Aho-Corasick automaton.
     result = yr_ac_add_string(
         compiler->automaton,
-        *string,
+        string,
         atom_list,
         compiler->matches_arena);
   }
@@ -552,12 +530,12 @@ static int _yr_parser_write_string(
   if (modifier.flags & STRING_GFLAGS_LITERAL)
   {
     if (modifier.flags & STRING_GFLAGS_WIDE)
-      max_string_len = (*string)->length * 2;
+      max_string_len = string->length * 2;
     else
-      max_string_len = (*string)->length;
+      max_string_len = string->length;
 
     if (max_string_len <= YR_MAX_ATOM_LENGTH)
-      (*string)->g_flags |= STRING_GFLAGS_FITS_IN_ATOM;
+      string->g_flags |= STRING_GFLAGS_FITS_IN_ATOM;
   }
 
   atom = atom_list;
@@ -571,6 +549,8 @@ static int _yr_parser_write_string(
 
   (*num_atom) += c;
 
+  compiler->current_string_idx++;
+
   if (free_literal)
     yr_free(literal_string);
 
@@ -580,17 +560,11 @@ static int _yr_parser_write_string(
   return result;
 }
 
-#include <limits.h>
-
-#include <yara/integers.h>
-
-
 int yr_parser_reduce_string_declaration(
     yyscan_t yyscanner,
     YR_MODIFIER modifier,
     const char* identifier,
     SIZED_STRING* str,
-    YR_STRING** string,
     YR_ARENA2_REFERENCE* string_ref)
 {
   int result = ERROR_SUCCESS;
@@ -601,11 +575,8 @@ int yr_parser_reduce_string_declaration(
 
   int32_t min_gap = 0;
   int32_t max_gap = 0;
-  int32_t prev_min_gap;
-  int32_t prev_max_gap;
 
   YR_COMPILER* compiler = yyget_extra(yyscanner);
-  YR_STRING* prev_string = NULL;
 
   RE_AST* re_ast = NULL;
   RE_AST* remainder_re_ast = NULL;
@@ -615,14 +586,14 @@ int yr_parser_reduce_string_declaration(
       compiler, compiler->current_rule_idx);
 
   // Determine if a string with the same identifier was already defined
-  // by searching for the identifier in string_table.
-
-  YR_STRING* new_string = (YR_STRING*) yr_hash_table_lookup(
+  // by searching for the identifier in strings_table.
+  uint32_t string_idx = yr_hash_table_lookup_uint32(
       compiler->strings_table,
       identifier,
       NULL);
 
-  if (new_string != NULL)
+  // The string was already defined, return an error.
+  if (string_idx != UINT32_MAX)
   {
     result = ERROR_DUPLICATED_STRING_IDENTIFIER;
     yr_compiler_set_error_extra_info(compiler, identifier)
@@ -630,7 +601,6 @@ int yr_parser_reduce_string_declaration(
   }
 
   // Empty strings are not allowed
-
   if (str->length == 0)
   {
     result = ERROR_EMPTY_STRING;
@@ -638,11 +608,35 @@ int yr_parser_reduce_string_declaration(
     goto _exit;
   }
 
+  // If string identifier is $ this is an anonymous string, if not add the
+  // identifier to strings_table.
+  if (strcmp(identifier, "$") == 0)
+  {
+    modifier.flags |= STRING_GFLAGS_ANONYMOUS;
+  }
+  else
+  {
+    result = yr_hash_table_add_uint32(
+        compiler->strings_table,
+        identifier,
+        NULL,
+        compiler->current_string_idx);
+
+    if (result != ERROR_SUCCESS)
+      goto _exit;
+  }
+
   if (str->flags & SIZED_STRING_FLAGS_NO_CASE)
     modifier.flags |= STRING_GFLAGS_NO_CASE;
 
-  // xor and nocase together is not implemented.
+  if (str->flags & SIZED_STRING_FLAGS_DOT_ALL)
+    modifier.flags |= STRING_GFLAGS_DOT_ALL;
 
+  // Hex strings are always handled as DOT_ALL regexps.
+  if (modifier.flags & STRING_GFLAGS_HEXADECIMAL)
+    modifier.flags |= STRING_GFLAGS_DOT_ALL;
+
+  // xor and nocase together is not implemented.
   if (modifier.flags & STRING_GFLAGS_XOR &&
       modifier.flags & STRING_GFLAGS_NO_CASE)
   {
@@ -652,7 +646,6 @@ int yr_parser_reduce_string_declaration(
   }
 
   // base64 and nocase together is not implemented.
-
   if (modifier.flags & STRING_GFLAGS_NO_CASE &&
       (modifier.flags & STRING_GFLAGS_BASE64 ||
        modifier.flags & STRING_GFLAGS_BASE64_WIDE))
@@ -667,7 +660,6 @@ int yr_parser_reduce_string_declaration(
   }
 
   // base64 and xor together is not implemented.
-
   if (modifier.flags & STRING_GFLAGS_XOR &&
       (modifier.flags & STRING_GFLAGS_BASE64 ||
        modifier.flags & STRING_GFLAGS_BASE64_WIDE))
@@ -681,12 +673,6 @@ int yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
-  if (str->flags & SIZED_STRING_FLAGS_DOT_ALL)
-    modifier.flags |= STRING_GFLAGS_DOT_ALL;
-
-  if (strcmp(identifier, "$") == 0)
-    modifier.flags |= STRING_GFLAGS_ANONYMOUS;
-
   if (!(modifier.flags & STRING_GFLAGS_WIDE) &&
       !(modifier.flags & STRING_GFLAGS_XOR) &&
       !(modifier.flags & STRING_GFLAGS_BASE64 ||
@@ -695,17 +681,11 @@ int yr_parser_reduce_string_declaration(
     modifier.flags |= STRING_GFLAGS_ASCII;
   }
 
-  // Hex strings are always handled as DOT_ALL regexps.
-
-  if (modifier.flags & STRING_GFLAGS_HEXADECIMAL)
-    modifier.flags |= STRING_GFLAGS_DOT_ALL;
-
   // The STRING_GFLAGS_SINGLE_MATCH flag indicates that finding
   // a single match for the string is enough. This is true in
   // most cases, except when the string count (#) and string offset (@)
   // operators are used. All strings are marked STRING_FLAGS_SINGLE_MATCH
   // initially, and unmarked later if required.
-
   modifier.flags |= STRING_GFLAGS_SINGLE_MATCH;
 
   // The STRING_GFLAGS_FIXED_OFFSET indicates that the string doesn't
@@ -713,8 +693,8 @@ int yr_parser_reduce_string_declaration(
   // "at" operator. The string must be searched at a fixed offset in the
   // file. All strings are marked STRING_GFLAGS_FIXED_OFFSET initially,
   // and unmarked later if required.
-
   modifier.flags |= STRING_GFLAGS_FIXED_OFFSET;
+
 
   if (modifier.flags & STRING_GFLAGS_HEXADECIMAL ||
       modifier.flags & STRING_GFLAGS_REGEXP ||
@@ -748,6 +728,9 @@ int yr_parser_reduce_string_declaration(
     if (re_ast->flags & RE_FLAGS_FAST_REGEXP)
       modifier.flags |= STRING_GFLAGS_FAST_REGEXP;
 
+    if (re_ast->flags & RE_FLAGS_GREEDY)
+      modifier.flags |= STRING_GFLAGS_GREEDY_REGEXP;
+
     // Regular expressions in the strings section can't mix greedy and ungreedy
     // quantifiers like .* and .*?. That's because these regular expressions can
     // be matched forwards and/or backwards depending on the atom found, and we
@@ -766,9 +749,6 @@ int yr_parser_reduce_string_declaration(
       goto _exit;
     }
 
-    if (re_ast->flags & RE_FLAGS_GREEDY)
-      modifier.flags |= STRING_GFLAGS_GREEDY_REGEXP;
-
     if (yr_re_ast_contains_dot_star(re_ast))
     {
       yywarning(
@@ -786,11 +766,16 @@ int yr_parser_reduce_string_declaration(
           compiler->re_ast_clbk_user_data);
     }
 
+    *string_ref = YR_ARENA_NULL_REF;
+
     while (re_ast != NULL)
     {
-      prev_string = new_string;
-      prev_min_gap = min_gap;
-      prev_max_gap = max_gap;
+      YR_ARENA2_REFERENCE ref;
+
+      uint32_t prev_string_idx = compiler->current_string_idx - 1;
+
+      int32_t prev_min_gap = min_gap;
+      int32_t prev_max_gap = max_gap;
 
       result = yr_re_ast_split_at_chaining_point(
           re_ast, &remainder_re_ast, &min_gap, &max_gap);
@@ -804,7 +789,7 @@ int yr_parser_reduce_string_declaration(
           compiler,
           NULL,
           re_ast,
-          &new_string,
+          &ref,
           &atom_quality,
           &current_rule->num_atoms);
 
@@ -814,8 +799,25 @@ int yr_parser_reduce_string_declaration(
       if (atom_quality < min_atom_quality)
         min_atom_quality = atom_quality;
 
-      if (prev_string != NULL)
+      if (string_ref->buffer_id == YR_ARENA_NULL_REF.buffer_id &&
+          string_ref->offset == YR_ARENA_NULL_REF.offset)
       {
+        // This is the first string in the chain, the string reference returned
+        // by this function must point to this string.
+        *string_ref = ref;
+      }
+      else
+      {
+        // This is not the first string in the chain, set the appropriate flags
+        // and fill the chained_to, chain_gap_min and chain_gap_max fields.
+        YR_STRING* prev_string = (YR_STRING*) yr_arena2_get_ptr(
+            compiler->arena,
+            YR_STRINGS_TABLE,
+            prev_string_idx * sizeof(YR_STRING));
+
+        YR_STRING* new_string = (YR_STRING*) yr_arena2_ref_to_ptr(
+            compiler->arena, &ref);
+
         new_string->chained_to = prev_string;
         new_string->chain_gap_min = prev_min_gap;
         new_string->chain_gap_max = prev_max_gap;
@@ -840,11 +842,6 @@ int yr_parser_reduce_string_declaration(
       yr_re_ast_destroy(re_ast);
       re_ast = remainder_re_ast;
     }
-
-    // Walk the chain of strings from the tail to the head, we want to return
-    // the string at the head of the chain.
-    while (new_string->chained_to != NULL)
-      new_string = new_string->chained_to;
   }
   else  // not a STRING_GFLAGS_HEXADECIMAL or STRING_GFLAGS_REGEXP or
         // STRING_GFLAGS_BASE64 or STRING_GFLAGS_BASE64_WIDE
@@ -855,21 +852,9 @@ int yr_parser_reduce_string_declaration(
         compiler,
         str,
         NULL,
-        &new_string,
+        string_ref,
         &min_atom_quality,
         &current_rule->num_atoms);
-
-    if (result != ERROR_SUCCESS)
-      goto _exit;
-  }
-
-  if (!STRING_IS_ANONYMOUS(new_string))
-  {
-    result = yr_hash_table_add(
-        compiler->strings_table,
-        identifier,
-        NULL,
-        new_string);
 
     if (result != ERROR_SUCCESS)
       goto _exit;
@@ -880,7 +865,7 @@ int yr_parser_reduce_string_declaration(
     yywarning(
         yyscanner,
         "%s in rule %s is slowing down scanning",
-        new_string->identifier,
+        identifier,
         current_rule->identifier);
   }
 
@@ -891,8 +876,6 @@ _exit:
 
   if (remainder_re_ast != NULL)
     yr_re_ast_destroy(remainder_re_ast);
-
-  *string = new_string;
 
   return result;
 }
@@ -1069,10 +1052,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
       return ERROR_TOO_MANY_STRINGS;
     }
 
-    string = (YR_STRING*) yr_arena_next_address(
-        compiler->strings_arena,
-        string,
-        sizeof(YR_STRING));
+    string++;
   }
 
   result = yr_parser_emit_with_arg(
@@ -1156,10 +1136,7 @@ int yr_parser_reduce_string_identifier(
           string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
         }
 
-        string = (YR_STRING*) yr_arena_next_address(
-            compiler->strings_arena,
-            string,
-            sizeof(YR_STRING));
+        string++;
       }
     }
     else
@@ -1220,10 +1197,9 @@ int yr_parser_reduce_meta_declaration(
     const char* identifier,
     const char* string,
     int64_t integer,
-    YR_META** meta,
     YR_ARENA2_REFERENCE* meta_ref)
 {
-  YR_ARENA2_REFERENCE ref;
+  //YR_ARENA2_REFERENCE ref;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   FAIL_ON_ERROR(yr_arena2_allocate_struct(
@@ -1233,63 +1209,45 @@ int yr_parser_reduce_meta_declaration(
       meta_ref,
       offsetof(YR_META, identifier),
       offsetof(YR_META, string),
-      EOL2));
+      EOL2))
 
-  YR_META* m = (YR_META*) yr_arena2_ref_to_ptr(compiler->arena, meta_ref);
+  YR_META* meta = (YR_META*) yr_arena2_ref_to_ptr(compiler->arena, meta_ref);
 
-  m->type = type;
-  m->integer = integer;
+  meta->type = type;
+  meta->integer = integer;
 
-  FAIL_ON_ERROR(yr_arena2_write_string(
+  /*FAIL_ON_ERROR(yr_arena2_write_string(
       compiler->arena,
       YR_SZ_POOL,
       identifier,
-      &ref));
-
-  m->identifier = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
-
-  if (string != NULL)
-  {
-    FAIL_ON_ERROR(yr_arena2_write_string(
-        compiler->arena,
-        YR_SZ_POOL,
-        string,
-        &ref));
-
-    m->string = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
-  }
-  else
-  {
-    m->string = NULL;
-  }
-
-  FAIL_ON_ERROR(yr_arena_allocate_struct(
-      compiler->metas_arena,
-      sizeof(YR_META),
-      (void**) meta,
-      offsetof(YR_META, identifier),
-      offsetof(YR_META, string),
-      EOL));
+      &ref))*/
 
   FAIL_ON_ERROR(yr_arena_write_string(
       compiler->sz_arena,
       identifier,
-      (char**) &(*meta)->identifier));
+      (char**) &meta->identifier))
+
+  // meta->identifier = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
 
   if (string != NULL)
   {
+    /*FAIL_ON_ERROR(yr_arena2_write_string(
+        compiler->arena,
+        YR_SZ_POOL,
+        string,
+        &ref))*/
+
     FAIL_ON_ERROR(yr_arena_write_string(
         compiler->sz_arena,
         string,
-        (char**) &(*meta)->string));
+        (char**) &meta->string))
+
+    // meta->string = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
   }
   else
   {
-    (*meta)->string = NULL;
+    meta->string = NULL;
   }
-
-  (*meta)->integer = integer;
-  (*meta)->type = type;
 
   return ERROR_SUCCESS;
 }

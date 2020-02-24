@@ -111,7 +111,6 @@ void test_set_clear()
 }
 
 
-
 void test_find_non_colliding_offsets_1()
 {
   uint32_t o = 0;

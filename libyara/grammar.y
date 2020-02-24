@@ -291,20 +291,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     YR_ARENA2_REFERENCE ref;
   } c_string_with_offset;
 
-  struct {
-    YR_RULE* ptr;
-    YR_ARENA2_REFERENCE ref;
-  } rule;
-
-  struct {
-    YR_META* ptr;
-    YR_ARENA2_REFERENCE ref;
-  } meta;
-
-  struct {
-    YR_STRING* ptr;
-    YR_ARENA2_REFERENCE ref;
-  } string;
+  YR_ARENA2_REFERENCE rule;
+  YR_ARENA2_REFERENCE meta;
+  YR_ARENA2_REFERENCE string;
 }
 
 
@@ -340,21 +329,25 @@ rule
     : rule_modifiers _RULE_ _IDENTIFIER_
       {
         fail_if_error(yr_parser_reduce_rule_declaration_phase_1(
-            yyscanner, (int32_t) $1, $3, &$<rule.ref>$));
+            yyscanner, (int32_t) $1, $3, &$<rule>$));
       }
       tags '{' meta strings
       {
         YR_RULE* rule = (YR_RULE*) yr_arena2_ref_to_ptr(
-            compiler->arena, &$<rule.ref>4);
+            compiler->arena, &$<rule>4);
 
         rule->tags = $5.ptr;
-        rule->metas = $7.ptr;
-        rule->strings = $8.ptr;
+
+        rule->metas = (YR_META*) yr_arena2_ref_to_ptr(
+            compiler->arena, &$7);
+
+        rule->strings = (YR_STRING*) yr_arena2_ref_to_ptr(
+            compiler->arena, &$8);
       }
       condition '}'
       {
         int result = yr_parser_reduce_rule_declaration_phase_2(
-            yyscanner, &$<rule.ref>4); // rule created in phase 1
+            yyscanner, &$<rule>4); // rule created in phase 1
 
         yr_free($3);
 
@@ -366,8 +359,7 @@ rule
 meta
     : /* empty */
       {
-        $$.ptr = NULL;
-        $$.ref = YR_ARENA_NULL_REF;
+        $$ = YR_ARENA_NULL_REF;
       }
     | _META_ ':' meta_declarations
       {
@@ -389,12 +381,6 @@ meta
             sizeof(YR_META),
             NULL));
 
-        fail_if_error(yr_arena_write_data(
-            compiler->metas_arena,
-            &null_meta,
-            sizeof(YR_META),
-            NULL));
-
         $$ = $3;
       }
     ;
@@ -403,8 +389,7 @@ meta
 strings
     : /* empty */
       {
-        $$.ptr = NULL;
-        $$.ref = YR_ARENA_NULL_REF;
+        $$ = YR_ARENA_NULL_REF;
       }
     | _STRINGS_ ':' string_declarations
       {
@@ -422,12 +407,6 @@ strings
         fail_if_error(yr_arena2_write_data(
             compiler->arena,
             YR_STRINGS_TABLE,
-            &null_string,
-            sizeof(YR_STRING),
-            NULL));
-
-        fail_if_error(yr_arena_write_data(
-            compiler->strings_arena,
             &null_string,
             sizeof(YR_STRING),
             NULL));
@@ -546,8 +525,7 @@ meta_declaration
             $1,
             sized_string->c_string,
             0,
-            &$<meta.ptr>$,
-            &$<meta.ref>$);
+            &$<meta>$);
 
         yr_free($1);
         yr_free($3);
@@ -562,8 +540,7 @@ meta_declaration
             $1,
             NULL,
             $3,
-            &$<meta.ptr>$,
-            &$<meta.ref>$);
+            &$<meta>$);
 
         yr_free($1);
 
@@ -577,8 +554,7 @@ meta_declaration
             $1,
             NULL,
             -$4,
-            &$<meta.ptr>$,
-            &$<meta.ref>$);
+            &$<meta>$);
 
         yr_free($1);
 
@@ -592,8 +568,7 @@ meta_declaration
             $1,
             NULL,
             true,
-            &$<meta.ptr>$,
-            &$<meta.ref>$);
+            &$<meta>$);
 
         yr_free($1);
 
@@ -607,8 +582,7 @@ meta_declaration
             $1,
             NULL,
             false,
-            &$<meta.ptr>$,
-            &$<meta.ref>$);
+            &$<meta>$);
 
         yr_free($1);
 
@@ -631,7 +605,7 @@ string_declaration
       _TEXT_STRING_ string_modifiers
       {
         int result = yr_parser_reduce_string_declaration(
-            yyscanner, $5, $1, $4, &$<string.ptr>$, &$<string.ref>$);
+            yyscanner, $5, $1, $4, &$<string>$);
 
         yr_free($1);
         yr_free($4);
@@ -651,7 +625,7 @@ string_declaration
         $5.flags |= STRING_GFLAGS_REGEXP;
 
         result = yr_parser_reduce_string_declaration(
-            yyscanner, $5, $1, $4, &$<string.ptr>$, &$<string.ref>$);
+            yyscanner, $5, $1, $4, &$<string>$);
 
         yr_free($1);
         yr_free($4);
@@ -671,7 +645,7 @@ string_declaration
         $5.flags |= STRING_GFLAGS_HEXADECIMAL;
 
         result = yr_parser_reduce_string_declaration(
-            yyscanner, $5, $1, $4, &$<string.ptr>$, &$<string.ref>$);
+            yyscanner, $5, $1, $4, &$<string>$);
 
         yr_free($1);
         yr_free($4);
