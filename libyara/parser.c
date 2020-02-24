@@ -456,10 +456,11 @@ static int _yr_parser_write_string(
   }
 
   string->g_flags = modifier.flags;
-  string->chained_to = NULL;
-  string->fixed_offset = UNDEFINED;
   string->rule_idx = compiler->current_rule_idx;
-
+  string->fixed_offset = UNDEFINED;
+  string->chained_to = NULL;
+  string->string = NULL;
+  
   memset(string->matches, 0,
          sizeof(string->matches));
 
