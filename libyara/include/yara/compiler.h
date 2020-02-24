@@ -82,7 +82,15 @@ typedef struct _YR_EXPRESSION
     SIZED_STRING* sized_string;
   } value;
 
-  const char* identifier;
+  // An expression can have an associated identifier, if "ptr" is not NULL it
+  // points to the identifier name, if it is NULL, then "ref" holds a reference
+  // to the identifier within YR_SZ_POOL. When the identifier is in YR_SZ_POOL
+  // a pointer can't be used as the YR_SZ_POOL can be moved to a different
+  // memory location.
+  struct {
+    const char* ptr;
+    YR_ARENA2_REFERENCE ref;
+  } identifier ;
 
 } YR_EXPRESSION;
 
@@ -158,6 +166,9 @@ typedef struct _YR_COMPILER
   //      An array of YR_META structures, one per each meta definition.
   //   YR_NAMESPACES_TABLE:
   //      An array of YR_NAMESPACE structures, one per each namespace.
+  //   YR_EXTERNAL_VARIABLES_TABLE:
+  //      An array of YR_EXTERNAL_VARIABLE structures, one per each external
+  //      variable defined.
   //   YR_SZ_POOL:
   //      A collection of null-terminated strings. This buffer contains
   //      identifiers, literal strings, and in general any null-terminated
@@ -191,15 +202,9 @@ typedef struct _YR_COMPILER
 
   jmp_buf           error_recovery;
 
-  YR_ARENA*         sz_arena;
-  //YR_ARENA*         rules_arena;
-  //YR_ARENA*         strings_arena;
   YR_ARENA*         code_arena;
   YR_ARENA*         re_code_arena;
   YR_ARENA*         compiled_rules_arena;
-  //YR_ARENA*         externals_arena;
-  //YR_ARENA*         namespaces_arena;
-  //YR_ARENA*         metas_arena;
   YR_ARENA*         matches_arena;
   YR_ARENA*         automaton_arena;
 
@@ -207,8 +212,6 @@ typedef struct _YR_COMPILER
   YR_HASH_TABLE*    rules_table;
   YR_HASH_TABLE*    objects_table;
   YR_HASH_TABLE*    strings_table;
-  //YR_NAMESPACE*     current_namespace_idx;
-  //YR_RULE*          current_rule;
 
   YR_FIXUP*         fixup_stack_head;
 
