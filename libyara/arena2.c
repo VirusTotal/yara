@@ -317,13 +317,13 @@ int yr_arena2_allocate_struct(
 
   va_end(field_offsets);
 
-  if (result == ERROR_SUCCESS)
-  {
-    result = _yr_arena2_make_ptr_relocatable(
-        arena, buffer_id, r.offset, field_offsets);
-  }
+  if (result != ERROR_SUCCESS)
+    return result;
 
-  if (ref != NULL)
+  result = _yr_arena2_make_ptr_relocatable(
+      arena, buffer_id, r.offset, field_offsets);
+
+  if (result == ERROR_SUCCESS && ref != NULL)
   {
     ref->buffer_id = r.buffer_id;
     ref->offset = r.offset;

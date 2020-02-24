@@ -397,5 +397,5 @@ YR_API uint32_t yr_hash_table_lookup_uint32(
 
   // Remove one from the pointer before converting back to integer, see
   // comment in yr_hash_table_add_uint32.
-  return (uint32_t) (ptr - 1);
+  return (uint32_t) (size_t) (ptr - 1);
 }

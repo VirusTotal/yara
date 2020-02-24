@@ -181,7 +181,7 @@
 #define expression_identifier(expr) \
     ((expr).identifier.ptr != NULL ? \
      (expr).identifier.ptr : \
-     yr_arena2_ref_to_ptr(compiler->arena, &(expr).identifier.ref))
+     (const char*) yr_arena2_ref_to_ptr(compiler->arena, &(expr).identifier.ref))
 
 
 #define DEFAULT_BASE64_ALPHABET "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
