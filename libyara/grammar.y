@@ -121,18 +121,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     check_type_with_cleanup(expression, expected_type, op, )
 
 
-
 #define loop_vars_cleanup(loop_index) \
     {  \
       YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[loop_index]; \
-      int i; \
-      for (i = 0; i < loop_ctx->vars_count; i++) \
+      for (int i = 0; i < loop_ctx->vars_count; i++) \
       { \
-        yr_free((void*) loop_ctx->vars[i].identifier); \
-        loop_ctx->vars[i].identifier = NULL; \
+        yr_free((void*) loop_ctx->vars[i].identifier.ptr); \
+        loop_ctx->vars[i].identifier.ptr = NULL; \
+        loop_ctx->vars[i].identifier.ref = YR_ARENA_NULL_REF; \
       } \
       loop_ctx->vars_count = 0; \
     } \
+
+
+// Given a YR_EXPRESSION returns its identifier. It returns identifier.ptr if not NULL and relies on identifier.ref if
+// otherwise.
+#define expression_identifier(expr) \
+    ((expr).identifier.ptr != NULL ? \
+     (expr).identifier.ptr : \
+     yr_arena2_ref_to_ptr(compiler->arena, &(expr).identifier.ref))
+
 
 #define DEFAULT_BASE64_ALPHABET "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
@@ -286,11 +294,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   double          double_;
   YR_MODIFIER     modifier;
 
-  struct {
-    char* ptr;
-    YR_ARENA2_REFERENCE ref;
-  } c_string_with_offset;
-
+  YR_ARENA2_REFERENCE c_string_with_offset;
   YR_ARENA2_REFERENCE rule;
   YR_ARENA2_REFERENCE meta;
   YR_ARENA2_REFERENCE string;
@@ -336,7 +340,8 @@ rule
         YR_RULE* rule = (YR_RULE*) yr_arena2_ref_to_ptr(
             compiler->arena, &$<rule>4);
 
-        rule->tags = $5.ptr;
+        rule->tags = (char*) yr_arena2_ref_to_ptr(
+            compiler->arena, &$5);
 
         rule->metas = (YR_META*) yr_arena2_ref_to_ptr(
             compiler->arena, &$7);
@@ -436,8 +441,7 @@ rule_modifier
 tags
     : /* empty */
       {
-        $$.ptr = NULL;
-        $$.ref = YR_ARENA_NULL_REF;
+        $$ = YR_ARENA_NULL_REF;
       }
     | ':' tag_list
       {
@@ -449,9 +453,6 @@ tags
         fail_if_error(yr_arena2_write_string(
             yyget_extra(yyscanner)->arena, YR_SZ_POOL, "", NULL));
 
-        fail_if_error(yr_arena_write_string(
-            yyget_extra(yyscanner)->sz_arena, "", NULL));
-
         $$ = $2;
       }
     ;
@@ -461,11 +462,7 @@ tag_list
     : _IDENTIFIER_
       {
         int result = yr_arena2_write_string(
-            yyget_extra(yyscanner)->arena, YR_SZ_POOL, $1, &$<c_string_with_offset.ref>$);
-
-        if (result == ERROR_SUCCESS)
-          result = yr_arena_write_string(
-              yyget_extra(yyscanner)->sz_arena, $1, &$<c_string_with_offset.ptr>$);
+            yyget_extra(yyscanner)->arena, YR_SZ_POOL, $1, &$<c_string_with_offset>$);
 
         yr_free($1);
 
@@ -476,7 +473,7 @@ tag_list
         int result = ERROR_SUCCESS;
 
         char* tag_name = (char*) yr_arena2_ref_to_ptr(
-            compiler->arena, &$<c_string_with_offset.ref>$);
+            compiler->arena, &$<c_string_with_offset>$);
 
         while (*tag_name != '\0')
         {
@@ -493,10 +490,6 @@ tag_list
         if (result == ERROR_SUCCESS)
           result = yr_arena2_write_string(
               yyget_extra(yyscanner)->arena, YR_SZ_POOL, $2, NULL);
-
-        if (result == ERROR_SUCCESS)
-          result = yr_arena_write_string(
-              yyget_extra(yyscanner)->sz_arena, $2, NULL);
 
         yr_free($2);
 
@@ -888,22 +881,23 @@ identifier
 
           if (object != NULL)
           {
-            char* id;
+            YR_ARENA2_REFERENCE ref;
 
-            result = yr_arena_write_string(
-                compiler->sz_arena, $1, &id);
+            result = yr_arena2_write_string(
+                compiler->arena, YR_SZ_POOL, $1, &ref);
 
             if (result == ERROR_SUCCESS)
               result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_OBJ_LOAD,
-                  id,
+                  yr_arena2_ref_to_ptr(compiler->arena, &ref),
                   NULL,
                   NULL);
 
             $$.type = EXPRESSION_TYPE_OBJECT;
             $$.value.object = object;
-            $$.identifier = object->identifier;
+            $$.identifier.ptr = NULL;
+            $$.identifier.ref = ref;
           }
           else
           {
@@ -919,13 +913,13 @@ identifier
                   NULL,
                   NULL);
 
-              //TODO(vmalvarez): The identifier field should be an offset, not a pointer
-
               YR_RULE* rule = _yr_compiler_get_rule_by_idx(compiler, rule_idx);
+
+              yr_arena2_ptr_to_ref(compiler->arena, rule->identifier, &$$.identifier.ref);
 
               $$.type = EXPRESSION_TYPE_BOOLEAN;
               $$.value.integer = UNDEFINED;
-              $$.identifier = rule->identifier;
+              $$.identifier.ptr = NULL;
             }
             else
             {
@@ -951,22 +945,23 @@ identifier
 
           if (field != NULL)
           {
-            char* ident;
+            YR_ARENA2_REFERENCE ref;
 
-            result = yr_arena_write_string(
-                compiler->sz_arena, $3, &ident);
+            result = yr_arena2_write_string(
+                compiler->arena, YR_SZ_POOL, $3, &ref);
 
             if (result == ERROR_SUCCESS)
               result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_OBJ_FIELD,
-                  ident,
+                  yr_arena2_ref_to_ptr(compiler->arena, &ref),
                   NULL,
                   NULL);
 
             $$.type = EXPRESSION_TYPE_OBJECT;
             $$.value.object = field;
-            $$.identifier = field->identifier;
+            $$.identifier.ref = ref;
+            $$.identifier.ptr = NULL;
           }
           else
           {
@@ -977,7 +972,7 @@ identifier
         else
         {
           yr_compiler_set_error_extra_info(
-              compiler, $1.identifier);
+             compiler, expression_identifier($1));
 
           result = ERROR_NOT_A_STRUCTURE;
         }
@@ -1011,7 +1006,8 @@ identifier
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = array->prototype_item;
-          $$.identifier = array->identifier;
+          $$.identifier.ptr = array->identifier;
+          $$.identifier.ref = YR_ARENA_NULL_REF;
         }
         else if ($1.type == EXPRESSION_TYPE_OBJECT &&
                  $1.value.object->type == OBJECT_TYPE_DICTIONARY)
@@ -1032,12 +1028,13 @@ identifier
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = dict->prototype_item;
-          $$.identifier = dict->identifier;
+          $$.identifier.ptr = dict->identifier;
+          $$.identifier.ref = YR_ARENA_NULL_REF;
         }
         else
         {
           yr_compiler_set_error_extra_info(
-              compiler, $1.identifier);
+              compiler, expression_identifier($1));
 
           result = ERROR_NOT_INDEXABLE;
         }
@@ -1047,9 +1044,9 @@ identifier
 
     | identifier '(' arguments ')'
       {
+        YR_ARENA2_REFERENCE ref;
         int result = ERROR_SUCCESS;
         YR_OBJECT_FUNCTION* function;
-        char* args_fmt;
 
         if ($1.type == EXPRESSION_TYPE_OBJECT &&
             $1.value.object->type == OBJECT_TYPE_FUNCTION)
@@ -1058,14 +1055,14 @@ identifier
               compiler, object_as_function($1.value.object), $3);
 
           if (result == ERROR_SUCCESS)
-            result = yr_arena_write_string(
-                compiler->sz_arena, $3, &args_fmt);
+            result = yr_arena2_write_string(
+                compiler->arena, YR_SZ_POOL, $3, &ref);
 
           if (result == ERROR_SUCCESS)
             result = yr_parser_emit_with_arg_reloc(
                 yyscanner,
                 OP_CALL,
-                args_fmt,
+                yr_arena2_ref_to_ptr(compiler->arena, &ref),
                 NULL,
                 NULL);
 
@@ -1073,12 +1070,13 @@ identifier
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = function->return_obj;
-          $$.identifier = function->identifier;
+          $$.identifier.ref = ref;
+          $$.identifier.ptr = NULL;
         }
         else
         {
           yr_compiler_set_error_extra_info(
-              compiler, $1.identifier);
+              compiler, expression_identifier($1));
 
           result = ERROR_NOT_A_FUNCTION;
         }
@@ -1799,7 +1797,7 @@ for_variables
 
         fail_if_error(result);
 
-        loop_ctx->vars[loop_ctx->vars_count++].identifier = $1;
+        loop_ctx->vars[loop_ctx->vars_count++].identifier.ptr = $1;
 
         assert(loop_ctx->vars_count <= YR_MAX_LOOP_VARS);
       }
@@ -1826,7 +1824,7 @@ for_variables
 
         fail_if_error(result);
 
-        loop_ctx->vars[loop_ctx->vars_count++].identifier = $3;
+        loop_ctx->vars[loop_ctx->vars_count++].identifier.ptr = $3;
       }
     ;
 
@@ -1861,7 +1859,7 @@ iterator
                     compiler,
                     "iterator for \"%s\" yields a single item on each iteration"
                     ", but the loop expects %d",
-                    $1.identifier,
+                    expression_identifier($1),
                     loop_ctx->vars_count);
 
                 result = ERROR_SYNTAX_ERROR;
@@ -1887,7 +1885,7 @@ iterator
                 yr_compiler_set_error_extra_info_fmt(
                     compiler,
                     "iterator for \"%s\" yields a key,value pair item on each iteration",
-                    $1.identifier);
+                    expression_identifier($1));
 
                 result = ERROR_SYNTAX_ERROR;
               }
@@ -1900,7 +1898,7 @@ iterator
           yr_compiler_set_error_extra_info_fmt(
               compiler,
               "identifier \"%s\" is not iterable",
-              $1.identifier);
+              expression_identifier($1));
         }
 
         fail_if_error(result);
@@ -2124,13 +2122,14 @@ primary_expression
       }
     | _TEXT_STRING_
       {
-        SIZED_STRING* sized_string;
+        YR_ARENA2_REFERENCE ref;
 
-        int result = yr_arena_write_data(
-            compiler->sz_arena,
+        int result = yr_arena2_write_data(
+            compiler->arena,
+            YR_SZ_POOL,
             $1,
             $1->length + sizeof(SIZED_STRING),
-            (void**) &sized_string);
+            &ref);
 
         yr_free($1);
 
@@ -2138,14 +2137,15 @@ primary_expression
           result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              sized_string,
+              yr_arena2_ref_to_ptr(compiler->arena, &ref),
               NULL,
               NULL);
 
         fail_if_error(result);
 
         $$.type = EXPRESSION_TYPE_STRING;
-        $$.value.sized_string = sized_string;
+        //TODO
+        // $$.value.sized_string = sized_string;
       }
     | _STRING_COUNT_
       {
@@ -2246,7 +2246,8 @@ primary_expression
               yr_compiler_set_error_extra_info_fmt(
                   compiler,
                   "wrong usage of identifier \"%s\"",
-                  $1.identifier);
+                  expression_identifier($1));
+
               result = ERROR_WRONG_TYPE;
           }
         }

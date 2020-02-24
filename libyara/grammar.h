@@ -162,7 +162,7 @@ extern int yara_yydebug;
 
 union YYSTYPE
 {
-#line 281 "grammar.y" /* yacc.c:1916  */
+#line 289 "grammar.y" /* yacc.c:1916  */
 
   YR_EXPRESSION   expression;
   SIZED_STRING*   sized_string;
@@ -171,16 +171,12 @@ union YYSTYPE
   double          double_;
   YR_MODIFIER     modifier;
 
-  struct {
-    char* ptr;
-    YR_ARENA2_REFERENCE ref;
-  } c_string_with_offset;
-
+  YR_ARENA2_REFERENCE c_string_with_offset;
   YR_ARENA2_REFERENCE rule;
   YR_ARENA2_REFERENCE meta;
   YR_ARENA2_REFERENCE string;
 
-#line 184 "grammar.h" /* yacc.c:1916  */
+#line 180 "grammar.h" /* yacc.c:1916  */
 };
 
 typedef union YYSTYPE YYSTYPE;

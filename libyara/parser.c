@@ -371,8 +371,8 @@ int yr_parser_lookup_loop_variable(
 
     for (j = 0; j < compiler->loop[i].vars_count; j++)
     {
-        if (compiler->loop[i].vars[j].identifier != NULL &&
-            strcmp(identifier, compiler->loop[i].vars[j].identifier ) == 0)
+        if (compiler->loop[i].vars[j].identifier.ptr != NULL &&
+            strcmp(identifier, compiler->loop[i].vars[j].identifier.ptr) == 0)
         {
           if (expr != NULL)
             *expr = compiler->loop[i].vars[j];
@@ -419,13 +419,15 @@ static int _yr_parser_write_string(
   YR_STRING* string = (YR_STRING*) yr_arena2_ref_to_ptr(
       compiler->arena, string_ref);
 
-  result = yr_arena_write_string(
-      compiler->sz_arena,
-      identifier,
-      &string->identifier);
+  YR_ARENA2_REFERENCE ref;
 
-  if (result != ERROR_SUCCESS)
-    return result;
+  FAIL_ON_ERROR(yr_arena2_write_string(
+      compiler->arena,
+      YR_SZ_POOL,
+      identifier,
+      &ref))
+
+  string->identifier = yr_arena2_ref_to_ptr(compiler->arena, &ref);
 
   if (modifier.flags & STRING_GFLAGS_HEXADECIMAL ||
       modifier.flags & STRING_GFLAGS_REGEXP ||
@@ -460,7 +462,7 @@ static int _yr_parser_write_string(
   string->fixed_offset = UNDEFINED;
   string->chained_to = NULL;
   string->string = NULL;
-  
+
   memset(string->matches, 0,
          sizeof(string->matches));
 
@@ -472,20 +474,15 @@ static int _yr_parser_write_string(
 
   if (modifier.flags & STRING_GFLAGS_LITERAL)
   {
-    string->length = (uint32_t) literal_string->length;
-
-    /*result = yr_arena2_write_data(
+    result = yr_arena2_write_data(
         compiler->arena,
         YR_SZ_POOL,
         literal_string->c_string,
         literal_string->length + 1,   // +1 to include terminating NULL
-        NULL);*/
+        &ref);
 
-    result = yr_arena_write_data(
-        compiler->sz_arena,
-        literal_string->c_string,
-        literal_string->length + 1,   // +1 to include terminating NULL
-        (void**) &string->string);
+    string->length = (uint32_t) literal_string->length;
+    string->string = (uint8_t*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
 
     if (result == ERROR_SUCCESS)
     {
@@ -933,16 +930,9 @@ int yr_parser_reduce_rule_declaration_phase_1(
       compiler->arena,
       YR_SZ_POOL,
       identifier,
-      &ref));
+      &ref))
 
-  // TODO(vmalvarez): remove
-  char* ident;
-  FAIL_ON_ERROR(yr_arena_write_string(
-      compiler->sz_arena,
-      identifier,
-      &ident));
-
-  rule->identifier = ident; //yr_arena2_ref_to_ptr(compiler->arena, &ref);
+  rule->identifier = yr_arena2_ref_to_ptr(compiler->arena, &ref);
   rule->g_flags = flags;
   rule->ns = ns;
   rule->num_atoms = 0;
@@ -1200,7 +1190,7 @@ int yr_parser_reduce_meta_declaration(
     int64_t integer,
     YR_ARENA2_REFERENCE* meta_ref)
 {
-  //YR_ARENA2_REFERENCE ref;
+  YR_ARENA2_REFERENCE ref;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   FAIL_ON_ERROR(yr_arena2_allocate_struct(
@@ -1217,33 +1207,23 @@ int yr_parser_reduce_meta_declaration(
   meta->type = type;
   meta->integer = integer;
 
-  /*FAIL_ON_ERROR(yr_arena2_write_string(
+  FAIL_ON_ERROR(yr_arena2_write_string(
       compiler->arena,
       YR_SZ_POOL,
       identifier,
-      &ref))*/
+      &ref))
 
-  FAIL_ON_ERROR(yr_arena_write_string(
-      compiler->sz_arena,
-      identifier,
-      (char**) &meta->identifier))
-
-  // meta->identifier = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
+  meta->identifier = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
 
   if (string != NULL)
   {
-    /*FAIL_ON_ERROR(yr_arena2_write_string(
+    FAIL_ON_ERROR(yr_arena2_write_string(
         compiler->arena,
         YR_SZ_POOL,
         string,
-        &ref))*/
+        &ref))
 
-    FAIL_ON_ERROR(yr_arena_write_string(
-        compiler->sz_arena,
-        string,
-        (char**) &meta->string))
-
-    // meta->string = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
+    meta->string = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
   }
   else
   {
@@ -1273,10 +1253,9 @@ int yr_parser_reduce_import(
 {
   int result;
 
+  YR_ARENA2_REFERENCE ref;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   YR_OBJECT* module_structure;
-
-  char* name;
 
   if (!_yr_parser_valid_module_name(module_name))
   {
@@ -1325,17 +1304,12 @@ int yr_parser_reduce_import(
       compiler->arena,
       YR_SZ_POOL,
       module_name->c_string,
-      NULL))
-
-  FAIL_ON_ERROR(yr_arena_write_string(
-      compiler->sz_arena,
-      module_name->c_string,
-      &name))
+      &ref))
 
   FAIL_ON_ERROR(yr_parser_emit_with_arg_reloc(
       yyscanner,
       OP_IMPORT,
-      name,
+      yr_arena2_ref_to_ptr(compiler->arena, &ref),
       NULL,
       NULL))
 

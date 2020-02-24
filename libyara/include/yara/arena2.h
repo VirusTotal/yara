@@ -170,7 +170,7 @@ void* yr_arena2_ref_to_ptr(
 
 int yr_arena2_ptr_to_ref(
     YR_ARENA2* arena,
-    void* address,
+    const void* address,
     YR_ARENA2_REFERENCE* ref);
 
 
