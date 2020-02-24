@@ -525,7 +525,7 @@ static int _yr_compiler_set_namespace(
         sizeof(YR_NAMESPACE),
         &ref,
         offsetof(YR_NAMESPACE, name),
-        EOL2))
+        EOL2));
 
     ns = (YR_NAMESPACE*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
 
@@ -533,7 +533,7 @@ static int _yr_compiler_set_namespace(
         compiler->arena,
         YR_SZ_POOL,
         namespace_,
-        &ref))
+        &ref));
 
     ns->name = (char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
 
@@ -887,7 +887,7 @@ static int _yr_compiler_define_variable(
       sizeof(YR_EXTERNAL_VARIABLE),
       &ext_ref,
       offsetof(YR_EXTERNAL_VARIABLE, identifier),
-      EOL2))
+      EOL2));
 
   ext = (YR_EXTERNAL_VARIABLE*) yr_arena2_ref_to_ptr(
       compiler->arena, &ext_ref);
@@ -896,7 +896,7 @@ static int _yr_compiler_define_variable(
       compiler->arena,
       YR_SZ_POOL,
       external->identifier,
-      &ref))
+      &ref));
 
   ext->identifier = (char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
   ext->type = external->type;
@@ -911,20 +911,20 @@ static int _yr_compiler_define_variable(
         compiler->arena,
         YR_SZ_POOL,
         external->value.s,
-        &ref))
+        &ref));
 
     FAIL_ON_ERROR(yr_arena2_make_ptr_relocatable(
         compiler->arena,
         YR_EXTERNAL_VARIABLES_TABLE,
         ext_ref.offset + offsetof(YR_EXTERNAL_VARIABLE, value.s),
-        EOL2))
+        EOL2));
 
     ext->value.s = (char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
   }
 
   FAIL_ON_ERROR(yr_object_from_external_variable(
       external,
-      &object))
+      &object));
 
   FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_add(
       compiler->objects_table,
@@ -932,7 +932,7 @@ static int _yr_compiler_define_variable(
       NULL,
       (void*) object),
       // cleanup
-      yr_object_destroy(object))
+      yr_object_destroy(object));
 
   return ERROR_SUCCESS;
 }
@@ -1004,7 +1004,7 @@ YR_API int yr_compiler_define_string_variable(
   external.value.s = (char*) value;
 
   FAIL_ON_ERROR(_yr_compiler_define_variable(
-      compiler, &external))
+      compiler, &external));
 
   return ERROR_SUCCESS;
 }
