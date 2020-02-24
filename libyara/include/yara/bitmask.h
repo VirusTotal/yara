@@ -51,7 +51,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //   yr_bitmask_isset(my_bitmask, n)
 //
 
-
 #define YR_BITMASK unsigned long
 
 #define YR_BITMASK_SLOT_BITS      (sizeof(YR_BITMASK) * 8)

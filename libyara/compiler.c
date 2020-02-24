@@ -177,6 +177,8 @@ YR_API int yr_compiler_create(
   if (new_compiler == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
+  new_compiler->current_rule_idx = 0;
+  new_compiler->current_string_idx = 0;
   new_compiler->current_namespace_idx = 0;
   new_compiler->namespaces_count = 0;
 
@@ -196,7 +198,6 @@ YR_API int yr_compiler_create(
   new_compiler->loop_for_of_var_index = -1;
   new_compiler->compiled_rules_arena = NULL;
 
-  new_compiler->current_rule_idx = 0;
   new_compiler->atoms_config.get_atom_quality = yr_atoms_heuristic_quality;
   new_compiler->atoms_config.quality_warning_threshold = \
       YR_ATOM_QUALITY_WARNING_THRESHOLD;
@@ -218,20 +219,12 @@ YR_API int yr_compiler_create(
         65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->sz_arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(
-        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->strings_arena);
-
-  if (result == ERROR_SUCCESS)
       result = yr_arena_create(
         65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->code_arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(
         65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->re_code_arena);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_create(
-        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->metas_arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(
@@ -267,10 +260,8 @@ YR_API void yr_compiler_destroy(
 
   yr_arena_destroy(compiler->compiled_rules_arena);
   yr_arena_destroy(compiler->sz_arena);
-  yr_arena_destroy(compiler->strings_arena);
   yr_arena_destroy(compiler->code_arena);
   yr_arena_destroy(compiler->re_code_arena);
-  yr_arena_destroy(compiler->metas_arena);
   yr_arena_destroy(compiler->automaton_arena);
   yr_arena_destroy(compiler->matches_arena);
 
@@ -761,22 +752,6 @@ static int _yr_compiler_compile_rules(
     compiler->re_code_arena = NULL;
     result = yr_arena_append(
         arena,
-        compiler->strings_arena);
-  }
-
-  if (result == ERROR_SUCCESS)
-  {
-    compiler->strings_arena = NULL;
-    result = yr_arena_append(
-        arena,
-        compiler->metas_arena);
-  }
-
-  if (result == ERROR_SUCCESS)
-  {
-    compiler->metas_arena = NULL;
-    result = yr_arena_append(
-        arena,
         compiler->sz_arena);
   }
 
@@ -807,6 +782,18 @@ static int _yr_compiler_compile_rules(
   {
     result = yr_arena_append_arena2_buffer(
       arena, compiler->arena, YR_RULES_TABLE);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    result = yr_arena_append_arena2_buffer(
+        arena, compiler->arena, YR_STRINGS_TABLE);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    result = yr_arena_append_arena2_buffer(
+        arena, compiler->arena, YR_METAS_TABLE);
   }
 
   if (result == ERROR_SUCCESS)

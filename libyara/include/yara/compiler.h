@@ -173,11 +173,15 @@ typedef struct _YR_COMPILER
   YR_ARENA2* arena;
 
   // Index of the rule being compiled in the array of YR_RULE structures
-  // stored in the YR_RULES_TABLE.
+  // stored in YR_RULES_TABLE.
   uint32_t current_rule_idx;
 
+  // Index of the string being compiled in the array of YR_STRING structures
+  // stored in YR_STRINGS_TABLE.
+  uint32_t current_string_idx;
+
   // Index of the current namespace in the array of YR_NAMESPACE structures
-  // stored in the YR_NAMESPACES_TABLE.
+  // stored in YR_NAMESPACES_TABLE.
   uint32_t current_namespace_idx;
 
   int               errors;
@@ -189,13 +193,13 @@ typedef struct _YR_COMPILER
 
   YR_ARENA*         sz_arena;
   //YR_ARENA*         rules_arena;
-  YR_ARENA*         strings_arena;
+  //YR_ARENA*         strings_arena;
   YR_ARENA*         code_arena;
   YR_ARENA*         re_code_arena;
   YR_ARENA*         compiled_rules_arena;
   //YR_ARENA*         externals_arena;
   //YR_ARENA*         namespaces_arena;
-  YR_ARENA*         metas_arena;
+  //YR_ARENA*         metas_arena;
   YR_ARENA*         matches_arena;
   YR_ARENA*         automaton_arena;
 
