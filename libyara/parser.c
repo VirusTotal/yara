@@ -414,7 +414,7 @@ static int _yr_parser_write_string(
       offsetof(YR_STRING, identifier),
       offsetof(YR_STRING, string),
       offsetof(YR_STRING, chained_to),
-      EOL2))
+      EOL2));
 
   YR_STRING* string = (YR_STRING*) yr_arena2_ref_to_ptr(
       compiler->arena, string_ref);
@@ -425,7 +425,7 @@ static int _yr_parser_write_string(
       compiler->arena,
       YR_SZ_POOL,
       identifier,
-      &ref))
+      &ref));
 
   string->identifier = yr_arena2_ref_to_ptr(compiler->arena, &ref);
 
@@ -920,7 +920,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
       offsetof(YR_RULE, strings),
       offsetof(YR_RULE, metas),
       offsetof(YR_RULE, ns),
-      EOL2))
+      EOL2));
 
   YR_RULE* rule = (YR_RULE*) yr_arena2_ref_to_ptr(compiler->arena, rule_ref);
 
@@ -930,7 +930,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
       compiler->arena,
       YR_SZ_POOL,
       identifier,
-      &ref))
+      &ref));
 
   rule->identifier = yr_arena2_ref_to_ptr(compiler->arena, &ref);
   rule->g_flags = flags;
@@ -947,14 +947,14 @@ int yr_parser_reduce_rule_declaration_phase_1(
   FAIL_ON_ERROR(yr_parser_emit(
       yyscanner,
       OP_INIT_RULE,
-      NULL))
+      NULL));
 
   FAIL_ON_ERROR(yr_arena_allocate_struct(
       compiler->code_arena,
       sizeof(YR_INIT_RULE_ARGS),
       (void**) &init_rule_args,
       offsetof(YR_INIT_RULE_ARGS, jmp_addr),
-      EOL))
+      EOL));
 
   init_rule_args->rule_idx = compiler->current_rule_idx;
 
@@ -1139,14 +1139,14 @@ int yr_parser_reduce_string_identifier(
   else
   {
     FAIL_ON_ERROR(yr_parser_lookup_string(
-        yyscanner, identifier, &string))
+        yyscanner, identifier, &string));
 
     FAIL_ON_ERROR(yr_parser_emit_with_arg_reloc(
         yyscanner,
         OP_PUSH,
         string,
         NULL,
-        NULL))
+        NULL));
 
     if (instruction != OP_FOUND)
       string->g_flags &= ~STRING_GFLAGS_SINGLE_MATCH;
@@ -1173,7 +1173,7 @@ int yr_parser_reduce_string_identifier(
       string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
     }
 
-    FAIL_ON_ERROR(yr_parser_emit(yyscanner, instruction, NULL))
+    FAIL_ON_ERROR(yr_parser_emit(yyscanner, instruction, NULL));
 
     string->g_flags |= STRING_GFLAGS_REFERENCED;
   }
@@ -1200,7 +1200,7 @@ int yr_parser_reduce_meta_declaration(
       meta_ref,
       offsetof(YR_META, identifier),
       offsetof(YR_META, string),
-      EOL2))
+      EOL2));
 
   YR_META* meta = (YR_META*) yr_arena2_ref_to_ptr(compiler->arena, meta_ref);
 
@@ -1211,7 +1211,7 @@ int yr_parser_reduce_meta_declaration(
       compiler->arena,
       YR_SZ_POOL,
       identifier,
-      &ref))
+      &ref));
 
   meta->identifier = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
 
@@ -1221,7 +1221,7 @@ int yr_parser_reduce_meta_declaration(
         compiler->arena,
         YR_SZ_POOL,
         string,
-        &ref))
+        &ref));
 
     meta->string = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
   }
@@ -1282,13 +1282,13 @@ int yr_parser_reduce_import(
       OBJECT_TYPE_STRUCTURE,
       module_name->c_string,
       NULL,
-      &module_structure))
+      &module_structure));
 
   FAIL_ON_ERROR(yr_hash_table_add(
       compiler->objects_table,
       module_name->c_string,
       ns->name,
-      module_structure))
+      module_structure));
 
   result = yr_modules_do_declarations(
       module_name->c_string,
@@ -1304,14 +1304,14 @@ int yr_parser_reduce_import(
       compiler->arena,
       YR_SZ_POOL,
       module_name->c_string,
-      &ref))
+      &ref));
 
   FAIL_ON_ERROR(yr_parser_emit_with_arg_reloc(
       yyscanner,
       OP_IMPORT,
       yr_arena2_ref_to_ptr(compiler->arena, &ref),
       NULL,
-      NULL))
+      NULL));
 
   return ERROR_SUCCESS;
 }
@@ -1410,7 +1410,7 @@ int yr_parser_reduce_operation(
           OP_INT_TO_DBL,
           (left_operand.type == EXPRESSION_TYPE_INTEGER) ? 2 : 1,
           NULL,
-          NULL))
+          NULL));
     }
 
     expression_type = EXPRESSION_TYPE_FLOAT;
@@ -1424,7 +1424,7 @@ int yr_parser_reduce_operation(
     FAIL_ON_ERROR(yr_parser_emit(
         yyscanner,
         _yr_parser_operator_to_opcode(op, expression_type),
-        NULL))
+        NULL));
   }
   else if (left_operand.type == EXPRESSION_TYPE_STRING &&
            right_operand.type == EXPRESSION_TYPE_STRING)
@@ -1436,7 +1436,7 @@ int yr_parser_reduce_operation(
       FAIL_ON_ERROR(yr_parser_emit(
           yyscanner,
           opcode,
-          NULL))
+          NULL));
     }
     else
     {
