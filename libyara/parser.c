@@ -55,20 +55,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int yr_parser_emit(
     yyscan_t yyscanner,
     uint8_t instruction,
-    uint8_t** instruction_address)
+    YR_ARENA2_REFERENCE* instruction_ref)
 {
-  yr_arena2_write_data(
+  return yr_arena2_write_data(
       yyget_extra(yyscanner)->arena,
       YR_CODE_SECTION,
       &instruction,
       sizeof(uint8_t),
-      NULL);
-
-  return yr_arena_write_data(
-      yyget_extra(yyscanner)->code_arena,
-      &instruction,
-      sizeof(uint8_t),
-      (void**) instruction_address);
+      instruction_ref);
 }
 
 
@@ -76,15 +70,15 @@ int yr_parser_emit_with_arg_double(
     yyscan_t yyscanner,
     uint8_t instruction,
     double argument,
-    uint8_t** instruction_address,
-    double** argument_address)
+    YR_ARENA2_REFERENCE* instruction_ref,
+    YR_ARENA2_REFERENCE* argument_ref)
 {
   int result = yr_arena2_write_data(
       yyget_extra(yyscanner)->arena,
       YR_CODE_SECTION,
       &instruction,
       sizeof(uint8_t),
-      NULL);
+      instruction_ref);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena2_write_data(
@@ -92,21 +86,33 @@ int yr_parser_emit_with_arg_double(
         YR_CODE_SECTION,
         &argument,
         sizeof(double),
-        NULL);
+        argument_ref);
+
+  return result;
+}
+
+
+int yr_parser_emit_with_arg_int32(
+    yyscan_t yyscanner,
+    uint8_t instruction,
+    int32_t argument,
+    YR_ARENA2_REFERENCE* instruction_ref,
+    YR_ARENA2_REFERENCE* argument_ref)
+{
+  int result = yr_arena2_write_data(
+      yyget_extra(yyscanner)->arena,
+      YR_CODE_SECTION,
+      &instruction,
+      sizeof(uint8_t),
+      instruction_ref);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_write_data(
-        yyget_extra(yyscanner)->code_arena,
-        &instruction,
-        sizeof(uint8_t),
-        (void**) instruction_address);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_write_data(
-        yyget_extra(yyscanner)->code_arena,
+    result = yr_arena2_write_data(
+        yyget_extra(yyscanner)->arena,
+        YR_CODE_SECTION,
         &argument,
-        sizeof(double),
-        (void**) argument_address);
+        sizeof(int32_t),
+        argument_ref);
 
   return result;
 }
@@ -116,15 +122,15 @@ int yr_parser_emit_with_arg(
     yyscan_t yyscanner,
     uint8_t instruction,
     int64_t argument,
-    uint8_t** instruction_address,
-    int64_t** argument_address)
+    YR_ARENA2_REFERENCE* instruction_ref,
+    YR_ARENA2_REFERENCE* argument_ref)
 {
   int result = yr_arena2_write_data(
       yyget_extra(yyscanner)->arena,
       YR_CODE_SECTION,
       &instruction,
       sizeof(uint8_t),
-      NULL);
+      instruction_ref);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena2_write_data(
@@ -132,21 +138,7 @@ int yr_parser_emit_with_arg(
         YR_CODE_SECTION,
         &argument,
         sizeof(int64_t),
-        NULL);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_write_data(
-        yyget_extra(yyscanner)->code_arena,
-        &instruction,
-        sizeof(uint8_t),
-        (void**) instruction_address);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_write_data(
-        yyget_extra(yyscanner)->code_arena,
-        &argument,
-        sizeof(int64_t),
-        (void**) argument_address);
+        argument_ref);
 
   return result;
 }
@@ -156,10 +148,10 @@ int yr_parser_emit_with_arg_reloc(
     yyscan_t yyscanner,
     uint8_t instruction,
     void* argument,
-    uint8_t** instruction_address,
-    void** argument_address)
+    YR_ARENA2_REFERENCE* instruction_ref,
+    YR_ARENA2_REFERENCE* argument_ref)
 {
-  int64_t* ptr = NULL;
+  YR_ARENA2_REFERENCE ref;
 
   DECLARE_REFERENCE(void*, ptr) arg;
 
@@ -171,9 +163,7 @@ int yr_parser_emit_with_arg_reloc(
       YR_CODE_SECTION,
       &instruction,
       sizeof(uint8_t),
-      NULL);
-
-  YR_ARENA2_REFERENCE ref;
+      instruction_ref);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena2_write_data(
@@ -190,29 +180,8 @@ int yr_parser_emit_with_arg_reloc(
         ref.offset,
         EOL2);
 
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_write_data(
-        yyget_extra(yyscanner)->code_arena,
-        &instruction,
-        sizeof(uint8_t),
-        (void**) instruction_address);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_write_data(
-        yyget_extra(yyscanner)->code_arena,
-        &arg,
-        sizeof(arg),
-        (void**) &ptr);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_make_ptr_relocatable(
-        yyget_extra(yyscanner)->code_arena,
-        ptr,
-        0,
-        EOL);
-
-  if (argument_address != NULL)
-    *argument_address = (void*) ptr;
+  if (argument_ref != NULL)
+    *argument_ref = ref;
 
   return result;
 }
@@ -521,6 +490,7 @@ static int _yr_parser_write_string(
     result = yr_ac_add_string(
         compiler->automaton,
         string,
+        compiler->current_string_idx,
         atom_list,
         compiler->matches_arena);
   }
@@ -886,7 +856,6 @@ int yr_parser_reduce_rule_declaration_phase_1(
     YR_ARENA2_REFERENCE* rule_ref)
 {
   YR_FIXUP *fixup;
-  YR_INIT_RULE_ARGS *init_rule_args;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena2_get_ptr(
@@ -944,25 +913,28 @@ int yr_parser_reduce_rule_declaration_phase_1(
   memset(rule->time_cost_per_thread, 0, sizeof(rule->time_cost_per_thread));
   #endif
 
-  FAIL_ON_ERROR(yr_parser_emit(
+  YR_ARENA2_REFERENCE jmp_offset_ref;
+
+  // The OP_INIT_RULE instruction behaves like a jump. When the rule is disabled
+  // it skips over the rule's code and go straight to the next rule's code. The
+  // jmp_offset_ref variable points to the jump's offset. The offset is set to 0
+  // as we don't know the jump target yet. When we finish generating the rule's
+  // code in yr_parser_reduce_rule_declaration_phase_2 the jump offset is set to
+  // its final value.
+
+  FAIL_ON_ERROR(yr_parser_emit_with_arg_int32(
       yyscanner,
       OP_INIT_RULE,
+      0,
+      NULL,
+      &jmp_offset_ref));
+
+  FAIL_ON_ERROR(yr_arena2_write_data(
+      compiler->arena,
+      YR_CODE_SECTION,
+      &compiler->current_rule_idx,
+      sizeof(compiler->current_rule_idx),
       NULL));
-
-  FAIL_ON_ERROR(yr_arena_allocate_struct(
-      compiler->code_arena,
-      sizeof(YR_INIT_RULE_ARGS),
-      (void**) &init_rule_args,
-      offsetof(YR_INIT_RULE_ARGS, jmp_addr),
-      EOL));
-
-  init_rule_args->rule_idx = compiler->current_rule_idx;
-
-  // jmp_addr holds the address to jump to when we want to skip the code for
-  // the rule. It is initialized as NULL at this point because we don't know
-  // the address until emitting the code for the rule's condition. The address
-  // is set in yr_parser_reduce_rule_declaration_phase_2.
-  init_rule_args->jmp_addr = NULL;
 
   // Create a fixup entry for the jump and push it in the stack
   fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
@@ -970,7 +942,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
   if (fixup == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  fixup->address = (void*) &(init_rule_args->jmp_addr);
+  fixup->ref = jmp_offset_ref;
   fixup->next = compiler->fixup_stack_head;
   compiler->fixup_stack_head = fixup;
 
@@ -992,9 +964,6 @@ int yr_parser_reduce_rule_declaration_phase_2(
 {
   uint32_t max_strings_per_rule;
   uint32_t strings_in_rule = 0;
-  uint8_t* nop_inst_addr = NULL;
-
-  int result;
 
   YR_FIXUP *fixup;
   YR_STRING* string;
@@ -1046,25 +1015,25 @@ int yr_parser_reduce_rule_declaration_phase_2(
     string++;
   }
 
-  result = yr_parser_emit_with_arg(
+  FAIL_ON_ERROR(yr_parser_emit_with_arg(
       yyscanner,
       OP_MATCH_RULE,
       compiler->current_rule_idx,
       NULL,
-      NULL);
-
-  // Generate a do-nothing instruction (NOP) in order to get its address
-  // and use it as the destination for the OP_INIT_RULE skip jump. We can not
-  // simply use the address of the OP_MATCH_RULE instruction +1 because we
-  // can't be sure that the instruction following the OP_MATCH_RULE is going to
-  // be in the same arena page. As we don't have a reliable way of getting the
-  // address of the next instruction we generate the OP_NOP.
-
-  if (result == ERROR_SUCCESS)
-    result = yr_parser_emit(yyscanner, OP_NOP, &nop_inst_addr);
+      NULL));
 
   fixup = compiler->fixup_stack_head;
-  *(void**)(fixup->address) = (void*) nop_inst_addr;
+
+  int32_t* jmp_offset_addr = yr_arena2_ref_to_ptr(
+      compiler->arena, &fixup->ref);
+
+  int32_t jmp_offset = \
+      yr_arena2_get_current_offset(compiler->arena, YR_CODE_SECTION) -
+      fixup->ref.offset + 1;
+
+  *jmp_offset_addr = jmp_offset;
+
+  // Remove fixup from the stack.
   compiler->fixup_stack_head = fixup->next;
   yr_free(fixup);
 
@@ -1072,7 +1041,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
   // a new one.
   compiler->current_rule_idx++;
 
-  return result;
+  return ERROR_SUCCESS;
 }
 
 

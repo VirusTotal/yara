@@ -180,6 +180,10 @@ void* yr_arena2_get_ptr(
     yr_arena_off_t offset);
 
 
+yr_arena_off_t yr_arena2_get_current_offset(
+    YR_ARENA2* arena,
+    int buffer_id);
+
 
 int yr_arena2_allocate_memory(
     YR_ARENA2* arena,

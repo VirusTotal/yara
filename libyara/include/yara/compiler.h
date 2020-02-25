@@ -67,6 +67,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_CODE_SECTION               6
 #define YR_RE_CODE_SECTION            7
 
+
 // This is the number of buffers used by the compiler, should match the number
 // of items in the list above.
 #define YR_NUM_SECTIONS               8
@@ -125,7 +126,6 @@ typedef void (*YR_COMPILER_RE_AST_CALLBACK_FUNC)(
 typedef struct _YR_FIXUP
 {
   YR_ARENA2_REFERENCE ref;
-  void* address;
   struct _YR_FIXUP* next;
 
 } YR_FIXUP;
@@ -138,7 +138,9 @@ typedef struct _YR_FIXUP
 
 typedef struct _YR_LOOP_CONTEXT
 {
-  uint8_t*          addr;
+  // Reference indicating the the place in the code where the loop starts. The
+  // loop goes back to this address on each iteration.
+  YR_ARENA2_REFERENCE start_ref;
 
   // vars_count is the number of local variables defined by the loop, and vars
   // is an array of expressions with the identifier and type for each of those
@@ -180,6 +182,10 @@ typedef struct _YR_COMPILER
   //      Similar to YR_CODE_SECTION, but it contains the code for regular
   //      expressions. This is the code executed by yr_re_exec and
   //      yr_re_fast_exec.
+  //   YR_AC_TRANSITION_TABLE:
+  //      Contains the Aho-Corasick transition table.
+  //   YR_AC_MATCHES_TABLE:
+  //      An array of YR_AC_MATCH structures.
   //
   YR_ARENA2* arena;
 
@@ -202,7 +208,7 @@ typedef struct _YR_COMPILER
 
   jmp_buf           error_recovery;
 
-  YR_ARENA*         code_arena;
+  //YR_ARENA*         code_arena;
   YR_ARENA*         re_code_arena;
   YR_ARENA*         compiled_rules_arena;
   YR_ARENA*         matches_arena;

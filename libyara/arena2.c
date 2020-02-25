@@ -345,6 +345,16 @@ void* yr_arena2_get_ptr(
 }
 
 
+yr_arena_off_t yr_arena2_get_current_offset(
+    YR_ARENA2* arena,
+    int buffer_id)
+{
+  assert(buffer_id < arena->num_buffers);
+
+  return arena->buffers[buffer_id].used;
+}
+
+
 int yr_arena2_ptr_to_ref(
     YR_ARENA2* arena,
     const void* address,

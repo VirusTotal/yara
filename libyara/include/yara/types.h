@@ -387,6 +387,7 @@ struct YR_EXTERNAL_VARIABLE
 struct YR_AC_MATCH
 {
   uint16_t backtrack;
+  uint32_t string_idx;
 
   DECLARE_REFERENCE(YR_STRING*, string);
   DECLARE_REFERENCE(const uint8_t*, forward_code);
@@ -426,17 +427,6 @@ typedef struct YARA_RULES_FILE_HEADER
   uint32_t ac_tables_size;
 
 } YARA_RULES_FILE_HEADER;
-
-
-typedef struct _YR_INIT_RULE_ARGS
-{
-  // Index of the rule in the rules table.
-  uint32_t rule_idx;
-  // Address of the first instruction belonging to the next rule. This is
-  // used when a rule is disabled and we want to skip its code.
-  DECLARE_REFERENCE(const uint8_t*, jmp_addr);
-} YR_INIT_RULE_ARGS;
-
 
 #pragma pack(pop)
 
