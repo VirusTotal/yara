@@ -215,10 +215,6 @@ YR_API int yr_compiler_create(
         YR_NUM_SECTIONS, 50*1048576, &new_compiler->arena);
 
   if (result == ERROR_SUCCESS)
-      result = yr_arena_create(
-        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->code_arena);
-
-  if (result == ERROR_SUCCESS)
     result = yr_arena_create(
         65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->re_code_arena);
 
@@ -255,7 +251,6 @@ YR_API void yr_compiler_destroy(
   yr_arena2_destroy(compiler->arena);
 
   yr_arena_destroy(compiler->compiled_rules_arena);
-  yr_arena_destroy(compiler->code_arena);
   yr_arena_destroy(compiler->re_code_arena);
   yr_arena_destroy(compiler->automaton_arena);
   yr_arena_destroy(compiler->matches_arena);
@@ -663,8 +658,9 @@ static int _yr_compiler_compile_rules(
   int result;
 
   // Write halt instruction at the end of code.
-  yr_arena_write_data(
-      compiler->code_arena,
+  yr_arena2_write_data(
+      compiler->arena,
+      YR_CODE_SECTION,
       &halt,
       sizeof(uint8_t),
       NULL);
@@ -720,8 +716,8 @@ static int _yr_compiler_compile_rules(
     rules_file_header->externals_list_head = (YR_EXTERNAL_VARIABLE*) \
         yr_arena2_get_ptr(compiler->arena, YR_EXTERNAL_VARIABLES_TABLE, 0);
 
-    rules_file_header->code_start = (uint8_t*) yr_arena_base_address(
-        compiler->code_arena);
+    rules_file_header->code_start = (uint8_t*) yr_arena2_get_ptr(
+        compiler->arena, YR_CODE_SECTION, 0);
 
     rules_file_header->ac_match_table = tables.matches;
     rules_file_header->ac_transition_table = tables.transitions;
@@ -730,14 +726,6 @@ static int _yr_compiler_compile_rules(
 
   if (result == ERROR_SUCCESS)
   {
-    result = yr_arena_append(
-        arena,
-        compiler->code_arena);
-  }
-
-  if (result == ERROR_SUCCESS)
-  {
-    compiler->code_arena = NULL;
     result = yr_arena_append(
         arena,
         compiler->re_code_arena);
@@ -794,6 +782,12 @@ static int _yr_compiler_compile_rules(
   {
     result = yr_arena_append_arena2_buffer(
         arena, compiler->arena, YR_SZ_POOL);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    result = yr_arena_append_arena2_buffer(
+        arena, compiler->arena, YR_CODE_SECTION);
   }
 
   if (result == ERROR_SUCCESS)

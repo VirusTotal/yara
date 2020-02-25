@@ -1379,7 +1379,7 @@ expression
       //  JL_P repeat     ; if M[1] is less M[3] repeat
       //
       // exit:
-      //  POP             ; remove the itertor object from the stack
+      //  POP             ; remove the iterator object from the stack
       //
       //  PUSH_M 0        ; pushes number of true results for <expression>
       //  PUSH_M 2        ; pushes value of <min_expression>
@@ -1434,14 +1434,14 @@ expression
         YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_index];
         YR_FIXUP* fixup;
 
-        uint8_t* loop_start_addr;
-        void* jmp_arg_addr;
+        YR_ARENA2_REFERENCE loop_start_ref;
+        YR_ARENA2_REFERENCE jmp_offset_ref;
 
         int var_frame = _yr_compiler_get_var_frame(compiler);
         int i;
 
         fail_if_error(yr_parser_emit(
-            yyscanner, OP_ITER_NEXT, &loop_start_addr));
+            yyscanner, OP_ITER_NEXT, &loop_start_ref));
 
         // For each variable generate an instruction that pops the value from
         // the stack and store it into one memory slot starting at var_frame + 3
@@ -1453,31 +1453,32 @@ expression
               yyscanner, OP_POP_M, var_frame + 3 + i, NULL, NULL));
         }
 
-        fail_if_error(yr_parser_emit_with_arg_reloc(
+        fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
             OP_JTRUE_P,
-            0,
+            0,              // still don't know the jump offset, use 0 for now.
             NULL,
-            &jmp_arg_addr));
+            &jmp_offset_ref));
 
-        // Push a new fixup entry in the fixup stack so that the jump
-        // destination is set once we know it.
+        // We still don't know the jump's target, so we push a fixup entry
+        // in the stack, so that the jump's offset can be set once we know it.
 
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
           fail_if_error(ERROR_INSUFFICIENT_MEMORY);
 
-        fixup->address = jmp_arg_addr;
+        fixup->ref = jmp_offset_ref;
         fixup->next = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup;
 
-        loop_ctx->addr = loop_start_addr;
+        loop_ctx->start_ref = loop_start_ref;
       }
       '(' boolean_expression ')'
       {
+        int32_t jmp_offset;
         YR_FIXUP* fixup;
-        uint8_t* pop_addr;
+        YR_ARENA2_REFERENCE pop_ref;
 
         int var_frame = _yr_compiler_get_var_frame(compiler);
 
@@ -1490,10 +1491,14 @@ expression
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_PUSH_M, var_frame + 2, NULL, NULL));
 
-        fail_if_error(yr_parser_emit_with_arg_reloc(
+        jmp_offset = \
+            compiler->loop[compiler->loop_index].start_ref.offset -
+            yr_arena2_get_current_offset(compiler->arena, YR_CODE_SECTION);
+
+        fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
             OP_JUNDEF_P,
-            compiler->loop[compiler->loop_index].addr,
+            jmp_offset,
             NULL,
             NULL));
 
@@ -1503,24 +1508,38 @@ expression
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_PUSH_M, var_frame + 2, NULL, NULL));
 
-        fail_if_error(yr_parser_emit_with_arg_reloc(
+        jmp_offset = \
+            compiler->loop[compiler->loop_index].start_ref.offset -
+            yr_arena2_get_current_offset(compiler->arena, YR_CODE_SECTION);
+
+        fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
             OP_JL_P,
-            compiler->loop[compiler->loop_index].addr,
+            jmp_offset,
             NULL,
             NULL));
 
         fail_if_error(yr_parser_emit(
-            yyscanner, OP_POP, &pop_addr));
+            yyscanner, OP_POP, &pop_ref));
 
-        // Pop from the stack the fixup entry containing the jump's address
-        // that needs to be fixed.
+        // Pop from the stack the fixup entry containing the reference to
+        // the jump offset that needs to be fixed.
 
         fixup = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup->next;
 
-        // Fix the jump's target address.
-        *(void**)(fixup->address) = (void*)(pop_addr);
+        // The fixup entry has a reference to the jump offset that need
+        // to be fixed, convert the address into a pointer.
+        int32_t* jmp_offset_addr = (int32_t*) yr_arena2_ref_to_ptr(
+            compiler->arena, &fixup->ref);
+
+        // The reference in the fixup entry points to the jump's offset
+        // but the jump instruction is one byte before, that's why we add
+        // one to the offset.
+        jmp_offset = pop_ref.offset - fixup->ref.offset + 1;
+
+        // Fix the jump's offset.
+        *jmp_offset_addr = jmp_offset;
 
         yr_free(fixup);
 
@@ -1544,9 +1563,10 @@ expression
       }
     | _FOR_ for_expression _OF_ string_set ':'
       {
+        YR_ARENA2_REFERENCE ref;
+
         int result = ERROR_SUCCESS;
         int var_frame;
-        uint8_t* addr;
 
         if (compiler->loop_index + 1 == YR_MAX_LOOP_NESTING)
           result = ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
@@ -1568,12 +1588,12 @@ expression
 
         // Pop the first string.
         yr_parser_emit_with_arg(
-            yyscanner, OP_POP_M, var_frame, &addr, NULL);
+            yyscanner, OP_POP_M, var_frame, &ref, NULL);
 
         compiler->loop_for_of_var_index = var_frame;
         compiler->loop[compiler->loop_index].vars_internal_count = 3;
         compiler->loop[compiler->loop_index].vars_count = 0;
-        compiler->loop[compiler->loop_index].addr = addr;
+        compiler->loop[compiler->loop_index].start_ref = ref;
       }
       '(' boolean_expression ')'
       {
@@ -1594,12 +1614,16 @@ expression
         yr_parser_emit_with_arg(
             yyscanner, OP_INCR_M, var_frame + 2, NULL, NULL);
 
+        int32_t jmp_offset = \
+            compiler->loop[compiler->loop_index].start_ref.offset -
+            yr_arena2_get_current_offset(compiler->arena, YR_CODE_SECTION);
+
         // If next string is not undefined, go back to the
         // beginning of the loop.
-        yr_parser_emit_with_arg_reloc(
+        yr_parser_emit_with_arg_int32(
             yyscanner,
             OP_JNUNDEF,
-            compiler->loop[compiler->loop_index].addr,
+            jmp_offset,
             NULL,
             NULL);
 
@@ -1641,43 +1665,43 @@ expression
     | boolean_expression _AND_
       {
         YR_FIXUP* fixup;
-        void* jmp_destination_addr;
+        YR_ARENA2_REFERENCE jmp_offset_ref;
 
-        fail_if_error(yr_parser_emit_with_arg_reloc(
+        fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
             OP_JFALSE,
-            0,          // still don't know the jump destination
+            0,          // still don't know the jump offset, use 0 for now.
             NULL,
-            &jmp_destination_addr));
+            &jmp_offset_ref));
 
-        // create a fixup entry for the jump and push it in the stack
+        // Create a fixup entry for the jump and push it in the stack.
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
           fail_if_error(ERROR_INSUFFICIENT_MEMORY);
 
-        fixup->address = jmp_destination_addr;
+        fixup->ref = jmp_offset_ref;
         fixup->next = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup;
       }
       boolean_expression
       {
         YR_FIXUP* fixup;
-        uint8_t* nop_addr;
 
         fail_if_error(yr_parser_emit(yyscanner, OP_AND, NULL));
 
-        // Generate a do-nothing instruction (NOP) in order to get its address
-        // and use it as the destination for the OP_JFALSE. We can not simply
-        // use the address of the OP_AND instruction +1 because we can't be
-        // sure that the instruction following the OP_AND is going to be in
-        // the same arena page. As we don't have a reliable way of getting the
-        // address of the next instruction we generate the OP_NOP.
-
-        fail_if_error(yr_parser_emit(yyscanner, OP_NOP, &nop_addr));
-
         fixup = compiler->fixup_stack_head;
-        *(void**)(fixup->address) = (void*) nop_addr;
+
+        int32_t* jmp_offset_addr = (int32_t*) yr_arena2_ref_to_ptr(
+            compiler->arena, &fixup->ref);
+
+        int32_t jmp_offset = \
+            yr_arena2_get_current_offset(compiler->arena, YR_CODE_SECTION) -
+            fixup->ref.offset + 1;
+
+        *jmp_offset_addr = jmp_offset;
+
+        // Remove fixup from the stack.
         compiler->fixup_stack_head = fixup->next;
         yr_free(fixup);
 
@@ -1686,42 +1710,42 @@ expression
     | boolean_expression _OR_
       {
         YR_FIXUP* fixup;
-        void* jmp_destination_addr;
+        YR_ARENA2_REFERENCE jmp_offset_ref;
 
-        fail_if_error(yr_parser_emit_with_arg_reloc(
+        fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
             OP_JTRUE,
-            0,         // still don't know the jump destination
+            0,         // still don't know the jump destination, use 0 for now.
             NULL,
-            &jmp_destination_addr));
+            &jmp_offset_ref));
 
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
           fail_if_error(ERROR_INSUFFICIENT_MEMORY);
 
-        fixup->address = jmp_destination_addr;
+        fixup->ref = jmp_offset_ref;
         fixup->next = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup;
       }
       boolean_expression
       {
         YR_FIXUP* fixup;
-        uint8_t* nop_addr;
 
         fail_if_error(yr_parser_emit(yyscanner, OP_OR, NULL));
 
-        // Generate a do-nothing instruction (NOP) in order to get its address
-        // and use it as the destination for the OP_JFALSE. We can not simply
-        // use the address of the OP_OR instruction +1 because we can't be
-        // sure that the instruction following the OP_AND is going to be in
-        // the same arena page. As we don't have a reliable way of getting the
-        // address of the next instruction we generate the OP_NOP.
-
-        fail_if_error(yr_parser_emit(yyscanner, OP_NOP, &nop_addr));
-
         fixup = compiler->fixup_stack_head;
-        *(void**)(fixup->address) = (void*)(nop_addr);
+
+        int32_t jmp_offset = \
+            yr_arena2_get_current_offset(compiler->arena, YR_CODE_SECTION) -
+            fixup->ref.offset + 1;
+
+        int32_t* jmp_offset_addr = (int32_t*) yr_arena2_ref_to_ptr(
+            compiler->arena, &fixup->ref);
+
+        *jmp_offset_addr = jmp_offset;
+
+        // Remove fixup from the stack.
         compiler->fixup_stack_head = fixup->next;
         yr_free(fixup);
 

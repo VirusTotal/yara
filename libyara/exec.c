@@ -179,18 +179,24 @@ static const uint8_t* jmp_if(
     int condition,
     const uint8_t* ip)
 {
-  const uint8_t* result;
+  size_t off;
 
   if (condition)
   {
-    result = *(const uint8_t**)(ip);
+    // The condition is true, the instruction pointer is incremented in the
+    // amount specified by the jump's offset. The offset is relative to the
+    // jump opcode, but now the instruction pointer is pointing past the opcode
+    // that's why we decrement the offset by 1.
+    off = *(int32_t*)(ip) - 1;
   }
   else
   {
-    result = ip + sizeof(uint64_t);
+    // The condition is false, the execution flow proceeds with the instruction
+    // right after the jump.
+    off = sizeof(int32_t);
   }
 
-  return result;
+  return ip + off;
 }
 
 
@@ -356,7 +362,7 @@ int yr_execute_code(
   uint64_t start_time;
   #endif
 
-  YR_INIT_RULE_ARGS init_rule_args;
+  uint32_t rule_idx;
 
   YR_RULE* current_rule = NULL;
   YR_RULE* rule;
@@ -407,7 +413,10 @@ int yr_execute_code(
 
   while(!stop)
   {
+    // Read the opcode from the address indicated by the instruction pointer.
     opcode = *ip;
+
+    // Advance the instruction pointer, which now points past the opcode.
     ip++;
 
     switch(opcode)
@@ -776,14 +785,16 @@ int yr_execute_code(
         break;
 
       case OP_INIT_RULE:
-        memcpy(&init_rule_args, ip, sizeof(init_rule_args));
-
-        current_rule = &context->rules->rules_list_head[init_rule_args.rule_idx];
-
-        if (RULE_IS_DISABLED(current_rule))
-          ip = init_rule_args.jmp_addr;
-        else
-          ip += sizeof(init_rule_args);
+        // After the opcode there's an int32_t corresponding to the jump's
+        // offset and an uint32_t corresponding to the rule's index.
+        rule_idx = *(uint32_t*)(ip + sizeof(int32_t));
+        current_rule = &context->rules->rules_list_head[rule_idx];
+        // If the rule is disabled let's skip its code.
+        ip = jmp_if(RULE_IS_DISABLED(current_rule), ip);
+        // Skip the bytes corresponding to the rule's index, but only if not
+        // taking the jump. 
+        if (!RULE_IS_DISABLED(current_rule))
+          ip += sizeof(uint32_t);
         break;
 
       case OP_MATCH_RULE:

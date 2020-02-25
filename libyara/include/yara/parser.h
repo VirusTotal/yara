@@ -37,31 +37,39 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int yr_parser_emit(
     yyscan_t yyscanner,
     uint8_t instruction,
-    uint8_t** instruction_address);
+    YR_ARENA2_REFERENCE* instruction_ref);
 
 
 int yr_parser_emit_with_arg(
     yyscan_t yyscanner,
     uint8_t instruction,
     int64_t argument,
-    uint8_t** instruction_address,
-    int64_t** argument_address);
+    YR_ARENA2_REFERENCE* instruction_ref,
+    YR_ARENA2_REFERENCE* argument_ref);
+
+
+int yr_parser_emit_with_arg_int32(
+    yyscan_t yyscanner,
+    uint8_t instruction,
+    int32_t argument,
+    YR_ARENA2_REFERENCE* instruction_ref,
+    YR_ARENA2_REFERENCE* argument_ref);
 
 
 int yr_parser_emit_with_arg_double(
     yyscan_t yyscanner,
     uint8_t instruction,
     double argument,
-    uint8_t** instruction_address,
-    double** argument_address);
+    YR_ARENA2_REFERENCE* instruction_ref,
+    YR_ARENA2_REFERENCE* argument_ref);
 
 
 int yr_parser_emit_with_arg_reloc(
     yyscan_t yyscanner,
     uint8_t instruction,
     void* argument,
-    uint8_t** instruction_address,
-    void** argument_address);
+    YR_ARENA2_REFERENCE* instruction_ref,
+    YR_ARENA2_REFERENCE* argument_ref);
 
 
 int yr_parser_check_types(

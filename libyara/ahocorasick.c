@@ -32,11 +32,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 
 #include <yara/arena.h>
+#include <yara/arena2.h>
 #include <yara/ahocorasick.h>
+#include <yara/compiler.h>
 #include <yara/error.h>
 #include <yara/utils.h>
 #include <yara/mem.h>
-
 
 
 typedef struct _QUEUE_NODE
@@ -681,7 +682,8 @@ static int _yr_ac_build_transition_table(
 // Prints automaton state for debug purposes. This function is invoked by
 // yr_ac_print_automaton, is not intended to be used stand-alone.
 //
-
+//TODO(vmalvarez): Remove or re-implement
+/*
 static void _yr_ac_print_automaton_state(
     YR_AC_STATE* state)
 {
@@ -757,7 +759,7 @@ static void _yr_ac_print_automaton_state(
     _yr_ac_print_automaton_state(child_state);
     child_state = child_state->siblings;
   }
-}
+}*/
 
 
 //
@@ -832,6 +834,7 @@ int yr_ac_automaton_destroy(
 int yr_ac_add_string(
     YR_AC_AUTOMATON* automaton,
     YR_STRING* string,
+    uint32_t string_idx,
     YR_ATOM_LIST_ITEM* atom,
     YR_ARENA* matches_arena)
 {
@@ -873,10 +876,12 @@ int yr_ac_add_string(
         offsetof(YR_AC_MATCH, next),
         EOL);
 
+
     if (result == ERROR_SUCCESS)
     {
       new_match->backtrack = state->depth + atom->backtrack;
       new_match->string = string;
+      new_match->string_idx = string_idx;
       new_match->forward_code = atom->forward_code;
       new_match->backward_code = atom->backward_code;
       new_match->next = state->matches;
@@ -908,6 +913,13 @@ int yr_ac_compile(
   FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_optimize_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton));
+
+  /*FAIL_ON_ERROR(yr_arena2_write_data(
+      arena,
+      YR_AC_TRANSITION_TABLE,
+      automaton->t_table,
+      automaton->tables_size * sizeof(YR_AC_TRANSITION),
+      NULL));*/
 
   FAIL_ON_ERROR(yr_arena_reserve_memory(
       arena,
@@ -967,10 +979,12 @@ int yr_ac_compile(
 //
 // Prints automaton for debug purposes.
 //
-
+//TODO(vmalvarez): Remove or re-implement
+/*
 void yr_ac_print_automaton(YR_AC_AUTOMATON* automaton)
 {
   printf("-------------------------------------------------------\n");
   _yr_ac_print_automaton_state(automaton->root);
   printf("-------------------------------------------------------\n");
 }
+*/
