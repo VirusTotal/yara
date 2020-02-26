@@ -586,8 +586,8 @@ static int _yr_atoms_choose(
 
     if (item->atom.length > 0)
     {
-      item->forward_code = node->re_nodes[shift]->forward_code;
-      item->backward_code = node->re_nodes[shift]->backward_code;
+      item->forward_code_ref = node->re_nodes[shift]->forward_code_ref;
+      item->backward_code_ref = node->re_nodes[shift]->backward_code_ref;
       item->backtrack = 0;
       item->next = NULL;
 
@@ -789,8 +789,8 @@ static int _yr_atoms_case_insensitive(
       }
 
       new_atom->atom.length = atom_length;
-      new_atom->forward_code = atom->forward_code;
-      new_atom->backward_code = atom->backward_code;
+      new_atom->forward_code_ref = atom->forward_code_ref;
+      new_atom->backward_code_ref = atom->backward_code_ref;
       new_atom->backtrack = atom->backtrack;
       new_atom->next = *case_insensitive_atoms;
 
@@ -844,8 +844,8 @@ static int _yr_atoms_xor(
       }
 
       new_atom->atom.length = yr_min(atom->atom.length, YR_MAX_ATOM_LENGTH);
-      new_atom->forward_code = atom->forward_code;
-      new_atom->backward_code = atom->backward_code;
+      new_atom->forward_code_ref = atom->forward_code_ref;
+      new_atom->backward_code_ref = atom->backward_code_ref;
       new_atom->backtrack = atom->backtrack;
       new_atom->next = *xor_atoms;
 
@@ -900,8 +900,8 @@ static int _yr_atoms_wide(
     }
 
     new_atom->atom.length = yr_min(atom->atom.length * 2, YR_MAX_ATOM_LENGTH);
-    new_atom->forward_code = atom->forward_code;
-    new_atom->backward_code = atom->backward_code;
+    new_atom->forward_code_ref = atom->forward_code_ref;
+    new_atom->backward_code_ref = atom->backward_code_ref;
     new_atom->backtrack = atom->backtrack * 2;
     new_atom->next = *wide_atoms;
 
@@ -1460,8 +1460,8 @@ int yr_atoms_extract_from_re(
 
     (*atoms)->atom.length = 0;
     (*atoms)->backtrack = 0;
-    (*atoms)->forward_code = re_ast->root_node->forward_code;
-    (*atoms)->backward_code = NULL;
+    (*atoms)->forward_code_ref = re_ast->root_node->forward_code_ref;
+    (*atoms)->backward_code_ref = YR_ARENA_NULL_REF;
     (*atoms)->next = NULL;
   }
 
@@ -1498,8 +1498,8 @@ int yr_atoms_extract_from_string(
   if (item == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  item->forward_code = NULL;
-  item->backward_code = NULL;
+  item->forward_code_ref = YR_ARENA_NULL_REF;
+  item->backward_code_ref = YR_ARENA_NULL_REF;
   item->next = NULL;
   item->backtrack = 0;
 

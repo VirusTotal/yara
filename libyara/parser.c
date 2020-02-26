@@ -468,12 +468,12 @@ static int _yr_parser_write_string(
   {
     // Emit forwards code
     result = yr_re_ast_emit_code(
-        re_ast, compiler->re_code_arena, compiler->arena, false);
+        re_ast, compiler->arena, false);
 
     // Emit backwards code
     if (result == ERROR_SUCCESS)
       result = yr_re_ast_emit_code(
-          re_ast, compiler->re_code_arena, compiler->arena, true);
+          re_ast, compiler->arena, true);
 
     if (result == ERROR_SUCCESS)
       result = yr_atoms_extract_from_re(
@@ -492,6 +492,7 @@ static int _yr_parser_write_string(
         string,
         compiler->current_string_idx,
         atom_list,
+        compiler->arena,
         compiler->matches_arena);
   }
 

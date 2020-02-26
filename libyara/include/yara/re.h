@@ -132,8 +132,7 @@ int yr_re_ast_split_at_chaining_point(
 
 int yr_re_ast_emit_code(
     RE_AST* re_ast,
-    YR_ARENA* arena,
-    YR_ARENA2* arena2,
+    YR_ARENA2* arena,
     int backwards_code);
 
 
@@ -194,9 +193,8 @@ int yr_re_parse_hex(
 int yr_re_compile(
     const char* re_string,
     int flags,
-    YR_ARENA* code_arena,
-    YR_ARENA2* arena2,
-    RE** re,
+    YR_ARENA2* arena,
+    YR_ARENA2_REFERENCE* ref,
     RE_ERROR* error);
 
 

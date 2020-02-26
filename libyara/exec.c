@@ -789,12 +789,15 @@ int yr_execute_code(
         // offset and an uint32_t corresponding to the rule's index.
         rule_idx = *(uint32_t*)(ip + sizeof(int32_t));
         current_rule = &context->rules->rules_list_head[rule_idx];
+
         // If the rule is disabled let's skip its code.
         ip = jmp_if(RULE_IS_DISABLED(current_rule), ip);
+
         // Skip the bytes corresponding to the rule's index, but only if not
-        // taking the jump. 
+        // taking the jump.
         if (!RULE_IS_DISABLED(current_rule))
           ip += sizeof(uint32_t);
+
         break;
 
       case OP_MATCH_RULE:

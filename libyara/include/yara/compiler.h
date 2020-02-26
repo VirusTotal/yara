@@ -208,8 +208,7 @@ typedef struct _YR_COMPILER
 
   jmp_buf           error_recovery;
 
-  //YR_ARENA*         code_arena;
-  YR_ARENA*         re_code_arena;
+  // YR_ARENA*         re_code_arena;
   YR_ARENA*         compiled_rules_arena;
   YR_ARENA*         matches_arena;
   YR_ARENA*         automaton_arena;

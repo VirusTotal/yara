@@ -216,10 +216,6 @@ YR_API int yr_compiler_create(
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(
-        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->re_code_arena);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_create(
         65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->automaton_arena);
 
   if (result == ERROR_SUCCESS)
@@ -251,7 +247,6 @@ YR_API void yr_compiler_destroy(
   yr_arena2_destroy(compiler->arena);
 
   yr_arena_destroy(compiler->compiled_rules_arena);
-  yr_arena_destroy(compiler->re_code_arena);
   yr_arena_destroy(compiler->automaton_arena);
   yr_arena_destroy(compiler->matches_arena);
 
@@ -728,14 +723,6 @@ static int _yr_compiler_compile_rules(
   {
     result = yr_arena_append(
         arena,
-        compiler->re_code_arena);
-  }
-
-  if (result == ERROR_SUCCESS)
-  {
-    compiler->re_code_arena = NULL;
-    result = yr_arena_append(
-        arena,
         compiler->automaton_arena);
   }
 
@@ -788,6 +775,12 @@ static int _yr_compiler_compile_rules(
   {
     result = yr_arena_append_arena2_buffer(
         arena, compiler->arena, YR_CODE_SECTION);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    result = yr_arena_append_arena2_buffer(
+        arena, compiler->arena, YR_RE_CODE_SECTION);
   }
 
   if (result == ERROR_SUCCESS)
