@@ -154,3 +154,12 @@ libraries in this path by default, we must instruct it to do so by adding
 
     sudo sh -c 'echo "/usr/local/lib" >> /etc/ld.so.conf'
     sudo ldconfig
+    
+If you're using Windows PowerShell as your command shell, ``yara my_first_rule my_first_rule`` may return this error::
+
+    my_first_rule(1): error: non-ascii character
+    
+You can avoid this by using the ``Set-Content`` cmdlet to specify ascii output when creating your rule file::
+
+    Set-Content -path .\my_first_rule -Value "rule dummy { condition: true }" -Encoding Ascii
+    .\yara my_first_rule my_first_rule
