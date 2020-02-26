@@ -401,9 +401,9 @@ void* yr_arena2_ref_to_ptr(
 //
 // Args:
 //    YR_ARENA* arena    - Pointer to the arena.
-//    void* base         - Address within the arena.
+//    int buffer_id      - Buffer number.
 //    ...                - Variable number of size_t arguments with offsets
-//                         relative to base.
+//                         within the buffer.
 //
 // Returns:
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.

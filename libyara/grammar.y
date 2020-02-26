@@ -1185,7 +1185,7 @@ regexp
     : _REGEXP_
       {
         SIZED_STRING* sized_string = $1;
-        RE* re;
+        YR_ARENA2_REFERENCE re_ref;
         RE_ERROR error;
 
         int result = ERROR_SUCCESS;
@@ -1200,9 +1200,8 @@ regexp
         result = yr_re_compile(
             sized_string->c_string,
             re_flags,
-            compiler->re_code_arena,
             compiler->arena,
-            &re,
+            &re_ref,
             &error);
 
         yr_free($1);
@@ -1214,7 +1213,7 @@ regexp
           result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              re,
+              yr_arena2_ref_to_ptr(compiler->arena, &re_ref),
               NULL,
               NULL);
 

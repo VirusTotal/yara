@@ -836,6 +836,7 @@ int yr_ac_add_string(
     YR_STRING* string,
     uint32_t string_idx,
     YR_ATOM_LIST_ITEM* atom,
+    YR_ARENA2* arena,
     YR_ARENA* matches_arena)
 {
   int result = ERROR_SUCCESS;
@@ -882,8 +883,10 @@ int yr_ac_add_string(
       new_match->backtrack = state->depth + atom->backtrack;
       new_match->string = string;
       new_match->string_idx = string_idx;
-      new_match->forward_code = atom->forward_code;
-      new_match->backward_code = atom->backward_code;
+      new_match->forward_code = (uint8_t*) yr_arena2_ref_to_ptr(
+          arena, &atom->forward_code_ref);
+      new_match->backward_code = (uint8_t*) yr_arena2_ref_to_ptr(
+          arena, &atom->backward_code_ref);
       new_match->next = state->matches;
       state->matches = new_match;
     }

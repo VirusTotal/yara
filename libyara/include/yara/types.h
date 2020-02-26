@@ -459,8 +459,8 @@ struct RE_NODE
   RE_NODE* prev_sibling;
   RE_NODE* next_sibling;
 
-  uint8_t* forward_code;
-  uint8_t* backward_code;
+  YR_ARENA2_REFERENCE forward_code_ref;
+  YR_ARENA2_REFERENCE backward_code_ref;
 };
 
 

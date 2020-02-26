@@ -159,11 +159,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_MAX_STACK 1024
 #endif
 
-// Maximum code size for a compiled regexp
-#ifndef RE_MAX_CODE_SIZE
-#define RE_MAX_CODE_SIZE 32768
-#endif
-
 // Maximum input size scanned by yr_re_exec
 #ifndef RE_SCAN_LIMIT
 #define RE_SCAN_LIMIT 4096
