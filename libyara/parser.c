@@ -492,8 +492,7 @@ static int _yr_parser_write_string(
         string,
         compiler->current_string_idx,
         atom_list,
-        compiler->arena,
-        compiler->matches_arena);
+        compiler->arena);
   }
 
   if (modifier.flags & STRING_GFLAGS_LITERAL)

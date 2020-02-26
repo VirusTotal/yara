@@ -464,6 +464,18 @@ int yr_arena2_write_string(
 }
 
 
+int yr_arena2_write_uint32(
+    YR_ARENA2* arena,
+    int buffer_id,
+    uint32_t integer,
+    YR_ARENA2_REFERENCE* ref)
+{
+  return yr_arena2_write_data(
+      arena, buffer_id, &integer, sizeof(integer), ref);
+}
+
+
+
 int yr_arena2_load_stream(
     YR_STREAM* stream,
     YR_ARENA2** arena)

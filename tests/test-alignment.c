@@ -84,8 +84,8 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_STRING, 8,  identifier);
   CHECK_OFFSET(YR_STRING, 16, string);
   CHECK_OFFSET(YR_STRING, 24, chained_to);
-  CHECK_OFFSET(YR_STRING, 40, chain_gap_min);
-  CHECK_OFFSET(YR_STRING, 44, chain_gap_max);
+  CHECK_OFFSET(YR_STRING, 36, chain_gap_min);
+  CHECK_OFFSET(YR_STRING, 40, chain_gap_max);
   CHECK_OFFSET(YR_STRING, 48, fixed_offset);
 
   CHECK_SIZE(YR_RULE, 64 + 12 * YR_MAX_THREADS);
@@ -107,13 +107,13 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_AC_MATCH, 16, forward_code);
   CHECK_OFFSET(YR_AC_MATCH, 24, backward_code);
   CHECK_OFFSET(YR_AC_MATCH, 32, next);
-
-  CHECK_SIZE(YARA_RULES_FILE_HEADER, 48);
+  CHECK_SIZE(YARA_RULES_FILE_HEADER, 56);
   CHECK_OFFSET(YARA_RULES_FILE_HEADER, 0, rules_list_head);
   CHECK_OFFSET(YARA_RULES_FILE_HEADER, 8, externals_list_head);
   CHECK_OFFSET(YARA_RULES_FILE_HEADER, 16, code_start);
-  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 24, ac_match_table);
-  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 32, ac_transition_table);
+  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 24, ac_match_pool);
+  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 32, ac_match_table);
+  CHECK_OFFSET(YARA_RULES_FILE_HEADER, 40, ac_transition_table);
 
   CHECK_SIZE(SIZED_STRING, 12);
   CHECK_OFFSET(SIZED_STRING, 4, flags);

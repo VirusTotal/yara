@@ -49,8 +49,8 @@ static int _yr_scanner_scan_mem_block(
     YR_MEMORY_BLOCK* block)
 {
   YR_RULES* rules = scanner->rules;
-  YR_AC_TRANSITION_TABLE transition_table = rules->ac_transition_table;
-  YR_AC_MATCH_TABLE match_table = rules->ac_match_table;
+  YR_AC_TRANSITION* transition_table = rules->ac_transition_table;
+  uint32_t* match_table = rules->ac_match_table;
 
   YR_AC_MATCH* match;
   YR_AC_TRANSITION transition;
@@ -61,29 +61,33 @@ static int _yr_scanner_scan_mem_block(
 
   while (i < block->size)
   {
-    match = match_table[state].match;
-
     if (i % 4096 == 0 && scanner->timeout > 0)
     {
       if (yr_stopwatch_elapsed_us(&scanner->stopwatch) > scanner->timeout)
         return ERROR_SCAN_TIMEOUT;
     }
 
-    while (match != NULL)
+    if (match_table[state] != UINT32_MAX)
     {
-      if (match->backtrack <= i)
-      {
-        FAIL_ON_ERROR(yr_scan_verify_match(
-            scanner,
-            match,
-            block_data,
-            block->size,
-            block->base,
-            i - match->backtrack));
-      }
+      match = &rules->ac_match_pool[match_table[state]];
 
-      match = match->next;
+      while (match != NULL)
+      {
+        if (match->backtrack <= i)
+        {
+          FAIL_ON_ERROR(yr_scan_verify_match(
+              scanner,
+              match,
+              block_data,
+              block->size,
+              block->base,
+              i - match->backtrack));
+        }
+
+        match = match->next;
+      }
     }
+
 
     index = block_data[i++] + 1;
     transition = transition_table[state + index];
@@ -105,23 +109,27 @@ static int _yr_scanner_scan_mem_block(
     state = YR_AC_NEXT_STATE(transition);
   }
 
-  match = match_table[state].match;
-
-  while (match != NULL)
+  if (match_table[state] != UINT32_MAX)
   {
-    if (match->backtrack <= i)
-    {
-      FAIL_ON_ERROR(yr_scan_verify_match(
-          scanner,
-          match,
-          block_data,
-          block->size,
-          block->base,
-          i - match->backtrack));
-    }
+    match = &rules->ac_match_pool[match_table[state]];
 
-    match = match->next;
+    while (match != NULL)
+    {
+      if (match->backtrack <= i)
+      {
+        FAIL_ON_ERROR(yr_scan_verify_match(
+            scanner,
+            match,
+            block_data,
+            block->size,
+            block->base,
+            i - match->backtrack));
+      }
+
+      match = match->next;
+    }
   }
+
 
   return ERROR_SUCCESS;
 }

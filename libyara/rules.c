@@ -514,15 +514,18 @@ YR_API int yr_rules_get_stats(
 
   for (i = 0; i < rules->ac_tables_size; i++)
   {
-    YR_AC_MATCH* match = rules->ac_match_table[i].match;
-
     int match_list_length = 0;
 
-    while (match != NULL)
+    if (rules->ac_match_table[i] != UINT32_MAX)
     {
-      match_list_length++;
-      stats->ac_matches++;
-      match = match->next;
+      YR_AC_MATCH* match = &rules->ac_match_pool[rules->ac_match_table[i]];
+
+      while (match != NULL)
+      {
+        match_list_length++;
+        stats->ac_matches++;
+        match = match->next;
+      }
     }
 
     if (i == 0)
