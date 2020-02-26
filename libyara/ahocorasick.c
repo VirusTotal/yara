@@ -286,7 +286,6 @@ static int _yr_ac_create_failure_links(
   while (!_yr_ac_queue_is_empty(&queue))
   {
     current_state = _yr_ac_queue_pop(&queue);
-
     match = current_state->matches;
 
     if (match != NULL)
@@ -426,7 +425,7 @@ static int _yr_ac_optimize_failure_links(
         current_state->failure = current_state->failure->failure;
     }
 
-    // Push childrens of current_state
+    // Push children of current_state
     state = current_state->first_child;
 
     while (state != NULL)
@@ -496,10 +495,10 @@ static int _yr_ac_find_suitable_transition_table_slot(
       size_t b_bytes_size = YR_BITMASK_SIZE(automaton->tables_size) *
            sizeof(YR_BITMASK);
 
-      automaton->t_table = (YR_AC_TRANSITION_TABLE) yr_realloc(
+      automaton->t_table = (YR_AC_TRANSITION*) yr_realloc(
           automaton->t_table, t_bytes_size * 2);
 
-      automaton->m_table = (YR_AC_MATCH_TABLE) yr_realloc(
+      automaton->m_table = (YR_AC_MATCH_TABLE_ENTRY*) yr_realloc(
           automaton->m_table, m_bytes_size * 2);
 
       automaton->bitmask = (YR_BITMASK*) yr_realloc(
@@ -590,14 +589,14 @@ static int _yr_ac_build_transition_table(
 
   uint32_t slot;
 
-  QUEUE queue = { NULL, NULL};
+  QUEUE queue = { NULL, NULL };
 
   automaton->tables_size = 1024;
 
-  automaton->t_table = (YR_AC_TRANSITION_TABLE) yr_calloc(
+  automaton->t_table = (YR_AC_TRANSITION*) yr_calloc(
       automaton->tables_size, sizeof(YR_AC_TRANSITION));
 
-  automaton->m_table = (YR_AC_MATCH_TABLE) yr_calloc(
+  automaton->m_table = (YR_AC_MATCH_TABLE_ENTRY*) yr_calloc(
       automaton->tables_size, sizeof(YR_AC_MATCH_TABLE_ENTRY));
 
   automaton->bitmask = (YR_BITMASK*) yr_calloc(
@@ -615,7 +614,7 @@ static int _yr_ac_build_transition_table(
   }
 
   automaton->t_table[0] = YR_AC_MAKE_TRANSITION(0, 0);
-  automaton->m_table[0].match = root_state->matches;
+  automaton->m_table[0] = root_state->matches;
 
   yr_bitmask_set(automaton->bitmask, 0);
 
@@ -652,10 +651,9 @@ static int _yr_ac_build_transition_table(
 
     yr_bitmask_set(automaton->bitmask, slot);
 
-    automaton->m_table[slot].match = state->matches;
+    automaton->m_table[slot] = state->matches;
 
-    // Push childrens of current_state
-
+    // Push children of current_state
     child_state = state->first_child;
 
     while (child_state != NULL)
@@ -836,25 +834,15 @@ int yr_ac_add_string(
     YR_STRING* string,
     uint32_t string_idx,
     YR_ATOM_LIST_ITEM* atom,
-    YR_ARENA2* arena,
-    YR_ARENA* matches_arena)
+    YR_ARENA2* arena)
 {
-  int result = ERROR_SUCCESS;
-  int i;
-
-  YR_AC_STATE* state;
-  YR_AC_STATE* next_state;
-  YR_AC_MATCH* new_match;
-
-  // For each atom create the states in the automaton.
-
   while (atom != NULL)
   {
-    state = automaton->root;
+    YR_AC_STATE* state = automaton->root;
 
-    for (i = 0; i < atom->atom.length; i++)
+    for (int i = 0; i < atom->atom.length; i++)
     {
-      next_state = _yr_ac_next_state(state, atom->atom.bytes[i]);
+      YR_AC_STATE* next_state = _yr_ac_next_state(state, atom->atom.bytes[i]);
 
       if (next_state == NULL)
       {
@@ -867,110 +855,83 @@ int yr_ac_add_string(
       state = next_state;
     }
 
-    result = yr_arena_allocate_struct(
-        matches_arena,
+    YR_ARENA2_REFERENCE ref;
+
+    FAIL_ON_ERROR(yr_arena2_allocate_struct(
+        arena,
+        YR_AC_MATCHES_POOL,
         sizeof(YR_AC_MATCH),
-        (void**) &new_match,
+        &ref,
         offsetof(YR_AC_MATCH, string),
         offsetof(YR_AC_MATCH, forward_code),
         offsetof(YR_AC_MATCH, backward_code),
         offsetof(YR_AC_MATCH, next),
-        EOL);
+        EOL2));
 
+    YR_AC_MATCH* match = (YR_AC_MATCH*) yr_arena2_ref_to_ptr(arena, &ref);
 
-    if (result == ERROR_SUCCESS)
-    {
-      new_match->backtrack = state->depth + atom->backtrack;
-      new_match->string = string;
-      new_match->string_idx = string_idx;
-      new_match->forward_code = (uint8_t*) yr_arena2_ref_to_ptr(
-          arena, &atom->forward_code_ref);
-      new_match->backward_code = (uint8_t*) yr_arena2_ref_to_ptr(
-          arena, &atom->backward_code_ref);
-      new_match->next = state->matches;
-      state->matches = new_match;
-    }
-    else
-    {
-      break;
-    }
+    match->backtrack = state->depth + atom->backtrack;
+    match->string_idx = string_idx;
+
+    match->string = (YR_STRING*) yr_arena2_get_ptr(
+        arena, YR_STRINGS_TABLE, match->string_idx * sizeof(YR_STRING));
+
+    match->forward_code = (uint8_t*) yr_arena2_ref_to_ptr(
+        arena, &atom->forward_code_ref);
+
+    match->backward_code = (uint8_t*) yr_arena2_ref_to_ptr(
+        arena, &atom->backward_code_ref);
+
+    // Add newly created match to the list of matches for the state.
+    match->next = state->matches;
+    state->matches = match;
 
     atom = atom->next;
   }
 
-  return result;
+  return ERROR_SUCCESS;
 }
 
 
 //
 // yr_ac_compile
 //
+// Compiles the Aho-Corasick automaton, the resulting data structures are
+// are written in the provided arena.
+//
 
 int yr_ac_compile(
     YR_AC_AUTOMATON* automaton,
-    YR_ARENA* arena,
-    YR_AC_TABLES* tables)
+    YR_ARENA2* arena)
 {
-  uint32_t i;
-
   FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_optimize_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton));
 
-  /*FAIL_ON_ERROR(yr_arena2_write_data(
+  //TODO(vmalvarez): Instead of copyig t_table into the arena once that it has
+  // been created, we can pass the arena _yr_ac_build_transition_table so that
+  // the table is created using the arena and the copy is not necessary.
+  FAIL_ON_ERROR(yr_arena2_write_data(
       arena,
       YR_AC_TRANSITION_TABLE,
       automaton->t_table,
       automaton->tables_size * sizeof(YR_AC_TRANSITION),
-      NULL));*/
+      NULL));
 
-  FAIL_ON_ERROR(yr_arena_reserve_memory(
-      arena,
-      automaton->tables_size * sizeof(tables->transitions[0]) +
-      automaton->tables_size * sizeof(tables->matches[0])));
+  YR_AC_MATCH* base = (YR_AC_MATCH*) yr_arena2_get_ptr(
+      arena, YR_AC_MATCHES_POOL, 0);
 
-  FAIL_ON_ERROR(yr_arena_write_data(
-      arena,
-      automaton->t_table,
-      sizeof(YR_AC_TRANSITION),
-      (void**) &tables->transitions));
-
-  for (i = 1; i < automaton->tables_size; i++)
+  for (uint32_t i = 0; i < automaton->tables_size; i++)
   {
-    FAIL_ON_ERROR(yr_arena_write_data(
+    YR_AC_MATCH* match = automaton->m_table[i];
+
+    uint32_t match_index = match - base;
+
+    FAIL_ON_ERROR(yr_arena2_write_uint32(
         arena,
-        automaton->t_table + i,
-        sizeof(YR_AC_TRANSITION),
+        YR_AC_MATCHES_TABLE,
+        match == NULL ? UINT32_MAX : match_index,
         NULL));
-  }
-
-  FAIL_ON_ERROR(yr_arena_write_data(
-      arena,
-      automaton->m_table,
-      sizeof(YR_AC_MATCH_TABLE_ENTRY),
-      (void**) &tables->matches));
-
-  FAIL_ON_ERROR(yr_arena_make_ptr_relocatable(
-      arena,
-      tables->matches,
-      offsetof(YR_AC_MATCH_TABLE_ENTRY, match),
-      EOL));
-
-  for (i = 1; i < automaton->tables_size; i++)
-  {
-    void* ptr;
-
-    FAIL_ON_ERROR(yr_arena_write_data(
-        arena,
-        automaton->m_table + i,
-        sizeof(YR_AC_MATCH_TABLE_ENTRY),
-        (void**) &ptr));
-
-    FAIL_ON_ERROR(yr_arena_make_ptr_relocatable(
-        arena,
-        ptr,
-        offsetof(YR_AC_MATCH_TABLE_ENTRY, match),
-        EOL));
   }
 
   return ERROR_SUCCESS;

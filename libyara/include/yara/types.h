@@ -208,8 +208,9 @@ typedef struct RE_FIBER_POOL RE_FIBER_POOL;
 typedef struct YR_AC_MATCH YR_AC_MATCH;
 typedef struct YR_AC_STATE YR_AC_STATE;
 typedef struct YR_AC_AUTOMATON YR_AC_AUTOMATON;
-typedef struct YR_AC_MATCH_TABLE_ENTRY YR_AC_MATCH_TABLE_ENTRY;
 typedef struct YR_AC_TABLES YR_AC_TABLES;
+
+typedef YR_AC_MATCH* YR_AC_MATCH_TABLE_ENTRY;
 
 typedef struct YR_NAMESPACE YR_NAMESPACE;
 typedef struct YR_META YR_META;
@@ -220,6 +221,7 @@ typedef struct YR_RULES YR_RULES;
 typedef struct YR_RULES_STATS YR_RULES_STATS;
 typedef struct YR_EXTERNAL_VARIABLE YR_EXTERNAL_VARIABLE;
 typedef struct YR_MATCH YR_MATCH;
+typedef struct YR_MATCH_LIST_ENTRY YR_MATCH_LIST_ENTRY;
 typedef struct YR_SCAN_CONTEXT YR_SCAN_CONTEXT;
 
 typedef union YR_VALUE YR_VALUE;
@@ -396,22 +398,7 @@ struct YR_AC_MATCH
 };
 
 
-struct YR_AC_MATCH_TABLE_ENTRY
-{
-  DECLARE_REFERENCE(YR_AC_MATCH*, match);
-};
-
-
-typedef uint32_t                  YR_AC_TRANSITION;
-typedef YR_AC_TRANSITION*         YR_AC_TRANSITION_TABLE;
-typedef YR_AC_MATCH_TABLE_ENTRY*  YR_AC_MATCH_TABLE;
-
-
-struct YR_AC_TABLES
-{
-  YR_AC_TRANSITION_TABLE transitions;
-  YR_AC_MATCH_TABLE matches;
-};
+typedef uint32_t  YR_AC_TRANSITION;
 
 
 typedef struct YARA_RULES_FILE_HEADER
@@ -419,8 +406,10 @@ typedef struct YARA_RULES_FILE_HEADER
   DECLARE_REFERENCE(YR_RULE*, rules_list_head);
   DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
   DECLARE_REFERENCE(const uint8_t*, code_start);
-  DECLARE_REFERENCE(YR_AC_MATCH_TABLE, ac_match_table);
-  DECLARE_REFERENCE(YR_AC_TRANSITION_TABLE, ac_transition_table);
+
+  DECLARE_REFERENCE(YR_AC_MATCH *, ac_match_pool);
+  DECLARE_REFERENCE(uint32_t*, ac_match_table);
+  DECLARE_REFERENCE(YR_AC_TRANSITION*, ac_transition_table);
 
   // Size of ac_match_table and ac_transition_table in number of items (both
   // tables have the same number of items)
@@ -576,8 +565,8 @@ struct YR_AC_AUTOMATON
   // and t_table is already in use.
   YR_BITMASK* bitmask;
 
-  YR_AC_TRANSITION_TABLE t_table;
-  YR_AC_MATCH_TABLE m_table;
+  YR_AC_TRANSITION* t_table;
+  YR_AC_MATCH_TABLE_ENTRY* m_table;
   YR_AC_STATE* root;
 };
 
@@ -591,8 +580,10 @@ struct YR_RULES
   YR_ARENA* arena;
   YR_RULE* rules_list_head;
   YR_EXTERNAL_VARIABLE* externals_list_head;
-  YR_AC_TRANSITION_TABLE ac_transition_table;
-  YR_AC_MATCH_TABLE ac_match_table;
+
+  YR_AC_TRANSITION* ac_transition_table;
+  YR_AC_MATCH* ac_match_pool;
+  uint32_t* ac_match_table;
 
   // Size of ac_match_table and ac_transition_table in number of items (both
   // tables have the same number of items).

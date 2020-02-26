@@ -221,6 +221,13 @@ int yr_arena2_write_string(
     YR_ARENA2_REFERENCE* ref);
 
 
+int yr_arena2_write_uint32(
+    YR_ARENA2* arena,
+    int buffer_id,
+    uint32_t integer,
+    YR_ARENA2_REFERENCE* ref);
+
+
 int yr_arena2_load_stream(
     YR_STREAM* stream,
     YR_ARENA2** arena);

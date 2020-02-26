@@ -66,11 +66,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_SZ_POOL                    5
 #define YR_CODE_SECTION               6
 #define YR_RE_CODE_SECTION            7
+#define YR_AC_TRANSITION_TABLE        8
+#define YR_AC_MATCHES_TABLE           9
+#define YR_AC_MATCHES_POOL           10
 
 
 // This is the number of buffers used by the compiler, should match the number
 // of items in the list above.
-#define YR_NUM_SECTIONS               8
+#define YR_NUM_SECTIONS              11
 
 
 typedef struct _YR_EXPRESSION
@@ -184,7 +187,8 @@ typedef struct _YR_COMPILER
   //      yr_re_fast_exec.
   //   YR_AC_TRANSITION_TABLE:
   //      Contains the Aho-Corasick transition table.
-  //   YR_AC_MATCHES_TABLE:
+  //   YR_AC_MATCHES_TABLE
+  //   YR_AC_MATCHES_POOL:
   //      An array of YR_AC_MATCH structures.
   //
   YR_ARENA2* arena;
@@ -208,10 +212,7 @@ typedef struct _YR_COMPILER
 
   jmp_buf           error_recovery;
 
-  // YR_ARENA*         re_code_arena;
   YR_ARENA*         compiled_rules_arena;
-  YR_ARENA*         matches_arena;
-  YR_ARENA*         automaton_arena;
 
   YR_AC_AUTOMATON*  automaton;
   YR_HASH_TABLE*    rules_table;

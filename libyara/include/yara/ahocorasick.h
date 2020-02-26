@@ -64,15 +64,12 @@ int yr_ac_add_string(
     YR_STRING* string,
     uint32_t string_idx,
     YR_ATOM_LIST_ITEM* atom,
-    YR_ARENA2* arena,
-    YR_ARENA* matches_arena);
+    YR_ARENA2* arena);
 
 
 int yr_ac_compile(
     YR_AC_AUTOMATON* automaton,
-    YR_ARENA* arena,
-    YR_AC_TABLES* tables);
-
+    YR_ARENA2* arena);
 
 void yr_ac_print_automaton(
     YR_AC_AUTOMATON* automaton);

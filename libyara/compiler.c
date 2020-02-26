@@ -215,14 +215,6 @@ YR_API int yr_compiler_create(
         YR_NUM_SECTIONS, 50*1048576, &new_compiler->arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(
-        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->automaton_arena);
-
-  if (result == ERROR_SUCCESS)
-    result = yr_arena_create(
-        65536, ARENA_FLAGS_RELOCATABLE, &new_compiler->matches_arena);
-
-  if (result == ERROR_SUCCESS)
     result = yr_ac_automaton_create(&new_compiler->automaton);
 
   if (result == ERROR_SUCCESS)
@@ -245,10 +237,7 @@ YR_API void yr_compiler_destroy(
   int i;
 
   yr_arena2_destroy(compiler->arena);
-
   yr_arena_destroy(compiler->compiled_rules_arena);
-  yr_arena_destroy(compiler->automaton_arena);
-  yr_arena_destroy(compiler->matches_arena);
 
   if (compiler->automaton != NULL)
     yr_ac_automaton_destroy(compiler->automaton);
@@ -647,7 +636,6 @@ static int _yr_compiler_compile_rules(
   YR_ARENA* arena = NULL;
   YR_RULE null_rule;
   YR_EXTERNAL_VARIABLE null_external;
-  YR_AC_TABLES tables;
 
   uint8_t halt = OP_HALT;
   int result;
@@ -685,8 +673,7 @@ static int _yr_compiler_compile_rules(
   // Write Aho-Corasick automaton to arena.
   result = yr_ac_compile(
       compiler->automaton,
-      compiler->automaton_arena,
-      &tables);
+      compiler->arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(1024, ARENA_FLAGS_RELOCATABLE, &arena);
@@ -701,6 +688,7 @@ static int _yr_compiler_compile_rules(
         offsetof(YARA_RULES_FILE_HEADER, code_start),
         offsetof(YARA_RULES_FILE_HEADER, ac_match_table),
         offsetof(YARA_RULES_FILE_HEADER, ac_transition_table),
+        offsetof(YARA_RULES_FILE_HEADER, ac_match_pool),
         EOL);
 
   if (result == ERROR_SUCCESS)
@@ -714,29 +702,21 @@ static int _yr_compiler_compile_rules(
     rules_file_header->code_start = (uint8_t*) yr_arena2_get_ptr(
         compiler->arena, YR_CODE_SECTION, 0);
 
-    rules_file_header->ac_match_table = tables.matches;
-    rules_file_header->ac_transition_table = tables.transitions;
+    rules_file_header->ac_match_table = (uint32_t*) yr_arena2_get_ptr(
+        compiler->arena, YR_AC_MATCHES_TABLE, 0);
+
+    rules_file_header->ac_match_pool = (YR_AC_MATCH*) yr_arena2_get_ptr(
+        compiler->arena, YR_AC_MATCHES_POOL, 0);
+
+    rules_file_header->ac_transition_table = (YR_AC_TRANSITION*) yr_arena2_get_ptr(
+        compiler->arena, YR_AC_TRANSITION_TABLE, 0);
+
     rules_file_header->ac_tables_size = compiler->automaton->tables_size;
   }
 
-  if (result == ERROR_SUCCESS)
-  {
-    result = yr_arena_append(
-        arena,
-        compiler->automaton_arena);
-  }
 
   if (result == ERROR_SUCCESS)
   {
-    compiler->automaton_arena = NULL;
-    result = yr_arena_append(
-        arena,
-        compiler->matches_arena);
-  }
-
-  if (result == ERROR_SUCCESS)
-  {
-    compiler->matches_arena = NULL;
     result = yr_arena_append_arena2_buffer(
       arena, compiler->arena, YR_NAMESPACES_TABLE);
   }
@@ -781,6 +761,24 @@ static int _yr_compiler_compile_rules(
   {
     result = yr_arena_append_arena2_buffer(
         arena, compiler->arena, YR_RE_CODE_SECTION);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    result = yr_arena_append_arena2_buffer(
+        arena, compiler->arena, YR_AC_TRANSITION_TABLE);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    result = yr_arena_append_arena2_buffer(
+        arena, compiler->arena, YR_AC_MATCHES_TABLE);
+  }
+
+  if (result == ERROR_SUCCESS)
+  {
+    result = yr_arena_append_arena2_buffer(
+        arena, compiler->arena, YR_AC_MATCHES_POOL);
   }
 
   if (result == ERROR_SUCCESS)
@@ -831,6 +829,7 @@ YR_API int yr_compiler_get_rules(
   yara_rules->ac_match_table = rules_file_header->ac_match_table;
   yara_rules->ac_transition_table = rules_file_header->ac_transition_table;
   yara_rules->ac_tables_size = rules_file_header->ac_tables_size;
+  yara_rules->ac_match_pool = rules_file_header->ac_match_pool;
   yara_rules->code_start = rules_file_header->code_start;
   yara_rules->time_cost = 0;
 
