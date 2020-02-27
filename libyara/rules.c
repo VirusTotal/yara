@@ -401,12 +401,15 @@ YR_API int yr_rules_load_stream(
   header = (YARA_RULES_FILE_HEADER*)
       yr_arena_base_address(new_rules->arena);
 
+  new_rules->num_rules = header->num_rules;
+  new_rules->num_strings = header->num_strings;
   new_rules->code_start = header->code_start;
   new_rules->externals_list_head = header->externals_list_head;
   new_rules->rules_list_head = header->rules_list_head;
   new_rules->ac_match_table = header->ac_match_table;
   new_rules->ac_transition_table = header->ac_transition_table;
   new_rules->ac_tables_size = header->ac_tables_size;
+
 
   memset(new_rules->tidx_mask, 0, sizeof(new_rules->tidx_mask));
 
@@ -595,11 +598,11 @@ YR_API void yr_rule_disable(
 {
   YR_STRING* string;
 
-  rule->g_flags |= RULE_GFLAGS_DISABLED;
+  rule->flags |= RULE_FLAGS_DISABLED;
 
   yr_rule_strings_foreach(rule, string)
   {
-    string->g_flags |= STRING_GFLAGS_DISABLED;
+    string->flags |= STRING_FLAGS_DISABLED;
   }
 }
 
@@ -609,10 +612,10 @@ YR_API void yr_rule_enable(
 {
   YR_STRING* string;
 
-  rule->g_flags &= ~RULE_GFLAGS_DISABLED;
+  rule->flags &= ~RULE_FLAGS_DISABLED;
 
   yr_rule_strings_foreach(rule, string)
   {
-    string->g_flags &= ~STRING_GFLAGS_DISABLED;
+    string->flags &= ~STRING_FLAGS_DISABLED;
   }
 }

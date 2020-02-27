@@ -51,129 +51,118 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL      0x01
 
 
-#define STRING_GFLAGS_REFERENCED        0x01
-#define STRING_GFLAGS_HEXADECIMAL       0x02
-#define STRING_GFLAGS_NO_CASE           0x04
-#define STRING_GFLAGS_ASCII             0x08
-#define STRING_GFLAGS_WIDE              0x10
-#define STRING_GFLAGS_REGEXP            0x20
-#define STRING_GFLAGS_FAST_REGEXP       0x40
-#define STRING_GFLAGS_FULL_WORD         0x80
-#define STRING_GFLAGS_ANONYMOUS         0x100
-#define STRING_GFLAGS_SINGLE_MATCH      0x200
-#define STRING_GFLAGS_LITERAL           0x400
-#define STRING_GFLAGS_FITS_IN_ATOM      0x800
-#define STRING_GFLAGS_NULL              0x1000
-#define STRING_GFLAGS_CHAIN_PART        0x2000
-#define STRING_GFLAGS_CHAIN_TAIL        0x4000
-#define STRING_GFLAGS_FIXED_OFFSET      0x8000
-#define STRING_GFLAGS_GREEDY_REGEXP     0x10000
-#define STRING_GFLAGS_DOT_ALL           0x20000
-#define STRING_GFLAGS_DISABLED          0x40000
-#define STRING_GFLAGS_XOR               0x80000
-#define STRING_GFLAGS_PRIVATE           0x100000
-#define STRING_GFLAGS_BASE64            0x200000
-#define STRING_GFLAGS_BASE64_WIDE       0x400000
-
-#define STRING_IS_HEX(x) \
-    (((x)->g_flags) & STRING_GFLAGS_HEXADECIMAL)
-
-#define STRING_IS_NO_CASE(x) \
-    (((x)->g_flags) & STRING_GFLAGS_NO_CASE)
-
-#define STRING_IS_DOT_ALL(x) \
-    (((x)->g_flags) & STRING_GFLAGS_DOT_ALL)
-
-#define STRING_IS_ASCII(x) \
-    (((x)->g_flags) & STRING_GFLAGS_ASCII)
-
-#define STRING_IS_WIDE(x) \
-    (((x)->g_flags) & STRING_GFLAGS_WIDE)
-
-#define STRING_IS_REGEXP(x) \
-    (((x)->g_flags) & STRING_GFLAGS_REGEXP)
-
-#define STRING_IS_GREEDY_REGEXP(x) \
-    (((x)->g_flags) & STRING_GFLAGS_GREEDY_REGEXP)
-
-#define STRING_IS_FULL_WORD(x) \
-    (((x)->g_flags) & STRING_GFLAGS_FULL_WORD)
-
-#define STRING_IS_ANONYMOUS(x) \
-    (((x)->g_flags) & STRING_GFLAGS_ANONYMOUS)
-
-#define STRING_IS_REFERENCED(x) \
-    (((x)->g_flags) & STRING_GFLAGS_REFERENCED)
-
-#define STRING_IS_SINGLE_MATCH(x) \
-    (((x)->g_flags) & STRING_GFLAGS_SINGLE_MATCH)
-
-#define STRING_IS_FIXED_OFFSET(x) \
-    (((x)->g_flags) & STRING_GFLAGS_FIXED_OFFSET)
-
-#define STRING_IS_LITERAL(x) \
-    (((x)->g_flags) & STRING_GFLAGS_LITERAL)
-
-#define STRING_IS_FAST_REGEXP(x) \
-    (((x)->g_flags) & STRING_GFLAGS_FAST_REGEXP)
-
-#define STRING_IS_CHAIN_PART(x) \
-    (((x)->g_flags) & STRING_GFLAGS_CHAIN_PART)
-
-#define STRING_IS_CHAIN_TAIL(x) \
-    (((x)->g_flags) & STRING_GFLAGS_CHAIN_TAIL)
-
-#define STRING_IS_NULL(x) \
-    ((x) == NULL || ((x)->g_flags) & STRING_GFLAGS_NULL)
-
-#define STRING_FITS_IN_ATOM(x) \
-    (((x)->g_flags) & STRING_GFLAGS_FITS_IN_ATOM)
-
-#define STRING_IS_DISABLED(x) \
-    (((x)->g_flags) & STRING_GFLAGS_DISABLED)
-
-#define STRING_IS_XOR(x) \
-    (((x)->g_flags) & STRING_GFLAGS_XOR)
-
-#define STRING_IS_BASE64(x) \
-    (((x)->g_flags) & STRING_GFLAGS_BASE64)
-
-#define STRING_IS_BASE64_WIDE(x) \
-    (((x)->g_flags) & STRING_GFLAGS_BASE64_WIDE)
-
-#define STRING_IS_PRIVATE(x) \
-    (((x)->g_flags) & STRING_GFLAGS_PRIVATE)
-
-#define STRING_FOUND(x) \
-    ((x)->matches[yr_get_tidx()].tail != NULL)
-
-#define STRING_MATCHES(x) \
-    ((x)->matches[yr_get_tidx()])
-
-
-#define RULE_TFLAGS_MATCH                0x01
-
-#define RULE_GFLAGS_PRIVATE              0x01
-#define RULE_GFLAGS_GLOBAL               0x02
-#define RULE_GFLAGS_REQUIRE_EXECUTABLE   0x04
-#define RULE_GFLAGS_REQUIRE_FILE         0x08
-#define RULE_GFLAGS_NULL                 0x1000
-#define RULE_GFLAGS_DISABLED             0x2000
+// Flags for YR_RULE
+#define RULE_FLAGS_PRIVATE              0x01
+#define RULE_FLAGS_GLOBAL               0x02
+#define RULE_FLAGS_NULL                 0x04
+#define RULE_FLAGS_DISABLED             0x08
 
 #define RULE_IS_PRIVATE(x) \
-    (((x)->g_flags) & RULE_GFLAGS_PRIVATE)
+    (((x)->flags) & RULE_FLAGS_PRIVATE)
 
 #define RULE_IS_GLOBAL(x) \
-    (((x)->g_flags) & RULE_GFLAGS_GLOBAL)
+    (((x)->flags) & RULE_FLAGS_GLOBAL)
 
 #define RULE_IS_NULL(x) \
-    (((x)->g_flags) & RULE_GFLAGS_NULL)
+    (((x)->flags) & RULE_FLAGS_NULL)
 
 #define RULE_IS_DISABLED(x) \
-    (((x)->g_flags) & RULE_GFLAGS_DISABLED)
+    (((x)->flags) & RULE_FLAGS_DISABLED)
 
-#define RULE_MATCHES(x) \
-    ((x)->t_flags[yr_get_tidx()] & RULE_TFLAGS_MATCH)
+
+// Flags for YR_STRING
+#define STRING_FLAGS_REFERENCED        0x01
+#define STRING_FLAGS_HEXADECIMAL       0x02
+#define STRING_FLAGS_NO_CASE           0x04
+#define STRING_FLAGS_ASCII             0x08
+#define STRING_FLAGS_WIDE              0x10
+#define STRING_FLAGS_REGEXP            0x20
+#define STRING_FLAGS_FAST_REGEXP       0x40
+#define STRING_FLAGS_FULL_WORD         0x80
+#define STRING_FLAGS_ANONYMOUS         0x100
+#define STRING_FLAGS_SINGLE_MATCH      0x200
+#define STRING_FLAGS_LITERAL           0x400
+#define STRING_FLAGS_FITS_IN_ATOM      0x800
+#define STRING_FLAGS_LAST_IN_RULE      0x1000
+#define STRING_FLAGS_CHAIN_PART        0x2000
+#define STRING_FLAGS_CHAIN_TAIL        0x4000
+#define STRING_FLAGS_FIXED_OFFSET      0x8000
+#define STRING_FLAGS_GREEDY_REGEXP     0x10000
+#define STRING_FLAGS_DOT_ALL           0x20000
+#define STRING_FLAGS_DISABLED          0x40000
+#define STRING_FLAGS_XOR               0x80000
+#define STRING_FLAGS_PRIVATE           0x100000
+#define STRING_FLAGS_BASE64            0x200000
+#define STRING_FLAGS_BASE64_WIDE       0x400000
+
+#define STRING_IS_HEX(x) \
+    (((x)->flags) & STRING_FLAGS_HEXADECIMAL)
+
+#define STRING_IS_NO_CASE(x) \
+    (((x)->flags) & STRING_FLAGS_NO_CASE)
+
+#define STRING_IS_DOT_ALL(x) \
+    (((x)->flags) & STRING_FLAGS_DOT_ALL)
+
+#define STRING_IS_ASCII(x) \
+    (((x)->flags) & STRING_FLAGS_ASCII)
+
+#define STRING_IS_WIDE(x) \
+    (((x)->flags) & STRING_FLAGS_WIDE)
+
+#define STRING_IS_REGEXP(x) \
+    (((x)->g_flags) & STRING_FLAGS_REGEXP)
+
+#define STRING_IS_GREEDY_REGEXP(x) \
+    (((x)->flags) & STRING_FLAGS_GREEDY_REGEXP)
+
+#define STRING_IS_FULL_WORD(x) \
+    (((x)->flags) & STRING_FLAGS_FULL_WORD)
+
+#define STRING_IS_ANONYMOUS(x) \
+    (((x)->g_flags) & STRING_FLAGS_ANONYMOUS)
+
+#define STRING_IS_REFERENCED(x) \
+    (((x)->flags) & STRING_FLAGS_REFERENCED)
+
+#define STRING_IS_SINGLE_MATCH(x) \
+    (((x)->flags) & STRING_FLAGS_SINGLE_MATCH)
+
+#define STRING_IS_FIXED_OFFSET(x) \
+    (((x)->flags) & STRING_FLAGS_FIXED_OFFSET)
+
+#define STRING_IS_LITERAL(x) \
+    (((x)->flags) & STRING_FLAGS_LITERAL)
+
+#define STRING_IS_FAST_REGEXP(x) \
+    (((x)->flags) & STRING_FLAGS_FAST_REGEXP)
+
+#define STRING_IS_CHAIN_PART(x) \
+    (((x)->flags) & STRING_FLAGS_CHAIN_PART)
+
+#define STRING_IS_CHAIN_TAIL(x) \
+    (((x)->flags) & STRING_FLAGS_CHAIN_TAIL)
+
+#define STRING_IS_LAST_IN_RULE(x) \
+    (((x)->flags) & STRING_FLAGS_LAST_IN_RULE)
+
+#define STRING_FITS_IN_ATOM(x) \
+    (((x)->flags) & STRING_FLAGS_FITS_IN_ATOM)
+
+#define STRING_IS_DISABLED(x) \
+    (((x)->flags) & STRING_FLAGS_DISABLED)
+
+#define STRING_IS_XOR(x) \
+    (((x)->flags) & STRING_FLAGS_XOR)
+
+#define STRING_IS_BASE64(x) \
+    (((x)->flags) & STRING_FLAGS_BASE64)
+
+#define STRING_IS_BASE64_WIDE(x) \
+    (((x)->flags) & STRING_FLAGS_BASE64_WIDE)
+
+#define STRING_IS_PRIVATE(x) \
+    (((x)->flags) & STRING_FLAGS_PRIVATE)
 
 
 #define META_TYPE_NULL      0
@@ -251,14 +240,6 @@ typedef struct YR_ITERATOR YR_ITERATOR;
 #pragma pack(push)
 #pragma pack(8)
 
-struct YR_MODIFIER
-{
-  int32_t flags;
-  uint8_t xor_min;
-  uint8_t xor_max;
-  SIZED_STRING *alphabet;
-};
-
 struct YR_NAMESPACE
 {
   int32_t t_flags[YR_MAX_THREADS];     // Thread-specific flags
@@ -269,7 +250,7 @@ struct YR_NAMESPACE
 struct YR_META
 {
   int32_t type;
-  YR_ALIGN(8) int64_t integer;
+  int64_t integer;
 
   DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(const char*, string);
@@ -287,26 +268,17 @@ struct YR_MATCHES
 
 struct YR_STRING
 {
-  int32_t g_flags;
-  int32_t length;
-
-  DECLARE_REFERENCE(char*, identifier);
-  DECLARE_REFERENCE(uint8_t*, string);
-
-  // Strings are splitted in two or more parts when they contain a "gap" that
-  // is larger than YR_STRING_CHAINING_THRESHOLD. This happens in strings like
-  // { 01 02 03 04 [X-Y] 05 06 07 08 } if Y >= X + YR_STRING_CHAINING_THRESHOLD
-  // and also in { 01 02 03 04 [-] 05 06 07 08 }. In both cases the strings are
-  // split in { 01 02 03 04 } and { 05 06 07 08 }, and the two smaller strings
-  // are searched for independently. If some string S is splitted in S1 and S2,
-  // S2 is chained to S1. In the example above { 05 06 07 08 } is chained to
-  // { 01 02 03 04 }. The same applies when the string is splitted in more than
-  // two parts, if S is split in S1, S2, and S3. S3 is chained to S2 and S2 is
-  // chained to S1 (it can represented as: S1 <- S2 <- S3).
-  DECLARE_REFERENCE(YR_STRING*, chained_to);
+  // Index in the strings table for the current string.
+  uint32_t idx;
 
   // Index in the rules table for the rule that contains this string.
-  int32_t rule_idx;
+  uint32_t rule_idx;
+
+  // Flags, see STRING_FLAGS_XXX macros defined above.
+  int32_t flags;
+
+  // String's length.
+  int32_t length;
 
   // When this string is chained to some other string, chain_gap_min and
   // chain_gap_max contain the minimum and maximum distance between the two
@@ -323,41 +295,39 @@ struct YR_STRING
   // strings that can match anywhere.
   int64_t fixed_offset;
 
-  // Each item in the "matches" array represents a list of matches, there's one
-  // list of matches for each thread currently using the compiled rules. Up to
-  // YR_MAX_THREADS can use the compiled rules simultaneously, that's why the
-  // array has YR_MAX_THREADS slots. The lists contain the matches that have
-  // been found so far.
-  YR_MATCHES matches[YR_MAX_THREADS];
+  // Identifier of this string.
+  DECLARE_REFERENCE(char*, identifier);
 
-  // "private_matches" is similar to "matches" but it holds the matches for
-  // strings that are flagged as private. The matches for such strings are not
-  // put in the "matches" arrays.
-  YR_MATCHES private_matches[YR_MAX_THREADS];
+  // Pointer to the string itself, the length is indicated by the "length"
+  // field.
+  DECLARE_REFERENCE(uint8_t*, string);
 
-  // "unconfirmed_matches" is used for strings that are part of a chain. Let's
-  // suppose that the string S is split in two chained strings S1 <- S2. When
-  // a match is found for S1, we can't be sure that S matches until a match for
-  // S2 is found (within the range defined by chain_gap_min and chain_gap_max),
-  // so the matches for S1 are put in "unconfirmed_matches" until they can be
-  // confirmed or discarded.
-  YR_MATCHES unconfirmed_matches[YR_MAX_THREADS];
+  // Strings are splitted in two or more parts when they contain a "gap" that
+  // is larger than YR_STRING_CHAINING_THRESHOLD. This happens in strings like
+  // { 01 02 03 04 [X-Y] 05 06 07 08 } if Y >= X + YR_STRING_CHAINING_THRESHOLD
+  // and also in { 01 02 03 04 [-] 05 06 07 08 }. In both cases the strings are
+  // split in { 01 02 03 04 } and { 05 06 07 08 }, and the two smaller strings
+  // are searched for independently. If some string S is splitted in S1 and S2,
+  // S2 is chained to S1. In the example above { 05 06 07 08 } is chained to
+  // { 01 02 03 04 }. The same applies when the string is splitted in more than
+  // two parts, if S is split in S1, S2, and S3. S3 is chained to S2 and S2 is
+  // chained to S1 (it can represented as: S1 <- S2 <- S3).
+  DECLARE_REFERENCE(YR_STRING*, chained_to);
 };
 
 
 struct YR_RULE
 {
-  int32_t g_flags;                  // Global flags
-  int32_t t_flags[YR_MAX_THREADS];  // Thread-specific flags
+  int32_t flags;
+
+  // Number of atoms generated for this rule.
+  int32_t num_atoms;
 
   DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(const char*, tags);
   DECLARE_REFERENCE(YR_META*, metas);
   DECLARE_REFERENCE(YR_STRING*, strings);
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);
-
-  // Number of atoms generated for this rule.
-  int32_t num_atoms;
 
   // Used only when PROFILING_ENABLED is defined. This is the sum of all values
   // in time_cost_per_thread. This is updated once on each call to
@@ -521,6 +491,15 @@ struct RE_FIBER_POOL
 };
 
 
+struct YR_MODIFIER
+{
+  int32_t flags;
+  uint8_t xor_min;
+  uint8_t xor_max;
+  SIZED_STRING *alphabet;
+};
+
+
 struct YR_MATCH
 {
   int64_t base;              // Base address for the match
@@ -582,13 +561,17 @@ struct YR_RULES
   YR_MUTEX mutex;
   YR_ARENA* arena;
   YR_RULE* rules_list_head;
+  YR_STRING* strings_list_head;
   YR_EXTERNAL_VARIABLE* externals_list_head;
 
   YR_AC_TRANSITION* ac_transition_table;
   YR_AC_MATCH* ac_match_pool;
   uint32_t* ac_match_table;
 
+  // Total number of rules.
   uint32_t num_rules;
+
+  // Total number of strings.
   uint32_t num_strings;
 
   // Size of ac_match_table and ac_transition_table in number of items (both
@@ -661,6 +644,7 @@ struct YR_MEMORY_BLOCK_ITERATOR
 
 
 typedef int (*YR_CALLBACK_FUNC)(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data);
@@ -729,6 +713,21 @@ struct YR_SCAN_CONTEXT
   // A bitmap with one bit per rule, bit N is set when the rule with index N
   // has matched.
   YR_BITMASK* rule_matches_flags;
+
+  // Array with pointers to lists of matches. Item N in the array has the
+  // list of matches for string with index N.
+  YR_MATCHES* matches;
+
+  // Similar to matches, but matches corresponding to private strings.
+  YR_MATCHES* private_matches;
+
+  // "unconfirmed_matches" is like "matches" but for strings that are part of
+  // a chain. Let's suppose that the string S is split in two chained strings
+  // S1 <- S2. When a match is found for S1, we can't be sure that S matches
+  // until a match for S2 is found (within the range defined by chain_gap_min
+  // and chain_gap_max), so the matches for S1 are put in "unconfirmed_matches"
+  // until they can be confirmed or discarded.
+  YR_MATCHES* unconfirmed_matches;
 };
 
 

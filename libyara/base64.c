@@ -414,11 +414,11 @@ int yr_base64_ast_from_string(
   BASE64_NODE* tail = NULL;
   SIZED_STRING* wide_str;
 
-  if (modifier.flags & STRING_GFLAGS_WIDE)
+  if (modifier.flags & STRING_FLAGS_WIDE)
   {
     wide_str = sized_string_convert_to_wide(in_str);
 
-    if (modifier.flags & STRING_GFLAGS_BASE64)
+    if (modifier.flags & STRING_FLAGS_BASE64)
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_base64_create_nodes(wide_str, modifier.alphabet, 0, &head, &tail),
@@ -429,7 +429,7 @@ int yr_base64_ast_from_string(
           });
     }
 
-    if (modifier.flags & STRING_GFLAGS_BASE64_WIDE)
+    if (modifier.flags & STRING_FLAGS_BASE64_WIDE)
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_base64_create_nodes(wide_str, modifier.alphabet, 1, &head, &tail),
@@ -443,9 +443,9 @@ int yr_base64_ast_from_string(
     yr_free(wide_str);
   }
 
-  if (modifier.flags & STRING_GFLAGS_ASCII)
+  if (modifier.flags & STRING_FLAGS_ASCII)
   {
-    if (modifier.flags & STRING_GFLAGS_BASE64)
+    if (modifier.flags & STRING_FLAGS_BASE64)
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_base64_create_nodes(in_str, modifier.alphabet, 0, &head, &tail),
@@ -455,7 +455,7 @@ int yr_base64_ast_from_string(
           });
     }
 
-    if (modifier.flags & STRING_GFLAGS_BASE64_WIDE)
+    if (modifier.flags & STRING_FLAGS_BASE64_WIDE)
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_base64_create_nodes(in_str, modifier.alphabet, 1, &head, &tail),
@@ -466,10 +466,10 @@ int yr_base64_ast_from_string(
     }
   }
 
-  if (!(modifier.flags & STRING_GFLAGS_WIDE) &&
-      !(modifier.flags & STRING_GFLAGS_ASCII))
+  if (!(modifier.flags & STRING_FLAGS_WIDE) &&
+      !(modifier.flags & STRING_FLAGS_ASCII))
   {
-    if (modifier.flags & STRING_GFLAGS_BASE64)
+    if (modifier.flags & STRING_FLAGS_BASE64)
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_base64_create_nodes(in_str, modifier.alphabet, 0, &head, &tail),
@@ -479,7 +479,7 @@ int yr_base64_ast_from_string(
           });
     }
 
-    if (modifier.flags & STRING_GFLAGS_BASE64_WIDE)
+    if (modifier.flags & STRING_FLAGS_BASE64_WIDE)
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_base64_create_nodes(in_str, modifier.alphabet, 1, &head, &tail),

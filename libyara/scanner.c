@@ -139,39 +139,30 @@ static void _yr_scanner_clean_matches(
     YR_SCANNER* scanner)
 {
   YR_RULE* rule;
-  YR_STRING** string;
 
   int tidx = scanner->tidx;
 
+  memset(
+      scanner->rule_matches_flags, 0,
+      sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_rules));
+
+  memset(
+      scanner->matches, 0,
+      sizeof(YR_MATCHES) * scanner->rules->num_strings);
+
+  memset(
+      scanner->private_matches, 0,
+      sizeof(YR_MATCHES) * scanner->rules->num_strings);
+
+  memset(
+      scanner->unconfirmed_matches, 0,
+      sizeof(YR_MATCHES) * scanner->rules->num_strings);
+
   yr_rules_foreach(scanner->rules, rule)
   {
-    rule->t_flags[tidx] &= ~RULE_TFLAGS_MATCH;
     rule->ns->t_flags[tidx] &= ~NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
   }
 
-  if (scanner->matching_strings_arena != NULL)
-  {
-    string = (YR_STRING**) yr_arena_base_address(
-        scanner->matching_strings_arena);
-
-    while (string != NULL)
-    {
-      (*string)->matches[tidx].count = 0;
-      (*string)->matches[tidx].head = NULL;
-      (*string)->matches[tidx].tail = NULL;
-      (*string)->private_matches[tidx].count = 0;
-      (*string)->private_matches[tidx].head = NULL;
-      (*string)->private_matches[tidx].tail = NULL;
-      (*string)->unconfirmed_matches[tidx].count = 0;
-      (*string)->unconfirmed_matches[tidx].head = NULL;
-      (*string)->unconfirmed_matches[tidx].tail = NULL;
-
-      string = (YR_STRING**) yr_arena_next_address(
-          scanner->matching_strings_arena,
-          string,
-          sizeof(YR_STRING*));
-    }
-  }
 }
 
 
@@ -198,6 +189,15 @@ YR_API int yr_scanner_create(
 
   new_scanner->rule_matches_flags = yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
+
+  new_scanner->matches = yr_calloc(
+      rules->num_strings, sizeof(YR_MATCHES));
+
+  new_scanner->unconfirmed_matches = yr_calloc(
+      rules->num_strings, sizeof(YR_MATCHES));
+
+  new_scanner->private_matches = yr_calloc(
+      rules->num_strings, sizeof(YR_MATCHES));
 
   external = rules->externals_list_head;
 
@@ -253,6 +253,9 @@ YR_API void yr_scanner_destroy(
   }
 
   yr_free(scanner->rule_matches_flags);
+  yr_free(scanner->matches);
+  yr_free(scanner->private_matches);
+  yr_free(scanner->unconfirmed_matches);
   yr_free(scanner);
 }
 
@@ -481,7 +484,7 @@ YR_API int yr_scanner_scan_mem_blocks(
 
     if (!RULE_IS_PRIVATE(rule))
     {
-      switch (scanner->callback(message, rule, scanner->user_data))
+      switch (scanner->callback(scanner, message, rule, scanner->user_data))
       {
         case CALLBACK_ABORT:
           result = ERROR_SUCCESS;
@@ -494,7 +497,11 @@ YR_API int yr_scanner_scan_mem_blocks(
     }
   }
 
-  scanner->callback(CALLBACK_MSG_SCAN_FINISHED, NULL, scanner->user_data);
+  scanner->callback(
+      scanner,
+      CALLBACK_MSG_SCAN_FINISHED,
+      NULL,
+      scanner->user_data);
 
 _exit:
 

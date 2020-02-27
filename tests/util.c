@@ -53,6 +53,7 @@ int warnings;
 // user_data argument must be a pointer to an int.
 //
 int count_matches(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data)
@@ -70,6 +71,7 @@ int count_matches(
 // A YR_CALLBACK_FUNC that does nothing.
 //
 int do_nothing(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data)
@@ -138,6 +140,7 @@ struct SCAN_CALLBACK_CTX {
 };
 
 static int _scan_callback(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data)
@@ -224,6 +227,7 @@ typedef struct
 
 
 static int capture_matches(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data)
@@ -239,7 +243,7 @@ static int capture_matches(
     {
       YR_MATCH* match;
 
-      yr_string_matches_foreach(string, match)
+      yr_string_matches_foreach(context, string, match)
       {
         if (strlen(f->expected) == match->data_length &&
             strncmp(f->expected, (char*)(match->data), match->data_length) == 0)

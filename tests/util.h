@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#include <yara.h>
+
 extern char compile_error[1024];
 extern int warnings;
 
@@ -39,12 +41,14 @@ int compile_rule(
 
 
 int count_matches(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data);
 
 
 int do_nothing(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data);

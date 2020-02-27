@@ -57,11 +57,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define yr_rule_strings_foreach(rule, string) \
-    for (string = rule->strings; !STRING_IS_NULL(string); string++)
+    for (string = rule->strings; \
+         string != NULL; \
+         string = STRING_IS_LAST_IN_RULE(string) ? NULL : string + 1)
 
 
-#define yr_string_matches_foreach(string, match) \
-    for (match = STRING_MATCHES(string).head; match != NULL; match = match->next)
+#define yr_string_matches_foreach(context, string, match) \
+    for (match = context->matches[string->idx].head; \
+         match != NULL; \
+         match = match->next)
 
 
 #define yr_rules_foreach(rules, rule) \
