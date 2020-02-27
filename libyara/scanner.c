@@ -138,13 +138,13 @@ static int _yr_scanner_scan_mem_block(
 static void _yr_scanner_clean_matches(
     YR_SCANNER* scanner)
 {
-  YR_RULE* rule;
-
-  int tidx = scanner->tidx;
-
   memset(
       scanner->rule_matches_flags, 0,
       sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_rules));
+
+  memset(
+      scanner->ns_unsatisfied_flags, 0,
+      sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_namespaces));
 
   memset(
       scanner->matches, 0,
@@ -157,12 +157,6 @@ static void _yr_scanner_clean_matches(
   memset(
       scanner->unconfirmed_matches, 0,
       sizeof(YR_MATCHES) * scanner->rules->num_strings);
-
-  yr_rules_foreach(scanner->rules, rule)
-  {
-    rule->ns->t_flags[tidx] &= ~NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
-  }
-
 }
 
 
@@ -183,12 +177,14 @@ YR_API int yr_scanner_create(
       yr_scanner_destroy(new_scanner));
 
   new_scanner->rules = rules;
-  new_scanner->tidx = -1;
   new_scanner->entry_point = UNDEFINED;
   new_scanner->canary = rand();
 
   new_scanner->rule_matches_flags = yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
+
+  new_scanner->ns_unsatisfied_flags = yr_calloc(
+      sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_namespaces));
 
   new_scanner->matches = yr_calloc(
       rules->num_strings, sizeof(YR_MATCHES));
@@ -198,6 +194,11 @@ YR_API int yr_scanner_create(
 
   new_scanner->private_matches = yr_calloc(
       rules->num_strings, sizeof(YR_MATCHES));
+
+  #ifdef PROFILING_ENABLED
+  new_scanner->time_cost = (uint64_t*) yr_calloc(
+      rules->num_rules, sizeof(uint64_t));
+  #endif
 
   external = rules->externals_list_head;
 
@@ -252,7 +253,12 @@ YR_API void yr_scanner_destroy(
         (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
   }
 
+  #ifdef PROFILING_ENABLED
+  yr_free(scanner->time_cost);
+  #endif
+
   yr_free(scanner->rule_matches_flags);
+  yr_free(scanner->ns_unsatisfied_flags);
   yr_free(scanner->matches);
   yr_free(scanner->private_matches);
   yr_free(scanner->unconfirmed_matches);
@@ -363,11 +369,7 @@ YR_API int yr_scanner_scan_mem_blocks(
   YR_RULE* rule;
   YR_MEMORY_BLOCK* block;
 
-  int i;
-  int tidx = 0;
-  int result = ERROR_SUCCESS;
-
-  uint64_t elapsed_time;
+  int i, result = ERROR_SUCCESS;
 
   if (scanner->callback == NULL)
     return ERROR_CALLBACK_REQUIRED;
@@ -379,35 +381,11 @@ YR_API int yr_scanner_scan_mem_blocks(
   if (block == NULL)
     return ERROR_SUCCESS;
 
-  yr_mutex_lock(&rules->mutex);
-
-  while (tidx < YR_MAX_THREADS && YR_BITARRAY_TEST(rules->tidx_mask, tidx))
-  {
-    tidx++;
-  }
-
-  if (tidx < YR_MAX_THREADS)
-    YR_BITARRAY_SET(rules->tidx_mask, tidx);
-  else
-    result = ERROR_TOO_MANY_SCAN_THREADS;
-
-  yr_mutex_unlock(&rules->mutex);
-
-  if (result != ERROR_SUCCESS)
-    return result;
-
-  scanner->tidx = tidx;
   scanner->file_size = block->size;
 
-  yr_set_tidx(tidx);
   yr_stopwatch_start(&scanner->stopwatch);
 
   result = yr_arena_create(1048576, 0, &scanner->matches_arena);
-
-  if (result != ERROR_SUCCESS)
-    goto _exit;
-
-  result = yr_arena_create(4096, 0, &scanner->matching_strings_arena);
 
   if (result != ERROR_SUCCESS)
     goto _exit;
@@ -468,12 +446,14 @@ YR_API int yr_scanner_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  for (i = 0, rule = rules->rules_list_head; !RULE_IS_NULL(rule); i++, rule++)
+  for (i = 0, rule = rules->rules_list_head;
+       !RULE_IS_NULL(rule);
+       i++, rule++)
   {
     int message;
 
-    if (yr_bitmask_isset(scanner->rule_matches_flags, i) &&
-        !(rule->ns->t_flags[tidx] & NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL))
+    if (yr_bitmask_is_set(scanner->rule_matches_flags, i) &&
+        yr_bitmask_is_not_set(scanner->ns_unsatisfied_flags, rule->ns->idx))
     {
       message = CALLBACK_MSG_RULE_MATCHING;
     }
@@ -505,21 +485,6 @@ YR_API int yr_scanner_scan_mem_blocks(
 
 _exit:
 
-  elapsed_time = yr_stopwatch_elapsed_us(&scanner->stopwatch);
-
-  #ifdef PROFILING_ENABLED
-  yr_rules_foreach(rules, rule)
-  {
-    #ifdef _WIN32
-    InterlockedAdd64(&rule->time_cost, rule->time_cost_per_thread[tidx]);
-    #else
-    __sync_fetch_and_add(&rule->time_cost, rule->time_cost_per_thread[tidx]);
-    #endif
-
-    rule->time_cost_per_thread[tidx] = 0;
-  }
-  #endif
-
   _yr_scanner_clean_matches(scanner);
 
   if (scanner->matches_arena != NULL)
@@ -527,19 +492,6 @@ _exit:
     yr_arena_destroy(scanner->matches_arena);
     scanner->matches_arena = NULL;
   }
-
-  if (scanner->matching_strings_arena != NULL)
-  {
-    yr_arena_destroy(scanner->matching_strings_arena);
-    scanner->matching_strings_arena = NULL;
-  }
-
-  yr_mutex_lock(&rules->mutex);
-  YR_BITARRAY_UNSET(rules->tidx_mask, tidx);
-  rules->time_cost += elapsed_time;
-  yr_mutex_unlock(&rules->mutex);
-
-  yr_set_tidx(-1);
 
   return result;
 }

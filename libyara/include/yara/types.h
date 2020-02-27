@@ -242,7 +242,11 @@ typedef struct YR_ITERATOR YR_ITERATOR;
 
 struct YR_NAMESPACE
 {
-  int32_t t_flags[YR_MAX_THREADS];     // Thread-specific flags
+  // Index of this namespace in the array of YR_NAMESPACE structures stored
+  // in YR_NAMESPACES_TABLE.
+  uint32_t idx;
+
+  // Pointer to namespace's name.
   DECLARE_REFERENCE(char*, name);
 };
 
@@ -268,10 +272,12 @@ struct YR_MATCHES
 
 struct YR_STRING
 {
-  // Index in the strings table for the current string.
+  // Index of this string in the array of YR_STRING structures stored in
+  // YR_STRINGS_TABLE.
   uint32_t idx;
 
-  // Index in the rules table for the rule that contains this string.
+  // Index of the rule containing this string in the array of YR_RULE
+  // structures stored in YR_RULES_TABLE.
   uint32_t rule_idx;
 
   // Flags, see STRING_FLAGS_XXX macros defined above.
@@ -375,6 +381,7 @@ typedef struct YARA_RULES_FILE_HEADER
 {
   uint32_t num_rules;
   uint32_t num_strings;
+  uint32_t num_namespaces;
 
   DECLARE_REFERENCE(YR_RULE*, rules_list_head);
   DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
@@ -555,7 +562,6 @@ struct YR_AC_AUTOMATON
 
 struct YR_RULES
 {
-  unsigned char tidx_mask[YR_BITARRAY_NCHARS(YR_MAX_THREADS)];
   const uint8_t* code_start;
 
   YR_MUTEX mutex;
@@ -573,6 +579,9 @@ struct YR_RULES
 
   // Total number of strings.
   uint32_t num_strings;
+
+  // Total number of namespaces.
+  uint32_t num_namespaces;
 
   // Size of ac_match_table and ac_transition_table in number of items (both
   // tables have the same number of items).
@@ -661,12 +670,6 @@ struct YR_SCAN_CONTEXT
   // Scanning flags.
   int flags;
 
-  // Thread index for the thread using this scan context. The number of threads
-  // that can use a YR_RULES object simultaneously is limited by the YR_MAX_THREADS
-  // constant. Each thread using a YR_RULES get assigned a unique thread index
-  // in the range [0, YR_MAX_THREADS)
-  int tidx;
-
   // Canary value used for preventing hand-crafted objects from being embedded
   // in compiled rules and used to exploit YARA. The canary value is initialized
   // to a random value and is subsequently set to all objects created by
@@ -700,10 +703,6 @@ struct YR_SCAN_CONTEXT
   // Arena used for storing YR_MATCH structures associated to the matches found.
   YR_ARENA* matches_arena;
 
-  // Arena used for storing pointers to the YR_STRING struct for each matching
-  // string. The pointers are used by _yr_scanner_clean_matches.
-  YR_ARENA* matching_strings_arena;
-
   // Stopwatch used for measuring the time elapsed during the scan.
   YR_STOPWATCH stopwatch;
 
@@ -713,6 +712,10 @@ struct YR_SCAN_CONTEXT
   // A bitmap with one bit per rule, bit N is set when the rule with index N
   // has matched.
   YR_BITMASK* rule_matches_flags;
+
+  // A bitmap with one bit per namespace, bit N is set if the namespace with
+  // index N has some global rule that is not satisfied.
+  YR_BITMASK* ns_unsatisfied_flags;
 
   // Array with pointers to lists of matches. Item N in the array has the
   // list of matches for string with index N.
@@ -728,6 +731,12 @@ struct YR_SCAN_CONTEXT
   // and chain_gap_max), so the matches for S1 are put in "unconfirmed_matches"
   // until they can be confirmed or discarded.
   YR_MATCHES* unconfirmed_matches;
+
+  // rule_cost is a pointer to an array of 64-bit integers with one entry per
+  // rule. Entry N has the time cost for rule with index N.
+  #ifdef PROFILING_ENABLED
+  uint64_t* time_cost;
+  #endif
 };
 
 

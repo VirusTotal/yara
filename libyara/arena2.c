@@ -96,7 +96,7 @@ static int _yr_arena2_make_ptr_relocatable(
       return ERROR_INSUFFICIENT_MEMORY;
 
     //TODO(vmalvarez): Remove.
-    if (1) {
+    if (0) {
       printf("making address relocatable in buffer %d: %p (off: %d)\n", buffer_id,
              arena->buffers[buffer_id].data + base_offset + offset,
              base_offset + offset);

@@ -71,7 +71,7 @@ uint32_t yr_bitmask_find_non_colliding_offset(
 
   // Ensure that the first bit of bitmask B is set, as this function does some
   // optimizations that rely on that.
-  assert(yr_bitmask_isset(b, 0));
+  assert(yr_bitmask_is_set(b, 0));
 
   // Skip all slots that are filled with 1s. It's safe to do that because the
   // first bit of B is 1, so we won't be able to accommodate B at any offset

@@ -403,15 +403,13 @@ YR_API int yr_rules_load_stream(
 
   new_rules->num_rules = header->num_rules;
   new_rules->num_strings = header->num_strings;
+  new_rules->num_namespaces = header->num_namespaces;
   new_rules->code_start = header->code_start;
   new_rules->externals_list_head = header->externals_list_head;
   new_rules->rules_list_head = header->rules_list_head;
   new_rules->ac_match_table = header->ac_match_table;
   new_rules->ac_transition_table = header->ac_transition_table;
   new_rules->ac_tables_size = header->ac_tables_size;
-
-
-  memset(new_rules->tidx_mask, 0, sizeof(new_rules->tidx_mask));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_mutex_create(&new_rules->mutex),
@@ -450,11 +448,6 @@ YR_API int yr_rules_save_stream(
     YR_RULES* rules,
     YR_STREAM* stream)
 {
-  int i;
-
-  for (i = 0; i < YR_BITARRAY_NCHARS(YR_MAX_THREADS); ++i)
-    assert(rules->tidx_mask[i] == 0);
-
   return yr_arena_save_stream(rules->arena, stream);
 }
 

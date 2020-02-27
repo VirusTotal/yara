@@ -180,7 +180,7 @@ YR_API int yr_compiler_create(
   new_compiler->current_rule_idx = 0;
   new_compiler->current_string_idx = 0;
   new_compiler->current_namespace_idx = 0;
-  new_compiler->namespaces_count = 0;
+  new_compiler->num_namespaces = 0;
 
   new_compiler->errors = 0;
   new_compiler->callback = NULL;
@@ -484,7 +484,7 @@ static int _yr_compiler_set_namespace(
 
   bool found = false;
 
-  for (int i = 0; i < compiler->namespaces_count; i++, ns++)
+  for (int i = 0; i < compiler->num_namespaces; i++, ns++)
   {
     if (strcmp(ns->name, namespace_) == 0)
     {
@@ -515,11 +515,10 @@ static int _yr_compiler_set_namespace(
         &ref));
 
     ns->name = (char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
+    ns->idx = compiler->num_namespaces;
 
-    memset(ns->t_flags, 0, sizeof(ns->t_flags));
-
-    compiler->namespaces_count++;
-    compiler->current_namespace_idx = compiler->namespaces_count - 1;
+    compiler->current_namespace_idx = compiler->num_namespaces;
+    compiler->num_namespaces++;
   }
 
   return ERROR_SUCCESS;
@@ -695,6 +694,7 @@ static int _yr_compiler_compile_rules(
   {
     rules_file_header->num_rules = compiler->current_rule_idx;
     rules_file_header->num_strings = compiler->current_string_idx;
+    rules_file_header->num_namespaces = compiler->num_namespaces;
 
     rules_file_header->rules_list_head = (YR_RULE*) \
         yr_arena2_get_ptr(compiler->arena, YR_RULES_TABLE, 0);
@@ -829,6 +829,7 @@ YR_API int yr_compiler_get_rules(
 
   yara_rules->num_rules = rules_file_header->num_rules;
   yara_rules->num_strings = rules_file_header->num_strings;
+  yara_rules->num_namespaces = rules_file_header->num_namespaces;
   yara_rules->externals_list_head = rules_file_header->externals_list_head;
   yara_rules->rules_list_head = rules_file_header->rules_list_head;
   yara_rules->ac_match_table = rules_file_header->ac_match_table;
@@ -837,8 +838,6 @@ YR_API int yr_compiler_get_rules(
   yara_rules->ac_match_pool = rules_file_header->ac_match_pool;
   yara_rules->code_start = rules_file_header->code_start;
   yara_rules->time_cost = 0;
-
-  memset(yara_rules->tidx_mask, 0, sizeof(yara_rules->tidx_mask));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_mutex_create(&yara_rules->mutex),
