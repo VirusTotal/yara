@@ -196,6 +196,9 @@ YR_API int yr_scanner_create(
   new_scanner->entry_point = UNDEFINED;
   new_scanner->canary = rand();
 
+  new_scanner->rule_matches_flags = yr_calloc(
+      sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
+
   external = rules->externals_list_head;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
@@ -249,6 +252,7 @@ YR_API void yr_scanner_destroy(
         (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
   }
 
+  yr_free(scanner->rule_matches_flags);
   yr_free(scanner);
 }
 
@@ -356,6 +360,7 @@ YR_API int yr_scanner_scan_mem_blocks(
   YR_RULE* rule;
   YR_MEMORY_BLOCK* block;
 
+  int i;
   int tidx = 0;
   int result = ERROR_SUCCESS;
 
@@ -460,11 +465,11 @@ YR_API int yr_scanner_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  yr_rules_foreach(rules, rule)
+  for (i = 0, rule = rules->rules_list_head; !RULE_IS_NULL(rule); i++, rule++)
   {
     int message;
 
-    if (rule->t_flags[tidx] & RULE_TFLAGS_MATCH &&
+    if (yr_bitmask_isset(scanner->rule_matches_flags, i) &&
         !(rule->ns->t_flags[tidx] & NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL))
     {
       message = CALLBACK_MSG_RULE_MATCHING;

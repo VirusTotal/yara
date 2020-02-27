@@ -693,6 +693,9 @@ static int _yr_compiler_compile_rules(
 
   if (result == ERROR_SUCCESS)
   {
+    rules_file_header->num_rules = compiler->current_rule_idx;
+    rules_file_header->num_strings = compiler->current_string_idx;
+
     rules_file_header->rules_list_head = (YR_RULE*) \
         yr_arena2_get_ptr(compiler->arena, YR_RULES_TABLE, 0);
 
@@ -824,6 +827,8 @@ YR_API int yr_compiler_get_rules(
   rules_file_header = (YARA_RULES_FILE_HEADER*) yr_arena_base_address(
       yara_rules->arena);
 
+  yara_rules->num_rules = rules_file_header->num_rules;
+  yara_rules->num_strings = rules_file_header->num_strings;
   yara_rules->externals_list_head = rules_file_header->externals_list_head;
   yara_rules->rules_list_head = rules_file_header->rules_list_head;
   yara_rules->ac_match_table = rules_file_header->ac_match_table;

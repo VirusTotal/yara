@@ -777,9 +777,16 @@ int yr_execute_code(
         rule = &context->rules->rules_list_head[r1.i];
 
         if (RULE_IS_DISABLED(rule))
+        {
           r2.i = UNDEFINED;
+        }
         else
-          r2.i = rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0;
+        {
+          if yr_bitmask_isset(context->rule_matches_flags, r1.i)
+            r2.i = 1;
+          else
+            r2.i = 0;
+        }
 
         push(r2);
         break;
@@ -813,7 +820,7 @@ int yr_execute_code(
         #endif
 
         if (!is_undef(r1) && r1.i)
-          rule->t_flags[tidx] |= RULE_TFLAGS_MATCH;
+          yr_bitmask_set(context->rule_matches_flags, r2.i);
         else if (RULE_IS_GLOBAL(rule))
           rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
 
