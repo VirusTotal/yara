@@ -221,7 +221,7 @@ typedef struct _YR_COMPILER
 
   YR_FIXUP*         fixup_stack_head;
 
-  int               namespaces_count;
+  int               num_namespaces;
 
   YR_LOOP_CONTEXT   loop[YR_MAX_LOOP_NESTING];
   int               loop_index;

@@ -39,7 +39,7 @@ void assert_clear_all(YR_BITMASK* bitmask)
 {
   for (int i = 0; i < BITMAP_SIZE; i++)
   {
-    if (yr_bitmask_isset(bitmask, i))
+    if (yr_bitmask_is_set(bitmask, i))
     {
       fprintf(stderr, "bit %d is set and should not\n", i);
       exit(EXIT_FAILURE);
@@ -57,22 +57,22 @@ void test_set_clear()
 
   yr_bitmask_set(bitmask, 0);
 
-  if (!yr_bitmask_isset(bitmask, 0))
+  if (yr_bitmask_is_not_set(bitmask, 0))
     exit(EXIT_FAILURE);
 
   yr_bitmask_clear(bitmask, 0);
 
-  if (yr_bitmask_isset(bitmask, 0))
+  if (yr_bitmask_is_set(bitmask, 0))
     exit(EXIT_FAILURE);
 
   yr_bitmask_set(bitmask, BITMAP_SIZE-1);
 
-  if (!yr_bitmask_isset(bitmask, BITMAP_SIZE-1))
+  if (yr_bitmask_is_not_set(bitmask, BITMAP_SIZE - 1))
     exit(EXIT_FAILURE);
 
   yr_bitmask_clear(bitmask, BITMAP_SIZE-1);
 
-  if (yr_bitmask_isset(bitmask, BITMAP_SIZE-1))
+  if (yr_bitmask_is_set(bitmask, BITMAP_SIZE - 1))
     exit(EXIT_FAILURE);
 
   yr_bitmask_set(bitmask, 31);
@@ -82,22 +82,22 @@ void test_set_clear()
   yr_bitmask_set(bitmask, 64);
   yr_bitmask_set(bitmask, 65);
 
-  if (!yr_bitmask_isset(bitmask, 31))
+  if (yr_bitmask_is_not_set(bitmask, 31))
     exit(EXIT_FAILURE);
 
-  if (!yr_bitmask_isset(bitmask, 32))
+  if (yr_bitmask_is_not_set(bitmask, 32))
     exit(EXIT_FAILURE);
 
-  if (!yr_bitmask_isset(bitmask, 33))
+  if (yr_bitmask_is_not_set(bitmask, 33))
     exit(EXIT_FAILURE);
 
-  if (!yr_bitmask_isset(bitmask, 63))
+  if (yr_bitmask_is_not_set(bitmask, 63))
     exit(EXIT_FAILURE);
 
-  if (!yr_bitmask_isset(bitmask, 64))
+  if (yr_bitmask_is_not_set(bitmask, 64))
     exit(EXIT_FAILURE);
 
-  if (!yr_bitmask_isset(bitmask, 65))
+  if (yr_bitmask_is_not_set(bitmask, 65))
     exit(EXIT_FAILURE);
 
   yr_bitmask_clear(bitmask, 31);

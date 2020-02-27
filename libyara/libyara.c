@@ -50,10 +50,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #endif
 
-
-YR_THREAD_STORAGE_KEY yr_tidx_key;
-YR_THREAD_STORAGE_KEY yr_recovery_state_key;
-
+YR_THREAD_STORAGE_KEY yr_yyfatal_trampoline_tls;
+YR_THREAD_STORAGE_KEY yr_trycatch_trampoline_tls;
 
 static int init_count = 0;
 
@@ -142,8 +140,8 @@ YR_API int yr_initialize(void)
   }
 
   FAIL_ON_ERROR(yr_heap_alloc());
-  FAIL_ON_ERROR(yr_thread_storage_create(&yr_tidx_key));
-  FAIL_ON_ERROR(yr_thread_storage_create(&yr_recovery_state_key));
+  FAIL_ON_ERROR(yr_thread_storage_create(&yr_yyfatal_trampoline_tls));
+  FAIL_ON_ERROR(yr_thread_storage_create(&yr_trycatch_trampoline_tls));
 
   #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
 
@@ -185,18 +183,6 @@ YR_API int yr_initialize(void)
 
 
 //
-// yr_finalize_thread
-//
-// This function is deprecated, it's maintained only for backward compatibility
-// with programs that already use it. Calling yr_finalize_thread from each
-// thread using libyara is not required anymore.
-
-YR_DEPRECATED_API void yr_finalize_thread(void)
-{
-}
-
-
-//
 // yr_finalize
 //
 // Should be called by main thread before exiting.
@@ -233,8 +219,8 @@ YR_API int yr_finalize(void)
 
   #endif
 
-  FAIL_ON_ERROR(yr_thread_storage_destroy(&yr_tidx_key));
-  FAIL_ON_ERROR(yr_thread_storage_destroy(&yr_recovery_state_key));
+  FAIL_ON_ERROR(yr_thread_storage_destroy(&yr_yyfatal_trampoline_tls));
+  FAIL_ON_ERROR(yr_thread_storage_destroy(&yr_trycatch_trampoline_tls));
   FAIL_ON_ERROR(yr_modules_finalize());
   FAIL_ON_ERROR(yr_heap_free());
 
@@ -246,38 +232,6 @@ YR_API int yr_finalize(void)
   return ERROR_SUCCESS;
 }
 
-//
-// yr_set_tidx
-//
-// Set the thread index (tidx) for the current thread. The tidx is the index
-// that will be used by the thread to access thread-specific data stored in
-// YR_RULES structure.
-//
-// Args:
-//    int tidx   - The zero-based tidx that will be associated to the current
-//                 thread.
-//
-
-YR_API void yr_set_tidx(int tidx)
-{
-  yr_thread_storage_set_value(&yr_tidx_key, (void*) (size_t) (tidx + 1));
-}
-
-
-//
-// yr_get_tidx
-//
-// Get the thread index (tidx) for the current thread.
-//
-// Returns:
-//    The tidx for the current thread or -1 if the current thread doesn't
-//    have any tidx associated.
-//
-
-YR_API int yr_get_tidx(void)
-{
-  return (int) (size_t) yr_thread_storage_get_value(&yr_tidx_key) - 1;
-}
 
 
 //
@@ -289,7 +243,7 @@ YR_API int yr_get_tidx(void)
 //
 // Args:
 //    YR_CONFIG_NAME  name   - Any of the values defined by the YR_CONFIG_NAME
-//                             enum. Posible values are:
+//                             enum. Possible values are:
 //
 //       YR_CONFIG_STACK_SIZE             data type: uint32_t
 //       YR_CONFIG_MAX_STRINGS_PER_RULE   data type: uint32_t

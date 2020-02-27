@@ -500,19 +500,6 @@ static int _yr_scan_verify_chained_string_match(
     }
     else // It's a part of a chain, but not the tail.
     {
-      // If this is the first match for the string, put the string in the
-      // list of strings whose flags needs to be cleared after the scan.
-      if (context->matches[matching_string->idx].count == 0 &&
-          context->private_matches[matching_string->idx].count == 0 &&
-          context->unconfirmed_matches[matching_string->idx].count == 0)
-      {
-        FAIL_ON_ERROR(yr_arena_write_data(
-            context->matching_strings_arena,
-            &matching_string,
-            sizeof(matching_string),
-            NULL));
-      }
-
       FAIL_ON_ERROR(yr_arena_allocate_memory(
           context->matches_arena,
           sizeof(YR_MATCH),
@@ -620,18 +607,6 @@ static int _yr_scan_match_callback(
     FAIL_ON_ERROR(yr_get_configuration(
         YR_CONFIG_MAX_MATCH_DATA,
         &max_match_data))
-
-    if (callback_args->context->matches[string->idx].count == 0)
-    {
-      // If this is the first match for the string, put the string in the
-      // list of strings whose flags needs to be cleared after the scan.
-
-      FAIL_ON_ERROR(yr_arena_write_data(
-          callback_args->context->matching_strings_arena,
-          &string,
-          sizeof(string),
-          NULL));
-    }
 
     FAIL_ON_ERROR(yr_arena_allocate_memory(
         callback_args->context->matches_arena,
@@ -932,14 +907,13 @@ int yr_scan_verify_match(
         context, ac_match, data, data_size, data_base, offset);
   }
 
-  if (result != ERROR_SUCCESS)
-    context->last_error_string = string;
-
   #ifdef PROFILING_ENABLED
   uint64_t finish_time = yr_stopwatch_elapsed_us(&context->stopwatch);
-  YR_RULE* rule = &context->rules->rules_list_head[string->rule_idx];
-  rule->time_cost_per_thread[context->tidx] += (finish_time - start_time);
+  context->time_cost[string->rule_idx] += (finish_time - start_time);
   #endif
+
+  if (result != ERROR_SUCCESS)
+    context->last_error_string = string;
 
   return result;
 }

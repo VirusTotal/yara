@@ -362,8 +362,7 @@ int yr_execute_code(
   uint64_t start_time;
   #endif
 
-  uint32_t rule_idx;
-
+  uint32_t current_rule_idx;
   YR_RULE* current_rule = NULL;
   YR_RULE* rule;
   YR_MATCH* match;
@@ -380,7 +379,6 @@ int yr_execute_code(
   int count;
   int result = ERROR_SUCCESS;
   int cycle = 0;
-  int tidx = context->tidx;
 
   bool stop = false;
 
@@ -782,7 +780,7 @@ int yr_execute_code(
         }
         else
         {
-          if yr_bitmask_isset(context->rule_matches_flags, r1.i)
+          if yr_bitmask_is_set(context->rule_matches_flags, r1.i)
             r2.i = 1;
           else
             r2.i = 0;
@@ -794,8 +792,8 @@ int yr_execute_code(
       case OP_INIT_RULE:
         // After the opcode there's an int32_t corresponding to the jump's
         // offset and an uint32_t corresponding to the rule's index.
-        rule_idx = *(uint32_t*)(ip + sizeof(int32_t));
-        current_rule = &context->rules->rules_list_head[rule_idx];
+        current_rule_idx = *(uint32_t*)(ip + sizeof(int32_t));
+        current_rule = &context->rules->rules_list_head[current_rule_idx];
 
         // If the rule is disabled let's skip its code.
         ip = jmp_if(RULE_IS_DISABLED(current_rule), ip);
@@ -822,11 +820,11 @@ int yr_execute_code(
         if (!is_undef(r1) && r1.i)
           yr_bitmask_set(context->rule_matches_flags, r2.i);
         else if (RULE_IS_GLOBAL(rule))
-          rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
+          yr_bitmask_set(context->ns_unsatisfied_flags, rule->ns->idx);
 
         #ifdef PROFILING_ENABLED
         elapsed_time = yr_stopwatch_elapsed_us(&context->stopwatch);
-        rule->time_cost_per_thread[tidx] += (elapsed_time - start_time);
+        context->time_cost[r2.i] += (elapsed_time - start_time);
         start_time = elapsed_time;
         #endif
 
@@ -1624,8 +1622,7 @@ int yr_execute_code(
       if (elapsed_time > context->timeout)
       {
         #ifdef PROFILING_ENABLED
-        assert(current_rule != NULL);
-        current_rule->time_cost_per_thread[tidx] += elapsed_time - start_time;
+        context->time_cost[current_rule_idx] += (elapsed_time - start_time);
         #endif
         result = ERROR_SCAN_TIMEOUT;
         stop = true;

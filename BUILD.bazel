@@ -70,7 +70,8 @@ yara_library(
         "elf",
         "hash",
         "macho",
-        "magic",
+        # TODO(vmalvarez): Enable"magic" module when all dependencies from tidx have been removed.
+        # "magic",
         "math",
         "pe",
         "tests",
@@ -82,7 +83,7 @@ yara_library(
         "libyara/modules/dotnet/dotnet.c",
         "libyara/modules/elf/elf.c",
         "libyara/modules/hash/hash.c",
-        "libyara/modules/magic/magic.c",
+        # "libyara/modules/magic/magic.c",
         "libyara/modules/macho/macho.c",
         "libyara/modules/math/math.c",
         "libyara/modules/pe/pe.c",
@@ -96,7 +97,7 @@ yara_library(
     }),
     deps = [
         "@jansson//:jansson",
-        "@magic//:magic",
+        # "@magic//:magic",
     ]
 )
 

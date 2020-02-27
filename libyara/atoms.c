@@ -160,7 +160,7 @@ int yr_atoms_heuristic_quality(
             else
               quality += 20;
         };
-        if (!yr_bitmask_isset(seen_bytes, atom->bytes[i]))
+        if (!yr_bitmask_is_set(seen_bytes, atom->bytes[i]))
         {
           yr_bitmask_set(seen_bytes, atom->bytes[i]);
           unique_bytes++;
@@ -172,10 +172,10 @@ int yr_atoms_heuristic_quality(
   // it heavily.
 
   if (unique_bytes == 1 &&
-      (yr_bitmask_isset(seen_bytes, 0x00) ||
-       yr_bitmask_isset(seen_bytes, 0x20) ||
-       yr_bitmask_isset(seen_bytes, 0xCC) ||
-       yr_bitmask_isset(seen_bytes, 0xFF)))
+      (yr_bitmask_is_set(seen_bytes, 0x00) ||
+       yr_bitmask_is_set(seen_bytes, 0x20) ||
+       yr_bitmask_is_set(seen_bytes, 0xCC) ||
+       yr_bitmask_is_set(seen_bytes, 0xFF)))
   {
     quality -= 10 * atom->length;
   }
