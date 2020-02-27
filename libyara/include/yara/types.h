@@ -403,6 +403,9 @@ typedef uint32_t  YR_AC_TRANSITION;
 
 typedef struct YARA_RULES_FILE_HEADER
 {
+  uint32_t num_rules;
+  uint32_t num_strings;
+
   DECLARE_REFERENCE(YR_RULE*, rules_list_head);
   DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
   DECLARE_REFERENCE(const uint8_t*, code_start);
@@ -585,6 +588,9 @@ struct YR_RULES
   YR_AC_MATCH* ac_match_pool;
   uint32_t* ac_match_table;
 
+  uint32_t num_rules;
+  uint32_t num_strings;
+
   // Size of ac_match_table and ac_transition_table in number of items (both
   // tables have the same number of items).
   uint32_t ac_tables_size;
@@ -719,6 +725,10 @@ struct YR_SCAN_CONTEXT
 
   // Fiber pool used by yr_re_exec.
   RE_FIBER_POOL re_fiber_pool;
+
+  // A bitmap with one bit per rule, bit N is set when the rule with index N
+  // has matched.
+  YR_BITMASK* rule_matches_flags;
 };
 
 
