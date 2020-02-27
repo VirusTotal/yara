@@ -650,7 +650,7 @@ static int _yr_compiler_compile_rules(
 
   // Write a null rule indicating the end.
   memset(&null_rule, 0xFA, sizeof(YR_RULE));
-  null_rule.g_flags = RULE_GFLAGS_NULL;
+  null_rule.flags = RULE_FLAGS_NULL;
 
   yr_arena2_write_data(
     compiler->arena,

@@ -196,14 +196,14 @@ int yr_parser_emit_pushes_for_strings(
   YR_RULE* current_rule = _yr_compiler_get_rule_by_idx(
       compiler, compiler->current_rule_idx);
 
-  YR_STRING* string = current_rule->strings;
+  YR_STRING* string;
 
   const char* string_identifier;
   const char* target_identifier;
 
   int matching = 0;
 
-  while(!STRING_IS_NULL(string))
+  yr_rule_strings_foreach(current_rule, string)
   {
     // Don't generate pushes for strings chained to another one, we are
     // only interested in non-chained strings or the head of the chain.
@@ -231,13 +231,11 @@ int yr_parser_emit_pushes_for_strings(
             NULL,
             NULL);
 
-        string->g_flags |= STRING_GFLAGS_REFERENCED;
-        string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+        string->flags |= STRING_FLAGS_REFERENCED;
+        string->flags &= ~STRING_FLAGS_FIXED_OFFSET;
         matching++;
       }
     }
-
-    string++;
   }
 
   if (matching == 0)
@@ -282,22 +280,18 @@ int yr_parser_lookup_string(
   YR_RULE* current_rule = _yr_compiler_get_rule_by_idx(
       compiler, compiler->current_rule_idx);
 
-  *string = current_rule->strings;
-
-  while(!STRING_IS_NULL(*string))
+  yr_rule_strings_foreach(current_rule, *string)
   {
     // If some string $a gets fragmented into multiple chained
     // strings, all those fragments have the same $a identifier
     // but we are interested in the heading fragment, which is
     // that with chained_to == NULL
 
-    if (strcmp((*string)->identifier, identifier) == 0 &&
-        (*string)->chained_to == NULL)
+    if ((*string)->chained_to == NULL &&
+        strcmp((*string)->identifier, identifier) == 0)
     {
       return ERROR_SUCCESS;
     }
-
-    (*string)++;
   }
 
   yr_compiler_set_error_extra_info(compiler, identifier)
@@ -398,16 +392,16 @@ static int _yr_parser_write_string(
 
   string->identifier = yr_arena2_ref_to_ptr(compiler->arena, &ref);
 
-  if (modifier.flags & STRING_GFLAGS_HEXADECIMAL ||
-      modifier.flags & STRING_GFLAGS_REGEXP ||
-      modifier.flags & STRING_GFLAGS_BASE64 ||
-      modifier.flags & STRING_GFLAGS_BASE64_WIDE)
+  if (modifier.flags & STRING_FLAGS_HEXADECIMAL ||
+      modifier.flags & STRING_FLAGS_REGEXP ||
+      modifier.flags & STRING_FLAGS_BASE64 ||
+      modifier.flags & STRING_FLAGS_BASE64_WIDE)
   {
     literal_string = yr_re_ast_extract_literal(re_ast);
 
     if (literal_string != NULL)
     {
-      modifier.flags |= STRING_GFLAGS_LITERAL;
+      modifier.flags |= STRING_FLAGS_LITERAL;
       free_literal = true;
     }
     else
@@ -417,31 +411,23 @@ static int _yr_parser_write_string(
       // the string should start, as the non-literal strings can contain
       // variable-length portions.
 
-      modifier.flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+      modifier.flags &= ~STRING_FLAGS_FIXED_OFFSET;
     }
   }
   else
   {
     literal_string = str;
-    modifier.flags |= STRING_GFLAGS_LITERAL;
+    modifier.flags |= STRING_FLAGS_LITERAL;
   }
 
-  string->g_flags = modifier.flags;
+  string->flags = modifier.flags;
   string->rule_idx = compiler->current_rule_idx;
+  string->idx = compiler->current_string_idx;
   string->fixed_offset = UNDEFINED;
   string->chained_to = NULL;
   string->string = NULL;
 
-  memset(string->matches, 0,
-         sizeof(string->matches));
-
-  memset(string->private_matches, 0,
-         sizeof(string->private_matches));
-
-  memset(string->unconfirmed_matches, 0,
-         sizeof(string->unconfirmed_matches));
-
-  if (modifier.flags & STRING_GFLAGS_LITERAL)
+  if (modifier.flags & STRING_FLAGS_LITERAL)
   {
     result = yr_arena2_write_data(
         compiler->arena,
@@ -495,15 +481,15 @@ static int _yr_parser_write_string(
         compiler->arena);
   }
 
-  if (modifier.flags & STRING_GFLAGS_LITERAL)
+  if (modifier.flags & STRING_FLAGS_LITERAL)
   {
-    if (modifier.flags & STRING_GFLAGS_WIDE)
+    if (modifier.flags & STRING_FLAGS_WIDE)
       max_string_len = string->length * 2;
     else
       max_string_len = string->length;
 
     if (max_string_len <= YR_MAX_ATOM_LENGTH)
-      string->g_flags |= STRING_GFLAGS_FITS_IN_ATOM;
+      string->flags |= STRING_FLAGS_FITS_IN_ATOM;
   }
 
   atom = atom_list;
@@ -580,7 +566,7 @@ int yr_parser_reduce_string_declaration(
   // identifier to strings_table.
   if (strcmp(identifier, "$") == 0)
   {
-    modifier.flags |= STRING_GFLAGS_ANONYMOUS;
+    modifier.flags |= STRING_FLAGS_ANONYMOUS;
   }
   else
   {
@@ -595,18 +581,18 @@ int yr_parser_reduce_string_declaration(
   }
 
   if (str->flags & SIZED_STRING_FLAGS_NO_CASE)
-    modifier.flags |= STRING_GFLAGS_NO_CASE;
+    modifier.flags |= STRING_FLAGS_NO_CASE;
 
   if (str->flags & SIZED_STRING_FLAGS_DOT_ALL)
-    modifier.flags |= STRING_GFLAGS_DOT_ALL;
+    modifier.flags |= STRING_FLAGS_DOT_ALL;
 
   // Hex strings are always handled as DOT_ALL regexps.
-  if (modifier.flags & STRING_GFLAGS_HEXADECIMAL)
-    modifier.flags |= STRING_GFLAGS_DOT_ALL;
+  if (modifier.flags & STRING_FLAGS_HEXADECIMAL)
+    modifier.flags |= STRING_FLAGS_DOT_ALL;
 
   // xor and nocase together is not implemented.
-  if (modifier.flags & STRING_GFLAGS_XOR &&
-      modifier.flags & STRING_GFLAGS_NO_CASE)
+  if (modifier.flags & STRING_FLAGS_XOR &&
+      modifier.flags & STRING_FLAGS_NO_CASE)
   {
       result = ERROR_INVALID_MODIFIER;
       yr_compiler_set_error_extra_info(compiler, "xor nocase")
@@ -614,64 +600,64 @@ int yr_parser_reduce_string_declaration(
   }
 
   // base64 and nocase together is not implemented.
-  if (modifier.flags & STRING_GFLAGS_NO_CASE &&
-      (modifier.flags & STRING_GFLAGS_BASE64 ||
-       modifier.flags & STRING_GFLAGS_BASE64_WIDE))
+  if (modifier.flags & STRING_FLAGS_NO_CASE &&
+      (modifier.flags & STRING_FLAGS_BASE64 ||
+       modifier.flags & STRING_FLAGS_BASE64_WIDE))
   {
       result = ERROR_INVALID_MODIFIER;
       yr_compiler_set_error_extra_info(
           compiler,
-          modifier.flags & STRING_GFLAGS_BASE64 ?
+          modifier.flags & STRING_FLAGS_BASE64 ?
              "base64 nocase" :
              "base64wide nocase")
       goto _exit;
   }
 
   // base64 and xor together is not implemented.
-  if (modifier.flags & STRING_GFLAGS_XOR &&
-      (modifier.flags & STRING_GFLAGS_BASE64 ||
-       modifier.flags & STRING_GFLAGS_BASE64_WIDE))
+  if (modifier.flags & STRING_FLAGS_XOR &&
+      (modifier.flags & STRING_FLAGS_BASE64 ||
+       modifier.flags & STRING_FLAGS_BASE64_WIDE))
   {
       result = ERROR_INVALID_MODIFIER;
       yr_compiler_set_error_extra_info(
           compiler,
-          modifier.flags & STRING_GFLAGS_BASE64 ?
+          modifier.flags & STRING_FLAGS_BASE64 ?
              "base64 xor" :
              "base64wide xor")
       goto _exit;
   }
 
-  if (!(modifier.flags & STRING_GFLAGS_WIDE) &&
-      !(modifier.flags & STRING_GFLAGS_XOR) &&
-      !(modifier.flags & STRING_GFLAGS_BASE64 ||
-        modifier.flags & STRING_GFLAGS_BASE64_WIDE))
+  if (!(modifier.flags & STRING_FLAGS_WIDE) &&
+      !(modifier.flags & STRING_FLAGS_XOR) &&
+      !(modifier.flags & STRING_FLAGS_BASE64 ||
+        modifier.flags & STRING_FLAGS_BASE64_WIDE))
   {
-    modifier.flags |= STRING_GFLAGS_ASCII;
+    modifier.flags |= STRING_FLAGS_ASCII;
   }
 
-  // The STRING_GFLAGS_SINGLE_MATCH flag indicates that finding
+  // The STRING_FLAGS_SINGLE_MATCH flag indicates that finding
   // a single match for the string is enough. This is true in
   // most cases, except when the string count (#) and string offset (@)
   // operators are used. All strings are marked STRING_FLAGS_SINGLE_MATCH
   // initially, and unmarked later if required.
-  modifier.flags |= STRING_GFLAGS_SINGLE_MATCH;
+  modifier.flags |= STRING_FLAGS_SINGLE_MATCH;
 
-  // The STRING_GFLAGS_FIXED_OFFSET indicates that the string doesn't
+  // The STRING_FLAGS_FIXED_OFFSET indicates that the string doesn't
   // need to be searched all over the file because the user is using the
   // "at" operator. The string must be searched at a fixed offset in the
-  // file. All strings are marked STRING_GFLAGS_FIXED_OFFSET initially,
+  // file. All strings are marked STRING_FLAGS_FIXED_OFFSET initially,
   // and unmarked later if required.
-  modifier.flags |= STRING_GFLAGS_FIXED_OFFSET;
+  modifier.flags |= STRING_FLAGS_FIXED_OFFSET;
 
 
-  if (modifier.flags & STRING_GFLAGS_HEXADECIMAL ||
-      modifier.flags & STRING_GFLAGS_REGEXP ||
-      modifier.flags & STRING_GFLAGS_BASE64 ||
-      modifier.flags & STRING_GFLAGS_BASE64_WIDE)
+  if (modifier.flags & STRING_FLAGS_HEXADECIMAL ||
+      modifier.flags & STRING_FLAGS_REGEXP ||
+      modifier.flags & STRING_FLAGS_BASE64 ||
+      modifier.flags & STRING_FLAGS_BASE64_WIDE)
   {
-    if (modifier.flags & STRING_GFLAGS_HEXADECIMAL)
+    if (modifier.flags & STRING_FLAGS_HEXADECIMAL)
       result = yr_re_parse_hex(str->c_string, &re_ast, &re_error);
-    else if (modifier.flags & STRING_GFLAGS_REGEXP)
+    else if (modifier.flags & STRING_FLAGS_REGEXP)
       result = yr_re_parse(str->c_string, &re_ast, &re_error);
     else
       result = yr_base64_ast_from_string(str, modifier, &re_ast, &re_error);
@@ -682,7 +668,7 @@ int yr_parser_reduce_string_declaration(
           message,
           sizeof(message),
           "invalid %s \"%s\": %s",
-          (modifier.flags & STRING_GFLAGS_HEXADECIMAL) ?
+          (modifier.flags & STRING_FLAGS_HEXADECIMAL) ?
               "hex string" : "regular expression",
           identifier,
           re_error.message);
@@ -694,10 +680,10 @@ int yr_parser_reduce_string_declaration(
     }
 
     if (re_ast->flags & RE_FLAGS_FAST_REGEXP)
-      modifier.flags |= STRING_GFLAGS_FAST_REGEXP;
+      modifier.flags |= STRING_FLAGS_FAST_REGEXP;
 
     if (re_ast->flags & RE_FLAGS_GREEDY)
-      modifier.flags |= STRING_GFLAGS_GREEDY_REGEXP;
+      modifier.flags |= STRING_FLAGS_GREEDY_REGEXP;
 
     // Regular expressions in the strings section can't mix greedy and ungreedy
     // quantifiers like .* and .*?. That's because these regular expressions can
@@ -792,27 +778,27 @@ int yr_parser_reduce_string_declaration(
 
         // A string chained to another one can't have a fixed offset, only the
         // head of the string chain can have a fixed offset.
-        new_string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+        new_string->flags &= ~STRING_FLAGS_FIXED_OFFSET;
 
         // There is a previous string, but that string wasn't marked as part of
         // a chain because we can't do that until knowing there will be another
         // string, let's flag it now the we know.
-        prev_string->g_flags |= STRING_GFLAGS_CHAIN_PART;
+        prev_string->flags |= STRING_FLAGS_CHAIN_PART;
 
         // There is a previous string, so this string is part of a chain, but
         // there will be no more strings because there are no more AST to split,
         // which means that this is the chain's tail.
         if (remainder_re_ast == NULL)
-          new_string->g_flags |= STRING_GFLAGS_CHAIN_PART |
-                                 STRING_GFLAGS_CHAIN_TAIL;
+          new_string->flags |= STRING_FLAGS_CHAIN_PART |
+                               STRING_FLAGS_CHAIN_TAIL;
       }
 
       yr_re_ast_destroy(re_ast);
       re_ast = remainder_re_ast;
     }
   }
-  else  // not a STRING_GFLAGS_HEXADECIMAL or STRING_GFLAGS_REGEXP or
-        // STRING_GFLAGS_BASE64 or STRING_GFLAGS_BASE64_WIDE
+  else  // not a STRING_FLAGS_HEXADECIMAL or STRING_FLAGS_REGEXP or
+        // STRING_FLAGS_BASE64 or STRING_FLAGS_BASE64_WIDE
   {
     result = _yr_parser_write_string(
         identifier,
@@ -902,11 +888,9 @@ int yr_parser_reduce_rule_declaration_phase_1(
       &ref));
 
   rule->identifier = yr_arena2_ref_to_ptr(compiler->arena, &ref);
-  rule->g_flags = flags;
+  rule->flags = flags;
   rule->ns = ns;
   rule->num_atoms = 0;
-
-  memset(rule->t_flags, 0, sizeof(rule->t_flags));
 
   #ifdef PROFILING_ENABLED
   rule->time_cost = 0;
@@ -988,10 +972,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
         rule->identifier);
   }
 
-  // Check for unreferenced (unused) strings.
-  string = rule->strings;
-
-  while (!STRING_IS_NULL(string))
+  yr_rule_strings_foreach(rule, string)
   {
     // Only the heading fragment in a chain of strings (the one with
     // chained_to == NULL) must be referenced. All other fragments
@@ -1011,11 +992,10 @@ int yr_parser_reduce_rule_declaration_phase_2(
       yr_compiler_set_error_extra_info(compiler, rule->identifier)
       return ERROR_TOO_MANY_STRINGS;
     }
-
-    string++;
   }
 
-  FAIL_ON_ERROR(yr_parser_emit_with_arg(
+
+FAIL_ON_ERROR(yr_parser_emit_with_arg(
       yyscanner,
       OP_MATCH_RULE,
       compiler->current_rule_idx,
@@ -1070,33 +1050,27 @@ int yr_parser_reduce_string_identifier(
       YR_RULE* current_rule = _yr_compiler_get_rule_by_idx(
           compiler, compiler->current_rule_idx);
 
-      string = current_rule->strings;
-
-      while(!STRING_IS_NULL(string))
+      yr_rule_strings_foreach(current_rule, string)
       {
         if (instruction != OP_FOUND)
-          string->g_flags &= ~STRING_GFLAGS_SINGLE_MATCH;
+          string->flags &= ~STRING_FLAGS_SINGLE_MATCH;
 
         if (instruction == OP_FOUND_AT)
         {
           // Avoid overwriting any previous fixed offset
-
           if (string->fixed_offset == UNDEFINED)
             string->fixed_offset = at_offset;
 
           // If a previous fixed offset was different, disable
           // the STRING_GFLAGS_FIXED_OFFSET flag because we only
           // have room to store a single fixed offset value
-
           if (string->fixed_offset != at_offset)
-            string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+            string->flags &= ~STRING_FLAGS_FIXED_OFFSET;
         }
         else
         {
-          string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+          string->flags &= ~STRING_FLAGS_FIXED_OFFSET;
         }
-
-        string++;
       }
     }
     else
@@ -1118,7 +1092,7 @@ int yr_parser_reduce_string_identifier(
         NULL));
 
     if (instruction != OP_FOUND)
-      string->g_flags &= ~STRING_GFLAGS_SINGLE_MATCH;
+      string->flags &= ~STRING_FLAGS_SINGLE_MATCH;
 
     if (instruction == OP_FOUND_AT)
     {
@@ -1134,17 +1108,17 @@ int yr_parser_reduce_string_identifier(
       if (string->fixed_offset == UNDEFINED ||
           string->fixed_offset != at_offset)
       {
-        string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+        string->flags &= ~STRING_FLAGS_FIXED_OFFSET;
       }
     }
     else
     {
-      string->g_flags &= ~STRING_GFLAGS_FIXED_OFFSET;
+      string->flags &= ~STRING_FLAGS_FIXED_OFFSET;
     }
 
     FAIL_ON_ERROR(yr_parser_emit(yyscanner, instruction, NULL));
 
-    string->g_flags |= STRING_GFLAGS_REFERENCED;
+    string->flags |= STRING_FLAGS_REFERENCED;
   }
 
   return ERROR_SUCCESS;

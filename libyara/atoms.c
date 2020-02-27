@@ -1414,8 +1414,8 @@ int yr_atoms_extract_from_re(
   // Don't do convert atoms to wide here if either base64 modifier is used.
   // This is to avoid the situation where we have "base64 wide" because
   // the wide has already been applied BEFORE the base64 encoding.
-  if (modifier.flags & STRING_GFLAGS_WIDE &&
-      !(modifier.flags & STRING_GFLAGS_BASE64 || modifier.flags & STRING_GFLAGS_BASE64_WIDE))
+  if (modifier.flags & STRING_FLAGS_WIDE &&
+      !(modifier.flags & STRING_FLAGS_BASE64 || modifier.flags & STRING_FLAGS_BASE64_WIDE))
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_wide(*atoms, &wide_atoms),
@@ -1425,7 +1425,7 @@ int yr_atoms_extract_from_re(
           *atoms = NULL;
         });
 
-    if (modifier.flags & STRING_GFLAGS_ASCII)
+    if (modifier.flags & STRING_FLAGS_ASCII)
     {
       *atoms = _yr_atoms_list_concat(*atoms, wide_atoms);
     }
@@ -1436,7 +1436,7 @@ int yr_atoms_extract_from_re(
     }
   }
 
-  if (modifier.flags & STRING_GFLAGS_NO_CASE)
+  if (modifier.flags & STRING_FLAGS_NO_CASE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_case_insensitive(*atoms, &case_insensitive_atoms),
@@ -1536,7 +1536,7 @@ int yr_atoms_extract_from_string(
   *atoms = item;
   *min_atom_quality = max_quality;
 
-  if (modifier.flags & STRING_GFLAGS_WIDE)
+  if (modifier.flags & STRING_FLAGS_WIDE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_wide(*atoms, &wide_atoms),
@@ -1546,7 +1546,7 @@ int yr_atoms_extract_from_string(
           *atoms = NULL;
         });
 
-    if (modifier.flags & STRING_GFLAGS_ASCII)
+    if (modifier.flags & STRING_FLAGS_ASCII)
     {
       *atoms = _yr_atoms_list_concat(*atoms, wide_atoms);
     }
@@ -1557,7 +1557,7 @@ int yr_atoms_extract_from_string(
     }
   }
 
-  if (modifier.flags & STRING_GFLAGS_NO_CASE)
+  if (modifier.flags & STRING_FLAGS_NO_CASE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
         _yr_atoms_case_insensitive(*atoms, &case_insensitive_atoms),
@@ -1570,7 +1570,7 @@ int yr_atoms_extract_from_string(
     *atoms = _yr_atoms_list_concat(*atoms, case_insensitive_atoms);
   }
 
-  if (modifier.flags & STRING_GFLAGS_XOR)
+  if (modifier.flags & STRING_FLAGS_XOR)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
       _yr_atoms_xor(*atoms, modifier.xor_min, modifier.xor_max, &xor_atoms),

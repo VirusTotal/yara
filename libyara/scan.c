@@ -210,7 +210,7 @@ static int _yr_scan_wicompare(
 
 
 static void _yr_scan_update_match_chain_length(
-    int tidx,
+    YR_SCAN_CONTEXT* context,
     YR_STRING* string,
     YR_MATCH* match_to_update,
     int chain_length)
@@ -225,7 +225,7 @@ static void _yr_scan_update_match_chain_length(
   if (string->chained_to == NULL)
     return;
 
-  match = string->chained_to->unconfirmed_matches[tidx].head;
+  match = context->unconfirmed_matches[string->chained_to->idx].head;
 
   while (match != NULL)
   {
@@ -235,7 +235,7 @@ static void _yr_scan_update_match_chain_length(
         ending_offset + string->chain_gap_min <= match_to_update->offset)
     {
       _yr_scan_update_match_chain_length(
-          tidx, string->chained_to, match, chain_length + 1);
+          context, string->chained_to, match, chain_length + 1);
     }
 
     match = match->next;
@@ -350,7 +350,6 @@ static int _yr_scan_verify_chained_string_match(
   uint64_t ending_offset;
   int32_t full_chain_length;
 
-  int tidx = context->tidx;
   bool add_match = false;
 
   if (matching_string->chained_to == NULL)
@@ -368,8 +367,10 @@ static int _yr_scan_verify_chained_string_match(
     // list of unconfirmed matches. Unconfirmed matches are sorted in ascending
     // offset order. If no unconfirmed match exists, the lowest possible offset
     // is the offset of the current match.
-    if (matching_string->unconfirmed_matches[tidx].head != NULL)
-      lowest_offset = matching_string->unconfirmed_matches[tidx].head->offset;
+    match = context->unconfirmed_matches[matching_string->idx].head;
+
+    if (match != NULL)
+      lowest_offset = match->offset;
     else
       lowest_offset = match_offset;
 
@@ -377,7 +378,7 @@ static int _yr_scan_verify_chained_string_match(
     // precedes the currently matching string. If we have a string chain like:
     // S1 <- S2 <- S3, and we just found a match for S2, we are iterating the
     // list of unconfirmed matches of S1.
-    match = matching_string->chained_to->unconfirmed_matches[tidx].head;
+    match = context->unconfirmed_matches[matching_string->chained_to->idx].head;
 
     while (match != NULL)
     {
@@ -397,7 +398,8 @@ static int _yr_scan_verify_chained_string_match(
         // negatively confirmed (i.e: we can be sure that this unconfirmed
         // match can't be an actual match)
         _yr_scan_remove_match_from_list(
-            match, &matching_string->chained_to->unconfirmed_matches[tidx]);
+            match,
+            &context->unconfirmed_matches[matching_string->chained_to->idx]);
       }
       else if (ending_offset + matching_string->chain_gap_max >= match_offset &&
                ending_offset + matching_string->chain_gap_min <= match_offset)
@@ -432,7 +434,7 @@ static int _yr_scan_verify_chained_string_match(
       // is a recursive operation that will update the chain_length field for
       // every unconfirmed match in all the strings in the chain up to the head
       // of the chain.
-      match = matching_string->chained_to->unconfirmed_matches[tidx].head;
+      match = context->unconfirmed_matches[matching_string->chained_to->idx].head;
 
       while (match != NULL)
       {
@@ -442,7 +444,7 @@ static int _yr_scan_verify_chained_string_match(
             ending_offset + matching_string->chain_gap_min <= match_offset)
         {
           _yr_scan_update_match_chain_length(
-              tidx, matching_string->chained_to, match, 1);
+              context, matching_string->chained_to, match, 1);
         }
 
         match = match->next;
@@ -458,7 +460,7 @@ static int _yr_scan_verify_chained_string_match(
       }
 
       // "string" points now to the head of the strings chain.
-      match = string->unconfirmed_matches[tidx].head;
+      match = context->unconfirmed_matches[string->idx].head;
 
       // Iterate over the list of unconfirmed matches of the head of the chain,
       // and move to the list of confirmed matches those with a chain_length
@@ -471,7 +473,8 @@ static int _yr_scan_verify_chained_string_match(
         if (match->chain_length == full_chain_length)
         {
           _yr_scan_remove_match_from_list(
-              match, &string->unconfirmed_matches[tidx]);
+              match,
+              &context->unconfirmed_matches[string->idx]);
 
           match->match_length = (int32_t) \
               (match_offset - match->offset + match_length);
@@ -486,9 +489,9 @@ static int _yr_scan_verify_chained_string_match(
 
           FAIL_ON_ERROR(_yr_scan_add_match_to_list(
               match,
-              !STRING_IS_PRIVATE(string) ?
-                  &string->matches[tidx] :
-                  &string->private_matches[tidx],
+              STRING_IS_PRIVATE(string) ?
+                  &context->private_matches[string->idx] :
+                  &context->matches[string->idx],
               false));
         }
 
@@ -499,9 +502,9 @@ static int _yr_scan_verify_chained_string_match(
     {
       // If this is the first match for the string, put the string in the
       // list of strings whose flags needs to be cleared after the scan.
-      if (matching_string->matches[tidx].count == 0 &&
-          matching_string->private_matches[tidx].count == 0 &&
-          matching_string->unconfirmed_matches[tidx].count == 0)
+      if (context->matches[matching_string->idx].count == 0 &&
+          context->private_matches[matching_string->idx].count == 0 &&
+          context->unconfirmed_matches[matching_string->idx].count == 0)
       {
         FAIL_ON_ERROR(yr_arena_write_data(
             context->matching_strings_arena,
@@ -544,7 +547,7 @@ static int _yr_scan_verify_chained_string_match(
       // an actual match until finding the remaining parts of the chain.
       FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,
-          &matching_string->unconfirmed_matches[tidx],
+          &context->unconfirmed_matches[matching_string->idx],
           false));
     }
   }
@@ -565,7 +568,6 @@ static int _yr_scan_match_callback(
   YR_MATCH* new_match;
 
   int result = ERROR_SUCCESS;
-  int tidx = callback_args->context->tidx;
 
   size_t match_offset = match_data - callback_args->data;
 
@@ -619,7 +621,7 @@ static int _yr_scan_match_callback(
         YR_CONFIG_MAX_MATCH_DATA,
         &max_match_data))
 
-    if (string->matches[tidx].count == 0)
+    if (callback_args->context->matches[string->idx].count == 0)
     {
       // If this is the first match for the string, put the string in the
       // list of strings whose flags needs to be cleared after the scan.
@@ -661,7 +663,9 @@ static int _yr_scan_match_callback(
 
       FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,
-          !STRING_IS_PRIVATE(string) ? &string->matches[tidx] : &string->private_matches[tidx],
+          STRING_IS_PRIVATE(string) ?
+             &callback_args->context->private_matches[string->idx] :
+             &callback_args->context->matches[string->idx],
           STRING_IS_GREEDY_REGEXP(string)));
     }
   }
@@ -906,7 +910,7 @@ int yr_scan_verify_match(
 
   if (context->flags & SCAN_FLAGS_FAST_MODE &&
       STRING_IS_SINGLE_MATCH(string) &&
-      string->matches[context->tidx].head != NULL)
+      context->matches[string->idx].head != NULL)
     return ERROR_SUCCESS;
 
   if (STRING_IS_FIXED_OFFSET(string) &&

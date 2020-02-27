@@ -398,23 +398,12 @@ strings
       }
     | _STRINGS_ ':' string_declarations
       {
-        // Each rule have a list of strings, consisting in a sequence
-        // of YR_STRING structures. The last YR_STRING structure does not
-        // represent a real string, it's just a end-of-list marker
-        // identified by a specific flag (STRING_FLAGS_NULL). Here we
-        // write the end-of-list marker.
-
-        YR_STRING null_string;
-
-        memset(&null_string, 0xFF, sizeof(YR_STRING));
-        null_string.g_flags = STRING_GFLAGS_NULL;
-
-        fail_if_error(yr_arena2_write_data(
+        YR_STRING* string = (YR_STRING*) yr_arena2_get_ptr(
             compiler->arena,
             YR_STRINGS_TABLE,
-            &null_string,
-            sizeof(YR_STRING),
-            NULL));
+            (compiler->current_string_idx - 1) * sizeof(YR_STRING));
+
+        string->flags |= STRING_FLAGS_LAST_IN_RULE;
 
         $$ = $3;
       }
@@ -433,8 +422,8 @@ rule_modifiers
 
 
 rule_modifier
-    : _PRIVATE_      { $$ = RULE_GFLAGS_PRIVATE; }
-    | _GLOBAL_       { $$ = RULE_GFLAGS_GLOBAL; }
+    : _PRIVATE_      { $$ = RULE_FLAGS_PRIVATE; }
+    | _GLOBAL_       { $$ = RULE_FLAGS_GLOBAL; }
     ;
 
 
@@ -615,7 +604,7 @@ string_declaration
       {
         int result;
 
-        $5.flags |= STRING_GFLAGS_REGEXP;
+        $5.flags |= STRING_FLAGS_REGEXP;
 
         result = yr_parser_reduce_string_declaration(
             yyscanner, $5, $1, $4, &$<string>$);
@@ -635,7 +624,7 @@ string_declaration
       {
         int result;
 
-        $5.flags |= STRING_GFLAGS_HEXADECIMAL;
+        $5.flags |= STRING_FLAGS_HEXADECIMAL;
 
         result = yr_parser_reduce_string_declaration(
             yyscanner, $5, $1, $4, &$<string>$);
@@ -670,7 +659,7 @@ string_modifiers
         // xor modifier. If we don't check for this then we can end up with
         // "xor wide" resulting in whatever is on the stack for "wide"
         // overwriting the values for xor.
-        if ($2.flags & STRING_GFLAGS_XOR)
+        if ($2.flags & STRING_FLAGS_XOR)
         {
           $$.xor_min = $2.xor_min;
           $$.xor_max = $2.xor_max;
@@ -681,7 +670,7 @@ string_modifiers
         // "base64 ascii" resulting in whatever is on the stack for "ascii"
         // overwriting the values for base64.
         if (($2.flags & STRING_GFLAGS_BASE64) ||
-            ($2.flags & STRING_GFLAGS_BASE64_WIDE))
+            ($2.flags & STRING_FLAGS_BASE64_WIDE))
         {
           if ($$.alphabet != NULL)
           {
@@ -706,14 +695,14 @@ string_modifiers
 
 
 string_modifier
-    : _WIDE_        { $$.flags = STRING_GFLAGS_WIDE; }
-    | _ASCII_       { $$.flags = STRING_GFLAGS_ASCII; }
-    | _NOCASE_      { $$.flags = STRING_GFLAGS_NO_CASE; }
-    | _FULLWORD_    { $$.flags = STRING_GFLAGS_FULL_WORD; }
-    | _PRIVATE_     { $$.flags = STRING_GFLAGS_PRIVATE; }
+    : _WIDE_        { $$.flags = STRING_FLAGS_WIDE; }
+    | _ASCII_       { $$.flags = STRING_FLAGS_ASCII; }
+    | _NOCASE_      { $$.flags = STRING_FLAGS_NO_CASE; }
+    | _FULLWORD_    { $$.flags = STRING_FLAGS_FULL_WORD; }
+    | _PRIVATE_     { $$.flags = STRING_FLAGS_PRIVATE; }
     | _XOR_
       {
-        $$.flags = STRING_GFLAGS_XOR;
+        $$.flags = STRING_FLAGS_XOR;
         $$.xor_min = 0;
         $$.xor_max = 255;
       }
@@ -729,7 +718,7 @@ string_modifier
 
         fail_if_error(result);
 
-        $$.flags = STRING_GFLAGS_XOR;
+        $$.flags = STRING_FLAGS_XOR;
         $$.xor_min = $3;
         $$.xor_max = $3;
       }
@@ -765,7 +754,7 @@ string_modifier
 
         fail_if_error(result);
 
-        $$.flags = STRING_GFLAGS_XOR;
+        $$.flags = STRING_FLAGS_XOR;
         $$.xor_min = $3;
         $$.xor_max = $5;
       }
@@ -793,7 +782,7 @@ string_modifier
       }
     | _BASE64_WIDE_
       {
-        $$.flags = STRING_GFLAGS_BASE64_WIDE;
+        $$.flags = STRING_FLAGS_BASE64_WIDE;
         $$.alphabet = sized_string_new(DEFAULT_BASE64_ALPHABET);
       }
     | _BASE64_WIDE_ '(' _TEXT_STRING_ ')'
@@ -810,7 +799,7 @@ string_modifier
 
         fail_if_error(result);
 
-        $$.flags = STRING_GFLAGS_BASE64_WIDE;
+        $$.flags = STRING_FLAGS_BASE64_WIDE;
         $$.alphabet = $3;
       }
     ;
@@ -821,11 +810,11 @@ regexp_modifiers
     ;
 
 regexp_modifier
-    : _WIDE_        { $$.flags = STRING_GFLAGS_WIDE; }
-    | _ASCII_       { $$.flags = STRING_GFLAGS_ASCII; }
-    | _NOCASE_      { $$.flags = STRING_GFLAGS_NO_CASE; }
-    | _FULLWORD_    { $$.flags = STRING_GFLAGS_FULL_WORD; }
-    | _PRIVATE_     { $$.flags = STRING_GFLAGS_PRIVATE; }
+    : _WIDE_        { $$.flags = STRING_FLAGS_WIDE; }
+    | _ASCII_       { $$.flags = STRING_FLAGS_ASCII; }
+    | _NOCASE_      { $$.flags = STRING_FLAGS_NO_CASE; }
+    | _FULLWORD_    { $$.flags = STRING_FLAGS_FULL_WORD; }
+    | _PRIVATE_     { $$.flags = STRING_FLAGS_PRIVATE; }
     ;
 
 hex_modifiers
@@ -834,7 +823,7 @@ hex_modifiers
     ;
 
 hex_modifier
-    : _PRIVATE_     { $$.flags = STRING_GFLAGS_PRIVATE; }
+    : _PRIVATE_     { $$.flags = STRING_FLAGS_PRIVATE; }
     ;
 
 identifier

@@ -656,6 +656,7 @@ static void print_rules_stats(
 
 
 static int handle_message(
+    YR_SCAN_CONTEXT* context,
     int message,
     YR_RULE* rule,
     void* data)
@@ -773,7 +774,7 @@ static int handle_message(
       {
         YR_MATCH* match;
 
-        yr_string_matches_foreach(string, match)
+        yr_string_matches_foreach(context, string, match)
         {
           if (show_string_length)
             printf("0x%" PRIx64 ":%d:%s",
@@ -819,6 +820,7 @@ static int handle_message(
 
 
 static int callback(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data)
@@ -831,7 +833,8 @@ static int callback(
   {
     case CALLBACK_MSG_RULE_MATCHING:
     case CALLBACK_MSG_RULE_NOT_MATCHING:
-      return handle_message(message, (YR_RULE*) message_data, user_data);
+      return handle_message(
+          context, message, (YR_RULE*) message_data, user_data);
 
     case CALLBACK_MSG_IMPORT_MODULE:
 

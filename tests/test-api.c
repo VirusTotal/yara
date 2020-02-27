@@ -206,6 +206,7 @@ void test_max_string_per_rules()
 
 
 int test_max_match_data_callback(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data)
@@ -219,7 +220,7 @@ int test_max_match_data_callback(
     {
       YR_MATCH* m;
 
-      yr_string_matches_foreach(s, m)
+      yr_string_matches_foreach(context, s, m)
       {
         if (m->data_length > 0)
           return CALLBACK_ERROR;
