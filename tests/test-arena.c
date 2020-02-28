@@ -35,10 +35,10 @@ static void basic_tests()
 {
   YR_ARENA2* arena;
 
-  // Create arena with 1 buffer of 10 bytes of initial size.
-  assert(yr_arena2_create(1, 10, &arena) == ERROR_SUCCESS);
+  // Create arena with 1 buffers of 10 bytes of initial size
+  assert(yr_arena2_create(2, 10, &arena) == ERROR_SUCCESS);
 
-  YR_ARENA2_REFERENCE ref;
+  YR_ARENA2_REF ref;
 
   // Allocate 5 bytes.
   assert(yr_arena2_allocate_memory(arena, 0, 5, &ref) == ERROR_SUCCESS);
@@ -58,7 +58,7 @@ static void basic_tests()
   // Offset should be 9.
   assert(ref.offset == 9);
 
-  yr_arena2_destroy(arena);
+  yr_arena2_release(arena);
 }
 
 
@@ -70,15 +70,16 @@ struct TEST_STRUCT {
 };
 
 
-static void reloc_tests()
+static void advanced_tests()
 {
   YR_ARENA2* arena;
 
-  // Create arena with 2 buffers of 10 bytes of initial size.
-  int result = yr_arena2_create(2, 10, &arena);
+  // Create arena with 3 buffers of 10 bytes of initial size. Only the first
+  // two are used, the third one is left empty on purpose.
+  int result = yr_arena2_create(3, 10, &arena);
   assert(result == ERROR_SUCCESS);
 
-  YR_ARENA2_REFERENCE ref;
+  YR_ARENA2_REF ref;
 
   // Allocate a struct in buffer 0 indicating that the field "str" is a
   // relocatable pointer.
@@ -141,7 +142,7 @@ static void reloc_tests()
   assert(strcmp(s->str1, "foo") == 0);
   assert(strcmp(s->str2, "bar") == 0);
 
-  yr_arena2_destroy(arena);
+  yr_arena2_release(arena);
 
   result = yr_arena2_load_stream(&stream, &arena);
   assert(result == ERROR_SUCCESS);
@@ -155,13 +156,13 @@ static void reloc_tests()
   assert(strcmp(s->str2, "bar") == 0);
 
   fclose(fh);
-  yr_arena2_destroy(arena);
+  yr_arena2_release(arena);
 }
 
 int main(int argc, char** argv)
 {
   basic_tests();
-  reloc_tests();
+  advanced_tests();
 
   return 0;
 }

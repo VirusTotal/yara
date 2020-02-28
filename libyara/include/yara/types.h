@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DECLARE_REFERENCE(type, name) \
     union { \
       type name; \
-      YR_ARENA2_REFERENCE name##_; \
+      YR_ARENA2_REF name##_; \
     } YR_ALIGN(8)
 
 
@@ -207,6 +207,7 @@ typedef struct YR_MATCHES YR_MATCHES;
 typedef struct YR_STRING YR_STRING;
 typedef struct YR_RULE YR_RULE;
 typedef struct YR_RULES YR_RULES;
+typedef struct YR_SUMMARY YR_SUMMARY;
 typedef struct YR_RULES_STATS YR_RULES_STATS;
 typedef struct YR_EXTERNAL_VARIABLE YR_EXTERNAL_VARIABLE;
 typedef struct YR_MATCH YR_MATCH;
@@ -236,6 +237,7 @@ typedef struct YR_MODIFIER YR_MODIFIER;
 
 typedef struct YR_ITERATOR YR_ITERATOR;
 
+typedef uint32_t  YR_AC_TRANSITION;
 
 #pragma pack(push)
 #pragma pack(8)
@@ -348,6 +350,13 @@ struct YR_RULE
 };
 
 
+struct YR_SUMMARY
+{
+  uint32_t num_rules;
+  uint32_t num_strings;
+  uint32_t num_namespaces;
+};
+
 struct YR_EXTERNAL_VARIABLE
 {
   int32_t type;
@@ -371,9 +380,6 @@ struct YR_AC_MATCH
   DECLARE_REFERENCE(const uint8_t*, backward_code);
   DECLARE_REFERENCE(YR_AC_MATCH*, next);
 };
-
-
-typedef uint32_t  YR_AC_TRANSITION;
 
 
 typedef struct YARA_RULES_FILE_HEADER
@@ -427,8 +433,8 @@ struct RE_NODE
   RE_NODE* prev_sibling;
   RE_NODE* next_sibling;
 
-  YR_ARENA2_REFERENCE forward_code_ref;
-  YR_ARENA2_REFERENCE backward_code_ref;
+  YR_ARENA2_REF forward_code_ref;
+  YR_ARENA2_REF backward_code_ref;
 };
 
 
@@ -561,10 +567,8 @@ struct YR_AC_AUTOMATON
 
 struct YR_RULES
 {
-  const uint8_t* code_start;
+  YR_ARENA2* arena;
 
-  YR_MUTEX mutex;
-  YR_ARENA* arena;
   YR_RULE* rules_list_head;
   YR_STRING* strings_list_head;
   YR_EXTERNAL_VARIABLE* externals_list_head;
@@ -572,6 +576,8 @@ struct YR_RULES
   YR_AC_TRANSITION* ac_transition_table;
   YR_AC_MATCH* ac_match_pool;
   uint32_t* ac_match_table;
+
+  const uint8_t* code_start;
 
   // Total number of rules.
   uint32_t num_rules;

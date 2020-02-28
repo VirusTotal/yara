@@ -294,10 +294,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   double          double_;
   YR_MODIFIER     modifier;
 
-  YR_ARENA2_REFERENCE c_string_with_offset;
-  YR_ARENA2_REFERENCE rule;
-  YR_ARENA2_REFERENCE meta;
-  YR_ARENA2_REFERENCE string;
+  YR_ARENA2_REF c_string_with_offset;
+  YR_ARENA2_REF rule;
+  YR_ARENA2_REF meta;
+  YR_ARENA2_REF string;
 }
 
 
@@ -870,7 +870,7 @@ identifier
 
           if (object != NULL)
           {
-            YR_ARENA2_REFERENCE ref;
+            YR_ARENA2_REF ref;
 
             result = yr_arena2_write_string(
                 compiler->arena, YR_SZ_POOL, $1, &ref);
@@ -934,7 +934,7 @@ identifier
 
           if (field != NULL)
           {
-            YR_ARENA2_REFERENCE ref;
+            YR_ARENA2_REF ref;
 
             result = yr_arena2_write_string(
                 compiler->arena, YR_SZ_POOL, $3, &ref);
@@ -1033,7 +1033,7 @@ identifier
 
     | identifier '(' arguments ')'
       {
-        YR_ARENA2_REFERENCE ref;
+        YR_ARENA2_REF ref;
         int result = ERROR_SUCCESS;
         YR_OBJECT_FUNCTION* function;
 
@@ -1174,7 +1174,7 @@ regexp
     : _REGEXP_
       {
         SIZED_STRING* sized_string = $1;
-        YR_ARENA2_REFERENCE re_ref;
+        YR_ARENA2_REF re_ref;
         RE_ERROR error;
 
         int result = ERROR_SUCCESS;
@@ -1422,8 +1422,8 @@ expression
         YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_index];
         YR_FIXUP* fixup;
 
-        YR_ARENA2_REFERENCE loop_start_ref;
-        YR_ARENA2_REFERENCE jmp_offset_ref;
+        YR_ARENA2_REF loop_start_ref;
+        YR_ARENA2_REF jmp_offset_ref;
 
         int var_frame = _yr_compiler_get_var_frame(compiler);
         int i;
@@ -1466,7 +1466,7 @@ expression
       {
         int32_t jmp_offset;
         YR_FIXUP* fixup;
-        YR_ARENA2_REFERENCE pop_ref;
+        YR_ARENA2_REF pop_ref;
 
         int var_frame = _yr_compiler_get_var_frame(compiler);
 
@@ -1551,7 +1551,7 @@ expression
       }
     | _FOR_ for_expression _OF_ string_set ':'
       {
-        YR_ARENA2_REFERENCE ref;
+        YR_ARENA2_REF ref;
 
         int result = ERROR_SUCCESS;
         int var_frame;
@@ -1653,7 +1653,7 @@ expression
     | boolean_expression _AND_
       {
         YR_FIXUP* fixup;
-        YR_ARENA2_REFERENCE jmp_offset_ref;
+        YR_ARENA2_REF jmp_offset_ref;
 
         fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
@@ -1698,7 +1698,7 @@ expression
     | boolean_expression _OR_
       {
         YR_FIXUP* fixup;
-        YR_ARENA2_REFERENCE jmp_offset_ref;
+        YR_ARENA2_REF jmp_offset_ref;
 
         fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
@@ -2134,7 +2134,7 @@ primary_expression
       }
     | _TEXT_STRING_
       {
-        YR_ARENA2_REFERENCE ref;
+        YR_ARENA2_REF ref;
 
         int result = yr_arena2_write_data(
             compiler->arena,

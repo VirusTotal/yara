@@ -171,10 +171,10 @@ union YYSTYPE
   double          double_;
   YR_MODIFIER     modifier;
 
-  YR_ARENA2_REFERENCE c_string_with_offset;
-  YR_ARENA2_REFERENCE rule;
-  YR_ARENA2_REFERENCE meta;
-  YR_ARENA2_REFERENCE string;
+  YR_ARENA2_REF c_string_with_offset;
+  YR_ARENA2_REF rule;
+  YR_ARENA2_REF meta;
+  YR_ARENA2_REF string;
 
 #line 180 "grammar.h" /* yacc.c:1916  */
 };

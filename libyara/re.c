@@ -274,7 +274,7 @@ int yr_re_compile(
     const char* re_string,
     int flags,
     YR_ARENA2* arena,
-    YR_ARENA2_REFERENCE* ref,
+    YR_ARENA2_REF* ref,
     RE_ERROR* error)
 {
   RE_AST* re_ast;
@@ -567,7 +567,7 @@ int yr_re_ast_split_at_chaining_point(
 int _yr_emit_inst(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
-    YR_ARENA2_REFERENCE* instruction_ref)
+    YR_ARENA2_REF* instruction_ref)
 {
   FAIL_ON_ERROR(yr_arena2_write_data(
       emit_context->arena,
@@ -584,8 +584,8 @@ int _yr_emit_inst_arg_uint8(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     uint8_t argument,
-    YR_ARENA2_REFERENCE* instruction_ref,
-    YR_ARENA2_REFERENCE* argument_ref)
+    YR_ARENA2_REF* instruction_ref,
+    YR_ARENA2_REF* argument_ref)
 {
   FAIL_ON_ERROR(yr_arena2_write_data(
       emit_context->arena,
@@ -609,8 +609,8 @@ int _yr_emit_inst_arg_uint16(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     uint16_t argument,
-    YR_ARENA2_REFERENCE* instruction_ref,
-    YR_ARENA2_REFERENCE* argument_ref)
+    YR_ARENA2_REF* instruction_ref,
+    YR_ARENA2_REF* argument_ref)
 {
   FAIL_ON_ERROR(yr_arena2_write_data(
       emit_context->arena,
@@ -634,8 +634,8 @@ int _yr_emit_inst_arg_uint32(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     uint32_t argument,
-    YR_ARENA2_REFERENCE* instruction_ref,
-    YR_ARENA2_REFERENCE* argument_ref)
+    YR_ARENA2_REF* instruction_ref,
+    YR_ARENA2_REF* argument_ref)
 {
   FAIL_ON_ERROR(yr_arena2_write_data(
       emit_context->arena,
@@ -659,8 +659,8 @@ int _yr_emit_inst_arg_int16(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     int16_t argument,
-    YR_ARENA2_REFERENCE* instruction_ref,
-    YR_ARENA2_REFERENCE* argument_ref)
+    YR_ARENA2_REF* instruction_ref,
+    YR_ARENA2_REF* argument_ref)
 {
   FAIL_ON_ERROR(yr_arena2_write_data(
       emit_context->arena,
@@ -685,8 +685,8 @@ int _yr_emit_inst_arg_struct(
     uint8_t opcode,
     void* structure,
     size_t structure_size,
-    YR_ARENA2_REFERENCE* instruction_ref,
-    YR_ARENA2_REFERENCE* argument_ref)
+    YR_ARENA2_REF* instruction_ref,
+    YR_ARENA2_REF* argument_ref)
 {
   FAIL_ON_ERROR(yr_arena2_write_data(
       emit_context->arena,
@@ -710,8 +710,8 @@ int _yr_emit_split(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     int16_t argument,
-    YR_ARENA2_REFERENCE* instruction_ref,
-    YR_ARENA2_REFERENCE* argument_ref)
+    YR_ARENA2_REF* instruction_ref,
+    YR_ARENA2_REF* argument_ref)
 {
   assert(opcode == RE_OPCODE_SPLIT_A || opcode == RE_OPCODE_SPLIT_B);
 
@@ -752,7 +752,7 @@ static int _yr_re_emit(
     RE_EMIT_CONTEXT* emit_context,
     RE_NODE* re_node,
     int flags,
-    YR_ARENA2_REFERENCE* code_ref)
+    YR_ARENA2_REF* code_ref)
 {
   yr_arena_off_t jmp_offset;
 
@@ -775,11 +775,11 @@ static int _yr_re_emit(
   int16_t* split_offset_addr = NULL;
   int16_t* jmp_offset_addr = NULL;
 
-  YR_ARENA2_REFERENCE instruction_ref;
-  YR_ARENA2_REFERENCE split_offset_ref;
-  YR_ARENA2_REFERENCE jmp_instruction_ref;
-  YR_ARENA2_REFERENCE jmp_offset_ref;
-  YR_ARENA2_REFERENCE repeat_start_args_ref;
+  YR_ARENA2_REF instruction_ref;
+  YR_ARENA2_REF split_offset_ref;
+  YR_ARENA2_REF jmp_instruction_ref;
+  YR_ARENA2_REF jmp_offset_ref;
+  YR_ARENA2_REF repeat_start_args_ref;
 
   switch(re_node->type)
   {

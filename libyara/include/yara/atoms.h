@@ -81,8 +81,8 @@ struct YR_ATOM_LIST_ITEM
 
   uint16_t backtrack;
 
-  YR_ARENA2_REFERENCE forward_code_ref;
-  YR_ARENA2_REFERENCE backward_code_ref;
+  YR_ARENA2_REF forward_code_ref;
+  YR_ARENA2_REF backward_code_ref;
 
   YR_ATOM_LIST_ITEM* next;
 };

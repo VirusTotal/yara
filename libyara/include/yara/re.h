@@ -194,7 +194,7 @@ int yr_re_compile(
     const char* re_string,
     int flags,
     YR_ARENA2* arena,
-    YR_ARENA2_REFERENCE* ref,
+    YR_ARENA2_REF* ref,
     RE_ERROR* error);
 
 
