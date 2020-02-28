@@ -107,11 +107,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Make sure that the string pointer is within the rules arena.
 #define ensure_within_rules_arena(x) \
-    if (yr_arena_page_for_address(context->rules->arena, x) == NULL) \
     { \
-      stop = true; \
-      result = ERROR_INTERNAL_FATAL_ERROR; \
-      break; \
+      YR_ARENA2_REF ref; \
+      if (yr_arena2_ptr_to_ref(context->rules->arena, x, &ref) == 0) \
+      { \
+        stop = true; \
+        result = ERROR_INTERNAL_FATAL_ERROR; \
+        break; \
+      } \
     }
 
 #define check_object_canary(o) \

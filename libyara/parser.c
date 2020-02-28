@@ -55,7 +55,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int yr_parser_emit(
     yyscan_t yyscanner,
     uint8_t instruction,
-    YR_ARENA2_REFERENCE* instruction_ref)
+    YR_ARENA2_REF* instruction_ref)
 {
   return yr_arena2_write_data(
       yyget_extra(yyscanner)->arena,
@@ -70,8 +70,8 @@ int yr_parser_emit_with_arg_double(
     yyscan_t yyscanner,
     uint8_t instruction,
     double argument,
-    YR_ARENA2_REFERENCE* instruction_ref,
-    YR_ARENA2_REFERENCE* argument_ref)
+    YR_ARENA2_REF* instruction_ref,
+    YR_ARENA2_REF* argument_ref)
 {
   int result = yr_arena2_write_data(
       yyget_extra(yyscanner)->arena,
@@ -96,8 +96,8 @@ int yr_parser_emit_with_arg_int32(
     yyscan_t yyscanner,
     uint8_t instruction,
     int32_t argument,
-    YR_ARENA2_REFERENCE* instruction_ref,
-    YR_ARENA2_REFERENCE* argument_ref)
+    YR_ARENA2_REF* instruction_ref,
+    YR_ARENA2_REF* argument_ref)
 {
   int result = yr_arena2_write_data(
       yyget_extra(yyscanner)->arena,
@@ -122,8 +122,8 @@ int yr_parser_emit_with_arg(
     yyscan_t yyscanner,
     uint8_t instruction,
     int64_t argument,
-    YR_ARENA2_REFERENCE* instruction_ref,
-    YR_ARENA2_REFERENCE* argument_ref)
+    YR_ARENA2_REF* instruction_ref,
+    YR_ARENA2_REF* argument_ref)
 {
   int result = yr_arena2_write_data(
       yyget_extra(yyscanner)->arena,
@@ -148,10 +148,10 @@ int yr_parser_emit_with_arg_reloc(
     yyscan_t yyscanner,
     uint8_t instruction,
     void* argument,
-    YR_ARENA2_REFERENCE* instruction_ref,
-    YR_ARENA2_REFERENCE* argument_ref)
+    YR_ARENA2_REF* instruction_ref,
+    YR_ARENA2_REF* argument_ref)
 {
-  YR_ARENA2_REFERENCE ref;
+  YR_ARENA2_REF ref;
 
   DECLARE_REFERENCE(void*, ptr) arg;
 
@@ -357,7 +357,7 @@ static int _yr_parser_write_string(
     YR_COMPILER* compiler,
     SIZED_STRING* str,
     RE_AST* re_ast,
-    YR_ARENA2_REFERENCE* string_ref,
+    YR_ARENA2_REF* string_ref,
     int* min_atom_quality,
     int* num_atom)
 {
@@ -382,7 +382,7 @@ static int _yr_parser_write_string(
   YR_STRING* string = (YR_STRING*) yr_arena2_ref_to_ptr(
       compiler->arena, string_ref);
 
-  YR_ARENA2_REFERENCE ref;
+  YR_ARENA2_REF ref;
 
   FAIL_ON_ERROR(yr_arena2_write_string(
       compiler->arena,
@@ -519,7 +519,7 @@ int yr_parser_reduce_string_declaration(
     YR_MODIFIER modifier,
     const char* identifier,
     SIZED_STRING* str,
-    YR_ARENA2_REFERENCE* string_ref)
+    YR_ARENA2_REF* string_ref)
 {
   int result = ERROR_SUCCESS;
   int min_atom_quality = YR_MAX_ATOM_QUALITY;
@@ -724,7 +724,7 @@ int yr_parser_reduce_string_declaration(
 
     while (re_ast != NULL)
     {
-      YR_ARENA2_REFERENCE ref;
+      YR_ARENA2_REF ref;
 
       uint32_t prev_string_idx = compiler->current_string_idx - 1;
 
@@ -839,7 +839,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
     yyscan_t yyscanner,
     int32_t flags,
     const char* identifier,
-    YR_ARENA2_REFERENCE* rule_ref)
+    YR_ARENA2_REF* rule_ref)
 {
   YR_FIXUP *fixup;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
@@ -879,7 +879,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
 
   YR_RULE* rule = (YR_RULE*) yr_arena2_ref_to_ptr(compiler->arena, rule_ref);
 
-  YR_ARENA2_REFERENCE ref;
+  YR_ARENA2_REF ref;
 
   FAIL_ON_ERROR(yr_arena2_write_string(
       compiler->arena,
@@ -897,7 +897,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
   memset(rule->time_cost_per_thread, 0, sizeof(rule->time_cost_per_thread));
   #endif
 
-  YR_ARENA2_REFERENCE jmp_offset_ref;
+  YR_ARENA2_REF jmp_offset_ref;
 
   // The OP_INIT_RULE instruction behaves like a jump. When the rule is disabled
   // it skips over the rule's code and go straight to the next rule's code. The
@@ -944,7 +944,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
 
 int yr_parser_reduce_rule_declaration_phase_2(
     yyscan_t yyscanner,
-    YR_ARENA2_REFERENCE* rule_ref)
+    YR_ARENA2_REF* rule_ref)
 {
   uint32_t max_strings_per_rule;
   uint32_t strings_in_rule = 0;
@@ -1131,9 +1131,9 @@ int yr_parser_reduce_meta_declaration(
     const char* identifier,
     const char* string,
     int64_t integer,
-    YR_ARENA2_REFERENCE* meta_ref)
+    YR_ARENA2_REF* meta_ref)
 {
-  YR_ARENA2_REFERENCE ref;
+  YR_ARENA2_REF ref;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
   FAIL_ON_ERROR(yr_arena2_allocate_struct(
@@ -1196,7 +1196,7 @@ int yr_parser_reduce_import(
 {
   int result;
 
-  YR_ARENA2_REFERENCE ref;
+  YR_ARENA2_REF ref;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
   YR_OBJECT* module_structure;
 

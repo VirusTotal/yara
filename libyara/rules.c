@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/globals.h>
 #include <yara/scan.h>
 #include <yara/scanner.h>
+#include <yara/compiler.h>
 
 
 YR_API int yr_rules_define_integer_variable(
@@ -383,42 +384,65 @@ YR_API int yr_rules_scan_proc(
 }
 
 
-YR_API int yr_rules_load_stream(
-    YR_STREAM* stream,
+int yr_rules_from_arena(
+    YR_ARENA2* arena,
     YR_RULES** rules)
 {
-  YARA_RULES_FILE_HEADER* header;
   YR_RULES* new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
 
   if (new_rules == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_arena_load_stream(stream, &new_rules->arena),
-      // cleanup
-      yr_free(new_rules));
+  YR_SUMMARY* summary = (YR_SUMMARY*) yr_arena2_get_ptr(
+      arena, YR_SUMMARY_SECTION, 0);
 
-  header = (YARA_RULES_FILE_HEADER*)
-      yr_arena_base_address(new_rules->arena);
+  // Now YR_RULES relies on this arena, let's increment the arena's
+  // reference count so that if the original owner of the arena calls
+  // yr_arena_destroy the arena is not destroyed.
+  yr_arena2_acquire(arena);
 
-  new_rules->num_rules = header->num_rules;
-  new_rules->num_strings = header->num_strings;
-  new_rules->num_namespaces = header->num_namespaces;
-  new_rules->code_start = header->code_start;
-  new_rules->externals_list_head = header->externals_list_head;
-  new_rules->rules_list_head = header->rules_list_head;
-  new_rules->ac_match_table = header->ac_match_table;
-  new_rules->ac_transition_table = header->ac_transition_table;
-  new_rules->ac_tables_size = header->ac_tables_size;
+  new_rules->arena = arena;
+  new_rules->num_rules = summary->num_rules;
+  new_rules->num_strings = summary->num_strings;
+  new_rules->num_namespaces = summary->num_namespaces;
 
-  FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_mutex_create(&new_rules->mutex),
-      // cleanup
-      yr_free(new_rules));
+  new_rules->rules_list_head = (YR_RULE*) yr_arena2_get_ptr(
+      arena, YR_RULES_TABLE, 0);
+
+  new_rules->strings_list_head = (YR_STRING*) yr_arena2_get_ptr(
+      arena, YR_STRINGS_TABLE, 0);
+
+  new_rules->externals_list_head = (YR_EXTERNAL_VARIABLE*) yr_arena2_get_ptr(
+      arena, YR_EXTERNAL_VARIABLES_TABLE, 0);
+
+  new_rules->ac_transition_table = (YR_AC_TRANSITION*) yr_arena2_get_ptr(
+      arena, YR_AC_TRANSITION_TABLE, 0);
+
+  new_rules->ac_match_table = (uint32_t*) yr_arena2_get_ptr(
+      arena, YR_AC_MATCHES_TABLE, 0);
+
+  new_rules->ac_match_pool = (YR_AC_MATCH*) yr_arena2_get_ptr(
+      arena, YR_AC_MATCHES_POOL, 0);
+
+  new_rules->code_start = (uint8_t*) yr_arena2_get_ptr(
+      arena, YR_CODE_SECTION, 0);
 
   *rules = new_rules;
 
   return ERROR_SUCCESS;
+}
+
+
+
+YR_API int yr_rules_load_stream(
+    YR_STREAM* stream,
+    YR_RULES** rules)
+{
+  YR_ARENA2* arena;
+
+  FAIL_ON_ERROR(yr_arena2_load_stream(stream, &arena));
+
+  return yr_rules_from_arena(arena, rules);
 }
 
 
@@ -448,7 +472,7 @@ YR_API int yr_rules_save_stream(
     YR_RULES* rules,
     YR_STREAM* stream)
 {
-  return yr_arena_save_stream(rules->arena, stream);
+  return yr_arena2_save_stream(rules->arena, stream);
 }
 
 
@@ -579,8 +603,7 @@ YR_API int yr_rules_destroy(
     external++;
   }
 
-  yr_mutex_destroy(&rules->mutex);
-  yr_arena_destroy(rules->arena);
+  yr_arena2_release(rules->arena);
   yr_free(rules);
 
   return ERROR_SUCCESS;

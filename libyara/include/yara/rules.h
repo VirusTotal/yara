@@ -178,4 +178,9 @@ YR_API void yr_rule_disable(
 YR_API void yr_rule_enable(
     YR_RULE* rule);
 
+
+int yr_rules_from_arena(
+    YR_ARENA2* arena,
+    YR_RULES** rules);
+
 #endif

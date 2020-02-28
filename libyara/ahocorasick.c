@@ -855,7 +855,7 @@ int yr_ac_add_string(
       state = next_state;
     }
 
-    YR_ARENA2_REFERENCE ref;
+    YR_ARENA2_REF ref;
 
     FAIL_ON_ERROR(yr_arena2_allocate_struct(
         arena,
