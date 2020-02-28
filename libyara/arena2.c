@@ -533,7 +533,8 @@ int yr_arena2_load_stream(
 
     FAIL_ON_ERROR_WITH_CLEANUP(
         yr_arena2_allocate_memory(
-            new_arena, i, buffers[i].size, &ref), yr_arena2_release(new_arena))
+            new_arena, i, buffers[i].size, &ref),
+        yr_arena2_release(new_arena))
 
     void* ptr = yr_arena2_get_ptr(new_arena, i, ref.offset);
 
@@ -566,7 +567,8 @@ int yr_arena2_load_stream(
            new_arena,
            ref.buffer_id,
            ref.offset,
-           EOL2), yr_arena2_release(new_arena))
+           EOL2),
+        yr_arena2_release(new_arena))
   }
 
   *arena = new_arena;

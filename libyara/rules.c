@@ -440,9 +440,18 @@ YR_API int yr_rules_load_stream(
 {
   YR_ARENA2* arena;
 
+  // Load the arena's data the stream. We are the owners of the arena.
   FAIL_ON_ERROR(yr_arena2_load_stream(stream, &arena));
 
-  return yr_rules_from_arena(arena, rules);
+  // Create the YR_RULES object from the arena, this makes YR_RULES owner
+  // of the arena too.
+  FAIL_ON_ERROR(yr_rules_from_arena(arena, rules));
+
+  // Release our ownership so that YR_RULES is the single owner. This way the
+  // arena is destroyed when YR_RULES is destroyed.
+  yr_arena2_release(arena);
+
+  return ERROR_SUCCESS;
 }
 
 
