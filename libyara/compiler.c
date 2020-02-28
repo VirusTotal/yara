@@ -511,7 +511,7 @@ static int _yr_compiler_set_namespace(
         namespace_,
         &ref));
 
-    ns->name = (char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
+    ns->name = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
     ns->idx = compiler->num_namespaces;
 
     compiler->current_namespace_idx = compiler->num_namespaces;
@@ -744,7 +744,9 @@ static int _yr_compiler_define_variable(
       external->identifier,
       &ref));
 
-  ext->identifier = (char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
+  ext->identifier = (const char*) yr_arena2_ref_to_ptr(
+      compiler->arena, &ref);
+
   ext->type = external->type;
   ext->value = external->value;
 
@@ -765,7 +767,8 @@ static int _yr_compiler_define_variable(
         ext_ref.offset + offsetof(YR_EXTERNAL_VARIABLE, value.s),
         EOL2));
 
-    ext->value.s = (char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
+    ext->value.s = (char*) yr_arena2_ref_to_ptr(
+        compiler->arena, &ref);
   }
 
   FAIL_ON_ERROR(yr_object_from_external_variable(

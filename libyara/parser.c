@@ -390,7 +390,8 @@ static int _yr_parser_write_string(
       identifier,
       &ref));
 
-  string->identifier = yr_arena2_ref_to_ptr(compiler->arena, &ref);
+  string->identifier = (const char*) yr_arena2_ref_to_ptr(
+      compiler->arena, &ref);
 
   if (modifier.flags & STRING_FLAGS_HEXADECIMAL ||
       modifier.flags & STRING_FLAGS_REGEXP ||
