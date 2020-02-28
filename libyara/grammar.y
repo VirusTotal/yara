@@ -669,7 +669,7 @@ string_modifiers
         // modifier. If we don't check for this then we can end up with
         // "base64 ascii" resulting in whatever is on the stack for "ascii"
         // overwriting the values for base64.
-        if (($2.flags & STRING_GFLAGS_BASE64) ||
+        if (($2.flags & STRING_FLAGS_BASE64) ||
             ($2.flags & STRING_FLAGS_BASE64_WIDE))
         {
           if ($$.alphabet != NULL)
@@ -760,7 +760,7 @@ string_modifier
       }
     | _BASE64_
       {
-        $$.flags = STRING_GFLAGS_BASE64;
+        $$.flags = STRING_FLAGS_BASE64;
         $$.alphabet = sized_string_new(DEFAULT_BASE64_ALPHABET);
       }
     | _BASE64_ '(' _TEXT_STRING_ ')'
@@ -777,7 +777,7 @@ string_modifier
 
         fail_if_error(result);
 
-        $$.flags = STRING_GFLAGS_BASE64;
+        $$.flags = STRING_FLAGS_BASE64;
         $$.alphabet = $3;
       }
     | _BASE64_WIDE_
