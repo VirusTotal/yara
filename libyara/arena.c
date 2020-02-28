@@ -816,65 +816,6 @@ int yr_arena_append(
   return ERROR_SUCCESS;
 }
 
-int yr_arena_append_arena2_buffer(
-    YR_ARENA* arena,
-    YR_ARENA2* arena2,
-    int buffer_id)
-{
-  uint8_t padding_data[15];
-  size_t padding_size = 16 - arena->current_page->used % 16;
-
-  if (padding_size < 16)
-  {
-    memset(&padding_data, 0xCC, padding_size);
-
-    FAIL_ON_ERROR(yr_arena_write_data(
-      arena,
-      padding_data,
-      padding_size,
-      NULL));
-  }
-
-  YR_ARENA_PAGE* new_page;
-
-  new_page = (YR_ARENA_PAGE*) yr_malloc(sizeof(YR_ARENA_PAGE));
-
-  if (new_page == NULL)
-    return ERROR_INSUFFICIENT_MEMORY;
-
-  new_page->address = arena2->buffers[buffer_id].data;
-  new_page->size = arena2->buffers[buffer_id].size;
-  new_page->used = arena2->buffers[buffer_id].used;
-  new_page->next = NULL;
-  new_page->prev = NULL;
-  new_page->reloc_list_head = NULL;
-  new_page->reloc_list_tail = NULL;
-
-  new_page->prev = arena->current_page;
-  arena->current_page->next = new_page;
-  arena->current_page = new_page;
-  arena->flags &= ~ARENA_FLAGS_COALESCED;
-
-  YR_RELOC2* reloc2 = arena2->reloc_list_head;
-
-  while (reloc2 != NULL)
-  {
-    if (reloc2->buffer_id == buffer_id)
-    {
-      FAIL_ON_ERROR(yr_arena_make_ptr_relocatable(
-          arena, new_page->address, reloc2->offset, EOL));
-    }
-
-    reloc2 = reloc2->next;
-  }
-
-  arena2->buffers[buffer_id].data = NULL;
-  arena2->buffers[buffer_id].size = 0;
-  arena2->buffers[buffer_id].used = 0;
-
-  return ERROR_SUCCESS;
-}
-
 
 //
 // yr_arena_duplicate

@@ -188,9 +188,4 @@ void yr_arena_print(
     YR_ARENA* arena);
 
 
-int yr_arena_append_arena2_buffer(
-    YR_ARENA* arena,
-    YR_ARENA2* arena2,
-    int buffer_id);
-
 #endif
