@@ -211,7 +211,6 @@ typedef struct YR_SUMMARY YR_SUMMARY;
 typedef struct YR_RULES_STATS YR_RULES_STATS;
 typedef struct YR_EXTERNAL_VARIABLE YR_EXTERNAL_VARIABLE;
 typedef struct YR_MATCH YR_MATCH;
-typedef struct YR_MATCH_LIST_ENTRY YR_MATCH_LIST_ENTRY;
 typedef struct YR_SCAN_CONTEXT YR_SCAN_CONTEXT;
 
 typedef union YR_VALUE YR_VALUE;
@@ -381,26 +380,6 @@ struct YR_AC_MATCH
   DECLARE_REFERENCE(YR_AC_MATCH*, next);
 };
 
-
-typedef struct YARA_RULES_FILE_HEADER
-{
-  uint32_t num_rules;
-  uint32_t num_strings;
-  uint32_t num_namespaces;
-
-  DECLARE_REFERENCE(YR_RULE*, rules_list_head);
-  DECLARE_REFERENCE(YR_EXTERNAL_VARIABLE*, externals_list_head);
-  DECLARE_REFERENCE(const uint8_t*, code_start);
-
-  DECLARE_REFERENCE(YR_AC_MATCH *, ac_match_pool);
-  DECLARE_REFERENCE(uint32_t*, ac_match_table);
-  DECLARE_REFERENCE(YR_AC_TRANSITION*, ac_transition_table);
-
-  // Size of ac_match_table and ac_transition_table in number of items (both
-  // tables have the same number of items)
-  uint32_t ac_tables_size;
-
-} YARA_RULES_FILE_HEADER;
 
 #pragma pack(pop)
 
