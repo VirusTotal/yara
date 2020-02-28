@@ -871,10 +871,9 @@ int yr_ac_add_string(
     YR_AC_MATCH* match = (YR_AC_MATCH*) yr_arena2_ref_to_ptr(arena, &ref);
 
     match->backtrack = state->depth + atom->backtrack;
-    match->string_idx = string_idx;
 
     match->string = (YR_STRING*) yr_arena2_get_ptr(
-        arena, YR_STRINGS_TABLE, match->string_idx * sizeof(YR_STRING));
+        arena, YR_STRINGS_TABLE, string_idx * sizeof(YR_STRING));
 
     match->forward_code = (uint8_t*) yr_arena2_ref_to_ptr(
         arena, &atom->forward_code_ref);

@@ -365,7 +365,6 @@ struct YR_EXTERNAL_VARIABLE
 struct YR_AC_MATCH
 {
   uint16_t backtrack;
-  uint32_t string_idx;
 
   DECLARE_REFERENCE(YR_STRING*, string);
   DECLARE_REFERENCE(const uint8_t*, forward_code);
