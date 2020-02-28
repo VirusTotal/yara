@@ -756,10 +756,10 @@ static int _yr_re_emit(
 {
   yr_arena_off_t jmp_offset;
 
-  yr_arena_off_t bookmark_1;
-  yr_arena_off_t bookmark_2;
-  yr_arena_off_t bookmark_3;
-  yr_arena_off_t bookmark_4;
+  yr_arena_off_t bookmark_1 = 0;
+  yr_arena_off_t bookmark_2 = 0;
+  yr_arena_off_t bookmark_3 = 0;
+  yr_arena_off_t bookmark_4 = 0;
 
   bool emit_split;
   bool emit_repeat;
