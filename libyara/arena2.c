@@ -672,7 +672,7 @@ int yr_arena2_save_stream(
     YR_ARENA2_REF* ref_ptr = (YR_ARENA2_REF*) reloc_ptr;
 
     // Let's convert the reference into a pointer again.
-    *reloc_ptr = arena->buffers[ref_ptr->buffer_id].data + ref_ptr->offset;
+    *reloc_ptr = yr_arena2_ref_to_ptr(arena, ref_ptr);
 
     reloc = reloc->next;
   }
