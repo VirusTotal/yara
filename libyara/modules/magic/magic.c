@@ -39,14 +39,16 @@ The original idea and inspiration for this module comes from Armin Buescher.
 
 #define MODULE_NAME magic
 
+
+// Thread-local storage key used to store a pointer to a MAGIC_CACHE struct.
 YR_THREAD_STORAGE_KEY magic_tls;
 
 
 typedef struct
 {
   magic_t magic_cookie;
-  const char* cached_types;
-  const char* cached_mime_types;
+  const char* cached_type;
+  const char* cached_mime_type;
 
 } MAGIC_CACHE ;
 
@@ -61,6 +63,20 @@ static int get_cache(MAGIC_CACHE** cache)
 
     if (*cache == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
+
+    (*cache)->magic_cookie = magic_open(0);
+
+    if ((*cache)->magic_cookie == NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+
+    if (magic_load((*cache)->magic_cookie, NULL) != 0)
+    {
+        magic_close((*cache)->magic_cookie);
+        return ERROR_INTERNAL_FATAL_ERROR;
+    }
+
+    (*cache)->cached_type = NULL;
+    (*cache)->cached_mime_type = NULL;
 
     return yr_thread_storage_set_value(&magic_tls, *cache);
   }
@@ -80,9 +96,9 @@ define_function(magic_mime_type)
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
     return_string(UNDEFINED);
 
-  get_cache(&cache);
+  FAIL_ON_ERROR(get_cache(&cache));
 
-  if (cache->cached_mime_types == NULL)
+  if (cache->cached_mime_type == NULL)
   {
     block = first_memory_block(context);
     block_data = block->fetch_data(block);
@@ -91,17 +107,17 @@ define_function(magic_mime_type)
     {
       magic_setflags(cache->magic_cookie, MAGIC_MIME_TYPE);
 
-      cache->cached_mime_types = magic_buffer(
+      cache->cached_mime_type = magic_buffer(
           cache->magic_cookie,
           block_data,
           block->size);
     }
   }
 
-  if (cache->cached_mime_types == NULL)
+  if (cache->cached_mime_type == NULL)
     return_string(UNDEFINED);
 
-  return_string((char*) cache->cached_mime_types);
+  return_string((char*) cache->cached_mime_type);
 }
 
 
@@ -116,9 +132,9 @@ define_function(magic_type)
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
     return_string(UNDEFINED);
 
-  get_cache(&cache);
+  FAIL_ON_ERROR(get_cache(&cache));
 
-  if (cache->cached_types == NULL)
+  if (cache->cached_type == NULL)
   {
     block = first_memory_block(context);
     block_data = block->fetch_data(block);
@@ -127,17 +143,17 @@ define_function(magic_type)
     {
       magic_setflags(cache->magic_cookie, 0);
 
-      cache->cached_types = magic_buffer(
+      cache->cached_type = magic_buffer(
           cache->magic_cookie,
           block_data,
           block->size);
     }
   }
 
-  if (cache->cached_types == NULL)
+  if (cache->cached_type == NULL)
     return_string(UNDEFINED);
 
-  return_string((char*) cache->cached_types);
+  return_string((char*) cache->cached_type);
 }
 
 begin_declarations;
@@ -146,9 +162,6 @@ begin_declarations;
   declare_function("type", "", "s", magic_type);
 
 end_declarations;
-
-
-
 
 
 int module_initialize(
@@ -164,7 +177,10 @@ int module_finalize(
   MAGIC_CACHE* cache = (MAGIC_CACHE*) yr_thread_storage_get_value(&magic_tls);
 
   if (cache != NULL)
+  {
+    magic_close(cache->magic_cookie);
     yr_free(cache);
+  }
 
   return yr_thread_storage_destroy(&magic_tls);
 }
@@ -176,31 +192,6 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-  MAGIC_CACHE* cache;
-
-  FAIL_ON_ERROR(get_cache(&cache));
-
-  cache->cached_types = NULL;
-  cache->cached_mime_types = NULL;
-
-  if (cache->magic_cookie == NULL)
-  {
-    cache->magic_cookie = magic_open(0);
-
-    if (cache->magic_cookie != NULL)
-    {
-      if (magic_load(cache->magic_cookie, NULL) != 0)
-      {
-        magic_close(cache->magic_cookie);
-        return ERROR_INTERNAL_FATAL_ERROR;
-      }
-    }
-    else
-    {
-      return ERROR_INSUFFICIENT_MEMORY;
-    }
-  }
-
   return ERROR_SUCCESS;
 }
 
@@ -208,5 +199,13 @@ int module_load(
 int module_unload(
     YR_OBJECT* module)
 {
+  MAGIC_CACHE* cache = (MAGIC_CACHE*) yr_thread_storage_get_value(&magic_tls);
+
+  if (cache != NULL)
+  {
+    cache->cached_type = NULL;
+    cache->cached_mime_type = NULL;
+  }
+
   return ERROR_SUCCESS;
 }
