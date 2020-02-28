@@ -33,52 +33,81 @@ The original idea and inspiration for this module comes from Armin Buescher.
 
 */
 
+#include <yara/mem.h>
 #include <yara/modules.h>
 #include <magic.h>
 
 #define MODULE_NAME magic
 
-magic_t magic_cookie[YR_MAX_THREADS];
+YR_THREAD_STORAGE_KEY magic_tls;
 
-const char* cached_types[YR_MAX_THREADS];
-const char* cached_mime_types[YR_MAX_THREADS];
+
+typedef struct
+{
+  magic_t magic_cookie;
+  const char* cached_types;
+  const char* cached_mime_types;
+
+} MAGIC_CACHE ;
+
+
+static int get_cache(MAGIC_CACHE** cache)
+{
+  *cache = (MAGIC_CACHE*) yr_thread_storage_get_value(&magic_tls);
+
+  if (*cache == NULL)
+  {
+    *cache = (MAGIC_CACHE*) yr_malloc(sizeof(MAGIC_CACHE));
+
+    if (*cache == NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+
+    return yr_thread_storage_set_value(&magic_tls, *cache);
+  }
+
+  return ERROR_SUCCESS;
+}
 
 
 define_function(magic_mime_type)
 {
-  YR_MEMORY_BLOCK* block;
   YR_SCAN_CONTEXT* context = scan_context();
+  YR_MEMORY_BLOCK* block;
+  MAGIC_CACHE* cache;
 
   const uint8_t* block_data;
 
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
     return_string(UNDEFINED);
 
-  if (cached_mime_types[context->tidx] == NULL)
+  get_cache(&cache);
+
+  if (cache->cached_mime_types == NULL)
   {
     block = first_memory_block(context);
     block_data = block->fetch_data(block);
 
     if (block_data != NULL)
     {
-      magic_setflags(magic_cookie[context->tidx], MAGIC_MIME_TYPE);
+      magic_setflags(cache->magic_cookie, MAGIC_MIME_TYPE);
 
-      cached_mime_types[context->tidx] = magic_buffer(
-          magic_cookie[context->tidx],
+      cache->cached_mime_types = magic_buffer(
+          cache->magic_cookie,
           block_data,
           block->size);
     }
   }
 
-  if (cached_mime_types[context->tidx] == NULL)
+  if (cache->cached_mime_types == NULL)
     return_string(UNDEFINED);
 
-  return_string((char*) cached_mime_types[context->tidx]);
+  return_string((char*) cache->cached_mime_types);
 }
 
 
 define_function(magic_type)
 {
+  MAGIC_CACHE* cache;
   YR_MEMORY_BLOCK* block;
   YR_SCAN_CONTEXT* context = scan_context();
 
@@ -87,26 +116,28 @@ define_function(magic_type)
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
     return_string(UNDEFINED);
 
-  if (cached_types[context->tidx] == NULL)
+  get_cache(&cache);
+
+  if (cache->cached_types == NULL)
   {
     block = first_memory_block(context);
     block_data = block->fetch_data(block);
 
     if (block_data != NULL)
     {
-      magic_setflags(magic_cookie[context->tidx], 0);
+      magic_setflags(cache->magic_cookie, 0);
 
-      cached_types[context->tidx] = magic_buffer(
-          magic_cookie[context->tidx],
+      cache->cached_types = magic_buffer(
+          cache->magic_cookie,
           block_data,
           block->size);
     }
   }
 
-  if (cached_types[context->tidx] == NULL)
+  if (cache->cached_types == NULL)
     return_string(UNDEFINED);
 
-  return_string((char*) cached_types[context->tidx]);
+  return_string((char*) cache->cached_types);
 }
 
 begin_declarations;
@@ -117,28 +148,25 @@ begin_declarations;
 end_declarations;
 
 
+
+
+
 int module_initialize(
     YR_MODULE* module)
 {
-  int i;
-
-  for (i = 0; i < YR_MAX_THREADS; i++)
-    magic_cookie[i] = NULL;
-
-  return ERROR_SUCCESS;
+  return yr_thread_storage_create(&magic_tls);
 }
 
 
 int module_finalize(
     YR_MODULE* module)
 {
-  int i;
+  MAGIC_CACHE* cache = (MAGIC_CACHE*) yr_thread_storage_get_value(&magic_tls);
 
-  for (i = 0; i < YR_MAX_THREADS; i++)
-    if (magic_cookie[i] != NULL)
-      magic_close(magic_cookie[i]);
+  if (cache != NULL)
+    yr_free(cache);
 
-  return ERROR_SUCCESS;
+  return yr_thread_storage_destroy(&magic_tls);
 }
 
 
@@ -148,18 +176,22 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-  cached_types[context->tidx] = NULL;
-  cached_mime_types[context->tidx] = NULL;
+  MAGIC_CACHE* cache;
 
-  if (magic_cookie[context->tidx] == NULL)
+  FAIL_ON_ERROR(get_cache(&cache));
+
+  cache->cached_types = NULL;
+  cache->cached_mime_types = NULL;
+
+  if (cache->magic_cookie == NULL)
   {
-    magic_cookie[context->tidx] = magic_open(0);
+    cache->magic_cookie = magic_open(0);
 
-    if (magic_cookie[context->tidx] != NULL)
+    if (cache->magic_cookie != NULL)
     {
-      if (magic_load(magic_cookie[context->tidx], NULL) != 0)
+      if (magic_load(cache->magic_cookie, NULL) != 0)
       {
-        magic_close(magic_cookie[context->tidx]);
+        magic_close(cache->magic_cookie);
         return ERROR_INTERNAL_FATAL_ERROR;
       }
     }

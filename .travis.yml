@@ -7,8 +7,7 @@ matrix:
     - os: linux
       dist: xenial
       sudo: required
-      # TODO(vmalvarez): enable magic module when all dependencies from tidx have been removed)
-      env: CONFIGFLAGS="CFLAGS=-m64 --enable-cuckoo --enable-pb-tests --enable-address-sanitizer"
+      env: CONFIGFLAGS="CFLAGS=-m64 --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
       # The certificate for scan.coverity.com is too new and is not recognized by
       # wget. This command adds the certificate to /etc/ssl/certs/ca-certificates.crt
       # See: https://github.com/travis-ci/travis-ci/issues/6142
