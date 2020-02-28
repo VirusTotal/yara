@@ -888,7 +888,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
       identifier,
       &ref));
 
-  rule->identifier = yr_arena2_ref_to_ptr(compiler->arena, &ref);
+  rule->identifier = (const char*) yr_arena2_ref_to_ptr(compiler->arena, &ref);
   rule->flags = flags;
   rule->ns = ns;
   rule->num_atoms = 0;
@@ -958,7 +958,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
       YR_CONFIG_MAX_STRINGS_PER_RULE,
       (void*) &max_strings_per_rule);
 
-  YR_RULE* rule = yr_arena2_ref_to_ptr(compiler->arena, rule_ref);
+  YR_RULE* rule = (YR_RULE*) yr_arena2_ref_to_ptr(compiler->arena, rule_ref);
 
   // Show warning if the rule is generating too many atoms. The warning is
   // shown if the number of atoms is greater than 20 times the maximum number
@@ -1005,7 +1005,7 @@ FAIL_ON_ERROR(yr_parser_emit_with_arg(
 
   fixup = compiler->fixup_stack_head;
 
-  int32_t* jmp_offset_addr = yr_arena2_ref_to_ptr(
+  int32_t* jmp_offset_addr = (int32_t*) yr_arena2_ref_to_ptr(
       compiler->arena, &fixup->ref);
 
   int32_t jmp_offset = \
