@@ -1198,7 +1198,7 @@ static int _yr_re_emit(
 
       bookmark_4 = current_re_code_offset();
 
-      repeat_start_args_addr = yr_arena2_ref_to_ptr(
+      repeat_start_args_addr = (RE_REPEAT_ARGS*) yr_arena2_ref_to_ptr(
           emit_context->arena, &repeat_start_args_ref);
 
       if (bookmark_4 - bookmark_1 > INT32_MAX)
@@ -1237,7 +1237,7 @@ static int _yr_re_emit(
       if (bookmark_2 - bookmark_1 > INT16_MAX)
         return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
-      split_offset_addr = yr_arena2_ref_to_ptr(
+      split_offset_addr = (int16_t*) yr_arena2_ref_to_ptr(
           emit_context->arena, &split_offset_ref);
 
       *split_offset_addr = (int16_t) (bookmark_2 - bookmark_1);

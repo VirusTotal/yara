@@ -180,19 +180,19 @@ YR_API int yr_scanner_create(
   new_scanner->entry_point = UNDEFINED;
   new_scanner->canary = rand();
 
-  new_scanner->rule_matches_flags = yr_calloc(
+  new_scanner->rule_matches_flags = (YR_BITMASK*) yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
 
-  new_scanner->ns_unsatisfied_flags = yr_calloc(
+  new_scanner->ns_unsatisfied_flags = (YR_BITMASK*) yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_namespaces));
 
-  new_scanner->matches = yr_calloc(
+  new_scanner->matches = (YR_MATCHES*) yr_calloc(
       rules->num_strings, sizeof(YR_MATCHES));
 
-  new_scanner->unconfirmed_matches = yr_calloc(
+  new_scanner->unconfirmed_matches = (YR_MATCHES*) yr_calloc(
       rules->num_strings, sizeof(YR_MATCHES));
 
-  new_scanner->private_matches = yr_calloc(
+  new_scanner->private_matches = (YR_MATCHES*) yr_calloc(
       rules->num_strings, sizeof(YR_MATCHES));
 
   #ifdef PROFILING_ENABLED

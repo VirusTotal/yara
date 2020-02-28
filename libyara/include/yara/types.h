@@ -248,7 +248,7 @@ struct YR_NAMESPACE
   uint32_t idx;
 
   // Pointer to namespace's name.
-  DECLARE_REFERENCE(char*, name);
+  DECLARE_REFERENCE(const char*, name);
 };
 
 
@@ -303,7 +303,7 @@ struct YR_STRING
   int64_t fixed_offset;
 
   // Identifier of this string.
-  DECLARE_REFERENCE(char*, identifier);
+  DECLARE_REFERENCE(const char*, identifier);
 
   // Pointer to the string itself, the length is indicated by the "length"
   // field.
