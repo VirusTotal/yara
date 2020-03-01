@@ -663,8 +663,6 @@ string_modifiers
       }
     | string_modifiers string_modifier
       {
-        int result = ERROR_SUCCESS;
-
         $$ = $1;
 
         // Only set the xor minimum and maximum if we are dealing with the
