@@ -279,8 +279,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %destructor { yr_free($$); $$ = NULL; } arguments
 %destructor { yr_free($$); $$ = NULL; } arguments_list
 
-%destructor { yr_free($$.alphabet); $$.alphabet = NULL; } string_modifier
-%destructor { yr_free($$.alphabet); $$.alphabet = NULL; } string_modifiers
+%destructor {
+  if ($$.alphabet != NULL)
+  {
+    yr_free($$.alphabet);
+    $$.alphabet = NULL;
+  }
+} string_modifier
+
+%destructor {
+  if ($$.alphabet != NULL)
+  {
+    yr_free($$.alphabet);
+    $$.alphabet = NULL;
+  }
+} string_modifiers
 
 
 %union {
@@ -650,8 +663,11 @@ string_modifiers
 
         if ($1.flags & $2.flags)
         {
-          yr_free($1.alphabet);
-          yr_free($2.alphabet);
+          if ($1.alphabet != NULL)
+            yr_free($1.alphabet);
+
+          if ($2.alphabet != NULL)
+            yr_free($2.alphabet);
 
           fail_with_error(ERROR_DUPLICATED_MODIFIER);
         }
