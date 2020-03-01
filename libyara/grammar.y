@@ -659,23 +659,7 @@ string_modifiers
       }
     | string_modifiers string_modifier
       {
-        int result = ERROR_SUCCESS;
-
-        if ($1.flags & $2.flags)
-        {
-          if ($1.alphabet != NULL)
-            yr_free($1.alphabet);
-
-          if ($2.alphabet != NULL)
-            yr_free($2.alphabet);
-
-          fail_with_error(ERROR_DUPLICATED_MODIFIER);
-        }
-        else
-        {
-          $$ = $1;
-          $$.flags = $1.flags | $2.flags;
-        }
+        $$ = $1;
 
         // Only set the xor minimum and maximum if we are dealing with the
         // xor modifier. If we don't check for this then we can end up with
@@ -700,17 +684,33 @@ string_modifiers
             {
               yr_compiler_set_error_extra_info(
                   compiler, "can not specify multiple alphabets");
-              result = ERROR_INVALID_MODIFIER;
+
+              yr_free($2.alphabet);
               yr_free($$.alphabet);
+
+              fail_with_error(ERROR_INVALID_MODIFIER);
             }
-            yr_free($2.alphabet);
+            else
+            {
+              yr_free($2.alphabet);
+            }
           }
           else
           {
             $$.alphabet = $2.alphabet;
           }
+        }
 
-          fail_if_error(result);
+        if ($$.flags & $2.flags)
+        {
+          if ($$.alphabet != NULL)
+            yr_free($$.alphabet);
+
+          fail_with_error(ERROR_DUPLICATED_MODIFIER);
+        }
+        else
+        {
+          $$.flags = $$.flags | $2.flags;
         }
       }
     ;
