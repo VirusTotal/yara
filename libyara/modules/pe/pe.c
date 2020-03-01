@@ -280,6 +280,7 @@ static void pe_parse_rich_signature(
   return;
 }
 
+
 static void pe_parse_debug_directory(
     PE* pe)
 {
@@ -336,6 +337,9 @@ static void pe_parse_debug_directory(
 
     PCV_HEADER cv_hdr = (PCV_HEADER) (pe->data + pcv_hdr_offset);
 
+    if (!struct_fits_in_pe(pe, cv_hdr, CV_HEADER))
+      continue;
+
     if (yr_le32toh(cv_hdr->dwSignature) == CVINFO_PDB20_CVSIGNATURE)
     {
       PCV_INFO_PDB20 pdb20 = (PCV_INFO_PDB20) cv_hdr;
@@ -354,7 +358,7 @@ static void pe_parse_debug_directory(
     if (pdb_path != NULL)
     {
       pdb_path_len = strnlen(
-        pdb_path, yr_min(available_space(pe, pdb_path), MAX_PATH));
+          pdb_path, yr_min(available_space(pe, pdb_path), MAX_PATH));
 
       if (pdb_path_len > 0 && pdb_path_len < MAX_PATH)
       {
