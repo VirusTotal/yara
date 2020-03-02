@@ -71,20 +71,21 @@ static int _yr_scanner_scan_mem_block(
     {
       match = &rules->ac_match_pool[match_table[state]];
 
-      while (match != NULL)
+      if (match != NULL)
       {
-        if (match->backtrack <= i)
+        do
         {
-          FAIL_ON_ERROR(yr_scan_verify_match(
-              scanner,
-              match,
-              block_data,
-              block->size,
-              block->base,
-              i - match->backtrack));
-        }
-
-        match = match->next;
+          if (match->backtrack <= i)
+          {
+            FAIL_ON_ERROR(yr_scan_verify_match(
+                scanner,
+                match,
+                block_data,
+                block->size,
+                block->base,
+                i - match->backtrack));
+          }
+        } while ((match++->flags & YR_AC_MATCH_FLAG_LAST) == 0);
       }
     }
 
@@ -113,21 +114,23 @@ static int _yr_scanner_scan_mem_block(
   {
     match = &rules->ac_match_pool[match_table[state]];
 
-    while (match != NULL)
+    if (match != NULL)
     {
-      if (match->backtrack <= i)
+      do
       {
-        FAIL_ON_ERROR(yr_scan_verify_match(
-            scanner,
-            match,
-            block_data,
-            block->size,
-            block->base,
-            i - match->backtrack));
-      }
-
-      match = match->next;
+        if (match->backtrack <= i)
+        {
+          FAIL_ON_ERROR(yr_scan_verify_match(
+              scanner,
+              match,
+              block_data,
+              block->size,
+              block->base,
+              i - match->backtrack));
+        }
+      } while ((match++->flags & YR_AC_MATCH_FLAG_LAST) == 0);
     }
+
   }
 
 
