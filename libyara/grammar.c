@@ -341,7 +341,7 @@ union YYSTYPE
   double          double_;
   YR_MODIFIER     modifier;
 
-  YR_ARENA2_REF c_string_with_offset;
+  YR_ARENA2_REF tag;
   YR_ARENA2_REF rule;
   YR_ARENA2_REF meta;
   YR_ARENA2_REF string;
@@ -1800,7 +1800,7 @@ yyreduce:
             compiler->arena, &(yyvsp[-4].rule));
 
         rule->tags = (char*) yr_arena2_ref_to_ptr(
-            compiler->arena, &(yyvsp[-3].c_string_with_offset));
+            compiler->arena, &(yyvsp[-3].tag));
 
         rule->metas = (YR_META*) yr_arena2_ref_to_ptr(
             compiler->arena, &(yyvsp[-1].meta));
@@ -1908,7 +1908,7 @@ yyreduce:
   case 22:
 #line 442 "grammar.y" /* yacc.c:1663  */
     {
-        (yyval.c_string_with_offset) = YR_ARENA_NULL_REF;
+        (yyval.tag) = YR_ARENA_NULL_REF;
       }
 #line 1914 "grammar.c" /* yacc.c:1663  */
     break;
@@ -1924,7 +1924,7 @@ yyreduce:
         fail_if_error(yr_arena2_write_string(
             yyget_extra(yyscanner)->arena, YR_SZ_POOL, "", NULL));
 
-        (yyval.c_string_with_offset) = (yyvsp[0].c_string_with_offset);
+        (yyval.tag) = (yyvsp[0].tag);
       }
 #line 1930 "grammar.c" /* yacc.c:1663  */
     break;
@@ -1933,7 +1933,7 @@ yyreduce:
 #line 462 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_arena2_write_string(
-            yyget_extra(yyscanner)->arena, YR_SZ_POOL, (yyvsp[0].c_string), &(yyval.c_string_with_offset));
+            yyget_extra(yyscanner)->arena, YR_SZ_POOL, (yyvsp[0].c_string), &(yyval.tag));
 
         yr_free((yyvsp[0].c_string));
 
@@ -1961,7 +1961,7 @@ yyreduce:
 
         // Take the address of first tag's identifier in the list.
         char* tag = (char*) yr_arena2_ref_to_ptr(
-            compiler->arena, &(yyval.c_string_with_offset));
+            compiler->arena, &(yyval.tag));
 
 	// Search for duplicated tags. Tags are written one after
 	// the other, with zeroes in between (i.e: tag1/0tag2/0tag3)
@@ -1978,7 +1978,7 @@ yyreduce:
           tag += strlen(tag) + 1;
         }
 
-        (yyval.c_string_with_offset) = (yyvsp[-1].c_string_with_offset);
+        (yyval.tag) = (yyvsp[-1].tag);
       }
 #line 1984 "grammar.c" /* yacc.c:1663  */
     break;

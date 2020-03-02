@@ -171,7 +171,7 @@ union YYSTYPE
   double          double_;
   YR_MODIFIER     modifier;
 
-  YR_ARENA2_REF c_string_with_offset;
+  YR_ARENA2_REF tag;
   YR_ARENA2_REF rule;
   YR_ARENA2_REF meta;
   YR_ARENA2_REF string;
