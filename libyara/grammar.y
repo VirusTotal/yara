@@ -469,30 +469,38 @@ tag_list
       }
     | tag_list _IDENTIFIER_
       {
-        int result = ERROR_SUCCESS;
+        YR_ARENA2_REF ref;
 
-        char* tag_name = (char*) yr_arena2_ref_to_ptr(
-            compiler->arena, &$<c_string_with_offset>$);
-
-        while (*tag_name != '\0')
-        {
-          if (strcmp(tag_name, $2) == 0)
-          {
-            yr_compiler_set_error_extra_info(compiler, tag_name);
-            result = ERROR_DUPLICATED_TAG_IDENTIFIER;
-            break;
-          }
-
-          tag_name += strlen(tag_name) + 1;
-        }
-
-        if (result == ERROR_SUCCESS)
-          result = yr_arena2_write_string(
-              yyget_extra(yyscanner)->arena, YR_SZ_POOL, $2, NULL);
+        // Write the new tag identifier.
+        int result = yr_arena2_write_string(
+            yyget_extra(yyscanner)->arena, YR_SZ_POOL, $2, &ref);
 
         yr_free($2);
 
         fail_if_error(result);
+
+        // Get the address for the tag identifier just written.
+        char* new_tag = (char*) yr_arena2_ref_to_ptr(
+            compiler->arena, &ref);
+
+        // Take the address of first tag's identifier in the list.
+        char* tag = (char*) yr_arena2_ref_to_ptr(
+            compiler->arena, &$<c_string_with_offset>$);
+
+	// Search for duplicated tags. Tags are written one after
+	// the other, with zeroes in between (i.e: tag1/0tag2/0tag3)
+	// that's why can use tag < new_tag as the condition for the
+	// loop.
+        while (tag < new_tag)
+        {
+          if (strcmp(tag, new_tag) == 0)
+          {
+            yr_compiler_set_error_extra_info(compiler, tag);
+            fail_with_error(ERROR_DUPLICATED_TAG_IDENTIFIER);
+          }
+
+          tag += strlen(tag) + 1;
+        }
 
         $$ = $1;
       }
