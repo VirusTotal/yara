@@ -239,8 +239,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <meta> meta_declaration
 %type <meta> meta_declarations
 
-%type <c_string_with_offset> tags
-%type <c_string_with_offset> tag_list
+%type <tag> tags
+%type <tag> tag_list
 
 %type <modifier> string_modifier
 %type <modifier> string_modifiers
@@ -304,7 +304,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   double          double_;
   YR_MODIFIER     modifier;
 
-  YR_ARENA2_REF c_string_with_offset;
+  YR_ARENA2_REF tag;
   YR_ARENA2_REF rule;
   YR_ARENA2_REF meta;
   YR_ARENA2_REF string;
@@ -461,7 +461,7 @@ tag_list
     : _IDENTIFIER_
       {
         int result = yr_arena2_write_string(
-            yyget_extra(yyscanner)->arena, YR_SZ_POOL, $1, &$<c_string_with_offset>$);
+            yyget_extra(yyscanner)->arena, YR_SZ_POOL, $1, &$<tag>$);
 
         yr_free($1);
 
@@ -485,7 +485,7 @@ tag_list
 
         // Take the address of first tag's identifier in the list.
         char* tag = (char*) yr_arena2_ref_to_ptr(
-            compiler->arena, &$<c_string_with_offset>$);
+            compiler->arena, &$<tag>$);
 
 	// Search for duplicated tags. Tags are written one after
 	// the other, with zeroes in between (i.e: tag1/0tag2/0tag3)
