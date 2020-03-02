@@ -36,14 +36,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 int sized_string_cmp_nocase(
-  SIZED_STRING* s1,
-  SIZED_STRING* s2)
+    SIZED_STRING* s1,
+    SIZED_STRING* s2)
 {
   size_t i = 0;
 
   while (s1->length > i &&
          s2->length > i &&
-         yr_lowercase[(uint8_t) s1->c_string[i]] == yr_lowercase[(uint8_t) s2->c_string[i]])
+         yr_lowercase[(uint8_t) s1->c_string[i]] ==
+         yr_lowercase[(uint8_t) s2->c_string[i]])
   {
     i++;
   }
