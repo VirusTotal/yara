@@ -406,25 +406,25 @@ int yr_rules_from_arena(
   new_rules->num_strings = summary->num_strings;
   new_rules->num_namespaces = summary->num_namespaces;
 
-  new_rules->rules_list_head = (YR_RULE*) yr_arena2_get_ptr(
+  new_rules->rules_list_head = yr_arena2_get_ptr(
       arena, YR_RULES_TABLE, 0);
 
-  new_rules->strings_list_head = (YR_STRING*) yr_arena2_get_ptr(
+  new_rules->strings_list_head = yr_arena2_get_ptr(
       arena, YR_STRINGS_TABLE, 0);
 
-  new_rules->externals_list_head = (YR_EXTERNAL_VARIABLE*) yr_arena2_get_ptr(
+  new_rules->externals_list_head = yr_arena2_get_ptr(
       arena, YR_EXTERNAL_VARIABLES_TABLE, 0);
 
-  new_rules->ac_transition_table = (YR_AC_TRANSITION*) yr_arena2_get_ptr(
+  new_rules->ac_transition_table = yr_arena2_get_ptr(
       arena, YR_AC_TRANSITION_TABLE, 0);
 
-  new_rules->ac_match_table = (uint32_t*) yr_arena2_get_ptr(
-      arena, YR_AC_MATCHES_TABLE, 0);
+  new_rules->ac_match_table = yr_arena2_get_ptr(
+      arena, YR_AC_STATE_MATCHES_TABLE, 0);
 
-  new_rules->ac_match_pool = (YR_AC_MATCH*) yr_arena2_get_ptr(
-      arena, YR_AC_MATCHES_POOL, 0);
+  new_rules->ac_match_pool = yr_arena2_get_ptr(
+      arena, YR_AC_STATE_MATCHES_POOL, 0);
 
-  new_rules->code_start = (uint8_t*) yr_arena2_get_ptr(
+  new_rules->code_start = yr_arena2_get_ptr(
       arena, YR_CODE_SECTION, 0);
 
   *rules = new_rules;
@@ -547,13 +547,13 @@ YR_API int yr_rules_get_stats(
 
     if (rules->ac_match_table[i] != UINT32_MAX)
     {
-      YR_AC_MATCH* match = &rules->ac_match_pool[rules->ac_match_table[i]];
+      YR_AC_MATCH *m = &rules->ac_match_pool[rules->ac_match_table[i]];
 
-      while (match != NULL)
+      while (m->flags == 0)
       {
         match_list_length++;
         stats->ac_matches++;
-        match = match->next;
+        m++;
       }
     }
 

@@ -67,8 +67,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_CODE_SECTION               6
 #define YR_RE_CODE_SECTION            7
 #define YR_AC_TRANSITION_TABLE        8
-#define YR_AC_MATCHES_TABLE           9
-#define YR_AC_MATCHES_POOL           10
+#define YR_AC_STATE_MATCHES_TABLE     9
+#define YR_AC_STATE_MATCHES_POOL     10
 #define YR_SUMMARY_SECTION           11
 
 
@@ -189,10 +189,15 @@ typedef struct _YR_COMPILER
   //      expressions. This is the code executed by yr_re_exec and
   //      yr_re_fast_exec.
   //   YR_AC_TRANSITION_TABLE:
-  //      Contains the Aho-Corasick transition table.
-  //   YR_AC_MATCHES_TABLE
-  //   YR_AC_MATCHES_POOL:
-  //      An array of YR_AC_MATCH structures.
+  //      An array of uint32_t containing the Aho-Corasick transition table.
+  //      See comment in _yr_ac_build_transition_table for details.
+  //   YR_AC_STATE_MATCHES_TABLE:
+  //      An array of uint32_t with the same number of items than the transition
+  //      table. If entry N in the transition table corresponds to some
+  //      Aho-Corasick state, the N-th item in this array has the index within
+  //      the matches pool where the list of matches for that state begins.
+  //   YR_AC_STATE_MATCHES_POOL:
+  //      An array of YR_AC_MATCH structures
   //
   YR_ARENA2* arena;
 

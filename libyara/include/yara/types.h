@@ -48,9 +48,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     } YR_ALIGN(8)
 
 
-#define NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL      0x01
-
-
 // Flags for YR_RULE
 #define RULE_FLAGS_PRIVATE              0x01
 #define RULE_FLAGS_GLOBAL               0x02
@@ -194,12 +191,13 @@ typedef struct RE_FIBER RE_FIBER;
 typedef struct RE_FIBER_LIST RE_FIBER_LIST;
 typedef struct RE_FIBER_POOL RE_FIBER_POOL;
 
-typedef struct YR_AC_MATCH YR_AC_MATCH;
 typedef struct YR_AC_STATE YR_AC_STATE;
 typedef struct YR_AC_AUTOMATON YR_AC_AUTOMATON;
 typedef struct YR_AC_TABLES YR_AC_TABLES;
+typedef struct YR_AC_MATCH_LIST_ENTRY YR_AC_MATCH_LIST_ENTRY;
+typedef struct YR_AC_MATCH YR_AC_MATCH;
 
-typedef YR_AC_MATCH* YR_AC_MATCH_TABLE_ENTRY;
+typedef YR_AC_MATCH_LIST_ENTRY* YR_AC_MATCH_TABLE_ENTRY;
 
 typedef struct YR_NAMESPACE YR_NAMESPACE;
 typedef struct YR_META YR_META;
@@ -370,18 +368,29 @@ struct YR_EXTERNAL_VARIABLE
 };
 
 
+#define YR_AC_MATCH_FLAG_LAST   1
+
 struct YR_AC_MATCH
 {
+  int8_t  flags;
+  // When the Aho-Corasick automaton reaches some state that has associated
+  // matches, the current position in the input buffer is a few bytes past
+  // the point where the match actually occurs, for example, when looking for
+  // string "bar" in "foobarbaz", when the automaton reaches the state associated
+  // to the ending "r" in "bar, which is the one that has a match, the current
+  // position in the input is 6 (the "b" after the "r"), but the match is at
+  // position 3. The backtrack field indicates how many bytes the scanner has
+  // to go back to find the point where the match actually start.
   uint16_t backtrack;
 
   DECLARE_REFERENCE(YR_STRING*, string);
   DECLARE_REFERENCE(const uint8_t*, forward_code);
   DECLARE_REFERENCE(const uint8_t*, backward_code);
-  DECLARE_REFERENCE(YR_AC_MATCH*, next);
 };
 
-
 #pragma pack(pop)
+
+
 
 
 //
@@ -522,7 +531,21 @@ struct YR_AC_STATE
   YR_AC_STATE* failure;
   YR_AC_STATE* first_child;
   YR_AC_STATE* siblings;
-  YR_AC_MATCH* matches;
+  YR_AC_MATCH_LIST_ENTRY* matches;
+};
+
+
+struct YR_AC_MATCH_LIST_ENTRY
+{
+  uint16_t backtrack;
+  uint32_t string_idx;
+  uint32_t xref;
+
+  YR_ARENA2_REF ref;
+  YR_ARENA2_REF forward_code_ref;
+  YR_ARENA2_REF backward_code_ref;
+
+  YR_AC_MATCH_LIST_ENTRY* next;
 };
 
 
@@ -532,14 +555,28 @@ struct YR_AC_AUTOMATON
   // stored in tables_size.
   uint32_t tables_size;
 
+  // The first slot in the transition table (t_table) that may be be unused.
+  // Used for speeding up the construction of the transition table.
   uint32_t t_table_unused_candidate;
 
   // Bitmask where each bit indicates if the corresponding slot in m_table
   // and t_table is already in use.
   YR_BITMASK* bitmask;
 
+  // Transition table. See comment in _yr_ac_build_transition_table for more
+  // details.
   YR_AC_TRANSITION* t_table;
+
+  // Pointer to an array of YR_AC_MATCH_LIST_ENTRY* pointers. This array has the same
+  // number of entries than the transition table. If entry N in the transition
+  // table corresponds to an Aho-Corasick state, the N-th entry in the array
+  // points to the first item of the list of matches corresponding to that state.
+  // If entry N in the transition table does not corresponds to a state, or the
+  // state doesn't have any match, the N-th entry in this array will be a NULL
+  // pointer.
   YR_AC_MATCH_TABLE_ENTRY* m_table;
+
+  // Pointer to the root Aho-Corasick state.
   YR_AC_STATE* root;
 };
 
@@ -554,6 +591,7 @@ struct YR_RULES
 
   YR_AC_TRANSITION* ac_transition_table;
   YR_AC_MATCH* ac_match_pool;
+
   uint32_t* ac_match_table;
 
   const uint8_t* code_start;
@@ -585,7 +623,7 @@ struct YR_RULES_STATS
   uint32_t strings;
 
   // Total number of Aho-Corasick matches. Each node in the  Aho-Corasick
-  // automaton has a list of YR_AC_MATCH structures (match list) pointing to
+  // automaton has a list of YR_AC_MATCH_LIST_ENTRY structures (match list) pointing to
   // strings that are potential matches. This field holds the total number of
   // those structures across all nodes in the automaton.
   uint32_t ac_matches;

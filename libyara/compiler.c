@@ -211,7 +211,7 @@ YR_API int yr_compiler_create(
 
   if (result == ERROR_SUCCESS)
     result = yr_arena2_create(
-        YR_NUM_SECTIONS, 50*1048576, &new_compiler->arena);
+        YR_NUM_SECTIONS, 64, &new_compiler->arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_ac_automaton_create(&new_compiler->automaton);
