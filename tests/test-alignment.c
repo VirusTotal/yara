@@ -92,7 +92,7 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_STRING, 40, string);
   CHECK_OFFSET(YR_STRING, 48, chained_to);
 
-  CHECK_SIZE(YR_RULE, 56 + 8 * YR_MAX_THREADS);
+  CHECK_SIZE(YR_RULE, 48);
   CHECK_OFFSET(YR_RULE, 8,  identifier);
   CHECK_OFFSET(YR_RULE, 16, tags);
   CHECK_OFFSET(YR_RULE, 24, metas);

@@ -260,39 +260,14 @@ struct YR_META
 };
 
 
-struct YR_MATCHES
-{
-  int32_t count;
-
-  DECLARE_REFERENCE(YR_MATCH*, head);
-  DECLARE_REFERENCE(YR_MATCH*, tail);
-};
-
-
 struct YR_STRING
 {
+  // Flags, see STRING_FLAGS_XXX macros defined above.
+  uint32_t flags;
+
   // Index of this string in the array of YR_STRING structures stored in
   // YR_STRINGS_TABLE.
   uint32_t idx;
-
-  // Index of the rule containing this string in the array of YR_RULE
-  // structures stored in YR_RULES_TABLE.
-  uint32_t rule_idx;
-
-  // Flags, see STRING_FLAGS_XXX macros defined above.
-  int32_t flags;
-
-  // String's length.
-  int32_t length;
-
-  // When this string is chained to some other string, chain_gap_min and
-  // chain_gap_max contain the minimum and maximum distance between the two
-  // strings. For example in { 01 02 03 04 [X-Y] 05 06 07 08 }, the string
-  // { 05 06 07 08 } is chained to { 01 02 03 04 } and chain_gap_min is X
-  // and chain_gap_max is Y. These fields are ignored for strings that are not
-  // part of a string chain.
-  int32_t chain_gap_min;
-  int32_t chain_gap_max;
 
   // If the string can only match at a specific offset (for example if the
   // condition is "$a at 0" the string $a can only match at offset 0), the
@@ -300,8 +275,12 @@ struct YR_STRING
   // strings that can match anywhere.
   int64_t fixed_offset;
 
-  // Identifier of this string.
-  DECLARE_REFERENCE(const char*, identifier);
+  // Index of the rule containing this string in the array of YR_RULE
+  // structures stored in YR_RULES_TABLE.
+  uint32_t rule_idx;
+
+  // String's length.
+  int32_t length;
 
   // Pointer to the string itself, the length is indicated by the "length"
   // field.
@@ -318,6 +297,18 @@ struct YR_STRING
   // two parts, if S is split in S1, S2, and S3. S3 is chained to S2 and S2 is
   // chained to S1 (it can represented as: S1 <- S2 <- S3).
   DECLARE_REFERENCE(YR_STRING*, chained_to);
+
+  // When this string is chained to some other string, chain_gap_min and
+  // chain_gap_max contain the minimum and maximum distance between the two
+  // strings. For example in { 01 02 03 04 [X-Y] 05 06 07 08 }, the string
+  // { 05 06 07 08 } is chained to { 01 02 03 04 } and chain_gap_min is X
+  // and chain_gap_max is Y. These fields are ignored for strings that are not
+  // part of a string chain.
+  int32_t chain_gap_min;
+  int32_t chain_gap_max;
+
+  // Identifier of this string.
+  DECLARE_REFERENCE(const char*, identifier);
 };
 
 
@@ -333,17 +324,6 @@ struct YR_RULE
   DECLARE_REFERENCE(YR_META*, metas);
   DECLARE_REFERENCE(YR_STRING*, strings);
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);
-
-  // Used only when PROFILING_ENABLED is defined. This is the sum of all values
-  // in time_cost_per_thread. This is updated once on each call to
-  // yr_scanner_scan_xxx.
-  volatile int64_t time_cost;
-
-  // Used only when PROFILING_ENABLED is defined. This array holds the time
-  // cost for each thread using this structure concurrently. This is necessary
-  // because a global variable causes too much contention while trying to
-  // increment in a synchronized way from multiple threads.
-  int64_t time_cost_per_thread[YR_MAX_THREADS];
 };
 
 
@@ -372,7 +352,6 @@ struct YR_EXTERNAL_VARIABLE
 
 struct YR_AC_MATCH
 {
-  int8_t  flags;
   // When the Aho-Corasick automaton reaches some state that has associated
   // matches, the current position in the input buffer is a few bytes past
   // the point where the match actually occurs, for example, when looking for
@@ -383,14 +362,14 @@ struct YR_AC_MATCH
   // to go back to find the point where the match actually start.
   uint16_t backtrack;
 
+  int8_t  flags;
+
   DECLARE_REFERENCE(YR_STRING*, string);
   DECLARE_REFERENCE(const uint8_t*, forward_code);
   DECLARE_REFERENCE(const uint8_t*, backward_code);
 };
 
 #pragma pack(pop)
-
-
 
 
 //
@@ -470,10 +449,10 @@ struct RE_FIBER
   int32_t  sp;          // stack pointer
   int32_t  rc;          // repeat counter
 
-  uint16_t stack[RE_MAX_STACK];
-
   RE_FIBER* prev;
   RE_FIBER* next;
+
+  uint16_t stack[RE_MAX_STACK];
 };
 
 
@@ -500,6 +479,15 @@ struct YR_MODIFIER
 };
 
 
+struct YR_MATCHES
+{
+  YR_MATCH* head;
+  YR_MATCH* tail;
+
+  int32_t count;
+};
+
+
 struct YR_MATCH
 {
   int64_t base;              // Base address for the match
@@ -512,26 +500,26 @@ struct YR_MATCH
   // to MAX_MATCH_DATA bytes.
   const uint8_t* data;
 
+  YR_MATCH* prev;
+  YR_MATCH* next;
+
   // If the match belongs to a chained string chain_length contains the
   // length of the chain. This field is used only in unconfirmed matches.
   int32_t chain_length;
-
-  YR_MATCH* prev;
-  YR_MATCH* next;
 };
 
 
 struct YR_AC_STATE
 {
-  uint8_t depth;
-  uint8_t input;
-
-  uint32_t t_table_slot;
-
   YR_AC_STATE* failure;
   YR_AC_STATE* first_child;
   YR_AC_STATE* siblings;
   YR_AC_MATCH_LIST_ENTRY* matches;
+
+  uint8_t depth;
+  uint8_t input;
+
+  uint32_t t_table_slot;
 };
 
 
