@@ -238,17 +238,20 @@ int yr_arena2_allocate_memory(
     if (new_data == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
-    // TODO(vmalvarez): remove
-    //assert(new_size == arena->initial_buffer_size || new_data == b->data);
-
     YR_RELOC2* reloc = arena->reloc_list_head;
 
     while (reloc != NULL)
     {
+      // If the reloc entry is for the same buffer that is being relocated,
+      // the base pointer that we use to access the buffer must be new_data,
+      // as arena->buffers[reloc->buffer_id].data which is the same than
+      // b->data can't be accessed anymore after the call to yr_realloc.
+      void* base = buffer_id == reloc->buffer_id ?
+          new_data : arena->buffers[reloc->buffer_id].data;
+
       // reloc_address holds the address inside the buffer where the pointer
       // to be relocated resides.
-      void** reloc_address = (void**)(
-          arena->buffers[reloc->buffer_id].data + reloc->offset);
+      void** reloc_address = (void**)(base + reloc->offset);
 
       // reloc_target is the value of the relocatable pointer.
       void* reloc_target = *reloc_address;
