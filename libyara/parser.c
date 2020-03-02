@@ -893,11 +893,6 @@ int yr_parser_reduce_rule_declaration_phase_1(
   rule->ns = ns;
   rule->num_atoms = 0;
 
-  #ifdef PROFILING_ENABLED
-  rule->time_cost = 0;
-  memset(rule->time_cost_per_thread, 0, sizeof(rule->time_cost_per_thread));
-  #endif
-
   YR_ARENA2_REF jmp_offset_ref;
 
   // The OP_INIT_RULE instruction behaves like a jump. When the rule is disabled

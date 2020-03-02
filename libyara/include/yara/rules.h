@@ -158,10 +158,6 @@ YR_API int yr_rules_define_string_variable(
     const char* value);
 
 
-YR_API void yr_rules_reset_profiling_info(
-    YR_RULES* rules);
-
-
 YR_API void yr_rules_print_profiling_info(
     YR_RULES* rules);
 
