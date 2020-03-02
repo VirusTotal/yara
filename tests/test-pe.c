@@ -215,6 +215,70 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny-idata-51ff");
 
+  /*
+   * mtxex.dll is 23e72ce7e9cdbc80c0095484ebeb02f56b21e48fd67044e69e7a2ae76db631e5,
+   * which was taken from a Windows 10 install. The details of which are:
+   *         export_timestamp = 1827812126
+   *         dll_name = "mtxex.dll"
+   *         number_of_exports = 4
+   *         export_details
+   *            [0]
+   *                    offset = 1072
+   *                    name = "DllGetClassObject"
+   *                    forward_name = UNDEFINED
+   *                    ordinal = 1
+   *            [1]
+   *                    offset = UNDEFINED
+   *                    name = "GetObjectContext"
+   *                    forward_name = "COMSVCS.GetObjectContext"
+   *                    ordinal = 2
+   *            [2]
+   *                    offset = UNDEFINED
+   *                    name = "MTSCreateActivity"
+   *                    forward_name = "COMSVCS.MTSCreateActivity"
+   *                    ordinal = 3
+   *            [3]
+   *                    offset = UNDEFINED
+   *                    name = "SafeRef"
+   *                    forward_name = "COMSVCS.SafeRef"
+   *                    ordinal = 4
+   */
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.number_of_exports == 4 and \
+          pe.dll_name == \"mtxex.dll\" and \
+          pe.export_timestamp == 1827812126 and \
+          pe.export_details[0].offset == 1072 and \
+          pe.export_details[0].name == \"DllGetClassObject\" and \
+          pe.export_details[0].ordinal == 1 and \
+          pe.export_details[1].forward_name == \"COMSVCS.GetObjectContext\" \
+      }",
+      "tests/data/mtxex.dll");
+
+  // Make sure exports function is case insensitive (historically this has been
+  // the case) and supports ordinals...
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.exports(\"saferef\") and \
+          pe.exports(4) and \
+          pe.exports(/mtscreateactivity/i) \
+      }",
+      "tests/data/mtxex.dll");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.exports_index(\"MTSCreateActivity\") == 2 and \
+          pe.exports_index(3) == 2 and \
+          pe.exports_index(/mtscreateactivity/i) == 2 \
+      }",
+      "tests/data/mtxex.dll");
+
   assert_true_rule_file(
       "import \"pe\" \
       rule test { \
