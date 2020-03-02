@@ -596,9 +596,6 @@ struct YR_RULES
   // Size of ac_match_table and ac_transition_table in number of items (both
   // tables have the same number of items).
   uint32_t ac_tables_size;
-
-  // Used only when PROFILING_ENABLED is defined.
-  uint64_t time_cost;
 };
 
 

@@ -1312,11 +1312,6 @@ int main(
 
 _exit:
 
-  #ifdef PROFILING_ENABLED
-  if (rules != NULL)
-    yr_rules_print_profiling_info(rules);
-  #endif
-
   unload_modules_data();
 
   if (scanner != NULL)

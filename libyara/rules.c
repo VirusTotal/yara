@@ -175,47 +175,6 @@ YR_API int yr_rules_define_string_variable(
 }
 
 
-#ifdef PROFILING_ENABLED
-YR_API void yr_rules_print_profiling_info(
-    YR_RULES* rules)
-{
-  YR_RULE* rule;
-
-  printf("\n===== PROFILING INFORMATION =====\n\n");
-
-  yr_rules_foreach(rules, rule)
-  {
-    printf(
-        "%s:%s: %" PRIu64 " (%0.3f%%)\n",
-        rule->ns->name,
-        rule->identifier,
-        rule->time_cost,
-        (float) rule->time_cost / rules->time_cost * 100);
-  }
-
-  printf("\n=================================\n");
-}
-#endif
-
-
-YR_API void yr_rules_reset_profiling_info(
-    YR_RULES* rules)
-{
-  #ifdef PROFILING_ENABLED
-  YR_RULE* rule;
-
-  yr_rules_foreach(rules, rule)
-  {
-    #ifdef _WIN32
-    InterlockedExchange64(&rule->time_cost, 0);
-    #else
-    __sync_fetch_and_and(&rule->time_cost, 0);
-    #endif
-  }
-  #endif
-}
-
-
 YR_API int yr_rules_scan_mem_blocks(
     YR_RULES* rules,
     YR_MEMORY_BLOCK_ITERATOR* iterator,
