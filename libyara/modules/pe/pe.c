@@ -1136,11 +1136,13 @@ static void pe_parse_exports(
   set_integer(exports->TimeDateStamp, pe->object, "export_timestamp");
 
   offset = pe_rva_to_offset(pe, yr_le32toh(exports->Name));
+
   if (offset > 0)
   {
     remaining = pe->data_size - (size_t) offset;
     name_len = strnlen((char*) (pe->data + offset), remaining);
-    set_sized_string((char*) (pe->data + offset), name_len, pe->object, "dll_name");
+    set_sized_string(
+        (char*) (pe->data + offset), name_len, pe->object, "dll_name");
   }
 
   if (number_of_exports * sizeof(DWORD) > pe->data_size - offset)
@@ -1179,7 +1181,8 @@ static void pe_parse_exports(
   if (available_space(pe, function_addrs) < sizeof(DWORD) * number_of_exports)
     return;
 
-  number_of_names = yr_min(yr_le32toh(exports->NumberOfNames), number_of_exports);
+  number_of_names = yr_min(
+      yr_le32toh(exports->NumberOfNames), number_of_exports);
 
   // Mapping out the exports is a bit janky. We start with the export address
   // array. The index from that array plus the ordinal base is the ordinal for
@@ -1225,16 +1228,18 @@ static void pe_parse_exports(
     if (offset > export_start && offset < export_start + export_size)
     {
       remaining = pe->data_size - (size_t) offset;
-
       name_len = strnlen((char*) (pe->data + offset), remaining);
+
       set_sized_string(
-        (char*) (pe->data + offset),
-        yr_min(name_len, MAX_EXPORT_NAME_LENGTH),
-        pe->object,
-        "export_details[%i].forward_name", exp_sz);
+          (char*) (pe->data + offset),
+          yr_min(name_len, MAX_EXPORT_NAME_LENGTH),
+          pe->object,
+          "export_details[%i].forward_name", exp_sz);
     }
     else
+    {
       set_integer(offset, pe->object, "export_details[%i].offset", exp_sz);
+    }
 
     if (names != NULL)
     {
@@ -1246,8 +1251,8 @@ static void pe_parse_exports(
           if (offset > 0)
           {
             remaining = pe->data_size - (size_t) offset;
-
             name_len = strnlen((char*) (pe->data + offset), remaining);
+
             set_sized_string(
                 (char*) (pe->data + offset),
                 yr_min(name_len, MAX_EXPORT_NAME_LENGTH),

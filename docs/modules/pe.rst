@@ -848,7 +848,7 @@ Reference
 
 .. c:function:: exports_index(function_name)
 
-    .. versionadded:: 3.11.0
+    .. versionadded:: 3.12.0
 
     Function returning the index into the export_details array where the named
     function is, undefined otherwise.
@@ -857,7 +857,7 @@ Reference
 
 .. c:function:: exports_index(ordinal)
 
-    .. versionadded:: 3.11.0
+    .. versionadded:: 3.12.0
 
     Function returning the index into the export_details array where the
     exported ordinal is, undefined otherwise.
@@ -866,10 +866,10 @@ Reference
 
 .. c:function:: exports_index(/regular_expression/)
 
-    .. versionadded:: 3.7.1
+    .. versionadded:: 3.12.0
 
-    Function returning the index into the export_details array where the regular
-    expression matches the exported name, undefined otherwise.
+    Function returning the first index into the export_details array where the
+    regular expression matches the exported name, undefined otherwise.
 
     *Example:  pe.exports_index(/^ERS@@/)*
 
