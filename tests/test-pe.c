@@ -283,6 +283,14 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
+          pe.is_reproducible_build == 1 \
+      }",
+      "tests/data/mtxex.dll");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
           pe.rich_signature.toolid(157, 40219) == 1 and \
           pe.rich_signature.toolid(1, 0) > 40 and pe.rich_signature.toolid(1, 0) < 45 and \
           pe.rich_signature.version(30319) and \
