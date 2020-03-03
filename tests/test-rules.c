@@ -2481,9 +2481,13 @@ void test_process_scan()
 {
   int pid = fork();
   int status = 0;
-  int matches = 0;
   YR_RULES* rules;
   int rc1, rc2;
+
+  struct COUNTERS counters;
+
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
 
   if (pid == 0)
   {
@@ -2503,7 +2507,7 @@ void test_process_scan()
       condition:\
         all of them\
     }", &rules) == ERROR_SUCCESS);
-  rc1 = yr_rules_scan_proc(rules, pid, 0, count_matches, &matches, 0);
+  rc1 = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
   yr_rules_destroy(rules);
   kill(pid, SIGALRM);
 
@@ -2521,7 +2525,7 @@ void test_process_scan()
 
   switch (rc1) {
   case ERROR_SUCCESS:
-    if (matches == 0)
+    if (counters.rules_matching == 0)
     {
       fputs("Found no matches\n", stderr);
       exit(EXIT_FAILURE);

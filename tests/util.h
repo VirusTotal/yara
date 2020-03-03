@@ -35,12 +35,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern char compile_error[1024];
 extern int warnings;
 
+struct COUNTERS
+{
+  int rules_matching;
+  int rules_not_matching;
+};
+
 int compile_rule(
     char* string,
     YR_RULES** rules);
 
 
-int count_matches(
+int count(
     YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
