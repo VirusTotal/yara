@@ -88,7 +88,8 @@ You can also download and install YARA using the `vcpkg <https://github.com/Micr
     ./vcpkg integrate install
     vcpkg install yara
 
-The YARA port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please `create an issue or pull request <https://github.com/Microsoft/vcpkg/>`_ on the vcpkg repository.
+The YARA port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out
+of date, please `create an issue or pull request <https://github.com/Microsoft/vcpkg/>`_ on the vcpkg repository.
 
 
 Installing on Windows
@@ -101,7 +102,9 @@ link below. Just download the version you want, unzip the archive, and put the
 `Download Windows binaries <https://github.com/VirusTotal/yara/releases/latest>`_
 
 To install YARA using `Scoop <https://scoop.sh>`_ or `Chocolatey <https://chocolatey.org>`_, simply type
-``scoop install yara`` or ``choco install yara``
+``scoop install yara`` or ``choco install yara``. The integration with both `Scoop` and `Chocolatey` are
+not maintained their respective teams, not by the YARA authors.
+
 
 Installing on Mac OS X with Homebrew
 ------------------------------------
