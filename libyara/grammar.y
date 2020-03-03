@@ -64,26 +64,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FOR_EXPRESSION_ALL 1
 #define FOR_EXPRESSION_ANY 2
 
-#define fail_if_error(e) \
-    if (e != ERROR_SUCCESS) \
+#define fail_with_error(e) \
     { \
       compiler->last_error = e; \
       yyerror(yyscanner, compiler, NULL); \
       YYERROR; \
-    } \
-
-
-#define set_flag_or_error(flags, new_flag) \
-    if (flags & new_flag) \
-    { \
-      compiler->last_error = ERROR_DUPLICATED_MODIFIER; \
-      yyerror(yyscanner, compiler, NULL); \
-      YYERROR; \
-    } \
-    else \
-    { \
-      flags |= new_flag; \
     }
+
+
+#define fail_if_error(e) \
+    if (e != ERROR_SUCCESS) \
+    { \
+      fail_with_error(e); \
+    } \
 
 
 #define check_type_with_cleanup(expression, expected_type, op, cleanup) \
@@ -276,6 +269,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 %destructor { yr_free($$); $$ = NULL; } arguments
 %destructor { yr_free($$); $$ = NULL; } arguments_list
+
+%destructor {
+  if ($$.alphabet != NULL)
+  {
+    yr_free($$.alphabet);
+    $$.alphabet = NULL;
+  }
+} string_modifier
+
+%destructor {
+  if ($$.alphabet != NULL)
+  {
+    yr_free($$.alphabet);
+    $$.alphabet = NULL;
+  }
+} string_modifiers
+
 
 %union {
   YR_EXPRESSION   expression;
@@ -653,11 +663,7 @@ string_modifiers
       }
     | string_modifiers string_modifier
       {
-        int result = ERROR_SUCCESS;
-
         $$ = $1;
-
-        set_flag_or_error($$.flags, $2.flags);
 
         // Only set the xor minimum and maximum if we are dealing with the
         // xor modifier. If we don't check for this then we can end up with
@@ -682,17 +688,33 @@ string_modifiers
             {
               yr_compiler_set_error_extra_info(
                   compiler, "can not specify multiple alphabets");
-              result = ERROR_INVALID_MODIFIER;
+
+              yr_free($2.alphabet);
               yr_free($$.alphabet);
+
+              fail_with_error(ERROR_INVALID_MODIFIER);
             }
-            yr_free($2.alphabet);
+            else
+            {
+              yr_free($2.alphabet);
+            }
           }
           else
           {
             $$.alphabet = $2.alphabet;
           }
+        }
 
-          fail_if_error(result);
+        if ($$.flags & $2.flags)
+        {
+          if ($$.alphabet != NULL)
+            yr_free($$.alphabet);
+
+          fail_with_error(ERROR_DUPLICATED_MODIFIER);
+        }
+        else
+        {
+          $$.flags = $$.flags | $2.flags;
         }
       }
     ;
@@ -810,7 +832,17 @@ string_modifier
 
 regexp_modifiers
     : /* empty */                         { $$.flags = 0; }
-    | regexp_modifiers regexp_modifier    { set_flag_or_error($$.flags, $2.flags); }
+    | regexp_modifiers regexp_modifier
+      {
+        if ($1.flags & $2.flags)
+        {
+          fail_with_error(ERROR_DUPLICATED_MODIFIER);
+        }
+        else
+        {
+          $$.flags = $1.flags | $2.flags;
+        }
+      }
     ;
 
 regexp_modifier
@@ -823,7 +855,17 @@ regexp_modifier
 
 hex_modifiers
     : /* empty */                         { $$.flags = 0; }
-    | hex_modifiers hex_modifier          { set_flag_or_error($$.flags, $2.flags); }
+    | hex_modifiers hex_modifier
+      {
+        if ($1.flags & $2.flags)
+        {
+          fail_with_error(ERROR_DUPLICATED_MODIFIER);
+        }
+        else
+        {
+          $$.flags = $1.flags | $2.flags;
+        }
+      }
     ;
 
 hex_modifier
@@ -1082,7 +1124,7 @@ arguments_list
         $$ = (char*) yr_malloc(YR_MAX_FUNCTION_ARGS + 1);
 
         if ($$ == NULL)
-          fail_if_error(ERROR_INSUFFICIENT_MEMORY);
+          fail_with_error(ERROR_INSUFFICIENT_MEMORY);
 
         switch($1.type)
         {
@@ -1105,7 +1147,7 @@ arguments_list
             yr_free($$);
             yr_compiler_set_error_extra_info(
                 compiler, "unknown type for argument 1 in function call");
-            fail_if_error(ERROR_WRONG_TYPE);
+            fail_with_error(ERROR_WRONG_TYPE);
             break;
           default:
             // An unknown expression type is OK iff an error ocurred.
@@ -1448,7 +1490,7 @@ expression
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
-          fail_if_error(ERROR_INSUFFICIENT_MEMORY);
+          fail_with_error(ERROR_INSUFFICIENT_MEMORY);
 
         fixup->address = jmp_arg_addr;
         fixup->next = compiler->fixup_stack_head;
@@ -1636,7 +1678,7 @@ expression
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
-          fail_if_error(ERROR_INSUFFICIENT_MEMORY);
+          fail_with_error(ERROR_INSUFFICIENT_MEMORY);
 
         fixup->address = jmp_destination_addr;
         fixup->next = compiler->fixup_stack_head;
@@ -1680,7 +1722,7 @@ expression
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
-          fail_if_error(ERROR_INSUFFICIENT_MEMORY);
+          fail_with_error(ERROR_INSUFFICIENT_MEMORY);
 
         fixup->address = jmp_destination_addr;
         fixup->next = compiler->fixup_stack_head;

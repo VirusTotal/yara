@@ -853,11 +853,75 @@ Reference
 
     *Example:  pe.exports(/^AXS@@/)*
 
+.. c:function:: exports_index(function_name)
+
+    .. versionadded:: 3.12.0
+
+    Function returning the index into the export_details array where the named
+    function is, undefined otherwise.
+
+    *Example:  pe.exports_index("CPlApplet")*
+
+.. c:function:: exports_index(ordinal)
+
+    .. versionadded:: 3.12.0
+
+    Function returning the index into the export_details array where the
+    exported ordinal is, undefined otherwise.
+
+    *Example:  pe.exports_index(72)*
+
+.. c:function:: exports_index(/regular_expression/)
+
+    .. versionadded:: 3.12.0
+
+    Function returning the first index into the export_details array where the
+    regular expression matches the exported name, undefined otherwise.
+
+    *Example:  pe.exports_index(/^ERS@@/)*
+
 .. c:type:: number_of_exports
 
     .. versionadded:: 3.6.0
 
     Number of exports in the PE.
+
+.. c:type:: export_details
+
+    .. versionadded:: 3.11.0
+
+    Structure containing information about the PE's exports.
+
+    .. c:member:: offset
+
+        Offset where the exported function starts.
+
+    .. c:member:: name
+
+        Name of the exported function. It will be undefined if the function has
+        no name.
+
+    .. c:member:: forward_name
+
+        The name of the function where this export forwards to. It will be
+        undefined if the export is not a forwarding export.
+
+    .. c:member:: ordinal
+
+        The ordinal of the exported function, after the ordinal base has been
+        applied to it.
+
+.. c:type:: dll_name
+
+    .. versionadded:: 3.11.0
+
+    The name of the DLL, if it exists in the export directory.
+
+.. c:type:: export_timestamp
+
+    .. versionadded:: 3.11.0
+
+    The timestamp the export data was created..
 
 .. c:type:: number_of_imports
 

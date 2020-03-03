@@ -27,10 +27,39 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <ctype.h>
 #include <string.h>
+#include <yara/globals.h>
 #include <yara/mem.h>
 #include <yara/sizedstr.h>
 #include <yara/types.h>
+
+
+int sized_string_cmp_nocase(
+    SIZED_STRING* s1,
+    SIZED_STRING* s2)
+{
+  size_t i = 0;
+
+  while (s1->length > i &&
+         s2->length > i &&
+         yr_lowercase[(uint8_t) s1->c_string[i]] ==
+         yr_lowercase[(uint8_t) s2->c_string[i]])
+  {
+    i++;
+  }
+
+  if (i == s1->length && i == s2->length)
+    return 0;
+  else if (i == s1->length)
+    return -1;
+  else if (i == s2->length)
+    return 1;
+  else if (s1->c_string[i] < s2->c_string[i])
+    return -1;
+  else
+    return 1;
+}
 
 
 int sized_string_cmp(
