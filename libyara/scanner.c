@@ -183,6 +183,11 @@ YR_API int yr_scanner_create(
   new_scanner->entry_point = UNDEFINED;
   new_scanner->canary = rand();
 
+  // By default report both matching and non-matching rules.
+  new_scanner->flags = \
+      SCAN_FLAGS_REPORT_RULES_MATCHING |
+      SCAN_FLAGS_REPORT_RULES_NOT_MATCHING;
+
   new_scanner->rule_matches_flags = (YR_BITMASK*) yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
 
@@ -291,6 +296,16 @@ YR_API void yr_scanner_set_flags(
     YR_SCANNER* scanner,
     int flags)
 {
+  // For backward compatibility, if neither SCAN_FLAGS_REPORT_RULES_MATCHING
+  // nor SCAN_FLAGS_REPORT_RULES_NOT_MATCHING are specified, both are assumed.
+
+  if (!(flags & SCAN_FLAGS_REPORT_RULES_MATCHING) &&
+      !(flags & SCAN_FLAGS_REPORT_RULES_NOT_MATCHING))
+  {
+    flags |= SCAN_FLAGS_REPORT_RULES_MATCHING |
+             SCAN_FLAGS_REPORT_RULES_NOT_MATCHING;
+  }
+
   scanner->flags = flags;
 }
 
@@ -453,19 +468,21 @@ YR_API int yr_scanner_scan_mem_blocks(
        !RULE_IS_NULL(rule);
        i++, rule++)
   {
-    int message;
+    int message = 0;
 
     if (yr_bitmask_is_set(scanner->rule_matches_flags, i) &&
         yr_bitmask_is_not_set(scanner->ns_unsatisfied_flags, rule->ns->idx))
     {
-      message = CALLBACK_MSG_RULE_MATCHING;
+      if (scanner->flags & SCAN_FLAGS_REPORT_RULES_MATCHING)
+        message = CALLBACK_MSG_RULE_MATCHING;
     }
     else
     {
-      message = CALLBACK_MSG_RULE_NOT_MATCHING;
+      if (scanner->flags & SCAN_FLAGS_REPORT_RULES_NOT_MATCHING)
+        message = CALLBACK_MSG_RULE_NOT_MATCHING;
     }
 
-    if (!RULE_IS_PRIVATE(rule))
+    if (message != 0 && !RULE_IS_PRIVATE(rule))
     {
       switch (scanner->callback(scanner, message, rule, scanner->user_data))
       {
