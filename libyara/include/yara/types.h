@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/sizedstr.h>
 #include <yara/stopwatch.h>
 #include <yara/threading.h>
+#include "notebook.h"
 
 
 #define DECLARE_REFERENCE(type, name) \
@@ -527,7 +528,6 @@ struct YR_AC_MATCH_LIST_ENTRY
 {
   uint16_t backtrack;
   uint32_t string_idx;
-  uint32_t xref;
 
   YR_ARENA2_REF ref;
   YR_ARENA2_REF forward_code_ref;
@@ -555,14 +555,17 @@ struct YR_AC_AUTOMATON
   // details.
   YR_AC_TRANSITION* t_table;
 
-  // Pointer to an array of YR_AC_MATCH_LIST_ENTRY* pointers. This array has the same
-  // number of entries than the transition table. If entry N in the transition
+  // Pointer to an array of YR_AC_MATCH_LIST_ENTRY* pointers. This array has the
+  // same number of entries than the transition table. If entry N in the transition
   // table corresponds to an Aho-Corasick state, the N-th entry in the array
   // points to the first item of the list of matches corresponding to that state.
   // If entry N in the transition table does not corresponds to a state, or the
   // state doesn't have any match, the N-th entry in this array will be a NULL
   // pointer.
   YR_AC_MATCH_TABLE_ENTRY* m_table;
+
+  // Notebook where the YR_AC_MATCH_TABLE_ENTRY structures will be allocated.
+  YR_NOTEBOOK* matches_nb;
 
   // Pointer to the root Aho-Corasick state.
   YR_AC_STATE* root;

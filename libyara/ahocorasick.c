@@ -227,22 +227,6 @@ static YR_AC_STATE* _yr_ac_state_create(
 static int _yr_ac_state_destroy(
     YR_AC_STATE* state)
 {
-  YR_AC_MATCH_LIST_ENTRY* match = state->matches;
-
-  while (match != NULL)
-  {
-    YR_AC_MATCH_LIST_ENTRY* next = match->next;
-
-    if (match->xref > 0)
-    {
-      if (match->xref-- == 0)
-        yr_free(match);
-    }
-
-    match = next;
-  }
-
-
   YR_AC_STATE* child_state = state->first_child;
 
   while (child_state != NULL)
@@ -255,17 +239,6 @@ static int _yr_ac_state_destroy(
   yr_free(state);
 
   return ERROR_SUCCESS;
-}
-
-
-static void _yr_ac_incr_xrefs(
-    YR_AC_MATCH_LIST_ENTRY* match)
-{
-  while (match != NULL)
-  {
-    match->xref++;
-    match = match->next;
-  }
 }
 
 
@@ -324,15 +297,16 @@ static int _yr_ac_create_failure_links(
       if (match->backtrack > 0)
       {
         match->next = root_state->matches;
-        _yr_ac_incr_xrefs(root_state->matches);
       }
     }
     else
     {
+      // This state doesn't have any matches, its matches will be those
+      // in the root state, if any.
       current_state->matches = root_state->matches;
-      _yr_ac_incr_xrefs(root_state->matches);
     }
 
+    // Iterate over all the states that the current state can transition to.
     transition_state = current_state->first_child;
 
     while (transition_state != NULL)
@@ -363,7 +337,6 @@ static int _yr_ac_create_failure_links(
             match->next = temp_state->matches;
           }
 
-          _yr_ac_incr_xrefs(temp_state->matches);
           break;
         }
         else
@@ -816,6 +789,13 @@ int yr_ac_automaton_create(
     return ERROR_INSUFFICIENT_MEMORY;
   }
 
+  FAIL_ON_ERROR_WITH_CLEANUP(yr_notebook_create(
+      sizeof(YR_AC_MATCH_TABLE_ENTRY) * 1024,
+      &new_automaton->matches_nb),
+      // cleanup
+      yr_free(new_automaton);
+      yr_free(root_state));
+
   root_state->depth = 0;
   root_state->matches = NULL;
   root_state->failure = NULL;
@@ -845,6 +825,8 @@ int yr_ac_automaton_destroy(
     YR_AC_AUTOMATON* automaton)
 {
   _yr_ac_state_destroy(automaton->root);
+
+  yr_notebook_destroy(automaton->matches_nb);
 
   yr_free(automaton->t_table);
   yr_free(automaton->m_table);
@@ -888,8 +870,8 @@ int yr_ac_add_string(
       state = next_state;
     }
 
-    YR_AC_MATCH_LIST_ENTRY* new_match = yr_malloc(
-        sizeof(struct YR_AC_MATCH_LIST_ENTRY));
+    YR_AC_MATCH_LIST_ENTRY* new_match = yr_notebook_alloc(
+        automaton->matches_nb, sizeof(struct YR_AC_MATCH_LIST_ENTRY));
 
     if (new_match == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
@@ -898,7 +880,6 @@ int yr_ac_add_string(
     new_match->string_idx = string_idx;
     new_match->forward_code_ref = atom->forward_code_ref;
     new_match->backward_code_ref = atom->backward_code_ref;
-    new_match->xref = 1;
     new_match->ref = YR_ARENA_NULL_REF;
 
     // Add newly created match to the list of matches for the state.
