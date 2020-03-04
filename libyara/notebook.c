@@ -54,10 +54,9 @@ struct YR_NOTEBOOK
 {
   // Size of each page in the notebook.
   size_t page_size;
-  // Pointer to the first page in the notebook.
+  // Pointer to the first page in the book, this also the most recently
+  // created page, the one that is being filled.
   YR_NOTEBOOK_PAGE* page_list_head;
-  // Pointer to the page that is being filled.
-  YR_NOTEBOOK_PAGE* current_page;
 };
 
 
@@ -95,9 +94,8 @@ int yr_notebook_create(
   }
 
   new_notebook->page_size = page_size;
-  new_notebook->current_page = new_notebook->page_list_head;
-  new_notebook->current_page->used = 0;
-  new_notebook->current_page->next = NULL;
+  new_notebook->page_list_head->used = 0;
+  new_notebook->page_list_head->next = NULL;
 
   *pool = new_notebook;
 
@@ -133,7 +131,7 @@ void* yr_notebook_alloc(
 
   // If the requested size doesn't fit in current page's free space, allocate
   // a new page.
-  if (notebook->page_size - notebook->current_page->used < size)
+  if (notebook->page_size - notebook->page_list_head->used < size)
   {
     YR_NOTEBOOK_PAGE* new_page = yr_malloc(
         sizeof(YR_NOTEBOOK_PAGE) + notebook->page_size);
@@ -142,13 +140,13 @@ void* yr_notebook_alloc(
       return NULL;
 
     new_page->used = 0;
-    new_page->next = notebook->current_page;
-    notebook->current_page = new_page;
+    new_page->next = notebook->page_list_head;
+    notebook->page_list_head = new_page;
   }
 
-  void *ptr = notebook->current_page->data + notebook->current_page->used;
+  void *ptr = notebook->page_list_head->data + notebook->page_list_head->used;
 
-  notebook->current_page->used += size;
+  notebook->page_list_head->used += size;
 
   return ptr;
 }
