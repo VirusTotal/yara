@@ -2828,7 +2828,7 @@ yyreduce:
             case EXPRESSION_TYPE_UNKNOWN:
               result = ERROR_WRONG_TYPE;
               yr_compiler_set_error_extra_info_fmt(
-                  compiler, "unknown type for argument %lu in function call",
+                  compiler, "unknown type for argument %zu in function call",
                   // As we add one character per argument, the length of $1 is
                   // the number of arguments parsed so far, and the argument
                   // represented by <expression> is length of $1 plus one.
