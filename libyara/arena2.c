@@ -95,13 +95,6 @@ static int _yr_arena2_make_ptr_relocatable(
     if (reloc == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
-    //TODO(vmalvarez): Remove.
-    if (0) {
-      printf("making address relocatable in buffer %d: %p (off: %d)\n", buffer_id,
-             arena->buffers[buffer_id].data + base_offset + offset,
-             base_offset + offset);
-    }
-
     reloc->buffer_id = buffer_id;
     reloc->offset = base_offset + offset;
     reloc->next = NULL;
@@ -294,7 +287,7 @@ int yr_arena2_allocate_memory(
 //        arena,
 //        0,
 //        sizeof(MY_STRUCTURE),
-//        &offset,
+//        &ref,
 //        offsetof(MY_STRUCTURE, field_1),
 //        offsetof(MY_STRUCTURE, field_2),
 //        ..
@@ -302,15 +295,16 @@ int yr_arena2_allocate_memory(
 //        EOL);
 //
 // Args:
-//    [in]  YR_ARENA* arena   - Pointer to the arena.
-//    [in]  int buffer_id     - Buffer number.
-//    [in]  size_t size       - Size of the region to be allocated.
-//    [out] size_t* offset    - Pointer to a variable where the function puts
-//                              the offset within the buffer of the allocated
-//                              region. The pointer can be NULL.
-//    ...                     - Variable number of offsets relative to the
-//                              beginning of the struct. Offsets are of type
-//                              size_t.
+//    [in]  YR_ARENA* arena     - Pointer to the arena.
+//    [in]  int buffer_id       - Buffer number.
+//    [in]  size_t size         - Size of the region to be allocated.
+//    [out] YR_ARENA2_REF* ref  - Pointer to a reference that will point to the
+//                                newly allocated structure when the function
+//                                returns. The pointer can be NULL if you don't
+//                                need the reference.
+//    ...                       - Variable number of offsets relative to the
+//                                beginning of the struct. Offsets are of type
+//                                size_t.
 //
 // Returns:
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
