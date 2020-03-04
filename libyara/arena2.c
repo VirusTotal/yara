@@ -230,7 +230,7 @@ int yr_arena2_allocate_memory(
   {
     size_t new_size = (b->size == 0) ? arena->initial_buffer_size : b->size * 2;
 
-    while (new_size < size)
+    while (new_size < b->used + size)
       new_size *= 2;
 
     void *new_data = yr_realloc(b->data, new_size);

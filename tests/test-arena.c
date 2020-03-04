@@ -46,17 +46,18 @@ static void basic_tests()
   // Offset should be 0 as this is the first write.
   assert(ref.offset == 0);
 
-  // Write 4 bytes, "foo" + null terminator.
-  assert(yr_arena2_write_string(arena, 0, "foo", &ref) == ERROR_SUCCESS);
+  // Write 16 bytes, "123456789ABCDEF" + null terminator. This forces a
+  // reallocation.
+  assert(yr_arena2_write_string(arena, 0, "123456789ABCDEF", &ref) == ERROR_SUCCESS);
 
   // Offset should be 5 as this was written after the first 5-bytes write.
   assert(ref.offset == 5);
 
-  // Write 4 bytes, "bar" + null terminator. This makes forces a reallocation.
-  assert(yr_arena2_write_string(arena, 0, "bar", &ref) == ERROR_SUCCESS);
+  // Write 4 bytes, "bar" + null terminator.
+  assert(yr_arena2_write_string(arena, 0, "123456789ABCDEF", &ref) == ERROR_SUCCESS);
 
-  // Offset should be 9.
-  assert(ref.offset == 9);
+  // Offset should be 21.
+  assert(ref.offset == 21);
 
   yr_arena2_release(arena);
 }
