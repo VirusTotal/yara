@@ -242,22 +242,22 @@ typedef uint32_t  YR_AC_TRANSITION;
 
 struct YR_NAMESPACE
 {
+  // Pointer to namespace's name.
+  DECLARE_REFERENCE(const char*, name);
+
   // Index of this namespace in the array of YR_NAMESPACE structures stored
   // in YR_NAMESPACES_TABLE.
   uint32_t idx;
-
-  // Pointer to namespace's name.
-  DECLARE_REFERENCE(const char*, name);
 };
 
 
 struct YR_META
 {
-  int32_t type;
-  int64_t integer;
-
   DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(const char*, string);
+
+  int64_t integer;
+  int32_t type;
 };
 
 
@@ -335,6 +335,7 @@ struct YR_SUMMARY
   uint32_t num_namespaces;
 };
 
+
 struct YR_EXTERNAL_VARIABLE
 {
   int32_t type;
@@ -353,6 +354,10 @@ struct YR_EXTERNAL_VARIABLE
 
 struct YR_AC_MATCH
 {
+  DECLARE_REFERENCE(YR_STRING*, string);
+  DECLARE_REFERENCE(const uint8_t*, forward_code);
+  DECLARE_REFERENCE(const uint8_t*, backward_code);
+
   // When the Aho-Corasick automaton reaches some state that has associated
   // matches, the current position in the input buffer is a few bytes past
   // the point where the match actually occurs, for example, when looking for
@@ -364,10 +369,6 @@ struct YR_AC_MATCH
   uint16_t backtrack;
 
   int8_t  flags;
-
-  DECLARE_REFERENCE(YR_STRING*, string);
-  DECLARE_REFERENCE(const uint8_t*, forward_code);
-  DECLARE_REFERENCE(const uint8_t*, backward_code);
 };
 
 #pragma pack(pop)

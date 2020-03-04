@@ -69,13 +69,14 @@ int err = 0;
 int main (int argc, char **argv)
 {
   CHECK_SIZE(YR_NAMESPACE, 16);
-  CHECK_OFFSET(YR_NAMESPACE, 0, idx);
-  CHECK_OFFSET(YR_NAMESPACE, 8, name);
+  CHECK_OFFSET(YR_NAMESPACE, 0, name);
+  CHECK_OFFSET(YR_NAMESPACE, 8, idx);
 
   CHECK_SIZE(YR_META, 32);
-  CHECK_OFFSET(YR_META, 8,  integer);
-  CHECK_OFFSET(YR_META, 16, identifier);
-  CHECK_OFFSET(YR_META, 24, string);
+  CHECK_OFFSET(YR_META, 0, identifier);
+  CHECK_OFFSET(YR_META, 8, string);
+  CHECK_OFFSET(YR_META, 16,  integer);
+  CHECK_OFFSET(YR_META, 24,  type);
 
   CHECK_SIZE(YR_STRING, 56);
   CHECK_OFFSET(YR_STRING, 0, flags);
@@ -88,13 +89,18 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_STRING, 40, chain_gap_min);
   CHECK_OFFSET(YR_STRING, 44, chain_gap_max);
   CHECK_OFFSET(YR_STRING, 48, identifier);
-  
+
   CHECK_SIZE(YR_RULE, 48);
   CHECK_OFFSET(YR_RULE, 8,  identifier);
   CHECK_OFFSET(YR_RULE, 16, tags);
   CHECK_OFFSET(YR_RULE, 24, metas);
   CHECK_OFFSET(YR_RULE, 32, strings);
   CHECK_OFFSET(YR_RULE, 40, ns);
+
+  CHECK_SIZE(YR_SUMMARY, 12);
+  CHECK_OFFSET(YR_SUMMARY, 0,  num_rules);
+  CHECK_OFFSET(YR_SUMMARY, 4,  num_strings);
+  CHECK_OFFSET(YR_SUMMARY, 8,  num_namespaces);
 
   CHECK_SIZE(YR_EXTERNAL_VARIABLE, 24);
   CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8,  value.i);
@@ -103,9 +109,9 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 16, identifier);
 
   CHECK_SIZE(YR_AC_MATCH, 32);
-  CHECK_OFFSET(YR_AC_MATCH, 8, string);
-  CHECK_OFFSET(YR_AC_MATCH, 16, forward_code);
-  CHECK_OFFSET(YR_AC_MATCH, 24, backward_code);
+  CHECK_OFFSET(YR_AC_MATCH, 0, string);
+  CHECK_OFFSET(YR_AC_MATCH, 8, forward_code);
+  CHECK_OFFSET(YR_AC_MATCH, 16, backward_code);
 
   CHECK_SIZE(SIZED_STRING, 12);
   CHECK_OFFSET(SIZED_STRING, 4, flags);
