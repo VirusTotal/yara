@@ -234,10 +234,10 @@ static int _yr_ac_state_destroy(
     YR_AC_MATCH_LIST_ENTRY* next = match->next;
 
     if (match->xref > 0)
-      match->xref--;
-
-    if (match->xref == 0)
-      yr_free(match);
+    {
+      if (match->xref-- == 0)
+        yr_free(match);
+    }
 
     match = next;
   }
@@ -888,7 +888,8 @@ int yr_ac_add_string(
       state = next_state;
     }
 
-    YR_AC_MATCH_LIST_ENTRY* new_match = yr_malloc(sizeof(struct YR_AC_MATCH_LIST_ENTRY));
+    YR_AC_MATCH_LIST_ENTRY* new_match = yr_malloc(
+        sizeof(struct YR_AC_MATCH_LIST_ENTRY));
 
     if (new_match == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
@@ -965,6 +966,7 @@ int yr_ac_compile(
     YR_AC_AUTOMATON* automaton,
     YR_ARENA2* arena)
 {
+  
   FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_optimize_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton));
