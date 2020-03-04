@@ -61,6 +61,7 @@ int err = 0;
     else                                              \
     {                                                 \
       printf("expected %d\n", offset);                \
+      err = 1;                                        \
     }                                                 \
   } while (0)
 
@@ -76,22 +77,18 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_META, 16, identifier);
   CHECK_OFFSET(YR_META, 24, string);
 
-  CHECK_SIZE(YR_MATCHES, 24);
-  CHECK_OFFSET(YR_MATCHES, 8,  head);
-  CHECK_OFFSET(YR_MATCHES, 16, tail);
-
   CHECK_SIZE(YR_STRING, 56);
-  CHECK_OFFSET(YR_STRING, 0, idx);
-  CHECK_OFFSET(YR_STRING, 4, rule_idx);
-  CHECK_OFFSET(YR_STRING, 8, flags);
-  CHECK_OFFSET(YR_STRING, 12, length);
-  CHECK_OFFSET(YR_STRING, 16, chain_gap_min);
-  CHECK_OFFSET(YR_STRING, 20, chain_gap_max);
-  CHECK_OFFSET(YR_STRING, 24, fixed_offset);
-  CHECK_OFFSET(YR_STRING, 32, identifier);
-  CHECK_OFFSET(YR_STRING, 40, string);
-  CHECK_OFFSET(YR_STRING, 48, chained_to);
-
+  CHECK_OFFSET(YR_STRING, 0, flags);
+  CHECK_OFFSET(YR_STRING, 4, idx);
+  CHECK_OFFSET(YR_STRING, 8, fixed_offset);
+  CHECK_OFFSET(YR_STRING, 16, rule_idx);
+  CHECK_OFFSET(YR_STRING, 20, length);
+  CHECK_OFFSET(YR_STRING, 24, string);
+  CHECK_OFFSET(YR_STRING, 32, chained_to);
+  CHECK_OFFSET(YR_STRING, 40, chain_gap_min);
+  CHECK_OFFSET(YR_STRING, 44, chain_gap_max);
+  CHECK_OFFSET(YR_STRING, 48, identifier);
+  
   CHECK_SIZE(YR_RULE, 48);
   CHECK_OFFSET(YR_RULE, 8,  identifier);
   CHECK_OFFSET(YR_RULE, 16, tags);
