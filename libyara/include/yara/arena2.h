@@ -137,7 +137,7 @@ in the structure are relocatable pointers.
 
 struct YR_ARENA2
 {
-  // Number users of this arena. This is set to one when the arena is created,
+  // Number of users of this arena. This is set to one when the arena is created,
   // and can be incremented by calling yr_arena2_acquire. On each call
   // to yr_arena2_release it gets decremented by one, if xrefs reaches zero
   // the buffers and the YR_ARENA2 structures are freed.
@@ -173,7 +173,7 @@ int yr_arena2_create(
 void yr_arena2_acquire(
     YR_ARENA2* arena);
 
-//
+
 // Release ownership of the arena. If the number of owners drops to zero the
 // arena is destroyed and all its resources are freed.
 int yr_arena2_release(
@@ -190,6 +190,7 @@ void* yr_arena2_ref_to_ptr(
     YR_ARENA2* arena,
     YR_ARENA2_REF* ref);
 
+
 // Given a pointer into the arena, it returns a reference to it. The reference
 // can be used with yr_arena2_ref_to_ptr to obtain a pointer again. Unlike
 // pointers, references are during the arena's lifetime, even if the buffers
@@ -199,6 +200,7 @@ int yr_arena2_ptr_to_ref(
     const void* address,
     YR_ARENA2_REF* ref);
 
+
 // Given a buffer number and an offset within the buffer, returns a pointer
 // to that offset. The same limitations explained for yr_arena2_ref_to_ptr
 // applies for the pointers returned by this function.
@@ -206,6 +208,7 @@ void* yr_arena2_get_ptr(
     YR_ARENA2* arena,
     int buffer_id,
     yr_arena_off_t offset);
+
 
 yr_arena_off_t yr_arena2_get_current_offset(
     YR_ARENA2* arena,
