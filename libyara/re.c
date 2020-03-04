@@ -386,6 +386,7 @@ SIZED_STRING* yr_re_ast_extract_literal(
     return NULL;
 
   string->length = length;
+  string->flags = 0;
 
   if (re_ast->root_node->type == RE_NODE_LITERAL)
   {
