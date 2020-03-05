@@ -344,7 +344,7 @@ YR_API int yr_rules_scan_proc(
 
 
 int yr_rules_from_arena(
-    YR_ARENA2* arena,
+    YR_ARENA* arena,
     YR_RULES** rules)
 {
   YR_RULES* new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
@@ -352,38 +352,38 @@ int yr_rules_from_arena(
   if (new_rules == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  YR_SUMMARY* summary = (YR_SUMMARY*) yr_arena2_get_ptr(
+  YR_SUMMARY* summary = (YR_SUMMARY*) yr_arena_get_ptr(
       arena, YR_SUMMARY_SECTION, 0);
 
   // Now YR_RULES relies on this arena, let's increment the arena's
   // reference count so that if the original owner of the arena calls
   // yr_arena_destroy the arena is not destroyed.
-  yr_arena2_acquire(arena);
+  yr_arena_acquire(arena);
 
   new_rules->arena = arena;
   new_rules->num_rules = summary->num_rules;
   new_rules->num_strings = summary->num_strings;
   new_rules->num_namespaces = summary->num_namespaces;
 
-  new_rules->rules_list_head = yr_arena2_get_ptr(
+  new_rules->rules_list_head = yr_arena_get_ptr(
       arena, YR_RULES_TABLE, 0);
 
-  new_rules->strings_list_head = yr_arena2_get_ptr(
+  new_rules->strings_list_head = yr_arena_get_ptr(
       arena, YR_STRINGS_TABLE, 0);
 
-  new_rules->externals_list_head = yr_arena2_get_ptr(
+  new_rules->externals_list_head = yr_arena_get_ptr(
       arena, YR_EXTERNAL_VARIABLES_TABLE, 0);
 
-  new_rules->ac_transition_table = yr_arena2_get_ptr(
+  new_rules->ac_transition_table = yr_arena_get_ptr(
       arena, YR_AC_TRANSITION_TABLE, 0);
 
-  new_rules->ac_match_table = yr_arena2_get_ptr(
+  new_rules->ac_match_table = yr_arena_get_ptr(
       arena, YR_AC_STATE_MATCHES_TABLE, 0);
 
-  new_rules->ac_match_pool = yr_arena2_get_ptr(
+  new_rules->ac_match_pool = yr_arena_get_ptr(
       arena, YR_AC_STATE_MATCHES_POOL, 0);
 
-  new_rules->code_start = yr_arena2_get_ptr(
+  new_rules->code_start = yr_arena_get_ptr(
       arena, YR_CODE_SECTION, 0);
 
   *rules = new_rules;
@@ -397,10 +397,10 @@ YR_API int yr_rules_load_stream(
     YR_STREAM* stream,
     YR_RULES** rules)
 {
-  YR_ARENA2* arena;
+  YR_ARENA* arena;
 
   // Load the arena's data the stream. We are the owners of the arena.
-  FAIL_ON_ERROR(yr_arena2_load_stream(stream, &arena));
+  FAIL_ON_ERROR(yr_arena_load_stream(stream, &arena));
 
   // Create the YR_RULES object from the arena, this makes YR_RULES owner
   // of the arena too.
@@ -408,7 +408,7 @@ YR_API int yr_rules_load_stream(
 
   // Release our ownership so that YR_RULES is the single owner. This way the
   // arena is destroyed when YR_RULES is destroyed.
-  yr_arena2_release(arena);
+  yr_arena_release(arena);
 
   return ERROR_SUCCESS;
 }
@@ -440,7 +440,7 @@ YR_API int yr_rules_save_stream(
     YR_RULES* rules,
     YR_STREAM* stream)
 {
-  return yr_arena2_save_stream(rules->arena, stream);
+  return yr_arena_save_stream(rules->arena, stream);
 }
 
 
@@ -571,7 +571,7 @@ YR_API int yr_rules_destroy(
     external++;
   }
 
-  yr_arena2_release(rules->arena);
+  yr_arena_release(rules->arena);
   yr_free(rules);
 
   return ERROR_SUCCESS;

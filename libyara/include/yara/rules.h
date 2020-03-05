@@ -176,7 +176,7 @@ YR_API void yr_rule_enable(
 
 
 int yr_rules_from_arena(
-    YR_ARENA2* arena,
+    YR_ARENA* arena,
     YR_RULES** rules);
 
 #endif

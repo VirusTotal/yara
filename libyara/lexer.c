@@ -1475,7 +1475,7 @@ YY_RULE_SETUP
       }
     }
 
-    YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena2_get_ptr(
+    YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
       compiler->arena,
       YR_NAMESPACES_TABLE,
       compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));

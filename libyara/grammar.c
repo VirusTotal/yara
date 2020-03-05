@@ -79,7 +79,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 
-#include <yara/arena2.h>
+#include <yara/arena.h>
 #include <yara/integers.h>
 #include <yara/utils.h>
 #include <yara/strutils.h>
@@ -174,7 +174,7 @@
 #define expression_identifier(expr) \
     ((expr).identifier.ptr != NULL ? \
      (expr).identifier.ptr : \
-     (const char*) yr_arena2_ref_to_ptr(compiler->arena, &(expr).identifier.ref))
+     (const char*) yr_arena_ref_to_ptr(compiler->arena, &(expr).identifier.ref))
 
 
 #define DEFAULT_BASE64_ALPHABET "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
@@ -341,10 +341,10 @@ union YYSTYPE
   double          double_;
   YR_MODIFIER     modifier;
 
-  YR_ARENA2_REF tag;
-  YR_ARENA2_REF rule;
-  YR_ARENA2_REF meta;
-  YR_ARENA2_REF string;
+  YR_ARENA_REF tag;
+  YR_ARENA_REF rule;
+  YR_ARENA_REF meta;
+  YR_ARENA_REF string;
 
 #line 350 "grammar.c" /* yacc.c:355  */
 };
@@ -1796,16 +1796,16 @@ yyreduce:
   case 11:
 #line 349 "grammar.y" /* yacc.c:1663  */
     {
-        YR_RULE* rule = (YR_RULE*) yr_arena2_ref_to_ptr(
+        YR_RULE* rule = (YR_RULE*) yr_arena_ref_to_ptr(
             compiler->arena, &(yyvsp[-4].rule));
 
-        rule->tags = (char*) yr_arena2_ref_to_ptr(
+        rule->tags = (char*) yr_arena_ref_to_ptr(
             compiler->arena, &(yyvsp[-3].tag));
 
-        rule->metas = (YR_META*) yr_arena2_ref_to_ptr(
+        rule->metas = (YR_META*) yr_arena_ref_to_ptr(
             compiler->arena, &(yyvsp[-1].meta));
 
-        rule->strings = (YR_STRING*) yr_arena2_ref_to_ptr(
+        rule->strings = (YR_STRING*) yr_arena_ref_to_ptr(
             compiler->arena, &(yyvsp[0].string));
       }
 #line 1812 "grammar.c" /* yacc.c:1663  */
@@ -1846,7 +1846,7 @@ yyreduce:
         memset(&null_meta, 0xFF, sizeof(YR_META));
         null_meta.type = META_TYPE_NULL;
 
-        fail_if_error(yr_arena2_write_data(
+        fail_if_error(yr_arena_write_data(
             compiler->arena,
             YR_METAS_TABLE,
             &null_meta,
@@ -1869,7 +1869,7 @@ yyreduce:
   case 16:
 #line 410 "grammar.y" /* yacc.c:1663  */
     {
-        YR_STRING* string = (YR_STRING*) yr_arena2_get_ptr(
+        YR_STRING* string = (YR_STRING*) yr_arena_get_ptr(
             compiler->arena,
             YR_STRINGS_TABLE,
             (compiler->current_string_idx - 1) * sizeof(YR_STRING));
@@ -1921,7 +1921,7 @@ yyreduce:
         // additional null character. Here we write the ending null
         //character. Example: tag1\0tag2\0tag3\0\0
 
-        fail_if_error(yr_arena2_write_string(
+        fail_if_error(yr_arena_write_string(
             yyget_extra(yyscanner)->arena, YR_SZ_POOL, "", NULL));
 
         (yyval.tag) = (yyvsp[0].tag);
@@ -1932,7 +1932,7 @@ yyreduce:
   case 24:
 #line 462 "grammar.y" /* yacc.c:1663  */
     {
-        int result = yr_arena2_write_string(
+        int result = yr_arena_write_string(
             yyget_extra(yyscanner)->arena, YR_SZ_POOL, (yyvsp[0].c_string), &(yyval.tag));
 
         yr_free((yyvsp[0].c_string));
@@ -1945,10 +1945,10 @@ yyreduce:
   case 25:
 #line 471 "grammar.y" /* yacc.c:1663  */
     {
-        YR_ARENA2_REF ref;
+        YR_ARENA_REF ref;
 
         // Write the new tag identifier.
-        int result = yr_arena2_write_string(
+        int result = yr_arena_write_string(
             yyget_extra(yyscanner)->arena, YR_SZ_POOL, (yyvsp[0].c_string), &ref);
 
         yr_free((yyvsp[0].c_string));
@@ -1956,11 +1956,11 @@ yyreduce:
         fail_if_error(result);
 
         // Get the address for the tag identifier just written.
-        char* new_tag = (char*) yr_arena2_ref_to_ptr(
+        char* new_tag = (char*) yr_arena_ref_to_ptr(
             compiler->arena, &ref);
 
         // Take the address of first tag's identifier in the list.
-        char* tag = (char*) yr_arena2_ref_to_ptr(
+        char* tag = (char*) yr_arena_ref_to_ptr(
             compiler->arena, &(yyval.tag));
 
 	// Search for duplicated tags. Tags are written one after
@@ -2514,7 +2514,7 @@ yyreduce:
           YR_OBJECT* object = (YR_OBJECT*) yr_hash_table_lookup(
               compiler->objects_table, (yyvsp[0].c_string), NULL);
 
-          YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena2_get_ptr(
+          YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
               compiler->arena,
               YR_NAMESPACES_TABLE,
               compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
@@ -2528,16 +2528,16 @@ yyreduce:
 
           if (object != NULL)
           {
-            YR_ARENA2_REF ref;
+            YR_ARENA_REF ref;
 
-            result = yr_arena2_write_string(
+            result = yr_arena_write_string(
                 compiler->arena, YR_SZ_POOL, (yyvsp[0].c_string), &ref);
 
             if (result == ERROR_SUCCESS)
               result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_OBJ_LOAD,
-                  yr_arena2_ref_to_ptr(compiler->arena, &ref),
+                  yr_arena_ref_to_ptr(compiler->arena, &ref),
                   NULL,
                   NULL);
 
@@ -2562,7 +2562,7 @@ yyreduce:
 
               YR_RULE* rule = _yr_compiler_get_rule_by_idx(compiler, rule_idx);
 
-              yr_arena2_ptr_to_ref(compiler->arena, rule->identifier, &(yyval.expression).identifier.ref);
+              yr_arena_ptr_to_ref(compiler->arena, rule->identifier, &(yyval.expression).identifier.ref);
 
               (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
               (yyval.expression).value.integer = UNDEFINED;
@@ -2596,16 +2596,16 @@ yyreduce:
 
           if (field != NULL)
           {
-            YR_ARENA2_REF ref;
+            YR_ARENA_REF ref;
 
-            result = yr_arena2_write_string(
+            result = yr_arena_write_string(
                 compiler->arena, YR_SZ_POOL, (yyvsp[0].c_string), &ref);
 
             if (result == ERROR_SUCCESS)
               result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_OBJ_FIELD,
-                  yr_arena2_ref_to_ptr(compiler->arena, &ref),
+                  yr_arena_ref_to_ptr(compiler->arena, &ref),
                   NULL,
                   NULL);
 
@@ -2702,7 +2702,7 @@ yyreduce:
   case 68:
 #line 1085 "grammar.y" /* yacc.c:1663  */
     {
-        YR_ARENA2_REF ref;
+        YR_ARENA_REF ref;
         int result = ERROR_SUCCESS;
         YR_OBJECT_FUNCTION* function;
 
@@ -2713,14 +2713,14 @@ yyreduce:
               compiler, object_as_function((yyvsp[-3].expression).value.object), (yyvsp[-1].c_string));
 
           if (result == ERROR_SUCCESS)
-            result = yr_arena2_write_string(
+            result = yr_arena_write_string(
                 compiler->arena, YR_SZ_POOL, (yyvsp[-1].c_string), &ref);
 
           if (result == ERROR_SUCCESS)
             result = yr_parser_emit_with_arg_reloc(
                 yyscanner,
                 OP_CALL,
-                yr_arena2_ref_to_ptr(compiler->arena, &ref),
+                yr_arena_ref_to_ptr(compiler->arena, &ref),
                 NULL,
                 NULL);
 
@@ -2854,7 +2854,7 @@ yyreduce:
 #line 1225 "grammar.y" /* yacc.c:1663  */
     {
         SIZED_STRING* sized_string = (yyvsp[0].sized_string);
-        YR_ARENA2_REF re_ref;
+        YR_ARENA_REF re_ref;
         RE_ERROR error;
 
         int result = ERROR_SUCCESS;
@@ -2882,7 +2882,7 @@ yyreduce:
           result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              yr_arena2_ref_to_ptr(compiler->arena, &re_ref),
+              yr_arena_ref_to_ptr(compiler->arena, &re_ref),
               NULL,
               NULL);
 
@@ -3088,8 +3088,8 @@ yyreduce:
         YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_index];
         YR_FIXUP* fixup;
 
-        YR_ARENA2_REF loop_start_ref;
-        YR_ARENA2_REF jmp_offset_ref;
+        YR_ARENA_REF loop_start_ref;
+        YR_ARENA_REF jmp_offset_ref;
 
         int var_frame = _yr_compiler_get_var_frame(compiler);
         int i;
@@ -3136,7 +3136,7 @@ yyreduce:
     {
         int32_t jmp_offset;
         YR_FIXUP* fixup;
-        YR_ARENA2_REF pop_ref;
+        YR_ARENA_REF pop_ref;
 
         int var_frame = _yr_compiler_get_var_frame(compiler);
 
@@ -3151,7 +3151,7 @@ yyreduce:
 
         jmp_offset = \
             compiler->loop[compiler->loop_index].start_ref.offset -
-            yr_arena2_get_current_offset(compiler->arena, YR_CODE_SECTION);
+            yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION);
 
         fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
@@ -3168,7 +3168,7 @@ yyreduce:
 
         jmp_offset = \
             compiler->loop[compiler->loop_index].start_ref.offset -
-            yr_arena2_get_current_offset(compiler->arena, YR_CODE_SECTION);
+            yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION);
 
         fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
@@ -3188,7 +3188,7 @@ yyreduce:
 
         // The fixup entry has a reference to the jump offset that need
         // to be fixed, convert the address into a pointer.
-        int32_t* jmp_offset_addr = (int32_t*) yr_arena2_ref_to_ptr(
+        int32_t* jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(
             compiler->arena, &fixup->ref);
 
         // The reference in the fixup entry points to the jump's offset
@@ -3225,7 +3225,7 @@ yyreduce:
   case 86:
 #line 1603 "grammar.y" /* yacc.c:1663  */
     {
-        YR_ARENA2_REF ref;
+        YR_ARENA_REF ref;
 
         int result = ERROR_SUCCESS;
         int var_frame;
@@ -3282,7 +3282,7 @@ yyreduce:
 
         int32_t jmp_offset = \
             compiler->loop[compiler->loop_index].start_ref.offset -
-            yr_arena2_get_current_offset(compiler->arena, YR_CODE_SECTION);
+            yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION);
 
         // If next string is not undefined, go back to the
         // beginning of the loop.
@@ -3343,7 +3343,7 @@ yyreduce:
 #line 1704 "grammar.y" /* yacc.c:1663  */
     {
         YR_FIXUP* fixup;
-        YR_ARENA2_REF jmp_offset_ref;
+        YR_ARENA_REF jmp_offset_ref;
 
         fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
@@ -3374,11 +3374,11 @@ yyreduce:
 
         fixup = compiler->fixup_stack_head;
 
-        int32_t* jmp_offset_addr = (int32_t*) yr_arena2_ref_to_ptr(
+        int32_t* jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(
             compiler->arena, &fixup->ref);
 
         int32_t jmp_offset = \
-            yr_arena2_get_current_offset(compiler->arena, YR_CODE_SECTION) -
+            yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION) -
             fixup->ref.offset + 1;
 
         *jmp_offset_addr = jmp_offset;
@@ -3396,7 +3396,7 @@ yyreduce:
 #line 1749 "grammar.y" /* yacc.c:1663  */
     {
         YR_FIXUP* fixup;
-        YR_ARENA2_REF jmp_offset_ref;
+        YR_ARENA_REF jmp_offset_ref;
 
         fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
@@ -3427,10 +3427,10 @@ yyreduce:
         fixup = compiler->fixup_stack_head;
 
         int32_t jmp_offset = \
-            yr_arena2_get_current_offset(compiler->arena, YR_CODE_SECTION) -
+            yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION) -
             fixup->ref.offset + 1;
 
-        int32_t* jmp_offset_addr = (int32_t*) yr_arena2_ref_to_ptr(
+        int32_t* jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(
             compiler->arena, &fixup->ref);
 
         *jmp_offset_addr = jmp_offset;
@@ -3918,9 +3918,9 @@ yyreduce:
   case 127:
 #line 2186 "grammar.y" /* yacc.c:1663  */
     {
-        YR_ARENA2_REF ref;
+        YR_ARENA_REF ref;
 
-        int result = yr_arena2_write_data(
+        int result = yr_arena_write_data(
             compiler->arena,
             YR_SZ_POOL,
             (yyvsp[0].sized_string),
@@ -3933,7 +3933,7 @@ yyreduce:
           result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              yr_arena2_ref_to_ptr(compiler->arena, &ref),
+              yr_arena_ref_to_ptr(compiler->arena, &ref),
               NULL,
               NULL);
 
