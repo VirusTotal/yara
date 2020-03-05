@@ -226,7 +226,7 @@ int yr_arena_allocate_memory(
     while (new_size < b->used + size)
       new_size *= 2;
 
-    void *new_data = yr_realloc(b->data, new_size);
+    uint8_t* new_data = yr_realloc(b->data, new_size);
 
     if (new_data == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
@@ -239,21 +239,22 @@ int yr_arena_allocate_memory(
       // the base pointer that we use to access the buffer must be new_data,
       // as arena->buffers[reloc->buffer_id].data which is the same than
       // b->data can't be accessed anymore after the call to yr_realloc.
-      void* base = buffer_id == reloc->buffer_id ?
+      uint8_t* base = buffer_id == reloc->buffer_id ?
           new_data : arena->buffers[reloc->buffer_id].data;
 
       // reloc_address holds the address inside the buffer where the pointer
       // to be relocated resides.
-      void** reloc_address = (void**)(base + reloc->offset);
+      void** reloc_address = (void**) (base + reloc->offset);
 
       // reloc_target is the value of the relocatable pointer.
       void* reloc_target = *reloc_address;
 
       // reloc_target points to some data inside the buffer being moved, so
       // the pointer needs to be adjusted.
-      if (reloc_target >= b->data && reloc_target < b->data + b->used)
+      if ((uint8_t*) reloc_target >= b->data &&
+          (uint8_t*) reloc_target < b->data + b->used)
       {
-        *reloc_address = reloc_target - b->data + new_data;
+        *reloc_address = (uint8_t*) reloc_target - b->data + new_data;
       }
 
       reloc = reloc->next;
@@ -377,11 +378,11 @@ int yr_arena_ptr_to_ref(
 
   for (int i = 0; i < arena->num_buffers; ++i)
   {
-    if (address >= arena->buffers[i].data &&
-        address <  arena->buffers[i].data + arena->buffers[i].used)
+    if ((uint8_t*) address >= arena->buffers[i].data &&
+        (uint8_t*) address <  arena->buffers[i].data + arena->buffers[i].used)
     {
       ref->buffer_id = i;
-      ref->offset = address - arena->buffers[i].data;
+      ref->offset = (uint8_t*) address - arena->buffers[i].data;
       return 1;
     }
   }
@@ -555,9 +556,10 @@ int yr_arena_load_stream(
       return ERROR_CORRUPT_FILE;
     }
 
-    void** reloc_ptr = b->data + ref.offset;
+    void** reloc_ptr = (void**) (b->data + ref.offset);
 
-    *reloc_ptr = yr_arena_ref_to_ptr(new_arena, (YR_ARENA_REF *) reloc_ptr);
+    // Let's convert the reference into a pointer.
+    *reloc_ptr = yr_arena_ref_to_ptr(new_arena, (YR_ARENA_REF*) reloc_ptr);
 
     FAIL_ON_ERROR_WITH_CLEANUP(
         yr_arena_make_ptr_relocatable(
@@ -620,7 +622,8 @@ int yr_arena_save_stream(
   {
     // reloc_ptr is a pointer to the relocatable pointer, while *reloc_ptr
     // is the relocatable pointer itself.
-    void** reloc_ptr = arena->buffers[reloc->buffer_id].data + reloc->offset;
+    void** reloc_ptr = (void**) (
+        arena->buffers[reloc->buffer_id].data + reloc->offset);
 
     YR_ARENA_REF ref;
 
@@ -665,7 +668,8 @@ int yr_arena_save_stream(
     if (yr_stream_write(&ref, sizeof(ref), 1, stream) != 1)
       return ERROR_WRITING_FILE;
 
-    void** reloc_ptr = arena->buffers[reloc->buffer_id].data + reloc->offset;
+    void** reloc_ptr = (void**) (
+        arena->buffers[reloc->buffer_id].data + reloc->offset);
 
     // reloc_ptr is now pointing to a YR_ARENA_REF.
     YR_ARENA_REF* ref_ptr = (YR_ARENA_REF*) reloc_ptr;

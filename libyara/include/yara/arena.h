@@ -73,7 +73,7 @@ struct YR_ARENA_REF
 struct YR_ARENA_BUFFER
 {
   // Pointer the buffer's data.
-  void* data;
+  uint8_t* data;
 
   // Total buffer size, including the used and unused areas.
   size_t size;
