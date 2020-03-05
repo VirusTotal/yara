@@ -371,8 +371,8 @@ int yr_execute_code(
   YR_MATCH* match;
   YR_OBJECT_FUNCTION* function;
   YR_OBJECT** obj_ptr;
-  YR_ARENA* obj_arena;
-  YR_ARENA* it_arena;
+  YR_ARENA2* obj_arena;
+  YR_NOTEBOOK* it_notebook;
 
   char* identifier;
   char* args_fmt;
@@ -382,6 +382,7 @@ int yr_execute_code(
   int count;
   int result = ERROR_SUCCESS;
   int cycle = 0;
+  int obj_count = 0;
 
   bool stop = false;
 
@@ -396,12 +397,12 @@ int yr_execute_code(
     return ERROR_INSUFFICIENT_MEMORY;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_arena_create(1024, 0, &obj_arena),
+      yr_arena2_create(1, 512 * sizeof(YR_OBJECT*), &obj_arena),
       yr_free(stack.items));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_arena_create(64 * sizeof(YR_ITERATOR), 0, &it_arena),
-      yr_arena_destroy(obj_arena);
+      yr_notebook_create(512 * sizeof(YR_ITERATOR), &it_notebook),
+      yr_arena2_release(obj_arena);
       yr_free(stack.items));
 
   #ifdef PROFILING_ENABLED
@@ -431,10 +432,13 @@ int yr_execute_code(
         break;
 
       case OP_ITER_START_ARRAY:
-        result = yr_arena_allocate_struct(
-            it_arena, sizeof(YR_ITERATOR), &r2.p);
+        r2.p = yr_notebook_alloc(it_notebook, sizeof(YR_ITERATOR));
 
-        if (result == ERROR_SUCCESS)
+        if (r2.p == NULL)
+        {
+          result = ERROR_INSUFFICIENT_MEMORY;
+        }
+        else
         {
           pop(r1);
           r2.it->array_it.array = r1.o;
@@ -447,10 +451,13 @@ int yr_execute_code(
         break;
 
       case OP_ITER_START_DICT:
-        result = yr_arena_allocate_struct(
-            it_arena, sizeof(YR_ITERATOR), &r2.p);
+        r2.p = yr_notebook_alloc(it_notebook, sizeof(YR_ITERATOR));
 
-        if (result == ERROR_SUCCESS)
+        if (r2.p == NULL)
+        {
+          result = ERROR_INSUFFICIENT_MEMORY;
+        }
+        else
         {
           pop(r1);
           r2.it->dict_it.dict = r1.o;
@@ -465,10 +472,13 @@ int yr_execute_code(
       case OP_ITER_START_INT_RANGE:
         // Creates an iterator for an integer range. The higher bound of the
         // range is at the top of the stack followed by the lower bound.
-        result = yr_arena_allocate_struct(
-            it_arena, sizeof(YR_ITERATOR), &r3.p);
+        r3.p = yr_notebook_alloc(it_notebook, sizeof(YR_ITERATOR));
 
-        if (result == ERROR_SUCCESS)
+        if (r3.p == NULL)
+        {
+          result = ERROR_INSUFFICIENT_MEMORY;
+        }
+        else
         {
           pop(r2);
           pop(r1);
@@ -487,10 +497,14 @@ int yr_execute_code(
         // items in reverse order.
         pop(r1);
 
-        result = yr_arena_allocate_struct(
-            it_arena, sizeof(YR_ITERATOR) + sizeof(uint64_t) * r1.i, &r3.p);
+        r3.p = yr_notebook_alloc(
+            it_notebook, sizeof(YR_ITERATOR) + sizeof(uint64_t) * r1.i);
 
-        if (result == ERROR_SUCCESS)
+        if (r3.p == NULL)
+        {
+          result = ERROR_INSUFFICIENT_MEMORY;
+        }
+        else
         {
           r3.it->int_enum_it.count = r1.i;
           r3.it->int_enum_it.next = 0;
@@ -976,7 +990,7 @@ int yr_execute_code(
 
         if (count > 0)
         {
-          // if there are undefined args, result for function call
+          // If there are undefined args, result for function call
           // is undefined as well.
 
           r1.i = UNDEFINED;
@@ -999,23 +1013,25 @@ int yr_execute_code(
           }
         }
 
-        // if i == YR_MAX_OVERLOADED_FUNCTIONS at this point no matching
+        // If i == YR_MAX_OVERLOADED_FUNCTIONS at this point no matching
         // prototype was found, but this shouldn't happen.
-
         assert(i < YR_MAX_OVERLOADED_FUNCTIONS);
 
-        // make a copy of the returned object and push the copy into the stack,
+        // Make a copy of the returned object and push the copy into the stack,
         // function->return_obj can't be pushed because it can change in
         // subsequent calls to the same function.
-
         if (result == ERROR_SUCCESS)
           result = yr_object_copy(function->return_obj, &r1.o);
 
-        // a pointer to the copied object is stored in a arena in order to
-        // free the object before exiting yr_execute_code
-
+        // A pointer to the copied object is stored in a arena in order to
+        // free the object before exiting yr_execute_code, obj_count tracks
+        // the number of objects written.
         if (result == ERROR_SUCCESS)
-          result = yr_arena_write_data(obj_arena, &r1.o, sizeof(r1.o), NULL);
+        {
+          result = yr_arena2_write_data(
+              obj_arena, 0, &r1.o, sizeof(r1.o), NULL);
+          obj_count++;
+        }
 
         stop = (result != ERROR_SUCCESS);
         push(r1);
@@ -1635,18 +1651,13 @@ int yr_execute_code(
     }
   }
 
-  obj_ptr = (YR_OBJECT**) yr_arena_base_address(obj_arena);
+  obj_ptr = yr_arena2_get_ptr(obj_arena, 0, 0);
 
-  while (obj_ptr != NULL)
-  {
-    yr_object_destroy(*obj_ptr);
+  for (int i = 0; i < obj_count; i++)
+    yr_object_destroy(obj_ptr[i]);
 
-    obj_ptr = (YR_OBJECT**) yr_arena_next_address(
-        obj_arena, obj_ptr, sizeof(YR_OBJECT*));
-  }
-
-  yr_arena_destroy(obj_arena);
-  yr_arena_destroy(it_arena);
+  yr_arena2_release(obj_arena);
+  yr_notebook_destroy(it_notebook);
   yr_modules_unload_all(context);
   yr_free(stack.items);
 

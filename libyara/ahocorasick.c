@@ -791,7 +791,7 @@ int yr_ac_automaton_create(
 
   FAIL_ON_ERROR_WITH_CLEANUP(yr_notebook_create(
       sizeof(YR_AC_MATCH_TABLE_ENTRY) * 1024,
-      &new_automaton->matches_nb),
+      &new_automaton->matches_notebook),
       // cleanup
       yr_free(new_automaton);
       yr_free(root_state));
@@ -826,7 +826,7 @@ int yr_ac_automaton_destroy(
 {
   _yr_ac_state_destroy(automaton->root);
 
-  yr_notebook_destroy(automaton->matches_nb);
+  yr_notebook_destroy(automaton->matches_notebook);
 
   yr_free(automaton->t_table);
   yr_free(automaton->m_table);
@@ -871,7 +871,7 @@ int yr_ac_add_string(
     }
 
     YR_AC_MATCH_LIST_ENTRY* new_match = yr_notebook_alloc(
-        automaton->matches_nb, sizeof(struct YR_AC_MATCH_LIST_ENTRY));
+        automaton->matches_notebook, sizeof(struct YR_AC_MATCH_LIST_ENTRY));
 
     if (new_match == NULL)
       return ERROR_INSUFFICIENT_MEMORY;

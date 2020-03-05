@@ -499,7 +499,7 @@ struct YR_MATCH
 
   // Pointer to a buffer containing a portion of the matched data. The size of
   // the buffer is data_length. data_length is always <= length and is limited
-  // to MAX_MATCH_DATA bytes.
+  // to YR_CONFIG_MAX_MATCH_DATA bytes.
   const uint8_t* data;
 
   YR_MATCH* prev;
@@ -566,7 +566,7 @@ struct YR_AC_AUTOMATON
   YR_AC_MATCH_TABLE_ENTRY* m_table;
 
   // Notebook where the YR_AC_MATCH_TABLE_ENTRY structures will be allocated.
-  YR_NOTEBOOK* matches_nb;
+  YR_NOTEBOOK* matches_notebook;
 
   // Pointer to the root Aho-Corasick state.
   YR_AC_STATE* root;
@@ -711,8 +711,9 @@ struct YR_SCAN_CONTEXT
   // contains entries for external variables and modules.
   YR_HASH_TABLE* objects_table;
 
-  // Arena used for storing YR_MATCH structures associated to the matches found.
-  YR_ARENA* matches_arena;
+  // Notebook used for storing YR_MATCH structures associated to the matches
+  // found.
+  YR_NOTEBOOK * matches_notebook;
 
   // Stopwatch used for measuring the time elapsed during the scan.
   YR_STOPWATCH stopwatch;
