@@ -35,7 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/ahocorasick.h>
 #include <yara/arena.h>
-#include <yara/arena2.h>
 #include <yara/hash.h>
 #include <yara/utils.h>
 #include <yara/filemap.h>
@@ -94,7 +93,7 @@ typedef struct _YR_EXPRESSION
   // memory location.
   struct {
     const char* ptr;
-    YR_ARENA2_REF ref;
+    YR_ARENA_REF ref;
   } identifier ;
 
 } YR_EXPRESSION;
@@ -129,7 +128,7 @@ typedef void (*YR_COMPILER_RE_AST_CALLBACK_FUNC)(
 
 typedef struct _YR_FIXUP
 {
-  YR_ARENA2_REF ref;
+  YR_ARENA_REF ref;
   struct _YR_FIXUP* next;
 
 } YR_FIXUP;
@@ -144,7 +143,7 @@ typedef struct _YR_LOOP_CONTEXT
 {
   // Reference indicating the the place in the code where the loop starts. The
   // loop goes back to this address on each iteration.
-  YR_ARENA2_REF start_ref;
+  YR_ARENA_REF start_ref;
 
   // vars_count is the number of local variables defined by the loop, and vars
   // is an array of expressions with the identifier and type for each of those
@@ -199,7 +198,7 @@ typedef struct _YR_COMPILER
   //   YR_AC_STATE_MATCHES_POOL:
   //      An array of YR_AC_MATCH structures
   //
-  YR_ARENA2* arena;
+  YR_ARENA* arena;
 
   // Index of the rule being compiled in the array of YR_RULE structures
   // stored in YR_RULES_TABLE.

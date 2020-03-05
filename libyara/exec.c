@@ -108,8 +108,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Make sure that the string pointer is within the rules arena.
 #define ensure_within_rules_arena(x) \
     { \
-      YR_ARENA2_REF ref; \
-      if (yr_arena2_ptr_to_ref(context->rules->arena, x, &ref) == 0) \
+      YR_ARENA_REF ref; \
+      if (yr_arena_ptr_to_ref(context->rules->arena, x, &ref) == 0) \
       { \
         stop = true; \
         result = ERROR_INTERNAL_FATAL_ERROR; \
@@ -371,7 +371,7 @@ int yr_execute_code(
   YR_MATCH* match;
   YR_OBJECT_FUNCTION* function;
   YR_OBJECT** obj_ptr;
-  YR_ARENA2* obj_arena;
+  YR_ARENA* obj_arena;
   YR_NOTEBOOK* it_notebook;
 
   char* identifier;
@@ -397,12 +397,12 @@ int yr_execute_code(
     return ERROR_INSUFFICIENT_MEMORY;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_arena2_create(1, 512 * sizeof(YR_OBJECT*), &obj_arena),
+      yr_arena_create(1, 512 * sizeof(YR_OBJECT*), &obj_arena),
       yr_free(stack.items));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_notebook_create(512 * sizeof(YR_ITERATOR), &it_notebook),
-      yr_arena2_release(obj_arena);
+      yr_arena_release(obj_arena);
       yr_free(stack.items));
 
   #ifdef PROFILING_ENABLED
@@ -1028,7 +1028,7 @@ int yr_execute_code(
         // the number of objects written.
         if (result == ERROR_SUCCESS)
         {
-          result = yr_arena2_write_data(
+          result = yr_arena_write_data(
               obj_arena, 0, &r1.o, sizeof(r1.o), NULL);
           obj_count++;
         }
@@ -1651,12 +1651,12 @@ int yr_execute_code(
     }
   }
 
-  obj_ptr = yr_arena2_get_ptr(obj_arena, 0, 0);
+  obj_ptr = yr_arena_get_ptr(obj_arena, 0, 0);
 
   for (int i = 0; i < obj_count; i++)
     yr_object_destroy(obj_ptr[i]);
 
-  yr_arena2_release(obj_arena);
+  yr_arena_release(obj_arena);
   yr_notebook_destroy(it_notebook);
   yr_modules_unload_all(context);
   yr_free(stack.items);

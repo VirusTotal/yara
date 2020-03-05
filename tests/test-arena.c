@@ -27,39 +27,39 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <yara/arena2.h>
+#include <yara/arena.h>
 #include <yara/stream.h>
 #include <yara.h>
 
 static void basic_tests()
 {
-  YR_ARENA2* arena;
+  YR_ARENA* arena;
 
   // Create arena with 1 buffers of 10 bytes of initial size
-  assert(yr_arena2_create(2, 10, &arena) == ERROR_SUCCESS);
+  assert(yr_arena_create(2, 10, &arena) == ERROR_SUCCESS);
 
-  YR_ARENA2_REF ref;
+  YR_ARENA_REF ref;
 
   // Allocate 5 bytes.
-  assert(yr_arena2_allocate_memory(arena, 0, 5, &ref) == ERROR_SUCCESS);
+  assert(yr_arena_allocate_memory(arena, 0, 5, &ref) == ERROR_SUCCESS);
 
   // Offset should be 0 as this is the first write.
   assert(ref.offset == 0);
 
   // Write 16 bytes, "123456789ABCDEF" + null terminator. This forces a
   // reallocation.
-  assert(yr_arena2_write_string(arena, 0, "123456789ABCDEF", &ref) == ERROR_SUCCESS);
+  assert(yr_arena_write_string(arena, 0, "123456789ABCDEF", &ref) == ERROR_SUCCESS);
 
   // Offset should be 5 as this was written after the first 5-bytes write.
   assert(ref.offset == 5);
 
   // Write 4 bytes, "bar" + null terminator.
-  assert(yr_arena2_write_string(arena, 0, "123456789ABCDEF", &ref) == ERROR_SUCCESS);
+  assert(yr_arena_write_string(arena, 0, "123456789ABCDEF", &ref) == ERROR_SUCCESS);
 
   // Offset should be 21.
   assert(ref.offset == 21);
 
-  yr_arena2_release(arena);
+  yr_arena_release(arena);
 }
 
 
@@ -73,43 +73,43 @@ struct TEST_STRUCT {
 
 static void advanced_tests()
 {
-  YR_ARENA2* arena;
+  YR_ARENA* arena;
 
   // Create arena with 3 buffers of 10 bytes of initial size. Only the first
   // two are used, the third one is left empty on purpose.
-  int result = yr_arena2_create(3, 10, &arena);
+  int result = yr_arena_create(3, 10, &arena);
   assert(result == ERROR_SUCCESS);
 
-  YR_ARENA2_REF ref;
+  YR_ARENA_REF ref;
 
   // Allocate a struct in buffer 0 indicating that the field "str" is a
   // relocatable pointer.
-  result = yr_arena2_allocate_struct(
+  result = yr_arena_allocate_struct(
       arena,
       0,
       sizeof(TEST_STRUCT),
       &ref,
       offsetof(TEST_STRUCT, str1),
       offsetof(TEST_STRUCT, str2),
-      EOL2);
+      EOL);
 
   assert(result == ERROR_SUCCESS);
 
   // Get the struct address, this pointer is valid as longs as we don't call
   // any other function that allocates memory in buffer 0.
-  TEST_STRUCT* s = (TEST_STRUCT*) yr_arena2_ref_to_ptr(arena, &ref);
+  TEST_STRUCT* s = (TEST_STRUCT*) yr_arena_ref_to_ptr(arena, &ref);
 
   // Write a string in buffer 1.
-  yr_arena2_write_string(arena, 1, "foo", &ref);
+  yr_arena_write_string(arena, 1, "foo", &ref);
 
   // Get the string's address and store it in the struct's "str" field.
-  s->str1 = (char *) yr_arena2_ref_to_ptr(arena, &ref);
+  s->str1 = (char *) yr_arena_ref_to_ptr(arena, &ref);
 
   // Write another string in buffer 1.
-  yr_arena2_write_string(arena, 1, "bar", &ref);
+  yr_arena_write_string(arena, 1, "bar", &ref);
 
   // Get the string's address and store it in the struct's "str" field.
-  s->str2 = (char *) yr_arena2_ref_to_ptr(arena, &ref);
+  s->str2 = (char *) yr_arena_ref_to_ptr(arena, &ref);
 
   // The arena should have two reloc entries for the "str1" and "str2" fields.
   assert(arena->reloc_list_head != NULL);
@@ -120,7 +120,7 @@ static void advanced_tests()
   assert(arena->reloc_list_tail->offset == offsetof(TEST_STRUCT, str2));
 
   // Write another string in buffer 1 that causes a buffer reallocation.
-  yr_arena2_write_string(arena, 1, "aaaaaaaaaaa", NULL);
+  yr_arena_write_string(arena, 1, "aaaaaaaaaaa", NULL);
 
   assert(strcmp(s->str1, "foo") == 0);
   assert(strcmp(s->str2, "bar") == 0);
@@ -134,7 +134,7 @@ static void advanced_tests()
   stream.write = (YR_STREAM_WRITE_FUNC) fwrite;
   stream.read = (YR_STREAM_READ_FUNC) fread;
 
-  if (yr_arena2_save_stream(arena, &stream) != ERROR_SUCCESS)
+  if (yr_arena_save_stream(arena, &stream) != ERROR_SUCCESS)
     exit(EXIT_FAILURE);
 
   fflush(fh);
@@ -143,21 +143,21 @@ static void advanced_tests()
   assert(strcmp(s->str1, "foo") == 0);
   assert(strcmp(s->str2, "bar") == 0);
 
-  yr_arena2_release(arena);
+  yr_arena_release(arena);
 
-  result = yr_arena2_load_stream(&stream, &arena);
+  result = yr_arena_load_stream(&stream, &arena);
   assert(result == ERROR_SUCCESS);
 
   ref.buffer_id = 0;
   ref.offset = 0;
 
-  s = (TEST_STRUCT*) yr_arena2_ref_to_ptr(arena, &ref);
+  s = (TEST_STRUCT*) yr_arena_ref_to_ptr(arena, &ref);
 
   assert(strcmp(s->str1, "foo") == 0);
   assert(strcmp(s->str2, "bar") == 0);
 
   fclose(fh);
-  yr_arena2_release(arena);
+  yr_arena_release(arena);
 }
 
 int main(int argc, char** argv)

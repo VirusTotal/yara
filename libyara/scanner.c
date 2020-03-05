@@ -411,7 +411,6 @@ YR_API int yr_scanner_scan_mem_blocks(
   // each match found. This notebook will also contain snippets of the matching
   // data (the "data" field in YR_MATCH points to the snippet corresponding to
   // the match). Each notebook's page can store up to 1024 matches.
-
   result = yr_notebook_create(
       1024 * (sizeof(YR_MATCH) + max_match_data),
       &scanner->matches_notebook);

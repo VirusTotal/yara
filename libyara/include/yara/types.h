@@ -31,7 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_TYPES_H
 
 #include <yara/arena.h>
-#include <yara/arena2.h>
 #include <yara/bitmask.h>
 #include <yara/limits.h>
 #include <yara/hash.h>
@@ -45,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DECLARE_REFERENCE(type, name) \
     union { \
       type name; \
-      YR_ARENA2_REF name##_; \
+      YR_ARENA_REF name##_; \
     } YR_ALIGN(8)
 
 
@@ -402,8 +401,8 @@ struct RE_NODE
   RE_NODE* prev_sibling;
   RE_NODE* next_sibling;
 
-  YR_ARENA2_REF forward_code_ref;
-  YR_ARENA2_REF backward_code_ref;
+  YR_ARENA_REF forward_code_ref;
+  YR_ARENA_REF backward_code_ref;
 };
 
 
@@ -530,9 +529,9 @@ struct YR_AC_MATCH_LIST_ENTRY
   uint16_t backtrack;
   uint32_t string_idx;
 
-  YR_ARENA2_REF ref;
-  YR_ARENA2_REF forward_code_ref;
-  YR_ARENA2_REF backward_code_ref;
+  YR_ARENA_REF ref;
+  YR_ARENA_REF forward_code_ref;
+  YR_ARENA_REF backward_code_ref;
 
   YR_AC_MATCH_LIST_ENTRY* next;
 };
@@ -575,7 +574,7 @@ struct YR_AC_AUTOMATON
 
 struct YR_RULES
 {
-  YR_ARENA2* arena;
+  YR_ARENA* arena;
 
   YR_RULE* rules_list_head;
   YR_STRING* strings_list_head;

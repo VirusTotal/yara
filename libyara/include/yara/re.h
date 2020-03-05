@@ -35,7 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/utils.h>
 #include <yara/types.h>
 #include <yara/arena.h>
-#include <yara/arena2.h>
 #include <yara/sizedstr.h>
 
 #define RE_NODE_LITERAL             1
@@ -132,7 +131,7 @@ int yr_re_ast_split_at_chaining_point(
 
 int yr_re_ast_emit_code(
     RE_AST* re_ast,
-    YR_ARENA2* arena,
+    YR_ARENA* arena,
     int backwards_code);
 
 
@@ -193,8 +192,8 @@ int yr_re_parse_hex(
 int yr_re_compile(
     const char* re_string,
     int flags,
-    YR_ARENA2* arena,
-    YR_ARENA2_REF* ref,
+    YR_ARENA* arena,
+    YR_ARENA_REF* ref,
     RE_ERROR* error);
 
 

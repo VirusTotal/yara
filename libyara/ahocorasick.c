@@ -32,7 +32,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 
 #include <yara/arena.h>
-#include <yara/arena2.h>
 #include <yara/ahocorasick.h>
 #include <yara/compiler.h>
 #include <yara/error.h>
@@ -849,7 +848,7 @@ int yr_ac_add_string(
     YR_STRING* string,
     uint32_t string_idx,
     YR_ATOM_LIST_ITEM* atom,
-    YR_ARENA2* arena)
+    YR_ARENA* arena)
 {
   while (atom != NULL)
   {
@@ -895,7 +894,7 @@ int yr_ac_add_string(
 
 static int _yr_ac_write_state_matches(
     YR_AC_STATE* state,
-    YR_ARENA2* arena)
+    YR_ARENA* arena)
 {
   YR_AC_STATE* child = state->first_child;
 
@@ -909,7 +908,7 @@ static int _yr_ac_write_state_matches(
 
   while (match != NULL)
   {
-    FAIL_ON_ERROR(yr_arena2_allocate_struct(
+    FAIL_ON_ERROR(yr_arena_allocate_struct(
         arena,
         YR_AC_STATE_MATCHES_POOL,
         sizeof(YR_AC_MATCH),
@@ -917,17 +916,17 @@ static int _yr_ac_write_state_matches(
         offsetof(YR_AC_MATCH, string),
         offsetof(YR_AC_MATCH, forward_code),
         offsetof(YR_AC_MATCH, backward_code),
-        EOL2));
+        EOL));
 
-    YR_AC_MATCH* m = yr_arena2_ref_to_ptr(arena, &match->ref);
+    YR_AC_MATCH* m = yr_arena_ref_to_ptr(arena, &match->ref);
 
-    m->string = yr_arena2_get_ptr(
+    m->string = yr_arena_get_ptr(
         arena, YR_STRINGS_TABLE, match->string_idx * sizeof(YR_STRING));
 
     m->flags = match->next == NULL ? YR_AC_MATCH_FLAG_LAST : 0;
     m->backtrack = match->backtrack;
-    m->forward_code = yr_arena2_ref_to_ptr(arena, &match->forward_code_ref);
-    m->backward_code = yr_arena2_ref_to_ptr(arena, &match->backward_code_ref);
+    m->forward_code = yr_arena_ref_to_ptr(arena, &match->forward_code_ref);
+    m->backward_code = yr_arena_ref_to_ptr(arena, &match->backward_code_ref);
 
     match = match->next;
   }
@@ -945,7 +944,7 @@ static int _yr_ac_write_state_matches(
 
 int yr_ac_compile(
     YR_AC_AUTOMATON* automaton,
-    YR_ARENA2* arena)
+    YR_ARENA* arena)
 {
   
   FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton));
@@ -955,7 +954,7 @@ int yr_ac_compile(
   //TODO(vmalvarez): Instead of copyig t_table into the arena once that it has
   // been created, we can pass the arena _yr_ac_build_transition_table so that
   // the table is created using the arena and the copy is not necessary.
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       arena,
       YR_AC_TRANSITION_TABLE,
       automaton->t_table,
@@ -975,7 +974,7 @@ int yr_ac_compile(
     else
       match_index = UINT32_MAX;
 
-    FAIL_ON_ERROR(yr_arena2_write_uint32(
+    FAIL_ON_ERROR(yr_arena_write_uint32(
         arena,
         YR_AC_STATE_MATCHES_TABLE,
         match_index,

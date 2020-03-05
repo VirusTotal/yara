@@ -84,7 +84,7 @@ typedef struct _RE_REPEAT_ANY_ARGS
 
 typedef struct _RE_EMIT_CONTEXT
 {
-  YR_ARENA2*        arena;
+  YR_ARENA*        arena;
   RE_SPLIT_ID_TYPE  next_split_id;
 
 } RE_EMIT_CONTEXT;
@@ -273,8 +273,8 @@ int yr_re_parse_hex(
 int yr_re_compile(
     const char* re_string,
     int flags,
-    YR_ARENA2* arena,
-    YR_ARENA2_REF* ref,
+    YR_ARENA* arena,
+    YR_ARENA_REF* ref,
     RE_ERROR* error)
 {
   RE_AST* re_ast;
@@ -285,7 +285,7 @@ int yr_re_compile(
   _re.flags = flags;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_arena2_write_data(
+      yr_arena_write_data(
           arena,
           YR_RE_CODE_SECTION,
           &_re,
@@ -568,9 +568,9 @@ int yr_re_ast_split_at_chaining_point(
 int _yr_emit_inst(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
-    YR_ARENA2_REF* instruction_ref)
+    YR_ARENA_REF* instruction_ref)
 {
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       &opcode,
@@ -585,17 +585,17 @@ int _yr_emit_inst_arg_uint8(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     uint8_t argument,
-    YR_ARENA2_REF* instruction_ref,
-    YR_ARENA2_REF* argument_ref)
+    YR_ARENA_REF* instruction_ref,
+    YR_ARENA_REF* argument_ref)
 {
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       &opcode,
       sizeof(uint8_t),
       instruction_ref));
 
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       &argument,
@@ -610,17 +610,17 @@ int _yr_emit_inst_arg_uint16(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     uint16_t argument,
-    YR_ARENA2_REF* instruction_ref,
-    YR_ARENA2_REF* argument_ref)
+    YR_ARENA_REF* instruction_ref,
+    YR_ARENA_REF* argument_ref)
 {
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       &opcode,
       sizeof(uint8_t),
       instruction_ref));
 
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       &argument,
@@ -635,17 +635,17 @@ int _yr_emit_inst_arg_uint32(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     uint32_t argument,
-    YR_ARENA2_REF* instruction_ref,
-    YR_ARENA2_REF* argument_ref)
+    YR_ARENA_REF* instruction_ref,
+    YR_ARENA_REF* argument_ref)
 {
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       &opcode,
       sizeof(uint8_t),
       instruction_ref));
 
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       &argument,
@@ -660,17 +660,17 @@ int _yr_emit_inst_arg_int16(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     int16_t argument,
-    YR_ARENA2_REF* instruction_ref,
-    YR_ARENA2_REF* argument_ref)
+    YR_ARENA_REF* instruction_ref,
+    YR_ARENA_REF* argument_ref)
 {
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       &opcode,
       sizeof(uint8_t),
       instruction_ref));
 
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       &argument,
@@ -686,17 +686,17 @@ int _yr_emit_inst_arg_struct(
     uint8_t opcode,
     void* structure,
     size_t structure_size,
-    YR_ARENA2_REF* instruction_ref,
-    YR_ARENA2_REF* argument_ref)
+    YR_ARENA_REF* instruction_ref,
+    YR_ARENA_REF* argument_ref)
 {
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       &opcode,
       sizeof(uint8_t),
       instruction_ref));
 
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       structure,
@@ -711,22 +711,22 @@ int _yr_emit_split(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
     int16_t argument,
-    YR_ARENA2_REF* instruction_ref,
-    YR_ARENA2_REF* argument_ref)
+    YR_ARENA_REF* instruction_ref,
+    YR_ARENA_REF* argument_ref)
 {
   assert(opcode == RE_OPCODE_SPLIT_A || opcode == RE_OPCODE_SPLIT_B);
 
   if (emit_context->next_split_id == RE_MAX_SPLIT_ID)
     return ERROR_REGULAR_EXPRESSION_TOO_COMPLEX;
 
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       &opcode,
       sizeof(uint8_t),
       instruction_ref));
 
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       &emit_context->next_split_id,
@@ -735,7 +735,7 @@ int _yr_emit_split(
 
   emit_context->next_split_id++;
 
-  FAIL_ON_ERROR(yr_arena2_write_data(
+  FAIL_ON_ERROR(yr_arena_write_data(
       emit_context->arena,
       YR_RE_CODE_SECTION,
       &argument,
@@ -747,13 +747,13 @@ int _yr_emit_split(
 
 
 #define current_re_code_offset() \
-    yr_arena2_get_current_offset(emit_context->arena, YR_RE_CODE_SECTION)
+    yr_arena_get_current_offset(emit_context->arena, YR_RE_CODE_SECTION)
 
 static int _yr_re_emit(
     RE_EMIT_CONTEXT* emit_context,
     RE_NODE* re_node,
     int flags,
-    YR_ARENA2_REF* code_ref)
+    YR_ARENA_REF* code_ref)
 {
   yr_arena_off_t jmp_offset;
 
@@ -776,11 +776,11 @@ static int _yr_re_emit(
   int16_t* split_offset_addr = NULL;
   int16_t* jmp_offset_addr = NULL;
 
-  YR_ARENA2_REF instruction_ref;
-  YR_ARENA2_REF split_offset_ref;
-  YR_ARENA2_REF jmp_instruction_ref;
-  YR_ARENA2_REF jmp_offset_ref;
-  YR_ARENA2_REF repeat_start_args_ref;
+  YR_ARENA_REF instruction_ref;
+  YR_ARENA_REF split_offset_ref;
+  YR_ARENA_REF jmp_instruction_ref;
+  YR_ARENA_REF jmp_offset_ref;
+  YR_ARENA_REF repeat_start_args_ref;
 
   switch(re_node->type)
   {
@@ -871,7 +871,7 @@ static int _yr_re_emit(
         RE_OPCODE_CLASS,
         &instruction_ref));
 
-    FAIL_ON_ERROR(yr_arena2_write_data(
+    FAIL_ON_ERROR(yr_arena_write_data(
         emit_context->arena,
         YR_RE_CODE_SECTION,
         re_node->re_class,
@@ -988,7 +988,7 @@ static int _yr_re_emit(
       return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
     // Update split offset.
-    split_offset_addr = (int16_t*) yr_arena2_ref_to_ptr(
+    split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
         emit_context->arena, &split_offset_ref);
 
     *split_offset_addr = (int16_t) jmp_offset;
@@ -1035,7 +1035,7 @@ static int _yr_re_emit(
       return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
     // Update split offset.
-    split_offset_addr = (int16_t*) yr_arena2_ref_to_ptr(
+    split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
           emit_context->arena, &split_offset_ref);
 
     *split_offset_addr = (int16_t) jmp_offset;
@@ -1052,7 +1052,7 @@ static int _yr_re_emit(
       return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
     // Update offset for jmp instruction.
-    jmp_offset_addr = (int16_t*) yr_arena2_ref_to_ptr(
+    jmp_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
           emit_context->arena, &jmp_offset_ref);
 
     *jmp_offset_addr = (int16_t) jmp_offset;
@@ -1199,7 +1199,7 @@ static int _yr_re_emit(
 
       bookmark_4 = current_re_code_offset();
 
-      repeat_start_args_addr = (RE_REPEAT_ARGS*) yr_arena2_ref_to_ptr(
+      repeat_start_args_addr = (RE_REPEAT_ARGS*) yr_arena_ref_to_ptr(
           emit_context->arena, &repeat_start_args_ref);
 
       if (bookmark_4 - bookmark_1 > INT32_MAX)
@@ -1238,7 +1238,7 @@ static int _yr_re_emit(
       if (bookmark_2 - bookmark_1 > INT16_MAX)
         return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
-      split_offset_addr = (int16_t*) yr_arena2_ref_to_ptr(
+      split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
           emit_context->arena, &split_offset_ref);
 
       *split_offset_addr = (int16_t) (bookmark_2 - bookmark_1);
@@ -1252,7 +1252,7 @@ static int _yr_re_emit(
     if (!(flags & EMIT_DONT_SET_BACKWARDS_CODE))
     {
       re_node->backward_code_ref.buffer_id = YR_RE_CODE_SECTION;
-      re_node->backward_code_ref.offset = yr_arena2_get_current_offset(
+      re_node->backward_code_ref.offset = yr_arena_get_current_offset(
           emit_context->arena, YR_RE_CODE_SECTION);
     }
   }
@@ -1273,7 +1273,7 @@ static int _yr_re_emit(
 
 int yr_re_ast_emit_code(
     RE_AST* re_ast,
-    YR_ARENA2* arena,
+    YR_ARENA* arena,
     int backwards_code)
 {
   RE_EMIT_CONTEXT emit_context;
