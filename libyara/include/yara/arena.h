@@ -115,11 +115,11 @@ number and the offset of the data relative to the beginning of the buffer.
 Such YR_ARENA_REF structures are returned by all functions that allocate space
 or write data in a buffer.
 
-The YR_ARENA_get_address function can be used for getting a pointer to data
+The yr_arena_get_ptr function can be used for getting a pointer to data
 stored in the buffer given its offset, but this pointer should be used with
 only in a limited scope where you can be sure that your program is not calling
-a function that may cause a buffer re-sizing, like YR_ARENA_allocate_xxx and
-YR_ARENA_write_xxx.
+a function that may cause a buffer re-sizing, like yr_arena_allocate_xxx and
+yr_arena_write_xxx.
 
 Arenas can also keep track pointers stored in some of its buffers that point to
 some location within the arena (it can be to the same buffer or a different one
@@ -183,7 +183,7 @@ int yr_arena_release(
 // Given a reference to some data within the arena, it returns a pointer to
 // the data. This pointer is valid only until the next call to any of the
 // functions that allocates space in the buffer where the data resides, like
-// YR_ARENA_allocate_xxx and YR_ARENA_write_xxx. These functions can cause
+// yr_arena_allocate_xxx and yr_arena_write_xxx. These functions can cause
 // the buffer to be moved to different memory location and the pointer won't
 // valid any longer.
 void* yr_arena_ref_to_ptr(
