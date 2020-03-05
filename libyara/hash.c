@@ -381,7 +381,7 @@ YR_API uint32_t yr_hash_table_add_uint32(
   // hash table once the integer is casted to a pointer. This is undone
   // by yr_hash_table_lookup_uint32.
   return yr_hash_table_add(
-      table, key, ns, (void*) (size_t) value + 1);
+      table, key, ns, (void*) (size_t) (value + 1));
 }
 
 
@@ -397,5 +397,5 @@ YR_API uint32_t yr_hash_table_lookup_uint32(
 
   // Remove one from the pointer before converting back to integer, see
   // comment in yr_hash_table_add_uint32.
-  return (uint32_t) (size_t) (ptr - 1);
+  return (uint32_t) (size_t) ((uint8_t*) ptr - 1);
 }
