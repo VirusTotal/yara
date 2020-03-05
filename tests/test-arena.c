@@ -35,6 +35,8 @@ static void basic_tests()
 {
   YR_ARENA* arena;
 
+  yr_initialize();
+
   // Create arena with 1 buffers of 10 bytes of initial size
   assert(yr_arena_create(2, 10, &arena) == ERROR_SUCCESS);
 
@@ -60,6 +62,7 @@ static void basic_tests()
   assert(ref.offset == 21);
 
   yr_arena_release(arena);
+  yr_finalize();
 }
 
 
@@ -74,6 +77,8 @@ struct TEST_STRUCT {
 static void advanced_tests()
 {
   YR_ARENA* arena;
+
+  yr_initialize();
 
   // Create arena with 3 buffers of 10 bytes of initial size. Only the first
   // two are used, the third one is left empty on purpose.
@@ -158,6 +163,7 @@ static void advanced_tests()
 
   fclose(fh);
   yr_arena_release(arena);
+  yr_finalize();
 }
 
 int main(int argc, char** argv)
