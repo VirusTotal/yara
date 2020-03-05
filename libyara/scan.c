@@ -481,11 +481,16 @@ static int _yr_scan_verify_chained_string_match(
 
           match->data_length = yr_min(match->match_length, max_match_data);
 
-          FAIL_ON_ERROR(yr_arena_write_data(
-              context->matches_arena,
+          match->data = yr_notebook_alloc(
+              context->matches_notebook, match->data_length);
+
+          if (match->data == NULL)
+            return ERROR_INSUFFICIENT_MEMORY;
+
+          memcpy(
+              (void*) match->data,
               match_data - match_offset + match->offset,
-              match->data_length,
-              (void**) &match->data));
+              match->data_length);
 
           FAIL_ON_ERROR(_yr_scan_add_match_to_list(
               match,
@@ -500,10 +505,10 @@ static int _yr_scan_verify_chained_string_match(
     }
     else // It's a part of a chain, but not the tail.
     {
-      FAIL_ON_ERROR(yr_arena_allocate_memory(
-          context->matches_arena,
-          sizeof(YR_MATCH),
-          (void**) &new_match));
+      new_match = yr_notebook_alloc(context->matches_notebook, sizeof(YR_MATCH));
+
+      if (new_match == NULL)
+        return ERROR_INSUFFICIENT_MEMORY;
 
       new_match->base = match_base;
       new_match->offset = match_offset;
@@ -518,11 +523,16 @@ static int _yr_scan_verify_chained_string_match(
 
       if (new_match->data_length > 0)
       {
-        FAIL_ON_ERROR(yr_arena_write_data(
-            context->matches_arena,
+        new_match->data = yr_notebook_alloc(
+            context->matches_notebook, new_match->data_length);
+
+        if (new_match->data == NULL)
+          return ERROR_INSUFFICIENT_MEMORY;
+
+        memcpy(
+            (void*) new_match->data,
             match_data,
-            new_match->data_length,
-            (void**) &new_match->data));
+            new_match->data_length);
       }
       else
       {
@@ -606,22 +616,28 @@ static int _yr_scan_match_callback(
 
     FAIL_ON_ERROR(yr_get_configuration(
         YR_CONFIG_MAX_MATCH_DATA,
-        &max_match_data))
+        &max_match_data));
 
-    FAIL_ON_ERROR(yr_arena_allocate_memory(
-        callback_args->context->matches_arena,
-        sizeof(YR_MATCH),
-        (void**) &new_match));
+    new_match = yr_notebook_alloc(
+        callback_args->context->matches_notebook, sizeof(YR_MATCH));
+
+    if (new_match == NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
 
     new_match->data_length = yr_min(match_length, max_match_data);
 
     if (new_match->data_length > 0)
     {
-      FAIL_ON_ERROR(yr_arena_write_data(
-          callback_args->context->matches_arena,
+      new_match->data = yr_notebook_alloc(
+          callback_args->context->matches_notebook, new_match->data_length);
+
+      if (new_match->data == NULL)
+        return ERROR_INSUFFICIENT_MEMORY;
+
+      memcpy(
+          (void*) new_match->data,
           match_data,
-          new_match->data_length,
-          (void**) &new_match->data));
+          new_match->data_length);
     }
     else
     {

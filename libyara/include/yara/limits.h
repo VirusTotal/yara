@@ -103,10 +103,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MAX_LOOP_VARS 2
 #endif
 
-#ifndef YR_MAX_ARENA_PAGES
-#define YR_MAX_ARENA_PAGES 32
-#endif
-
 // Maximum number of nested included files.
 #ifndef YR_MAX_INCLUDE_DEPTH
 #define YR_MAX_INCLUDE_DEPTH 16

@@ -387,10 +387,16 @@ YR_API int yr_scanner_scan_mem_blocks(
   YR_RULE* rule;
   YR_MEMORY_BLOCK* block;
 
+  uint32_t max_match_data;
+
   int i, result = ERROR_SUCCESS;
 
   if (scanner->callback == NULL)
     return ERROR_CALLBACK_REQUIRED;
+
+  FAIL_ON_ERROR(yr_get_configuration(
+      YR_CONFIG_MAX_MATCH_DATA,
+      &max_match_data))
 
   scanner->iterator = iterator;
   rules = scanner->rules;
@@ -401,12 +407,19 @@ YR_API int yr_scanner_scan_mem_blocks(
 
   scanner->file_size = block->size;
 
-  yr_stopwatch_start(&scanner->stopwatch);
+  // Create the notebook that will hold the YR_MATCH structures representing
+  // each match found. This notebook will also contain snippets of the matching
+  // data (the "data" field in YR_MATCH points to the snippet corresponding to
+  // the match). Each notebook's page can store up to 1024 matches.
 
-  result = yr_arena_create(1048576, 0, &scanner->matches_arena);
+  result = yr_notebook_create(
+      1024 * (sizeof(YR_MATCH) + max_match_data),
+      &scanner->matches_notebook);
 
   if (result != ERROR_SUCCESS)
     goto _exit;
+
+  yr_stopwatch_start(&scanner->stopwatch);
 
   while (block != NULL)
   {
@@ -507,10 +520,10 @@ _exit:
 
   _yr_scanner_clean_matches(scanner);
 
-  if (scanner->matches_arena != NULL)
+  if (scanner->matches_notebook != NULL)
   {
-    yr_arena_destroy(scanner->matches_arena);
-    scanner->matches_arena = NULL;
+    yr_notebook_destroy(scanner->matches_notebook);
+    scanner->matches_notebook = NULL;
   }
 
   return result;
