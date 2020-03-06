@@ -44,8 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SIZED_STRING_FLAGS_DOT_ALL  2
 
 #pragma pack(push)
-#pragma pack(8)
-
+#pragma pack(4)
 
 typedef struct _SIZED_STRING
 {

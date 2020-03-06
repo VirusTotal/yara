@@ -15,13 +15,16 @@ void test_disabled_rules()
   YR_RULES* rules;
   YR_RULE* rule;
 
-  int matches = 0;
   char* buf = "foo bar";
   char* rules_str = " \
     rule disabled_rule {condition: true} \
     rule false_rule {condition: true and disabled_rule} \
     rule true_rule {condition: true or disabled_rule}";
 
+  struct COUNTERS counters;
+
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
 
   yr_initialize();
 
@@ -39,12 +42,12 @@ void test_disabled_rules()
   }
 
   yr_rules_scan_mem(
-      rules, (uint8_t *) buf, strlen(buf), 0, count_matches, &matches, 0);
+      rules, (uint8_t *) buf, strlen(buf), 0, count, &counters, 0);
 
   yr_rules_destroy(rules);
 
   // matches should be exactly one.
-  if (matches != 1)
+  if (counters.rules_matching != 1)
   {
     fprintf(stderr, "test_disabled_rules failed\n");
     exit(EXIT_FAILURE);
@@ -206,6 +209,7 @@ void test_max_string_per_rules()
 
 
 int test_max_match_data_callback(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data)
@@ -219,7 +223,7 @@ int test_max_match_data_callback(
     {
       YR_MATCH* m;
 
-      yr_string_matches_foreach(s, m)
+      yr_string_matches_foreach(context, s, m)
       {
         if (m->data_length > 0)
           return CALLBACK_ERROR;
@@ -280,7 +284,11 @@ void test_save_load_rules()
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
 
-  int matches = 0;
+  struct COUNTERS counters;
+
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
+
   char* rules_str = "rule t {condition: bool_var and str_var == \"foobar\"}";
 
   yr_initialize();
@@ -330,8 +338,8 @@ void test_save_load_rules()
       (uint8_t *) "",
        0,
        0,
-       count_matches,
-       &matches,
+       count,
+       &counters,
        0);
 
   if (err != ERROR_SUCCESS)
@@ -340,9 +348,13 @@ void test_save_load_rules()
     exit(EXIT_FAILURE);
   }
 
-  if (matches != 1)
+  if (counters.rules_matching != 1)
   {
-    fprintf(stderr, "test_save_load_rules: expecting 1 match, got: %d\n", matches);
+    fprintf(
+        stderr,
+        "test_save_load_rules: expecting 1 match, got: %d\n",
+        counters.rules_matching);
+
     exit(EXIT_FAILURE);
   }
 
@@ -353,11 +365,17 @@ void test_save_load_rules()
 
 void test_scanner()
 {
-  int matches = 0;
   const char* buf = "dummy";
   const char* rules_str = "\
+    rule true_rule { \
+       condition: true \
+    } \
+    rule false_rule { \
+       condition: false \
+    } \
     rule test { \
-    condition: bool_var and int_var == 1 and str_var == \"foo\" }";
+       condition: bool_var and int_var == 1 and str_var == \"foo\" \
+    }";
 
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
@@ -436,8 +454,13 @@ void test_scanner()
     exit(EXIT_FAILURE);
   }
 
-  // Set the callback and a some the correct values for the rule to match.
-  yr_scanner_set_callback(scanner1, count_matches, &matches);
+  struct COUNTERS counters;
+
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
+
+  // Set the callback and the correct variable values for the rule to match.
+  yr_scanner_set_callback(scanner1, count, &counters);
   yr_scanner_define_integer_variable(scanner1, "int_var", 1);
   yr_scanner_define_boolean_variable(scanner1, "bool_var", 1);
   yr_scanner_define_string_variable(scanner1, "str_var", "foo");
@@ -460,7 +483,40 @@ void test_scanner()
     exit(EXIT_FAILURE);
   }
 
-  if (matches != 1)
+  if (counters.rules_matching != 2 ||
+      counters.rules_not_matching != 1)
+  {
+    yr_scanner_destroy(scanner1);
+    yr_scanner_destroy(scanner2);
+    yr_rules_destroy(rules);
+    exit(EXIT_FAILURE);
+  }
+
+  counters.rules_matching = 0;
+  counters.rules_not_matching = 0;
+
+  yr_scanner_set_flags(scanner1, SCAN_FLAGS_REPORT_RULES_MATCHING);
+  yr_scanner_set_callback(scanner1, count, &counters);
+  yr_scanner_scan_mem(scanner1, (uint8_t *) buf, strlen(buf));
+
+  if (counters.rules_matching != 2 ||
+      counters.rules_not_matching != 0)
+  {
+    yr_scanner_destroy(scanner1);
+    yr_scanner_destroy(scanner2);
+    yr_rules_destroy(rules);
+    exit(EXIT_FAILURE);
+  }
+
+  counters.rules_matching = 0;
+  counters.rules_not_matching = 0;
+
+  yr_scanner_set_flags(scanner2, SCAN_FLAGS_REPORT_RULES_NOT_MATCHING);
+  yr_scanner_set_callback(scanner2, count, &counters);
+  yr_scanner_scan_mem(scanner2, (uint8_t *) buf, strlen(buf));
+
+  if (counters.rules_not_matching != 2 ||
+      counters.rules_matching != 0)
   {
     yr_scanner_destroy(scanner1);
     yr_scanner_destroy(scanner2);
@@ -754,11 +810,12 @@ int main(int argc, char** argv)
   test_include_callback();
   test_save_load_rules();
   test_scanner();
-  test_ast_callback();
-  test_rules_stats();
-
-  test_issue_834();
-  test_issue_920();
+// test_ast_callback();
+// //TODO(vmalvarez): Enable these tests.
+// //test_rules_stats();
+//
+// test_issue_834();
+// test_issue_920();
 
   return 0;
 }
