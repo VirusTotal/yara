@@ -72,6 +72,11 @@ typedef struct _HEX_LEX_ENVIRONMENT
 } HEX_LEX_ENVIRONMENT;
 
 
+// The default behavior when a fatal error occurs in the parser is calling
+// exit(YY_EXIT_FAILURE) for terminating the process. This is not acceptable
+// for a library, which should return gracefully to the calling program. For
+// this reason we redefine the YY_FATAL_ERROR macro so that it expands to our
+// own function instead of the one provided by default.
 #define YY_FATAL_ERROR(msg) hex_yyfatal(yyscanner, msg)
 
 #define LEX_ENV  ((HEX_LEX_ENVIRONMENT*) lex_env)

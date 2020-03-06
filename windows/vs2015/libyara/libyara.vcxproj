@@ -90,7 +90,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB;PROFILING_ENABLED</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x86.1.1.0\include;..\packages\YARA.OpenSSL.x86.1.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
-      <CompileAs>CompileAsCpp</CompileAs>
+      <CompileAs>CompileAsC</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PrecompiledHeaderFile />
@@ -117,7 +117,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIBC;PROFILING_ENABLED</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
-      <CompileAs>CompileAsCpp</CompileAs>
+      <CompileAs>CompileAsC</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>false</OmitFramePointers>
@@ -144,7 +144,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x86.1.1.0\include;..\packages\YARA.OpenSSL.x86.1.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
-      <CompileAs>CompileAsCpp</CompileAs>
+      <CompileAs>CompileAsC</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
       <PrecompiledHeaderFile />
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -169,7 +169,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
-      <CompileAs>CompileAsCpp</CompileAs>
+      <CompileAs>CompileAsC</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
       <OmitFramePointers>false</OmitFramePointers>
       <PrecompiledHeaderFile />
@@ -196,7 +196,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB;NDEBUG=1</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
-      <CompileAs>CompileAsCpp</CompileAs>
+      <CompileAs>CompileAsC</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
       <OmitFramePointers>false</OmitFramePointers>
       <PrecompiledHeaderFile />
@@ -247,6 +247,7 @@
     <ClCompile Include="..\..\..\libyara\modules\pe\pe_utils.c" />
     <ClCompile Include="..\..\..\libyara\modules\tests\tests.c" />
     <ClCompile Include="..\..\..\libyara\modules\time\time.c" />
+    <ClCompile Include="..\..\..\libyara\notebook.c" />
     <ClCompile Include="..\..\..\libyara\object.c" />
     <ClCompile Include="..\..\..\libyara\parser.c" />
     <ClCompile Include="..\..\..\libyara\proc.c" />
