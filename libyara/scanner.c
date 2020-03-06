@@ -638,49 +638,63 @@ YR_API YR_RULE* yr_scanner_last_error_rule(
 
 
 #ifdef PROFILING_ENABLED
-static int sort_by_cost_desc(
-    YR_SCANNER* scanner,
-    const uint32_t* rule_idx1,
-    const uint32_t* rule_idx2)
+struct RULE_COST
 {
-  if (scanner->time_cost[*rule_idx1] < scanner->time_cost[*rule_idx2])
+  uint32_t idx;
+  uint64_t cost;
+};
+
+static int sort_by_cost_desc(
+    const struct RULE_COST* r1,
+    const struct RULE_COST* r2)
+{
+  if (r1->cost < r2->cost)
     return 1;
 
-  if (scanner->time_cost[*rule_idx1] > scanner->time_cost[*rule_idx2])
+  if (r1->cost > r2->cost)
     return -1;
 
   return 0;
 }
 
-YR_API void yr_scanner_print_profiling_info(
+YR_API int yr_scanner_print_profiling_info(
     YR_SCANNER* scanner)
 {
   printf("\n===== PROFILING INFORMATION =====\n\n");
 
-  uint32_t* rules_by_cost = yr_malloc(
-      scanner->rules->num_rules * sizeof(uint32_t));
+  struct RULE_COST* rule_costs = yr_malloc(
+      scanner->rules->num_rules * sizeof(struct RULE_COST));
 
-  for (uint32_t i = 0; i < scanner->rules->num_rules; i++)
-    rules_by_cost[i] = i;
-
-  qsort_r(
-      rules_by_cost,
-      scanner->rules->num_rules,
-      sizeof(uint32_t),
-      scanner,
-      (int (*)(void *, const void *, const void *)) sort_by_cost_desc);
+  if (rule_costs == NULL)
+    return ERROR_INSUFFICIENT_MEMORY;
 
   for (uint32_t i = 0; i < scanner->rules->num_rules; i++)
   {
-    YR_RULE* rule = &scanner->rules->rules_list_head[rules_by_cost[i]];
+    rule_costs[i].idx = i;
+    rule_costs[i].cost = scanner->time_cost[i];
+  }
+
+  qsort(
+      rule_costs,
+      scanner->rules->num_rules,
+      sizeof(struct RULE_COST),
+      (int (*)(const void *, const void *)) sort_by_cost_desc);
+
+  for (uint32_t i = 0; i < scanner->rules->num_rules; i++)
+  {
+    YR_RULE* rule = &scanner->rules->rules_list_head[rule_costs[i].idx];
 
     printf(
         "%s:%s: %" PRIu64 "\n",
         rule->ns->name,
         rule->identifier,
-        scanner->time_cost[rules_by_cost[i]]);
+        rule_costs[i].cost);
   }
 
   printf("\n=================================\n");
+
+  yr_free(rule_costs);
+
+  return ERROR_SUCCESS;
 }
 #endif
