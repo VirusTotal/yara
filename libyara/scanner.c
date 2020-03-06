@@ -635,3 +635,52 @@ YR_API YR_RULE* yr_scanner_last_error_rule(
 
   return &scanner->rules->rules_list_head[scanner->last_error_string->rule_idx];
 }
+
+
+#ifdef PROFILING_ENABLED
+static int sort_by_cost_desc(
+    YR_SCANNER* scanner,
+    const uint32_t* rule_idx1,
+    const uint32_t* rule_idx2)
+{
+  if (scanner->time_cost[*rule_idx1] < scanner->time_cost[*rule_idx2])
+    return 1;
+
+  if (scanner->time_cost[*rule_idx1] > scanner->time_cost[*rule_idx2])
+    return -1;
+
+  return 0;
+}
+
+YR_API void yr_scanner_print_profiling_info(
+    YR_SCANNER* scanner)
+{
+  printf("\n===== PROFILING INFORMATION =====\n\n");
+
+  uint32_t* rules_by_cost = yr_malloc(
+      scanner->rules->num_rules * sizeof(uint32_t));
+
+  for (uint32_t i = 0; i < scanner->rules->num_rules; i++)
+    rules_by_cost[i] = i;
+
+  qsort_r(
+      rules_by_cost,
+      scanner->rules->num_rules,
+      sizeof(uint32_t),
+      scanner,
+      (int (*)(void *, const void *, const void *)) sort_by_cost_desc);
+
+  for (uint32_t i = 0; i < scanner->rules->num_rules; i++)
+  {
+    YR_RULE* rule = &scanner->rules->rules_list_head[rules_by_cost[i]];
+
+    printf(
+        "%s:%s: %" PRIu64 "\n",
+        rule->ns->name,
+        rule->identifier,
+        scanner->time_cost[rules_by_cost[i]]);
+  }
+
+  printf("\n=================================\n");
+}
+#endif
