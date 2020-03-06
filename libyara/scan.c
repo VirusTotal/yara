@@ -494,9 +494,7 @@ static int _yr_scan_verify_chained_string_match(
 
           FAIL_ON_ERROR(_yr_scan_add_match_to_list(
               match,
-              STRING_IS_PRIVATE(string) ?
-                  &context->private_matches[string->idx] :
-                  &context->matches[string->idx],
+              &context->matches[string->idx],
               false));
         }
 
@@ -516,6 +514,7 @@ static int _yr_scan_verify_chained_string_match(
       new_match->chain_length = 0;
       new_match->prev = NULL;
       new_match->next = NULL;
+      new_match->private = STRING_IS_PRIVATE(matching_string);
 
       // A copy of the matching data is written to the matches_arena, the
       // amount of data copies is limited by YR_CONFIG_MAX_MATCH_DATA.
@@ -651,12 +650,11 @@ static int _yr_scan_match_callback(
       new_match->match_length = match_length;
       new_match->prev = NULL;
       new_match->next = NULL;
+      new_match->private = STRING_IS_PRIVATE(string);
 
       FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,
-          STRING_IS_PRIVATE(string) ?
-             &callback_args->context->private_matches[string->idx] :
-             &callback_args->context->matches[string->idx],
+          &callback_args->context->matches[string->idx],
           STRING_IS_GREEDY_REGEXP(string)));
     }
   }

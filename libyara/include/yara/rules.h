@@ -65,7 +65,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define yr_string_matches_foreach(context, string, match) \
     for (match = context->matches[string->idx].head; \
          match != NULL; \
-         match = match->next)
+         match = match->next) \
+      /* private matches are skipped */ \
+      if (match->private) { continue; } \
+      else /* user code block goes here */
 
 
 #define yr_rules_foreach(rules, rule) \

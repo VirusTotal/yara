@@ -30,6 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_TYPES_H
 #define YR_TYPES_H
 
+#include <stdbool.h>
+
 #include <yara/arena.h>
 #include <yara/bitmask.h>
 #include <yara/limits.h>
@@ -507,6 +509,9 @@ struct YR_MATCH
   // If the match belongs to a chained string chain_length contains the
   // length of the chain. This field is used only in unconfirmed matches.
   int32_t chain_length;
+
+  // True if this is match for a private string.
+  bool private;
 };
 
 
@@ -731,9 +736,6 @@ struct YR_SCAN_CONTEXT
   // Array with pointers to lists of matches. Item N in the array has the
   // list of matches for string with index N.
   YR_MATCHES* matches;
-
-  // Similar to matches, but matches corresponding to private strings.
-  YR_MATCHES* private_matches;
 
   // "unconfirmed_matches" is like "matches" but for strings that are part of
   // a chain. Let's suppose that the string S is split in two chained strings
