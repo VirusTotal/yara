@@ -1076,27 +1076,31 @@ static IMPORTED_DLL* pe_parse_imports(
 // "exports" function for comparison.
 //
 
-static EXPORT_FUNCTIONS* pe_parse_exports(
+static void pe_parse_exports(
     PE* pe)
 {
   PIMAGE_DATA_DIRECTORY directory;
   PIMAGE_EXPORT_DIRECTORY exports;
-  EXPORT_FUNCTIONS* exported_functions;
 
-  uint32_t i;
+  uint32_t i, j;
   uint32_t number_of_exports;
   uint32_t number_of_names;
-  uint16_t ordinal;
+  uint32_t ordinal_base;
+  uint32_t export_start;
+  uint32_t export_size;
   int64_t offset;
   size_t remaining;
+  size_t name_len;
 
+  uint32_t exp_sz = 0;
   DWORD* names = NULL;
   WORD* ordinals = NULL;
+  DWORD* function_addrs = NULL;
 
   // If not a PE file, return UNDEFINED
 
   if (pe == NULL)
-    return NULL;
+    return;
 
   // Default to 0 exports until we know there are any
   set_integer(0, pe->object, "number_of_exports");
@@ -1105,112 +1109,165 @@ static EXPORT_FUNCTIONS* pe_parse_exports(
       pe, IMAGE_DIRECTORY_ENTRY_EXPORT);
 
   if (directory == NULL)
-    return NULL;
+    return;
 
   if (yr_le32toh(directory->VirtualAddress) == 0)
-    return NULL;
+    return;
 
   offset = pe_rva_to_offset(pe, yr_le32toh(directory->VirtualAddress));
 
   if (offset < 0)
-    return NULL;
+    return;
+
+  export_start = offset;
+  export_size = directory->Size;
 
   exports = (PIMAGE_EXPORT_DIRECTORY) (pe->data + offset);
 
   if (!struct_fits_in_pe(pe, exports, IMAGE_EXPORT_DIRECTORY))
-    return NULL;
+    return;
 
   number_of_exports = yr_min(
       yr_le32toh(exports->NumberOfFunctions),
       MAX_PE_EXPORTS);
 
+  ordinal_base = exports->Base;
+
+  set_integer(exports->TimeDateStamp, pe->object, "export_timestamp");
+
+  offset = pe_rva_to_offset(pe, yr_le32toh(exports->Name));
+
+  if (offset > 0)
+  {
+    remaining = pe->data_size - (size_t) offset;
+    name_len = strnlen((char*) (pe->data + offset), remaining);
+    set_sized_string(
+        (char*) (pe->data + offset), name_len, pe->object, "dll_name");
+  }
+
   if (number_of_exports * sizeof(DWORD) > pe->data_size - offset)
-    return NULL;
+    return;
 
   if (yr_le32toh(exports->NumberOfNames) > 0)
   {
     offset = pe_rva_to_offset(pe, yr_le32toh(exports->AddressOfNames));
 
     if (offset < 0)
-      return NULL;
+      return;
 
     if (yr_le32toh(exports->NumberOfNames) * sizeof(DWORD) > pe->data_size - offset)
-      return NULL;
+      return;
 
     names = (DWORD*)(pe->data + offset);
-
-    offset = pe_rva_to_offset(pe, yr_le32toh(exports->AddressOfNameOrdinals));
-
-    if (offset < 0)
-      return NULL;
-
-    ordinals = (WORD*)(pe->data + offset);
   }
 
-  exported_functions = (EXPORT_FUNCTIONS*) yr_malloc(sizeof(EXPORT_FUNCTIONS));
+  offset = pe_rva_to_offset(pe, yr_le32toh(exports->AddressOfNameOrdinals));
 
-  if (exported_functions == NULL)
-    return NULL;
+  if (offset < 0)
+    return;
 
-  exported_functions->number_of_exports = number_of_exports;
-  exported_functions->functions = (EXPORT_FUNCTION*) yr_malloc(
-      number_of_exports * sizeof(EXPORT_FUNCTION));
+  ordinals = (WORD*)(pe->data + offset);
 
-  if (exported_functions->functions == NULL)
-  {
-    yr_free(exported_functions);
-    return NULL;
-  }
+  if (available_space(pe, ordinals) < sizeof(WORD) * number_of_exports)
+    return;
 
-  // At first, iterate through Functions array and create representation for
-  // each exported function. Ordinal is just array index that starts from 1
-  for (i = 0; i < exported_functions->number_of_exports; i++)
-  {
-    exported_functions->functions[i].name = NULL;
-    exported_functions->functions[i].ordinal = i + 1;
-  }
+  offset = pe_rva_to_offset(pe, yr_le32toh(exports->AddressOfFunctions));
 
-  // Now, we can iterate through Names and NameOrdinals arrays to obtain
-  // function names. Not all functions have names.
+  if (offset < 0)
+    return;
+
+  function_addrs = (DWORD*)(pe->data + offset);
+
+  if (available_space(pe, function_addrs) < sizeof(DWORD) * number_of_exports)
+    return;
+
   number_of_names = yr_min(
-      yr_le32toh(exports->NumberOfNames),
-      exported_functions->number_of_exports);
+      yr_le32toh(exports->NumberOfNames), number_of_exports);
 
-  for (i = 0; i < number_of_names; i++)
+  // Mapping out the exports is a bit janky. We start with the export address
+  // array. The index from that array plus the ordinal base is the ordinal for
+  // that export. To find the name we walk the ordinal array looking for a value
+  // that matches our index. If one exists we look up the corresponding RVA from
+  // the names array and follow it to get the name. If one does not exist then
+  // the export has no name.
+  //
+  // Ordinal base: 5
+  //                       0            1            2
+  // Address array: [ 0x00000011 | 0x00000022 | 0x00000033 ]
+  //                     0        1        2
+  // Ordinal array: [ 0x0000 | 0x0002 | 0x0001 ]
+  //                       0            1
+  // Names array:   [ 0x00000044 | 0x00000055 ]
+  //
+  // The function at RVA 0x00000011 (index 0) has ordinal 5 (base + index). The
+  // index can be found in position 0 in the ordinal array. Using 0 to index
+  // into the name array gives us an RVA (0x00000044) which we can follow to get
+  // the name.
+  //
+  // The function at RVA 0x00000022 (index 1) has ordinal 6 (base + index). The
+  // index can be found in position 2 in the ordinal array. 2 is out of bounds
+  // for the names array so this function is exported without a name.
+  //
+  // The function at RVA 0x00000033 (index 2) has ordinal 7 (base + index). The
+  // index can be found in position 1 in the ordinal array. Using 1 to index
+  // into the name array gives us an RVA (0x00000055) which we can follow to get
+  // the name.
+  //
+  // If the RVA from the address array is within the export directory it is a
+  // forwarder RVA and points to a NULL terminated ASCII string.
+
+  for (i = 0; i < number_of_exports; i++)
   {
-    if (available_space(pe, names + i) < sizeof(DWORD) ||
-        available_space(pe, ordinals + i) < sizeof(WORD))
-    {
-      break;
-    }
-
-    offset = pe_rva_to_offset(pe, names[i]);
-
-    if (offset < 0)
+    offset = pe_rva_to_offset(pe, function_addrs[i]);
+    if (offset <= 0)
       continue;
 
-    // Even though it is called ordinal, it is just index to Functions array
-    // If it was ordinal it would start from 1 but it starts from 0
-    ordinal = yr_le16toh(ordinals[i]);
+    set_integer(
+        ordinal_base + i, pe->object, "export_details[%i].ordinal", exp_sz);
 
-    if (ordinal >= exported_functions->number_of_exports)
-      continue;
-
-    remaining = pe->data_size - (size_t) offset;
-
-    if (exported_functions->functions[ordinal].name == NULL)
+    if (offset > export_start && offset < export_start + export_size)
     {
-      exported_functions->functions[ordinal].name = yr_strndup(
+      remaining = pe->data_size - (size_t) offset;
+      name_len = strnlen((char*) (pe->data + offset), remaining);
+
+      set_sized_string(
           (char*) (pe->data + offset),
-          yr_min(remaining, MAX_EXPORT_NAME_LENGTH));
+          yr_min(name_len, MAX_EXPORT_NAME_LENGTH),
+          pe->object,
+          "export_details[%i].forward_name", exp_sz);
     }
+    else
+    {
+      set_integer(offset, pe->object, "export_details[%i].offset", exp_sz);
+    }
+
+    if (names != NULL)
+    {
+      for (j = 0; j < number_of_exports; j++)
+      {
+        if (ordinals[j] == i && j < number_of_names)
+        {
+          offset = pe_rva_to_offset(pe, names[j]);
+          if (offset > 0)
+          {
+            remaining = pe->data_size - (size_t) offset;
+            name_len = strnlen((char*) (pe->data + offset), remaining);
+
+            set_sized_string(
+                (char*) (pe->data + offset),
+                yr_min(name_len, MAX_EXPORT_NAME_LENGTH),
+                pe->object,
+                "export_details[%i].name", exp_sz);
+          }
+          break;
+        }
+      }
+    }
+    exp_sz++;
   }
 
-  set_integer(
-      exported_functions->number_of_exports,
-      pe->object, "number_of_exports");
-
-  return exported_functions;
+  set_integer(exp_sz, pe->object, "number_of_exports");
+  return;
 }
 
 // BoringSSL (https://boringssl.googlesource.com/boringssl/) doesn't support
@@ -1801,7 +1858,7 @@ static void pe_parse_header(
   if (last_section_end && (pe->data_size > last_section_end))
     set_integer(last_section_end, pe->object, "overlay.offset");
 
-  // "overlay.size" is zero for well formed PE files that don not have an
+  // "overlay.size" is zero for well formed PE files that do not have an
   // overlay and UNDEFINED for malformed PE files or non-PE files.
   if (last_section_end && (pe->data_size >= last_section_end))
     set_integer(pe->data_size - last_section_end, pe->object, "overlay.size");
@@ -1894,27 +1951,30 @@ define_function(section_index_name)
 
 define_function(exports)
 {
-  SIZED_STRING* function_name = sized_string_argument(1);
+  SIZED_STRING* search_name = sized_string_argument(1);
 
+  SIZED_STRING* function_name = NULL;
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
-  int i;
+  int i, n;
 
   // If not a PE, return UNDEFINED.
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  // If PE, but not exported functions, return false.
-  if (pe->exported_functions == NULL)
+  // If PE, but no exported functions, return false.
+  n = get_integer(module, "number_of_exports");
+  if (n == 0)
     return_integer(0);
 
-  for (i = 0; i < pe->exported_functions->number_of_exports; i++)
+  for (i = 0; i < n; i++)
   {
-    if (pe->exported_functions->functions[i].name &&
-        strcasecmp(
-            pe->exported_functions->functions[i].name,
-            function_name->c_string) == 0)
+    function_name = get_string(module, "export_details[%i].name", i);
+    if (function_name == NULL)
+      continue;
+
+    if (sized_string_cmp_nocase(function_name, search_name) == 0)
     {
       return_integer(1);
     }
@@ -1928,26 +1988,28 @@ define_function(exports_regexp)
 {
   RE* regex = regexp_argument(1);
 
+  SIZED_STRING* function_name = NULL;
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
-  int i;
+  int i, n;
 
   // If not a PE, return UNDEFINED.
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  // If PE, but not exported functions, return false.
-  if (pe->exported_functions == NULL)
+  // If PE, but no exported functions, return false.
+  n = get_integer(module, "number_of_exports");
+  if (n == 0)
     return_integer(0);
 
-  for (i = 0; i < pe->exported_functions->number_of_exports; i++)
+  for (i = 0; i < n; i++)
   {
-    if (pe->exported_functions->functions[i].name &&
-        yr_re_match(
-            scan_context(),
-            regex,
-            pe->exported_functions->functions[i].name) != -1)
+    function_name = get_string(module, "export_details[%i].name", i);
+    if (function_name == NULL)
+      continue;
+
+    if (yr_re_match(scan_context(), regex, function_name->c_string) != -1)
     {
       return_integer(1);
     }
@@ -1963,24 +2025,133 @@ define_function(exports_ordinal)
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
+  int i, n, exported_ordinal;
 
   // If not a PE, return UNDEFINED.
   if (pe == NULL)
     return_integer(UNDEFINED);
 
-  // If PE, but not exported functions, return false.
-  if (pe->exported_functions == NULL)
+  // If PE, but no exported functions, return false.
+  n = get_integer(module, "number_of_exports");
+  if (n == 0)
     return_integer(0);
 
-  if (ordinal == 0 || ordinal > pe->exported_functions->number_of_exports)
+  if (ordinal == 0 || ordinal > n)
     return_integer(0);
 
-  // Just in case, this should always be true
-  if (pe->exported_functions->functions[ordinal - 1].ordinal == ordinal)
-    return_integer(1);
+  for (i = 0; i < n; i++)
+  {
+    exported_ordinal = yr_object_get_integer(
+        module, "export_details[%i].ordinal", i);
+    if (exported_ordinal == ordinal)
+      return_integer(1);
+  }
 
   return_integer(0);
 }
+
+
+define_function(exports_index_name)
+{
+  SIZED_STRING* search_name = sized_string_argument(1);
+
+  SIZED_STRING* function_name = NULL;
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  int i, n;
+
+  // If not a PE, return UNDEFINED.
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  // If PE, but no exported functions, return false.
+  n = get_integer(module, "number_of_exports");
+  if (n == 0)
+    return_integer(UNDEFINED);
+
+  for (i = 0; i < n; i++)
+  {
+    function_name = get_string(module, "export_details[%i].name", i);
+    if (function_name == NULL)
+      continue;
+
+    if (sized_string_cmp_nocase(function_name, search_name) == 0)
+    {
+      return_integer(i);
+    }
+  }
+
+  return_integer(UNDEFINED);
+}
+
+
+define_function(exports_index_ordinal)
+{
+  uint64_t ordinal = integer_argument(1);
+
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+  int i, n, exported_ordinal;
+
+  // If not a PE, return UNDEFINED.
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  // If PE, but no exported functions, return false.
+  n = get_integer(module, "number_of_exports");
+  if (n == 0)
+    return_integer(UNDEFINED);
+
+  if (ordinal == 0 || ordinal > n)
+    return_integer(UNDEFINED);
+
+  for (i = 0; i < n; i++)
+  {
+    exported_ordinal = yr_object_get_integer(
+        module, "export_details[%i].ordinal", i);
+    if (exported_ordinal == ordinal)
+      return_integer(i);
+  }
+
+  return_integer(UNDEFINED);
+}
+
+
+define_function(exports_index_regex)
+{
+  RE* regex = regexp_argument(1);
+
+  SIZED_STRING* function_name = NULL;
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  int i, n;
+
+  // If not a PE, return UNDEFINED.
+  if (pe == NULL)
+    return_integer(UNDEFINED);
+
+  // If PE, but no exported functions, return false.
+  n = get_integer(module, "number_of_exports");
+  if (n == 0)
+    return_integer(UNDEFINED);
+
+  for (i = 0; i < n; i++)
+  {
+    function_name = get_string(module, "export_details[%i].name", i);
+    if (function_name == NULL)
+      continue;
+
+    if (yr_re_match(scan_context(), regex, function_name->c_string) != -1)
+    {
+      return_integer(i);
+    }
+  }
+
+  return_integer(UNDEFINED);
+}
+
 
 #if defined(HAVE_LIBCRYPTO) || \
     defined(HAVE_WINCRYPT_H) || \
@@ -2732,6 +2903,9 @@ begin_declarations;
   declare_function("exports", "s", "i", exports);
   declare_function("exports", "r", "i", exports_regexp);
   declare_function("exports", "i", "i", exports_ordinal);
+  declare_function("exports_index", "s", "i", exports_index_name);
+  declare_function("exports_index", "i", "i", exports_index_ordinal);
+  declare_function("exports_index", "r", "i", exports_index_regex);
   declare_function("imports", "ss", "i", imports);
   declare_function("imports", "si", "i", imports_ordinal);
   declare_function("imports", "s", "i", imports_dll);
@@ -2744,6 +2918,15 @@ begin_declarations;
 
   declare_integer("number_of_imports");
   declare_integer("number_of_exports");
+
+  declare_string("dll_name");
+  declare_integer("export_timestamp");
+  begin_struct_array("export_details");
+    declare_integer("offset");
+    declare_string("name");
+    declare_string("forward_name");
+    declare_integer("ordinal");
+  end_struct_array("export_details");
 
   declare_integer("resource_timestamp");
 
@@ -3190,7 +3373,7 @@ int module_load(
         #endif
 
         pe->imported_dlls = pe_parse_imports(pe);
-        pe->exported_functions = pe_parse_exports(pe);
+        pe_parse_exports(pe);
 
         break;
       }
@@ -3208,7 +3391,6 @@ int module_unload(
   IMPORTED_DLL* next_dll = NULL;
   IMPORT_FUNCTION* func = NULL;
   IMPORT_FUNCTION* next_func = NULL;
-  int i = 0;
 
   PE* pe = (PE *) module_object->data;
 
@@ -3242,18 +3424,6 @@ int module_unload(
     next_dll = dll->next;
     yr_free(dll);
     dll = next_dll;
-  }
-
-  if (pe->exported_functions)
-  {
-    for (i = 0; i < pe->exported_functions->number_of_exports; i++)
-    {
-      if (pe->exported_functions->functions[i].name)
-        yr_free(pe->exported_functions->functions[i].name);
-    }
-
-    yr_free(pe->exported_functions->functions);
-    yr_free(pe->exported_functions);
   }
 
   yr_free(pe);
