@@ -63,7 +63,7 @@ static int _yr_scanner_scan_mem_block(
   {
     if (i % 4096 == 0 && scanner->timeout > 0)
     {
-      if (yr_stopwatch_elapsed_us(&scanner->stopwatch) > scanner->timeout)
+      if (yr_stopwatch_elapsed_ns(&scanner->stopwatch) > scanner->timeout)
         return ERROR_SCAN_TIMEOUT;
     }
 

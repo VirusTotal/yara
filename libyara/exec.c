@@ -406,7 +406,7 @@ int yr_execute_code(
       yr_free(stack.items));
 
   #ifdef PROFILING_ENABLED
-  start_time = yr_stopwatch_elapsed_us(&context->stopwatch);
+  start_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
   #endif
 
   #if PARANOID_EXEC
@@ -840,7 +840,7 @@ int yr_execute_code(
           yr_bitmask_set(context->ns_unsatisfied_flags, rule->ns->idx);
 
         #ifdef PROFILING_ENABLED
-        elapsed_time = yr_stopwatch_elapsed_us(&context->stopwatch);
+        elapsed_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
         context->time_cost[r2.i] += (elapsed_time - start_time);
         start_time = elapsed_time;
         #endif
@@ -1612,7 +1612,7 @@ int yr_execute_code(
 
     if (context->timeout > 0L && ++cycle == 100)
     {
-      elapsed_time = yr_stopwatch_elapsed_us(&context->stopwatch);
+      elapsed_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
 
       if (elapsed_time > context->timeout)
       {

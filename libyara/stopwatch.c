@@ -39,14 +39,14 @@ void yr_stopwatch_start(
 }
 
 
-uint64_t yr_stopwatch_elapsed_us(
+uint64_t yr_stopwatch_elapsed_ns(
     YR_STOPWATCH* sw)
 {
   LARGE_INTEGER li;
 
   QueryPerformanceCounter(&li);
 
-  return (li.QuadPart - sw->start.QuadPart) * 1000000L / sw->frequency.QuadPart;
+  return (li.QuadPart - sw->start.QuadPart) * 1000000000L / sw->frequency.QuadPart;
 }
 
 
@@ -60,14 +60,11 @@ void yr_stopwatch_start(
 }
 
 
-uint64_t yr_stopwatch_elapsed_us(
+uint64_t yr_stopwatch_elapsed_ns(
     YR_STOPWATCH* sw)
 {
-  uint64_t now;
-
-  now = mach_absolute_time();
-  return (now - sw->start) * sw->timebase.numer /
-         (sw->timebase.denom * 1000ULL);
+  uint64_t now = mach_absolute_time();
+  return ((now - sw->start) * sw->timebase.numer) / sw->timebase.denom;
 }
 
 
@@ -91,7 +88,7 @@ void yr_stopwatch_start(
 }
 
 
-uint64_t yr_stopwatch_elapsed_us(
+uint64_t yr_stopwatch_elapsed_ns(
     YR_STOPWATCH* stopwatch)
 {
   struct timespec ts_stop;
@@ -99,7 +96,7 @@ uint64_t yr_stopwatch_elapsed_us(
 
   clock_gettime(CLOCK_MONOTONIC, &ts_stop);
   timespecsub(&ts_stop, &stopwatch->ts_start, &ts_elapsed);
-  return ts_elapsed.tv_sec * 1000000L + ts_elapsed.tv_nsec / 1000;
+  return ts_elapsed.tv_sec * 1000000000L + ts_elapsed.tv_nsec;
 }
 
 
@@ -125,7 +122,7 @@ void yr_stopwatch_start(
 }
 
 
-uint64_t yr_stopwatch_elapsed_us(
+uint64_t yr_stopwatch_elapsed_ns(
     YR_STOPWATCH* stopwatch)
 {
   struct timeval tv_stop;
@@ -133,7 +130,7 @@ uint64_t yr_stopwatch_elapsed_us(
 
   gettimeofday(&tv_stop, NULL);
   timevalsub(&tv_stop, &stopwatch->tv_start, &tv_elapsed);
-  return tv_elapsed.tv_sec * 1000000L + tv_elapsed.tv_usec;
+  return tv_elapsed.tv_sec * 1000000000L + tv_elapsed.tv_usec * 1000L;
 }
 
 #endif

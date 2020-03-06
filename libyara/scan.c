@@ -907,7 +907,7 @@ int yr_scan_verify_match(
     return ERROR_SUCCESS;
 
   #ifdef PROFILING_ENABLED
-  uint64_t start_time = yr_stopwatch_elapsed_us(&context->stopwatch);
+  uint64_t start_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
   #endif
 
   if (STRING_IS_LITERAL(string))
@@ -922,7 +922,7 @@ int yr_scan_verify_match(
   }
 
   #ifdef PROFILING_ENABLED
-  uint64_t finish_time = yr_stopwatch_elapsed_us(&context->stopwatch);
+  uint64_t finish_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
   context->time_cost[string->rule_idx] += (finish_time - start_time);
   #endif
 
