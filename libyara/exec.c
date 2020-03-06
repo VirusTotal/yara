@@ -1631,10 +1631,10 @@ int yr_execute_code(
         assert(false);
     }
 
-    // Check for timeout every 10 instruction cycles. If timeout == 0 it means
+    // Check for timeout every 100 instruction cycles. If timeout == 0 it means
     // no timeout at all.
 
-    if (context->timeout > 0L && ++cycle == 10)
+    if (context->timeout > 0L && ++cycle == 100)
     {
       elapsed_time = yr_stopwatch_elapsed_us(&context->stopwatch);
 
