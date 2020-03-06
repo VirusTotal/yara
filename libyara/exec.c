@@ -1039,12 +1039,7 @@ int yr_execute_code(
 
       case OP_FOUND:
         pop(r1);
-
-        if (STRING_IS_PRIVATE(r1.s))
-          r2.i = context->private_matches[r1.s->idx].tail != NULL ? 1 : 0;
-        else
-          r2.i = context->matches[r1.s->idx].tail != NULL ? 1 : 0;
-
+        r2.i = context->matches[r1.s->idx].tail != NULL ? 1 : 0;
         push(r2);
         break;
 
@@ -1063,11 +1058,7 @@ int yr_execute_code(
         ensure_within_rules_arena(r2.p);
         #endif
 
-        if (STRING_IS_PRIVATE(r2.s))
-          match = context->private_matches[r2.s->idx].head;
-        else
-          match = context->matches[r2.s->idx].head;
-
+        match = context->matches[r2.s->idx].head;
         r3.i = false;
 
         while (match != NULL)
@@ -1099,11 +1090,7 @@ int yr_execute_code(
         ensure_within_rules_arena(r3.p);
         #endif
 
-        if (STRING_IS_PRIVATE(r3.s))
-          match = context->private_matches[r3.s->idx].head;
-        else
-          match = context->matches[r3.s->idx].head;
-
+        match = context->matches[r3.s->idx].head;
         r4.i = false;
 
         while (match != NULL && !r4.i)
@@ -1130,11 +1117,7 @@ int yr_execute_code(
         ensure_within_rules_arena(r1.p);
         #endif
 
-        if (STRING_IS_PRIVATE(r1.s))
-          r2.i = context->private_matches[r1.s->idx].count;
-        else
-          r2.i = context->matches[r1.s->idx].count;
-
+        r2.i = context->matches[r1.s->idx].count;
         push(r2);
         break;
 
@@ -1148,10 +1131,7 @@ int yr_execute_code(
         ensure_within_rules_arena(r2.p);
         #endif
 
-        if (STRING_IS_PRIVATE(r2.s))
-          match = context->private_matches[r2.s->idx].head;
-        else
-          match = context->matches[r2.s->idx].head;
+        match = context->matches[r2.s->idx].head;
 
         i = 1;
         r3.i = UNDEFINED;
@@ -1178,10 +1158,7 @@ int yr_execute_code(
         ensure_within_rules_arena(r2.p);
         #endif
 
-        if (STRING_IS_PRIVATE(r2.s))
-          match = context->private_matches[r2.s->idx].head;
-        else
-          match = context->matches[r2.s->idx].head;
+        match = context->matches[r2.s->idx].head;
 
         i = 1;
         r3.i = UNDEFINED;
@@ -1205,8 +1182,7 @@ int yr_execute_code(
 
         while (!is_undef(r1))
         {
-          if (context->private_matches[r1.s->idx].tail != NULL ||
-              context->matches[r1.s->idx].tail != NULL)
+          if (context->matches[r1.s->idx].tail != NULL)
           {
             found++;
           }

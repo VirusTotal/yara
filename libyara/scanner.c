@@ -154,10 +154,6 @@ static void _yr_scanner_clean_matches(
       sizeof(YR_MATCHES) * scanner->rules->num_strings);
 
   memset(
-      scanner->private_matches, 0,
-      sizeof(YR_MATCHES) * scanner->rules->num_strings);
-
-  memset(
       scanner->unconfirmed_matches, 0,
       sizeof(YR_MATCHES) * scanner->rules->num_strings);
 }
@@ -198,9 +194,6 @@ YR_API int yr_scanner_create(
       rules->num_strings, sizeof(YR_MATCHES));
 
   new_scanner->unconfirmed_matches = (YR_MATCHES*) yr_calloc(
-      rules->num_strings, sizeof(YR_MATCHES));
-
-  new_scanner->private_matches = (YR_MATCHES*) yr_calloc(
       rules->num_strings, sizeof(YR_MATCHES));
 
   #ifdef PROFILING_ENABLED
@@ -268,7 +261,6 @@ YR_API void yr_scanner_destroy(
   yr_free(scanner->rule_matches_flags);
   yr_free(scanner->ns_unsatisfied_flags);
   yr_free(scanner->matches);
-  yr_free(scanner->private_matches);
   yr_free(scanner->unconfirmed_matches);
   yr_free(scanner);
 }
