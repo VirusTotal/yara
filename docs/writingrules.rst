@@ -23,52 +23,56 @@ keywords are reserved and cannot be used as an identifier:
 
 
 .. list-table:: YARA keywords
-   :widths: 10 10 10 10 10 10 10
+   :widths: 10 10 10 10 10 10 10 10
 
    * - all
      - and
      - any
      - ascii
      - at
+     - base64
+     - base64wide
      - condition
-     - contains
-   * - entrypoint
+   * - contains
+     - entrypoint
      - false
      - filesize
-     - fullword
      - for
+     - fullword
      - global
-     - in
-   * - import
+     - import
+   * - in
      - include
-     - int8
      - int16
-     - int32
-     - int8be
      - int16be
-   * - int32be
-     - matches
+     - int32
+     - int32be
+     - int8
+     - int8be
+   * - matches
      - meta
      - nocase
      - not
-     - or
      - of
-   * - private
+     - or
+     - private
      - rule
-     - strings
+   * - strings
      - them
      - true
-     - uint8
      - uint16
-   * - uint32
-     - uint8be
      - uint16be
+     - uint32
      - uint32be
+     - uint8
+   * - uint8be
      - wide
      - xor
-     - base64
-     - base64wide
-     -
+     - 
+     - 
+     - 
+     - 
+     - 
 
 Rules are generally composed of two sections: strings definition and condition.
 The strings definition section can be omitted if the rule doesn't rely on any
