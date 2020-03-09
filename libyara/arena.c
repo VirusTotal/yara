@@ -652,10 +652,6 @@ int yr_arena_save_stream(
 
     YR_ARENA_REF ref;
 
-    // Fill reference with zeroes, as this structure is going to be written
-    // we don't want random bytes in the padding.
-    memset(&ref, 0, sizeof(ref));
-
     int found = yr_arena_ptr_to_ref(arena, *reloc_ptr, &ref);
 
     // yr_arena_ptr_to_ref returns 0 if the relocatable pointer is pointing
