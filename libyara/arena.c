@@ -112,6 +112,107 @@ static int _yr_arena_make_ptr_relocatable(
   return result;
 }
 
+// Flags for _yr_arena_allocate_memory.
+#define YR_ARENA_ZERO_MEMORY  1
+
+//
+// _yr_arena_allocate_memory
+//
+// Allocates memory in a buffer within the arena.
+//
+// Args:
+//    [in]  YR_ARENA* arena   - Pointer to the arena.
+//    [in]  int flags         - Flags.
+//    [in]  int buffer_id     - Buffer number.
+//    [in]  size_t size       - Size of the region to be allocated.
+//    [out] size_t* offset    - Pointer to a variable where the function puts
+//                              the offset within the buffer of the allocated
+//                              region. The pointer can be NULL.
+// Returns:
+//    ERROR_SUCCESS if succeed or the corresponding error code if otherwise.
+//
+
+static int _yr_arena_allocate_memory(
+    YR_ARENA* arena,
+    int flags,
+    int buffer_id,
+    size_t size,
+    YR_ARENA_REF* ref)
+{
+  if (buffer_id > arena->num_buffers)
+    return ERROR_INVALID_ARGUMENT;
+
+  YR_ARENA_BUFFER* b = &arena->buffers[buffer_id];
+
+  // If the new data doesn't fit in the remaining space the buffer must be
+  // re-sized. This implies moving the buffer to a different memory location
+  // and adjusting the pointers listed in the relocation list.
+
+  if (b->size - b->used < size)
+  {
+    size_t new_size = (b->size == 0) ? arena->initial_buffer_size : b->size * 2;
+
+    while (new_size < b->used + size)
+      new_size *= 2;
+
+    uint8_t* new_data = yr_realloc(b->data, new_size);
+
+    if (new_data == NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+
+    // When yr_realloc uses the Windows API (HeapAlloc, HeapReAlloc) under the
+    // hood this is not necessary because HeapReAlloc already sets the new
+    // memory to zero.
+    #if !defined(_WIN32) && !defined(__CYGWIN__)
+    if (flags & YR_ARENA_ZERO_MEMORY)
+      memset(new_data + b->used, 0, new_size - b->used);
+    #endif
+
+    YR_RELOC* reloc = arena->reloc_list_head;
+
+    while (reloc != NULL)
+    {
+      // If the reloc entry is for the same buffer that is being relocated,
+      // the base pointer that we use to access the buffer must be new_data,
+      // as arena->buffers[reloc->buffer_id].data which is the same than
+      // b->data can't be accessed anymore after the call to yr_realloc.
+      uint8_t* base = buffer_id == reloc->buffer_id ?
+                      new_data : arena->buffers[reloc->buffer_id].data;
+
+      // reloc_address holds the address inside the buffer where the pointer
+      // to be relocated resides.
+      void** reloc_address = (void**) (base + reloc->offset);
+
+      // reloc_target is the value of the relocatable pointer.
+      void* reloc_target = *reloc_address;
+
+      // reloc_target points to some data inside the buffer being moved, so
+      // the pointer needs to be adjusted.
+      if ((uint8_t*) reloc_target >= b->data &&
+          (uint8_t*) reloc_target < b->data + b->used)
+      {
+        *reloc_address = (uint8_t*) reloc_target - b->data + new_data;
+      }
+
+      reloc = reloc->next;
+    }
+
+    b->size = new_size;
+    b->data = new_data;
+  }
+
+  if (ref != NULL)
+  {
+    ref->buffer_id = buffer_id;
+    ref->offset = b->used;
+  }
+
+  b->used += size;
+
+  return ERROR_SUCCESS;
+}
+
+
 //
 // yr_arena_create
 //
@@ -188,92 +289,15 @@ int yr_arena_release(
   return ERROR_SUCCESS;
 }
 
-//
-// yr_arena_allocate_memory
-//
-// Allocates memory in a buffer within the arena.
-//
-// Args:
-//    [in]  YR_ARENA* arena   - Pointer to the arena.
-//    [in]  int buffer_id     - Buffer number.
-//    [in]  size_t size       - Size of the region to be allocated.
-//    [out] size_t* offset    - Pointer to a variable where the function puts
-//                              the offset within the buffer of the allocated
-//                              region. The pointer can be NULL.
-// Returns:
-//    ERROR_SUCCESS if succeed or the corresponding error code if otherwise.
-//
-
 int yr_arena_allocate_memory(
     YR_ARENA* arena,
     int buffer_id,
     size_t size,
     YR_ARENA_REF* ref)
 {
-  if (buffer_id > arena->num_buffers)
-    return ERROR_INVALID_ARGUMENT;
-
-  YR_ARENA_BUFFER* b = &arena->buffers[buffer_id];
-
-  // If the new data doesn't fit in the remaining space the buffer must be
-  // re-sized. This implies moving the buffer to a different memory location
-  // and adjusting the pointers listed in the relocation list.
-
-  if (b->size - b->used < size)
-  {
-    size_t new_size = (b->size == 0) ? arena->initial_buffer_size : b->size * 2;
-
-    while (new_size < b->used + size)
-      new_size *= 2;
-
-    uint8_t* new_data = yr_realloc(b->data, new_size);
-
-    if (new_data == NULL)
-      return ERROR_INSUFFICIENT_MEMORY;
-
-    YR_RELOC* reloc = arena->reloc_list_head;
-
-    while (reloc != NULL)
-    {
-      // If the reloc entry is for the same buffer that is being relocated,
-      // the base pointer that we use to access the buffer must be new_data,
-      // as arena->buffers[reloc->buffer_id].data which is the same than
-      // b->data can't be accessed anymore after the call to yr_realloc.
-      uint8_t* base = buffer_id == reloc->buffer_id ?
-          new_data : arena->buffers[reloc->buffer_id].data;
-
-      // reloc_address holds the address inside the buffer where the pointer
-      // to be relocated resides.
-      void** reloc_address = (void**) (base + reloc->offset);
-
-      // reloc_target is the value of the relocatable pointer.
-      void* reloc_target = *reloc_address;
-
-      // reloc_target points to some data inside the buffer being moved, so
-      // the pointer needs to be adjusted.
-      if ((uint8_t*) reloc_target >= b->data &&
-          (uint8_t*) reloc_target < b->data + b->used)
-      {
-        *reloc_address = (uint8_t*) reloc_target - b->data + new_data;
-      }
-
-      reloc = reloc->next;
-    }
-
-    b->size = new_size;
-    b->data = new_data;
-  }
-
-  if (ref != NULL)
-  {
-    ref->buffer_id = buffer_id;
-    ref->offset = b->used;
-  }
-
-  b->used += size;
-
-  return ERROR_SUCCESS;
+  return _yr_arena_allocate_memory(arena, 0, buffer_id, size, ref);
 }
+
 
 //
 // yr_arena_allocate_struct
@@ -324,7 +348,8 @@ int yr_arena_allocate_struct(
   va_list field_offsets;
   va_start(field_offsets, ref);
 
-  result = yr_arena_allocate_memory(arena, buffer_id, size, &r);
+  result = _yr_arena_allocate_memory(
+      arena, YR_ARENA_ZERO_MEMORY, buffer_id, size, &r);
 
   va_end(field_offsets);
 
