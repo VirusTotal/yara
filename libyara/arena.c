@@ -299,7 +299,7 @@ int yr_arena_allocate_memory(
 //    [in]  YR_ARENA* arena     - Pointer to the arena.
 //    [in]  int buffer_id       - Buffer number.
 //    [in]  size_t size         - Size of the region to be allocated.
-//    [out] YR_ARENA_REF* ref  - Pointer to a reference that will point to the
+//    [out] YR_ARENA_REF* ref   - Pointer to a reference that will point to the
 //                                newly allocated structure when the function
 //                                returns. The pointer can be NULL if you don't
 //                                need the reference.
