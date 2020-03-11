@@ -60,7 +60,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Paranoid mode does not guarantee that it's safe to load compiled rules from
 // third parties, it only prevents severe security issues. Maliciously crafted
 // compiled rules can still crash YARA. Loading third-party compiled rules is
-// *highly* undiscouraged. If you need to distribute YARA rules in compiled
+// *highly* discouraged. If you need to distribute YARA rules in compiled
 // form you should encapsulate them in some digitally-signed package that
 // ensure that they haven't been modified by someone else.
 
@@ -69,7 +69,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
-#define MEM_SIZE   YR_MAX_LOOP_NESTING * YR_MAX_LOOP_VARS
+#define MEM_SIZE \
+    YR_MAX_LOOP_NESTING * (YR_MAX_LOOP_VARS + YR_INTERNAL_LOOP_VARS)
 
 
 #define push(x)  \
