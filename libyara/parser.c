@@ -753,8 +753,7 @@ int yr_parser_reduce_string_declaration(
       if (atom_quality < min_atom_quality)
         min_atom_quality = atom_quality;
 
-      if (string_ref->buffer_id == YR_ARENA_NULL_REF.buffer_id &&
-          string_ref->offset == YR_ARENA_NULL_REF.offset)
+      if (YR_ARENA_IS_NULL_REF(*string_ref))
       {
         // This is the first string in the chain, the string reference returned
         // by this function must point to this string.

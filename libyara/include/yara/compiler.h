@@ -196,7 +196,7 @@ typedef struct _YR_COMPILER
   //      Aho-Corasick state, the N-th item in this array has the index within
   //      the matches pool where the list of matches for that state begins.
   //   YR_AC_STATE_MATCHES_POOL:
-  //      An array of YR_AC_MATCH structures
+  //      An array of YR_AC_MATCH structures.
   //
   YR_ARENA* arena;
 

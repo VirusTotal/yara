@@ -199,8 +199,6 @@ typedef struct YR_AC_TABLES YR_AC_TABLES;
 typedef struct YR_AC_MATCH_LIST_ENTRY YR_AC_MATCH_LIST_ENTRY;
 typedef struct YR_AC_MATCH YR_AC_MATCH;
 
-typedef YR_AC_MATCH_LIST_ENTRY* YR_AC_MATCH_TABLE_ENTRY;
-
 typedef struct YR_NAMESPACE YR_NAMESPACE;
 typedef struct YR_META YR_META;
 typedef struct YR_MATCHES YR_MATCHES;
@@ -351,13 +349,12 @@ struct YR_EXTERNAL_VARIABLE
 };
 
 
-#define YR_AC_MATCH_FLAG_LAST   1
-
 struct YR_AC_MATCH
 {
   DECLARE_REFERENCE(YR_STRING*, string);
   DECLARE_REFERENCE(const uint8_t*, forward_code);
   DECLARE_REFERENCE(const uint8_t*, backward_code);
+  DECLARE_REFERENCE(YR_AC_MATCH*, next);
 
   // When the Aho-Corasick automaton reaches some state that has associated
   // matches, the current position in the input buffer is a few bytes past
@@ -368,8 +365,6 @@ struct YR_AC_MATCH
   // position 3. The backtrack field indicates how many bytes the scanner has
   // to go back to find the point where the match actually start.
   uint16_t backtrack;
-
-  int8_t  flags;
 };
 
 #pragma pack(pop)
@@ -520,7 +515,10 @@ struct YR_AC_STATE
   YR_AC_STATE* failure;
   YR_AC_STATE* first_child;
   YR_AC_STATE* siblings;
-  YR_AC_MATCH_LIST_ENTRY* matches;
+
+  // Reference to the YR_AC_MATCH structure that heads the list of matches
+  // for this state.
+  YR_ARENA_REF matches_ref;
 
   uint8_t depth;
   uint8_t input;
@@ -552,25 +550,9 @@ struct YR_AC_AUTOMATON
   // Used for speeding up the construction of the transition table.
   uint32_t t_table_unused_candidate;
 
-  // Bitmask where each bit indicates if the corresponding slot in m_table
-  // and t_table is already in use.
+  // Bitmask where each bit indicates if the corresponding slot in the
+  // transition table is already in use.
   YR_BITMASK* bitmask;
-
-  // Transition table. See comment in _yr_ac_build_transition_table for more
-  // details.
-  YR_AC_TRANSITION* t_table;
-
-  // Pointer to an array of YR_AC_MATCH_LIST_ENTRY* pointers. This array has the
-  // same number of entries than the transition table. If entry N in the transition
-  // table corresponds to an Aho-Corasick state, the N-th entry in the array
-  // points to the first item of the list of matches corresponding to that state.
-  // If entry N in the transition table does not corresponds to a state, or the
-  // state doesn't have any match, the N-th entry in this array will be a NULL
-  // pointer.
-  YR_AC_MATCH_TABLE_ENTRY* m_table;
-
-  // Notebook where the YR_AC_MATCH_TABLE_ENTRY structures will be allocated.
-  YR_NOTEBOOK* matches_notebook;
 
   // Pointer to the root Aho-Corasick state.
   YR_AC_STATE* root;

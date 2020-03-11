@@ -295,7 +295,19 @@ int yr_arena_allocate_memory(
     size_t size,
     YR_ARENA_REF* ref)
 {
-  return _yr_arena_allocate_memory(arena, 0, buffer_id, size, ref);
+  return _yr_arena_allocate_memory(
+      arena, 0, buffer_id, size, ref);
+}
+
+
+int yr_arena_allocate_zeroed_memory(
+    YR_ARENA* arena,
+    int buffer_id,
+    size_t size,
+    YR_ARENA_REF* ref)
+{
+  return _yr_arena_allocate_memory(
+      arena, YR_ARENA_ZERO_MEMORY, buffer_id, size, ref);
 }
 
 
@@ -419,11 +431,8 @@ void* yr_arena_ref_to_ptr(
     YR_ARENA* arena,
     YR_ARENA_REF* ref)
 {
-  if (ref->buffer_id == YR_ARENA_NULL_REF.buffer_id &&
-      ref->offset == YR_ARENA_NULL_REF.offset)
-  {
+  if (YR_ARENA_IS_NULL_REF(*ref))
     return NULL;
-  }
 
   return yr_arena_get_ptr(arena, ref->buffer_id, ref->offset);
 }
