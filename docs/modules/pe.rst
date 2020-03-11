@@ -881,7 +881,7 @@ Reference
 
 .. c:type:: export_details
 
-    .. versionadded:: 3.11.0
+    .. versionadded:: 3.12.0
 
     Structure containing information about the PE's exports.
 
@@ -906,13 +906,13 @@ Reference
 
 .. c:type:: dll_name
 
-    .. versionadded:: 3.11.0
+    .. versionadded:: 3.12.0
 
     The name of the DLL, if it exists in the export directory.
 
 .. c:type:: export_timestamp
 
-    .. versionadded:: 3.11.0
+    .. versionadded:: 3.12.0
 
     The timestamp the export data was created..
 
