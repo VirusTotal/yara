@@ -689,8 +689,8 @@ void test_rules_stats()
       condition: all of them }",
       &stats);
 
-  assert_true_expr(stats.rules == 1);
-  assert_true_expr(stats.strings == 1);
+  assert_true_expr(stats.num_rules == 1);
+  assert_true_expr(stats.num_strings == 1);
   assert_true_expr(stats.ac_root_match_list_length == 1);
 
   stats_for_rules("\
@@ -699,8 +699,8 @@ void test_rules_stats()
       condition: all of them }",
       &stats);
 
-  assert_true_expr(stats.rules == 1);
-  assert_true_expr(stats.strings == 1);
+  assert_true_expr(stats.num_rules == 1);
+  assert_true_expr(stats.num_strings == 1);
   assert_true_expr(stats.ac_matches == 1);
   assert_true_expr(stats.ac_root_match_list_length == 0);
   assert_true_expr(stats.top_ac_match_list_lengths[0] == 1);
@@ -719,8 +719,8 @@ void test_rules_stats()
       condition: all of them }",
       &stats);
 
-  assert_true_expr(stats.rules == 1);
-  assert_true_expr(stats.strings == 6);
+  assert_true_expr(stats.num_rules == 1);
+  assert_true_expr(stats.num_strings == 6);
   assert_true_expr(stats.ac_matches == 6);
   assert_true_expr(stats.ac_root_match_list_length == 0);
   assert_true_expr(stats.top_ac_match_list_lengths[0] == 3);
@@ -741,8 +741,8 @@ void test_rules_stats()
       condition: all of them }",
       &stats);
 
-  assert_true_expr(stats.rules == 1);
-  assert_true_expr(stats.strings == 8);
+  assert_true_expr(stats.num_rules == 1);
+  assert_true_expr(stats.num_strings == 8);
   assert_true_expr(stats.ac_matches == 8);
   assert_true_expr(stats.ac_root_match_list_length == 0);
   assert_true_expr(stats.top_ac_match_list_lengths[0] == 3);
@@ -754,8 +754,8 @@ void test_rules_stats()
       condition: true }",
       &stats);
 
-  assert_true_expr(stats.rules == 1);
-  assert_true_expr(stats.strings == 0);
+  assert_true_expr(stats.num_rules == 1);
+  assert_true_expr(stats.num_strings== 0);
   assert_true_expr(stats.ac_matches == 0);
   assert_true_expr(stats.ac_root_match_list_length == 0);
 }
