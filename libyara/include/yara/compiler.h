@@ -54,6 +54,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define EXPRESSION_TYPE_OBJECT    16
 #define EXPRESSION_TYPE_FLOAT     32
 
+
+// Number of variables used by loops. This doesn't include user defined
+// variables.
+#define YR_INTERNAL_LOOP_VARS     3
+
 typedef struct _YR_EXPRESSION
 {
   int type;
