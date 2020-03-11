@@ -115,6 +115,7 @@ static int _yr_arena_make_ptr_relocatable(
 // Flags for _yr_arena_allocate_memory.
 #define YR_ARENA_ZERO_MEMORY  1
 
+
 //
 // _yr_arena_allocate_memory
 //
@@ -289,13 +290,26 @@ int yr_arena_release(
   return ERROR_SUCCESS;
 }
 
+
 int yr_arena_allocate_memory(
     YR_ARENA* arena,
     int buffer_id,
     size_t size,
     YR_ARENA_REF* ref)
 {
-  return _yr_arena_allocate_memory(arena, 0, buffer_id, size, ref);
+  return _yr_arena_allocate_memory(
+      arena, 0, buffer_id, size, ref);
+}
+
+
+int yr_arena_allocate_zeroed_memory(
+    YR_ARENA* arena,
+    int buffer_id,
+    size_t size,
+    YR_ARENA_REF* ref)
+{
+  return _yr_arena_allocate_memory(
+      arena, YR_ARENA_ZERO_MEMORY, buffer_id, size, ref);
 }
 
 
@@ -323,7 +337,7 @@ int yr_arena_allocate_memory(
 //    [in]  YR_ARENA* arena     - Pointer to the arena.
 //    [in]  int buffer_id       - Buffer number.
 //    [in]  size_t size         - Size of the region to be allocated.
-//    [out] YR_ARENA_REF* ref  - Pointer to a reference that will point to the
+//    [out] YR_ARENA_REF* ref   - Pointer to a reference that will point to the
 //                                newly allocated structure when the function
 //                                returns. The pointer can be NULL if you don't
 //                                need the reference.
@@ -419,11 +433,8 @@ void* yr_arena_ref_to_ptr(
     YR_ARENA* arena,
     YR_ARENA_REF* ref)
 {
-  if (ref->buffer_id == YR_ARENA_NULL_REF.buffer_id &&
-      ref->offset == YR_ARENA_NULL_REF.offset)
-  {
+  if (YR_ARENA_IS_NULL_REF(*ref))
     return NULL;
-  }
 
   return yr_arena_get_ptr(arena, ref->buffer_id, ref->offset);
 }
@@ -651,10 +662,6 @@ int yr_arena_save_stream(
         arena->buffers[reloc->buffer_id].data + reloc->offset);
 
     YR_ARENA_REF ref;
-
-    // Fill reference with zeroes, as this structure is going to be written
-    // we don't want random bytes in the padding.
-    memset(&ref, 0, sizeof(ref));
 
     int found = yr_arena_ptr_to_ref(arena, *reloc_ptr, &ref);
 

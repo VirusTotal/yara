@@ -40,7 +40,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_ARENA_FILE_VERSION  17
 
 #define YR_ARENA_NULL_REF  \
-    (YR_ARENA_REF){ UINT8_MAX, UINT32_MAX }
+    (YR_ARENA_REF){ UINT32_MAX, UINT32_MAX }
+
+#define YR_ARENA_IS_NULL_REF(ref) \
+    (memcmp(&(ref), &YR_ARENA_NULL_REF, sizeof(YR_ARENA_NULL_REF)) == 0)
 
 typedef uint32_t yr_arena_off_t;
 
@@ -63,7 +66,7 @@ typedef struct YR_RELOC YR_RELOC;
 
 struct YR_ARENA_REF
 {
-  uint8_t buffer_id;
+  uint32_t buffer_id;
   uint32_t offset;
 };
 
@@ -216,6 +219,13 @@ yr_arena_off_t yr_arena_get_current_offset(
 
 
 int yr_arena_allocate_memory(
+    YR_ARENA* arena,
+    int buffer_id,
+    size_t size,
+    YR_ARENA_REF* ref);
+
+
+int yr_arena_allocate_zeroed_memory(
     YR_ARENA* arena,
     int buffer_id,
     size_t size,

@@ -208,7 +208,7 @@ static YR_AC_STATE* _yr_ac_state_create(
 
   new_state->input = input;
   new_state->depth = state->depth + 1;
-  new_state->matches = NULL;
+  new_state->matches_ref = YR_ARENA_NULL_REF;
   new_state->failure = NULL;
   new_state->t_table_slot = 0;
   new_state->first_child = NULL;
@@ -249,7 +249,8 @@ static int _yr_ac_state_destroy(
 //
 
 static int _yr_ac_create_failure_links(
-    YR_AC_AUTOMATON* automaton)
+    YR_AC_AUTOMATON* automaton,
+    YR_ARENA* arena)
 {
   YR_AC_STATE* current_state;
   YR_AC_STATE* failure_state;
@@ -257,7 +258,7 @@ static int _yr_ac_create_failure_links(
   YR_AC_STATE* state;
   YR_AC_STATE* transition_state;
   YR_AC_STATE* root_state;
-  YR_AC_MATCH_LIST_ENTRY* match;
+  YR_AC_MATCH* match;
 
   QUEUE queue;
 
@@ -285,7 +286,7 @@ static int _yr_ac_create_failure_links(
   while (!_yr_ac_queue_is_empty(&queue))
   {
     current_state = _yr_ac_queue_pop(&queue);
-    match = current_state->matches;
+    match = yr_arena_ref_to_ptr(arena, &current_state->matches_ref);
 
     if (match != NULL)
     {
@@ -295,14 +296,14 @@ static int _yr_ac_create_failure_links(
 
       if (match->backtrack > 0)
       {
-        match->next = root_state->matches;
+        match->next = yr_arena_ref_to_ptr(arena, &root_state->matches_ref);
       }
     }
     else
     {
       // This state doesn't have any matches, its matches will be those
       // in the root state, if any.
-      current_state->matches = root_state->matches;
+      current_state->matches_ref = root_state->matches_ref;
     }
 
     // Iterate over all the states that the current state can transition to.
@@ -322,18 +323,18 @@ static int _yr_ac_create_failure_links(
         {
           transition_state->failure = temp_state;
 
-          if (transition_state->matches == NULL)
+          if (YR_ARENA_IS_NULL_REF(transition_state->matches_ref))
           {
-            transition_state->matches = temp_state->matches;
+            transition_state->matches_ref = temp_state->matches_ref;
           }
           else
           {
-            match = transition_state->matches;
+            match = yr_arena_ref_to_ptr(arena, &transition_state->matches_ref);
 
             while (match != NULL && match->next != NULL)
               match = match->next;
 
-            match->next = temp_state->matches;
+            match->next = yr_arena_ref_to_ptr(arena, &temp_state->matches_ref);
           }
 
           break;
@@ -455,6 +456,7 @@ static int _yr_ac_optimize_failure_links(
 
 static int _yr_ac_find_suitable_transition_table_slot(
     YR_AC_AUTOMATON* automaton,
+    YR_ARENA* arena,
     YR_AC_STATE* state,
     uint32_t* slot)
 {
@@ -491,36 +493,31 @@ static int _yr_ac_find_suitable_transition_table_slot(
 
   if (*slot > automaton->tables_size - 257)
   {
-      size_t t_bytes_size = automaton->tables_size *
-          sizeof(YR_AC_TRANSITION);
+      FAIL_ON_ERROR(yr_arena_allocate_zeroed_memory(
+          arena,
+          YR_AC_TRANSITION_TABLE,
+          257 * sizeof(YR_AC_TRANSITION),
+          NULL));
 
-      size_t m_bytes_size = automaton->tables_size *
-          sizeof(YR_AC_MATCH_TABLE_ENTRY);
+      FAIL_ON_ERROR(yr_arena_allocate_zeroed_memory(
+          arena,
+          YR_AC_STATE_MATCHES_TABLE,
+          257 * sizeof(uint8_t*),
+          NULL));
 
-      size_t b_bytes_size = YR_BITMASK_SIZE(automaton->tables_size) *
+      size_t bm_len = YR_BITMASK_SIZE(automaton->tables_size) *
            sizeof(YR_BITMASK);
 
-      automaton->t_table = (YR_AC_TRANSITION*) yr_realloc(
-          automaton->t_table, t_bytes_size * 2);
+      size_t bm_len_incr = YR_BITMASK_SIZE(257) * sizeof(YR_BITMASK);
 
-      automaton->m_table = (YR_AC_MATCH_TABLE_ENTRY*) yr_realloc(
-          automaton->m_table, m_bytes_size * 2);
+      automaton->bitmask = yr_realloc(automaton->bitmask, bm_len + bm_len_incr);
 
-      automaton->bitmask = (YR_BITMASK*) yr_realloc(
-          automaton->bitmask, b_bytes_size * 2);
-
-      if (automaton->t_table == NULL ||
-          automaton->m_table == NULL ||
-          automaton->bitmask == NULL)
-      {
+      if (automaton->bitmask == NULL)
         return ERROR_INSUFFICIENT_MEMORY;
-      }
 
-      memset((uint8_t*) automaton->t_table + t_bytes_size, 0, t_bytes_size);
-      memset((uint8_t*) automaton->m_table + m_bytes_size, 0, m_bytes_size);
-      memset((uint8_t*) automaton->bitmask + b_bytes_size, 0, b_bytes_size);
+      memset((uint8_t*) automaton->bitmask + bm_len, 0, bm_len_incr);
 
-      automaton->tables_size *= 2;
+      automaton->tables_size += 257;
   }
 
   return ERROR_SUCCESS;
@@ -585,8 +582,11 @@ static int _yr_ac_find_suitable_transition_table_slot(
 // A more detailed description can be found in: http://goo.gl/lE6zG
 
 static int _yr_ac_build_transition_table(
-    YR_AC_AUTOMATON* automaton)
+    YR_AC_AUTOMATON* automaton,
+    YR_ARENA* arena)
 {
+  YR_AC_TRANSITION* t_table;
+  uint32_t* m_table;
   YR_AC_STATE* state;
   YR_AC_STATE* child_state;
   YR_AC_STATE* root_state = automaton->root;
@@ -595,32 +595,43 @@ static int _yr_ac_build_transition_table(
 
   QUEUE queue = { NULL, NULL };
 
-  // Both t_table and m_table are 1KB long, but they will grow if needed.
-  automaton->tables_size = 1024;
+  // Both t_table and m_table have 512 slots initially, which is enough for the
+  // root node's transition table.
+  automaton->tables_size = 512;
 
-  automaton->t_table = (YR_AC_TRANSITION*) yr_calloc(
-      automaton->tables_size, sizeof(YR_AC_TRANSITION));
-
-  automaton->m_table = (YR_AC_MATCH_TABLE_ENTRY*) yr_calloc(
-      automaton->tables_size, sizeof(YR_AC_MATCH_TABLE_ENTRY));
-
-  automaton->bitmask = (YR_BITMASK*) yr_calloc(
+  automaton->bitmask = yr_calloc(
       YR_BITMASK_SIZE(automaton->tables_size), sizeof(YR_BITMASK));
 
-  if (automaton->t_table == NULL ||
-      automaton->m_table == NULL ||
-      automaton->bitmask == NULL)
-  {
-    yr_free(automaton->t_table);
-    yr_free(automaton->m_table);
-    yr_free(automaton->bitmask);
-
+  if (automaton->bitmask == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
-  }
 
-  automaton->t_table[0] = YR_AC_MAKE_TRANSITION(0, 0);
-  automaton->m_table[0] = root_state->matches;
+  FAIL_ON_ERROR(yr_arena_allocate_zeroed_memory(
+      arena,
+      YR_AC_TRANSITION_TABLE,
+      automaton->tables_size * sizeof(YR_AC_TRANSITION),
+      NULL));
 
+  FAIL_ON_ERROR(yr_arena_allocate_zeroed_memory(
+      arena,
+      YR_AC_STATE_MATCHES_TABLE,
+      automaton->tables_size * sizeof(uint32_t),
+      NULL));
+
+  t_table = yr_arena_get_ptr(arena, YR_AC_TRANSITION_TABLE, 0);
+  m_table = yr_arena_get_ptr(arena, YR_AC_STATE_MATCHES_TABLE, 0);
+
+  // The failure link for the root node points to itself.
+  t_table[0] = YR_AC_MAKE_TRANSITION(0, 0);
+
+  // Initialize the entry corresponding to the root node in the match table.
+  // Entries in this table are the index within YR_AC_MATCH_POOL where resides
+  // the YR_AC_MATCH structure that corresponds to the head of the matches list
+  // for the node. The indexes start counting at 1, the zero is used for
+  // indicating that the node has no associated matches.
+  if (!YR_ARENA_IS_NULL_REF(root_state->matches_ref))
+    m_table[0] = root_state->matches_ref.offset / sizeof(YR_AC_MATCH) + 1;
+
+  // Mark the first slot in the transition table as used.
   yr_bitmask_set(automaton->bitmask, 0);
 
   // Index 0 is for root node. Unused indexes start at 1.
@@ -630,8 +641,10 @@ static int _yr_ac_build_transition_table(
 
   while (child_state != NULL)
   {
+    // Each state stores its slot number.
     child_state->t_table_slot = child_state->input + 1;
-    automaton->t_table[child_state->input + 1] = YR_AC_MAKE_TRANSITION(
+
+    t_table[child_state->input + 1] = YR_AC_MAKE_TRANSITION(
         0, child_state->input + 1);
 
     yr_bitmask_set(automaton->bitmask, child_state->input + 1);
@@ -645,18 +658,29 @@ static int _yr_ac_build_transition_table(
     state = _yr_ac_queue_pop(&queue);
 
     FAIL_ON_ERROR(_yr_ac_find_suitable_transition_table_slot(
-        automaton, state, &slot));
+        automaton, arena, state, &slot));
 
-    automaton->t_table[state->t_table_slot] |= (slot << YR_AC_SLOT_OFFSET_BITS);
+    // _yr_ac_find_suitable_transition_table_slot can allocate more space in
+    // both tables and cause the tables to be moved to a different memory
+    // location, we must get their up-to-date addresses.
+    t_table = yr_arena_get_ptr(arena, YR_AC_TRANSITION_TABLE, 0);
+    m_table = yr_arena_get_ptr(arena, YR_AC_STATE_MATCHES_TABLE, 0);
+
+    t_table[state->t_table_slot] |= (slot << YR_AC_SLOT_OFFSET_BITS);
+    t_table[slot] = YR_AC_MAKE_TRANSITION(state->failure->t_table_slot, 0);
+
+    // The match table is an array of indexes within YR_AC_MATCHES_POOL. The
+    // N-th item in the array is the index for the YR_AC_MATCH structure that
+    // represents the head of the matches list for state N. The indexes start
+    // at 1, the 0 indicates that there are no matches for the state.
+    if (YR_ARENA_IS_NULL_REF(state->matches_ref))
+      m_table[slot] = 0;
+    else
+      m_table[slot] = state->matches_ref.offset / sizeof(YR_AC_MATCH) + 1;
 
     state->t_table_slot = slot;
 
-    automaton->t_table[slot] = YR_AC_MAKE_TRANSITION(
-        state->failure->t_table_slot, 0);
-
     yr_bitmask_set(automaton->bitmask, slot);
-
-    automaton->m_table[slot] = state->matches;
 
     // Push children of current_state
     child_state = state->first_child;
@@ -664,7 +688,8 @@ static int _yr_ac_build_transition_table(
     while (child_state != NULL)
     {
       child_state->t_table_slot = slot + child_state->input + 1;
-      automaton->t_table[child_state->t_table_slot] = YR_AC_MAKE_TRANSITION(
+
+      t_table[child_state->t_table_slot] = YR_AC_MAKE_TRANSITION(
           0, child_state->input + 1);
 
       yr_bitmask_set(automaton->bitmask, child_state->t_table_slot);
@@ -788,23 +813,14 @@ int yr_ac_automaton_create(
     return ERROR_INSUFFICIENT_MEMORY;
   }
 
-  FAIL_ON_ERROR_WITH_CLEANUP(yr_notebook_create(
-      sizeof(YR_AC_MATCH_TABLE_ENTRY) * 1024,
-      &new_automaton->matches_notebook),
-      // cleanup
-      yr_free(new_automaton);
-      yr_free(root_state));
-
   root_state->depth = 0;
-  root_state->matches = NULL;
+  root_state->matches_ref = YR_ARENA_NULL_REF;
   root_state->failure = NULL;
   root_state->first_child = NULL;
   root_state->siblings = NULL;
   root_state->t_table_slot = 0;
 
   new_automaton->root = root_state;
-  new_automaton->m_table = NULL;
-  new_automaton->t_table = NULL;
   new_automaton->bitmask = NULL;
   new_automaton->tables_size = 0;
 
@@ -825,10 +841,6 @@ int yr_ac_automaton_destroy(
 {
   _yr_ac_state_destroy(automaton->root);
 
-  yr_notebook_destroy(automaton->matches_notebook);
-
-  yr_free(automaton->t_table);
-  yr_free(automaton->m_table);
   yr_free(automaton->bitmask);
   yr_free(automaton);
 
@@ -869,66 +881,36 @@ int yr_ac_add_string(
       state = next_state;
     }
 
-    YR_AC_MATCH_LIST_ENTRY* new_match = yr_notebook_alloc(
-        automaton->matches_notebook, sizeof(struct YR_AC_MATCH_LIST_ENTRY));
+    YR_ARENA_REF new_match_ref;
 
-    if (new_match == NULL)
-      return ERROR_INSUFFICIENT_MEMORY;
-
-    new_match->backtrack = state->depth + atom->backtrack;
-    new_match->string_idx = string_idx;
-    new_match->forward_code_ref = atom->forward_code_ref;
-    new_match->backward_code_ref = atom->backward_code_ref;
-    new_match->ref = YR_ARENA_NULL_REF;
-
-    // Add newly created match to the list of matches for the state.
-    new_match->next = state->matches;
-    state->matches = new_match;
-
-    atom = atom->next;
-  }
-
-  return ERROR_SUCCESS;
-}
-
-
-static int _yr_ac_write_state_matches(
-    YR_AC_STATE* state,
-    YR_ARENA* arena)
-{
-  YR_AC_STATE* child = state->first_child;
-
-  while (child != NULL)
-  {
-    FAIL_ON_ERROR(_yr_ac_write_state_matches(child, arena));
-    child = child->siblings;
-  }
-
-  YR_AC_MATCH_LIST_ENTRY* match = state->matches;
-
-  while (match != NULL)
-  {
     FAIL_ON_ERROR(yr_arena_allocate_struct(
         arena,
         YR_AC_STATE_MATCHES_POOL,
         sizeof(YR_AC_MATCH),
-        &match->ref,
+        &new_match_ref,
         offsetof(YR_AC_MATCH, string),
         offsetof(YR_AC_MATCH, forward_code),
         offsetof(YR_AC_MATCH, backward_code),
+        offsetof(YR_AC_MATCH, next),
         EOL));
 
-    YR_AC_MATCH* m = yr_arena_ref_to_ptr(arena, &match->ref);
+    YR_AC_MATCH* new_match = yr_arena_ref_to_ptr(arena, &new_match_ref);
 
-    m->string = yr_arena_get_ptr(
-        arena, YR_STRINGS_TABLE, match->string_idx * sizeof(YR_STRING));
+    new_match->backtrack = state->depth + atom->backtrack;
+    new_match->string = yr_arena_get_ptr(
+        arena, YR_STRINGS_TABLE, string_idx * sizeof(struct YR_STRING));
 
-    m->flags = match->next == NULL ? YR_AC_MATCH_FLAG_LAST : 0;
-    m->backtrack = match->backtrack;
-    m->forward_code = yr_arena_ref_to_ptr(arena, &match->forward_code_ref);
-    m->backward_code = yr_arena_ref_to_ptr(arena, &match->backward_code_ref);
+    new_match->forward_code = yr_arena_ref_to_ptr(
+        arena, &atom->forward_code_ref);
 
-    match = match->next;
+    new_match->backward_code = yr_arena_ref_to_ptr(
+        arena, &atom->backward_code_ref);
+
+    // Add newly created match to the list of matches for the state.
+    new_match->next = yr_arena_ref_to_ptr(arena, &state->matches_ref);
+    state->matches_ref = new_match_ref;
+
+    atom = atom->next;
   }
 
   return ERROR_SUCCESS;
@@ -946,40 +928,9 @@ int yr_ac_compile(
     YR_AC_AUTOMATON* automaton,
     YR_ARENA* arena)
 {
-  
-  FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton));
+  FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton, arena));
   FAIL_ON_ERROR(_yr_ac_optimize_failure_links(automaton));
-  FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton));
-
-  //TODO(vmalvarez): Instead of copyig t_table into the arena once that it has
-  // been created, we can pass the arena _yr_ac_build_transition_table so that
-  // the table is created using the arena and the copy is not necessary.
-  FAIL_ON_ERROR(yr_arena_write_data(
-      arena,
-      YR_AC_TRANSITION_TABLE,
-      automaton->t_table,
-      automaton->tables_size * sizeof(YR_AC_TRANSITION),
-      NULL));
-
-
-  _yr_ac_write_state_matches(automaton->root, arena);
-
-  for (uint32_t i = 0; i < automaton->tables_size; i++)
-  {
-    YR_AC_MATCH_LIST_ENTRY* match = automaton->m_table[i];
-    uint32_t match_index;
-
-    if (match != NULL)
-      match_index = match->ref.offset / sizeof(YR_AC_MATCH);
-    else
-      match_index = UINT32_MAX;
-
-    FAIL_ON_ERROR(yr_arena_write_uint32(
-        arena,
-        YR_AC_STATE_MATCHES_TABLE,
-        match_index,
-        NULL));
-  }
+  FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton, arena));
 
   return ERROR_SUCCESS;
 }
