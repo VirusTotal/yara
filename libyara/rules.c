@@ -504,15 +504,15 @@ YR_API int yr_rules_get_stats(
   {
     int match_list_length = 0;
 
-    if (rules->ac_match_table[i] != UINT32_MAX)
+    if (rules->ac_match_table[i] != 0)
     {
-      YR_AC_MATCH *m = &rules->ac_match_pool[rules->ac_match_table[i]];
+      YR_AC_MATCH *m = &rules->ac_match_pool[rules->ac_match_table[i]-1];
 
-      while (m->flags == 0)
+      while (m != NULL)
       {
         match_list_length++;
         stats->ac_matches++;
-        m++;
+        m = m->next;
       }
     }
 

@@ -67,25 +67,29 @@ static int _yr_scanner_scan_mem_block(
         return ERROR_SCAN_TIMEOUT;
     }
 
-    if (match_table[state] != UINT32_MAX)
+    if (match_table[state] != 0)
     {
-      match = &rules->ac_match_pool[match_table[state]];
+      // If the entry corresponding to state N in the match table is zero, it
+      // means that there's no match associated to the state. If it's non-zero,
+      // its value is the 1-based index within ac_match_pool where the first
+      // match resides.
 
-      if (match != NULL)
+      match = &rules->ac_match_pool[match_table[state] - 1];
+
+      while (match != NULL)
       {
-        do
+        if (match->backtrack <= i)
         {
-          if (match->backtrack <= i)
-          {
-            FAIL_ON_ERROR(yr_scan_verify_match(
-                scanner,
-                match,
-                block_data,
-                block->size,
-                block->base,
-                i - match->backtrack));
-          }
-        } while ((match++->flags & YR_AC_MATCH_FLAG_LAST) == 0);
+          FAIL_ON_ERROR(yr_scan_verify_match(
+              scanner,
+              match,
+              block_data,
+              block->size,
+              block->base,
+              i - match->backtrack));
+        }
+
+        match = match->next;
       }
     }
 
@@ -110,29 +114,26 @@ static int _yr_scanner_scan_mem_block(
     state = YR_AC_NEXT_STATE(transition);
   }
 
-  if (match_table[state] != UINT32_MAX)
+  if (match_table[state] != 0)
   {
-    match = &rules->ac_match_pool[match_table[state]];
+    match = &rules->ac_match_pool[match_table[state] - 1];
 
-    if (match != NULL)
+    while (match != NULL)
     {
-      do
+      if (match->backtrack <= i)
       {
-        if (match->backtrack <= i)
-        {
-          FAIL_ON_ERROR(yr_scan_verify_match(
-              scanner,
-              match,
-              block_data,
-              block->size,
-              block->base,
-              i - match->backtrack));
-        }
-      } while ((match++->flags & YR_AC_MATCH_FLAG_LAST) == 0);
+        FAIL_ON_ERROR(yr_scan_verify_match(
+            scanner,
+            match,
+            block_data,
+            block->size,
+            block->base,
+            i - match->backtrack));
+      }
+
+      match = match->next;
     }
-
   }
-
 
   return ERROR_SUCCESS;
 }
