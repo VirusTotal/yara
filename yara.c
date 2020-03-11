@@ -629,11 +629,11 @@ static void print_rules_stats(
 
   printf(
       "number of rules                    : %d\n",
-      stats.rules);
+      stats.num_rules);
 
   printf(
       "number of strings                  : %d\n",
-      stats.strings);
+      stats.num_strings);
 
   printf(
       "number of AC matches               : %d\n",
@@ -650,7 +650,7 @@ static void print_rules_stats(
 
   printf("match list length percentiles\n");
 
-  for (int i = 0; i <= 100; i++)
+  for (int i = 100; i >= 0; i--)
     printf(" %3d: %d\n", i, stats.ac_match_list_length_pctls[i]);
 }
 
