@@ -115,6 +115,9 @@ SIZED_STRING* sized_string_new(
 
   result = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + length);
 
+  if (result == NULL)
+    return NULL;
+
   result->length = length;
   result->flags = 0;
 
@@ -130,11 +133,14 @@ SIZED_STRING* sized_string_new(
 //
 
 SIZED_STRING* sized_string_convert_to_wide(
-  SIZED_STRING* s)
+    SIZED_STRING* s)
 {
   size_t i;
   size_t j = 0;
-  SIZED_STRING* wide = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + s->length * 2);
+
+  SIZED_STRING* wide = (SIZED_STRING*) yr_malloc(
+      sizeof(SIZED_STRING) + s->length * 2);
+
   if (wide == NULL)
     return NULL;
 

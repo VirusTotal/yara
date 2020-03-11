@@ -477,42 +477,36 @@ YR_API int yr_rules_get_stats(
     YR_RULES* rules,
     YR_RULES_STATS *stats)
 {
-  YR_RULE* rule;
-  YR_STRING* string;
+  memset(stats, 0, sizeof(YR_RULES_STATS));
+
+  stats->ac_tables_size = yr_arena_get_current_offset(
+      rules->arena, YR_AC_TRANSITION_TABLE) / sizeof(YR_AC_TRANSITION);
 
   uint32_t* match_list_lengths = (uint32_t*) yr_malloc(
-      sizeof(uint32_t) * rules->ac_tables_size);
-
-  float match_list_length_sum = 0;
-  int i, c = 0;
+      sizeof(uint32_t) * stats->ac_tables_size);
 
   if (match_list_lengths == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  memset(stats, 0, sizeof(YR_RULES_STATS));
+  stats->num_rules = rules->num_rules;
+  stats->num_strings = rules->num_strings;
 
-  yr_rules_foreach(rules, rule)
-  {
-    stats->rules++;
-    yr_rule_strings_foreach(rule, string)
-      stats->strings++;
-  }
+  float match_list_length_sum = 0;
+  int c = 0;
 
-  stats->ac_tables_size = rules->ac_tables_size;
-
-  for (i = 0; i < rules->ac_tables_size; i++)
+  for (int i = 0; i < stats->ac_tables_size; i++)
   {
     int match_list_length = 0;
 
-    if (rules->ac_match_table[i] != UINT32_MAX)
+    if (rules->ac_match_table[i] != 0)
     {
-      YR_AC_MATCH *m = &rules->ac_match_pool[rules->ac_match_table[i]];
+      YR_AC_MATCH *m = &rules->ac_match_pool[rules->ac_match_table[i]-1];
 
-      while (m->flags == 0)
+      while (m != NULL)
       {
         match_list_length++;
         stats->ac_matches++;
-        m++;
+        m = m->next;
       }
     }
 
@@ -537,7 +531,7 @@ YR_API int yr_rules_get_stats(
   // sort match_list_lengths in increasing order for computing percentiles.
   qsort(match_list_lengths, c, sizeof(match_list_lengths[0]), _uint32_cmp);
 
-  for (i = 0; i < 100; i++)
+  for (int i = 0; i < 100; i++)
   {
     if (i < c)
       stats->top_ac_match_list_lengths[i] = match_list_lengths[c-i-1];
@@ -549,7 +543,7 @@ YR_API int yr_rules_get_stats(
   stats->ac_match_list_length_pctls[0] = match_list_lengths[0];
   stats->ac_match_list_length_pctls[100] = match_list_lengths[c-1];
 
-  for (i = 1; i < 100; i++)
+  for (int i = 1; i < 100; i++)
     stats->ac_match_list_length_pctls[i] = match_list_lengths[(c * i) / 100];
 
   yr_free(match_list_lengths);
