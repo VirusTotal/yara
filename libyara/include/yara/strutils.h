@@ -51,6 +51,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PRId64 "I64d"
 #endif
 
+#if !defined (PRIi32)
+#define PRIi32 "I32i"
+#endif
+
 #else
 #include <inttypes.h>
 #endif
