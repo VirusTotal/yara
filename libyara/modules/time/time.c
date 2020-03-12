@@ -38,7 +38,7 @@ define_function(now)
 {
   time_t now = time(NULL);
   if (now == -1)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
   return_integer((long) now);
 }
 

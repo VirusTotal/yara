@@ -423,7 +423,7 @@ static int _yr_parser_write_string(
   string->flags = modifier.flags;
   string->rule_idx = compiler->current_rule_idx;
   string->idx = compiler->current_string_idx;
-  string->fixed_offset = UNDEFINED;
+  string->fixed_offset = YR_UNDEFINED;
   string->chained_to = NULL;
   string->string = NULL;
 
@@ -1052,7 +1052,7 @@ int yr_parser_reduce_string_identifier(
         if (instruction == OP_FOUND_AT)
         {
           // Avoid overwriting any previous fixed offset
-          if (string->fixed_offset == UNDEFINED)
+          if (string->fixed_offset == YR_UNDEFINED)
             string->fixed_offset = at_offset;
 
           // If a previous fixed offset was different, disable
@@ -1092,14 +1092,14 @@ int yr_parser_reduce_string_identifier(
     {
       // Avoid overwriting any previous fixed offset
 
-      if (string->fixed_offset == UNDEFINED)
+      if (string->fixed_offset == YR_UNDEFINED)
         string->fixed_offset = at_offset;
 
       // If a previous fixed offset was different, disable
       // the STRING_GFLAGS_FIXED_OFFSET flag because we only
       // have room to store a single fixed offset value
 
-      if (string->fixed_offset == UNDEFINED ||
+      if (string->fixed_offset == YR_UNDEFINED ||
           string->fixed_offset != at_offset)
       {
         string->flags &= ~STRING_FLAGS_FIXED_OFFSET;

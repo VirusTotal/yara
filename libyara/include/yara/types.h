@@ -271,7 +271,7 @@ struct YR_STRING
 
   // If the string can only match at a specific offset (for example if the
   // condition is "$a at 0" the string $a can only match at offset 0), the
-  // fixed_offset field contains the offset, it have the UNDEFINED value for
+  // fixed_offset field contains the offset, it have the YR_UNDEFINED value for
   // strings that can match anywhere.
   int64_t fixed_offset;
 
@@ -867,7 +867,7 @@ struct YR_DICTIONARY_ITEMS
 //
 // The boolean shouldn't be true if the next item was pushed in the stack, it
 // can be true only when all the items have been returned in previous calls,
-// in which case the value for the next item should be UNDEFINED. The stack
+// in which case the value for the next item should be YR_UNDEFINED. The stack
 // should look like this after the last call to "next":
 //
 //  +------------+
@@ -877,8 +877,8 @@ struct YR_DICTIONARY_ITEMS
 //  +------------+
 //  |   . . .    |
 //
-// We can't use the UNDEFINED value in the stack as an indicator of the end
-// of the iterator, because it's legitimate for an iterator to return UNDEFINED
+// We can't use the YR_UNDEFINED value in the stack as an indicator of the end
+// of the iterator, because it's legitimate for an iterator to return YR_UNDEFINED
 // items in the middle of the iteration.
 //
 // The "next" function should return ERROR_SUCCESS if everything went fine or

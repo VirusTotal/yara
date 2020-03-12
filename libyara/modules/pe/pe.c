@@ -1097,7 +1097,7 @@ static void pe_parse_exports(
   WORD* ordinals = NULL;
   DWORD* function_addrs = NULL;
 
-  // If not a PE file, return UNDEFINED
+  // If not a PE file, return YR_UNDEFINED
 
   if (pe == NULL)
     return;
@@ -1854,12 +1854,12 @@ static void pe_parse_header(
   // RawData + RawOffset of the last section on the physical file
   last_section_end = highest_sec_siz + highest_sec_ofs;
 
-  // "overlay.offset" is set to UNDEFINED for files that do not have an overlay
+  // "overlay.offset" is set to YR_UNDEFINED for files that do not have an overlay
   if (last_section_end && (pe->data_size > last_section_end))
     set_integer(last_section_end, pe->object, "overlay.offset");
 
   // "overlay.size" is zero for well formed PE files that do not have an
-  // overlay and UNDEFINED for malformed PE files or non-PE files.
+  // overlay and YR_UNDEFINED for malformed PE files or non-PE files.
   if (last_section_end && (pe->data_size >= last_section_end))
     set_integer(pe->data_size - last_section_end, pe->object, "overlay.size");
 }
@@ -1877,7 +1877,7 @@ define_function(valid_on)
   if (is_undefined(parent(), "not_before") ||
       is_undefined(parent(), "not_after"))
   {
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
   }
 
   timestamp = integer_argument(1);
@@ -1902,7 +1902,7 @@ define_function(section_index_addr)
   int64_t n = get_integer(module, "number_of_sections");
 
   if (is_undefined(module, "number_of_sections"))
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   for (i = 0; i < yr_min(n, MAX_PE_SECTIONS); i++)
   {
@@ -1921,7 +1921,7 @@ define_function(section_index_addr)
       return_integer(i);
   }
 
-  return_integer(UNDEFINED);
+  return_integer(YR_UNDEFINED);
 }
 
 
@@ -1935,7 +1935,7 @@ define_function(section_index_name)
   int i;
 
   if (is_undefined(module, "number_of_sections"))
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   for (i = 0; i < yr_min(n, MAX_PE_SECTIONS); i++)
   {
@@ -1945,7 +1945,7 @@ define_function(section_index_name)
       return_integer(i);
   }
 
-  return_integer(UNDEFINED);
+  return_integer(YR_UNDEFINED);
 }
 
 
@@ -1959,9 +1959,9 @@ define_function(exports)
 
   int i, n;
 
-  // If not a PE, return UNDEFINED.
+  // If not a PE, return YR_UNDEFINED.
   if (pe == NULL)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   // If PE, but no exported functions, return false.
   n = get_integer(module, "number_of_exports");
@@ -1994,9 +1994,9 @@ define_function(exports_regexp)
 
   int i, n;
 
-  // If not a PE, return UNDEFINED.
+  // If not a PE, return YR_UNDEFINED.
   if (pe == NULL)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   // If PE, but no exported functions, return false.
   n = get_integer(module, "number_of_exports");
@@ -2027,9 +2027,9 @@ define_function(exports_ordinal)
   PE* pe = (PE*) module->data;
   int i, n, exported_ordinal;
 
-  // If not a PE, return UNDEFINED.
+  // If not a PE, return YR_UNDEFINED.
   if (pe == NULL)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   // If PE, but no exported functions, return false.
   n = get_integer(module, "number_of_exports");
@@ -2061,14 +2061,14 @@ define_function(exports_index_name)
 
   int i, n;
 
-  // If not a PE, return UNDEFINED.
+  // If not a PE, return YR_UNDEFINED.
   if (pe == NULL)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   // If PE, but no exported functions, return false.
   n = get_integer(module, "number_of_exports");
   if (n == 0)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   for (i = 0; i < n; i++)
   {
@@ -2082,7 +2082,7 @@ define_function(exports_index_name)
     }
   }
 
-  return_integer(UNDEFINED);
+  return_integer(YR_UNDEFINED);
 }
 
 
@@ -2094,17 +2094,17 @@ define_function(exports_index_ordinal)
   PE* pe = (PE*) module->data;
   int i, n, exported_ordinal;
 
-  // If not a PE, return UNDEFINED.
+  // If not a PE, return YR_UNDEFINED.
   if (pe == NULL)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   // If PE, but no exported functions, return false.
   n = get_integer(module, "number_of_exports");
   if (n == 0)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   if (ordinal == 0 || ordinal > n)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   for (i = 0; i < n; i++)
   {
@@ -2114,7 +2114,7 @@ define_function(exports_index_ordinal)
       return_integer(i);
   }
 
-  return_integer(UNDEFINED);
+  return_integer(YR_UNDEFINED);
 }
 
 
@@ -2128,14 +2128,14 @@ define_function(exports_index_regex)
 
   int i, n;
 
-  // If not a PE, return UNDEFINED.
+  // If not a PE, return YR_UNDEFINED.
   if (pe == NULL)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   // If PE, but no exported functions, return false.
   n = get_integer(module, "number_of_exports");
   if (n == 0)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   for (i = 0; i < n; i++)
   {
@@ -2149,7 +2149,7 @@ define_function(exports_index_regex)
     }
   }
 
-  return_integer(UNDEFINED);
+  return_integer(YR_UNDEFINED);
 }
 
 
@@ -2179,10 +2179,10 @@ define_function(imphash)
 
   PE* pe = (PE*) module->data;
 
-  // If not a PE, return UNDEFINED.
+  // If not a PE, return YR_UNDEFINED.
 
   if (!pe)
-    return_string(UNDEFINED);
+    return_string(YR_UNDEFINED);
 
   // Lookup in cache first.
   digest_ascii = (char*) yr_hash_table_lookup(
@@ -2298,7 +2298,7 @@ define_function(imports)
   IMPORTED_DLL* imported_dll;
 
   if (!pe)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   imported_dll = pe->imported_dlls;
 
@@ -2335,7 +2335,7 @@ define_function(imports_ordinal)
   IMPORTED_DLL* imported_dll;
 
   if (!pe)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   imported_dll = pe->imported_dlls;
 
@@ -2369,7 +2369,7 @@ define_function(imports_regex)
   uint64_t imported_func_count = 0;
 
   if (!pe)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   imported_dll = pe->imported_dlls;
 
@@ -2404,7 +2404,7 @@ define_function(imports_dll)
   uint64_t imported_func_count = 0;
 
   if (!pe)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   imported_dll = pe->imported_dlls;
 
@@ -2436,12 +2436,12 @@ define_function(locale)
   int64_t n, i;
 
   if (is_undefined(module, "number_of_resources"))
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
-  // If not a PE file, return UNDEFINED
+  // If not a PE file, return YR_UNDEFINED
 
   if (pe == NULL)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   n = get_integer(module, "number_of_resources");
 
@@ -2467,12 +2467,12 @@ define_function(language)
   int64_t n, i;
 
   if (is_undefined(module, "number_of_resources"))
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
-  // If not a PE file, return UNDEFINED
+  // If not a PE file, return YR_UNDEFINED
 
   if (pe == NULL)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   n = get_integer(module, "number_of_resources");
 
@@ -2495,7 +2495,7 @@ define_function(is_dll)
   YR_OBJECT* module = module();
 
   if (is_undefined(module, "characteristics"))
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   characteristics = get_integer(module, "characteristics");
   return_integer(characteristics & IMAGE_FILE_DLL);
@@ -2508,7 +2508,7 @@ define_function(is_32bit)
   PE* pe = (PE*) module->data;
 
   if (pe == NULL)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   return_integer(IS_64BITS_PE(pe) ? 0 : 1);
 }
@@ -2520,7 +2520,7 @@ define_function(is_64bit)
   PE* pe = (PE*) module->data;
 
   if (pe == NULL)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   return_integer(IS_64BITS_PE(pe) ? 1 : 0);
 }
@@ -2548,16 +2548,16 @@ static uint64_t _rich_version(
 
   // Check if the required fields are set
   if (is_undefined(module, "rich_signature.length"))
-      return UNDEFINED;
+      return YR_UNDEFINED;
 
   rich_length = get_integer(module, "rich_signature.length");
   rich_string = get_string(module, "rich_signature.clear_data");
 
-  // If the clear_data was not set, return UNDEFINED
+  // If the clear_data was not set, return YR_UNDEFINED
   if (rich_string == NULL)
-      return UNDEFINED;
+      return YR_UNDEFINED;
 
-  if (version == UNDEFINED && toolid == UNDEFINED)
+  if (version == YR_UNDEFINED && toolid == YR_UNDEFINED)
       return false;
 
   clear_rich_signature = (PRICH_SIGNATURE) rich_string->c_string;
@@ -2574,8 +2574,8 @@ static uint64_t _rich_version(
     int match_version = (version == RICH_VERSION_VERSION(id_version));
     int match_toolid = (toolid == RICH_VERSION_ID(id_version));
 
-    if ((version == UNDEFINED || match_version) &&
-        (toolid == UNDEFINED || match_toolid))
+    if ((version == YR_UNDEFINED || match_version) &&
+        (toolid == YR_UNDEFINED || match_toolid))
     {
       result += yr_le32toh(clear_rich_signature->versions[i].times);
     }
@@ -2588,7 +2588,7 @@ static uint64_t _rich_version(
 define_function(rich_version)
 {
   return_integer(
-      _rich_version(module(), integer_argument(1), UNDEFINED));
+      _rich_version(module(), integer_argument(1), YR_UNDEFINED));
 }
 
 
@@ -2602,7 +2602,7 @@ define_function(rich_version_toolid)
 define_function(rich_toolid)
 {
   return_integer(
-      _rich_version(module(), UNDEFINED, integer_argument(1)));
+      _rich_version(module(), YR_UNDEFINED, integer_argument(1)));
 }
 
 
@@ -2623,7 +2623,7 @@ define_function(calculate_checksum)
   size_t i, j;
 
   if (pe == NULL)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   csum_offset = ((uint8_t*) &(pe->header->OptionalHeader) +
       offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum)) - pe->data;
@@ -2670,12 +2670,12 @@ define_function(rva_to_offset)
   uint64_t rva, offset;
 
   if (pe == NULL)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   rva = integer_argument(1);
   offset = pe_rva_to_offset(pe, rva);
   if (offset == -1)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   return_integer(offset);
 }

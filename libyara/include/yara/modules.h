@@ -356,7 +356,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
           __function_obj->return_obj->type == OBJECT_TYPE_FLOAT, \
           "return type differs from function declaration"); \
       return yr_object_set_float( \
-          (d != (double) UNDEFINED) ? d : NAN, \
+          (d != (double) YR_UNDEFINED) ? d : NAN, \
           __function_obj->return_obj, \
           NULL); \
     }
@@ -368,8 +368,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
           __function_obj->return_obj->type == OBJECT_TYPE_STRING, \
           "return type differs from function declaration"); \
       return yr_object_set_string( \
-          (s != (char*) UNDEFINED) ? s : NULL, \
-          (s != (char*) UNDEFINED) ? strlen(s) : 0, \
+          (s != (char*) YR_UNDEFINED) ? s : NULL, \
+          (s != (char*) YR_UNDEFINED) ? strlen(s) : 0, \
           __function_obj->return_obj, \
           NULL); \
     }

@@ -94,7 +94,7 @@ define_function(magic_mime_type)
   const uint8_t* block_data;
 
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
-    return_string(UNDEFINED);
+    return_string(YR_UNDEFINED);
 
   FAIL_ON_ERROR(get_cache(&cache));
 
@@ -115,7 +115,7 @@ define_function(magic_mime_type)
   }
 
   if (cache->cached_mime_type == NULL)
-    return_string(UNDEFINED);
+    return_string(YR_UNDEFINED);
 
   return_string((char*) cache->cached_mime_type);
 }
@@ -130,7 +130,7 @@ define_function(magic_type)
   const uint8_t* block_data;
 
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
-    return_string(UNDEFINED);
+    return_string(YR_UNDEFINED);
 
   FAIL_ON_ERROR(get_cache(&cache));
 
@@ -151,7 +151,7 @@ define_function(magic_type)
   }
 
   if (cache->cached_type == NULL)
-    return_string(UNDEFINED);
+    return_string(YR_UNDEFINED);
 
   return_string((char*) cache->cached_type);
 }
