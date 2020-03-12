@@ -1541,6 +1541,22 @@ void test_for()
           for any i in tests.integer_array : ( i == \"foo\" ) \
       }",
       ERROR_WRONG_TYPE);
+
+
+  assert_false_rule(
+      "rule test { \
+        condition: \
+          for any i in (0,1): ( \
+            for any j in (0,1): ( \
+              for any k in (0,1): ( \
+                for any l in (0,1): (\
+                  false \
+                ) \
+              ) \
+            ) \
+        ) \
+      }",
+      NULL);
 }
 
 

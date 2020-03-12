@@ -1448,9 +1448,10 @@ expression
 
         compiler->loop_index++;
 
-        // This loop uses 3 internal variables besides the ones explicitly
+        // This loop uses internal variables besides the ones explicitly
         // defined by the user.
-        compiler->loop[compiler->loop_index].vars_internal_count = 3;
+        compiler->loop[compiler->loop_index].vars_internal_count = \
+       		YR_INTERNAL_LOOP_VARS;
 
         // Initialize the number of variables, this number will be incremented
         // as variable declaration are processed by for_variables.
@@ -1482,13 +1483,18 @@ expression
             yyscanner, OP_ITER_NEXT, &loop_start_ref));
 
         // For each variable generate an instruction that pops the value from
-        // the stack and store it into one memory slot starting at var_frame + 3
-        // because the first 3 slots in the frame are for the internal variables.
+        // the stack and store it into one memory slot starting at var_frame +
+        // YR_INTERNAL_LOOP_VARS because the first YR_INTERNAL_LOOP_VARS slots
+        // in the frame are for the internal variables.
 
         for (i = 0; i < loop_ctx->vars_count; i++)
         {
           fail_if_error(yr_parser_emit_with_arg(
-              yyscanner, OP_POP_M, var_frame + 3 + i, NULL, NULL));
+              yyscanner,
+              OP_POP_M,
+              var_frame + YR_INTERNAL_LOOP_VARS + i,
+              NULL,
+              NULL));
         }
 
         fail_if_error(yr_parser_emit_with_arg_int32(
@@ -1629,9 +1635,10 @@ expression
             yyscanner, OP_POP_M, var_frame, &ref, NULL);
 
         compiler->loop_for_of_var_index = var_frame;
-        compiler->loop[compiler->loop_index].vars_internal_count = 3;
-        compiler->loop[compiler->loop_index].vars_count = 0;
         compiler->loop[compiler->loop_index].start_ref = ref;
+        compiler->loop[compiler->loop_index].vars_count = 0;
+        compiler->loop[compiler->loop_index].vars_internal_count = \
+            YR_INTERNAL_LOOP_VARS;
       }
       '(' boolean_expression ')'
       {

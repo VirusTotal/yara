@@ -302,6 +302,14 @@ int main(int argc, char** argv)
       }",
       "tests/data/weird_rich");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.language(0x09) and pe.locale(0x0409) \
+      }",
+      "tests/data/mtxex.dll");
+
   yr_finalize();
   return 0;
 }
