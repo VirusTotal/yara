@@ -957,7 +957,7 @@ identifier
               yr_arena_ptr_to_ref(compiler->arena, rule->identifier, &$$.identifier.ref);
 
               $$.type = EXPRESSION_TYPE_BOOLEAN;
-              $$.value.integer = UNDEFINED;
+              $$.value.integer = YR_UNDEFINED;
               $$.identifier.ptr = NULL;
             }
             else
@@ -1326,7 +1326,7 @@ expression
             yyscanner,
             $1,
             OP_FOUND,
-            UNDEFINED);
+            YR_UNDEFINED);
 
         yr_free($1);
 
@@ -1352,7 +1352,7 @@ expression
     | _STRING_IDENTIFIER_ _IN_ range
       {
         int result = yr_parser_reduce_string_identifier(
-            yyscanner, $1, OP_FOUND_IN, UNDEFINED);
+            yyscanner, $1, OP_FOUND_IN, YR_UNDEFINED);
 
         yr_free($1);
 
@@ -1650,7 +1650,7 @@ expression
 
         // Increment counter by the value returned by the
         // boolean expression (0 or 1). If the boolean expression
-        // returned UNDEFINED the OP_ADD_M won't do anything.
+        // returned YR_UNDEFINED the OP_ADD_M won't do anything.
 
         yr_parser_emit_with_arg(
             yyscanner, OP_ADD_M, var_frame + 1, NULL, NULL);
@@ -1981,7 +1981,7 @@ iterator
         if (loop_ctx->vars_count == 1)
         {
           loop_ctx->vars[0].type = EXPRESSION_TYPE_INTEGER;
-          loop_ctx->vars[0].value.integer = UNDEFINED;
+          loop_ctx->vars[0].value.integer = YR_UNDEFINED;
         }
         else
         {
@@ -2079,13 +2079,13 @@ string_set
     : '('
       {
         // Push end-of-list marker
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL);
       }
       string_enumeration ')'
     | _THEM_
       {
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, UNDEFINED, NULL, NULL));
+            yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL));
 
         fail_if_error(yr_parser_emit_pushes_for_strings(
             yyscanner, "$*"));
@@ -2124,7 +2124,7 @@ for_expression
       }
     | _ALL_
       {
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL);
         $$ = FOR_EXPRESSION_ALL;
       }
     | _ANY_
@@ -2146,7 +2146,7 @@ primary_expression
             yyscanner, OP_FILESIZE, NULL));
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _ENTRYPOINT_
       {
@@ -2158,7 +2158,7 @@ primary_expression
             yyscanner, OP_ENTRYPOINT, NULL));
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _INTEGER_FUNCTION_ '(' primary_expression ')'
       {
@@ -2172,7 +2172,7 @@ primary_expression
             yyscanner, (uint8_t) (OP_READ_INT + $1), NULL));
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _NUMBER_
       {
@@ -2219,26 +2219,26 @@ primary_expression
     | _STRING_COUNT_
       {
         int result = yr_parser_reduce_string_identifier(
-            yyscanner, $1, OP_COUNT, UNDEFINED);
+            yyscanner, $1, OP_COUNT, YR_UNDEFINED);
 
         yr_free($1);
 
         fail_if_error(result);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _STRING_OFFSET_ '[' primary_expression ']'
       {
         int result = yr_parser_reduce_string_identifier(
-            yyscanner, $1, OP_OFFSET, UNDEFINED);
+            yyscanner, $1, OP_OFFSET, YR_UNDEFINED);
 
         yr_free($1);
 
         fail_if_error(result);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _STRING_OFFSET_
       {
@@ -2247,26 +2247,26 @@ primary_expression
 
         if (result == ERROR_SUCCESS)
           result = yr_parser_reduce_string_identifier(
-              yyscanner, $1, OP_OFFSET, UNDEFINED);
+              yyscanner, $1, OP_OFFSET, YR_UNDEFINED);
 
         yr_free($1);
 
         fail_if_error(result);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _STRING_LENGTH_ '[' primary_expression ']'
       {
         int result = yr_parser_reduce_string_identifier(
-            yyscanner, $1, OP_LENGTH, UNDEFINED);
+            yyscanner, $1, OP_LENGTH, YR_UNDEFINED);
 
         yr_free($1);
 
         fail_if_error(result);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _STRING_LENGTH_
       {
@@ -2275,14 +2275,14 @@ primary_expression
 
         if (result == ERROR_SUCCESS)
           result = yr_parser_reduce_string_identifier(
-              yyscanner, $1, OP_LENGTH, UNDEFINED);
+              yyscanner, $1, OP_LENGTH, YR_UNDEFINED);
 
         yr_free($1);
 
         fail_if_error(result);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | identifier
       {
@@ -2297,7 +2297,7 @@ primary_expression
           {
             case OBJECT_TYPE_INTEGER:
               $$.type = EXPRESSION_TYPE_INTEGER;
-              $$.value.integer = UNDEFINED;
+              $$.value.integer = YR_UNDEFINED;
               break;
             case OBJECT_TYPE_FLOAT:
               $$.type = EXPRESSION_TYPE_FLOAT;
@@ -2336,8 +2336,8 @@ primary_expression
         if ($2.type == EXPRESSION_TYPE_INTEGER)
         {
           $$.type = EXPRESSION_TYPE_INTEGER;
-          $$.value.integer = ($2.value.integer == UNDEFINED) ?
-              UNDEFINED : -($2.value.integer);
+          $$.value.integer = ($2.value.integer == YR_UNDEFINED) ?
+              YR_UNDEFINED : -($2.value.integer);
           result = yr_parser_emit(yyscanner, OP_INT_MINUS, NULL);
         }
         else if ($2.type == EXPRESSION_TYPE_FLOAT)
@@ -2531,8 +2531,8 @@ primary_expression
         fail_if_error(yr_parser_emit(yyscanner, OP_BITWISE_NOT, NULL));
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = ($2.value.integer == UNDEFINED) ?
-            UNDEFINED : ~($2.value.integer);
+        $$.value.integer = ($2.value.integer == YR_UNDEFINED) ?
+            YR_UNDEFINED : ~($2.value.integer);
       }
     | primary_expression _SHIFT_LEFT_ primary_expression
       {

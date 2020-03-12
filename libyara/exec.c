@@ -93,7 +93,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ensure_defined(x) \
     if (is_undef(x)) \
     { \
-      r1.i = UNDEFINED; \
+      r1.i = YR_UNDEFINED; \
       push(r1); \
       break; \
     }
@@ -154,14 +154,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
           type result; \
           const uint8_t* data = block->fetch_data(block); \
           if (data == NULL) \
-            return UNDEFINED; \
+            return YR_UNDEFINED; \
           result = *(type *)(data + offset - block->base); \
           result = endianess##_##type(result); \
           return result; \
         } \
         block = iterator->next(iterator); \
       } \
-      return UNDEFINED; \
+      return YR_UNDEFINED; \
     };
 
 
@@ -227,7 +227,7 @@ static int iter_array_next(
     if (obj != NULL)
       stack->items[stack->sp++].o = obj;
     else
-      stack->items[stack->sp++].i = UNDEFINED;
+      stack->items[stack->sp++].i = YR_UNDEFINED;
 
     self->array_it.index++;
   }
@@ -235,8 +235,8 @@ static int iter_array_next(
   {
     // Push true for indicating the iterator has been exhausted.
     stack->items[stack->sp++].i = 1;
-    // Push UNDEFINED as a placeholder for the next item.
-    stack->items[stack->sp++].i = UNDEFINED;
+    // Push YR_UNDEFINED as a placeholder for the next item.
+    stack->items[stack->sp++].i = YR_UNDEFINED;
   }
 
   return ERROR_SUCCESS;
@@ -261,9 +261,9 @@ static int iter_dict_next(
   {
     // Push true for indicating the iterator has been exhausted.
     stack->items[stack->sp++].i = 1;
-    // Push UNDEFINED as a placeholder for the next key and value.
-    stack->items[stack->sp++].i = UNDEFINED;
-    stack->items[stack->sp++].i = UNDEFINED;
+    // Push YR_UNDEFINED as a placeholder for the next key and value.
+    stack->items[stack->sp++].i = YR_UNDEFINED;
+    stack->items[stack->sp++].i = YR_UNDEFINED;
   }
   else
   {
@@ -277,8 +277,8 @@ static int iter_dict_next(
     }
     else
     {
-      stack->items[stack->sp++].i = UNDEFINED;
-      stack->items[stack->sp++].i = UNDEFINED;
+      stack->items[stack->sp++].i = YR_UNDEFINED;
+      stack->items[stack->sp++].i = YR_UNDEFINED;
     }
 
     self->dict_it.index++;
@@ -309,8 +309,8 @@ static int iter_int_range_next(
   {
     // Push true for indicating the iterator has been exhausted.
     stack->items[stack->sp++].i = 1;
-    // Push UNDEFINED as a placeholder for the next item.
-    stack->items[stack->sp++].i = UNDEFINED;
+    // Push YR_UNDEFINED as a placeholder for the next item.
+    stack->items[stack->sp++].i = YR_UNDEFINED;
   }
 
   return ERROR_SUCCESS;
@@ -338,8 +338,8 @@ static int iter_int_enum_next(
   {
     // Push true for indicating the iterator has been exhausted.
     stack->items[stack->sp++].i = 1;
-    // Push UNDEFINED as a placeholder for the next item.
-    stack->items[stack->sp++].i = UNDEFINED;
+    // Push YR_UNDEFINED as a placeholder for the next item.
+    stack->items[stack->sp++].i = YR_UNDEFINED;
   }
 
   return ERROR_SUCCESS;
@@ -705,7 +705,7 @@ int yr_execute_code(
         pop(r1);
 
         if (is_undef(r1))
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
         else
           r1.i = !r1.i;
 
@@ -720,7 +720,7 @@ int yr_execute_code(
         if (r2.i != 0)
           r1.i = r1.i % r2.i;
         else
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
         push(r1);
         break;
 
@@ -730,7 +730,7 @@ int yr_execute_code(
         ensure_defined(r2);
         ensure_defined(r1);
         if (r2.i < 0)
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
         else if (r2.i < 64)
           r1.i = r1.i >> r2.i;
         else
@@ -744,7 +744,7 @@ int yr_execute_code(
         ensure_defined(r2);
         ensure_defined(r1);
         if (r2.i < 0)
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
         else if (r2.i < 64)
           r1.i = r1.i << r2.i;
         else
@@ -794,7 +794,7 @@ int yr_execute_code(
 
         if (RULE_IS_DISABLED(rule))
         {
-          r2.i = UNDEFINED;
+          r2.i = YR_UNDEFINED;
         }
         else
         {
@@ -891,14 +891,14 @@ int yr_execute_code(
 
           case OBJECT_TYPE_FLOAT:
             if (isnan(r1.o->value.d))
-              r1.i = UNDEFINED;
+              r1.i = YR_UNDEFINED;
             else
               r1.d = r1.o->value.d;
             break;
 
           case OBJECT_TYPE_STRING:
             if (r1.o->value.ss == NULL)
-              r1.i = UNDEFINED;
+              r1.i = YR_UNDEFINED;
             else
               r1.ss = r1.o->value.ss;
             break;
@@ -926,7 +926,7 @@ int yr_execute_code(
         r1.o = yr_object_array_get_item(r2.o, 0, (int) r1.i);
 
         if (r1.o == NULL)
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
 
         push(r1);
         break;
@@ -948,7 +948,7 @@ int yr_execute_code(
             r2.o, 0, r1.ss->c_string);
 
         if (r1.o == NULL)
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
 
         push(r1);
         break;
@@ -994,7 +994,7 @@ int yr_execute_code(
           // If there are undefined args, result for function call
           // is undefined as well.
 
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
           push(r1);
           break;
         }
@@ -1135,9 +1135,9 @@ int yr_execute_code(
         match = context->matches[r2.s->idx].head;
 
         i = 1;
-        r3.i = UNDEFINED;
+        r3.i = YR_UNDEFINED;
 
-        while (match != NULL && r3.i == UNDEFINED)
+        while (match != NULL && r3.i == YR_UNDEFINED)
         {
           if (r1.i == i)
             r3.i = match->base + match->offset;
@@ -1162,9 +1162,9 @@ int yr_execute_code(
         match = context->matches[r2.s->idx].head;
 
         i = 1;
-        r3.i = UNDEFINED;
+        r3.i = YR_UNDEFINED;
 
-        while (match != NULL && r3.i == UNDEFINED)
+        while (match != NULL && r3.i == YR_UNDEFINED)
         {
           if (r1.i == i)
             r3.i = match->match_length;
@@ -1356,7 +1356,7 @@ int yr_execute_code(
         r2 = stack.items[stack.sp - r1.i];
 
         if (is_undef(r2))
-          stack.items[stack.sp - r1.i].i = UNDEFINED;
+          stack.items[stack.sp - r1.i].i = YR_UNDEFINED;
         else
           stack.items[stack.sp - r1.i].d = (double) r2.i;
         break;
@@ -1457,7 +1457,7 @@ int yr_execute_code(
         if (r2.i != 0)
           r1.i = r1.i / r2.i;
         else
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
         push(r1);
         break;
 

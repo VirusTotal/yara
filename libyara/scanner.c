@@ -177,7 +177,7 @@ YR_API int yr_scanner_create(
       yr_scanner_destroy(new_scanner));
 
   new_scanner->rules = rules;
-  new_scanner->entry_point = UNDEFINED;
+  new_scanner->entry_point = YR_UNDEFINED;
   new_scanner->canary = rand();
 
   // By default report both matching and non-matching rules.
@@ -424,7 +424,7 @@ YR_API int yr_scanner_scan_mem_blocks(
       continue;
     }
 
-    if (scanner->entry_point == UNDEFINED)
+    if (scanner->entry_point == YR_UNDEFINED)
     {
       YR_TRYCATCH(
         !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),

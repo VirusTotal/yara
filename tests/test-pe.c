@@ -225,20 +225,20 @@ int main(int argc, char** argv)
    *            [0]
    *                    offset = 1072
    *                    name = "DllGetClassObject"
-   *                    forward_name = UNDEFINED
+   *                    forward_name = YR_UNDEFINED
    *                    ordinal = 1
    *            [1]
-   *                    offset = UNDEFINED
+   *                    offset = YR_UNDEFINED
    *                    name = "GetObjectContext"
    *                    forward_name = "COMSVCS.GetObjectContext"
    *                    ordinal = 2
    *            [2]
-   *                    offset = UNDEFINED
+   *                    offset = YR_UNDEFINED
    *                    name = "MTSCreateActivity"
    *                    forward_name = "COMSVCS.MTSCreateActivity"
    *                    ordinal = 3
    *            [3]
-   *                    offset = UNDEFINED
+   *                    offset = YR_UNDEFINED
    *                    name = "SafeRef"
    *                    forward_name = "COMSVCS.SafeRef"
    *                    ordinal = 4

@@ -265,12 +265,12 @@ static int64_t dex_get_integer(
      const char* pattern,
      int64_t index)
 {
-  if (index == UNDEFINED)
-    return UNDEFINED;
+  if (index == YR_UNDEFINED)
+    return YR_UNDEFINED;
 
   // Impose a reasonably large limit to table indexes.
   if (index > 0x80000)
-    return UNDEFINED;
+    return YR_UNDEFINED;
 
   return get_integer(object, pattern, (int) index);
 }
@@ -281,7 +281,7 @@ static SIZED_STRING* dex_get_string(
      const char* pattern,
      int64_t index)
 {
-  if (index == UNDEFINED)
+  if (index == YR_UNDEFINED)
     return NULL;
 
   // Impose a reasonably large limit to table indexes.
@@ -442,7 +442,7 @@ uint32_t load_encoded_field(
   int64_t name_idx = dex_get_integer(
       dex->object, "field_ids[%i].name_idx", *previous_field_idx);
 
-  if (name_idx == UNDEFINED)
+  if (name_idx == YR_UNDEFINED)
     return 0;
 
   SIZED_STRING* field_name = dex_get_string(
@@ -582,7 +582,7 @@ uint32_t load_encoded_method(
   int64_t name_idx = dex_get_integer(
       dex->object, "method_ids[%i].name_idx", *previous_method_idx);
 
-  if (name_idx == UNDEFINED)
+  if (name_idx == YR_UNDEFINED)
     return 0;
 
   #ifdef DEBUG_DEX_MODULE

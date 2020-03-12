@@ -57,7 +57,7 @@ define_function(string_entropy)
   uint32_t* data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
 
   if (data == NULL)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   for (i = 0; i < s->length; i++)
   {
@@ -97,12 +97,12 @@ define_function(data_entropy)
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   if (offset < 0 || length < 0 || offset < block->base)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
 
   if (data == NULL)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   foreach_memory_block(iterator, block)
   {
@@ -118,7 +118,7 @@ define_function(data_entropy)
       if (block_data == NULL)
       {
         yr_free(data);
-        return_float(UNDEFINED);
+        return_float(YR_UNDEFINED);
       }
 
       total_len += data_len;
@@ -142,7 +142,7 @@ define_function(data_entropy)
       // undefined.
 
       yr_free(data);
-      return_float(UNDEFINED);
+      return_float(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -152,7 +152,7 @@ define_function(data_entropy)
   if (!past_first_block)
   {
     yr_free(data);
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
   }
 
   for (i = 0; i < 256; i++)
@@ -207,7 +207,7 @@ define_function(data_deviation)
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   if (offset < 0 || length < 0 || offset < block->base)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   foreach_memory_block(iterator, block)
   {
@@ -220,7 +220,7 @@ define_function(data_deviation)
       block_data = block->fetch_data(block);
 
       if (block_data == NULL)
-        return_float(UNDEFINED);
+        return_float(YR_UNDEFINED);
 
       total_len += data_len;
       offset += data_len;
@@ -238,7 +238,7 @@ define_function(data_deviation)
       // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
-      return_float(UNDEFINED);
+      return_float(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -246,7 +246,7 @@ define_function(data_deviation)
   }
 
   if (!past_first_block)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   return_float(sum / total_len);
 }
@@ -282,7 +282,7 @@ define_function(data_mean)
   size_t i;
 
   if (offset < 0 || length < 0 || offset < block->base)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   foreach_memory_block(iterator, block)
   {
@@ -296,7 +296,7 @@ define_function(data_mean)
       const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
-        return_float(UNDEFINED);
+        return_float(YR_UNDEFINED);
 
       total_len += data_len;
       offset += data_len;
@@ -314,7 +314,7 @@ define_function(data_mean)
       // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
-      return_float(UNDEFINED);
+      return_float(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -322,7 +322,7 @@ define_function(data_mean)
   }
 
   if (!past_first_block)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   return_float(sum / total_len);
 }
@@ -350,7 +350,7 @@ define_function(data_serial_correlation)
   double scc = 0;
 
   if (offset < 0 || length < 0 || offset < block->base)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   foreach_memory_block(iterator, block)
   {
@@ -364,7 +364,7 @@ define_function(data_serial_correlation)
       const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
-        return_float(UNDEFINED);
+        return_float(YR_UNDEFINED);
 
       total_len += data_len;
       offset += data_len;
@@ -388,7 +388,7 @@ define_function(data_serial_correlation)
       // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
-      return_float(UNDEFINED);
+      return_float(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -396,7 +396,7 @@ define_function(data_serial_correlation)
   }
 
   if (!past_first_block)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   scct1 += scclast * sccun;
   scct2 *= scct2;
@@ -467,7 +467,7 @@ define_function(data_monte_carlo_pi)
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   if (offset < 0 || length < 0 || offset < block->base)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   foreach_memory_block(iterator, block)
   {
@@ -483,7 +483,7 @@ define_function(data_monte_carlo_pi)
       const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
-        return_float(UNDEFINED);
+        return_float(YR_UNDEFINED);
 
       offset += data_len;
       length -= data_len;
@@ -520,7 +520,7 @@ define_function(data_monte_carlo_pi)
       // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
-      return_float(UNDEFINED);
+      return_float(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -528,7 +528,7 @@ define_function(data_monte_carlo_pi)
   }
 
   if (!past_first_block || mcount == 0)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   mpi = 4.0 * ((double) inmont / mcount);
 
@@ -575,7 +575,7 @@ define_function(string_monte_carlo_pi)
   }
 
   if (mcount == 0)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   mpi = 4.0 * ((double) inmont / mcount);
   return_float(fabs((mpi - PI) / PI));

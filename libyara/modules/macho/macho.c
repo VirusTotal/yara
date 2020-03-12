@@ -481,7 +481,7 @@ void macho_parse_fat_file_##bits(                                              \
         continue;                                                              \
                                                                                \
     /* Force 'file' array entry creation. */                                   \
-    set_integer(UNDEFINED, object, "file[%i].magic", i);                       \
+    set_integer(YR_UNDEFINED, object, "file[%i].magic", i);                       \
                                                                                \
     /* Get specific Mach-O file data. */                                       \
     macho_parse_file(data + offset, file_size,                                 \
@@ -720,7 +720,7 @@ define_function(file_index_type)
 
   uint64_t nfat = get_integer(module, "nfat_arch");
   if (is_undefined(module, "nfat_arch"))
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   for (int i = 0; i < nfat; i++)
   {
@@ -730,7 +730,7 @@ define_function(file_index_type)
       return_integer(i);
     }
   }
-  return_integer(UNDEFINED);
+  return_integer(YR_UNDEFINED);
 }
 
 
@@ -744,7 +744,7 @@ define_function(file_index_subtype)
 
   uint64_t nfat = get_integer(module, "nfat_arch");
   if (is_undefined(module, "nfat_arch"))
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   for (int i = 0; i < nfat; i++)
   {
@@ -756,7 +756,7 @@ define_function(file_index_subtype)
       return_integer(i);
     }
   }
-  return_integer(UNDEFINED);
+  return_integer(YR_UNDEFINED);
 }
 
 
@@ -769,7 +769,7 @@ define_function(ep_for_arch_type)
 
   uint64_t nfat = get_integer(module, "nfat_arch");
   if (is_undefined(module, "nfat_arch"))
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   for (int i = 0; i < nfat; i++)
   {
@@ -781,7 +781,7 @@ define_function(ep_for_arch_type)
       return_integer(file_offset + entry_point);
     }
   }
-  return_integer(UNDEFINED);
+  return_integer(YR_UNDEFINED);
 }
 
 
@@ -795,7 +795,7 @@ define_function(ep_for_arch_subtype)
 
   uint64_t nfat = get_integer(module, "nfat_arch");
   if (is_undefined(module, "nfat_arch"))
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
 
   for (int i = 0; i < nfat; i++)
   {
@@ -808,7 +808,7 @@ define_function(ep_for_arch_subtype)
       return_integer(file_offset + entry_point);
     }
   }
-  return_integer(UNDEFINED);
+  return_integer(YR_UNDEFINED);
 }
 
 
