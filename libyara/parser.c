@@ -737,9 +737,8 @@ int yr_parser_reduce_string_declaration(
   {
     yywarning(
         yyscanner,
-        "%s in rule %s is slowing down scanning",
-        new_string->identifier,
-        compiler->current_rule->identifier);
+        "%s is slowing down scanning",
+        new_string->identifier);
   }
 
 _exit:
@@ -877,14 +876,11 @@ int yr_parser_reduce_rule_declaration_phase_2(
   // Show warning if the rule is generating too many atoms. The warning is
   // shown if the number of atoms is greater than 20 times the maximum number
   // of strings allowed for a rule, as 20 is minimum number of atoms generated
-  // for a string using *nocase*, *ascii* and *wide* modifiers simultaneosly.
+  // for a string using *nocase*, *ascii* and *wide* modifiers simultaneously.
 
   if (rule->num_atoms > YR_ATOMS_PER_RULE_WARNING_THRESHOLD)
   {
-    yywarning(
-        yyscanner,
-        "rule %s is slowing down scanning",
-        rule->identifier);
+    yywarning(yyscanner, "rule is slowing down scanning");
   }
 
   // Check for unreferenced (unused) strings.
@@ -938,6 +934,11 @@ int yr_parser_reduce_rule_declaration_phase_2(
   *(void**)(fixup->address) = (void*) nop_inst_addr;
   compiler->fixup_stack_head = fixup->next;
   yr_free(fixup);
+
+  // We are leaving the scope of the current rule, let's assign NULL to
+  // current_rule. It will remain NULL until the next call to
+  // yr_parser_reduce_rule_declaration_phase_1.
+  compiler->current_rule = NULL;
 
   return result;
 }
