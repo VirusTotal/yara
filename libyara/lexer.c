@@ -1,6 +1,6 @@
-#line 1 "lexer.c"
+#line 2 "lexer.c"
 
-#line 3 "lexer.c"
+#line 4 "lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -1137,11 +1137,11 @@ static bool is_absolute_path(
   #endif
 }
 
-#line 1140 "lexer.c"
+#line 1141 "lexer.c"
 #define YY_NO_UNISTD_H 1
 #define YY_NO_INPUT 1
 
-#line 1144 "lexer.c"
+#line 1145 "lexer.c"
 
 #define INITIAL 0
 #define str 1
@@ -1420,7 +1420,7 @@ YY_DECL
 #line 163 "lexer.l"
 
 
-#line 1423 "lexer.c"
+#line 1424 "lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2304,7 +2304,7 @@ YY_RULE_SETUP
 #line 738 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 2307 "lexer.c"
+#line 2308 "lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3484,6 +3484,7 @@ void yywarning(
       YARA_ERROR_LEVEL_WARNING,
       file_name,
       compiler->current_line ? compiler->current_line : yyget_lineno(yyscanner),
+      compiler->current_rule,
       message,
       compiler->user_data);
 
@@ -3545,6 +3546,7 @@ void yyerror(
           YARA_ERROR_LEVEL_ERROR,
           file_name,
           compiler->last_error_line,
+          compiler->current_rule,
           error_message,
           compiler->user_data);
     }
@@ -3557,6 +3559,7 @@ void yyerror(
       YARA_ERROR_LEVEL_ERROR,
       file_name,
       compiler->last_error_line,
+      compiler->current_rule,
       message,
       compiler->user_data);
   }

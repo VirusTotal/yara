@@ -765,6 +765,7 @@ void yywarning(
       YARA_ERROR_LEVEL_WARNING,
       file_name,
       compiler->current_line ? compiler->current_line : yyget_lineno(yyscanner),
+      compiler->current_rule,
       message,
       compiler->user_data);
 
@@ -826,6 +827,7 @@ void yyerror(
           YARA_ERROR_LEVEL_ERROR,
           file_name,
           compiler->last_error_line,
+          compiler->current_rule,
           error_message,
           compiler->user_data);
     }
@@ -838,6 +840,7 @@ void yyerror(
       YARA_ERROR_LEVEL_ERROR,
       file_name,
       compiler->last_error_line,
+      compiler->current_rule,
       message,
       compiler->user_data);
   }
