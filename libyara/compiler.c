@@ -177,7 +177,8 @@ YR_API int yr_compiler_create(
   if (new_compiler == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  new_compiler->current_rule_idx = 0;
+  new_compiler->current_rule_idx = UINT32_MAX;
+  new_compiler->next_rule_idx = 0;
   new_compiler->current_string_idx = 0;
   new_compiler->current_namespace_idx = 0;
   new_compiler->num_namespaces = 0;
@@ -681,7 +682,7 @@ static int _yr_compiler_compile_rules(
       compiler->arena, &ref);
 
   summary->num_namespaces = compiler->num_namespaces;
-  summary->num_rules = compiler->current_rule_idx;
+  summary->num_rules = compiler->next_rule_idx;
   summary->num_strings = compiler->current_string_idx;
 
   return yr_rules_from_arena(compiler->arena, &compiler->rules);

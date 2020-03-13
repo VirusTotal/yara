@@ -108,6 +108,7 @@ typedef void (*YR_COMPILER_CALLBACK_FUNC)(
     int error_level,
     const char* file_name,
     int line_number,
+    const YR_RULE* rule,
     const char* message,
     void* user_data);
 
@@ -206,8 +207,12 @@ typedef struct _YR_COMPILER
   YR_ARENA* arena;
 
   // Index of the rule being compiled in the array of YR_RULE structures
-  // stored in YR_RULES_TABLE.
+  // stored in YR_RULES_TABLE. If this is MAX_UINT32 the compiler is not
+  // parsing a rule.
   uint32_t current_rule_idx;
+
+  //
+  uint32_t next_rule_idx;
 
   // Index of the string being compiled in the array of YR_STRING structures
   // stored in YR_STRINGS_TABLE.
