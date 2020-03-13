@@ -295,9 +295,7 @@ static int _yr_ac_create_failure_links(
         match = match->next;
 
       if (match->backtrack > 0)
-      {
         match->next = yr_arena_ref_to_ptr(arena, &root_state->matches_ref);
-      }
     }
     else
     {
@@ -331,7 +329,10 @@ static int _yr_ac_create_failure_links(
           {
             match = yr_arena_ref_to_ptr(arena, &transition_state->matches_ref);
 
-            while (match != NULL && match->next != NULL)
+            assert(match != NULL);
+
+            // Find the last match in the list of matches.
+            while (match->next != NULL)
               match = match->next;
 
             match->next = yr_arena_ref_to_ptr(arena, &temp_state->matches_ref);
