@@ -57,11 +57,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define yr_rule_strings_foreach(rule, string) \
-    for (string = rule->strings; !STRING_IS_NULL(string); string++)
+    for (string = rule->strings; \
+         string != NULL; \
+         string = STRING_IS_LAST_IN_RULE(string) ? NULL : string + 1)
 
 
-#define yr_string_matches_foreach(string, match) \
-    for (match = STRING_MATCHES(string).head; match != NULL; match = match->next)
+#define yr_string_matches_foreach(context, string, match) \
+    for (match = context->matches[string->idx].head; \
+         match != NULL; \
+         match = match->next) \
+      /* private matches are skipped */ \
+      if (match->private) { continue; } \
+      else /* user code block goes here */
 
 
 #define yr_rules_foreach(rules, rule) \
@@ -154,14 +161,6 @@ YR_API int yr_rules_define_string_variable(
     const char* value);
 
 
-YR_API void yr_rules_reset_profiling_info(
-    YR_RULES* rules);
-
-
-YR_API void yr_rules_print_profiling_info(
-    YR_RULES* rules);
-
-
 YR_API int yr_rules_get_stats(
     YR_RULES* rules,
     YR_RULES_STATS *stats);
@@ -173,5 +172,10 @@ YR_API void yr_rule_disable(
 
 YR_API void yr_rule_enable(
     YR_RULE* rule);
+
+
+int yr_rules_from_arena(
+    YR_ARENA* arena,
+    YR_RULES** rules);
 
 #endif

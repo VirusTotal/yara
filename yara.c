@@ -629,11 +629,11 @@ static void print_rules_stats(
 
   printf(
       "number of rules                    : %d\n",
-      stats.rules);
+      stats.num_rules);
 
   printf(
       "number of strings                  : %d\n",
-      stats.strings);
+      stats.num_strings);
 
   printf(
       "number of AC matches               : %d\n",
@@ -650,12 +650,13 @@ static void print_rules_stats(
 
   printf("match list length percentiles\n");
 
-  for (int i = 0; i <= 100; i++)
+  for (int i = 100; i >= 0; i--)
     printf(" %3d: %d\n", i, stats.ac_match_list_length_pctls[i]);
 }
 
 
 static int handle_message(
+    YR_SCAN_CONTEXT* context,
     int message,
     YR_RULE* rule,
     void* data)
@@ -773,7 +774,7 @@ static int handle_message(
       {
         YR_MATCH* match;
 
-        yr_string_matches_foreach(string, match)
+        yr_string_matches_foreach(context, string, match)
         {
           if (show_string_length)
             printf("0x%" PRIx64 ":%d:%s",
@@ -819,6 +820,7 @@ static int handle_message(
 
 
 static int callback(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data)
@@ -831,7 +833,8 @@ static int callback(
   {
     case CALLBACK_MSG_RULE_MATCHING:
     case CALLBACK_MSG_RULE_NOT_MATCHING:
-      return handle_message(message, (YR_RULE*) message_data, user_data);
+      return handle_message(
+          context, message, (YR_RULE*) message_data, user_data);
 
     case CALLBACK_MSG_IMPORT_MODULE:
 
@@ -1303,16 +1306,15 @@ int main(
 
     if (print_count_only)
       printf("%d\n", user_data.current_count);
+
+    #ifdef PROFILING_ENABLED
+    yr_scanner_print_profiling_info(scanner);
+    #endif
   }
 
   result = EXIT_SUCCESS;
 
 _exit:
-
-  #ifdef PROFILING_ENABLED
-  if (rules != NULL)
-    yr_rules_print_profiling_info(rules);
-  #endif
 
   unload_modules_data();
 

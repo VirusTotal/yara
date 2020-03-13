@@ -53,6 +53,17 @@ cc_test(
 )
 
 cc_test(
+    name = "test_arena",
+    srcs = ["test-arena.c"],
+    copts = COPTS,
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+    linkstatic=True,
+)
+
+cc_test(
     name = "test_atoms",
     srcs = ["test-atoms.c"],
     copts = COPTS,

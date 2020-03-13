@@ -192,8 +192,8 @@ int yr_re_parse_hex(
 int yr_re_compile(
     const char* re_string,
     int flags,
-    YR_ARENA* code_arena,
-    RE** re,
+    YR_ARENA* arena,
+    YR_ARENA_REF* ref,
     RE_ERROR* error);
 
 
