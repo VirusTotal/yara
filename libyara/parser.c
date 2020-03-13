@@ -150,7 +150,7 @@ int yr_parser_emit_with_arg_reloc(
     YR_ARENA_REF* instruction_ref,
     YR_ARENA_REF* argument_ref)
 {
-  YR_ARENA_REF ref;
+  YR_ARENA_REF ref = YR_ARENA_NULL_REF;
 
   DECLARE_REFERENCE(void*, ptr) arg;
 
