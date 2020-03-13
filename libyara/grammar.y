@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <stddef.h>
 
+#include <yara/arena.h>
 #include <yara/integers.h>
 #include <yara/utils.h>
 #include <yara/strutils.h>
@@ -113,18 +114,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     check_type_with_cleanup(expression, expected_type, op, )
 
 
-
 #define loop_vars_cleanup(loop_index) \
     {  \
       YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[loop_index]; \
-      int i; \
-      for (i = 0; i < loop_ctx->vars_count; i++) \
+      for (int i = 0; i < loop_ctx->vars_count; i++) \
       { \
-        yr_free((void*) loop_ctx->vars[i].identifier); \
-        loop_ctx->vars[i].identifier = NULL; \
+        yr_free((void*) loop_ctx->vars[i].identifier.ptr); \
+        loop_ctx->vars[i].identifier.ptr = NULL; \
+        loop_ctx->vars[i].identifier.ref = YR_ARENA_NULL_REF; \
       } \
       loop_ctx->vars_count = 0; \
     } \
+
+
+// Given a YR_EXPRESSION returns its identifier. It returns identifier.ptr if not NULL and relies on identifier.ref if
+// otherwise.
+#define expression_identifier(expr) \
+    ((expr).identifier.ptr != NULL ? \
+     (expr).identifier.ptr : \
+     (const char*) yr_arena_ref_to_ptr(compiler->arena, &(expr).identifier.ref))
+
 
 #define DEFAULT_BASE64_ALPHABET "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
@@ -230,8 +239,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <meta> meta_declaration
 %type <meta> meta_declarations
 
-%type <c_string> tags
-%type <c_string> tag_list
+%type <tag> tags
+%type <tag> tag_list
 
 %type <modifier> string_modifier
 %type <modifier> string_modifiers
@@ -293,10 +302,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   char*           c_string;
   int64_t         integer;
   double          double_;
-  YR_STRING*      string;
-  YR_META*        meta;
-  YR_RULE*        rule;
   YR_MODIFIER     modifier;
+
+  YR_ARENA_REF tag;
+  YR_ARENA_REF rule;
+  YR_ARENA_REF meta;
+  YR_ARENA_REF string;
 }
 
 
@@ -336,16 +347,22 @@ rule
       }
       tags '{' meta strings
       {
-        YR_RULE* rule = $<rule>4; // rule created in phase 1
+        YR_RULE* rule = (YR_RULE*) yr_arena_ref_to_ptr(
+            compiler->arena, &$<rule>4);
 
-        rule->tags = $5;
-        rule->metas = $7;
-        rule->strings = $8;
+        rule->tags = (char*) yr_arena_ref_to_ptr(
+            compiler->arena, &$5);
+
+        rule->metas = (YR_META*) yr_arena_ref_to_ptr(
+            compiler->arena, &$7);
+
+        rule->strings = (YR_STRING*) yr_arena_ref_to_ptr(
+            compiler->arena, &$8);
       }
       condition '}'
       {
         int result = yr_parser_reduce_rule_declaration_phase_2(
-            yyscanner, $<rule>4); // rule created in phase 1
+            yyscanner, &$<rule>4); // rule created in phase 1
 
         yr_free($3);
 
@@ -357,12 +374,10 @@ rule
 meta
     : /* empty */
       {
-        $$ = NULL;
+        $$ = YR_ARENA_NULL_REF;
       }
     | _META_ ':' meta_declarations
       {
-        int result;
-
         // Each rule have a list of meta-data info, consisting in a
         // sequence of YR_META structures. The last YR_META structure does
         // not represent a real meta-data, it's just a end-of-list marker
@@ -374,15 +389,14 @@ meta
         memset(&null_meta, 0xFF, sizeof(YR_META));
         null_meta.type = META_TYPE_NULL;
 
-        result = yr_arena_write_data(
-            compiler->metas_arena,
+        fail_if_error(yr_arena_write_data(
+            compiler->arena,
+            YR_METAS_TABLE,
             &null_meta,
             sizeof(YR_META),
-            NULL);
+            NULL));
 
         $$ = $3;
-
-        fail_if_error(result);
       }
     ;
 
@@ -390,26 +404,16 @@ meta
 strings
     : /* empty */
       {
-        $$ = NULL;
+        $$ = YR_ARENA_NULL_REF;
       }
     | _STRINGS_ ':' string_declarations
       {
-        // Each rule have a list of strings, consisting in a sequence
-        // of YR_STRING structures. The last YR_STRING structure does not
-        // represent a real string, it's just a end-of-list marker
-        // identified by a specific flag (STRING_FLAGS_NULL). Here we
-        // write the end-of-list marker.
+        YR_STRING* string = (YR_STRING*) yr_arena_get_ptr(
+            compiler->arena,
+            YR_STRINGS_TABLE,
+            (compiler->current_string_idx - 1) * sizeof(YR_STRING));
 
-        YR_STRING null_string;
-
-        memset(&null_string, 0xFF, sizeof(YR_STRING));
-        null_string.g_flags = STRING_GFLAGS_NULL;
-
-        fail_if_error(yr_arena_write_data(
-            compiler->strings_arena,
-            &null_string,
-            sizeof(YR_STRING),
-            NULL));
+        string->flags |= STRING_FLAGS_LAST_IN_RULE;
 
         $$ = $3;
       }
@@ -428,15 +432,15 @@ rule_modifiers
 
 
 rule_modifier
-    : _PRIVATE_      { $$ = RULE_GFLAGS_PRIVATE; }
-    | _GLOBAL_       { $$ = RULE_GFLAGS_GLOBAL; }
+    : _PRIVATE_      { $$ = RULE_FLAGS_PRIVATE; }
+    | _GLOBAL_       { $$ = RULE_FLAGS_GLOBAL; }
     ;
 
 
 tags
     : /* empty */
       {
-        $$ = NULL;
+        $$ = YR_ARENA_NULL_REF;
       }
     | ':' tag_list
       {
@@ -445,10 +449,8 @@ tags
         // additional null character. Here we write the ending null
         //character. Example: tag1\0tag2\0tag3\0\0
 
-        int result = yr_arena_write_string(
-            yyget_extra(yyscanner)->sz_arena, "", NULL);
-
-        fail_if_error(result);
+        fail_if_error(yr_arena_write_string(
+            yyget_extra(yyscanner)->arena, YR_SZ_POOL, "", NULL));
 
         $$ = $2;
       }
@@ -459,7 +461,7 @@ tag_list
     : _IDENTIFIER_
       {
         int result = yr_arena_write_string(
-            yyget_extra(yyscanner)->sz_arena, $1, &$$);
+            yyget_extra(yyscanner)->arena, YR_SZ_POOL, $1, &$<tag>$);
 
         yr_free($1);
 
@@ -467,35 +469,38 @@ tag_list
       }
     | tag_list _IDENTIFIER_
       {
-        int result = ERROR_SUCCESS;
+        YR_ARENA_REF ref;
 
-        char* tag_name = $1;
-        size_t tag_length = tag_name != NULL ? strlen(tag_name) : 0;
-
-        while (tag_length > 0)
-        {
-          if (strcmp(tag_name, $2) == 0)
-          {
-            yr_compiler_set_error_extra_info(compiler, tag_name);
-            result = ERROR_DUPLICATED_TAG_IDENTIFIER;
-            break;
-          }
-
-          tag_name = (char*) yr_arena_next_address(
-              yyget_extra(yyscanner)->sz_arena,
-              tag_name,
-              tag_length + 1);
-
-          tag_length = tag_name != NULL ? strlen(tag_name) : 0;
-        }
-
-        if (result == ERROR_SUCCESS)
-          result = yr_arena_write_string(
-              yyget_extra(yyscanner)->sz_arena, $2, NULL);
+        // Write the new tag identifier.
+        int result = yr_arena_write_string(
+            yyget_extra(yyscanner)->arena, YR_SZ_POOL, $2, &ref);
 
         yr_free($2);
 
         fail_if_error(result);
+
+        // Get the address for the tag identifier just written.
+        char* new_tag = (char*) yr_arena_ref_to_ptr(
+            compiler->arena, &ref);
+
+        // Take the address of first tag's identifier in the list.
+        char* tag = (char*) yr_arena_ref_to_ptr(
+            compiler->arena, &$<tag>$);
+
+	// Search for duplicated tags. Tags are written one after
+	// the other, with zeroes in between (i.e: tag1/0tag2/0tag3)
+	// that's why can use tag < new_tag as the condition for the
+	// loop.
+        while (tag < new_tag)
+        {
+          if (strcmp(tag, new_tag) == 0)
+          {
+            yr_compiler_set_error_extra_info(compiler, tag);
+            fail_with_error(ERROR_DUPLICATED_TAG_IDENTIFIER);
+          }
+
+          tag += strlen(tag) + 1;
+        }
 
         $$ = $1;
       }
@@ -520,7 +525,7 @@ meta_declaration
             $1,
             sized_string->c_string,
             0,
-            &$$);
+            &$<meta>$);
 
         yr_free($1);
         yr_free($3);
@@ -535,7 +540,7 @@ meta_declaration
             $1,
             NULL,
             $3,
-            &$$);
+            &$<meta>$);
 
         yr_free($1);
 
@@ -549,7 +554,7 @@ meta_declaration
             $1,
             NULL,
             -$4,
-            &$$);
+            &$<meta>$);
 
         yr_free($1);
 
@@ -563,7 +568,7 @@ meta_declaration
             $1,
             NULL,
             true,
-            &$$);
+            &$<meta>$);
 
         yr_free($1);
 
@@ -577,7 +582,7 @@ meta_declaration
             $1,
             NULL,
             false,
-            &$$);
+            &$<meta>$);
 
         yr_free($1);
 
@@ -600,11 +605,10 @@ string_declaration
       _TEXT_STRING_ string_modifiers
       {
         int result = yr_parser_reduce_string_declaration(
-            yyscanner, $5, $1, $4, &$$);
+            yyscanner, $5, $1, $4, &$<string>$);
 
         yr_free($1);
         yr_free($4);
-
         yr_free($5.alphabet);
 
         fail_if_error(result);
@@ -618,10 +622,10 @@ string_declaration
       {
         int result;
 
-        $5.flags |= STRING_GFLAGS_REGEXP;
+        $5.flags |= STRING_FLAGS_REGEXP;
 
         result = yr_parser_reduce_string_declaration(
-            yyscanner, $5, $1, $4, &$$);
+            yyscanner, $5, $1, $4, &$<string>$);
 
         yr_free($1);
         yr_free($4);
@@ -638,10 +642,10 @@ string_declaration
       {
         int result;
 
-        $5.flags |= STRING_GFLAGS_HEXADECIMAL;
+        $5.flags |= STRING_FLAGS_HEXADECIMAL;
 
         result = yr_parser_reduce_string_declaration(
-            yyscanner, $5, $1, $4, &$$);
+            yyscanner, $5, $1, $4, &$<string>$);
 
         yr_free($1);
         yr_free($4);
@@ -669,7 +673,7 @@ string_modifiers
         // xor modifier. If we don't check for this then we can end up with
         // "xor wide" resulting in whatever is on the stack for "wide"
         // overwriting the values for xor.
-        if ($2.flags & STRING_GFLAGS_XOR)
+        if ($2.flags & STRING_FLAGS_XOR)
         {
           $$.xor_min = $2.xor_min;
           $$.xor_max = $2.xor_max;
@@ -679,8 +683,8 @@ string_modifiers
         // modifier. If we don't check for this then we can end up with
         // "base64 ascii" resulting in whatever is on the stack for "ascii"
         // overwriting the values for base64.
-        if (($2.flags & STRING_GFLAGS_BASE64) ||
-            ($2.flags & STRING_GFLAGS_BASE64_WIDE))
+        if (($2.flags & STRING_FLAGS_BASE64) ||
+            ($2.flags & STRING_FLAGS_BASE64_WIDE))
         {
           if ($$.alphabet != NULL)
           {
@@ -721,14 +725,14 @@ string_modifiers
 
 
 string_modifier
-    : _WIDE_        { $$.flags = STRING_GFLAGS_WIDE; }
-    | _ASCII_       { $$.flags = STRING_GFLAGS_ASCII; }
-    | _NOCASE_      { $$.flags = STRING_GFLAGS_NO_CASE; }
-    | _FULLWORD_    { $$.flags = STRING_GFLAGS_FULL_WORD; }
-    | _PRIVATE_     { $$.flags = STRING_GFLAGS_PRIVATE; }
+    : _WIDE_        { $$.flags = STRING_FLAGS_WIDE; }
+    | _ASCII_       { $$.flags = STRING_FLAGS_ASCII; }
+    | _NOCASE_      { $$.flags = STRING_FLAGS_NO_CASE; }
+    | _FULLWORD_    { $$.flags = STRING_FLAGS_FULL_WORD; }
+    | _PRIVATE_     { $$.flags = STRING_FLAGS_PRIVATE; }
     | _XOR_
       {
-        $$.flags = STRING_GFLAGS_XOR;
+        $$.flags = STRING_FLAGS_XOR;
         $$.xor_min = 0;
         $$.xor_max = 255;
       }
@@ -744,7 +748,7 @@ string_modifier
 
         fail_if_error(result);
 
-        $$.flags = STRING_GFLAGS_XOR;
+        $$.flags = STRING_FLAGS_XOR;
         $$.xor_min = $3;
         $$.xor_max = $3;
       }
@@ -780,13 +784,13 @@ string_modifier
 
         fail_if_error(result);
 
-        $$.flags = STRING_GFLAGS_XOR;
+        $$.flags = STRING_FLAGS_XOR;
         $$.xor_min = $3;
         $$.xor_max = $5;
       }
     | _BASE64_
       {
-        $$.flags = STRING_GFLAGS_BASE64;
+        $$.flags = STRING_FLAGS_BASE64;
         $$.alphabet = sized_string_new(DEFAULT_BASE64_ALPHABET);
       }
     | _BASE64_ '(' _TEXT_STRING_ ')'
@@ -803,12 +807,12 @@ string_modifier
 
         fail_if_error(result);
 
-        $$.flags = STRING_GFLAGS_BASE64;
+        $$.flags = STRING_FLAGS_BASE64;
         $$.alphabet = $3;
       }
     | _BASE64_WIDE_
       {
-        $$.flags = STRING_GFLAGS_BASE64_WIDE;
+        $$.flags = STRING_FLAGS_BASE64_WIDE;
         $$.alphabet = sized_string_new(DEFAULT_BASE64_ALPHABET);
       }
     | _BASE64_WIDE_ '(' _TEXT_STRING_ ')'
@@ -825,7 +829,7 @@ string_modifier
 
         fail_if_error(result);
 
-        $$.flags = STRING_GFLAGS_BASE64_WIDE;
+        $$.flags = STRING_FLAGS_BASE64_WIDE;
         $$.alphabet = $3;
       }
     ;
@@ -846,11 +850,11 @@ regexp_modifiers
     ;
 
 regexp_modifier
-    : _WIDE_        { $$.flags = STRING_GFLAGS_WIDE; }
-    | _ASCII_       { $$.flags = STRING_GFLAGS_ASCII; }
-    | _NOCASE_      { $$.flags = STRING_GFLAGS_NO_CASE; }
-    | _FULLWORD_    { $$.flags = STRING_GFLAGS_FULL_WORD; }
-    | _PRIVATE_     { $$.flags = STRING_GFLAGS_PRIVATE; }
+    : _WIDE_        { $$.flags = STRING_FLAGS_WIDE; }
+    | _ASCII_       { $$.flags = STRING_FLAGS_ASCII; }
+    | _NOCASE_      { $$.flags = STRING_FLAGS_NO_CASE; }
+    | _FULLWORD_    { $$.flags = STRING_FLAGS_FULL_WORD; }
+    | _PRIVATE_     { $$.flags = STRING_FLAGS_PRIVATE; }
     ;
 
 hex_modifiers
@@ -869,7 +873,7 @@ hex_modifiers
     ;
 
 hex_modifier
-    : _PRIVATE_     { $$.flags = STRING_GFLAGS_PRIVATE; }
+    : _PRIVATE_     { $$.flags = STRING_FLAGS_PRIVATE; }
     ;
 
 identifier
@@ -902,53 +906,59 @@ identifier
           YR_OBJECT* object = (YR_OBJECT*) yr_hash_table_lookup(
               compiler->objects_table, $1, NULL);
 
+          YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
+              compiler->arena,
+              YR_NAMESPACES_TABLE,
+              compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
+
           if (object == NULL)
           {
             // If not found, search within the current namespace.
-            char* ns = compiler->current_namespace->name;
-
             object = (YR_OBJECT*) yr_hash_table_lookup(
-                compiler->objects_table, $1, ns);
+                compiler->objects_table, $1, ns->name);
           }
 
           if (object != NULL)
           {
-            char* id;
+            YR_ARENA_REF ref;
 
             result = yr_arena_write_string(
-                compiler->sz_arena, $1, &id);
+                compiler->arena, YR_SZ_POOL, $1, &ref);
 
             if (result == ERROR_SUCCESS)
               result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_OBJ_LOAD,
-                  id,
+                  yr_arena_ref_to_ptr(compiler->arena, &ref),
                   NULL,
                   NULL);
 
             $$.type = EXPRESSION_TYPE_OBJECT;
             $$.value.object = object;
-            $$.identifier = object->identifier;
+            $$.identifier.ptr = NULL;
+            $$.identifier.ref = ref;
           }
           else
           {
-            YR_RULE* rule = (YR_RULE*) yr_hash_table_lookup(
-                compiler->rules_table,
-                $1,
-                compiler->current_namespace->name);
+            uint32_t rule_idx = yr_hash_table_lookup_uint32(
+                compiler->rules_table, $1, ns->name);
 
-            if (rule != NULL)
+            if (rule_idx != UINT32_MAX)
             {
-              result = yr_parser_emit_with_arg_reloc(
+              result = yr_parser_emit_with_arg(
                   yyscanner,
                   OP_PUSH_RULE,
-                  rule,
+                  rule_idx,
                   NULL,
                   NULL);
 
+              YR_RULE* rule = _yr_compiler_get_rule_by_idx(compiler, rule_idx);
+
+              yr_arena_ptr_to_ref(compiler->arena, rule->identifier, &$$.identifier.ref);
+
               $$.type = EXPRESSION_TYPE_BOOLEAN;
-              $$.value.integer = UNDEFINED;
-              $$.identifier = rule->identifier;
+              $$.value.integer = YR_UNDEFINED;
+              $$.identifier.ptr = NULL;
             }
             else
             {
@@ -974,22 +984,23 @@ identifier
 
           if (field != NULL)
           {
-            char* ident;
+            YR_ARENA_REF ref;
 
             result = yr_arena_write_string(
-                compiler->sz_arena, $3, &ident);
+                compiler->arena, YR_SZ_POOL, $3, &ref);
 
             if (result == ERROR_SUCCESS)
               result = yr_parser_emit_with_arg_reloc(
                   yyscanner,
                   OP_OBJ_FIELD,
-                  ident,
+                  yr_arena_ref_to_ptr(compiler->arena, &ref),
                   NULL,
                   NULL);
 
             $$.type = EXPRESSION_TYPE_OBJECT;
             $$.value.object = field;
-            $$.identifier = field->identifier;
+            $$.identifier.ref = ref;
+            $$.identifier.ptr = NULL;
           }
           else
           {
@@ -1000,7 +1011,7 @@ identifier
         else
         {
           yr_compiler_set_error_extra_info(
-              compiler, $1.identifier);
+             compiler, expression_identifier($1));
 
           result = ERROR_NOT_A_STRUCTURE;
         }
@@ -1034,7 +1045,8 @@ identifier
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = array->prototype_item;
-          $$.identifier = array->identifier;
+          $$.identifier.ptr = array->identifier;
+          $$.identifier.ref = YR_ARENA_NULL_REF;
         }
         else if ($1.type == EXPRESSION_TYPE_OBJECT &&
                  $1.value.object->type == OBJECT_TYPE_DICTIONARY)
@@ -1055,12 +1067,13 @@ identifier
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = dict->prototype_item;
-          $$.identifier = dict->identifier;
+          $$.identifier.ptr = dict->identifier;
+          $$.identifier.ref = YR_ARENA_NULL_REF;
         }
         else
         {
           yr_compiler_set_error_extra_info(
-              compiler, $1.identifier);
+              compiler, expression_identifier($1));
 
           result = ERROR_NOT_INDEXABLE;
         }
@@ -1070,9 +1083,9 @@ identifier
 
     | identifier '(' arguments ')'
       {
+        YR_ARENA_REF ref;
         int result = ERROR_SUCCESS;
         YR_OBJECT_FUNCTION* function;
-        char* args_fmt;
 
         if ($1.type == EXPRESSION_TYPE_OBJECT &&
             $1.value.object->type == OBJECT_TYPE_FUNCTION)
@@ -1082,13 +1095,13 @@ identifier
 
           if (result == ERROR_SUCCESS)
             result = yr_arena_write_string(
-                compiler->sz_arena, $3, &args_fmt);
+                compiler->arena, YR_SZ_POOL, $3, &ref);
 
           if (result == ERROR_SUCCESS)
             result = yr_parser_emit_with_arg_reloc(
                 yyscanner,
                 OP_CALL,
-                args_fmt,
+                yr_arena_ref_to_ptr(compiler->arena, &ref),
                 NULL,
                 NULL);
 
@@ -1096,12 +1109,13 @@ identifier
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = function->return_obj;
-          $$.identifier = function->identifier;
+          $$.identifier.ref = ref;
+          $$.identifier.ptr = NULL;
         }
         else
         {
           yr_compiler_set_error_extra_info(
-              compiler, $1.identifier);
+              compiler, expression_identifier($1));
 
           result = ERROR_NOT_A_FUNCTION;
         }
@@ -1184,7 +1198,7 @@ arguments_list
             case EXPRESSION_TYPE_UNKNOWN:
               result = ERROR_WRONG_TYPE;
               yr_compiler_set_error_extra_info_fmt(
-                  compiler, "unknown type for argument %lu in function call",
+                  compiler, "unknown type for argument %zu in function call",
                   // As we add one character per argument, the length of $1 is
                   // the number of arguments parsed so far, and the argument
                   // represented by <expression> is length of $1 plus one.
@@ -1210,7 +1224,7 @@ regexp
     : _REGEXP_
       {
         SIZED_STRING* sized_string = $1;
-        RE* re;
+        YR_ARENA_REF re_ref;
         RE_ERROR error;
 
         int result = ERROR_SUCCESS;
@@ -1225,8 +1239,8 @@ regexp
         result = yr_re_compile(
             sized_string->c_string,
             re_flags,
-            compiler->re_code_arena,
-            &re,
+            compiler->arena,
+            &re_ref,
             &error);
 
         yr_free($1);
@@ -1238,7 +1252,7 @@ regexp
           result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              re,
+              yr_arena_ref_to_ptr(compiler->arena, &re_ref),
               NULL,
               NULL);
 
@@ -1312,7 +1326,7 @@ expression
             yyscanner,
             $1,
             OP_FOUND,
-            UNDEFINED);
+            YR_UNDEFINED);
 
         yr_free($1);
 
@@ -1338,7 +1352,7 @@ expression
     | _STRING_IDENTIFIER_ _IN_ range
       {
         int result = yr_parser_reduce_string_identifier(
-            yyscanner, $1, OP_FOUND_IN, UNDEFINED);
+            yyscanner, $1, OP_FOUND_IN, YR_UNDEFINED);
 
         yr_free($1);
 
@@ -1403,7 +1417,7 @@ expression
       //  JL_P repeat     ; if M[1] is less M[3] repeat
       //
       // exit:
-      //  POP             ; remove the itertor object from the stack
+      //  POP             ; remove the iterator object from the stack
       //
       //  PUSH_M 0        ; pushes number of true results for <expression>
       //  PUSH_M 2        ; pushes value of <min_expression>
@@ -1459,14 +1473,14 @@ expression
         YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_index];
         YR_FIXUP* fixup;
 
-        uint8_t* loop_start_addr;
-        void* jmp_arg_addr;
+        YR_ARENA_REF loop_start_ref;
+        YR_ARENA_REF jmp_offset_ref;
 
         int var_frame = _yr_compiler_get_var_frame(compiler);
         int i;
 
         fail_if_error(yr_parser_emit(
-            yyscanner, OP_ITER_NEXT, &loop_start_addr));
+            yyscanner, OP_ITER_NEXT, &loop_start_ref));
 
         // For each variable generate an instruction that pops the value from
         // the stack and store it into one memory slot starting at var_frame +
@@ -1483,31 +1497,32 @@ expression
               NULL));
         }
 
-        fail_if_error(yr_parser_emit_with_arg_reloc(
+        fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
             OP_JTRUE_P,
-            0,
+            0,              // still don't know the jump offset, use 0 for now.
             NULL,
-            &jmp_arg_addr));
+            &jmp_offset_ref));
 
-        // Push a new fixup entry in the fixup stack so that the jump
-        // destination is set once we know it.
+        // We still don't know the jump's target, so we push a fixup entry
+        // in the stack, so that the jump's offset can be set once we know it.
 
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
           fail_with_error(ERROR_INSUFFICIENT_MEMORY);
 
-        fixup->address = jmp_arg_addr;
+        fixup->ref = jmp_offset_ref;
         fixup->next = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup;
 
-        loop_ctx->addr = loop_start_addr;
+        loop_ctx->start_ref = loop_start_ref;
       }
       '(' boolean_expression ')'
       {
+        int32_t jmp_offset;
         YR_FIXUP* fixup;
-        uint8_t* pop_addr;
+        YR_ARENA_REF pop_ref;
 
         int var_frame = _yr_compiler_get_var_frame(compiler);
 
@@ -1520,10 +1535,14 @@ expression
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_PUSH_M, var_frame + 2, NULL, NULL));
 
-        fail_if_error(yr_parser_emit_with_arg_reloc(
+        jmp_offset = \
+            compiler->loop[compiler->loop_index].start_ref.offset -
+            yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION);
+
+        fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
             OP_JUNDEF_P,
-            compiler->loop[compiler->loop_index].addr,
+            jmp_offset,
             NULL,
             NULL));
 
@@ -1533,24 +1552,38 @@ expression
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_PUSH_M, var_frame + 2, NULL, NULL));
 
-        fail_if_error(yr_parser_emit_with_arg_reloc(
+        jmp_offset = \
+            compiler->loop[compiler->loop_index].start_ref.offset -
+            yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION);
+
+        fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
             OP_JL_P,
-            compiler->loop[compiler->loop_index].addr,
+            jmp_offset,
             NULL,
             NULL));
 
         fail_if_error(yr_parser_emit(
-            yyscanner, OP_POP, &pop_addr));
+            yyscanner, OP_POP, &pop_ref));
 
-        // Pop from the stack the fixup entry containing the jump's address
-        // that needs to be fixed.
+        // Pop from the stack the fixup entry containing the reference to
+        // the jump offset that needs to be fixed.
 
         fixup = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup->next;
 
-        // Fix the jump's target address.
-        *(void**)(fixup->address) = (void*)(pop_addr);
+        // The fixup entry has a reference to the jump offset that need
+        // to be fixed, convert the address into a pointer.
+        int32_t* jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(
+            compiler->arena, &fixup->ref);
+
+        // The reference in the fixup entry points to the jump's offset
+        // but the jump instruction is one byte before, that's why we add
+        // one to the offset.
+        jmp_offset = pop_ref.offset - fixup->ref.offset + 1;
+
+        // Fix the jump's offset.
+        *jmp_offset_addr = jmp_offset;
 
         yr_free(fixup);
 
@@ -1574,9 +1607,10 @@ expression
       }
     | _FOR_ for_expression _OF_ string_set ':'
       {
+        YR_ARENA_REF ref;
+
         int result = ERROR_SUCCESS;
         int var_frame;
-        uint8_t* addr;
 
         if (compiler->loop_index + 1 == YR_MAX_LOOP_NESTING)
           result = ERROR_LOOP_NESTING_LIMIT_EXCEEDED;
@@ -1598,13 +1632,13 @@ expression
 
         // Pop the first string.
         yr_parser_emit_with_arg(
-            yyscanner, OP_POP_M, var_frame, &addr, NULL);
+            yyscanner, OP_POP_M, var_frame, &ref, NULL);
 
         compiler->loop_for_of_var_index = var_frame;
-        compiler->loop[compiler->loop_index].addr = addr;
+        compiler->loop[compiler->loop_index].start_ref = ref;
         compiler->loop[compiler->loop_index].vars_count = 0;
         compiler->loop[compiler->loop_index].vars_internal_count = \
-           YR_INTERNAL_LOOP_VARS;
+            YR_INTERNAL_LOOP_VARS;
       }
       '(' boolean_expression ')'
       {
@@ -1616,7 +1650,7 @@ expression
 
         // Increment counter by the value returned by the
         // boolean expression (0 or 1). If the boolean expression
-        // returned UNDEFINED the OP_ADD_M won't do anything.
+        // returned YR_UNDEFINED the OP_ADD_M won't do anything.
 
         yr_parser_emit_with_arg(
             yyscanner, OP_ADD_M, var_frame + 1, NULL, NULL);
@@ -1625,12 +1659,16 @@ expression
         yr_parser_emit_with_arg(
             yyscanner, OP_INCR_M, var_frame + 2, NULL, NULL);
 
+        int32_t jmp_offset = \
+            compiler->loop[compiler->loop_index].start_ref.offset -
+            yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION);
+
         // If next string is not undefined, go back to the
         // beginning of the loop.
-        yr_parser_emit_with_arg_reloc(
+        yr_parser_emit_with_arg_int32(
             yyscanner,
             OP_JNUNDEF,
-            compiler->loop[compiler->loop_index].addr,
+            jmp_offset,
             NULL,
             NULL);
 
@@ -1672,43 +1710,43 @@ expression
     | boolean_expression _AND_
       {
         YR_FIXUP* fixup;
-        void* jmp_destination_addr;
+        YR_ARENA_REF jmp_offset_ref;
 
-        fail_if_error(yr_parser_emit_with_arg_reloc(
+        fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
             OP_JFALSE,
-            0,          // still don't know the jump destination
+            0,          // still don't know the jump offset, use 0 for now.
             NULL,
-            &jmp_destination_addr));
+            &jmp_offset_ref));
 
-        // create a fixup entry for the jump and push it in the stack
+        // Create a fixup entry for the jump and push it in the stack.
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
           fail_with_error(ERROR_INSUFFICIENT_MEMORY);
 
-        fixup->address = jmp_destination_addr;
+        fixup->ref = jmp_offset_ref;
         fixup->next = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup;
       }
       boolean_expression
       {
         YR_FIXUP* fixup;
-        uint8_t* nop_addr;
 
         fail_if_error(yr_parser_emit(yyscanner, OP_AND, NULL));
 
-        // Generate a do-nothing instruction (NOP) in order to get its address
-        // and use it as the destination for the OP_JFALSE. We can not simply
-        // use the address of the OP_AND instruction +1 because we can't be
-        // sure that the instruction following the OP_AND is going to be in
-        // the same arena page. As we don't have a reliable way of getting the
-        // address of the next instruction we generate the OP_NOP.
-
-        fail_if_error(yr_parser_emit(yyscanner, OP_NOP, &nop_addr));
-
         fixup = compiler->fixup_stack_head;
-        *(void**)(fixup->address) = (void*) nop_addr;
+
+        int32_t* jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(
+            compiler->arena, &fixup->ref);
+
+        int32_t jmp_offset = \
+            yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION) -
+            fixup->ref.offset + 1;
+
+        *jmp_offset_addr = jmp_offset;
+
+        // Remove fixup from the stack.
         compiler->fixup_stack_head = fixup->next;
         yr_free(fixup);
 
@@ -1717,42 +1755,42 @@ expression
     | boolean_expression _OR_
       {
         YR_FIXUP* fixup;
-        void* jmp_destination_addr;
+        YR_ARENA_REF jmp_offset_ref;
 
-        fail_if_error(yr_parser_emit_with_arg_reloc(
+        fail_if_error(yr_parser_emit_with_arg_int32(
             yyscanner,
             OP_JTRUE,
-            0,         // still don't know the jump destination
+            0,         // still don't know the jump destination, use 0 for now.
             NULL,
-            &jmp_destination_addr));
+            &jmp_offset_ref));
 
         fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
 
         if (fixup == NULL)
           fail_with_error(ERROR_INSUFFICIENT_MEMORY);
 
-        fixup->address = jmp_destination_addr;
+        fixup->ref = jmp_offset_ref;
         fixup->next = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup;
       }
       boolean_expression
       {
         YR_FIXUP* fixup;
-        uint8_t* nop_addr;
 
         fail_if_error(yr_parser_emit(yyscanner, OP_OR, NULL));
 
-        // Generate a do-nothing instruction (NOP) in order to get its address
-        // and use it as the destination for the OP_JFALSE. We can not simply
-        // use the address of the OP_OR instruction +1 because we can't be
-        // sure that the instruction following the OP_AND is going to be in
-        // the same arena page. As we don't have a reliable way of getting the
-        // address of the next instruction we generate the OP_NOP.
-
-        fail_if_error(yr_parser_emit(yyscanner, OP_NOP, &nop_addr));
-
         fixup = compiler->fixup_stack_head;
-        *(void**)(fixup->address) = (void*)(nop_addr);
+
+        int32_t jmp_offset = \
+            yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION) -
+            fixup->ref.offset + 1;
+
+        int32_t* jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(
+            compiler->arena, &fixup->ref);
+
+        *jmp_offset_addr = jmp_offset;
+
+        // Remove fixup from the stack.
         compiler->fixup_stack_head = fixup->next;
         yr_free(fixup);
 
@@ -1828,7 +1866,7 @@ for_variables
 
         fail_if_error(result);
 
-        loop_ctx->vars[loop_ctx->vars_count++].identifier = $1;
+        loop_ctx->vars[loop_ctx->vars_count++].identifier.ptr = $1;
 
         assert(loop_ctx->vars_count <= YR_MAX_LOOP_VARS);
       }
@@ -1855,7 +1893,7 @@ for_variables
 
         fail_if_error(result);
 
-        loop_ctx->vars[loop_ctx->vars_count++].identifier = $3;
+        loop_ctx->vars[loop_ctx->vars_count++].identifier.ptr = $3;
       }
     ;
 
@@ -1890,7 +1928,7 @@ iterator
                     compiler,
                     "iterator for \"%s\" yields a single item on each iteration"
                     ", but the loop expects %d",
-                    $1.identifier,
+                    expression_identifier($1),
                     loop_ctx->vars_count);
 
                 result = ERROR_SYNTAX_ERROR;
@@ -1916,7 +1954,7 @@ iterator
                 yr_compiler_set_error_extra_info_fmt(
                     compiler,
                     "iterator for \"%s\" yields a key,value pair item on each iteration",
-                    $1.identifier);
+                    expression_identifier($1));
 
                 result = ERROR_SYNTAX_ERROR;
               }
@@ -1929,7 +1967,7 @@ iterator
           yr_compiler_set_error_extra_info_fmt(
               compiler,
               "identifier \"%s\" is not iterable",
-              $1.identifier);
+              expression_identifier($1));
         }
 
         fail_if_error(result);
@@ -1943,7 +1981,7 @@ iterator
         if (loop_ctx->vars_count == 1)
         {
           loop_ctx->vars[0].type = EXPRESSION_TYPE_INTEGER;
-          loop_ctx->vars[0].value.integer = UNDEFINED;
+          loop_ctx->vars[0].value.integer = YR_UNDEFINED;
         }
         else
         {
@@ -2041,13 +2079,13 @@ string_set
     : '('
       {
         // Push end-of-list marker
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL);
       }
       string_enumeration ')'
     | _THEM_
       {
         fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, UNDEFINED, NULL, NULL));
+            yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL));
 
         fail_if_error(yr_parser_emit_pushes_for_strings(
             yyscanner, "$*"));
@@ -2086,7 +2124,7 @@ for_expression
       }
     | _ALL_
       {
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, UNDEFINED, NULL, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL);
         $$ = FOR_EXPRESSION_ALL;
       }
     | _ANY_
@@ -2108,7 +2146,7 @@ primary_expression
             yyscanner, OP_FILESIZE, NULL));
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _ENTRYPOINT_
       {
@@ -2120,7 +2158,7 @@ primary_expression
             yyscanner, OP_ENTRYPOINT, NULL));
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _INTEGER_FUNCTION_ '(' primary_expression ')'
       {
@@ -2134,7 +2172,7 @@ primary_expression
             yyscanner, (uint8_t) (OP_READ_INT + $1), NULL));
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _NUMBER_
       {
@@ -2153,13 +2191,14 @@ primary_expression
       }
     | _TEXT_STRING_
       {
-        SIZED_STRING* sized_string;
+        YR_ARENA_REF ref;
 
         int result = yr_arena_write_data(
-            compiler->sz_arena,
+            compiler->arena,
+            YR_SZ_POOL,
             $1,
             $1->length + sizeof(SIZED_STRING),
-            (void**) &sized_string);
+            &ref);
 
         yr_free($1);
 
@@ -2167,38 +2206,39 @@ primary_expression
           result = yr_parser_emit_with_arg_reloc(
               yyscanner,
               OP_PUSH,
-              sized_string,
+              yr_arena_ref_to_ptr(compiler->arena, &ref),
               NULL,
               NULL);
 
         fail_if_error(result);
 
         $$.type = EXPRESSION_TYPE_STRING;
-        $$.value.sized_string = sized_string;
+        //TODO
+        // $$.value.sized_string = sized_string;
       }
     | _STRING_COUNT_
       {
         int result = yr_parser_reduce_string_identifier(
-            yyscanner, $1, OP_COUNT, UNDEFINED);
+            yyscanner, $1, OP_COUNT, YR_UNDEFINED);
 
         yr_free($1);
 
         fail_if_error(result);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _STRING_OFFSET_ '[' primary_expression ']'
       {
         int result = yr_parser_reduce_string_identifier(
-            yyscanner, $1, OP_OFFSET, UNDEFINED);
+            yyscanner, $1, OP_OFFSET, YR_UNDEFINED);
 
         yr_free($1);
 
         fail_if_error(result);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _STRING_OFFSET_
       {
@@ -2207,26 +2247,26 @@ primary_expression
 
         if (result == ERROR_SUCCESS)
           result = yr_parser_reduce_string_identifier(
-              yyscanner, $1, OP_OFFSET, UNDEFINED);
+              yyscanner, $1, OP_OFFSET, YR_UNDEFINED);
 
         yr_free($1);
 
         fail_if_error(result);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _STRING_LENGTH_ '[' primary_expression ']'
       {
         int result = yr_parser_reduce_string_identifier(
-            yyscanner, $1, OP_LENGTH, UNDEFINED);
+            yyscanner, $1, OP_LENGTH, YR_UNDEFINED);
 
         yr_free($1);
 
         fail_if_error(result);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _STRING_LENGTH_
       {
@@ -2235,14 +2275,14 @@ primary_expression
 
         if (result == ERROR_SUCCESS)
           result = yr_parser_reduce_string_identifier(
-              yyscanner, $1, OP_LENGTH, UNDEFINED);
+              yyscanner, $1, OP_LENGTH, YR_UNDEFINED);
 
         yr_free($1);
 
         fail_if_error(result);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = UNDEFINED;
+        $$.value.integer = YR_UNDEFINED;
       }
     | identifier
       {
@@ -2257,7 +2297,7 @@ primary_expression
           {
             case OBJECT_TYPE_INTEGER:
               $$.type = EXPRESSION_TYPE_INTEGER;
-              $$.value.integer = UNDEFINED;
+              $$.value.integer = YR_UNDEFINED;
               break;
             case OBJECT_TYPE_FLOAT:
               $$.type = EXPRESSION_TYPE_FLOAT;
@@ -2275,7 +2315,8 @@ primary_expression
               yr_compiler_set_error_extra_info_fmt(
                   compiler,
                   "wrong usage of identifier \"%s\"",
-                  $1.identifier);
+                  expression_identifier($1));
+
               result = ERROR_WRONG_TYPE;
           }
         }
@@ -2295,8 +2336,8 @@ primary_expression
         if ($2.type == EXPRESSION_TYPE_INTEGER)
         {
           $$.type = EXPRESSION_TYPE_INTEGER;
-          $$.value.integer = ($2.value.integer == UNDEFINED) ?
-              UNDEFINED : -($2.value.integer);
+          $$.value.integer = ($2.value.integer == YR_UNDEFINED) ?
+              YR_UNDEFINED : -($2.value.integer);
           result = yr_parser_emit(yyscanner, OP_INT_MINUS, NULL);
         }
         else if ($2.type == EXPRESSION_TYPE_FLOAT)
@@ -2490,8 +2531,8 @@ primary_expression
         fail_if_error(yr_parser_emit(yyscanner, OP_BITWISE_NOT, NULL));
 
         $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = ($2.value.integer == UNDEFINED) ?
-            UNDEFINED : ~($2.value.integer);
+        $$.value.integer = ($2.value.integer == YR_UNDEFINED) ?
+            YR_UNDEFINED : ~($2.value.integer);
       }
     | primary_expression _SHIFT_LEFT_ primary_expression
       {

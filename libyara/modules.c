@@ -150,6 +150,7 @@ int yr_modules_load(
   mi.module_data_size = 0;
 
   result = context->callback(
+      context,
       CALLBACK_MSG_IMPORT_MODULE,
       &mi,
       context->user_data);
@@ -188,6 +189,7 @@ int yr_modules_load(
   }
 
   result = context->callback(
+      context,
       CALLBACK_MSG_MODULE_IMPORTED,
       module_structure,
       context->user_data);

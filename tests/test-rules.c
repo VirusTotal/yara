@@ -2468,12 +2468,28 @@ void test_integer_functions()
 void test_include_files()
 {
   assert_true_rule(
-    "include \"tests/data/baz.yar\" rule t { condition: baz }",
-    NULL);
+      "include \"tests/data/baz.yar\" rule t { condition: baz }",
+      NULL);
 
   assert_true_rule(
-    "include \"tests/data/foo.yar\" rule t { condition: foo }",
-    NULL);
+      "include \"tests/data/foo.yar\" rule t { condition: foo }",
+      NULL);
+}
+
+
+void test_tags()
+{
+  assert_true_rule(
+      "rule test : tag1 { condition: true}",
+      NULL);
+
+  assert_true_rule(
+      "rule test : tag1 tag2 { condition: true}",
+      NULL);
+
+  assert_error(
+      "rule test : tag1 tag1 { condition: true}",
+      ERROR_DUPLICATED_TAG_IDENTIFIER);
 }
 
 
@@ -2481,9 +2497,13 @@ void test_process_scan()
 {
   int pid = fork();
   int status = 0;
-  int matches = 0;
   YR_RULES* rules;
   int rc1, rc2;
+
+  struct COUNTERS counters;
+
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
 
   if (pid == 0)
   {
@@ -2503,7 +2523,7 @@ void test_process_scan()
       condition:\
         all of them\
     }", &rules) == ERROR_SUCCESS);
-  rc1 = yr_rules_scan_proc(rules, pid, 0, count_matches, &matches, 0);
+  rc1 = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
   yr_rules_destroy(rules);
   kill(pid, SIGALRM);
 
@@ -2521,7 +2541,7 @@ void test_process_scan()
 
   switch (rc1) {
   case ERROR_SUCCESS:
-    if (matches == 0)
+    if (counters.rules_matching == 0)
     {
       fputs("Found no matches\n", stderr);
       exit(EXIT_FAILURE);
@@ -2718,6 +2738,7 @@ int main(int argc, char** argv)
   // test_string_io();
   test_entrypoint();
   test_global_rules();
+  test_tags();
 
   #if !defined(USE_WINDOWS_PROC) && !defined(USE_NO_PROC)
   test_process_scan();

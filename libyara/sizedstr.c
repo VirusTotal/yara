@@ -151,7 +151,7 @@ SIZED_STRING* sized_string_convert_to_wide(
   }
 
   wide->length = s->length * 2;
-  wide->flags = s->flags | STRING_GFLAGS_WIDE;
+  wide->flags = s->flags | STRING_FLAGS_WIDE;
 
   return wide;
 }
