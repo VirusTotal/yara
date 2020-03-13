@@ -365,3 +365,37 @@ YR_API int yr_hash_table_add(
       ns,
       value);
 }
+
+
+YR_API uint32_t yr_hash_table_add_uint32(
+    YR_HASH_TABLE* table,
+    const char* key,
+    const char* ns,
+    uint32_t value)
+{
+  // Don't allow values equal to UINT32_MAX or UINT32_MAX - 1.
+  if (value >= UINT32_MAX - 1)
+    return ERROR_INVALID_ARGUMENT;
+
+  // Add +1 to the value in order to avoid putting a NULL pointer in the
+  // hash table once the integer is casted to a pointer. This is undone
+  // by yr_hash_table_lookup_uint32.
+  return yr_hash_table_add(
+      table, key, ns, (void*) (size_t) (value + 1));
+}
+
+
+YR_API uint32_t yr_hash_table_lookup_uint32(
+    YR_HASH_TABLE* table,
+    const char* key,
+    const char* ns)
+{
+  void* ptr = yr_hash_table_lookup(table, key, ns);
+
+  if (ptr == NULL)
+    return UINT32_MAX;
+
+  // Remove one from the pointer before converting back to integer, see
+  // comment in yr_hash_table_add_uint32.
+  return (uint32_t) (size_t) ((uint8_t*) ptr - 1);
+}

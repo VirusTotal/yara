@@ -135,7 +135,7 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
     if(ULONG_MAX - yr_##bo##bits##toh(elf_header->ph_offset) <                 \
        ELF_SIZE_OF_PROGRAM_TABLE(bits,bo,elf_header))                          \
     {                                                                          \
-      return UNDEFINED;                                                        \
+      return YR_UNDEFINED;                                                        \
     }                                                                          \
                                                                                \
     if (yr_##bo##bits##toh(elf_header->ph_offset) == 0 ||                      \
@@ -144,7 +144,7 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
          ELF_SIZE_OF_PROGRAM_TABLE(bits,bo,elf_header) > elf_size ||           \
         yr_##bo##16toh(elf_header->ph_entry_count) == 0)                       \
     {                                                                          \
-      return UNDEFINED;                                                        \
+      return YR_UNDEFINED;                                                        \
     }                                                                          \
                                                                                \
     program = (elf##bits##_program_header_t*)                                  \
@@ -174,7 +174,7 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
     if(ULONG_MAX - yr_##bo##bits##toh(elf_header->sh_offset) <                 \
        ELF_SIZE_OF_SECTION_TABLE(bits,bo,elf_header))                          \
     {                                                                          \
-      return UNDEFINED;                                                        \
+      return YR_UNDEFINED;                                                        \
     }                                                                          \
                                                                                \
     if (yr_##bo##bits##toh(elf_header->sh_offset) == 0 ||                      \
@@ -183,7 +183,7 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
          ELF_SIZE_OF_SECTION_TABLE(bits,bo,elf_header) > elf_size ||           \
         yr_##bo##16toh(elf_header->sh_entry_count) == 0)                       \
     {                                                                          \
-      return UNDEFINED;                                                        \
+      return YR_UNDEFINED;                                                        \
     }                                                                          \
                                                                                \
     section = (elf##bits##_section_header_t*)                                  \
@@ -204,7 +204,7 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
       section++;                                                               \
     }                                                                          \
   }                                                                            \
-  return UNDEFINED;                                                            \
+  return YR_UNDEFINED;                                                            \
 }
 
 #define PARSE_ELF_HEADER(bits,bo)                                              \

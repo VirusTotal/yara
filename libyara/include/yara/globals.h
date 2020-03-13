@@ -39,7 +39,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern uint8_t yr_lowercase[256];
 extern uint8_t yr_altercase[256];
 
-extern YR_THREAD_STORAGE_KEY yr_tidx_key;
-extern YR_THREAD_STORAGE_KEY yr_recovery_state_key;
+
+// Thread-local storage (TLS) key used by the regexp and hex string parsers.
+// Each thread calling yr_parse_re_string/yr_parse_hex_string stores a pointer
+// to a jmp_buf struct used by setjmp/longjmp for recovering when a fatal error
+// occurs in the parser.
+extern YR_THREAD_STORAGE_KEY yr_yyfatal_trampoline_tls;
+
+// Thread-local storage (TLS) key used by YR_TRYCATCH.
+extern YR_THREAD_STORAGE_KEY yr_trycatch_trampoline_tls;
 
 #endif

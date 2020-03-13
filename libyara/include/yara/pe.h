@@ -38,6 +38,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 
+// PKCS7_SIGNER_INFO is defined by wincrypt.h, but it conflicts with a type
+// defined in openssl/pkcs7.h which is used in pe.c. Let's undefine the macro.
+#undef PKCS7_SIGNER_INFO
+
 // These definitions are not present in older Windows headers.
 
 #ifndef IMAGE_FILE_MACHINE_ARMNT
@@ -47,6 +51,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef IMAGE_FILE_MACHINE_ARM64
 #define IMAGE_FILE_MACHINE_ARM64             0xaa64
 #endif
+
+
 
 #else
 
@@ -452,9 +458,51 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY {
     WORD  NumberOfIdEntries;
 } IMAGE_RESOURCE_DIRECTORY, *PIMAGE_RESOURCE_DIRECTORY;
 
+#define IMAGE_DEBUG_TYPE_UNKNOWN                         0
+#define IMAGE_DEBUG_TYPE_COFF                            1
+#define IMAGE_DEBUG_TYPE_CODEVIEW                        2
+#define IMAGE_DEBUG_TYPE_FPO                             3
+#define IMAGE_DEBUG_TYPE_MISC                            4
+#define IMAGE_DEBUG_TYPE_EXCEPTION                       5
+#define IMAGE_DEBUG_TYPE_FIXUP                           6
+#define IMAGE_DEBUG_TYPE_BORLAND                         9
+
+typedef struct _IMAGE_DEBUG_DIRECTORY {
+    DWORD Characteristics;
+    DWORD TimeDateStamp;
+    WORD  MajorVersion;
+    WORD  MinorVersion;
+    DWORD Type;
+    DWORD SizeOfData;
+    DWORD AddressOfRawData;
+    DWORD PointerToRawData;
+} IMAGE_DEBUG_DIRECTORY, *PIMAGE_DEBUG_DIRECTORY;
+
 #pragma pack(pop)
 
 #endif  // _WIN32
+
+#define CVINFO_PDB70_CVSIGNATURE                0x53445352 // "RSDS"
+#define CVINFO_PDB20_CVSIGNATURE                0x3031424e // "NB10"
+
+typedef struct _CV_HEADER {
+    DWORD dwSignature;
+    DWORD dwOffset;
+} CV_HEADER, *PCV_HEADER;
+
+typedef struct _CV_INFO_PDB20 {
+    CV_HEADER CvHeader;
+    DWORD dwSignature;
+    DWORD dwAge;
+    BYTE PdbFileName[1];
+} CV_INFO_PDB20, *PCV_INFO_PDB20;
+
+typedef struct _CV_INFO_PDB70 {
+    DWORD CvSignature;
+    DWORD Signature[4];
+    DWORD Age;
+    BYTE  PdbFileName[1];
+} CV_INFO_PDB70, *PCV_INFO_PDB70;
 
 typedef struct _VERSION_INFO {
     WORD   Length;
@@ -463,6 +511,8 @@ typedef struct _VERSION_INFO {
     char   Key[0];
 } VERSION_INFO, *PVERSION_INFO;
 
+
+#define MAX_PE_CERTS 16
 
 #define WIN_CERT_REVISION_1_0 0x0100
 #define WIN_CERT_REVISION_2_0 0x0200
@@ -480,6 +530,8 @@ typedef struct _WIN_CERTIFICATE {
     WORD  CertificateType;
     BYTE  Certificate[0];
 } WIN_CERTIFICATE, *PWIN_CERTIFICATE;
+
+#define SPC_NESTED_SIGNATURE_OBJID  "1.3.6.1.4.1.311.2.4.1"
 
 
 //

@@ -27,9 +27,39 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <ctype.h>
 #include <string.h>
+#include <yara/globals.h>
 #include <yara/mem.h>
 #include <yara/sizedstr.h>
+#include <yara/types.h>
+
+
+int sized_string_cmp_nocase(
+    SIZED_STRING* s1,
+    SIZED_STRING* s2)
+{
+  size_t i = 0;
+
+  while (s1->length > i &&
+         s2->length > i &&
+         yr_lowercase[(uint8_t) s1->c_string[i]] ==
+         yr_lowercase[(uint8_t) s2->c_string[i]])
+  {
+    i++;
+  }
+
+  if (i == s1->length && i == s2->length)
+    return 0;
+  else if (i == s1->length)
+    return -1;
+  else if (i == s2->length)
+    return 1;
+  else if (s1->c_string[i] < s2->c_string[i])
+    return -1;
+  else
+    return 1;
+}
 
 
 int sized_string_cmp(
@@ -85,12 +115,43 @@ SIZED_STRING* sized_string_new(
 
   result = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + length);
 
+  if (result == NULL)
+    return NULL;
+
   result->length = length;
   result->flags = 0;
 
-  strncpy(result->c_string, s, length);
-
-  result->c_string[length] = '\0';
-
+  // Copy the string and the null terminator.
+  strcpy(result->c_string, s);
+  
   return result;
+}
+
+//
+// Convert a SIZED_STRING to a wide version. It is up to the caller to free
+// the returned string.
+//
+
+SIZED_STRING* sized_string_convert_to_wide(
+    SIZED_STRING* s)
+{
+  size_t i;
+  size_t j = 0;
+
+  SIZED_STRING* wide = (SIZED_STRING*) yr_malloc(
+      sizeof(SIZED_STRING) + s->length * 2);
+
+  if (wide == NULL)
+    return NULL;
+
+  for (i = 0; i <= s->length; i++)
+  {
+    wide->c_string[j++] = s->c_string[i];
+    wide->c_string[j++] = '\x00';
+  }
+
+  wide->length = s->length * 2;
+  wide->flags = s->flags | STRING_FLAGS_WIDE;
+
+  return wide;
 }

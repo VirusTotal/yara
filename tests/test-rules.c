@@ -695,6 +695,251 @@ static void test_strings()
       }",
       "AXS1111ERS2222");
 
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" base64 nocase\n\
+      condition:\n\
+        true\n\
+    }", ERROR_INVALID_MODIFIER);
+
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" base64 xor\n\
+      condition:\n\
+        true\n\
+    }", ERROR_INVALID_MODIFIER);
+
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" base64(\"AXS\")\n\
+      condition:\n\
+        true\n\
+    }", ERROR_INVALID_MODIFIER);
+
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" base64wide(\"ERS\")\n\
+      condition:\n\
+        true\n\
+    }", ERROR_INVALID_MODIFIER);
+
+  // Specifying different alphabets is an error.
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" base64 base64wide(\"abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ,.\")\n\
+      condition:\n\
+        true\n\
+    }", ERROR_INVALID_MODIFIER);
+
+  // Be specific about the offsets in these tests to make sure we are matching
+  // the correct strings. Also be specific about the length because we want to
+  // make sure the match is not the entire base64 string, but just the
+  // substrings which are not dependent upon leading or trailing bytes.
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"This program cannot\" base64\n\
+        condition:\n\
+          #a == 6 and\n\
+          @a[1] == 0x53 and\n\
+          !a[1] == 25 and\n\
+          @a[2] == 0x70 and\n\
+          !a[2] == 25 and\n\
+          @a[3] == 0xa2 and\n\
+          !a[3] == 24 and\n\
+          @a[4] == 0xbd and\n\
+          !a[4] == 24 and\n\
+          @a[5] == 0xef and\n\
+          !a[5] == 25 and\n\
+          @a[6] == 0x109 and\n\
+          !a[6] == 25\n\
+      }", "tests/data/base64");
+
+  // This is identical to "base64" alone, but test it to make sure we don't
+  // accidentally include the plaintext in the base64 search.
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"This program cannot\" base64 ascii\n\
+        condition:\n\
+          #a == 6 and\n\
+          @a[1] == 0x53 and\n\
+          !a[1] == 25 and\n\
+          @a[2] == 0x70 and\n\
+          !a[2] == 25 and\n\
+          @a[3] == 0xa2 and\n\
+          !a[3] == 24 and\n\
+          @a[4] == 0xbd and\n\
+          !a[4] == 24 and\n\
+          @a[5] == 0xef and\n\
+          !a[5] == 25 and\n\
+          @a[6] == 0x109 and\n\
+          !a[6] == 25\n\
+      }", "tests/data/base64");
+
+  // Make sure the wide modifier is applied BEFORE the base64 and we do NOT
+  // include the wide plaintext string.
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"This program cannot\" base64 wide\n\
+        condition:\n\
+          #a == 6 and\n\
+          @a[1] == 0x1b5 and\n\
+          !a[1] == 50 and\n\
+          @a[2] == 0x1ea and\n\
+          !a[2] == 50 and\n\
+          @a[3] == 0x248 and\n\
+          !a[3] == 50 and\n\
+          @a[4] == 0x27b and\n\
+          !a[4] == 50 and\n\
+          @a[5] == 0x2db and\n\
+          !a[5] == 50 and\n\
+          @a[6] == 0x311 and\n\
+          !a[6] == 50\n\
+      }", "tests/data/base64");
+
+  // Make sure that both wide and ascii are base64 encoded. We can skip the
+  // verbose length and offset checks, since the previous tests cover that.
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"This program cannot\" base64 wide ascii\n\
+        condition:\n\
+          #a == 12\n\
+      }", "tests/data/base64");
+
+  // This checks for the ascii string in base64 form then widened.
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"This program cannot\" base64wide\n\
+        condition:\n\
+          #a == 3 and\n\
+          @a[1] == 0x379 and\n\
+          !a[1] == 50 and\n\
+          @a[2] == 0x3b6 and\n\
+          !a[2] == 48 and\n\
+          @a[3] == 0x3f1 and\n\
+          !a[3] == 50\n\
+      }", "tests/data/base64");
+
+  // Logically identical to the test above but include it to make sure we don't
+  // accidentally include the plaintext in the future.
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"This program cannot\" base64wide ascii\n\
+        condition:\n\
+          #a == 3 and\n\
+          @a[1] == 0x379 and\n\
+          !a[1] == 50 and\n\
+          @a[2] == 0x3b6 and\n\
+          !a[2] == 48 and\n\
+          @a[3] == 0x3f1 and\n\
+          !a[3] == 50\n\
+      }", "tests/data/base64");
+
+  // Make sure the wide string is base64wide encoded.
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"This program cannot\" base64wide wide\n\
+        condition:\n\
+          #a == 3 and\n\
+          @a[1] == 0x458 and\n\
+          !a[1] == 100 and\n\
+          @a[2] == 0x4c5 and\n\
+          !a[2] == 100 and\n\
+          @a[3] == 0x530 and\n\
+          !a[3] == 100\n\
+      }", "tests/data/base64");
+
+  // Make sure both ascii and wide strings are base64wide encoded properly.
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"This program cannot\" base64wide wide ascii\n\
+        condition:\n\
+          #a == 6 and\n\
+          @a[1] == 0x379 and\n\
+          !a[1] == 50 and\n\
+          @a[2] == 0x3b6 and\n\
+          !a[2] == 48 and\n\
+          @a[3] == 0x3f1 and\n\
+          !a[3] == 50 and\n\
+          @a[4] == 0x458 and\n\
+          !a[4] == 100 and\n\
+          @a[5] == 0x4c5 and\n\
+          !a[5] == 100 and\n\
+          @a[6] == 0x530 and\n\
+          !a[6] == 100\n\
+      }", "tests/data/base64");
+
+  // Make sure base64 and base64wide together work.
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"This program cannot\" base64 base64wide\n\
+        condition:\n\
+          #a == 9 and\n\
+          @a[1] == 0x53 and\n\
+          !a[1] == 25 and\n\
+          @a[2] == 0x70 and\n\
+          !a[2] == 25 and\n\
+          @a[3] == 0xa2 and\n\
+          !a[3] == 24 and\n\
+          @a[4] == 0xbd and\n\
+          !a[4] == 24 and\n\
+          @a[5] == 0xef and\n\
+          !a[5] == 25 and\n\
+          @a[6] == 0x109 and\n\
+          !a[6] == 25 and\n\
+          @a[7] == 0x379 and\n\
+          !a[7] == 50 and\n\
+          @a[8] == 0x3b6 and\n\
+          !a[8] == 48 and\n\
+          @a[9] == 0x3f1 and\n\
+          !a[9] == 50\n\
+      }", "tests/data/base64");
+
+  // Identical to the test above but useful to make sure we don't accidentally
+  // include the ascii plaintext in the future.
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"This program cannot\" base64 base64wide ascii\n\
+        condition:\n\
+          #a == 9\n\
+      }", "tests/data/base64");
+
+  // Making sure we don't accidentally include the wide plaintext in the future.
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"This program cannot\" base64 base64wide wide\n\
+        condition:\n\
+          #a == 9\n\
+      }", "tests/data/base64");
+
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"This program cannot\" base64(\"!@#$\%^&*(){}[].,|ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstu\")\n\
+        condition:\n\
+          #a == 3 and\n\
+          @a[1] == 0x619 and\n\
+          !a[1] == 25 and\n\
+          @a[2] == 0x638 and\n\
+          !a[2] == 24 and\n\
+          @a[3] == 0x656 and\n\
+          !a[3] == 25\n\
+      }", "tests/data/base64");
 }
 
 
@@ -1237,6 +1482,16 @@ void test_for()
       }",
       NULL);
 
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any k,v in tests.empty_struct_dict : ( \
+            true \
+          ) \
+      }",
+    NULL);
+
   assert_true_rule(
       "import \"tests\" \
       rule test { \
@@ -1286,6 +1541,22 @@ void test_for()
           for any i in tests.integer_array : ( i == \"foo\" ) \
       }",
       ERROR_WRONG_TYPE);
+
+
+  assert_false_rule(
+      "rule test { \
+        condition: \
+          for any i in (0,1): ( \
+            for any j in (0,1): ( \
+              for any k in (0,1): ( \
+                for any l in (0,1): (\
+                  false \
+                ) \
+              ) \
+            ) \
+        ) \
+      }",
+      NULL);
 }
 
 
@@ -2197,12 +2468,28 @@ void test_integer_functions()
 void test_include_files()
 {
   assert_true_rule(
-    "include \"tests/data/baz.yar\" rule t { condition: baz }",
-    NULL);
+      "include \"tests/data/baz.yar\" rule t { condition: baz }",
+      NULL);
 
   assert_true_rule(
-    "include \"tests/data/foo.yar\" rule t { condition: foo }",
-    NULL);
+      "include \"tests/data/foo.yar\" rule t { condition: foo }",
+      NULL);
+}
+
+
+void test_tags()
+{
+  assert_true_rule(
+      "rule test : tag1 { condition: true}",
+      NULL);
+
+  assert_true_rule(
+      "rule test : tag1 tag2 { condition: true}",
+      NULL);
+
+  assert_error(
+      "rule test : tag1 tag1 { condition: true}",
+      ERROR_DUPLICATED_TAG_IDENTIFIER);
 }
 
 
@@ -2210,9 +2497,13 @@ void test_process_scan()
 {
   int pid = fork();
   int status = 0;
-  int matches = 0;
   YR_RULES* rules;
   int rc1, rc2;
+
+  struct COUNTERS counters;
+
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
 
   if (pid == 0)
   {
@@ -2232,7 +2523,7 @@ void test_process_scan()
       condition:\
         all of them\
     }", &rules) == ERROR_SUCCESS);
-  rc1 = yr_rules_scan_proc(rules, pid, 0, count_matches, &matches, 0);
+  rc1 = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
   yr_rules_destroy(rules);
   kill(pid, SIGALRM);
 
@@ -2250,7 +2541,7 @@ void test_process_scan()
 
   switch (rc1) {
   case ERROR_SUCCESS:
-    if (matches == 0)
+    if (counters.rules_matching == 0)
     {
       fputs("Found no matches\n", stderr);
       exit(EXIT_FAILURE);
@@ -2392,6 +2683,18 @@ void test_performance_warnings()
        "rule test { \
         strings: $a = \"MZ\" \
         condition: $a }")
+
+  assert_warning(
+      "rule test { \
+        strings: $a = \"                    \" xor(0x20) \
+        condition: $a }")
+
+  // This will eventually xor with 0x41 and should cause a warning.
+  assert_warning(
+      "rule test { \
+        strings: $a = \"AAAAAAAAAAAAAAAAAAAA\" xor \
+        condition: $a }")
+
 }
 
 
@@ -2435,6 +2738,7 @@ int main(int argc, char** argv)
   // test_string_io();
   test_entrypoint();
   test_global_rules();
+  test_tags();
 
   #if !defined(USE_WINDOWS_PROC) && !defined(USE_NO_PROC)
   test_process_scan();

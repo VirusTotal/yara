@@ -49,6 +49,18 @@ cc_test(
     srcs = ["test-alignment.c"],
     copts = COPTS,
     deps = ["@//:libyara"],
+    linkstatic=True,
+)
+
+cc_test(
+    name = "test_arena",
+    srcs = ["test-arena.c"],
+    copts = COPTS,
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -59,6 +71,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -66,6 +79,7 @@ cc_test(
     srcs = ["test-rules.c"],
     copts = COPTS,
     data = [
+        "data/base64",
         "data/baz.yar",
         "data/foo.yar",
         "data/include/bar.yar",
@@ -78,6 +92,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -91,11 +106,13 @@ cc_test(
         "data/tiny-idata-5200",
         "data/tiny-overlay",
         "data/weird_rich",
+        "data/mtxex.dll",
     ],
     deps = [
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -107,6 +124,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -118,6 +136,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -128,6 +147,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -138,6 +158,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -148,6 +169,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 # This test fails when running under ASAN
@@ -159,6 +181,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -171,6 +194,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -182,6 +206,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -192,4 +217,5 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
