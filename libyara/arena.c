@@ -357,21 +357,20 @@ int yr_arena_allocate_struct(
     ...)
 {
   YR_ARENA_REF r;
-  int result;
 
-  va_list field_offsets;
-  va_start(field_offsets, ref);
-
-  result = _yr_arena_allocate_memory(
+  int result = _yr_arena_allocate_memory(
       arena, YR_ARENA_ZERO_MEMORY, buffer_id, size, &r);
-
-  va_end(field_offsets);
 
   if (result != ERROR_SUCCESS)
     return result;
 
+  va_list field_offsets;
+  va_start(field_offsets, ref);
+
   result = _yr_arena_make_ptr_relocatable(
       arena, buffer_id, r.offset, field_offsets);
+
+  va_end(field_offsets);
 
   if (result == ERROR_SUCCESS && ref != NULL)
   {
