@@ -124,6 +124,10 @@ static void report_error(
     compiler_results->warnings++;
     msg_type = "warning";
   }
+  else
+  {
+    return;
+  }
 
   if (rule != NULL)
   {
