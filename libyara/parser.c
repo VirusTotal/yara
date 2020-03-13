@@ -815,11 +815,7 @@ int yr_parser_reduce_string_declaration(
 
   if (min_atom_quality < compiler->atoms_config.quality_warning_threshold)
   {
-    yywarning(
-        yyscanner,
-        "%s in rule %s is slowing down scanning",
-        identifier,
-        current_rule->identifier);
+    yywarning(yyscanner, "%s is slowing down scanning", identifier);
   }
 
 _exit:
@@ -842,6 +838,9 @@ int yr_parser_reduce_rule_declaration_phase_1(
 {
   YR_FIXUP *fixup;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
+
+  // We are starting to parse a rule, set current_rule_idx accordingly.
+  compiler->current_rule_idx = compiler->next_rule_idx;
 
   YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
       compiler->arena,
@@ -960,10 +959,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
 
   if (rule->num_atoms > YR_ATOMS_PER_RULE_WARNING_THRESHOLD)
   {
-    yywarning(
-        yyscanner,
-        "rule %s is slowing down scanning",
-        rule->identifier);
+    yywarning(yyscanner, "rule is slowing down scanning");
   }
 
   yr_rule_strings_foreach(rule, string)
@@ -988,8 +984,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
     }
   }
 
-
-FAIL_ON_ERROR(yr_parser_emit_with_arg(
+  FAIL_ON_ERROR(yr_parser_emit_with_arg(
       yyscanner,
       OP_MATCH_RULE,
       compiler->current_rule_idx,
@@ -1011,9 +1006,11 @@ FAIL_ON_ERROR(yr_parser_emit_with_arg(
   compiler->fixup_stack_head = fixup->next;
   yr_free(fixup);
 
-  // We have finished parsing the current rule and are about to start parsing
-  // a new one.
-  compiler->current_rule_idx++;
+  // We have finished parsing the current rule, increment next_rule_idx
+  // and set current_rule_idx to UINT32_MAX indicating that we are not
+  // currently parsing a rule.
+  compiler->next_rule_idx++;
+  compiler->current_rule_idx = UINT32_MAX;
 
   return ERROR_SUCCESS;
 }

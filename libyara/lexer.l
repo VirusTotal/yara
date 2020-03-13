@@ -768,10 +768,19 @@ void yywarning(
 
   vsnprintf(message, sizeof(message), message_fmt, message_args);
 
+  YR_RULE* current_rule = NULL;
+
+  if (compiler->current_rule_idx != UINT32_MAX)
+    current_rule = yr_arena_get_ptr(
+        compiler->arena,
+        YR_RULES_TABLE,
+        compiler->current_rule_idx * sizeof(YR_RULE));
+
   compiler->callback(
       YARA_ERROR_LEVEL_WARNING,
       file_name,
       compiler->current_line ? compiler->current_line : yyget_lineno(yyscanner),
+      current_rule,
       message,
       compiler->user_data);
 
@@ -822,6 +831,14 @@ void yyerror(
     file_name = NULL;
   }
 
+  YR_RULE* current_rule = NULL;
+
+  if (compiler->current_rule_idx != UINT32_MAX)
+    current_rule = yr_arena_get_ptr(
+        compiler->arena,
+        YR_RULES_TABLE,
+        compiler->current_rule_idx * sizeof(YR_RULE));
+
   if (error_message != NULL)
   {
     yr_compiler_set_error_extra_info(compiler, error_message);
@@ -833,6 +850,7 @@ void yyerror(
           YARA_ERROR_LEVEL_ERROR,
           file_name,
           compiler->last_error_line,
+          current_rule,
           error_message,
           compiler->user_data);
     }
@@ -842,11 +860,12 @@ void yyerror(
     yr_compiler_get_error_message(compiler, message, sizeof(message));
 
     compiler->callback(
-      YARA_ERROR_LEVEL_ERROR,
-      file_name,
-      compiler->last_error_line,
-      message,
-      compiler->user_data);
+        YARA_ERROR_LEVEL_ERROR,
+        file_name,
+        compiler->last_error_line,
+        current_rule,
+        message,
+        compiler->user_data);
   }
 }
 

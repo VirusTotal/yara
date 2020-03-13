@@ -103,6 +103,7 @@ static void _compiler_callback(
     int error_level,
     const char* file_name,
     int line_number,
+    const YR_RULE* rule,
     const char* message,
     void* user_data)
 {
