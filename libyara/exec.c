@@ -60,7 +60,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Paranoid mode does not guarantee that it's safe to load compiled rules from
 // third parties, it only prevents severe security issues. Maliciously crafted
 // compiled rules can still crash YARA. Loading third-party compiled rules is
-// *highly* undiscouraged. If you need to distribute YARA rules in compiled
+// *highly* discouraged. If you need to distribute YARA rules in compiled
 // form you should encapsulate them in some digitally-signed package that
 // ensure that they haven't been modified by someone else.
 
@@ -69,7 +69,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
-#define MEM_SIZE   YR_MAX_LOOP_NESTING * YR_MAX_LOOP_VARS
+#define MEM_SIZE \
+    YR_MAX_LOOP_NESTING * (YR_MAX_LOOP_VARS + YR_INTERNAL_LOOP_VARS)
 
 
 #define push(x)  \
@@ -92,7 +93,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ensure_defined(x) \
     if (is_undef(x)) \
     { \
-      r1.i = UNDEFINED; \
+      r1.i = YR_UNDEFINED; \
       push(r1); \
       break; \
     }
@@ -107,11 +108,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Make sure that the string pointer is within the rules arena.
 #define ensure_within_rules_arena(x) \
-    if (yr_arena_page_for_address(context->rules->arena, x) == NULL) \
     { \
-      stop = true; \
-      result = ERROR_INTERNAL_FATAL_ERROR; \
-      break; \
+      YR_ARENA_REF ref; \
+      if (yr_arena_ptr_to_ref(context->rules->arena, x, &ref) == 0) \
+      { \
+        stop = true; \
+        result = ERROR_INTERNAL_FATAL_ERROR; \
+        break; \
+      } \
     }
 
 #define check_object_canary(o) \
@@ -150,14 +154,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
           type result; \
           const uint8_t* data = block->fetch_data(block); \
           if (data == NULL) \
-            return UNDEFINED; \
+            return YR_UNDEFINED; \
           result = *(type *)(data + offset - block->base); \
           result = endianess##_##type(result); \
           return result; \
         } \
         block = iterator->next(iterator); \
       } \
-      return UNDEFINED; \
+      return YR_UNDEFINED; \
     };
 
 
@@ -179,18 +183,24 @@ static const uint8_t* jmp_if(
     int condition,
     const uint8_t* ip)
 {
-  const uint8_t* result;
+  size_t off;
 
   if (condition)
   {
-    result = *(const uint8_t**)(ip);
+    // The condition is true, the instruction pointer is incremented in the
+    // amount specified by the jump's offset. The offset is relative to the
+    // jump opcode, but now the instruction pointer is pointing past the opcode
+    // that's why we decrement the offset by 1.
+    off = *(int32_t*)(ip) - 1;
   }
   else
   {
-    result = ip + sizeof(uint64_t);
+    // The condition is false, the execution flow proceeds with the instruction
+    // right after the jump.
+    off = sizeof(int32_t);
   }
 
-  return result;
+  return ip + off;
 }
 
 
@@ -217,7 +227,7 @@ static int iter_array_next(
     if (obj != NULL)
       stack->items[stack->sp++].o = obj;
     else
-      stack->items[stack->sp++].i = UNDEFINED;
+      stack->items[stack->sp++].i = YR_UNDEFINED;
 
     self->array_it.index++;
   }
@@ -225,8 +235,8 @@ static int iter_array_next(
   {
     // Push true for indicating the iterator has been exhausted.
     stack->items[stack->sp++].i = 1;
-    // Push UNDEFINED as a placeholder for the next item.
-    stack->items[stack->sp++].i = UNDEFINED;
+    // Push YR_UNDEFINED as a placeholder for the next item.
+    stack->items[stack->sp++].i = YR_UNDEFINED;
   }
 
   return ERROR_SUCCESS;
@@ -245,7 +255,17 @@ static int iter_dict_next(
   if (stack->sp + 2 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
-  if (self->dict_it.index < items->used)
+  // If the dictionary has no items or the iterator reached the last item, abort
+  // the iteration, if not push the next key and value.
+  if (items == NULL || self->dict_it.index == items->used)
+  {
+    // Push true for indicating the iterator has been exhausted.
+    stack->items[stack->sp++].i = 1;
+    // Push YR_UNDEFINED as a placeholder for the next key and value.
+    stack->items[stack->sp++].i = YR_UNDEFINED;
+    stack->items[stack->sp++].i = YR_UNDEFINED;
+  }
+  else
   {
     // Push the false value that indicates that the iterator is not exhausted.
     stack->items[stack->sp++].i = 0;
@@ -257,19 +277,11 @@ static int iter_dict_next(
     }
     else
     {
-      stack->items[stack->sp++].i = UNDEFINED;
-      stack->items[stack->sp++].i = UNDEFINED;
+      stack->items[stack->sp++].i = YR_UNDEFINED;
+      stack->items[stack->sp++].i = YR_UNDEFINED;
     }
 
     self->dict_it.index++;
-  }
-  else
-  {
-    // Push true for indicating the iterator has been exhausted.
-    stack->items[stack->sp++].i = 1;
-    // Push UNDEFINED as a placeholder for the next key and value.
-    stack->items[stack->sp++].i = UNDEFINED;
-    stack->items[stack->sp++].i = UNDEFINED;
   }
 
   return ERROR_SUCCESS;
@@ -297,8 +309,8 @@ static int iter_int_range_next(
   {
     // Push true for indicating the iterator has been exhausted.
     stack->items[stack->sp++].i = 1;
-    // Push UNDEFINED as a placeholder for the next item.
-    stack->items[stack->sp++].i = UNDEFINED;
+    // Push YR_UNDEFINED as a placeholder for the next item.
+    stack->items[stack->sp++].i = YR_UNDEFINED;
   }
 
   return ERROR_SUCCESS;
@@ -326,8 +338,8 @@ static int iter_int_enum_next(
   {
     // Push true for indicating the iterator has been exhausted.
     stack->items[stack->sp++].i = 1;
-    // Push UNDEFINED as a placeholder for the next item.
-    stack->items[stack->sp++].i = UNDEFINED;
+    // Push YR_UNDEFINED as a placeholder for the next item.
+    stack->items[stack->sp++].i = YR_UNDEFINED;
   }
 
   return ERROR_SUCCESS;
@@ -352,17 +364,16 @@ int yr_execute_code(
 
   #ifdef PROFILING_ENABLED
   uint64_t start_time;
-  YR_RULE* current_rule = NULL;
   #endif
 
-  YR_INIT_RULE_ARGS init_rule_args;
-
+  uint32_t current_rule_idx;
+  YR_RULE* current_rule = NULL;
   YR_RULE* rule;
   YR_MATCH* match;
   YR_OBJECT_FUNCTION* function;
   YR_OBJECT** obj_ptr;
   YR_ARENA* obj_arena;
-  YR_ARENA* it_arena;
+  YR_NOTEBOOK* it_notebook;
 
   char* identifier;
   char* args_fmt;
@@ -372,7 +383,7 @@ int yr_execute_code(
   int count;
   int result = ERROR_SUCCESS;
   int cycle = 0;
-  int tidx = context->tidx;
+  int obj_count = 0;
 
   bool stop = false;
 
@@ -387,16 +398,16 @@ int yr_execute_code(
     return ERROR_INSUFFICIENT_MEMORY;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_arena_create(1024, 0, &obj_arena),
+      yr_arena_create(1, 512 * sizeof(YR_OBJECT*), &obj_arena),
       yr_free(stack.items));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_arena_create(64 * sizeof(YR_ITERATOR), 0, &it_arena),
-      yr_arena_destroy(obj_arena);
+      yr_notebook_create(512 * sizeof(YR_ITERATOR), &it_notebook),
+      yr_arena_release(obj_arena);
       yr_free(stack.items));
 
   #ifdef PROFILING_ENABLED
-  start_time = yr_stopwatch_elapsed_us(&context->stopwatch);
+  start_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
   #endif
 
   #if PARANOID_EXEC
@@ -405,7 +416,10 @@ int yr_execute_code(
 
   while(!stop)
   {
+    // Read the opcode from the address indicated by the instruction pointer.
     opcode = *ip;
+
+    // Advance the instruction pointer, which now points past the opcode.
     ip++;
 
     switch(opcode)
@@ -419,10 +433,13 @@ int yr_execute_code(
         break;
 
       case OP_ITER_START_ARRAY:
-        result = yr_arena_allocate_struct(
-            it_arena, sizeof(YR_ITERATOR), &r2.p);
+        r2.p = yr_notebook_alloc(it_notebook, sizeof(YR_ITERATOR));
 
-        if (result == ERROR_SUCCESS)
+        if (r2.p == NULL)
+        {
+          result = ERROR_INSUFFICIENT_MEMORY;
+        }
+        else
         {
           pop(r1);
           r2.it->array_it.array = r1.o;
@@ -435,10 +452,13 @@ int yr_execute_code(
         break;
 
       case OP_ITER_START_DICT:
-        result = yr_arena_allocate_struct(
-            it_arena, sizeof(YR_ITERATOR), &r2.p);
+        r2.p = yr_notebook_alloc(it_notebook, sizeof(YR_ITERATOR));
 
-        if (result == ERROR_SUCCESS)
+        if (r2.p == NULL)
+        {
+          result = ERROR_INSUFFICIENT_MEMORY;
+        }
+        else
         {
           pop(r1);
           r2.it->dict_it.dict = r1.o;
@@ -453,10 +473,13 @@ int yr_execute_code(
       case OP_ITER_START_INT_RANGE:
         // Creates an iterator for an integer range. The higher bound of the
         // range is at the top of the stack followed by the lower bound.
-        result = yr_arena_allocate_struct(
-            it_arena, sizeof(YR_ITERATOR), &r3.p);
+        r3.p = yr_notebook_alloc(it_notebook, sizeof(YR_ITERATOR));
 
-        if (result == ERROR_SUCCESS)
+        if (r3.p == NULL)
+        {
+          result = ERROR_INSUFFICIENT_MEMORY;
+        }
+        else
         {
           pop(r2);
           pop(r1);
@@ -475,10 +498,14 @@ int yr_execute_code(
         // items in reverse order.
         pop(r1);
 
-        result = yr_arena_allocate_struct(
-            it_arena, sizeof(YR_ITERATOR) + sizeof(uint64_t) * r1.i, &r3.p);
+        r3.p = yr_notebook_alloc(
+            it_notebook, sizeof(YR_ITERATOR) + sizeof(uint64_t) * r1.i);
 
-        if (result == ERROR_SUCCESS)
+        if (r3.p == NULL)
+        {
+          result = ERROR_INSUFFICIENT_MEMORY;
+        }
+        else
         {
           r3.it->int_enum_it.count = r1.i;
           r3.it->int_enum_it.next = 0;
@@ -678,7 +705,7 @@ int yr_execute_code(
         pop(r1);
 
         if (is_undef(r1))
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
         else
           r1.i = !r1.i;
 
@@ -693,7 +720,7 @@ int yr_execute_code(
         if (r2.i != 0)
           r1.i = r1.i % r2.i;
         else
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
         push(r1);
         break;
 
@@ -703,7 +730,7 @@ int yr_execute_code(
         ensure_defined(r2);
         ensure_defined(r1);
         if (r2.i < 0)
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
         else if (r2.i < 64)
           r1.i = r1.i >> r2.i;
         else
@@ -717,7 +744,7 @@ int yr_execute_code(
         ensure_defined(r2);
         ensure_defined(r1);
         if (r2.i < 0)
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
         else if (r2.i < 64)
           r1.i = r1.i << r2.i;
         else
@@ -760,44 +787,62 @@ int yr_execute_code(
         break;
 
       case OP_PUSH_RULE:
-        rule = *(YR_RULE**)(ip);
+        r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
+
+        rule = &context->rules->rules_list_head[r1.i];
+
         if (RULE_IS_DISABLED(rule))
-          r1.i = UNDEFINED;
+        {
+          r2.i = YR_UNDEFINED;
+        }
         else
-          r1.i = rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0;
-        push(r1);
+        {
+          if yr_bitmask_is_set(context->rule_matches_flags, r1.i)
+            r2.i = 1;
+          else
+            r2.i = 0;
+        }
+
+        push(r2);
         break;
 
       case OP_INIT_RULE:
-        memcpy(&init_rule_args, ip, sizeof(init_rule_args));
-        #ifdef PROFILING_ENABLED
-        current_rule = init_rule_args.rule;
-        #endif
-        if (RULE_IS_DISABLED(init_rule_args.rule))
-          ip = init_rule_args.jmp_addr;
-        else
-          ip += sizeof(init_rule_args);
+        // After the opcode there's an int32_t corresponding to the jump's
+        // offset and an uint32_t corresponding to the rule's index.
+        current_rule_idx = *(uint32_t*)(ip + sizeof(int32_t));
+        current_rule = &context->rules->rules_list_head[current_rule_idx];
+
+        // If the rule is disabled let's skip its code.
+        ip = jmp_if(RULE_IS_DISABLED(current_rule), ip);
+
+        // Skip the bytes corresponding to the rule's index, but only if not
+        // taking the jump.
+        if (!RULE_IS_DISABLED(current_rule))
+          ip += sizeof(uint32_t);
+
         break;
 
       case OP_MATCH_RULE:
         pop(r1);
-        rule = *(YR_RULE**)(ip);
+
+        r2.i = *(uint64_t*)(ip);
+        ip += sizeof(uint64_t);
+
+        rule = &context->rules->rules_list_head[r2.i];
 
         #if PARANOID_EXEC
         ensure_within_rules_arena(rule);
         #endif
 
-        ip += sizeof(uint64_t);
-
         if (!is_undef(r1) && r1.i)
-          rule->t_flags[tidx] |= RULE_TFLAGS_MATCH;
+          yr_bitmask_set(context->rule_matches_flags, r2.i);
         else if (RULE_IS_GLOBAL(rule))
-          rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
+          yr_bitmask_set(context->ns_unsatisfied_flags, rule->ns->idx);
 
         #ifdef PROFILING_ENABLED
-        elapsed_time = yr_stopwatch_elapsed_us(&context->stopwatch);
-        rule->time_cost_per_thread[tidx] += (elapsed_time - start_time);
+        elapsed_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
+        context->time_cost[r2.i] += (elapsed_time - start_time);
         start_time = elapsed_time;
         #endif
 
@@ -846,14 +891,14 @@ int yr_execute_code(
 
           case OBJECT_TYPE_FLOAT:
             if (isnan(r1.o->value.d))
-              r1.i = UNDEFINED;
+              r1.i = YR_UNDEFINED;
             else
               r1.d = r1.o->value.d;
             break;
 
           case OBJECT_TYPE_STRING:
             if (r1.o->value.ss == NULL)
-              r1.i = UNDEFINED;
+              r1.i = YR_UNDEFINED;
             else
               r1.ss = r1.o->value.ss;
             break;
@@ -881,7 +926,7 @@ int yr_execute_code(
         r1.o = yr_object_array_get_item(r2.o, 0, (int) r1.i);
 
         if (r1.o == NULL)
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
 
         push(r1);
         break;
@@ -903,7 +948,7 @@ int yr_execute_code(
             r2.o, 0, r1.ss->c_string);
 
         if (r1.o == NULL)
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
 
         push(r1);
         break;
@@ -946,10 +991,10 @@ int yr_execute_code(
 
         if (count > 0)
         {
-          // if there are undefined args, result for function call
+          // If there are undefined args, result for function call
           // is undefined as well.
 
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
           push(r1);
           break;
         }
@@ -969,23 +1014,25 @@ int yr_execute_code(
           }
         }
 
-        // if i == YR_MAX_OVERLOADED_FUNCTIONS at this point no matching
+        // If i == YR_MAX_OVERLOADED_FUNCTIONS at this point no matching
         // prototype was found, but this shouldn't happen.
-
         assert(i < YR_MAX_OVERLOADED_FUNCTIONS);
 
-        // make a copy of the returned object and push the copy into the stack,
+        // Make a copy of the returned object and push the copy into the stack,
         // function->return_obj can't be pushed because it can change in
         // subsequent calls to the same function.
-
         if (result == ERROR_SUCCESS)
           result = yr_object_copy(function->return_obj, &r1.o);
 
-        // a pointer to the copied object is stored in a arena in order to
-        // free the object before exiting yr_execute_code
-
+        // A pointer to the copied object is stored in a arena in order to
+        // free the object before exiting yr_execute_code, obj_count tracks
+        // the number of objects written.
         if (result == ERROR_SUCCESS)
-          result = yr_arena_write_data(obj_arena, &r1.o, sizeof(r1.o), NULL);
+        {
+          result = yr_arena_write_data(
+              obj_arena, 0, &r1.o, sizeof(r1.o), NULL);
+          obj_count++;
+        }
 
         stop = (result != ERROR_SUCCESS);
         push(r1);
@@ -993,12 +1040,7 @@ int yr_execute_code(
 
       case OP_FOUND:
         pop(r1);
-
-        if (STRING_IS_PRIVATE(r1.s))
-          r2.i = r1.s->private_matches[tidx].tail != NULL ? 1 : 0;
-        else
-          r2.i = r1.s->matches[tidx].tail != NULL ? 1 : 0;
-
+        r2.i = context->matches[r1.s->idx].tail != NULL ? 1 : 0;
         push(r2);
         break;
 
@@ -1017,11 +1059,7 @@ int yr_execute_code(
         ensure_within_rules_arena(r2.p);
         #endif
 
-        if (STRING_IS_PRIVATE(r2.s))
-          match = r2.s->private_matches[tidx].head;
-        else
-          match = r2.s->matches[tidx].head;
-
+        match = context->matches[r2.s->idx].head;
         r3.i = false;
 
         while (match != NULL)
@@ -1053,11 +1091,7 @@ int yr_execute_code(
         ensure_within_rules_arena(r3.p);
         #endif
 
-        if (STRING_IS_PRIVATE(r3.s))
-          match = r3.s->private_matches[tidx].head;
-        else
-          match = r3.s->matches[tidx].head;
-
+        match = context->matches[r3.s->idx].head;
         r4.i = false;
 
         while (match != NULL && !r4.i)
@@ -1084,11 +1118,7 @@ int yr_execute_code(
         ensure_within_rules_arena(r1.p);
         #endif
 
-        if (STRING_IS_PRIVATE(r1.s))
-          r2.i = r1.s->private_matches[tidx].count;
-        else
-          r2.i = r1.s->matches[tidx].count;
-
+        r2.i = context->matches[r1.s->idx].count;
         push(r2);
         break;
 
@@ -1102,15 +1132,12 @@ int yr_execute_code(
         ensure_within_rules_arena(r2.p);
         #endif
 
-        if (STRING_IS_PRIVATE(r2.s))
-          match = r2.s->private_matches[tidx].head;
-        else
-          match = r2.s->matches[tidx].head;
+        match = context->matches[r2.s->idx].head;
 
         i = 1;
-        r3.i = UNDEFINED;
+        r3.i = YR_UNDEFINED;
 
-        while (match != NULL && r3.i == UNDEFINED)
+        while (match != NULL && r3.i == YR_UNDEFINED)
         {
           if (r1.i == i)
             r3.i = match->base + match->offset;
@@ -1132,15 +1159,12 @@ int yr_execute_code(
         ensure_within_rules_arena(r2.p);
         #endif
 
-        if (STRING_IS_PRIVATE(r2.s))
-          match = r2.s->private_matches[tidx].head;
-        else
-          match = r2.s->matches[tidx].head;
+        match = context->matches[r2.s->idx].head;
 
         i = 1;
-        r3.i = UNDEFINED;
+        r3.i = YR_UNDEFINED;
 
-        while (match != NULL && r3.i == UNDEFINED)
+        while (match != NULL && r3.i == YR_UNDEFINED)
         {
           if (r1.i == i)
             r3.i = match->match_length;
@@ -1159,8 +1183,10 @@ int yr_execute_code(
 
         while (!is_undef(r1))
         {
-          if (r1.s->matches[tidx].tail != NULL || r1.s->private_matches[tidx].tail != NULL)
+          if (context->matches[r1.s->idx].tail != NULL)
+          {
             found++;
+          }
           count++;
           pop(r1);
         }
@@ -1330,7 +1356,7 @@ int yr_execute_code(
         r2 = stack.items[stack.sp - r1.i];
 
         if (is_undef(r2))
-          stack.items[stack.sp - r1.i].i = UNDEFINED;
+          stack.items[stack.sp - r1.i].i = YR_UNDEFINED;
         else
           stack.items[stack.sp - r1.i].d = (double) r2.i;
         break;
@@ -1431,7 +1457,7 @@ int yr_execute_code(
         if (r2.i != 0)
           r1.i = r1.i / r2.i;
         else
-          r1.i = UNDEFINED;
+          r1.i = YR_UNDEFINED;
         push(r1);
         break;
 
@@ -1582,18 +1608,17 @@ int yr_execute_code(
         assert(false);
     }
 
-    // Check for timeout every 10 instruction cycles. If timeout == 0 it means
+    // Check for timeout every 100 instruction cycles. If timeout == 0 it means
     // no timeout at all.
 
-    if (context->timeout > 0L && ++cycle == 10)
+    if (context->timeout > 0L && ++cycle == 100)
     {
-      elapsed_time = yr_stopwatch_elapsed_us(&context->stopwatch);
+      elapsed_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
 
       if (elapsed_time > context->timeout)
       {
         #ifdef PROFILING_ENABLED
-        assert(current_rule != NULL);
-        current_rule->time_cost_per_thread[tidx] += elapsed_time - start_time;
+        context->time_cost[current_rule_idx] += (elapsed_time - start_time);
         #endif
         result = ERROR_SCAN_TIMEOUT;
         stop = true;
@@ -1603,18 +1628,13 @@ int yr_execute_code(
     }
   }
 
-  obj_ptr = (YR_OBJECT**) yr_arena_base_address(obj_arena);
+  obj_ptr = yr_arena_get_ptr(obj_arena, 0, 0);
 
-  while (obj_ptr != NULL)
-  {
-    yr_object_destroy(*obj_ptr);
+  for (int i = 0; i < obj_count; i++)
+    yr_object_destroy(obj_ptr[i]);
 
-    obj_ptr = (YR_OBJECT**) yr_arena_next_address(
-        obj_arena, obj_ptr, sizeof(YR_OBJECT*));
-  }
-
-  yr_arena_destroy(obj_arena);
-  yr_arena_destroy(it_arena);
+  yr_arena_release(obj_arena);
+  yr_notebook_destroy(it_notebook);
   yr_modules_unload_all(context);
   yr_free(stack.items);
 

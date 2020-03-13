@@ -49,15 +49,36 @@ int warnings;
 
 
 //
-// A YR_CALLBACK_FUNC that counts the number of matches during the scan. The
-// user_data argument must be a pointer to an int.
+// A YR_CALLBACK_FUNC that counts the number of matching and non-matching rules
+// during a scan. user_data must point to a COUNTERS structure.
 //
-int count_matches(
+int count(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data)
 {
-  if (message == CALLBACK_MSG_RULE_MATCHING)
+  switch (message)
+  {
+    case CALLBACK_MSG_RULE_MATCHING:
+      (*(struct COUNTERS*) user_data).rules_matching++;
+      break;
+
+    case CALLBACK_MSG_RULE_NOT_MATCHING:
+      (*(struct COUNTERS*) user_data).rules_not_matching++;
+
+  }
+  return CALLBACK_CONTINUE;
+}
+
+
+int count_non_matches(
+    YR_SCAN_CONTEXT* context,
+    int message,
+    void* message_data,
+    void* user_data)
+{
+  if (message == CALLBACK_MSG_RULE_NOT_MATCHING)
   {
     (*(int*) user_data)++;
   }
@@ -65,11 +86,11 @@ int count_matches(
   return CALLBACK_CONTINUE;
 }
 
-
 //
 // A YR_CALLBACK_FUNC that does nothing.
 //
 int do_nothing(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data)
@@ -139,6 +160,7 @@ struct SCAN_CALLBACK_CTX {
 };
 
 static int _scan_callback(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data)
@@ -190,7 +212,7 @@ int matches_blob(
   };
 
   int scan_result = yr_rules_scan_mem(
-      rules, blob, blob_size, 0, _scan_callback, &ctx, 0);
+      rules, blob, blob_size, SCAN_FLAGS_NO_TRYCATCH, _scan_callback, &ctx, 0);
 
   if (scan_result != ERROR_SUCCESS)
   {
@@ -225,6 +247,7 @@ typedef struct
 
 
 static int capture_matches(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data)
@@ -240,7 +263,7 @@ static int capture_matches(
     {
       YR_MATCH* match;
 
-      yr_string_matches_foreach(string, match)
+      yr_string_matches_foreach(context, string, match)
       {
         if (strlen(f->expected) == match->data_length &&
             strncmp(f->expected, (char*)(match->data), match->data_length) == 0)

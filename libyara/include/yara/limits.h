@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils.h"
 
-// Maximum lenght of file paths. This is the only limit that doesn't have the
+// Maximum length of file paths. This is the only limit that doesn't have the
 // YR_ prefix. The intention is using the default MAX_PATH if defined.
 #ifndef MAX_PATH
 #define MAX_PATH 1024
@@ -48,6 +48,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // structures.
 #ifndef YR_MAX_THREADS
 #define YR_MAX_THREADS 32
+#endif
+
+// Maximum number of buffers that an arena can have.
+#ifndef YR_MAX_ARENA_BUFFERS
+#define YR_MAX_ARENA_BUFFERS 16
 #endif
 
 // Capacity of the buffer used for storing compiler error messages. Messages
@@ -96,10 +101,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // required for maintaining the loop's state.
 #ifndef YR_MAX_LOOP_VARS
 #define YR_MAX_LOOP_VARS 2
-#endif
-
-#ifndef YR_MAX_ARENA_PAGES
-#define YR_MAX_ARENA_PAGES 32
 #endif
 
 // Maximum number of nested included files.
@@ -152,11 +153,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Maximum stack size for regexp evaluation
 #ifndef RE_MAX_STACK
 #define RE_MAX_STACK 1024
-#endif
-
-// Maximum code size for a compiled regexp
-#ifndef RE_MAX_CODE_SIZE
-#define RE_MAX_CODE_SIZE 32768
 #endif
 
 // Maximum input size scanned by yr_re_exec

@@ -69,21 +69,9 @@ typedef enum _YR_CONFIG_NAME
 
 YR_API int yr_initialize(void);
 
-
 YR_API int yr_finalize(void);
 
-
-YR_DEPRECATED_API void yr_finalize_thread(void);
-
-
-YR_API int yr_get_tidx(void);
-
-
-YR_API void yr_set_tidx(int);
-
-
 YR_API int yr_set_configuration(YR_CONFIG_NAME, void*);
-
 
 YR_API int yr_get_configuration(YR_CONFIG_NAME, void*);
 

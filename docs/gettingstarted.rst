@@ -88,7 +88,8 @@ You can also download and install YARA using the `vcpkg <https://github.com/Micr
     ./vcpkg integrate install
     vcpkg install yara
 
-The YARA port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please `create an issue or pull request <https://github.com/Microsoft/vcpkg/>`_ on the vcpkg repository.
+The YARA port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out
+of date, please `create an issue or pull request <https://github.com/Microsoft/vcpkg/>`_ on the vcpkg repository.
 
 
 Installing on Windows
@@ -98,10 +99,11 @@ Compiled binaries for Windows in both 32 and 64 bit flavors can be found in the
 link below. Just download the version you want, unzip the archive, and put the
 ``yara.exe`` and ``yarac.exe`` binaries anywhere in your disk.
 
-To install the ``yara-python`` extension download and execute the installer
-corresponding to the version of Python you're using.
+`Download Windows binaries <https://github.com/VirusTotal/yara/releases/latest>`_
 
-`Download Windows binaries <https://www.dropbox.com/sh/umip8ndplytwzj1/AADdLRsrpJL1CM1vPVAxc5JZa?dl=0>`_
+To install YARA using `Scoop <https://scoop.sh>`_ or `Chocolatey <https://chocolatey.org>`_, simply type
+``scoop install yara`` or ``choco install yara``. The integration with both `Scoop` and `Chocolatey` are
+not maintained their respective teams, not by the YARA authors.
 
 
 Installing on Mac OS X with Homebrew
@@ -111,7 +113,7 @@ To install YARA using `Homebrew <https://brew.sh>`_, simply type
 ``brew install yara``.
 
 
-Installing yara-python
+Installing ``yara-python``
 ----------------------
 
 If you plan to use YARA from your Python scripts you need to install the

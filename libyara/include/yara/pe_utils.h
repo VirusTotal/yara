@@ -52,20 +52,6 @@ typedef struct _IMPORT_FUNCTION
 } IMPORT_FUNCTION, *PIMPORT_FUNCTION;
 
 
-typedef struct _EXPORT_FUNCTION
-{
-  char *name;
-  uint16_t ordinal;
-} EXPORT_FUNCTION, *PEXPORT_FUNCTION;
-
-
-typedef struct _EXPORT_FUNCTIONS
-{
-  uint32_t number_of_exports;
-  EXPORT_FUNCTION* functions;
-} EXPORT_FUNCTIONS, *PEXPORT_FUNCTIONS;
-
-
 typedef struct _PE
 {
   const uint8_t* data;
@@ -79,7 +65,6 @@ typedef struct _PE
   YR_HASH_TABLE* hash_table;
   YR_OBJECT* object;
   IMPORTED_DLL* imported_dlls;
-  EXPORT_FUNCTIONS* exported_functions;
 
   uint32_t resources;
 

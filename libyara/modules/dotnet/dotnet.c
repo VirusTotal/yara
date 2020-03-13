@@ -196,6 +196,12 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(
     result.size = 0;
   }
 
+  // There is an additional terminal byte which is 0x01 under certain
+  // conditions. The exact conditions are not relevant to our parsing but are
+  // documented in ECMA-335 II.24.2.4.
+  if (result.length > 0)
+    result.length--;
+
   return result;
 }
 
@@ -795,6 +801,9 @@ void dotnet_parse_tilde_2(
 
             // Now follow the Class index into the TypeRef table.
             typeref_row = typeref_ptr + (typeref_row_size * class_index);
+
+            if (!fits_in_pe(pe, typeref_row, typeref_row_size))
+              break;
 
             // Skip over the ResolutionScope and check the Name field,
             // which is an index into the Strings heap.
@@ -1439,6 +1448,7 @@ void dotnet_parse_tilde(
   // number of rows being indexed into.
   ROWS rows;
   INDEX_SIZES index_sizes;
+  uint32_t heap_sizes;
 
   // Default all rows to 0. They will be set to actual values later on, if
   // they exist in the file.
@@ -1455,13 +1465,15 @@ void dotnet_parse_tilde(
   if (!struct_fits_in_pe(pe, tilde_header, TILDE_HEADER))
     return;
 
-  uint32_t heap_sizes = yr_le32toh(tilde_header->HeapSizes);
+  heap_sizes = yr_le32toh(tilde_header->HeapSizes);
 
   // Set index sizes for various heaps.
   if (heap_sizes & 0x01)
     index_sizes.string = 4;
+
   if (heap_sizes & 0x02)
     index_sizes.guid = 4;
+
   if (heap_sizes & 0x04)
     index_sizes.blob = 4;
 

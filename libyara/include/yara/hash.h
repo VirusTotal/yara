@@ -120,4 +120,17 @@ YR_API int yr_hash_table_add_raw_key(
     const char* ns,
     void* value);
 
+
+YR_API uint32_t yr_hash_table_add_uint32(
+    YR_HASH_TABLE* table,
+    const char* key,
+    const char* ns,
+    uint32_t value);
+
+
+YR_API uint32_t yr_hash_table_lookup_uint32(
+    YR_HASH_TABLE* table,
+    const char* key,
+    const char* ns);
+
 #endif

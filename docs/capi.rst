@@ -30,7 +30,7 @@ with :c:func:`yr_compiler_destroy`.
 
 You can use :c:func:`yr_compiler_add_file`, :c:func:`yr_compiler_add_fd`, or
 :c:func:`yr_compiler_add_string` to add one or more input sources to be
-compiled. Both of these functions receive an optional namespace. Rules added
+compiler. Both of these functions receive an optional namespace. Rules added
 under the same namespace behave as if they were contained within the same
 source file or string, so, rule identifiers must be unique among all the sources
 sharing a namespace. If the namespace argument is ``NULL`` the rules are put
@@ -71,11 +71,11 @@ However, if you want to fetch the imported rules from another source (eg: from a
 database or remote service), a callback function can be set with
 :c:func:`yr_compiler_set_include_callback`.
 
-The callback receives the following parameters:
+This callback receives the following parameters:
  * ``include_name``: name of the requested file.
  * ``calling_rule_filename``: the requesting file name (NULL if not a file).
  * ``calling_rule_namespace``: namespace (NULL if undefined).
- * ``user_data`` pointer is the same you passed to :c:func:`yr_compiler_set_include_callback`.
+ * ``user_data`` same pointer passed to :c:func:`yr_compiler_set_include_callback`.
 
 It should return the requested file's content as a null-terminated string. The
 memory for this string should be allocated by the callback function. Once it is
@@ -248,6 +248,9 @@ Lastly, the callback function is also called with the
 ``CALLBACK_MSG_SCAN_FINISHED`` message when the scan is finished. In this case
 ``message_data`` is ``NULL``.
 
+Notice that you shouldn't call any of the ``yr_rules_scan_XXXX`` functions from
+within the callback as those functions are not re-entrant.
+
 Your callback function must return one of the following values::
 
   CALLBACK_CONTINUE
@@ -260,16 +263,19 @@ If it returns ``CALLBACK_CONTINUE`` YARA will continue normally,
 ``CALLBACK_ERROR`` will abort the scanning too, but the result from
 ``yr_rules_scan_XXXX`` will be ``ERROR_CALLBACK_ERROR``.
 
-
 The ``user_data`` argument passed to your callback function is the same you
 passed ``yr_rules_scan_XXXX``. This pointer is not touched by YARA, it's just a
 way for your program to pass arbitrary data to the callback function.
 
-All ``yr_rules_scan_XXXX`` functions receive a ``flags`` argument and a
-``timeout`` argument. The only flag defined at this time is
-``SCAN_FLAGS_FAST_MODE``, so you must pass either this flag or a zero value.
-The ``timeout`` argument forces the function to return after the specified
-number of seconds approximately, with a zero meaning no timeout at all.
+All ``yr_rules_scan_XXXX`` functions receive a ``flags`` argument that allows
+to tweak some aspects of the scanning process. The supported flags are the following
+ones:
+
+ ``SCAN_FLAGS_FAST_MODE``
+ ``SCAN_FLAGS_NO_TRYCATCH``
+ ``SCAN_FLAGS_REPORT_RULES_MATCHING``
+ ``SCAN_FLAGS_REPORT_RULES_NOT_MATCHING``
+
 
 The ``SCAN_FLAGS_FAST_MODE`` flag makes the scanning a little faster by avoiding
 multiple matches of the same string when not necessary. Once the string was
@@ -278,8 +284,22 @@ single match for the string, even if it appears multiple times in the scanned
 data. This flag has the same effect of the ``-f`` command-line option described
 in :ref:`command-line`.
 
-Notice that you shouldn't call any of the ``yr_rules_scan_XXXX`` functions from
-within the callback as those functions are not re-entrant.
+``SCAN_FLAGS_REPORT_RULES_MATCHING`` and ``SCAN_FLAGS_REPORT_RULES_NOT_MATCHING``
+control whether the callback is invoked for rules that are matching or for rules
+that are not matching respectively. If ``SCAN_FLAGS_REPORT_RULES_MATCHING`` is
+specified alone, the callback will be called for matching rules with the
+``CALLBACK_MSG_RULE_MATCHING`` message but it won't be called for non-matching
+rules. If ``SCAN_FLAGS_REPORT_RULES_NOT_MATCHING`` is specified alone, the opposite
+happens, the callback will be called with ``CALLBACK_MSG_RULE_NOT_MATCHING``
+messages but not with ``CALLBACK_MSG_RULE_MATCHING`` messages. If both flags
+are combined together (the default) the callback will be called for both matching
+and non-matching rules. For backward compatibility, if none of these two flags
+are specified, the scanner will follow the default behavior.
+
+Additionally, ``yr_rules_scan_XXXX`` functions can receive a ``timeout`` argument
+which forces the scan to abort after the specified number of seconds (approximately).
+If ``timeout`` is 0 it means no timeout at all.
+
 
 Using a scanner
 ---------------
@@ -825,7 +845,12 @@ Functions
 
   .. versionadded:: 3.8.0
 
-  Set the flags that will be used by any call to `yr_scanner_scan_xxx`.
+  Set the flags that will be used by any call to `yr_scanner_scan_xxx`. The supported flags are:
+
+ ``SCAN_FLAGS_FAST_MODE``: Enable fast scan mode.
+ ``SCAN_FLAGS_NO_TRYCATCH``: Disable exception handling.
+ ``SCAN_FLAGS_REPORT_RULES_MATCHING``: If this
+ ``SCAN_FLAGS_REPORT_RULES_NOT_MATCHING``
 
 .. c:function:: int yr_scanner_define_integer_variable(YR_SCANNER* scanner, const char* identifier, int64_t value)
 

@@ -114,7 +114,9 @@ void setup_crasher()
 }
 
 /* Simple yr_scan_* callback function that delays execution by 2 seconds */
-int delay_callback(int message,
+int delay_callback(
+    YR_SCAN_CONTEXT* context,
+    int message,
     void* message_data,
     void* user_data)
 {
@@ -134,16 +136,20 @@ int test_crash(int handle_exceptions)
   setup_rules();
 
   puts("Scanning for \"aaaa\"...");
-  int matches = 0;
+
+  struct COUNTERS counters;
+
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
 
   int flags = (handle_exceptions ? 0 : SCAN_FLAGS_NO_TRYCATCH);
 
   int rc = yr_rules_scan_mem(
-      rules_a, mapped_region, COUNT * sizeof(wbuf), flags, count_matches, &matches, 0);
+      rules_a, mapped_region, COUNT * sizeof(wbuf), flags, count, &counters, 0);
 
-  printf("err = %d, matches = %d\n", rc, matches);
+  printf("err = %d, matches = %d\n", rc, counters.rules_matching);
 
-  if (rc == ERROR_SUCCESS || matches != 0)
+  if (rc == ERROR_SUCCESS || counters.rules_matching != 0)
     return 1;
 
   return 0;
@@ -194,14 +200,18 @@ int test_blocked_signal() {
   kill(getpid(), SIGUSR1);
 
   puts("Scanning for {00 00 00 00}...");
-  int matches = 0;
+
+  struct COUNTERS counters;
+
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
 
   int rc = yr_rules_scan_mem(
-      rules_0, mapped_region, COUNT * sizeof(wbuf), 0, count_matches, &matches, 0);
+      rules_0, mapped_region, COUNT * sizeof(wbuf), 0, count, &counters, 0);
 
-  printf("err = %d, matches = %d\n", rc, matches);
+  printf("err = %d, matches = %d\n", rc, counters.rules_matching);
 
-  if (rc == ERROR_SUCCESS || matches != 0)
+  if (rc == ERROR_SUCCESS || counters.rules_matching != 0)
     return 1;
 
   return 0;

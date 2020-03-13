@@ -23,50 +23,56 @@ keywords are reserved and cannot be used as an identifier:
 
 
 .. list-table:: YARA keywords
-   :widths: 10 10 10 10 10 10 10
+   :widths: 10 10 10 10 10 10 10 10
 
    * - all
      - and
      - any
      - ascii
      - at
+     - base64
+     - base64wide
      - condition
-     - contains
-   * - entrypoint
+   * - contains
+     - entrypoint
      - false
      - filesize
-     - fullword
      - for
+     - fullword
      - global
-     - in
-   * - import
+     - import
+   * - in
      - include
-     - int8
      - int16
-     - int32
-     - int8be
      - int16be
-   * - int32be
-     - matches
+     - int32
+     - int32be
+     - int8
+     - int8be
+   * - matches
      - meta
      - nocase
      - not
-     - or
      - of
-   * - private
+     - or
+     - private
      - rule
-     - strings
+   * - strings
      - them
      - true
-     - uint8
      - uint16
-   * - uint32
-     - uint8be
      - uint16be
+     - uint32
      - uint32be
+     - uint8
+   * - uint8be
      - wide
      - xor
-     -
+     - 
+     - 
+     - 
+     - 
+     - 
 
 Rules are generally composed of two sections: strings definition and condition.
 The strings definition section can be omitted if the rule doesn't rely on any
@@ -362,7 +368,7 @@ The following rule will search for every single byte xor applied to the string
             $xor_string = "This program cannot" xor
 
         condition:
-           $xor_string
+            $xor_string
     }
 
 The above rule is logically equivalent to:
@@ -434,6 +440,65 @@ If you want more control over the range of bytes used with the xor modifier use:
 
 The above example will apply the bytes from 0x01 to 0xff, inclusively, to the
 string when searching. The general syntax is ``xor(minimum-maximum)``.
+
+base64 strings
+^^^^^^^^^^^^^^
+
+The ``base64`` modifier can be used to search for strings that have been base64
+encoded. A good explanation of the technique is at:
+
+https://www.leeholmes.com/blog/2019/12/10/searching-for-content-in-base-64-strings-2/
+
+The following rule will search for the three base64 permutations of the string
+"This program cannot":
+
+.. code-block:: yara
+
+    rule Base64Example1
+    {
+        strings:
+            $a = "This program cannot" base64
+
+        condition:
+            $a
+    }
+
+This will cause YARA to search for these three permutations:
+
+VGhpcyBwcm9ncmFtIGNhbm5vd
+RoaXMgcHJvZ3JhbSBjYW5ub3
+UaGlzIHByb2dyYW0gY2Fubm90
+
+The ``base64wide`` modifier works just like the base64 modifier but the results
+of the base64 modifier are converted to wide.
+
+The interaction between ``base64`` (or ``base64wide``) and ``wide`` and
+``ascii`` is as you might expect. ``wide`` and ``ascii`` are applied to the
+string first, and then the ``base64`` and ``base64wide`` modifiers are applied.
+At no point is the plaintext of the ``ascii`` or ``wide`` versions of the
+strings included in the search. If you want to also include those you can put
+them in a secondary string.
+
+The ``base64`` and ``base64wide`` modifiers also support a custom alphabet. For
+example:
+
+.. code-block:: yara
+
+    rule Base64Example2
+    {
+        strings:
+            $a = "This program cannot" base64("!@#$%^&*(){}[].,|ABCDEFGHIJ\x09LMNOPQRSTUVWXYZabcdefghijklmnopqrstu")
+
+        condition:
+            $a
+    }
+
+The alphabet must be 64 bytes long.
+
+The ``base64`` and ``base64wide`` modifiers are only supported with text
+strings. Using these modifiers with a hexadecimal string or a regular expression
+will cause a compiler error. Also, the ``xor`` and ``nocase`` modifiers used in
+combination with ``base64`` or ``base64wide`` will cause a compiler error.
 
 Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -611,24 +676,10 @@ the typical Boolean operators ``and``, ``or``, and ``not``, and relational opera
 and bitwise operators (``&``, ``|``, ``<<``, ``>>``, ``~``, ``^``) can be used on numerical
 expressions.
 
-String identifiers can be also used within a condition, acting as Boolean
-variables whose value depends on the presence or not of the associated string
-in the file.
-
-.. code-block:: yara
-
-    rule Example
-    {
-        strings:
-            $a = "text1"
-            $b = "text2"
-            $c = "text3"
-            $d = "text4"
-
-        condition:
-            ($a or $b) and ($c or $d)
-    }
-
+Integers are always 64-bits long, even the results of functions like `uint8`,
+`uint16` and `uint32` are promoted to 64-bits. This is something you must take
+into account, specially while using bitwise operators (for example, ~0x01 is not
+0xFE but 0xFFFFFFFFFFFFFFFE).
 
 The following table lists the precedence and associativity of all operators. The
 table is sorted in descending precedence order, which means that operators listed
@@ -685,6 +736,26 @@ Precedence  Operator  Description                                Associativity
 ----------  --------  -----------------------------------------  -------------
 13          or        Logical or                                 Left-to-right
 ==========  ========  =========================================  =============
+
+
+String identifiers can be also used within a condition, acting as Boolean
+variables whose value depends on the presence or not of the associated string
+in the file.
+
+.. code-block:: yara
+
+    rule Example
+    {
+        strings:
+            $a = "text1"
+            $b = "text2"
+            $c = "text3"
+            $d = "text4"
+
+        condition:
+            ($a or $b) and ($c or $d)
+    }
+
 
 
 Counting strings
@@ -1106,6 +1177,49 @@ In summary, the syntax of this operator is:
 .. code-block:: yara
 
     for expression identifier in indexes : ( boolean_expression )
+
+
+Iterators
+---------
+
+In YARA 3.12 the ``for..of`` operator was improved and now it can be used to
+iterate not only over integer enumerations and ranges (e.g: 1,2,3,4 and 1..4),
+but also over any kind of iterable data type, like arrays and dictionaries
+defined by YARA modules. For example, the following expression is valid in
+YARA 3.12:
+
+.. code-block:: yara
+
+    for any section in pe.sections : ( section.name == ".text" )
+
+This is equivalent to:
+
+.. code-block:: yara
+
+    for any i in (0..pe.number_of_sections-1) : ( pe.sections[i].name == ".text" )
+
+The new syntax is more natural and easy to understand, and is the recommended
+way of expressing this type of conditions in newer versions of YARA.
+
+For while iterating dictionaries you must provide to variable names that will
+hold the key and value of each entry in the dictionary, for example:
+
+.. code-block:: yara
+
+    for any k,v in some_dict : ( k == "foo" and v == "bar" )
+
+In general the ``for..of`` operator has the form:
+
+.. code-block:: yara
+
+    for <quantifier> <variables> in <iterable> : ( <some condition using the loop variables> )
+
+Where `<quantifier>` is either `any`, `all` or an expression that evaluates to
+the number of items in the iterator that must satisfy the condition, `<variables>`
+is a comma-separated list of variable names that holds the values for the
+current item (the number of variables depend on the type of `<iterable>`) and
+`<iterable>` is something that can be iterated.
+
 
 .. _referencing-rules:
 

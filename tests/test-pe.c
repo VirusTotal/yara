@@ -40,7 +40,7 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
-          pe.imports(/.*/, /.*CriticalSection/) \
+          pe.imports(/.*/, /.*CriticalSection/) == 4 \
       }",
       "tests/data/tiny");
 
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
-          pe.imports(/kernel32\\.dll/i, /.*/) \
+          pe.imports(/kernel32\\.dll/i, /.*/) == 21 \
       }",
       "tests/data/tiny");
 
@@ -199,6 +199,14 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.pdb_path == \"D:\\\\workspace\\\\2018_R9_RelBld\\\\target\\\\checkout\\\\custprof\\\\Release\\\\custprof.pdb\" \
+      }",
+       "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
   assert_false_rule_file(
       "import \"pe\" \
       rule test { \
@@ -206,6 +214,70 @@ int main(int argc, char** argv)
           pe.checksum == pe.calculate_checksum() \
       }",
       "tests/data/tiny-idata-51ff");
+
+  /*
+   * mtxex.dll is 23e72ce7e9cdbc80c0095484ebeb02f56b21e48fd67044e69e7a2ae76db631e5,
+   * which was taken from a Windows 10 install. The details of which are:
+   *         export_timestamp = 1827812126
+   *         dll_name = "mtxex.dll"
+   *         number_of_exports = 4
+   *         export_details
+   *            [0]
+   *                    offset = 1072
+   *                    name = "DllGetClassObject"
+   *                    forward_name = YR_UNDEFINED
+   *                    ordinal = 1
+   *            [1]
+   *                    offset = YR_UNDEFINED
+   *                    name = "GetObjectContext"
+   *                    forward_name = "COMSVCS.GetObjectContext"
+   *                    ordinal = 2
+   *            [2]
+   *                    offset = YR_UNDEFINED
+   *                    name = "MTSCreateActivity"
+   *                    forward_name = "COMSVCS.MTSCreateActivity"
+   *                    ordinal = 3
+   *            [3]
+   *                    offset = YR_UNDEFINED
+   *                    name = "SafeRef"
+   *                    forward_name = "COMSVCS.SafeRef"
+   *                    ordinal = 4
+   */
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.number_of_exports == 4 and \
+          pe.dll_name == \"mtxex.dll\" and \
+          pe.export_timestamp == 1827812126 and \
+          pe.export_details[0].offset == 1072 and \
+          pe.export_details[0].name == \"DllGetClassObject\" and \
+          pe.export_details[0].ordinal == 1 and \
+          pe.export_details[1].forward_name == \"COMSVCS.GetObjectContext\" \
+      }",
+      "tests/data/mtxex.dll");
+
+  // Make sure exports function is case insensitive (historically this has been
+  // the case) and supports ordinals...
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.exports(\"saferef\") and \
+          pe.exports(4) and \
+          pe.exports(/mtscreateactivity/i) \
+      }",
+      "tests/data/mtxex.dll");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.exports_index(\"MTSCreateActivity\") == 2 and \
+          pe.exports_index(3) == 2 and \
+          pe.exports_index(/mtscreateactivity/i) == 2 \
+      }",
+      "tests/data/mtxex.dll");
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -229,6 +301,14 @@ int main(int argc, char** argv)
           pe.rich_signature.clear_data == \"DanS\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x01\\x00\\x11\\x00\\x00\\x00\\xc3\\x0f]\\x00\\x03\\x00\\x00\\x00\\x09x\\x95\\x00\\x01\\x00\\x00\\x00\\x09x\\x83\\x00\\x05\\x00\\x00\\x00\\x09x\\x94\\x00\\x01\\x00\\x00\\x00\\x09x\\x91\\x00\\x01\\x00\\x00\\x00\" \
       }",
       "tests/data/weird_rich");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.language(0x09) and pe.locale(0x0409) \
+      }",
+      "tests/data/mtxex.dll");
 
   yr_finalize();
   return 0;
