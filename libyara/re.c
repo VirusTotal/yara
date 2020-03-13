@@ -776,7 +776,7 @@ static int _yr_re_emit(
   int16_t* split_offset_addr = NULL;
   int16_t* jmp_offset_addr = NULL;
 
-  YR_ARENA_REF instruction_ref;
+  YR_ARENA_REF instruction_ref = YR_ARENA_NULL_REF;
   YR_ARENA_REF split_offset_ref;
   YR_ARENA_REF jmp_instruction_ref;
   YR_ARENA_REF jmp_offset_ref;
