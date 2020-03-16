@@ -215,7 +215,9 @@ YR_API int yr_compiler_create(
         YR_NUM_SECTIONS, 64, &new_compiler->arena);
 
   if (result == ERROR_SUCCESS)
-    result = yr_ac_automaton_create(&new_compiler->automaton);
+    result = yr_ac_automaton_create(
+        new_compiler->arena,
+        &new_compiler->automaton);
 
   if (result == ERROR_SUCCESS)
   {
