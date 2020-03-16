@@ -1268,11 +1268,14 @@ boolean_expression
       {
         if ($1.type == EXPRESSION_TYPE_STRING)
         {
-          if ($1.value.sized_string != NULL)
+          if (!YR_ARENA_IS_NULL_REF($1.value.sized_string_ref))
           {
+            SIZED_STRING* sized_string = yr_arena_ref_to_ptr(
+                compiler->arena, &$1.value.sized_string_ref);
+
             yywarning(yyscanner,
-              "Using literal string \"%s\" in a boolean operation.",
-              $1.value.sized_string->c_string);
+                "Using literal string \"%s\" in a boolean operation.",
+                sized_string->c_string);
           }
 
           fail_if_error(yr_parser_emit(
@@ -1942,7 +1945,7 @@ iterator
               if (loop_ctx->vars_count == 2)
               {
                 loop_ctx->vars[0].type = EXPRESSION_TYPE_STRING;
-                loop_ctx->vars[0].value.sized_string = NULL;
+                loop_ctx->vars[0].value.sized_string_ref = YR_ARENA_NULL_REF;
                 loop_ctx->vars[1].type = EXPRESSION_TYPE_OBJECT;
                 loop_ctx->vars[1].value.object = \
                     object_as_array($1.value.object)->prototype_item;
@@ -2213,8 +2216,7 @@ primary_expression
         fail_if_error(result);
 
         $$.type = EXPRESSION_TYPE_STRING;
-        //TODO
-        // $$.value.sized_string = sized_string;
+        $$.value.sized_string_ref = ref;
       }
     | _STRING_COUNT_
       {
@@ -2304,7 +2306,7 @@ primary_expression
               break;
             case OBJECT_TYPE_STRING:
               $$.type = EXPRESSION_TYPE_STRING;
-              $$.value.sized_string = NULL;
+              $$.value.sized_string_ref = YR_ARENA_NULL_REF;
               break;
             default:
               // In a primary expression any identifier that corresponds to an
