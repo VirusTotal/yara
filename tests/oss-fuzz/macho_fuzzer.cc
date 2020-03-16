@@ -60,7 +60,7 @@ extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
 }
 
 
-int callback(int message, void* message_data, void* user_data)
+int callback(YR_SCAN_CONTEXT* context, int message, void* message_data, void* user_data)
 {
   return CALLBACK_CONTINUE;
 }
