@@ -848,7 +848,7 @@ Reference
 
 .. c:function:: exports_index(function_name)
 
-    .. versionadded:: 3.12.0
+    .. versionadded:: 4.0.0
 
     Function returning the index into the export_details array where the named
     function is, undefined otherwise.
@@ -857,7 +857,7 @@ Reference
 
 .. c:function:: exports_index(ordinal)
 
-    .. versionadded:: 3.12.0
+    .. versionadded:: 4.0.0
 
     Function returning the index into the export_details array where the
     exported ordinal is, undefined otherwise.
@@ -866,7 +866,7 @@ Reference
 
 .. c:function:: exports_index(/regular_expression/)
 
-    .. versionadded:: 3.12.0
+    .. versionadded:: 4.0.0
 
     Function returning the first index into the export_details array where the
     regular expression matches the exported name, undefined otherwise.
@@ -881,7 +881,7 @@ Reference
 
 .. c:type:: export_details
 
-    .. versionadded:: 3.12.0
+    .. versionadded:: 4.0.0
 
     Structure containing information about the PE's exports.
 
@@ -906,13 +906,13 @@ Reference
 
 .. c:type:: dll_name
 
-    .. versionadded:: 3.12.0
+    .. versionadded:: 4.0.0
 
     The name of the DLL, if it exists in the export directory.
 
 .. c:type:: export_timestamp
 
-    .. versionadded:: 3.12.0
+    .. versionadded:: 4.0.0
 
     The timestamp the export data was created..
 
@@ -932,12 +932,12 @@ Reference
 .. c:function:: imports(dll_name)
 
     .. versionadded:: 3.5.0
-    .. versionchanged:: 3.12.0
+    .. versionchanged:: 4.0.0
 
     Function returning the number of functions from the *dll_name*, in the PE
     imports. *dll_name* is case insensitive.
 
-    Note: Prior to version 3.12.0, this function returned only a boolean value
+    Note: Prior to version 4.0.0, this function returned only a boolean value
     indicating if the given DLL name was found in the PE imports. This change
     is backward compatible, as any number larger than 0 also evaluates as
     true.
@@ -956,7 +956,7 @@ Reference
 .. c:function:: imports(dll_regexp, function_regexp)
 
     .. versionadded:: 3.8.0
-    .. versionchanged:: 3.12.0
+    .. versionchanged:: 4.0.0
 
     Function returning the number of functions from the PE imports where a
     function name matches *function_regexp* and a DLL name matches
@@ -964,7 +964,7 @@ Reference
     unless you use the "/i" modifier in the regexp, as shown in the example
     below.
 
-    Note: Prior to version 3.12.0, this function returned only a boolean value
+    Note: Prior to version 4.0.0, this function returned only a boolean value
     indicating if matching import was found or not. This change is backward
     compatible, as any number larger than 0 also evaluates as true.
 
