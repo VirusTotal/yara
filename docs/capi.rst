@@ -107,12 +107,11 @@ After you successfully added some sources you can get the compiled rules
 using the :c:func:`yr_compiler_get_rules` function. You'll get a pointer to
 a :c:type:`YR_RULES` structure which can be used to scan your data as
 described in :ref:`scanning-data`. Once :c:func:`yr_compiler_get_rules` is
-invoked you can not add more sources to the compiler, but you can get multiple
-instances of the compiled rules by calling :c:func:`yr_compiler_get_rules`
-multiple times.
+invoked you can not add more sources to the compiler, but you can call
+:c:func:`yr_compiler_get_rules` multiple times. Each time this function is called
+it returns a pointer to the same :c:type:`YR_RULES` structure.
 
-Each instance of :c:type:`YR_RULES` must be destroyed with
-:c:func:`yr_rules_destroy`.
+Instances of :c:type:`YR_RULES` must be destroyed with :c:func:`yr_rules_destroy`.
 
 Defining external variables
 ===========================
@@ -209,6 +208,7 @@ a callback function. The callback has the following prototype:
 .. code-block:: c
 
   int callback_function(
+      YR_SCAN_CONTEXT* context,
       int message,
       void* message_data,
       void* user_data);
@@ -226,7 +226,11 @@ a ``CALLBACK_MSG_RULE_MATCHING`` or ``CALLBACK_MSG_RULE_NOT_MATCHING`` message,
 depending if the rule is matching or not. In both cases a pointer to the
 :c:type:`YR_RULE` structure associated with the rule is passed in the
 ``message_data`` argument. You just need to perform a typecast from
-``void*`` to ``YR_RULE*`` to access the structure.
+``void*`` to ``YR_RULE*`` to access the structure. You can control whether or
+not YARA calls your callback function with ``CALLBACK_MSG_RULE_MATCHING`` and
+``CALLBACK_MSG_RULE_NOT_MATCHING`` messages by using the
+``SCAN_FLAGS_REPORT_RULES_MATCHING`` and ``SCAN_FLAGS_REPORT_RULES_NOT_MATCHING``
+as described later in this section.
 
 This callback is also called with the ``CALLBACK_MSG_IMPORT_MODULE`` message.
 All modules referenced by an ``import`` statement in the rules are imported
@@ -333,6 +337,12 @@ Data structures
 .. c:type:: YR_COMPILER
 
   Data structure representing a YARA compiler.
+
+.. c:type:: YR_SCAN_CONTEXT
+
+  Data structure that holds information about an on-going scan. A pointer to
+  this structure is passed to the callback function that receives notifications
+  about matches found. This structure is also used for iterating over the
 
 .. c:type:: YR_MATCH
 
@@ -757,19 +767,21 @@ Functions
       ..do something with string
     }
 
-.. c:function:: yr_string_matches_foreach(string, match)
+.. c:function:: yr_string_matches_foreach(context, string, match)
 
-  Iterate over the :c:type:`YR_MATCH` structures associated with a given string
-  running the block of code that follows each time with a different value for
-  *match*. Example:
+  Iterate over the :c:type:`YR_MATCH` structures that represent the matches
+  found for a given string during a scan running the block of code that follows,
+  each time with a different value for *match*. The `context` argument is a
+  pointer to a :c:type:`YR_SCAN_CONTEXT` that is passed to the callback function
+  and `string` is a pointer to a :c:type:`YR_STRING`. Example:
 
   .. code-block:: c
 
     YR_MATCH* match;
 
-    /* string is a YR_STRING object */
+    /* context is a YR_SCAN_CONTEXT* and string is a YR_STRING*  */
 
-    yr_string_matches_foreach(string, match)
+    yr_string_matches_foreach(context, string, match)
     {
       ..do something with match
     }
