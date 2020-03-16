@@ -88,7 +88,7 @@ typedef struct _YR_EXPRESSION
   union {
     int64_t integer;
     YR_OBJECT* object;
-    SIZED_STRING* sized_string;
+    YR_ARENA_REF sized_string_ref;
   } value;
 
   // An expression can have an associated identifier, if "ptr" is not NULL it
