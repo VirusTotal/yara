@@ -542,6 +542,9 @@ struct YR_AC_MATCH_LIST_ENTRY
 
 struct YR_AC_AUTOMATON
 {
+  // Arena used by this automaton to store the transition and match tables.
+  YR_ARENA* arena;
+
   // Both m_table and t_table have the same number of elements, which is
   // stored in tables_size.
   uint32_t tables_size;

@@ -249,8 +249,7 @@ static int _yr_ac_state_destroy(
 //
 
 static int _yr_ac_create_failure_links(
-    YR_AC_AUTOMATON* automaton,
-    YR_ARENA* arena)
+    YR_AC_AUTOMATON* automaton)
 {
   YR_AC_STATE* current_state;
   YR_AC_STATE* failure_state;
@@ -286,7 +285,8 @@ static int _yr_ac_create_failure_links(
   while (!_yr_ac_queue_is_empty(&queue))
   {
     current_state = _yr_ac_queue_pop(&queue);
-    match = yr_arena_ref_to_ptr(arena, &current_state->matches_ref);
+    match = yr_arena_ref_to_ptr(
+        automaton->arena, &current_state->matches_ref);
 
     if (match != NULL)
     {
@@ -295,7 +295,8 @@ static int _yr_ac_create_failure_links(
         match = match->next;
 
       if (match->backtrack > 0)
-        match->next = yr_arena_ref_to_ptr(arena, &root_state->matches_ref);
+        match->next = yr_arena_ref_to_ptr(
+            automaton->arena, &root_state->matches_ref);
     }
     else
     {
@@ -327,7 +328,8 @@ static int _yr_ac_create_failure_links(
           }
           else
           {
-            match = yr_arena_ref_to_ptr(arena, &transition_state->matches_ref);
+            match = yr_arena_ref_to_ptr(
+                automaton->arena, &transition_state->matches_ref);
 
             assert(match != NULL);
 
@@ -335,7 +337,8 @@ static int _yr_ac_create_failure_links(
             while (match->next != NULL)
               match = match->next;
 
-            match->next = yr_arena_ref_to_ptr(arena, &temp_state->matches_ref);
+            match->next = yr_arena_ref_to_ptr(
+                automaton->arena, &temp_state->matches_ref);
           }
 
           break;
@@ -583,8 +586,7 @@ static int _yr_ac_find_suitable_transition_table_slot(
 // A more detailed description can be found in: http://goo.gl/lE6zG
 
 static int _yr_ac_build_transition_table(
-    YR_AC_AUTOMATON* automaton,
-    YR_ARENA* arena)
+    YR_AC_AUTOMATON* automaton)
 {
   YR_AC_TRANSITION* t_table;
   uint32_t* m_table;
@@ -607,19 +609,19 @@ static int _yr_ac_build_transition_table(
     return ERROR_INSUFFICIENT_MEMORY;
 
   FAIL_ON_ERROR(yr_arena_allocate_zeroed_memory(
-      arena,
+      automaton->arena,
       YR_AC_TRANSITION_TABLE,
       automaton->tables_size * sizeof(YR_AC_TRANSITION),
       NULL));
 
   FAIL_ON_ERROR(yr_arena_allocate_zeroed_memory(
-      arena,
+      automaton->arena,
       YR_AC_STATE_MATCHES_TABLE,
       automaton->tables_size * sizeof(uint32_t),
       NULL));
 
-  t_table = yr_arena_get_ptr(arena, YR_AC_TRANSITION_TABLE, 0);
-  m_table = yr_arena_get_ptr(arena, YR_AC_STATE_MATCHES_TABLE, 0);
+  t_table = yr_arena_get_ptr(automaton->arena, YR_AC_TRANSITION_TABLE, 0);
+  m_table = yr_arena_get_ptr(automaton->arena, YR_AC_STATE_MATCHES_TABLE, 0);
 
   // The failure link for the root node points to itself.
   t_table[0] = YR_AC_MAKE_TRANSITION(0, 0);
@@ -659,13 +661,13 @@ static int _yr_ac_build_transition_table(
     state = _yr_ac_queue_pop(&queue);
 
     FAIL_ON_ERROR(_yr_ac_find_suitable_transition_table_slot(
-        automaton, arena, state, &slot));
+        automaton, automaton->arena, state, &slot));
 
     // _yr_ac_find_suitable_transition_table_slot can allocate more space in
     // both tables and cause the tables to be moved to a different memory
     // location, we must get their up-to-date addresses.
-    t_table = yr_arena_get_ptr(arena, YR_AC_TRANSITION_TABLE, 0);
-    m_table = yr_arena_get_ptr(arena, YR_AC_STATE_MATCHES_TABLE, 0);
+    t_table = yr_arena_get_ptr(automaton->arena, YR_AC_TRANSITION_TABLE, 0);
+    m_table = yr_arena_get_ptr(automaton->arena, YR_AC_STATE_MATCHES_TABLE, 0);
 
     t_table[state->t_table_slot] |= (slot << YR_AC_SLOT_OFFSET_BITS);
     t_table[slot] = YR_AC_MAKE_TRANSITION(state->failure->t_table_slot, 0);
@@ -711,7 +713,6 @@ static int _yr_ac_build_transition_table(
 // Prints automaton state for debug purposes. This function is invoked by
 // yr_ac_print_automaton, is not intended to be used stand-alone.
 //
-//TODO(vmalvarez): Remove or re-implement
 /*
 static void _yr_ac_print_automaton_state(
     YR_AC_STATE* state)
@@ -737,7 +738,7 @@ static void _yr_ac_print_automaton_state(
   printf("%p childs:%d depth:%d failure:%p",
          state, child_count, state->depth, state->failure);
 
-  match = state->matches;
+  match = state->matches_ref;
 
   while (match != NULL)
   {
@@ -798,6 +799,7 @@ static void _yr_ac_print_automaton_state(
 //
 
 int yr_ac_automaton_create(
+    YR_ARENA* arena,
     YR_AC_AUTOMATON** automaton)
 {
   YR_AC_AUTOMATON* new_automaton;
@@ -821,6 +823,7 @@ int yr_ac_automaton_create(
   root_state->siblings = NULL;
   root_state->t_table_slot = 0;
 
+  new_automaton->arena = arena;
   new_automaton->root = root_state;
   new_automaton->bitmask = NULL;
   new_automaton->tables_size = 0;
@@ -929,9 +932,9 @@ int yr_ac_compile(
     YR_AC_AUTOMATON* automaton,
     YR_ARENA* arena)
 {
-  FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton, arena));
+  FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_optimize_failure_links(automaton));
-  FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton, arena));
+  FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton));
 
   return ERROR_SUCCESS;
 }
@@ -942,12 +945,10 @@ int yr_ac_compile(
 //
 // Prints automaton for debug purposes.
 //
-//TODO(vmalvarez): Remove or re-implement
-/*
 void yr_ac_print_automaton(YR_AC_AUTOMATON* automaton)
 {
   printf("-------------------------------------------------------\n");
-  _yr_ac_print_automaton_state(automaton->root);
+  //_yr_ac_print_automaton_state(automaton->root);
   printf("-------------------------------------------------------\n");
 }
-*/
+

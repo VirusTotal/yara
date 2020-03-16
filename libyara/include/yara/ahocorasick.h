@@ -52,6 +52,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 int yr_ac_automaton_create(
+    YR_ARENA* arena,
     YR_AC_AUTOMATON** automaton);
 
 
