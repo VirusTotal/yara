@@ -906,7 +906,7 @@ int yr_scan_verify_match(
       string->fixed_offset != data_base + offset)
     return ERROR_SUCCESS;
 
-  #ifdef PROFILING_ENABLED
+  #ifdef YR_PROFILING_ENABLED
   uint64_t start_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
   #endif
 
@@ -921,7 +921,7 @@ int yr_scan_verify_match(
         context, ac_match, data, data_size, data_base, offset);
   }
 
-  #ifdef PROFILING_ENABLED
+  #ifdef YR_PROFILING_ENABLED
   uint64_t finish_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
   context->time_cost[string->rule_idx] += (finish_time - start_time);
   #endif

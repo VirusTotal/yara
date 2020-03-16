@@ -362,7 +362,7 @@ int yr_execute_code(
 
   uint64_t elapsed_time;
 
-  #ifdef PROFILING_ENABLED
+  #ifdef YR_PROFILING_ENABLED
   uint64_t start_time;
   #endif
 
@@ -406,7 +406,7 @@ int yr_execute_code(
       yr_arena_release(obj_arena);
       yr_free(stack.items));
 
-  #ifdef PROFILING_ENABLED
+  #ifdef YR_PROFILING_ENABLED
   start_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
   #endif
 
@@ -840,7 +840,7 @@ int yr_execute_code(
         else if (RULE_IS_GLOBAL(rule))
           yr_bitmask_set(context->ns_unsatisfied_flags, rule->ns->idx);
 
-        #ifdef PROFILING_ENABLED
+        #ifdef YR_PROFILING_ENABLED
         elapsed_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
         context->time_cost[r2.i] += (elapsed_time - start_time);
         start_time = elapsed_time;
@@ -1617,7 +1617,7 @@ int yr_execute_code(
 
       if (elapsed_time > context->timeout)
       {
-        #ifdef PROFILING_ENABLED
+        #ifdef YR_PROFILING_ENABLED
         context->time_cost[current_rule_idx] += (elapsed_time - start_time);
         #endif
         result = ERROR_SCAN_TIMEOUT;

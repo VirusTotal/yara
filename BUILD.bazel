@@ -57,7 +57,7 @@ config_setting(
 yara_library(
     name = "libyara",
     defines = select({
-        ":profiling_enabled": ["PROFILING_ENABLED"],
+        ":profiling_enabled": ["YR_PROFILING_ENABLED"],
         "//conditions:default": [],
     }) + select({
         ":crypto_library_boringssl": ["BORINGSSL"],

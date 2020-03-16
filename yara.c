@@ -1335,7 +1335,7 @@ int main(
     if (print_count_only)
       printf("%d\n", user_data.current_count);
 
-    #ifdef PROFILING_ENABLED
+    #ifdef YR_PROFILING_ENABLED
     yr_scanner_print_profiling_info(scanner);
     #endif
   }
