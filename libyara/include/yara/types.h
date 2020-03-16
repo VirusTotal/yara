@@ -207,6 +207,7 @@ typedef struct YR_RULE YR_RULE;
 typedef struct YR_RULES YR_RULES;
 typedef struct YR_SUMMARY YR_SUMMARY;
 typedef struct YR_RULES_STATS YR_RULES_STATS;
+typedef struct YR_PROFILING_INFO YR_PROFILING_INFO;
 typedef struct YR_EXTERNAL_VARIABLE YR_EXTERNAL_VARIABLE;
 typedef struct YR_MATCH YR_MATCH;
 typedef struct YR_SCAN_CONTEXT YR_SCAN_CONTEXT;
@@ -619,6 +620,15 @@ struct YR_RULES_STATS
 };
 
 
+#ifdef YR_PROFILING_ENABLED
+struct YR_PROFILING_INFO
+{
+  YR_RULE* rule;
+  uint64_t cost;
+};
+#endif
+
+
 typedef const uint8_t* (*YR_MEMORY_BLOCK_FETCH_DATA_FUNC)(
     YR_MEMORY_BLOCK* self);
 
@@ -727,7 +737,7 @@ struct YR_SCAN_CONTEXT
 
   // rule_cost is a pointer to an array of 64-bit integers with one entry per
   // rule. Entry N has the time cost for rule with index N.
-  #ifdef PROFILING_ENABLED
+  #ifdef YR_PROFILING_ENABLED
   uint64_t* time_cost;
   #endif
 };
