@@ -713,17 +713,16 @@ static int _yr_ac_build_transition_table(
 // Prints automaton state for debug purposes. This function is invoked by
 // yr_ac_print_automaton, is not intended to be used stand-alone.
 //
-/*
 static void _yr_ac_print_automaton_state(
+    YR_AC_AUTOMATON* automaton,
     YR_AC_STATE* state)
 {
-  int i;
   int child_count;
 
-  YR_AC_MATCH_LIST_ENTRY* match;
+  YR_AC_MATCH* match;
   YR_AC_STATE* child_state;
 
-  for (i = 0; i < state->depth; i++)
+  for (int i = 0; i < state->depth; i++)
     printf(" ");
 
   child_state = state->first_child;
@@ -738,13 +737,13 @@ static void _yr_ac_print_automaton_state(
   printf("%p childs:%d depth:%d failure:%p",
          state, child_count, state->depth, state->failure);
 
-  match = state->matches_ref;
+  match = yr_arena_ref_to_ptr(automaton->arena, &state->matches_ref);
 
   while (match != NULL)
   {
     printf("\n");
 
-    for (i = 0; i < state->depth + 1; i++)
+    for (int i = 0; i < state->depth + 1; i++)
       printf(" ");
 
     printf("%s = ", match->string->identifier);
@@ -753,7 +752,7 @@ static void _yr_ac_print_automaton_state(
     {
       printf("{ ");
 
-      for (i = 0; i < yr_min(match->string->length, 10); i++)
+      for (int i = 0; i < yr_min(match->string->length, 10); i++)
         printf("%02x ", match->string->string[i]);
 
       printf("}");
@@ -762,7 +761,7 @@ static void _yr_ac_print_automaton_state(
     {
       printf("/");
 
-      for (i = 0; i < yr_min(match->string->length, 10); i++)
+      for (int i = 0; i < yr_min(match->string->length, 10); i++)
         printf("%c", match->string->string[i]);
 
       printf("/");
@@ -771,7 +770,7 @@ static void _yr_ac_print_automaton_state(
     {
       printf("\"");
 
-      for (i = 0; i < yr_min(match->string->length, 10); i++)
+      for (int i = 0; i < yr_min(match->string->length, 10); i++)
         printf("%c", match->string->string[i]);
 
       printf("\"");
@@ -786,10 +785,10 @@ static void _yr_ac_print_automaton_state(
 
   while(child_state != NULL)
   {
-    _yr_ac_print_automaton_state(child_state);
+    _yr_ac_print_automaton_state(automaton, child_state);
     child_state = child_state->siblings;
   }
-}*/
+}
 
 
 //
@@ -935,7 +934,7 @@ int yr_ac_compile(
   FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_optimize_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton));
-
+  
   return ERROR_SUCCESS;
 }
 
@@ -948,7 +947,7 @@ int yr_ac_compile(
 void yr_ac_print_automaton(YR_AC_AUTOMATON* automaton)
 {
   printf("-------------------------------------------------------\n");
-  //_yr_ac_print_automaton_state(automaton->root);
+  _yr_ac_print_automaton_state(automaton, automaton->root);
   printf("-------------------------------------------------------\n");
 }
 
