@@ -623,13 +623,11 @@ struct YR_RULES_STATS
 };
 
 
-#ifdef YR_PROFILING_ENABLED
 struct YR_PROFILING_INFO
 {
   YR_RULE* rule;
   uint64_t cost;
 };
-#endif
 
 
 typedef const uint8_t* (*YR_MEMORY_BLOCK_FETCH_DATA_FUNC)(
@@ -739,10 +737,9 @@ struct YR_SCAN_CONTEXT
   YR_MATCHES* unconfirmed_matches;
 
   // rule_cost is a pointer to an array of 64-bit integers with one entry per
-  // rule. Entry N has the time cost for rule with index N.
-  #ifdef YR_PROFILING_ENABLED
+  // rule. Entry N has the time cost for rule with index N. If YARA is not
+  // built with YR_PROFILING_ENABLED this pointer is NULL.
   uint64_t* time_cost;
-  #endif
 };
 
 

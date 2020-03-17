@@ -174,7 +174,7 @@ YR_API int yr_scanner_create(
 
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_hash_table_create(64, &new_scanner->objects_table),
-      yr_scanner_destroy(new_scanner));
+      yr_free(new_scanner));
 
   new_scanner->rules = rules;
   new_scanner->entry_point = YR_UNDEFINED;
@@ -200,6 +200,14 @@ YR_API int yr_scanner_create(
   #ifdef YR_PROFILING_ENABLED
   new_scanner->time_cost = (uint64_t*) yr_calloc(
       rules->num_rules, sizeof(uint64_t));
+
+  if (new_scanner->time_cost == NULL)
+  {
+    yr_scanner_destroy(new_scanner);
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+  #else
+  new_scanner->time_cost = NULL;
   #endif
 
   external = rules->externals_list_head;
@@ -638,7 +646,6 @@ YR_API YR_RULE* yr_scanner_last_error_rule(
 }
 
 
-#ifdef YR_PROFILING_ENABLED
 static int sort_by_cost_desc(
     const struct YR_PROFILING_INFO* r1,
     const struct YR_PROFILING_INFO* r2)
@@ -719,4 +726,3 @@ YR_API int yr_scanner_print_profiling_info(
 
   return ERROR_SUCCESS;
 }
-#endif
