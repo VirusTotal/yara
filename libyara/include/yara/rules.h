@@ -53,7 +53,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define yr_rule_metas_foreach(rule, meta) \
-    for (meta = rule->metas; !META_IS_NULL(meta); meta++)
+    for (meta = rule->metas; \
+         meta != NULL; \
+         meta = META_IS_LAST_IN_RULE(meta) ? NULL : meta + 1)
 
 
 #define yr_rule_strings_foreach(rule, string) \

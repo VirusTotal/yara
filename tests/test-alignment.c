@@ -77,6 +77,7 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_META, 8, string);
   CHECK_OFFSET(YR_META, 16,  integer);
   CHECK_OFFSET(YR_META, 24,  type);
+  CHECK_OFFSET(YR_META, 28,  flags);
 
   CHECK_SIZE(YR_STRING, 56);
   CHECK_OFFSET(YR_STRING, 0, flags);

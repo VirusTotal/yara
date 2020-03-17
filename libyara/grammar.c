@@ -666,20 +666,20 @@ static const yytype_uint8 yytranslate[] =
 static const yytype_uint16 yyrline[] =
 {
        0,   316,   316,   318,   319,   320,   321,   322,   323,   331,
-     344,   349,   343,   376,   379,   406,   409,   424,   429,   430,
-     435,   436,   442,   445,   461,   470,   512,   513,   518,   535,
-     549,   563,   577,   595,   596,   602,   601,   618,   617,   638,
-     637,   662,   668,   728,   729,   730,   731,   732,   733,   739,
-     760,   791,   796,   813,   818,   838,   839,   853,   854,   855,
-     856,   857,   861,   862,   876,   880,   975,  1023,  1084,  1131,
-    1132,  1136,  1171,  1224,  1267,  1290,  1297,  1304,  1316,  1326,
-    1340,  1355,  1366,  1437,  1475,  1385,  1612,  1611,  1701,  1707,
-    1714,  1713,  1759,  1758,  1802,  1809,  1816,  1823,  1830,  1837,
-    1844,  1848,  1856,  1876,  1904,  1978,  2006,  2015,  2024,  2048,
-    2063,  2083,  2082,  2088,  2100,  2101,  2106,  2113,  2124,  2128,
-    2133,  2142,  2146,  2154,  2166,  2180,  2188,  2195,  2221,  2233,
-    2245,  2261,  2273,  2289,  2332,  2353,  2388,  2423,  2457,  2482,
-    2499,  2509,  2519,  2529,  2539,  2559,  2579
+     344,   349,   343,   376,   379,   395,   398,   413,   418,   419,
+     424,   425,   431,   434,   450,   459,   501,   502,   507,   524,
+     538,   552,   566,   584,   585,   591,   590,   607,   606,   627,
+     626,   651,   657,   717,   718,   719,   720,   721,   722,   728,
+     749,   780,   785,   802,   807,   827,   828,   842,   843,   844,
+     845,   846,   850,   851,   865,   869,   964,  1012,  1073,  1120,
+    1121,  1125,  1160,  1213,  1256,  1279,  1286,  1293,  1305,  1315,
+    1329,  1344,  1355,  1426,  1464,  1374,  1601,  1600,  1690,  1696,
+    1703,  1702,  1748,  1747,  1791,  1798,  1805,  1812,  1819,  1826,
+    1833,  1837,  1845,  1865,  1893,  1967,  1995,  2004,  2013,  2037,
+    2052,  2072,  2071,  2077,  2089,  2090,  2095,  2102,  2113,  2117,
+    2122,  2131,  2135,  2143,  2155,  2169,  2177,  2184,  2210,  2222,
+    2234,  2250,  2262,  2278,  2321,  2342,  2377,  2412,  2446,  2471,
+    2488,  2498,  2508,  2518,  2528,  2548,  2568
 };
 #endif
 
@@ -1835,39 +1835,28 @@ yyreduce:
   case 14:
 #line 380 "grammar.y" /* yacc.c:1663  */
     {
-        // Each rule have a list of meta-data info, consisting in a
-        // sequence of YR_META structures. The last YR_META structure does
-        // not represent a real meta-data, it's just a end-of-list marker
-        // identified by a specific type (META_TYPE_NULL). Here we
-        // write the end-of-list marker.
-
-        YR_META null_meta;
-
-        memset(&null_meta, 0xFF, sizeof(YR_META));
-        null_meta.type = META_TYPE_NULL;
-
-        fail_if_error(yr_arena_write_data(
+        YR_META* meta = yr_arena_get_ptr(
             compiler->arena,
             YR_METAS_TABLE,
-            &null_meta,
-            sizeof(YR_META),
-            NULL));
+            (compiler->current_meta_idx - 1) * sizeof(YR_META));
+
+        meta->flags |= META_FLAGS_LAST_IN_RULE;
 
         (yyval.meta) = (yyvsp[0].meta);
       }
-#line 1859 "grammar.c" /* yacc.c:1663  */
+#line 1848 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 15:
-#line 406 "grammar.y" /* yacc.c:1663  */
+#line 395 "grammar.y" /* yacc.c:1663  */
     {
         (yyval.string) = YR_ARENA_NULL_REF;
       }
-#line 1867 "grammar.c" /* yacc.c:1663  */
+#line 1856 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 16:
-#line 410 "grammar.y" /* yacc.c:1663  */
+#line 399 "grammar.y" /* yacc.c:1663  */
     {
         YR_STRING* string = (YR_STRING*) yr_arena_get_ptr(
             compiler->arena,
@@ -1878,43 +1867,43 @@ yyreduce:
 
         (yyval.string) = (yyvsp[0].string);
       }
-#line 1882 "grammar.c" /* yacc.c:1663  */
+#line 1871 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 18:
-#line 429 "grammar.y" /* yacc.c:1663  */
+#line 418 "grammar.y" /* yacc.c:1663  */
     { (yyval.integer) = 0;  }
-#line 1888 "grammar.c" /* yacc.c:1663  */
+#line 1877 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 19:
-#line 430 "grammar.y" /* yacc.c:1663  */
+#line 419 "grammar.y" /* yacc.c:1663  */
     { (yyval.integer) = (yyvsp[-1].integer) | (yyvsp[0].integer); }
-#line 1894 "grammar.c" /* yacc.c:1663  */
+#line 1883 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 20:
-#line 435 "grammar.y" /* yacc.c:1663  */
+#line 424 "grammar.y" /* yacc.c:1663  */
     { (yyval.integer) = RULE_FLAGS_PRIVATE; }
-#line 1900 "grammar.c" /* yacc.c:1663  */
+#line 1889 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 21:
-#line 436 "grammar.y" /* yacc.c:1663  */
+#line 425 "grammar.y" /* yacc.c:1663  */
     { (yyval.integer) = RULE_FLAGS_GLOBAL; }
-#line 1906 "grammar.c" /* yacc.c:1663  */
+#line 1895 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 22:
-#line 442 "grammar.y" /* yacc.c:1663  */
+#line 431 "grammar.y" /* yacc.c:1663  */
     {
         (yyval.tag) = YR_ARENA_NULL_REF;
       }
-#line 1914 "grammar.c" /* yacc.c:1663  */
+#line 1903 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 23:
-#line 446 "grammar.y" /* yacc.c:1663  */
+#line 435 "grammar.y" /* yacc.c:1663  */
     {
         // Tags list is represented in the arena as a sequence
         // of null-terminated strings, the sequence ends with an
@@ -1926,11 +1915,11 @@ yyreduce:
 
         (yyval.tag) = (yyvsp[0].tag);
       }
-#line 1930 "grammar.c" /* yacc.c:1663  */
+#line 1919 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 24:
-#line 462 "grammar.y" /* yacc.c:1663  */
+#line 451 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_arena_write_string(
             yyget_extra(yyscanner)->arena, YR_SZ_POOL, (yyvsp[0].c_string), &(yyval.tag));
@@ -1939,11 +1928,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 1943 "grammar.c" /* yacc.c:1663  */
+#line 1932 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 25:
-#line 471 "grammar.y" /* yacc.c:1663  */
+#line 460 "grammar.y" /* yacc.c:1663  */
     {
         YR_ARENA_REF ref;
 
@@ -1980,23 +1969,23 @@ yyreduce:
 
         (yyval.tag) = (yyvsp[-1].tag);
       }
-#line 1984 "grammar.c" /* yacc.c:1663  */
+#line 1973 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 26:
-#line 512 "grammar.y" /* yacc.c:1663  */
+#line 501 "grammar.y" /* yacc.c:1663  */
     {  (yyval.meta) = (yyvsp[0].meta); }
-#line 1990 "grammar.c" /* yacc.c:1663  */
+#line 1979 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 27:
-#line 513 "grammar.y" /* yacc.c:1663  */
+#line 502 "grammar.y" /* yacc.c:1663  */
     {  (yyval.meta) = (yyvsp[-1].meta); }
-#line 1996 "grammar.c" /* yacc.c:1663  */
+#line 1985 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 28:
-#line 519 "grammar.y" /* yacc.c:1663  */
+#line 508 "grammar.y" /* yacc.c:1663  */
     {
         SIZED_STRING* sized_string = (yyvsp[0].sized_string);
 
@@ -2013,11 +2002,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2017 "grammar.c" /* yacc.c:1663  */
+#line 2006 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 29:
-#line 536 "grammar.y" /* yacc.c:1663  */
+#line 525 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_meta_declaration(
             yyscanner,
@@ -2031,11 +2020,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2035 "grammar.c" /* yacc.c:1663  */
+#line 2024 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 30:
-#line 550 "grammar.y" /* yacc.c:1663  */
+#line 539 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_meta_declaration(
             yyscanner,
@@ -2049,11 +2038,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2053 "grammar.c" /* yacc.c:1663  */
+#line 2042 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 31:
-#line 564 "grammar.y" /* yacc.c:1663  */
+#line 553 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_meta_declaration(
             yyscanner,
@@ -2067,11 +2056,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2071 "grammar.c" /* yacc.c:1663  */
+#line 2060 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 32:
-#line 578 "grammar.y" /* yacc.c:1663  */
+#line 567 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_meta_declaration(
             yyscanner,
@@ -2085,31 +2074,31 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2089 "grammar.c" /* yacc.c:1663  */
+#line 2078 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 33:
-#line 595 "grammar.y" /* yacc.c:1663  */
+#line 584 "grammar.y" /* yacc.c:1663  */
     { (yyval.string) = (yyvsp[0].string); }
-#line 2095 "grammar.c" /* yacc.c:1663  */
+#line 2084 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 34:
-#line 596 "grammar.y" /* yacc.c:1663  */
+#line 585 "grammar.y" /* yacc.c:1663  */
     { (yyval.string) = (yyvsp[-1].string); }
-#line 2101 "grammar.c" /* yacc.c:1663  */
+#line 2090 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 35:
-#line 602 "grammar.y" /* yacc.c:1663  */
+#line 591 "grammar.y" /* yacc.c:1663  */
     {
         compiler->current_line = yyget_lineno(yyscanner);
       }
-#line 2109 "grammar.c" /* yacc.c:1663  */
+#line 2098 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 36:
-#line 606 "grammar.y" /* yacc.c:1663  */
+#line 595 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_string_declaration(
             yyscanner, (yyvsp[0].modifier), (yyvsp[-4].c_string), (yyvsp[-1].sized_string), &(yyval.string));
@@ -2121,19 +2110,19 @@ yyreduce:
         fail_if_error(result);
         compiler->current_line = 0;
       }
-#line 2125 "grammar.c" /* yacc.c:1663  */
+#line 2114 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 37:
-#line 618 "grammar.y" /* yacc.c:1663  */
+#line 607 "grammar.y" /* yacc.c:1663  */
     {
         compiler->current_line = yyget_lineno(yyscanner);
       }
-#line 2133 "grammar.c" /* yacc.c:1663  */
+#line 2122 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 38:
-#line 622 "grammar.y" /* yacc.c:1663  */
+#line 611 "grammar.y" /* yacc.c:1663  */
     {
         int result;
 
@@ -2149,19 +2138,19 @@ yyreduce:
 
         compiler->current_line = 0;
       }
-#line 2153 "grammar.c" /* yacc.c:1663  */
+#line 2142 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 39:
-#line 638 "grammar.y" /* yacc.c:1663  */
+#line 627 "grammar.y" /* yacc.c:1663  */
     {
         compiler->current_line = yyget_lineno(yyscanner);
       }
-#line 2161 "grammar.c" /* yacc.c:1663  */
+#line 2150 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 40:
-#line 642 "grammar.y" /* yacc.c:1663  */
+#line 631 "grammar.y" /* yacc.c:1663  */
     {
         int result;
 
@@ -2177,22 +2166,22 @@ yyreduce:
 
         compiler->current_line = 0;
       }
-#line 2181 "grammar.c" /* yacc.c:1663  */
+#line 2170 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 41:
-#line 662 "grammar.y" /* yacc.c:1663  */
+#line 651 "grammar.y" /* yacc.c:1663  */
     {
         (yyval.modifier).flags = 0;
         (yyval.modifier).xor_min = 0;
         (yyval.modifier).xor_max = 0;
         (yyval.modifier).alphabet = NULL;
       }
-#line 2192 "grammar.c" /* yacc.c:1663  */
+#line 2181 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 42:
-#line 669 "grammar.y" /* yacc.c:1663  */
+#line 658 "grammar.y" /* yacc.c:1663  */
     {
         (yyval.modifier) = (yyvsp[-1].modifier);
 
@@ -2248,51 +2237,51 @@ yyreduce:
           (yyval.modifier).flags = (yyval.modifier).flags | (yyvsp[0].modifier).flags;
         }
       }
-#line 2252 "grammar.c" /* yacc.c:1663  */
+#line 2241 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 43:
-#line 728 "grammar.y" /* yacc.c:1663  */
+#line 717 "grammar.y" /* yacc.c:1663  */
     { (yyval.modifier).flags = STRING_FLAGS_WIDE; }
-#line 2258 "grammar.c" /* yacc.c:1663  */
+#line 2247 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 44:
-#line 729 "grammar.y" /* yacc.c:1663  */
+#line 718 "grammar.y" /* yacc.c:1663  */
     { (yyval.modifier).flags = STRING_FLAGS_ASCII; }
-#line 2264 "grammar.c" /* yacc.c:1663  */
+#line 2253 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 45:
-#line 730 "grammar.y" /* yacc.c:1663  */
+#line 719 "grammar.y" /* yacc.c:1663  */
     { (yyval.modifier).flags = STRING_FLAGS_NO_CASE; }
-#line 2270 "grammar.c" /* yacc.c:1663  */
+#line 2259 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 46:
-#line 731 "grammar.y" /* yacc.c:1663  */
+#line 720 "grammar.y" /* yacc.c:1663  */
     { (yyval.modifier).flags = STRING_FLAGS_FULL_WORD; }
-#line 2276 "grammar.c" /* yacc.c:1663  */
+#line 2265 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 47:
-#line 732 "grammar.y" /* yacc.c:1663  */
+#line 721 "grammar.y" /* yacc.c:1663  */
     { (yyval.modifier).flags = STRING_FLAGS_PRIVATE; }
-#line 2282 "grammar.c" /* yacc.c:1663  */
+#line 2271 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 48:
-#line 734 "grammar.y" /* yacc.c:1663  */
+#line 723 "grammar.y" /* yacc.c:1663  */
     {
         (yyval.modifier).flags = STRING_FLAGS_XOR;
         (yyval.modifier).xor_min = 0;
         (yyval.modifier).xor_max = 255;
       }
-#line 2292 "grammar.c" /* yacc.c:1663  */
+#line 2281 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 49:
-#line 740 "grammar.y" /* yacc.c:1663  */
+#line 729 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
 
@@ -2308,11 +2297,11 @@ yyreduce:
         (yyval.modifier).xor_min = (yyvsp[-1].integer);
         (yyval.modifier).xor_max = (yyvsp[-1].integer);
       }
-#line 2312 "grammar.c" /* yacc.c:1663  */
+#line 2301 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 50:
-#line 761 "grammar.y" /* yacc.c:1663  */
+#line 750 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
 
@@ -2343,20 +2332,20 @@ yyreduce:
         (yyval.modifier).xor_min = (yyvsp[-3].integer);
         (yyval.modifier).xor_max = (yyvsp[-1].integer);
       }
-#line 2347 "grammar.c" /* yacc.c:1663  */
+#line 2336 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 51:
-#line 792 "grammar.y" /* yacc.c:1663  */
+#line 781 "grammar.y" /* yacc.c:1663  */
     {
         (yyval.modifier).flags = STRING_FLAGS_BASE64;
         (yyval.modifier).alphabet = sized_string_new(DEFAULT_BASE64_ALPHABET);
       }
-#line 2356 "grammar.c" /* yacc.c:1663  */
+#line 2345 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 52:
-#line 797 "grammar.y" /* yacc.c:1663  */
+#line 786 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
 
@@ -2373,20 +2362,20 @@ yyreduce:
         (yyval.modifier).flags = STRING_FLAGS_BASE64;
         (yyval.modifier).alphabet = (yyvsp[-1].sized_string);
       }
-#line 2377 "grammar.c" /* yacc.c:1663  */
+#line 2366 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 53:
-#line 814 "grammar.y" /* yacc.c:1663  */
+#line 803 "grammar.y" /* yacc.c:1663  */
     {
         (yyval.modifier).flags = STRING_FLAGS_BASE64_WIDE;
         (yyval.modifier).alphabet = sized_string_new(DEFAULT_BASE64_ALPHABET);
       }
-#line 2386 "grammar.c" /* yacc.c:1663  */
+#line 2375 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 54:
-#line 819 "grammar.y" /* yacc.c:1663  */
+#line 808 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
 
@@ -2403,17 +2392,17 @@ yyreduce:
         (yyval.modifier).flags = STRING_FLAGS_BASE64_WIDE;
         (yyval.modifier).alphabet = (yyvsp[-1].sized_string);
       }
-#line 2407 "grammar.c" /* yacc.c:1663  */
+#line 2396 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 55:
-#line 838 "grammar.y" /* yacc.c:1663  */
+#line 827 "grammar.y" /* yacc.c:1663  */
     { (yyval.modifier).flags = 0; }
-#line 2413 "grammar.c" /* yacc.c:1663  */
+#line 2402 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 56:
-#line 840 "grammar.y" /* yacc.c:1663  */
+#line 829 "grammar.y" /* yacc.c:1663  */
     {
         if ((yyvsp[-1].modifier).flags & (yyvsp[0].modifier).flags)
         {
@@ -2424,47 +2413,47 @@ yyreduce:
           (yyval.modifier).flags = (yyvsp[-1].modifier).flags | (yyvsp[0].modifier).flags;
         }
       }
-#line 2428 "grammar.c" /* yacc.c:1663  */
+#line 2417 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 57:
-#line 853 "grammar.y" /* yacc.c:1663  */
+#line 842 "grammar.y" /* yacc.c:1663  */
     { (yyval.modifier).flags = STRING_FLAGS_WIDE; }
-#line 2434 "grammar.c" /* yacc.c:1663  */
+#line 2423 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 58:
-#line 854 "grammar.y" /* yacc.c:1663  */
+#line 843 "grammar.y" /* yacc.c:1663  */
     { (yyval.modifier).flags = STRING_FLAGS_ASCII; }
-#line 2440 "grammar.c" /* yacc.c:1663  */
+#line 2429 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 59:
-#line 855 "grammar.y" /* yacc.c:1663  */
+#line 844 "grammar.y" /* yacc.c:1663  */
     { (yyval.modifier).flags = STRING_FLAGS_NO_CASE; }
-#line 2446 "grammar.c" /* yacc.c:1663  */
+#line 2435 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 60:
-#line 856 "grammar.y" /* yacc.c:1663  */
+#line 845 "grammar.y" /* yacc.c:1663  */
     { (yyval.modifier).flags = STRING_FLAGS_FULL_WORD; }
-#line 2452 "grammar.c" /* yacc.c:1663  */
+#line 2441 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 61:
-#line 857 "grammar.y" /* yacc.c:1663  */
+#line 846 "grammar.y" /* yacc.c:1663  */
     { (yyval.modifier).flags = STRING_FLAGS_PRIVATE; }
-#line 2458 "grammar.c" /* yacc.c:1663  */
+#line 2447 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 62:
-#line 861 "grammar.y" /* yacc.c:1663  */
+#line 850 "grammar.y" /* yacc.c:1663  */
     { (yyval.modifier).flags = 0; }
-#line 2464 "grammar.c" /* yacc.c:1663  */
+#line 2453 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 63:
-#line 863 "grammar.y" /* yacc.c:1663  */
+#line 852 "grammar.y" /* yacc.c:1663  */
     {
         if ((yyvsp[-1].modifier).flags & (yyvsp[0].modifier).flags)
         {
@@ -2475,17 +2464,17 @@ yyreduce:
           (yyval.modifier).flags = (yyvsp[-1].modifier).flags | (yyvsp[0].modifier).flags;
         }
       }
-#line 2479 "grammar.c" /* yacc.c:1663  */
+#line 2468 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 64:
-#line 876 "grammar.y" /* yacc.c:1663  */
+#line 865 "grammar.y" /* yacc.c:1663  */
     { (yyval.modifier).flags = STRING_FLAGS_PRIVATE; }
-#line 2485 "grammar.c" /* yacc.c:1663  */
+#line 2474 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 65:
-#line 881 "grammar.y" /* yacc.c:1663  */
+#line 870 "grammar.y" /* yacc.c:1663  */
     {
         YR_EXPRESSION expr;
 
@@ -2580,11 +2569,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2584 "grammar.c" /* yacc.c:1663  */
+#line 2573 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 66:
-#line 976 "grammar.y" /* yacc.c:1663  */
+#line 965 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
         YR_OBJECT* field = NULL;
@@ -2632,11 +2621,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2636 "grammar.c" /* yacc.c:1663  */
+#line 2625 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 67:
-#line 1024 "grammar.y" /* yacc.c:1663  */
+#line 1013 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
         YR_OBJECT_ARRAY* array;
@@ -2696,11 +2685,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2700 "grammar.c" /* yacc.c:1663  */
+#line 2689 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 68:
-#line 1085 "grammar.y" /* yacc.c:1663  */
+#line 1074 "grammar.y" /* yacc.c:1663  */
     {
         YR_ARENA_REF ref;
         int result = ERROR_SUCCESS;
@@ -2743,23 +2732,23 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2747 "grammar.c" /* yacc.c:1663  */
+#line 2736 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 69:
-#line 1131 "grammar.y" /* yacc.c:1663  */
+#line 1120 "grammar.y" /* yacc.c:1663  */
     { (yyval.c_string) = yr_strdup(""); }
-#line 2753 "grammar.c" /* yacc.c:1663  */
+#line 2742 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 70:
-#line 1132 "grammar.y" /* yacc.c:1663  */
+#line 1121 "grammar.y" /* yacc.c:1663  */
     { (yyval.c_string) = (yyvsp[0].c_string); }
-#line 2759 "grammar.c" /* yacc.c:1663  */
+#line 2748 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 71:
-#line 1137 "grammar.y" /* yacc.c:1663  */
+#line 1126 "grammar.y" /* yacc.c:1663  */
     {
         (yyval.c_string) = (char*) yr_malloc(YR_MAX_FUNCTION_ARGS + 1);
 
@@ -2794,11 +2783,11 @@ yyreduce:
             assert(compiler->last_error != ERROR_SUCCESS);
         }
       }
-#line 2798 "grammar.c" /* yacc.c:1663  */
+#line 2787 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 72:
-#line 1172 "grammar.y" /* yacc.c:1663  */
+#line 1161 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
 
@@ -2847,11 +2836,11 @@ yyreduce:
 
         (yyval.c_string) = (yyvsp[-2].c_string);
       }
-#line 2851 "grammar.c" /* yacc.c:1663  */
+#line 2840 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 73:
-#line 1225 "grammar.y" /* yacc.c:1663  */
+#line 1214 "grammar.y" /* yacc.c:1663  */
     {
         SIZED_STRING* sized_string = (yyvsp[0].sized_string);
         YR_ARENA_REF re_ref;
@@ -2890,11 +2879,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_REGEXP;
       }
-#line 2894 "grammar.c" /* yacc.c:1663  */
+#line 2883 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 74:
-#line 1268 "grammar.y" /* yacc.c:1663  */
+#line 1257 "grammar.y" /* yacc.c:1663  */
     {
         if ((yyvsp[0].expression).type == EXPRESSION_TYPE_STRING)
         {
@@ -2914,33 +2903,33 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 2918 "grammar.c" /* yacc.c:1663  */
+#line 2907 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 75:
-#line 1291 "grammar.y" /* yacc.c:1663  */
+#line 1280 "grammar.y" /* yacc.c:1663  */
     {
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, 1, NULL, NULL));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 2929 "grammar.c" /* yacc.c:1663  */
+#line 2918 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 76:
-#line 1298 "grammar.y" /* yacc.c:1663  */
+#line 1287 "grammar.y" /* yacc.c:1663  */
     {
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, 0, NULL, NULL));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 2940 "grammar.c" /* yacc.c:1663  */
+#line 2929 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 77:
-#line 1305 "grammar.y" /* yacc.c:1663  */
+#line 1294 "grammar.y" /* yacc.c:1663  */
     {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_STRING, "matches");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_REGEXP, "matches");
@@ -2952,11 +2941,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 2956 "grammar.c" /* yacc.c:1663  */
+#line 2945 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 78:
-#line 1317 "grammar.y" /* yacc.c:1663  */
+#line 1306 "grammar.y" /* yacc.c:1663  */
     {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_STRING, "contains");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_STRING, "contains");
@@ -2966,11 +2955,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 2970 "grammar.c" /* yacc.c:1663  */
+#line 2959 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 79:
-#line 1327 "grammar.y" /* yacc.c:1663  */
+#line 1316 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_string_identifier(
             yyscanner,
@@ -2984,11 +2973,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 2988 "grammar.c" /* yacc.c:1663  */
+#line 2977 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 80:
-#line 1341 "grammar.y" /* yacc.c:1663  */
+#line 1330 "grammar.y" /* yacc.c:1663  */
     {
         int result;
 
@@ -3003,11 +2992,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3007 "grammar.c" /* yacc.c:1663  */
+#line 2996 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 81:
-#line 1356 "grammar.y" /* yacc.c:1663  */
+#line 1345 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[-2].c_string), OP_FOUND_IN, YR_UNDEFINED);
@@ -3018,11 +3007,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3022 "grammar.c" /* yacc.c:1663  */
+#line 3011 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 82:
-#line 1367 "grammar.y" /* yacc.c:1663  */
+#line 1356 "grammar.y" /* yacc.c:1663  */
     {
         int i;
 
@@ -3041,11 +3030,11 @@ yyreduce:
         compiler->loop_index = -1;
         YYERROR;
       }
-#line 3045 "grammar.c" /* yacc.c:1663  */
+#line 3034 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 83:
-#line 1437 "grammar.y" /* yacc.c:1663  */
+#line 1426 "grammar.y" /* yacc.c:1663  */
     {
         // var_frame is used for accessing local variables used in this loop.
         // All local variables are accessed using var_frame as a reference,
@@ -3083,11 +3072,11 @@ yyreduce:
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_POP_M, var_frame + 2, NULL, NULL));
       }
-#line 3087 "grammar.c" /* yacc.c:1663  */
+#line 3076 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 84:
-#line 1475 "grammar.y" /* yacc.c:1663  */
+#line 1464 "grammar.y" /* yacc.c:1663  */
     {
         YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_index];
         YR_FIXUP* fixup;
@@ -3137,11 +3126,11 @@ yyreduce:
 
         loop_ctx->start_ref = loop_start_ref;
       }
-#line 3141 "grammar.c" /* yacc.c:1663  */
+#line 3130 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 85:
-#line 1525 "grammar.y" /* yacc.c:1663  */
+#line 1514 "grammar.y" /* yacc.c:1663  */
     {
         int32_t jmp_offset;
         YR_FIXUP* fixup;
@@ -3228,11 +3217,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3232 "grammar.c" /* yacc.c:1663  */
+#line 3221 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 86:
-#line 1612 "grammar.y" /* yacc.c:1663  */
+#line 1601 "grammar.y" /* yacc.c:1663  */
     {
         YR_ARENA_REF ref;
 
@@ -3267,11 +3256,11 @@ yyreduce:
         compiler->loop[compiler->loop_index].vars_internal_count = \
             YR_INTERNAL_LOOP_VARS;
       }
-#line 3271 "grammar.c" /* yacc.c:1663  */
+#line 3260 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 87:
-#line 1647 "grammar.y" /* yacc.c:1663  */
+#line 1636 "grammar.y" /* yacc.c:1663  */
     {
         int var_frame = 0;
 
@@ -3326,31 +3315,31 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3330 "grammar.c" /* yacc.c:1663  */
+#line 3319 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 88:
-#line 1702 "grammar.y" /* yacc.c:1663  */
+#line 1691 "grammar.y" /* yacc.c:1663  */
     {
         yr_parser_emit(yyscanner, OP_OF, NULL);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3340 "grammar.c" /* yacc.c:1663  */
+#line 3329 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 89:
-#line 1708 "grammar.y" /* yacc.c:1663  */
+#line 1697 "grammar.y" /* yacc.c:1663  */
     {
         yr_parser_emit(yyscanner, OP_NOT, NULL);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3350 "grammar.c" /* yacc.c:1663  */
+#line 3339 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 90:
-#line 1714 "grammar.y" /* yacc.c:1663  */
+#line 1703 "grammar.y" /* yacc.c:1663  */
     {
         YR_FIXUP* fixup;
         YR_ARENA_REF jmp_offset_ref;
@@ -3372,11 +3361,11 @@ yyreduce:
         fixup->next = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup;
       }
-#line 3376 "grammar.c" /* yacc.c:1663  */
+#line 3365 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 91:
-#line 1736 "grammar.y" /* yacc.c:1663  */
+#line 1725 "grammar.y" /* yacc.c:1663  */
     {
         YR_FIXUP* fixup;
 
@@ -3399,11 +3388,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3403 "grammar.c" /* yacc.c:1663  */
+#line 3392 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 92:
-#line 1759 "grammar.y" /* yacc.c:1663  */
+#line 1748 "grammar.y" /* yacc.c:1663  */
     {
         YR_FIXUP* fixup;
         YR_ARENA_REF jmp_offset_ref;
@@ -3424,11 +3413,11 @@ yyreduce:
         fixup->next = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup;
       }
-#line 3428 "grammar.c" /* yacc.c:1663  */
+#line 3417 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 93:
-#line 1780 "grammar.y" /* yacc.c:1663  */
+#line 1769 "grammar.y" /* yacc.c:1663  */
     {
         YR_FIXUP* fixup;
 
@@ -3451,93 +3440,93 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3455 "grammar.c" /* yacc.c:1663  */
+#line 3444 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 94:
-#line 1803 "grammar.y" /* yacc.c:1663  */
+#line 1792 "grammar.y" /* yacc.c:1663  */
     {
         fail_if_error(yr_parser_reduce_operation(
             yyscanner, "<", (yyvsp[-2].expression), (yyvsp[0].expression)));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3466 "grammar.c" /* yacc.c:1663  */
+#line 3455 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 95:
-#line 1810 "grammar.y" /* yacc.c:1663  */
+#line 1799 "grammar.y" /* yacc.c:1663  */
     {
         fail_if_error(yr_parser_reduce_operation(
             yyscanner, ">", (yyvsp[-2].expression), (yyvsp[0].expression)));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3477 "grammar.c" /* yacc.c:1663  */
+#line 3466 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 96:
-#line 1817 "grammar.y" /* yacc.c:1663  */
+#line 1806 "grammar.y" /* yacc.c:1663  */
     {
         fail_if_error(yr_parser_reduce_operation(
             yyscanner, "<=", (yyvsp[-2].expression), (yyvsp[0].expression)));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3488 "grammar.c" /* yacc.c:1663  */
+#line 3477 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 97:
-#line 1824 "grammar.y" /* yacc.c:1663  */
+#line 1813 "grammar.y" /* yacc.c:1663  */
     {
         fail_if_error(yr_parser_reduce_operation(
             yyscanner, ">=", (yyvsp[-2].expression), (yyvsp[0].expression)));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3499 "grammar.c" /* yacc.c:1663  */
+#line 3488 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 98:
-#line 1831 "grammar.y" /* yacc.c:1663  */
+#line 1820 "grammar.y" /* yacc.c:1663  */
     {
         fail_if_error(yr_parser_reduce_operation(
             yyscanner, "==", (yyvsp[-2].expression), (yyvsp[0].expression)));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3510 "grammar.c" /* yacc.c:1663  */
+#line 3499 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 99:
-#line 1838 "grammar.y" /* yacc.c:1663  */
+#line 1827 "grammar.y" /* yacc.c:1663  */
     {
         fail_if_error(yr_parser_reduce_operation(
             yyscanner, "!=", (yyvsp[-2].expression), (yyvsp[0].expression)));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3521 "grammar.c" /* yacc.c:1663  */
+#line 3510 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 100:
-#line 1845 "grammar.y" /* yacc.c:1663  */
+#line 1834 "grammar.y" /* yacc.c:1663  */
     {
         (yyval.expression) = (yyvsp[0].expression);
       }
-#line 3529 "grammar.c" /* yacc.c:1663  */
+#line 3518 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 101:
-#line 1849 "grammar.y" /* yacc.c:1663  */
+#line 1838 "grammar.y" /* yacc.c:1663  */
     {
         (yyval.expression) = (yyvsp[-1].expression);
       }
-#line 3537 "grammar.c" /* yacc.c:1663  */
+#line 3526 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 102:
-#line 1857 "grammar.y" /* yacc.c:1663  */
+#line 1846 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
 
@@ -3557,11 +3546,11 @@ yyreduce:
 
         assert(loop_ctx->vars_count <= YR_MAX_LOOP_VARS);
       }
-#line 3561 "grammar.c" /* yacc.c:1663  */
+#line 3550 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 103:
-#line 1877 "grammar.y" /* yacc.c:1663  */
+#line 1866 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
 
@@ -3586,11 +3575,11 @@ yyreduce:
 
         loop_ctx->vars[loop_ctx->vars_count++].identifier.ptr = (yyvsp[0].c_string);
       }
-#line 3590 "grammar.c" /* yacc.c:1663  */
+#line 3579 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 104:
-#line 1905 "grammar.y" /* yacc.c:1663  */
+#line 1894 "grammar.y" /* yacc.c:1663  */
     {
         YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_index];
 
@@ -3664,11 +3653,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 3668 "grammar.c" /* yacc.c:1663  */
+#line 3657 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 105:
-#line 1979 "grammar.y" /* yacc.c:1663  */
+#line 1968 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
 
@@ -3692,11 +3681,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 3696 "grammar.c" /* yacc.c:1663  */
+#line 3685 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 106:
-#line 2007 "grammar.y" /* yacc.c:1663  */
+#line 1996 "grammar.y" /* yacc.c:1663  */
     {
         // $2 contains the number of integers in the enumeration
         fail_if_error(yr_parser_emit_with_arg(
@@ -3705,20 +3694,20 @@ yyreduce:
         fail_if_error(yr_parser_emit(
             yyscanner, OP_ITER_START_INT_ENUM, NULL));
       }
-#line 3709 "grammar.c" /* yacc.c:1663  */
+#line 3698 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 107:
-#line 2016 "grammar.y" /* yacc.c:1663  */
+#line 2005 "grammar.y" /* yacc.c:1663  */
     {
         fail_if_error(yr_parser_emit(
             yyscanner, OP_ITER_START_INT_RANGE, NULL));
       }
-#line 3718 "grammar.c" /* yacc.c:1663  */
+#line 3707 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 108:
-#line 2025 "grammar.y" /* yacc.c:1663  */
+#line 2014 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
 
@@ -3738,11 +3727,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 3742 "grammar.c" /* yacc.c:1663  */
+#line 3731 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 109:
-#line 2049 "grammar.y" /* yacc.c:1663  */
+#line 2038 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
 
@@ -3757,11 +3746,11 @@ yyreduce:
 
         (yyval.integer) = 1;
       }
-#line 3761 "grammar.c" /* yacc.c:1663  */
+#line 3750 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 110:
-#line 2064 "grammar.y" /* yacc.c:1663  */
+#line 2053 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
 
@@ -3776,20 +3765,20 @@ yyreduce:
 
         (yyval.integer) = (yyvsp[-2].integer) + 1;
       }
-#line 3780 "grammar.c" /* yacc.c:1663  */
+#line 3769 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 111:
-#line 2083 "grammar.y" /* yacc.c:1663  */
+#line 2072 "grammar.y" /* yacc.c:1663  */
     {
         // Push end-of-list marker
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL);
       }
-#line 3789 "grammar.c" /* yacc.c:1663  */
+#line 3778 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 113:
-#line 2089 "grammar.y" /* yacc.c:1663  */
+#line 2078 "grammar.y" /* yacc.c:1663  */
     {
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL));
@@ -3797,11 +3786,22 @@ yyreduce:
         fail_if_error(yr_parser_emit_pushes_for_strings(
             yyscanner, "$*"));
       }
-#line 3801 "grammar.c" /* yacc.c:1663  */
+#line 3790 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 116:
-#line 2107 "grammar.y" /* yacc.c:1663  */
+#line 2096 "grammar.y" /* yacc.c:1663  */
+    {
+        int result = yr_parser_emit_pushes_for_strings(yyscanner, (yyvsp[0].c_string));
+        yr_free((yyvsp[0].c_string));
+
+        fail_if_error(result);
+      }
+#line 3801 "grammar.c" /* yacc.c:1663  */
+    break;
+
+  case 117:
+#line 2103 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_emit_pushes_for_strings(yyscanner, (yyvsp[0].c_string));
         yr_free((yyvsp[0].c_string));
@@ -3811,53 +3811,42 @@ yyreduce:
 #line 3812 "grammar.c" /* yacc.c:1663  */
     break;
 
-  case 117:
-#line 2114 "grammar.y" /* yacc.c:1663  */
-    {
-        int result = yr_parser_emit_pushes_for_strings(yyscanner, (yyvsp[0].c_string));
-        yr_free((yyvsp[0].c_string));
-
-        fail_if_error(result);
-      }
-#line 3823 "grammar.c" /* yacc.c:1663  */
-    break;
-
   case 118:
-#line 2125 "grammar.y" /* yacc.c:1663  */
+#line 2114 "grammar.y" /* yacc.c:1663  */
     {
         (yyval.integer) = FOR_EXPRESSION_ANY;
       }
-#line 3831 "grammar.c" /* yacc.c:1663  */
+#line 3820 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 119:
-#line 2129 "grammar.y" /* yacc.c:1663  */
+#line 2118 "grammar.y" /* yacc.c:1663  */
     {
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL);
         (yyval.integer) = FOR_EXPRESSION_ALL;
       }
-#line 3840 "grammar.c" /* yacc.c:1663  */
+#line 3829 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 120:
-#line 2134 "grammar.y" /* yacc.c:1663  */
+#line 2123 "grammar.y" /* yacc.c:1663  */
     {
         yr_parser_emit_with_arg(yyscanner, OP_PUSH, 1, NULL, NULL);
         (yyval.integer) = FOR_EXPRESSION_ANY;
       }
-#line 3849 "grammar.c" /* yacc.c:1663  */
+#line 3838 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 121:
-#line 2143 "grammar.y" /* yacc.c:1663  */
+#line 2132 "grammar.y" /* yacc.c:1663  */
     {
         (yyval.expression) = (yyvsp[-1].expression);
       }
-#line 3857 "grammar.c" /* yacc.c:1663  */
+#line 3846 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 122:
-#line 2147 "grammar.y" /* yacc.c:1663  */
+#line 2136 "grammar.y" /* yacc.c:1663  */
     {
         fail_if_error(yr_parser_emit(
             yyscanner, OP_FILESIZE, NULL));
@@ -3865,11 +3854,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 3869 "grammar.c" /* yacc.c:1663  */
+#line 3858 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 123:
-#line 2155 "grammar.y" /* yacc.c:1663  */
+#line 2144 "grammar.y" /* yacc.c:1663  */
     {
         yywarning(yyscanner,
             "Using deprecated \"entrypoint\" keyword. Use the \"entry_point\" "
@@ -3881,11 +3870,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 3885 "grammar.c" /* yacc.c:1663  */
+#line 3874 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 124:
-#line 2167 "grammar.y" /* yacc.c:1663  */
+#line 2156 "grammar.y" /* yacc.c:1663  */
     {
         check_type((yyvsp[-1].expression), EXPRESSION_TYPE_INTEGER, "intXXXX or uintXXXX");
 
@@ -3899,11 +3888,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 3903 "grammar.c" /* yacc.c:1663  */
+#line 3892 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 125:
-#line 2181 "grammar.y" /* yacc.c:1663  */
+#line 2170 "grammar.y" /* yacc.c:1663  */
     {
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, (yyvsp[0].integer), NULL, NULL));
@@ -3911,22 +3900,22 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = (yyvsp[0].integer);
       }
-#line 3915 "grammar.c" /* yacc.c:1663  */
+#line 3904 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 126:
-#line 2189 "grammar.y" /* yacc.c:1663  */
+#line 2178 "grammar.y" /* yacc.c:1663  */
     {
         fail_if_error(yr_parser_emit_with_arg_double(
             yyscanner, OP_PUSH, (yyvsp[0].double_), NULL, NULL));
 
         (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
       }
-#line 3926 "grammar.c" /* yacc.c:1663  */
+#line 3915 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 127:
-#line 2196 "grammar.y" /* yacc.c:1663  */
+#line 2185 "grammar.y" /* yacc.c:1663  */
     {
         YR_ARENA_REF ref;
 
@@ -3952,11 +3941,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_STRING;
         (yyval.expression).value.sized_string_ref = ref;
       }
-#line 3956 "grammar.c" /* yacc.c:1663  */
+#line 3945 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 128:
-#line 2222 "grammar.y" /* yacc.c:1663  */
+#line 2211 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[0].c_string), OP_COUNT, YR_UNDEFINED);
@@ -3968,11 +3957,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 3972 "grammar.c" /* yacc.c:1663  */
+#line 3961 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 129:
-#line 2234 "grammar.y" /* yacc.c:1663  */
+#line 2223 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[-3].c_string), OP_OFFSET, YR_UNDEFINED);
@@ -3984,11 +3973,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 3988 "grammar.c" /* yacc.c:1663  */
+#line 3977 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 130:
-#line 2246 "grammar.y" /* yacc.c:1663  */
+#line 2235 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, 1, NULL, NULL);
@@ -4004,11 +3993,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 4008 "grammar.c" /* yacc.c:1663  */
+#line 3997 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 131:
-#line 2262 "grammar.y" /* yacc.c:1663  */
+#line 2251 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[-3].c_string), OP_LENGTH, YR_UNDEFINED);
@@ -4020,11 +4009,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 4024 "grammar.c" /* yacc.c:1663  */
+#line 4013 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 132:
-#line 2274 "grammar.y" /* yacc.c:1663  */
+#line 2263 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_emit_with_arg(
             yyscanner, OP_PUSH, 1, NULL, NULL);
@@ -4040,11 +4029,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 4044 "grammar.c" /* yacc.c:1663  */
+#line 4033 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 133:
-#line 2290 "grammar.y" /* yacc.c:1663  */
+#line 2279 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
 
@@ -4087,11 +4076,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4091 "grammar.c" /* yacc.c:1663  */
+#line 4080 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 134:
-#line 2333 "grammar.y" /* yacc.c:1663  */
+#line 2322 "grammar.y" /* yacc.c:1663  */
     {
         int result = ERROR_SUCCESS;
 
@@ -4112,11 +4101,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4116 "grammar.c" /* yacc.c:1663  */
+#line 4105 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 135:
-#line 2354 "grammar.y" /* yacc.c:1663  */
+#line 2343 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_operation(
             yyscanner, "+", (yyvsp[-2].expression), (yyvsp[0].expression));
@@ -4151,11 +4140,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4155 "grammar.c" /* yacc.c:1663  */
+#line 4144 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 136:
-#line 2389 "grammar.y" /* yacc.c:1663  */
+#line 2378 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_operation(
             yyscanner, "-", (yyvsp[-2].expression), (yyvsp[0].expression));
@@ -4190,11 +4179,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4194 "grammar.c" /* yacc.c:1663  */
+#line 4183 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 137:
-#line 2424 "grammar.y" /* yacc.c:1663  */
+#line 2413 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_operation(
             yyscanner, "*", (yyvsp[-2].expression), (yyvsp[0].expression));
@@ -4228,11 +4217,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4232 "grammar.c" /* yacc.c:1663  */
+#line 4221 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 138:
-#line 2458 "grammar.y" /* yacc.c:1663  */
+#line 2447 "grammar.y" /* yacc.c:1663  */
     {
         int result = yr_parser_reduce_operation(
             yyscanner, "\\", (yyvsp[-2].expression), (yyvsp[0].expression));
@@ -4257,11 +4246,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4261 "grammar.c" /* yacc.c:1663  */
+#line 4250 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 139:
-#line 2483 "grammar.y" /* yacc.c:1663  */
+#line 2472 "grammar.y" /* yacc.c:1663  */
     {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "%");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "%");
@@ -4278,11 +4267,11 @@ yyreduce:
           fail_if_error(ERROR_DIVISION_BY_ZERO);
         }
       }
-#line 4282 "grammar.c" /* yacc.c:1663  */
+#line 4271 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 140:
-#line 2500 "grammar.y" /* yacc.c:1663  */
+#line 2489 "grammar.y" /* yacc.c:1663  */
     {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "^");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "^");
@@ -4292,11 +4281,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(^, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
       }
-#line 4296 "grammar.c" /* yacc.c:1663  */
+#line 4285 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 141:
-#line 2510 "grammar.y" /* yacc.c:1663  */
+#line 2499 "grammar.y" /* yacc.c:1663  */
     {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "^");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "^");
@@ -4306,11 +4295,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(&, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
       }
-#line 4310 "grammar.c" /* yacc.c:1663  */
+#line 4299 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 142:
-#line 2520 "grammar.y" /* yacc.c:1663  */
+#line 2509 "grammar.y" /* yacc.c:1663  */
     {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "|");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "|");
@@ -4320,11 +4309,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(|, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
       }
-#line 4324 "grammar.c" /* yacc.c:1663  */
+#line 4313 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 143:
-#line 2530 "grammar.y" /* yacc.c:1663  */
+#line 2519 "grammar.y" /* yacc.c:1663  */
     {
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "~");
 
@@ -4334,11 +4323,11 @@ yyreduce:
         (yyval.expression).value.integer = ((yyvsp[0].expression).value.integer == YR_UNDEFINED) ?
             YR_UNDEFINED : ~((yyvsp[0].expression).value.integer);
       }
-#line 4338 "grammar.c" /* yacc.c:1663  */
+#line 4327 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 144:
-#line 2540 "grammar.y" /* yacc.c:1663  */
+#line 2529 "grammar.y" /* yacc.c:1663  */
     {
         int result;
 
@@ -4358,11 +4347,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4362 "grammar.c" /* yacc.c:1663  */
+#line 4351 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 145:
-#line 2560 "grammar.y" /* yacc.c:1663  */
+#line 2549 "grammar.y" /* yacc.c:1663  */
     {
         int result;
 
@@ -4382,19 +4371,19 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4386 "grammar.c" /* yacc.c:1663  */
+#line 4375 "grammar.c" /* yacc.c:1663  */
     break;
 
   case 146:
-#line 2580 "grammar.y" /* yacc.c:1663  */
+#line 2569 "grammar.y" /* yacc.c:1663  */
     {
         (yyval.expression) = (yyvsp[0].expression);
       }
-#line 4394 "grammar.c" /* yacc.c:1663  */
+#line 4383 "grammar.c" /* yacc.c:1663  */
     break;
 
 
-#line 4398 "grammar.c" /* yacc.c:1663  */
+#line 4387 "grammar.c" /* yacc.c:1663  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -4622,5 +4611,5 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 2585 "grammar.y" /* yacc.c:1907  */
+#line 2574 "grammar.y" /* yacc.c:1907  */
 

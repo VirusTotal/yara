@@ -181,6 +181,7 @@ YR_API int yr_compiler_create(
   new_compiler->next_rule_idx = 0;
   new_compiler->current_string_idx = 0;
   new_compiler->current_namespace_idx = 0;
+  new_compiler->current_meta_idx = 0;
   new_compiler->num_namespaces = 0;
   new_compiler->errors = 0;
   new_compiler->callback = NULL;
