@@ -1,4 +1,3 @@
-
 # Copyright (c) 2020. The YARA Authors. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -27,8 +26,9 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """Load dependencies needed to compile YARA as a 3rd-party consumer."""
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 def yara_deps():
     """Loads common dependencies needed to compile YARA."""

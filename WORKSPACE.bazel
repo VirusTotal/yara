@@ -30,18 +30,22 @@
 workspace(name = "com_github_virustotal_yara")
 
 load("//:bazel/yara_deps.bzl", "yara_deps")
-yara_deps()
 
+yara_deps()
 
 load(
     "@rules_proto//proto:repositories.bzl",
-    "rules_proto_dependencies", "rules_proto_toolchains"
+    "rules_proto_dependencies",
+    "rules_proto_toolchains",
 )
+
 rules_proto_dependencies()
+
 rules_proto_toolchains()
 
 load(
     "@com_google_sandboxed_api//sandboxed_api/bazel:sapi_deps.bzl",
     "sapi_deps",
 )
+
 sapi_deps()
