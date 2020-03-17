@@ -1164,6 +1164,8 @@ int yr_parser_reduce_meta_declaration(
     meta->string = NULL;
   }
 
+  compiler->current_meta_idx++;
+
   return ERROR_SUCCESS;
 }
 

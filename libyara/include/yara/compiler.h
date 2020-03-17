@@ -222,6 +222,10 @@ typedef struct _YR_COMPILER
   // stored in YR_NAMESPACES_TABLE.
   uint32_t current_namespace_idx;
 
+  // Index of the current meta in the array of YR_META structures stored in
+  // YR_METAS_TABLE.
+  uint32_t current_meta_idx;
+
   // Pointer to a YR_RULES structure that represents the compiled rules. This
   // is what yr_compiler_get_rules returns. Once these rules are generated you
   // can't call any of the yr_compiler_add_xxx functions.

@@ -164,13 +164,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     (((x)->flags) & STRING_FLAGS_PRIVATE)
 
 
-#define META_TYPE_NULL      0
 #define META_TYPE_INTEGER   1
 #define META_TYPE_STRING    2
 #define META_TYPE_BOOLEAN   3
 
-#define META_IS_NULL(x) \
-    ((x) != NULL ? (x)->type == META_TYPE_NULL : true)
+
+#define META_FLAGS_LAST_IN_RULE  1
+
+#define META_IS_LAST_IN_RULE(x) \
+    (((x)->flags) & META_FLAGS_LAST_IN_RULE)
 
 
 #define EXTERNAL_VARIABLE_TYPE_NULL           0
@@ -258,6 +260,7 @@ struct YR_META
 
   int64_t integer;
   int32_t type;
+  int32_t flags;
 };
 
 

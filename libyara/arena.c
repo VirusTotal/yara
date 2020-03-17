@@ -187,11 +187,11 @@ static int _yr_arena_allocate_memory(
       // reloc_target is the value of the relocatable pointer.
       void* reloc_target = *reloc_address;
 
-      // reloc_target points to some data inside the buffer being moved, so
-      // the pointer needs to be adjusted.
       if ((uint8_t*) reloc_target >= b->data &&
           (uint8_t*) reloc_target < b->data + b->used)
       {
+        // reloc_target points to some data inside the buffer being moved, so
+        // the pointer needs to be adjusted.
         *reloc_address = (uint8_t*) reloc_target - b->data + new_data;
       }
 
@@ -506,7 +506,7 @@ int yr_arena_write_string(
     YR_ARENA_REF* ref)
 {
   return yr_arena_write_data(
-      arena, buffer_id, string,strlen(string) + 1, ref);
+      arena, buffer_id, string, strlen(string) + 1, ref);
 }
 
 
@@ -713,7 +713,3 @@ int yr_arena_save_stream(
 
   return ERROR_SUCCESS;
 }
-
-
-
-

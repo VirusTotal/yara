@@ -378,23 +378,12 @@ meta
       }
     | _META_ ':' meta_declarations
       {
-        // Each rule have a list of meta-data info, consisting in a
-        // sequence of YR_META structures. The last YR_META structure does
-        // not represent a real meta-data, it's just a end-of-list marker
-        // identified by a specific type (META_TYPE_NULL). Here we
-        // write the end-of-list marker.
-
-        YR_META null_meta;
-
-        memset(&null_meta, 0xFF, sizeof(YR_META));
-        null_meta.type = META_TYPE_NULL;
-
-        fail_if_error(yr_arena_write_data(
+        YR_META* meta = yr_arena_get_ptr(
             compiler->arena,
             YR_METAS_TABLE,
-            &null_meta,
-            sizeof(YR_META),
-            NULL));
+            (compiler->current_meta_idx - 1) * sizeof(YR_META));
+
+        meta->flags |= META_FLAGS_LAST_IN_RULE;
 
         $$ = $3;
       }
