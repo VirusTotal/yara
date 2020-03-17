@@ -666,7 +666,9 @@ static int sort_by_cost_desc(
 // information about the cost of each rule. The rules are sorted by cost
 // in descending order and the last item in the array has rule == NULL.
 // The caller is responsible for freeing the returned array by calling
-// yr_free.
+// yr_free. Calling this function only makes sense if YR_PROFILING_ENABLED
+// is defined, if not, the cost for each rule won't be computed, it will be
+// set to 0 for all rules.
 //
 YR_API YR_PROFILING_INFO* yr_scanner_get_profiling_info(
     YR_SCANNER* scanner)
@@ -680,7 +682,11 @@ YR_API YR_PROFILING_INFO* yr_scanner_get_profiling_info(
   for (uint32_t i = 0; i < scanner->rules->num_rules; i++)
   {
     profiling_info[i].rule = &scanner->rules->rules_list_head[i];
+    #ifdef YR_PROFILING_ENABLED
     profiling_info[i].cost = scanner->time_cost[i];
+    #else
+    profiling_info[i].cost = 0;
+    #endif
   }
 
   qsort(
