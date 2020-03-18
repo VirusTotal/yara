@@ -289,7 +289,7 @@ YR_API void yr_scanner_set_timeout(
     YR_SCANNER* scanner,
     int timeout)
 {
-  scanner->timeout = timeout * 1000000L;  // convert timeout to microseconds.
+  scanner->timeout = timeout * 1000000000L;  // convert timeout to nanoseconds.
 }
 
 
