@@ -1865,13 +1865,13 @@ int yr_re_exec(
 
   if (flags & RE_FLAGS_BACKWARDS)
   {
-    max_bytes_matched = (int) yr_min(input_backwards_size, RE_SCAN_LIMIT);
+    max_bytes_matched = (int) yr_min(input_backwards_size, YR_RE_SCAN_LIMIT);
     input -= character_size;
     input_incr = -input_incr;
   }
   else
   {
-    max_bytes_matched = (int) yr_min(input_forwards_size, RE_SCAN_LIMIT);
+    max_bytes_matched = (int) yr_min(input_forwards_size, YR_RE_SCAN_LIMIT);
   }
 
   // Round down max_bytes_matched to a multiple of character_size, this way if
