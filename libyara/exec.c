@@ -64,8 +64,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // form you should encapsulate them in some digitally-signed package that
 // ensure that they haven't been modified by someone else.
 
-#if !defined(PARANOID_EXEC)
-#define PARANOID_EXEC   1
+#if !defined(YR_PARANOID_EXEC)
+#define YR_PARANOID_EXEC   1
 #endif
 
 
@@ -410,7 +410,7 @@ int yr_execute_code(
   start_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
   #endif
 
-  #if PARANOID_EXEC
+  #if YR_PARANOID_EXEC
   memset(mem, 0, MEM_SIZE * sizeof(mem[0]));
   #endif
 
@@ -548,7 +548,7 @@ int yr_execute_code(
       case OP_CLEAR_M:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
         #endif
         mem[r1.i].i = 0;
@@ -557,7 +557,7 @@ int yr_execute_code(
       case OP_ADD_M:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
         #endif
         pop(r2);
@@ -568,7 +568,7 @@ int yr_execute_code(
       case OP_INCR_M:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
         #endif
         mem[r1.i].i++;
@@ -577,7 +577,7 @@ int yr_execute_code(
       case OP_PUSH_M:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
         #endif
         r1 = mem[r1.i];
@@ -587,7 +587,7 @@ int yr_execute_code(
       case OP_POP_M:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
         #endif
         pop(r2);
@@ -597,7 +597,7 @@ int yr_execute_code(
       case OP_SET_M:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
         #endif
         pop(r2);
@@ -609,7 +609,7 @@ int yr_execute_code(
       case OP_SWAPUNDEF:
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
         #endif
         pop(r2);
@@ -831,7 +831,7 @@ int yr_execute_code(
 
         rule = &context->rules->rules_list_head[r2.i];
 
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         ensure_within_rules_arena(rule);
         #endif
 
@@ -879,7 +879,7 @@ int yr_execute_code(
         pop(r1);
         ensure_defined(r1);
 
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         check_object_canary(r1.o);
         #endif
 
@@ -919,7 +919,7 @@ int yr_execute_code(
 
         assert(r2.o->type == OBJECT_TYPE_ARRAY);
 
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         check_object_canary(r2.o);
         #endif
 
@@ -940,7 +940,7 @@ int yr_execute_code(
 
         assert(r2.o->type == OBJECT_TYPE_DICTIONARY);
 
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         check_object_canary(r2.o);
         #endif
 
@@ -960,7 +960,7 @@ int yr_execute_code(
         i = (int) strlen(args_fmt);
         count = 0;
 
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         if (i > YR_MAX_FUNCTION_ARGS)
         {
           stop = true;
@@ -985,7 +985,7 @@ int yr_execute_code(
         pop(r2);
         ensure_defined(r2);
 
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         check_object_canary(r2.o);
         #endif
 
@@ -1055,7 +1055,7 @@ int yr_execute_code(
           break;
         }
 
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         ensure_within_rules_arena(r2.p);
         #endif
 
@@ -1087,7 +1087,7 @@ int yr_execute_code(
         ensure_defined(r1);
         ensure_defined(r2);
 
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         ensure_within_rules_arena(r3.p);
         #endif
 
@@ -1114,7 +1114,7 @@ int yr_execute_code(
       case OP_COUNT:
         pop(r1);
 
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         ensure_within_rules_arena(r1.p);
         #endif
 
@@ -1128,7 +1128,7 @@ int yr_execute_code(
 
         ensure_defined(r1);
 
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         ensure_within_rules_arena(r2.p);
         #endif
 
@@ -1155,7 +1155,7 @@ int yr_execute_code(
 
         ensure_defined(r1);
 
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         ensure_within_rules_arena(r2.p);
         #endif
 
@@ -1344,7 +1344,7 @@ int yr_execute_code(
         r1.i = *(uint64_t*)(ip);
         ip += sizeof(uint64_t);
 
-        #if PARANOID_EXEC
+        #if YR_PARANOID_EXEC
         if (r1.i > stack.sp || stack.sp - r1.i >= stack.capacity)
         {
           stop = true;
