@@ -127,15 +127,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     } \
 
 
-// Given a YR_EXPRESSION returns its identifier. It returns identifier.ptr if not NULL and relies on identifier.ref if
-// otherwise.
+// Given a YR_EXPRESSION returns its identifier. It returns identifier.ptr if
+// not NULL and relies on identifier.ref if otherwise.
 #define expression_identifier(expr) \
     ((expr).identifier.ptr != NULL ? \
      (expr).identifier.ptr : \
      (const char*) yr_arena_ref_to_ptr(compiler->arena, &(expr).identifier.ref))
 
 
-#define DEFAULT_BASE64_ALPHABET "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+#define DEFAULT_BASE64_ALPHABET \
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
 %}
 
@@ -219,7 +220,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // in the list. Operators that appear in the same line have the same precedence.
 %left _OR_
 %left _AND_
-%left _EQ_ _NEQ_
+%left _EQ_ _NEQ_ _CONTAINS_ _MATCHES_
 %left _LT_ _LE_ _GT_ _GE_
 %left '|'
 %left '^'
