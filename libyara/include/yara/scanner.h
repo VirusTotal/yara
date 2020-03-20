@@ -125,6 +125,10 @@ YR_API YR_PROFILING_INFO* yr_scanner_get_profiling_info(
     YR_SCANNER* scanner);
 
 
+YR_API void yr_scanner_reset_profiling_info(
+    YR_SCANNER* scanner);
+
+
 YR_API int yr_scanner_print_profiling_info(
     YR_SCANNER* scanner);
 
