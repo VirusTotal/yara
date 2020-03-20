@@ -198,8 +198,7 @@ YR_API int yr_scanner_create(
       rules->num_strings, sizeof(YR_MATCHES));
 
   #ifdef YR_PROFILING_ENABLED
-  new_scanner->time_cost = (uint64_t*) yr_calloc(
-      rules->num_rules, sizeof(uint64_t));
+  new_scanner->time_cost = yr_calloc(rules->num_rules, sizeof(uint64_t));
 
   if (new_scanner->time_cost == NULL)
   {
@@ -701,6 +700,14 @@ YR_API YR_PROFILING_INFO* yr_scanner_get_profiling_info(
   return profiling_info;
 }
 
+
+YR_API void yr_scanner_reset_profiling_info(
+    YR_SCANNER* scanner)
+{
+  #ifdef YR_PROFILING_ENABLED
+  memset(scanner->time_cost, 0, scanner->rules->num_rules * sizeof(uint64_t));
+  #endif
+}
 
 YR_API int yr_scanner_print_profiling_info(
     YR_SCANNER* scanner)
