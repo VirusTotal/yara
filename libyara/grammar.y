@@ -185,6 +185,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token <sized_string> _REGEXP_                         "regular expression"
 %token _ASCII_                                         "<ascii>"
 %token _WIDE_                                          "<wide>"
+%token _ROL_                                           "<rol>"
 %token _XOR_                                           "<xor>"
 %token _BASE64_                                        "<base64>"
 %token _BASE64_WIDE_                                   "<base64wide>"
@@ -659,6 +660,16 @@ string_modifiers
       {
         $$ = $1;
 
+        // Only set the rol minimum and maximum if we are dealing with the
+        // rol modifier. If we don't check for this then we can end up with
+        // "rol wide" resulting in whatever is on the stack for "wide"
+        // overwriting the values for rol.
+        if ($2.flags & STRING_FLAGS_ROL)
+        {
+          $$.rol_min = $2.rol_min;
+          $$.rol_max = $2.rol_max;
+        }
+
         // Only set the xor minimum and maximum if we are dealing with the
         // xor modifier. If we don't check for this then we can end up with
         // "xor wide" resulting in whatever is on the stack for "wide"
@@ -668,6 +679,7 @@ string_modifiers
           $$.xor_min = $2.xor_min;
           $$.xor_max = $2.xor_max;
         }
+
 
         // Only set the base64 alphabet if we are dealing with the base64
         // modifier. If we don't check for this then we can end up with
@@ -720,6 +732,65 @@ string_modifier
     | _NOCASE_      { $$.flags = STRING_FLAGS_NO_CASE; }
     | _FULLWORD_    { $$.flags = STRING_FLAGS_FULL_WORD; }
     | _PRIVATE_     { $$.flags = STRING_FLAGS_PRIVATE; }
+    | _ROL_
+      {
+        $$.flags = STRING_FLAGS_ROL;
+        $$.rol_min = 1;
+        $$.rol_max = 7;
+      }
+    | _ROL_ '(' _NUMBER_ ')'
+      {
+        int result = ERROR_SUCCESS;
+
+        if ($3 < 1 || $3 > 7)
+        {
+          yr_compiler_set_error_extra_info(compiler, "invalid rol range");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        fail_if_error(result);
+
+        $$.flags = STRING_FLAGS_ROL;
+        $$.rol_min = $3;
+        $$.rol_max = $3;
+      }
+    /*
+     * Would love to use range here for consistency in the language but that
+     * uses a primary expression which pushes a value on the VM stack we don't
+     * account for.
+     */
+    | _ROL_ '(' _NUMBER_ '-' _NUMBER_ ')'
+      {
+        int result = ERROR_SUCCESS;
+
+        if ($3 < 1)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "lower bound for rol range exceeded (min: 1)");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        if ($5 > 7)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "upper bound for rol range exceeded (max: 7)");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        if ($3 > $5)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "rol lower bound exceeds upper bound");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        fail_if_error(result);
+
+        $$.flags = STRING_FLAGS_ROL;
+        $$.rol_min = $3;
+        $$.rol_max = $5;
+      }
+
     | _XOR_
       {
         $$.flags = STRING_FLAGS_XOR;

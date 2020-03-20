@@ -58,6 +58,64 @@ typedef struct _CALLBACK_ARGS
 } CALLBACK_ARGS;
 
 
+static int _yr_scan_rol_compare(
+    const uint8_t* data,
+    size_t data_size,
+    uint8_t* string,
+    size_t string_length)
+{
+  const uint8_t* s1 = data;
+  const uint8_t* s2 = string;
+
+  if (data_size < string_length)
+    return 0;
+
+  int i = 0;
+  int k = 0;
+
+  // Calculate the rol key to compare with the rest of the string.
+  // Since there are only 7 options, we can bruteforce it.
+  for (int n=1; n<8; n++)
+    if (s2[0] == (uint8_t) (s1[0] << n | s1[0] >> (8-n)))
+      k = n;
+
+  for (i=0; i < string_length; i++)
+    if (s2[i] != (uint8_t) (s1[i] << k | s1[i] >> (8-k)))
+      return 0;
+
+  return (int) ((i == string_length) ? i : 0);
+
+}
+
+static int _yr_scan_rol_wcompare(
+    const uint8_t* data,
+    size_t data_size,
+    uint8_t* string,
+    size_t string_length)
+{
+  const uint8_t* s1 = data;
+  const uint8_t* s2 = string;
+
+  if (data_size < string_length)
+    return 0;
+
+  int i = 0;
+  int k = 0;
+
+  // Calculate the rol key to compare with the rest of the string.
+  // Since there are only 7 options, we can bruteforce it.
+  for (int n=1; n<8; n++)
+    if (s2[0] == (uint8_t) (s1[0] << n | s1[0] >> (8-n)))
+      k = n;
+
+  for (i=0; i < string_length; i++)
+    if (s2[i] != (uint8_t) (s1[i] << k | s1[i] >> (8-k)))
+      return 0;
+
+  return (int) ((i == string_length) ? i : 0);
+
+}
+
 static int _yr_scan_xor_compare(
     const uint8_t* data,
     size_t data_size,
@@ -830,6 +888,27 @@ static int _yr_scan_verify_literal_match(
           data_size - offset,
           string->string,
           string->length);
+    }
+
+    if (STRING_IS_ROL(string) && forward_matches == 0)
+    {
+      if (STRING_IS_WIDE(string))
+      {
+        forward_matches = _yr_scan_rol_wcompare(
+            data + offset,
+            data_size - offset,
+            string->string,
+            string->length);
+      }
+
+      if (forward_matches == 0)
+      {
+        forward_matches = _yr_scan_rol_compare(
+            data + offset,
+            data_size - offset,
+            string->string,
+            string->length);
+      }
     }
 
     if (STRING_IS_XOR(string) && forward_matches == 0)

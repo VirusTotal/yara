@@ -179,6 +179,7 @@ octdigit      [0-7]
 "ascii"                 { return _ASCII_;       }
 "wide"                  { return _WIDE_;        }
 "xor"                   { return _XOR_;         }
+"rol"                   { return _ROL_;         }
 "base64"                { return _BASE64_;      }
 "base64wide"            { return _BASE64_WIDE_; }
 "fullword"              { return _FULLWORD_;    }

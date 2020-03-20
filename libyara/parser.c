@@ -627,10 +627,34 @@ int yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
+  // base64 and rol together is not implemented.
+  if (modifier.flags & STRING_FLAGS_ROL &&
+      (modifier.flags & STRING_FLAGS_BASE64 ||
+       modifier.flags & STRING_FLAGS_BASE64_WIDE))
+  {
+      result = ERROR_INVALID_MODIFIER;
+      yr_compiler_set_error_extra_info(
+          compiler,
+          modifier.flags & STRING_FLAGS_BASE64 ?
+             "base64 rol" :
+             "base64wide rol")
+      goto _exit;
+  }
+
+  // rol and nocase together is not implemented.
+  if (modifier.flags & STRING_FLAGS_ROL &&
+      modifier.flags & STRING_FLAGS_NO_CASE)
+  {
+      result = ERROR_INVALID_MODIFIER;
+      yr_compiler_set_error_extra_info(compiler, "rol nocase")
+      goto _exit;
+  }
+
   if (!(modifier.flags & STRING_FLAGS_WIDE) &&
       !(modifier.flags & STRING_FLAGS_XOR) &&
       !(modifier.flags & STRING_FLAGS_BASE64 ||
-        modifier.flags & STRING_FLAGS_BASE64_WIDE))
+        modifier.flags & STRING_FLAGS_BASE64_WIDE) &&
+      !(modifier.flags & STRING_FLAGS_ROL))
   {
     modifier.flags |= STRING_FLAGS_ASCII;
   }

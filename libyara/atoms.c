@@ -807,6 +807,54 @@ static int _yr_atoms_case_insensitive(
   return ERROR_SUCCESS;
 }
 
+//
+// _yr_atoms_rol
+//
+// For a given list of atoms returns another list after 1-7 byte shifts
+// have been applied to it.
+//
+
+static int _yr_atoms_rol(
+    YR_ATOM_LIST_ITEM* atoms,
+    uint8_t min,
+    uint8_t max,
+    YR_ATOM_LIST_ITEM** rol_atoms)
+{
+  YR_ATOM_LIST_ITEM* atom;
+  YR_ATOM_LIST_ITEM* new_atom;
+
+  int i, j;
+  *rol_atoms = NULL;
+  atom = atoms;
+
+  while (atom != NULL)
+  {
+    for (j = min; j <= max; j++)
+    {
+      new_atom = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
+
+      if (new_atom == NULL)
+        return ERROR_INSUFFICIENT_MEMORY;
+
+      for (i = 0; i < atom->atom.length; i++)
+      {
+        new_atom->atom.bytes[i] = atom->atom.bytes[i] << j | atom->atom.bytes[i] >> (8-j);
+      }
+
+      new_atom->atom.length = yr_min(atom->atom.length, YR_MAX_ATOM_LENGTH);
+      new_atom->forward_code_ref = atom->forward_code_ref;
+      new_atom->backward_code_ref = atom->backward_code_ref;
+      new_atom->backtrack = atom->backtrack;
+      new_atom->next = *rol_atoms;
+
+      *rol_atoms = new_atom;
+    }
+
+    atom = atom->next;
+  }
+  return ERROR_SUCCESS;
+}
+
 
 //
 // _yr_atoms_xor
@@ -1485,6 +1533,7 @@ int yr_atoms_extract_from_string(
 {
   YR_ATOM_LIST_ITEM* item;
   YR_ATOM_LIST_ITEM* case_insensitive_atoms;
+  YR_ATOM_LIST_ITEM* rol_atoms;
   YR_ATOM_LIST_ITEM* xor_atoms;
   YR_ATOM_LIST_ITEM* wide_atoms;
 
@@ -1568,6 +1617,21 @@ int yr_atoms_extract_from_string(
         });
 
     *atoms = _yr_atoms_list_concat(*atoms, case_insensitive_atoms);
+  }
+
+  if (modifier.flags & STRING_FLAGS_ROL)
+  {
+    FAIL_ON_ERROR_WITH_CLEANUP(
+      _yr_atoms_rol(*atoms, modifier.rol_min, modifier.rol_max, &rol_atoms),
+      {
+        yr_atoms_list_destroy(*atoms);
+        yr_atoms_list_destroy(rol_atoms);
+        *atoms = NULL;
+      });
+
+    yr_atoms_list_destroy(*atoms);
+    *atoms = rol_atoms;
+
   }
 
   if (modifier.flags & STRING_FLAGS_XOR)
