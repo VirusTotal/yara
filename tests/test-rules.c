@@ -940,8 +940,51 @@ static void test_strings()
           @a[3] == 0x656 and\n\
           !a[3] == 25\n\
       }", "tests/data/base64");
-}
 
+  //start of assert_error for rol
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" rol nocase\n\
+      condition:\n\
+        true\n\
+    }", ERROR_INVALID_MODIFIER);
+
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" rol xor\n\
+      condition:\n\
+        true\n\
+    }", ERROR_INVALID_MODIFIER);
+
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" rol(\"AXS\")\n\
+      condition:\n\
+        true\n\
+    }", ERROR_INVALID_MODIFIER);
+
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" rolwide(\"ERS\")\n\
+      condition:\n\
+        true\n\
+    }", ERROR_INVALID_MODIFIER);
+  
+  // rol validation test
+  // this will test the agaisnt the values of 1,4 and 7 rol operations. 
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"Tested Code Here\" rol\n\
+      condition:\n\
+        $a\n\
+    }", "tests/data/rol.out");
+
+}
 
 static void test_wildcard_strings()
 {
