@@ -510,7 +510,7 @@ struct YR_MATCH
   int32_t chain_length;
 
   // True if this is match for a private string.
-  bool private;
+  bool is_private;
 };
 
 
