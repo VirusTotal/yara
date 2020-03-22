@@ -68,101 +68,47 @@ extern int yara_yydebug;
     _REGEXP_ = 277,
     _ASCII_ = 278,
     _WIDE_ = 279,
-    _XOR_ = 280,
-    _BASE64_ = 281,
-    _BASE64_WIDE_ = 282,
-    _NOCASE_ = 283,
-    _FULLWORD_ = 284,
-    _AT_ = 285,
-    _FILESIZE_ = 286,
-    _ENTRYPOINT_ = 287,
-    _ALL_ = 288,
-    _ANY_ = 289,
-    _IN_ = 290,
-    _OF_ = 291,
-    _FOR_ = 292,
-    _THEM_ = 293,
-    _MATCHES_ = 294,
-    _CONTAINS_ = 295,
-    _IMPORT_ = 296,
-    _TRUE_ = 297,
-    _FALSE_ = 298,
-    _OR_ = 299,
-    _AND_ = 300,
-    _NOT_ = 301,
-    _EQ_ = 302,
-    _NEQ_ = 303,
-    _LT_ = 304,
-    _LE_ = 305,
-    _GT_ = 306,
-    _GE_ = 307,
-    _SHIFT_LEFT_ = 308,
-    _SHIFT_RIGHT_ = 309,
-    UNARY_MINUS = 310
+    _ROL_ = 280,
+    _XOR_ = 281,
+    _BASE64_ = 282,
+    _BASE64_WIDE_ = 283,
+    _NOCASE_ = 284,
+    _FULLWORD_ = 285,
+    _AT_ = 286,
+    _FILESIZE_ = 287,
+    _ENTRYPOINT_ = 288,
+    _ALL_ = 289,
+    _ANY_ = 290,
+    _IN_ = 291,
+    _OF_ = 292,
+    _FOR_ = 293,
+    _THEM_ = 294,
+    _MATCHES_ = 295,
+    _CONTAINS_ = 296,
+    _IMPORT_ = 297,
+    _TRUE_ = 298,
+    _FALSE_ = 299,
+    _OR_ = 300,
+    _AND_ = 301,
+    _NOT_ = 302,
+    _EQ_ = 303,
+    _NEQ_ = 304,
+    _LT_ = 305,
+    _LE_ = 306,
+    _GT_ = 307,
+    _GE_ = 308,
+    _SHIFT_LEFT_ = 309,
+    _SHIFT_RIGHT_ = 310,
+    UNARY_MINUS = 311
   };
 #endif
-/* Tokens.  */
-#define _END_OF_FILE_ 0
-#define _END_OF_INCLUDED_FILE_ 258
-#define _DOT_DOT_ 259
-#define _RULE_ 260
-#define _PRIVATE_ 261
-#define _GLOBAL_ 262
-#define _META_ 263
-#define _STRINGS_ 264
-#define _CONDITION_ 265
-#define _IDENTIFIER_ 266
-#define _STRING_IDENTIFIER_ 267
-#define _STRING_COUNT_ 268
-#define _STRING_OFFSET_ 269
-#define _STRING_LENGTH_ 270
-#define _STRING_IDENTIFIER_WITH_WILDCARD_ 271
-#define _NUMBER_ 272
-#define _DOUBLE_ 273
-#define _INTEGER_FUNCTION_ 274
-#define _TEXT_STRING_ 275
-#define _HEX_STRING_ 276
-#define _REGEXP_ 277
-#define _ASCII_ 278
-#define _WIDE_ 279
-#define _XOR_ 280
-#define _BASE64_ 281
-#define _BASE64_WIDE_ 282
-#define _NOCASE_ 283
-#define _FULLWORD_ 284
-#define _AT_ 285
-#define _FILESIZE_ 286
-#define _ENTRYPOINT_ 287
-#define _ALL_ 288
-#define _ANY_ 289
-#define _IN_ 290
-#define _OF_ 291
-#define _FOR_ 292
-#define _THEM_ 293
-#define _MATCHES_ 294
-#define _CONTAINS_ 295
-#define _IMPORT_ 296
-#define _TRUE_ 297
-#define _FALSE_ 298
-#define _OR_ 299
-#define _AND_ 300
-#define _NOT_ 301
-#define _EQ_ 302
-#define _NEQ_ 303
-#define _LT_ 304
-#define _LE_ 305
-#define _GT_ 306
-#define _GE_ 307
-#define _SHIFT_LEFT_ 308
-#define _SHIFT_RIGHT_ 309
-#define UNARY_MINUS 310
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 
 union YYSTYPE
 {
-#line 300 "grammar.y" /* yacc.c:1916  */
+#line 301 "grammar.y" /* yacc.c:1910  */
 
   YR_EXPRESSION   expression;
   SIZED_STRING*   sized_string;
@@ -176,7 +122,7 @@ union YYSTYPE
   YR_ARENA_REF meta;
   YR_ARENA_REF string;
 
-#line 180 "grammar.h" /* yacc.c:1916  */
+#line 126 "grammar.h" /* yacc.c:1910  */
 };
 
 typedef union YYSTYPE YYSTYPE;
