@@ -907,7 +907,12 @@ int yr_scan_verify_match(
     return ERROR_SUCCESS;
 
   #ifdef YR_PROFILING_ENABLED
-  uint64_t start_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
+  uint64_t start_time;
+  bool sample = context->profiling_info[string->rule_idx].atom_matches 
+     % YR_MATCH_VERIFICATION_PROFILING_RATE == 0;
+
+  if (sample)
+    start_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
   #endif
 
   if (STRING_IS_LITERAL(string))
@@ -922,8 +927,13 @@ int yr_scan_verify_match(
   }
 
   #ifdef YR_PROFILING_ENABLED
-  uint64_t finish_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
-  context->time_cost[string->rule_idx] += (finish_time - start_time);
+  if (sample)
+  {
+    uint64_t finish_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
+    context->profiling_info[string->rule_idx].match_verification_time += (
+        finish_time - start_time);  
+  }
+  context->profiling_info[string->rule_idx].atom_matches++;
   #endif
 
   if (result != ERROR_SUCCESS)
