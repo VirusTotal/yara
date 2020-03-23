@@ -637,7 +637,7 @@ struct YR_PROFILING_INFO
   // determining if the corresponding string actually matched or not. This
   // time is not measured for all atom matches, only 1 out of 1024 matches
   // are actually measured.
-  uint64_t match_verification_time;
+  uint64_t match_time;
 
   // Amount of time (in nanoseconds) spent evaluating the rule condition.
   uint64_t exec_time;

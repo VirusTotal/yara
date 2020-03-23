@@ -908,7 +908,7 @@ int yr_scan_verify_match(
 
   #ifdef YR_PROFILING_ENABLED
   uint64_t start_time;
-  bool sample = context->profiling_info[string->rule_idx].atom_matches 
+  bool sample = context->profiling_info[string->rule_idx].atom_matches
      % YR_MATCH_VERIFICATION_PROFILING_RATE == 0;
 
   if (sample)
@@ -930,8 +930,8 @@ int yr_scan_verify_match(
   if (sample)
   {
     uint64_t finish_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
-    context->profiling_info[string->rule_idx].match_verification_time += (
-        finish_time - start_time);  
+    context->profiling_info[string->rule_idx].match_time += (
+        finish_time - start_time);
   }
   context->profiling_info[string->rule_idx].atom_matches++;
   #endif
