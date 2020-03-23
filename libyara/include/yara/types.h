@@ -629,11 +629,11 @@ struct YR_RULES_STATS
 //
 struct YR_PROFILING_INFO
 {
-  // Number of times that some atom belonging to the rule matched. Each 
+  // Number of times that some atom belonging to the rule matched. Each
   // matching atom means a potential string match that needs to be verified.
   uint32_t atom_matches;
 
-  // Amount of time (in nanoseconds) spent verifying atom matches for 
+  // Amount of time (in nanoseconds) spent verifying atom matches for
   // determining if the corresponding string actually matched or not. This
   // time is not measured for all atom matches, only 1 out of 1024 matches
   // are actually measured.
@@ -759,9 +759,7 @@ struct YR_SCAN_CONTEXT
 
   // profiling_info is a pointer to an array of YR_PROFILING_INFO structures,
   // one per rule. Entry N has the profiling information for rule with index N.
-  #ifdef YR_PROFILING_ENABLED
   YR_PROFILING_INFO* profiling_info;
-  #endif
 };
 
 
