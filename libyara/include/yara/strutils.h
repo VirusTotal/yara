@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #if !defined(PRIu32)
-#define PRIu64 "I32u"
+#define PRIu32 "I32u"
 #endif
 
 #if !defined(PRIx64)
