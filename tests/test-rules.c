@@ -947,7 +947,7 @@ static void test_strings()
       strings:\n\
         $a = \"ab\" rol nocase\n\
       condition:\n\
-        true\n\
+        $a\n\
     }", ERROR_INVALID_MODIFIER);
 
   assert_error(
@@ -955,23 +955,15 @@ static void test_strings()
       strings:\n\
         $a = \"ab\" rol xor\n\
       condition:\n\
-        true\n\
+        $a\n\
     }", ERROR_INVALID_MODIFIER);
 
   assert_error(
     "rule test {\n\
       strings:\n\
-        $a = \"ab\" rol(\"AXS\")\n\
+        $a = \"ab\" rol wide\n\
       condition:\n\
-        true\n\
-    }", ERROR_INVALID_MODIFIER);
-
-  assert_error(
-    "rule test {\n\
-      strings:\n\
-        $a = \"ab\" rolwide(\"ERS\")\n\
-      condition:\n\
-        true\n\
+        $a\n\
     }", ERROR_INVALID_MODIFIER);
   
   // rol validation test

@@ -650,6 +650,24 @@ int yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
+  // rol and wide together is not implemented.
+  if (modifier.flags & STRING_FLAGS_ROL &&
+      modifier.flags & STRING_FLAGS_WIDE)
+  {
+      result = ERROR_INVALID_MODIFIER;
+      yr_compiler_set_error_extra_info(compiler, "rol wide")
+      goto _exit;
+  }
+
+    // rol and xor together is not implemented.
+  if (modifier.flags & STRING_FLAGS_ROL &&
+      modifier.flags & STRING_FLAGS_XOR)
+  {
+      result = ERROR_INVALID_MODIFIER;
+      yr_compiler_set_error_extra_info(compiler, "rol xor")
+      goto _exit;
+  }
+
   if (!(modifier.flags & STRING_FLAGS_WIDE) &&
       !(modifier.flags & STRING_FLAGS_XOR) &&
       !(modifier.flags & STRING_FLAGS_BASE64 ||
