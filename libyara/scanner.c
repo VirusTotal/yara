@@ -649,18 +649,10 @@ static int sort_by_cost_desc(
     const struct YR_RULE_PROFILING_INFO* r1,
     const struct YR_RULE_PROFILING_INFO* r2)
 {
-  uint64_t total_cost1 = r1->profiling_info.exec_time +
-      r1->profiling_info.match_time *
-      r1->profiling_info.atom_matches / YR_MATCH_VERIFICATION_PROFILING_RATE;
-
-  uint64_t total_cost2 = r2->profiling_info.exec_time +
-      r2->profiling_info.match_time *
-      r2->profiling_info.atom_matches / YR_MATCH_VERIFICATION_PROFILING_RATE;
-
-  if (total_cost1 < total_cost2)
+  if (r1->cost < r2->cost)
     return 1;
 
-  if (total_cost1 > total_cost2)
+  if (r1->cost > r2->cost)
     return -1;
 
   return 0;
@@ -690,7 +682,11 @@ YR_API YR_RULE_PROFILING_INFO* yr_scanner_get_profiling_info(
   {
     profiling_info[i].rule = &scanner->rules->rules_list_head[i];
     #ifdef YR_PROFILING_ENABLED
-    profiling_info[i].profiling_info = scanner->profiling_info[i];
+    profiling_info[i].cost = \
+        scanner->profiling_info[i].exec_time +
+        (scanner->profiling_info[i].atom_matches *
+         scanner->profiling_info[i].match_time) /
+        YR_MATCH_VERIFICATION_PROFILING_RATE;
     #else
     memset(&profiling_info[i], 0, sizeof(YR_RULE_PROFILING_INFO));
     #endif
@@ -703,6 +699,7 @@ YR_API YR_RULE_PROFILING_INFO* yr_scanner_get_profiling_info(
       (int (*)(const void *, const void *)) sort_by_cost_desc);
 
   profiling_info[scanner->rules->num_rules].rule = NULL;
+  profiling_info[scanner->rules->num_rules].cost = 0;
 
   return profiling_info;
 }
@@ -733,10 +730,8 @@ YR_API int yr_scanner_print_profiling_info(
   while (rpi->rule != NULL)
   {
     printf(
-        "%10" PRIu32 " %10" PRIu64 " %10" PRIu64 "  %s:%s: \n",
-        rpi->profiling_info.atom_matches,
-        rpi->profiling_info.match_time,
-        rpi->profiling_info.exec_time,
+        "%10" PRIu64 " %s:%s: \n",
+        rpi->cost,
         rpi->rule->ns->name,
         rpi->rule->identifier);
 

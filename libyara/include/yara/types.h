@@ -644,10 +644,14 @@ struct YR_PROFILING_INFO
 };
 
 
+//
+// YR_RULE_PROFILING_INFO is the structure returned by
+// yr_scanner_get_profiling_info
+//
 struct YR_RULE_PROFILING_INFO
 {
   YR_RULE* rule;
-  YR_PROFILING_INFO profiling_info;
+  uint64_t cost;
 };
 
 
