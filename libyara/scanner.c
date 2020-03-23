@@ -649,12 +649,12 @@ static int sort_by_cost_desc(
     const struct YR_RULE_PROFILING_INFO* r1,
     const struct YR_RULE_PROFILING_INFO* r2)
 {
-  uint64_t total_cost1 = r1->profiling_info.exec_time + 
-      r1->profiling_info.match_verification_time * 
+  uint64_t total_cost1 = r1->profiling_info.exec_time +
+      r1->profiling_info.match_verification_time *
       r1->profiling_info.atom_matches / YR_MATCH_VERIFICATION_PROFILING_RATE;
 
-  uint64_t total_cost2 = r2->profiling_info.exec_time + 
-      r2->profiling_info.match_verification_time * 
+  uint64_t total_cost2 = r2->profiling_info.exec_time +
+      r2->profiling_info.match_verification_time *
       r2->profiling_info.atom_matches / YR_MATCH_VERIFICATION_PROFILING_RATE;
 
   if (total_cost1 < total_cost2)
@@ -692,7 +692,7 @@ YR_API YR_RULE_PROFILING_INFO* yr_scanner_get_profiling_info(
     #ifdef YR_PROFILING_ENABLED
     profiling_info[i].profiling_info = scanner->profiling_info[i];
     #else
-    profiling_info[i].profiling_info = 0;
+    memset(&profiling_info[i], 0, sizeof(YR_RULE_PROFILING_INFO));
     #endif
   }
 
@@ -703,7 +703,7 @@ YR_API YR_RULE_PROFILING_INFO* yr_scanner_get_profiling_info(
       (int (*)(const void *, const void *)) sort_by_cost_desc);
 
   profiling_info[scanner->rules->num_rules].rule = NULL;
-  
+
   return profiling_info;
 }
 
@@ -712,7 +712,9 @@ YR_API void yr_scanner_reset_profiling_info(
     YR_SCANNER* scanner)
 {
   #ifdef YR_PROFILING_ENABLED
-  memset(scanner->profiling_info, 0, scanner->rules->num_rules * sizeof(YR_PROFILING_INFO));
+  memset(
+    scanner->profiling_info, 0,
+    scanner->rules->num_rules * sizeof(YR_PROFILING_INFO));
   #endif
 }
 
@@ -721,13 +723,12 @@ YR_API int yr_scanner_print_profiling_info(
 {
   printf("\n===== PROFILING INFORMATION =====\n\n");
 
-  YR_RULE_PROFILING_INFO* profiling_info = yr_scanner_get_profiling_info(scanner);
+  YR_RULE_PROFILING_INFO* info = yr_scanner_get_profiling_info(scanner);
 
-  if (profiling_info == NULL)
+  if (info == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-
-  YR_RULE_PROFILING_INFO* rpi = profiling_info;
+  YR_RULE_PROFILING_INFO* rpi = info;
 
   while (rpi->rule != NULL)
   {
@@ -744,7 +745,7 @@ YR_API int yr_scanner_print_profiling_info(
 
   printf("\n=================================\n");
 
-  yr_free(profiling_info);
+  yr_free(info);
 
   return ERROR_SUCCESS;
 }
