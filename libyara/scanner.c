@@ -650,11 +650,11 @@ static int sort_by_cost_desc(
     const struct YR_RULE_PROFILING_INFO* r2)
 {
   uint64_t total_cost1 = r1->profiling_info.exec_time +
-      r1->profiling_info.match_verification_time *
+      r1->profiling_info.match_time *
       r1->profiling_info.atom_matches / YR_MATCH_VERIFICATION_PROFILING_RATE;
 
   uint64_t total_cost2 = r2->profiling_info.exec_time +
-      r2->profiling_info.match_verification_time *
+      r2->profiling_info.match_time *
       r2->profiling_info.atom_matches / YR_MATCH_VERIFICATION_PROFILING_RATE;
 
   if (total_cost1 < total_cost2)
@@ -735,7 +735,7 @@ YR_API int yr_scanner_print_profiling_info(
     printf(
         "%10" PRIu32 " %10" PRIu64 " %10" PRIu64 "  %s:%s: \n",
         rpi->profiling_info.atom_matches,
-        rpi->profiling_info.match_verification_time,
+        rpi->profiling_info.match_time,
         rpi->profiling_info.exec_time,
         rpi->rule->ns->name,
         rpi->rule->identifier);
