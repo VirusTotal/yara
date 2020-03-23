@@ -210,6 +210,7 @@ typedef struct YR_RULES YR_RULES;
 typedef struct YR_SUMMARY YR_SUMMARY;
 typedef struct YR_RULES_STATS YR_RULES_STATS;
 typedef struct YR_PROFILING_INFO YR_PROFILING_INFO;
+typedef struct YR_RULE_PROFILING_INFO YR_RULE_PROFILING_INFO;
 typedef struct YR_EXTERNAL_VARIABLE YR_EXTERNAL_VARIABLE;
 typedef struct YR_MATCH YR_MATCH;
 typedef struct YR_SCAN_CONTEXT YR_SCAN_CONTEXT;
@@ -623,10 +624,30 @@ struct YR_RULES_STATS
 };
 
 
+//
+// YR_PROFILING_INFO contains profiling information for a rule.
+//
 struct YR_PROFILING_INFO
 {
+  // Number of times that some atom belonging to the rule matched. Each 
+  // matching atom means a potential string match that needs to be verified.
+  uint32_t atom_matches;
+
+  // Amount of time (in nanoseconds) spent verifying atom matches for 
+  // determining if the corresponding string actually matched or not. This
+  // time is not measured for all atom matches, only 1 out of 1024 matches
+  // are actually measured.
+  uint64_t match_verification_time;
+
+  // Amount of time (in nanoseconds) spent evaluating the rule condition.
+  uint64_t exec_time;
+};
+
+
+struct YR_RULE_PROFILING_INFO
+{
   YR_RULE* rule;
-  uint64_t cost;
+  YR_PROFILING_INFO profiling_info;
 };
 
 
@@ -736,10 +757,11 @@ struct YR_SCAN_CONTEXT
   // until they can be confirmed or discarded.
   YR_MATCHES* unconfirmed_matches;
 
-  // rule_cost is a pointer to an array of 64-bit integers with one entry per
-  // rule. Entry N has the time cost for rule with index N. If YARA is not
-  // built with YR_PROFILING_ENABLED this pointer is NULL.
-  uint64_t* time_cost;
+  // profiling_info is a pointer to an array of YR_PROFILING_INFO structures,
+  // one per rule. Entry N has the profiling information for rule with index N.
+  #ifdef YR_PROFILING_ENABLED
+  YR_PROFILING_INFO* profiling_info;
+  #endif
 };
 
 

@@ -113,3 +113,5 @@ windows/*/packages/
 *.trs
 *.log
 .dirstamp
+
+.idea/
