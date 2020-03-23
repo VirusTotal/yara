@@ -43,6 +43,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PRIu64 "I64u"
 #endif
 
+#if !defined(PRIu32)
+#define PRIu64 "I32u"
+#endif
+
 #if !defined(PRIx64)
 #define PRIx64 "I64x"
 #endif
