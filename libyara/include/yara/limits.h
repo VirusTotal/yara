@@ -143,6 +143,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_LEX_BUF_SIZE 8192
 #endif
 
+// Each time an atom is found it means that we have a potential match for some
+// string, and that match must be verified. The time spent in verifying those
+// matches is measured in one out of YR_MATCH_VERIFICATION_PROFILING_RATE matches.
+// The time is not measured for all matches because measuring it is expensive
+// by itself and match verification is a frequent operation.
+#ifndef YR_MATCH_VERIFICATION_PROFILING_RATE
+#define YR_MATCH_VERIFICATION_PROFILING_RATE 1024
+#endif
+
 // Maximum allowed split ID, also limiting the number of split instructions
 // allowed in a regular expression. This number can't be increased
 // over 255 without changing RE_SPLIT_ID_TYPE.

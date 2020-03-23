@@ -198,8 +198,8 @@ YR_API int yr_scanner_create(
       rules->num_strings, sizeof(YR_MATCHES));
 
   #ifdef YR_PROFILING_ENABLED
-  new_scanner->time_cost = (uint64_t*) yr_calloc(
-      rules->num_rules, sizeof(uint64_t));
+  new_scanner->profiling_info = yr_calloc(
+      rules->num_rules, sizeof(YR_PROFILING_INFO));
   #endif
 
   external = rules->externals_list_head;
@@ -256,7 +256,7 @@ YR_API void yr_scanner_destroy(
   }
 
   #ifdef YR_PROFILING_ENABLED
-  yr_free(scanner->time_cost);
+  yr_free(scanner->profiling_info);
   #endif
 
   yr_free(scanner->rule_matches_flags);
@@ -640,13 +640,21 @@ YR_API YR_RULE* yr_scanner_last_error_rule(
 
 #ifdef YR_PROFILING_ENABLED
 static int sort_by_cost_desc(
-    const struct YR_PROFILING_INFO* r1,
-    const struct YR_PROFILING_INFO* r2)
+    const struct YR_RULE_PROFILING_INFO* r1,
+    const struct YR_RULE_PROFILING_INFO* r2)
 {
-  if (r1->cost < r2->cost)
+  uint64_t total_cost1 = r1->profiling_info.exec_time + 
+      r1->profiling_info.match_verification_time * 
+      r1->profiling_info.atom_matches / YR_MATCH_VERIFICATION_PROFILING_RATE;
+
+  uint64_t total_cost2 = r2->profiling_info.exec_time + 
+      r2->profiling_info.match_verification_time * 
+      r2->profiling_info.atom_matches / YR_MATCH_VERIFICATION_PROFILING_RATE;
+
+  if (total_cost1 < total_cost2)
     return 1;
 
-  if (r1->cost > r2->cost)
+  if (total_cost1 > total_cost2)
     return -1;
 
   return 0;
@@ -655,17 +663,17 @@ static int sort_by_cost_desc(
 //
 // yr_scanner_get_profiling_info
 //
-// Returns a pointer to an array of YR_PROFILING_INFO structures with
+// Returns a pointer to an array of YR_RULE_PROFILING_INFO structures with
 // information about the cost of each rule. The rules are sorted by cost
 // in descending order and the last item in the array has rule == NULL.
 // The caller is responsible for freeing the returned array by calling
 // yr_free.
 //
-YR_API YR_PROFILING_INFO* yr_scanner_get_profiling_info(
+YR_API YR_RULE_PROFILING_INFO* yr_scanner_get_profiling_info(
     YR_SCANNER* scanner)
 {
-  YR_PROFILING_INFO* profiling_info = yr_malloc(
-      (scanner->rules->num_rules + 1) * sizeof(YR_PROFILING_INFO));
+  YR_RULE_PROFILING_INFO* profiling_info = yr_malloc(
+      (scanner->rules->num_rules + 1) * sizeof(YR_RULE_PROFILING_INFO));
 
   if (profiling_info == NULL)
     return NULL;
@@ -673,18 +681,17 @@ YR_API YR_PROFILING_INFO* yr_scanner_get_profiling_info(
   for (uint32_t i = 0; i < scanner->rules->num_rules; i++)
   {
     profiling_info[i].rule = &scanner->rules->rules_list_head[i];
-    profiling_info[i].cost = scanner->time_cost[i];
+    profiling_info[i].profiling_info = scanner->profiling_info[i];
   }
 
   qsort(
       profiling_info,
       scanner->rules->num_rules,
-      sizeof(YR_PROFILING_INFO),
+      sizeof(YR_RULE_PROFILING_INFO),
       (int (*)(const void *, const void *)) sort_by_cost_desc);
 
   profiling_info[scanner->rules->num_rules].rule = NULL;
-  profiling_info[scanner->rules->num_rules].cost = 0;
-
+  
   return profiling_info;
 }
 
@@ -694,23 +701,25 @@ YR_API int yr_scanner_print_profiling_info(
 {
   printf("\n===== PROFILING INFORMATION =====\n\n");
 
-  YR_PROFILING_INFO* profiling_info = yr_scanner_get_profiling_info(scanner);
+  YR_RULE_PROFILING_INFO* profiling_info = yr_scanner_get_profiling_info(scanner);
 
   if (profiling_info == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
 
-  YR_PROFILING_INFO* pi = profiling_info;
+  YR_RULE_PROFILING_INFO* rpi = profiling_info;
 
-  while (pi->rule != NULL)
+  while (rpi->rule != NULL)
   {
     printf(
-        "%s:%s: %" PRIu64 "\n",
-        pi->rule->ns->name,
-        pi->rule->identifier,
-        pi->cost);
+        "%10" PRIu32 " %10" PRIu64 " %10" PRIu64 "  %s:%s: \n",
+        rpi->profiling_info.atom_matches,
+        rpi->profiling_info.match_verification_time,
+        rpi->profiling_info.exec_time,
+        rpi->rule->ns->name,
+        rpi->rule->identifier);
 
-    pi++;
+    rpi++;
   }
 
   printf("\n=================================\n");
