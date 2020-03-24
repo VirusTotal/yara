@@ -1391,7 +1391,7 @@ expression
       //
       //  POP_M 3         ; pops the next item from the stack and puts it in M[3], it
       //
-      //  JTRUE_P exit    ; pops the boolean that tells if we already reached
+      //  JTRUE_P epilog  ; pops the boolean that tells if we already reached
       //                  ; the end of the iterator
       //  <expression>    ; here goes the code for <expression> the value of the
       //                  ; expressions ends up being at the top of the stack
@@ -1409,8 +1409,15 @@ expression
       //
       //  JL_P repeat     ; if M[1] is less M[3] repeat
       //
-      // exit:
+      // epilog:
       //  POP             ; remove the iterator object from the stack
+      //
+      //  PUSH_M 1        ; push iteration counter
+      //  JZ end          ; if iteration counter is 0 the loop evaluates to false
+      //                  ; in all cases, we jump to "end" leaving a 0 in the stack
+      //                  ; that will used as the resulting false value.
+      //  POP             ; the iteration counter wasn't 0, remove it from the
+      //                  ; stack
       //
       //  PUSH_M 0        ; pushes number of true results for <expression>
       //  PUSH_M 2        ; pushes value of <min_expression>
@@ -1423,6 +1430,7 @@ expression
       //                  ; with the number of iterations, if <min_expression>
       //                  ; was "all". A 1 is pushed into the stack if the former
       //                  ; is greater than or equal to the latter
+      // end:
       //
       {
         // var_frame is used for accessing local variables used in this loop.
@@ -1516,6 +1524,7 @@ expression
         int32_t jmp_offset;
         YR_FIXUP* fixup;
         YR_ARENA_REF pop_ref;
+        YR_ARENA_REF jmp_offset_ref;
 
         int var_frame = _yr_compiler_get_var_frame(compiler);
 
@@ -1559,6 +1568,19 @@ expression
         fail_if_error(yr_parser_emit(
             yyscanner, OP_POP, &pop_ref));
 
+        fail_if_error(yr_parser_emit_with_arg(
+            yyscanner, OP_PUSH_M, var_frame + 1, NULL, NULL));
+
+        fail_if_error(yr_parser_emit_with_arg_int32(
+            yyscanner,
+            OP_JZ,
+            0,      // still don't know the jump offset, use 0 for now.
+            NULL,
+            &jmp_offset_ref));
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_POP, NULL));
+
         // Pop from the stack the fixup entry containing the reference to
         // the jump offset that needs to be fixed.
 
@@ -1591,6 +1613,15 @@ expression
 
         fail_if_error(yr_parser_emit(
             yyscanner, OP_INT_GE, NULL));
+
+        jmp_offset = \
+            yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION) -
+            jmp_offset_ref.offset + 1;
+
+        jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(
+            compiler->arena, &jmp_offset_ref);
+
+        *jmp_offset_addr = jmp_offset;
 
         loop_vars_cleanup(compiler->loop_index);
 

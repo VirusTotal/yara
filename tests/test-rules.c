@@ -1492,6 +1492,49 @@ void test_for()
       }",
     NULL);
 
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for all i in (1..tests.undefined.i) : ( \
+            true \
+          ) \
+      }",
+    NULL);
+
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for all i in (tests.undefined.i..10) : ( \
+            true \
+          ) \
+      }",
+    NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for all i in (1..tests.undefined.i) : ( \
+            false \
+          ) \
+      }",
+    NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for 0 i in (1..3) : ( \
+            false \
+          ) \
+      }",
+    NULL);
+
+
   assert_true_rule(
       "import \"tests\" \
       rule test { \
