@@ -86,6 +86,7 @@ cc_test(
         "data/xor.out",
         "data/xorwide.out",
         "data/xorwideandascii.out",
+        "data/rol.out",
     ],
     deps = [
         ":blob",
