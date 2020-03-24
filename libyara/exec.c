@@ -298,7 +298,9 @@ static int iter_int_range_next(
   if (stack->sp + 1 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
-  if (self->int_range_it.next <= self->int_range_it.last)
+  if (!IS_UNDEFINED(self->int_range_it.next) &&
+      !IS_UNDEFINED(self->int_range_it.last) &&
+      self->int_range_it.next <= self->int_range_it.last)
   {
     // Push the false value that indicates that the iterator is not exhausted.
     stack->items[stack->sp++].i = 0;
@@ -327,7 +329,9 @@ static int iter_int_enum_next(
   if (stack->sp + 1 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
-  if (self->int_enum_it.next < self->int_enum_it.count)
+  if (!IS_UNDEFINED(self->int_enum_it.next) &&
+      !IS_UNDEFINED(self->int_enum_it.count) &&
+      self->int_enum_it.next < self->int_enum_it.count)
   {
     // Push the false value that indicates that the iterator is not exhausted.
     stack->items[stack->sp++].i = 0;
@@ -668,6 +672,17 @@ int yr_execute_code(
       case OP_JFALSE_P:
         pop(r1);
         ip = jmp_if(is_undef(r1) || !r1.i, ip);
+        break;
+
+      case OP_JZ:
+        pop(r1);
+        push(r1);
+        ip = jmp_if(r1.i == 0, ip);
+        break;
+
+      case OP_JZ_P:
+        pop(r1);
+        ip = jmp_if(r1.i == 0, ip);
         break;
 
       case OP_AND:

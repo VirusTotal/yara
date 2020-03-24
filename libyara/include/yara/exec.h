@@ -100,6 +100,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OP_ITER_START_DICT         55
 #define OP_ITER_START_INT_RANGE    56
 #define OP_ITER_START_INT_ENUM     57
+#define OP_JZ                      58
+#define OP_JZ_P                    59
 
 
 #define _OP_EQ            0
