@@ -12,8 +12,8 @@ Compiling and installing YARA
 
 Download the source tarball and get prepared for compiling it::
 
-    tar -zxf yara-3.11.0.tar.gz
-    cd yara-3.11.0
+    tar -zxf yara-4.0.0.tar.gz
+    cd yara-4.0.0
     ./bootstrap.sh
 
 Make sure you have ``automake``, ``libtool``, ``make``  and ``gcc`` and ``pkg-config`` installed in your system. Ubuntu and Debian users can use::
@@ -154,11 +154,11 @@ libraries in this path by default, we must instruct it to do so by adding
 
     sudo sh -c 'echo "/usr/local/lib" >> /etc/ld.so.conf'
     sudo ldconfig
-    
+
 If you're using Windows PowerShell as your command shell, ``yara my_first_rule my_first_rule`` may return this error::
 
     my_first_rule(1): error: non-ascii character
-    
+
 You can avoid this by using the ``Set-Content`` cmdlet to specify ascii output when creating your rule file::
 
     Set-Content -path .\my_first_rule -Value "rule dummy { condition: true }" -Encoding Ascii
