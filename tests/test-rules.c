@@ -1492,7 +1492,6 @@ void test_for()
       }",
     NULL);
 
-
   assert_false_rule(
       "import \"tests\" \
       rule test { \
@@ -1524,16 +1523,31 @@ void test_for()
       }",
     NULL);
 
+  // Test case for issue #1180.
   assert_true_rule(
       "import \"tests\" \
       rule test { \
         condition: \
-          for 0 i in (1..3) : ( \
-            false \
-          ) \
+          not tests.string_array[4] contains \"foo\" \
       }",
     NULL);
 
+  // Test case for issue #1180.
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not tests.string_dict[\"undefined\"] matches /foo/ \
+      }",
+    NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not tests.undefined.i \
+      }",
+    NULL);
 
   assert_true_rule(
       "import \"tests\" \
