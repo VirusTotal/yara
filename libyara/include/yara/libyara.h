@@ -32,8 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/utils.h>
 
-#define YR_MAJOR_VERSION   3
-#define YR_MINOR_VERSION   11
+#define YR_MAJOR_VERSION   4
+#define YR_MINOR_VERSION   0
 #define YR_MICRO_VERSION   0
 
 #define version_str(s) _version_str(s)
