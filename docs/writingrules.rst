@@ -1405,7 +1405,7 @@ Undefined values
 
 Modules often leave variables in an undefined state, for example when the
 variable doesn't make sense in the current context (think of ``pe.entry_point``
-while scanning a non-PE file). YARA handles undefined values in way that allows
+while scanning a non-PE file). YARA handles undefined values in a way that allows
 the rule to keep its meaningfulness. Take a look at this rule:
 
 .. code-block:: yara
@@ -1431,10 +1431,23 @@ if the condition is changed to:
     $a or pe.entry_point == 0x1000
 
 You would expect the rule to match in this case if the file contains the string,
-even if it isn't a PE file. That's exactly how YARA behaves. The logic is
-simple: any arithmetic, comparison, or boolean operation will result in an
-undefined value if one of its operands is undefined, except for *OR* operations
-where an undefined operand is interpreted as a False.
+even if it isn't a PE file. That's exactly how YARA behaves. The logic is as
+follows:
+
+* Arithmetic and bitwise operators return a undefined value if some of its
+  operands is undefined.
+
+* Boolean operators `and` and `or` will treat undefined operands as `false`.
+
+* Boolean `not` operator returns false if the operand is undefined.
+
+* Comparison operators and any other operator whose result is a boolean (like
+  the ``contains`` and ``matches`` operators) will return `false` if any of its
+  operands is undefined.
+
+In the expression above `pe.entry_point == 0x1000` will be false, because
+`pe.entry_point` is undefined, and the `==` operator returns false if any of its
+operand is undefined.
 
 
 External variables

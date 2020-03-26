@@ -1302,11 +1302,16 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
-        ensure_defined(r1);
-        ensure_defined(r2);
+        if (is_undef(r1) || is_undef(r2))
+        {
+          r1.i = false;
+        }
+        else
+        {
+          r1.i = memmem(r1.ss->c_string, r1.ss->length,
+                        r2.ss->c_string, r2.ss->length) != NULL;
+        }
 
-        r1.i = memmem(r1.ss->c_string, r1.ss->length,
-                      r2.ss->c_string, r2.ss->length) != NULL;
         push(r1);
         break;
 
@@ -1322,14 +1327,10 @@ int yr_execute_code(
         break;
 
       case OP_MATCHES:
-
         pop(r2);
         pop(r1);
 
-        ensure_defined(r2);
-        ensure_defined(r1);
-
-        if (r1.ss->length == 0)
+        if (is_undef(r1) || is_undef(r2) || r1.ss->length == 0)
         {
           r1.i = false;
           push(r1);
@@ -1337,15 +1338,15 @@ int yr_execute_code(
         }
 
         result = yr_re_exec(
-          context,
-          (uint8_t*) r2.re->code,
-          (uint8_t*) r1.ss->c_string,
-          r1.ss->length,
-          0,
-          r2.re->flags | RE_FLAGS_SCAN,
-          NULL,
-          NULL,
-          &found);
+            context,
+            (uint8_t*) r2.re->code,
+            (uint8_t*) r1.ss->c_string,
+            r1.ss->length,
+            0,
+            r2.re->flags | RE_FLAGS_SCAN,
+            NULL,
+            NULL,
+            &found);
 
         if (result != ERROR_SUCCESS)
           stop = true;
@@ -1386,54 +1387,60 @@ int yr_execute_code(
       case OP_INT_EQ:
         pop(r2);
         pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i == r2.i;
+        if (is_undef(r1) || is_undef(r2))
+          r1.i = false;
+        else
+          r1.i = r1.i == r2.i;
         push(r1);
         break;
 
       case OP_INT_NEQ:
         pop(r2);
         pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i != r2.i;
+        if (is_undef(r1) || is_undef(r2))
+          r1.i = false;
+        else
+          r1.i = r1.i != r2.i;
         push(r1);
         break;
 
       case OP_INT_LT:
         pop(r2);
         pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i < r2.i;
+        if (is_undef(r1) || is_undef(r2))
+          r1.i = false;
+        else
+          r1.i = r1.i < r2.i;
         push(r1);
         break;
 
       case OP_INT_GT:
         pop(r2);
         pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i > r2.i;
+        if (is_undef(r1) || is_undef(r2))
+          r1.i = false;
+        else
+          r1.i = r1.i > r2.i;
         push(r1);
         break;
 
       case OP_INT_LE:
         pop(r2);
         pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i <= r2.i;
+        if (is_undef(r1) || is_undef(r2))
+          r1.i = false;
+        else
+          r1.i = r1.i <= r2.i;
         push(r1);
         break;
 
       case OP_INT_GE:
         pop(r2);
         pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i >= r2.i;
+        if (is_undef(r1) || is_undef(r2))
+          r1.i = false;
+        else
+          r1.i = r1.i >= r2.i;
         push(r1);
         break;
 
@@ -1486,54 +1493,60 @@ int yr_execute_code(
       case OP_DBL_LT:
         pop(r2);
         pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.d < r2.d;
+        if (is_undef(r1) || is_undef(r2))
+          r1.i = false;
+        else
+          r1.i = r1.d < r2.d;
         push(r1);
         break;
 
       case OP_DBL_GT:
         pop(r2);
         pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.d > r2.d;
+        if (is_undef(r1) || is_undef(r2))
+          r1.i = false;
+        else
+          r1.i = r1.d > r2.d;
         push(r1);
         break;
 
       case OP_DBL_LE:
         pop(r2);
         pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.d <= r2.d;
+        if (is_undef(r1) || is_undef(r2))
+          r1.i = false;
+        else
+          r1.i = r1.d <= r2.d;
         push(r1);
         break;
 
       case OP_DBL_GE:
         pop(r2);
         pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.d >= r2.d;
+        if (is_undef(r1) || is_undef(r2))
+          r1.i = false;
+        else
+          r1.i = r1.d >= r2.d;
         push(r1);
         break;
 
       case OP_DBL_EQ:
         pop(r2);
         pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = fabs(r1.d - r2.d) < DBL_EPSILON;
+        if (is_undef(r1) || is_undef(r2))
+          r1.i = false;
+        else
+          r1.i = fabs(r1.d - r2.d) < DBL_EPSILON;
         push(r1);
         break;
 
       case OP_DBL_NEQ:
         pop(r2);
         pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = fabs(r1.d - r2.d) >= DBL_EPSILON;
+        if (is_undef(r1) || is_undef(r2))
+          r1.i = false;
+        else
+          r1.i = fabs(r1.d - r2.d) >= DBL_EPSILON;
         push(r1);
         break;
 
@@ -1590,29 +1603,33 @@ int yr_execute_code(
         pop(r2);
         pop(r1);
 
-        ensure_defined(r1);
-        ensure_defined(r2);
-
-        switch(opcode)
+        if (is_undef(r1) || is_undef(r2))
         {
-          case OP_STR_EQ:
-            r1.i = (sized_string_cmp(r1.ss, r2.ss) == 0);
-            break;
-          case OP_STR_NEQ:
-            r1.i = (sized_string_cmp(r1.ss, r2.ss) != 0);
-            break;
-          case OP_STR_LT:
-            r1.i = (sized_string_cmp(r1.ss, r2.ss) < 0);
-            break;
-          case OP_STR_LE:
-            r1.i = (sized_string_cmp(r1.ss, r2.ss) <= 0);
-            break;
-          case OP_STR_GT:
-            r1.i = (sized_string_cmp(r1.ss, r2.ss) > 0);
-            break;
-          case OP_STR_GE:
-            r1.i = (sized_string_cmp(r1.ss, r2.ss) >= 0);
-            break;
+          r1.i = false;
+        }
+        else
+        {
+          switch(opcode)
+          {
+            case OP_STR_EQ:
+              r1.i = (sized_string_cmp(r1.ss, r2.ss) == 0);
+              break;
+            case OP_STR_NEQ:
+              r1.i = (sized_string_cmp(r1.ss, r2.ss) != 0);
+              break;
+            case OP_STR_LT:
+              r1.i = (sized_string_cmp(r1.ss, r2.ss) < 0);
+              break;
+            case OP_STR_LE:
+              r1.i = (sized_string_cmp(r1.ss, r2.ss) <= 0);
+              break;
+            case OP_STR_GT:
+              r1.i = (sized_string_cmp(r1.ss, r2.ss) > 0);
+              break;
+            case OP_STR_GE:
+              r1.i = (sized_string_cmp(r1.ss, r2.ss) >= 0);
+              break;
+          }
         }
 
         push(r1);
