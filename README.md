@@ -80,6 +80,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Guidance Software](http://www.guidancesoftware.com/endpointsecurity)
 * [Heroku](https://heroku.com)
 * [Hornetsecurity](https://www.hornetsecurity.com/en/)
+* [ICS Defense](https://icsdefense.net/)
 * [InQuest](http://www.inquest.net/)
 * [JASK](http://jask.io)
 * [Joe Security](https://www.joesecurity.org)
