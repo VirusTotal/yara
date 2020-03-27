@@ -133,14 +133,12 @@ static int _yr_scan_add_compare(
 
   for (int n=0; n<255; n++)
   {
-    if (s2[0] == (uint8_t) (s1[0] + n) % 255) {
+    if (s2[0] == (uint8_t) ((s1[0] + n) % 255))
       k = n;
-      break;
-    }
   }
 
   for (i=0; i < string_length; i++){
-    if (s2[i] != (uint8_t) (s1[i] + k) % 255)
+    if (s2[i] != (uint8_t) ((s1[i] + k) % 255))
       return 0;
   }
 
