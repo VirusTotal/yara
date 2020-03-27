@@ -670,7 +670,7 @@ string_modifiers
           $$.xor_max = $2.xor_max;
         }
 
-        if ($2.flags & STRING_GFLAGS_ADD)
+        if ($2.flags & STRING_FLAGS_ADD)
         {
           $$.add_min = $2.add_min;
           $$.add_max = $2.add_max;
@@ -831,7 +831,7 @@ string_modifier
       }
     | _ADD_
       {
-        $$.flags = STRING_GFLAGS_ADD;
+        $$.flags = STRING_FLAGS_ADD;
         $$.add_min = 0;
         $$.add_max = 255;
       }
@@ -877,7 +877,7 @@ string_modifier
 
         fail_if_error(result);
 
-        $$.flags = STRING_GFLAGS_ADD;
+        $$.flags = STRING_FLAGS_ADD;
         $$.add_min = $3;
         $$.add_max = $5;
       }

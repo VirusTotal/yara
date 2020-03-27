@@ -162,7 +162,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     (((x)->flags) & STRING_FLAGS_BASE64_WIDE)
 
 #define STRING_IS_ADD(x) \
-    (((x)->g_flags) & STRING_GFLAGS_ADD)
+    (((x)->flags) & STRING_FLAGS_ADD)
 
 #define STRING_IS_PRIVATE(x) \
     (((x)->flags) & STRING_FLAGS_PRIVATE)

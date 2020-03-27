@@ -886,8 +886,8 @@ static int _yr_atoms_add(
       }
 
       new_atom->atom.length = yr_min(atom->atom.length, YR_MAX_ATOM_LENGTH);
-      new_atom->forward_code = atom->forward_code;
-      new_atom->backward_code = atom->backward_code;
+      new_atom->forward_code_ref = atom->forward_code_ref;
+      new_atom->backward_code_ref = atom->backward_code_ref;
       new_atom->backtrack = atom->backtrack;
       new_atom->next = *add_atoms;
 
@@ -1628,7 +1628,7 @@ int yr_atoms_extract_from_string(
 
   }
 
-  if (modifier.flags & STRING_GFLAGS_ADD)
+  if (modifier.flags & STRING_FLAGS_ADD)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
       _yr_atoms_add(*atoms, modifier.add_min, modifier.add_max, &add_atoms),
