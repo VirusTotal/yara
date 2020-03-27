@@ -115,6 +115,39 @@ static int _yr_scan_xor_wcompare(
 }
 
 
+static int _yr_scan_add_compare(
+    const uint8_t* data,
+    size_t data_size,
+    uint8_t* string,
+    size_t string_length)
+{
+  const uint8_t* s1 = data;
+  const uint8_t* s2 = string;
+
+  if (data_size < string_length)
+    return 0;
+  
+
+  size_t i = 0;
+  uint8_t k = 0;
+
+  for (int n=0; n<255; n++)
+  {
+    if (s2[0] == (uint8_t) (s1[0] + n) % 255) {
+      k = n;
+      break;
+    }
+  }
+
+  for (i=0; i < string_length; i++){
+    if (s2[i] != (uint8_t) (s1[i] + k) % 255)
+      return 0;
+  }
+
+  return (int) ((i == string_length) ? i : 0);
+}
+
+
 static int _yr_scan_compare(
     const uint8_t* data,
     size_t data_size,
@@ -853,6 +886,22 @@ static int _yr_scan_verify_literal_match(
       }
     }
 
+    if (STRING_IS_ADD(string) && forward_matches == 0)
+    {
+      if (STRING_IS_WIDE(string))
+      {
+        return ERROR_INVALID_MODIFIER;
+      }
+
+      if (forward_matches == 0)
+      {
+        forward_matches = _yr_scan_add_compare(
+            data + offset,
+            data_size - offset,
+            string->string,
+            string->length);
+      }
+    }
   }
 
   if (forward_matches == 0)

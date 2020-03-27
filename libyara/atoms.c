@@ -858,6 +858,48 @@ static int _yr_atoms_xor(
 }
 
 
+static int _yr_atoms_add(
+    YR_ATOM_LIST_ITEM* atoms,
+    uint8_t min,
+    uint8_t max,
+    YR_ATOM_LIST_ITEM** add_atoms)
+{
+  YR_ATOM_LIST_ITEM* atom;
+  YR_ATOM_LIST_ITEM* new_atom;
+
+  int i, j;
+  *add_atoms = NULL;
+  atom = atoms;
+
+  while (atom != NULL)
+  {
+    for (j = min; j <= max; j++)
+    {
+      new_atom = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
+
+      if (new_atom == NULL)
+        return ERROR_INSUFFICIENT_MEMORY;
+
+      for (i = 0; i < atom->atom.length; i++)
+      {
+        new_atom->atom.bytes[i] = (atom->atom.bytes[i] + j) % 255;
+      }
+
+      new_atom->atom.length = yr_min(atom->atom.length, YR_MAX_ATOM_LENGTH);
+      new_atom->forward_code = atom->forward_code;
+      new_atom->backward_code = atom->backward_code;
+      new_atom->backtrack = atom->backtrack;
+      new_atom->next = *add_atoms;
+
+      *add_atoms = new_atom;
+    }
+
+    atom = atom->next;
+  }
+  return ERROR_SUCCESS;
+}
+
+
 //
 // _yr_atoms_wide
 //
@@ -1486,6 +1528,7 @@ int yr_atoms_extract_from_string(
   YR_ATOM_LIST_ITEM* item;
   YR_ATOM_LIST_ITEM* case_insensitive_atoms;
   YR_ATOM_LIST_ITEM* xor_atoms;
+  YR_ATOM_LIST_ITEM* add_atoms;
   YR_ATOM_LIST_ITEM* wide_atoms;
 
   YR_ATOM atom;
@@ -1583,6 +1626,20 @@ int yr_atoms_extract_from_string(
     yr_atoms_list_destroy(*atoms);
     *atoms = xor_atoms;
 
+  }
+
+  if (modifier.flags & STRING_GFLAGS_ADD)
+  {
+    FAIL_ON_ERROR_WITH_CLEANUP(
+      _yr_atoms_add(*atoms, modifier.add_min, modifier.add_max, &add_atoms),
+      {
+        yr_atoms_list_destroy(*atoms);
+        yr_atoms_list_destroy(add_atoms);
+        *atoms = NULL;
+      });
+
+      yr_atoms_list_destroy(*atoms);
+      *atoms = add_atoms;
   }
 
   // Recheck the atom quality, in case we have just generated some poor atoms.

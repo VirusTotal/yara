@@ -186,6 +186,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _ASCII_                                         "<ascii>"
 %token _WIDE_                                          "<wide>"
 %token _XOR_                                           "<xor>"
+%token _ADD_                                           "<add>"
 %token _BASE64_                                        "<base64>"
 %token _BASE64_WIDE_                                   "<base64wide>"
 %token _NOCASE_                                        "<nocase>"
@@ -669,6 +670,12 @@ string_modifiers
           $$.xor_max = $2.xor_max;
         }
 
+        if ($2.flags & STRING_GFLAGS_ADD)
+        {
+          $$.add_min = $2.add_min;
+          $$.add_max = $2.add_max;
+        }
+
         // Only set the base64 alphabet if we are dealing with the base64
         // modifier. If we don't check for this then we can end up with
         // "base64 ascii" resulting in whatever is on the stack for "ascii"
@@ -821,6 +828,58 @@ string_modifier
 
         $$.flags = STRING_FLAGS_BASE64_WIDE;
         $$.alphabet = $3;
+      }
+    | _ADD_
+      {
+        $$.flags = STRING_GFLAGS_ADD;
+        $$.add_min = 0;
+        $$.add_max = 255;
+      }
+
+    | _ADD_ '(' _NUMBER_ ')'
+      {
+        int result = ERROR_SUCCESS;
+
+        if ($3 < 0 || $3 > 255)
+        {
+          yr_compiler_set_error_extra_info(compiler, "invalid add range");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        fail_if_error(result)
+        $$.add_min = $3;
+        $$.add_max = $3;
+      }
+    | _ADD_ '(' _NUMBER_ '-' _NUMBER_ ')'
+      {
+        int result = ERROR_SUCCESS;
+
+        if($3 < 1)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "lower bound for add range exceeded (min: 0)");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        if ($5 > 255)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "upper bound for add range exceeded (max: 7)");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        if ($3 > $5)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "add lower bound exceeds upper bound");
+          result = ERROR_INVALID_MODIFIER;
+        }
+
+        fail_if_error(result);
+
+        $$.flags = STRING_GFLAGS_ADD;
+        $$.add_min = $3;
+        $$.add_max = $5;
       }
     ;
 

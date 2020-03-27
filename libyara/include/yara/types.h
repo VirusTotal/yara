@@ -93,6 +93,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STRING_FLAGS_PRIVATE           0x100000
 #define STRING_FLAGS_BASE64            0x200000
 #define STRING_FLAGS_BASE64_WIDE       0x400000
+#define STRING_FLAGS_ADD              0x800000
 
 #define STRING_IS_HEX(x) \
     (((x)->flags) & STRING_FLAGS_HEXADECIMAL)
@@ -159,6 +160,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define STRING_IS_BASE64_WIDE(x) \
     (((x)->flags) & STRING_FLAGS_BASE64_WIDE)
+
+#define STRING_IS_ADD(x) \
+    (((x)->g_flags) & STRING_GFLAGS_ADD)
 
 #define STRING_IS_PRIVATE(x) \
     (((x)->flags) & STRING_FLAGS_PRIVATE)
@@ -479,6 +483,9 @@ struct YR_MODIFIER
   uint8_t xor_min;
   uint8_t xor_max;
   SIZED_STRING *alphabet;
+  uint8_t add_min;
+  uint8_t add_max;
+
 };
 
 
