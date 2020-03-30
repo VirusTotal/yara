@@ -940,6 +940,14 @@ static void test_strings()
           @a[3] == 0x656 and\n\
           !a[3] == 25\n\
       }", "tests/data/base64");
+
+  assert_true_rule_file(
+    "rule test {\n\
+      strings:\n\
+        $a = \"Tested Code Here\" add\n\
+      condition:\n\
+        $a\n\
+    }", "tests/data/add.out");
 }
 
 
