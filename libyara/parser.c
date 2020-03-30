@@ -599,7 +599,6 @@ int yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
-
   // base64 and nocase together is not implemented.
   if (modifier.flags & STRING_FLAGS_NO_CASE &&
       (modifier.flags & STRING_FLAGS_BASE64 ||
@@ -676,9 +675,6 @@ int yr_parser_reduce_string_declaration(
       yr_compiler_set_error_extra_info(compiler, "add nocase")
       goto _exit;
   }
-
-
-  
 
   // The STRING_FLAGS_SINGLE_MATCH flag indicates that finding
   // a single match for the string is enough. This is true in

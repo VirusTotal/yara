@@ -941,6 +941,33 @@ static void test_strings()
           !a[3] == 25\n\
       }", "tests/data/base64");
 
+  //start of assert_error for add
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" add nocase\n\
+      condition:\n\
+        $a\n\
+    }", ERROR_INVALID_MODIFIER);
+
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" add xor\n\
+      condition:\n\
+        $a\n\
+    }", ERROR_INVALID_MODIFIER);
+
+  assert_error(
+    "rule test {\n\
+      strings:\n\
+        $a = \"ab\" add wide\n\
+      condition:\n\
+        $a\n\
+    }", ERROR_INVALID_MODIFIER);
+
+  //add validation test
+  //this will test against add encryption with the key 0x2f or 47 as decimal
   assert_true_rule_file(
     "rule test {\n\
       strings:\n\
