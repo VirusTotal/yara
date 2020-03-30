@@ -77,6 +77,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     for (rule = rules->rules_list_head; !RULE_IS_NULL(rule); rule++)
 
 
+YR_API int yr_rules_scan_mem_blocks(
+    YR_RULES* rules,
+    YR_MEMORY_BLOCK_ITERATOR* iterator,
+    int flags,
+    YR_CALLBACK_FUNC callback,
+    void* user_data,
+    int timeout);
+
 
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
