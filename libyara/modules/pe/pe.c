@@ -99,11 +99,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define IS_RESOURCE_SUBDIRECTORY(entry) \
-    ((entry)->OffsetToData & 0x80000000)
+    (yr_le32toh((entry)->OffsetToData) & 0x80000000)
 
 
 #define RESOURCE_OFFSET(entry) \
-    ((entry)->OffsetToData & 0x7FFFFFFF)
+    (yr_le32toh((entry)->OffsetToData) & 0x7FFFFFFF)
 
 
 typedef int (*RESOURCE_CALLBACK_FUNC) ( \
@@ -189,7 +189,7 @@ static void pe_parse_rich_signature(
   p = (DWORD*)(pe->data + nthdr_offset - 4);
   while (p > (DWORD*)(pe->data + sizeof(IMAGE_DOS_HEADER)))
   {
-    if (*p == RICH_RICH)
+    if (yr_le32toh(*p) == RICH_RICH)
     {
       // The XOR key is the dword following the Rich value. We  use this to find
       // DanS header only.
@@ -210,7 +210,7 @@ static void pe_parse_rich_signature(
   // If we have found the key we need to now find the start (DanS).
   while (p > (DWORD*)(pe->data + sizeof(IMAGE_DOS_HEADER)))
   {
-    if ((*(p) ^ key) == RICH_DANS)
+    if (yr_le32toh((*(p) ^ key)) == RICH_DANS)
     {
       rich_signature = (PRICH_SIGNATURE) p;
       break;
@@ -1120,7 +1120,7 @@ static void pe_parse_exports(
     return;
 
   export_start = offset;
-  export_size = directory->Size;
+  export_size = yr_le32toh(directory->Size);
 
   exports = (PIMAGE_EXPORT_DIRECTORY) (pe->data + offset);
 
@@ -1131,9 +1131,9 @@ static void pe_parse_exports(
       yr_le32toh(exports->NumberOfFunctions),
       MAX_PE_EXPORTS);
 
-  ordinal_base = exports->Base;
+  ordinal_base = yr_le32toh(exports->Base);
 
-  set_integer(exports->TimeDateStamp, pe->object, "export_timestamp");
+  set_integer(yr_le32toh(exports->TimeDateStamp), pe->object, "export_timestamp");
 
   offset = pe_rva_to_offset(pe, yr_le32toh(exports->Name));
 
@@ -1182,7 +1182,7 @@ static void pe_parse_exports(
     return;
 
   number_of_names = yr_min(
-      yr_le32toh(exports->NumberOfNames), number_of_exports);
+      yr_le32toh(yr_le32toh(exports->NumberOfNames)), number_of_exports);
 
   // Mapping out the exports is a bit janky. We start with the export address
   // array. The index from that array plus the ordinal base is the ordinal for
@@ -1218,7 +1218,7 @@ static void pe_parse_exports(
 
   for (i = 0; i < number_of_exports; i++)
   {
-    offset = pe_rva_to_offset(pe, function_addrs[i]);
+    offset = pe_rva_to_offset(pe, yr_le32toh(function_addrs[i]));
     if (offset <= 0)
       continue;
 
@@ -1245,9 +1245,9 @@ static void pe_parse_exports(
     {
       for (j = 0; j < number_of_exports; j++)
       {
-        if (ordinals[j] == i && j < number_of_names)
+        if (yr_le16toh(ordinals[j]) == i && j < number_of_names)
         {
-          offset = pe_rva_to_offset(pe, names[j]);
+          offset = pe_rva_to_offset(pe, yr_le32toh(names[j]));
           if (offset > 0)
           {
             remaining = pe->data_size - (size_t) offset;
