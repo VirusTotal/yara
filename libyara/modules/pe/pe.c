@@ -249,7 +249,7 @@ static void pe_parse_rich_signature(
 
   set_integer(rich_len, pe->object, "rich_signature.length");
 
-  set_integer(rich_signature->key1, pe->object, "rich_signature.key");
+  set_integer(yr_le32toh(rich_signature->key1), pe->object, "rich_signature.key");
 
   clear_data = (BYTE*) yr_malloc(rich_len);
 
