@@ -298,6 +298,7 @@ int main(int argc, char** argv)
         condition: \
           pe.rich_signature.offset == 0x200 and \
           pe.rich_signature.length == 64 and \
+          pe.rich_signature.key == 0x9f1d8511 and \
           pe.rich_signature.clear_data == \"DanS\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x01\\x00\\x11\\x00\\x00\\x00\\xc3\\x0f]\\x00\\x03\\x00\\x00\\x00\\x09x\\x95\\x00\\x01\\x00\\x00\\x00\\x09x\\x83\\x00\\x05\\x00\\x00\\x00\\x09x\\x94\\x00\\x01\\x00\\x00\\x00\\x09x\\x91\\x00\\x01\\x00\\x00\\x00\" \
       }",
       "tests/data/weird_rich");
