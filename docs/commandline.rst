@@ -127,6 +127,10 @@ Available options are:
 
   Pass file's content as extra data to module.
 
+.. option:: --scan-list
+
+  Scan files listed in FILE, one per line.
+
 .. option:: -r --recursive
 
   Recursively search for directories. It follows symlinks.

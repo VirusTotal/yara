@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <dirent.h>
 #include <unistd.h>
 #include <inttypes.h>
+#include <fcntl.h>
 
 #else
 
@@ -128,6 +129,7 @@ static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 static char* modules_data[MAX_ARGS_MODULE_DATA + 1];
 
 static bool recursive_search = false;
+static bool scan_list_search = false;
 static bool show_module_data = false;
 static bool show_tags = false;
 static bool show_stats = false;
@@ -219,6 +221,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN('r', "recursive", &recursive_search,
       "recursively search directories (follows symlinks)"),
+
+  OPT_BOOLEAN(0, "scan-list", &scan_list_search,
+      "scan files listed in FILE, one per line"),
 
   OPT_INTEGER('k', "stack-size", &stack_size,
       "set maximum stack size (default=16384)", "SLOTS"),
@@ -387,6 +392,80 @@ static void scan_dir(
   }
 }
 
+static int populate_scan_list(
+    const char* filename,
+    int recursive,
+    time_t start_time)
+{
+  char path[MAX_PATH];
+  DWORD bytes_read;
+  int ii = 0;
+
+  HANDLE hFile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (hFile == INVALID_HANDLE_VALUE)
+  {
+    fprintf(stderr, "error: could not open %s to read as scan list.\n",
+            filename);
+    return ERROR_COULD_NOT_OPEN_FILE;
+  }
+
+  while (ReadFile(hFile, &path[ii], 1, &bytes_read, NULL))
+  {
+    if (bytes_read == 0)
+    {
+      break;
+    }
+    else if (path[ii] == '\r' || path[ii] == '\n')
+    {
+      if (ii > 0)
+      {
+        path[ii] = '\0';
+        if (is_directory(path))
+          scan_dir(path, recursive, start_time);
+        else
+          file_queue_put(path);
+        ii = 0;
+      }
+    }
+    else // not eol marker
+    {
+      ii++;
+      // buffer is 0..MAX_PATH-1, also need room for null terminator
+      if (ii > MAX_PATH - 2)
+      {
+        fprintf(stderr, "error in scan list: name too long\n");
+        ii = 0;
+
+        // skip to next line in scan list
+        while (1)
+        {
+          if (!ReadFile(hFile, &path[0], 1, &bytes_read, NULL) ||
+              bytes_read == 0)
+            goto _eof;
+
+          if (path[0] == '\r' || path[0] == '\n')
+            break;
+        }
+      }
+    }
+  }
+
+_eof:
+  if (ii > 0)
+  {
+    // process final line read from scan list
+    path[ii] = '\0';
+    if (is_directory(path))
+      scan_dir(path, recursive, start_time);
+    else
+      file_queue_put(path);
+  }
+
+  CloseHandle(hFile);
+  return ERROR_SUCCESS;
+}
+
 #else
 
 static bool is_directory(
@@ -441,6 +520,74 @@ static void scan_dir(
 
     closedir(dp);
   }
+}
+
+static int populate_scan_list(
+    const char* filename,
+    int recursive,
+    time_t start_time)
+{
+  char path[MAX_PATH];
+  int ii = 0;
+
+  int fd = open(filename, O_RDONLY);
+  if (fd == -1)
+  {
+    fprintf(stderr, "error: could not open %s to read as scan list.\n",
+            filename);
+    return ERROR_COULD_NOT_OPEN_FILE;
+  }
+
+  while (read(fd, &path[ii], 1) > 0)
+  {
+    if (path[ii] == '\r' || path[ii] == '\n')
+    {
+      if (ii > 0)
+      {
+        path[ii] = '\0';
+        if (is_directory(path))
+          scan_dir(path, recursive, start_time);
+        else
+          file_queue_put(path);
+        ii = 0;
+      }
+    }
+    else // not eol marker
+    {
+      ii++;
+      // buffer is 0..MAX_PATH-1, also need room for null terminator
+      if (ii > MAX_PATH - 2)
+      {
+        fprintf(stderr, "error in scan list: name too long\n");
+        ii = 0;
+
+        // skip to next line in scan list
+        while (1)
+        {
+          ssize_t n = read(fd, &path[0], 1);
+          if (n <= 0)
+            goto _eof;
+
+          if (path[0] == '\r' || path[0] == '\n')
+            break;
+        }
+      }
+    }
+  }
+
+_eof:
+  if (ii > 0)
+  {
+    // process final line read from scan list
+    path[ii] = '\0';
+    if (is_directory(path))
+      scan_dir(path, recursive, start_time);
+    else
+      file_queue_put(path);
+  }
+
+  close(fd);
+  return ERROR_SUCCESS;
 }
 
 #endif
@@ -1108,6 +1255,7 @@ int main(
   YR_RULES* rules = NULL;
   YR_SCANNER* scanner = NULL;
 
+  bool arg_is_dir = false;
   int flags = 0;
   int result, i;
 
@@ -1251,7 +1399,15 @@ int main(
   if (fast_scan)
     flags |= SCAN_FLAGS_FAST_MODE;
 
-  if (is_directory(argv[argc - 1]))
+  arg_is_dir = is_directory(argv[argc - 1]);
+
+  if (scan_list_search && arg_is_dir)
+  {
+    fprintf(stderr,
+      "error: can't use a directory as a scan list file.\n");
+    exit_with_code(EXIT_FAILURE);
+  }
+  else if (scan_list_search || arg_is_dir)
   {
     if (file_queue_init() != 0)
     {
@@ -1291,7 +1447,18 @@ int main(
       }
     }
 
-    scan_dir(argv[argc - 1], recursive_search, start_time);
+    if (arg_is_dir)
+    {
+      scan_dir(argv[argc - 1], recursive_search, start_time);
+    }
+    else
+    {
+      result = populate_scan_list(argv[argc - 1], recursive_search, start_time);
+      if (result != ERROR_SUCCESS)
+      {
+        exit_with_code(EXIT_FAILURE);
+      }
+    }
 
     file_queue_finish();
 
