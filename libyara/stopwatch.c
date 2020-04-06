@@ -50,7 +50,7 @@ uint64_t yr_stopwatch_elapsed_ns(
 }
 
 
-#elif defined(__MACH__)
+#elif defined(__APPLE__) && defined(__MACH__)
 
 void yr_stopwatch_start(
     YR_STOPWATCH* sw)
