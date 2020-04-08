@@ -613,6 +613,14 @@ int yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
+  if (!(modifier.flags & STRING_FLAGS_WIDE) &&
+      !(modifier.flags & STRING_FLAGS_XOR) &&
+      !(modifier.flags & STRING_FLAGS_BASE64 ||
+        modifier.flags & STRING_FLAGS_BASE64_WIDE))
+  {
+    modifier.flags |= STRING_FLAGS_ASCII;
+  }
+
   // base64 and xor together is not implemented.
   if (modifier.flags & STRING_FLAGS_XOR &&
       (modifier.flags & STRING_FLAGS_BASE64 ||
@@ -627,12 +635,45 @@ int yr_parser_reduce_string_declaration(
       goto _exit;
   }
 
-  if (!(modifier.flags & STRING_FLAGS_WIDE) &&
-      !(modifier.flags & STRING_FLAGS_XOR) &&
-      !(modifier.flags & STRING_FLAGS_BASE64 ||
-        modifier.flags & STRING_FLAGS_BASE64_WIDE))
+  // base64 and add together is not implemented.
+  if (modifier.flags & STRING_FLAGS_ADD &&
+      (modifier.flags & STRING_FLAGS_BASE64 ||
+       modifier.flags & STRING_FLAGS_BASE64_WIDE))
   {
-    modifier.flags |= STRING_FLAGS_ASCII;
+      result = ERROR_INVALID_MODIFIER;
+      yr_compiler_set_error_extra_info(
+          compiler,
+          modifier.flags & STRING_FLAGS_BASE64 ?
+             "base64 add" :
+             "base64wide add")
+      goto _exit;
+  }
+  
+  // xor and add together is not implemented.
+  if (modifier.flags & STRING_FLAGS_XOR &&
+      modifier.flags & STRING_FLAGS_ADD)
+  {
+      result = ERROR_INVALID_MODIFIER;
+      yr_compiler_set_error_extra_info(compiler, "add xor")
+      goto _exit;
+  }
+
+  // wide and add together is not implemented.
+  if (modifier.flags & STRING_FLAGS_WIDE &&
+      modifier.flags & STRING_FLAGS_ADD)
+  {
+      result = ERROR_INVALID_MODIFIER;
+      yr_compiler_set_error_extra_info(compiler, "add wide")
+      goto _exit;
+  }
+
+  // add and nocase together is not implemented.
+  if (modifier.flags & STRING_FLAGS_ADD &&
+      modifier.flags & STRING_FLAGS_NO_CASE)
+  {
+      result = ERROR_INVALID_MODIFIER;
+      yr_compiler_set_error_extra_info(compiler, "add nocase")
+      goto _exit;
   }
 
   // The STRING_FLAGS_SINGLE_MATCH flag indicates that finding
