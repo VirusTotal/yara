@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 
 #include <yara/elf.h>
+#include <yara/elf_utils.h>
 #include <yara/endian.h>
 #include <yara/modules.h>
 #include <yara/mem.h>
@@ -38,6 +39,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define MODULE_NAME elf
+
+define_function(symtab_symbol_name)
+{
+  YR_OBJECT* obj = module();
+  ELF* elf = (ELF*) obj->data;
+  if (elf == NULL)
+    return_integer(YR_UNDEFINED);
+
+  ELF_SYMBOL_TABLE* symtab = elf->symtab;
+  if (symtab == NULL)
+    return_integer(YR_UNDEFINED);
+
+  char *name = string_argument(1);
+  int result = 0;
+
+  for (ELF_SYMBOL *i=symtab->symbols; i!=NULL; i=i->next)
+  {
+      if (!strcmp(i->name, name))
+      {
+        result++;
+      }
+  }
+
+  return_integer(result);
+}
 
 #define CLASS_DATA(c,d) ((c << 8) | d)
 
@@ -208,7 +234,8 @@ uint64_t elf_rva_to_offset_##bits##_##bo(                                      \
 }
 
 #define PARSE_ELF_HEADER(bits,bo)                                              \
-void parse_elf_header_##bits##_##bo(                                           \
+uint64_t parse_elf_header_##bits##_##bo(                                       \
+  ELF *elf_data,                                                               \
   elf##bits##_header_t* elf,                                                   \
   uint64_t base_address,                                                       \
   size_t elf_size,                                                             \
@@ -319,29 +346,55 @@ void parse_elf_header_##bits##_##bo(                                           \
         is_valid_ptr(elf, elf_size, sym_table, sym_table_size))                \
     {                                                                          \
       elf##bits##_sym_t* sym = (elf##bits##_sym_t*) sym_table;                 \
-                                                                               \
+      elf_data->symtab =(ELF_SYMBOL_TABLE*)yr_malloc(sizeof(ELF_SYMBOL_TABLE));\
+      if (elf_data->symtab == NULL)                                            \
+        return ERROR_INSUFFICIENT_MEMORY;                                      \
+      ELF_SYMBOL **symbol = &(elf_data->symtab->symbols);                      \
+      *symbol = NULL;                                                          \
       for (j = 0; j < sym_table_size / sizeof(elf##bits##_sym_t); j++, sym++)  \
       {                                                                        \
+        *symbol = (ELF_SYMBOL*)yr_malloc(sizeof(ELF_SYMBOL));                  \
+        if (*symbol == NULL)                                                   \
+          return ERROR_INSUFFICIENT_MEMORY;                                    \
+        (*symbol)->name = NULL;                                                \
+        (*symbol)->next = NULL;                                                \
         const char* sym_name = str_table_entry(                                \
             sym_str_table,                                                     \
             sym_str_table + sym_str_table_size,                                \
             yr_##bo##32toh(sym->name));                                        \
                                                                                \
         if (sym_name)                                                          \
+        {                                                                      \
           set_string(sym_name, elf_obj, "symtab[%i].name", j);                 \
+          (*symbol)->name = (char*)yr_malloc(strlen(sym_name)+1);                     \
+          if ((*symbol)->name == NULL)                                         \
+            return ERROR_INSUFFICIENT_MEMORY;                                  \
+          strcpy((*symbol)->name, sym_name);                                   \
+        }                                                                      \
                                                                                \
-        set_integer(sym->info >> 4, elf_obj,                                   \
+        int bind = sym->info >> 4;                                             \
+        set_integer(bind, elf_obj,                                             \
             "symtab[%i].bind", j);                                             \
-        set_integer(sym->info & 0xf, elf_obj,                                  \
+        (*symbol)->bind = bind;                                                \
+        int type = sym->info & 0xf;                                            \
+        set_integer(type, elf_obj,                                             \
             "symtab[%i].type", j);                                             \
-        set_integer(yr_##bo##16toh(sym->shndx), elf_obj,                       \
+        (*symbol)->type = type;                                                \
+        int shndx = yr_##bo##16toh(sym->shndx);                                \
+        set_integer(shndx, elf_obj,                                            \
            "symtab[%i].shndx", j);                                             \
+        (*symbol)->shndx = shndx;                                              \
+        int value = yr_##bo##bits##toh(sym->value);                            \
         set_integer(yr_##bo##bits##toh(sym->value), elf_obj,                   \
            "symtab[%i].value", j);                                             \
+        (*symbol)->value = value;                                              \
+        int size = yr_##bo##bits##toh(sym->size);                              \
         set_integer(yr_##bo##bits##toh(sym->size), elf_obj,                    \
            "symtab[%i].size", j);                                              \
+        (*symbol)->size = size;                                                \
+        symbol = &((*symbol)->next);                                           \
       }                                                                        \
-                                                                               \
+      elf_data->symtab->count = j;                                             \
       set_integer(j, elf_obj, "symtab_entries");                               \
     }                                                                          \
   }                                                                            \
@@ -403,6 +456,7 @@ void parse_elf_header_##bits##_##bo(                                           \
       }                                                                        \
     }                                                                          \
   }                                                                            \
+  return ERROR_SUCCESS;                                                        \
 }
 
 ELF_RVA_TO_OFFSET(32,le);
@@ -555,6 +609,7 @@ begin_declarations;
   end_struct_array("dynamic");
 
   declare_integer("symtab_entries");
+  declare_function("symtab_symbol", "s", "i", symtab_symbol_name);
   begin_struct_array("symtab");
     declare_string("name");
     declare_integer("value");
@@ -691,6 +746,9 @@ int module_load(
   set_integer(ELF_PF_W, module_object, "PF_W");
   set_integer(ELF_PF_R, module_object, "PF_R");
 
+  ELF *elf = (ELF*)NULL;
+
+  uint64_t parse_result = ERROR_SUCCESS;
   foreach_memory_block(iterator, block)
   {
     const uint8_t* block_data = block->fetch_data(block);
@@ -698,6 +756,11 @@ int module_load(
     if (block_data == NULL)
       continue;
 
+    elf = (ELF*) yr_malloc(sizeof(ELF));
+    if (elf == NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+    elf->symtab = NULL;
+    module_object->data = elf;
     switch(get_elf_class_data(block_data, block->size))
     {
       case CLASS_DATA(ELF_CLASS_32, ELF_DATA_2LSB):
@@ -709,7 +772,8 @@ int module_load(
           if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
               yr_le16toh(elf_header32->type) == ELF_ET_EXEC)
           {
-            parse_elf_header_32_le(
+            parse_result = parse_elf_header_32_le(
+                elf,
                 elf_header32,
                 block->base,
                 block->size,
@@ -729,7 +793,8 @@ int module_load(
           if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
               yr_be16toh(elf_header32->type) == ELF_ET_EXEC)
           {
-            parse_elf_header_32_be(
+            parse_result = parse_elf_header_32_be(
+                elf,
                 elf_header32,
                 block->base,
                 block->size,
@@ -749,7 +814,8 @@ int module_load(
           if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
               yr_le16toh(elf_header64->type) == ELF_ET_EXEC)
           {
-            parse_elf_header_64_le(
+             parse_result = parse_elf_header_64_le(
+                elf,
                 elf_header64,
                 block->base,
                 block->size,
@@ -769,7 +835,8 @@ int module_load(
           if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
               yr_be16toh(elf_header64->type) == ELF_ET_EXEC)
           {
-            parse_elf_header_64_be(
+              parse_result = parse_elf_header_64_be(
+                elf,
                 elf_header64,
                 block->base,
                 block->size,
@@ -782,11 +849,28 @@ int module_load(
     }
   }
 
-  return ERROR_SUCCESS;
+  return parse_result;
 }
 
 
 int module_unload(YR_OBJECT* module_object)
 {
+  ELF* elf = (ELF *) module_object->data;
+  if (elf == NULL)
+    return ERROR_SUCCESS;
+  if (elf->symtab != NULL)
+  {
+    ELF_SYMBOL *act = NULL, *next = NULL;
+    for (act=elf->symtab->symbols; act!=NULL; act=next)
+    {
+      next = act->next;
+      if (act->name != NULL)
+        yr_free(act->name);
+      yr_free(act);
+    }
+    yr_free(elf->symtab);
+  }
+  yr_free(elf);
+  module_object->data = NULL;
   return ERROR_SUCCESS;
 }
