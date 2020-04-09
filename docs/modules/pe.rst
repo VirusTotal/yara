@@ -815,7 +815,7 @@ Reference
 
 .. c:type:: pdb_path
 
-    .. versionadded:: 3.13.0
+    .. versionadded:: 4.0.0
 
     Path of the PDB file for this PE if present.
 

@@ -306,7 +306,8 @@ of the string definition, in the same line:
     }
 
 With the ``nocase`` modifier the string *foobar* will match *Foobar*, *FOOBAR*,
-and *fOoBaR*. This modifier can be used in conjunction with any other modifier.
+and *fOoBaR*. This modifier can be used in conjunction with any modifier,
+except ``base64`` and ``base64wide``.
 
 Wide-character strings
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -426,7 +427,7 @@ equivalent:
             any of them
     }
 
-If you want more control over the range of bytes used with the xor modifier use:
+Since YARA 3.11, if you want more control over the range of bytes used with the xor modifier use:
 
 .. code-block:: yara
 
@@ -441,15 +442,15 @@ If you want more control over the range of bytes used with the xor modifier use:
 The above example will apply the bytes from 0x01 to 0xff, inclusively, to the
 string when searching. The general syntax is ``xor(minimum-maximum)``.
 
-base64 strings
+Base64 strings
 ^^^^^^^^^^^^^^
 
-The ``base64`` modifier can be used to search for strings that have been base64
+The ``base64`` modifier can be used to search for strings that have been Base64
 encoded. A good explanation of the technique is at:
 
 https://www.leeholmes.com/blog/2019/12/10/searching-for-content-in-base-64-strings-2/
 
-The following rule will search for the three base64 permutations of the string
+The following rule will search for the three Base64 permutations of the string
 "This program cannot":
 
 .. code-block:: yara
@@ -465,9 +466,9 @@ The following rule will search for the three base64 permutations of the string
 
 This will cause YARA to search for these three permutations:
 
-VGhpcyBwcm9ncmFtIGNhbm5vd
-RoaXMgcHJvZ3JhbSBjYW5ub3
-UaGlzIHByb2dyYW0gY2Fubm90
+| VGhpcyBwcm9ncmFtIGNhbm5vd
+| RoaXMgcHJvZ3JhbSBjYW5ub3
+| UaGlzIHByb2dyYW0gY2Fubm90
 
 The ``base64wide`` modifier works just like the base64 modifier but the results
 of the base64 modifier are converted to wide.
@@ -497,8 +498,9 @@ The alphabet must be 64 bytes long.
 
 The ``base64`` and ``base64wide`` modifiers are only supported with text
 strings. Using these modifiers with a hexadecimal string or a regular expression
-will cause a compiler error. Also, the ``xor`` and ``nocase`` modifiers used in
-combination with ``base64`` or ``base64wide`` will cause a compiler error.
+will cause a compiler error. Also, the ``xor``, ``fullword``, and ``nocase``
+modifiers used in combination with ``base64`` or ``base64wide`` will cause
+a compiler error.
 
 Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -664,6 +666,53 @@ the C API.
         condition:
             $text_string
     }
+
+String Modifier Summary
+-----------------------
+
+The following string modifiers are processed in the following order, but are only applicable
+to the string types listed.
+
+.. list-table:: Text string modifiers
+   :widths: 3 5 10 10
+   :header-rows: 1
+
+   * - Keyword
+     - String Types
+     - Summary
+     - Restrictions
+   * - ``nocase``
+     - Text, Regex
+     - Ignore case
+     - Cannot use with ``xor``, ``base64``, or ``base64wide``
+   * - ``wide``
+     - Text, Regex
+     - Emulate UTF16 by interleaving null (0x00) characters
+     - None
+   * - ``ascii``
+     - Text, Regex
+     - Also match ASCII characters, only required if ``wide`` is used
+     - None
+   * - ``xor``
+     - Text
+     - XOR text string with single byte keys
+     - Cannot use with ``nocase``, ``base64``, or ``base64wide``
+   * - ``base64``
+     - Text
+     - Convert to 3 Base64 encoded strings
+     - Cannot use with ``nocase``, ``xor``, or ``fullword``
+   * - ``base64wide``
+     - Text
+     - Convert to 3 Base64 encoded strings, then interleaving null characters like ``wide``
+     - Cannot use with ``nocase``, ``xor``, or ``fullword``
+   * - ``fullword``
+     - Text, Regex
+     - Match is not preceded or followed by an alphanumeric character
+     - Cannot use with ``base64`` or ``base64wide``
+   * - ``private``
+     - Hex, Text, Regex
+     - Match never included in output
+     - None
 
 
 Conditions
@@ -1186,11 +1235,11 @@ In summary, the syntax of this operator is:
 Iterators
 ---------
 
-In YARA 3.12 the ``for..of`` operator was improved and now it can be used to
+In YARA 4.0 the ``for..of`` operator was improved and now it can be used to
 iterate not only over integer enumerations and ranges (e.g: 1,2,3,4 and 1..4),
 but also over any kind of iterable data type, like arrays and dictionaries
 defined by YARA modules. For example, the following expression is valid in
-YARA 3.12:
+YARA 4.0:
 
 .. code-block:: yara
 
