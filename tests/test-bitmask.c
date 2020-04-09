@@ -51,7 +51,7 @@ void test_set_clear()
 {
   YR_BITMASK bitmask[YR_BITMASK_SIZE(BITMAP_SIZE)];
 
-  yr_bitmask_clear_all(bitmask);
+  yr_bitmask_clear_all(bitmask, sizeof(bitmask));
 
   assert_clear_all(bitmask);
 
@@ -118,10 +118,10 @@ void test_find_non_colliding_offsets_1()
   YR_BITMASK a[YR_BITMASK_SIZE(18)];
   YR_BITMASK b[YR_BITMASK_SIZE(13)];
 
-  yr_bitmask_clear_all(a);
-  yr_bitmask_clear_all(b);
+  yr_bitmask_clear_all(a, sizeof(a));
+  yr_bitmask_clear_all(b, sizeof(b));
 
-  // Set odd bits in B and odd bits in A.
+  // Set even bits in B and odd bits in A.
   for (int i = 0; i < 13; i++)
   {
     if (i % 2 == 0)
@@ -134,8 +134,8 @@ void test_find_non_colliding_offsets_1()
   if (yr_bitmask_find_non_colliding_offset(a, b, 18, 13, &o) != 0)
     exit(EXIT_FAILURE);
 
-  yr_bitmask_clear_all(a);
-  yr_bitmask_clear_all(b);
+  yr_bitmask_clear_all(a, sizeof(a));
+  yr_bitmask_clear_all(b, sizeof(b));
 
   // Set the following pattern in A:
   // 1 0 1 0   0 0 0 1   0 0 0 0   0 0 1 1   0 0
@@ -167,8 +167,8 @@ void test_find_non_colliding_offsets_1()
     exit(EXIT_FAILURE);
 
 
-  yr_bitmask_clear_all(a);
-  yr_bitmask_clear_all(b);
+  yr_bitmask_clear_all(a, sizeof(a));
+  yr_bitmask_clear_all(b, sizeof(b));
 
   yr_bitmask_set(a, 0);
   yr_bitmask_set(a, 3);
@@ -200,8 +200,8 @@ void test_find_non_colliding_offsets_2()
   YR_BITMASK a[YR_BITMASK_SIZE(140)];
   YR_BITMASK b[YR_BITMASK_SIZE(200)];
 
-  yr_bitmask_clear_all(a);
-  yr_bitmask_clear_all(b);
+  yr_bitmask_clear_all(a, sizeof(a));
+  yr_bitmask_clear_all(b, sizeof(b));
 
   // Set odds bits in A and even bits in B.
   for (int i = 0; i < 13; i++)
@@ -216,8 +216,8 @@ void test_find_non_colliding_offsets_2()
   if (yr_bitmask_find_non_colliding_offset(a, b, 200, 140, &o) != 0)
     exit(EXIT_FAILURE);
 
-  yr_bitmask_clear_all(a);
-  yr_bitmask_clear_all(b);
+  yr_bitmask_clear_all(a, sizeof(a));
+  yr_bitmask_clear_all(b, sizeof(b));
 
   yr_bitmask_set(a, 130);
 

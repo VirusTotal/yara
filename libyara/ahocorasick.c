@@ -471,7 +471,7 @@ static int _yr_ac_find_suitable_transition_table_slot(
   YR_AC_STATE* child_state = state->first_child;
 
   // Start with all bits set to zero.
-  yr_bitmask_clear_all(state_bitmask);
+  yr_bitmask_clear_all(state_bitmask, sizeof(state_bitmask));
 
   // The first slot in the transition table is for the state's failure link,
   // so the first bit in the bitmask must be set to one.
