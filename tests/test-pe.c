@@ -291,6 +291,14 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
+          pe.is_reproducible_build == 0 \
+      }",
+      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
           pe.rich_signature.toolid(157, 40219) == 1 and \
           pe.rich_signature.toolid(1, 0) > 40 and pe.rich_signature.toolid(1, 0) < 45 and \
           pe.rich_signature.version(30319) and \

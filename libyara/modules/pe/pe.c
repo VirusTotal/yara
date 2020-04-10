@@ -289,24 +289,22 @@ static void pe_parse_debug_directory(
   int64_t debug_dir_offset;
   int64_t pcv_hdr_offset;
   int i, dcount;
+  int repro = 0;
   size_t pdb_path_len;
   char* pdb_path = NULL;
-  
-  set_integer(0, pe->object, "is_reproducible_build");
   
   data_dir = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_DEBUG);
 
-  if (data_dir == NULL)
-    return;
-
-  if (yr_le32toh(data_dir->Size) == 0)
-    return;
+  if (data_dir == NULL ||
+      yr_le32toh(data_dir->Size) == 0 ||
+      yr_le32toh(data_dir->VirtualAddress) == 0)
+  {
+      set_integer(0, pe->object, "is_reproducible_build");
+      return;
+  }
 
   if (yr_le32toh(data_dir->Size) % sizeof(IMAGE_DEBUG_DIRECTORY) != 0)
-    return;
-
-  if (yr_le32toh(data_dir->VirtualAddress) == 0)
     return;
 
   debug_dir_offset = pe_rva_to_offset(
@@ -327,7 +325,7 @@ static void pe_parse_debug_directory(
 
     if (yr_le32toh(debug_dir->Type) == IMAGE_DEBUG_TYPE_REPRO)
     {
-      set_integer(1, pe->object, "is_reproducible_build");
+      repro = 1;
       continue;
     }
   
@@ -374,6 +372,11 @@ static void pe_parse_debug_directory(
       }
     }
   }
+  
+  if (repro == 1)
+      set_integer(1, pe->object, "is_reproducible_build");
+  else if (i == dcount)
+      set_integer(0, pe->object, "is_reproducible_build");
   
   return;
 }

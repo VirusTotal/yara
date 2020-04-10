@@ -823,7 +823,7 @@ Reference
     
 .. c:type:: is_reproducible_build
 
-    .. versionadded:: 3.13.0
+    .. versionadded:: 4.0.0
     
     Value that indicates if the PE is build using compiler settings to achieve reproducibility.
     
