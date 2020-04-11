@@ -228,20 +228,21 @@ static int _yr_base64_create_nodes(
   int i;
   int pad;
 
-  for (i = 0; i <= 2; i++)
+  // Generate offset 1 last, as it can be null with a single byte input
+  for (i = 2; i <= 4; i++)
   {
     node = (BASE64_NODE*) yr_malloc(sizeof(BASE64_NODE));
     if (node == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
     FAIL_ON_NULL_WITH_CLEANUP(
-        encoded_str = _yr_modified_base64_encode(str, alphabet, i, &pad),
+        encoded_str = _yr_modified_base64_encode(str, alphabet, i % 3, &pad),
         yr_free(node));
 
     // Now take the encoded string and strip the bytes which are affected by
     // the leading and trailing bytes of the plaintext.
     FAIL_ON_NULL_WITH_CLEANUP(
-      final_str = _yr_base64_get_base64_substring(encoded_str, wide, i, pad),
+      final_str = _yr_base64_get_base64_substring(encoded_str, wide, i % 3, pad),
       {
         yr_free(encoded_str);
         yr_free(node);
