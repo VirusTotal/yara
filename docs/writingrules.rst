@@ -445,12 +445,12 @@ string when searching. The general syntax is ``xor(minimum-maximum)``.
 Base64 strings
 ^^^^^^^^^^^^^^
 
-The ``base64`` modifier can be used to search for strings that have been Base64
+The ``base64`` modifier can be used to search for strings that have been base64
 encoded. A good explanation of the technique is at:
 
 https://www.leeholmes.com/blog/2019/12/10/searching-for-content-in-base-64-strings-2/
 
-The following rule will search for the three Base64 permutations of the string
+The following rule will search for the three base64 permutations of the string
 "This program cannot":
 
 .. code-block:: yara
@@ -470,8 +470,8 @@ This will cause YARA to search for these three permutations:
 | RoaXMgcHJvZ3JhbSBjYW5ub3
 | UaGlzIHByb2dyYW0gY2Fubm90
 
-The ``base64wide`` modifier works just like the base64 modifier but the results
-of the base64 modifier are converted to wide.
+The ``base64wide`` modifier works just like the ``base64`` modifier but the results
+of the ``base64`` modifier are converted to wide.
 
 The interaction between ``base64`` (or ``base64wide``) and ``wide`` and
 ``ascii`` is as you might expect. ``wide`` and ``ascii`` are applied to the
@@ -699,11 +699,11 @@ to the string types listed.
      - Cannot use with ``nocase``, ``base64``, or ``base64wide``
    * - ``base64``
      - Text
-     - Convert to 3 Base64 encoded strings
+     - Convert to 3 base64 encoded strings
      - Cannot use with ``nocase``, ``xor``, or ``fullword``
    * - ``base64wide``
      - Text
-     - Convert to 3 Base64 encoded strings, then interleaving null characters like ``wide``
+     - Convert to 3 base64 encoded strings, then interleaving null characters like ``wide``
      - Cannot use with ``nocase``, ``xor``, or ``fullword``
    * - ``fullword``
      - Text, Regex

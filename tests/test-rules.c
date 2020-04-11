@@ -714,6 +714,14 @@ static void test_strings()
   assert_error(
     "rule test {\n\
       strings:\n\
+        $a = \"ab\" base64 fullword\n\
+      condition:\n\
+        true\n\
+    }", ERROR_INVALID_MODIFIER);
+
+  assert_error(
+    "rule test {\n\
+      strings:\n\
         $a = \"ab\" base64(\"AXS\")\n\
       condition:\n\
         true\n\
