@@ -822,6 +822,20 @@ static void test_strings()
           #a == 12\n\
       }", "tests/data/base64");
 
+  // Make sure that the two strings are generated when one ascii byte is
+  // base64 encoded. When stripped, third base64 encoded is null.
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"a\" base64\n\
+          $b = \"a\" base64wide\n\
+        condition:\n\
+          @a[58] == 0x6b2 and\n\
+          @a[59] == 0x6bf and\n\
+          @b[15] == 0x6fd and\n\
+          @b[16] == 0x717\n\
+      }", "tests/data/base64");
+
   // This checks for the ascii string in base64 form then widened.
   assert_true_rule_file(
       "rule test {\n\
