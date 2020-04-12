@@ -502,6 +502,14 @@ will cause a compiler error. Also, the ``xor``, ``fullword``, and ``nocase``
 modifiers used in combination with ``base64`` or ``base64wide`` will cause
 a compiler error.
 
+Because of the way that YARA strips the leading and trailing characters after
+base64 encoding, one of the base64 encodings of "Dhis program cannow" and
+"This program cannot" are identical. Similarly, using the ``base64`` keyword on
+single ASCII characters is not recommended. For example, "a" with the
+``base64`` keyword matches "\`", "b", "c", "!", "\xa1", or "\xe1" after base64
+encoding, and will not match where the base64 encoding matches the
+``[GWm2][EFGH]`` regular expression
+
 Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
