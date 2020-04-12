@@ -830,10 +830,22 @@ static void test_strings()
           $a = \"a\" base64\n\
           $b = \"a\" base64wide\n\
         condition:\n\
-          @a[58] == 0x6b2 and\n\
-          @a[59] == 0x6bf and\n\
-          @b[15] == 0x6fd and\n\
-          @b[16] == 0x717\n\
+          @a[58] == 0x6ac and\n\
+          @a[59] == 0x6b9 and\n\
+          @b[15] == 0x6f7 and\n\
+          @b[16] == 0x711\n\
+      }", "tests/data/base64");
+
+  // In the future, assert false if character classes are generated instead
+  // of stripping the leading and trailing characters
+  assert_true_rule_file(
+      "rule test {\n\
+        strings:\n\
+          $a = \"Dhis program cannow\" base64\n\
+        condition:\n\
+          #a == 2 and\n\
+          @a[1] == 0xa2 and\n\
+          @a[2] == 0xbd\n\
       }", "tests/data/base64");
 
   // This checks for the ascii string in base64 form then widened.
