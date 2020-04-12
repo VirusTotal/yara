@@ -508,7 +508,7 @@ base64 encoding, one of the base64 encodings of "Dhis program cannow" and
 single ASCII characters is not recommended. For example, "a" with the
 ``base64`` keyword matches "\`", "b", "c", "!", "\xa1", or "\xe1" after base64
 encoding, and will not match where the base64 encoding matches the
-``[GWm2][EFGH]`` regular expression
+``[GWm2][EFGH]`` regular expression.
 
 Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
