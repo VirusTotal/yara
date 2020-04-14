@@ -40,7 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MODULE_NAME elf
 
-define_function(symtab_symbol_name)
+define_function(symtab_symbol_string)
 {
   YR_OBJECT* obj = module();
   ELF* elf = (ELF*) obj->data;
@@ -56,14 +56,41 @@ define_function(symtab_symbol_name)
 
   for (ELF_SYMBOL *i=symtab->symbols; i!=NULL; i=i->next)
   {
-      if (!strcmp(i->name, name))
-      {
-        result++;
-      }
+    if (!strcmp(i->name, name))
+    {
+      result++;
+    }
   }
 
   return_integer(result);
 }
+
+define_function(symtab_symbol_regexp)
+{
+  YR_SCAN_CONTEXT* context = scan_context();
+  YR_OBJECT* obj = module();
+  ELF* elf = (ELF*) obj->data;
+  if (elf == NULL)
+    return_integer(YR_UNDEFINED);
+
+  ELF_SYMBOL_TABLE* symtab = elf->symtab;
+  if (symtab == NULL)
+    return_integer(YR_UNDEFINED);
+
+  RE *name = regexp_argument(1);
+  int result = 0;
+
+  for (ELF_SYMBOL *i=symtab->symbols; i!=NULL; i=i->next)
+  {
+    if (yr_re_match(context, name, i->name) > 0)
+    {
+      result++;
+    }
+  }
+
+  return_integer(result);
+}
+
 
 #define CLASS_DATA(c,d) ((c << 8) | d)
 
@@ -366,7 +393,7 @@ uint64_t parse_elf_header_##bits##_##bo(                                       \
         if (sym_name)                                                          \
         {                                                                      \
           set_string(sym_name, elf_obj, "symtab[%i].name", j);                 \
-          (*symbol)->name = (char*)yr_malloc(strlen(sym_name)+1);                     \
+          (*symbol)->name = (char*)yr_malloc(strlen(sym_name)+1);              \
           if ((*symbol)->name == NULL)                                         \
             return ERROR_INSUFFICIENT_MEMORY;                                  \
           strcpy((*symbol)->name, sym_name);                                   \
@@ -609,7 +636,8 @@ begin_declarations;
   end_struct_array("dynamic");
 
   declare_integer("symtab_entries");
-  declare_function("symtab_symbol", "s", "i", symtab_symbol_name);
+  declare_function("symtab_symbol", "s", "i", symtab_symbol_string);
+  declare_function("symtab_symbol", "r", "i", symtab_symbol_regexp);
   begin_struct_array("symtab");
     declare_string("name");
     declare_integer("value");
