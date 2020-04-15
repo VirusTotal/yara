@@ -52,6 +52,7 @@ struct YR_ATOM
   uint8_t length;
   uint8_t bytes[YR_MAX_ATOM_LENGTH];
   uint8_t mask[YR_MAX_ATOM_LENGTH];
+  YR_BITMASK bitmap[YR_MAX_ATOM_LENGTH][YR_BITMAP_SIZE];
 };
 
 struct YR_ATOM_TREE_NODE
