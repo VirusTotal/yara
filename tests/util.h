@@ -79,6 +79,13 @@ int capture_string(
     char* expected_string);
 
 
+int capture_strings(
+    char* rule,
+    char* string,
+    char* expected_strings[14],
+    int number);
+
+
 int read_file(
     char* filename, char** buf);
 
@@ -289,5 +296,16 @@ void assert_hex_atoms(
 #define assert_regexp_syntax_error(regexp)                              \
   assert_error("rule test { strings: $a = /" regexp "/ condition: $a }",\
                ERROR_INVALID_REGULAR_EXPRESSION)
+
+
+
+#define assert_true_matches(rule,string,expected,number) do {            \
+    if (!capture_strings(rule, string, expected, number)) {              \
+      fprintf(stderr, "%s:%d: rule does not match\n",                    \
+        __FILE__, __LINE__);                                             \
+      exit(EXIT_FAILURE);                                                \
+    }                                                                    \
+  } while (0);
+
 
 #endif /* _UTIL_H */
