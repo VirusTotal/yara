@@ -128,7 +128,10 @@ int yr_atoms_heuristic_quality(
     switch (atom->mask[i])
     {
       case 0x00:
-        quality -= 6;
+        quality += 6;
+        break;
+      case 0xCC:
+        quality += 10;
         break;
       case 0x0F:
         quality += 1;
@@ -207,6 +210,7 @@ static int _yr_atoms_cmp(
     switch (a2->mask[i])
     {
       case 0xFF:
+      case 0xCC:
       case 0x0F:
       case 0xF0:
       case 0x00:
@@ -535,6 +539,11 @@ int _yr_atoms_trim(
   {
     atom->bytes[i] = atom->bytes[trim_left + i];
     atom->mask[i] = atom->mask[trim_left + i];
+    yr_bitmask_clear_all(atom->bitmap[i], sizeof(atom->bitmap[i]));
+    if (atom->mask[i] == 0xFF)
+      yr_bitmask_set(atom->bitmap[i], atom->bytes[i]);
+    else
+       memcpy(atom->bitmap[i], atom->bitmap[trim_left + i], (sizeof(YR_BITMASK) * YR_BITMAP_SIZE));
   }
 
   return trim_left;
@@ -916,16 +925,41 @@ struct STACK_ITEM
 };
 
 
-#define make_atom_from_re_nodes(atom, nodes_length, nodes) \
-    { \
-      atom.length = nodes_length; \
-      for (i = 0; i < atom.length; i++) \
-      { \
-        atom.bytes[i] = (uint8_t) (recent_re_nodes)[i]->value; \
-        atom.mask[i] = (uint8_t) (recent_re_nodes)[i]->mask; \
-      } \
-    }
+static void make_atom_from_re_nodes(YR_ATOM* atom, int nodes_length, RE_NODE** nodes)
+{
+  int diff = YR_BITMASK_SLOT_BITS / 8;
+  unsigned long chunk;
+  int k, j, i;
+  atom->length = nodes_length;
+  for (i = 0; i < atom->length; i++)
+  {
+    atom->bytes[i] = (uint8_t) (nodes)[i]->value;
+    atom->mask[i] = (uint8_t) (nodes)[i]->mask;
+    yr_bitmask_clear_all(atom->bitmap[i], sizeof(atom->bitmap[i]));
 
+    // Classes have initially different encoding
+    if ((nodes)[i]->type == RE_NODE_CLASS)
+    {
+      for (j = 0; j < 32; j++)
+      {
+        if ((nodes)[i]->re_class->bitmap[j] != 0)
+        {
+          chunk = (uint8_t)(nodes)[i]->re_class->bitmap[j];
+          atom->bitmap[i][j/diff] |= chunk << ((j%diff)*diff);
+        }
+      }
+
+      // For cases as [^abc], it creates the complement of the class
+      if ((nodes)[i]->re_class->negated == 1)
+      {
+        for (k = 0; k < YR_BITMAP_SIZE; k++)
+          atom->bitmap[i][k] = ~atom->bitmap[i][k];
+      }
+    }
+    else
+      yr_bitmask_set(atom->bitmap[i], atom->bytes[i]);
+  }
+}
 
 //
 // _yr_atoms_extract_from_re
@@ -1007,7 +1041,7 @@ static int _yr_atoms_extract_from_re(
       // the current appending node.
       if (n > 0)
       {
-        make_atom_from_re_nodes(atom, n, recent_re_nodes);
+        make_atom_from_re_nodes(&atom, n, recent_re_nodes);
         shift = _yr_atoms_trim(&atom);
         quality = config->get_atom_quality(config, &atom);
 
@@ -1046,6 +1080,7 @@ static int _yr_atoms_extract_from_re(
         case RE_NODE_LITERAL:
         case RE_NODE_MASKED_LITERAL:
         case RE_NODE_ANY:
+        case RE_NODE_CLASS:
 
           if (n < YR_MAX_ATOM_LENGTH)
           {
@@ -1053,11 +1088,13 @@ static int _yr_atoms_extract_from_re(
             best_atom_re_nodes[n] = si.re_node;
             best_atom.bytes[n] = (uint8_t) si.re_node->value;
             best_atom.mask[n] = (uint8_t) si.re_node->mask;
+            yr_bitmask_clear_all(best_atom.bitmap[n], sizeof(best_atom.bitmap[n]));
+            yr_bitmask_set(best_atom.bitmap[n], best_atom.bytes[n]);
             best_atom.length = ++n;
           }
           else if (best_quality < YR_MAX_ATOM_QUALITY)
           {
-            make_atom_from_re_nodes(atom, n, recent_re_nodes);
+            make_atom_from_re_nodes(&atom, n, recent_re_nodes);
             shift = _yr_atoms_trim(&atom);
             quality = config->get_atom_quality(config, &atom);
 
@@ -1067,6 +1104,7 @@ static int _yr_atoms_extract_from_re(
               {
                 best_atom.bytes[i] = atom.bytes[i];
                 best_atom.mask[i] = atom.mask[i];
+                memcpy(best_atom.bitmap[i], atom.bitmap[i], sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
                 best_atom_re_nodes[i] = recent_re_nodes[i + shift];
               }
 
@@ -1206,7 +1244,6 @@ static int _yr_atoms_extract_from_re(
 
         case RE_NODE_RANGE_ANY:
         case RE_NODE_STAR:
-        case RE_NODE_CLASS:
         case RE_NODE_WORD_CHAR:
         case RE_NODE_NON_WORD_CHAR:
         case RE_NODE_SPACE:
@@ -1298,12 +1335,6 @@ static int _yr_atoms_expand_wildcards(
 
       switch(atom->atom.mask[i])
       {
-        case 0x00:
-          expanded = true;
-          s = 0x00;
-          e = 0xFF;
-          break;
-
         case 0x0F:
           expanded = true;
           s = atom->atom.bytes[i];
@@ -1340,6 +1371,8 @@ static int _yr_atoms_expand_wildcards(
 
         new_atom->atom.bytes[i] = (uint8_t) a;
         new_atom->atom.mask[i] = 0xFF;
+        yr_bitmask_clear_all(new_atom->atom.bitmap[i], sizeof(new_atom->atom.bitmap[i]));
+        yr_bitmask_set(new_atom->atom.bitmap[i], new_atom->atom.bytes[i]);
         new_atom->next = next_atom;
         prev_atom->next = new_atom;
         prev_atom = new_atom;
@@ -1487,7 +1520,7 @@ int yr_atoms_extract_from_string(
   YR_ATOM atom;
 
   int quality, max_quality;
-  int i;
+  int i, j;
 
   item = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
@@ -1505,6 +1538,8 @@ int yr_atoms_extract_from_string(
   {
     item->atom.bytes[i] = string[i];
     item->atom.mask[i] = 0xFF;
+    yr_bitmask_clear_all(item->atom.bitmap[i], sizeof(item->atom.bitmap[i]));
+    yr_bitmask_set(item->atom.bitmap[i], item->atom.bytes[i]);
   }
 
   max_quality = config->get_atom_quality(config, &item->atom);
@@ -1518,6 +1553,12 @@ int yr_atoms_extract_from_string(
   {
     atom.length = YR_MAX_ATOM_LENGTH;
     memcpy(atom.bytes, string + i - YR_MAX_ATOM_LENGTH + 1, atom.length);
+
+    for (j = 0; j <atom.length; j++)
+    {
+      yr_bitmask_clear_all(atom.bitmap[j], sizeof(atom.bitmap[j]));
+      yr_bitmask_set(atom.bitmap[j], atom.bytes[j]);
+    }
 
     quality = config->get_atom_quality(config, &atom);
 
