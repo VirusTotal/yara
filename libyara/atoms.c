@@ -671,140 +671,49 @@ static int _yr_atoms_choose(
 
 
 //
-// _yr_atoms_case_combinations
-//
-// Returns all combinations of lower and upper cases for a given atom. For
-// atom "abc" the output would be "abc" "abC" "aBC" and so on. Resulting
-// atoms are written into the output buffer in this format:
-//
-//  [size of atom 1] [atom 1]  ... [size of atom N] [atom N] [0]
-//
-// Notice the zero at the end to indicate where the output ends.
-//
-// The caller is responsible of providing a buffer large enough to hold the
-// returned atoms.
-//
-
-static uint8_t* _yr_atoms_case_combinations(
-    uint8_t* atom,
-    int atom_length,
-    int atom_offset,
-    uint8_t* output_buffer)
-{
-  uint8_t c;
-  uint8_t* new_atom;
-
-  if (atom_offset + 1 < atom_length)
-    output_buffer = _yr_atoms_case_combinations(
-        atom,
-        atom_length,
-        atom_offset + 1,
-        output_buffer);
-
-  c = atom[atom_offset];
-
-  if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
-  {
-    // Write atom length.
-    *output_buffer = atom_length;
-    output_buffer++;
-
-    memcpy(output_buffer, atom, atom_length);
-
-    new_atom = output_buffer;
-    output_buffer += atom_length;
-
-    // Swap character case.
-    if (c >= 'a' && c <= 'z')
-      new_atom[atom_offset] -= 32;
-    else
-      new_atom[atom_offset] += 32;
-
-    if (atom_offset + 1 < atom_length)
-      output_buffer = _yr_atoms_case_combinations(
-          new_atom,
-          atom_length,
-          atom_offset + 1,
-          output_buffer);
-  }
-
-  if (atom_offset == 0)
-    *output_buffer = 0;
-
-  return output_buffer;
-}
-
-// Size of buffer used in _yr_atoms_case_insensitive for storing the all
-// the possible combinations for an atom. Each atom has up to YR_MAX_ATOM_LENGTH
-// characters and each character has two possible values (upper and lower case).
-// That means 2 ^ YR_MAX_ATOM_LENGTH combinations for an atom, where each atom
-// occupies YR_MAX_ATOM_LENGTH + 1 bytes (the atom itself +1 byte for its length)
-// One extra bytes is allocated for the zero value indicating the end.
-
-#define CASE_COMBINATIONS_BUFFER_SIZE \
-    (1 << YR_MAX_ATOM_LENGTH) * (YR_MAX_ATOM_LENGTH + 1) + 1
-
-//
 // _yr_atoms_case_insensitive
 //
 // For a given list of atoms returns another list of atoms
-// with every case combination.
+// with every case combination encoded into bitmap.
 //
 
 static int _yr_atoms_case_insensitive(
-    YR_ATOM_LIST_ITEM* atoms,
-    YR_ATOM_LIST_ITEM** case_insensitive_atoms)
+    YR_ATOM_LIST_ITEM* atoms)
 {
   YR_ATOM_LIST_ITEM* atom;
-  YR_ATOM_LIST_ITEM* new_atom;
 
-  uint8_t buffer[CASE_COMBINATIONS_BUFFER_SIZE];
-  uint8_t atom_length;
-  uint8_t* atoms_cursor;
+  int i, j;
+  bool alphabet = false;
 
-  int i;
-
-  *case_insensitive_atoms = NULL;
   atom = atoms;
 
   while (atom != NULL)
   {
-    _yr_atoms_case_combinations(
-        atom->atom.bytes,
-        atom->atom.length,
-        0,
-        buffer);
-
-    atoms_cursor = buffer;
-    atom_length = *atoms_cursor;
-    atoms_cursor++;
-
-    while (atom_length != 0)
+    for (i = 0; i < atom->atom.length; i++)
     {
-      new_atom = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
+      if (atom->atom.mask[i] == YR_ATOM_TYPE_ANY)
+        continue;
 
-      if (new_atom == NULL)
-        return ERROR_INSUFFICIENT_MEMORY;
-
-      for (i = 0; i < atom_length; i++)
+      alphabet = false;
+      // insensitive encoding added
+      for (j = 'A'; j <= 'Z'; j++)
       {
-        new_atom->atom.bytes[i] = atoms_cursor[i];
-        new_atom->atom.mask[i] = 0xFF;
+        if (yr_bitmask_is_set(atom->atom.bitmap[i], j))
+        {
+          alphabet = true;
+          yr_bitmask_set(atom->atom.bitmap[i], j | LOWERCASE_MASK);
+        }
+        else if (yr_bitmask_is_set(atom->atom.bitmap[i], j | LOWERCASE_MASK))
+        {
+          alphabet = true;
+          yr_bitmask_set(atom->atom.bitmap[i], j);
+        }
       }
 
-      new_atom->atom.length = atom_length;
-      new_atom->forward_code_ref = atom->forward_code_ref;
-      new_atom->backward_code_ref = atom->backward_code_ref;
-      new_atom->backtrack = atom->backtrack;
-      new_atom->next = *case_insensitive_atoms;
+      if (alphabet)
+        atom->atom.mask[i] = YR_ATOM_TYPE_CLASS;
 
-      *case_insensitive_atoms = new_atom;
-
-      atoms_cursor += atom_length;
-      atom_length = *atoms_cursor;
-      atoms_cursor++;
     }
-
     atom = atom->next;
   }
 
@@ -845,6 +754,8 @@ static int _yr_atoms_xor(
       {
         new_atom->atom.bytes[i] = atom->atom.bytes[i] ^ j;
         new_atom->atom.mask[i] = 0xFF;
+        yr_bitmask_clear_all(new_atom->atom.bitmap[i], sizeof(new_atom->atom.bitmap[i]));
+        yr_bitmask_set(new_atom->atom.bitmap[i], new_atom->atom.bytes[i]);
       }
 
       new_atom->atom.length = yr_min(atom->atom.length, YR_MAX_ATOM_LENGTH);
@@ -893,12 +804,22 @@ static int _yr_atoms_wide(
     {
       new_atom->atom.bytes[i] = 0;
       new_atom->atom.mask[i] = 0xFF;
+      yr_bitmask_clear_all(new_atom->atom.bitmap[i], sizeof(new_atom->atom.bitmap[i]));
+      yr_bitmask_set(new_atom->atom.bitmap[i], new_atom->atom.bytes[i]);
     }
 
     for (i = 0; i < atom->atom.length; i++)
     {
       if (i * 2 < YR_MAX_ATOM_LENGTH)
+      {
         new_atom->atom.bytes[i * 2] = atom->atom.bytes[i];
+        new_atom->atom.mask[i * 2] = atom->atom.mask[i];
+        yr_bitmask_clear_all(new_atom->atom.bitmap[i * 2], sizeof(new_atom->atom.bitmap[i * 2]));
+        if (new_atom->atom.mask[i * 2] == 0xFF)
+          yr_bitmask_set(new_atom->atom.bitmap[i * 2], new_atom->atom.bytes[i * 2]);
+        else
+          memcpy(new_atom->atom.bitmap[i * 2], atom->atom.bitmap[i], (sizeof(YR_BITMASK) * YR_BITMAP_SIZE));
+      }
       else
         break;
     }
@@ -1405,7 +1326,6 @@ int yr_atoms_extract_from_re(
   YR_ATOM_TREE* atom_tree = (YR_ATOM_TREE*) yr_malloc(sizeof(YR_ATOM_TREE));
 
   YR_ATOM_LIST_ITEM* wide_atoms;
-  YR_ATOM_LIST_ITEM* case_insensitive_atoms;
 
   if (atom_tree == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
@@ -1468,14 +1388,11 @@ int yr_atoms_extract_from_re(
   if (modifier.flags & STRING_FLAGS_NO_CASE)
   {
     FAIL_ON_ERROR_WITH_CLEANUP(
-        _yr_atoms_case_insensitive(*atoms, &case_insensitive_atoms),
-        {
-          yr_atoms_list_destroy(*atoms);
-          yr_atoms_list_destroy(case_insensitive_atoms);
-          *atoms = NULL;
-        });
-
-    *atoms = _yr_atoms_list_concat(*atoms, case_insensitive_atoms);
+    _yr_atoms_case_insensitive(*atoms),
+    {
+      yr_atoms_list_destroy(*atoms);
+      *atoms = NULL;
+    });
   }
 
   // No atoms has been extracted, let's add a zero-length atom.
@@ -1513,7 +1430,6 @@ int yr_atoms_extract_from_string(
     int* min_atom_quality)
 {
   YR_ATOM_LIST_ITEM* item;
-  YR_ATOM_LIST_ITEM* case_insensitive_atoms;
   YR_ATOM_LIST_ITEM* xor_atoms;
   YR_ATOM_LIST_ITEM* wide_atoms;
 
@@ -1596,15 +1512,12 @@ int yr_atoms_extract_from_string(
 
   if (modifier.flags & STRING_FLAGS_NO_CASE)
   {
-    FAIL_ON_ERROR_WITH_CLEANUP(
-        _yr_atoms_case_insensitive(*atoms, &case_insensitive_atoms),
-        {
-          yr_atoms_list_destroy(*atoms);
-          yr_atoms_list_destroy(case_insensitive_atoms);
-          *atoms = NULL;
-        });
-
-    *atoms = _yr_atoms_list_concat(*atoms, case_insensitive_atoms);
+    FAIL_ON_ERROR_WITH_CLEANUP( 
+      _yr_atoms_case_insensitive(*atoms), 
+      { 
+        yr_atoms_list_destroy(*atoms);  
+        *atoms = NULL;  
+      });
   }
 
   if (modifier.flags & STRING_FLAGS_XOR)
