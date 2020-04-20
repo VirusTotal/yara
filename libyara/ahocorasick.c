@@ -397,6 +397,121 @@ static void _yr_ac_join_matches(
 }
 
 
+// Creates a new state with values of add_state and creates a new matches list
+static YR_AC_STATE* _yr_ac_create_copied_state(
+    YR_AC_STATE* current_state,
+    YR_AC_STATE* add_state,
+    YR_ARENA* arena)
+{
+  YR_AC_STATE* new_state = NULL;
+
+  YR_AC_MATCH* match;
+  YR_AC_MATCH* new_match;
+  YR_ARENA_REF new_match_ref;
+
+  new_state = _yr_ac_state_create(current_state, add_state->input, add_state->type, add_state->bitmap);
+  new_state->failure = current_state->failure;
+
+  match = yr_arena_ref_to_ptr(arena, &add_state->matches_ref);
+  //match = add_state->matches;
+
+  while (match != NULL)
+  {
+    FAIL_ON_ERROR(yr_arena_allocate_struct(
+        arena,
+        YR_AC_STATE_MATCHES_POOL,
+        sizeof(YR_AC_MATCH),
+        &new_match_ref,
+        offsetof(YR_AC_MATCH, string),
+        offsetof(YR_AC_MATCH, forward_code),
+        offsetof(YR_AC_MATCH, backward_code),
+        offsetof(YR_AC_MATCH, next),
+        EOL));
+
+    new_match = yr_arena_ref_to_ptr(arena, &new_match_ref);
+
+    new_match->backtrack = match->backtrack;
+    new_match->string = match->string;
+    new_match->forward_code = match->forward_code;
+    new_match->backward_code = match->backward_code;
+    new_match->next = yr_arena_ref_to_ptr(arena, &new_state->matches_ref);
+    new_state->matches_ref = new_match_ref;
+
+    match = match->next;
+  }
+
+  return new_state;
+}
+
+
+//
+// _yr_ac_copy_path
+//
+// Creates a copy of subpart of AC automaton starting with state `path` into `new_path`.
+// If given `input_char`, it rewrites the input of the state `path` with it.
+// Example:
+//   o - a - b - c
+//    |- d - e - f
+//    _yr_ac_copy_path(d, o, k)
+//   o - a - b - c
+//    |- d - e - f
+//    |- k - e - f
+
+static void _yr_ac_copy_path(
+    YR_AC_STATE* path,
+    YR_AC_STATE* new_path,
+    YR_AC_STATE* input_state,
+    YR_ARENA* arena)
+{
+  YR_AC_STATE* state;
+  YR_AC_STATE* current_state = new_path;
+  YR_AC_STATE* new_state = NULL;
+
+  // "root" node
+  if (path != NULL)
+  {
+    if (input_state != NULL)
+    {
+      new_state = _yr_ac_next_state_typed(current_state, input_state->input, input_state->type, input_state->bitmap);
+      if (new_state != NULL)
+      {
+        if (YR_ARENA_IS_NULL_REF(new_state->matches_ref))
+          new_state->matches_ref = input_state->matches_ref;
+        else
+          _yr_ac_join_matches(arena, &new_state->matches_ref, &input_state->matches_ref);
+      }
+    }
+    else
+    {
+      new_state = _yr_ac_next_state_typed(current_state, path->input, path->type, path->bitmap);
+      if (new_state!= NULL)
+      {
+        if (YR_ARENA_IS_NULL_REF(new_state->matches_ref))
+          new_state->matches_ref = path->matches_ref;
+        else
+          _yr_ac_join_matches(arena, &new_state->matches_ref, &path->matches_ref);
+      }
+    }
+
+    if (new_state == NULL)
+    {
+      if (input_state != NULL)
+        new_state = _yr_ac_create_copied_state(current_state, input_state, arena);
+      else
+        new_state = _yr_ac_create_copied_state(current_state, path, arena);
+    }
+
+    state = path->first_child;
+
+    while (state != NULL)
+    {
+      _yr_ac_copy_path(state, new_state, NULL, arena);
+      state = state->siblings;
+    }
+  }
+}
+
+
 uint8_t num_to_bits[16] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 uint8_t num_to_pos[16] = { 0, 1, 2, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -491,7 +606,8 @@ static bool _yr_ac_class_is_literal(
 //
 
 static int _yr_ac_create_failure_links(
-    YR_AC_AUTOMATON* automaton)
+    YR_AC_AUTOMATON* automaton,
+    YR_ARENA* arena)
 {
   YR_AC_STATE* current_state;
   YR_AC_STATE* failure_state;
@@ -1175,7 +1291,7 @@ int yr_ac_compile(
     YR_AC_AUTOMATON* automaton,
     YR_ARENA* arena)
 {
-  FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton));
+  FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton, arena));
   FAIL_ON_ERROR(_yr_ac_optimize_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton));
   
