@@ -358,6 +358,45 @@ static int _yr_ac_state_destroy(
 }
 
 
+//
+// _yr_ac_join_matches: joines two lists of matches without duplicates
+//
+static void _yr_ac_join_matches(
+    YR_ARENA* arena,
+    YR_ARENA_REF* matches1,
+    YR_ARENA_REF* matches2)
+{
+  YR_AC_MATCH* match;
+  YR_AC_MATCH* match2;
+
+  if (YR_ARENA_IS_NULL_REF(matches2))
+    return;
+
+  if (YR_ARENA_IS_NULL_REF(matches1))
+    matches1 = matches2;
+  else
+  {
+    match = yr_arena_ref_to_ptr(arena, matches1);
+    match2 = yr_arena_ref_to_ptr(arena, matches2);
+
+    while (match != NULL)
+    {
+      // duplicates were detected, the matches are identical
+      if (match == match2)
+        return;
+
+      if (match->next == NULL)
+        break;
+
+      match = match->next;
+    }
+
+    match->next = yr_arena_ref_to_ptr(arena, matches2);
+  }
+
+}
+
+
 uint8_t num_to_bits[16] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 uint8_t num_to_pos[16] = { 0, 1, 2, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -530,17 +569,7 @@ static int _yr_ac_create_failure_links(
           }
           else
           {
-            match = yr_arena_ref_to_ptr(
-                automaton->arena, &transition_state->matches_ref);
-
-            assert(match != NULL);
-
-            // Find the last match in the list of matches.
-            while (match->next != NULL)
-              match = match->next;
-
-            match->next = yr_arena_ref_to_ptr(
-                automaton->arena, &temp_state->matches_ref);
+            _yr_ac_join_matches(automaton->arena, &transition_state->matches_ref, &temp_state->matches_ref);
           }
 
           break;
