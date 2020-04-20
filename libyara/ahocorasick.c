@@ -358,6 +358,92 @@ static int _yr_ac_state_destroy(
 }
 
 
+uint8_t num_to_bits[16] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
+uint8_t num_to_pos[16] = { 0, 1, 2, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0 };
+
+//
+// If only one bit is set in the element of array the encoded literal is return.
+// If the element is empty, 0 is returned.
+// Otherwise, the -1 is returned.
+//
+
+static int _yr_ac_return_literal(
+    uint64_t number,
+    uint8_t index)
+{
+  uint8_t bits;
+  uint8_t nibble = 0;
+  uint64_t num;
+  uint64_t result = 0;
+  uint64_t counter = 0;
+  int i;
+
+  num = number;
+
+  if (0 == num)
+    return result;
+
+  for (i = 0; i < sizeof(uint64_t) * 2; i++)
+  {
+    // find last nibble
+    nibble = num & 0xf;
+    bits = num_to_bits[nibble];
+    if (bits > 1)
+      return -1;
+    else if (bits == 1)
+    {
+      // character decoding (+1 to detect bit on zero position)
+      result = (index * YR_BITMASK_SLOT_BITS) + (4 * i + num_to_pos[nibble]);
+      counter++;
+    }
+    num = num >> 4;
+  }
+
+  if (counter > 1)
+    return -1;
+  else
+    return result;
+}
+
+//
+// If the class become literal, change the type
+//
+
+static bool _yr_ac_class_is_literal(
+    YR_AC_STATE* state)
+{
+  uint8_t i;
+  int bits = 0;
+  int counter = 0;
+  int literal = 0;
+
+  for (i = 0; i < YR_BITMAP_SIZE; i++)
+  {
+    bits = _yr_ac_return_literal(state->bitmap[i], i);
+
+    if (bits == -1)
+      return false;
+    else if (bits != 0)
+    {
+      literal = bits;
+      counter++;
+    }
+  }
+
+  if (counter == 1)
+  {
+    state->type = YR_ATOM_TYPE_LITERAL;
+    // _yr_ac_return_literal return literal + 1
+    state->input = literal - 1;
+    return true;
+  }
+
+  assert(counter != 0);
+
+  return false;
+}
+
+
 //
 // _yr_ac_create_failure_links
 //
@@ -1005,6 +1091,10 @@ int yr_ac_add_string(
         if (next_state == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
       }
+
+      // for a case like [a] - the class is a literal
+      if (atom->atom.mask[i] == YR_ATOM_TYPE_CLASS)
+          _yr_ac_class_is_literal(next_state);
 
       state = next_state;
     }
