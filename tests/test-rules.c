@@ -2688,16 +2688,6 @@ void test_performance_warnings()
 
   assert_warning(
       "rule test { \
-        strings: $a = { 01 ?? ?2 03 } \
-        condition: $a }")
-
-  assert_warning(
-      "rule test { \
-        strings: $a = { 01 ?? 02 1? } \
-        condition: $a }")
-
-  assert_warning(
-      "rule test { \
         strings: $a = { 1? 2? 3? } \
         condition: $a }")
 
