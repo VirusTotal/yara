@@ -133,6 +133,32 @@ static YR_AC_STATE* _yr_ac_queue_pop(
 
 
 //
+// _yr_ac_queue_top
+//
+// Returns a state from a queue.
+//
+// Args:
+//    QUEUE* queue     - The queue
+//
+// Returns:
+//    Pointer to the top state without poping it.
+//
+
+static YR_AC_STATE* _yr_ac_queue_top(
+    QUEUE* queue)
+{
+  YR_AC_STATE* result;
+
+  if (queue->head == NULL)
+    return NULL;
+
+  result = queue->head->value;
+
+  return result;
+}
+
+
+//
 // _yr_ac_queue_is_empty
 //
 // Checks if a queue is empty.
@@ -407,16 +433,16 @@ static YR_AC_STATE* _yr_ac_create_copied_state(
 
   YR_AC_MATCH* match;
   YR_AC_MATCH* new_match;
-  YR_ARENA_REF new_match_ref;
 
   new_state = _yr_ac_state_create(current_state, add_state->input, add_state->type, add_state->bitmap);
   new_state->failure = current_state->failure;
 
   match = yr_arena_ref_to_ptr(arena, &add_state->matches_ref);
-  //match = add_state->matches;
 
   while (match != NULL)
   {
+    YR_ARENA_REF new_match_ref;
+
     FAIL_ON_ERROR(yr_arena_allocate_struct(
         arena,
         YR_AC_STATE_MATCHES_POOL,
@@ -598,6 +624,197 @@ static bool _yr_ac_class_is_literal(
 }
 
 
+// Detect if two states are in a collision
+static bool _yr_ac_find_conflict_states(
+    YR_AC_STATE* input_state,
+    YR_AC_STATE* next_state,
+    YR_AC_STATE* dfa_state1,
+    YR_AC_STATE* dfa_state2)
+{
+  int i;
+  int int_counter = 0;
+  int bitmap2_counter = 0;
+
+  YR_BITMASK intersetion[YR_BITMAP_SIZE];
+  YR_BITMASK bitmap2[YR_BITMAP_SIZE];
+  yr_bitmask_clear_all(intersetion, sizeof(intersetion));
+  yr_bitmask_clear_all(bitmap2, sizeof(bitmap2));
+
+  if ((next_state->type == YR_ATOM_TYPE_LITERAL) && (yr_bitmask_is_set(input_state->bitmap, next_state->input)))
+  {
+    // New state with input from next_state
+    memcpy(dfa_state1, input_state, sizeof(YR_AC_STATE));
+    dfa_state1->input = next_state->input;
+    dfa_state1->type = next_state->type;
+    memcpy(dfa_state1->bitmap, next_state->bitmap, sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
+
+    // Updated input_state (without input from next_state)
+    memcpy(dfa_state2, input_state, sizeof(YR_AC_STATE));
+    yr_bitmask_clear(dfa_state2->bitmap, next_state->input);
+
+    if (dfa_state2->type == YR_ATOM_TYPE_CLASS)
+      _yr_ac_class_is_literal(dfa_state2);
+    else
+      dfa_state2->type = YR_ATOM_TYPE_CLASS;
+    return false;
+  }
+  else if (next_state->type == YR_ATOM_TYPE_CLASS)
+  {
+    if (input_state->type == YR_ATOM_TYPE_ANY)
+    {
+      // New state with input from next_state (class)
+      memcpy(dfa_state1, input_state, sizeof(YR_AC_STATE));
+      dfa_state1->input = next_state->input;
+      dfa_state1->type = next_state->type;
+      memcpy(dfa_state1->bitmap, next_state->bitmap, sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
+
+      // Updated input_state (without class from next_state)
+      memcpy(dfa_state2, input_state, sizeof(YR_AC_STATE));
+      dfa_state2->type = YR_ATOM_TYPE_CLASS;
+      for (i = 0; i < YR_BITMAP_SIZE; i++)
+        dfa_state2->bitmap[i] = dfa_state2->bitmap[i] - next_state->bitmap[i];
+      _yr_ac_class_is_literal(dfa_state2);
+      return false;
+    } // if (input_state->type == YR_ATOM_TYPE_ANY)
+    else if (input_state->type == YR_ATOM_TYPE_CLASS)
+    {
+      int_counter = 0;
+      bitmap2_counter = 0;
+
+      for (i = 0; i < YR_BITMAP_SIZE; i++)
+      {
+        intersetion[i] = (next_state->bitmap[i] & input_state->bitmap[i]);
+        if (intersetion[i] != 0)
+          int_counter++;
+
+        bitmap2[i] = input_state->bitmap[i] - intersetion[i];
+        if (bitmap2[i] != 0)
+          bitmap2_counter++;
+      }
+
+      if ((int_counter != 0) && (bitmap2_counter != 0))
+      {
+        // New state with intersected input from next_state
+        memcpy(dfa_state1, input_state, sizeof(YR_AC_STATE));
+        memcpy(dfa_state1->bitmap, intersetion, sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
+        _yr_ac_class_is_literal(dfa_state1);
+
+        // Updated input_state (without input from itersection)
+        memcpy(dfa_state2, input_state, sizeof(YR_AC_STATE));
+        memcpy(dfa_state2->bitmap, bitmap2, sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
+        _yr_ac_class_is_literal(dfa_state2);
+        return false;
+      }
+    } // else if (input_state->type == YR_ATOM_TYPE_CLASS)
+  } // else if (next_state->type == YR_ATOM_TYPE_CLASS)
+
+  return true;
+}
+
+// In case of collision, some symbols have to be excluded from the state,
+// and the copy of the state is created
+static bool _yr_ac_exclude_from_state(
+    YR_AC_STATE* input_state,
+    YR_AC_STATE* dfa_state1,
+    YR_AC_STATE* dfa_state2,
+    YR_ARENA* arena)
+{
+  YR_AC_STATE* next1 = NULL;
+  YR_AC_STATE* next2 = NULL;
+  YR_AC_STATE* temp_state;
+  YR_AC_STATE* prev_state;
+
+  next1 = _yr_ac_next_state_typed(input_state->parent, dfa_state1->input, dfa_state1->type, dfa_state1->bitmap);
+  next2 = _yr_ac_next_state_typed(input_state->parent, dfa_state2->input, dfa_state2->type, dfa_state2->bitmap);
+
+  if ((next1 != NULL) && (next2 != NULL))
+  {
+    // Both version of the input_state already exist in the AC
+    _yr_ac_copy_path(input_state, input_state->parent, dfa_state1, arena);
+    _yr_ac_copy_path(input_state, input_state->parent, dfa_state2, arena);
+    temp_state = input_state->parent->first_child;
+
+    if (temp_state == input_state)
+    {
+      input_state->parent->first_child = temp_state->siblings;
+      _yr_ac_state_destroy(input_state);
+      return true;
+    }
+
+    while (temp_state != NULL && temp_state != input_state)
+    {
+      prev_state = temp_state;
+      temp_state = temp_state->siblings;
+    }
+
+    prev_state->siblings = temp_state->siblings;
+    _yr_ac_state_destroy(input_state);
+    return true;
+  }
+  else if (next2 != NULL)
+  {
+    // The updated state aleady exists in the AC
+    memcpy(input_state, dfa_state1, sizeof(YR_AC_STATE));
+    _yr_ac_copy_path(input_state, input_state->parent, dfa_state2, arena);
+  }
+  else
+  {
+    // Neither version of the input_state already exist in the AC or there is only literal state
+    memcpy(input_state, dfa_state2, sizeof(YR_AC_STATE));
+    _yr_ac_copy_path(input_state, input_state->parent, dfa_state1, arena);
+  }
+
+  return false;
+}
+
+
+// Creates deterministic AC for failure function
+static bool dfa_subtree(
+    YR_AC_STATE* state,
+    YR_AC_STATE* input_state,
+    YR_ARENA* arena)
+{
+  YR_AC_STATE* next_state;
+  YR_AC_STATE* dfa_state1 = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
+  YR_AC_STATE* dfa_state2 = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
+
+  bool pop = true;
+
+  _yr_ac_class_is_literal(input_state);
+
+  if ((input_state->type == YR_ATOM_TYPE_CLASS) || (input_state->type == YR_ATOM_TYPE_ANY))
+  {
+
+    next_state = state->first_child;
+
+    while (next_state != NULL)
+    {
+      pop = true;
+      if (input_state == next_state)
+      {
+        next_state = next_state->siblings;
+        continue;
+      }
+
+      pop = _yr_ac_find_conflict_states(input_state, next_state, dfa_state1, dfa_state2);
+
+      if (!pop)
+      {
+        if (_yr_ac_exclude_from_state(input_state, dfa_state1, dfa_state2, arena))
+          return true;
+
+        if (input_state->type == YR_ATOM_TYPE_LITERAL)
+          break;
+      }
+
+      next_state = next_state->siblings;
+    }
+  }
+
+  return pop;
+}
+
+
 //
 // _yr_ac_create_failure_links
 //
@@ -615,6 +832,7 @@ static int _yr_ac_create_failure_links(
   YR_AC_STATE* state;
   YR_AC_STATE* transition_state;
   YR_AC_STATE* root_state;
+  YR_AC_STATE* check_state;
   YR_AC_MATCH* match;
 
   QUEUE queue;
@@ -622,10 +840,21 @@ static int _yr_ac_create_failure_links(
   queue.head = NULL;
   queue.tail = NULL;
 
+  bool pop = true;
+
   root_state = automaton->root;
 
   // Set the failure link of root state to itself.
   root_state->failure = root_state;
+
+  state = root_state->first_child;
+
+  // Check if the root's states are derermnistic
+  while (state != NULL)
+  {
+    dfa_subtree(root_state, state, arena);
+    state = state->siblings;
+  }
 
   // Push root's children and set their failure link to root.
   state = root_state->first_child;
@@ -642,7 +871,7 @@ static int _yr_ac_create_failure_links(
 
   while (!_yr_ac_queue_is_empty(&queue))
   {
-    current_state = _yr_ac_queue_pop(&queue);
+    current_state = _yr_ac_queue_top(&queue);
     match = yr_arena_ref_to_ptr(
         automaton->arena, &current_state->matches_ref);
 
@@ -663,6 +892,15 @@ static int _yr_ac_create_failure_links(
       current_state->matches_ref = root_state->matches_ref;
     }
 
+    // Check if states are determnistic
+    check_state = current_state->first_child;
+
+    while (check_state != NULL)
+    {
+      dfa_subtree(current_state, check_state, arena);
+      check_state = check_state->siblings;
+    }
+
     // Iterate over all the states that the current state can transition to.
     transition_state = current_state->first_child;
 
@@ -673,6 +911,11 @@ static int _yr_ac_create_failure_links(
 
       while (1)
       {
+        // Check if states are determnistic
+        // If some changes were done to automaton, do not pop (check these states twice)
+        if (!dfa_subtree(failure_state, transition_state, arena))
+          pop = false;
+
         temp_state = _yr_ac_next_state_bitmap(failure_state, transition_state);
 
         if (temp_state != NULL)
@@ -706,6 +949,11 @@ static int _yr_ac_create_failure_links(
 
       transition_state = transition_state->siblings;
     }
+
+    if (pop)
+      _yr_ac_queue_pop(&queue);
+
+    pop = true;
 
   } // while(!__yr_ac_queue_is_empty(&queue))
 
