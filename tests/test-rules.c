@@ -2573,13 +2573,20 @@ void test_process_scan()
   /* Give child process time to initialize */
   sleep(1);
 
-  assert( compile_rule("\
+  status = compile_rule("\
     rule test {\
       strings:\
         $a = { 48 65 6c 6c 6f 2c 20 77 6f 72 6c 64 21 }\
       condition:\
         all of them\
-    }", &rules) == ERROR_SUCCESS);
+    }", &rules);
+
+  if (status != ERROR_SUCCESS)
+  {
+    perror("compile_rule");
+    exit(EXIT_FAILURE);
+  }
+
   rc1 = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
   yr_rules_destroy(rules);
   kill(pid, SIGALRM);
