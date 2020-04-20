@@ -152,30 +152,140 @@ static int _yr_ac_queue_is_empty(
 
 
 //
-// _yr_ac_next_state
+// _yr_ac_next_state_classes
 //
-// Given an automaton state and an input symbol, returns the new state
-// after reading the input symbol.
+// Returns true if the bitmap1 and bitmap2 are the same.
+//
+
+static bool _yr_ac_compare_classes(
+    YR_BITMASK* bitmap1,
+    YR_BITMASK* bitmap2)
+{
+  int i;
+  for (i = 0; i < YR_BITMAP_SIZE; i++)
+  {
+    if (bitmap1[i] != bitmap2[i])
+      return false;
+  }
+  return true;
+}
+
+//
+// _yr_ac_bitmap_subset
+//
+// Returns true if the bitmap2 is a subset for bitmap1.
+//
+
+static bool _yr_ac_bitmap_subset(
+    YR_BITMASK* bitmap1,
+    YR_BITMASK* bitmap2)
+{
+  int i;
+  for (i = 0; i < YR_BITMAP_SIZE; i++)
+  {
+    if ((bitmap1[i] & bitmap2[i]) != bitmap2[i])
+      return false;
+  }
+  return true;
+}
+
+
+//
+// _yr_ac_next_state_bitmap
+//
+// Given an automaton state and an input from state2, returns the new state.
 //
 // Args:
 //    YR_AC_STATE* state     - Automaton state
-//    uint8_t input       - Input symbol
+//    YR_AC_STATE* state2    - Automaton state with input
 //
 // Returns:
 //   Pointer to the next automaton state.
 //
 
-static YR_AC_STATE* _yr_ac_next_state(
+static YR_AC_STATE* _yr_ac_next_state_bitmap(
     YR_AC_STATE* state,
-    uint8_t input)
+    YR_AC_STATE* state2)
 {
   YR_AC_STATE* next_state = state->first_child;
 
   while (next_state != NULL)
   {
-    if (next_state->input == input)
-      return next_state;
+    switch (next_state->type)
+    {
+      // Literal - the input byte has to be the same
+      case YR_ATOM_TYPE_LITERAL:
+        if (state2->type == YR_ATOM_TYPE_LITERAL)
+        {
+          if (next_state->input == state2->input)
+            return next_state;
+        }
+        break;
+      // Atom - accepts everything
+      case YR_ATOM_TYPE_ANY:
+        return next_state;
+      // Class - the input has to be set in the class
+      case YR_ATOM_TYPE_CLASS:
+        if (state2->type == YR_ATOM_TYPE_LITERAL)
+        {
+          if (yr_bitmask_is_set(next_state->bitmap, state2->input))
+            return next_state;
+        }
+        else if (state2->type == YR_ATOM_TYPE_CLASS)
+        {
+          if (_yr_ac_bitmap_subset(next_state->bitmap, state2->bitmap))
+            return next_state;
+        }
+        break;
+    }
+    next_state = next_state->siblings;
+  }
 
+    return NULL;
+}
+
+
+//
+// _yr_ac_next_state_typed
+//
+// Given an automaton state and an input information, returns the new state.
+//
+// Args:
+//    YR_AC_STATE* state     - Automaton state
+//    uint8_t input          - Input symbol
+//    uint8_t type           - Type of input
+//    YR_BITMASK* bitmap     - Bitmap for input (classes)
+//
+// Returns:
+//   Pointer to the next automaton state.
+//
+
+static YR_AC_STATE* _yr_ac_next_state_typed(
+    YR_AC_STATE* state,
+    uint8_t input,
+    uint8_t type,
+    YR_BITMASK* bitmap)
+{
+  YR_AC_STATE* next_state = state->first_child;
+
+  while (next_state != NULL)
+  {
+    if (next_state->type == type)
+    {
+      switch (type)
+      {
+        case YR_ATOM_TYPE_LITERAL:
+          if (next_state->input == input)
+            return next_state;
+          break;
+        case YR_ATOM_TYPE_ANY:
+          return next_state;
+        case YR_ATOM_TYPE_CLASS:
+          if (_yr_ac_compare_classes(next_state->bitmap, bitmap))
+            return next_state;
+          break;
+      }
+    }
     next_state = next_state->siblings;
   }
 
@@ -192,6 +302,8 @@ static YR_AC_STATE* _yr_ac_next_state(
 // Args:
 //   YR_AC_STATE* state  - Origin state
 //   uint8_t input       - Input symbol
+//   uint8_t type        - Type of the state
+//   YR_BITMASK* bitmap  - Input symbols coded in bitmap
 //
 // Returns:
 //   YR_AC_STATE* pointer to the newly allocated state or NULL in case
@@ -199,7 +311,9 @@ static YR_AC_STATE* _yr_ac_next_state(
 
 static YR_AC_STATE* _yr_ac_state_create(
     YR_AC_STATE* state,
-    uint8_t input)
+    uint8_t input,
+    uint8_t type,
+    YR_BITMASK* bitmap)
 {
   YR_AC_STATE* new_state = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
 
@@ -207,6 +321,8 @@ static YR_AC_STATE* _yr_ac_state_create(
     return NULL;
 
   new_state->input = input;
+  new_state->type = type;
+  memcpy(new_state->bitmap, bitmap, sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
   new_state->depth = state->depth + 1;
   new_state->matches_ref = YR_ARENA_NULL_REF;
   new_state->failure = NULL;
@@ -214,6 +330,7 @@ static YR_AC_STATE* _yr_ac_state_create(
   new_state->first_child = NULL;
   new_state->siblings = state->first_child;
   state->first_child = new_state;
+  new_state->parent = state;
 
   return new_state;
 }
@@ -315,8 +432,7 @@ static int _yr_ac_create_failure_links(
 
       while (1)
       {
-        temp_state = _yr_ac_next_state(
-            failure_state, transition_state->input);
+        temp_state = _yr_ac_next_state_bitmap(failure_state, transition_state);
 
         if (temp_state != NULL)
         {
@@ -806,6 +922,8 @@ int yr_ac_automaton_create(
 
   new_automaton = (YR_AC_AUTOMATON*) yr_malloc(sizeof(YR_AC_AUTOMATON));
   root_state = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
+  yr_bitmask_clear_all(root_state->bitmap, sizeof(root_state->bitmap));
+  root_state->input = 0;
 
   if (new_automaton == NULL || root_state == NULL)
   {
@@ -871,11 +989,18 @@ int yr_ac_add_string(
 
     for (int i = 0; i < atom->atom.length; i++)
     {
-      YR_AC_STATE* next_state = _yr_ac_next_state(state, atom->atom.bytes[i]);
+      if (atom->atom.mask[i] == YR_ATOM_TYPE_ANY)
+      {
+        yr_bitmask_clear_all(atom->atom.bitmap[i], sizeof(atom->atom.bitmap[i]));
+        for (int j = 0; j < YR_BITMAP_SIZE; j++)
+          atom->atom.bitmap[i][j] = ~atom->atom.bitmap[i][j];
+      }
+
+      YR_AC_STATE* next_state = _yr_ac_next_state_typed(state, atom->atom.bytes[i], atom->atom.mask[i], atom->atom.bitmap[i]);
 
       if (next_state == NULL)
       {
-        next_state = _yr_ac_state_create(state, atom->atom.bytes[i]);
+        next_state = _yr_ac_state_create(state, atom->atom.bytes[i], atom->atom.mask[i], atom->atom.bitmap[i]);
 
         if (next_state == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
