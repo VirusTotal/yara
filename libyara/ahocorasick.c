@@ -433,6 +433,7 @@ static YR_AC_STATE* _yr_ac_create_copied_state(
 
   YR_AC_MATCH* match;
   YR_AC_MATCH* new_match;
+  int result;
 
   new_state = _yr_ac_state_create(current_state, add_state->input, add_state->type, add_state->bitmap);
   new_state->failure = current_state->failure;
@@ -443,7 +444,7 @@ static YR_AC_STATE* _yr_ac_create_copied_state(
   {
     YR_ARENA_REF new_match_ref;
 
-    FAIL_ON_ERROR(yr_arena_allocate_struct(
+    result = yr_arena_allocate_struct(
         arena,
         YR_AC_STATE_MATCHES_POOL,
         sizeof(YR_AC_MATCH),
@@ -452,7 +453,13 @@ static YR_AC_STATE* _yr_ac_create_copied_state(
         offsetof(YR_AC_MATCH, forward_code),
         offsetof(YR_AC_MATCH, backward_code),
         offsetof(YR_AC_MATCH, next),
-        EOL));
+        EOL);
+
+    if (result != ERROR_SUCCESS)
+    {
+      _yr_ac_state_destroy(new_state);
+      return NULL;
+    }
 
     new_match = yr_arena_ref_to_ptr(arena, &new_match_ref);
 
@@ -462,6 +469,7 @@ static YR_AC_STATE* _yr_ac_create_copied_state(
     new_match->backward_code = match->backward_code;
     new_match->next = yr_arena_ref_to_ptr(arena, &new_state->matches_ref);
     new_state->matches_ref = new_match_ref;
+    //}
 
     match = match->next;
   }
@@ -722,7 +730,7 @@ static bool _yr_ac_exclude_from_state(
   YR_AC_STATE* next1 = NULL;
   YR_AC_STATE* next2 = NULL;
   YR_AC_STATE* temp_state;
-  YR_AC_STATE* prev_state;
+  YR_AC_STATE* prev_state = NULL;
 
   next1 = _yr_ac_next_state_typed(input_state->parent, dfa_state1->input, dfa_state1->type, dfa_state1->bitmap);
   next2 = _yr_ac_next_state_typed(input_state->parent, dfa_state2->input, dfa_state2->type, dfa_state2->bitmap);
@@ -747,7 +755,9 @@ static bool _yr_ac_exclude_from_state(
       temp_state = temp_state->siblings;
     }
 
-    prev_state->siblings = temp_state->siblings;
+    if (prev_state != NULL)
+      prev_state->siblings = temp_state->siblings;
+
     _yr_ac_state_destroy(input_state);
     return true;
   }
@@ -973,25 +983,45 @@ static bool _yr_ac_transitions_subset(
     YR_AC_STATE* s1,
     YR_AC_STATE* s2)
 {
-  uint8_t set[32];
+  YR_BITMASK set[YR_BITMAP_SIZE];
 
-  YR_AC_STATE* state = s1->first_child;
+  YR_AC_STATE* state;
+  int i;
 
-  memset(set, 0, 32);
+  yr_bitmask_clear_all(set, sizeof(set));
 
+  state = s1->first_child;
   while (state != NULL)
   {
-    set[state->input / 8] |= 1 << state->input % 8;
+    if (state->type == YR_ATOM_TYPE_LITERAL)
+    {
+       yr_bitmask_set(set, state->input);
+    }
+    else
+    {
+      for (i = 0; i < YR_BITMAP_SIZE; i++)
+        set[i] |= state->bitmap[i];
+    }
+
     state = state->siblings;
   }
 
   state = s2->first_child;
-
   while (state != NULL)
   {
-    if (!(set[state->input / 8] & 1 << state->input % 8))
-      return false;
-
+    if (state->type == YR_ATOM_TYPE_LITERAL)
+    {
+      if (!yr_bitmask_is_set(set, state->input))
+        return false;
+    }
+    else
+    {
+      for (i = 0; i < YR_BITMAP_SIZE; i++)
+      {
+        if ((set[i] & state->bitmap[i]) != state->bitmap[i])
+          return false;
+      }
+    }
     state = state->siblings;
   }
 
@@ -1074,7 +1104,24 @@ static int _yr_ac_find_suitable_transition_table_slot(
 
   while (child_state != NULL)
   {
-    yr_bitmask_set(state_bitmask, child_state->input + 1);
+    if (child_state->type == YR_ATOM_TYPE_LITERAL)
+    {
+      yr_bitmask_set(state_bitmask, child_state->input + 1);
+    }
+    else
+    {
+      for (int i = 0; i < YR_BITMAP_SIZE; i++)
+      {
+        if (child_state->bitmap[i] != 0)
+        {
+          for (int k = 0; k < YR_BITMASK_SLOT_BITS; k++)
+          {
+            if (yr_bitmask_is_set(child_state->bitmap, i * YR_BITMASK_SLOT_BITS + k))
+              yr_bitmask_set(state_bitmask, i * YR_BITMASK_SLOT_BITS + k + 1);
+          }
+        }
+      }
+    }
     child_state = child_state->siblings;
   }
 
@@ -1189,7 +1236,11 @@ static int _yr_ac_build_transition_table(
   YR_AC_STATE* child_state;
   YR_AC_STATE* root_state = automaton->root;
 
+  uint32_t num;
   uint32_t slot;
+  uint32_t prev;
+  uint32_t input;
+  uint32_t input_slot;
 
   QUEUE queue = { NULL, NULL };
 
@@ -1239,13 +1290,37 @@ static int _yr_ac_build_transition_table(
 
   while (child_state != NULL)
   {
-    // Each state stores its slot number.
-    child_state->t_table_slot = child_state->input + 1;
-
-    t_table[child_state->input + 1] = YR_AC_MAKE_TRANSITION(
-        0, child_state->input + 1);
-
-    yr_bitmask_set(automaton->bitmask, child_state->input + 1);
+    if (child_state->type == YR_ATOM_TYPE_LITERAL)
+    {
+      // Each state stores its slot number.
+      child_state->t_table_slot = child_state->input + 1;
+      t_table[child_state->input + 1] = YR_AC_MAKE_TRANSITION(
+          0, child_state->input + 1);
+      yr_bitmask_set(automaton->bitmask, child_state->input + 1);
+    }
+    else
+    {
+      // The case, when the state has several characters
+      prev = 0;
+      input_slot = 0;
+      for (int i = 0; i < YR_BITMAP_SIZE; i++)
+      {
+        if (child_state->bitmap[i] != 0)
+        {
+          for (int k = 0; k < YR_BITMASK_SLOT_BITS; k++)
+          {
+            if (yr_bitmask_is_set(child_state->bitmap, i * YR_BITMASK_SLOT_BITS + k))
+            {
+              input_slot = i * YR_BITMASK_SLOT_BITS + k + 1;
+              child_state->t_table_slot = input_slot;
+              t_table[input_slot] = YR_AC_MAKE_TRANSITION(prev, input_slot);
+              prev = input_slot;
+              yr_bitmask_set(automaton->bitmask, input_slot);
+            }
+          }
+        }
+      }
+    }
 
     FAIL_ON_ERROR(_yr_ac_queue_push(&queue, child_state));
     child_state = child_state->siblings;
@@ -1263,6 +1338,18 @@ static int _yr_ac_build_transition_table(
     // location, we must get their up-to-date addresses.
     t_table = yr_arena_get_ptr(automaton->arena, YR_AC_TRANSITION_TABLE, 0);
     m_table = yr_arena_get_ptr(automaton->arena, YR_AC_STATE_MATCHES_TABLE, 0);
+
+    // 0x1FF = 1 1111 1111
+    input = 0;
+    prev = 0;
+    do
+    {
+      input = (t_table[state->t_table_slot] & 0x1FF);
+      assert(input != 0);
+      prev = YR_AC_NEXT_STATE(t_table[state->t_table_slot]);
+      t_table[state->t_table_slot] = YR_AC_MAKE_TRANSITION(slot, input);
+      state->t_table_slot = prev;
+    } while (prev != 0);
 
     t_table[state->t_table_slot] |= (slot << YR_AC_SLOT_OFFSET_BITS);
     t_table[slot] = YR_AC_MAKE_TRANSITION(state->failure->t_table_slot, 0);
@@ -1285,12 +1372,34 @@ static int _yr_ac_build_transition_table(
 
     while (child_state != NULL)
     {
-      child_state->t_table_slot = slot + child_state->input + 1;
-
-      t_table[child_state->t_table_slot] = YR_AC_MAKE_TRANSITION(
-          0, child_state->input + 1);
-
-      yr_bitmask_set(automaton->bitmask, child_state->t_table_slot);
+      if (child_state->type == YR_ATOM_TYPE_LITERAL)
+      {
+        child_state->t_table_slot = slot + child_state->input + 1;
+        t_table[child_state->t_table_slot] = YR_AC_MAKE_TRANSITION(
+            0, child_state->input + 1);
+        yr_bitmask_set(automaton->bitmask, child_state->t_table_slot);
+      }
+      else
+      {
+        prev = 0;
+        for (int i = 0; i < YR_BITMAP_SIZE; i++)
+        {
+          if (child_state->bitmap[i] != 0)
+          {
+            for (int k = 0; k < YR_BITMASK_SLOT_BITS; k++)
+            {
+              if (yr_bitmask_is_set(child_state->bitmap, i * YR_BITMASK_SLOT_BITS + k))
+              {
+                num = i * YR_BITMASK_SLOT_BITS + k + 1;
+                child_state->t_table_slot = slot + num;
+                t_table[child_state->t_table_slot] = YR_AC_MAKE_TRANSITION(prev, num);
+                prev = child_state->t_table_slot;
+                yr_bitmask_set(automaton->bitmask, child_state->t_table_slot);
+              }
+            }
+          }
+        }
+      }
 
       FAIL_ON_ERROR(_yr_ac_queue_push(&queue, child_state));
 
