@@ -52,18 +52,21 @@ functions. The callback function has the following prototype:
       int error_level,
       const char* file_name,
       int line_number,
+      const YR_RULE* rule,
       const char* message,
       void* user_data)
 
-.. versionchanged:: 3.3.0
+.. versionchanged:: 4.0.0
 
 Possible values for ``error_level`` are ``YARA_ERROR_LEVEL_ERROR`` and
 ``YARA_ERROR_LEVEL_WARNING``. The arguments ``file_name`` and ``line_number``
 contains the file name and line number where the error or warning occurs.
 ``file_name`` is the one passed to :c:func:`yr_compiler_add_file` or
 :c:func:`yr_compiler_add_fd`. It can be ``NULL`` if you passed ``NULL`` or if
-you're using :c:func:`yr_compiler_add_string`. The ``user_data`` pointer is the
-same you passed to :c:func:`yr_compiler_set_callback`.
+you're using :c:func:`yr_compiler_add_string`. `rule` is a pointer to the
+`YR_RULE` structure representing the rule that contained the error, but it can
+be `NULL` it the error is not contained in a specific rule. The ``user_data``
+pointer is the same you passed to :c:func:`yr_compiler_set_callback`.
 
 By default, for rules containing references to other files
 (``include "filename.yara"``), YARA will try to find those files on disk.
@@ -109,7 +112,9 @@ a :c:type:`YR_RULES` structure which can be used to scan your data as
 described in :ref:`scanning-data`. Once :c:func:`yr_compiler_get_rules` is
 invoked you can not add more sources to the compiler, but you can call
 :c:func:`yr_compiler_get_rules` multiple times. Each time this function is called
-it returns a pointer to the same :c:type:`YR_RULES` structure.
+it returns a pointer to the same :c:type:`YR_RULES` structure. Notice that this
+behaviour is new in YARA 4.0.0, in YARA 3.X and 2.X :c:func:`yr_compiler_get_rules`
+returned a new copy the :c:type:`YR_RULES` structure.
 
 Instances of :c:type:`YR_RULES` must be destroyed with :c:func:`yr_rules_destroy`.
 
