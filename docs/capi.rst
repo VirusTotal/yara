@@ -497,14 +497,6 @@ Functions
   success another error code in case of error. The list of possible return
   codes vary according to the modules compiled into YARA.
 
-.. c:function:: void yr_finalize_thread(void)
-
-  .. deprecated:: 3.8.0
-
-  Any thread using the library, except the main thread, must call this
-  function when it finishes using the library. Since version 3.8.0 this calling
-  this function is not required anymore, and it's deprecated.
-
 .. c:function:: int yr_compiler_create(YR_COMPILER** compiler)
 
   Create a YARA compiler. You must pass the address of a pointer to a
