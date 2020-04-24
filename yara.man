@@ -80,6 +80,9 @@ Print the tags associated to the rule.
 .B \-r " --recursive"
 Scan files in directories recursively. It follows symlinks.
 .TP
+.BI "    --scan-list"
+Scan files listed in FILE, one per line.
+.TP
 .BI \-k " slots" " --stack-size=" slots
 Set maximum stack size to the specified number of
 .I slots.
