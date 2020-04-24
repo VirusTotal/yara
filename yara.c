@@ -29,6 +29,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if !defined(_WIN32) && !defined(__CYGWIN__)
 
+// for getline(3)
+#define _POSIX_C_SOURCE 200809L
+
 #include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -128,6 +131,7 @@ static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 static char* modules_data[MAX_ARGS_MODULE_DATA + 1];
 
 static bool recursive_search = false;
+static bool scan_list_search = false;
 static bool show_module_data = false;
 static bool show_tags = false;
 static bool show_stats = false;
@@ -219,6 +223,9 @@ args_option_t options[] =
 
   OPT_BOOLEAN('r', "recursive", &recursive_search,
       "recursively search directories (follows symlinks)"),
+
+  OPT_BOOLEAN(0, "scan-list", &scan_list_search,
+      "scan files listed in FILE, one per line"),
 
   OPT_INTEGER('k', "stack-size", &stack_size,
       "set maximum stack size (default=16384)", "SLOTS"),
@@ -387,6 +394,70 @@ static void scan_dir(
   }
 }
 
+
+static int populate_scan_list(
+    const char* filename,
+    int recursive,
+    time_t start_time)
+{
+  char* context;
+  DWORD nread;
+
+  HANDLE hFile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (hFile == INVALID_HANDLE_VALUE)
+  {
+    fprintf(stderr, "error: could not open file \"%s\".\n", filename);
+    return ERROR_COULD_NOT_OPEN_FILE;
+  }
+  DWORD fileSize = GetFileSize(hFile, NULL);
+  if (fileSize == INVALID_FILE_SIZE)
+  {
+    fprintf(stderr, "error: could not determine size of file \"%s\".\n", filename);
+    CloseHandle(hFile);
+    return ERROR_COULD_NOT_READ_FILE;
+  }
+  // INVALID_FILE_SIZE is 0xFFFFFFFF, so (+1) will not overflow
+  char* buf = (char*) VirtualAlloc(NULL, fileSize + 1, MEM_COMMIT, PAGE_READWRITE);
+  if (buf == NULL)
+  {
+    fprintf(stderr, "error: could not allocate memory for file \"%s\".\n", filename);
+    CloseHandle(hFile);
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+  DWORD total = 0;
+  while (total < fileSize)
+  {
+    if (!ReadFile(hFile, buf + total, fileSize - total, &nread, NULL))
+    {
+      fprintf(stderr, "error: could not read file \"%s\".\n", filename);
+      CloseHandle(hFile);
+      return ERROR_COULD_NOT_READ_FILE;
+    }
+    total += nread;
+  }
+
+  char* path = strtok_s(buf, "\n", &context);
+  while (path != NULL)
+  {
+    // remove trailing carriage return, if present
+    if (*path != '\0')
+    {
+      char* final = path + strlen(path) - 1;
+      if (*final == '\r')
+        *final = '\0';
+    }
+    if (is_directory(path))
+      scan_dir(path, recursive, start_time);
+    else
+      file_queue_put(path);
+    path = strtok_s(NULL, "\n", &context);
+  }
+
+  CloseHandle(hFile);
+  return ERROR_SUCCESS;
+}
+
 #else
 
 static bool is_directory(
@@ -441,6 +512,42 @@ static void scan_dir(
 
     closedir(dp);
   }
+}
+
+
+static int populate_scan_list(
+    const char* filename,
+    int recursive,
+    time_t start_time)
+{
+  size_t nsize = 0;
+  ssize_t nread;
+  char* path = NULL;
+
+  FILE* fh_scan_list = fopen(filename, "r");
+  if (fh_scan_list == NULL)
+  {
+    fprintf(stderr, "error: could not open file \"%s\".\n", filename);
+    return ERROR_COULD_NOT_OPEN_FILE;
+  }
+
+  while ((nread = getline(&path, &nsize, fh_scan_list)) != -1)
+  {
+    // remove trailing newline
+    if (nread && path[nread - 1] == '\n')
+    {
+      path[nread - 1] = '\0';
+      nread--;
+    }
+    if (is_directory(path))
+      scan_dir(path, recursive, start_time);
+    else
+      file_queue_put(path);
+  }
+
+  free(path);
+  fclose(fh_scan_list);
+  return ERROR_SUCCESS;
 }
 
 #endif
@@ -1108,6 +1215,7 @@ int main(
   YR_RULES* rules = NULL;
   YR_SCANNER* scanner = NULL;
 
+  bool arg_is_dir = false;
   int flags = 0;
   int result, i;
 
@@ -1251,7 +1359,14 @@ int main(
   if (fast_scan)
     flags |= SCAN_FLAGS_FAST_MODE;
 
-  if (is_directory(argv[argc - 1]))
+  arg_is_dir = is_directory(argv[argc - 1]);
+
+  if (scan_list_search && arg_is_dir)
+  {
+    fprintf(stderr, "error: cannot use a directory as scan list.\n");
+    exit_with_code(EXIT_FAILURE);
+  }
+  else if (scan_list_search || arg_is_dir)
   {
     if (file_queue_init() != 0)
     {
@@ -1291,7 +1406,18 @@ int main(
       }
     }
 
-    scan_dir(argv[argc - 1], recursive_search, start_time);
+    if (arg_is_dir)
+    {
+      scan_dir(argv[argc - 1], recursive_search, start_time);
+    }
+    else
+    {
+      result = populate_scan_list(argv[argc - 1], recursive_search, start_time);
+      if (result != ERROR_SUCCESS)
+      {
+        exit_with_code(EXIT_FAILURE);
+      }
+    }
 
     file_queue_finish();
 
