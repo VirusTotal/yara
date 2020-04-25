@@ -44,7 +44,7 @@ typedef struct _YR_STOPWATCH
 
 } YR_STOPWATCH;
 
-#elif defined(__MACH__)
+#elif defined(__APPLE__) && defined(__MACH__)
 
 #include <mach/mach_time.h>
 

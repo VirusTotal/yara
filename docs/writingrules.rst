@@ -1422,9 +1422,9 @@ identifier/value pairs like in the following example:
 
 As can be seen in the example, metadata identifiers are always followed by
 an equals sign and the value assigned to them. The assigned values can be
-strings, integers, or one of the boolean values true or false. Note that
-identifier/value pairs defined in the metadata section can not be used in
-the condition section, their only purpose is to store additional information
+strings (valid UTF8 only), integers, or one of the boolean values true or false.
+Note that identifier/value pairs defined in the metadata section can not be used
+in the condition section, their only purpose is to store additional information
 about the rule.
 
 .. _using-modules:

@@ -278,6 +278,11 @@ both ``stack_size`` and ``max_strings_per_rule`` provided as kwargs. At the time
 of this writing, the default stack size was ``16384`` and the default maximum
 strings per rule was ``10000``.
 
+Also, ``yara.set_config`` accepts the `max_match_data` argument for controlling
+the maximum number of bytes that will be returned for each matching string. This
+is equivalent to using ``YR_CONFIG_MAX_MATCH_DATA`` with the ``yr_set_configuration``
+in the C API. By the default this is set to 512.
+
 Here are a few example calls:
 
 .. code-block:: python
@@ -285,6 +290,7 @@ Here are a few example calls:
   yara.set_config(stack_size=65536)
   yara.set_config(max_strings_per_rule=50000, stack_size=65536)
   yara.set_config(max_strings_per_rule=20000)
+  yara.set_config(max_match_data=128)
 
 
 Reference
