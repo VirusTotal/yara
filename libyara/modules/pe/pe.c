@@ -249,7 +249,7 @@ static void pe_parse_rich_signature(
 
   set_integer(rich_len, pe->object, "rich_signature.length");
 
-  set_integer(rich_signature->key1, pe->object, "rich_signature.key");
+  set_integer(yr_le32toh(rich_signature->key1), pe->object, "rich_signature.key");
 
   clear_data = (BYTE*) yr_malloc(rich_len);
 
@@ -1552,7 +1552,7 @@ static void pe_parse_certificates(
     end = (uintptr_t)((uint8_t*) win_cert) + yr_le32toh(win_cert->Length);
     while ((uintptr_t) cert_p < end && counter < MAX_PE_CERTS)
     {
-      pkcs7 = d2i_PKCS7(NULL, &cert_p, (win_cert->Length));
+      pkcs7 = d2i_PKCS7(NULL, &cert_p, (yr_le32toh(win_cert->Length)));
       if (pkcs7 == NULL)
         break;
       _parse_pkcs7(pe, pkcs7, &counter);

@@ -69,7 +69,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
          match != NULL; \
          match = match->next) \
       /* private matches are skipped */ \
-      if (match->private) { continue; } \
+      if (match->is_private) { continue; } \
       else /* user code block goes here */
 
 
