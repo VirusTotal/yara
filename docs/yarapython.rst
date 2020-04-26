@@ -341,14 +341,16 @@ Reference
   Set the configuration variables accessible through the yr_set_configuration
   API.
 
-  Provide either *stack_size* or *max_strings_per_rule*. These kwargs take
-  unsigned integer values as input and will assign the provided value to the
-  yr_set_configuration(...) variables ``YR_CONFIG_STACK_SIZE`` and
-  ``YR_CONFIG_MAX_STRINGS_PER_RULE``, respectively.
+  Provide either *stack_size*, *max_strings_per_rule*, or *max_match_data*. These kwargs
+  take unsigned integer values as input and will assign the provided value to the
+  yr_set_configuration(...) variables ``YR_CONFIG_STACK_SIZE``,
+  ``YR_CONFIG_MAX_STRINGS_PER_RULE``, and ``YR_CONFIG_MAX_MATCH_DATA`` respectively.
 
   :param int stack_size: Stack size to use for ``YR_CONFIG_STACK_SIZE``
   :param int max_strings_per_rule: Maximum number of strings to allow per
     yara rule. Will be mapped to ``YR_CONFIG_MAX_STRINGS_PER_RULE``.
+  :param int max_match_data: Maximum number of bytes to allow per
+    yara match. Will be mapped to ``YR_CONFIG_MAX_MATCH_DATA``.
   :return: None
   :rtype: **NoneType**
   :raises: **YaraError**: If an error occurred.
