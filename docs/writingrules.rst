@@ -506,7 +506,7 @@ Because of the way that YARA strips the leading and trailing characters after
 base64 encoding, one of the base64 encodings of "Dhis program cannow" and
 "This program cannot" are identical. Similarly, using the ``base64`` keyword on
 single ASCII characters is not recommended. For example, "a" with the
-``base64`` keyword matches "\`", "b", "c", "!", "\xa1", or "\xe1" after base64
+``base64`` keyword matches "\`", "b", "c", "!", "\\xA1", or "\\xE1" after base64
 encoding, and will not match where the base64 encoding matches the
 ``[GWm2][EFGH]`` regular expression.
 
@@ -793,7 +793,7 @@ Precedence  Operator  Description                                Associativity
 ----------  --------  -----------------------------------------  -------------
 11          not       Logical NOT                                Right-to-left
 ----------  --------  -----------------------------------------  -------------
-12          and       Logical NOT                                Left-to-right
+12          and       Logical AND                                Left-to-right
 ----------  --------  -----------------------------------------  -------------
 13          or        Logical OR                                 Left-to-right
 ==========  ========  =========================================  =============
@@ -1135,7 +1135,7 @@ evaluated. Take a look at the following expression:
 
 .. code-block:: yara
 
-    for any of ($a,$b,$c) : ( $ at entrypoint  )
+    for any of ($a,$b,$c) : ( $ at pe.entry_point  )
 
 The $ symbol in the boolean expression is not tied to any particular string,
 it will be $a, and then $b, and then $c in the three successive evaluations
@@ -1149,8 +1149,8 @@ Maybe you already realised that the ``of`` operator is an special case of
     any of ($a,$b,$c)
     for any of ($a,$b,$c) : ( $ )
 
-You can also employ the symbols # and @ to make reference to the number of
-occurrences and the first offset of each string respectively.
+You can also employ the symbols #, @, and ! to make reference to the number of
+occurrences, the first offset, and the length of each string respectively.
 
 .. code-block:: yara
 
