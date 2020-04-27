@@ -395,6 +395,10 @@ static void scan_dir(
 }
 
 
+#if defined(__CYGWIN__)
+#define strtok_s strtok_r
+#endif
+
 static int populate_scan_list(
     const char* filename,
     int recursive,
@@ -403,29 +407,40 @@ static int populate_scan_list(
   char* context;
   DWORD nread;
 
-  HANDLE hFile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL,
-                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  HANDLE hFile = CreateFile(
+      filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
   if (hFile == INVALID_HANDLE_VALUE)
   {
     fprintf(stderr, "error: could not open file \"%s\".\n", filename);
     return ERROR_COULD_NOT_OPEN_FILE;
   }
+
   DWORD fileSize = GetFileSize(hFile, NULL);
+
   if (fileSize == INVALID_FILE_SIZE)
   {
-    fprintf(stderr, "error: could not determine size of file \"%s\".\n", filename);
+    fprintf(stderr,
+      "error: could not determine size of file \"%s\".\n", filename);
     CloseHandle(hFile);
     return ERROR_COULD_NOT_READ_FILE;
   }
+
   // INVALID_FILE_SIZE is 0xFFFFFFFF, so (+1) will not overflow
-  char* buf = (char*) VirtualAlloc(NULL, fileSize + 1, MEM_COMMIT, PAGE_READWRITE);
+  char* buf = (char*) VirtualAlloc(
+      NULL, fileSize + 1, MEM_COMMIT, PAGE_READWRITE);
+
   if (buf == NULL)
   {
-    fprintf(stderr, "error: could not allocate memory for file \"%s\".\n", filename);
+    fprintf(stderr,
+        "error: could not allocate memory for file \"%s\".\n", filename);
     CloseHandle(hFile);
     return ERROR_INSUFFICIENT_MEMORY;
   }
+
   DWORD total = 0;
+
   while (total < fileSize)
   {
     if (!ReadFile(hFile, buf + total, fileSize - total, &nread, NULL))
@@ -438,6 +453,7 @@ static int populate_scan_list(
   }
 
   char* path = strtok_s(buf, "\n", &context);
+
   while (path != NULL)
   {
     // remove trailing carriage return, if present
@@ -1413,10 +1429,9 @@ int main(
     else
     {
       result = populate_scan_list(argv[argc - 1], recursive_search, start_time);
+
       if (result != ERROR_SUCCESS)
-      {
         exit_with_code(EXIT_FAILURE);
-      }
     }
 
     file_queue_finish();
