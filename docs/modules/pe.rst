@@ -883,7 +883,7 @@ Reference
 
     .. versionadded:: 4.0.0
 
-    Structure containing information about the PE's exports.
+    Array of structures containing information about the PE's exports.
 
     .. c:member:: offset
 

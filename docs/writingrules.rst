@@ -1262,8 +1262,8 @@ This is equivalent to:
 The new syntax is more natural and easy to understand, and is the recommended
 way of expressing this type of conditions in newer versions of YARA.
 
-For while iterating dictionaries you must provide to variable names that will
-hold the key and value of each entry in the dictionary, for example:
+While iterating dictionaries you must provide two variable names that will
+hold the key and value for each entry in the dictionary, for example:
 
 .. code-block:: yara
 
