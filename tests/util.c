@@ -216,7 +216,7 @@ int matches_blob(
 
   if (scan_result != ERROR_SUCCESS)
   {
-    fprintf(stderr, "yr_rules_scan_mem: error: %d\n", scan_result);
+    fprintf(stderr, "failed to scan using rule << %s >>: error: %d\n", rule, scan_result);
     exit(EXIT_FAILURE);
   }
 
@@ -296,10 +296,12 @@ int capture_string(
   f.found = 0;
   f.expected = expected_string;
 
-  if (yr_rules_scan_mem(rules, (uint8_t*)string, strlen(string), 0,
-                        capture_matches, &f, 0) != ERROR_SUCCESS)
+  int scan_result = yr_rules_scan_mem(rules, (uint8_t*)string, strlen(string), 0,
+      capture_matches, &f, 0);
+
+  if (scan_result != ERROR_SUCCESS)
   {
-    fprintf(stderr, "yr_rules_scan_mem: error\n");
+    fprintf(stderr, "failed to scan using rule << %s >>: error %d\n", rule, scan_result);
     exit(EXIT_FAILURE);
   }
 
