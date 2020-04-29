@@ -289,22 +289,22 @@ static void pe_parse_debug_directory(
   int64_t debug_dir_offset;
   int64_t pcv_hdr_offset;
   int i, dcount;
+  int repro = 0;
   size_t pdb_path_len;
   char* pdb_path = NULL;
   
   data_dir = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_DEBUG);
 
-  if (data_dir == NULL)
-    return;
-
-  if (yr_le32toh(data_dir->Size) == 0)
-    return;
+  if (data_dir == NULL ||
+      yr_le32toh(data_dir->Size) == 0 ||
+      yr_le32toh(data_dir->VirtualAddress) == 0)
+  {
+      set_integer(0, pe->object, "is_reproducible_build");
+      return;
+  }
 
   if (yr_le32toh(data_dir->Size) % sizeof(IMAGE_DEBUG_DIRECTORY) != 0)
-    return;
-
-  if (yr_le32toh(data_dir->VirtualAddress) == 0)
     return;
 
   debug_dir_offset = pe_rva_to_offset(
@@ -322,6 +322,12 @@ static void pe_parse_debug_directory(
     
     if (!struct_fits_in_pe(pe, debug_dir, IMAGE_DEBUG_DIRECTORY))
       break;
+
+    if (yr_le32toh(debug_dir->Type) == IMAGE_DEBUG_TYPE_REPRO)
+    {
+      repro = 1;
+      continue;
+    }
   
     if (yr_le32toh(debug_dir->Type) != IMAGE_DEBUG_TYPE_CODEVIEW)
       continue;
@@ -363,10 +369,14 @@ static void pe_parse_debug_directory(
       if (pdb_path_len > 0 && pdb_path_len < MAX_PATH)
       {
         set_sized_string(pdb_path, pdb_path_len, pe->object, "pdb_path");
-        break;
       }
     }
   }
+  
+  if (repro == 1)
+      set_integer(1, pe->object, "is_reproducible_build");
+  else if (i == dcount)
+      set_integer(0, pe->object, "is_reproducible_build");
   
   return;
 }
@@ -2806,7 +2816,8 @@ begin_declarations;
   declare_integer("number_of_symbols");
   declare_integer("size_of_optional_header");
   declare_integer("characteristics");
-
+  declare_integer("is_reproducible_build");
+  
   declare_integer("entry_point");
   declare_integer("image_base");
   declare_integer("number_of_rva_and_sizes");
