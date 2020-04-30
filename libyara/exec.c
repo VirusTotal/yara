@@ -540,7 +540,7 @@ int yr_execute_code(
         break;
 
       case OP_PUSH:
-        r1.i = *(uint64_t*)(ip);
+        memcpy(&r1.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
         push(r1);
         break;
@@ -550,7 +550,7 @@ int yr_execute_code(
         break;
 
       case OP_CLEAR_M:
-        r1.i = *(uint64_t*)(ip);
+        memcpy(&r1.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
         #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
@@ -559,7 +559,7 @@ int yr_execute_code(
         break;
 
       case OP_ADD_M:
-        r1.i = *(uint64_t*)(ip);
+        memcpy(&r1.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
         #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
@@ -570,7 +570,7 @@ int yr_execute_code(
         break;
 
       case OP_INCR_M:
-        r1.i = *(uint64_t*)(ip);
+        memcpy(&r1.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
         #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
@@ -579,7 +579,7 @@ int yr_execute_code(
         break;
 
       case OP_PUSH_M:
-        r1.i = *(uint64_t*)(ip);
+        memcpy(&r1.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
         #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
@@ -589,7 +589,7 @@ int yr_execute_code(
         break;
 
       case OP_POP_M:
-        r1.i = *(uint64_t*)(ip);
+        memcpy(&r1.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
         #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
@@ -599,7 +599,7 @@ int yr_execute_code(
         break;
 
       case OP_SET_M:
-        r1.i = *(uint64_t*)(ip);
+        memcpy(&r1.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
         #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
@@ -611,7 +611,7 @@ int yr_execute_code(
         break;
 
       case OP_SWAPUNDEF:
-        r1.i = *(uint64_t*)(ip);
+        memcpy(&r1.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
         #if YR_PARANOID_EXEC
         ensure_within_mem(r1.i);
@@ -802,7 +802,7 @@ int yr_execute_code(
         break;
 
       case OP_PUSH_RULE:
-        r1.i = *(uint64_t*)(ip);
+        memcpy(&r1.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
 
         rule = &context->rules->rules_list_head[r1.i];
@@ -841,7 +841,7 @@ int yr_execute_code(
       case OP_MATCH_RULE:
         pop(r1);
 
-        r2.i = *(uint64_t*)(ip);
+        memcpy(&r2.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
 
         rule = &context->rules->rules_list_head[r2.i];
@@ -1316,7 +1316,7 @@ int yr_execute_code(
         break;
 
       case OP_IMPORT:
-        r1.i = *(uint64_t*)(ip);
+        memcpy(&r1.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
 
         result = yr_modules_load((char*) r1.p, context);
@@ -1356,8 +1356,7 @@ int yr_execute_code(
         break;
 
       case OP_INT_TO_DBL:
-
-        r1.i = *(uint64_t*)(ip);
+        memcpy(&r1.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
 
         #if YR_PARANOID_EXEC
