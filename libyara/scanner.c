@@ -672,13 +672,15 @@ static int sort_by_cost_desc(
 YR_API YR_RULE_PROFILING_INFO* yr_scanner_get_profiling_info(
     YR_SCANNER* scanner)
 {
+  uint32_t i = 0;
+
   YR_RULE_PROFILING_INFO* profiling_info = yr_malloc(
       (scanner->rules->num_rules + 1) * sizeof(YR_RULE_PROFILING_INFO));
 
   if (profiling_info == NULL)
     return NULL;
 
-  for (uint32_t i = 0; i < scanner->rules->num_rules; i++)
+  for (i = 0; i < scanner->rules->num_rules; i++)
   {
     profiling_info[i].rule = &scanner->rules->rules_list_head[i];
     #ifdef YR_PROFILING_ENABLED
