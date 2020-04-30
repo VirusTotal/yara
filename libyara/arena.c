@@ -435,6 +435,12 @@ void* yr_arena_ref_to_ptr(
   if (YR_ARENA_IS_NULL_REF(*ref))
     return NULL;
 
+#if defined(__arm__)
+  YR_ARENA_REF tmp_ref;
+  memcpy(&tmp_ref, ref, sizeof(YR_ARENA_REF));
+  ref = &tmp_ref;
+#endif
+
   return yr_arena_get_ptr(arena, ref->buffer_id, ref->offset);
 }
 
