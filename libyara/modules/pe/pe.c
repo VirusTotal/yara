@@ -1218,12 +1218,12 @@ static void pe_parse_exports(
 
   for (i = 0; i < number_of_exports; i++)
   {
-    offset = pe_rva_to_offset(pe, yr_le32toh(function_addrs[i]));
-    if (offset <= 0)
-      continue;
-
     set_integer(
         ordinal_base + i, pe->object, "export_details[%i].ordinal", exp_sz);
+
+    // Don't check for a failure here since some packers make this an invalid
+    // value.
+    offset = pe_rva_to_offset(pe, yr_le32toh(function_addrs[i]));
 
     if (offset > export_start && offset < export_start + export_size)
     {
