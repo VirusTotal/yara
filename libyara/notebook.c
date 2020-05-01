@@ -146,14 +146,16 @@ void* yr_notebook_alloc(
 
   void *ptr = notebook->page_list_head->data + notebook->page_list_head->used;
 
-#if defined(__arm__)
-  uintptr_t misalignment = (uintptr_t)ptr & 3;
+  // In ARM make sure the alignment of the returned buffer is 4 bytes.
+  #if defined(__arm__)
+  uintptr_t misalignment = (uintptr_t) ptr & 3;
+
   if (misalignment)
   {
-    size += 4-misalignment;
-    ptr += 4-misalignment;
+    size += 4 - misalignment;
+    ptr += 4 - misalignment;
   }
-#endif
+  #endif
 
   notebook->page_list_head->used += size;
 
