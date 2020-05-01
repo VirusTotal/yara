@@ -75,6 +75,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [ESTsecurity](https://www.estsecurity.com)
 * [Fidelis XPS](http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
 * [FireEye, Inc.](http://www.fireeye.com)
+* [Forcepoint](https://www.forcepoint.com)
 * [Fox-IT](https://www.fox-it.com)
 * [FSF](https://github.com/EmersonElectricCo/fsf)
 * [Guidance Software](http://www.guidancesoftware.com/endpointsecurity)
@@ -120,7 +121,6 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [VirusTotal Intelligence](https://www.virustotal.com/intelligence/)
 * [VMRay](https://www.vmray.com/)
 * [We Watch Your Website](http://www.wewatchyourwebsite.com/)
-* [Websense](http://www.websense.com)
 * [x64dbg](http://x64dbg.com)
 * [YALIH](https://github.com/Masood-M/YALIH)
 
