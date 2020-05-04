@@ -383,6 +383,27 @@ static int _yr_ac_state_destroy(
   return ERROR_SUCCESS;
 }
 
+//
+// _yr_ac_state_destroy_updated
+//
+
+static int _yr_ac_state_destroy_updated(
+    YR_AC_STATE* state)
+{
+  YR_AC_STATE* child_state = state->first_child;
+
+  while (child_state != NULL)
+  {
+    YR_AC_STATE* next_child_state = child_state->siblings;
+    _yr_ac_state_destroy(child_state);
+    child_state = next_child_state;
+  }
+
+  //yr_free(state);
+
+  return ERROR_SUCCESS;
+}
+
 
 //
 // _yr_ac_join_matches: joines two lists of matches without duplicates
@@ -745,7 +766,8 @@ static bool _yr_ac_exclude_from_state(
     if (temp_state == input_state)
     {
       input_state->parent->first_child = temp_state->siblings;
-      _yr_ac_state_destroy(input_state);
+      _yr_ac_state_destroy_updated(input_state);
+      input_state->type = YR_ATOM_TYPE_REMOVE;
       return true;
     }
 
@@ -758,7 +780,8 @@ static bool _yr_ac_exclude_from_state(
     if (prev_state != NULL)
       prev_state->siblings = temp_state->siblings;
 
-    _yr_ac_state_destroy(input_state);
+    _yr_ac_state_destroy_updated(input_state);
+    input_state->type = YR_ATOM_TYPE_REMOVE;
     return true;
   }
   else if (next2 != NULL)
@@ -811,7 +834,11 @@ static bool dfa_subtree(
       if (!pop)
       {
         if (_yr_ac_exclude_from_state(input_state, dfa_state1, dfa_state2, arena))
+        {
+          yr_free(dfa_state1);
+          yr_free(dfa_state2);
           return true;
+        }
 
         if (input_state->type == YR_ATOM_TYPE_LITERAL)
           break;
@@ -821,6 +848,8 @@ static bool dfa_subtree(
     }
   }
 
+  yr_free(dfa_state1);
+  yr_free(dfa_state2);
   return pop;
 }
 
@@ -843,6 +872,7 @@ static int _yr_ac_create_failure_links(
   YR_AC_STATE* transition_state;
   YR_AC_STATE* root_state;
   YR_AC_STATE* check_state;
+  YR_AC_STATE* res_state;
   YR_AC_MATCH* match;
 
   QUEUE queue;
@@ -863,7 +893,12 @@ static int _yr_ac_create_failure_links(
   while (state != NULL)
   {
     dfa_subtree(root_state, state, arena);
+    res_state = state;
     state = state->siblings;
+    if (res_state->type == YR_ATOM_TYPE_REMOVE)
+    {
+      yr_free(res_state);
+    }
   }
 
   // Push root's children and set their failure link to root.
@@ -908,7 +943,12 @@ static int _yr_ac_create_failure_links(
     while (check_state != NULL)
     {
       dfa_subtree(current_state, check_state, arena);
+      res_state = check_state;
       check_state = check_state->siblings;
+      if (res_state->type == YR_ATOM_TYPE_REMOVE)
+      {
+        yr_free(res_state);
+      }
     }
 
     // Iterate over all the states that the current state can transition to.
@@ -925,6 +965,13 @@ static int _yr_ac_create_failure_links(
         // If some changes were done to automaton, do not pop (check these states twice)
         if (!dfa_subtree(failure_state, transition_state, arena))
           pop = false;
+
+        res_state = transition_state;
+        if (res_state->type == YR_ATOM_TYPE_REMOVE)
+        {
+          transition_state = transition_state->siblings;
+          yr_free(res_state);
+        }
 
         temp_state = _yr_ac_next_state_bitmap(failure_state, transition_state);
 
