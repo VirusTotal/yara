@@ -556,9 +556,9 @@ void macho_parse_file(
     set_integer(header64->reserved, object, "reserved");
   }
 
+  /* The first command parsing pass handles only segments. */      
   uint64_t seg_count = 0;
   uint64_t parsed_size = header_size;
-
   uint8_t *command = (uint8_t*)(data + header_size);
   yr_load_command_t command_struct;
   for (unsigned i = 0; i < header.ncmds; i++)
@@ -582,6 +582,28 @@ void macho_parse_file(
         macho_handle_segment_64(command, seg_count++, object);
         break;
       }
+    }
+
+    command += command_struct.cmdsize;
+    parsed_size += command_struct.cmdsize;
+  }
+
+  set_integer(seg_count, object, "number_of_segments");
+
+  /* The second command parsing pass handles others, who use segment count */
+  parsed_size = header_size;
+  command = (uint8_t*)(data + header_size);
+  for (unsigned i = 0; i < header.ncmds; i++)
+  {
+    memcpy(&command_struct, command, sizeof(yr_load_command_t));
+    if (should_swap)
+      swap_load_command(&command_struct);
+
+    if (size < header_size + command_struct.cmdsize)
+      break;
+
+    switch(command_struct.cmd)
+    {
       case LC_UNIXTHREAD:
       {
         macho_handle_unixthread(command, object, context);
@@ -597,8 +619,6 @@ void macho_parse_file(
     command += command_struct.cmdsize;
     parsed_size += command_struct.cmdsize;
   }
-
-  set_integer(seg_count, object, "number_of_segments");
 }
 
 
