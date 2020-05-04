@@ -184,6 +184,7 @@ bool macho_rva_to_offset(
     YR_OBJECT* object)
 {
   uint64_t segment_count = get_integer(object, "number_of_segments");
+
   for (int i = 0; i < segment_count; i++)
   {
     uint64_t start = get_integer(object, "segments[%i].vmaddr", i);
@@ -196,6 +197,7 @@ bool macho_rva_to_offset(
       return true;
     }
   }
+
   return false;
 }
 
@@ -208,6 +210,7 @@ int macho_offset_to_rva(
     YR_OBJECT* object)
 {
   uint64_t segment_count = get_integer(object, "number_of_segments");
+
   for (int i = 0; i < segment_count; i++)
   {
     uint64_t start = get_integer(object, "segments[%i].fileoff", i);
@@ -220,6 +223,7 @@ int macho_offset_to_rva(
       return true;
     }
   }
+
   return false;
 }
 
@@ -331,7 +335,9 @@ void macho_handle_main(
     YR_SCAN_CONTEXT* context)
 {
   yr_entry_point_command_t ep_command;
+
   memcpy(&ep_command, command, sizeof(yr_entry_point_command_t));
+
   if (should_swap_bytes(get_integer(object, "magic")))
     swap_entry_point_command(&ep_command);
 
@@ -379,32 +385,55 @@ void macho_handle_segment(
 
   uint64_t parsed_size = sizeof(yr_segment_command_32_t);
   yr_section_32_t sec;
+
   for (unsigned j = 0; j < sg.nsects; ++j)
   {
     parsed_size += sizeof(yr_section_32_t);
     if (sg.cmdsize < parsed_size)
       break;
 
-    memcpy(&sec, 
+    memcpy(&sec,
            command + sizeof(yr_segment_command_32_t) + (j * sizeof(yr_section_32_t)),
            sizeof(yr_section_32_t));
+
     if (should_swap)
       swap_section(&sec);
 
-    set_sized_string(sec.segname, strnlen(sec.segname, 16),
-                     object, "segments[%i].sections[%i].segname", i, j);
-    set_sized_string(sec.sectname, strnlen(sec.sectname, 16),
-                     object, "segments[%i].sections[%i].sectname", i, j);
+    set_sized_string(
+        sec.segname, strnlen(sec.segname, 16), object,
+        "segments[%i].sections[%i].segname", i, j);
 
-    set_integer(sec.addr, object, "segments[%i].sections[%i].addr", i, j);
-    set_integer(sec.size, object, "segments[%i].sections[%i].size", i, j);
-    set_integer(sec.offset, object, "segments[%i].sections[%i].offset", i, j);
-    set_integer(sec.align, object, "segments[%i].sections[%i].align", i, j);
-    set_integer(sec.reloff, object, "segments[%i].sections[%i].reloff", i, j);
-    set_integer(sec.nreloc, object, "segments[%i].sections[%i].nreloc", i, j);
-    set_integer(sec.flags, object, "segments[%i].sections[%i].flags", i, j);
-    set_integer(sec.reserved1, object, "segments[%i].sections[%i].reserved1", i, j);
-    set_integer(sec.reserved2, object, "segments[%i].sections[%i].reserved2", i, j);
+    set_sized_string(
+        sec.sectname, strnlen(sec.sectname, 16), object,
+        "segments[%i].sections[%i].sectname", i, j);
+
+    set_integer(
+        sec.addr, object,
+        "segments[%i].sections[%i].addr", i, j);
+
+    set_integer(
+        sec.size, object, "segments[%i].sections[%i].size", i, j);
+
+    set_integer(
+        sec.offset, object, "segments[%i].sections[%i].offset", i, j);
+
+    set_integer(
+        sec.align, object, "segments[%i].sections[%i].align", i, j);
+
+    set_integer(
+        sec.reloff, object, "segments[%i].sections[%i].reloff", i, j);
+
+    set_integer(
+        sec.nreloc, object, "segments[%i].sections[%i].nreloc", i, j);
+
+    set_integer(
+        sec.flags, object, "segments[%i].sections[%i].flags", i, j);
+
+    set_integer(
+        sec.reserved1, object, "segments[%i].sections[%i].reserved1", i, j);
+
+    set_integer(
+        sec.reserved2, object, "segments[%i].sections[%i].reserved2", i, j);
   }
 }
 
@@ -440,27 +469,50 @@ void macho_handle_segment_64(
     if (sg.cmdsize < parsed_size)
       break;
 
-    memcpy(&sec, 
+    memcpy(&sec,
            command + sizeof(yr_segment_command_64_t) + (j * sizeof(yr_section_64_t)),
            sizeof(yr_section_64_t));
+
     if (should_swap)
       swap_section_64(&sec);
 
-    set_sized_string(sec.segname, strnlen(sec.segname, 16),
-                     object, "segments[%i].sections[%i].segname", i, j);
-    set_sized_string(sec.sectname, strnlen(sec.sectname, 16),
-                     object, "segments[%i].sections[%i].sectname", i, j);
+    set_sized_string(
+        sec.segname, strnlen(sec.segname, 16), object,
+        "segments[%i].sections[%i].segname", i, j);
 
-    set_integer(sec.addr, object, "segments[%i].sections[%i].addr", i, j);
-    set_integer(sec.size, object, "segments[%i].sections[%i].size", i, j);
-    set_integer(sec.offset, object, "segments[%i].sections[%i].offset", i, j);
-    set_integer(sec.align, object, "segments[%i].sections[%i].align", i, j);
-    set_integer(sec.reloff, object, "segments[%i].sections[%i].reloff", i, j);
-    set_integer(sec.nreloc, object, "segments[%i].sections[%i].nreloc", i, j);
-    set_integer(sec.flags, object, "segments[%i].sections[%i].flags", i, j);
-    set_integer(sec.reserved1, object, "segments[%i].sections[%i].reserved1", i, j);
-    set_integer(sec.reserved2, object, "segments[%i].sections[%i].reserved2", i, j);
-    set_integer(sec.reserved3, object, "segments[%i].sections[%i].reserved3", i, j);
+    set_sized_string(
+        sec.sectname, strnlen(sec.sectname, 16), object,
+        "segments[%i].sections[%i].sectname", i, j);
+
+    set_integer(
+        sec.addr, object, "segments[%i].sections[%i].addr", i, j);
+
+    set_integer(
+        sec.size, object, "segments[%i].sections[%i].size", i, j);
+
+    set_integer(
+        sec.offset, object, "segments[%i].sections[%i].offset", i, j);
+
+    set_integer(
+        sec.align, object, "segments[%i].sections[%i].align", i, j);
+
+    set_integer(
+        sec.reloff, object, "segments[%i].sections[%i].reloff", i, j);
+
+    set_integer(
+        sec.nreloc, object, "segments[%i].sections[%i].nreloc", i, j);
+
+    set_integer(
+        sec.flags, object, "segments[%i].sections[%i].flags", i, j);
+
+    set_integer(
+        sec.reserved1, object, "segments[%i].sections[%i].reserved1", i, j);
+
+    set_integer(
+        sec.reserved2, object, "segments[%i].sections[%i].reserved2", i, j);
+
+    set_integer(
+        sec.reserved3, object, "segments[%i].sections[%i].reserved3", i, j);
   }
 }
 
@@ -559,8 +611,8 @@ void macho_load_fat_arch_header(
     yr_fat_arch_64_t* arch)
 {
   if (macho_fat_is_32(data)) {
-    yr_fat_arch_32_t* arch32 = 
-        (yr_fat_arch_32_t*)(data + sizeof(yr_fat_header_t) + 
+    yr_fat_arch_32_t* arch32 =
+        (yr_fat_arch_32_t*)(data + sizeof(yr_fat_header_t) +
         (num * sizeof(yr_fat_arch_32_t)));
     arch->cputype = yr_be32toh(arch32->cputype);
     arch->cpusubtype = yr_be32toh(arch32->cpusubtype);
@@ -570,8 +622,8 @@ void macho_load_fat_arch_header(
     arch->reserved = 0;
   }
   else {
-    yr_fat_arch_64_t* arch64 = 
-        (yr_fat_arch_64_t*)(data + sizeof(yr_fat_header_t) + 
+    yr_fat_arch_64_t* arch64 =
+        (yr_fat_arch_64_t*)(data + sizeof(yr_fat_header_t) +
         (num * sizeof(yr_fat_arch_64_t)));
     arch->cputype = yr_be32toh(arch64->cputype);
     arch->cpusubtype = yr_be32toh(arch64->cpusubtype);
