@@ -187,8 +187,7 @@ static bool _yr_ac_compare_classes(
     YR_BITMASK* bitmap1,
     YR_BITMASK* bitmap2)
 {
-  int i;
-  for (i = 0; i < YR_BITMAP_SIZE; i++)
+  for (int i = 0; i < YR_BITMAP_SIZE; i++)
   {
     if (bitmap1[i] != bitmap2[i])
       return false;
@@ -206,8 +205,7 @@ static bool _yr_ac_bitmap_subset(
     YR_BITMASK* bitmap1,
     YR_BITMASK* bitmap2)
 {
-  int i;
-  for (i = 0; i < YR_BITMAP_SIZE; i++)
+  for (int i = 0; i < YR_BITMAP_SIZE; i++)
   {
     if ((bitmap1[i] & bitmap2[i]) != bitmap2[i])
       return false;
@@ -399,7 +397,7 @@ static int _yr_ac_state_destroy_updated(
     child_state = next_child_state;
   }
 
-  //yr_free(state);
+  // The state itself will not be deallocated
 
   return ERROR_SUCCESS;
 }
@@ -583,16 +581,15 @@ static int _yr_ac_return_literal(
   uint8_t bits;
   uint8_t nibble = 0;
   uint64_t num;
-  uint64_t result = 0;
-  uint64_t counter = 0;
-  int i;
+  int result = 0;
+  int counter = 0;
 
   num = number;
 
   if (0 == num)
     return result;
 
-  for (i = 0; i < sizeof(uint64_t) * 2; i++)
+  for (int i = 0; i < sizeof(uint64_t) * 2; i++)
   {
     // find last nibble
     nibble = num & 0xf;
@@ -621,12 +618,11 @@ static int _yr_ac_return_literal(
 static bool _yr_ac_class_is_literal(
     YR_AC_STATE* state)
 {
-  uint8_t i;
   int bits = 0;
   int counter = 0;
   int literal = 0;
 
-  for (i = 0; i < YR_BITMAP_SIZE; i++)
+  for (int i = 0; i < YR_BITMAP_SIZE; i++)
   {
     bits = _yr_ac_return_literal(state->bitmap[i], i);
 
@@ -660,7 +656,6 @@ static bool _yr_ac_find_conflict_states(
     YR_AC_STATE* dfa_state1,
     YR_AC_STATE* dfa_state2)
 {
-  int i;
   int int_counter = 0;
   int bitmap2_counter = 0;
 
@@ -700,7 +695,7 @@ static bool _yr_ac_find_conflict_states(
       // Updated input_state (without class from next_state)
       memcpy(dfa_state2, input_state, sizeof(YR_AC_STATE));
       dfa_state2->type = YR_ATOM_TYPE_CLASS;
-      for (i = 0; i < YR_BITMAP_SIZE; i++)
+      for (int i = 0; i < YR_BITMAP_SIZE; i++)
         dfa_state2->bitmap[i] = dfa_state2->bitmap[i] - next_state->bitmap[i];
       _yr_ac_class_is_literal(dfa_state2);
       return false;
@@ -710,7 +705,7 @@ static bool _yr_ac_find_conflict_states(
       int_counter = 0;
       bitmap2_counter = 0;
 
-      for (i = 0; i < YR_BITMAP_SIZE; i++)
+      for (int i = 0; i < YR_BITMAP_SIZE; i++)
       {
         intersetion[i] = (next_state->bitmap[i] & input_state->bitmap[i]);
         if (intersetion[i] != 0)
@@ -1033,7 +1028,6 @@ static bool _yr_ac_transitions_subset(
   YR_BITMASK set[YR_BITMAP_SIZE];
 
   YR_AC_STATE* state;
-  int i;
 
   yr_bitmask_clear_all(set, sizeof(set));
 
@@ -1046,7 +1040,7 @@ static bool _yr_ac_transitions_subset(
     }
     else
     {
-      for (i = 0; i < YR_BITMAP_SIZE; i++)
+      for (int i = 0; i < YR_BITMAP_SIZE; i++)
         set[i] |= state->bitmap[i];
     }
 
@@ -1063,7 +1057,7 @@ static bool _yr_ac_transitions_subset(
     }
     else
     {
-      for (i = 0; i < YR_BITMAP_SIZE; i++)
+      for (int i = 0; i < YR_BITMAP_SIZE; i++)
       {
         if ((set[i] & state->bitmap[i]) != state->bitmap[i])
           return false;
@@ -1392,7 +1386,6 @@ static int _yr_ac_build_transition_table(
     do
     {
       input = (t_table[state->t_table_slot] & 0x1FF);
-      assert(input != 0);
       prev = YR_AC_NEXT_STATE(t_table[state->t_table_slot]);
       t_table[state->t_table_slot] = YR_AC_MAKE_TRANSITION(slot, input);
       state->t_table_slot = prev;
@@ -1573,6 +1566,7 @@ int yr_ac_automaton_create(
   root_state->failure = NULL;
   root_state->first_child = NULL;
   root_state->siblings = NULL;
+  root_state->parent = NULL;
   root_state->t_table_slot = 0;
 
   new_automaton->arena = arena;
