@@ -69,9 +69,9 @@ def yara_deps():
     maybe(
         git_repository,
         name = "com_google_sandboxed_api",
-        commit = "aafc597630ecf22e32ae71fdd45cab8c43584e65",  # 2020-04-30
+        commit = "144a441d798f13d27cc71e7c2a630e0063d747b5",  # 2020-05-12
         remote = "https://github.com/google/sandboxed-api.git",
-        shallow_since = "1588247853 -0700",
+        shallow_since = "1589270865 -0700",
     )
     maybe(
         http_archive,

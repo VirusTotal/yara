@@ -35,7 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "absl/strings/str_cat.h"
 #include "libyara/include/yara/error.h"
-#include "sandboxed_api/util/canonical_errors.h"
 #include "sandboxed_api/util/status_macros.h"
 
 namespace yara {
@@ -49,7 +48,7 @@ absl::Mutex YaraTransaction::mutex_(absl::kConstInit);
   // "Run" the transaction in order to initialize the underlying sandbox.
   SAPI_RETURN_IF_ERROR(transaction->Run());
 
-  sandbox::YaraApi api(transaction->GetSandbox());
+  sandbox::YaraApi api(transaction->sandbox());
   SAPI_RETURN_IF_ERROR(
       api.YaraInitWorkers(options.num_workers >= 1 ? options.num_workers : 1));
 
@@ -59,7 +58,7 @@ absl::Mutex YaraTransaction::mutex_(absl::kConstInit);
 ::sapi::StatusOr<int> YaraTransaction::LoadRules(
     const std::string& rule_string) {
   absl::MutexLock lock(&mutex_);
-  sandbox::YaraApi api(GetSandbox());
+  sandbox::YaraApi api(sandbox());
 
   ::sapi::v::ConstCStr rule_string_sapi(rule_string.c_str());
   YaraStatus error_status;
@@ -70,9 +69,9 @@ absl::Mutex YaraTransaction::mutex_(absl::kConstInit);
   if (num_rules <= 0) {
     auto error_status_copy = error_status_sapi.GetProtoCopy();
     if (!error_status_copy) {
-      return ::sapi::UnknownError("Deserialization of response failed");
+      return absl::UnknownError("Deserialization of response failed");
     }
-    return ::sapi::InvalidArgumentError(error_status_copy->message());
+    return absl::InvalidArgumentError(error_status_copy->message());
   }
   return num_rules;
 }
@@ -80,7 +79,7 @@ absl::Mutex YaraTransaction::mutex_(absl::kConstInit);
 ::sapi::StatusOr<YaraMatches> YaraTransaction::ScanFd(int fd) {
   int local_event_fd = eventfd(0 /* initval */, 0 /* flags */);
   if (local_event_fd == -1) {
-    return ::sapi::InternalError(
+    return absl::InternalError(
         absl::StrCat("eventfd() error: ", strerror(errno)));
   }
   struct FDCloser {
@@ -88,21 +87,20 @@ absl::Mutex YaraTransaction::mutex_(absl::kConstInit);
     int event_fd;
   } event_fd_closer = {local_event_fd};
 
-  auto* sandbox = GetSandbox();
-  sandbox::YaraApi api(sandbox);
+  sandbox::YaraApi api(sandbox());
   uint64_t result_id;
   {
     absl::MutexLock lock(&mutex_);
 
     // Note: These SAPI Fd objects use the underlying sandbox comms to
     //       synchronize. Hence they must live within this locked scope.
-    ::sapi::v::Fd event_fd{local_event_fd};
-    SAPI_RETURN_IF_ERROR(sandbox->TransferToSandboxee(&event_fd));
+    ::sapi::v::Fd event_fd(local_event_fd);
+    SAPI_RETURN_IF_ERROR(sandbox()->TransferToSandboxee(&event_fd));
     event_fd.OwnLocalFd(false);   // Needs to be valid during poll()
     event_fd.OwnRemoteFd(false);  // Sandboxee will close
 
-    ::sapi::v::Fd data_fd{fd};
-    SAPI_RETURN_IF_ERROR(sandbox->TransferToSandboxee(&data_fd));
+    ::sapi::v::Fd data_fd(fd);
+    SAPI_RETURN_IF_ERROR(sandbox()->TransferToSandboxee(&data_fd));
     data_fd.OwnLocalFd(false);   // To be closed by caller
     data_fd.OwnRemoteFd(false);  // Sandboxee will close
 
@@ -122,16 +120,16 @@ absl::Mutex YaraTransaction::mutex_(absl::kConstInit);
            // Add extra time to allow code inside the sandbox to time out first.
            absl::ToInt64Milliseconds(scan_timeout_ + absl::Seconds(10))));
   if (poll_result == 0) {
-    return ::sapi::DeadlineExceededError("Scan timeout during poll()");
+    return absl::DeadlineExceededError("Scan timeout during poll()");
   }
 
   if (poll_result == -1) {
-    return ::sapi::InternalError(
+    return absl::InternalError(
         absl::StrCat("poll() error: ", strerror(errno)));
   }
   if (poll_events.revents & POLLHUP || poll_events.revents & POLLERR ||
       poll_events.revents & POLLNVAL) {
-    return ::sapi::InternalError(
+    return absl::InternalError(
         absl::StrCat("poll() error, revents: ", poll_events.revents));
   }
 
@@ -146,16 +144,15 @@ absl::Mutex YaraTransaction::mutex_(absl::kConstInit);
     case ERROR_TOO_MANY_MATCHES: {
       auto matches_copy = matches_sapi.GetProtoCopy();
       if (!matches_copy) {
-        return ::sapi::UnknownError("Deserialization of response failed");
+        return absl::UnknownError("Deserialization of response failed");
       }
       return *matches_copy;
     }
 
     case ERROR_SCAN_TIMEOUT:
-      return ::sapi::DeadlineExceededError("Scan timeout");
+      return absl::DeadlineExceededError("Scan timeout");
   }
-  return ::sapi::InternalError(
-      absl::StrCat("Error during scan: ", scan_result));
+  return absl::InternalError(absl::StrCat("Error during scan: ", scan_result));
 }
 
 }  // namespace yara
