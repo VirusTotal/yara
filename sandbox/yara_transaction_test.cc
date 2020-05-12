@@ -63,17 +63,16 @@ class MemoryFD {
     mem_fd.fd_ = syscall(__NR_memfd_create, reinterpret_cast<uintptr_t>(kName),
                          MFD_CLOEXEC);
     if (mem_fd.fd_ == -1) {
-      return ::sapi::UnknownError(absl::StrCat("memfd(): ", strerror(errno)));
+      return absl::UnknownError(absl::StrCat("memfd(): ", strerror(errno)));
     }
     if (ftruncate(mem_fd.fd_, content.size()) == -1) {
-      return ::sapi::UnknownError(
-          absl::StrCat("ftruncate(): ", strerror(errno)));
+      return absl::UnknownError(absl::StrCat("ftruncate(): ", strerror(errno)));
     }
     while (!content.empty()) {
       ssize_t written =
           TEMP_FAILURE_RETRY(write(mem_fd.fd_, content.data(), content.size()));
       if (written <= 0) {
-        return ::sapi::UnknownError(absl::StrCat("write(): ", strerror(errno)));
+        return absl::UnknownError(absl::StrCat("write(): ", strerror(errno)));
       }
       content.remove_prefix(written);
     }

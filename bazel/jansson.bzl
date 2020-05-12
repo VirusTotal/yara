@@ -26,11 +26,11 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 def jansson_api_test(name):
-  native.cc_test(
-    name = name,
-    srcs = [
-        "test/suites/api/util.h",
-        "test/suites/api/" + name + ".c",
-    ],
-    deps = [":jansson"]
-  )
+    native.cc_test(
+        name = name,
+        srcs = [
+            "test/suites/api/util.h",
+            "test/suites/api/" + name + ".c",
+        ],
+        deps = [":jansson"],
+    )

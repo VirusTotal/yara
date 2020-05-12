@@ -53,9 +53,12 @@ config_setting(
     values = {"define": "yara_crypto_library=boringssl"},
 )
 
-
 yara_library(
     name = "libyara",
+    crypto_libs = select({
+        ":crypto_library_boringssl": ["@boringssl//:crypto"],
+        "//conditions:default": ["@openssl//:crypto"],
+    }),
     defines = select({
         ":profiling_enabled": ["YR_PROFILING_ENABLED"],
         "//conditions:default": [],
@@ -90,16 +93,11 @@ yara_library(
         "libyara/modules/tests/tests.c",
         "libyara/modules/time/time.c",
     ],
-    crypto_libs = select({
-        ":crypto_library_boringssl": ["@boringssl//:crypto"],
-        "//conditions:default": ["@openssl//:crypto"],
-    }),
     deps = [
-        "@jansson//:jansson",
-        "@magic//:magic",
-    ]
+        "@jansson",
+        "@magic",
+    ],
 )
-
 
 # Code shared by the command-line tools.
 cc_library(
