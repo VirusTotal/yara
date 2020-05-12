@@ -38,7 +38,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sstream>
 
 #include "sandbox/yara_transaction.h"
-#include "sandboxed_api/util/canonical_errors.h"
 #include "sandboxed_api/util/statusor.h"
 // TODO(cblichmann): SAPI leaks these symbols currently.
 #undef ABSL_FLAG
@@ -46,10 +45,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef ABSL_RETIRED_FLAG
 
 #include "absl/flags/flag.h"
-#include "absl/flags/internal/usage.h"
 #include "absl/flags/parse.h"
-#include "absl/time/time.h"
+#include "absl/flags/usage.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/time/time.h"
 
 ABSL_FLAG(std::string, identifier, "", "print only rules with this name");
 ABSL_FLAG(int, timeout, 5, "abort scanning after the given number of seconds");
@@ -62,7 +62,7 @@ namespace {
   std::ostringstream output;
   output << input.rdbuf();
   if (!input) {
-    return ::sapi::UnknownError(absl::StrCat("Cannot read file '", filename, "'"));
+    return absl::UnknownError(absl::StrCat("Cannot read file '", filename, "'"));
   }
   return output.str();
 }
@@ -71,9 +71,9 @@ namespace {
 
 // Implements a subset of the YARA command line scanner, but runs the actual
 // scan inside of a sandbox.
-::sapi::Status YaraMain(const std::vector<char*>& args) {
+absl::Status YaraMain(const std::vector<char*>& args) {
   if (args.size() < 3) {
-    return ::sapi::InvalidArgumentError("Missing operand. Try '--help'.");
+    return absl::InvalidArgumentError("Missing operand. Try '--help'.");
   }
 
   // Get file to scan and concatenate all the YARA rules from the specified
@@ -99,7 +99,7 @@ namespace {
     int fd;
   } fd_closer{open(scan_filename.c_str(), O_RDONLY)};
   if (fd_closer.fd == -1) {
-    return ::sapi::UnknownError(absl::StrCat(
+    return absl::UnknownError(absl::StrCat(
         "Cannot open file '", scan_filename, "': ", strerror(errno)));
   }
 
@@ -112,7 +112,7 @@ namespace {
     }
   }
 
-  return ::sapi::OkStatus();
+  return absl::OkStatus();
 }
 
 }  // namespace yara
@@ -125,12 +125,11 @@ int main(int argc, char* argv[]) {
       argv0 = argv0.substr(last_slash_pos + 1);
     }
   }
-  // TODO(cblichmann): Use public API once available from Bazel builds.
-  absl::flags_internal::SetProgramUsageMessage(
+  absl::SetProgramUsageMessage(
       absl::StrCat("YARA, the pattern matching swiss army knife.\n",
                    "Usage: ", argv0, " [OPTION] RULES_FILE... FILE"));
 
-  ::sapi::Status status = ::yara::YaraMain(absl::ParseCommandLine(argc, argv));
+  absl::Status status = ::yara::YaraMain(absl::ParseCommandLine(argc, argv));
   if (!status.ok()) {
     absl::FPrintF(stderr, "ERROR: %s\n", status.message());
     return EXIT_FAILURE;
