@@ -34,7 +34,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace yara {
 
-int CollectMatches(int message, void* message_data, void* user_data) {
+int CollectMatches(YR_SCAN_CONTEXT*, int message, void* message_data,
+                   void* user_data) {
   if (message != CALLBACK_MSG_RULE_MATCHING) {
     return ERROR_SUCCESS;  // There are no matching rules, simply return
   }
@@ -47,7 +48,7 @@ int CollectMatches(int message, void* message_data, void* user_data) {
     match->mutable_id()->set_rule_namespace(rule->ns->name);
   }
   match->mutable_id()->set_rule_name(rule->identifier);
-  while (!META_IS_NULL(rule_meta)) {
+  yr_rule_metas_foreach(rule, rule_meta) {
     auto* meta = match->add_meta();
     meta->set_identifier(rule_meta->identifier);
     switch (rule_meta->type) {

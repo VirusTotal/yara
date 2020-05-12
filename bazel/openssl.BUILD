@@ -37,28 +37,34 @@ config_setting(
 
 cc_library(
     name = "crypto",
-    hdrs = glob(["include/openssl/*.h"]) + ["include/openssl/opensslconf.h"],
     srcs = ["libcrypto.a"],
+    hdrs = glob(["include/openssl/*.h"]) + ["include/openssl/opensslconf.h"],
     includes = ["include"],
     linkopts = select({
         ":darwin": [],
-        "//conditions:default": ["-lpthread", "-ldl"],
+        "//conditions:default": [
+            "-lpthread",
+            "-ldl",
+        ],
     }),
     visibility = ["//visibility:public"],
 )
 
 cc_library(
     name = "ssl",
-    deps = [":crypto"],
-    hdrs = glob(["include/openssl/*.h"]) + ["include/openssl/opensslconf.h"],
     srcs = ["libssl.a"],
+    hdrs = glob(["include/openssl/*.h"]) + ["include/openssl/opensslconf.h"],
     includes = ["include"],
     visibility = ["//visibility:public"],
+    deps = [":crypto"],
 )
 
 genrule(
     name = "openssl-build",
-    srcs = glob(["**/*"], exclude=["bazel-*"]),
+    srcs = glob(
+        ["**/*"],
+        exclude = ["bazel-*"],
+    ),
     outs = [
         "libcrypto.a",
         "libssl.a",
