@@ -101,6 +101,7 @@ cc_test(
     copts = COPTS,
     data = [
         "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885",
+        "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885.upx",
         "data/tiny",
         "data/tiny-idata-51ff",
         "data/tiny-idata-5200",
@@ -187,7 +188,10 @@ cc_test(
 cc_test(
     name = "test_macho",
     srcs = ["test-macho.c"],
-    data = ["data/tiny-universal"],
+    data = [
+        "data/tiny-universal",
+        "data/tiny-macho",
+    ],
     copts = COPTS,
     deps = [
         ":blob",
