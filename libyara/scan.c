@@ -722,7 +722,8 @@ static int _yr_scan_verify_re_match(
 
   if ((forward_matches == -1) &&
       (STRING_IS_WIDE(ac_match->string) &&
-      !(STRING_IS_BASE64_WIDE(ac_match->string) || STRING_IS_BASE64_WIDE(ac_match->string))))
+      !(STRING_IS_BASE64(ac_match->string) ||
+        STRING_IS_BASE64_WIDE(ac_match->string))))
   {
     flags |= RE_FLAGS_WIDE;
     FAIL_ON_ERROR(exec(
