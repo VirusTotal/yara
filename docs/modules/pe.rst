@@ -1029,8 +1029,7 @@ Reference
 
     .. versionadded:: 3.8.0
 
-    Function returning true if the PE is a PE. Based on presence of MZ header. 
-    Equivalent to uint16(0) == 0x5A4D
+    Return true if the file is a PE.
 
     *Example: pe.is_pe()*
        
