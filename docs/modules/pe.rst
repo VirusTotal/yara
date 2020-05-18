@@ -32,6 +32,12 @@ write more expressive and targeted rules. Let's see some examples:
             pe.characteristics & pe.DLL
     }
 
+    rule is_pe
+    {
+        condition:
+            pe.is_pe
+    }
+
 Reference
 ---------
 
@@ -1019,6 +1025,15 @@ Reference
 
     *Example: pe.section_index(pe.entry_point)*
 
+.. c:function:: is_pe()
+
+    .. versionadded:: 3.8.0
+
+    Function returning true if the PE is a PE. Based on presence of MZ header. 
+    Equivalent to uint16(0) == 0x5A4D
+
+    *Example: pe.is_pe()*
+       
 .. c:function:: is_dll()
 
     .. versionadded:: 3.5.0
