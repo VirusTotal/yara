@@ -1433,10 +1433,10 @@ void _parse_pkcs7(
       }
     }
 
-    date_time = ASN1_get_time_t(X509_get_notBefore(cert));
+    date_time = ASN1_get_time_t(X509_getm_notBefore(cert));
     set_integer(date_time, pe->object, "signatures[%i].not_before", *counter);
 
-    date_time = ASN1_get_time_t(X509_get_notAfter(cert));
+    date_time = ASN1_get_time_t(X509_getm_notAfter(cert));
     set_integer(date_time, pe->object, "signatures[%i].not_after", *counter);
 
     (*counter)++;
