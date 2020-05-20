@@ -89,7 +89,7 @@ struct YR_ARENA_BUFFER
 struct YR_RELOC
 {
   // Buffer ID associated to this relocation entry.
-  uint8_t buffer_id;
+  uint32_t buffer_id;
 
   // Offset within the buffer where the relocatable pointer resides.
   yr_arena_off_t offset;
@@ -209,32 +209,32 @@ int yr_arena_ptr_to_ref(
 // applies for the pointers returned by this function.
 void* yr_arena_get_ptr(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     yr_arena_off_t offset);
 
 
 yr_arena_off_t yr_arena_get_current_offset(
     YR_ARENA* arena,
-    int buffer_id);
+    uint32_t buffer_id);
 
 
 int yr_arena_allocate_memory(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     size_t size,
     YR_ARENA_REF* ref);
 
 
 int yr_arena_allocate_zeroed_memory(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     size_t size,
     YR_ARENA_REF* ref);
 
 
 int yr_arena_allocate_struct(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     size_t size,
     YR_ARENA_REF* ref,
     ...);
@@ -242,13 +242,13 @@ int yr_arena_allocate_struct(
 
 int yr_arena_make_ptr_relocatable(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     ...);
 
 
 int yr_arena_write_data(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     const void* data,
     size_t size,
     YR_ARENA_REF* ref);
@@ -256,14 +256,14 @@ int yr_arena_write_data(
 
 int yr_arena_write_string(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     const char* string,
     YR_ARENA_REF* ref);
 
 
 int yr_arena_write_uint32(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     uint32_t integer,
     YR_ARENA_REF* ref);
 
