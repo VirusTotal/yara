@@ -68,7 +68,7 @@ struct YR_ARENA_FILE_BUFFER
 //
 // Args:
 //    [in]  YR_ARENA* arena     - Pointer the arena.
-//    [in]  int buffer_id       - Buffer number.
+//    [in]  uint32_t buffer_id  - Buffer number.
 //    [in]  size_t base_offset  - Base offset.
 //    [in]  va_list offsets     - List of offsets relative to base offset.
 //
@@ -78,7 +78,7 @@ struct YR_ARENA_FILE_BUFFER
 
 static int _yr_arena_make_ptr_relocatable(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     yr_arena_off_t base_offset,
     va_list offsets)
 {
@@ -122,11 +122,11 @@ static int _yr_arena_make_ptr_relocatable(
 // Allocates memory in a buffer within the arena.
 //
 // Args:
-//    [in]  YR_ARENA* arena   - Pointer to the arena.
-//    [in]  int flags         - Flags.
-//    [in]  int buffer_id     - Buffer number.
-//    [in]  size_t size       - Size of the region to be allocated.
-//    [out] size_t* offset    - Pointer to a variable where the function puts
+//    [in]  YR_ARENA* arena    - Pointer to the arena.
+//    [in]  int flags          - Flags.
+//    [in]  uint32_t buffer_id - Buffer number.
+//    [in]  size_t size        - Size of the region to be allocated.
+//    [out] size_t* offset     - Pointer to a variable where the function puts
 //                              the offset within the buffer of the allocated
 //                              region. The pointer can be NULL.
 // Returns:
@@ -136,7 +136,7 @@ static int _yr_arena_make_ptr_relocatable(
 static int _yr_arena_allocate_memory(
     YR_ARENA* arena,
     int flags,
-    int buffer_id,
+    uint32_t buffer_id,
     size_t size,
     YR_ARENA_REF* ref)
 {
@@ -293,7 +293,7 @@ int yr_arena_release(
 
 int yr_arena_allocate_memory(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     size_t size,
     YR_ARENA_REF* ref)
 {
@@ -304,7 +304,7 @@ int yr_arena_allocate_memory(
 
 int yr_arena_allocate_zeroed_memory(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     size_t size,
     YR_ARENA_REF* ref)
 {
@@ -335,7 +335,7 @@ int yr_arena_allocate_zeroed_memory(
 //
 // Args:
 //    [in]  YR_ARENA* arena     - Pointer to the arena.
-//    [in]  int buffer_id       - Buffer number.
+//    [in]  uint32_t buffer_id   - Buffer number.
 //    [in]  size_t size         - Size of the region to be allocated.
 //    [out] YR_ARENA_REF* ref   - Pointer to a reference that will point to the
 //                                newly allocated structure when the function
@@ -351,7 +351,7 @@ int yr_arena_allocate_zeroed_memory(
 
 int yr_arena_allocate_struct(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     size_t size,
     YR_ARENA_REF* ref,
     ...)
@@ -384,7 +384,7 @@ int yr_arena_allocate_struct(
 
 void* yr_arena_get_ptr(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     yr_arena_off_t offset)
 {
   assert(buffer_id < arena->num_buffers);
@@ -396,7 +396,7 @@ void* yr_arena_get_ptr(
 
 yr_arena_off_t yr_arena_get_current_offset(
     YR_ARENA* arena,
-    int buffer_id)
+    uint32_t buffer_id)
 {
   assert(buffer_id < arena->num_buffers);
 
@@ -453,7 +453,7 @@ void* yr_arena_ref_to_ptr(
 //
 // Args:
 //    YR_ARENA* arena    - Pointer to the arena.
-//    int buffer_id      - Buffer number.
+//    uint32_t buffer_id - Buffer number.
 //    ...                - Variable number of size_t arguments with offsets
 //                         within the buffer.
 //
@@ -463,7 +463,7 @@ void* yr_arena_ref_to_ptr(
 
 int yr_arena_make_ptr_relocatable(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     ...)
 {
   int result;
@@ -482,7 +482,7 @@ int yr_arena_make_ptr_relocatable(
 
 int yr_arena_write_data(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     const void* data,
     size_t size,
     YR_ARENA_REF* ref)
@@ -507,7 +507,7 @@ int yr_arena_write_data(
 
 int yr_arena_write_string(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     const char* string,
     YR_ARENA_REF* ref)
 {
@@ -518,7 +518,7 @@ int yr_arena_write_string(
 
 int yr_arena_write_uint32(
     YR_ARENA* arena,
-    int buffer_id,
+    uint32_t buffer_id,
     uint32_t integer,
     YR_ARENA_REF* ref)
 {
