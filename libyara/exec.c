@@ -826,6 +826,9 @@ int yr_execute_code(
         // After the opcode there's an int32_t corresponding to the jump's
         // offset and an uint32_t corresponding to the rule's index.
         current_rule_idx = *(uint32_t*)(ip + sizeof(int32_t));
+
+        assert(current_rule_idx < context->rules->num_rules);
+
         current_rule = &context->rules->rules_list_head[current_rule_idx];
 
         // If the rule is disabled let's skip its code.
@@ -868,6 +871,10 @@ int yr_execute_code(
         identifier = *(char**)(ip);
         ip += sizeof(uint64_t);
 
+        #if YR_PARANOID_EXEC
+        ensure_within_rules_arena(identifier);
+        #endif
+
         r1.o = (YR_OBJECT*) yr_hash_table_lookup(
             context->objects_table,
             identifier,
@@ -880,6 +887,10 @@ int yr_execute_code(
       case OP_OBJ_FIELD:
         identifier = *(char**)(ip);
         ip += sizeof(uint64_t);
+
+        #if YR_PARANOID_EXEC
+        ensure_within_rules_arena(identifier);
+        #endif
 
         pop(r1);
         ensure_defined(r1);
@@ -1318,6 +1329,10 @@ int yr_execute_code(
       case OP_IMPORT:
         memcpy(&r1.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
+
+        #if YR_PARANOID_EXEC
+        ensure_within_rules_arena(r1.p);
+        #endif
 
         result = yr_modules_load((char*) r1.p, context);
 
