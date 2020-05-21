@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(HAVE_LIBCRYPTO)
 #include <openssl/safestack.h>
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include <openssl/bio.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
@@ -1276,6 +1277,128 @@ static void pe_parse_exports(
 // but you won't have signature-related features in the PE module.
 #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
 
+#define SPC_INDIRECT_DATA_OBJID      "1.3.6.1.4.1.311.2.1.4"
+
+typedef struct {
+	ASN1_OBJECT *type;
+	ASN1_TYPE *value;
+} SpcAttributeTypeAndOptionalValue;
+
+DECLARE_ASN1_FUNCTIONS(SpcAttributeTypeAndOptionalValue)
+
+ASN1_SEQUENCE(SpcAttributeTypeAndOptionalValue) = {
+	ASN1_SIMPLE(SpcAttributeTypeAndOptionalValue, type, ASN1_OBJECT),
+	ASN1_OPT(SpcAttributeTypeAndOptionalValue, value, ASN1_ANY)
+} ASN1_SEQUENCE_END(SpcAttributeTypeAndOptionalValue)
+
+IMPLEMENT_ASN1_FUNCTIONS(SpcAttributeTypeAndOptionalValue)
+
+typedef struct {
+	ASN1_OBJECT *algorithm;
+	ASN1_TYPE *parameters;
+} AlgorithmIdentifier;
+
+DECLARE_ASN1_FUNCTIONS(AlgorithmIdentifier)
+
+ASN1_SEQUENCE(AlgorithmIdentifier) = {
+	ASN1_SIMPLE(AlgorithmIdentifier, algorithm, ASN1_OBJECT),
+	ASN1_OPT(AlgorithmIdentifier, parameters, ASN1_ANY)
+} ASN1_SEQUENCE_END(AlgorithmIdentifier)
+
+IMPLEMENT_ASN1_FUNCTIONS(AlgorithmIdentifier)
+
+typedef struct {
+	AlgorithmIdentifier *digestAlgorithm;
+	ASN1_OCTET_STRING *digest;
+} DigestInfo;
+
+DECLARE_ASN1_FUNCTIONS(DigestInfo)
+
+ASN1_SEQUENCE(DigestInfo) = {
+	ASN1_SIMPLE(DigestInfo, digestAlgorithm, AlgorithmIdentifier),
+	ASN1_SIMPLE(DigestInfo, digest, ASN1_OCTET_STRING)
+} ASN1_SEQUENCE_END(DigestInfo)
+
+IMPLEMENT_ASN1_FUNCTIONS(DigestInfo)
+
+typedef struct {
+	SpcAttributeTypeAndOptionalValue *data;
+	DigestInfo *messageDigest;
+} SpcIndirectDataContent;
+
+DECLARE_ASN1_FUNCTIONS(SpcIndirectDataContent)
+
+ASN1_SEQUENCE(SpcIndirectDataContent) = {
+	ASN1_SIMPLE(SpcIndirectDataContent, data, SpcAttributeTypeAndOptionalValue),
+	ASN1_SIMPLE(SpcIndirectDataContent, messageDigest, DigestInfo)
+} ASN1_SEQUENCE_END(SpcIndirectDataContent)
+
+IMPLEMENT_ASN1_FUNCTIONS(SpcIndirectDataContent)
+
+static int is_indirect_data_signature(PKCS7 *p7)
+{
+	ASN1_OBJECT *indir_objid;
+	int retval;
+
+	indir_objid = OBJ_txt2obj(SPC_INDIRECT_DATA_OBJID, 1);
+	retval = p7 && PKCS7_type_is_signed(p7) &&
+		!OBJ_cmp(p7->d.sign->contents->type, indir_objid) &&
+		p7->d.sign->contents->d.other->type == V_ASN1_SEQUENCE;
+	ASN1_OBJECT_free(indir_objid);
+	return retval;
+}
+
+static void tohex(const unsigned char *v, char *b, int len)
+{
+	int i;
+	for (i = 0; i < len; i++)
+		sprintf(b + i * 2, "%02X", v[i]);
+}
+
+//From osslsigncode
+static void pe_calc_digest(BIO *bio, const EVP_MD *md, unsigned char *mdbuf, PE* pe)
+{
+	size_t sizebfb = 16 * 1024 * 1024;
+	unsigned char* bfb = malloc(sizebfb);
+	EVP_MD_CTX *mdctx;
+	size_t n;
+	size_t headersize = yr_le32toh(((PIMAGE_DOS_HEADER)pe->data)->e_lfanew);
+	size_t pe32plus = IS_64BITS_PE(pe);
+	PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
+		pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
+	size_t sigpos = yr_le32toh(directory->VirtualAddress);
+	int l;
+
+	mdctx = EVP_MD_CTX_new();
+	EVP_DigestInit(mdctx, md);
+	memset(mdbuf, 0, EVP_MAX_MD_SIZE);
+	memset(bfb, 0, sizebfb);
+
+	(void)BIO_seek(bio, 0);
+	BIO_read(bio, bfb, (headersize + 88));
+	EVP_DigestUpdate(mdctx, bfb, (headersize + 88));
+	BIO_read(bio, bfb, 4); //Skip the header checksum. Read from bio but don't update the ctx
+	BIO_read(bio, bfb, (60 + pe32plus * 16));
+	EVP_DigestUpdate(mdctx, bfb, (60 + pe32plus * 16));
+	BIO_read(bio, bfb, 8); //Skip IMAGE_DIRECTORY_ENTRY_SECURITY size
+
+	n = headersize + 88 + 4 + 60 + (pe32plus * 16) + 8;
+
+	while (n < sigpos) {
+		size_t want = sigpos - n;
+		if (want > sizebfb)
+			want = sizebfb;
+		l = BIO_read(bio, bfb, want);
+		if (l <= 0)
+			break;
+		EVP_DigestUpdate(mdctx, bfb, l);
+		n += l;
+	}
+	EVP_DigestFinal(mdctx, mdbuf, NULL);
+	EVP_MD_CTX_free(mdctx);
+	free(bfb);
+}
+
 //
 // Parse a PKCS7 blob, looking for certs and nested PKCS7 blobs.
 //
@@ -1305,6 +1428,11 @@ void _parse_pkcs7(
   STACK_OF(X509)* certs = NULL;
   X509_ATTRIBUTE *xa = NULL;
   STACK_OF(X509_ATTRIBUTE)* attrs = NULL;
+  const EVP_MD *md;
+  char hexbuf[EVP_MAX_MD_SIZE * 2 + 1];
+  unsigned char mdbuf[EVP_MAX_MD_SIZE] = { 0 }, cmdbuf[EVP_MAX_MD_SIZE] = { 0 };
+  int mdtype = -1;
+  BIO *bio = NULL;
 
   if (*counter >= MAX_PE_CERTS)
     return;
@@ -1347,6 +1475,33 @@ void _parse_pkcs7(
     sig_alg = OBJ_nid2ln(X509_get_signature_nid(cert));
 
     set_string(sig_alg, pe->object, "signatures[%i].algorithm", *counter);
+
+	if (is_indirect_data_signature(pkcs7))
+	{
+		ASN1_STRING *astr = pkcs7->d.sign->contents->d.other->value.sequence;
+		const unsigned char *p = astr->data;
+		SpcIndirectDataContent *idc = d2i_SpcIndirectDataContent(NULL, &p, astr->length);
+		if (idc) {
+			if (idc->messageDigest && idc->messageDigest->digest && idc->messageDigest->digestAlgorithm) {
+				mdtype = OBJ_obj2nid(idc->messageDigest->digestAlgorithm->algorithm);
+				if (mdtype != -1) {
+					memcpy(mdbuf, idc->messageDigest->digest->data, idc->messageDigest->digest->length);
+
+					md = EVP_get_digestbynid(mdtype);
+					tohex(mdbuf, hexbuf, EVP_MD_size(md));
+					PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
+						pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
+					bio = BIO_new_mem_buf(pe->data, yr_le32toh(directory->VirtualAddress) + yr_le32toh(directory->Size));
+					pe_calc_digest(bio, md, cmdbuf, pe);
+					BIO_free(bio);
+					tohex(cmdbuf, hexbuf, EVP_MD_size(md));
+					int invalid = memcmp(mdbuf, cmdbuf, EVP_MD_size(md)) != 0;
+					set_integer(invalid, pe->object, "signatures[%i].hashinvalid", *counter);
+				}
+			}
+			SpcIndirectDataContent_free(idc);
+		}
+	}
 
     serial = X509_get_serialNumber(cert);
 
@@ -2960,6 +3115,7 @@ begin_declarations;
     declare_integer("not_before");
     declare_integer("not_after");
     declare_function("valid_on", "i", "i", valid_on);
+	declare_integer("hashinvalid");
   end_struct_array("signatures");
 
   declare_integer("number_of_signatures");
