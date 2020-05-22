@@ -1552,11 +1552,12 @@ static void pe_parse_certificates(
     end = (uintptr_t)((uint8_t*) win_cert) + yr_le32toh(win_cert->Length);
     while ((uintptr_t) cert_p < end && counter < MAX_PE_CERTS)
     {
-      pkcs7 = d2i_PKCS7(NULL, &cert_p, (yr_le32toh(win_cert->Length)));
+      pkcs7 = d2i_PKCS7(NULL, &cert_p, (yr_le32toh( (uint32_t)((uintptr_t)end - (uintptr_t)cert_p)) ));
       if (pkcs7 == NULL)
         break;
       _parse_pkcs7(pe, pkcs7, &counter);
       PKCS7_free(pkcs7);
+      pkcs7 = NULL;
     }
 
     win_cert = (PWIN_CERTIFICATE) (end + (end % 8));
