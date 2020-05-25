@@ -115,6 +115,3 @@ windows/*/packages/
 .dirstamp
 
 .idea/
-
-# Test files
-test-rules.yarc
