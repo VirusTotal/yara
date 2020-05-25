@@ -219,7 +219,7 @@ Here is an example:
   import yara
 
   def mycallback(data):
-    print data
+    print(data)
     return yara.CALLBACK_CONTINUE
 
   matches = rules.match('/foo/bar/my_file', callback=mycallback, which_callbacks=yara.CALLBACK_MATCHES)
@@ -259,7 +259,7 @@ Here is an example:
   import yara
 
   def modules_callback(data):
-    print data
+    print(data)
     return yara.CALLBACK_CONTINUE
 
   matches = rules.match('/foo/bar/my_file', modules_callback=modules_callback)
@@ -278,6 +278,11 @@ both ``stack_size`` and ``max_strings_per_rule`` provided as kwargs. At the time
 of this writing, the default stack size was ``16384`` and the default maximum
 strings per rule was ``10000``.
 
+Also, ``yara.set_config`` accepts the `max_match_data` argument for controlling
+the maximum number of bytes that will be returned for each matching string. This
+is equivalent to using ``YR_CONFIG_MAX_MATCH_DATA`` with the ``yr_set_configuration``
+in the C API. By the default this is set to 512.
+
 Here are a few example calls:
 
 .. code-block:: python
@@ -285,6 +290,7 @@ Here are a few example calls:
   yara.set_config(stack_size=65536)
   yara.set_config(max_strings_per_rule=50000, stack_size=65536)
   yara.set_config(max_strings_per_rule=20000)
+  yara.set_config(max_match_data=128)
 
 
 Reference
@@ -335,14 +341,16 @@ Reference
   Set the configuration variables accessible through the yr_set_configuration
   API.
 
-  Provide either *stack_size* or *max_strings_per_rule*. These kwargs take
-  unsigned integer values as input and will assign the provided value to the
-  yr_set_configuration(...) variables ``YR_CONFIG_STACK_SIZE`` and
-  ``YR_CONFIG_MAX_STRINGS_PER_RULE``, respectively.
+  Provide either *stack_size*, *max_strings_per_rule*, or *max_match_data*. These kwargs
+  take unsigned integer values as input and will assign the provided value to the
+  yr_set_configuration(...) variables ``YR_CONFIG_STACK_SIZE``,
+  ``YR_CONFIG_MAX_STRINGS_PER_RULE``, and ``YR_CONFIG_MAX_MATCH_DATA`` respectively.
 
   :param int stack_size: Stack size to use for ``YR_CONFIG_STACK_SIZE``
   :param int max_strings_per_rule: Maximum number of strings to allow per
     yara rule. Will be mapped to ``YR_CONFIG_MAX_STRINGS_PER_RULE``.
+  :param int max_match_data: Maximum number of bytes to allow per
+    yara match. Will be mapped to ``YR_CONFIG_MAX_MATCH_DATA``.
   :return: None
   :rtype: **NoneType**
   :raises: **YaraError**: If an error occurred.

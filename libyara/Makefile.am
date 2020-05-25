@@ -1,35 +1,59 @@
+# Rules for generating YARA modules from .proto files. For each .proto file
+# three files are generated: .c, .pb-c.c, and .pb-c.h. The .c file is generated
+# by protoc-gen-yara and the other two by protoc-gen-c. This is done only if
+# protoc is found, if not, files already in the repository are used instead
+# of generating fresh ones from the .proto file.
+#
+if PROTOC
+SUFFIXES = .proto .pb-c.c .pb-c.h .c
+.proto.pb-c.c:
+		$(PROTOC) --c_out=$(builddir) $^ -Ipb/ -I=$(srcdir)
 
-MODULES =  modules/tests.c
-MODULES += modules/pe.c
-MODULES += modules/elf.c
-MODULES += modules/math.c
-MODULES += modules/time.c
+.proto.pb-c.h:
+		$(PROTOC) --c_out=$(builddir) $^ -Ipb/ -I=$(srcdir)
 
-# This isn't really a module, but needs to be compiled with them.
-MODULES += modules/pe_utils.c
+.proto.c:
+		$(PROTOC) --c_out=$(builddir) $^ -Ipb/ -I=$(srcdir)
+endif
+
+MODULES =  modules/tests/tests.c
+
+MODULES += modules/elf/elf.c
+
+MODULES += modules/math/math.c
+
+MODULES += modules/time/time.c
+
+MODULES += modules/pe/pe.c
+MODULES += modules/pe/pe_utils.c
 
 if CUCKOO_MODULE
-MODULES += modules/cuckoo.c
+MODULES += modules/cuckoo/cuckoo.c
 endif
 
 if MAGIC_MODULE
-MODULES += modules/magic.c
+MODULES += modules/magic/magic.c
 endif
 
 if HASH_MODULE
-MODULES += modules/hash.c
+MODULES += modules/hash/hash.c
 endif
 
 if DOTNET_MODULE
-MODULES += modules/dotnet.c
+MODULES += modules/dotnet/dotnet.c
 endif
 
 if MACHO_MODULE
-MODULES += modules/macho.c
+MODULES += modules/macho/macho.c
 endif
 
 if DEX_MODULE
-MODULES += modules/dex.c
+MODULES += modules/dex/dex.c
+endif
+
+if PB_TESTS_MODULE
+MODULES += modules/pb_tests/pb_tests.c
+MODULES += modules/pb_tests/pb_tests.pb-c.c
 endif
 
 #
@@ -40,7 +64,9 @@ endif
 
 AM_YFLAGS=-d
 
-AM_CFLAGS=-Wall -Wno-deprecated-declarations -std=gnu99 -I$(srcdir)/include
+AM_CFLAGS=-Wall -Wno-deprecated-declarations \
+	-D_GNU_SOURCE \
+	-I$(srcdir)/include
 
 if DEBUG
 AM_CFLAGS+=-g
@@ -66,98 +92,104 @@ include_HEADERS = include/yara.h
 
 yaraincludedir = $(includedir)/yara
 yarainclude_HEADERS = \
-  include/yara/ahocorasick.h \
-  include/yara/arena.h \
-  include/yara/atoms.h \
-  include/yara/bitmask.h \
-  include/yara/compiler.h \
-  include/yara/error.h \
-  include/yara/exec.h \
-  include/yara/exefiles.h \
-  include/yara/filemap.h \
-  include/yara/hash.h \
-  include/yara/integers.h \
-  include/yara/libyara.h \
-  include/yara/limits.h \
-  include/yara/mem.h \
-  include/yara/modules.h \
-  include/yara/object.h \
-  include/yara/parser.h \
-  include/yara/proc.h \
-  include/yara/re.h \
-  include/yara/rules.h \
-  include/yara/scan.h \
-  include/yara/scanner.h \
-  include/yara/sizedstr.h \
-  include/yara/stack.h \
-  include/yara/stopwatch.h \
-  include/yara/stream.h \
-  include/yara/strutils.h \
-  include/yara/threading.h \
-  include/yara/types.h \
-  include/yara/utils.h
+	include/yara/ahocorasick.h \
+	include/yara/arena.h \
+	include/yara/atoms.h \
+	include/yara/base64.h \
+	include/yara/bitmask.h \
+	include/yara/compiler.h \
+	include/yara/error.h \
+	include/yara/exec.h \
+	include/yara/exefiles.h \
+	include/yara/filemap.h \
+	include/yara/hash.h \
+	include/yara/integers.h \
+	include/yara/libyara.h \
+	include/yara/limits.h \
+	include/yara/mem.h \
+	include/yara/modules.h \
+	include/yara/notebook.h \
+	include/yara/object.h \
+	include/yara/parser.h \
+	include/yara/proc.h \
+	include/yara/re.h \
+	include/yara/rules.h \
+	include/yara/scan.h \
+	include/yara/scanner.h \
+	include/yara/sizedstr.h \
+	include/yara/stack.h \
+	include/yara/stopwatch.h \
+	include/yara/stream.h \
+	include/yara/strutils.h \
+	include/yara/threading.h \
+	include/yara/types.h \
+	include/yara/utils.h
 
 noinst_HEADERS = \
-  crypto.h \
-  exception.h \
-  include/yara/dotnet.h \
-  include/yara/elf.h \
-  include/yara/endian.h \
-  include/yara/globals.h \
-  include/yara/hex_lexer.h \
-  include/yara/lexer.h \
-  include/yara/pe.h \
-  include/yara/pe_utils.h \
-  include/yara/re_lexer.h \
-  modules/module_list
+	crypto.h \
+	exception.h \
+	include/yara/dotnet.h \
+	include/yara/elf.h \
+	include/yara/endian.h \
+	include/yara/globals.h \
+	include/yara/hex_lexer.h \
+	include/yara/lexer.h \
+	include/yara/pe.h \
+	include/yara/pe_utils.h \
+	include/yara/re_lexer.h \
+	modules/module_list
+
+dist_noinst_DATA = pb/yara.proto
 
 
 lib_LTLIBRARIES = libyara.la
 
-libyara_la_LDFLAGS = -version-number 3:9:0
+libyara_la_LDFLAGS = -version-number 4:0:1
 
 BUILT_SOURCES = \
-  lexer.c \
-  hex_lexer.c \
-  re_lexer.c \
-  grammar.c \
-  hex_grammar.c \
-  re_grammar.c
+	lexer.c \
+	hex_lexer.c \
+	re_lexer.c \
+	grammar.c \
+	hex_grammar.c \
+	re_grammar.c
 
 libyara_la_SOURCES = \
-  $(MODULES) \
-  grammar.y \
-  ahocorasick.c \
-  arena.c \
-  atoms.c \
-  bitmask.c \
-  compiler.c \
-  endian.c \
-  exec.c \
-  exefiles.c \
-  filemap.c \
-  hash.c \
-  hex_grammar.y \
-  hex_lexer.l \
-  lexer.l \
-  libyara.c \
-  mem.c \
-  modules.c \
-  object.c \
-  parser.c \
-  proc.c \
-  re.c \
-  re_grammar.y \
-  re_lexer.l \
-  rules.c \
-  scan.c \
-  scanner.c \
-  sizedstr.c \
-  stack.c \
-  stopwatch.c \
-  strutils.c \
-  stream.c \
-  threading.c
+	$(MODULES) \
+	grammar.y \
+	ahocorasick.c \
+	arena.c \
+	atoms.c \
+	base64.c \
+	bitmask.c \
+	compiler.c \
+	endian.c \
+	exec.c \
+	exefiles.c \
+	filemap.c \
+	hash.c \
+	hex_grammar.y \
+	hex_lexer.l \
+	lexer.l \
+	libyara.c \
+	mem.c \
+	modules.c \
+	notebook.c \
+	object.c \
+	parser.c \
+	proc.c \
+	re.c \
+	re_grammar.y \
+	re_lexer.l \
+	rules.c \
+	scan.c \
+	scanner.c \
+	sizedstr.c \
+	stack.c \
+	stopwatch.c \
+	strutils.c \
+	stream.c \
+	threading.c
 
 
 if USE_WINDOWS_PROC

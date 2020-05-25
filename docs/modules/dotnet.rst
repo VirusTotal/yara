@@ -176,3 +176,14 @@ Reference
 
     An zero-based array of user strings, one for each stream contained in the
     file. Individual strings can be accessed by using the [] operator.
+
+.. c:type:: number_of_field_offsets
+
+    The number of fields in the field_offsets array.
+
+.. c:type:: field_offsets
+
+    A zero-based array of integers, one for each field. Individual field offsets
+    can be accessed by using the [] operator.
+
+    *Example: dotnet.field_offsets[0] == 8675309*

@@ -111,13 +111,6 @@ Reference
     Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has
     COFF debug info.
 
-.. c:type:: pointer_to_symbol_table
-
-    .. versionadded:: 3.8.0
-
-    Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has
-    COFF debug info.
-
 .. c:type:: number_of_symbols
 
     .. versionadded:: 3.8.0
@@ -223,63 +216,63 @@ Reference
     following constants:
 
     .. c:type:: RELOCS_STRIPPED
-    
+
         Relocation info stripped from file.
-    
+
     .. c:type:: EXECUTABLE_IMAGE
-    
+
         File is executable  (i.e. no unresolved external references).
-    
+
     .. c:type:: LINE_NUMS_STRIPPED
-    
+
         Line numbers stripped from file.
-    
+
     .. c:type:: LOCAL_SYMS_STRIPPED
-    
+
         Local symbols stripped from file.
-    
+
     .. c:type:: AGGRESIVE_WS_TRIM
-    
+
         Aggressively trim working set
-    
+
     .. c:type:: LARGE_ADDRESS_AWARE
-    
+
         App can handle >2gb addresses
-    
+
     .. c:type:: BYTES_REVERSED_LO
-    
+
         Bytes of machine word are reversed.
-    
+
     .. c:type:: MACHINE_32BIT
-    
+
         32 bit word machine.
-    
+
     .. c:type:: DEBUG_STRIPPED
-    
+
         Debugging info stripped from file in .DBG file
-    
+
     .. c:type:: REMOVABLE_RUN_FROM_SWAP
-    
+
         If Image is on removable media, copy and run from the swap file.
-    
+
     .. c:type:: NET_RUN_FROM_SWAP
-    
+
         If Image is on Net, copy and run from the swap file.
-    
+
     .. c:type:: SYSTEM
-    
+
         System File.
-    
+
     .. c:type:: DLL
-    
+
         File is a DLL.
-    
+
     .. c:type:: UP_SYSTEM_ONLY
-    
+
         File should only be run on a UP machine
-    
+
     .. c:type:: BYTES_REVERSED_HI
-    
+
         Bytes of machine word are reversed.
 
     *Example:  pe.characteristics & pe.DLL*
@@ -563,7 +556,7 @@ Reference
     .. c:type:: SECTION_MEM_READ
     .. c:type:: SECTION_MEM_WRITE
 
-    *Example: pe.sections[1].characteristics & SECTION_CNT_CODE*
+    *Example: pe.sections[1].characteristics & pe.SECTION_CNT_CODE*
 
 .. c:type:: overlay
 
@@ -792,25 +785,41 @@ Reference
 
         .. versionadded:: 3.5.0
 
-        Function returning true if the PE has the specified *version* in the PE's rich
-        signature. Provide the optional *toolid* argument to only match when both match
-        for one entry. More information can be found here:
+        Function returning a sum of count values of all matching *version*
+        records. Provide the optional *toolid* argument to only match when both
+        match for one entry. More information can be found here:
 
         http://www.ntcore.com/files/richsign.htm
 
-        *Example: pe.rich_signature.version(21005)*
+        Note: Prior to version *3.11.0*, this function returns only a boolean
+        value (0 or 1) if the given *version* and optional *toolid* is present
+        in an entry.
+
+        *Example: pe.rich_signature.version(24215, 261) == 61*
 
     .. c:function:: toolid(toolid, [version])
 
         .. versionadded:: 3.5.0
 
-        Function returning true if the PE has the specified *id* in the PE's rich
-        signature. Provide the optional *version* argument to only match when both
-        match for one entry. More information can be found here:
+        Function returning a sum of count values of all matching *toolid*
+        records. Provide the optional *version* argument to only match when
+        both match for one entry. More information can be found here:
 
         http://www.ntcore.com/files/richsign.htm
 
-        *Example: pe.rich_signature.toolid(222)*
+        Note: Prior to version *3.11.0*, this function returns only a boolean
+        value (0 or 1) if the given *toolid* and optional *version* is present
+        in an entry.
+
+        *Example: pe.rich_signature.toolid(170, 40219) >= 99*
+
+.. c:type:: pdb_path
+
+    .. versionadded:: 4.0.0
+
+    Path of the PDB file for this PE if present.
+
+    * Example: pe.pdb_path == "D:\\workspace\\2018_R9_RelBld\\target\\checkout\\custprof\\Release\\custprof.pdb"
 
 .. c:function:: exports(function_name)
 
@@ -837,11 +846,75 @@ Reference
 
     *Example:  pe.exports(/^AXS@@/)*
 
+.. c:function:: exports_index(function_name)
+
+    .. versionadded:: 4.0.0
+
+    Function returning the index into the export_details array where the named
+    function is, undefined otherwise.
+
+    *Example:  pe.exports_index("CPlApplet")*
+
+.. c:function:: exports_index(ordinal)
+
+    .. versionadded:: 4.0.0
+
+    Function returning the index into the export_details array where the
+    exported ordinal is, undefined otherwise.
+
+    *Example:  pe.exports_index(72)*
+
+.. c:function:: exports_index(/regular_expression/)
+
+    .. versionadded:: 4.0.0
+
+    Function returning the first index into the export_details array where the
+    regular expression matches the exported name, undefined otherwise.
+
+    *Example:  pe.exports_index(/^ERS@@/)*
+
 .. c:type:: number_of_exports
 
     .. versionadded:: 3.6.0
 
     Number of exports in the PE.
+
+.. c:type:: export_details
+
+    .. versionadded:: 4.0.0
+
+    Array of structures containing information about the PE's exports.
+
+    .. c:member:: offset
+
+        Offset where the exported function starts.
+
+    .. c:member:: name
+
+        Name of the exported function. It will be undefined if the function has
+        no name.
+
+    .. c:member:: forward_name
+
+        The name of the function where this export forwards to. It will be
+        undefined if the export is not a forwarding export.
+
+    .. c:member:: ordinal
+
+        The ordinal of the exported function, after the ordinal base has been
+        applied to it.
+
+.. c:type:: dll_name
+
+    .. versionadded:: 4.0.0
+
+    The name of the DLL, if it exists in the export directory.
+
+.. c:type:: export_timestamp
+
+    .. versionadded:: 4.0.0
+
+    The timestamp the export data was created..
 
 .. c:type:: number_of_imports
 
@@ -859,11 +932,17 @@ Reference
 .. c:function:: imports(dll_name)
 
     .. versionadded:: 3.5.0
+    .. versionchanged:: 4.0.0
 
-    Function returning true if the PE imports anything from *dll_name*,
-    or false otherwise. *dll_name* is case insensitive.
+    Function returning the number of functions from the *dll_name*, in the PE
+    imports. *dll_name* is case insensitive.
 
-    *Example:  pe.imports("kernel32.dll")*
+    Note: Prior to version 4.0.0, this function returned only a boolean value
+    indicating if the given DLL name was found in the PE imports. This change
+    is backward compatible, as any number larger than 0 also evaluates as
+    true.
+
+    *Examples:  pe.imports("kernel32.dll"), pe.imports("kernel32.dll") == 10*
 
 .. c:function:: imports(dll_name, ordinal)
 
@@ -877,13 +956,19 @@ Reference
 .. c:function:: imports(dll_regexp, function_regexp)
 
     .. versionadded:: 3.8.0
+    .. versionchanged:: 4.0.0
 
-    Function returning true if the PE imports a function name matching
-    *function_regexp* from a DLL matching *dll_regexp*. *dll_regexp* is case
-    sensitive unless you use the "/i" modifier in the regexp, as shown in the
-    example below.
+    Function returning the number of functions from the PE imports where a
+    function name matches *function_regexp* and a DLL name matches
+    *dll_regexp*. Both *dll_regexp* and *function_regexp* are case sensitive
+    unless you use the "/i" modifier in the regexp, as shown in the example
+    below.
 
-    *Example:  pe.imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/)*
+    Note: Prior to version 4.0.0, this function returned only a boolean value
+    indicating if matching import was found or not. This change is backward
+    compatible, as any number larger than 0 also evaluates as true.
+
+    *Example:  pe.imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
 
 .. c:function:: locale(locale_identifier)
 

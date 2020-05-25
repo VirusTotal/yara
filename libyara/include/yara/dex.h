@@ -10,6 +10,7 @@
 #define DEX_FILE_MAGIC_036 "dex\n036\x00"
 #define DEX_FILE_MAGIC_037 "dex\n037\x00"
 #define DEX_FILE_MAGIC_038 "dex\n038\x00"
+#define DEX_FILE_MAGIC_039 "dex\n039\x00"
 
 #pragma pack(push,1)
 
@@ -75,7 +76,7 @@ typedef struct {
 	uint32_t class_idx;
 	uint32_t access_flags;
 	uint32_t super_class_idx;
-	uint32_t interfaces_off;
+	uint32_t interfaces_offset;
 	uint32_t source_file_idx;
 	uint32_t annotations_offset;
 	uint32_t class_data_offset;

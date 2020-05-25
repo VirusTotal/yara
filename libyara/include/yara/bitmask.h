@@ -32,6 +32,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/integers.h>
 
+//
+// Utility macros for working with bitmaps.
+//
+// Declare a bitmask of n bits:
+//   YR_BITMASK my_bitmask[YR_BITMASK_SIZE(n)];
+//
+// Clear all bits:
+//   yr_bitmask_clear_all(my_bitmask)
+//
+// Set bit n to 1:
+//   yr_bitmask_set(my_bitmask, n)
+//
+// Clear bit n (set to 0):
+//   yr_bitmask_clear(my_bitmask, n)
+//
+// Check if bit n is set:
+//   yr_bitmask_is_set(my_bitmask, n)
+//
 
 #define YR_BITMASK unsigned long
 
@@ -55,10 +73,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   memset(bm, 0, sizeof(bm))
 
 
-#define yr_bitmask_isset(bm, i) \
+#define yr_bitmask_is_set(bm, i) \
   ( \
     (bm)[(i) / YR_BITMASK_SLOT_BITS] & (1UL << ((i) % YR_BITMASK_SLOT_BITS)) \
   )
+
+#define yr_bitmask_is_not_set(bm, i) (!yr_bitmask_is_set(bm, i))
 
 
 #define yr_bitmask_print(bm) \

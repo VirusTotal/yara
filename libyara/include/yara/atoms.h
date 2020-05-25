@@ -81,8 +81,8 @@ struct YR_ATOM_LIST_ITEM
 
   uint16_t backtrack;
 
-  uint8_t* forward_code;
-  uint8_t* backward_code;
+  YR_ARENA_REF forward_code_ref;
+  YR_ARENA_REF backward_code_ref;
 
   YR_ATOM_LIST_ITEM* next;
 };
@@ -119,7 +119,7 @@ struct YR_ATOMS_CONFIG
 int yr_atoms_extract_from_re(
     YR_ATOMS_CONFIG* config,
     RE_AST* re_ast,
-    int flags,
+    YR_MODIFIER modifier,
     YR_ATOM_LIST_ITEM** atoms,
     int* min_atom_quality);
 
@@ -128,7 +128,7 @@ int yr_atoms_extract_from_string(
     YR_ATOMS_CONFIG* config,
     uint8_t* string,
     int string_length,
-    int flags,
+    YR_MODIFIER modifier,
     YR_ATOM_LIST_ITEM** atoms,
     int* min_atom_quality);
 

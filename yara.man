@@ -78,7 +78,10 @@ Print length of strings found in the file.
 Print the tags associated to the rule.
 .TP
 .B \-r " --recursive"
-Scan files in directories recursively.
+Scan files in directories recursively. It follows symlinks.
+.TP
+.BI "    --scan-list"
+Scan files listed in FILE, one per line.
 .TP
 .BI \-k " slots" " --stack-size=" slots
 Set maximum stack size to the specified number of

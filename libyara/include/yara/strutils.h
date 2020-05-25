@@ -37,10 +37,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/integers.h>
 
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32)
 
 #if !defined(PRIu64)
 #define PRIu64 "I64u"
+#endif
+
+#if !defined(PRIu32)
+#define PRIu32 "I32u"
 #endif
 
 #if !defined(PRIx64)
@@ -49,6 +53,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if !defined(PRId64)
 #define PRId64 "I64d"
+#endif
+
+#if !defined (PRIi32)
+#define PRIi32 "I32i"
 #endif
 
 #else

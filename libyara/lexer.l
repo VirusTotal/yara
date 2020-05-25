@@ -179,6 +179,8 @@ octdigit      [0-7]
 "ascii"                 { return _ASCII_;       }
 "wide"                  { return _WIDE_;        }
 "xor"                   { return _XOR_;         }
+"base64"                { return _BASE64_;      }
+"base64wide"            { return _BASE64_WIDE_; }
 "fullword"              { return _FULLWORD_;    }
 "nocase"                { return _NOCASE_;      }
 "condition"             { return _CONDITION_;   }
@@ -274,10 +276,15 @@ include[ \t]+\"         {
       }
     }
 
+    YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
+        compiler->arena,
+        YR_NAMESPACES_TABLE,
+        compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
+
     included_rules = compiler->include_callback(
         include_path,
         current_file_name,
-        compiler->current_namespace->name,
+        ns->name,
         compiler->incl_clbk_user_data);
 
     if (included_rules != NULL)
@@ -704,7 +711,7 @@ u?int(8|16|32)(be)? {
 }
 
 
-\{(({hexdigit}|[ \-|\?\[\]\(\)\n\r\t]|\/\*[^*]*\*+([^*/][^*]*\*+)*\/)+|\/\/.*)+\}  {
+\{(({hexdigit}|[ \-|\?\[\]\(\)\n\r\t]|\/\*(\/|\**[^*/])*\*+\/)+|\/\/.*)+\}  {
   // Match hex-digits with whitespace or comments. The latter are stripped
   // out by hex_lexer.l
   // TODO(vmalvarez): Integrate the hex string lexer and parser into this one,
@@ -761,10 +768,19 @@ void yywarning(
 
   vsnprintf(message, sizeof(message), message_fmt, message_args);
 
+  YR_RULE* current_rule = NULL;
+
+  if (compiler->current_rule_idx != UINT32_MAX)
+    current_rule = yr_arena_get_ptr(
+        compiler->arena,
+        YR_RULES_TABLE,
+        compiler->current_rule_idx * sizeof(YR_RULE));
+
   compiler->callback(
       YARA_ERROR_LEVEL_WARNING,
       file_name,
       compiler->current_line ? compiler->current_line : yyget_lineno(yyscanner),
+      current_rule,
       message,
       compiler->user_data);
 
@@ -815,6 +831,14 @@ void yyerror(
     file_name = NULL;
   }
 
+  YR_RULE* current_rule = NULL;
+
+  if (compiler->current_rule_idx != UINT32_MAX)
+    current_rule = yr_arena_get_ptr(
+        compiler->arena,
+        YR_RULES_TABLE,
+        compiler->current_rule_idx * sizeof(YR_RULE));
+
   if (error_message != NULL)
   {
     yr_compiler_set_error_extra_info(compiler, error_message);
@@ -826,6 +850,7 @@ void yyerror(
           YARA_ERROR_LEVEL_ERROR,
           file_name,
           compiler->last_error_line,
+          current_rule,
           error_message,
           compiler->user_data);
     }
@@ -835,11 +860,12 @@ void yyerror(
     yr_compiler_get_error_message(compiler, message, sizeof(message));
 
     compiler->callback(
-      YARA_ERROR_LEVEL_ERROR,
-      file_name,
-      compiler->last_error_line,
-      message,
-      compiler->user_data);
+        YARA_ERROR_LEVEL_ERROR,
+        file_name,
+        compiler->last_error_line,
+        current_rule,
+        message,
+        compiler->user_data);
   }
 }
 
@@ -956,6 +982,7 @@ int yr_lex_parse_rules_fd(
 
   yyset_extra(compiler, yyscanner);
   yy_scan_bytes((const char*) buffer, (int) file_size, yyscanner);
+  yyset_lineno(1, yyscanner);
   yyparse(yyscanner, compiler);
   yylex_destroy(yyscanner);
 

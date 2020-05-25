@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // yr_bitmask_find_non_colliding_offset
 //
 // Finds the smaller offset within bitmask A where bitmask B can be accommodated
-// without bit collisions. A collision occurs when bots bitmasks have a bit set
+// without bit collisions. A collision occurs when both bitmasks have a bit set
 // to 1 at the same offset. This function assumes that the first bit in B is 1
 // and do optimizations that rely on that.
 //
@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // a value that is used for speeding-up subsequent searches over the same
 // bitmask A. When called for the first time with some bitmask A, the pointer
 // must point to a zero-initialized uint32_t. In the next call the function uses
-// the previously stored value for skiping over a portion of the A bitmask and
+// the previously stored value for skipping over a portion of the A bitmask and
 // updates the value.
 //
 // Args:
@@ -71,7 +71,7 @@ uint32_t yr_bitmask_find_non_colliding_offset(
 
   // Ensure that the first bit of bitmask B is set, as this function does some
   // optimizations that rely on that.
-  assert(yr_bitmask_isset(b, 0));
+  assert(yr_bitmask_is_set(b, 0));
 
   // Skip all slots that are filled with 1s. It's safe to do that because the
   // first bit of B is 1, so we won't be able to accommodate B at any offset

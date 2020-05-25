@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/globals.h>
 #include <yara/scan.h>
 #include <yara/scanner.h>
+#include <yara/compiler.h>
 
 
 YR_API int yr_rules_define_integer_variable(
@@ -172,29 +173,6 @@ YR_API int yr_rules_define_string_variable(
 
   return ERROR_INVALID_ARGUMENT;
 }
-
-
-#ifdef PROFILING_ENABLED
-void yr_rules_print_profiling_info(
-    YR_RULES* rules)
-{
-  YR_RULE* rule;
-
-  printf("\n===== PROFILING INFORMATION =====\n\n");
-
-  yr_rules_foreach(rules, rule)
-  {
-    printf(
-        "%s:%s: %" PRIu64 " (%0.3f%%)\n",
-        rule->ns->name,
-        rule->identifier,
-        rule->time_cost,
-        (float) rule->time_cost / rules->time_cost * 100);
-  }
-
-  printf("\n=================================\n");
-}
-#endif
 
 
 YR_API int yr_rules_scan_mem_blocks(
@@ -365,39 +343,72 @@ YR_API int yr_rules_scan_proc(
 }
 
 
-YR_API int yr_rules_load_stream(
-    YR_STREAM* stream,
+int yr_rules_from_arena(
+    YR_ARENA* arena,
     YR_RULES** rules)
 {
-  YARA_RULES_FILE_HEADER* header;
   YR_RULES* new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
 
   if (new_rules == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_arena_load_stream(stream, &new_rules->arena),
-      // cleanup
-      yr_free(new_rules));
+  YR_SUMMARY* summary = (YR_SUMMARY*) yr_arena_get_ptr(
+      arena, YR_SUMMARY_SECTION, 0);
 
-  header = (YARA_RULES_FILE_HEADER*)
-      yr_arena_base_address(new_rules->arena);
+  // Now YR_RULES relies on this arena, let's increment the arena's
+  // reference count so that if the original owner of the arena calls
+  // yr_arena_destroy the arena is not destroyed.
+  yr_arena_acquire(arena);
 
-  new_rules->code_start = header->code_start;
-  new_rules->externals_list_head = header->externals_list_head;
-  new_rules->rules_list_head = header->rules_list_head;
-  new_rules->ac_match_table = header->ac_match_table;
-  new_rules->ac_transition_table = header->ac_transition_table;
-  new_rules->ac_tables_size = header->ac_tables_size;
+  new_rules->arena = arena;
+  new_rules->num_rules = summary->num_rules;
+  new_rules->num_strings = summary->num_strings;
+  new_rules->num_namespaces = summary->num_namespaces;
 
-  memset(new_rules->tidx_mask, 0, sizeof(new_rules->tidx_mask));
+  new_rules->rules_list_head = yr_arena_get_ptr(
+      arena, YR_RULES_TABLE, 0);
 
-  FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_mutex_create(&new_rules->mutex),
-      // cleanup
-      yr_free(new_rules));
+  new_rules->strings_list_head = yr_arena_get_ptr(
+      arena, YR_STRINGS_TABLE, 0);
+
+  new_rules->externals_list_head = yr_arena_get_ptr(
+      arena, YR_EXTERNAL_VARIABLES_TABLE, 0);
+
+  new_rules->ac_transition_table = yr_arena_get_ptr(
+      arena, YR_AC_TRANSITION_TABLE, 0);
+
+  new_rules->ac_match_table = yr_arena_get_ptr(
+      arena, YR_AC_STATE_MATCHES_TABLE, 0);
+
+  new_rules->ac_match_pool = yr_arena_get_ptr(
+      arena, YR_AC_STATE_MATCHES_POOL, 0);
+
+  new_rules->code_start = yr_arena_get_ptr(
+      arena, YR_CODE_SECTION, 0);
 
   *rules = new_rules;
+
+  return ERROR_SUCCESS;
+}
+
+
+
+YR_API int yr_rules_load_stream(
+    YR_STREAM* stream,
+    YR_RULES** rules)
+{
+  YR_ARENA* arena;
+
+  // Load the arena's data the stream. We are the owners of the arena.
+  FAIL_ON_ERROR(yr_arena_load_stream(stream, &arena));
+
+  // Create the YR_RULES object from the arena, this makes YR_RULES owner
+  // of the arena too.
+  FAIL_ON_ERROR(yr_rules_from_arena(arena, rules));
+
+  // Release our ownership so that YR_RULES is the single owner. This way the
+  // arena is destroyed when YR_RULES is destroyed.
+  yr_arena_release(arena);
 
   return ERROR_SUCCESS;
 }
@@ -429,11 +440,6 @@ YR_API int yr_rules_save_stream(
     YR_RULES* rules,
     YR_STREAM* stream)
 {
-  int i;
-
-  for (i = 0; i < YR_BITARRAY_NCHARS(YR_MAX_THREADS); ++i)
-    assert(rules->tidx_mask[i] == 0);
-
   return yr_arena_save_stream(rules->arena, stream);
 }
 
@@ -471,40 +477,37 @@ YR_API int yr_rules_get_stats(
     YR_RULES* rules,
     YR_RULES_STATS *stats)
 {
-  YR_RULE* rule;
-  YR_STRING* string;
+  memset(stats, 0, sizeof(YR_RULES_STATS));
+
+  stats->ac_tables_size = yr_arena_get_current_offset(
+      rules->arena, YR_AC_TRANSITION_TABLE) / sizeof(YR_AC_TRANSITION);
 
   uint32_t* match_list_lengths = (uint32_t*) yr_malloc(
-      sizeof(uint32_t) * rules->ac_tables_size);
-
-  float match_list_length_sum = 0;
-  int i, c = 0;
+      sizeof(uint32_t) * stats->ac_tables_size);
 
   if (match_list_lengths == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  memset(stats, 0, sizeof(YR_RULES_STATS));
+  stats->num_rules = rules->num_rules;
+  stats->num_strings = rules->num_strings;
 
-  yr_rules_foreach(rules, rule)
+  float match_list_length_sum = 0;
+  int c = 0;
+
+  for (int i = 0; i < stats->ac_tables_size; i++)
   {
-    stats->rules++;
-    yr_rule_strings_foreach(rule, string)
-      stats->strings++;
-  }
-
-  stats->ac_tables_size = rules->ac_tables_size;
-
-  for (i = 0; i < rules->ac_tables_size; i++)
-  {
-    YR_AC_MATCH* match = rules->ac_match_table[i].match;
-
     int match_list_length = 0;
 
-    while (match != NULL)
+    if (rules->ac_match_table[i] != 0)
     {
-      match_list_length++;
-      stats->ac_matches++;
-      match = match->next;
+      YR_AC_MATCH *m = &rules->ac_match_pool[rules->ac_match_table[i]-1];
+
+      while (m != NULL)
+      {
+        match_list_length++;
+        stats->ac_matches++;
+        m = m->next;
+      }
     }
 
     if (i == 0)
@@ -528,7 +531,7 @@ YR_API int yr_rules_get_stats(
   // sort match_list_lengths in increasing order for computing percentiles.
   qsort(match_list_lengths, c, sizeof(match_list_lengths[0]), _uint32_cmp);
 
-  for (i = 0; i < 100; i++)
+  for (int i = 0; i < 100; i++)
   {
     if (i < c)
       stats->top_ac_match_list_lengths[i] = match_list_lengths[c-i-1];
@@ -540,7 +543,7 @@ YR_API int yr_rules_get_stats(
   stats->ac_match_list_length_pctls[0] = match_list_lengths[0];
   stats->ac_match_list_length_pctls[100] = match_list_lengths[c-1];
 
-  for (i = 1; i < 100; i++)
+  for (int i = 1; i < 100; i++)
     stats->ac_match_list_length_pctls[i] = match_list_lengths[(c * i) / 100];
 
   yr_free(match_list_lengths);
@@ -562,8 +565,7 @@ YR_API int yr_rules_destroy(
     external++;
   }
 
-  yr_mutex_destroy(&rules->mutex);
-  yr_arena_destroy(rules->arena);
+  yr_arena_release(rules->arena);
   yr_free(rules);
 
   return ERROR_SUCCESS;
@@ -574,11 +576,11 @@ YR_API void yr_rule_disable(
 {
   YR_STRING* string;
 
-  rule->g_flags |= RULE_GFLAGS_DISABLED;
+  rule->flags |= RULE_FLAGS_DISABLED;
 
   yr_rule_strings_foreach(rule, string)
   {
-    string->g_flags |= STRING_GFLAGS_DISABLED;
+    string->flags |= STRING_FLAGS_DISABLED;
   }
 }
 
@@ -588,10 +590,10 @@ YR_API void yr_rule_enable(
 {
   YR_STRING* string;
 
-  rule->g_flags &= ~RULE_GFLAGS_DISABLED;
+  rule->flags &= ~RULE_FLAGS_DISABLED;
 
   yr_rule_strings_foreach(rule, string)
   {
-    string->g_flags &= ~STRING_GFLAGS_DISABLED;
+    string->flags &= ~STRING_FLAGS_DISABLED;
   }
 }

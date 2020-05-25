@@ -231,4 +231,5 @@ int main(int argc, char** argv)
       ELF_x64_FILE);
 
   yr_finalize();
+  return 0;
 }

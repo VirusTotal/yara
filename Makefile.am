@@ -1,4 +1,4 @@
-AM_CFLAGS=-std=gnu99 -Wall -I$(srcdir)/libyara/include
+AM_CFLAGS=-Wall -I$(srcdir)/libyara/include
 
 if DEBUG
 AM_CFLAGS+=-g
@@ -29,6 +29,8 @@ yarac_SOURCES = args.c args.h common.h yarac.c
 yarac_LDADD = -Llibyara/.libs -lyara
 
 test_alignment_SOURCES = tests/test-alignment.c
+test_arena_SOURCES = tests/test-arena.c
+test_arena_LDADD = libyara/.libs/libyara.a
 test_atoms_SOURCES = tests/test-atoms.c tests/util.c libyara/atoms.c
 test_atoms_LDADD = libyara/.libs/libyara.a
 test_rules_SOURCES = tests/test-rules.c tests/util.c
@@ -46,11 +48,15 @@ test_math_SOURCES = tests/test-math.c tests/util.c
 test_math_LDADD = libyara/.libs/libyara.a
 test_stack_SOURCES = tests/test-stack.c
 test_stack_LDADD = libyara/.libs/libyara.a
+test_re_split_SOURCES = tests/test-re-split.c
+test_re_split_LDADD = libyara/.libs/libyara.a
 
 TESTS = $(check_PROGRAMS)
 TESTS_ENVIRONMENT = TOP_SRCDIR=$(top_srcdir)
 
-check_PROGRAMS = test-alignment \
+check_PROGRAMS = \
+  test-arena \
+  test-alignment \
   test-atoms \
   test-api \
   test-rules \
@@ -59,7 +65,8 @@ check_PROGRAMS = test-alignment \
   test-version \
   test-bitmask \
   test-math \
-  test-stack
+  test-stack \
+  test-re-split
 
 if POSIX
 # The -fsanitize=address option makes test-exception fail. Include the test
@@ -81,6 +88,18 @@ if DEX_MODULE
 check_PROGRAMS+=test-dex
 test_dex_SOURCES = tests/test-dex.c tests/util.c
 test_dex_LDADD = libyara/.libs/libyara.a
+endif
+
+if DOTNET_MODULE
+check_PROGRAMS+=test-dotnet
+test_dotnet_SOURCES = tests/test-dotnet.c tests/util.c
+test_dotnet_LDADD = libyara/.libs/libyara.a
+endif
+
+if PB_TESTS_MODULE
+check_PROGRAMS+=test-pb
+test_pb_SOURCES = tests/test-pb.c tests/util.c
+test_pb_LDADD = libyara/.libs/libyara.a
 endif
 
 # man pages

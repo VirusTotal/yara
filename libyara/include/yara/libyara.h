@@ -32,9 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/utils.h>
 
-#define YR_MAJOR_VERSION   3
-#define YR_MINOR_VERSION   10
-#define YR_MICRO_VERSION   0
+#define YR_MAJOR_VERSION   4
+#define YR_MINOR_VERSION   0
+#define YR_MICRO_VERSION   1
 
 #define version_str(s) _version_str(s)
 #define _version_str(s) #s
@@ -69,21 +69,9 @@ typedef enum _YR_CONFIG_NAME
 
 YR_API int yr_initialize(void);
 
-
 YR_API int yr_finalize(void);
 
-
-YR_DEPRECATED_API void yr_finalize_thread(void);
-
-
-YR_API int yr_get_tidx(void);
-
-
-YR_API void yr_set_tidx(int);
-
-
 YR_API int yr_set_configuration(YR_CONFIG_NAME, void*);
-
 
 YR_API int yr_get_configuration(YR_CONFIG_NAME, void*);
 

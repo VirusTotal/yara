@@ -35,6 +35,8 @@ int main(int argc, char** argv)
     macho.segments[0].vmsize == 0x1000 and \
     macho.segments[2].nsects == 2 and \
     macho.segments[3].fsize == 0x118 }", MACHO_X86_FILE);
+  assert_true_rule_file("import \"macho\" rule test { condition: \
+    macho.number_of_segments == 1 }", "tests/data/tiny-macho");
 
   // Sections
 
@@ -194,4 +196,5 @@ int main(int argc, char** argv)
     "tests/data/tiny-universal");
 
   yr_finalize();
+  return 0;
 }

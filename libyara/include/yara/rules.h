@@ -53,20 +53,37 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define yr_rule_metas_foreach(rule, meta) \
-    for (meta = rule->metas; !META_IS_NULL(meta); meta++)
+    for (meta = rule->metas; \
+         meta != NULL; \
+         meta = META_IS_LAST_IN_RULE(meta) ? NULL : meta + 1)
 
 
 #define yr_rule_strings_foreach(rule, string) \
-    for (string = rule->strings; !STRING_IS_NULL(string); string++)
+    for (string = rule->strings; \
+         string != NULL; \
+         string = STRING_IS_LAST_IN_RULE(string) ? NULL : string + 1)
 
 
-#define yr_string_matches_foreach(string, match) \
-    for (match = STRING_MATCHES(string).head; match != NULL; match = match->next)
+#define yr_string_matches_foreach(context, string, match) \
+    for (match = context->matches[string->idx].head; \
+         match != NULL; \
+         match = match->next) \
+      /* private matches are skipped */ \
+      if (match->is_private) { continue; } \
+      else /* user code block goes here */
 
 
 #define yr_rules_foreach(rules, rule) \
     for (rule = rules->rules_list_head; !RULE_IS_NULL(rule); rule++)
 
+
+YR_API int yr_rules_scan_mem_blocks(
+    YR_RULES* rules,
+    YR_MEMORY_BLOCK_ITERATOR* iterator,
+    int flags,
+    YR_CALLBACK_FUNC callback,
+    void* user_data,
+    int timeout);
 
 
 YR_API int yr_rules_scan_mem(
@@ -154,10 +171,6 @@ YR_API int yr_rules_define_string_variable(
     const char* value);
 
 
-YR_API void yr_rules_print_profiling_info(
-    YR_RULES* rules);
-
-
 YR_API int yr_rules_get_stats(
     YR_RULES* rules,
     YR_RULES_STATS *stats);
@@ -169,5 +182,10 @@ YR_API void yr_rule_disable(
 
 YR_API void yr_rule_enable(
     YR_RULE* rule);
+
+
+int yr_rules_from_arena(
+    YR_ARENA* arena,
+    YR_RULES** rules);
 
 #endif

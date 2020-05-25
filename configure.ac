@@ -1,4 +1,4 @@
-AC_INIT([yara], [3.10.0], [vmalvarez@virustotal.com])
+AC_INIT([yara], [4.0.1], [vmalvarez@virustotal.com])
 
 AM_SILENT_RULES([yes])
 AC_CONFIG_SRCDIR([yara.c])
@@ -10,19 +10,30 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 
 # AC_PROG_CC sets CFLAGS to "-g -O2" if it wasn't previously set. Let's set
-# an empty CFLAGS
+# an empty CFLAGS.
 : ${CFLAGS=""}
 
 no_std_allocator="-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free"
 
 # automake 1.12 seems to require AM_PROG_AR, but automake 1.11 doesn't
-# recognize it
+# recognize it.
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 AC_PROG_CC
+AC_PROG_CC_C99
 AM_PROG_CC_C_O
 AM_PROG_LEX
 AC_PROG_YACC
+
+# If the C compiler supports the keyword inline, do nothing. Otherwise define
+# inline to __inline__ or __inline if it accepts one of those, otherwise define
+# inline to be empty.
+AC_C_INLINE
+
+# Defines WORDS_BIGENDIAN if building in a big-endian host.
+AC_C_BIGENDIAN
+
+# Arrange for 64-bit file offsets.
 AC_SYS_LARGEFILE
 
 LT_INIT
@@ -56,6 +67,7 @@ case $host_os in
             jemalloc_prefix= ;;
     openbsd*)
             CFLAGS="$CFLAGS -DUSE_OPENBSD_PROC"
+            CFLAGS="$CFLAGS -I/usr/local/include -L/usr/local/lib"
             posix=true
             proc_interface=openbsd
             jemalloc_prefix= ;;
@@ -65,8 +77,6 @@ case $host_os in
             jemalloc_prefix= ;;
 esac
 
-AC_C_BIGENDIAN
-
 ACX_PTHREAD(
     [LIBS="$PTHREAD_LIBS $LIBS"
      CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
@@ -75,7 +85,8 @@ ACX_PTHREAD(
 
 AC_CHECK_LIB(m, isnan)
 AC_CHECK_LIB(m, log2)
-AC_CHECK_FUNCS([strlcpy strlcat memmem timegm _mkgmtime])
+AC_CHECK_FUNCS([strlcpy strlcat memmem timegm _mkgmtime clock_gettime])
+AC_CHECK_HEADERS([stdbool.h])
 
 AC_ARG_ENABLE([debug],
   [AS_HELP_STRING([--enable-debug], [compiles with -g option])],
@@ -100,7 +111,7 @@ AC_ARG_ENABLE([profiling],
   [AS_HELP_STRING([--enable-profiling], [enable rules profiling support])],
   [if test x$enableval = xyes; then
     profiling_enabled=true
-    CFLAGS="$CFLAGS -DPROFILING_ENABLED"
+    CFLAGS="$CFLAGS -DYR_PROFILING_ENABLED"
   fi])
 
 AC_ARG_ENABLE([cuckoo],
@@ -155,6 +166,23 @@ AC_ARG_ENABLE([debug-dex],
     CFLAGS="$CFLAGS -DDEBUG_DEX_MODULE"
   fi])
 
+AC_ARG_ENABLE([pb-tests],
+  [AS_HELP_STRING([--enable-pb-tests], [enable protobuf test module])],
+  [if test x$enableval = xyes; then
+    build_pb_tests_module=true
+    AC_CHECK_PROG(PROTOC, protoc, protoc)
+    AS_IF([test "x${PROTOC}" == "x"],
+        [AC_MSG_ERROR([protobuf compiler "protoc" not found])])
+    # AC_CHECK_PROG(PROTOC_GEN_YARA, protoc-gen-yara, protoc-gen-yara)
+    # AS_IF([test "x${PROTOC_GEN_YARA}" == "x"],
+    #    [AC_MSG_ERROR([please install https://github.com/VirusTotal/protoc-gen-yara])])
+    PKG_CHECK_MODULES(PROTOBUF_C, libprotobuf-c >= 1.0.0)
+    AC_CHECK_LIB(protobuf-c, protobuf_c_message_unpack,,
+      AC_MSG_ERROR([please install libprotobuf-c library]))
+    CFLAGS="$CFLAGS -DPB_TESTS_MODULE"
+    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libprotobuf-c"
+  fi])
+
 AC_ARG_WITH([jemalloc],
   [AS_HELP_STRING([--with-jemalloc],
     [use jemalloc to debug heap-related issues])],
@@ -162,7 +190,7 @@ AC_ARG_WITH([jemalloc],
     mallctl=mallctl
     malloc_stats_print=malloc_stats_print
     AC_CHECK_LIB(jemalloc, $jemalloc_prefix$mallctl,,
-        AC_MSG_ERROR([please install jemalloc library]))
+      AC_MSG_ERROR([please install jemalloc library]))
     CFLAGS="$CFLAGS -DJEMALLOC -Dmallctl=$jemalloc_prefix$mallctl -Dmalloc_stats_print=$jemalloc_prefix$malloc_stats_print $no_std_allocator"
   fi])
 
@@ -270,10 +298,10 @@ AS_IF([test "x$have_crypto" = "xno"],
     PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libcrypto"
   ])
 
-AC_CHECK_HEADERS([stdbool.h])
 
-AC_CHECK_FUNCS([clock_gettime],,)
 
+AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
+AM_CONDITIONAL([PROTOC], [test "x${PROTOC}" != "x"])
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
 AM_CONDITIONAL([POSIX], [test x$posix = xtrue])
 AM_CONDITIONAL([PROFILING_ENABLED], [test x$profiling_enabled = xtrue])
@@ -284,7 +312,7 @@ AM_CONDITIONAL([MAGIC_MODULE], [test x$build_magic_module = xtrue])
 AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
 AM_CONDITIONAL([DOTNET_MODULE], [test x$build_dotnet_module = xtrue])
 AM_CONDITIONAL([MACHO_MODULE], [test x$build_macho_module = xtrue])
-AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
+AM_CONDITIONAL([PB_TESTS_MODULE], [test x$build_pb_tests_module = xtrue])
 AM_CONDITIONAL([DEX_MODULE], [test x$build_dex_module = xtrue])
 AM_CONDITIONAL([DEBUG_DEX_MODULE], [test x$debug_dex_module = xtrue])
 

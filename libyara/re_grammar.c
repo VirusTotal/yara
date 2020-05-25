@@ -1667,10 +1667,10 @@ yyreduce:
     {
         (yyval.re_node) = yr_re_node_create(RE_NODE_ANY);
 
+        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
+
         (yyval.re_node)->value = 0x00;
         (yyval.re_node)->mask = 0x00;
-
-        fail_if((yyval.re_node) == NULL, ERROR_INSUFFICIENT_MEMORY);
       }
 #line 1676 "re_grammar.c" /* yacc.c:1663  */
     break;

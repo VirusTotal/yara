@@ -36,62 +36,72 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/rules.h>
 
 
-#define LOOP_LOCAL_VARS      5
-
-#define UNDEFINED           0xFFFABADAFABADAFFLL
-#define IS_UNDEFINED(x)     ((size_t)(x) == (size_t) UNDEFINED)
+#define YR_UNDEFINED           0xFFFABADAFABADAFFLL
+#define IS_UNDEFINED(x)     ((size_t)(x) == (size_t) YR_UNDEFINED)
 
 #define OP_ERROR          0
 #define OP_HALT           255
 #define OP_NOP            254
 
-#define OP_AND            1
-#define OP_OR             2
-#define OP_NOT            3
-#define OP_BITWISE_NOT    4
-#define OP_BITWISE_AND    5
-#define OP_BITWISE_OR     6
-#define OP_BITWISE_XOR    7
-#define OP_SHL            8
-#define OP_SHR            9
-#define OP_MOD            10
-#define OP_INT_TO_DBL     11
-#define OP_STR_TO_BOOL    12
-#define OP_PUSH           13
-#define OP_POP            14
-#define OP_CALL           15
-#define OP_OBJ_LOAD       16
-#define OP_OBJ_VALUE      17
-#define OP_OBJ_FIELD      18
-#define OP_INDEX_ARRAY    19
-#define OP_COUNT          20
-#define OP_LENGTH         21
-#define OP_FOUND          22
-#define OP_FOUND_AT       23
-#define OP_FOUND_IN       24
-#define OP_OFFSET         25
-#define OP_OF             26
-#define OP_PUSH_RULE      27
-#define OP_INIT_RULE      28
-#define OP_MATCH_RULE     29
-#define OP_INCR_M         30
-#define OP_CLEAR_M        31
-#define OP_ADD_M          32
-#define OP_POP_M          33
-#define OP_PUSH_M         34
-#define OP_SET_M          35
-#define OP_SWAPUNDEF      36
-#define OP_FILESIZE       37
-#define OP_ENTRYPOINT     38
-#define OP_CONTAINS       39
-#define OP_MATCHES        40
-#define OP_IMPORT         41
-#define OP_LOOKUP_DICT    42
-#define OP_JNUNDEF        43
-#define OP_JFALSE         44
-#define OP_JTRUE          45
-#define OP_JLE_P          46
-#define OP_JFALSE_P       47
+#define OP_AND                     1
+#define OP_OR                      2
+#define OP_NOT                     3
+#define OP_BITWISE_NOT             4
+#define OP_BITWISE_AND             5
+#define OP_BITWISE_OR              6
+#define OP_BITWISE_XOR             7
+#define OP_SHL                     8
+#define OP_SHR                     9
+#define OP_MOD                     10
+#define OP_INT_TO_DBL              11
+#define OP_STR_TO_BOOL             12
+#define OP_PUSH                    13
+#define OP_POP                     14
+#define OP_CALL                    15
+#define OP_OBJ_LOAD                16
+#define OP_OBJ_VALUE               17
+#define OP_OBJ_FIELD               18
+#define OP_INDEX_ARRAY             19
+#define OP_COUNT                   20
+#define OP_LENGTH                  21
+#define OP_FOUND                   22
+#define OP_FOUND_AT                23
+#define OP_FOUND_IN                24
+#define OP_OFFSET                  25
+#define OP_OF                      26
+#define OP_PUSH_RULE               27
+#define OP_INIT_RULE               28
+#define OP_MATCH_RULE              29
+#define OP_INCR_M                  30
+#define OP_CLEAR_M                 31
+#define OP_ADD_M                   32
+#define OP_POP_M                   33
+#define OP_PUSH_M                  34
+#define OP_SET_M                   35
+#define OP_SWAPUNDEF               36
+#define OP_FILESIZE                37
+#define OP_ENTRYPOINT              38
+#define OP_CONTAINS                39
+#define OP_MATCHES                 40
+#define OP_IMPORT                  41
+#define OP_LOOKUP_DICT             42
+#define OP_JUNDEF                  43   # Not used
+#define OP_JUNDEF_P                44
+#define OP_JNUNDEF                 45
+#define OP_JNUNDEF_P               46   # Not used
+#define OP_JFALSE                  47
+#define OP_JFALSE_P                48
+#define OP_JTRUE                   49
+#define OP_JTRUE_P                 50
+#define OP_JL_P                    51
+#define OP_JLE_P                   52
+#define OP_ITER_NEXT               53
+#define OP_ITER_START_ARRAY        54
+#define OP_ITER_START_DICT         55
+#define OP_ITER_START_INT_RANGE    56
+#define OP_ITER_START_INT_ENUM     57
+#define OP_JZ                      58
+#define OP_JZ_P                    59
 
 
 #define _OP_EQ            0
@@ -164,7 +174,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define OPERATION(operator, op1, op2) \
-    (IS_UNDEFINED(op1) || IS_UNDEFINED(op2)) ? (UNDEFINED) : (op1 operator op2)
+    (IS_UNDEFINED(op1) || IS_UNDEFINED(op2)) ? (YR_UNDEFINED) : (op1 operator op2)
 
 
 #define COMPARISON(operator, op1, op2) \

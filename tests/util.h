@@ -30,21 +30,31 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#include <yara.h>
+
 extern char compile_error[1024];
 extern int warnings;
+
+struct COUNTERS
+{
+  int rules_matching;
+  int rules_not_matching;
+};
 
 int compile_rule(
     char* string,
     YR_RULES** rules);
 
 
-int count_matches(
+int count(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data);
 
 
 int do_nothing(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data);
@@ -53,7 +63,9 @@ int do_nothing(
 int matches_blob(
     char* rule,
     uint8_t* blob,
-    size_t len);
+    size_t blob_size,
+    uint8_t* module_data,
+    size_t module_data_size);
 
 
 int matches_string(
@@ -111,17 +123,20 @@ void assert_hex_atoms(
     }                                                                   \
   } while (0);
 
+
 #define assert_true_rule_blob_size(rule, blob, size)                    \
   do {                                                                  \
-    if (!matches_blob(rule, (uint8_t*) (blob), size)) {                 \
+    if (!matches_blob(rule, (uint8_t*) (blob), size, NULL, 0)) {        \
       fprintf(stderr, "%s:%d: rule does not match (but should)\n",      \
               __FILE__, __LINE__ );                                     \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
   } while (0);
 
-#define assert_true_rule_blob(rule, blob)               \
+
+#define assert_true_rule_blob(rule, blob)                               \
   assert_true_rule_blob_size(rule, blob, sizeof(blob))
+
 
 #define assert_true_rule_file(rule, filename)                           \
   do {                                                                  \
@@ -132,7 +147,7 @@ void assert_hex_atoms(
               __FILE__, __LINE__, filename);                            \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
-    if (!matches_blob(rule, (uint8_t*) (buf), sz)) {                    \
+    if (!matches_blob(rule, (uint8_t*) (buf), sz, NULL, 0)) {           \
       fprintf(stderr, "%s:%d: rule does not match contents of"          \
               "'%s' (but should)\n",                                    \
               __FILE__, __LINE__, filename);                            \
@@ -140,6 +155,7 @@ void assert_hex_atoms(
     }                                                                   \
     free(buf);                                                          \
   } while (0);
+
 
 #define assert_false_rule(rule, string)                                 \
   do {                                                                  \
@@ -150,17 +166,38 @@ void assert_hex_atoms(
     }                                                                   \
   } while (0);
 
+
 #define assert_false_rule_blob_size(rule, blob, size)                   \
   do {                                                                  \
-    if (matches_blob(rule, (uint8_t*) (blob), size)) {                  \
+    if (matches_blob(rule, (uint8_t*) (blob), size, NULL, 0)) {         \
       fprintf(stderr, "%s:%d: rule matches (but shouldn't)\n",          \
               __FILE__, __LINE__ );                                     \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
   } while (0);
 
-#define assert_false_rule_blob(rule, blob)              \
+
+#define assert_false_rule_blob(rule, blob)                              \
   assert_false_rule_blob_size(rule, blob, sizeof(blob))
+
+
+#define assert_true_rule_module_data_file(rule, filename)               \
+  do {                                                                  \
+    char* buf;                                                          \
+    size_t sz;                                                          \
+    if ((sz = read_file(filename, &buf)) == -1) {                       \
+      fprintf(stderr, "%s:%d: cannot read file '%s'\n",                 \
+              __FILE__, __LINE__, filename);                            \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+    if (!matches_blob(rule, NULL, 0, (uint8_t*) buf, sz)) {             \
+      fprintf(stderr, "%s:%d: rule does not matches (but should)\n",    \
+              __FILE__, __LINE__);                                      \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+    free(buf);                                                          \
+  } while (0);
+
 
 #define assert_false_rule_file(rule, filename)                          \
   do {                                                                  \
@@ -171,7 +208,7 @@ void assert_hex_atoms(
               __FILE__, __LINE__, filename);                            \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
-    if (matches_blob(rule, (uint8_t*) (buf), sz)) {                     \
+    if (matches_blob(rule, (uint8_t*) (buf), sz, NULL, 0)) {            \
       fprintf(stderr, "%s:%d: rule matches contents of"                 \
               "'%s' (but shouldn't)\n",                                 \
               __FILE__, __LINE__, filename);                            \
@@ -243,9 +280,11 @@ void assert_hex_atoms(
     }                                                                   \
   } while (0);
 
+
 #define assert_false_regexp(regexp,string)                              \
   assert_false_rule("rule test { strings: $a = /" regexp                \
                     "/ condition: $a }", string)
+
 
 #define assert_regexp_syntax_error(regexp)                              \
   assert_error("rule test { strings: $a = /" regexp "/ condition: $a }",\

@@ -1,0 +1,126 @@
+# Copyright (c) 2019. The YARA Authors. All Rights Reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+# list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation and/or
+# other materials provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its contributors
+# may be used to endorse or promote products derived from this software without
+# specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+load("@rules_cc//cc:defs.bzl", "cc_proto_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load(
+    "@com_google_sandboxed_api//sandboxed_api/bazel:proto.bzl",
+    "sapi_proto_library",
+)
+load(
+    "@com_google_sandboxed_api//sandboxed_api/bazel:sapi.bzl",
+    "sapi_library",
+)
+
+# Proto message that stores YARA matches. Used to communicate matches from
+# the sandboxee to the host code.
+sapi_proto_library(
+    name = "yara_matches",
+    srcs = ["yara_matches.proto"],
+)
+
+# Library with a callback function to collect YARA matches into a YaraMatches
+# proto
+cc_library(
+    name = "collect_matches",
+    srcs = ["collect_matches.cc"],
+    hdrs = ["collect_matches.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":yara_matches_cc_proto",
+        "//:yara",
+    ],
+)
+
+# The sandboxee side of the YARA sandbox. This implements a dispatch queue
+# shared by multiple worker threads. YARA rules are shared across all threads
+# to keep memory usage down.
+cc_library(
+    name = "yara_entry_points",
+    srcs = ["yara_entry_points.cc"],
+    deps = [
+        ":collect_matches",
+        ":yara_matches_cc_proto",
+        "//:libyara",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/container:node_hash_map",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+    ],
+    alwayslink = 1,
+)
+
+# Sandboxed API for YARA. This is what clients of this library should use. The
+# API is intentionally minimal and may be extended in the future.
+# See the "sandboxed-yara" target for an example on how to use this from code.
+sapi_library(
+    name = "yara_sapi",
+    srcs = ["yara_transaction.cc"],
+    hdrs = ["yara_transaction.h"],
+    embed = True,
+    functions = [
+        "YaraAsyncScanFd",
+        "YaraGetScanResult",
+        "YaraInitWorkers",
+        "YaraLoadRules",
+    ],
+    input_files = ["yara_entry_points.cc"],
+    lib = ":yara_entry_points",
+    lib_name = "Yara",
+    namespace = "yara::sandbox",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":yara_matches_cc_proto",
+        "//:yara_errors",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
+        "@com_google_absl//absl/time",
+        "@com_google_sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+        "@com_google_sandboxed_api//sandboxed_api/util:status",
+    ],
+)
+
+cc_test(
+    name = "yara_transaction_test",
+    srcs = ["yara_transaction_test.cc"],
+    deps = [
+        ":yara_sapi",
+        "@com_google_googletest//:gtest_main",
+        "@com_google_sandboxed_api//sandboxed_api/util:status_matchers",
+    ],
+)
+
+# Sandboxed command-line executable demonstrating how to use the YARA SAPI.
+cc_binary(
+    name = "sandboxed_yara",
+    srcs = ["sandboxed_yara.cc"],
+    deps = [
+        ":yara_sapi",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/strings",
+    ],
+)

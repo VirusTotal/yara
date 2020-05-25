@@ -23,49 +23,55 @@ keywords are reserved and cannot be used as an identifier:
 
 
 .. list-table:: YARA keywords
-   :widths: 10 10 10 10 10 10 10
+   :widths: 10 10 10 10 10 10 10 10
 
    * - all
      - and
      - any
      - ascii
      - at
+     - base64
+     - base64wide
      - condition
-     - contains
-   * - entrypoint
+   * - contains
+     - entrypoint
      - false
      - filesize
-     - fullword
      - for
+     - fullword
      - global
-     - in
-   * - import
+     - import
+   * - in
      - include
-     - int8
      - int16
-     - int32
-     - int8be
      - int16be
-   * - int32be
-     - matches
+     - int32
+     - int32be
+     - int8
+     - int8be
+   * - matches
      - meta
      - nocase
      - not
-     - or
      - of
-   * - private
+     - or
+     - private
      - rule
-     - strings
+   * - strings
      - them
      - true
-     - uint8
      - uint16
-   * - uint32
-     - uint8be
      - uint16be
+     - uint32
      - uint32be
+     - uint8
+   * - uint8be
      - wide
      - xor
+     -
+     -
+     -
+     -
      -
 
 Rules are generally composed of two sections: strings definition and condition.
@@ -300,7 +306,8 @@ of the string definition, in the same line:
     }
 
 With the ``nocase`` modifier the string *foobar* will match *Foobar*, *FOOBAR*,
-and *fOoBaR*. This modifier can be used in conjunction with any other modifier.
+and *fOoBaR*. This modifier can be used in conjunction with any modifier,
+except ``base64`` and ``base64wide``.
 
 Wide-character strings
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -348,11 +355,11 @@ string is assumed to be ASCII by default.
 XOR strings
 ^^^^^^^^^^^
 
-The ``xor`` modifier can be used to search for strings with a single byte xor
+The ``xor`` modifier can be used to search for strings with a single byte XOR
 applied to them.
 
-The following rule will search for every single byte xor applied to the string
-"This program cannot":
+The following rule will search for every single byte XOR applied to the string
+"This program cannot" (including the plaintext string):
 
 .. code-block:: yara
 
@@ -362,7 +369,7 @@ The following rule will search for every single byte xor applied to the string
             $xor_string = "This program cannot" xor
 
         condition:
-           $xor_string
+            $xor_string
     }
 
 The above rule is logically equivalent to:
@@ -375,15 +382,14 @@ The above rule is logically equivalent to:
             $xor_string_00 = "This program cannot"
             $xor_string_01 = "Uihr!qsnfs`l!b`oonu"
             $xor_string_02 = "Vjkq\"rpmepco\"acllmv"
-            // Repeat for every single byte xor
+            // Repeat for every single byte XOR
         condition:
             any of them
     }
 
-You can also combine the ``xor`` modifier with ``wide``, ``ascii`` and
-``nocase`` modifiers. For example, to search for the ``wide`` and ``ascii``
-versions of a string after every single byte xor has been applied you would
-use:
+You can also combine the ``xor`` modifier with ``wide`` and ``ascii``
+modifiers. For example, to search for the ``wide`` and ``ascii`` versions of a
+string after every single byte XOR has been applied you would use:
 
 .. code-block:: yara
 
@@ -396,13 +402,13 @@ use:
     }
 
 The ``xor`` modifier is applied after every other modifier. This means that
-using the ``xor`` and ``wide`` together results in the xor applying to the
+using the ``xor`` and ``wide`` together results in the XOR applying to the
 interleaved zero bytes. For example, the following two rules are logically
 equivalent:
 
 .. code-block:: yara
 
-    rule XorExample3
+    rule XorExample4
     {
         strings:
             $xor_string = "This program cannot" xor wide
@@ -416,10 +422,93 @@ equivalent:
             $xor_string_00 = "T\x00h\x00i\x00s\x00 \x00p\x00r\x00o\x00g\x00r\x00a\x00m\x00 \x00c\x00a\x00n\x00n\x00o\x00t\x00"
             $xor_string_01 = "U\x01i\x01h\x01r\x01!\x01q\x01s\x01n\x01f\x01s\x01`\x01l\x01!\x01b\x01`\x01o\x01o\x01n\x01u\x01"
             $xor_string_02 = "V\x02j\x02k\x02q\x02\"\x02r\x02p\x02m\x02e\x02p\x02c\x02o\x02\"\x02a\x02c\x02l\x02l\x02m\x02v\x02"
-            // Repeat for every single byte xor operation.
+            // Repeat for every single byte XOR operation.
         condition:
             any of them
     }
+
+Since YARA 3.11, if you want more control over the range of bytes used with the ``xor`` modifier use:
+
+.. code-block:: yara
+
+    rule XorExample5
+    {
+        strings:
+            $xor_string = "This program cannot" xor(0x01-0xff)
+        condition:
+            $xor_string
+    }
+
+The above example will apply the bytes from 0x01 to 0xff, inclusively, to the
+string when searching. The general syntax is ``xor(minimum-maximum)``.
+
+Base64 strings
+^^^^^^^^^^^^^^
+
+The ``base64`` modifier can be used to search for strings that have been base64
+encoded. A good explanation of the technique is at:
+
+https://www.leeholmes.com/blog/2019/12/10/searching-for-content-in-base-64-strings-2/
+
+The following rule will search for the three base64 permutations of the string
+"This program cannot":
+
+.. code-block:: yara
+
+    rule Base64Example1
+    {
+        strings:
+            $a = "This program cannot" base64
+
+        condition:
+            $a
+    }
+
+This will cause YARA to search for these three permutations:
+
+| VGhpcyBwcm9ncmFtIGNhbm5vd
+| RoaXMgcHJvZ3JhbSBjYW5ub3
+| UaGlzIHByb2dyYW0gY2Fubm90
+
+The ``base64wide`` modifier works just like the ``base64`` modifier but the results
+of the ``base64`` modifier are converted to wide.
+
+The interaction between ``base64`` (or ``base64wide``) and ``wide`` and
+``ascii`` is as you might expect. ``wide`` and ``ascii`` are applied to the
+string first, and then the ``base64`` and ``base64wide`` modifiers are applied.
+At no point is the plaintext of the ``ascii`` or ``wide`` versions of the
+strings included in the search. If you want to also include those you can put
+them in a secondary string.
+
+The ``base64`` and ``base64wide`` modifiers also support a custom alphabet. For
+example:
+
+.. code-block:: yara
+
+    rule Base64Example2
+    {
+        strings:
+            $a = "This program cannot" base64("!@#$%^&*(){}[].,|ABCDEFGHIJ\x09LMNOPQRSTUVWXYZabcdefghijklmnopqrstu")
+
+        condition:
+            $a
+    }
+
+The alphabet must be 64 bytes long.
+
+The ``base64`` and ``base64wide`` modifiers are only supported with text
+strings. Using these modifiers with a hexadecimal string or a regular expression
+will cause a compiler error. Also, the ``xor``, ``fullword``, and ``nocase``
+modifiers used in combination with ``base64`` or ``base64wide`` will cause
+a compiler error.
+
+Because of the way that YARA strips the leading and trailing characters after
+base64 encoding, one of the base64 encodings of "Dhis program cannow" and
+"This program cannot" are identical. Similarly, using the ``base64`` keyword on
+single ASCII characters is not recommended. For example, "a" with the
+``base64`` keyword matches "\`", "b", "c", "!", "\\xA1", or "\\xE1" after base64
+encoding, and will not match where the base64 encoding matches the
+``[GWm2][EFGH]`` regular expression.
 
 Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -566,6 +655,73 @@ Starting with version 3.3.0 these zero-width assertions are also recognized:
    * - ``\B``
      - Match except at a word boundary
 
+Private strings
+---------------
+
+All strings in YARA can be marked as ``private`` which means they will never be
+included in the output of YARA. They are treated as normal strings everywhere
+else, so you can still use them as you wish in the condition, but they will
+never be shown with the ``-s`` flag or seen in the YARA callback if you're using
+the C API.
+
+.. code-block:: yara
+
+    rule PrivateStringExample
+    {
+        strings:
+            $text_string = "foobar" private
+
+        condition:
+            $text_string
+    }
+
+String Modifier Summary
+-----------------------
+
+The following string modifiers are processed in the following order, but are only applicable
+to the string types listed.
+
+.. list-table:: Text string modifiers
+   :widths: 3 5 10 10
+   :header-rows: 1
+
+   * - Keyword
+     - String Types
+     - Summary
+     - Restrictions
+   * - ``nocase``
+     - Text, Regex
+     - Ignore case
+     - Cannot use with ``xor``, ``base64``, or ``base64wide``
+   * - ``wide``
+     - Text, Regex
+     - Emulate UTF16 by interleaving null (0x00) characters
+     - None
+   * - ``ascii``
+     - Text, Regex
+     - Also match ASCII characters, only required if ``wide`` is used
+     - None
+   * - ``xor``
+     - Text
+     - XOR text string with single byte keys
+     - Cannot use with ``nocase``, ``base64``, or ``base64wide``
+   * - ``base64``
+     - Text
+     - Convert to 3 base64 encoded strings
+     - Cannot use with ``nocase``, ``xor``, or ``fullword``
+   * - ``base64wide``
+     - Text
+     - Convert to 3 base64 encoded strings, then interleaving null characters like ``wide``
+     - Cannot use with ``nocase``, ``xor``, or ``fullword``
+   * - ``fullword``
+     - Text, Regex
+     - Match is not preceded or followed by an alphanumeric character
+     - Cannot use with ``base64`` or ``base64wide``
+   * - ``private``
+     - Hex, Text, Regex
+     - Match never included in output
+     - None
+
 
 Conditions
 ==========
@@ -576,6 +732,72 @@ the typical Boolean operators ``and``, ``or``, and ``not``, and relational opera
 ``>=``, ``<=``, ``<``, ``>``, ``==`` and ``!=``. Also, the arithmetic operators (``+``, ``-``, ``*``, ``\``, ``%``)
 and bitwise operators (``&``, ``|``, ``<<``, ``>>``, ``~``, ``^``) can be used on numerical
 expressions.
+
+Integers are always 64-bits long, even the results of functions like `uint8`,
+`uint16` and `uint32` are promoted to 64-bits. This is something you must take
+into account, specially while using bitwise operators (for example, ~0x01 is not
+0xFE but 0xFFFFFFFFFFFFFFFE).
+
+The following table lists the precedence and associativity of all operators. The
+table is sorted in descending precedence order, which means that operators listed
+on a higher row in the list are grouped prior operators listed in rows further
+below it. Operators within the same row have the same precedence, if they appear
+together in a expression the associativity determines how they are grouped.
+
+==========  ========  =========================================  =============
+Precedence  Operator  Description                                Associativity
+==========  ========  =========================================  =============
+1           []        Array subscripting                         Left-to-right
+
+            .         Structure member access
+----------  --------  -----------------------------------------  -------------
+2           `-`       Unary minus                                Right-to-left
+
+            `~`       Bitwise not
+----------  --------  -----------------------------------------  -------------
+3           `*`       Multiplication                             Left-to-right
+
+            \\        Division
+
+            %         Remainder
+----------  --------  -----------------------------------------  -------------
+4           `+`       Addition                                   Left-to-right
+
+            `-`       Substraction
+----------  --------  -----------------------------------------  -------------
+5           `<<`      Bitwise left shift                         Left-to-right
+
+            `>>`      Bitwise right shift
+----------  --------  -----------------------------------------  -------------
+6           &         Bitwise AND                                Left-to-right
+----------  --------  -----------------------------------------  -------------
+7           ^         Bitwise XOR                                Left-to-right
+----------  --------  -----------------------------------------  -------------
+8           `|`       Bitwise OR                                 Left-to-right
+----------  --------  -----------------------------------------  -------------
+9           <         Less than                                  Left-to-right
+
+            <=        Less than or equal to
+
+            >         Greater than
+
+            >=        Greater than or equal to
+----------  --------  -----------------------------------------  -------------
+10          ==        Equal to                                   Left-to-right
+
+            !=        Not equal to
+
+            contains  String contains substring
+
+            matches   String matches regular expression
+----------  --------  -----------------------------------------  -------------
+11          not       Logical NOT                                Right-to-left
+----------  --------  -----------------------------------------  -------------
+12          and       Logical AND                                Left-to-right
+----------  --------  -----------------------------------------  -------------
+13          or        Logical OR                                 Left-to-right
+==========  ========  =========================================  =============
+
 
 String identifiers can be also used within a condition, acting as Boolean
 variables whose value depends on the presence or not of the associated string
@@ -594,6 +816,8 @@ in the file.
         condition:
             ($a or $b) and ($c or $d)
     }
+
+
 
 Counting strings
 ----------------
@@ -911,7 +1135,7 @@ evaluated. Take a look at the following expression:
 
 .. code-block:: yara
 
-    for any of ($a,$b,$c) : ( $ at entrypoint  )
+    for any of ($a,$b,$c) : ( $ at pe.entry_point  )
 
 The $ symbol in the boolean expression is not tied to any particular string,
 it will be $a, and then $b, and then $c in the three successive evaluations
@@ -925,8 +1149,8 @@ Maybe you already realised that the ``of`` operator is an special case of
     any of ($a,$b,$c)
     for any of ($a,$b,$c) : ( $ )
 
-You can also employ the symbols # and @ to make reference to the number of
-occurrences and the first offset of each string respectively.
+You can also employ the symbols #, @, and ! to make reference to the number of
+occurrences, the first offset, and the length of each string respectively.
 
 .. code-block:: yara
 
@@ -1014,6 +1238,49 @@ In summary, the syntax of this operator is:
 .. code-block:: yara
 
     for expression identifier in indexes : ( boolean_expression )
+
+
+Iterators
+---------
+
+In YARA 4.0 the ``for..of`` operator was improved and now it can be used to
+iterate not only over integer enumerations and ranges (e.g: 1,2,3,4 and 1..4),
+but also over any kind of iterable data type, like arrays and dictionaries
+defined by YARA modules. For example, the following expression is valid in
+YARA 4.0:
+
+.. code-block:: yara
+
+    for any section in pe.sections : ( section.name == ".text" )
+
+This is equivalent to:
+
+.. code-block:: yara
+
+    for any i in (0..pe.number_of_sections-1) : ( pe.sections[i].name == ".text" )
+
+The new syntax is more natural and easy to understand, and is the recommended
+way of expressing this type of conditions in newer versions of YARA.
+
+While iterating dictionaries you must provide two variable names that will
+hold the key and value for each entry in the dictionary, for example:
+
+.. code-block:: yara
+
+    for any k,v in some_dict : ( k == "foo" and v == "bar" )
+
+In general the ``for..of`` operator has the form:
+
+.. code-block:: yara
+
+    for <quantifier> <variables> in <iterable> : ( <some condition using the loop variables> )
+
+Where `<quantifier>` is either `any`, `all` or an expression that evaluates to
+the number of items in the iterator that must satisfy the condition, `<variables>`
+is a comma-separated list of variable names that holds the values for the
+current item (the number of variables depend on the type of `<iterable>`) and
+`<iterable>` is something that can be iterated.
+
 
 .. _referencing-rules:
 
@@ -1155,9 +1422,9 @@ identifier/value pairs like in the following example:
 
 As can be seen in the example, metadata identifiers are always followed by
 an equals sign and the value assigned to them. The assigned values can be
-strings, integers, or one of the boolean values true or false. Note that
-identifier/value pairs defined in the metadata section can not be used in
-the condition section, their only purpose is to store additional information
+strings (valid UTF8 only), integers, or one of the boolean values true or false.
+Note that identifier/value pairs defined in the metadata section can not be used
+in the condition section, their only purpose is to store additional information
 about the rule.
 
 .. _using-modules:
@@ -1195,7 +1462,7 @@ Undefined values
 
 Modules often leave variables in an undefined state, for example when the
 variable doesn't make sense in the current context (think of ``pe.entry_point``
-while scanning a non-PE file). YARA handles undefined values in way that allows
+while scanning a non-PE file). YARA handles undefined values in a way that allows
 the rule to keep its meaningfulness. Take a look at this rule:
 
 .. code-block:: yara
@@ -1221,10 +1488,23 @@ if the condition is changed to:
     $a or pe.entry_point == 0x1000
 
 You would expect the rule to match in this case if the file contains the string,
-even if it isn't a PE file. That's exactly how YARA behaves. The logic is
-simple: any arithmetic, comparison, or boolean operation will result in an
-undefined value if one of its operands is undefined, except for *OR* operations
-where an undefined operand is interpreted as a False.
+even if it isn't a PE file. That's exactly how YARA behaves. The logic is as
+follows:
+
+* Arithmetic and bitwise operators return a undefined value if some of its
+  operands is undefined.
+
+* Boolean operators `and` and `or` will treat undefined operands as `false`.
+
+* Boolean `not` operator returns false if the operand is undefined.
+
+* Comparison operators and any other operator whose result is a boolean (like
+  the ``contains`` and ``matches`` operators) will return `false` if any of its
+  operands is undefined.
+
+In the expression above `pe.entry_point == 0x1000` will be false, because
+`pe.entry_point` is undefined, and the `==` operator returns false if any of its
+operand is undefined.
 
 
 External variables

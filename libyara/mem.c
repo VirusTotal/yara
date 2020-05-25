@@ -71,6 +71,9 @@ void* yr_malloc(size_t size)
 
 void* yr_realloc(void* ptr, size_t size)
 {
+  if (ptr == NULL)
+    return (void*) HeapAlloc(hHeap, HEAP_ZERO_MEMORY, size);
+
   return (void*) HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, ptr, size);
 }
 
@@ -111,8 +114,6 @@ char* yr_strndup(const char *str, size_t n)
 }
 
 #else
-
-#define _GNU_SOURCE
 
 #include <stdlib.h>
 #include <string.h>

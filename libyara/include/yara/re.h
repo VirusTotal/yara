@@ -105,7 +105,6 @@ typedef int RE_MATCH_CALLBACK_FUNC(
     int flags,
     void* args);
 
-
 int yr_re_ast_create(
     RE_AST** re_ast);
 
@@ -125,7 +124,6 @@ int yr_re_ast_contains_dot_star(
 
 int yr_re_ast_split_at_chaining_point(
     RE_AST* re_ast,
-    RE_AST** result_re_ast,
     RE_AST** remainder_re_ast,
     int32_t* min_gap,
     int32_t* max_gap);
@@ -194,8 +192,8 @@ int yr_re_parse_hex(
 int yr_re_compile(
     const char* re_string,
     int flags,
-    YR_ARENA* code_arena,
-    RE** re,
+    YR_ARENA* arena,
+    YR_ARENA_REF* ref,
     RE_ERROR* error);
 
 
@@ -203,6 +201,5 @@ int yr_re_match(
     YR_SCAN_CONTEXT* context,
     RE* re,
     const char* target);
-
 
 #endif

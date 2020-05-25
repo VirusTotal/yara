@@ -1,0 +1,1 @@
+rule r{condition:r(for 7e in(6):(1)

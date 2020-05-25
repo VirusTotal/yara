@@ -115,3 +115,5 @@ windows/*/packages/
 
 # Test files
 test-rules.yarc
+.dirstamp
+.idea/

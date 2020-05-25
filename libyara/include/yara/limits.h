@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils.h"
 
-// Maximum lenght of file paths. This is the only limit that doesn't have the
+// Maximum length of file paths. This is the only limit that doesn't have the
 // YR_ prefix. The intention is using the default MAX_PATH if defined.
 #ifndef MAX_PATH
 #define MAX_PATH 1024
@@ -48,6 +48,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // structures.
 #ifndef YR_MAX_THREADS
 #define YR_MAX_THREADS 32
+#endif
+
+// Maximum number of buffers that an arena can have.
+#ifndef YR_MAX_ARENA_BUFFERS
+#define YR_MAX_ARENA_BUFFERS 16
 #endif
 
 // Capacity of the buffer used for storing compiler error messages. Messages
@@ -91,8 +96,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MAX_LOOP_NESTING 4
 #endif
 
-#ifndef YR_MAX_ARENA_PAGES
-#define YR_MAX_ARENA_PAGES 32
+// Maximum number of local variables in a "for" loop. This includes the
+// variables defined explicitly defined by the user, not the internal variables
+// required for maintaining the loop's state.
+#ifndef YR_MAX_LOOP_VARS
+#define YR_MAX_LOOP_VARS 2
 #endif
 
 // Maximum number of nested included files.
@@ -135,6 +143,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_LEX_BUF_SIZE 8192
 #endif
 
+// Each time an atom is found it means that we have a potential match for some
+// string, and that match must be verified. The time spent in verifying those
+// matches is measured in one out of YR_MATCH_VERIFICATION_PROFILING_RATE matches.
+// The time is not measured for all matches because measuring it is expensive
+// by itself and match verification is a frequent operation.
+#ifndef YR_MATCH_VERIFICATION_PROFILING_RATE
+#define YR_MATCH_VERIFICATION_PROFILING_RATE 1024
+#endif
+
 // Maximum allowed split ID, also limiting the number of split instructions
 // allowed in a regular expression. This number can't be increased
 // over 255 without changing RE_SPLIT_ID_TYPE.
@@ -147,14 +164,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_MAX_STACK 1024
 #endif
 
-// Maximum code size for a compiled regexp
-#ifndef RE_MAX_CODE_SIZE
-#define RE_MAX_CODE_SIZE 32768
-#endif
-
 // Maximum input size scanned by yr_re_exec
-#ifndef RE_SCAN_LIMIT
-#define RE_SCAN_LIMIT 4096
+#ifndef YR_RE_SCAN_LIMIT
+#define YR_RE_SCAN_LIMIT 4096
 #endif
 
 // Maximum number of fibers

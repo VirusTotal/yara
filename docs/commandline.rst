@@ -127,9 +127,13 @@ Available options are:
 
   Pass file's content as extra data to module.
 
+.. option:: --scan-list
+
+  Scan files listed in FILE, one per line.
+
 .. option:: -r --recursive
 
-  Recursively search for directories.
+  Recursively search for directories. It follows symlinks.
 
 .. option:: -f --fast-scan
 
@@ -165,7 +169,7 @@ Here you have some examples:
 
 * Scan all files in the */foo* directory and its subdirectories::
 
-    yara -r /foo
+    yara /foo/bar/rules -r /foo
 
 * Defines three external variables *mybool*, *myint* and *mystring*::
 

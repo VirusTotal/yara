@@ -44,8 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SIZED_STRING_FLAGS_DOT_ALL  2
 
 #pragma pack(push)
-#pragma pack(8)
-
+#pragma pack(4)
 
 typedef struct _SIZED_STRING
 {
@@ -59,12 +58,24 @@ typedef struct _SIZED_STRING
 #pragma pack(pop)
 
 
+int sized_string_cmp_nocase(
+  SIZED_STRING* s1,
+  SIZED_STRING* s2);
+
+
 int sized_string_cmp(
     SIZED_STRING* s1,
     SIZED_STRING* s2);
 
 
 SIZED_STRING* sized_string_dup(
+    SIZED_STRING* s);
+
+
+SIZED_STRING* sized_string_new(
+    const char* s);
+
+SIZED_STRING* sized_string_convert_to_wide(
     SIZED_STRING* s);
 
 #endif
