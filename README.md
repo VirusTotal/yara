@@ -117,6 +117,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [ThreatConnect](https://www.threatconnect.com/)
 * [ThreatStream, Inc.](http://threatstream.com)
 * [Thug](https://github.com/buffer/thug)
+* [TouchWeb](https://www.touchweb.fr)
 * [Trend Micro](http://www.trendmicro.com)
 * [VirusTotal Intelligence](https://www.virustotal.com/intelligence/)
 * [VMRay](https://www.vmray.com/)
