@@ -11,13 +11,13 @@ YARA, which does absolutely nothing:
     rule dummy
     {
         condition:
-           false
+            false
     }
 
 Each rule in YARA starts with the keyword ``rule`` followed by a rule
 identifier. Identifiers must follow the same lexical conventions of the C
 programming language, they can contain any alphanumeric character and the
-underscore character, but the first character can not be a digit. Rule
+underscore character, but the first character cannot be a digit. Rule
 identifiers are case sensitive and cannot exceed 128 characters. The following
 keywords are reserved and cannot be used as an identifier:
 
@@ -122,7 +122,7 @@ single-line and multi-line C-style comments are supported.
     rule CommentExample   // ... and this is single-line comment
     {
         condition:
-           false  // just a dummy rule, don't do this
+            false  // just a dummy rule, don't do this
     }
 
 Strings
@@ -149,10 +149,10 @@ you have an example of a hexadecimal string with wild-cards:
     rule WildcardExample
     {
         strings:
-           $hex_string = { E2 34 ?? C8 A? FB }
+            $hex_string = { E2 34 ?? C8 A? FB }
 
         condition:
-           $hex_string
+            $hex_string
     }
 
 As shown in the example the wild-cards are nibble-wise, which means that you can
@@ -167,11 +167,11 @@ length. In those situations you can use jumps instead of wild-cards:
 
     rule JumpExample
     {
-            strings:
-               $hex_string = { F4 23 [4-6] 62 B4 }
+        strings:
+            $hex_string = { F4 23 [4-6] 62 B4 }
 
-            condition:
-               $hex_string
+        condition:
+            $hex_string
     }
 
 In the example above we have a pair of numbers enclosed in square brackets and
@@ -223,10 +223,10 @@ can use a syntax which resembles a regular expression:
     rule AlternativesExample1
     {
         strings:
-           $hex_string = { F4 23 ( 62 B4 | 56 ) 45 }
+            $hex_string = { F4 23 ( 62 B4 | 56 ) 45 }
 
         condition:
-           $hex_string
+            $hex_string
     }
 
 This rule will match any file containing ``F42362B445`` or ``F4235645``.
@@ -240,10 +240,10 @@ their lengths.
     rule AlternativesExample2
     {
         strings:
-           $hex_string = { F4 23 ( 62 B4 | 56 | 45 ?? 67 ) 45 }
+            $hex_string = { F4 23 ( 62 B4 | 56 | 45 ?? 67 ) 45 }
 
         condition:
-           $hex_string
+            $hex_string
     }
 
 As can be seen also in the above example, strings containing wild-cards are
@@ -262,7 +262,7 @@ As shown in previous sections, text strings are generally defined like this:
             $text_string = "foobar"
 
         condition:
-           $text_string
+            $text_string
     }
 
 This is the simplest case: an ASCII-encoded, case-sensitive string. However,
@@ -328,7 +328,7 @@ character (i.e. ``B\x00o\x00r\x00l\x00a\x00n\x00d\x00``), then the following rul
             $wide_string = "Borland" wide
 
         condition:
-           $wide_string
+            $wide_string
     }
 
 However, keep in mind that this modifier just interleaves the ASCII codes of
@@ -345,7 +345,7 @@ with ``wide`` , no matter the order in which they appear.
             $wide_and_ascii_string = "Borland" wide ascii
 
         condition:
-           $wide_and_ascii_string
+            $wide_and_ascii_string
     }
 
 The ``ascii`` modifier can appear alone, without an accompanying ``wide``
@@ -763,7 +763,7 @@ Precedence  Operator  Description                                Associativity
 ----------  --------  -----------------------------------------  -------------
 4           `+`       Addition                                   Left-to-right
 
-            `-`       Substraction
+            `-`       Subtraction
 ----------  --------  -----------------------------------------  -------------
 5           `<<`      Bitwise left shift                         Left-to-right
 
@@ -931,7 +931,7 @@ the size of the file being scanned. The size is expressed in bytes.
     rule FileSizeExample
     {
         condition:
-           filesize > 200KB
+            filesize > 200KB
     }
 
 The previous example also demonstrates the use of the ``KB`` postfix. This
@@ -962,7 +962,7 @@ or simple file infectors.
             $a = { E8 00 00 00 00 }
 
         condition:
-           $a at entrypoint
+            $a at entrypoint
     }
 
     rule EntryPointExample2
@@ -971,7 +971,7 @@ or simple file infectors.
             $a = { 9C 50 66 A1 ?? ?? ?? 00 66 A9 ?? ?? 58 0F 85 }
 
         condition:
-           $a in (entrypoint..entrypoint + 10)
+            $a in (entrypoint..entrypoint + 10)
     }
 
 The presence of the ``entrypoint`` variable in a rule implies that only PE or
@@ -1020,11 +1020,11 @@ itself. As an example let's see a rule to distinguish PE files:
 
     rule IsPE
     {
-      condition:
-         // MZ signature at offset 0 and ...
-         uint16(0) == 0x5A4D and
-         // ... PE signature at offset stored in MZ header at 0x3C
-         uint32(uint32(0x3C)) == 0x00004550
+        condition:
+            // MZ signature at offset 0 and ...
+            uint16(0) == 0x5A4D and
+            // ... PE signature at offset stored in MZ header at 0x3C
+            uint32(uint32(0x3C)) == 0x00004550
     }
 
 
@@ -1141,7 +1141,7 @@ The $ symbol in the boolean expression is not tied to any particular string,
 it will be $a, and then $b, and then $c in the three successive evaluations
 of the expression.
 
-Maybe you already realised that the ``of`` operator is an special case of
+Maybe you already realised that the ``of`` operator is a special case of
 ``for..of``. The following expressions are the same:
 
 .. code-block:: yara
@@ -1327,8 +1327,8 @@ Global rules
 ------------
 
 Global rules give you the possibility of imposing restrictions in all your
-rules at once. For example, suppose that you want all your rules ignoring
-those files that exceed a certain size limit, you could go rule by rule making
+rules at once. For example, suppose that you want all your rules to ignore
+files that exceed a certain size limit. You could go rule by rule making
 the required modifications to their conditions, or just write a global rule
 like this one:
 
@@ -1423,7 +1423,7 @@ identifier/value pairs like in the following example:
 As can be seen in the example, metadata identifiers are always followed by
 an equals sign and the value assigned to them. The assigned values can be
 strings (valid UTF8 only), integers, or one of the boolean values true or false.
-Note that identifier/value pairs defined in the metadata section can not be used
+Note that identifier/value pairs defined in the metadata section cannot be used
 in the condition section, their only purpose is to store additional information
 about the rule.
 
@@ -1471,11 +1471,11 @@ the rule to keep its meaningfulness. Take a look at this rule:
 
     rule Test
     {
-      strings:
-          $a = "some string"
+        strings:
+            $a = "some string"
 
-      condition:
-          $a and pe.entry_point == 0x1000
+        condition:
+            $a and pe.entry_point == 0x1000
     }
 
 If the scanned file is not a PE you wouldn't expect this rule to match the file,
@@ -1491,34 +1491,34 @@ You would expect the rule to match in this case if the file contains the string,
 even if it isn't a PE file. That's exactly how YARA behaves. The logic is as
 follows:
 
-* Arithmetic and bitwise operators return a undefined value if some of its
-  operands is undefined.
+* Arithmetic and bitwise operators return an undefined value if some of their
+  operands are undefined.
 
 * Boolean operators `and` and `or` will treat undefined operands as `false`.
 
 * Boolean `not` operator returns false if the operand is undefined.
 
 * Comparison operators and any other operator whose result is a boolean (like
-  the ``contains`` and ``matches`` operators) will return `false` if any of its
-  operands is undefined.
+  the ``contains`` and ``matches`` operators) will return `false` if any of
+  their operands are undefined.
 
-In the expression above `pe.entry_point == 0x1000` will be false, because
+In the expression above, `pe.entry_point == 0x1000` will be false, because
 `pe.entry_point` is undefined, and the `==` operator returns false if any of its
-operand is undefined.
+operands are undefined.
 
 
 External variables
 ==================
 
-External variables allow you to define rules which depends on values provided
-from the outside. For example you can write the following rule:
+External variables allow you to define rules that depend on values provided
+from the outside. For example, you can write the following rule:
 
 .. code-block:: yara
 
     rule ExternalVariableExample1
     {
         condition:
-           ext_var == 10
+            ext_var == 10
     }
 
 In this case ``ext_var`` is an external variable whose value is assigned at
@@ -1534,7 +1534,7 @@ For example:
     rule ExternalVariableExample2
     {
         condition:
-           bool_ext_var or filesize < int_ext_var
+            bool_ext_var or filesize < int_ext_var
     }
 
 External variables of type string can be used with the operators: ``contains``
