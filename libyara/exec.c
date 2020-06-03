@@ -897,7 +897,13 @@ int yr_execute_code(
 
         r1.o = yr_object_lookup_field(r1.o, identifier);
 
-        assert(r1.o != NULL);
+        if (r1.o == NULL)
+        {
+          result = ERROR_INVALID_FIELD_NAME;
+          stop = true;
+          break;
+        }
+
         push(r1);
         break;
 
