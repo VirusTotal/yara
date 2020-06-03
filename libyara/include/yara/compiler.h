@@ -211,7 +211,7 @@ typedef struct _YR_COMPILER
   // parsing a rule.
   uint32_t current_rule_idx;
 
-  //
+  // Index of the rule that comes next during parsing.
   uint32_t next_rule_idx;
 
   // Index of the string being compiled in the array of YR_STRING structures

@@ -855,6 +855,7 @@ int yr_parser_reduce_rule_declaration_phase_1(
 
   // We are starting to parse a rule, set current_rule_idx accordingly.
   compiler->current_rule_idx = compiler->next_rule_idx;
+  compiler->next_rule_idx++;
 
   YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
       compiler->arena,
@@ -1020,10 +1021,8 @@ int yr_parser_reduce_rule_declaration_phase_2(
   compiler->fixup_stack_head = fixup->next;
   yr_free(fixup);
 
-  // We have finished parsing the current rule, increment next_rule_idx
-  // and set current_rule_idx to UINT32_MAX indicating that we are not
-  // currently parsing a rule.
-  compiler->next_rule_idx++;
+  // We have finished parsing the current rule set current_rule_idx to
+  // UINT32_MAX indicating that we are not currently parsing a rule.
   compiler->current_rule_idx = UINT32_MAX;
 
   return ERROR_SUCCESS;
