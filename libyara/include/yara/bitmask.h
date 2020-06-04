@@ -42,6 +42,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void yr_bitmask_set(YR_BITMASK* bm, uint64_t c);
 
 
+void yr_bitmask_set_all(YR_BITMASK* bm, size_t size);
+
+
 void yr_bitmask_clear(YR_BITMASK* bm, uint64_t c);
 
 
