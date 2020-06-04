@@ -845,7 +845,7 @@ struct STACK_ITEM
 static void make_atom_from_re_nodes(YR_ATOM* atom, int nodes_length, RE_NODE** nodes)
 {
   int diff = YR_BITMASK_SLOT_BITS / 8;
-  unsigned long chunk;
+  uint64_t chunk;
   atom->length = nodes_length;
   for (int i = 0; i < atom->length; i++)
   {
