@@ -58,6 +58,12 @@ void yr_bitmask_set(YR_BITMASK* bm, uint64_t c)
 }
 
 
+void yr_bitmask_set_all(YR_BITMASK* bm, size_t size)
+{
+  memset(bm, ~0, size);
+}
+
+
 void yr_bitmask_clear(YR_BITMASK* bm, uint64_t c)
 {
   (bm)[(c) / YR_BITMASK_SLOT_BITS] &= ~(UINT64_C(1) << ((c) % YR_BITMASK_SLOT_BITS));

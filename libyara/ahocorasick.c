@@ -189,7 +189,7 @@ static bool _yr_ac_compare_classes(
 {
   for (int i = 0; i < YR_BITMAP_SIZE; i++)
   {
-    if (bitmap1[i] != bitmap2[i])
+    if (memcmp(&bitmap1[i], &bitmap2[i], sizeof(bitmap1[i])))
       return false;
   }
   return true;
@@ -775,8 +775,6 @@ static bool dfa_subtree(
     YR_ARENA* arena)
 {
   YR_AC_STATE* next_state;
-  YR_AC_STATE* dfa_state1 = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
-  YR_AC_STATE* dfa_state2 = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
 
   bool pop = true;
 
@@ -784,6 +782,9 @@ static bool dfa_subtree(
 
   if ((input_state->type == YR_ATOM_TYPE_CLASS) || (input_state->type == YR_ATOM_TYPE_ANY))
   {
+
+    YR_AC_STATE* dfa_state1 = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
+    YR_AC_STATE* dfa_state2 = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
 
     next_state = state->first_child;
 
@@ -813,10 +814,11 @@ static bool dfa_subtree(
 
       next_state = next_state->siblings;
     }
+
+    yr_free(dfa_state1);
+    yr_free(dfa_state2);
   }
 
-  yr_free(dfa_state1);
-  yr_free(dfa_state2);
   return pop;
 }
 
@@ -1182,6 +1184,45 @@ static int _yr_ac_find_suitable_transition_table_slot(
   return ERROR_SUCCESS;
 }
 
+
+static void _yr_ac_add_children_state(
+  YR_AC_AUTOMATON* automaton,
+  YR_AC_TRANSITION* t_table,
+  YR_AC_STATE* state,
+  uint32_t slot)
+{
+  if (state->type == YR_ATOM_TYPE_LITERAL)
+  {
+    state->t_table_slot = slot + state->input + 1;
+    t_table[state->t_table_slot] = YR_AC_MAKE_TRANSITION(
+            0, state->input + 1);
+    yr_bitmask_set(automaton->bitmask, state->t_table_slot);
+  }
+  else
+  {
+    uint32_t prev = 0;
+
+    for (int i = 0; i < YR_BITMAP_SIZE; i++)
+    {
+      if (state->bitmap[i] != 0)
+      {
+        for (int k = 0; k < YR_BITMASK_SLOT_BITS; k++)
+        {
+           if (yr_bitmask_is_set(state->bitmap, i * YR_BITMASK_SLOT_BITS + k))
+           {
+              uint32_t input_slot = i * YR_BITMASK_SLOT_BITS + k + 1;
+              state->t_table_slot = slot + input_slot;
+              t_table[state->t_table_slot] = YR_AC_MAKE_TRANSITION(prev, input_slot);
+              prev = state->t_table_slot;
+              yr_bitmask_set(automaton->bitmask, state->t_table_slot);
+           }
+        }
+      }
+    }
+  }
+}
+
+
 //
 // _yr_ac_build_transition_table
 //
@@ -1249,11 +1290,7 @@ static int _yr_ac_build_transition_table(
   YR_AC_STATE* child_state;
   YR_AC_STATE* root_state = automaton->root;
 
-  uint32_t num;
   uint32_t slot;
-  uint32_t prev;
-  uint32_t input;
-  uint32_t input_slot;
 
   QUEUE queue = { NULL, NULL };
 
@@ -1303,38 +1340,7 @@ static int _yr_ac_build_transition_table(
 
   while (child_state != NULL)
   {
-    if (child_state->type == YR_ATOM_TYPE_LITERAL)
-    {
-      // Each state stores its slot number.
-      child_state->t_table_slot = child_state->input + 1;
-      t_table[child_state->input + 1] = YR_AC_MAKE_TRANSITION(
-          0, child_state->input + 1);
-      yr_bitmask_set(automaton->bitmask, child_state->input + 1);
-    }
-    else
-    {
-      // The case, when the state has several characters
-      prev = 0;
-      input_slot = 0;
-      for (int i = 0; i < YR_BITMAP_SIZE; i++)
-      {
-        if (child_state->bitmap[i] != 0)
-        {
-          for (int k = 0; k < YR_BITMASK_SLOT_BITS; k++)
-          {
-            if (yr_bitmask_is_set(child_state->bitmap, i * YR_BITMASK_SLOT_BITS + k))
-            {
-              input_slot = i * YR_BITMASK_SLOT_BITS + k + 1;
-              child_state->t_table_slot = input_slot;
-              t_table[input_slot] = YR_AC_MAKE_TRANSITION(prev, input_slot);
-              prev = input_slot;
-              yr_bitmask_set(automaton->bitmask, input_slot);
-            }
-          }
-        }
-      }
-    }
-
+    _yr_ac_add_children_state(automaton, t_table, child_state, 0);
     FAIL_ON_ERROR(_yr_ac_queue_push(&queue, child_state));
     child_state = child_state->siblings;
   }
@@ -1353,8 +1359,8 @@ static int _yr_ac_build_transition_table(
     m_table = yr_arena_get_ptr(automaton->arena, YR_AC_STATE_MATCHES_TABLE, 0);
 
     // 0x1FF = 1 1111 1111
-    input = 0;
-    prev = 0;
+    uint32_t input = 0;
+    uint32_t prev = 0;
     do
     {
       input = (t_table[state->t_table_slot] & 0x1FF);
@@ -1384,35 +1390,7 @@ static int _yr_ac_build_transition_table(
 
     while (child_state != NULL)
     {
-      if (child_state->type == YR_ATOM_TYPE_LITERAL)
-      {
-        child_state->t_table_slot = slot + child_state->input + 1;
-        t_table[child_state->t_table_slot] = YR_AC_MAKE_TRANSITION(
-            0, child_state->input + 1);
-        yr_bitmask_set(automaton->bitmask, child_state->t_table_slot);
-      }
-      else
-      {
-        prev = 0;
-        for (int i = 0; i < YR_BITMAP_SIZE; i++)
-        {
-          if (child_state->bitmap[i] != 0)
-          {
-            for (int k = 0; k < YR_BITMASK_SLOT_BITS; k++)
-            {
-              if (yr_bitmask_is_set(child_state->bitmap, i * YR_BITMASK_SLOT_BITS + k))
-              {
-                num = i * YR_BITMASK_SLOT_BITS + k + 1;
-                child_state->t_table_slot = slot + num;
-                t_table[child_state->t_table_slot] = YR_AC_MAKE_TRANSITION(prev, num);
-                prev = child_state->t_table_slot;
-                yr_bitmask_set(automaton->bitmask, child_state->t_table_slot);
-              }
-            }
-          }
-        }
-      }
-
+      _yr_ac_add_children_state(automaton, t_table, child_state, slot);
       FAIL_ON_ERROR(_yr_ac_queue_push(&queue, child_state));
 
       child_state = child_state->siblings;
@@ -1590,12 +1568,6 @@ int yr_ac_add_string(
 
     for (int i = 0; i < atom->atom.length; i++)
     {
-      if (atom->atom.mask[i] == YR_ATOM_TYPE_ANY)
-      {
-        yr_bitmask_clear_all(atom->atom.bitmap[i], sizeof(atom->atom.bitmap[i]));
-        for (int j = 0; j < YR_BITMAP_SIZE; j++)
-          atom->atom.bitmap[i][j] = ~atom->atom.bitmap[i][j];
-      }
 
       YR_AC_STATE* next_state = _yr_ac_next_state_typed(state, atom->atom.bytes[i], atom->atom.mask[i], atom->atom.bitmap[i]);
 
