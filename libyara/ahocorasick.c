@@ -403,68 +403,27 @@ static int _yr_ac_state_destroy_updated(
 }
 
 
+// 
+// _yr_ac_copy_matches:
+// creates a copy of the list of matches and joins it with the list of the state
 //
-// _yr_ac_join_matches: joines two lists of matches without duplicates
-//
-static void _yr_ac_join_matches(
-    YR_ARENA* arena,
-    YR_ARENA_REF* matches1,
-    YR_ARENA_REF* matches2)
+static void _yr_ac_copy_matches(
+  YR_AC_STATE* state, 
+  YR_ARENA_REF* matches, 
+  YR_ARENA* matches_arena)
 {
   YR_AC_MATCH* match;
-  YR_AC_MATCH* match2;
-
-  if (YR_ARENA_IS_NULL_REF(matches2))
-    return;
-
-  if (YR_ARENA_IS_NULL_REF(matches1))
-    matches1 = matches2;
-  else
-  {
-    match = yr_arena_ref_to_ptr(arena, matches1);
-    match2 = yr_arena_ref_to_ptr(arena, matches2);
-
-    while (match != NULL)
-    {
-      // duplicates were detected, the matches are identical
-      if (match == match2)
-        return;
-
-      if (match->next == NULL)
-        break;
-
-      match = match->next;
-    }
-
-    match->next = yr_arena_ref_to_ptr(arena, matches2);
-  }
-
-}
-
-
-// Creates a new state with values of add_state and creates a new matches list
-static YR_AC_STATE* _yr_ac_create_copied_state(
-    YR_AC_STATE* current_state,
-    YR_AC_STATE* add_state,
-    YR_ARENA* arena)
-{
-  YR_AC_STATE* new_state = NULL;
-
-  YR_AC_MATCH* match;
-  YR_AC_MATCH* new_match;
+  YR_AC_MATCH* new_match = NULL;
   int result;
 
-  new_state = _yr_ac_state_create(current_state, add_state->input, add_state->type, add_state->bitmap);
-  new_state->failure = current_state->failure;
-
-  match = yr_arena_ref_to_ptr(arena, &add_state->matches_ref);
+  match = yr_arena_ref_to_ptr(matches_arena, matches);
 
   while (match != NULL)
   {
     YR_ARENA_REF new_match_ref;
 
     result = yr_arena_allocate_struct(
-        arena,
+        matches_arena,
         YR_AC_STATE_MATCHES_POOL,
         sizeof(YR_AC_MATCH),
         &new_match_ref,
@@ -474,24 +433,37 @@ static YR_AC_STATE* _yr_ac_create_copied_state(
         offsetof(YR_AC_MATCH, next),
         EOL);
 
-    if (result != ERROR_SUCCESS)
+    if (result == ERROR_SUCCESS)
     {
-      _yr_ac_state_destroy(new_state);
-      return NULL;
+      new_match = yr_arena_ref_to_ptr(matches_arena, &new_match_ref);
+
+      new_match->backtrack = match->backtrack;
+      new_match->string = match->string;
+      new_match->forward_code = match->forward_code;
+      new_match->backward_code = match->backward_code;
+      new_match->next = yr_arena_ref_to_ptr(matches_arena, &state->matches_ref);
+      state->matches_ref = new_match_ref;
     }
-
-    new_match = yr_arena_ref_to_ptr(arena, &new_match_ref);
-
-    new_match->backtrack = match->backtrack;
-    new_match->string = match->string;
-    new_match->forward_code = match->forward_code;
-    new_match->backward_code = match->backward_code;
-    new_match->next = yr_arena_ref_to_ptr(arena, &new_state->matches_ref);
-    new_state->matches_ref = new_match_ref;
-    //}
+    else
+      break;
 
     match = match->next;
   }
+}
+
+
+
+// Creates a new state with values of add_state and creates a new matches list
+static YR_AC_STATE* _yr_ac_create_copied_state(
+    YR_AC_STATE* current_state,
+    YR_AC_STATE* add_state,
+    YR_ARENA* matches_arena)
+{
+  YR_AC_STATE* new_state = NULL;
+
+  new_state = _yr_ac_state_create(current_state, add_state->input, add_state->type, add_state->bitmap);
+  new_state->failure = current_state->failure;
+  _yr_ac_copy_matches(new_state, &add_state->matches_ref, matches_arena);
 
   return new_state;
 }
@@ -531,7 +503,7 @@ static void _yr_ac_copy_path(
         if (YR_ARENA_IS_NULL_REF(new_state->matches_ref))
           new_state->matches_ref = input_state->matches_ref;
         else
-          _yr_ac_join_matches(arena, &new_state->matches_ref, &input_state->matches_ref);
+          _yr_ac_copy_matches(new_state, &input_state->matches_ref, arena);
       }
     }
     else
@@ -542,7 +514,7 @@ static void _yr_ac_copy_path(
         if (YR_ARENA_IS_NULL_REF(new_state->matches_ref))
           new_state->matches_ref = path->matches_ref;
         else
-          _yr_ac_join_matches(arena, &new_state->matches_ref, &path->matches_ref);
+          _yr_ac_copy_matches(new_state, &path->matches_ref, arena);
       }
     }
 
@@ -980,7 +952,7 @@ static int _yr_ac_create_failure_links(
           }
           else
           {
-            _yr_ac_join_matches(automaton->arena, &transition_state->matches_ref, &temp_state->matches_ref);
+            _yr_ac_copy_matches(transition_state, &temp_state->matches_ref, arena);
           }
 
           break;
