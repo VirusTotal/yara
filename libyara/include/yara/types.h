@@ -189,10 +189,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // The types of states in AC automaton
 #define YR_ATOM_TYPE_ANY                     0x00
 #define YR_ATOM_TYPE_CLASS                   0xCC
-#define YR_ATOM_TYPE_MASKED_LITERAL_0F       0x0F
-#define YR_ATOM_TYPE_MASKED_LITERAL_F0       0xF0
 #define YR_ATOM_TYPE_LITERAL                 0xFF
-#define YR_ATOM_TYPE_REMOVE                 0xEE
+#define YR_ATOM_TYPE_REMOVE                  0xEE
 
 
 typedef struct RE RE;

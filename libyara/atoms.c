@@ -872,6 +872,8 @@ static void make_atom_from_re_nodes(YR_ATOM* atom, int nodes_length, RE_NODE** n
           atom->bitmap[i][k] = ~atom->bitmap[i][k];
       }
     }
+    else if ((nodes)[i]->type == RE_NODE_ANY)
+      yr_bitmask_set_all(atom->bitmap[i], sizeof(atom->bitmap[i]));
     else
       yr_bitmask_set(atom->bitmap[i], atom->bytes[i]);
   }
@@ -1004,8 +1006,15 @@ static int _yr_atoms_extract_from_re(
             best_atom_re_nodes[n] = si.re_node;
             best_atom.bytes[n] = (uint8_t) si.re_node->value;
             best_atom.mask[n] = (uint8_t) si.re_node->mask;
-            yr_bitmask_clear_all(best_atom.bitmap[n], sizeof(best_atom.bitmap[n]));
-            yr_bitmask_set(best_atom.bitmap[n], best_atom.bytes[n]);
+            if (si.re_node->type != RE_NODE_ANY)
+            {
+              yr_bitmask_clear_all(best_atom.bitmap[n], sizeof(best_atom.bitmap[n]));
+              yr_bitmask_set(best_atom.bitmap[n], best_atom.bytes[n]);
+            }
+            else
+            {
+              yr_bitmask_set_all(best_atom.bitmap[n], sizeof(best_atom.bitmap[n]));
+            }
             best_atom.length = ++n;
           }
           else if (best_quality < YR_MAX_ATOM_QUALITY)
@@ -1020,7 +1029,10 @@ static int _yr_atoms_extract_from_re(
               {
                 best_atom.bytes[i] = atom.bytes[i];
                 best_atom.mask[i] = atom.mask[i];
-                memcpy(best_atom.bitmap[i], atom.bitmap[i], sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
+                if (atom.mask[i] != YR_ATOM_TYPE_ANY)
+                  memcpy(best_atom.bitmap[i], atom.bitmap[i], sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
+                else
+                  yr_bitmask_set_all(best_atom.bitmap[i], sizeof(best_atom.bitmap[i]));
                 best_atom_re_nodes[i] = recent_re_nodes[i + shift];
               }
 
