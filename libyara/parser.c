@@ -853,10 +853,6 @@ int yr_parser_reduce_rule_declaration_phase_1(
   YR_FIXUP *fixup;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
-  // We are starting to parse a rule, set current_rule_idx accordingly.
-  compiler->current_rule_idx = compiler->next_rule_idx;
-  compiler->next_rule_idx++;
-
   YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
       compiler->arena,
       YR_NAMESPACES_TABLE,
@@ -906,6 +902,10 @@ int yr_parser_reduce_rule_declaration_phase_1(
   rule->num_atoms = 0;
 
   YR_ARENA_REF jmp_offset_ref;
+
+  // We are starting to parse a new rule, set current_rule_idx accordingly.
+  compiler->current_rule_idx = compiler->next_rule_idx;
+  compiler->next_rule_idx++;
 
   // The OP_INIT_RULE instruction behaves like a jump. When the rule is disabled
   // it skips over the rule's code and go straight to the next rule's code. The
