@@ -375,6 +375,11 @@ static void test_syntax()
   assert_error(
       "rule test { strings: $a = {01 02 03 04} xor condition: $a }",
       ERROR_SYNTAX_ERROR);
+
+  // Test case for issue #1295
+  assert_error(
+      "rule test rule test",
+      ERROR_DUPLICATED_IDENTIFIER);
 }
 
 
