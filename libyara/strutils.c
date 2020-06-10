@@ -233,11 +233,13 @@ void* memmem(
 {
   char *sp = (char *) haystack;
   char *pp = (char *) needle;
-  char *eos = sp + haystack_size - needle_size;
+  char *eos;
 
   if (haystack == NULL || haystack_size == 0 ||
       needle == NULL || needle_size == 0)
     return NULL;
+
+  eos = sp + haystack_size - needle_size;
 
   while (sp <= eos)
   {
