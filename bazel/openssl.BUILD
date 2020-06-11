@@ -71,11 +71,17 @@ genrule(
         "include/openssl/opensslconf.h",
     ],
     cmd = """
+        CONFIG_LOG=$$(mktemp)
+        MAKE_LOG=$$(mktemp)
         OPENSSL_ROOT=$$(dirname $(location config))
-        pushd $$OPENSSL_ROOT
-            ./config
-            make -j 4
-        popd
+        pushd $$OPENSSL_ROOT > /dev/null
+            if ! ./config > $$CONFIG_LOG; then
+                cat $$CONFIG_LOG
+            fi
+            if ! make -j 4 > $$MAKE_LOG; then
+                cat $$MAKE_LOG
+            fi
+        popd > /dev/null
         cp $$OPENSSL_ROOT/libcrypto.a $(location libcrypto.a)
         cp $$OPENSSL_ROOT/libssl.a $(location libssl.a)
         cp $$OPENSSL_ROOT/include/openssl/opensslconf.h $(location include/openssl/opensslconf.h)
