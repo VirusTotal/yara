@@ -46,7 +46,7 @@ uint64_t yr_stopwatch_elapsed_ns(
 
   QueryPerformanceCounter(&li);
 
-  return (li.QuadPart - sw->start.QuadPart) * 1000000000L / sw->frequency.QuadPart;
+  return (li.QuadPart - sw->start.QuadPart) * 1000000000ULL / sw->frequency.QuadPart;
 }
 
 
@@ -96,7 +96,7 @@ uint64_t yr_stopwatch_elapsed_ns(
 
   clock_gettime(CLOCK_MONOTONIC, &ts_stop);
   timespecsub(&ts_stop, &stopwatch->ts_start, &ts_elapsed);
-  return ts_elapsed.tv_sec * 1000000000L + ts_elapsed.tv_nsec;
+  return ts_elapsed.tv_sec * 1000000000ULL + ts_elapsed.tv_nsec;
 }
 
 
@@ -130,7 +130,7 @@ uint64_t yr_stopwatch_elapsed_ns(
 
   gettimeofday(&tv_stop, NULL);
   timevalsub(&tv_stop, &stopwatch->tv_start, &tv_elapsed);
-  return tv_elapsed.tv_sec * 1000000000L + tv_elapsed.tv_usec * 1000L;
+  return tv_elapsed.tv_sec * 1000000000ULL + tv_elapsed.tv_usec * 1000ULL;
 }
 
 #endif

@@ -288,9 +288,9 @@ YR_API void yr_scanner_set_timeout(
     YR_SCANNER* scanner,
     int timeout)
 {
-  scanner->timeout = timeout * 1000000000L;  // convert timeout to nanoseconds.
+  // Convert timeout from seconds to nanoseconds.
+  scanner->timeout = timeout * 1000000000ULL;
 }
-
 
 YR_API void yr_scanner_set_flags(
     YR_SCANNER* scanner,
