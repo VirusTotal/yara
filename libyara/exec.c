@@ -1663,7 +1663,7 @@ int yr_execute_code(
     // Check for timeout every 100 instruction cycles. If timeout == 0 it means
     // no timeout at all.
 
-    if (context->timeout > 0L && ++cycle == 100)
+    if (context->timeout > 0ULL && ++cycle == 100)
     {
       elapsed_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
 
