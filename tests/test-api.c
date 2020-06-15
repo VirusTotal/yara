@@ -810,12 +810,10 @@ int main(int argc, char** argv)
   test_include_callback();
   test_save_load_rules();
   test_scanner();
-// test_ast_callback();
-// //TODO(vmalvarez): Enable these tests.
-// //test_rules_stats();
-//
-// test_issue_834();
-// test_issue_920();
+  test_ast_callback();
+  test_rules_stats();
+  test_issue_834();
+  test_issue_920();
 
   return 0;
 }
