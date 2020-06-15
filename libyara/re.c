@@ -1831,8 +1831,9 @@ int yr_re_exec(
   RE_FIBER* fiber;
   RE_FIBER* next_fiber;
 
-  int bytes_matched;
-  int max_bytes_matched;
+  size_t bytes_matched;
+  size_t max_bytes_matched;
+
   int match;
   int input_incr;
   int kill;
@@ -1865,13 +1866,13 @@ int yr_re_exec(
 
   if (flags & RE_FLAGS_BACKWARDS)
   {
-    max_bytes_matched = (int) yr_min(input_backwards_size, YR_RE_SCAN_LIMIT);
+    max_bytes_matched = yr_min(input_backwards_size, YR_RE_SCAN_LIMIT);
     input -= character_size;
     input_incr = -input_incr;
   }
   else
   {
-    max_bytes_matched = (int) yr_min(input_forwards_size, YR_RE_SCAN_LIMIT);
+    max_bytes_matched = yr_min(input_forwards_size, YR_RE_SCAN_LIMIT);
   }
 
   // Round down max_bytes_matched to a multiple of character_size, this way if
@@ -2199,12 +2200,13 @@ int yr_re_fast_exec(
   int stop;
   int input_incr;
   int sp = 0;
-  int bytes_matched;
-  int max_bytes_matched;
+
+  size_t bytes_matched;
+  size_t max_bytes_matched;
 
   max_bytes_matched = flags & RE_FLAGS_BACKWARDS ?
-      (int) input_backwards_size :
-      (int) input_forwards_size;
+      input_backwards_size :
+      input_forwards_size;
 
   input_incr = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
 

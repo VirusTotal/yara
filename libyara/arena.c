@@ -335,7 +335,7 @@ int yr_arena_allocate_zeroed_memory(
 //
 // Args:
 //    [in]  YR_ARENA* arena     - Pointer to the arena.
-//    [in]  uint32_t buffer_id   - Buffer number.
+//    [in]  uint32_t buffer_id  - Buffer number.
 //    [in]  size_t size         - Size of the region to be allocated.
 //    [out] YR_ARENA_REF* ref   - Pointer to a reference that will point to the
 //                                newly allocated structure when the function
