@@ -398,7 +398,7 @@ Reference
 
 .. py:class:: Match
 
-  Objects returned by :py:func:`yara.match`, representing a match.
+  Objects returned by :py:method:`yara.match`, representing a match.
 
   .. py:attribute:: rule
 
