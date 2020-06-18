@@ -176,6 +176,26 @@ YR_API int yr_filemap_map_fd(
 
 #else // POSIX
 
+#define MAP_EXTRA_FLAGS 0
+
+#if defined (__APPLE__)
+// MacOS defines some extra flags for mmap.The MAP_RESILIENT_CODESIGN allows
+// to read from binaries whose code signature is invalid, without this flags
+// any attempt to read from such binaries causes a crash, see:
+// https://github.com/VirusTotal/yara/issues/1309.
+//
+// Also, reading from files in removable media that becomes unavailable crashes
+// the program if the MAP_RESILIENT_MEDIA flag is not set.
+#if defined(MAP_RESILIENT_CODESIGN)
+  #undef MAP_EXTRA_FLAGS
+  #if defined(MAP_RESILIENT_MEDIA)
+    #define MAP_EXTRA_FLAGS MAP_RESILIENT_CODESIGN | MAP_RESILIENT_MEDIA
+  #else
+    #define MAP_EXTRA_FLAGS MAP_RESILIENT_CODESIGN
+  #endif
+#endif // #if defined(MAP_RESILIENT_CODESIGN)
+#endif // #if defined (__APPLE__)
+
 YR_API int yr_filemap_map_fd(
     YR_FILE_DESCRIPTOR file,
     off_t offset,
@@ -209,7 +229,7 @@ YR_API int yr_filemap_map_fd(
         0,
         pmapped_file->size,
         PROT_READ,
-        MAP_PRIVATE,
+        MAP_PRIVATE | MAP_EXTRA_FLAGS,
         pmapped_file->file,
         offset);
 
