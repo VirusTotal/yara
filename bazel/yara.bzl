@@ -10,6 +10,8 @@ YARA_CONFIG_OPTS = [
 
 YARA_COPTS = YARA_CONFIG_OPTS + [
     "-D_GNU_SOURCE",
+    "-O3",
+    "-DNDEBUG",
     # Tell the compiler we want the C99 standard.
     "-std=c99",
     # Additional include paths.
