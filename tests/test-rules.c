@@ -525,6 +525,10 @@ static void test_strings()
       "x\001a\0b\0c\0");
 
   assert_true_rule(
+      "rule test { strings: $a = \"\\t\\r\\n\\\"\\\\\" condition: $a }",
+      "\t\r\n\"\\");
+
+  assert_true_rule(
       "rule test {\n\
          strings:\n\
              $a = \"abcdef\"\n\

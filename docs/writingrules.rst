@@ -280,6 +280,8 @@ available in the C language:
      - Double quote
    * - ``\\``
      - Backslash
+   * - ``\r``
+     - Carriage return
    * - ``\t``
      - Horizontal tab
    * - ``\n``
