@@ -668,7 +668,7 @@ int yr_arena_save_stream(
 
     YR_ARENA_REF ref;
 
-    #if NDEBUG
+    #if !defined(NDEBUG)
     int found = yr_arena_ptr_to_ref(arena, *reloc_ptr, &ref);
     // yr_arena_ptr_to_ref returns 0 if the relocatable pointer is pointing
     // outside the arena, this should not happen.
