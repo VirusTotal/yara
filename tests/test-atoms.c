@@ -189,6 +189,7 @@ void test_heuristic_quality()
   assert_true_expr(q000102   > q000001);
   assert_true_expr(q00010203 > q010203);
   assert_true_expr(q010203   > q0102);
+  assert_true_expr(q010203   > q00000000);
   assert_true_expr(q0102     > q01);
   assert_true_expr(q01X203   > q0102);
   assert_true_expr(q01X203   > q0001);
