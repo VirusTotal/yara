@@ -1,7 +1,7 @@
-AC_INIT([yara], [4.0.1], [vmalvarez@virustotal.com])
+AC_INIT([yara], [4.0.2], [vmalvarez@virustotal.com])
 
 AM_SILENT_RULES([yes])
-AC_CONFIG_SRCDIR([yara.c])
+AC_CONFIG_SRCDIR([cli/yara.c])
 
 AC_CONFIG_AUX_DIR([build-aux])
 
@@ -29,7 +29,6 @@ AC_PROG_YACC
 # inline to __inline__ or __inline if it accepts one of those, otherwise define
 # inline to be empty.
 AC_C_INLINE
-
 # Defines WORDS_BIGENDIAN if building in a big-endian host.
 AC_C_BIGENDIAN
 
