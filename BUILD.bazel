@@ -103,13 +103,13 @@ yara_library(
 cc_library(
     name = "cli_shared",
     srcs = [
-        "args.c",
-        "threading.c",
+        "cli/args.c",
+        "cli/threading.c",
     ],
     hdrs = [
-        "args.h",
-        "common.h",
-        "threading.h",
+        "cli/args.h",
+        "cli/common.h",
+        "cli/threading.h",
     ],
     deps = [":libyara"],
 )
@@ -117,7 +117,7 @@ cc_library(
 # YARA command-line tool
 cc_binary(
     name = "yara",
-    srcs = ["yara.c"],
+    srcs = ["cli/yara.c"],
     visibility = ["//visibility:public"],
     deps = [
         ":cli_shared",
@@ -128,7 +128,7 @@ cc_binary(
 # YARA compiler
 cc_binary(
     name = "yarac",
-    srcs = ["yarac.c"],
+    srcs = ["cli/yarac.c"],
     visibility = ["//visibility:public"],
     deps = [
         ":cli_shared",
