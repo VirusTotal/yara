@@ -158,14 +158,11 @@ static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 #define USAGE_STRING \
     "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
 
-// yaramod - added :
-//----------------------------------------------------------
-
 static char* argsearchexts = NULL;
 char* emptyext = ".";
 
-// check if file matches extension specified using -m
-// Example :  -m .php/.jsp/.asp/.aspx/.js/.dll/.exe/.gif
+// check if file matches extension specified using --exts
+// Example :  --exts=.php/.jsp/.asp/.aspx/.js/.dll/.exe/.gif
 
 bool ExtMatchSearchedExts(char* full_path)
 {
@@ -191,16 +188,12 @@ bool ExtMatchSearchedExts(char* full_path)
     } while (pos);
     return false;
 }
-//----------------------------------------------------------
 
 args_option_t options[] =
-{
-  // yaramod - added :
-  OPT_STRING('m', "mask", &argsearchexts,"searched extensions mask", "MASK"),
-
+{  
   OPT_STRING(0, "atom-quality-table", &atom_quality_table,
       "path to a file with the atom quality table", "FILE"),
-
+        
   OPT_BOOLEAN('C', "compiled-rules", &rules_are_compiled,
       "load compiled rules"),
 
@@ -209,6 +202,8 @@ args_option_t options[] =
 
   OPT_STRING_MULTI('d', "define", &ext_vars, MAX_ARGS_EXT_VAR,
       "define external variable", "VAR=VALUE"),
+
+  OPT_STRING(0, "exts", &argsearchexts,"file extension(s) to scan",".ext1/.ext2...etc"),
 
   OPT_BOOLEAN(0, "fail-on-warnings", &fail_on_warnings,
       "fail on warnings"),
@@ -278,7 +273,7 @@ args_option_t options[] =
 
   OPT_BOOLEAN('v', "version", &show_version,
       "show version information"),
-
+  
   OPT_END()
 };
 
