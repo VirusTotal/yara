@@ -370,7 +370,7 @@ int yr_execute_code(
   uint64_t start_time;
   #endif
 
-  uint32_t current_rule_idx;
+  uint32_t current_rule_idx = 0;
   YR_RULE* current_rule = NULL;
   YR_RULE* rule;
   YR_MATCH* match;
