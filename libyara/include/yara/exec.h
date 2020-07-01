@@ -85,10 +85,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OP_MATCHES                 40
 #define OP_IMPORT                  41
 #define OP_LOOKUP_DICT             42
-#define OP_JUNDEF                  43   # Not used
+#define OP_JUNDEF                  43   /* Not used */
 #define OP_JUNDEF_P                44
 #define OP_JNUNDEF                 45
-#define OP_JNUNDEF_P               46   # Not used
+#define OP_JNUNDEF_P               46   /* Not used */
 #define OP_JFALSE                  47
 #define OP_JFALSE_P                48
 #define OP_JTRUE                   49
