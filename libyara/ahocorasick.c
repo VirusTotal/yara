@@ -843,6 +843,7 @@ static int _yr_ac_create_failure_links(
   YR_AC_STATE* check_state;
   YR_AC_STATE* res_state;
   YR_AC_MATCH* match;
+  YR_AC_STATE* test_new_root_state;
 
   QUEUE queue;
 
@@ -861,6 +862,7 @@ static int _yr_ac_create_failure_links(
   // Check if the root's states are derermnistic
   while (state != NULL)
   {
+    test_new_root_state = root_state->first_child;
     dfa_subtree(root_state, state, arena);
     res_state = state;
     state = state->siblings;
@@ -868,6 +870,8 @@ static int _yr_ac_create_failure_links(
     {
       yr_free(res_state);
     }
+    if (test_new_root_state != root_state->first_child)
+      state = root_state->first_child;
   }
 
   // Push root's children and set their failure link to root.
