@@ -540,10 +540,7 @@ int _yr_atoms_trim(
     atom->bytes[i] = atom->bytes[trim_left + i];
     atom->mask[i] = atom->mask[trim_left + i];
     yr_bitmask_clear_all(atom->bitmap[i], sizeof(atom->bitmap[i]));
-    if (atom->mask[i] == 0xFF)
-      yr_bitmask_set(atom->bitmap[i], atom->bytes[i]);
-    else
-       memcpy(atom->bitmap[i], atom->bitmap[trim_left + i], (sizeof(YR_BITMASK) * YR_BITMAP_SIZE));
+    memcpy(atom->bitmap[i], atom->bitmap[trim_left + i], (sizeof(YR_BITMASK) * YR_BITMAP_SIZE));
   }
 
   return trim_left;
@@ -1006,7 +1003,7 @@ static int _yr_atoms_extract_from_re(
             best_atom_re_nodes[n] = si.re_node;
             best_atom.bytes[n] = (uint8_t) si.re_node->value;
             best_atom.mask[n] = (uint8_t) si.re_node->mask;
-            if (si.re_node->type != RE_NODE_ANY)
+            if (si.re_node->type == RE_NODE_LITERAL || si.re_node->type == RE_NODE_MASKED_LITERAL)
             {
               yr_bitmask_clear_all(best_atom.bitmap[n], sizeof(best_atom.bitmap[n]));
               yr_bitmask_set(best_atom.bitmap[n], best_atom.bytes[n]);
