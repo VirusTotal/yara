@@ -195,8 +195,8 @@ void test_heuristic_quality()
   assert_true_expr(q01X203   > q0001);
   assert_true_expr(q01X203   < q010203);
   assert_true_expr(q01X203   == q010X03);
-  assert_true_expr(q01XX03   <= q0102);
-  assert_true_expr(q01XX03   < q010X03);
+  assert_true_expr(q01XX03   >= q0102);
+  assert_true_expr(q01XX03   >= q010X03);
   assert_true_expr(q01XX03   < q010203);
   assert_true_expr(q010X0X   > q01);
   assert_true_expr(q010X0X   < q010203);
@@ -571,7 +571,7 @@ void test_atom_choose()
 
     // Test case for issue #1025
     assert_hex_atoms("{?? 11 22 33 ?? 55 66 }", 1, (struct atom[]) {
-      {3, {0x11, 0x22, 0x33}},
+      {4, {0x22, 0x33, 0x00, 0x55}},
     });
 }
 
