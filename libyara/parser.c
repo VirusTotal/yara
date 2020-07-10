@@ -383,11 +383,8 @@ static int _yr_parser_write_string(
 
   YR_ARENA_REF ref;
 
-  FAIL_ON_ERROR(yr_arena_write_string(
-      compiler->arena,
-      YR_SZ_POOL,
-      identifier,
-      &ref));
+  FAIL_ON_ERROR(_yr_compiler_store_string(
+      compiler, identifier, &ref));
 
   string->identifier = (const char*) yr_arena_ref_to_ptr(
       compiler->arena, &ref);
@@ -429,9 +426,8 @@ static int _yr_parser_write_string(
 
   if (modifier.flags & STRING_FLAGS_LITERAL)
   {
-    result = yr_arena_write_data(
-        compiler->arena,
-        YR_SZ_POOL,
+    result = _yr_compiler_store_data(
+        compiler,
         literal_string->c_string,
         literal_string->length + 1,   // +1 to include terminating NULL
         &ref);
@@ -890,9 +886,8 @@ int yr_parser_reduce_rule_declaration_phase_1(
 
   YR_ARENA_REF ref;
 
-  FAIL_ON_ERROR(yr_arena_write_string(
-      compiler->arena,
-      YR_SZ_POOL,
+  FAIL_ON_ERROR(_yr_compiler_store_string(
+      compiler,
       identifier,
       &ref));
 
@@ -1154,9 +1149,8 @@ int yr_parser_reduce_meta_declaration(
   meta->type = type;
   meta->integer = integer;
 
-  FAIL_ON_ERROR(yr_arena_write_string(
-      compiler->arena,
-      YR_SZ_POOL,
+  FAIL_ON_ERROR(_yr_compiler_store_string(
+      compiler,
       identifier,
       &ref));
 
@@ -1164,9 +1158,8 @@ int yr_parser_reduce_meta_declaration(
 
   if (string != NULL)
   {
-    FAIL_ON_ERROR(yr_arena_write_string(
-        compiler->arena,
-        YR_SZ_POOL,
+    FAIL_ON_ERROR(_yr_compiler_store_string(
+        compiler,
         string,
         &ref));
 
@@ -1249,9 +1242,8 @@ int yr_parser_reduce_import(
   if (result != ERROR_SUCCESS)
     return result;
 
-  FAIL_ON_ERROR(yr_arena_write_string(
-      compiler->arena,
-      YR_SZ_POOL,
+  FAIL_ON_ERROR(_yr_compiler_store_string(
+      compiler,
       module_name->c_string,
       &ref));
 

@@ -166,6 +166,68 @@ YR_RULE* _yr_compiler_get_rule_by_idx(
 }
 
 
+//
+// _yr_compiler_store_data stores some data in the YR_SZ_POOL and returns a
+// reference to it. If the same data was already stored in a previous call
+// to this function the data is not written again, a reference to the
+// existing data is returned instead.
+//
+int _yr_compiler_store_data(
+    YR_COMPILER* compiler,
+    const void* data,
+    size_t data_length,
+    YR_ARENA_REF* ref)
+{
+  // Check if the data is already in YR_SZ_POOL by using a hash table.
+  uint32_t offset = yr_hash_table_lookup_uint32_raw_key(
+      compiler->sz_table, data, data_length, NULL);
+
+  if (offset == UINT32_MAX)
+  {
+    // The data was not previously written to YR_SZ_POOL, write it and store
+    // the reference's offset in the hash table. Storing the buffer number
+    // is not necessary, it's always YR_SZ_POOL.
+    FAIL_ON_ERROR(yr_arena_write_data(
+        compiler->arena,
+        YR_SZ_POOL,
+        data,
+        data_length,
+        ref));
+
+    FAIL_ON_ERROR(yr_hash_table_add_uint32_raw_key(
+        compiler->sz_table,
+        data,
+        data_length,
+        NULL,
+        ref->offset));
+  }
+  else
+  {
+    ref->buffer_id = YR_SZ_POOL;
+    ref->offset = offset;
+  }
+
+  return ERROR_SUCCESS;
+}
+
+
+//
+// _yr_compiler_store_string is similar to _yr_compiler_store_data, but receives
+// a null-terminated string.
+//
+int _yr_compiler_store_string(
+    YR_COMPILER* compiler,
+    const char* string,
+    YR_ARENA_REF* ref)
+{
+  return _yr_compiler_store_data(
+      compiler,
+      (void*) string,
+      strlen(string) + 1, // include the null terminator
+      ref);
+}
+
+
 YR_API int yr_compiler_create(
     YR_COMPILER** compiler)
 {
@@ -209,7 +271,10 @@ YR_API int yr_compiler_create(
     result = yr_hash_table_create(10007, &new_compiler->objects_table);
 
   if (result == ERROR_SUCCESS)
-    result = yr_hash_table_create(101, &new_compiler->strings_table);
+    result = yr_hash_table_create(10000, &new_compiler->strings_table);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_hash_table_create(50000, &new_compiler->sz_table);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(
@@ -250,10 +315,14 @@ YR_API void yr_compiler_destroy(
       NULL);
 
   yr_hash_table_destroy(
+      compiler->sz_table,
+      NULL);
+
+  yr_hash_table_destroy(
       compiler->objects_table,
       (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
-  if (compiler->  atoms_config.free_quality_table)
+  if (compiler->atoms_config.free_quality_table)
     yr_free(compiler->atoms_config.quality_table);
 
   for (int i = 0; i < compiler->file_name_stack_ptr; i++)
@@ -509,9 +578,8 @@ static int _yr_compiler_set_namespace(
 
     ns = (YR_NAMESPACE*) yr_arena_ref_to_ptr(compiler->arena, &ref);
 
-    FAIL_ON_ERROR(yr_arena_write_string(
-        compiler->arena,
-        YR_SZ_POOL,
+    FAIL_ON_ERROR(_yr_compiler_store_string(
+        compiler,
         namespace_,
         &ref));
 
@@ -742,9 +810,8 @@ static int _yr_compiler_define_variable(
   ext = (YR_EXTERNAL_VARIABLE*) yr_arena_ref_to_ptr(
       compiler->arena, &ext_ref);
 
-  FAIL_ON_ERROR(yr_arena_write_string(
-      compiler->arena,
-      YR_SZ_POOL,
+  FAIL_ON_ERROR(_yr_compiler_store_string(
+      compiler,
       external->identifier,
       &ref));
 
@@ -759,9 +826,8 @@ static int _yr_compiler_define_variable(
     if (external->value.s == NULL)
       return ERROR_INVALID_ARGUMENT;
 
-    FAIL_ON_ERROR(yr_arena_write_string(
-        compiler->arena,
-        YR_SZ_POOL,
+    FAIL_ON_ERROR(_yr_compiler_store_string(
+        compiler,
         external->value.s,
         &ref));
 
