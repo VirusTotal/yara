@@ -474,10 +474,10 @@ tag_list
         char* tag = (char*) yr_arena_ref_to_ptr(
             compiler->arena, &$<tag>$);
 
-	// Search for duplicated tags. Tags are written one after
-	// the other, with zeroes in between (i.e: tag1/0tag2/0tag3)
-	// that's why can use tag < new_tag as the condition for the
-	// loop.
+        // Search for duplicated tags. Tags are written one after
+        // the other, with zeroes in between (i.e: tag1/0tag2/0tag3)
+        // that's why can use tag < new_tag as the condition for the
+        // loop.
         while (tag < new_tag)
         {
           if (strcmp(tag, new_tag) == 0)
@@ -909,8 +909,8 @@ identifier
           {
             YR_ARENA_REF ref;
 
-            result = yr_arena_write_string(
-                compiler->arena, YR_SZ_POOL, $1, &ref);
+            result = _yr_compiler_store_string(
+                compiler, $1, &ref);
 
             if (result == ERROR_SUCCESS)
               result = yr_parser_emit_with_arg_reloc(
@@ -973,8 +973,8 @@ identifier
           {
             YR_ARENA_REF ref;
 
-            result = yr_arena_write_string(
-                compiler->arena, YR_SZ_POOL, $3, &ref);
+            result = _yr_compiler_store_string(
+                compiler, $3, &ref);
 
             if (result == ERROR_SUCCESS)
               result = yr_parser_emit_with_arg_reloc(
@@ -1081,8 +1081,8 @@ identifier
               compiler, object_as_function($1.value.object), $3);
 
           if (result == ERROR_SUCCESS)
-            result = yr_arena_write_string(
-                compiler->arena, YR_SZ_POOL, $3, &ref);
+            result = _yr_compiler_store_string(
+                compiler, $3, &ref);
 
           if (result == ERROR_SUCCESS)
             result = yr_parser_emit_with_arg_reloc(
@@ -2214,9 +2214,8 @@ primary_expression
       {
         YR_ARENA_REF ref;
 
-        int result = yr_arena_write_data(
-            compiler->arena,
-            YR_SZ_POOL,
+        int result = _yr_compiler_store_data(
+            compiler,
             $1,
             $1->length + sizeof(SIZED_STRING),
             &ref);
