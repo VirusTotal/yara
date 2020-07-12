@@ -545,6 +545,29 @@ int yr_execute_code(
         push(r1);
         break;
 
+      case OP_PUSH_8:
+        r1.i = *ip;
+        ip += sizeof(uint8_t);
+        push(r1);
+        break;
+
+      case OP_PUSH_16:
+        r1.i = *(uint16_t*)(ip);
+        ip += sizeof(uint16_t);
+        push(r1);
+        break;
+
+      case OP_PUSH_32:
+        r1.i = *(uint32_t*)(ip);
+        ip += sizeof(uint32_t);
+        push(r1);
+        break;
+
+      case OP_PUSH_U:
+        r1.i = YR_UNDEFINED;
+        push(r1);
+        break;
+
       case OP_POP:
         pop(r1);
         break;
