@@ -1276,15 +1276,13 @@ boolean_expression
 expression
     : _TRUE_
       {
-        fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, 1, NULL, NULL));
+        fail_if_error(yr_parser_emit_push_const(yyscanner, 1));
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | _FALSE_
       {
-        fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, 0, NULL, NULL));
+        fail_if_error(yr_parser_emit_push_const(yyscanner, 0));
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -2024,8 +2022,7 @@ integer_set
     : '(' integer_enumeration ')'
       {
         // $2 contains the number of integers in the enumeration
-        fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, $2, NULL, NULL));
+        fail_if_error(yr_parser_emit_push_const(yyscanner, $2));
 
         fail_if_error(yr_parser_emit(
             yyscanner, OP_ITER_START_INT_ENUM, NULL));
@@ -2100,13 +2097,12 @@ string_set
     : '('
       {
         // Push end-of-list marker
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL);
+        yr_parser_emit_push_const(yyscanner, YR_UNDEFINED);
       }
       string_enumeration ')'
     | _THEM_
       {
-        fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL));
+        fail_if_error(yr_parser_emit_push_const(yyscanner, YR_UNDEFINED));
 
         fail_if_error(yr_parser_emit_pushes_for_strings(
             yyscanner, "$*"));
@@ -2145,12 +2141,12 @@ for_expression
       }
     | _ALL_
       {
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL);
+        yr_parser_emit_push_const(yyscanner, YR_UNDEFINED);
         $$ = FOR_EXPRESSION_ALL;
       }
     | _ANY_
       {
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, 1, NULL, NULL);
+        yr_parser_emit_push_const(yyscanner, 1);
         $$ = FOR_EXPRESSION_ANY;
       }
     ;
@@ -2197,8 +2193,7 @@ primary_expression
       }
     | _NUMBER_
       {
-        fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, $1, NULL, NULL));
+        fail_if_error(yr_parser_emit_push_const(yyscanner, $1));
 
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = $1;
@@ -2261,8 +2256,7 @@ primary_expression
       }
     | _STRING_OFFSET_
       {
-        int result = yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, 1, NULL, NULL);
+        int result = yr_parser_emit_push_const(yyscanner, 1);
 
         if (result == ERROR_SUCCESS)
           result = yr_parser_reduce_string_identifier(
@@ -2289,8 +2283,7 @@ primary_expression
       }
     | _STRING_LENGTH_
       {
-        int result = yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, 1, NULL, NULL);
+        int result = yr_parser_emit_push_const(yyscanner, 1);
 
         if (result == ERROR_SUCCESS)
           result = yr_parser_reduce_string_identifier(
