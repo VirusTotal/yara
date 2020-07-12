@@ -103,6 +103,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OP_JZ                      58
 #define OP_JZ_P                    59
 
+#define OP_PUSH_8                  60
+#define OP_PUSH_16                 61
+#define OP_PUSH_32                 62
+#define OP_PUSH_U                  63
 
 #define _OP_EQ            0
 #define _OP_NEQ           1
