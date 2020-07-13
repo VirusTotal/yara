@@ -268,13 +268,13 @@ YR_API int yr_compiler_create(
   result = yr_hash_table_create(5000, &new_compiler->rules_table);
 
   if (result == ERROR_SUCCESS)
-    result = yr_hash_table_create(5000, &new_compiler->objects_table);
+    result = yr_hash_table_create(1000, &new_compiler->objects_table);
 
   if (result == ERROR_SUCCESS)
-    result = yr_hash_table_create(5000, &new_compiler->strings_table);
+    result = yr_hash_table_create(10000, &new_compiler->strings_table);
 
   if (result == ERROR_SUCCESS)
-    result = yr_hash_table_create(5000, &new_compiler->sz_table);
+    result = yr_hash_table_create(10000, &new_compiler->sz_table);
 
   if (result == ERROR_SUCCESS)
     result = yr_arena_create(
