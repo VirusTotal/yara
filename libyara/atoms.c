@@ -117,7 +117,6 @@ int yr_atoms_heuristic_quality(
 
   int quality = 0;
   int unique_bytes = 0;
-  int i;
 
   assert(atom->length <= YR_MAX_ATOM_LENGTH);
 
@@ -1513,11 +1512,11 @@ int yr_atoms_extract_from_string(
 
   if (modifier.flags & STRING_FLAGS_NO_CASE)
   {
-    FAIL_ON_ERROR_WITH_CLEANUP( 
-      _yr_atoms_case_insensitive(*atoms), 
-      { 
-        yr_atoms_list_destroy(*atoms);  
-        *atoms = NULL;  
+    FAIL_ON_ERROR_WITH_CLEANUP(
+      _yr_atoms_case_insensitive(*atoms),
+      {
+        yr_atoms_list_destroy(*atoms);
+        *atoms = NULL;
       });
   }
 
