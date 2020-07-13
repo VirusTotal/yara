@@ -403,26 +403,28 @@ static int _yr_ac_state_destroy_updated(
 }
 
 
-// 
+//
 // _yr_ac_copy_matches:
 // creates a copy of the list of matches and joins it with the list of the state
 //
-static void _yr_ac_copy_matches(
-  YR_AC_STATE* state, 
-  YR_ARENA_REF* matches, 
+static int _yr_ac_copy_matches(
+  YR_AC_STATE* state,
+  YR_AC_STATE* copy_state,
   YR_ARENA* matches_arena)
 {
-  YR_AC_MATCH* match;
-  YR_AC_MATCH* new_match = NULL;
-  int result;
-
-  match = yr_arena_ref_to_ptr(matches_arena, matches);
+  YR_AC_MATCH* match = yr_arena_ref_to_ptr(matches_arena, &copy_state->matches_ref);
+  YR_ARENA_REF new_match_ref;
+  int counter = 0;
 
   while (match != NULL)
   {
-    YR_ARENA_REF new_match_ref;
+    counter++;
+    match = match->next;
+  }
 
-    result = yr_arena_allocate_struct(
+  for (int i = 0; i < counter; i++)
+  {
+    FAIL_ON_ERROR(yr_arena_allocate_struct(
         matches_arena,
         YR_AC_STATE_MATCHES_POOL,
         sizeof(YR_AC_MATCH),
@@ -431,26 +433,28 @@ static void _yr_ac_copy_matches(
         offsetof(YR_AC_MATCH, forward_code),
         offsetof(YR_AC_MATCH, backward_code),
         offsetof(YR_AC_MATCH, next),
-        EOL);
+        EOL));
 
-    if (result == ERROR_SUCCESS)
-    {
-      new_match = yr_arena_ref_to_ptr(matches_arena, &new_match_ref);
+    YR_AC_MATCH* new_match = yr_arena_ref_to_ptr(matches_arena, &new_match_ref);
+    new_match->next = yr_arena_ref_to_ptr(matches_arena, &state->matches_ref);
+    state->matches_ref = new_match_ref;
+  }
 
-      new_match->backtrack = match->backtrack;
-      new_match->string = match->string;
-      new_match->forward_code = match->forward_code;
-      new_match->backward_code = match->backward_code;
-      new_match->next = yr_arena_ref_to_ptr(matches_arena, &state->matches_ref);
-      state->matches_ref = new_match_ref;
-    }
-    else
-      break;
+  match = yr_arena_ref_to_ptr(matches_arena, &copy_state->matches_ref);
+  YR_AC_MATCH* new_match = yr_arena_ref_to_ptr(matches_arena, &state->matches_ref);
 
+  while (match != NULL)
+  {
+    new_match->backtrack = match->backtrack;
+    new_match->string = match->string;
+    new_match->forward_code = match->forward_code;
+    new_match->backward_code = match->backward_code;
+
+    new_match = new_match->next;
     match = match->next;
   }
+  return ERROR_SUCCESS;
 }
-
 
 
 // Creates a new state with values of add_state and creates a new matches list
@@ -463,7 +467,7 @@ static YR_AC_STATE* _yr_ac_create_copied_state(
 
   new_state = _yr_ac_state_create(current_state, add_state->input, add_state->type, add_state->bitmap);
   new_state->failure = current_state->failure;
-  _yr_ac_copy_matches(new_state, &add_state->matches_ref, matches_arena);
+  _yr_ac_copy_matches(new_state, add_state, matches_arena);
 
   return new_state;
 }
@@ -503,7 +507,7 @@ static void _yr_ac_copy_path(
         if (YR_ARENA_IS_NULL_REF(new_state->matches_ref))
           new_state->matches_ref = input_state->matches_ref;
         else
-          _yr_ac_copy_matches(new_state, &input_state->matches_ref, arena);
+          _yr_ac_copy_matches(new_state, input_state, arena);
       }
     }
     else
@@ -514,7 +518,7 @@ static void _yr_ac_copy_path(
         if (YR_ARENA_IS_NULL_REF(new_state->matches_ref))
           new_state->matches_ref = path->matches_ref;
         else
-          _yr_ac_copy_matches(new_state, &path->matches_ref, arena);
+          _yr_ac_copy_matches(new_state, path, arena);
       }
     }
 
@@ -958,7 +962,7 @@ static int _yr_ac_create_failure_links(
           }
           else
           {
-            _yr_ac_copy_matches(transition_state, &temp_state->matches_ref, arena);
+            _yr_ac_copy_matches(transition_state, temp_state, arena);
           }
 
           break;
@@ -1640,7 +1644,7 @@ int yr_ac_compile(
   FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton, arena));
   FAIL_ON_ERROR(_yr_ac_optimize_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton));
-  
+
   return ERROR_SUCCESS;
 }
 
@@ -1656,4 +1660,3 @@ void yr_ac_print_automaton(YR_AC_AUTOMATON* automaton)
   _yr_ac_print_automaton_state(automaton, automaton->root);
   printf("-------------------------------------------------------\n");
 }
-
