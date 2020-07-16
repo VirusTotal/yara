@@ -490,6 +490,7 @@ int _yr_atoms_trim(
 {
   int mask_00 = 0;
   int mask_ff = 0;
+  int mask_cc = 0;
 
   int trim_left = 0;
 
@@ -513,6 +514,8 @@ int _yr_atoms_trim(
   {
     if (atom->mask[trim_left + i] == 0xFF)
       mask_ff++;
+    else if (atom->mask[trim_left + i] == 0xCC)
+      mask_cc++;
     else if (atom->mask[trim_left + i] == 0x00)
       mask_00++;
   }
@@ -526,7 +529,7 @@ int _yr_atoms_trim(
   // example, in { XX ?? ?? ?? YY ZZ } the best atom is { YY ZZ } not { XX }.
   // But let's keep it like this for simplicity.
 
-  if (mask_00 >= mask_ff)
+  if (mask_00 >= (mask_ff + mask_cc))
     atom->length = 1;
 
   if (trim_left == 0)
