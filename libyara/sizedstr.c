@@ -123,7 +123,7 @@ SIZED_STRING* sized_string_new(
 
   // Copy the string and the null terminator.
   strcpy(result->c_string, s);
-  
+
   return result;
 }
 
@@ -135,19 +135,16 @@ SIZED_STRING* sized_string_new(
 SIZED_STRING* sized_string_convert_to_wide(
     SIZED_STRING* s)
 {
-  size_t i;
-  size_t j = 0;
-
   SIZED_STRING* wide = (SIZED_STRING*) yr_malloc(
       sizeof(SIZED_STRING) + s->length * 2);
 
   if (wide == NULL)
     return NULL;
 
-  for (i = 0; i <= s->length; i++)
+  for (size_t i = 0; i < s->length; i++)
   {
-    wide->c_string[j++] = s->c_string[i];
-    wide->c_string[j++] = '\x00';
+    wide->c_string[i * 2] = s->c_string[i];
+    wide->c_string[i * 2 + 1] = '\x00';
   }
 
   wide->length = s->length * 2;
