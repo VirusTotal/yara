@@ -100,7 +100,7 @@ SIZED_STRING* sized_string_dup(
   result->length = s->length;
   result->flags = s->flags;
 
-  strncpy(result->c_string, s->c_string, s->length + 1);
+  memcpy(result->c_string, s->c_string, s->length + 1);
 
   return result;
 }
