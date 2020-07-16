@@ -34,18 +34,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/integers.h>
 
+#define SIZED_STRING_FLAGS_NO_CASE  1
+#define SIZED_STRING_FLAGS_DOT_ALL  2
+
+#pragma pack(push)
+#pragma pack(1)
+
 //
 // This struct is used to support strings containing null chars. The length of
 // the string is stored along the string data. However the string data is also
 // terminated with a null char.
 //
-
-#define SIZED_STRING_FLAGS_NO_CASE  1
-#define SIZED_STRING_FLAGS_DOT_ALL  2
-
-#pragma pack(push)
-#pragma pack(4)
-
 typedef struct _SIZED_STRING
 {
   uint32_t length;
