@@ -588,22 +588,24 @@ static int _yr_ac_return_literal(
 }
 
 //
-// If the class become literal, change the type
+// If the class becomes literal, it returns a literal found.
+// Otherwise, it returns 0.
 //
 
-static bool _yr_ac_class_is_literal(
-    YR_AC_STATE* state)
+static uint8_t _yr_ac_class_is_literal(
+    YR_BITMASK* bitmap)
 {
   int bits = 0;
   int counter = 0;
   int literal = 0;
+  uint8_t non_literal = 0;
 
   for (int i = 0; i < YR_BITMAP_SIZE; i++)
   {
-    bits = _yr_ac_return_literal(state->bitmap[i], i);
+    bits = _yr_ac_return_literal(bitmap[i], i);
 
     if (bits == -1)
-      return false;
+      return non_literal;
     else if (bits != 0)
     {
       literal = bits;
@@ -613,15 +615,12 @@ static bool _yr_ac_class_is_literal(
 
   if (counter == 1)
   {
-    state->type = YR_ATOM_TYPE_LITERAL;
     // _yr_ac_return_literal return literal + 1
-    state->input = literal - 1;
-    return true;
+    return literal - 1;
   }
-
   assert(counter != 0);
 
-  return false;
+  return non_literal;
 }
 
 
@@ -634,6 +633,7 @@ static bool _yr_ac_find_conflict_states(
 {
   int int_counter = 0;
   int bitmap2_counter = 0;
+  uint8_t literal = 0;
 
   YR_BITMASK intersetion[YR_BITMAP_SIZE];
   YR_BITMASK bitmap2[YR_BITMAP_SIZE];
@@ -653,7 +653,14 @@ static bool _yr_ac_find_conflict_states(
     yr_bitmask_clear(dfa_state2->bitmap, next_state->input);
 
     if (dfa_state2->type == YR_ATOM_TYPE_CLASS)
-      _yr_ac_class_is_literal(dfa_state2);
+    {
+      literal = _yr_ac_class_is_literal(dfa_state2->bitmap);
+      if (literal)
+      {
+        dfa_state2->input = literal;
+        dfa_state2->type = YR_ATOM_TYPE_LITERAL;
+      }
+    }
     else
       dfa_state2->type = YR_ATOM_TYPE_CLASS;
     return false;
@@ -673,7 +680,13 @@ static bool _yr_ac_find_conflict_states(
       dfa_state2->type = YR_ATOM_TYPE_CLASS;
       for (int i = 0; i < YR_BITMAP_SIZE; i++)
         dfa_state2->bitmap[i] = dfa_state2->bitmap[i] - next_state->bitmap[i];
-      _yr_ac_class_is_literal(dfa_state2);
+
+      literal = _yr_ac_class_is_literal(dfa_state2->bitmap);
+      if (literal)
+      {
+        dfa_state2->input = literal;
+        dfa_state2->type = YR_ATOM_TYPE_LITERAL;
+      }
       return false;
     } // if (input_state->type == YR_ATOM_TYPE_ANY)
     else if (input_state->type == YR_ATOM_TYPE_CLASS)
@@ -697,12 +710,22 @@ static bool _yr_ac_find_conflict_states(
         // New state with intersected input from next_state
         memcpy(dfa_state1, input_state, sizeof(YR_AC_STATE));
         memcpy(dfa_state1->bitmap, intersetion, sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
-        _yr_ac_class_is_literal(dfa_state1);
+        literal = _yr_ac_class_is_literal(dfa_state1->bitmap);
+        if (literal)
+        {
+          dfa_state1->input = literal;
+          dfa_state1->type = YR_ATOM_TYPE_LITERAL;
+        }
 
         // Updated input_state (without input from itersection)
         memcpy(dfa_state2, input_state, sizeof(YR_AC_STATE));
         memcpy(dfa_state2->bitmap, bitmap2, sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
-        _yr_ac_class_is_literal(dfa_state2);
+        literal = _yr_ac_class_is_literal(dfa_state2->bitmap);
+        if (literal)
+        {
+          dfa_state2->input = literal;
+          dfa_state2->type = YR_ATOM_TYPE_LITERAL;
+        }
         return false;
       }
     } // else if (input_state->type == YR_ATOM_TYPE_CLASS)
@@ -782,7 +805,12 @@ static bool dfa_subtree(
 
   bool pop = true;
 
-  _yr_ac_class_is_literal(input_state);
+  uint8_t literal = _yr_ac_class_is_literal(input_state->bitmap);
+  if (literal)
+  {
+    input_state->input = literal;
+    input_state->type = YR_ATOM_TYPE_LITERAL;
+  }
 
   if ((input_state->type == YR_ATOM_TYPE_CLASS) || (input_state->type == YR_ATOM_TYPE_ANY))
   {
@@ -1576,6 +1604,29 @@ int yr_ac_add_string(
 
     for (int i = 0; i < atom->atom.length; i++)
     {
+      if (atom->atom.mask[i] == YR_ATOM_TYPE_CLASS)
+      {
+        // for a case like [a] - the class is a literal or re_node_any
+        uint8_t literal = _yr_ac_class_is_literal(atom->atom.bitmap[i]);
+        if (literal)
+        {
+          atom->atom.bytes[i] = literal;
+          atom->atom.mask[i] = YR_ATOM_TYPE_LITERAL;
+        }
+        else
+        {
+          bool secret_any = false;
+          for (int j = 0; j < YR_BITMAP_SIZE; j++)
+          {
+            if (atom->atom.bitmap[i][j] == UINT64_MAX)
+              secret_any = true;
+            else
+              secret_any = false;
+          }
+          if (secret_any)
+            atom->atom.mask[i] = YR_ATOM_TYPE_ANY;
+        }
+      }
 
       YR_AC_STATE* next_state = _yr_ac_next_state_typed(state, atom->atom.bytes[i], atom->atom.mask[i], atom->atom.bitmap[i]);
 
@@ -1586,10 +1637,6 @@ int yr_ac_add_string(
         if (next_state == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
       }
-
-      // for a case like [a] - the class is a literal
-      if (atom->atom.mask[i] == YR_ATOM_TYPE_CLASS)
-          _yr_ac_class_is_literal(next_state);
 
       state = next_state;
     }
