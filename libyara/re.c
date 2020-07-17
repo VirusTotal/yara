@@ -395,12 +395,15 @@ SIZED_STRING* yr_re_ast_extract_literal(
   else
   {
     child = re_ast->root_node->children_tail;
+
     while (child != NULL)
     {
       string->c_string[--length] = child->value;
       child = child->prev_sibling;
     }
   }
+
+  string->c_string[length] = '\0';
 
   return string;
 }
