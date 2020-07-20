@@ -73,6 +73,7 @@ MAGIC_COPTS = [
         "-DHAVE_INTTYPES_H=1",
         "-DHAVE_STDINT_H=1",
         "-DHAVE_UNISTD_H=1",
+        "-DHAVE_MKSTEMP=1",
     ],
     "@bazel_tools//src/conditions:windows": [
     ],
