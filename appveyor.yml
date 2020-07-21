@@ -7,28 +7,28 @@ pull_requests:
 
 environment:
   matrix:
-  - TARGET: vs2015
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    VisualStudioVersion: 14.0
-    platform: x86
-    configuration: Release
-    artifact_postfix: win32
-  - TARGET: vs2015
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    VisualStudioVersion: 14.0
-    platform: x86
-    configuration: Debug
-  - TARGET: vs2015
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    VisualStudioVersion: 14.0
-    platform: x64
-    configuration: Release
-    artifact_postfix: win64
-  - TARGET: vs2015
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    VisualStudioVersion: 14.0
-    platform: x64
-    configuration: Debug
+#  - TARGET: vs2015
+#    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+#    VisualStudioVersion: 14.0
+#    platform: x86
+#    configuration: Release
+#    artifact_postfix: win32
+#  - TARGET: vs2015
+#    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+#    VisualStudioVersion: 14.0
+#    platform: x86
+#    configuration: Debug
+#  - TARGET: vs2015
+#    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+#    VisualStudioVersion: 14.0
+#    platform: x64
+#    configuration: Release
+#    artifact_postfix: win64
+#  - TARGET: vs2015
+#    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+#    VisualStudioVersion: 14.0
+#    platform: x64
+#    configuration: Debug
   - TARGET: cygwin
 
 for:
