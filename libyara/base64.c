@@ -155,7 +155,9 @@ static SIZED_STRING* _yr_base64_get_base64_substring(
   start = encoded_str->c_string + leading;
 
   memcpy(new_str->c_string, start, length);
+
   new_str->length = length;
+  new_str->c_string[length] = '\0';
 
   if (wide)
   {
