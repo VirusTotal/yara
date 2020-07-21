@@ -137,6 +137,7 @@ static SIZED_STRING* _yr_base64_get_base64_substring(
 {
   SIZED_STRING* new_str;
   SIZED_STRING* final_str;
+
   char* start;
   uint32_t length;
   int trailing;
@@ -155,7 +156,9 @@ static SIZED_STRING* _yr_base64_get_base64_substring(
   start = encoded_str->c_string + leading;
 
   memcpy(new_str->c_string, start, length);
+
   new_str->length = length;
+  new_str->c_string[new_str->length] = '\0';
 
   if (wide)
   {
