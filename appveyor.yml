@@ -94,5 +94,5 @@ for:
 
 # Uncomment the lines below for enabling Remote Desktop in the Appveyor. This
 # allows connecting to the remote machine and debug issues.
-# on_finish:
-# - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+on_finish:
+ - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
