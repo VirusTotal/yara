@@ -403,7 +403,7 @@ SIZED_STRING* yr_re_ast_extract_literal(
     }
   }
 
-  string->c_string[length] = '\0';
+  string->c_string[string->length] = '\0';
 
   return string;
 }
