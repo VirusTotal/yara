@@ -491,8 +491,35 @@ int _yr_atoms_trim(
   int mask_00 = 0;
   int mask_ff = 0;
   int mask_cc = 0;
+  int same_cc = 0;
 
   int trim_left = 0;
+
+  for (int i = 0; i < atom->length; i++)
+  {
+    if (atom->mask[i] == 0xCC)
+    {
+      int any_counter = 0;
+      bool same_cc_bool = true;
+      for (int k = 0; k < YR_BITMAP_SIZE; k++)
+      {
+        if (atom->bitmap[i][k] == UINT64_MAX)
+          any_counter++;
+
+        if (i < (atom->length - 1))
+        {
+          if (atom->bitmap[i][k] != atom->bitmap[i + 1][k])
+          {
+            same_cc_bool = false;
+          }
+        }
+      }
+      if (any_counter == YR_BITMAP_SIZE)
+        atom->mask[i] = 0x00;
+      if (same_cc_bool)
+        same_cc++;
+    }
+  }
 
   while (trim_left < atom->length && atom->mask[trim_left] == 0)
     trim_left++;
@@ -532,6 +559,12 @@ int _yr_atoms_trim(
   if (mask_00 >= (mask_ff + mask_cc))
     atom->length = 1;
 
+  if (mask_cc >= 3)
+  {
+    if (same_cc == atom->length)
+      atom->length = 2;
+  }
+
   if (trim_left == 0)
     return 0;
 
@@ -541,7 +574,6 @@ int _yr_atoms_trim(
   {
     atom->bytes[i] = atom->bytes[trim_left + i];
     atom->mask[i] = atom->mask[trim_left + i];
-    yr_bitmask_clear_all(atom->bitmap[i], sizeof(atom->bitmap[i]));
     memcpy(atom->bitmap[i], atom->bitmap[trim_left + i], (sizeof(YR_BITMASK) * YR_BITMAP_SIZE));
   }
 
@@ -584,7 +616,6 @@ static int _yr_atoms_choose(
       return ERROR_INSUFFICIENT_MEMORY;
 
     memcpy(&item->atom, &node->atom, sizeof(YR_ATOM));
-
     shift = _yr_atoms_trim(&item->atom);
 
     if (item->atom.length > 0)
@@ -681,8 +712,6 @@ static int _yr_atoms_case_insensitive(
 {
   YR_ATOM_LIST_ITEM* atom;
 
-  bool alphabet = false;
-
   atom = atoms;
 
   while (atom != NULL)
@@ -692,7 +721,7 @@ static int _yr_atoms_case_insensitive(
       if (atom->atom.mask[i] == YR_ATOM_TYPE_ANY)
         continue;
 
-      alphabet = false;
+      bool alphabet = false;
       // insensitive encoding added
       for (int j = 'A'; j <= 'Z'; j++)
       {
@@ -709,7 +738,18 @@ static int _yr_atoms_case_insensitive(
       }
 
       if (alphabet)
-        atom->atom.mask[i] = YR_ATOM_TYPE_CLASS;
+      {
+        int any_counter = 0;
+        for (int k = 0; k < YR_BITMAP_SIZE; k++)
+        {
+          if (atom->atom.bitmap[i][k] == UINT64_MAX)
+            any_counter++;
+          if (any_counter == YR_BITMAP_SIZE)
+            atom->atom.mask[i] = YR_ATOM_TYPE_ANY;
+          else
+            atom->atom.mask[i] = YR_ATOM_TYPE_CLASS;
+        }
+      }
 
     }
     atom = atom->next;
@@ -810,10 +850,7 @@ static int _yr_atoms_wide(
         new_atom->atom.bytes[i * 2] = atom->atom.bytes[i];
         new_atom->atom.mask[i * 2] = atom->atom.mask[i];
         yr_bitmask_clear_all(new_atom->atom.bitmap[i * 2], sizeof(new_atom->atom.bitmap[i * 2]));
-        if (new_atom->atom.mask[i * 2] == 0xFF)
-          yr_bitmask_set(new_atom->atom.bitmap[i * 2], new_atom->atom.bytes[i * 2]);
-        else
-          memcpy(new_atom->atom.bitmap[i * 2], atom->atom.bitmap[i], (sizeof(YR_BITMASK) * YR_BITMAP_SIZE));
+        memcpy(new_atom->atom.bitmap[i * 2], atom->atom.bitmap[i], (sizeof(YR_BITMASK) * YR_BITMAP_SIZE));
       }
       else
         break;
@@ -853,7 +890,7 @@ static void make_atom_from_re_nodes(YR_ATOM* atom, int nodes_length, RE_NODE** n
     yr_bitmask_clear_all(atom->bitmap[i], sizeof(atom->bitmap[i]));
 
     // Classes have initially different encoding
-    if ((nodes)[i]->type == RE_NODE_CLASS)
+    if ((nodes)[i]->mask == YR_ATOM_TYPE_CLASS)
     {
       for (int j = 0; j < 32; j++)
       {
@@ -871,10 +908,13 @@ static void make_atom_from_re_nodes(YR_ATOM* atom, int nodes_length, RE_NODE** n
           atom->bitmap[i][k] = ~atom->bitmap[i][k];
       }
     }
-    else if ((nodes)[i]->type == RE_NODE_ANY)
+    else if ((nodes)[i]->mask == YR_ATOM_TYPE_ANY)
       yr_bitmask_set_all(atom->bitmap[i], sizeof(atom->bitmap[i]));
     else
+    {
+      yr_bitmask_clear_all(atom->bitmap[i], sizeof(atom->bitmap[i]));
       yr_bitmask_set(atom->bitmap[i], atom->bytes[i]);
+    }
   }
 }
 
@@ -1005,14 +1045,32 @@ static int _yr_atoms_extract_from_re(
             best_atom_re_nodes[n] = si.re_node;
             best_atom.bytes[n] = (uint8_t) si.re_node->value;
             best_atom.mask[n] = (uint8_t) si.re_node->mask;
-            if (si.re_node->type == RE_NODE_LITERAL || si.re_node->type == RE_NODE_MASKED_LITERAL)
+            if ((si.re_node->type == RE_NODE_LITERAL) || (si.re_node->type == RE_NODE_MASKED_LITERAL))
             {
               yr_bitmask_clear_all(best_atom.bitmap[n], sizeof(best_atom.bitmap[n]));
               yr_bitmask_set(best_atom.bitmap[n], best_atom.bytes[n]);
             }
-            else
+            else if (si.re_node->type == RE_NODE_ANY)
             {
               yr_bitmask_set_all(best_atom.bitmap[n], sizeof(best_atom.bitmap[n]));
+            }
+            else if (si.re_node->type == RE_NODE_CLASS)
+            {
+              int diff = YR_BITMASK_SLOT_BITS / 8;
+              uint64_t chunk;
+              for (int j = 0; j < 32; j++)
+              {
+                if (si.re_node->re_class->bitmap[j] != 0)
+                {
+                  chunk = (uint8_t)si.re_node->re_class->bitmap[j];
+                  best_atom.bitmap[n][j/diff] |= chunk << ((j%diff)*diff);
+                }
+              }
+              if (si.re_node->re_class->negated == 1)
+              {
+                for (int k = 0; k < YR_BITMAP_SIZE; k++)
+                  best_atom.bitmap[n][k] = ~best_atom.bitmap[n][k];
+              }
             }
             best_atom.length = ++n;
           }
@@ -1028,10 +1086,7 @@ static int _yr_atoms_extract_from_re(
               {
                 best_atom.bytes[i] = atom.bytes[i];
                 best_atom.mask[i] = atom.mask[i];
-                if (atom.mask[i] != YR_ATOM_TYPE_ANY)
-                  memcpy(best_atom.bitmap[i], atom.bitmap[i], sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
-                else
-                  yr_bitmask_set_all(best_atom.bitmap[i], sizeof(best_atom.bitmap[i]));
+                memcpy(best_atom.bitmap[i], atom.bitmap[i], sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
                 best_atom_re_nodes[i] = recent_re_nodes[i + shift];
               }
 

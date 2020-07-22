@@ -318,6 +318,58 @@ static YR_AC_STATE* _yr_ac_next_state_typed(
 
 
 //
+// _yr_ac_state_create_append
+//
+// Creates a new automaton state, the automaton will transition from
+// the given state to the new state after reading the input symbol.
+//
+// Args:
+//   YR_AC_STATE* state  - Origin state
+//   uint8_t input       - Input symbol
+//   uint8_t type        - Type of the state
+//   YR_BITMASK* bitmap  - Input symbols coded in bitmap
+//
+// Returns:
+//   YR_AC_STATE* pointer to the newly allocated state or NULL in case
+//   of error.
+
+static YR_AC_STATE* _yr_ac_state_create_append(
+    YR_AC_STATE* state,
+    uint8_t input,
+    uint8_t type,
+    YR_BITMASK* bitmap)
+{
+  YR_AC_STATE* new_state = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
+
+  if (new_state == NULL)
+    return NULL;
+
+  new_state->input = input;
+  new_state->type = type;
+  memcpy(new_state->bitmap, bitmap, sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
+  new_state->depth = state->depth + 1;
+  new_state->matches_ref = YR_ARENA_NULL_REF;
+  new_state->failure = NULL;
+  new_state->t_table_slot = 0;
+  new_state->first_child = NULL;
+  new_state->siblings = NULL;
+  if (state->first_child == NULL)
+    state->first_child = new_state;
+  else
+  {
+    YR_AC_STATE* help_state;
+    help_state = state->first_child;
+    while (help_state->siblings != NULL)
+      help_state = help_state->siblings;
+    help_state->siblings = new_state;
+  }
+  new_state->parent = state;
+
+  return new_state;
+}
+
+
+//
 // _yr_ac_state_create
 //
 // Creates a new automaton state, the automaton will transition from
@@ -465,7 +517,7 @@ static YR_AC_STATE* _yr_ac_create_copied_state(
 {
   YR_AC_STATE* new_state = NULL;
 
-  new_state = _yr_ac_state_create(current_state, add_state->input, add_state->type, add_state->bitmap);
+  new_state = _yr_ac_state_create_append(current_state, add_state->input, add_state->type, add_state->bitmap);
   new_state->failure = current_state->failure;
   _yr_ac_copy_matches(new_state, add_state, matches_arena);
 
@@ -592,13 +644,13 @@ static int _yr_ac_return_literal(
 // Otherwise, it returns 0.
 //
 
-static uint8_t _yr_ac_class_is_literal(
+static int _yr_ac_class_is_literal(
     YR_BITMASK* bitmap)
 {
   int bits = 0;
   int counter = 0;
   int literal = 0;
-  uint8_t non_literal = 0;
+  int non_literal = -1;
 
   for (int i = 0; i < YR_BITMAP_SIZE; i++)
   {
@@ -633,7 +685,7 @@ static bool _yr_ac_find_conflict_states(
 {
   int int_counter = 0;
   int bitmap2_counter = 0;
-  uint8_t literal = 0;
+  int literal = 0;
 
   YR_BITMASK intersetion[YR_BITMAP_SIZE];
   YR_BITMASK bitmap2[YR_BITMAP_SIZE];
@@ -651,11 +703,10 @@ static bool _yr_ac_find_conflict_states(
     // Updated input_state (without input from next_state)
     memcpy(dfa_state2, input_state, sizeof(YR_AC_STATE));
     yr_bitmask_clear(dfa_state2->bitmap, next_state->input);
-
     if (dfa_state2->type == YR_ATOM_TYPE_CLASS)
     {
       literal = _yr_ac_class_is_literal(dfa_state2->bitmap);
-      if (literal)
+      if (literal >= 0)
       {
         dfa_state2->input = literal;
         dfa_state2->type = YR_ATOM_TYPE_LITERAL;
@@ -682,7 +733,7 @@ static bool _yr_ac_find_conflict_states(
         dfa_state2->bitmap[i] = dfa_state2->bitmap[i] - next_state->bitmap[i];
 
       literal = _yr_ac_class_is_literal(dfa_state2->bitmap);
-      if (literal)
+      if (literal >= 0)
       {
         dfa_state2->input = literal;
         dfa_state2->type = YR_ATOM_TYPE_LITERAL;
@@ -711,7 +762,7 @@ static bool _yr_ac_find_conflict_states(
         memcpy(dfa_state1, input_state, sizeof(YR_AC_STATE));
         memcpy(dfa_state1->bitmap, intersetion, sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
         literal = _yr_ac_class_is_literal(dfa_state1->bitmap);
-        if (literal)
+        if (literal >= 0)
         {
           dfa_state1->input = literal;
           dfa_state1->type = YR_ATOM_TYPE_LITERAL;
@@ -721,7 +772,7 @@ static bool _yr_ac_find_conflict_states(
         memcpy(dfa_state2, input_state, sizeof(YR_AC_STATE));
         memcpy(dfa_state2->bitmap, bitmap2, sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
         literal = _yr_ac_class_is_literal(dfa_state2->bitmap);
-        if (literal)
+        if (literal >= 0)
         {
           dfa_state2->input = literal;
           dfa_state2->type = YR_ATOM_TYPE_LITERAL;
@@ -801,55 +852,52 @@ static bool dfa_subtree(
     YR_AC_STATE* input_state,
     YR_ARENA* arena)
 {
-  YR_AC_STATE* next_state;
-
   bool pop = true;
 
-  uint8_t literal = _yr_ac_class_is_literal(input_state->bitmap);
-  if (literal)
+  if (input_state->type == YR_ATOM_TYPE_LITERAL)
+    return pop;
+
+  int literal = _yr_ac_class_is_literal(input_state->bitmap);
+  if (literal >= 0)
   {
     input_state->input = literal;
     input_state->type = YR_ATOM_TYPE_LITERAL;
   }
 
-  if ((input_state->type == YR_ATOM_TYPE_CLASS) || (input_state->type == YR_ATOM_TYPE_ANY))
+  YR_AC_STATE* dfa_state1 = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
+  YR_AC_STATE* dfa_state2 = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
+
+  YR_AC_STATE* next_state = state->first_child;
+
+  while (next_state != NULL)
   {
-
-    YR_AC_STATE* dfa_state1 = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
-    YR_AC_STATE* dfa_state2 = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
-
-    next_state = state->first_child;
-
-    while (next_state != NULL)
+    pop = true;
+    if (input_state == next_state)
     {
-      pop = true;
-      if (input_state == next_state)
-      {
-        next_state = next_state->siblings;
-        continue;
-      }
-
-      pop = _yr_ac_find_conflict_states(input_state, next_state, dfa_state1, dfa_state2);
-
-      if (!pop)
-      {
-        if (_yr_ac_exclude_from_state(input_state, dfa_state1, dfa_state2, arena))
-        {
-          yr_free(dfa_state1);
-          yr_free(dfa_state2);
-          return true;
-        }
-
-        if (input_state->type == YR_ATOM_TYPE_LITERAL)
-          break;
-      }
-
       next_state = next_state->siblings;
+      continue;
     }
 
-    yr_free(dfa_state1);
-    yr_free(dfa_state2);
+    pop = _yr_ac_find_conflict_states(input_state, next_state, dfa_state1, dfa_state2);
+
+    if (!pop)
+    {
+      if (_yr_ac_exclude_from_state(input_state, dfa_state1, dfa_state2, arena))
+      {
+        yr_free(dfa_state1);
+        yr_free(dfa_state2);
+        return true;
+      }
+
+      if (input_state->type == YR_ATOM_TYPE_LITERAL)
+        break;
+    }
+
+    next_state = next_state->siblings;
   }
+
+  yr_free(dfa_state1);
+  yr_free(dfa_state2);
 
   return pop;
 }
@@ -875,7 +923,6 @@ static int _yr_ac_create_failure_links(
   YR_AC_STATE* check_state;
   YR_AC_STATE* res_state;
   YR_AC_MATCH* match;
-  YR_AC_STATE* test_new_root_state;
 
   QUEUE queue;
 
@@ -894,7 +941,6 @@ static int _yr_ac_create_failure_links(
   // Check if the root's states are derermnistic
   while (state != NULL)
   {
-    test_new_root_state = root_state->first_child;
     dfa_subtree(root_state, state, arena);
     res_state = state;
     state = state->siblings;
@@ -902,8 +948,6 @@ static int _yr_ac_create_failure_links(
     {
       yr_free(res_state);
     }
-    if (test_new_root_state != root_state->first_child)
-      state = root_state->first_child;
   }
 
   // Push root's children and set their failure link to root.
@@ -1538,6 +1582,7 @@ int yr_ac_automaton_create(
   root_state = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
   yr_bitmask_clear_all(root_state->bitmap, sizeof(root_state->bitmap));
   root_state->input = 0;
+  root_state->type = 0xDD;
 
   if (new_automaton == NULL || root_state == NULL)
   {
@@ -1606,25 +1651,12 @@ int yr_ac_add_string(
     {
       if (atom->atom.mask[i] == YR_ATOM_TYPE_CLASS)
       {
-        // for a case like [a] - the class is a literal or re_node_any
-        uint8_t literal = _yr_ac_class_is_literal(atom->atom.bitmap[i]);
-        if (literal)
+        // for a case like [a] - the class is a literal
+        int literal = _yr_ac_class_is_literal(atom->atom.bitmap[i]);
+        if (literal >= 0)
         {
           atom->atom.bytes[i] = literal;
           atom->atom.mask[i] = YR_ATOM_TYPE_LITERAL;
-        }
-        else
-        {
-          bool secret_any = false;
-          for (int j = 0; j < YR_BITMAP_SIZE; j++)
-          {
-            if (atom->atom.bitmap[i][j] == UINT64_MAX)
-              secret_any = true;
-            else
-              secret_any = false;
-          }
-          if (secret_any)
-            atom->atom.mask[i] = YR_ATOM_TYPE_ANY;
         }
       }
 
