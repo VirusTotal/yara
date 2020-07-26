@@ -30,7 +30,7 @@ yara_SOURCES = \
   cli/threading.h \
   cli/yara.c
 
-yara_LDADD = libyara/.libs/libyara.a #-Llibyara/.libs -lyara
+yara_LDADD = -Llibyara/.libs -lyara
 
 yarac_SOURCES = \
    cli/args.c \
