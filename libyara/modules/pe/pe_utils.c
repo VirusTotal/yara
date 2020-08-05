@@ -307,7 +307,7 @@ time_t timegm(
 // and cleaned up. Also uses timegm(3) instead of mktime(3).
 
 time_t ASN1_get_time_t(
-  	ASN1_TIME* time)
+  	const ASN1_TIME* time)
 {
   struct tm t;
   const char* str = (const char*) time->data;
