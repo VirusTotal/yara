@@ -825,7 +825,7 @@ Reference
 
     Path of the PDB file for this PE if present.
 
-    * Example: pe.pdb_path == "D:\\workspace\\2018_R9_RelBld\\target\\checkout\\custprof\\Release\\custprof.pdb"
+    *Example: pe.pdb_path == "D:\\workspace\\2018_R9_RelBld\\target\\checkout\\custprof\\Release\\custprof.pdb"*
 
 .. c:function:: exports(function_name)
 
