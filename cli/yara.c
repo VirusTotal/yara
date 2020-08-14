@@ -158,12 +158,42 @@ static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 #define USAGE_STRING \
     "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
 
+static char* argsearchexts = NULL;
+char* emptyext = ".";
+
+// check if file matches extension specified using --exts
+// Example :  --exts=.php/.jsp/.asp/.aspx/.js/.dll/.exe/.gif
+
+bool ExtMatchSearchedExts(char* full_path)
+{
+    if (!argsearchexts) return true;// "-m" not used => scan the file
+    char* ext = strrchr(full_path, '.');
+    if ((!ext) || (strcmp(full_path, ext) == 0)) ext = emptyext; // ex : handle the case where path used is "."   (in this case, a file with not ext (test) will have fullpath=".\test" and ext=".\test")
+    tolower(*ext);
+    size_t len = strlen(ext);
+    char* extlist = argsearchexts;
+    char* pos;
+    // check ext for exact match in listed extensions (note : we need to iterate matches as we don't want to select .js when only .jsp was listed in searched extensions)
+    do
+    {
+        pos = strstr(extlist, ext);// see if ext matches listed extensions     
+        if (pos) // found candidate
+        {
+            // check exact match (ex : if ext is .js , we are looking for exact match in exts : "extn/.js" or "ext1/.js/ext2"
+            if ((pos[len] == '/') || (pos[len] == 0))
+                return true;
+            else
+                extlist = pos + len;
+        }
+    } while (pos);
+    return false;
+}
 
 args_option_t options[] =
-{
+{  
   OPT_STRING(0, "atom-quality-table", &atom_quality_table,
       "path to a file with the atom quality table", "FILE"),
-
+        
   OPT_BOOLEAN('C', "compiled-rules", &rules_are_compiled,
       "load compiled rules"),
 
@@ -172,6 +202,8 @@ args_option_t options[] =
 
   OPT_STRING_MULTI('d', "define", &ext_vars, MAX_ARGS_EXT_VAR,
       "define external variable", "VAR=VALUE"),
+
+  OPT_STRING(0, "exts", &argsearchexts,"file extension(s) to scan",".ext1/.ext2...etc"),
 
   OPT_BOOLEAN(0, "fail-on-warnings", &fail_on_warnings,
       "fail on warnings"),
@@ -241,7 +273,7 @@ args_option_t options[] =
 
   OPT_BOOLEAN('v', "version", &show_version,
       "show version information"),
-
+  
   OPT_END()
 };
 
@@ -379,7 +411,9 @@ static void scan_dir(
 
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
-        file_queue_put(full_path);
+       // yaramod added :
+       if (ExtMatchSearchedExts(full_path))      
+            file_queue_put(full_path);
       }
       else if (recursive &&
                strcmp(FindFileData.cFileName, ".") != 0 &&
