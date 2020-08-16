@@ -78,8 +78,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Number of variables used by loops. This doesn't include user defined
 // variables.
-#define YR_INTERNAL_LOOP_VARS     3
+#define YR_INTERNAL_LOOP_VARS       3
+// Number of variables used by ANY array evaluation. This doesn't include
+// user defined variables.
+#define YR_INTERNAL_ANY_ARRAY_VARS  3
+// Number of variables used by ALL array evaluation. This doesn't include
+// user defined variables
+#define YR_INTERNAL_ALL_ARRAY_VARS  4
 
+// The loop structure is reused for boolean array evaluation. We need to
+// save the information about the type of loop so we can use the right
+// criteria to short circuit the evaluation.
+#define YR_LOOP_TYPE_ANY        1
+#define YR_LOOP_TYPE_ALL        2
 
 typedef struct _YR_EXPRESSION
 {
@@ -161,6 +172,12 @@ typedef struct _YR_LOOP_CONTEXT
   // not defined by the rule itself but that are necessary for keeping the
   // loop's state. One example is the iteration counter.
   int               vars_internal_count;
+
+  // type is used to save information about the type of loop being used.
+  // This is useful in case current 'loop' is an array evaluation procedure
+  // and we want to short circuit it. Check YR_LOOP_TYPE variables for
+  // possible values.
+  int               type;
 } YR_LOOP_CONTEXT;
 
 

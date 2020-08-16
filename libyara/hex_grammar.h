@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.5.  */
+/* A Bison parser, made by GNU Bison 3.6.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,6 +31,10 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 #ifndef YY_HEX_YY_HEX_GRAMMAR_H_INCLUDED
 # define YY_HEX_YY_HEX_GRAMMAR_H_INCLUDED
 /* Debug traces.  */
@@ -40,34 +45,41 @@
 extern int hex_yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    _BYTE_ = 258,
-    _MASKED_BYTE_ = 259,
-    _NUMBER_ = 260
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    _BYTE_ = 258,                  /* _BYTE_  */
+    _MASKED_BYTE_ = 259,           /* _MASKED_BYTE_  */
+    _NUMBER_ = 260                 /* _NUMBER_  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define _BYTE_ 258
 #define _MASKED_BYTE_ 259
 #define _NUMBER_ 260
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 78 "hex_grammar.y" /* yacc.c:1916  */
+#line 78 "hex_grammar.y"
 
   int64_t integer;
   RE_NODE *re_node;
 
-#line 69 "hex_grammar.h" /* yacc.c:1916  */
-};
+#line 81 "hex_grammar.h"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
