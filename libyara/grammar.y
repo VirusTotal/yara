@@ -1719,10 +1719,11 @@ expression
       }
     | for_expression _OF_ '['
       {
-        // mem_offset       => number of items evaluating to true
-        // mem_offset + 1   => number of evaluated items
-        // mem_offset + 2   => required number of items required for evaluation
-        // mem_offset + 3   => boolean value of latest evaluated item in array    
+        // var_frane + 0   => number of items evaluating to true
+        // var_frame + 1   => number of evaluated items
+        // var_frame + 2   => storage for variable depending on loop type
+        //                    - ANY: contains required number of items for evaluation
+        //                    - ALL: contains value of latest evaluated item in array    
 
         // all of [ expr1, expr2, .. ]
         //
@@ -1784,9 +1785,9 @@ expression
         
         var_frame = _yr_compiler_get_var_frame(compiler);        
 
-        // "any" loops require us to store the primary expression for
-        // later evaluation, but "all" loops do not. The OP_SWAPUNDEF after the
-        // loop ensures we evaluate the proper values.
+        // "any" loops require us to store the required number of matches for
+        // later comparisons, but "all" loops do not. The OP_SWAPUNDEF after the
+        // array evaluation  ensures we will compare the right value
         if ($1 == YR_LOOP_TYPE_ANY)
         {
           yr_parser_emit_with_arg(
@@ -1818,13 +1819,8 @@ expression
         // YR_LOOP_TYPE_ALL is 1, ANY is 2
         compiler->loop[compiler->loop_index].type = $1;
         compiler->loop[compiler->loop_index].vars_count = 0;
-        
-        if($1 == YR_LOOP_TYPE_ANY)
-            compiler->loop[compiler->loop_index].vars_internal_count = \
-                YR_INTERNAL_ANY_ARRAY_VARS;
-        else if($1 == YR_LOOP_TYPE_ALL)
-            compiler->loop[compiler->loop_index].vars_internal_count = \
-                YR_INTERNAL_ALL_ARRAY_VARS;
+        compiler->loop[compiler->loop_index].vars_internal_count = \
+            YR_INTERNAL_LOOP_VARS;
       }
       bool_array_expression ']'
       {
@@ -2755,7 +2751,7 @@ bool_array_expression
         // so that we don't loose access to it when it is popped after ADD.
         if(compiler->loop[compiler->loop_index].type == YR_LOOP_TYPE_ALL) {
           yr_parser_emit_with_arg(
-                  yyscanner, OP_SET_M, var_frame + 3, NULL, NULL);
+                  yyscanner, OP_SET_M, var_frame + 2, NULL, NULL);
         }
 
         // Update sum of evaluated bool expressions, which is effectively a number of expressions evaluated to true
@@ -2769,7 +2765,7 @@ bool_array_expression
         if(compiler->loop[compiler->loop_index].type == YR_LOOP_TYPE_ALL) {
           // Push back the value of latest evaluated item in array
           yr_parser_emit_with_arg(
-                  yyscanner, OP_PUSH_M, var_frame + 3, NULL, NULL);
+                  yyscanner, OP_PUSH_M, var_frame + 2, NULL, NULL);
           // End evaluation if latest item is false
           yr_parser_emit_with_arg_int32(
                   yyscanner, OP_JFALSE_P, 0, NULL, &jmp_destination_addr);
@@ -2807,7 +2803,7 @@ bool_array_expression
         // so that we don't loose access to it when it is popped after ADD.
         if(compiler->loop[compiler->loop_index].type == YR_LOOP_TYPE_ALL) {
           yr_parser_emit_with_arg(
-                  yyscanner, OP_SET_M, var_frame + 3, NULL, NULL);
+                  yyscanner, OP_SET_M, var_frame + 2, NULL, NULL);
         }
 
         // Update sum of evaluated bool expressions, which is effectively a number of expressions evaluated to true
@@ -2821,7 +2817,7 @@ bool_array_expression
         if(compiler->loop[compiler->loop_index].type == YR_LOOP_TYPE_ALL) {
           // Push back the value of latest evaluated item in array
           yr_parser_emit_with_arg(
-                  yyscanner, OP_PUSH_M, var_frame + 3, NULL, NULL);
+                  yyscanner, OP_PUSH_M, var_frame + 2, NULL, NULL);
           // End evaluation if latest item is false
           yr_parser_emit_with_arg_int32(
                   yyscanner, OP_JFALSE_P, 0, NULL, &jmp_destination_addr);

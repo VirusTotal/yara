@@ -79,12 +79,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Number of variables used by loops. This doesn't include user defined
 // variables.
 #define YR_INTERNAL_LOOP_VARS       3
-// Number of variables used by ANY array evaluation. This doesn't include
-// user defined variables.
-#define YR_INTERNAL_ANY_ARRAY_VARS  3
-// Number of variables used by ALL array evaluation. This doesn't include
-// user defined variables
-#define YR_INTERNAL_ALL_ARRAY_VARS  4
 
 // The loop structure is reused for boolean array evaluation. We need to
 // save the information about the type of loop so we can use the right
