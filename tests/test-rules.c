@@ -1659,6 +1659,26 @@ void test_for()
       NULL);
 }
 
+void test_of_array() {
+    assert_true_rule(
+        "rule test { condition: any of [ false, true ] }",
+        NULL);
+    assert_false_rule(
+        "rule test { condition: any of [ false ] }",
+        NULL);
+    assert_true_rule(
+        "rule test { condition: 1 of [ false, true, false ] }",
+        NULL);
+    assert_false_rule(
+        "rule test { condition: 2 of [ false, true, false ] }",
+        NULL);
+    assert_true_rule(
+        "rule test { condition: all of [ true, true] }",
+        NULL);
+    assert_false_rule(
+        "rule test { condition: all of [ true, false ] }",
+        NULL);
+}
 
 void test_re()
 {
@@ -2830,6 +2850,7 @@ int main(int argc, char** argv)
   test_length();
   test_of();
   test_for();
+  test_of_array();
   test_re();
   test_filesize();
   test_include_files();
