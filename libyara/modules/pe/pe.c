@@ -707,13 +707,16 @@ static int pe_collect_resources(
 {
   DWORD length;
 
+  set_integer(
+        yr_le32toh(rsrc_data->OffsetToData),
+        pe->object,
+        "resources[%i].rva",
+        pe->resources);
+
   int64_t offset = pe_rva_to_offset(pe, yr_le32toh(rsrc_data->OffsetToData));
 
   if (offset < 0)
-    return RESOURCE_CALLBACK_CONTINUE;
-
-  if (!fits_in_pe(pe, pe->data + offset, yr_le32toh(rsrc_data->Size)))
-    return RESOURCE_CALLBACK_CONTINUE;
+    offset = YR_UNDEFINED;
 
   set_integer(
         offset,
@@ -2937,6 +2940,7 @@ begin_declarations;
   end_struct("resource_version");
 
   begin_struct_array("resources");
+    declare_integer("rva");
     declare_integer("offset");
     declare_integer("length");
     declare_integer("type");
