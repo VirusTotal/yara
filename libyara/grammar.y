@@ -166,6 +166,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _GLOBAL_                                        "<global>"
 %token _META_                                          "<meta>"
 %token <string> _STRINGS_                              "<strings>"
+%token _VARIABLES_                                     "<variables>"
 %token _CONDITION_                                     "<condition>"
 %token <c_string> _IDENTIFIER_                         "identifier"
 %token <c_string> _STRING_IDENTIFIER_                  "string identifier"
@@ -228,6 +229,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %right _NOT_ '~' UNARY_MINUS
 
 %type <rule>   rule
+
+%type <expression> variables
+%type <expression> variable_declaration
+%type <expression> variable_declarations
 
 %type <string> strings
 %type <string> string_declaration
@@ -343,7 +348,7 @@ rule
         fail_if_error(yr_parser_reduce_rule_declaration_phase_1(
             yyscanner, (int32_t) $1, $3, &$<rule>$));
       }
-      tags '{' meta strings
+      tags '{' meta strings variables
       {
         YR_RULE* rule = (YR_RULE*) yr_arena_ref_to_ptr(
             compiler->arena, &$<rule>4);
@@ -406,6 +411,16 @@ strings
       }
     ;
 
+variables
+    : /* empty */
+      {
+        $$.type = EXPRESSION_TYPE_UNKNOWN;
+      }
+    | _VARIABLES_ ':' variable_declarations
+      {
+        $$ = $3;
+      }
+    ;
 
 condition
     : _CONDITION_ ':' boolean_expression
@@ -577,6 +592,18 @@ meta_declaration
       }
     ;
 
+variable_declarations
+    : variable_declaration                          { $$ = $1; }
+    | variable_declarations variable_declaration    { $$ = $1; }
+    ;
+
+variable_declaration
+    : _IDENTIFIER_ '=' expression
+      {
+        // variable value is on stack
+        $$ = $3;
+      }
+    ;
 
 string_declarations
     : string_declaration                      { $$ = $1; }
