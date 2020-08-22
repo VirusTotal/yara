@@ -256,6 +256,22 @@ int main(int argc, char** argv)
           pe.export_details[1].forward_name == \"COMSVCS.GetObjectContext\" \
       }",
       "tests/data/mtxex.dll");
+  /*
+   * mtxex_modified_rsrc_rva.dll is a modified copy of mtxex.dll from a Windows
+   * 10 install. The modification was to change the RVA of the only resource to
+   * be invalid (it was changed to be 0x41585300), to ensure we are still
+   * parsing resources even if the RVA does not have a corresponding file
+   * offset.
+   */
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.number_of_resources == 1 and \
+          pe.resources[0].rva == 5462081 and \
+          pe.resources[0].length == 888 \
+      }",
+      "tests/data/mtxex_modified_rsrc_rva.dll");
 
   // Make sure exports function is case insensitive (historically this has been
   // the case) and supports ordinals...
