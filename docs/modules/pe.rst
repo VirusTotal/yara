@@ -608,9 +608,14 @@ Reference
     Individual resources can be accessed by using the [] operator. Each
     resource object has the following attributes:
 
+    .. c:member:: rva
+
+        The RVA of the resource data.
+
     .. c:member:: offset
 
-        Offset for the resource data.
+        Offset for the resource data. This can be undefined if the RVA is
+        invalid.
 
     .. c:member:: length
 
