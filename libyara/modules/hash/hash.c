@@ -322,6 +322,9 @@ define_function(data_sha1)
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
+  if(!block)
+	return_string(YR_UNDEFINED);
+
   yr_sha1_init(&sha_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
