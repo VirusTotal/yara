@@ -907,6 +907,26 @@ int yr_execute_code(
         push(r1);
         break;
 
+      case OP_OBJ_STORE:
+        identifier = *(char**)(ip);
+        ip += sizeof(uint64_t);
+        
+        #if YR_PARANOID_EXEC
+        ensure_within_rules_arena(identifier);
+        #endif
+
+        pop(r1);
+        
+        YR_OBJECT* obj = (YR_OBJECT*) yr_hash_table_lookup(
+                context->objects_table,
+                identifier,
+                NULL);
+
+        assert(obj != NULL);
+
+        obj->value = r1;
+        break;
+
       case OP_OBJ_FIELD:
         identifier = *(char**)(ip);
         ip += sizeof(uint64_t);

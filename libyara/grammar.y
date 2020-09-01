@@ -598,10 +598,71 @@ variable_declarations
     ;
 
 variable_declaration
-    : _IDENTIFIER_ '=' expression
+    : _IDENTIFIER_ '='
       {
-        // variable value is on stack
-        $$ = $3;
+        compiler->current_line = yyget_lineno(yyscanner);
+      }
+      expression
+      {
+        YR_OBJECT* object;
+
+        object = (YR_OBJECT*)yr_hash_table_lookup(
+            compiler->objects_table,
+            $1,
+            NULL);
+        
+        if(object != NULL) {
+            fail_with_error(ERROR_DUPLICATED_IDENTIFIER);
+        }
+       
+        YR_EXTERNAL_VARIABLE* ext;
+        YR_ARENA_REF ext_ref;
+        YR_ARENA_REF identifier_ref;
+
+        yr_arena_allocate_struct(
+            compiler->arena,
+            YR_EXTERNAL_VARIABLES_TABLE,
+            sizeof(YR_EXTERNAL_VARIABLE),
+            &ext_ref,
+            offsetof(YR_EXTERNAL_VARIABLE, identifier),
+            EOL);
+        //fprintf(stdout, "%d\n", offsetof(YR_EXTERNAL_VARIABLE, value));
+        ext = yr_arena_ref_to_ptr(compiler->arena, &ext_ref);
+        
+        _yr_compiler_store_string(
+            compiler,
+            $1,
+            &identifier_ref);
+
+        ext->identifier = yr_arena_ref_to_ptr(
+            compiler->arena, &identifier_ref);
+        ext->type = $4.type;
+
+       switch(ext->type) {
+            case EXPRESSION_TYPE_BOOLEAN:
+                break;
+            case EXPRESSION_TYPE_INTEGER:
+                break;
+            case EXPRESSION_TYPE_FLOAT:
+                fprintf(stdout, "float hit\n");
+                break;
+            default: assert(false);
+        }
+        
+        // Pop value on stack to variable
+        yr_parser_emit_with_arg_reloc(yyscanner, OP_OBJ_STORE, yr_arena_ref_to_ptr(compiler->arena, &identifier_ref), NULL, NULL);
+
+        // get object from ext var
+        yr_object_from_external_variable(ext, &object);
+
+        FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_add(
+            compiler->objects_table,
+            $1,
+            NULL,
+            (void*) object),
+            yr_object_destroy(object));
+        
+        yr_free($1);
       }
     ;
 
