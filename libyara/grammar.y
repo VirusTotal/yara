@@ -636,15 +636,19 @@ variable_declaration
 
         ext->identifier = yr_arena_ref_to_ptr(
             compiler->arena, &identifier_ref);
-        ext->type = $4.type;
 
-       switch(ext->type) {
+       switch($4.type) {
             case EXPRESSION_TYPE_BOOLEAN:
+                ext->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
                 break;
             case EXPRESSION_TYPE_INTEGER:
+                ext->type = EXTERNAL_VARIABLE_TYPE_INTEGER;
                 break;
             case EXPRESSION_TYPE_FLOAT:
-                fprintf(stdout, "float hit\n");
+                ext->type = EXTERNAL_VARIABLE_TYPE_FLOAT;
+                break;
+            case EXPRESSION_TYPE_STRING:
+                ext->type = EXTERNAL_VARIABLE_TYPE_STRING;
                 break;
             default: assert(false);
         }
