@@ -239,6 +239,9 @@ define_function(data_md5)
   int64_t offset = arg_offset;
   int64_t length = arg_length;
 
+  if (block == NULL)
+    return_string(YR_UNDEFINED);
+
   yr_md5_init(&md5_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
@@ -322,8 +325,8 @@ define_function(data_sha1)
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
-  if(!block)
-	return_string(YR_UNDEFINED);
+  if (block == NULL)
+    return_string(YR_UNDEFINED);
 
   yr_sha1_init(&sha_context);
 
@@ -407,6 +410,9 @@ define_function(data_sha256)
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
+  if (block == NULL)
+    return_string(YR_UNDEFINED);
+
   yr_sha256_init(&sha256_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
@@ -480,6 +486,9 @@ define_function(data_checksum32)
   uint32_t checksum = 0;
   int past_first_block = false;
 
+  if (block == NULL)
+    return_integer(YR_UNDEFINED);
+
   if (offset < 0 || length < 0 || offset < block->base)
     return_integer(YR_UNDEFINED);
 
@@ -552,6 +561,9 @@ define_function(data_crc32)
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   int past_first_block = false;
+
+  if (block == NULL)
+    return_integer(YR_UNDEFINED);
 
   if (offset < 0 || length < 0 || offset < block->base)
     return_integer(YR_UNDEFINED);
