@@ -1071,6 +1071,7 @@ static IMPORTED_DLL* pe_parse_imports(
   }
 
   set_integer(num_imports, pe->object, "number_of_imports");
+  set_integer(num_function_imports, pe->object, "number_of_imported_functions");
   return head;
 }
 
@@ -2921,6 +2922,7 @@ begin_declarations;
   declare_function("is_64bit", "", "i", is_64bit);
 
   declare_integer("number_of_imports");
+  declare_integer("number_of_imported_functions");
   declare_integer("number_of_exports");
 
   declare_string("dll_name");
