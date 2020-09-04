@@ -101,7 +101,7 @@ args_error_type_t args_parse_option(
   switch (opt->type)
   {
     case ARGS_OPT_BOOLEAN:
-      *(bool*) opt->value = true;
+      *(bool*) opt->value = !(*(bool*) opt->value);
       break;
 
     case ARGS_OPT_INTEGER:

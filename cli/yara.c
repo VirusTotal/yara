@@ -118,6 +118,12 @@ typedef struct COMPILER_RESULTS
 
 } COMPILER_RESULTS;
 
+typedef struct SCAN_OPTIONS
+{
+  bool follow_symlinks;
+  bool recursive_search;
+} SCAN_OPTIONS;
+
 
 #define MAX_ARGS_TAG            32
 #define MAX_ARGS_IDENTIFIER     32
@@ -130,6 +136,7 @@ static char* identifiers[MAX_ARGS_IDENTIFIER + 1];
 static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 static char* modules_data[MAX_ARGS_MODULE_DATA + 1];
 
+static bool follow_symlinks = true;
 static bool recursive_search = false;
 static bool scan_list_search = false;
 static bool show_module_data = false;
@@ -222,7 +229,10 @@ args_option_t options[] =
       "print tags"),
 
   OPT_BOOLEAN('r', "recursive", &recursive_search,
-      "recursively search directories (follows symlinks)"),
+      "recursively search directories"),
+
+  OPT_BOOLEAN('N', "no-follow-symlinks", &follow_symlinks,
+      "do not follow symlinks when scanning"),
 
   OPT_BOOLEAN(0, "scan-list", &scan_list_search,
       "scan files listed in FILE, one per line"),
@@ -358,7 +368,7 @@ static bool is_directory(
 
 static void scan_dir(
     const char* dir,
-    int recursive,
+    SCAN_OPTIONS* scan_opts,
     time_t start_time)
 {
   static char path_and_mask[MAX_PATH];
@@ -385,7 +395,7 @@ static void scan_dir(
                strcmp(FindFileData.cFileName, ".") != 0 &&
                strcmp(FindFileData.cFileName, "..") != 0)
       {
-        scan_dir(full_path, recursive, start_time);
+        scan_dir(full_path, scan_opts, start_time);
       }
 
     } while (FindNextFile(hFind, &FindFileData));
@@ -401,7 +411,7 @@ static void scan_dir(
 
 static int populate_scan_list(
     const char* filename,
-    int recursive,
+    SCAN_OPTIONS* scan_opts,
     time_t start_time)
 {
   char* context;
@@ -464,7 +474,7 @@ static int populate_scan_list(
         *final = '\0';
     }
     if (is_directory(path))
-      scan_dir(path, recursive, start_time);
+      scan_dir(path, scan_opts, start_time);
     else
       file_queue_put(path);
     path = strtok_s(NULL, "\n", &context);
@@ -481,7 +491,7 @@ static bool is_directory(
 {
   struct stat st;
 
-  if (stat(path,&st) == 0)
+  if (stat(path, &st) == 0)
     return S_ISDIR(st.st_mode);
 
   return 0;
@@ -490,7 +500,7 @@ static bool is_directory(
 
 static void scan_dir(
     const char* dir,
-    int recursive,
+    SCAN_OPTIONS* scan_opts,
     time_t start_time)
 {
   DIR* dp = opendir(dir);
@@ -506,20 +516,27 @@ static void scan_dir(
 
       snprintf(full_path, sizeof(full_path), "%s/%s", dir, de->d_name);
 
-      int err = stat(full_path, &st);
+      int err = lstat(full_path, &st);
 
+      if (err != 0 || (S_ISLNK(st.st_mode) && !scan_opts->follow_symlinks))
+      {
+        de = readdir(dp);
+        continue;
+      }
+
+      err = stat(full_path, &st);
       if (err == 0)
       {
-        if(S_ISREG(st.st_mode))
+        if (S_ISREG(st.st_mode))
         {
           file_queue_put(full_path);
         }
-        else if(recursive &&
+        else if (scan_opts->recursive_search &&
                 S_ISDIR(st.st_mode) &&
                 strcmp(de->d_name, ".") != 0 &&
                 strcmp(de->d_name, "..") != 0)
         {
-          scan_dir(full_path, recursive, start_time);
+          scan_dir(full_path, scan_opts, start_time);
         }
       }
 
@@ -533,7 +550,7 @@ static void scan_dir(
 
 static int populate_scan_list(
     const char* filename,
-    int recursive,
+    SCAN_OPTIONS* scan_opts,
     time_t start_time)
 {
   size_t nsize = 0;
@@ -556,7 +573,7 @@ static int populate_scan_list(
       nread--;
     }
     if (is_directory(path))
-      scan_dir(path, recursive, start_time);
+      scan_dir(path, scan_opts, start_time);
     else
       file_queue_put(path);
   }
@@ -1230,12 +1247,16 @@ int main(
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
   YR_SCANNER* scanner = NULL;
+  SCAN_OPTIONS scan_opts;
 
   bool arg_is_dir = false;
   int flags = 0;
   int result, i;
 
   argc = args_parse(options, argc, argv);
+
+  scan_opts.follow_symlinks = follow_symlinks;
+  scan_opts.recursive_search = recursive_search;
 
   if (show_version)
   {
@@ -1424,11 +1445,11 @@ int main(
 
     if (arg_is_dir)
     {
-      scan_dir(argv[argc - 1], recursive_search, start_time);
+      scan_dir(argv[argc - 1], &scan_opts, start_time);
     }
     else
     {
-      result = populate_scan_list(argv[argc - 1], recursive_search, start_time);
+      result = populate_scan_list(argv[argc - 1], &scan_opts, start_time);
 
       if (result != ERROR_SUCCESS)
         exit_with_code(EXIT_FAILURE);
