@@ -923,8 +923,23 @@ int yr_execute_code(
                 NULL);
 
         assert(obj != NULL);
-
-        obj->value = r1;
+        
+        switch(obj->type) {
+            case OBJECT_TYPE_INTEGER:
+                yr_object_set_integer(r1.i, obj, NULL);
+                break;
+            case OBJECT_TYPE_FLOAT:
+                yr_object_set_float(r1.d, obj, NULL);
+                break;
+            case OBJECT_TYPE_STRING:
+                yr_object_set_string(
+                    r1.ss->c_string,
+                    strlen(r1.ss->c_string),
+                    obj,
+                    NULL);
+                break;
+            default: assert(false);
+        }
         break;
 
       case OP_OBJ_FIELD:
