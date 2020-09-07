@@ -165,6 +165,7 @@ YR_API int yr_scanner_create(
     YR_SCANNER** scanner)
 {
   YR_EXTERNAL_VARIABLE* external;
+  YR_INTERNAL_VARIABLE* internal;
   YR_SCANNER* new_scanner;
 
   new_scanner = (YR_SCANNER*) yr_calloc(1, sizeof(YR_SCANNER));
@@ -234,8 +235,37 @@ YR_API int yr_scanner_create(
     external++;
   }
 
-  *scanner = new_scanner;
+  internal = rules->internals_list_head;
 
+  while (!INTERNAL_VARIABLE_IS_NULL(internal))
+  {
+    YR_OBJECT* object;
+
+    FAIL_ON_ERROR_WITH_CLEANUP(
+        yr_object_create(
+            internal->type,
+            internal->identifier,
+            NULL,
+            &object),
+        // cleanup
+        yr_scanner_destroy(new_scanner));
+
+    FAIL_ON_ERROR_WITH_CLEANUP(
+        yr_hash_table_add(
+            new_scanner->objects_table,
+            internal->identifier,
+            NULL,
+            (void*) object),
+        // cleanup
+        yr_object_destroy(object);
+        yr_scanner_destroy(new_scanner));
+
+    yr_object_set_canary(object, new_scanner->canary);
+    internal++;
+  }
+
+  *scanner = new_scanner;
+  
   return ERROR_SUCCESS;
 }
 

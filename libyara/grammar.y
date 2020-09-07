@@ -605,6 +605,11 @@ variable_declaration
       expression
       {
         YR_OBJECT* object;
+        YR_INTERNAL_VARIABLE* int_var;
+        YR_ARENA_REF int_ref;
+        YR_ARENA_REF identifier_ref;
+        uint8_t obj_type;
+        YR_NAMESPACE* ns;
 
         object = (YR_OBJECT*)yr_hash_table_lookup(
             compiler->objects_table,
@@ -614,58 +619,71 @@ variable_declaration
         if(object != NULL) {
             fail_with_error(ERROR_DUPLICATED_IDENTIFIER);
         }
-       
-        YR_EXTERNAL_VARIABLE* ext;
-        YR_ARENA_REF ext_ref;
-        YR_ARENA_REF identifier_ref;
-
+        
         yr_arena_allocate_struct(
             compiler->arena,
-            YR_EXTERNAL_VARIABLES_TABLE,
-            sizeof(YR_EXTERNAL_VARIABLE),
-            &ext_ref,
-            offsetof(YR_EXTERNAL_VARIABLE, identifier),
+            YR_INTERNAL_VARIABLES_TABLE,
+            sizeof(YR_INTERNAL_VARIABLE),
+            &int_ref,
+            offsetof(YR_INTERNAL_VARIABLE, identifier),
             EOL);
-        //fprintf(stdout, "%d\n", offsetof(YR_EXTERNAL_VARIABLE, value));
-        ext = yr_arena_ref_to_ptr(compiler->arena, &ext_ref);
+        
+        int_var = yr_arena_ref_to_ptr(compiler->arena, &int_ref);
         
         _yr_compiler_store_string(
             compiler,
             $1,
             &identifier_ref);
 
-        ext->identifier = yr_arena_ref_to_ptr(
-            compiler->arena, &identifier_ref);
-
-       switch($4.type) {
-            case EXPRESSION_TYPE_BOOLEAN:
-                ext->type = EXTERNAL_VARIABLE_TYPE_BOOLEAN;
-                break;
-            case EXPRESSION_TYPE_INTEGER:
-                ext->type = EXTERNAL_VARIABLE_TYPE_INTEGER;
-                break;
-            case EXPRESSION_TYPE_FLOAT:
-                ext->type = EXTERNAL_VARIABLE_TYPE_FLOAT;
-                break;
-            case EXPRESSION_TYPE_STRING:
-                ext->type = EXTERNAL_VARIABLE_TYPE_STRING;
-                break;
-            default: assert(false);
+        switch($4.type) {
+          case EXPRESSION_TYPE_BOOLEAN:
+          case EXPRESSION_TYPE_INTEGER:
+            obj_type = OBJECT_TYPE_INTEGER;
+            break;
+          case EXPRESSION_TYPE_FLOAT:
+            obj_type = OBJECT_TYPE_FLOAT;
+            break;
+          case EXPRESSION_TYPE_STRING:
+            obj_type = OBJECT_TYPE_STRING;
+            break;
+          default: assert(false);
         }
         
-        // Pop value on stack to variable
-        yr_parser_emit_with_arg_reloc(yyscanner, OP_OBJ_STORE, yr_arena_ref_to_ptr(compiler->arena, &identifier_ref), NULL, NULL);
+        int_var->identifier = yr_arena_ref_to_ptr(
+          compiler->arena, &identifier_ref);
+        int_var->type = obj_type;
 
-        // get object from ext var
-        yr_object_from_external_variable(ext, &object);
+        yr_object_create(
+            int_var->type,
+            int_var->identifier,
+            NULL,
+            &object);
+        
+        ns = (YR_NAMESPACE*) yr_arena_get_ptr(
+            compiler->arena,
+            YR_NAMESPACES_TABLE,
+            compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
 
         FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_add(
             compiler->objects_table,
             $1,
-            NULL,
+            ns->name,
             (void*) object),
             yr_object_destroy(object));
+
+        // Pop value on stack to variable
+        yr_parser_emit_with_arg_reloc(
+          yyscanner,
+          OP_OBJ_STORE,
+          (void*)int_var->identifier,
+          NULL,
+          NULL);
         
+        /*
+        // get object from ext var
+        yr_object_from_external_variable(ext, &object);
+        */
+
         yr_free($1);
       }
     ;

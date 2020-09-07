@@ -62,18 +62,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_METAS_TABLE                2
 #define YR_STRINGS_TABLE              3
 #define YR_EXTERNAL_VARIABLES_TABLE   4
-#define YR_SZ_POOL                    5
-#define YR_CODE_SECTION               6
-#define YR_RE_CODE_SECTION            7
-#define YR_AC_TRANSITION_TABLE        8
-#define YR_AC_STATE_MATCHES_TABLE     9
-#define YR_AC_STATE_MATCHES_POOL     10
-#define YR_SUMMARY_SECTION           11
+#define YR_INTERNAL_VARIABLES_TABLE   5
+#define YR_SZ_POOL                    6
+#define YR_CODE_SECTION               7
+#define YR_RE_CODE_SECTION            8
+#define YR_AC_TRANSITION_TABLE        9
+#define YR_AC_STATE_MATCHES_TABLE    10
+#define YR_AC_STATE_MATCHES_POOL     11
+#define YR_SUMMARY_SECTION           12
 
 
 // This is the number of buffers used by the compiler, should match the number
 // of items in the list above.
-#define YR_NUM_SECTIONS              12
+#define YR_NUM_SECTIONS              13
 
 
 // Number of variables used by loops. This doesn't include user defined
@@ -181,6 +182,9 @@ typedef struct _YR_COMPILER
   //      An array of YR_NAMESPACE structures, one per each namespace.
   //   YR_EXTERNAL_VARIABLES_TABLE:
   //      An array of YR_EXTERNAL_VARIABLE structures, one per each external
+  //      variable defined.
+  //   YR_INTERNAL_VARIABLES_TABLE:
+  //      An array of YR_INTERNAL_VARIABLE structures, one per each internal
   //      variable defined.
   //   YR_SZ_POOL:
   //      A collection of null-terminated strings. This buffer contains

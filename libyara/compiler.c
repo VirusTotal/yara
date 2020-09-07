@@ -702,6 +702,7 @@ static int _yr_compiler_compile_rules(
 {
   YR_RULE null_rule;
   YR_EXTERNAL_VARIABLE null_external;
+  YR_INTERNAL_VARIABLE null_internal;
 
   uint8_t halt = OP_HALT;
 
@@ -733,6 +734,17 @@ static int _yr_compiler_compile_rules(
       YR_EXTERNAL_VARIABLES_TABLE,
       &null_external,
       sizeof(YR_EXTERNAL_VARIABLE),
+      NULL));
+
+  // Write a null internal indicating the end.
+  memset(&null_internal, 0xFA, sizeof(YR_INTERNAL_VARIABLE));
+  null_internal.type = OBJECT_TYPE_UNDEFINED;
+
+  FAIL_ON_ERROR(yr_arena_write_data(
+      compiler->arena,
+      YR_INTERNAL_VARIABLES_TABLE,
+      &null_internal,
+      sizeof(YR_INTERNAL_VARIABLE),
       NULL));
 
   // Write Aho-Corasick automaton to arena.

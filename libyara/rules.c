@@ -41,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/scan.h>
 #include <yara/scanner.h>
 #include <yara/compiler.h>
-
+#include <yara/object.h>
 
 YR_API int yr_rules_define_integer_variable(
     YR_RULES* rules,
@@ -373,6 +373,9 @@ int yr_rules_from_arena(
 
   new_rules->externals_list_head = yr_arena_get_ptr(
       arena, YR_EXTERNAL_VARIABLES_TABLE, 0);
+
+  new_rules->internals_list_head = yr_arena_get_ptr(
+      arena, YR_INTERNAL_VARIABLES_TABLE, 0);
 
   new_rules->ac_transition_table = yr_arena_get_ptr(
       arena, YR_AC_TRANSITION_TABLE, 0);
