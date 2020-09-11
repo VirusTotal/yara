@@ -733,7 +733,7 @@ struct YR_SCAN_CONTEXT
 
   // Notebook used for storing YR_MATCH structures associated to the matches
   // found.
-  YR_NOTEBOOK * matches_notebook;
+  YR_NOTEBOOK* matches_notebook;
 
   // Stopwatch used for measuring the time elapsed during the scan.
   YR_STOPWATCH stopwatch;

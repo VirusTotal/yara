@@ -1038,6 +1038,10 @@ static int callback(
       }
 
       return CALLBACK_CONTINUE;
+    case CALLBACK_MSG_SCAN_WARNING_MATCH_LIMIT:
+      printf("Warning: maximum matches for string %s. Results may be invalid.\n",
+          ((YR_STRING*) message_data)->identifier);
+      return CALLBACK_CONTINUE;
   }
 
   return CALLBACK_ERROR;

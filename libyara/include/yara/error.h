@@ -104,6 +104,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ERROR_INVALID_MODIFIER                  59
 #define ERROR_DUPLICATED_MODIFIER               60
 
+#define WARN_TOO_MANY_MATCHES                   -1
+
+#define IS_WARNING(x) (x < 0)
 
 #define FAIL_ON_ERROR(x) { \
   int result = (x); \
