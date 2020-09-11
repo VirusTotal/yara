@@ -240,10 +240,11 @@ void yr_re_ast_destroy(
 
 int yr_re_parse(
     const char* re_string,
+    uint32_t length,
     RE_AST** re_ast,
     RE_ERROR* error)
 {
-  return yr_parse_re_string(re_string, re_ast, error);
+  return yr_parse_re_string(re_string, length, re_ast, error);
 }
 
 
@@ -280,7 +281,7 @@ int yr_re_compile(
   RE_AST* re_ast;
   RE _re;
 
-  FAIL_ON_ERROR(yr_re_parse(re_string, &re_ast, error));
+  FAIL_ON_ERROR(yr_re_parse(re_string, strlen(re_string), &re_ast, error));
 
   _re.flags = flags;
 

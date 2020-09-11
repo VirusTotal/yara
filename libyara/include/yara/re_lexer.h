@@ -109,5 +109,6 @@ void yyfatal(
 
 int yr_parse_re_string(
   const char* re_string,
+  uint32_t length,
   RE_AST** re_ast,
   RE_ERROR* error);

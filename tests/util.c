@@ -406,7 +406,7 @@ void assert_re_atoms(
 
   int exit_code;
 
-  yr_re_parse(re, &re_ast, &re_error);
+  yr_re_parse(re, strlen(re), &re_ast, &re_error);
   exit_code = _assert_atoms(re_ast, expected_atom_count, expected_atoms);
 
   if (re_ast != NULL)

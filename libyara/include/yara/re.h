@@ -179,6 +179,7 @@ int yr_re_fast_exec(
 
 int yr_re_parse(
     const char* re_string,
+    uint32_t length,
     RE_AST** re_ast,
     RE_ERROR* error);
 

@@ -608,6 +608,7 @@ void yyerror(
 
 int yr_parse_re_string(
   const char* re_string,
+  uint32_t length,
   RE_AST** re_ast,
   RE_ERROR* error)
 {
@@ -631,7 +632,7 @@ int yr_parse_re_string(
 
   yylex_init(&yyscanner);
   yyset_extra(*re_ast, yyscanner);
-  yy_scan_string(re_string, yyscanner);
+  yy_scan_bytes(re_string, length, yyscanner);
   yyparse(yyscanner, &lex_env);
   yylex_destroy(yyscanner);
 
