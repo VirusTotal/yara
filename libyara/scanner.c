@@ -252,7 +252,7 @@ YR_API int yr_scanner_create(
 
     FAIL_ON_ERROR_WITH_CLEANUP(
         yr_hash_table_add(
-            new_scanner->objects_table,
+            internal->rule->internal_variables_table,
             internal->identifier,
             NULL,
             (void*) object),

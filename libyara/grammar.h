@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.5.  */
+/* A Bison parser, made by GNU Bison 3.6.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,6 +31,10 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 #ifndef YY_YARA_YY_GRAMMAR_H_INCLUDED
 # define YY_YARA_YY_GRAMMAR_H_INCLUDED
 /* Debug traces.  */
@@ -40,69 +45,76 @@
 extern int yara_yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    _END_OF_FILE_ = 0,
-    _END_OF_INCLUDED_FILE_ = 258,
-    _DOT_DOT_ = 259,
-    _RULE_ = 260,
-    _PRIVATE_ = 261,
-    _GLOBAL_ = 262,
-    _META_ = 263,
-    _STRINGS_ = 264,
-    _CONDITION_ = 265,
-    _IDENTIFIER_ = 266,
-    _STRING_IDENTIFIER_ = 267,
-    _STRING_COUNT_ = 268,
-    _STRING_OFFSET_ = 269,
-    _STRING_LENGTH_ = 270,
-    _STRING_IDENTIFIER_WITH_WILDCARD_ = 271,
-    _NUMBER_ = 272,
-    _DOUBLE_ = 273,
-    _INTEGER_FUNCTION_ = 274,
-    _TEXT_STRING_ = 275,
-    _HEX_STRING_ = 276,
-    _REGEXP_ = 277,
-    _ASCII_ = 278,
-    _WIDE_ = 279,
-    _XOR_ = 280,
-    _BASE64_ = 281,
-    _BASE64_WIDE_ = 282,
-    _NOCASE_ = 283,
-    _FULLWORD_ = 284,
-    _AT_ = 285,
-    _FILESIZE_ = 286,
-    _ENTRYPOINT_ = 287,
-    _ALL_ = 288,
-    _ANY_ = 289,
-    _IN_ = 290,
-    _OF_ = 291,
-    _FOR_ = 292,
-    _THEM_ = 293,
-    _MATCHES_ = 294,
-    _CONTAINS_ = 295,
-    _IMPORT_ = 296,
-    _TRUE_ = 297,
-    _FALSE_ = 298,
-    _OR_ = 299,
-    _AND_ = 300,
-    _NOT_ = 301,
-    _EQ_ = 302,
-    _NEQ_ = 303,
-    _LT_ = 304,
-    _LE_ = 305,
-    _GT_ = 306,
-    _GE_ = 307,
-    _SHIFT_LEFT_ = 308,
-    _SHIFT_RIGHT_ = 309,
-    UNARY_MINUS = 310
+    YYEMPTY = -2,
+    _END_OF_FILE_ = 0,             /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    _END_OF_INCLUDED_FILE_ = 258,  /* "end of included file"  */
+    _DOT_DOT_ = 259,               /* ".."  */
+    _RULE_ = 260,                  /* "<rule>"  */
+    _PRIVATE_ = 261,               /* "<private>"  */
+    _GLOBAL_ = 262,                /* "<global>"  */
+    _META_ = 263,                  /* "<meta>"  */
+    _STRINGS_ = 264,               /* "<strings>"  */
+    _VARIABLES_ = 265,             /* "<variables>"  */
+    _CONDITION_ = 266,             /* "<condition>"  */
+    _IDENTIFIER_ = 267,            /* "identifier"  */
+    _STRING_IDENTIFIER_ = 268,     /* "string identifier"  */
+    _STRING_COUNT_ = 269,          /* "string count"  */
+    _STRING_OFFSET_ = 270,         /* "string offset"  */
+    _STRING_LENGTH_ = 271,         /* "string length"  */
+    _STRING_IDENTIFIER_WITH_WILDCARD_ = 272, /* "string identifier with wildcard"  */
+    _NUMBER_ = 273,                /* "integer number"  */
+    _DOUBLE_ = 274,                /* "floating point number"  */
+    _INTEGER_FUNCTION_ = 275,      /* "integer function"  */
+    _TEXT_STRING_ = 276,           /* "text string"  */
+    _HEX_STRING_ = 277,            /* "hex string"  */
+    _REGEXP_ = 278,                /* "regular expression"  */
+    _ASCII_ = 279,                 /* "<ascii>"  */
+    _WIDE_ = 280,                  /* "<wide>"  */
+    _XOR_ = 281,                   /* "<xor>"  */
+    _BASE64_ = 282,                /* "<base64>"  */
+    _BASE64_WIDE_ = 283,           /* "<base64wide>"  */
+    _NOCASE_ = 284,                /* "<nocase>"  */
+    _FULLWORD_ = 285,              /* "<fullword>"  */
+    _AT_ = 286,                    /* "<at>"  */
+    _FILESIZE_ = 287,              /* "<filesize>"  */
+    _ENTRYPOINT_ = 288,            /* "<entrypoint>"  */
+    _ALL_ = 289,                   /* "<all>"  */
+    _ANY_ = 290,                   /* "<any>"  */
+    _IN_ = 291,                    /* "<in>"  */
+    _OF_ = 292,                    /* "<of>"  */
+    _FOR_ = 293,                   /* "<for>"  */
+    _THEM_ = 294,                  /* "<them>"  */
+    _MATCHES_ = 295,               /* "<matches>"  */
+    _CONTAINS_ = 296,              /* "<contains>"  */
+    _IMPORT_ = 297,                /* "<import>"  */
+    _TRUE_ = 298,                  /* "<true>"  */
+    _FALSE_ = 299,                 /* "<false"  */
+    _OR_ = 300,                    /* "<or>"  */
+    _AND_ = 301,                   /* "<and>"  */
+    _NOT_ = 302,                   /* "<not>"  */
+    _EQ_ = 303,                    /* "=="  */
+    _NEQ_ = 304,                   /* "!="  */
+    _LT_ = 305,                    /* "<"  */
+    _LE_ = 306,                    /* "<="  */
+    _GT_ = 307,                    /* ">"  */
+    _GE_ = 308,                    /* ">="  */
+    _SHIFT_LEFT_ = 309,            /* "<<"  */
+    _SHIFT_RIGHT_ = 310,           /* ">>"  */
+    UNARY_MINUS = 311              /* UNARY_MINUS  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
 #define _END_OF_FILE_ 0
+#define YYerror 256
+#define YYUNDEF 257
 #define _END_OF_INCLUDED_FILE_ 258
 #define _DOT_DOT_ 259
 #define _RULE_ 260
@@ -110,59 +122,59 @@ extern int yara_yydebug;
 #define _GLOBAL_ 262
 #define _META_ 263
 #define _STRINGS_ 264
-#define _CONDITION_ 265
-#define _IDENTIFIER_ 266
-#define _STRING_IDENTIFIER_ 267
-#define _STRING_COUNT_ 268
-#define _STRING_OFFSET_ 269
-#define _STRING_LENGTH_ 270
-#define _STRING_IDENTIFIER_WITH_WILDCARD_ 271
-#define _NUMBER_ 272
-#define _DOUBLE_ 273
-#define _INTEGER_FUNCTION_ 274
-#define _TEXT_STRING_ 275
-#define _HEX_STRING_ 276
-#define _REGEXP_ 277
-#define _ASCII_ 278
-#define _WIDE_ 279
-#define _XOR_ 280
-#define _BASE64_ 281
-#define _BASE64_WIDE_ 282
-#define _NOCASE_ 283
-#define _FULLWORD_ 284
-#define _AT_ 285
-#define _FILESIZE_ 286
-#define _ENTRYPOINT_ 287
-#define _ALL_ 288
-#define _ANY_ 289
-#define _IN_ 290
-#define _OF_ 291
-#define _FOR_ 292
-#define _THEM_ 293
-#define _MATCHES_ 294
-#define _CONTAINS_ 295
-#define _IMPORT_ 296
-#define _TRUE_ 297
-#define _FALSE_ 298
-#define _OR_ 299
-#define _AND_ 300
-#define _NOT_ 301
-#define _EQ_ 302
-#define _NEQ_ 303
-#define _LT_ 304
-#define _LE_ 305
-#define _GT_ 306
-#define _GE_ 307
-#define _SHIFT_LEFT_ 308
-#define _SHIFT_RIGHT_ 309
-#define UNARY_MINUS 310
+#define _VARIABLES_ 265
+#define _CONDITION_ 266
+#define _IDENTIFIER_ 267
+#define _STRING_IDENTIFIER_ 268
+#define _STRING_COUNT_ 269
+#define _STRING_OFFSET_ 270
+#define _STRING_LENGTH_ 271
+#define _STRING_IDENTIFIER_WITH_WILDCARD_ 272
+#define _NUMBER_ 273
+#define _DOUBLE_ 274
+#define _INTEGER_FUNCTION_ 275
+#define _TEXT_STRING_ 276
+#define _HEX_STRING_ 277
+#define _REGEXP_ 278
+#define _ASCII_ 279
+#define _WIDE_ 280
+#define _XOR_ 281
+#define _BASE64_ 282
+#define _BASE64_WIDE_ 283
+#define _NOCASE_ 284
+#define _FULLWORD_ 285
+#define _AT_ 286
+#define _FILESIZE_ 287
+#define _ENTRYPOINT_ 288
+#define _ALL_ 289
+#define _ANY_ 290
+#define _IN_ 291
+#define _OF_ 292
+#define _FOR_ 293
+#define _THEM_ 294
+#define _MATCHES_ 295
+#define _CONTAINS_ 296
+#define _IMPORT_ 297
+#define _TRUE_ 298
+#define _FALSE_ 299
+#define _OR_ 300
+#define _AND_ 301
+#define _NOT_ 302
+#define _EQ_ 303
+#define _NEQ_ 304
+#define _LT_ 305
+#define _LE_ 306
+#define _GT_ 307
+#define _GE_ 308
+#define _SHIFT_LEFT_ 309
+#define _SHIFT_RIGHT_ 310
+#define UNARY_MINUS 311
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 297 "grammar.y" /* yacc.c:1916  */
+#line 302 "grammar.y"
 
   YR_EXPRESSION   expression;
   SIZED_STRING*   sized_string;
@@ -176,9 +188,9 @@ union YYSTYPE
   YR_ARENA_REF meta;
   YR_ARENA_REF string;
 
-#line 180 "grammar.h" /* yacc.c:1916  */
-};
+#line 192 "grammar.h"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

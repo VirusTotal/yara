@@ -938,6 +938,8 @@ int yr_parser_reduce_rule_declaration_phase_1(
   rule->flags = flags;
   rule->ns = ns;
   rule->num_atoms = 0;
+  
+  yr_hash_table_create(10, &rule->internal_variables_table);
 
   YR_ARENA_REF jmp_offset_ref;
 

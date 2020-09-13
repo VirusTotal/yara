@@ -899,9 +899,15 @@ int yr_execute_code(
         #endif
 
         r1.o = (YR_OBJECT*) yr_hash_table_lookup(
-            context->objects_table,
+            current_rule->internal_variables_table,
             identifier,
             NULL);
+
+        if(r1.o == NULL)
+            r1.o = (YR_OBJECT*) yr_hash_table_lookup(
+                context->objects_table,
+                identifier,
+                NULL);
 
         assert(r1.o != NULL);
         push(r1);
@@ -918,7 +924,7 @@ int yr_execute_code(
         pop(r1);
         
         YR_OBJECT* obj = (YR_OBJECT*) yr_hash_table_lookup(
-                context->objects_table,
+                current_rule->internal_variables_table,
                 identifier,
                 NULL);
 

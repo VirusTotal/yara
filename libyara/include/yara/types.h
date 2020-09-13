@@ -327,6 +327,8 @@ struct YR_RULE
   // Number of atoms generated for this rule.
   int32_t num_atoms;
 
+  YR_HASH_TABLE* internal_variables_table;
+
   DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(const char*, tags);
   DECLARE_REFERENCE(YR_META*, metas);
@@ -361,6 +363,7 @@ struct YR_INTERNAL_VARIABLE
   int32_t type;
 
   DECLARE_REFERENCE(const char*, identifier);
+  DECLARE_REFERENCE(YR_RULE*, rule);
 };
 
 struct YR_AC_MATCH

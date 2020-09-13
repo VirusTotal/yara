@@ -609,13 +609,26 @@ variable_declaration
         YR_ARENA_REF int_ref;
         YR_ARENA_REF identifier_ref;
         uint8_t obj_type;
-        YR_NAMESPACE* ns;
+
+        YR_RULE* rule = _yr_compiler_get_rule_by_idx(compiler,
+                            compiler->current_rule_idx);
 
         object = (YR_OBJECT*)yr_hash_table_lookup(
             compiler->objects_table,
             $1,
             NULL);
         
+        if(object != NULL) {
+            yywarning(yyscanner,
+                "External variable overrides definition of internal variable \"%s\".",
+                $1);
+        }
+        
+        object = (YR_OBJECT*)yr_hash_table_lookup(
+            rule->internal_variables_table,
+            $1,
+            NULL);
+
         if(object != NULL) {
             fail_with_error(ERROR_DUPLICATED_IDENTIFIER);
         }
@@ -626,6 +639,7 @@ variable_declaration
             sizeof(YR_INTERNAL_VARIABLE),
             &int_ref,
             offsetof(YR_INTERNAL_VARIABLE, identifier),
+            offsetof(YR_INTERNAL_VARIABLE, rule),
             EOL);
         
         int_var = yr_arena_ref_to_ptr(compiler->arena, &int_ref);
@@ -651,6 +665,7 @@ variable_declaration
         
         int_var->identifier = yr_arena_ref_to_ptr(
           compiler->arena, &identifier_ref);
+        int_var->rule = rule;
         int_var->type = obj_type;
 
         yr_object_create(
@@ -658,16 +673,11 @@ variable_declaration
             int_var->identifier,
             NULL,
             &object);
-        
-        ns = (YR_NAMESPACE*) yr_arena_get_ptr(
-            compiler->arena,
-            YR_NAMESPACES_TABLE,
-            compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
 
         FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_add(
-            compiler->objects_table,
+            rule->internal_variables_table,
             $1,
-            ns->name,
+            NULL,
             (void*) object),
             yr_object_destroy(object));
 
@@ -1000,8 +1010,16 @@ identifier
           // Search for identifier within the global namespace, where the
           // externals variables reside.
 
-          YR_OBJECT* object = (YR_OBJECT*) yr_hash_table_lookup(
-              compiler->objects_table, $1, NULL);
+          YR_OBJECT* object;
+
+          YR_RULE* rule = _yr_compiler_get_rule_by_idx(compiler, compiler->current_rule_idx);
+          
+          object = yr_hash_table_lookup(rule->internal_variables_table, $1, NULL);
+    
+          if (object == NULL) {
+            object = (YR_OBJECT*) yr_hash_table_lookup(
+                compiler->objects_table, $1, NULL);
+          }
 
           YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
               compiler->arena,
