@@ -604,7 +604,6 @@ variable_declaration
       }
       expression
       {
-        YR_OBJECT* object;
         YR_INTERNAL_VARIABLE* int_var;
         YR_ARENA_REF int_ref;
         YR_ARENA_REF identifier_ref;
@@ -613,7 +612,8 @@ variable_declaration
         YR_RULE* rule = _yr_compiler_get_rule_by_idx(compiler,
                             compiler->current_rule_idx);
 
-        object = (YR_OBJECT*)yr_hash_table_lookup(
+        // Check for duplicated identifier in scope with external variables
+        YR_OBJECT* object = (YR_OBJECT*)yr_hash_table_lookup(
             compiler->objects_table,
             $1,
             NULL);
@@ -624,6 +624,7 @@ variable_declaration
                 $1);
         }
         
+        // Check for duplicated identifier in local rule scope
         object = (YR_OBJECT*)yr_hash_table_lookup(
             rule->internal_variables_table,
             $1,
@@ -689,11 +690,6 @@ variable_declaration
           NULL,
           NULL);
         
-        /*
-        // get object from ext var
-        yr_object_from_external_variable(ext, &object);
-        */
-
         yr_free($1);
       }
     ;
