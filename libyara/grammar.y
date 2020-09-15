@@ -622,74 +622,75 @@ variable_declaration
             yywarning(yyscanner,
                 "External variable overrides definition of internal variable \"%s\".",
                 $1);
+            yr_parser_emit(yyscanner, OP_POP, NULL);
+        } else {
+          // Check for duplicated identifier in local rule scope
+          object = (YR_OBJECT*)yr_hash_table_lookup(
+              rule->internal_variables_table,
+              $1,
+              NULL);
+
+          if(object != NULL) {
+              fail_with_error(ERROR_DUPLICATED_IDENTIFIER);
+          }
+        
+          yr_arena_allocate_struct(
+              compiler->arena,
+              YR_INTERNAL_VARIABLES_TABLE,
+              sizeof(YR_INTERNAL_VARIABLE),
+              &int_ref,
+              offsetof(YR_INTERNAL_VARIABLE, identifier),
+              offsetof(YR_INTERNAL_VARIABLE, rule),
+              EOL);
+
+          int_var = yr_arena_ref_to_ptr(compiler->arena, &int_ref);
+        
+          _yr_compiler_store_string(
+              compiler,
+              $1,
+              &identifier_ref);
+
+          switch($4.type) {
+            case EXPRESSION_TYPE_BOOLEAN:
+            case EXPRESSION_TYPE_INTEGER:
+              obj_type = OBJECT_TYPE_INTEGER;
+              break;
+            case EXPRESSION_TYPE_FLOAT:
+              obj_type = OBJECT_TYPE_FLOAT;
+              break;
+            case EXPRESSION_TYPE_STRING:
+              obj_type = OBJECT_TYPE_STRING;
+              break;
+            default: assert(false);
+          }
+
+          int_var->identifier = yr_arena_ref_to_ptr(
+              compiler->arena, &identifier_ref);
+          int_var->rule = rule;
+          int_var->type = obj_type;
+
+          yr_object_create(
+              int_var->type,
+              int_var->identifier,
+              NULL,
+              &object);
+
+          FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_add(
+              rule->internal_variables_table,
+              $1,
+              NULL,
+              (void*) object),
+              yr_object_destroy(object));
+
+          // Pop value on stack to variable
+          yr_parser_emit_with_arg_reloc(
+              yyscanner,
+              OP_OBJ_STORE,
+              (void*)int_var->identifier,
+              NULL,
+              NULL);
         }
-        
-        // Check for duplicated identifier in local rule scope
-        object = (YR_OBJECT*)yr_hash_table_lookup(
-            rule->internal_variables_table,
-            $1,
-            NULL);
 
-        if(object != NULL) {
-            fail_with_error(ERROR_DUPLICATED_IDENTIFIER);
-        }
-        
-        yr_arena_allocate_struct(
-            compiler->arena,
-            YR_INTERNAL_VARIABLES_TABLE,
-            sizeof(YR_INTERNAL_VARIABLE),
-            &int_ref,
-            offsetof(YR_INTERNAL_VARIABLE, identifier),
-            offsetof(YR_INTERNAL_VARIABLE, rule),
-            EOL);
-        
-        int_var = yr_arena_ref_to_ptr(compiler->arena, &int_ref);
-        
-        _yr_compiler_store_string(
-            compiler,
-            $1,
-            &identifier_ref);
-
-        switch($4.type) {
-          case EXPRESSION_TYPE_BOOLEAN:
-          case EXPRESSION_TYPE_INTEGER:
-            obj_type = OBJECT_TYPE_INTEGER;
-            break;
-          case EXPRESSION_TYPE_FLOAT:
-            obj_type = OBJECT_TYPE_FLOAT;
-            break;
-          case EXPRESSION_TYPE_STRING:
-            obj_type = OBJECT_TYPE_STRING;
-            break;
-          default: assert(false);
-        }
-        
-        int_var->identifier = yr_arena_ref_to_ptr(
-          compiler->arena, &identifier_ref);
-        int_var->rule = rule;
-        int_var->type = obj_type;
-
-        yr_object_create(
-            int_var->type,
-            int_var->identifier,
-            NULL,
-            &object);
-
-        FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_add(
-            rule->internal_variables_table,
-            $1,
-            NULL,
-            (void*) object),
-            yr_object_destroy(object));
-
-        // Pop value on stack to variable
-        yr_parser_emit_with_arg_reloc(
-          yyscanner,
-          OP_OBJ_STORE,
-          (void*)int_var->identifier,
-          NULL,
-          NULL);
-        
         yr_free($1);
       }
     ;
