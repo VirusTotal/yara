@@ -391,7 +391,7 @@ static void scan_dir(
       {
         file_queue_put(full_path);
       }
-      else if (recursive &&
+      else if (scan_opts->recursive_search &&
                strcmp(FindFileData.cFileName, ".") != 0 &&
                strcmp(FindFileData.cFileName, "..") != 0)
       {
