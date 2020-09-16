@@ -200,27 +200,6 @@ YR_API int yr_rules_scan_mem_blocks(
 }
 
 
-static YR_MEMORY_BLOCK* _yr_get_first_block(
-    YR_MEMORY_BLOCK_ITERATOR* iterator)
-{
-  return (YR_MEMORY_BLOCK*) iterator->context;
-}
-
-
-static YR_MEMORY_BLOCK* _yr_get_next_block(
-    YR_MEMORY_BLOCK_ITERATOR* iterator)
-{
-  return NULL;
-}
-
-
-static const uint8_t* _yr_fetch_block_data(
-    YR_MEMORY_BLOCK* block)
-{
-  return (const uint8_t*) block->context;
-}
-
-
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
     const uint8_t* buffer,
@@ -230,25 +209,20 @@ YR_API int yr_rules_scan_mem(
     void* user_data,
     int timeout)
 {
-  YR_MEMORY_BLOCK block;
-  YR_MEMORY_BLOCK_ITERATOR iterator;
+  YR_SCANNER* scanner;
+  int result;
 
-  block.size = buffer_size;
-  block.base = 0;
-  block.fetch_data = _yr_fetch_block_data;
-  block.context = (void*) buffer;
+  FAIL_ON_ERROR(yr_scanner_create(rules, &scanner));
 
-  iterator.context = &block;
-  iterator.first = _yr_get_first_block;
-  iterator.next = _yr_get_next_block;
+  yr_scanner_set_callback(scanner, callback, user_data);
+  yr_scanner_set_timeout(scanner, timeout);
+  yr_scanner_set_flags(scanner, flags);
 
-  return yr_rules_scan_mem_blocks(
-      rules,
-      &iterator,
-      flags,
-      callback,
-      user_data,
-      timeout);
+  result = yr_scanner_scan_mem(scanner, buffer, buffer_size);
+
+  yr_scanner_destroy(scanner);
+
+  return result;
 }
 
 
