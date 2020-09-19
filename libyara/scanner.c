@@ -275,7 +275,6 @@ YR_API void yr_scanner_destroy(
 {
   RE_FIBER* fiber;
   RE_FIBER* next_fiber;
-  YR_RULE* rule;
 
   fiber = scanner->re_fiber_pool.fibers.head;
 
@@ -291,15 +290,6 @@ YR_API void yr_scanner_destroy(
     yr_hash_table_destroy(
         scanner->objects_table,
         (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
-  }
-
-  rule = (YR_RULE*)scanner->rules->rules_list_head;
-  while(!RULE_IS_NULL(rule)) {
-    yr_hash_table_destroy(
-        rule->internal_variables_table,
-        (YR_HASH_TABLE_FREE_VALUE_FUNC)yr_object_destroy);
-
-    rule++;
   }
 
   #ifdef YR_PROFILING_ENABLED
