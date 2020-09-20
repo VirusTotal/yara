@@ -309,10 +309,6 @@ YR_API void yr_compiler_destroy(
     yr_ac_automaton_destroy(compiler->automaton);
 
   yr_hash_table_destroy(
-      compiler->rules_table,
-      NULL);
-
-  yr_hash_table_destroy(
       compiler->strings_table,
       NULL);
 
@@ -332,6 +328,10 @@ YR_API void yr_compiler_destroy(
 
     rule++;
   }
+
+  yr_hash_table_destroy(
+      compiler->rules_table,
+      NULL);
 
   if (compiler->atoms_config.free_quality_table)
     yr_free(compiler->atoms_config.quality_table);
